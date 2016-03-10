@@ -16,8 +16,8 @@ import (
 Parameters (
 	VolumePerWell  Volume
 	InoculationVolume Volume
-	/*AntibioticVolume Volume
-	InducerVolume Volume
+	/*AntibioticVolume Volume  
+	InducerVolume Volume // 0.5mM IPTG
 	RepressorVolume Volume*/
 	Imagefilename string
 	Palettename string

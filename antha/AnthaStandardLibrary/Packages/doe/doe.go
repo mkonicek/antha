@@ -119,21 +119,28 @@ func AllComboCount(pairs []DOEPair) (numberofuniquecombos int) {
 	return
 }
 
+// fix!!!!!!
 func AllCombinations(factors []DOEPair) (runs []Run) {
 	fmt.Println(factors)
 	descriptors := make([]string, 0)
 	setpoints := make([]interface{}, 0)
 	runs = make([]Run, AllComboCount(factors))
+
+	var runnumber int
+
 	var run Run
 	for i, factor := range factors {
 		fmt.Println(factor, i, "of", AllComboCount(factors))
 		for j, level := range factor.Levels {
+			if len(run.Levels) == 1 {
+				runnumber = i + j
+			}
 			fmt.Println(factor, level, i, j, i+j)
 			descriptors = append(descriptors, factor.Factor)
 			setpoints = append(setpoints, level)
 			run.Factordescriptors = descriptors
 			run.Setpoints = setpoints
-			runs[i+j] = run
+			runs[runnumber] = run
 		}
 	}
 	return

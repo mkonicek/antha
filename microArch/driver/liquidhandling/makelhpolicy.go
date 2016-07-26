@@ -431,8 +431,7 @@ func MakeColonyPolicy() LHPolicy {
 func MakeWaterPolicy() LHPolicy {
 	waterpolicy := make(LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
-	//waterpolicy["CAN_MULTI"] = true
-	waterpolicy["CAN_MULTI"] = false
+	waterpolicy["CAN_MULTI"] = true
 	waterpolicy["CAN_MSA"] = true
 	waterpolicy["CAN_SDD"] = true
 	waterpolicy["DSPZOFFSET"] = 1.0

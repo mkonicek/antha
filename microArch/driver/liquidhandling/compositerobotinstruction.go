@@ -295,6 +295,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		// make hash key
 
 		hashkey := fmt.Sprintf("%s:%s:%d:%s:%d:%d:%d", ins.What[i], pltF, fcoord, pltT, tcoord, pmf, pmt)
+		fmt.Println("HASH KEY: ", hashkey)
 
 		a, ok := tfrs[hashkey]
 
@@ -318,12 +319,12 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		pmf, _ := strconv.Atoi(tx[5])
 		pmt, _ := strconv.Atoi(tx[6])
 
-		//		fmt.Println("transfer ", k, " len : ", len(a))
+		fmt.Println("transfer ", k, " len : ", len(a))
 		if len(a) >= channel.Multi {
 			// could be
 			mss := GetMultiSet(a, channel.Multi, pmf, pmt)
 
-			//fmt.Println("Multiset length: ", len(mss))
+			fmt.Println("Multiset length: ", len(mss))
 
 			if len(mss) != 0 {
 				for _, ms := range mss {
@@ -367,12 +368,11 @@ func GetNextSet(a []string, channelmulti int, fromplatemulti int, toplatemulti i
 
 	// this is simply a greedy algorithm, it may miss things
 	for _, s := range a {
+		fmt.Println("SSS::", s)
 		tx := strings.Split(s, ",")
-
 		i, _ := strconv.Atoi(tx[0])
 		j, _ := strconv.Atoi(tx[1])
 		k, _ := strconv.Atoi(tx[2])
-
 		r[i][j] = k
 	}
 	// now we just take the first one we find
@@ -380,7 +380,7 @@ func GetNextSet(a []string, channelmulti int, fromplatemulti int, toplatemulti i
 	ret := getset(r, channelmulti)
 	censa := censoredcopy(a, ret)
 
-	//fmt.Println("RET: ", ret, " CENSA: ", censa)
+	fmt.Println("RET: ", ret, " CENSA: ", censa)
 
 	return ret, censa
 }
@@ -403,6 +403,8 @@ func getset(a [][]int, mx int) []int {
 						r = make([]int, 0, mx)
 					}
 				}
+
+				fmt.Println("R::: ", r)
 
 				if len(r) == mx {
 					break

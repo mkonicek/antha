@@ -48,7 +48,6 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 		if err != nil {
 			break
 		}
-		//fmt.Println("LAYOUT STAGE ", x)
 		ch = ch.Child
 	}
 
@@ -227,7 +226,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				return s, m, err
 			}
 
-			fmt.Println(v.Components[0].CName)
 			v.Components[0].Loc = addr
 			tx := strings.Split(addr, ":")
 			request.LHInstructions[k].Welladdress = tx[1]

@@ -70,6 +70,12 @@ func mix(ctx context.Context, inst *mixInst) *wtype.LHComponent {
 		}
 	}
 
+	if len(cmps) == 0 {
+		inst.Node.Inst.Type = wtype.LHIEND
+	} else {
+		inst.Node.Inst.Type = wtype.LHIMIX
+	}
+
 	inst.Node.Inst.SetGeneration(mx)
 	inst.Comp.SetGeneration(mx + 1)
 

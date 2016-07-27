@@ -313,6 +313,16 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 //
 
 func (this *Liquidhandler) Plan(request *LHRequest) error {
+	// figure out the output order
+
+	err := set_output_order(request)
+
+	if err != nil {
+		return err
+	}
+
+	request.InstructionChain.Print()
+
 	// convert requests to volumes and determine required stock concentrations
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
 
@@ -323,13 +333,6 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	request.LHInstructions = instructions
 	request.Stockconcs = stockconcs
 
-	// figure out the output order
-
-	err = set_output_order(request)
-
-	if err != nil {
-		return err
-	}
 	// looks at components, determines what inputs are required
 	request, err = this.GetInputs(request)
 

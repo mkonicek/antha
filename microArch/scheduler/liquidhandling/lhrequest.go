@@ -62,6 +62,7 @@ type LHRequest struct {
 	Input_vols_wanting       map[string]wunit.Volume
 	TimeEstimate             float64
 	CarryVolume              wunit.Volume
+	InstructionSets          [][]*wtype.LHInstruction
 }
 
 func (req *LHRequest) ConfigureYourself() error {

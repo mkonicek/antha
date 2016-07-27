@@ -4,6 +4,26 @@ import (
 	"strings"
 )
 
+// enum of instruction types
+
+const (
+	LHIEND = iota
+	LHIMIX
+	LHIWAI
+)
+
+func InsType(i int) string {
+	insnames := []string{"END", "MIX", "WAIT"}
+
+	ret := ""
+
+	if i >= 0 && i < len(insnames) {
+		ret = insnames[i]
+	}
+
+	return ret
+}
+
 //  instruction to a liquid handler
 type LHInstruction struct {
 	ID               string
@@ -18,7 +38,7 @@ type LHInstruction struct {
 	plateID          string
 	Platetype        string
 	Vol              float64
-	Type             string
+	Type             int
 	Conc             float64
 	Tvol             float64
 	Majorlayoutgroup int

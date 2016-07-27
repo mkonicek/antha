@@ -132,9 +132,6 @@ func (bg ByGeneration) Less(i, j int) bool {
 
 func set_output_order(rq *LHRequest) error {
 	// sort into equivalence classes by generation
-	// nb that this basically means the ichain stuff is a bit pointless
-	// however for now it will be maintained to test whether
-	// parent-child relationships are working OK
 
 	sorted := insSliceFromMap(rq.LHInstructions)
 
@@ -151,6 +148,8 @@ func set_output_order(rq *LHRequest) error {
 	rq.Output_order = it.Flatten()
 
 	rq.InstructionChain = it
+
+	//rq.InstructionSets = make_instruction_sets(it)
 
 	return nil
 }
@@ -329,3 +328,16 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	ti := driver.TransferInstruction{Type: driver.TFR, What: wh, Volume: va, PltTo: pt, WellTo: wt, TPlateWX: ptwx, TPlateWY: ptwy, PltFrom: pf, WellFrom: wf, FPlateWX: pfwx, FPlateWY: pfwy, FVolume: vf, TVolume: vt, FPlateType: ptf, TPlateType: ptt}
 	return &ti, nil
 }
+
+/*
+func make_instruction_sets(ic *IChain) [][]*wtype.LHInstruction {
+	for {
+		if ic == nil {
+			break
+		}
+
+
+		ic = ic.Child
+	}
+}
+*/

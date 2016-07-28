@@ -555,7 +555,7 @@ func MakeDNAPolicy() wtype.LHPolicy {
 
 func MakeDNAMixPolicy() wtype.LHPolicy {
 	dnapolicy := MakeDNAPolicy()
-	dnapolicy["POST_MIX_VOLUME"] = 50
+	dnapolicy["POST_MIX_VOLUME"] = 50.0
 	dnapolicy["POST_MIX"] = 3
 	dnapolicy["POST_MIX_Z"] = 0.5
 	dnapolicy["POST_MIX_RATE"] = 3.0
@@ -579,7 +579,7 @@ func MakeDetergentPolicy() wtype.LHPolicy {
 func MakeProteinPolicy() wtype.LHPolicy {
 	proteinpolicy := make(wtype.LHPolicy, 10)
 	proteinpolicy["POST_MIX"] = 5
-	proteinpolicy["POST_MIX_VOLUME"] = 50
+	proteinpolicy["POST_MIX_VOLUME"] = 50.0
 	proteinpolicy["ASPSPEED"] = 2.0
 	proteinpolicy["DSPSPEED"] = 2.0
 	proteinpolicy["CAN_MULTI"] = false
@@ -640,7 +640,7 @@ func MakeLoadlowPolicy() wtype.LHPolicy {
 func MakeNeedToMixPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 15)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 10
+	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
 	dnapolicy["PRE_MIX_VOLUME"] = 10
@@ -681,7 +681,7 @@ func PreMixPolicy() wtype.LHPolicy {
 func PostMixPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 10
+	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	//dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
@@ -732,8 +732,8 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["PRE_MIX_Z"] = 0.5
 	//defaultpolicy["ASP_WAIT"] = 1.0
 	//defaultpolicy["DSP_WAIT"] = 1.0
-	defaultpolicy["PRE_MIX_VOLUME"] = 10
-	defaultpolicy["POST_MIX_VOLUME"] = 10
+	defaultpolicy["PRE_MIX_VOLUME"] = 10.0
+	defaultpolicy["POST_MIX_VOLUME"] = 10.0
 
 	return defaultpolicy
 }

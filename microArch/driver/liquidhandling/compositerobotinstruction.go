@@ -2162,9 +2162,9 @@ func (ins *SuckInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 		mix.Blowout = []bool{false}
 
 		// this is not safe
-		_, ok := pol["PRE_MIX_VOL"]
+		_, ok := pol["PRE_MIX_VOLUME"]
 		mix.Volume = ins.Volume
-		mixvol := SafeGetF64(pol, "PRE_MIX_VOL")
+		mixvol := SafeGetF64(pol, "PRE_MIX_VOLUME")
 
 		if ok {
 			v := make([]wunit.Volume, ins.Multi)
@@ -2629,9 +2629,9 @@ func (ins *BlowInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 		}
 
 		// this is not safe, need to verify volume is OK
-		_, ok := pol["POST_MIX_VOL"]
+		_, ok := pol["POST_MIX_VOLUME"]
 		mix.Volume = ins.Volume
-		mixvol := SafeGetF64(pol, "POST_MIX_VOL")
+		mixvol := SafeGetF64(pol, "POST_MIX_VOLUME")
 
 		if ok {
 			v := make([]wunit.Volume, ins.Multi)

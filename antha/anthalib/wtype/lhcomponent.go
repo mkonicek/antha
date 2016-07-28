@@ -24,6 +24,7 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -350,6 +351,39 @@ func parseTree(p string, g *graph.StringGraph) []string {
 	return newnodes
 }
 
-func (lhc *LHComponent) SetPolicies(rs LHPolicyRuleSet) error {
-	return nil
+func (lhc *LHComponent) SetPolicies(rs *LHPolicyRuleSet) error {
+	buf, err := json.Marshal(rs)
+
+	if err == nil {
+		lhc.Extra["Policies"] = string(buf)
+	}
+
+	return err
+}
+
+func (lhc *LHComponent) GetPolicies() (*LHPolicyRuleSet, error) {
+	var rs LHPolicyRuleSet
+	var err error
+
+	if lhc.Extra == nil {
+		return &rs, err
+	}
+
+	ent, ok := lhc.Extra["Policies"]
+
+	if !ok {
+		return &rs, err
+	}
+
+	s, ok := ent.(string)
+
+	if !ok {
+		err = fmt.Errorf("Wrong type for policies entry (%v)", ent)
+		return &rs, err
+	}
+
+	ba := []byte(s)
+
+	err = json.Unmarshal(ba, &rs)
+	return &rs, err
 }

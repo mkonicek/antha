@@ -25,9 +25,9 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"io/ioutil"
+	"reflect"
 )
 
 const (
@@ -47,6 +47,80 @@ func LoadLHPoliciesFrom(filename string) *LHPolicyRuleSet {
 
 // this structure defines parameters
 type LHPolicy map[string]interface{}
+
+func (plhp *LHPolicy) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	*plhp = make(map[string]interface{})
+	lhp := *plhp
+	items := MakePolicyItems()
+
+	err := json.Unmarshal(data, &m)
+
+	if err != nil {
+		return err
+	}
+
+	for k, v := range m {
+		alhpi, ok := items[k]
+
+		if !ok {
+			return fmt.Errorf("Policy item %s unknown", k)
+		}
+
+		switch alhpi.Type.Name() {
+		case "float64":
+			tv, ok := v.(float64)
+			if !ok {
+				return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+			}
+			lhp[k] = tv
+		case "int":
+			tv, ok := v.(int)
+
+			if !ok {
+				tv2, ok2 := v.(float64)
+				if ok2 {
+					tv = int(tv2)
+				} else {
+					return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+				}
+			}
+			lhp[k] = tv
+		case "string":
+			tv, ok := v.(string)
+			if !ok {
+				return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+			}
+			lhp[k] = tv
+		case "bool":
+			tv, ok := v.(bool)
+			if !ok {
+				return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+			}
+			lhp[k] = tv
+		case "wunit.Volume":
+			tv, ok := v.(wunit.Volume)
+			if !ok {
+				return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+			}
+			lhp[k] = tv
+		}
+	}
+
+	return nil
+}
+
+func (lhp LHPolicy) IsEqualTo(lh2 LHPolicy) bool {
+	for k, v := range lhp {
+		v2 := lh2[k]
+
+		if v2 != v {
+			return false
+		}
+
+	}
+	return true
+}
 
 func DupLHPolicy(in LHPolicy) LHPolicy {
 	ret := make(LHPolicy, len(in))
@@ -168,38 +242,22 @@ func (lh *LHVariableCondition) UnmarshalJSON(data []byte) error {
 		}
 		//Try now with the condition
 		if v, ex := t["Condition"]; ex {
-			//Watch out, even empty data will marshal into lhnumeric condition
-			next, err := json.Marshal(v)
-			if err != nil {
-				return err
-			}
-			lhcc := LHCategoryCondition{}
-			if err := json.Unmarshal(next, &lhcc); err == nil {
+			// manual ftw
+
+			mp := v.(map[string]interface{})
+
+			_, cat := mp["Category"]
+			_, num := mp["Upper"]
+			if cat {
+				lhcc := LHCategoryCondition{Category: mp["Categor"].(string)}
 				lh.Condition = lhcc
+			} else if num {
+				lhnc := LHNumericCondition{Upper: mp["Upper"].(float64), Lower: mp["Lower"].(float64)}
+				lh.Condition = lhnc
 			} else {
-				lhnc := LHNumericCondition{}
-				if err := json.Unmarshal(next, &lhnc); err == nil {
-					lh.Condition = lhnc
-				} else {
-					return fmt.Errorf("No Suitable Condition Format could be found")
-				}
+				return fmt.Errorf("No Suitable Condition Format could be found")
 			}
-			//Revert back to doing it manually if new types are added, and the numeric  conditions
-			// are causing trouble
-			//switch c := v.(type){
-			//case map[string]interface{}:
-			//	if cc, ex := c["Category"]; ex {
-			//		if cond, ok := cc.(string); ok {
-			//			lh.Condition = LHCategoryCondition{cond}
-			//		} else {
-			//			return fmt.Errorf("Could not detect Category Type when unmarshaling LHVariableCondition")
-			//		}
-			//	} else {
-			//		return fmt.Errorf("Could not find Category when unmarshaling LHVariableCondition")
-			//	}
-			//default:
-			//	return fmt.Errorf("Could not parse json for LHVariableCondition")
-			//}
+
 		} else {
 			return fmt.Errorf("Could not find Condition when unmarshaling LHVariableCondition")
 		}
@@ -217,10 +275,6 @@ func NewLHVariableCondition(testvariable string) LHVariableCondition {
 
 func (lhvc *LHVariableCondition) SetNumeric(low, up float64) error {
 	if low > up {
-		/*
-			logger.Fatal("Nonsensical numeric condition requested")
-			panic("Nonsensical numeric condition requested")
-		*/
 		return LHError(LH_ERR_POLICY, fmt.Sprintf("Numeric condition requested with lower limit (%f) greater than upper limit (%f), which is not allowed", low, up))
 	}
 	lhvc.Condition = LHNumericCondition{up, low}
@@ -229,10 +283,6 @@ func (lhvc *LHVariableCondition) SetNumeric(low, up float64) error {
 
 func (lhvc *LHVariableCondition) SetCategoric(category string) error {
 	if category == "" {
-		/*
-			logger.Fatal("No empty categoric conditions can be made")
-			panic("No empty categoric conditions can be made")
-		*/
 		return LHError(LH_ERR_POLICY, fmt.Sprintf("Categoric condition %s has an empty category, which is not allowed", category))
 	}
 	lhvc.Condition = LHCategoryCondition{category}
@@ -249,6 +299,34 @@ func (lhvc LHVariableCondition) IsEqualTo(other LHVariableCondition) bool {
 type LHPolicyRuleSet struct {
 	Policies map[string]LHPolicy
 	Rules    map[string]LHPolicyRule
+}
+
+func (lhpr *LHPolicyRuleSet) IsEqualTo(lhp2 *LHPolicyRuleSet) bool {
+	if len(lhpr.Policies) != len(lhp2.Policies) {
+		return false
+	}
+
+	for name, _ := range lhpr.Rules {
+		p1, ok1 := lhpr.Policies[name]
+		p2, ok2 := lhp2.Policies[name]
+
+		if !(ok1 && ok2) {
+			return false
+		}
+
+		r1, ok1 := lhpr.Rules[name]
+		r2, ok2 := lhp2.Rules[name]
+
+		if !(ok1 && ok2) {
+			return false
+		}
+
+		if !(p1.IsEqualTo(p2) && r1.IsEqualTo(r2)) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func NewLHPolicyRuleSet() *LHPolicyRuleSet {

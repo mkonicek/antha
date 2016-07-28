@@ -24,13 +24,16 @@ package liquidhandling
 
 import (
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"sort"
 )
 
 type RobotInstruction interface {
 	InstructionType() int
 	GetParameter(name string) interface{}
-	Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	Check(lhpr wtype.LHPolicyRule) bool
 }
 
 type TerminalRobotInstruction interface {
@@ -184,4 +187,40 @@ func concatintarray(a []int) string {
 
 	return r
 
+}
+
+// empty struct to hang methods on
+type GenericRobotInstruction struct {
+	Ins RobotInstruction
+}
+
+func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
+	for _, vcondition := range rule.Conditions {
+		v := gri.Ins.GetParameter(vcondition.TestVariable)
+		return vcondition.Condition.Match(v)
+	}
+	return true
+}
+
+func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPolicy {
+	// find the set of matching rules
+	rules := make([]wtype.LHPolicyRule, 0, len(lhpr.Rules))
+	for _, rule := range lhpr.Rules {
+		if ins.Check(rule) {
+			rules = append(rules, rule)
+		}
+	}
+
+	// sort rules by priority
+	sort.Sort(wtype.SortableRules(rules))
+
+	// we might prefer to just merge this in
+
+	ppl := wtype.DupLHPolicy(lhpr.Policies["default"])
+
+	for _, rule := range rules {
+		ppl.MergeWith(lhpr.Policies[rule.Name])
+	}
+
+	return ppl
 }

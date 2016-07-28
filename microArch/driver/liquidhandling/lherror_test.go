@@ -2,11 +2,12 @@ package liquidhandling
 
 import (
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"testing"
 )
 
 func TestPolicyError(t *testing.T) {
-	rule := NewLHPolicyRule("test_rule")
+	rule := wtype.NewLHPolicyRule("test_rule")
 	err := rule.AddNumericConditionOn("VOLUME", 32.5, 32.3)
 	e1 := "6 (LH_ERR_POLICY) : liquid handling policy error : Numeric condition requested with lower limit (32.500000) greater than upper limit (32.300000), which is not allowed"
 	if err == nil {

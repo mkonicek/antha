@@ -349,3 +349,7 @@ func parseTree(p string, g *graph.StringGraph) []string {
 
 	return newnodes
 }
+
+func (lhc *LHComponent) SetPolicies(rs LHPolicyRuleSet) error {
+	return nil
+}

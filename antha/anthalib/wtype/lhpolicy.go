@@ -1,4 +1,4 @@
-// /anthalib/driver/liquidhandling/lhpolicy.go: Part of the Antha language
+// anthalib/wtype/lhpolicy.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -20,15 +20,13 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package liquidhandling
+package wtype
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"sort"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
@@ -108,15 +106,6 @@ func (lhpr *LHPolicyRule) AddCategoryConditionOn(variable, category string) erro
 	lhpr.Conditions = append(lhpr.Conditions, lhvc)
 	lhpr.Priority += 1
 	return err
-}
-
-func (lhpr LHPolicyRule) Check(ins RobotInstruction) bool {
-	for _, condition := range lhpr.Conditions {
-		if !condition.Check(ins) {
-			return false
-		}
-	}
-	return true
 }
 
 // this just looks for the same conditions, doesn't matter if
@@ -232,7 +221,7 @@ func (lhvc *LHVariableCondition) SetNumeric(low, up float64) error {
 			logger.Fatal("Nonsensical numeric condition requested")
 			panic("Nonsensical numeric condition requested")
 		*/
-		return wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Numeric condition requested with lower limit (%f) greater than upper limit (%f), which is not allowed", low, up))
+		return LHError(LH_ERR_POLICY, fmt.Sprintf("Numeric condition requested with lower limit (%f) greater than upper limit (%f), which is not allowed", low, up))
 	}
 	lhvc.Condition = LHNumericCondition{up, low}
 	return nil
@@ -244,7 +233,7 @@ func (lhvc *LHVariableCondition) SetCategoric(category string) error {
 			logger.Fatal("No empty categoric conditions can be made")
 			panic("No empty categoric conditions can be made")
 		*/
-		return wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Categoric condition %s has an empty category, which is not allowed", category))
+		return LHError(LH_ERR_POLICY, fmt.Sprintf("Categoric condition %s has an empty category, which is not allowed", category))
 	}
 	lhvc.Condition = LHCategoryCondition{category}
 	return nil
@@ -255,12 +244,6 @@ func (lhvc LHVariableCondition) IsEqualTo(other LHVariableCondition) bool {
 		return false
 	}
 	return lhvc.Condition.IsEqualTo(other.Condition)
-}
-
-func (lhvc LHVariableCondition) Check(ins RobotInstruction) bool {
-	v := ins.GetParameter(lhvc.TestVariable)
-
-	return lhvc.Condition.Match(v)
 }
 
 type LHPolicyRuleSet struct {
@@ -313,54 +296,21 @@ func (lhpr *LHPolicyRuleSet) MergeWith(other *LHPolicyRuleSet) {
 	}
 }
 
-type sortableRules []LHPolicyRule
+type SortableRules []LHPolicyRule
 
-func (s sortableRules) Len() int {
+func (s SortableRules) Len() int {
 	return len(s)
 }
 
-func (s sortableRules) Less(i, j int) bool {
+func (s SortableRules) Less(i, j int) bool {
 	return s[i].Priority < s[j].Priority
 }
 
-func (s sortableRules) Swap(i, j int) {
+func (s SortableRules) Swap(i, j int) {
 	t := s[i]
 	s[i] = s[j]
 	s[j] = t
 }
-
-func (lhpr LHPolicyRuleSet) GetPolicyFor(ins RobotInstruction) LHPolicy {
-	// find the set of matching rules
-	rules := make([]LHPolicyRule, 0, len(lhpr.Rules))
-	for _, rule := range lhpr.Rules {
-		if rule.Check(ins) {
-			rules = append(rules, rule)
-		}
-	}
-
-	// sort rules by priority
-	sort.Sort(sortableRules(rules))
-
-	// we might prefer to just merge this in
-
-	ppl := DupLHPolicy(lhpr.Policies["default"])
-
-	for _, rule := range rules {
-		ppl.MergeWith(lhpr.Policies[rule.Name])
-	}
-
-	return ppl
-}
-
-//func (lhpr LHPolicyRuleSet) MarshalJSON() ([]byte, error) {
-//	return
-//}
-
-//func (lhpr LHPolicyRuleSet) UnmarshalJSON(data []byte) error {
-//	test := NewLHPolicyRuleSet()
-//	if err := json.Unmarshal(data, )
-//	return nil
-//}
 
 type LHCondition interface {
 	Match(interface{}) bool

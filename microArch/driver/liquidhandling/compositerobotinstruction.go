@@ -134,7 +134,8 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	v.FPlateWY = FPlateWY
 	v.TPlateWX = TPlateWX
 	v.TPlateWY = TPlateWY
-	v.GenericRobotInstruction.Ins = &v
+	v.GenericRobotInstruction.Ins = RobotInstruction(&v)
+	fmt.Println("TRANSFER NEW: ", v.GenericRobotInstruction.Ins)
 	return &v
 }
 func (ins *TransferInstruction) InstructionType() int {
@@ -658,6 +659,7 @@ func NewSingleChannelBlockInstruction() *SingleChannelBlockInstruction {
 	v.TVolume = make([]wunit.Volume, 0)
 	v.FPlateType = make([]string, 0)
 	v.TPlateType = make([]string, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 
@@ -2019,6 +2021,7 @@ func NewSuckInstruction() *SuckInstruction {
 	v.Volume = make([]wunit.Volume, 0)
 	v.FPlateType = make([]string, 0)
 	v.FVolume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *SuckInstruction) InstructionType() int {
@@ -2360,6 +2363,7 @@ func NewBlowInstruction() *BlowInstruction {
 	v.Volume = make([]wunit.Volume, 0)
 	v.TPlateType = make([]string, 0)
 	v.TVolume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *BlowInstruction) InstructionType() int {
@@ -3183,6 +3187,7 @@ func NewResetInstruction() *ResetInstruction {
 	ri.TPlateType = make([]string, 0)
 	ri.FVolume = make([]wunit.Volume, 0)
 	ri.TVolume = make([]wunit.Volume, 0)
+	ri.GenericRobotInstruction.Ins = &ri
 	return &ri
 }
 

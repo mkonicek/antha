@@ -351,6 +351,54 @@ func parseTree(p string, g *graph.StringGraph) []string {
 	return newnodes
 }
 
+func (lhc *LHComponent) AddVolumeRule(minvol, maxvol float64, pol LHPolicy) error {
+	lhpr, err := lhc.GetPolicies()
+
+	if err != nil {
+		return err
+	}
+
+	rulenum := len(lhpr.Rules)
+
+	name := fmt.Sprintf("UserRule%d", rulenum+1)
+
+	rule := NewLHPolicyRule(name)
+	err = rule.AddNumericConditionOn("VOLUME", minvol, maxvol)
+	if err != nil {
+		return err
+	}
+	lhpr.AddRule(rule, pol)
+
+	err = lhc.SetPolicies(lhpr)
+
+	return err
+}
+
+func (lhc *LHComponent) AddPolicy(pol LHPolicy) error {
+	lhpr, err := lhc.GetPolicies()
+
+	if err != nil {
+		return err
+	}
+
+	rulenum := len(lhpr.Rules)
+
+	name := fmt.Sprintf("UserRule%d", rulenum+1)
+
+	rule := NewLHPolicyRule(name)
+	rule.AddCategoryConditionOn("INSTANCE", lhc.ID)
+	if err != nil {
+		return err
+	}
+	lhpr.AddRule(rule, pol)
+
+	err = lhc.SetPolicies(lhpr)
+
+	return err
+
+}
+
+// in future this will be deprecated... should not let user completely reset policies
 func (lhc *LHComponent) SetPolicies(rs *LHPolicyRuleSet) error {
 	buf, err := json.Marshal(rs)
 

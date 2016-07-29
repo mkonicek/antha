@@ -25,9 +25,9 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 var lhhelpCmd = &cobra.Command{
@@ -43,7 +43,7 @@ func lhhelp(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	fmt.Println("name,         type,   description")
 	fmt.Println()
-	fmt.Print(liquidhandling.GetPolicyConsequents().TypeList())
+	fmt.Print(wtype.GetPolicyConsequents().TypeList())
 	fmt.Println()
 	return nil
 }

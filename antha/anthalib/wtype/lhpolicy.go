@@ -48,6 +48,25 @@ func LoadLHPoliciesFrom(filename string) *LHPolicyRuleSet {
 // this structure defines parameters
 type LHPolicy map[string]interface{}
 
+func (plhp *LHPolicy) Set(item string, value interface{}) error {
+	var err error
+	alhpis := MakePolicyItems()
+
+	alhpi, ok := alhpis[item]
+
+	if !ok {
+		err = fmt.Errorf("No such LHPolicy item %s", item)
+	} else {
+		if reflect.TypeOf(value) != alhpi.Type {
+			err = fmt.Errorf("LHPolicy item %s needs value of type %t not %t", item, alhpi.Type, reflect.TypeOf(value))
+		} else {
+			(*plhp)[item] = value
+		}
+	}
+
+	return err
+}
+
 func (plhp *LHPolicy) UnmarshalJSON(data []byte) error {
 	m := make(map[string]interface{})
 	*plhp = make(map[string]interface{})

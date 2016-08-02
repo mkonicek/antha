@@ -24,9 +24,6 @@ package liquidhandling
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/material"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -34,6 +31,9 @@ import (
 	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/sampletracker"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // describes a liquid handler, its capabilities and current state
@@ -174,64 +174,55 @@ func (lhp *LHProperties) Dup() *LHProperties {
 		r.HeadsLoaded = append(r.HeadsLoaded, hl.Dup())
 	}
 
-	for name, pl := range lhp.PosLookup {
-		r.PosLookup[name] = pl
-	}
+	/*
+		for name, pl := range lhp.PosLookup {
+			r.PosLookup[name] = pl
+		}
 
-	for name, pl := range lhp.PlateIDLookup {
-		r.PlateIDLookup[name] = pl
-	}
+		for name, pl := range lhp.PlateIDLookup {
+			r.PlateIDLookup[name] = pl
+		}
+	*/
 
 	// plate lookup can contain anything
 
-	m := make(map[string]interface{})
 	for name, pt := range lhp.PlateLookup {
 		var pt2 interface{}
+		var newid string
+		var pos string
 		switch pt.(type) {
 		case *wtype.LHTipwaste:
 			tmp := pt.(*wtype.LHTipwaste).Dup()
-			tmp.ID = pt.(*wtype.LHTipwaste).ID
 			pt2 = tmp
+			newid = tmp.ID
+			pos = lhp.PlateIDLookup[name]
+			r.Tipwastes[pos] = tmp
 		case *wtype.LHPlate:
 			tmp := pt.(*wtype.LHPlate).Dup()
-			tmp.ID = pt.(*wtype.LHPlate).ID
 			pt2 = tmp
+			newid = tmp.ID
+			pos = lhp.PlateIDLookup[name]
+			_, waste := lhp.Wastes[pos]
+			_, wash := lhp.Washes[pos]
+
+			if waste {
+				r.Wastes[pos] = tmp
+			} else if wash {
+				r.Washes[pos] = tmp
+			} else {
+				r.Plates[pos] = tmp
+			}
+
 		case *wtype.LHTipbox:
 			tmp := pt.(*wtype.LHTipbox).Dup()
-			tmp.ID = pt.(*wtype.LHTipbox).ID
 			pt2 = tmp
+			newid = tmp.ID
+			pos = lhp.PlateIDLookup[name]
+			r.Tipboxes[pos] = tmp
 		}
-		m[name] = pt2
-		r.PlateLookup[name] = pt2
-	}
-
-	for name, plate := range lhp.Plates {
-		p2 := m[plate.ID]
-		r.Plates[name] = p2.(*wtype.LHPlate)
-	}
-
-	for name, tb := range lhp.Tipboxes {
-		tb2 := tb.Dup()
-		tb2.ID = tb.ID
-		r.Tipboxes[name] = tb2
-	}
-
-	for name, tw := range lhp.Tipwastes {
-		tw2 := tw.Dup()
-		tw2.ID = tw.ID
-		r.Tipwastes[name] = tw2
-	}
-
-	for name, waste := range lhp.Wastes {
-		w2 := waste.Dup()
-		w2.ID = waste.ID
-		r.Wastes[name] = w2
-	}
-
-	for name, wash := range lhp.Washes {
-		w2 := wash.Dup()
-		w2.ID = wash.ID
-		r.Washes[name] = w2
+		r.PlateLookup[newid] = pt2
+		r.PlateIDLookup[newid] = pos
+		r.PosLookup[pos] = newid
 	}
 
 	for name, dev := range lhp.Devices {
@@ -286,6 +277,10 @@ func (lhp *LHProperties) Dup() *LHProperties {
 	}
 
 	r.MaterialType = lhp.MaterialType
+
+	// copy the driver
+
+	r.Driver = lhp.Driver
 
 	return r
 }
@@ -583,7 +578,6 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 				// component we seek
 
 				p, ok := lhp.Plates[ipref]
-
 				if ok {
 					// whaddya got?
 					// nb this won't work if we need to split a volume across several plates
@@ -788,6 +782,27 @@ func (lhp *LHProperties) RemoveTemporaryComponents() {
 	}
 
 	// good
+}
+func (lhp *LHProperties) GetEnvironment() wtype.Environment {
+	// static to start with
+
+	return wtype.Environment{
+		Temperature:         wunit.NewTemperature(25, "C"),
+		Pressure:            wunit.NewPressure(100000, "Pa"),
+		Humidity:            0.35,
+		MeanAirFlowVelocity: wunit.NewVelocity(0, "m/s"),
+	}
+}
+
+func (lhp *LHProperties) Evaporate(t time.Duration) []wtype.VolumeCorrection {
+	// TODO: proper environmental calls
+	env := lhp.GetEnvironment()
+	ret := make([]wtype.VolumeCorrection, 0, 5)
+	for _, v := range lhp.Plates {
+		ret = append(ret, v.Evaporate(t, env)...)
+	}
+
+	return ret
 }
 
 // TODO -- allow drivers to provide relevant constraint info... not all positions

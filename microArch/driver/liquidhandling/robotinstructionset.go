@@ -85,6 +85,14 @@ func (ri *RobotInstructionSet) Generate(lhpr *wtype.LHPolicyRuleSet, lhpm *LHPro
 		ret = newret
 	}
 
+	// might need to do this instead of current version
+	/*
+		else if ri.parent.Type == TFR {
+			// update the vols
+			prms.Evaporate()
+		}
+	*/
+
 	return ret, nil
 }
 

@@ -30,7 +30,6 @@ import (
 )
 
 func Θ(liquid string, airvelocity wunit.Velocity) float64 {
-
 	return (liquidclasses.Liquidclass[liquid]["c"]) + ((liquidclasses.Liquidclass[liquid]["d"]) * airvelocity.SIValue())
 }
 
@@ -53,4 +52,26 @@ func Xs(pws float64, Pa wunit.Pressure) float64 {
 
 func X(pw float64, Pa wunit.Pressure) float64 {
 	return (0.62198 * pw / (Pa.SIValue() - pw))
+}
+
+func EvaporationVolume(temp wunit.Temperature, liquidtype string, relativehumidity float64, time float64, Airvelocity wunit.Velocity, surfacearea wunit.Area, Pa wunit.Pressure) wunit.Volume {
+	// ensure we are in the right units
+	mysa := wunit.NewArea(surfacearea.Mvalue, surfacearea.Unit().PrefixedSymbol())
+	if surfacearea.Unit().ToString() != "mm^2" {
+		mysa.Mvalue /= 1000000.00
+	}
+
+	var PWS float64 = Pws(temp)
+	var pw float64 = Pw(relativehumidity, PWS) // vapour partial pressure in Pascals
+	var Gh = (Θ(liquidtype, Airvelocity) *
+		((surfacearea.RawValue() / 1000000) *
+			((Xs(PWS, Pa)) - (X(pw, Pa))))) // Gh is rate of evaporation in kg/h
+
+	evaporatedliquid := (Gh * (time / 3600)) // in kg
+
+	density, _ := liquidclasses.Liquidclass[liquidtype]["ro"]
+
+	evaporatedliquid = (evaporatedliquid * density) / 1000     // converted to litres
+	vol := wunit.NewVolume((evaporatedliquid * 1000000), "ul") // convert to ul
+	return vol
 }

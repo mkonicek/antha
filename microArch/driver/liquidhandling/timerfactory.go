@@ -2,6 +2,8 @@ package liquidhandling
 
 import "time"
 
+// urrgh -- this needs to get packaged in with the driver
+
 func GetTimerFor(model, mnfr string) *LHTimer {
 	timers := makeTimers()
 
@@ -12,6 +14,7 @@ func GetTimerFor(model, mnfr string) *LHTimer {
 		return timers[model+mnfr]
 	} else {
 		//fmt.Println("None found")
+		return makeNullTimer()
 	}
 
 	return nil
@@ -24,6 +27,13 @@ func makeTimers() map[string]*LHTimer {
 	timers["CyBioFelix"] = makeCyBioFelixTimer()
 	timers["CyBioGeneTheatre"] = makeCyBioGeneTheatreTimer()
 	return timers
+}
+
+func makeNullTimer() *LHTimer {
+	// always returns zero
+	t := NewTimer()
+
+	return t
 }
 
 func makeGilsonPipetmaxTimer() *LHTimer {

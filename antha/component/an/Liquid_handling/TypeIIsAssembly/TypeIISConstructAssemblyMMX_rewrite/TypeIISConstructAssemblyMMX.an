@@ -1,0 +1,121 @@
+protocol TypeIISConstructAssemblyMMX_rewrite
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"fmt"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	ReactionVolume				Volume
+	MasterMixVolume				Volume
+	PartVols				[]Volume
+	ReactionTemp				Temperature
+	ReactionTime				Time
+	InactivationTemp			Temperature
+	InactivationTime			Time
+	OutputReactionName			string
+	OutputLocation 				string
+        OutputConstructName                     string
+	OutputPlateNum				int
+	LHPolicyName				string
+        EnzymeName                              string
+        PartSeqs                                []wtype.DNASequence
+
+)
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Parts			[]*wtype.LHComponent
+	MasterMix		*wtype.LHComponent
+	OutPlate		*wtype.LHPlate
+	Water                   *wtype.LHComponent
+)
+
+
+// Physical outputs from this protocol with types
+Outputs (
+	Reaction      *wtype.LHComponent
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Errors        []string
+        ConstructName string
+        Sequence      wtype.DNASequence
+)
+
+Requirements {}
+
+// Conditions to run on startup
+Setup {}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	var err error
+
+        ConstructName = OutputConstructName
+	
+        last := len(PartSeqs) - 1
+	output, count, _, seq, err := enzymes.Assemblysimulator(enzymes.Assemblyparameters{
+            Constructname: ConstructName,
+            Enzymename: EnzymeName,
+            Vector: PartSeqs[last],
+            Partsinorder: PartSeqs[:last],
+        })
+        if err != nil {
+          Errors = append(Errors, fmt.Sprintf("%s: %s", output, err))
+          return
+        }
+        if count != 1 {
+          Errors = append(Errors, fmt.Sprintf("no successful assembly"))
+          return
+        }
+
+        Sequence = seq
+
+	waterSample:=mixer.SampleForTotalVolume(Water,ReactionVolume)
+	reacmixture:=MixTo(OutPlate.Type, OutputLocation, OutputPlateNum, waterSample)
+
+	for k, part := range Parts {
+		fmt.Println("creating dna part num ", k, " comp ", part.CName, " renamed to ", PartSeqs[k].Nm, " vol ", PartVols[k])
+		
+		part.Type, err = wtype.LiquidTypeFromString(LHPolicyName)
+		
+		if err != nil {
+			Errors = append(Errors, fmt.Sprintf("cannot find liquid type: %s", err))
+                        return
+		}
+		
+		partSample := mixer.Sample(part, PartVols[k])
+		partSample.CName = PartSeqs[k].Nm
+		reacmixture = Mix(reacmixture, partSample)
+	}
+
+
+
+	mmxSample:=mixer.Sample(MasterMix,MasterMixVolume)
+	// ensure the last step is mixed
+	mmxSample.Type=wtype.LTDNAMIX
+	Reaction = Mix(reacmixture, mmxSample)
+
+	// incubate the reaction mixture
+	// commented out pending changes to incubate
+	Incubate(Reaction, ReactionTemp, ReactionTime, false)
+	// inactivate
+	//Incubate(Reaction, InactivationTemp, InactivationTime, false)
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

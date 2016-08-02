@@ -24,10 +24,12 @@ package liquidhandling
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/factory"
@@ -145,7 +147,6 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 	for _, ins := range instructions {
 		//logger.Debug(fmt.Sprintln(liquidhandling.InsToString(ins)))
-		fmt.Println(liquidhandling.InsToString(ins))
 		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
 		if timer != nil {
@@ -205,6 +206,25 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 		}
 	}
 
+	// apply evaporation
+	for _, vc := range rq.Evaps {
+		loctox := strings.Split(vc.Location, ":")
+		plateID := loctox[0]
+		wellcrds := loctox[1]
+
+		wellmap, ok := vols[plateID]
+
+		if !ok {
+			//err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SUCH PLATE: ", plateID))
+			//return err
+
+			continue
+		}
+
+		vol := wellmap[wellcrds]
+		vol.Add(vc.Volume)
+	}
+
 	// now go through and set the plates up appropriately
 
 	for plateID, wellmap := range vols {
@@ -216,7 +236,9 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 			return err
 		}
 
-		for crd, vol := range wellmap {
+		for crd, unroundedvol := range wellmap {
+			rv, _ := wutil.Roundto(unroundedvol.RawValue(), 1)
+			vol := wunit.NewVolume(rv, unroundedvol.Unit().PrefixedSymbol())
 			well := plate.Wellcoords[crd]
 			well2 := plate2.Wellcoords[crd]
 			if well.IsAutoallocated() {
@@ -257,7 +279,6 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 }
 
 func (this *Liquidhandler) do_setup(rq *LHRequest) error {
-
 	stat := this.Properties.Driver.RemoveAllPlates()
 
 	if stat.Errorcode == driver.ERR {
@@ -342,12 +363,12 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	}
 	// define the input plates
 	// should be merged with the above
-
 	request, err = input_plate_setup(request)
 
 	if err != nil {
 		return err
 	}
+
 	// set up the mapping of the outputs
 	request, err = this.Layout(request)
 
@@ -628,21 +649,13 @@ func (this *Liquidhandler) Layout(request *LHRequest) (*LHRequest, error) {
 func (this *Liquidhandler) ExecutionPlan(request *LHRequest) (*LHRequest, error) {
 	//rbtcpy := this.Properties.Dup()
 	this.FinalProperties = this.Properties.Dup()
+	temprobot := this.Properties.Dup()
+	rq, err := this.ExecutionPlanner(request, this.Properties)
 
-	rq, err := this.ExecutionPlanner(request, this.FinalProperties)
+	// switcherooo
 
-	// ensure any relevant state changes are noted
-
-	/*
-		for _, v := range rbtcpy.Plates {
-			fmt.Println("PLATE NAME: ", v.Name())
-			for _, w := range v.Wellcoords {
-				if !w.Empty() {
-					fmt.Println("WELL: ", w.Crds, " HAS: ", w.WContents.Volume().ToString(), " of ", w.WContents.CName)
-				}
-			}
-		}
-	*/
+	this.FinalProperties = this.Properties
+	this.Properties = temprobot
 
 	return rq, err
 }

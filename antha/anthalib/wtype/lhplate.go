@@ -26,12 +26,12 @@ package wtype
 import (
 	"encoding/csv"
 	"fmt"
-	"os"
-	"strconv"
-
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
+	"os"
+	"strconv"
+	"time"
 )
 
 // structure describing a microplate
@@ -281,6 +281,10 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit s
 }
 
 func (lhp *LHPlate) Dup() *LHPlate {
+	// protect yourself fgs
+	if lhp == nil {
+		logger.Fatal(fmt.Sprintln("Can't dup nonexistent plate"))
+	}
 	ret := NewLHPlate(lhp.Type, lhp.Mnfr, lhp.WlsY, lhp.WlsX, lhp.Height, lhp.Hunit, lhp.Welltype, lhp.WellXOffset, lhp.WellYOffset, lhp.WellXStart, lhp.WellYStart, lhp.WellZStart)
 
 	ret.PlateName = lhp.PlateName
@@ -405,12 +409,6 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 
-		/*
-			fmt.Println("len(wells)", len(wells))
-			fmt.Println("len(liquids)", len(liquids))
-			fmt.Println("len(Volumes)", len(Volumes))
-		*/
-
 		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, Volumes[i].Unit().PrefixedSymbol()}
 		records = append(records, record)
 	}
@@ -445,4 +443,28 @@ func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
 
 	return pos, false
 
+}
+
+func (p *LHPlate) Evaporate(time time.Duration, env Environment) []VolumeCorrection {
+	ret := make([]VolumeCorrection, 0, 10)
+	if p == nil {
+		return ret
+	}
+	for _, w := range p.Wellcoords {
+		if !w.Empty() {
+			vc := w.Evaporate(time, env)
+			if vc.Type != "" {
+				ret = append(ret, vc)
+			}
+		}
+	}
+
+	return ret
+}
+
+func (p *LHPlate) ResetID(newID string) {
+	for _, w := range p.Wellcoords {
+		w.ResetPlateID(newID)
+	}
+	p.ID = newID
 }

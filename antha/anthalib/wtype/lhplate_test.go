@@ -64,6 +64,10 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent -- %s != %s", ltx[0], plate.ID))
 		}
 
+		if ltx[0] != w.Plateid {
+			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent with well -- %s != %s", ltx[0], w.Plateid))
+		}
+
 		if ltx[1] != crds {
 			t.Fatal(fmt.Sprintf("ERROR: Coords for component not consistent: -- %s != %s", ltx[1], crds))
 		}

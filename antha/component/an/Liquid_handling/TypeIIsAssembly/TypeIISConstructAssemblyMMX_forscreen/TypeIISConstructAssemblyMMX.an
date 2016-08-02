@@ -77,8 +77,6 @@ Steps {
 	waterSample:=mixer.SampleForTotalVolume(Water,ReactionVolume)
 	samples = append(samples, waterSample)
 	
-	mmxSample:=mixer.Sample(MasterMix,MasterMixVolume)
-	samples = append(samples, mmxSample)
 
 	for k, part := range Parts {
 		fmt.Println("creating dna part num ", k, " comp ", part.CName, " renamed to ", PartSeqs[k].Nm, " vol ", PartVols[k])
@@ -93,6 +91,9 @@ Steps {
 		partSample.CName = PartSeqs[k].Nm
 		samples = append(samples, partSample)
 	}
+
+	mmxSample:=mixer.Sample(MasterMix,MasterMixVolume)
+	samples = append(samples, mmxSample)
 
 	// ensure the last step is mixed
 	samples[len(samples)-1].Type=wtype.LTDNAMIX

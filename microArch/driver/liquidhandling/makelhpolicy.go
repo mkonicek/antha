@@ -552,10 +552,10 @@ func MakeDNAPolicy() wtype.LHPolicy {
 
 func MakeDNAMixPolicy() wtype.LHPolicy {
 	dnapolicy := MakeDNAPolicy()
-	dnapolicy.Set("POST_MIX_VOLUME", 50.0)
-	dnapolicy.Set("POST_MIX", 3)
-	dnapolicy.Set("POST_MIX_Z", 0.5)
-	dnapolicy.Set("POST_MIX_RATE", 3.0)
+	dnapolicy["POST_MIX_VOLUME"] = 10.0
+	dnapolicy["POST_MIX"] = 5
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 3.0
 	return dnapolicy
 }
 

@@ -369,6 +369,11 @@ func (lhc *LHComponent) AddVolumeRule(minvol, maxvol float64, pol LHPolicy) erro
 	}
 	lhpr.AddRule(rule, pol)
 
+	err = rule.AddCategoryConditionOn("INSTANCE", lhc.ID)
+	if err != nil {
+		return err
+	}
+
 	err = lhc.SetPolicies(lhpr)
 
 	return err
@@ -386,7 +391,7 @@ func (lhc *LHComponent) AddPolicy(pol LHPolicy) error {
 	name := fmt.Sprintf("UserRule%d", rulenum+1)
 
 	rule := NewLHPolicyRule(name)
-	rule.AddCategoryConditionOn("INSTANCE", lhc.ID)
+	err = rule.AddCategoryConditionOn("INSTANCE", lhc.ID)
 	if err != nil {
 		return err
 	}
@@ -414,13 +419,13 @@ func (lhc *LHComponent) GetPolicies() (*LHPolicyRuleSet, error) {
 	var err error
 
 	if lhc.Extra == nil {
-		return &rs, err
+		return NewLHPolicyRuleSet(), err
 	}
 
 	ent, ok := lhc.Extra["Policies"]
 
 	if !ok {
-		return &rs, err
+		return NewLHPolicyRuleSet(), err
 	}
 
 	s, ok := ent.(string)

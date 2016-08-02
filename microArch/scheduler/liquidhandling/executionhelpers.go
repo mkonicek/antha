@@ -200,6 +200,7 @@ func merge_transfers(insIn []driver.RobotInstruction, aggregates [][]int) []driv
 	return ret
 }
 
+// TODO -- refactor this to pass robot through
 func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, carryvol wunit.Volume) (insOut *driver.TransferInstruction, err error) {
 	cmps := insIn.Components
 
@@ -254,7 +255,6 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 		if flhif != nil {
 			flhp = flhif.(*wtype.LHPlate)
 		} else {
-			//logger.Fatal("NO SRC PLATE FOUND : ", ix, " ", fromPlateID[ix])
 			s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateID[ix])
 			err := wtype.LHError(wtype.LH_ERR_DIRE, s)
 

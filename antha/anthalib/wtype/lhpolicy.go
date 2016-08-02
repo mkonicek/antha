@@ -48,6 +48,11 @@ func LoadLHPoliciesFrom(filename string) *LHPolicyRuleSet {
 // this structure defines parameters
 type LHPolicy map[string]interface{}
 
+func NewLHPolicy() LHPolicy {
+	pol := make(LHPolicy)
+	return pol
+}
+
 func (plhp *LHPolicy) Set(item string, value interface{}) error {
 	var err error
 	alhpis := MakePolicyItems()

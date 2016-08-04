@@ -182,6 +182,18 @@ func NewLHPolicyRule(name string) LHPolicyRule {
 }
 
 func (lhpr *LHPolicyRule) AddNumericConditionOn(variable string, low, up float64) error {
+	params := MakeInstructionParameters()
+
+	t, ok := params[variable]
+
+	if !ok {
+		return fmt.Errorf("No instruction defines parameter %s", variable)
+	}
+
+	if reflect.TypeOf(t.Type) != reflect.TypeOf(3.2) {
+		return fmt.Errorf("Parameter %s is not numeric", variable)
+	}
+
 	lhvc := NewLHVariableCondition(variable)
 	err := lhvc.SetNumeric(low, up)
 
@@ -194,6 +206,17 @@ func (lhpr *LHPolicyRule) AddNumericConditionOn(variable string, low, up float64
 }
 
 func (lhpr *LHPolicyRule) AddCategoryConditionOn(variable, category string) error {
+	params := MakeInstructionParameters()
+
+	t, ok := params[variable]
+
+	if !ok {
+		return fmt.Errorf("No instruction defines parameter %s", variable)
+	}
+
+	if reflect.TypeOf(t.Type) != reflect.TypeOf("thisisastring") {
+		return fmt.Errorf("Parameter %s is not categoric", variable)
+	}
 	lhvc := NewLHVariableCondition(variable)
 	err := lhvc.SetCategoric(category)
 

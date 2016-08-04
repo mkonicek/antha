@@ -341,7 +341,6 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("PLANNED")
 
 	request.InstructionChain.Print()
 

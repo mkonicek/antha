@@ -15,11 +15,19 @@ func TestPolicyError(t *testing.T) {
 	} else if err.Error() != e1 {
 		t.Fatal(fmt.Sprintf("Expected error --%s--\nGot error --%s--\n", e1, err.Error()))
 	}
-	e2 := "6 (LH_ERR_POLICY) : liquid handling policy error : Categoric condition  has an empty category, which is not allowed"
+	e2 := "Parameter VOLUME is not categoric"
 	err = rule.AddCategoryConditionOn("VOLUME", "")
 	if err == nil {
 		t.Fatal(fmt.Sprintf("Expected error %s\nGot nil", e2))
 	} else if err.Error() != e2 {
+		t.Fatal(fmt.Sprintf("Expected error %s\nGot error %s\n", e2, err.Error()))
+	}
+
+	e3 := "6 (LH_ERR_POLICY) : liquid handling policy error : Categoric condition  has an empty category, which is not allowed"
+	err = rule.AddCategoryConditionOn("LIQUIDCLASS", "")
+	if err == nil {
+		t.Fatal(fmt.Sprintf("Expected error %s\nGot nil", e2))
+	} else if err.Error() != e3 {
 		t.Fatal(fmt.Sprintf("Expected error %s\nGot error %s\n", e2, err.Error()))
 	}
 }

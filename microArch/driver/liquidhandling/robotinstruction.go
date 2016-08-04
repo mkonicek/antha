@@ -43,7 +43,7 @@ type TerminalRobotInstruction interface {
 
 const (
 	TFR int = iota // Transfer
-	CTF            // Channel Transfer
+	TFB            // Transfer block
 	SCB            // Single channel transfer block
 	MCB            // Multi channel transfer block
 	SCT            // Single channel transfer

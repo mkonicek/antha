@@ -440,3 +440,31 @@ func (lhc *LHComponent) GetPolicies() (*LHPolicyRuleSet, error) {
 	err = json.Unmarshal(ba, &rs)
 	return &rs, err
 }
+
+func (lhc *LHComponent) IsValuable() bool {
+	if lhc.Extra == nil {
+		return false
+	}
+
+	v, ok := lhc.Extra["valuable"]
+
+	if !ok {
+		return false
+	}
+
+	b, ok := v.(bool)
+
+	if !ok {
+		return false
+	}
+
+	return b
+}
+
+func (lhc *LHComponent) SetValue(b bool) {
+	if lhc.Extra == nil {
+		lhc.Extra = make(map[string]interface{})
+	}
+
+	lhc.Extra["valuable"] = b
+}

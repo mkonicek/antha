@@ -117,7 +117,7 @@ func TestWellCoords(t *testing.T) {
 
 	wc = MakeWellCoords1A("1AAA")
 	if wc.X != 0 || wc.Y != 702 {
-		t.Fatal(fmt.Sprint("Well Coords AAA1 expected {0,702} got ", wc))
+		t.Fatal(fmt.Sprint("Well Coords 1AAA expected {0,702} got ", wc))
 	}
 }
 

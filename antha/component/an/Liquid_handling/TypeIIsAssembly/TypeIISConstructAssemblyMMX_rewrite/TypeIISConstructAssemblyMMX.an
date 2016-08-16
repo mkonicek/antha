@@ -1,4 +1,4 @@
-protocol TypeIISConstructAssemblyMMX_forscreen
+protocol TypeIISConstructAssemblyMMX_rewrite
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
@@ -23,6 +23,7 @@ Parameters (
 	LHPolicyName				string
         EnzymeName                              string
         PartSeqs                                []wtype.DNASequence
+
 )
 
 // Physical Inputs to this protocol with types
@@ -41,6 +42,7 @@ Outputs (
 
 // Data which is returned from this protocol, and data types
 Data (
+	Errors        []string
         ConstructName string
         Sequence      wtype.DNASequence
 )
@@ -55,7 +57,6 @@ Setup {}
 Steps {
 	var err error
 
-	samples := make([]*wtype.LHComponent, 0)
         ConstructName = OutputConstructName
 	
         last := len(PartSeqs) - 1
@@ -66,17 +67,18 @@ Steps {
             Partsinorder: PartSeqs[:last],
         })
         if err != nil {
-          Errorf("%s: %s", output, err)
+          Errors = append(Errors, fmt.Sprintf("%s: %s", output, err))
+          return
         }
         if count != 1 {
-          Errorf("no successful assembly")
+          Errors = append(Errors, fmt.Sprintf("no successful assembly"))
+          return
         }
 
         Sequence = seq
 
 	waterSample:=mixer.SampleForTotalVolume(Water,ReactionVolume)
-	samples = append(samples, waterSample)
-	
+	reacmixture:=MixTo(OutPlate.Type, OutputLocation, OutputPlateNum, waterSample)
 
 	for k, part := range Parts {
 		fmt.Println("creating dna part num ", k, " comp ", part.CName, " renamed to ", PartSeqs[k].Nm, " vol ", PartVols[k])
@@ -84,21 +86,21 @@ Steps {
 		part.Type, err = wtype.LiquidTypeFromString(LHPolicyName)
 		
 		if err != nil {
-                        Errorf("cannot find liquid type: %s", err)
+			Errors = append(Errors, fmt.Sprintf("cannot find liquid type: %s", err))
+                        return
 		}
 		
 		partSample := mixer.Sample(part, PartVols[k])
 		partSample.CName = PartSeqs[k].Nm
-		samples = append(samples, partSample)
+		reacmixture = Mix(reacmixture, partSample)
 	}
 
-	mmxSample:=mixer.Sample(MasterMix,MasterMixVolume)
-	samples = append(samples, mmxSample)
 
+
+	mmxSample:=mixer.Sample(MasterMix,MasterMixVolume)
 	// ensure the last step is mixed
-	samples[len(samples)-1].Type=wtype.LTDNAMIX
-	Reaction = MixTo(OutPlate.Type, OutputLocation, OutputPlateNum, samples...)
-        Reaction.Extra["label"] = ConstructName
+	mmxSample.Type=wtype.LTDNAMIX
+	Reaction = Mix(reacmixture, mmxSample)
 
 	// incubate the reaction mixture
 	// commented out pending changes to incubate

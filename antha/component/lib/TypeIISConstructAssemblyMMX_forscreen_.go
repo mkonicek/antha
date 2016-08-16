@@ -53,9 +53,6 @@ func _TypeIISConstructAssemblyMMX_forscreenSteps(_ctx context.Context, _input *T
 	waterSample := mixer.SampleForTotalVolume(_input.Water, _input.ReactionVolume)
 	samples = append(samples, waterSample)
 
-	mmxSample := mixer.Sample(_input.MasterMix, _input.MasterMixVolume)
-	samples = append(samples, mmxSample)
-
 	for k, part := range _input.Parts {
 		fmt.Println("creating dna part num ", k, " comp ", part.CName, " renamed to ", _input.PartSeqs[k].Nm, " vol ", _input.PartVols[k])
 
@@ -69,6 +66,9 @@ func _TypeIISConstructAssemblyMMX_forscreenSteps(_ctx context.Context, _input *T
 		partSample.CName = _input.PartSeqs[k].Nm
 		samples = append(samples, partSample)
 	}
+
+	mmxSample := mixer.Sample(_input.MasterMix, _input.MasterMixVolume)
+	samples = append(samples, mmxSample)
 
 	// ensure the last step is mixed
 	samples[len(samples)-1].Type = wtype.LTDNAMIX

@@ -214,9 +214,8 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 		for _, vv := range v {
 			// this now means input assignments is always set...
 			// previously this was empty
-			if vv.Loc != "" {
+			if vv.Loc != "" && vv.Volume().GreaterThanFloat(0.0) {
 				// append it
-
 				input_assignments[vv.CName] = append(input_assignments[vv.CName], vv.Loc)
 			}
 		}

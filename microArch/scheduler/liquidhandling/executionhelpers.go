@@ -255,7 +255,6 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 		if flhif != nil {
 			flhp = flhif.(*wtype.LHPlate)
 		} else {
-			//logger.Fatal("NO SRC PLATE FOUND : ", ix, " ", fromPlateID[ix])
 			s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateID[ix])
 			err := wtype.LHError(wtype.LH_ERR_DIRE, s)
 

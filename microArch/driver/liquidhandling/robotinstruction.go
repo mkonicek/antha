@@ -94,11 +94,11 @@ func InsToString(ins RobotInstruction) string {
 		ss := ""
 
 		switch p.(type) {
-		case []*wunit.Volume:
-			if len(p.([]*wunit.Volume)) == 0 {
+		case []wunit.Volume:
+			if len(p.([]wunit.Volume)) == 0 {
 				continue
 			}
-			ss = concatvolarray(p.([]*wunit.Volume))
+			ss = concatvolarray(p.([]wunit.Volume))
 
 		case []string:
 			if len(p.([]string)) == 0 {
@@ -142,13 +142,10 @@ func concatstringarray(a []string) string {
 	return r
 }
 
-func concatvolarray(a []*wunit.Volume) string {
+func concatvolarray(a []wunit.Volume) string {
 	r := ""
-
 	for i, s := range a {
-		if s != nil {
-			r += s.ToString()
-		}
+		r += s.ToString()
 		if i < len(a)-1 {
 			r += ","
 		}

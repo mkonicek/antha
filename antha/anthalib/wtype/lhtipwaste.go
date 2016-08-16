@@ -60,6 +60,7 @@ func (tw *LHTipwaste) GetName() string {
 
 func NewLHTipwaste(capacity int, typ, mfr string, height float64, w *LHWell, wellxstart, wellystart, wellzstart float64) *LHTipwaste {
 	var lht LHTipwaste
+	//	lht.ID = "tipwaste-" + GetUUID()
 	lht.ID = GetUUID()
 	lht.Type = typ
 	lht.Mnfr = mfr

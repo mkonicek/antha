@@ -236,6 +236,10 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 	}
 
 	err = r.Liquidhandler.MakeSolutions(r.LHRequest)
+	// MIS XXX XXX XXX unfortunately we need to make sure this stays up to date
+	// would be better to remove this and just use the ones the liquid handler
+	// holds
+	r.LHProperties = r.Liquidhandler.Properties
 
 	if err != nil {
 		// depending on what went wrong we might error out or return

@@ -34,6 +34,8 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
+var ntipstot int
+
 type TransferParams struct {
 	What       string
 	PltFrom    string
@@ -2140,9 +2142,9 @@ func (ins *SuckInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 		mix.Blowout = []bool{false}
 
 		// this is not safe
-		_, ok := pol["PRE_MIX_VOL"]
+		_, ok := pol["PRE_MIX_VOLUME"]
 		mix.Volume = ins.Volume
-		mixvol := SafeGetF64(pol, "PRE_MIX_VOL")
+		mixvol := SafeGetF64(pol, "PRE_MIX_VOLUME")
 
 		if ok {
 			v := make([]wunit.Volume, ins.Multi)
@@ -2606,9 +2608,9 @@ func (ins *BlowInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 		}
 
 		// this is not safe, need to verify volume is OK
-		_, ok := pol["POST_MIX_VOL"]
+		_, ok := pol["POST_MIX_VOLUME"]
 		mix.Volume = ins.Volume
-		mixvol := SafeGetF64(pol, "POST_MIX_VOL")
+		mixvol := SafeGetF64(pol, "POST_MIX_VOLUME")
 
 		if ok {
 			v := make([]wunit.Volume, ins.Multi)
@@ -3449,6 +3451,8 @@ func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParam
 		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("PICKUP: type: ", tiptype, " n: ", multi, " mirror: ", mirror))
 		return NewLoadTipsMoveInstruction(), err
 	}
+
+	ntipstot += multi
 
 	ins := NewLoadTipsMoveInstruction()
 	ins.Head = channel.Head

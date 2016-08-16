@@ -24,7 +24,9 @@ package wunit
 
 import (
 	"fmt"
+	"github.com/antha-lang/antha/microArch/logger"
 	"strings"
+	"time"
 )
 
 // length
@@ -56,14 +58,14 @@ type Area struct {
 
 // make an area unit
 func NewArea(v float64, unit string) (a Area) {
-
 	if unit == "m^2" {
 		a = Area{NewMeasurement(v, "", unit)}
-	}
-	if unit == "mm^2" {
-		a = Area{NewPMeasurement(v /**0.000001*/, unit)}
+	} else if unit == "mm^2" {
+		//a = Area{NewPMeasurement(v /**0.000001*/, unit)}
+		a = Area{NewMeasurement(v, "", unit)}
+		// should be OK
 	} else {
-		panic("Can't make areas which aren't square metres")
+		panic("Can't make areas which aren't square (milli)metres")
 	}
 
 	return
@@ -76,26 +78,21 @@ type Volume struct {
 
 // make a volume
 func NewVolume(v float64, unit string) (o Volume) {
-	if unit == "" && v == 0 {
-		return NewVolume(0.0, "ul")
-	}
-
 	if len(strings.TrimSpace(unit)) == 0 {
-		fmt.Println("warning no units found so returned 0.0 ul")
-		return NewVolume(0.0, "ul")
-
+		return ZeroVolume()
 	}
+
 	/*if len(strings.TrimSpace(unit)) == 0 {
 		panic("Can't make Volumes without unit")
-	}*/
+	}
 
 	if len(strings.TrimSpace(unit)) == 1 {
 		o = Volume{NewMeasurement(v, "", unit)}
 	}
-	if len(strings.TrimSpace(unit)) > 1 {
+	*/
 
-		o = Volume{NewPMeasurement(v, unit)}
-	}
+	o = Volume{NewPMeasurement(v, unit)}
+
 	return
 }
 
@@ -217,6 +214,22 @@ func NewTime(v float64, unit string) (t Time) {
 
 func (t Time) Seconds() float64 {
 	return t.SIValue()
+}
+
+func (t Time) AsDuration() time.Duration {
+	// simply use the parser
+
+	d, e := time.ParseDuration(t.ToString())
+
+	if e != nil {
+		logger.Fatal(e.Error())
+	}
+
+	return d
+}
+
+func FromDuration(t time.Duration) Time {
+	return NewTime(float64(t.Seconds()), "s")
 }
 
 // mass
@@ -434,7 +447,7 @@ type FlowRate struct {
 
 func NewFlowRate(v float64, unit string) FlowRate {
 	if unit != "ml/min" {
-		panic("Can't make flow rate which aren't in ml/min")
+		panic("Can't make flow rate not in ml/min")
 	}
 	fr := FlowRate{NewMeasurement(v, "", unit)}
 
@@ -450,7 +463,7 @@ type Velocity struct {
 func NewVelocity(v float64, unit string) Velocity {
 
 	if unit != "m/s" {
-		panic("Can't make flow rate which aren't in m/s")
+		panic("Can't make flow rate which isn't in m/s")
 	}
 	fr := Velocity{NewMeasurement(v, "", unit)}
 

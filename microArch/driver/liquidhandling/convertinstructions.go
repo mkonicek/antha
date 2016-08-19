@@ -24,9 +24,6 @@ package liquidhandling
 
 import (
 	"fmt"
-	"sort"
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -36,21 +33,25 @@ import (
 // and longer ones
 
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
-	insOut := make(*TransferInstruction, 0, 1)
+	insOut = make([]*TransferInstruction, 0, 1)
 
 	for i := 0; i < inssIn.MaxLen(); i++ {
 		comps := inssIn.CompsAt(i)
 
-		if len(comps) == 0 {
-			continue
+		lenToMake := 0
+		cmpSquash := make([]*wtype.LHComponent, 0, lenToMake)
+		for _, c := range comps {
+			if c != nil {
+				lenToMake += 1
+				cmpSquash = append(cmpSquash, c)
+			}
 		}
-		lenToMake := len(comps) // I'm lazy
 
 		wh := make([]string, lenToMake)       // component types
 		va := make([]wunit.Volume, lenToMake) // volumes
 		// six parameters applying to the source
 		// need to refactor here
-		fromPlateID, fromWells, err := robot.GetComponents(cmps, carryvol, channelprms.Orientation, multi)
+		fromPlateID, fromWells, err := robot.GetComponents(cmpSquash, carryvol, channelprms.Orientation, multi)
 
 		if err != nil {
 			return nil, err
@@ -75,8 +76,10 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		ix := 0
 
 		for i, v := range comps {
-			// get dem big ole plates out
-			// TODO -- pass them in instead of all this nonsense
+
+			if comps[i] == nil {
+				continue
+			}
 
 			var flhp, tlhp *wtype.LHPlate
 
@@ -91,21 +94,21 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				return nil, err
 			}
 
-			tlhif := robot.PlateLookup[insIn.PlateID()]
+			tlhif := robot.PlateLookup[inssIn[i].PlateID()]
 
 			if tlhif != nil {
 				tlhp = tlhif.(*wtype.LHPlate)
 			} else {
-				s := fmt.Sprint("NO DST PLATE FOUND : ", ix, " ", insIn.PlateID())
+				s := fmt.Sprint("NO DST PLATE FOUND : ", ix, " ", inssIn[i].PlateID())
 				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
 
 				return nil, err
 			}
 
-			wlt, ok := tlhp.WellAtString(insIn.Welladdress)
+			wlt, ok := tlhp.WellAtString(inssIn[i].Welladdress)
 
 			if !ok {
-				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", insIn.Welladdress, " not found on dest plate ", insIn.PlateID))
+				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", inssIn[i].Welladdress, " not found on dest plate ", inssIn[i].PlateID))
 				return nil, err
 			}
 
@@ -113,8 +116,8 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			vt[ix] = wlt.CurrVolume()
 			wh[ix] = v.TypeName()
 			va[ix] = v2
-			pt[ix] = robot.PlateIDLookup[insIn.PlateID()]
-			wt[ix] = insIn.Welladdress
+			pt[ix] = robot.PlateIDLookup[inssIn[i].PlateID()]
+			wt[ix] = inssIn[i].Welladdress
 			ptwx[ix] = tlhp.WellsX()
 			ptwy[ix] = tlhp.WellsY()
 			ptt[ix] = tlhp.Type
@@ -159,7 +162,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		insOut = append(insOut, tfr)
 	}
 
-	return insOut
+	return insOut, nil
 }
 
 /*
@@ -295,7 +298,7 @@ func yeahyeahyeah(){
 */
 
 /*
-func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
+func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms **wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
 	insOut := make(*TransferInstruction, 0, 1)
 
 	for i := 0; i < inssIn.MaxLen(); i++ {

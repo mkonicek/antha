@@ -1,7 +1,7 @@
 package liquidhandling
 
 import (
-	"github.com/antha-lang/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 type LHIVector []*wtype.LHInstruction
@@ -19,19 +19,19 @@ func (lhiv LHIVector) MaxLen() int {
 	return l
 }
 
-func (lhiv LHIvector) CompsAt(i int) []*wtype.LHComponent {
-	ret := make([]*wtype.LHComponent, 0, len(lhiv))
+func (lhiv LHIVector) CompsAt(i int) []*wtype.LHComponent {
+	ret := make([]*wtype.LHComponent, len(lhiv))
 
-	for _, cmp := range lhiv {
-		if i == 0 && cmp.IsMixInPlace() {
+	for ix, ins := range lhiv {
+		if i == 0 && ins.IsMixInPlace() {
 			continue
 		}
 
-		if i >= len(cmp.Components) {
+		if i >= len(ins.Components) {
 			continue
 		}
 
-		ret = append(ret, cmp.Components[i])
+		ret[ix] = ins.Components[i]
 	}
 
 	return ret

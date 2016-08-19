@@ -3,6 +3,7 @@ package liquidhandling
 import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/factory"
 	"sort"
 	"strings"
@@ -10,12 +11,12 @@ import (
 
 type TransferBlockInstruction struct {
 	GenericRobotInstruction
-	Ins []*wtype.LHInstruction
+	Inss []*wtype.LHInstruction
 }
 
 func NewTransferBlockInstruction(inss []*wtype.LHInstruction) TransferBlockInstruction {
 	tb := TransferBlockInstruction{}
-	tb.Ins = inss
+	tb.Inss = inss
 	tb.GenericRobotInstruction.Ins = RobotInstruction(&tb)
 	return tb
 }
@@ -29,20 +30,20 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	// need to define how to make this optional
 	//timer := robot.GetTimer()
 	inss := make([]RobotInstruction, 0, 1)
-	insm := make(map[string]*wtype.LHInstruction, len(ti.Ins))
+	insm := make(map[string]*wtype.LHInstruction, len(ti.Inss))
 	seen := make(map[string]bool)
 
 	for _, ins := range ti.Inss {
 		insm[ins.ID] = ins
 	}
 	// list of ids
-	parallel_sets, prm, err := get_parallel_sets_robot(ti.Ins, robot, policy)
+	parallel_sets, prm, err := get_parallel_sets_robot(ti.Inss, robot, policy)
 
 	if err != nil {
 		return inss, err
 	}
 
-	for i, set := range parallel_sets {
+	for _, set := range parallel_sets {
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
 
@@ -51,14 +52,20 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 			insset[i] = insm[id]
 		}
 
-		tfr := convert_instructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm.multi, prm.Orientation)
-		inss = append(inss, tfr)
+		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi)
+
+		if err != nil {
+			panic(err)
+		}
+		for _, tf := range tfr {
+			inss = append(inss, RobotInstruction(tf))
+		}
 	}
 
 	// stuff that can't be done in parallel
 	insset := make([]*wtype.LHInstruction, 0, 1)
 
-	for _, ins := range ti.Ins {
+	for _, ins := range ti.Inss {
 		if seen[ins.ID] {
 			continue
 		}
@@ -68,16 +75,24 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 
 	// now make transfer and append
 
-	tfr := convert_instructions(insset, robot, wunit.NewVolume(0.5, "ul"), 1, 0)
+	tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1)
 
-	inss = append(inss, tfr)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, tf := range tfr {
+		inss = append(inss, RobotInstruction(tf))
+	}
+
+	//inss = append(inss, tfr...)
 	return inss, nil
 }
 
 type IDSet []string
 type SetOfIDSets []IDSet
 
-func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, policy *wtype.LHPolicyRuleSet) (SetOfIDSets, wtype.LHChannelParameter, error) {
+func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, policy *wtype.LHPolicyRuleSet) (SetOfIDSets, *wtype.LHChannelParameter, error) {
 	//  depending on the configuration and options we may have to try and
 	//  use one or both of H / V or... whatever
 	//  -- issue is this choice and choosechannel conflict with one another
@@ -89,7 +104,7 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 	// on we can at least make this choice
 
 	possible_sets := make([]SetOfIDSets, 0, len(robot.HeadsLoaded))
-	corresponding_params := make([]wtype.LHChannelParameter, 0, 1)
+	corresponding_params := make([]*wtype.LHChannelParameter, 0, 1)
 
 	for _, head := range robot.HeadsLoaded {
 		// ignore heads which do not have multi
@@ -102,7 +117,7 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 		sids, err := get_parallel_sets_head(head, ins)
 
 		if err != nil {
-			return SetOfIDSets{}, []wtype.LHChannelParameter{}, err
+			return SetOfIDSets{}, &wtype.LHChannelParameter{}, err
 		}
 		possible_sets = append(possible_sets, sids)
 		corresponding_params = append(corresponding_params, head.GetParams())
@@ -328,9 +343,9 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 	return ret
 }
 
-func choose_parallel_sets(sets []SetOfIDSets, params []wtype.LHChannelParameter, ins []*wtype.LHInstruction) (SetOfIDSets, wtype.LHChannelParameter, error) {
+func choose_parallel_sets(sets []SetOfIDSets, params []*wtype.LHChannelParameter, ins []*wtype.LHInstruction) (SetOfIDSets, *wtype.LHChannelParameter, error) {
 	var ret SetOfIDSets
-	var retp LHChannelParameter
+	var retp *wtype.LHChannelParameter
 	// just one or the other to start with
 
 	mx := 0

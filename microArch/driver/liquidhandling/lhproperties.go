@@ -537,7 +537,9 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 // GetComponents takes requests for components at particular volumes
 // + a measure of carry volume
 // returns lists of plate IDs + wells from which to get components or error
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int) ([]string, []string, error) {
+// MIS TODO HERE --- > refactor to get from sequential wells if multi > 1
+
+func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, contiguous bool) ([]string, []string, error) {
 	r1 := make([]string, len(cmps))
 	r2 := make([]string, len(cmps))
 

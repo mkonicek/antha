@@ -20,20 +20,18 @@ func (lhiv LHIVector) MaxLen() int {
 }
 
 func (lhiv LHIvector) CompsAt(i int) []*wtype.LHComponent {
-	ret := make([]*wtype.LHComponent, len(lhiv))
+	ret := make([]*wtype.LHComponent, 0, len(lhiv))
 
-	for ci := 0; ci < len(lhiv); ci++ {
-
-		cmp := lhiv[ci]
-
-		if ci == 0 && cmp.IsMixInPlace() {
+	for _, cmp := range lhiv {
+		if i == 0 && cmp.IsMixInPlace() {
 			continue
 		}
 
 		if i >= len(cmp.Components) {
 			continue
 		}
-		ret[ci] = cmp.Components[i]
+
+		ret = append(ret, cmp.Components[i])
 	}
 
 	return ret

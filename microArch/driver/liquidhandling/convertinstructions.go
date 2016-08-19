@@ -31,25 +31,135 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+// splits [[A,B,C], [A,B,C]...] --> TFR[A,A...], TFR[B,B...]...
+// if instrx are not equal in length there will be shorter arrays
+// and longer ones
+
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
+	insOut := make(*TransferInstruction, 0, 1)
+
 	for i := 0; i < inssIn.MaxLen(); i++ {
 		comps := inssIn.CompsAt(i)
 
-		lenCmps := 0
-
-		for _, ccc := range comps {
-			if ccc != nil {
-				lenCmps += 1
-			}
-		}
-		if lenCmps == 0 {
+		if len(comps) == 0 {
 			continue
 		}
+		lenToMake := len(comps) // I'm lazy
 
-		fromPlateID, fromWells, err := robot.GetComponents(comps, carryvol, channelprms.Orientation, multi)
+		wh := make([]string, lenToMake)       // component types
+		va := make([]wunit.Volume, lenToMake) // volumes
+		// six parameters applying to the source
+		// need to refactor here
+		fromPlateID, fromWells, err := robot.GetComponents(cmps, carryvol, channelprms.Orientation, multi)
 
+		if err != nil {
+			return nil, err
+		}
+
+		pf := make([]string, lenToMake)       // src plate positions
+		wf := make([]string, lenToMake)       // src wells
+		pfwx := make([]int, lenToMake)        // src plate X dim
+		pfwy := make([]int, lenToMake)        // src plate Y dim
+		vf := make([]wunit.Volume, lenToMake) // volumes
+		ptf := make([]string, lenToMake)      // plate types
+
+		// six parameters applying to the destination
+
+		pt := make([]string, lenToMake)       // dest plate positions
+		wt := make([]string, lenToMake)       // dest wells
+		ptwx := make([]int, lenToMake)        // dimensions of plate pipetting to (X)
+		ptwy := make([]int, lenToMake)        // dimensions of plate pipetting to (Y)
+		vt := make([]wunit.Volume, lenToMake) // volume in well to
+		ptt := make([]string, lenToMake)      // plate types
+
+		ix := 0
+
+		for i, v := range comps {
+			// get dem big ole plates out
+			// TODO -- pass them in instead of all this nonsense
+
+			var flhp, tlhp *wtype.LHPlate
+
+			flhif := robot.PlateLookup[fromPlateID[ix]]
+
+			if flhif != nil {
+				flhp = flhif.(*wtype.LHPlate)
+			} else {
+				s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateID[ix])
+				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
+
+				return nil, err
+			}
+
+			tlhif := robot.PlateLookup[insIn.PlateID()]
+
+			if tlhif != nil {
+				tlhp = tlhif.(*wtype.LHPlate)
+			} else {
+				s := fmt.Sprint("NO DST PLATE FOUND : ", ix, " ", insIn.PlateID())
+				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
+
+				return nil, err
+			}
+
+			wlt, ok := tlhp.WellAtString(insIn.Welladdress)
+
+			if !ok {
+				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", insIn.Welladdress, " not found on dest plate ", insIn.PlateID))
+				return nil, err
+			}
+
+			v2 := wunit.NewVolume(v.Vol, v.Vunit)
+			vt[ix] = wlt.CurrVolume()
+			wh[ix] = v.TypeName()
+			va[ix] = v2
+			pt[ix] = robot.PlateIDLookup[insIn.PlateID()]
+			wt[ix] = insIn.Welladdress
+			ptwx[ix] = tlhp.WellsX()
+			ptwy[ix] = tlhp.WellsY()
+			ptt[ix] = tlhp.Type
+
+			wlf, ok := flhp.WellAtString(fromWells[ix])
+
+			if !ok {
+				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
+				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
+				return nil, err
+			}
+
+			vf[ix] = wlf.CurrVolume()
+			//wlf.Remove(va[ix])
+
+			pf[ix] = robot.PlateIDLookup[fromPlateID[ix]]
+			wf[ix] = fromWells[ix]
+			pfwx[ix] = flhp.WellsX()
+			pfwy[ix] = flhp.WellsY()
+			ptf[ix] = flhp.Type
+
+			if v.Loc == "" {
+				v.Loc = fromPlateID[ix] + ":" + fromWells[ix]
+			}
+			// add component to destination
+			// need to ensure data are consistent
+			vd := v.Dup()
+			vd.ID = wlf.WContents.ID
+			vd.ParentID = wlf.WContents.ParentID
+			wlt.Add(vd)
+
+			// add daughter ID to component in
+
+			wlf.WContents.AddDaughterComponent(wlt.WContents)
+
+			//fmt.Println("HERE GOES: ", i, wh[i], vf[i].ToString(), vt[i].ToString(), va[i].ToString(), pt[i], wt[i], pf[i], wf[i], pfwx[i], pfwy[i], ptwx[i], ptwy[i])
+
+			ix += 1
+		}
+
+		tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
+		insOut = append(insOut, tfr)
 	}
 
+	return insOut
 }
 
 /*
@@ -181,5 +291,23 @@ func yeahyeahyeah(){
 
 	// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int
 	return ti, nil
+}
+*/
+
+/*
+func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
+	insOut := make(*TransferInstruction, 0, 1)
+
+	for i := 0; i < inssIn.MaxLen(); i++ {
+		comps := inssIn.CompsAt(i)
+
+		if len(comps) == 0 {
+			continue
+		}
+		tfr := NewTransferInstruction(robot, comps, channelprms, multi)
+		insOut = append(insOut, tfr)
+	}
+
+	return insOut
 }
 */

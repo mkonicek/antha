@@ -81,7 +81,6 @@ func NewMultiTransferParams(multi int) MultiTransferParams {
 	return v
 }
 
-// TODO -- refactor to pass actual plates through
 type TransferInstruction struct {
 	GenericRobotInstruction
 	Type       int

@@ -270,6 +270,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 		plate2 := this.Properties.Plates[pos]
 
+		fmt.Println("Plate ID Map: ", plate2.ID, " --> ", plate.ID)
+
 		this.plateIDMap[plate2.ID] = plate.ID
 	}
 

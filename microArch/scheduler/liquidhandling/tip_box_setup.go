@@ -106,6 +106,8 @@ func (lh *Liquidhandler) Tip_box_setup(request *LHRequest) (*LHRequest, error) {
 
 		// how many tips remain on the platform?
 
+		fmt.Println(ntip, " ", lh.Properties.TipsLeftOfType(actualtiptype))
+
 		newtips_needed := ntip - lh.Properties.TipsLeftOfType(actualtiptype)
 
 		if newtips_needed < 1 {
@@ -114,6 +116,8 @@ func (lh *Liquidhandler) Tip_box_setup(request *LHRequest) (*LHRequest, error) {
 
 		tbt := factory.GetTipByType(actualtiptype)
 		ntbx := (newtips_needed-1)/tbt.NTips + 1
+
+		fmt.Println("newtips needed: ", newtips_needed, " : ", tbt.NTips, " NTBX: ", ntbx)
 
 		for i := 0; i < ntbx; i++ {
 			tbt2 := factory.GetTipByType(actualtiptype)
@@ -128,7 +132,9 @@ func (lh *Liquidhandler) Tip_box_setup(request *LHRequest) (*LHRequest, error) {
 
 	lh.Properties.RemoveTipBoxes()
 	for i, tb := range tip_boxes {
+		fmt.Println("ADDING TIP BOXES to : ", tiplocs2[i])
 		lh.Properties.AddTipBoxTo(tiplocs2[i], tb)
+		lh.FinalProperties.AddTipBoxTo(tiplocs2[i], tb)
 	}
 
 	return request, nil

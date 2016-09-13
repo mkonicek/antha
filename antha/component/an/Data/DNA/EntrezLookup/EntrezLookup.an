@@ -52,8 +52,6 @@ Steps {
 	Filenameused, output, Err = entrez.RetrieveRecords(ID, Database,MaxReturns,ReturnType,Filename)
 			
 	Output = string(output)
-	
-		
 }
 
 

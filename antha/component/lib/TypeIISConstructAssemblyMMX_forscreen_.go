@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -54,8 +53,6 @@ func _TypeIISConstructAssemblyMMX_forscreenSteps(_ctx context.Context, _input *T
 	samples = append(samples, waterSample)
 
 	for k, part := range _input.Parts {
-		fmt.Println("creating dna part num ", k, " comp ", part.CName, " renamed to ", _input.PartSeqs[k].Nm, " vol ", _input.PartVols[k])
-
 		part.Type, err = wtype.LiquidTypeFromString(_input.LHPolicyName)
 
 		if err != nil {

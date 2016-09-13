@@ -30,7 +30,9 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	//features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
 )
 
 func jointwoparts(upstreampart []Digestedfragment, downstreampart []Digestedfragment) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
@@ -73,7 +75,11 @@ func jointwoparts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 		}
 	}
 	if len(assembledfragments) == 0 && len(plasmidproducts) == 0 {
-		err = fmt.Errorf("fragments aren't compatible, check ends")
+		errstr := fmt.Sprintln("fragments aren't compatible, check ends",
+			text.Print("upstream fragments:", upstreampart),
+			text.Print("downstream fragements:", downstreampart))
+
+		err = fmt.Errorf(errstr)
 	}
 	return assembledfragments, plasmidproducts, err
 }
@@ -99,13 +105,45 @@ func rotate_vector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASeq
 	// we just ensure the first one is first in the sequence... if there's more than one
 	// it's not our problem
 
-	ix := strings.Index(ret.Seq, enzyme.RecognitionSequence)
+	ix := strings.Index(strings.ToUpper(ret.Seq), strings.ToUpper(enzyme.RecognitionSequence))
 
 	if ix == -1 {
 		err := fmt.Errorf("No restriction sites found in vector - cannot rotate")
 		return ret, err
 	}
 
+	/*thingsfound := FindSeqsinSeqs(ret.Seq, []string{enzyme.RecognitionSequence})
+
+	if len(thingsfound) == 0 {
+		err := fmt.Errorf("No restriction sites found in vector - cannot rotate")
+		return ret, err
+	}
+	if len(thingsfound) != 2 {
+		errstr := fmt.Sprint(len(thingsfound), "restriction sites found in vector - cannot rotate")
+
+		err := fmt.Errorf(errstr)
+		return ret, err
+	}
+
+	if len(thingsfound[0].Positions) > 1 {
+
+		errstr := fmt.Sprint(len(thingsfound[0].Positions), "restriction sites found in vector - cannot rotate")
+
+		err := fmt.Errorf(errstr)
+		return ret, err
+	}*/
+	/*
+			if thingsfound[0].Reverse {
+				err := fmt.Errorf("first site is reverse")
+				return ret, err
+			}
+			if thingsfound[1].Reverse {
+				err := fmt.Errorf("second site is reverse")
+				return ret, err
+			}
+
+		ix := thingsfound[0].Positions[0]
+	*/
 	newseq := ""
 
 	newseq += ret.Seq[ix:]

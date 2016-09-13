@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
 //"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 )
 
@@ -53,10 +54,15 @@ Data (
 	Status string
 	Simulationpass bool
 	PartswithOverhangs []wtype.DNASequence // parts to order
+	PartsWithSitesRemoved []wtype.DNASequence
+	OriginalParts []wtype.DNASequence 
 	NewDNASequence wtype.DNASequence // desired sequence to end up with after assembly
 	ORFmissing bool
 	Endreport string
 	PositionReport []string
+	Plasmid bool
+	ORIpresent bool
+	SelectionMarkerPresent bool
 	
 )
 // Input Requirement specification
@@ -143,6 +149,10 @@ Steps {
 		partsinorder = append(partsinorder,partDNA)
 	}
 	
+	// export original parts list
+	
+	OriginalParts = partsinorder
+	
 	warnings = append(warnings,fmt.Sprintln(partsinorder))
 			
 	
@@ -228,6 +238,10 @@ Steps {
 		}
 	}
 	
+	
+	// export the parts list with sites removed
+	PartsWithSitesRemoved = partsinorder
+	
 	// make vector into an antha type DNASequence
 	if inventorydata, found := inventory.Partslist[Vector]; found{
 		vectordata = inventorydata
@@ -261,13 +275,23 @@ Steps {
 	
 	// Check that assembly is feasible with designed parts by simulating assembly of the sequences with the chosen enzyme
 	assembly := enzymes.Assemblyparameters{Constructname, restrictionenzyme.Name, vectordata, PartswithOverhangs}
-	status, numberofassemblies, _, newDNASequence, err := enzymes.Assemblysimulator(assembly)
+	status, numberofassemblies, _, newDNASequence, simerr := enzymes.Assemblysimulator(assembly)
+	
+	if simerr != nil {
+		warnings = append(warnings, text.Print("Error", simerr.Error()))
+	}
+
+	Plasmid, ORIpresent, SelectionMarkerPresent, err = features.ValidPlasmid(newDNASequence)
+	
+	if err != nil {
+		warnings = append(warnings, text.Print("Error", err.Error()))
+	}
 
 	endreport := "Endreport only run in the event of assembly simulation failure"
 	//sites := "Restriction mapper only run in the event of assembly simulation failure"
 	newDNASequence.Nm = Constructname
 	NewDNASequence = newDNASequence
-	if err == nil && numberofassemblies == 1 {
+	if simerr == nil && numberofassemblies == 1 {
 
 		Simulationpass = true
 	}// else {

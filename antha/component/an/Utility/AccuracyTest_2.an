@@ -82,7 +82,7 @@ Steps {
 	// work out plate layout based on picture or just in order
 	
 	if Printasimage {
-	chosencolourpalette := image.AvailablePalettes["Palette1"]
+	chosencolourpalette := image.AvailablePalettes()["Palette1"]
 	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette, rotate,autorotate) 
 	
 	//Runtowelllocationmap = make([]string,0)

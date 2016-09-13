@@ -1,7 +1,11 @@
 package lib
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -61,6 +65,20 @@ func _PCRSetup(_ctx context.Context, _input *PCRInput) {
 // The core process for this protocol, with the steps to be performed
 // for every input
 func _PCRSteps(_ctx context.Context, _input *PCRInput, _output *PCROutput) {
+
+	_output.FwdPrimerSites = sequences.FindSeqsinSeqs(_input.Targetsequence, []string{_input.FwdPrimerSeq})
+
+	_output.RevPrimerSites = sequences.FindSeqsinSeqs(_input.Targetsequence, []string{_input.RevPrimerSeq})
+
+	if len(_output.FwdPrimerSites) == 0 || len(_output.RevPrimerSites) == 0 {
+
+		errordescription := fmt.Sprint(
+			text.Print("FwdPrimerSitesfound:", fmt.Sprint(_output.FwdPrimerSites)),
+			text.Print("RevPrimerSitesfound:", fmt.Sprint(_output.RevPrimerSites)),
+		)
+
+		execute.Errorf(_ctx, errordescription)
+	}
 
 	// Mix components
 	samples := make([]*wtype.LHComponent, 0)
@@ -188,6 +206,7 @@ type PCRInput struct {
 	Finalextensiontime            wunit.Time
 	FwdPrimer                     *wtype.LHComponent
 	FwdPrimerConc                 wunit.Concentration
+	FwdPrimerSeq                  string
 	InitDenaturationtime          wunit.Time
 	Numberofcycles                int
 	OutPlate                      *wtype.LHPlate
@@ -195,17 +214,23 @@ type PCRInput struct {
 	ReactionVolume                wunit.Volume
 	RevPrimer                     *wtype.LHComponent
 	RevPrimerConc                 wunit.Concentration
+	RevPrimerSeq                  string
 	TargetpolymeraseConcentration wunit.Concentration
+	Targetsequence                string
 	Template                      *wtype.LHComponent
 	Templatevolume                wunit.Volume
 }
 
 type PCROutput struct {
-	Reaction *wtype.LHComponent
+	FwdPrimerSites []search.Thingfound
+	Reaction       *wtype.LHComponent
+	RevPrimerSites []search.Thingfound
 }
 
 type PCRSOutput struct {
 	Data struct {
+		FwdPrimerSites []search.Thingfound
+		RevPrimerSites []search.Thingfound
 	}
 	Outputs struct {
 		Reaction *wtype.LHComponent
@@ -232,6 +257,7 @@ func init() {
 				{Name: "Finalextensiontime", Desc: "", Kind: "Parameters"},
 				{Name: "FwdPrimer", Desc: "", Kind: "Inputs"},
 				{Name: "FwdPrimerConc", Desc: "", Kind: "Parameters"},
+				{Name: "FwdPrimerSeq", Desc: "", Kind: "Parameters"},
 				{Name: "InitDenaturationtime", Desc: "", Kind: "Parameters"},
 				{Name: "Numberofcycles", Desc: "\t// let's be ambitious and try this as part of type polymerase Polymeraseconc Volume\n\n\t//Templatetype string  // e.g. colony, genomic, pure plasmid... will effect efficiency. We could get more sophisticated here later on...\n\t//FullTemplatesequence string // better to use Sid's type system here after proof of concept\n\t//FullTemplatelength int\t// clearly could be calculated from the sequence... Sid will have a method to do this already so check!\n\t//TargetTemplatesequence string // better to use Sid's type system here after proof of concept\n\t//TargetTemplatelengthinBP int\n\nReaction parameters: (could be a entered as thermocycle parameters type possibly?)\n", Kind: "Parameters"},
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},
@@ -239,10 +265,14 @@ func init() {
 				{Name: "ReactionVolume", Desc: "PCRprep parameters:\n", Kind: "Parameters"},
 				{Name: "RevPrimer", Desc: "", Kind: "Inputs"},
 				{Name: "RevPrimerConc", Desc: "", Kind: "Parameters"},
+				{Name: "RevPrimerSeq", Desc: "", Kind: "Parameters"},
 				{Name: "TargetpolymeraseConcentration", Desc: "", Kind: "Parameters"},
+				{Name: "Targetsequence", Desc: "", Kind: "Parameters"},
 				{Name: "Template", Desc: "", Kind: "Inputs"},
 				{Name: "Templatevolume", Desc: "", Kind: "Parameters"},
+				{Name: "FwdPrimerSites", Desc: "", Kind: "Data"},
 				{Name: "Reaction", Desc: "", Kind: "Outputs"},
+				{Name: "RevPrimerSites", Desc: "", Kind: "Data"},
 			},
 		},
 	}); err != nil {

@@ -203,6 +203,7 @@ type PCR_vol_mmxInput struct {
 	Finalextensiontime                wunit.Time
 	FwdPrimer                         *wtype.LHComponent
 	FwdPrimerName                     string
+	FwdPrimerSeq                      wtype.DNASequence
 	FwdPrimerVol                      wunit.Volume
 	InitDenaturationtime              wunit.Time
 	MasterMix                         *wtype.LHComponent
@@ -216,7 +217,9 @@ type PCR_vol_mmxInput struct {
 	ReactionName                      string
 	RevPrimer                         *wtype.LHComponent
 	RevPrimerName                     string
+	RevPrimerSeq                      wtype.DNASequence
 	RevPrimerVol                      wunit.Volume
+	Targetsequence                    wtype.DNASequence
 	Template                          *wtype.LHComponent
 	TemplateName                      string
 	Templatevolume                    wunit.Volume
@@ -224,11 +227,15 @@ type PCR_vol_mmxInput struct {
 }
 
 type PCR_vol_mmxOutput struct {
-	Reaction *wtype.LHComponent
+	FWDPrimerBindingSiteinTemplate int
+	Reaction                       *wtype.LHComponent
+	RevPrimerBindingSiteinTemplate int
 }
 
 type PCR_vol_mmxSOutput struct {
 	Data struct {
+		FWDPrimerBindingSiteinTemplate int
+		RevPrimerBindingSiteinTemplate int
 	}
 	Outputs struct {
 		Reaction *wtype.LHComponent
@@ -249,6 +256,7 @@ func init() {
 				{Name: "Finalextensiontime", Desc: "", Kind: "Parameters"},
 				{Name: "FwdPrimer", Desc: "", Kind: "Inputs"},
 				{Name: "FwdPrimerName", Desc: "", Kind: "Parameters"},
+				{Name: "FwdPrimerSeq", Desc: "", Kind: "Parameters"},
 				{Name: "FwdPrimerVol", Desc: "", Kind: "Parameters"},
 				{Name: "InitDenaturationtime", Desc: "", Kind: "Parameters"},
 				{Name: "MasterMix", Desc: "", Kind: "Inputs"},
@@ -262,12 +270,16 @@ func init() {
 				{Name: "ReactionName", Desc: "", Kind: "Parameters"},
 				{Name: "RevPrimer", Desc: "", Kind: "Inputs"},
 				{Name: "RevPrimerName", Desc: "", Kind: "Parameters"},
+				{Name: "RevPrimerSeq", Desc: "", Kind: "Parameters"},
 				{Name: "RevPrimerVol", Desc: "", Kind: "Parameters"},
+				{Name: "Targetsequence", Desc: "", Kind: "Parameters"},
 				{Name: "Template", Desc: "", Kind: "Inputs"},
 				{Name: "TemplateName", Desc: "", Kind: "Parameters"},
 				{Name: "Templatevolume", Desc: "", Kind: "Parameters"},
 				{Name: "WellPosition", Desc: "", Kind: "Parameters"},
+				{Name: "FWDPrimerBindingSiteinTemplate", Desc: "", Kind: "Data"},
 				{Name: "Reaction", Desc: "", Kind: "Outputs"},
+				{Name: "RevPrimerBindingSiteinTemplate", Desc: "", Kind: "Data"},
 			},
 		},
 	}); err != nil {

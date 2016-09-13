@@ -73,6 +73,7 @@ func TestMatch(t *testing.T) {
 }
 
 func TestDotSlashImport(t *testing.T) {
+	t.Skip("external files")
 	p, err := ImportDir("testdata/other", 0)
 	if err != nil {
 		t.Fatal(err)
@@ -108,6 +109,7 @@ func TestEmptyImport(t *testing.T) {
 }
 
 func TestLocalDirectory(t *testing.T) {
+	t.Skip("external files")
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)

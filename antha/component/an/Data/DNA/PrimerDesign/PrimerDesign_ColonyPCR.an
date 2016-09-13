@@ -33,6 +33,7 @@ Parameters (
 // Data which is returned from this protocol
 Data (
 	FWDPrimer oligos.Primer // this needs to be changed to PrimerPair [2]oligo.Primer
+	REVPrimer oligos.Primer
 	Warnings error
 )
 
@@ -100,7 +101,30 @@ Steps {
 	}
 	
 	fmt.Println(text.Print("FWDPrimer:",FWDPrimer))
+
+	if FlankTargetSequence {
+		region = oligos.DNAregion(fulldnaseqs[0], regionstart, regionend+150)
+	}else {
+		region = oligos.DNAregion(fulldnaseqs[0], regionstart, regionend)
+	}
+	fmt.Println("6")
+	
+	Seqstoavoid = append(Seqstoavoid,FWDPrimer.Seq)
+	
+	REVPrimer, Warnings = oligos.REVOligoSeq(region, Maxgc, Minlength, Maxlength, Mintemp, Maxtemp, Seqstoavoid, PermittednucleotideOverlapBetweenPrimers) 
+	
+	if Warnings != nil {
+		fmt.Println("REVOligoSeqFail")
+		Errorf(Warnings.Error())
+	}
+	
+	fmt.Println(text.Print("REVPrimer:",REVPrimer))
+	
+	
+
 }
+
+
 
 // Actions to perform after steps block to analyze data
 Analysis {

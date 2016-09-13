@@ -349,3 +349,32 @@ func TestWCSorting(t *testing.T) {
 		t.Fatal("Col-first sort incorrect: expected A9 first, got ", v[0].FormatA1())
 	}
 }
+
+func TestLHCPCanMove(t *testing.T) {
+	v1 := wunit.NewVolume(0.5, "ul")
+	v2 := wunit.NewVolume(200, "ul")
+
+	lhcp := LHChannelParameter{Minvol: v1, Maxvol: v2}
+
+	v := wunit.ZeroVolume()
+
+	if lhcp.CanMove(v, false) || lhcp.CanMove(v, true) {
+		t.Fatal("Channel claims to be able to move zero volume... while technically true this is nonsense")
+	}
+
+	v = wunit.NewVolume(10.0, "ul")
+
+	if !lhcp.CanMove(v, false) || !lhcp.CanMove(v, true) {
+		t.Fatal("Channel claims not to be able to move a volume of 10 ul while it blatantly can")
+	}
+
+	v = wunit.NewVolume(250, "ul")
+
+	if !lhcp.CanMove(v, false) {
+		t.Fatal("Channel claims not to be able to move excessive volume in more than one go... it can")
+	}
+
+	if lhcp.CanMove(v, true) {
+		t.Fatal("Channel claims to be able to move excessive volume in one shot... it cannot")
+	}
+}

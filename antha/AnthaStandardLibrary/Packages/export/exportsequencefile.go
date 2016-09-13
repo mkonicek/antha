@@ -25,8 +25,10 @@ package export
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -248,5 +250,16 @@ func ExporttoTextFile(filename string, data []string) error {
 		}
 	}
 
+	return nil
+}
+
+func ExporttoJSON(data interface{}, filename string) (err error) {
+	bytes, err := json.Marshal(data)
+
+	if err != nil {
+		return err
+	}
+
+	ioutil.WriteFile(filename, bytes, 0644)
 	return nil
 }

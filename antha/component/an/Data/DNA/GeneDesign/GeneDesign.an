@@ -1,7 +1,6 @@
 protocol GeneDesign
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -66,7 +65,7 @@ Steps {
 	if EndsAlreadyAdded {
 		PartsWithOverhangs = PartDNA
 	}else {
-		fmt.Println("Parts + vector:",PartDNA,VectorSeq)
+		// fmt.Println("Parts + vector:",PartDNA,VectorSeq)
 	PartsWithOverhangs = enzymes.MakeScarfreeCustomTypeIIsassemblyParts(PartDNA, VectorSeq, EnzymeInf)
 	}
 	
@@ -83,7 +82,7 @@ Steps {
 	export.Makefastaserial2(export.LOCAL,ConstructName, PartsWithOverhangs)
 	}
 	
-	fmt.Println("Parts Source: ",PartsWithOverhangs)
+	//fmt.Println("Parts Source: ",PartsWithOverhangs)
 }
 	
 Analysis {

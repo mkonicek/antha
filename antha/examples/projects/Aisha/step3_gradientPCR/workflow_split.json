@@ -1,8 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "GradientPCR": {
-            "component": "AutoPCR_Gradient_mmx_multiplereactions"
-        }
-    }
-}

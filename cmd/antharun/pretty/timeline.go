@@ -11,12 +11,16 @@ import (
 	"github.com/antha-lang/antha/target"
 )
 
+func prettyInst(inst *target.Manual) string {
+	return fmt.Sprintf("[%s] %s", inst.Label, strings.Replace(inst.Details, "\n", "; ", -1))
+}
+
 func summarize(inst target.Inst) (string, error) {
 	switch inst := inst.(type) {
 	case target.RunInst:
 		return fmt.Sprintf("Run file (size: %d)", len(inst.Data().Tarball)), nil
 	case *target.Manual:
-		return fmt.Sprintf("Manual: %s", inst.Details), nil
+		return prettyInst(inst), nil
 	case *target.Wait:
 		return "", nil
 	case *target.CmpError:

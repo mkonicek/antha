@@ -51,7 +51,7 @@ Steps {
 	
 	
 
-	chosencolourpalette := image.AvailablePalettes[Palette]
+	chosencolourpalette := image.AvailablePalettes()[Palette]
 	
 	if CheckAllResizeAlgorithms {
 			image.CheckAllResizealgorithms(Imagefilename,OutPlate,Rotate,imaging.AllResampleFilters)

@@ -236,7 +236,7 @@ Steps {
 		vectordata = inventorydata
 		}else if strings.Contains(Vector, ".gb") {
 	
-			vectordata, _ = parser.GenbanktoAnnotatedSeq(Vector)
+			vectordata, _ = parser.GenbanktoFeaturelessDNASequence(Vector)
 			vectordata.Plasmid = true
 		}else {
 		vectornm := "Vector"

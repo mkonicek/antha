@@ -45,7 +45,7 @@ func _PipetteImageSteps(_ctx context.Context, _input *PipetteImageInput, _output
 	if _input.Subset {
 		chosencolourpalette = image.MakeSubPallette(_input.Palettename, _input.Subsetnames)
 	} else {
-		chosencolourpalette = image.AvailablePalettes[_input.Palettename]
+		chosencolourpalette = image.AvailablePalettes()[_input.Palettename]
 	}
 
 	if _input.CheckResizeAlgorithms {
@@ -55,13 +55,13 @@ func _PipetteImageSteps(_ctx context.Context, _input *PipetteImageInput, _output
 	// the output of this is a map of well positions to colours needed
 	positiontocolourmap, _, _ := image.ImagetoPlatelayout(_input.Imagefilename, _input.OutPlate, &chosencolourpalette, _input.Rotate, _input.AutoRotate)
 
-	colourtostringmap := image.AvailableComponentmaps[_input.Palettename]
+	colourtostringmap := image.AvailableComponentmaps()[_input.Palettename]
 
 	// if the image will be printed using fluorescent proteins, 2 previews will be generated for the image (i) under UV light (ii) under visible light
 
 	if _input.UVimage {
-		uvmap := image.AvailableComponentmaps[_input.Palettename]
-		visiblemap := image.Visibleequivalentmaps[_input.Palettename]
+		uvmap := image.AvailableComponentmaps()[_input.Palettename]
+		visiblemap := image.Visibleequivalentmaps()[_input.Palettename]
 
 		if _input.Subset {
 			uvmap = image.MakeSubMapfromMap(colourtostringmap, _input.Subsetnames)
@@ -81,7 +81,17 @@ func _PipetteImageSteps(_ctx context.Context, _input *PipetteImageInput, _output
 
 		componentname := colourtostringmap[colourname]
 
-		componentmap[componentname] = factory.GetComponentByType(componentname)
+		// use template component instead
+		var componenttopick *wtype.LHComponent
+
+		if _input.ComponentType != nil {
+			componenttopick = _input.ComponentType
+		} else {
+			componenttopick = factory.GetComponentByType("Paint")
+		}
+		componenttopick.CName = componentname
+
+		componentmap[componentname] = componenttopick
 
 	}
 	//fmt.Println(componentmap)
@@ -207,6 +217,7 @@ type PipetteImageElement struct {
 type PipetteImageInput struct {
 	AutoRotate            bool
 	CheckResizeAlgorithms bool
+	ComponentType         *wtype.LHComponent
 	Imagefilename         string
 	Notthiscolour         string
 	OnlythisColour        string
@@ -245,6 +256,7 @@ func init() {
 			Params: []component.ParamDesc{
 				{Name: "AutoRotate", Desc: "", Kind: "Parameters"},
 				{Name: "CheckResizeAlgorithms", Desc: "", Kind: "Parameters"},
+				{Name: "ComponentType", Desc: "", Kind: "Inputs"},
 				{Name: "Imagefilename", Desc: "", Kind: "Parameters"},
 				{Name: "Notthiscolour", Desc: "", Kind: "Parameters"},
 				{Name: "OnlythisColour", Desc: "", Kind: "Parameters"},

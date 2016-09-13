@@ -80,14 +80,17 @@ func (p *compiler) anthaInit() {
 		p.reuseMap[tok] = make(map[string]bool)
 	}
 	p.intrinsics = map[string]string{
-		"Centrifuge":   "execute.Centrifuge",
-		"Electroshock": "execute.Electroshock",
-		"ReadEM":       "execute.ReadEM",
-		"MixTo":        "execute.MixTo",
-		"MixInto":      "execute.MixInto",
-		"Mix":          "execute.Mix",
-		"Incubate":     "execute.Incubate",
-		"Errorf":       "execute.Errorf",
+		"Centrifuge":    "execute.Centrifuge",
+		"Electroshock":  "execute.Electroshock",
+		"Errorf":        "execute.Errorf",
+		"Handle":        "execute.Handle",
+		"Incubate":      "execute.Incubate",
+		"Mix":           "execute.Mix",
+		"MixInto":       "execute.MixInto",
+		"MixNamed":      "execute.MixNamed",
+		"MixTo":         "execute.MixTo",
+		"ReadEM":        "execute.ReadEM",
+		"SetInputPlate": "execute.SetInputPlate",
 	}
 	p.types = map[string]string{
 		"Temperature":          "wunit.Temperature",

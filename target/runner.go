@@ -7,20 +7,20 @@ import (
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
-	driver "github.com/antha-lang/antha/driver/pb"
+	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 )
 
 type Runner struct {
-	client driver.RunnerClient
+	client runner.RunnerClient
 }
 
-func NewRunner(c driver.RunnerClient) *Runner {
+func NewRunner(c runner.RunnerClient) *Runner {
 	return &Runner{c}
 }
 
 func (a *Runner) Run(files Files) error {
 	ctx := context.Background()
-	reply, err := a.client.Run(ctx, &driver.RunRequest{
+	reply, err := a.client.Run(ctx, &runner.RunRequest{
 		Type: files.Type,
 		Data: files.Tarball,
 	})
@@ -31,7 +31,7 @@ func (a *Runner) Run(files Files) error {
 	// Proof of concept
 	var errors []string
 	for range time.Tick(5 * time.Second) {
-		msgs, err := a.client.Messages(ctx, &driver.MessagesRequest{
+		msgs, err := a.client.Messages(ctx, &runner.MessagesRequest{
 			Id: reply.Id,
 		})
 		if err != nil {
@@ -55,7 +55,7 @@ func (a *Runner) Run(files Files) error {
 
 func (a *Runner) types() ([]string, error) {
 	ctx := context.Background()
-	reply, err := a.client.SupportedRunTypes(ctx, &driver.SupportedRunTypesRequest{})
+	reply, err := a.client.SupportedRunTypes(ctx, &runner.SupportedRunTypesRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +74,6 @@ func (a *Runner) MoveCost(Device) int {
 	return 0
 }
 
-func (a *Runner) Compile([]ast.Command) ([]Inst, error) {
+func (a *Runner) Compile([]ast.Node) ([]Inst, error) {
 	return nil, nil
 }

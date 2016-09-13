@@ -2,7 +2,7 @@ package lib
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	// "github.com/montanaflynn/stats"
+	"github.com/montanaflynn/stats"
 	// "github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/factory"
@@ -12,9 +12,10 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/buffers"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/platereader"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/plot"
 	// "path/filepath"
 	// antha "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
-	// "fmt"
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/component"
 	"github.com/antha-lang/antha/execute"
@@ -49,6 +50,8 @@ import (
 // of target molecule at wavelength
 //= 20330
 //= 0.0002878191305957933
+
+// validation requirements
 
 // Data which is returned from this protocol, and data types
 
@@ -153,11 +156,19 @@ func _AddPlateReaderresults_2Steps(_ctx context.Context, _input *AddPlateReaderr
 
 			experimentalvolumestr := experimentalvolumeinterface.(string)
 
-			volandunit := strings.Split(experimentalvolumestr, " ")
+			//experimentalvolumestr = strings.TrimSpace(experimentalvolumestr)
 
-			vol, err := strconv.ParseFloat(volandunit[0], 64)
+			var volandunit []string
 
-			experimentalvolume := wunit.NewVolume(vol, volandunit[1])
+			if strings.Count(experimentalvolumestr, " ") == 1 {
+				volandunit = strings.Split(experimentalvolumestr, " ")
+			} else if strings.Count(experimentalvolumestr, "ul") == 1 && strings.HasSuffix(experimentalvolumestr, "ul") {
+				volandunit = []string{strings.Trim(experimentalvolumestr, "ul"), "ul"}
+			}
+
+			vol, err := strconv.ParseFloat(strings.TrimSpace(volandunit[0]), 64)
+
+			experimentalvolume := wunit.NewVolume(vol, strings.TrimSpace(volandunit[1]))
 
 			actualconcentrations[experimentalvolume.ToString()] = buffers.DiluteBasedonMolecularWeight(Molecularweight, _input.StockconcinMperL, experimentalvolume, _input.Diluent.CName, wunit.NewVolume(_input.Stockvol.RawValue()-experimentalvolume.RawValue(), "ul"))
 
@@ -282,6 +293,8 @@ func _AddPlateReaderresults_2Steps(_ctx context.Context, _input *AddPlateReaderr
 
 		}
 
+		run = doe.AddNewResponseFieldandValue(run, "Runorder", k)
+
 		//rsquared := plot.Rsquared("Expected Conc", xvalues, "Actual Conc", yvalues)
 		//run.AddResponseValue("R2", rsquared)
 
@@ -292,7 +305,7 @@ func _AddPlateReaderresults_2Steps(_ctx context.Context, _input *AddPlateReaderr
 		runswithresponses = append(runswithresponses, run)
 	}
 
-	_ = doe.XLSXFileFromRuns(runswithresponses, _input.OutputFilename, _input.DesignFiletype)
+	doe.XLSXFileFromRuns(runswithresponses, _input.OutputFilename, _input.DesignFiletype)
 
 	_output.Runs = runswithresponses
 
@@ -301,13 +314,423 @@ func _AddPlateReaderresults_2Steps(_ctx context.Context, _input *AddPlateReaderr
 // Run after controls and a steps block are completed to
 // post process any data and provide downstream results
 func _AddPlateReaderresults_2Analysis(_ctx context.Context, _input *AddPlateReaderresults_2Input, _output *AddPlateReaderresults_2Output) {
+
+	_output.Errors = make([]string, 0)
+
+	xvalues := make([]float64, 0)
+	yvalues := make([]float64, 0)
+
+	// add origin
+	xvalues = append(xvalues, 0.0)
+	yvalues = append(yvalues, 0.0)
+
+	fmt.Println("in analysis")
+
+	if len(_output.Runs) == 0 {
+		execute.Errorf(_ctx, "no runs")
+	}
+	// 1. now calculate r2 and plot results
+	for i, runwithresponses := range _output.Runs {
+		// values for r2 to reset each run
+
+		// get response value and check if it's a float64 type
+		expectedconc, err := runwithresponses.GetResponseValue("Absorbance ExpectedConc " + strconv.Itoa(_input.Wavelength))
+
+		if err != nil {
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		expectedconcfloat, floattrue := expectedconc.(float64)
+		// if float64 is true
+		if floattrue {
+			xvalues = append(xvalues, expectedconcfloat)
+		} else {
+			execute.Errorf(_ctx, "Run"+fmt.Sprint(i, runwithresponses)+" ExpectedConc:"+fmt.Sprint(expectedconcfloat))
+		}
+
+		// get response value and check if it's a float64 type
+		actualconc, err := runwithresponses.GetResponseValue("AbsorbanceActualConc")
+
+		if err != nil {
+			fmt.Println(err.Error())
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		actualconcfloat, floattrue := actualconc.(float64)
+
+		if floattrue {
+			yvalues = append(yvalues, actualconcfloat)
+		} else {
+			fmt.Println(err.Error())
+			execute.Errorf(_ctx, " ActualConc:"+fmt.Sprint(actualconcfloat))
+		}
+
+	}
+
+	_output.R2, _output.Variance, _output.Formula = plot.Rsquared("Expected Conc", xvalues, "Actual Conc", yvalues)
+	//run.AddResponseValue("R2", rsquared)
+
+	xygraph := plot.Plot(xvalues, [][]float64{yvalues})
+	filenameandextension := strings.Split(_input.OutputFilename, ".")
+	plot.Export(xygraph, filenameandextension[0]+"_plot"+".png")
+
+	// reset
+	xvalues = make([]float64, 0)
+	yvalues = make([]float64, 0)
+
+	// add origin
+	xvalues = append(xvalues, 0.0)
+	yvalues = append(yvalues, 0.0)
+
+	// 2. now plot correctnessfactor
+	for i, runwithresponses := range _output.Runs {
+		// values for r2 to reset each run
+
+		// get response value and check if it's a float64 type
+		expectedconc, err := runwithresponses.GetResponseValue("Absorbance ExpectedConc " + strconv.Itoa(_input.Wavelength))
+
+		if err != nil {
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		expectedconcfloat, floattrue := expectedconc.(float64)
+		// if float64 is true
+		if floattrue {
+			xvalues = append(xvalues, expectedconcfloat)
+		} else {
+			execute.Errorf(_ctx, "Run"+fmt.Sprint(i, runwithresponses)+" ExpectedConc:"+fmt.Sprint(expectedconcfloat))
+		}
+
+		// get response value and check if it's a float64 type
+		correctness, err := runwithresponses.GetResponseValue("Absorbance CorrectnessFactor " + strconv.Itoa(_input.Wavelength))
+
+		if err != nil {
+			fmt.Println(err.Error())
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		correctnessfloat, floattrue := correctness.(float64)
+
+		if floattrue {
+			yvalues = append(yvalues, correctnessfloat)
+		} else {
+			fmt.Println(err.Error())
+			execute.Errorf(_ctx, " Absorbance CorrectnessFactor:"+fmt.Sprint(correctnessfloat))
+		}
+
+	}
+
+	_output.R2_CorrectnessFactor, _, _ = plot.Rsquared("Expected Conc", xvalues, "Correctness Factor", yvalues)
+	//run.AddResponseValue("R2", rsquared)
+
+	correctnessgraph := plot.Plot(xvalues, [][]float64{yvalues})
+
+	plot.Export(correctnessgraph, filenameandextension[0]+"_correctnessfactor"+".png")
+
+	// reset
+	xvalues = make([]float64, 0)
+	yvalues = make([]float64, 0)
+
+	// add origin
+	xvalues = append(xvalues, 0.0)
+	yvalues = append(yvalues, 0.0)
+
+	// 3. now look for systematic errors
+	for i, runwithresponses := range _output.Runs {
+		// values for r2 to reset each run
+
+		// get response value and check if it's a float64 type
+		runorder, err := runwithresponses.GetResponseValue("Runorder")
+
+		if err != nil {
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		runorderint, inttrue := runorder.(int)
+		// if int is true
+		if inttrue {
+			xvalues = append(xvalues, float64(runorderint))
+		} else {
+			execute.Errorf(_ctx, "Run"+fmt.Sprint(i, runwithresponses)+" Run Order:"+fmt.Sprint(runorderint), " not an int")
+		}
+
+		// get response value and check if it's a float64 type
+		actualconc, err := runwithresponses.GetResponseValue("AbsorbanceActualConc")
+
+		if err != nil {
+			fmt.Println(err.Error())
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		actualconcfloat, floattrue := actualconc.(float64)
+
+		if floattrue {
+			yvalues = append(yvalues, actualconcfloat)
+		} else {
+			fmt.Println(err.Error())
+			execute.Errorf(_ctx, " ActualConc:"+fmt.Sprint(actualconcfloat))
+		}
+	}
+
+	runorderconcgraph := plot.Plot(xvalues, [][]float64{yvalues})
+
+	plot.Export(runorderconcgraph, filenameandextension[0]+"_runorder"+".png")
+
+	// reset
+	xvalues = make([]float64, 0)
+	yvalues = make([]float64, 0)
+
+	// add origin
+	xvalues = append(xvalues, 0.0)
+	yvalues = append(yvalues, 0.0)
+
+	// 4.  now look for systematic errors with correctness factor
+	for i, runwithresponses := range _output.Runs {
+		// values for r2 to reset each run
+
+		// get response value and check if it's a float64 type
+		runorder, err := runwithresponses.GetResponseValue("Runorder")
+
+		if err != nil {
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		runorderint, inttrue := runorder.(int)
+		// if int is true
+		if inttrue {
+			xvalues = append(xvalues, float64(runorderint))
+		} else {
+			execute.Errorf(_ctx, "Run"+fmt.Sprint(i, runwithresponses)+" Run Order:"+fmt.Sprint(runorderint), " not an int")
+		}
+
+		// get response value and check if it's a float64 type
+		correctness, err := runwithresponses.GetResponseValue("Absorbance CorrectnessFactor " + strconv.Itoa(_input.Wavelength))
+
+		if err != nil {
+			fmt.Println(err.Error())
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		correctnessfloat, floattrue := correctness.(float64)
+
+		if floattrue {
+			yvalues = append(yvalues, correctnessfloat)
+		} else {
+			fmt.Println(err.Error())
+			execute.Errorf(_ctx, " Absorbance CorrectnessFactor:"+fmt.Sprint(correctnessfloat))
+		}
+
+	}
+
+	runordercorrectnessgraph := plot.Plot(xvalues, [][]float64{yvalues})
+
+	plot.Export(runordercorrectnessgraph, filenameandextension[0]+"_runorder_correctnessfactor"+".png")
+
+	// 5. workout CV for each volume
+	replicateactualconcmap := make(map[string][]float64)
+	_output.VolumeToActualConc = make(map[string]Dataset)
+	replicatevalues := make([]float64, 0)
+
+	replicatecorrectnessmap := make(map[string][]float64)
+	correctnessvalues := make([]float64, 0)
+	_output.VolumeToCorrectnessFactor = make(map[string]Dataset)
+
+	//counter := 0
+
+	// make map of replicate values for Actual Conc
+	for _, runwithresponses := range _output.Runs {
+
+		volstr, err := runwithresponses.GetAdditionalInfo("Volume")
+
+		if err != nil {
+			execute.Errorf(_ctx, err.Error())
+		}
+
+		/*
+			repstr, err := runwithresponses.GetAdditionalInfo("Replicate")
+
+			if err != nil {
+				Errorf(err.Error())
+			}
+		*/
+		actualconc, err := runwithresponses.GetResponseValue("AbsorbanceActualConc")
+
+		if err != nil {
+			execute.Errorf(_ctx, err.Error())
+		}
+
+		/*rep, err := strconv.Atoi(repstr.(string))
+
+		if err != nil {
+			Errorf(err.Error())
+		}
+		*/
+
+		// Actual Conc map
+		if _, found := replicateactualconcmap[volstr.(string)]; found /*&& rep == counter*/ {
+			replicatevalues = replicateactualconcmap[volstr.(string)]
+			replicatevalues = append(replicatevalues, actualconc.(float64))
+			replicateactualconcmap[volstr.(string)] = replicatevalues
+			replicatevalues = make([]float64, 0)
+			//counter++
+		} else if _, found := replicateactualconcmap[volstr.(string)]; !found {
+			replicatevalues = append(replicatevalues, actualconc.(float64))
+			replicateactualconcmap[volstr.(string)] = replicatevalues
+			replicatevalues = make([]float64, 0)
+			//counter++
+		}
+
+		// get response value and check if it's a float64 type
+		correctness, err := runwithresponses.GetResponseValue("Absorbance CorrectnessFactor " + strconv.Itoa(_input.Wavelength))
+
+		if err != nil {
+			fmt.Println(err.Error())
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		correctnessfloat, floattrue := correctness.(float64)
+
+		if !floattrue {
+			fmt.Println(err.Error())
+			execute.Errorf(_ctx, " Correctnessfloat not float but:"+fmt.Sprint(correctnessfloat))
+		}
+
+		// correctness factor map
+		if _, found := replicatecorrectnessmap[volstr.(string)]; found /*&& rep == counter*/ {
+			correctnessvalues = replicatecorrectnessmap[volstr.(string)]
+			correctnessvalues = append(correctnessvalues, correctnessfloat)
+			replicatecorrectnessmap[volstr.(string)] = correctnessvalues
+			correctnessvalues = make([]float64, 0)
+			//counter++
+		} else if _, found := replicatecorrectnessmap[volstr.(string)]; !found {
+			correctnessvalues = append(correctnessvalues, correctnessfloat)
+			replicatecorrectnessmap[volstr.(string)] = correctnessvalues
+			correctnessvalues = make([]float64, 0)
+			//counter++
+		}
+
+	}
+
+	// process into datasets
+	for key, values := range replicateactualconcmap {
+
+		var dataset Dataset
+		// process replicates into mean and cv
+		dataset.Name = key + "_AbsorbanceActualConc"
+		dataset.Mean, _ = stats.Mean(values)
+		dataset.StdDev, _ = stats.StdDevS(values)
+		dataset.Values = values
+
+		dataset.CV = dataset.StdDev / dataset.Mean * float64(100)
+		_output.VolumeToActualConc[key] = dataset
+
+	}
+
+	// process into datasets
+	for key, values := range replicatecorrectnessmap {
+
+		var dataset Dataset
+		// process replicates into mean and cv
+		dataset.Name = key + "_CorrectnessFactor"
+		dataset.Mean, _ = stats.Mean(values)
+		dataset.StdDev, _ = stats.StdDevS(values)
+		dataset.Values = values
+
+		dataset.CV = dataset.StdDev / dataset.Mean * float64(100)
+		_output.VolumeToCorrectnessFactor[key] = dataset
+
+	}
+
+	if _input.ManualComparison {
+
+		// reset
+		xvalues = make([]float64, 0)
+		yvalues = make([]float64, 0)
+
+		// add origin
+		xvalues = append(xvalues, 0.0)
+		yvalues = append(yvalues, 0.0)
+
+		// 2. now plot correctnessfactor
+		for i, runwithresponses := range _output.Runs {
+			// values for r2 to reset each run
+
+			// get response value and check if it's a float64 type
+			expectedconc, err := runwithresponses.GetResponseValue("Absorbance ExpectedConc " + strconv.Itoa(_input.Wavelength))
+
+			if err != nil {
+				_output.Errors = append(_output.Errors, err.Error())
+			}
+
+			expectedconcfloat, floattrue := expectedconc.(float64)
+			// if float64 is true
+			if floattrue {
+				xvalues = append(xvalues, expectedconcfloat)
+			} else {
+				execute.Errorf(_ctx, "Run"+fmt.Sprint(i, runwithresponses)+" ExpectedConc:"+fmt.Sprint(expectedconcfloat))
+			}
+
+			// get response value and check if it's a float64 type
+			correctness, err := runwithresponses.GetResponseValue("Absorbance ManualCorrectnessFactor " + strconv.Itoa(_input.Wavelength))
+
+			if err != nil {
+				fmt.Println(err.Error())
+				_output.Errors = append(_output.Errors, err.Error())
+			}
+
+			correctnessfloat, floattrue := correctness.(float64)
+
+			if floattrue {
+				yvalues = append(yvalues, correctnessfloat)
+			} else {
+				fmt.Println(err.Error())
+				execute.Errorf(_ctx, "Manual Absorbance CorrectnessFactor:"+fmt.Sprint(correctnessfloat))
+			}
+
+		}
+
+		_output.R2_CorrectnessFactor, _, _ = plot.Rsquared("Expected Conc", xvalues, "Manual Correctness Factor", yvalues)
+		//run.AddResponseValue("R2", rsquared)
+
+		correctnessgraph := plot.Plot(xvalues, [][]float64{yvalues})
+
+		plot.Export(correctnessgraph, filenameandextension[0]+"_Manualcorrectnessfactor"+".png")
+
+	}
+
 }
 
 // A block of tests to perform to validate that the sample was processed correctly
 // Optionally, destructive tests can be performed to validate results on a
 // dipstick basis
 func _AddPlateReaderresults_2Validation(_ctx context.Context, _input *AddPlateReaderresults_2Input, _output *AddPlateReaderresults_2Output) {
+
+	_output.CVpass = true
+
+	if _output.R2 > _input.R2threshold {
+		_output.R2Pass = true
+	} else {
+		_output.Errors = append(_output.Errors, fmt.Sprint("R2 threshold of ", _input.R2threshold, " not met; R2 value = ", _output.R2))
+	}
+
+	for key, dataset := range _output.VolumeToActualConc {
+
+		if dataset.CV > _input.CVthreshold {
+			_output.CVpass = false
+			_output.Errors = append(_output.Errors, fmt.Sprint(key, " coefficient of variance above ", _input.CVthreshold, " percent threshold; CV value = ", dataset.CV))
+		}
+	}
+
 }
+
+type Dataset struct {
+	Name   string
+	Values []float64
+	Mean   float64
+	StdDev float64
+	CV     float64
+}
+
 func _AddPlateReaderresults_2Run(_ctx context.Context, input *AddPlateReaderresults_2Input) *AddPlateReaderresults_2Output {
 	output := &AddPlateReaderresults_2Output{}
 	_AddPlateReaderresults_2Setup(_ctx, input)
@@ -357,6 +780,7 @@ type AddPlateReaderresults_2Element struct {
 
 type AddPlateReaderresults_2Input struct {
 	Blanks                []string
+	CVthreshold           float64
 	DesignFile            string
 	DesignFiletype        string
 	Diluent               *wtype.LHComponent
@@ -367,6 +791,7 @@ type AddPlateReaderresults_2Input struct {
 	Molecule              *wtype.LHComponent
 	OutputFilename        string
 	PlateType             *wtype.LHPlate
+	R2threshold           float64
 	ReadingTypeinMarsFile string
 	Responsecolumnstofill []string
 	Sheet                 int
@@ -379,17 +804,37 @@ type AddPlateReaderresults_2Input struct {
 
 type AddPlateReaderresults_2Output struct {
 	BlankValues               []float64
+	CV                        float64
+	CVpass                    bool
+	Errors                    []string
+	Formula                   string
 	MeasuredOptimalWavelength int
+	R2                        float64
+	R2Pass                    bool
+	R2_CorrectnessFactor      float64
 	ResponsetoManualValuesmap map[string][]float64
 	Runs                      []doe.Run
+	Variance                  float64
+	VolumeToActualConc        map[string]Dataset
+	VolumeToCorrectnessFactor map[string]Dataset
 }
 
 type AddPlateReaderresults_2SOutput struct {
 	Data struct {
 		BlankValues               []float64
+		CV                        float64
+		CVpass                    bool
+		Errors                    []string
+		Formula                   string
 		MeasuredOptimalWavelength int
+		R2                        float64
+		R2Pass                    bool
+		R2_CorrectnessFactor      float64
 		ResponsetoManualValuesmap map[string][]float64
 		Runs                      []doe.Run
+		Variance                  float64
+		VolumeToActualConc        map[string]Dataset
+		VolumeToCorrectnessFactor map[string]Dataset
 	}
 	Outputs struct {
 	}
@@ -403,6 +848,7 @@ func init() {
 			Path: "antha/component/an/Utility/AddPlateReaderResults_2.an",
 			Params: []component.ParamDesc{
 				{Name: "Blanks", Desc: "= []string{\"P24\"}\n", Kind: "Parameters"},
+				{Name: "CVthreshold", Desc: "", Kind: "Parameters"},
 				{Name: "DesignFile", Desc: "= \"250516CCFbubbles/240516DXCFFDoeoutputgilsonright_TEST.xlsx\"\n", Kind: "Parameters"},
 				{Name: "DesignFiletype", Desc: "= \"JMP\"\n", Kind: "Parameters"},
 				{Name: "Diluent", Desc: "", Kind: "Inputs"},
@@ -413,6 +859,7 @@ func init() {
 				{Name: "Molecule", Desc: "", Kind: "Inputs"},
 				{Name: "OutputFilename", Desc: "= \"250516CCFbubbles/2501516bubblesresults.xlsx\"\n", Kind: "Parameters"},
 				{Name: "PlateType", Desc: "", Kind: "Inputs"},
+				{Name: "R2threshold", Desc: "validation requirements\n", Kind: "Parameters"},
 				{Name: "ReadingTypeinMarsFile", Desc: "= \"Abs Spectrum\"\n", Kind: "Parameters"},
 				{Name: "Responsecolumnstofill", Desc: "= []string{\"AbsVLV\"}\n", Kind: "Parameters"},
 				{Name: "Sheet", Desc: "= 0                                        //PRESHAKEPRESPIN\n", Kind: "Parameters"},
@@ -422,9 +869,19 @@ func init() {
 				{Name: "Wavelength", Desc: "= 472\n", Kind: "Parameters"},
 				{Name: "WellForScanAnalysis", Desc: "= []string{\"J5\"}\n", Kind: "Parameters"},
 				{Name: "BlankValues", Desc: "", Kind: "Data"},
+				{Name: "CV", Desc: "", Kind: "Data"},
+				{Name: "CVpass", Desc: "", Kind: "Data"},
+				{Name: "Errors", Desc: "", Kind: "Data"},
+				{Name: "Formula", Desc: "", Kind: "Data"},
 				{Name: "MeasuredOptimalWavelength", Desc: "", Kind: "Data"},
+				{Name: "R2", Desc: "", Kind: "Data"},
+				{Name: "R2Pass", Desc: "", Kind: "Data"},
+				{Name: "R2_CorrectnessFactor", Desc: "", Kind: "Data"},
 				{Name: "ResponsetoManualValuesmap", Desc: "", Kind: "Data"},
 				{Name: "Runs", Desc: "", Kind: "Data"},
+				{Name: "Variance", Desc: "", Kind: "Data"},
+				{Name: "VolumeToActualConc", Desc: "", Kind: "Data"},
+				{Name: "VolumeToCorrectnessFactor", Desc: "", Kind: "Data"},
 			},
 		},
 	}); err != nil {

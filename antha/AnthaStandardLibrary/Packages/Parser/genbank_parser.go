@@ -111,11 +111,11 @@ func GenbankFeaturetoDNASequence(filename string, featurename string) (wtype.DNA
 		if strings.Contains(feature.Name, featurename) {
 			standardseq.Nm = feature.Name
 			standardseq.Seq = feature.DNASeq
-			break
+			return standardseq, nil
 		}
 	}
-
-	return standardseq, nil
+	errstr := fmt.Sprint("Feature: ", featurename, "not found. ", "found these features: ", annotated.FeatureNames())
+	return standardseq, fmt.Errorf(errstr)
 }
 
 func GenbankContentstoAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNASequence, err error) {
@@ -362,15 +362,9 @@ func Featureline2(line string) (description string, found bool) {
 	}
 
 	for _, line := range newarray {
-		if strings.Contains(line, `/label`) {
-			parts := strings.SplitAfterN(line, "=", 2)
-			if len(parts) == 2 {
-				description = strings.TrimSpace(parts[1])
-				found = true
-				return
-			}
 
-		} else if strings.Contains(line, `/gene`) {
+		if strings.Contains(line, `/gene`) {
+
 			parts := strings.SplitAfterN(line, `="`, 2)
 			if len(parts) == 2 {
 				// // fmt.Println("line", line)
@@ -383,7 +377,21 @@ func Featureline2(line string) (description string, found bool) {
 				return
 			}
 
-		} else if strings.Contains(line, `/product`) {
+		}
+
+		if strings.Contains(line, `/label`) {
+
+			parts := strings.SplitAfterN(line, "=", 2)
+			if len(parts) == 2 {
+				description = strings.TrimSpace(parts[1])
+				found = true
+				return
+			}
+
+		}
+
+		if strings.Contains(line, `/product`) {
+
 			parts := strings.SplitAfterN(line, `="`, 2)
 			if len(parts) == 2 {
 				// // fmt.Println("line", line)

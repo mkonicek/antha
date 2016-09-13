@@ -49,13 +49,18 @@ func _PrimerDesign_FWD_wtypeSteps(_ctx context.Context, _input *PrimerDesign_FWD
 
 	if err != nil {
 		fmt.Println("FindPositioninoligoFail")
+		fmt.Println(err.Error())
 		_output.Warnings = err
 		execute.Errorf(_ctx, _output.Warnings.Error())
 	}
 
 	// if true then the start point to design primers is moved back 150bp to ensure full region is covered
-	if _input.FlankTargetSequence {
+	if _input.FlankTargetSequence && regionstart-150 >= 0 {
 		region = oligos.DNAregion(_input.FullDNASeq, regionstart-150, regionend)
+	} else if _input.FlankTargetSequence && regionstart-150 < 0 && regionstart-_input.Maxlength >= 0 {
+		region = oligos.DNAregion(_input.FullDNASeq, 0, regionend)
+	} else if _input.FlankTargetSequence && regionstart-150 < 0 && regionstart-_input.Maxlength < 0 && _input.FullDNASeq.Plasmid {
+		region = oligos.DNAregion(_input.FullDNASeq, len(_input.FullDNASeq.Seq)-150, regionend)
 	} else {
 		region = oligos.DNAregion(_input.FullDNASeq, regionstart, regionend)
 	}
@@ -64,7 +69,9 @@ func _PrimerDesign_FWD_wtypeSteps(_ctx context.Context, _input *PrimerDesign_FWD
 
 	if _output.Warnings != nil {
 		fmt.Println("FWDOligoSeqFail")
-		execute.Errorf(_ctx, _output.Warnings.Error())
+		errstr := _output.Warnings.Error()
+		fmt.Println(errstr)
+		execute.Errorf(_ctx, errstr)
 	}
 
 	fmt.Println(text.Print("FWDPrimer:", _output.FWDPrimer))

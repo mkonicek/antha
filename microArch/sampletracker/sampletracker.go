@@ -1,16 +1,22 @@
 package sampletracker
 
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+)
+
 var st *SampleTracker
 
 type SampleTracker struct {
 	records  map[string]string
 	forwards map[string]string
+	plates   map[string]*wtype.LHPlate
 }
 
 func newSampleTracker() *SampleTracker {
 	r := make(map[string]string)
 	f := make(map[string]string)
-	st := SampleTracker{r, f}
+	p := make(map[string]*wtype.LHPlate)
+	st := SampleTracker{r, f, p}
 	return &st
 }
 
@@ -22,8 +28,37 @@ func GetSampleTracker() *SampleTracker {
 	return st
 }
 
+func (st *SampleTracker) SetInputPlate(p *wtype.LHPlate) {
+	st.plates[p.ID] = p
+
+	for _, w := range p.HWells {
+		if !w.Empty() {
+			st.SetLocationOf(w.WContents.ID, w.WContents.Loc)
+			w.SetUserAllocated()
+		}
+	}
+}
+
+// this is destructive, i.e. once asked for that's it
+// that's one way to make it thread-safe...
+func (st *SampleTracker) GetInputPlates() []*wtype.LHPlate {
+	var ret []*wtype.LHPlate
+	if len(st.plates) == 0 {
+		return ret
+	}
+	ret = make([]*wtype.LHPlate, 0, len(st.plates))
+
+	for _, p := range st.plates {
+		ret = append(ret, p)
+	}
+
+	st.plates = make(map[string]*wtype.LHPlate)
+
+	return ret
+}
+
 func (st *SampleTracker) SetLocationOf(ID string, loc string) {
-	//fmt.Println("LOCATION OF ", ID, " SET TO ", loc)
+	//	fmt.Println("LOCATION OF ", ID, " SET TO ", loc)
 	st.records[ID] = loc
 }
 

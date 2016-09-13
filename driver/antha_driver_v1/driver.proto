@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package antha.driver.v1;
+
+service Driver {
+  rpc DriverType(TypeRequest) returns (TypeReply);
+}
+
+message TypeRequest {}
+
+message TypeReply {
+  string type = 1;
+}
+
+message HttpHeader {
+  string name = 1;
+  string value = 2;
+}
+
+// Remote Http call
+message HttpCall {
+  string url = 1;
+  string method = 2;
+  bytes body = 3;
+  repeated HttpHeader headers = 4;
+}

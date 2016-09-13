@@ -17,6 +17,7 @@ import (
 // Input parameters for this protocol (data)
 Parameters (
 	//Seqsinorder					map[string][]string // constructname to sequence combination
+	ProjectName					string
 	Standard						string //MoClo
 	StandardLevel				string // of assembly standard
 	Vectors						[]string
@@ -76,11 +77,11 @@ Steps {
 			for l := range RBSs {
 				for m := range CDSs {	
 					for n := range TERs {
-						key := 	"Contruct"+strconv.Itoa(counter)
+						key := 	ProjectName	+strconv.Itoa(counter)
 						assembly := RunSteps(AssemblyStandard_siteremove_orfcheck,
 		Parameters {
 					Constructname: 				key,
-					Seqsinorder:					[]string{PROs[k],RBSs[l],CDSs[m],TERs[n]},
+					Seqsinorder:				[]string{PROs[k],RBSs[l],CDSs[m],TERs[n]},
 					AssemblyStandard:			Standard,
 					Level:						StandardLevel, // of assembly standard
 					Vector:						Vectors[j],

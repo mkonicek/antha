@@ -22,6 +22,7 @@ import (
 // Input parameters for this protocol (data)
 
 //Seqsinorder					map[string][]string // constructname to sequence combination
+
 //MoClo
 // of assembly standard
 
@@ -63,7 +64,7 @@ func _CombinatorialLibraryDesign_PRO_RBS_CDS_mapSteps(_ctx context.Context, _inp
 			for l := range _input.RBSs {
 				for m := range _input.CDSs {
 					for n := range _input.TERs {
-						key := "Contruct" + strconv.Itoa(counter)
+						key := _input.ProjectName + strconv.Itoa(counter)
 						assembly := AssemblyStandard_siteremove_orfcheckRunSteps(_ctx, &AssemblyStandard_siteremove_orfcheckInput{Constructname: key,
 							Seqsinorder:                   []string{_input.PROs[k], _input.RBSs[l], _input.CDSs[m], _input.TERs[n]},
 							AssemblyStandard:              _input.Standard,
@@ -169,6 +170,7 @@ type CombinatorialLibraryDesign_PRO_RBS_CDS_mapInput struct {
 	BlastSearchSeqs bool
 	CDSs            []string
 	PROs            []string
+	ProjectName     string
 	RBSs            []string
 	SitesToRemove   []string
 	Standard        string
@@ -211,9 +213,10 @@ func init() {
 				{Name: "BlastSearchSeqs", Desc: "", Kind: "Parameters"},
 				{Name: "CDSs", Desc: "", Kind: "Parameters"},
 				{Name: "PROs", Desc: "", Kind: "Parameters"},
+				{Name: "ProjectName", Desc: "Seqsinorder\t\t\t\t\tmap[string][]string // constructname to sequence combination\n", Kind: "Parameters"},
 				{Name: "RBSs", Desc: "", Kind: "Parameters"},
 				{Name: "SitesToRemove", Desc: "", Kind: "Parameters"},
-				{Name: "Standard", Desc: "Seqsinorder\t\t\t\t\tmap[string][]string // constructname to sequence combination\n\nMoClo\n", Kind: "Parameters"},
+				{Name: "Standard", Desc: "MoClo\n", Kind: "Parameters"},
 				{Name: "StandardLevel", Desc: "of assembly standard\n", Kind: "Parameters"},
 				{Name: "TERs", Desc: "", Kind: "Parameters"},
 				{Name: "Vectors", Desc: "", Kind: "Parameters"},

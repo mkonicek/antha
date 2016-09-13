@@ -13,14 +13,19 @@ import (
 	"github.com/antha-lang/antha/target/human"
 )
 
+const (
+	useTreePartition = false
+)
+
 // Intermediate representation.
 type ir struct {
-	Root        ast.Node
-	Graph       *ast.Graph              // Graph of ast.Nodes
-	CommandTree graph.Graph             // Tree of ast.Commands (and potentially BundleExpr root)
-	DeviceDeps  graph.QGraph            // Dependencies of druns
-	assignment  map[ast.Node]*drun      // From Commands/Root to device runs
-	output      map[*drun][]target.Inst // Output of device-specific planners
+	Root         ast.Node
+	Graph        *ast.Graph                  // Graph of ast.Nodes
+	Commands     graph.Graph                 // DAG of ast.Commands (and potentially BundleExpr root)
+	DeviceDeps   graph.QGraph                // Dependencies of druns
+	reachingUses map[ast.Node][]*ast.UseComp // Reaching comps
+	assignment   map[ast.Node]*drun          // From Commands/Root to device runs
+	output       map[*drun][]target.Inst     // Output of device-specific planners
 }
 
 // Print out IR for debugging
@@ -29,12 +34,26 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 		Graph: g,
 		NodeLabelers: []graph.Labeler{
 			func(x interface{}) string {
+				if c, ok := x.(*ast.Command); ok {
+					return fmt.Sprintf("%T", c.Inst)
+				} else {
+					return ""
+				}
+			},
+			func(x interface{}) string {
 				n := x.(ast.Node)
 				drun := a.assignment[n]
 				if drun != nil {
 					return fmt.Sprintf("Run %p Device %p %s", drun, drun.Device, drun.Device)
 				}
 				return "NoRun"
+			},
+			func(x interface{}) string {
+				n := x.(ast.Node)
+				if u, ok := n.(*ast.UseComp); ok {
+					return u.Value.CName
+				}
+				return ""
 			},
 		},
 	})
@@ -47,28 +66,47 @@ type drun struct {
 	Device target.Device
 }
 
+func (a *ir) partition(opt graph.PartitionTreeOpt) (*graph.TreePartition, error) {
+	if useTreePartition {
+		if err := graph.IsTree(opt.Tree, opt.Root); err != nil {
+			return nil, err
+		}
+		return graph.PartitionTree(opt)
+	}
+
+	ret := &graph.TreePartition{
+		Parts: make(map[graph.Node]int),
+	}
+	// Simple first-fit algorithm but handles arbitrary graph structures
+	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i += 1 {
+		n := opt.Tree.Node(i)
+		ret.Parts[n] = opt.Colors(n)[0]
+	}
+	return ret, nil
+}
+
 // Assign runs of a device to each ApplyExpr. Construct initial plan by
 // by maximally coalescing ApplyExprs with the same device into the same
 // device run.
 func (a *ir) assignDevices(t *target.Target) error {
 	// A bundle's requests is the sum of its children
 	bundleReqs := func(n *ast.Bundle) (reqs []ast.Request) {
-		for i, inum := 0, a.CommandTree.NumOuts(n); i < inum; i += 1 {
-			kid := a.CommandTree.Out(n, i)
-			if c, ok := kid.(ast.Command); ok {
-				reqs = append(reqs, c.Requests()...)
+		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i += 1 {
+			kid := a.Commands.Out(n, i)
+			if c, ok := kid.(*ast.Command); ok {
+				reqs = append(reqs, c.Requests...)
 			}
 		}
 		return
 	}
 
 	colors := make(map[ast.Node][]target.Device)
-	for i, inum := 0, a.CommandTree.NumNodes(); i < inum; i += 1 {
-		n := a.CommandTree.Node(i).(ast.Node)
+	for i, inum := 0, a.Commands.NumNodes(); i < inum; i += 1 {
+		n := a.Commands.Node(i).(ast.Node)
 		var reqs []ast.Request
 		isBundle := false
-		if c, ok := n.(ast.Command); ok {
-			reqs = c.Requests()
+		if c, ok := n.(*ast.Command); ok {
+			reqs = c.Requests
 		} else if b, ok := n.(*ast.Bundle); ok {
 			// Try to find device that can do everything
 			reqs = bundleReqs(b)
@@ -100,8 +138,8 @@ func (a *ir) assignDevices(t *target.Target) error {
 		}
 	}
 
-	r, err := graph.PartitionTree(graph.PartitionTreeOpt{
-		Tree: a.CommandTree,
+	r, err := a.partition(graph.PartitionTreeOpt{
+		Tree: a.Commands,
 		Root: a.Root,
 		Colors: func(n graph.Node) (r []int) {
 			for _, d := range colors[n.(ast.Node)] {
@@ -133,8 +171,8 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 
 	kidRun := func(n ast.Node) *drun {
 		m := make(map[*drun]bool)
-		for i, inum := 0, a.CommandTree.NumOuts(n); i < inum; i += 1 {
-			kid := a.CommandTree.Out(n, i).(ast.Node)
+		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i += 1 {
+			kid := a.Commands.Out(n, i).(ast.Node)
 			m[run[kid]] = true
 			if device[kid] != device[n] {
 				return nil
@@ -149,7 +187,7 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 		return nil
 	}
 
-	dag := graph.Schedule(graph.Reverse(a.CommandTree))
+	dag := graph.Schedule(graph.Reverse(a.Commands))
 
 	for len(dag.Roots) > 0 {
 		var next []graph.Node
@@ -181,7 +219,7 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 // planner capabilities and return output.
 func (a *ir) tryPlan() error {
 	dg := graph.MakeQuotient(graph.MakeQuotientOpt{
-		Graph: a.CommandTree,
+		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
 			return a.assignment[n.(ast.Node)]
 		},
@@ -196,9 +234,9 @@ func (a *ir) tryPlan() error {
 	// TODO: When splitting a mix sequence, adjust LHInstructions to place
 	// output samples on the same plate
 
-	cmds := make(map[*drun][]ast.Command)
+	cmds := make(map[*drun][]ast.Node)
 	for n, d := range a.assignment {
-		if c, ok := n.(ast.Command); !ok {
+		if c, ok := n.(*ast.Command); !ok {
 			continue
 		} else {
 			cmds[d] = append(cmds[d], c)
@@ -217,31 +255,6 @@ func (a *ir) tryPlan() error {
 	a.output = output
 
 	return nil
-}
-
-// Find the components that connect from to to
-func findComps(g graph.Graph, from, to ast.Node) []*ast.UseComp {
-	findComp := func(u *ast.UseComp, t ast.Node) *ast.UseComp {
-		for _, v := range u.From {
-			if v == t {
-				return u
-			}
-		}
-		return nil
-	}
-
-	var comps []*ast.UseComp
-	for i, inum := 0, g.NumOuts(to); i < inum; i += 1 {
-		n := g.Out(to, i)
-		if u, ok := n.(*ast.UseComp); !ok {
-			continue
-		} else if c := findComp(u, from); c == nil {
-			continue
-		} else {
-			comps = append(comps, c)
-		}
-	}
-	return comps
 }
 
 // Find best device to move a component between two devices
@@ -288,7 +301,7 @@ func splice(head, tail target.Inst, insts []target.Inst) {
 	}
 }
 
-// Create move of dependencies if neccessary
+// Create move of dependencies if necessary
 func (a *ir) addMove(t *target.Target, dnode graph.Node, run *drun) error {
 	rewrite := func(n ast.Node, cs []*ast.UseComp, move *ast.Move) {
 		m := make(map[ast.Node]bool)
@@ -313,17 +326,19 @@ func (a *ir) addMove(t *target.Target, dnode graph.Node, run *drun) error {
 		return r
 	}
 
-	moves := make(map[target.Device][]ast.Command)
+	moves := make(map[target.Device][]ast.Node)
 	for i, inum := 0, a.DeviceDeps.NumOrigs(dnode); i < inum; i += 1 {
 		n := a.DeviceDeps.Orig(dnode, i).(ast.Node)
-		for j, jnum := 0, a.CommandTree.NumOuts(n); j < jnum; j += 1 {
-			out := a.CommandTree.Out(n, j).(ast.Node)
+		for j, jnum := 0, a.Commands.NumOuts(n); j < jnum; j += 1 {
+			out := a.Commands.Out(n, j).(ast.Node)
 			if run == a.assignment[out] {
 				continue
 			}
 			// Command has input dependence on a previous run
-			if cs := findComps(a.Graph, out, n); len(cs) == 0 {
-				return fmt.Errorf("cannot find component to move")
+			cs := a.reachingUses[out.(*ast.Command)]
+			if len(cs) == 0 {
+				// Nothing to move
+				continue
 			} else if dev := findBestMoveDevice(t, out, n, a.assignment[out], run); dev == nil {
 				return fmt.Errorf("cannot find any device to move inputs")
 			} else {
@@ -364,7 +379,7 @@ func (a *ir) addMove(t *target.Target, dnode graph.Node, run *drun) error {
 // Add implied moves between devices
 func (a *ir) addMoves(t *target.Target) error {
 	a.DeviceDeps = graph.MakeQuotient(graph.MakeQuotientOpt{
-		Graph: a.CommandTree,
+		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
 			return a.assignment[n.(ast.Node)]
 		},
@@ -460,12 +475,12 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 // Mark nodes as compiled
 func (a *ir) setOutputs() error {
 	for _, n := range a.Graph.Nodes {
-		if c, ok := n.(ast.Command); !ok {
+		if c, ok := n.(*ast.Command); !ok {
 			continue
-		} else if c.Output() != nil {
+		} else if c.Output != nil {
 			continue
 		} else if run := a.assignment[c]; run != nil {
-			c.SetOutput(run)
+			c.Output = run
 		}
 	}
 	return nil

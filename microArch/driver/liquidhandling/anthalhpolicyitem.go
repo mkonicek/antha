@@ -44,6 +44,7 @@ func MakePolicyItems() AnthaLHPolicyItemSet {
 	alhpis["PRE_MIX_Y"] = AnthaLHPolicyItem{Name: "PRE_MIX_Y", Type: typemap["float64"], Desc: "y offset from centre of well (mm) when pre-mixing"}
 	alhpis["PRE_MIX_Z"] = AnthaLHPolicyItem{Name: "PRE_MIX_Z", Type: typemap["float64"], Desc: "z offset from centre of well (mm) when pre-mixing"}
 	alhpis["TIP_REUSE_LIMIT"] = AnthaLHPolicyItem{Name: "TIP_REUSE_LIMIT", Type: typemap["int"], Desc: "number of times tips can be reused for asp/dsp cycles"}
+	alhpis["RESET_OVERRIDE"] = AnthaLHPolicyItem{Name: "RESET_OVERRIDE", Type: typemap["bool"], Desc: "whether to BLOWOUT after dispense"}
 	alhpis["TOUCHOFF"] = AnthaLHPolicyItem{Name: "TOUCHOFF", Type: typemap["bool"], Desc: "whether to move to TOUCHOFFSET after dispense"}
 	alhpis["TOUCHOFFSET"] = AnthaLHPolicyItem{Name: "TOUCHOFFSET", Type: typemap["float64"], Desc: "mm above wb to touch off at"}
 	return alhpis

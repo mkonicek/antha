@@ -34,6 +34,9 @@ Parameters (
 	FwdPrimerName string
 	RevPrimerName string
 	WellPosition string
+	Targetsequence wtype.DNASequence
+	FwdPrimerSeq wtype.DNASequence
+	RevPrimerSeq wtype.DNASequence
 	/*
 	// let's be ambitious and try this as part of type polymerase Polymeraseconc Volume
 	
@@ -56,6 +59,8 @@ Parameters (
 
 // Data which is returned from this protocol, and data types
 Data (
+	FWDPrimerBindingSiteinTemplate int
+	RevPrimerBindingSiteinTemplate int
 )
 
 

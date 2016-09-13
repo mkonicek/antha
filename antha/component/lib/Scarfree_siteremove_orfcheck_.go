@@ -16,6 +16,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/igem"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -40,6 +41,7 @@ import (
 // Data which is returned from this protocol, and data types
 
 // parts to order
+
 // desired sequence to end up with after assembly
 
 // Input Requirement specification
@@ -121,6 +123,10 @@ func _Scarfree_siteremove_orfcheckSteps(_ctx context.Context, _input *Scarfree_s
 		}
 		partsinorder = append(partsinorder, partDNA)
 	}
+
+	// export original parts list
+
+	_output.OriginalParts = partsinorder
 
 	warnings = append(warnings, fmt.Sprintln(partsinorder))
 
@@ -204,6 +210,9 @@ func _Scarfree_siteremove_orfcheckSteps(_ctx context.Context, _input *Scarfree_s
 		}
 	}
 
+	// export the parts list with sites removed
+	_output.PartsWithSitesRemoved = partsinorder
+
 	// make vector into an antha type DNASequence
 	if inventorydata, found := inventory.Partslist[_input.Vector]; found {
 		vectordata = inventorydata
@@ -238,13 +247,23 @@ func _Scarfree_siteremove_orfcheckSteps(_ctx context.Context, _input *Scarfree_s
 
 	// Check that assembly is feasible with designed parts by simulating assembly of the sequences with the chosen enzyme
 	assembly := enzymes.Assemblyparameters{_input.Constructname, restrictionenzyme.Name, vectordata, _output.PartswithOverhangs}
-	status, numberofassemblies, _, newDNASequence, err := enzymes.Assemblysimulator(assembly)
+	status, numberofassemblies, _, newDNASequence, simerr := enzymes.Assemblysimulator(assembly)
+
+	if simerr != nil {
+		warnings = append(warnings, text.Print("Error", simerr.Error()))
+	}
+
+	_output.Plasmid, _output.ORIpresent, _output.SelectionMarkerPresent, err = features.ValidPlasmid(newDNASequence)
+
+	if err != nil {
+		warnings = append(warnings, text.Print("Error", err.Error()))
+	}
 
 	endreport := "Endreport only run in the event of assembly simulation failure"
 	//sites := "Restriction mapper only run in the event of assembly simulation failure"
 	newDNASequence.Nm = _input.Constructname
 	_output.NewDNASequence = newDNASequence
-	if err == nil && numberofassemblies == 1 {
+	if simerr == nil && numberofassemblies == 1 {
 
 		_output.Simulationpass = true
 	} // else {
@@ -425,26 +444,36 @@ type Scarfree_siteremove_orfcheckInput struct {
 }
 
 type Scarfree_siteremove_orfcheckOutput struct {
-	Endreport          string
-	NewDNASequence     wtype.DNASequence
-	ORFmissing         bool
-	PartswithOverhangs []wtype.DNASequence
-	PositionReport     []string
-	Simulationpass     bool
-	Status             string
-	Warnings           error
+	Endreport              string
+	NewDNASequence         wtype.DNASequence
+	ORFmissing             bool
+	ORIpresent             bool
+	OriginalParts          []wtype.DNASequence
+	PartsWithSitesRemoved  []wtype.DNASequence
+	PartswithOverhangs     []wtype.DNASequence
+	Plasmid                bool
+	PositionReport         []string
+	SelectionMarkerPresent bool
+	Simulationpass         bool
+	Status                 string
+	Warnings               error
 }
 
 type Scarfree_siteremove_orfcheckSOutput struct {
 	Data struct {
-		Endreport          string
-		NewDNASequence     wtype.DNASequence
-		ORFmissing         bool
-		PartswithOverhangs []wtype.DNASequence
-		PositionReport     []string
-		Simulationpass     bool
-		Status             string
-		Warnings           error
+		Endreport              string
+		NewDNASequence         wtype.DNASequence
+		ORFmissing             bool
+		ORIpresent             bool
+		OriginalParts          []wtype.DNASequence
+		PartsWithSitesRemoved  []wtype.DNASequence
+		PartswithOverhangs     []wtype.DNASequence
+		Plasmid                bool
+		PositionReport         []string
+		SelectionMarkerPresent bool
+		Simulationpass         bool
+		Status                 string
+		Warnings               error
 	}
 	Outputs struct {
 	}
@@ -470,8 +499,13 @@ func init() {
 				{Name: "Endreport", Desc: "", Kind: "Data"},
 				{Name: "NewDNASequence", Desc: "desired sequence to end up with after assembly\n", Kind: "Data"},
 				{Name: "ORFmissing", Desc: "", Kind: "Data"},
+				{Name: "ORIpresent", Desc: "", Kind: "Data"},
+				{Name: "OriginalParts", Desc: "", Kind: "Data"},
+				{Name: "PartsWithSitesRemoved", Desc: "", Kind: "Data"},
 				{Name: "PartswithOverhangs", Desc: "parts to order\n", Kind: "Data"},
+				{Name: "Plasmid", Desc: "", Kind: "Data"},
 				{Name: "PositionReport", Desc: "", Kind: "Data"},
+				{Name: "SelectionMarkerPresent", Desc: "", Kind: "Data"},
 				{Name: "Simulationpass", Desc: "", Kind: "Data"},
 				{Name: "Status", Desc: "", Kind: "Data"},
 				{Name: "Warnings", Desc: "", Kind: "Data"},

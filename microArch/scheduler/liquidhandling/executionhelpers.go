@@ -143,7 +143,7 @@ func set_output_order(rq *LHRequest) error {
 	it := NewIChain(nil)
 
 	for _, v := range sorted {
-		//fmt.Println("V: ", v.Result.CName, " PARENTS: ", v.ParentString(), " RESULT : ", v.Result.ID, " GENERATION: ", v.Generation())
+		//	fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
 
 		it.Add(v)
 	}
@@ -211,118 +211,118 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 		cmps = cmps[1:len(cmps)]
 	}
 
-	wh := make([]string, lenToMake)       // component types
-	va := make([]wunit.Volume, lenToMake) // volumes
+	wh := make([]string, 0, lenToMake)       // component types
+	va := make([]wunit.Volume, 0, lenToMake) // volumes
 
-	// six parameters applying to the source
-
-	fromPlateID, fromWells, err := robot.GetComponents(cmps, carryvol)
+	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol)
 
 	if err != nil {
 		return nil, err
 	}
 
-	pf := make([]string, lenToMake)
-	wf := make([]string, lenToMake)
-	pfwx := make([]int, lenToMake)
-	pfwy := make([]int, lenToMake)
-	vf := make([]wunit.Volume, lenToMake)
-	ptt := make([]string, lenToMake)
+	pf := make([]string, 0, lenToMake)
+	wf := make([]string, 0, lenToMake)
+	pfwx := make([]int, 0, lenToMake)
+	pfwy := make([]int, 0, lenToMake)
+	vf := make([]wunit.Volume, 0, lenToMake)
+	ptt := make([]string, 0, lenToMake)
 
 	// six parameters applying to the destination
 
-	pt := make([]string, lenToMake)       // dest plate positions
-	wt := make([]string, lenToMake)       // dest wells
-	ptwx := make([]int, lenToMake)        // dimensions of plate pipetting to (X)
-	ptwy := make([]int, lenToMake)        // dimensions of plate pipetting to (Y)
-	vt := make([]wunit.Volume, lenToMake) // volume in well to
-	ptf := make([]string, lenToMake)      // plate types
+	pt := make([]string, 0, lenToMake)       // dest plate positions
+	wt := make([]string, 0, lenToMake)       // dest wells
+	ptwx := make([]int, 0, lenToMake)        // dimensions of plate pipetting to (X)
+	ptwy := make([]int, 0, lenToMake)        // dimensions of plate pipetting to (Y)
+	vt := make([]wunit.Volume, 0, lenToMake) // volume in well to
+	ptf := make([]string, 0, lenToMake)      // plate types
 
-	ix := 0
+	for i, v := range cmps {
+		/*
+			if insIn.IsMixInPlace() && i == 0 {
+				continue
+			}
+		*/
 
-	for i, v := range insIn.Components {
-		if insIn.IsMixInPlace() && i == 0 {
-			continue
+		for xx, _ := range fromPlateIDs[i] {
+			// get dem big ole plates out
+			// TODO -- pass them in instead of all this nonsense
+
+			var flhp, tlhp *wtype.LHPlate
+
+			flhif := robot.PlateLookup[fromPlateIDs[i][xx]]
+
+			if flhif != nil {
+				flhp = flhif.(*wtype.LHPlate)
+			} else {
+				s := fmt.Sprint("NO SRC PLATE FOUND : ", i, " ", xx, " ", fromPlateIDs[i][xx])
+				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
+
+				return nil, err
+			}
+
+			tlhif := robot.PlateLookup[insIn.PlateID()]
+
+			if tlhif != nil {
+				tlhp = tlhif.(*wtype.LHPlate)
+			} else {
+				s := fmt.Sprint("NO DST PLATE FOUND : ", i, " ", xx, " ", insIn.PlateID())
+				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
+
+				return nil, err
+			}
+
+			wlt, ok := tlhp.WellAtString(insIn.Welladdress)
+
+			if !ok {
+				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", insIn.Welladdress, " not found on dest plate ", insIn.PlateID))
+				return nil, err
+			}
+
+			//v2 := wunit.NewVolume(v.Vol, v.Vunit)
+			v2 := volss[i][xx]
+			vt = append(vt, wlt.CurrVolume())
+			wh = append(wh, v.TypeName())
+			va = append(va, v2)
+			pt = append(pt, robot.PlateIDLookup[insIn.PlateID()])
+			wt = append(wt, insIn.Welladdress)
+			ptwx = append(ptwx, tlhp.WellsX())
+			ptwy = append(ptwy, tlhp.WellsY())
+			ptt = append(ptt, tlhp.Type)
+
+			wlf, ok := flhp.WellAtString(fromWellss[i][xx])
+
+			if !ok {
+				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
+				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWellss[i][xx], " not found on source plate ", fromPlateIDs[i][xx]))
+				return nil, err
+			}
+
+			vf = append(vf, wlf.CurrVolume())
+			//wlf.Remove(va[ix])
+
+			pf = append(pf, robot.PlateIDLookup[fromPlateIDs[i][xx]])
+			wf = append(wf, fromWellss[i][xx])
+			pfwx = append(pfwx, flhp.WellsX())
+			pfwy = append(pfwy, flhp.WellsY())
+			ptf = append(ptf, flhp.Type)
+
+			if v.Loc == "" {
+				v.Loc = fromPlateIDs[i][xx] + ":" + fromWellss[i][xx]
+			}
+			// add component to destination
+			// need to ensure data are consistent
+			vd := v.Dup()
+			vd.ID = wlf.WContents.ID
+			vd.ParentID = wlf.WContents.ParentID
+			wlt.Add(vd)
+
+			// add daughter ID to component in
+
+			wlf.WContents.AddDaughterComponent(wlt.WContents)
+
+			//fmt.Println("HERE GOES: ", i, wh[i], vf[i].ToString(), vt[i].ToString(), va[i].ToString(), pt[i], wt[i], pf[i], wf[i], pfwx[i], pfwy[i], ptwx[i], ptwy[i])
+
 		}
-
-		// get dem big ole plates out
-		// TODO -- pass them in instead of all this nonsense
-
-		var flhp, tlhp *wtype.LHPlate
-
-		flhif := robot.PlateLookup[fromPlateID[ix]]
-
-		if flhif != nil {
-			flhp = flhif.(*wtype.LHPlate)
-		} else {
-			s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateID[ix])
-			err := wtype.LHError(wtype.LH_ERR_DIRE, s)
-
-			return nil, err
-		}
-
-		tlhif := robot.PlateLookup[insIn.PlateID()]
-
-		if tlhif != nil {
-			tlhp = tlhif.(*wtype.LHPlate)
-		} else {
-			s := fmt.Sprint("NO DST PLATE FOUND : ", ix, " ", insIn.PlateID())
-			err := wtype.LHError(wtype.LH_ERR_DIRE, s)
-
-			return nil, err
-		}
-
-		wlt, ok := tlhp.WellAtString(insIn.Welladdress)
-
-		if !ok {
-			err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", insIn.Welladdress, " not found on dest plate ", insIn.PlateID))
-			return nil, err
-		}
-
-		v2 := wunit.NewVolume(v.Vol, v.Vunit)
-		vt[ix] = wlt.CurrVolume()
-		wh[ix] = v.TypeName()
-		va[ix] = v2
-		pt[ix] = robot.PlateIDLookup[insIn.PlateID()]
-		wt[ix] = insIn.Welladdress
-		ptwx[ix] = tlhp.WellsX()
-		ptwy[ix] = tlhp.WellsY()
-		ptt[ix] = tlhp.Type
-
-		wlf, ok := flhp.WellAtString(fromWells[ix])
-
-		if !ok {
-			//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
-			err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
-			return nil, err
-		}
-
-		vf[ix] = wlf.CurrVolume()
-		//wlf.Remove(va[ix])
-
-		pf[ix] = robot.PlateIDLookup[fromPlateID[ix]]
-		wf[ix] = fromWells[ix]
-		pfwx[ix] = flhp.WellsX()
-		pfwy[ix] = flhp.WellsY()
-		ptf[ix] = flhp.Type
-
-		if v.Loc == "" {
-			v.Loc = fromPlateID[ix] + ":" + fromWells[ix]
-		}
-		// add component to destination
-		// need to ensure data are consistent
-		vd := v.Dup()
-		vd.ID = wlf.WContents.ID
-		vd.ParentID = wlf.WContents.ParentID
-		wlt.Add(vd)
-
-		// add daughter ID to component in
-
-		wlf.WContents.AddDaughterComponent(wlt.WContents)
-
-		//fmt.Println("HERE GOES: ", i, wh[i], vf[i].ToString(), vt[i].ToString(), va[i].ToString(), pt[i], wt[i], pf[i], wf[i], pfwx[i], pfwy[i], ptwx[i], ptwy[i])
-
-		ix += 1
 	}
 
 	ti := driver.TransferInstruction{Type: driver.TFR, What: wh, Volume: va, PltTo: pt, WellTo: wt, TPlateWX: ptwx, TPlateWY: ptwy, PltFrom: pf, WellFrom: wf, FPlateWX: pfwx, FPlateWY: pfwy, FVolume: vf, TVolume: vt, FPlateType: ptf, TPlateType: ptt}

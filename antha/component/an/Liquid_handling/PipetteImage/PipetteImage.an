@@ -40,7 +40,7 @@ Data (
 
 // Physical Inputs to this protocol with types
 Inputs (
-
+	ComponentType *wtype.LHComponent
 	OutPlate *wtype.LHPlate
 )
 
@@ -68,7 +68,7 @@ Steps {
 	if Subset {
 		chosencolourpalette = image.MakeSubPallette(Palettename, Subsetnames)
 	}else {
-		chosencolourpalette = image.AvailablePalettes[Palettename]
+		chosencolourpalette = image.AvailablePalettes()[Palettename]
 	}
 	
 	
@@ -79,13 +79,13 @@ Steps {
 	// the output of this is a map of well positions to colours needed
 	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette,Rotate,AutoRotate) 
 	
-	colourtostringmap := image.AvailableComponentmaps[Palettename]
+	colourtostringmap := image.AvailableComponentmaps()[Palettename]
 	
 	// if the image will be printed using fluorescent proteins, 2 previews will be generated for the image (i) under UV light (ii) under visible light 
 	
 	if UVimage {
-		uvmap := image.AvailableComponentmaps[Palettename]
-		visiblemap := image.Visibleequivalentmaps[Palettename]
+		uvmap := image.AvailableComponentmaps()[Palettename]
+		visiblemap := image.Visibleequivalentmaps()[Palettename]
 		
 		if Subset {
 		uvmap = image.MakeSubMapfromMap(colourtostringmap, Subsetnames)
@@ -105,7 +105,17 @@ Steps {
 
 		componentname := colourtostringmap[colourname]
 
-		componentmap[componentname] = factory.GetComponentByType(componentname)
+		// use template component instead
+		var componenttopick *wtype.LHComponent
+		
+		if ComponentType != nil{
+		componenttopick = ComponentType
+		} else { 
+		componenttopick = factory.GetComponentByType("Paint")
+		}
+		componenttopick.CName = componentname
+
+		componentmap[componentname] = componenttopick
 
 	}
 	//fmt.Println(componentmap)

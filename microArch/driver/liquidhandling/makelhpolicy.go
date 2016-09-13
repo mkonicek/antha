@@ -70,6 +70,8 @@ var AvailablePolicyfiles []PolicyFile = []PolicyFile{
 	MakePolicyFile("newdesign2factorsonly.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 2000),
 	MakePolicyFile("190516OnePolicy.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 3000),
 	MakePolicyFile("AssemblycategoricScreen.xlsx", "JMP", &[]int{1, 2, 3, 4, 5}, 4000),
+	MakePolicyFile("090816dispenseerrordiagnosis.xlsx", "JMP", &[]int{2}, 5000),
+	MakePolicyFile("090816combineddesign.xlsx", "JMP", &[]int{1}, 6000),
 }
 
 // change to range through several files
@@ -355,7 +357,8 @@ func MakePEGPolicy() LHPolicy {
 	policy["DSPZOFFSET"] = 2.5
 	policy["POST_MIX"] = 3
 	policy["POST_MIX_Z"] = 3.5
-	policy["BLOWOUTVOLUME"] = 0.0
+	policy["POST_MIX_VOLUME"] = 190.0
+	policy["BLOWOUTVOLUME"] = 50.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = true
 	policy["CAN_MULTI"] = false
@@ -403,7 +406,7 @@ func MakeDispenseAboveLiquidPolicy() LHPolicy {
 	policy["DSP_SPEED"] = 3.0
 	//policy["ASP_WAIT"] = 1.0
 	//policy["DSP_WAIT"] = 1.0
-	policy["BLOWOUTVOLUME"] = 0.0
+	policy["BLOWOUTVOLUME"] = 50.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = false
 	policy["CAN_MULTI"] = false
@@ -436,7 +439,7 @@ func MakeWaterPolicy() LHPolicy {
 	waterpolicy["CAN_MSA"] = true
 	waterpolicy["CAN_SDD"] = true
 	waterpolicy["DSPZOFFSET"] = 1.0
-	waterpolicy["BLOWOUTVOLUME"] = 0.0
+	waterpolicy["BLOWOUTVOLUME"] = 50.0
 	return waterpolicy
 }
 func MakeFoamyPolicy() LHPolicy {
@@ -550,6 +553,10 @@ func MakeDNAPolicy() LHPolicy {
 	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
 	dnapolicy["NO_AIR_DISPENSE"] = true
+	dnapolicy["POST_MIX_VOLUME"] = 5.0
+	dnapolicy["POST_MIX"] = 1
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 3.0
 	return dnapolicy
 }
 
@@ -579,7 +586,7 @@ func MakeDetergentPolicy() LHPolicy {
 func MakeProteinPolicy() LHPolicy {
 	proteinpolicy := make(LHPolicy, 10)
 	proteinpolicy["POST_MIX"] = 5
-	proteinpolicy["POST_MIX_VOLUME"] = 50
+	proteinpolicy["POST_MIX_VOLUME"] = 50.0
 	proteinpolicy["ASPSPEED"] = 2.0
 	proteinpolicy["DSPSPEED"] = 2.0
 	proteinpolicy["CAN_MULTI"] = false
@@ -652,7 +659,7 @@ func MakeLoadlowPolicy() LHPolicy {
 func MakeNeedToMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 15)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 10
+	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
 	dnapolicy["PRE_MIX_VOLUME"] = 10
@@ -672,10 +679,10 @@ func MakeNeedToMixPolicy() LHPolicy {
 func PreMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 12)
 	//dnapolicy["POST_MIX"] = 3
-	//dnapolicy["POST_MIX_VOLUME"] = 10
+	//dnapolicy["POST_MIX_VOLUME"] = 10.0
 	//dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
-	dnapolicy["PRE_MIX_VOLUME"] = 10
+	dnapolicy["PRE_MIX_VOLUME"] = 10.0
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
@@ -693,7 +700,7 @@ func PreMixPolicy() LHPolicy {
 func PostMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 10
+	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	//dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
@@ -727,8 +734,11 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["CAN_SDD"] = true
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
+
+	defaultpolicy["BLOWOUTVOLUME"] = 50.0
+
 	defaultpolicy["BLOWOUTOFFSET"] = 0.0 //-5.0
-	defaultpolicy["BLOWOUTVOLUME"] = 0.0
+
 	defaultpolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	defaultpolicy["PTZREFERENCE"] = 1
 	defaultpolicy["PTZOFFSET"] = -0.5
@@ -744,8 +754,8 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["PRE_MIX_Z"] = 0.5
 	//defaultpolicy["ASP_WAIT"] = 1.0
 	//defaultpolicy["DSP_WAIT"] = 1.0
-	defaultpolicy["PRE_MIX_VOLUME"] = 10
-	defaultpolicy["POST_MIX_VOLUME"] = 10
+	defaultpolicy["PRE_MIX_VOLUME"] = 10.0
+	defaultpolicy["POST_MIX_VOLUME"] = 10.0
 
 	return defaultpolicy
 }
@@ -863,15 +873,18 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	*/
 
-	// remove blowout from gilson
-	rule = NewLHPolicyRule("NoBlowoutForGilson")
-	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+	// this is commented out to diagnose the dispense error
+	/*
+			// remove blowout from gilson
+			rule = NewLHPolicyRule("NoBlowoutForGilson")
+			rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
 
-	policy := make(LHPolicy, 6)
-	policy["RESET_OVERRIDE"] = true
+			policy := make(LHPolicy, 6)
+			policy["RESET_OVERRIDE"] = true
 
-	lhpr.AddRule(rule, policy)
 
+		lhpr.AddRule(rule, policy)
+	*/
 	return lhpr, nil
 
 }

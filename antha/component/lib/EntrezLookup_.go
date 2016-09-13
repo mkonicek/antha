@@ -44,7 +44,6 @@ func _EntrezLookupSteps(_ctx context.Context, _input *EntrezLookupInput, _output
 	_output.Filenameused, output, _output.Err = entrez.RetrieveRecords(_input.ID, _input.Database, _input.MaxReturns, _input.ReturnType, _input.Filename)
 
 	_output.Output = string(output)
-
 }
 
 // Actions to perform after steps block to analyze data

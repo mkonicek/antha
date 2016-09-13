@@ -154,7 +154,6 @@ func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHCompone
 	ret.Visc = l.GetVisc()
 	//logger.Track(fmt.Sprintf("SAMPLE T %s %s %s", l.ID, ret.ID, v.ToString()))
 	ret.SetSample(true)
-
 	return ret
 }
 
@@ -185,6 +184,7 @@ type MixOptions struct {
 	PlateType   string               // type of destination plate
 	Address     string               // Well in destination to place result; if nil, select one later
 	PlateNum    int                  // which plate to stick these on
+	PlateName   string               // which (named) plate to stick these on
 }
 
 func GenericMix(opt MixOptions) *wtype.LHInstruction {
@@ -198,12 +198,21 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		r.Result = opt.Result
 	} else {
 		r.Result = wtype.NewLHComponent()
+		mx := 0
+		for _, c := range opt.Components {
+			r.Result.MixPreserveTvol(c)
+			if c.Generation() > mx {
+				mx = c.Generation()
+			}
+		}
+		r.Result.SetGeneration(mx)
 	}
 
 	if opt.Destination != nil {
 		r.ContainerType = opt.Destination.Type
 		r.Platetype = opt.Destination.Type
 		r.SetPlateID(opt.Destination.ID)
+		r.OutPlate = opt.Destination
 	}
 
 	if opt.PlateType != "" {
@@ -218,6 +227,19 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	if opt.PlateNum > 0 {
 		r.Majorlayoutgroup = opt.PlateNum - 1
 	}
+
+	if opt.PlateName != "" {
+		r.PlateName = opt.PlateName
+	}
+
+	// oh yus oh yus oh yus
+
+	s := ""
+	for _, v := range r.Components {
+		s += v.CName + "-" + v.ID + " "
+	}
+
+	//fmt.Println("GENERATION: ", r.Result.Generation(), "MIXING : ", s, " RESULT: ", r.Result.CName+"-"+r.Result.ID)
 
 	return r
 }

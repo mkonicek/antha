@@ -31,6 +31,8 @@ import (
 
 // robot here should be a copy... this routine will be destructive of state
 func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
+	rbtcpy := robot.Dup()
+
 	// get timer to assess evaporation etc.
 
 	timer := robot.GetTimer()
@@ -66,7 +68,7 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 		// now assuming we don't change instruction order below (Safe?)
 		// we should be able to model evaporation here
 
-		instrx, _ := ris.Generate(request.Policies, robot)
+		instrx, _ := ris.Generate(request.Policies, rbtcpy)
 
 		if timer != nil {
 			var totaltime time.Duration
@@ -76,8 +78,10 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 
 			// evaporate stuff
 
-			myevap := robot.Evaporate(totaltime)
-			evaps = append(evaps, myevap...)
+			if request.Options.ModelEvaporation {
+				myevap := robot.Evaporate(totaltime)
+				evaps = append(evaps, myevap...)
+			}
 		}
 	}
 

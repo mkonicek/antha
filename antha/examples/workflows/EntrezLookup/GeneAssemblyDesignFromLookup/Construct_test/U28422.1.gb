@@ -1,0 +1,96 @@
+LOCUS       ATU28422                2240 bp    mRNA    linear   PLN 28-SEP-2001
+DEFINITION  Arabidopsis thaliana DNA-binding protein CCA1 (CCA1) mRNA, complete
+            cds.
+ACCESSION   U28422
+VERSION     U28422.1  GI:1777442
+KEYWORDS    .
+SOURCE      Arabidopsis thaliana (thale cress)
+  ORGANISM  Arabidopsis thaliana
+            Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
+            Spermatophyta; Magnoliophyta; eudicotyledons; Gunneridae;
+            Pentapetalae; rosids; malvids; Brassicales; Brassicaceae;
+            Camelineae; Arabidopsis.
+REFERENCE   1  (bases 1 to 2240)
+  AUTHORS   Wang,Z.Y., Kenigsbuch,D., Sun,L., Harel,E., Ong,M.S. and Tobin,E.M.
+  TITLE     A Myb-related transcription factor is involved in the phytochrome
+            regulation of an Arabidopsis Lhcb gene
+  JOURNAL   Plant Cell 9 (4), 491-507 (1997)
+   PUBMED   9144958
+REFERENCE   2  (bases 1 to 2240)
+  AUTHORS   Wang,Z.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (06-JUN-1995) Zhiyong Wang, Dept. of Biology, University
+            of California at Los Angeles, 405 Hillgard Ave., Los Angeles, CA
+            90095, USA
+FEATURES             Location/Qualifiers
+     source          1..2240
+                     /organism="Arabidopsis thaliana"
+                     /mol_type="mRNA"
+                     /db_xref="taxon:3702"
+                     /dev_stage="21-day-old green seedlings"
+                     /ecotype="Columbia"
+     gene            1..2240
+                     /gene="CCA1"
+     CDS             238..2064
+                     /gene="CCA1"
+                     /function="DNA binding protein"
+                     /note="myb-related DNA binding protein"
+                     /codon_start=1
+                     /product="CCA1"
+                     /protein_id="AAB40525.1"
+                     /db_xref="GI:1777443"
+                     /translation="METNSSGEDLVIKTRKPYTITKQRERWTEEEHNRFIEALRLYGR
+                     AWQKIEEHVATKTAVQIRSHAQKFFSKVEKEAEAKGVAMGQALDIAIPPPRPKRKPNN
+                     PYPRKTGSGTILMSKTGVNDGKESLGSEKVSHPEMANEDRQQSKPEEKTLQEDNCSDC
+                     FTHQYLSAASSMNKSCIETSNASTFREFLPSREEGSQNNRVRKESNSDLNAKSLENGN
+                     EQGPQTYPMHIPVLVPLGSSITSSLSHPPSEPDSHPHTVAGDYQSFPNHIMSTLLQTP
+                     ALYTAATFASSFWPPDSSGGSPVPGNSPPNLAAMAAATVAAASAWWAANGLLPLCAPL
+                     SSGGFTSHPPSTFGPSCDVEYTKASTLQHGSVQSREQEHSEASKARSSLDSEDVENKS
+                     KPVCHEQPSATPESDAKGSDGAGDRKQVDRSSCGSNTPSSSDDVEADASERQEDGTNG
+                     EVKETNEDTNKPQTSESNARRSRISSNITDPWKSVSDEGRIAFQALFSREVLPQSFTY
+                     REEHREEEQQQQEQRYPMALDLNFTAQLTPVDDQEEKRNTGFLGIGLDASKLMSRGRT
+                     GFKPYKRCSMEAKESRILNNNPIIHVEQKDPKRMRLETQAST"
+     polyA_site      2240
+                     /gene="CCA1"
+                     /note="14 A nucleotides"
+ORIGIN      
+        1 tgagatttct ccatttccgt agcttctggt ctcttttctt tgtttcattg atcaaaagca
+       61 aatcacttct tcttcttctt cttctcgatt tcttactgtt ttcttatcca acgaaatctg
+      121 gaattaaaaa tggaatcttt atcgaatcca agctgatttt gtttctttca ttgaatcatc
+      181 tctctaaagt ggaattttgt aaagagaaga tctgaagttg tgtagaggag cttagtgatg
+      241 gagacaaatt cgtctggaga agatctggtt attaagactc ggaagccata tacgataaca
+      301 aagcaacgtg aaaggtggac tgaggaagaa cataatagat tcattgaagc tttgaggctt
+      361 tatggtagag catggcagaa gattgaagaa catgtagcaa caaaaactgc tgtccagata
+      421 agaagtcacg ctcagaaatt tttctccaag gtagagaaag aggctgaagc taaaggtgta
+      481 gctatgggtc aagcgctaga catagctatt cctcctccac ggcctaagcg taaaccaaac
+      541 aatccttatc ctcgaaagac gggaagtgga acgatcctta tgtcaaaaac gggtgtgaat
+      601 gatggaaaag agtcccttgg atcagaaaaa gtgtcgcatc ctgagatggc caatgaagat
+      661 cgacaacaat caaagcctga agagaaaact ctgcaggaag acaactgttc agattgtttc
+      721 actcatcagt atctctctgc tgcatcctcc atgaataaaa gttgtataga gacatcaaac
+      781 gcaagcactt tccgcgagtt cttgccttca cgggaagagg gaagtcagaa taacagggta
+      841 agaaaggagt caaactcaga tttgaatgca aaatctctgg aaaacggtaa tgagcaagga
+      901 cctcagactt atccgatgca tatccctgtg ctagtgccat tggggagctc aataacaagt
+      961 tctctatcac atcctccttc agagccagat agtcatcccc acacagttgc aggagattat
+     1021 cagtcgtttc ctaatcatat aatgtcaacc cttttacaaa caccggctct ttatactgcc
+     1081 gcaactttcg cctcatcatt ttggcctccc gattctagtg gtggctcacc tgttccaggg
+     1141 aactcacctc cgaatctggc tgccatggcc gcagccactg ttgcagctgc tagtgcttgg
+     1201 tgggctgcca atggattatt acctttatgt gctcctctta gttcaggtgg tttcactagt
+     1261 catcctccat ctacttttgg accatcatgt gatgtagagt acacaaaagc aagcacttta
+     1321 caacatggtt ctgtgcagag ccgagagcaa gaacactccg aggcatcaaa ggctcgatct
+     1381 tcactggact cagaggatgt tgaaaataag agtaaaccag tttgtcatga gcagccttct
+     1441 gcaacacctg agagtgatgc aaagggttca gatggagcag gagacagaaa acaagttgac
+     1501 cggtcctcgt gtggctcaaa cactccgtcg agtagtgatg atgttgaggc ggatgcatca
+     1561 gaaaggcaag aggatggcac caatggtgag gtgaaagaaa cgaatgaaga cactaataaa
+     1621 cctcaaactt cagagtccaa tgcacgccgc agtagaatca gctccaatat aaccgatcca
+     1681 tggaagtctg tgtctgacga gggtcgaatt gccttccaag ctctcttctc cagagaggta
+     1741 ttgccgcaaa gttttacata tcgagaagaa cacagagagg aagaacaaca acaacaagaa
+     1801 caaagatatc caatggcact tgatcttaac ttcacagctc agttaacacc agttgatgat
+     1861 caagaggaga agagaaacac aggatttctt ggaatcggat tagatgcttc aaagctaatg
+     1921 agtagaggaa gaacaggttt taaaccatac aaaagatgtt ccatggaagc caaagaaagt
+     1981 agaatcctca acaacaatcc tatcattcat gtggaacaga aagatcccaa acggatgcgg
+     2041 ttggaaactc aagcttccac atgagactct attttcatct gatctgttgt ttgtactctg
+     2101 tttttaagtt ttcaagacca ctgctacatt ttctttttct tttgaggcct ttgtatttgt
+     2161 ttccttgtcc atagtcttcc tgtaacattt gactctgtat tattcaacaa atcataaact
+     2221 gtttaatctt tttttttcca
+//
+

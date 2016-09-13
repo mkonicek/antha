@@ -4,7 +4,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
-	"fmt"
 )
 
 // Input parameters for this protocol (data)
@@ -79,8 +78,6 @@ Steps {
 	
 
 	for k, part := range Parts {
-		fmt.Println("creating dna part num ", k, " comp ", part.CName, " renamed to ", PartSeqs[k].Nm, " vol ", PartVols[k])
-		
 		part.Type, err = wtype.LiquidTypeFromString(LHPolicyName)
 		
 		if err != nil {

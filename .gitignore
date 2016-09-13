@@ -45,6 +45,7 @@ cmd/anthafmt/anthafmt
 
 *~
 /reports
+output.json
 
 reference/reference_run/main
 

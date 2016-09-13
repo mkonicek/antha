@@ -1,7 +1,6 @@
 package target
 
 import (
-	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 )
@@ -25,26 +24,6 @@ type Files struct {
 type RunInst interface {
 	Inst
 	Data() Files // Blob of data that is runnable
-}
-
-type Graph struct {
-	Insts []Inst
-}
-
-func (a *Graph) NumNodes() int {
-	return len(a.Insts)
-}
-
-func (a *Graph) Node(i int) graph.Node {
-	return a.Insts[i]
-}
-
-func (a *Graph) NumOuts(n graph.Node) int {
-	return len(n.(Inst).DependsOn())
-}
-
-func (a *Graph) Out(n graph.Node, i int) graph.Node {
-	return n.(Inst).DependsOn()[i]
 }
 
 type CmpError struct {

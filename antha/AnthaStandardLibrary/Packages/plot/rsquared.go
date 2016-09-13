@@ -27,7 +27,7 @@ import (
 	"github.com/sajari/regression"
 )
 
-func Rsquared(xname string, xvalues []float64, yname string, yvalues []float64) (rsquared float64) {
+func Rsquared(xname string, xvalues []float64, yname string, yvalues []float64) (rsquared float64, variance float64, formula string) {
 
 	var r regression.Regression
 	r.SetObservedName(yname)
@@ -41,5 +41,7 @@ func Rsquared(xname string, xvalues []float64, yname string, yvalues []float64) 
 	_ = r.GetRegCoeff(0)
 	//c := r.GetRegCoeff(1)
 	rsquared = r.Rsquared
+	variance = r.VarianceObserved
+	formula = r.Formula
 	return
 }

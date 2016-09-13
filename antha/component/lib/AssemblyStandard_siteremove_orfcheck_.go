@@ -214,7 +214,7 @@ func _AssemblyStandard_siteremove_orfcheckSteps(_ctx context.Context, _input *As
 		vectordata = inventorydata
 	} else if strings.Contains(_input.Vector, ".gb") {
 
-		vectordata, _ = parser.GenbanktoAnnotatedSeq(_input.Vector)
+		vectordata, _ = parser.GenbanktoFeaturelessDNASequence(_input.Vector)
 		vectordata.Plasmid = true
 	} else {
 		vectornm := "Vector"

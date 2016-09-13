@@ -24,6 +24,39 @@ func TestPlateDup(t *testing.T) {
 	p := makeplatefortest()
 	d := p.Dup()
 	validatePlate(t, d)
+	for crds, w := range p.Wellcoords {
+		w2 := d.Wellcoords[crds]
+
+		if w.ID == w2.ID {
+			t.Fatal(fmt.Sprintf("Error: coords %s has same IDs before / after dup", crds))
+		}
+
+		if w.WContents.Loc == w2.WContents.Loc {
+			t.Fatal(fmt.Sprintf("Error: contents of wells at coords %s have same loc before and after regular Dup()", crds))
+		}
+	}
+}
+
+func TestPlateDupKeepIDs(t *testing.T) {
+	p := makeplatefortest()
+	d := p.DupKeepIDs()
+
+	for crds, w := range p.Wellcoords {
+		w2 := d.Wellcoords[crds]
+
+		if w.ID != w2.ID {
+			t.Fatal(fmt.Sprintf("Error: coords %s has different IDs", crds))
+		}
+
+		if w.WContents.ID != w2.WContents.ID {
+			t.Fatal(fmt.Sprintf("Error: contents of wells at coords %s have different IDs", crds))
+
+		}
+		if w.WContents.Loc != w2.WContents.Loc {
+			t.Fatal(fmt.Sprintf("Error: contents of wells at coords %s have different loc before and after DupKeepIDs()", crds))
+		}
+	}
+
 }
 
 func validatePlate(t *testing.T, plate *LHPlate) {
@@ -101,5 +134,63 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 		} else if !seen {
 			comp[c.ID] = c
 		}
+	}
+}
+
+func TestIsUserAllocated(t *testing.T) {
+	p := makeplatefortest()
+
+	if p.IsUserAllocated() {
+		t.Fatal("Error: Plates must not start out user allocated")
+	}
+	p.Wellcoords["A1"].SetUserAllocated()
+
+	if !p.IsUserAllocated() {
+		t.Fatal("Error: Plates with at least one user allocated well must return true to IsUserAllocated()")
+	}
+
+	d := p.Dup()
+
+	if !d.IsUserAllocated() {
+		t.Fatal("Error: user allocation mark must survive Dup()lication")
+	}
+
+	d.Wellcoords["A1"].ClearUserAllocated()
+
+	if d.IsUserAllocated() {
+		t.Fatal("Error: user allocation mark not cleared")
+	}
+
+	if !p.IsUserAllocated() {
+		t.Fatal("Error: UserAllocation mark must operate separately on Dup()licated plates")
+	}
+}
+
+func TestMergeWith(t *testing.T) {
+	p1 := makeplatefortest()
+	p2 := makeplatefortest()
+
+	c := NewLHComponent()
+
+	c.CName = "Water1"
+	c.Vol = 50.0
+	c.Vunit = "ul"
+	p1.Wellcoords["A1"].Add(c)
+	p1.Wellcoords["A1"].SetUserAllocated()
+
+	c = NewLHComponent()
+	c.CName = "Butter"
+	c.Vol = 80.0
+	c.Vunit = "ul"
+	p2.Wellcoords["A2"].Add(c)
+
+	p1.MergeWith(p2)
+
+	if !(p1.Wellcoords["A1"].WContents.CName == "Water1" && p1.Wellcoords["A1"].WContents.Vol == 50.0 && p1.Wellcoords["A1"].WContents.Vunit == "ul") {
+		t.Fatal("Error: MergeWith should leave user allocated components alone")
+	}
+
+	if !(p1.Wellcoords["A2"].WContents.CName == "Butter" && p1.Wellcoords["A2"].WContents.Vol == 80.0 && p1.Wellcoords["A2"].WContents.Vunit == "ul") {
+		t.Fatal("Error: MergeWith should add non user-allocated components to  plate merged with")
 	}
 }

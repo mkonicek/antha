@@ -90,6 +90,25 @@ func _PrimerDesign_ColonyPCRSteps(_ctx context.Context, _input *PrimerDesign_Col
 	}
 
 	fmt.Println(text.Print("FWDPrimer:", _output.FWDPrimer))
+
+	if _input.FlankTargetSequence {
+		region = oligos.DNAregion(fulldnaseqs[0], regionstart, regionend+150)
+	} else {
+		region = oligos.DNAregion(fulldnaseqs[0], regionstart, regionend)
+	}
+	fmt.Println("6")
+
+	_input.Seqstoavoid = append(_input.Seqstoavoid, _output.FWDPrimer.Seq)
+
+	_output.REVPrimer, _output.Warnings = oligos.REVOligoSeq(region, _input.Maxgc, _input.Minlength, _input.Maxlength, _input.Mintemp, _input.Maxtemp, _input.Seqstoavoid, _input.PermittednucleotideOverlapBetweenPrimers)
+
+	if _output.Warnings != nil {
+		fmt.Println("REVOligoSeqFail")
+		execute.Errorf(_ctx, _output.Warnings.Error())
+	}
+
+	fmt.Println(text.Print("REVPrimer:", _output.REVPrimer))
+
 }
 
 // Actions to perform after steps block to analyze data
@@ -163,12 +182,14 @@ type PrimerDesign_ColonyPCRInput struct {
 
 type PrimerDesign_ColonyPCROutput struct {
 	FWDPrimer oligos.Primer
+	REVPrimer oligos.Primer
 	Warnings  error
 }
 
 type PrimerDesign_ColonyPCRSOutput struct {
 	Data struct {
 		FWDPrimer oligos.Primer
+		REVPrimer oligos.Primer
 		Warnings  error
 	}
 	Outputs struct {
@@ -194,6 +215,7 @@ func init() {
 				{Name: "RegionSequenceString", Desc: "", Kind: "Parameters"},
 				{Name: "Seqstoavoid", Desc: "", Kind: "Parameters"},
 				{Name: "FWDPrimer", Desc: "this needs to be changed to PrimerPair [2]oligo.Primer\n", Kind: "Data"},
+				{Name: "REVPrimer", Desc: "", Kind: "Data"},
 				{Name: "Warnings", Desc: "", Kind: "Data"},
 			},
 		},

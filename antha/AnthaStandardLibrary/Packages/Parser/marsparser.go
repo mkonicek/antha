@@ -119,7 +119,7 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 		}
 		if cell.String()[0:4] == "Date" {
 			date := strings.Split(cell.String(), ": ")[1]
-			fmt.Println(date)
+			//fmt.Println(date)
 			dateparts := strings.Split(date, `/`)
 			dateints := make([]int, 0)
 			for _, part := range dateparts {
@@ -137,7 +137,7 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 				return
 			}
 			dataoutput.Date = godate
-			fmt.Println(godate)
+			//fmt.Println(godate)
 			//dataoutput.Date.AddDate(dateints[2], dateints[1], dateints[0])
 
 		}
@@ -155,7 +155,7 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 				return dataoutput, headerrowcount, err
 			}
 			dataoutput.Time = gotime
-			fmt.Println(gotime)
+			//fmt.Println(gotime)
 		}
 		if cell.String()[0:3] == "ID1" {
 			dataoutput.ID1 = strings.Split(cell.String(), ": ")[1]
@@ -198,7 +198,7 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 		cell := sheet1.Cell(i, 0)
 		if cell.String() == "A" {
 			wellrowstart = i
-			fmt.Println(wellrowstart)
+			//fmt.Println(wellrowstart)
 			break
 		}
 
@@ -210,7 +210,7 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 
 	//find special rows
 	// wavelength or time rows?
-	fmt.Println(headerrows, headerrow)
+	//fmt.Println(headerrows, headerrow)
 	if wellrowstart-headerrow > 0 {
 		for i := 0; i < wellrowstart-headerrow; i++ {
 
@@ -473,8 +473,8 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 			output.Readings[0] = set
 			welldata.Data = output
 			welldatamap[welldata.Well] = welldata
-			fmt.Println(welldata)
-			fmt.Println(output)
+			//fmt.Println(welldata)
+			//fmt.Println(output)
 
 		}
 	}
@@ -505,14 +505,14 @@ func ParseTime(timestring string) (gotime time.Duration, err error) {
 
 func HeaderContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool) {
 	headercell := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
-	fmt.Println(headercell)
+	//fmt.Println(headercell)
 
 	if strings.Contains(headercell, "(") && strings.Contains(headercell, ")") {
 		start := strings.Index(headercell, "(")
 		finish := strings.Index(headercell, ")")
 
 		isthisanumber := headercell[start+1 : finish]
-		fmt.Println(isthisanumber)
+		//	fmt.Println(isthisanumber)
 		_, err := strconv.Atoi(isthisanumber)
 
 		if err == nil {
@@ -525,14 +525,14 @@ func HeaderContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno
 
 func HeaderWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, number int, err error) {
 	headercell := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
-	fmt.Println(headercell)
+	//fmt.Println(headercell)
 
 	if strings.Contains(headercell, "(") && strings.Contains(headercell, ")") {
 		start := strings.Index(headercell, "(")
 		finish := strings.Index(headercell, ")")
 
 		isthisanumber := headercell[start+1 : finish]
-		fmt.Println(isthisanumber)
+		//fmt.Println(isthisanumber)
 		number, err = strconv.Atoi(isthisanumber)
 
 		if err == nil {

@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package antha.human.v1;
+
+service Human {
+}

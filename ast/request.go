@@ -15,6 +15,7 @@ type Request struct {
 	Temp   *Interval
 	Time   *Interval
 	Move   []Movement
+	Manual bool
 }
 
 func (a Request) String() string {
@@ -34,6 +35,9 @@ func (a Request) String() string {
 	for _, m := range a.Move {
 		r = append(r, fmt.Sprintf("move %s %s", m.From, m.To))
 	}
+	if a.Manual {
+		r = append(r, "manual")
+	}
 	return fmt.Sprint(r)
 }
 
@@ -51,6 +55,9 @@ func Meet(reqs []Request) (req Request) {
 		meetI(&req.Temp, r.Temp)
 		meetI(&req.Time, r.Time)
 		req.Move = append(req.Move, r.Move...)
+		if !req.Manual && r.Manual {
+			req.Manual = r.Manual
+		}
 	}
 	return
 }

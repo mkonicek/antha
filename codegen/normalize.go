@@ -53,42 +53,80 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 	return ret, nil
 }
 
+// What is the set of UseComps that reach each command
+func buildReachingUses(g *ast.Graph) map[ast.Node][]*ast.UseComp {
+	// Simple fixpoint:
+	//   Value: set of use comps,
+	//   Merge: union
+	//   Transfer functions:
+	//     - Command c -> { }
+	//     - UseComp u -> {u}
+
+	values := make(map[ast.Node][]*ast.UseComp)
+
+	merge := func(n ast.Node) []*ast.UseComp {
+		var vs []*ast.UseComp
+		for i, inum := 0, g.NumOuts(n); i < inum; i += 1 {
+			pred := g.Out(n, i).(ast.Node)
+			switch pred := pred.(type) {
+			case *ast.Command:
+				// Kill
+			case *ast.UseComp:
+				vs = append(vs, values[pred]...)
+				vs = append(vs, pred)
+			default:
+				vs = append(vs, values[pred]...)
+			}
+		}
+		return vs
+	}
+
+	dag := graph.Schedule(graph.Reverse(g))
+
+	for len(dag.Roots) > 0 {
+		var next []graph.Node
+		for _, n := range dag.Roots {
+			n := n.(ast.Node)
+			seen := make(map[*ast.UseComp]bool)
+
+			for _, v := range merge(n) {
+				if seen[v] {
+					continue
+				}
+				seen[v] = true
+				values[n] = append(values[n], v)
+			}
+
+			next = append(next, dag.Visit(n)...)
+		}
+
+		dag.Roots = next
+	}
+
+	return values
+}
+
 // Build IR
 func build(root ast.Node) (*ir, error) {
 	g := ast.ToGraph(ast.ToGraphOpt{
 		Roots: []ast.Node{root},
 	})
 
-	// Check that data dependencies are single-consumer (because they model
-	// destructive update of values)
-	if err := graph.IsTree(g, root); err != nil {
-		return nil, err
-	}
-
-	for i, inum := 0, g.NumNodes(); i < inum; i += 1 {
-		switch n := g.Node(i).(type) {
-		case *ast.UseComp:
-			if len(n.From) > 1 {
-				return nil, fmt.Errorf("component %q created multiple times", n)
-			}
-		default:
-		}
-	}
-
 	ct := graph.Eliminate(graph.EliminateOpt{
 		Graph: g,
 		In: func(n graph.Node) bool {
-			c, ok := n.(ast.Command)
-			return (ok && c.Output() == nil) || n == root
+			c, ok := n.(*ast.Command)
+			return (ok && c.Output == nil) || n == root
 		},
 	})
-	if err := graph.IsTree(ct, root); err != nil {
-		return nil, err
-	}
+
+	// TODO: Add back some validity checks like the same UseComp cannot be used
+	// multiple times
 
 	return &ir{
-		Root:        root,
-		Graph:       g,
-		CommandTree: ct,
+		Root:         root,
+		Graph:        g,
+		Commands:     ct,
+		reachingUses: buildReachingUses(g),
 	}, nil
 }

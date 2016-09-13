@@ -1,0 +1,14 @@
+{
+    "connections": [],
+    "processes": {
+        "REVPrimerOri": {
+            "component": "PrimerDesign_REV"
+        },
+        "REVPrimerOriRevComp": {
+            "component": "PrimerDesign_REV"
+        },
+        "REVPrimerTetA": {
+            "component": "PrimerDesign_REV"
+        }
+    }
+}

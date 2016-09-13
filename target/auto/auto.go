@@ -5,8 +5,9 @@ import (
 
 	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/bvendor/google.golang.org/grpc"
+	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
+	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 	lhclient "github.com/antha-lang/antha/driver/lh"
-	driver "github.com/antha-lang/antha/driver/pb"
 	"github.com/antha-lang/antha/driver/pb/lh"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/mixer"
@@ -31,16 +32,16 @@ type Opt struct {
 }
 
 func tryRunner(conn *grpc.ClientConn, opts []interface{}) (target.Device, error) {
-	c := driver.NewRunnerClient(conn)
+	c := driver.NewDriverClient(conn)
 	reply, err := c.DriverType(context.Background(), &driver.TypeRequest{})
 	if err != nil {
 		return nil, err
 	}
-	if reply.Type != "driver.runner" {
+	if reply.Type != "antha.runner.v1.Runner" {
 		return nil, noMatch
 	}
 
-	return target.NewRunner(c), nil
+	return target.NewRunner(runner.NewRunnerClient(conn)), nil
 }
 
 func getMixerOpt(opt []interface{}) (ret mixer.Opt) {

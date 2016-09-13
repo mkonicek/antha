@@ -59,15 +59,20 @@ Steps {
 
 	if err != nil {
 		fmt.Println("FindPositioninoligoFail")
+		fmt.Println(err.Error())
 		Warnings = err
 		Errorf(Warnings.Error())
 	}
 	
 	
 	// if true then the start point to design primers is moved back 150bp to ensure full region is covered
-	if FlankTargetSequence {
+	if FlankTargetSequence && regionstart-150 >= 0 {
 		region = oligos.DNAregion(FullDNASeq, regionstart-150, regionend)
-	}else {
+	}else if FlankTargetSequence && regionstart-150 < 0 && regionstart-Maxlength >= 0{
+		region = oligos.DNAregion(FullDNASeq, 0, regionend)
+	}else if FlankTargetSequence && regionstart-150 < 0 && regionstart-Maxlength < 0 && FullDNASeq.Plasmid{
+		region = oligos.DNAregion(FullDNASeq, len(FullDNASeq.Seq)-150, regionend)
+	}else{
 		region = oligos.DNAregion(FullDNASeq, regionstart, regionend)
 	}
 
@@ -76,7 +81,9 @@ Steps {
 	
 	if Warnings != nil {
 		fmt.Println("FWDOligoSeqFail")
-		Errorf(Warnings.Error())
+		errstr:= Warnings.Error()
+		fmt.Println(errstr)
+		Errorf(errstr)
 	}
 	
 	fmt.Println(text.Print("FWDPrimer:",FWDPrimer))

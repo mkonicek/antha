@@ -63,6 +63,7 @@ type LHRequest struct {
 	TimeEstimate             float64
 	CarryVolume              wunit.Volume
 	Evaps                    []wtype.VolumeCorrection
+	Options                  LHOptions
 }
 
 func (req *LHRequest) ConfigureYourself() error {
@@ -143,6 +144,7 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_setup_weights["MAX_N_WELLS"] = 96
 	lhr.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = 1.0
 	lhr.Policies, _ = liquidhandling.GetLHPolicyForTest()
+	lhr.Options = NewLHOptions()
 	return &lhr
 }
 
@@ -156,6 +158,11 @@ func (lhr *LHRequest) NewComponentsAdded() bool {
 	// new was added to the inputs
 
 	return len(lhr.Input_vols_wanting) != 0
+}
+
+func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
+	p.MarkNonEmptyWellsUserAllocated()
+	lhr.Input_plates[p.ID] = p
 }
 
 type LHPolicyManager struct {

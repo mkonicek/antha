@@ -109,6 +109,7 @@ func getTestBlowout(robot *LHProperties) RobotInstruction {
 }
 
 func TestBlowWithTipChange(t *testing.T) {
+	t.Skip()
 	robot := makeTestGilson()
 	bi := getTestBlowout(robot)
 	pol, _ := GetLHPolicyForTest()

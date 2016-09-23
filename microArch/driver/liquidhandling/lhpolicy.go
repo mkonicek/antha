@@ -320,7 +320,16 @@ func (s sortableRules) Len() int {
 }
 
 func (s sortableRules) Less(i, j int) bool {
-	return s[i].Priority < s[j].Priority
+	if s[i].Priority != s[j].Priority {
+		// (numerically) highest priority wins
+		return s[i].Priority < s[j].Priority
+	} else if len(s[i].Conditions) != len(s[j].Conditions) {
+		// most conditions wins
+		return len(s[i].Conditions) < len(s[j].Conditions)
+	} else {
+		// longest name wins
+		return len(s[i].Name) < len(s[j].Name)
+	}
 }
 
 func (s sortableRules) Swap(i, j int) {

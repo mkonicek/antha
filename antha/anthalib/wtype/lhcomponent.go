@@ -213,6 +213,7 @@ func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	vcmp.Add(vcmp2)
 	cmp.Vol = vcmp.RawValue() // same units
 	cmp.CName = mergeNames(cmp.CName, cmp2.CName)
+
 	// allow trace back
 	//logger.Track(fmt.Sprintf("MIX %s %s %s", cmp.ID, cmp2.ID, vcmp.ToString()))
 

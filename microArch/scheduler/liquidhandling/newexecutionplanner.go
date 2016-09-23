@@ -65,20 +65,20 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 		ar = append(ar, ix)
 		agg[cmp] = ar
 
-		// now assuming we don't change instruction order below (Safe?)
-		// we should be able to model evaporation here
+		if request.Options.ModelEvaporation {
+			// now assuming we don't change instruction order below (Safe?)
+			// we should be able to model evaporation here
 
-		instrx, _ := ris.Generate(request.Policies, rbtcpy)
+			instrx, _ := ris.Generate(request.Policies, rbtcpy)
 
-		if timer != nil {
-			var totaltime time.Duration
-			for _, instr := range instrx {
-				totaltime += timer.TimeFor(instr)
-			}
+			if timer != nil {
+				var totaltime time.Duration
+				for _, instr := range instrx {
+					totaltime += timer.TimeFor(instr)
+				}
 
-			// evaporate stuff
+				// evaporate stuff
 
-			if request.Options.ModelEvaporation {
 				myevap := robot.Evaporate(totaltime)
 				evaps = append(evaps, myevap...)
 			}

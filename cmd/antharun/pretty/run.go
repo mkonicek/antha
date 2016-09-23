@@ -1,41 +1,57 @@
 package pretty
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"strings"
 
+	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/target/auto"
 )
 
-func Run(out io.Writer, result *execute.Result, t *target.Target) error {
-	if len(t.Runners()) == 0 {
-		return nil
+func shouldWait(inst target.Inst) bool {
+	switch inst.(type) {
+	case *target.Run:
+		return true
 	}
+	return false
+}
+
+func Run(out io.Writer, in io.Reader, a *auto.Auto, result *execute.Result) error {
 	if _, err := fmt.Fprintf(out, "== Running Workflow:\n"); err != nil {
 		return err
 	}
+
+	bin := bufio.NewReader(in)
+	ctx := context.Background()
 	for _, inst := range result.Insts {
-		rinst, ok := inst.(target.RunInst)
-		if !ok {
-			continue
-		}
-		files := rinst.Data()
-		rs := t.CanRun(files.Type)
-		if len(rs) == 0 {
-			return fmt.Errorf("no device to run type %s", files.Type)
-		}
-		s, err := summarize(rinst)
-		if err != nil {
+		if _, err := fmt.Fprintf(out, "    * %s", a.Pretty(inst)); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(out, "    * %s", s); err != nil {
-			return err
+
+		var skip bool
+		if shouldWait(inst) {
+			fmt.Fprintf(out, " (Run? [yes,skip]) ")
+			s, err := bin.ReadString('\n')
+			if err != nil {
+				return err
+			}
+			skip = true
+			if strings.HasPrefix(s, "yes") {
+				skip = false
+			}
 		}
-		if err := rs[0].Run(files); err != nil {
-			fmt.Fprintf(out, " [FAIL]\n")
-			return err
+
+		if !skip {
+			if err := a.Execute(ctx, inst); err != nil {
+				fmt.Fprintf(out, " [FAIL]\n")
+				return err
+			}
 		}
+
 		if _, err := fmt.Fprintf(out, " [OK]\n"); err != nil {
 			return err
 		}

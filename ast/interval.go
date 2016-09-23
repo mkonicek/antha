@@ -1,65 +1,60 @@
 package ast
 
-// TODO(ddn): Replace with a more efficient data structure (interval tree)
-
-// An interval or union thereof
 type Interval struct {
-	values []struct{ A, B float64 }
+	min, max float64
 }
 
-func (a Interval) Extrema() (min, max float64) {
-	if len(a.values) == 0 {
-		return
+func (a *Interval) Meet(x *Interval) *Interval {
+	if x == nil && a == nil {
+		return nil
 	}
-	min = a.values[0].A
-	max = a.values[0].B
-	for i, n := 1, len(a.values); i < n; i += 1 {
-		if a.values[i].A < min {
-			min = a.values[i].A
-		}
-
-		if a.values[i].B > max {
-			max = a.values[i].B
-		}
+	if x == nil {
+		return a
 	}
-	return
-}
-
-// The nil interval does not contain any points
-func (a Interval) Nil() bool {
-	return len(a.values) == 0
-}
-
-func (a Interval) Contains(x, y float64) bool {
-	for _, v := range a.values {
-		if v.A <= x && y <= v.B {
-			return true
-		}
+	if a == nil {
+		return x
 	}
-	return false
-}
 
-func (a Interval) Add(x Interval) *Interval {
-	var values []struct{ A, B float64 }
-	for _, v := range a.values {
-		values = append(values, v)
+	max := a.max
+	if max < x.max {
+		max = x.max
 	}
-	for _, v := range x.values {
-		values = append(values, v)
+	min := a.min
+	if min > x.min {
+		min = x.min
 	}
-	return &Interval{values: values}
-}
-
-// Create the interval [a, b]
-func NewInterval(a, b float64) *Interval {
 	return &Interval{
-		values: []struct{ A, B float64 }{struct{ A, B float64 }{A: a, B: b}},
+		min: min,
+		max: max,
+	}
+}
+
+func (a *Interval) Contains(x *Interval) bool {
+	if x == nil {
+		return true
+	}
+	if a == nil {
+		return false
+	}
+
+	return a.min <= x.min && x.max <= a.max
+}
+
+// Create the interval [min, max]
+func NewInterval(min, max float64) *Interval {
+	if min > max {
+		min, max = max, min
+	}
+	return &Interval{
+		min: min,
+		max: max,
 	}
 }
 
 // Create the interval [a, a]
 func NewPoint(a float64) *Interval {
 	return &Interval{
-		values: []struct{ A, B float64 }{struct{ A, B float64 }{A: a, B: a}},
+		min: a,
+		max: a,
 	}
 }

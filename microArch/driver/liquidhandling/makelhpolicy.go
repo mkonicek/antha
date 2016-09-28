@@ -347,8 +347,8 @@ TOUCHOFFSET,                         ,float64,          ,mm above wb to touch of
 
 */
 
-func MakePEGPolicy() LHPolicy {
-	policy := make(LHPolicy, 9)
+func MakePEGPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 9)
 	policy["ASP_SPEED"] = 1.5
 	policy["DSP_SPEED"] = 1.5
 	policy["ASP_WAIT"] = 2.0
@@ -400,7 +400,7 @@ func MakePaintPolicy() wtype.LHPolicy {
 }
 
 func MakeDispenseAboveLiquidPolicy() wtype.LHPolicy {
-	policy := make(LHPolicy, 7)
+	policy := make(wtype.LHPolicy, 7)
 	policy["DSPREFERENCE"] = 1 // 1 indicates dispense at top of well
 	policy["ASP_SPEED"] = 3.0
 	policy["DSP_SPEED"] = 3.0
@@ -430,8 +430,8 @@ func MakeColonyPolicy() wtype.LHPolicy {
 	return policy
 }
 
-func MakeWaterPolicy() LHPolicy {
-	waterpolicy := make(LHPolicy, 6)
+func MakeWaterPolicy() wtype.LHPolicy {
+	waterpolicy := make(wtype.LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
 	//waterpolicy["CAN_MULTI"] = true
 	waterpolicy["CAN_MULTI"] = false
@@ -541,8 +541,8 @@ func MakeSolventPolicy() wtype.LHPolicy {
 	return solventpolicy
 }
 
-func MakeDNAPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 10)
+func MakeDNAPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 10)
 	dnapolicy["ASPSPEED"] = 2.0
 	dnapolicy["DSPSPEED"] = 2.0
 	dnapolicy["CAN_MULTI"] = false
@@ -580,8 +580,8 @@ func MakeDetergentPolicy() wtype.LHPolicy {
 	detergentpolicy.Set("NO_AIR_DISPENSE", true)
 	return detergentpolicy
 }
-func MakeProteinPolicy() LHPolicy {
-	proteinpolicy := make(LHPolicy, 10)
+func MakeProteinPolicy() wtype.LHPolicy {
+	proteinpolicy := make(wtype.LHPolicy, 10)
 	proteinpolicy["POST_MIX"] = 5
 	proteinpolicy["POST_MIX_VOLUME"] = 50.0
 	proteinpolicy["ASPSPEED"] = 2.0
@@ -595,9 +595,9 @@ func MakeProteinPolicy() LHPolicy {
 	proteinpolicy["NO_AIR_DISPENSE"] = true
 	return proteinpolicy
 }
-func MakeLoadPolicy() LHPolicy {
+func MakeLoadPolicy() wtype.LHPolicy {
 
-	loadpolicy := make(LHPolicy)
+	loadpolicy := make(wtype.LHPolicy)
 	loadpolicy["ASPSPEED"] = 1.0
 	loadpolicy["DSPSPEED"] = 0.1
 	loadpolicy["CAN_MULTI"] = false
@@ -615,7 +615,7 @@ func MakeLoadPolicy() LHPolicy {
 }
 
 func MakeLoadWaterPolicy() wtype.LHPolicy {
-	loadpolicy := make(LHPolicy)
+	loadpolicy := make(wtype.LHPolicy)
 	loadpolicy["ASPSPEED"] = 1.0
 	loadpolicy["DSPSPEED"] = 0.1
 	loadpolicy["CAN_MULTI"] = false
@@ -633,7 +633,7 @@ func MakeLoadWaterPolicy() wtype.LHPolicy {
 }
 
 func MakeLoadlowPolicy() wtype.LHPolicy {
-	loadpolicy := make(LHPolicy)
+	loadpolicy := make(wtype.LHPolicy)
 	loadpolicy["ASPSPEED"] = 1.0
 	loadpolicy["DSPSPEED"] = 1.0
 	loadpolicy["CAN_MULTI"] = false
@@ -651,8 +651,8 @@ func MakeLoadlowPolicy() wtype.LHPolicy {
 	return loadpolicy
 }
 
-func MakeNeedToMixPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 15)
+func MakeNeedToMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 15)
 	dnapolicy["POST_MIX"] = 3
 	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
@@ -671,8 +671,8 @@ func MakeNeedToMixPolicy() LHPolicy {
 	return dnapolicy
 }
 
-func PreMixPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 12)
+func PreMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 12)
 	//dnapolicy["POST_MIX"] = 3
 	//dnapolicy["POST_MIX_VOLUME"] = 10.0
 	//dnapolicy["POST_MIX_RATE"] = 3.74
@@ -692,8 +692,8 @@ func PreMixPolicy() LHPolicy {
 
 }
 
-func PostMixPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 12)
+func PostMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 3
 	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
@@ -773,8 +773,8 @@ func MakeLVExtraPolicy() wtype.LHPolicy {
 	return lvep
 }
 
-func MakeLVDNAMixPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 4)
+func MakeLVDNAMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 4)
 	dnapolicy["RESET_OVERRIDE"] = true
 	dnapolicy["POST_MIX_VOLUME"] = 5.0
 	dnapolicy["POST_MIX"] = 1
@@ -784,8 +784,8 @@ func MakeLVDNAMixPolicy() LHPolicy {
 	return dnapolicy
 }
 
-func MakeHVOffsetPolicy() LHPolicy {
-	lvop := make(LHPolicy, 6)
+func MakeHVOffsetPolicy() wtype.LHPolicy {
+	lvop := make(wtype.LHPolicy, 6)
 	lvop["ASPZOFFSET"] = 1.50
 	lvop["DSPZOFFSET"] = 1.50
 	lvop["POST_MIX_Z"] = 1.00
@@ -800,8 +800,8 @@ func MakeHVOffsetPolicy() LHPolicy {
 }
 
 // deprecated; see above
-func MakeHVFlowRatePolicy() LHPolicy {
-	policy := make(LHPolicy, 4)
+func MakeHVFlowRatePolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 4)
 	policy["POST_MIX_RATE"] = 37
 	policy["PRE_MIX_RATE"] = 37
 	policy["ASPSPEED"] = 37
@@ -833,7 +833,7 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	// this really should be removed asap
 	// make low priority so it doesn't clobber other
 	// policies
-	rule := NewLHPolicyRule("HVOffsetFix")
+	rule := wtype.NewLHPolicyRule("HVOffsetFix")
 	rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
 	rule.Priority = 0
 	//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
@@ -849,7 +849,7 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 		lhpr.AddRule(rule, pol)
 	*/
 
-	rule = NewLHPolicyRule("DNALV")
+	rule = wtype.NewLHPolicyRule("DNALV")
 	rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
 	rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
 	pol = MakeLVDNAMixPolicy()

@@ -114,9 +114,9 @@ func TestBlowWithTipChange(t *testing.T) {
 	bi := getTestBlowout(robot)
 	pol, _ := GetLHPolicyForTest()
 
-	rule := NewLHPolicyRule("TESTRULE1")
+	rule := wtype.NewLHPolicyRule("TESTRULE1")
 	rule.AddCategoryConditionOn("LIQUIDCLASS", "soup")
-	pols := make(LHPolicy, 2)
+	pols := make(wtype.LHPolicy, 2)
 	pols["POST_MIX"] = 5
 	pols["POST_MIX_VOLUME"] = 100.0
 	pol.AddRule(rule, pols)
@@ -147,9 +147,9 @@ func TestBlowNoTipChange(t *testing.T) {
 	bi := getTestBlowout(robot)
 	pol, _ := GetLHPolicyForTest()
 
-	rule := NewLHPolicyRule("TESTRULE1")
+	rule := wtype.NewLHPolicyRule("TESTRULE1")
 	rule.AddCategoryConditionOn("LIQUIDCLASS", "soup")
-	pols := make(LHPolicy, 2)
+	pols := make(wtype.LHPolicy, 2)
 	pols["POST_MIX"] = 5
 	pols["POST_MIX_VOLUME"] = 10.0
 	pol.AddRule(rule, pols)

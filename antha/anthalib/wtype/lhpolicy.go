@@ -427,11 +427,7 @@ func (s SortableRules) Len() int {
 	return len(s)
 }
 
-<<<<<<< HEAD:antha/anthalib/wtype/lhpolicy.go
 func (s SortableRules) Less(i, j int) bool {
-	return s[i].Priority < s[j].Priority
-=======
-func (s sortableRules) Less(i, j int) bool {
 	if s[i].Priority != s[j].Priority {
 		// (numerically) highest priority wins
 		return s[i].Priority < s[j].Priority
@@ -442,7 +438,6 @@ func (s sortableRules) Less(i, j int) bool {
 		// longest name wins
 		return len(s[i].Name) < len(s[j].Name)
 	}
->>>>>>> master:microArch/driver/liquidhandling/lhpolicy.go
 }
 
 func (s SortableRules) Swap(i, j int) {

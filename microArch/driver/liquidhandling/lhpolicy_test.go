@@ -23,7 +23,7 @@ func TestDNAPolicy(t *testing.T) {
 	ins1 := NewSuckInstruction()
 	ins1.AddTransferParams(tp)
 
-	p := pft.GetPolicyFor(ins1)
+	p := GetPolicyFor(pft, ins1)
 
 	m, ok := p["POST_MIX"]
 
@@ -35,7 +35,7 @@ func TestDNAPolicy(t *testing.T) {
 
 	ins2 := NewSuckInstruction()
 	ins2.AddTransferParams(tp)
-	p = pft.GetPolicyFor(ins2)
+	p = GetPolicyFor(pft, ins2)
 
 	m, ok = p["POST_MIX"]
 
@@ -56,7 +56,7 @@ func TestPEGPolicy(t *testing.T) {
 	ins1 := NewSuckInstruction()
 	ins1.AddTransferParams(tp)
 
-	p := pft.GetPolicyFor(ins1)
+	p := GetPolicyFor(pft, ins1)
 
 	if p["ASPZOFFSET"].(float64) != 2.5 {
 		t.Fatal("ASPZOFFSET for PEG must be 2.5")
@@ -69,7 +69,7 @@ func TestPEGPolicy(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		q := pft.GetPolicyFor(ins1)
+		q := GetPolicyFor(pft, ins1)
 
 		if q["ASPZOFFSET"] != p["ASPZOFFSET"] {
 			t.Fatal("Inconsistent Z offsets returned")
@@ -89,7 +89,7 @@ func TestPPPolicy(t *testing.T) {
 	ins1 := NewBlowInstruction()
 	ins1.AddTransferParams(tp)
 
-	p := pft.GetPolicyFor(ins1)
+	p := GetPolicyFor(pft, ins1)
 
 	if p["TIP_REUSE_LIMIT"].(int) != 5 {
 		t.Fatal(fmt.Sprintf("Protoplast tip reuse limit is %d, not 5", p["TIP_REUSE_LIMIT"]))

@@ -142,3 +142,7 @@ func (ins *LHInstruction) ComponentsMoving() string {
 	}
 	return strings.Join(sa, "+")
 }
+
+func (ins *LHInstruction) Wellcoords() WellCoords {
+	return MakeWellCoords(ins.Welladdress)
+}

@@ -24,7 +24,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	// timer for assessing evaporation
 	// need to define how to make this optional
 	inss := make([]RobotInstruction, 0, 1)
-	timer := prms.GetTimer()
+	//timer := robot.GetTimer()
 
 	seen := make(map[string]bool)
 
@@ -40,7 +40,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 
 	// stuff that can't be done in parallel
 
-	for _, ins := range ti.Inss {
+	for _, ins := range ti.Ins {
 		if seen[ins.ID] {
 			continue
 		}
@@ -52,7 +52,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 type IDset []string
 type SetOfIDSets []IDset
 
-func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, policy *LHPolicyRuleSet) SetOfIDSets {
+func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, policy *wtype.LHPolicyRuleSet) SetOfIDSets {
 	//  depending on the configuration and options we may have to try and
 	//  use one or both of H / V or... whatever
 	//  -- issue is this choice and choosechannel conflict with one another
@@ -68,7 +68,7 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 	for _, head := range robot.HeadsLoaded {
 		// ignore heads which do not have multi
 
-		if head.Multi == 1 {
+		if head.GetParams().Multi == 1 {
 			continue
 		}
 
@@ -82,7 +82,7 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 	return choose_parallel_sets(possible_sets, ins)
 }
 
-func get_parallel_sets_head(head wtype.LHHead, ins []*wtype.LHInstruction) SetOfIDSets {
+func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) SetOfIDSets {
 	ret := make(SetOfIDSets, 0, 1)
 
 	return ret

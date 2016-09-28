@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -37,8 +36,6 @@ func _TypeIISConstructAssemblyMMXSteps(_ctx context.Context, _input *TypeIISCons
 	samples = append(samples, mmxSample)
 
 	for k, part := range _input.Parts {
-		fmt.Println("creating dna part num ", k, " comp ", part.CName, " renamed to ", _input.PartNames[k], " vol ", _input.PartVols[k])
-
 		part.Type, _ = wtype.LiquidTypeFromString(_input.LHPolicyName)
 
 		partSample := mixer.Sample(part, _input.PartVols[k])

@@ -50,3 +50,40 @@ func Reverse(graph Graph) Graph {
 	}
 	return ret
 }
+
+type SimplifyOpt struct {
+	Graph            Graph
+	RemoveSelfLoops  bool
+	RemoveMultiEdges bool
+}
+
+// Simplify graph
+func Simplify(opt SimplifyOpt) Graph {
+	ret := &qgraph{
+		Outs: make(map[Node][]Node),
+	}
+	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i += 1 {
+		n := opt.Graph.Node(i)
+		ret.Nodes = append(ret.Nodes, n)
+		seen := make(map[Node]bool)
+		for j, jnum := 0, opt.Graph.NumOuts(n); j < jnum; j += 1 {
+			dst := opt.Graph.Out(n, j)
+
+			if opt.RemoveSelfLoops {
+				if dst == n {
+					continue
+				}
+			}
+
+			if opt.RemoveMultiEdges {
+				if seen[dst] {
+					continue
+				}
+				seen[dst] = true
+			}
+
+			ret.Outs[n] = append(ret.Outs[n], dst)
+		}
+	}
+	return ret
+}

@@ -38,7 +38,7 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 
 	ch := request.InstructionChain
 	pc := make([]PlateChoice, 0, 3)
-	mp := make(map[int]string)
+	mp := make(map[string]string)
 	var err error
 	for {
 		if ch == nil {
@@ -53,7 +53,18 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 
 	return request, err
 }
-func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain *IChain, plate_choices []PlateChoice, mapchoices map[int]string) (*LHRequest, []PlateChoice, map[int]string, error) {
+
+func getNameForID(pc []PlateChoice, id string) string {
+	for _, p := range pc {
+		if p.ID == id {
+			return p.Name
+		}
+	}
+
+	return fmt.Sprintf("Output_plate_%s", id[0:6])
+}
+
+func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain *IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
 	// we have three kinds of solution
 	// 1- ones going to a specific plate
 	// 2- ones going to a specific plate type
@@ -85,8 +96,16 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 
 	for _, v := range request.Output_plates {
 		// we need to ensure this has a name
+		/*
+			if v.Name() == "" {
+				v.PlateName = fmt.Sprintf("Output_plate_%s", v.ID[0:6])
+			}
+		*/
+
+		// MIS ASSIGN NAMES HERE
+
 		if v.Name() == "" {
-			v.PlateName = fmt.Sprintf("Output_plate_%s", v.ID[0:6])
+			v.PlateName = getNameForID(plate_choices, v.ID)
 		}
 	}
 
@@ -169,9 +188,10 @@ type PlateChoice struct {
 	Assigned  []string
 	ID        string
 	Wells     []string
+	Name      string
 }
 
-func get_and_complete_assignments(request *LHRequest, order []string, s []PlateChoice, m map[int]string) ([]PlateChoice, map[int]string, error) {
+func get_and_complete_assignments(request *LHRequest, order []string, s []PlateChoice, m map[string]string) ([]PlateChoice, map[string]string, error) {
 	//s := make([]PlateChoice, 0, 3)
 	//m := make(map[int]string)
 
@@ -187,8 +207,14 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 		if v.PlateID() != "" {
 			i := defined(v.PlateID(), s)
 
+			nm := v.PlateName
+
+			if nm == "" {
+				nm = fmt.Sprintf("Output_plate_%s", v.PlateID()[0:6])
+			}
+
 			if i == -1 {
-				s = append(s, PlateChoice{v.Platetype, []string{v.ID}, v.PlateID(), []string{v.Welladdress}})
+				s = append(s, PlateChoice{v.Platetype, []string{v.ID}, v.PlateID(), []string{v.Welladdress}, nm})
 			} else {
 				s[i].Assigned = append(s[i].Assigned, v.ID)
 				s[i].Wells = append(s[i].Wells, v.Welladdress)
@@ -196,12 +222,20 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 			//fmt.Println("Instruction ", x, " component: ", v.Components[0].CName, " plateID: ", v.PlateID())
 
-		} else if v.Majorlayoutgroup != -1 {
+		} else if v.Majorlayoutgroup != -1 || v.PlateName != "" {
 			//fmt.Println("Instruction ", x, " component: ", v.Components[0].CName, " mlg: ", v.Majorlayoutgroup)
-			id, ok := m[v.Majorlayoutgroup]
+			nm := "Output_plate"
+			mlg := fmt.Sprintf("%d", v.Majorlayoutgroup)
+			if mlg == "-1" {
+				mlg = v.PlateName
+				nm = v.PlateName
+			}
+
+			id, ok := m[mlg]
 			if !ok {
 				id = wtype.NewUUID()
-				m[v.Majorlayoutgroup] = id
+				m[mlg] = id
+				nm += "_" + id[0:6]
 			}
 
 			//  fix the plate id to this temporary one
@@ -210,7 +244,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			i := defined(id, s)
 
 			if i == -1 {
-				s = append(s, PlateChoice{v.Platetype, []string{v.ID}, id, []string{v.Welladdress}})
+				s = append(s, PlateChoice{v.Platetype, []string{v.ID}, id, []string{v.Welladdress}, nm})
 			} else {
 				s[i].Assigned = append(s[i].Assigned, v.ID)
 				s[i].Wells = append(s[i].Wells, v.Welladdress)
@@ -293,7 +327,7 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 			if ass == -1 {
 				// make a new plate
 				ass = len(pc)
-				pc = append(pc, PlateChoice{chooseAPlate(request, v), []string{v.ID}, wtype.GetUUID(), []string{""}})
+				pc = append(pc, PlateChoice{chooseAPlate(request, v), []string{v.ID}, wtype.GetUUID(), []string{""}, "Output_plate_" + v.ID[0:6]})
 			}
 
 			pc[ass].Assigned = append(pc[ass].Assigned, v.ID)
@@ -344,7 +378,9 @@ func modpc(choice PlateChoice, nwell int) []PlateChoice {
 			fmt.Println("L: ", len(choice.Assigned), " ", choice.Assigned)
 			fmt.Println("W: ", len(choice.Wells), " ", choice.Wells)
 		*/
-		r = append(r, PlateChoice{choice.Platetype, choice.Assigned[s:e], ID, choice.Wells[s:e]})
+		tx := strings.Split(choice.Name, "_")
+		nm := tx[0] + "_" + tx[1] + "_" + ID[0:6]
+		r = append(r, PlateChoice{choice.Platetype, choice.Assigned[s:e], ID, choice.Wells[s:e], nm})
 	}
 	return r
 }

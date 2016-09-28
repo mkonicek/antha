@@ -25,8 +25,10 @@ package export
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,6 +39,11 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+)
+
+const (
+	ANTHAPATH bool = true
+	LOCAL     bool = false
 )
 
 // function to export a standard report of sequence properties to a txt file
@@ -135,8 +142,14 @@ func Makefastaserial(dir string, seqs []*wtype.DNASequence) (string, error) {
 	return filename, nil
 }
 
-func Makefastaserial2(dir string, seqs []wtype.DNASequence) (string, error) {
-	filename := filepath.Join(anthapath.Path(), fmt.Sprintf("%s.fasta", dir))
+func Makefastaserial2(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (string, error) {
+
+	var filename string
+	if makeinanthapath {
+		filename = filepath.Join(anthapath.Path(), fmt.Sprintf("%s.fasta", dir))
+	} else {
+		filename = filepath.Join(fmt.Sprintf("%s.fasta", dir))
+	}
 	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
 		return "", err
 	}
@@ -221,7 +234,7 @@ func ExportFastaSerialfromMultipleAssemblies(dirname string, multipleassemblypar
 
 	}
 
-	return Makefastaserial2(dirname, seqs)
+	return Makefastaserial2(ANTHAPATH, dirname, seqs)
 }
 
 func ExporttoTextFile(filename string, data []string) error {
@@ -237,5 +250,16 @@ func ExporttoTextFile(filename string, data []string) error {
 		}
 	}
 
+	return nil
+}
+
+func ExporttoJSON(data interface{}, filename string) (err error) {
+	bytes, err := json.Marshal(data)
+
+	if err != nil {
+		return err
+	}
+
+	ioutil.WriteFile(filename, bytes, 0644)
 	return nil
 }

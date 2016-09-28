@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -21,6 +22,7 @@ var (
 // Result of executing a workflow.
 type Result struct {
 	Workflow *workflow.Workflow
+	Input    []ast.Node
 	Insts    []target.Inst
 }
 
@@ -64,13 +66,14 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 	if err == nil {
 		return &Result{
 			Workflow: w,
+			Input:    r.nodes,
 			Insts:    r.insts,
 		}, nil
 	}
 
-	// Unwrap error
+	// Unwrap execute.Error
 	if terr, ok := err.(*trace.Error); ok {
-		if eerr, ok := terr.BaseError.(error); ok {
+		if eerr, ok := terr.BaseError.(*Error); ok {
 			err = eerr
 		}
 	}

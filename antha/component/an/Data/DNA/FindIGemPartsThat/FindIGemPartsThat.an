@@ -39,7 +39,7 @@ Outputs (
 Data (
 	Warnings error
 	//FulllistBackupParts []string 
-	//WorkingBackupParts []string
+	Partslist []string
 	PartMap map[string][]string // i.e. map[description]list of parts matching description
 	BiobrickDescriptions map[string]string // i.e. map[biobrickID]description
 	HighestRatedMatch string
@@ -61,6 +61,7 @@ Steps {
 	Parttypes := []string{Parttype}
 
 	BackupParts := make([]string,0)
+	Partslist = make([]string,0)
 	WorkingBackupParts := make([]string,0)
 
 	
@@ -172,6 +173,14 @@ Steps {
 		
 		
 	}
+		for _,part := range WorkingBackupParts {
+			Partslist = append(Partslist,part)
+		}
+		
+		// remove duplicates
+		Partslist = search.RemoveDuplicates(Partslist)
+		
+		// reset
 		//FulllistBackupParts = BackupParts 
 		BackupParts = make([]string,0)
 		WorkingBackupParts = make([]string,0)

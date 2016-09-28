@@ -28,6 +28,7 @@ func _Units_NewSetup(_ctx context.Context, _input *Units_NewInput) {
 
 // Core process of the protocol: steps to be performed for each input
 func _Units_NewSteps(_ctx context.Context, _input *Units_NewInput, _output *Units_NewOutput) {
+	// this is importing the NewVolume function from the wunit package
 	_output.MyVolume = wunit.NewVolume(_input.MyValue, _input.MyUnit)
 
 	// Exercise: adjust the protocol to make a concentration instead

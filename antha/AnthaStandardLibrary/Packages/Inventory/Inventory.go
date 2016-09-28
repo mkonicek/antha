@@ -24,11 +24,18 @@
 package Inventory
 
 import (
-	//"fmt"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	parser "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	//"log"
 	//"os"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 )
 
 // what about cutting 3prime to recognition site?
@@ -95,4 +102,70 @@ var Partslist = map[string]wtype.DNASequence{
 	"AmpR_promoter": wtype.DNASequence{"AmpR_promoter", strings.ToUpper("CGCGGAACCCCTATTTGTTTATTTTTCTAAATACATTCAAATATGTATCCGCTCATGAGACAATAACCCTGATAAATGCTTCAATAATATTGAAAAAGGAAGAGT"), false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", features},
 	"SmR":           wtype.DNASequence{"SmR", strings.ToUpper("atgagggaagcggtgatcgccgaagtatcgactcaactatcagaggtagttggcgtcatcgagcgccatctcgaaccgacgttgctggccgtacatttgtacggctccgcagtggatggcggcctgaagccacacagcgatattgatttgctggttacggtgaccgtaaggcttgatgaaacaacgcggcgagctttgatcaacgaccttttggaaacttcggcttcccctggagagagcgagattctccgcgctgtagaagtcaccattgttgtgcacgacgacatcattccgtggcgttatccagctaagcgcgaactgcaatttggagaatggcagcgcaatgacattcttgcaggtatcttcgagccagccacgatcgacattgatctggctatcttgctgacaaaagcaagagaacatagcgttgccttggtaggtccagcggcggaggaactctttgatccggttcctgaacaggatctatttgaggcgctaaatgaaaccttaacgctatggaactcgccgcccgactgggctggcgatgagcgaaatgtagtgcttacgttgtcccgcatttggtacagcgcagtaaccggcaaaatcgcgccgaaggatgtcgctgccgactgggcaatggagcgcctgccggcccagtatcagcccgtcatacttgaagctagacaggcttatcttggacaagaagaagatcgcttggcctcgcgcgcagatcagttggaagaatttgtccattacgtaaaaggcgagatcaccaaggtagtcggcaaataa"), false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", features},
 	"pAGM1311_M":    pAGM1311_M,
+}
+
+func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
+	partslist = make(map[string]wtype.DNASequence)
+
+	// first add PartsList above
+	for key, value := range Partslist {
+		if _, alreadyinmap := partslist[key]; !alreadyinmap {
+			partslist[key] = value
+		} else if _, alreadyinmap := partslist[value.Nm]; !alreadyinmap {
+			partslist[value.Nm] = value
+		} else {
+			err = fmt.Errorf("cannot add " + key + " to inventory partslist as already found, change the name")
+			return
+		}
+	}
+
+	files := make([]string, 0)
+	// look for all parts in anthapath
+	d, err := os.Open(anthapath.Path())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer d.Close()
+
+	allfiles, err := d.Readdir(-1)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	//Determine if file extension is ".gb" or ".fasta"
+	for _, file := range allfiles {
+		if filepath.Ext(file.Name()) == ".gb" || filepath.Ext(file.Name()) == ".fasta" {
+			files = append(files, file.Name())
+		}
+	}
+
+	for _, filename := range files {
+		file := filepath.Join(anthapath.Path(), filename)
+
+		if filepath.Ext(file) == ".fasta" {
+			sequences, _ := parser.FastatoDNASequences(file)
+
+			for _, seq := range sequences {
+				if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
+					partslist[seq.Nm] = seq
+				} else {
+					err = fmt.Errorf("cannot add " + seq.Nm + " to inventory partslist as already found, change the name")
+					return
+				}
+			}
+		} else if filepath.Ext(file) == ".gb" {
+			seq, _ := parser.GenbanktoAnnotatedSeq(file)
+			if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
+				partslist[seq.Nm] = seq
+			} else {
+				err = fmt.Errorf("cannot add " + seq.Nm + " to inventory partslist as already found, change the name")
+				return
+			}
+
+		}
+	}
+
+	return
 }

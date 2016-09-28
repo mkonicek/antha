@@ -23,6 +23,7 @@
 package search
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -30,6 +31,21 @@ type Thingfound struct {
 	Thing     string
 	Positions []int
 	Reverse   bool
+}
+
+func (thing Thingfound) ToString() (descriptions string) {
+	things := make([]string, 0)
+	var reverse string
+	for i := range thing.Positions {
+		if thing.Reverse {
+			reverse = " in reverse direction"
+		} else {
+			reverse = " in forward direction"
+		}
+		things = append(things, thing.Thing, " found at position ", strconv.Itoa(thing.Positions[i]), reverse, "; ")
+	}
+	descriptions = strings.Join(things, "")
+	return
 }
 
 // not perfect yet! issue with byte conversion of certain characters!

@@ -1,0 +1,25 @@
+{
+    "Parameters": {
+        "xml": {
+            "ID": "accD",
+			"Filename": "",
+			"ReturnType": "xml",
+			"MaxReturns":10,
+			"Database":"nucleotide"
+        },
+        "fasta": {
+            "ID": "opuntia[ORGN] accD",
+			"Filename": "accD.fasta",
+			"ReturnType": "fasta",
+			"MaxReturns":3,
+			"Database":"nucleotide"
+        },
+        "genbank": {
+            "ID": "opuntia[ORGN] accD",
+			"Filename": "accD.gb",
+			"ReturnType": "gb",
+			"MaxReturns":3,
+			"Database":"nucleotide"
+        }
+    }
+}

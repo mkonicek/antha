@@ -1,0 +1,216 @@
+protocol AutoPCR_Gradient_Split
+
+import (
+"github.com/antha-lang/antha/antha/anthalib/wtype"
+//"github.com/antha-lang/antha/antha/anthalib/mixer"
+"github.com/antha-lang/antha/microArch/factory"
+
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+// PCRprep parameters
+Projectname string
+Reactiontotemplate map[string]string // e.g. ["left homology arm"]:"templatename"
+Reactiontoprimerpair map[string][2]string // e.g. ["left homology arm"]:"fwdprimer","revprimer"
+RowGradientRatherthanColumn bool // if true, 12 replicates of each reaction will be set up, one set of reactions per row, else 8 reactions set up 1 set per column
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Error error
+	NumberOfReactions int
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+FwdPrimertype *wtype.LHComponent
+RevPrimertype *wtype.LHComponent
+Templatetype *wtype.LHComponent
+Plate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+NewReactions []*wtype.LHComponent
+)
+
+Requirements {
+}
+
+// Conditions to run on startup
+Setup {
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	var Samplenumber int
+	
+	// if RowGradientRatherthanColumn == true, 
+	//12 replicates of each reaction will be set up, 
+	//one set of reactions per row, 
+	//else 8 reactions set up 1 set per column
+	if RowGradientRatherthanColumn{
+		Samplenumber = 12
+	} else {
+		Samplenumber = 8
+	}
+	
+	var counter int
+	var repeatcounter int
+	var wellcoords  = wtype.WellCoords{X:counter,Y:repeatcounter}
+	
+Reactions := make([]*wtype.LHComponent,0)
+NewReactions = make([]*wtype.LHComponent,0)
+volumes := make([]wunit.Volume,0)
+welllocations := make([]string,0)
+
+for reactionname, templatename := range Reactiontotemplate {
+	
+	//wellposition := Plate.AllWellPositions(wtype.BYCOLUMN)[counter]
+
+
+//	for i:= 0;i < len(Reactions);i++{	
+	
+	
+	
+	if RowGradientRatherthanColumn{
+		wellcoords  = wtype.WellCoords{X:repeatcounter,Y:counter}
+	} else {
+		wellcoords  = wtype.WellCoords{X:counter,Y:repeatcounter}
+	}
+	
+	wellposition := wellcoords.FormatA1()
+result := RunSteps(PCR_vol,
+               Parameters{
+                    WaterVolume: wunit.NewVolume(10*float64(Samplenumber),"ul"),
+					ReactionVolume: wunit.NewVolume(25*float64(Samplenumber),"ul"),
+          BufferConcinX: 5,
+    FwdPrimerName: Reactiontoprimerpair[reactionname][0],
+    RevPrimerName: Reactiontoprimerpair[reactionname][1],
+    TemplateName: templatename,
+    ReactionName: reactionname,
+          FwdPrimerVol: wunit.NewVolume(1*float64(Samplenumber),"ul"),
+          RevPrimerVol: wunit.NewVolume(1*float64(Samplenumber),"ul"),
+          AdditiveVols: []wunit.Volume{wunit.NewVolume(5*float64(Samplenumber),"ul")},
+          Templatevolume: wunit.NewVolume(1*float64(Samplenumber),"ul"),
+          PolymeraseVolume: wunit.NewVolume(1*float64(Samplenumber),"ul"),
+          DNTPVol:wunit.NewVolume(1*float64(Samplenumber),"ul"),
+          Numberofcycles: 0,
+          InitDenaturationtime: wunit.NewTime(30,"s"),
+          Denaturationtime: wunit.NewTime(5,"s"),
+          Annealingtime: wunit.NewTime(10,"s"),
+          AnnealingTemp: wunit.NewTemperature(72,"C"), // Should be calculated from primer and template binding
+          Extensiontime: wunit.NewTime(60,"s"), // should be calculated from template length and polymerase rate
+          Finalextensiontime: wunit.NewTime(180,"s"),
+          Hotstart: false,
+          AddPrimerstoMasterMix: false,
+		WellPosition: wellposition,
+                }, Inputs{
+          FwdPrimer:FwdPrimertype,
+          RevPrimer: RevPrimertype,
+          DNTPS: factory.GetComponentByType("DNTPs") ,
+          PCRPolymerase:factory.GetComponentByType("Q5Polymerase"),
+          Buffer:factory.GetComponentByType("Q5buffer"),
+          Water:factory.GetComponentByType("water"),
+          Template: Templatetype,
+          Additives: []*wtype.LHComponent{factory.GetComponentByType("GCenhancer")} ,
+          OutPlate: Plate,
+                        
+                })
+
+
+    Reactions = append(Reactions, result.Outputs.Reaction)
+ 
+/*
+   volumes = append(volumes,result.Outputs.Reaction.Volume())
+	welllocations = append(welllocations,wellposition)
+	*/
+	
+	
+	counter++
+	}
+	
+	var byrow bool
+	var startrow int
+	var startcolumn int
+	
+	if !RowGradientRatherthanColumn {
+		byrow = true
+		startrow = 0
+		startcolumn = 0//1
+	}else {
+		byrow = false
+		startrow = 0//1
+		startcolumn = 0
+	}
+
+aliquots := RunSteps(AliquotStartatRowColumn,
+               Parameters{
+	SolutionVolume: wunit.NewVolume(25*float64(Samplenumber),"ul"),
+	VolumePerAliquot:  wunit.NewVolume(25,"ul"),
+	NumberofAliquots:Samplenumber,
+	StartRow:startrow,
+	StartColumn:startcolumn,
+	ByRow: byrow,
+	PreMix: true,
+},Inputs{
+	Solutions:Reactions,
+	OutPlate:Plate,
+	})
+		
+	
+	for i, aliquot := range aliquots.Outputs.Aliquots {
+    NewReactions = append(NewReactions,aliquot)
+    volumes = append(volumes,aliquot.Volume())
+	welllocations = append(welllocations,aliquots.Data.WellPositions[i])
+	}
+	
+/*	
+	// reset
+	counter = 0
+	// go to next 
+	repeatcounter++
+	if RowGradientRatherthanColumn{
+		wellcoords  = wtype.WellCoords{X:repeatcounter,Y:counter}
+	} else {
+		wellcoords  = wtype.WellCoords{X:counter,Y:repeatcounter}
+	}
+	
+	
+	
+	for k, reaction := range Reactions {
+		
+	for l := repeatcounter; l < Samplenumber;l++ {
+	reactionSample := mixer.Sample(reaction,wunit.NewVolume(25,"ul"))
+		
+	next := 	MixTo(Plate.Type,wellcoords.FormatA1(),1,reactionSample)
+	Reactions = append(Reactions, next)
+	volumes = append(volumes,wunit.NewVolume(25,"ul"))
+	welllocations = append(welllocations,wellcoords.FormatA1())
+	
+	if RowGradientRatherthanColumn{
+		wellcoords  = wtype.WellCoords{X:l,Y:k}
+	} else {
+		wellcoords  = wtype.WellCoords{X:k,Y:l}
+	}
+
+	}
+}*/
+	NumberOfReactions = len(Reactions)
+	Error = wtype.ExportPlateCSV(Projectname+".csv", Plate,Projectname+"outputPlate", welllocations, Reactions, volumes) 
+	
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

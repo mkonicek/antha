@@ -23,9 +23,8 @@
 package entrez
 
 import (
-	//"bufio"
+	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -63,27 +62,21 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 		return filename, []byte{}, err
 	}
 
-	fmt.Fprintf(os.Stdout, "%d records found for your query.\n", s.Count)
-
 	var of *os.File
-	if out == "" {
-		of = os.Stdout
-	} else {
-		/*if err := os.Mkdir(filepath.Dir(out), 0777); err != nil {
-			return err
-		}*/
+	/*if err := os.Mkdir(filepath.Dir(out), 0777); err != nil {
+		return err
+	}*/
 
-		dir, _ := filepath.Split(filename)
+	dir, _ := filepath.Split(filename)
 
-		if dir != "" {
-			err = os.MkdirAll(dir, 0777)
-		}
-		of, err = os.Create(filename)
-		if err != nil {
-			return filename, []byte{}, err
-		}
-		defer of.Close()
+	if dir != "" {
+		err = os.MkdirAll(dir, 0777)
 	}
+	of, err = os.Create(filename)
+	if err != nil {
+		return filename, []byte{}, err
+	}
+	defer of.Close()
 
 	var (
 		buf   = &bytes.Buffer{}
@@ -92,7 +85,6 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 	)
 
 	for p.RetStart = 0; p.RetStart < s.Count; p.RetStart += p.RetMax {
-		fmt.Fprintf(os.Stdout, "Attempting to retrieve %d record(s).\n", p.RetMax)
 		var t int
 		for t = 0; t < retries; t++ {
 			buf.Reset()
@@ -108,7 +100,6 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 				if r != nil {
 					r.Close()
 				}
-				fmt.Fprintf(os.Stdout, "Failed to retrieve on attempt %d... error: %v retrying.\n", t, err)
 				continue
 			}
 			_bn, err = io.Copy(buf, r)
@@ -117,13 +108,11 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 			if err == nil {
 				break
 			}
-			fmt.Fprintf(os.Stdout, "Failed to buffer on attempt %d... error: %v retrying.\n", t, err)
 		}
 		if err != nil {
 			return filename, []byte{}, err
 		}
 
-		fmt.Fprintf(os.Stdout, "Retrieved records with %d retries... writing out.\n", t)
 		_n, err := io.Copy(of, buf)
 		n += _n
 		if err != nil {
@@ -132,21 +121,23 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 
 	}
 	if bn != n {
-		fmt.Fprintf(os.Stdout, "Writethrough mismatch: %d != %d\n", bn, n)
+		//fmt.Fprintf(os.Stdout, "Writethrough mismatch: %d != %d\n", bn, n)
 	}
-	/*
-		fileInfo, _ := of.Stat()
-		var size int64 = fileInfo.Size()
-		contentsinbytes := make([]byte, size)
 
-		// read file into bytes
-		buffer := bufio.NewReader(of)
-		_, err = buffer.Read(contentsinbytes)
-	*/
+	fileInfo, _ := of.Stat()
+	var size int64 = fileInfo.Size()
+	contentsinbytes = make([]byte, size)
+
+	// read file into bytes
+	buffer := bufio.NewReader(of)
+	_, err = buffer.Read(contentsinbytes)
+
 	of.Close()
-	contentsinbytes, err = ioutil.ReadAll(of)
-
-	return filename, contentsinbytes, nil
+	//contentsinbytes, err = ioutil.ReadAll(of)
+	/*if err != nil {
+		fmt.Println("line 153", err.Error())
+	}*/
+	return filename, contentsinbytes, err
 }
 
 // This retrieves sequence of any type from any NCBI sequence database
@@ -155,19 +146,15 @@ func RetrieveSequence(id string, database string, filename string) (seq wtype.DN
 	filepathandname, _, err = RetrieveRecords(id, database, 1, "gb", filename)
 
 	if err != nil {
-		fmt.Println("RetrieveRecordsfail for", id)
-		fmt.Println(err.Error())
 		return wtype.DNASequence{}, filepathandname, err
 	}
 
-	contents, err := ioutil.ReadFile(filepathandname)
+	_, err = ioutil.ReadFile(filepathandname)
 	//contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), filename))
 
-	fmt.Println("ID:", id, "Contents:", string(contents))
 	//file := filepath.Join(anthapath.Path(), filename)
 	seq, err = parser.GenbanktoAnnotatedSeq(filepathandname)
 	if err != nil {
-		fmt.Println("File:", filepathandname, "Error:", err.Error())
 		return wtype.DNASequence{}, filepathandname, err
 	}
 	seq.Seq = strings.ToUpper(seq.Seq)

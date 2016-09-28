@@ -76,7 +76,7 @@ Steps {
 	
 	ShadesofGrey = make([]int,0)
 	
-	chosencolourpalette := image.AvailablePalettes["Gray"]
+	chosencolourpalette := image.AvailablePalettes()["Gray"]
 	
 	if CheckResizeAlgorithms {
 	image.CheckAllResizealgorithms(Imagefilename,OutPlate,Rotate,imaging.AllResampleFilters)

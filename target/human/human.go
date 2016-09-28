@@ -22,20 +22,32 @@ type Human struct {
 }
 
 func (a *Human) CanCompile(req ast.Request) bool {
-	canMove := true
-	mov := len(req.Move) > 0
-	mix := req.MixVol != nil
-	inc := req.Temp != nil || req.Time != nil
+	can := ast.Request{
+		Move: req.Move,
+		Selector: []ast.NameValue{
+			ast.NameValue{
+				// TODO: Remove hard coded strings
+				Name:  "antha.driver.v1.TypeReply.type",
+				Value: "antha.human.v1.Human",
+			},
+		},
+	}
+	if a.opt.CanMix {
+		can.MixVol = req.MixVol
+	}
+	if a.opt.CanIncubate {
+		can.Temp = req.Temp
+		can.Time = req.Time
+	}
+	if a.opt.CanHandle {
+		can.Selector = req.Selector
+	}
 
-	switch {
-	case !canMove && mov:
-		return false
-	case !a.opt.CanMix && mix:
-		return false
-	case !a.opt.CanIncubate && inc:
+	if !req.Matches(can) {
 		return false
 	}
-	return true
+
+	return can.Contains(req)
 }
 
 func (a *Human) MoveCost(from target.Device) int {
@@ -49,15 +61,26 @@ func (a *Human) String() string {
 	return "Human"
 }
 
-func (a *Human) Compile(cmds []ast.Command) ([]target.Inst, error) {
+// Return key for node for grouping
+func getKey(n ast.Node) (r interface{}) {
+	// Group by value for HandleInst and Incubate and type otherwise
+	if c, ok := n.(*ast.Command); !ok {
+		r = reflect.TypeOf(n)
+	} else if h, ok := c.Inst.(*ast.HandleInst); ok {
+		r = h.Group
+	} else if i, ok := c.Inst.(*ast.IncubateInst); ok {
+		r = i.Temp.ToString() + " " + i.Time.ToString()
+	} else {
+		r = reflect.TypeOf(c.Inst)
+	}
+	return
+}
+
+func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 	addDep := func(in, dep target.Inst) {
 		in.SetDependsOn(append(in.DependsOn(), dep))
 	}
 
-	var nodes []ast.Node
-	for _, c := range cmds {
-		nodes = append(nodes, c)
-	}
 	g := ast.Deps(nodes)
 
 	entry := &target.Wait{}
@@ -67,33 +90,34 @@ func (a *Human) Compile(cmds []ast.Command) ([]target.Inst, error) {
 
 	insts = append(insts, entry)
 
-	// Maximally coalesce repeated commands
-	dag := graph.Schedule(g)
+	// Maximally coalesce repeated commands according to when they are first
+	// available to be executed (graph.Reverse)
+	dag := graph.Schedule(graph.Reverse(g))
 	for len(dag.Roots) > 0 {
 		var next []graph.Node
 		// Gather
-		same := make(map[reflect.Type][]graph.Node)
+		same := make(map[interface{}][]ast.Node)
 		for _, r := range dag.Roots {
 			n := r.(ast.Node)
-			tn := reflect.TypeOf(n)
-			same[tn] = append(same[tn], n)
+			key := getKey(n)
+			same[key] = append(same[key], n)
 			next = append(next, dag.Visit(r)...)
 		}
 		// Apply
 		for _, nodes := range same {
 			var ins []*target.Manual
 			for _, n := range nodes {
-				in, err := a.makeInst(n.(ast.Command))
+				in, err := a.makeInst(n)
 				if err != nil {
 					return nil, err
 				}
 				ins = append(ins, in)
 			}
-			min := a.makeFromManual(ins)
-			insts = append(insts, min)
+			in := a.coalesce(ins)
+			insts = append(insts, in)
 
 			for _, n := range nodes {
-				inst[n.(ast.Node)] = min
+				inst[n] = in
 			}
 		}
 
@@ -120,6 +144,7 @@ func (a *Human) Compile(cmds []ast.Command) ([]target.Inst, error) {
 type Opt struct {
 	CanMix      bool
 	CanIncubate bool
+	CanHandle   bool
 }
 
 func New(opt Opt) *Human {

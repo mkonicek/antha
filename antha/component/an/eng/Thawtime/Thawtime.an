@@ -49,7 +49,7 @@ Steps {
 	
 	/*  Step 2. Required heat energy to melt the solid is calculated using the calculated mass along with the latent heat of melting 
 	which we find via a liquid class look up package which is not required for import here since it's imported from the engineering library */
-	
+
 	q := eng.Q(Liquid, mass)
 	
 	/*  Step 3. Heat will be transferred via both convection through the air and conduction through the plate walls.

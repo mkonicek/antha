@@ -1,0 +1,14 @@
+{
+    "connections": [],
+    "processes": {
+        "FWDPrimerOri": {
+            "component": "PrimerDesign_FWD"
+        },
+        "FWDPrimerOriRevComp": {
+            "component": "PrimerDesign_FWD"
+        },
+        "FWDPrimerTetA": {
+            "component": "PrimerDesign_FWD"
+        }
+    }
+}

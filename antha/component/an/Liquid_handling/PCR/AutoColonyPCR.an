@@ -1,0 +1,172 @@
+protocol AutoColonyPCR
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/microArch/factory"
+	inplate "github.com/antha-lang/antha/target/mixer" 
+	"fmt"
+	"strconv"
+
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	// PCRprep parameters
+	Projectname string
+	WellstopickCSV string
+	Reactiontoprimerpair map[string][2]string // e.g. ["left homology arm"]:"fwdprimer","revprimer"
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Error error
+	OriginalWelltoNewWell map[string]string
+	NumberofColonies int
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	FwdPrimertype *wtype.LHComponent
+	RevPrimertype *wtype.LHComponent
+	Templatetype *wtype.LHComponent
+	Plate *wtype.LHPlate
+	RecoveryPlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Reactions []*wtype.LHComponent
+)
+
+Requirements {
+}
+
+// Conditions to run on startup
+Setup {
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	// make map to cross reference starting well to destination well
+	OriginalWelltoNewWell = make(map[string]string)
+	
+	// initialise some counters
+	platenum := 1
+	counter := 0
+	
+	// set low volume of colony to pick
+	colonypickvol := wunit.NewVolume(1.0,"ul")
+	
+	// stuff we need later
+	//wellpositionarray := make([]string,0)
+	numberofcolonies := 0
+	
+	// parse colony locations from file
+	inputplate,err := inplate.ParseInputPlateFile(WellstopickCSV) 
+	
+	if err!=nil {
+		Errorf("Error parsing inputplate csv file")
+	}
+	
+	// count number of colonies from inplate
+	
+	for _,wellcontents := range inputplate.Wellcoords {
+		if wellcontents.Empty()== false {
+			numberofcolonies = numberofcolonies + 1
+		}
+	}
+	
+	// reset before adding colonies
+	platenum = 1
+	counter = 0
+	
+
+	
+	Reactions = make([]*wtype.LHComponent,0)
+	volumes := make([]wunit.Volume,0)
+	welllocations := make([]string,0)
+
+	// add colonies
+	for originalwell, wellcontents := range inputplate.Wellcoords  {
+		
+		if wellcontents.Empty() == false{
+		
+		if counter==((Plate.WlsX*Plate.WlsY)/*+NumberofBlanks*/){
+			fmt.Println("plate full, counter = ", counter)
+			platenum++
+			//reset counter
+			counter = 0
+		}
+		
+	colonyComponent := wellcontents.WContents
+	
+	wellposition := Plate.AllWellPositions(wtype.BYCOLUMN)[counter]
+	
+	result := RunSteps(ColonyPCR_vol_mmx,
+               Parameters{
+                    RecoveryWaterVolume: wunit.NewVolume(10,"ul"),
+					MasterMixVolume: wunit.NewVolume(17,"ul"),
+    	FwdPrimerName: Reactiontoprimerpair[wellcontents.WContents.CName][0],
+    	RevPrimerName: Reactiontoprimerpair[wellcontents.WContents.CName][1],
+    	TemplateName: wellcontents.WContents.CName, //+"_"+inputplate.PlateName+"_"+originalwell, // colony starting well position
+    	ReactionName: wellcontents.WContents.CName+"_"+inputplate.PlateName+"_"+originalwell,
+		PolymeraseVolume: wunit.NewVolume(0,"ul"),
+          FwdPrimerVol: wunit.NewVolume(1,"ul"),
+          RevPrimerVol: wunit.NewVolume(1,"ul"),
+          Templatevolume: colonypickvol,
+          Numberofcycles: 30 ,
+          InitDenaturationtime: wunit.NewTime(30,"s"),
+          Denaturationtime: wunit.NewTime(5,"s"),
+          Annealingtime: wunit.NewTime(10,"s"),
+          AnnealingTemp: wunit.NewTemperature(72,"C"), // Should be calculated from primer and template binding
+          Extensiontime: wunit.NewTime(60,"s"), // should be calculated from template length and polymerase rate
+          Finalextensiontime: wunit.NewTime(180,"s"),
+		WellPosition: wellposition,
+		PolymeraseAlreadyaddedtoMastermix:true,
+                }, Inputs{
+          FwdPrimer:FwdPrimertype,
+          RevPrimer: RevPrimertype,
+          MasterMix:factory.GetComponentByType("Q5mastermix"),
+			PCRPolymerase: factory.GetComponentByType("Q5Polymerase"),
+          RecoveryWater:factory.GetComponentByType("water"),
+          Template: colonyComponent,
+          OutPlate: Plate,
+		RecoveryPlate: RecoveryPlate,
+                        
+                })
+
+
+    Reactions = append(Reactions, result.Outputs.Reaction)
+    volumes = append(volumes,result.Outputs.Reaction.Volume())
+	welllocations = append(welllocations,wellposition)
+	
+	
+	// add info to output map for well location cross referencing
+	OriginalWelltoNewWell[inputplate.PlateName+"_"+originalwell] = strconv.Itoa(platenum) + wellposition
+	
+	counter++
+	
+    }
+	
+}
+	NumberofColonies =  numberofcolonies
+	
+	
+	Error = wtype.ExportPlateCSV(Projectname+".csv", Plate,Projectname+"outputPlate", welllocations, Reactions, volumes) 
+	
+	
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

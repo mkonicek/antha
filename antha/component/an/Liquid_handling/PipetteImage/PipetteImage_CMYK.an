@@ -53,7 +53,7 @@ Setup {
 Steps {
 	
 	//var chosencolourpalette color.Palette
-	chosencolourpalette := image.AvailablePalettes["Plan9"]
+	chosencolourpalette := image.AvailablePalettes()["Plan9"]
 	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette, Rotate, AutoRotate) 
 	
 	solutions := make([]*wtype.LHComponent, 0)

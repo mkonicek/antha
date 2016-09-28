@@ -37,6 +37,7 @@ Setup {
 
 // Core process of the protocol: steps to be performed for each input
 Steps {
+	// this is importing the NewVolume function from the wunit package
 	MyVolume = wunit.NewVolume(MyValue,MyUnit)
 	
 	// Exercise: adjust the protocol to make a concentration instead

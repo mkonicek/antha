@@ -1,0 +1,8 @@
+{
+    "connections": [],
+    "processes": {
+        "RGB": {
+            "component": "Scarfree_siteremove_orfcheck"
+        }
+    }
+}

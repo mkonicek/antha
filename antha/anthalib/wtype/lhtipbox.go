@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import "fmt"
@@ -48,6 +47,7 @@ type LHTipbox struct {
 
 func NewLHTipbox(nrows, ncols int, height float64, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64) *LHTipbox {
 	var tipbox LHTipbox
+	//tipbox.ID = "tipbox-" + GetUUID()
 	tipbox.ID = GetUUID()
 	tipbox.Type = boxtype
 	tipbox.Boxname = fmt.Sprintf("%s_%s", boxtype, tipbox.ID[1:len(tipbox.ID)-2])
@@ -109,8 +109,22 @@ TipZStart : %f,
 	)
 }
 
+//lazy sunuva
 func (tb *LHTipbox) Dup() *LHTipbox {
-	return NewLHTipbox(tb.Nrows, tb.Ncols, tb.Height, tb.Mnfr, tb.Type, tb.Tiptype, tb.AsWell, tb.TipXOffset, tb.TipYOffset, tb.TipXStart, tb.TipYStart, tb.TipZStart)
+	tb2 := NewLHTipbox(tb.Nrows, tb.Ncols, tb.Height, tb.Mnfr, tb.Type, tb.Tiptype, tb.AsWell, tb.TipXOffset, tb.TipYOffset, tb.TipXStart, tb.TipYStart, tb.TipZStart)
+
+	for i := 0; i < len(tb.Tips); i++ {
+		for j := 0; j < len(tb.Tips[i]); j++ {
+			t := tb.Tips[i][j]
+			if t == nil {
+				tb2.Tips[i][j] = nil
+			} else {
+				tb2.Tips[i][j] = t.Dup()
+			}
+		}
+	}
+
+	return tb2
 }
 
 // @implement named
@@ -203,8 +217,12 @@ func (tb *LHTipbox) GetTips(mirror bool, multi, orient int) []string {
 
 	}
 
-	tb.NTips -= multi
+	tb.NTips -= len(ret)
 	return ret
+}
+
+func (tb *LHTipbox) Refresh() {
+	initialize_tips(tb, tb.Tiptype)
 }
 
 func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {

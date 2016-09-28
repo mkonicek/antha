@@ -44,6 +44,8 @@ type LHInstruction struct {
 	Majorlayoutgroup int
 	Result           *LHComponent
 	gen              int
+	PlateName        string
+	OutPlate         *LHPlate
 }
 
 func NewLHInstruction() *LHInstruction {

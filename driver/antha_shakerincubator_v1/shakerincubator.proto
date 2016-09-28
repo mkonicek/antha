@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package antha.shakerincubator.v1;
+
+service ShakerIncubator {
+  rpc Connect (Blank) returns (BoolReply) {}
+  rpc Disconnect (Blank) returns (BoolReply) {}
+  rpc Test (Blank) returns (BoolReply) {}
+
+  rpc CarrierOpen (Blank) returns (BoolReply) {}
+  rpc CarrierClose (Blank) returns (BoolReply) {}
+  rpc ShakeStart (ShakerSettings) returns (BoolReply) {}
+  rpc ShakeStop (Blank) returns (BoolReply) {}
+  rpc TemperatureSet (TemperatureSettings) returns (BoolReply) {}
+  rpc TemperatureReset (Blank) returns (BoolReply) {}
+}
+
+message BoolReply {
+  bool result = 1;
+}
+
+message ShakerSettings {
+  double frequency = 1;
+  double radius = 2;
+}
+
+message TemperatureSettings {
+  double temperature = 1;
+}
+
+message Blank {
+}

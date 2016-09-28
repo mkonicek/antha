@@ -27,7 +27,7 @@ PipetMax -out nameoffile.sqlite
 PipetMax -port 50052
 PipetMax -protocol newprotocolname
 
-If using the clientdevice (./clientdevice.exe —device pipetmax) to control the pipetmax directly you can add an additional driver flag with the IP address of the remote clientdevice and port.
+If using the clientdevice (./clientdevice.exe -—device pipetmax) to control the pipetmax directly you can add an additional driver flag with the IP address of the remote clientdevice and port.
 This will allow direct running and simulation of the Pipetmax:
 
 antharun --driver localhost:50051 --driver 192.168.1.58:50051

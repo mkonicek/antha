@@ -55,7 +55,7 @@ func _AccuracyTest_2Steps(_ctx context.Context, _input *AccuracyTest_2Input, _ou
 	// work out plate layout based on picture or just in order
 
 	if _input.Printasimage {
-		chosencolourpalette := image.AvailablePalettes["Palette1"]
+		chosencolourpalette := image.AvailablePalettes()["Palette1"]
 		positiontocolourmap, _, _ := image.ImagetoPlatelayout(_input.Imagefilename, _input.OutPlate, &chosencolourpalette, rotate, autorotate)
 
 		//Runtowelllocationmap = make([]string,0)
@@ -72,7 +72,7 @@ func _AccuracyTest_2Steps(_ctx context.Context, _input *AccuracyTest_2Input, _ou
 
 	} else {
 
-		wellpositionarray = _input.OutPlate.AllWellPositions()
+		wellpositionarray = _input.OutPlate.AllWellPositions(wtype.BYCOLUMN)
 
 	}
 	reactions := make([]*wtype.LHComponent, 0)

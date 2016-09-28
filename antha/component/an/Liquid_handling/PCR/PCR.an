@@ -4,6 +4,10 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"fmt"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 )
 
 /*type Polymerase struct {
@@ -48,10 +52,15 @@ Parameters (
 	Extensiontime Time // should be calculated from template length and polymerase rate
 	Extensiontemp Temperature
 	Finalextensiontime Time
+	Targetsequence string
+	FwdPrimerSeq string
+	RevPrimerSeq string
 )
 
 // Data which is returned from this protocol, and data types
 Data (
+	FwdPrimerSites []search.Thingfound
+	RevPrimerSites []search.Thingfound
 )
 
 
@@ -82,6 +91,23 @@ Setup {
 // The core process for this protocol, with the steps to be performed
 // for every input
 Steps {
+	
+	FwdPrimerSites = sequences.FindSeqsinSeqs(Targetsequence, []string{FwdPrimerSeq})
+	
+	RevPrimerSites = sequences.FindSeqsinSeqs(Targetsequence, []string{RevPrimerSeq})
+
+	
+	if len(FwdPrimerSites)==0 || len(RevPrimerSites)==0{
+	
+	errordescription := fmt.Sprint(
+						text.Print("FwdPrimerSitesfound:", fmt.Sprint(FwdPrimerSites)),
+						text.Print("RevPrimerSitesfound:", fmt.Sprint(RevPrimerSites)),
+	)
+	
+	Errorf(errordescription)	
+	}
+	
+	
 	
 	// Mix components
 	samples := make([]*wtype.LHComponent, 0)

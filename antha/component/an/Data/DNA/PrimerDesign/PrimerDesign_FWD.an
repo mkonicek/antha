@@ -1,0 +1,110 @@
+// This element will design a sequencing primer to target amplification of a target region within a sequence file
+// Design criteria such as maximum gc content, acceptable ranges of melting temperatures and primer length may be specified by the user.
+protocol PrimerDesign_FWD
+
+import (
+	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/oligos"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
+	
+)
+// Input parameters for this protocol
+Parameters (
+	DNASeqfile   string // genbank file (.gb)
+	Plasmid 	bool
+	
+	Maxtemp    Temperature 
+	Mintemp    Temperature 
+	Maxgc      float64 // as a proportion of 1, i.e. 1 == 100%
+	Minlength   int 
+	Maxlength   int 
+	Seqstoavoid []string
+	PermittednucleotideOverlapBetweenPrimers int // number of nucleotides which primers can overlap by
+	RegionSequenceString string
+	FlankTargetSequence bool
+)
+
+// Data which is returned from this protocol
+Data (
+	FWDPrimer oligos.Primer
+	Warnings error
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+		
+	var region wtype.DNASequence
+
+	fulldnaseqs, err := parser.DNAFiletoDNASequence(DNASeqfile, Plasmid)
+	
+	if err != nil {
+		fmt.Println("ParseSeqFail")
+		Warnings = err
+		Errorf(Warnings.Error())
+	}
+	fmt.Println("1")
+	if len(fulldnaseqs)!= 1 {
+		Warnings  = fmt.Errorf("more than one matching dna sequence found in target sequence")
+		Errorf(Warnings.Error())
+	}
+	fmt.Println("2")
+	RegionSequence := wtype.MakeLinearDNASequence("region",RegionSequenceString)
+	fmt.Println("3")
+	fmt.Println("fulldnaseqs[0]",fulldnaseqs[0])
+	fmt.Println("RegionSequence",RegionSequence)
+	regionstart, regionend, err := oligos.FindPositioninSequence(fulldnaseqs[0], RegionSequence) 
+	fmt.Println("4")
+	if err != nil {
+		fmt.Println("FindPositioninoligoFail")
+		Warnings = err
+		Errorf(Warnings.Error())
+	}
+	fmt.Println("5")
+	// if true then the start oint ot design primers is moved back 150bp to ensure full region is covered
+	if FlankTargetSequence {
+		region = oligos.DNAregion(fulldnaseqs[0], regionstart-150, regionend)
+	}else {
+		region = oligos.DNAregion(fulldnaseqs[0], regionstart, regionend)
+	}
+	fmt.Println("6")
+	
+	FWDPrimer, Warnings = oligos.FWDOligoSeq(region, Maxgc, Minlength, Maxlength, Mintemp, Maxtemp, Seqstoavoid, PermittednucleotideOverlapBetweenPrimers) 
+	
+	if Warnings != nil {
+		fmt.Println("FWDOligoSeqFail")
+		Errorf(Warnings.Error())
+	}
+	
+	fmt.Println(text.Print("FWDPrimer:",FWDPrimer))
+}
+
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}
+

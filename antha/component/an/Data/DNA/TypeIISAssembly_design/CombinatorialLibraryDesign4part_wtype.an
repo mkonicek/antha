@@ -1,0 +1,139 @@
+// This protocol is intended to design assembly parts using a specified enzyme. 
+// overhangs are added to complement the adjacent parts and leave no scar. 
+// parts can be entered as genbank (.gb) files, sequences or biobrick IDs
+// If assembly simulation fails after overhangs are added. In order to help the user
+// diagnose the reason, a report of the part overhangs 
+// is returned to the user along with a list of cut sites in each part.
+protocol CombinatorialLibraryDesign_PRO_RBS_CDS_wtype_map
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/oligos"
+	//"strconv"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	//Seqsinorder					map[string][]string // constructname to sequence combination
+	ProjectName					string
+	Standard					string //MoClo
+	StandardLevel				string // of assembly standard
+	Vectors						[]wtype.DNASequence
+	PROs						[]wtype.DNASequence
+	RBSs						[]wtype.DNASequence
+	CDSs						[]wtype.DNASequence
+	TERs						[]wtype.DNASequence
+	SitesToRemove				[]string
+	BlastSearchSeqs				bool
+)
+
+// Physical Inputs to this protocol with types
+Inputs (
+
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	StatusMap map[string]string
+	PartswithOverhangsMap map[string][]wtype.DNASequence // parts to order
+	PassMap map[string]bool
+	SeqsMap map[string]wtype.DNASequence // desired sequence to end up with after assembly
+	EndreportMap  map[string]string
+	PositionReportMap  map[string][]string
+	PrimerMap map[string]oligos.Primer
+	
+)
+// Input Requirement specification
+Requirements {
+	// e.g. are MoClo types valid?
+}
+
+// Conditions to run on startup
+Setup {}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	StatusMap = make(map[string]string)
+	PartswithOverhangsMap = make(map[string][]wtype.DNASequence) // parts to order
+	PassMap = make(map[string]bool)
+	SeqsMap = make(map[string]wtype.DNASequence) // desired sequence to end up with after assembly
+	EndreportMap  = make(map[string]string)
+	PositionReportMap = make(map[string][]string)
+	StatusMap = make(map[string]string)
+	PrimerMap = make(map[string]oligos.Primer)
+	
+	var counter int = 1
+	
+	for j := range Vectors {
+		for k := range PROs {
+			for l := range RBSs {
+				for m := range CDSs {	
+					for n := range TERs {
+						key := 	ProjectName	+Vectors[j].Nm+"_"+PROs[k].Nm+"_"+RBSs[l].Nm+"_"+CDSs[m].Nm
+						assembly := RunSteps(AssemblyStandard_siteremove_orfcheck_wtype,
+		Parameters {
+					Constructname: 				key,
+					Seqsinorder:				[]wtype.DNASequence{PROs[k],RBSs[l],CDSs[m],TERs[n]},
+					AssemblyStandard:			Standard,
+					Level:						StandardLevel, // of assembly standard
+					Vector:						Vectors[j],
+					PartMoClotypesinorder:		[]string{"Pro","5U + NT1","CDS1","3U + Ter"}, 
+					OtherEnzymeSitesToRemove:	SitesToRemove,
+					ORFstoConfirm:				[]string{}, // enter each as amino acid sequence
+					RemoveproblemRestrictionSites: true,
+					EndsAlreadyadded:			false,
+					ExporttoFastaFile: 			true,
+					BlastSeqswithNoName:			BlastSearchSeqs,
+		}, Inputs{
+                    
+                })
+				key = key  //+ Vectors[j]
+				PartswithOverhangsMap[key] = assembly.Data.PartswithOverhangs // parts to order
+				PassMap[key] = assembly.Data.Simulationpass
+				EndreportMap[key]  = assembly.Data.Endreport
+				PositionReportMap[key] = assembly.Data.PositionReport
+				SeqsMap[key] = assembly.Data.NewDNASequence
+				StatusMap[key] = assembly.Data.Status
+				
+	// for each vector we'll also design sequencing primers
+	
+	primer := RunSteps(PrimerDesign_FWD_wtype,
+	Parameters {
+				FullDNASeq:assembly.Data.NewDNASequence,
+				Maxtemp:    wunit.NewTemperature(60,"C"),
+				Mintemp:    wunit.NewTemperature(55,"C"),
+				Maxgc:    0.6,
+				Minlength:   20, 
+				Maxlength:  25, 
+				Seqstoavoid: []string{},
+				PermittednucleotideOverlapBetweenPrimers: 10, // number of nucleotides which primers can overlap by
+				RegionSequence: assembly.Data.PartsWithSitesRemoved[0], // first part
+				FlankTargetSequence:true,
+	}, Inputs{
+                    
+                })
+				PrimerMap[key]=primer.Data.FWDPrimer
+				counter++
+	}
+	}
+	}
+	}
+	}
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

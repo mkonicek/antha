@@ -3,12 +3,6 @@
     "processes": {
         "DNAgelParams1": {
             "component": "DNA_gel"
-        },
-        "DNAgelParams2": {
-            "component": "DNA_gel"
-        },
-        "DNAgelParams3": {
-            "component": "DNA_gel"
         }
     }
 }

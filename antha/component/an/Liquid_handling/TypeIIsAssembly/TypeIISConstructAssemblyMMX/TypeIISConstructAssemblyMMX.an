@@ -3,7 +3,6 @@ protocol TypeIISConstructAssemblyMMX
 import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"fmt"
 )
 
 // Input parameters for this protocol (data)
@@ -54,8 +53,6 @@ Steps {
 	samples = append(samples, mmxSample)
 
 	for k, part := range Parts {
-		fmt.Println("creating dna part num ", k, " comp ", part.CName, " renamed to ", PartNames[k], " vol ", PartVols[k])
-		
 		part.Type,_ = wtype.LiquidTypeFromString(LHPolicyName)
 		
 		partSample := mixer.Sample(part, PartVols[k])

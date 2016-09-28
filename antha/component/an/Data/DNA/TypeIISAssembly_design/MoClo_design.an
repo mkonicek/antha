@@ -12,6 +12,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/igem"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Inventory"
 	"strings"
@@ -27,6 +28,7 @@ Parameters (
 	Level						string // of assembly standard
 	Vector						string
 	PartMoClotypesinorder		[]string // labels e.g. pro = promoter
+	BlastSeqswithNoName 			bool
 )
 
 // Physical Inputs to this protocol with types
@@ -62,12 +64,13 @@ Steps {
 	// set warnings reported back to user to none initially
 	warnings := make([]string,1)
 	warnings[0] = "none"
-	var features []wtype.Feature
+	found := false
+	var err error 
 	
 	/* find sequence data from keyword; looking it up by a given name in an inventory 
 	   or by biobrick ID from iGem parts registry */
 	partsinorder := make([]wtype.DNASequence,0)
-	var partDNA =wtype.DNASequence{"","",false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "",features}
+	var partDNA wtype.DNASequence
 	
 	Status = "all parts available"
 	for _, part := range Partsinorder {
@@ -92,13 +95,39 @@ Steps {
 				
 		}
 		} else {
-		partDNA = Inventory.Partslist[part]
+		// look up part in inventory
+		partDNA, found = Inventory.Partslist[part]
 		
+		if !found {
+		//Status = text.Print("part: " + partDNA.Nm, partDNA.Seq + ": not found in Inventory so element aborted!")
+		
+		// assume dna sequence and test 
+		partDNA = wtype.MakeLinearDNASequence("tempPart",part)
+		
+		// test for illegal nucleotides
+		pass,illegals,_ := sequences.Illegalnucleotides(partDNA)
+		
+		if !pass {
+			var newstatus = make([]string,0)
+			for _,illegal := range illegals {
+				
+				newstatus =append(newstatus, "part: " + partDNA.Nm+" "+ partDNA.Seq + ": contains illegalnucleotides:"+ illegal.ToString())
+			}
+			
+			Errorf(strings.Join(newstatus,""))
+		}else if BlastSeqswithNoName{
+			// run a blast search on the sequence to get the name
+			blastsearch := RunSteps(BlastSearch_wtype, 
+                Parameters{
+                	DNA: partDNA, 
+                }, Inputs{
+                      
+                })
+		partDNA.Nm = blastsearch.Data.AnthaSeq.Nm
 		}
 		
-		if partDNA.Seq == "" || partDNA.Nm == "" {
-		Status = text.Print("part: " + partDNA.Nm, partDNA.Seq + ": not found in Inventory so element aborted!")
 		}
+	}
 	partsinorder = append(partsinorder,partDNA)
 	}
 	// lookup vector sequence
@@ -109,7 +138,12 @@ Steps {
 	
 
 	// (1) Add standard overhangs using chosen assembly standard
-	PartswithOverhangs = enzymes.MakeStandardTypeIIsassemblyParts(partsinorder, AssemblyStandard, Level, PartMoClotypesinorder)
+	PartswithOverhangs,err = enzymes.MakeStandardTypeIIsassemblyParts(partsinorder, AssemblyStandard, Level, PartMoClotypesinorder)
+	
+	if err !=nil{
+		warnings = append(warnings, text.Print("Error", err.Error()))
+		Errorf(err.Error())
+	}
 	
 	// OR (2) Add overhangs for scarfree assembly based on part seqeunces only, i.e. no Assembly standard
 	//PartswithOverhangs = enzymes.MakeScarfreeCustomTypeIIsassemblyParts(partsinorder, vectordata, restrictionenzyme)

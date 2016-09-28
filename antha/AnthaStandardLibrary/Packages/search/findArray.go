@@ -23,7 +23,11 @@
 // Utility package providing functions useful for searches
 package search
 
-//"strings"
+import (
+	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+)
 
 func InSlice(slice string, list []string) bool {
 	for _, b := range list {
@@ -96,6 +100,26 @@ func RemoveDuplicatesValuesfromMap(elements map[interface{}]interface{}) map[int
 			encountered[v] = true
 			// Append to result slice.
 			result[key] = v
+		}
+	}
+	// Return the new slice.
+	return result
+}
+
+// based on exact sequence matches only; ignores name
+func RemoveDuplicateSequences(elements []wtype.DNASequence) []wtype.DNASequence {
+	// Use map to record duplicates as we find them.
+	encountered := map[string]bool{}
+	result := []wtype.DNASequence{}
+
+	for v := range elements {
+		if encountered[strings.ToUpper(elements[v].Seq)] == true {
+			// Do not add duplicate.
+		} else {
+			// Record this element as an encountered element.
+			encountered[strings.ToUpper(elements[v].Seq)] = true
+			// Append to result slice.
+			result = append(result, elements[v])
 		}
 	}
 	// Return the new slice.

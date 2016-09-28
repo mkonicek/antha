@@ -25,6 +25,7 @@
 package anthapath
 
 import (
+	"os"
 	"os/user"
 	"path/filepath"
 )
@@ -36,4 +37,21 @@ func Path() string {
 		return ""
 	}
 	return filepath.Join(u.HomeDir, ".antha")
+}
+
+func Anthafileexists(filename string) bool {
+	fullpath := filepath.Join(Path(), filename)
+	if Exists(fullpath) {
+		return true
+	}
+	return false
+}
+
+func Exists(filename string) bool {
+	if _, err := os.Stat(filename); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
 }

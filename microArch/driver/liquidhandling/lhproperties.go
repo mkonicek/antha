@@ -289,6 +289,8 @@ func (lhp *LHProperties) Dup() *LHProperties {
 func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype string, layout map[string]wtype.Coordinates) *LHProperties {
 	var lhp LHProperties
 
+	lhp.ID = wtype.GetUUID()
+
 	lhp.Nposns = num_positions
 
 	lhp.Model = model
@@ -537,16 +539,22 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 // GetComponents takes requests for components at particular volumes
 // + a measure of carry volume
 // returns lists of plate IDs + wells from which to get components or error
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([]string, []string, error) {
-	r1 := make([]string, len(cmps))
-	r2 := make([]string, len(cmps))
+func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([][]string, [][]string, [][]wunit.Volume, error) {
+	r1 := make([][]string, len(cmps))
+	r2 := make([][]string, len(cmps))
+	r3 := make([][]wunit.Volume, len(cmps))
 
 	for i, v := range cmps {
+		r1[i] = make([]string, 0, 1)
+		r2[i] = make([]string, 0, 1)
+		r3[i] = make([]wunit.Volume, 0, 1)
 		foundIt := false
 
 		vdup := v.Dup()
-		vdup.Vol += carryvol.ConvertTo(wunit.ParsePrefixedUnit(vdup.Vunit))
-
+		/*
+			vdup := v.Dup()
+			vdup.Vol += carryvol.ConvertTo(wunit.ParsePrefixedUnit(vdup.Vunit))
+		*/
 		if v.HasAnyParent() {
 			//fmt.Println("Trying to get component ", v.CName, v.ParentID)
 			// this means it was already made with a previous call
@@ -560,8 +568,9 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 				tx = strings.Split(loc, ":")
 			}
 
-			r1[i] = tx[0]
-			r2[i] = tx[1]
+			r1[i] = append(r1[i], tx[0])
+			r2[i] = append(r2[i], tx[1])
+			r3[i] = append(r3[i], v.Volume().Dup())
 
 			vol := v.Volume().Dup()
 			vol.Add(carryvol)
@@ -581,21 +590,22 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 				if ok {
 					// whaddya got?
 					// nb this won't work if we need to split a volume across several plates
-					wcarr, ok := p.GetComponent(vdup, false)
+					wcarr, varr, ok := p.BetterGetComponent(vdup, false, lhp.MinPossibleVolume())
 
 					if ok {
 						foundIt = true
-						// update r1 and r2
-						r1[i] = p.ID
-						// XXX XXX XXX FFS this should aggregate
-						// TODO -- fix this
-						r2[i] = wcarr[0].FormatA1()
-
-						vol := v.Volume().Dup()
-						vol.Add(carryvol)
-
-						lhp.RemoveComponent(r1[i], r2[i], vol)
-
+						for ix, _ := range wcarr {
+							wc := wcarr[ix].FormatA1()
+							vl := varr[ix].Dup()
+							r1[i] = append(r1[i], p.ID)
+							r2[i] = append(r2[i], wc)
+							r3[i] = append(r3[i], vl)
+							/*
+								vl = vl.Dup()
+								vl.Add(carryvol)
+							*/
+							lhp.RemoveComponent(p.ID, wc, vl)
+						}
 						break
 					}
 				}
@@ -603,13 +613,13 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 
 			if !foundIt {
 				err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SOURCE FOR ", v.CName, " at volume ", v.Volume().ToString()))
-				return r1, r2, err
+				return r1, r2, r3, err
 			}
 
 		}
 	}
 
-	return r1, r2, nil
+	return r1, r2, r3, nil
 }
 
 func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int) (wells, positions, boxtypes []string, err error) {
@@ -656,7 +666,6 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 	// surely
 
 	if !foundit {
-
 		// try adding a new tip box
 		bx := factory.GetTipboxByType(tiptype)
 
@@ -829,4 +838,51 @@ func (lhp *LHProperties) CheckTipPrefCompatibility(prefs []string) bool {
 	}
 
 	return true
+}
+
+type UserPlate struct {
+	Plate    *wtype.LHPlate
+	Position string
+}
+type UserPlates []UserPlate
+
+func (p *LHProperties) SaveUserPlates() UserPlates {
+	up := make(UserPlates, 0, len(p.Positions))
+
+	for pos, plate := range p.Plates {
+		if plate.IsUserAllocated() {
+			up = append(up, UserPlate{Plate: plate.DupKeepIDs(), Position: pos})
+		}
+	}
+
+	return up
+}
+
+func (p *LHProperties) RestoreUserPlates(up UserPlates) {
+	for _, plate := range up {
+		oldPlate := p.Plates[plate.Position]
+		p.RemovePlateAtPosition(plate.Position)
+		// merge these
+		plate.Plate.MergeWith(oldPlate)
+		p.AddPlate(plate.Position, plate.Plate)
+	}
+}
+
+func (p *LHProperties) MinPossibleVolume() wunit.Volume {
+	if len(p.HeadsLoaded) == 0 {
+		return wunit.ZeroVolume()
+	}
+	minvol := p.HeadsLoaded[0].GetParams().Minvol
+	for _, head := range p.HeadsLoaded {
+		for _, tip := range p.Tips {
+			lhcp := head.Params.MergeWithTip(tip)
+			v := lhcp.Minvol
+			if v.LessThan(minvol) {
+				minvol = v
+			}
+		}
+
+	}
+
+	return minvol
 }

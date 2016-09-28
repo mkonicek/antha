@@ -1,8 +1,10 @@
 package codegen
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
@@ -41,7 +43,14 @@ func (a *incubator) CanCompile(req ast.Request) bool {
 	return req.Time != nil || req.Temp != nil
 }
 
-func (a *incubator) Compile(insts []ast.Command) ([]target.Inst, error) {
+func (a *incubator) Compile(nodes []ast.Node) ([]target.Inst, error) {
+	for _, n := range nodes {
+		if c, ok := n.(*ast.Command); !ok {
+			return nil, fmt.Errorf("unexpected node %T", n)
+		} else if _, ok := c.Inst.(*ast.IncubateInst); !ok {
+			return nil, fmt.Errorf("unexpected inst %T", c.Inst)
+		}
+	}
 	return []target.Inst{&incubateInst{}}, nil
 }
 
@@ -59,12 +68,13 @@ func (a *incubator) String() string {
 func TestWellFormed(t *testing.T) {
 	var nodes []ast.Node
 	for idx := 0; idx < 4; idx += 1 {
-		m := &ast.Mix{
-			Reqs: []ast.Request{
+		m := &ast.Command{
+			Requests: []ast.Request{
 				ast.Request{
 					MixVol: ast.NewInterval(0.1, 1.0),
 				},
 			},
+			Inst: &wtype.LHInstruction{},
 			From: []ast.Node{
 				&ast.UseComp{},
 				&ast.UseComp{},
@@ -74,13 +84,14 @@ func TestWellFormed(t *testing.T) {
 		u := &ast.UseComp{}
 		u.From = append(u.From, m)
 
-		i := &ast.Incubate{
-			Reqs: []ast.Request{
+		i := &ast.Command{
+			Requests: []ast.Request{
 				ast.Request{
 					Temp: ast.NewPoint(25),
 					Time: ast.NewPoint(60 * 60),
 				},
 			},
+			Inst: &ast.IncubateInst{},
 			From: []ast.Node{u},
 		}
 

@@ -21,9 +21,8 @@ func (ti TransferBlockInstruction) InstructionType() int {
 }
 
 func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
-	// timer for assessing evaporation
-	// need to define how to make this optional
 	inss := make([]RobotInstruction, 0, 1)
+	// reinstate with options once things are moved on
 	//timer := robot.GetTimer()
 
 	seen := make(map[string]bool)

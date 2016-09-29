@@ -22,8 +22,8 @@
 		],
 		"OnlythisColour":"",
 		"Notthiscolour":"white",
-      "OutPlate": "nunc1536_riser",
-      "VolumePerWell": "0.5ul"
+      "OutPlate": "greiner384_riser",
+      "VolumePerWell": "50ul"
     }
   }
 }

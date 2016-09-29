@@ -1,0 +1,156 @@
+// This protocol is intended to design assembly parts using the MoClo assembly standard. 
+// Overhangs for a part are chosen according to the designated class of each part (e.g. promoter).
+// The MoClo standard is hierarchical so the enzyme is chosen based on the level of assembly. 
+// i.e. first level 0 parts are made which may comprise of a promoter, 5prime upstream part, coding sequene, and terminator.
+// Level 0 parts can then be assembled together by using level 1 enzymes and overhangs. 
+// currently this protocol only supports level 0 steps.
+// see http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0016765
+
+protocol MoCloLevel0_PRO_RBS_CDS_TERMINATOR_VECTOR
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"fmt"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"strings"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	Constructname 				string
+	Partsinorder				[]string
+	AssemblyStandard			string //MoClo
+	//Level						string // of assembly standard
+	//PartMoClotypesinorder		[]string // labels e.g. pro = promoter
+	Promoter 					wtype.DNASequence
+	Rbs 						wtype.DNASequence
+	CDS 						wtype.DNASequence
+	Terminator					wtype.DNASequence
+	Vector						wtype.DNASequence //string
+)
+
+// Physical Inputs to this protocol with types
+Inputs (
+
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Warnings string
+	Status string
+	Simulationpass bool
+	PartswithOverhangs []wtype.DNASequence // parts to order
+	NewDNASequence wtype.DNASequence // desired sequence to end up with after assembly
+)
+// Input Requirement specification
+Requirements {
+	// e.g. are MoClo types valid?
+}
+
+// Conditions to run on startup
+Setup {}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	//var msg string
+	// set warnings reported back to user to none initially
+	warnings := make([]string,1)
+	warnings[0] = "none"
+	var err error 
+	
+	/* find sequence data from keyword; looking it up by a given name in an inventory 
+	   or by biobrick ID from iGem parts registry */
+	partsinorder := make([]wtype.DNASequence,0)
+	
+	partsinorder = append(partsinorder,Promoter,Rbs,CDS,Terminator)
+	
+	vectordata := Vector
+	
+	Level := "Level0"
+	
+	//lookup restriction enzyme
+	restrictionenzyme := enzymes.Enzymelookup[AssemblyStandard][Level]
+
+	// (1) Add standard overhangs using chosen assembly standard
+	PartswithOverhangs,err = enzymes.MakeStandardTypeIIsassemblyParts(partsinorder, AssemblyStandard, Level, []string{"Pro","5U + NT1","CDS1","3U + Ter"})
+	if err !=nil{
+		warnings = append(warnings, text.Print("Error", err.Error()))
+		Errorf(err.Error())
+	}
+	
+	// Check that assembly is feasible with designed parts by simulating assembly of the sequences with the chosen enzyme
+	assembly := enzymes.Assemblyparameters{Constructname, restrictionenzyme.Name,vectordata,PartswithOverhangs}
+		status,numberofassemblies,_,newDNASequence, err := enzymes.Assemblysimulator(assembly)
+	
+	endreport := "Only run in the event of assembly failure"
+	NewDNASequence = newDNASequence
+	if err == nil && numberofassemblies == 1 {
+		
+		Simulationpass = true
+	} else {
+		warnings = append(warnings,status)
+		// perform mock digest to test fragement overhangs (fragments are hidden by using _, )
+	_,stickyends5,stickyends3 := enzymes.TypeIIsdigest(vectordata, restrictionenzyme)
+	
+	allends := make([]string,0)
+	ends := ""
+	
+	ends = text.Print(vectordata.Nm + " 5 Prime end: ",stickyends5)
+	allends =append(allends,ends)
+	ends = text.Print(vectordata.Nm + " 3 Prime end: ",stickyends3)
+	allends =append(allends,ends)
+	
+	for _, part := range PartswithOverhangs {
+	_,stickyends5,stickyends3 := enzymes.TypeIIsdigest(part, restrictionenzyme)
+	ends = text.Print(part.Nm + " 5 Prime end: ",stickyends5)
+	allends =append(allends,ends)
+	ends = text.Print(part.Nm + " 3 Prime end: ",stickyends3)
+	allends =append(allends,ends)
+	}
+	endreport = strings.Join(allends," ")
+	}	
+	
+	Warnings = strings.Join(warnings,";")
+	
+	partsummary := make([]string,0)
+	for _, part:= range PartswithOverhangs {
+		partsummary =append(partsummary, text.Print(part.Nm,part.Seq))
+	}
+	
+	partstoorder := text.Print("PartswithOverhangs: ", partsummary)
+	
+	
+	
+	// Print status
+	if Status != "all parts available"{
+		Status = fmt.Sprintln(Status)
+	} else {Status = fmt.Sprintln(
+		text.Print("simulator status: ", status),
+		text.Print("Endreport after digestion: ",endreport),
+		text.Print("Warnings:", Warnings),
+		text.Print("Simulationpass=", Simulationpass),
+		text.Print("NewDNASequence: ",NewDNASequence),
+		partstoorder,
+		)
+	}
+	
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

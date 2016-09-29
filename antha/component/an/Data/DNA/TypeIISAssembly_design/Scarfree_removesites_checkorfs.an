@@ -11,25 +11,31 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/igem"
+	inventory "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Inventory"
 	"strconv"
 	"strings"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
 //"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 )
 
 // Input parameters for this protocol (data)
 Parameters (
-	Constructname 			string
-	Seqsinorder				[]string
-	Vector					string
-	Enzymename				string
-	ORFstoConfirm			[]string // enter each as amino acid sequence
+	Constructname 				string
+	Seqsinorder					[]string
+	OtherEnzymeSitesToRemove	[]string
+	Vector						string
+	Enzymename					string
+	ORFstoConfirm				[]string // enter each as amino acid sequence
 	RemoveproblemRestrictionSites bool
-	EndsAlreadyadded bool
+	EndsAlreadyadded 			bool
+	ExporttoFastaFile 			bool
+	BlastSeqswithNoName 			bool
 )
 
 // Physical Inputs to this protocol with types
@@ -48,8 +54,16 @@ Data (
 	Status string
 	Simulationpass bool
 	PartswithOverhangs []wtype.DNASequence // parts to order
+	PartsWithSitesRemoved []wtype.DNASequence
+	OriginalParts []wtype.DNASequence 
 	NewDNASequence wtype.DNASequence // desired sequence to end up with after assembly
 	ORFmissing bool
+	Endreport string
+	PositionReport []string
+	Plasmid bool
+	ORIpresent bool
+	SelectionMarkerPresent bool
+	
 )
 // Input Requirement specification
 Requirements {
@@ -78,6 +92,7 @@ Steps {
 
 	Status = "all parts available"
 	for i, part := range Seqsinorder {
+		// check if genbank feature
 		if strings.Contains(part, ".gb") && strings.Contains(part, "Feature:") {
 
 			split := strings.SplitAfter(part, ".gb")
@@ -87,21 +102,71 @@ Steps {
 			feature := split2[1]
 
 			partDNA, _ = parser.GenbankFeaturetoDNASequence(file, feature)
+			
+			// check if genbank file
 		} else if strings.Contains(part, ".gb") {
 
 			partDNA, _ = parser.GenbanktoAnnotatedSeq(part)
-		} else {
-			nm := "Part "+strconv.Itoa(i) 
-			if strings.Contains(part, "BBa_") {
-				nm = nm+"_"+part
+			//check if biobrick
+		} else if strings.Contains(part, "BBa_") {
+				nm := "Part "+strconv.Itoa(i)+"_"+part
 				part = igem.GetSequence(part)
-			}
+			
 			partDNA = wtype.MakeLinearDNASequence(nm, part)
+			
+			// check if in inventory
+		} else if inventoryDNA, found := inventory.Partslist[part]; found {
+			partDNA = inventoryDNA
+			
+			// else treat as DNA sequence and check
+			}else {
+				partDNA = wtype.MakeLinearDNASequence("Part "+strconv.Itoa(i) , part)
+			
+		// test for illegal nucleotides
+		pass,illegals,_ := sequences.Illegalnucleotides(partDNA)
+		
+		if !pass {
+			var newstatus = make([]string,0)
+			for _,illegal := range illegals {
+				
+				newstatus =append(newstatus, "part: " + partDNA.Nm+" "+ partDNA.Seq + ": contains illegalnucleotides:"+ illegal.ToString())
+			}
+			warnings = append(warnings,strings.Join(newstatus,""))
+			Errorf(strings.Join(newstatus,""))
 		}
-		partsinorder = append(partsinorder, partDNA)
+		if pass && BlastSeqswithNoName{
+			// run a blast search on the sequence to get the name
+			blastsearch := RunSteps(BlastSearch_wtype, 
+                Parameters{
+                	DNA: partDNA, 
+                }, Inputs{
+                      
+                })
+		partDNA.Nm = blastsearch.Data.AnthaSeq.Nm
+		}
+		
+		}
+		partsinorder = append(partsinorder,partDNA)
 	}
+	
+	// export original parts list
+	
+	OriginalParts = partsinorder
+	
+	warnings = append(warnings,fmt.Sprintln(partsinorder))
+			
+	
 	// check parts for restriction sites first and remove if the user has chosen to
 	enz := lookup.EnzymeLookup(Enzymename)
+
+
+	// get properties of other enzyme sites to remove
+	removetheseenzymes := make([]wtype.RestrictionEnzyme,0)
+	removetheseenzymes = append(removetheseenzymes,enz)
+	
+	for _,enzyme := range OtherEnzymeSitesToRemove {
+		removetheseenzymes = append(removetheseenzymes,lookup.EnzymeLookup(enzyme))
+	}
 
 	warning = text.Print("RemoveproblemRestrictionSites =", RemoveproblemRestrictionSites)
 	warnings = append(warnings, warning)
@@ -112,14 +177,14 @@ Steps {
 
 		for _, part := range partsinorder {
 		
-			info := enzymes.Restrictionsitefinder(part, []wtype.RestrictionEnzyme{enz})
+			info := enzymes.Restrictionsitefinder(part, removetheseenzymes)
 
 			for _, anysites := range info {
 				if anysites.Sitefound {
-					warning = "problem site found in " + part.Nm
+					warning = "problem " + anysites.Enzyme.Name+" site found in " + part.Nm
 					warnings = append(warnings, warning)
 					orf, orftrue := sequences.FindBiggestORF(part.Seq)
-					warning = fmt.Sprintln("site found in orf ", part.Nm, " ", orftrue, " site positions ", anysites.Positions("ALL"), "orf between", orf.StartPosition, " and ", orf.EndPosition, /*orf.DNASeq[orf.StartPosition:orf.EndPosition]*/)
+					warning = fmt.Sprintln(anysites.Enzyme.Name+" site found in orf ", part.Nm, " ", orftrue, " site positions ", anysites.Positions("ALL"), "orf between", orf.StartPosition, " and ", orf.EndPosition, /*orf.DNASeq[orf.StartPosition:orf.EndPosition]*/)
 					warnings = append(warnings, warning)
 					if orftrue /* && len(orf.ProtSeq) > 20 */ {
 						allsitestoavoid := make([]string, 0)
@@ -134,7 +199,7 @@ Steps {
 								warnings = append(warnings, warning)
 								warnings = append(warnings, "Paaaaerrttseq: "+part.Seq+"position: "+strconv.Itoa(position)+" original: "+originalcodon+" replacementcodon: "+codonoption)
 								if err != nil {
-									warning := text.Print("removal of site from orf "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
+									warning := text.Print("removal of "+anysites.Enzyme.Name+" site from orf "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
 									warnings = append(warnings, warning)
 								}
 							} else {
@@ -142,7 +207,7 @@ Steps {
 								part, err = sequences.RemoveSite(part, anysites.Enzyme, allsitestoavoid)
 								if err != nil {
 
-									warning = text.Print("position found to be outside of orf: "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
+									warning = text.Print(anysites.Enzyme.Name+" position found to be outside of orf: "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
 									warnings = append(warnings, warning)
 								}
 							}
@@ -165,16 +230,22 @@ Steps {
 					}
 				}
 				
-				newparts = append(newparts, part)
+				
+			}
+			newparts = append(newparts, part)
 
 				partsinorder = newparts
-			}
 		}
 	}
 	
-	// make vector into an antha type DNASequence
 	
-		if strings.Contains(Vector, ".gb") {
+	// export the parts list with sites removed
+	PartsWithSitesRemoved = partsinorder
+	
+	// make vector into an antha type DNASequence
+	if inventorydata, found := inventory.Partslist[Vector]; found{
+		vectordata = inventorydata
+		}else if strings.Contains(Vector, ".gb") {
 	
 			vectordata, _ = parser.GenbanktoAnnotatedSeq(Vector)
 			vectordata.Plasmid = true
@@ -204,15 +275,26 @@ Steps {
 	
 	// Check that assembly is feasible with designed parts by simulating assembly of the sequences with the chosen enzyme
 	assembly := enzymes.Assemblyparameters{Constructname, restrictionenzyme.Name, vectordata, PartswithOverhangs}
-	status, numberofassemblies, _, newDNASequence, err := enzymes.Assemblysimulator(assembly)
+	status, numberofassemblies, _, newDNASequence, simerr := enzymes.Assemblysimulator(assembly)
+	
+	if simerr != nil {
+		warnings = append(warnings, text.Print("Error", simerr.Error()))
+	}
+
+	Plasmid, ORIpresent, SelectionMarkerPresent, err = features.ValidPlasmid(newDNASequence)
+	
+	if err != nil {
+		warnings = append(warnings, text.Print("Error", err.Error()))
+	}
 
 	endreport := "Endreport only run in the event of assembly simulation failure"
 	//sites := "Restriction mapper only run in the event of assembly simulation failure"
+	newDNASequence.Nm = Constructname
 	NewDNASequence = newDNASequence
-	if err == nil && numberofassemblies == 1 {
+	if simerr == nil && numberofassemblies == 1 {
 
 		Simulationpass = true
-	} else {
+	}// else {
 
 		warnings = append(warnings, status)
 		// perform mock digest to test fragement overhangs (fragments are hidden by using _, )
@@ -234,8 +316,10 @@ Steps {
 			allends = append(allends, ends)
 		}
 		endreport = strings.Join(allends, " ")
+		if !Simulationpass{
 		warnings = append(warnings, endreport)
-	}
+		}
+//	}
 
 	// check number of sites per part !
 
@@ -243,13 +327,15 @@ Steps {
 	multiple := make([]string, 0)
 	for _, part := range PartswithOverhangs {
 
-		info := enzymes.Restrictionsitefinder(part, []wtype.RestrictionEnzyme{enz})
+		info := enzymes.Restrictionsitefinder(part, removetheseenzymes)
 
-		sitepositions := enzymes.SitepositionString(info[0])
+		for i := range info {
+		sitepositions := enzymes.SitepositionString(info[i])
 
-		sites = append(sites, info[0].Numberofsites)
-		sitepositions = text.Print(part.Nm+" "+Enzymename+" positions:", sitepositions)
+		sites = append(sites, info[i].Numberofsites)
+		sitepositions = text.Print(part.Nm+" "+info[i].Enzyme.Name+" positions:", sitepositions)
 		multiple = append(multiple, sitepositions)
+		}
 	}
 
 	for _, orf := range ORFstoConfirm {
@@ -264,6 +350,8 @@ Steps {
 		warnings = append(warnings, "none")
 	}
 	Warnings = fmt.Errorf(strings.Join(warnings, ";"))
+	Endreport = endreport
+	PositionReport = multiple
 
 	partsummary := make([]string, 0)
 	for _, part := range PartswithOverhangs {
@@ -292,6 +380,25 @@ Steps {
 	//anthapath.ExportTextFile("Report"+"_"+Constructname+".txt",Status)
 	fmt.Println(Status)
 	}
+	
+	// export sequence to fasta
+	if ExporttoFastaFile && Simulationpass{
+		exportedsequences := make([]wtype.DNASequence,0)
+		// add dna sequence produced
+		exportedsequences = append(exportedsequences,NewDNASequence)
+		
+		// export to file
+		export.Makefastaserial2(export.LOCAL,Constructname+"_AssemblyProduct", exportedsequences)
+		
+		// reset 
+		exportedsequences = make([]wtype.DNASequence,0)
+		// add all parts with overhangs 
+		for _,part := range PartswithOverhangs{
+		exportedsequences = append(exportedsequences,part)	
+		}
+		export.Makefastaserial2(export.LOCAL,Constructname+"_Parts", exportedsequences)
+	}
+	
 	
 }
 

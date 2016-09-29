@@ -1,0 +1,65 @@
+protocol EntrezLookup
+
+import (
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/entrez"
+
+)
+
+// Valid Database list: http://www.ncbi.nlm.nih.gov/books/NBK25497/table/chapter2.T._entrez_unique_identifiers_ui/?report=objectonly
+
+// Valid ReturnType List: http://www.ncbi.nlm.nih.gov/books/NBK25499/table/chapter4.T._valid_values_of__retmode_and/?report=objectonly
+
+// Input parameters for this protocol
+Parameters (
+	ID string // e.g. "EF208560"
+	Database string // e.g. "nucleotide", "Protein", "Gene"
+	MaxReturns int // e.g. 1
+	ReturnType string // e.g. "gb", "fasta"
+	Filename string // e.g myproject/GFPReporter.gb. if Filename == "" no file will be generated
+)
+
+// Data which is returned from this protocol
+Data (
+	Output string
+	Err error
+	Filenameused string
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	
+	var output []byte
+	
+	Filenameused, output, Err = entrez.RetrieveRecords(ID, Database,MaxReturns,ReturnType,Filename)
+			
+	Output = string(output)
+}
+
+
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

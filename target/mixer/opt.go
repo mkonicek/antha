@@ -1,6 +1,9 @@
 package mixer
 
-import "github.com/antha-lang/antha/antha/anthalib/wtype"
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/reflect"
+)
 
 var (
 	defaultMaxPlates            = 4.5
@@ -10,9 +13,10 @@ var (
 		MaxPlates:            &defaultMaxPlates,
 		MaxWells:             &defaultMaxWells,
 		ResidualVolumeWeight: &defaultResidualVolumeWeight,
-		InputPlateType:       []string{"pcrplate_skirted_riser"},
-		OutputPlateType:      []string{"pcrplate_skirted_riser"},
+		InputPlateType:       []string{"pcrplate_skirted_riser40"},
+		OutputPlateType:      []string{"pcrplate_skirted_riser40"},
 		InputPlates:          []*wtype.LHPlate{},
+		OutputPlates:         []*wtype.LHPlate{},
 	}
 )
 
@@ -30,8 +34,17 @@ type Opt struct {
 	InputPlateData  [][]byte         // From contents of files
 	InputPlates     []*wtype.LHPlate // Directly
 
-	// Driver specific position names (e.g., position_1 or A2) will be revised when multi-device is available
-	DriverSpecificTipPreferences []string
+	// Direct specification of Output plates
+	OutputPlates []*wtype.LHPlate
+
+	// Driver specific options. Semantics are not stable. Will need to be
+	// revised when multi device execution is supported.
+	DriverSpecificInputPreferences    []string
+	DriverSpecificOutputPreferences   []string
+	DriverSpecificTipPreferences      []string // Driver specific position names (e.g., position_1 or A2)
+	DriverSpecificTipWastePreferences []string
+	DriverSpecificWashPreferences     []string
+	ModelEvaporation                  bool
 }
 
 // Merge two configs together and return the result. Values in the argument
@@ -40,39 +53,9 @@ func (a Opt) Merge(x *Opt) Opt {
 	if x == nil {
 		return a
 	}
-	if x.MaxPlates != nil {
-		a.MaxPlates = x.MaxPlates
+	obj, err := reflect.ShallowMerge(a, *x)
+	if err != nil {
+		panic(err)
 	}
-	if x.MaxWells != nil {
-		a.MaxWells = x.MaxWells
-	}
-	if x.ResidualVolumeWeight != nil {
-		a.ResidualVolumeWeight = x.ResidualVolumeWeight
-	}
-	if len(x.InputPlateType) != 0 {
-		a.InputPlateType = x.InputPlateType
-	}
-	if len(x.OutputPlateType) != 0 {
-		a.OutputPlateType = x.OutputPlateType
-	}
-	if len(x.TipType) != 0 {
-		a.TipType = x.TipType
-	}
-	if len(x.InputPlateFiles) != 0 {
-		a.InputPlateFiles = x.InputPlateFiles
-	}
-	if len(x.InputPlateData) != 0 {
-		a.InputPlateData = x.InputPlateData
-	}
-	if len(x.InputPlates) != 0 {
-		a.InputPlates = x.InputPlates
-	}
-	if len(x.DriverSpecificTipPreferences) != 0 {
-		a.DriverSpecificTipPreferences = x.DriverSpecificTipPreferences
-	}
-	if x.PlanningVersion != nil {
-		a.PlanningVersion = x.PlanningVersion
-	}
-
-	return a
+	return obj.(Opt)
 }

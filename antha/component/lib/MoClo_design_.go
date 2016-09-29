@@ -13,6 +13,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Inventory"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/igem"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -54,12 +55,13 @@ func _MoClo_designSteps(_ctx context.Context, _input *MoClo_designInput, _output
 	// set warnings reported back to user to none initially
 	warnings := make([]string, 1)
 	warnings[0] = "none"
-	var features []wtype.Feature
+	found := false
+	var err error
 
 	/* find sequence data from keyword; looking it up by a given name in an inventory
 	   or by biobrick ID from iGem parts registry */
 	partsinorder := make([]wtype.DNASequence, 0)
-	var partDNA = wtype.DNASequence{"", "", false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", features}
+	var partDNA wtype.DNASequence
 
 	_output.Status = "all parts available"
 	for _, part := range _input.Partsinorder {
@@ -84,12 +86,33 @@ func _MoClo_designSteps(_ctx context.Context, _input *MoClo_designInput, _output
 
 			}
 		} else {
-			partDNA = Inventory.Partslist[part]
+			// look up part in inventory
+			partDNA, found = Inventory.Partslist[part]
 
-		}
+			if !found {
+				//Status = text.Print("part: " + partDNA.Nm, partDNA.Seq + ": not found in Inventory so element aborted!")
 
-		if partDNA.Seq == "" || partDNA.Nm == "" {
-			_output.Status = text.Print("part: "+partDNA.Nm, partDNA.Seq+": not found in Inventory so element aborted!")
+				// assume dna sequence and test
+				partDNA = wtype.MakeLinearDNASequence("tempPart", part)
+
+				// test for illegal nucleotides
+				pass, illegals, _ := sequences.Illegalnucleotides(partDNA)
+
+				if !pass {
+					var newstatus = make([]string, 0)
+					for _, illegal := range illegals {
+
+						newstatus = append(newstatus, "part: "+partDNA.Nm+" "+partDNA.Seq+": contains illegalnucleotides:"+illegal.ToString())
+					}
+
+					execute.Errorf(_ctx, strings.Join(newstatus, ""))
+				} else if _input.BlastSeqswithNoName {
+					// run a blast search on the sequence to get the name
+					blastsearch := BlastSearch_wtypeRunSteps(_ctx, &BlastSearch_wtypeInput{DNA: partDNA})
+					partDNA.Nm = blastsearch.Data.AnthaSeq.Nm
+				}
+
+			}
 		}
 		partsinorder = append(partsinorder, partDNA)
 	}
@@ -100,7 +123,12 @@ func _MoClo_designSteps(_ctx context.Context, _input *MoClo_designInput, _output
 	restrictionenzyme := enzymes.Enzymelookup[_input.AssemblyStandard][_input.Level]
 
 	// (1) Add standard overhangs using chosen assembly standard
-	_output.PartswithOverhangs = enzymes.MakeStandardTypeIIsassemblyParts(partsinorder, _input.AssemblyStandard, _input.Level, _input.PartMoClotypesinorder)
+	_output.PartswithOverhangs, err = enzymes.MakeStandardTypeIIsassemblyParts(partsinorder, _input.AssemblyStandard, _input.Level, _input.PartMoClotypesinorder)
+
+	if err != nil {
+		warnings = append(warnings, text.Print("Error", err.Error()))
+		execute.Errorf(_ctx, err.Error())
+	}
 
 	// OR (2) Add overhangs for scarfree assembly based on part seqeunces only, i.e. no Assembly standard
 	//PartswithOverhangs = enzymes.MakeScarfreeCustomTypeIIsassemblyParts(partsinorder, vectordata, restrictionenzyme)
@@ -221,6 +249,7 @@ type MoClo_designElement struct {
 
 type MoClo_designInput struct {
 	AssemblyStandard      string
+	BlastSeqswithNoName   bool
 	Constructname         string
 	Level                 string
 	PartMoClotypesinorder []string
@@ -256,6 +285,7 @@ func init() {
 			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/MoClo_design.an",
 			Params: []component.ParamDesc{
 				{Name: "AssemblyStandard", Desc: "MoClo\n", Kind: "Parameters"},
+				{Name: "BlastSeqswithNoName", Desc: "", Kind: "Parameters"},
 				{Name: "Constructname", Desc: "", Kind: "Parameters"},
 				{Name: "Level", Desc: "of assembly standard\n", Kind: "Parameters"},
 				{Name: "PartMoClotypesinorder", Desc: "labels e.g. pro = promoter\n", Kind: "Parameters"},

@@ -73,7 +73,7 @@ Steps {
 	
 	// export sequence to fasta
 	if ExporttoFastaFile {
-	export.Makefastaserial2(ConstructName, PartsWithOverhangs)
+	export.Makefastaserial2(export.LOCAL,ConstructName, PartsWithOverhangs)
 	}
 	
 	fmt.Println("Parts Source: ",PartsWithOverhangs)

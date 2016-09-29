@@ -101,6 +101,57 @@ func CopyVolume(v Volume) Volume {
 	return ret
 }
 
+// Add volumes
+func AddVolumes(vols []Volume) (newvolume Volume) {
+	// ideally should check these have the same Dimension
+	// need to improve this
+	var tempvol Volume
+	tempvol = NewVolume(0.0, "ul")
+	for _, vol := range vols {
+		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
+			tempvol = NewVolume(newvolume.RawValue()+vol.RawValue(), newvolume.Unit().PrefixedSymbol())
+			newvolume = tempvol
+		} else {
+			tempvol = NewVolume(tempvol.SIValue()+vol.SIValue(), newvolume.Unit().BaseSISymbol())
+		}
+	}
+	return
+
+}
+
+// subtract volumes
+func SubtractVolumes(OriginalVol Volume, subtractvols []Volume) (newvolume Volume) {
+	// ideally should check these have the same Dimension
+	// need to improve this
+
+	tempvol := OriginalVol
+
+	for _, vol := range subtractvols {
+		newvolume = NewVolume(tempvol.SIValue()-vol.SIValue(), newvolume.Unit().BaseSISymbol())
+		tempvol = newvolume
+	}
+	return
+
+}
+
+// multiply volume
+func MultiplyVolume(v Volume, factor float64) (newvolume Volume) {
+	// ideally should check these have the same Dimension
+	// need to improve this
+	newvolume = NewVolume(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// divide volume
+func DivideVolume(v Volume, factor float64) (newvolume Volume) {
+	// ideally should check these have the same Dimension
+	// need to improve this
+	newvolume = NewVolume(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
 func (v Volume) Dup() Volume {
 	ret := NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
 	return ret

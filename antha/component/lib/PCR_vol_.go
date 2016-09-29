@@ -62,13 +62,18 @@ func _PCR_volSetup(_ctx context.Context, _input *PCR_volInput) {
 // for every input
 func _PCR_volSteps(_ctx context.Context, _input *PCR_volInput, _output *PCR_volOutput) {
 
-	bufferVolume := (wunit.CopyVolume(_input.ReactionVolume))
+	// rename components
 
+	_input.Template.CName = _input.TemplateName
+	_input.FwdPrimer.CName = _input.FwdPrimerName
+	_input.RevPrimer.CName = _input.RevPrimerName
+
+	bufferVolume := (wunit.CopyVolume(_input.ReactionVolume))
 	bufferVolume.DivideBy(float64(_input.BufferConcinX))
 
 	// Make a mastermix
 	samples := make([]*wtype.LHComponent, 0)
-	waterSample := mixer.SampleForTotalVolume(_input.Water, _input.ReactionVolume)
+	waterSample := mixer.Sample(_input.Water, _input.WaterVolume)
 	bufferSample := mixer.Sample(_input.Buffer, bufferVolume)
 	samples = append(samples, waterSample, bufferSample)
 
@@ -100,7 +105,14 @@ func _PCR_volSteps(_ctx context.Context, _input *PCR_volInput, _output *PCR_volO
 	}
 
 	// pipette out to make mastermix
-	mastermix := execute.MixInto(_ctx, _input.OutPlate, "", samples...)
+	var mastermix *wtype.LHComponent
+	for j := range samples {
+		if j == 0 {
+			mastermix = execute.MixInto(_ctx, _input.OutPlate, _input.WellPosition, samples[j])
+		} else {
+			mastermix = execute.Mix(_ctx, mastermix, samples[j])
+		}
+	}
 
 	// rest samples to zero
 	samples = make([]*wtype.LHComponent, 0)
@@ -161,6 +173,8 @@ func _PCR_volSteps(_ctx context.Context, _input *PCR_volInput, _output *PCR_volO
 
 	// all done
 	_output.Reaction = r1
+
+	_output.Reaction.CName = _input.ReactionName
 }
 
 // Run after controls and a steps block are completed to
@@ -234,6 +248,7 @@ type PCR_volInput struct {
 	Extensiontime         wunit.Time
 	Finalextensiontime    wunit.Time
 	FwdPrimer             *wtype.LHComponent
+	FwdPrimerName         string
 	FwdPrimerVol          wunit.Volume
 	Hotstart              bool
 	InitDenaturationtime  wunit.Time
@@ -241,12 +256,17 @@ type PCR_volInput struct {
 	OutPlate              *wtype.LHPlate
 	PCRPolymerase         *wtype.LHComponent
 	PolymeraseVolume      wunit.Volume
+	ReactionName          string
 	ReactionVolume        wunit.Volume
 	RevPrimer             *wtype.LHComponent
+	RevPrimerName         string
 	RevPrimerVol          wunit.Volume
 	Template              *wtype.LHComponent
+	TemplateName          string
 	Templatevolume        wunit.Volume
 	Water                 *wtype.LHComponent
+	WaterVolume           wunit.Volume
+	WellPosition          string
 }
 
 type PCR_volOutput struct {
@@ -281,6 +301,7 @@ func init() {
 				{Name: "Extensiontime", Desc: "should be calculated from template length and polymerase rate\n", Kind: "Parameters"},
 				{Name: "Finalextensiontime", Desc: "", Kind: "Parameters"},
 				{Name: "FwdPrimer", Desc: "", Kind: "Inputs"},
+				{Name: "FwdPrimerName", Desc: "", Kind: "Parameters"},
 				{Name: "FwdPrimerVol", Desc: "", Kind: "Parameters"},
 				{Name: "Hotstart", Desc: "", Kind: "Parameters"},
 				{Name: "InitDenaturationtime", Desc: "", Kind: "Parameters"},
@@ -288,12 +309,17 @@ func init() {
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},
 				{Name: "PCRPolymerase", Desc: "", Kind: "Inputs"},
 				{Name: "PolymeraseVolume", Desc: "", Kind: "Parameters"},
-				{Name: "ReactionVolume", Desc: "PCRprep parameters:\n", Kind: "Parameters"},
+				{Name: "ReactionName", Desc: "", Kind: "Parameters"},
+				{Name: "ReactionVolume", Desc: "", Kind: "Parameters"},
 				{Name: "RevPrimer", Desc: "", Kind: "Inputs"},
+				{Name: "RevPrimerName", Desc: "", Kind: "Parameters"},
 				{Name: "RevPrimerVol", Desc: "", Kind: "Parameters"},
 				{Name: "Template", Desc: "", Kind: "Inputs"},
+				{Name: "TemplateName", Desc: "", Kind: "Parameters"},
 				{Name: "Templatevolume", Desc: "", Kind: "Parameters"},
 				{Name: "Water", Desc: "", Kind: "Inputs"},
+				{Name: "WaterVolume", Desc: "PCRprep parameters:\n", Kind: "Parameters"},
+				{Name: "WellPosition", Desc: "", Kind: "Parameters"},
 				{Name: "Reaction", Desc: "", Kind: "Outputs"},
 			},
 		},

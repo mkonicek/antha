@@ -24,7 +24,7 @@
 package enzymes
 
 import (
-	//"fmt"
+	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
@@ -165,13 +165,19 @@ func AddStandardStickyEnds(part wtype.DNASequence, assemblystandard string, leve
 }
 
 // Adds sticky ends to dna part according to the class identifier (e.g. PRO, 5U, CDS)
-func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblystandard string, level string, class string) (Partwithends wtype.DNASequence) {
+func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblystandard string, level string, class string) (Partwithends wtype.DNASequence, err error) {
 
 	//vectorends := Vectorends[assemblystandard][level] // this could also look up Endlinks[assemblystandard][level][numberofparts][0]
 
 	enzyme := Enzymelookup[assemblystandard][level]
 
-	bitstoadd := EndlinksString[assemblystandard][level][class]
+	bitstoadd, found := EndlinksString[assemblystandard][level][class]
+
+	if !found {
+		err = fmt.Errorf("Class " + class + " not found in Assmbly standard map of " + assemblystandard + " level " + level)
+		return Partwithends, err
+	}
+
 	bittoadd := bitstoadd[0]
 	if strings.HasPrefix(part.Seq, bittoadd) == true {
 		bittoadd = ""
@@ -206,7 +212,7 @@ func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblystandard str
 	Partwithends.Plasmid = part.Plasmid
 	Partwithends.Seq = partwithends
 
-	return Partwithends
+	return Partwithends, err
 }
 
 // Adds ends to the part sequence based upon enzyme chosen and the desired overhangs after digestion
@@ -237,7 +243,7 @@ func AddCustomEnds(part wtype.DNASequence, enzyme wtype.TypeIIs, desiredstickyen
 }
 
 // Add compatible ends to an array of parts based on the rules of a typeIIS assembly standard
-func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandard string, level string, optionalpartclasses []string) (partswithends []wtype.DNASequence) {
+func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandard string, level string, optionalpartclasses []string) (partswithends []wtype.DNASequence, err error) {
 
 	partswithends = make([]wtype.DNASequence, 0)
 	var partwithends wtype.DNASequence
@@ -245,7 +251,10 @@ func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandar
 	if len(optionalpartclasses) != 0 {
 		if len(optionalpartclasses) == len(parts) {
 			for i := 0; i < len(parts); i++ {
-				partwithends = AddStandardStickyEndsfromClass(parts[i], assemblystandard, level, optionalpartclasses[i])
+				partwithends, err = AddStandardStickyEndsfromClass(parts[i], assemblystandard, level, optionalpartclasses[i])
+				if err != nil {
+					return []wtype.DNASequence{}, err
+				}
 				partswithends = append(partswithends, partwithends)
 			}
 		}
@@ -256,7 +265,7 @@ func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandar
 			partswithends = append(partswithends, partwithends)
 		}
 	}
-	return partswithends
+	return partswithends, err
 }
 
 // Utility function to check whether a part already has typeIIs ends added
@@ -437,6 +446,51 @@ var EndlinksString = map[string]map[string]map[string][]string{
 			"3U + Ter":    []string{"GCTT", "CGCT"},
 		},
 	},
+	"Custom": map[string]map[string][]string{
+		"Level0": map[string][]string{
+			"L1Uadaptor":       []string{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
+			"L1Uadaptor + Pro": []string{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
+			//	"TF":               []string{"GTCG", "GGAG"}, // transcription factor e.g. laci (same as L1Uadaptor prefix currently)
+			//	"TF + Pro":         []string{"GTCG", "TTTT"},
+			"Pro":                   []string{"GGAG", "TTTT"},
+			"5U":                    []string{"TTTT", "CCAT"}, // 5' untranslated, e.g. rbs // changed from MoClo TACT to TTTT to conform with Protein Paintbox??
+			"5U(f)":                 []string{"TTTT", "CCAT"},
+			"Pro + 5U(f)":           []string{"GGAG", "CCAT"},
+			"Pro + 5U":              []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"NT1":                   []string{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"5U + NT1":              []string{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"CDS1":                  []string{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"CDS1 ns":               []string{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"NT2":                   []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"SP":                    []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"CDS2 ns":               []string{"AGGT", "TTCG"},
+			"CDS2":                  []string{"AGGT", "GCTT"},
+			"CT":                    []string{"TTCG", "GCTT"},
+			"3U":                    []string{"GCTT", "CCCC"}, // should we cahnge this from GGTA to CCCC to conform with Protein Paintbox??
+			"Ter":                   []string{"CCCC", "CGCT"},
+			"3U + Ter":              []string{"GCTT", "CGCT"},
+			"3U + Ter + L1Dadaptor": []string{"GCTT", "TAAT"},
+			"L1Dadaptor":            []string{"CGCT", "TAAT"},
+			"Ter + L1Dadaptor":      []string{"CCCC", "TAAT"},
+		},
+		"Level1": map[string][]string{
+			"Device1": []string{"GAA", "ACC"},
+			"Device2": []string{"ACC", "CTG"},
+			"Device3": []string{"CTG", "GGT"},
+		},
+	},
+	"Antibody": map[string]map[string][]string{
+		"Heavy": map[string][]string{
+			"Part1": []string{"GCG", "TCG"},
+			"Part2": []string{"TGG", "CTG"},
+			"Part3": []string{"CTG", "AAG"},
+		},
+		"Light": map[string][]string{
+			"Part1": []string{"GCG", "TCG"},
+			"Part2": []string{"TGG", "CTG"},
+			"Part3": []string{"CTG", "AAG"},
+		},
+	},
 	"MoClo_Raven": map[string]map[string][]string{
 		"Level0": map[string][]string{
 			"Pro":         []string{"GAGG", "TACT"},
@@ -455,7 +509,7 @@ var EndlinksString = map[string]map[string]map[string][]string{
 			"CT":          []string{"TTCG", "GCTT"},
 			"3U":          []string{"GCTT", "GGTA"},
 			"Ter":         []string{"GGTA", "CGCT"},
-			"3U + Ter":    []string{"GCTT", "GCTT"},
+			"3U + Ter":    []string{"GCTT", "GCTT"}, // both same ! look into this
 		},
 	},
 }
@@ -484,6 +538,14 @@ var Vectorends = map[string]map[string][]string{
 		"Level0": []string{"GGT", "GAA"},
 		"Level1": []string{"", ""},
 	},
+	"Custom": map[string][]string{
+		"Level0": []string{"TAAT", "GTCG"},
+		"Level1": []string{"GGT", "GAA"},
+	},
+	"Antibody": map[string][]string{
+		"Heavy": []string{"GCG", "AAG"},
+		"Light": []string{"", ""},
+	},
 	"Electra": map[string][]string{
 		"Level0": []string{"GGT", "ATG"},
 		"Level1": []string{"", ""},
@@ -501,10 +563,31 @@ var Enzymelookup = map[string]map[string]wtype.TypeIIs{
 		"Level0": BsaIenz,
 		"Level1": BpiIenz,
 	},
+	"Custom": map[string]wtype.TypeIIs{
+		"Level0": BsaIenz,
+		"Level1": SapIenz,
+	},
+	"Antibody": map[string]wtype.TypeIIs{
+		"Heavy": SapIenz,
+		"Light": SapIenz,
+	},
 	"Electra": map[string]wtype.TypeIIs{
 		"Level0": SapIenz,
 	},
 }
+
+/*
+func AdaptPartsForNextLevel(parts []wtype.DNASequence, assemblystandard string, level string, class string) (newparts []wtype.DNASequence) {
+	newparts = make([]wtype.DNASequence, 0)
+
+	enzyme := Enzymelookup[assemblystandard][level]
+
+	enzyme.RestrictionEnzyme
+
+	UpstreamAdaptor := AddStandardStickyEndsfromClass(parts[0], assemblystandard, level, class)
+
+	return
+}*/
 
 /*
 var MoClo AssemblyStandard{

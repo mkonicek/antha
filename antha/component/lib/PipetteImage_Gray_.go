@@ -51,7 +51,7 @@ func _PipetteImage_GraySteps(_ctx context.Context, _input *PipetteImage_GrayInpu
 
 	_output.ShadesofGrey = make([]int, 0)
 
-	chosencolourpalette := image.AvailablePalettes["Gray"]
+	chosencolourpalette := image.AvailablePalettes()["Gray"]
 
 	if _input.CheckResizeAlgorithms {
 		image.CheckAllResizealgorithms(_input.Imagefilename, _input.OutPlate, _input.Rotate, imaging.AllResampleFilters)

@@ -86,6 +86,19 @@ type LHChannelParameter struct {
 	Head        int
 }
 
+// can you move this much? If oneshot is true it's strictly Minvol <= v <= Maxvol
+func (lhcp LHChannelParameter) CanMove(v wunit.Volume, oneshot bool) bool {
+	if v.LessThan(lhcp.Minvol) || (v.GreaterThan(lhcp.Maxvol) && oneshot) {
+		return false
+	}
+
+	return true
+}
+
+func (lhcp LHChannelParameter) VolumeLimitString() string {
+	return fmt.Sprintf("Min: %s Max: %s", lhcp.Minvol.ToString(), lhcp.Maxvol.ToString())
+}
+
 func (lhcp LHChannelParameter) String() string {
 	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %d Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.ToString(), lhcp.Maxvol.ToString(), lhcp.Minspd.ToString(), lhcp.Maxspd.ToString(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
 }

@@ -3,65 +3,27 @@ package execute
 import (
 	"fmt"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/target"
+	"golang.org/x/net/context"
 )
 
 // Converts execute instructions to their ast equivalents
 type resolver struct {
-	insts []target.Inst
-	nodes []ast.Node
-	comp  map[*wtype.LHComponent]*ast.UseComp
-}
-
-func (a *resolver) makeComp(c *wtype.LHComponent) *ast.UseComp {
-	if a.comp == nil {
-		a.comp = make(map[*wtype.LHComponent]*ast.UseComp)
-	}
-
-	n, ok := a.comp[c]
-	if !ok {
-		n = &ast.UseComp{
-			Value: c,
-		}
-		a.comp[c] = n
-	}
-	return n
-}
-
-func (a *resolver) addIncubate(in *incubateInst) {
-	in.Node.From = append(in.Node.From, a.makeComp(in.Arg))
-
-	out := a.makeComp(in.Comp)
-	out.From = append(out.From, in.Node)
-
-	a.nodes = append(a.nodes, out)
-}
-
-func (a *resolver) addMix(in *mixInst) {
-	for _, arg := range in.Args {
-		in.Node.From = append(in.Node.From, a.makeComp(arg))
-	}
-
-	out := a.makeComp(in.Comp)
-	out.From = append(out.From, in.Node)
-
-	a.nodes = append(a.nodes, out)
+	nodes []ast.Node    // Squirrel away state for Run()
+	insts []target.Inst // Squirrel away state for Run()
 }
 
 // Called by trace to resolve blocked instructions
-func (a *resolver) resolve(ctx context.Context, insts []interface{}) (map[int]interface{}, error) {
+func (a *resolver) resolve(ctx context.Context, instObjs []interface{}) (map[int]interface{}, error) {
 	ret := make(map[int]interface{})
-	for idx, in := range insts {
+	var commands []*commandInst
+	for idx, in := range instObjs {
 		switch inst := in.(type) {
 		case nil:
-		case *incubateInst:
-			a.addIncubate(inst)
-		case *mixInst:
-			a.addMix(inst)
+		case *commandInst:
+			commands = append(commands, inst)
 		default:
 			return nil, fmt.Errorf("invalid instruction: %T", inst)
 		}
@@ -72,12 +34,21 @@ func (a *resolver) resolve(ctx context.Context, insts []interface{}) (map[int]in
 		ret[idx] = nil
 	}
 
-	if t, err := target.GetTarget(ctx); err != nil {
+	t, err := target.GetTarget(ctx)
+	if err != nil {
 		return nil, err
-	} else if insts, err := codegen.Compile(t, a.nodes); err != nil {
-		return nil, err
-	} else {
-		a.insts = append(a.insts, insts...)
-		return ret, nil
 	}
+
+	nodes, err := makeNodes(commands)
+	if err != nil {
+		return nil, err
+	}
+
+	insts, err := codegen.Compile(t, nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	a.insts = append(a.insts, insts...)
+	return ret, nil
 }

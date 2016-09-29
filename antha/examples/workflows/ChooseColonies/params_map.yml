@@ -1,0 +1,19 @@
+{
+  "Parameters": {
+    "ChooseColonies": {
+	  "Imagefile": "Plate1.png",
+	  "Setplateperimeterfirst": true,
+	  "Rotate": false,
+	  "ReactiontoNumberMap":{
+		  "A1":3,
+		  "A2":3,
+		  "A3":3,
+		  "B1":3,
+		  "B2":3,
+		  "B3":3
+		  },
+	  "ExportFileName":"test.csv",
+	  "PlateForCoordinates":"Agarplateforpicking1536_riser"
+    }
+  }
+}

@@ -4,18 +4,12 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/graph"
 )
 
 const (
 	AllDeps  = iota // Follow all AST edges
 	DataDeps        // Follow only consumer-producer edges
-)
-
-var (
-	_ Command = &Incubate{}
-	_ Command = &Mix{}
 )
 
 // Input to code generation. An abstract syntax tree generated via execution of
@@ -34,11 +28,22 @@ type Node interface {
 	NodeString() string
 }
 
-type Command interface {
-	Node
-	Requests() []Request // Requirements for device selection
-	Output() interface{} // Output from compilation
-	SetOutput(interface{})
+// High-level instruction.
+type Command struct {
+	From     []Node      // Inputs
+	Requests []Request   // Requirements for device selection
+	Inst     interface{} // Command-specific data
+	Output   interface{} // Output from compilation
+}
+
+func (a *Command) NodeString() string {
+	return fmt.Sprintf("%+v", struct {
+		Requests interface{}
+		Inst     string
+	}{
+		Requests: a.Requests,
+		Inst:     fmt.Sprintf("%T", a.Inst),
+	})
 }
 
 // Use of a liquid component
@@ -55,63 +60,6 @@ func (a *UseComp) NodeString() string {
 	})
 }
 
-// Incubate expression
-type Incubate struct {
-	From []Node
-	Reqs []Request
-	Time wunit.Time
-	Temp wunit.Temperature
-	Out  interface{}
-}
-
-func (a *Incubate) Requests() []Request {
-	return a.Reqs
-}
-
-func (a *Incubate) Output() interface{} {
-	return a.Out
-}
-
-func (a *Incubate) SetOutput(x interface{}) {
-	a.Out = x
-}
-
-func (a *Incubate) NodeString() string {
-	return fmt.Sprintf("%+v", struct {
-		Requests interface{}
-	}{
-		Requests: a.Requests,
-	})
-}
-
-// Mix expression
-type Mix struct {
-	From []Node
-	Reqs []Request
-	Inst *wtype.LHInstruction // Data for planner
-	Out  interface{}
-}
-
-func (a *Mix) Requests() []Request {
-	return a.Reqs
-}
-
-func (a *Mix) Output() interface{} {
-	return a.Out
-}
-
-func (a *Mix) SetOutput(x interface{}) {
-	a.Out = x
-}
-
-func (a *Mix) NodeString() string {
-	return fmt.Sprintf("%+v", struct {
-		Requests interface{}
-	}{
-		Requests: a.Requests,
-	})
-}
-
 // Unordered collection of expressions
 type Bundle struct {
 	From []Node
@@ -123,22 +71,9 @@ func (a *Bundle) NodeString() string {
 
 // Low-level move instruction
 type Move struct {
-	From     []*UseComp
-	FromLocs []Location
-	ToLoc    Location
-	Out      interface{}
-}
-
-func (a *Move) Requests() []Request {
-	return nil
-}
-
-func (a *Move) Output() interface{} {
-	return a.Out
-}
-
-func (a *Move) SetOutput(x interface{}) {
-	a.Out = x
+	From   []*UseComp
+	ToLoc  Location
+	Output interface{}
 }
 
 func (a *Move) NodeString() string {
@@ -180,9 +115,7 @@ func setOut(n Node, i, deps int, x Node) {
 		n.From[i] = x
 	case *Bundle:
 		n.From[i] = x
-	case *Mix:
-		n.From[i] = x
-	case *Incubate:
+	case *Command:
 		n.From[i] = x
 	case *Move:
 		n.From[i] = x.(*UseComp)
@@ -197,9 +130,7 @@ func getOut(n Node, i, deps int) Node {
 		return n.From[i]
 	case *Bundle:
 		return n.From[i]
-	case *Mix:
-		return n.From[i]
-	case *Incubate:
+	case *Command:
 		return n.From[i]
 	case *Move:
 		return n.From[i]
@@ -212,12 +143,9 @@ func numOuts(n Node, deps int) int {
 	switch n := n.(type) {
 	case *UseComp:
 		return len(n.From)
-		return 1
 	case *Bundle:
 		return len(n.From)
-	case *Mix:
-		return len(n.From)
-	case *Incubate:
+	case *Command:
 		return len(n.From)
 	case *Move:
 		return len(n.From)

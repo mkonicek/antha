@@ -1,0 +1,51 @@
+
+{
+    "Parameters": {
+        "REVPrimerOri": {
+					"RegionSequenceString":"ctagcgtttgcaatgcaccaggtcatcattgacccaggcgtgttccaccaggccgctgcctcgcaactcttcgcaggcttcgccgacctgctcgcgccacttcttcacgcgggtggaatccgatccgcacatgaggcggaaggtttccagcttgagcgggtacggctcccggtgcgagctgaaatagtcgaacatccgtcgggccgtcggcgacagcttgcggtacttctcccatatgaatttcgtgtagtggtcgccagcaaacagcacgacgatttcctcgtcgatcaggacctggcaacgggacgttttcttgccacggtccaggacgcggaagcggtgcagcagcgacaccgattccaggtgcccaacgcggtcggacgtgaagcccatcgccgtcgcctgtaggcgcgacaggcattcctcggccttcgtgtaataccggccattgatcgaccagcccaggtcctggcaaagctcgtagaacgtgaaggtgatcggctcgccgataggggtgcgcttcgcgtactccaacacctgctgccacaccagttcgtcatcgtcggcccgcagctcgacgccggtgtaggtgatcttcacgtccttgttgacgtggaaaatgaccttgttttgcagcgcctcgcgcgggattttcttgttgcgcgtggtgaacagggcagagcgggccgtgtcgtttggcatcgctcgcatcgtgtccggccacggcgcaatatcgaacaaggaaagctgcatttccttgatctgctgcttcgtgtgtttcagcaacgcggcctgcttggcttcgctgacctgttttgccaggtcctcgccggcggtttttcgcttcttggtcgtcatagttcctcgcgtgtcgatggtcatcgacttcgccaaacctgccgcctcctgttcgagacgacgcgaacgctccacggcggccgatggcgcgggcagggcagggggagccagttgcacgctgtcgcgctcgatcttggccgtagcttgctggactatcgagccgacggactggaaggtttcgcggggcgcacgcatgacggtgcggcttgcgatggtttcggcatcctcggcggaaaaccccgcgtcgatcagttcttgcctgtatgccttccggtcaaacgtccgattcat",
+					"FlankTargetSequence":true,
+		            "DNASeqfile": "pSEVA521.gb",
+					"Plasmid":true,
+		            "Maxtemp": "65C",
+		            "Mintemp": "50C",
+		            "Maxgc": 0.6,
+		            "Minlength": 18,
+					"Maxlength":30,
+					"Seqstoavoid":[
+					""
+					],
+					"PermittednucleotideOverlapBetweenPrimers": 10
+        },
+        "REVPrimerTetA": {
+					"RegionSequenceString":"atgccggtactgccgggcctcttgcgggatatcgtccattccgacagcatcgccagtcactatggcgtgctgctagcgctatatgcgttgatgcaatttctatgcgcacccgttctcggagcactgtccgaccgctttggccgccgcccagtcctgctcgcttcgctacttggagccactatcgactacgcgatcatggcgaccacacccgtcctgtggattctctacgccggacgcatcgtggccggcatcaccggcgccacaggtgcggttgctggcgcctatatcgccgacatcaccgatggggaagatcgggctcgccacttcgggctcatgagcgcttgtttcggcgtgggtatggtggcaggccccgtggccgggggactgttgggcgccatctccctgcacgcaccattccttgcggcggcggtgctcaacggcctcaacctactactgggctgcttcctaatgcaggagtcgcataagggagagcgccgtccgatgcccttgagagccttcaacccagtcagctccttccggtgggcgcggggcatgaccattgtggccgcacttatgactgtcttctttatcatgcaactcgtaggacaggtgccggcagcgctctgggtcattttcggcgaggaccgctttcgctggagcgcgacgatgatcggcctgtcgcttgcggtattcggaatcttgcacgccctcgctcaagccttcgtcactggtcccgccaccaaacgtttcggcgagaagcaggccattatcgccggcatggcggccgacgcgctgggctacgtcttgctggcgttcgcgacgcgaggctggatggccttccccattatgattcttctcgcttccggcggcatcgggatgcccgcgttgcaggccatgctgtccaggcaggtagatgacgaccatcagggacagcttcaaggatcgctcgcggctcttaccagcctaacttcgatcactggaccgctgatcgtcacggcgatttatgccgcctcggcgagcacatggaacgggttggcatggattgtaggcgccgccctataccttgtctgcctccccgcgttgcgtcgcggtgcatggagccgggccacctcgacctga",
+					"FlankTargetSequence":true,
+		            "DNASeqfile": "pSEVA521.gb",
+					"Plasmid":true,
+		            "Maxtemp": "65C",
+		            "Mintemp": "50C",
+		            "Maxgc": 0.6,
+		            "Minlength": 18,
+					"Maxlength":30,
+					"Seqstoavoid":[
+					""
+					],
+					"PermittednucleotideOverlapBetweenPrimers": 10
+        },
+		"REVPrimerOriRevComp":{
+							"RegionSequenceString":"atgaatcggacgtttgaccggaaggcatacaggcaagaactgatcgacgcggggttttccgccgaggatgccgaaaccatcgcaagccgcaccgtcatgcgtgcgccccgcgaaaccttccagtccgtcggctcgatagtccagcaagctacggccaagatcgagcgcgacagcgtgcaactggctccccctgccctgcccgcgccatcggccgccgtggagcgttcgcgtcgtctcgaacaggaggcggcaggtttggcgaagtcgatgaccatcgacacgcgaggaactatgacgaccaagaagcgaaaaaccgccggcgaggacctggcaaaacaggtcagcgaagccaagcaggccgcgttgctgaaacacacgaagcagcagatcaaggaaatgcagctttccttgttcgatattgcgccgtggccggacacgatgcgagcgatgccaaacgacacggcccgctctgccctgttcaccacgcgcaacaagaaaatcccgcgcgaggcgctgcaaaacaaggtcattttccacgtcaacaaggacgtgaagatcacctacaccggcgtcgagctgcgggccgacgatgacgaactggtgtggcagcaggtgttggagtacgcgaagcgcacccctatcggcgagccgatcaccttcacgttctacgagctttgccaggacctgggctggtcgatcaatggccggtattacacgaaggccgaggaatgcctgtcgcgcctacaggcgacggcgatgggcttcacgtccgaccgcgttgggcacctggaatcggtgtcgctgctgcaccgcttccgcgtcctggaccgtggcaagaaaacgtcccgttgccaggtcctgatcgacgaggaaatcgtcgtgctgtttgctggcgaccactacacgaaattcatatgggagaagtaccgcaagctgtcgccgacggcccgacggatgttcgactatttcagctcgcaccgggagccgtacccgctcaagctggaaaccttccgcctcatgtgcggatcggattccacccgcgtgaagaagtggcgcgagcaggtcggcgaagcctgcgaagagttgcgaggcagcggcctggtggaacacgcctgggtcaatgatgacctggtgcattgcaaacgctag",
+							"FlankTargetSequence":true,
+				            "DNASeqfile": "pSEVA521.gb",
+							"Plasmid":true,
+				            "Maxtemp": "65C",
+				            "Mintemp": "50C",
+				            "Maxgc": 0.6,
+				            "Minlength": 18,
+							"Maxlength":30,
+							"Seqstoavoid":[
+							""
+							],
+							"PermittednucleotideOverlapBetweenPrimers": 10
+		        }
+    }
+}
+

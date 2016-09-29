@@ -39,6 +39,7 @@ func Siteinorfs(Features features, site string) bool {
 }
 */
 
+// refactor strings to DNASequences to enable handling plasmid sequences
 func FindSeqsinSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thingfound) {
 
 	bigseq = strings.ToUpper(bigseq)
@@ -56,7 +57,7 @@ func FindSeqsinSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thing
 		}
 	}
 	for _, seq := range smallseqs {
-		revseq := RevComp(seq)
+		revseq := strings.ToUpper(RevComp(seq))
 		if strings.Contains(bigseq, revseq) {
 			// fmt.Println("rev seq found")
 			seqfound.Thing = revseq

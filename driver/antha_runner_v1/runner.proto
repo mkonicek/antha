@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+import "github.com/antha-lang/antha/driver/antha_driver_v1/driver.proto";
+
+package antha.runner.v1;
+
+service Runner {
+  // Run a blob
+  rpc Run(RunRequest) returns (RunReply);
+  // Run a blob identified by reference
+  rpc RunRef(RunRefRequest) returns (RunReply);
+  // Messages from run (call repeatedly to get more messages)
+  rpc Messages(MessagesRequest) returns (MessagesReply);
+  // Types of files that can be run
+  rpc SupportedRunTypes(SupportedRunTypesRequest) returns (SupportedRunTypesReply);
+}
+
+message RunRequest {
+  string type = 1;
+  bytes data = 2;
+  antha.driver.v1.HttpCall done = 3;
+}
+
+message RunRefRequest {
+  string type = 1;
+  antha.driver.v1.HttpCall data = 2;
+  antha.driver.v1.HttpCall done = 3;
+}
+
+message RunReply {
+  string id = 1;
+}
+
+message MessagesRequest {
+  string id = 1;
+}
+
+message MessagesReply {
+  message Message {
+    string code = 1;
+    int32 seq = 2;
+    bytes data = 3; 
+  }
+
+  repeated Message values = 1;
+}
+
+message SupportedRunTypesRequest {}
+
+message SupportedRunTypesReply {
+  repeated string types = 1;
+}

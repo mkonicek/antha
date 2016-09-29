@@ -1,9 +1,9 @@
 {
     "Parameters": {
         "newparams": {
-            "LiquidVolume": "10ul",
+            "LiquidVolume": "100ul",
             "Liquidname": "Evian",
-            "OutPlate": "greiner384_riser",
+            "OutPlate": "nunc8well",
             "Startingsolution": "water"
         }
     }

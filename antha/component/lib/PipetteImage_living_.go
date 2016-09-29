@@ -59,20 +59,20 @@ func _PipetteImage_livingSteps(_ctx context.Context, _input *PipetteImage_living
 	if _input.Subset {
 		chosencolourpalette = image.MakeSubPallette(_input.Palettename, _input.Subsetnames)
 	} else {
-		chosencolourpalette = image.AvailablePalettes[_input.Palettename]
+		chosencolourpalette = image.AvailablePalettes()[_input.Palettename]
 	}
 
 	// resize image to fit dimensions of plate and change each pixel to match closest colour from chosen palette
 	// the output of this is a map of well positions to colours needed
 	positiontocolourmap, _, _ := image.ImagetoPlatelayout(_input.Imagefilename, _input.OutPlate, &chosencolourpalette, _input.Rotate, _input.AutoRotate)
 
-	colourtostringmap := image.AvailableComponentmaps[_input.Palettename]
+	colourtostringmap := image.AvailableComponentmaps()[_input.Palettename]
 
 	// if the image will be printed using fluorescent proteins, 2 previews will be generated for the image (i) under UV light (ii) under visible light
 
 	if _input.UVimage {
-		uvmap := image.AvailableComponentmaps[_input.Palettename]
-		visiblemap := image.Visibleequivalentmaps[_input.Palettename]
+		uvmap := image.AvailableComponentmaps()[_input.Palettename]
+		visiblemap := image.Visibleequivalentmaps()[_input.Palettename]
 
 		if _input.Subset {
 			uvmap = image.MakeSubMapfromMap(colourtostringmap, _input.Subsetnames)
@@ -92,7 +92,17 @@ func _PipetteImage_livingSteps(_ctx context.Context, _input *PipetteImage_living
 
 		componentname := colourtostringmap[colourname]
 
-		componentmap[componentname] = factory.GetComponentByType(componentname)
+		// use template component instead
+		var componenttopick *wtype.LHComponent
+
+		if _input.ComponentType != nil {
+			componenttopick = _input.ComponentType
+		} else {
+			componenttopick = factory.GetComponentByType("water")
+		}
+		componenttopick.CName = componentname
+
+		componentmap[componentname] = componenttopick
 
 	}
 	//	fmt.Println(componentmap)
@@ -243,6 +253,7 @@ type PipetteImage_livingElement struct {
 
 type PipetteImage_livingInput struct {
 	AutoRotate     bool
+	ComponentType  *wtype.LHComponent
 	Imagefilename  string
 	Notthiscolour  string
 	OnlythisColour string
@@ -280,10 +291,11 @@ func init() {
 			Path: "antha/component/an/Liquid_handling/PipetteImage/PipetteLivingimage.an",
 			Params: []component.ParamDesc{
 				{Name: "AutoRotate", Desc: "", Kind: "Parameters"},
+				{Name: "ComponentType", Desc: "InPlate *wtype.LHPlate\nMedia *wtype.LHComponent\nAntibiotic *wtype.LHComponent\n\tInducer *wtype.LHComponent\n\tRepressor *wtype.LHComponent\n", Kind: "Inputs"},
 				{Name: "Imagefilename", Desc: "InoculationVolume Volume\nAntibioticVolume Volume\n\tInducerVolume Volume\n\tRepressorVolume Volume\n", Kind: "Parameters"},
 				{Name: "Notthiscolour", Desc: "", Kind: "Parameters"},
 				{Name: "OnlythisColour", Desc: "", Kind: "Parameters"},
-				{Name: "OutPlate", Desc: "InPlate *wtype.LHPlate\nMedia *wtype.LHComponent\nAntibiotic *wtype.LHComponent\n\tInducer *wtype.LHComponent\n\tRepressor *wtype.LHComponent\n", Kind: "Inputs"},
+				{Name: "OutPlate", Desc: "", Kind: "Inputs"},
 				{Name: "Palettename", Desc: "", Kind: "Parameters"},
 				{Name: "Rotate", Desc: "", Kind: "Parameters"},
 				{Name: "Subset", Desc: "", Kind: "Parameters"},

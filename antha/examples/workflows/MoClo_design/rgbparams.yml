@@ -1,0 +1,22 @@
+{
+    "Parameters": {
+        "MoClo_design": {
+            "AssemblyStandard": "MoClo",
+            "Constructname": "Moflo2Assemblyproduct",
+            "Level": "Level0",
+            "PartMoClotypesinorder": [
+                "Pro",
+                "5U + NT1",
+                "CDS1",
+                "3U + Ter"
+            ],
+            "Partsinorder": [
+                "CGCGGAACCCCTGAGACCGATTTGTTTATTTTTCTAAATACATTCAAATATGTATCCGCTCATGAGACAATAACCCTGATAAATGCTTCAATAATATTGAAAAAGGAAGAGT",
+                "BBa_B0030",
+                "BBa_E1010",
+                "ccaggcatcaaataaaacgaaaggctcagtcgaaagactgggcctttcgttttatctgttgtttgtcggtgaacgctctctactagagtcacactggctcaccttcgggtgggcctttctgcgtttata"
+            ],
+            "Vector": "pAGM1311_M"
+        }
+    }
+}

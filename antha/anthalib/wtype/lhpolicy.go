@@ -182,6 +182,18 @@ func NewLHPolicyRule(name string) LHPolicyRule {
 }
 
 func (lhpr *LHPolicyRule) AddNumericConditionOn(variable string, low, up float64) error {
+	params := MakeInstructionParameters()
+
+	t, ok := params[variable]
+
+	if !ok {
+		return fmt.Errorf("No instruction defines parameter %s", variable)
+	}
+
+	if t.Type != reflect.TypeOf(3.2) {
+		return fmt.Errorf("Parameter %s is not numeric", variable)
+	}
+
 	lhvc := NewLHVariableCondition(variable)
 	err := lhvc.SetNumeric(low, up)
 
@@ -194,6 +206,17 @@ func (lhpr *LHPolicyRule) AddNumericConditionOn(variable string, low, up float64
 }
 
 func (lhpr *LHPolicyRule) AddCategoryConditionOn(variable, category string) error {
+	params := MakeInstructionParameters()
+
+	t, ok := params[variable]
+
+	if !ok {
+		return fmt.Errorf("No instruction defines parameter %s", variable)
+	}
+
+	if t.Type != reflect.TypeOf("thisisastring") {
+		return fmt.Errorf("Parameter %s is not categoric", variable)
+	}
 	lhvc := NewLHVariableCondition(variable)
 	err := lhvc.SetCategoric(category)
 
@@ -405,7 +428,16 @@ func (s SortableRules) Len() int {
 }
 
 func (s SortableRules) Less(i, j int) bool {
-	return s[i].Priority < s[j].Priority
+	if s[i].Priority != s[j].Priority {
+		// (numerically) highest priority wins
+		return s[i].Priority < s[j].Priority
+	} else if len(s[i].Conditions) != len(s[j].Conditions) {
+		// most conditions wins
+		return len(s[i].Conditions) < len(s[j].Conditions)
+	} else {
+		// longest name wins
+		return len(s[i].Name) < len(s[j].Name)
+	}
 }
 
 func (s SortableRules) Swap(i, j int) {

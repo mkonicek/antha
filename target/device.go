@@ -8,5 +8,5 @@ type Device interface {
 
 	// Produce a single-entry, single-exit DAG of instructions where insts[0]
 	// is the entry point and insts[len(insts)-1] is the exit point
-	Compile(cmds []ast.Command) (insts []Inst, err error)
+	Compile(cmds []ast.Node) (insts []Inst, err error)
 }

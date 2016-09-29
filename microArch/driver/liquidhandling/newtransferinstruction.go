@@ -124,7 +124,6 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 	}
 
 	// now we make our choice
-
 	return choose_parallel_sets(possible_sets, corresponding_params, ins)
 }
 

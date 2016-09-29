@@ -34,6 +34,8 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
+var ntipstot int
+
 type TransferParams struct {
 	What       string
 	PltFrom    string
@@ -765,6 +767,15 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 			}
 
 			if change_tips {
+				/*
+					fmt.Println("CHANGING TIPS HERE ")
+					fmt.Println("THIS: ", this_thing.CName, " THAT: ", last_thing.CName)
+					fmt.Println("channels equal? ", channel == newchannel)
+					fmt.Println("tips same? ", tiptype == newtiptype)
+					fmt.Println("tip reuse over? ", n_tip_uses > pol["TIP_REUSE_LIMIT"].(int))
+					fmt.Println(n_tip_uses, " ", pol["TIP_REUSE_LIMIT"].(int), " NOT CAST: ", pol["TIP_REUSE_LIMIT"])
+					fmt.Println("dirty? ", dirty)
+				*/
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters
 
@@ -813,6 +824,11 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 
 			if pol["DSPREFERENCE"].(int) == 0 && !ins.TVolume[t].IsZero() || premix && npre.(int) > 0 || postmix && npost.(int) > 0 {
 				dirty = true
+				/*
+					fmt.Println("DIRTY DIRTY DIRTY")
+					fmt.Println(pol["DSPREFERENCE"].(int) == 0, " ", ins.TVolume[t].ToString(), " ", "PRE: ", premix, " ", npre, " POST: ", postmix, " ", npost)
+					fmt.Println(ins.WellTo[t])
+				*/
 			}
 
 			ins.FVolume[t].Subtract(vol)
@@ -850,7 +866,6 @@ type MultiChannelBlockInstruction struct {
 
 func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 	var v MultiChannelBlockInstruction
-	v.Type = MCB
 	v.What = make([][]string, 0)
 	v.PltFrom = make([][]string, 0)
 	v.PltTo = make([][]string, 0)
@@ -2163,10 +2178,18 @@ func (ins *SuckInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 		// TODO get rid of this HARD CODE
 		mix.Blowout = []bool{false}
 
-		// this is not safe
 		_, ok := pol["PRE_MIX_VOLUME"]
 		mix.Volume = ins.Volume
 		mixvol := SafeGetF64(pol, "PRE_MIX_VOLUME")
+		vmixvol := wunit.NewVolume(mixvol, "ul")
+
+		// TODO -- corresponding checks when set
+		if mixvol < wtype.Globals.MIN_REASONABLE_VOLUME_UL {
+			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME set below minimum allowed: %f min %f", mixvol, wtype.Globals.MIN_REASONABLE_VOLUME_UL))
+		} else if !ins.Prms.CanMove(vmixvol, true) {
+			// this is an error in channel choice but the user has to deal... needs modificationst
+			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.ToString(), ins.Prms.VolumeLimitString()))
+		}
 
 		if ok {
 			v := make([]wunit.Volume, ins.Multi)
@@ -2631,10 +2654,28 @@ func (ins *BlowInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 			mix.OffsetZ = append(mix.OffsetZ, pmzoff)
 		}
 
-		// this is not safe, need to verify volume is OK
 		_, ok := pol["POST_MIX_VOLUME"]
 		mix.Volume = ins.Volume
 		mixvol := SafeGetF64(pol, "POST_MIX_VOLUME")
+		vmixvol := wunit.NewVolume(mixvol, "ul")
+
+		// check the volume
+
+		if mixvol < wtype.Globals.MIN_REASONABLE_VOLUME_UL {
+			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("POST_MIX_VOLUME set below minimum allowed: %f min %f", mixvol, wtype.Globals.MIN_REASONABLE_VOLUME_UL))
+		} else if !ins.Prms.CanMove(vmixvol, true) {
+			// make this illegal for now
+
+			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip", vmixvol.ToString()))
+			/*
+				tipchg, err := ChangeTips("", vmixvol, prms, ins.Prms, ins.Multi, true)
+
+				if err != nil {
+					return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLUME: %s", err.Error()))
+				}
+				ret = append(ret, tipchg...)
+			*/
+		}
 
 		if ok {
 			v := make([]wunit.Volume, ins.Multi)
@@ -3478,6 +3519,29 @@ func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) {
 
 // TODO -- implement MESSAGE
 
+func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *wtype.LHChannelParameter, multi int, oneshot bool) ([]RobotInstruction, error) {
+	ret := make([]RobotInstruction, 0, 2)
+	newchannel, newtiptype := ChooseChannel(vol, prms)
+
+	if !newchannel.CanMove(vol, oneshot) {
+		return ret, fmt.Errorf("No channel can move a volume of %s in one shot", vol.ToString())
+	}
+
+	tipdrp, err := DropTips(tiptype, prms, channel, multi)
+
+	if err != nil {
+		return ret, err
+	}
+	ret = append(ret, tipdrp)
+
+	tipget, err := GetTips(newtiptype, prms, newchannel, multi, false)
+	if err != nil {
+		return ret, err
+	}
+	ret = append(ret, tipget)
+	return ret, err
+}
+
 func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int, mirror bool) (RobotInstruction, error) {
 
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(tiptype, channel, mirror, multi)
@@ -3490,6 +3554,8 @@ func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParam
 		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("PICKUP: type: ", tiptype, " n: ", multi, " mirror: ", mirror))
 		return NewLoadTipsMoveInstruction(), err
 	}
+
+	ntipstot += multi
 
 	ins := NewLoadTipsMoveInstruction()
 	ins.Head = channel.Head

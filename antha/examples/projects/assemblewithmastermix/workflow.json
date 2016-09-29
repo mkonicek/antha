@@ -1,0 +1,38 @@
+{
+    "Properties": {
+        "Name": "main",
+        "Id": "TypeIIsConstructWorkflow",
+        "Description": ""
+    },
+    "Processes": {
+        "Mastermix_one_7750": {
+            "Component": "Mastermix_one",
+            "Version": "4jfld3701",
+            "Metadata": {
+                "x": 197,
+                "y": 180
+            }
+        },
+        "TypeIISConstructAssemblyMMX_6485": {
+            "Component": "TypeIISConstructAssemblyMMX",
+            "Version": "4jfld2189",
+            "Metadata": {
+                "x": 413,
+                "y": 191
+            }
+        }
+    },
+    "Connections": [
+        {
+            "Src": {
+                "Process": "Mastermix_one_7750",
+                "Port": "Mastermix"
+            },
+            "Tgt": {
+                "Process": "TypeIISConstructAssemblyMMX_6485",
+                "Port": "MasterMix"
+            }
+        }
+    ],
+    "Exports": null
+}

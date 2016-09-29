@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	noLh     = errors.New("no liquid handler found")
-	noTarget = errors.New("no target configuration found")
+	noLh         = errors.New("no liquid handler found")
+	noTarget     = errors.New("no target configuration found")
+	alreadyAdded = errors.New("already added")
 )
 
 type targetKey int
@@ -34,13 +35,10 @@ func WithTarget(parent context.Context, t *Target) context.Context {
 // Target machine for execution.
 type Target struct {
 	devices []Device
-	runners map[string][]*Runner
 }
 
 func New() *Target {
-	return &Target{
-		runners: make(map[string][]*Runner),
-	}
+	return &Target{}
 }
 
 func (a *Target) String() string {
@@ -69,31 +67,7 @@ func (a *Target) CanCompile(reqs ...ast.Request) (r []Device) {
 	return
 }
 
-func (a *Target) CanRun(ftype string) []*Runner {
-	return a.runners[ftype]
-}
-
-func (a *Target) Runners() (rs []*Runner) {
-	for _, d := range a.devices {
-		if r, ok := d.(*Runner); ok {
-			rs = append(rs, r)
-		}
-	}
-	return
-}
-
 func (a *Target) AddDevice(d Device) error {
 	a.devices = append(a.devices, d)
-	if r, ok := d.(*Runner); ok {
-		ftypes, err := r.types()
-		if err != nil {
-			return err
-		}
-		for _, ftype := range ftypes {
-			a.runners[ftype] = append(a.runners[ftype], r)
-		}
-	}
-
 	return nil
-
 }

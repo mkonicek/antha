@@ -31,7 +31,7 @@ One of the key antha types which will typically be specified in the parameters f
 LHComponents can be accessed in the parameters.yml file in the following way:
 
 These are written as a string: e.g. 
-"Diluent":water,
+"Diluent":"water",
 “dnastock”:”gfpstock”,
 
 Before a component can be used, currently, the concept of that component needs to be added to the factory.

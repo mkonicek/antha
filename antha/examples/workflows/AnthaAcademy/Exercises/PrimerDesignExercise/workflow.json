@@ -1,0 +1,12 @@
+{
+    "connections": [],
+    "processes": {
+        "BothPrimersRight": {
+            "component": "PrimerDesign_ColonyPCR"
+        },
+        "BothPrimersLeft": {
+            "component": "PrimerDesign_ColonyPCR"
+        }
+       
+    }
+}

@@ -365,19 +365,20 @@ func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool)
 		/*plasmidstatus := "FALSE"
 		seqtype := "DNA"
 		class := "not specified"*/
-
-		if !exacttypecodeonly && search.Containsallthings(record.Desc, keystrings) && strings.Contains(strings.ToUpper(record.Part_type), strings.ToUpper(partype)) && record.Seq_data != "" {
-			listofpartIDs = append(listofpartIDs, record.Part_name)
-			idtodescriptionmap[record.Part_name] = record.Desc
-		}
-
 		bba_code, ok := IgemTypeCodes[strings.ToUpper(partype)]
 		i := 0
-		if ok && search.Containsallthings(record.Desc, keystrings) && record.Seq_data != "" && strings.Contains(record.Part_name, bba_code) {
+
+		if exacttypecodeonly && ok && search.Containsallthings(record.Desc, keystrings) && record.Seq_data != "" && strings.Contains(record.Part_name, bba_code) {
 
 			listofpartIDs = append(listofpartIDs, record.Part_name)
 			idtodescriptionmap[record.Part_name] = record.Desc
 			i++
+		} else if !exacttypecodeonly && search.Containsallthings(record.Desc, keystrings) && strings.Contains(strings.ToUpper(record.Part_type), strings.ToUpper(partype)) && record.Seq_data != "" {
+			listofpartIDs = append(listofpartIDs, record.Part_name)
+			idtodescriptionmap[record.Part_name] = record.Desc
+		} else if !exacttypecodeonly && search.Containsallthings(record.Desc, keystrings) && record.Seq_data != "" {
+			listofpartIDs = append(listofpartIDs, record.Part_name)
+			idtodescriptionmap[record.Part_name] = record.Desc
 		}
 
 		/*	if strings.Contains(record.Desc, "Amino acid") || strings.Contains(record.Id, "aa") {

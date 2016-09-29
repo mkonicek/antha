@@ -120,7 +120,7 @@ func (lhc *LHComponent) Dup() *LHComponent {
 	c.Vol = lhc.Vol
 	c.Conc = lhc.Conc
 	c.Vunit = lhc.Vunit
-	c.Tvol = lhc.Vol
+	c.Tvol = lhc.Tvol
 	c.Smax = lhc.Smax
 	c.Visc = lhc.Visc
 	c.StockConcentration = lhc.StockConcentration
@@ -189,17 +189,32 @@ func (cmp *LHComponent) AddDaughterComponent(cmp2 *LHComponent) {
 	cmp.DaughterID += cmp2.ID
 }
 
+func (cmp *LHComponent) MixPreserveTvol(cmp2 *LHComponent) {
+	cmp.Mix(cmp2)
+	if cmp2.Vol == 0.00 && cmp2.Tvol > 0.00 {
+		vcmp := wunit.NewVolume(cmp.Vol, cmp.Vunit)
+		vcmp2 := wunit.NewVolume(cmp2.Tvol, cmp2.Vunit)
+		vcmp.SetValue(vcmp2.ConvertToString(cmp.Vunit))
+		cmp.Vol = vcmp.RawValue() // same units
+		cmp.Tvol = vcmp2.ConvertToString(cmp.Vunit)
+	} else if cmp.Tvol > 0.00 {
+		cmp.Vol = cmp.Tvol
+	}
+}
+
 func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	//wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
 	// determine type of final
 	cmp.Type = mergeTypes(cmp, cmp2)
 	// add cmp2 to cmp
+
 	vcmp := wunit.NewVolume(cmp.Vol, cmp.Vunit)
 	vcmp2 := wunit.NewVolume(cmp2.Vol, cmp2.Vunit)
 	vcmp.Add(vcmp2)
 	cmp.Vol = vcmp.RawValue() // same units
 	cmp.CName = mergeNames(cmp.CName, cmp2.CName)
+
 	// allow trace back
 	//logger.Track(fmt.Sprintf("MIX %s %s %s", cmp.ID, cmp2.ID, vcmp.ToString()))
 
@@ -211,6 +226,7 @@ func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 		}
 	*/
 	cmp.AddParentComponent(cmp2)
+	//	cmp.ID = "component-" + GetUUID()
 	cmp.ID = GetUUID()
 	cmp2.AddDaughterComponent(cmp)
 }
@@ -254,6 +270,7 @@ func (lhc *LHComponent) GetType() string {
 
 func NewLHComponent() *LHComponent {
 	var lhc LHComponent
+	//lhc.ID = "component-" + GetUUID()
 	lhc.ID = GetUUID()
 	lhc.Vunit = "ul"
 	lhc.Extra = make(map[string]interface{})

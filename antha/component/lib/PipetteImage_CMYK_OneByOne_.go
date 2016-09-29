@@ -39,7 +39,7 @@ func _PipetteImage_CMYK_OneByOneSetup(_ctx context.Context, _input *PipetteImage
 func _PipetteImage_CMYK_OneByOneSteps(_ctx context.Context, _input *PipetteImage_CMYK_OneByOneInput, _output *PipetteImage_CMYK_OneByOneOutput) {
 
 	//var chosencolourpalette color.Palette
-	chosencolourpalette := image.AvailablePalettes["Plan9"]
+	chosencolourpalette := image.AvailablePalettes()["Plan9"]
 	positiontocolourmap, _, _ := image.ImagetoPlatelayout(_input.Imagefilename, _input.OutPlate, &chosencolourpalette, _input.Rotate, _input.AutoRotate)
 
 	solutions := make([]*wtype.LHComponent, 0)

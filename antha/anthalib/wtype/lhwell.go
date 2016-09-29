@@ -185,7 +185,7 @@ func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
 	// if the volume is too high we complain
 
 	if v.GreaterThan(w.CurrentVolume()) {
-		logger.Debug("You ask too much: ", w.Crds, " ", v.ToString(), " I only have: ", w.CurrentVolume().ToString(), " PLATEID: ", w.Plateid)
+		//logger.Debug("You ask too much: ", w.Crds, " ", v.ToString(), " I only have: ", w.CurrentVolume().ToString(), " PLATEID: ", w.Plateid)
 		return nil
 	}
 
@@ -239,6 +239,7 @@ func (w *LHWell) ContainerType() string {
 
 func (w *LHWell) Clear() {
 	w.WContents = NewLHComponent()
+	w.WContents.Loc = w.Plateid + ":" + w.Crds
 }
 
 func (w *LHWell) Empty() bool {
@@ -268,6 +269,20 @@ func (lhw *LHWell) CDup() *LHWell {
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
 	}
+
+	return cp
+}
+func (lhw *LHWell) DupKeepIDs() *LHWell {
+	cp := NewLHWell(lhw.Platetype, lhw.Plateid, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, lhw.Dunit)
+
+	for k, v := range lhw.Extra {
+		cp.Extra[k] = v
+	}
+
+	// Dup here doesn't change ID
+	cp.WContents = lhw.Contents().Dup()
+
+	cp.ID = lhw.ID
 
 	return cp
 }
@@ -342,6 +357,7 @@ func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape 
 	var well LHWell
 
 	well.WContents = NewLHComponent()
+	//well.ID = "well-" + GetUUID()
 	well.ID = GetUUID()
 	well.Platetype = platetype
 	well.Plateid = plateid
@@ -520,13 +536,21 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 		return ret
 	}
 
+	if well.Empty() {
+		return ret
+	}
+
 	// we need to use the evaporation calculator
 	// we should likely decorate wells since we have different capabilities
 	// for different well types
 
 	vol := eng.EvaporationVolume(env.Temperature, "water", env.Humidity, time.Seconds(), env.MeanAirFlowVelocity, well.AreaForVolume(), env.Pressure)
 
-	well.Remove(vol)
+	r := well.Remove(vol)
+
+	if r == nil {
+		well.WContents.Vol = 0.0
+	}
 
 	ret.Type = "Evaporation"
 	ret.Volume = vol.Dup()
@@ -539,4 +563,32 @@ func (w *LHWell) ResetPlateID(newID string) {
 	ltx := strings.Split(w.WContents.Loc, ":")
 	w.WContents.Loc = newID + ":" + ltx[1]
 	w.Plateid = newID
+}
+
+func (w *LHWell) IsUserAllocated() bool {
+	if w.Extra == nil {
+		return false
+	}
+
+	ua, ok := w.Extra["UserAllocated"].(bool)
+
+	if !ok {
+		return false
+	}
+
+	return ua
+}
+
+func (w *LHWell) SetUserAllocated() {
+	if w.Extra == nil {
+		w.Extra = make(map[string]interface{})
+	}
+	w.Extra["UserAllocated"] = true
+}
+
+func (w *LHWell) ClearUserAllocated() {
+	if w.Extra == nil {
+		w.Extra = make(map[string]interface{})
+	}
+	w.Extra["UserAllocated"] = false
 }

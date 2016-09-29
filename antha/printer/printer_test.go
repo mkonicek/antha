@@ -226,6 +226,7 @@ var data = []entry{
 }
 
 func TestFiles(t *testing.T) {
+	t.Skip("external files")
 	for _, e := range data {
 		source := filepath.Join(dataDir, e.source)
 		golden := filepath.Join(dataDir, e.golden)
@@ -510,6 +511,7 @@ func TestStmtLists(t *testing.T) {
 }
 
 func TestBaseIndent(t *testing.T) {
+	t.Skip("external files")
 	// The testfile must not contain multi-line raw strings since those
 	// are not indented (because their values must not change) and make
 	// this test fail.

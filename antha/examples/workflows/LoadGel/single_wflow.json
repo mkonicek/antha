@@ -1,0 +1,11 @@
+{
+    "connections": [],
+    "processes": {
+        "LoadGel1": {
+            "component": "LoadGel"
+        },
+        "LoadGel2": {
+            "component": "LoadGel"
+        }
+    }
+}

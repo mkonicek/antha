@@ -31,12 +31,13 @@ package printer
 
 import (
 	"bytes"
-	"github.com/antha-lang/antha/antha/ast"
-	"github.com/antha-lang/antha/antha/parser"
 	"io"
 	"io/ioutil"
 	"log"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/ast"
+	"github.com/antha-lang/antha/antha/parser"
 )
 
 var testfile *ast.File
@@ -71,6 +72,7 @@ func initialize() {
 }
 
 func BenchmarkPrint(b *testing.B) {
+	b.Skip("external files")
 	if testfile == nil {
 		initialize()
 	}

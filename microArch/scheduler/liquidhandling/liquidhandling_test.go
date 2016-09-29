@@ -24,11 +24,14 @@ package liquidhandling
 
 import (
 	"fmt"
+	"math/rand"
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"math/rand"
-	"testing"
 )
 
 func TestStockConcs(*testing.T) {
@@ -57,59 +60,6 @@ func TestStockConcs(*testing.T) {
 		logger.Debug(fmt.Sprintln(k, " ", minrequired[k], " ", maxrequired[k], " ", T[k], " ", v))
 	}*/
 }
-
-/*
-func TestInputAssignments(t *testing.T) {
-	lh := GetLiquidHandlerForTest()
-	rq := GetLHRequestForTest()
-	configure_request_simple(rq)
-
-	fmt.Println("INPUT ASSIGNMENTS")
-	for k, v := range rq.Input_assignments {
-		fmt.Println(k, " ", v)
-	}
-
-	fmt.Println("INPUT SOLUTIONS")
-
-	for k, v := range rq.Input_solutions {
-		fmt.Println("\t", k, ":")
-		for _, v2 := range v {
-			fmt.Println("\t\t", v2.CName, " ", v2.Volume().ToString())
-		}
-	}
-
-	fmt.Println("INPUT PLATES")
-
-	for _, v := range rq.Input_plates {
-		fmt.Println("\tPLATE: ", v.Name, " ", v.Type)
-	}
-
-	fmt.Println("INPUT ASSIGNMENTS")
-
-	for k, v := range rq.Input_assignments {
-		fmt.Println("\t", k, " ", v)
-	}
-
-	fmt.Println("INPUT VOLS SUPPLIED")
-
-	for k, v := range rq.Input_vols_supplied {
-		fmt.Println(k, " ", v.ToString())
-	}
-
-	fmt.Println("INPUT VOLS REQUIRED")
-
-	for k, v := range rq.Input_vols_required {
-		fmt.Println(k, " ", v.ToString())
-	}
-
-	fmt.Println("INPUT VOLS WANTING")
-	for k, v := range rq.Input_vols_wanting {
-		fmt.Println(k, " ", v.ToString())
-	}
-
-
-}
-*/
 
 func configure_request_simple(rq *LHRequest) {
 	water := GetComponentForTest("water", wunit.NewVolume(100.0, "ul"))
@@ -159,6 +109,12 @@ func TestPlateReuse(t *testing.T) {
 		if !ok {
 			continue
 		}
+
+		if strings.Contains(plate.Name(), "Output_plate") {
+			// leave it out
+			continue
+		}
+
 		rq.Input_plates[plateid] = plate
 	}
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
@@ -195,6 +151,10 @@ func TestPlateReuse(t *testing.T) {
 		if !ok {
 			continue
 		}
+		if strings.Contains(plate.Name(), "Output_plate") {
+			// leave it out
+			continue
+		}
 		for _, v := range plate.Wellcoords {
 			if !v.Empty() {
 				v.Remove(wunit.NewVolume(5.0, "ul"))
@@ -217,7 +177,117 @@ func TestPlateReuse(t *testing.T) {
 
 	// this time we should have added some components again
 	if len(rq.Input_assignments) != 3 {
-		t.Fatal(fmt.Sprintf("Error resimulating, should have added 3 components, instead added ", len(rq.Input_assignments)))
+		t.Fatal(fmt.Sprintf("Error resimulating, should have added 3 components, instead added %d", len(rq.Input_assignments)))
+	}
+
+}
+
+func TestBeforeVsAfter(t *testing.T) {
+	lh := GetLiquidHandlerForTest()
+	rq := GetLHRequestForTest()
+	configure_request_simple(rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+
+	err := lh.Plan(rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
+	}
+
+	for pos, _ := range lh.Properties.PosLookup {
+
+		id1, ok1 := lh.Properties.PosLookup[pos]
+		id2, ok2 := lh.FinalProperties.PosLookup[pos]
+
+		if ok1 && !ok2 || ok2 && !ok1 {
+			t.Fatal(fmt.Sprintf("Position %s inconsistent: Before %t after %t", pos, ok1, ok2))
+		}
+
+		p1 := lh.Properties.PlateLookup[id1]
+		p2 := lh.FinalProperties.PlateLookup[id2]
+
+		// check types
+
+		t1 := reflect.TypeOf(p1)
+		t2 := reflect.TypeOf(p2)
+
+		if t1 != t2 {
+			t.Fatal(fmt.Sprintf("Types of thing at position %s not same: %v %v", pos, t1, t2))
+		}
+
+		// ok nice we have some sort of consistency
+
+		switch p1.(type) {
+		case *wtype.LHPlate:
+			pp1 := p1.(*wtype.LHPlate)
+			pp2 := p2.(*wtype.LHPlate)
+			if pp1.Type != pp2.Type {
+				t.Fatal(fmt.Sprintf("Plates at %s not same type: %s %s", pos, pp1.Type, pp2.Type))
+			}
+			it := wtype.NewOneTimeColumnWiseIterator(pp1)
+
+			for {
+				if !it.Valid() {
+					break
+				}
+				wc := it.Curr()
+				w1 := pp1.Wellcoords[wc.FormatA1()]
+				w2 := pp2.Wellcoords[wc.FormatA1()]
+
+				if w1.Empty() && w2.Empty() {
+					it.Next()
+					continue
+				}
+				/*
+					fmt.Println(pp1.PlateName, " ", pp1.Type)
+					fmt.Println(pp2.PlateName, " ", pp2.Type)
+					fmt.Println(wc.FormatA1())
+					fmt.Println(w1.ID, " ", w1.WContents.ID, " ", w1.WContents.CName, " ", w1.WContents.Vol)
+					fmt.Println(w2.ID, " ", w2.WContents.ID, " ", w2.WContents.CName, " ", w2.WContents.Vol)
+				*/
+
+				if w1.WContents.ID == w2.WContents.ID {
+					t.Fatal(fmt.Sprintf("IDs before and after must differ"))
+				}
+				it.Next()
+			}
+		case *wtype.LHTipbox:
+			tb1 := p1.(*wtype.LHTipbox)
+			tb2 := p2.(*wtype.LHTipbox)
+
+			if tb1.Type != tb2.Type {
+				t.Fatal(fmt.Sprintf("Tipbox at position %s changed type: %s %s", tb1.Type, tb2.Type))
+			}
+		case *wtype.LHTipwaste:
+			tw1 := p1.(*wtype.LHTipwaste)
+			tw2 := p2.(*wtype.LHTipwaste)
+
+			if tw1.Type != tw2.Type {
+				t.Fatal(fmt.Sprintf("Tipwaste at position %s changed type: %s %s", tw1.Type, tw2.Type))
+			}
+		}
+
+	}
+
+}
+
+func TestEP3(t *testing.T) {
+	fmt.Println("Test EP3")
+	lh := GetLiquidHandlerForTest()
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got planning error: ", err))
 	}
 
 }

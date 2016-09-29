@@ -48,6 +48,7 @@ Inputs (
 	/*Antibiotic *wtype.LHComponent
 	Inducer *wtype.LHComponent
 	Repressor *wtype.LHComponent*/
+	ComponentType *wtype.LHComponent
 	OutPlate *wtype.LHPlate
 )
 
@@ -76,20 +77,20 @@ Steps {
 	if Subset {
 		chosencolourpalette = image.MakeSubPallette(Palettename, Subsetnames)
 	}else {
-		chosencolourpalette = image.AvailablePalettes[Palettename]
+		chosencolourpalette = image.AvailablePalettes()[Palettename]
 	}
 	
 	// resize image to fit dimensions of plate and change each pixel to match closest colour from chosen palette
 	// the output of this is a map of well positions to colours needed
 	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette,Rotate,AutoRotate) 
 	
-	colourtostringmap := image.AvailableComponentmaps[Palettename]
+	colourtostringmap := image.AvailableComponentmaps()[Palettename]
 	
 	// if the image will be printed using fluorescent proteins, 2 previews will be generated for the image (i) under UV light (ii) under visible light 
 	
 	if UVimage {
-		uvmap := image.AvailableComponentmaps[Palettename]
-		visiblemap := image.Visibleequivalentmaps[Palettename]
+		uvmap := image.AvailableComponentmaps()[Palettename]
+		visiblemap := image.Visibleequivalentmaps()[Palettename]
 		
 		if Subset {
 		uvmap = image.MakeSubMapfromMap(colourtostringmap, Subsetnames)
@@ -109,7 +110,17 @@ Steps {
 
 		componentname := colourtostringmap[colourname]
 
-		componentmap[componentname] = factory.GetComponentByType(componentname)
+		// use template component instead
+		var componenttopick *wtype.LHComponent
+		
+		if ComponentType != nil{
+		componenttopick = ComponentType
+		} else { 
+		componenttopick = factory.GetComponentByType("water")
+		}
+		componenttopick.CName = componentname
+
+		componentmap[componentname] = componenttopick
 
 	}
 //	fmt.Println(componentmap)

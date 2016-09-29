@@ -22,6 +22,7 @@ import (
 // Input parameters for this protocol (data)
 Parameters (
 	// PCRprep parameters:
+	WaterVolume Volume
 	ReactionVolume Volume
 	BufferConcinX int
 	FwdPrimerVol Volume
@@ -30,6 +31,11 @@ Parameters (
 	Templatevolume Volume
 	PolymeraseVolume Volume
 	DNTPVol Volume
+	ReactionName string
+	TemplateName string
+	FwdPrimerName string
+	RevPrimerName string
+	WellPosition string
 	/*
 	// let's be ambitious and try this as part of type polymerase Polymeraseconc Volume
 	
@@ -86,13 +92,21 @@ Setup {
 // for every input
 Steps {
 	
-	bufferVolume := (wunit.CopyVolume(ReactionVolume))
+	// rename components
+		
+
+	Template.CName = TemplateName
+	FwdPrimer.CName = FwdPrimerName
+	RevPrimer.CName = RevPrimerName
 	
+	
+	
+	bufferVolume := (wunit.CopyVolume(ReactionVolume))
 	bufferVolume.DivideBy(float64(BufferConcinX))
 	
 	// Make a mastermix
 	samples := make([]*wtype.LHComponent, 0)
-	waterSample := mixer.SampleForTotalVolume(Water, ReactionVolume)
+	waterSample := mixer.Sample(Water, WaterVolume)
 	bufferSample := mixer.Sample(Buffer,bufferVolume)
 	samples = append(samples, waterSample, bufferSample)
 
@@ -124,7 +138,14 @@ Steps {
 	}
 	
 	// pipette out to make mastermix
-	mastermix := MixInto(OutPlate, "", samples...)
+	var mastermix *wtype.LHComponent
+	for j := range samples { 
+	if j == 0  {
+	mastermix = MixInto(OutPlate, WellPosition, samples[j])
+	}else{
+	mastermix = Mix(mastermix, samples[j])
+	}
+	}
 	
 	// rest samples to zero
 	samples = make([]*wtype.LHComponent, 0)
@@ -188,6 +209,8 @@ Steps {
 
 	// all done
 	Reaction = r1
+	
+	Reaction.CName = ReactionName
 }
 
 // Run after controls and a steps block are completed to

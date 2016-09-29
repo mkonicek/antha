@@ -112,17 +112,63 @@ func (lhp LHPlate) String() string {
 	)
 }
 
-// convenience method
-
-func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool) ([]WellCoords, bool) {
+func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+	// we first try to find a single well that satisfies us
+	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
-
+	vols := make([]wunit.Volume, 0, 1)
 	it := NewOneTimeColumnWiseIterator(lhp)
 
-	var volGot wunit.Volume
-	volGot = wunit.NewVolume(0.0, "ul")
+	volGot := wunit.NewVolume(0.0, "ul")
+	volWant := cmp.Volume().Dup()
 
-	x := 0
+	// find any well with at least as much as we need
+	// if exists, return, if not then fall through
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		w := lhp.Wellcoords[wc.FormatA1()]
+
+		if w.Contents().CName == cmp.CName {
+			if exact && w.Contents().ID != cmp.ID {
+				continue
+			}
+
+			v := w.WorkingVolume()
+
+			if v.LessThan(volWant) {
+				continue
+			}
+
+			volGot.Add(volWant)
+			ret = append(ret, wc)
+			vols = append(vols, volGot)
+
+			volWant.Subtract(volGot)
+
+			if volGot.GreaterThan(cmp.Volume()) || volGot.EqualTo(cmp.Volume()) {
+				break
+			}
+		}
+
+	}
+	//	fmt.Println("FOUND: ", cmp.CName, " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
+
+	if volGot.LessThan(cmp.Volume()) {
+		return lhp.GetComponent(cmp, exact, mpv)
+	}
+
+	return ret, vols, true
+}
+
+// convenience method
+
+func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+	ret := make([]WellCoords, 0, 1)
+	vols := make([]wunit.Volume, 0, 1)
+	it := NewOneTimeColumnWiseIterator(lhp)
+
+	volGot := wunit.NewVolume(0.0, "ul")
+	volWant := cmp.Volume().Dup()
 
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
@@ -136,14 +182,21 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool) ([]WellCoords, bo
 			if exact && w.Contents().ID != cmp.ID {
 				continue
 			}
-			x += 1
 
 			v := w.WorkingVolume()
-			if v.LessThan(cmp.Volume()) {
+			if v.LessThan(mpv) {
 				continue
 			}
 			volGot.Add(v)
 			ret = append(ret, wc)
+
+			if volWant.GreaterThan(v) {
+				vols = append(vols, v)
+			} else {
+				vols = append(vols, volWant.Dup())
+			}
+
+			volWant.Subtract(v)
 
 			if volGot.GreaterThan(cmp.Volume()) || volGot.EqualTo(cmp.Volume()) {
 				break
@@ -151,13 +204,13 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool) ([]WellCoords, bo
 		}
 	}
 
-	//	fmt.Println("FOUND: ", cmp.CName, " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
+	//fmt.Println("FOUND: ", cmp.CName, " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
-	if !(volGot.GreaterThan(cmp.Volume()) || volGot.EqualTo(cmp.Volume())) {
-		return ret, false
+	if volGot.LessThan(cmp.Volume()) {
+		return ret, vols, false
 	}
 
-	return ret, true
+	return ret, vols, true
 }
 
 func (lhp *LHPlate) Wells() [][]*LHWell {
@@ -167,16 +220,35 @@ func (lhp *LHPlate) WellMap() map[string]*LHWell {
 	return lhp.Wellcoords
 }
 
-func (lhp *LHPlate) AllWellPositions() (wellpositionarray []string) {
+const (
+	BYROW    = true
+	BYCOLUMN = false
+)
+
+func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
 
 	wellpositionarray = make([]string, 0)
 
-	// range through well coordinates
-	for j := 0; j < lhp.WlsX; j++ {
-		for i := 0; i < lhp.WlsY; i++ {
-			wellposition := wutil.NumToAlpha(i+1) + strconv.Itoa(j+1)
-			wellpositionarray = append(wellpositionarray, wellposition)
+	if byrow {
+
+		// range through well coordinates
+		for j := 0; j < lhp.WlsY; j++ {
+			for i := 0; i < lhp.WlsX; i++ {
+				wellposition := wutil.NumToAlpha(j+1) + strconv.Itoa(i+1)
+				wellpositionarray = append(wellpositionarray, wellposition)
+			}
 		}
+
+	} else {
+
+		// range through well coordinates
+		for j := 0; j < lhp.WlsX; j++ {
+			for i := 0; i < lhp.WlsY; i++ {
+				wellposition := wutil.NumToAlpha(i+1) + strconv.Itoa(j+1)
+				wellpositionarray = append(wellpositionarray, wellposition)
+			}
+		}
+
 	}
 	return
 }
@@ -225,6 +297,7 @@ func (lhp *LHPlate) NextEmptyWell(it PlateIterator) WellCoords {
 func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
 	var lhp LHPlate
 	lhp.Type = platetype
+	//lhp.ID = "plate-" + GetUUID()
 	lhp.ID = GetUUID()
 	lhp.Mnfr = mfr
 	lhp.WlsX = ncols
@@ -298,6 +371,36 @@ func (lhp *LHPlate) Dup() *LHPlate {
 			ret.Cols[j][i] = d
 			ret.Wellcoords[d.Crds] = d
 			ret.HWells[d.ID] = d
+			d.WContents.Loc = ret.ID + ":" + d.Crds
+			d.Plate = ret
+			d.Plateinst = ret.Inst
+			d.Plateid = ret.ID
+		}
+	}
+
+	return ret
+}
+func (lhp *LHPlate) DupKeepIDs() *LHPlate {
+	// protect yourself fgs
+	if lhp == nil {
+		logger.Fatal(fmt.Sprintln("Can't dup nonexistent plate"))
+	}
+	ret := NewLHPlate(lhp.Type, lhp.Mnfr, lhp.WlsY, lhp.WlsX, lhp.Height, lhp.Hunit, lhp.Welltype, lhp.WellXOffset, lhp.WellYOffset, lhp.WellXStart, lhp.WellYStart, lhp.WellZStart)
+	ret.ID = lhp.ID
+
+	ret.PlateName = lhp.PlateName
+
+	ret.HWells = make(map[string]*LHWell, len(ret.HWells))
+
+	for i, row := range lhp.Rows {
+		for j, well := range row {
+			d := well.Dup()
+			d.ID = well.ID
+			ret.Rows[i][j] = d
+			ret.Cols[j][i] = d
+			ret.Wellcoords[d.Crds] = d
+			ret.HWells[d.ID] = d
+			d.WContents.ID = well.WContents.ID
 			d.WContents.Loc = ret.ID + ":" + d.Crds
 			d.Plate = ret
 			d.Plateinst = ret.Inst
@@ -427,6 +530,72 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 
 	return err
 }
+
+func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
+
+	var platename string = plate.PlateName
+	var wells = make([]string, 0)
+	var liquids = make([]*LHComponent, 0)
+	var volumes = make([]wunit.Volume, 0)
+
+	allpositions := plate.AllWellPositions(false)
+
+	for _, position := range allpositions {
+		well := plate.WellMap()[position]
+
+		if !well.Empty() {
+			wells = append(wells, position)
+			liquids = append(liquids, well.Contents())
+			volumes = append(volumes, well.CurrentVolume())
+		}
+	}
+
+	csvfile, err := os.Create(outputfilename)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return err
+	}
+	defer csvfile.Close()
+
+	records := make([][]string, 0)
+
+	//record := make([]string, 0)
+
+	headerrecord := []string{plate.Type, platename, "", "", ""}
+
+	records = append(records, headerrecord)
+
+	for i, well := range wells {
+
+		volfloat := volumes[i].RawValue()
+
+		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
+
+		/*
+			fmt.Println("len(wells)", len(wells))
+			fmt.Println("len(liquids)", len(liquids))
+			fmt.Println("len(Volumes)", len(Volumes))
+		*/
+
+		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol()}
+		records = append(records, record)
+	}
+
+	csvwriter := csv.NewWriter(csvfile)
+
+	for _, record := range records {
+
+		err = csvwriter.Write(record)
+
+		if err != nil {
+			return err
+		}
+	}
+	csvwriter.Flush()
+
+	return err
+}
+
 func (p *LHPlate) SetConstrained(platform string, positions []string) {
 	p.Welltype.Extra[platform] = positions
 }
@@ -467,4 +636,51 @@ func (p *LHPlate) ResetID(newID string) {
 		w.ResetPlateID(newID)
 	}
 	p.ID = newID
+}
+
+func (p *LHPlate) IsUserAllocated() bool {
+	// true if any wells are user allocated
+
+	for _, w := range p.Wellcoords {
+		if w.IsUserAllocated() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *LHPlate) MergeWith(p2 *LHPlate) {
+	// do nothing if these are not same type
+
+	if p.Type != p2.Type {
+		return
+	}
+
+	// transfer any non-User-Allocated wells in here
+
+	it := NewOneTimeColumnWiseIterator(p)
+
+	for ; it.Valid(); it.Next() {
+		wc := it.Curr()
+
+		if !it.Valid() {
+			break
+		}
+
+		w1 := p.Wellcoords[wc.FormatA1()]
+		w2 := p2.Wellcoords[wc.FormatA1()]
+
+		if !w1.IsUserAllocated() {
+			w1.WContents = w2.WContents
+		}
+	}
+}
+
+func (p *LHPlate) MarkNonEmptyWellsUserAllocated() {
+	for _, w := range p.Wellcoords {
+		if !w.Empty() {
+			w.SetUserAllocated()
+		}
+	}
 }

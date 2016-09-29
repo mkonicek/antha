@@ -32,7 +32,7 @@ import (
 // Data which is returned from this protocol, and data types
 
 //FulllistBackupParts []string
-//WorkingBackupParts []string
+
 // i.e. map[description]list of parts matching description
 // i.e. map[biobrickID]description
 
@@ -51,6 +51,7 @@ func _FindIGemPartsThatSteps(_ctx context.Context, _input *FindIGemPartsThatInpu
 	Parttypes := []string{_input.Parttype}
 
 	BackupParts := make([]string, 0)
+	_output.Partslist = make([]string, 0)
 	WorkingBackupParts := make([]string, 0)
 
 	// initialise some variables for use later
@@ -157,6 +158,14 @@ func _FindIGemPartsThatSteps(_ctx context.Context, _input *FindIGemPartsThatInpu
 				}
 
 			}
+			for _, part := range WorkingBackupParts {
+				_output.Partslist = append(_output.Partslist, part)
+			}
+
+			// remove duplicates
+			_output.Partslist = search.RemoveDuplicates(_output.Partslist)
+
+			// reset
 			//FulllistBackupParts = BackupParts
 			BackupParts = make([]string, 0)
 			WorkingBackupParts = make([]string, 0)
@@ -259,6 +268,7 @@ type FindIGemPartsThatOutput struct {
 	HighestRatedMatchDNASequence wtype.DNASequence
 	HighestRatedMatchScore       int
 	PartMap                      map[string][]string
+	Partslist                    []string
 	Warnings                     error
 }
 
@@ -269,6 +279,7 @@ type FindIGemPartsThatSOutput struct {
 		HighestRatedMatchDNASequence wtype.DNASequence
 		HighestRatedMatchScore       int
 		PartMap                      map[string][]string
+		Partslist                    []string
 		Warnings                     error
 	}
 	Outputs struct {
@@ -292,7 +303,8 @@ func init() {
 				{Name: "HighestRatedMatch", Desc: "", Kind: "Data"},
 				{Name: "HighestRatedMatchDNASequence", Desc: "", Kind: "Data"},
 				{Name: "HighestRatedMatchScore", Desc: "", Kind: "Data"},
-				{Name: "PartMap", Desc: "FulllistBackupParts []string\nWorkingBackupParts []string\n\ni.e. map[description]list of parts matching description\n", Kind: "Data"},
+				{Name: "PartMap", Desc: "i.e. map[description]list of parts matching description\n", Kind: "Data"},
+				{Name: "Partslist", Desc: "FulllistBackupParts []string\n", Kind: "Data"},
 				{Name: "Warnings", Desc: "", Kind: "Data"},
 			},
 		},

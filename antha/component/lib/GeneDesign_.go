@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
@@ -57,7 +56,7 @@ func _GeneDesignSteps(_ctx context.Context, _input *GeneDesignInput, _output *Ge
 	if _input.EndsAlreadyAdded {
 		_output.PartsWithOverhangs = PartDNA
 	} else {
-		fmt.Println("Parts + vector:", PartDNA, VectorSeq)
+		// fmt.Println("Parts + vector:",PartDNA,VectorSeq)
 		_output.PartsWithOverhangs = enzymes.MakeScarfreeCustomTypeIIsassemblyParts(PartDNA, VectorSeq, EnzymeInf)
 	}
 
@@ -70,10 +69,10 @@ func _GeneDesignSteps(_ctx context.Context, _input *GeneDesignInput, _output *Ge
 
 	// export sequence to fasta
 	if _input.ExporttoFastaFile {
-		export.Makefastaserial2(_input.ConstructName, _output.PartsWithOverhangs)
+		export.Makefastaserial2(export.LOCAL, _input.ConstructName, _output.PartsWithOverhangs)
 	}
 
-	fmt.Println("Parts Source: ", _output.PartsWithOverhangs)
+	//fmt.Println("Parts Source: ",PartsWithOverhangs)
 }
 
 func _GeneDesignAnalysis(_ctx context.Context, _input *GeneDesignInput, _output *GeneDesignOutput) {

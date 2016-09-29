@@ -72,13 +72,91 @@ func (run Run) AddResponseValue(responsedescriptor string, responsevalue interfa
 
 }
 
-func (run Run) GetResponseValue(responsedescriptor string) (responsevalue interface{}) {
+func (run Run) AllResponses() (headers []string, values []interface{}) {
+	headers = make([]string, 0)
+	values = make([]interface{}, 0)
 
+	for _, header := range run.Responsedescriptors {
+		headers = append(headers, header)
+	}
+	for _, value := range run.ResponseValues {
+		values = append(values, value)
+	}
+	return
+}
+
+func (run Run) AllFactors() (headers []string, values []interface{}) {
+	headers = make([]string, 0)
+	values = make([]interface{}, 0)
+
+	for _, header := range run.Factordescriptors {
+		fmt.Println(header)
+		headers = append(headers, header)
+	}
+	for _, value := range run.Setpoints {
+		values = append(values, value)
+	}
+	fmt.Println(headers, values)
+	return
+}
+
+func (run Run) GetResponseValue(responsedescriptor string) (responsevalue interface{}, err error) {
+
+	var tempresponsevalue interface{}
+	headers, _ := run.AllResponses()
+
+	errstr := fmt.Sprint("response descriptor", responsedescriptor, "not found in ", headers)
+	err = fmt.Errorf(errstr)
 	for i, descriptor := range run.Responsedescriptors {
-		if strings.ToUpper(descriptor) == strings.ToUpper(responsedescriptor) {
+		if strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(responsedescriptor)) {
 			responsevalue = run.ResponseValues[i]
+			return responsevalue, nil
+		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(descriptor)), strings.TrimSpace(strings.ToUpper(responsedescriptor))) {
+
+			errstr := fmt.Sprint("response descriptor", responsedescriptor, "found within ", descriptor, "but no exact match")
+			err = fmt.Errorf(errstr)
+			tempresponsevalue = run.ResponseValues[i]
+			return tempresponsevalue, err
+		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(responsedescriptor)), strings.TrimSpace(strings.ToUpper(descriptor))) {
+
+			errstr := fmt.Sprint("response descriptors of ", descriptor, "found within ", responsedescriptor, "but not exact match")
+			err = fmt.Errorf(errstr)
+			tempresponsevalue = run.ResponseValues[i]
+			return tempresponsevalue, err
 		}
 	}
+
+	responsevalue = tempresponsevalue
+	return
+}
+
+func (run Run) GetFactorValue(factordescriptor string) (factorvalue interface{}, err error) {
+
+	var tempresponsevalue interface{}
+	headers, values := run.AllFactors()
+
+	errstr := fmt.Sprint("factor descriptor ", factordescriptor, " not found in ", headers, values)
+	err = fmt.Errorf(errstr)
+	for i, descriptor := range run.Factordescriptors {
+		if strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(factordescriptor)) {
+			factorvalue = run.Setpoints[i]
+			return factorvalue, nil
+		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(descriptor)), strings.TrimSpace(strings.ToUpper(factordescriptor))) {
+
+			errstr := fmt.Sprint("factor descriptor", factordescriptor, "found within ", descriptor, "but no exact match")
+			err = fmt.Errorf(errstr)
+			tempresponsevalue = run.Setpoints[i]
+			return tempresponsevalue, err
+		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(factordescriptor)), strings.TrimSpace(strings.ToUpper(descriptor))) {
+
+			errstr := fmt.Sprint("factor descriptors of ", descriptor, "found within ", factordescriptor, "but not exact match")
+			err = fmt.Errorf(errstr)
+			tempresponsevalue = run.Setpoints[i]
+			return tempresponsevalue, err
+		}
+	}
+
+	factorvalue = tempresponsevalue
 	return
 }
 
@@ -986,6 +1064,108 @@ func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfi
 	}
 	if dxorjmp == "JMP" {
 		xlsxfile = JMPXLSXFilefromRuns(runs, outputfilename)
+	}
+	return
+}
+
+func RunsFromDesign(designfile string, intfactors []string, responsecolumns []int, dxorjmp string) (runs []Run, err error) {
+
+	if dxorjmp == "DX" {
+
+		runs, err = RunsFromDXDesign(designfile, intfactors)
+		if err != nil {
+			return runs, err
+		}
+
+	} else if dxorjmp == "JMP" {
+
+		factorcolumns := findFactorColumns(designfile, responsecolumns)
+
+		runs, err = RunsFromJMPDesign(designfile, factorcolumns, responsecolumns, intfactors)
+		if err != nil {
+			return runs, err
+		}
+	}
+	return
+}
+
+func RunsFromDesignPreResponses(designfile string, intfactors []string, dxorjmp string) (runs []Run, err error) {
+
+	if dxorjmp == "DX" {
+
+		runs, err = RunsFromDXDesign(designfile, intfactors)
+		if err != nil {
+			return runs, err
+		}
+
+	} else if dxorjmp == "JMP" {
+
+		factorcolumns, responsecolumns, _ := findJMPFactorandResponseColumnsinEmptyDesign(designfile)
+
+		runs, err = RunsFromJMPDesign(designfile, factorcolumns, responsecolumns, intfactors)
+		if err != nil {
+			return runs, err
+		}
+	}
+	return
+
+}
+
+func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int) {
+
+	factorcolumns = make([]int, 0)
+
+	file, err := spreadsheet.OpenFile(xlsx)
+	if err != nil {
+		return factorcolumns
+	}
+	sheet := spreadsheet.Sheet(file, 0)
+
+	for i := 0; i < sheet.MaxCol; i++ {
+		if search.BinarySearch(responsefactors, i) == false && strings.ToUpper(sheet.Cell(0, i).String()) != "PATTERN" {
+			factorcolumns = append(factorcolumns, i)
+		}
+	}
+
+	return
+}
+
+// add func to auto check for Response and factor status based on empty entries implying Response column
+func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []int, responsecolumns []int, PatternColumn int) {
+
+	factorcolumns = make([]int, 0)
+	responsecolumns = make([]int, 0)
+
+	file, err := spreadsheet.OpenFile(xlsx)
+	if err != nil {
+		return
+	}
+	sheet := spreadsheet.Sheet(file, 0)
+
+	//descriptors := make([]string, 0)
+
+	for j := 0; j < sheet.MaxCol; j++ {
+
+		descriptor := sheet.Cell(0, j).String()
+		//	descriptors = append(descriptors,descriptor)
+		if strings.ToUpper(descriptor) == "PATTERN" {
+			PatternColumn = j
+		}
+	}
+	// iterate through every run of the design sheet (row) and if all values for that row == "", the column is interpreted as a response
+	for i := 1; i < sheet.MaxRow; i++ {
+		//maxfactorcol := 2
+		for j := 0; j < sheet.MaxCol; j++ {
+
+			if j != PatternColumn && sheet.Cell(i, j).String() != "" {
+				factorcolumns = append(factorcolumns, j)
+			} else if sheet.Cell(i, j).String() == "" {
+
+				responsecolumns = append(responsecolumns, j)
+			}
+
+		}
+
 	}
 	return
 }

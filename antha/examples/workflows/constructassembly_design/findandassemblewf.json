@@ -1,0 +1,8 @@
+{
+    "connections": [],
+    "processes": {
+        "TypeIISAssembly_design": {
+            "component": "TypeIISAssembly_design"
+        }
+    }
+}

@@ -24,7 +24,7 @@ func Eliminate(opt EliminateOpt) Graph {
 		Outs: make(map[Node][]Node),
 	}
 
-	// Elimination can be quadatric. Reduce to linear on special case of trees
+	// Elimination can be quadratic. Reduce to linear on special case of trees
 	// with reverse topological order.
 	var nodes []Node
 	if order, err := TopoSort(TopoSortOpt{

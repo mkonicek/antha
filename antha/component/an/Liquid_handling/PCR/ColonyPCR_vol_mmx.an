@@ -1,0 +1,196 @@
+protocol ColonyPCR_vol_mmx
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+)
+
+/*type Polymerase struct {
+	wtype.LHComponent
+	Rate_BPpers float64
+	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
+	Extensiontemp Temperature
+	Hotstart bool
+	StockConcentration Concentration // this is normally in U?
+	TargetConcentration Concentration
+	// this is also a glycerol solution rather than a watersolution!
+}
+*/
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	// PCRprep parameters:
+	RecoveryWaterVolume Volume
+	MasterMixVolume Volume
+	PrimersalreadyAddedtoMasterMix bool
+	PolymeraseAlreadyaddedtoMastermix bool
+	FwdPrimerVol Volume
+	RevPrimerVol Volume
+	Templatevolume Volume
+	PolymeraseVolume Volume
+	ReactionName string
+	TemplateName string
+	FwdPrimerName string
+	RevPrimerName string
+	WellPosition string
+	/*
+	// let's be ambitious and try this as part of type polymerase Polymeraseconc Volume
+	
+	//Templatetype string  // e.g. colony, genomic, pure plasmid... will effect efficiency. We could get more sophisticated here later on... 
+	//FullTemplatesequence string // better to use Sid's type system here after proof of concept
+	//FullTemplatelength int	// clearly could be calculated from the sequence... Sid will have a method to do this already so check!
+	//TargetTemplatesequence string // better to use Sid's type system here after proof of concept
+	//TargetTemplatelengthinBP int
+	*/
+	// Reaction parameters: (could be a entered as thermocycle parameters type possibly?)
+	Numberofcycles int 
+	InitDenaturationtime Time
+	Denaturationtime Time
+	//Denaturationtemp Temperature
+	Annealingtime Time
+	AnnealingTemp Temperature // Should be calculated from primer and template binding
+	Extensiontime Time // should be calculated from template length and polymerase rate
+	Finalextensiontime Time
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	FwdPrimer *wtype.LHComponent
+	RevPrimer *wtype.LHComponent
+	MasterMix *wtype.LHComponent
+	RecoveryWater *wtype.LHComponent
+	PCRPolymerase *wtype.LHComponent
+	Template *wtype.LHComponent
+	OutPlate *wtype.LHPlate
+	RecoveryPlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Reaction *wtype.LHComponent
+	RecoveredSample *wtype.LHComponent
+)
+
+Requirements {
+}
+
+// Conditions to run on startup
+Setup {
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	// rename components
+
+	Template.CName = TemplateName
+	FwdPrimer.CName = FwdPrimerName
+	RevPrimer.CName = RevPrimerName
+	
+	
+	// add water to recovery plate 
+	//templateinWater := MixInto(RecoveryPlate,WellPosition,mixer.Sample(RecoveryWater,RecoveryWaterVolume))
+	
+	//templateinWater := MixInto(OutPlate,WellPosition,mixer.Sample(RecoveryWater,RecoveryWaterVolume))
+	
+	// add colony to recovery plate
+	//recoveredSample := Mix(templateinWater,mixer.Sample(Template, Templatevolume))
+	
+	
+	// Make a mastermix 
+	mmxSample := mixer.Sample(MasterMix, MasterMixVolume)
+	
+	// pipette out Outplate to make mastermix
+	mastermix := MixInto(OutPlate, WellPosition, mmxSample)
+	//mastermix := Mix(recoveredSample, mmxSample)
+	
+	// reset samples to zero
+	samples := make([]*wtype.LHComponent, 0)
+	
+	// if this is false do stuff inside {}
+	
+	// add primers
+	
+	if !PrimersalreadyAddedtoMasterMix {
+	FwdPrimerSample := mixer.Sample(FwdPrimer, FwdPrimerVol)
+	samples = append(samples, FwdPrimerSample)
+	RevPrimerSample := mixer.Sample(RevPrimer, RevPrimerVol)
+	samples = append(samples, RevPrimerSample)
+	}
+	
+	
+	// add template
+	//templateSample := mixer.Sample(recoveredSample, Templatevolume)
+	templateSample := mixer.Sample(Template, Templatevolume)
+	samples = append(samples, templateSample)
+
+	
+	for j := range samples { 
+	mastermix = Mix(mastermix, samples[j])
+	}
+	reaction := mastermix
+
+	// this needs to go after an initial denaturation!
+	if !PolymeraseAlreadyaddedtoMastermix {
+	polySample := mixer.Sample(PCRPolymerase, PolymeraseVolume)
+	
+	reaction = Mix(reaction,polySample)
+	}
+
+	// thermocycle parameters called from enzyme lookup:
+
+	polymerase := PCRPolymerase.CName
+
+	extensionTemp := enzymes.DNApolymerasetemps[polymerase]["extensiontemp"]
+	meltingTemp := enzymes.DNApolymerasetemps[polymerase]["meltingtemp"]
+
+
+	// initial Denaturation
+
+	r1 := Incubate(reaction, meltingTemp, InitDenaturationtime, false)
+	
+	for i:=0; i < Numberofcycles; i++ {
+		
+		// Denature
+
+	r1 = Incubate(r1, meltingTemp, Denaturationtime, false)
+	
+		// Anneal
+	r1 = Incubate(r1, AnnealingTemp, Annealingtime, false)
+	
+	//extensiontime := TargetTemplatelengthinBP/PCRPolymerase.RateBPpers // we'll get type issues here so leave it out for now
+	
+		// Extend
+	r1 = Incubate(r1, extensionTemp, Extensiontime, false)
+		
+	}
+		// Final Extension
+	r1 = Incubate(r1, extensionTemp, Finalextensiontime, false)
+	
+
+	// all done
+	Reaction = r1
+	
+	Reaction.CName = ReactionName
+	
+	//RecoveredSample = recoveredSample
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

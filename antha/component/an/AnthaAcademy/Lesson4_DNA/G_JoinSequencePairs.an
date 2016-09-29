@@ -1,0 +1,102 @@
+
+protocol JoinDNASequences_map
+
+import (
+	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+
+)
+// Input parameters for this protocol
+Parameters (
+	Pairs map[string][]string
+	BlastSeqswithNoName bool
+	Vectors bool
+)
+
+// Data which is returned from this protocol
+Data (
+	JoinedSeqs []wtype.DNASequence
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	
+	// make a lookup table of []DNASequences; in go these are called maps
+	// in this case the map is called sequencepairs; the key is of type string; the values returned will be an array of DNASequences
+	// e.g. we can add two sequences eGFP and sfGFP to the map like so: 
+	// sequencepairs["GFPSequences"] = wtype.DNASequence{eGFP,sfGFP}
+	// we can return the two stored sequences to a variable called gfpseqscopy using the key "GFPSequences" by typing 
+	// gfpseqscopy := sequencepairs["GFPSequences"]
+	
+	var sequencepairs = make(map[string][]wtype.DNASequence)
+	
+	
+	// Step 1. Call antha element for turning a string array of parts into []DNASequence for each map entry
+	// We can range through maps in a similar fashion to arrays; the important difference is after for the key value is used rather than the index as is the case with array
+	for key,values := range Pairs {
+	
+	// this is how we call an antha element from within an element
+	seqs := RunSteps(NewDNASequences,
+			Parameters {
+			Seqsinorder: values,
+			BlastSeqswithNoName:BlastSeqswithNoName,
+			Vectors: Vectors,
+			}, Inputs{})
+			
+		sequencepairs[key] = seqs.Data.Parts
+	}
+	
+	
+	//  make an array of seqs to export for each map combination
+	var seqstoexport = make([]wtype.DNASequence,0)
+	
+	// Step 2. Range through the map created in step 1.
+	for key, Seqsinorder := range sequencepairs {
+	
+	newSeq := Seqsinorder[0]
+	fmt.Println("seq?",Seqsinorder[0].Nm)
+	//seqnames := make([]string,0)
+
+	// Step 2a. Each set of sequences we'll range through and concatenate the sequence with the next sequence
+	for i, seq := range Seqsinorder {
+		fmt.Println("seq[i]?",Seqsinorder[i].Nm)
+		if i!=0{
+		newSeq.Append(seq.Seq)
+		}
+		//seqnames = append(seqnames,seq.Nm)
+	}
+	
+	// Step 2b. Name the new DNAParts using map key. This could also name by concatenating but we'll use key for now
+	newSeq.Nm = key //strings.Join(seqnames,"_")
+		seqstoexport = append(seqstoexport,newSeq)
+	}
+	
+	JoinedSeqs = seqstoexport
+	
+}
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

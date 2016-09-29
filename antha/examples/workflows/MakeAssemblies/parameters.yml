@@ -12,10 +12,10 @@
             "Ligase": "T4Ligase",
             "OutPlate": "pcrplate_with_cooler",
             "PartNames": [ 
-              [ "vector_1", "promoter_1", "rbs_1", "cds_1" ],
-              [ "vector_1", "promoter_1", "rbs_1", "cds_1" ],
-              [ "vector_1", "promoter_1", "rbs_1", "cds_1" ],
-              [ "vector_1", "promoter_1", "rbs_1", "cds_1" ]
+              [ "pUMP", "T5", "StrongRBS", "ADH" ],
+              [ "pUMP", "T5", "WeakRBS", "ADH" ],
+              [ "pUMP2", "pBAD", "StrongRBS", "Tam" ],
+              [ "pUMP2", "pBAD", "WeakRBS", "Tam" ]
             ],
             "PartVols": [
               [ "1ul", "1ul", "1ul", "1ul" ],

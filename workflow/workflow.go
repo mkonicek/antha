@@ -241,7 +241,7 @@ func (a *Workflow) AddEdge(src, tgt Port) error {
 	sport := src.Port
 	tport := tgt.Port
 	if _, seen := tnode.Ins[tport]; seen {
-		return fmt.Errorf("port %q of process %q already assigned", endpoint{Port: tport, Node: tnode})
+		return fmt.Errorf("port %q of process %q already assigned", endpoint{Port: tport, Node: tnode}, tgt.Process)
 	}
 	tnode.Ins[tport] = true
 	snode.Outs[sport] = append(snode.Outs[sport], endpoint{Port: tport, Node: tnode})

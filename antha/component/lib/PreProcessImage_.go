@@ -32,7 +32,7 @@ func _PreProcessImageSetup(_ctx context.Context, _input *PreProcessImageInput) {
 // for every input
 func _PreProcessImageSteps(_ctx context.Context, _input *PreProcessImageInput, _output *PreProcessImageOutput) {
 
-	chosencolourpalette := image.AvailablePalettes[_input.Palette]
+	chosencolourpalette := image.AvailablePalettes()[_input.Palette]
 
 	if _input.CheckAllResizeAlgorithms {
 		image.CheckAllResizealgorithms(_input.Imagefilename, _input.OutPlate, _input.Rotate, imaging.AllResampleFilters)

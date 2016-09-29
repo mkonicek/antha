@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package driver;
-
-message TypeRequest {}
-
-message TypeReply {
-  string type = 1;
-}

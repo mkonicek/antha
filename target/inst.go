@@ -1,13 +1,9 @@
 package target
 
 import (
-	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
-)
-
-var (
-	_ RunInst = &Mix{}
 )
 
 type Inst interface {
@@ -15,36 +11,6 @@ type Inst interface {
 	DependsOn() []Inst
 	SetDependsOn([]Inst)
 	GetTimeEstimate() float64
-}
-
-type Files struct {
-	Type    string // Pseudo MIME-type describing contents of tarball
-	Tarball []byte // Tar'ed and gzip'ed files
-}
-
-type RunInst interface {
-	Inst
-	Data() Files // Blob of data that is runnable
-}
-
-type Graph struct {
-	Insts []Inst
-}
-
-func (a *Graph) NumNodes() int {
-	return len(a.Insts)
-}
-
-func (a *Graph) Node(i int) graph.Node {
-	return a.Insts[i]
-}
-
-func (a *Graph) NumOuts(n graph.Node) int {
-	return len(n.(Inst).DependsOn())
-}
-
-func (a *Graph) Out(n graph.Node, i int) graph.Node {
-	return n.(Inst).DependsOn()[i]
 }
 
 type CmpError struct {
@@ -76,10 +42,6 @@ type Incubate struct {
 	Time    float64
 }
 
-func (a *Incubate) Data() Files {
-	return a.Files
-}
-
 func (a *Incubate) Device() Device {
 	return a.Dev
 }
@@ -105,10 +67,6 @@ type Mix struct {
 	FinalProperties *liquidhandling.LHProperties
 	Final           map[string]string // Map from ids in Properties to FinalProperties
 	Files           Files
-}
-
-func (a *Mix) Data() Files {
-	return a.Files
 }
 
 func (a *Mix) Device() Device {
@@ -155,6 +113,31 @@ func (a *Manual) SetDependsOn(x []Inst) {
 
 func (a *Manual) GetTimeEstimate() float64 {
 	return a.Time
+}
+
+// Run calls on device
+type Run struct {
+	Dev     Device
+	Label   string
+	Details string
+	Depends []Inst
+	Calls   []driver.Call
+}
+
+func (a *Run) DependsOn() []Inst {
+	return a.Depends
+}
+
+func (a *Run) Device() Device {
+	return a.Dev
+}
+
+func (a *Run) SetDependsOn(x []Inst) {
+	a.Depends = x
+}
+
+func (a *Run) GetTimeEstimate() float64 {
+	return 0.0
 }
 
 // Virtual instruction to hang dependencies on

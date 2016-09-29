@@ -24,6 +24,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -64,6 +65,8 @@ type LHRequest struct {
 	CarryVolume              wunit.Volume
 	InstructionSets          [][]*wtype.LHInstruction
 	Evaps                    []wtype.VolumeCorrection
+	Options                  LHOptions
+	NUserPlates              int
 }
 
 func (req *LHRequest) ConfigureYourself() error {
@@ -144,6 +147,7 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_setup_weights["MAX_N_WELLS"] = 96
 	lhr.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = 1.0
 	lhr.Policies, _ = liquidhandling.GetLHPolicyForTest()
+	lhr.Options = NewLHOptions()
 	return &lhr
 }
 
@@ -157,6 +161,18 @@ func (lhr *LHRequest) NewComponentsAdded() bool {
 	// new was added to the inputs
 
 	return len(lhr.Input_vols_wanting) != 0
+}
+
+func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
+	// impose sanity
+
+	if p.PlateName == "" {
+		p.PlateName = fmt.Sprintf("User_plate_%d", lhr.NUserPlates+1)
+		lhr.NUserPlates += 1
+	}
+
+	p.MarkNonEmptyWellsUserAllocated()
+	lhr.Input_plates[p.ID] = p
 }
 
 type LHPolicyManager struct {

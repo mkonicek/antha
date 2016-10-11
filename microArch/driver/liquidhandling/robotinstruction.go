@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -130,6 +131,11 @@ func InsToString(ins RobotInstruction) string {
 	}
 
 	return s
+}
+
+func InsToString2(ins RobotInstruction) string {
+	b, _ := json.Marshal(ins)
+	return string(b)
 }
 
 func concatstringarray(a []string) string {

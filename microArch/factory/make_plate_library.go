@@ -29,6 +29,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 //var commonwelltypes
@@ -684,7 +685,7 @@ func GetPlateByType(typ string) *wtype.LHPlate {
 
 	if p == nil {
 		//fmt.Println("can't dup plate nil, plate name", typ)
-		logger.debug(fmt.Sprint("Plate type ", typ, " not known"))
+		logger.Debug(fmt.Sprint("Plate type ", typ, " not known"))
 		return nil
 	} else {
 		//fmt.Println("plate type", typ, "found in factory")

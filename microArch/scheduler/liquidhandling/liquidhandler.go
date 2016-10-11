@@ -334,6 +334,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 						if ok {
 							// there's no strict separation between outputs and
 							// inputs here
+							// the call below is essentially "is this an input?"
 							if w.IsAutoallocated() || w.IsUserAllocated() {
 								continue
 							}
@@ -795,6 +796,7 @@ func (lh *Liquidhandler) fix_post_ids() {
 }
 
 func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
+
 	for _, i := range rq.LHInstructions {
 		tx := strings.Split(i.Result.Loc, ":")
 

@@ -65,12 +65,13 @@ func getNameForID(pc []PlateChoice, id string) string {
 }
 
 func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain *IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
+	// considering only plate assignments,
 	// we have three kinds of solution
 	// 1- ones going to a specific plate
 	// 2- ones going to a specific plate type
 	// 3- ones going to a plate of our choosing
 
-	// find existing assignments
+	// find existing assignments and copy into the plate_choices structure
 	plate_choices, mapchoices, err := get_and_complete_assignments(request, chain.ValueIDs(), plate_choices, mapchoices)
 
 	if err != nil {
@@ -322,16 +323,20 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 			pt := v.Platetype
 
 			// find a plate choice to put it in or return -1 for a new one
-			ass := assignmentWithType(pt, pc)
+			ass := -1
+
+			if pt != "" {
+				ass = assignmentWithType(pt, pc)
+			}
 
 			if ass == -1 {
 				// make a new plate
 				ass = len(pc)
-				pc = append(pc, PlateChoice{chooseAPlate(request, v), []string{v.ID}, wtype.GetUUID(), []string{""}, "Output_plate_" + v.ID[0:6]})
+				pc = append(pc, PlateChoice{chooseAPlate(request, v), []string{v.ID}, wtype.GetUUID(), []string{}, "Output_plate_" + v.ID[0:6]})
 			}
 
 			pc[ass].Assigned = append(pc[ass].Assigned, v.ID)
-			pc[ass].Wells = append(pc[ass].Wells, "")
+			//			pc[ass].Wells = append(pc[ass].Wells, "")
 		}
 	}
 
@@ -348,6 +353,8 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 		pc2 = append(pc2, modpc(v, plate.Nwells)...)
 	}
 
+	fmt.Println("PC2 lenth: ", len(pc2))
+
 	// copy the choices in
 
 	for _, c := range pc2 {
@@ -362,7 +369,10 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 // chop the assignments up modulo plate size
 func modpc(choice PlateChoice, nwell int) []PlateChoice {
 	r := make([]PlateChoice, 0, 1)
-
+	/*
+		fmt.Println("L: ", len(choice.Assigned), " ", choice.Assigned)
+		fmt.Println("W: ", len(choice.Wells), " ", choice.Wells)
+	*/
 	for s := 0; s < len(choice.Assigned); s += nwell {
 		e := s + nwell
 		if e > len(choice.Assigned) {
@@ -373,14 +383,20 @@ func modpc(choice PlateChoice, nwell int) []PlateChoice {
 			// new ID
 			ID = wtype.GetUUID()
 		}
-		/*
-			fmt.Println("S: ", s, " E: ", e)
-			fmt.Println("L: ", len(choice.Assigned), " ", choice.Assigned)
-			fmt.Println("W: ", len(choice.Wells), " ", choice.Wells)
-		*/
+
 		tx := strings.Split(choice.Name, "_")
 		nm := tx[0] + "_" + tx[1] + "_" + ID[0:6]
-		r = append(r, PlateChoice{choice.Platetype, choice.Assigned[s:e], ID, choice.Wells[s:e], nm})
+
+		var ass, wll []string
+		if len(choice.Assigned) != 0 {
+			ass = choice.Assigned[s:e]
+		}
+		if len(choice.Wells) != 0 {
+			wll = choice.Wells[s:e]
+		}
+		fmt.Println("LEN ASS: ", len(ass))
+
+		r = append(r, PlateChoice{choice.Platetype, ass, ID, wll, nm})
 	}
 	return r
 }
@@ -388,17 +404,10 @@ func modpc(choice PlateChoice, nwell int) []PlateChoice {
 func assignmentWithType(pt string, pc []PlateChoice) int {
 	r := -1
 
-	if pt == "" {
-		if len(pc) != 0 {
-			r = 0
-		}
-		return r
-	}
-
 	for i, v := range pc {
 		if pt == v.Platetype {
 			r = i
-			break
+			//			break
 		}
 	}
 
@@ -466,6 +475,8 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 	//opa := request.Output_assignments
 	opa := make(map[string][]string)
 
+	fmt.Println("LEN PC: ", len(pc))
+
 	for _, c := range pc {
 		// make a temporary plate to hold info
 
@@ -489,7 +500,10 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 
 		for i, _ := range c.Assigned {
 			sID := c.Assigned[i]
-			well := c.Wells[i]
+			well := ""
+			if i < len(c.Wells) {
+				well = c.Wells[i]
+			}
 
 			var assignment string
 
@@ -508,11 +522,8 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 				plat.Cols[wc.X][wc.Y].Add(dummycmp)
 				request.LHInstructions[sID].Welladdress = wc.FormatA1()
 				assignment = c.ID + ":" + wc.FormatA1()
-				c.Wells[i] = wc.FormatA1()
-
-				//fmt.Println(sID, " TO WELL ", assignment)
+				c.Wells = append(c.Wells, wc.FormatA1())
 			} else {
-				//fmt.Println("WELL HERE: ", well)
 				assignment = c.ID + ":" + well
 			}
 

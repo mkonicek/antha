@@ -111,13 +111,15 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 			tx := strings.Split(ins.Result.Loc, ":")
 			pa := tx[0]
 
+			fmt.Println(ins.Generation(), " ", ins.Result.CName, " ", ins.Result.Loc)
+
 			if !isInStrArr(pa, output_plate_order) {
 				output_plate_order = append(output_plate_order, pa)
 			}
 		}
 
 		if len(output_plate_order) != len(output_plates) {
-			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 101))
+			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 120))
 		}
 
 		request.Output_plate_order = output_plate_order

@@ -90,6 +90,7 @@ func (p *compiler) anthaInit() {
 		"MixNamed":      "execute.MixNamed",
 		"MixTo":         "execute.MixTo",
 		"ReadEM":        "execute.ReadEM",
+		"Wait":          "execute.Wait",
 		"SetInputPlate": "execute.SetInputPlate",
 	}
 	p.types = map[string]string{

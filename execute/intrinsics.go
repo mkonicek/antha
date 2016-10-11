@@ -176,3 +176,25 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 		PlateNum:   platenum,
 	}))
 }
+
+func Wait(ctx context.Context, time wunit.Time) {
+	return wait(ctx, time)
+}
+
+func wait(ctx context.Context, time wunit.Time) {
+	// generate the correct intrinsic
+	inst := &commandInst{
+		Args: []*wunit.Time{time},
+		Command: &ast.Command{
+			Inst: &ast.WaitInst{
+				Time: time,
+			},
+			Requests: []ast.Request{
+				ast.Request{
+					Time: ast.NewPoint(time.SIValue()),
+				},
+			},
+		},
+	}
+	trace.Issue(ctx, inst)
+}

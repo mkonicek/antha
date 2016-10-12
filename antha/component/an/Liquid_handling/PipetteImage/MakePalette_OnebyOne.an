@@ -115,11 +115,11 @@ Steps {
 				cyanvol.SetValue(0.5)
 			}
 		
-		if cmyk.K == 0 && cmyk.M == 0 && cmyk.Y == 0{
-		Cyan.Type  =	wtype.LTDoNotMix
-		}else {
-		Cyan.Type = wtype.LTPostMix
-		}
+		//if cmyk.K == 0 && cmyk.M == 0 && cmyk.Y == 0{
+		Cyan.Type  =	wtype.LTDISPENSEABOVE
+		//}else {
+		//Cyan.Type = wtype.LTPostMix
+		//}
 		
 		cyanSample := mixer.Sample(Cyan, cyanvol)
 		components = append(components, cyanSample)
@@ -133,9 +133,9 @@ Steps {
 			}
 		
 		if cmyk.K == 0 && cmyk.M == 0{
-		Yellow.Type  =	wtype.LTDoNotMix
+		Yellow.Type  =	wtype.LTPostMix
 		}else {
-		Yellow.Type = wtype.LTPostMix
+		Yellow.Type = wtype.LTDISPENSEABOVE
 		}
 		
 		yellowSample := mixer.Sample(Yellow, yellowvol)
@@ -150,9 +150,9 @@ Steps {
 			}
 		
 		if cmyk.K == 0 {
-		Magenta.Type  =	wtype.LTDoNotMix
+		Magenta.Type  =	wtype.LTPostMix
 		}else {
-		Magenta.Type = wtype.LTPostMix
+		Magenta.Type = wtype.LTDISPENSEABOVE
 		}
 		
 		magentaSample := mixer.Sample(Magenta, magentavol)

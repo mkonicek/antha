@@ -29,7 +29,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/factory"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 type InputSorter struct {
@@ -75,7 +74,7 @@ func (is InputSorter) Less(i, j int) bool {
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
 func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 	// I think this might need moving too
-	logger.Debug("in input plate setup")
+	//	logger.Debug("in input plate setup")
 	input_platetypes := (*request).Input_platetypes
 	if input_platetypes == nil || len(input_platetypes) == 0 {
 		// XXX this is dangerous... until input_plate_linear is replaced we will hit big problems here

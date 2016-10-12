@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -106,6 +107,34 @@ func (this *Liquidhandler) MakeSolutions(request *LHRequest) error {
 	if err != nil {
 		return err
 	}
+
+	// now give me some answers
+
+	/*
+		for _, id := range this.FinalProperties.PosLookup {
+			p, ok := this.FinalProperties.PlateLookup[id]
+			if !ok {
+				continue
+			}
+			switch p.(type) {
+			case *wtype.LHPlate:
+				pl := p.(*wtype.LHPlate)
+				for _, c := range pl.Cols {
+					for _, w := range c {
+						if !w.Empty() {
+							fmt.Print(w.Crds, " ")
+							fmt.Print(pl.PlateName, " ")
+							fmt.Print(pl.Type, " ")
+							fmt.Print(w.WContents.CName, " ")
+							fmt.Print(w.WContents.Vol, " ")
+							fmt.Println()
+						}
+					}
+				}
+			}
+		}
+	*/
+
 	err = this.Execute(request)
 
 	if err != nil {
@@ -140,6 +169,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	var d time.Duration
 
 	for _, ins := range instructions {
+
 		//logger.Debug(fmt.Sprintln(liquidhandling.InsToString(ins)))
 		//fmt.Println(liquidhandling.InsToString(ins))
 		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
@@ -446,8 +476,12 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	// revise the volumes
 	err = this.revise_volumes(request)
 
+	if err != nil {
+		return err
+	}
 	// ensure the after state is correct
 	this.fix_post_ids()
+	err = this.fix_post_names(request)
 
 	if err != nil {
 		return err
@@ -733,7 +767,8 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 	logger.Debug("Plates:")
 
 	for k, v := range robot.Plates {
-		logger.Debug(fmt.Sprintf("%s %s: %s", k, robot.PlateIDLookup[k], v.PlateName))
+
+		logger.Debug(fmt.Sprintf("%s %s: %s %s", k, robot.PlateIDLookup[k], v.PlateName, v.Type))
 
 		wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
 
@@ -756,4 +791,36 @@ func (lh *Liquidhandler) fix_post_ids() {
 			}
 		}
 	}
+}
+
+func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
+	for _, i := range rq.LHInstructions {
+		tx := strings.Split(i.Result.Loc, ":")
+
+		newid, ok := lh.plateIDMap[tx[0]]
+
+		if !ok {
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", tx[0]))
+		}
+
+		ip, ok := lh.FinalProperties.PlateLookup[newid]
+
+		if !ok {
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate %s", newid))
+		}
+
+		p, ok := ip.(*wtype.LHPlate)
+
+		if !ok {
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Got %s, should have *wtype.LHPlate", reflect.TypeOf(ip)))
+		}
+
+		w, ok := p.Wellcoords[tx[1]]
+		if !ok {
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No well %s on plate %s", tx[1], tx[0]))
+		}
+
+		w.WContents.CName = i.Result.CName
+	}
+	return nil
 }

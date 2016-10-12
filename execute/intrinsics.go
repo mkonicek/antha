@@ -117,7 +117,8 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	for i, c := range wtype.CopyComponentArray(inst.Components) {
 		reqs = append(reqs, ast.Request{MixVol: ast.NewPoint(c.Volume().SIValue())})
 		c.Order = i
-		result.MixPreserveTvol(c)
+
+		//result.MixPreserveTvol(c)
 		if c.Generation() > mx {
 			mx = c.Generation()
 		}

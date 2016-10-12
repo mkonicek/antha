@@ -1,6 +1,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"testing"
@@ -73,6 +74,25 @@ func TestPEGPolicy(t *testing.T) {
 		if q["ASPZOFFSET"] != p["ASPZOFFSET"] {
 			t.Fatal("Inconsistent Z offsets returned")
 		}
+	}
+}
+
+func TestPPPolicy(t *testing.T) {
+	pft, _ := GetLHPolicyForTest()
+
+	tp := TransferParams{
+		What:    "Protoplasts",
+		Volume:  wunit.NewVolume(10.0, "ul"),
+		Channel: getChannelForTest(),
+	}
+
+	ins1 := NewBlowInstruction()
+	ins1.AddTransferParams(tp)
+
+	p := pft.GetPolicyFor(ins1)
+
+	if p["TIP_REUSE_LIMIT"].(int) != 5 {
+		t.Fatal(fmt.Sprintf("Protoplast tip reuse limit is %d, not 5", p["TIP_REUSE_LIMIT"]))
 	}
 
 }

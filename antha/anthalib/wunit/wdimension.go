@@ -261,17 +261,45 @@ type Mass struct {
 // make a mass unit
 
 func NewMass(v float64, unit string) (o Mass) {
-	if len(strings.TrimSpace(unit)) == 0 {
-		panic("Can't make masses without unit")
-	}
-	if len(strings.TrimSpace(unit)) == 1 {
-		o = Mass{NewMeasurement(v, "", unit)}
-	}
-	if len(strings.TrimSpace(unit)) > 1 {
 
-		o = Mass{NewPMeasurement(v, unit)}
+	approvedunits := map[string]Unit{
+		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
+		"ug": Unit{Base: "g", Prefix: "u", Multiplier: 1.0},
+		"mg": Unit{Base: "g", Prefix: "m", Multiplier: 1.0},
+		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
+		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
 	}
 
+	var approved bool
+	for key, _ := range approvedunits {
+
+		if unit == key {
+			approved = true
+			break
+		}
+	}
+
+	if !approved {
+		panic("Can't make masses with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
+	}
+
+	unitdetails := approvedunits[unit]
+
+	o = Mass{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
+	fmt.Println("NewMass: v: ", v, "unit: ", unit, "mass.ToString():", o.ToString(), "mass.SIValue()", o.SIValue())
+	return
+	/*
+		if len(strings.TrimSpace(unit)) == 0 {
+			panic("Can't make masses without unit")
+		}
+		if len(strings.TrimSpace(unit)) == 1 {
+			o = Mass{NewMeasurement(v, "", unit)}
+		}
+		if len(strings.TrimSpace(unit)) > 1 {
+
+			o = Mass{NewPMeasurement(v, unit)}
+		}
+	*/
 	return //Mass{NewPMeasurement(v, unit)}
 }
 
@@ -413,6 +441,8 @@ func NewConcentration(v float64, unit string) (o Concentration) {
 	approvedunits := map[string]Unit{
 		"mg/ml":  Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
 		"g/L":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"kg/l":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
+		"kg/L":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
 		"g/l":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
 		"mg/L":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"mg/l":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
@@ -457,7 +487,7 @@ func NewConcentration(v float64, unit string) (o Concentration) {
 	unitdetails := approvedunits[unit]
 
 	o = Concentration{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
-	fmt.Println(v, unit, o.ToString(), o.SIValue())
+	fmt.Println("NewConcentration: v: ", v, "unit: ", unit, "conc.ToString():", o.ToString(), "conc.SIValue()", o.SIValue())
 	return
 
 	/*	if len(strings.TrimSpace(unit)) == 0 {

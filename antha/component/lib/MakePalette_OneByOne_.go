@@ -93,11 +93,11 @@ func _MakePalette_OneByOneSteps(_ctx context.Context, _input *MakePalette_OneByO
 						cyanvol.SetValue(0.5)
 					}
 
-					if cmyk.K == 0 && cmyk.M == 0 && cmyk.Y == 0 {
-						_input.Cyan.Type = wtype.LTDoNotMix
-					} else {
-						_input.Cyan.Type = wtype.LTPostMix
-					}
+					//if cmyk.K == 0 && cmyk.M == 0 && cmyk.Y == 0{
+					_input.Cyan.Type = wtype.LTDISPENSEABOVE
+					//}else {
+					//Cyan.Type = wtype.LTPostMix
+					//}
 
 					cyanSample := mixer.Sample(_input.Cyan, cyanvol)
 					components = append(components, cyanSample)
@@ -111,9 +111,9 @@ func _MakePalette_OneByOneSteps(_ctx context.Context, _input *MakePalette_OneByO
 					}
 
 					if cmyk.K == 0 && cmyk.M == 0 {
-						_input.Yellow.Type = wtype.LTDoNotMix
-					} else {
 						_input.Yellow.Type = wtype.LTPostMix
+					} else {
+						_input.Yellow.Type = wtype.LTDISPENSEABOVE
 					}
 
 					yellowSample := mixer.Sample(_input.Yellow, yellowvol)
@@ -128,9 +128,9 @@ func _MakePalette_OneByOneSteps(_ctx context.Context, _input *MakePalette_OneByO
 					}
 
 					if cmyk.K == 0 {
-						_input.Magenta.Type = wtype.LTDoNotMix
-					} else {
 						_input.Magenta.Type = wtype.LTPostMix
+					} else {
+						_input.Magenta.Type = wtype.LTDISPENSEABOVE
 					}
 
 					magentaSample := mixer.Sample(_input.Magenta, magentavol)

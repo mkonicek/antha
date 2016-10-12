@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
@@ -140,8 +141,12 @@ func runElements(t *testing.T, ctx context.Context, inputs []*TInput) {
 		t.Fatal(err)
 	}
 
+	// for associating elements with default paramter values
+	var parametertodefaultsmap = make(map[string]string)
+
 	for _, input := range inputs {
 		errs := make(chan error)
+
 		go func() {
 			// HACK(ddn): Sink chdir inside goroutine to "improve" chances that
 			// golang scheduler puts this goroutine on the os thread
@@ -161,6 +166,9 @@ func runElements(t *testing.T, ctx context.Context, inputs []*TInput) {
 				Target:       tgt,
 			})
 			errs <- err
+
+			parametertodefaultsmap[string(input.WorkflowData)] = string(input.ParamData)
+
 		}()
 
 		select {
@@ -176,11 +184,15 @@ func runElements(t *testing.T, ctx context.Context, inputs []*TInput) {
 		} else {
 			t.Errorf("error running workflow %q with parameters %q: %s", input.WorkflowPath, input.ParamPath, err)
 		}
+
 	}
 
 	if err := os.Chdir(odir); err != nil {
 		t.Fatal(err)
 	}
+
+	export.ExporttoJSON(parametertodefaultsmap, "workflowtoparams"+time.Now().String()+".json")
+
 }
 
 func makeContext() (context.Context, error) {

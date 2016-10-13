@@ -43,7 +43,7 @@ func MasstoVolume(m Mass, d Density) (v Volume) {
 
 	mass := m.SIValue()
 
-	if m.Unit().BaseSIUnit() == "g" {
+	if m.Unit().BaseSISymbol() == "g" {
 		// work out mass in kg
 		mass = mass / 1000
 	}
@@ -70,25 +70,13 @@ func VolumetoMass(v Volume, d Density) (m Mass) {
 }
 
 func VolumeForTargetMass(targetmass Mass, startingconc Concentration) (v Volume, err error) {
-	fmt.Println("Base units ", startingconc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit())
 
-	if startingconc.Unit().PrefixedSymbol() == "ng/ul" && targetmass.Unit().PrefixedSymbol() == "ng" {
-		v = NewVolume(float64((targetmass.RawValue() / startingconc.RawValue())), "ul")
-		fmt.Println("starting conc SI ", startingconc.SIValue(), " and target mass SI: ", targetmass.SIValue())
-
-	} else if startingconc.Unit().PrefixedSymbol() == "mg/l" && targetmass.Unit().PrefixedSymbol() == "ng" {
-		v = NewVolume(float64((targetmass.RawValue() / startingconc.RawValue())), "ul")
-		fmt.Println("starting conc SI ", startingconc.SIValue(), " and target mass SI: ", targetmass.SIValue())
-
-	} else if startingconc.Unit().BaseSIUnit() == "kg/l" && targetmass.Unit().BaseSIUnit() == "kg" {
+	if startingconc.Unit().BaseSISymbol() == "kg/l" && targetmass.Unit().BaseSISymbol() == "kg" {
 		v = NewVolume(float64((targetmass.SIValue()/startingconc.SIValue())*1000000), "ul")
-		fmt.Println("starting conc SI ", startingconc.SIValue(), " and target mass SI: ", targetmass.SIValue())
-
-	} else if startingconc.Unit().BaseSIUnit() == "g/l" && targetmass.Unit().BaseSIUnit() == "g" {
+	} else if startingconc.Unit().BaseSISymbol() == "g/l" && targetmass.Unit().BaseSISymbol() == "g" {
 		v = NewVolume(float64((targetmass.SIValue()/startingconc.SIValue())*1000000), "ul")
-		fmt.Println("starting conc SI ", startingconc.SIValue(), " and target mass SI: ", targetmass.SIValue())
 	} else {
-		fmt.Println("Base units ", startingconc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit(), " not compatible with this function")
+		fmt.Println("Base units ", startingconc.Unit().BaseSISymbol(), " and ", targetmass.Unit().BaseSISymbol(), " not compatible with this function")
 		err = fmt.Errorf("Convert ", targetmass.ToString(), " to g and ", startingconc.ToString(), " to g/l")
 	}
 
@@ -99,7 +87,7 @@ func VolumeForTargetConcentration(targetconc Concentration, startingconc Concent
 
 	var factor float64
 
-	if startingconc.Unit().BaseSIUnit() == targetconc.Unit().BaseSIUnit() {
+	if startingconc.Unit().BaseSISymbol() == targetconc.Unit().BaseSISymbol() {
 		factor = targetconc.SIValue() / startingconc.SIValue()
 	} else {
 		err = fmt.Errorf("incompatible units of ", targetconc.ToString(), " and ", startingconc.ToString())
@@ -122,11 +110,11 @@ func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Ma
 	if targetconc.Unit().PrefixedSymbol() == "kg/l" {
 		multiplier = 1000
 		unit = "g"
-		//fmt.Println("targetconc.Unit().BaseSISymbol() == kg/l")
+		fmt.Println("targetconc.Unit().BaseSISymbol() == kg/l")
 	} else if targetconc.Unit().PrefixedSymbol() == "g/l" {
 		multiplier = 1
 		unit = "g"
-		//fmt.Println("targetconc.Unit().BaseSISymbol() == g/l")
+		fmt.Println("targetconc.Unit().BaseSISymbol() == g/l")
 	} else if targetconc.Unit().PrefixedSymbol() == "mg/l" {
 		multiplier = 1
 		unit = "mg"

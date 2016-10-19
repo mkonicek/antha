@@ -435,7 +435,11 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 
 	// Remove synthetic nodes and redundant edges
 	sg, err := graph.TransitiveReduction(graph.Eliminate(graph.EliminateOpt{
-		Graph: ig,
+		Graph: graph.Simplify(graph.SimplifyOpt{
+			Graph:            ig,
+			RemoveSelfLoops:  true,
+			RemoveMultiEdges: true,
+		}),
 		In: func(n graph.Node) bool {
 			if _, isWait := n.(*target.Wait); isWait {
 				return false
@@ -516,9 +520,9 @@ func (a *instGraph) addInsts(root graph.Node, insts []target.Inst) {
 
 	a.entry[root] = entry
 	a.exit[root] = exit
-	a.insts = append(a.insts, entry, exit)
-	a.dependsOn[exit] = append(a.dependsOn[exit], entry)
 
+	// Add dependencies
+	a.dependsOn[exit] = append(a.dependsOn[exit], entry)
 	for idx, in := range insts {
 		if idx == 0 {
 			a.dependsOn[in] = append(a.dependsOn[in], entry)
@@ -526,10 +530,24 @@ func (a *instGraph) addInsts(root graph.Node, insts []target.Inst) {
 		if idx == len(insts)-1 {
 			a.dependsOn[exit] = append(a.dependsOn[exit], in)
 		}
-		a.insts = append(a.insts, in)
 		for _, v := range in.DependsOn() {
 			a.dependsOn[in] = append(a.dependsOn[in], v)
 		}
+	}
+
+	// Add nodes
+	toAdd := make(map[target.Inst]bool)
+	toAdd[entry] = true
+	toAdd[exit] = true
+	for _, in := range insts {
+		toAdd[in] = true
+		for _, v := range in.DependsOn() {
+			toAdd[v] = true
+		}
+	}
+
+	for in := range toAdd {
+		a.insts = append(a.insts, in)
 	}
 }
 

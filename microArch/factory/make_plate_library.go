@@ -124,7 +124,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	// shallow round well flat bottom 96 on QInstruments incubator
 	rwshp = wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
 	welltype = wtype.NewLHWell("SRWFB96", "", "", "ul", 500, 10, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
-	plate = wtype.NewLHPlate("SRWFB96_incubator", "Unknown", 8, 12, 15, "mm", welltype, 9, 9, 0.0, 0.0, 40.0)
+	plate = wtype.NewLHPlate("SRWFB96_incubator", "Unknown", 8, 12, 15, "mm", welltype, 9, 9, 0.0, 0.0, incubatorheightinmm+5.0)
 	consar := []string{"position_1"}
 	plate.SetConstrained("Pipetmax", consar)
 	plates[plate.Type] = plate

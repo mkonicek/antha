@@ -1,0 +1,54 @@
+{
+    "connections": [
+	{
+	"src":{
+		"port":"PartConcs",
+		"process":"Parsednacomponents"
+	},
+	"tgt":{
+		"port": "PlasmidConc",
+		"process":"PoolLibrary"
+	}
+	},
+	{
+	"src":{
+		"port":"Partnames",
+		"process":"Parsednacomponents"
+	},
+	"tgt":{
+		"port": "Partnames",
+		"process":"PoolLibrary"
+	}
+	},
+	{
+	"src":{
+		"port":"Partplusvectorlengths",
+		"process":"Parsednacomponents"
+	},
+	"tgt":{
+		"port": "Tot",
+		"process":"PoolLibrary"
+	}
+	},
+	{
+	"src":{
+		"port":"PartLengths",
+		"process":"Parsednacomponents"
+	},
+	"tgt":{
+		"port": "Part",
+		"process":"PoolLibrary"
+	}
+	
+	
+	}
+	],
+    "processes": {
+        "Parsednacomponents": {
+            "component": "ParseDNAComponents"
+        },
+		"PoolLibrary": {
+            "component": "Ratio"
+        }
+	}
+}

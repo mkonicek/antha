@@ -1,0 +1,141 @@
+// Example protocol demonstrating the use of the Sample function
+protocol ParseDNAComponents
+
+// we need to import the wtype package to use the LHComponent type
+// the mixer package is required to use the Sample function
+import (
+	"fmt"
+	//"github.com/antha-lang/antha/antha/anthalib/wtype"
+	//"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	//ComponentFile string
+	SequenceInfoFile string
+	SequenceInfoFileformat string
+	ConcHeader string
+	NameHeader string
+	PartLengthHeader string
+	PartplusvectorlengthsHeader string
+)
+
+Data (
+	PartConcs []float64
+	Partnames []string
+	Partplusvectorlengths []int
+	PartLengths []int
+	Status string
+)
+
+Inputs (
+	
+)
+
+Outputs (
+
+)
+
+Requirements {
+}
+
+Setup {
+}
+
+
+Steps {
+	
+	headersfound := make([]string,0)
+	
+	
+	Partnames = make([]string,0)
+	PartConcs = make([]float64,0)
+	Partplusvectorlengths = make([]int,0)
+	PartLengths = make([]int,0)
+	
+	dnaparts, err := doe.RunsFromDesignPreResponses(SequenceInfoFile,[]string{PartplusvectorlengthsHeader},SequenceInfoFileformat)
+
+	if err!= nil {
+		Errorf(err.Error())
+	}
+
+
+for i, partinfo := range dnaparts {
+	
+	for j := range partinfo.Setpoints {
+	
+	
+	if partinfo.Factordescriptors[j] == NameHeader {
+		
+		if	name, found := partinfo.Setpoints[j].(string); found{
+			Partnames = append(Partnames,name)
+		} else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+		
+			if i == 0 {
+		headersfound = append(headersfound,NameHeader)
+		}
+		
+	}
+	
+	
+	if partinfo.Factordescriptors[j] == ConcHeader {
+		
+		if	conc, found := partinfo.Setpoints[j].(float64); found{
+			PartConcs = append(PartConcs,conc)
+		}  else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+			if  i == 0 {
+		headersfound = append(headersfound,ConcHeader)
+		}
+	}
+	
+	if partinfo.Factordescriptors[j] == PartLengthHeader {
+		
+		if	partlength, found := partinfo.Setpoints[j].(int); found{
+			PartLengths = append(PartLengths,partlength)
+		}  else if	partlength, found := partinfo.Setpoints[j].(float64); found{
+			PartLengths = append(PartLengths,int(partlength))
+		} else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+			if  i == 0 {
+		headersfound = append(headersfound,PartLengthHeader)
+		}
+	}
+	
+	if partinfo.Factordescriptors[j] == PartplusvectorlengthsHeader {
+		
+		if	partplusplasmid, found := partinfo.Setpoints[j].(int); found{
+			Partplusvectorlengths = append(Partplusvectorlengths,partplusplasmid)
+		}  else if	partplusplasmid, found := partinfo.Setpoints[j].(float64); found{
+			Partplusvectorlengths = append(Partplusvectorlengths,int(partplusplasmid))
+		}else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+		if  i == 0 {
+		headersfound = append(headersfound,PartplusvectorlengthsHeader)
+		}
+	}
+	
+	}
+	
+	
+	if len(headersfound)!= 4 {
+		Errorf(fmt.Sprint("Only found these headers in input file: ", headersfound))
+	}
+	
+}
+ 
+}
+
+Analysis {
+}
+
+
+Validation {
+}

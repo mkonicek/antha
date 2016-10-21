@@ -3,15 +3,15 @@
         "PoolLibrary": {
             "NgRequired": 100,
            	"Inputtype": "dna_part",
-			"PlateType": "pcrplate_skirted_riser"  ,
-			"TotalVolume":"200ul",
-			"Buffer":"water"   
+			"PlateType": "pcrplate_skirted_riser",
+			"TotalVolume": "200ul",
+			"Buffer": "water"   
 	 },
 	 "Parsednacomponents": {
-            "SequenceInfoFile": "Rewiring input.xlsx",
-            "SequenceInfoFileformat":"JMP",
+            "SequenceInfoFile": "Rewiringinput2.xlsx",
+            "SequenceInfoFileformat": "JMP",
             "ConcHeader": "Plasmid Conc",
-            "NameHeader":"Part names",
+            "NameHeader": "Part names",
 			"PartLengthHeader": "Part Size",
 			"PartplusvectorlengthsHeader": "Total Size"      
 	 }

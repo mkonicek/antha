@@ -21,7 +21,7 @@ Parameters (
 	PartLengthHeader string
 	PartplusvectorlengthsHeader string
 )
-
+//Outputs from this element
 Data (
 	PartConcs []float64
 	Partnames []string
@@ -46,10 +46,10 @@ Setup {
 
 
 Steps {
-	
+//create a string that will store the header names the element finds in the input file, this is for an internal check to make sure all 4 columns of information is found.	
 	headersfound := make([]string,0)
 	
-	
+//create strings that will be populated with the values from each column in the input file	
 	Partnames = make([]string,0)
 	PartConcs = make([]float64,0)
 	Partplusvectorlengths = make([]int,0)
@@ -61,12 +61,12 @@ Steps {
 		Errorf(err.Error())
 	}
 
-
+// code for parsing the data from the xl file into the strings, this searches the file in direction i followed by j
 for i, partinfo := range dnaparts {
 	
 	for j := range partinfo.Setpoints {
 	
-	
+//First creates an array of part names	
 	if partinfo.Factordescriptors[j] == NameHeader {
 		
 		if	name, found := partinfo.Setpoints[j].(string); found{
@@ -81,7 +81,7 @@ for i, partinfo := range dnaparts {
 		
 	}
 	
-	
+//second creats an array of plasmid concentrations	
 	if partinfo.Factordescriptors[j] == ConcHeader {
 		
 		if	conc, found := partinfo.Setpoints[j].(float64); found{
@@ -93,7 +93,8 @@ for i, partinfo := range dnaparts {
 		headersfound = append(headersfound,ConcHeader)
 		}
 	}
-	
+
+//third creates an array of part lengths in bp	
 	if partinfo.Factordescriptors[j] == PartLengthHeader {
 		
 		if	partlength, found := partinfo.Setpoints[j].(int); found{
@@ -107,7 +108,8 @@ for i, partinfo := range dnaparts {
 		headersfound = append(headersfound,PartLengthHeader)
 		}
 	}
-	
+
+//forth creates an array of total plasmid size (part + vector) in bp	
 	if partinfo.Factordescriptors[j] == PartplusvectorlengthsHeader {
 		
 		if	partplusplasmid, found := partinfo.Setpoints[j].(int); found{
@@ -124,7 +126,7 @@ for i, partinfo := range dnaparts {
 	
 	}
 	
-	
+//internal check if there are not 4 headers (as we know there should be 4) return an error telling us which ones were found and which were not	
 	if len(headersfound)!= 4 {
 		Errorf(fmt.Sprint("Only found these headers in input file: ", headersfound))
 	}

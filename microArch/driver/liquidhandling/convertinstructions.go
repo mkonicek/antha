@@ -1,4 +1,4 @@
-// anthalib//liquidhandling/executionplanner.go: Part of the Antha language
+// liquidhandling/convertinstructions.go Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -28,9 +28,31 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-// splits [[A,B,C], [A,B,C]...] --> TFR[A,A...], TFR[B,B...]...
-// if instrx are not equal in length there will be shorter arrays
-// and longer ones
+//	this section aggregates instructions with the following constraints:
+//
+//	1) obey any requirement to do one sample at a time
+//		-- bullet bitten: we cannot permit transfer to split up any multichannel instructions
+//		   into singles here... this is a bit tricky but we must make it so
+//		   some revision to how pragmas work may be needed: extend only to component type etc.
+//
+//	here is what a single sample assembled one thing at a time looks like
+//	|
+//	|		here is one sample assembled one component at a time looks like
+//	|		|
+//	i1(A)		i2(A B C)	--> the LHIVector contains these two, maxlen = 3, CmpAt (0) = [A A]
+//	--										  CmpAt (1) = [  B]
+//	i3(B) <------									  CmpAt (2) = [  C]
+//	--          |-- these two are done separately (so they're boring)
+//	i4(C) <------
+//
+// 	this should produce the output:
+//	TFR(A A d1 d2), TFR(B d2), TFR(C d2), TFR(B d1), TFR(C d1)
+//	iow it does i1 + first part of i2 in parallel, then the rest of i2 then i3 then i4
+
+// 	issue is we cannot tolerate this situation
+//
+//	i1(A)		i2(A B)		i3(A C)
+//	so we have to ensure the components line up
 
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
@@ -39,6 +61,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		comps := inssIn.CompsAt(i)
 
 		lenToMake := 0
+		// remove spaces between components
 		cmpSquash := make([]*wtype.LHComponent, 0, lenToMake)
 		for _, c := range comps {
 			if c != nil {
@@ -51,7 +74,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		va := make([]wunit.Volume, lenToMake) // volumes
 		// six parameters applying to the source
 		// need to refactor here
-		fromPlateID, fromWells, fromvols, err := robot.GetComponents(cmpSquash, carryvol, channelprms.Orientation, multi, channelprms.Independent)
+		fromPlateIDs, fromWells, fromvols, err := robot.GetComponents(cmpSquash, carryvol, channelprms.Orientation, multi, channelprms.Independent)
 
 		if err != nil {
 			return nil, err
@@ -75,20 +98,20 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		ix := 0
 
-		for i, v := range comps {
+		for j, v := range comps {
 
-			if comps[i] == nil {
+			if comps[j] == nil {
 				continue
 			}
 
 			var flhp, tlhp *wtype.LHPlate
 
-			flhif := robot.PlateLookup[fromPlateID[ix]]
+			flhif := robot.PlateLookup[fromPlateIDs[i][ix]]
 
 			if flhif != nil {
 				flhp = flhif.(*wtype.LHPlate)
 			} else {
-				s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateID[ix])
+				s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateIDs[ix])
 				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
 
 				return nil, err
@@ -125,22 +148,22 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			wlf, ok := flhp.WellAtString(fromWells[ix])
 
 			if !ok {
-				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
-				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
+				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
+				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
 				return nil, err
 			}
 
 			vf[ix] = wlf.CurrVolume()
 			//wlf.Remove(va[ix])
 
-			pf[ix] = robot.PlateIDLookup[fromPlateID[ix]]
+			pf[ix] = robot.PlateIDLookup[fromPlateIDs[ix]]
 			wf[ix] = fromWells[ix]
 			pfwx[ix] = flhp.WellsX()
 			pfwy[ix] = flhp.WellsY()
 			ptf[ix] = flhp.Type
 
 			if v.Loc == "" {
-				v.Loc = fromPlateID[ix] + ":" + fromWells[ix]
+				v.Loc = fromPlateIDs[ix] + ":" + fromWells[ix]
 			}
 			// add component to destination
 			// need to ensure data are consistent
@@ -181,7 +204,7 @@ func yeahyeahyeah(){
 
 	// six parameters applying to the source
 
-	fromPlateID, fromWells, err := robot.GetComponents(cmps, carryvol, channelprms.Orientation, multi)
+	fromPlateIDs, fromWells, err := robot.GetComponents(cmps, carryvol, channelprms.Orientation, multi)
 
 	if err != nil {
 		return nil, err
@@ -215,12 +238,12 @@ func yeahyeahyeah(){
 
 		var flhp, tlhp *wtype.LHPlate
 
-		flhif := robot.PlateLookup[fromPlateID[ix]]
+		flhif := robot.PlateLookup[fromPlateIDs[ix]]
 
 		if flhif != nil {
 			flhp = flhif.(*wtype.LHPlate)
 		} else {
-			s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateID[ix])
+			s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateIDs[ix])
 			err := wtype.LHError(wtype.LH_ERR_DIRE, s)
 
 			return nil, err
@@ -257,22 +280,22 @@ func yeahyeahyeah(){
 		wlf, ok := flhp.WellAtString(fromWells[ix])
 
 		if !ok {
-			//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
-			err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
+			//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
+			err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
 			return nil, err
 		}
 
 		vf[ix] = wlf.CurrVolume()
 		//wlf.Remove(va[ix])
 
-		pf[ix] = robot.PlateIDLookup[fromPlateID[ix]]
+		pf[ix] = robot.PlateIDLookup[fromPlateIDs[ix]]
 		wf[ix] = fromWells[ix]
 		pfwx[ix] = flhp.WellsX()
 		pfwy[ix] = flhp.WellsY()
 		ptf[ix] = flhp.Type
 
 		if v.Loc == "" {
-			v.Loc = fromPlateID[ix] + ":" + fromWells[ix]
+			v.Loc = fromPlateIDs[ix] + ":" + fromWells[ix]
 		}
 		// add component to destination
 		// need to ensure data are consistent

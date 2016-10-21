@@ -52,6 +52,8 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 			insset[i] = insm[id]
 		}
 
+		// aggregates across components
+
 		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi)
 
 		if err != nil {

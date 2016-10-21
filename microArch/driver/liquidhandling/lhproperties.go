@@ -536,20 +536,21 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
+// destructive of state
 // GetComponents takes requests for components at particular volumes
 // + a measure of carry volume
 // returns lists of plate IDs + wells from which to get components or error
 // MIS TODO HERE --- > refactor to get from sequential wells if multi > 1
 
 func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, contiguous bool) ([][]string, [][]string, [][]wunit.Volume, error) {
-	r1 := make([][]string, len(cmps))
-	r2 := make([][]string, len(cmps))
-	r3 := make([][]wunit.Volume, len(cmps))
+	plateIDs := make([][]string, len(cmps))
+	wellCoords := make([][]string, len(cmps))
+	vols := make([][]wunit.Volume, len(cmps))
 
 	for i, v := range cmps {
-		r1[i] = make([]string, 0, 1)
-		r2[i] = make([]string, 0, 1)
-		r3[i] = make([]wunit.Volume, 0, 1)
+		plateIDs[i] = make([]string, 0, 1)
+		wellCoords[i] = make([]string, 0, 1)
+		vols[i] = make([]wunit.Volume, 0, 1)
 		foundIt := false
 
 		vdup := v.Dup()
@@ -570,9 +571,9 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 				tx = strings.Split(loc, ":")
 			}
 
-			r1[i] = append(r1[i], tx[0])
-			r2[i] = append(r2[i], tx[1])
-			r3[i] = append(r3[i], v.Volume().Dup())
+			plateIDs[i] = append(plateIDs[i], tx[0])
+			wellCoords[i] = append(wellCoords[i], tx[1])
+			vols[i] = append(vols[i], v.Volume().Dup())
 
 			vol := v.Volume().Dup()
 			vol.Add(carryvol)
@@ -599,9 +600,9 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 						for ix, _ := range wcarr {
 							wc := wcarr[ix].FormatA1()
 							vl := varr[ix].Dup()
-							r1[i] = append(r1[i], p.ID)
-							r2[i] = append(r2[i], wc)
-							r3[i] = append(r3[i], vl)
+							plateIDs[i] = append(plateIDs[i], p.ID)
+							wellCoords[i] = append(wellCoords[i], wc)
+							vols[i] = append(vols[i], vl)
 							/*
 								vl = vl.Dup()
 								vl.Add(carryvol)
@@ -615,13 +616,13 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 
 			if !foundIt {
 				err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SOURCE FOR ", v.CName, " at volume ", v.Volume().ToString()))
-				return r1, r2, r3, err
+				return plateIDs, wellCoords, vols, err
 			}
 
 		}
 	}
 
-	return r1, r2, r3, nil
+	return plateIDs, wellCoords, vols, nil
 }
 
 func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int) (wells, positions, boxtypes []string, err error) {

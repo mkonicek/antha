@@ -162,6 +162,40 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 
 // convenience method
 
+func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoords, err error) {
+	ret := make([]WellCoords, 0, 1)
+
+	v := wunit.NewVolume(cmp.Vol, cmp.Vunit)
+	wv := wunit.NewVolume(lhp.Welltype.MaxVol, lhp.Welltype.Vunit)
+
+	if v.GreaterThan(wv) && !overflow {
+		return ret, fmt.Errorf("Too much to put in a single well of this type")
+	}
+
+	it := NewOneTimeColumnWiseIterator(lhp)
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		wl := lhp.Wellcoords[wc.FormatA1()]
+
+		if !wl.Empty() {
+			continue
+		}
+
+		ret = append(ret, wc)
+		c, e := cmp.Sample(wv)
+
+		if e != nil {
+			return ret, e
+		}
+		wl.Add(c)
+
+	}
+
+	return ret, fmt.Errorf("No empty wells")
+}
+
+// convenience method
+
 func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)

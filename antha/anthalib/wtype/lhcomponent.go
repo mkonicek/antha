@@ -102,13 +102,37 @@ func (lhc *LHComponent) Volume() wunit.Volume {
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
-func (lhc *LHComponent) Remove(v wunit.Volume) {
-	///TODO -- catch errors
+func (lhc *LHComponent) Remove(v wunit.Volume) wunit.Volume {
+	v2 := lhc.Volume()
+
+	if v2.LessThan(v) {
+		lhc.Vol = (0.0)
+		return v2
+	}
+
 	lhc.Vol -= v.ConvertToString(lhc.Vunit)
 
-	if lhc.Vol < 0.0 {
-		lhc.Vol = 0.0
+	return v
+}
+
+func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
+	if lhc.IsZero() {
+		return nil, fmt.Errorf("Cannot sample empty component")
+	} else if lhc.Volume().EqualTo(v) {
+		return lhc, nil
 	}
+
+	c := lhc.Dup()
+	c.ID = NewUUID()
+	v2 := lhc.Remove(v)
+	c.Vunit = v2.Unit().PrefixedSymbol()
+	c.Vol = v2.RawValue()
+	c.AddParentComponent(lhc)
+	lhc.AddDaughterComponent(c)
+	c.Loc = ""
+	c.Destination = ""
+
+	return c, nil
 }
 
 func (lhc *LHComponent) Dup() *LHComponent {

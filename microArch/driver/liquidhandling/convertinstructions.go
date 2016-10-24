@@ -60,6 +60,8 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	for i := 0; i < inssIn.MaxLen(); i++ {
 		comps := inssIn.CompsAt(i)
 
+		fmt.Println(i, " ::: ", comps)
+
 		lenToMake := 0
 		// remove spaces between components
 		cmpSquash := make([]*wtype.LHComponent, 0, lenToMake)
@@ -106,7 +108,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 			var flhp, tlhp *wtype.LHPlate
 
-			flhif := robot.PlateLookup[fromPlateIDs[i][ix]]
+			flhif := robot.PlateLookup[fromPlateIDs[i][0]]
 
 			if flhif != nil {
 				flhp = flhif.(*wtype.LHPlate)
@@ -145,7 +147,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			ptwy[ix] = tlhp.WellsY()
 			ptt[ix] = tlhp.Type
 
-			wlf, ok := flhp.WellAtString(fromWells[i][ix])
+			wlf, ok := flhp.WellAtString(fromWells[i][0])
 
 			if !ok {
 				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
@@ -153,17 +155,17 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				return nil, err
 			}
 
-			vf[ix] = fromvols[i][ix]
+			vf[ix] = fromvols[i][0]
 			//wlf.Remove(va[ix])
 
-			pf[ix] = robot.PlateIDLookup[fromPlateIDs[i][ix]]
-			wf[ix] = fromWells[i][ix]
+			pf[ix] = robot.PlateIDLookup[fromPlateIDs[i][0]]
+			wf[ix] = fromWells[i][0]
 			pfwx[ix] = flhp.WellsX()
 			pfwy[ix] = flhp.WellsY()
 			ptf[ix] = flhp.Type
 
 			if v.Loc == "" {
-				v.Loc = fromPlateIDs[i][ix] + ":" + fromWells[i][ix]
+				v.Loc = fromPlateIDs[i][0] + ":" + fromWells[i][0]
 			}
 			// add component to destination
 			// need to ensure data are consistent

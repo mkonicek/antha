@@ -1,8 +1,6 @@
 package liquidhandling
 
-import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-)
+import "github.com/antha-lang/antha/antha/anthalib/wtype"
 
 type LHIVector []*wtype.LHInstruction
 

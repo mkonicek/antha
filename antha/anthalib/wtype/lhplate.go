@@ -174,6 +174,8 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 
 	it := NewOneTimeColumnWiseIterator(lhp)
 
+	vt := wunit.ZeroVolume()
+
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		wl := lhp.Wellcoords[wc.FormatA1()]
 
@@ -181,17 +183,21 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 			continue
 		}
 
-		ret = append(ret, wc)
 		c, e := cmp.Sample(wv)
 
 		if e != nil {
 			return ret, e
 		}
-		wl.Add(c)
 
+		ret = append(ret, wc)
+		wl.Add(c)
+		vt.Add(c.Volume())
+		if vt.EqualTo(v) {
+			return ret, nil
+		}
 	}
 
-	return ret, fmt.Errorf("No empty wells")
+	return ret, fmt.Errorf("Not enough empty wells")
 }
 
 // convenience method

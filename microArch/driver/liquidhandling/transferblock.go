@@ -161,7 +161,6 @@ func (ibc InsByCol) Less(i, j int) bool {
 func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
 	// sort instructions to keep components together
 
-	fmt.Println("INS: ", ins)
 	sort.Sort(InsByComponent(ins))
 
 	ret := make(SetOfIDSets, 0, 1)
@@ -171,7 +170,6 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 
 	prm := head.GetParams()
 	for _, i := range ins {
-		fmt.Println(i.Result.CName)
 		wc := wtype.MakeWellCoords(i.Welladdress)
 
 		_, ok := h[i.PlateID()]
@@ -189,8 +187,6 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 
 			platedims[i.PlateID()] = wtype.Rational{pt.WellsX(), pt.WellsY()}
 		}
-
-		fmt.Println(wc.X, " ", wc.Y, " ", i.PlateID())
 
 		h[i.PlateID()][wc.X][wc.Y] = append(h[i.PlateID()][wc.X][wc.Y], i)
 	}

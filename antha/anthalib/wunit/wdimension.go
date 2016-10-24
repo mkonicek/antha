@@ -262,13 +262,7 @@ type Mass struct {
 
 func NewMass(v float64, unit string) (o Mass) {
 
-	approvedunits := map[string]Unit{
-		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
-		"ug": Unit{Base: "g", Prefix: "u", Multiplier: 1.0},
-		"mg": Unit{Base: "g", Prefix: "m", Multiplier: 1.0},
-		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
-		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
-	}
+	approvedunits := UnitMap["Mass"]
 
 	var approved bool
 	for key, _ := range approvedunits {
@@ -416,6 +410,31 @@ type Unit struct {
 	Multiplier float64
 }
 
+var UnitMap = map[string]map[string]Unit{
+	"Concentration": map[string]Unit{
+		"mg/ml":  Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"g/L":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"kg/l":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
+		"kg/L":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
+		"g/l":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"mg/L":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"mg/l":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ng/ul":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"Mol/L":  Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M":      Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/l":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"mM":     Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/L": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+	},
+	"Mass": map[string]Unit{
+		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
+		"ug": Unit{Base: "g", Prefix: "u", Multiplier: 1.0},
+		"mg": Unit{Base: "g", Prefix: "m", Multiplier: 1.0},
+		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
+		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
+	},
+}
+
 // make a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) (o Concentration) {
 
@@ -438,21 +457,7 @@ func NewConcentration(v float64, unit string) (o Concentration) {
 		}
 	*/
 
-	approvedunits := map[string]Unit{
-		"mg/ml":  Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"g/L":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"kg/l":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
-		"kg/L":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
-		"g/l":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"mg/L":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"mg/l":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ng/ul":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"Mol/L":  Unit{Base: "Mol/l", Prefix: "", Multiplier: 1.0},
-		"M":      Unit{Base: "Mol/l", Prefix: "", Multiplier: 1.0},
-		"M/l":    Unit{Base: "Mol/l", Prefix: "", Multiplier: 1.0},
-		"mM":     Unit{Base: "Mol/l", Prefix: "m", Multiplier: 1.0},
-		"mMol/L": Unit{Base: "Mol/l", Prefix: "m", Multiplier: 1.0},
-	}
+	approvedunits := UnitMap["Concentration"]
 
 	var approved bool
 	for key, _ := range approvedunits {
@@ -464,7 +469,7 @@ func NewConcentration(v float64, unit string) (o Concentration) {
 	}
 
 	if !approved {
-		panic("Can't make Concentration with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
+		panic("Can't make Concentration of, " + fmt.Sprint(v, unit) + "with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
 	}
 	/*if unit == "g/L" {
 		o = Concentration{NewMeasurement(v, "", "g/l")}
@@ -620,7 +625,7 @@ func NewRate(v float64, unit string) (r Rate, err error) {
 		return r, nil
 	}
 
-	err = fmt.Errorf(unit, " Not approved time unit. Approved units time are: ", approvedtimeunits)
+	err = fmt.Errorf(unit, " Not approved time unit. Approved units of time are: ", approvedtimeunits)
 	return r, err
 }
 

@@ -761,18 +761,14 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 	logger.Debug("Tipboxes: ")
 
 	for k, v := range robot.Tipboxes {
-		//		logger.Debug(fmt.Sprintf("%s %s: %s", k, robot.PlateIDLookup[k], v.Type))
-		_ = k
-		_ = v
+		logger.Debug(fmt.Sprintf("%s %s: %s", k, robot.PlateIDLookup[k], v.Type))
 	}
 
 	logger.Debug("Plates:")
 
 	for k, v := range robot.Plates {
 
-		_ = k
-		_ = v
-		//logger.Debug(fmt.Sprintf("%s %s: %s %s", k, robot.PlateIDLookup[k], v.PlateName, v.Type))
+		logger.Debug(fmt.Sprintf("%s %s: %s %s", k, robot.PlateIDLookup[k], v.PlateName, v.Type))
 
 		wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
 

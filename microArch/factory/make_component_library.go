@@ -624,6 +624,97 @@ func makeComponentLibrary() map[string]*wtype.LHComponent {
 	A.Smax = 1.0 //still not sure....
 	cmap[A.CName] = A
 
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "BaseGrowthMedium"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "SterileWater"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "100mMPhosphate"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "100g/LGlucose"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "10g/LGlucose"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "1g/LGlucose"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "0.1g/Lglucose"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "100g/Lglycerol"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "10g/Lglycerol"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "1g/Lglycerol"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "0.1g/Lglycerol"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "100g/Lpeptone"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "100g/LYeastExtract"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+
+	A = wtype.NewLHComponent()
+	//A.GenericMatter = matter[wtype.LTWater]
+	A.CName = "10g/LYeastExtract"
+	A.Type = wtype.LTWater
+	A.Smax = 1.0 //still not sure....
+	cmap[A.CName] = A
+
 	// protein paintbox
 
 	for key, value := range image.ProteinPaintboxmap {

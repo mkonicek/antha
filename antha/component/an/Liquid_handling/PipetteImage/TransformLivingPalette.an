@@ -78,24 +78,24 @@ Steps {
 	
 	var (
 	ReactionTemp 				Temperature = wunit.NewTemperature(25,"C")
-	ReactionTime				Time = wunit.NewTime(35,"min")
-	CompetentCellPlateWell 	string = ""
+	ReactionTime					Time = wunit.NewTime(35,"min")
+	CompetentCellPlateWell 		string = ""
 	RecoveryPlateWell 			string = ""
 	RecoveryTemp 				Temperature = wunit.NewTemperature(37.0,"C")
-	RecoveryTime				Time = wunit.NewTime(2.0,"h")
+	RecoveryTime					Time = wunit.NewTime(2.0,"h")
 	TransformationVolume 		Volume  = wunit.NewVolume(2.0,"ul")
-	PostPlasmidTemp 			Temperature = wunit.NewTemperature(2.0,"C")
-	PostPlasmidTime 			Time  = wunit.NewTime(5,"min")
-	CompetentCellTransferVolume Volume = wunit.NewVolume(20.0,"ul")
-	RecoveryPlateNumber 		int = 1
+	PostPlasmidTemp 				Temperature = wunit.NewTemperature(2.0,"C")
+	PostPlasmidTime 				Time  = wunit.NewTime(5,"min")
+	CompetentCellTransferVolume 	Volume = wunit.NewVolume(20.0,"ul")
+	RecoveryPlateNumber 			int = 1
 	
-	PlatewithRecoveryMedia		*wtype.LHPlate = factory.GetPlateByType("pcrplate_skirted_riser")
-	PlateWithCompetentCells		*wtype.LHPlate = factory.GetPlateByType("pcrplate_skirted_riser")
+	PlatewithRecoveryMedia		*wtype.LHPlate = factory.GetPlateByType("DSW96_riser40")
+	PlateWithCompetentCells		*wtype.LHPlate = factory.GetPlateByType("pcrplate_with_cooler")
 	)
 	
 	colourtoComponentMap := make(map[string]*wtype.LHComponent)
 	
-	
+	wellpositions := PlateWithCompetentCells.AllWellPositions(wtype.BYCOLUMN)
 	
 	// make sub pallete if necessary
 	var chosencolourpalette color.Palette
@@ -110,6 +110,7 @@ Steps {
 	
 	// resize image to fit dimensions of plate and change each pixel to match closest colour from chosen palette
 	// the output of this is a map of well positions to colours needed
+	
 	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette,Rotate,AutoRotate) 
 	
 	
@@ -190,6 +191,11 @@ Steps {
 			
 			UniqueComponents = append(UniqueComponents,component.CName)
 			
+			
+			// set destination wells
+			CompetentCellPlateWell = wellpositions[counter]
+			RecoveryPlateWell = CompetentCellPlateWell
+			
 			counter = counter + 1
 	//		fmt.Println("wells",OnlythisColour, counter)
 		//mediaSample := mixer.SampleForTotalVolume(Media, VolumePerWell)
@@ -207,6 +213,8 @@ Steps {
 		dnaSample.Type = wtype.LTCulture	
 		
 		Incubate(dnaSample, ReactionTemp, ReactionTime, false)
+		
+	
 		
 		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWell,1,dnaSample)
 		
@@ -229,6 +237,10 @@ Steps {
 			if component.CName !=Notthiscolour{
 				
 			UniqueComponents = append(UniqueComponents,component.CName)
+			
+			// set destination wells
+			CompetentCellPlateWell = wellpositions[counter]
+			RecoveryPlateWell = CompetentCellPlateWell
 			
 			counter = counter + 1
 	//		fmt.Println("wells not ",Notthiscolour,counter)
@@ -257,6 +269,7 @@ Steps {
 		dnaSample.Type = wtype.LTCulture	
 		
 		Incubate(dnaSample, ReactionTemp, ReactionTime, false)
+		
 		
 		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWell,1,dnaSample)
 		

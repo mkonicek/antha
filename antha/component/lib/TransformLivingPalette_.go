@@ -70,11 +70,13 @@ func _TransformLivingPaletteSteps(_ctx context.Context, _input *TransformLivingP
 		CompetentCellTransferVolume wunit.Volume      = wunit.NewVolume(20.0, "ul")
 		RecoveryPlateNumber         int               = 1
 
-		PlatewithRecoveryMedia  *wtype.LHPlate = factory.GetPlateByType("pcrplate_skirted_riser")
-		PlateWithCompetentCells *wtype.LHPlate = factory.GetPlateByType("pcrplate_skirted_riser")
+		PlatewithRecoveryMedia  *wtype.LHPlate = factory.GetPlateByType("DSW96_riser40")
+		PlateWithCompetentCells *wtype.LHPlate = factory.GetPlateByType("pcrplate_with_cooler")
 	)
 
 	colourtoComponentMap := make(map[string]*wtype.LHComponent)
+
+	wellpositions := PlateWithCompetentCells.AllWellPositions(wtype.BYCOLUMN)
 
 	// make sub pallete if necessary
 	var chosencolourpalette color.Palette
@@ -88,6 +90,7 @@ func _TransformLivingPaletteSteps(_ctx context.Context, _input *TransformLivingP
 
 	// resize image to fit dimensions of plate and change each pixel to match closest colour from chosen palette
 	// the output of this is a map of well positions to colours needed
+
 	positiontocolourmap, _, _ := image.ImagetoPlatelayout(_input.Imagefilename, _input.OutPlate, &chosencolourpalette, _input.Rotate, _input.AutoRotate)
 
 	colourtostringmap := image.AvailableComponentmaps()[_input.Palettename]
@@ -165,6 +168,10 @@ func _TransformLivingPaletteSteps(_ctx context.Context, _input *TransformLivingP
 
 				_output.UniqueComponents = append(_output.UniqueComponents, component.CName)
 
+				// set destination wells
+				CompetentCellPlateWell = wellpositions[counter]
+				RecoveryPlateWell = CompetentCellPlateWell
+
 				counter = counter + 1
 				//		fmt.Println("wells",OnlythisColour, counter)
 				//mediaSample := mixer.SampleForTotalVolume(Media, VolumePerWell)
@@ -204,6 +211,10 @@ func _TransformLivingPaletteSteps(_ctx context.Context, _input *TransformLivingP
 			if component.CName != _input.Notthiscolour {
 
 				_output.UniqueComponents = append(_output.UniqueComponents, component.CName)
+
+				// set destination wells
+				CompetentCellPlateWell = wellpositions[counter]
+				RecoveryPlateWell = CompetentCellPlateWell
 
 				counter = counter + 1
 				//		fmt.Println("wells not ",Notthiscolour,counter)

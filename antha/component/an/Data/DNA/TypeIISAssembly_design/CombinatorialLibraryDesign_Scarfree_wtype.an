@@ -29,8 +29,8 @@ Parameters (
 	BlastSearchSeqs				bool
 	EndsAlreadyadded 			bool
 	RemoveproblemRestrictionSites bool
-	FolderPerConstruct		bool
-	FolderPerProject			bool
+	FolderPerConstruct			bool
+	FolderPerProject				bool
 )
 
 // Physical Inputs to this protocol with types

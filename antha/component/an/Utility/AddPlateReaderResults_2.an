@@ -199,6 +199,10 @@ Steps {
 			
 			vol,err := strconv.ParseFloat(strings.TrimSpace(volandunit[0]), 64)
 			
+			if err != nil {
+			Errorf(err.Error())
+			}
+	
 			experimentalvolume := wunit.NewVolume(vol,strings.TrimSpace(volandunit[1]))
 			
 			

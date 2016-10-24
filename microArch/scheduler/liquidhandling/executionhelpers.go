@@ -214,7 +214,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	wh := make([]string, 0, lenToMake)       // component types
 	va := make([]wunit.Volume, 0, lenToMake) // volumes
 
-	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol)
+	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol, wtype.LHVChannel, 1, true)
 
 	if err != nil {
 		return nil, err

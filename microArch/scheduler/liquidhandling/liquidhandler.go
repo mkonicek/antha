@@ -350,9 +350,9 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 		}
 
-		fmt.Println("Plate ID Map: ", plate2.ID, " --> ", plate.ID)
+		fmt.Println("Plate ID Map: ", p2.ID, " --> ", p1.ID)
 
-		this.plateIDMap[plate2.ID] = plate.ID
+		this.plateIDMap[p2.ID] = p1.ID
 	}
 
 	// all done

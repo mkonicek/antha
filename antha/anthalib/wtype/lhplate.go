@@ -66,7 +66,7 @@ func (lhp LHPlate) Name() string {
 func (lhp LHPlate) String() string {
 	return fmt.Sprintf(
 		`LHPlate {
-	ID          : %s,
+	ID          : %s, 
 	Inst        : %s,
 	Loc         : %s,
 	PlateName   : %s,
@@ -80,7 +80,7 @@ func (lhp LHPlate) String() string {
 	Hunit       : %s,
 	Rows        : %p,
 	Cols        : %p,
-	Welltype    : %p,
+	Welltype    : %s,
 	Wellcoords  : %p,
 	WellXOffset : %f,
 	WellYOffset : %f,
@@ -102,7 +102,7 @@ func (lhp LHPlate) String() string {
 		lhp.Hunit,
 		lhp.Rows,
 		lhp.Cols,
-		lhp.Welltype,
+		lhp.Welltype.String(),
 		lhp.Wellcoords,
 		lhp.WellXOffset,
 		lhp.WellYOffset,

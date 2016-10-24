@@ -50,6 +50,18 @@ func LoadLHPoliciesFrom(filename string) *LHPolicyRuleSet {
 // this structure defines parameters
 type LHPolicy map[string]interface{}
 
+func (lhp LHPolicy) List() (namevaluepairs []string, names []string, values []string) {
+	namevaluepairs = make([]string, 0)
+	names = make([]string, 0)
+	values = make([]string, 0)
+	for key, value := range lhp {
+		namevaluepairs = append(namevaluepairs, key+": "+fmt.Sprintln(value))
+		names = append(names, key)
+		values = append(values, fmt.Sprintln(value))
+	}
+	return
+}
+
 func DupLHPolicy(in LHPolicy) LHPolicy {
 	ret := make(LHPolicy, len(in))
 

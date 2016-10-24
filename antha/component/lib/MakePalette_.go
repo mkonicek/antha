@@ -88,6 +88,8 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 
 			} else {
 
+				nextwellpostion := paletteplatepositions[counter]
+
 				if counter+1 == len(paletteplatepositions) {
 					platenum = platenum + 1
 					counter = 0
@@ -110,7 +112,7 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 
 					cyanSample := mixer.Sample(_input.Cyan, cyanvol)
 
-					solution = execute.MixTo(_ctx, _input.PalettePlate.Type, paletteplatepositions[counter], platenum, cyanSample)
+					solution = execute.MixTo(_ctx, _input.PalettePlate.Type, nextwellpostion, platenum, cyanSample)
 					//solution = MixTo(PalettePlate.Type, position,1,cyanSample)
 
 					//components = append(components, cyanSample)
@@ -133,7 +135,7 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 					if solution != nil {
 						solution = execute.Mix(_ctx, solution, yellowSample)
 					} else {
-						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, paletteplatepositions[counter], platenum, yellowSample)
+						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, nextwellpostion, platenum, yellowSample)
 						//solution = MixTo(PalettePlate.Type, position,1,yellowSample)
 					}
 
@@ -158,7 +160,7 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 					if solution != nil {
 						solution = execute.Mix(_ctx, solution, magentaSample)
 					} else {
-						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, paletteplatepositions[counter], platenum, magentaSample)
+						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, nextwellpostion, platenum, magentaSample)
 						//solution = MixTo(PalettePlate.Type, position,1,magentaSample)
 					}
 
@@ -179,7 +181,7 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 					if solution != nil {
 						solution = execute.Mix(_ctx, solution, blackSample)
 					} else {
-						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, paletteplatepositions[counter], platenum, blackSample)
+						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, nextwellpostion, platenum, blackSample)
 						//solution = MixTo(PalettePlate.Type, position,1,blackSample)
 					}
 

@@ -145,7 +145,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			ptwy[ix] = tlhp.WellsY()
 			ptt[ix] = tlhp.Type
 
-			wlf, ok := flhp.WellAtString(fromWells[ix])
+			wlf, ok := flhp.WellAtString(fromWells[i][ix])
 
 			if !ok {
 				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
@@ -153,17 +153,17 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				return nil, err
 			}
 
-			vf[ix] = wlf.CurrVolume()
+			vf[ix] = fromvols[i][ix]
 			//wlf.Remove(va[ix])
 
-			pf[ix] = robot.PlateIDLookup[fromPlateIDs[ix]]
-			wf[ix] = fromWells[ix]
+			pf[ix] = robot.PlateIDLookup[fromPlateIDs[i][ix]]
+			wf[ix] = fromWells[i][ix]
 			pfwx[ix] = flhp.WellsX()
 			pfwy[ix] = flhp.WellsY()
 			ptf[ix] = flhp.Type
 
 			if v.Loc == "" {
-				v.Loc = fromPlateIDs[ix] + ":" + fromWells[ix]
+				v.Loc = fromPlateIDs[i][ix] + ":" + fromWells[i][ix]
 			}
 			// add component to destination
 			// need to ensure data are consistent

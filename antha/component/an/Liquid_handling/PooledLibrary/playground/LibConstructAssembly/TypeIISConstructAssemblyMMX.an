@@ -1,4 +1,4 @@
-protocol TypeIISConstructAssemblyMMX_forscreen
+protocol TypeIISConstructAssemblyMMX_forscreen_jaja
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
@@ -65,11 +65,11 @@ Steps {
             Partsinorder: PartSeqs[:last],
         })
         if err != nil {
-         Errorf("%s: %s", output, err)
-	//fmt.Println(output)
+        // Errorf("%s: %s", output, err)
+	fmt.Println(output)
         }
         if count != 1 {
-          Errorf("no successful assembly")
+      //    Errorf("no successful assembly")
         }
 
         Sequence = seq

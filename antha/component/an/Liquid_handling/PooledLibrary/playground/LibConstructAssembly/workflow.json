@@ -1,0 +1,13 @@
+{
+    "processes": {
+        "AssemblyMMX1": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_jaja"
+        },
+        "AssemblyMMX2": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_jaja"
+        },
+        "AssemblyMMX3": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_jaja"
+        }
+    }
+}

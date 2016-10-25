@@ -1,0 +1,128 @@
+{
+  "Parameters": {
+    "AssemblyMMX1": {
+      "InactivationTemp": "40C",
+      "InactivationTime": "60s",
+      "LHPolicyName": "dna",
+      "MasterMix": "mastermix_sapI",
+      "MasterMixVolume": "5ul",
+      "OutPlate": "pcrplate_skirted_riser",
+      "OutputPlateNum": 1,
+      "OutputReactionName": "Reaction 11",
+      "OutputConstructName": "MyConstruct",
+      "PartVols": [
+        "1uL",
+        "1uL",
+        "1uL"
+      ],
+      "Parts": [
+        "dna_part",
+        "dna_part",
+        "dna_part"
+      ],
+      "ReactionTemp": "25C",
+      "ReactionTime": "1800s",
+      "ReactionVolume": "20ul",
+      "EnzymeName": "sapi",
+      "PartSeqs": [
+        {
+          "jm": "LibORFs",
+          "seq": ""
+        },
+        {
+          "jm": "LibPromoters",
+          "seq": ""
+        },
+        {
+          "jm": "Vector",
+          "seq": ""
+        }
+      ],
+      "Water": "water"
+    },
+	
+	
+	"AssemblyMMX2": {
+      "InactivationTemp": "40C",
+      "InactivationTime": "60s",
+      "LHPolicyName": "dna",
+      "MasterMix": "mastermix_sapI",
+      "MasterMixVolume": "5ul",
+      "OutPlate": "pcrplate_skirted_riser",
+      "OutputPlateNum": 1,
+      "OutputReactionName": "Reaction 11",
+      "OutputConstructName": "MyConstruct",
+      "PartVols": [
+        "1uL",
+        "2uL",
+        "2uL"
+      ],
+      "Parts": [
+        "dna_part",
+        "dna_part",
+        "dna_part"
+      ],
+      "ReactionTemp": "25C",
+      "ReactionTime": "1800s",
+      "ReactionVolume": "20ul",
+      "EnzymeName": "sapi",
+      "PartSeqs": [
+        {
+          "jm": "LibORFs",
+          "seq": ""
+        },
+        {
+          "jm": "LibPromoters",
+          "seq": ""
+        },
+        {
+          "jm": "Vector",
+          "seq": ""
+        }
+      ],
+      "Water": "water"
+    },
+	
+	
+	"AssemblyMMX3": {
+      "InactivationTemp": "40C",
+      "InactivationTime": "60s",
+      "LHPolicyName": "dna",
+      "MasterMix": "mastermix_sapI",
+      "MasterMixVolume": "5ul",
+      "OutPlate": "pcrplate_skirted_riser",
+      "OutputPlateNum": 1,
+      "OutputReactionName": "Reaction 11",
+      "OutputConstructName": "MyConstruct",
+      "PartVols": [
+        "1uL",
+        "3uL",
+        "3uL"
+      ],
+      "Parts": [
+        "dna_part",
+        "dna_part",
+        "dna_part"
+      ],
+      "ReactionTemp": "25C",
+      "ReactionTime": "1800s",
+      "ReactionVolume": "20ul",
+      "EnzymeName": "sapi",
+      "PartSeqs": [
+        {
+          "jm": "LibORFs",
+          "seq": ""
+        },
+        {
+          "jm": "LibPromoters",
+          "seq": ""
+        },
+        {
+          "jm": "Vector",
+          "seq": ""
+        }
+      ],
+      "Water": "water"
+    }
+  }
+}

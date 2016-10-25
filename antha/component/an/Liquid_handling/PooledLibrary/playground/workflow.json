@@ -3,51 +3,111 @@
 	{
 	"src":{
 		"port":"PartConcs",
-		"process":"Parsednacomponents"
+		"process":"ParsednacomponentsORFs"
 	},
 	"tgt":{
 		"port": "PlasmidConc",
-		"process":"PoolLibrary"
+		"process":"PoolLibraryORFs"
 	}
 	},
 	{
 	"src":{
 		"port":"Partnames",
-		"process":"Parsednacomponents"
+		"process":"ParsednacomponentsORFs"
 	},
 	"tgt":{
 		"port": "Partnames",
-		"process":"PoolLibrary"
+		"process":"PoolLibraryORFs"
 	}
 	},
 	{
 	"src":{
 		"port":"Partplusvectorlengths",
-		"process":"Parsednacomponents"
+		"process":"ParsednacomponentsORFs"
 	},
 	"tgt":{
 		"port": "Tot",
-		"process":"PoolLibrary"
+		"process":"PoolLibraryORFs"
 	}
 	},
 	{
 	"src":{
 		"port":"PartLengths",
-		"process":"Parsednacomponents"
+		"process":"ParsednacomponentsORFs"
 	},
 	"tgt":{
 		"port": "Part",
-		"process":"PoolLibrary"
+		"process":"PoolLibraryORFs"
 	}
+	},
 	
+	
+	
+	
+	{
+	"src":{
+		"port":"PartConcs",
+		"process":"ParsednacomponentsPromoters"
+	},
+	"tgt":{
+		"port": "PlasmidConc",
+		"process":"PoolLibraryPromoters"
+	}
+	},
+	{
+	"src":{
+		"port":"Partnames",
+		"process":"ParsednacomponentsPromoters"
+	},
+	"tgt":{
+		"port": "Partnames",
+		"process":"PoolLibraryPromoters"
+	}
+	},
+	{
+	"src":{
+		"port":"Partplusvectorlengths",
+		"process":"ParsednacomponentsPromoters"
+	},
+	"tgt":{
+		"port": "Tot",
+		"process":"PoolLibraryPromoters"
+	}
+	},
+	{
+	"src":{
+		"port":"PartLengths",
+		"process":"ParsednacomponentsPromoters"
+	},
+	"tgt":{
+		"port": "Part",
+		"process":"PoolLibraryPromoters"
+	}
+	},
+	
+	{
+	"src":{
+		"port":"WellsUsedPostRun",
+		"process":"PoolLibraryORFs"
+	},
+	"tgt":{
+		"port": "WellsUsedPreRun",
+		"process":"PoolLibraryPromoters"
+	}
 	
 	}
 	],
     "processes": {
-        "Parsednacomponents": {
+        "ParsednacomponentsORFs": {
             "component": "ParseDNAComponents"
         },
-		"PoolLibrary": {
+		"PoolLibraryORFs": {
+            "component": "Ratio"
+        },
+		"ParsednacomponentsPromoters": {
+            "component": "ParseDNAComponents"
+        },
+		"PoolLibraryPromoters": {
             "component": "Ratio"
         }
 	}

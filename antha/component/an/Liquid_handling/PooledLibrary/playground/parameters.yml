@@ -1,13 +1,28 @@
 {
     "Parameters": {
-        "PoolLibrary": {
+        "PoolLibraryORFs": {
             "NgRequired": 100,
            	"Inputtype": "dna_part",
 			"PlateType": "pcrplate_skirted_riser",
 			"TotalVolume": "200ul",
 			"Buffer": "water"   
 	 },
-	 "Parsednacomponents": {
+	 "ParsednacomponentsORFs": {
+            "SequenceInfoFile": "Rewiringinput2.xlsx",
+            "SequenceInfoFileformat": "JMP",
+            "ConcHeader": "Plasmid Conc",
+            "NameHeader": "Part names",
+			"PartLengthHeader": "Part Size",
+			"PartplusvectorlengthsHeader": "Total Size"      
+	 },
+	  "PoolLibraryPromoters": {
+            "NgRequired": 100,
+           	"Inputtype": "dna_part",
+			"PlateType": "pcrplate_skirted_riser",
+			"TotalVolume": "200ul",
+			"Buffer": "water"   
+	 },
+	 "ParsednacomponentsPromoters": {
             "SequenceInfoFile": "Rewiringinput3.xlsx",
             "SequenceInfoFileformat": "JMP",
             "ConcHeader": "Plasmid Conc",

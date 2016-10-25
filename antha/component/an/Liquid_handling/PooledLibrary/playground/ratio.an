@@ -117,6 +117,10 @@ samples = append(samples,watersample)
 	
   }
 
+	// Change liquid class of last sample to mix
+	
+	samples[len(samples)-1].Type = LTDNAMIX
+
 	PooledLib = MixTo(PlateType.Type,wellpositions[counter],1,samples...)
 	
 	counter++

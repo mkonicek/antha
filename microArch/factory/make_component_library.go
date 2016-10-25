@@ -23,6 +23,7 @@
 package factory
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
@@ -620,15 +621,34 @@ func makeComponentLibrary() map[string]*wtype.LHComponent {
 	return cmap
 }
 
+type Inventory struct {
+	inv map[string]*wtype.LHComponent
+}
+
+var defaultInventory *Inventory
+
+func init() {
+	defaultInventory = &Inventory{
+		inv: makeComponentLibrary(),
+	}
+}
+
+func AddComponent(name string, c *wtype.LHComponent) error {
+	return errors.New("tbd")
+}
 func GetComponentByType(typ string) *wtype.LHComponent {
-	components := makeComponentLibrary()
-	c := components[typ]
-	if c == nil {
+	return defaultInventory.GetComponentByType(typ)
+}
+
+func (i *Inventory) GetComponentByType(typ string) *wtype.LHComponent {
+	c, ok := i.inv[typ]
+	if !ok {
 		logger.Fatal(fmt.Sprintf("Component %s not found", typ))
 		panic(fmt.Errorf("Component %s not found", typ)) //TODO refactor to errors
 	}
 	return c.Dup()
 }
+
 func ComponentInFactory(typ string) bool {
 	components := makeComponentLibrary()
 	c, ok := components[typ]

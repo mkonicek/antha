@@ -540,7 +540,6 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 	plateIDs = make([][]string, len(cmps))
 	wellCoords = make([][]string, len(cmps))
 	vols = make([][]wunit.Volume, len(cmps))
-	fmt.Println("GetComponents called... ", len(cmps), " Components requested, multi: ", multi)
 
 	if multi > 1 {
 		for _, ipref := range lhp.Input_preferences {

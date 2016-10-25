@@ -60,8 +60,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	for i := 0; i < inssIn.MaxLen(); i++ {
 		comps := inssIn.CompsAt(i)
 
-		fmt.Println(i, " ::: ", comps)
-
 		lenToMake := 0
 		// remove spaces between components
 		cmpSquash := make([]*wtype.LHComponent, 0, lenToMake)
@@ -107,8 +105,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			}
 
 			var flhp, tlhp *wtype.LHPlate
-
-			fmt.Println(i, " ", fromPlateIDs)
 
 			flhif := robot.PlateLookup[fromPlateIDs[i][0]]
 

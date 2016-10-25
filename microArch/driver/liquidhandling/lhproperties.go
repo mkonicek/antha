@@ -590,7 +590,7 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 				if ok {
 					// whaddya got?
 					// nb this won't work if we need to split a volume across several plates
-					wcarr, varr, ok := p.GetComponent(vdup, false, lhp.MinPossibleVolume())
+					wcarr, varr, ok := p.BetterGetComponent(vdup, false, lhp.MinPossibleVolume())
 
 					if ok {
 						foundIt = true

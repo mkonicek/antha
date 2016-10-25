@@ -24,12 +24,10 @@ package liquidhandling
 
 import (
 	"fmt"
-	"sort"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/factory"
-	"github.com/antha-lang/antha/microArch/logger"
+	"strings"
 )
 
 // v2.0 should be another linear program - basically just want to optimize
@@ -61,14 +59,36 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 	input_plate_order := request.Input_plate_order
 
 	if len(input_plate_order) < len(input_plates) {
-		input_plate_order = make([]string, len(input_plates))
-		x := 0
-		for k, _ := range input_plates {
-			input_plate_order[x] = k
-			x += 1
+		input_plate_order = make([]string, 0, len(input_plates))
+		/*
+			x := 0
+			for k, _ := range input_plates {
+				input_plate_order[x] = k
+				x += 1
+			}
+
+			sort.Strings(input_plate_order)
+		*/
+
+		for _, ass := range request.Input_assignments {
+			for _, a := range ass {
+				tx := strings.Split(a, ":")
+				if !isInStrArr(tx[0], input_plate_order) {
+					input_plate_order = append(input_plate_order, tx[0])
+				}
+			}
 		}
 
-		sort.Strings(input_plate_order)
+		if len(input_plate_order) < len(input_plates) {
+			for id, _ := range input_plates {
+				if !isInStrArr(id, input_plate_order) {
+					input_plate_order = append(input_plate_order, id)
+				}
+			}
+		} else if len(input_plate_order) > len(input_plates) {
+			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(input_plate_order), len(input_plates), 82))
+		}
+
 		request.Input_plate_order = input_plate_order
 	}
 
@@ -77,16 +97,33 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 	output_plate_order := request.Output_plate_order
 
 	if len(output_plate_order) < len(output_plates) {
-		output_plate_order = make([]string, len(output_plates))
-		x := 0
-		for k, _ := range output_plates {
-			output_plate_order[x] = k
-			x += 1
+		output_plate_order = make([]string, 0, len(output_plates))
+		/*
+				x := 0
+			for k, _ := range output_plates {
+				fmt.Println("K: ", k)
+			}
+				sort.Strings(output_plate_order)
+		*/
+		// order them according to when they are first used
+		for _, insID := range request.Output_order {
+			ins := request.LHInstructions[insID]
+			tx := strings.Split(ins.Result.Loc, ":")
+			pa := tx[0]
+
+			if !isInStrArr(pa, output_plate_order) {
+				output_plate_order = append(output_plate_order, pa)
+			}
 		}
 
-		sort.Strings(output_plate_order)
+		if len(output_plate_order) != len(output_plates) {
+			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 101))
+		}
+
 		request.Output_plate_order = output_plate_order
+
 	}
+
 	// tips
 	tips := request.Tips
 
@@ -159,7 +196,7 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 		setup[position] = p
 		plate_lookup[p.ID] = position
 		params.AddPlate(position, p)
-		logger.Info(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
+		//logger.Info(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}
 
 	// add the waste

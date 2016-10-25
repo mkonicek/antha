@@ -117,11 +117,10 @@ func (a *ir) assignDevices(t *target.Target) error {
 		devices := t.CanCompile(reqs...)
 
 		if len(devices) == 0 {
-			// Otherwise fall back to manual
 			if isBundle {
-				devices = append(devices, human.New(human.Opt{CanMix: true, CanIncubate: true}))
+				devices = append(devices, human.New(human.Opt{}))
 			} else {
-				return fmt.Errorf("no device in target %T can handle constraints %s", n, ast.Meet(reqs))
+				return fmt.Errorf("no device can handle constraints %s", ast.Meet(reqs...))
 			}
 		}
 		colors[n] = devices

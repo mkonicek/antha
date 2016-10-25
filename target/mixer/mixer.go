@@ -32,22 +32,14 @@ func (a *Mixer) String() string {
 }
 
 func (a *Mixer) CanCompile(req ast.Request) bool {
-	// TODO: remove when mixers have wait instruction
-	if req.Time != nil {
-		return false
-	}
-	if req.Temp != nil {
-		return false
-	}
-	if req.Move != nil {
-		return false
-	}
-	if req.Manual {
-		return false
-	}
-
 	// TODO: Add specific volume constraints
-	return req.MixVol != nil
+	can := ast.Request{
+		MixVol: req.MixVol,
+	}
+	if !req.Matches(can) {
+		return false
+	}
+	return can.Contains(req)
 }
 
 func (a *Mixer) MoveCost(from target.Device) int {
@@ -55,6 +47,13 @@ func (a *Mixer) MoveCost(from target.Device) int {
 		return 0
 	}
 	return human.HumanByXCost + 1
+}
+
+func (a *Mixer) FileType() (ftype string) {
+	if m := a.properties.Mnfr; len(m) != 0 {
+		ftype = fmt.Sprintf("application/%s", strings.ToLower(m))
+	}
+	return
 }
 
 type lhreq struct {
@@ -282,10 +281,6 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 		return nil, err
 	}
 
-	var ftype string
-	if r.LHProperties.Mnfr != "" {
-		ftype = fmt.Sprintf("application/%s", strings.ToLower(r.LHProperties.Mnfr))
-	}
 	return &target.Mix{
 		Dev:             a,
 		Request:         r.LHRequest,
@@ -294,7 +289,7 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 		Final:           r.Liquidhandler.PlateIDMap(),
 		Files: target.Files{
 			Tarball: tarball,
-			Type:    ftype,
+			Type:    a.FileType(),
 		},
 	}, nil
 }

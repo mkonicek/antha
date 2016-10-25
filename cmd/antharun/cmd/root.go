@@ -54,7 +54,7 @@ func Execute(lib []component.Component) {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.antharun.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $HOME/.antharun.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -326,8 +326,6 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 		// plate, even a virtual one
 		if v.PlateID() == "" {
 			pt := v.Platetype
-			fmt.Println("PT: ", pt)
-
 			// find a plate choice to put it in or return -1 for a new one
 			ass := -1
 
@@ -338,8 +336,6 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 
 				ass = 0
 			}
-
-			fmt.Println("ASS: ", ass)
 
 			if ass == -1 {
 				// make a new plate
@@ -365,8 +361,6 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 		pc2 = append(pc2, modpc(v, plate.Nwells)...)
 	}
 
-	fmt.Println("PC2 lenth: ", len(pc2))
-
 	// copy the choices in
 
 	for _, c := range pc2 {
@@ -381,8 +375,6 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 // chop the assignments up modulo plate size
 func modpc(choice PlateChoice, nwell int) []PlateChoice {
 	r := make([]PlateChoice, 0, 1)
-	fmt.Println("L: ", len(choice.Assigned), " ", choice.Assigned)
-	fmt.Println("W: ", len(choice.Wells), " ", choice.Wells)
 	for s := 0; s < len(choice.Assigned); s += nwell {
 		e := s + nwell
 		if e > len(choice.Assigned) {
@@ -404,8 +396,6 @@ func modpc(choice PlateChoice, nwell int) []PlateChoice {
 		if len(choice.Wells) != 0 {
 			wll = choice.Wells[s:e]
 		}
-		fmt.Println("LEN ASS: ", len(ass))
-
 		r = append(r, PlateChoice{choice.Platetype, ass, ID, wll, nm})
 	}
 	return r
@@ -484,8 +474,6 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 
 	//opa := request.Output_assignments
 	opa := make(map[string][]string)
-
-	fmt.Println("LEN PC: ", len(pc))
 
 	for _, c := range pc {
 		// make a temporary plate to hold info

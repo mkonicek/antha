@@ -111,8 +111,6 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 			tx := strings.Split(ins.Result.Loc, ":")
 			pa := tx[0]
 
-			fmt.Println(ins.Generation(), " ", ins.Result.CName, " ", ins.Result.Loc)
-
 			if !isInStrArr(pa, output_plate_order) {
 				output_plate_order = append(output_plate_order, pa)
 			}
@@ -178,7 +176,6 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 	for _, pid := range input_plate_order {
 		p := input_plates[pid]
 
-		fmt.Println("PID: ", pid)
 		if p == nil {
 			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Plate with id ", pid, " in input_plate_order does not exist in input_plates"))
 			return request, err

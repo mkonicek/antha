@@ -204,7 +204,7 @@ func init() {
 		Constructor: NewDNASequencesNew,
 		Desc: component.ComponentDesc{
 			Desc: "Demo protocol of how to create an array of dna types from parsing user inputs of various types\nscenarios handled:\nBiobrick IDS\ngenbank files\nraw sequence\ninventory lookup\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson4_DNA/D_NewDNASequences.an",
+			Path: "antha/component/an/AnthaAcademy/Lesson6_DNA/D_NewDNASequences.an",
 			Params: []component.ParamDesc{
 				{Name: "BlastSeqswithNoName", Desc: "", Kind: "Parameters"},
 				{Name: "Seqsinorder", Desc: "", Kind: "Parameters"},

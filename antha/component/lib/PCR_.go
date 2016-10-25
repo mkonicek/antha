@@ -70,7 +70,7 @@ func _PCRSteps(_ctx context.Context, _input *PCRInput, _output *PCROutput) {
 
 	_output.RevPrimerSites = sequences.FindSeqsinSeqs(_input.Targetsequence, []string{_input.RevPrimerSeq})
 
-	if len(_output.FwdPrimerSites) == 0 || len(_output.RevPrimerSites) == 0 {
+	if len(_output.FwdPrimerSites) != 1 || len(_output.RevPrimerSites) != 1 {
 
 		errordescription := fmt.Sprint(
 			text.Print("FwdPrimerSitesfound:", fmt.Sprint(_output.FwdPrimerSites)),

@@ -111,7 +111,7 @@ func init() {
 		Constructor: Units_NewNew,
 		Desc: component.ComponentDesc{
 			Desc: "demo of how to create units from raw values and unit strings\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson0_Units/A_units_new.an",
+			Path: "antha/component/an/AnthaAcademy/Lesson4_Units/A_units_new.an",
 			Params: []component.ParamDesc{
 				{Name: "MyUnit", Desc: "", Kind: "Parameters"},
 				{Name: "MyValue", Desc: "", Kind: "Parameters"},

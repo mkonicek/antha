@@ -97,7 +97,7 @@ Steps {
 	RevPrimerSites = sequences.FindSeqsinSeqs(Targetsequence, []string{RevPrimerSeq})
 
 	
-	if len(FwdPrimerSites)==0 || len(RevPrimerSites)==0{
+	if len(FwdPrimerSites)!=1 || len(RevPrimerSites)!=1{
 	
 	errordescription := fmt.Sprint(
 						text.Print("FwdPrimerSitesfound:", fmt.Sprint(FwdPrimerSites)),

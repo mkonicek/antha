@@ -40,6 +40,8 @@ func _PipetteImage_fromPaletteSetup(_ctx context.Context, _input *PipetteImage_f
 // for every input
 func _PipetteImage_fromPaletteSteps(_ctx context.Context, _input *PipetteImage_fromPaletteInput, _output *PipetteImage_fromPaletteOutput) {
 
+	var err error
+
 	if _input.PosterizeImage {
 		_, _input.Imagefilename = image.Posterize(_input.Imagefilename, _input.PosterizeLevels)
 	}
@@ -76,7 +78,11 @@ func _PipetteImage_fromPaletteSteps(_ctx context.Context, _input *PipetteImage_f
 		//	fmt.Println("Am I a component", component, "key:", colourindex, "from map:", ColourIndextoComponentMap)
 
 		if componentpresent {
-			component.Type = wtype.LTDISPENSEABOVE //"DoNotMix"
+			component.Type, err = wtype.LiquidTypeFromString(_input.LiquidType) //"DoNotMix"
+
+			if err != nil {
+				execute.Errorf(_ctx, err.Error())
+			}
 
 			//fmt.Println(image.Colourcomponentmap[colour])
 
@@ -172,6 +178,7 @@ type PipetteImage_fromPaletteInput struct {
 	ColourIndextoComponentMap map[string]*wtype.LHComponent
 	Colourcomponents          []*wtype.LHComponent
 	Imagefilename             string
+	LiquidType                string
 	NotthisColour             string
 	OnlythisColour            string
 	OutPlate                  *wtype.LHPlate
@@ -207,6 +214,7 @@ func init() {
 				{Name: "ColourIndextoComponentMap", Desc: "", Kind: "Parameters"},
 				{Name: "Colourcomponents", Desc: "", Kind: "Inputs"},
 				{Name: "Imagefilename", Desc: "", Kind: "Parameters"},
+				{Name: "LiquidType", Desc: "", Kind: "Parameters"},
 				{Name: "NotthisColour", Desc: "", Kind: "Parameters"},
 				{Name: "OnlythisColour", Desc: "AvailableColours []string\n", Kind: "Parameters"},
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},

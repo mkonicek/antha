@@ -359,8 +359,9 @@ func MakePEGPolicy() LHPolicy {
 	policy["POST_MIX_Z"] = 3.5
 	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUME"] = 50.0
+	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	policy["TOUCHOFF"] = true
+	policy["TOUCHOFF"] = false
 	policy["CAN_MULTI"] = false
 	policy["RESET_OVERRIDE"] = true
 	return policy
@@ -389,7 +390,7 @@ func MakePaintPolicy() LHPolicy {
 	policy["DSP_SPEED"] = 1.5
 	policy["ASP_WAIT"] = 1.0
 	policy["DSP_WAIT"] = 1.0
-	policy["PRE_MIX"] = 3
+	//policy["PRE_MIX"] = 3
 	policy["POST_MIX"] = 3
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
@@ -474,7 +475,7 @@ func MakeCulturePolicy() LHPolicy {
 func MakePlateOutPolicy() LHPolicy {
 	culturepolicy := make(LHPolicy, 17)
 	culturepolicy["PRE_MIX"] = 2
-	culturepolicy["PRE_MIX_VOLUME"] = 50
+	culturepolicy["PRE_MIX_VOLUME"] = 20
 	culturepolicy["PRE_MIX_Z"] = 2.0
 	culturepolicy["PRE_MIX_RATE"] = 4.0
 	culturepolicy["ASPSPEED"] = 4.0
@@ -484,7 +485,7 @@ func MakePlateOutPolicy() LHPolicy {
 	culturepolicy["CAN_MSA"] = false
 	culturepolicy["CAN_SDD"] = false
 	culturepolicy["DSPREFERENCE"] = 0
-	culturepolicy["DSPZOFFSET"] = 0.5
+	culturepolicy["DSPZOFFSET"] = 0.0
 	culturepolicy["TIP_REUSE_LIMIT"] = 0
 	culturepolicy["NO_AIR_DISPENSE"] = true
 	culturepolicy["BLOWOUTVOLUME"] = 0.0

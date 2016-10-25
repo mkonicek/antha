@@ -29,7 +29,7 @@ Parameters (
 	SitesToRemove			[]string
 	BlastSearchSeqs			bool
 	FolderPerConstruct		bool
-	FolderPerProject			bool
+	FolderPerProject		bool
 )
 
 // Physical Inputs to this protocol with types
@@ -201,7 +201,7 @@ Steps {
 		export.Makefastaserial2(export.LOCAL,filepath.Join(ProjectName,key), duplicateremoved)
 		}
 	
-	}
+	 }
 }
 
 // Run after controls and a steps block are completed to

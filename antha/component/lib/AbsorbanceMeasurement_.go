@@ -36,10 +36,17 @@ func _AbsorbanceMeasurementSteps(_ctx context.Context, _input *AbsorbanceMeasure
 	blankabs := platereader.ReadAbsorbance(_input.Plate, blankSample, _input.AbsorbanceWavelength.RawValue())
 
 	// blank correct
-	blankcorrected := platereader.Blankcorrect(blankabs, abs)
+	blankcorrected, err := platereader.Blankcorrect(blankabs, abs)
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
 
 	// estimate pathlength
-	pathlength, _ := platereader.EstimatePathLength(_input.Plate, dilutedSample.Volume())
+	pathlength, err := platereader.EstimatePathLength(_input.Plate, dilutedSample.Volume())
+
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
 
 	// pathlength correct
 	pathlengthcorrected := platereader.PathlengthCorrect(pathlength, blankcorrected)

@@ -28,7 +28,10 @@ func _VolumeFromMassandConcSetup(_ctx context.Context, _input *VolumeFromMassand
 
 // Core process of the protocol: steps to be performed for each input
 func _VolumeFromMassandConcSteps(_ctx context.Context, _input *VolumeFromMassandConcInput, _output *VolumeFromMassandConcOutput) {
-	_output.DNAVol = wunit.VolumeForTargetMass(_input.DNAMassperReaction, _input.DNAConc)
+	_output.DNAVol, _output.Err = wunit.VolumeForTargetMass(_input.DNAMassperReaction, _input.DNAConc)
+	if _output.Err != nil {
+		execute.Errorf(_ctx, _output.Err.Error())
+	}
 }
 
 // Actions to perform after steps block to analyze data
@@ -93,11 +96,13 @@ type VolumeFromMassandConcInput struct {
 
 type VolumeFromMassandConcOutput struct {
 	DNAVol wunit.Volume
+	Err    error
 }
 
 type VolumeFromMassandConcSOutput struct {
 	Data struct {
 		DNAVol wunit.Volume
+		Err    error
 	}
 	Outputs struct {
 	}
@@ -113,6 +118,7 @@ func init() {
 				{Name: "DNAConc", Desc: "", Kind: "Parameters"},
 				{Name: "DNAMassperReaction", Desc: "", Kind: "Parameters"},
 				{Name: "DNAVol", Desc: "", Kind: "Data"},
+				{Name: "Err", Desc: "", Kind: "Data"},
 			},
 		},
 	}); err != nil {

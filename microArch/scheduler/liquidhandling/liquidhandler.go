@@ -169,6 +169,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	var d time.Duration
 
 	for _, ins := range instructions {
+
 		//logger.Debug(fmt.Sprintln(liquidhandling.InsToString(ins)))
 		//fmt.Println(liquidhandling.InsToString(ins))
 		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
@@ -766,7 +767,11 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 	logger.Debug("Plates:")
 
 	for k, v := range robot.Plates {
+
 		logger.Debug(fmt.Sprintf("%s %s: %s %s", k, robot.PlateIDLookup[k], v.PlateName, v.Type))
+
+		wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+
 	}
 
 	logger.Debug("Tipwastes: ")

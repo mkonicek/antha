@@ -18,6 +18,7 @@ import (
 // Input parameters for this protocol
 Parameters (
 	Seqsinorder []string
+	PartPrefix string
 	BlastSeqswithNoName bool
 	Vectors bool
 )
@@ -82,7 +83,7 @@ Steps {
 			partDNA, _ = parser.GenbanktoAnnotatedSeq(part)
 			//check if biobrick
 		} else if strings.Contains(part, "BBa_") {
-				nm := "Part "+strconv.Itoa(i)+"_"+part
+				nm := PartPrefix+"_"+"Part "+strconv.Itoa(i)+"_"+part
 				part = igem.GetSequence(part)
 			
 			if Vectors {
@@ -91,16 +92,16 @@ Steps {
 			partDNA = wtype.MakeLinearDNASequence(nm, part)
 			}
 			// check if in inventory
-		} else if inventoryDNA, found := inventory.Partslist[part]; found {
+		} else if inventoryDNA, found := inventory.Partslist()[part]; found {
 			partDNA = inventoryDNA
 			
 			// else treat as DNA sequence and check
 			}else {
 				
 			if Vectors {
-			partDNA = wtype.MakePlasmidDNASequence("Part "+strconv.Itoa(i) , part)
+			partDNA = wtype.MakePlasmidDNASequence(PartPrefix+"_"+"Part "+strconv.Itoa(i) , part)
 			}else{
-			partDNA = wtype.MakeLinearDNASequence("Part "+strconv.Itoa(i) , part)
+			partDNA = wtype.MakeLinearDNASequence(PartPrefix+"_"+"Part "+strconv.Itoa(i) , part)
 			}
 			
 			
@@ -111,7 +112,7 @@ Steps {
 			var newstatus = make([]string,0)
 			for _,illegal := range illegals {
 				
-				newstatus =append(newstatus, "part: " + partDNA.Nm+" "+ partDNA.Seq + ": contains illegalnucleotides:"+ illegal.ToString())
+				newstatus =append(newstatus,PartPrefix+"_"+ "part: " + partDNA.Nm+" "+ partDNA.Seq + ": contains illegalnucleotides:"+ illegal.ToString())
 			}
 			warnings = append(warnings,strings.Join(newstatus,""))
 			Errorf(strings.Join(newstatus,""))

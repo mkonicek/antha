@@ -82,7 +82,7 @@ func Simplify(opt SimplifyOpt) Graph {
 				seen[dst] = true
 			}
 
-			ret.Outs[dst] = append(ret.Outs[dst], n)
+			ret.Outs[n] = append(ret.Outs[n], dst)
 		}
 	}
 	return ret

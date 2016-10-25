@@ -78,7 +78,12 @@ Steps {
 	DNASolution.CName = DNAName
 	
 	// work out necessary volume to add
-	DNAVol := wunit.VolumeForTargetMass(DNAMassperReaction,DNAConc) //NewVolume(float64((DNAMassperReaction.SIValue()/DNAConc.SIValue())),"l")
+	DNAVol,err := wunit.VolumeForTargetMass(DNAMassperReaction,DNAConc) //NewVolume(float64((DNAMassperReaction.SIValue()/DNAConc.SIValue())),"l")
+	
+	if err !=nil{
+		Errorf(err.Error())
+	}
+	
 	statii = append(statii,fmt.Sprintln("DNA MAss to Volume conversion:", DNAMassperReaction.SIValue(),DNAConc.SIValue(),float64((DNAMassperReaction.SIValue()/DNAConc.SIValue())), "DNAVol =",DNAVol.SIValue()))
 	statii = append(statii,fmt.Sprintln("DNAVOL",DNAVol.ToString()))
 	dnaSample := mixer.Sample(DNASolution, DNAVol)

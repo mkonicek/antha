@@ -79,8 +79,11 @@ func _ODSteps(_ctx context.Context, _input *ODInput, _output *ODOutput) {
 } // serial dilution or could write element for finding optimum dilution or search historical data
 func _ODAnalysis(_ctx context.Context, _input *ODInput, _output *ODOutput) {
 	// Need to substract blank from measurement; normalise to path length of 1cm for OD value; apply conversion factor to estimate dry cell weight
-
-	_output.Blankcorrected_absorbance = platereader.Blankcorrect(_output.Sample_absorbance, _input.Blank_absorbance)
+	var err error
+	_output.Blankcorrected_absorbance, err = platereader.Blankcorrect(_output.Sample_absorbance, _input.Blank_absorbance)
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
 	volumetopathlengthconversionfactor := wunit.NewLength(_input.Heightof100ulinm, "m")                               //WellCrosssectionalArea
 	_output.OD = platereader.PathlengthCorrect(volumetopathlengthconversionfactor, _output.Blankcorrected_absorbance) // 0.0533 could be written as function of labware and liquid volume (or measureed height)
 	_output.Estimateddrycellweight_conc = wunit.NewConcentration(_output.OD.Reading*_input.ODtoDCWconversionfactor, "g/L")

@@ -60,7 +60,7 @@ Steps {
 	regionstart, regionend, err := oligos.FindPositioninSequence(FullDNASeq, RegionSequence) 
 	
 	if err != nil {
-		fmt.Println("FindPositioninoligoFail")
+		fmt.Println("FindPositioninoligoFail with ", FullDNASeq.Nm, FullDNASeq.Seq," and ", RegionSequence.Nm, RegionSequence.Seq)
 		Warnings = err
 		Errorf(Warnings.Error())
 	}

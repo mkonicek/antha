@@ -15,9 +15,10 @@ import (
 Parameters (
 	Name string
 	TotalVolume			Volume
-	LiqComponentVolumes []Volume
-	SolidComponentMasses []wunit.Mass //Volume //Mass // Should be Mass
-	SolidComponentDensities []wunit.Density
+	LiqComponentStockConcentrations map[string]Concentration
+	LiqComponentFinalConcentrations map[string]Concentration
+	SolidComponentFinalConcentrations map[string]Concentration //Volume //Mass // Should be Mass
+	SolidComponentDensities 			map[string]wunit.Density
 	PH_setPoint float64
 	PH_tolerance float64 //  +/- x  e.g. 7.0 +/- 0.2 
 	PH_setPointTemp	wunit.Temperature
@@ -30,14 +31,16 @@ Parameters (
 
 // Physical Inputs to this protocol with types
 Inputs (
-	Water				*wtype.LHComponent
-	LiqComponents		[]*wtype.LHComponent
-	SolidComponents		[]*wtype.LHComponent // should be new type or field indicating solid and mass
-	/*Acid				*wtype.LHComponent
-	Base 				*wtype.LHComponent
+	Diluent					*wtype.LHComponent
+	LiqComponents			[]*wtype.LHComponent
+	SolidComponents			[]*wtype.LHComponent // should be new type or field indicating solid and mass
+	/*Acid					*wtype.LHComponent
+	Base 					*wtype.LHComponent
 	*/
-	
-	Vessel				*wtype.LHPlate
+	Sterilise 				bool
+	SterilisationMethod	string
+	AdditionalInstructions []string
+	Vessel					*wtype.LHPlate
 )
 
 
@@ -49,6 +52,7 @@ Outputs (
 // Data which is returned from this protocol, and data types
 Data (
 	Status string
+	RecipeSteps []string
 )
 // Input Requirement specification
 Requirements {
@@ -69,28 +73,44 @@ Steps {
 		step = text.Print("Recipe for: ",Name)
 		recipestring = append(recipestring,step)
 		
-		for i, liq := range LiqComponents {
-			liqsamp := mixer.Sample(liq,LiqComponentVolumes[i])
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "Prepare clean " + Vessel.Type)
+		recipestring = append(recipestring,step)
+		stepcounter++
+
+		for _, liq := range LiqComponents {
+			
+			volrequired, err := wunit.VolumeForTargetConcentration(LiqComponentFinalConcentrations[liq.CName], LiqComponentStockConcentrations[liq.CName],TotalVolume) 
+			if err!= nil{
+				Errorf(fmt.Sprint("Liquid: ",liq.CName," ", err.Error()))
+			}
+			liqsamp := mixer.Sample(liq,volrequired)
 			liquids = append(liquids,liqsamp)
-			step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add " + LiqComponentVolumes[i].ToString() + " of " + liq.CName)
+			step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add " + volrequired.ToString() + " of " + LiqComponentStockConcentrations[liq.CName].ToString()+" "+liq.CName)
 			recipestring = append(recipestring,step)
 			stepcounter++
 		}
 		
 		//solids := make([]*wtype.LHComponent,0)
 		
-		for k, sol := range SolidComponents {
-			solsamp := mixer.SampleSolidtoLiquid(sol,SolidComponentMasses[k],SolidComponentDensities[k])
+		for _, sol := range SolidComponents {
+			
+			targetMass, err := wunit.MassForTargetConcentration(SolidComponentFinalConcentrations[sol.CName],TotalVolume)
+			if err!= nil{
+				Errorf(fmt.Sprint("Solid: ",sol.CName," ", err.Error()))
+			}
+			solsamp := mixer.SampleMass(sol,targetMass,SolidComponentDensities[sol.CName])
 			liquids = append(liquids,solsamp)
-			step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add " + SolidComponentMasses[k].ToString() + " of " + sol.CName)
+			step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add " + targetMass.ToString() + " of " + sol.CName)
 			recipestring = append(recipestring,step)
-			stepcounter = stepcounter + k
+			stepcounter++
+			//stepcounter = stepcounter + k
 		}
 		
-		watersample := mixer.SampleForTotalVolume(Water,TotalVolume)
+		watersample := mixer.SampleForTotalVolume(Diluent,TotalVolume)
 		liquids = append(liquids,watersample)
-		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add up to " + TotalVolume.ToString() + " of " + Water.CName)
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add up to " + TotalVolume.ToString() + " of " + Diluent.CName)
 		recipestring = append(recipestring,step)
+		
 		stepcounter++
 		
 	// Add pH handling functions and driver calls etc...
@@ -99,6 +119,22 @@ Steps {
 		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", description)
 		recipestring = append(recipestring,step)
 		stepcounter++
+		
+		
+		if Sterilise {
+		description:= fmt.Sprint("Now Sterilise by ", SterilisationMethod)
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", description)
+		recipestring = append(recipestring,step)
+		stepcounter++
+		}
+		
+		for _, extrastep := range AdditionalInstructions {
+		description:= fmt.Sprint("Now, ", extrastep)
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", description)
+		recipestring = append(recipestring,step)
+		stepcounter++
+		}
+		
 	
 	/*
 	prepH := MixInto(Vessel,liquids...)
@@ -125,7 +161,9 @@ Steps {
 	}
 	*/
 	Media = MixInto(Vessel, "", liquids...)
+	RecipeSteps = recipestring
 	
+	fmt.Println(recipestring)
 	Status = fmt.Sprintln(recipestring)
 		
 }

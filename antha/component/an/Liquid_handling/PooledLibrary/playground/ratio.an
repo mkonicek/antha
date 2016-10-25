@@ -18,11 +18,13 @@ Parameters (
   Part []int
   TotalVolume Volume
   Tot []int
-  Partnames []string
+  Partnames []string 
+WellsUsedPreRun int
 )
 
 Data (
 	SampleVolumesUsed []Volume
+	WellsUsedPostRun int
 )
 
 Inputs (
@@ -48,6 +50,14 @@ Steps {
 if len(Part) != len(Tot) || len(Part)!= len(PlasmidConc) || len(Part)!= len(Partnames){
 	Errorf(fmt.Sprint("What the hell do you think you're doing these lists aren't equal in size. len(Parts):",len(Part)," len(Partnames):", len(Partnames)))
 }
+
+var counter int
+
+counter = WellsUsedPreRun
+
+var wellpositions []string
+
+wellpositions = PlateType.AllWellPositions(wtype.BYCOLUMN)
 
 //var inputname string = Inputtype.CName
 
@@ -94,7 +104,7 @@ samples = append(samples,watersample)
 		volused := wunit.NewVolume(VolPlasmid[i],"ul")
 		SampleVolumesUsed = append(SampleVolumesUsed,volused)
 		
-		Inputtype.CName = Partnames[i]  // inputname + fmt.Sprint(i+1) 
+		Inputtype.CName = Partnames[i]  
 		partSample := mixer.Sample(Inputtype,volused)
 		
 		samples = append(samples,partSample)
@@ -107,7 +117,11 @@ samples = append(samples,watersample)
 	
   }
 
-	PooledLib = MixTo(PlateType.Type,"",1,samples...)
+	PooledLib = MixTo(PlateType.Type,wellpositions[counter],1,samples...)
+	
+	counter++
+	
+	WellsUsedPostRun = counter
 //	DNAparts = samples
 	
 }

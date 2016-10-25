@@ -34,6 +34,14 @@ func _RatioSteps(_ctx context.Context, _input *RatioInput, _output *RatioOutput)
 		execute.Errorf(_ctx, fmt.Sprint("What the hell do you think you're doing these lists aren't equal in size. len(Parts):", len(_input.Part), " len(Partnames):", len(_input.Partnames)))
 	}
 
+	var counter int
+
+	counter = _input.WellsUsedPreRun
+
+	var wellpositions []string
+
+	wellpositions = _input.PlateType.AllWellPositions(wtype.BYCOLUMN)
+
 	//var inputname string = Inputtype.CName
 
 	Ratio := make([]float64, len(_input.Part))
@@ -78,7 +86,7 @@ func _RatioSteps(_ctx context.Context, _input *RatioInput, _output *RatioOutput)
 			volused := wunit.NewVolume(VolPlasmid[i], "ul")
 			_output.SampleVolumesUsed = append(_output.SampleVolumesUsed, volused)
 
-			_input.Inputtype.CName = _input.Partnames[i] // inputname + fmt.Sprint(i+1)
+			_input.Inputtype.CName = _input.Partnames[i]
 			partSample := mixer.Sample(_input.Inputtype, volused)
 
 			samples = append(samples, partSample)
@@ -88,7 +96,11 @@ func _RatioSteps(_ctx context.Context, _input *RatioInput, _output *RatioOutput)
 
 	}
 
-	_output.PooledLib = execute.MixTo(_ctx, _input.PlateType.Type, "", 1, samples...)
+	_output.PooledLib = execute.MixTo(_ctx, _input.PlateType.Type, wellpositions[counter], 1, samples...)
+
+	counter++
+
+	_output.WellsUsedPostRun = counter
 	//	DNAparts = samples
 
 }
@@ -146,25 +158,28 @@ type RatioElement struct {
 }
 
 type RatioInput struct {
-	Buffer      *wtype.LHComponent
-	Inputtype   *wtype.LHComponent
-	NgRequired  float64
-	Part        []int
-	Partnames   []string
-	PlasmidConc []float64
-	PlateType   *wtype.LHPlate
-	Tot         []int
-	TotalVolume wunit.Volume
+	Buffer          *wtype.LHComponent
+	Inputtype       *wtype.LHComponent
+	NgRequired      float64
+	Part            []int
+	Partnames       []string
+	PlasmidConc     []float64
+	PlateType       *wtype.LHPlate
+	Tot             []int
+	TotalVolume     wunit.Volume
+	WellsUsedPreRun int
 }
 
 type RatioOutput struct {
 	PooledLib         *wtype.LHComponent
 	SampleVolumesUsed []wunit.Volume
+	WellsUsedPostRun  int
 }
 
 type RatioSOutput struct {
 	Data struct {
 		SampleVolumesUsed []wunit.Volume
+		WellsUsedPostRun  int
 	}
 	Outputs struct {
 		PooledLib *wtype.LHComponent
@@ -176,7 +191,7 @@ func init() {
 		Constructor: RatioNew,
 		Desc: component.ComponentDesc{
 			Desc: "Example protocol demonstrating the use of the Sample function\n",
-			Path: "antha/component/an/playground/ratio.an",
+			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/ratio.an",
 			Params: []component.ParamDesc{
 				{Name: "Buffer", Desc: "", Kind: "Inputs"},
 				{Name: "Inputtype", Desc: "", Kind: "Inputs"},
@@ -187,8 +202,10 @@ func init() {
 				{Name: "PlateType", Desc: "", Kind: "Inputs"},
 				{Name: "Tot", Desc: "", Kind: "Parameters"},
 				{Name: "TotalVolume", Desc: "", Kind: "Parameters"},
+				{Name: "WellsUsedPreRun", Desc: "", Kind: "Parameters"},
 				{Name: "PooledLib", Desc: "", Kind: "Outputs"},
 				{Name: "SampleVolumesUsed", Desc: "", Kind: "Data"},
+				{Name: "WellsUsedPostRun", Desc: "", Kind: "Data"},
 			},
 		},
 	}); err != nil {

@@ -136,7 +136,6 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	v.TPlateWX = TPlateWX
 	v.TPlateWY = TPlateWY
 	v.GenericRobotInstruction.Ins = RobotInstruction(&v)
-	fmt.Println("TRANSFER NEW: ", v.GenericRobotInstruction.Ins)
 	return &v
 }
 func (ins *TransferInstruction) InstructionType() int {

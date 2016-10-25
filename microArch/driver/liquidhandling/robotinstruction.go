@@ -200,8 +200,6 @@ type GenericRobotInstruction struct {
 func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
 	for _, vcondition := range rule.Conditions {
 		v := gri.Ins.GetParameter(vcondition.TestVariable)
-
-		fmt.Println("PRM: ", vcondition.TestVariable, " :: ", v)
 		return vcondition.Condition.Match(v)
 	}
 	return true

@@ -112,6 +112,53 @@ func (lhp LHPlate) String() string {
 	)
 }
 
+func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
+	ret := make([]*LHComponent, len(wv))
+
+	for i, wc := range wv {
+		ret[i] = lhp.Wellcoords[wc.FormatA1()].WContents.Dup()
+		wv := lhp.Wellcoords[wc.FormatA1()].WorkingVolume()
+		ret[i].Vol = wv.ConvertToString(ret[i].Vunit)
+	}
+
+	return ret
+}
+
+//plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, contiguous)
+
+func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, contiguous bool) (plateIDs, wellCoords []string, vols []wunit.Volume, err error) {
+
+	for _, c := range cmps {
+		if contiguous && c == nil {
+			err = fmt.Errorf("Cannot do non-contiguous asks")
+			return
+		}
+	}
+
+	err = fmt.Errorf("Not found")
+
+	var it VectorPlateIterator
+
+	if ori == LHVChannel {
+		it = NewColVectorIterator(lhp, multi)
+	} else {
+		it = NewRowVectorIterator(lhp, multi)
+	}
+
+	for wv := it.Curr(); it.Valid(); wv = it.Next() {
+		mycmps := lhp.GetContentVector(wv)
+		if canGet(cmps, mycmps) {
+			plateIDs = mycmps.GetPlateIds()
+			wellCoords = mycmps.GetWellCoords()
+			vols = cmps.GetVols()
+			err = nil
+		}
+	}
+
+	return
+}
+
+// this gets ONE component... possibly from several wells
 func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess

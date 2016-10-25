@@ -536,16 +536,42 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
+func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, contiguous bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
+	plateIDs = make([][]string, len(cmps))
+	wellCoords = make([][]string, len(cmps))
+	vols = make([][]wunit.Volume, len(cmps))
+	fmt.Println("GetComponents called... ", len(cmps), " Components requested, multi: ", multi)
+
+	if multi == 1 {
+		return lhp.GetComponentsSingle(cmps, carryvol)
+	} else {
+		for _, ipref := range lhp.Input_preferences {
+			p, ok := lhp.Plates[ipref]
+
+			if ok {
+				plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, contiguous)
+				if err == nil {
+					// this means we can get the things we need
+					return
+				}
+			}
+		}
+	}
+
+	return
+}
+
 // destructive of state
 // GetComponents takes requests for components at particular volumes
 // + a measure of carry volume
 // returns lists of plate IDs + wells from which to get components or error
-// MIS TODO HERE --- > refactor to get from sequential wells if multi > 1
 
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, contiguous bool) ([][]string, [][]string, [][]wunit.Volume, error) {
+func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([][]string, [][]string, [][]wunit.Volume, error) {
 	plateIDs := make([][]string, len(cmps))
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
+
+	// need to disentangle some stuff here
 
 	for i, v := range cmps {
 		plateIDs[i] = make([]string, 0, 1)
@@ -554,16 +580,9 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 		foundIt := false
 
 		vdup := v.Dup()
-		/*
-			vdup := v.Dup()
-			vdup.Vol += carryvol.ConvertTo(wunit.ParsePrefixedUnit(vdup.Vunit))
-		*/
 		if v.HasAnyParent() {
-			//fmt.Println("Trying to get component ", v.CName, v.ParentID)
 			// this means it was already made with a previous call
 			tx := strings.Split(v.Loc, ":")
-
-			// maybe we can look it up?
 
 			if len(tx) < 2 || len(v.Loc) == 0 {
 				st := sampletracker.GetSampleTracker()

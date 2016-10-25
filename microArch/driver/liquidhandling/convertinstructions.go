@@ -75,7 +75,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		wh := make([]string, lenToMake)       // component types
 		va := make([]wunit.Volume, lenToMake) // volumes
 		// six parameters applying to the source
-		// need to refactor here
+		// TODO --> this should create components if not already found
 		fromPlateIDs, fromWells, fromvols, err := robot.GetComponents(cmpSquash, carryvol, channelprms.Orientation, multi, channelprms.Independent)
 
 		if err != nil {
@@ -98,7 +98,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		vt := make([]wunit.Volume, lenToMake) // volume in well to
 		ptt := make([]string, lenToMake)      // plate types
 
-		ix := 0
+		ix := 0 // counts up cmpsquash
 
 		for j, v := range comps {
 

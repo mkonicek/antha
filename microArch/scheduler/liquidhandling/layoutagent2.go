@@ -72,7 +72,10 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 	// 3- ones going to a plate of our choosing
 
 	// find existing assignments and copy into the plate_choices structure
+	// this may be because 1) the user has set the assignment 2) the assignment derives from a component
 	plate_choices, mapchoices, err := get_and_complete_assignments(request, chain.ValueIDs(), plate_choices, mapchoices)
+
+	// map choices maps layout groups to (temp)plate IDs
 
 	if err != nil {
 		return request, plate_choices, mapchoices, err
@@ -205,7 +208,9 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 	for _, k := range order {
 		x += 1
 		v := request.LHInstructions[k]
+		// if plate ID set
 		if v.PlateID() != "" {
+			// if plate ID not found, invent a new one of the correct type
 			i := defined(v.PlateID(), s)
 
 			nm := v.PlateName
@@ -224,6 +229,8 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			//fmt.Println("Instruction ", x, " component: ", v.Components[0].CName, " plateID: ", v.PlateID())
 
 		} else if v.Majorlayoutgroup != -1 || v.PlateName != "" {
+			// if we've set a plate group either by name or number
+
 			//fmt.Println("Instruction ", x, " component: ", v.Components[0].CName, " mlg: ", v.Majorlayoutgroup)
 			nm := "Output_plate"
 			mlg := fmt.Sprintf("%d", v.Majorlayoutgroup)
@@ -233,6 +240,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			}
 
 			id, ok := m[mlg]
+			// if no plate assigned so far, assign a temp ID for grouping
 			if !ok {
 				id = wtype.NewUUID()
 				m[mlg] = id
@@ -275,10 +283,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			if i == -1 {
 				logger.Debug("CONTRADICTORY PLATE ID SITUATION ", v)
 			}
-
-			// v2 is not always set - this isn't safe... why did we do it this way?
-			// i think this whole mechanism is pretty shady
-
+			// XXX this is an issue if v2 not set
 			for i2, v2 := range s[i].Wells {
 				if v2 == tx[1] {
 					s[i].Assigned[i2] = v.ID
@@ -321,13 +326,20 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 		// plate, even a virtual one
 		if v.PlateID() == "" {
 			pt := v.Platetype
+			fmt.Println("PT: ", pt)
 
 			// find a plate choice to put it in or return -1 for a new one
 			ass := -1
 
 			if pt != "" {
 				ass = assignmentWithType(pt, pc)
+			} else if len(pc) != 0 {
+				// just stick it in the first one
+
+				ass = 0
 			}
+
+			fmt.Println("ASS: ", ass)
 
 			if ass == -1 {
 				// make a new plate
@@ -369,10 +381,8 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 // chop the assignments up modulo plate size
 func modpc(choice PlateChoice, nwell int) []PlateChoice {
 	r := make([]PlateChoice, 0, 1)
-	/*
-		fmt.Println("L: ", len(choice.Assigned), " ", choice.Assigned)
-		fmt.Println("W: ", len(choice.Wells), " ", choice.Wells)
-	*/
+	fmt.Println("L: ", len(choice.Assigned), " ", choice.Assigned)
+	fmt.Println("W: ", len(choice.Wells), " ", choice.Wells)
 	for s := 0; s < len(choice.Assigned); s += nwell {
 		e := s + nwell
 		if e > len(choice.Assigned) {

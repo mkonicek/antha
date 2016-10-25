@@ -8,7 +8,7 @@
 			"Buffer": "water"   
 	 },
 	 "Parsednacomponents": {
-            "SequenceInfoFile": "Rewiringinput2.xlsx",
+            "SequenceInfoFile": "Rewiringinput3.xlsx",
             "SequenceInfoFileformat": "JMP",
             "ConcHeader": "Plasmid Conc",
             "NameHeader": "Part names",

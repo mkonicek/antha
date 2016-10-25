@@ -21,6 +21,8 @@ import
 
 //ComponentFile string
 
+//Outputs from this element
+
 func _ParseDNAComponentsRequirements() {
 }
 
@@ -28,9 +30,10 @@ func _ParseDNAComponentsSetup(_ctx context.Context, _input *ParseDNAComponentsIn
 }
 
 func _ParseDNAComponentsSteps(_ctx context.Context, _input *ParseDNAComponentsInput, _output *ParseDNAComponentsOutput) {
-
+	//create a string that will store the header names the element finds in the input file, this is for an internal check to make sure all 4 columns of information is found.
 	headersfound := make([]string, 0)
 
+	//create strings that will be populated with the values from each column in the input file
 	_output.Partnames = make([]string, 0)
 	_output.PartConcs = make([]float64, 0)
 	_output.Partplusvectorlengths = make([]int, 0)
@@ -42,10 +45,12 @@ func _ParseDNAComponentsSteps(_ctx context.Context, _input *ParseDNAComponentsIn
 		execute.Errorf(_ctx, err.Error())
 	}
 
+	// code for parsing the data from the xl file into the strings, this searches the file in direction i followed by j
 	for i, partinfo := range dnaparts {
 
 		for j := range partinfo.Setpoints {
 
+			//First creates an array of part names
 			if partinfo.Factordescriptors[j] == _input.NameHeader {
 
 				if name, found := partinfo.Setpoints[j].(string); found {
@@ -60,6 +65,7 @@ func _ParseDNAComponentsSteps(_ctx context.Context, _input *ParseDNAComponentsIn
 
 			}
 
+			//second creats an array of plasmid concentrations
 			if partinfo.Factordescriptors[j] == _input.ConcHeader {
 
 				if conc, found := partinfo.Setpoints[j].(float64); found {
@@ -72,6 +78,7 @@ func _ParseDNAComponentsSteps(_ctx context.Context, _input *ParseDNAComponentsIn
 				}
 			}
 
+			//third creates an array of part lengths in bp
 			if partinfo.Factordescriptors[j] == _input.PartLengthHeader {
 
 				if partlength, found := partinfo.Setpoints[j].(int); found {
@@ -86,6 +93,7 @@ func _ParseDNAComponentsSteps(_ctx context.Context, _input *ParseDNAComponentsIn
 				}
 			}
 
+			//forth creates an array of total plasmid size (part + vector) in bp
 			if partinfo.Factordescriptors[j] == _input.PartplusvectorlengthsHeader {
 
 				if partplusplasmid, found := partinfo.Setpoints[j].(int); found {
@@ -102,6 +110,7 @@ func _ParseDNAComponentsSteps(_ctx context.Context, _input *ParseDNAComponentsIn
 
 		}
 
+		//internal check if there are not 4 headers (as we know there should be 4) return an error telling us which ones were found and which were not
 		if len(headersfound) != 4 {
 			execute.Errorf(_ctx, fmt.Sprint("Only found these headers in input file: ", headersfound))
 		}
@@ -196,7 +205,7 @@ func init() {
 		Constructor: ParseDNAComponentsNew,
 		Desc: component.ComponentDesc{
 			Desc: "Example protocol demonstrating the use of the Sample function\n",
-			Path: "antha/component/an/playground/ParseDNAComponents.an",
+			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/ParseDNAComponents.an",
 			Params: []component.ParamDesc{
 				{Name: "ConcHeader", Desc: "", Kind: "Parameters"},
 				{Name: "NameHeader", Desc: "", Kind: "Parameters"},

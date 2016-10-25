@@ -542,23 +542,26 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 	vols = make([][]wunit.Volume, len(cmps))
 	fmt.Println("GetComponents called... ", len(cmps), " Components requested, multi: ", multi)
 
-	if multi == 1 {
-		return lhp.GetComponentsSingle(cmps, carryvol)
-	} else {
+	if multi > 1 {
 		for _, ipref := range lhp.Input_preferences {
 			p, ok := lhp.Plates[ipref]
 
 			if ok {
-				plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, contiguous)
-				if err == nil {
-					// this means we can get the things we need
-					return
+				pids, wcs, vls, err := p.FindComponentsMulti(cmps, ori, multi, contiguous)
+				if err != nil {
+					continue
 				}
+				for i := 0; i < len(cmps); i++ {
+					plateIDs[i] = []string{pids[i]}
+					wellCoords[i] = []string{wcs[i]}
+					vols[i] = []wunit.Volume{vls[i]}
+				}
+
+				return plateIDs, wellCoords, vols, nil
 			}
 		}
 	}
-
-	return
+	return lhp.GetComponentsSingle(cmps, carryvol)
 }
 
 // destructive of state

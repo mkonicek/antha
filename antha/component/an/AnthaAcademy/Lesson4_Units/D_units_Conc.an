@@ -1,0 +1,52 @@
+protocol Units_Concentration
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+)
+// Input parameters for this protocol
+Parameters (	
+	MyConc Concentration
+	MolecularWeight float64
+)
+
+// Data which is returned from this protocol
+Data (
+	ConcinMperL Concentration
+	ConcinGperL Concentration
+
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	
+	ConcinMperL = MyConc.MolPerL(MolecularWeight)
+	ConcinGperL = MyConc.GramPerL(MolecularWeight)
+
+}
+
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

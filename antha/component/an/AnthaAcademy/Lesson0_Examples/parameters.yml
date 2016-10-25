@@ -1,0 +1,126 @@
+{
+    "Parameters": {
+        "Upstream": {
+            "BSAoptional": "DNAsolution",
+            "BSAvol": "0ul",
+            "Buffer": "CutsmartBuffer",
+            "BufferConcX": 10,
+            "DNAConc": "50ng/ul",
+            "DNAMassperReaction": "100ng",
+            "DNAName": "BBa_J23104",
+            "DNASolution": "DNAsolution",
+            "DesiredConcinUperml": [
+                10,
+				10
+            ],
+            "EnzSolutions": [
+                "restrictionenzyme",
+				"restrictionenzyme"
+            ],
+            "EnzymeNames": [
+                "EcoRI",
+				"SpeI"
+            ],
+            "InactivationTemp": "80C",
+            "InactivationTime": "1200s",
+            "OutPlate": "pcrplate_with_cooler",
+			"Platenumber": 1,
+            "ReactionTemp": "37C",
+            "ReactionTime": "600s",
+            "ReactionVolume": "25ul",
+            "StockReConcinUperml": [
+                10000,
+				10000
+            ],
+            "Water": "water"
+        },
+        "Downstream": {
+            "BSAoptional": "DNAsolution",
+            "BSAvol": "0ul",
+            "Buffer": "CutsmartBuffer",
+            "BufferConcX": 10,
+            "DNAConc": "50ng/ul",
+            "DNAMassperReaction": "100ng",
+            "DNAName": "BBa_I13502",
+            "DNASolution": "DNAsolution",
+            "DesiredConcinUperml": [
+                10,
+				10
+            ],
+            "EnzSolutions": [
+                "restrictionenzyme",
+				"restrictionenzyme"
+            ],
+            "EnzymeNames": [
+                "XbaI",
+				"PstI"
+            ],
+            "InactivationTemp": "80C",
+            "InactivationTime": "1200s",
+            "OutPlate": "pcrplate_with_cooler",
+			"Platenumber": 1,
+            "ReactionTemp": "37C",
+            "ReactionTime": "600s",
+            "ReactionVolume": "25ul",
+            "StockReConcinUperml": [
+                10000,
+				10000
+            ],
+            "Water": "water"
+        },
+        "Vector": {
+            "BSAoptional": "DNAsolution",
+            "BSAvol": "0ul",
+            "Buffer": "CutsmartBuffer",
+            "BufferConcX": 10,
+            "DNAConc": "50ng/ul",
+            "DNAMassperReaction": "100ng",
+            "DNAName": "pSB1A3",
+            "DNASolution": "DNAsolution",
+            "DesiredConcinUperml": [
+                10,
+				10
+            ],
+            "EnzSolutions": [
+                "restrictionenzyme",
+				"restrictionenzyme"
+            ],
+            "EnzymeNames": [
+                "EcoRI",
+				"PstI"
+            ],
+            "InactivationTemp": "80C",
+            "InactivationTime": "1200s",
+            "OutPlate": "pcrplate_with_cooler",
+			"Platenumber": 1,
+            "ReactionTemp": "37C",
+            "ReactionTime": "600s",
+            "ReactionVolume": "25ul",
+            "StockReConcinUperml": [
+                10000,
+				10000
+            ],
+            "Water": "water"
+        },
+		"Ligation": {
+		            "Atp": "ATP",
+		            "AtpVol": "1ul",
+		            "Buffer": "CutsmartBuffer",
+		            "BufferVol": "2ul",
+		            "InactivationTemp": "80C",
+		            "InactivationTime": "1200s",
+		            "LigVol": "1ul",
+		            "Ligase": "T4Ligase",
+		            "OutPlate": "pcrplate_with_cooler",
+		            "PartVols": [
+		                "3ul",
+		                "3ul"
+		            ],
+		            "ReactionTemp": "16C",
+		            "ReactionTime": "600s",
+		            "ReactionVolume": "20ul",
+		            "VectorVol": "3ul",
+		            "Water": "water"
+         }
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "connections": [],
+    "processes": {
+        "EntrezSequence": {
+            "component": "NewDNASequence_fromLookup"
+        },
+        "BiobrickSequence": {
+            "component": "NewDNASequence_fromLookup"
+        },
+        "BiobrickSequenceRecursive": {
+            "component": "NewDNASequence_fromLookup"
+        }
+	}
+       
+}

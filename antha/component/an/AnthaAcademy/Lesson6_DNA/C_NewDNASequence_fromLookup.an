@@ -1,0 +1,108 @@
+protocol NewDNASequence_fromLookup
+
+import (
+	"fmt"
+	//"math"
+	"path/filepath"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/entrez"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/igem"
+)
+// Input parameters for this protocol
+Parameters (
+	ID string
+	BiobrickID bool	
+	EntrezID bool
+	DNAID bool
+	AddORFS bool
+)
+
+// Data which is returned from this protocol
+Data (
+	DNA wtype.DNASequence
+	Status string
+	Warnings error
+	Description string
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	
+	
+	var err error
+	var partdetails igem.Rsbpml
+	
+		if EntrezID  {
+		
+			if DNAID {
+			
+			filename := filepath.Join(anthapath.Path(), ID+".gb")
+			
+			DNA,_, err = entrez.RetrieveSequence(ID, "nucleotide",filename)
+			
+			}
+		} else if BiobrickID {
+			
+			partdetails = igem.LookUp([]string{ID})
+			
+			seq := partdetails.Sequence(ID)
+			
+			DNA = wtype.MakeLinearDNASequence(ID,seq)
+			
+		} 
+									
+	
+	if AddORFS {
+	orfs := sequences.FindallORFs(DNA.Seq)
+	features := sequences.ORFs2Features(orfs)
+	DNA = wtype.Annotate(DNA,features)
+	}
+	
+	if BiobrickID {
+		Status = fmt.Sprintln(
+		text.Print(ID +" DNA_Seq: ",DNA),
+		text.Print(ID +" ORFs: ", DNA.Features),
+		text.Print(ID +" PartDescription", partdetails.Description(ID)),
+		)
+		Description = partdetails.Description(ID)
+		}else {
+			Status = fmt.Sprintln(
+		text.Print(ID +" DNA_Seq: ",DNA),
+		text.Print(ID +" ORFs: ", DNA.Features),
+
+	)
+		}
+	Warnings = err
+	fmt.Println(Status)
+}
+
+
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

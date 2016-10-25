@@ -1,0 +1,56 @@
+protocol Units_SI
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+)
+// Input parameters for this protocol
+Parameters (
+	MyMass Mass
+)
+
+// Data which is returned from this protocol
+Data (
+	SIMass float64
+	SIMassUnit string
+	RawMass float64
+	RawMassUnit string
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	
+	SIMass = MyMass.SIValue()
+	SIMassUnit = MyMass.Unit().BaseSISymbol()
+	
+	RawMass = MyMass.RawValue()
+	RawMassUnit = MyMass.Unit().PrefixedSymbol()
+	
+
+}
+
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

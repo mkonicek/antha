@@ -1,0 +1,22 @@
+{
+    "Parameters": {
+        "sampleTotal": {
+           "Solution": "neb5compcells",
+		   "Diluent": "water",
+           	"SolutionVolume": "15ul",
+		   "TotalVolume": "150ul"
+        },
+	"samplehalfConc": {
+           "Solution": "neb5compcells",
+		   "Diluent": "water",
+           	"SolutionVolume": "7.5ul",
+		   "TotalVolume": "150ul"
+        },
+	"sampleDoubleconc": {
+           "Solution": "neb5compcells",
+		   "Diluent": "water",
+           	"SolutionVolume": "30ul",
+		   "TotalVolume": "150ul"
+        }
+    }
+}

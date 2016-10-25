@@ -1,0 +1,19 @@
+{
+    "Parameters": {
+        "genbank": {
+            "Filename": "test.gb",
+            "Gene_name": "TheUnkownSequence",
+            "Plasmid": false
+        },
+        "fasta": {
+            "Filename": "test.fasta",
+            "Gene_name": "TheUnkownSequence",
+            "Plasmid": false
+        },
+        "gdx": {
+            "Filename": "test.gdx",
+            "Gene_name": "TheUnkownSequence",
+            "Plasmid": false
+        }
+    }
+}

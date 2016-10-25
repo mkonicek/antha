@@ -1,0 +1,15 @@
+{
+    "Parameters": {
+        "1stprocess": {
+            "MyValue": 15,
+            "MyUnit": "ul"
+        },
+        "2ndprocess": {
+            "MyTemperature": "37C",
+            "MyConc": "100ng/ul",
+			"MyMoles": "0.001M",
+			"MyTime":"60s",
+			"MyMass":"100ng"
+        }
+    }
+}

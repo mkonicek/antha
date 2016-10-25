@@ -1,0 +1,22 @@
+{
+    "Parameters": {
+        "EntrezSequence": {
+            "ID": "EF208560",
+			"BiobrickID":false,
+			"EntrezID":true,
+			"DNAID": true
+        },
+        "BiobrickSequence": {
+            "ID": "BBa_E0040",
+			"BiobrickID":true,
+			"EntrezID":false,
+			"DNAID": true
+        },
+        "BiobrickSequenceRecursive": {
+            "ID": "BBa_K314110",
+			"BiobrickID":true,
+			"EntrezID":false,
+			"DNAID": true
+        }
+    }
+}

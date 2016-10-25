@@ -1,0 +1,87 @@
+// Protocol for creating a DNASequence from a sequence file format. // Supported formats: .gdx .fasta .gb
+protocol NewDNASequence_fromfile
+
+import (
+	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+)
+// Input parameters for this protocol
+Parameters (
+	Filename string
+	Gene_name string
+	Plasmid bool
+	Linear bool
+	SingleStranded bool
+	
+)
+
+// Data which is returned from this protocol
+Data (
+	DNA wtype.DNASequence
+	Status string
+	Warnings error
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	
+	
+	
+	seqs, err := parser.DNAFiletoDNASequence(Filename, Plasmid) 
+	
+	if len(seqs) == 1 && err == nil {
+		
+	DNA = seqs[0]
+	
+	DNA.Nm = Gene_name
+	
+	} 
+			
+									
+	orfs := sequences.FindallORFs(DNA.Seq)
+	
+	if len(DNA.Features) == 0 {
+	features := sequences.ORFs2Features(orfs)
+	
+	DNA = wtype.Annotate(DNA,features)
+	}
+	
+	Status = fmt.Sprintln(
+		text.Print("DNA_Seq: ",DNA),
+		text.Print("ORFs: ", orfs),
+	)
+	
+	Warnings = err
+	
+} 
+
+
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

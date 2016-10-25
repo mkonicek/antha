@@ -1,0 +1,15 @@
+{
+    "connections": [],
+    "processes": {
+        "genbank": {
+            "component": "NewDNASequence_fromfile"
+        },
+        "fasta": {
+            "component": "NewDNASequence_fromfile"
+        },
+        "gdx": {
+            "component": "NewDNASequence_fromfile"
+        }
+	}
+       
+}

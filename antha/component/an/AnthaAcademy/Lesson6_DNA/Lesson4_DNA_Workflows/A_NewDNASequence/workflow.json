@@ -1,0 +1,11 @@
+{
+    "connections": [],
+    "processes": {
+        "NewDNASequenceandBlast1": {
+            "component": "NewDNASequence"
+        },
+        "NewDNASequenceandBlast2": {
+            "component": "NewDNASequence"
+        }
+    }
+}

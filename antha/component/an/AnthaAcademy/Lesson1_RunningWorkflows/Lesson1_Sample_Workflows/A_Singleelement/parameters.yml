@@ -1,0 +1,10 @@
+{
+    "Parameters": {
+        "sampleTotal": {
+           "Solution": "neb5compcells",
+		   "Diluent": "water",
+           	"SolutionVolume": "15ul",
+		   "TotalVolume": "150ul"
+        }
+    }
+}

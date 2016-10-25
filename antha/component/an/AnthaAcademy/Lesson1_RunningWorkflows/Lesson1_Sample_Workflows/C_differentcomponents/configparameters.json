@@ -1,0 +1,30 @@
+{
+    "Parameters": {
+        "sample": {
+            "Solution": "water",
+            "SampleVolume": "15ul"
+        },
+        "samplealone": {
+            "Solution": "water",
+            "SampleVolume": "20ul"
+        },
+        "sampleAll": {
+			"Sampleall": true
+        },
+        "sampleTotal": {
+           "Solution": "neb5compcells",
+		   "Diluent": "water",
+           "SolutionVolume": "15ul",
+		   "TotalVolume": "150ul"
+        }
+    },
+	"Config": {
+        "InputPlateType": [
+            "pcrplate_skirted_riser"
+        ],
+        "OutputPlateType": [
+            "greiner384_riser"
+        ]
+    }
+	
+}

@@ -1,0 +1,48 @@
+{
+    "connections": [
+        {
+            "src": {
+                "port": "Reaction",
+                "process": "Upstream"
+            },
+            "tgt": {
+                "port": "Part1",
+                "process": "Ligation"
+            }
+        },
+        {
+            "src": {
+                "port": "Reaction",
+                "process": "Downstream"
+            },
+            "tgt": {
+                "port": "Part2",
+                "process": "Ligation"
+            }
+        },
+        {
+            "src": {
+                "port": "Reaction",
+                "process": "Vector"
+            },
+            "tgt": {
+                "port": "Vector",
+                "process": "Ligation"
+            }
+        }
+    ],
+    "processes": {
+        "Upstream": {
+            "component": "RestrictionDigestion_conc"
+        },
+        "Downstream": {
+            "component": "RestrictionDigestion_conc"
+        },
+        "Vector": {
+            "component": "RestrictionDigestion_conc"
+        },
+        "Ligation": {
+            "component": "Ligation_2partsintovector"
+        }
+    }
+}

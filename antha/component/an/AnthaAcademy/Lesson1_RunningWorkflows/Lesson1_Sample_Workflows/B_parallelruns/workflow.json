@@ -1,0 +1,15 @@
+{
+    "connections": [],
+    "processes": {
+        "sampleTotal": {
+            "component": "SampleForTotalVolume"
+        },
+	"samplehalfConc": {
+            "component": "SampleForTotalVolume"
+        },
+	"sampleDoubleconc": {
+            "component": "SampleForTotalVolume"
+        }
+	}   
+}
+

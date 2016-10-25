@@ -1,0 +1,65 @@
+// demo protocol of how to convert units to string
+protocol Units_ToString
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+)
+// Input parameters for this protocol
+Parameters (
+	MyVolume Volume
+	MyTemperature Temperature
+	MyConc Concentration
+	MyMoles wunit.Moles
+	MyTime Time
+	MyMass Mass
+	MyFlowrate FlowRate
+)
+
+// Data which is returned from this protocol
+Data (
+	VolumeasString string
+	TempasString string
+	ConcasString string
+	MolesasString string
+	MassasString string
+	FlowrateString string
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	VolumeasString = MyVolume.ToString()
+	TempasString = MyTemperature.ToString()
+	ConcasString = MyConc.ToString()
+	MolesasString = MyMoles.ToString()
+	MassasString = MyMass.ToString()
+	FlowrateString = MyFlowrate.ToString()
+	
+	// Exercise: Add an equivalent process for a FlowRate
+}
+
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

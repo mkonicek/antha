@@ -1,0 +1,70 @@
+// Demo protocol of how to create an array of dna types from parsing user inputs of various types
+// scenarios handled:
+// Biobrick IDS
+// genbank files
+// raw sequence
+// inventory lookup
+protocol JoinDNASequences
+
+import (
+	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+
+)
+// Input parameters for this protocol
+Parameters (
+	Seqsinorder[]wtype.DNASequence
+)
+
+// Data which is returned from this protocol
+Data (
+	Seq wtype.DNASequence
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	
+	
+	newSeq := Seqsinorder[0]
+	seqnames := make([]string,0)
+
+	for i, seq := range Seqsinorder {
+		if i!=0{
+		newSeq.Append(seq.Seq)
+		}
+		seqnames = append(seqnames,seq.Nm)
+	}
+	
+	newSeq.Nm = strings.Join(seqnames,"_")
+	
+	Seq = newSeq
+	
+	
+}
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

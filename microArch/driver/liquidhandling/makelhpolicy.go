@@ -359,9 +359,11 @@ func MakePEGPolicy() LHPolicy {
 	policy["POST_MIX_Z"] = 3.5
 	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUME"] = 50.0
+	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	policy["TOUCHOFF"] = true
+	policy["TOUCHOFF"] = false
 	policy["CAN_MULTI"] = false
+	policy["RESET_OVERRIDE"] = true
 	return policy
 }
 
@@ -388,7 +390,7 @@ func MakePaintPolicy() LHPolicy {
 	policy["DSP_SPEED"] = 1.5
 	policy["ASP_WAIT"] = 1.0
 	policy["DSP_WAIT"] = 1.0
-	policy["PRE_MIX"] = 3
+	//policy["PRE_MIX"] = 3
 	policy["POST_MIX"] = 3
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
@@ -473,7 +475,7 @@ func MakeCulturePolicy() LHPolicy {
 func MakePlateOutPolicy() LHPolicy {
 	culturepolicy := make(LHPolicy, 17)
 	culturepolicy["PRE_MIX"] = 2
-	culturepolicy["PRE_MIX_VOLUME"] = 50
+	culturepolicy["PRE_MIX_VOLUME"] = 20
 	culturepolicy["PRE_MIX_Z"] = 2.0
 	culturepolicy["PRE_MIX_RATE"] = 4.0
 	culturepolicy["ASPSPEED"] = 4.0
@@ -483,7 +485,7 @@ func MakePlateOutPolicy() LHPolicy {
 	culturepolicy["CAN_MSA"] = false
 	culturepolicy["CAN_SDD"] = false
 	culturepolicy["DSPREFERENCE"] = 0
-	culturepolicy["DSPZOFFSET"] = 0.5
+	culturepolicy["DSPZOFFSET"] = 0.0
 	culturepolicy["TIP_REUSE_LIMIT"] = 0
 	culturepolicy["NO_AIR_DISPENSE"] = true
 	culturepolicy["BLOWOUTVOLUME"] = 0.0
@@ -553,6 +555,8 @@ func MakeDNAPolicy() LHPolicy {
 	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
 	dnapolicy["NO_AIR_DISPENSE"] = true
+	dnapolicy["RESET_OVERRIDE"] = true
+	dnapolicy["TOUCHOFF"] = false
 	return dnapolicy
 }
 
@@ -776,17 +780,33 @@ func MakeLVExtraPolicy() LHPolicy {
 	return lvep
 }
 
+func MakeLVDNAMixPolicy() LHPolicy {
+	dnapolicy := make(LHPolicy, 4)
+	dnapolicy["RESET_OVERRIDE"] = true
+	dnapolicy["POST_MIX_VOLUME"] = 5.0
+	dnapolicy["POST_MIX"] = 1
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 3.0
+	dnapolicy["TOUCHOFF"] = false
+	return dnapolicy
+}
+
 func MakeHVOffsetPolicy() LHPolicy {
 	lvop := make(LHPolicy, 6)
-	lvop["ASPZOFFSET"] = 1.00
-	lvop["DSPZOFFSET"] = 1.00
-	lvop["POST_MIX_Z"] = 1.00
-	lvop["PRE_MIX_Z"] = 1.00
+	lvop["ASPZOFFSET"] = 2.0
+	lvop["DSPZOFFSET"] = 2.0
+	lvop["POST_MIX_Z"] = 2.0
+	lvop["PRE_MIX_Z"] = 2.0
 	lvop["DSPREFERENCE"] = 0
 	lvop["ASPREFERENCE"] = 0
+	lvop["POST_MIX_RATE"] = 37
+	lvop["PRE_MIX_RATE"] = 37
+	lvop["ASPSPEED"] = 37
+	lvop["DSPSPEED"] = 37
 	return lvop
 }
 
+// deprecated; see above
 func MakeHVFlowRatePolicy() LHPolicy {
 	policy := make(LHPolicy, 4)
 	policy["POST_MIX_RATE"] = 37
@@ -816,71 +836,32 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 		lhpr.AddRule(rule, policy)
 	}
 
-	// add a specific case for transfers of water to dry wells
-	// nb for this to really work I think we still need to make sure well volumes
-	// are being properly kept in sync
-
-	/* hide this for now as a suspect for causing bubbles
-	rule := NewLHPolicyRule("BlowOutToEmptyWells")
-	err := rule.AddNumericConditionOn("WELLTOVOLUME", 0.0, 1.0)
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = rule.AddCategoryConditionOn("LIQUIDCLASS", "water")
-	if err != nil {
-		return nil, err
-	}
-	pol := MakeJBPolicy()
-	lhpr.AddRule(rule, pol)
-	*/
-
-	// a further refinement: for low volumes we need to add extra volume
-	// for aspirate and dispense
-
-	/*
-		rule = NewLHPolicyRule("ExtraVolumeForLV")
-		rule.AddNumericConditionOn("VOLUME", 0.0, 20.0)
-		pol = MakeLVExtraPolicy()
-		lhpr.AddRule(rule, pol)
-	*/
-
 	// hack to fix plate type problems
+	// this really should be removed asap
+	// make low priority so it doesn't clobber other
+	// policies
 	rule := NewLHPolicyRule("HVOffsetFix")
 	rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+	rule.Priority = 0
 	//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
 	pol := MakeHVOffsetPolicy()
 	lhpr.AddRule(rule, pol)
 
-	// hack to fix plate type problems
-	rule = NewLHPolicyRule("HVFlowRate")
-	rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-	//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
-	pol = MakeHVFlowRatePolicy()
-	lhpr.AddRule(rule, pol)
-
-	/*rule = NewLHPolicyRule("LVOffsetFix2")
-	rule.AddNumericConditionOn("VOLUME", 0.0, 20.0)
-	rule.AddCategoryConditionOn("TOPLATETYPE", "pcrplate_skirted_riser")
-	pol = MakeLVOffsetPolicy()
-
-	lhpr.AddRule(rule, pol)
-
-	*/
-
-	// this is commented out to diagnose the dispense error
+	// merged the below and the above
 	/*
-			// remove blowout from gilson
-			rule = NewLHPolicyRule("NoBlowoutForGilson")
-			rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
-
-			policy := make(LHPolicy, 6)
-			policy["RESET_OVERRIDE"] = true
-
-
-		lhpr.AddRule(rule, policy)
+		rule = NewLHPolicyRule("HVFlowRate")
+		rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+		//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
+		pol = MakeHVFlowRatePolicy()
+		lhpr.AddRule(rule, pol)
 	*/
+
+	rule = NewLHPolicyRule("DNALV")
+	rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
+	rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
+	pol = MakeLVDNAMixPolicy()
+	lhpr.AddRule(rule, pol)
+
 	return lhpr, nil
 
 }

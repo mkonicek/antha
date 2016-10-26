@@ -24,7 +24,6 @@ package factory
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -706,9 +705,9 @@ func GetPlateByType(typ string) *wtype.LHPlate {
 	p := plates[typ]
 
 	if p != nil {
-		fmt.Println("can't dup plate nil, plate name", typ)
+		//fmt.Println("can't dup plate nil, plate name", typ)
 	} else {
-		fmt.Println("plate type", typ, "found in factory")
+		//fmt.Println("plate type", typ, "found in factory")
 	}
 	return p.Dup()
 }

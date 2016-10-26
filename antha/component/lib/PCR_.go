@@ -15,18 +15,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-/*type Polymerase struct {
-	wtype.LHComponent
-	Rate_BPpers float64
-	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
-	Extensiontemp Temperature
-	Hotstart bool
-	StockConcentration Concentration // this is normally in U?
-	TargetConcentration Concentration
-	// this is also a glycerol solution rather than a watersolution!
-}
-*/
-
 // Input parameters for this protocol (data)
 
 // PCRprep parameters:
@@ -70,7 +58,7 @@ func _PCRSteps(_ctx context.Context, _input *PCRInput, _output *PCROutput) {
 
 	_output.RevPrimerSites = sequences.FindSeqsinSeqs(_input.Targetsequence, []string{_input.RevPrimerSeq})
 
-	if len(_output.FwdPrimerSites) != 1 || len(_output.RevPrimerSites) != 1 {
+	if len(_output.FwdPrimerSites) == 0 || len(_output.RevPrimerSites) == 0 {
 
 		errordescription := fmt.Sprint(
 			text.Print("FwdPrimerSitesfound:", fmt.Sprint(_output.FwdPrimerSites)),
@@ -279,3 +267,15 @@ func init() {
 		panic(err)
 	}
 }
+
+/*type Polymerase struct {
+	wtype.LHComponent
+	Rate_BPpers float64
+	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
+	Extensiontemp Temperature
+	Hotstart bool
+	StockConcentration Concentration // this is normally in U?
+	TargetConcentration Concentration
+	// this is also a glycerol solution rather than a watersolution!
+}
+*/

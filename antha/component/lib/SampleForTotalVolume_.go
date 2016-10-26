@@ -58,8 +58,7 @@ func _SampleForTotalVolumeSteps(_ctx context.Context, _input *SampleForTotalVolu
 
 	// Now we have an antha element which will generate liquid handling instructions
 	// let's see how to actually run the protocol
-	// open the terminal and type this:
-	// 'workflows && cd AnthaAcademy/Lesson1_Sample'
+	// open the terminal and
 	// work your way through the lessons there showing how to specify parameters and different types of workflow
 
 }

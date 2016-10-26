@@ -11,18 +11,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-/*type Polymerase struct {
-	wtype.LHComponent
-	Rate_BPpers float64
-	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
-	Extensiontemp Temperature
-	Hotstart bool
-	StockConcentration Concentration // this is normally in U?
-	TargetConcentration Concentration
-	// this is also a glycerol solution rather than a watersolution!
-}
-*/
-
 // Input parameters for this protocol (data)
 
 // PCRprep parameters:
@@ -81,7 +69,7 @@ func _PCR_volSteps(_ctx context.Context, _input *PCR_volInput, _output *PCR_volO
 	samples = append(samples, dntpSample)
 
 	if len(_input.Additives) != len(_input.AdditiveVols) {
-		panic("Bad things are going to happen if you have different numbers of additives and additivevolumes")
+		execute.Errorf(_ctx, "Bad things are going to happen if you have different numbers of additives and additivevolumes")
 	}
 
 	for i := range _input.Additives {
@@ -327,3 +315,15 @@ func init() {
 		panic(err)
 	}
 }
+
+/*type Polymerase struct {
+	wtype.LHComponent
+	Rate_BPpers float64
+	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
+	Extensiontemp Temperature
+	Hotstart bool
+	StockConcentration Concentration // this is normally in U?
+	TargetConcentration Concentration
+	// this is also a glycerol solution rather than a watersolution!
+}
+*/

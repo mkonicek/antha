@@ -53,6 +53,9 @@ func _SampleSteps(_ctx context.Context, _input *SampleInput, _output *SampleOutp
 	// The function signature  shows that the function requires a *LHComponent and a Volume and returns an *LHComponent
 	_output.Sample = mixer.Sample(_input.Solution, _input.SampleVolume)
 
+	// The Sample function is not sufficient to generate liquid handling instructions alone,
+	// We would need a Mix command to instruct where to put the sample
+
 }
 
 // Run after controls and a steps block are completed to

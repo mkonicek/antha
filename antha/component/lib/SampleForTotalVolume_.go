@@ -35,14 +35,15 @@ func _SampleForTotalVolumeSetup(_ctx context.Context, _input *SampleForTotalVolu
 // for every input
 func _SampleForTotalVolumeSteps(_ctx context.Context, _input *SampleForTotalVolumeInput, _output *SampleForTotalVolumeOutput) {
 
-	// make empty slice of components ready to sequentially add all samples to
+	// make empty slice of LHComponents (i.e. of length 0) ready to sequentially add all samples to
+	// See golangbook chapter 6 for more details on slices and arrays
 	allsamples := make([]*wtype.LHComponent, 0)
 
 	// SampleForTotalVolume will "top up" solution to the TotalVolume with Diluent.
-	// in this case it will still add diluent first but calculates the volume to add by substracting the volumes of subsequent components
+	// In this case it will still add diluent first but calculates the volume to add by substracting the volumes of subsequent components
 	diluentsample := mixer.SampleForTotalVolume(_input.Diluent, _input.TotalVolume) // i.e. if TotalVolume == 20ul and SolutionVolume == 2ul then 18ul of Diluent will be sampled here
 
-	// append will add the diliuent sample to the allsamples slice
+	// append will add the diluent sample to the allsamples slice
 	allsamples = append(allsamples, diluentsample)
 
 	solutionsample := mixer.Sample(_input.Solution, _input.SolutionVolume)

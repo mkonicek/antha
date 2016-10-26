@@ -1,0 +1,25 @@
+{
+    "processes": {
+        "LibAssembly1": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "LibAssembly2": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "LibAssembly3": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "ReporterStrong": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "ReporterMedium": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "ControlSEVA": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "ControlBiobrick": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        }
+    }
+}

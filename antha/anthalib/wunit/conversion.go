@@ -44,7 +44,6 @@ func MasstoVolume(m Mass, d Density) (v Volume) {
 		// work out mass in kg
 		mass = mass / 1000
 	}
-
 	density := d.SIValue()
 	volume := mass / density // in m^3
 	volume = volume * 1000   // in l
@@ -134,5 +133,5 @@ func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Ma
 
 	m = NewMass(float64((targetconc.RawValue()*multiplier)*(totalvol.SIValue()/litre.SIValue())), unit)
 
-	return v
+	return
 }

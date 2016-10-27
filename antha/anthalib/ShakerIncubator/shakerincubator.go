@@ -10,7 +10,7 @@ import (
 )
 
 // Produce driver calls to send to incubator for set up
-func SetUpShakerIncubator(component *wtype.LHComponent, temp wunit.Temperature, device string, rpm float64) ([]driver.Call) {
+func SetPoints(component *wtype.LHComponent, temp wunit.Temperature, device string, rpm float64) ([]driver.Call) {
 	return[]driver.Call{
 		
 		driver.Call{
@@ -48,7 +48,7 @@ func MarkForSetup(component *wtype.LHComponent) execute.HandleOpt {
 }
 
 // Adds step to set up incubator in AnthaOS timeline
-func SetUpIncubator(component *wtype.LHComponent) execute.HandleOpt {
+func SetUp(component *wtype.LHComponent) execute.HandleOpt {
 	return execute.HandleOpt{
 		Label:     "setup incubator",
 		Component: component,

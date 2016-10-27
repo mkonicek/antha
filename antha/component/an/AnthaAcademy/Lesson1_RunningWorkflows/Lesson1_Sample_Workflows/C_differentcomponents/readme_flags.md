@@ -1,4 +1,4 @@
-Other antharun flags:
+### Other antharun flags:
 
 
 antharun --parameters --workflow
@@ -9,7 +9,7 @@ If these files are named differently you’ll need to use the --parameters and/o
 1.
 To run the parameters found in this folder you'll need to run this:
 
-antharun --parameters parameters.json --myamazingworkflow.json
+antharun --parameters parameters.json --workflow myamazingworkflow.json
 
 _____________
 

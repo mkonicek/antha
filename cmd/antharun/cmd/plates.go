@@ -44,10 +44,12 @@ func lhPlates(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 
 	cs := factory.GetPlateList()
+	
+	//inv := factory.GetPlateLibrary()
 
 	switch viper.GetString("output") {
 	case jsonOutput:
-		if bs, err := json.Marshal(cs); err != nil {
+		if bs, err := json.MarshalIndent(cs, "", "\t"); err != nil {
 			return err
 		} else {
 			_, err = fmt.Println(string(bs))

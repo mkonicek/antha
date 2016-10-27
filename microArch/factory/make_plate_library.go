@@ -24,10 +24,13 @@ package factory
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 //var commonwelltypes
@@ -700,14 +703,30 @@ func MakeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 //  plate = wtype.LHPlate("EPAGE48", "Invitrogen", 2, 26, height, "mm", welltype, 9, 22, 0.0, 0.0, 50.0)
 //	plates[plate.Type] = plate
 
-func GetPlateByType(typ string) *wtype.LHPlate {
-	plates := makePlateLibrary()
-	p := plates[typ]
+type PlateInventory struct {
+	inv map[string]*wtype.LHPlate
+}
 
-	if p != nil {
-		//fmt.Println("can't dup plate nil, plate name", typ)
-	} else {
-		//fmt.Println("plate type", typ, "found in factory")
+var defaultPlateInventory *PlateInventory
+
+func init() {
+	defaultPlateInventory = &PlateInventory{
+		inv: makePlateLibrary(),
+	}
+}
+
+func AddPlate(name string, p *wtype.LHPlate) error {
+	return errors.New("tbd")
+}
+func GetPlateByType(typ string) *wtype.LHPlate {
+	return defaultPlateInventory.GetPlateByType(typ)
+}
+
+func (i *PlateInventory) GetPlateByType(typ string) *wtype.LHPlate {
+	p, ok := i.inv[typ]
+	if !ok {
+		logger.Fatal(fmt.Sprintf("Plate %s not found", typ))
+		panic(fmt.Errorf("Plate %s not found", typ)) //TODO refactor to errors
 	}
 	return p.Dup()
 }
@@ -722,4 +741,9 @@ func GetPlateList() []string {
 		x += 1
 	}
 	return kz
+}
+
+func GetPlateLibrary() map[string]*wtype.LHPlate {
+
+	return defaultPlateInventory.inv
 }

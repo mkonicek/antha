@@ -46,7 +46,7 @@
 	  	"OutputLocation": 			"A1",
 		"RecoveryTemp": 			"37C",
 	  	"RecoveryTime":				"2h",
-	  	"TransformationVolume": 	"1ul",
+	  	"TransformationVolume": 	"2ul",
 	  	"PostPlasmidTemp": 			"2C",
 	  	"PostPlasmidTime": 			"5min",
 	  	"CompetentCellTransferVolume": "21ul"
@@ -97,7 +97,7 @@
 	  	"OutputLocation": 			"B1",
 		"RecoveryTemp": 			"37C",
 	  	"RecoveryTime":				"2h",
-	  	"TransformationVolume": 	"1ul",
+	  	"TransformationVolume": 	"2ul",
 	  	"PostPlasmidTemp": 			"2C",
 	  	"PostPlasmidTime": 			"5min",
 	  	"CompetentCellTransferVolume": "21ul"
@@ -148,7 +148,7 @@
 	  	"OutputLocation": 			"C1",
 		"RecoveryTemp": 			"37C",
 	  	"RecoveryTime":				"2h",
-	  	"TransformationVolume": 	"1ul",
+	  	"TransformationVolume": 	"2ul",
 	  	"PostPlasmidTemp": 			"2C",
 	  	"PostPlasmidTime": 			"5min",
 	  	"CompetentCellTransferVolume": "21ul"
@@ -200,7 +200,7 @@
 	  	"OutputLocation": 			"D1",
 		"RecoveryTemp": 			"37C",
 	  	"RecoveryTime":				"2h",
-	  	"TransformationVolume": 	"1ul",
+	  	"TransformationVolume": 	"2ul",
 	  	"PostPlasmidTemp": 			"2C",
 	  	"PostPlasmidTime": 			"5min",
 	  	"CompetentCellTransferVolume": "21ul"
@@ -253,7 +253,7 @@
 	  	"OutputLocation": 			"E1",
 		"RecoveryTemp": 			"37C",
 	  	"RecoveryTime":				"2h",
-	  	"TransformationVolume": 	"1ul",
+	  	"TransformationVolume": 	"2ul",
 	  	"PostPlasmidTemp": 			"2C",
 	  	"PostPlasmidTime": 			"5min",
 	  	"CompetentCellTransferVolume": "21ul"
@@ -299,7 +299,7 @@
 	  	"OutputLocation": 			"F1",
 		"RecoveryTemp": 			"37C",
 	  	"RecoveryTime":				"2h",
-	  	"TransformationVolume": 	"1ul",
+	  	"TransformationVolume": 	"2ul",
 	  	"PostPlasmidTemp": 			"2C",
 	  	"PostPlasmidTime": 			"5min",
 	  	"CompetentCellTransferVolume": "21ul"
@@ -345,7 +345,7 @@
 	  	"OutputLocation": 			"G1",
 		"RecoveryTemp": 			"37C",
 	  	"RecoveryTime":				"2h",
-	  	"TransformationVolume": 	"1ul",
+	  	"TransformationVolume": 	"2ul",
 	  	"PostPlasmidTemp": 			"2C",
 	  	"PostPlasmidTime": 			"5min",
 	  	"CompetentCellTransferVolume": "21ul"

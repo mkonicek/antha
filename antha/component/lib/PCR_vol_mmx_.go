@@ -11,18 +11,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-/*type Polymerase struct {
-	wtype.LHComponent
-	Rate_BPpers float64
-	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
-	Extensiontemp Temperature
-	Hotstart bool
-	StockConcentration Concentration // this is normally in U?
-	TargetConcentration Concentration
-	// this is also a glycerol solution rather than a watersolution!
-}
-*/
-
 // Input parameters for this protocol (data)
 
 // PCRprep parameters:
@@ -286,3 +274,15 @@ func init() {
 		panic(err)
 	}
 }
+
+/*type Polymerase struct {
+	wtype.LHComponent
+	Rate_BPpers float64
+	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
+	Extensiontemp Temperature
+	Hotstart bool
+	StockConcentration Concentration // this is normally in U?
+	TargetConcentration Concentration
+	// this is also a glycerol solution rather than a watersolution!
+}
+*/

@@ -1,0 +1,14 @@
+{
+    "Parameters": {
+        "StockBuffer": {
+            "Molecule": "X-Glucuro",
+            "TargetConc": "100mg/ml",
+            "MoleculeDensity": "1000kg/m^3",
+            "Diluent":"DMSO",
+            "Vessel":"1L_DuranBottle",
+            "TotalVolume": "10ml",
+            "ExtraInstructions":["Aliquot and Store away from light"],
+            "StorageTemperature":"-20C"
+        }
+    }
+}

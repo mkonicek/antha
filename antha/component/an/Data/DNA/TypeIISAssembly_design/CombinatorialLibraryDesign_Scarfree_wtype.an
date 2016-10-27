@@ -13,6 +13,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
 	"path/filepath"
 	"strconv"
+	"fmt"
 )
 
 // Input parameters for this protocol (data)
@@ -28,8 +29,8 @@ Parameters (
 	BlastSearchSeqs				bool
 	EndsAlreadyadded 			bool
 	RemoveproblemRestrictionSites bool
-	FolderPerConstruct		bool
-	FolderPerProject			bool
+	FolderPerConstruct			bool
+	FolderPerProject				bool
 )
 
 // Physical Inputs to this protocol with types
@@ -144,9 +145,11 @@ Steps {
 		
 		// add fasta files of all parts with overhangs 
 		labels:= []string{"Device1","Device2","Device3"}
+		for j := range labels {
 		for i := range Parts{
-	
-		export.Makefastaserial2(export.LOCAL,filepath.Join(ProjectName,labels[i]), Parts[i])
+		fmt.Println(i,len(labels),len(Parts))
+		export.Makefastaserial2(export.LOCAL,filepath.Join(ProjectName,labels[j]), Parts[i])
+		}
 		}
 	}
 	

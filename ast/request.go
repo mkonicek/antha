@@ -1,7 +1,5 @@
 package ast
 
-import "fmt"
-
 // TODO make more specific
 type Location interface{}
 
@@ -10,54 +8,92 @@ type Movement struct {
 	To   Location
 }
 
-type Request struct {
-	MixVol *Interval
-	Temp   *Interval
-	Time   *Interval
-	Move   []Movement
-	Manual bool
+type NameValue struct {
+	Name  string
+	Value string
 }
 
-func (a Request) String() string {
-	var r []string
-	if a.MixVol != nil {
-		a, b := a.MixVol.Extrema()
-		r = append(r, fmt.Sprintf("mix %fl %fl", a, b))
+type Request struct {
+	MixVol   *Interval
+	Temp     *Interval
+	Time     *Interval
+	Move     []Movement
+	Selector []NameValue
+}
+
+func makeMovementMap(vs []Movement) map[interface{}]int {
+	m := make(map[interface{}]int)
+	for _, v := range vs {
+		m[v] += 1
 	}
-	if a.Temp != nil {
-		a, b := a.Temp.Extrema()
-		r = append(r, fmt.Sprintf("hold %fC %fC", a, b))
+	return m
+}
+
+func makeNameValueMap(vs []NameValue) map[interface{}]int {
+	m := make(map[interface{}]int)
+	for _, v := range vs {
+		m[v] += 1
 	}
-	if a.Time != nil {
-		a, b := a.Time.Extrema()
-		r = append(r, fmt.Sprintf("hold %fs %fs", a, b))
+	return m
+}
+
+func mapContains(a, b map[interface{}]int) bool {
+	for k, v := range b {
+		if v > a[k] {
+			return false
+		}
 	}
-	for _, m := range a.Move {
-		r = append(r, fmt.Sprintf("move %s %s", m.From, m.To))
+	return true
+}
+
+// A >= B?
+func (reqA Request) Contains(reqB Request) bool {
+	if !reqA.MixVol.Contains(reqB.MixVol) {
+		return false
 	}
-	if a.Manual {
-		r = append(r, "manual")
+	if !reqA.Temp.Contains(reqB.Temp) {
+		return false
 	}
-	return fmt.Sprint(r)
+	if !reqA.Time.Contains(reqB.Time) {
+		return false
+	}
+	if !mapContains(makeMovementMap(reqA.Move), makeMovementMap(reqB.Move)) {
+		return false
+	}
+	if !mapContains(makeNameValueMap(reqA.Selector), makeNameValueMap(reqB.Selector)) {
+		return false
+	}
+	return true
 }
 
 // Compute greatest lower bound of a set of requests
-func Meet(reqs []Request) (req Request) {
-	meetI := func(dst **Interval, src *Interval) {
-		if *dst == nil {
-			*dst = src
-		} else if src != nil {
-			(*dst).Add(*src)
-		}
-	}
+func Meet(reqs ...Request) (req Request) {
 	for _, r := range reqs {
-		meetI(&req.MixVol, r.MixVol)
-		meetI(&req.Temp, r.Temp)
-		meetI(&req.Time, r.Time)
+		req.MixVol = req.MixVol.Meet(r.MixVol)
+		req.Temp = req.Temp.Meet(r.Temp)
+		req.Time = req.Time.Meet(r.Time)
 		req.Move = append(req.Move, r.Move...)
-		if !req.Manual && r.Manual {
-			req.Manual = r.Manual
-		}
+		req.Selector = append(req.Selector, r.Selector...)
 	}
 	return
+}
+
+// Checks if the non-zero fields of A are a subset of the non-zero fields of B.
+func (reqA Request) Matches(reqB Request) bool {
+	if reqA.MixVol != nil && reqB.MixVol == nil {
+		return false
+	}
+	if reqA.Temp != nil && reqB.Temp == nil {
+		return false
+	}
+	if reqA.Time != nil && reqB.Time == nil {
+		return false
+	}
+	if len(reqA.Move) != 0 && len(reqB.Move) == 0 {
+		return false
+	}
+	if len(reqA.Selector) != 0 && len(reqB.Selector) == 0 {
+		return false
+	}
+	return true
 }

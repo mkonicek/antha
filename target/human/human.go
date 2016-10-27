@@ -22,20 +22,32 @@ type Human struct {
 }
 
 func (a *Human) CanCompile(req ast.Request) bool {
-	canMove := true
-	mov := len(req.Move) > 0
-	mix := req.MixVol != nil
-	inc := req.Temp != nil || req.Time != nil
+	can := ast.Request{
+		Move: req.Move,
+		Selector: []ast.NameValue{
+			ast.NameValue{
+				// TODO: Remove hard coded strings
+				Name:  "antha.driver.v1.TypeReply.type",
+				Value: "antha.human.v1.Human",
+			},
+		},
+	}
+	if a.opt.CanMix {
+		can.MixVol = req.MixVol
+	}
+	if a.opt.CanIncubate {
+		can.Temp = req.Temp
+		can.Time = req.Time
+	}
+	if a.opt.CanHandle {
+		can.Selector = req.Selector
+	}
 
-	switch {
-	case !canMove && mov:
-		return false
-	case !a.opt.CanMix && mix:
-		return false
-	case !a.opt.CanIncubate && inc:
+	if !req.Matches(can) {
 		return false
 	}
-	return true
+
+	return can.Contains(req)
 }
 
 func (a *Human) MoveCost(from target.Device) int {
@@ -84,7 +96,7 @@ func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 	for len(dag.Roots) > 0 {
 		var next []graph.Node
 		// Gather
-		same := make(map[interface{}][]graph.Node)
+		same := make(map[interface{}][]ast.Node)
 		for _, r := range dag.Roots {
 			n := r.(ast.Node)
 			key := getKey(n)
@@ -95,7 +107,7 @@ func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 		for _, nodes := range same {
 			var ins []*target.Manual
 			for _, n := range nodes {
-				in, err := a.makeInst(n.(ast.Node))
+				in, err := a.makeInst(n)
 				if err != nil {
 					return nil, err
 				}
@@ -105,7 +117,7 @@ func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 			insts = append(insts, in)
 
 			for _, n := range nodes {
-				inst[n.(ast.Node)] = in
+				inst[n] = in
 			}
 		}
 
@@ -132,6 +144,7 @@ func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 type Opt struct {
 	CanMix      bool
 	CanIncubate bool
+	CanHandle   bool
 }
 
 func New(opt Opt) *Human {

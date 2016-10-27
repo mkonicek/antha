@@ -1,7 +1,7 @@
 {
     "Parameters": {
         "AliquotParams": {
-            "NumberofAliquots": 160,
+            "NumberofAliquots": 3,
             "OutPlate": "nunc1536_riser",
             "Solutions": [
 			"water",

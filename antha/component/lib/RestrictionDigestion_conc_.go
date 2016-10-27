@@ -49,7 +49,12 @@ func _RestrictionDigestion_concSteps(_ctx context.Context, _input *RestrictionDi
 	_input.DNASolution.CName = _input.DNAName
 
 	// work out necessary volume to add
-	DNAVol := wunit.VolumeForTargetMass(_input.DNAMassperReaction, _input.DNAConc) //NewVolume(float64((DNAMassperReaction.SIValue()/DNAConc.SIValue())),"l")
+	DNAVol, err := wunit.VolumeForTargetMass(_input.DNAMassperReaction, _input.DNAConc) //NewVolume(float64((DNAMassperReaction.SIValue()/DNAConc.SIValue())),"l")
+
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
+
 	statii = append(statii, fmt.Sprintln("DNA MAss to Volume conversion:", _input.DNAMassperReaction.SIValue(), _input.DNAConc.SIValue(), float64((_input.DNAMassperReaction.SIValue()/_input.DNAConc.SIValue())), "DNAVol =", DNAVol.SIValue()))
 	statii = append(statii, fmt.Sprintln("DNAVOL", DNAVol.ToString()))
 	dnaSample := mixer.Sample(_input.DNASolution, DNAVol)

@@ -1,0 +1,13 @@
+{
+    "processes": {
+        "4partcomet": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform"
+        },
+        "3partmcherry": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform"
+        },
+        "5partTinsel": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform"
+        }
+    }
+}

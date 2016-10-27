@@ -50,6 +50,18 @@ func LoadLHPoliciesFrom(filename string) *LHPolicyRuleSet {
 // this structure defines parameters
 type LHPolicy map[string]interface{}
 
+func (lhp LHPolicy) List() (namevaluepairs []string, names []string, values []string) {
+	namevaluepairs = make([]string, 0)
+	names = make([]string, 0)
+	values = make([]string, 0)
+	for key, value := range lhp {
+		namevaluepairs = append(namevaluepairs, key+": "+fmt.Sprintln(value))
+		names = append(names, key)
+		values = append(values, fmt.Sprintln(value))
+	}
+	return
+}
+
 func DupLHPolicy(in LHPolicy) LHPolicy {
 	ret := make(LHPolicy, len(in))
 
@@ -320,7 +332,16 @@ func (s sortableRules) Len() int {
 }
 
 func (s sortableRules) Less(i, j int) bool {
-	return s[i].Priority < s[j].Priority
+	if s[i].Priority != s[j].Priority {
+		// (numerically) highest priority wins
+		return s[i].Priority < s[j].Priority
+	} else if len(s[i].Conditions) != len(s[j].Conditions) {
+		// most conditions wins
+		return len(s[i].Conditions) < len(s[j].Conditions)
+	} else {
+		// longest name wins
+		return len(s[i].Name) < len(s[j].Name)
+	}
 }
 
 func (s sortableRules) Swap(i, j int) {

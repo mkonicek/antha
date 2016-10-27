@@ -8,7 +8,7 @@ service Runner {
   // Run a blob
   rpc Run(RunRequest) returns (RunReply);
   // Run a blob identified by reference
-  //rpc RunRef(RunRefRequest) returns (RunReply);
+  rpc RunRef(RunRefRequest) returns (RunReply);
   // Messages from run (call repeatedly to get more messages)
   rpc Messages(MessagesRequest) returns (MessagesReply);
   // Types of files that can be run

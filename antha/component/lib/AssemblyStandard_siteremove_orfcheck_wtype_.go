@@ -75,7 +75,11 @@ func _AssemblyStandard_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _inp
 	// export this as data output
 	_output.OriginalParts = partsinorder
 	// check parts for restriction sites first and remove if the user has chosen to
-	enz := enzymes.Enzymelookup[_input.AssemblyStandard][_input.Level]
+	enz, found := enzymes.Enzymelookup[_input.AssemblyStandard][_input.Level]
+
+	if !found {
+		execute.Errorf(_ctx, "AssemblyStandard ", _input.AssemblyStandard, " level ", _input.Level, " not found")
+	}
 
 	// get properties of other enzyme sites to remove
 	removetheseenzymes := make([]wtype.RestrictionEnzyme, 0)

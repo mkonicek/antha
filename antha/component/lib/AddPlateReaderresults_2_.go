@@ -168,6 +168,10 @@ func _AddPlateReaderresults_2Steps(_ctx context.Context, _input *AddPlateReaderr
 
 			vol, err := strconv.ParseFloat(strings.TrimSpace(volandunit[0]), 64)
 
+			if err != nil {
+				execute.Errorf(_ctx, err.Error())
+			}
+
 			experimentalvolume := wunit.NewVolume(vol, strings.TrimSpace(volandunit[1]))
 
 			actualconcentrations[experimentalvolume.ToString()] = buffers.DiluteBasedonMolecularWeight(Molecularweight, _input.StockconcinMperL, experimentalvolume, _input.Diluent.CName, wunit.NewVolume(_input.Stockvol.RawValue()-experimentalvolume.RawValue(), "ul"))
@@ -370,9 +374,12 @@ func _AddPlateReaderresults_2Analysis(_ctx context.Context, _input *AddPlateRead
 	_output.R2, _output.Variance, _output.Formula = plot.Rsquared("Expected Conc", xvalues, "Actual Conc", yvalues)
 	//run.AddResponseValue("R2", rsquared)
 
-	xygraph := plot.Plot(xvalues, [][]float64{yvalues})
+	xygraph, err := plot.Plot(xvalues, [][]float64{yvalues})
+	if err != nil {
+		_output.Errors = append(_output.Errors, err.Error())
+	}
 	filenameandextension := strings.Split(_input.OutputFilename, ".")
-	plot.Export(xygraph, filenameandextension[0]+"_plot"+".png")
+	plot.Export(xygraph, "10cm", "10cm", filenameandextension[0]+"_plot"+".png")
 
 	// reset
 	xvalues = make([]float64, 0)
@@ -423,9 +430,13 @@ func _AddPlateReaderresults_2Analysis(_ctx context.Context, _input *AddPlateRead
 	_output.R2_CorrectnessFactor, _, _ = plot.Rsquared("Expected Conc", xvalues, "Correctness Factor", yvalues)
 	//run.AddResponseValue("R2", rsquared)
 
-	correctnessgraph := plot.Plot(xvalues, [][]float64{yvalues})
+	correctnessgraph, err := plot.Plot(xvalues, [][]float64{yvalues})
 
-	plot.Export(correctnessgraph, filenameandextension[0]+"_correctnessfactor"+".png")
+	if err != nil {
+		_output.Errors = append(_output.Errors, err.Error())
+	}
+
+	plot.Export(correctnessgraph, "10cm", "10cm", filenameandextension[0]+"_correctnessfactor"+".png")
 
 	// reset
 	xvalues = make([]float64, 0)
@@ -472,9 +483,13 @@ func _AddPlateReaderresults_2Analysis(_ctx context.Context, _input *AddPlateRead
 		}
 	}
 
-	runorderconcgraph := plot.Plot(xvalues, [][]float64{yvalues})
+	runorderconcgraph, err := plot.Plot(xvalues, [][]float64{yvalues})
 
-	plot.Export(runorderconcgraph, filenameandextension[0]+"_runorder"+".png")
+	if err != nil {
+		_output.Errors = append(_output.Errors, err.Error())
+	}
+
+	plot.Export(runorderconcgraph, "10cm", "10cm", filenameandextension[0]+"_runorder"+".png")
 
 	// reset
 	xvalues = make([]float64, 0)
@@ -522,9 +537,13 @@ func _AddPlateReaderresults_2Analysis(_ctx context.Context, _input *AddPlateRead
 
 	}
 
-	runordercorrectnessgraph := plot.Plot(xvalues, [][]float64{yvalues})
+	runordercorrectnessgraph, err := plot.Plot(xvalues, [][]float64{yvalues})
 
-	plot.Export(runordercorrectnessgraph, filenameandextension[0]+"_runorder_correctnessfactor"+".png")
+	if err != nil {
+		_output.Errors = append(_output.Errors, err.Error())
+	}
+
+	plot.Export(runordercorrectnessgraph, "10cm", "10cm", filenameandextension[0]+"_runorder_correctnessfactor"+".png")
 
 	// 5. workout CV for each volume
 	replicateactualconcmap := make(map[string][]float64)
@@ -692,9 +711,13 @@ func _AddPlateReaderresults_2Analysis(_ctx context.Context, _input *AddPlateRead
 		_output.R2_CorrectnessFactor, _, _ = plot.Rsquared("Expected Conc", xvalues, "Manual Correctness Factor", yvalues)
 		//run.AddResponseValue("R2", rsquared)
 
-		correctnessgraph := plot.Plot(xvalues, [][]float64{yvalues})
+		correctnessgraph, err := plot.Plot(xvalues, [][]float64{yvalues})
 
-		plot.Export(correctnessgraph, filenameandextension[0]+"_Manualcorrectnessfactor"+".png")
+		if err != nil {
+			_output.Errors = append(_output.Errors, err.Error())
+		}
+
+		plot.Export(correctnessgraph, "10cm", "10cm", filenameandextension[0]+"_Manualcorrectnessfactor"+".png")
 
 	}
 

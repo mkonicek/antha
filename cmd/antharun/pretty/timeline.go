@@ -9,28 +9,10 @@ import (
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/target/auto"
 )
 
-func prettyInst(inst *target.Manual) string {
-	return fmt.Sprintf("[%s] %s", inst.Label, strings.Replace(inst.Details, "\n", "; ", -1))
-}
-
-func summarize(inst target.Inst) (string, error) {
-	switch inst := inst.(type) {
-	case target.RunInst:
-		return fmt.Sprintf("Run file (size: %d)", len(inst.Data().Tarball)), nil
-	case *target.Manual:
-		return prettyInst(inst), nil
-	case *target.Wait:
-		return "", nil
-	case *target.CmpError:
-		return "", fmt.Errorf("Planning error: %s", inst.Error)
-	default:
-		return "", fmt.Errorf("unknown inst %T", inst)
-	}
-}
-
-func Timeline(out io.Writer, result *execute.Result) error {
+func Timeline(out io.Writer, a *auto.Auto, result *execute.Result) error {
 	g := &target.Graph{
 		Insts: result.Insts,
 	}
@@ -42,12 +24,8 @@ func Timeline(out io.Writer, result *execute.Result) error {
 		var next []graph.Node
 		for _, n := range dag.Roots {
 			inst := n.(target.Inst)
-			if s, err := summarize(inst); err != nil {
-				return err
-			} else {
-				lines = append(lines, fmt.Sprintf("    * %s\n", s))
-				next = append(next, dag.Visit(n)...)
-			}
+			lines = append(lines, fmt.Sprintf("    * %s\n", a.Pretty(inst)))
+			next = append(next, dag.Visit(n)...)
 		}
 
 		dag.Roots = next

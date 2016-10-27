@@ -158,7 +158,7 @@ func init() {
 		Constructor: JoinDNASequences_mapNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/AnthaAcademy/Lesson4_DNA/G_JoinSequencePairs.an",
+			Path: "antha/component/an/AnthaAcademy/Lesson6_DNA/G_JoinSequencePairs.an",
 			Params: []component.ParamDesc{
 				{Name: "BlastSeqswithNoName", Desc: "", Kind: "Parameters"},
 				{Name: "Pairs", Desc: "", Kind: "Parameters"},

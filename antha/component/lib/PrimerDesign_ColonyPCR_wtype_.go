@@ -50,7 +50,7 @@ func _PrimerDesign_ColonyPCR_wtypeSteps(_ctx context.Context, _input *PrimerDesi
 	regionstart, regionend, err := oligos.FindPositioninSequence(_input.FullDNASeq, _input.RegionSequence)
 
 	if err != nil {
-		fmt.Println("FindPositioninoligoFail")
+		fmt.Println("FindPositioninoligoFail with ", _input.FullDNASeq.Nm, _input.FullDNASeq.Seq, " and ", _input.RegionSequence.Nm, _input.RegionSequence.Seq)
 		_output.Warnings = err
 		execute.Errorf(_ctx, _output.Warnings.Error())
 	}

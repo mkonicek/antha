@@ -6,6 +6,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/trace"
 )
@@ -52,27 +53,50 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	return inst.Comp
 }
 
-func handle(ctx context.Context, by string, in *wtype.LHComponent) *commandInst {
+func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	st := sampletracker.GetSampleTracker()
+	in := opt.Component
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
 	comp.BlockID = wtype.NewBlockID(getId(ctx))
 	st.UpdateIDOf(in.ID, comp.ID)
+
+	var sels []ast.NameValue
+
+	if len(opt.Selector) == 0 {
+		sels = append(sels, ast.NameValue{
+			Name:  "antha.driver.v1.TypeReply.type",
+			Value: "antha.human.v1.Human",
+		})
+	} else {
+		for n, v := range opt.Selector {
+			sels = append(sels, ast.NameValue{Name: n, Value: v})
+		}
+	}
 
 	return &commandInst{
 		Args: []*wtype.LHComponent{in},
 		Comp: comp,
 		Command: &ast.Command{
 			Inst: &ast.HandleInst{
-				Group: by,
+				Group:    opt.Label,
+				Selector: opt.Selector,
+				Calls:    opt.Calls,
 			},
-			Requests: []ast.Request{ast.Request{Manual: true}},
+			Requests: []ast.Request{ast.Request{Selector: sels}},
 		},
 	}
 }
 
-func Handle(ctx context.Context, by string, in *wtype.LHComponent) *wtype.LHComponent {
-	inst := handle(ctx, by, in)
+type HandleOpt struct {
+	Component *wtype.LHComponent
+	Label     string
+	Selector  map[string]string
+	Calls     []driver.Call
+}
+
+func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
+	inst := handle(ctx, opt)
 	trace.Issue(ctx, inst)
 	return inst.Comp
 }
@@ -93,7 +117,8 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	for i, c := range wtype.CopyComponentArray(inst.Components) {
 		reqs = append(reqs, ast.Request{MixVol: ast.NewPoint(c.Volume().SIValue())})
 		c.Order = i
-		result.MixPreserveTvol(c)
+
+		//result.MixPreserveTvol(c)
 		if c.Generation() > mx {
 			mx = c.Generation()
 		}

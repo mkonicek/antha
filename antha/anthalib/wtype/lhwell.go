@@ -39,6 +39,20 @@ const (
 	LHWBV
 )
 
+func BottomType(well *LHWell) (desc string) {
+
+	if well.Bottom == 0 {
+		desc = "flat bottomed"
+	}
+	if well.Bottom == 1 {
+		desc = "U bottomed"
+	}
+	if well.Bottom == 2 {
+		desc = "V bottomed"
+	}
+	return
+}
+
 // structure representing a well on a microplate - description of a destination
 type LHWell struct {
 	ID        string

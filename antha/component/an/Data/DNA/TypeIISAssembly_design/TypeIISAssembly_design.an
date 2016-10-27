@@ -68,12 +68,16 @@ Steps {
 	/* find sequence data from keyword; looking it up by a given name in an inventory 
 	   or by biobrick ID from iGem parts registry */
 	partsinorder := make([]wtype.DNASequence,0)
-	var partDNA =wtype.DNASequence{"","",false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "",nofeatures}
+	
 	
 	Status = "all parts available"
 	for _, part := range Partsinorder {
 		
+		var partDNA =wtype.DNASequence{"","",false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "",nofeatures}
+		
 		if strings.Contains(part,"BBa_") ==true{
+		
+		fmt.Println("looking in igem registry for: ",part)
 		
 			partDNA.Nm = part
 			partproperties := igem.LookUp([]string{part})
@@ -93,13 +97,15 @@ Steps {
 				
 		}
 		} else {
-		partDNA = Inventory.Partslist[part]
+		var found bool
+		partDNA, found = Inventory.Partslist()[part]
 		
+		 if !found{
+			Status = fmt.Sprintln("part not found in Inventory so element aborted!")
+			Errorf(Status)
+			
 		}
-		
-		if partDNA.Seq == "" || partDNA.Nm == "" {
-		Status = fmt.Sprintln("part not found in Inventory so element aborted!")
-		}
+		} 
 	partsinorder = append(partsinorder,partDNA)
 	}
 
@@ -122,7 +128,7 @@ Steps {
 	
 	
 	// lookup vector sequence
-	vectordata := Inventory.Partslist[Vector]
+	vectordata := Inventory.Partslist()[Vector]
 	
 	//lookup restriction enzyme
 	restrictionenzyme := enzymes.Enzymelookup[AssemblyStandard][Level]
@@ -132,6 +138,7 @@ Steps {
 	//PartswithOverhangs = enzymes.MakeStandardTypeIIsassemblyParts(partsinorder, AssemblyStandard, Level, PartMoClotypesinorder)
 	
 	// OR (2) Add overhangs for scarfree assembly based on part seqeunces only, i.e. no Assembly standard
+	fmt.Println("partsinorder: ",partsinorder)
 	PartswithOverhangs = enzymes.MakeScarfreeCustomTypeIIsassemblyParts(partsinorder, vectordata, restrictionenzyme)
 	
 	// perfrom mock digest to test fragement overhangs (fragments are hidden by using _, )
@@ -167,7 +174,9 @@ Steps {
 	if status == "Yay! this should work" && numberofassemblies == 1 {
 		
 		Simulationpass = true
-	}	
+	}	else {
+		fmt.Println(status)
+	}
 	
 	Warnings = strings.Join(warnings,";")
 	
@@ -192,6 +201,7 @@ Steps {
 	} else {Status = fmt.Sprintln(
 		"Warnings:", Warnings,
 		"Simulationpass=", Simulationpass,
+		"Status: ",status,
 		"Back up parts found (Reported to work!)", BackupParts,
 		"NewDNASequence",NewDNASequence,
 		//"partonewithoverhangs", partonewithoverhangs,

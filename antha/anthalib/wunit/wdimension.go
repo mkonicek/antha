@@ -24,9 +24,10 @@ package wunit
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/microArch/logger"
 	"strings"
 	"time"
+
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // length
@@ -124,11 +125,13 @@ func SubtractVolumes(OriginalVol Volume, subtractvols []Volume) (newvolume Volum
 	// ideally should check these have the same Dimension
 	// need to improve this
 
-	tempvol := OriginalVol
+	tempvol := (CopyVolume(OriginalVol))
+
+	fmt.Println(tempvol)
 
 	for _, vol := range subtractvols {
-		newvolume = NewVolume(tempvol.SIValue()-vol.SIValue(), newvolume.Unit().BaseSISymbol())
-		tempvol = newvolume
+		newvolume = NewVolume(tempvol.RawValue()-vol.RawValue(), tempvol.Unit().PrefixedSymbol())
+		tempvol = (CopyVolume(newvolume))
 	}
 	return
 
@@ -148,6 +151,24 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 	// ideally should check these have the same Dimension
 	// need to improve this
 	newvolume = NewVolume(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// multiply volume
+func MultiplyConcentration(v Concentration, factor float64) (newconc Concentration) {
+	// ideally should check these have the same Dimension
+	// need to improve this
+	newconc = NewConcentration(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// divide volume
+func DivideConcentration(v Concentration, factor float64) (newconc Concentration) {
+	// ideally should check these have the same Dimension
+	// need to improve this
+	newconc = NewConcentration(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
 	return
 
 }
@@ -240,17 +261,39 @@ type Mass struct {
 // make a mass unit
 
 func NewMass(v float64, unit string) (o Mass) {
-	if len(strings.TrimSpace(unit)) == 0 {
-		panic("Can't make masses without unit")
-	}
-	if len(strings.TrimSpace(unit)) == 1 {
-		o = Mass{NewMeasurement(v, "", unit)}
-	}
-	if len(strings.TrimSpace(unit)) > 1 {
 
-		o = Mass{NewPMeasurement(v, unit)}
+	approvedunits := UnitMap["Mass"]
+
+	var approved bool
+	for key, _ := range approvedunits {
+
+		if unit == key {
+			approved = true
+			break
+		}
 	}
 
+	if !approved {
+		panic("Can't make masses with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
+	}
+
+	unitdetails := approvedunits[unit]
+
+	o = Mass{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
+	fmt.Println("NewMass: v: ", v, "unit: ", unit, "mass.ToString():", o.ToString(), "mass.SIValue()", o.SIValue())
+	return
+	/*
+		if len(strings.TrimSpace(unit)) == 0 {
+			panic("Can't make masses without unit")
+		}
+		if len(strings.TrimSpace(unit)) == 1 {
+			o = Mass{NewMeasurement(v, "", unit)}
+		}
+		if len(strings.TrimSpace(unit)) > 1 {
+
+			o = Mass{NewPMeasurement(v, unit)}
+		}
+	*/
 	return //Mass{NewPMeasurement(v, unit)}
 }
 
@@ -361,25 +404,107 @@ type Concentration struct {
 	//MolecularWeight *float64
 }
 
+type Unit struct {
+	Base       string
+	Prefix     string
+	Multiplier float64
+}
+
+var UnitMap = map[string]map[string]Unit{
+	"Concentration": map[string]Unit{
+		"mg/ml":  Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"g/L":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"kg/l":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
+		"kg/L":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
+		"g/l":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"mg/L":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"mg/l":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ng/ul":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"Mol/L":  Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M":      Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/l":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"mM":     Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/L": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+	},
+	"Mass": map[string]Unit{
+		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
+		"ug": Unit{Base: "g", Prefix: "u", Multiplier: 1.0},
+		"mg": Unit{Base: "g", Prefix: "m", Multiplier: 1.0},
+		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
+		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
+	},
+}
+
 // make a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) (o Concentration) {
 
-	if unit == "mg/ml" {
-		unit = "g/l"
+	/*
+		if unit == "mg/ml" {
+			unit = "g/l"
+		} else if unit == "ng/ul" {
+			unit = "mg/l"
+		}
+
+		if len(strings.TrimSpace(unit)) == 0 {
+			panic("Can't make concentration without unit")
+		}
+		if len(strings.TrimSpace(unit)) == 3 {
+			o = Concentration{NewMeasurement(v, "", unit)}
+		}
+		if len(strings.TrimSpace(unit)) > 3 {
+
+			o = Concentration{NewPMeasurement(v, unit)}
+		}
+	*/
+
+	approvedunits := UnitMap["Concentration"]
+
+	var approved bool
+	for key, _ := range approvedunits {
+
+		if unit == key {
+			approved = true
+			break
+		}
+	}
+
+	if !approved {
+		panic("Can't make Concentration of, " + fmt.Sprint(v, unit) + "with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
+	}
+	/*if unit == "g/L" {
+		o = Concentration{NewMeasurement(v, "", "g/l")}
+		fmt.Println(v, unit, o.ToString())
+		return
+	} else if unit == "mg/ml" {
+		o = Concentration{NewMeasurement(v, "", "g/l")}
+		fmt.Println(v, unit, o.ToString())
+		return
+	} else if unit == "mg/L" {
+		o = Concentration{NewMeasurement(v, "m", "g/l")}
+		fmt.Println(v, unit, o.ToString())
+		return
 	} else if unit == "ng/ul" {
-		unit = "mg/l"
-	}
+		o = Concentration{NewMeasurement(v, "m", "g/l")}
+		fmt.Println(v, unit, o.ToString())
+		return
+	}*/
 
-	if len(strings.TrimSpace(unit)) == 0 {
-		panic("Can't make concentration without unit")
-	}
-	if len(strings.TrimSpace(unit)) == 3 {
-		o = Concentration{NewMeasurement(v, "", unit)}
-	}
-	if len(strings.TrimSpace(unit)) > 3 {
+	unitdetails := approvedunits[unit]
 
-		o = Concentration{NewPMeasurement(v, unit)}
-	}
+	o = Concentration{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
+	fmt.Println("NewConcentration: v: ", v, "unit: ", unit, "conc.ToString():", o.ToString(), "conc.SIValue()", o.SIValue())
+	return
+
+	/*	if len(strings.TrimSpace(unit)) == 0 {
+			panic("Can't make concentration without unit")
+		}
+		if len(strings.TrimSpace(unit)) == 3 {
+			o = Concentration{NewMeasurement(v, "", unit)}
+		}
+		if len(strings.TrimSpace(unit)) > 3 {
+
+			o = Concentration{NewPMeasurement(v, unit)}
+		}*/
 
 	return //Mass{NewPMeasurement(v, unit)}
 }
@@ -393,16 +518,26 @@ func (conc *Concentration) GramPerL(molecularweight float64) (conc_g Concentrati
 	if conc.Munit.BaseSISymbol() == "g/l" {
 		conc_g = *conc
 	}
+
+	if conc.Munit.BaseSISymbol() == "kg/l" {
+		conc_g = *conc
+	}
+
 	if conc.Munit.BaseSISymbol() == "M/l" {
-		conc_g = NewConcentration((conc.SIValue() * molecularweight), "M/l")
+		conc_g = NewConcentration((conc.SIValue() * molecularweight), "g/l")
 	}
 	return conc_g
 }
 
 func (conc *Concentration) MolPerL(molecularweight float64) (conc_M Concentration) {
 	if conc.Munit.BaseSISymbol() == "g/l" {
-		conc_M = NewConcentration((conc.SIValue() / molecularweight), "g/l")
+		conc_M = NewConcentration((conc.SIValue() / molecularweight), "M/l")
 	}
+
+	if conc.Munit.BaseSISymbol() == "kg/l" {
+		conc_M = NewConcentration((conc.SIValue() / molecularweight), "M/l")
+	}
+
 	if conc.Munit.BaseSISymbol() == "M/l" {
 		conc_M = *conc
 	}
@@ -490,7 +625,7 @@ func NewRate(v float64, unit string) (r Rate, err error) {
 		return r, nil
 	}
 
-	err = fmt.Errorf(unit, " Not approved time unit. Approved units time are: ", approvedtimeunits)
+	err = fmt.Errorf(unit, " Not approved time unit. Approved units of time are: ", approvedtimeunits)
 	return r, err
 }
 

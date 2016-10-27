@@ -1,27 +1,32 @@
 # Antha Academy - A Directory of Tutorial Experiments
 
-This directory contains lessons meant to teach the user the basics of the Antha Environment. It holds both workflows and elements.
+This directory contains lessons meant to teach the user the basics of the Antha Environment. 
+It holds both workflows and elements.
 
-### Units
 
-Basic unit types and declarations.
+### Running Antha elements & Sampling
 
-### Sampling
-
-How to automate a familiar activity in the lab. Basic Antha commands and concepts.
+How to use the Sample command in Antha as a pre-requisite to performing liquid 
+handling actions. Basic Antha commands and concepts.
 
 ### Mixing, Part 1
 
-Learn about liquid handling from the Antha system.
+Learn about applying the products of the Sample command with the Mix command. 
+
 
 ### Mixing, Part 2
 
 Learn about liquid handling from the Antha system, continued.
 
-### DNA and Databases
+### Units
 
-Use Antha to search for DNA strings and types from online databases.
+Basic unit types and declarations.
+
 
 ### Data Analysis
 
 Use Antha to parse your data and create user-friendly charts and graphs.
+
+### DNA and Databases
+
+Use Antha to search for DNA strings and types from online databases.

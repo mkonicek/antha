@@ -1,0 +1,317 @@
+// Generates instructions to pipette out a defined image onto a defined plate using a defined palette of coloured bacteria
+protocol TransformLivingPalette
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/microArch/factory"
+	"fmt"
+	 "image/color"
+	"strconv"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	VolumePerWell  Volume
+	//InoculationVolume Volume
+	/*AntibioticVolume Volume
+	InducerVolume Volume
+	RepressorVolume Volume*/
+	Imagefilename string
+	Palettename string
+	OnlythisColour string
+	Notthiscolour string
+	UVimage bool
+	Rotate bool
+	AutoRotate bool
+	Subset bool
+	UseLiquidClass string
+	Subsetnames []string
+	//IncTemp Temperature
+	//IncTime Time
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Numberofpixels int
+	UniqueComponents []string
+	
+	// for making a palette of colours in advance
+	Palette color.Palette
+	ColourtoComponentMap map[string]*wtype.LHComponent
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	//InPlate *wtype.LHPlate
+	//Media *wtype.LHComponent
+	/*Antibiotic *wtype.LHComponent
+	Inducer *wtype.LHComponent
+	Repressor *wtype.LHComponent*/
+	ComponentType *wtype.LHComponent
+	OutPlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Pixels			[]*wtype.LHComponent
+	//PaletteColours 	[]*wtype.LHComponent// not used 
+)
+
+Requirements {
+	
+}
+
+// Conditions to run on startup
+Setup {
+	
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	var (
+	ReactionTemp 				Temperature = wunit.NewTemperature(25,"C")
+	ReactionTime					Time = wunit.NewTime(35,"min")
+	CompetentCellPlateWell 		string = ""
+	RecoveryPlateWell 			string = ""
+	RecoveryTemp 				Temperature = wunit.NewTemperature(37.0,"C")
+	RecoveryTime					Time = wunit.NewTime(2.0,"h")
+	TransformationVolume 		Volume  = wunit.NewVolume(2.0,"ul")
+	PostPlasmidTemp 				Temperature = wunit.NewTemperature(2.0,"C")
+	PostPlasmidTime 				Time  = wunit.NewTime(5,"min")
+	CompetentCellTransferVolume 	Volume = wunit.NewVolume(20.0,"ul")
+	RecoveryPlateNumber 			int = 1
+	
+	PlatewithRecoveryMedia		*wtype.LHPlate = factory.GetPlateByType("DSW96_riser40")
+	PlateWithCompetentCells		*wtype.LHPlate = factory.GetPlateByType("pcrplate_with_cooler")
+	)
+	
+	colourtoComponentMap := make(map[string]*wtype.LHComponent)
+	
+	wellpositions := PlateWithCompetentCells.AllWellPositions(wtype.BYCOLUMN)
+	
+	// make sub pallete if necessary
+	var chosencolourpalette color.Palette
+	var err error
+	
+	if Subset {
+		chosencolourpalette = image.MakeSubPallette(Palettename, Subsetnames)
+	}else {
+		chosencolourpalette = image.AvailablePalettes()[Palettename]
+	}
+
+	
+	// resize image to fit dimensions of plate and change each pixel to match closest colour from chosen palette
+	// the output of this is a map of well positions to colours needed
+	
+	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette,Rotate,AutoRotate) 
+	
+	
+	colourtostringmap := image.AvailableComponentmaps()[Palettename]
+	
+	// make additional palette map
+	positiontocolourmap = image.RemoveDuplicatesValuesfromMap(positiontocolourmap)
+	
+	
+	// if the image will be printed using fluorescent proteins, 2 previews will be generated for the image (i) under UV light (ii) under visible light 
+	
+	if UVimage {
+		uvmap := image.AvailableComponentmaps()[Palettename]
+		visiblemap := image.Visibleequivalentmaps()[Palettename]
+		
+		if Subset {
+		uvmap = image.MakeSubMapfromMap(colourtostringmap, Subsetnames)
+		visiblemap = image.MakeSubMapfromMap(colourtostringmap, Subsetnames)
+		}
+		image.PrintFPImagePreview(Imagefilename,OutPlate, Rotate, visiblemap, uvmap)
+	}
+
+	// get components from factory
+	componentmap := make(map[string]*wtype.LHComponent, 0)
+	
+	if Subset {
+	colourtostringmap = image.MakeSubMapfromMap(colourtostringmap, Subsetnames)
+	}
+
+	for colourname, _ := range colourtostringmap {
+
+		componentname := colourtostringmap[colourname]
+
+		// use template component instead
+		var componenttopick *wtype.LHComponent
+		
+		if ComponentType != nil{
+		componenttopick = ComponentType
+		} else { 
+		componenttopick = factory.GetComponentByType("water")
+		}
+		componenttopick.CName = componentname
+
+		componentmap[componentname] = componenttopick
+
+	}
+//	fmt.Println(componentmap)
+
+	solutions := make([]*wtype.LHComponent, 0)
+
+	counter := 0
+	UniqueComponents = make([]string,0)
+
+
+// loop through the position to colour map pipeting the correct coloured protein into each well
+	for _, colour := range positiontocolourmap {
+		
+		//components := make([]*wtype.LHComponent, 0)
+		
+		component := componentmap[colourtostringmap[colour]]
+		
+		// for palette
+		colourindex := chosencolourpalette.Index(colour)
+
+		// make sure liquid class is appropriate for cell culture in case this is not set elsewhere
+		component.Type, err = wtype.LiquidTypeFromString(UseLiquidClass)//wtype.LTCulture
+		
+		if err != nil {
+			panic(err.Error())
+		}
+		
+	//	fmt.Println(image.Colourcomponentmap[colour])
+		
+		// if the option to only print a single colour is not selected then the pipetting actions for all colours (apart from if not this colour is not empty) will follow
+		if OnlythisColour !="" {
+	
+		if image.Colourcomponentmap[colour] == OnlythisColour{
+			
+			UniqueComponents = append(UniqueComponents,component.CName)
+			
+			
+			// set destination wells
+			CompetentCellPlateWell = wellpositions[counter]
+			RecoveryPlateWell = CompetentCellPlateWell
+			
+			counter = counter + 1
+	//		fmt.Println("wells",OnlythisColour, counter)
+		//mediaSample := mixer.SampleForTotalVolume(Media, VolumePerWell)
+		//components = append(components,mediaSample)
+		/*antibioticSample := mixer.Sample(Antibiotic, AntibioticVolume)
+		components = append(components,antibioticSample)
+		repressorSample := mixer.Sample(Repressor, RepressorVolume)
+		components = append(components,repressorSample)
+		inducerSample := mixer.Sample(Inducer, InducerVolume)
+		components = append(components,inducerSample)*/
+		//pixelSample := mixer.Sample(component, VolumePerWell)
+		
+		dnaSample := mixer.Sample(component,TransformationVolume)
+		
+		dnaSample.Type = wtype.LTCulture	
+		
+		Incubate(dnaSample, ReactionTemp, ReactionTime, false)
+		
+	
+		
+		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWell,1,dnaSample)
+		
+		transformation.Type = wtype.LTCulture
+		
+		Incubate(transformation, PostPlasmidTemp, PostPlasmidTime, false)
+		
+		transformationSample := mixer.Sample(transformation,CompetentCellTransferVolume) 
+		
+		solution := MixTo(PlatewithRecoveryMedia.Type,RecoveryPlateWell,RecoveryPlateNumber,transformationSample)
+		
+		Incubate(solution, RecoveryTemp, RecoveryTime, true)
+		//components = append(components,pixelSample)
+		//solution := MixTo(OutPlate.Type, locationkey, 1,pixelSample)
+		
+		solutions = append(solutions, solution /*Incubate(solution,IncTemp,IncTime,true)*/)
+			}
+			
+		}else{
+			if component.CName !=Notthiscolour{
+				
+			UniqueComponents = append(UniqueComponents,component.CName)
+			
+			// set destination wells
+			CompetentCellPlateWell = wellpositions[counter]
+			RecoveryPlateWell = CompetentCellPlateWell
+			
+			counter = counter + 1
+	//		fmt.Println("wells not ",Notthiscolour,counter)
+		//mediaSample := mixer.SampleForTotalVolume(Media, VolumePerWell)
+		//components = append(components,mediaSample)
+		/*antibioticSample := mixer.Sample(Antibiotic, AntibioticVolume)
+		components = append(components,antibioticSample)
+		repressorSample := mixer.Sample(Repressor, RepressorVolume)
+		components = append(components,repressorSample)
+		inducerSample := mixer.Sample(Inducer, InducerVolume)
+		components = append(components,inducerSample)*/
+		
+		component.Type,err = wtype.LiquidTypeFromString(UseLiquidClass)//wtype.LTCulture
+		
+		if err != nil {
+			panic(err.Error())
+		}
+		
+		
+		//pixelSample := mixer.Sample(component, VolumePerWell)
+		//components = append(components,pixelSample)
+		//solution := MixTo(OutPlate.Type, locationkey, 1, pixelSample)
+		
+		dnaSample := mixer.Sample(component,TransformationVolume)
+		
+		dnaSample.Type = wtype.LTCulture	
+		
+		Incubate(dnaSample, ReactionTemp, ReactionTime, false)
+		
+		
+		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWell,1,dnaSample)
+		
+		transformation.Type = wtype.LTCulture
+		
+		Incubate(transformation, PostPlasmidTemp, PostPlasmidTime, false)
+		
+		transformationSample := mixer.Sample(transformation,CompetentCellTransferVolume) 
+		
+		solution := MixTo(PlatewithRecoveryMedia.Type,RecoveryPlateWell,RecoveryPlateNumber,transformationSample)
+		
+		Incubate(solution, RecoveryTemp, RecoveryTime, true)
+		
+		solutions = append(solutions, solution /*Incubate(solution,IncTemp,IncTime,true)*/)
+		colourtoComponentMap[strconv.Itoa(colourindex)] = solution
+		}
+		}
+	}
+
+	UniqueComponents = search.RemoveDuplicates(UniqueComponents)
+	fmt.Println("Unique Components:",UniqueComponents)
+	fmt.Println("number of unique components",len(UniqueComponents))
+	Pixels = solutions
+	Palette = chosencolourpalette
+	ColourtoComponentMap = colourtoComponentMap
+	Numberofpixels = len(Pixels)
+	fmt.Println("Pixels =",Numberofpixels)
+	
+}
+
+
+
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+	
+}
+

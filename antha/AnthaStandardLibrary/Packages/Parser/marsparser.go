@@ -431,6 +431,16 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 								measurement.EWavelength = wavelength
 							}
 
+						} else if strings.Contains(welldata.ReadingType, "(484-8/517.5-9 4)") {
+							measurement.RWavelength = 517
+							measurement.EWavelength = 484
+						} else if strings.Contains(welldata.ReadingType, "(600 2)") {
+							measurement.RWavelength = 600
+							measurement.EWavelength = 600
+							/*} else if strings.Contains(welldata.ReadingType, "(484-8/517.5-9 3)") {
+							measurement.RWavelength = 517
+							measurement.EWavelength = 484
+							*/
 						} else if HeaderContainsWavelength(sheet1, headerrow, j) {
 							if wavelengthrow == 0 && HeaderContainsWavelength(sheet1, headerrow, j) {
 								_, wavelength, err := HeaderWavelength(sheet1, headerrow, j)

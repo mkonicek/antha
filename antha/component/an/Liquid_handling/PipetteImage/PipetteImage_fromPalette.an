@@ -27,6 +27,7 @@ Parameters (
 	AutoRotate bool
 	PosterizeImage bool
 	PosterizeLevels int
+	LiquidType string
 )
 
 // Data which is returned from this protocol, and data types
@@ -59,6 +60,7 @@ Setup {
 // for every input
 Steps {
 	
+	var err error
 	
 	if PosterizeImage{
 		_, Imagefilename = image.Posterize(Imagefilename, PosterizeLevels)
@@ -98,7 +100,11 @@ Steps {
 	//	fmt.Println("Am I a component", component, "key:", colourindex, "from map:", ColourIndextoComponentMap)
 		
 		if componentpresent {
-		component.Type = wtype.LTDISPENSEABOVE//"DoNotMix"
+		component.Type, err = wtype.LiquidTypeFromString(LiquidType)//"DoNotMix"
+		
+		if err != nil {
+			Errorf(err.Error())
+		}
 		
 		//fmt.Println(image.Colourcomponentmap[colour])
 		

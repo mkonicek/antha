@@ -10,7 +10,7 @@
             ],
             "LiquidTypes": ["water","dna_mix"],
             "Startingsolution": "water",
-            "WellsUsedperPlateTypeInorder":[4,4,4]
+            "WellsUsedperOutPlateInorder":[0,0,0]
         }
     }
 }

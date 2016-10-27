@@ -1,0 +1,8 @@
+{
+    "connections": [],
+    "processes": {
+        "newparams": {
+            "component": "PlateTest"
+        }
+    }
+}

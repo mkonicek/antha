@@ -1,0 +1,147 @@
+// Protocol to allow for rapid combinatorial testing of plate, liquid class combinations.
+// Allows testing of effect of liquid handling changes such as offsets and liquid class changes
+// Intended to be run prior to any liquid handling change before accepting pull requests.
+protocol PlateTest
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/microArch/factory"
+	"fmt"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	Liquidname string
+	LiquidVolumes []Volume
+	LiquidTypes []string
+	OutPlates []string
+	WellsUsedperPlateTypeInorder []int
+	
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Status string
+	WellsUsedPostRunPerPlate []int
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Startingsolution *wtype.LHComponent
+	
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	FinalSolutions []*wtype.LHComponent
+	
+)
+
+Requirements {
+	
+}
+
+// Conditions to run on startup
+Setup {
+	
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	// Make slices to fill up later before exporting as outputs
+	FinalSolutions = make([]*wtype.LHComponent,0)
+	WellsUsedPostRunPerPlate = make([]int,0)
+	
+	
+	// Get list of plates to check validity of plate names specified in parameters
+	platelist := factory.GetPlateList()
+	
+	// This if statement ensures that default behaviour should be to assume that
+	// all plates have no wells used if no WellsUsedperPlateTypeInorder []int is specified
+	// in input parameters
+	if WellsUsedperPlateTypeInorder == nil || len(WellsUsedperPlateTypeInorder)==0{
+		WellsUsedperPlateTypeInorder = make([]int,len(OutPlates))
+		for l := range OutPlates {
+			WellsUsedperPlateTypeInorder[l] = 0
+		}
+	}
+	
+	// Range through all plates first 
+	for k := range OutPlates {
+		
+		// get all well positions from the plate
+		wellpositionsarray := factory.GetPlateByType(OutPlates[k]).AllWellPositions(wtype.BYCOLUMN)
+		
+		
+		// Initialise a counter to be equal to the number of wells used for that plate
+		// The counter will be used to select the correct well position
+		// if no well position is specified the scheduler will by default select the next well position
+		// however using the counter gives flexibility to resume from a given well position if  
+		// a plate is already partially filled
+		counter := WellsUsedperPlateTypeInorder[k]
+		
+		// range through different volumes to ensure correct behaviour with different pipette heads
+		// recommended defaults would be "5ul" and "100"
+		for j := range LiquidVolumes {
+			
+			// range through liquid types
+			for i := range LiquidTypes {
+				
+				liquidtypestring, err := wtype.LiquidTypeFromString(LiquidTypes[i])
+				
+				// check liquid type is valid
+				if err != nil {
+					Errorf("Liquid type issue with ", LiquidTypes[i], err.Error())
+				}
+				
+				// change liquid type to that specified in loop
+				Startingsolution.Type = liquidtypestring
+				
+				// sample 
+				sample := mixer.Sample(Startingsolution,LiquidVolumes[j]) 
+				
+				// check validity of plate name; is it in the plate factory?
+				if !search.InSlice(OutPlates[k],platelist){
+					Errorf("No plate ", OutPlates[k], " found in library ", platelist)
+				}
+				
+				// Mix into a plate at next well position, plate name is given as the type of plate
+				finalSolution := MixNamed(OutPlates[k], wellpositionsarray[counter],OutPlates[k],sample)
+				FinalSolutions = append(FinalSolutions,finalSolution)
+	
+			// Append status
+			Status = Status + fmt.Sprintln(LiquidVolumes[j].ToString(), " of ",Liquidname, "Liquid type ", LiquidTypes[i],"was mixed into " + OutPlates[k])
+			
+	
+			// increase counter ready for next instance of loop
+			counter++
+			
+			}
+		}
+		
+		// export wells used once all aspirate and dispenses for a particular plate type
+		// sticking to plate order specified in input parameters
+		WellsUsedPostRunPerPlate = append(WellsUsedPostRunPerPlate,counter)
+		
+	
+	}
+	
+	
+	
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+	
+}

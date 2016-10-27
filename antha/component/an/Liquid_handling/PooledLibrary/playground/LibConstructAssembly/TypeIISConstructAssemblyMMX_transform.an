@@ -83,7 +83,7 @@ Steps {
 		
 		if err != nil {
 //          Errorf("%s: %s", output, err)
-fmt.Println(output)
+		fmt.Println(output)
         }
         if count != 1 {
   //        Errorf("no successful assembly")
@@ -117,6 +117,10 @@ fmt.Println(output)
 
 	dnaSample := mixer.Sample(Reaction,TransformationVolume)
 	
+	//Mix DNA sample with comp cells
+	
+	dnaSample.Type = wtype.LTDNAMIX
+	
 	Incubate(dnaSample, ReactionTemp, ReactionTime, false)
 		
 		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWell,1,dnaSample)
@@ -126,7 +130,7 @@ fmt.Println(output)
 		transformationSample := mixer.Sample(transformation,CompetentCellTransferVolume) 
 		
 		// change liquid type to mix cells with SOC Media
-		transformationSample.Type = LTPostMix
+		transformationSample.Type = wtype.LTPostMix
 		
 		Recovery = MixNamed(PlatewithRecoveryMedia.Type,RecoveryPlateWell,"RecoveryPlate",transformationSample)
 		

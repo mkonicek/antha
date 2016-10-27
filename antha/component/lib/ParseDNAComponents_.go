@@ -205,7 +205,7 @@ func init() {
 		Constructor: ParseDNAComponentsNew,
 		Desc: component.ComponentDesc{
 			Desc: "Example protocol demonstrating the use of the Sample function\n",
-			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/ParseDNAComponents.an",
+			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/PooledPartLibrary/ParseDNAComponents.an",
 			Params: []component.ParamDesc{
 				{Name: "ConcHeader", Desc: "", Kind: "Parameters"},
 				{Name: "NameHeader", Desc: "", Kind: "Parameters"},

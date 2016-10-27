@@ -42,6 +42,7 @@ func _TypeIISConstructAssemblyMMX_forscreenSteps(_ctx context.Context, _input *T
 	})
 	if err != nil {
 		execute.Errorf(_ctx, "%s: %s", output, err)
+		//fmt.Println(output)
 	}
 	if count != 1 {
 		execute.Errorf(_ctx, "no successful assembly")

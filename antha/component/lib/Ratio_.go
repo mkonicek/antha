@@ -195,7 +195,7 @@ func init() {
 		Constructor: RatioNew,
 		Desc: component.ComponentDesc{
 			Desc: "Example protocol demonstrating the use of the Sample function\n",
-			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/ratio.an",
+			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/PooledPartLibrary/ratio.an",
 			Params: []component.ParamDesc{
 				{Name: "Buffer", Desc: "", Kind: "Inputs"},
 				{Name: "Inputtype", Desc: "", Kind: "Inputs"},

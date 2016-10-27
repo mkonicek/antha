@@ -79,6 +79,10 @@ func _TypeIISConstructAssemblyMMX_forscreen_transform_JAJASteps(_ctx context.Con
 
 	dnaSample := mixer.Sample(_output.Reaction, _input.TransformationVolume)
 
+	//Mix DNA sample with comp cells
+
+	dnaSample.Type = wtype.LTDNAMIX
+
 	execute.Incubate(_ctx, dnaSample, _input.ReactionTemp, _input.ReactionTime, false)
 
 	transformation := execute.MixTo(_ctx, _input.PlateWithCompetentCells.Type, _input.CompetentCellPlateWell, 1, dnaSample)
@@ -86,6 +90,9 @@ func _TypeIISConstructAssemblyMMX_forscreen_transform_JAJASteps(_ctx context.Con
 	execute.Incubate(_ctx, transformation, _input.PostPlasmidTemp, _input.PostPlasmidTime, false)
 
 	transformationSample := mixer.Sample(transformation, _input.CompetentCellTransferVolume)
+
+	// change liquid type to mix cells with SOC Media
+	transformationSample.Type = wtype.LTPostMix
 
 	_output.Recovery = execute.MixNamed(_ctx, _input.PlatewithRecoveryMedia.Type, _input.RecoveryPlateWell, "RecoveryPlate", transformationSample)
 

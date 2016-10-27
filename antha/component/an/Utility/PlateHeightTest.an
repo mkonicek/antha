@@ -1,6 +1,8 @@
 // Protocol to allow for rapid combinatorial testing of plate, liquid class combinations.
 // Allows testing of effect of liquid handling changes such as offsets and liquid class changes
 // Intended to be run prior to any liquid handling change before accepting pull requests.
+// The element creates an output csv file which can be filled in by the user to log observed offsets
+// for each condition
 protocol PlateTest
 
 import (
@@ -9,10 +11,18 @@ import (
 	"github.com/antha-lang/antha/microArch/factory"
 	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+
+	"encoding/csv"
+	"os"
+	//"path/filepath"
+	"time"
+
 )
 
 // Input parameters for this protocol (data)
 Parameters (
+
+	TestName string // name of test e.g. branch name, date, name of project; csv file will be named after this
 	Liquidname string
 	LiquidVolumes []Volume
 	LiquidTypes []string
@@ -53,11 +63,32 @@ Setup {
 // for every input
 Steps {
 	
+
+	// prepare header to add data and export csv
+	
+	if TestName == "" {
+		TestName = "PlateHeightTest" +fmt.Sprint(time.Now().Format("20060102150405"))
+	}
+	outputfilename := TestName+".csv"
+	
+	csvfile, err := os.Create(outputfilename)
+	if err != nil {
+		Errorf(err.Error())
+	}
+	
+	defer csvfile.Close()
+	
+	records := make([][]string,0)
+	header := []string{"TestName", "Plate","Liquid name", "Liquid type ","Liquid Volume", "Well ","mm from Bottom of well? ", "Acceptable? "}
+	records = append(records,header)
+	
+	
+
 	// Make slices to fill up later before exporting as outputs
 	FinalSolutions = make([]*wtype.LHComponent,0)
 	WellsUsedPostRunPerPlate = make([]int,0)
 	
-	
+
 	// Get list of plates to check validity of plate names specified in parameters
 	platelist := factory.GetPlateList()
 	
@@ -117,6 +148,10 @@ Steps {
 			// Append status
 			Status = Status + fmt.Sprintln(LiquidVolumes[j].ToString(), " of ",Liquidname, "Liquid type ", LiquidTypes[i],"was mixed into " + OutPlates[k])
 			
+
+			record := []string{TestName,OutPlates[k],Liquidname,LiquidTypes[i],LiquidVolumes[j].ToString(),wellpositionsarray[counter],  "  ","  "}
+			records = append(records, record)
+
 	
 			// increase counter ready for next instance of loop
 			counter++
@@ -131,6 +166,21 @@ Steps {
 	
 	}
 	
+
+	csvwriter := csv.NewWriter(csvfile)
+
+	for _, record := range records {
+
+		err = csvwriter.Write(record)
+
+		if err != nil {
+			Errorf(err.Error())
+		}
+	}
+	csvwriter.Flush()
+
+
+
 	
 	
 }

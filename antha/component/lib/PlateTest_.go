@@ -1,3 +1,6 @@
+// Protocol to allow for rapid combinatorial testing of plate, liquid class combinations.
+// Allows testing of effect of liquid handling changes such as offsets and liquid class changes
+// Intended to be run prior to any liquid handling change before accepting pull requests.
 package lib
 
 import (
@@ -5,15 +8,22 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/microArch/factory"
+
+	"encoding/csv"
+	"os"
+	//"path/filepath"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/component"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/inject"
-	"github.com/antha-lang/antha/microArch/factory"
 	"golang.org/x/net/context"
+	"time"
 )
 
 // Input parameters for this protocol (data)
+
+// name of test e.g. branch name, date, name of project; csv file will be named after this
 
 // Data which is returned from this protocol, and data types
 
@@ -34,12 +44,34 @@ func _PlateTestSetup(_ctx context.Context, _input *PlateTestInput) {
 // for every input
 func _PlateTestSteps(_ctx context.Context, _input *PlateTestInput, _output *PlateTestOutput) {
 
-	_output.FinalSolutions = make([]*wtype.LHComponent, 0)
+	// prepare header to add data and export csv
 
+	if _input.TestName == "" {
+		_input.TestName = "PlateHeightTest" + fmt.Sprint(time.Now().Format("20060102150405"))
+	}
+	outputfilename := _input.TestName + ".csv"
+
+	csvfile, err := os.Create(outputfilename)
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
+
+	defer csvfile.Close()
+
+	records := make([][]string, 0)
+	header := []string{"TestName", "Plate", "Liquid name", "Liquid type ", "Liquid Volume", "Well ", "mm from Bottom of well? ", "Acceptable? "}
+	records = append(records, header)
+
+	// Make slices to fill up later before exporting as outputs
+	_output.FinalSolutions = make([]*wtype.LHComponent, 0)
 	_output.WellsUsedPostRunPerPlate = make([]int, 0)
 
+	// Get list of plates to check validity of plate names specified in parameters
 	platelist := factory.GetPlateList()
 
+	// This if statement ensures that default behaviour should be to assume that
+	// all plates have no wells used if no WellsUsedperPlateTypeInorder []int is specified
+	// in input parameters
 	if _input.WellsUsedperPlateTypeInorder == nil || len(_input.WellsUsedperPlateTypeInorder) == 0 {
 		_input.WellsUsedperPlateTypeInorder = make([]int, len(_input.OutPlates))
 		for l := range _input.OutPlates {
@@ -47,42 +79,77 @@ func _PlateTestSteps(_ctx context.Context, _input *PlateTestInput, _output *Plat
 		}
 	}
 
+	// Range through all plates first
 	for k := range _input.OutPlates {
 
+		// get all well positions from the plate
 		wellpositionsarray := factory.GetPlateByType(_input.OutPlates[k]).AllWellPositions(wtype.BYCOLUMN)
 
+		// Initialise a counter to be equal to the number of wells used for that plate
+		// The counter will be used to select the correct well position
+		// if no well position is specified the scheduler will by default select the next well position
+		// however using the counter gives flexibility to resume from a given well position if
+		// a plate is already partially filled
 		counter := _input.WellsUsedperPlateTypeInorder[k]
 
+		// range through different volumes to ensure correct behaviour with different pipette heads
+		// recommended defaults would be "5ul" and "100"
 		for j := range _input.LiquidVolumes {
+
+			// range through liquid types
 			for i := range _input.LiquidTypes {
 
 				liquidtypestring, err := wtype.LiquidTypeFromString(_input.LiquidTypes[i])
 
+				// check liquid type is valid
 				if err != nil {
 					execute.Errorf(_ctx, "Liquid type issue with ", _input.LiquidTypes[i], err.Error())
 				}
 
+				// change liquid type to that specified in loop
 				_input.Startingsolution.Type = liquidtypestring
 
+				// sample
 				sample := mixer.Sample(_input.Startingsolution, _input.LiquidVolumes[j])
 
+				// check validity of plate name; is it in the plate factory?
 				if !search.InSlice(_input.OutPlates[k], platelist) {
 					execute.Errorf(_ctx, "No plate ", _input.OutPlates[k], " found in library ", platelist)
 				}
 
+				// Mix into a plate at next well position, plate name is given as the type of plate
 				finalSolution := execute.MixNamed(_ctx, _input.OutPlates[k], wellpositionsarray[counter], _input.OutPlates[k], sample)
 				_output.FinalSolutions = append(_output.FinalSolutions, finalSolution)
 
+				// Append status
 				_output.Status = _output.Status + fmt.Sprintln(_input.LiquidVolumes[j].ToString(), " of ", _input.Liquidname, "Liquid type ", _input.LiquidTypes[i], "was mixed into "+_input.OutPlates[k])
 
+				record := []string{_input.TestName, _input.OutPlates[k], _input.Liquidname, _input.LiquidTypes[i], _input.LiquidVolumes[j].ToString(), wellpositionsarray[counter], "  ", "  "}
+				records = append(records, record)
+
+				// increase counter ready for next instance of loop
 				counter++
 
 			}
 		}
 
+		// export wells used once all aspirate and dispenses for a particular plate type
+		// sticking to plate order specified in input parameters
 		_output.WellsUsedPostRunPerPlate = append(_output.WellsUsedPostRunPerPlate, counter)
 
 	}
+
+	csvwriter := csv.NewWriter(csvfile)
+
+	for _, record := range records {
+
+		err = csvwriter.Write(record)
+
+		if err != nil {
+			execute.Errorf(_ctx, err.Error())
+		}
+	}
+	csvwriter.Flush()
 
 }
 
@@ -150,6 +217,7 @@ type PlateTestInput struct {
 	Liquidname                   string
 	OutPlates                    []string
 	Startingsolution             *wtype.LHComponent
+	TestName                     string
 	WellsUsedperPlateTypeInorder []int
 }
 
@@ -173,7 +241,7 @@ func init() {
 	if err := addComponent(component.Component{Name: "PlateTest",
 		Constructor: PlateTestNew,
 		Desc: component.ComponentDesc{
-			Desc: "",
+			Desc: "Protocol to allow for rapid combinatorial testing of plate, liquid class combinations.\nAllows testing of effect of liquid handling changes such as offsets and liquid class changes\nIntended to be run prior to any liquid handling change before accepting pull requests.\n",
 			Path: "antha/component/an/Utility/PlateHeightTest.an",
 			Params: []component.ParamDesc{
 				{Name: "LiquidTypes", Desc: "", Kind: "Parameters"},
@@ -181,6 +249,7 @@ func init() {
 				{Name: "Liquidname", Desc: "", Kind: "Parameters"},
 				{Name: "OutPlates", Desc: "", Kind: "Parameters"},
 				{Name: "Startingsolution", Desc: "", Kind: "Inputs"},
+				{Name: "TestName", Desc: "name of test e.g. branch name, date, name of project; csv file will be named after this\n", Kind: "Parameters"},
 				{Name: "WellsUsedperPlateTypeInorder", Desc: "", Kind: "Parameters"},
 				{Name: "FinalSolutions", Desc: "", Kind: "Outputs"},
 				{Name: "Status", Desc: "", Kind: "Data"},

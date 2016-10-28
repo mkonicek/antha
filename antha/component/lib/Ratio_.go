@@ -98,7 +98,7 @@ func _RatioSteps(_ctx context.Context, _input *RatioInput, _output *RatioOutput)
 
 	// Change liquid class of last sample to mix
 
-	samples[len(samples)-1].Type = LTDNAMIX
+	samples[len(samples)-1].Type = wtype.LTDNAMIX
 
 	_output.PooledLib = execute.MixTo(_ctx, _input.PlateType.Type, wellpositions[counter], 1, samples...)
 

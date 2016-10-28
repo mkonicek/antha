@@ -33,6 +33,7 @@ Parameters (
 	PostPlasmidTime 			Time
 	CompetentCellTransferVolume Volume
 	RecoveryPlateNumber 		int
+	Skip 						bool
 )
 
 // Physical Inputs to this protocol with types
@@ -94,6 +95,7 @@ Steps {
 	waterSample:=mixer.SampleForTotalVolume(Water,ReactionVolume)
 	samples = append(samples, waterSample)
 	
+	if !Skip {
 
 	for k, part := range Parts {
 		part.Type, err = wtype.LiquidTypeFromString(LHPolicyName)
@@ -112,6 +114,9 @@ Steps {
 
 	// ensure the last step is mixed
 	samples[len(samples)-1].Type=wtype.LTDNAMIX
+	
+	
+	}
 	Reaction = MixTo(OutPlate.Type, OutputLocation, OutputPlateNum, samples...)
         Reaction.Extra["label"] = ConstructName
 

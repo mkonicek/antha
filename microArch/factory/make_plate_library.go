@@ -36,7 +36,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plates := make(map[string]*wtype.LHPlate)
 
 	offset := 0.25
-	riserheightinmm := 40.0 - offset
+	riserheightinmm := 41.0 - offset
 	shallowriserheightinmm := 20.0 - offset
 	coolerheight := 16.5
 	pcrtuberack496 := 28.0

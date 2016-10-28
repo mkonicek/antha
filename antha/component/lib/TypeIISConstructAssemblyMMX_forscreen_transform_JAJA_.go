@@ -57,23 +57,27 @@ func _TypeIISConstructAssemblyMMX_forscreen_transform_JAJASteps(_ctx context.Con
 	waterSample := mixer.SampleForTotalVolume(_input.Water, _input.ReactionVolume)
 	samples = append(samples, waterSample)
 
-	for k, part := range _input.Parts {
-		part.Type, err = wtype.LiquidTypeFromString(_input.LHPolicyName)
+	if !_input.Skip {
 
-		if err != nil {
-			execute.Errorf(_ctx, "cannot find liquid type: %s", err)
+		for k, part := range _input.Parts {
+			part.Type, err = wtype.LiquidTypeFromString(_input.LHPolicyName)
+
+			if err != nil {
+				execute.Errorf(_ctx, "cannot find liquid type: %s", err)
+			}
+
+			partSample := mixer.Sample(part, _input.PartVols[k])
+			partSample.CName = _input.PartSeqs[k].Nm
+			samples = append(samples, partSample)
 		}
 
-		partSample := mixer.Sample(part, _input.PartVols[k])
-		partSample.CName = _input.PartSeqs[k].Nm
-		samples = append(samples, partSample)
+		mmxSample := mixer.Sample(_input.MasterMix, _input.MasterMixVolume)
+		samples = append(samples, mmxSample)
+
+		// ensure the last step is mixed
+		samples[len(samples)-1].Type = wtype.LTDNAMIX
+
 	}
-
-	mmxSample := mixer.Sample(_input.MasterMix, _input.MasterMixVolume)
-	samples = append(samples, mmxSample)
-
-	// ensure the last step is mixed
-	samples[len(samples)-1].Type = wtype.LTDNAMIX
 	_output.Reaction = execute.MixTo(_ctx, _input.OutPlate.Type, _input.OutputLocation, _input.OutputPlateNum, samples...)
 	_output.Reaction.Extra["label"] = _output.ConstructName
 
@@ -188,6 +192,7 @@ type TypeIISConstructAssemblyMMX_forscreen_transform_JAJAInput struct {
 	RecoveryPlateWell           string
 	RecoveryTemp                wunit.Temperature
 	RecoveryTime                wunit.Time
+	Skip                        bool
 	TransformationVolume        wunit.Volume
 	Water                       *wtype.LHComponent
 }
@@ -246,6 +251,7 @@ func init() {
 				{Name: "RecoveryPlateWell", Desc: "", Kind: "Parameters"},
 				{Name: "RecoveryTemp", Desc: "", Kind: "Parameters"},
 				{Name: "RecoveryTime", Desc: "", Kind: "Parameters"},
+				{Name: "Skip", Desc: "", Kind: "Parameters"},
 				{Name: "TransformationVolume", Desc: "", Kind: "Parameters"},
 				{Name: "Water", Desc: "", Kind: "Inputs"},
 				{Name: "ConstructName", Desc: "", Kind: "Data"},

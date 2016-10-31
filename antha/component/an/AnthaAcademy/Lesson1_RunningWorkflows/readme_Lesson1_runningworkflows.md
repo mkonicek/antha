@@ -2,10 +2,29 @@
 
 Work your way through the following folders in order.
 
+### Antha elements (.an files)
+The .an files found here show the structure of antha elements. The Parameters and Inputs sections of these files represent the inputs to the element. 
+
+The Data and Outputs represent the outputs. 
+
+The steps block defines how the inputs are converted into outputs. 
+
+Take a look at the three .an files in this folder and read  through the comments. 
+
+### running Antha elements in a workflow
+To run antha elements we need two additional files:
+1. A worflow definition file (showing what elements to run)
+2. A parameters file (showing what specific values to set the input variables to) 
+ 
+This structure is designed to encourage modularity and reusability by ensuring key variables are specified at runtime rather than hardcoded in, to facilitate the rapid wiring up of workflows by allowing outputs to be fed in as inputs to other elements and to enable scalability.
+
+Before running Antha elements
+
+
+
 Each shows two key files, both in json format:
 
-1. A worflow definition file
-2. A parameters file 
+
 
 ### Workflow:
 The workflow file specifies a set of Processes which call Antha elements 
@@ -31,7 +50,7 @@ i.e. the parameters file is used to set the values for the input parameters.
 
 In this example, the parameters for the process sample which uses the Antha element "Sample" are shown like so: 
 ![sample](samplehover.png)
-Here we can see that one output of that process (also called Sample) is wired in as an input into the sampleAll process as the parameter "Solution".
+Here we can see that there are two required inputs for this Process "Solution" and "SampleVolume" and one output of that process (also called "Sample") which is wired in as an input into the sampleAll process as the parameter "Solution".
 
 The parameters to the parallel process "sampleTotal" are shown below: 
 ![sampleTotal](sampleallhover.png)

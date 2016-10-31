@@ -78,6 +78,7 @@ One of the key variables you'll likely want to set are the liquid handling compo
 ## Excercises
 
 1. Define the following:
+
 (a) element
 (b) workflow
 (c) parameters

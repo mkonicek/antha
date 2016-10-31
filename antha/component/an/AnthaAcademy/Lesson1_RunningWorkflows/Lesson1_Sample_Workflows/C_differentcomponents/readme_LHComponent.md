@@ -111,7 +111,7 @@ $GOPATH/src/github.com/antha-lang/antha/microArch/driver/liquidhandling/makelhpo
 
 ## Excercises
 
-1. Check the available plates and change inputPlateType to one of the valid alternatives in the parameters file config section
+1. Check the available plates using ```antharun lhplates``` and change inputPlateType to one of the valid alternatives in the parameters file config section
 
 2. Check the available components and change Solution from water to one of these.
 

@@ -12,10 +12,17 @@ The workflow file specifies a set of Processes which call Antha elements
 (components) which are to be run. 
 This could be: 
 (A) a single element run once 
+
 (B) parallel copies of a single element run in parallel, for example multiple runs of the same protocol for different samples or with different conditions.
+
 (C) multiple different elements run at the same time
+
 (C) multiple elements which may be connected; i.e. one or more outputs (ports) from a source element (src) may feed in as inputs (also ports) into the downstream target element (tgt).
 
+
+The following figure shows the workflow represented by the workflow file in folder (c) showing 4 processes; 2 of which are connected.
+
+![workflowc](sampleall.png)
 
 ### Parameters:
 The parameters file assigns parameters for each of the processes specified in the workflow file

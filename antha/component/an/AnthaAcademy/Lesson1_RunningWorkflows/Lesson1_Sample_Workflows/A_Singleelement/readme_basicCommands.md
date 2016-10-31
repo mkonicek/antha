@@ -30,4 +30,4 @@ You'll need to run anthabuild since the source code is being modified. If you ge
 
 ## Next Steps
 
-Now go to Folder B to see how to run workflows with drivers.
+Now go to [Folder B](../B_parallelruns/readme_drivers.md) to see how to run workflows with drivers.

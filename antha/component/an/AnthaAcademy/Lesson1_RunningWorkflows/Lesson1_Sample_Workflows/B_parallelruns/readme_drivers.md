@@ -81,4 +81,4 @@ Again, the default port is 50051
 
 ## Next Steps
 
-Now go to Folder C to find out about the other configuration options for antharun and a run down of the basics on LHComponents.
+Now go to [Folder C](../C_differentcomponents/readme_flags.md) to find out about the other configuration options for antharun and a run down of the basics on LHComponents.

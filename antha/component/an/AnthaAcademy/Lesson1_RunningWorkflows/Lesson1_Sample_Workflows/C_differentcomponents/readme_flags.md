@@ -53,4 +53,4 @@ An input or output plate type can be specified by adding a config section to the
 1. Check the available plates using ```antharun lhplates``` and change inputPlateType to one of the valid alternatives in the parameters file
 
 ## Next Steps
-open readme_LHComponents.md and continue
+open [readme_LHComponents.md](readme_LHComponent.md) and continue

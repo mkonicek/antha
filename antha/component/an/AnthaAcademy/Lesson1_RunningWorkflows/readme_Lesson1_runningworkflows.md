@@ -85,5 +85,5 @@ One of the key variables you'll likely want to set are the liquid handling compo
 
 ## Next Steps
 
-Now Move to [Folder A](A_Singleelement/readme_basicCommands.md) to find out the basic Antha commands to build an run Antha elements.
+Now Move to [Folder A](Lesson1_Sample_Workflows/A_Singleelement/readme_basicCommands.md) to find out the basic Antha commands to build an run Antha elements.
 

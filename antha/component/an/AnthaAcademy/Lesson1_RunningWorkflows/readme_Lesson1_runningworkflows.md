@@ -1,35 +1,49 @@
 ## Lesson 1: Key Concepts
 
-Work your way through the following folders in order.
+This tutorial will teach you the basics you need to start running and writing Antha protocols. 
+
+Antha is a domain specific progrmaming language for biology built atop the go programming language. Many of the core concepts in go also apply in Antha so If you're not familiar with the concepts of programming and have time we highly recommend checking out chapters 1 to 8 of the [golang book](https://www.golang-book.com/books/intro/1).
+
+Here're the core concepts of how to run your first Antha programme:
 
 ### Antha elements (.an files)
-The .an files found here show the structure of antha elements. The Parameters and Inputs sections of these files represent the inputs to the element. 
+Antha elements are the building blocks from which we assemble experimental workflows in Antha. 
+The .an files found here show the structure of antha elements. 
+
+```go
+inputs
+``` 
+
+The Parameters and Inputs sections of these files represent the inputs to the element. 
+
+
+```go
+outputs
+```
 
 The Data and Outputs represent the outputs. 
 
+```go
+steps
+```
+
 The steps block defines how the inputs are converted into outputs. 
 
-Take a look at the three .an files in this folder and read  through the comments. 
+Take a look at the three .an files in order in this folder and read through the comments to follow how the elementare put together. 
 
-### running Antha elements in a workflow
+### Running Antha elements in a workflow
 To run antha elements we need two additional files:
 1. A worflow definition file (showing what elements to run)
 2. A parameters file (showing what specific values to set the input variables to) 
  
 This structure is designed to encourage modularity and reusability by ensuring key variables are specified at runtime rather than hardcoded in, to facilitate the rapid wiring up of workflows by allowing outputs to be fed in as inputs to other elements and to enable scalability.
 
-Before running Antha elements
-
-
-
-Each shows two key files, both in json format:
-
-
 
 ### Workflow:
 The workflow file specifies a set of Processes which call Antha elements 
 (components) which are to be run. 
 This could be: 
+
 (A) a single element run once 
 
 (B) parallel copies of a single element run in parallel, for example multiple runs of the same protocol for different samples or with different conditions.

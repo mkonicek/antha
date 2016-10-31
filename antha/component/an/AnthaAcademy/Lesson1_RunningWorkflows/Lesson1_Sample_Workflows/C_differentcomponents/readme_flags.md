@@ -44,3 +44,13 @@ An input or output plate type can be specified by adding a config section to the
             "greiner384_riser"
         ]
     }
+	
+	
+	
+	
+## Excercises
+
+1. Check the available plates and change inputPlateType to one of the valid alternatives in the parameters file
+
+## Next Steps
+open readme_LHComponents.md and continue

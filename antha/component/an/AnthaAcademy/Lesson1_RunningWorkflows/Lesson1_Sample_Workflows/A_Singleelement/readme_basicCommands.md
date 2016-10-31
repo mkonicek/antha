@@ -22,3 +22,11 @@ if you haven't set up the anthabuild alias you can do so here:
 [https://www.antha-lang.org/docs/academy/install_advanced.html#setting-up-some-aliases-to-your-profile-for-easier-building-and-running-of-protocols](https://www.antha-lang.org/docs/academy/install_advanced.html#setting-up-some-aliases-to-your-profile-for-easier-building-and-running-of-protocols
 )
 
+## Excercises
+
+1. Modify the Sample.an file so that a additional Sample output is created called Sample2; modify the steps so that Sample2 is created in the same way as Sample, with the same Solution input and SolutionVolume.
+You'll need to run anthabuild since the source code is being modified. If you get an error along the way, you'll need to resolve it before being able to run th emodified element.
+
+## Next Steps
+
+Now go to Folder B to see how to run workflows with drivers.

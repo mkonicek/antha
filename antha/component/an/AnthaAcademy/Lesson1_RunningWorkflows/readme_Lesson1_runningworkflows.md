@@ -2,7 +2,7 @@
 
 This tutorial will teach you the basics you need to start running and writing Antha protocols. 
 
-Antha is a domain specific progrmaming language for biology built atop the go programming language. Many of the core concepts in go also apply in Antha so If you're not familiar with the concepts of programming and have time we highly recommend checking out chapters 1 to 8 of the [golang book](https://www.golang-book.com/books/intro/1).
+Antha is a domain specific progrmaming language for biology built atop the [go](golang.org) programming language. Many of the core concepts in go also apply in Antha so if you're not familiar with the concepts of programming we highly recommend checking out chapters 1 to 8 of the [golang book](https://www.golang-book.com/books/intro/1).
 
 Here're the core concepts of how to run your first Antha programme:
 
@@ -29,11 +29,13 @@ steps
 
 The steps block defines how the inputs are converted into outputs. 
 
-Take a look at the three .an files in order in this folder and read through the comments to follow how the elementare put together. 
+Take a look at the three .an files in this folder and read through the comments explaining how the element is put together. 
 
 ### Running Antha elements in a workflow
-To run antha elements we need two additional files:
-1. A worflow definition file (showing what elements to run)
+To run these Antha elements we need two additional files:
+
+1. A workflow definition file (showing what elements to run)
+
 2. A parameters file (showing what specific values to set the input variables to) 
  
 This structure is designed to encourage modularity and reusability by ensuring key variables are specified at runtime rather than hardcoded in, to facilitate the rapid wiring up of workflows by allowing outputs to be fed in as inputs to other elements and to enable scalability.
@@ -44,16 +46,16 @@ The workflow file specifies a set of Processes which call Antha elements
 (components) which are to be run. 
 This could be: 
 
-(A) a single element run once 
+(Folder A) a single element run once.
 
-(B) parallel copies of a single element run in parallel, for example multiple runs of the same protocol for different samples or with different conditions.
+(Folder B) parallel copies of a single element run in parallel, for example multiple runs of the same protocol for different samples or with different conditions.
 
-(C) multiple different elements run at the same time
+(Folder C) multiple different elements run at the same time
 
-(C) multiple elements which may be connected; i.e. one or more outputs (ports) from a source element (src) may feed in as inputs (also ports) into the downstream target element (tgt).
+(Folder C) multiple elements which may be connected; i.e. one or more outputs (ports) from a source element (src) may feed in as inputs (also ports) into the downstream target element (tgt).
 
 
-The following figure shows the workflow represented by the workflow file in folder (c) showing 4 processes; 2 of which are connected (sample and sampleall).
+The following figure shows the workflow represented by the workflow file in folder C showing 4 processes; 2 of which are connected (sample and sampleall).
 
 ![workflowc](sampleall.png)
 
@@ -73,4 +75,14 @@ The example parameters files in these folders show how to set variables specifie
  
 One of the key variables you'll likely want to set are the liquid handling components. (wtype.LHComponent) 
 
+## Excercises
+
+1. Define the following:
+(a) element
+(b) workflow
+(c) parameters
+
+## Next Steps
+
+Now Move to Folder A to find out the basic Antha commands to build an run Antha elements.
 

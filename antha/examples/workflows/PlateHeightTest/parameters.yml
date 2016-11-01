@@ -1,0 +1,16 @@
+{
+    "Parameters": {
+        "newparams": {
+            "LiquidVolumes": ["5ul","100ul"],
+            "Liquidname": "Evian",
+            "OutPlates": [
+            "pcrplate_skirted_riser40",
+            "pcrplate_with_cooler",
+            "greiner384_riser40"
+            ],
+            "LiquidTypes": ["water","dna_mix"],
+            "Startingsolution": "water",
+            "WellsUsedperOutPlateInorder":[0,0,0]
+        }
+    }
+}

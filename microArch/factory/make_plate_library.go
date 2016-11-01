@@ -564,7 +564,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plates[plate.Type] = plate
 
 	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
-	plate = wtype.NewLHPlate("costar48well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, incubatorheightinmm+2.0)
+	plate = wtype.NewLHPlate("costar48well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, incubatorheightinmm)
 	plates[plate.Type] = plate
 	consar = []string{"position_1"}
 	plate.SetConstrained("Pipetmax", consar)
@@ -598,7 +598,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	wellsperrow = 4.0
 	wellspercolumn = 3.0
 
-	zstart = incubatorheightinmm // offset of bottom of deck to bottom of well (this includes agar estimate)
+	zstart = incubatorheightinmm - 5.0 // offset of bottom of deck to bottom of well (this includes agar estimate)
 	welltype = wtype.NewLHWell("falcon12well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 	plate = wtype.NewLHPlate("Nuncon12wellAgar_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 

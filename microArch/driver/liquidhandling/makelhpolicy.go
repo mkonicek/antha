@@ -793,10 +793,10 @@ func MakeLVDNAMixPolicy() LHPolicy {
 
 func MakeHVOffsetPolicy() LHPolicy {
 	lvop := make(LHPolicy, 6)
-	lvop["ASPZOFFSET"] = 3.0
-	lvop["DSPZOFFSET"] = 3.0
-	lvop["POST_MIX_Z"] = 3.0
-	lvop["PRE_MIX_Z"] = 3.0
+	lvop["ASPZOFFSET"] = 1.5
+	lvop["DSPZOFFSET"] = 1.5
+	lvop["POST_MIX_Z"] = 1.5
+	lvop["PRE_MIX_Z"] = 1.5
 	lvop["DSPREFERENCE"] = 0
 	lvop["ASPREFERENCE"] = 0
 	lvop["POST_MIX_RATE"] = 37

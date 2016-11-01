@@ -89,17 +89,13 @@ func NewPrefixedUnit(prefix string, unit string) *GenericPrefixedUnit {
 // get a unit from a string
 
 func ParsePrefixedUnit(unit string) *GenericPrefixedUnit {
-	parser := &SIPrefixedUnitGrammar{Buffer: unit}
-	parser.Init()
+	parser := &SIPrefixedUnitGrammar{}
 	parser.SIPrefixedUnit.Init([]byte(unit))
 
-	if err := parser.Parse(); err != nil {
+	if err := parser.Parse(unit); err != nil {
 		e := errors.New(fmt.Sprintf("cannot parse %s: %s", unit, err.Error()))
-		logger.Fatal(e.Error())
 		panic(e)
 	}
-
-	parser.Execute()
 
 	prefix := ""
 	un := ""

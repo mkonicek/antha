@@ -169,12 +169,14 @@
       "PartVols": [
         "1uL",
         "1uL",
-        "1uL"
+        "1uL",
+		"1ul"
       ],
       "Parts": [
         "dna_part",
         "dna_part",
-        "dna_part"
+        "dna_part",
+		"dna_part"
       ],
       "ReactionTemp": "25C",
       "ReactionTime": "1800s",
@@ -186,10 +188,14 @@
           "seq": ""
         },
         {
-          "jm": "CometFL",
+          "jm": "Comet1",
           "seq": ""
         },
         {
+          "jm": "Comet2",
+          "seq": ""
+        },
+		{
           "jm": "p543-2_SacB",
           "seq": ""
         }
@@ -217,17 +223,19 @@
 	  "PlateWithCompetentCells":"pcrplate_with_cooler",
 	  "PlatewithRecoveryMedia":"pcrplate_skirted_riser",
       "OutputPlateNum": 1,
-      "OutputReactionName":    "ReporterMedium",
-      "OutputConstructName": "ReporterMedium",
+      "OutputReactionName":    "ReporterStrong",
+      "OutputConstructName": "ReporterStrong",
       "PartVols": [
         "1uL",
         "1uL",
-        "1uL"
+        "1uL",
+		"1ul"
       ],
       "Parts": [
         "dna_part",
         "dna_part",
-        "dna_part"
+        "dna_part",
+		"dna_part"
       ],
       "ReactionTemp": "25C",
       "ReactionTime": "1800s",
@@ -239,25 +247,29 @@
           "seq": ""
         },
         {
-          "jm": "CometFL",
+          "jm": "Comet1",
           "seq": ""
         },
         {
+          "jm": "Comet2",
+          "seq": ""
+        },
+		{
           "jm": "p543-2_SacB",
           "seq": ""
         }
       ],
       "Water": "water",
-	  "CompetentCellPlateWell": 	"E1",
-	  	"RecoveryPlateWell": 		"E1",
-	  	"OutputLocation": 			"E1",
+	  "CompetentCellPlateWell": 	"D1",
+	  	"RecoveryPlateWell": 		"D1",
+	  	"OutputLocation": 			"D1",
 		"RecoveryTemp": 			"37C",
 	  	"RecoveryTime":				"2h",
 	  	"TransformationVolume": 	"2ul",
 	  	"PostPlasmidTemp": 			"2C",
 	  	"PostPlasmidTime": 			"5min",
 	  	"CompetentCellTransferVolume": "21ul"
-    },
+    }, 
 	
 	 "ControlSEVA": {
       "InactivationTemp": "40C",

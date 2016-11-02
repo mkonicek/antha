@@ -60,9 +60,7 @@ Steps {
 	// func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	// The function signature  shows that the function requires a *LHComponent and a Volume and returns an *LHComponent	
 	Sample = mixer.Sample(Solution,SampleVolume)
-	
-	Sample = Mix(Sample)
-	
+		
 	// The Sample function is not sufficient to generate liquid handling instructions alone,
 	// We would need a Mix command to instruct where to put the sample
 	

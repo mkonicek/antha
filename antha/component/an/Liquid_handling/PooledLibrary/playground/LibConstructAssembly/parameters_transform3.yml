@@ -1,0 +1,64 @@
+{
+  "Parameters": {
+    "LibAssembly2": {
+      "InactivationTemp": "40C",
+      "InactivationTime": "60s",
+      "LHPolicyName": "dna",
+      "MasterMix": "mastermix_sapI",
+      "MasterMixVolume": "5ul",
+      "OutPlate": "pcrplate_skirted_riser",
+	  "PlateWithCompetentCells":"pcrplate_with_cooler",
+	  "PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+      "OutputPlateNum": 1,
+      "OutputReactionName": "LibAssembly2",
+      "OutputConstructName": "LibAssembly2",
+      "PartVols": [
+        "2uL",
+        "2uL",
+        "1uL"
+      ],
+      "Parts": [
+        "dna_part",
+        "dna_part",
+        "dna_part"
+      ],
+      "ReactionTemp": "25C",
+      "ReactionTime": "1800s",
+      "ReactionVolume": "20ul",
+      "EnzymeName": "sapi",
+      "PartSeqs": [
+        {
+          "jm": "LibORFs",
+          "seq": ""
+        },
+        {
+          "jm": "LibPromoters",
+          "seq": ""
+        },
+        {
+          "jm": "p363-1_RW_DW",
+          "seq": ""
+        }
+      ],
+      "Water": "water",
+	  "CompetentCellPlateWells": 	[
+	"A1",
+	"B1", 
+	"C1", 
+	"D1"
+	],
+	  	"RecoveryPlateWells": 	[
+	"A1", 
+	"B1", 
+	"C1", 
+	"D1"],
+	  	"OutputLocation": 				"A1",
+		"RecoveryTemp": 			"37C",
+	  	"RecoveryTime":				"2h",
+	  	"TransformationVolume": 	"2ul",
+	  	"PostPlasmidTemp": 			"2C",
+	  	"PostPlasmidTime": 			"5min",
+	  	"CompetentCellTransferVolume": "21ul"
+    }
+  }
+}

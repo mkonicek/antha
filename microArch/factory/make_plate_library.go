@@ -468,7 +468,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 48.5, "mm", welltype, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
 	//plate = wtype.NewLHPlate("greiner384", "Unknown", 16, 24, 14, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
-	consar := []string{"position_9"}
+	consar = []string{"position_9"}
 	plate.SetConstrained("Pipetmax", consar)
 
 	plates[plate.Type] = plate

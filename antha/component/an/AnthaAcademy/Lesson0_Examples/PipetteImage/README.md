@@ -1,6 +1,5 @@
 ## Lesson 0: PipetteImage Example
 
-W
 The protocol in this folder will generate instructions to pipette images on microtitre plates. You can run it by typing antharun. 
 
 

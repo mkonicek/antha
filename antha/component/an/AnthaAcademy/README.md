@@ -3,8 +3,13 @@
 This directory contains lessons meant to teach the user the basics of the Antha Environment. 
 It holds both workflows and elements.
 
+go to [Lesson 1](Lesson1_RunningWorkflows/README.md) to  get started
 
-### Running Antha elements & Sampling
+### Running Antha elements
+Get used to running existing antha elements with an Example element for running multiple PCR reactions
+
+
+###  Sampling
 
 How to use the Sample command in Antha as a pre-requisite to performing liquid 
 handling actions. Basic Antha commands and concepts.

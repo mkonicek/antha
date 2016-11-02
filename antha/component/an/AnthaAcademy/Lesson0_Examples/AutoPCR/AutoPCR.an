@@ -16,7 +16,7 @@ Reactiontoprimerpair map[string][2]string // e.g. ["left homology arm"]:"fwdprim
 
 // Data which is returned from this protocol, and data types
 Data (
-	Error error
+	Error error // return an error message if an error is encountered
 )
 
 

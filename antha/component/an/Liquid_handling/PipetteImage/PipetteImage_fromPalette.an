@@ -71,23 +71,7 @@ Steps {
 	
 	image.CheckAllResizealgorithms(Imagefilename,OutPlate,Rotate,imaging.AllResampleFilters)
 
-	
-	/*	
-	// get components from factory
-	componentmap := make(map[string]*wtype.LHComponent, 0)
 
-	colourtostringmap := image.AvailableComponentmaps[Palettename]
-	
-	submap := image.MakeSubMapfromMap(colourtostringmap, availableColours)
-
-	for colourname, _ := range submap {
-
-		componentname := colourtostringmap[colourname]
-
-		componentmap[componentname] = factory.GetComponentByType(componentname)
-
-	}
-*/
 	solutions := make([]*wtype.LHComponent, 0)
 
 	counter := 0
@@ -97,8 +81,7 @@ Steps {
 		colourindex := strconv.Itoa(Palette.Index(colour))
 		
 		component, componentpresent := ColourIndextoComponentMap[colourindex]
-	//	fmt.Println("Am I a component", component, "key:", colourindex, "from map:", ColourIndextoComponentMap)
-		
+
 		if componentpresent {
 		component.Type, err = wtype.LiquidTypeFromString(LiquidType)//"DoNotMix"
 		
@@ -106,13 +89,11 @@ Steps {
 			Errorf(err.Error())
 		}
 		
-		//fmt.Println(image.Colourcomponentmap[colour])
-		
 		if OnlythisColour !="" {
 	
 		if image.Colourcomponentmap[colour] == OnlythisColour{
 			counter = counter + 1
-	//		fmt.Println("wells",counter)
+
 		pixelSample := mixer.Sample(component, VolumePerWell)
 		solution := MixTo(OutPlate.Type, locationkey, 1, pixelSample)
 		solutions = append(solutions, solution)
@@ -121,7 +102,6 @@ Steps {
 		}else{
 			if component.CName != NotthisColour{
 			counter = counter + 1
-	//		fmt.Println("wells",counter)
 		pixelSample := mixer.Sample(component, VolumePerWell)
 		solution := MixTo(OutPlate.Type, locationkey, 1, pixelSample)
 		solutions = append(solutions, solution)

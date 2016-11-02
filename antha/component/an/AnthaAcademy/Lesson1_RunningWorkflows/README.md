@@ -124,6 +124,20 @@ Sample = Mix(Sample)
 
 2. Modify the Status message accordingly
 
+3. Run the following commands in the terminal to run your modified protocol
+
+(a) Compile the changes to the source code:
+
+```bash
+anthabuild
+```
+
+(b) Run protocol using parameters in parameters.yml file
+
+```bash
+antharun
+```
+
 ## Next Steps
 
 Now Move to [workflows](readme_Lesson1_runningworkflows.md) to find out how to use the Antha element in a workflow with real parameters.

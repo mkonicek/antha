@@ -65,7 +65,7 @@ Steps {
 	// We would need a Mix command to instruct where to put the sample
 	
 	// we can also create data outputs as a string like this
-	Status = SampleVolume.ToString() + " of " + Solution.String() + " sampled"
+	Status = SampleVolume.ToString() + " of " + Solution.CName + " sampled"
 	
 }
 // Run after controls and a steps block are completed to

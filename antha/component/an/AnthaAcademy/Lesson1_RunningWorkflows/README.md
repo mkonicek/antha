@@ -29,9 +29,9 @@ import (
 
 
 
-```go
-inputs
-```
+
+### inputs
+
 
 The Parameters and Inputs sections of these files represent the inputs to the element. 
 
@@ -60,9 +60,9 @@ Inputs (
 )
 ```
 
-```go
-outputs
-```
+
+### outputs
+
 
 The Data and Outputs represent the outputs. 
 
@@ -87,9 +87,8 @@ Outputs (
 )
 ```
 
-```go
-steps
-```
+
+### steps
 
 The steps block defines how the inputs are converted into outputs. 
 

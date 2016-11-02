@@ -1,5 +1,5 @@
 // Example protocol demonstrating the use of the Sample function
-protocol Sample
+protocol Sample // this is the name of the protocol that will be called in a workflow or other antha element
 
 // we need to import the wtype package to use the LHComponent type
 // the mixer package is required to use the Sample function
@@ -21,7 +21,9 @@ Parameters (
 
 // Data which is returned from this protocol, and data types
 Data (
-	
+	// Antha inherits all standard primitives valid in golang; 
+	//for example the string type shown here used to return a textual message 
+	Status string
 )
 
 
@@ -36,6 +38,7 @@ Inputs (
 
 // Physical outputs from this protocol with types
 Outputs (
+	// An output LHComponent variable is created called Sample
 	Sample *wtype.LHComponent
 )
 
@@ -60,6 +63,9 @@ Steps {
 	
 	// The Sample function is not sufficient to generate liquid handling instructions alone,
 	// We would need a Mix command to instruct where to put the sample
+	
+	// we can also create data outputs as a string like this
+	Status = SampleVolume.ToString() + " of " + Solution.ToString() + " sampled"
 	
 }
 // Run after controls and a steps block are completed to

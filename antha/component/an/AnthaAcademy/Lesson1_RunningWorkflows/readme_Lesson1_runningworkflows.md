@@ -12,9 +12,24 @@ The .an files found here show the structure of antha elements.
 
 ```go
 inputs
-``` 
+```
 
 The Parameters and Inputs sections of these files represent the inputs to the element. 
+
+
+
+```go
+// Input parameters for this protocol (data)
+Parameters (
+	// antha, like golang is a strongly typed language in which the type of a variable must be declared.
+	// In this case we're creating a variable called SampleVolume which is of type Volume;
+	// the type system allows the antha compiler to catch many types of common errors before the programme is run
+	// the antha type system extends this to biological types such as volumes here.
+	// functions require inputs of particular types to be adhered to
+	SampleVolume Volume 
+)
+```
+
 
 
 ```go
@@ -30,6 +45,10 @@ steps
 The steps block defines how the inputs are converted into outputs. 
 
 Take a look at the three .an files in this folder and read through the comments explaining how the element is put together. 
+
+Here's the first example:
+
+![Example 1](A_Sample.pdf)
 
 ### Running Antha elements in a workflow
 To run these Antha elements we need two additional files:

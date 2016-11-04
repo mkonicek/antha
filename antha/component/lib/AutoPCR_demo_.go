@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/component"
@@ -43,15 +44,23 @@ func _AutoPCR_demoSteps(_ctx context.Context, _input *AutoPCR_demoInput, _output
 	_output.Reactions = make([]*wtype.LHComponent, 0)
 	volumes := make([]wunit.Volume, 0)
 	welllocations := make([]string, 0)
+	// initialise map
+	_output.ReactionMap = make(map[string]*wtype.LHComponent)
 
 	// range through the Reaction to template map
+
 	for reactionname, templatename := range _input.Reactiontotemplate {
 
 		// use counter to find next available well position in plate
-		wellposition := _input.Plate.AllWellPositions(wtype.BYCOLUMN)[counter]
+
+		var allwellpositionsforplate []string
+
+		allwellpositionsforplate = _input.Plate.AllWellPositions(wtype.BYCOLUMN)
+
+		wellposition := allwellpositionsforplate[counter]
 
 		// Run PCR_vol element
-		result := PCR_volRunSteps(_ctx, &PCR_volInput{WaterVolume: wunit.NewVolume(10, "ul"),
+		result := PCR_vol_demoRunSteps(_ctx, &PCR_vol_demoInput{WaterVolume: wunit.NewVolume(10, "ul"),
 			ReactionVolume:        wunit.NewVolume(25, "ul"),
 			BufferConcinX:         5,
 			FwdPrimerName:         _input.Reactiontoprimerpair[reactionname][0],
@@ -61,7 +70,7 @@ func _AutoPCR_demoSteps(_ctx context.Context, _input *AutoPCR_demoInput, _output
 			FwdPrimerVol:          wunit.NewVolume(1, "ul"),
 			RevPrimerVol:          wunit.NewVolume(1, "ul"),
 			AdditiveVols:          []wunit.Volume{wunit.NewVolume(5, "ul")},
-			Templatevolume:        wunit.NewVolume(1, "ul"),
+			Templatevolume:        _input.DefaultTemplateVol,
 			PolymeraseVolume:      wunit.NewVolume(1, "ul"),
 			DNTPVol:               wunit.NewVolume(1, "ul"),
 			Numberofcycles:        30,
@@ -90,13 +99,24 @@ func _AutoPCR_demoSteps(_ctx context.Context, _input *AutoPCR_demoInput, _output
 		_output.Reactions = append(_output.Reactions, result.Outputs.Reaction)
 		volumes = append(volumes, result.Outputs.Reaction.Volume())
 		welllocations = append(welllocations, wellposition)
+		_output.ReactionMap[reactionname] = result.Outputs.Reaction
+
+		if result.Data.Status != "Success" {
+
+			errormessage := "Reaction failure: " + reactionname
+
+			_output.Errors = append(_output.Errors, fmt.Errorf(errormessage))
+
+			execute.Errorf(_ctx, "Oops", errormessage)
+		}
+
 		// increase counter by 1 ready for next iteration of loop
 		counter++
 
 	}
 
 	// once all values of loop have been completed, export the plate contents as a csv file
-	_output.Error = wtype.ExportPlateCSV(_input.Projectname+".csv", _input.Plate, _input.Projectname+"outputPlate", welllocations, _output.Reactions, volumes)
+	_output.Errors = append(_output.Errors, wtype.ExportPlateCSV(_input.Projectname+".csv", _input.Plate, _input.Projectname+"outputPlate", welllocations, _output.Reactions, volumes))
 
 }
 
@@ -158,6 +178,7 @@ type AutoPCR_demoElement struct {
 }
 
 type AutoPCR_demoInput struct {
+	DefaultTemplateVol   wunit.Volume
 	FwdPrimertype        *wtype.LHComponent
 	Plate                *wtype.LHPlate
 	Projectname          string
@@ -168,16 +189,18 @@ type AutoPCR_demoInput struct {
 }
 
 type AutoPCR_demoOutput struct {
-	Error     error
-	Reactions []*wtype.LHComponent
+	Errors      []error
+	ReactionMap map[string]*wtype.LHComponent
+	Reactions   []*wtype.LHComponent
 }
 
 type AutoPCR_demoSOutput struct {
 	Data struct {
-		Error error
+		Errors []error
 	}
 	Outputs struct {
-		Reactions []*wtype.LHComponent
+		ReactionMap map[string]*wtype.LHComponent
+		Reactions   []*wtype.LHComponent
 	}
 }
 
@@ -188,6 +211,7 @@ func init() {
 			Desc: "",
 			Path: "antha/component/an/AnthaAcademy/Lesson0_Examples/AutoPCR/AutoPCR.an",
 			Params: []component.ParamDesc{
+				{Name: "DefaultTemplateVol", Desc: "", Kind: "Parameters"},
 				{Name: "FwdPrimertype", Desc: "", Kind: "Inputs"},
 				{Name: "Plate", Desc: "", Kind: "Inputs"},
 				{Name: "Projectname", Desc: "PCRprep parameters\n", Kind: "Parameters"},
@@ -195,7 +219,8 @@ func init() {
 				{Name: "Reactiontotemplate", Desc: "e.g. [\"left homology arm\"]:\"templatename\"\n", Kind: "Parameters"},
 				{Name: "RevPrimertype", Desc: "", Kind: "Inputs"},
 				{Name: "Templatetype", Desc: "", Kind: "Inputs"},
-				{Name: "Error", Desc: "return an error message if an error is encountered\n", Kind: "Data"},
+				{Name: "Errors", Desc: "return an error message if an error is encountered\n", Kind: "Data"},
+				{Name: "ReactionMap", Desc: "", Kind: "Outputs"},
 				{Name: "Reactions", Desc: "", Kind: "Outputs"},
 			},
 		},

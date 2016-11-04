@@ -134,7 +134,7 @@ Steps {
 	}
 	}
 	
-	// rest samples to zero
+	// reset samples to zero
 	samples = make([]*wtype.LHComponent, 0)
 	
 	// if this is false do stuff inside {}

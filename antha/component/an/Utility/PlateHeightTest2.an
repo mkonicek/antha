@@ -1,0 +1,224 @@
+// Protocol to allow for rapid combinatorial testing of plate, liquid class combinations.
+// Allows testing of effect of liquid handling changes such as offsets and liquid class changes
+// Intended to be run prior to any liquid handling change before accepting pull requests.
+// The element creates an output csv file which can be filled in by the user to log observed offsets
+// for each condition
+protocol PlateTest2
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/microArch/factory"
+	"fmt"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+
+	"encoding/csv"
+	"os"
+	//"path/filepath"
+	"time"
+
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+
+	TestName string // name of test e.g. branch name, date, name of project; csv file will be named after this
+	Liquidnames []string // can be whatever you want to call it
+	LiquidVolumes []Volume // List of volumes to test
+	LiquidTypes []string // corresponding to valid antha liquid types
+	OutPlates []string // list of out plate types to test
+	WellsUsedperOutPlateInorder []int // optional slice of ints which should match the length and order of the OutPlates slice
+	
+	
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Status string
+	WellsUsedPostRunPerPlate []int
+	PlatesUsedPostRunPerPlateType []int
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Startingsolutions []*wtype.LHComponent
+	
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	FinalSolutions []*wtype.LHComponent
+	
+)
+
+Requirements {
+	
+}
+
+// Conditions to run on startup
+Setup {
+	
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+
+	// prepare header to add data and export csv
+	
+	if TestName == "" {
+		TestName = "PlateHeightTest" +fmt.Sprint(time.Now().Format("20060102150405"))
+	}
+	outputfilename := TestName+".csv"
+	
+	csvfile, err := os.Create(outputfilename)
+	if err != nil {
+		Errorf(err.Error())
+	}
+	
+	defer csvfile.Close()
+	
+	records := make([][]string,0)
+	header := []string{"TestName", "Plate","Liquid name", "Liquid type ","Liquid Volume", "Well ","mm from Bottom of well? ", "Acceptable? "}
+	records = append(records,header)
+	
+	
+
+	// Make slices to fill up later before exporting as outputs
+	FinalSolutions = make([]*wtype.LHComponent,0)
+	WellsUsedPostRunPerPlate = make([]int,0)
+	PlatesUsedPostRunPerPlateType = make([]int,0)
+	
+
+	// Get list of plates to check validity of plate names specified in parameters
+	platelist := factory.GetPlateList()
+	
+	// This if statement ensures that default behaviour should be to assume that
+	// all plates have no wells used if no WellsUsedperPlateTypeInorder []int is specified
+	// in input parameters
+	if WellsUsedperOutPlateInorder == nil || len(WellsUsedperOutPlateInorder)==0{
+		WellsUsedperOutPlateInorder = make([]int,len(OutPlates))
+		for l := range OutPlates {
+			WellsUsedperOutPlateInorder[l] = 0
+		}
+	}
+	
+	// Range through all plates first 
+	for k := range OutPlates {
+		
+		// set plate number to 1 to start with
+		var platenumber int = 1
+		
+		// get all well positions from the plate
+		wellpositionsarray := factory.GetPlateByType(OutPlates[k]).AllWellPositions(wtype.BYCOLUMN)
+		
+		
+		// Initialise a counter to be equal to the number of wells used for that plate
+		// The counter will be used to select the correct well position
+		// if no well position is specified the scheduler will by default select the next well position
+		// however using the counter gives flexibility to resume from a given well position if  
+		// a plate is already partially filled
+		counter := WellsUsedperOutPlateInorder[k]
+		
+		// range through different volumes to ensure correct behaviour with different pipette heads
+		// recommended defaults would be "5ul" and "100"
+		for j := range LiquidVolumes {
+			
+			
+		for i, Startingsolution := range Startingsolutions {
+			
+			startingsolutionname := Startingsolution.CName
+			
+			// range through liquid types
+			//for i := range LiquidTypes {
+				
+				liquidtypestring, err := wtype.LiquidTypeFromString(LiquidTypes[i])
+				
+				// check liquid type is valid
+				if err != nil {
+					Errorf("Liquid type issue with ", LiquidTypes[i], err.Error())
+				}
+				
+				Startingsolution.CName = startingsolutionname + "_" +LiquidTypes[i]
+				// change liquid type to that specified in loop
+				Startingsolution.Type = liquidtypestring
+				
+				// sample 
+				sample := mixer.Sample(Startingsolution,LiquidVolumes[j]) 
+				
+				// check validity of plate name; is it in the plate factory?
+				if !search.InSlice(OutPlates[k],platelist){
+					Errorf("No plate ", OutPlates[k], " found in library ", platelist)
+				}
+				
+				// Mix into a plate at next well position, plate name is given as the type of plate + platenumber
+				
+				platename := fmt.Sprint(OutPlates[k],"_Platenumber_",platenumber)
+				
+				finalSolution := MixNamed(OutPlates[k], wellpositionsarray[counter],platename,sample)
+				FinalSolutions = append(FinalSolutions,finalSolution)
+	
+			// Append status
+			Status = Status + fmt.Sprintln(LiquidVolumes[j].ToString(), " of ",Startingsolution.CName, "Liquid type ", LiquidTypes[i],"was mixed into " + OutPlates[k])
+			
+
+			record := []string{TestName,platename,Startingsolution.CName,LiquidTypes[i],LiquidVolumes[j].ToString(),wellpositionsarray[counter],  "  ","  "}
+			records = append(records, record)
+
+			// evaluate whether plate is full and if so add new plate
+			if counter +1 == len(wellpositionsarray) {
+			platenumber++
+			counter=0
+			// else increase counter ready for next instance of loop
+			}else{
+			counter++
+			}
+			
+		//	}
+			
+			}
+		}
+		
+		// export wells used once all aspirate and dispenses for a particular plate type
+		// sticking to plate order specified in input parameters
+		WellsUsedPostRunPerPlate = append(WellsUsedPostRunPerPlate,counter)
+		
+		if counter > 0 {
+		PlatesUsedPostRunPerPlateType = append(PlatesUsedPostRunPerPlateType,platenumber)
+		}else {
+		PlatesUsedPostRunPerPlateType = append(PlatesUsedPostRunPerPlateType,platenumber-1)
+
+		}
+	}
+	
+
+	csvwriter := csv.NewWriter(csvfile)
+
+	for _, record := range records {
+
+		err = csvwriter.Write(record)
+
+		if err != nil {
+			Errorf(err.Error())
+		}
+	}
+	csvwriter.Flush()
+
+
+
+	
+	
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+	
+}

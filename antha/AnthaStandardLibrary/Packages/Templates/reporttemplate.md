@@ -21,16 +21,16 @@
 cd $GOPATH/src/github.com/antha-lang/antha
 
 git fetch 
-git checkout origin/master
+git checkout ***ANTHACOMMIT****
 cd -
 ```
 
 
-2.  branch of Synthace/elements
+2.  branch of antha/elements
 
 
 ```bash
-cd $GOPATH/src/github.com/Synthace/elements
+cd $GOPATH/src/github.com/antha-lang/elements
 git fetch
 git checkout origin/master
 cd -
@@ -42,7 +42,7 @@ cd -
 ```bash
 cd $GOPATH/src/github.com/Synthace/PipetMaxDriver
 git fetch
-git checkout 87b4440863ca30181edef2279af9e93411f42885
+git checkout ***PIPETMAXDRIVERCOMMIT****
 ```
 
 Or
@@ -52,7 +52,7 @@ Or
 ```bash
 cd $GOPATH/src/github.com/Synthace/CybioXMLDriver
 git fetch
-git checkout 0838e814157228144927b3cda42238693a2bdc31
+git checkout ***CYBIODRIVERCOMMIT****
 cd -
 ```
 
@@ -61,16 +61,16 @@ cd -
 4. Build 
 
 ```bash
-cd $GOPATH/src/github.com/Synthace/elements
+cd $GOPATH/src/github.com/antha-lang/antha
 make
-go install -v github.com/Synthace/elements/cmd/...
+go get -v github.com/antha-lang/antha/cmd/...
 cd -
 ```
 
 or
 
 ```
-elementsbuild
+anthabuild
 ```
 
 

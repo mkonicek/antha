@@ -357,7 +357,6 @@ func MakePEGPolicy() LHPolicy {
 	policy["DSPZOFFSET"] = 2.5
 	policy["POST_MIX"] = 3
 	policy["POST_MIX_Z"] = 3.5
-	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUME"] = 50.0
 	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"

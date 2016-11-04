@@ -166,44 +166,40 @@
 			"path": "github.com/golang/freetype",
 			"revision": "38b4c392adc5eed94207994c4848fff99f4ac234",
 			"revisionTime": "2016-06-26T16:51:47+10:00"
-			
 		},
 		{
 			"path": "github.com/golang/freetype/truetype",
 			"revision": "38b4c392adc5eed94207994c4848fff99f4ac234",
 			"revisionTime": "2016-06-26T16:51:47+10:00"
-			
 		},
 		{
 			"path": "github.com/gonum/floats",
 			"revision": "a147620b4ae568fdb3487ad6dc6d3613714b5e7d",
 			"revisionTime": "2015-09-30T11:41:40+09:00"
-			
 		},
 		{
 			"path": "github.com/gonum/internal",
 			"revision": "266f56a1bd90ca9ec520f5e918a683fc00eea8b5",
 			"revisionTime": "2015-08-31T15:28:52+09:30"
-			
 		},
 		{
-			"checksumSHA1": "L3MAOjb/7cFQa5M9XpiCTXQxcvE=",
-			"path": "github.com/gonum/plot/vg",
+			"path": "github.com/gonum/plot",
 			"revision": "986a404a76fa599aed8ce476ec816c82fd9c9c4e",
 			"revisionTime": "2016-06-17T15:34:52-04:00"
 		},
-		{	
+		{
 			"path": "github.com/gonum/plot/plotter",
 			"revision": "986a404a76fa599aed8ce476ec816c82fd9c9c4e",
 			"revisionTime": "2016-06-17T15:34:52-04:00"
 		},
-		{	
+		{
 			"path": "github.com/gonum/plot/plotutil",
 			"revision": "986a404a76fa599aed8ce476ec816c82fd9c9c4e",
 			"revisionTime": "2016-06-17T15:34:52-04:00"
 		},
-		{	
-			"path": "github.com/gonum/plot",
+		{
+			"checksumSHA1": "L3MAOjb/7cFQa5M9XpiCTXQxcvE=",
+			"path": "github.com/gonum/plot/vg",
 			"revision": "986a404a76fa599aed8ce476ec816c82fd9c9c4e",
 			"revisionTime": "2016-06-17T15:34:52-04:00"
 		},
@@ -356,6 +352,12 @@
 			"path": "github.com/tealeg/xlsx",
 			"revision": "c2885b3e5cb5fb9b241bdab3430ca6e1c1057079",
 			"revisionTime": "2015-07-24T21:09:55+02:00"
+		},
+		{
+			"origin": "github.com/antha-lang/antha/vendor/github.com/twinj/uuid",
+			"path": "github.com/twinj/uuid",
+			"revision": "7bbe408d339787c56ec15568c947c0959db1b275",
+			"revisionTime": "2016-09-09T17:54:38+10:00"
 		},
 		{
 			"path": "golang.org/x/image/bmp",

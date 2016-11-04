@@ -52,8 +52,8 @@
             "falcon6wellAgar",
             "Nuncon12wellAgar_incubator"
             ],
-            "LiquidTypes": ["water","dna_mix","PEG","protoplasts","dna"],
-            "Startingsolutions": ["water", "dna_part","PEG","protoplasts","dna_part"]
+            "LiquidTypes": ["water","dna_mix","PEG","dna","PostMix"],
+            "Startingsolutions": ["water", "dna_part","PEG","dna_part","water"]
         }
     }
 }

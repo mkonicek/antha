@@ -1,0 +1,22 @@
+{
+    "processes": {
+        "LibAssembly2": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA2"
+        },
+        "4PartRepStrong": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "5PartRepStrong": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "4PartRepMed": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+        },
+        "5PartRepMed": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA"
+		},	
+		"TransformationControl": {
+            "component": "TypeIISConstructAssemblyMMX_forscreen_transform_JAJA2"
+        }
+    }
+}

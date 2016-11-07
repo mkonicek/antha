@@ -275,7 +275,6 @@ func TestBeforeVsAfter(t *testing.T) {
 }
 
 func TestEP3(t *testing.T) {
-	t.Skip()
 	fmt.Println("Test EP3")
 	lh := GetLiquidHandlerForTest()
 	lh.ExecutionPlanner = ExecutionPlanner3

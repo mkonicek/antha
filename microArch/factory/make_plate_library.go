@@ -170,7 +170,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	// pcr plate with cooler
 	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
 
-	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 250, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
+	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
 	welltype.SetAfVFunc(afs)
 
 	//plate = wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 6.5)
@@ -180,7 +180,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	// pcr plate with 496rack
 	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
-	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 250, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
+	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
 	//plate = wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 6.5)
 	//plates[plate.Type] = plate
 	plate = wtype.NewLHPlate("pcrplate_with_496rack", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, pcrtuberack496-2.5)
@@ -217,7 +217,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	// pcr plate with incubator
 	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
-	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 250, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
+	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
 	welltype.SetAfVFunc(afs)
 	plate = wtype.NewLHPlate("pcrplate_with_incubator", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, (15.5 + 44.0))
 
@@ -455,7 +455,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	*/
 	/// placeholder for non plate container for testing
 	rwshp = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
-	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 250, 5, rwshp, wtype.LHWBFLAT, 5.5, 5.5, 20.4, 1.4, "mm")
+	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, rwshp, wtype.LHWBFLAT, 5.5, 5.5, 20.4, 1.4, "mm")
 	//plate = wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 6.5)
 	//plates[plate.Type] = plate
 	plate = wtype.NewLHPlate("1L_DuranBottle", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 15.5)
@@ -661,7 +661,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	/// placeholder for non plate container for testing
 	rwshp = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
-	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 250, 5, rwshp, wtype.LHWBFLAT, 5.5, 5.5, 20.4, 1.4, "mm")
+	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, rwshp, wtype.LHWBFLAT, 5.5, 5.5, 20.4, 1.4, "mm")
 	//plate = wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 6.5)
 	//plates[plate.Type] = plate
 	plate = wtype.NewLHPlate("1L_DuranBottle", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 15.5)

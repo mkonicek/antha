@@ -1,0 +1,79 @@
+protocol TransformationControlForPooledLib
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	ReactionVolume wunit.Volume
+	//PlatewithRecoveryMedia *wtype.LHPlate
+	CompetentCellPlateWells 		[]string
+	RecoveryPlateWells 		[]string
+	RecoveryTemp 				Temperature
+	RecoveryTime				Time
+	PostPlasmidTemp 			Temperature
+	PostPlasmidTime 			Time
+	CompetentCellTransferVolume Volume
+	RecoveryPlateNumber 		int
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Reaction *wtype.LHComponent
+	PlateWithCompetentCells		 *wtype.LHPlate
+	PlatewithRecoveryMedia		*wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	RecoveredCells []*wtype.LHComponent
+)
+
+Requirements {
+}
+
+// Conditions to run on startup
+Setup {
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	dnaSample := mixer.Sample(Reaction,ReactionVolume)
+	dnaSample.Type = wtype.LTDNAMIX
+	
+	
+		for i, RecoveryPlateWell := range RecoveryPlateWells {
+		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWells[i],1,dnaSample)
+	transformationSample := mixer.Sample(transformation,CompetentCellTransferVolume) 
+		
+		// change liquid type to mix cells with SOC Media
+		transformationSample.Type = wtype.LTPostMix
+		
+		Recovery := MixNamed(PlatewithRecoveryMedia.Type,RecoveryPlateWell,"RecoveryPlate",transformationSample)
+	RecoveredCells = append(RecoveredCells, Recovery)
+
+	// incubate the reaction mixture
+	// commented out pending changes to incubate
+	Incubate(Recovery, RecoveryTemp, RecoveryTime, true)
+	// inactivate
+	//Incubate(Reaction, InactivationTemp, InactivationTime, false)
+}
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

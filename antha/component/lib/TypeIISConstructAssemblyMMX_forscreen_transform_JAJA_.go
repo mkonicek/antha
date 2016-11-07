@@ -89,7 +89,7 @@ func _TypeIISConstructAssemblyMMX_forscreen_transform_JAJASteps(_ctx context.Con
 
 	execute.Incubate(_ctx, dnaSample, _input.ReactionTemp, _input.ReactionTime, false)
 
-	transformation := execute.MixTo(_ctx, _input.PlateWithCompetentCells.Type, _input.CompetentCellPlateWell, 1, dnaSample)
+	transformation := execute.MixNamed(_ctx, _input.PlateWithCompetentCells.Type, _input.CompetentCellPlateWell, "TransformationPlate", dnaSample)
 
 	execute.Incubate(_ctx, transformation, _input.PostPlasmidTemp, _input.PostPlasmidTime, false)
 

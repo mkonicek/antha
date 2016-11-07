@@ -128,7 +128,7 @@ Steps {
 	
 	Incubate(dnaSample, ReactionTemp, ReactionTime, false)
 		
-		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWell,1,dnaSample)
+		transformation := MixNamed(PlateWithCompetentCells.Type,CompetentCellPlateWell,"TransformationPlate",dnaSample)
 		
 	Incubate(transformation, PostPlasmidTemp, PostPlasmidTime, false)
 		

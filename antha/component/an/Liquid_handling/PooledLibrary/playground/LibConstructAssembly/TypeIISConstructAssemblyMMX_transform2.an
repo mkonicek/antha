@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	//"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 )
 
@@ -33,7 +33,9 @@ Parameters (
 	PostPlasmidTime 			Time
 	CompetentCellTransferVolume Volume
 	RecoveryPlateNumber 		int
-	Skip 						bool
+	ControlTransformation 						bool
+	ControlPlasmid	string
+	
 )
 
 // Physical Inputs to this protocol with types
@@ -91,10 +93,12 @@ Steps {
 
         Sequence = seq
 
+if !ControlTransformation {
+	
 	waterSample:=mixer.SampleForTotalVolume(Water,ReactionVolume)
 	samples = append(samples, waterSample)
 	
-	if !Skip {
+	
 
 	for k, part := range Parts {
 		part.Type, err = wtype.LiquidTypeFromString(LHPolicyName)
@@ -113,24 +117,46 @@ Steps {
 
 	// ensure the last step is mixed
 	samples[len(samples)-1].Type=wtype.LTDNAMIX
-	
-	
-	}
-	
-	
-		
 	Reaction = MixTo(OutPlate.Type, OutputLocation, OutputPlateNum, samples...)
         Reaction.Extra["label"] = ConstructName
 
 	dnaSample := mixer.Sample(Reaction,TransformationVolume)
-	
 	//Mix DNA sample with comp cells
 	
 	dnaSample.Type = wtype.LTDNAMIX
 	
 	Incubate(dnaSample, ReactionTemp, ReactionTime, false)
 		for i, RecoveryPlateWell := range RecoveryPlateWells {
-		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWells[i],1,dnaSample)
+		transformation := MixNamed(PlateWithCompetentCells.Type,CompetentCellPlateWells[i],"TransformationPlate",dnaSample)
+		
+	Incubate(transformation, PostPlasmidTemp, PostPlasmidTime, false)
+		
+		transformationSample := mixer.Sample(transformation,CompetentCellTransferVolume) 
+		
+		// change liquid type to mix cells with SOC Media
+		transformationSample.Type = wtype.LTPostMix
+		
+		Recovery := MixNamed(PlatewithRecoveryMedia.Type,RecoveryPlateWell,"RecoveryPlate",transformationSample)
+	RecoveredCells = append(RecoveredCells, Recovery)
+
+	// incubate the reaction mixture
+	// commented out pending changes to incubate
+	Incubate(Recovery, RecoveryTemp, RecoveryTime, true)
+	// inactivate
+	//Incubate(Reaction, InactivationTemp, InactivationTime, false)
+	} 
+	} else if ControlTransformation {
+	
+	Control := factory.GetComponentByType("dna_part")
+	Control.CName = ControlPlasmid
+		PlasmidSample := mixer.Sample(Control,TransformationVolume)
+
+	//Mix DNA sample with comp cells
+	
+	PlasmidSample.Type = wtype.LTDNAMIX
+	
+		for i, RecoveryPlateWell := range RecoveryPlateWells {
+		transformation := MixNamed(PlateWithCompetentCells.Type,CompetentCellPlateWells[i],"TransformationPlate",PlasmidSample)
 		
 	Incubate(transformation, PostPlasmidTemp, PostPlasmidTime, false)
 		
@@ -149,6 +175,8 @@ Steps {
 	//Incubate(Reaction, InactivationTemp, InactivationTime, false)
 	}
 }
+}
+
 // Run after controls and a steps block are completed to
 // post process any data and provide downstream results
 Analysis {

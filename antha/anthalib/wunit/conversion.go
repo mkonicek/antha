@@ -116,11 +116,9 @@ func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Ma
 	if targetconc.Unit().PrefixedSymbol() == "kg/l" {
 		multiplier = 1000
 		unit = "g"
-		//fmt.Println("targetconc.Unit().BaseSISymbol() == kg/l")
 	} else if targetconc.Unit().PrefixedSymbol() == "g/l" {
 		multiplier = 1
 		unit = "g"
-		//fmt.Println("targetconc.Unit().BaseSISymbol() == g/l")
 	} else if targetconc.Unit().PrefixedSymbol() == "mg/l" {
 		multiplier = 1
 		unit = "mg"

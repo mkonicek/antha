@@ -49,7 +49,6 @@ Setup {
 Steps {
 	
 	Reaction := ReactionsMap[ReactionName]
-	
 	dnaSample := mixer.Sample(Reaction,ReactionVolume)
 	dnaSample.Type = wtype.LTDNAMIX
 	

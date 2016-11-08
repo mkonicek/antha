@@ -29,6 +29,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 //var commonwelltypes
@@ -114,11 +115,15 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plates[plate.Type] = plate
 
 	// shallow round well flat bottom 96 on riser
+	// are these well bottoms definitely correct?
 	rwshp = wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
 	welltype = wtype.NewLHWell("SRWFB96", "", "", "ul", 500, 10, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
 	plate = wtype.NewLHPlate("SRWFB96_riser", "Unknown", 8, 12, 15, "mm", welltype, 9, 9, 0.0, 0.0, 40.0)
 	plates[plate.Type] = plate
 	plate = wtype.NewLHPlate("SRWFB96_riser40", "Unknown", 8, 12, 15, "mm", welltype, 9, 9, 0.0, 0.0, 40.0)
+	plates[plate.Type] = plate
+	// incubator
+	plate = wtype.NewLHPlate("SRWFB96_incubator", "Unknown", 8, 12, 15, "mm", welltype, 9, 9, 0.0, 0.0, 44.0)
 	plates[plate.Type] = plate
 
 	// shallow round well flat bottom 96 on QInstruments incubator
@@ -718,10 +723,12 @@ func GetPlateByType(typ string) *wtype.LHPlate {
 	plates := makePlateLibrary()
 	p := plates[typ]
 
-	if p != nil {
-		fmt.Println("can't dup plate nil, plate name", typ)
+	if p == nil {
+		//fmt.Println("can't dup plate nil, plate name", typ)
+		logger.Debug(fmt.Sprint("Plate type ", typ, " not known"))
+		return nil
 	} else {
-		fmt.Println("plate type", typ, "found in factory")
+		//fmt.Println("plate type", typ, "found in factory")
 	}
 	return p.Dup()
 }

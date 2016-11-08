@@ -1,0 +1,53 @@
+// Protocol for resuspending freeze dried DNA with a diluent
+protocol ParseDNAPlateFile
+
+// we need to import the wtype package to use the LHComponent type
+// the mixer package is required to use the Sample function
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+  	Platefile string
+	Vendor string
+	
+)
+
+Data (
+	Parts[]string
+	PartMassMap map[string]Mass
+	PartMolecularWeightMap map[string]float64
+	PartLocationsMap map[string]string
+	Platetype string
+)
+
+Inputs (
+	Diluent *wtype.LHComponent
+	DNAPlate *wtype.LHPlate
+)
+
+Outputs (
+	ResuspendedDNAMap map[string]*wtype.LHComponent
+	
+)
+
+Requirements {
+}
+
+Setup {
+}
+
+
+Steps {
+
+}
+
+Analysis {
+}
+
+
+Validation {
+}

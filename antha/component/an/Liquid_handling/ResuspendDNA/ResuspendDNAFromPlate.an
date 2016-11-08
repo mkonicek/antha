@@ -1,0 +1,66 @@
+// Protocol for resuspending freeze dried DNA with a diluent
+protocol ResuspendDNA_Multiple
+
+// we need to import the wtype package to use the LHComponent type
+// the mixer package is required to use the Sample function
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+  	TargetConc Concentration
+	Parts[]string
+	PartMassMap map[string]Mass
+	PartMolecularWeightMap map[string]float64
+	PartLocationsMap map[string]string
+)
+
+Data (
+)
+
+Inputs (
+	Diluent *wtype.LHComponent
+	DNAPlate *wtype.LHPlate
+)
+
+Outputs (
+	ResuspendedDNAMap map[string]*wtype.LHComponent
+	
+)
+
+Requirements {
+}
+
+Setup {
+}
+
+
+Steps {
+
+	ResuspendedDNAMap = make(map[string]*wtype.LHComponent)
+
+
+	for _, part := range Parts {
+
+	result := RunSteps(ResuspendDNA,
+	Parameters{DNAMass: PartMassMap[part],
+			  	TargetConc: TargetConc,
+				MolecularWeight: PartMolecularWeightMap[part],
+				Well: PartLocationsMap[part],
+	},Inputs{
+				Diluent: Diluent,
+				DNAPlate: DNAPlate,
+	})
+	ResuspendedDNAMap[part]= result.Outputs.ResuspendedDNA
+	}
+}
+
+Analysis {
+}
+
+
+Validation {
+}

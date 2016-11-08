@@ -16,6 +16,7 @@ import (
 // PCRprep parameters
 
 // e.g. ["left homology arm"]:"templatename"
+// e.g. ["left homology arm"]:"fwdprimer","revprimer"
 
 // Data which is returned from this protocol, and data types
 
@@ -62,12 +63,10 @@ func _AutoAssemblySteps(_ctx context.Context, _input *AutoAssemblyInput, _output
 			ReactionVolume:      wunit.NewVolume(20, "ul"),
 			OutputLocation:      wellposition,
 			EnzymeName:          _input.EnzymeName,
-			LHPolicyName:        _input.LHPolicyName,
 
 			MasterMix: _input.MasterMixtype,
 			Water:     _input.Watertype,
-			Parts:     _input.Reactiontoparttypes[reactionname],
-			OutPlate:  _input.OutPlate},
+			Parts:     _input.Reactiontoparttypes[reactionname]},
 		)
 
 		// add result to reactions slice
@@ -148,6 +147,7 @@ type AutoAssemblyInput struct {
 	OutPlate                  *wtype.LHPlate
 	OutputPlateNum            int
 	Projectname               string
+	Reactiontoassemblyparts   map[string][]string
 	Reactiontoassemblyvolumes map[string][]wunit.Volume
 	Reactiontonames           map[string]string
 	Reactiontopartseqs        map[string][]wtype.DNASequence
@@ -174,7 +174,7 @@ func init() {
 		Constructor: AutoAssemblyNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/Refactored2/AutoAssembly.an",
+			Path: "antha/component/an/Liquid_handling/TypeIIsAssembly/Refactored/AutoAssembly.an",
 			Params: []component.ParamDesc{
 				{Name: "EnzymeName", Desc: "", Kind: "Parameters"},
 				{Name: "LHPolicyName", Desc: "", Kind: "Parameters"},
@@ -182,6 +182,7 @@ func init() {
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},
 				{Name: "OutputPlateNum", Desc: "", Kind: "Parameters"},
 				{Name: "Projectname", Desc: "PCRprep parameters\n", Kind: "Parameters"},
+				{Name: "Reactiontoassemblyparts", Desc: "e.g. [\"left homology arm\"]:\"fwdprimer\",\"revprimer\"\n", Kind: "Parameters"},
 				{Name: "Reactiontoassemblyvolumes", Desc: "e.g. [\"left homology arm\"]:\"templatename\"\n", Kind: "Parameters"},
 				{Name: "Reactiontonames", Desc: "", Kind: "Parameters"},
 				{Name: "Reactiontopartseqs", Desc: "", Kind: "Parameters"},

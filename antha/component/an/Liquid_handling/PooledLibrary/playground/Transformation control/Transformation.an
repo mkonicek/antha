@@ -27,7 +27,7 @@ Data (
 
 // Physical Inputs to this protocol with types
 Inputs (
-	ReactionsMap map[string][]*wtype.LHComponent
+	ReactionsMap map[string]*wtype.LHComponent
 	PlateWithCompetentCells		 *wtype.LHPlate
 	PlatewithRecoveryMedia		*wtype.LHPlate
 )

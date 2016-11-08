@@ -30,7 +30,9 @@ func _TransformationControlForPooledLibSetup(_ctx context.Context, _input *Trans
 // The core process for this protocol, with the steps to be performed
 // for every input
 func _TransformationControlForPooledLibSteps(_ctx context.Context, _input *TransformationControlForPooledLibInput, _output *TransformationControlForPooledLibOutput) {
-	dnaSample := mixer.Sample(_input.Reaction, _input.ReactionVolume)
+
+	Reaction := _input.ReactionsMap[_input.ReactionName]
+	dnaSample := mixer.Sample(Reaction, _input.ReactionVolume)
 	dnaSample.Type = wtype.LTDNAMIX
 
 	for i, RecoveryPlateWell := range _input.RecoveryPlateWells {
@@ -116,8 +118,9 @@ type TransformationControlForPooledLibInput struct {
 	PlatewithRecoveryMedia      *wtype.LHPlate
 	PostPlasmidTemp             wunit.Temperature
 	PostPlasmidTime             wunit.Time
-	Reaction                    *wtype.LHComponent
+	ReactionName                string
 	ReactionVolume              wunit.Volume
+	ReactionsMap                map[string]*wtype.LHComponent
 	RecoveryPlateNumber         int
 	RecoveryPlateWells          []string
 	RecoveryTemp                wunit.Temperature
@@ -149,8 +152,9 @@ func init() {
 				{Name: "PlatewithRecoveryMedia", Desc: "", Kind: "Inputs"},
 				{Name: "PostPlasmidTemp", Desc: "", Kind: "Parameters"},
 				{Name: "PostPlasmidTime", Desc: "", Kind: "Parameters"},
-				{Name: "Reaction", Desc: "", Kind: "Inputs"},
+				{Name: "ReactionName", Desc: "", Kind: "Parameters"},
 				{Name: "ReactionVolume", Desc: "", Kind: "Parameters"},
+				{Name: "ReactionsMap", Desc: "", Kind: "Inputs"},
 				{Name: "RecoveryPlateNumber", Desc: "", Kind: "Parameters"},
 				{Name: "RecoveryPlateWells", Desc: "", Kind: "Parameters"},
 				{Name: "RecoveryTemp", Desc: "", Kind: "Parameters"},

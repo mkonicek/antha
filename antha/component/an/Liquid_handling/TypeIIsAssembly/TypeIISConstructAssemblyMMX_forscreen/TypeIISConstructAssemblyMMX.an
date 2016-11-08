@@ -4,6 +4,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"fmt"
 )
 
 // Input parameters for this protocol (data)
@@ -95,7 +96,7 @@ Steps {
 
 	// ensure the last step is mixed
 	samples[len(samples)-1].Type=wtype.LTDNAMIX
-	Reaction = MixTo(OutPlate.Type, OutputLocation, OutputPlateNum, samples...)
+	Reaction = MixNamed(OutPlate.Type, OutputLocation, fmt.Sprint("Assembly Plate", OutputPlateNum), samples...)
         Reaction.Extra["label"] = ConstructName
 
 	// incubate the reaction mixture

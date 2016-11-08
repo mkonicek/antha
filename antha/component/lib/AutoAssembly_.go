@@ -6,16 +6,16 @@ import (
 	"github.com/antha-lang/antha/component"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/inject"
-	"github.com/antha-lang/antha/microArch/factory"
 	"golang.org/x/net/context"
 )
+
+//"github.com/antha-lang/antha/microArch/factory"
 
 // Input parameters for this protocol (data)
 
 // PCRprep parameters
 
 // e.g. ["left homology arm"]:"templatename"
-// e.g. ["left homology arm"]:"fwdprimer","revprimer"
 
 // Data which is returned from this protocol, and data types
 
@@ -41,7 +41,7 @@ func _AutoAssemblySteps(_ctx context.Context, _input *AutoAssemblyInput, _output
 
 	_output.Reactions = make([]*wtype.LHComponent, 0)
 	volumes := make([]wunit.Volume, 0)
-	welllocations := make([]string, 0)
+	OutputLocations := make([]string, 0)
 
 	// range through the Reaction to template map
 	for reactionname, constructname := range _input.Reactiontonames {
@@ -53,8 +53,8 @@ func _AutoAssemblySteps(_ctx context.Context, _input *AutoAssemblyInput, _output
 		result := TypeIISConstructAssemblyMMX_forscreenRunSteps(_ctx, &TypeIISConstructAssemblyMMX_forscreenInput{InactivationTemp: wunit.NewTemperature(40, "C"),
 			InactivationTime:    wunit.NewTime(60, "s"),
 			MasterMixVolume:     wunit.NewVolume(5, "ul"),
-			PartVols:            _input.Reactiontoassemblyvolumes,
-			Partseqs:            _input.Reactiontopartseqs,
+			PartVols:            _input.Reactiontoassemblyvolumes[reactionname],
+			PartSeqs:            _input.Reactiontopartseqs[reactionname],
 			OutputReactionName:  reactionname,
 			OutputConstructName: constructname,
 			ReactionTemp:        wunit.NewTemperature(25, "C"),
@@ -62,23 +62,25 @@ func _AutoAssemblySteps(_ctx context.Context, _input *AutoAssemblyInput, _output
 			ReactionVolume:      wunit.NewVolume(20, "ul"),
 			OutputLocation:      wellposition,
 			EnzymeName:          _input.EnzymeName,
+			LHPolicyName:        _input.LHPolicyName,
 
 			MasterMix: _input.MasterMixtype,
 			Water:     _input.Watertype,
-			Parts:     _input.Reactiontoparttypes},
+			Parts:     _input.Reactiontoparttypes[reactionname],
+			OutPlate:  _input.OutPlate},
 		)
 
 		// add result to reactions slice
 		_output.Reactions = append(_output.Reactions, result.Outputs.Reaction)
 		volumes = append(volumes, result.Outputs.Reaction.Volume())
-		OutputLocation = append(OutputLocation, wellposition)
+		OutputLocations = append(OutputLocations, wellposition)
 		// increase counter by 1 ready for next iteration of loop
 		counter++
 
 	}
 
 	// once all values of loop have been completed, export the plate contents as a csv file
-	_output.Error = wtype.ExportPlateCSV(_input.Projectname+".csv", Plate, _input.Projectname+"outputPlate", welllocations, _output.Reactions, volumes)
+	_output.Error = wtype.ExportPlateCSV(_input.Projectname+".csv", _input.OutPlate, _input.Projectname+"outputPlate", OutputLocations, _output.Reactions, volumes)
 
 }
 
@@ -146,10 +148,9 @@ type AutoAssemblyInput struct {
 	OutPlate                  *wtype.LHPlate
 	OutputPlateNum            int
 	Projectname               string
-	Reactiontoassemblyparts   map[string][]string
 	Reactiontoassemblyvolumes map[string][]wunit.Volume
-	Reactiontonames           map[string][]string
-	Reactiontopartseqs        map[string][]string
+	Reactiontonames           map[string]string
+	Reactiontopartseqs        map[string][]wtype.DNASequence
 	Reactiontoparttypes       map[string][]*wtype.LHComponent
 	Watertype                 *wtype.LHComponent
 }
@@ -173,7 +174,7 @@ func init() {
 		Constructor: AutoAssemblyNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/Refactored/AutoAssembly.an",
+			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/Refactored2/AutoAssembly.an",
 			Params: []component.ParamDesc{
 				{Name: "EnzymeName", Desc: "", Kind: "Parameters"},
 				{Name: "LHPolicyName", Desc: "", Kind: "Parameters"},
@@ -181,7 +182,6 @@ func init() {
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},
 				{Name: "OutputPlateNum", Desc: "", Kind: "Parameters"},
 				{Name: "Projectname", Desc: "PCRprep parameters\n", Kind: "Parameters"},
-				{Name: "Reactiontoassemblyparts", Desc: "e.g. [\"left homology arm\"]:\"fwdprimer\",\"revprimer\"\n", Kind: "Parameters"},
 				{Name: "Reactiontoassemblyvolumes", Desc: "e.g. [\"left homology arm\"]:\"templatename\"\n", Kind: "Parameters"},
 				{Name: "Reactiontonames", Desc: "", Kind: "Parameters"},
 				{Name: "Reactiontopartseqs", Desc: "", Kind: "Parameters"},

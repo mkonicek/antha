@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -70,7 +71,7 @@ func _TypeIISConstructAssemblyMMX_forscreenSteps(_ctx context.Context, _input *T
 
 	// ensure the last step is mixed
 	samples[len(samples)-1].Type = wtype.LTDNAMIX
-	_output.Reaction = execute.MixTo(_ctx, _input.OutPlate.Type, _input.OutputLocation, _input.OutputPlateNum, samples...)
+	_output.Reaction = execute.MixNamed(_ctx, _input.OutPlate.Type, _input.OutputLocation, fmt.Sprint("Assembly Plate", _input.OutputPlateNum), samples...)
 	_output.Reaction.Extra["label"] = _output.ConstructName
 
 	// incubate the reaction mixture

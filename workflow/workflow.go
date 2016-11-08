@@ -231,11 +231,11 @@ func (a *Workflow) AddNode(process, funcName string) error {
 func (a *Workflow) AddEdge(src, tgt Port) error {
 	snode := a.nodes[src.Process]
 	if snode == nil {
-		return fmt.Errorf("unknown process %q", src)
+		return fmt.Errorf("unknown source port %q", src)
 	}
 	tnode := a.nodes[tgt.Process]
 	if tnode == nil {
-		return fmt.Errorf("unknown process %q", src)
+		return fmt.Errorf("unknown target port %q", tgt)
 	}
 
 	sport := src.Port

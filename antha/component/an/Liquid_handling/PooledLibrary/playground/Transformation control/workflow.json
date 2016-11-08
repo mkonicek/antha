@@ -1,0 +1,7 @@
+{
+    "processes": {
+		"TransformationControl": {
+            "component": "TransformationControlForPooledLib"
+        }
+    }
+}

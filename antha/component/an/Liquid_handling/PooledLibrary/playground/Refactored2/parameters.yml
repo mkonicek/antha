@@ -1,5 +1,85 @@
 {
     "Parameters": {
+		"Transformation1": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"A1"
+		],
+	  	"RecoveryPlateWells": 	[
+			"A1"
+		],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"ReactionName":"Assembly2",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul"
+        },
+		"Transformation2": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"B1",
+			"B2", 
+			"B3", 
+			"B4",
+			"B5"
+	],
+	  	"RecoveryPlateWells": 	[
+			"B1",
+			"B2", 
+			"B3", 
+			"B4",
+			"B5"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"ReactionName":"Assembly1",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul"
+        },
+		"Transformation3": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"C1"
+		],
+	  	"RecoveryPlateWells": 	[
+			"C1"
+		],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"ReactionName":"Assembly3",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul"
+        },
+		"Transformation4": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"D1"
+		],
+	  	"RecoveryPlateWells": 	[
+			"D1"
+		],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"ReactionName":"Assembly4",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul"
+        },
         "Assembly": {
 			"Projectname": "AssemblyRefactored",
 			"MasterMixtype": "mastermix_sapI",

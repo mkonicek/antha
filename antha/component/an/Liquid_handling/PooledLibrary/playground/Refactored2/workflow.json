@@ -1,8 +1,62 @@
 {
-    "connections": [],
+    "connections": [
+	{
+	"src":{
+		"port":"ReactionsMap",
+		"process":"Assembly"
+	},
+	"tgt":{
+		"port": "ReactionsMap",
+		"process":"Transformation1"
+	}
+	},
+	{
+	"src":{
+		"port":"ReactionsMap",
+		"process":"Assembly"
+	},
+	"tgt":{
+		"port": "ReactionsMap",
+		"process":"Transformation2"
+	}
+	},
+	{
+	"src":{
+		"port":"ReactionsMap",
+		"process":"Assembly"
+	},
+	"tgt":{
+		"port": "ReactionsMap",
+		"process":"Transformation3"
+	}
+	},
+	{
+	"src":{
+		"port":"ReactionsMap",
+		"process":"Assembly"
+	},
+	"tgt":{
+		"port": "ReactionsMap",
+		"process":"Transformation4"
+	}
+	}
+	
+	],
     "processes": {
         "Assembly": {
             "component": "AutoAssembly2"
+        },
+		 "Transformation1": {
+            "component": "TransformationControlForPooledLib"
+        },
+		"Transformation2": {
+            "component": "TransformationControlForPooledLib"
+        },
+		"Transformation3": {
+            "component": "TransformationControlForPooledLib"
+        },
+		"Transformation4": {
+            "component": "TransformationControlForPooledLib"
         }
     }
 }

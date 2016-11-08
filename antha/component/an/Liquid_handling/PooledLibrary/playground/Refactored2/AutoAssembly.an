@@ -1,4 +1,4 @@
-protocol AutoAssembly
+protocol AutoAssembly2
 
 import (
 "github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -36,7 +36,7 @@ OutPlate		*wtype.LHPlate
 // Physical outputs from this protocol with types
 Outputs (
 Reactions []*wtype.LHComponent
-ReactionsMap map[string][]*wtype.LHComponent
+ReactionsMap map[string]*wtype.LHComponent
 )
 
 Requirements {
@@ -57,7 +57,7 @@ Steps {
 	// set up some empty slices to fill as we iterate through the reactions
 		
 	Reactions = make([]*wtype.LHComponent,0)
-	ReactionsMap = make(map[string][]*wtype.LHComponent)
+	ReactionsMap = make(map[string]*wtype.LHComponent)
 	volumes := make([]wunit.Volume,0)
 	OutputLocations := make([]string,0)
 
@@ -94,7 +94,7 @@ Steps {
 
 	// add result to reactions slice
     Reactions = append(Reactions, result.Outputs.Reaction)
-    ReactionsMap[result.Outputs.Reaction.CName] = result.Outputs.Reaction
+    ReactionsMap[reactionname] = result.Outputs.Reaction
 	volumes = append(volumes,result.Outputs.Reaction.Volume())
 	OutputLocations = append(OutputLocations,wellposition)
 	// increase counter by 1 ready for next iteration of loop

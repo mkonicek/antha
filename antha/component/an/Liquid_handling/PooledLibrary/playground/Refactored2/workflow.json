@@ -2,10 +2,7 @@
     "connections": [],
     "processes": {
         "Assembly": {
-            "component": "AutoAssembly"
-        },
-		 "Transformation": {
-            "component": "TransformationControlForPooledLib"
+            "component": "AutoAssembly2"
         }
     }
 }

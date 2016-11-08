@@ -31,8 +31,7 @@ import (
 	parser "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	//"log"
-	//"os"
+	
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
@@ -120,17 +119,14 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 
 		// initialise parts into map
 		partslist[key] = value
-		/*if _, alreadyinmap := initialpartslist[key]; !alreadyinmap {
-			partslist[key] = value
-			fmt.Println("adding ", key, " to inventory")
-		}*/
+		
 		// add by name too
 		if _, alreadyinmap := initialpartslist[value.Nm]; !alreadyinmap {
 			partslist[value.Nm] = value
 			fmt.Println("adding ", value.Nm, " to inventory")
 		} else {
 			err = fmt.Errorf("cannot add " + key + " to inventory partslist as already found, change the name")
-			//return
+			
 		}
 	}
 

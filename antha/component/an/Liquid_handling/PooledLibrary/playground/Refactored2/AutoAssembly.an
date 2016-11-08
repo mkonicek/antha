@@ -3,6 +3,8 @@ protocol AutoAssembly2
 import (
 "github.com/antha-lang/antha/antha/anthalib/wtype"
 //"github.com/antha-lang/antha/microArch/factory"
+"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
+"path/filepath"
 
 )
 
@@ -22,6 +24,8 @@ OutputPlateNum int
 // Data which is returned from this protocol, and data types
 Data (
 	Error error
+	Assembledsequences map[string]wtype.DNASequence
+	Sequences[]wtype.DNASequence
 )
 
 
@@ -58,6 +62,8 @@ Steps {
 		
 	Reactions = make([]*wtype.LHComponent,0)
 	ReactionsMap = make(map[string]*wtype.LHComponent)
+	Assembledsequences = make(map[string]wtype.DNASequence)
+
 	volumes := make([]wunit.Volume,0)
 	OutputLocations := make([]string,0)
 
@@ -95,6 +101,8 @@ Steps {
 	// add result to reactions slice
     Reactions = append(Reactions, result.Outputs.Reaction)
     ReactionsMap[reactionname] = result.Outputs.Reaction
+	Assembledsequences[reactionname] = result.Data.Sequence
+	Sequences = append(Sequences, result.Data.Sequence)
 	volumes = append(volumes,result.Outputs.Reaction.Volume())
 	OutputLocations = append(OutputLocations,wellposition)
 	// increase counter by 1 ready for next iteration of loop
@@ -102,9 +110,9 @@ Steps {
 	
     }
 	
+	export.Makefastaserial2(export.LOCAL,filepath.Join(Projectname,"AssembledSequences"), Sequences)
 	// once all values of loop have been completed, export the plate contents as a csv file
 	Error = wtype.ExportPlateCSV(Projectname+".csv", OutPlate,Projectname+"outputPlate", OutputLocations, Reactions, volumes) 
-	
 }
 
 // Run after controls and a steps block are completed to

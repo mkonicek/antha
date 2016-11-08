@@ -39,7 +39,17 @@
 		"port": "ReactionsMap",
 		"process":"Transformation4"
 	}
+	},
+	{
+	"src":{
+		"port":"ReactionsMap",
+		"process":"Assembly"
+	},
+	"tgt":{
+		"port": "ReactionsMap",
+		"process":"Transformation5"
 	}
+	},
 	
 	],
     "processes": {
@@ -56,6 +66,9 @@
             "component": "TransformationControlForPooledLib"
         },
 		"Transformation4": {
+            "component": "TransformationControlForPooledLib"
+        },
+		"Transformation5": {
             "component": "TransformationControlForPooledLib"
         }
     }

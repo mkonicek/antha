@@ -2,14 +2,15 @@ package lib
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	//"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/component"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/inject"
 	"golang.org/x/net/context"
+	"path/filepath"
 )
-
-//"github.com/antha-lang/antha/microArch/factory"
 
 // Input parameters for this protocol (data)
 
@@ -41,6 +42,8 @@ func _AutoAssembly2Steps(_ctx context.Context, _input *AutoAssembly2Input, _outp
 
 	_output.Reactions = make([]*wtype.LHComponent, 0)
 	_output.ReactionsMap = make(map[string]*wtype.LHComponent)
+	_output.Assembledsequences = make(map[string]wtype.DNASequence)
+
 	volumes := make([]wunit.Volume, 0)
 	OutputLocations := make([]string, 0)
 
@@ -74,6 +77,8 @@ func _AutoAssembly2Steps(_ctx context.Context, _input *AutoAssembly2Input, _outp
 		// add result to reactions slice
 		_output.Reactions = append(_output.Reactions, result.Outputs.Reaction)
 		_output.ReactionsMap[reactionname] = result.Outputs.Reaction
+		_output.Assembledsequences[reactionname] = result.Data.Sequence
+		_output.Sequences = append(_output.Sequences, result.Data.Sequence)
 		volumes = append(volumes, result.Outputs.Reaction.Volume())
 		OutputLocations = append(OutputLocations, wellposition)
 		// increase counter by 1 ready for next iteration of loop
@@ -81,9 +86,9 @@ func _AutoAssembly2Steps(_ctx context.Context, _input *AutoAssembly2Input, _outp
 
 	}
 
+	export.Makefastaserial2(export.LOCAL, filepath.Join(_input.Projectname, "AssembledSequences"), _output.Sequences)
 	// once all values of loop have been completed, export the plate contents as a csv file
 	_output.Error = wtype.ExportPlateCSV(_input.Projectname+".csv", _input.OutPlate, _input.Projectname+"outputPlate", OutputLocations, _output.Reactions, volumes)
-
 }
 
 // Run after controls and a steps block are completed to
@@ -158,14 +163,18 @@ type AutoAssembly2Input struct {
 }
 
 type AutoAssembly2Output struct {
-	Error        error
-	Reactions    []*wtype.LHComponent
-	ReactionsMap map[string]*wtype.LHComponent
+	Assembledsequences map[string]wtype.DNASequence
+	Error              error
+	Reactions          []*wtype.LHComponent
+	ReactionsMap       map[string]*wtype.LHComponent
+	Sequences          []wtype.DNASequence
 }
 
 type AutoAssembly2SOutput struct {
 	Data struct {
-		Error error
+		Assembledsequences map[string]wtype.DNASequence
+		Error              error
+		Sequences          []wtype.DNASequence
 	}
 	Outputs struct {
 		Reactions    []*wtype.LHComponent
@@ -191,9 +200,11 @@ func init() {
 				{Name: "Reactiontopartseqs", Desc: "", Kind: "Parameters"},
 				{Name: "Reactiontoparttypes", Desc: "", Kind: "Inputs"},
 				{Name: "Watertype", Desc: "", Kind: "Inputs"},
+				{Name: "Assembledsequences", Desc: "", Kind: "Data"},
 				{Name: "Error", Desc: "", Kind: "Data"},
 				{Name: "Reactions", Desc: "", Kind: "Outputs"},
 				{Name: "ReactionsMap", Desc: "", Kind: "Outputs"},
+				{Name: "Sequences", Desc: "", Kind: "Data"},
 			},
 		},
 	}); err != nil {

@@ -107,3 +107,13 @@ The details of these policies can be found in
 ```bash
 $GOPATH/src/github.com/antha-lang/antha/microArch/driver/liquidhandling/makelhpolicy.go
 ```
+
+
+## Excercises
+
+1. Check the available plates using ```antharun lhplates``` and change inputPlateType to one of the valid alternatives in the parameters file config section
+
+2. Check the available components and change Solution from water to one of these.
+
+## Next Steps
+Now move on to Lesson 2 where you can find out about how to perform more advanced liquid handling. 

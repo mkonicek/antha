@@ -41,32 +41,31 @@ func _MakePaletteSetup(_ctx context.Context, _input *MakePaletteInput) {
 // for every input
 func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *MakePaletteOutput) {
 
+	// Posterize image if desired
 	if _input.PosterizeImage {
 		_, _input.Imagefilename = image.Posterize(_input.Imagefilename, _input.PosterizeLevels)
 	}
 
-	//var chosencolourpalette color.Palette
-
-	//chosencolourpalette := image.AvailablePalettes["Plan9"]
-
-	//positiontocolourmap, _ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette, Rotate)
-
-	// make pallette of colours from image
+	// make pallette of colours from image based on CMYK profile
 	chosencolourpalette := image.MakeSmallPalleteFromImage(_input.Imagefilename, _input.OutPlate, _input.Rotate)
 
+	// Resize image to fit microplate, one pixel per well. Produce map to correspond the colour required for each well position.
+	// The nearest matching colour from the colourpalette made above will be used.
 	positiontocolourmap, _, _ := image.ImagetoPlatelayout(_input.Imagefilename, _input.OutPlate, &chosencolourpalette, _input.Rotate, _input.AutoRotate)
 
-	// remove duplicates
+	// remove duplicate colours so each is only made once
 	positiontocolourmap = image.RemoveDuplicatesValuesfromMap(positiontocolourmap)
 
-	//fmt.Println("positions", positiontocolourmap)
-
+	// make an empty slice of liquid handling components and a map of colour name to liquid handling components
 	solutions := make([]*wtype.LHComponent, 0)
 	colourtoComponentMap := make(map[string]*wtype.LHComponent)
 
+	// initialise a counter to use for looking up the next well position for each iteration of the loop below
 	counter := 0
 
 	platenum := 1
+
+	// make a slice of well positions for the plate set in the parameters file
 	paletteplatepositions := _input.PalettePlate.AllWellPositions(wtype.BYCOLUMN)
 
 	for _, colour := range positiontocolourmap {

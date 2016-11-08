@@ -10,6 +10,8 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/cmd/antharun/cmd"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/factory"
 
 	"encoding/csv"
@@ -66,8 +68,23 @@ func _PlateTestSteps(_ctx context.Context, _input *PlateTestInput, _output *Plat
 	defer csvfile.Close()
 
 	records := make([][]string, 0)
-	header := []string{"TestName", "Plate", "Liquid name", "Liquid type ", "Liquid Volume", "Well ", "mm from Bottom of well? ", "Acceptable? "}
-	records = append(records, header)
+
+	title := []string{"Plate Height Test:", _input.TestName}
+	time := []string{"Time:", fmt.Sprint(time.Now())}
+
+	// find git commit id
+	anthacommit, err := cmd.GitCommit()
+
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
+
+	gitcommit := []string{"antha-lang/antha commitID:", anthacommit}
+
+	spacer := []string{}
+
+	header := []string{"TestName", "Plate", "Liquid name", "Liquid type ", "Liquid Volume", "Well ", "Aspirate mm from Bottom of well? ", "Dispense mm from Bottom of well? ", "Acceptable? ", " Comments", "plate Z start", "Plate Height", "lhpolicy aspirate z offset", "lhpolicy dispense z offset"}
+	records = append(records, title, time, gitcommit, spacer, header)
 
 	// Make slices to fill up later before exporting as outputs
 	_output.FinalSolutions = make([]*wtype.LHComponent, 0)
@@ -94,7 +111,10 @@ func _PlateTestSteps(_ctx context.Context, _input *PlateTestInput, _output *Plat
 		var platenumber int = 1
 
 		// get all well positions from the plate
-		wellpositionsarray := factory.GetPlateByType(_input.OutPlates[k]).AllWellPositions(wtype.BYCOLUMN)
+
+		lhplate := factory.GetPlateByType(_input.OutPlates[k])
+
+		wellpositionsarray := lhplate.AllWellPositions(wtype.BYCOLUMN)
 
 		// Initialise a counter to be equal to the number of wells used for that plate
 		// The counter will be used to select the correct well position
@@ -138,7 +158,31 @@ func _PlateTestSteps(_ctx context.Context, _input *PlateTestInput, _output *Plat
 				// Append status
 				_output.Status = _output.Status + fmt.Sprintln(_input.LiquidVolumes[j].ToString(), " of ", _input.Liquidname, "Liquid type ", _input.LiquidTypes[i], "was mixed into "+_input.OutPlates[k])
 
-				record := []string{_input.TestName, platename, _input.Liquidname, _input.LiquidTypes[i], _input.LiquidVolumes[j].ToString(), wellpositionsarray[counter], "  ", "  "}
+				// get specific plate info
+
+				plateheight := lhplate.Height
+				zstart := lhplate.WellZStart
+				/*
+					Height float64
+					WellXOffset float64            // distance (mm) between well centres in X direction
+					WellYOffset float64            // distance (mm) between well centres in Y direction
+					WellXStart  float64            // offset (mm) to first well in X direction
+					WellYStart  float64            // offset (mm) to first well in Y direction
+					WellZStart  float64            // offset (mm) to bottom of well in Z direction
+				*/
+				// get lhpolicyinfo
+
+				// print out LHPolicy info
+				policy, ok := liquidhandling.GetPolicyByName(_input.LiquidTypes[i])
+
+				if !ok {
+					execute.Errorf(_ctx, fmt.Sprint("Liquid type, ", _input.LiquidTypes[i], "not found"))
+				}
+
+				aspz := policy["ASPZOFFSET"]
+				dspz := policy["DSPZOFFSET"]
+
+				record := []string{_input.TestName, platename, _input.Liquidname, _input.LiquidTypes[i], _input.LiquidVolumes[j].ToString(), wellpositionsarray[counter], "  ", "  ", " ", " ", fmt.Sprint(zstart), fmt.Sprint(plateheight), fmt.Sprint(aspz), fmt.Sprint(dspz)}
 				records = append(records, record)
 
 				// evaluate whether plate is full and if so add new plate

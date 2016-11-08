@@ -45,9 +45,20 @@ func lhPlates(cmd *cobra.Command, args []string) error {
 
 	cs := factory.GetPlateList()
 
+	//inv := factory.GetPlateLibrary()
+	if viper.GetString("platetemplate") != "" {
+		inv := factory.GetPlateLibrary()
+
+		plate, ok := inv[viper.GetString("platetemplate")]
+		if !ok {
+			return fmt.Errorf(fmt.Sprint("plate ", viper.GetString("platetemplate"), " not found in factory"))
+		}
+		err := wtype.AutoExportPlateCSV(viper.GetString("platetemplate")+".csv", plate)
+		return err
+	}
 	switch viper.GetString("output") {
 	case jsonOutput:
-		if bs, err := json.Marshal(cs); err != nil {
+		if bs, err := json.MarshalIndent(cs, "", "\t"); err != nil {
 			return err
 		} else {
 			_, err = fmt.Println(string(bs))
@@ -70,6 +81,8 @@ func lhPlates(cmd *cobra.Command, args []string) error {
 		_, err := fmt.Println(strings.Join(prettystrings, ""))
 		return err
 	}
+
+	return nil
 }
 
 func init() {
@@ -81,4 +94,8 @@ func init() {
 		"output",
 		stringOutput,
 		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{stringOutput, jsonOutput}, ",")))
+	flags.String(
+		"platetemplate",
+		"",
+		fmt.Sprintf("plate template: "))
 }

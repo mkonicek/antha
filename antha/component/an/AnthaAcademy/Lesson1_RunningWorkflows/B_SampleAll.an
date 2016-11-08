@@ -15,6 +15,7 @@ Parameters (
 
 // Data which is returned from this protocol, and data types
 Data (
+	Status string
 )
 
 
@@ -41,11 +42,14 @@ Setup {
 // for every input
 Steps {
 	
+	Status = "Not sampled anything"
+	
 	// the SampleAll function samples the entire contents of the LHComponent
 	// so there's no need to specify the volume
 	// this if statement specifies that the SampleAll action will only be performed if SampleAll is set to true
 	if Sampleall == true {
 	Sample = mixer.SampleAll(Solution)
+	Status = "Sampled everything"
 	}
 
 	// now move on to C_SampleForTotalVolume.an

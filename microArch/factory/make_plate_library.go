@@ -24,10 +24,13 @@ package factory
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 //var commonwelltypes
@@ -559,7 +562,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plates[plate.Type] = plate
 
 	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
-	plate = wtype.NewLHPlate("costar48well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, incubatorheightinmm+2.0)
+	plate = wtype.NewLHPlate("costar48well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, incubatorheightinmm)
 	plates[plate.Type] = plate
 	consar = []string{"position_1"}
 	plate.SetConstrained("Pipetmax", consar)
@@ -595,8 +598,12 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//	WellYStart  float64
 	//	WellZStart  float64
 
-	zstart = 9.0 + incubatorheightinmm // offset of bottom of deck to bottom of well (this includes agar estimate)
-	welltype = wtype.NewLHWell("falcon6well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	wellsperrow = 4.0
+	wellspercolumn = 3.0
+
+	zstart = incubatorheightinmm - 5.0 // offset of bottom of deck to bottom of well (this includes agar estimate)
+	welltype = wtype.NewLHWell("falcon12well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+
 	plate = wtype.NewLHPlate("Nuncon12wellAgar_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	consar = []string{"position_1"}
@@ -672,9 +679,33 @@ func MakeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 //  plate = wtype.LHPlate("EPAGE48", "Invitrogen", 2, 26, height, "mm", welltype, 9, 22, 0.0, 0.0, 50.0)
 //	plates[plate.Type] = plate
 
+type PlateInventory struct {
+	inv map[string]*wtype.LHPlate
+}
+
+var defaultPlateInventory *PlateInventory
+
+func init() {
+	defaultPlateInventory = &PlateInventory{
+		inv: makePlateLibrary(),
+	}
+}
+
+func AddPlate(name string, p *wtype.LHPlate) error {
+	return errors.New("tbd")
+}
 func GetPlateByType(typ string) *wtype.LHPlate {
-	plates := makePlateLibrary()
-	p := plates[typ]
+
+	return defaultPlateInventory.GetPlateByType(typ)
+}
+
+func (i *PlateInventory) GetPlateByType(typ string) *wtype.LHPlate {
+	p, ok := i.inv[typ]
+	if !ok {
+		logger.Fatal(fmt.Sprintf("Plate %s not found", typ))
+		panic(fmt.Errorf("Plate %s not found", typ)) //TODO refactor to errors
+	}
+
 	return p.Dup()
 }
 
@@ -688,4 +719,9 @@ func GetPlateList() []string {
 		x += 1
 	}
 	return kz
+}
+
+func GetPlateLibrary() map[string]*wtype.LHPlate {
+
+	return defaultPlateInventory.inv
 }

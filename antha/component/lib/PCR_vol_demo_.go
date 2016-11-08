@@ -163,6 +163,8 @@ func _PCR_vol_demoSteps(_ctx context.Context, _input *PCR_vol_demoInput, _output
 	_output.Reaction = r1
 
 	_output.Reaction.CName = _input.ReactionName
+
+	_output.Status = "Success"
 }
 
 // Run after controls and a steps block are completed to
@@ -259,10 +261,12 @@ type PCR_vol_demoInput struct {
 
 type PCR_vol_demoOutput struct {
 	Reaction *wtype.LHComponent
+	Status   string
 }
 
 type PCR_vol_demoSOutput struct {
 	Data struct {
+		Status string
 	}
 	Outputs struct {
 		Reaction *wtype.LHComponent
@@ -309,6 +313,7 @@ func init() {
 				{Name: "WaterVolume", Desc: "PCRprep parameters:\n", Kind: "Parameters"},
 				{Name: "WellPosition", Desc: "", Kind: "Parameters"},
 				{Name: "Reaction", Desc: "", Kind: "Outputs"},
+				{Name: "Status", Desc: "", Kind: "Data"},
 			},
 		},
 	}); err != nil {

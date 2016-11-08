@@ -45,11 +45,18 @@ This will allow direct running and simulation of the Pipetmax:
 
 ```antharun --driver localhost:50051 --driver 192.168.1.58:50051```
 
+
 or if from source code:
+
+
 
 ```antharun --driver  go://github.com/Synthace/PipetMaxDriver/server --driver 192.168.1.58:50051```
 
+
+
 run ```ifconfig``` on pc controlling the pipetmax to find out IP address.
+
+
 
 3. The manualLiquidhandlingdriver would work in the same way
 You can get this from source code before running in a separate terminal or call directly as seen above
@@ -58,13 +65,20 @@ go get github.com/antha-lang/manualLiquidHandler
 
 Running it:
 
-```
+```bash
 cd server
 go build ./...
 ./server
 ```
 
+
+
 Again, the default port is 50051
 
+## Excercises
 
+1. Run the protocol with the pipetmax driver
 
+## Next Steps
+
+Now go to [Folder C](../C_differentcomponents/readme_flags.md) to find out about the other configuration options for antharun and a run down of the basics on LHComponents.

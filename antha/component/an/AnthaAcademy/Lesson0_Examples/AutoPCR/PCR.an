@@ -47,6 +47,7 @@ Parameters (
 
 // Data which is returned from this protocol, and data types
 Data (
+	Status string
 )
 
 
@@ -198,6 +199,8 @@ Steps {
 	Reaction = r1
 	
 	Reaction.CName = ReactionName
+	
+	Status = "Success"
 }
 
 // Run after controls and a steps block are completed to

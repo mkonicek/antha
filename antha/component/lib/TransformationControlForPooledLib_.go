@@ -30,14 +30,11 @@ func _TransformationControlForPooledLibSetup(_ctx context.Context, _input *Trans
 // The core process for this protocol, with the steps to be performed
 // for every input
 func _TransformationControlForPooledLibSteps(_ctx context.Context, _input *TransformationControlForPooledLibInput, _output *TransformationControlForPooledLibOutput) {
-
-	Reaction := _input.ReactionsMap[_input.ReactionName]
-	dnaSample := mixer.Sample(Reaction, _input.ReactionVolume)
+	dnaSample := mixer.Sample(_input.Reaction, _input.ReactionVolume)
 	dnaSample.Type = wtype.LTDNAMIX
 
 	for i, RecoveryPlateWell := range _input.RecoveryPlateWells {
 		transformation := execute.MixTo(_ctx, _input.PlateWithCompetentCells.Type, _input.CompetentCellPlateWells[i], 1, dnaSample)
-
 		transformationSample := mixer.Sample(transformation, _input.CompetentCellTransferVolume)
 
 		// change liquid type to mix cells with SOC Media
@@ -118,9 +115,8 @@ type TransformationControlForPooledLibInput struct {
 	PlatewithRecoveryMedia      *wtype.LHPlate
 	PostPlasmidTemp             wunit.Temperature
 	PostPlasmidTime             wunit.Time
-	ReactionName                string
+	Reaction                    *wtype.LHComponent
 	ReactionVolume              wunit.Volume
-	ReactionsMap                map[string]*wtype.LHComponent
 	RecoveryPlateNumber         int
 	RecoveryPlateWells          []string
 	RecoveryTemp                wunit.Temperature
@@ -144,7 +140,7 @@ func init() {
 		Constructor: TransformationControlForPooledLibNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/Transformation control/Transformation.an",
+			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/LibConstructAssembly/Transformation.an",
 			Params: []component.ParamDesc{
 				{Name: "CompetentCellPlateWells", Desc: "PlatewithRecoveryMedia *wtype.LHPlate\n", Kind: "Parameters"},
 				{Name: "CompetentCellTransferVolume", Desc: "", Kind: "Parameters"},
@@ -152,9 +148,8 @@ func init() {
 				{Name: "PlatewithRecoveryMedia", Desc: "", Kind: "Inputs"},
 				{Name: "PostPlasmidTemp", Desc: "", Kind: "Parameters"},
 				{Name: "PostPlasmidTime", Desc: "", Kind: "Parameters"},
-				{Name: "ReactionName", Desc: "", Kind: "Parameters"},
+				{Name: "Reaction", Desc: "", Kind: "Inputs"},
 				{Name: "ReactionVolume", Desc: "", Kind: "Parameters"},
-				{Name: "ReactionsMap", Desc: "", Kind: "Inputs"},
 				{Name: "RecoveryPlateNumber", Desc: "", Kind: "Parameters"},
 				{Name: "RecoveryPlateWells", Desc: "", Kind: "Parameters"},
 				{Name: "RecoveryTemp", Desc: "", Kind: "Parameters"},

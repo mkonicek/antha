@@ -57,19 +57,19 @@
             "component": "AutoAssembly2"
         },
 		 "Transformation1": {
-            "component": "TransformationControlForPooledLib"
+            "component": "TransformationRefactored"
         },
 		"Transformation2": {
-            "component": "TransformationControlForPooledLib"
+            "component": "TransformationRefactored"
         },
 		"Transformation3": {
-            "component": "TransformationControlForPooledLib"
+            "component": "TransformationRefactored"
         },
 		"Transformation4": {
-            "component": "TransformationControlForPooledLib"
+            "component": "TransformationRefactored"
         },
 		"Transformation5": {
-            "component": "TransformationControlForPooledLib"
+            "component": "TransformationRefactored"
         }
     }
 }

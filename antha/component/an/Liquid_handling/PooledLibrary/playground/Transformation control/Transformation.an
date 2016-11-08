@@ -1,4 +1,4 @@
-protocol TransformationControlForPooledLib
+protocol TransformationRefactored
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"

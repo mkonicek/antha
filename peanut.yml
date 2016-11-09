@@ -4,13 +4,11 @@ name: github.com/antha-lang/antha
 version: 0.0.2
 build:
   morelines:
-  - RUN apt-get update && apt-get install -y libglpk-dev libsqlite3-dev mercurial
+  - RUN apt-get update && apt-get install -y curl libglpk-dev libsqlite3-dev
   volumes:
   - /certs
-  copyhostpaths:
-  - github.com/Synthace/server:certs:/in
   commands:
-  - tar -C /certs --dereference --hard-dereference -xzv -f /in/certs.tar.gz
+  - tar -C /etc/ssl/certs --dereference --hard-dereference -cz -f - . | tar -C /certs -xz -f -
 modules:
   golang:
     testpackages:
@@ -19,3 +17,5 @@ modules:
     image:
       copyhostpaths:
       - github.com/antha-lang/antha:antha/examples:/root/examples
+      copyvolumes:
+      - github.com/antha-lang/antha:/certs:/etc/ssl/certs

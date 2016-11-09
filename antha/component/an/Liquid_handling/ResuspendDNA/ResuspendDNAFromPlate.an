@@ -20,6 +20,7 @@ Parameters (
 )
 
 Data (
+	PartConcentrations map[string]wunit.Concentration
 )
 
 Inputs (
@@ -42,7 +43,7 @@ Setup {
 Steps {
 
 	ResuspendedDNAMap = make(map[string]*wtype.LHComponent)
-
+	PartConcentrations = make(map[string]wunit.Concentration)
 
 	for _, part := range Parts {
 
@@ -57,6 +58,7 @@ Steps {
 				DNAPlate: DNAPlate,
 	})
 	ResuspendedDNAMap[part]= result.Outputs.ResuspendedDNA
+	PartConcentrations[part]= TargetConc.GramPerL(PartMolecularWeightMap[part])
 	}
 }
 

@@ -13,8 +13,8 @@ import (
 Parameters (
   	FWDOligoVolume Volume
 	REVOligoVolume Volume
-	TotalVolume Volume
 	Well string
+	TotalVolume Volume
 	IncubationTemp Temperature
 	IncubationTime Time
 )

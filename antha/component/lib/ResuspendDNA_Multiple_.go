@@ -25,6 +25,7 @@ func _ResuspendDNA_MultipleSetup(_ctx context.Context, _input *ResuspendDNA_Mult
 func _ResuspendDNA_MultipleSteps(_ctx context.Context, _input *ResuspendDNA_MultipleInput, _output *ResuspendDNA_MultipleOutput) {
 
 	_output.ResuspendedDNAMap = make(map[string]*wtype.LHComponent)
+	_output.PartConcentrations = make(map[string]wunit.Concentration)
 
 	for _, part := range _input.Parts {
 
@@ -38,6 +39,7 @@ func _ResuspendDNA_MultipleSteps(_ctx context.Context, _input *ResuspendDNA_Mult
 			DNAPlate: _input.DNAPlate},
 		)
 		_output.ResuspendedDNAMap[part] = result.Outputs.ResuspendedDNA
+		_output.PartConcentrations[part] = _input.TargetConc.GramPerL(_input.PartMolecularWeightMap[part])
 	}
 }
 
@@ -105,11 +107,13 @@ type ResuspendDNA_MultipleInput struct {
 }
 
 type ResuspendDNA_MultipleOutput struct {
-	ResuspendedDNAMap map[string]*wtype.LHComponent
+	PartConcentrations map[string]wunit.Concentration
+	ResuspendedDNAMap  map[string]*wtype.LHComponent
 }
 
 type ResuspendDNA_MultipleSOutput struct {
 	Data struct {
+		PartConcentrations map[string]wunit.Concentration
 	}
 	Outputs struct {
 		ResuspendedDNAMap map[string]*wtype.LHComponent
@@ -131,6 +135,7 @@ func init() {
 				{Name: "PartPlateMap", Desc: "", Kind: "Parameters"},
 				{Name: "Parts", Desc: "", Kind: "Parameters"},
 				{Name: "TargetConc", Desc: "", Kind: "Parameters"},
+				{Name: "PartConcentrations", Desc: "", Kind: "Data"},
 				{Name: "ResuspendedDNAMap", Desc: "", Kind: "Outputs"},
 			},
 		},

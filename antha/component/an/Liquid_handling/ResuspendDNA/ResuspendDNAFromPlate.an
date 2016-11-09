@@ -16,6 +16,7 @@ Parameters (
 	PartMassMap map[string]Mass
 	PartMolecularWeightMap map[string]float64
 	PartLocationsMap map[string]string
+	PartPlateMap map[string]string
 )
 
 Data (
@@ -50,6 +51,7 @@ Steps {
 			  	TargetConc: TargetConc,
 				MolecularWeight: PartMolecularWeightMap[part],
 				Well: PartLocationsMap[part],
+				PlateName: PartPlateMap[part],
 	},Inputs{
 				Diluent: Diluent,
 				DNAPlate: DNAPlate,

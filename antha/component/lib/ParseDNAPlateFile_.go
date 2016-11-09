@@ -6,12 +6,15 @@ import
 // we need to import the wtype package to use the LHComponent type
 // the mixer package is required to use the Sample function
 (
+	"fmt"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/component"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/inject"
 	"golang.org/x/net/context"
+	"strings"
 )
 
 // Input parameters for this protocol (data)
@@ -24,8 +27,163 @@ func _ParseDNAPlateFileSetup(_ctx context.Context, _input *ParseDNAPlateFileInpu
 
 func _ParseDNAPlateFileSteps(_ctx context.Context, _input *ParseDNAPlateFileInput, _output *ParseDNAPlateFileOutput) {
 
-}
+	var ReplaceMap = map[string]string{
+		"01": "1",
+		"02": "2",
+		"03": "3",
+		"04": "4",
+		"05": "5",
+		"06": "6",
+		"07": "7",
+		"08": "8",
+		"09": "9",
+		"_":  "",
+	}
 
+	// headers
+	NameHeader := "Seq Name"
+	MassHeader := "Yield_ug"
+	MWHeader := "MW"
+	WellHeader := "Customer Well"
+	PlateNameHeader := "Plate"
+
+	// initialise maps
+	_output.PartMassMap = make(map[string]wunit.Mass)
+	_output.PartMolecularWeightMap = make(map[string]float64)
+	_output.PartLocationsMap = make(map[string]string)
+	_output.PartPlateMap = make(map[string]string)
+	headersfound := make([]string, 0)
+
+	dnaparts, err := doe.RunsFromDesignPreResponses(_input.SequenceInfoFile, []string{"Length", "MW", "Tm", "Yield"}, _input.SequenceInfoFileformat)
+
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
+
+	// code for parsing the data from the xl file into the strings, this searches the file in direction i followed by j
+	for i, partinfo := range dnaparts {
+
+		var partname string
+		var partmass float64
+		var partwell string
+		var partmw float64
+		var platename string
+
+		for j := range partinfo.Setpoints {
+
+			//First creates an array of part names
+			if partinfo.Factordescriptors[j] == NameHeader {
+
+				if name, found := partinfo.Setpoints[j].(string); found {
+
+					if name == "" || name == "BLANK" {
+						fmt.Print("Skipping ", name)
+					} else {
+						partname = name
+						_output.Partnames = append(_output.Partnames, name)
+					}
+				} else {
+					execute.Errorf(_ctx, fmt.Sprint("wrong type", partinfo.Factordescriptors[j], partinfo.Setpoints[j]))
+				}
+
+				if i == 0 {
+					headersfound = append(headersfound, NameHeader)
+				}
+
+			}
+
+			//second create an array of plasmid masses
+			if partinfo.Factordescriptors[j] == MassHeader {
+
+				if mass, found := partinfo.Setpoints[j].(float64); found {
+					partmass = mass
+				} else if mass, found := partinfo.Setpoints[j].(string); found {
+					if mass == "" {
+						partmass = 0.0 // mw
+						// empty so skip
+					}
+				} else {
+					execute.Errorf(_ctx, fmt.Sprint("wrong type", partinfo.Factordescriptors[j], partinfo.Setpoints[j]))
+				}
+				if i == 0 {
+					headersfound = append(headersfound, MassHeader)
+				}
+			}
+
+			//third creates an array of part lengths in bp
+			if partinfo.Factordescriptors[j] == MWHeader {
+
+				if mw, found := partinfo.Setpoints[j].(int); found {
+					partmw = float64(mw)
+				} else if mw, found := partinfo.Setpoints[j].(float64); found {
+					partmw = mw
+				} else if mw, found := partinfo.Setpoints[j].(string); found {
+					if mw == "" {
+						partmw = 0.0 // mw
+						// empty so skip
+					}
+				} else {
+					execute.Errorf(_ctx, fmt.Sprint("wrong type", partinfo.Factordescriptors[j], partinfo.Setpoints[j]))
+				}
+				if i == 0 {
+					headersfound = append(headersfound, MWHeader)
+				}
+			}
+
+			//third creates an array of part lengths in bp
+			if partinfo.Factordescriptors[j] == WellHeader {
+
+				if well, found := partinfo.Setpoints[j].(string); found {
+
+					for key, value := range ReplaceMap {
+						if strings.Contains(well, key) {
+							well = strings.Replace(well, key, value, 1)
+							break
+						}
+					}
+					partwell = well
+				} else {
+					execute.Errorf(_ctx, fmt.Sprint("wrong type", partinfo.Factordescriptors[j], partinfo.Setpoints[j]))
+				}
+				if i == 0 {
+					headersfound = append(headersfound, WellHeader)
+				}
+			}
+
+			//third creates an array of part lengths in bp
+			if partinfo.Factordescriptors[j] == PlateNameHeader {
+
+				if plate, found := partinfo.Setpoints[j].(string); found {
+
+					platename = plate
+				} else {
+					execute.Errorf(_ctx, fmt.Sprint("wrong type", partinfo.Factordescriptors[j], partinfo.Setpoints[j]))
+				}
+				if i == 0 {
+					headersfound = append(headersfound, PlateNameHeader)
+				}
+			}
+
+			//internal check if there are not 4 headers (as we know there should be 4) return an error telling us which ones were found and which were not
+			/*
+				if len(headersfound)!= 4 {
+					Errorf(fmt.Sprint("Only found these headers in input file: ", headersfound))
+				}
+			*/
+		}
+
+		if partname == "" || partname == "BLANK" {
+			fmt.Print("Skipping ", partname)
+		} else {
+			_output.PartLocationsMap[partname] = partwell
+			_output.PartMolecularWeightMap[partname] = partmw
+			_output.PartMassMap[partname] = wunit.NewMass(partmass, "ug")
+			_output.PartPlateMap[partname] = platename
+		}
+
+	}
+
+}
 func _ParseDNAPlateFileAnalysis(_ctx context.Context, _input *ParseDNAPlateFileInput, _output *ParseDNAPlateFileOutput) {
 }
 
@@ -79,19 +237,18 @@ type ParseDNAPlateFileElement struct {
 }
 
 type ParseDNAPlateFileInput struct {
-	DNAPlate  *wtype.LHPlate
-	Diluent   *wtype.LHComponent
-	Platefile string
-	Vendor    string
+	DNAPlate               *wtype.LHPlate
+	SequenceInfoFile       string
+	SequenceInfoFileformat string
 }
 
 type ParseDNAPlateFileOutput struct {
 	PartLocationsMap       map[string]string
 	PartMassMap            map[string]wunit.Mass
 	PartMolecularWeightMap map[string]float64
-	Parts                  []string
+	PartPlateMap           map[string]string
+	Partnames              []string
 	Platetype              string
-	ResuspendedDNAMap      map[string]*wtype.LHComponent
 }
 
 type ParseDNAPlateFileSOutput struct {
@@ -99,11 +256,11 @@ type ParseDNAPlateFileSOutput struct {
 		PartLocationsMap       map[string]string
 		PartMassMap            map[string]wunit.Mass
 		PartMolecularWeightMap map[string]float64
-		Parts                  []string
+		PartPlateMap           map[string]string
+		Partnames              []string
 		Platetype              string
 	}
 	Outputs struct {
-		ResuspendedDNAMap map[string]*wtype.LHComponent
 	}
 }
 
@@ -115,15 +272,14 @@ func init() {
 			Path: "antha/component/an/Liquid_handling/ResuspendDNA/ParseDNAInputFile.an",
 			Params: []component.ParamDesc{
 				{Name: "DNAPlate", Desc: "", Kind: "Inputs"},
-				{Name: "Diluent", Desc: "", Kind: "Inputs"},
-				{Name: "Platefile", Desc: "", Kind: "Parameters"},
-				{Name: "Vendor", Desc: "", Kind: "Parameters"},
+				{Name: "SequenceInfoFile", Desc: "", Kind: "Parameters"},
+				{Name: "SequenceInfoFileformat", Desc: "", Kind: "Parameters"},
 				{Name: "PartLocationsMap", Desc: "", Kind: "Data"},
 				{Name: "PartMassMap", Desc: "", Kind: "Data"},
 				{Name: "PartMolecularWeightMap", Desc: "", Kind: "Data"},
-				{Name: "Parts", Desc: "", Kind: "Data"},
+				{Name: "PartPlateMap", Desc: "", Kind: "Data"},
+				{Name: "Partnames", Desc: "", Kind: "Data"},
 				{Name: "Platetype", Desc: "", Kind: "Data"},
-				{Name: "ResuspendedDNAMap", Desc: "", Kind: "Outputs"},
 			},
 		},
 	}); err != nil {

@@ -32,6 +32,7 @@ func _ResuspendDNA_MultipleSteps(_ctx context.Context, _input *ResuspendDNA_Mult
 			TargetConc:      _input.TargetConc,
 			MolecularWeight: _input.PartMolecularWeightMap[part],
 			Well:            _input.PartLocationsMap[part],
+			PlateName:       _input.PartPlateMap[part],
 
 			Diluent:  _input.Diluent,
 			DNAPlate: _input.DNAPlate},
@@ -98,6 +99,7 @@ type ResuspendDNA_MultipleInput struct {
 	PartLocationsMap       map[string]string
 	PartMassMap            map[string]wunit.Mass
 	PartMolecularWeightMap map[string]float64
+	PartPlateMap           map[string]string
 	Parts                  []string
 	TargetConc             wunit.Concentration
 }
@@ -126,6 +128,7 @@ func init() {
 				{Name: "PartLocationsMap", Desc: "", Kind: "Parameters"},
 				{Name: "PartMassMap", Desc: "", Kind: "Parameters"},
 				{Name: "PartMolecularWeightMap", Desc: "", Kind: "Parameters"},
+				{Name: "PartPlateMap", Desc: "", Kind: "Parameters"},
 				{Name: "Parts", Desc: "", Kind: "Parameters"},
 				{Name: "TargetConc", Desc: "", Kind: "Parameters"},
 				{Name: "ResuspendedDNAMap", Desc: "", Kind: "Outputs"},

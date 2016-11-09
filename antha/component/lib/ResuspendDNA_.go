@@ -41,7 +41,7 @@ func _ResuspendDNASteps(_ctx context.Context, _input *ResuspendDNAInput, _output
 
 	diluentSample.Type = wtype.LTDNAMIX
 
-	_output.ResuspendedDNA = execute.MixInto(_ctx, _input.DNAPlate, _input.Well, diluentSample)
+	_output.ResuspendedDNA = execute.MixNamed(_ctx, _input.DNAPlate.Type, _input.Well, _input.PlateName, diluentSample)
 
 }
 
@@ -102,6 +102,7 @@ type ResuspendDNAInput struct {
 	DNAPlate        *wtype.LHPlate
 	Diluent         *wtype.LHComponent
 	MolecularWeight float64
+	PlateName       string
 	TargetConc      wunit.Concentration
 	Well            string
 }
@@ -129,6 +130,7 @@ func init() {
 				{Name: "DNAPlate", Desc: "", Kind: "Inputs"},
 				{Name: "Diluent", Desc: "", Kind: "Inputs"},
 				{Name: "MolecularWeight", Desc: "", Kind: "Parameters"},
+				{Name: "PlateName", Desc: "", Kind: "Parameters"},
 				{Name: "TargetConc", Desc: "", Kind: "Parameters"},
 				{Name: "Well", Desc: "", Kind: "Parameters"},
 				{Name: "ResuspendedDNA", Desc: "", Kind: "Outputs"},

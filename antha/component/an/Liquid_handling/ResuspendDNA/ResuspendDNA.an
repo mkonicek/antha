@@ -16,6 +16,7 @@ Parameters (
   	TargetConc Concentration
 	MolecularWeight float64
 	Well string
+	PlateName string
 )
 
 Data (
@@ -55,7 +56,7 @@ Steps {
 	
 	diluentSample.Type = wtype.LTDNAMIX
 	
-	ResuspendedDNA = MixInto(DNAPlate,Well,diluentSample) 
+	ResuspendedDNA = MixNamed(DNAPlate.Type,Well,PlateName,diluentSample) 
 
 }
 

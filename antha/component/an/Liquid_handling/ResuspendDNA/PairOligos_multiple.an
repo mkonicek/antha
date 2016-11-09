@@ -1,0 +1,105 @@
+// Protocol for resuspending freeze dried DNA with a diluent
+protocol PairOligos_multiple
+
+// we need to import the wtype package to use the LHComponent type
+// the mixer package is required to use the Sample function
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+  	PartConcentrations map[string]Concentration
+	FwdOligotoRevOligoMap map[string]string
+	ConcentrationSetPoint Concentration
+	TotalVolume Volume
+	IncubationTemp Temperature
+	IncubationTime Time
+)
+
+Data (
+)
+
+Inputs (
+	DNAPartsMap map[string]*wtype.LHComponent
+	Diluent *wtype.LHComponent
+	Plate *wtype.LHPlate
+)
+
+Outputs (
+	OligoPairs map[string]*wtype.LHComponent
+)
+
+Requirements {
+}
+
+Setup {
+}
+
+
+Steps {
+
+	// initialise output map 
+	OligoPairs = make(map[string]*wtype.LHComponent)
+	
+	// get all well locations for plate
+	var welllocations []string = Plate.AllWellPositions(wtype.BYCOLUMN)
+
+	// initialise a counter
+	var counter int
+	
+	// range through Oligo pairs map
+	for fwd, rev := range  FwdOligotoRevOligoMap{
+
+	// calculate volume to add for target conc
+	fwdoligoVol, err := wunit.VolumeForTargetConcentration(ConcentrationSetPoint, PartConcentrations[fwd], TotalVolume)  
+
+	if err != nil {
+		Errorf(err.Error())
+	}
+	
+	// calculate volume to add for target conc
+	revoligoVol, err := wunit.VolumeForTargetConcentration(ConcentrationSetPoint, PartConcentrations[rev], TotalVolume)  
+
+	if err != nil {
+		Errorf(err.Error())
+	}
+
+	// next well 
+	well := welllocations[counter]
+
+
+	// run PairOligos Antha element recursively
+	result := RunSteps(PairOligos,
+	Parameters{
+		TotalVolume: TotalVolume,
+		IncubationTemp: IncubationTemp,
+		IncubationTime: IncubationTime,
+		FWDOligoVolume: fwdoligoVol,
+		REVOligoVolume: revoligoVol,
+		Well: well,
+	},Inputs{
+		FwdOligo:	DNAPartsMap[fwd],
+		RevOligo:	DNAPartsMap[rev],
+		Diluent: Diluent,
+		Plate: Plate,
+	})
+	
+	// add to output map
+	OligoPairs[fwd] = result.Outputs.OligoPairs
+	
+	// increase counter to find next free well
+	counter++
+}
+
+
+}
+
+Analysis {
+}
+
+
+Validation {
+}

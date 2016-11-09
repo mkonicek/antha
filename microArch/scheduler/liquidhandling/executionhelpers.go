@@ -130,7 +130,7 @@ func (bg ByGeneration) Less(i, j int) bool {
 		c := strings.Compare(bg[i].PlateName, bg[j].PlateName)
 
 		if c != 0 {
-			return c
+			return c < 0
 		}
 
 		// finally go down columns (nb need to add option)
@@ -176,6 +176,7 @@ func (bo ByOrdinal) Less(i, j int) bool {
 	return bo[i][0] < bo[j][0]
 }
 
+/*
 func flatten_aggregates(agg map[string][]int) [][]int {
 	ret := make([][]int, 0, len(agg))
 
@@ -187,11 +188,13 @@ func flatten_aggregates(agg map[string][]int) [][]int {
 
 	return ret
 }
+*/
 
 func merge_transfers(insIn []driver.RobotInstruction, aggregates [][]int) []driver.RobotInstruction {
 	ret := make([]driver.RobotInstruction, 0, len(insIn))
 
 	for _, ar := range aggregates {
+		fmt.Println(ar)
 		if len(ar) == 1 {
 			// just push it in and move on
 			ret = append(ret, insIn[ar[0]])

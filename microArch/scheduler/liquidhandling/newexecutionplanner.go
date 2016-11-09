@@ -37,8 +37,13 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 
 	timer := robot.GetTimer()
 	// 1 -- generate high level instructions
-	// also work out which ones can be aggregated
-	agg := make(map[string][]int)
+
+	// aggregation now works by lumping together stuff that makes the same components
+	// until it finds something different
+
+	agg := make([][]int, 0, 1)
+	curragg := make([]int, 0, 1)
+
 	transfers := make([]liquidhandling.RobotInstruction, 0, len(request.LHInstructions))
 	evaps := make([]wtype.VolumeCorrection, 0, 10)
 	for ix, insID := range request.Output_order {
@@ -57,16 +62,28 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 		transfers = append(transfers, transIns)
 		cmp := fmt.Sprintf("%s_%s", request.LHInstructions[insID].ComponentsMoving(), request.LHInstructions[insID].Generation())
 
-		ar, ok := agg[cmp]
-		if !ok {
-			ar = make([]int, 0, 1)
+		/*
+			ar, ok := agg[cmp]
+			if !ok {
+				ar = make([]int, 0, 1)
+			}
+
+			ar = append(ar, ix)
+			agg[cmp] = ar
+
+		*/
+
+		if canaggregate(curragg, cmp, request.Output_order, request.LHInstructions) {
+			// true if either curragg empty or cmp is same
+			curragg = append(curragg, ix)
+		} else {
+			agg = append(agg, curragg)
+			curragg = make([]int, 0, 1)
+			curragg = append(curragg, ix)
+
 		}
 
-		ar = append(ar, ix)
-		agg[cmp] = ar
-
 		if request.Options.ModelEvaporation {
-			// now assuming we don't change instruction order below (Safe?)
 			// we should be able to model evaporation here
 
 			instrx, _ := ris.Generate(request.Policies, rbtcpy)
@@ -84,14 +101,11 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 			}
 		}
 	}
-
-	// sort the above out
-
-	aggregates := flatten_aggregates(agg)
+	agg = append(agg, curragg)
 
 	// 2 -- see if any of the above can be aggregated, if so we merge them
 
-	transfers = merge_transfers(transfers, aggregates)
+	transfers = merge_transfers(transfers, agg)
 
 	// 3 -- add them to the instruction set
 
@@ -117,4 +131,13 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 	request.Evaps = evaps
 
 	return request, nil
+}
+
+func canaggregate(agg []int, cmp string, outorder []string, cmps map[string]*wtype.LHInstruction) bool {
+
+	if len(agg) == 0 {
+		return true
+	}
+
+	return cmps[outorder[agg[0]]].ComponentsMoving() == cmp
 }

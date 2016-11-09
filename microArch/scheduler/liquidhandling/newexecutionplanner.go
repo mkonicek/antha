@@ -23,10 +23,10 @@
 package liquidhandling
 
 import (
-	"fmt"
+	"time"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"time"
 )
 
 // robot here should be a copy... this routine will be destructive of state
@@ -60,7 +60,8 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 		ris.Add(transIns)
 
 		transfers = append(transfers, transIns)
-		cmp := fmt.Sprintf("%s_%s", request.LHInstructions[insID].ComponentsMoving(), request.LHInstructions[insID].Generation())
+
+		cmp := request.LHInstructions[insID].ComponentsMoving()
 
 		/*
 			ar, ok := agg[cmp]

@@ -154,7 +154,7 @@ func set_output_order(rq *LHRequest) error {
 	it := NewIChain(nil)
 
 	for _, v := range sorted {
-		fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
+		//fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
 
 		it.Add(v)
 	}
@@ -194,7 +194,6 @@ func merge_transfers(insIn []driver.RobotInstruction, aggregates [][]int) []driv
 	ret := make([]driver.RobotInstruction, 0, len(insIn))
 
 	for _, ar := range aggregates {
-		fmt.Println(ar)
 		if len(ar) == 1 {
 			// just push it in and move on
 			ret = append(ret, insIn[ar[0]])

@@ -40,7 +40,7 @@
 		"process":"Transformation4"
 	}
 	},
-	{
+		{
 	"src":{
 		"port":"ReactionsMap",
 		"process":"Assembly"
@@ -70,6 +70,6 @@
         },
 		"Transformation5": {
             "component": "TransformationRefactored"
-        }
+        }	
     }
 }

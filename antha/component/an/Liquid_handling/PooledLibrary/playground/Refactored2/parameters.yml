@@ -5,17 +5,13 @@
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
 			"A1",
-			"A2", 
-			"A3", 
-			"A4",
-			"A5"
+			"A2",
+			"A3"
 		],
 	  	"RecoveryPlateWells": 	[
 			"A1",
-			"A2", 
-			"A3", 
-			"A4",
-			"A5"
+			"A2",
+			"A3"
 		],
             
         	"RecoveryTemp":"37C",

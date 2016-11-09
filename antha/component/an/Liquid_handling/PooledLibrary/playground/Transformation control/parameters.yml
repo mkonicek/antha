@@ -4,25 +4,25 @@
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"B1",
-			"B2", 
-			"B3", 
-			"B4",
-			"B5"
+			"F1",
+			"F2", 
+			"F3", 
+			"F4",
+			"F5"
 	],
 	  	"RecoveryPlateWells": 	[
-			"B1",
-			"B2", 
-			"B3", 
-			"B4",
-			"B5"
+			"F1",
+			"F2", 
+			"F3", 
+			"F4",
+			"F5"
 	],
             
         	"RecoveryTemp":"37C",
 	  	"RecoveryTime":"2h",
 		"PostPlasmidTemp":"2C",
         	"PostPlasmidTime": "5min",
-        	"Reaction": "dna_part",
+        	"Plasmid": "dna_part",
         	"ReactionVolume": "2ul",
 		"CompetentCellTransferVolume": "21ul"
         }

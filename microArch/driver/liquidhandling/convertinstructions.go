@@ -106,6 +106,9 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 			var flhp, tlhp *wtype.LHPlate
 
+			fmt.Println("YO WUT?: ", i)
+			fmt.Println(i, " ", fromPlateIDs[i])
+
 			flhif := robot.PlateLookup[fromPlateIDs[i][0]]
 
 			if flhif != nil {

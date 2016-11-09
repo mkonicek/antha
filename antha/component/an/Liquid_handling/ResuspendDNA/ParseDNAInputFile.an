@@ -26,6 +26,8 @@ Data (
 	PartPlateMap map[string]string
 	PartLocationsMap map[string]string
 	Platetype string
+	FwdOligotoRevOligo map[string]string // using the fwd primer name, returns the rev primer name
+	OligoPairs int
 )
 
 Inputs (
@@ -73,6 +75,7 @@ PlateNameHeader := "Plate"
 	PartLocationsMap = make(map[string]string)
 	PartPlateMap = make(map[string]string)
 	headersfound := make([]string,0)
+	FwdOligotoRevOligo = make(map[string]string)
 
 dnaparts, err := doe.RunsFromDesignPreResponses(SequenceInfoFile,[]string{"Length", "MW","Tm","Yield"},SequenceInfoFileformat)
 
@@ -203,9 +206,22 @@ PartMassMap[partname] = wunit.NewMass(partmass,"ug")
 PartPlateMap[partname]= platename
 }
 
+
+
 }
 
-
+for _, partname := range Partnames {
+	
+	if !strings.Contains(partname, "Revers"){
+	for _, partname2 := range Partnames {
+	if strings.Contains(partname2, "Revers")&& strings.Contains(partname2, partname){
+		FwdOligotoRevOligo[partname] = partname2
+		break
+	}
+}
+}
+}
+OligoPairs = len(FwdOligotoRevOligo)
 }
 Analysis {
 }

@@ -19,6 +19,8 @@ import
 
 // Input parameters for this protocol (data)
 
+// using the fwd primer name, returns the rev primer name
+
 func _ParseDNAPlateFileRequirements() {
 }
 
@@ -53,6 +55,7 @@ func _ParseDNAPlateFileSteps(_ctx context.Context, _input *ParseDNAPlateFileInpu
 	_output.PartLocationsMap = make(map[string]string)
 	_output.PartPlateMap = make(map[string]string)
 	headersfound := make([]string, 0)
+	_output.FwdOligotoRevOligo = make(map[string]string)
 
 	dnaparts, err := doe.RunsFromDesignPreResponses(_input.SequenceInfoFile, []string{"Length", "MW", "Tm", "Yield"}, _input.SequenceInfoFileformat)
 
@@ -183,6 +186,18 @@ func _ParseDNAPlateFileSteps(_ctx context.Context, _input *ParseDNAPlateFileInpu
 
 	}
 
+	for _, partname := range _output.Partnames {
+
+		if !strings.Contains(partname, "Revers") {
+			for _, partname2 := range _output.Partnames {
+				if strings.Contains(partname2, "Revers") && strings.Contains(partname2, partname) {
+					_output.FwdOligotoRevOligo[partname] = partname2
+					break
+				}
+			}
+		}
+	}
+	_output.OligoPairs = len(_output.FwdOligotoRevOligo)
 }
 func _ParseDNAPlateFileAnalysis(_ctx context.Context, _input *ParseDNAPlateFileInput, _output *ParseDNAPlateFileOutput) {
 }
@@ -243,6 +258,8 @@ type ParseDNAPlateFileInput struct {
 }
 
 type ParseDNAPlateFileOutput struct {
+	FwdOligotoRevOligo     map[string]string
+	OligoPairs             int
 	PartLocationsMap       map[string]string
 	PartMassMap            map[string]wunit.Mass
 	PartMolecularWeightMap map[string]float64
@@ -253,6 +270,8 @@ type ParseDNAPlateFileOutput struct {
 
 type ParseDNAPlateFileSOutput struct {
 	Data struct {
+		FwdOligotoRevOligo     map[string]string
+		OligoPairs             int
 		PartLocationsMap       map[string]string
 		PartMassMap            map[string]wunit.Mass
 		PartMolecularWeightMap map[string]float64
@@ -274,6 +293,8 @@ func init() {
 				{Name: "DNAPlate", Desc: "", Kind: "Inputs"},
 				{Name: "SequenceInfoFile", Desc: "", Kind: "Parameters"},
 				{Name: "SequenceInfoFileformat", Desc: "", Kind: "Parameters"},
+				{Name: "FwdOligotoRevOligo", Desc: "using the fwd primer name, returns the rev primer name\n", Kind: "Data"},
+				{Name: "OligoPairs", Desc: "", Kind: "Data"},
 				{Name: "PartLocationsMap", Desc: "", Kind: "Data"},
 				{Name: "PartMassMap", Desc: "", Kind: "Data"},
 				{Name: "PartMolecularWeightMap", Desc: "", Kind: "Data"},

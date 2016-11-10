@@ -528,7 +528,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	circle := wtype.NewShape("cylinder", "mm", 37, 37, 20)
 	//func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape *Shape, bott int, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
-	welltype = wtype.NewLHWell("falcon6well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	welltype = wtype.NewLHWell("falcon6well", "", "", "ul", 4000, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
 	plate = wtype.NewLHPlate("falcon6wellAgar", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
@@ -554,7 +554,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	circle = wtype.NewShape("cylinder", "mm", xdim, ydim, zdim)
 	//func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape *Shape, bott int, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
-	welltype = wtype.NewLHWell("costar48well", "", "", "ul", 1600, 100, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	welltype = wtype.NewLHWell("costar48well", "", "", "ul", 1000, 100, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
 	plate = wtype.NewLHPlate("costar48well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)

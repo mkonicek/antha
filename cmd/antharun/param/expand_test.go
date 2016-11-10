@@ -47,7 +47,7 @@ func TestInvalidInput(t *testing.T) {
 			"TheAlpha2": { "Key": "Value" } 
 		} 
 	}`)
-	pdataBad := []byte(strings.Replace(string(pdataOk), `"invalid":`, `"invalid",`, 1))
+	pdataBad := []byte(strings.Replace(string(pdataOk), `"invalid":`, `invalid}}}},`, 1))
 
 	if _, _, err := TryExpand(wdata, pdataOk); err != nil {
 		t.Error(err)

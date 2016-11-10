@@ -5,10 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/ghodss/yaml"
 )
 
 var (
@@ -16,11 +15,7 @@ var (
 )
 
 func unmarshal(data []byte, v interface{}) error {
-	if err := json.Unmarshal(data, v); err == nil {
-		return nil
-	} else {
-		return yaml.Unmarshal(data, v)
-	}
+	return yaml.Unmarshal(data, v)
 }
 
 // Flatten []map[string]RawMessage to RawParams
@@ -126,7 +121,7 @@ func TryExpand(wdata, pdata []byte) (*workflow.Desc, *execute.RawParams, error) 
 		// ^ This should be last as most parameters will match
 		origErr = nil
 	} else {
-		origErr = fmt.Errorf("exhausted methods for expanding workflow")
+		origErr = fmt.Errorf("exhausted methods for expanding workflow: %s", origErr)
 	}
 	if origErr != nil {
 		return nil, nil, origErr

@@ -12,6 +12,7 @@ import (
 // Input parameters for this protocol (data)
 Parameters (
   	PartConcentrations map[string]Concentration
+	StockConcentration Concentration
 	FwdOligotoRevOligoMap map[string]string
 	ConcentrationSetPoint Concentration
 	TotalVolume Volume
@@ -41,6 +42,16 @@ Setup {
 
 Steps {
 
+	//var nilconcmap map[string]wunit.Concentration
+	var nilconc wunit.Concentration
+
+	if PartConcentrations == nil  && StockConcentration != nilconc {
+		PartConcentrations = make(map[string]wunit.Concentration)
+		for key, _ := range DNAPartsMap {
+		PartConcentrations[key] = StockConcentration
+		}
+	}
+
 	// initialise output map 
 	OligoPairs = make(map[string]*wtype.LHComponent)
 	
@@ -48,8 +59,8 @@ Steps {
 	var welllocations []string = Plate.AllWellPositions(wtype.BYCOLUMN)
 
 	// initialise a counter
-	var counter int
-	
+	var counter int = 0
+	var platenum int = 1
 	// range through Oligo pairs map
 	for fwd, rev := range  FwdOligotoRevOligoMap{
 
@@ -80,6 +91,7 @@ Steps {
 		FWDOligoVolume: fwdoligoVol,
 		REVOligoVolume: revoligoVol,
 		Well: well,
+		PlateNumber: platenum,
 	},Inputs{
 		FwdOligo:	DNAPartsMap[fwd],
 		RevOligo:	DNAPartsMap[rev],
@@ -91,7 +103,13 @@ Steps {
 	OligoPairs[fwd] = result.Outputs.OligoPairs
 	
 	// increase counter to find next free well
+	
+	if counter +1 == len(welllocations){
+	counter = 0
+	platenum++	
+	}else {
 	counter++
+	}
 }
 
 

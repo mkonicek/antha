@@ -24,6 +24,16 @@ func _PairOligos_multipleSetup(_ctx context.Context, _input *PairOligos_multiple
 
 func _PairOligos_multipleSteps(_ctx context.Context, _input *PairOligos_multipleInput, _output *PairOligos_multipleOutput) {
 
+	//var nilconcmap map[string]wunit.Concentration
+	var nilconc wunit.Concentration
+
+	if _input.PartConcentrations == nil && _input.StockConcentration != nilconc {
+		_input.PartConcentrations = make(map[string]wunit.Concentration)
+		for key := range _input.DNAPartsMap {
+			_input.PartConcentrations[key] = _input.StockConcentration
+		}
+	}
+
 	// initialise output map
 	_output.OligoPairs = make(map[string]*wtype.LHComponent)
 
@@ -31,8 +41,8 @@ func _PairOligos_multipleSteps(_ctx context.Context, _input *PairOligos_multiple
 	var welllocations []string = _input.Plate.AllWellPositions(wtype.BYCOLUMN)
 
 	// initialise a counter
-	var counter int
-
+	var counter int = 0
+	var platenum int = 1
 	// range through Oligo pairs map
 	for fwd, rev := range _input.FwdOligotoRevOligoMap {
 
@@ -60,6 +70,7 @@ func _PairOligos_multipleSteps(_ctx context.Context, _input *PairOligos_multiple
 			FWDOligoVolume: fwdoligoVol,
 			REVOligoVolume: revoligoVol,
 			Well:           well,
+			PlateNumber:    platenum,
 
 			FwdOligo: _input.DNAPartsMap[fwd],
 			RevOligo: _input.DNAPartsMap[rev],
@@ -71,7 +82,13 @@ func _PairOligos_multipleSteps(_ctx context.Context, _input *PairOligos_multiple
 		_output.OligoPairs[fwd] = result.Outputs.OligoPairs
 
 		// increase counter to find next free well
-		counter++
+
+		if counter+1 == len(welllocations) {
+			counter = 0
+			platenum++
+		} else {
+			counter++
+		}
 	}
 
 }
@@ -137,6 +154,7 @@ type PairOligos_multipleInput struct {
 	IncubationTime        wunit.Time
 	PartConcentrations    map[string]wunit.Concentration
 	Plate                 *wtype.LHPlate
+	StockConcentration    wunit.Concentration
 	TotalVolume           wunit.Volume
 }
 
@@ -167,6 +185,7 @@ func init() {
 				{Name: "IncubationTime", Desc: "", Kind: "Parameters"},
 				{Name: "PartConcentrations", Desc: "", Kind: "Parameters"},
 				{Name: "Plate", Desc: "", Kind: "Inputs"},
+				{Name: "StockConcentration", Desc: "", Kind: "Parameters"},
 				{Name: "TotalVolume", Desc: "", Kind: "Parameters"},
 				{Name: "OligoPairs", Desc: "", Kind: "Outputs"},
 			},

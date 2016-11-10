@@ -24,6 +24,15 @@ func _ResuspendDNA_MultipleSetup(_ctx context.Context, _input *ResuspendDNA_Mult
 
 func _ResuspendDNA_MultipleSteps(_ctx context.Context, _input *ResuspendDNA_MultipleInput, _output *ResuspendDNA_MultipleOutput) {
 
+	if _input.Projectname == "" {
+		_input.Projectname = "ResuspendDNA"
+	}
+
+	// set up some empty slices to fill as we iterate through the reactions
+	Reactions := make([]*wtype.LHComponent, 0)
+	volumes := make([]wunit.Volume, 0)
+	welllocations := make([]string, 0)
+
 	_output.ResuspendedDNAMap = make(map[string]*wtype.LHComponent)
 	_output.PartConcentrations = make(map[string]wunit.Concentration)
 
@@ -38,9 +47,22 @@ func _ResuspendDNA_MultipleSteps(_ctx context.Context, _input *ResuspendDNA_Mult
 			Diluent:  _input.Diluent,
 			DNAPlate: _input.DNAPlate},
 		)
+
+		result.Outputs.ResuspendedDNA.CName = part
+
 		_output.ResuspendedDNAMap[part] = result.Outputs.ResuspendedDNA
+
 		_output.PartConcentrations[part] = _input.TargetConc.GramPerL(_input.PartMolecularWeightMap[part])
+
+		// add to slices to export as csv later
+		Reactions = append(Reactions, result.Outputs.ResuspendedDNA)
+		volumes = append(volumes, result.Outputs.ResuspendedDNA.Volume())
+		welllocations = append(welllocations, _input.PartLocationsMap[part])
 	}
+
+	// once all values of loop have been completed, export the plate contents as a csv file
+	_output.Errors = append(_output.Errors, wtype.ExportPlateCSV(_input.Projectname+".csv", _input.DNAPlate, _input.Projectname+"outputPlate", welllocations, Reactions, volumes))
+
 }
 
 func _ResuspendDNA_MultipleAnalysis(_ctx context.Context, _input *ResuspendDNA_MultipleInput, _output *ResuspendDNA_MultipleOutput) {
@@ -103,16 +125,19 @@ type ResuspendDNA_MultipleInput struct {
 	PartMolecularWeightMap map[string]float64
 	PartPlateMap           map[string]string
 	Parts                  []string
+	Projectname            string
 	TargetConc             wunit.Concentration
 }
 
 type ResuspendDNA_MultipleOutput struct {
+	Errors             []error
 	PartConcentrations map[string]wunit.Concentration
 	ResuspendedDNAMap  map[string]*wtype.LHComponent
 }
 
 type ResuspendDNA_MultipleSOutput struct {
 	Data struct {
+		Errors             []error
 		PartConcentrations map[string]wunit.Concentration
 	}
 	Outputs struct {
@@ -134,7 +159,9 @@ func init() {
 				{Name: "PartMolecularWeightMap", Desc: "", Kind: "Parameters"},
 				{Name: "PartPlateMap", Desc: "", Kind: "Parameters"},
 				{Name: "Parts", Desc: "", Kind: "Parameters"},
+				{Name: "Projectname", Desc: "", Kind: "Parameters"},
 				{Name: "TargetConc", Desc: "", Kind: "Parameters"},
+				{Name: "Errors", Desc: "", Kind: "Data"},
 				{Name: "PartConcentrations", Desc: "", Kind: "Data"},
 				{Name: "ResuspendedDNAMap", Desc: "", Kind: "Outputs"},
 			},

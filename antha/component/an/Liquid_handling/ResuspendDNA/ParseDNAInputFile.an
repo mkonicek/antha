@@ -5,10 +5,10 @@ protocol ParseDNAPlateFile
 // the mixer package is required to use the Sample function
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"fmt"
 	"strings"
+	"fmt"
+	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
-
 )
 
 
@@ -28,6 +28,7 @@ Data (
 	Platetype string
 	FwdOligotoRevOligo map[string]string // using the fwd primer name, returns the rev primer name
 	OligoPairs int
+	HeadersFound []string
 )
 
 Inputs (
@@ -35,7 +36,7 @@ Inputs (
 )
 
 Outputs (
-	
+	PartsList map[string]*wtype.LHComponent
 )
 
 Requirements {
@@ -62,12 +63,14 @@ var ReplaceMap = map[string]string{
 }
 
 
-// headers
-NameHeader := "Seq Name"
-MassHeader := "Yield_ug"
-MWHeader := "MW"
-WellHeader := "Customer Well"
-PlateNameHeader := "Plate"
+	// headers
+	NameHeader := "Seq Name"
+	MassHeader := "Yield_ug"
+	MWHeader := "MW"
+	WellHeader := "Customer Well"
+	PlateNameHeader := "Plate"
+
+
 
 	// initialise maps
 	PartMassMap = make(map[string]wunit.Mass)
@@ -76,6 +79,7 @@ PlateNameHeader := "Plate"
 	PartPlateMap = make(map[string]string)
 	headersfound := make([]string,0)
 	FwdOligotoRevOligo = make(map[string]string)
+	PartsList = make(map[string]*wtype.LHComponent)
 
 dnaparts, err := doe.RunsFromDesignPreResponses(SequenceInfoFile,[]string{"Length", "MW","Tm","Yield"},SequenceInfoFileformat)
 
@@ -160,8 +164,10 @@ for i, partinfo := range dnaparts {
 		if	well, found := partinfo.Setpoints[j].(string); found{
 			
 			for key, value := range ReplaceMap {
+			
 			if strings.Contains(well,key){
 				well = strings.Replace(well,key,value,1)
+		
 				break
 			}
 			}
@@ -204,6 +210,11 @@ PartLocationsMap[partname] = partwell
 PartMolecularWeightMap[partname] = partmw
 PartMassMap[partname] = wunit.NewMass(partmass,"ug")
 PartPlateMap[partname]= platename
+
+part := factory.GetComponentByType("dna_part")
+part.CName = partname
+
+PartsList[partname] = part
 }
 
 
@@ -212,9 +223,9 @@ PartPlateMap[partname]= platename
 
 for _, partname := range Partnames {
 	
-	if !strings.Contains(partname, "Revers"){
+	if !strings.Contains(partname, "_Revers"){
 	for _, partname2 := range Partnames {
-	if strings.Contains(partname2, "Revers")&& strings.Contains(partname2, partname){
+	if strings.Contains(partname2, "_Revers")&& strings.Contains(partname2, partname){
 		FwdOligotoRevOligo[partname] = partname2
 		break
 	}
@@ -222,6 +233,9 @@ for _, partname := range Partnames {
 }
 }
 OligoPairs = len(FwdOligotoRevOligo)
+
+
+HeadersFound = headersfound
 }
 Analysis {
 }

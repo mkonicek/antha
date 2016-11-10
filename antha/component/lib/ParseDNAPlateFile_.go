@@ -13,6 +13,7 @@ import
 	"github.com/antha-lang/antha/component"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/microArch/factory"
 	"golang.org/x/net/context"
 	"strings"
 )
@@ -56,6 +57,7 @@ func _ParseDNAPlateFileSteps(_ctx context.Context, _input *ParseDNAPlateFileInpu
 	_output.PartPlateMap = make(map[string]string)
 	headersfound := make([]string, 0)
 	_output.FwdOligotoRevOligo = make(map[string]string)
+	_output.PartsList = make(map[string]*wtype.LHComponent)
 
 	dnaparts, err := doe.RunsFromDesignPreResponses(_input.SequenceInfoFile, []string{"Length", "MW", "Tm", "Yield"}, _input.SequenceInfoFileformat)
 
@@ -139,8 +141,10 @@ func _ParseDNAPlateFileSteps(_ctx context.Context, _input *ParseDNAPlateFileInpu
 				if well, found := partinfo.Setpoints[j].(string); found {
 
 					for key, value := range ReplaceMap {
+
 						if strings.Contains(well, key) {
 							well = strings.Replace(well, key, value, 1)
+
 							break
 						}
 					}
@@ -182,15 +186,20 @@ func _ParseDNAPlateFileSteps(_ctx context.Context, _input *ParseDNAPlateFileInpu
 			_output.PartMolecularWeightMap[partname] = partmw
 			_output.PartMassMap[partname] = wunit.NewMass(partmass, "ug")
 			_output.PartPlateMap[partname] = platename
+
+			part := factory.GetComponentByType("dna_part")
+			part.CName = partname
+
+			_output.PartsList[partname] = part
 		}
 
 	}
 
 	for _, partname := range _output.Partnames {
 
-		if !strings.Contains(partname, "Revers") {
+		if !strings.Contains(partname, "_Revers") {
 			for _, partname2 := range _output.Partnames {
-				if strings.Contains(partname2, "Revers") && strings.Contains(partname2, partname) {
+				if strings.Contains(partname2, "_Revers") && strings.Contains(partname2, partname) {
 					_output.FwdOligotoRevOligo[partname] = partname2
 					break
 				}
@@ -198,6 +207,8 @@ func _ParseDNAPlateFileSteps(_ctx context.Context, _input *ParseDNAPlateFileInpu
 		}
 	}
 	_output.OligoPairs = len(_output.FwdOligotoRevOligo)
+
+	_output.HeadersFound = headersfound
 }
 func _ParseDNAPlateFileAnalysis(_ctx context.Context, _input *ParseDNAPlateFileInput, _output *ParseDNAPlateFileOutput) {
 }
@@ -259,18 +270,21 @@ type ParseDNAPlateFileInput struct {
 
 type ParseDNAPlateFileOutput struct {
 	FwdOligotoRevOligo     map[string]string
+	HeadersFound           []string
 	OligoPairs             int
 	PartLocationsMap       map[string]string
 	PartMassMap            map[string]wunit.Mass
 	PartMolecularWeightMap map[string]float64
 	PartPlateMap           map[string]string
 	Partnames              []string
+	PartsList              map[string]*wtype.LHComponent
 	Platetype              string
 }
 
 type ParseDNAPlateFileSOutput struct {
 	Data struct {
 		FwdOligotoRevOligo     map[string]string
+		HeadersFound           []string
 		OligoPairs             int
 		PartLocationsMap       map[string]string
 		PartMassMap            map[string]wunit.Mass
@@ -280,6 +294,7 @@ type ParseDNAPlateFileSOutput struct {
 		Platetype              string
 	}
 	Outputs struct {
+		PartsList map[string]*wtype.LHComponent
 	}
 }
 
@@ -294,12 +309,14 @@ func init() {
 				{Name: "SequenceInfoFile", Desc: "", Kind: "Parameters"},
 				{Name: "SequenceInfoFileformat", Desc: "", Kind: "Parameters"},
 				{Name: "FwdOligotoRevOligo", Desc: "using the fwd primer name, returns the rev primer name\n", Kind: "Data"},
+				{Name: "HeadersFound", Desc: "", Kind: "Data"},
 				{Name: "OligoPairs", Desc: "", Kind: "Data"},
 				{Name: "PartLocationsMap", Desc: "", Kind: "Data"},
 				{Name: "PartMassMap", Desc: "", Kind: "Data"},
 				{Name: "PartMolecularWeightMap", Desc: "", Kind: "Data"},
 				{Name: "PartPlateMap", Desc: "", Kind: "Data"},
 				{Name: "Partnames", Desc: "", Kind: "Data"},
+				{Name: "PartsList", Desc: "", Kind: "Outputs"},
 				{Name: "Platetype", Desc: "", Kind: "Data"},
 			},
 		},

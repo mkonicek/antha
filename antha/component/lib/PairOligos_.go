@@ -6,6 +6,7 @@ import
 // we need to import the wtype package to use the LHComponent type
 // the mixer package is required to use the Sample function
 (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -33,7 +34,7 @@ func _PairOligosSteps(_ctx context.Context, _input *PairOligosInput, _output *Pa
 
 	revOligoSample.Type = wtype.LTDNAMIX
 
-	_output.OligoPairs = execute.MixNamed(_ctx, _input.Plate.Type, _input.Well, "OligoPlate", diluentSample, fwdOligoSample, revOligoSample)
+	_output.OligoPairs = execute.MixNamed(_ctx, _input.Plate.Type, _input.Well, fmt.Sprint("OligoPlate", _input.PlateNumber), diluentSample, fwdOligoSample, revOligoSample)
 
 	_output.OligoPairs = execute.Incubate(_ctx, _output.OligoPairs, _input.IncubationTemp, _input.IncubationTime, false)
 
@@ -98,6 +99,7 @@ type PairOligosInput struct {
 	IncubationTemp wunit.Temperature
 	IncubationTime wunit.Time
 	Plate          *wtype.LHPlate
+	PlateNumber    int
 	REVOligoVolume wunit.Volume
 	RevOligo       *wtype.LHComponent
 	TotalVolume    wunit.Volume
@@ -129,6 +131,7 @@ func init() {
 				{Name: "IncubationTemp", Desc: "", Kind: "Parameters"},
 				{Name: "IncubationTime", Desc: "", Kind: "Parameters"},
 				{Name: "Plate", Desc: "", Kind: "Inputs"},
+				{Name: "PlateNumber", Desc: "", Kind: "Parameters"},
 				{Name: "REVOligoVolume", Desc: "", Kind: "Parameters"},
 				{Name: "RevOligo", Desc: "", Kind: "Inputs"},
 				{Name: "TotalVolume", Desc: "", Kind: "Parameters"},

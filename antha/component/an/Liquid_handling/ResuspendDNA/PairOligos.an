@@ -6,6 +6,7 @@ protocol PairOligos
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"fmt"
 )
 
 
@@ -17,6 +18,7 @@ Parameters (
 	TotalVolume Volume
 	IncubationTemp Temperature
 	IncubationTime Time
+	PlateNumber int
 )
 
 Data (
@@ -50,7 +52,7 @@ Steps {
 	
 	revOligoSample.Type = wtype.LTDNAMIX
 	
-	OligoPairs = MixNamed(Plate.Type,Well,"OligoPlate",diluentSample,fwdOligoSample,revOligoSample) 
+	OligoPairs = MixNamed(Plate.Type,Well,fmt.Sprint("OligoPlate",PlateNumber),diluentSample,fwdOligoSample,revOligoSample) 
 
 	OligoPairs = Incubate(OligoPairs,IncubationTemp,IncubationTime,false)
 

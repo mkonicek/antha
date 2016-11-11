@@ -113,7 +113,7 @@ func _Mastermix_numberofreactionsSteps(_ctx context.Context, _input *Mastermix_n
 
 	_output.Mastermix = mastermix
 
-	_output.Error = wtype.ExportPlateCSV(_input.Projectname+"mastermix.csv", _input.OutPlate, _input.Projectname+"outputPlate", []string{wellpositions[counter]}, []*wtype.LHComponent{_output.Mastermix}, []wunit.Volume{_output.Mastermix.Volume()})
+	_output.Error = wtype.ExportPlateCSV(_input.Projectname+"mastermix.csv", _input.OutPlate, _input.Projectname+"mastermixoutputPlate", []string{wellpositions[counter]}, []*wtype.LHComponent{_output.Mastermix}, []wunit.Volume{_output.Mastermix.Volume()})
 
 }
 

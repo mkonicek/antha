@@ -59,7 +59,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 	for i := 0; i < inssIn.MaxLen(); i++ {
 		comps := inssIn.CompsAt(i)
-
 		lenToMake := 0
 		// remove spaces between components
 		cmpSquash := make([]*wtype.LHComponent, 0, lenToMake)
@@ -75,6 +74,16 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		// six parameters applying to the source
 		// TODO --> this should create components if not already found
 		fromPlateIDs, fromWells, fromvols, err := robot.GetComponents(cmpSquash, carryvol, channelprms.Orientation, multi, channelprms.Independent)
+
+		// let's start making sense here
+
+		if !allEqual(len(fromPlateIDs), len(fromWells), len(fromvols)) {
+			panic("Lengths cannot differ here")
+		}
+
+		fmt.Println("HELLO COMPONENTS MY OLD FRIENDS:")
+		fmt.Println(cmpSquash)
+		fmt.Println(fromPlateIDs)
 
 		if err != nil {
 			return nil, err
@@ -106,10 +115,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 			var flhp, tlhp *wtype.LHPlate
 
-			fmt.Println("YO WUT?: ", i)
-			fmt.Println(i, " ", fromPlateIDs[i])
-
-			flhif := robot.PlateLookup[fromPlateIDs[i][0]]
+			flhif := robot.PlateLookup[fromPlateIDs[ix][0]]
 
 			if flhif != nil {
 				flhp = flhif.(*wtype.LHPlate)
@@ -148,7 +154,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			ptwy[ix] = tlhp.WellsY()
 			ptt[ix] = tlhp.Type
 
-			wlf, ok := flhp.WellAtString(fromWells[i][0])
+			wlf, ok := flhp.WellAtString(fromWells[ix][0])
 
 			if !ok {
 				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
@@ -159,14 +165,14 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			vf[ix] = fromvols[i][0]
 			//wlf.Remove(va[ix])
 
-			pf[ix] = robot.PlateIDLookup[fromPlateIDs[i][0]]
+			pf[ix] = robot.PlateIDLookup[fromPlateIDs[ix][0]]
 			wf[ix] = fromWells[i][0]
 			pfwx[ix] = flhp.WellsX()
 			pfwy[ix] = flhp.WellsY()
 			ptf[ix] = flhp.Type
 
 			if v.Loc == "" {
-				v.Loc = fromPlateIDs[i][0] + ":" + fromWells[i][0]
+				v.Loc = fromPlateIDs[ix][0] + ":" + fromWells[ix][0]
 			}
 			// add component to destination
 			// need to ensure data are consistent

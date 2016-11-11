@@ -124,6 +124,17 @@ func (bg ByGeneration) Len() int      { return len(bg) }
 func (bg ByGeneration) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
 func (bg ByGeneration) Less(i, j int) bool {
 	if bg[i].Generation() == bg[j].Generation() {
+
+		// compare the plate names (which must exist now)
+
+		c := strings.Compare(bg[i].PlateName, bg[j].PlateName)
+
+		if c != 0 {
+			return c < 0
+		}
+
+		// finally go down columns (nb need to add option)
+
 		return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 	}
 
@@ -140,7 +151,7 @@ func set_output_order(rq *LHRequest) error {
 	it := NewIChain(nil)
 
 	for _, v := range sorted {
-		//	fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
+		//fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
 
 		it.Add(v)
 	}
@@ -164,6 +175,7 @@ func (bo ByOrdinal) Less(i, j int) bool {
 	return bo[i][0] < bo[j][0]
 }
 
+/*
 func flatten_aggregates(agg map[string][]int) [][]int {
 	ret := make([][]int, 0, len(agg))
 
@@ -175,6 +187,7 @@ func flatten_aggregates(agg map[string][]int) [][]int {
 
 	return ret
 }
+*/
 
 func merge_transfers(insIn []driver.RobotInstruction, aggregates [][]int) []driver.RobotInstruction {
 	ret := make([]driver.RobotInstruction, 0, len(insIn))

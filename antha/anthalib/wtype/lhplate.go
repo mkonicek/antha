@@ -503,7 +503,7 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 
 	//record := make([]string, 0)
 
-	headerrecord := []string{plate.Type, platename, "", "", ""}
+	headerrecord := []string{plate.Type, platename, "", "", "", "", ""}
 
 	records = append(records, headerrecord)
 
@@ -513,7 +513,12 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 
-		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, Volumes[i].Unit().PrefixedSymbol()}
+		// if no conc unit and conc is zero use a default concentration unit
+		if liquids[i].Conc == 0 && liquids[i].Cunit == "" {
+			liquids[i].Cunit = "mg/l"
+		}
+
+		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, Volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
 		records = append(records, record)
 	}
 

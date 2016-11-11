@@ -263,8 +263,12 @@ func MakeSubMapfromMap(existingmap map[color.Color]string, colournames []string)
 	}
 
 	for _, colourname := range colournames {
+
 		colour := reversedmap[colourname]
-		newmap[colour] = colourname
+
+		if colour != nil {
+			newmap[colour] = colourname
+		}
 	}
 
 	return
@@ -277,6 +281,7 @@ func MakeSubPallette(palettename string, colournames []string) (subpalette color
 
 	subpalette = palettefromMap(submap)
 
+	fmt.Println("length of subpalette: ", len(subpalette), subpalette)
 	return
 
 }
@@ -323,7 +328,7 @@ var ProteinPaintboxmap = map[color.Color]string{
 	color.RGBA{R: uint8(241), G: uint8(84), B: uint8(152), A: uint8(255)}:  "GuajilloRFP",
 	color.RGBA{R: uint8(247), G: uint8(132), B: uint8(179), A: uint8(255)}: "PaprikaRFP",
 	color.RGBA{R: uint8(248), G: uint8(84), B: uint8(149), A: uint8(255)}:  "SerranoRFP",
-	color.RGBA{R: uint8(254), G: uint8(253), B: uint8(252), A: uint8(255)}: "EiraCFP",
+	//color.RGBA{R: uint8(254), G: uint8(253), B: uint8(252), A: uint8(255)}: "EiraCFP",
 	color.RGBA{R: uint8(255), G: uint8(255), B: uint8(146), A: uint8(255)}: "BlazeYFP",
 	color.RGBA{R: uint8(194), G: uint8(164), B: uint8(72), A: uint8(255)}:  "JuniperGFP",
 	color.RGBA{R: uint8(243), G: uint8(138), B: uint8(112), A: uint8(255)}: "TannenGFP",
@@ -332,13 +337,27 @@ var ProteinPaintboxmap = map[color.Color]string{
 	color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "E.coli",
 
 	// lacZ expresser (e.g. pUC19) grown on S gal
-	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "E.coli pUC19 on sgal",
-
+	//color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "E.coli pUC19 on sgal",
+	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}: "veryblack",
 	// plus white as a blank (or comment out to use EiraCFP)
-	//color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
+	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
 }
 
 var UVProteinPaintboxmap = map[color.Color]string{
+
+	// Chromogenic proteins same colours as visible
+	color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)}:  "BlitzenBlue",
+	color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)}:   "DreidelTeal",
+	color.RGBA{R: uint8(107), G: uint8(80), B: uint8(140), A: uint8(255)}:  "VirginiaViolet",
+	color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)}:  "VixenPurple",
+	color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)}:   "TinselPurple",
+	color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)}:   "MaccabeePurple",
+	color.RGBA{R: uint8(152), G: uint8(76), B: uint8(128), A: uint8(255)}:  "DonnerMagenta",
+	color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)}:  "CupidPink",
+	color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)}:  "SeraphinaPink",
+	color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)}:   "ScroogeOrange",
+	color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)}: "LeorOrange",
+
 	// under UV
 
 	// fluorescent
@@ -360,26 +379,27 @@ var UVProteinPaintboxmap = map[color.Color]string{
 	color.RGBA{R: uint8(255), G: uint8(0), B: uint8(166), A: uint8(255)}:  "FresnoRFP",
 
 	// Extended fluorescent proteins
-	color.RGBA{R: uint8(255), G: uint8(24), B: uint8(138), A: uint8(255)}:  "CayenneRFP",
-	color.RGBA{R: uint8(255), G: uint8(8), B: uint8(138), A: uint8(255)}:   "GuajilloRFP",
-	color.RGBA{R: uint8(252), G: uint8(65), B: uint8(136), A: uint8(255)}:  "PaprikaRFP",
-	color.RGBA{R: uint8(254), G: uint8(23), B: uint8(127), A: uint8(255)}:  "SerranoRFP",
-	color.RGBA{R: uint8(173), G: uint8(253), B: uint8(218), A: uint8(255)}: "EiraCFP",
-	color.RGBA{R: uint8(254), G: uint8(255), B: uint8(83), A: uint8(255)}:  "BlazeYFP",
-	color.RGBA{R: uint8(0), G: uint8(231), B: uint8(162), A: uint8(255)}:   "JuniperGFP",
-	color.RGBA{R: uint8(179), G: uint8(119), B: uint8(57), A: uint8(255)}:  "TannenGFP",
+	color.RGBA{R: uint8(255), G: uint8(24), B: uint8(138), A: uint8(255)}: "CayenneRFP",
+	color.RGBA{R: uint8(255), G: uint8(8), B: uint8(138), A: uint8(255)}:  "GuajilloRFP",
+	color.RGBA{R: uint8(252), G: uint8(65), B: uint8(136), A: uint8(255)}: "PaprikaRFP",
+	color.RGBA{R: uint8(254), G: uint8(23), B: uint8(127), A: uint8(255)}: "SerranoRFP",
+	//color.RGBA{R: uint8(173), G: uint8(253), B: uint8(218), A: uint8(255)}: "EiraCFP",
+	color.RGBA{R: uint8(254), G: uint8(255), B: uint8(83), A: uint8(255)}: "BlazeYFP",
+	color.RGBA{R: uint8(0), G: uint8(231), B: uint8(162), A: uint8(255)}:  "JuniperGFP",
+	color.RGBA{R: uint8(179), G: uint8(119), B: uint8(57), A: uint8(255)}: "TannenGFP",
 
-	// conventional E.coli colour is black under UV ??
-	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "E.coli",
-	//color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
+	// conventional E.coli colour
+	color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "E.coli",
+	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}:       "E.coli pUC19 on sgal",
+	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
 }
 
 var ProteinPaintboxSubsetmap = map[color.Color]string{
 	// under visible light
 
 	// Chromogenic proteins
-	//color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)}:  "BlitzenBlue",
-	color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)}: "DreidelTeal",
+	color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)}: "BlitzenBlue",
+	color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)}:  "DreidelTeal",
 	/*color.RGBA{R: uint8(107), G: uint8(80), B: uint8(140), A: uint8(255)}:  "VirginiaViolet",
 	color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)}:  "VixenPurple",*/
 	color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)}: "TinselPurple",
@@ -388,51 +408,52 @@ var ProteinPaintboxSubsetmap = map[color.Color]string{
 	color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)}: "CupidPink",
 	//	color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)}:  "SeraphinaPink",
 	//color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)}: "ScroogeOrange",
-	color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)}: "LeorOrange",
+	//color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)}: "LeorOrange",
 
 	// fluorescent proteins
 
 	//	color.RGBA{R: uint8(224), G: uint8(120), B: uint8(240), A: uint8(255)}:  "CindylouCFP",
 	//color.RGBA{R: uint8(224), G: uint8(120), B: uint8(140), A: uint8(255)}: "FrostyCFP",
+	color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "TwinkleCFP",
 	/*
 		// for twinkle B should = uint8(137) but this is the same colour as e.coli so changed it to uint8(138) to avoid error due to duplicate map keys
 		color.RGBA{R: uint8(196), G: uint8(183), B: uint8(138), A: uint8(255)}: "TwinkleCFP",
 		//color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "TwinkleCFP",
-		//color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "TwinkleCFP",
-		color.RGBA{R: uint8(251), G: uint8(176), B: uint8(0), A: uint8(255)}: "YetiYFP",
-		color.RGBA{R: uint8(250), G: uint8(210), B: uint8(0), A: uint8(255)}: "MarleyYFP",
-		color.RGBA{R: uint8(255), G: uint8(194), B: uint8(0), A: uint8(255)}: "CratchitYFP",
-		color.RGBA{R: uint8(231), G: uint8(173), B: uint8(0), A: uint8(255)}: "KringleYFP",*/
+		//color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "TwinkleCFP",*/
+	color.RGBA{R: uint8(251), G: uint8(176), B: uint8(0), A: uint8(255)}: "YetiYFP",
+	color.RGBA{R: uint8(250), G: uint8(210), B: uint8(0), A: uint8(255)}: "MarleyYFP",
+	color.RGBA{R: uint8(255), G: uint8(194), B: uint8(0), A: uint8(255)}: "CratchitYFP",
+	color.RGBA{R: uint8(231), G: uint8(173), B: uint8(0), A: uint8(255)}: "KringleYFP",
 	//color.RGBA{R: uint8(222), G: uint8(221), B: uint8(68), A: uint8(255)}: "CometGFP",
 	// new green
 	//color.RGBA{R: uint8(105), G: uint8(189), B: uint8(67), A: uint8(255)}: "green",
 	//105 189 67 255
-	//color.RGBA{R: uint8(209), G: uint8(214), B: uint8(0), A: uint8(255)}:  "DasherGFP",
-	/*color.RGBA{R: uint8(225), G: uint8(222), B: uint8(120), A: uint8(255)}: "IvyGFP",
+	color.RGBA{R: uint8(209), G: uint8(214), B: uint8(0), A: uint8(255)}:   "DasherGFP",
+	color.RGBA{R: uint8(225), G: uint8(222), B: uint8(120), A: uint8(255)}: "IvyGFP",
 	//color.RGBA{R: uint8(216), G: uint8(231), B: uint8(15), A: uint8(255)}:     "HollyGFP",
 	color.RGBA{R: uint8(251), G: uint8(102), B: uint8(79), A: uint8(255)}: "YukonOFP",
 	color.RGBA{R: uint8(215), G: uint8(72), B: uint8(76), A: uint8(255)}:  "RudolphRFP",
 	color.RGBA{R: uint8(244), G: uint8(63), B: uint8(150), A: uint8(255)}: "FresnoRFP",
 
 	// Extended fluorescent proteins
-	color.RGBA{R: uint8(248), G: uint8(64), B: uint8(148), A: uint8(255)}:  "CayenneRFP",
+	/*color.RGBA{R: uint8(248), G: uint8(64), B: uint8(148), A: uint8(255)}:  "CayenneRFP",
 	color.RGBA{R: uint8(241), G: uint8(84), B: uint8(152), A: uint8(255)}:  "GuajilloRFP",
 	color.RGBA{R: uint8(247), G: uint8(132), B: uint8(179), A: uint8(255)}: "PaprikaRFP",
 	color.RGBA{R: uint8(248), G: uint8(84), B: uint8(149), A: uint8(255)}:  "SerranoRFP",
-	color.RGBA{R: uint8(254), G: uint8(253), B: uint8(252), A: uint8(255)}: "EiraCFP",
+	color.RGBA{R: uint8(254), G: uint8(253), B: uint8(252), A: uint8(255)}: "EiraCFP",*/
 	color.RGBA{R: uint8(255), G: uint8(255), B: uint8(146), A: uint8(255)}: "BlazeYFP",
 	color.RGBA{R: uint8(194), G: uint8(164), B: uint8(72), A: uint8(255)}:  "JuniperGFP",
-	color.RGBA{R: uint8(243), G: uint8(138), B: uint8(112), A: uint8(255)}: "TannenGFP",
-	*/
+	//color.RGBA{R: uint8(243), G: uint8(138), B: uint8(112), A: uint8(255)}: "TannenGFP",
+	//*/
 	// conventional E.coli colour
 	//color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "E.coli",
 
 	// lacZ expresser (e.g. pUC19) grown on S gal
 	//color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "E.coli pUC19 on sgal",
-	//color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "black",
+	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}: "veryblack",
 
 	// plus white as a blank (or comment out to use EiraCFP)
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
+	//color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
 }
 
 func MakeGoimageNRGBA(imagefilename string) (nrgba *goimage.NRGBA) {
@@ -558,7 +579,12 @@ func ResizeImagetoPlate(imagefilename string, plate *wtype.LHPlate, algorithm im
 		if rotate {
 			img = imaging.Rotate270(img)
 		}
-		plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
+		var aspectratio float64 = float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
+		if aspectratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
+			plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
+		} else {
+			plateimage = imaging.Resize(img, plate.WlsX, 0, algorithm)
+		}
 		//plateimages = append(plateimages,plateimage)
 	} else {
 		// fmt.Println("i'm the same!!!")
@@ -591,7 +617,12 @@ func ResizeImagetoPlateAutoRotate(imagefilename string, plate *wtype.LHPlate, al
 			// fmt.Println("Auto Rotating image")
 			img = imaging.Rotate270(img)
 		}
-		plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
+		var aspectratio float64 = float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
+		if aspectratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
+			plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
+		} else {
+			plateimage = imaging.Resize(img, plate.WlsX, 0, algorithm)
+		}
 		//plateimages = append(plateimages,plateimage)
 	} else {
 		// fmt.Println("i'm the same!!!")
@@ -627,7 +658,12 @@ func CheckAllResizealgorithms(imagefilename string, plate *wtype.LHPlate, rotate
 		if img.Bounds().Dy() != plate.WellsY() {
 			// fmt.Println("hey we're not so different", img.Bounds().Dy(), plate.WellsY())
 			// have the option of changing the resize algorithm here
-			plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
+			var aspectratio float64 = float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
+			if aspectratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
+				plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
+			} else {
+				plateimage = imaging.Resize(img, plate.WlsX, 0, algorithm)
+			}
 			//plateimages = append(plateimages,plateimage)
 		} else {
 			// fmt.Println("i'm the same!!!")

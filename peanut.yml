@@ -4,11 +4,15 @@ name: github.com/antha-lang/antha
 version: 0.0.2
 build:
   morelines:
-  - RUN apt-get update && apt-get install -y curl libglpk-dev libsqlite3-dev
+
+  - RUN apt-get update && apt-get install -y libglpk-dev libsqlite3-dev libopencv-dev mercurial
+
   volumes:
   - /certs
   commands:
+
   - tar -C /etc/ssl/certs --dereference --hard-dereference -cz -f - . | tar -C /certs -xz -f -
+
 modules:
   golang:
     testpackages:

@@ -1,0 +1,84 @@
+// example protocol demonstrating the use of the SampleForTotalVolume function
+protocol SampleForTotalVolume
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	SolutionVolume Volume // e.g. 2ul
+	TotalVolume Volume // e.g. 20ul
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Solution *wtype.LHComponent
+	Diluent *wtype.LHComponent
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	DilutedSample *wtype.LHComponent
+)
+
+Requirements {
+	
+}
+
+// Conditions to run on startup
+Setup {
+	
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	// make empty slice of LHComponents (i.e. of length 0) ready to sequentially add all samples to
+	// See golangbook chapter 6 for more details on slices and arrays
+	allsamples := make([]*wtype.LHComponent,0)
+	
+	// SampleForTotalVolume will "top up" solution to the TotalVolume with Diluent.
+	// In this case it will still add diluent first but calculates the volume to add by substracting the volumes of subsequent components
+	diluentsample := mixer.SampleForTotalVolume(Diluent,TotalVolume) // i.e. if TotalVolume == 20ul and SolutionVolume == 2ul then 18ul of Diluent will be sampled here
+	
+	// append will add the diluent sample to the allsamples slice
+	allsamples = append(allsamples,diluentsample)
+	
+	solutionsample := mixer.Sample(Solution,SolutionVolume)
+	
+	allsamples = append(allsamples,solutionsample)
+	
+	// The Sample functions will not generate liquid handling instructions on their own
+	// We need to tell Antha what to do with samples
+	// For this we need to use one of the Mix functions
+	// therefore finally we use Mix to combine samples into a new component
+	DilutedSample = Mix(allsamples...)
+	
+	// Now we have an antha element which will generate liquid handling instructions
+	// let's see how to actually run the protocol
+	// open the terminal and 
+	// work your way through the lessons there showing how to specify parameters and different types of workflow
+	
+	
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed 
+//correctly. Optionally, destructive tests can be performed to validate 
+//results on a dipstick basis
+Validation {
+	
+}

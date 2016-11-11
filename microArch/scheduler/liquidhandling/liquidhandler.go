@@ -767,7 +767,12 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 	logger.Debug("Plates:")
 
 	for k, v := range robot.Plates {
+
 		logger.Debug(fmt.Sprintf("%s %s: %s %s", k, robot.PlateIDLookup[k], v.PlateName, v.Type))
+
+		if strings.Contains(v.GetName(), "Input") {
+			wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+		}
 	}
 
 	logger.Debug("Tipwastes: ")

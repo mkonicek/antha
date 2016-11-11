@@ -389,7 +389,7 @@ func MakePaintPolicy() LHPolicy {
 	policy["DSP_SPEED"] = 1.5
 	policy["ASP_WAIT"] = 1.0
 	policy["DSP_WAIT"] = 1.0
-	policy["PRE_MIX"] = 3
+	//policy["PRE_MIX"] = 3
 	policy["POST_MIX"] = 3
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
@@ -474,7 +474,7 @@ func MakeCulturePolicy() LHPolicy {
 func MakePlateOutPolicy() LHPolicy {
 	culturepolicy := make(LHPolicy, 17)
 	culturepolicy["PRE_MIX"] = 2
-	culturepolicy["PRE_MIX_VOLUME"] = 50
+	culturepolicy["PRE_MIX_VOLUME"] = 20
 	culturepolicy["PRE_MIX_Z"] = 2.0
 	culturepolicy["PRE_MIX_RATE"] = 4.0
 	culturepolicy["ASPSPEED"] = 4.0
@@ -484,7 +484,7 @@ func MakePlateOutPolicy() LHPolicy {
 	culturepolicy["CAN_MSA"] = false
 	culturepolicy["CAN_SDD"] = false
 	culturepolicy["DSPREFERENCE"] = 0
-	culturepolicy["DSPZOFFSET"] = 0.5
+	culturepolicy["DSPZOFFSET"] = 0.0
 	culturepolicy["TIP_REUSE_LIMIT"] = 0
 	culturepolicy["NO_AIR_DISPENSE"] = true
 	culturepolicy["BLOWOUTVOLUME"] = 0.0
@@ -792,10 +792,10 @@ func MakeLVDNAMixPolicy() LHPolicy {
 
 func MakeHVOffsetPolicy() LHPolicy {
 	lvop := make(LHPolicy, 6)
-	lvop["ASPZOFFSET"] = 1.50
-	lvop["DSPZOFFSET"] = 1.50
-	lvop["POST_MIX_Z"] = 1.00
-	lvop["PRE_MIX_Z"] = 1.00
+	lvop["ASPZOFFSET"] = 2.50
+	lvop["DSPZOFFSET"] = 2.50
+	lvop["POST_MIX_Z"] = 2.50
+	lvop["PRE_MIX_Z"] = 2.50
 	lvop["DSPREFERENCE"] = 0
 	lvop["ASPREFERENCE"] = 0
 	lvop["POST_MIX_RATE"] = 37

@@ -18,6 +18,8 @@ Parameters (
 	Imagefilename string
 	Rotate bool
 	AutoRotate bool
+	PosterizeImage bool
+	PosterizeLevels int
 )
 
 // Data which is returned from this protocol, and data types
@@ -58,26 +60,34 @@ Setup {
 // for every input
 Steps {
 	
-	//var chosencolourpalette color.Palette
-	
-	//chosencolourpalette := image.AvailablePalettes["Plan9"] 
-	
-	//positiontocolourmap, _ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette, Rotate) 
-	
-	// make pallette of colours from image
+	// Posterize image if desired
+	if PosterizeImage{
+		_, Imagefilename = image.Posterize(Imagefilename, PosterizeLevels)
+	}
+	 
+	// make pallette of colours from image based on CMYK profile 
 	chosencolourpalette := image.MakeSmallPalleteFromImage(Imagefilename, OutPlate,Rotate) 
 	
+	// Resize image to fit microplate, one pixel per well. Produce map to correspond the colour required for each well position. 
+	// The nearest matching colour from the colourpalette made above will be used.
 	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette, Rotate, AutoRotate) 
 	
-	// remove duplicates
+	// remove duplicate colours so each is only made once
 	positiontocolourmap = image.RemoveDuplicatesValuesfromMap(positiontocolourmap)
 	
-	//fmt.Println("positions", positiontocolourmap)
-	
+	// make an empty slice of liquid handling components and a map of colour name to liquid handling components
 	solutions := make([]*wtype.LHComponent, 0)
 	colourtoComponentMap := make(map[string]*wtype.LHComponent)
 
+
+	// initialise a counter to use for looking up the next well position for each iteration of the loop below
 	counter := 0
+
+	platenum := 1
+	
+	// make a slice of well positions for the plate set in the parameters file
+	paletteplatepositions := PalettePlate.AllWellPositions(wtype.BYCOLUMN)
+
 
 
 	for _, colour := range positiontocolourmap {
@@ -99,25 +109,31 @@ Steps {
 			
 			}else{
 			
-		counter = counter + 1
-		
+			nextwellpostion := paletteplatepositions[counter]
+			
+		if counter +1 == len(paletteplatepositions){
+		platenum = platenum + 1
+		counter = 0
+		}else{
+		counter = counter + 1	
+		}
 		if cmyk.C > 0{
 			
 		cyanvol := wunit.NewVolume(((float64(cmyk.C)/float64(maxuint8)) * VolumeForFullcolour.RawValue()), VolumeForFullcolour.Unit().PrefixedSymbol())
 		
-		if cyanvol.RawValue() < 10 && cyanvol.Unit().PrefixedSymbol() == "ul"{
-				cyanvol.SetValue(10)
+		if cyanvol.RawValue() < 0.5 && cyanvol.Unit().PrefixedSymbol() == "ul"{
+				cyanvol = wunit.NewVolume(0.5,"ul")
 			}
 		
 		if cmyk.K == 0 && cmyk.M == 0 && cmyk.Y == 0{
-		Cyan.Type  =	wtype.LTNeedToMix
+		Cyan.Type  =	wtype.LTPostMix
 		}else {
 		Cyan.Type = wtype.LTDISPENSEABOVE
 		}
 		
 		cyanSample := mixer.Sample(Cyan, cyanvol)
 		
-		solution = MixInto(PalettePlate, "",cyanSample)
+		solution = MixTo(PalettePlate.Type, nextwellpostion,platenum,cyanSample)
 		//solution = MixTo(PalettePlate.Type, position,1,cyanSample)
 		
 		//components = append(components, cyanSample)
@@ -126,11 +142,11 @@ Steps {
 		if cmyk.Y > 0{
 		yellowvol := wunit.NewVolume(((float64(cmyk.Y)/float64(maxuint8)) * VolumeForFullcolour.RawValue()), VolumeForFullcolour.Unit().PrefixedSymbol())
 		
-		if yellowvol.RawValue() < 10 && yellowvol.Unit().PrefixedSymbol() == "ul"{
-				yellowvol.SetValue(10)
+		if yellowvol.RawValue() < 0.5 && yellowvol.Unit().PrefixedSymbol() == "ul"{
+				yellowvol= wunit.NewVolume(0.5,"ul")
 			}
 		if cmyk.K == 0 && cmyk.M == 0{
-		Yellow.Type  =	wtype.LTNeedToMix
+		Yellow.Type  =	wtype.LTPostMix
 		}else {
 		Yellow.Type = wtype.LTDISPENSEABOVE
 		}
@@ -141,7 +157,7 @@ Steps {
 		if solution != nil {
 		solution = Mix(solution, yellowSample)
 		}else {
-			solution = MixInto(PalettePlate, "", yellowSample)
+			solution = MixTo(PalettePlate.Type, nextwellpostion, platenum,yellowSample)
 			//solution = MixTo(PalettePlate.Type, position,1,yellowSample)
 		}
 		
@@ -152,12 +168,12 @@ Steps {
 		if cmyk.M > 0{
 		magentavol := wunit.NewVolume(((float64(cmyk.M)/float64(maxuint8)) * VolumeForFullcolour.RawValue()), VolumeForFullcolour.Unit().PrefixedSymbol())
 		
-		if magentavol.RawValue() < 10 && magentavol.Unit().PrefixedSymbol() == "ul"{
-				magentavol.SetValue(10)
+		if magentavol.RawValue() < 0.5 && magentavol.Unit().PrefixedSymbol() == "ul"{
+				magentavol= wunit.NewVolume(0.5,"ul")
 			}
 		
 		if cmyk.K == 0 {
-		Magenta.Type  =	wtype.LTNeedToMix
+		Magenta.Type  =	wtype.LTPostMix
 		}else {
 		Magenta.Type = wtype.LTDISPENSEABOVE
 		}
@@ -167,7 +183,7 @@ Steps {
 		if solution != nil {
 		solution = Mix(solution, magentaSample)
 		}else {
-			solution = MixInto(PalettePlate, "", magentaSample)
+			solution = MixTo(PalettePlate.Type, nextwellpostion, platenum,magentaSample)
 			//solution = MixTo(PalettePlate.Type, position,1,magentaSample)
 		}
 		
@@ -177,18 +193,18 @@ Steps {
 		if cmyk.K > 0{
 		blackvol := wunit.NewVolume(((float64(cmyk.K)/float64(maxuint8)) * VolumeForFullcolour.RawValue()), VolumeForFullcolour.Unit().PrefixedSymbol())
 		
-		if blackvol.RawValue() < 10 && blackvol.Unit().PrefixedSymbol() == "ul"{
-				blackvol.SetValue(10)
+		if blackvol.RawValue() < 0.5 && blackvol.Unit().PrefixedSymbol() == "ul"{
+				blackvol= wunit.NewVolume(0.5,"ul")
 			}
 		
-		Black.Type = wtype.LTNeedToMix
+		Black.Type = wtype.LTPostMix
 		
 		blackSample := mixer.Sample(Black, blackvol)
 		
 		if solution != nil {
 		solution = Mix(solution, blackSample)
 		}else {
-			solution = MixInto(PalettePlate, "", blackSample)
+			solution = MixTo(PalettePlate.Type, nextwellpostion,platenum, blackSample)
 			//solution = MixTo(PalettePlate.Type, position,1,blackSample)
 		}
 		

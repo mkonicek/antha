@@ -38,7 +38,7 @@ func ReadAbsorbance(plate *wtype.LHPlate, solution *wtype.LHComponent, wavelengt
 	return abs
 }
 
-func Blankcorrect(blank wtype.Absorbance, sample wtype.Absorbance) (blankcorrected wtype.Absorbance) {
+func Blankcorrect(blank wtype.Absorbance, sample wtype.Absorbance) (blankcorrected wtype.Absorbance, err error) {
 
 	if sample.Wavelength == blank.Wavelength &&
 		sample.Pathlength == blank.Pathlength &&
@@ -51,6 +51,8 @@ func Blankcorrect(blank wtype.Absorbance, sample wtype.Absorbance) (blankcorrect
 			blankcorrected.Status = append(blankcorrected.Status, status)
 		}
 		blankcorrected.Status = append(blankcorrected.Status, "Blank Corrected")
+	} else {
+		err = fmt.Errorf("Cannot pathlength correct as Absorbance readings ", sample, " and ", blank, " are incompatible due to either wavelength, pathlength or reader differences. ")
 	}
 	return
 }

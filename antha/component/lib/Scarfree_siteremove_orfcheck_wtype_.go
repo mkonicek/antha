@@ -13,16 +13,16 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
-	features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"strconv"
+	"strings"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/component"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/inject"
 	"golang.org/x/net/context"
-	"strconv"
-	"strings"
 )
 
 //"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
@@ -80,7 +80,7 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 		removetheseenzymes = append(removetheseenzymes, lookup.EnzymeLookup(enzyme))
 	}
 
-	warning = text.Print("RemoveproblemRestrictionSites =", _input.RemoveproblemRestrictionSites)
+	warning = fmt.Sprint("RemoveproblemRestrictionSites =", _input.RemoveproblemRestrictionSites)
 	warnings = append(warnings, warning)
 	if _input.RemoveproblemRestrictionSites {
 		newparts := make([]wtype.DNASequence, 0)
@@ -111,7 +111,7 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 								warnings = append(warnings, warning)
 								warnings = append(warnings, "Paaaaerrttseq: "+part.Seq+"position: "+strconv.Itoa(position)+" original: "+originalcodon+" replacementcodon: "+codonoption)
 								if err != nil {
-									warning := text.Print("removal of "+anysites.Enzyme.Name+" site from orf "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
+									warning := fmt.Sprint("removal of "+anysites.Enzyme.Name+" site from orf "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
 									warnings = append(warnings, warning)
 								}
 							} else {
@@ -119,7 +119,7 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 								part, err = sequences.RemoveSite(part, anysites.Enzyme, allsitestoavoid)
 								if err != nil {
 
-									warning = text.Print(anysites.Enzyme.Name+" position found to be outside of orf: "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
+									warning = fmt.Sprint(anysites.Enzyme.Name+" position found to be outside of orf: "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
 									warnings = append(warnings, warning)
 								}
 							}
@@ -130,7 +130,7 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 						//		fmt.Println("part= ", part)
 						//		fmt.Println("temppart= ", temppart)
 						if err != nil {
-							warning := text.Print("removal of site failed! improve your algorithm!", err.Error())
+							warning := fmt.Sprint("removal of site failed! improve your algorithm!", err.Error())
 							warnings = append(warnings, warning)
 
 						}
@@ -155,7 +155,7 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 	//lookup restriction enzyme
 	restrictionenzyme, err := lookup.TypeIIsLookup(_input.Enzymename)
 	if err != nil {
-		warnings = append(warnings, text.Print("Error", err.Error()))
+		warnings = append(warnings, fmt.Sprint("Error", err.Error()))
 	}
 
 	//  Add overhangs for scarfree assembly based on part seqeunces only, i.e. no Assembly standard
@@ -172,13 +172,13 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 	status, numberofassemblies, _, newDNASequence, simerr := enzymes.Assemblysimulator(assembly)
 
 	if simerr != nil {
-		warnings = append(warnings, text.Print("Error", simerr.Error()))
+		warnings = append(warnings, fmt.Sprint("Error", simerr.Error()))
 	}
 
 	_output.Plasmid, _output.ORIpresent, _output.SelectionMarkerPresent, err = features.ValidPlasmid(newDNASequence)
 
 	if err != nil {
-		warnings = append(warnings, text.Print("Error", err.Error()))
+		warnings = append(warnings, fmt.Sprint("Error", err.Error()))
 	}
 
 	endreport := "Endreport only run in the event of assembly simulation failure"
@@ -197,16 +197,16 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 	allends := make([]string, 0)
 	ends := ""
 
-	ends = text.Print(vectordata.Nm+" 5 Prime end: ", stickyends5)
+	ends = fmt.Sprint(vectordata.Nm+" 5 Prime end: ", stickyends5)
 	allends = append(allends, ends)
-	ends = text.Print(vectordata.Nm+" 3 Prime end: ", stickyends3)
+	ends = fmt.Sprint(vectordata.Nm+" 3 Prime end: ", stickyends3)
 	allends = append(allends, ends)
 
 	for _, part := range _output.PartswithOverhangs {
 		_, stickyends5, stickyends3 := enzymes.TypeIIsdigest(part, restrictionenzyme)
-		ends = text.Print(part.Nm+" 5 Prime end: ", stickyends5)
+		ends = fmt.Sprint(part.Nm+" 5 Prime end: ", stickyends5)
 		allends = append(allends, ends)
-		ends = text.Print(part.Nm+" 3 Prime end: ", stickyends3)
+		ends = fmt.Sprint(part.Nm+" 3 Prime end: ", stickyends3)
 		allends = append(allends, ends)
 	}
 	endreport = strings.Join(allends, " ")
@@ -227,14 +227,14 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 			sitepositions := enzymes.SitepositionString(info[i])
 
 			sites = append(sites, info[i].Numberofsites)
-			sitepositions = text.Print(part.Nm+" "+info[i].Enzyme.Name+" positions:", sitepositions)
+			sitepositions = fmt.Sprint(part.Nm+" "+info[i].Enzyme.Name+" positions:", sitepositions)
 			multiple = append(multiple, sitepositions)
 		}
 	}
 
 	for _, orf := range _input.ORFstoConfirm {
 		if sequences.LookforSpecificORF(_output.NewDNASequence.Seq, orf) == false {
-			warning = text.Print("orf not present: ", orf)
+			warning = fmt.Sprint("orf not present: ", orf)
 			warnings = append(warnings, warning)
 			_output.ORFmissing = true
 		}
@@ -249,31 +249,30 @@ func _Scarfree_siteremove_orfcheck_wtypeSteps(_ctx context.Context, _input *Scar
 
 	partsummary := make([]string, 0)
 	for _, part := range _output.PartswithOverhangs {
-		partsummary = append(partsummary, text.Print(part.Nm, part.Seq))
+		partsummary = append(partsummary, fmt.Sprint(part.Nm, part.Seq))
 	}
-	partsummary = append(partsummary, text.Print("Vector:"+vectordata.Nm, vectordata.Seq))
-	partstoorder := text.Print("PartswithOverhangs: ", partsummary)
+	partsummary = append(partsummary, fmt.Sprint("Vector:"+vectordata.Nm, vectordata.Seq))
+	partstoorder := fmt.Sprint("PartswithOverhangs: ", partsummary)
 
 	// Print status
-	if _output.Status != "all parts available" {
-		_output.Status = fmt.Sprintln(_output.Status)
-	} else {
-		_output.Status = fmt.Sprintln(
-			text.Print("simulator status: ", status),
-			text.Print("Endreport after digestion: ", endreport),
-			text.Print("Sites per part for "+_input.Enzymename, sites),
-			text.Print("Positions: ", multiple),
-			text.Print("Warnings:", _output.Warnings.Error()),
-			text.Print("Simulationpass=", _output.Simulationpass),
-			text.Print("NewDNASequence: ", _output.NewDNASequence),
-			text.Print("Any Orfs to confirm missing from new DNA sequence:", _output.ORFmissing),
-			partstoorder,
-		)
-		// export data to file
-		//anthapath.ExporttoFile("Report"+"_"+Constructname+".txt",[]byte(Status))
-		//anthapath.ExportTextFile("Report"+"_"+Constructname+".txt",Status)
-		fmt.Println(_output.Status)
-	}
+	/*if Status != "all parts available"{
+		Status = fmt.Sprintln(status)
+	} else {*/_output.Status = fmt.Sprintln(
+		fmt.Sprint("simulator status: ", status),
+		fmt.Sprint("Endreport after digestion: ", endreport),
+		fmt.Sprint("Sites per part for "+_input.Enzymename, sites),
+		fmt.Sprint("Positions: ", multiple),
+		fmt.Sprint("Warnings:", _output.Warnings.Error()),
+		fmt.Sprint("Simulationpass=", _output.Simulationpass),
+		fmt.Sprint("NewDNASequence: ", _output.NewDNASequence),
+		fmt.Sprint("Any Orfs to confirm missing from new DNA sequence:", _output.ORFmissing),
+		partstoorder,
+	)
+	// export data to file
+	//anthapath.ExporttoFile("Report"+"_"+Constructname+".txt",[]byte(Status))
+	//anthapath.ExportTextFile("Report"+"_"+Constructname+".txt",Status)
+	fmt.Println(_output.Status)
+	//}
 
 	// export sequence to fasta
 	if _input.ExporttoFastaFile && _output.Simulationpass {

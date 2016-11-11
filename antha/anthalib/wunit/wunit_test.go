@@ -183,6 +183,12 @@ var units = []testunit{
 	{2.05, "u", "l", "ul", 2.05e-6},
 }
 
+var concs = []testunit{
+	{2.0000000000000003e-06, "", "g/l", "g/l", 2.0000000000000003e-06},
+	{2.0000000000000003e-06, "", "kg/l", "kg/l", 2.0000000000000005e-09},
+	{2.05, "m", "g/l", "mg/l", 0.0020499999999999997},
+}
+
 func TestNewMeasurement(t *testing.T) {
 	for _, testunit := range units {
 		r := NewMeasurement(testunit.value, testunit.prefix, testunit.unit)
@@ -200,6 +206,20 @@ func TestNewMeasurement(t *testing.T) {
 func TestNewVolume(t *testing.T) {
 	for _, testunit := range units {
 		r := NewVolume(testunit.value, testunit.prefixedunit)
+		if r.SIValue() != testunit.siresult {
+			t.Error(
+				"For", testunit.value, testunit.prefixedunit, "/n",
+				"expected", testunit.siresult, "\n",
+				"got", r.SIValue(), "\n",
+			)
+		}
+	}
+
+}
+
+func TestNewConcentration(t *testing.T) {
+	for _, testunit := range concs {
+		r := NewConcentration(testunit.value, testunit.prefixedunit)
 		if r.SIValue() != testunit.siresult {
 			t.Error(
 				"For", testunit.value, testunit.prefixedunit, "/n",

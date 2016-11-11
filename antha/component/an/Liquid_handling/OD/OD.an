@@ -75,8 +75,11 @@ if MaxDilutions == 0 {
 } // serial dilution or could write element for finding optimum dilution or search historical data
 Analysis {
 	// Need to substract blank from measurement; normalise to path length of 1cm for OD value; apply conversion factor to estimate dry cell weight
-	
-	Blankcorrected_absorbance = platereader.Blankcorrect(Sample_absorbance,Blank_absorbance)
+	var err error
+	Blankcorrected_absorbance, err = platereader.Blankcorrect(Sample_absorbance,Blank_absorbance)
+	if err!=nil {
+		Errorf(err.Error())
+	}
 	volumetopathlengthconversionfactor := wunit.NewLength(Heightof100ulinm,"m")//WellCrosssectionalArea 
 	OD = platereader.PathlengthCorrect(volumetopathlengthconversionfactor,Blankcorrected_absorbance)// 0.0533 could be written as function of labware and liquid volume (or measureed height)
 	Estimateddrycellweight_conc = wunit.NewConcentration(OD.Reading * ODtoDCWconversionfactor,"g/L")

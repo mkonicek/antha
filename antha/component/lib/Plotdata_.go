@@ -41,9 +41,13 @@ func _PlotdataSteps(_ctx context.Context, _input *PlotdataInput, _output *Plotda
 
 	// the data points
 
-	plot := graph.Plot(_input.Xvalues, _input.Yvaluearray)
+	plot, err := graph.Plot(_input.Xvalues, _input.Yvaluearray)
 
-	graph.Export(plot, _input.Exportedfilename)
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
+
+	graph.Export(plot, "10cm", "10cm", _input.Exportedfilename)
 
 }
 

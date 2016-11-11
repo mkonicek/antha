@@ -2,24 +2,34 @@
   "Parameters": {
     "PipetteImage": {
 		"OnlythisColour":"",
-		"Notthiscolour":"verywhite",
+		"Notthiscolour":"veryblack",
 	  	"Imagefilename": "rainbow1.png",
 		"Rotate": false,
 		"AutoRotate": true,
-		"Palettename":"ProteinPaintboxUV",
+		"Palettename":"ProteinPaintboxSubset",
 		"Subset": false,
 		"Subsetnames": [
 				"DreidelTeal",
 				"TinselPurple",
 				"CupidPink",
 				"LeorOrange",
-				"verywhite",
-				"E.coli",
-				"E.coli pUC19 on sgal"
+				"KringleYFP",
+				"DasherGFP",
+				"RudolphRFP",
+				"FresnoRFP",
+				"IvyGFP",
+				"TwinkleCFP",
+				"BlitzenBlue",
+				"YetiYFP",
+				"YukonOFP",
+				"HollyGFP",
+				"CometGFP",
+				"veryblack",
+				"JuniperGFP"
 				],
 		"UseLiquidClass":"water",
-      	"OutPlate": "Agarplateforpicking384_riser",
-		"UVimage":true,
+      	"OutPlate": "Agarplateforpicking768_riser",
+		"UVimage":false,
       	"VolumePerWell": "2ul"
     }
   }

@@ -1,0 +1,68 @@
+// Protocol for resuspending freeze dried DNA with a diluent
+protocol ResuspendDNA
+
+// we need to import the wtype package to use the LHComponent type
+// the mixer package is required to use the Sample function
+import (
+	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+  	DNAMass Mass
+  	TargetConc Concentration
+	MolecularWeight float64
+	Well string
+	PlateName string
+)
+
+Data (
+)
+
+Inputs (
+	Diluent *wtype.LHComponent
+	DNAPlate *wtype.LHPlate
+)
+
+Outputs (
+	ResuspendedDNA *wtype.LHComponent
+	
+)
+
+Requirements {
+}
+
+Setup {
+}
+
+
+Steps {
+
+	targetconcgperL := TargetConc.GramPerL(MolecularWeight).SIValue()
+	
+	dnamassG := DNAMass.SIValue()
+	
+	if DNAMass.Unit().BaseSIUnit()== "kg"{
+		dnamassG = dnamassG * 1000
+		fmt.Println("Base Unit correction; Base unit of mass = ", DNAMass.Unit().BaseSIUnit()," therfore multiplying by 1000 to convert to grams")
+	}
+	
+	volumetoadd := wunit.NewVolume(dnamassG/targetconcgperL,"L")
+	
+	diluentSample := mixer.Sample(Diluent,volumetoadd)
+	
+	diluentSample.Type = wtype.LTDNAMIX
+	
+	ResuspendedDNA = MixNamed(DNAPlate.Type,Well,PlateName,diluentSample) 
+
+}
+
+Analysis {
+}
+
+
+Validation {
+}

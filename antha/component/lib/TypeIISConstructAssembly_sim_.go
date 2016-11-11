@@ -41,11 +41,11 @@ func _TypeIISConstructAssembly_simSteps(_ctx context.Context, _input *TypeIISCon
 	partsinorder := make([]wtype.DNASequence, 0)
 
 	for _, part := range _input.Partsinorder {
-		partDNA := Inventory.Partslist[part]
+		partDNA := Inventory.Partslist()[part]
 		partsinorder = append(partsinorder, partDNA)
 	}
 
-	vectordata := Inventory.Partslist[_input.Vectordata]
+	vectordata := Inventory.Partslist()[_input.Vectordata]
 	assembly := enzymes.Assemblyparameters{_input.Constructname, _input.RestrictionEnzyme.CName, vectordata, partsinorder}
 	status, numberofassemblies, sitesfound, newDNASequence, _ := enzymes.Assemblysimulator(assembly)
 

@@ -139,7 +139,7 @@ func init() {
 		Constructor: Units_SumNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/AnthaAcademy/Lesson0_Units/E_units_Sum.an",
+			Path: "antha/component/an/AnthaAcademy/Lesson4_Units/E_units_Sum.an",
 			Params: []component.ParamDesc{
 				{Name: "MyOtherVolume", Desc: "", Kind: "Parameters"},
 				{Name: "MyVolume", Desc: "", Kind: "Parameters"},

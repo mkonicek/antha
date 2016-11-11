@@ -145,7 +145,7 @@ func init() {
 		Constructor: NewDNASequence_fromfileNew,
 		Desc: component.ComponentDesc{
 			Desc: "Protocol for creating a DNASequence from a sequence file format. // Supported formats: .gdx .fasta .gb\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson4_DNA/B_NewDNASequence_fromfile.an",
+			Path: "antha/component/an/AnthaAcademy/Lesson6_DNA/B_NewDNASequence_fromfile.an",
 			Params: []component.ParamDesc{
 				{Name: "Filename", Desc: "", Kind: "Parameters"},
 				{Name: "Gene_name", Desc: "", Kind: "Parameters"},

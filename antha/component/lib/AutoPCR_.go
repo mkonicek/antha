@@ -34,16 +34,21 @@ func _AutoPCRSetup(_ctx context.Context, _input *AutoPCRInput) {
 // for every input
 func _AutoPCRSteps(_ctx context.Context, _input *AutoPCRInput, _output *AutoPCROutput) {
 
+	// set up a counter to use as an index for increasing well position
 	var counter int
 
+	// set up some empty slices to fill as we iterate through the reactions
 	_output.Reactions = make([]*wtype.LHComponent, 0)
 	volumes := make([]wunit.Volume, 0)
 	welllocations := make([]string, 0)
 
+	// range through the Reaction to template map
 	for reactionname, templatename := range _input.Reactiontotemplate {
 
+		// use counter to find next available well position in plate
 		wellposition := _input.Plate.AllWellPositions(wtype.BYCOLUMN)[counter]
 
+		// Run PCR_vol element
 		result := PCR_volRunSteps(_ctx, &PCR_volInput{WaterVolume: wunit.NewVolume(10, "ul"),
 			ReactionVolume:        wunit.NewVolume(25, "ul"),
 			BufferConcinX:         5,
@@ -79,13 +84,16 @@ func _AutoPCRSteps(_ctx context.Context, _input *AutoPCRInput, _output *AutoPCRO
 			OutPlate:      _input.Plate},
 		)
 
+		// add result to reactions slice
 		_output.Reactions = append(_output.Reactions, result.Outputs.Reaction)
 		volumes = append(volumes, result.Outputs.Reaction.Volume())
 		welllocations = append(welllocations, wellposition)
+		// increase counter by 1 ready for next iteration of loop
 		counter++
 
 	}
 
+	// once all values of loop have been completed, export the plate contents as a csv file
 	_output.Error = wtype.ExportPlateCSV(_input.Projectname+".csv", _input.Plate, _input.Projectname+"outputPlate", welllocations, _output.Reactions, volumes)
 
 }

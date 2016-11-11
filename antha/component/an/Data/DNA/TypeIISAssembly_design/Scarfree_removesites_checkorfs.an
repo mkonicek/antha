@@ -115,7 +115,7 @@ Steps {
 			partDNA = wtype.MakeLinearDNASequence(nm, part)
 			
 			// check if in inventory
-		} else if inventoryDNA, found := inventory.Partslist[part]; found {
+		} else if inventoryDNA, found := inventory.Partslist()[part]; found {
 			partDNA = inventoryDNA
 			
 			// else treat as DNA sequence and check
@@ -243,7 +243,7 @@ Steps {
 	PartsWithSitesRemoved = partsinorder
 	
 	// make vector into an antha type DNASequence
-	if inventorydata, found := inventory.Partslist[Vector]; found{
+	if inventorydata, found := inventory.Partslist()[Vector]; found{
 		vectordata = inventorydata
 		}else if strings.Contains(Vector, ".gb") {
 	

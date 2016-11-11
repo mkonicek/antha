@@ -1,0 +1,95 @@
+// Protocol for resuspending freeze dried DNA with a diluent
+protocol ResuspendDNA_Multiple
+
+// we need to import the wtype package to use the LHComponent type
+// the mixer package is required to use the Sample function
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	Projectname string
+  	TargetConc Concentration
+	Parts[]string
+	PartMassMap map[string]Mass
+	PartMolecularWeightMap map[string]float64
+	PartLocationsMap map[string]string
+	PartPlateMap map[string]string
+)
+
+Data (
+	PartConcentrations map[string]wunit.Concentration
+	Errors []error
+)
+
+Inputs (
+	Diluent *wtype.LHComponent
+	DNAPlate *wtype.LHPlate
+)
+
+Outputs (
+	ResuspendedDNAMap map[string]*wtype.LHComponent
+	
+)
+
+Requirements {
+}
+
+Setup {
+}
+
+
+Steps {
+
+	if Projectname == ""{
+		Projectname = "ResuspendDNA"
+	}
+
+	// set up some empty slices to fill as we iterate through the reactions
+	Reactions := make([]*wtype.LHComponent,0)
+	volumes := make([]wunit.Volume,0)
+	welllocations := make([]string,0)
+
+
+	ResuspendedDNAMap = make(map[string]*wtype.LHComponent)
+	PartConcentrations = make(map[string]wunit.Concentration)
+
+	for _, part := range Parts {
+
+	result := RunSteps(ResuspendDNA,
+	Parameters{	DNAMass: PartMassMap[part],
+			  	TargetConc: TargetConc,
+				MolecularWeight: PartMolecularWeightMap[part],
+				Well: PartLocationsMap[part],
+				PlateName: PartPlateMap[part],
+	},Inputs{
+				Diluent: Diluent,
+				DNAPlate: DNAPlate,
+	})
+	
+	result.Outputs.ResuspendedDNA.CName = part
+	
+	ResuspendedDNAMap[part]= result.Outputs.ResuspendedDNA
+	
+	PartConcentrations[part]= TargetConc.GramPerL(PartMolecularWeightMap[part])
+	
+	// add to slices to export as csv later
+	Reactions = append(Reactions,result.Outputs.ResuspendedDNA)
+	volumes = append(volumes,result.Outputs.ResuspendedDNA.Volume())
+	welllocations = append(welllocations,PartLocationsMap[part])
+	}
+	
+	// once all values of loop have been completed, export the plate contents as a csv file
+	Errors = append(Errors,wtype.ExportPlateCSV(Projectname+".csv", DNAPlate,Projectname+"outputPlate", welllocations, Reactions, volumes) )
+	
+}
+
+Analysis {
+}
+
+
+Validation {
+}

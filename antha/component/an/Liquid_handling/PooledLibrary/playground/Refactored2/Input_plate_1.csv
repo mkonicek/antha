@@ -1,13 +1,6 @@
 pcrplate_skirted_riser40,Input_plate_1,LiquidType ,Vol,Vol Unit,Conc,Conc Unit
-A1,water,water,59.5,ul,0,mg/l
-C1,mastermix_sapI,dna_mix,32.5,ul,0,mg/l
-E1,cometGFPB,dna,11,ul,0,mg/l
-G1,p543-2_SacB,dna,11,ul,0,mg/l
-A2,SSND_0024a_082,dna,8,ul,0,mg/l
-C2,SSND_0024a_083,dna,8,ul,0,mg/l
-E2,cometGFPC,dna,8,ul,0,mg/l
-G2,cometGFPD,dna,8,ul,0,mg/l
-A3,cometGFPE,dna,8,ul,0,mg/l
-C3,LibORFs,dna,7.5,ul,0,mg/l
-E3,LibPromoters,dna,7.5,ul,0,mg/l
-G3,p363-1_RW_DV,dna,6.5,ul,0,mg/l
+A1,water,water,15.5,ul,0,mg/l
+C1,mastermix_sapI,dna_mix,10.5,ul,0,mg/l
+E1,LibORFs,dna,7.5,ul,0,mg/l
+G1,LibPromoters,dna,7.5,ul,0,mg/l
+A2,p363-1_RW_DV,dna,6.5,ul,0,mg/l

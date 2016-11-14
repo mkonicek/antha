@@ -1,6 +1,27 @@
 {
     "processes": {
-		"TransformationControl": {
+		"TransformationControl1": {
+            "component": "TransformationControl"
+        },
+		"TransformationControl2": {
+            "component": "TransformationControl"
+        },
+		"TransformationControl3": {
+            "component": "TransformationControl"
+        },
+		"TransformationControl4": {
+            "component": "TransformationControl"
+        },
+		"TransformationControl5": {
+            "component": "TransformationControl"
+        },
+		"TransformationControl6": {
+            "component": "TransformationControl"
+        },
+		"TransformationControl7": {
+            "component": "TransformationControl"
+        },
+		"TransformationControl8": {
             "component": "TransformationControl"
         }
     }

@@ -144,7 +144,7 @@ func init() {
 		Constructor: TransformationRefactoredNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/Transformation control/Transformation.an",
+			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/Transformation_control/Transformation.an",
 			Params: []component.ParamDesc{
 				{Name: "CompetentCellPlateWells", Desc: "PlatewithRecoveryMedia *wtype.LHPlate\n", Kind: "Parameters"},
 				{Name: "CompetentCellTransferVolume", Desc: "", Kind: "Parameters"},

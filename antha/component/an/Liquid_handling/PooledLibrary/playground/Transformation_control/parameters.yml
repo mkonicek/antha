@@ -1,21 +1,15 @@
 {
 	"Parameters":{
-    "TransformationControl": {
+    "TransformationControl1": {
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"F1",
-			"F2", 
-			"F3", 
-			"F4",
-			"F5"
+			"B1",
+			"B2"
 	],
 	  	"RecoveryPlateWells": 	[
-			"F1",
-			"F2", 
-			"F3", 
-			"F4",
-			"F5"
+			"B1",
+			"B2"
 	],
             
         	"RecoveryTemp":"37C",
@@ -24,7 +18,155 @@
         	"PostPlasmidTime": "5min",
         	"Plasmid": "dna_part",
         	"ReactionVolume": "2ul",
-		"CompetentCellTransferVolume": "21ul"
+		"CompetentCellTransferVolume": "21ul",
+		"ReactionName": "pDasher"
+        },
+		"TransformationControl2": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"C1",
+			"C2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"C1",
+			"C2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmid": "dna_part",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul",
+		"ReactionName": "pDasher"
+        },
+		"TransformationControl3": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"D1",
+			"D2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"D1",
+			"D2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmid": "dna_part",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul",
+		"ReactionName": "pDasher"
+        },
+		"TransformationControl4": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"E1",
+			"E2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"E1",
+			"E2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmid": "dna_part",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul",
+		"ReactionName": "pDasher"
+        },
+		"TransformationControl5": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"F1",
+			"F2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"F1",
+			"F2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmid": "dna_part",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul",
+		"ReactionName": "pDasher"
+        },
+		"TransformationControl6": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"G1",
+			"G2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"G1",
+			"G2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmid": "dna_part",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul",
+		"ReactionName": "pDasher"
+        },
+		"TransformationControl7": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"H1",
+			"H2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"H1",
+			"H2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmid": "dna_part",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul",
+		"ReactionName": "pDasher"
+        },
+		"TransformationControl8": {
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"B3",
+			"B4"
+	],
+	  	"RecoveryPlateWells": 	[
+			"B3",
+			"B4"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmid": "dna_part",
+        	"ReactionVolume": "2ul",
+		"CompetentCellTransferVolume": "21ul",
+		"ReactionName": "pDasher"
         }
   }
 }

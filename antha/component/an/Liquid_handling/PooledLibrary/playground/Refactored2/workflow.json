@@ -10,65 +10,12 @@
 		"process":"Transformation1"
 	}
 	},
-	{
-	"src":{
-		"port":"ReactionsMap",
-		"process":"Assembly"
-	},
-	"tgt":{
-		"port": "ReactionsMap",
-		"process":"Transformation2"
-	}
-	},
-	{
-	"src":{
-		"port":"ReactionsMap",
-		"process":"Assembly"
-	},
-	"tgt":{
-		"port": "ReactionsMap",
-		"process":"Transformation3"
-	}
-	},
-	{
-	"src":{
-		"port":"ReactionsMap",
-		"process":"Assembly"
-	},
-	"tgt":{
-		"port": "ReactionsMap",
-		"process":"Transformation4"
-	}
-	},
-		{
-	"src":{
-		"port":"ReactionsMap",
-		"process":"Assembly"
-	},
-	"tgt":{
-		"port": "ReactionsMap",
-		"process":"Transformation5"
-	}
-	},
-	
 	],
     "processes": {
         "Assembly": {
             "component": "AutoAssembly2"
         },
 		 "Transformation1": {
-            "component": "TransformationRefactored"
-        },
-		"Transformation2": {
-            "component": "TransformationRefactored"
-        },
-		"Transformation3": {
-            "component": "TransformationRefactored"
-        },
-		"Transformation4": {
-            "component": "TransformationRefactored"
-        },
-		"Transformation5": {
             "component": "TransformationRefactored"
         }	
     }

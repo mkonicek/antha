@@ -1,0 +1,22 @@
+{
+    "processes": {
+		"TransformationControl1": {
+            "component": "TransformationCotrans"
+        },
+		"TransformationControl2": {
+            "component": "TransformationCotrans"
+        },
+		"TransformationControl3": {
+            "component": "TransformationCotrans"
+        },
+		"TransformationControl4": {
+            "component": "TransformationCotrans"
+        },
+		"TransformationControl5": {
+            "component": "TransformationCotrans"
+        },
+		"TransformationControl6": {
+            "component": "TransformationCotrans"
+        }
+    }
+}

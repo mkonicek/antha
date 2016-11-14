@@ -64,7 +64,24 @@ type DocumentTask struct {
 
 // Run mixer
 type MixerTask struct {
-	// DeviceConfig, etc.
+	// Setup: input state of device
+	Before []*MixerState `json:"before"`
+	// Result: output state of device
+	After []*MixerState `json:"after"`
+	// Low level device calls representing this task
+	Calls []*GrpcCall `json:"calls"`
+}
+
+type MixerState struct {
+	Items      []*InventoryItem `json:"items"`
+	Placements []*Placement     `json:"placements"`
+}
+
+type Placement struct {
+	Parent string `json:"parent"`
+	Child  string `json:"child"`
+	// Symbolic location of child in coordinate system of parent
+	OrdinalCoord *OrdinalCoord `json:"coord"`
 }
 
 // Manually initiated task

@@ -26,21 +26,13 @@ func _MultichannelTestProtocolSetup(_ctx context.Context, _input *MultichannelTe
 // The core process for this protocol, with the steps to be performed
 // for every input
 func _MultichannelTestProtocolSteps(_ctx context.Context, _input *MultichannelTestProtocolInput, _output *MultichannelTestProtocolOutput) {
-	var m *wtype.LHComponent
-
 	for k := 0; k < len(_input.Vols); k++ {
 		var s *wtype.LHComponent
 		if !_input.Vols[k].IsZero() {
 			s = mixer.Sample(_input.Parts[k], _input.Vols[k])
-			if m != nil {
-				m = execute.Mix(_ctx, m, s)
-			} else {
-				m = execute.MixTo(_ctx, _input.OutputPlateType, "", 1, s)
-			}
+			execute.Mix(_ctx, s)
 		}
 	}
-
-	_output.Reaction = m
 }
 
 // Run after controls and a steps block are completed to
@@ -107,14 +99,12 @@ type MultichannelTestProtocolInput struct {
 }
 
 type MultichannelTestProtocolOutput struct {
-	Reaction *wtype.LHComponent
 }
 
 type MultichannelTestProtocolSOutput struct {
 	Data struct {
 	}
 	Outputs struct {
-		Reaction *wtype.LHComponent
 	}
 }
 
@@ -128,7 +118,6 @@ func init() {
 				{Name: "OutputPlateType", Desc: "", Kind: "Inputs"},
 				{Name: "Parts", Desc: "", Kind: "Inputs"},
 				{Name: "Vols", Desc: "", Kind: "Parameters"},
-				{Name: "Reaction", Desc: "", Kind: "Outputs"},
 			},
 		},
 	}); err != nil {

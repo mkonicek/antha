@@ -3,7 +3,7 @@
     "Parameters": {
         "MultiChannelTest": {
 				"Vols": ["1ul","1ul","1ul","1ul","1ul","1ul","1ul","1ul"],
-				"Parts":["water","ATP","T4Ligase","dna_part","SapI","standard_cloning_vector_mark_1","CutsmartBuffer","tartrazine"],
+				"Parts":["water","water","water","water","water","water","water","water"],
 				"OutputPlateType":"pcrplate_skirted_riser"
         }
     }

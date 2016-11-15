@@ -19,7 +19,6 @@ Inputs (
 
 // Physical outputs from this protocol with types
 Outputs (
-	Reaction *wtype.LHComponent
 )
 
 // Data which is returned from this protocol, and data types
@@ -33,21 +32,13 @@ Setup {}
 // The core process for this protocol, with the steps to be performed
 // for every input
 Steps {
-	var m *wtype.LHComponent
-
 	for k:=0;k<len(Vols);k++{
 		var s *wtype.LHComponent
 		if !Vols[k].IsZero(){
 			s = mixer.Sample(Parts[k], Vols[k])
-			if m!=nil{
-			 m = Mix(m,s)
-			}else{
-			 m = MixTo(OutputPlateType, "", 1, s)
-			}
+			Mix(s)
 		}
 	}
-
-	Reaction = m 
 }
 
 // Run after controls and a steps block are completed to

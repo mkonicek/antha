@@ -523,7 +523,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	circle := wtype.NewShape("cylinder", "mm", 37, 37, 20)
 	//func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape *Shape, bott int, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
-	welltype = wtype.NewLHWell("falcon6well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	welltype = wtype.NewLHWell("falcon6well", "", "", "ul", 4000, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
 	plate = wtype.NewLHPlate("falcon6wellAgar", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
@@ -549,7 +549,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	circle = wtype.NewShape("cylinder", "mm", xdim, ydim, zdim)
 	//func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape *Shape, bott int, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
-	welltype = wtype.NewLHWell("costar48well", "", "", "ul", 1600, 100, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	welltype = wtype.NewLHWell("costar48well", "", "", "ul", 1000, 100, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
 	plate = wtype.NewLHPlate("costar48well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
@@ -598,7 +598,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	wellsperrow = 4.0
 	wellspercolumn = 3.0
 
-	zstart = incubatorheightinmm - 5.0 // offset of bottom of deck to bottom of well (this includes agar estimate)
+	zstart = incubatorheightinmm - 3.5 // offset of bottom of deck to bottom of well (this includes agar estimate)
 	welltype = wtype.NewLHWell("falcon12well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 	plate = wtype.NewLHPlate("Nuncon12wellAgar_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
@@ -612,6 +612,44 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	consar = []string{"position_9"}
 	plate.SetConstrained("Pipetmax", consar)
+	plates[plate.Type] = plate
+
+	//VWR 12 Well Plate 734-2324 NO AGAR
+
+	bottomtype = wtype.LHWBFLAT
+	xdim = 24.0 // diameter
+	ydim = 24.0 // diameter
+	zdim = 19.0
+	bottomh = 5.0 //(this includes agar estimate)
+
+	wellxoffset = 27.0 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 27.0 //centre of well to centre of neighbouring well in y direction
+	xstart = 11.0      // distance from top left side of plate to first well
+	ystart = 4.0       // distance from top left side of plate to first well
+	zstart = 1.0       // offset of bottom of deck to bottom of well (this includes agar estimate)
+
+	wellsperrow = 4
+	wellspercolumn = 3
+	heightinmm = 20.0
+
+	circle = wtype.NewShape("cylinder", "mm", xdim, ydim, zdim)
+	//func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape *Shape, bott int, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+	welltype = wtype.NewLHWell("VWR12", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+
+	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
+	plate = wtype.NewLHPlate("VWR12well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+
+	wellsperrow = 4.0
+	wellspercolumn = 3.0
+
+	zstart = incubatorheightinmm - 2.0 // offset of bottom of deck to bottom of well (this includes agar estimate)
+	welltype = wtype.NewLHWell("falcon12well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	plate = wtype.NewLHPlate("VWR12well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	consar = []string{"position_1"}
+	plate.SetConstrained("Pipetmax", consar)
+
 	plates[plate.Type] = plate
 
 	//Nunclon 8 well Plate 167064 DOW

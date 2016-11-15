@@ -26,104 +26,191 @@
         	"ReactionVolume": "2ul",
 		"CompetentCellTransferVolume": "21ul"
         },
-		"Transformation2": {
+		  "TransformationControl1": {
+		"LHPolicyName": "dna",
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"B1"
+			"B1",
+			"B2"
 	],
 	  	"RecoveryPlateWells": 	[
-			"B1"
-	],
-            
-        	"RecoveryTemp":"37C",
-	  	"RecoveryTime":"2h",
-		"PostPlasmidTemp":"2C",
-        	"PostPlasmidTime": "5min",
-        	"ReactionName":"Assembly1",
-        	"ReactionVolume": "2ul",
-		"CompetentCellTransferVolume": "21ul"
-        },
-		"Transformation3": {
-		"PlateWithCompetentCells":"pcrplate_with_cooler",
-	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
-		"CompetentCellPlateWells": [
-			"C1"
-		],
-	  	"RecoveryPlateWells": 	[
-			"C1"
-		],
-            
-        	"RecoveryTemp":"37C",
-	  	"RecoveryTime":"2h",
-		"PostPlasmidTemp":"2C",
-        	"PostPlasmidTime": "5min",
-        	"ReactionName":"Assembly2",
-        	"ReactionVolume": "2ul",
-		"CompetentCellTransferVolume": "21ul"
-        },
-		"Transformation4": {
-		"PlateWithCompetentCells":"pcrplate_with_cooler",
-	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
-		"CompetentCellPlateWells": [
-			"D1"
-		],
-	  	"RecoveryPlateWells": 	[
-			"D1"
-		],
-            
-        	"RecoveryTemp":"37C",
-	  	"RecoveryTime":"2h",
-		"PostPlasmidTemp":"2C",
-        	"PostPlasmidTime": "5min",
-        	"ReactionName":"Assembly3",
-        	"ReactionVolume": "2ul",
-		"CompetentCellTransferVolume": "21ul"
-        },
-		"Transformation5": {
-		"PlateWithCompetentCells":"pcrplate_with_cooler",
-	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
-		"CompetentCellPlateWells": [
-			"E1"
-		],
-	  	"RecoveryPlateWells": 	[
-			"E1"
-		],
-            
-        	"RecoveryTemp":"37C",
-	  	"RecoveryTime":"2h",
-		"PostPlasmidTemp":"2C",
-        	"PostPlasmidTime": "5min",
-        	"ReactionName":"Assembly4",
-        	"ReactionVolume": "2ul",
-		"CompetentCellTransferVolume": "21ul"
-        },
-		"TransformationControl": {
-		"PlateWithCompetentCells":"pcrplate_with_cooler",
-	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
-		"CompetentCellPlateWells": [
-			"F1",
-			"F2", 
-			"F3", 
-			"F4",
-			"F5"
-	],
-	  	"RecoveryPlateWells": 	[
-			"F1",
-			"F2", 
-			"F3", 
-			"F4",
-			"F5"
+			"B1",
+			"B2"
 	],
             
         	"RecoveryTemp":"37C",
 	  	"RecoveryTime":"2h",
 		"PostPlasmidTemp":"2C",
         	"PostPlasmidTime": "5min",
-        	"Plasmid": "dna_part",
-        	"ReactionVolume": "2ul",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "1ul"
+		],
 		"CompetentCellTransferVolume": "21ul",
-		"ReactionName": "p363-1_RWC_SEVA"
+		"PlasmidNames": [
+		"pDasher",
+		"RWC_SEVA"
+		]
+        },
+		 "TransformationControl2": {
+		"LHPolicyName": "dna",
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"C1",
+			"C2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"C1",
+			"C2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "1ul"
+		],
+		"CompetentCellTransferVolume": "21ul",
+		"PlasmidNames": [
+		"pDasher",
+		"RWC_Biobrick"
+		]
+        },
+		 "TransformationControl3": {
+		"LHPolicyName": "dna",
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"D1",
+			"D2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"D1",
+			"D2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "1ul"
+		],
+		"CompetentCellTransferVolume": "21ul",
+		"PlasmidNames": [
+		"pComet",
+		"RWC_SEVA"
+		]
+        },
+		 "TransformationControl4": {
+		"LHPolicyName": "dna",
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"E1",
+			"E2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"E1",
+			"E2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "1ul"
+		],
+		"CompetentCellTransferVolume": "21ul",
+		"PlasmidNames": [
+		"pComet",
+		"RWC_Biobrick"
+		]
+        },
+		 "TransformationControl5": {
+		"LHPolicyName": "dna",
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"F1",
+			"F2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"F1",
+			"F2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "0ul"
+		],
+		"CompetentCellTransferVolume": "21ul",
+		"PlasmidNames": [
+		"pDasher",
+		"Nothing"
+		]
+        },
+		 "TransformationControl6": {
+		"LHPolicyName": "dna",
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"G1",
+			"G2"
+	],
+	  	"RecoveryPlateWells": 	[
+			"G1",
+			"G2"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "0ul"
+		],
+		"CompetentCellTransferVolume": "21ul",
+		"PlasmidNames": [
+		"pComet",
+		"Nothing"
+		]
         },
         "Assembly": {
 			"Projectname": "AssemblyRefactored",

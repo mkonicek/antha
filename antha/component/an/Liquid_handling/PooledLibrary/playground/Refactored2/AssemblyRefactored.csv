@@ -1,2 +1,6 @@
 pcrplate_skirted_riser,AssemblyRefactoredoutputPlate,,,
 A1,water+LibPromoters+LibORFs+p363-1_RW_DV+mastermix_sapI,dna,20,ul
+B1,water+SSND_0024a_082+cometGFPB+cometGFPC+p543-2_SacB+mastermix_sapI,dna,20,ul
+C1,water+SSND_0024a_083+cometGFPB+cometGFPC+p543-2_SacB+mastermix_sapI,dna,20,ul
+D1,water+SSND_0024a_082+cometGFPB+cometGFPD+cometGFPE+p543-2_SacB+mastermix_sapI,dna,20,ul
+E1,water+SSND_0024a_083+cometGFPB+cometGFPD+cometGFPE+p543-2_SacB+mastermix_sapI,dna,20,ul

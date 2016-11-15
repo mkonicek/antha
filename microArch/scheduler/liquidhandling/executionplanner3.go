@@ -23,7 +23,6 @@
 package liquidhandling
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -50,7 +49,7 @@ func ExecutionPlanner3(request *LHRequest, robot *liquidhandling.LHProperties) (
 
 	instrx := make([]liquidhandling.TerminalRobotInstruction, len(inx))
 	for i := 0; i < len(inx); i++ {
-		fmt.Println(liquidhandling.InsToString(inx[i]))
+		//fmt.Println(liquidhandling.InsToString(inx[i]))
 		instrx[i] = inx[i].(liquidhandling.TerminalRobotInstruction)
 	}
 	request.Instructions = instrx

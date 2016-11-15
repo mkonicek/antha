@@ -26,8 +26,7 @@ func (ti TransferBlockInstruction) InstructionType() int {
 }
 
 func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
-	// timer for assessing evaporation
-	// need to define how to make this optional
+	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()
 	inss := make([]RobotInstruction, 0, 1)
 	insm := make(map[string]*wtype.LHInstruction, len(ti.Inss))
@@ -38,6 +37,8 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	}
 	// list of ids
 	parallel_sets, prm, err := get_parallel_sets_robot(ti.Inss, robot, policy)
+
+	// what if prm is nil?
 
 	if err != nil {
 		return inss, err
@@ -121,8 +122,12 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 		if err != nil {
 			return SetOfIDSets{}, &wtype.LHChannelParameter{}, err
 		}
+
 		possible_sets = append(possible_sets, sids)
 		corresponding_params = append(corresponding_params, head.GetParams())
+
+		fmt.Println("PS: ", possible_sets)
+		fmt.Println("CP: ", corresponding_params)
 	}
 
 	// now we make our choice

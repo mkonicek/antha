@@ -77,7 +77,8 @@ func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
 	lh := Liquidhandler{}
 	lh.SetupAgent = BasicSetupAgent
 	lh.LayoutAgent = ImprovedLayoutAgent
-	lh.ExecutionPlanner = ImprovedExecutionPlanner
+	//	lh.ExecutionPlanner = ImprovedExecutionPlanner
+	lh.ExecutionPlanner = ExecutionPlanner3
 	lh.Properties = properties
 	lh.FinalProperties = properties
 	lh.plateIDMap = make(map[string]string)
@@ -373,6 +374,9 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 		}
 		plate := this.Properties.PlateLookup[plateid]
 		name := plate.(wtype.Named).GetName()
+
+		fmt.Println("PLEASE SPARE US THE ", name)
+
 		stat = this.Properties.Driver.AddPlateTo(position, plate, name)
 
 		if stat.Errorcode == driver.ERR {

@@ -910,3 +910,7 @@ func (p *LHProperties) MinPossibleVolume() wunit.Volume {
 
 	return minvol
 }
+
+func (p *LHProperties) CanPossiblyDo(v wunit.Volume) bool {
+	return !p.MinPossibleVolume().LessThan(v)
+}

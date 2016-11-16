@@ -25,12 +25,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"sort"
+	"strings"
 )
 
 var lhpoliciesCmd = &cobra.Command{
@@ -58,9 +58,18 @@ func lhPolicies(cmd *cobra.Command, args []string) error {
 
 		prettystrings = append(prettystrings, text.Print("PolicyName", "Properties"))
 
-		for key, value := range policymap {
+		var keys []string
 
-			kv, _, _ := value.List()
+		for key, _ := range policymap {
+			keys = append(keys, key)
+
+		}
+
+		sort.Strings(keys)
+
+		for _, key := range keys {
+
+			kv, _, _ := policymap[key].OrderedList()
 
 			prettystrings = append(prettystrings, text.Print(key, kv))
 		}

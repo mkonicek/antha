@@ -1424,6 +1424,9 @@ func (ins *LoadTipsMoveInstruction) GetParameter(name string) interface{} {
 }
 
 func (ins *LoadTipsMoveInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	fmt.Println("I LOVE YOU MUMMY")
+	fmt.Println(ins.Well)
+	fmt.Println("I LOVE YOUR EYES")
 	ret := make([]RobotInstruction, 2)
 
 	// move
@@ -3555,6 +3558,10 @@ func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *w
 func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int, mirror bool) (RobotInstruction, error) {
 
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(tiptype, channel, mirror, multi)
+
+	fmt.Println("DRIVE MY ROCKET SHIP")
+	fmt.Println(tipwells)
+	fmt.Println("YOU WILL BE REFLECTED")
 
 	if tipwells == nil || terr != nil {
 		/*

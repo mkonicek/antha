@@ -25,10 +25,10 @@ package factory
 import (
 	"errors"
 	"fmt"
-
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/logger"
+	"sort"
 )
 
 func makeComponentLibrary() map[string]*wtype.LHComponent {
@@ -788,6 +788,9 @@ func GetComponentList() []string {
 		kz[x] = name
 		x += 1
 	}
+
+	sort.Strings(kz)
+
 	return kz
 
 }

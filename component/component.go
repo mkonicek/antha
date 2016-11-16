@@ -68,7 +68,8 @@ func UpdateParamTypes(desc *Component) error {
 		return err
 	} else {
 		for _, v := range append(inTypes, outTypes...) {
-			if err := add(v.Name, v.Type.String()); err != nil {
+			fqn := v.Type.PkgPath() + "." + v.Type.Name()
+			if err := add(v.Name, fqn); err != nil {
 				return err
 			}
 		}

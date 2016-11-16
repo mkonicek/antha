@@ -457,7 +457,7 @@ type LHCategoryCondition struct {
 }
 
 func (lhcc LHCategoryCondition) Match(v interface{}) bool {
-	////logger.Debug(fmt.Sprintln("CATEGORY MATCH ON ", lhcc.Category))
+	//fmt.Println(fmt.Sprintln("CATEGORY MATCH ON ", lhcc.Category, " ", v))
 
 	switch v.(type) {
 	case string:
@@ -508,7 +508,7 @@ func (lhnc LHNumericCondition) IsEqualTo(other LHCondition) bool {
 }
 
 func (lhnc LHNumericCondition) Match(v interface{}) bool {
-	////logger.Debug(fmt.Sprintln("NUMERIC MATCH: ", lhnc.Lower, " ", lhnc.Upper, " ", v))
+	//fmt.Println(fmt.Sprintln("NUMERIC MATCH: ", lhnc.Lower, " ", lhnc.Upper, " ", v))
 	switch v.(type) {
 	case float64:
 		f := v.(float64)

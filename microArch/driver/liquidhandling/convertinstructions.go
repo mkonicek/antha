@@ -73,9 +73,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		va := make([]wunit.Volume, lenToMake) // volumes
 		// six parameters applying to the source
 		// TODO --> this should create components if not already found
-		fmt.Println(cmpSquash)
-		fmt.Println(carryvol)
-		fmt.Println(channelprms)
 		fromPlateIDs, fromWells, fromvols, err := robot.GetComponents(cmpSquash, carryvol, channelprms.Orientation, multi, channelprms.Independent)
 
 		// let's start making sense here

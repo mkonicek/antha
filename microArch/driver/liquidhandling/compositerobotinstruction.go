@@ -323,7 +323,9 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 		if len(a) >= channel.Multi {
 			// could be
+			fmt.Println("URGENT")
 			mss := GetMultiSet(a, channel.Multi, pmf, pmt)
+			fmt.Println("MSS: ", mss)
 
 			if len(mss) != 0 {
 				for _, ms := range mss {
@@ -334,6 +336,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 	}
 
+	fmt.Println("LEN RET: ", len(ret))
 	if len(ret) == 0 {
 		return nil
 	}
@@ -346,9 +349,12 @@ func GetMultiSet(a []string, channelmulti int, fromplatemulti int, toplatemulti 
 	var next []int
 	for {
 		next, a = GetNextSet(a, channelmulti, fromplatemulti, toplatemulti)
+		fmt.Println("GREEN PEPPERS")
+		fmt.Println(next, " ", a)
 		if next == nil {
 			break
 		}
+		fmt.Println("NUREMBURG")
 
 		ret = append(ret, next)
 	}
@@ -357,6 +363,9 @@ func GetMultiSet(a []string, channelmulti int, fromplatemulti int, toplatemulti 
 }
 
 func GetNextSet(a []string, channelmulti int, fromplatemulti int, toplatemulti int) ([]int, []string) {
+	if len(a) == 0 {
+		return nil, nil
+	}
 	r := make([][]int, fromplatemulti)
 	for i := 0; i < fromplatemulti; i++ {
 		r[i] = make([]int, toplatemulti)
@@ -376,7 +385,9 @@ func GetNextSet(a []string, channelmulti int, fromplatemulti int, toplatemulti i
 	// now we just take the first one we find
 
 	ret := getset(r, channelmulti)
+	fmt.Println("RET: ", ret)
 	censa := censoredcopy(a, ret)
+	fmt.Println(censa)
 
 	return ret, censa
 }
@@ -384,21 +395,26 @@ func GetNextSet(a []string, channelmulti int, fromplatemulti int, toplatemulti i
 func getset(a [][]int, mx int) []int {
 	r := make([]int, 0, mx)
 
+	fmt.Println("MX: ", mx)
+
 	for i := 0; i < len(a); i++ {
 		for j := 0; j < len(a[i]); j++ {
 			if a[i][j] != -1 {
+				fmt.Println("I: ", i, " J: ", j, " K: ", a[i][j])
 				r = append(r, a[i][j])
 				// find a diagonal line
-				for l := 1; l < mx; l++ {
-					x := (i + l) % len(a)
-					y := (j + l) % len(a[i])
+				/*
+					for l := 1; l < mx; l++ {
+						x := (i + l) % len(a)
+						y := (j + l) % len(a[i])
 
-					if a[x][y] != -1 {
-						r = append(r, a[x][y])
-					} else {
-						r = make([]int, 0, mx)
+						if a[x][y] != -1 {
+							r = append(r, a[x][y])
+						} else {
+							r = make([]int, 0, mx)
+						}
 					}
-				}
+				*/
 
 				if len(r) == mx {
 					break
@@ -406,6 +422,7 @@ func getset(a [][]int, mx int) []int {
 			}
 		}
 	}
+	fmt.Println("LEN R: ", len(r))
 
 	if len(r) == mx {
 		sort.Ints(r)
@@ -490,11 +507,14 @@ func (vs VolumeSet) GetACopy() []wunit.Volume {
 
 func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	pol := GetPolicyFor(policy, ins)
+	fmt.Println("TI GENERATE")
 
+	fmt.Println(ins.What)
 	ret := make([]RobotInstruction, 0)
 
 	// if we can multi we do this first
 
+	fmt.Println("CAN MULti: ", pol["CAN_MULTI"])
 	if pol["CAN_MULTI"].(bool) {
 		// break out the sets of parallel instructions
 
@@ -503,12 +523,13 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 		// basis of its multi, partly based on volume range
 		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
 
-		//fmt.Println("PARALLEL SETS FOUND: ", parallelsets)
+		fmt.Println("PARALLEL SETS FOUND: ", parallelsets)
 
 		mci := NewMultiChannelBlockInstruction()
 		mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here
 		mci.Prms = prms.HeadsLoaded[0].Params        // TODO Remove Hard code here
 		for _, set := range parallelsets {
+			fmt.Println("SIMPLICITY")
 			// assemble the info
 
 			vols := NewVolumeSet(len(set))
@@ -865,6 +886,7 @@ func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 	v.TPlateType = make([][]string, 0)
 	v.FVolume = make([][]wunit.Volume, 0)
 	v.TVolume = make([][]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 
@@ -1028,7 +1050,6 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 			mci.TPlateType = ins.TPlateType[t]
 			mci.Multi = ins.Multi
 			mci.Prms = ins.Prms
-
 			ret = append(ret, mci)
 
 			tiptype = newtiptype

@@ -83,7 +83,7 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols := make(map[string]wtype.LHPolicy)
 
 	// what policies do we need?
-	pols["water"] = MakeWaterPolicy()
+	pols["water"] = MakeMultiWaterPolicy()
 	pols["culture"] = MakeCulturePolicy()
 	pols["culturereuse"] = MakeCultureReusePolicy()
 	pols["glycerol"] = MakeGlycerolPolicy()
@@ -433,13 +433,18 @@ func MakeColonyPolicy() wtype.LHPolicy {
 func MakeWaterPolicy() wtype.LHPolicy {
 	waterpolicy := make(wtype.LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
-	//waterpolicy["CAN_MULTI"] = true
 	waterpolicy["CAN_MULTI"] = false
 	waterpolicy["CAN_MSA"] = true
 	waterpolicy["CAN_SDD"] = true
 	waterpolicy["DSPZOFFSET"] = 1.0
 	waterpolicy["BLOWOUTVOLUME"] = 50.0
 	return waterpolicy
+}
+
+func MakeMultiWaterPolicy() wtype.LHPolicy {
+	pol := MakeWaterPolicy()
+	pol["CAN_MULTI"] = true
+	return pol
 }
 func MakeFoamyPolicy() wtype.LHPolicy {
 	foamypolicy := make(wtype.LHPolicy, 5)

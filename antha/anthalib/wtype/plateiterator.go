@@ -37,7 +37,8 @@ func (mpi *MultiPlateIterator) Curr() []WellCoords {
 	wa := make([]WellCoords, mpi.multi)
 
 	for i := 0; i < mpi.multi; i++ {
-		wa[i] = mpi.BasicPlateIterator.Next()
+		wa[i] = mpi.BasicPlateIterator.Curr()
+		mpi.BasicPlateIterator.Next()
 	}
 
 	mpi.SetCurTo(wc)
@@ -62,8 +63,7 @@ func (mpi *MultiPlateIterator) Valid() bool {
 
 	for i := 0; i < mpi.multi-1; i++ {
 		wc2 := mpi.BasicPlateIterator.Next()
-
-		if (mpi.ori == LHVChannel && wc2.Y != wc.Y) || (mpi.ori == LHHChannel && wc2.X != wc.X) {
+		if (mpi.ori == LHVChannel && wc2.X != wc.X) || (mpi.ori == LHHChannel && wc2.Y != wc.Y) {
 			valid = false
 			break
 		}

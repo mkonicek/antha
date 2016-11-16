@@ -27,9 +27,8 @@ func (cv ComponentVector) GetWellCoords() []string {
 
 func (cv ComponentVector) getLocTok(x int) []string {
 	ret := make([]string, len(cv))
-
 	for i, c := range cv {
-		tx := strings.Split(":", c.Loc)
+		tx := strings.Split(c.Loc, ":")
 		ret[i] = tx[x]
 	}
 

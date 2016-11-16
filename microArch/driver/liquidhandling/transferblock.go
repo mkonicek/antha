@@ -5,7 +5,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/factory"
-	"sort"
 	"strings"
 )
 
@@ -125,9 +124,6 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 
 		possible_sets = append(possible_sets, sids)
 		corresponding_params = append(corresponding_params, head.GetParams())
-
-		fmt.Println("PS: ", possible_sets)
-		fmt.Println("CP: ", corresponding_params)
 	}
 
 	// now we make our choice
@@ -166,7 +162,7 @@ func (ibc InsByCol) Less(i, j int) bool {
 func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
 	// sort instructions to keep components together
 
-	sort.Sort(InsByComponent(ins))
+	//sort.Sort(InsByComponent(ins))
 
 	ret := make(SetOfIDSets, 0, 1)
 

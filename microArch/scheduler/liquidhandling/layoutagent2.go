@@ -340,7 +340,7 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 			if ass == -1 {
 				// make a new plate
 				ass = len(pc)
-				pc = append(pc, PlateChoice{chooseAPlate(request, v), []string{v.ID}, wtype.GetUUID(), []string{}, "Output_plate_" + v.ID[0:6]})
+				pc = append(pc, PlateChoice{chooseAPlate(request, v), []string{}, wtype.GetUUID(), []string{}, "Output_plate_" + v.ID[0:6]})
 			}
 
 			pc[ass].Assigned = append(pc[ass].Assigned, v.ID)
@@ -471,7 +471,6 @@ func make_plates(request *LHRequest, order []string) map[string]string {
 func make_layouts(request *LHRequest, pc []PlateChoice) error {
 	// we need to fill in the platechoice structure then
 	// transfer the info across to the solutions
-
 	//opa := request.Output_assignments
 	opa := make(map[string][]string)
 
@@ -507,7 +506,6 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 
 			if well == "" {
 				wc := plat.NextEmptyWell(it)
-
 				if wc.IsZero() {
 					// something very bad has happened
 					//	logger.Fatal("DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")

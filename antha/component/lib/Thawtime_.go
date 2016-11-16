@@ -161,7 +161,7 @@ func init() {
 		Constructor: ThawtimeNew,
 		Desc: component.ComponentDesc{
 			Desc: "status = compiles and calculates; need to fill in correct parameters and check units\ncurrently using dummy values only so won't be accurate yet!\n",
-			Path: "antha/component/an/eng/Thawtime/Thawtime.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/eng/Thawtime/Thawtime.an",
 			Params: []component.ParamDesc{
 				{Name: "Airvelocity", Desc: "These should be captured via sensors just prior to execution\n", Kind: "Parameters"},
 				{Name: "BulkTemp", Desc: "This will be monitored via the thermometer in the freezer in which the sample was stored\n", Kind: "Parameters"},

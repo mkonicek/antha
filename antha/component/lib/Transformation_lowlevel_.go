@@ -158,7 +158,7 @@ func init() {
 		Constructor: Transformation_lowlevelNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Transformation/Transformation_lowlevel.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Transformation/Transformation_lowlevel.an",
 			Params: []component.ParamDesc{
 				{Name: "Postplasmidtemp", Desc: "", Kind: "Parameters"},
 				{Name: "Postplasmidtime", Desc: "", Kind: "Parameters"},

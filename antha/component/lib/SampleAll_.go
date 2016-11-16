@@ -125,7 +125,7 @@ func init() {
 		Constructor: SampleAllNew,
 		Desc: component.ComponentDesc{
 			Desc: "example protocol demonstrating the use of the SampleAll function\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson1_Sample/B_SampleAll.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson1_Sample/B_SampleAll.an",
 			Params: []component.ParamDesc{
 				{Name: "Sampleall", Desc: "the bool type is a \"boolean\": which essentially means true or false\n", Kind: "Parameters"},
 				{Name: "Solution", Desc: "", Kind: "Inputs"},

@@ -127,7 +127,7 @@ func init() {
 		Constructor: ProtocolName_from_an_fileNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/default.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/default.an",
 			Params: []component.ParamDesc{
 				{Name: "InputVariable", Desc: "", Kind: "Inputs"},
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},

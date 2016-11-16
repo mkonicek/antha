@@ -251,7 +251,7 @@ func init() {
 		Constructor: MakePalette_OneByOneNew,
 		Desc: component.ComponentDesc{
 			Desc: "Generates instructions to make a pallette of all colours in an image\n",
-			Path: "antha/component/an/Liquid_handling/PipetteImage/MakePalette_OnebyOne.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PipetteImage/MakePalette_OnebyOne.an",
 			Params: []component.ParamDesc{
 				{Name: "AutoRotate", Desc: "", Kind: "Parameters"},
 				{Name: "Black", Desc: "", Kind: "Inputs"},

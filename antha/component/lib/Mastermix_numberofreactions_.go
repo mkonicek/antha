@@ -203,7 +203,7 @@ func init() {
 		Constructor: Mastermix_numberofreactionsNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/MakeMastermix/Mastermix_number.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/MakeMastermix/Mastermix_number.an",
 			Params: []component.ParamDesc{
 				{Name: "ComponentVolumesperReaction", Desc: "", Kind: "Parameters"},
 				{Name: "Components", Desc: "TopUpBuffer *wtype.LHComponent // optional if nil this is ignored\n", Kind: "Inputs"},

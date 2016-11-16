@@ -135,7 +135,7 @@ func init() {
 		Constructor: Assay_quenchNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/AssaySetUp/QuenchedReaction.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/AssaySetUp/QuenchedReaction.an",
 			Params: []component.ParamDesc{
 				{Name: "Enzyme", Desc: "", Kind: "Inputs"},
 				{Name: "EnzymeVolume", Desc: "", Kind: "Parameters"},

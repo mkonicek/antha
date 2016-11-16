@@ -288,7 +288,7 @@ func init() {
 		Constructor: PipetteImage_livingNew,
 		Desc: component.ComponentDesc{
 			Desc: "Generates instructions to pipette out a defined image onto a defined plate using a defined palette of coloured bacteria\n",
-			Path: "antha/component/an/Liquid_handling/PipetteImage/PipetteLivingimage.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PipetteImage/PipetteLivingimage.an",
 			Params: []component.ParamDesc{
 				{Name: "AutoRotate", Desc: "", Kind: "Parameters"},
 				{Name: "ComponentType", Desc: "InPlate *wtype.LHPlate\nMedia *wtype.LHComponent\nAntibiotic *wtype.LHComponent\n\tInducer *wtype.LHComponent\n\tRepressor *wtype.LHComponent\n", Kind: "Inputs"},

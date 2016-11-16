@@ -170,7 +170,7 @@ func init() {
 		Constructor: Mastermix_reactionsNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/MakeMastermix/Mastermix_reactions.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/MakeMastermix/Mastermix_reactions.an",
 			Params: []component.ParamDesc{
 				{Name: "AliquotbyRow", Desc: "", Kind: "Parameters"},
 				{Name: "ComponentVolumesperReaction", Desc: "", Kind: "Parameters"},

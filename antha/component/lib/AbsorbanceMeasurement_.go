@@ -133,7 +133,7 @@ func init() {
 		Constructor: AbsorbanceMeasurementNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/GrowthAndAssay/absorbanceassay.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/GrowthAndAssay/absorbanceassay.an",
 			Params: []component.ParamDesc{
 				{Name: "AbsorbanceWavelength", Desc: "", Kind: "Parameters"},
 				{Name: "Diluent", Desc: "", Kind: "Inputs"},

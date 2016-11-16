@@ -121,7 +121,7 @@ func init() {
 		Constructor: LoadGelNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/LoadGel/LoadGel.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/LoadGel/LoadGel.an",
 			Params: []component.ParamDesc{
 				{Name: "GelPlate", Desc: "Gel to load ie OutPlate\n", Kind: "Inputs"},
 				{Name: "InPlate", Desc: "96 well plate with water, marker and samples\n", Kind: "Inputs"},

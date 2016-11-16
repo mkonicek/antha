@@ -172,7 +172,7 @@ func init() {
 		Constructor: CombinatorialLibraryDesign_PRO_RBS_CDSNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/CombinatorialLibraryDesign.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/TypeIISAssembly_design/CombinatorialLibraryDesign.an",
 			Params: []component.ParamDesc{
 				{Name: "PartTypesinOrder", Desc: "labels e.g. pro = promoter\n", Kind: "Parameters"},
 				{Name: "Seqsinorder", Desc: "constructname to sequence combination\n", Kind: "Parameters"},

@@ -126,7 +126,7 @@ func init() {
 		Constructor: PlotdataNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/plotdata/Plotdata.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/plotdata/Plotdata.an",
 			Params: []component.ParamDesc{
 				{Name: "Exportedfilename", Desc: "", Kind: "Parameters"},
 				{Name: "Xvalues", Desc: "", Kind: "Parameters"},

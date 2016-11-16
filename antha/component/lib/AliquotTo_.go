@@ -196,7 +196,7 @@ func init() {
 		Constructor: AliquotToNew,
 		Desc: component.ComponentDesc{
 			Desc: "The lowest level example protocol showing The MixTo command being used to specify the specific wells to be aliquoted to;\nBy doing this we are able to specify whether the aliqouts are pipetted by row or by column.\nIn this case the user is still not specifying the well location (i.e. A1) in the parameters, although that would be possible to specify.\nWe don't generally encourage this since Antha is designed to be prodiminantly a high level language which avoids the user specifying well locations but this possibility is there if necessary.\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson2_mix/E_AliquotTo_wellpositions.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson2_mix/E_AliquotTo_wellpositions.an",
 			Params: []component.ParamDesc{
 				{Name: "ByRow", Desc: "", Kind: "Parameters"},
 				{Name: "NumberofAliquots", Desc: "", Kind: "Parameters"},

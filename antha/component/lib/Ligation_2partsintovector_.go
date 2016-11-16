@@ -162,7 +162,7 @@ func init() {
 		Constructor: Ligation_2partsintovectorNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Ligation/Ligation.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Ligation/Ligation.an",
 			Params: []component.ParamDesc{
 				{Name: "Atp", Desc: "", Kind: "Inputs"},
 				{Name: "AtpVol", Desc: "", Kind: "Parameters"},

@@ -136,7 +136,7 @@ func init() {
 		Constructor: LookUpMoleculeNew,
 		Desc: component.ComponentDesc{
 			Desc: "example of how to look up molecule properties from pubchem\n",
-			Path: "antha/component/an/Data/LookUpMolecule/LookUpMolecule.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/LookUpMolecule/LookUpMolecule.an",
 			Params: []component.ParamDesc{
 				{Name: "Compound", Desc: "Name of compound or array of multiple compounds\n", Kind: "Parameters"},
 				{Name: "Compoundlist", Desc: "", Kind: "Parameters"},

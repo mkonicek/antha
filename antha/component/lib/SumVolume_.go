@@ -132,7 +132,7 @@ func init() {
 		Constructor: SumVolumeNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/sumVolume/Sum.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/sumVolume/Sum.an",
 			Params: []component.ParamDesc{
 				{Name: "A", Desc: "", Kind: "Parameters"},
 				{Name: "B", Desc: "", Kind: "Parameters"},

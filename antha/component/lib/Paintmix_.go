@@ -130,7 +130,7 @@ func init() {
 		Constructor: PaintmixNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Colourmix/Paintmix.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Colourmix/Paintmix.an",
 			Params: []component.ParamDesc{
 				{Name: "Colour1", Desc: "", Kind: "Inputs"},
 				{Name: "Colour1vol", Desc: "", Kind: "Parameters"},

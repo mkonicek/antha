@@ -353,7 +353,7 @@ func init() {
 		Constructor: DNA_gel_fromCSVNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/DNA_gel/DNA_gel_fromCSV.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/DNA_gel/DNA_gel_fromCSV.an",
 			Params: []component.ParamDesc{
 				{Name: "DNAgel", Desc: "gel\n", Kind: "Inputs"},
 				{Name: "DNAgelrunvolume", Desc: "", Kind: "Parameters"},

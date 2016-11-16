@@ -142,7 +142,7 @@ func init() {
 		Constructor: Aliquot_PlateTypeNew,
 		Desc: component.ComponentDesc{
 			Desc: "example protocol showing The MixTo command which allows a specifc plate type to be specified. i.e. platetype pcrplate_skirted\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson2_mix/C_AliquotTo_PlateType.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson2_mix/C_AliquotTo_PlateType.an",
 			Params: []component.ParamDesc{
 				{Name: "NumberofAliquots", Desc: "", Kind: "Parameters"},
 				{Name: "OutPlatetype", Desc: "", Kind: "Parameters"},

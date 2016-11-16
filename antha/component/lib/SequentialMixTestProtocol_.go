@@ -136,7 +136,7 @@ func init() {
 		Constructor: SequentialMixTestProtocolNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Test/SequentialMixTestProtocol/SequentialMixTestProtocol.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Test/SequentialMixTestProtocol/SequentialMixTestProtocol.an",
 			Params: []component.ParamDesc{
 				{Name: "InactivationTemp", Desc: "", Kind: "Parameters"},
 				{Name: "InactivationTime", Desc: "", Kind: "Parameters"},

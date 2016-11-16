@@ -143,7 +143,7 @@ func init() {
 		Constructor: MakeSequenceArrayNew,
 		Desc: component.ComponentDesc{
 			Desc: "combine up to 8 sequences into array; for convenience in using workflow editor\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson4_DNA/F_MakeDNASequenceArray.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson4_DNA/F_MakeDNASequenceArray.an",
 			Params: []component.ParamDesc{
 				{Name: "Seq1", Desc: "", Kind: "Parameters"},
 				{Name: "Seq2", Desc: "", Kind: "Parameters"},

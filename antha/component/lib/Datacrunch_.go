@@ -212,7 +212,7 @@ func init() {
 		Constructor: DatacrunchNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/AnthaAcademy/Lesson5_Units2/A_Datacrunch.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson5_Units2/A_Datacrunch.an",
 			Params: []component.ParamDesc{
 				{Name: "DNAConc", Desc: "", Kind: "Parameters"},
 				{Name: "DNA_seq", Desc: "", Kind: "Parameters"},

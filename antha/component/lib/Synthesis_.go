@@ -115,7 +115,7 @@ func init() {
 		Constructor: SynthesisNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/GeneDesign/Synthesis.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/GeneDesign/Synthesis.an",
 			Params: []component.ParamDesc{
 				{Name: "PartsWithOverhangs", Desc: "", Kind: "Parameters"},
 				{Name: "Components", Desc: "", Kind: "Outputs"},

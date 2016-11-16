@@ -185,7 +185,7 @@ func init() {
 		Constructor: SDSprepNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/SDSprep/SDSprep.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/SDSprep/SDSprep.an",
 			Params: []component.ParamDesc{
 				{Name: "Buffer", Desc: "", Kind: "Inputs"},
 				{Name: "BufferName", Desc: "SDSBuffer\n", Kind: "Parameters"},

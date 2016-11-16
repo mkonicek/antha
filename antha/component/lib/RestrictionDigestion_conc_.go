@@ -185,7 +185,7 @@ func init() {
 		Constructor: RestrictionDigestion_concNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/RestrictionDigestion/set_conc/RestrictionDigestion.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/RestrictionDigestion/set_conc/RestrictionDigestion.an",
 			Params: []component.ParamDesc{
 				{Name: "BSAoptional", Desc: "", Kind: "Inputs"},
 				{Name: "BSAvol", Desc: "", Kind: "Parameters"},

@@ -156,7 +156,7 @@ func init() {
 		Constructor: MastermixNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/MakeMastermix/Mastermix.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/MakeMastermix/Mastermix.an",
 			Params: []component.ParamDesc{
 				{Name: "AliquotbyRow", Desc: "", Kind: "Parameters"},
 				{Name: "Buffer", Desc: "optional if nil this is ignored\n", Kind: "Inputs"},

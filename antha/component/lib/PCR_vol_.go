@@ -286,7 +286,7 @@ func init() {
 		Constructor: PCR_volNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PCR/pcr_vol.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PCR/pcr_vol.an",
 			Params: []component.ParamDesc{
 				{Name: "AddPrimerstoMasterMix", Desc: "", Kind: "Parameters"},
 				{Name: "AdditiveVols", Desc: "", Kind: "Parameters"},

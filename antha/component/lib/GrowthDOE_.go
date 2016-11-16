@@ -101,7 +101,7 @@ func init() {
 		Constructor: GrowthDOENew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/GrowthAndAssay/growth.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/GrowthAndAssay/growth.an",
 			Params: []component.ParamDesc{
 				{Name: "Growthtemp", Desc: "", Kind: "Parameters"},
 				{Name: "Growthtime", Desc: "", Kind: "Parameters"},

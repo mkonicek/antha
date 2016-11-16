@@ -201,7 +201,7 @@ func init() {
 		Constructor: EvaporationrateNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/eng/Evaporationrate/Evaporationrate.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/eng/Evaporationrate/Evaporationrate.an",
 			Params: []component.ParamDesc{
 				{Name: "Airvelocity", Desc: "// velocity of air above water in m/s ; could be calculated or measured by an anemometer\n", Kind: "Parameters"},
 				{Name: "Executiontime", Desc: "time\n", Kind: "Parameters"},

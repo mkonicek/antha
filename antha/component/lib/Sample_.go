@@ -135,7 +135,7 @@ func init() {
 		Constructor: SampleNew,
 		Desc: component.ComponentDesc{
 			Desc: "Example protocol demonstrating the use of the Sample function\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson1_Sample/A_Sample.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson1_Sample/A_Sample.an",
 			Params: []component.ParamDesc{
 				{Name: "SampleVolume", Desc: "antha, like golang is a strongly typed language in which the type of a variable must be declared\nin this case we're creating a variable called SampleVolume which is of type Volume\nthe type system allows the antha compiler to catch many types of common errors before the programme is run\nthe antha type system extends this to biological types such as volumes here.\nfunctions require inputs of particular types to be adhered to\n", Kind: "Parameters"},
 				{Name: "Solution", Desc: "the LHComponent is the principal liquidhandling type in antha\nthe * signifies that this is a pointer to the component rather than the component itself\nmost key antha functions such as Sample and Mix use *LHComponent rather than LHComponent\nsince the type is imported from the wtype package we need to use  *wtype.LHComponent rather than simply *LHComponent\n", Kind: "Inputs"},

@@ -99,7 +99,7 @@ func init() {
 		Constructor: InoculateDOENew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/GrowthAndAssay/inoculate.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/GrowthAndAssay/inoculate.an",
 			Params: []component.ParamDesc{
 				{Name: "Inoculum", Desc: "", Kind: "Inputs"},
 				{Name: "InoculumVolume", Desc: "", Kind: "Parameters"},

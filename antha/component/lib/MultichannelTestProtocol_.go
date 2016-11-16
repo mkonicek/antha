@@ -123,7 +123,7 @@ func init() {
 		Constructor: MultichannelTestProtocolNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Test/MultichannelTestProtocol/MultichannelTestProtocol.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Test/MultichannelTestProtocol/MultichannelTestProtocol.an",
 			Params: []component.ParamDesc{
 				{Name: "OutputPlateType", Desc: "", Kind: "Inputs"},
 				{Name: "Parts", Desc: "", Kind: "Inputs"},

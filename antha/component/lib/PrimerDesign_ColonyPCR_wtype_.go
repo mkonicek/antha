@@ -183,7 +183,7 @@ func init() {
 		Constructor: PrimerDesign_ColonyPCR_wtypeNew,
 		Desc: component.ComponentDesc{
 			Desc: "This element will design a pair of primers to cover a specified region of a sequence for colonyPCR.\nBut it's not finished yet!, please finish it off by designing the reverse primer\ngo to cd $GOPATH/src/github.com/antha-lang/antha/antha/examples/workflows/AnthaAcademy/Exercises/PrimerDesignExercise\nmake antharun return correct primerpairs for the three cases shown\nDesign criteria such as maximum gc content, acceptable ranges of melting temperatures and primer length may be specified by the user.\n",
-			Path: "antha/component/an/Data/DNA/PrimerDesign/PrimerDesign_ColonyPCR_wtype.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/PrimerDesign/PrimerDesign_ColonyPCR_wtype.an",
 			Params: []component.ParamDesc{
 				{Name: "FlankTargetSequence", Desc: "", Kind: "Parameters"},
 				{Name: "FullDNASeq", Desc: "", Kind: "Parameters"},

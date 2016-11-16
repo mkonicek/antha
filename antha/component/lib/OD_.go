@@ -178,7 +178,7 @@ func init() {
 		Constructor: ODNew,
 		Desc: component.ComponentDesc{
 			Desc: "Example OD measurement protocol.\nComputes the OD and dry cell weight estimate from absorbance reading\nTODO: implement replicates from parameters\n",
-			Path: "antha/component/an/Liquid_handling/OD/OD.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/OD/OD.an",
 			Params: []component.ParamDesc{
 				{Name: "Blank_absorbance", Desc: "WellCrosssectionalArea float64// should be calculated from plate and well type automatically\n", Kind: "Parameters"},
 				{Name: "Diluent", Desc: "", Kind: "Inputs"},

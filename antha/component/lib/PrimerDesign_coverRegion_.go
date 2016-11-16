@@ -160,7 +160,7 @@ func init() {
 		Constructor: PrimerDesign_coverRegionNew,
 		Desc: component.ComponentDesc{
 			Desc: "This element will design primers to cover a specified region of a sequence at the interval specified by the user (e.g. every 800 bp).\nDesign criteria such as maximum gc content, acceptable ranges of melting temperatures and primer length may be specified by the user.\n",
-			Path: "antha/component/an/Data/DNA/PrimerDesign/PrimerDesign_coverRegion.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/PrimerDesign/PrimerDesign_coverRegion.an",
 			Params: []component.ParamDesc{
 				{Name: "DNASeqfile", Desc: "genbank file (.gb)\n", Kind: "Parameters"},
 				{Name: "Maxgc", Desc: "as a proportion of 1, i.e. 1 == 100%\n", Kind: "Parameters"},

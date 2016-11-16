@@ -26,11 +26,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
+	"sort"
 )
 
 //var commonwelltypes
@@ -787,6 +787,8 @@ func GetPlateList() []string {
 		kz[x] = name
 		x += 1
 	}
+	sort.Strings(kz)
+
 	return kz
 }
 

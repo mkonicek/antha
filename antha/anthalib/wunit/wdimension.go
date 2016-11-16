@@ -83,15 +83,6 @@ func NewVolume(v float64, unit string) (o Volume) {
 		return ZeroVolume()
 	}
 
-	/*if len(strings.TrimSpace(unit)) == 0 {
-		panic("Can't make Volumes without unit")
-	}
-
-	if len(strings.TrimSpace(unit)) == 1 {
-		o = Volume{NewMeasurement(v, "", unit)}
-	}
-	*/
-
 	o = Volume{NewPMeasurement(v, unit)}
 
 	return
@@ -104,16 +95,15 @@ func CopyVolume(v Volume) Volume {
 
 // Add volumes
 func AddVolumes(vols []Volume) (newvolume Volume) {
-	// ideally should check these have the same Dimension
-	// need to improve this
+
 	var tempvol Volume
 	tempvol = NewVolume(0.0, "ul")
 	for _, vol := range vols {
 		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
-			tempvol = NewVolume(newvolume.RawValue()+vol.RawValue(), newvolume.Unit().PrefixedSymbol())
+			tempvol = NewVolume(tempvol.RawValue()+vol.RawValue(), tempvol.Unit().PrefixedSymbol())
 			newvolume = tempvol
 		} else {
-			tempvol = NewVolume(tempvol.SIValue()+vol.SIValue(), newvolume.Unit().BaseSISymbol())
+			tempvol = NewVolume(tempvol.SIValue()+vol.SIValue(), tempvol.Unit().BaseSISymbol())
 		}
 	}
 	return
@@ -122,16 +112,17 @@ func AddVolumes(vols []Volume) (newvolume Volume) {
 
 // subtract volumes
 func SubtractVolumes(OriginalVol Volume, subtractvols []Volume) (newvolume Volume) {
-	// ideally should check these have the same Dimension
-	// need to improve this
 
 	tempvol := (CopyVolume(OriginalVol))
-
-	fmt.Println(tempvol)
-
 	for _, vol := range subtractvols {
-		newvolume = NewVolume(tempvol.RawValue()-vol.RawValue(), tempvol.Unit().PrefixedSymbol())
-		tempvol = (CopyVolume(newvolume))
+		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
+			newvolume = NewVolume(tempvol.RawValue()-vol.RawValue(), tempvol.Unit().PrefixedSymbol())
+			tempvol = (CopyVolume(newvolume))
+		} else {
+			newvolume = NewVolume(tempvol.SIValue()-vol.SIValue(), tempvol.Unit().BaseSISymbol())
+			tempvol = (CopyVolume(newvolume))
+		}
+
 	}
 	return
 
@@ -139,8 +130,7 @@ func SubtractVolumes(OriginalVol Volume, subtractvols []Volume) (newvolume Volum
 
 // multiply volume
 func MultiplyVolume(v Volume, factor float64) (newvolume Volume) {
-	// ideally should check these have the same Dimension
-	// need to improve this
+
 	newvolume = NewVolume(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
 	return
 
@@ -148,8 +138,7 @@ func MultiplyVolume(v Volume, factor float64) (newvolume Volume) {
 
 // divide volume
 func DivideVolume(v Volume, factor float64) (newvolume Volume) {
-	// ideally should check these have the same Dimension
-	// need to improve this
+
 	newvolume = NewVolume(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
 	return
 
@@ -157,8 +146,7 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 
 // multiply volume
 func MultiplyConcentration(v Concentration, factor float64) (newconc Concentration) {
-	// ideally should check these have the same Dimension
-	// need to improve this
+
 	newconc = NewConcentration(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
 	return
 
@@ -166,8 +154,7 @@ func MultiplyConcentration(v Concentration, factor float64) (newconc Concentrati
 
 // divide volume
 func DivideConcentration(v Concentration, factor float64) (newconc Concentration) {
-	// ideally should check these have the same Dimension
-	// need to improve this
+
 	newconc = NewConcentration(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
 	return
 
@@ -280,21 +267,8 @@ func NewMass(v float64, unit string) (o Mass) {
 	unitdetails := approvedunits[unit]
 
 	o = Mass{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
-	fmt.Println("NewMass: v: ", v, "unit: ", unit, "mass.ToString():", o.ToString(), "mass.SIValue()", o.SIValue())
-	return
-	/*
-		if len(strings.TrimSpace(unit)) == 0 {
-			panic("Can't make masses without unit")
-		}
-		if len(strings.TrimSpace(unit)) == 1 {
-			o = Mass{NewMeasurement(v, "", unit)}
-		}
-		if len(strings.TrimSpace(unit)) > 1 {
 
-			o = Mass{NewPMeasurement(v, unit)}
-		}
-	*/
-	return //Mass{NewPMeasurement(v, unit)}
+	return
 }
 
 // defines mass to be a SubstanceQuantity
@@ -421,10 +395,12 @@ var UnitMap = map[string]map[string]Unit{
 		"mg/l":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"ng/ul":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"Mol/L":  Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"Mol/l":  Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"M":      Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"M/l":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"mM":     Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
 		"mMol/L": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/l": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
 	},
 	"Mass": map[string]Unit{
 		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
@@ -437,25 +413,6 @@ var UnitMap = map[string]map[string]Unit{
 
 // make a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) (o Concentration) {
-
-	/*
-		if unit == "mg/ml" {
-			unit = "g/l"
-		} else if unit == "ng/ul" {
-			unit = "mg/l"
-		}
-
-		if len(strings.TrimSpace(unit)) == 0 {
-			panic("Can't make concentration without unit")
-		}
-		if len(strings.TrimSpace(unit)) == 3 {
-			o = Concentration{NewMeasurement(v, "", unit)}
-		}
-		if len(strings.TrimSpace(unit)) > 3 {
-
-			o = Concentration{NewPMeasurement(v, unit)}
-		}
-	*/
 
 	approvedunits := UnitMap["Concentration"]
 
@@ -471,42 +428,11 @@ func NewConcentration(v float64, unit string) (o Concentration) {
 	if !approved {
 		panic("Can't make Concentration of, " + fmt.Sprint(v, unit) + "with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
 	}
-	/*if unit == "g/L" {
-		o = Concentration{NewMeasurement(v, "", "g/l")}
-		fmt.Println(v, unit, o.ToString())
-		return
-	} else if unit == "mg/ml" {
-		o = Concentration{NewMeasurement(v, "", "g/l")}
-		fmt.Println(v, unit, o.ToString())
-		return
-	} else if unit == "mg/L" {
-		o = Concentration{NewMeasurement(v, "m", "g/l")}
-		fmt.Println(v, unit, o.ToString())
-		return
-	} else if unit == "ng/ul" {
-		o = Concentration{NewMeasurement(v, "m", "g/l")}
-		fmt.Println(v, unit, o.ToString())
-		return
-	}*/
 
 	unitdetails := approvedunits[unit]
 
 	o = Concentration{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
-	fmt.Println("NewConcentration: v: ", v, "unit: ", unit, "conc.ToString():", o.ToString(), "conc.SIValue()", o.SIValue())
 	return
-
-	/*	if len(strings.TrimSpace(unit)) == 0 {
-			panic("Can't make concentration without unit")
-		}
-		if len(strings.TrimSpace(unit)) == 3 {
-			o = Concentration{NewMeasurement(v, "", unit)}
-		}
-		if len(strings.TrimSpace(unit)) > 3 {
-
-			o = Concentration{NewPMeasurement(v, unit)}
-		}*/
-
-	return //Mass{NewPMeasurement(v, unit)}
 }
 
 // mass or mole

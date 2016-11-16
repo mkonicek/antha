@@ -187,6 +187,190 @@ var concs = []testunit{
 	{2.0000000000000003e-06, "", "g/l", "g/l", 2.0000000000000003e-06},
 	{2.0000000000000003e-06, "", "kg/l", "kg/l", 2.0000000000000005e-09},
 	{2.05, "m", "g/l", "mg/l", 0.0020499999999999997},
+	{2.05, "m", "Mol/l", "mMol/l", 0.0020499999999999997},
+	{2.05, "m", "g/l", "ng/ul", 0.0020499999999999997},
+}
+
+type VolumeArithmetic struct {
+	VolumeA    Volume
+	VolumeB    Volume
+	Sum        Volume
+	Difference Volume
+	Factor     float64
+	Product    Volume
+	Quotient   Volume
+}
+
+var volumearithmetictests = []VolumeArithmetic{
+	{
+		VolumeA:    NewVolume(1, "ul"),
+		VolumeB:    NewVolume(1, "ul"),
+		Sum:        NewVolume(2, "ul"),
+		Difference: NewVolume(0, "ul"),
+		Factor:     1.0,
+		Product:    NewVolume(1, "ul"),
+		Quotient:   NewVolume(1, "ul"),
+	},
+	{
+		VolumeA:    NewVolume(100, "ul"),
+		VolumeB:    NewVolume(10, "ul"),
+		Sum:        NewVolume(110, "ul"),
+		Difference: NewVolume(90, "ul"),
+		Factor:     10.0,
+		Product:    NewVolume(1000, "ul"),
+		Quotient:   NewVolume(10, "ul"),
+	},
+	{
+		VolumeA:    NewVolume(1000000, "ul"),
+		VolumeB:    NewVolume(10, "ul"),
+		Sum:        NewVolume(1000010, "ul"),
+		Difference: NewVolume(999990, "ul"),
+		Factor:     10.0,
+		Product:    NewVolume(10000000, "ul"),
+		Quotient:   NewVolume(100000, "ul"),
+	},
+	{
+		VolumeA:    NewVolume(1000, "ml"),
+		VolumeB:    NewVolume(10, "ul"),
+		Sum:        NewVolume(1000010, "ul"),
+		Difference: NewVolume(999990, "ul"),
+		Factor:     10.0,
+		Product:    NewVolume(10000000, "ul"),
+		Quotient:   NewVolume(100000, "ul"),
+	},
+}
+
+func TestSubstractVolumes(t *testing.T) {
+	for _, testunit := range volumearithmetictests {
+		r := SubtractVolumes(testunit.VolumeA, []Volume{testunit.VolumeB})
+		if r.SIValue() != testunit.Difference.SIValue() {
+			t.Error(
+				"For", testunit.VolumeA, "/n",
+				"expected", testunit.Difference, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+}
+
+func TestAddVolumes(t *testing.T) {
+	for _, testunit := range volumearithmetictests {
+		r := AddVolumes([]Volume{testunit.VolumeA, testunit.VolumeB})
+		if r.SIValue() != testunit.Sum.SIValue() {
+			t.Error(
+				"For", testunit.VolumeA, "/n",
+				"expected", testunit.Sum, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+}
+
+func TestMultiplyVolumes(t *testing.T) {
+	for _, testunit := range volumearithmetictests {
+		r := MultiplyVolume(testunit.VolumeA, testunit.Factor)
+		if r.SIValue() != testunit.Product.SIValue() {
+			t.Error(
+				"For", testunit.VolumeA, "/n",
+				"expected", testunit.Product, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+}
+
+func TestDivideVolumes(t *testing.T) {
+	for _, testunit := range volumearithmetictests {
+		r := DivideVolume(testunit.VolumeA, testunit.Factor)
+		if r.SIValue() != testunit.Quotient.SIValue() {
+			t.Error(
+				"For", testunit.VolumeA, "/n",
+				"expected", testunit.Quotient, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+}
+
+type ConcArithmetic struct {
+	ValueA     Concentration
+	ValueB     Concentration
+	Sum        Concentration
+	Difference Concentration
+	Factor     float64
+	Product    Concentration
+	Quotient   Concentration
+}
+
+var concarithmetictests = []ConcArithmetic{
+	{
+		ValueA:     NewConcentration(1, "ng/ul"),
+		ValueB:     NewConcentration(1, "ng/ul"),
+		Sum:        NewConcentration(2, "ng/ul"),
+		Difference: NewConcentration(0, "ng/ul"),
+		Factor:     1.0,
+		Product:    NewConcentration(1, "ng/ul"),
+		Quotient:   NewConcentration(1, "ng/ul"),
+	},
+	{
+		ValueA:     NewConcentration(100, "ng/ul"),
+		ValueB:     NewConcentration(10, "ng/ul"),
+		Sum:        NewConcentration(110, "ng/ul"),
+		Difference: NewConcentration(90, "ng/ul"),
+		Factor:     10.0,
+		Product:    NewConcentration(1000, "ng/ul"),
+		Quotient:   NewConcentration(10, "ng/ul"),
+	},
+	{
+		ValueA:     NewConcentration(1000000, "mg/l"),
+		ValueB:     NewConcentration(10, "ng/ul"),
+		Sum:        NewConcentration(1000010, "ng/ul"),
+		Difference: NewConcentration(999990, "ng/ul"),
+		Factor:     10.0,
+		Product:    NewConcentration(10000000, "ng/ul"),
+		Quotient:   NewConcentration(100000, "ng/ul"),
+	},
+	{
+		ValueA:     NewConcentration(1000, "g/l"),
+		ValueB:     NewConcentration(10, "ng/ul"),
+		Sum:        NewConcentration(1000010, "ng/ul"),
+		Difference: NewConcentration(999990, "ng/ul"),
+		Factor:     10.0,
+		Product:    NewConcentration(10000000, "ng/ul"),
+		Quotient:   NewConcentration(100000, "ng/ul"),
+	},
+}
+
+func TestMultiplyConcentrations(t *testing.T) {
+	for _, testunit := range concarithmetictests {
+		r := MultiplyConcentration(testunit.ValueA, testunit.Factor)
+		if r.SIValue() != testunit.Product.SIValue() {
+			t.Error(
+				"For", testunit.ValueA, "/n",
+				"expected", testunit.Product, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+}
+
+func TestDivideConcentration(t *testing.T) {
+	for _, testunit := range concarithmetictests {
+		r := DivideConcentration(testunit.ValueA, testunit.Factor)
+		if r.SIValue() != testunit.Quotient.SIValue() {
+			t.Error(
+				"For", testunit.ValueA, "/n",
+				"expected", testunit.Quotient, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
 }
 
 func TestNewMeasurement(t *testing.T) {

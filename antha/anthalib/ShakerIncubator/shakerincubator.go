@@ -9,13 +9,10 @@ import (
 	"github.com/antha-lang/antha/execute"
 )
 
-func SetUpShakerIncubator(component *wtype.LHComponent, temp wunit.Temperature, device string, rpm float64) (calls []driver.Call) {
-	calls = []driver.Call{
-		driver.Call{
-			Method: "/antha.shakerincubator.v1.ShakerIncubator/Connect",
-			Args:   &shakerincubator.Blank{},
-			Reply:  &shakerincubator.BoolReply{},
-		},
+// Produce driver calls to send to incubator for set up
+func SetPoints(component *wtype.LHComponent, temp wunit.Temperature, device string, rpm float64) ([]driver.Call) {
+	return[]driver.Call{
+		
 		driver.Call{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/TemperatureSet",
 			Args: &shakerincubator.TemperatureSettings{
@@ -31,16 +28,10 @@ func SetUpShakerIncubator(component *wtype.LHComponent, temp wunit.Temperature, 
 			},
 			Reply: &shakerincubator.BoolReply{},
 		},
-		driver.Call{
-			Method: "/antha.shakerincubator.v1.ShakerIncubator/Disconnect",
-			Args:   &shakerincubator.Blank{},
-			Reply:  &shakerincubator.BoolReply{},
-		},
 	}
-
-	return
 }
 
+// Adds plate prep step in AnthaOS timeline
 func PlatePrep(component *wtype.LHComponent) execute.HandleOpt {
 	return execute.HandleOpt{
 		Label:     "plate prep",
@@ -49,20 +40,23 @@ func PlatePrep(component *wtype.LHComponent) execute.HandleOpt {
 
 }
 
-func SetUp(component *wtype.LHComponent) execute.HandleOpt {
+// Adds manual step in AnthaOS timeline
+func MarkForSetup(component *wtype.LHComponent) execute.HandleOpt {
 	return execute.HandleOpt{Label: "setup",
 		Component: component,
 	}
 }
 
-func SetUpIncubator(component *wtype.LHComponent) execute.HandleOpt {
+// Adds step to set up incubator in AnthaOS timeline
+func SetUp(component *wtype.LHComponent) execute.HandleOpt {
 	return execute.HandleOpt{
 		Label:     "setup incubator",
 		Component: component,
 	}
 }
 
-func TurnOnIncubator(component *wtype.LHComponent, incubatorsettings []driver.Call) execute.HandleOpt {
+// Turn on incubator using incubator settings from SetUpShakerIncubator function
+func TurnOn(component *wtype.LHComponent, incubatorsettings []driver.Call) execute.HandleOpt {
 	return execute.HandleOpt{
 		Label: "turn on incubator",
 		Selector: map[string]string{
@@ -76,11 +70,6 @@ func TurnOnIncubator(component *wtype.LHComponent, incubatorsettings []driver.Ca
 func turnOff() []driver.Call {
 	return []driver.Call{
 		driver.Call{
-			Method: "/antha.shakerincubator.v1.ShakerIncubator/Connect",
-			Args:   &shakerincubator.Blank{},
-			Reply:  &shakerincubator.BoolReply{},
-		},
-		driver.Call{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/ShakeStop",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
@@ -90,14 +79,11 @@ func turnOff() []driver.Call {
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
 		},
-		driver.Call{
-			Method: "/antha.shakerincubator.v1.ShakerIncubator/Disconnect",
-			Args:   &shakerincubator.Blank{},
-			Reply:  &shakerincubator.BoolReply{},
-		},
 	}
 }
-func TurnOffIncubator(component *wtype.LHComponent) execute.HandleOpt {
+
+// Turn off Incubator
+func TurnOff(component *wtype.LHComponent) execute.HandleOpt {
 	return execute.HandleOpt{
 		Label: "turn off incubator",
 		Selector: map[string]string{

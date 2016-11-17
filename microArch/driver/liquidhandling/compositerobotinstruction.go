@@ -507,7 +507,6 @@ func (vs VolumeSet) GetACopy() []wunit.Volume {
 
 func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	pol := GetPolicyFor(policy, ins)
-	fmt.Println("TI GENERATE")
 
 	fmt.Println(ins.What)
 	ret := make([]RobotInstruction, 0)
@@ -523,13 +522,10 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 		// basis of its multi, partly based on volume range
 		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
 
-		fmt.Println("PARALLEL SETS FOUND: ", parallelsets)
-
 		mci := NewMultiChannelBlockInstruction()
 		mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here
 		mci.Prms = prms.HeadsLoaded[0].Params        // TODO Remove Hard code here
 		for _, set := range parallelsets {
-			fmt.Println("SIMPLICITY")
 			// assemble the info
 
 			vols := NewVolumeSet(len(set))
@@ -591,6 +587,9 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 			tp.FPlateType = FPlateType
 			tp.TPlateType = TPlateType
 			tp.Channel = mci.Prms
+
+			fmt.Println("TI CHANNEL: ", mci.Prms)
+
 			mci.AddTransferParams(tp)
 		}
 
@@ -949,7 +948,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 	pol := GetPolicyFor(policy, ins)
 	ret := make([]RobotInstruction, 0)
 	// get some tips
-
+	//eesh... potential conflict here
 	channel, tiptype := ChooseChannel(ins.Volume[0][0], prms)
 	tipget, err := GetTips(tiptype, prms, channel, ins.Multi, false)
 	if err != nil {
@@ -1049,7 +1048,8 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 			mci.FPlateType = ins.FPlateType[t]
 			mci.TPlateType = ins.TPlateType[t]
 			mci.Multi = ins.Multi
-			mci.Prms = ins.Prms
+			//mci.Prms = ins.Prms
+			mci.Prms = channel
 			ret = append(ret, mci)
 
 			tiptype = newtiptype
@@ -1268,6 +1268,8 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name string) interface{
 func (ins *MultiChannelTransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 
+	fmt.Println("MCI HEAD HERE: ", ins.Prms)
+
 	// make the instructions
 
 	suckinstruction := NewSuckInstruction()
@@ -1446,6 +1448,7 @@ func (ins *LoadTipsMoveInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms
 	// load tips
 
 	lod := NewLoadTipsInstruction()
+	fmt.Println("LOAD HEAD: ", ins.Head)
 	lod.Head = ins.Head
 	lod.TipType = ins.FPlateType
 	lod.HolderType = ins.FPlateType
@@ -2100,6 +2103,7 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 }
 
 func (ins *SuckInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	fmt.Println("SUCK HEAD: ", ins.Head)
 	ret := make([]RobotInstruction, 0, 1)
 
 	// this is where the policies come into effect

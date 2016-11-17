@@ -349,8 +349,8 @@ TOUCHOFFSET,                         ,float64,          ,mm above wb to touch of
 
 func MakePEGPolicy() LHPolicy {
 	policy := make(LHPolicy, 9)
-	policy["ASP_SPEED"] = 1.5
-	policy["DSP_SPEED"] = 1.5
+	policy["ASPSPEED"] = 1.5
+	policy["DSPSPEED"] = 1.5
 	policy["ASP_WAIT"] = 2.0
 	policy["DSP_WAIT"] = 2.0
 	policy["ASPZOFFSET"] = 2.5
@@ -368,8 +368,8 @@ func MakePEGPolicy() LHPolicy {
 
 func MakeProtoplastPolicy() LHPolicy {
 	policy := make(LHPolicy, 7)
-	policy["ASP_SPEED"] = 0.15
-	policy["DSP_SPEED"] = 0.15
+	policy["ASPSPEED"] = 0.15
+	policy["DSPSPEED"] = 0.15
 	policy["ASPZOFFSET"] = 2.5
 	policy["DSPZOFFSET"] = 2.5
 	policy["BLOWOUTVOLUME"] = 100.0
@@ -385,8 +385,8 @@ func MakePaintPolicy() LHPolicy {
 	policy := make(LHPolicy, 13)
 	policy["DSPREFERENCE"] = 0
 	policy["DSPZOFFSET"] = 0.5
-	policy["ASP_SPEED"] = 1.5
-	policy["DSP_SPEED"] = 1.5
+	policy["ASPSPEED"] = 1.5
+	policy["DSPSPEED"] = 1.5
 	policy["ASP_WAIT"] = 1.0
 	policy["DSP_WAIT"] = 1.0
 	//policy["PRE_MIX"] = 3
@@ -403,8 +403,8 @@ func MakeDispenseAboveLiquidPolicy() LHPolicy {
 
 	policy := make(LHPolicy, 7)
 	policy["DSPREFERENCE"] = 1 // 1 indicates dispense at top of well
-	policy["ASP_SPEED"] = 3.0
-	policy["DSP_SPEED"] = 3.0
+	policy["ASPSPEED"] = 3.0
+	policy["DSPSPEED"] = 3.0
 	//policy["ASP_WAIT"] = 1.0
 	//policy["DSP_WAIT"] = 1.0
 	policy["BLOWOUTVOLUME"] = 50.0
@@ -420,8 +420,8 @@ func MakeColonyPolicy() LHPolicy {
 	policy := make(LHPolicy, 10)
 	policy["DSPREFERENCE"] = 0
 	policy["DSPZOFFSET"] = 0.0
-	policy["ASP_SPEED"] = 3.0
-	policy["DSP_SPEED"] = 3.0
+	policy["ASPSPEED"] = 3.0
+	policy["DSPSPEED"] = 3.0
 	policy["ASP_WAIT"] = 1.0
 	policy["POST_MIX"] = 3
 	policy["BLOWOUTVOLUME"] = 0.0
@@ -515,8 +515,8 @@ func MakeCultureReusePolicy() LHPolicy {
 
 func MakeGlycerolPolicy() LHPolicy {
 	glycerolpolicy := make(LHPolicy, 6)
-	glycerolpolicy["ASP_SPEED"] = 1.5
-	glycerolpolicy["DSP_SPEED"] = 1.5
+	glycerolpolicy["ASPSPEED"] = 1.5
+	glycerolpolicy["DSPSPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["TIP_REUSE_LIMIT"] = 0
@@ -526,8 +526,8 @@ func MakeGlycerolPolicy() LHPolicy {
 
 func MakeViscousPolicy() LHPolicy {
 	glycerolpolicy := make(LHPolicy, 4)
-	glycerolpolicy["ASP_SPEED"] = 1.5
-	glycerolpolicy["DSP_SPEED"] = 1.5
+	glycerolpolicy["ASPSPEED"] = 1.5
+	glycerolpolicy["DSPSPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	//glycerolpolicy["TIP_REUSE_LIMIT"] = 0
@@ -661,7 +661,7 @@ func MakeNeedToMixPolicy() LHPolicy {
 	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
-	dnapolicy["PRE_MIX_VOLUME"] = 10
+	//dnapolicy["PRE_MIX_VOLUME"] = 10
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
@@ -720,8 +720,8 @@ func PostMixPolicy() LHPolicy {
 func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy := make(LHPolicy, 27)
 	// don't set this here -- use defaultpipette speed or there will be inconsistencies
-	// defaultpolicy["ASP_SPEED"] = 3.0
-	// defaultpolicy["DSP_SPEED"] = 3.0
+	// defaultpolicy["ASPSPEED"] = 3.0
+	// defaultpolicy["DSPSPEED"] = 3.0
 	defaultpolicy["TOUCHOFF"] = false
 	defaultpolicy["TOUCHOFFSET"] = 0.5
 	defaultpolicy["ASPREFERENCE"] = 0
@@ -792,10 +792,10 @@ func MakeLVDNAMixPolicy() LHPolicy {
 
 func MakeHVOffsetPolicy() LHPolicy {
 	lvop := make(LHPolicy, 6)
-	lvop["ASPZOFFSET"] = 2.50
-	lvop["DSPZOFFSET"] = 2.50
-	lvop["POST_MIX_Z"] = 2.50
-	lvop["PRE_MIX_Z"] = 2.50
+	lvop["ASPZOFFSET"] = 3.0
+	lvop["DSPZOFFSET"] = 3.0
+	lvop["POST_MIX_Z"] = 3.0
+	lvop["PRE_MIX_Z"] = 3.0
 	lvop["DSPREFERENCE"] = 0
 	lvop["ASPREFERENCE"] = 0
 	lvop["POST_MIX_RATE"] = 37

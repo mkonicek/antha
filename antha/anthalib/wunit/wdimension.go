@@ -104,6 +104,7 @@ func AddVolumes(vols []Volume) (newvolume Volume) {
 			newvolume = tempvol
 		} else {
 			tempvol = NewVolume(tempvol.SIValue()+vol.SIValue(), tempvol.Unit().BaseSISymbol())
+			newvolume = tempvol
 		}
 	}
 	return

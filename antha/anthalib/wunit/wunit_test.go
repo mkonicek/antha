@@ -25,6 +25,7 @@ package wunit
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"testing"
 )
 
@@ -230,6 +231,15 @@ var volumearithmetictests = []VolumeArithmetic{
 		Quotient:   NewVolume(100000, "ul"),
 	},
 	{
+		VolumeA:    NewVolume(1, "l"),
+		VolumeB:    NewVolume(10, "ul"),
+		Sum:        NewVolume(1000010, "ul"),
+		Difference: NewVolume(999990, "ul"),
+		Factor:     10.0,
+		Product:    NewVolume(10000000, "ul"),
+		Quotient:   NewVolume(100000, "ul"),
+	},
+	{
 		VolumeA:    NewVolume(1000, "ml"),
 		VolumeB:    NewVolume(10, "ul"),
 		Sum:        NewVolume(1000010, "ul"),
@@ -243,9 +253,11 @@ var volumearithmetictests = []VolumeArithmetic{
 func TestSubstractVolumes(t *testing.T) {
 	for _, testunit := range volumearithmetictests {
 		r := SubtractVolumes(testunit.VolumeA, []Volume{testunit.VolumeB})
-		if r.SIValue() != testunit.Difference.SIValue() {
+		rt, _ := wutil.Roundto(r.SIValue(), 4)
+		tt, _ := wutil.Roundto(testunit.Difference.SIValue(), 4)
+		if rt != tt {
 			t.Error(
-				"For", testunit.VolumeA, "/n",
+				"For", testunit.VolumeA, "-", testunit.VolumeB, "\n",
 				"expected", testunit.Difference, "\n",
 				"got", r, "\n",
 			)
@@ -259,7 +271,7 @@ func TestAddVolumes(t *testing.T) {
 		r := AddVolumes([]Volume{testunit.VolumeA, testunit.VolumeB})
 		if r.SIValue() != testunit.Sum.SIValue() {
 			t.Error(
-				"For", testunit.VolumeA, "/n",
+				"For", testunit.VolumeA, "+", testunit.VolumeB, "\n",
 				"expected", testunit.Sum, "\n",
 				"got", r, "\n",
 			)
@@ -273,7 +285,7 @@ func TestMultiplyVolumes(t *testing.T) {
 		r := MultiplyVolume(testunit.VolumeA, testunit.Factor)
 		if r.SIValue() != testunit.Product.SIValue() {
 			t.Error(
-				"For", testunit.VolumeA, "/n",
+				"For", testunit.VolumeA, " x ", testunit.Factor, "\n",
 				"expected", testunit.Product, "\n",
 				"got", r, "\n",
 			)
@@ -285,9 +297,11 @@ func TestMultiplyVolumes(t *testing.T) {
 func TestDivideVolumes(t *testing.T) {
 	for _, testunit := range volumearithmetictests {
 		r := DivideVolume(testunit.VolumeA, testunit.Factor)
-		if r.SIValue() != testunit.Quotient.SIValue() {
+		rt, _ := wutil.Roundto(r.SIValue(), 4)
+		tt, _ := wutil.Roundto(testunit.Quotient.SIValue(), 4)
+		if rt != tt {
 			t.Error(
-				"For", testunit.VolumeA, "/n",
+				"For", testunit.VolumeA, " / ", testunit.Factor, "\n",
 				"expected", testunit.Quotient, "\n",
 				"got", r, "\n",
 			)
@@ -343,6 +357,15 @@ var concarithmetictests = []ConcArithmetic{
 		Product:    NewConcentration(10000000, "ng/ul"),
 		Quotient:   NewConcentration(100000, "ng/ul"),
 	},
+	{
+		ValueA:     NewConcentration(1, "Mol/l"),
+		ValueB:     NewConcentration(10, "mMol/l"),
+		Sum:        NewConcentration(1.01, "Mol/l"),
+		Difference: NewConcentration(0.99, "Mol/l"),
+		Factor:     10.0,
+		Product:    NewConcentration(10, "Mol/l"),
+		Quotient:   NewConcentration(0.1, "Mol/l"),
+	},
 }
 
 func TestMultiplyConcentrations(t *testing.T) {
@@ -350,7 +373,7 @@ func TestMultiplyConcentrations(t *testing.T) {
 		r := MultiplyConcentration(testunit.ValueA, testunit.Factor)
 		if r.SIValue() != testunit.Product.SIValue() {
 			t.Error(
-				"For", testunit.ValueA, "/n",
+				"For", testunit.ValueA, "\n",
 				"expected", testunit.Product, "\n",
 				"got", r, "\n",
 			)
@@ -364,7 +387,7 @@ func TestDivideConcentration(t *testing.T) {
 		r := DivideConcentration(testunit.ValueA, testunit.Factor)
 		if r.SIValue() != testunit.Quotient.SIValue() {
 			t.Error(
-				"For", testunit.ValueA, "/n",
+				"For", testunit.ValueA, "\n",
 				"expected", testunit.Quotient, "\n",
 				"got", r, "\n",
 			)
@@ -378,7 +401,7 @@ func TestNewMeasurement(t *testing.T) {
 		r := NewMeasurement(testunit.value, testunit.prefix, testunit.unit)
 		if r.SIValue() != testunit.siresult {
 			t.Error(
-				"For", testunit.value, testunit.prefix, testunit.unit, "/n",
+				"For", testunit.value, testunit.prefix, testunit.unit, "\n",
 				"expected", testunit.siresult, "\n",
 				"got", r.SIValue(), "\n",
 			)
@@ -392,7 +415,7 @@ func TestNewVolume(t *testing.T) {
 		r := NewVolume(testunit.value, testunit.prefixedunit)
 		if r.SIValue() != testunit.siresult {
 			t.Error(
-				"For", testunit.value, testunit.prefixedunit, "/n",
+				"For", testunit.value, testunit.prefixedunit, "\n",
 				"expected", testunit.siresult, "\n",
 				"got", r.SIValue(), "\n",
 			)
@@ -406,7 +429,7 @@ func TestNewConcentration(t *testing.T) {
 		r := NewConcentration(testunit.value, testunit.prefixedunit)
 		if r.SIValue() != testunit.siresult {
 			t.Error(
-				"For", testunit.value, testunit.prefixedunit, "/n",
+				"For", testunit.value, testunit.prefixedunit, "\n",
 				"expected", testunit.siresult, "\n",
 				"got", r.SIValue(), "\n",
 			)

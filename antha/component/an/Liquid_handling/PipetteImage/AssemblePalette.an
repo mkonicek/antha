@@ -1,5 +1,5 @@
 // Generates instructions to make a pallette of all colours in an image
-protocol AssemblePalette_OneByOne_RGB
+protocol AssemblePalette_OneByOne_RGB_2
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"

@@ -1,0 +1,11 @@
+Plate Height Test:,PlateHeightTestpcrplate_with_cooler20161117170218,,,,,,,,,,,,
+Time:,2016-11-17 17:02:18.789072723 +0000 GMT,,,,,,,,,,,,
+antha-lang/antha commitID:,b62d149f0d67bc42c2bf0c7db9a5e8bf959312c6,,,,,,,,,,,,
+,,,,,,,,,,,,,
+TestName,Plate,Liquid name,Liquid type ,Liquid Volume,Well ,Aspirate mm from Bottom of well? ,Dispense mm from Bottom of well? ,Acceptable? , Comments,plate Z start,Plate Height,lhpolicy aspirate z offset,lhpolicy dispense z offset
+PlateHeightTestpcrplate_with_cooler20161117170218,pcrplate_with_cooler_Platenumber_1,tartrazine,water,19.000ul,A1,  ,2, , ,16.5,15.5,<nil>,1
+PlateHeightTestpcrplate_with_cooler20161117170218,pcrplate_with_cooler_Platenumber_1,tartrazine,dna_mix,19.000ul,B1,  ,2, , ,16.5,15.5,<nil>,0.5
+PlateHeightTestpcrplate_with_cooler20161117170218,pcrplate_with_cooler_Platenumber_1,tartrazine,DispenseAboveLiquid,19.000ul,C1,  ,2mm above plate top, , ,16.5,15.5,<nil>,<nil>
+PlateHeightTestpcrplate_with_cooler20161117170218,pcrplate_with_cooler_Platenumber_1,tartrazine,water,100.000ul,D1,  ,0.5-1, , ,16.5,15.5,<nil>,1
+PlateHeightTestpcrplate_with_cooler20161117170218,pcrplate_with_cooler_Platenumber_1,tartrazine,dna_mix,100.000ul,E1,  ,0.5, , ,16.5,15.5,<nil>,0.5
+PlateHeightTestpcrplate_with_cooler20161117170218,pcrplate_with_cooler_Platenumber_1,tartrazine,DispenseAboveLiquid,100.000ul,F1,  ,2mm above plate top, , ,16.5,15.5,<nil>,<nil>

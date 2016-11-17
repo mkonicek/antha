@@ -169,58 +169,58 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	afb, _ := json.Marshal(areaf)
 	afs := string(afb)
 	// pcr plate with cooler
-	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
+	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
 
-	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
+	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 1.55, 1.4, "mm")
 	welltype.SetAfVFunc(afs)
 
 	//plate = wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 6.5)
 	//plates[plate.Type] = plate
-	plate = wtype.NewLHPlate("pcrplate_with_cooler", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, coolerheight+0.5)
+	plate = wtype.NewLHPlate("pcrplate_with_cooler", "Unknown", 8, 12, 15.5, "mm", welltype, 9, 9, 0.0, 0.0, coolerheight+0.5)
 	plates[plate.Type] = plate
 
 	// pcr plate with 496rack
-	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
-	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
+	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
+	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 15.5, 1.4, "mm")
 	//plate = wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 6.5)
 	//plates[plate.Type] = plate
-	plate = wtype.NewLHPlate("pcrplate_with_496rack", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, pcrtuberack496-2.5)
+	plate = wtype.NewLHPlate("pcrplate_with_496rack", "Unknown", 8, 12, 15.5, "mm", welltype, 9, 9, 0.0, 0.0, pcrtuberack496-2.5)
 	plates[plate.Type] = plate
 
 	// pcr plate skirted (on riser)
-	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
-	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
+	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
+	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 15.5, 1.4, "mm")
 	welltype.SetAfVFunc(afs)
-	plate = wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
+	plate = wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, 15.5, "mm", welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
 
 	plates[plate.Type] = plate
 
-	plate = wtype.NewLHPlate("pcrplate_skirted_riser40", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
+	plate = wtype.NewLHPlate("pcrplate_skirted_riser40", "Unknown", 8, 12, 15.5, "mm", welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
 
 	plates[plate.Type] = plate
 
 	// pcr plate skirted (on riser)
-	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
+	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
 	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
 
-	plate = wtype.NewLHPlate("pcrplate_skirted_shallowriser", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, shallowriserheightinmm-1.25)
+	plate = wtype.NewLHPlate("pcrplate_skirted_shallowriser", "Unknown", 8, 12, 15.5, "mm", welltype, 9, 9, 0.0, 0.0, shallowriserheightinmm-1.25)
 	plates[plate.Type] = plate
 
-	plate = wtype.NewLHPlate("pcrplate_skirted_riser20", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, shallowriserheightinmm-1.25)
+	plate = wtype.NewLHPlate("pcrplate_skirted_riser20", "Unknown", 8, 12, 15.5, "mm", welltype, 9, 9, 0.0, 0.0, shallowriserheightinmm-1.25)
 	plates[plate.Type] = plate
 
 	// pcr plate skirted
-	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
+	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
 	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
 	welltype.SetAfVFunc(afs)
-	plate = wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, 0.636)
+	plate = wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", welltype, 9, 9, 0.0, 0.0, 0.636)
 	plates[plate.Type] = plate
 
 	// pcr plate with incubator
-	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
+	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
 	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
 	welltype.SetAfVFunc(afs)
-	plate = wtype.NewLHPlate("pcrplate_with_incubator", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, (15.5 + 44.0))
+	plate = wtype.NewLHPlate("pcrplate_with_incubator", "Unknown", 8, 12, 15.5, "mm", welltype, 9, 9, 0.0, 0.0, incubatorheightinmm+2.0)
 
 	consar = []string{"position_1"}
 	plate.SetConstrained("Pipetmax", consar)

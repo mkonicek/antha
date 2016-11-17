@@ -55,8 +55,12 @@ func _PlateTestSteps(_ctx context.Context, _input *PlateTestInput, _output *Plat
 
 	// prepare header to add data and export csv
 
-	if _input.TestName == "" {
+	if _input.TestName == "" && len(_input.OutPlates) >= 2 {
 		_input.TestName = "PlateHeightTest" + fmt.Sprint(time.Now().Format("20060102150405"))
+	} else if _input.TestName == "" && len(_input.OutPlates) == 1 {
+		_input.TestName = "PlateHeightTest" + _input.OutPlates[0] + fmt.Sprint(time.Now().Format("20060102150405"))
+	} else {
+		_input.TestName = _input.TestName + fmt.Sprint(time.Now().Format("20060102150405"))
 	}
 	outputfilename := _input.TestName + ".csv"
 

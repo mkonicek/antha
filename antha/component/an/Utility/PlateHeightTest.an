@@ -68,8 +68,12 @@ Steps {
 
 	// prepare header to add data and export csv
 	
-	if TestName == "" {
+	if TestName == "" && len(OutPlates)>=2{
 		TestName = "PlateHeightTest" +fmt.Sprint(time.Now().Format("20060102150405"))
+	}else if TestName == "" && len(OutPlates)== 1 {
+		TestName = "PlateHeightTest" + OutPlates[0]+fmt.Sprint(time.Now().Format("20060102150405"))
+	}else {
+	TestName = TestName +fmt.Sprint(time.Now().Format("20060102150405"))
 	}
 	outputfilename := TestName+".csv"
 	

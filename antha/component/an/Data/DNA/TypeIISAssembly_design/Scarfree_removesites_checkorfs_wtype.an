@@ -16,7 +16,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"strconv"
 	"strings"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
 //"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 )
@@ -102,7 +102,7 @@ Steps {
 		removetheseenzymes = append(removetheseenzymes,lookup.EnzymeLookup(enzyme))
 	}
 
-	warning = text.Print("RemoveproblemRestrictionSites =", RemoveproblemRestrictionSites)
+	warning = fmt.Sprint("RemoveproblemRestrictionSites =", RemoveproblemRestrictionSites)
 	warnings = append(warnings, warning)
 	if RemoveproblemRestrictionSites {
 		newparts := make([]wtype.DNASequence, 0)
@@ -133,7 +133,7 @@ Steps {
 								warnings = append(warnings, warning)
 								warnings = append(warnings, "Paaaaerrttseq: "+part.Seq+"position: "+strconv.Itoa(position)+" original: "+originalcodon+" replacementcodon: "+codonoption)
 								if err != nil {
-									warning := text.Print("removal of "+anysites.Enzyme.Name+" site from orf "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
+									warning := fmt.Sprint("removal of "+anysites.Enzyme.Name+" site from orf "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
 									warnings = append(warnings, warning)
 								}
 							} else {
@@ -141,7 +141,7 @@ Steps {
 								part, err = sequences.RemoveSite(part, anysites.Enzyme, allsitestoavoid)
 								if err != nil {
 
-									warning = text.Print(anysites.Enzyme.Name+" position found to be outside of orf: "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
+									warning = fmt.Sprint(anysites.Enzyme.Name+" position found to be outside of orf: "+orf.DNASeq, " failed! improve your algorithm! "+err.Error())
 									warnings = append(warnings, warning)
 								}
 							}
@@ -152,7 +152,7 @@ Steps {
 				//		fmt.Println("part= ", part)
 				//		fmt.Println("temppart= ", temppart)
 						if err != nil {
-							warning := text.Print("removal of site failed! improve your algorithm!", err.Error())
+							warning := fmt.Sprint("removal of site failed! improve your algorithm!", err.Error())
 							warnings = append(warnings, warning)
 
 						}
@@ -179,7 +179,7 @@ Steps {
 	//lookup restriction enzyme
 	restrictionenzyme, err := lookup.TypeIIsLookup(Enzymename)
 	if err != nil {
-		warnings = append(warnings, text.Print("Error", err.Error()))
+		warnings = append(warnings, fmt.Sprint("Error", err.Error()))
 	}
 
 	//  Add overhangs for scarfree assembly based on part seqeunces only, i.e. no Assembly standard
@@ -195,13 +195,13 @@ Steps {
 	status, numberofassemblies, _, newDNASequence, simerr := enzymes.Assemblysimulator(assembly)
 	
 	if simerr != nil {
-		warnings = append(warnings, text.Print("Error", simerr.Error()))
+		warnings = append(warnings, fmt.Sprint("Error", simerr.Error()))
 	}
 
 	Plasmid, ORIpresent, SelectionMarkerPresent, err = features.ValidPlasmid(newDNASequence)
 	
 	if err != nil {
-		warnings = append(warnings, text.Print("Error", err.Error()))
+		warnings = append(warnings, fmt.Sprint("Error", err.Error()))
 	}
 
 	endreport := "Endreport only run in the event of assembly simulation failure"
@@ -220,16 +220,16 @@ Steps {
 		allends := make([]string, 0)
 		ends := ""
 
-		ends = text.Print(vectordata.Nm+" 5 Prime end: ", stickyends5)
+		ends = fmt.Sprint(vectordata.Nm+" 5 Prime end: ", stickyends5)
 		allends = append(allends, ends)
-		ends = text.Print(vectordata.Nm+" 3 Prime end: ", stickyends3)
+		ends = fmt.Sprint(vectordata.Nm+" 3 Prime end: ", stickyends3)
 		allends = append(allends, ends)
 
 		for _, part := range PartswithOverhangs {
 			_, stickyends5, stickyends3 := enzymes.TypeIIsdigest(part, restrictionenzyme)
-			ends = text.Print(part.Nm+" 5 Prime end: ", stickyends5)
+			ends = fmt.Sprint(part.Nm+" 5 Prime end: ", stickyends5)
 			allends = append(allends, ends)
-			ends = text.Print(part.Nm+" 3 Prime end: ", stickyends3)
+			ends = fmt.Sprint(part.Nm+" 3 Prime end: ", stickyends3)
 			allends = append(allends, ends)
 		}
 		endreport = strings.Join(allends, " ")
@@ -250,14 +250,14 @@ Steps {
 		sitepositions := enzymes.SitepositionString(info[i])
 
 		sites = append(sites, info[i].Numberofsites)
-		sitepositions = text.Print(part.Nm+" "+info[i].Enzyme.Name+" positions:", sitepositions)
+		sitepositions = fmt.Sprint(part.Nm+" "+info[i].Enzyme.Name+" positions:", sitepositions)
 		multiple = append(multiple, sitepositions)
 		}
 	}
 
 	for _, orf := range ORFstoConfirm {
 		if sequences.LookforSpecificORF(NewDNASequence.Seq, orf) == false {
-			warning = text.Print("orf not present: ", orf)
+			warning = fmt.Sprint("orf not present: ", orf)
 			warnings = append(warnings, warning)
 			ORFmissing = true
 		}
@@ -272,31 +272,31 @@ Steps {
 
 	partsummary := make([]string, 0)
 	for _, part := range PartswithOverhangs {
-		partsummary = append(partsummary, text.Print(part.Nm, part.Seq))
+		partsummary = append(partsummary, fmt.Sprint(part.Nm, part.Seq))
 	}
-	partsummary = append(partsummary, text.Print("Vector:"+ vectordata.Nm, vectordata.Seq))
-	partstoorder := text.Print("PartswithOverhangs: ", partsummary)
+	partsummary = append(partsummary, fmt.Sprint("Vector:"+ vectordata.Nm, vectordata.Seq))
+	partstoorder := fmt.Sprint("PartswithOverhangs: ", partsummary)
 	
 
 	// Print status
-	if Status != "all parts available"{
-		Status = fmt.Sprintln(Status)
-	} else {Status = fmt.Sprintln(
-		text.Print("simulator status: ", status),
-		text.Print("Endreport after digestion: ",endreport),
-		text.Print("Sites per part for " + Enzymename, sites),
-		text.Print("Positions: ", multiple),
-		text.Print("Warnings:", Warnings.Error()),
-		text.Print("Simulationpass=", Simulationpass),
-		text.Print("NewDNASequence: ",NewDNASequence),
-		text.Print("Any Orfs to confirm missing from new DNA sequence:", ORFmissing),
+	/*if Status != "all parts available"{
+		Status = fmt.Sprintln(status)
+	} else {*/Status = fmt.Sprintln(
+		fmt.Sprint("simulator status: ", status),
+		fmt.Sprint("Endreport after digestion: ",endreport),
+		fmt.Sprint("Sites per part for " + Enzymename, sites),
+		fmt.Sprint("Positions: ", multiple),
+		fmt.Sprint("Warnings:", Warnings.Error()),
+		fmt.Sprint("Simulationpass=", Simulationpass),
+		fmt.Sprint("NewDNASequence: ",NewDNASequence),
+		fmt.Sprint("Any Orfs to confirm missing from new DNA sequence:", ORFmissing),
 		partstoorder,
 		)
 		// export data to file
 		//anthapath.ExporttoFile("Report"+"_"+Constructname+".txt",[]byte(Status))
 	//anthapath.ExportTextFile("Report"+"_"+Constructname+".txt",Status)
 	fmt.Println(Status)
-	}
+	//}
 	
 	// export sequence to fasta
 	if ExporttoFastaFile && Simulationpass{

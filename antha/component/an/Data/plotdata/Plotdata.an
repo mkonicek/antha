@@ -48,9 +48,13 @@ Steps {
 
 	// the data points
 	
-	plot := graph.Plot(Xvalues, Yvaluearray)
+	plot,err := graph.Plot(Xvalues, Yvaluearray)
 	
-	graph.Export(plot,Exportedfilename)
+	if err!=nil{
+		Errorf(err.Error())
+	}
+	
+	graph.Export(plot,"10cm","10cm",Exportedfilename)
 	
 
 }

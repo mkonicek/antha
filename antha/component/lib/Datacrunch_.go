@@ -55,7 +55,7 @@ func _DatacrunchSteps(_ctx context.Context, _input *DatacrunchInput, _output *Da
 	// Look up properties
 	substrate_mw, err := pubchem.MakeMolecule(_input.Substrate_name)
 	if err != nil {
-		panic(err)
+		execute.Errorf(_ctx, err.Error())
 	}
 
 	// calculate moles

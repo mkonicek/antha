@@ -80,11 +80,11 @@ Steps {
 	partsinorder := make([]wtype.DNASequence,0)
 	
 	for _, part := range Partsinorder {
-	partDNA := Inventory.Partslist[part]
+	partDNA := Inventory.Partslist()[part]
 	partsinorder = append(partsinorder,partDNA)
 	}
 	
-	vectordata := Inventory.Partslist[Vectordata]
+	vectordata := Inventory.Partslist()[Vectordata]
 	assembly := enzymes.Assemblyparameters{Constructname, RestrictionEnzyme.CName,vectordata,partsinorder}
 	status,numberofassemblies,sitesfound,newDNASequence,_ := enzymes.Assemblysimulator(assembly)
 	

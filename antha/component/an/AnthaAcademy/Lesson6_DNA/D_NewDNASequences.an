@@ -1,0 +1,147 @@
+// Demo protocol of how to create an array of dna types from parsing user inputs of various types
+// scenarios handled:
+// Biobrick IDS
+// genbank files
+// raw sequence
+// inventory lookup
+protocol NewDNASequences
+
+import (
+	"strings"
+	"strconv"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/igem"
+	inventory "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Inventory"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
+)
+// Input parameters for this protocol
+Parameters (
+	Seqsinorder []string
+	PartPrefix string
+	BlastSeqswithNoName bool
+	Vectors bool
+)
+
+// Data which is returned from this protocol
+Data (
+	Parts[]wtype.DNASequence
+	Status string
+	Warnings []string
+)
+
+// Physical inputs to this protocol
+Inputs (
+
+)
+
+// Physical outputs from this protocol
+Outputs (
+)
+
+Requirements {
+
+}
+
+// Actions to perform before protocol itself
+Setup {
+
+}
+
+// Core process of the protocol: steps to be performed for each input
+Steps {
+	
+	// set warnings reported back to user to none initially
+	warnings := make([]string, 0)
+	
+	// make an empty array of DNA Sequences ready to fill
+	partsinorder := make([]wtype.DNASequence, 0)
+
+	var partDNA wtype.DNASequence
+	var err error
+
+	Status = "all parts available"
+	for i, part := range Seqsinorder {
+		// check if genbank feature
+		if strings.Contains(part, ".gb") && strings.Contains(part, "Feature:") {
+
+			split := strings.SplitAfter(part, ".gb")
+			file := split[0]
+
+			split2 := strings.Split(split[1], "Feature:")
+			feature := split2[1]
+
+			partDNA, err = parser.GenbankFeaturetoDNASequence(file, feature)
+			
+			if err!= nil {
+				Errorf(err.Error())
+			}
+			
+			// check if genbank file
+		} else if strings.Contains(part, ".gb") {
+
+			partDNA, _ = parser.GenbanktoAnnotatedSeq(part)
+			//check if biobrick
+		} else if strings.Contains(part, "BBa_") {
+				nm := PartPrefix+"_"+"Part "+strconv.Itoa(i)+"_"+part
+				part = igem.GetSequence(part)
+			
+			if Vectors {
+			partDNA = wtype.MakePlasmidDNASequence(nm, part)
+			}else{
+			partDNA = wtype.MakeLinearDNASequence(nm, part)
+			}
+			// check if in inventory
+		} else if inventoryDNA, found := inventory.Partslist()[part]; found {
+			partDNA = inventoryDNA
+			
+			// else treat as DNA sequence and check
+			}else {
+				
+			if Vectors {
+			partDNA = wtype.MakePlasmidDNASequence(PartPrefix+"_"+"Part "+strconv.Itoa(i) , part)
+			}else{
+			partDNA = wtype.MakeLinearDNASequence(PartPrefix+"_"+"Part "+strconv.Itoa(i) , part)
+			}
+			
+			
+		// test for illegal nucleotides
+		pass,illegals,_ := sequences.Illegalnucleotides(partDNA)
+		
+		if !pass {
+			var newstatus = make([]string,0)
+			for _,illegal := range illegals {
+				
+				newstatus =append(newstatus,PartPrefix+"_"+ "part: " + partDNA.Nm+" "+ partDNA.Seq + ": contains illegalnucleotides:"+ illegal.ToString())
+			}
+			warnings = append(warnings,strings.Join(newstatus,""))
+			Errorf(strings.Join(newstatus,""))
+		}
+		if pass && BlastSeqswithNoName{
+			// run a blast search on the sequence to get the name
+			blastsearch := RunSteps(BlastSearch_wtype, 
+                Parameters{
+                	DNA: partDNA, 
+                }, Inputs{
+                      
+                })
+		partDNA.Nm = blastsearch.Data.AnthaSeq.Nm
+		}
+		
+		}
+		partsinorder = append(partsinorder,partDNA)
+	}
+	
+	Parts = partsinorder
+	
+	Warnings = warnings
+	
+}
+// Actions to perform after steps block to analyze data
+Analysis {
+
+}
+
+Validation {
+
+}

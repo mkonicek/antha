@@ -52,10 +52,17 @@ Steps {
 	blankabs := platereader.ReadAbsorbance(Plate, blankSample, AbsorbanceWavelength.RawValue())
 	
 	// blank correct
-	blankcorrected := platereader.Blankcorrect(blankabs,abs)
+	blankcorrected, err := platereader.Blankcorrect(blankabs,abs)
+	if err!=nil {
+		Errorf(err.Error())
+	}
 	
 	// estimate pathlength
-	pathlength,_ := platereader.EstimatePathLength(Plate,dilutedSample.Volume())
+	pathlength,err := platereader.EstimatePathLength(Plate,dilutedSample.Volume())
+	
+	if err!=nil {
+		Errorf(err.Error())
+	}
 	
 	// pathlength correct
     pathlengthcorrected := platereader.PathlengthCorrect(pathlength, blankcorrected)

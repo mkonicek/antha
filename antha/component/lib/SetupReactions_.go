@@ -55,7 +55,8 @@ func _SetupReactionsSteps(_ctx context.Context, _input *SetupReactionsInput, _ou
 		enzSample := mixer.Sample(_input.Enzyme, _input.EnzymeVolume)
 
 		// by separating each reaction into 3 mix commands when the reactions are pipetted out in parallel at runtime
-		// the scheduler will try to optimise each mix step and will hence look for where components are shared between parallel threads to take advantage of things like tip reuse and multipipetting (if the liquid class permits these)
+		// the scheduler will try to optimise each mix step and will hence look for where components are shared between
+		// parallel threads to take advantage of things like tip reuse and multipipetting (if the liquid class permits these)
 		reaction := execute.Mix(_ctx, subplusbuffer, enzSample)
 
 		reactions = append(reactions, reaction)

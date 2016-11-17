@@ -1,0 +1,66 @@
+// Protocol for resuspending freeze dried DNA with a diluent
+protocol PairOligos
+
+// we need to import the wtype package to use the LHComponent type
+// the mixer package is required to use the Sample function
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"fmt"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+  	FWDOligoVolume Volume
+	REVOligoVolume Volume
+	Well string
+	TotalVolume Volume
+	IncubationTemp Temperature
+	IncubationTime Time
+	PlateNumber int
+)
+
+Data (
+)
+
+Inputs (
+	FwdOligo *wtype.LHComponent
+	RevOligo *wtype.LHComponent
+	Diluent *wtype.LHComponent
+	Plate *wtype.LHPlate
+)
+
+Outputs (
+	OligoPairs *wtype.LHComponent
+)
+
+Requirements {
+}
+
+Setup {
+}
+
+
+Steps {
+
+	diluentSample := mixer.SampleForTotalVolume(Diluent,TotalVolume)
+	
+	fwdOligoSample := mixer.Sample(FwdOligo,FWDOligoVolume)
+	
+	revOligoSample := mixer.Sample(RevOligo,REVOligoVolume)
+	
+	revOligoSample.Type = wtype.LTDNAMIX
+	
+	OligoPairs = MixNamed(Plate.Type,Well,fmt.Sprint("OligoPlate",PlateNumber),diluentSample,fwdOligoSample,revOligoSample) 
+
+	OligoPairs = Incubate(OligoPairs,IncubationTemp,IncubationTime,false)
+
+}
+
+Analysis {
+}
+
+
+Validation {
+}

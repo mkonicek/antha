@@ -1,0 +1,185 @@
+protocol MakeMedia
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"fmt"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+	"strconv"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Inventory"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	Name string
+	TotalVolume			Volume
+	LiqComponentStockConcentrations map[string]Concentration
+	LiqComponentFinalConcentrations map[string]Concentration
+	SolidComponentFinalConcentrations map[string]Concentration //Volume //Mass // Should be Mass
+	SolidComponentDensities 			map[string]wunit.Density
+	PH_setPoint float64
+	PH_tolerance float64 //  +/- x  e.g. 7.0 +/- 0.2 
+	PH_setPointTemp	wunit.Temperature
+	
+	//LiqComponentkeys	[]string
+	//Solidcomponentkeys	[]string // name or barcode id
+	//Acidkey string
+	//Basekey string
+)
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Diluent					*wtype.LHComponent
+	LiqComponents			[]*wtype.LHComponent
+	SolidComponents			[]*wtype.LHComponent // should be new type or field indicating solid and mass
+	/*Acid					*wtype.LHComponent
+	Base 					*wtype.LHComponent
+	*/
+	Sterilise 				bool
+	SterilisationMethod	string
+	AdditionalInstructions []string
+	Vessel					*wtype.LHPlate
+)
+
+
+// Physical outputs from this protocol with types
+Outputs (
+	Media *wtype.LHComponent
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Status string
+	RecipeSteps []string
+)
+// Input Requirement specification
+Requirements {
+	
+	
+}
+
+// Conditions to run on startup
+Setup {}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+		recipestring := make([]string,0)
+		var step string
+		stepcounter := 1 // counting from 1 is what makes us human
+		liquids := make([]*wtype.LHComponent,0)
+		step = text.Print("Recipe for: ",Name)
+		recipestring = append(recipestring,step)
+		
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "Prepare clean " + Vessel.Type)
+		recipestring = append(recipestring,step)
+		stepcounter++
+
+		for _, liq := range LiqComponents {
+			
+			volrequired, err := wunit.VolumeForTargetConcentration(LiqComponentFinalConcentrations[liq.CName], LiqComponentStockConcentrations[liq.CName],TotalVolume) 
+			if err!= nil{
+				Errorf(fmt.Sprint("Liquid: ",liq.CName," ", err.Error()))
+			}
+			liqsamp := mixer.Sample(liq,volrequired)
+			liquids = append(liquids,liqsamp)
+			step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add " + volrequired.ToString() + " of " + LiqComponentStockConcentrations[liq.CName].ToString()+" "+liq.CName)
+			recipestring = append(recipestring,step)
+			stepcounter++
+		}
+		
+		//solids := make([]*wtype.LHComponent,0)
+		
+		for _, sol := range SolidComponents {
+			
+			targetMass, err := wunit.MassForTargetConcentration(SolidComponentFinalConcentrations[sol.CName],TotalVolume)
+			if err!= nil{
+				Errorf(fmt.Sprint("Solid: ",sol.CName," ", err.Error()))
+			}
+			solsamp := mixer.SampleMass(sol,targetMass,SolidComponentDensities[sol.CName])
+			liquids = append(liquids,solsamp)
+			step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add " + targetMass.ToString() + " of " + sol.CName)
+			recipestring = append(recipestring,step)
+			stepcounter++
+			//stepcounter = stepcounter + k
+		}
+		
+		watersample := mixer.SampleForTotalVolume(Diluent,TotalVolume)
+		liquids = append(liquids,watersample)
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", "add up to " + TotalVolume.ToString() + " of " + Diluent.CName)
+		recipestring = append(recipestring,step)
+		
+		stepcounter++
+		
+	// Add pH handling functions and driver calls etc...
+	
+		description:= fmt.Sprint("adjust pH to ", PH_setPoint, " +/-", PH_tolerance, " for temp ",PH_setPointTemp.ToString(), "C")
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", description)
+		recipestring = append(recipestring,step)
+		stepcounter++
+		
+		
+		if Sterilise {
+		description:= fmt.Sprint("Now Sterilise by ", SterilisationMethod)
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", description)
+		recipestring = append(recipestring,step)
+		stepcounter++
+		}
+		
+		for _, extrastep := range AdditionalInstructions {
+		description:= fmt.Sprint("Now, ", extrastep)
+		step = text.Print("Step" + strconv.Itoa(stepcounter) + ": ", description)
+		recipestring = append(recipestring,step)
+		stepcounter++
+		}
+		
+	
+	/*
+	prepH := MixInto(Vessel,liquids...)
+	
+	pHactual := prepH.Measure("pH")
+	
+	step = text.Print("pH measured = ", pHactual)
+	recipestring = append(recipestring,step)
+	
+	//pHactual = wutil.Roundto(pHactual,PH_tolerance)
+	
+	pHmax := PH_setpoint + PH_tolerance
+	pHmin := PH_setpoint - PH_tolerance  
+	
+	if pHactual < pHmax || pHactual < pHmin {
+		// basically just a series of sample, stir, wait and recheck pH
+	Media, newph, componentadded = prepH.AdjustpH(PH_setPoint, pHactual, PH_setPointTemp,Acid,Base)
+	
+	step = text.Print("Adjusted pH = ", newpH)
+	recipestring = append(recipestring,step)
+	
+	step = text.Print("Component added = ", componentadded.Vol + componentadded.Vunit + " of " + componentadded.Conc + componentadded.Cunit + " " + componentadded.CName + )
+	recipestring = append(recipestring,step)
+	}
+	*/
+	Media = MixInto(Vessel, "", liquids...)
+	RecipeSteps = recipestring
+	
+	fmt.Println(recipestring)
+	Status = fmt.Sprintln(recipestring)
+		
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}
+/*
+type Mole struct {
+	number float64
+}*/
+

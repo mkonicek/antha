@@ -95,7 +95,7 @@ func _Scarfree_siteremove_orfcheckSteps(_ctx context.Context, _input *Scarfree_s
 			partDNA = wtype.MakeLinearDNASequence(nm, part)
 
 			// check if in inventory
-		} else if inventoryDNA, found := inventory.Partslist[part]; found {
+		} else if inventoryDNA, found := inventory.Partslist()[part]; found {
 			partDNA = inventoryDNA
 
 			// else treat as DNA sequence and check
@@ -214,7 +214,7 @@ func _Scarfree_siteremove_orfcheckSteps(_ctx context.Context, _input *Scarfree_s
 	_output.PartsWithSitesRemoved = partsinorder
 
 	// make vector into an antha type DNASequence
-	if inventorydata, found := inventory.Partslist[_input.Vector]; found {
+	if inventorydata, found := inventory.Partslist()[_input.Vector]; found {
 		vectordata = inventorydata
 	} else if strings.Contains(_input.Vector, ".gb") {
 

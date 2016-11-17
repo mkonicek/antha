@@ -87,7 +87,7 @@ func _MoClo_designSteps(_ctx context.Context, _input *MoClo_designInput, _output
 			}
 		} else {
 			// look up part in inventory
-			partDNA, found = Inventory.Partslist[part]
+			partDNA, found = Inventory.Partslist()[part]
 
 			if !found {
 				//Status = text.Print("part: " + partDNA.Nm, partDNA.Seq + ": not found in Inventory so element aborted!")
@@ -117,7 +117,7 @@ func _MoClo_designSteps(_ctx context.Context, _input *MoClo_designInput, _output
 		partsinorder = append(partsinorder, partDNA)
 	}
 	// lookup vector sequence
-	vectordata := Inventory.Partslist[_input.Vector]
+	vectordata := Inventory.Partslist()[_input.Vector]
 
 	//lookup restriction enzyme
 	restrictionenzyme := enzymes.Enzymelookup[_input.AssemblyStandard][_input.Level]

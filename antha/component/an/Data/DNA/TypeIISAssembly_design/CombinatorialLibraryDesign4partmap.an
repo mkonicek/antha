@@ -1,0 +1,249 @@
+// This protocol is intended to design assembly parts using a specified enzyme. 
+// overhangs are added to complement the adjacent parts and leave no scar. 
+// parts can be entered as genbank (.gb) files, sequences or biobrick IDs
+// If assembly simulation fails after overhangs are added. In order to help the user
+// diagnose the reason, a report of the part overhangs 
+// is returned to the user along with a list of cut sites in each part.
+protocol CombinatorialLibraryDesign_4part_wtype_map
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/oligos"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"path/filepath"
+	//"strconv"
+	"fmt"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	//Seqsinorder					map[string][]string // constructname to sequence combination
+	ProjectName				string
+	Standard					string //MoClo
+	StandardLevel			string // of assembly standard
+	StandardLabels 			[4]string
+	Vectors					[]wtype.DNASequence
+	PROs						[]wtype.DNASequence
+	RBSs						[]wtype.DNASequence
+	CDSs						[]wtype.DNASequence
+	TERs						[]wtype.DNASequence
+	SitesToRemove			[]string
+	BlastSearchSeqs			bool
+	FolderPerConstruct		bool
+	FolderPerProject		bool
+)
+
+// Physical Inputs to this protocol with types
+Inputs (
+
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	StatusMap map[string]string
+	PartswithOverhangsMap map[string][]wtype.DNASequence // parts to order
+	Sequences[]wtype.DNASequence
+	Parts[][]wtype.DNASequence
+	SequencingPrimers [][]wtype.DNASequence
+	PassMap map[string]bool
+	SeqsMap map[string]wtype.DNASequence // desired sequence to end up with after assembly
+	EndreportMap  map[string]string
+	PositionReportMap  map[string][]string
+	PrimerMap map[string]oligos.Primer
+	
+)
+// Input Requirement specification
+Requirements {
+	// e.g. are MoClo types valid?
+}
+
+// Conditions to run on startup
+Setup {}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	StatusMap = make(map[string]string)
+	PartswithOverhangsMap = make(map[string][]wtype.DNASequence) // parts to order
+	PassMap = make(map[string]bool)
+	SeqsMap = make(map[string]wtype.DNASequence) // desired sequence to end up with after assembly
+	EndreportMap  = make(map[string]string)
+	PositionReportMap = make(map[string][]string)
+	StatusMap = make(map[string]string)
+	PrimerMap = make(map[string]oligos.Primer)
+	
+	Sequences = make([]wtype.DNASequence,0)
+	Parts = make([][]wtype.DNASequence,0)
+	SequencingPrimers = make([][]wtype.DNASequence,0)
+	//uniqueFWDPrimers := make([]wtype.DNASequence,0)
+	//uniqueREVPrimers := make([]wtype.DNASequence,0)
+	
+	var counter int = 1
+	
+	for j := range Vectors {
+		for k := range PROs {
+			for l := range RBSs {
+				for m := range CDSs {	
+					for n := range TERs {
+						key := 	ProjectName	+Vectors[j].Nm+"_"+PROs[k].Nm+"_"+RBSs[l].Nm+"_"+CDSs[m].Nm
+						assembly := RunSteps(AssemblyStandard_siteremove_orfcheck_wtype,
+		Parameters {
+					Constructname: 				key,
+					Seqsinorder:				[]wtype.DNASequence{PROs[k],RBSs[l],CDSs[m],TERs[n]},
+					AssemblyStandard:			Standard,
+					Level:						StandardLevel, // of assembly standard
+					Vector:						Vectors[j],
+					PartMoClotypesinorder:		[]string{StandardLabels[0],StandardLabels[1],StandardLabels[2],StandardLabels[3]}, 
+					OtherEnzymeSitesToRemove:	SitesToRemove,
+					ORFstoConfirm:				[]string{}, // enter each as amino acid sequence
+					RemoveproblemRestrictionSites: true,
+					OnlyRemovesitesinORFs: 		false,
+					EndsAlreadyadded:			false,
+					ExporttoFastaFile: 			FolderPerConstruct,
+					BlastSeqswithNoName:			BlastSearchSeqs,
+		}, Inputs{
+                    
+                })
+				key = key  //+ Vectors[j]
+				PartswithOverhangsMap[key] = assembly.Data.PartswithOverhangs // parts to order
+				Parts = append(Parts,assembly.Data.PartswithOverhangs)
+				PassMap[key] = assembly.Data.Simulationpass
+				EndreportMap[key]  = assembly.Data.Endreport
+				PositionReportMap[key] = assembly.Data.PositionReport
+				SeqsMap[key] = assembly.Data.NewDNASequence
+				Sequences = append(Sequences,assembly.Data.NewDNASequence)
+				StatusMap[key] = assembly.Data.Status
+				
+	// for each vector we'll also design sequencing primers
+	
+	primer := RunSteps(PrimerDesign_ColonyPCR_wtype,
+	Parameters {
+				FullDNASeq:assembly.Data.NewDNASequence,
+				Maxtemp:    wunit.NewTemperature(72,"C"),
+				Mintemp:    wunit.NewTemperature(50,"C"),
+				Maxgc:    0.7,
+				Minlength:   12, 
+				Maxlength:  30, 
+				Seqstoavoid: []string{},
+				PermittednucleotideOverlapBetweenPrimers: 10, // number of nucleotides which primers can overlap by
+				RegionSequence: assembly.Data.PartsWithSitesRemoved[0], // first part
+				FlankTargetSequence:true,
+	}, Inputs{
+                    
+                })
+				
+				// rename primers
+				primer.Data.FWDPrimer.Nm = primer.Data.FWDPrimer.Nm+ProjectName+Vectors[j].Nm+"_FWD"
+				primer.Data.REVPrimer.Nm = primer.Data.REVPrimer.Nm+ProjectName+Vectors[j].Nm+"_REV"
+				
+				PrimerMap[key+"_FWD"]=primer.Data.FWDPrimer
+				PrimerMap[key+"_REV"]=primer.Data.REVPrimer
+				SequencingPrimers = append(SequencingPrimers,[]wtype.DNASequence{primer.Data.FWDPrimer.DNASequence,primer.Data.REVPrimer.DNASequence})
+				
+				//uniqueFWDPrimers = append(uniqueFWDPrimers,primer.Data.FWDPrimer.Seq)
+				//uniqueREVPrimers = append(uniqueREVPrimers,primer.Data.REVPrimer.Seq)
+				
+				counter++
+	}
+	}
+	}
+	}
+	}
+	
+	//uniqueFWDPrimers = search.RemoveDuplicateSequences(uniqueFWDPrimers)
+	//uniqueREVPrimers = search.RemoveDuplicateSequences(uniqueREVPrimers)
+	
+	// export sequence to fasta
+	if FolderPerProject{
+		
+		// export simulated sequences to file
+		export.Makefastaserial2(export.LOCAL,filepath.Join(ProjectName,"AssembledSequences"), Sequences)
+
+		// add fasta file for each set of parts with overhangs
+		labels:= StandardLabels //[]string{"Promoters","RBSs","CDSs","Ters"}
+		
+		refactoredparts:= make(map[string][]wtype.DNASequence)
+		
+		newparts := make([]wtype.DNASequence,0)
+		
+		for _, parts := range Parts{
+		
+		for j := range parts{
+			newparts = refactoredparts[labels[j]]
+			newparts = append(newparts,parts[j])
+			refactoredparts[labels[j]]=newparts
+		}
+		}
+		
+		for key,value := range refactoredparts{
+			
+		duplicateremoved := search.RemoveDuplicateSequences(value)
+		csv  := make([]string, 0)
+		revcompseqs := make([]wtype.DNASequence,0)
+		
+		for _, seq := range duplicateremoved {
+			revcomp := wtype.RevComp(seq.Seq)
+			revcompseqs = append(revcompseqs,wtype.MakeSingleStrandedDNASequence(seq.Nm+"_ReverseCompliment",revcomp))
+			output := fmt.Sprintln(seq.Nm,",", seq.Seq, ",",seq.Nm+"_ReverseCompliment","," ,revcomp)
+			csv = append(csv, output)
+		}
+				
+		export.Makefastaserial2(export.LOCAL,filepath.Join(ProjectName,key), duplicateremoved)
+		export.Makefastaserial2(export.LOCAL,filepath.Join(ProjectName,key+"_RevComp"), revcompseqs)
+		err := export.ExporttoTextFile(filepath.Join(ProjectName,key)+".csv", csv)
+	
+		if err != nil {
+		panic(err.Error())
+		}
+		}
+		
+		// add fasta file for each set of primers
+		labels= []string{"FWDPrimers","REVPrimers"}
+		
+		refactoredparts = make(map[string][]wtype.DNASequence)
+		csv  := make([]string, 0)
+		newparts = make([]wtype.DNASequence,0)
+		
+		for i, parts := range SequencingPrimers{
+		
+		for j := range parts{
+			newparts = refactoredparts[labels[j]]
+			newparts = append(newparts,parts[j])
+			refactoredparts[labels[j]]=newparts
+		}
+		output := fmt.Sprintln(i+1,",","FWD: ",parts[0].Nm,",",parts[0].Seq, ",","REV: ",parts[1].Nm,",",parts[1].Seq)
+		csv = append(csv,output)
+		}
+		
+		for key,value := range refactoredparts{
+			
+		duplicateremoved := search.RemoveDuplicateSequences(value)
+		
+		export.Makefastaserial2(export.LOCAL,filepath.Join(ProjectName,key), duplicateremoved)
+		}
+	
+		err := export.ExporttoTextFile(filepath.Join(ProjectName,"Primers")+".csv", csv)
+	
+		if err != nil {
+		panic(err.Error())
+		}
+	
+	 }
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

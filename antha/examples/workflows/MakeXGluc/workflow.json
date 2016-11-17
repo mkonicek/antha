@@ -1,0 +1,8 @@
+{
+    "connections": [],
+    "processes": {
+        "StockBuffer": {
+            "component": "MakeStockBuffer2"
+        }
+    }
+}

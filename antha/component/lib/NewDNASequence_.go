@@ -156,7 +156,7 @@ func init() {
 		Constructor: NewDNASequenceNew,
 		Desc: component.ComponentDesc{
 			Desc: "demo protocol of how to create a dna type from user inputs\n",
-			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson4_DNA/A_NewDNASequence.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson6_DNA/A_NewDNASequence.an",
 			Params: []component.ParamDesc{
 				{Name: "DNA_seq", Desc: "", Kind: "Parameters"},
 				{Name: "Gene_name", Desc: "", Kind: "Parameters"},

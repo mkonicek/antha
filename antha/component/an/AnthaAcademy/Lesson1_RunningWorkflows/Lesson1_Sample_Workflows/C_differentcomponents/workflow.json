@@ -1,0 +1,29 @@
+{
+    "connections": [
+        {
+            "src": {
+                "port": "Sample",
+                "process": "sample"
+            },
+            "tgt": {
+                "port": "Solution",
+                "process": "sampleAll"
+            }
+        }
+    ],
+    "processes": {
+        "sample": {
+            "component": "Sample"
+        },
+        "samplealone": {
+            "component": "Sample"
+        },
+        "sampleAll": {
+            "component": "SampleAll"
+        },
+        "sampleTotal": {
+            "component": "SampleForTotalVolume"
+        }
+	}   
+}
+

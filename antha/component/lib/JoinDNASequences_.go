@@ -129,7 +129,7 @@ func init() {
 		Constructor: JoinDNASequencesNew,
 		Desc: component.ComponentDesc{
 			Desc: "Demo protocol of how to create an array of dna types from parsing user inputs of various types\nscenarios handled:\nBiobrick IDS\ngenbank files\nraw sequence\ninventory lookup\n",
-			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson4_DNA/E_JoinDNASequences.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson6_DNA/E_JoinDNASequences.an",
 			Params: []component.ParamDesc{
 				{Name: "Seqsinorder", Desc: "", Kind: "Parameters"},
 				{Name: "Seq", Desc: "", Kind: "Data"},

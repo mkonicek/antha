@@ -24,12 +24,13 @@ package factory
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
+	"sort"
 )
 
 //var commonwelltypes
@@ -40,7 +41,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	offset := 0.25
 	riserheightinmm := 40.0 - offset
 	shallowriserheightinmm := 20.0 - offset
-	coolerheight := 15.0
+	coolerheight := 16.0
 	pcrtuberack496 := 28.0
 	incubatorheightinmm := devices.Shaker["3000 T-elm"]["Height"] * 1000
 
@@ -56,22 +57,22 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	// deep square well 96 on riser
 	swshp = wtype.NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype = wtype.NewLHWell("DSW96", "", "", "ul", 1000, 100, swshp, wtype.LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	plate = wtype.NewLHPlate("DSW96_riser", "Unknown", 8, 12, 44.1, "mm", welltype, 9, 9, 0.0, 0.0, riserheightinmm)
+	welltype = wtype.NewLHWell("DSW96", "", "", "ul", 1000, 200, swshp, wtype.LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	plate = wtype.NewLHPlate("DSW96_riser", "Unknown", 8, 12, 44.1, "mm", welltype, 9, 9, 0.0, 0.0, riserheightinmm+valueformaxheadtonotintoDSWplatewithp20tips)
 	plates[plate.Type] = plate
 	plate = wtype.NewLHPlate("DSW96_riser40", "Unknown", 8, 12, 44.1, "mm", welltype, 9, 9, 0.0, 0.0, riserheightinmm)
 	plates[plate.Type] = plate
 
 	// deep square well 96 on q instruments incubator
 	swshp = wtype.NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype = wtype.NewLHWell("DSW96", "", "", "ul", 1000, 100, swshp, wtype.LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	plate = wtype.NewLHPlate("DSW96_incubator", "Unknown", 8, 12, 44.1, "mm", welltype, 9, 9, 0.0, 0.0, incubatorheightinmm)
+	welltype = wtype.NewLHWell("DSW96", "", "", "ul", 1000, 200, swshp, wtype.LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	plate = wtype.NewLHPlate("DSW96_incubator", "Unknown", 8, 12, 44.1, "mm", welltype, 9, 9, 0.0, 0.0, incubatorheightinmm+valueformaxheadtonotintoDSWplatewithp20tips)
 	plates[plate.Type] = plate
 
 	// deep square well 96 on inheco incubator
 	swshp = wtype.NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype = wtype.NewLHWell("DSW96", "", "", "ul", 1000, 100, swshp, wtype.LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	plate = wtype.NewLHPlate("DSW96_inheco", "Unknown", 8, 12, 44.1, "mm", welltype, 9, 9, 0.0, 0.0, inhecoincubatorinmm)
+	welltype = wtype.NewLHWell("DSW96", "", "", "ul", 1000, 200, swshp, wtype.LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	plate = wtype.NewLHPlate("DSW96_inheco", "Unknown", 8, 12, 44.1, "mm", welltype, 9, 9, 0.0, 0.0, inhecoincubatorinmm+valueformaxheadtonotintoDSWplatewithp20tips)
 	plates[plate.Type] = plate
 
 	// 24 well deep square well plate on riser
@@ -379,8 +380,10 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
 	// greiner one well with 50ml of agar in
 	plate = wtype.NewLHPlate("Agarplateforpicking1536_riser", "Unknown", 32, 48, 7, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
-	plate = wtype.NewLHPlate("Agarplateforpicking1536_riser40", "Unknown", 32, 48, 7, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
 	plates[plate.Type] = plate
+
+	plate = wtype.NewLHPlate("Agarplateforpicking1536_riser40", "Unknown", 32, 48, 7, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	plates[plate.Type] = plate
 
@@ -443,6 +446,31 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = wtype.NewLHPlate("30mlAgarplateforpicking384_riser", "Unknown", 16, 24, 14, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 	plate = wtype.NewLHPlate("30mlAgarplateforpicking384_riser40", "Unknown", 16, 24, 14, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+
+	// Onewell SBS format Agarplate with colonies on riser (50ml agar) med res
+
+	bottomtype = wtype.LHWBFLAT
+	xdim = 3.0
+	ydim = 3.0
+	zdim = 14.0
+	bottomh = 1.0
+
+	wellxoffset = 3.1              // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 3.1              //centre of well to centre of neighbouring well in y direction
+	xstart = -2.5                  // distance from top left side of plate to first well
+	ystart = -2.5                  // distance from top left side of plate to first well
+	zstart = riserheightinmm + 3.5 //5.5 // offset of bottom of deck to bottom of well
+
+	square = wtype.NewShape("box", "mm", 3, 3, 14)
+	//func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape *Shape, bott int, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+	welltype = wtype.NewLHWell("768flat", "", "", "ul", 31.25, 5, square, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+
+	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
+	// greiner one well with 50ml of agar in
+	plate = wtype.NewLHPlate("Agarplateforpicking768_riser", "Unknown", 24, 32, 14, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+	plate = wtype.NewLHPlate("Agarplateforpicking768_riser40", "Unknown", 24, 32, 14, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
 	/*
@@ -757,16 +785,33 @@ func MakeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 //  plate = wtype.LHPlate("EPAGE48", "Invitrogen", 2, 26, height, "mm", welltype, 9, 22, 0.0, 0.0, 50.0)
 //	plates[plate.Type] = plate
 
-func GetPlateByType(typ string) *wtype.LHPlate {
-	plates := makePlateLibrary()
-	p := plates[typ]
+type PlateInventory struct {
+	inv map[string]*wtype.LHPlate
+}
 
-	if p == nil {
-		//fmt.Println("can't dup plate nil, plate name", typ)
+var defaultPlateInventory *PlateInventory
+
+func init() {
+	defaultPlateInventory = &PlateInventory{
+		inv: makePlateLibrary(),
+	}
+}
+
+func AddPlate(name string, p *wtype.LHPlate) error {
+	return errors.New("tbd")
+}
+func GetPlateByType(typ string) *wtype.LHPlate {
+	return defaultPlateInventory.GetPlateByType(typ)
+}
+
+func (i *PlateInventory) GetPlateByType(typ string) *wtype.LHPlate {
+	p, ok := i.inv[typ]
+	if !ok {
+		//logger.Fatal(fmt.Sprintf("Plate %s not found", typ))
 		logger.Debug(fmt.Sprint("Plate type ", typ, " not known"))
+		//panic(fmt.Errorf("Plate %s not found", typ)) //TODO refactor to errors
 		return nil
-	} else {
-		//fmt.Println("plate type", typ, "found in factory")
+
 	}
 	return p.Dup()
 }
@@ -780,5 +825,12 @@ func GetPlateList() []string {
 		kz[x] = name
 		x += 1
 	}
+	sort.Strings(kz)
+
 	return kz
+}
+
+func GetPlateLibrary() map[string]*wtype.LHPlate {
+
+	return defaultPlateInventory.inv
 }

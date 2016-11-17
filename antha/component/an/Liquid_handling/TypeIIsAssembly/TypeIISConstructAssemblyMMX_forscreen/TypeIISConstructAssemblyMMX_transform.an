@@ -1,0 +1,144 @@
+protocol TypeIISConstructAssemblyMMX_forscreen_transform
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	//"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	ReactionVolume				Volume
+	MasterMixVolume				Volume
+	PartVols					[]Volume
+	ReactionTemp				Temperature
+	ReactionTime				Time
+	InactivationTemp			Temperature
+	InactivationTime			Time
+	OutputReactionName			string
+	OutputLocation 				string
+    OutputConstructName         string
+	OutputPlateNum				int
+	LHPolicyName				string
+    EnzymeName                  string
+    PartSeqs                   	[]wtype.DNASequence
+	CompetentCellPlateWell 		string
+	RecoveryPlateWell 			string
+	RecoveryTemp 				Temperature
+	RecoveryTime				Time
+	TransformationVolume 		Volume
+	PostPlasmidTemp 			Temperature
+	PostPlasmidTime 			Time
+	CompetentCellTransferVolume Volume
+	RecoveryPlateNumber 		int
+)
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Parts						[]*wtype.LHComponent
+	MasterMix					*wtype.LHComponent
+	OutPlate					*wtype.LHPlate
+	PlateWithCompetentCells		 *wtype.LHPlate
+	PlatewithRecoveryMedia		*wtype.LHPlate
+	Water                   	*wtype.LHComponent
+)
+
+
+// Physical outputs from this protocol with types
+Outputs (
+	Reaction      *wtype.LHComponent
+	Recovery	*wtype.LHComponent
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+        ConstructName string
+        Sequence      wtype.DNASequence
+		Output string
+)
+
+Requirements {}
+
+// Conditions to run on startup
+Setup {}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	var err error
+
+	samples := make([]*wtype.LHComponent, 0)
+        ConstructName = OutputConstructName
+	
+        last := len(PartSeqs) - 1
+	output, count, _, seq, err := enzymes.Assemblysimulator(enzymes.Assemblyparameters{
+            Constructname: ConstructName,
+            Enzymename: EnzymeName,
+            Vector: PartSeqs[last],
+            Partsinorder: PartSeqs[:last],
+        })
+        Output = output
+		if err != nil {
+        //  Errorf("%s: %s", output, err)
+        }
+        if count != 1 {
+        //  Errorf("no successful assembly")
+        }
+
+        Sequence = seq
+
+	waterSample:=mixer.SampleForTotalVolume(Water,ReactionVolume)
+	samples = append(samples, waterSample)
+	
+
+	for k, part := range Parts {
+		part.Type, err = wtype.LiquidTypeFromString(LHPolicyName)
+		
+		if err != nil {
+                        Errorf("cannot find liquid type: %s", err)
+		}
+		
+		partSample := mixer.Sample(part, PartVols[k])
+		partSample.CName = PartSeqs[k].Nm
+		samples = append(samples, partSample)
+	}
+
+	mmxSample:=mixer.Sample(MasterMix,MasterMixVolume)
+	samples = append(samples, mmxSample)
+
+	// ensure the last step is mixed
+	samples[len(samples)-1].Type=wtype.LTDNAMIX
+	Reaction = MixTo(OutPlate.Type, OutputLocation, OutputPlateNum, samples...)
+        Reaction.Extra["label"] = ConstructName
+
+	dnaSample := mixer.Sample(Reaction,TransformationVolume)
+	
+	Incubate(dnaSample, ReactionTemp, ReactionTime, false)
+		
+		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWell,1,dnaSample)
+		
+	Incubate(transformation, PostPlasmidTemp, PostPlasmidTime, false)
+		
+		transformationSample := mixer.Sample(transformation,CompetentCellTransferVolume) 
+		
+		Recovery = MixTo(PlatewithRecoveryMedia.Type,RecoveryPlateWell,RecoveryPlateNumber,transformationSample)
+		
+
+	// incubate the reaction mixture
+	// commented out pending changes to incubate
+	Incubate(Recovery, RecoveryTemp, RecoveryTime, true)
+	// inactivate
+	//Incubate(Reaction, InactivationTemp, InactivationTime, false)
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

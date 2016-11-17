@@ -1,0 +1,213 @@
+// Generates instructions to make a pallette of all colours in an image
+protocol AssemblePalette_OneByOne_RGB_2
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	//"github.com/antha-lang/antha/microArch/factory"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"image/color"
+	"strconv"
+	"fmt"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	VolumeForeachColourPlasmid  Volume
+	Imagefilename string
+	PosterizeImage bool
+	PosterizeLevels int
+	Rotate bool
+	AutoRotate bool
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Numberofcolours int
+	//Colournames []string
+	Palette color.Palette
+	ColourtoComponentMap map[string]*wtype.LHComponent
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Red *wtype.LHComponent
+	Green *wtype.LHComponent
+	Blue *wtype.LHComponent
+	//InPlate *wtype.LHPlate
+	PlateWithMasterMix *wtype.LHPlate
+	PalettePlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Colours[]*wtype.LHComponent
+)
+
+Requirements {
+	
+}
+
+// Conditions to run on startup
+Setup {
+	
+}
+
+type RBSdata struct {
+	Seq wtype.DNASequence
+	Strength float64
+}
+
+type collection []RBSdata
+
+func (rbscollection collection) Max()(rbs RBSdata) {
+	
+	//var maxSeq wtype.DNASequence
+	var maxStrength float64
+	for i:= range rbscollection {
+		if i == 0 {
+			maxStrength = rbscollection[i].Strength
+			//maxSeq = rbscollection[i].Seq
+			rbs = rbscollection[i]
+		} else if rbscollection[i].Strength > maxStrength {
+			maxStrength = rbscollection[i].Strength
+			//maxSeq = rbscollection[i].Seq
+			rbs = rbscollection[i]
+		}
+	}
+	return
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	var rbsstrengthdata []RBSdata =[]RBSdata{
+		RBSdata{wtype.MakeLinearDNASequence("rbs1","gggcgcgc"),0.0},
+		RBSdata{wtype.MakeLinearDNASequence("rbs2","gggcgcgc"),2.0},
+		RBSdata{wtype.MakeLinearDNASequence("rbs3","gggcgcgc"),5.0},
+		RBSdata{wtype.MakeLinearDNASequence("rbs4","gggcgcgc"),10.0},
+		}
+
+	redname := Red.CName
+	greenname := Green.CName
+	bluename := Blue.CName
+	
+	fmt.Println(rbsstrengthdata)
+	//var chosencolourpalette color.Palette
+	
+	//chosencolourpalette := image.AvailablePalettes["Plan9"] 
+	
+	//positiontocolourmap, _ := image.ImagetoPlatelayout(Imagefilename, PlateWithMasterMix, &chosencolourpalette, Rotate) 
+	
+	if PosterizeImage{
+		_, Imagefilename = image.Posterize(Imagefilename, PosterizeLevels)
+	}
+	
+	
+	// make palette of colours from image
+	chosencolourpalette := image.MakeSmallPalleteFromImage(Imagefilename, PlateWithMasterMix,Rotate) 
+	
+	// make a map of colour to well coordinates
+	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, PlateWithMasterMix, &chosencolourpalette, Rotate, AutoRotate) 
+	
+	// remove duplicates
+	positiontocolourmap = image.RemoveDuplicatesValuesfromMap(positiontocolourmap)
+	
+	//fmt.Println("positions", positiontocolourmap)
+	
+	solutions := make([]*wtype.LHComponent, 0)
+	colourtoComponentMap := make(map[string]*wtype.LHComponent)
+
+	counter := 0
+
+
+	for _, colour := range positiontocolourmap {
+		
+		colourindex := chosencolourpalette.Index(colour)
+		
+		if colour != nil {
+		components := make([]*wtype.LHComponent, 0)
+
+		r, g, b, _ := colour.RGBA()
+		
+		//var maxuint8 uint8 = 255		
+		
+		if r ==0 && g == 0 && b == 0 {
+		
+		continue
+			
+			}else{
+			
+		counter = counter + 1
+		
+		
+		Red.CName = fmt.Sprint(redname,"_RBS_", uint8(r))
+		Red.Type = wtype.LTPostMix
+		
+		redSample := mixer.Sample(Red, VolumeForeachColourPlasmid)
+		components = append(components, redSample)
+		
+		
+		Green.CName = fmt.Sprint(greenname,"_RBS_", uint8(g))
+		Green.Type = wtype.LTPostMix
+		
+		greenSample := mixer.Sample(Green, VolumeForeachColourPlasmid)
+		
+		components = append(components, greenSample)
+		
+		
+		Blue.CName = fmt.Sprint(bluename,"_RBS_", uint8(b))
+		Blue.Type = wtype.LTPostMix
+		
+		blueSample := mixer.Sample(Blue, VolumeForeachColourPlasmid)
+	
+		components = append(components, blueSample)
+		
+		
+		
+		solution := MixInto(PalettePlate, "", components...)
+		
+		/*
+		dnaSample := mixer.Sample(solution,wunit.NewVolume(1,"ul"))
+		
+		transformation := MixInto(factory.GetPlateByType("pcrplate_with_cooler"),"",dnaSample)
+		
+		transformationSample := mixer.Sample(transformation,wunit.NewVolume(20,"ul")) 
+		
+		recovery := MixInto(factory.GetPlateByType("DSW96_riser"),"",transformationSample)
+		
+		solutions = append(solutions, recovery)
+		colourtoComponentMap[strconv.Itoa(colourindex)] = recovery
+		*/
+		
+		solutions = append(solutions, solution)
+		colourtoComponentMap[strconv.Itoa(colourindex)] = solution
+		
+		
+		}
+		
+		}
+	}
+
+	Colours = solutions
+	Numberofcolours = len(chosencolourpalette)
+	Palette = chosencolourpalette
+	ColourtoComponentMap = colourtoComponentMap
+	//fmt.Println("Unique Colours =",Numberofcolours,"from palette:", chosencolourpalette)
+
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+	
+}

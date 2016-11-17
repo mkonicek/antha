@@ -40,6 +40,8 @@ func _PipetteImage_fromPaletteSetup(_ctx context.Context, _input *PipetteImage_f
 // for every input
 func _PipetteImage_fromPaletteSteps(_ctx context.Context, _input *PipetteImage_fromPaletteInput, _output *PipetteImage_fromPaletteOutput) {
 
+	var err error
+
 	if _input.PosterizeImage {
 		_, _input.Imagefilename = image.Posterize(_input.Imagefilename, _input.PosterizeLevels)
 	}
@@ -48,22 +50,6 @@ func _PipetteImage_fromPaletteSteps(_ctx context.Context, _input *PipetteImage_f
 
 	image.CheckAllResizealgorithms(_input.Imagefilename, _input.OutPlate, _input.Rotate, imaging.AllResampleFilters)
 
-	/*
-		// get components from factory
-		componentmap := make(map[string]*wtype.LHComponent, 0)
-
-		colourtostringmap := image.AvailableComponentmaps[Palettename]
-
-		submap := image.MakeSubMapfromMap(colourtostringmap, availableColours)
-
-		for colourname, _ := range submap {
-
-			componentname := colourtostringmap[colourname]
-
-			componentmap[componentname] = factory.GetComponentByType(componentname)
-
-		}
-	*/
 	solutions := make([]*wtype.LHComponent, 0)
 
 	counter := 0
@@ -73,18 +59,19 @@ func _PipetteImage_fromPaletteSteps(_ctx context.Context, _input *PipetteImage_f
 		colourindex := strconv.Itoa(_input.Palette.Index(colour))
 
 		component, componentpresent := _input.ColourIndextoComponentMap[colourindex]
-		//	fmt.Println("Am I a component", component, "key:", colourindex, "from map:", ColourIndextoComponentMap)
 
 		if componentpresent {
-			component.Type = wtype.LTDISPENSEABOVE //"DoNotMix"
+			component.Type, err = wtype.LiquidTypeFromString(_input.LiquidType) //"DoNotMix"
 
-			//fmt.Println(image.Colourcomponentmap[colour])
+			if err != nil {
+				execute.Errorf(_ctx, err.Error())
+			}
 
 			if _input.OnlythisColour != "" {
 
 				if image.Colourcomponentmap[colour] == _input.OnlythisColour {
 					counter = counter + 1
-					//		fmt.Println("wells",counter)
+
 					pixelSample := mixer.Sample(component, _input.VolumePerWell)
 					solution := execute.MixTo(_ctx, _input.OutPlate.Type, locationkey, 1, pixelSample)
 					solutions = append(solutions, solution)
@@ -93,7 +80,6 @@ func _PipetteImage_fromPaletteSteps(_ctx context.Context, _input *PipetteImage_f
 			} else {
 				if component.CName != _input.NotthisColour {
 					counter = counter + 1
-					//		fmt.Println("wells",counter)
 					pixelSample := mixer.Sample(component, _input.VolumePerWell)
 					solution := execute.MixTo(_ctx, _input.OutPlate.Type, locationkey, 1, pixelSample)
 					solutions = append(solutions, solution)
@@ -172,6 +158,7 @@ type PipetteImage_fromPaletteInput struct {
 	ColourIndextoComponentMap map[string]*wtype.LHComponent
 	Colourcomponents          []*wtype.LHComponent
 	Imagefilename             string
+	LiquidType                string
 	NotthisColour             string
 	OnlythisColour            string
 	OutPlate                  *wtype.LHPlate
@@ -207,6 +194,7 @@ func init() {
 				{Name: "ColourIndextoComponentMap", Desc: "", Kind: "Parameters"},
 				{Name: "Colourcomponents", Desc: "", Kind: "Inputs"},
 				{Name: "Imagefilename", Desc: "", Kind: "Parameters"},
+				{Name: "LiquidType", Desc: "", Kind: "Parameters"},
 				{Name: "NotthisColour", Desc: "", Kind: "Parameters"},
 				{Name: "OnlythisColour", Desc: "AvailableColours []string\n", Kind: "Parameters"},
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},

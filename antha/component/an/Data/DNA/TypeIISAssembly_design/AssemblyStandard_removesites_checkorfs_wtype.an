@@ -92,7 +92,11 @@ Steps {
 	// export this as data output
 	OriginalParts = partsinorder
 	// check parts for restriction sites first and remove if the user has chosen to
-	enz := enzymes.Enzymelookup[AssemblyStandard][Level]
+	enz, found := enzymes.Enzymelookup[AssemblyStandard][Level]
+	
+	if !found {
+		Errorf("AssemblyStandard ",AssemblyStandard," level ",Level, " not found")
+	}
 
 	// get properties of other enzyme sites to remove
 	removetheseenzymes := make([]wtype.RestrictionEnzyme,0)

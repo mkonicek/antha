@@ -50,6 +50,28 @@ func LoadLHPoliciesFrom(filename string) *LHPolicyRuleSet {
 // this structure defines parameters
 type LHPolicy map[string]interface{}
 
+func (lhp LHPolicy) OrderedList() (namevaluepairs []string, names []string, values []string) {
+	namevaluepairs = make([]string, 0)
+	names = make([]string, 0)
+	values = make([]string, 0)
+
+	for key, _ := range lhp {
+
+		names = append(names, key)
+
+	}
+
+	sort.Strings(names)
+
+	for _, key := range names {
+
+		value := fmt.Sprint(lhp[key])
+		namevaluepairs = append(namevaluepairs, key+": "+value)
+		values = append(values, value)
+	}
+	return
+}
+
 func DupLHPolicy(in LHPolicy) LHPolicy {
 	ret := make(LHPolicy, len(in))
 

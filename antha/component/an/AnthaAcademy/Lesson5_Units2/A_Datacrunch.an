@@ -76,7 +76,7 @@ Steps {
 	// Look up properties 
 	substrate_mw, err := pubchem.MakeMolecule(Substrate_name)
         if err != nil {
-                panic(err)
+                Errorf(err.Error())
         }
 	
 	// calculate moles

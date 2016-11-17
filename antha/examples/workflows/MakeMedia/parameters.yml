@@ -1,0 +1,22 @@
+{
+    "Parameters": {
+        "StockBuffer": {
+            "Name": "Agar Overlay",
+            "TotalVolume": "100ml",
+            "LiqComponentStockConcentrations": {"Apramycin":"50mg/ml","X-glc":"100g/L"},
+            "LiqComponentFinalConcentrations": {"Apramycin":"50mg/L","X-glc":"10g/L"},
+            "SolidComponentFinalConcentrations":{"Agar":"3g/L"},
+            "SolidComponentDensities":{"Agar":"1000kg/m^3"},
+            "PH_setPoint":7.0,
+            "PH_tolerance":0.1,
+            "PH_setPointTemp":"23C",
+            "Diluent":"water",
+            "LiqComponents":["Apramycin","X-glc"],
+            "SolidComponents":["Agar"],
+            "Sterilise":true,
+            "SterilisationMethod":"Autoclave",
+            "AdditionalInstructions":["Microwave before use and rest for 5 minutes before using"],
+            "Vessel":"1L_DuranBottle"
+        }
+    }
+}

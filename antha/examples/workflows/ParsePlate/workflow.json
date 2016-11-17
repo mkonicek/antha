@@ -1,0 +1,22 @@
+{
+    "connections": [
+	{
+	"src":{
+		"port":"PlatewithComponents",
+		"process":"addplate"
+	},
+	"tgt":{
+		"port": "OutPlate",
+		"process":"transfer"
+	}
+	}
+	],
+    "processes": {
+       "addplate": {
+            "component": "ParsePlate"
+        },
+		"transfer":{
+			"component": "Transfer"
+		}
+	}
+}

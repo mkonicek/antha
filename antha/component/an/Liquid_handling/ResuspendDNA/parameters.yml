@@ -1,0 +1,23 @@
+{
+    "Parameters": {
+        "Resuspend": {
+              "TargetConc": "2000ng/ul",
+			"Parts":["A","B"],
+			"PartMassMap": {
+			"A":"98.17ug",
+			"B":"289.96ug"
+			},
+			"PartMolecularWeightMap":{
+			"A":10057.57,
+			"B":15057.57
+			},
+			"PartLocationsMap":{
+			"A":"A1",
+			"B":"B1"
+			},
+			"Diluent":"water",
+			"DNAPlate":"greiner384_riser"
+	 }
+
+    }
+}

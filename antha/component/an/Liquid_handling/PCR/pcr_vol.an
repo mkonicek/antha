@@ -6,19 +6,6 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 )
 
-/*type Polymerase struct {
-	wtype.LHComponent
-	Rate_BPpers float64
-	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
-	Extensiontemp Temperature
-	Hotstart bool
-	StockConcentration Concentration // this is normally in U?
-	TargetConcentration Concentration
-	// this is also a glycerol solution rather than a watersolution!
-}
-*/
-
-
 // Input parameters for this protocol (data)
 Parameters (
 	// PCRprep parameters:
@@ -114,7 +101,7 @@ Steps {
 	samples = append(samples, dntpSample)
 	
 	if len(Additives)!=len(AdditiveVols){
-		panic("Bad things are going to happen if you have different numbers of additives and additivevolumes")
+		Errorf("Bad things are going to happen if you have different numbers of additives and additivevolumes")
 	}
 	
 	for i := range Additives {
@@ -147,7 +134,7 @@ Steps {
 	}
 	}
 	
-	// rest samples to zero
+	// reset samples to zero
 	samples = make([]*wtype.LHComponent, 0)
 	
 	// if this is false do stuff inside {}
@@ -223,3 +210,16 @@ Analysis {
 // dipstick basis
 Validation {
 }
+
+/*type Polymerase struct {
+	wtype.LHComponent
+	Rate_BPpers float64
+	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
+	Extensiontemp Temperature
+	Hotstart bool
+	StockConcentration Concentration // this is normally in U?
+	TargetConcentration Concentration
+	// this is also a glycerol solution rather than a watersolution!
+}
+*/
+

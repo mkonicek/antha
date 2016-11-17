@@ -1,0 +1,245 @@
+// Protocol for resuspending freeze dried DNA with a diluent
+protocol ParseDNAPlateFile
+
+// we need to import the wtype package to use the LHComponent type
+// the mixer package is required to use the Sample function
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"strings"
+	"fmt"
+	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+  	SequenceInfoFile string
+	SequenceInfoFileformat string
+	
+)
+
+Data (
+	Partnames[]string
+	PartMassMap map[string]wunit.Mass
+	PartMolecularWeightMap map[string]float64
+	PartPlateMap map[string]string
+	PartLocationsMap map[string]string
+	Platetype string
+	FwdOligotoRevOligo map[string]string // using the fwd primer name, returns the rev primer name
+	OligoPairs int
+	HeadersFound []string
+)
+
+Inputs (
+	DNAPlate *wtype.LHPlate
+)
+
+Outputs (
+	PartsList map[string]*wtype.LHComponent
+)
+
+Requirements {
+}
+
+Setup {	
+}
+
+
+Steps {
+
+
+var ReplaceMap = map[string]string{
+	"01":"1",
+	"02":"2",
+	"03":"3",
+	"04":"4",
+	"05":"5",
+	"06":"6",
+	"07":"7",
+	"08":"8",
+	"09":"9",
+	"_":"",
+}
+
+
+	// headers
+	NameHeader := "Seq Name"
+	MassHeader := "Yield_ug"
+	MWHeader := "MW"
+	WellHeader := "Customer Well"
+	PlateNameHeader := "Plate"
+
+
+
+	// initialise maps
+	PartMassMap = make(map[string]wunit.Mass)
+	PartMolecularWeightMap = make(map[string]float64)
+	PartLocationsMap = make(map[string]string)
+	PartPlateMap = make(map[string]string)
+	headersfound := make([]string,0)
+	FwdOligotoRevOligo = make(map[string]string)
+	PartsList = make(map[string]*wtype.LHComponent)
+
+dnaparts, err := doe.RunsFromDesignPreResponses(SequenceInfoFile,[]string{"Length", "MW","Tm","Yield"},SequenceInfoFileformat)
+
+	if err!= nil {
+		Errorf(err.Error())
+	}
+
+// code for parsing the data from the xl file into the strings, this searches the file in direction i followed by j
+for i, partinfo := range dnaparts {
+	
+	
+	var partname string
+	var partmass float64
+	var partwell string
+	var partmw float64
+	var platename string
+	
+	for j := range partinfo.Setpoints {
+	
+//First creates an array of part names	
+	if partinfo.Factordescriptors[j] == NameHeader {
+		
+		if	name, found := partinfo.Setpoints[j].(string); found{
+			
+			if name == ""|| name == "BLANK"{
+				fmt.Print("Skipping ", name)
+				}else{
+			partname = name
+			Partnames = append(Partnames,name)
+			}
+		} else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+		
+			if i == 0 {
+		headersfound = append(headersfound,NameHeader)
+		}
+		
+	}
+	
+//second create an array of plasmid masses	
+	if partinfo.Factordescriptors[j] == MassHeader {
+		
+		if	mass, found := partinfo.Setpoints[j].(float64); found{
+			partmass = mass
+		}  else if	mass, found := partinfo.Setpoints[j].(string); found{
+			if mass == ""{
+			partmass = 0.0 // mw
+			// empty so skip
+			}
+		}else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+			if  i == 0 {
+		headersfound = append(headersfound,MassHeader)
+		}
+	}
+
+//third creates an array of part lengths in bp	
+	if partinfo.Factordescriptors[j] == MWHeader {
+		
+		if	mw, found := partinfo.Setpoints[j].(int); found{
+			partmw = float64(mw)
+		}  else if	mw, found := partinfo.Setpoints[j].(float64); found{
+			partmw = mw
+		}  else if	mw, found := partinfo.Setpoints[j].(string); found{
+			if mw == ""{
+			partmw = 0.0 // mw
+			// empty so skip
+			}
+		}else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+			if  i == 0 {
+		headersfound = append(headersfound,MWHeader)
+		}
+	}
+	
+	//third creates an array of part lengths in bp	
+	if partinfo.Factordescriptors[j] == WellHeader {
+		
+		if	well, found := partinfo.Setpoints[j].(string); found{
+			
+			for key, value := range ReplaceMap {
+			
+			if strings.Contains(well,key){
+				well = strings.Replace(well,key,value,1)
+		
+				break
+			}
+			}
+			partwell = well
+		}  else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+			if  i == 0 {
+		headersfound = append(headersfound,WellHeader)
+		}
+	}
+
+	//third creates an array of part lengths in bp	
+	if partinfo.Factordescriptors[j] == PlateNameHeader {
+		
+		if	plate, found := partinfo.Setpoints[j].(string); found{
+			
+			platename = plate
+		}  else {
+			Errorf(fmt.Sprint("wrong type", partinfo.Factordescriptors[j],partinfo.Setpoints[j]))
+		}
+			if  i == 0 {
+		headersfound = append(headersfound,PlateNameHeader)
+		}
+	}
+	
+	
+//internal check if there are not 4 headers (as we know there should be 4) return an error telling us which ones were found and which were not	
+	/*
+	if len(headersfound)!= 4 {
+		Errorf(fmt.Sprint("Only found these headers in input file: ", headersfound))
+	}
+	*/
+}
+
+if partname == "" || partname == "BLANK"{
+	fmt.Print("Skipping ", partname)
+	}else{
+PartLocationsMap[partname] = partwell
+PartMolecularWeightMap[partname] = partmw
+PartMassMap[partname] = wunit.NewMass(partmass,"ug")
+PartPlateMap[partname]= platename
+
+part := factory.GetComponentByType("dna_part")
+part.CName = partname
+
+PartsList[partname] = part
+}
+
+
+
+}
+
+for _, partname := range Partnames {
+	
+	if !strings.Contains(partname, "_Revers"){
+	for _, partname2 := range Partnames {
+	if strings.Contains(partname2, "_Revers")&& strings.Contains(partname2, partname){
+		FwdOligotoRevOligo[partname] = partname2
+		break
+	}
+}
+}
+}
+OligoPairs = len(FwdOligotoRevOligo)
+
+
+HeadersFound = headersfound
+}
+Analysis {
+}
+
+
+Validation {
+}

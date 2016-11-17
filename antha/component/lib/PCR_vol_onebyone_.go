@@ -279,7 +279,7 @@ func init() {
 		Constructor: PCR_vol_onebyoneNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PCR/pcr_vol_onebyone.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PCR/pcr_vol_onebyone.an",
 			Params: []component.ParamDesc{
 				{Name: "AddPrimerstoMasterMix", Desc: "", Kind: "Parameters"},
 				{Name: "AdditiveVols", Desc: "", Kind: "Parameters"},

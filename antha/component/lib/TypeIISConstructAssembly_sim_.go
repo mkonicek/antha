@@ -243,7 +243,7 @@ func init() {
 		Constructor: TypeIISConstructAssembly_simNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/TypeIIsAssembly/TypeIIsConstructAssembly_sim/TypeIIsConstructAssembly_sim.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/TypeIIsAssembly/TypeIIsConstructAssembly_sim/TypeIIsConstructAssembly_sim.an",
 			Params: []component.ParamDesc{
 				{Name: "Atp", Desc: "", Kind: "Inputs"},
 				{Name: "AtpVol", Desc: "", Kind: "Parameters"},

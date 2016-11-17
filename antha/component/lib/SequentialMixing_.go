@@ -178,7 +178,7 @@ func init() {
 		Constructor: SequentialMixingNew,
 		Desc: component.ComponentDesc{
 			Desc: "Protocol to Demonstrate how to perform sequential mixing using the example of\nmaking a serial dilution series from a solution and diluent\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson3_MixPart2/C_SequentialMixing.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson3_MixPart2/C_SequentialMixing.an",
 			Params: []component.ParamDesc{
 				{Name: "Diluent", Desc: "", Kind: "Inputs"},
 				{Name: "DilutionFactor", Desc: "e.g. 10 would take 1 part solution to 9 parts diluent for each dilution\n", Kind: "Parameters"},

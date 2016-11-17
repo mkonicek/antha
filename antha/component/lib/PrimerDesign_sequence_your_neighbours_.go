@@ -301,7 +301,7 @@ func init() {
 		Constructor: PrimerDesign_sequence_your_neighboursNew,
 		Desc: component.ComponentDesc{
 			Desc: "This element will design outward facing primers for all .gb file sequences in a specified folder.\nDesign criteria such as maximum gc content, acceptable ranges of melting temperatures and primer length may be specified by the user.\n",
-			Path: "antha/component/an/Data/DNA/PrimerDesign/PrimerDesign_sequence_your_neighbours.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/PrimerDesign/PrimerDesign_sequence_your_neighbours.an",
 			Params: []component.ParamDesc{
 				{Name: "Dirname", Desc: "files     []string = []string{\"STAR_0023_VECTOR_BBSI.gb\", \"STAR_0023_VECTOR_BBSI+Grp7+Grp14+Grp3.gb\"}\n\n= \"current\" // this will check for all .gb files in the folder you select here\n", Kind: "Parameters"},
 				{Name: "ExportToFile", Desc: "", Kind: "Parameters"},

@@ -205,7 +205,7 @@ func init() {
 		Constructor: Colony_PCRNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PCR/Colony_PCR.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PCR/Colony_PCR.an",
 			Params: []component.ParamDesc{
 				{Name: "Additiveconc", Desc: "", Kind: "Parameters"},
 				{Name: "Additives", Desc: "e.g. DMSO\n", Kind: "Inputs"},

@@ -175,7 +175,7 @@ func init() {
 		Constructor: PrimerDesign_REVNew,
 		Desc: component.ComponentDesc{
 			Desc: "This element will design a sequencing primer to target amplification of a target region within a sequence file\nDesign criteria such as maximum gc content, acceptable ranges of melting temperatures and primer length may be specified by the user.\n",
-			Path: "antha/component/an/Data/DNA/PrimerDesign/PrimerDesign_Rev.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/PrimerDesign/PrimerDesign_Rev.an",
 			Params: []component.ParamDesc{
 				{Name: "DNASeqfile", Desc: "genbank file (.gb)\n", Kind: "Parameters"},
 				{Name: "FlankTargetSequence", Desc: "", Kind: "Parameters"},

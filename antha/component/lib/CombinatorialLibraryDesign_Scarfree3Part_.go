@@ -200,7 +200,7 @@ func init() {
 		Constructor: CombinatorialLibraryDesign_Scarfree3PartNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/CombinatorialLibraryDesign_Scarfree.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/TypeIISAssembly_design/CombinatorialLibraryDesign_Scarfree.an",
 			Params: []component.ParamDesc{
 				{Name: "BlastSearchSeqs", Desc: "", Kind: "Parameters"},
 				{Name: "EnzymeName", Desc: "", Kind: "Parameters"},

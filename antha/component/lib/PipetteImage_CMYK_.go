@@ -248,7 +248,7 @@ func init() {
 		Constructor: PipetteImage_CMYKNew,
 		Desc: component.ComponentDesc{
 			Desc: "Generates instructions to pipette out a defined image onto a defined plate by blending cyan magenta yellow and black dyes\n",
-			Path: "antha/component/an/Liquid_handling/PipetteImage/PipetteImage_CMYK.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PipetteImage/PipetteImage_CMYK.an",
 			Params: []component.ParamDesc{
 				{Name: "AutoRotate", Desc: "", Kind: "Parameters"},
 				{Name: "Black", Desc: "", Kind: "Inputs"},

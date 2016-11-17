@@ -150,7 +150,7 @@ func init() {
 		Constructor: Aliquot_SamePositionsMultipleplatesNew,
 		Desc: component.ComponentDesc{
 			Desc: "example protocol showing how the MixTo command can be used to specify different plates of the same type  i.e. plate 1 ,2, 3 of type greiner384\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson2_mix/D_AliquotTo_samepositionmultipleplates.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson2_mix/D_AliquotTo_samepositionmultipleplates.an",
 			Params: []component.ParamDesc{
 				{Name: "NumberofPlates", Desc: "number of plates to fill aliquots into\n", Kind: "Parameters"},
 				{Name: "OutPlate", Desc: "", Kind: "Parameters"},

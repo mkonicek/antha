@@ -148,7 +148,7 @@ func init() {
 		Constructor: InoculateNew,
 		Desc: component.ComponentDesc{
 			Desc: "Example inoculation protocol.\nInoculates seed culture into fresh media (and logs conditions?)\nTODO: in progress from edited bradford protocol\n",
-			Path: "antha/component/an/Liquid_handling/Fermentation/Inoculate.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Fermentation/Inoculate.an",
 			Params: []component.ParamDesc{
 				{Name: "Antibiotic", Desc: "type buffer which could have a concentration automatically?\n", Kind: "Inputs"},
 				{Name: "Antibioticstockconc", Desc: "= mgperml (100)\n", Kind: "Parameters"},

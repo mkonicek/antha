@@ -132,7 +132,7 @@ func init() {
 		Constructor: PlateOutNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Transformation/Plateout.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Transformation/Plateout.an",
 			Params: []component.ParamDesc{
 				{Name: "AgarPlate", Desc: "", Kind: "Inputs"},
 				{Name: "Diluent", Desc: "", Kind: "Inputs"},

@@ -124,7 +124,7 @@ func init() {
 		Constructor: AnotherSequentialMixTestProtocolNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Test/AnotherSequentialMixTestProtocol/AnotherSequentialMixTestProtocol.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Test/AnotherSequentialMixTestProtocol/AnotherSequentialMixTestProtocol.an",
 			Params: []component.ParamDesc{
 				{Name: "OutputPlateType", Desc: "", Kind: "Inputs"},
 				{Name: "Parts", Desc: "", Kind: "Inputs"},

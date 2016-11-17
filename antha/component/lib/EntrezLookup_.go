@@ -130,7 +130,7 @@ func init() {
 		Constructor: EntrezLookupNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/EntrezLookup/EntrezLookup.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/EntrezLookup/EntrezLookup.an",
 			Params: []component.ParamDesc{
 				{Name: "Database", Desc: "e.g. \"nucleotide\", \"Protein\", \"Gene\"\n", Kind: "Parameters"},
 				{Name: "Filename", Desc: "e.g myproject/GFPReporter.gb. if Filename == \"\" no file will be generated\n", Kind: "Parameters"},

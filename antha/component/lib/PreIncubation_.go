@@ -120,7 +120,7 @@ func init() {
 		Constructor: PreIncubationNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Transformation/PreIncubation.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Transformation/PreIncubation.an",
 			Params: []component.ParamDesc{
 				{Name: "CompetentCells", Desc: "", Kind: "Inputs"},
 				{Name: "CompetentCellvolumeperassembly", Desc: "= 50.(uL)\n", Kind: "Parameters"},

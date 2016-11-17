@@ -208,7 +208,7 @@ func init() {
 		Constructor: CombinatorialLibraryDesign_PRO_RBS_CDS_mapNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/CombinatorialLibraryDesign4part.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/TypeIISAssembly_design/CombinatorialLibraryDesign4part.an",
 			Params: []component.ParamDesc{
 				{Name: "BlastSearchSeqs", Desc: "", Kind: "Parameters"},
 				{Name: "CDSs", Desc: "", Kind: "Parameters"},

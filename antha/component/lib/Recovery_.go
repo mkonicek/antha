@@ -124,7 +124,7 @@ func init() {
 		Constructor: RecoveryNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Transformation/Recovery.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Transformation/Recovery.an",
 			Params: []component.ParamDesc{
 				{Name: "Recoverymedium", Desc: "", Kind: "Inputs"},
 				{Name: "Recoverytemp", Desc: "", Kind: "Parameters"},

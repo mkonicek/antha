@@ -163,7 +163,7 @@ func init() {
 		Constructor: MakeAssembliesNew,
 		Desc: component.ComponentDesc{
 			Desc: "Assemble multiple assemblies using TypeIIs construct assembly\n",
-			Path: "antha/component/an/Liquid_handling/TypeIIsAssembly/MakeAssemblies/MakeAssemblies.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/TypeIIsAssembly/MakeAssemblies/MakeAssemblies.an",
 			Params: []component.ParamDesc{
 				{Name: "Atp", Desc: "ATP to use\n", Kind: "Inputs"},
 				{Name: "AtpVol", Desc: "ATP volume\n", Kind: "Parameters"},

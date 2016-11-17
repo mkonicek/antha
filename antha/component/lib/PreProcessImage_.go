@@ -137,7 +137,7 @@ func init() {
 		Constructor: PreProcessImageNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PipetteImage/PreProcessImage.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PipetteImage/PreProcessImage.an",
 			Params: []component.ParamDesc{
 				{Name: "AutoRotate", Desc: "", Kind: "Parameters"},
 				{Name: "CheckAllResizeAlgorithms", Desc: "", Kind: "Parameters"},

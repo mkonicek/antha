@@ -136,7 +136,7 @@ func init() {
 		Constructor: AliquotNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Aliquot/Aliquot.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Aliquot/Aliquot.an",
 			Params: []component.ParamDesc{
 				{Name: "NumberofAliquots", Desc: "", Kind: "Parameters"},
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},

@@ -111,7 +111,7 @@ func init() {
 		Constructor: PrintnameNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/Printname/Printname.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/Printname/Printname.an",
 			Params: []component.ParamDesc{
 				{Name: "Name", Desc: "", Kind: "Parameters"},
 				{Name: "Fullname", Desc: "", Kind: "Data"},

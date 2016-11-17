@@ -286,7 +286,7 @@ func init() {
 		Constructor: MakePaletteNew,
 		Desc: component.ComponentDesc{
 			Desc: "Generates instructions to make a pallette of all colours in an image\n",
-			Path: "antha/component/an/Liquid_handling/PipetteImage/MakePallete.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PipetteImage/MakePallete.an",
 			Params: []component.ParamDesc{
 				{Name: "AutoRotate", Desc: "", Kind: "Parameters"},
 				{Name: "Black", Desc: "", Kind: "Inputs"},

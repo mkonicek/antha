@@ -127,7 +127,7 @@ func init() {
 		Constructor: TransformationNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Transformation/Transformation.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Transformation/Transformation.an",
 			Params: []component.ParamDesc{
 				{Name: "CompetentCellvolumeperassembly", Desc: "= 50.(uL)\n", Kind: "Parameters"},
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},

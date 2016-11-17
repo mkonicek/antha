@@ -152,7 +152,7 @@ func init() {
 		Constructor: SetupReactionsNew,
 		Desc: component.ComponentDesc{
 			Desc: "this protocol will set up a specified number of reactions one component at a time, i.e. in the following format:\nadd component 1 into reaction 1 location,\nadd component 1 into reaction 2 location,\nadd component 1 into reaction n location,\nadd component 2 into reaction 1 location,\nadd component 2 into reaction 2 location,\nadd component 2 into reaction n location,\nadd component x into reaction 1 location,\nadd component x into reaction 2 location,\nadd component x into reaction n location,\n",
-			Path: "antha/component/an/AnthaAcademy/Lesson3_MixPart2/A_Assaysetup_componentbycomponent.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson3_MixPart2/A_Assaysetup_componentbycomponent.an",
 			Params: []component.ParamDesc{
 				{Name: "Buffer", Desc: "", Kind: "Inputs"},
 				{Name: "Enzyme", Desc: "", Kind: "Inputs"},

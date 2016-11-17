@@ -256,7 +256,7 @@ func init() {
 		Constructor: ColonyPCR_vol_mmxNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PCR/ColonyPCR_vol_mmx.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PCR/ColonyPCR_vol_mmx.an",
 			Params: []component.ParamDesc{
 				{Name: "AnnealingTemp", Desc: "Should be calculated from primer and template binding\n", Kind: "Parameters"},
 				{Name: "Annealingtime", Desc: "Denaturationtemp Temperature\n", Kind: "Parameters"},

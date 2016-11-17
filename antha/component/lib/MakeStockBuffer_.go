@@ -144,7 +144,7 @@ func init() {
 		Constructor: MakeStockBufferNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/MakeBuffer/MakeStockBuffer.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/MakeBuffer/MakeStockBuffer.an",
 			Params: []component.ParamDesc{
 				{Name: "Diluent", Desc: "Bufferstock\t\t*wtype.LHComponent\n", Kind: "Inputs"},
 				{Name: "MassAddedinG", Desc: "", Kind: "Parameters"},

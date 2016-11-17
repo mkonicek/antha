@@ -142,7 +142,7 @@ func init() {
 		Constructor: DiluteBufferNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/MakeBuffer/DiluteBuffer.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/MakeBuffer/DiluteBuffer.an",
 			Params: []component.ParamDesc{
 				{Name: "BufferVolumeAdded", Desc: "", Kind: "Parameters"},
 				{Name: "Buffername", Desc: "", Kind: "Parameters"},

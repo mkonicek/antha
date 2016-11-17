@@ -182,7 +182,7 @@ func init() {
 		Constructor: TypeIISConstructAssemblyMMX_rewriteNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/TypeIIsAssembly/TypeIISConstructAssemblyMMX_rewrite/TypeIISConstructAssemblyMMX.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/TypeIIsAssembly/TypeIISConstructAssemblyMMX_rewrite/TypeIISConstructAssemblyMMX.an",
 			Params: []component.ParamDesc{
 				{Name: "EnzymeName", Desc: "", Kind: "Parameters"},
 				{Name: "InactivationTemp", Desc: "", Kind: "Parameters"},

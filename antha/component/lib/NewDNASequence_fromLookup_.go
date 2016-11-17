@@ -168,7 +168,7 @@ func init() {
 		Constructor: NewDNASequence_fromLookupNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/AnthaAcademy/Lesson4_DNA/C_NewDNASequence_fromLookup.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson4_DNA/C_NewDNASequence_fromLookup.an",
 			Params: []component.ParamDesc{
 				{Name: "AddORFS", Desc: "", Kind: "Parameters"},
 				{Name: "BiobrickID", Desc: "", Kind: "Parameters"},

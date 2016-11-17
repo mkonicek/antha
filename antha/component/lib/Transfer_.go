@@ -122,7 +122,7 @@ func init() {
 		Constructor: TransferNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Transfer/Transfer.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Transfer/Transfer.an",
 			Params: []component.ParamDesc{
 				{Name: "LiquidVolume", Desc: "", Kind: "Parameters"},
 				{Name: "Liquidname", Desc: "", Kind: "Parameters"},

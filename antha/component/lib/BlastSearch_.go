@@ -174,7 +174,7 @@ func init() {
 		Constructor: BlastSearchNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/BlastSearch/BlastSearch.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/BlastSearch/BlastSearch.an",
 			Params: []component.ParamDesc{
 				{Name: "DNA", Desc: "", Kind: "Parameters"},
 				{Name: "Name", Desc: "", Kind: "Parameters"},

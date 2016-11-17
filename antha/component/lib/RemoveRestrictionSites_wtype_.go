@@ -265,7 +265,7 @@ func init() {
 		Constructor: RemoveRestrictionSites_wtypeNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/RestrictionSiteRemover/RemoveRestrictionSites_wtype.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/RestrictionSiteRemover/RemoveRestrictionSites_wtype.an",
 			Params: []component.ParamDesc{
 				{Name: "EnzymeforRestrictionmapping", Desc: "", Kind: "Parameters"},
 				{Name: "PreserveTranslatedseq", Desc: "", Kind: "Parameters"},

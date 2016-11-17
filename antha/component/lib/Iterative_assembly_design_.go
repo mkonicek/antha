@@ -303,7 +303,7 @@ func init() {
 		Constructor: Iterative_assembly_designNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/Iterative_assembly_design.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/TypeIISAssembly_design/Iterative_assembly_design.an",
 			Params: []component.ParamDesc{
 				{Name: "ApprovedEnzymes", Desc: "", Kind: "Parameters"},
 				{Name: "Constructname", Desc: "", Kind: "Parameters"},

@@ -176,7 +176,7 @@ func init() {
 		Constructor: TypeIISConstructAssembly_altNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/TypeIIsAssembly/TypeIISConstructAssembly/TypeIISConstructAssembly_alt.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/TypeIIsAssembly/TypeIISConstructAssembly/TypeIISConstructAssembly_alt.an",
 			Params: []component.ParamDesc{
 				{Name: "Atp", Desc: "", Kind: "Inputs"},
 				{Name: "AtpVol", Desc: "", Kind: "Parameters"},

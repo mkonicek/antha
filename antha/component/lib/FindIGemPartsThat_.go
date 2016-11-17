@@ -291,7 +291,7 @@ func init() {
 		Constructor: FindIGemPartsThatNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/FindIGemPartsThat/FindIGemPartsThat.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/FindIGemPartsThat/FindIGemPartsThat.an",
 			Params: []component.ParamDesc{
 				{Name: "ExactTypeOnly", Desc: "", Kind: "Parameters"},
 				{Name: "MatchAllDescriptions", Desc: "", Kind: "Parameters"},

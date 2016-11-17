@@ -845,7 +845,7 @@ func init() {
 		Constructor: AddPlateReaderresults_2New,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Utility/AddPlateReaderResults_2.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Utility/AddPlateReaderResults_2.an",
 			Params: []component.ParamDesc{
 				{Name: "Blanks", Desc: "= []string{\"P24\"}\n", Kind: "Parameters"},
 				{Name: "CVthreshold", Desc: "", Kind: "Parameters"},

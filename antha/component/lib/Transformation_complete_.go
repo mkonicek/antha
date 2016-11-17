@@ -162,7 +162,7 @@ func init() {
 		Constructor: Transformation_completeNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/Transformation/Transformation_complete.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/Transformation/Transformation_complete.an",
 			Params: []component.ParamDesc{
 				{Name: "AgarPlate", Desc: "", Kind: "Inputs"},
 				{Name: "CompetentCells", Desc: "", Kind: "Inputs"},

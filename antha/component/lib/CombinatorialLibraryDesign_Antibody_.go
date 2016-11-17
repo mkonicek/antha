@@ -205,7 +205,7 @@ func init() {
 		Constructor: CombinatorialLibraryDesign_AntibodyNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/CombinatorialLibraryDesign_Antibody.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/TypeIISAssembly_design/CombinatorialLibraryDesign_Antibody.an",
 			Params: []component.ParamDesc{
 				{Name: "BlastSearchSeqs", Desc: "", Kind: "Parameters"},
 				{Name: "Part1s", Desc: "", Kind: "Parameters"},

@@ -24,10 +24,12 @@ package compile
 
 import (
 	"bytes"
+	"path/filepath"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/parser"
 	"github.com/antha-lang/antha/antha/token"
-	"testing"
 )
 
 func TestTypeSugaring(t *testing.T) {
@@ -56,5 +58,40 @@ func TestTypeSugaring(t *testing.T) {
 	}
 	if !bytes.Equal(buf1.Bytes(), buf2.Bytes()) {
 		t.Errorf("wanted\n'''%s'''\ngot\n'''%s'''\n", buf2.String(), buf1.String())
+	}
+}
+
+func TestRelativeToGoPath(t *testing.T) {
+	type TestCase struct {
+		GoPath   []string
+		Name     string
+		Expected string
+		HasError bool
+	}
+
+	cases := []TestCase{
+		TestCase{GoPath: []string{"/go"}, Name: "/go/file", Expected: "file"},
+		TestCase{GoPath: []string{"/go"}, Name: "file", Expected: "file"},
+		TestCase{GoPath: []string{"/nogo"}, Name: "/go/file", Expected: "/go/file"},
+		TestCase{GoPath: []string{"/go", "/go/deeper"}, Name: "/go/file", Expected: "file"},
+		TestCase{GoPath: []string{"/go", "/go/deeper"}, Name: "/go/deeper/file", Expected: "file"},
+	}
+
+	for _, c := range cases {
+		var goPath []string
+		for _, v := range c.GoPath {
+			goPath = append(goPath, filepath.FromSlash(v))
+		}
+		name := filepath.FromSlash(c.Name)
+		expected := filepath.FromSlash(c.Expected)
+
+		f, err := relativeTo(goPath, name)
+		if c.HasError && err == nil {
+			t.Errorf("%+v: expected error but found success", c)
+		} else if err != nil {
+			t.Errorf("%+v: %s", c, err)
+		} else if expected != f {
+			t.Errorf("%+v: expected %q found %q", c, expected, f)
+		}
 	}
 }

@@ -473,7 +473,7 @@ func init() {
 		Constructor: AssemblyStandard_siteremove_orfcheckNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/AssemblyStandard_removesites_checkorfs.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/TypeIISAssembly_design/AssemblyStandard_removesites_checkorfs.an",
 			Params: []component.ParamDesc{
 				{Name: "AssemblyStandard", Desc: "MoClo\n", Kind: "Parameters"},
 				{Name: "BlastSeqswithNoName", Desc: "", Kind: "Parameters"},

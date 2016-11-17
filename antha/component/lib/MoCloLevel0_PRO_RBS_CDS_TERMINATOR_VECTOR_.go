@@ -226,7 +226,7 @@ func init() {
 		Constructor: MoCloLevel0_PRO_RBS_CDS_TERMINATOR_VECTORNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/MoClo_level0.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/TypeIISAssembly_design/MoClo_level0.an",
 			Params: []component.ParamDesc{
 				{Name: "AssemblyStandard", Desc: "MoClo\n", Kind: "Parameters"},
 				{Name: "CDS", Desc: "", Kind: "Parameters"},

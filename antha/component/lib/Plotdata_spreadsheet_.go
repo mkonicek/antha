@@ -159,7 +159,7 @@ func init() {
 		Constructor: Plotdata_spreadsheetNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/plotdata/Plotdata_fromxlsx.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/plotdata/Plotdata_fromxlsx.an",
 			Params: []component.ParamDesc{
 				{Name: "Exportedfilename", Desc: "= \"Excelfile.jpg\"\n", Kind: "Parameters"},
 				{Name: "Filename", Desc: "                                                                        = \"plotinumdata.xlsx\"\n", Kind: "Parameters"},

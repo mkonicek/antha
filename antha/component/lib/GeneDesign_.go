@@ -162,7 +162,7 @@ func init() {
 		Constructor: GeneDesignNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/GeneDesign/GeneDesign.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/GeneDesign/GeneDesign.an",
 			Params: []component.ParamDesc{
 				{Name: "ConstructName", Desc: "name you want to give your construct\n", Kind: "Parameters"},
 				{Name: "EndsAlreadyAdded", Desc: "have the typeIIs assembly ends been added already? true/false\n", Kind: "Parameters"},

@@ -351,7 +351,7 @@ func init() {
 		Constructor: AccuracyTestNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Utility/AccuracyTest.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Utility/AccuracyTest.an",
 			Params: []component.ParamDesc{
 				{Name: "DXORJMP", Desc: "", Kind: "Parameters"},
 				{Name: "Diluent", Desc: "", Kind: "Inputs"},

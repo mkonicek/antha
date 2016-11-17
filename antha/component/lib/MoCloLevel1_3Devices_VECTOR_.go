@@ -225,7 +225,7 @@ func init() {
 		Constructor: MoCloLevel1_3Devices_VECTORNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/TypeIISAssembly_design/MoClo_level1.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/TypeIISAssembly_design/MoClo_level1.an",
 			Params: []component.ParamDesc{
 				{Name: "AssemblyStandard", Desc: "MoClo\n", Kind: "Parameters"},
 				{Name: "Constructname", Desc: "", Kind: "Parameters"},

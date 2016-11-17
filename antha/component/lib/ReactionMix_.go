@@ -140,7 +140,7 @@ func init() {
 		Constructor: ReactionMixNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Data/DNA/GeneDesign/ReactionMix.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/Data/DNA/GeneDesign/ReactionMix.an",
 			Params: []component.ParamDesc{
 				{Name: "ATP", Desc: "", Kind: "Inputs"},
 				{Name: "ATPV", Desc: "", Kind: "Parameters"},

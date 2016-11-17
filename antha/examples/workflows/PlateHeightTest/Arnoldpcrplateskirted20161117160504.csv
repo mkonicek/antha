@@ -1,0 +1,11 @@
+Plate Height Test:,PlateHeightTest20161117160504,,,,,,,,,,,,
+Time:,2016-11-17 16:05:04.678615768 +0000 GMT,,,,,,,,,,,,
+antha-lang/antha commitID:,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+TestName,Plate,Liquid name,Liquid type ,Liquid Volume,Well ,Aspirate mm from Bottom of well? ,Dispense mm from Bottom of well? ,Acceptable? , Comments,plate Z start,Plate Height,lhpolicy aspirate z offset,lhpolicy dispense z offset
+PlateHeightTest20161117160504,pcrplate_skirted_riser40_Platenumber_1,tartrazine,water,19.000ul,A1,  ,1, , ,38.5,15.5,<nil>,1
+PlateHeightTest20161117160504,pcrplate_skirted_riser40_Platenumber_1,tartrazine,dna_mix,19.000ul,B1,  ,0.5, , ,38.5,15.5,<nil>,0.5
+PlateHeightTest20161117160504,pcrplate_skirted_riser40_Platenumber_1,tartrazine,DispenseAboveLiquid,19.000ul,C1,  ,At top,distance yes – pipetting no,did not dispense (droplet),38.5,15.5,<nil>,<nil>
+PlateHeightTest20161117160504,pcrplate_skirted_riser40_Platenumber_1,tartrazine,water,100.000ul,D1,  ,0, ,increased Hvoffset from 2.5 to 3 and nothing seemed to happen,38.5,15.5,<nil>,1
+PlateHeightTest20161117160504,pcrplate_skirted_riser40_Platenumber_1,tartrazine,dna_mix,100.000ul,E1,  ,0, ,didn’t seem to mix (could be too small to notice since only 10ul mix volume),38.5,15.5,<nil>,0.5
+PlateHeightTest20161117160504,pcrplate_skirted_riser40_Platenumber_1,tartrazine,DispenseAboveLiquid,100.000ul,F1,  ,at top,droplet left at end, ,38.5,15.5,<nil>,<nil>

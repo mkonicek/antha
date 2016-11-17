@@ -52,12 +52,15 @@ func _TypeIISAssembly_designSteps(_ctx context.Context, _input *TypeIISAssembly_
 	/* find sequence data from keyword; looking it up by a given name in an inventory
 	   or by biobrick ID from iGem parts registry */
 	partsinorder := make([]wtype.DNASequence, 0)
-	var partDNA = wtype.DNASequence{"", "", false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
 
 	_output.Status = "all parts available"
 	for _, part := range _input.Partsinorder {
 
+		var partDNA = wtype.DNASequence{"", "", false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
+
 		if strings.Contains(part, "BBa_") == true {
+
+			fmt.Println("looking in igem registry for: ", part)
 
 			partDNA.Nm = part
 			partproperties := igem.LookUp([]string{part})
@@ -77,12 +80,14 @@ func _TypeIISAssembly_designSteps(_ctx context.Context, _input *TypeIISAssembly_
 
 			}
 		} else {
-			partDNA = Inventory.Partslist[part]
+			var found bool
+			partDNA, found = Inventory.Partslist()[part]
 
-		}
+			if !found {
+				_output.Status = fmt.Sprintln("part not found in Inventory so element aborted!")
+				execute.Errorf(_ctx, _output.Status)
 
-		if partDNA.Seq == "" || partDNA.Nm == "" {
-			_output.Status = fmt.Sprintln("part not found in Inventory so element aborted!")
+			}
 		}
 		partsinorder = append(partsinorder, partDNA)
 	}
@@ -104,7 +109,7 @@ func _TypeIISAssembly_designSteps(_ctx context.Context, _input *TypeIISAssembly_
 	}
 
 	// lookup vector sequence
-	vectordata := Inventory.Partslist[_input.Vector]
+	vectordata := Inventory.Partslist()[_input.Vector]
 
 	//lookup restriction enzyme
 	restrictionenzyme := enzymes.Enzymelookup[_input.AssemblyStandard][_input.Level]
@@ -113,6 +118,7 @@ func _TypeIISAssembly_designSteps(_ctx context.Context, _input *TypeIISAssembly_
 	//PartswithOverhangs = enzymes.MakeStandardTypeIIsassemblyParts(partsinorder, AssemblyStandard, Level, PartMoClotypesinorder)
 
 	// OR (2) Add overhangs for scarfree assembly based on part seqeunces only, i.e. no Assembly standard
+	fmt.Println("partsinorder: ", partsinorder)
 	_output.PartswithOverhangs = enzymes.MakeScarfreeCustomTypeIIsassemblyParts(partsinorder, vectordata, restrictionenzyme)
 
 	// perfrom mock digest to test fragement overhangs (fragments are hidden by using _, )
@@ -147,6 +153,8 @@ func _TypeIISAssembly_designSteps(_ctx context.Context, _input *TypeIISAssembly_
 	if status == "Yay! this should work" && numberofassemblies == 1 {
 
 		_output.Simulationpass = true
+	} else {
+		fmt.Println(status)
 	}
 
 	_output.Warnings = strings.Join(warnings, ";")
@@ -171,6 +179,7 @@ func _TypeIISAssembly_designSteps(_ctx context.Context, _input *TypeIISAssembly_
 		_output.Status = fmt.Sprintln(
 			"Warnings:", _output.Warnings,
 			"Simulationpass=", _output.Simulationpass,
+			"Status: ", status,
 			"Back up parts found (Reported to work!)", _output.BackupParts,
 			"NewDNASequence", _output.NewDNASequence,
 			//"partonewithoverhangs", partonewithoverhangs,

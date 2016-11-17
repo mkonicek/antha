@@ -1,0 +1,223 @@
+// Generates instructions to make a pallette of all colours in an image
+protocol AssemblePalette_OneByOne_RGB_transform_2
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"github.com/antha-lang/antha/microArch/factory"
+	"image/color"
+	"strconv"
+	"fmt"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	VolumeForeachColourPlasmid  Volume
+	Imagefilename string
+	PosterizeImage bool
+	PosterizeLevels int
+	Rotate bool
+	AutoRotate bool
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Numberofcolours int
+	//Colournames []string
+	Palette color.Palette
+	ColourtoComponentMap map[string]*wtype.LHComponent
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Red *wtype.LHComponent
+	Green *wtype.LHComponent
+	Blue *wtype.LHComponent
+	//InPlate *wtype.LHPlate
+	PlateWithMasterMix *wtype.LHPlate
+	PalettePlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Colours[]*wtype.LHComponent
+)
+
+Requirements {
+	
+}
+
+// Conditions to run on startup
+Setup {
+	
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	var (
+	ReactionTemp 				Temperature = wunit.NewTemperature(25,"C")
+	ReactionTime				Time = wunit.NewTime(35,"min")
+	OutputLocation 				string = ""
+	CompetentCellPlateWell 		string = ""
+	RecoveryPlateWell 			string = ""
+	RecoveryTemp 				Temperature = wunit.NewTemperature(37.0,"C")
+	RecoveryTime				Time = wunit.NewTime(2.0,"h")
+	TransformationVolume 		Volume  = wunit.NewVolume(2.0,"ul")
+	PostPlasmidTemp 			Temperature = wunit.NewTemperature(2.0,"C")
+	PostPlasmidTime 			Time  = wunit.NewTime(5,"min")
+	CompetentCellTransferVolume Volume = wunit.NewVolume(20.0,"ul")
+	RecoveryPlateNumber 		int = 1
+	
+	PlatewithRecoveryMedia		*wtype.LHPlate = factory.GetPlateByType("pcrplate_skirted_riser")
+	PlateWithCompetentCells		*wtype.LHPlate = factory.GetPlateByType("pcrplate_skirted_riser")
+	)
+	
+	
+	
+	
+	redname := Red.CName
+	greenname :=	Green.CName
+	bluename := Blue.CName
+	
+	//var chosencolourpalette color.Palette
+	
+	//chosencolourpalette := image.AvailablePalettes["Plan9"] 
+	
+	//positiontocolourmap, _ := image.ImagetoPlatelayout(Imagefilename, PlateWithMasterMix, &chosencolourpalette, Rotate) 
+	
+	if PosterizeImage{
+		_, Imagefilename = image.Posterize(Imagefilename, PosterizeLevels)
+	}
+	
+	
+	// make palette of colours from image
+	chosencolourpalette := image.MakeSmallPalleteFromImage(Imagefilename, PlateWithMasterMix,Rotate) 
+	
+	// make a map of colour to well coordinates
+	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, PlateWithMasterMix, &chosencolourpalette, Rotate, AutoRotate) 
+	
+	// remove duplicates
+	positiontocolourmap = image.RemoveDuplicatesValuesfromMap(positiontocolourmap)
+	
+	//fmt.Println("positions", positiontocolourmap)
+	
+	solutions := make([]*wtype.LHComponent, 0)
+	colourtoComponentMap := make(map[string]*wtype.LHComponent)
+
+	counter := 0
+	//wellpositionarray := PlateWithMasterMix.AllWellPositions(wtype.BYCOLUMN)
+
+	for _, colour := range positiontocolourmap {
+		
+		
+		colourindex := chosencolourpalette.Index(colour)
+		
+		if colour != nil {
+		components := make([]*wtype.LHComponent, 0)
+
+		r, g, b, _ := colour.RGBA()
+		
+		//var maxuint8 uint8 = 255		
+		
+		if r ==0 && g == 0 && b == 0 {
+		
+		continue
+			
+			}else{
+		
+		//OutputLocation 			= wellpositionarray[counter]
+		//CompetentCellPlateWell 	= wellpositionarray[counter]
+		//RecoveryPlateWell 		= wellpositionarray[counter]
+		
+		counter = counter + 1
+		
+	/*
+		MasterMix.Type,err = wtype.LiquidTypeFromString(LHPolicyName)
+	
+		if err != nil {
+                 Errorf("cannot find liquid type: %s", err)
+    	}
+	
+		mmxSample:=mixer.Sample(MasterMix,MasterMixVolume)
+	
+		components = append(components, mmxSample)
+		*/
+		Red.CName = fmt.Sprint(redname,"_RBSstrength_", uint8(r))
+		Red.Type = wtype.LTPostMix
+		
+		redSample := mixer.Sample(Red, VolumeForeachColourPlasmid)
+		components = append(components, redSample)
+		
+		
+		Green.CName = fmt.Sprint(greenname,"_RBSstrength_", uint8(g))
+		Green.Type = wtype.LTPostMix
+		
+		greenSample := mixer.Sample(Green, VolumeForeachColourPlasmid)
+		
+		components = append(components, greenSample)
+		
+		
+		Blue.CName = fmt.Sprint(bluename,"_RBSstrength_", uint8(b))
+		Blue.Type = wtype.LTPostMix
+		
+		blueSample := mixer.Sample(Blue, VolumeForeachColourPlasmid)
+	
+		components = append(components, blueSample)
+		
+		reaction := MixTo(PalettePlate.Type, OutputLocation,1, components...)
+		
+		dnaSample := mixer.Sample(reaction,TransformationVolume)
+		
+		dnaSample.Type = wtype.LTCulture	
+		
+		Incubate(dnaSample, ReactionTemp, ReactionTime, false)
+		
+		transformation := MixTo(PlateWithCompetentCells.Type,CompetentCellPlateWell,1,dnaSample)
+		
+		transformation.Type = wtype.LTCulture
+		
+		Incubate(transformation, PostPlasmidTemp, PostPlasmidTime, false)
+		
+		transformationSample := mixer.Sample(transformation,CompetentCellTransferVolume) 
+		
+		solution := MixTo(PlatewithRecoveryMedia.Type,RecoveryPlateWell,RecoveryPlateNumber,transformationSample)
+		
+
+		// incubate the reaction mixture
+					// commented out pending changes to incubate
+		Incubate(solution, RecoveryTemp, RecoveryTime, true)
+		
+		solutions = append(solutions, solution)
+		colourtoComponentMap[strconv.Itoa(colourindex)] = solution
+		
+		
+		
+		}
+		
+		}
+	}
+
+	Colours = solutions
+	Numberofcolours = len(chosencolourpalette)
+	Palette = chosencolourpalette
+	ColourtoComponentMap = colourtoComponentMap
+	//fmt.Println("Unique Colours =",Numberofcolours,"from palette:", chosencolourpalette)
+
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+	
+}

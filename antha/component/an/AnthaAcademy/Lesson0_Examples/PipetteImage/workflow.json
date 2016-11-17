@@ -1,0 +1,43 @@
+{
+    "connections": [
+    	{
+            "src": {
+                "port": "Palette",
+                "process": "MakePalette1"
+            },
+            "tgt": {
+                "port": "Palette",
+                "process": "Pipette1"
+            }
+    	},
+    	{
+            "src": {
+                "port": "ColourtoComponentMap",
+                "process": "MakePalette1"
+            },
+            "tgt": {
+                "port": "ColourIndextoComponentMap",
+                "process": "Pipette1"
+            }
+    	},
+    	{
+            "src": {
+                "port": "Colours",
+                "process": "MakePalette1"
+            },
+            "tgt": {
+                "port": "Colourcomponents",
+                "process": "Pipette1"
+            }
+    	}
+		
+    ],
+    "processes": {
+        "MakePalette1": {
+            "component": "MakePalette_OneByOne"
+        },
+        "Pipette1": {
+            "component": "PipetteImage_fromPalette"
+        }
+    }
+}

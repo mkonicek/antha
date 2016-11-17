@@ -73,7 +73,7 @@ func _NewDNASequencesSteps(_ctx context.Context, _input *NewDNASequencesInput, _
 			partDNA, _ = parser.GenbanktoAnnotatedSeq(part)
 			//check if biobrick
 		} else if strings.Contains(part, "BBa_") {
-			nm := "Part " + strconv.Itoa(i) + "_" + part
+			nm := _input.PartPrefix + "_" + "Part " + strconv.Itoa(i) + "_" + part
 			part = igem.GetSequence(part)
 
 			if _input.Vectors {
@@ -82,16 +82,16 @@ func _NewDNASequencesSteps(_ctx context.Context, _input *NewDNASequencesInput, _
 				partDNA = wtype.MakeLinearDNASequence(nm, part)
 			}
 			// check if in inventory
-		} else if inventoryDNA, found := inventory.Partslist[part]; found {
+		} else if inventoryDNA, found := inventory.Partslist()[part]; found {
 			partDNA = inventoryDNA
 
 			// else treat as DNA sequence and check
 		} else {
 
 			if _input.Vectors {
-				partDNA = wtype.MakePlasmidDNASequence("Part "+strconv.Itoa(i), part)
+				partDNA = wtype.MakePlasmidDNASequence(_input.PartPrefix+"_"+"Part "+strconv.Itoa(i), part)
 			} else {
-				partDNA = wtype.MakeLinearDNASequence("Part "+strconv.Itoa(i), part)
+				partDNA = wtype.MakeLinearDNASequence(_input.PartPrefix+"_"+"Part "+strconv.Itoa(i), part)
 			}
 
 			// test for illegal nucleotides
@@ -101,7 +101,7 @@ func _NewDNASequencesSteps(_ctx context.Context, _input *NewDNASequencesInput, _
 				var newstatus = make([]string, 0)
 				for _, illegal := range illegals {
 
-					newstatus = append(newstatus, "part: "+partDNA.Nm+" "+partDNA.Seq+": contains illegalnucleotides:"+illegal.ToString())
+					newstatus = append(newstatus, _input.PartPrefix+"_"+"part: "+partDNA.Nm+" "+partDNA.Seq+": contains illegalnucleotides:"+illegal.ToString())
 				}
 				warnings = append(warnings, strings.Join(newstatus, ""))
 				execute.Errorf(_ctx, strings.Join(newstatus, ""))
@@ -179,6 +179,7 @@ type NewDNASequencesElement struct {
 
 type NewDNASequencesInput struct {
 	BlastSeqswithNoName bool
+	PartPrefix          string
 	Seqsinorder         []string
 	Vectors             bool
 }
@@ -204,9 +205,10 @@ func init() {
 		Constructor: NewDNASequencesNew,
 		Desc: component.ComponentDesc{
 			Desc: "Demo protocol of how to create an array of dna types from parsing user inputs of various types\nscenarios handled:\nBiobrick IDS\ngenbank files\nraw sequence\ninventory lookup\n",
-			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson4_DNA/D_NewDNASequences.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson6_DNA/D_NewDNASequences.an",
 			Params: []component.ParamDesc{
 				{Name: "BlastSeqswithNoName", Desc: "", Kind: "Parameters"},
+				{Name: "PartPrefix", Desc: "", Kind: "Parameters"},
 				{Name: "Seqsinorder", Desc: "", Kind: "Parameters"},
 				{Name: "Vectors", Desc: "", Kind: "Parameters"},
 				{Name: "Parts", Desc: "", Kind: "Data"},

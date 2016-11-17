@@ -135,6 +135,10 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	cone = wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
 	welltype = wtype.NewLHWell("pcrplate", "", "", "ul", 250, 5, cone, wtype.LHWBU, 5.5, 5.5, 20.4, 1.4, "mm")
 	plate = wtype.NewLHPlate("pcrplate_with_incubater", "Unknown", 8, 12, 25.7, "mm", welltype, 9, 9, 0.0, 0.0, (15.5 + 44.0))
+
+	consar := []string{"position_1"}
+	plate.SetConstrained("Pipetmax", consar)
+
 	plates[plate.Type] = plate
 
 	// Block Kombi 2ml
@@ -395,7 +399,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltype = wtype.NewLHWell("falcon6well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 	plate = wtype.NewLHPlate("Nuncon12wellAgar_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
-	consar := []string{"position_1"}
+	consar = []string{"position_1"}
 	plate.SetConstrained("Pipetmax", consar)
 
 	plates[plate.Type] = plate

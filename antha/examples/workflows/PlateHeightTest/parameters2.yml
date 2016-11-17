@@ -1,0 +1,59 @@
+{
+  "Config": {
+      "DriverSpecificInputPreferences": [
+          "position_4",
+          "position_5",
+          "position_6",
+          "position_9",
+          "position_8",
+          "position_3",
+          "position_1"
+      ],
+      "DriverSpecificOutputPreferences": [
+          "position_9",
+          "position_6",
+          "position_8",
+          "position_5",
+          "position_3",
+          "position_1"
+      ],
+      "DriverSpecificTipPreferences": [
+          "position_2",
+          "position_3",
+          "position_6",
+          "position_9",
+          "position_8",
+          "position_5",
+          "position_7"
+      ],
+      "DriverSpecificTipWastePreferences": [
+          "position_7"
+      ],
+      "DriverSpecificWashPreferences": null,
+      "InputPlateData": null,
+      "InputPlateFiles": null,
+      "InputPlateType": [
+          "Nuncon12wellAgar_incubator"
+      ],
+      "InputPlates": null,
+      "MaxPlates": null,
+      "MaxWells": null,
+      "ModelEvaporation": false,
+      "OutputPlates": null,
+      "PlanningVersion": null,
+      "ResidualVolumeWeight": null,
+      "TipType": null
+  },
+    "Parameters": {
+        "newparams": {
+            "LiquidVolumes": ["5ul","100ul"],
+            "OutPlates": [
+            "pcrplate_skirted_riser20",
+            "falcon6wellAgar",
+            "Nuncon12wellAgar_incubator"
+            ],
+            "LiquidTypes": ["water","dna_mix","PEG","dna","PostMix"],
+            "Startingsolutions": ["water", "dna_part","PEG","dna_part","water"]
+        }
+    }
+}

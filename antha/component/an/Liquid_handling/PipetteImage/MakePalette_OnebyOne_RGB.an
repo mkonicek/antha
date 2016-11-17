@@ -1,0 +1,179 @@
+// Generates instructions to make a pallette of all colours in an image
+protocol MakePalette_OneByOne_RGB
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"image/color"
+	"strconv"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	VolumeForFullcolour  Volume
+	Imagefilename string
+	PosterizeImage bool
+	PosterizeLevels int
+	Rotate bool
+	AutoRotate bool
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Numberofcolours int
+	//Colournames []string
+	Palette color.Palette
+	ColourtoComponentMap map[string]*wtype.LHComponent
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Red *wtype.LHComponent
+	Green *wtype.LHComponent
+	Blue *wtype.LHComponent
+	//InPlate *wtype.LHPlate
+	OutPlate *wtype.LHPlate
+	PalettePlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Colours[]*wtype.LHComponent
+)
+
+Requirements {
+	
+}
+
+// Conditions to run on startup
+Setup {
+	
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	//var chosencolourpalette color.Palette
+	
+	//chosencolourpalette := image.AvailablePalettes["Plan9"] 
+	
+	//positiontocolourmap, _ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette, Rotate) 
+	
+	if PosterizeImage{
+		_, Imagefilename = image.Posterize(Imagefilename, PosterizeLevels)
+	}
+	
+	
+	// make palette of colours from image
+	chosencolourpalette := image.MakeSmallPalleteFromImage(Imagefilename, OutPlate,Rotate) 
+	
+	// make a map of colour to well coordinates
+	positiontocolourmap, _,_ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette, Rotate, AutoRotate) 
+	
+	// remove duplicates
+	positiontocolourmap = image.RemoveDuplicatesValuesfromMap(positiontocolourmap)
+	
+	//fmt.Println("positions", positiontocolourmap)
+	
+	solutions := make([]*wtype.LHComponent, 0)
+	colourtoComponentMap := make(map[string]*wtype.LHComponent)
+
+	counter := 0
+
+
+	for _, colour := range positiontocolourmap {
+		
+		colourindex := chosencolourpalette.Index(colour)
+		
+		if colour != nil {
+		components := make([]*wtype.LHComponent, 0)
+
+		r, g, b, _ := colour.RGBA()
+		
+		var maxuint8 uint8 = 255		
+		
+		if r ==0 && g == 0 && b == 0 {
+		
+		continue
+			
+			}else{
+			
+		counter = counter + 1
+		
+		if r > 0{
+			
+		redvol := wunit.NewVolume(((float64(r)/float64(maxuint8)) * VolumeForFullcolour.RawValue()), VolumeForFullcolour.Unit().PrefixedSymbol())
+		
+		if redvol.RawValue() < 10 && redvol.Unit().PrefixedSymbol() == "ul"{
+				redvol.SetValue(10)
+			}
+		
+		
+		Red.Type = wtype.LTPAINT
+		
+		redSample := mixer.Sample(Red, redvol)
+		components = append(components, redSample)
+		}
+		
+		if g > 0{
+		greenvol := wunit.NewVolume(((float64(g)/float64(maxuint8)) * VolumeForFullcolour.RawValue()), VolumeForFullcolour.Unit().PrefixedSymbol())
+		
+		if greenvol.RawValue() < 10 && greenvol.Unit().PrefixedSymbol() == "ul"{
+				greenvol.SetValue(10)
+			}
+		
+		
+		Green.Type = wtype.LTPAINT
+		
+		greenSample := mixer.Sample(Green, greenvol)
+		components = append(components, greenSample)
+		}
+		
+		if b > 0{
+		bluevol := wunit.NewVolume(((float64(b)/float64(maxuint8)) * VolumeForFullcolour.RawValue()), VolumeForFullcolour.Unit().PrefixedSymbol())
+		
+		if bluevol.RawValue() < 10 && bluevol.Unit().PrefixedSymbol() == "ul"{
+				bluevol.SetValue(10)
+			}
+		
+		Blue.Type = wtype.LTPAINT
+		
+		blueSample := mixer.Sample(Blue,bluevol)
+		components = append(components, blueSample)
+		}
+		
+		
+		solution := MixInto(PalettePlate, "", components...)
+		solutions = append(solutions, solution)
+		colourtoComponentMap[strconv.Itoa(colourindex)] = solution
+		
+		
+		
+		}
+		
+		}
+	}
+
+	Colours = solutions
+	Numberofcolours = len(chosencolourpalette)
+	Palette = chosencolourpalette
+	ColourtoComponentMap = colourtoComponentMap
+	//fmt.Println("Unique Colours =",Numberofcolours,"from palette:", chosencolourpalette)
+
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+	
+}

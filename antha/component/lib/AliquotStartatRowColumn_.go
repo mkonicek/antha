@@ -19,7 +19,7 @@ import (
 // Input parameters for this protocol (data)
 
 // starts at 0
-// tarts at 0
+// starts at 0
 
 // Data which is returned from this protocol, and data types
 
@@ -219,7 +219,7 @@ func init() {
 				{Name: "PreMix", Desc: "", Kind: "Parameters"},
 				{Name: "SolutionVolume", Desc: "", Kind: "Parameters"},
 				{Name: "Solutions", Desc: "we're now going to aliquot multiple solutions at the same time (but not mixing them)\n", Kind: "Inputs"},
-				{Name: "StartColumn", Desc: "tarts at 0\n", Kind: "Parameters"},
+				{Name: "StartColumn", Desc: "starts at 0\n", Kind: "Parameters"},
 				{Name: "StartRow", Desc: "starts at 0\n", Kind: "Parameters"},
 				{Name: "VolumePerAliquot", Desc: "", Kind: "Parameters"},
 				{Name: "Aliquots", Desc: "", Kind: "Outputs"},

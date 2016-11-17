@@ -34,11 +34,14 @@ func _SampleAllSetup(_ctx context.Context, _input *SampleAllInput) {
 // for every input
 func _SampleAllSteps(_ctx context.Context, _input *SampleAllInput, _output *SampleAllOutput) {
 
+	_output.Status = "Not sampled anything"
+
 	// the SampleAll function samples the entire contents of the LHComponent
 	// so there's no need to specify the volume
 	// this if statement specifies that the SampleAll action will only be performed if SampleAll is set to true
 	if _input.Sampleall == true {
 		_output.Sample = mixer.SampleAll(_input.Solution)
+		_output.Status = "Sampled everything"
 	}
 
 	// now move on to C_SampleForTotalVolume.an
@@ -110,10 +113,12 @@ type SampleAllInput struct {
 
 type SampleAllOutput struct {
 	Sample *wtype.LHComponent
+	Status string
 }
 
 type SampleAllSOutput struct {
 	Data struct {
+		Status string
 	}
 	Outputs struct {
 		Sample *wtype.LHComponent
@@ -125,11 +130,12 @@ func init() {
 		Constructor: SampleAllNew,
 		Desc: component.ComponentDesc{
 			Desc: "example protocol demonstrating the use of the SampleAll function\n",
-			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson1_Sample/B_SampleAll.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson1_RunningWorkflows/B_SampleAll.an",
 			Params: []component.ParamDesc{
 				{Name: "Sampleall", Desc: "the bool type is a \"boolean\": which essentially means true or false\n", Kind: "Parameters"},
 				{Name: "Solution", Desc: "", Kind: "Inputs"},
 				{Name: "Sample", Desc: "", Kind: "Outputs"},
+				{Name: "Status", Desc: "", Kind: "Data"},
 			},
 		},
 	}); err != nil {

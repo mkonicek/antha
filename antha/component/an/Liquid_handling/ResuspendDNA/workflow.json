@@ -1,0 +1,10 @@
+{
+    "connections": [
+	
+	],
+    "processes": {
+        "Resuspend": {
+            "component": "ResuspendDNA_Multiple"
+        }
+	}
+}

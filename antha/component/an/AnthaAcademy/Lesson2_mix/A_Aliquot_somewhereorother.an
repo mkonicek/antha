@@ -47,6 +47,7 @@ Setup {
 Steps {
 	
 	
+	
 	// First check that we can make enough aliquots of this volume
 	number := SolutionVolume.SIValue()/VolumePerAliquot.SIValue()
 	possiblenumberofAliquots, _ := wutil.RoundDown(number)
@@ -61,6 +62,7 @@ Steps {
 	
 	// this is golang syntax for a for loop
 	// variable i is initialised at 0 and will increase with each loop whilst i < NumberofAliquots is still true
+	
 	for i := 0; i < NumberofAliquots; i++ { 
 		
 		// this is golang syntax for if statements

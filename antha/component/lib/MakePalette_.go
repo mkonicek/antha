@@ -41,26 +41,32 @@ func _MakePaletteSetup(_ctx context.Context, _input *MakePaletteInput) {
 // for every input
 func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *MakePaletteOutput) {
 
-	//var chosencolourpalette color.Palette
+	// Posterize image if desired
+	if _input.PosterizeImage {
+		_, _input.Imagefilename = image.Posterize(_input.Imagefilename, _input.PosterizeLevels)
+	}
 
-	//chosencolourpalette := image.AvailablePalettes["Plan9"]
-
-	//positiontocolourmap, _ := image.ImagetoPlatelayout(Imagefilename, OutPlate, &chosencolourpalette, Rotate)
-
-	// make pallette of colours from image
+	// make pallette of colours from image based on CMYK profile
 	chosencolourpalette := image.MakeSmallPalleteFromImage(_input.Imagefilename, _input.OutPlate, _input.Rotate)
 
+	// Resize image to fit microplate, one pixel per well. Produce map to correspond the colour required for each well position.
+	// The nearest matching colour from the colourpalette made above will be used.
 	positiontocolourmap, _, _ := image.ImagetoPlatelayout(_input.Imagefilename, _input.OutPlate, &chosencolourpalette, _input.Rotate, _input.AutoRotate)
 
-	// remove duplicates
+	// remove duplicate colours so each is only made once
 	positiontocolourmap = image.RemoveDuplicatesValuesfromMap(positiontocolourmap)
 
-	//fmt.Println("positions", positiontocolourmap)
-
+	// make an empty slice of liquid handling components and a map of colour name to liquid handling components
 	solutions := make([]*wtype.LHComponent, 0)
 	colourtoComponentMap := make(map[string]*wtype.LHComponent)
 
+	// initialise a counter to use for looking up the next well position for each iteration of the loop below
 	counter := 0
+
+	platenum := 1
+
+	// make a slice of well positions for the plate set in the parameters file
+	paletteplatepositions := _input.PalettePlate.AllWellPositions(wtype.BYCOLUMN)
 
 	for _, colour := range positiontocolourmap {
 
@@ -81,25 +87,31 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 
 			} else {
 
-				counter = counter + 1
+				nextwellpostion := paletteplatepositions[counter]
 
+				if counter+1 == len(paletteplatepositions) {
+					platenum = platenum + 1
+					counter = 0
+				} else {
+					counter = counter + 1
+				}
 				if cmyk.C > 0 {
 
 					cyanvol := wunit.NewVolume(((float64(cmyk.C) / float64(maxuint8)) * _input.VolumeForFullcolour.RawValue()), _input.VolumeForFullcolour.Unit().PrefixedSymbol())
 
-					if cyanvol.RawValue() < 10 && cyanvol.Unit().PrefixedSymbol() == "ul" {
-						cyanvol.SetValue(10)
+					if cyanvol.RawValue() < 0.5 && cyanvol.Unit().PrefixedSymbol() == "ul" {
+						cyanvol = wunit.NewVolume(0.5, "ul")
 					}
 
 					if cmyk.K == 0 && cmyk.M == 0 && cmyk.Y == 0 {
-						_input.Cyan.Type = wtype.LTNeedToMix
+						_input.Cyan.Type = wtype.LTPostMix
 					} else {
 						_input.Cyan.Type = wtype.LTDISPENSEABOVE
 					}
 
 					cyanSample := mixer.Sample(_input.Cyan, cyanvol)
 
-					solution = execute.MixInto(_ctx, _input.PalettePlate, "", cyanSample)
+					solution = execute.MixTo(_ctx, _input.PalettePlate.Type, nextwellpostion, platenum, cyanSample)
 					//solution = MixTo(PalettePlate.Type, position,1,cyanSample)
 
 					//components = append(components, cyanSample)
@@ -108,11 +120,11 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 				if cmyk.Y > 0 {
 					yellowvol := wunit.NewVolume(((float64(cmyk.Y) / float64(maxuint8)) * _input.VolumeForFullcolour.RawValue()), _input.VolumeForFullcolour.Unit().PrefixedSymbol())
 
-					if yellowvol.RawValue() < 10 && yellowvol.Unit().PrefixedSymbol() == "ul" {
-						yellowvol.SetValue(10)
+					if yellowvol.RawValue() < 0.5 && yellowvol.Unit().PrefixedSymbol() == "ul" {
+						yellowvol = wunit.NewVolume(0.5, "ul")
 					}
 					if cmyk.K == 0 && cmyk.M == 0 {
-						_input.Yellow.Type = wtype.LTNeedToMix
+						_input.Yellow.Type = wtype.LTPostMix
 					} else {
 						_input.Yellow.Type = wtype.LTDISPENSEABOVE
 					}
@@ -122,7 +134,7 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 					if solution != nil {
 						solution = execute.Mix(_ctx, solution, yellowSample)
 					} else {
-						solution = execute.MixInto(_ctx, _input.PalettePlate, "", yellowSample)
+						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, nextwellpostion, platenum, yellowSample)
 						//solution = MixTo(PalettePlate.Type, position,1,yellowSample)
 					}
 
@@ -132,12 +144,12 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 				if cmyk.M > 0 {
 					magentavol := wunit.NewVolume(((float64(cmyk.M) / float64(maxuint8)) * _input.VolumeForFullcolour.RawValue()), _input.VolumeForFullcolour.Unit().PrefixedSymbol())
 
-					if magentavol.RawValue() < 10 && magentavol.Unit().PrefixedSymbol() == "ul" {
-						magentavol.SetValue(10)
+					if magentavol.RawValue() < 0.5 && magentavol.Unit().PrefixedSymbol() == "ul" {
+						magentavol = wunit.NewVolume(0.5, "ul")
 					}
 
 					if cmyk.K == 0 {
-						_input.Magenta.Type = wtype.LTNeedToMix
+						_input.Magenta.Type = wtype.LTPostMix
 					} else {
 						_input.Magenta.Type = wtype.LTDISPENSEABOVE
 					}
@@ -147,7 +159,7 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 					if solution != nil {
 						solution = execute.Mix(_ctx, solution, magentaSample)
 					} else {
-						solution = execute.MixInto(_ctx, _input.PalettePlate, "", magentaSample)
+						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, nextwellpostion, platenum, magentaSample)
 						//solution = MixTo(PalettePlate.Type, position,1,magentaSample)
 					}
 
@@ -157,18 +169,18 @@ func _MakePaletteSteps(_ctx context.Context, _input *MakePaletteInput, _output *
 				if cmyk.K > 0 {
 					blackvol := wunit.NewVolume(((float64(cmyk.K) / float64(maxuint8)) * _input.VolumeForFullcolour.RawValue()), _input.VolumeForFullcolour.Unit().PrefixedSymbol())
 
-					if blackvol.RawValue() < 10 && blackvol.Unit().PrefixedSymbol() == "ul" {
-						blackvol.SetValue(10)
+					if blackvol.RawValue() < 0.5 && blackvol.Unit().PrefixedSymbol() == "ul" {
+						blackvol = wunit.NewVolume(0.5, "ul")
 					}
 
-					_input.Black.Type = wtype.LTNeedToMix
+					_input.Black.Type = wtype.LTPostMix
 
 					blackSample := mixer.Sample(_input.Black, blackvol)
 
 					if solution != nil {
 						solution = execute.Mix(_ctx, solution, blackSample)
 					} else {
-						solution = execute.MixInto(_ctx, _input.PalettePlate, "", blackSample)
+						solution = execute.MixTo(_ctx, _input.PalettePlate.Type, nextwellpostion, platenum, blackSample)
 						//solution = MixTo(PalettePlate.Type, position,1,blackSample)
 					}
 
@@ -258,6 +270,8 @@ type MakePaletteInput struct {
 	Magenta             *wtype.LHComponent
 	OutPlate            *wtype.LHPlate
 	PalettePlate        *wtype.LHPlate
+	PosterizeImage      bool
+	PosterizeLevels     int
 	Rotate              bool
 	VolumeForFullcolour wunit.Volume
 	Yellow              *wtype.LHComponent
@@ -295,6 +309,8 @@ func init() {
 				{Name: "Magenta", Desc: "", Kind: "Inputs"},
 				{Name: "OutPlate", Desc: "InPlate *wtype.LHPlate\n", Kind: "Inputs"},
 				{Name: "PalettePlate", Desc: "", Kind: "Inputs"},
+				{Name: "PosterizeImage", Desc: "", Kind: "Parameters"},
+				{Name: "PosterizeLevels", Desc: "", Kind: "Parameters"},
 				{Name: "Rotate", Desc: "", Kind: "Parameters"},
 				{Name: "VolumeForFullcolour", Desc: "", Kind: "Parameters"},
 				{Name: "Yellow", Desc: "", Kind: "Inputs"},

@@ -15,6 +15,7 @@ Parameters (
 // Data which is returned from this protocol
 Data (
 	DNAVol Volume
+	Err error
 )
 
 // Physical inputs to this protocol
@@ -37,7 +38,10 @@ Setup {
 
 // Core process of the protocol: steps to be performed for each input
 Steps {
-	DNAVol = wunit.VolumeForTargetMass(DNAMassperReaction,DNAConc) 
+	DNAVol, Err = wunit.VolumeForTargetMass(DNAMassperReaction,DNAConc) 
+	if Err !=nil{
+		Errorf(Err.Error())
+	}
 }
 
 // Actions to perform after steps block to analyze data

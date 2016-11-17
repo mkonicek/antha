@@ -96,7 +96,7 @@ Steps {
 		}
 		} else {
 		// look up part in inventory
-		partDNA, found = Inventory.Partslist[part]
+		partDNA, found = Inventory.Partslist()[part]
 		
 		if !found {
 		//Status = text.Print("part: " + partDNA.Nm, partDNA.Seq + ": not found in Inventory so element aborted!")
@@ -131,7 +131,7 @@ Steps {
 	partsinorder = append(partsinorder,partDNA)
 	}
 	// lookup vector sequence
-	vectordata := Inventory.Partslist[Vector]
+	vectordata := Inventory.Partslist()[Vector]
 	
 	//lookup restriction enzyme
 	restrictionenzyme := enzymes.Enzymelookup[AssemblyStandard][Level]

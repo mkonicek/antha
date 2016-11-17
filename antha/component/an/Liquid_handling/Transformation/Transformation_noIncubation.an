@@ -1,0 +1,106 @@
+protocol Transformation_complete_noIncubation
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	CompetentCellvolumeperassembly wunit.Volume //= 50.(uL)
+	Reactionvolume wunit.Volume
+	Preplasmidtime wunit.Time
+	Preplasmidtemp wunit.Temperature
+	Postplasmidtime wunit.Time
+	Postplasmidtemp wunit.Temperature
+	Recoveryvolume wunit.Volume
+	Recoverytime wunit.Time //= 2 (hours)
+	Recoverytemp wunit.Temperature
+	Plateoutvolume wunit.Volume
+	//Shakerspeed float64 // correct type?
+	
+	//Plateoutdilution float64
+	
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Reaction *wtype.LHComponent
+	CompetentCells *wtype.LHComponent
+    Recoverymedium *wtype.LHComponent
+	OutPlate *wtype.LHPlate
+	AgarPlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Platedculture *wtype.LHComponent
+)
+
+Requirements {
+}
+
+// Conditions to run on startup
+Setup {
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	
+	competentcells := make([]*wtype.LHComponent,0)
+	
+	
+	competentcells = append(competentcells,CompetentCells)
+	
+	// MixInto a specific plate e.g. plate ID blahblahblah001
+	readycompetentcellsComp := MixInto(OutPlate, "", competentcells...)  // readycompetentcells IS now a LHComponent
+	/*
+	readycompetentcellsComp := Incubate (readycompetentcells,Preplasmidtemp, Preplasmidtime, false) // we can incubate an LHComponent so this is fine
+	*/
+	
+	//competetentcellmix := mixer.Sample(readycompetentcellsComp, CompetentCellvolumeperassembly) // ERROR! mixer.Sample needs a liquid, not an LHComponent! however, the typeIIs method worked with a *wtype.LHComponent from inputs!
+	//transformationmix := make([]*wtype.LHComponent, 0)
+	//transformationmix = append(transformationmix, competetentcellmix)
+	DNAsample := mixer.Sample(Reaction, Reactionvolume)
+	//transformationmix = append(transformationmix, DNAsample)
+	
+	transformedcellsComp := Mix(readycompetentcellsComp, DNAsample)
+	
+
+	//transformedcellsComp := Incubate (transformedcells, Postplasmidtemp, Postplasmidtime,false)
+
+	//recoverymix := make([]*wtype.LHComponent, 0)
+	recoverymixture := mixer.Sample(Recoverymedium, Recoveryvolume)
+
+	//recoverymix = append(recoverymix,transformedcellsComp) // ERROR! transformedcells is now an LHComponent, not a liquid, so can't be used here
+	//recoverymix = append(recoverymix,recoverymixture)
+	recoverymix2Comp := Mix(transformedcellsComp,recoverymixture)
+	
+	
+	//recoverymix2Comp := Incubate (recoverymix2,  Recoverytemp, Recoverytime, true)
+	
+	plateout := mixer.Sample(recoverymix2Comp, Plateoutvolume) // ERROR! recoverymix2 is now an LHComponent, not a liquid, so can't be used here
+	platedculture := MixInto(AgarPlate, "",  plateout)
+	
+	Platedculture = platedculture
+	
+	
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

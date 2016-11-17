@@ -130,7 +130,7 @@ func init() {
 		Constructor: Units_ToStringNew,
 		Desc: component.ComponentDesc{
 			Desc: "demo protocol of how to convert units to string\n",
-			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson0_Units/B_units_toString.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson4_Units/B_units_toString.an",
 			Params: []component.ParamDesc{
 				{Name: "MyConc", Desc: "", Kind: "Parameters"},
 				{Name: "MyFlowrate", Desc: "", Kind: "Parameters"},

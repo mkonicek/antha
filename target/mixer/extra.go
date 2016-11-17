@@ -137,6 +137,28 @@ func parseInputPlateData(inData io.Reader) (*wtype.LHPlate, error) {
 			volume = wunit.NewVolume(vol, vunit)
 		}
 
+		// Concentration
+
+		conc := 0.0
+
+		if len(rec) > 5 {
+			conc = wutil.ParseFloat(rec[5])
+			if conc == 0.0 {
+				logger.Info(fmt.Sprint("parseInputFile warning (line ", lineNo, "): no sensible float in ", rec[5], " defaulting to volume of 0.0"))
+			}
+		}
+
+		cunit := "ng/ul"
+		if len(rec) > 6 {
+			cunit = rec[6]
+		}
+		concentration := wunit.NewConcentration(conc, cunit)
+		if len(rec) == 6 || len(strings.TrimSpace(rec[6])) == 0 {
+			logger.Info("Conc specified without unit... defaulting to ng/ul")
+		} else {
+			concentration = wunit.NewConcentration(conc, cunit)
+		}
+
 		// now we make the component and stick it in the well
 
 		cmp := wtype.NewLHComponent()
@@ -146,6 +168,8 @@ func parseInputPlateData(inData io.Reader) (*wtype.LHPlate, error) {
 		cmp.CName = cname
 		cmp.Type = ctype
 
+		cmp.Conc = concentration.RawValue()
+		cmp.Cunit = concentration.Unit().PrefixedSymbol()
 		p.WellAt(well).Add(cmp)
 	}
 

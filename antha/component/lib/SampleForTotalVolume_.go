@@ -35,14 +35,15 @@ func _SampleForTotalVolumeSetup(_ctx context.Context, _input *SampleForTotalVolu
 // for every input
 func _SampleForTotalVolumeSteps(_ctx context.Context, _input *SampleForTotalVolumeInput, _output *SampleForTotalVolumeOutput) {
 
-	// make empty slice of components ready to sequentially add all samples to
+	// make empty slice of LHComponents (i.e. of length 0) ready to sequentially add all samples to
+	// See golangbook chapter 6 for more details on slices and arrays
 	allsamples := make([]*wtype.LHComponent, 0)
 
 	// SampleForTotalVolume will "top up" solution to the TotalVolume with Diluent.
-	// in this case it will still add diluent first but calculates the volume to add by substracting the volumes of subsequent components
+	// In this case it will still add diluent first but calculates the volume to add by substracting the volumes of subsequent components
 	diluentsample := mixer.SampleForTotalVolume(_input.Diluent, _input.TotalVolume) // i.e. if TotalVolume == 20ul and SolutionVolume == 2ul then 18ul of Diluent will be sampled here
 
-	// append will add the diliuent sample to the allsamples slice
+	// append will add the diluent sample to the allsamples slice
 	allsamples = append(allsamples, diluentsample)
 
 	solutionsample := mixer.Sample(_input.Solution, _input.SolutionVolume)
@@ -57,8 +58,7 @@ func _SampleForTotalVolumeSteps(_ctx context.Context, _input *SampleForTotalVolu
 
 	// Now we have an antha element which will generate liquid handling instructions
 	// let's see how to actually run the protocol
-	// open the terminal and type this:
-	// 'workflows && cd AnthaAcademy/Lesson1_Sample'
+	// open the terminal and
 	// work your way through the lessons there showing how to specify parameters and different types of workflow
 
 }
@@ -145,7 +145,7 @@ func init() {
 		Constructor: SampleForTotalVolumeNew,
 		Desc: component.ComponentDesc{
 			Desc: "example protocol demonstrating the use of the SampleForTotalVolume function\n",
-			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson1_Sample/C_SampleForTotalVolume.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson1_RunningWorkflows/C_SampleForTotalVolume.an",
 			Params: []component.ParamDesc{
 				{Name: "Diluent", Desc: "", Kind: "Inputs"},
 				{Name: "Solution", Desc: "", Kind: "Inputs"},

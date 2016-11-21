@@ -70,6 +70,7 @@ Steps {
 	
 		// change liquid type to mix cells with SOC Media
 		transformationSample.Type = wtype.LTPostMix
+	
 		
 		Recovery := MixNamed(PlatewithRecoveryMedia.Type,RecoveryPlateWell,"RecoveryPlate",transformationSample)
 	RecoveredCells = append(RecoveredCells, Recovery)

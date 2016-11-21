@@ -17,6 +17,12 @@
         },
 		"TransformationControl6": {
             "component": "TransformationCotrans"
+        },
+		"TransformationControl7": {
+            "component": "TransformationCotrans"
+        },
+		"TransformationControl8": {
+            "component": "TransformationCotrans"
         }
     }
 }

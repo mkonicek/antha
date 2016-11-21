@@ -5,12 +5,10 @@
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"B1",
-			"B2"
+			"A1"
 	],
 	  	"RecoveryPlateWells": 	[
-			"B1",
-			"B2"
+			"A1"
 	],
             
         	"RecoveryTemp":"37C",
@@ -36,12 +34,10 @@
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"C1",
-			"C2"
+			"B1"
 	],
 	  	"RecoveryPlateWells": 	[
-			"C1",
-			"C2"
+			"B1"
 	],
             
         	"RecoveryTemp":"37C",
@@ -67,12 +63,10 @@
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"D1",
-			"D2"
+			"C1"
 	],
 	  	"RecoveryPlateWells": 	[
-			"D1",
-			"D2"
+			"C1"
 	],
             
         	"RecoveryTemp":"37C",
@@ -98,12 +92,10 @@
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"E1",
-			"E2"
+			"D1"
 	],
 	  	"RecoveryPlateWells": 	[
-			"E1",
-			"E2"
+			"D1"
 	],
             
         	"RecoveryTemp":"37C",
@@ -129,12 +121,10 @@
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"F1",
-			"F2"
+			"E1"
 	],
 	  	"RecoveryPlateWells": 	[
-			"F1",
-			"F2"
+			"E1"
 	],
             
         	"RecoveryTemp":"37C",
@@ -160,12 +150,10 @@
 		"PlateWithCompetentCells":"pcrplate_with_cooler",
 	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
 		"CompetentCellPlateWells": [
-			"G1",
-			"G2"
+			"F1"
 	],
 	  	"RecoveryPlateWells": 	[
-			"G1",
-			"G2"
+			"F1"
 	],
             
         	"RecoveryTemp":"37C",
@@ -183,6 +171,64 @@
 		"CompetentCellTransferVolume": "21ul",
 		"PlasmidNames": [
 		"pComet",
+		"Nothing"
+		]
+        },
+		 "TransformationControl7": {
+		"LHPolicyName": "dna",
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"G1"
+	],
+	  	"RecoveryPlateWells": 	[
+			"G1"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "0ul"
+		],
+		"CompetentCellTransferVolume": "21ul",
+		"PlasmidNames": [
+		"RWC_SEVA",
+		"Nothing"
+		]
+        },
+		 "TransformationControl8": {
+		"LHPolicyName": "dna",
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"CompetentCellPlateWells": [
+			"H1"
+	],
+	  	"RecoveryPlateWells": 	[
+			"H1"
+	],
+            
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "0ul"
+		],
+		"CompetentCellTransferVolume": "21ul",
+		"PlasmidNames": [
+		"RWC_Biobrick",
 		"Nothing"
 		]
         }

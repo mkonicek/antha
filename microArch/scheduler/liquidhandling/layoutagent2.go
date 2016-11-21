@@ -358,14 +358,14 @@ func modpc(choice PlateChoice, nwell int) []PlateChoice {
 			ID = wtype.GetUUID()
 		}
 
-		nm := unique_plate_name(choice.Name, seen, 100)
+		nm := uniquePlateName(choice.Name, seen, 100)
 
 		r = append(r, PlateChoice{choice.Platetype, choice.Assigned[s:e], ID, choice.Wells[s:e], nm})
 	}
 	return r
 }
 
-func unique_plate_name(namein string, seen map[string]bool, maxtries int) string {
+func uniquePlateName(namein string, seen map[string]bool, maxtries int) string {
 	nm := namein
 
 	_, ok := seen[nm]

@@ -357,41 +357,38 @@ func modpc(choice PlateChoice, nwell int) []PlateChoice {
 			// new ID
 			ID = wtype.GetUUID()
 		}
-		/*
-			fmt.Println("S: ", s, " E: ", e)
-			fmt.Println("L: ", len(choice.Assigned), " ", choice.Assigned)
-			fmt.Println("W: ", len(choice.Wells), " ", choice.Wells)
-			fmt.Println("I: ", ID)
-		*/
-		nm := choice.Name
 
-		_, ok := seen[nm]
-
-		if ok {
-			for k := 2; k < 100; k++ {
-				nm2 := fmt.Sprintf("%s%d", nm, k)
-				_, ok = seen[nm2]
-				if !ok {
-					nm = nm2
-					break
-				}
-			}
-
-			if ok {
-				logger.Fatal("Tried to assign more than 100 output plates")
-			}
-
-		}
-
-		/*
-			fmt.Println("N: ", nm)
-		*/
-
-		seen[nm] = true
+		nm := unique_plate_name(choice.Name, seen, 100)
 
 		r = append(r, PlateChoice{choice.Platetype, choice.Assigned[s:e], ID, choice.Wells[s:e], nm})
 	}
 	return r
+}
+
+func unique_plate_name(namein string, seen map[string]bool, maxtries int) string {
+	nm := namein
+
+	_, ok := seen[nm]
+
+	if ok {
+		for k := 0; k < maxtries; k++ {
+			nm2 := fmt.Sprintf("%s%d", nm, k+2)
+			_, ok = seen[nm2]
+			if !ok {
+				nm = nm2
+				break
+			}
+		}
+
+		if ok {
+			logger.Fatal(fmt.Sprintf("Tried to assign more than %d output plates", maxtries))
+		}
+
+	}
+
+	seen[nm] = true
+
+	return nm
 }
 
 func assignmentWithType(pt string, pc []PlateChoice) int {

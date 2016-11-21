@@ -31,10 +31,10 @@ import (
 
 	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/cmd/antharun/frontend"
-	"github.com/antha-lang/antha/cmd/antharun/param"
 	"github.com/antha-lang/antha/cmd/antharun/pretty"
 	"github.com/antha-lang/antha/cmd/antharun/spawn"
 	"github.com/antha-lang/antha/execute"
+	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
@@ -92,22 +92,37 @@ func makeContext() (context.Context, error) {
 type runOpt struct {
 	MixerOpt       mixer.Opt
 	Drivers        []string
-	WorkflowFile   string
+	BundleFile     string
 	ParametersFile string
+	WorkflowFile   string
 }
 
 func (a *runOpt) Run() error {
-	wdata, err := ioutil.ReadFile(a.WorkflowFile)
-	if err != nil {
-		return err
+	var wdata, pdata, bdata []byte
+	var err error
+
+	if len(a.BundleFile) != 0 {
+		bdata, err = ioutil.ReadFile(a.BundleFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		wdata, err = ioutil.ReadFile(a.WorkflowFile)
+		if err != nil {
+			return err
+		}
+
+		pdata, err = ioutil.ReadFile(a.ParametersFile)
+		if err != nil {
+			return err
+		}
 	}
 
-	pdata, err := ioutil.ReadFile(a.ParametersFile)
-	if err != nil {
-		return err
-	}
-
-	wdesc, params, err := param.TryExpand(wdata, pdata)
+	wdesc, params, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
+		WorkflowData: wdata,
+		BundleData:   bdata,
+		ParamsData:   pdata,
+	})
 	if err != nil {
 		return err
 	}
@@ -191,8 +206,9 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 	opt := &runOpt{
 		MixerOpt:       makeMixerOpt(),
 		Drivers:        drivers,
-		WorkflowFile:   viper.GetString("workflow"),
+		BundleFile:     viper.GetString("bundle"),
 		ParametersFile: viper.GetString("parameters"),
+		WorkflowFile:   viper.GetString("workflow"),
 	}
 
 	return opt.Run()
@@ -205,6 +221,7 @@ func init() {
 	//RootCmd.AddCommand(c)
 	flags.String("parameters", "parameters.yml", "Parameters to workflow")
 	flags.String("workflow", "workflow.json", "Workflow definition file")
+	flags.String("bundle", "", "Input bundle with parameters and workflow together (overrides parameter and workflow arguments)")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
 	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
 	flags.Int("maxPlates", 0, "Maximum number of plates")

@@ -722,6 +722,7 @@ func MakeDefaultPolicy() LHPolicy {
 	// don't set this here -- use defaultpipette speed or there will be inconsistencies
 	// defaultpolicy["ASPSPEED"] = 3.0
 	// defaultpolicy["DSPSPEED"] = 3.0
+	defaultpolicy["OFFSETZADJUST"] = 0.0
 	defaultpolicy["TOUCHOFF"] = false
 	defaultpolicy["TOUCHOFFSET"] = 0.5
 	defaultpolicy["ASPREFERENCE"] = 0
@@ -747,8 +748,6 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
 	// added to diagnose bubble cause
-	defaultpolicy["ASPZOFFSET"] = 0.5
-	defaultpolicy["DSPZOFFSET"] = 0.5
 	defaultpolicy["POST_MIX_Z"] = 0.5
 	defaultpolicy["PRE_MIX_Z"] = 0.5
 	//defaultpolicy["ASP_WAIT"] = 1.0
@@ -792,12 +791,7 @@ func MakeLVDNAMixPolicy() LHPolicy {
 
 func MakeHVOffsetPolicy() LHPolicy {
 	lvop := make(LHPolicy, 6)
-	lvop["ASPZOFFSET"] = 3.0
-	lvop["DSPZOFFSET"] = 3.0
-	lvop["POST_MIX_Z"] = 3.0
-	lvop["PRE_MIX_Z"] = 3.0
-	lvop["DSPREFERENCE"] = 0
-	lvop["ASPREFERENCE"] = 0
+	lvop["OFFSETZADJUST"] = 2.0
 	lvop["POST_MIX_RATE"] = 37
 	lvop["PRE_MIX_RATE"] = 37
 	lvop["ASPSPEED"] = 37
@@ -837,12 +831,13 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	// hack to fix plate type problems
 	// this really should be removed asap
-	// make low priority so it doesn't clobber other
-	// policies
 	rule := NewLHPolicyRule("HVOffsetFix")
-	rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-	rule.Priority = 0
-	//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
+	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+
+	rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
+	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+	// don't get overridden
+	rule.Priority = 100
 	pol := MakeHVOffsetPolicy()
 	lhpr.AddRule(rule, pol)
 

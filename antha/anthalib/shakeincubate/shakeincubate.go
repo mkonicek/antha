@@ -1,5 +1,5 @@
 // Package for helping to set up and run the incubator; designed for interacting with anthaOS
-package shakerincubator
+package shake
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -10,9 +10,9 @@ import (
 )
 
 // Produce driver calls to send to incubator for set up
-func SetPoints(component *wtype.LHComponent, temp wunit.Temperature, device string, rpm float64) ([]driver.Call) {
-	return[]driver.Call{
-		
+func SetPoints(component *wtype.LHComponent, temp wunit.Temperature, device string, rpm float64) []driver.Call {
+	return []driver.Call{
+
 		driver.Call{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/TemperatureSet",
 			Args: &shakerincubator.TemperatureSettings{
@@ -28,22 +28,6 @@ func SetPoints(component *wtype.LHComponent, temp wunit.Temperature, device stri
 			},
 			Reply: &shakerincubator.BoolReply{},
 		},
-	}
-}
-
-// Adds plate prep step in AnthaOS timeline
-func PlatePrep(component *wtype.LHComponent) execute.HandleOpt {
-	return execute.HandleOpt{
-		Label:     "plate prep",
-		Component: component,
-	}
-
-}
-
-// Adds manual step in AnthaOS timeline
-func MarkForSetup(component *wtype.LHComponent) execute.HandleOpt {
-	return execute.HandleOpt{Label: "setup",
-		Component: component,
 	}
 }
 

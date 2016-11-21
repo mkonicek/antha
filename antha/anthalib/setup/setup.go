@@ -22,7 +22,7 @@ func MarkForSetup(component *wtype.LHComponent) execute.HandleOpt {
 	}
 }
 
-// Adds manual step in AnthaOS timeline
+// Adds step for component ordering in AnthaOS timeline
 func OrderInfo(component *wtype.LHComponent) execute.HandleOpt {
 	return execute.HandleOpt{Label: "order",
 		Component: component,

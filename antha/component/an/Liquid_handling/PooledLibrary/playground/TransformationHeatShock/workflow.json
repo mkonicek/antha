@@ -1,0 +1,7 @@
+{
+    "processes": {
+		"TransformationControl1": {
+            "component": "TransformationHeatShock"
+        }
+    }
+}

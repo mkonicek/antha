@@ -1,0 +1,103 @@
+protocol TransformationHeatShock
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	PlasmidVolumes []Volume
+	CompetentCellPlateWells 		[]string
+	ColdRecoveryCellPlateWells []string
+	RecoveryPlateWells 		[]string
+	HeatShockPlateWells		[]string
+	RecoveryTemp 				Temperature
+	RecoveryTime				Time
+	PostPlasmidTemp 			Temperature
+	PostPlasmidTime 			Time
+	CompetentCellTransferVolume Volume
+	RecoveryPlateNumber 		int
+	PlasmidNames []string
+	LHPolicyName string
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Plasmids []*wtype.LHComponent
+	PlateWithCompetentCells		 *wtype.LHPlate
+	PlatewithRecoveryMedia		*wtype.LHPlate
+	HeatShockPlate				*wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	RecoveredCells []*wtype.LHComponent
+)
+
+Requirements {
+}
+
+// Conditions to run on startup
+Setup {
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+		var err error
+	samples := make([]*wtype.LHComponent, 0)
+	
+	for k, plasmid := range Plasmids {
+		plasmid.Type, err = wtype.LiquidTypeFromString(LHPolicyName)
+		
+		if err != nil {
+                        Errorf("cannot find liquid type: %s", err)
+		} 		
+		dnaSample := mixer.Sample(plasmid, PlasmidVolumes[k])
+		dnaSample.CName = PlasmidNames[k]
+		dnaSample.Type = wtype.LTDNAMIX
+		samples = append(samples, dnaSample)
+	}
+	
+	
+		for i, RecoveryPlateWell := range RecoveryPlateWells {
+		transformation := MixInto(PlateWithCompetentCells,CompetentCellPlateWells[i],samples...)
+	
+	transformationSample := mixer.Sample(transformation,CompetentCellTransferVolume) 
+	
+		// change liquid type to mix cells with SOC Media
+		transformationSample.Type = wtype.LTPostMix
+		
+		HeatShock := MixNamed(HeatShockPlate.Type,HeatShockPlateWells[i],"HeatShockPlate",transformationSample)
+		HeatShockSample := mixer.Sample(HeatShock,CompetentCellTransferVolume) 
+		ColdRecovery := MixInto(PlateWithCompetentCells,ColdRecoveryCellPlateWells[i],HeatShockSample)
+		ColdRecoverySample := mixer.Sample(ColdRecovery,CompetentCellTransferVolume) 
+		ColdRecoverySample.Type = wtype.LTPostMix
+
+
+	Recovery := MixNamed(PlatewithRecoveryMedia.Type,RecoveryPlateWell,"RecoveryPlate",ColdRecoverySample)
+	RecoveredCells = append(RecoveredCells, Recovery)
+
+	// incubate the reaction mixture
+	// commented out pending changes to incubate
+	Incubate(Recovery, RecoveryTemp, RecoveryTime, true)
+	// inactivate
+	//Incubate(Reaction, InactivationTemp, InactivationTime, false)
+}
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}

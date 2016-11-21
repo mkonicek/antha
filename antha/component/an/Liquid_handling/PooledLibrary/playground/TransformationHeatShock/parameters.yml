@@ -1,0 +1,39 @@
+{
+	"Parameters":{
+    "TransformationControl1": {
+		"LHPolicyName": "dna",
+		"PlateWithCompetentCells":"pcrplate_with_cooler",
+	 	"PlatewithRecoveryMedia":"pcrplate_skirted_riser",
+		"HeatShockPlate":"pcrplate_with_incubater",
+		"CompetentCellPlateWells": [
+			"A1"
+	],
+	  	"RecoveryPlateWells": 	[
+			"A1"
+	],
+		"HeatShockPlateWells": [
+			"A1"
+	],
+	"ColdRecoveryCellPlateWells": [
+	"A2"
+	],      
+        	"RecoveryTemp":"37C",
+	  	"RecoveryTime":"2h",
+		"PostPlasmidTemp":"2C",
+        	"PostPlasmidTime": "5min",
+        	"Plasmids": [
+			"dna_part",
+			"dna_part"
+			],
+		"PlasmidVolumes": [
+		 "1ul",
+		 "1ul"
+		],
+		"CompetentCellTransferVolume": "21ul",
+		"PlasmidNames": [
+		"pDasher",
+		"RWC_SEVA"
+		]
+        }
+	}
+}

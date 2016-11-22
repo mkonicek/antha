@@ -2,6 +2,7 @@ package executeutil
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/workflow"
@@ -51,7 +52,7 @@ func Unmarshal(opt UnmarshalOpt) (*workflow.Desc, *execute.RawParams, error) {
 		if err := unmarshal(opt.WorkflowData, &desc); err != nil {
 			return nil, nil, err
 		}
-		if err := unmarshal(opt.ParamsData, &param); err == nil {
+		if err := unmarshal(opt.ParamsData, &param); err != nil {
 			return nil, nil, err
 		}
 	}

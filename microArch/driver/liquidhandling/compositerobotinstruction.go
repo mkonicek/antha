@@ -48,10 +48,11 @@ type TransferParams struct {
 	FVolume    wunit.Volume
 	TVolume    wunit.Volume
 	Channel    *wtype.LHChannelParameter
+	TipType    string
 }
 
 func (tp TransferParams) ToString() string {
-	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel)
+	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType)
 }
 
 type MultiTransferParams struct {
@@ -66,6 +67,7 @@ type MultiTransferParams struct {
 	FVolume    []wunit.Volume
 	TVolume    []wunit.Volume
 	Channel    *wtype.LHChannelParameter
+	TipTypes   []string
 }
 
 func NewMultiTransferParams(multi int) MultiTransferParams {
@@ -80,6 +82,7 @@ func NewMultiTransferParams(multi int) MultiTransferParams {
 	v.TVolume = make([]wunit.Volume, 0, multi)
 	v.FPlateType = make([]string, 0, multi)
 	v.TPlateType = make([]string, 0, multi)
+	v.TipTypes = make([]string, 0, multi)
 	return v
 }
 
@@ -114,7 +117,7 @@ func (ti *TransferInstruction) ToString() string {
 }
 
 func (ti *TransferInstruction) ParamSet(n int) TransferParams {
-	return TransferParams{ti.What[n], ti.PltFrom[n], ti.PltTo[n], ti.WellFrom[n], ti.WellTo[n], ti.Volume[n], ti.FPlateType[n], ti.TPlateType[n], ti.FVolume[n], ti.TVolume[n], nil}
+	return TransferParams{ti.What[n], ti.PltFrom[n], ti.PltTo[n], ti.WellFrom[n], ti.WellTo[n], ti.Volume[n], ti.FPlateType[n], ti.TPlateType[n], ti.FVolume[n], ti.TVolume[n], nil, ""}
 }
 
 func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int) *TransferInstruction {
@@ -805,6 +808,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms
 			stci.FVolume = wunit.CopyVolume(ins.FVolume[t])
 			stci.TVolume = wunit.CopyVolume(ins.TVolume[t])
 			stci.Prms = channel
+			stci.TipType = tiptype
 			ret = append(ret, stci)
 			last_thing = this_thing
 
@@ -1066,6 +1070,7 @@ type SingleChannelTransferInstruction struct {
 	FVolume    wunit.Volume
 	TVolume    wunit.Volume
 	Prms       *wtype.LHChannelParameter
+	TipType    string
 }
 
 func (scti *SingleChannelTransferInstruction) Params() TransferParams {
@@ -1081,6 +1086,7 @@ func (scti *SingleChannelTransferInstruction) Params() TransferParams {
 	tp.FVolume = wunit.CopyVolume(scti.FVolume)
 	tp.TVolume = wunit.CopyVolume(scti.TVolume)
 	tp.Channel = scti.Prms
+	tp.TipType = scti.TipType
 	return tp
 }
 
@@ -1126,6 +1132,8 @@ func (ins *SingleChannelTransferInstruction) GetParameter(name string) interface
 		return ins.TPlateType
 	case "INSTRUCTIONTYPE":
 		return ins.InstructionType()
+	case "TIPTYPE":
+		return ins.TipType
 	}
 	return nil
 }
@@ -2001,6 +2009,7 @@ type SuckInstruction struct {
 	Prms       *wtype.LHChannelParameter
 	Multi      int
 	Overstroke bool
+	TipType    string
 }
 
 func NewSuckInstruction() *SuckInstruction {
@@ -2027,6 +2036,7 @@ func (ins *SuckInstruction) AddTransferParams(tp TransferParams) {
 	ins.FVolume = append(ins.FVolume, tp.FVolume)
 	ins.Prms = tp.Channel
 	ins.Head = tp.Channel.Head
+	ins.TipType = tp.TipType
 }
 
 func (ins *SuckInstruction) GetParameter(name string) interface{} {
@@ -2058,6 +2068,8 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 		return ins.Prms.Platform
 	case "INSTRUCTIONTYPE":
 		return ins.InstructionType()
+	case "TIPTYPE":
+		return ins.TipType
 	}
 	return nil
 }
@@ -2073,6 +2085,8 @@ func (ins *SuckInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 	ofx := SafeGetF64(pol, "ASPXOFFSET")
 	ofy := SafeGetF64(pol, "ASPYOFFSET")
 	ofz := SafeGetF64(pol, "ASPZOFFSET")
+	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
+	ofz += ofzadj
 
 	mixofx := SafeGetF64(pol, "PRE_MIX_X")
 	mixofy := SafeGetF64(pol, "PRE_MIX_Y")
@@ -2349,6 +2363,7 @@ type BlowInstruction struct {
 	TVolume    []wunit.Volume
 	Prms       *wtype.LHChannelParameter
 	Multi      int
+	TipType    string
 }
 
 func NewBlowInstruction() *BlowInstruction {
@@ -2393,6 +2408,8 @@ func (ins *BlowInstruction) GetParameter(name string) interface{} {
 		return ins.Multi
 	case "INSTRUCTIONTYPE":
 		return ins.InstructionType()
+	case "TIPTYPE":
+		return ins.TipType
 	}
 	return nil
 }
@@ -2405,6 +2422,7 @@ func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
 	ins.TPlateType = append(ins.TPlateType, tp.TPlateType)
 	ins.TVolume = append(ins.TVolume, tp.TVolume)
 	ins.Head = tp.Channel.Head
+	ins.TipType = tp.TipType
 }
 func (scti *BlowInstruction) Params() MultiTransferParams {
 	var tp MultiTransferParams
@@ -2428,6 +2446,10 @@ func (ins *BlowInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 	ofx := SafeGetF64(pol, "DSPXOFFSET")
 	ofy := SafeGetF64(pol, "DSPYOFFSET")
 	ofz := SafeGetF64(pol, "DSPZOFFSET")
+	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
+
+	ofz += ofzadj
+
 	ref := SafeGetInt(pol, "DSPREFERENCE")
 	entryspeed := SafeGetF64(pol, "DSPENTRYSPEED")
 	defaultspeed := SafeGetF64(pol, "DEFAULTZSPEED")

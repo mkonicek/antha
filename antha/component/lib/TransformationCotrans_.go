@@ -153,7 +153,7 @@ func init() {
 		Constructor: TransformationCotransNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/Transformation_control/TransformationCotrans.an",
+			Path: "antha/component/an/Liquid_handling/PooledLibrary/playground/Cotransformation/TransformationCotrans.an",
 			Params: []component.ParamDesc{
 				{Name: "CompetentCellPlateWells", Desc: "", Kind: "Parameters"},
 				{Name: "CompetentCellTransferVolume", Desc: "", Kind: "Parameters"},

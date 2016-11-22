@@ -2,8 +2,6 @@ package executeutil
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/ghodss/yaml"

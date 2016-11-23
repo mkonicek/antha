@@ -40,7 +40,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	offset := 0.25
 	riserheightinmm := 40.0 - offset
-	shallowriserheightinmm := 20.0 - offset
+	shallowriserheightinmm := 20.25 - offset
 	coolerheight := 16.0
 	pcrtuberack496 := 28.0
 	incubatorheightinmm := devices.Shaker["3000 T-elm"]["Height"] * 1000

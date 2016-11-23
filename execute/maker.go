@@ -1,14 +1,29 @@
 package execute
 
 import (
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 )
 
 type maker struct {
+	// Map from old LHComponent id to new id after instruction (typically 1)
+	afterInst map[string][]string
+	// Map from old LHComponent id to new id after sample
+	afterSample map[string][]string
+	// Map from from wtype world to ast world
 	byComp map[*wtype.LHComponent]*ast.UseComp
-	// pre-mixing samples of the same component share the same id
-	byId map[string][]*ast.UseComp
+	byId   map[string][]*ast.UseComp
+}
+
+func newMaker() *maker {
+	return &maker{
+		afterInst:   make(map[string][]string),
+		afterSample: make(map[string][]string),
+		byComp:      make(map[*wtype.LHComponent]*ast.UseComp),
+		byId:        make(map[string][]*ast.UseComp),
+	}
 }
 
 func (a *maker) makeComp(c *wtype.LHComponent) *ast.UseComp {
@@ -35,8 +50,8 @@ func (a *maker) makeCommand(in *commandInst) ast.Node {
 	return out
 }
 
-// Manifest dependencies between samples that share the same id
-func (a *maker) addMissingDeps() {
+// Samples of the same component share the same id.
+func (a *maker) resolveReuses() {
 	for _, uses := range a.byId {
 		// HACK: assume that samples are used in sequentially; remove when
 		// dependencies are tracked individually
@@ -60,18 +75,66 @@ func (a *maker) addMissingDeps() {
 	}
 }
 
-// Normalize commands into well-formed AST
-func makeNodes(insts []*commandInst) ([]ast.Node, error) {
-	m := &maker{
-		byComp: make(map[*wtype.LHComponent]*ast.UseComp),
-		byId:   make(map[string][]*ast.UseComp),
+// Manifest dependencies across opaque blocks
+func (a *maker) resolveUpdates(m map[string][]string) {
+	for oldId, newIds := range m {
+		// Uses by id are sequential from resolveReuses, so it is sufficient to
+		// match first use to last def
+		for _, newId := range newIds {
+			if len(a.byId[newId]) == 0 {
+				continue
+			}
+			if len(a.byId[oldId]) == 0 {
+				continue
+			}
+
+			new := a.byId[newId][0]
+			old := a.byId[oldId][len(a.byId[oldId])-1]
+			new.From = append(new.From, old)
+		}
 	}
+}
+
+func (a *maker) removeMultiEdges() {
+	for _, use := range a.byComp {
+		var filtered []ast.Node
+		seen := make(map[ast.Node]bool)
+		for _, from := range use.From {
+			if seen[from] {
+				continue
+			}
+			seen[from] = true
+			filtered = append(filtered, from)
+		}
+		use.From = filtered
+	}
+}
+
+func (a *maker) UpdateAfterInst(oldId, newId string) {
+	a.afterInst[oldId] = append(a.afterInst[oldId], newId)
+}
+
+// Normalize commands into well-formed AST
+func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
 	var nodes []ast.Node
 	for _, inst := range insts {
-		nodes = append(nodes, m.makeCommand(inst))
+		nodes = append(nodes, a.makeCommand(inst))
 	}
 
-	m.addMissingDeps()
+	for comp := range a.byComp {
+		// Cannot use comp.ParentId because it is new.ParentID = old.ParentID
+		// rather than new.ParentID = old.ID . Use DaughterComponent instead.
+
+		// Contains all descendents rather then direct ones
+		for _, kid := range strings.Split(comp.DaughterID, "_") {
+			a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
+		}
+	}
+
+	a.resolveReuses()
+	a.resolveUpdates(a.afterInst)
+	a.resolveUpdates(a.afterSample)
+	a.removeMultiEdges()
 
 	return nodes, nil
 }

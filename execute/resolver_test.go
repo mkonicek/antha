@@ -18,6 +18,7 @@ func TestUseCompChainThroughSample(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = target.WithTarget(ctx, tgt)
+	ctx = WithId(ctx, "")
 
 	vol := wunit.NewVolume(1, "ul")
 	a1 := mix(ctx, mixer.GenericMix(mixer.MixOptions{

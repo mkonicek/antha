@@ -86,10 +86,11 @@ func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice) []PlateChoice {
 		cnt := w.WContents
 
 		if i == -1 {
-			pc = append(pc, PlateChoice{p.Type, []string{cnt.ID}, p.ID, []string{wc.FormatA1()}, nm})
+			pc = append(pc, PlateChoice{p.Type, []string{cnt.ID}, p.ID, []string{wc.FormatA1()}, nm, []bool{false}})
 		} else {
 			pc[i].Assigned = append(pc[i].Assigned, cnt.ID)
 			pc[i].Wells = append(pc[i].Wells, wc.FormatA1())
+			pc[i].Output = append(pc[i].Output, false)
 		}
 	}
 	return pc
@@ -211,6 +212,7 @@ type PlateChoice struct {
 	ID        string
 	Wells     []string
 	Name      string
+	Output    []bool
 }
 
 func get_and_complete_assignments(request *LHRequest, order []string, s []PlateChoice, m map[string]string) ([]PlateChoice, map[string]string, error) {
@@ -236,10 +238,11 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			}
 
 			if i == -1 {
-				s = append(s, PlateChoice{v.Platetype, []string{v.ID}, v.PlateID(), []string{v.Welladdress}, nm})
+				s = append(s, PlateChoice{v.Platetype, []string{v.ID}, v.PlateID(), []string{v.Welladdress}, nm, []bool{true}})
 			} else {
 				s[i].Assigned = append(s[i].Assigned, v.ID)
 				s[i].Wells = append(s[i].Wells, v.Welladdress)
+				s[i].Output = append(s[i].Output, true)
 			}
 
 		} else if v.Majorlayoutgroup != -1 || v.PlateName != "" {
@@ -267,10 +270,11 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			i := defined(id, s)
 
 			if i == -1 {
-				s = append(s, PlateChoice{v.Platetype, []string{v.ID}, id, []string{v.Welladdress}, nm})
+				s = append(s, PlateChoice{v.Platetype, []string{v.ID}, id, []string{v.Welladdress}, nm, []bool{true}})
 			} else {
 				s[i].Assigned = append(s[i].Assigned, v.ID)
 				s[i].Wells = append(s[i].Wells, v.Welladdress)
+				s[i].Output = append(s[i].Output, true)
 			}
 		} else if v.IsMixInPlace() {
 			// the first component sets the destination
@@ -304,7 +308,11 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 			for i2, v2 := range s[i].Wells {
 				if v2 == tx[1] {
-					s[i].Assigned[i2] = v.ID
+					if s[i].Output[i2] {
+						s[i].Assigned[i2] = v.ID
+					} else {
+						s[i].Assigned[i2] = v.ProductID
+					}
 					//		found = true
 					break
 				}
@@ -352,11 +360,13 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 			if ass == -1 {
 				// make a new plate
 				ass = len(pc)
-				pc = append(pc, PlateChoice{chooseAPlate(request, v), []string{v.ID}, wtype.GetUUID(), []string{""}, "Output_plate_" + v.ID[0:6]})
+				pc = append(pc, PlateChoice{chooseAPlate(request, v), []string{v.ID}, wtype.GetUUID(), []string{""}, "Output_plate_" + v.ID[0:6], []bool{true}})
+				continue
 			}
 
 			pc[ass].Assigned = append(pc[ass].Assigned, v.ID)
 			pc[ass].Wells = append(pc[ass].Wells, "")
+			pc[ass].Output = append(pc[ass].Output, true)
 		}
 	}
 
@@ -409,7 +419,7 @@ func modpc(choice PlateChoice, nwell int) []PlateChoice {
 
 		nm := uniquePlateName(choice.Name, seen, 100)
 
-		r = append(r, PlateChoice{choice.Platetype, choice.Assigned[s:e], ID, choice.Wells[s:e], nm})
+		r = append(r, PlateChoice{choice.Platetype, choice.Assigned[s:e], ID, choice.Wells[s:e], nm, choice.Output[s:e]})
 	}
 	return r
 }
@@ -524,6 +534,7 @@ func make_plates(request *LHRequest, order []string) map[string]string {
 }
 
 func make_layouts(request *LHRequest, pc []PlateChoice) error {
+	sampletracker := sampletracker.GetSampleTracker()
 	// we need to fill in the platechoice structure then
 	// transfer the info across to the solutions
 
@@ -554,6 +565,12 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 		for i, _ := range c.Assigned {
 			sID := c.Assigned[i]
 			well := c.Wells[i]
+			keep := c.Output[i]
+
+			if !keep {
+				sampletracker.SetLocationOf(sID, c.ID+":"+well)
+				continue
+			}
 
 			var assignment string
 

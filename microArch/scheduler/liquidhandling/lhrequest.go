@@ -164,6 +164,7 @@ func (lhr *LHRequest) NewComponentsAdded() bool {
 
 func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 	// impose sanity
+	fmt.Println("SETTING USER PLATE: ", p.PlateName)
 
 	if p.PlateName == "" {
 		p.PlateName = fmt.Sprintf("User_plate_%d", lhr.NUserPlates+1)
@@ -171,6 +172,7 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 	}
 
 	p.MarkNonEmptyWellsUserAllocated()
+
 	lhr.Input_plates[p.ID] = p
 }
 

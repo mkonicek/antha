@@ -2,7 +2,7 @@ LOCUS       EF590893                 271 bp    DNA     linear   PLN 26-JUL-2016
 DEFINITION  Opuntia humifusa voucher NMNH 06-8355 acetyl-CoA carboxylase-D
             (accD) gene, partial cds; chloroplast.
 ACCESSION   EF590893
-VERSION     EF590893.1  GI:156535673
+VERSION     EF590893.1
 KEYWORDS    .
 SOURCE      chloroplast Opuntia humifusa
   ORGANISM  Opuntia humifusa
@@ -39,7 +39,6 @@ FEATURES             Location/Qualifiers
                      /transl_table=11
                      /product="acetyl-CoA carboxylase-D"
                      /protein_id="ABU79977.1"
-                     /db_xref="GI:156535674"
                      /translation="GEKITRLIEYATKNSLPLIIVCASGGARMQEGIVSLMQMAKISS
                      ALYDYHYKPVEKKLLYISILASPTSGGVTASFGMLGDIIIAEPDAE"
 ORIGIN      
@@ -54,7 +53,7 @@ LOCUS       EF590892                 271 bp    DNA     linear   PLN 26-JUL-2016
 DEFINITION  Opuntia fragilis voucher USBG s.n. acetyl-CoA carboxylase-D (accD)
             gene, partial cds; chloroplast.
 ACCESSION   EF590892
-VERSION     EF590892.1  GI:156535671
+VERSION     EF590892.1
 KEYWORDS    .
 SOURCE      chloroplast Opuntia fragilis
   ORGANISM  Opuntia fragilis
@@ -91,7 +90,6 @@ FEATURES             Location/Qualifiers
                      /transl_table=11
                      /product="acetyl-CoA carboxylase-D"
                      /protein_id="ABU79976.1"
-                     /db_xref="GI:156535672"
                      /translation="GEKITRLIEYATKNSLPLIIVCASGGARMQEGIVSLMQMAKISS
                      ALYDYHHKPVEKKLLYISILASPTSGGVTASFGMLGDIIIAEPDAE"
 ORIGIN      
@@ -106,7 +104,7 @@ LOCUS       HQ620723                 576 bp    DNA     linear   PLN 26-FEB-2012
 DEFINITION  Opuntia decumbens voucher Martinez & Eggli 146a (ZSS) acetyl-CoA
             carboxylase beta subunit (accD) gene, partial cds; chloroplast.
 ACCESSION   HQ620723
-VERSION     HQ620723.1  GI:377580661
+VERSION     HQ620723.1
 KEYWORDS    .
 SOURCE      chloroplast Opuntia decumbens
   ORGANISM  Opuntia decumbens
@@ -149,7 +147,6 @@ FEATURES             Location/Qualifiers
                      /transl_table=11
                      /product="acetyl-CoA carboxylase beta subunit"
                      /protein_id="AFB70469.1"
-                     /db_xref="GI:377580662"
                      /translation="ETGLPEAIQTGIGELNGIPLAIGVMDFGFIGGSMGAVVGEKITR
                      LIEYATKNSLPLIIVCASGGARMQEGIVSLMQMAKISSALHDYHYKPVEKKLLYISIL
                      ASPTSGGVTASFGMLGDIIIAEPDAEIAFAGKRVIEEVLKEEVPEGAQTTENLFENGL

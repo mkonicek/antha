@@ -40,6 +40,10 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 	pc := make([]PlateChoice, 0, 3)
 	mp := make(map[string]string)
 	var err error
+
+	// stage zero: seed in user plates if destinations are required
+	//	pc = map_in_user_plates(request, pc)
+
 	for {
 		if ch == nil {
 			break
@@ -52,6 +56,43 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 	}
 
 	return request, err
+}
+
+func map_in_user_plates(rq *LHRequest, pc []PlateChoice) []PlateChoice {
+	for _, p := range rq.Input_plates {
+		pc = map_in_user_plate(p, pc)
+	}
+
+	for _, p := range rq.Output_plates {
+		pc = map_in_user_plate(p, pc)
+	}
+
+	return pc
+}
+
+func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice) []PlateChoice {
+	nm := p.PlateName
+
+	it := wtype.NewOneTimeColumnWiseIterator(p)
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		w := p.Wellcoords[wc.FormatA1()]
+
+		if w.Empty() {
+			continue
+		}
+
+		i := defined(p.ID, pc)
+		cnt := w.WContents
+
+		if i == -1 {
+			pc = append(pc, PlateChoice{p.Type, []string{cnt.ID}, p.ID, []string{wc.FormatA1()}, nm})
+		} else {
+			pc[i].Assigned = append(pc[i].Assigned, cnt.ID)
+			pc[i].Wells = append(pc[i].Wells, wc.FormatA1())
+		}
+	}
+	return pc
 }
 
 func getNameForID(pc []PlateChoice, id string) string {
@@ -241,6 +282,8 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				return s, m, err
 			}
 
+			fmt.Println("GOT LOCATION: ", addr, " for ", v.Components[0].CName)
+
 			v.Components[0].Loc = addr
 			tx := strings.Split(addr, ":")
 			request.LHInstructions[k].Welladdress = tx[1]
@@ -254,6 +297,9 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 			if i == -1 {
 				logger.Debug("CONTRADICTORY PLATE ID SITUATION ", v)
+				fmt.Println("WANT: ", tx[0])
+				fmt.Println("S HAS: ")
+				fmt.Println(s)
 			}
 
 			// v2 is not always set - this isn't safe... why did we do it this way?

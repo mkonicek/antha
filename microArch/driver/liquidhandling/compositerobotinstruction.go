@@ -2091,7 +2091,7 @@ func (ins *SuckInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 	mixofx := SafeGetF64(pol, "PRE_MIX_X")
 	mixofy := SafeGetF64(pol, "PRE_MIX_Y")
 	mixofz := SafeGetF64(pol, "PRE_MIX_Z")
-
+	mixofz += ofzadj
 	final_asp_ref := SafeGetInt(pol, "ASPREFERENCE")
 
 	pspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
@@ -2645,6 +2645,7 @@ func (ins *BlowInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 		}
 
 		pmzoff := SafeGetF64(pol, "POST_MIX_Z")
+		pmzoff += ofzadj
 
 		for k := 0; k < ins.Multi; k++ {
 			mix.OffsetZ = append(mix.OffsetZ, pmzoff)

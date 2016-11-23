@@ -1,0 +1,69 @@
+parameters:
+  ConstructAssembly1:
+    Atp: ATP
+    AtpVol: 1ul
+    Buffer: CutsmartBuffer
+    BufferVol: 2ul
+    InPlate: greiner384
+    InactivationTemp: 40C
+    InactivationTime: 60s
+    LigVol: 1ul
+    Ligase: T4Ligase
+    OutPlate: pcrplate_with_cooler
+    PartNames:
+    - dna1
+    - dna2
+    - dna3
+    PartVols:
+    - 3ul
+    - 3ul
+    - 3ul
+    Parts:
+    - dna_part
+    - dna_part
+    - dna_part
+    ReVol: 1ul
+    ReactionTemp: 25C
+    ReactionTime: 1800s
+    ReactionVolume: 20ul
+    RestrictionEnzyme: SapI
+    Vector: standard_cloning_vector_mark_1
+    VectorVol: 3ul
+    Water: water
+  ConstructAssembly2:
+    Atp: ATP
+    AtpVol: 1ul
+    Buffer: CutsmartBuffer
+    BufferVol: 2ul
+    InPlate: pcrplate_with_cooler
+    InactivationTemp: 40C
+    InactivationTime: 60s
+    LigVol: 1ul
+    Ligase: T4Ligase
+    OutPlate: greiner384
+    PartNames:
+    - dna4
+    - dna5
+    - dna6
+    PartVols:
+    - 3ul
+    - 3ul
+    - 3ul
+    Parts:
+    - dna_part
+    - dna_part
+    - dna_part
+    ReVol: 1ul
+    ReactionTemp: 25C
+    ReactionTime: 1800s
+    ReactionVolume: 20ul
+    RestrictionEnzyme: SapI
+    Vector: standard_cloning_vector_mark_1
+    VectorVol: 3ul
+    Water: water
+connections: []
+processes:
+  ConstructAssembly1:
+    component: TypeIISConstructAssembly
+  ConstructAssembly2:
+    component: TypeIISConstructAssembly

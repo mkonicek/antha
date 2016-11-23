@@ -110,29 +110,29 @@ func TransitiveReduction(graph Graph) (Graph, error) {
 
 	dag := Schedule(graph)
 	for len(dag.Roots) > 0 {
-		// In DAG, solving shortest path with -w() is the solution to the
-		// longest path problem
-		dist := ShortestPath(ShortestPathOpt{
-			Graph:   graph,
-			Sources: dag.Roots,
-			Weight: func(x, y Node) int {
-				return -1
-			},
-		})
+		for _, root := range dag.Roots {
+			// In DAG, solving shortest path with -w() is the solution to the
+			// longest path problem
+			dist := ShortestPath(ShortestPathOpt{
+				Graph:   graph,
+				Sources: []Node{root},
+				Weight: func(x, y Node) int {
+					return -1
+				},
+			})
 
-		for _, src := range dag.Roots {
-			ret.Nodes = append(ret.Nodes, src)
-			for i, inum := 0, graph.NumOuts(src); i < inum; i += 1 {
-				dst := graph.Out(src, i)
+			ret.Nodes = append(ret.Nodes, root)
+			for i, inum := 0, graph.NumOuts(root); i < inum; i += 1 {
+				dst := graph.Out(root, i)
 				if dist[dst] == -1 {
-					ret.Outs[src] = append(ret.Outs[src], dst)
+					ret.Outs[root] = append(ret.Outs[root], dst)
 				}
 			}
 		}
 
 		var next []Node
-		for _, src := range dag.Roots {
-			next = append(next, dag.Visit(src)...)
+		for _, root := range dag.Roots {
+			next = append(next, dag.Visit(root)...)
 		}
 		dag.Roots = next
 	}

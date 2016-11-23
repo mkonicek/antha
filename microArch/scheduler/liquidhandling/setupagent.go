@@ -96,6 +96,8 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 	output_plates := request.Output_plates
 	output_plate_order := request.Output_plate_order
 
+	fmt.Println("OPA: ", output_plate_order)
+
 	if len(output_plate_order) < len(output_plates) {
 		output_plate_order = make([]string, 0, len(output_plates))
 		/*
@@ -110,7 +112,6 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 			ins := request.LHInstructions[insID]
 			tx := strings.Split(ins.Result.Loc, ":")
 			pa := tx[0]
-
 			notInInputs := !isInStrArr(pa, input_plate_order)
 			if !isInStrArr(pa, output_plate_order) && notInInputs {
 				output_plate_order = append(output_plate_order, pa)
@@ -118,6 +119,15 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 		}
 
 		if len(output_plate_order) > len(output_plates) {
+			for _, o := range output_plate_order {
+				fmt.Println(o)
+			}
+			fmt.Println("---")
+
+			for _, p := range output_plates {
+				fmt.Println(p.ID)
+			}
+
 			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 121))
 		}
 

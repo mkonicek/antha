@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 ASL=antha/AnthaStandardLibrary/Packages
 
-all: gen_comp
+all: gen_comp compile
 
 gen_comp:
 	go run cmd/antha/antha.go -outdir=antha/component/lib antha/component/an
@@ -24,30 +24,8 @@ fmt_json:
 compile:
 	go install github.com/antha-lang/antha/cmd/...
 
-test_workflows: compile
-	for d in `find antha/examples -mindepth 2 -maxdepth 2 -type d`; do \
-	  abs=`cd $$d; pwd` ;\
-	  /bin/echo "Checking $$d..."; \
-	  (go test github.com/antha-lang/antha/antha/component/lib -args $$abs) ;\
-	  if [[ $$? == 0 ]]; then \
-	    echo "PASS $$d"; \
-	  else \
-	    echo "FAIL $$d"; \
-	  fi; \
-	done
-
-test_workflows_old: compile
-	for d in `find antha/examples -type d -o -name '*.yml'`; do \
-	  if [[ -f "$$d/workflow.json" && -f "$$d/parameters.yml" ]]; then \
-	    /bin/echo -n "Checking $$d..."; \
-	    (cd "$$d" && antharun --workflow workflow.json --parameters parameters.yml $(ANTHA_ARGS) > /dev/null); \
-	    if [[ $$? == 0 ]]; then \
-	      /bin/echo "PASS"; \
-	    else \
-	      /bin/echo "FAIL"; \
-	    fi; \
-	  fi; \
-	done
+test_workflows:
+	go test github.com/antha-lang/antha/antha/component/lib
 
 assets: $(ASL)/asset/asset.go
 

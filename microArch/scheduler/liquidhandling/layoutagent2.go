@@ -42,7 +42,7 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 	var err error
 
 	// stage zero: seed in user plates if destinations are required
-	//	pc = map_in_user_plates(request, pc)
+	pc = map_in_user_plates(request, pc)
 
 	for {
 		if ch == nil {
@@ -282,8 +282,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				return s, m, err
 			}
 
-			fmt.Println("GOT LOCATION: ", addr, " for ", v.Components[0].CName)
-
 			v.Components[0].Loc = addr
 			tx := strings.Split(addr, ":")
 			request.LHInstructions[k].Welladdress = tx[1]
@@ -297,17 +295,17 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 			if i == -1 {
 				logger.Debug("CONTRADICTORY PLATE ID SITUATION ", v)
-				fmt.Println("WANT: ", tx[0])
-				fmt.Println("S HAS: ")
-				fmt.Println(s)
 			}
 
 			// v2 is not always set - this isn't safe... why did we do it this way?
 			// i think this whole mechanism is pretty shady
 
+			//found := false
+
 			for i2, v2 := range s[i].Wells {
 				if v2 == tx[1] {
 					s[i].Assigned[i2] = v.ID
+					//		found = true
 					break
 				}
 			}
@@ -379,6 +377,11 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 
 	for _, c := range pc2 {
 		for _, i := range c.Assigned {
+			_, ok := request.LHInstructions[i]
+
+			if !ok {
+				continue
+			}
 			request.LHInstructions[i].SetPlateID(c.ID)
 			request.LHInstructions[i].Platetype = c.Platetype
 			request.LHInstructions[i].PlateName = c.Name
@@ -499,8 +502,16 @@ func make_plates(request *LHRequest, order []string) map[string]string {
 		}
 		_, ok := request.Output_plates[v.PlateID()]
 
-		if !ok {
+		// we don't remap input plates
+		_, ok2 := request.Input_plates[v.PlateID()]
+
+		// need to assign a new plate
+		if !(ok || ok2) {
 			plate := factory.GetPlateByType(v.Platetype)
+
+			if plate == nil {
+				logger.Fatal(fmt.Sprintln("Output mapping: no such plate type: ", v.Platetype))
+			}
 			plate.PlateName = request.LHInstructions[k].PlateName
 			request.Output_plates[plate.ID] = plate
 			remap[v.PlateID()] = plate.ID

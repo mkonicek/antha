@@ -4,13 +4,13 @@
             "LiquidVolumes": ["19ul","100ul"],
             "Liquidname": "tartrazine",
             "OutPlates": [
-            "greiner384_riser20",
-			"greiner384_riser40"
+            "pcrplate_skirted_riser20",
+			"pcrplate_skirted_riser40"
             ],
             "LiquidTypes": ["water","PostMix","PreMix", "DispenseAboveLiquid"],
             "Startingsolution": "tartrazine",
            
-			"TestName":"shallowheighttest"
+			"TestName":"Test"
         }
     }
 }

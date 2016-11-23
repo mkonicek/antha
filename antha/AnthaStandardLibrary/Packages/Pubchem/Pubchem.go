@@ -244,6 +244,10 @@ func MakeMolecule(name string) (Molecule, error) {
 
 	var molecule Molecule
 	molecule.Moleculename = name
+
+	if len(pubchemtable.Propertytable < 1) {
+		return nil, fmt.Errorf("No property table")
+	}
 	molecule.CID = pubchemtable.Propertytable[0].CID
 	molecule.MolecularFormula = pubchemtable.Propertytable[0].MolecularFormula
 	molecule.MolecularWeight = pubchemtable.Propertytable[0].MolecularWeight

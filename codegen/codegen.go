@@ -6,6 +6,7 @@ package codegen
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
@@ -30,31 +31,68 @@ type ir struct {
 
 // Print out IR for debugging
 func (a *ir) Print(g graph.Graph, out io.Writer) error {
+	shortId := func(x string) string {
+		for _, p := range strings.Split(x, "-") {
+			return p
+		}
+		return x
+	}
+
+	labelers := []func(interface{}) string{
+		func(x interface{}) string {
+			c, ok := x.(*ast.Command)
+			if !ok {
+				return ""
+			}
+			return fmt.Sprintf("%T", c.Inst)
+		},
+		func(x interface{}) string {
+			n, ok := x.(ast.Node)
+			if !ok {
+				return ""
+			}
+			drun := a.assignment[n]
+			if drun != nil {
+				return fmt.Sprintf("Run %p Device %p %s", drun, drun.Device, drun.Device)
+			}
+			return ""
+		},
+		func(x interface{}) string {
+			n, ok := x.(ast.Node)
+			if !ok {
+				return ""
+			}
+
+			u, ok := n.(*ast.UseComp)
+			if !ok {
+				return ""
+			}
+			return fmt.Sprintf("%s (%s)", u.Value.CName, shortId(u.Value.ID))
+		},
+		func(x interface{}) string {
+			n, ok := x.(*target.Manual)
+			if !ok {
+				return ""
+			}
+			return n.Label
+		},
+	}
+
+	label := func(x interface{}) string {
+		var items []string
+		for _, l := range labelers {
+			s := l(x)
+			if len(s) != 0 {
+				items = append(items, s)
+			}
+		}
+		return strings.Join(items, "\n")
+	}
+
 	s := graph.Print(graph.PrintOpt{
 		Graph: g,
 		NodeLabelers: []graph.Labeler{
-			func(x interface{}) string {
-				if c, ok := x.(*ast.Command); ok {
-					return fmt.Sprintf("%T", c.Inst)
-				} else {
-					return ""
-				}
-			},
-			func(x interface{}) string {
-				n := x.(ast.Node)
-				drun := a.assignment[n]
-				if drun != nil {
-					return fmt.Sprintf("Run %p Device %p %s", drun, drun.Device, drun.Device)
-				}
-				return "NoRun"
-			},
-			func(x interface{}) string {
-				n := x.(ast.Node)
-				if u, ok := n.(*ast.UseComp); ok {
-					return u.Value.CName
-				}
-				return ""
-			},
+			label,
 		},
 	})
 	_, err := fmt.Fprint(out, s, "\n")

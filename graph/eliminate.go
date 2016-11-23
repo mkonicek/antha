@@ -35,6 +35,18 @@ func inNodes(graph Graph) map[Node][]Node {
 	return ins
 }
 
+func outNodes(graph Graph) map[Node][]Node {
+	outs := make(map[Node][]Node)
+	for i, inum := 0, graph.NumNodes(); i < inum; i += 1 {
+		n := graph.Node(i)
+		for j, jnum := 0, graph.NumOuts(n); j < jnum; j += 1 {
+			out := graph.Out(n, j)
+			outs[n] = append(outs[n], out)
+		}
+	}
+	return outs
+}
+
 // Return graph resulting from node elimination. Node elimination removes node
 // n by adding edges (in(n), out(n)) for the product of incoming and outgoing
 // neighbors.
@@ -49,45 +61,29 @@ func Eliminate(opt EliminateOpt) Graph {
 	// Retarget ins of eliminated nodes to outs of eliminated nodes
 	nodes := eliminationOrder(opt.Graph)
 	ins := inNodes(opt.Graph)
-	outs := make(map[Node][]Node)
-	eliminated := make(map[Node]bool)
-	for idx, n := range nodes {
-		// Remove processed ins as we go
-		if idx > 0 {
-			delete(ins, nodes[idx-1])
-		}
+	outs := outNodes(opt.Graph)
 
+	for _, n := range nodes {
 		if kmap[n] {
 			continue
 		}
 
-		// Make sure to process outs given to us by previously eliminated nodes
-		nouts := outs[n]
-		for j, jnum := 0, opt.Graph.NumOuts(n); j < jnum; j += 1 {
-			nouts = append(nouts, opt.Graph.Out(n, j))
-		}
-
-		for _, out := range nouts {
-			if kmap[out] {
-				// Normal case: link ins of eliminated node to outs of
-				// eliminated node
-				for _, in := range ins[n] {
-					outs[in] = append(outs[in], out)
-				}
-				continue
-			}
-
-			if eliminated[out] {
-				continue
-			}
-
-			// If we aren't keeping out and we haven't yet processed it, update
-			// its ins to include our ins
+		for _, out := range outs[n] {
 			for _, in := range ins[n] {
+				if n == in {
+					continue
+				}
+
+				outs[in] = append(outs[in], out)
+			}
+
+			for _, in := range ins[n] {
+				if n == out {
+					continue
+				}
 				ins[out] = append(ins[out], in)
 			}
 		}
-		eliminated[n] = true
 	}
 
 	// Create eliminated graph

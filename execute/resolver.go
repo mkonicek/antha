@@ -39,7 +39,7 @@ func (a *resolver) resolve(ctx context.Context, instObjs []interface{}) (map[int
 		return nil, err
 	}
 
-	nodes, err := makeNodes(commands)
+	nodes, err := getMaker(ctx).MakeNodes(commands)
 	if err != nil {
 		return nil, err
 	}

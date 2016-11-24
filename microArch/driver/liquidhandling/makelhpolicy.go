@@ -791,7 +791,7 @@ func MakeLVDNAMixPolicy() LHPolicy {
 
 func MakeHVOffsetPolicy() LHPolicy {
 	lvop := make(LHPolicy, 6)
-	lvop["OFFSETZADJUST"] = 1.0
+	lvop["OFFSETZADJUST"] = 0.75
 	lvop["POST_MIX_RATE"] = 37
 	lvop["PRE_MIX_RATE"] = 37
 	lvop["ASPSPEED"] = 37

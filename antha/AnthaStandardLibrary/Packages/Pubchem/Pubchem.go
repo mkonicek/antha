@@ -25,7 +25,7 @@ package pubchem
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -247,7 +247,7 @@ func MakeMolecule(name string) (Molecule, error) {
 	molecule.Moleculename = name
 
 	if len(pubchemtable.Propertytable) < 1 {
-		return molecule, fmt.Errorf("No property table")
+		return molecule, errors.New("No property table")
 	}
 	molecule.CID = pubchemtable.Propertytable[0].CID
 	molecule.MolecularFormula = pubchemtable.Propertytable[0].MolecularFormula

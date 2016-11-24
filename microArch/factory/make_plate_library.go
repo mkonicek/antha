@@ -54,6 +54,42 @@ type Riser struct {
 	Synonyms     []string
 }
 
+func (r Riser) GetRiser() Riser {
+	return r
+}
+
+func (r Riser) GetConstraints() *Constraints {
+	return nil
+}
+
+func (r Riser) GetSynonyms() []string {
+	return r.Synonyms
+}
+func (r Riser) GetHeightInmm() float64 {
+	return r.Heightinmm
+}
+func (r Riser) GetName() string {
+	return r.Name
+}
+
+func (r Incubator) GetRiser() Riser {
+	i := r.Riser
+	return i
+}
+func (r Incubator) GetConstraints() *Constraints {
+	return nil
+}
+
+func (r Incubator) GetSynonyms() []string {
+	return r.Synonyms
+}
+func (r Incubator) GetHeightInmm() float64 {
+	return r.Heightinmm
+}
+func (r Incubator) GetName() string {
+	return r.Name
+}
+
 // An SBS format device upon which a plate can be placed; The device may have constraints
 type Incubator struct {
 	Riser
@@ -61,17 +97,21 @@ type Incubator struct {
 	Constraints Constraints // map device to positions where the device is restricted; if empty no restrictions are expected
 }
 
+type Device interface {
+	GetConstraints() *Constraints
+	GetSynonyms() []string
+	GetHeightInmm() float64
+	GetRiser() Riser
+	GetName() string
+}
+
 // map using device name as key to return allowed positions
 type Constraints map[string][]string
 
-// list of default risers
-var Risers map[string]Riser = map[string]Riser{
+// list of default devices upon which an sbs format plate may be placed
+var Devices map[string]Device = map[string]Device{
 	"riser40": Riser{Name: "riser40", Manufacturer: "Cybio", Heightinmm: riserheightinmm, Synonyms: []string{"riser40", "riser"}},
 	"riser20": Riser{Name: "riser20", Manufacturer: "Gilson", Heightinmm: shallowriserheightinmm, Synonyms: []string{"riser20", "shallowriser"}},
-}
-
-// list of default incubators
-var Incubators map[string]Incubator = map[string]Incubator{
 	"incubator": Incubator{
 		Riser:      Riser{Name: "incubator", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm, Synonyms: []string{"incubator", "bioshake"}},
 		Properties: devices.Shaker["3000 T-elm"],
@@ -84,20 +124,14 @@ var Incubators map[string]Incubator = map[string]Incubator{
 // function to check if a platename already contains a riser
 func ContainsRiser(plate *wtype.LHPlate) bool {
 
-	for _, riser := range Risers {
-		for _, synonym := range riser.Synonyms {
+	for _, riser := range Devices {
+		for _, synonym := range riser.GetSynonyms() {
 			if strings.Contains(plate.Type, synonym) {
 				return true
 			}
 		}
 	}
-	for _, riser := range Incubators {
-		for _, synonym := range riser.Synonyms {
-			if strings.Contains(plate.Type, synonym) {
-				return true
-			}
-		}
-	}
+
 	return false
 }
 
@@ -107,42 +141,38 @@ var (
 	inhecoincubatorinmm float64 = devices.Shaker["InhecoStaticOnDeck"]["Height"] * 1000
 )
 
-func (i *PlateInventory) AddRiser(riser Riser, zoffsetinmm float64, constraints *Constraints) {
-	for platename, plate := range i.inv {
-		if !ContainsRiser(plate) {
-			for _, risername := range riser.Synonyms {
-				if _, found := i.inv[risername]; !found && !strings.Contains(platename, risername) {
-					newplate := plate
-					newplate.WellZStart = plate.WellZStart + zoffsetinmm
-					newname := platename + "_" + risername
-					newplate.Type = newname
-					if constraints != nil {
-						for device, allowedpositions := range *constraints {
-							newplate.SetConstrained(device, allowedpositions)
-						}
-					}
+func (i *PlateInventory) AddRiser(plate *wtype.LHPlate, riser Device) {
+	//for platename, plate := range i.inv {
+	if !ContainsRiser(plate) {
+		for _, risername := range riser.GetSynonyms() {
 
-					i.inv[newname] = newplate
+			newplate := plate.Dup()
+			newplate.WellZStart = plate.WellZStart + riser.GetHeightInmm()
+			newname := plate.Type + "_" + risername
+			newplate.Type = newname
+			if riser.GetConstraints() != nil {
+				for device, allowedpositions := range *riser.GetConstraints() {
+					// duplicate well before adding constraint to prevent applying constraint to all common &Welltype on other paltes
+					newwell := newplate.Welltype.Dup()
+					newplate.Welltype = newwell
+					newplate.SetConstrained(device, allowedpositions)
 				}
 			}
+
+			i.inv[newname] = newplate
+
 		}
-	}
-}
-
-func (i *PlateInventory) AddAllRisers() {
-	for _, riser := range Risers {
-		riserheight := riser.Heightinmm
-		i.AddRiser(riser, riserheight, nil)
 
 	}
+	//}
 }
+func (i *PlateInventory) AddAllDevices() {
+	for _, plate := range i.inv {
+		for _, riser := range Devices {
 
-func (i *PlateInventory) AddAllIncubators() {
-	for _, incubator := range Incubators {
-		riserheight := incubator.Heightinmm
+			i.AddRiser(plate, riser)
 
-		i.AddRiser(incubator.Riser, riserheight, &incubator.Constraints)
-
+		}
 	}
 }
 
@@ -216,10 +246,10 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plates[plate.Type] = plate
 
 	// shallow round well flat bottom 96 on QInstruments incubator
-	plate = wtype.NewLHPlate("SRWFB96_incubator", "Unknown", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, incubatorheightinmm+5.0)
+	incubator96 := wtype.NewLHPlate("SRWFB96_incubator", "Unknown", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, incubatorheightinmm+5.0)
 	consar := []string{"position_1"}
-	plate.SetConstrained("Pipetmax", consar)
-	plates[plate.Type] = plate
+	incubator96.SetConstrained("Pipetmax", consar)
+	plates[incubator96.Type] = incubator96
 
 	// deep well strip trough 12
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
@@ -290,12 +320,15 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, 0.636)
 	plates[plate.Type] = plate
 
+	pcrplatewellinc := wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 1.55, 1.4, "mm")
+	pcrplatewellinc.SetAfVFunc(afs)
+
 	// pcr plate with incubator
-	plate = wtype.NewLHPlate("pcrplate_with_incubator", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, incubatorheightinmm+2.0)
+	platewithincubator := wtype.NewLHPlate("pcrplate_with_incubator", "Unknown", 8, 12, 15.5, "mm", pcrplatewellinc, 9, 9, 0.0, 0.0, incubatorheightinmm+2.0)
 
 	consar = []string{"position_1"}
-	plate.SetConstrained("Pipetmax", consar)
-	plates[plate.Type] = plate
+	platewithincubator.SetConstrained("Pipetmax", consar)
+	plates[platewithincubator.Type] = platewithincubator
 
 	// Block Kombi 2ml
 	eppy := wtype.NewShape("cylinder", "mm", 8.2, 8.2, 45)
@@ -514,13 +547,13 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 25, 0, ep48g, wtype.LHWBFLAT, 2, 4, 2, 2, "mm")
 	//welltype = wtype.NewLHWell("384flat", "", "", "ul", 100, 10, square, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 	//plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, -1.0, 17.25, 49.5)
-	plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
+	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
 	//plate = wtype.NewLHPlate("greiner384", "Unknown", 16, 24, 14, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
-	consar = []string{"position_9"}
-	plate.SetConstrained("Pipetmax", consar)
+	gelconsar := []string{"position_9"}
+	gelplate.SetConstrained("Pipetmax", gelconsar)
 
-	plates[plate.Type] = plate
+	plates[gelplate.Type] = gelplate
 
 	// E-GEL 96 definition
 
@@ -531,21 +564,19 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	// 1st type
 	//can't reach all wells; change to 12 wells per row?
 	//plate = wtype.NewLHPlate("EGEL96_1", "Invitrogen", 4, 13, 48.5, "mm", welltype, 9, 18.0, 0, -1.0, riserheightinmm+5.5)
-	plate = wtype.NewLHPlate("EGEL96_1", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -9.0, -0.5, riserheightinmm+5.5)
+	gelplate = wtype.NewLHPlate("EGEL96_1", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -9.0, -0.5, riserheightinmm+5.5)
 
-	consar = []string{"position_9"}
-	plate.SetConstrained("Pipetmax", consar)
+	gelplate.SetConstrained("Pipetmax", gelconsar)
 
-	plates[plate.Type] = plate
+	plates[gelplate.Type] = gelplate
 
 	// 2nd type
 	//plate = wtype.NewLHPlate("EGEL96_2", "Invitrogen", 4, 13, 48.5, "mm", welltype, 9, 18.0, 4.0, 8, riserheightinmm+5.5)
-	plate = wtype.NewLHPlate("EGEL96_2", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -5.0, 9, riserheightinmm+5.5)
+	gelplate = wtype.NewLHPlate("EGEL96_2", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -5.0, 9, riserheightinmm+5.5)
 
-	consar = []string{"position_9"}
-	plate.SetConstrained("Pipetmax", consar)
+	gelplate.SetConstrained("Pipetmax", gelconsar)
 
-	plates[plate.Type] = plate
+	plates[gelplate.Type] = gelplate
 
 	// falcon 6 well plate with Agar flat bottom with 4ml per well
 
@@ -606,11 +637,10 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plates[plate.Type] = plate
 
 	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
-	plate = wtype.NewLHPlate("costar48well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltypecostart48, wellxoffset, wellyoffset, xstart, ystart, incubatorheightinmm)
-	plates[plate.Type] = plate
-	consar = []string{"position_1"}
-	plate.SetConstrained("Pipetmax", consar)
+	incubator48 := wtype.NewLHPlate("costar48well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltypecostart48, wellxoffset, wellyoffset, xstart, ystart, incubatorheightinmm)
 
+	incubator48.SetConstrained("Pipetmax", consar)
+	plates[incubator48.Type] = incubator48
 	// Nunclon 12 well plate with Agar flat bottom 2ml per well
 
 	bottomtype = wtype.LHWBFLAT
@@ -642,18 +672,17 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	zstart = incubatorheightinmm - 3.5 // offset of bottom of deck to bottom of well (this includes agar estimate)
 
-	plate = wtype.NewLHPlate("Nuncon12wellAgar_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	incubator12agar := wtype.NewLHPlate("Nuncon12wellAgar_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
-	consar = []string{"position_1"}
-	plate.SetConstrained("Pipetmax", consar)
+	incubator12agar.SetConstrained("Pipetmax", consar)
 
-	plates[plate.Type] = plate
+	plates[incubator12agar.Type] = incubator12agar
 
-	plate = wtype.NewLHPlate("Nuncon12wellAgarD_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	incubator12agarposition9 := wtype.NewLHPlate("Nuncon12wellAgarD_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
-	consar = []string{"position_9"}
-	plate.SetConstrained("Pipetmax", consar)
-	plates[plate.Type] = plate
+	consar9 := []string{"position_9"}
+	incubator12agarposition9.SetConstrained("Pipetmax", consar9)
+	plates[incubator12agarposition9.Type] = incubator12agarposition9
 
 	//VWR 12 Well Plate 734-2324 NO AGAR
 
@@ -686,12 +715,11 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	zstart = incubatorheightinmm - 2.0 // offset of bottom of deck to bottom of well (this includes agar estimate)
 
-	plate = wtype.NewLHPlate("VWR12well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltypevwr12, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	platevwr12 := wtype.NewLHPlate("VWR12well_incubator", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltypevwr12, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
-	consar = []string{"position_1"}
 	plate.SetConstrained("Pipetmax", consar)
 
-	plates[plate.Type] = plate
+	plates[platevwr12.Type] = platevwr12
 
 	//Nunclon 8 well Plate 167064 DOW
 	bottomtype = wtype.LHWBFLAT
@@ -780,8 +808,9 @@ func init() {
 	defaultPlateInventory = &PlateInventory{
 		inv: makePlateLibrary(),
 	}
-	defaultPlateInventory.AddAllRisers()
-	defaultPlateInventory.AddAllIncubators()
+
+	defaultPlateInventory.AddAllDevices()
+	//defaultPlateInventory.AddAllRisers()
 }
 
 func AddPlate(name string, p *wtype.LHPlate) error {

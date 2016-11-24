@@ -26,11 +26,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
-	"sort"
 )
 
 //var commonwelltypes
@@ -43,7 +44,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	shallowriserheightinmm := 20.25 - offset
 	coolerheight := 16.0
 	pcrtuberack496 := 28.0
-	incubatorheightinmm := devices.Shaker["3000 T-elm"]["Height"] * 1000
+	incubatorheightinmm := devices.Shaker["3000 T-elm"]["Height"]*1000 - 3.0
 
 	inhecoincubatorinmm := devices.Shaker["InhecoStaticOnDeck"]["Height"] * 1000
 

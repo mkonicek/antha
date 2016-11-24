@@ -46,6 +46,7 @@ const (
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
 )
 
+// An SBS format object upon which a plate can be placed.
 type Riser struct {
 	Name         string
 	Manufacturer string
@@ -53,6 +54,7 @@ type Riser struct {
 	Synonyms     []string
 }
 
+// An SBS format device upon which a plate can be placed; The device may have constraints
 type Incubator struct {
 	Riser
 	Properties  map[string]float64
@@ -62,11 +64,13 @@ type Incubator struct {
 // map using device name as key to return allowed positions
 type Constraints map[string][]string
 
+// list of default risers
 var Risers map[string]Riser = map[string]Riser{
 	"riser40": Riser{Name: "riser40", Manufacturer: "Cybio", Heightinmm: riserheightinmm, Synonyms: []string{"riser40", "riser"}},
 	"riser20": Riser{Name: "riser20", Manufacturer: "Gilson", Heightinmm: shallowriserheightinmm, Synonyms: []string{"riser20", "shallowriser"}},
 }
 
+// list of default incubators
 var Incubators map[string]Incubator = map[string]Incubator{
 	"incubator": Incubator{
 		Riser:      Riser{Name: "incubator", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm, Synonyms: []string{"incubator", "bioshake"}},
@@ -77,18 +81,19 @@ var Incubators map[string]Incubator = map[string]Incubator{
 	},
 }
 
-func ContainsRiserName(platename string) bool {
+// function to check if a platename already contains a riser
+func ContainsRiser(plate *wtype.LHPlate) bool {
 
 	for _, riser := range Risers {
 		for _, synonym := range riser.Synonyms {
-			if strings.Contains(platename, synonym) {
+			if strings.Contains(plate.Type, synonym) {
 				return true
 			}
 		}
 	}
 	for _, riser := range Incubators {
 		for _, synonym := range riser.Synonyms {
-			if strings.Contains(platename, synonym) {
+			if strings.Contains(plate.Type, synonym) {
 				return true
 			}
 		}
@@ -97,13 +102,14 @@ func ContainsRiserName(platename string) bool {
 }
 
 var (
-	incubatorheightinmm float64 = devices.Shaker["3000 T-elm"]["Height"] * 1000
+	incubatoroffset     float64 = -3.0
+	incubatorheightinmm float64 = devices.Shaker["3000 T-elm"]["Height"]*1000 + incubatoroffset
 	inhecoincubatorinmm float64 = devices.Shaker["InhecoStaticOnDeck"]["Height"] * 1000
 )
 
 func (i *PlateInventory) AddRiser(riser Riser, zoffsetinmm float64, constraints *Constraints) {
 	for platename, plate := range i.inv {
-		if !ContainsRiserName(platename) {
+		if !ContainsRiser(plate) {
 			for _, risername := range riser.Synonyms {
 				if _, found := i.inv[risername]; !found && !strings.Contains(platename, risername) {
 					newplate := plate

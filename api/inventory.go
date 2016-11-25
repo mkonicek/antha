@@ -1,12 +1,15 @@
 package api
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type InventoryItem struct {
 	// Inventory id
 	Id string `json:"id"`
 	// Metadata
-	Metadata map[string][]byte `json:"metadata,omitempty"`
+	Metadata map[string]json.RawMessage `json:"metadata,omitempty"`
 	// Time this inventory item was created at
 	CreatedAt time.Time `json:"create_at"`
 	// From: history of this inventory item

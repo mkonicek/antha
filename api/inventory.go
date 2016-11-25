@@ -55,11 +55,17 @@ type Component struct {
 	// Component type
 	Type string `json:"type"`
 	// Name
-	ComponentName string `json:"component_name"`
+	Name string `json:"name"`
 	// Volume
-	Volume Measurement `json:"volume"`
+	Volume *Measurement `json:"volume,omitempty"`
 	// Viscosity
-	Viscosity Measurement `json:"viscosity"`
+	Viscosity *Measurement `json:"viscosity,omitempty"`
+	// Mass
+	Mass *Measurement `json:"mass,omitempty"`
+	// Amount (moles)
+	Amount *Measurement `json:"amount,omitempty"`
+	// If non-atomic component, this is what we are comprised of
+	Components []*Component `json:"components,omitempty"`
 
 	//TotalVolume Measurement `json:"total_volume"`
 	//Concentration      Measurement `json:"concentration"`

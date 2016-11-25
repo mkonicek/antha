@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -413,27 +414,18 @@ var UnitMap = map[string]map[string]Unit{
 }
 
 // make a new concentration in SI units... either M/l or kg/l
-func NewConcentration(v float64, unit string) (o Concentration) {
-
-	approvedunits := UnitMap["Concentration"]
-
-	var approved bool
-	for key, _ := range approvedunits {
-
-		if unit == key {
-			approved = true
-			break
+func NewConcentration(v float64, unit string) Concentration {
+	details, ok := UnitMap["Concentration"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Concentration"] {
+			approved = append(approved, u)
 		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved concentration unit %q, approved units are %s", unit, approved))
 	}
 
-	if !approved {
-		panic("Can't make Concentration of, " + fmt.Sprint(v, unit) + "with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
-	}
-
-	unitdetails := approvedunits[unit]
-
-	o = Concentration{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
-	return
+	return Concentration{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
 }
 
 // mass or mole

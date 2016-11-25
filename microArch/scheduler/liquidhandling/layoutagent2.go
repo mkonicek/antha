@@ -123,6 +123,7 @@ func find_insID(plateID, wellcoords string, rq *LHRequest) string {
 	for _, ins := range rq.LHInstructions {
 		if ins.PlateID() == plateID && ins.Welladdress == wellcoords {
 			r = ins.ID
+			break
 		}
 	}
 

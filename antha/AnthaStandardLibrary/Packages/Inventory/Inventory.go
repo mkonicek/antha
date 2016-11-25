@@ -138,15 +138,13 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 	// look for all parts in anthapath
 	d, err := os.Open(anthapath.Path())
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
 	defer d.Close()
 
 	allfiles, err := d.Readdir(-1)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	//Determine if file extension is ".fasta"

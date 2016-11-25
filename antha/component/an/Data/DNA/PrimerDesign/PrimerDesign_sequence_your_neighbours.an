@@ -80,15 +80,13 @@ Steps {
 	
 	d, err := os.Open(dirname)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+                panic(err)
 	}
 	defer d.Close()
 
 	allfiles, err := d.Readdir(-1)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+                panic(err)
 	}
 
 	fmt.Println("Reading " + dirname)
@@ -172,15 +170,13 @@ Validation {
 	
 	d, err := os.Open(dirname)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+                panic(err)
 	}
 	defer d.Close()
 
 	allfiles, err := d.Readdir(-1)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+                panic(err)
 	}
 
 	fmt.Println("Reading " + dirname)

@@ -112,13 +112,22 @@ func build(root ast.Node) (*ir, error) {
 		Roots: []ast.Node{root},
 	})
 
-	ct := graph.Eliminate(graph.EliminateOpt{
-		Graph: g,
+	// Remove UseComps primarily. They make be locally cyclic. Try to simpilify
+	// before elimination.
+	ct, err := graph.TransitiveReduction(graph.Eliminate(graph.EliminateOpt{
+		Graph: graph.Simplify(graph.SimplifyOpt{
+			Graph:            g,
+			RemoveSelfLoops:  true,
+			RemoveMultiEdges: true,
+		}),
 		In: func(n graph.Node) bool {
 			c, ok := n.(*ast.Command)
 			return (ok && c.Output == nil) || n == root
 		},
-	})
+	}))
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: Add back some validity checks like the same UseComp cannot be used
 	// multiple times

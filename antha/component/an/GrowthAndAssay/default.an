@@ -1,8 +1,6 @@
-protocol ProtocolName_from_an_file
+protocol GrowthAndAssay
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/mixer"
 )
 
 Parameters (

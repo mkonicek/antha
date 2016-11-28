@@ -1,5 +1,5 @@
 // example of how to convert a density and mass to a volume
-protocol VolumeFromMassandConc
+protocol MasstoVolume
 
 import (
 	

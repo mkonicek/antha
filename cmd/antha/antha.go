@@ -136,16 +136,25 @@ func (a *output) Init() error {
 // Write out a file which was generated from another file. Generate the output
 // file name based on desired output dir and base name. Makes sure that output
 // directory exists as well.
-func write(from, dir, name string, b []byte) error {
+func write(from, dir, name string, bs []byte) error {
 	if len(dir) == 0 {
 		dir = filepath.Dir(from)
 	}
-	f := filepath.Join(dir, name)
-	if err := mkdirp(filepath.Dir(f)); err != nil {
+	fname := filepath.Join(dir, name)
+	if err := mkdirp(filepath.Dir(fname)); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(f, b, 0664); err != nil {
+	f, err := os.OpenFile(fname, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0666)
+	if err != nil {
 		return err
+	}
+	defer f.Close()
+	n, err := io.Copy(f, bytes.NewBuffer(bs))
+	if err != nil {
+		return err
+	}
+	if n < int64(len(bs)) {
+		return fmt.Errorf("short write")
 	}
 	return nil
 }

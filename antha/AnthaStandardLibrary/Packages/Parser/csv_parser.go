@@ -54,8 +54,7 @@ func ReadDesign(filename string) [][]string {
 	rawCSVdata, err := reader.ReadAll()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	// sanity check, display to standard output
@@ -99,8 +98,7 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 	rawCSVdata, err := reader.ReadAll()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	// sanity check, display to standard output

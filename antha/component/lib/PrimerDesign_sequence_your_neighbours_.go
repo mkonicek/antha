@@ -72,15 +72,13 @@ func _PrimerDesign_sequence_your_neighboursSteps(_ctx context.Context, _input *P
 
 	d, err := os.Open(dirname)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 	defer d.Close()
 
 	allfiles, err := d.Readdir(-1)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	fmt.Println("Reading " + dirname)
@@ -160,15 +158,13 @@ func _PrimerDesign_sequence_your_neighboursValidation(_ctx context.Context, _inp
 
 	d, err := os.Open(dirname)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 	defer d.Close()
 
 	allfiles, err := d.Readdir(-1)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	fmt.Println("Reading " + dirname)

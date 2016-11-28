@@ -1,3 +1,4 @@
+// Perform multiple PCR reactions with common default parameters 
 protocol AutoPCR_demo
 
 import (
@@ -11,9 +12,16 @@ import (
 Parameters (
 // PCRprep parameters
 Projectname string
-Reactiontotemplate map[string]string // e.g. ["left homology arm"]:"templatename"
-Reactiontoprimerpair map[string][2]string // e.g. ["left homology arm"]:"fwdprimer","revprimer"
-DefaultTemplateVol Volume
+Reactiontotemplate map[string]string // map of which reaction uses which template e.g. ["left homology arm"]:"templatename"
+Reactiontoprimerpair map[string][2]string // map of which reaction uses which primer pair e.g. ["left homology arm"]:"fwdprimer","revprimer"
+DefaultTemplateVol Volume // Volume of template in each reaction
+DefaultBufferConcinX int // e.g. for  10X Q5 buffer this would be 10
+DefaultReactionVolume Volume // Volume for each reaction
+DefaultWaterVolume Volume
+DefaultPrimerVolume Volume 
+DefaultPolymeraseVolume Volume
+DefaultDNTPVol Volume
+AdditiveToAdditiveVolume map[string]Volume // look up table of additives to volumes of each additive; e.g. ["DMSO"]:"3ul"
 )
 
 // Data which is returned from this protocol, and data types
@@ -27,6 +35,10 @@ Inputs (
 FwdPrimertype *wtype.LHComponent
 RevPrimertype *wtype.LHComponent
 Templatetype *wtype.LHComponent
+DefaultPolymerase *wtype.LHComponent
+DefaultBuffer *wtype.LHComponent
+DefaultDNTPS *wtype.LHComponent
+DefaultWater *wtype.LHComponent
 Plate *wtype.LHPlate
 )
 
@@ -61,6 +73,25 @@ Steps {
 
 	// range through the Reaction to template map
 
+	additives := make([]*wtype.LHComponent,0)
+	additivevolumes := make([]wunit.Volume,0)
+
+	// get additive info 
+	for additive, volume := range AdditiveToAdditiveVolume {
+		
+		var additivecomponent *wtype.LHComponent
+		var componentfound bool = factory.ComponentInFactory(additive)
+		if componentfound {
+		additivecomponent = factory.GetComponentByType(additive)
+		}else{
+			// if not found in factory use dmso as the base liquid handling type and change name to additivename specified
+			additivecomponent = factory.GetComponentByType("DMSO")
+			additivecomponent.CName = additive
+		}
+		additives = append(additives, additivecomponent)
+		additivevolumes = append(additivevolumes,volume)
+	}
+
  	
 	for reactionname, templatename := range Reactiontotemplate {
 	
@@ -72,23 +103,24 @@ Steps {
 	
 	wellposition := allwellpositionsforplate[counter]
 	
+
 	
 	// Run PCR_vol element
 	result := RunSteps(PCR_vol_demo,
         Parameters{
-          WaterVolume: wunit.NewVolume(10,"ul"),
-			ReactionVolume: wunit.NewVolume(25,"ul"),
-   			BufferConcinX: 5,
+          WaterVolume: DefaultWaterVolume,
+			ReactionVolume: DefaultReactionVolume,
+   			BufferConcinX: DefaultBufferConcinX,
 			FwdPrimerName: Reactiontoprimerpair[reactionname][0],
 			RevPrimerName: Reactiontoprimerpair[reactionname][1],
 			TemplateName: templatename,
 	 		ReactionName: reactionname,
-	          FwdPrimerVol: wunit.NewVolume(1,"ul"),
-	          RevPrimerVol: wunit.NewVolume(1,"ul"),
-	          AdditiveVols: []wunit.Volume{wunit.NewVolume(5,"ul")},
+	          FwdPrimerVol: DefaultPrimerVolume,
+	          RevPrimerVol: DefaultPrimerVolume,
+	          AdditiveVols: additivevolumes,
 	          Templatevolume: DefaultTemplateVol,
-	          PolymeraseVolume: wunit.NewVolume(1,"ul"),
-	          DNTPVol:wunit.NewVolume(1,"ul"),
+	          PolymeraseVolume: DefaultPolymeraseVolume,
+	          DNTPVol:DefaultDNTPVol,
 	          Numberofcycles: 30 ,
 	          InitDenaturationtime: wunit.NewTime(30,"s"),
 	          Denaturationtime: wunit.NewTime(5,"s"),
@@ -102,12 +134,12 @@ Steps {
      		}, Inputs{
           		FwdPrimer:FwdPrimertype,
           		RevPrimer: RevPrimertype,
-          		DNTPS: factory.GetComponentByType("DNTPs") ,
-          		PCRPolymerase:factory.GetComponentByType("Q5Polymerase"),
-          		Buffer:factory.GetComponentByType("Q5buffer"),
-          		Water:factory.GetComponentByType("water"),
+          		DNTPS: DefaultDNTPS ,
+          		PCRPolymerase:DefaultPolymerase,
+          		Buffer:DefaultBuffer,
+          		Water:DefaultWater,
           		Template: Templatetype,
-          		Additives: []*wtype.LHComponent{factory.GetComponentByType("GCenhancer")} ,
+          		Additives: additives,
           		OutPlate: Plate,
                         
                 })

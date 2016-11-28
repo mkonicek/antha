@@ -24,13 +24,29 @@
 package eng
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Liquidclasses"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"math"
 )
 
-func Θ(liquid string, airvelocity wunit.Velocity) float64 {
-	return (liquidclasses.Liquidclass[liquid]["c"]) + ((liquidclasses.Liquidclass[liquid]["d"]) * airvelocity.SIValue())
+func Θ(liquid string, airvelocity wunit.Velocity) (float64, error) {
+
+	var ok bool
+	liquiddetails, ok := liquidclasses.Liquidclass[liquid]
+	if !ok {
+		return 0.0, fmt.Errorf("liquid,", liquid, "not found in map", "liquidclasses.Liquidclass[liquid]")
+	}
+	c, ok := liquiddetails["c"]
+	if !ok {
+		return 0.0, fmt.Errorf("liquid,", liquid, "not found in map", "no value c found for liquid in liquidclasses.Liquidclass[liquid][c]")
+	}
+	d, ok := liquiddetails["d"]
+	if !ok {
+		return 0.0, fmt.Errorf("liquid,", liquid, "not found in map", "no value d found for liquid in liquidclasses.Liquidclass[liquid][d]")
+	}
+	return (c) + ((d) * airvelocity.SIValue()), nil
+
 }
 
 //Some functions to calculate evaporation
@@ -63,7 +79,11 @@ func EvaporationVolume(temp wunit.Temperature, liquidtype string, relativehumidi
 
 	var PWS float64 = Pws(temp)
 	var pw float64 = Pw(relativehumidity, PWS) // vapour partial pressure in Pascals
-	var Gh = (Θ(liquidtype, Airvelocity) *
+	theta, err := Θ(liquidtype, Airvelocity)
+	if err != nil {
+		panic(err.Error())
+	}
+	var Gh = (theta *
 		((surfacearea.RawValue() / 1000000) *
 			((Xs(PWS, Pa)) - (X(pw, Pa))))) // Gh is rate of evaporation in kg/h
 

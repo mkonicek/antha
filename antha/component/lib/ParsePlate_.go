@@ -1,5 +1,4 @@
-// example protocol for loading a DNAgel
-
+// example protocol for parsing the contents of a plate from a csv file
 package lib
 
 import (
@@ -168,7 +167,7 @@ func init() {
 	if err := addComponent(component.Component{Name: "ParsePlate",
 		Constructor: ParsePlateNew,
 		Desc: component.ComponentDesc{
-			Desc: "",
+			Desc: "example protocol for parsing the contents of a plate from a csv file\n",
 			Path: "src/github.com/antha-lang/antha/antha/component/an/Utility/ParsePlate.an",
 			Params: []component.ParamDesc{
 				{Name: "InputCSVfile", Desc: "", Kind: "Parameters"},

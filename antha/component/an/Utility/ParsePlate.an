@@ -1,5 +1,4 @@
-// example protocol for loading a DNAgel
-
+// example protocol for parsing the contents of a plate from a csv file
 protocol ParsePlate
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"

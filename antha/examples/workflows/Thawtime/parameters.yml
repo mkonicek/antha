@@ -2,12 +2,12 @@
     "Parameters": {
         "Thawtime": {
             "Airvelocity": "20m/s",
-            "BulkTemp": "0\u02daC",
+            "BulkTemp": "0C",
             "Fillvolume": "200ul",
             "Fudgefactor": 2,
             "Liquid": "water",
-            "Platetype": "PCR_plate",
-            "SurfaceTemp": "25\u02daC"
+            "Platetype": "DSW24",
+            "SurfaceTemp": "25C"
         }
     }
 }

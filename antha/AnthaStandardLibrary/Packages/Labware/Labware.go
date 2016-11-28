@@ -59,7 +59,7 @@ var (
 			"k":      0.1,    // plastic thermal conductivity J s-1 m-1 °C-1 for polypropylene ~0.1-0.22 http://www.engineeringtoolbox.com/thermal-conductivity-d_429.html
 			"A":      0.0003, // plasticsurfacearea m2 in contact with ?
 		},
-		"PCR_plate": map[string]float64{
+		"pcrplate_skirted": map[string]float64{
 			"numberofwells":     96.0,
 			"numberofwellsides": 1.0,
 			"height_m":          0.02075, //m

@@ -43,7 +43,7 @@ type testdevice struct {
 }
 
 var testdevices = []testdevice{
-	testdevice{name: "incubator", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 54.5},
+	testdevice{name: "incubator", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 55.92},
 }
 
 type deviceExceptions map[string][]string // key is device name, exceptions are the plates which will give a result which differs from norm

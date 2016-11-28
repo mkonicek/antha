@@ -24,15 +24,12 @@ A = water surface area (m2)
 xs = humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 
 x = humidity ratio in the air (kg/kg) (kg H2O in kg Dry Air) */
-
 package lib
 
 import (
 	"fmt"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Labware"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Liquidclasses"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
-	//"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/component"
@@ -41,17 +38,12 @@ import (
 	"golang.org/x/net/context"
 )
 
-//"github.com/antha-lang/antha/microArch/factory"
-
-//Liquid string
-//Plate string
 // ul
 
 // cubesensor streams:
 // in pascals atmospheric pressure of moist air (Pa) 100mBar = 1 pa. Not yet built in unit so we import it from wunit.
 // input in deg C will be converted to Kelvin
 // Percentage // density water vapor (kg/m3)
-
 // // velocity of air above water in m/s ; could be calculated or measured by an anemometer
 
 // time
@@ -67,24 +59,29 @@ func _EvaporationrateSteps(_ctx context.Context, _input *EvaporationrateInput, _
 }
 func _EvaporationrateAnalysis(_ctx context.Context, _input *EvaporationrateInput, _output *EvaporationrateOutput) {
 
-	//Platetype := factory.GetPlateByType(Plate)
-
 	var surfacearea wunit.Area
-	if /*Platetype.Welltype.Bottom == 0  i.e. flat  && */ _input.Platetype.Welltype.Shape().LengthUnit == "mm" {
+	if _input.Platetype.Welltype.Shape().LengthUnit == "mm" {
 		wellarea, err := _input.Platetype.Welltype.CalculateMaxCrossSectionArea()
 		if err != nil {
-			panic(err.Error())
+			_output.Warnings = append(_output.Warnings, fmt.Errorf(err.Error()))
 		}
+
+		// print statements like this
 		fmt.Println("wellarea", wellarea.ToString())
 		fmt.Println(_input.Platetype.Welltype.Xdim, _input.Platetype.Welltype.Ydim, _input.Platetype.Welltype.Zdim, _input.Platetype.Welltype.Shape())
 		surfacearea = wellarea
 	} else {
-		_output.Warnings = fmt.Errorf("plate " + _input.Platetype.String() + " Wellshape " + _input.Platetype.Welltype.String() + " surface area not yet calculated due to bottom type")
+		_output.Warnings = append(_output.Warnings, fmt.Errorf("plate "+_input.Platetype.String()+" Wellshape "+_input.Platetype.Welltype.String()+" surface area not yet calculated due to bottom type"))
 		execute.Errorf(_ctx, "plate "+_input.Platetype.String()+" Wellshape "+_input.Platetype.Welltype.String()+" surface area not yet calculated due to bottom type")
 	}
 	var PWS float64 = eng.Pws(_input.Temp)
 	var pw float64 = eng.Pw(_input.Relativehumidity, PWS) // vapour partial pressure in Pascals
-	var Gh = (eng.Θ(_input.Liquid.TypeName(), _input.Airvelocity) *
+
+	theta, err := eng.Θ(_input.Liquid.TypeName(), _input.Airvelocity)
+	if err != nil {
+		execute.Errorf(_ctx, err.Error())
+	}
+	var Gh = (theta *
 		((surfacearea.RawValue() / 1000000) *
 			((eng.Xs(PWS, _input.Pa)) - (eng.X(pw, _input.Pa))))) // Gh is rate of evaporation in kg/h
 	evaporatedliquid := (Gh * (_input.Executiontime.SIValue() / 3600)) // in kg
@@ -93,7 +90,7 @@ func _EvaporationrateAnalysis(_ctx context.Context, _input *EvaporationrateInput
 
 	if !ok {
 		density = liquidclasses.Liquidclass["water"]["ro"]
-		_output.Warnings = fmt.Errorf("liquid density not found for " + _input.Liquid.TypeName() + " so used water value")
+		_output.Warnings = append(_output.Warnings, fmt.Errorf("liquid density not found for "+_input.Liquid.TypeName()+" so used water value"))
 	}
 
 	evaporatedliquid = (evaporatedliquid * density) / 1000                         // converted to litres
@@ -181,7 +178,7 @@ type EvaporationrateOutput struct {
 	Evaporatedliquid         wunit.Volume
 	Evaporationrateestimate  float64
 	Status                   string
-	Warnings                 error
+	Warnings                 []error
 }
 
 type EvaporationrateSOutput struct {
@@ -190,7 +187,7 @@ type EvaporationrateSOutput struct {
 		Evaporatedliquid         wunit.Volume
 		Evaporationrateestimate  float64
 		Status                   string
-		Warnings                 error
+		Warnings                 []error
 	}
 	Outputs struct {
 	}
@@ -200,7 +197,7 @@ func init() {
 	if err := addComponent(component.Component{Name: "Evaporationrate",
 		Constructor: EvaporationrateNew,
 		Desc: component.ComponentDesc{
-			Desc: "",
+			Desc: " Evaporation calculator based on\nhttp://www.engineeringtoolbox.com/evaporation-water-surface-d_690.html\n\nThis engineering function may need to be improved to account for vapour pressure and surface tension\n\ngs = Θ A (xs - x) / 3600         (1)\n\nor\n\ngh = Θ A (xs - x)\n\nwhere\n\ngs = amount of evaporated water per second (kg/s)\n\ngh = amount of evaporated water per hour (kg/h)\n\nΘ = (25 + 19 v) = evaporation coefficient (kg/m2h)\n\nv = velocity of air above the water surface (m/s)\n\nA = water surface area (m2)\n\nxs = humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)\n\nx = humidity ratio in the air (kg/kg) (kg H2O in kg Dry Air)\n",
 			Path: "src/github.com/antha-lang/antha/antha/component/an/eng/Evaporationrate/Evaporationrate.an",
 			Params: []component.ParamDesc{
 				{Name: "Airvelocity", Desc: "// velocity of air above water in m/s ; could be calculated or measured by an anemometer\n", Kind: "Parameters"},
@@ -210,7 +207,7 @@ func init() {
 				{Name: "Platetype", Desc: "", Kind: "Inputs"},
 				{Name: "Relativehumidity", Desc: "Percentage // density water vapor (kg/m3)\n", Kind: "Parameters"},
 				{Name: "Temp", Desc: "input in deg C will be converted to Kelvin\n", Kind: "Parameters"},
-				{Name: "Volumeperwell", Desc: "Liquid string\nPlate string\n\nul\n", Kind: "Parameters"},
+				{Name: "Volumeperwell", Desc: "ul\n", Kind: "Parameters"},
 				{Name: "Estimatedevaporationtime", Desc: "", Kind: "Data"},
 				{Name: "Evaporatedliquid", Desc: "ul\n", Kind: "Data"},
 				{Name: "Evaporationrateestimate", Desc: "ul/h\n", Kind: "Data"},

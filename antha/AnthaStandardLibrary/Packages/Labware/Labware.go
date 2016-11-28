@@ -42,7 +42,7 @@ var (
 			"Height": 10.0, // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 			"Radius": 0.001,
 		},
-		"24DSW_pyramid": map[string]float64{ //24 square wells, pyramidal bases (DOT Scientific, Inc., Burton, MI)
+		"DSW24": map[string]float64{ //24 square wells, pyramidal bases (DOT Scientific, Inc., Burton, MI)
 			"numberofwells":     24.0,
 			"numberofwellsides": 4.0,
 			"height_m":          0.043, //m

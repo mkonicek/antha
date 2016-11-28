@@ -1,5 +1,5 @@
-//status = compiles and calculates; need to fill in correct parameters and check units
-//currently using dummy values only so won't be accurate yet! 
+// Example element which calculates thawtime of a liquid with environmental conditions specified along with plate.
+// Currently only works with water and pcrplate_skirted and DSW24 plates due to requirement for information on plate thickness and thermal conductivity
 protocol Thawtime 
 import (
 	"fmt" // we need this go library to print
@@ -42,10 +42,7 @@ Requirements {
 Setup {
 } 
 Steps {
-	
-	
-	
-	
+
 	/*  Step 1. we need a mass for the following equations so we calculate this by looking up 
 	the liquid density and multiplying by the fill volume using this function from the engineering library */
 	
@@ -79,7 +76,6 @@ Steps {
 	by the combined rate of heat transfer estimated to occur via both convection and conduction */
 	Estimatedthawtime = eng.Thawtime(convection, conduction, q)
 
-	
 	
 	/* Step 7. Since there're a lot of assumptions here (liquid behaves as water, no change in temperature gradient, no heat transferred via radiation,
 	imprecision in the estimates and 	empirical formaulas) we'll multiply by a fudgefactor to be safer that we've definitely thawed, 

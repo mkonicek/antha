@@ -1,5 +1,5 @@
-//status = compiles and calculates; need to fill in correct parameters and check units
-//currently using dummy values only so won't be accurate yet!
+// Calculate thawtime of a liquid with environmental conditions specified along with plate.
+// Currently only works with water and pcrplate_skirted and 24DSW_pyramid
 package lib
 
 import (
@@ -162,7 +162,7 @@ func init() {
 	if err := addComponent(component.Component{Name: "Thawtime",
 		Constructor: ThawtimeNew,
 		Desc: component.ComponentDesc{
-			Desc: "status = compiles and calculates; need to fill in correct parameters and check units\ncurrently using dummy values only so won't be accurate yet!\n",
+			Desc: "Calculate thawtime of a liquid with environmental conditions specified along with plate.\nCurrently only works with water and pcrplate_skirted and 24DSW_pyramid\n",
 			Path: "src/github.com/antha-lang/antha/antha/component/an/eng/Thawtime/Thawtime.an",
 			Params: []component.ParamDesc{
 				{Name: "Airvelocity", Desc: "These should be captured via sensors just prior to execution\n", Kind: "Parameters"},

@@ -6,7 +6,7 @@
             "Fillvolume": "200ul",
             "Fudgefactor": 2,
             "Liquid": "water",
-            "Platetype": "pcrplate_skirted",
+            "Platetype": "DSW24",
             "SurfaceTemp": "25C"
         }
     }

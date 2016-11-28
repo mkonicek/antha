@@ -129,6 +129,10 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
+		if w.Empty() {
+			continue
+		}
+
 		if w.Contents().CName == cmp.CName {
 			if exact && w.Contents().ID != cmp.ID {
 				continue

@@ -3,7 +3,7 @@ protocol AutoPCR_mmx_demo
 
 import (
 "github.com/antha-lang/antha/antha/anthalib/wtype"
-//"github.com/antha-lang/antha/antha/anthalib/thermocycle"
+"github.com/antha-lang/antha/antha/anthalib/thermocycle"
 
 
 )
@@ -79,7 +79,7 @@ Steps {
 	wellposition := allwellpositionsforplate[counter]
 	
 	// handle to set up thermocycler
- 	//MasterMix = Handle(thermocycle.SetUp(MasterMix))
+ 	MasterMix = Handle(thermocycle.SetUp(MasterMix))
 	
 	// Run PCR_vol element
 	result := RunSteps(PCR_vol_mmx,

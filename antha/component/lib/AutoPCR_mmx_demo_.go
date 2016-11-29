@@ -208,7 +208,7 @@ func init() {
 		Constructor: AutoPCR_mmx_demoNew,
 		Desc: component.ComponentDesc{
 			Desc: "Perform multiple PCR reactions with common default parameters\n",
-			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson0_Examples/AutoPCR/AutoPCR_mmx.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson0_Examples/MakeMasterMix_PCR/AutoPCR_mmx.an",
 			Params: []component.ParamDesc{
 				{Name: "DefaultBufferConcinX", Desc: "e.g. for  10X Q5 buffer this would be 10\n", Kind: "Parameters"},
 				{Name: "DefaultMasterMixVolume", Desc: "", Kind: "Parameters"},

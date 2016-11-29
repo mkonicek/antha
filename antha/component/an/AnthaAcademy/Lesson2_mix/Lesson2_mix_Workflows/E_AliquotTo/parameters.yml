@@ -2,7 +2,7 @@
     "Parameters": {
         "AliquotParams": {
             "NumberofAliquots": 50,
-            "OutPlate": "greiner384_riser",
+            "OutPlate": "greiner384_riser20",
             "Solutions": [
 			"water",
 			"fluorescein"

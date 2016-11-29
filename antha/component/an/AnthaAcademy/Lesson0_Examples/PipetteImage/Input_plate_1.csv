@@ -1,0 +1,5 @@
+DWST12_riser20,Input_plate_1,LiquidType ,Vol,Vol Unit,Conc,Conc Unit
+A1,Yellow_ink,DispenseAboveLiquid,6266.9,ul,0,mg/l
+A3,Black,PostMix,5722,ul,0,mg/l
+A5,Magenta,DispenseAboveLiquid,4411.5,ul,0,mg/l
+A7,Cyan,DispenseAboveLiquid,2907.7,ul,0,mg/l

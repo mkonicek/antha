@@ -6,5 +6,13 @@
 	"Components":["GCenhancer","DNTPs","Q5buffer","water"],
 	"OutPlate":"pcrplate_skirted_riser20"
 	}
-}
+},
+    "connections": [
+	 
+	],
+    "processes": {
+        "MMX": {
+            "component": "Mastermix_one"
+        }
+    }
 }

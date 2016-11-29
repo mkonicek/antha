@@ -3,7 +3,7 @@
         "PCR": {
             "FwdPrimertype": "PrimerFw",
             "Plate": "pcrplate_skirted_riser20",
-            "Projectname": "pcrdemo_mmx",
+            "Projectname": "pcrdemo",
             "Reactiontoprimerpair": {
                 "reaction1": [
                     "LHA1kbF",
@@ -50,15 +50,25 @@
             },
            
 			"DefaultTemplateVol":"1ul",
-			"DefaultMasterMixVolume": "20ul",
+			"DefaultBufferConcinX":5,
+			"DefaultReactionVolume": "25ul",
+			"DefaultWaterVolume":"10ul",
 			"DefaultPrimerVolume":"1ul" ,
 			"DefaultPolymeraseVolume": "1ul",
+			"DefaultDNTPVol": "1ul",
+			"AdditiveToAdditiveVolume":{"GCenhancer":"5ul"},
 			 "RevPrimertype": "PrimerRev",
             "Templatetype": "dna_part",
 			"DefaultPolymerase":"Q5Polymerase",
-			"MasterMix":"Q5mastermix",
-			"PrimersalreadyAddedtoMasterMix":false,
-			"PolymeraseAlreadyaddedtoMastermix":false
+			"DefaultBuffer":"Q5buffer",
+			"DefaultDNTPS":"DNTPs",
+			"DefaultWater":"water"
+        }
+    },
+    "connections": [],
+    "processes": {
+        "PCR": {
+            "component": "AutoPCR_demo"
         }
     }
 }

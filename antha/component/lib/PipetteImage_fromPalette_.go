@@ -61,12 +61,14 @@ func _PipetteImage_fromPaletteSteps(_ctx context.Context, _input *PipetteImage_f
 		component, componentpresent := _input.ColourIndextoComponentMap[colourindex]
 
 		if componentpresent {
-			component.Type, err = wtype.LiquidTypeFromString(_input.LiquidType) //"DoNotMix"
 
-			if err != nil {
-				execute.Errorf(_ctx, err.Error())
+			if _input.LiquidType != "" {
+				component.Type, err = wtype.LiquidTypeFromString(_input.LiquidType) //"DoNotMix"
+
+				if err != nil {
+					execute.Errorf(_ctx, "for component", component.CName, err.Error())
+				}
 			}
-
 			if _input.OnlythisColour != "" {
 
 				if image.Colourcomponentmap[colour] == _input.OnlythisColour {

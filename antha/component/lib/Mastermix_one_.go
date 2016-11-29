@@ -1,3 +1,5 @@
+// Make a general mastermix comprising of a list of components, list of volumes
+// and specifying the number of reactions required
 package lib
 
 import (
@@ -12,11 +14,6 @@ import (
 )
 
 // Input parameters for this protocol (data)
-
-//TotalVolumeperreaction Volume // if buffer is being added
-//VolumetoLeaveforDNAperreaction Volume
-
-//NumberofMastermixes int // add as many as possible option e.g. if == -1
 
 // Data which is returned from this protocol, and data types
 
@@ -39,22 +36,11 @@ func _Mastermix_oneSteps(_ctx context.Context, _input *Mastermix_oneInput, _outp
 
 	var mastermix *wtype.LHComponent
 
-	// work out volume to top up to in each case (per reaction) in l:
-	//topupVolumeperreacttion := TotalVolumeperreaction.SIValue() - VolumetoLeaveforDNAperreaction.SIValue()
-
-	// multiply by number of reactions per mastermix
-	//topupVolume := wunit.NewVolume(float64(Reactionspermastermix)*topupVolumeperreacttion,"l")
-
 	if len(_input.Components) != len(_input.ComponentVolumesperReaction) {
 		panic("len(Components) != len(OtherComponentVolumes)")
 	}
 
 	eachmastermix := make([]*wtype.LHComponent, 0)
-
-	//if TopUpBuffer != nil {
-	//bufferSample := mixer.SampleForTotalVolume(TopUpBuffer, topupVolume)
-	//eachmastermix = append(eachmastermix,bufferSample)
-	//	}
 
 	for k, component := range _input.Components {
 		if k == len(_input.Components) {
@@ -73,7 +59,7 @@ func _Mastermix_oneSteps(_ctx context.Context, _input *Mastermix_oneInput, _outp
 
 	_output.Mastermix = mastermix
 
-	_output.Status = "this is being used"
+	_output.Status = "Mastermix Made"
 
 }
 
@@ -159,13 +145,13 @@ func init() {
 	if err := addComponent(component.Component{Name: "Mastermix_one",
 		Constructor: Mastermix_oneNew,
 		Desc: component.ComponentDesc{
-			Desc: "",
+			Desc: "Make a general mastermix comprising of a list of components, list of volumes\nand specifying the number of reactions required\n",
 			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/MakeMastermix/Mastermix_one.an",
 			Params: []component.ParamDesc{
 				{Name: "ComponentVolumesperReaction", Desc: "", Kind: "Parameters"},
 				{Name: "Components", Desc: "TopUpBuffer *wtype.LHComponent // optional if nil this is ignored\n", Kind: "Inputs"},
 				{Name: "OutPlate", Desc: "", Kind: "Inputs"},
-				{Name: "Reactionspermastermix", Desc: "TotalVolumeperreaction Volume // if buffer is being added\nVolumetoLeaveforDNAperreaction Volume\n", Kind: "Parameters"},
+				{Name: "Reactionspermastermix", Desc: "", Kind: "Parameters"},
 				{Name: "Mastermix", Desc: "", Kind: "Outputs"},
 				{Name: "Status", Desc: "", Kind: "Data"},
 			},

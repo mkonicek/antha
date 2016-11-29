@@ -2,7 +2,7 @@
     "Parameters": {
         "AliquotParams2": {
             "NumberofAliquots": 96,
-            "OutPlate": "SRWFB96",
+            "OutPlate": "SRWFB96_riser20",
             "Solution": "mediaonculture",
             "SolutionVolume": "20ml",
             "VolumePerAliquot": "200ul"

@@ -32,6 +32,8 @@ func TestAddRiser(t *testing.T) {
 
 			testPlateInventory2.AddRiser(testplate, device)
 
+			offset, _ := platespecificoffset[testplatename]
+
 			// check if new plate with device is in inventory
 			if _, found := testPlateInventory2.inv[testname]; !found {
 				t.Error(
@@ -74,7 +76,7 @@ func TestAddRiser(t *testing.T) {
 					"got:", testplate.WellZStart, "\n",
 				)
 			}
-			if testPlateInventory2.inv[testname].WellZStart != test.ExpectedZStart+device.GetHeightInmm() {
+			if testPlateInventory2.inv[testname].WellZStart != test.ExpectedZStart+device.GetHeightInmm()-offset {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",

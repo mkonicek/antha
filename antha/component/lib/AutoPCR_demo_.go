@@ -1,4 +1,3 @@
-// Perform multiple PCR reactions with common default parameters
 package lib
 
 import (
@@ -16,13 +15,8 @@ import (
 
 // PCRprep parameters
 
-// map of which reaction uses which template e.g. ["left homology arm"]:"templatename"
-// map of which reaction uses which primer pair e.g. ["left homology arm"]:"fwdprimer","revprimer"
-// Volume of template in each reaction
-// e.g. for  10X Q5 buffer this would be 10
-// Volume for each reaction
-
-// look up table of additives to volumes of each additive; e.g. ["DMSO"]:"3ul"
+// e.g. ["left homology arm"]:"templatename"
+// e.g. ["left homology arm"]:"fwdprimer","revprimer"
 
 // Data which is returned from this protocol, and data types
 
@@ -55,25 +49,6 @@ func _AutoPCR_demoSteps(_ctx context.Context, _input *AutoPCR_demoInput, _output
 
 	// range through the Reaction to template map
 
-	additives := make([]*wtype.LHComponent, 0)
-	additivevolumes := make([]wunit.Volume, 0)
-
-	// get additive info
-	for additive, volume := range _input.AdditiveToAdditiveVolume {
-
-		var additivecomponent *wtype.LHComponent
-		var componentfound bool = factory.ComponentInFactory(additive)
-		if componentfound {
-			additivecomponent = factory.GetComponentByType(additive)
-		} else {
-			// if not found in factory use dmso as the base liquid handling type and change name to additivename specified
-			additivecomponent = factory.GetComponentByType("DMSO")
-			additivecomponent.CName = additive
-		}
-		additives = append(additives, additivecomponent)
-		additivevolumes = append(additivevolumes, volume)
-	}
-
 	for reactionname, templatename := range _input.Reactiontotemplate {
 
 		// use counter to find next available well position in plate
@@ -85,19 +60,19 @@ func _AutoPCR_demoSteps(_ctx context.Context, _input *AutoPCR_demoInput, _output
 		wellposition := allwellpositionsforplate[counter]
 
 		// Run PCR_vol element
-		result := PCR_vol_demoRunSteps(_ctx, &PCR_vol_demoInput{WaterVolume: _input.DefaultWaterVolume,
-			ReactionVolume:        _input.DefaultReactionVolume,
-			BufferConcinX:         _input.DefaultBufferConcinX,
+		result := PCR_vol_demoRunSteps(_ctx, &PCR_vol_demoInput{WaterVolume: wunit.NewVolume(10, "ul"),
+			ReactionVolume:        wunit.NewVolume(25, "ul"),
+			BufferConcinX:         5,
 			FwdPrimerName:         _input.Reactiontoprimerpair[reactionname][0],
 			RevPrimerName:         _input.Reactiontoprimerpair[reactionname][1],
 			TemplateName:          templatename,
 			ReactionName:          reactionname,
-			FwdPrimerVol:          _input.DefaultPrimerVolume,
-			RevPrimerVol:          _input.DefaultPrimerVolume,
-			AdditiveVols:          additivevolumes,
+			FwdPrimerVol:          wunit.NewVolume(1, "ul"),
+			RevPrimerVol:          wunit.NewVolume(1, "ul"),
+			AdditiveVols:          []wunit.Volume{wunit.NewVolume(5, "ul")},
 			Templatevolume:        _input.DefaultTemplateVol,
-			PolymeraseVolume:      _input.DefaultPolymeraseVolume,
-			DNTPVol:               _input.DefaultDNTPVol,
+			PolymeraseVolume:      wunit.NewVolume(1, "ul"),
+			DNTPVol:               wunit.NewVolume(1, "ul"),
 			Numberofcycles:        30,
 			InitDenaturationtime:  wunit.NewTime(30, "s"),
 			Denaturationtime:      wunit.NewTime(5, "s"),
@@ -111,12 +86,12 @@ func _AutoPCR_demoSteps(_ctx context.Context, _input *AutoPCR_demoInput, _output
 
 			FwdPrimer:     _input.FwdPrimertype,
 			RevPrimer:     _input.RevPrimertype,
-			DNTPS:         _input.DefaultDNTPS,
-			PCRPolymerase: _input.DefaultPolymerase,
-			Buffer:        _input.DefaultBuffer,
-			Water:         _input.DefaultWater,
+			DNTPS:         factory.GetComponentByType("DNTPs"),
+			PCRPolymerase: factory.GetComponentByType("Q5Polymerase"),
+			Buffer:        factory.GetComponentByType("Q5buffer"),
+			Water:         factory.GetComponentByType("water"),
 			Template:      _input.Templatetype,
-			Additives:     additives,
+			Additives:     []*wtype.LHComponent{factory.GetComponentByType("GCenhancer")},
 			OutPlate:      _input.Plate},
 		)
 
@@ -203,25 +178,14 @@ type AutoPCR_demoElement struct {
 }
 
 type AutoPCR_demoInput struct {
-	AdditiveToAdditiveVolume map[string]wunit.Volume
-	DefaultBuffer            *wtype.LHComponent
-	DefaultBufferConcinX     int
-	DefaultDNTPS             *wtype.LHComponent
-	DefaultDNTPVol           wunit.Volume
-	DefaultPolymerase        *wtype.LHComponent
-	DefaultPolymeraseVolume  wunit.Volume
-	DefaultPrimerVolume      wunit.Volume
-	DefaultReactionVolume    wunit.Volume
-	DefaultTemplateVol       wunit.Volume
-	DefaultWater             *wtype.LHComponent
-	DefaultWaterVolume       wunit.Volume
-	FwdPrimertype            *wtype.LHComponent
-	Plate                    *wtype.LHPlate
-	Projectname              string
-	Reactiontoprimerpair     map[string][]string
-	Reactiontotemplate       map[string]string
-	RevPrimertype            *wtype.LHComponent
-	Templatetype             *wtype.LHComponent
+	DefaultTemplateVol   wunit.Volume
+	FwdPrimertype        *wtype.LHComponent
+	Plate                *wtype.LHPlate
+	Projectname          string
+	Reactiontoprimerpair map[string][]string
+	Reactiontotemplate   map[string]string
+	RevPrimertype        *wtype.LHComponent
+	Templatetype         *wtype.LHComponent
 }
 
 type AutoPCR_demoOutput struct {
@@ -244,26 +208,15 @@ func init() {
 	if err := addComponent(component.Component{Name: "AutoPCR_demo",
 		Constructor: AutoPCR_demoNew,
 		Desc: component.ComponentDesc{
-			Desc: "Perform multiple PCR reactions with common default parameters\n",
+			Desc: "",
 			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson0_Examples/AutoPCR/AutoPCR.an",
 			Params: []component.ParamDesc{
-				{Name: "AdditiveToAdditiveVolume", Desc: "look up table of additives to volumes of each additive; e.g. [\"DMSO\"]:\"3ul\"\n", Kind: "Parameters"},
-				{Name: "DefaultBuffer", Desc: "", Kind: "Inputs"},
-				{Name: "DefaultBufferConcinX", Desc: "e.g. for  10X Q5 buffer this would be 10\n", Kind: "Parameters"},
-				{Name: "DefaultDNTPS", Desc: "", Kind: "Inputs"},
-				{Name: "DefaultDNTPVol", Desc: "", Kind: "Parameters"},
-				{Name: "DefaultPolymerase", Desc: "", Kind: "Inputs"},
-				{Name: "DefaultPolymeraseVolume", Desc: "", Kind: "Parameters"},
-				{Name: "DefaultPrimerVolume", Desc: "", Kind: "Parameters"},
-				{Name: "DefaultReactionVolume", Desc: "Volume for each reaction\n", Kind: "Parameters"},
-				{Name: "DefaultTemplateVol", Desc: "Volume of template in each reaction\n", Kind: "Parameters"},
-				{Name: "DefaultWater", Desc: "", Kind: "Inputs"},
-				{Name: "DefaultWaterVolume", Desc: "", Kind: "Parameters"},
+				{Name: "DefaultTemplateVol", Desc: "", Kind: "Parameters"},
 				{Name: "FwdPrimertype", Desc: "", Kind: "Inputs"},
 				{Name: "Plate", Desc: "", Kind: "Inputs"},
 				{Name: "Projectname", Desc: "PCRprep parameters\n", Kind: "Parameters"},
-				{Name: "Reactiontoprimerpair", Desc: "map of which reaction uses which primer pair e.g. [\"left homology arm\"]:\"fwdprimer\",\"revprimer\"\n", Kind: "Parameters"},
-				{Name: "Reactiontotemplate", Desc: "map of which reaction uses which template e.g. [\"left homology arm\"]:\"templatename\"\n", Kind: "Parameters"},
+				{Name: "Reactiontoprimerpair", Desc: "e.g. [\"left homology arm\"]:\"fwdprimer\",\"revprimer\"\n", Kind: "Parameters"},
+				{Name: "Reactiontotemplate", Desc: "e.g. [\"left homology arm\"]:\"templatename\"\n", Kind: "Parameters"},
 				{Name: "RevPrimertype", Desc: "", Kind: "Inputs"},
 				{Name: "Templatetype", Desc: "", Kind: "Inputs"},
 				{Name: "Errors", Desc: "return an error message if an error is encountered\n", Kind: "Data"},

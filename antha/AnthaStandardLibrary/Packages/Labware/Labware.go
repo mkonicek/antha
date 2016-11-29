@@ -42,7 +42,7 @@ var (
 			"Height": 10.0, // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 			"Radius": 0.001,
 		},
-		"DSW24": map[string]float64{ //24 square wells, pyramidal bases (DOT Scientific, Inc., Burton, MI)
+		"24DSW_pyramid": map[string]float64{ //24 square wells, pyramidal bases (DOT Scientific, Inc., Burton, MI)
 			"numberofwells":     24.0,
 			"numberofwellsides": 4.0,
 			"height_m":          0.043, //m
@@ -59,7 +59,7 @@ var (
 			"k":      0.1,    // plastic thermal conductivity J s-1 m-1 °C-1 for polypropylene ~0.1-0.22 http://www.engineeringtoolbox.com/thermal-conductivity-d_429.html
 			"A":      0.0003, // plasticsurfacearea m2 in contact with ?
 		},
-		"pcrplate_skirted": map[string]float64{
+		"PCR_plate": map[string]float64{
 			"numberofwells":     96.0,
 			"numberofwellsides": 1.0,
 			"height_m":          0.02075, //m

@@ -3,7 +3,7 @@
         "newparams": {
             "LiquidVolume": "100ul",
             "Liquidname": "Evian",
-            "OutPlate": "pcrplate_skirted_riser40",
+            "OutPlate": "nunc8well",
             "Startingsolution": "water"
         }
     }

@@ -102,7 +102,7 @@ func _PCR_vol_demoSteps(_ctx context.Context, _input *PCR_vol_demoInput, _output
 		}
 	}
 
-	// reset samples to zero
+	// rest samples to zero
 	samples = make([]*wtype.LHComponent, 0)
 
 	// if this is false do stuff inside {}

@@ -83,12 +83,14 @@ Steps {
 		component, componentpresent := ColourIndextoComponentMap[colourindex]
 
 		if componentpresent {
+		
+		if LiquidType != ""{
 		component.Type, err = wtype.LiquidTypeFromString(LiquidType)//"DoNotMix"
 		
 		if err != nil {
-			Errorf(err.Error())
+			Errorf("for component",component.CName, err.Error())
 		}
-		
+		}
 		if OnlythisColour !="" {
 	
 		if image.Colourcomponentmap[colour] == OnlythisColour{

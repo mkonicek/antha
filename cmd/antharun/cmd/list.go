@@ -48,6 +48,15 @@ var listCmd = &cobra.Command{
 func listComponents(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 
+	paths := make(map[string]string)
+	for _, comp := range library {
+		p, seen := paths[comp.Name]
+		if seen {
+			return fmt.Errorf("protocol %q defined in more than one file %q and %q", comp.Name, p, comp.Desc.Path)
+		}
+		paths[comp.Name] = comp.Desc.Path
+	}
+
 	cs, err := comp.New(library)
 	if err != nil {
 		return err

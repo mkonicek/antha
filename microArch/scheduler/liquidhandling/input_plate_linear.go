@@ -23,10 +23,12 @@
 package liquidhandling
 
 import (
+	"fmt"
+
+	"github.com/Synthace/go-glpk/glpk"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/Synthace/go-glpk/glpk"
 	//"github.com/antha-lang/antha/microArch/logger"
 )
 
@@ -112,6 +114,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	// well number constraints
 	max_n_wells := weight_constraint["MAX_N_WELLS"]
+	fmt.Println("MAX N WELLS: ", max_n_wells)
 	//debug
 	//fmt.Println("Max_n_wells: ", max_n_wells)
 	lp.SetRowBnds(cur, glpk.UP, -99999.0, max_n_wells)

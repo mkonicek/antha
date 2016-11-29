@@ -158,7 +158,6 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 		}
 
 		//logger.Debug(fmt.Sprintln("Well assignments: ", well_assignments))
-		fmt.Println("WELL ASS: ", well_assignments)
 
 		var curr_well *wtype.LHWell
 		ass := make([]string, 0, 3)

@@ -126,16 +126,12 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 	// find any well with at least as much as we need
 	// if exists, return, if not then fall through
 
-	fmt.Println("RIGHT THE WAY DOWN, P: ", lhp.ID, " ", lhp.Name())
-
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
 		if w.Empty() {
 			continue
 		}
-
-		fmt.Println("Well ", wc.FormatA1(), " GOT: ", w.Contents().Vol, " ", w.Contents().CName)
 
 		if w.Contents().CName == cmp.CName {
 			if exact && w.Contents().ID != cmp.ID {

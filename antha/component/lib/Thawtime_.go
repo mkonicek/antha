@@ -1,5 +1,5 @@
-// Calculate thawtime of a liquid with environmental conditions specified along with plate.
-// Currently only works with water and pcrplate_skirted and 24DSW_pyramid
+// Example element which calculates thawtime of a liquid with environmental conditions specified along with plate.
+// Currently only works with water and pcrplate_skirted and DSW24 plates due to requirement for information on plate thickness and thermal conductivity
 package lib
 
 import (
@@ -162,7 +162,7 @@ func init() {
 	if err := addComponent(component.Component{Name: "Thawtime",
 		Constructor: ThawtimeNew,
 		Desc: component.ComponentDesc{
-			Desc: "Calculate thawtime of a liquid with environmental conditions specified along with plate.\nCurrently only works with water and pcrplate_skirted and 24DSW_pyramid\n",
+			Desc: "Example element which calculates thawtime of a liquid with environmental conditions specified along with plate.\nCurrently only works with water and pcrplate_skirted and DSW24 plates due to requirement for information on plate thickness and thermal conductivity\n",
 			Path: "src/github.com/antha-lang/antha/antha/component/an/eng/Thawtime/Thawtime.an",
 			Params: []component.ParamDesc{
 				{Name: "Airvelocity", Desc: "These should be captured via sensors just prior to execution\n", Kind: "Parameters"},

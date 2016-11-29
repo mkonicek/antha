@@ -11,9 +11,14 @@ import (
 type platetest struct {
 	TestPlateName  string
 	ExpectedHeight float64
+	ExpectedZStart float64
 }
 
-var tests = []platetest{platetest{TestPlateName: "reservoir", ExpectedHeight: 1.0}, platetest{TestPlateName: "pcrplate_skirted", ExpectedHeight: 0.63}, platetest{TestPlateName: "greiner384", ExpectedHeight: 0.63}}
+var tests = []platetest{
+	platetest{TestPlateName: "reservoir", ExpectedZStart: 10.0, ExpectedHeight: 45.0},
+	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
+}
 
 func TestAddRiser(t *testing.T) {
 
@@ -22,21 +27,67 @@ func TestAddRiser(t *testing.T) {
 
 			testplatename := test.TestPlateName
 			testplate := GetPlateByType(testplatename)
+
 			testname := testplatename + "_" + device.GetName()
 
-			defaultPlateInventory.AddRiser(testplate, device)
-			if _, found := defaultPlateInventory.inv[testname]; !found {
+			testPlateInventory2.AddRiser(testplate, device)
+
+			// check if new plate with device is in inventory
+			if _, found := testPlateInventory2.inv[testname]; !found {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
 					"not in platelist", GetPlateList(), "\n",
 				)
-			} else if defaultPlateInventory.inv[testname].WellZStart != test.ExpectedHeight+device.GetHeightInmm() {
+			}
+			// check that the height is as expected using default inventory
+			if testplate.Height != test.ExpectedHeight {
+				t.Error(
+					"for", testplatename, "\n",
+					"Expected plate height:", test.ExpectedHeight, "\n",
+					"got:", testplate.Height, "\n",
+				)
+			}
+			// check that the height is as expected using replicated default inventory following AddRiser()
+			if testPlateInventory2.inv[test.TestPlateName].Height != test.ExpectedHeight {
+				t.Error(
+					"for", "no device", "\n",
+					"testname", test.TestPlateName, "\n",
+					"Expected plate height:", test.ExpectedHeight, "\n",
+					"got:", testPlateInventory2.inv[test.TestPlateName].Height, "\n",
+				)
+			}
+			// check that the height is as expected with riser added
+			if testPlateInventory2.inv[testname].Height != test.ExpectedHeight {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
-					"Expected plate height:", test.ExpectedHeight, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedHeight+device.GetHeightInmm(), "\n",
-					"got:", defaultPlateInventory.inv[testname].WellZStart, "\n",
+					"Expected plate height:", test.ExpectedHeight, "\n",
+					"got:", testPlateInventory2.inv[testname].Height, "\n",
+				)
+			}
+			// now test z offsets
+			if testplate.WellZStart != test.ExpectedZStart {
+				t.Error(
+					"for", testplatename, "\n",
+					"Expected plate height:", test.ExpectedZStart, "\n",
+					"got:", testplate.WellZStart, "\n",
+				)
+			}
+			if testPlateInventory2.inv[testname].WellZStart != test.ExpectedZStart+device.GetHeightInmm() {
+				t.Error(
+					"for", device, "\n",
+					"testname", testname, "\n",
+					"Expected plate height:", test.ExpectedZStart, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedZStart+device.GetHeightInmm(), "\n",
+					"got:", testPlateInventory2.inv[testname].WellZStart, "\n",
+				)
+			}
+			if testPlateInventory2.inv[test.TestPlateName].WellZStart != test.ExpectedZStart {
+				t.Error(
+					"for", "no device", "\n",
+					"testname", test.TestPlateName, "\n",
+					"Expected plate height:", test.ExpectedZStart, "\n",
+					"got:", testPlateInventory2.inv[test.TestPlateName].WellZStart, "\n",
 				)
 			}
 		}
@@ -51,7 +102,7 @@ type testdevice struct {
 }
 
 var testdevices = []testdevice{
-	testdevice{name: "incubator", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 54.5},
+	testdevice{name: "incubator", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 55.92},
 }
 
 type deviceExceptions map[string][]string // key is device name, exceptions are the plates which will give a result which differs from norm
@@ -104,6 +155,17 @@ var testPlateInventory *PlateInventory
 
 func init() {
 	testPlateInventory = &PlateInventory{
+		inv: makePlateLibrary(),
+	}
+
+	//defaultPlateInventory.AddAllDevices()
+	//defaultPlateInventory.AddAllRisers()
+}
+
+var testPlateInventory2 *PlateInventory
+
+func init() {
+	testPlateInventory2 = &PlateInventory{
 		inv: makePlateLibrary(),
 	}
 

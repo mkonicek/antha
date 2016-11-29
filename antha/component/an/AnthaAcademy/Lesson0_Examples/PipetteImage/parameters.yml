@@ -36,10 +36,10 @@
       "Black": "Black",
       "OutPlate": "greiner384_riser",
       "PalettePlate": "pcrplate_skirted_riser20",
-      "VolumeForFullcolour": "300ul"
+      "VolumeForFullcolour": "75ul"
     },
     "Pipette1": {
-      "VolumePerWell": "5ul",
+      "VolumePerWell": "2ul",
       "Imagefilename": "cmyk3.jpg",
       "OnlythisColour": "",
       "NotthisColour": "",

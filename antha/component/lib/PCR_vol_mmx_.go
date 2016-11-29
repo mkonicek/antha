@@ -1,3 +1,4 @@
+// protocol for running pcr for one sample using a mastermix
 package lib
 
 import (
@@ -234,7 +235,7 @@ func init() {
 	if err := addComponent(component.Component{Name: "PCR_vol_mmx",
 		Constructor: PCR_vol_mmxNew,
 		Desc: component.ComponentDesc{
-			Desc: "",
+			Desc: "protocol for running pcr for one sample using a mastermix\n",
 			Path: "src/github.com/antha-lang/antha/antha/component/an/Liquid_handling/PCR/pcr_vol_mmx.an",
 			Params: []component.ParamDesc{
 				{Name: "AnnealingTemp", Desc: "Should be calculated from primer and template binding\n", Kind: "Parameters"},

@@ -2,7 +2,7 @@
     "Parameters": {
         "PCR": {
             "FwdPrimertype": "PrimerFw",
-            "Plate": "pcrplate_skirted_riser",
+            "Plate": "pcrplate_skirted_riser20",
             "Projectname": "pcrdemo",
             "Reactiontoprimerpair": {
                 "reaction1": [

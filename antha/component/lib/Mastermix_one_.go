@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -64,12 +65,15 @@ func _Mastermix_oneSteps(_ctx context.Context, _input *Mastermix_oneInput, _outp
 		adjustedvol := wunit.NewVolume(float64(_input.Reactionspermastermix)*_input.ComponentVolumesperReaction[k].SIValue()*1000000, "ul")
 
 		componentSample := mixer.Sample(component, adjustedvol)
+		component.CName = "component" + fmt.Sprint(k+1)
 		eachmastermix = append(eachmastermix, componentSample)
 
 	}
 	mastermix = execute.MixInto(_ctx, _input.OutPlate, "", eachmastermix...)
 
 	_output.Mastermix = mastermix
+
+	_output.Status = "this is being used"
 
 }
 

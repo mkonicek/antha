@@ -1,0 +1,8 @@
+{
+    "connections": [],
+    "processes": {
+        "PCR": {
+            "component": "AutoPCR_mmx_demo"
+        }
+    }
+}

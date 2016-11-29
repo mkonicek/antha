@@ -1,0 +1,22 @@
+{
+    "connections": [
+	 {
+            "src": {
+                "process": "MMX",
+                "port": "Mastermix"
+            },
+            "tgt": {
+                "process": "PCR",
+                "port": "MasterMix"
+            }
+        }
+	],
+    "processes": {
+        "MMX": {
+            "component": "Mastermix_one"
+        },
+		"PCR": {
+            "component": "AutoPCR_mmx_demo"
+        }
+    }
+}

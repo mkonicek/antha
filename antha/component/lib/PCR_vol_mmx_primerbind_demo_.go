@@ -253,7 +253,7 @@ func init() {
 		Constructor: PCR_vol_mmx_primerbind_demoNew,
 		Desc: component.ComponentDesc{
 			Desc: "",
-			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson0_Examples/AutoPCR/PCR_primerbind.an",
+			Path: "src/github.com/antha-lang/antha/antha/component/an/AnthaAcademy/Lesson0_Examples/MakeMasterMix_PCR/PCR_primerbind.an",
 			Params: []component.ParamDesc{
 				{Name: "AnnealingTemp", Desc: "Should be calculated from primer and template binding\n", Kind: "Parameters"},
 				{Name: "Annealingtime", Desc: "Denaturationtemp Temperature\n", Kind: "Parameters"},

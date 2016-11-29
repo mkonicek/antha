@@ -1,0 +1,228 @@
+protocol PCR_vol_demo
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+)
+
+// Input parameters for this protocol (data)
+Parameters (
+	// PCRprep parameters:
+	WaterVolume Volume
+	ReactionVolume Volume
+	BufferConcinX int
+	FwdPrimerVol Volume
+	RevPrimerVol Volume
+	AdditiveVols []Volume
+	Templatevolume Volume
+	PolymeraseVolume Volume
+	DNTPVol Volume
+	ReactionName string
+	TemplateName string
+	FwdPrimerName string
+	RevPrimerName string
+	WellPosition string
+	/*
+	// let's be ambitious and try this as part of type polymerase Polymeraseconc Volume
+	
+	//Templatetype string  // e.g. colony, genomic, pure plasmid... will effect efficiency. We could get more sophisticated here later on... 
+	//FullTemplatesequence string // better to use Sid's type system here after proof of concept
+	//FullTemplatelength int	// clearly could be calculated from the sequence... Sid will have a method to do this already so check!
+	//TargetTemplatesequence string // better to use Sid's type system here after proof of concept
+	//TargetTemplatelengthinBP int
+	*/
+	// Reaction parameters: (could be a entered as thermocycle parameters type possibly?)
+	Numberofcycles int 
+	InitDenaturationtime Time
+	Denaturationtime Time
+	//Denaturationtemp Temperature
+	Annealingtime Time
+	AnnealingTemp Temperature // Should be calculated from primer and template binding
+	Extensiontime Time // should be calculated from template length and polymerase rate
+	Finalextensiontime Time
+	Hotstart bool
+	AddPrimerstoMasterMix bool
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Status string
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	FwdPrimer *wtype.LHComponent
+	RevPrimer *wtype.LHComponent
+	DNTPS *wtype.LHComponent
+	PCRPolymerase *wtype.LHComponent
+	Buffer *wtype.LHComponent
+	Water *wtype.LHComponent
+	Template *wtype.LHComponent
+	Additives []*wtype.LHComponent // e.g. DMSO
+	OutPlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Reaction *wtype.LHComponent
+)
+
+Requirements {
+}
+
+// Conditions to run on startup
+Setup {
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	// rename components
+		
+
+	Template.CName = TemplateName
+	FwdPrimer.CName = FwdPrimerName
+	RevPrimer.CName = RevPrimerName
+	
+	
+	
+	bufferVolume := (wunit.CopyVolume(ReactionVolume))
+	bufferVolume.DivideBy(float64(BufferConcinX))
+	
+	// Make a mastermix
+	samples := make([]*wtype.LHComponent, 0)
+	waterSample := mixer.Sample(Water, WaterVolume)
+	bufferSample := mixer.Sample(Buffer,bufferVolume)
+	samples = append(samples, waterSample, bufferSample)
+
+	dntpSample := mixer.Sample(DNTPS, DNTPVol)
+	samples = append(samples, dntpSample)
+	
+	if len(Additives)!=len(AdditiveVols){
+		Errorf("Bad things are going to happen if you have different numbers of additives and additivevolumes")
+	}
+	
+	for i := range Additives {
+		additiveSample := mixer.Sample(Additives[i], AdditiveVols[i])
+		samples = append(samples, additiveSample)
+	}
+
+	if Hotstart == false {
+	polySample := mixer.Sample(PCRPolymerase, PolymeraseVolume)
+	samples = append(samples, polySample)
+	}
+	
+	// if this is true do stuff inside {}
+	if AddPrimerstoMasterMix {
+	
+	FwdPrimerSample := mixer.Sample(FwdPrimer, FwdPrimerVol)
+	samples = append(samples, FwdPrimerSample)
+	RevPrimerSample := mixer.Sample(RevPrimer, RevPrimerVol)
+	samples = append(samples, RevPrimerSample)
+	
+	}
+	
+	// pipette out to make mastermix
+	var mastermix *wtype.LHComponent
+	for j := range samples { 
+	if j == 0  {
+	mastermix = MixInto(OutPlate, WellPosition, samples[j])
+	}else{
+	mastermix = Mix(mastermix, samples[j])
+	}
+	}
+	
+	// reset samples to zero
+	samples = make([]*wtype.LHComponent, 0)
+	
+	// if this is false do stuff inside {}
+	if !AddPrimerstoMasterMix {
+	
+	FwdPrimerSample := mixer.Sample(FwdPrimer, FwdPrimerVol)
+	samples = append(samples, FwdPrimerSample)
+	RevPrimerSample := mixer.Sample(RevPrimer, RevPrimerVol)
+	samples = append(samples, RevPrimerSample)
+	
+	}
+	
+	templateSample := mixer.Sample(Template, Templatevolume)
+	samples = append(samples, templateSample)
+
+	
+	for j := range samples { 
+	mastermix = Mix(mastermix, samples[j])
+	}
+	reaction := mastermix
+
+	// this needs to go after an initial denaturation!
+	if Hotstart {
+	polySample := mixer.Sample(PCRPolymerase, PolymeraseVolume)
+	
+	reaction = Mix(reaction,polySample)
+	}
+
+	// thermocycle parameters called from enzyme lookup:
+
+	polymerase := PCRPolymerase.CName
+
+	extensionTemp := enzymes.DNApolymerasetemps[polymerase]["extensiontemp"]
+	meltingTemp := enzymes.DNApolymerasetemps[polymerase]["meltingtemp"]
+
+
+	// initial Denaturation
+
+	r1 := Incubate(reaction, meltingTemp, InitDenaturationtime, false)
+	
+	for i:=0; i < Numberofcycles; i++ {
+		
+		// Denature
+
+	r1 = Incubate(r1, meltingTemp, Denaturationtime, false)
+	
+		// Anneal
+	r1 = Incubate(r1, AnnealingTemp, Annealingtime, false)
+	
+	//extensiontime := TargetTemplatelengthinBP/PCRPolymerase.RateBPpers // we'll get type issues here so leave it out for now
+	
+		// Extend
+	r1 = Incubate(r1, extensionTemp, Extensiontime, false)
+		
+	}
+		// Final Extension
+	r1 = Incubate(r1, extensionTemp, Finalextensiontime, false)
+	
+
+	// all done
+	Reaction = r1
+	
+	Reaction.CName = ReactionName
+	
+	Status = "Success"
+}
+
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+}
+
+/*type Polymerase struct {
+	wtype.LHComponent
+	Rate_BPpers float64
+	Fidelity_errorrate float64 // could dictate how many colonies are checked in validation!
+	Extensiontemp Temperature
+	Hotstart bool
+	StockConcentration Concentration // this is normally in U?
+	TargetConcentration Concentration
+	// this is also a glycerol solution rather than a watersolution!
+}
+*/
+

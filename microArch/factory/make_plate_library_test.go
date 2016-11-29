@@ -9,10 +9,11 @@ import (
 )
 
 type platetest struct {
-	TestPlateName string
+	TestPlateName  string
+	ExpectedHeight float64
 }
 
-var tests = []platetest{platetest{TestPlateName: "reservoir"}}
+var tests = []platetest{platetest{TestPlateName: "reservoir", ExpectedHeight: 1.0}, platetest{TestPlateName: "pcrplate_skirted", ExpectedHeight: 0.63}, platetest{TestPlateName: "greiner384", ExpectedHeight: 0.63}}
 
 func TestAddRiser(t *testing.T) {
 
@@ -30,6 +31,13 @@ func TestAddRiser(t *testing.T) {
 					"testname", testname, "\n",
 					"not in platelist", GetPlateList(), "\n",
 				)
+			} else if defaultPlateInventory.inv[testname].WellZStart != test.ExpectedHeight+device.GetHeightInmm() {
+				t.Error(
+					"for", device, "\n",
+					"testname", testname, "\n",
+					"Expected plate height:", test.ExpectedHeight, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedHeight+device.GetHeightInmm(), "\n",
+					"got:", defaultPlateInventory.inv[testname].WellZStart, "\n",
+				)
 			}
 		}
 	}
@@ -43,7 +51,7 @@ type testdevice struct {
 }
 
 var testdevices = []testdevice{
-	testdevice{name: "incubator", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 55.92},
+	testdevice{name: "incubator", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 54.5},
 }
 
 type deviceExceptions map[string][]string // key is device name, exceptions are the plates which will give a result which differs from norm

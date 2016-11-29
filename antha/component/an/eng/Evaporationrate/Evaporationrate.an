@@ -24,25 +24,30 @@ A = water surface area (m2)
 xs = humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 
 x = humidity ratio in the air (kg/kg) (kg H2O in kg Dry Air) */
-protocol Evaporationrate 
 
+protocol Evaporationrate 
 import (
 	"fmt"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Labware"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Liquidclasses"	
+	//"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	//"github.com/antha-lang/antha/microArch/factory"
 )
-
 Parameters (
   	
+	//Liquid string 
+	//Plate string
 	Volumeperwell Volume // ul
 	
 	// cubesensor streams:
 	Pa wunit.Pressure // in pascals atmospheric pressure of moist air (Pa) 100mBar = 1 pa. Not yet built in unit so we import it from wunit.
 	Temp Temperature // input in deg C will be converted to Kelvin
 	Relativehumidity float64 // Percentage // density water vapor (kg/m3)
+	
 	Airvelocity wunit.Velocity  // // velocity of air above water in m/s ; could be calculated or measured by an anemometer
-
+	
 	Executiontime Time// time 
 	
 )
@@ -51,7 +56,7 @@ Data (
 	Evaporationrateestimate float64 // ul/h
 	Evaporatedliquid Volume // ul
 	Estimatedevaporationtime Time
-	Warnings []error
+	Warnings error
 )
 Inputs (
 	Platetype *wtype.LHPlate
@@ -67,29 +72,24 @@ Steps {
 	}
 Analysis {
 	
+	//Platetype := factory.GetPlateByType(Plate)
+	
 	var surfacearea wunit.Area 
-	if  Platetype.Welltype.Shape().LengthUnit == "mm" {
+	if /*Platetype.Welltype.Bottom == 0  i.e. flat  && */ Platetype.Welltype.Shape().LengthUnit == "mm" {
 		wellarea, err := Platetype.Welltype.CalculateMaxCrossSectionArea()
 		if err != nil {
-			Warnings = append(Warnings,fmt.Errorf(err.Error()))
+			panic(err.Error())
 		}
-		
-		// print statements like this
 		fmt.Println("wellarea", wellarea.ToString())
 		fmt.Println(Platetype.Welltype.Xdim, Platetype.Welltype.Ydim, Platetype.Welltype.Zdim, Platetype.Welltype.Shape())
 	surfacearea = wellarea
 	}else {
-		Warnings = append(Warnings,fmt.Errorf("plate "+ Platetype.String() +" Wellshape "+ Platetype.Welltype.String() +" surface area not yet calculated due to bottom type"))
+		Warnings = fmt.Errorf("plate "+ Platetype.String() +" Wellshape "+ Platetype.Welltype.String() +" surface area not yet calculated due to bottom type")
 		Errorf("plate "+ Platetype.String() +" Wellshape "+ Platetype.Welltype.String() +" surface area not yet calculated due to bottom type")
 	}
 	var PWS float64 = eng.Pws(Temp)
 	var pw float64 = eng.Pw(Relativehumidity, PWS) // vapour partial pressure in Pascals
-	
-	theta, err := eng.Θ(Liquid.TypeName(), Airvelocity)
-	if err!= nil {
-		Errorf(err.Error())
-	}
-	var	Gh = (theta * 
+	var	Gh = (eng.Θ(Liquid.TypeName(), Airvelocity) * 
 	((surfacearea.RawValue()/1000000)* 
 	((eng.Xs(PWS, Pa)) - (eng.X(pw, Pa))))) // Gh is rate of evaporation in kg/h
 	evaporatedliquid := (Gh * (Executiontime.SIValue()/3600)) // in kg
@@ -98,7 +98,7 @@ Analysis {
 	
 	if !ok {
 		density = liquidclasses.Liquidclass["water"]["ro"]
-		Warnings = append(Warnings,fmt.Errorf("liquid density not found for "+ Liquid.TypeName() +" so used water value"))
+		Warnings = fmt.Errorf("liquid density not found for "+ Liquid.TypeName() +" so used water value")
 	}
 	
 	evaporatedliquid = (evaporatedliquid * density)/1000 // converted to litres

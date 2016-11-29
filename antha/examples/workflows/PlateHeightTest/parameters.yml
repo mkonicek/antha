@@ -4,15 +4,11 @@
             "LiquidVolumes": ["19ul","100ul"],
             "Liquidname": "tartrazine",
             "OutPlates": [
-			"pcrplate_skirted",
-            "pcrplate_skirted_riser20",
-			"pcrplate_skirted_riser40",
-			"pcrplate_skirted_incubator",
+            "pcrplate_skirted_riser40"
             ],
-            "LiquidTypes": ["water","NeedToMix", "DispenseAboveLiquid"],
+            "LiquidTypes": ["water","dna_mix","DispenseAboveLiquid"],
             "Startingsolution": "tartrazine",
-           
-			"TestName":"pcrplate+postrefactor"
+            "WellsUsedperOutPlateInorder":[0]
         }
     }
 }

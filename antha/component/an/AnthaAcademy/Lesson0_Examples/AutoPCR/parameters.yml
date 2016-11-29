@@ -48,21 +48,9 @@
                 "reaction7": "plasmid1",
                 "reaction8": "plasmid1"
             },
-           
-			"DefaultTemplateVol":"1ul",
-			"DefaultBufferConcinX":5,
-			"DefaultReactionVolume": "25ul",
-			"DefaultWaterVolume":"10ul",
-			"DefaultPrimerVolume":"1ul" ,
-			"DefaultPolymeraseVolume": "1ul",
-			"DefaultDNTPVol": "1ul",
-			"AdditiveToAdditiveVolume":{"GCenhancer":"5ul"},
-			 "RevPrimertype": "PrimerRev",
+            "RevPrimertype": "PrimerRev",
             "Templatetype": "dna_part",
-			"DefaultPolymerase":"Q5Polymerase",
-			"DefaultBuffer":"Q5buffer",
-			"DefaultDNTPS":"DNTPs",
-			"DefaultWater":"water"
+			"DefaultTemplateVol":"1ul"
         }
     }
 }

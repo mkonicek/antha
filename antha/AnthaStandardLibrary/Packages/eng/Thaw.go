@@ -27,6 +27,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Labware"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Liquidclasses"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	//"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"math"
 )
 
@@ -58,8 +59,8 @@ q = Lm m
 
 func Massfromvolume(Volume wunit.Volume, liquid string) (Mass wunit.Mass) {
 	volume := Volume.SIValue()
-	mass := ((liquidclasses.Liquidclass[liquid]["ro"]) * volume)
-	Mass = wunit.NewMass(mass, "g")
+	mass := ((liquidclasses.Liquidclass[liquid]["ro"]) * volume) / 1000
+	Mass = wunit.NewMass(mass, "kg")
 	return Mass
 }
 

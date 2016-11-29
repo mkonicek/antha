@@ -13,8 +13,8 @@ var (
 		MaxPlates:            &defaultMaxPlates,
 		MaxWells:             &defaultMaxWells,
 		ResidualVolumeWeight: &defaultResidualVolumeWeight,
-		InputPlateType:       []string{"pcrplate_skirted_riser40"},
-		OutputPlateType:      []string{"pcrplate_skirted_riser40"},
+		InputPlateType:       []string{"pcrplate_skirted_riser20"},
+		OutputPlateType:      []string{"pcrplate_skirted_riser20"},
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
 	}

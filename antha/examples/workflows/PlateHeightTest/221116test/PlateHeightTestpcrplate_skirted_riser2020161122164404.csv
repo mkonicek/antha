@@ -1,0 +1,20 @@
+Plate Height Test:,PlateHeightTestpcrplate_skirted_riser2020161122164404,,,,,,,,,,,,
+Time:,2016-11-22 16:44:04.52764431 +0000 GMT,,,,,,,,,,,,
+antha-lang/antha commitID:,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+TestName,Plate,Liquid name,Liquid type ,Liquid Volume,Well ,Aspirate mm from Bottom of well? ,Dispense mm from Bottom of well? ,Acceptable? , Comments,plate Z start,Plate Height,lhpolicy aspirate z offset,lhpolicy dispense z offset
+PlateHeightTestpcrplate_skirted_riser2020161122164404,pcrplate_skirted_riser20_Platenumber_1,tartrazine,water,19.000ul,A1,ok,ok, , ,18.5,15.5,<nil>,1
+PlateHeightTestpcrplate_skirted_riser2020161122164404,pcrplate_skirted_riser20_Platenumber_1,tartrazine,PostMix,19.000ul,B1,  ,touching bottom, , ,18.5,15.5,<nil>,0.5
+PlateHeightTestpcrplate_skirted_riser2020161122164404,pcrplate_skirted_riser20_Platenumber_1,tartrazine,PreMix,19.000ul,C1,  ,touching bottom, , ,18.5,15.5,<nil>,0.5
+PlateHeightTestpcrplate_skirted_riser2020161122164404,pcrplate_skirted_riser20_Platenumber_1,tartrazine,DispenseAboveLiquid,19.000ul,D1,  ,  , , ,18.5,15.5,<nil>,<nil>
+PlateHeightTestpcrplate_skirted_riser2020161122164404,pcrplate_skirted_riser20_Platenumber_1,tartrazine,water,100.000ul,E1,  ,  , , ,18.5,15.5,<nil>,1
+PlateHeightTestpcrplate_skirted_riser2020161122164404,pcrplate_skirted_riser20_Platenumber_1,tartrazine,PostMix,100.000ul,F1,  ,tip bends, , ,18.5,15.5,<nil>,0.5
+PlateHeightTestpcrplate_skirted_riser2020161122164404,pcrplate_skirted_riser20_Platenumber_1,tartrazine,PreMix,100.000ul,G1,touhcing on mix,  , , ,18.5,15.5,<nil>,0.5
+PlateHeightTestpcrplate_skirted_riser2020161122164404,pcrplate_skirted_riser20_Platenumber_1,tartrazine,DispenseAboveLiquid,100.000ul,H1,  ,  ,ok, ,18.5,15.5,<nil>,<nil>
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,Recommendation:,,,,,,,,,,,,
+,fix mix z offsets ,,,,,,,,,,,,
+,check other shallow riser plates and increase height if necessary,,,,,,,,,,,,

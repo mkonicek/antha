@@ -1,0 +1,25 @@
+Plate Height Test:,Elissaplateheighttest20161122154639,,,,,,,,,,,,
+Time:,2016-11-22 15:46:39.020426407 +0000 GMT,,,,,,,,,,,,
+antha-lang/antha commitID:,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+TestName,Plate,Liquid name,Liquid type ,Liquid Volume,Well ,Aspirate mm from Bottom of well? ,Dispense mm from Bottom of well? ,Acceptable? , Comments,plate Z start,Plate Height,lhpolicy aspirate z offset,lhpolicy dispense z offset
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,water,19.000ul,A1,  ,0.5,yes, ,18.5,15.5,<nil>,1
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,dna_mix,19.000ul,B1,  ,0.5,yes, ,18.5,15.5,<nil>,0.5
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,PostMix,19.000ul,C1,  ,0.5,yes, ,18.5,15.5,<nil>,0.5
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,PreMix,19.000ul,D1,  ,at top,yes, ,18.5,15.5,<nil>,0.5
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,DispenseAboveLiquid,19.000ul,E1,  ,2,no,dspz height 2mm too high,18.5,15.5,<nil>,<nil>
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,water,100.000ul,F1,  ,2,no no,post mix height too low; dspz height 2mm too high,18.5,15.5,<nil>,1
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,dna_mix,100.000ul,G1,  ,slightly above top (1mm?), , ,18.5,15.5,<nil>,0.5
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,PostMix,100.000ul,H1,  ,  , , ,18.5,15.5,<nil>,0.5
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,PreMix,100.000ul,I1,  ,  , , ,18.5,15.5,<nil>,0.5
+Elissaplateheighttest20161122154639,greiner384_riser20_Platenumber_1,tartrazine,DispenseAboveLiquid,100.000ul,J1,  ,  , , ,18.5,15.5,<nil>,<nil>
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,water,19.000ul,A1,  ,  , , ,20.25,14,<nil>,1
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,dna_mix,19.000ul,B1,  ,  , , ,20.25,14,<nil>,0.5
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,PostMix,19.000ul,C1,  ,  , , ,20.25,14,<nil>,0.5
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,PreMix,19.000ul,D1,  ,0mm,no,blowout too high,20.25,14,<nil>,0.5
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,DispenseAboveLiquid,19.000ul,E1,  ,>2mm above top, , ,20.25,14,<nil>,<nil>
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,water,100.000ul,F1,  ,  , , ,20.25,14,<nil>,1
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,dna_mix,100.000ul,G1,  ,, ,tip crushed on mix,20.25,14,<nil>,0.5
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,PostMix,100.000ul,H1,  ,0.5 dspz; tip crush on mix; blowout too high, , ,20.25,14,<nil>,0.5
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,PreMix,100.000ul,A2,  ,  , , ,20.25,14,<nil>,0.5
+Elissaplateheighttest20161122154639,pcrplate_skirted_riser20_Platenumber_1,tartrazine,DispenseAboveLiquid,100.000ul,B2,  ,5mm above plate top, , ,20.25,14,<nil>,<nil>

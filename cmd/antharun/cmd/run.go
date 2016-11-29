@@ -219,7 +219,7 @@ func init() {
 	flags := c.Flags()
 
 	//RootCmd.AddCommand(c)
-	flags.String("parameters", "parameters.yml", "Parameters to workflow")
+	flags.String("parameters", "parameters.json", "Parameters to workflow")
 	flags.String("workflow", "workflow.json", "Workflow definition file")
 	flags.String("bundle", "", "Input bundle with parameters and workflow together (overrides parameter and workflow arguments)")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")

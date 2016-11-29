@@ -158,12 +158,14 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 		}
 
 		//logger.Debug(fmt.Sprintln("Well assignments: ", well_assignments))
+		fmt.Println("WELL ASS: ", well_assignments)
 
 		var curr_well *wtype.LHWell
 		ass := make([]string, 0, 3)
 
 		// best hack so far: add an extra well of everything
 		// except we should do this at the end
+
 		for platetype, nwells := range well_assignments {
 			for i := 0; i < nwells+1; i++ {
 				curr_plate = plates_in_play[platetype.Type]

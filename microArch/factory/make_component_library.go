@@ -25,10 +25,10 @@ package factory
 import (
 	"errors"
 	"fmt"
+	"sort"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/microArch/logger"
-	"sort"
 )
 
 func makeComponentLibrary() map[string]*wtype.LHComponent {
@@ -762,7 +762,6 @@ func GetComponentByType(typ string) *wtype.LHComponent {
 func (i *Inventory) GetComponentByType(typ string) *wtype.LHComponent {
 	c, ok := i.inv[typ]
 	if !ok {
-		logger.Fatal(fmt.Sprintf("Component %s not found", typ))
 		panic(fmt.Errorf("Component %s not found", typ)) //TODO refactor to errors
 	}
 	return c.Dup()

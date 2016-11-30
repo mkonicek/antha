@@ -1,8 +1,0 @@
-{
-    "Parameters": {
-        "MyFirstProtocol": {
-           "Solution": "neb5compcells",
-           	"SampleVolume": "15ul"
-        }
-    }
-}

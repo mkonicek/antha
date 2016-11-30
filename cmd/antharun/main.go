@@ -22,9 +22,10 @@
 
 package main
 
-import "github.com/antha-lang/antha/cmd/antharun/cmd"
-import "github.com/antha-lang/antha/antha/component/lib"
+import (
+	"github.com/antha-lang/antha/cmd/antharun/cmd"
+)
 
 func main() {
-	cmd.Execute(lib.GetComponents())
+	cmd.Execute(nil)
 }

@@ -1,8 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "AliquotParams4": {
-            "component": "Aliquot_SamePositionsMultipleplates"
-        }
-    }
-}

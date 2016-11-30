@@ -22,8 +22,12 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-// Colour palette to use // this would relate to a map of components of these available colours in factor
+// Image resizing resample filters from disintegration package
+var AllResampleFilters = map[string]imaging.ResampleFilter{
+	"Cosine": imaging.Cosine, "Welch": imaging.Welch, "Blackman": imaging.Blackman, "Hamming": imaging.Hamming, "Hann": imaging.Hann, "Lanczos": imaging.Lanczos, "Bartlett": imaging.Bartlett, "Guassian": imaging.Gaussian, "BSpline": imaging.BSpline, "CatmullRom": imaging.CatmullRom, "MitchellNetravali": imaging.MitchellNetravali, "Hermite": imaging.Hermite, "Linear": imaging.Linear, "Box": imaging.Box, "NearestNeighbour": imaging.NearestNeighbor,
+}
 
+// Colour palette to use // this would relate to a map of components of these available colours in factor
 func AvailablePalettes() (availablepalettes map[string]color.Palette) {
 
 	availablepalettes = make(map[string]color.Palette)

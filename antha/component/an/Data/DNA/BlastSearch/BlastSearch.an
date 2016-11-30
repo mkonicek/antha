@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/blast"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
-	biogo "github.com/biogo/ncbi/blast"
+	biogo "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	
 )

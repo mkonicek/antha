@@ -119,6 +119,36 @@ func TestWellCoords(t *testing.T) {
 	if wc.X != 0 || wc.Y != 702 {
 		t.Fatal(fmt.Sprint("Well Coords 1AAA expected {0,702} got ", wc))
 	}
+
+	wc = MakeWellCoords("F23")
+
+	if wc.X != 22 || wc.Y != 5 {
+		t.Fatal(fmt.Sprint("Well coords F23 expected {22,5} got ", wc))
+	}
+
+	wc = MakeWellCoords("X1Y1")
+
+	if wc.X != 0 || wc.Y != 0 {
+		t.Fatal(fmt.Sprint("Well coords X1Y1 expected {0,0} got ", wc))
+	}
+
+	wc = MakeWellCoords("12C")
+
+	if wc.X != 11 || wc.Y != 2 {
+		t.Fatal(fmt.Sprint("Well coords 12C expected {11,2} got ", wc))
+	}
+
+	wc = MakeWellCoords("X23")
+	if wc.X != 22 || wc.Y != 23 {
+		t.Fatal(fmt.Sprint("Well coords X23 expected {22,23} got ", wc))
+	}
+
+	wc = MakeWellCoords("23X")
+
+	if wc.X != 22 || wc.Y != 23 {
+		t.Fatal(fmt.Sprint("Well coords 23X expected {22,23} got ", wc))
+	}
+
 }
 
 func TestWellCoordsComparison(t *testing.T) {

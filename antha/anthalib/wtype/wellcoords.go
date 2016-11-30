@@ -115,7 +115,7 @@ func MakeWellCoords(wc string) WellCoords {
 
 // make well coordinates in the "A1" convention
 func MakeWellCoordsA1(a1 string) WellCoords {
-	if !MatchString("[A-Z]{1,}[0-9]{1,2}", a1) {
+	if !MatchString("^[A-Z]{1,}[0-9]{1,2}$", a1) {
 		return WellCoords{-1, -1}
 	}
 	re, _ := regexp.Compile("[A-Z]{1,}")
@@ -129,8 +129,7 @@ func MakeWellCoordsA1(a1 string) WellCoords {
 
 // make well coordinates in the "1A" convention
 func MakeWellCoords1A(a1 string) WellCoords {
-
-	if !MatchString("[0-9]{1,2}[A-Z]{1,}", a1) {
+	if !MatchString("^[0-9]{1,2}[A-Z]{1,}$", a1) {
 		return WellCoords{-1, -1}
 	}
 	re, _ := regexp.Compile("[A-Z]{1,}")

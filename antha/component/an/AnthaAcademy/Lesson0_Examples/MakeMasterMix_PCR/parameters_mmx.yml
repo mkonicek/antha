@@ -1,0 +1,64 @@
+{
+    "Parameters": {
+        "PCR": {
+            "FwdPrimertype": "PrimerFw",
+            "Plate": "pcrplate_skirted_riser20",
+            "Projectname": "pcrdemo_mmx",
+            "Reactiontoprimerpair": {
+                "reaction1": [
+                    "LHA1kbF",
+                    "LHAR4"
+                ],
+                "reaction2": [
+                    "LHAF1",
+                    "LHAR2"
+                ],
+                "reaction3": [
+                    "LHAF3",
+                    "LHAR4"
+                ],
+                "reaction4": [
+                    "LHA3kbF",
+                    "LHAR4"
+                ],
+                "reaction5": [
+                    "RHAF1",
+                    "RHA1kbR"
+                ],
+                "reaction6": [
+                    "RHAF1",
+                    "RHAR2"
+                ],
+                "reaction7": [
+                    "RHAF3",
+                    "RHAR4"
+                ],
+                "reaction8": [
+                    "RHAF1",
+                    "RHA3kbR"
+                ]
+            },
+            "Reactiontotemplate": {
+                "reaction1": "genome1",
+                "reaction2": "genome1",
+                "reaction3": "genome1",
+                "reaction4": "genome1",
+                "reaction5": "plasmid1",
+                "reaction6": "genome1",
+                "reaction7": "plasmid1",
+                "reaction8": "plasmid1"
+            },
+           
+			"DefaultTemplateVol":"1ul",
+			"DefaultMasterMixVolume": "20ul",
+			"DefaultPrimerVolume":"1ul" ,
+			"DefaultPolymeraseVolume": "1ul",
+			 "RevPrimertype": "PrimerRev",
+            "Templatetype": "dna_part",
+			"DefaultPolymerase":"Q5Polymerase",
+			"MasterMix":"Q5mastermix",
+			"PrimersalreadyAddedtoMasterMix":false,
+			"PolymeraseAlreadyaddedtoMastermix":false
+        }
+    }
+}

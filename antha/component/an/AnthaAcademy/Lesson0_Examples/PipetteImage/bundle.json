@@ -1,0 +1,94 @@
+{
+  "connections": [
+    {
+      "src": {
+        "port": "Palette",
+        "process": "MakePalette1"
+      },
+      "tgt": {
+        "port": "Palette",
+        "process": "Pipette1"
+      }
+    },
+    {
+      "src": {
+        "port": "ColourtoComponentMap",
+        "process": "MakePalette1"
+      },
+      "tgt": {
+        "port": "ColourIndextoComponentMap",
+        "process": "Pipette1"
+      }
+    },
+    {
+      "src": {
+        "port": "Colours",
+        "process": "MakePalette1"
+      },
+      "tgt": {
+        "port": "Colourcomponents",
+        "process": "Pipette1"
+      }
+    }
+  ],
+  "processes": {
+    "MakePalette1": {
+      "component": "MakePalette_OneByOne"
+    },
+    "Pipette1": {
+      "component": "PipetteImage_fromPalette"
+    }
+  },
+"config":{
+    "DriverSpecificInputPreferences": [
+        "position_4"
+    ],
+    "DriverSpecificOutputPreferences": [
+        "position_8",
+        "position_9",
+	"position_1"
+        
+    ],
+    "DriverSpecificTipPreferences": [
+        "position_5",
+        "position_6",
+        "position_3",
+        "position_2"
+    ],
+    "DriverSpecificTipWastePreferences": [
+        "position_7"
+    ],
+	 "InputPlateType": [
+            "DWST12_riser20"
+        ],
+
+},
+  "Parameters": {
+    "MakePalette1": {
+      "Imagefilename": "cmyk3.jpg",
+      "Rotate": false,
+      "AutoRotate": true,
+      "PosterizeImage": false,
+      "PosterizeLevels": 2,
+      "Cyan": "Cyan",
+      "Magenta": "Magenta",
+      "Yellow": "Yellow_ink",
+      "Black": "Black",
+      "OutPlate": "greiner384_riser",
+      "PalettePlate": "pcrplate_skirted_riser20",
+      "VolumeForFullcolour": "300ul"
+    },
+    "Pipette1": {
+      "VolumePerWell": "5ul",
+      "Imagefilename": "cmyk3.jpg",
+      "OnlythisColour": "",
+      "NotthisColour": "",
+      "Rotate": false,
+      "AutoRotate": true,
+      "PosterizeImage": false,
+      "PosterizeLevels": 2,
+      "OutPlate": "greiner384_riser20"
+    }
+  }
+}
+

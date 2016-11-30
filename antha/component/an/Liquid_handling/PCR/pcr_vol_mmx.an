@@ -1,3 +1,4 @@
+// protocol for running pcr for one sample using a mastermix 
 protocol PCR_vol_mmx
 
 import (

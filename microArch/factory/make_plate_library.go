@@ -411,7 +411,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltype1536 := wtype.NewLHWell("1536flat", "", "", "ul", 13, 2, square1536, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("nunc1536", "Unknown", 32, 48, 7, "mm", welltype1536, wellxoffset, wellyoffset, xstart, ystart, zstart)
-
+	plates[plate.Type] = plate
 	// 250ml box reservoir (working vol estimated to be 100ml to prevent spillage on moving decks)
 	reservoirbox := wtype.NewShape("box", "mm", 71, 107, 38) // 39?
 	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 100000, 10000, reservoirbox, 0, 107, 71, 38, 3, "mm")

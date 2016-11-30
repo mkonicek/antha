@@ -763,13 +763,15 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms
 			}
 
 			if change_tips {
-				fmt.Println("CHANGING TIPS HERE ")
-				fmt.Println("THIS: ", this_thing.CName, " THAT: ", last_thing.CName)
-				fmt.Println("channels equal? ", channel == newchannel)
-				fmt.Println("tips same? ", tiptype == newtiptype)
-				fmt.Println("tip reuse over? ", n_tip_uses > pol["TIP_REUSE_LIMIT"].(int))
-				fmt.Println(n_tip_uses, " ", pol["TIP_REUSE_LIMIT"].(int), " NOT CAST: ", pol["TIP_REUSE_LIMIT"])
-				fmt.Println("dirty? ", dirty)
+				/*
+					fmt.Println("CHANGING TIPS HERE ")
+					fmt.Println("THIS: ", this_thing.CName, " THAT: ", last_thing.CName)
+					fmt.Println("channels equal? ", channel == newchannel)
+					fmt.Println("tips same? ", tiptype == newtiptype)
+					fmt.Println("tip reuse over? ", n_tip_uses > pol["TIP_REUSE_LIMIT"].(int))
+					fmt.Println(n_tip_uses, " ", pol["TIP_REUSE_LIMIT"].(int), " NOT CAST: ", pol["TIP_REUSE_LIMIT"])
+					fmt.Println("dirty? ", dirty)
+				*/
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters
 

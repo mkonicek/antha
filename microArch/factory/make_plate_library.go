@@ -47,12 +47,15 @@ const (
 	coolerheight                                float64 = 16.0
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
+	pcrbioshakeadaptorheight                    float64 = 3.5
 )
 
 var platespecificoffset = map[string]float64{
 	"pcrplate_skirted": gilsonoffsetpcrplate,
 	"greiner384":       gilsonoffsetgreiner,
 	"costar48well":     3.0,
+	"Nuncon12wellAgar": 12.5, // this must be wrong!! check z start without riser properly
+	"VWR12well":        3.0,
 }
 
 var (
@@ -129,6 +132,13 @@ var Devices map[string]Device = map[string]Device{
 	"riser20": Riser{Name: "riser20", Manufacturer: "Gilson", Heightinmm: shallowriserheightinmm, Synonyms: []string{"riser20", "shallowriser"}},
 	"incubator": Incubator{
 		Riser:      Riser{Name: "incubator", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm, Synonyms: []string{"incubator", "bioshake"}},
+		Properties: devices.Shaker["3000 T-elm"],
+		PositionConstraints: map[string][]string{
+			"Pipetmax": []string{"position_1"},
+		},
+	},
+	"inc_pcr_adaptor": Incubator{
+		Riser:      Riser{Name: "inc_pcr_adaptor", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm + pcrbioshakeadaptorheight, Synonyms: []string{"inc_pcr_adaptor"}},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{
 			"Pipetmax": []string{"position_1"},

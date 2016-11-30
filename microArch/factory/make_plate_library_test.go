@@ -110,7 +110,8 @@ var testdevices = []testdevice{
 type deviceExceptions map[string][]string // key is device name, exceptions are the plates which will give a result which differs from norm
 
 var exceptions deviceExceptions = map[string][]string{
-	"incubator": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
+	"incubator":       []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
+	"inc_pcr_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator", "SRWFB96"},
 }
 
 func TestDeviceMethods(t *testing.T) {
@@ -212,7 +213,7 @@ func TestSetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						fmt.Println("testplate: ", testname, " Constraints: ", positions)
+						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -268,7 +269,7 @@ func TestGetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						fmt.Println("testplate: ", testname, " Constraints: ", positions)
+						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -286,5 +287,16 @@ func TestGetConstraints(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestPlateZs(t *testing.T) {
+	allplates := GetPlateList()
+
+	for _, testplatename := range allplates {
+
+		testplate := GetPlateByType(testplatename)
+		fmt.Println("plate:", testplate.Type, "Z start", testplate.WellZStart)
+
 	}
 }

@@ -1,8 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "Assaysetup": {
-            "component": "SetupReactions_onebyone"
-        }
-    }
-}

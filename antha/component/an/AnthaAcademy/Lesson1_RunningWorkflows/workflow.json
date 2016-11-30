@@ -1,9 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "MyFirstProtocol": {
-            "component": "Sample"
-        }
-	}   
-}
-

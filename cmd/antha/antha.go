@@ -119,9 +119,33 @@ func removeFiles(dir, suffix string) error {
 type output struct {
 	OutDir  string
 	outName string
+	dir     string
+}
+
+func (a *output) Dir() string {
+	if len(a.OutDir) == 0 {
+		return a.dir
+	}
+	return a.OutDir
+}
+
+func (a *output) Close() error {
+	if len(a.dir) == 0 {
+		return nil
+	}
+	return os.RemoveAll(a.dir)
 }
 
 func (a *output) Init() error {
+	if len(a.OutDir) == 0 {
+		n, err := ioutil.TempDir("", "antha")
+		if err != nil {
+			return err
+		}
+		a.dir = n
+		return nil
+	}
+
 	p, err := filepath.Abs(a.OutDir)
 	if err != nil {
 		return err
@@ -165,10 +189,13 @@ func anthaMain() error {
 
 	initParserMode()
 
-	o := output{OutDir: *genOutDir}
+	o := output{
+		OutDir: *genOutDir,
+	}
 	if err := o.Init(); err != nil {
 		return err
 	}
+	defer o.Close()
 
 	// try to parse standard input if no files or directories were passed in
 	if flag.NArg() == 0 {
@@ -176,7 +203,7 @@ func anthaMain() error {
 			Filename: "-",
 			In:       os.Stdin,
 			Stdin:    true,
-			OutDir:   *genOutDir,
+			OutDir:   o.Dir(),
 		}); err != nil {
 			return err
 		}
@@ -196,7 +223,7 @@ func anthaMain() error {
 					// order to establish whether more than one component exist
 					err = processFile(processFileOptions{
 						Filename: path,
-						OutDir:   *genOutDir,
+						OutDir:   o.Dir(),
 					})
 					if err != nil {
 						report(err)
@@ -207,7 +234,7 @@ func anthaMain() error {
 		default:
 			if err := processFile(processFileOptions{
 				Filename: path,
-				OutDir:   *genOutDir,
+				OutDir:   o.Dir(),
 			}); err != nil {
 				return err
 			}

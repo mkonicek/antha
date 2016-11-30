@@ -83,7 +83,7 @@ func makeContext() (context.Context, error) {
 			return nil, fmt.Errorf("component %q has unexpected type %T", desc.Name, obj)
 		}
 		if err := inject.Add(ctx, inject.Name{Repo: desc.Name}, runner); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error adding protocol %q: %s", desc.Name, err)
 		}
 	}
 	return ctx, nil
@@ -219,7 +219,7 @@ func init() {
 	flags := c.Flags()
 
 	//RootCmd.AddCommand(c)
-	flags.String("parameters", "parameters.yml", "Parameters to workflow")
+	flags.String("parameters", "parameters.json", "Parameters to workflow")
 	flags.String("workflow", "workflow.json", "Workflow definition file")
 	flags.String("bundle", "", "Input bundle with parameters and workflow together (overrides parameter and workflow arguments)")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")

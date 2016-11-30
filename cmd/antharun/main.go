@@ -24,9 +24,8 @@ package main
 
 import (
 	"github.com/antha-lang/antha/cmd/antharun/cmd"
-	"github.com/antha-lang/elements/lib"
 )
 
 func main() {
-	cmd.Execute(lib.GetComponents())
+	cmd.Execute(nil)
 }

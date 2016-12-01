@@ -1,10 +1,9 @@
 language: go
 go:
-  - 1.6
+  - 1.7
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y libglpk-dev
-  - sudo apt-get install -y libopencv-dev libcv-dev libhighgui-dev
+  - sudo apt-get install -y libglpk-dev libopencv-dev libcv-dev libhighgui-dev
   - go get golang.org/x/net/context
 script: make test
 notifications:

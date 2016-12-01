@@ -1,10 +1,10 @@
 apiversion: v2
 kind: package
 name: github.com/antha-lang/antha
-version: 0.0.2
+version: 0.5
 build:
   morelines:
-  - RUN apt-get update && apt-get install -y libglpk-dev libsqlite3-dev libopencv-dev mercurial
+  - RUN apt-get update && apt-get install -y libglpk-dev libsqlite3-dev libopencv-dev
   volumes:
   - /certs
   commands:

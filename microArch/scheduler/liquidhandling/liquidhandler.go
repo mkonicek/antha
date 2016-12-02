@@ -653,12 +653,6 @@ func DefineOrderOrFail(mapin map[string]map[string]int) ([]string, error) {
 			c1 := mapin[cmps[i]][cmps[j]]
 			//c2 := mapin[cmps[j]][cmps[i]]
 
-			/*
-				if c1 > 0 && c2 > 0 {
-					log.Fatalf(fmt.Sprint("CANNOT DEAL WITH INCONSISTENT COMPONENT ORDERING ", cmps[i], " ", cmps[j], " ", c1, " ", c2))
-				}
-
-			*/
 			// if c1 > 0 we add to the count
 
 			if c1 > 0 {

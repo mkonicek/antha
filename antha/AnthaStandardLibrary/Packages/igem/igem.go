@@ -30,7 +30,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -163,7 +162,7 @@ func SlurpOutput(Urlstring string) (output []byte) {
 
 	res, err := http.Get(Urlstring)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	output, err = ioutil.ReadAll(res.Body) // this is a slow step!

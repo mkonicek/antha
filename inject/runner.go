@@ -3,7 +3,7 @@ package inject
 import (
 	"fmt"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 // Basic signature of injectable functions

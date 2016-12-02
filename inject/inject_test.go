@@ -1,9 +1,8 @@
 package inject
 
 import (
+	"context"
 	"testing"
-
-	"golang.org/x/net/context"
 )
 
 func TestFuncRunner(t *testing.T) {

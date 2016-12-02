@@ -5,10 +5,9 @@
 package trace
 
 import (
+	"context"
 	"runtime/debug"
 	"sync"
-
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 )
 
 type instrKey int

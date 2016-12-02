@@ -24,15 +24,17 @@
 package enzymes
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"strings"
 )
 
 var (
 	//
 
 	DNApolymeraseProperties = map[string]map[string]float64{
-		"Q5": map[string]float64{
+		"Q5Polymerase": map[string]float64{
 			"activity_U/ml_assayconds": 50.0,
 			"SecperKb_upper":           30,
 			"SperKb_lower":             20,
@@ -65,6 +67,25 @@ var (
 		},
 	}
 )
+
+func CalculateExtensionTime(polymerase *wtype.LHComponent, targetsequence wtype.DNASequence) (wunit.Time, error) {
+
+	var err error = nil
+
+	polymerasename := polymerase.CName
+
+	polymeraseproperties, polymerasefound := DNApolymeraseProperties[polymerasename]
+
+	if !polymerasefound {
+		validoptions := make([]string, 0)
+		for key, _ := range DNApolymeraseProperties {
+			validoptions = append(validoptions, key)
+		}
+
+		err = fmt.Errorf("No Properties for " + polymerasename + " found." + " Valid options are: " + strings.Join(validoptions, ","))
+	}
+	return wunit.NewTime(float64(len(targetsequence.Sequence()))/polymeraseproperties["SperKb_lower"], "s"), err
+}
 
 /*
 type assayconds struct {

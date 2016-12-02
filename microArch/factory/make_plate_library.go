@@ -40,7 +40,7 @@ import (
 // heights in mm
 const (
 	offset                                      float64 = 0.25
-	gilsonoffsetpcrplate                        float64 = 2.136
+	gilsonoffsetpcrplate                        float64 = 2.0 // 2.136
 	gilsonoffsetgreiner                         float64 = 2.0
 	riserheightinmm                             float64 = 40.0 - offset
 	shallowriserheightinmm                      float64 = 20.25 - offset
@@ -328,7 +328,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	// pcr plate with cooler
 	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
 
-	pcrplatewell := wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 1.55, 1.4, "mm")
+	pcrplatewell := wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 15, 1.4, "mm")
 	pcrplatewell.SetAfVFunc(afs)
 
 	plate = wtype.NewLHPlate("pcrplate_with_cooler", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, coolerheight+0.5)

@@ -627,7 +627,7 @@ func MakeLoadWaterPolicy() LHPolicy {
 	loadpolicy["TOUCHOFF"] = false
 	loadpolicy["NO_AIR_DISPENSE"] = true
 	loadpolicy["TOUCHOFF"] = false
-	loadpolicy["TIP_REUSE_LIMIT"] = 500
+	loadpolicy["TIP_REUSE_LIMIT"] = 100
 	loadpolicy["BLOWOUTREFERENCE"] = 1
 	loadpolicy["BLOWOUTOFFSET"] = 0.0
 	loadpolicy["BLOWOUTVOLUME"] = 0.0
@@ -732,7 +732,7 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["CAN_MULTI"] = true
 	defaultpolicy["CAN_MSA"] = false
 	defaultpolicy["CAN_SDD"] = true
-	defaultpolicy["TIP_REUSE_LIMIT"] = 500
+	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
 
 	defaultpolicy["BLOWOUTVOLUME"] = 50.0

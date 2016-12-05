@@ -1,2 +1,0 @@
-Modify the PrimerDesign_colonyPCR.an file to produce a pair of primers to amplify the target region rather than just the FWD primer.
-

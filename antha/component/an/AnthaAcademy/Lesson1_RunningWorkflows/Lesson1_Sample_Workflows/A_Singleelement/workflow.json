@@ -1,9 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "sampleTotal": {
-            "component": "SampleForTotalVolume"
-        }
-	}   
-}
-

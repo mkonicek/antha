@@ -14,7 +14,7 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
-type constructor func(string) (interface{}, error)
+type constructor func(string) interface{}
 
 var (
 	ptipbox         wtype.LHTipbox
@@ -24,23 +24,22 @@ var (
 	cannotConstruct = errors.New("cannot construct parameter")
 	nilValue        reflect.Value
 	constructors    = map[reflect.Type]constructor{
-		reflect.TypeOf(ptipbox): func(x string) (interface{}, error) {
-			return constructOrError(factory.GetTipByType(x))
-		},
-		reflect.TypeOf(pplate): func(x string) (interface{}, error) {
-			return constructOrError(factory.GetPlateByType(x))
-		},
-		reflect.TypeOf(pcomponent): func(x string) (interface{}, error) {
-			return constructOrError(factory.GetComponentByType(x))
-		},
+		reflect.TypeOf(ptipbox):    func(x string) interface{} { return factory.GetTipByType(x) },
+		reflect.TypeOf(pplate):     func(x string) interface{} { return factory.GetPlateByType(x) },
+		reflect.TypeOf(pcomponent): func(x string) interface{} { return factory.GetComponentByType(x) },
 	}
 )
 
-func constructOrError(v interface{}) (interface{}, error) {
-	if v == nil {
-		return nil, cannotConstruct
-	}
-	return v, nil
+func constructOrError(fn func(x string) interface{}, x string) (interface{}, error) {
+	var v interface{}
+	var err error
+	defer func() {
+		if res := recover(); res != nil {
+			err = fmt.Errorf("error making %q: %s", x, res)
+		}
+	}()
+	v = fn(x)
+	return v, err
 }
 
 // Structure of parameter data for unmarshalling
@@ -71,12 +70,15 @@ func unmarshalOne(value reflect.Value, data []byte) (reflect.Value, error) {
 			return nilValue, origErr
 		} else if err := json.Unmarshal(data, &carg); err != nil {
 			return nilValue, fmt.Errorf("%s: %s", err, origErr)
-		} else if v, err := construct(carg); err != nil {
+		} else if v, err := constructOrError(construct, carg); err != nil {
 			return nilValue, fmt.Errorf("%s: %s", err, origErr)
+		} else if v == nil {
+			return nilValue, cannotConstruct
 		} else {
 			newValue = v
 		}
 	}
+
 	return reflect.ValueOf(newValue).Elem(), nil
 }
 

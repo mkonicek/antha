@@ -9,10 +9,16 @@ import (
 )
 
 type platetest struct {
-	TestPlateName string
+	TestPlateName  string
+	ExpectedHeight float64
+	ExpectedZStart float64
 }
 
-var tests = []platetest{platetest{TestPlateName: "reservoir"}}
+var tests = []platetest{
+	platetest{TestPlateName: "reservoir", ExpectedZStart: 10.0, ExpectedHeight: 45.0},
+	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
+}
 
 func TestAddRiser(t *testing.T) {
 
@@ -21,14 +27,69 @@ func TestAddRiser(t *testing.T) {
 
 			testplatename := test.TestPlateName
 			testplate := GetPlateByType(testplatename)
+
 			testname := testplatename + "_" + device.GetName()
 
-			defaultPlateInventory.AddRiser(testplate, device)
-			if _, found := defaultPlateInventory.inv[testname]; !found {
+			testPlateInventory2.AddRiser(testplate, device)
+
+			offset, _ := platespecificoffset[testplatename]
+
+			// check if new plate with device is in inventory
+			if _, found := testPlateInventory2.inv[testname]; !found {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
 					"not in platelist", GetPlateList(), "\n",
+				)
+			}
+			// check that the height is as expected using default inventory
+			if testplate.Height != test.ExpectedHeight {
+				t.Error(
+					"for", testplatename, "\n",
+					"Expected plate height:", test.ExpectedHeight, "\n",
+					"got:", testplate.Height, "\n",
+				)
+			}
+			// check that the height is as expected using replicated default inventory following AddRiser()
+			if testPlateInventory2.inv[test.TestPlateName].Height != test.ExpectedHeight {
+				t.Error(
+					"for", "no device", "\n",
+					"testname", test.TestPlateName, "\n",
+					"Expected plate height:", test.ExpectedHeight, "\n",
+					"got:", testPlateInventory2.inv[test.TestPlateName].Height, "\n",
+				)
+			}
+			// check that the height is as expected with riser added
+			if testPlateInventory2.inv[testname].Height != test.ExpectedHeight {
+				t.Error(
+					"for", device, "\n",
+					"testname", testname, "\n",
+					"Expected plate height:", test.ExpectedHeight, "\n",
+					"got:", testPlateInventory2.inv[testname].Height, "\n",
+				)
+			}
+			// now test z offsets
+			if testplate.WellZStart != test.ExpectedZStart {
+				t.Error(
+					"for", testplatename, "\n",
+					"Expected plate height:", test.ExpectedZStart, "\n",
+					"got:", testplate.WellZStart, "\n",
+				)
+			}
+			if testPlateInventory2.inv[testname].WellZStart != test.ExpectedZStart+device.GetHeightInmm()-offset {
+				t.Error(
+					"for", device, "\n",
+					"testname", testname, "\n",
+					"Expected plate height:", test.ExpectedZStart, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedZStart+device.GetHeightInmm(), "\n",
+					"got:", testPlateInventory2.inv[testname].WellZStart, "\n",
+				)
+			}
+			if testPlateInventory2.inv[test.TestPlateName].WellZStart != test.ExpectedZStart {
+				t.Error(
+					"for", "no device", "\n",
+					"testname", test.TestPlateName, "\n",
+					"Expected plate height:", test.ExpectedZStart, "\n",
+					"got:", testPlateInventory2.inv[test.TestPlateName].WellZStart, "\n",
 				)
 			}
 		}
@@ -49,7 +110,8 @@ var testdevices = []testdevice{
 type deviceExceptions map[string][]string // key is device name, exceptions are the plates which will give a result which differs from norm
 
 var exceptions deviceExceptions = map[string][]string{
-	"incubator": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
+	"incubator":       []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
+	"inc_pcr_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator", "SRWFB96"},
 }
 
 func TestDeviceMethods(t *testing.T) {
@@ -103,6 +165,17 @@ func init() {
 	//defaultPlateInventory.AddAllRisers()
 }
 
+var testPlateInventory2 *PlateInventory
+
+func init() {
+	testPlateInventory2 = &PlateInventory{
+		inv: makePlateLibrary(),
+	}
+
+	//defaultPlateInventory.AddAllDevices()
+	//defaultPlateInventory.AddAllRisers()
+}
+
 func TestSetConstraints(t *testing.T) {
 
 	var ok bool
@@ -140,7 +213,7 @@ func TestSetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						fmt.Println("testplate: ", testname, " Constraints: ", positions)
+						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -196,7 +269,7 @@ func TestGetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						fmt.Println("testplate: ", testname, " Constraints: ", positions)
+						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -214,5 +287,16 @@ func TestGetConstraints(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestPlateZs(t *testing.T) {
+	allplates := GetPlateList()
+
+	for _, testplatename := range allplates {
+
+		testplate := GetPlateByType(testplatename)
+		fmt.Println("plate:", testplate.Type, "Z start", testplate.WellZStart)
+
 	}
 }

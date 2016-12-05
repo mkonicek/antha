@@ -83,8 +83,6 @@ var (
 
 func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.DNASequence) (wunit.Time, error) {
 
-	var err error
-
 	polymerasename := polymerase.CName
 
 	polymeraseproperties, polymerasefound := dnaPolymeraseProperties[polymerasename]
@@ -93,7 +91,7 @@ func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.
 
 		return wunit.Time{}, anInvalidProperty
 	}
-	return wunit.NewTime(float64(len(targetSequence.Sequence()))/polymeraseproperties["SperKb_lower"], "s"), err
+	return wunit.NewTime(float64(len(targetSequence.Sequence()))/polymeraseproperties["SperKb_lower"], "s"), anInvalidProperty
 }
 
 /*

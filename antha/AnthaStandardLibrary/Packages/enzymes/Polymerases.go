@@ -24,16 +24,29 @@
 package enzymes
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"sort"
 	"strings"
 )
+
+type invalidProperty struct{}
+
+var anInvalidProperty = &invalidProperty{}
+
+func (ip *invalidProperty) Error() string {
+	var props []string
+	for key, _ := range dnaPolymeraseProperties {
+		props = append(props, key)
+	}
+	sort.Strings(props)
+	return "Valid options are: " + strings.Join(props, ",")
+}
 
 var (
 	//
 
-	DNApolymeraseProperties = map[string]map[string]float64{
+	dnaPolymeraseProperties = map[string]map[string]float64{
 		"Q5Polymerase": map[string]float64{
 			"activity_U/ml_assayconds": 50.0,
 			"SecperKb_upper":           30,
@@ -74,16 +87,11 @@ func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.
 
 	polymerasename := polymerase.CName
 
-	polymeraseproperties, polymerasefound := DNApolymeraseProperties[polymerasename]
+	polymeraseproperties, polymerasefound := dnaPolymeraseProperties[polymerasename]
 
 	if !polymerasefound {
-		var validOptions []string
-		for key, _ := range DNApolymeraseProperties {
-			validOptions = append(validOptions, key)
-		}
 
-		err = fmt.Errorf("No Properties for " + polymerasename + " found." + " Valid options are: " + strings.Join(validOptions, ","))
-		return wunit.Time{}, err
+		return wunit.Time{}, anInvalidProperty
 	}
 	return wunit.NewTime(float64(len(targetSequence.Sequence()))/polymeraseproperties["SperKb_lower"], "s"), err
 }

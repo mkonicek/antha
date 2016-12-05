@@ -68,23 +68,24 @@ var (
 	}
 )
 
-func CalculateExtensionTime(polymerase *wtype.LHComponent, targetsequence wtype.DNASequence) (wunit.Time, error) {
+func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.DNASequence) (wunit.Time, error) {
 
-	var err error = nil
+	var err error
 
 	polymerasename := polymerase.CName
 
 	polymeraseproperties, polymerasefound := DNApolymeraseProperties[polymerasename]
 
 	if !polymerasefound {
-		validoptions := make([]string, 0)
+		var validOptions []string
 		for key, _ := range DNApolymeraseProperties {
-			validoptions = append(validoptions, key)
+			validOptions = append(validOptions, key)
 		}
 
-		err = fmt.Errorf("No Properties for " + polymerasename + " found." + " Valid options are: " + strings.Join(validoptions, ","))
+		err = fmt.Errorf("No Properties for " + polymerasename + " found." + " Valid options are: " + strings.Join(validOptions, ","))
+		return wunit.Time{}, err
 	}
-	return wunit.NewTime(float64(len(targetsequence.Sequence()))/polymeraseproperties["SperKb_lower"], "s"), err
+	return wunit.NewTime(float64(len(targetSequence.Sequence()))/polymeraseproperties["SperKb_lower"], "s"), err
 }
 
 /*

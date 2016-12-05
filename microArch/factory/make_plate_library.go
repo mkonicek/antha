@@ -53,7 +53,7 @@ const (
 var platespecificoffset = map[string]float64{
 	"pcrplate_skirted": gilsonoffsetpcrplate,
 	"greiner384":       gilsonoffsetgreiner,
-	"costar48well":     3.0,
+	"costar48well":     2.5,
 	"Nuncon12wellAgar": 12.5, // this must be wrong!! check z start without riser properly
 	"VWR12well":        3.0,
 }

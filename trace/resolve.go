@@ -1,7 +1,7 @@
 package trace
 
 import (
-	"golang.org/x/net/context"
+	"context"
 )
 
 type resolverKey int

@@ -44,7 +44,7 @@ func (st *SampleTracker) SetInputPlate(p *wtype.LHPlate) {
 
 	for _, w := range p.HWells {
 		if !w.Empty() {
-			st.SetLocationOf(w.WContents.ID, w.WContents.Loc)
+			st.setLocationOf(w.WContents.ID, w.WContents.Loc)
 			w.SetUserAllocated()
 		}
 	}
@@ -71,19 +71,18 @@ func (st *SampleTracker) GetInputPlates() []*wtype.LHPlate {
 	return ret
 }
 
+func (st *SampleTracker) setLocationOf(ID string, loc string) {
+	st.records[ID] = loc
+}
+
 func (st *SampleTracker) SetLocationOf(ID string, loc string) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 
-	//	fmt.Println("LOCATION OF ", ID, " SET TO ", loc)
-	st.records[ID] = loc
+	st.setLocationOf(ID, loc)
 }
 
-func (st *SampleTracker) GetLocationOf(ID string) (string, bool) {
-	st.lock.Lock()
-	defer st.lock.Unlock()
-
-	//fmt.Println("GET LOCATION OF :", ID)
+func (st *SampleTracker) getLocationOf(ID string) (string, bool) {
 	if ID == "" {
 		return "", false
 	}
@@ -94,10 +93,17 @@ func (st *SampleTracker) GetLocationOf(ID string) (string, bool) {
 	// can this lead to an out of date location???
 
 	if !ok {
-		return st.GetLocationOf(st.forwards[ID])
+		return st.getLocationOf(st.forwards[ID])
 	}
 
 	return s, ok
+}
+
+func (st *SampleTracker) GetLocationOf(ID string) (string, bool) {
+	st.lock.Lock()
+	defer st.lock.Unlock()
+
+	return st.getLocationOf(ID)
 }
 
 func (st *SampleTracker) UpdateIDOf(ID string, newID string) {

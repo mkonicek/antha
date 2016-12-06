@@ -47,7 +47,7 @@ func EnzymeLookup(name string) (enzyme wtype.RestrictionEnzyme) {
 
 	rebaseFh := bytes.NewReader(enzymes)
 
-	for record := range rebase.RebaseParse(rebaseFh) {
+	for _, record := range rebase.RebaseParse(rebaseFh) {
 		/*plasmidstatus := "FALSE"
 		seqtype := "DNA"
 		class := "not specified"*/
@@ -68,7 +68,7 @@ func FindEnzymesofClass(class string) (enzymelist []wtype.RestrictionEnzyme) {
 
 	rebaseFh := bytes.NewReader(enzymes)
 
-	for record := range rebase.RebaseParse(rebaseFh) {
+	for _, record := range rebase.RebaseParse(rebaseFh) {
 		/*plasmidstatus := "FALSE"
 		seqtype := "DNA"
 		class := "not specified"*/

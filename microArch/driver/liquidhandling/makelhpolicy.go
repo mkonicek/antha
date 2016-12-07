@@ -423,11 +423,12 @@ func MakeColonyPolicy() LHPolicy {
 	policy["ASPSPEED"] = 3.0
 	policy["DSPSPEED"] = 3.0
 	policy["ASP_WAIT"] = 1.0
-	policy["POST_MIX"] = 3
+	policy["POST_MIX"] = 1
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = true
 	policy["CAN_MULTI"] = false
+	policy["RESET_OVERRIDE"] = true
 
 	return policy
 }

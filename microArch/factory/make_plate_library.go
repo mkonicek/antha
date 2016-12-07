@@ -27,12 +27,13 @@ import (
 	"errors"
 	"fmt"
 
+	"sort"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
-	"sort"
-	"strings"
 )
 
 //var commonwelltypes
@@ -426,6 +427,30 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	reservoirbox := wtype.NewShape("box", "mm", 71, 107, 38) // 39?
 	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 100000, 10000, reservoirbox, 0, 107, 71, 38, 3, "mm")
 	plate = wtype.NewLHPlate("reservoir", "unknown", 1, 1, 45, "mm", welltypereservoir, 58, 13, 0, 0, 10)
+	plates[plate.Type] = plate
+
+	// Onewell SBS format Agarplate with colonies on shallowriser (50ml agar) very high res
+
+	bottomtype = wtype.LHWBFLAT
+	xdim = 1.4 // of well
+	ydim = 1.4
+	zdim = 7.0
+	bottomh = 0.5
+
+	wellxoffset = 1.55 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 1.55 //centre of well to centre of neighbouring well in y direction
+	xstart = -3.885    // distance from top left side of plate to first well
+	ystart = -3.0      // distance from top left side of plate to first well
+	zstart = 3.25      // offset of bottom of deck to bottom of well
+
+	square3150 := wtype.NewShape("box", "mm", xdim, ydim, zdim)
+	//func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape *Shape, bott int, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+	welltype3150 := wtype.NewLHWell("3150flat", "", "", "ul", 5, 0.5, square3150, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+
+	//func NewLHPlate(platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
+	// greiner one well with 50ml of agar in
+	plate = wtype.NewLHPlate("Agarplateforpicking3150", "Unknown", 45, 70, 7, "mm", welltype3150, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
 	plates[plate.Type] = plate
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) high res

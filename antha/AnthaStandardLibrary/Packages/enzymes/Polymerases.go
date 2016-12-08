@@ -24,6 +24,7 @@
 package enzymes
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"sort"
@@ -91,7 +92,13 @@ func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.
 
 		return wunit.Time{}, anInvalidProperty
 	}
-	return wunit.NewTime(float64(len(targetSequence.Sequence()))/polymeraseproperties["SperKb_lower"], "s"), anInvalidProperty
+
+	sperkblower, found := polymeraseproperties["SperKb_lower"]
+	if !found {
+		return wunit.Time{}, fmt.Errorf("no property, SperKb_lower found for", polymerase.CName)
+	}
+
+	return wunit.NewTime(float64(len(targetSequence.Sequence()))/sperkblower, "s"), anInvalidProperty
 }
 
 /*

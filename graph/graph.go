@@ -55,6 +55,7 @@ type SimplifyOpt struct {
 	Graph            Graph
 	RemoveSelfLoops  bool
 	RemoveMultiEdges bool
+	RemoveNodes      func(Node) bool // Should node be removed
 }
 
 // Simplify graph
@@ -62,17 +63,31 @@ func Simplify(opt SimplifyOpt) Graph {
 	ret := &qgraph{
 		Outs: make(map[Node][]Node),
 	}
+
+	remove := make(map[Node]bool)
+	if opt.RemoveNodes != nil {
+		for i, inum := 0, opt.Graph.NumNodes(); i < inum; i += 1 {
+			n := opt.Graph.Node(i)
+			remove[n] = opt.RemoveNodes(n)
+		}
+	}
+
 	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i += 1 {
 		n := opt.Graph.Node(i)
+		if remove[n] {
+			continue
+		}
+
 		ret.Nodes = append(ret.Nodes, n)
 		seen := make(map[Node]bool)
 		for j, jnum := 0, opt.Graph.NumOuts(n); j < jnum; j += 1 {
 			dst := opt.Graph.Out(n, j)
+			if remove[dst] {
+				continue
+			}
 
-			if opt.RemoveSelfLoops {
-				if dst == n {
-					continue
-				}
+			if opt.RemoveSelfLoops && dst == n {
+				continue
 			}
 
 			if opt.RemoveMultiEdges {

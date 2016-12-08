@@ -30,13 +30,15 @@ import (
 
 	"github.com/antha-lang/antha/cmd/antharun/comp"
 	"github.com/antha-lang/antha/cmd/antharun/pretty"
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 const (
 	jsonOutput   = "json"
-	stringOutput = "pretty"
+	yamlOutput   = "yaml"
+	stringOutput = "string"
 )
 
 var listCmd = &cobra.Command{
@@ -62,16 +64,26 @@ func listComponents(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	switch viper.GetString("output") {
+	output := viper.GetString("output")
+	switch output {
 	case jsonOutput:
-		if bs, err := json.Marshal(cs); err != nil {
-			return err
-		} else {
-			_, err = fmt.Println(string(bs))
+		bs, err := json.Marshal(cs)
+		if err != nil {
 			return err
 		}
-	default:
+		_, err = fmt.Println(string(bs))
+		return err
+	case yamlOutput:
+		bs, err := yaml.Marshal(cs)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Println(string(bs))
+		return err
+	case stringOutput:
 		return pretty.Components(os.Stdout, cs)
+	default:
+		return fmt.Errorf("unknown output format %q", output)
 	}
 }
 
@@ -83,5 +95,5 @@ func init() {
 	flags.String(
 		"output",
 		stringOutput,
-		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{stringOutput, jsonOutput}, ",")))
+		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{stringOutput, yamlOutput, jsonOutput}, ",")))
 }

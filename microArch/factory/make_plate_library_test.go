@@ -111,7 +111,7 @@ type deviceExceptions map[string][]string // key is device name, exceptions are 
 
 var exceptions deviceExceptions = map[string][]string{
 	"incubator":       []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
-	"inc_pcr_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator", "SRWFB96"},
+	"inc_pcr_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
 }
 
 func TestDeviceMethods(t *testing.T) {
@@ -161,8 +161,6 @@ func init() {
 		lib: makePlateLibrary(),
 	}
 
-	//defaultPlateInventory.AddAllDevices()
-	//defaultPlateInventory.AddAllRisers()
 }
 
 var testPlateInventory2 *plateLibrary

@@ -24,15 +24,12 @@ package factory
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/microArch/logger"
-	"sort"
-	"strings"
 )
 
 //var commonwelltypes
@@ -160,7 +157,7 @@ func ContainsRiser(plate *wtype.LHPlate) bool {
 	return false
 }
 
-func (i *PlateInventory) AddRiser(plate *wtype.LHPlate, riser Device) {
+func (i *plateLibrary) AddRiser(plate *wtype.LHPlate, riser Device) {
 
 	//for platename, plate := range i.inv {
 	if !ContainsRiser(plate) {
@@ -196,7 +193,7 @@ func (i *PlateInventory) AddRiser(plate *wtype.LHPlate, riser Device) {
 				}
 			}
 			if !dontaddrisertothisplate {
-				i.inv[newname] = newplate
+				i.lib[newname] = newplate
 			}
 			dontaddrisertothisplate = false
 		}
@@ -205,7 +202,7 @@ func (i *PlateInventory) AddRiser(plate *wtype.LHPlate, riser Device) {
 	//}
 	return
 }
-func (i *PlateInventory) AddAllDevices() {
+func (i *plateLibrary) AddAllDevices() {
 
 	platelist := GetPlateList()
 
@@ -765,42 +762,36 @@ func MakeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 	return plate
 }
 
-type PlateInventory struct {
-	inv map[string]*wtype.LHPlate
+type plateLibrary struct {
+	lib map[string]*wtype.LHPlate
 }
 
-var defaultPlateInventory *PlateInventory
+var defaultPlateLibrary *plateLibrary
 
 func init() {
-	defaultPlateInventory = &PlateInventory{
-		inv: makePlateLibrary(),
+	defaultPlateLibrary = &plateLibrary{
+		lib: makePlateLibrary(),
 	}
 
-	defaultPlateInventory.AddAllDevices()
+	defaultPlateLibrary.AddAllDevices()
 	//defaultPlateInventory.AddAllRisers()
 }
 
-func AddPlate(name string, p *wtype.LHPlate) error {
-	return errors.New("tbd")
-}
 func GetPlateByType(typ string) *wtype.LHPlate {
-	return defaultPlateInventory.GetPlateByType(typ)
+	return defaultPlateLibrary.GetPlateByType(typ)
 }
 
-func (i *PlateInventory) GetPlateByType(typ string) *wtype.LHPlate {
-	p, ok := i.inv[typ]
+func (i *plateLibrary) GetPlateByType(typ string) *wtype.LHPlate {
+	p, ok := i.lib[typ]
 	if !ok {
-		//logger.Fatal(fmt.Sprintf("Plate %s not found", typ))
-		logger.Debug(fmt.Sprint("Plate type ", typ, " not known"))
-		//panic(fmt.Errorf("Plate %s not found", typ)) //TODO refactor to errors
 		return nil
-
 	}
 	return p.Dup()
 }
 
+// TODO: deprecate
 func GetPlateList() []string {
-	plates := defaultPlateInventory.inv
+	plates := defaultPlateLibrary.lib
 
 	kz := make([]string, len(plates))
 	x := 0
@@ -814,6 +805,5 @@ func GetPlateList() []string {
 }
 
 func GetPlateLibrary() map[string]*wtype.LHPlate {
-
-	return defaultPlateInventory.inv
+	return defaultPlateLibrary.lib
 }

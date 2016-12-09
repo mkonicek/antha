@@ -47,10 +47,11 @@ const (
 )
 
 var runCmd = &cobra.Command{
-	Use:          "antharun",
-	Short:        "Run an antha workflow",
-	RunE:         runWorkflow,
-	SilenceUsage: true,
+	Use:           "antharun",
+	Short:         "Run an antha workflow",
+	RunE:          runWorkflow,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 func makeMixerOpt() mixer.Opt {

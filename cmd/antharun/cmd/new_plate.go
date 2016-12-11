@@ -1,5 +1,5 @@
-// lhhelp.go: Part of the Antha language
-// Copyright (C) 2015 The Antha authors. All rights reserved.
+// new_plate.go: Part of the Antha language
+// Copyright (C) 2016 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,37 +19,46 @@
 // contact license@antha-lang.org or write to the Antha team c/o
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
-
 package cmd
 
 import (
 	"fmt"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-var lhhelpCmd = &cobra.Command{
-	Use:   "lhhelp",
-	Short: "List available liquid handling policy commands",
-	RunE:  lhhelp,
+var newPlateCmd = &cobra.Command{
+	Use:   "plate <plate type> <filename.csv>",
+	Short: "Create template plate file",
+	RunE:  newPlate,
 }
 
-func lhhelp(cmd *cobra.Command, args []string) error {
+func newPlate(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
-	fmt.Println()
-	fmt.Println("Liquid handling policy commands available:")
-	fmt.Println()
-	fmt.Println("name,         type,   description")
-	fmt.Println()
-	fmt.Print(liquidhandling.GetPolicyConsequents().TypeList())
-	fmt.Println()
-	return nil
+
+	switch len(args) {
+	case 0:
+		return fmt.Errorf("no plate type given")
+	case 1:
+		return fmt.Errorf("no output file given")
+	}
+
+	ptype := args[0]
+	file := args[1]
+
+	inv := factory.GetPlateLibrary()
+
+	plate, ok := inv[ptype]
+	if !ok {
+		return fmt.Errorf("invalid plate type %q", ptype)
+	}
+	return wtype.AutoExportPlateCSV(file, plate)
 }
 
 func init() {
-	c := lhhelpCmd
-	//flags := c.Flags()
-	RootCmd.AddCommand(c)
+	c := newPlateCmd
+	newCmd.AddCommand(c)
 }

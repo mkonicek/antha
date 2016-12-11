@@ -130,7 +130,7 @@ func (p *compiler) anthaInit() {
 		"github.com/antha-lang/antha/execute":              "execute.MixInto",
 		"github.com/antha-lang/antha/inject":               "",
 		"github.com/antha-lang/antha/component":            "",
-		"golang.org/x/net/context":                         "",
+		"context": "",
 	}
 }
 

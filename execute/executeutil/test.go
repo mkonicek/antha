@@ -1,6 +1,7 @@
 package executeutil
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/workflow"
-	"golang.org/x/net/context"
 )
 
 // A test input

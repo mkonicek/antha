@@ -26,8 +26,8 @@ var (
 
 // Unique identifier for an input or output parameter
 type Port struct {
-	Process string
-	Port    string
+	Process string `json:"process"`
+	Port    string `json:"port"`
 }
 
 func (a Port) String() string {
@@ -35,19 +35,19 @@ func (a Port) String() string {
 }
 
 type Process struct {
-	Component string
+	Component string `json:"component"`
 }
 
 type Connection struct {
-	Src Port
-	Tgt Port
+	Src Port `json:"src"`
+	Tgt Port `json:"tgt"`
 }
 
 // Description of a workflow. Structure inherited from and is a subset of
 // noflow library
 type Desc struct {
-	Processes   map[string]Process
-	Connections []Connection
+	Processes   map[string]Process `json:"processes"`
+	Connections []Connection       `json:"connections"`
 }
 
 type endpoint struct {

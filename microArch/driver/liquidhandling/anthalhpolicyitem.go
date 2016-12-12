@@ -33,13 +33,13 @@ func MakePolicyItems() AnthaLHPolicyItemSet {
 	alhpis["JUSTBLOWOUT"] = AnthaLHPolicyItem{Name: "JUSTBLOWOUT", Type: typemap["bool"], Desc: "shortcut to get single transfer"}
 	alhpis["POST_MIX"] = AnthaLHPolicyItem{Name: "POST_MIX", Type: typemap["int"], Desc: "number of mix cycles to do after dispense"}
 	alhpis["POST_MIX_RATE"] = AnthaLHPolicyItem{Name: "POST_MIX_RATE", Type: typemap["float64"], Desc: "pipetting rate when post mixing"}
-	alhpis["POST_MIX_VOL"] = AnthaLHPolicyItem{Name: "POST_MIX_VOL", Type: typemap["float64"], Desc: "volume to post mix (ul)"}
+	alhpis["POST_MIX_VOLUME"] = AnthaLHPolicyItem{Name: "POST_MIX_VOLUME", Type: typemap["float64"], Desc: "volume to post mix (ul)"}
 	alhpis["POST_MIX_X"] = AnthaLHPolicyItem{Name: "POST_MIX_X", Type: typemap["float64"], Desc: "x offset from centre of well (mm) when post-mixing"}
 	alhpis["POST_MIX_Y"] = AnthaLHPolicyItem{Name: "POST_MIX_Y", Type: typemap["float64"], Desc: "y offset from centre of well (mm) when post-mixing"}
 	alhpis["POST_MIX_Z"] = AnthaLHPolicyItem{Name: "POST_MIX_Z", Type: typemap["float64"], Desc: "z offset from centre of well (mm) when post-mixing"}
 	alhpis["PRE_MIX"] = AnthaLHPolicyItem{Name: "PRE_MIX", Type: typemap["int"], Desc: "number of mix cycles to do before aspirating"}
 	alhpis["PRE_MIX_RATE"] = AnthaLHPolicyItem{Name: "PRE_MIX_RATE", Type: typemap["float64"], Desc: "pipetting rate when pre mixing"}
-	alhpis["PRE_MIX_VOL"] = AnthaLHPolicyItem{Name: "PRE_MIX_VOL", Type: typemap["float64"], Desc: "volume to pre mix (ul)"}
+	alhpis["PRE_MIX_VOLUME"] = AnthaLHPolicyItem{Name: "PRE_MIX_VOLUME", Type: typemap["float64"], Desc: "volume to pre mix (ul)"}
 	alhpis["PRE_MIX_X"] = AnthaLHPolicyItem{Name: "PRE_MIX_X", Type: typemap["float64"], Desc: "x offset from centre of well (mm) when pre-mixing"}
 	alhpis["PRE_MIX_Y"] = AnthaLHPolicyItem{Name: "PRE_MIX_Y", Type: typemap["float64"], Desc: "y offset from centre of well (mm) when pre-mixing"}
 	alhpis["PRE_MIX_Z"] = AnthaLHPolicyItem{Name: "PRE_MIX_Z", Type: typemap["float64"], Desc: "z offset from centre of well (mm) when pre-mixing"}

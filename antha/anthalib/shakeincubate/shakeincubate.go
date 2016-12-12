@@ -12,7 +12,6 @@ import (
 // Produce driver calls to send to incubator for set up
 func SetPoints(component *wtype.LHComponent, temp wunit.Temperature, device string, rpm float64) []driver.Call {
 	return []driver.Call{
-
 		driver.Call{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/TemperatureSet",
 			Args: &shakerincubator.TemperatureSettings{

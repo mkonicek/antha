@@ -6,11 +6,11 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/factory"
 )
 
@@ -69,11 +69,9 @@ func ParsePlateCSV(inData io.Reader) (*ParsePlateResult, error) {
 	}
 
 	parseUnit := func(value, unit, defaultUnit string) (float64, string, error) {
-		v := wutil.ParseFloat(value)
-
-		var err error
-		if v == 0.0 {
-			err = fmt.Errorf("cannot parse value %q", value)
+		v, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			err = fmt.Errorf("cannot parse value %q: %s", value, err)
 		}
 
 		if len(unit) == 0 {

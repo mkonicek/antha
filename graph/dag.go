@@ -89,23 +89,14 @@ func TopoSort(opt TopoSortOpt) ([]Node, error) {
 // Compute transitive reduction of a graph. Relatively expensive operation:
 // O(nm).
 func TransitiveReduction(graph Graph) (Graph, error) {
-	// Find some node in g not in ns
-	someNode := func(g Graph, ns []Node) Node {
-		nodes := make(map[Node]bool)
-		for _, n := range ns {
-			nodes[n] = true
-		}
-		for i, inum := 0, g.NumNodes(); i < inum; i += 1 {
-			n := g.Node(i)
-			if !nodes[n] {
-				return n
-			}
-		}
-		return nil
-	}
-
 	ret := &qgraph{
 		Outs: make(map[Node][]Node),
+	}
+
+	if err := IsDag(graph); err != nil {
+		// TODO(ddn): transitive reductions exist for cyclic graphs but we just
+		// can't use SSSP to find them
+		return nil, fmt.Errorf("not yet implemented: cycle %s", err)
 	}
 
 	dag := Schedule(graph)
@@ -135,12 +126,6 @@ func TransitiveReduction(graph Graph) (Graph, error) {
 			next = append(next, dag.Visit(root)...)
 		}
 		dag.Roots = next
-	}
-
-	if len(ret.Nodes) < graph.NumNodes() {
-		// TODO(ddn): transitive reductions exist for cyclic graphs but we just
-		// can't use SSSP to find them
-		return nil, fmt.Errorf("not yet implemented: cycle containing %q", someNode(graph, ret.Nodes))
 	}
 
 	return ret, nil

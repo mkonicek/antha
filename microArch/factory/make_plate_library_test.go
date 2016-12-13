@@ -35,7 +35,7 @@ func TestAddRiser(t *testing.T) {
 			offset, _ := platespecificoffset[testplatename]
 
 			// check if new plate with device is in inventory
-			if _, found := testPlateInventory2.inv[testname]; !found {
+			if _, found := testPlateInventory2.lib[testname]; !found {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
@@ -51,21 +51,21 @@ func TestAddRiser(t *testing.T) {
 				)
 			}
 			// check that the height is as expected using replicated default inventory following AddRiser()
-			if testPlateInventory2.inv[test.TestPlateName].Height != test.ExpectedHeight {
+			if testPlateInventory2.lib[test.TestPlateName].Height != test.ExpectedHeight {
 				t.Error(
 					"for", "no device", "\n",
 					"testname", test.TestPlateName, "\n",
 					"Expected plate height:", test.ExpectedHeight, "\n",
-					"got:", testPlateInventory2.inv[test.TestPlateName].Height, "\n",
+					"got:", testPlateInventory2.lib[test.TestPlateName].Height, "\n",
 				)
 			}
 			// check that the height is as expected with riser added
-			if testPlateInventory2.inv[testname].Height != test.ExpectedHeight {
+			if testPlateInventory2.lib[testname].Height != test.ExpectedHeight {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
 					"Expected plate height:", test.ExpectedHeight, "\n",
-					"got:", testPlateInventory2.inv[testname].Height, "\n",
+					"got:", testPlateInventory2.lib[testname].Height, "\n",
 				)
 			}
 			// now test z offsets
@@ -76,20 +76,20 @@ func TestAddRiser(t *testing.T) {
 					"got:", testplate.WellZStart, "\n",
 				)
 			}
-			if testPlateInventory2.inv[testname].WellZStart != test.ExpectedZStart+device.GetHeightInmm()-offset {
+			if testPlateInventory2.lib[testname].WellZStart != test.ExpectedZStart+device.GetHeightInmm()-offset {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
 					"Expected plate height:", test.ExpectedZStart, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedZStart+device.GetHeightInmm(), "\n",
-					"got:", testPlateInventory2.inv[testname].WellZStart, "\n",
+					"got:", testPlateInventory2.lib[testname].WellZStart, "\n",
 				)
 			}
-			if testPlateInventory2.inv[test.TestPlateName].WellZStart != test.ExpectedZStart {
+			if testPlateInventory2.lib[test.TestPlateName].WellZStart != test.ExpectedZStart {
 				t.Error(
 					"for", "no device", "\n",
 					"testname", test.TestPlateName, "\n",
 					"Expected plate height:", test.ExpectedZStart, "\n",
-					"got:", testPlateInventory2.inv[test.TestPlateName].WellZStart, "\n",
+					"got:", testPlateInventory2.lib[test.TestPlateName].WellZStart, "\n",
 				)
 			}
 		}
@@ -154,22 +154,22 @@ func TestDeviceMethods(t *testing.T) {
 
 }
 
-var testPlateInventory *PlateInventory
+var testPlateInventory *plateLibrary
 
 func init() {
-	testPlateInventory = &PlateInventory{
-		inv: makePlateLibrary(),
+	testPlateInventory = &plateLibrary{
+		lib: makePlateLibrary(),
 	}
 
 	//defaultPlateInventory.AddAllDevices()
 	//defaultPlateInventory.AddAllRisers()
 }
 
-var testPlateInventory2 *PlateInventory
+var testPlateInventory2 *plateLibrary
 
 func init() {
-	testPlateInventory2 = &PlateInventory{
-		inv: makePlateLibrary(),
+	testPlateInventory2 = &plateLibrary{
+		lib: makePlateLibrary(),
 	}
 
 	//defaultPlateInventory.AddAllDevices()
@@ -202,7 +202,7 @@ func TestSetConstraints(t *testing.T) {
 
 					testPlateInventory.AddRiser(testplate, device)
 
-					testplate, ok = testPlateInventory.inv[testname]
+					testplate, ok = testPlateInventory.lib[testname]
 
 					if !ok {
 						t.Error(
@@ -258,7 +258,7 @@ func TestGetConstraints(t *testing.T) {
 						continue
 					}
 
-					testplate, ok = defaultPlateInventory.inv[testname]
+					testplate, ok = defaultPlateLibrary.lib[testname]
 
 					if !ok {
 						t.Error(

@@ -1,5 +1,5 @@
 // list.go: Part of the Antha language
-// Copyright (C) 2015 The Antha authors. All rights reserved.
+// Copyright (C) 2016 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -25,57 +25,62 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
+	"os"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/cmd/antharun/comp"
+	"github.com/antha-lang/antha/cmd/antharun/pretty"
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var lhcomponentsCmd = &cobra.Command{
-	Use:   "lhcomponents",
-	Short: "List available antha lhcomponents",
-	RunE:  lhComponents,
+var listElementsCmd = &cobra.Command{
+	Use:   "elements",
+	Short: "List available antha elements",
+	RunE:  listElements,
 }
 
-func lhComponents(cmd *cobra.Command, args []string) error {
+func listElements(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 
-	cs := factory.GetComponentList()
-	/*if err != nil {
-		return err
-	}*/
+	paths := make(map[string]string)
+	for _, comp := range library {
+		p, seen := paths[comp.Name]
+		if seen {
+			return fmt.Errorf("protocol %q defined in more than one file %q and %q", comp.Name, p, comp.Desc.Path)
+		}
+		paths[comp.Name] = comp.Desc.Path
+	}
 
-	switch viper.GetString("output") {
+	cs, err := comp.New(library)
+	if err != nil {
+		return err
+	}
+
+	output := viper.GetString("output")
+	switch output {
 	case jsonOutput:
-		if bs, err := json.Marshal(cs); err != nil {
-			return err
-		} else {
-			_, err = fmt.Println(string(bs))
+		bs, err := json.MarshalIndent(cs, "", "  ")
+		if err != nil {
 			return err
 		}
-	default:
-
-		prettystrings := make([]string, 0)
-
-		prettystrings = append(prettystrings, text.Print("Component Name", "LiquidTypeName"))
-
-		for i := range cs {
-			prettystrings = append(prettystrings, text.Print(cs[i], factory.GetComponentByType(cs[i]).TypeName()))
-		}
-		_, err := fmt.Println(strings.Join(prettystrings, ""))
+		_, err = fmt.Println(string(bs))
 		return err
+	case yamlOutput:
+		bs, err := yaml.Marshal(cs)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Print(string(bs))
+		return err
+	case textOutput:
+		return pretty.Components(os.Stdout, cs)
+	default:
+		return fmt.Errorf("unknown output format %q", output)
 	}
 }
 
 func init() {
-	c := lhcomponentsCmd
-	flags := c.Flags()
-	RootCmd.AddCommand(c)
-
-	flags.String(
-		"output",
-		stringOutput,
-		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{stringOutput, jsonOutput}, ",")))
+	c := listElementsCmd
+	listCmd.AddCommand(c)
 }

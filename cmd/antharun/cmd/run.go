@@ -47,13 +47,14 @@ const (
 )
 
 var runCmd = &cobra.Command{
-	Use:          "antharun",
-	Short:        "Run an antha workflow",
-	RunE:         runWorkflow,
-	SilenceUsage: true,
+	Use:           "antharun",
+	Short:         "Run an antha workflow",
+	RunE:          runWorkflow,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
-func makeMixerOpt() mixer.Opt {
+func makeMixerOpt() (mixer.Opt, error) {
 	opt := mixer.Opt{}
 	if i := viper.GetInt("maxPlates"); i != 0 {
 		f := float64(i)
@@ -70,8 +71,16 @@ func makeMixerOpt() mixer.Opt {
 	opt.InputPlateType = GetStringSlice("inputPlateType")
 	opt.OutputPlateType = GetStringSlice("outputPlateType")
 	opt.TipType = GetStringSlice("tipType")
-	opt.InputPlateFiles = GetStringSlice("inputPlates")
-	return opt
+
+	for _, fn := range GetStringSlice("inputPlates") {
+		p, err := mixer.ParseInputPlateFile(fn)
+		if err != nil {
+			return opt, err
+		}
+		opt.InputPlates = append(opt.InputPlates, p)
+	}
+
+	return opt, nil
 }
 
 func makeContext() (context.Context, error) {
@@ -203,8 +212,13 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	mopt, err := makeMixerOpt()
+	if err != nil {
+		return err
+	}
+
 	opt := &runOpt{
-		MixerOpt:       makeMixerOpt(),
+		MixerOpt:       mopt,
 		Drivers:        drivers,
 		BundleFile:     viper.GetString("bundle"),
 		ParametersFile: viper.GetString("parameters"),

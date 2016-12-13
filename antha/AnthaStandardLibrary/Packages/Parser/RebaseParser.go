@@ -1,22 +1,22 @@
 // antha/AnthaStandardLibrary/Packages/Parser/RebaseParser.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
-// 
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-// 
+//
 // For more information relating to the software or licensing issues please
-// contact license@antha-lang.org or write to the Antha team c/o 
+// contact license@antha-lang.org or write to the Antha team c/o
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
@@ -24,11 +24,12 @@ package parser
 
 import (
 	"bufio"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"io"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 /*
@@ -167,9 +168,8 @@ func Build_rebase(name string, prototype string, recognitionseq string, methylat
 	return Record
 }
 
-func RebaseParse(rebaseRh io.Reader) chan wtype.RestrictionEnzyme {
-
-	outputChannel := make(chan wtype.RestrictionEnzyme)
+func RebaseParse(rebaseRh io.Reader) []wtype.RestrictionEnzyme {
+	var outputs []wtype.RestrictionEnzyme
 
 	scanner := bufio.NewScanner(rebaseRh)
 	// scanner.Split(bufio.ScanLines)
@@ -181,60 +181,46 @@ func RebaseParse(rebaseRh io.Reader) chan wtype.RestrictionEnzyme {
 	refs := ""
 	//var data bytes.Buffer
 
-	go func() {
-		// Loop over the letters in inputString
-		for scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
-			if len(line) == 0 {
-				continue
-			}
-
-			// line := scanner.Text()
-
-			if line[0] == '<' && line[1] == '1' {
-
-				if name != "" {
-
-					outputChannel <- Build_rebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs)
-
-					name = ""
-					recognitionseq = ""
-					methylationsite = ""
-					prototype = ""
-				}
-
-				name = line[3:]
-			}
-			if line[0] == '<' && line[1] == '2' {
-
-				prototype = line[3:]
-			}
-			if line[0] == '<' && line[1] == '3' {
-
-				recognitionseq = line[3:]
-			}
-			if line[0] == '<' && line[1] == '4' {
-
-				methylationsite = line[3:]
-			}
-
-			if line[0] == '<' && line[1] == '5' {
-
-				commercialsource = line[3:]
-			}
-			if line[0] == '<' && line[1] == '6' {
-
-				refs = line[3:]
-			}
-
+	// Loop over the letters in inputString
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) == 0 {
+			continue
 		}
 
-		outputChannel <- Build_rebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs)
+		// line := scanner.Text()
 
-		// Close the output channel, so anything that loops over it
-		// will know that it is finished.
-		close(outputChannel)
-	}()
+		if line[0] == '<' && line[1] == '1' {
+			if name != "" {
+				outputs = append(outputs, Build_rebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs))
 
-	return outputChannel
+				name = ""
+				recognitionseq = ""
+				methylationsite = ""
+				prototype = ""
+			}
+
+			name = line[3:]
+		}
+		if line[0] == '<' && line[1] == '2' {
+			prototype = line[3:]
+		}
+		if line[0] == '<' && line[1] == '3' {
+			recognitionseq = line[3:]
+		}
+		if line[0] == '<' && line[1] == '4' {
+			methylationsite = line[3:]
+		}
+		if line[0] == '<' && line[1] == '5' {
+			commercialsource = line[3:]
+		}
+		if line[0] == '<' && line[1] == '6' {
+			refs = line[3:]
+		}
+
+	}
+
+	outputs = append(outputs, Build_rebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs))
+
+	return outputs
 }

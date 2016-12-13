@@ -29,10 +29,9 @@ type Opt struct {
 	TipType              []string
 	PlanningVersion      *int
 
-	// Three methods of populating Opt.InputPlates
-	InputPlateFiles []string         // From filenames
-	InputPlateData  [][]byte         // From contents of files
-	InputPlates     []*wtype.LHPlate // Directly
+	// Two methods of populating Opt.InputPlates
+	InputPlateData [][]byte         // From contents of files
+	InputPlates    []*wtype.LHPlate // Directly
 
 	// Direct specification of Output plates
 	OutputPlates []*wtype.LHPlate

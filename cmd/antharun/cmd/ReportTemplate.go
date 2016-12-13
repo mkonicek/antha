@@ -103,6 +103,6 @@ func init() {
 
 	flags.String(
 		"output",
-		stringOutput,
-		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{stringOutput, jsonOutput}, ",")))
+		textOutput,
+		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{textOutput, jsonOutput}, ",")))
 }

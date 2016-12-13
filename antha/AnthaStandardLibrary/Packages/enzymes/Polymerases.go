@@ -24,15 +24,31 @@
 package enzymes
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"sort"
+	"strings"
 )
+
+type invalidProperty struct{}
+
+var anInvalidProperty = &invalidProperty{}
+
+func (ip *invalidProperty) Error() string {
+	var props []string
+	for key, _ := range dnaPolymeraseProperties {
+		props = append(props, key)
+	}
+	sort.Strings(props)
+	return "Valid options are: " + strings.Join(props, ",")
+}
 
 var (
 	//
 
-	DNApolymeraseProperties = map[string]map[string]float64{
-		"Q5": map[string]float64{
+	dnaPolymeraseProperties = map[string]map[string]float64{
+		"Q5Polymerase": map[string]float64{
 			"activity_U/ml_assayconds": 50.0,
 			"SecperKb_upper":           30,
 			"SperKb_lower":             20,
@@ -65,6 +81,25 @@ var (
 		},
 	}
 )
+
+func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.DNASequence) (wunit.Time, error) {
+
+	polymerasename := polymerase.CName
+
+	polymeraseproperties, polymerasefound := dnaPolymeraseProperties[polymerasename]
+
+	if !polymerasefound {
+
+		return wunit.Time{}, anInvalidProperty
+	}
+
+	sperkblower, found := polymeraseproperties["SperKb_lower"]
+	if !found {
+		return wunit.Time{}, fmt.Errorf("no property, SperKb_lower found for", polymerase.CName)
+	}
+
+	return wunit.NewTime(float64(len(targetSequence.Sequence()))/sperkblower, "s"), anInvalidProperty
+}
 
 /*
 type assayconds struct {

@@ -30,6 +30,16 @@ for using both are stored here.
 First step is to install or upgrade to go 1.7. Follow the instructions at the
 [Golang](http://golang.org/doc/install) site. 
 
+Update the GOPATH:
+
+```bash
+cat<<EOF>>$HOME/.bash_profile
+export GOPATH=$HOME/go
+export PATH=\$PATH:$HOME/go/bin
+EOF
+source ~/.bash_profile
+```
+
 After you install go, if you don't have [Homebrew](http://brew.sh/), please
 install it. Then, follow these steps to setup a working antha development
 environment:

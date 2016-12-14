@@ -58,8 +58,9 @@ func samePlate(a, b *wtype.LHPlate) error {
 
 func TestParsePlate(t *testing.T) {
 	type testCase struct {
-		File     []byte
-		Expected *wtype.LHPlate
+		File       []byte
+		Expected   *wtype.LHPlate
+		NoWarnings bool
 	}
 
 	suite := []testCase{
@@ -108,6 +109,7 @@ pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
 A1,water,water,140.5,ul,0,mg/l
 C1,neb5compcells,culture,20.5,ul,0,mg/l
 `),
+			NoWarnings: true,
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
@@ -139,6 +141,9 @@ C1,neb5compcells,culture,20.5,ul,0,mg/l
 		}
 		if err := samePlate(tc.Expected, p.Plate); err != nil {
 			t.Error(err)
+		}
+		if tc.NoWarnings && len(p.Warnings) != 0 {
+			t.Errorf("found warnings: %s", p.Warnings)
 		}
 	}
 }

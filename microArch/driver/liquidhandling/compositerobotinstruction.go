@@ -34,8 +34,6 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
-var ntipstot int
-
 type TransferParams struct {
 	What       string
 	PltFrom    string
@@ -3536,8 +3534,6 @@ func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParam
 		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("PICKUP: type: ", tiptype, " n: ", multi, " mirror: ", mirror))
 		return NewLoadTipsMoveInstruction(), err
 	}
-
-	ntipstot += multi
 
 	ins := NewLoadTipsMoveInstruction()
 	ins.Head = channel.Head

@@ -1,6 +1,7 @@
 package execute
 
 import (
+	"context"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
@@ -9,7 +10,6 @@ import (
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
-	"golang.org/x/net/context"
 )
 
 func TestUseCompChainThroughSample(t *testing.T) {

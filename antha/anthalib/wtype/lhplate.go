@@ -498,9 +498,9 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 
 	csvfile, err := os.Create(outputpilename)
 	if err != nil {
-		fmt.Println("Error:", err)
 		return err
 	}
+
 	defer csvfile.Close()
 
 	records := make([][]string, 0)
@@ -567,7 +567,6 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 
 	csvfile, err := os.Create(outputfilename)
 	if err != nil {
-		fmt.Println("Error:", err)
 		return err
 	}
 	defer csvfile.Close()

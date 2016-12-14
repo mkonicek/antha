@@ -30,7 +30,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -163,7 +162,7 @@ func SlurpOutput(Urlstring string) (output []byte) {
 
 	res, err := http.Get(Urlstring)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	output, err = ioutil.ReadAll(res.Body) // this is a slow step!
@@ -254,53 +253,45 @@ func Build_fasta(header string, seq bytes.Buffer) (Record FastaPart) {
 	return Record
 }
 
-func FastaParse(fastaFh io.Reader) chan FastaPart {
-
-	outputChannel := make(chan FastaPart)
+func FastaParse(fastaFh io.Reader) []FastaPart {
+	var outputs []FastaPart
 
 	scanner := bufio.NewScanner(fastaFh)
-	// scanner.Split(bufio.ScanLines)
 	header := ""
 	var seq bytes.Buffer
 
-	go func() {
-		// Loop over the letters in inputString
-		for scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
-			if len(line) == 0 {
-				continue
-			}
-
-			// line := scanner.Text()
-
-			if line[0] == '>' {
-				// If we stored a previous identifier, get the DNA string and map to the
-				// identifier and clear the string
-				if header != "" {
-					// outputChannel <- build_fasta(header, seq.String())
-					outputChannel <- Build_fasta(header, seq)
-					// fmt.Println(record.id, len(record.seq))
-					header = ""
-					seq.Reset()
-				}
-
-				// Standard FASTA identifiers look like: ">id desc"
-				header = line[1:]
-			} else {
-				// Append here since multi-line DNA strings are possible
-				seq.WriteString(line)
-			}
-
+	// Loop over the letters in inputString
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) == 0 {
+			continue
 		}
 
-		outputChannel <- Build_fasta(header, seq)
+		// line := scanner.Text()
 
-		// Close the output channel, so anything that loops over it
-		// will know that it is finished.
-		close(outputChannel)
-	}()
+		if line[0] == '>' {
+			// If we stored a previous identifier, get the DNA string and map to the
+			// identifier and clear the string
+			if header != "" {
+				// outputChannel <- build_fasta(header, seq.String())
+				outputs = append(outputs, Build_fasta(header, seq))
+				// fmt.Println(record.id, len(record.seq))
+				header = ""
+				seq.Reset()
+			}
 
-	return outputChannel
+			// Standard FASTA identifiers look like: ">id desc"
+			header = line[1:]
+		} else {
+			// Append here since multi-line DNA strings are possible
+			seq.WriteString(line)
+		}
+
+	}
+
+	outputs = append(outputs, Build_fasta(header, seq))
+
+	return outputs
 }
 
 func CountPartsinRegistryContaining(keystrings []string) (numberofparts int) {
@@ -319,7 +310,7 @@ func CountPartsinRegistryContaining(keystrings []string) (numberofparts int) {
 	seq := make([]string, 0)
 	//seq = []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
 	records = append(records, seq)
-	for record := range FastaParse(fastaFh) {
+	for _, record := range FastaParse(fastaFh) {
 		/*plasmidstatus := "FALSE"
 		seqtype := "DNA"
 		class := "not specified"*/
@@ -361,7 +352,7 @@ func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool)
 
 	listofpartIDs = make([]string, 0)
 
-	for record := range FastaParse(fastaFh) {
+	for _, record := range FastaParse(fastaFh) {
 		/*plasmidstatus := "FALSE"
 		seqtype := "DNA"
 		class := "not specified"*/
@@ -396,27 +387,6 @@ func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool)
 	return listofpartIDs, idtodescriptionmap
 }
 
-/*
-func PartSummary(parts []string) [][]string {
-
-	parsedxml := PartProperties(parts)
-
-
-	for _,part := range parsedxml.Partlist.Parts {
-		name := part.Part_name
-		seq := "Seq:"+ part.Sequencelist[0].Seq_data
-		part_type := "type:" + part.Part_type
-		part.Part_results
-		part.Part_rating
-		part.Part_short_desc
-		for _, category := range part.Categories {
-
-		}
-
-	}
-return[][]string
-}
-*/
 func ParseOutput(xmldata []byte) (parsedxml Rsbpml) {
 
 	err := xml.Unmarshal(xmldata, &parsedxml)
@@ -438,95 +408,6 @@ func Partpropertiesmini(parts []string) (parsedxml Rsbpml) {
 
 	return parsedxml
 }
-
-/*
-func PartPropertiesChan(parts []string) chan Rsbpml {
-
-	outputChannel := make(chan Fasta)
-
-	fmt.Println("len(parts =", len(parts))
-	if len(parts) > 14 {
-
-		partslice := parts[0:14]
-		fmt.Println("len(partslice) =", len(partslice))
-
-		go func() {
-		for parts []string {
-
-
-			}
-
-		outputChannel <- Partpropertiesmini(partslice)
-
-		url := MakeXMLURL(partslice)
-
-		urloutput := SlurpOutput(url)
-
-		parsedxml = ParseOutput(urloutput)
-
-		//var parts []Part
-		newparsedxml := make([]Part, 0)
-		fmt.Println("len(parsedxml.Partlist[0].Parts) =", len(parsedxml.Partlist[0].Parts))
-		for _, part := range parsedxml.Partlist[0].Parts {
-			newparsedxml = append(newparsedxml, part)
-		}
-
-		var parsedxml Rsbpml
-		//n := 0
-		partsleft := (len(parts) - len(partslice))
-		/*if partsleft > 10 {
-			n = 10
-		} else {
-			n = len(parts) - 10
-		}
-
-		for i := 10; i < len(parts); i = i + 10 {
-			partslice = parts[i : i+10]
-			url := MakeXMLURL(partslice)
-
-			urloutput := SlurpOutput(url)
-
-			parsedxml = ParseOutput(urloutput)
-			fmt.Println("len(parsedxml.Partlist[0].Parts) =", len(parsedxml.Partlist[0].Parts))
-			for _, part := range parsedxml.Partlist[0].Parts {
-				newparsedxml = append(newparsedxml, part)
-				fmt.Println("len(newparsedxml)", len(newparsedxml))
-			}
-			var parsedxml Rsbpml
-			partsleft = partsleft - len(partslice)
-			fmt.Println("parts left = ", partsleft)
-			if partsleft < 10 {
-				//for i := 0; i < len(parts); i = i + 10 {
-				partslice = parts[len(parts)-partsleft : len(parts)]
-				url = MakeXMLURL(partslice)
-
-				urloutput = SlurpOutput(url)
-
-				parsedxml = ParseOutput(urloutput)
-
-				for _, part := range parsedxml.Partlist[0].Parts {
-					newparsedxml = append(newparsedxml, part)
-					fmt.Println("len(newparsedxml)", len(newparsedxml))
-					parsedxml.Partlist[0].Parts = newparsedxml
-					fmt.Println("newparsedxml", newparsedxml)
-
-				}
-				{
-					break
-				}
-			}
-		}
-	} else {
-
-		url := MakeXMLURL(parts)
-
-		urloutput := SlurpOutput(url)
-
-		parsedxml = ParseOutput(urloutput)
-	}
-	return parsedxml
-}
-*/
 
 func LookUp(parts []string) (parsedxml Rsbpml) {
 	fmt.Println("number of parts to find in registry", len(parts))

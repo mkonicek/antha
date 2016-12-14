@@ -108,6 +108,7 @@ func MakePolicies() map[string]LHPolicy {
 	pols["PEG"] = MakePEGPolicy()
 	pols["Protoplasts"] = MakeProtoplastPolicy()
 	pols["dna_mix"] = MakeDNAMixPolicy()
+	pols["dna_cells_mix"] = MakeDNACELLSMixPolicy()
 	pols["plateout"] = MakePlateOutPolicy()
 	pols["colony"] = MakeColonyPolicy()
 	//      pols["lysate"] = MakeLysatePolicy()
@@ -565,6 +566,15 @@ func MakeDNAMixPolicy() LHPolicy {
 	dnapolicy["POST_MIX"] = 5
 	dnapolicy["POST_MIX_Z"] = 0.5
 	dnapolicy["POST_MIX_RATE"] = 3.0
+	return dnapolicy
+}
+
+func MakeDNACELLSMixPolicy() LHPolicy {
+	dnapolicy := MakeDNAPolicy()
+	dnapolicy["POST_MIX_VOLUME"] = 20.0
+	dnapolicy["POST_MIX"] = 2
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 1.0
 	return dnapolicy
 }
 

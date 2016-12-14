@@ -2,6 +2,7 @@ package lh
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/antha-lang/antha/antha/anthalib/material"
@@ -24,7 +25,7 @@ func NewDriver(address string) *Driver {
 	var d Driver
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
-		log.Fatal("Cannot initialize driver")
+		panic(fmt.Sprintf("Cannot initialize driver: %s", err))
 	}
 
 	d.C = pb.NewExtendedLiquidhandlingDriverClient(conn)

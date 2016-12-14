@@ -1,5 +1,5 @@
-// list.go: Part of the Antha language
-// Copyright (C) 2015 The Antha authors. All rights reserved.
+// new.go: Part of the Antha language
+// Copyright (C) 2016 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -22,37 +22,14 @@
 
 package cmd
 
-import (
-	"fmt"
-	"strings"
+import "github.com/spf13/cobra"
 
-	"github.com/spf13/cobra"
-)
-
-const (
-	jsonOutput = "json"
-	yamlOutput = "yaml"
-	textOutput = "text"
-)
-
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List antha properties",
-	// TODO: deprecate bare list command
-	RunE: listElements,
+var newCmd = &cobra.Command{
+	Use:   "new",
+	Short: "Create template antha files",
 }
 
 func init() {
-	c := listCmd
-	flags := c.PersistentFlags()
+	c := newCmd
 	RootCmd.AddCommand(c)
-
-	flags.String(
-		"output",
-		textOutput,
-		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{
-			textOutput,
-			yamlOutput,
-			jsonOutput,
-		}, ",")))
 }

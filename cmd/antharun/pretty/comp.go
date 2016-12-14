@@ -21,6 +21,8 @@ func Components(out io.Writer, cs []comp.Component) error {
 		for _, p := range c.OutPorts {
 			lines = append(lines, fmt.Sprintf("\t\t%s %s\n", p.Name, p.Type))
 		}
+		lines = append(lines, fmt.Sprintf("\tPath:\n"))
+		lines = append(lines, fmt.Sprintf("\t\t%s\n", c.Path))
 	}
 
 	_, err := fmt.Fprint(out, strings.Join(lines, ""))

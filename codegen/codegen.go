@@ -471,19 +471,11 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 		}
 	}
 
-	// Remove synthetic nodes and redundant edges; be very aggressive reducing
-	// graph before eliminate since it is a very memory intensive operation
-	sg, err := graph.TransitiveReduction(graph.Eliminate(graph.EliminateOpt{
-		Graph: graph.Simplify(graph.SimplifyOpt{
-			Graph:            ig,
-			RemoveSelfLoops:  true,
-			RemoveMultiEdges: true,
-		}),
-		In: func(n graph.Node) bool {
-			_, isWait := n.(*target.Wait)
-			return !isWait
-		},
-	}))
+	// Remove synthetic nodes and redundant edges
+	sg, err := simplifyWithDeps(ig, func(n graph.Node) bool {
+		_, isWait := n.(*target.Wait)
+		return !isWait
+	})
 	if err != nil {
 		return nil, err
 	}

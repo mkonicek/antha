@@ -25,7 +25,6 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	"log"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -130,14 +129,13 @@ func GenbankContentstoAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNAS
 		genbanklines = append(genbanklines, line)
 	}
 
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+	if err = scanner.Err(); err != nil {
+		return
 	}
 
 	annotated, err = HandleGenbank(genbanklines)
 
 	return
-
 }
 
 func GenbanktoAnnotatedSeq(filename string) (annotated wtype.DNASequence, err error) {

@@ -18,7 +18,9 @@ var tests = []platetest{
 	platetest{TestPlateName: "reservoir", ExpectedZStart: 10.0, ExpectedHeight: 45.0},
 	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
+	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9, ExpectedHeight: 22.0},
 }
+
 
 func TestAddRiser(t *testing.T) {
 
@@ -288,6 +290,8 @@ func TestGetConstraints(t *testing.T) {
 	}
 }
 
+
+
 func TestPlateZs(t *testing.T) {
 	allplates := GetPlateList()
 
@@ -295,6 +299,17 @@ func TestPlateZs(t *testing.T) {
 
 		testplate := GetPlateByType(testplatename)
 		fmt.Println("plate:", testplate.Type, "Z start", testplate.WellZStart)
+	}
+	for _, test := range tests {
 
+		testplate := GetPlateByType(test.TestPlateName)
+		
+		if testplate.WellZStart != test.ExpectedZStart {
+							t.Error(
+								"for", test.TestPlateName, "\n",
+								"expected height: ", test.ExpectedZStart, "\n",
+								"got height :", testplate.WellZStart, "\n",
+							)
+						}
 	}
 }

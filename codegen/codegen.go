@@ -6,12 +6,14 @@ package codegen
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
+	"github.com/antha-lang/antha/target/mixer"
 )
 
 const (
@@ -45,6 +47,17 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 				return ""
 			}
 			return fmt.Sprintf("%T", c.Inst)
+		},
+		func(x interface{}) string {
+			c, ok := x.(*ast.Command)
+			if !ok {
+				return ""
+			}
+			h, ok := c.Inst.(*ast.HandleInst)
+			if !ok {
+				return ""
+			}
+			return fmt.Sprintf("%s", h.Group)
 		},
 		func(x interface{}) string {
 			n, ok := x.(ast.Node)
@@ -123,6 +136,31 @@ func (a *ir) partition(opt graph.PartitionTreeOpt) (*graph.TreePartition, error)
 	return ret, nil
 }
 
+type devicesByType []target.Device
+
+func (a devicesByType) Len() int {
+	return len(a)
+}
+
+func (a devicesByType) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a devicesByType) Less(i, j int) bool {
+	_, ok1 := a[i].(*mixer.Mixer)
+	_, ok2 := a[i].(*mixer.Mixer)
+	switch {
+	case ok1 && ok2:
+		return false // Equal
+	case ok1 && !ok2:
+		return true
+	case !ok1 && ok2:
+		return false
+	default:
+		return false // Equal
+	}
+}
+
 // Assign runs of a device to each ApplyExpr. Construct initial plan by
 // by maximally coalescing ApplyExprs with the same device into the same
 // device run.
@@ -161,6 +199,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 				return fmt.Errorf("no device can handle constraints %s", ast.Meet(reqs...))
 			}
 		}
+		sort.Stable(devicesByType(devices))
 		colors[n] = devices
 	}
 
@@ -261,9 +300,6 @@ func (a *ir) tryPlan() error {
 			return a.assignment[n.(ast.Node)]
 		},
 	})
-	if err := graph.IsDag(dg); err != nil {
-		return fmt.Errorf("invalid assignment: %s", err)
-	}
 
 	// TODO: When initial assignment is not feasible for a device (e.g.,
 	// capacity constraints), split up run until feasible or give up.
@@ -273,20 +309,34 @@ func (a *ir) tryPlan() error {
 
 	cmds := make(map[*drun][]ast.Node)
 	for n, d := range a.assignment {
-		if c, ok := n.(*ast.Command); !ok {
+		c, ok := n.(*ast.Command)
+		if !ok {
 			continue
-		} else {
-			cmds[d] = append(cmds[d], c)
 		}
+		cmds[d] = append(cmds[d], c)
+	}
+
+	// Process runs in dependency order
+	order, err := graph.TopoSort(graph.TopoSortOpt{
+		Graph: dg,
+	})
+	if err != nil {
+		return fmt.Errorf("invalid assignment: %s", err)
+	}
+	var runs []*drun
+	for _, n := range order {
+		n := dg.Orig(n, 0).(ast.Node)
+		run := a.assignment[n]
+		runs = append(runs, run)
 	}
 
 	output := make(map[*drun][]target.Inst)
-	for d, cs := range cmds {
-		if insts, err := d.Device.Compile(cs); err != nil {
+	for _, d := range runs {
+		insts, err := d.Device.Compile(cmds[d])
+		if err != nil {
 			return err
-		} else {
-			output[d] = insts
 		}
+		output[d] = insts
 	}
 
 	a.output = output

@@ -1,8 +1,9 @@
 package auto
 
 import (
+	"context"
+
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/bvendor/google.golang.org/grpc"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"

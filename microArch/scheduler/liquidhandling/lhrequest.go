@@ -82,12 +82,16 @@ func (req *LHRequest) ConfigureYourself() error {
 	// i.e. anything used in a mix-in-place; these don't add to the general
 	// store of anonymous components to be sampled from
 
-	uniques := make(map[wtype.PlateLocation]string, len(req.LHInstructions))
+	uniques := make(map[wtype.PlateLocation]*wtype.LHComponent, len(req.LHInstructions))
 
 	for _, ins := range req.LHInstructions {
+		// If provenance info is brought in here this becomes unsafe
 		if ins.IsMixInPlace() && !ins.HasAnyParent() {
-			// first component is special
-			uniques[ins.Components[0].PlateLocation().ToString()] = ins.Components[0].CNID()
+			if !ins.Components[0].PlateLocation().IsZero() {
+				uniques[ins.Components[0].PlateLocation()] = ins.Components[0]
+			} else {
+				// this will be autoallocated
+			}
 		}
 	}
 
@@ -99,15 +103,25 @@ func (req *LHRequest) ConfigureYourself() error {
 
 			// special case for components treated literally
 
-			cnid, ok := uniques[w.PlateLocation()]
+			cmp, ok := uniques[w.PlateLocation()]
 
-			c := w.Contents().Dup()
-			vvvvvv := c.Volume()
-			vvvvvv.Subtract(w.ResidualVolume())
-			c.SetVolume(vvvvvv)
-			ar := inputs[c.CName]
-			ar = append(ar, c)
-			inputs[c.CName] = ar
+			if ok {
+				// unique components (where instances matter) are
+				// identified using CNID()
+				ar := inputs[cmp.CNID()]
+				ar = append(ar, cmp)
+				inputs[cmp.CNID()] = ar
+			} else {
+				// bulk components (where instances don't matter) are
+				// identified using just CName
+				c := w.Contents().Dup()
+				vvvvvv := c.Volume()
+				vvvvvv.Subtract(w.ResidualVolume())
+				c.SetVolume(vvvvvv)
+				ar := inputs[c.CName]
+				ar = append(ar, c)
+				inputs[c.CName] = ar
+			}
 		}
 	}
 

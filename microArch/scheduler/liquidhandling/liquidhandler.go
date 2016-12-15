@@ -512,7 +512,9 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 
 		for ix, component := range components {
 			// ignore anything which is made in another mix
-
+			// XXX if provenance info comes in this is not safe
+			// since something can not have been made in a previous mix
+			// and yet still answer yes to this question
 			if component.HasAnyParent() {
 				continue
 			}
@@ -520,36 +522,39 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			// what if this is a mix in place?
 			if ix == 0 && !component.IsSample() {
 				// these components come in as instances -- hence 1 per well
-				inputs[component.CNID()] = make([]*wtype.LHComponent, 0, 3)
+				inputs[component.CNID()] = make([]*wtype.LHComponent, 0, 1)
+				inputs[component.CNID()] = append(inputs[component.CNID()], component)
 				allinputs = append(allinputs, component.CNID())
 				vmap[component.CNID()] = component.Volume()
+
+			} else {
+
+				cmps, ok := inputs[component.CName]
+				if !ok {
+					cmps = make([]*wtype.LHComponent, 0, 3)
+					allinputs = append(allinputs, component.CName)
+				}
+
+				cmps = append(cmps, component)
+				inputs[component.CName] = cmps
+
+				// similarly add the volumes up
+
+				vol := vmap[component.CName]
+
+				if vol.IsNil() {
+					vol = wunit.NewVolume(0.0, "ul")
+				}
+
+				v2a := wunit.NewVolume(component.Vol, component.Vunit)
+
+				// we have to add the carry volume here
+				// this is roughly per transfer so should be OK
+				v2a.Add(request.CarryVolume)
+				vol.Add(v2a)
+
+				vmap[component.CName] = vol
 			}
-
-			cmps, ok := inputs[component.CName]
-			if !ok {
-				cmps = make([]*wtype.LHComponent, 0, 3)
-				allinputs = append(allinputs, component.CName)
-			}
-
-			cmps = append(cmps, component)
-			inputs[component.CName] = cmps
-
-			// similarly add the volumes up
-
-			vol := vmap[component.CName]
-
-			if vol.IsNil() {
-				vol = wunit.NewVolume(0.0, "ul")
-			}
-
-			v2a := wunit.NewVolume(component.Vol, component.Vunit)
-
-			// we have to add the carry volume here
-			// this is roughly per transfer so should be OK
-			v2a.Add(request.CarryVolume)
-			vol.Add(v2a)
-
-			vmap[component.CName] = vol
 
 			for j := 0; j < len(components); j++ {
 				// again exempt those parented components
@@ -616,8 +621,8 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		if volb.GreaterThanFloat(0.0001) {
 			vmap3[k] = volb
 		}
-		//	volc := vmap[k]
-		//logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
+		volc := vmap[k]
+		logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
 	}
 
 	(*request).Input_vols_required = vmap

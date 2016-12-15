@@ -7,12 +7,20 @@ type PlateLocation struct {
 	Coords WellCoords
 }
 
+func ZeroPlateLocation() PlateLocation {
+	return PlateLocation{"", ZeroWellCoords()}
+}
+
+func (pc PlateLocation) IsZero() bool {
+	return pc.Equals(ZeroPlateLocation())
+}
+
 func (pc PlateLocation) ToString() string {
 	return pc.ID + ":" + pc.Coords.FormatA1()
 }
 
 func PlateLocationFromString(s string) PlateLocation {
-	pl := PlateLocation{}
+	pl := ZeroPlateLocation()
 	tx := strings.Split(s, ":")
 
 	if len(tx) != 2 {

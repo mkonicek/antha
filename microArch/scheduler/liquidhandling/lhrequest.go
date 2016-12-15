@@ -78,13 +78,30 @@ func (req *LHRequest) ConfigureYourself() error {
 		inputs = make(map[string][]*wtype.LHComponent)
 	}
 
+	// we need to make an exception of components which are used literally
+	// i.e. anything used in a mix-in-place; these don't add to the general
+	// store of anonymous components to be sampled from
+
+	uniques := make(map[wtype.PlateLocation]string, len(req.LHInstructions))
+
+	for _, ins := range req.LHInstructions {
+		if ins.IsMixInPlace() && !ins.HasAnyParent() {
+			// first component is special
+			uniques[ins.Components[0].PlateLocation().ToString()] = ins.Components[0].CNID()
+		}
+	}
+
 	for _, v := range req.Input_plates {
 		for _, w := range v.Wellcoords {
 			if w.Empty() {
 				continue
 			}
+
+			// special case for components treated literally
+
+			cnid, ok := uniques[w.PlateLocation()]
+
 			c := w.Contents().Dup()
-			// issue here -- not accounting for working volume of well
 			vvvvvv := c.Volume()
 			vvvvvv.Subtract(w.ResidualVolume())
 			c.SetVolume(vvvvvv)

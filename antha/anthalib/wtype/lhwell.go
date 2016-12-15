@@ -210,6 +210,10 @@ func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
 	return ret
 }
 
+func (w *LHWell) PlateLocation() PlateLocation {
+	return w.WContents.PlateLocation()
+}
+
 func (w *LHWell) WorkingVolume() wunit.Volume {
 	v := wunit.NewVolume(w.Currvol(), w.Vunit)
 	v2 := wunit.NewVolume(w.Rvol, w.Vunit)

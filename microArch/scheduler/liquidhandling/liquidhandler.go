@@ -510,11 +510,19 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	for _, instruction := range instructions {
 		components := instruction.Components
 
-		for _, component := range components {
+		for ix, component := range components {
 			// ignore anything which is made in another mix
 
 			if component.HasAnyParent() {
 				continue
+			}
+
+			// what if this is a mix in place?
+			if ix == 0 && !component.IsSample() {
+				// these components come in as instances -- hence 1 per well
+				inputs[component.CNID()] = make([]*wtype.LHComponent, 0, 3)
+				allinputs = append(allinputs, component.CNID())
+				vmap[component.CNID()] = component.Volume()
 			}
 
 			cmps, ok := inputs[component.CName]

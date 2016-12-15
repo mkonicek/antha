@@ -1,7 +1,7 @@
 package execute
 
 import (
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	"context"
 )
 
 type contextKey int

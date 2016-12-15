@@ -3,11 +3,11 @@
 package target
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 )
 
 var (

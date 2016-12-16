@@ -864,6 +864,7 @@ func (p *LHProperties) RestoreUserPlates(up UserPlates) {
 		p.RemovePlateAtPosition(plate.Position)
 		// merge these
 		plate.Plate.MergeWith(oldPlate)
+
 		p.AddPlate(plate.Position, plate.Plate)
 	}
 }

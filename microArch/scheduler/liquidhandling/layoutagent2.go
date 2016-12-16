@@ -313,6 +313,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 		} else if v.IsMixInPlace() {
 			// the first component sets the destination
 			// and now it should indeed be set
+
 			addr, ok := st.GetLocationOf(v.Components[0].ID)
 
 			if !ok {

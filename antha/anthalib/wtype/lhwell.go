@@ -492,6 +492,12 @@ func (well *LHWell) IsTemporary() bool {
 			return false
 		}
 
+		// user allocated wells are never temporary
+
+		if well.IsUserAllocated() {
+			return false
+		}
+
 		t, ok := well.Extra["temporary"]
 
 		if !ok || !t.(bool) {
@@ -499,7 +505,7 @@ func (well *LHWell) IsTemporary() bool {
 		}
 		return true
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in DeclareTemporary()")
+		logger.Debug("Warning: Attempt to access nil well in IsTemporary()")
 	}
 	return false
 }

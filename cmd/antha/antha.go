@@ -119,9 +119,33 @@ func removeFiles(dir, suffix string) error {
 type output struct {
 	OutDir  string
 	outName string
+	dir     string
+}
+
+func (a *output) Dir() string {
+	if len(a.OutDir) == 0 {
+		return a.dir
+	}
+	return a.OutDir
+}
+
+func (a *output) Close() error {
+	if len(a.dir) == 0 {
+		return nil
+	}
+	return os.RemoveAll(a.dir)
 }
 
 func (a *output) Init() error {
+	if len(a.OutDir) == 0 {
+		n, err := ioutil.TempDir("", "antha")
+		if err != nil {
+			return err
+		}
+		a.dir = n
+		return nil
+	}
+
 	p, err := filepath.Abs(a.OutDir)
 	if err != nil {
 		return err
@@ -136,16 +160,25 @@ func (a *output) Init() error {
 // Write out a file which was generated from another file. Generate the output
 // file name based on desired output dir and base name. Makes sure that output
 // directory exists as well.
-func write(from, dir, name string, b []byte) error {
+func write(from, dir, name string, bs []byte) error {
 	if len(dir) == 0 {
 		dir = filepath.Dir(from)
 	}
-	f := filepath.Join(dir, name)
-	if err := mkdirp(filepath.Dir(f)); err != nil {
+	fname := filepath.Join(dir, name)
+	if err := mkdirp(filepath.Dir(fname)); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(f, b, 0664); err != nil {
+	f, err := os.OpenFile(fname, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0666)
+	if err != nil {
 		return err
+	}
+	defer f.Close()
+	n, err := io.Copy(f, bytes.NewBuffer(bs))
+	if err != nil {
+		return err
+	}
+	if n < int64(len(bs)) {
+		return fmt.Errorf("short write")
 	}
 	return nil
 }
@@ -156,10 +189,13 @@ func anthaMain() error {
 
 	initParserMode()
 
-	o := output{OutDir: *genOutDir}
+	o := output{
+		OutDir: *genOutDir,
+	}
 	if err := o.Init(); err != nil {
 		return err
 	}
+	defer o.Close()
 
 	// try to parse standard input if no files or directories were passed in
 	if flag.NArg() == 0 {
@@ -167,7 +203,7 @@ func anthaMain() error {
 			Filename: "-",
 			In:       os.Stdin,
 			Stdin:    true,
-			OutDir:   *genOutDir,
+			OutDir:   o.Dir(),
 		}); err != nil {
 			return err
 		}
@@ -187,7 +223,7 @@ func anthaMain() error {
 					// order to establish whether more than one component exist
 					err = processFile(processFileOptions{
 						Filename: path,
-						OutDir:   *genOutDir,
+						OutDir:   o.Dir(),
 					})
 					if err != nil {
 						report(err)
@@ -198,7 +234,7 @@ func anthaMain() error {
 		default:
 			if err := processFile(processFileOptions{
 				Filename: path,
-				OutDir:   *genOutDir,
+				OutDir:   o.Dir(),
 			}); err != nil {
 				return err
 			}

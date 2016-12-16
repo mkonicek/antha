@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	areflect "github.com/antha-lang/antha/reflect"
+
 	"github.com/antha-lang/antha/inject"
 )
 
@@ -68,7 +70,7 @@ func UpdateParamTypes(desc *Component) error {
 		return err
 	} else {
 		for _, v := range append(inTypes, outTypes...) {
-			if err := add(v.Name, v.Type.String()); err != nil {
+			if err := add(v.Name, areflect.FullTypeName(v.Type)); err != nil {
 				return err
 			}
 		}

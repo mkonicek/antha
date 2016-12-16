@@ -108,6 +108,7 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols["PEG"] = MakePEGPolicy()
 	pols["Protoplasts"] = MakeProtoplastPolicy()
 	pols["dna_mix"] = MakeDNAMixPolicy()
+	pols["dna_cells_mix"] = MakeDNACELLSMixPolicy()
 	pols["plateout"] = MakePlateOutPolicy()
 	pols["colony"] = MakeColonyPolicy()
 	//      pols["lysate"] = MakeLysatePolicy()
@@ -349,8 +350,8 @@ TOUCHOFFSET,                         ,float64,          ,mm above wb to touch of
 
 func MakePEGPolicy() wtype.LHPolicy {
 	policy := make(wtype.LHPolicy, 9)
-	policy["ASP_SPEED"] = 1.5
-	policy["DSP_SPEED"] = 1.5
+	policy["ASPSPEED"] = 1.5
+	policy["DSPSPEED"] = 1.5
 	policy["ASP_WAIT"] = 2.0
 	policy["DSP_WAIT"] = 2.0
 	policy["ASPZOFFSET"] = 2.5
@@ -368,42 +369,40 @@ func MakePEGPolicy() wtype.LHPolicy {
 
 func MakeProtoplastPolicy() wtype.LHPolicy {
 	policy := make(wtype.LHPolicy, 7)
-	policy.Set("ASP_SPEED", 0.15)
-	policy.Set("DSP_SPEED", 0.15)
-	policy.Set("ASPZOFFSET", 1.5)
-	policy.Set("DSPZOFFSET", 1.5)
-	policy.Set("BLOWOUTVOLUME", 0.0)
-	policy.Set("BLOWOUTVOLUMEUNIT", "ul")
-	policy.Set("TOUCHOFF", true)
-	policy.Set("TIP_REUSE_LIMIT", 5)
-	policy.Set("CAN_MULTI", false)
+	policy["ASPSPEED"] = 0.15
+	policy["DSPSPEED"] = 0.15
+	policy["ASPZOFFSET"] = 2.5
+	policy["DSPZOFFSET"] = 2.5
+	policy["BLOWOUTVOLUME"] = 100.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	//policy["TOUCHOFF"] = true
+	policy["TIP_REUSE_LIMIT"] = 5
+	policy["CAN_MULTI"] = false
 	return policy
 }
 
 func MakePaintPolicy() wtype.LHPolicy {
-
 	policy := make(wtype.LHPolicy, 13)
-	policy.Set("DSPREFERENCE", 0)
-	policy.Set("DSPZOFFSET", 0.5)
-	policy.Set("ASP_SPEED", 1.5)
-	policy.Set("DSP_SPEED", 1.5)
-	policy.Set("ASP_WAIT", 1.0)
-	policy.Set("DSP_WAIT", 1.0)
-	policy.Set("PRE_MIX", 3)
-	policy.Set("POST_MIX", 3)
-	policy.Set("BLOWOUTVOLUME", 0.0)
-	policy.Set("BLOWOUTVOLUMEUNIT", "ul")
-	policy.Set("TOUCHOFF", true)
-	policy.Set("CAN_MULTI", false)
-
+	policy["DSPREFERENCE"] = 0
+	policy["DSPZOFFSET"] = 0.5
+	policy["ASPSPEED"] = 1.5
+	policy["DSPSPEED"] = 1.5
+	policy["ASP_WAIT"] = 1.0
+	policy["DSP_WAIT"] = 1.0
+	//policy["PRE_MIX"] = 3
+	policy["POST_MIX"] = 3
+	policy["BLOWOUTVOLUME"] = 0.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = true
+	policy["CAN_MULTI"] = false
 	return policy
 }
 
 func MakeDispenseAboveLiquidPolicy() wtype.LHPolicy {
 	policy := make(wtype.LHPolicy, 7)
 	policy["DSPREFERENCE"] = 1 // 1 indicates dispense at top of well
-	policy["ASP_SPEED"] = 3.0
-	policy["DSP_SPEED"] = 3.0
+	policy["ASPSPEED"] = 3.0
+	policy["DSPSPEED"] = 3.0
 	//policy["ASP_WAIT"] = 1.0
 	//policy["DSP_WAIT"] = 1.0
 	policy["BLOWOUTVOLUME"] = 50.0
@@ -414,19 +413,17 @@ func MakeDispenseAboveLiquidPolicy() wtype.LHPolicy {
 }
 
 func MakeColonyPolicy() wtype.LHPolicy {
-
 	policy := make(wtype.LHPolicy, 10)
-	policy.Set("DSPREFERENCE", 0)
-	policy.Set("DSPZOFFSET", 0.0)
-	policy.Set("ASP_SPEED", 3.0)
-	policy.Set("DSP_SPEED", 3.0)
-	policy.Set("ASP_WAIT", 1.0)
-	policy.Set("POST_MIX", 3)
-	policy.Set("BLOWOUTVOLUME", 0.0)
-	policy.Set("BLOWOUTVOLUMEUNIT", "ul")
-	policy.Set("TOUCHOFF", true)
-	policy.Set("CAN_MULTI", false)
-
+	policy["DSPREFERENCE"] = 0
+	policy["DSPZOFFSET"] = 0.0
+	policy["ASPSPEED"] = 3.0
+	policy["DSPSPEED"] = 3.0
+	policy["ASP_WAIT"] = 1.0
+	policy["POST_MIX"] = 3
+	policy["BLOWOUTVOLUME"] = 0.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = true
+	policy["CAN_MULTI"] = false
 	return policy
 }
 
@@ -476,24 +473,23 @@ func MakeCulturePolicy() wtype.LHPolicy {
 
 func MakePlateOutPolicy() wtype.LHPolicy {
 	culturepolicy := make(wtype.LHPolicy, 17)
-	culturepolicy.Set("PRE_MIX", 2)
-	culturepolicy.Set("PRE_MIX_VOLUME", 50)
-	culturepolicy.Set("PRE_MIX_Z", 2.0)
-	culturepolicy.Set("PRE_MIX_RATE", 4.0)
-	culturepolicy.Set("ASPSPEED", 4.0)
-	culturepolicy.Set("ASPZOFFSET", 2.0)
-	culturepolicy.Set("DSPSPEED", 4.0)
-	culturepolicy.Set("CAN_MULTI", false)
-	culturepolicy.Set("CAN_MSA", false)
-	culturepolicy.Set("CAN_SDD", false)
-	culturepolicy.Set("DSPREFERENCE", 0)
-	culturepolicy.Set("DSPZOFFSET", 0.5)
-	culturepolicy.Set("TIP_REUSE_LIMIT", 0)
-	culturepolicy.Set("NO_AIR_DISPENSE", true)
-	culturepolicy.Set("BLOWOUTVOLUME", 0.0)
-	culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul")
-	culturepolicy.Set("TOUCHOFF", false)
-
+	culturepolicy["PRE_MIX"] = 2
+	culturepolicy["PRE_MIX_VOLUME"] = 20
+	culturepolicy["PRE_MIX_Z"] = 2.0
+	culturepolicy["PRE_MIX_RATE"] = 4.0
+	culturepolicy["ASPSPEED"] = 4.0
+	culturepolicy["ASPZOFFSET"] = 2.0
+	culturepolicy["DSPSPEED"] = 4.0
+	culturepolicy["CAN_MULTI"] = false
+	culturepolicy["CAN_MSA"] = false
+	culturepolicy["CAN_SDD"] = false
+	culturepolicy["DSPREFERENCE"] = 0
+	culturepolicy["DSPZOFFSET"] = 0.0
+	culturepolicy["TIP_REUSE_LIMIT"] = 0
+	culturepolicy["NO_AIR_DISPENSE"] = true
+	culturepolicy["BLOWOUTVOLUME"] = 0.0
+	culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
+	culturepolicy["TOUCHOFF"] = false
 	return culturepolicy
 }
 
@@ -518,22 +514,22 @@ func MakeCultureReusePolicy() wtype.LHPolicy {
 
 func MakeGlycerolPolicy() wtype.LHPolicy {
 	glycerolpolicy := make(wtype.LHPolicy, 6)
-	glycerolpolicy.Set("ASP_SPEED", 1.5)
-	glycerolpolicy.Set("DSP_SPEED", 1.5)
-	glycerolpolicy.Set("ASP_WAIT", 1.0)
-	glycerolpolicy.Set("DSP_WAIT", 1.0)
-	glycerolpolicy.Set("TIP_REUSE_LIMIT", 0)
-	glycerolpolicy.Set("CAN_MULTI", false)
+	glycerolpolicy["ASPSPEED"] = 1.5
+	glycerolpolicy["DSPSPEED"] = 1.5
+	glycerolpolicy["ASP_WAIT"] = 1.0
+	glycerolpolicy["DSP_WAIT"] = 1.0
+	glycerolpolicy["TIP_REUSE_LIMIT"] = 0
+	glycerolpolicy["CAN_MULTI"] = false
 	return glycerolpolicy
 }
 
 func MakeViscousPolicy() wtype.LHPolicy {
 	glycerolpolicy := make(wtype.LHPolicy, 4)
-	glycerolpolicy.Set("ASP_SPEED", 1.5)
-	glycerolpolicy.Set("DSP_SPEED", 1.5)
-	glycerolpolicy.Set("ASP_WAIT", 1.0)
-	glycerolpolicy.Set("DSP_WAIT", 1.0)
-	glycerolpolicy.Set("TIP_REUSE_LIMIT", 0)
+	glycerolpolicy["ASPSPEED"] = 1.5
+	glycerolpolicy["DSPSPEED"] = 1.5
+	glycerolpolicy["ASP_WAIT"] = 1.0
+	glycerolpolicy["DSP_WAIT"] = 1.0
+	//glycerolpolicy["TIP_REUSE_LIMIT"] = 0
 	return glycerolpolicy
 }
 func MakeSolventPolicy() wtype.LHPolicy {
@@ -571,18 +567,27 @@ func MakeDNAMixPolicy() wtype.LHPolicy {
 	return dnapolicy
 }
 
+func MakeDNACELLSMixPolicy() wtype.LHPolicy {
+	dnapolicy := MakeDNAPolicy()
+	dnapolicy["POST_MIX_VOLUME"] = 20.0
+	dnapolicy["POST_MIX"] = 2
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 1.0
+	return dnapolicy
+}
+
 func MakeDetergentPolicy() wtype.LHPolicy {
 	detergentpolicy := make(wtype.LHPolicy, 9)
-	detergentpolicy.Set("POST_MIX", 3)
-	detergentpolicy.Set("ASPSPEED", 1.0)
-	detergentpolicy.Set("DSPSPEED", 1.0)
-	detergentpolicy.Set("CAN_MULTI", false)
-	detergentpolicy.Set("CAN_MSA", false)
-	detergentpolicy.Set("CAN_SDD", false)
-	detergentpolicy.Set("DSPREFERENCE", 0)
-	detergentpolicy.Set("DSPZOFFSET", 0.5)
-	detergentpolicy.Set("TIP_REUSE_LIMIT", 8)
-	detergentpolicy.Set("NO_AIR_DISPENSE", true)
+	//        detergentpolicy["POST_MIX"] = 3
+	detergentpolicy["ASPSPEED"] = 1.0
+	detergentpolicy["DSPSPEED"] = 1.0
+	detergentpolicy["CAN_MULTI"] = false
+	detergentpolicy["CAN_MSA"] = false
+	detergentpolicy["CAN_SDD"] = false
+	detergentpolicy["DSPREFERENCE"] = 0
+	detergentpolicy["DSPZOFFSET"] = 0.5
+	detergentpolicy["TIP_REUSE_LIMIT"] = 8
+	detergentpolicy["NO_AIR_DISPENSE"] = true
 	return detergentpolicy
 }
 func MakeProteinPolicy() wtype.LHPolicy {
@@ -662,7 +667,7 @@ func MakeNeedToMixPolicy() wtype.LHPolicy {
 	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
-	dnapolicy["PRE_MIX_VOLUME"] = 10
+	//dnapolicy["PRE_MIX_VOLUME"] = 10
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
@@ -720,8 +725,9 @@ func PostMixPolicy() wtype.LHPolicy {
 func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy := make(wtype.LHPolicy, 27)
 	// don't set this here -- use defaultpipette speed or there will be inconsistencies
-	// defaultpolicy["ASP_SPEED"] = 3.0
-	// defaultpolicy["DSP_SPEED"] = 3.0
+	// defaultpolicy["ASPSPEED"] = 3.0
+	// defaultpolicy["DSPSPEED"] = 3.0
+	defaultpolicy["OFFSETZADJUST"] = 0.0
 	defaultpolicy["TOUCHOFF"] = false
 	defaultpolicy["TOUCHOFFSET"] = 0.5
 	defaultpolicy["ASPREFERENCE"] = 0
@@ -747,8 +753,6 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
 	// added to diagnose bubble cause
-	defaultpolicy["ASPZOFFSET"] = 0.5
-	defaultpolicy["DSPZOFFSET"] = 0.5
 	defaultpolicy["POST_MIX_Z"] = 0.5
 	defaultpolicy["PRE_MIX_Z"] = 0.5
 	//defaultpolicy["ASP_WAIT"] = 1.0
@@ -791,12 +795,7 @@ func MakeLVDNAMixPolicy() wtype.LHPolicy {
 
 func MakeHVOffsetPolicy() wtype.LHPolicy {
 	lvop := make(wtype.LHPolicy, 6)
-	lvop["ASPZOFFSET"] = 1.50
-	lvop["DSPZOFFSET"] = 1.50
-	lvop["POST_MIX_Z"] = 1.00
-	lvop["PRE_MIX_Z"] = 1.00
-	lvop["DSPREFERENCE"] = 0
-	lvop["ASPREFERENCE"] = 0
+	lvop["OFFSETZADJUST"] = 0.75
 	lvop["POST_MIX_RATE"] = 37
 	lvop["PRE_MIX_RATE"] = 37
 	lvop["ASPSPEED"] = 37
@@ -836,18 +835,19 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 
 	// hack to fix plate type problems
 	// this really should be removed asap
-	// make low priority so it doesn't clobber other
-	// policies
 	rule := wtype.NewLHPolicyRule("HVOffsetFix")
-	rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-	rule.Priority = 0
-	//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
+	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+
+	rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
+	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+	// don't get overridden
+	rule.Priority = 100
 	pol := MakeHVOffsetPolicy()
 	lhpr.AddRule(rule, pol)
 
 	// merged the below and the above
 	/*
-		rule = NewLHPolicyRule("HVFlowRate")
+		rule = wtype.NewLHPolicyRule("HVFlowRate")
 		rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
 		//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
 		pol = MakeHVFlowRatePolicy()

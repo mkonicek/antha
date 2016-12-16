@@ -27,6 +27,8 @@ func incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
 	comp.BlockID = wtype.NewBlockID(getId(ctx))
+
+	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
 	st.UpdateIDOf(in.ID, comp.ID)
 
 	return &commandInst{
@@ -59,6 +61,8 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
 	comp.BlockID = wtype.NewBlockID(getId(ctx))
+
+	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
 	st.UpdateIDOf(in.ID, comp.ID)
 
 	var sels []ast.NameValue
@@ -122,6 +126,7 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 		if c.Generation() > mx {
 			mx = c.Generation()
 		}
+		getMaker(ctx).UpdateAfterInst(c.ID, result.ID)
 	}
 
 	inst.SetGeneration(mx)
@@ -169,6 +174,7 @@ func MixNamed(ctx context.Context, outplatetype, address string, platename strin
 }
 
 func MixTo(ctx context.Context, outplatetype, address string, platenum int, components ...*wtype.LHComponent) *wtype.LHComponent {
+	// TODO: Addresses break dependence information. Deprecated.
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components: components,
 		PlateType:  outplatetype,

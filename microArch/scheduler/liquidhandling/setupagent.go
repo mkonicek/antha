@@ -86,7 +86,7 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 				}
 			}
 		} else if len(input_plate_order) > len(input_plates) {
-			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(input_plate_order), len(input_plates), 82))
+			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(input_plate_order), len(input_plates), 89))
 		}
 
 		request.Input_plate_order = input_plate_order
@@ -110,14 +110,14 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 			ins := request.LHInstructions[insID]
 			tx := strings.Split(ins.Result.Loc, ":")
 			pa := tx[0]
-
-			if !isInStrArr(pa, output_plate_order) {
+			notInInputs := !isInStrArr(pa, input_plate_order)
+			if !isInStrArr(pa, output_plate_order) && notInInputs {
 				output_plate_order = append(output_plate_order, pa)
 			}
 		}
 
-		if len(output_plate_order) != len(output_plates) {
-			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 120))
+		if len(output_plate_order) > len(output_plates) {
+			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 121))
 		}
 
 		request.Output_plate_order = output_plate_order

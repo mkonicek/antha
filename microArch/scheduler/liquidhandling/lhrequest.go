@@ -172,6 +172,7 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 	}
 
 	p.MarkNonEmptyWellsUserAllocated()
+
 	lhr.Input_plates[p.ID] = p
 }
 

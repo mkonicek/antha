@@ -89,58 +89,43 @@ func TopoSort(opt TopoSortOpt) ([]Node, error) {
 // Compute transitive reduction of a graph. Relatively expensive operation:
 // O(nm).
 func TransitiveReduction(graph Graph) (Graph, error) {
-	// Find some node in g not in ns
-	someNode := func(g Graph, ns []Node) Node {
-		nodes := make(map[Node]bool)
-		for _, n := range ns {
-			nodes[n] = true
-		}
-		for i, inum := 0, g.NumNodes(); i < inum; i += 1 {
-			n := g.Node(i)
-			if !nodes[n] {
-				return n
-			}
-		}
-		return nil
-	}
-
 	ret := &qgraph{
 		Outs: make(map[Node][]Node),
 	}
 
+	if err := IsDag(graph); err != nil {
+		// TODO(ddn): transitive reductions exist for cyclic graphs but we just
+		// can't use SSSP to find them
+		return nil, fmt.Errorf("not yet implemented: cycle %s", err)
+	}
+
 	dag := Schedule(graph)
 	for len(dag.Roots) > 0 {
-		// In DAG, solving shortest path with -w() is the solution to the
-		// longest path problem
-		dist := ShortestPath(ShortestPathOpt{
-			Graph:   graph,
-			Sources: dag.Roots,
-			Weight: func(x, y Node) int {
-				return -1
-			},
-		})
+		for _, root := range dag.Roots {
+			// In DAG, solving shortest path with -w() is the solution to the
+			// longest path problem
+			dist := ShortestPath(ShortestPathOpt{
+				Graph:   graph,
+				Sources: []Node{root},
+				Weight: func(x, y Node) int {
+					return -1
+				},
+			})
 
-		for _, src := range dag.Roots {
-			ret.Nodes = append(ret.Nodes, src)
-			for i, inum := 0, graph.NumOuts(src); i < inum; i += 1 {
-				dst := graph.Out(src, i)
+			ret.Nodes = append(ret.Nodes, root)
+			for i, inum := 0, graph.NumOuts(root); i < inum; i += 1 {
+				dst := graph.Out(root, i)
 				if dist[dst] == -1 {
-					ret.Outs[src] = append(ret.Outs[src], dst)
+					ret.Outs[root] = append(ret.Outs[root], dst)
 				}
 			}
 		}
 
 		var next []Node
-		for _, src := range dag.Roots {
-			next = append(next, dag.Visit(src)...)
+		for _, root := range dag.Roots {
+			next = append(next, dag.Visit(root)...)
 		}
 		dag.Roots = next
-	}
-
-	if len(ret.Nodes) < graph.NumNodes() {
-		// TODO(ddn): transitive reductions exist for cyclic graphs but we just
-		// can't use SSSP to find them
-		return nil, fmt.Errorf("not yet implemented: cycle containing %q", someNode(graph, ret.Nodes))
 	}
 
 	return ret, nil

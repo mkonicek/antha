@@ -30,8 +30,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
-	. "github.com/biogo/ncbi/blast"
 	"github.com/mgutz/ansi"
 )
 
@@ -40,9 +40,9 @@ import (
 var (
 	email     = "no-reply@antha-lang.com"
 	tool      = "blast-biogo-antha"
-	params    Parameters
-	putparams = PutParameters{Program: "blastn", Megablast: true, Database: "nr"}
-	getparams GetParameters
+	params    blast.Parameters
+	putparams = blast.PutParameters{Program: "blastn", Megablast: true, Database: "nr"}
+	getparams blast.GetParameters
 	page      = ""
 	//query     = "X14032.1"
 	//query     = "MSFSNYKVIAMPVLVANFVLGAATAWANENYPAKSAGYNQGDWVASFNFSKVYVGEELGDLNVGGGALPNADVSIGNDTTLTFDIAYFVSSNIAVDFFVGVPARAKFQGEKSISSLGRVSEVDYGPAILSLQYHYDSFERLYPYVGVGVGRVLFFDKTDGALSSFDIKDKWAPAFQVGLRYDLGNSWMLNSDVRYIPFKTDVTGTLGPVPVSTKIEVDPFILSLGASYVF"
@@ -51,16 +51,15 @@ var (
 	retry   = retries
 )
 
-func RerunRIDstring(rid string) (o *Output, err error) {
-
-	r := NewRid(rid)
+func RerunRIDstring(rid string) (o *blast.Output, err error) {
+	r := blast.NewRid(rid)
 
 	if r != nil {
 		fmt.Println("RID=", r.String())
 
 		//var o *Output
 		for k := 0; k < retries; k++ {
-			var s *SearchInfo
+			var s *blast.SearchInfo
 			s, err = r.SearchInfo(tool, email)
 			fmt.Println(s.Status)
 
@@ -82,14 +81,14 @@ func RerunRIDstring(rid string) (o *Output, err error) {
 	return
 }
 
-func RerunRID(r *Rid) (o *Output, err error) {
+func RerunRID(r *blast.Rid) (o *blast.Output, err error) {
 
 	if r != nil {
 		fmt.Println("RID=", r.String())
 
 		//var o *Output
 		for k := 0; k < retries; k++ {
-			var s *SearchInfo
+			var s *blast.SearchInfo
 			s, err = r.SearchInfo(tool, email)
 			fmt.Println(s.Status)
 
@@ -110,7 +109,7 @@ func RerunRID(r *Rid) (o *Output, err error) {
 	return
 }
 
-func HitSummary(hits []Hit, topnumberofhits int, topnumberofhsps int) (summary string, err error) {
+func HitSummary(hits []blast.Hit, topnumberofhits int, topnumberofhsps int) (summary string, err error) {
 
 	summaryarray := make([]string, 0)
 
@@ -179,7 +178,7 @@ func HitSummary(hits []Hit, topnumberofhits int, topnumberofhsps int) (summary s
 	return
 }
 
-func FindBestHit(hits []Hit) (besthit Hit, identity float64, coverage float64, besthitsummary string, err error) {
+func FindBestHit(hits []blast.Hit) (besthit blast.Hit, identity float64, coverage float64, besthitsummary string, err error) {
 
 	var besthitnumber int
 	highestidentity := 0.0
@@ -244,10 +243,9 @@ func FindBestHit(hits []Hit) (besthit Hit, identity float64, coverage float64, b
 	return
 }
 
-func AllExactMatches(hits []Hit) (exactmatches []Hit, summary string, err error) {
-
+func AllExactMatches(hits []blast.Hit) (exactmatches []blast.Hit, summary string, err error) {
 	summaryarray := make([]string, 0)
-	exactmatches = make([]Hit, 0)
+	exactmatches = make([]blast.Hit, 0)
 
 	if len(hits) != 0 {
 
@@ -332,9 +330,9 @@ func Summary(hit Hit) (summary string) {
 	return
 }
 */
-func MegaBlastP(query string) (hits []Hit, err error) {
+func MegaBlastP(query string) (hits []blast.Hit, err error) {
 
-	putparams = PutParameters{Program: "blastp", Megablast: true, Database: "nr"}
+	putparams = blast.PutParameters{Program: "blastp", Megablast: true, Database: "nr"}
 
 	o, err := SimpleBlast(query)
 	if err != nil {
@@ -348,9 +346,8 @@ func MegaBlastP(query string) (hits []Hit, err error) {
 	return
 }
 
-func MegaBlastN(query string) (hits []Hit, err error) {
-
-	putparams = PutParameters{Program: "blastn", Megablast: true, Database: "nr"}
+func MegaBlastN(query string) (hits []blast.Hit, err error) {
+	putparams = blast.PutParameters{Program: "blastn", Megablast: true, Database: "nr"}
 
 	o, err := SimpleBlast(query)
 	if err != nil {
@@ -364,14 +361,13 @@ func MegaBlastN(query string) (hits []Hit, err error) {
 	return
 }
 
-func SimpleBlast(query string) (o *Output, err error) {
-
-	r, err := Put(query, &putparams, tool, email)
+func SimpleBlast(query string) (o *blast.Output, err error) {
+	r, err := blast.Put(query, &putparams, tool, email)
 	fmt.Println("RID=", r.String())
 	fmt.Println("Submitting request to BLAST server, please wait")
 	//var o *Output
 	for k := 0; k < retries; k++ {
-		var s *SearchInfo
+		var s *blast.SearchInfo
 		s, err = r.SearchInfo(tool, email)
 		fmt.Println(s.Status)
 
@@ -402,8 +398,8 @@ func SimpleBlast(query string) (o *Output, err error) {
 
 	return
 }
-func Hits(o *Output) (hits []Hit, err error) {
 
+func Hits(o *blast.Output) (hits []blast.Hit, err error) {
 	if o == nil {
 		err = fmt.Errorf("output == nil")
 		return

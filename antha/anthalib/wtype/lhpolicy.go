@@ -26,7 +26,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"io/ioutil"
 	"reflect"
 )
 
@@ -34,16 +33,6 @@ const (
 	LHP_AND int = iota
 	LHP_OR
 )
-
-func LoadLHPoliciesFrom(filename string) *LHPolicyRuleSet {
-	dat, _ := ioutil.ReadFile(filename)
-
-	var lhprs LHPolicyRuleSet
-
-	json.Unmarshal(dat, &lhprs)
-
-	return &lhprs
-}
 
 // this structure defines parameters
 type LHPolicy map[string]interface{}

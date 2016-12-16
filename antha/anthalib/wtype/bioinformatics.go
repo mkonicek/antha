@@ -24,7 +24,6 @@ package wtype
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -109,7 +108,7 @@ func Makeseq(dir string, seq BioSequence) string {
 	filename := dir + "/" + seq.Name() + ".fasta"
 	f, e := os.Create(filename)
 	if e != nil {
-		log.Fatal(e)
+		panic(e)
 	}
 
 	fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence())

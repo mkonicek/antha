@@ -73,30 +73,35 @@ func RevComp(s string) string {
 }
 
 func AllCombinations(arr [][]string) []string {
-
 	if len(arr) == 1 {
 		return arr[0]
-	} else {
-
-		results := make([]string, 0)
-		allRem := AllCombinations(arr[1:len(arr)])
-		for i := 0; i < len(allRem); i++ {
-			for j := 0; j < len(arr[0]); j++ {
-				x := arr[0][j] + allRem[i]
-				results = append(results, x)
-			}
-		}
-		return results
-
 	}
 
+	results := make([]string, 0)
+	allRem := AllCombinations(arr[1:len(arr)])
+	for i := 0; i < len(allRem); i++ {
+		for j := 0; j < len(arr[0]); j++ {
+			x := arr[0][j] + allRem[i]
+			results = append(results, x)
+		}
+	}
+	return results
 }
 
 func Prefix(seq string, lengthofprefix int) (prefix string) {
-	prefix = seq[:lengthofprefix]
+	end := lengthofprefix
+	if end > len(seq) {
+		end = len(seq)
+	}
+	prefix = seq[:end]
 	return prefix
 }
+
 func Suffix(seq string, lengthofsuffix int) (suffix string) {
-	suffix = seq[(len(seq) - lengthofsuffix):]
+	start := len(seq) - lengthofsuffix
+	if start < 0 {
+		start = 0
+	}
+	suffix = seq[start:]
 	return suffix
 }

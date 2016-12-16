@@ -13,8 +13,8 @@ var (
 		MaxPlates:            &defaultMaxPlates,
 		MaxWells:             &defaultMaxWells,
 		ResidualVolumeWeight: &defaultResidualVolumeWeight,
-		InputPlateType:       []string{"pcrplate_skirted_riser40"},
-		OutputPlateType:      []string{"pcrplate_skirted_riser40"},
+		InputPlateType:       []string{"pcrplate_skirted_riser20"},
+		OutputPlateType:      []string{"pcrplate_skirted_riser20"},
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
 	}
@@ -29,10 +29,9 @@ type Opt struct {
 	TipType              []string
 	PlanningVersion      *int
 
-	// Three methods of populating Opt.InputPlates
-	InputPlateFiles []string         // From filenames
-	InputPlateData  [][]byte         // From contents of files
-	InputPlates     []*wtype.LHPlate // Directly
+	// Two methods of populating Opt.InputPlates
+	InputPlateData [][]byte         // From contents of files
+	InputPlates    []*wtype.LHPlate // Directly
 
 	// Direct specification of Output plates
 	OutputPlates []*wtype.LHPlate

@@ -1,11 +1,11 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/inject"
-	"golang.org/x/net/context"
 )
 
 const (

@@ -23,632 +23,259 @@
 package factory
 
 import (
-	"fmt"
+	"sort"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
-func makeComponentLibrary() map[string]*wtype.LHComponent {
-	//	matter := wtype.MakeMatterLib()
-
-	cmap := make(map[string]*wtype.LHComponent)
-
-	A := wtype.NewLHComponent()
-	A.CName = "water"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "PEG"
-	A.Type = wtype.LTPEG
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "protoplasts"
-	A.Type = wtype.LTProtoplasts
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "fluorescein"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "ethanol"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "whiteFabricDye"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "blackFabricDye"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Some component in factory"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "neb5compcells"
-	A.Type = wtype.LTCulture
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "mediaonculture"
-	A.Type = wtype.LTNeedToMix
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "10x_M9Salts"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "100x_MEMVitamins"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Yeast extract"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Tryptone"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Glycerol"
-	A.Type = wtype.LTPostMix
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "culture"
-	A.Type = wtype.LTCulture
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "Acid yellow 23" // the pubchem name for tartrazine
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "tartrazine"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "tartrazinePostMix"
-	A.Type = wtype.LTPostMix
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "tartrazineNeedtoMix"
-	A.Type = wtype.LTNeedToMix
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "tartrazine_DNA"
-	A.Type = wtype.LTDNA
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	A.CName = "tartrazine_Glycerol"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Yellow_ink"
-	A.Type = wtype.LTPAINT
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Cyan"
-	A.Type = wtype.LTPAINT
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Magenta"
-	A.Type = wtype.LTPAINT
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "transparent"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Black"
-	A.Type = wtype.LTPAINT
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Paint"
-	A.Type = wtype.LTPostMix
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "yellow"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "blue"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "darkblue"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "grey"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "green"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "red"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "white"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "black"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "purple"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "pink"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "orange"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "DNAsolution"
-	A.Type = wtype.LTDNA
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "1kb DNA Ladder"
-	A.Type = wtype.LTDNA
-	A.Smax = 10.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter["glycerol"]
-	A.CName = "restrictionenzyme"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "bsa"
-	A.Type = wtype.LTWater
-	A.Smax = 100
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "dna_part"
-	A.Type = wtype.LTDNA
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "dna"
-	A.Type = wtype.LTDNA
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter["glycerol"]
-	A.CName = "SapI"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter["glycerol"]
-	A.CName = "T4Ligase"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter["glycerol"]
-	A.CName = "EcoRI"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter["glycerol"]
-	A.CName = "EnzMastermix: 1/2 SapI; 1/2 T4 Ligase"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "TypeIIsbuffer: 2/11 10xCutsmart; 1/11 1mM ATP; 8/11 Water"
-	A.Type = wtype.LTWater
-	A.Smax = 9999
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "CutsmartBuffer"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "ATP"
-	A.Type = wtype.LTWater
-	A.Smax = 5.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	//A.CName = "SapI_Mastermix: 1/5 SapI; 1/5 T4 Ligase; 2/5 Cutsmart; 1/5 1mM ATP"
-	A.CName = "mastermix_sapI"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "standard_cloning_vector_mark_1"
-	A.Type = wtype.LTDNA
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	//
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "standard_cloning_vector_mark_1"
-	A.Type = wtype.LTDNA
-	A.Smax = 1.0
-	cmap[A.CName] = A
-
-	// solutions needed for PCR example:
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter["glycerol"]
-	A.CName = "Q5Polymerase"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter["glycerol"]
-	A.CName = "GoTaq_ green 2x mastermix"
-	A.Type = wtype.LTGlycerol
-	A.Smax = 9999.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "DMSO"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "pET_GFP"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "HC"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "GCenhancer"
-	A.Type = wtype.LTWater
-	A.Smax = 9999.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Q5buffer"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Q5mastermix"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "PrimerFw"
-	A.Type = wtype.LTDNA
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "PrimerRev"
-	A.Type = wtype.LTDNA
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "template_part"
-	A.Type = wtype.LTDNA
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "DNTPs"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 // not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "ProteinMarker"
-	A.Type = wtype.LTProtein
-	A.Smax = 1.0 //not sure if this is correct
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "ProteinFraction"
-	A.Type = wtype.LTProtein
-	A.Smax = 1.0 //still not sure
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "EColiLysate"
-	A.Type = wtype.LTProtein
-	A.Smax = 1.0 //not sure what this is!
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "SDSbuffer"
-	A.Type = wtype.LTDetergent
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Load"
-	A.Type = wtype.LTload
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "LB"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "TB"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Kanamycin"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Glucose"
-	A.Type = wtype.LTPostMix
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "IPTG"
-	A.Type = wtype.LTPostMix
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "Lactose"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "colony"
-	A.Type = wtype.LTCOLONY
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "LB_autoinduction_Amp"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	A = wtype.NewLHComponent()
-	//A.GenericMatter = matter[wtype.LTWater]
-	A.CName = "LB_Kan"
-	A.Type = wtype.LTWater
-	A.Smax = 1.0 //still not sure....
-	cmap[A.CName] = A
-
-	// protein paintbox
-
-	for key, value := range image.ProteinPaintboxmap {
-
-		_, ok := cmap[value]
-		if ok == true {
-			alreadyinthere := cmap[value]
-
-			err := fmt.Errorf("attempt to add value", key, "for key", value, "to component factory", cmap, "failed due to duplicate entry", alreadyinthere)
-			panic(err)
-		} else {
-
-			A = wtype.NewLHComponent()
-			//A.GenericMatter = matter[wtype.LTWater]
-			A.CName = value
-			A.Type = wtype.LTPostMix
-			A.Smax = 1.0
-			cmap[A.CName] = A
-
-		}
-	}
-	return cmap
+type alreadyAdded struct {
+	Name string
 }
 
-func GetComponentByType(typ string) *wtype.LHComponent {
-	components := makeComponentLibrary()
-	c := components[typ]
-	if c == nil {
-		logger.Fatal(fmt.Sprintf("Component %s not found", typ))
-		panic(fmt.Errorf("Component %s not found", typ)) //TODO refactor to errors
+func (a *alreadyAdded) Error() string {
+	return "component " + a.Name + " already added"
+}
+
+type notFound struct {
+	Name string
+}
+
+func (a *notFound) Error() string {
+	return "component " + a.Name + " not found"
+}
+
+func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
+	var components []*wtype.LHComponent
+
+	add := func(name string, typ wtype.LiquidType, smax float64) {
+		c := wtype.NewLHComponent()
+		c.CName = name
+		c.Type = typ
+		c.Smax = smax
+		components = append(components, c)
+	}
+
+	add("water", wtype.LTWater, 9999)
+	add("PEG", wtype.LTPEG, 9999)
+	add("protoplasts", wtype.LTProtoplasts, 9999)
+	add("fluorescein", wtype.LTWater, 9999)
+	add("ethanol", wtype.LTWater, 9999)
+	add("whiteFabricDye", wtype.LTGlycerol, 9999)
+	add("blackFabricDye", wtype.LTGlycerol, 9999)
+	add("Some component in factory", wtype.LTWater, 9999)
+	add("neb5compcells", wtype.LTCulture, 1.0)
+	add("mediaonculture", wtype.LTNeedToMix, 1.0)
+	add("10x_M9Salts", wtype.LTWater, 9999)
+	add("100x_MEMVitamins", wtype.LTWater, 9999)
+	add("Yeast extract", wtype.LTWater, 9999)
+	add("Tryptone", wtype.LTWater, 9999)
+	add("Glycerol", wtype.LTPostMix, 9999)
+	add("culture", wtype.LTCulture, 9999)
+	// the pubchem name for tartrazine
+	add("Acid yellow 23", wtype.LTWater, 9999)
+	add("tartrazine", wtype.LTWater, 9999)
+	add("tartrazinePostMix", wtype.LTPostMix, 9999)
+	add("tartrazineNeedtoMix", wtype.LTNeedToMix, 9999)
+	add("tartrazine_DNA", wtype.LTDNA, 9999)
+	add("tartrazine_Glycerol", wtype.LTGlycerol, 9999)
+	add("Yellow_ink", wtype.LTPAINT, 9999)
+	add("Cyan", wtype.LTPAINT, 9999)
+	add("Magenta", wtype.LTPAINT, 9999)
+	add("transparent", wtype.LTWater, 9999)
+	add("Black", wtype.LTPAINT, 9999)
+	add("Paint", wtype.LTPostMix, 9999)
+	add("yellow", wtype.LTWater, 9999)
+	add("blue", wtype.LTWater, 9999)
+	add("darkblue", wtype.LTWater, 9999)
+	add("grey", wtype.LTWater, 9999)
+	add("green", wtype.LTWater, 9999)
+	add("red", wtype.LTWater, 9999)
+	add("white", wtype.LTWater, 9999)
+	add("black", wtype.LTWater, 9999)
+	add("purple", wtype.LTWater, 9999)
+	add("pink", wtype.LTWater, 9999)
+	add("orange", wtype.LTWater, 9999)
+	add("DNAsolution", wtype.LTDNA, 1.0)
+	add("1kb DNA Ladder", wtype.LTDNA, 10.0)
+	add("restrictionenzyme", wtype.LTGlycerol, 1.0)
+	add("bsa", wtype.LTWater, 100)
+	add("dna_part", wtype.LTDNA, 1.0)
+	add("dna", wtype.LTDNA, 1.0)
+	add("SapI", wtype.LTGlycerol, 1.0)
+	add("T4Ligase", wtype.LTGlycerol, 1.0)
+	add("EcoRI", wtype.LTGlycerol, 1.0)
+	add("EnzMastermix: 1/2 SapI; 1/2 T4 Ligase", wtype.LTGlycerol, 1.0)
+	add("TypeIIsbuffer: 2/11 10xCutsmart; 1/11 1mM ATP; 8/11 Water", wtype.LTWater, 9999)
+	add("CutsmartBuffer", wtype.LTWater, 1.0)
+	add("ATP", wtype.LTWater, 5.0)
+	add("mastermix_sapI", wtype.LTWater, 1.0)
+	add("standard_cloning_vector_mark_1", wtype.LTDNA, 1.0)
+	// not sure if this is correct
+	add("Q5Polymerase", wtype.LTGlycerol, 1.0)
+	// not sure if this is correct
+	add("GoTaq_ green 2x mastermix", wtype.LTGlycerol, 9999.0)
+	// not sure if this is correct
+	add("DMSO", wtype.LTWater, 1.0)
+	// not sure if this is correct
+	add("pET_GFP", wtype.LTWater, 1.0)
+	// not sure if this is correct
+	add("HC", wtype.LTWater, 1.0)
+	// not sure if this is correct
+	add("GCenhancer", wtype.LTWater, 9999.0)
+	// not sure if this is correct
+	add("Q5buffer", wtype.LTWater, 1.0)
+	// not sure if this is correct
+	add("Q5mastermix", wtype.LTWater, 1.0)
+	// not sure if this is correct
+	add("PrimerFw", wtype.LTDNA, 1.0)
+	// not sure if this is correct
+	add("PrimerRev", wtype.LTDNA, 1.0)
+	// not sure if this is correct
+	add("template_part", wtype.LTDNA, 1.0)
+	// not sure if this is correct
+	add("DNTPs", wtype.LTWater, 1.0)
+	//not sure if this is correct
+	add("ProteinMarker", wtype.LTProtein, 1.0)
+	//still not sure
+	add("ProteinFraction", wtype.LTProtein, 1.0)
+	//not sure what this is!
+	add("EColiLysate", wtype.LTProtein, 1.0)
+	//still not sure....
+	add("SDSbuffer", wtype.LTDetergent, 1.0)
+	//still not sure....
+	add("Load", wtype.LTload, 1.0)
+	//still not sure....
+	add("LB", wtype.LTWater, 1.0)
+	//still not sure....
+	add("TB", wtype.LTWater, 1.0)
+	//still not sure....
+	add("Kanamycin", wtype.LTWater, 1.0)
+	//still not sure....
+	add("Glucose", wtype.LTPostMix, 1.0)
+	//still not sure....
+	add("IPTG", wtype.LTPostMix, 1.0)
+	//still not sure....
+	add("Lactose", wtype.LTWater, 1.0)
+	//still not sure....
+	add("colony", wtype.LTCOLONY, 1.0)
+	//still not sure....
+	add("LB_autoinduction_Amp", wtype.LTWater, 1.0)
+	//still not sure....
+	add("LB_Kan", wtype.LTWater, 1.0)
+	//still not sure....
+	add("Apramycin", wtype.LTWater, 1.0)
+	//still not sure....
+	add("Agar", wtype.LTWater, 1.0)
+	//still not sure....
+	add("X-glc", wtype.LTWater, 1.0)
+	//still not sure....
+	add("X-Glucuro", wtype.LTWater, 1.0)
+	//still not sure....
+	add("BaseGrowthMedium", wtype.LTWater, 1.0)
+	//still not sure....
+	add("SterileWater", wtype.LTWater, 1.0)
+	//still not sure....
+	add("100mMPhosphate", wtype.LTWater, 1.0)
+	//still not sure....
+	add("100g/LGlucose", wtype.LTWater, 1.0)
+	//still not sure....
+	add("10g/LGlucose", wtype.LTWater, 1.0)
+	//still not sure....
+	add("1g/LGlucose", wtype.LTWater, 1.0)
+	//still not sure....
+	add("0.1g/Lglucose", wtype.LTWater, 1.0)
+	//still not sure....
+	add("100g/Lglycerol", wtype.LTWater, 1.0)
+	//still not sure....
+	add("10g/Lglycerol", wtype.LTWater, 1.0)
+	//still not sure....
+	add("1g/Lglycerol", wtype.LTWater, 1.0)
+	//still not sure....
+	add("0.1g/Lglycerol", wtype.LTWater, 1.0)
+	//still not sure....
+	add("100g/Lpeptone", wtype.LTWater, 1.0)
+	//still not sure....
+	add("100g/LYeastExtract", wtype.LTWater, 1.0)
+	//still not sure....
+	add("10g/LYeastExtract", wtype.LTWater, 1.0)
+
+	// protein paintbox
+	for _, value := range image.ProteinPaintboxmap {
+		add(value, wtype.LTPostMix, 1.0)
+	}
+
+	cmap := make(map[string]*wtype.LHComponent)
+	for _, c := range components {
+		if _, seen := cmap[c.CName]; seen {
+			return nil, &alreadyAdded{Name: c.CName}
+		}
+		cmap[c.CName] = c
+	}
+
+	return cmap, nil
+}
+
+type componentLibrary struct {
+	lib map[string]*wtype.LHComponent
+}
+
+var defaultComponentLibrary *componentLibrary
+
+func init() {
+	lib, err := makeComponentLibrary()
+	if err != nil {
+		panic(err)
+	}
+
+	defaultComponentLibrary = &componentLibrary{
+		lib: lib,
+	}
+}
+
+func (i *componentLibrary) GetComponentByType(typ string) *wtype.LHComponent {
+	c, ok := i.lib[typ]
+	if !ok {
+		panic(&notFound{Name: typ})
 	}
 	return c.Dup()
 }
-func ComponentInFactory(typ string) bool {
-	components := makeComponentLibrary()
-	c, ok := components[typ]
-	if c == nil || ok == false {
-		return false
+
+func (i *componentLibrary) GetComponent(typ string) (*wtype.LHComponent, error) {
+	c, ok := i.lib[typ]
+	if !ok {
+		return nil, &notFound{Name: typ}
 	}
-	if ok {
-		return true
-	}
-	return false
+	return c.Dup(), nil
 }
 
-func GetComponentList() []string {
-	components := makeComponentLibrary()
-	kz := make([]string, len(components))
-	x := 0
-	for name, _ := range components {
-		kz[x] = name
-		x += 1
-	}
-	return kz
+func ComponentInFactory(typ string) bool {
+	_, ok := defaultComponentLibrary.lib[typ]
+	return ok
+}
 
+func GetComponents() []*wtype.LHComponent {
+	var comps []*wtype.LHComponent
+	for _, c := range defaultComponentLibrary.lib {
+		comps = append(comps, c)
+	}
+
+	return wtype.CopyComponentArray(comps)
+}
+
+// TODO: deprecate
+func GetComponentList() []string {
+	comps := GetComponents()
+	var names []string
+	for _, c := range comps {
+		names = append(names, c.CName)
+	}
+
+	sort.Strings(names)
+
+	return names
+}
+
+func GetComponentByType(typ string) *wtype.LHComponent {
+	return defaultComponentLibrary.GetComponentByType(typ)
 }

@@ -665,12 +665,6 @@ func DefineOrderOrFail(mapin map[string]map[string]int) ([]string, error) {
 			c1 := mapin[cmps[i]][cmps[j]]
 			//c2 := mapin[cmps[j]][cmps[i]]
 
-			/*
-				if c1 > 0 && c2 > 0 {
-					log.Fatalf(fmt.Sprint("CANNOT DEAL WITH INCONSISTENT COMPONENT ORDERING ", cmps[i], " ", cmps[j], " ", c1, " ", c2))
-				}
-
-			*/
 			// if c1 > 0 we add to the count
 
 			if c1 > 0 {
@@ -776,7 +770,13 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 	logger.Debug("Plates:")
 
 	for k, v := range robot.Plates {
+
 		logger.Debug(fmt.Sprintf("%s %s: %s %s", k, robot.PlateIDLookup[k], v.PlateName, v.Type))
+
+		//TODO Deprecate
+		if strings.Contains(v.GetName(), "Input") {
+			wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+		}
 	}
 
 	logger.Debug("Tipwastes: ")

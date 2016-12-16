@@ -1,11 +1,11 @@
 package remote
 
 import (
+	"context"
 	"net"
 	"testing"
 
 	"github.com/antha-lang/antha/inject"
-	"golang.org/x/net/context"
 )
 
 func haveNetwork() error {

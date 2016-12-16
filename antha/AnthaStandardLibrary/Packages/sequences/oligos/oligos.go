@@ -287,7 +287,6 @@ func FindPositioninSequence(largeSequence wtype.DNASequence, smallSequence wtype
 	start = seqsfound[0].Positions[0]
 	end = seqsfound[0].Positions[0] + len(smallSequence.Sequence())
 	//}
-	fmt.Println("rev? ", seqsfound[0].Reverse, start, end)
 	return
 }
 
@@ -310,7 +309,6 @@ func FindDirectionalPositioninSequence(largeSequence wtype.DNASequence, smallSeq
 		end = seqsfound[0].Positions[0]
 		start = seqsfound[0].Positions[0] + len(smallSequence.Sequence())
 	}
-	fmt.Println("rev? ", seqsfound[0].Reverse, start, end)
 	return
 }
 

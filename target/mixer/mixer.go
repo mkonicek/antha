@@ -111,26 +111,19 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 		}
 	}
 
-	if p := a.opt.InputPlateFiles; len(p) != 0 {
-		for _, filename := range p {
-			ip, err := parseInputPlateFile(filename)
-			if err != nil {
-				return nil, fmt.Errorf("cannot parse file %q: %s", filename, err)
-			}
-			if err := addPlate(req, ip); err != nil {
-				return nil, err
-			}
-		}
-	}
-
 	if p := a.opt.InputPlateData; len(p) != 0 {
 		for idx, bs := range p {
 			buf := bytes.NewBuffer(bs)
-			ip, err := parseInputPlateData(buf)
+			r, err := ParsePlateCSV(buf)
 			if err != nil {
 				return nil, fmt.Errorf("cannot parse data at idx %d: %s", idx, err)
 			}
-			if err := addPlate(req, ip); err != nil {
+
+			if len(r.Warnings) != 0 {
+				return nil, fmt.Errorf("cannot parse data at idx %d: %s", idx, strings.Join(r.Warnings, " "))
+			}
+
+			if err := addPlate(req, r.Plate); err != nil {
 				return nil, err
 			}
 		}

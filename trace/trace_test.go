@@ -1,9 +1,9 @@
 package trace
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"testing"
 	"time"
 )

@@ -31,10 +31,10 @@ import (
 
 	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/cmd/antharun/frontend"
-	"github.com/antha-lang/antha/cmd/antharun/param"
 	"github.com/antha-lang/antha/cmd/antharun/pretty"
 	"github.com/antha-lang/antha/cmd/antharun/spawn"
 	"github.com/antha-lang/antha/execute"
+	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
@@ -47,13 +47,14 @@ const (
 )
 
 var runCmd = &cobra.Command{
-	Use:          "antharun",
-	Short:        "Run an antha workflow",
-	RunE:         runWorkflow,
-	SilenceUsage: true,
+	Use:           "antharun",
+	Short:         "Run an antha workflow",
+	RunE:          runWorkflow,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
-func makeMixerOpt() mixer.Opt {
+func makeMixerOpt() (mixer.Opt, error) {
 	opt := mixer.Opt{}
 	if i := viper.GetInt("maxPlates"); i != 0 {
 		f := float64(i)
@@ -70,8 +71,16 @@ func makeMixerOpt() mixer.Opt {
 	opt.InputPlateType = GetStringSlice("inputPlateType")
 	opt.OutputPlateType = GetStringSlice("outputPlateType")
 	opt.TipType = GetStringSlice("tipType")
-	opt.InputPlateFiles = GetStringSlice("inputPlates")
-	return opt
+
+	for _, fn := range GetStringSlice("inputPlates") {
+		p, err := mixer.ParseInputPlateFile(fn)
+		if err != nil {
+			return opt, err
+		}
+		opt.InputPlates = append(opt.InputPlates, p)
+	}
+
+	return opt, nil
 }
 
 func makeContext() (context.Context, error) {
@@ -83,7 +92,7 @@ func makeContext() (context.Context, error) {
 			return nil, fmt.Errorf("component %q has unexpected type %T", desc.Name, obj)
 		}
 		if err := inject.Add(ctx, inject.Name{Repo: desc.Name}, runner); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error adding protocol %q: %s", desc.Name, err)
 		}
 	}
 	return ctx, nil
@@ -92,22 +101,37 @@ func makeContext() (context.Context, error) {
 type runOpt struct {
 	MixerOpt       mixer.Opt
 	Drivers        []string
-	WorkflowFile   string
+	BundleFile     string
 	ParametersFile string
+	WorkflowFile   string
 }
 
 func (a *runOpt) Run() error {
-	wdata, err := ioutil.ReadFile(a.WorkflowFile)
-	if err != nil {
-		return err
+	var wdata, pdata, bdata []byte
+	var err error
+
+	if len(a.BundleFile) != 0 {
+		bdata, err = ioutil.ReadFile(a.BundleFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		wdata, err = ioutil.ReadFile(a.WorkflowFile)
+		if err != nil {
+			return err
+		}
+
+		pdata, err = ioutil.ReadFile(a.ParametersFile)
+		if err != nil {
+			return err
+		}
 	}
 
-	pdata, err := ioutil.ReadFile(a.ParametersFile)
-	if err != nil {
-		return err
-	}
-
-	wdesc, params, err := param.TryExpand(wdata, pdata)
+	wdesc, params, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
+		WorkflowData: wdata,
+		BundleData:   bdata,
+		ParamsData:   pdata,
+	})
 	if err != nil {
 		return err
 	}
@@ -188,11 +212,17 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	mopt, err := makeMixerOpt()
+	if err != nil {
+		return err
+	}
+
 	opt := &runOpt{
-		MixerOpt:       makeMixerOpt(),
+		MixerOpt:       mopt,
 		Drivers:        drivers,
-		WorkflowFile:   viper.GetString("workflow"),
+		BundleFile:     viper.GetString("bundle"),
 		ParametersFile: viper.GetString("parameters"),
+		WorkflowFile:   viper.GetString("workflow"),
 	}
 
 	return opt.Run()
@@ -203,8 +233,9 @@ func init() {
 	flags := c.Flags()
 
 	//RootCmd.AddCommand(c)
-	flags.String("parameters", "parameters.yml", "Parameters to workflow")
+	flags.String("parameters", "parameters.json", "Parameters to workflow")
 	flags.String("workflow", "workflow.json", "Workflow definition file")
+	flags.String("bundle", "", "Input bundle with parameters and workflow together (overrides parameter and workflow arguments)")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
 	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
 	flags.Int("maxPlates", 0, "Maximum number of plates")

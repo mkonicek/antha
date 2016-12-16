@@ -30,6 +30,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"os/user"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -129,7 +131,7 @@ func (p *compiler) anthaInit() {
 		"github.com/antha-lang/antha/execute":              "execute.MixInto",
 		"github.com/antha-lang/antha/inject":               "",
 		"github.com/antha-lang/antha/component":            "",
-		"golang.org/x/net/context":                         "",
+		"context": "",
 	}
 }
 
@@ -293,11 +295,55 @@ func sortKeys(m map[string]param) []string {
 	return sorted
 }
 
+// Usually $GOPATH but if not set, future versions of go will assume $HOME/go
+func getGoPath() []string {
+	ps := filepath.SplitList(os.Getenv("GOPATH"))
+	if len(ps) == 0 {
+		usr, err := user.Current()
+		if err == nil {
+			ps = append(ps, filepath.Join(usr.HomeDir, "go"))
+		}
+	}
+
+	return ps
+}
+
+// Return name relative to a base if possible
+func relativeTo(bases []string, name string) (string, error) {
+	absName, err := filepath.Abs(name)
+	if err != nil {
+		return "", err
+	}
+
+	var prefixes []string
+	for _, v := range bases {
+		prefixes = append(prefixes, v)
+	}
+
+	// In reverse alphabetical to ensure longest match first
+	sort.Strings(prefixes)
+	for idx := len(prefixes) - 1; idx >= 0; idx -= 1 {
+		p := prefixes[idx]
+		if !strings.HasPrefix(absName, p) {
+			continue
+		} else if rp, err := filepath.Rel(p, absName); err != nil {
+			return "", err
+		} else {
+			return rp, nil
+		}
+	}
+
+	return name, nil
+}
+
 // Collect information needed in downstream generation passes
 func (p *compiler) analyze(src *ast.File) {
 	p.desc = src.Doc.Text()
-	if f := p.fset.File(src.Package); f != nil {
-		p.path = filepath.ToSlash(f.Name())
+	f := p.fset.File(src.Package)
+	if f != nil {
+		name := f.Name()
+		name, _ = relativeTo(getGoPath(), name)
+		p.path = filepath.ToSlash(name)
 	}
 	p.element = strings.Title(src.Name.Name)
 

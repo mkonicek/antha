@@ -26,11 +26,12 @@ package parser
 import (
 	"encoding/csv"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"os"
-	"strings"
 )
 
 func ReadDesign(filename string) [][]string {
@@ -53,8 +54,7 @@ func ReadDesign(filename string) [][]string {
 	rawCSVdata, err := reader.ReadAll()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	// sanity check, display to standard output
@@ -98,8 +98,7 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 	rawCSVdata, err := reader.ReadAll()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	// sanity check, display to standard output
@@ -153,6 +152,7 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 						part.Plasmid = false
 					}*/
 				}
+
 				parts = append(parts, part)
 				m[part.Nm] = part
 			}

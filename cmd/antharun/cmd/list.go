@@ -23,56 +23,36 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
-	"github.com/antha-lang/antha/cmd/antharun/comp"
-	"github.com/antha-lang/antha/cmd/antharun/pretty"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const (
-	jsonOutput   = "json"
-	stringOutput = "pretty"
+	jsonOutput = "json"
+	yamlOutput = "yaml"
+	textOutput = "text"
 )
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List available antha components",
-	RunE:  listComponents,
-}
-
-func listComponents(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
-
-	cs, err := comp.New(library)
-	if err != nil {
-		return err
-	}
-
-	switch viper.GetString("output") {
-	case jsonOutput:
-		if bs, err := json.Marshal(cs); err != nil {
-			return err
-		} else {
-			_, err = fmt.Println(string(bs))
-			return err
-		}
-	default:
-		return pretty.Components(os.Stdout, cs)
-	}
+	Short: "List antha properties",
+	// TODO: deprecate bare list command
+	RunE: listElements,
 }
 
 func init() {
 	c := listCmd
-	flags := c.Flags()
+	flags := c.PersistentFlags()
 	RootCmd.AddCommand(c)
 
 	flags.String(
 		"output",
-		stringOutput,
-		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{stringOutput, jsonOutput}, ",")))
+		textOutput,
+		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{
+			textOutput,
+			yamlOutput,
+			jsonOutput,
+		}, ",")))
 }

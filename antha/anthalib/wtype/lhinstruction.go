@@ -34,7 +34,6 @@ type LHInstruction struct {
 	Components       []*LHComponent
 	ContainerType    string
 	Welladdress      string
-	Plateaddress     string
 	plateID          string
 	Platetype        string
 	Vol              float64

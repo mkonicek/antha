@@ -1,16 +1,18 @@
 {
     "Parameters": {
         "newparams": {
-            "LiquidVolumes": ["5ul","100ul"],
-            "Liquidname": "Evian",
+            "LiquidVolumes": ["19ul","100ul"],
+            "Liquidname": "tartrazine",
             "OutPlates": [
-            "pcrplate_skirted_riser40",
-            "pcrplate_with_cooler",
-            "greiner384_riser40"
+			"pcrplate_skirted",
+            "pcrplate_skirted_riser20",
+			"pcrplate_skirted_riser40",
+			"pcrplate_skirted_incubator",
             ],
-            "LiquidTypes": ["water","dna_mix"],
-            "Startingsolution": "water",
-            "WellsUsedperOutPlateInorder":[0,0,0]
+            "LiquidTypes": ["water","NeedToMix", "DispenseAboveLiquid"],
+            "Startingsolution": "tartrazine",
+           
+			"TestName":"pcrplate+postrefactor"
         }
     }
 }

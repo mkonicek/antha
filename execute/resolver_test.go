@@ -1,6 +1,7 @@
 package execute
 
 import (
+	"context"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
@@ -9,7 +10,6 @@ import (
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
-	"golang.org/x/net/context"
 )
 
 func TestUseCompChainThroughSample(t *testing.T) {
@@ -18,6 +18,7 @@ func TestUseCompChainThroughSample(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = target.WithTarget(ctx, tgt)
+	ctx = WithId(ctx, "")
 
 	vol := wunit.NewVolume(1, "ul")
 	a1 := mix(ctx, mixer.GenericMix(mixer.MixOptions{

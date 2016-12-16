@@ -26,12 +26,13 @@ package wtype
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/microArch/logger"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // structure describing a microplate
@@ -66,7 +67,7 @@ func (lhp LHPlate) Name() string {
 func (lhp LHPlate) String() string {
 	return fmt.Sprintf(
 		`LHPlate {
-	ID          : %s,
+	ID          : %s, 
 	Inst        : %s,
 	Loc         : %s,
 	PlateName   : %s,
@@ -80,7 +81,7 @@ func (lhp LHPlate) String() string {
 	Hunit       : %s,
 	Rows        : %p,
 	Cols        : %p,
-	Welltype    : %p,
+	Welltype    : %s,
 	Wellcoords  : %p,
 	WellXOffset : %f,
 	WellYOffset : %f,
@@ -102,7 +103,7 @@ func (lhp LHPlate) String() string {
 		lhp.Hunit,
 		lhp.Rows,
 		lhp.Cols,
-		lhp.Welltype,
+		lhp.Welltype.String(),
 		lhp.Wellcoords,
 		lhp.WellXOffset,
 		lhp.WellYOffset,
@@ -174,6 +175,10 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
+
+		if w.Empty() {
+			continue
+		}
 
 		if w.Contents().CName == cmp.CName {
 			if exact && w.Contents().ID != cmp.ID {
@@ -580,16 +585,16 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 
 	csvfile, err := os.Create(outputpilename)
 	if err != nil {
-		fmt.Println("Error:", err)
 		return err
 	}
+
 	defer csvfile.Close()
 
 	records := make([][]string, 0)
 
 	//record := make([]string, 0)
 
-	headerrecord := []string{plate.Type, platename, "", "", ""}
+	headerrecord := []string{plate.Type, platename, "", "", "", "", ""}
 
 	records = append(records, headerrecord)
 
@@ -599,7 +604,12 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 
-		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, Volumes[i].Unit().PrefixedSymbol()}
+		// if no conc unit and conc is zero use a default concentration unit
+		if liquids[i].Conc == 0 && liquids[i].Cunit == "" {
+			liquids[i].Cunit = "mg/l"
+		}
+
+		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, Volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
 		records = append(records, record)
 	}
 
@@ -624,7 +634,7 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 	var wells = make([]string, 0)
 	var liquids = make([]*LHComponent, 0)
 	var volumes = make([]wunit.Volume, 0)
-
+	var concs = make([]wunit.Concentration, 0)
 	allpositions := plate.AllWellPositions(false)
 
 	for _, position := range allpositions {
@@ -634,12 +644,16 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 			wells = append(wells, position)
 			liquids = append(liquids, well.Contents())
 			volumes = append(volumes, well.CurrentVolume())
+			if well.Contents().Cunit != "" {
+				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, well.Contents().Cunit))
+			} else {
+				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, "ng/ul"))
+			}
 		}
 	}
 
 	csvfile, err := os.Create(outputfilename)
 	if err != nil {
-		fmt.Println("Error:", err)
 		return err
 	}
 	defer csvfile.Close()
@@ -648,23 +662,24 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 
 	//record := make([]string, 0)
 
-	headerrecord := []string{plate.Type, platename, "", "", ""}
+	headerrecord := []string{plate.Type, platename, "LiquidType ", "Vol", "Vol Unit", "Conc", "Conc Unit"}
 
 	records = append(records, headerrecord)
 
 	for i, well := range wells {
 
 		volfloat := volumes[i].RawValue()
+		concfloat := concs[i].RawValue()
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
-
+		concstr := strconv.FormatFloat(concfloat, 'G', -1, 64)
 		/*
 			fmt.Println("len(wells)", len(wells))
 			fmt.Println("len(liquids)", len(liquids))
 			fmt.Println("len(Volumes)", len(Volumes))
 		*/
 
-		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol()}
+		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), concstr, concs[i].Unit().PrefixedSymbol()}
 		records = append(records, record)
 	}
 

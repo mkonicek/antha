@@ -38,46 +38,68 @@ var (
 	alphabet string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-func Export(plt *plot.Plot, filename string) {
-	length, _ := vg.ParseLength("10cm")
-
-	plt.Save(length, length, filename)
+func Export(plt *plot.Plot, heightstr string, lengthstr string, filename string) (err error) {
+	length, err := vg.ParseLength(lengthstr)
+	if err != nil {
+		return
+	}
+	height, err := vg.ParseLength(heightstr)
+	if err != nil {
+		return
+	}
+	plt.Save(length, height, filename)
+	return
 }
 
-func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot) {
+func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error) {
 	// now plot the graph
 
 	// the data points
 	pts := make([]plotter.XYer, 0) //len(Xdatarange))
 
-	for ptsindex := 0; ptsindex < len(Xvalues); ptsindex++ {
+	//for ptsindex := 0; ptsindex < len(Xvalues); ptsindex++ {
 
-		// each specific set for each datapoint
+	// each specific set for each datapoint
 
-		for Xdatarangeindex, xfloat := range Xvalues {
+	for index, ydataset := range Yvaluearray {
 
-			xys := make(plotter.XYs, len(Yvaluearray))
-
-			yfloats := make([]float64, 0)
-			for _, yvalues := range Yvaluearray {
-				yfloat := yvalues[Xdatarangeindex]
-				yfloats = append(yfloats, yfloat)
-			}
-
-			for j := range xys {
-				xys[j].X = xfloat
-				xys[j].Y = yfloats[j]
-
-			}
-			//fmt.Println(xys)
-			pts = append(pts, xys) //
+		if len(ydataset) != len(Xvalues) {
+			err = fmt.Errorf("cannot plot x by y as ", Xvalues, " is not the same length as dataset", index+1, " ", ydataset, " of ", Yvaluearray)
 		}
 
+		xys := make(plotter.XYs, len(ydataset))
+		for j := range xys {
+			xys[j].X = Xvalues[j]
+			xys[j].Y = ydataset[j]
+		}
+		pts = append(pts, xys)
 	}
-	plt, err := plot.New()
+	/*
+			for Xdatarangeindex, xfloat := range Xvalues {
+
+				xys := make(plotter.XYs, len(Yvaluearray))
+
+				yfloats := make([]float64, 0)
+				for _, yvalues := range Yvaluearray {
+					yfloat := yvalues[Xdatarangeindex]
+					yfloats = append(yfloats, yfloat)
+				}
+
+				for j := range xys {
+					xys[j].X = xfloat
+					xys[j].Y = yfloats[j]
+
+				}
+				//fmt.Println(xys)
+				pts = append(pts, xys) //
+			}
+		}
+	*/
+
+	plt, err = plot.New()
 
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	// Create two lines connecting points and error bars. For
@@ -109,14 +131,45 @@ func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot) {
 
 	ptsinterface := make([]interface{}, 0)
 
-	for _, pt := range pts {
+	for i, pt := range pts {
+		ptsinterface = append(ptsinterface, fmt.Sprint("run_", i))
 		ptsinterface = append(ptsinterface, pt)
 	}
 
 	plotutil.AddScatters(plt, ptsinterface...) //AddScattersXYer(plt, pts)
+
+	plt.Legend.Top = true
+	plt.Legend.Left = true
+
+	/*for _, pt := range ptsinterface {
+
+
+		plotutil.AddLinePoints(plt, pt)
+	}
+	*/
 	return
 }
 
+func AddAxesTitles(plt *plot.Plot, xtitle string, ytitle string) {
+
+	plt.X.Label.Text = xtitle
+	plt.Y.Label.Text = ytitle
+
+}
+
+/*
+func AddLegend(plt *plot.Plot, titles []string)(err error) {
+
+	for i, title := range titles {
+
+	err = plotutil.AddLinePoints(plt,)
+
+	plt.Legend.Add(plt,title,plt.)
+
+	}
+
+}
+*/
 func PlotfromMinMaxpairs(sheet *xlsx.Sheet, Xminmax []string, Yminmaxarray [][]string, Exportedfilename string) {
 	Xdatarange, err := spreadsheet.ConvertMinMaxtoArray(Xminmax)
 	if err != nil {

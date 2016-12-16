@@ -49,11 +49,19 @@ func (thing Thingfound) ToString() (descriptions string) {
 }
 
 // not perfect yet! issue with byte conversion of certain characters!
+// PLEASE STOP PRINTING SO MUCH
 func Findall(bigthing string, smallthing string) (positions []int) {
 
 	positions = make([]int, 0)
 	count := strings.Count(bigthing, smallthing)
-	//// fmt.Println("count", count)
+	/*
+		fmt.Println("count", count)
+		fmt.Println("big seq", bigthing)
+		fmt.Println("small seq", smallthing)
+	*/
+	if smallthing == "" {
+		return
+	}
 	if count != 0 {
 
 		pos := (strings.Index(bigthing, smallthing))

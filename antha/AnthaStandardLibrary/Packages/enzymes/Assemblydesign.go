@@ -452,26 +452,28 @@ var EndlinksString = map[string]map[string]map[string][]string{
 			"L1Uadaptor + Pro": []string{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
 			//	"TF":               []string{"GTCG", "GGAG"}, // transcription factor e.g. laci (same as L1Uadaptor prefix currently)
 			//	"TF + Pro":         []string{"GTCG", "TTTT"},
-			"Pro":                   []string{"GGAG", "TTTT"},
-			"5U":                    []string{"TTTT", "CCAT"}, // 5' untranslated, e.g. rbs // changed from MoClo TACT to TTTT to conform with Protein Paintbox??
-			"5U(f)":                 []string{"TTTT", "CCAT"},
-			"Pro + 5U(f)":           []string{"GGAG", "CCAT"},
-			"Pro + 5U":              []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"NT1":                   []string{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"5U + NT1":              []string{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS1":                  []string{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS1 ns":               []string{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"NT2":                   []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"SP":                    []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS2 ns":               []string{"AGGT", "TTCG"},
-			"CDS2":                  []string{"AGGT", "GCTT"},
-			"CT":                    []string{"TTCG", "GCTT"},
-			"3U":                    []string{"GCTT", "CCCC"}, // should we cahnge this from GGTA to CCCC to conform with Protein Paintbox??
-			"Ter":                   []string{"CCCC", "CGCT"},
-			"3U + Ter":              []string{"GCTT", "CGCT"},
-			"3U + Ter + L1Dadaptor": []string{"GCTT", "TAAT"},
-			"L1Dadaptor":            []string{"CGCT", "TAAT"},
-			"Ter + L1Dadaptor":      []string{"CCCC", "TAAT"},
+			"Pro":                        []string{"GGAG", "TTTT"},
+			"5U":                         []string{"TTTT", "CCAT"}, // 5' untranslated, e.g. rbs // changed from MoClo TACT to TTTT to conform with Protein Paintbox??
+			"5U(f)":                      []string{"TTTT", "CCAT"},
+			"Pro + 5U(f)":                []string{"GGAG", "CCAT"},
+			"Pro + 5U":                   []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"NT1":                        []string{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"5U + NT1":                   []string{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"CDS1":                       []string{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"CDS1 + 3U":                  []string{"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"CDS1 ns":                    []string{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"NT2":                        []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"SP":                         []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"CDS2 ns":                    []string{"AGGT", "TTCG"},
+			"CDS2":                       []string{"AGGT", "GCTT"},
+			"CT":                         []string{"TTCG", "GCTT"},
+			"3U":                         []string{"GCTT", "CCCC"}, // should we cahnge this from GGTA to CCCC to conform with Protein Paintbox??
+			"Ter":                        []string{"CCCC", "CGCT"},
+			"3U + Ter":                   []string{"GCTT", "CGCT"},
+			"3U + Ter + L1Dadaptor":      []string{"GCTT", "TAAT"},
+			"CT + 3U + Ter + L1Dadaptor": []string{"TTCG", "TAAT"},
+			"L1Dadaptor":                 []string{"CGCT", "TAAT"},
+			"Ter + L1Dadaptor":           []string{"CCCC", "TAAT"},
 		},
 		"Level1": map[string][]string{
 			"Device1": []string{"GAA", "ACC"},

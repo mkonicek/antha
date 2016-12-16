@@ -34,6 +34,7 @@ const (
 	LTDNAMIX
 	LTPLATEOUT
 	LTCOLONY
+	LTDNACELLSMIX
 )
 
 func LiquidTypeFromString(s string) (LiquidType, error) {
@@ -91,6 +92,8 @@ func LiquidTypeFromString(s string) (LiquidType, error) {
 		return LTPLATEOUT, nil
 	case "colony":
 		return LTCOLONY, nil
+	case "dna_cells_mix":
+		return LTDNACELLSMIX, nil
 	default:
 		return LTWater, nil
 	}
@@ -148,6 +151,8 @@ func LiquidTypeName(lt LiquidType) string {
 		return "plateout"
 	case LTCOLONY:
 		return "colony"
+	case LTDNACELLSMIX:
+		return "dna_cells_mix"
 	default:
 		return "nil"
 	}

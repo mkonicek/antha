@@ -404,10 +404,6 @@ var Welch ResampleFilter
 // Cosine-windowed sinc filter (3 lobes).
 var Cosine ResampleFilter
 
-var AllResampleFilters = map[string]ResampleFilter{
-	"Cosine": Cosine, "Welch": Welch, "Blackman": Blackman, "Hamming": Hamming, "Hann": Hann, "Lanczos": Lanczos, "Bartlett": Bartlett, "Guassian": Gaussian, "BSpline": BSpline, "CatmullRom": CatmullRom, "MitchellNetravali": MitchellNetravali, "Hermite": Hermite, "Linear": Linear, "Box": Box, "NearestNeighbour": NearestNeighbor,
-}
-
 func bcspline(x, b, c float64) float64 {
 	x = math.Abs(x)
 	if x < 1.0 {

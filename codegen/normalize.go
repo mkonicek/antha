@@ -106,19 +106,39 @@ func buildReachingUses(g *ast.Graph) map[ast.Node][]*ast.UseComp {
 	return values
 }
 
+// Eliminate nodes while preserving dependency relation
+func simplifyWithDeps(g graph.Graph, in func(n graph.Node) bool) (graph.Graph, error) {
+	rg := graph.Reaches(graph.Simplify(graph.SimplifyOpt{
+		Graph:            g,
+		RemoveSelfLoops:  true,
+		RemoveMultiEdges: true,
+	}))
+
+	rg = graph.Simplify(graph.SimplifyOpt{
+		Graph: rg,
+		RemoveNodes: func(n graph.Node) bool {
+			return !in(n)
+		},
+	})
+
+	return graph.TransitiveReduction(rg)
+}
+
 // Build IR
 func build(root ast.Node) (*ir, error) {
 	g := ast.ToGraph(ast.ToGraphOpt{
 		Roots: []ast.Node{root},
 	})
 
-	ct := graph.Eliminate(graph.EliminateOpt{
-		Graph: g,
-		In: func(n graph.Node) bool {
-			c, ok := n.(*ast.Command)
-			return (ok && c.Output == nil) || n == root
-		},
+	// Remove UseComps primarily. They may be locally cyclic.
+	ct, err := simplifyWithDeps(g, func(n graph.Node) bool {
+		c, ok := n.(*ast.Command)
+		return (ok && c.Output == nil) || n == root
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: Add back some validity checks like the same UseComp cannot be used
 	// multiple times

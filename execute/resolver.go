@@ -1,12 +1,12 @@
 package execute
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/target"
-	"golang.org/x/net/context"
 )
 
 // Converts execute instructions to their ast equivalents
@@ -39,7 +39,7 @@ func (a *resolver) resolve(ctx context.Context, instObjs []interface{}) (map[int
 		return nil, err
 	}
 
-	nodes, err := makeNodes(commands)
+	nodes, err := getMaker(ctx).MakeNodes(commands)
 	if err != nil {
 		return nil, err
 	}

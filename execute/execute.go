@@ -3,14 +3,13 @@
 package execute
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -27,31 +26,20 @@ type Result struct {
 }
 
 type Opt struct {
-	WorkflowData []byte         // JSON data describing workflow
-	Workflow     *workflow.Desc // Or workflow directly
-	ParamData    []byte         // JSON data describing parameters
-	Params       *RawParams     // Or parameters directly
-	Target       *target.Target // Target machine configuration
-	Id           string         // Job Id
+	Workflow *workflow.Desc // Or workflow directly
+	Params   *RawParams     // Or parameters directly
+	Target   *target.Target // Target machine configuration
+	Id       string         // Job Id
 }
 
 // Simple entrypoint for one-shot execution of workflows.
 func Run(parent context.Context, opt Opt) (*Result, error) {
-	w, err := workflow.New(workflow.Opt{FromBytes: opt.WorkflowData, FromDesc: opt.Workflow})
+	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
 	if err != nil {
 		return nil, err
 	}
 
-	var params *RawParams
-	if opt.Params != nil {
-		params = opt.Params
-	} else if opt.ParamData != nil {
-		if err := json.Unmarshal(opt.ParamData, &params); err != nil {
-			return nil, err
-		}
-	}
-
-	if _, err := setParams(parent, params, w); err != nil {
+	if _, err := setParams(parent, opt.Params, w); err != nil {
 		return nil, err
 	}
 

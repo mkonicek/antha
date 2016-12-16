@@ -27,9 +27,9 @@ import (
 	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"encoding/json"
+	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/blast"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	. "github.com/biogo/ncbi/blast"
 	"math/rand"
 	"strings"
 )

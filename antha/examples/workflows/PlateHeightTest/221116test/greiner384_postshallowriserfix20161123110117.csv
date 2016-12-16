@@ -1,0 +1,28 @@
+Plate Height Test:,greiner384_postshallowriserfix20161123110117,,,,,,,,,,,,
+Time:,2016-11-23 11:01:17.378083412 +0000 GMT,,,,,,,,,,,,
+antha-lang/antha commitID:,8995491f33dadd85c306bcb2402cbde08b9ddef1,,,,,,,,,,,,
+,,,,,,,,,,,,,
+TestName,Plate,Liquid name,Liquid type ,Liquid Volume,Well ,Aspirate mm from Bottom of well? ,Dispense mm from Bottom of well? ,Acceptable? , Comments,plate Z start,Plate Height,lhpolicy aspirate z offset,lhpolicy dispense z offset
+greiner384_postshallowriserfix20161123110117,greiner384_riser20_Platenumber_1,tartrazine,water,19.000ul,A1,  ,  , , ,20.5,14,<nil>,1
+greiner384_postshallowriserfix20161123110117,greiner384_riser20_Platenumber_1,tartrazine,PostMix,19.000ul,B1,  ,  , , ,20.5,14,<nil>,0.5
+greiner384_postshallowriserfix20161123110117,greiner384_riser20_Platenumber_1,tartrazine,PreMix,19.000ul,C1,  ,  , , ,20.5,14,<nil>,0.5
+greiner384_postshallowriserfix20161123110117,greiner384_riser20_Platenumber_1,tartrazine,DispenseAboveLiquid,19.000ul,D1,  ,  , , ,20.5,14,<nil>,<nil>
+greiner384_postshallowriserfix20161123110117,greiner384_riser20_Platenumber_1,tartrazine,water,100.000ul,E1,  ,  , , ,20.5,14,<nil>,1
+greiner384_postshallowriserfix20161123110117,greiner384_riser20_Platenumber_1,tartrazine,PostMix,100.000ul,F1,  ,  , , ,20.5,14,<nil>,0.5
+greiner384_postshallowriserfix20161123110117,greiner384_riser20_Platenumber_1,tartrazine,PreMix,100.000ul,G1,  ,  , , ,20.5,14,<nil>,0.5
+greiner384_postshallowriserfix20161123110117,greiner384_riser20_Platenumber_1,tartrazine,DispenseAboveLiquid,100.000ul,H1,  ,  , , ,20.5,14,<nil>,<nil>
+greiner384_postshallowriserfix20161123110117,greiner384_riser40_Platenumber_1,tartrazine,water,19.000ul,A1,  ,  , , ,40.5,14,<nil>,1
+greiner384_postshallowriserfix20161123110117,greiner384_riser40_Platenumber_1,tartrazine,PostMix,19.000ul,B1,  ,  , , ,40.5,14,<nil>,0.5
+greiner384_postshallowriserfix20161123110117,greiner384_riser40_Platenumber_1,tartrazine,PreMix,19.000ul,C1,  ,  , , ,40.5,14,<nil>,0.5
+greiner384_postshallowriserfix20161123110117,greiner384_riser40_Platenumber_1,tartrazine,DispenseAboveLiquid,19.000ul,D1,  ,  , , ,40.5,14,<nil>,<nil>
+greiner384_postshallowriserfix20161123110117,greiner384_riser40_Platenumber_1,tartrazine,water,100.000ul,E1,  ,  , , ,40.5,14,<nil>,1
+greiner384_postshallowriserfix20161123110117,greiner384_riser40_Platenumber_1,tartrazine,PostMix,100.000ul,F1,  ,  , , ,40.5,14,<nil>,0.5
+greiner384_postshallowriserfix20161123110117,greiner384_riser40_Platenumber_1,tartrazine,PreMix,100.000ul,G1,  ,  , , ,40.5,14,<nil>,0.5
+greiner384_postshallowriserfix20161123110117,greiner384_riser40_Platenumber_1,tartrazine,DispenseAboveLiquid,100.000ul,H1,  ,  , , ,40.5,14,<nil>,<nil>
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,are input locations being calculated correctly?,,,,,,,,,,,,
+,still seeing aspz and dspz discrepency,approximately 1mm,,,,,,,,,,,
+,did shallowriser height change get through,according to the heights here it looks like no,,,,,,,,,,,
+,slight discrpency between tip size offset still? Less certain than with pcrplae,,,,,,,,,,,,

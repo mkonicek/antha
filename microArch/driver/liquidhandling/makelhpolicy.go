@@ -111,6 +111,7 @@ func MakePolicies() map[string]LHPolicy {
 	pols["dna_cells_mix"] = MakeDNACELLSMixPolicy()
 	pols["plateout"] = MakePlateOutPolicy()
 	pols["colony"] = MakeColonyPolicy()
+	pols["colonymix"] = MakeColonyMixPolicy()
 	//      pols["lysate"] = MakeLysatePolicy()
 
 	/*policies, names := PolicyMaker(Allpairs, "DOE_run", false)
@@ -427,10 +428,16 @@ func MakeColonyPolicy() LHPolicy {
 	policy["POST_MIX"] = 1
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	policy["TOUCHOFF"] = true
+	policy["TOUCHOFF"] = false
 	policy["CAN_MULTI"] = false
 	policy["RESET_OVERRIDE"] = true
 
+	return policy
+}
+
+func MakeColonyMixPolicy() LHPolicy {
+	policy := MakeColonyPolicy()
+	policy["POST_MIX"] = 3
 	return policy
 }
 

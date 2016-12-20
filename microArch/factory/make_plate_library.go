@@ -27,9 +27,6 @@ import (
 	"sort"
 	"strings"
 
-	"sort"
-	"strings"
-
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"

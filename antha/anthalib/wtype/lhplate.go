@@ -699,3 +699,19 @@ func (p *LHPlate) MarkNonEmptyWellsUserAllocated() {
 		}
 	}
 }
+
+func (p *LHPlate) AllNonEmptyWells() []*LHWell {
+	ret := make([]*LHWell, 0, p.Nwells)
+
+	it := NewOneTimeColumnWiseIterator(p)
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		w := p.Wellcoords[wc.FormatA1()]
+
+		if !w.Empty() {
+			ret = append(ret, w)
+		}
+	}
+
+	return ret
+}

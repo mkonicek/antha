@@ -1,4 +1,4 @@
-// package download, for downloading files
+// Package download provides convenience functions for downloading files
 package download
 
 import (
@@ -7,11 +7,9 @@ import (
 	"os"
 )
 
-// func File downloads a url to the given filename.
-// On error, the file will be left behind.
+// File downloads the data at a url to the given filename. If there is an error, the file will contain the partially downloaded data.
 func File(url string, filename string) (err error) {
 
-	var f *os.File
 	res, err := http.Get(url)
 
 	if err != nil {
@@ -19,7 +17,7 @@ func File(url string, filename string) (err error) {
 	}
 	defer res.Body.Close()
 
-	f, err = os.Create(filename)
+	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}

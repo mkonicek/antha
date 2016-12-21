@@ -20,16 +20,22 @@ func (a *alreadySeen) Error() string {
 	return "parameter " + a.Name + " already seen"
 }
 
+// Description of the parameters of a component.
 type ParamDesc struct {
-	Name, Desc, Kind, Type string
+	Name string // Name of parameter
+	Desc string // Description of parameter from doc string
+	Kind string // Input, Output, Data or Parameter
+	Type string // Full go type name
 }
 
+// Description of a component.
 type ComponentDesc struct {
 	Desc   string
 	Path   string
 	Params []ParamDesc
 }
 
+// An antha component / element.
 type Component struct {
 	Name        string
 	Constructor func() interface{}
@@ -54,35 +60,35 @@ func (a *Component) MakeParams() (map[string]interface{}, error) {
 	return m, nil
 }
 
-type tdesc struct {
+type typeDesc struct {
 	Name string
 	Type reflect.Type
 }
 
-func typeOf(i interface{}) ([]tdesc, error) {
-	var tdescs []tdesc
+func typeDescOf(obj interface{}) ([]typeDesc, error) {
+	var tdescs []typeDesc
 	// Generated elements always have type *XXXOutput or *XXXInput
-	t := reflect.TypeOf(i).Elem()
+	t := reflect.TypeOf(obj).Elem()
 	if t.Kind() != reflect.Struct {
 		return nil, invalidComponent
 	}
 	for i, l := 0, t.NumField(); i < l; i += 1 {
-		tdescs = append(tdescs, tdesc{Name: t.Field(i).Name, Type: t.Field(i).Type})
+		tdescs = append(tdescs, typeDesc{Name: t.Field(i).Name, Type: t.Field(i).Type})
 	}
 	return tdescs, nil
 }
 
-func (a *Component) params() ([]tdesc, error) {
+func (a *Component) params() ([]typeDesc, error) {
 	r, ok := a.Constructor().(inject.TypedRunner)
 	if !ok {
 		return nil, invalidComponent
 	}
 
-	inTypes, err := typeOf(r.Input())
+	inTypes, err := typeDescOf(r.Input())
 	if err != nil {
 		return nil, err
 	}
-	outTypes, err := typeOf(r.Output())
+	outTypes, err := typeDescOf(r.Output())
 	if err != nil {
 		return nil, err
 	}

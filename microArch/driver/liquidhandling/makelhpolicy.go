@@ -668,7 +668,7 @@ func MakeLoadlowPolicy() LHPolicy {
 func MakeNeedToMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 15)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 10.0
+	//dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
@@ -762,8 +762,8 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["PRE_MIX_Z"] = 0.5
 	//defaultpolicy["ASP_WAIT"] = 1.0
 	//defaultpolicy["DSP_WAIT"] = 1.0
-	defaultpolicy["PRE_MIX_VOLUME"] = 10.0
-	defaultpolicy["POST_MIX_VOLUME"] = 10.0
+	defaultpolicy["PRE_MIX_VOLUME"] = 19.0
+	defaultpolicy["POST_MIX_VOLUME"] = 19.0
 
 	return defaultpolicy
 }

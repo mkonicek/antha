@@ -44,12 +44,14 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 	// stage zero: seed in user plates if destinations are required
 	pc = map_in_user_plates(request, pc)
 
+	k := 1
+
 	for {
 		if ch == nil {
 			break
 		}
 		request, pc, mp, err = LayoutStage(request, params, ch, pc, mp)
-
+		k += 1
 		if err != nil {
 			break
 		}
@@ -263,6 +265,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 		x += 1
 		v := request.LHInstructions[k]
 		if v.PlateID() != "" {
+			//MixInto
 			i := defined(v.PlateID(), s)
 
 			nm := v.PlateName
@@ -280,7 +283,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			}
 
 		} else if v.Majorlayoutgroup != -1 || v.PlateName != "" {
-
+			//MixTo / MixNamed
 			nm := "Output_plate"
 			mlg := fmt.Sprintf("%d", v.Majorlayoutgroup)
 
@@ -356,7 +359,8 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			}
 
 		} else {
-			//fmt.Println("OH YOU KID")
+			// bare mix
+			// this is handled later
 		}
 	}
 
@@ -492,7 +496,10 @@ func assignmentWithType(pt string, pc []PlateChoice) int {
 
 	if pt == "" {
 		if len(pc) != 0 {
-			r = 0
+			//r = 0
+			// assume previous plates are all full
+			// TODO -- much more sensible choice method
+			r = len(pc) - 1
 		}
 		return r
 	}

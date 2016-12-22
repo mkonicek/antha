@@ -25,10 +25,11 @@ package enzymes
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"sort"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 type invalidProperty struct{}
@@ -98,7 +99,7 @@ func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.
 		return wunit.Time{}, fmt.Errorf("no property, SperKb_lower found for", polymerase.CName)
 	}
 
-	return wunit.NewTime(float64(len(targetSequence.Sequence()))/sperkblower, "s"), anInvalidProperty
+	return wunit.NewTime(float64(len(targetSequence.Sequence()))/sperkblower, "s"), nil
 }
 
 /*

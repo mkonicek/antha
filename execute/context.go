@@ -1,7 +1,7 @@
 package execute
 
 import (
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	"context"
 )
 
 type contextKey int
@@ -25,7 +25,7 @@ func getId(ctx context.Context) string {
 	return v.Id
 }
 
-func WithId(parent context.Context, id string) context.Context {
+func withId(parent context.Context, id string) context.Context {
 	return context.WithValue(parent, theContextKey, &withExecute{
 		Id:    id,
 		Maker: newMaker(),

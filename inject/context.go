@@ -2,9 +2,8 @@
 package inject
 
 import (
+	"context"
 	"errors"
-
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 )
 
 type injectKey int

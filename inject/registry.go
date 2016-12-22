@@ -1,10 +1,9 @@
 package inject
 
 import (
+	"context"
 	"errors"
 	"sync"
-
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 )
 
 var alreadyAdded = errors.New("already added")

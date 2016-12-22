@@ -1,38 +1,31 @@
-// package for downloading files
+// Package download provides convenience functions for downloading files
 package download
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 )
 
-// get a file from a url link, the file will be given the specified filename
-func UrlToFile(url string, filename string) (f *os.File, err error) {
+// File downloads the data at a url to the given filename. If there is an error, the file will contain the partially downloaded data.
+func File(url string, filename string) (err error) {
 
-	fmt.Println("getting url: ", url)
-
-	res, err := http.Get(url)
+  res, err := http.Get(url)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer res.Body.Close()
 
-	f, err = os.Create(filename)
+	f, err := os.Create(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer f.Close()
 
 	if _, err := io.Copy(f, res.Body); err != nil {
-		return nil, err
+		return err
 	}
 
-	f.Close()
-
-	fmt.Println("made file: ", filename)
-
-	return f, nil
+	return nil
 }

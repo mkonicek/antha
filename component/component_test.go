@@ -25,14 +25,14 @@ func TestMakeParams(t *testing.T) {
 	if err := UpdateParamTypes(comp); err != nil {
 		t.Fatal(err)
 	}
-	params, err := comp.MakeParams()
+	params, err := comp.NewParams()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := params["A"].(int); !ok {
-		t.Errorf("expecting int found %T", params["A"])
+	if _, ok := params["A"].(*int); !ok {
+		t.Errorf("expecting *int found %T", params["A"])
 	}
-	if _, ok := params["B"].(int); !ok {
-		t.Errorf("expecting int found %T", params["B"])
+	if _, ok := params["B"].(*int); !ok {
+		t.Errorf("expecting *int found %T", params["B"])
 	}
 }

@@ -42,8 +42,26 @@ type Component struct {
 	Desc        ComponentDesc
 }
 
-// MakeParams returns zero instances for each input and output parameter.
-func (a *Component) MakeParams() (map[string]interface{}, error) {
+// NewParams returns new objects instances for each input and output parameter.
+//
+// If a component has parameters:
+//
+//   Parameters (
+//     String string
+//     Number int
+//   )
+//   Data(...)
+//   Inputs(...)
+//   Outputs(...)
+//
+// The result of NewParams will be:
+//
+//   map[string]interface{} {
+//     "String": new(string),
+//     "Number": new(int),
+//     ...
+//   }
+func (a *Component) NewParams() (map[string]interface{}, error) {
 	params, err := a.params()
 	if err != nil {
 		return nil, err
@@ -51,7 +69,7 @@ func (a *Component) MakeParams() (map[string]interface{}, error) {
 
 	m := make(map[string]interface{})
 	for _, v := range params {
-		z := reflect.Zero(v.Type)
+		z := reflect.New(v.Type)
 		if _, seen := m[v.Name]; seen {
 			return nil, &alreadySeen{v.Name}
 		}

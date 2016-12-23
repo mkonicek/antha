@@ -10,7 +10,7 @@ import (
 // File downloads the data at a url to the given filename. If there is an error, the file will contain the partially downloaded data.
 func File(url string, filename string) (err error) {
 
-	res, err := http.Get(url)
+  res, err := http.Get(url)
 
 	if err != nil {
 		return err

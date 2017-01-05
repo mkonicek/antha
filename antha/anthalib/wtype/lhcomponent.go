@@ -77,7 +77,7 @@ func (lhc *LHComponent) IsZero() bool {
 	return false
 }
 
-// Adds DNASequence to the LHComponent. If a Sequence already exists an error is returned
+// Adds DNASequence to the LHComponent. If a Sequence already exists an error is returned and the sequence is not replaced
 func (lhc *LHComponent) SetDNASequence(seq DNASequence) error {
 	g, ok := lhc.Extra["DNASequence"]
 

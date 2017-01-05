@@ -122,7 +122,7 @@ func (lhc *LHComponent) DNASequence() (DNASequence, bool) {
 		return seq, true
 	}
 
-	return seq, nil
+	return seq, false
 }
 
 func (lhc *LHComponent) SetVolume(v wunit.Volume) {

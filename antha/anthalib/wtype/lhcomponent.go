@@ -107,18 +107,19 @@ func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 	return nil
 }
 
-// Returns a DNA Sequence asociated with an LHComponent. If a Sequence does not exist an error is returned
-func (lhc *LHComponent) DNASequence() (DNASequence, error) {
+// Returns a DNA Sequence asociated with an LHComponent.
+// A boolean is also returned indicating whether a sequence was found.
+func (lhc *LHComponent) DNASequence() (DNASequence, bool) {
 
 	var seq DNASequence
 
 	g, ok := lhc.Extra["DNASequence"]
 
 	if !ok {
-		return seq, fmt.Errorf("No DNASequence found")
+		return seq, false
 	} else {
 		seq = g.(DNASequence)
-		return seq, nil
+		return seq, true
 	}
 
 	return seq, nil

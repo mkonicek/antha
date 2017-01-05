@@ -25,9 +25,10 @@ package wtype
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"strings"
 	//"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/graph"
 )
@@ -74,6 +75,53 @@ func (lhc *LHComponent) IsZero() bool {
 		return true
 	}
 	return false
+}
+
+// Adds DNASequence to the LHComponent. If a Sequence already exists an error is returned
+func (lhc *LHComponent) SetDNASequence(seq DNASequence) error {
+	g, ok := lhc.Extra["DNASequence"]
+
+	if ok {
+		gseqeunce := g.(DNASequence)
+		return fmt.Errorf("LHComponent already contains sequence ", gseqeunce.Name())
+	} else {
+		lhc.Extra["DNASequence"] = seq
+		return nil
+	}
+
+	return nil
+}
+
+// Replaces an existing DNASequence to the LHComponent. If a Sequence does not exist, the sequence is added and an error is returned
+func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
+	_, ok := lhc.Extra["DNASequence"]
+
+	if !ok {
+		lhc.Extra["DNASequence"] = seq
+		return fmt.Errorf("No previous DNASequence found; added sequence ", seq.Name())
+	} else {
+		lhc.Extra["DNASequence"] = seq
+		return nil
+	}
+
+	return nil
+}
+
+// Returns a DNA Sequence asociated with an LHComponent. If a Sequence does not exist an error is returned
+func (lhc *LHComponent) DNASequence() (DNASequence, error) {
+
+	var seq DNASequence
+
+	g, ok := lhc.Extra["DNASequence"]
+
+	if !ok {
+		return seq, fmt.Errorf("No DNASequence found")
+	} else {
+		seq = g.(DNASequence)
+		return seq, nil
+	}
+
+	return seq, nil
 }
 
 func (lhc *LHComponent) SetVolume(v wunit.Volume) {

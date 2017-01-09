@@ -280,7 +280,7 @@ func newElement(cmd *cobra.Command, args []string) error {
 		"A":           2.99,
 		"B":           -1.0,
 		"ComponentA":  "water",
-		"ComponentB":  "water",
+		"ComponentB":  "dna",
 		"Option":      false,
 		"String":      "Example",
 		"StringArray": []string{"A", "B", "C"},

@@ -1885,10 +1885,6 @@ func Count(imagefile string, setplateperimeterfirst bool, rotate bool) (wells []
 	return
 }*/
 
-var alphabet []string = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
-	"K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X",
-	"Y", "Z", "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ"}
-
 func PixelstoWellPosition(x, y int, plate *wtype.LHPlate, image *opencv.IplImage) (a1 string) {
 
 	fmt.Println("func pixels:", x, y)
@@ -1906,7 +1902,7 @@ func PixelstoWellPosition(x, y int, plate *wtype.LHPlate, image *opencv.IplImage
 	if err != nil {
 		return
 	}
-	a1 = alphabet[rowint] + strconv.Itoa(colint+1)
+	a1 = wutil.NumToAlpha(rowint+1) + strconv.Itoa(colint+1)
 	return
 }
 func PixelstoWellPositionFromRectangle(x, y int, plate *wtype.LHPlate, topleft, bottomright opencv.Point) (a1 string) {
@@ -1926,7 +1922,7 @@ func PixelstoWellPositionFromRectangle(x, y int, plate *wtype.LHPlate, topleft, 
 	if err != nil {
 		return
 	}
-	a1 = alphabet[rowint] + strconv.Itoa(colint+1)
+	a1 = wutil.NumToAlpha(rowint+1) + strconv.Itoa(colint+1)
 	return
 }
 

@@ -1,13 +1,13 @@
 package liquidhandling
 
 import (
-	"fmt"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/factory"
-	"testing"
 )
 
 func TestInputSampleAutoAllocate(t *testing.T) {
@@ -56,11 +56,11 @@ func testSetup(rbt *liquidhandling.LHProperties, expected map[string]float64, t 
 				v, ok := expected[w.WContents.CName]
 
 				if !ok {
-					t.Fatal(fmt.Sprint("ERROR: unexpected component in plating area: ", w.WContents.CName))
+					t.Errorf("ERROR: unexpected component in plating area: ", w.WContents.CName)
 				}
 
 				if v != w.WContents.Vol {
-					t.Fatal(fmt.Sprint("ERROR: Volume of component ", w.WContents.CName, " was ", w.WContents.Vol, " should be ", v))
+					t.Errorf("ERROR: Volume of component ", w.WContents.CName, " was ", w.WContents.Vol, " should be ", v)
 				}
 
 				delete(expected, w.WContents.CName)
@@ -69,7 +69,7 @@ func testSetup(rbt *liquidhandling.LHProperties, expected map[string]float64, t 
 	}
 
 	if len(expected) != 0 {
-		t.Fatal(fmt.Sprint("ERROR: Expected components remaining: ", expected))
+		t.Errorf("ERROR: Expected components remaining: ", expected)
 	}
 
 }

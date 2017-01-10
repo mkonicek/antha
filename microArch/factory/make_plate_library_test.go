@@ -2,7 +2,6 @@
 package factory
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"strings"
 	"testing"
@@ -20,7 +19,6 @@ var tests = []platetest{
 	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
 	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9, ExpectedHeight: 22.0},
 }
-
 
 func TestAddRiser(t *testing.T) {
 
@@ -213,7 +211,6 @@ func TestSetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -269,7 +266,6 @@ func TestGetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -290,26 +286,17 @@ func TestGetConstraints(t *testing.T) {
 	}
 }
 
-
-
 func TestPlateZs(t *testing.T) {
-	allplates := GetPlateList()
-
-	for _, testplatename := range allplates {
-
-		testplate := GetPlateByType(testplatename)
-		fmt.Println("plate:", testplate.Type, "Z start", testplate.WellZStart)
-	}
 	for _, test := range tests {
 
 		testplate := GetPlateByType(test.TestPlateName)
-		
+
 		if testplate.WellZStart != test.ExpectedZStart {
-							t.Error(
-								"for", test.TestPlateName, "\n",
-								"expected height: ", test.ExpectedZStart, "\n",
-								"got height :", testplate.WellZStart, "\n",
-							)
-						}
+			t.Error(
+				"for", test.TestPlateName, "\n",
+				"expected height: ", test.ExpectedZStart, "\n",
+				"got height :", testplate.WellZStart, "\n",
+			)
+		}
 	}
 }

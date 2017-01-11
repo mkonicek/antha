@@ -156,11 +156,11 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 		}
 
 	}
-	//	fmt.Println("FOUND: ", cmp.CName, " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
 	if volGot.LessThan(cmp.Volume()) {
 		return lhp.GetComponent(cmp, exact, mpv)
 	}
+	//fmt.Println("FOUND: ", cmp.CName, " AT: ", ret[0].FormatA1(), " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
 	return ret, vols, true
 }

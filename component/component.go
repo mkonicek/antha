@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/antha-lang/antha/inject"
-	areflect "github.com/antha-lang/antha/reflect"
+	"github.com/antha-lang/antha/meta"
 )
 
 var (
@@ -133,7 +133,8 @@ func UpdateParamTypes(desc *Component) error {
 	}
 
 	for _, v := range params {
-		if err := add(v.Name, areflect.FullTypeName(v.Type)); err != nil {
+		obj := reflect.Zero(v.Type)
+		if err := add(v.Name, meta.FullTypeName(obj)); err != nil {
 			return err
 		}
 	}

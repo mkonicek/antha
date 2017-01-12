@@ -53,9 +53,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 		}
 
 		// aggregates across components
-
 		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi)
-
 		if err != nil {
 			panic(err)
 		}
@@ -76,6 +74,8 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	}
 
 	// now make transfer and append
+	// prm here will be nil unless len(insset)==0
+	// we must either tolerate this or do something else
 
 	tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1)
 
@@ -88,6 +88,11 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	}
 
 	//inss = append(inss, tfr...)
+
+	for _, v := range inss {
+		fmt.Println(InsToString(v))
+	}
+
 	return inss, nil
 }
 
@@ -126,6 +131,12 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 		corresponding_params = append(corresponding_params, head.GetParams())
 	}
 
+	// don't even bother if there are no possible sets
+
+	if len(possible_sets) == 0 {
+		return SetOfIDSets{}, &wtype.LHChannelParameter{}, nil
+	}
+
 	// now we make our choice
 	return choose_parallel_sets(possible_sets, corresponding_params, ins)
 }
@@ -160,6 +171,12 @@ func (ibc InsByCol) Less(i, j int) bool {
 
 // limited to SBS format plates for now
 func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
+
+	// surely not
+
+	if len(ins) == 0 {
+		return nil, fmt.Errorf("No instructions")
+	}
 	// sort instructions to keep components together
 
 	//sort.Sort(InsByComponent(ins))
@@ -190,6 +207,10 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 		}
 
 		h[i.PlateID()][wc.X][wc.Y] = append(h[i.PlateID()][wc.X][wc.Y], i)
+	}
+
+	if len(h) == 0 {
+		return nil, fmt.Errorf("No plate destinations")
 	}
 
 	for id, pdm := range h {
@@ -283,6 +304,7 @@ func get_row(pdm wtype.Platedestmap, row, multi, wells int, contiguous, full boo
 func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) SetOfIDSets {
 	ret := make(SetOfIDSets, 0, 1)
 	col := 0
+
 	for {
 		if col >= len(pdm) {
 			break
@@ -295,6 +317,7 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 		} else {
 			col += 1
 		}
+
 	}
 
 	return ret
@@ -311,7 +334,6 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 			// if this isn't an even multiple it should be rejected
 
 			if multi%wells != 0 {
-				///urrr
 				return ret
 			}
 

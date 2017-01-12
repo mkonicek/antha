@@ -69,11 +69,25 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			}
 		}
 
+		if lenToMake == 0 {
+			// don't make empty transfers
+			continue
+		}
+
 		wh := make([]string, lenToMake)       // component types
 		va := make([]wunit.Volume, lenToMake) // volumes
 		// six parameters applying to the source
 		// TODO --> this should create components if not already found
-		fromPlateIDs, fromWells, fromvols, err := robot.GetComponents(cmpSquash, carryvol, channelprms.Orientation, multi, channelprms.Independent)
+
+		orientation := wtype.LHVChannel
+		independent := false
+
+		if channelprms != nil {
+			orientation = channelprms.Orientation
+			independent = channelprms.Independent
+		}
+
+		fromPlateIDs, fromWells, fromvols, err := robot.GetComponents(cmpSquash, carryvol, orientation, multi, independent)
 
 		// let's start making sense here
 
@@ -185,6 +199,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		}
 
 		tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
+
 		insOut = append(insOut, tfr)
 	}
 

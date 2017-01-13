@@ -378,3 +378,43 @@ func TestLHCPCanMove(t *testing.T) {
 		t.Fatal("Channel claims to be able to move excessive volume in one shot... it cannot")
 	}
 }
+
+func TestPlateLocation(t *testing.T) {
+	plstring := "PLATEX:A1"
+	pl1 := PlateLocationFromString(plstring)
+
+	if !(pl1.ToString() == plstring) {
+		t.Fatal("PlateLocation.ToString() must recreate input string if canonically formatted")
+	}
+
+	if !pl1.Equals(pl1) {
+		t.Fatal("Identity rule for equality violated")
+	}
+
+	pl2 := PlateLocationFromString(pl1.ToString())
+
+	if !pl2.Equals(pl1) {
+		t.Fatal("PlateLocation output format incorrect")
+	}
+
+	pl2 = PlateLocationFromString(plstring)
+
+	if !pl2.Equals(pl1) {
+		t.Fatal("PlateLocation creation from string inconsistent")
+	}
+
+	plstring2 := "PLATEY:A1"
+	pl3 := PlateLocationFromString(plstring2)
+
+	if pl3.Equals(pl2) {
+		t.Fatal("PlateLocations on different plates reported equal")
+	}
+
+	plstring3 := "PLATEX:A2"
+
+	pl3 = PlateLocationFromString(plstring3)
+
+	if pl3.Equals(pl2) {
+		t.Fatal("PlateLocations in different wells reported equal")
+	}
+}

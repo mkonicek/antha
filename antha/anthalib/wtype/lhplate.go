@@ -665,6 +665,8 @@ func (p *LHPlate) IsUserAllocated() bool {
 	return false
 }
 
+// semantics are: put stuff from p2 into p unless
+// the well in p is declared as user allocated
 func (p *LHPlate) MergeWith(p2 *LHPlate) {
 	// do nothing if these are not same type
 

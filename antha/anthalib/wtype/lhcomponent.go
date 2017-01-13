@@ -51,8 +51,16 @@ type LHComponent struct {
 	Visc               float64
 	StockConcentration float64
 	Extra              map[string]interface{}
-	Loc                string
+	Loc                string // refactor to PlateLocation
 	Destination        string
+}
+
+func (lhc *LHComponent) PlateLocation() PlateLocation {
+	return PlateLocationFromString(lhc.Loc)
+}
+
+func (lhc *LHComponent) CNID() string {
+	return fmt.Sprintf("CNID:%s:%s", lhc.CName, lhc.ID)
 }
 
 func (lhc *LHComponent) Generation() int {

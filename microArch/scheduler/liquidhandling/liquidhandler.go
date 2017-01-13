@@ -471,18 +471,11 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	if err != nil {
 		return err
 	}
-	// fix the deck setup
-	// don't think you need this
-	/*
-		request, err = this.Tip_box_setup(request)
-		if err != nil {
-			return err
-		}
-	*/
 
+	// sorts out tip boxes etc.
 	this.Refresh_tipboxes_tipwastes(request)
 
-	// revise the volumes
+	// revise the volumes - this makes sure the volumes requested are correct
 	err = this.revise_volumes(request)
 
 	if err != nil {
@@ -514,85 +507,123 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	}
 
 	inputs := make(map[string][]*wtype.LHComponent, 3)
-	order := make(map[string]map[string]int, 3)
+	//order := make(map[string]map[string]int, 3)
 	vmap := make(map[string]wunit.Volume)
 
 	allinputs := make([]string, 0, 10)
 
-	for _, instruction := range instructions {
+	ordH := make(map[string]int, len(instructions))
+
+	//	for _, instruction := range instructions {
+	for _, insID := range request.Output_order {
+		instruction := instructions[insID]
 		components := instruction.Components
 
-		for _, component := range components {
+		for ix, component := range components {
 			// ignore anything which is made in another mix
-
+			// XXX if provenance info comes in this is not safe
+			// since something can not have been made in a previous mix
+			// and yet still answer yes to this question
 			if component.HasAnyParent() {
 				continue
 			}
 
-			cmps, ok := inputs[component.CName]
-			if !ok {
-				cmps = make([]*wtype.LHComponent, 0, 3)
-				allinputs = append(allinputs, component.CName)
-			}
+			// what if this is a mix in place?
+			if ix == 0 && !component.IsSample() {
+				// these components come in as instances -- hence 1 per well
+				inputs[component.CNID()] = make([]*wtype.LHComponent, 0, 1)
+				inputs[component.CNID()] = append(inputs[component.CNID()], component)
+				allinputs = append(allinputs, component.CNID())
+				vmap[component.CNID()] = component.Volume()
 
-			cmps = append(cmps, component)
-			inputs[component.CName] = cmps
+				ordH[component.CNID()] = len(ordH)
+			} else {
 
-			// similarly add the volumes up
-
-			vol := vmap[component.CName]
-
-			if vol.IsNil() {
-				vol = wunit.NewVolume(0.0, "ul")
-			}
-
-			v2a := wunit.NewVolume(component.Vol, component.Vunit)
-
-			// we have to add the carry volume here
-			// this is roughly per transfer so should be OK
-			v2a.Add(request.CarryVolume)
-			vol.Add(v2a)
-
-			vmap[component.CName] = vol
-
-			for j := 0; j < len(components); j++ {
-				// again exempt those parented components
-				if components[j].HasAnyParent() {
-					continue
+				cmps, ok := inputs[component.CName]
+				if !ok {
+					cmps = make([]*wtype.LHComponent, 0, 3)
+					allinputs = append(allinputs, component.CName)
 				}
-				if component.Order < components[j].Order {
-					m, ok := order[component.CName]
-					if !ok {
-						m = make(map[string]int, len(components))
-						order[component.CName] = m
+
+				_, ok = ordH[component.CName]
+
+				if !ok {
+					ordH[component.CName] = len(ordH)
+				}
+
+				cmps = append(cmps, component)
+				inputs[component.CName] = cmps
+
+				// similarly add the volumes up
+
+				vol := vmap[component.CName]
+
+				if vol.IsNil() {
+					vol = wunit.NewVolume(0.0, "ul")
+				}
+
+				v2a := wunit.NewVolume(component.Vol, component.Vunit)
+
+				// we have to add the carry volume here
+				// this is roughly per transfer so should be OK
+				v2a.Add(request.CarryVolume)
+				vol.Add(v2a)
+
+				vmap[component.CName] = vol
+			}
+
+			/*
+
+				for j := 0; j < len(components); j++ {
+					// again exempt those parented components
+					if components[j].HasAnyParent() {
+						continue
+					}
+					if component.Order < components[j].Order {
+						m, ok := order[component.CName]
+						if !ok {
+							m = make(map[string]int, len(components))
+							order[component.CName] = m
+						}
+
+						m[components[j].CName] += 1
+					} else {
+						m, ok := order[components[j].CName]
+						if !ok {
+							m = make(map[string]int, len(components))
+							order[components[j].CName] = m
+						}
+						m[component.CName] += 1
 					}
 
-					m[components[j].CName] += 1
-				} else {
-					m, ok := order[components[j].CName]
-					if !ok {
-						m = make(map[string]int, len(components))
-						order[components[j].CName] = m
-					}
-					m[component.CName] += 1
 				}
-			}
-
+			*/
 		}
 	}
 
-	// define component ordering
+	/*
+		// define component ordering
 
-	component_order, err := DefineOrderOrFail(order)
+		component_order, err := DefineOrderOrFail(order)
+
+		if err != nil {
+			return request, err
+		}
+
+		(*request).Input_order = component_order
+
+	*/
+	// work out how much we have and how much we need
+	// need to consider what to do with IDs
+
+	// invert the Hash
+
+	var err error
+	(*request).Input_order, err = OrdinalFromHash(ordH)
 
 	if err != nil {
 		return request, err
 	}
-
-	(*request).Input_order = component_order
-
-	// work out how much we have and how much we need
-	// need to consider what to do with IDs
 
 	var requestinputs map[string][]*wtype.LHComponent
 	requestinputs = request.Input_solutions
@@ -620,8 +651,10 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		if volb.GreaterThanFloat(0.0001) {
 			vmap3[k] = volb
 		}
-		//	volc := vmap[k]
-		//logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
+		/*
+			volc := vmap[k]
+			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
+		*/
 	}
 
 	(*request).Input_vols_required = vmap
@@ -641,6 +674,23 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	return request, nil
 }
 
+func OrdinalFromHash(m map[string]int) ([]string, error) {
+	s := make([]string, len(m))
+
+	// no collisions allowed!
+
+	for k, v := range m {
+		if s[v] != "" {
+			return nil, fmt.Errorf("Error: ordinal %d appears twice!", v)
+		}
+
+		s[v] = k
+	}
+
+	return s, nil
+}
+
+/*
 func DefineOrderOrFail(mapin map[string]map[string]int) ([]string, error) {
 	cmps := make([]string, 0, 1)
 
@@ -703,7 +753,7 @@ func DefineOrderOrFail(mapin map[string]map[string]int) ([]string, error) {
 
 	return ret, nil
 }
-
+*/
 // define which labware to use
 func (this *Liquidhandler) GetPlates(plates map[string]*wtype.LHPlate, major_layouts map[int][]string, ptype *wtype.LHPlate) map[string]*wtype.LHPlate {
 	if plates == nil {

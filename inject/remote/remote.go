@@ -2,12 +2,12 @@
 package remote
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"net/rpc"
 
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/inject"
 )
 

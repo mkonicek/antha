@@ -11,7 +11,7 @@ type InventoryItem struct {
 	// Metadata
 	Metadata map[string]json.RawMessage `json:"metadata,omitempty"`
 	// Time this inventory item was created at
-	CreatedAt time.Time `json:"create_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// From: history of this inventory item
 	From []*InventoryItem `json:"from,omitempty"`
 

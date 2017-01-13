@@ -760,6 +760,7 @@ func MakeSmallPalleteFromImage(imagefilename string, plate *wtype.LHPlate, rotat
 // create a map of pixel to plate position from processing a given image with a chosen colour palette.
 // It's recommended to use at least 384 well plate
 // if autorotate == true, rotate is overridden
+
 func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, numberofpixels int, newname string) {
 
 	var plateimage *goimage.NRGBA
@@ -775,9 +776,6 @@ func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolour
 	colourarray := make([]color.Color, 0)
 	wellpositiontocolourmap = make(map[string]color.Color, 0)
 	// need to extend for 1536 plates
-	alphabet := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
-		"K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X",
-		"Y", "Z", "AA", "AB", "AC", "AD", "AE", "AF"}
 
 	// Find out colour at each position:
 	for y := 0; y < plateimage.Bounds().Dy(); y++ {
@@ -795,7 +793,7 @@ func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolour
 					plateimage.Set(x, y, colour)
 				}
 				// equivalent well position
-				wellposition := alphabet[y] + strconv.Itoa(x+1)
+				wellposition := wutil.NumToAlpha(y+1) + strconv.Itoa(x+1)
 				fmt.Println(wellposition)
 				wellpositionarray = append(wellpositionarray, wellposition)
 				wellpositiontocolourmap[wellposition] = colour

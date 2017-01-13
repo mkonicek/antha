@@ -752,6 +752,8 @@ func (p *LHPlate) IsUserAllocated() bool {
 	return false
 }
 
+// semantics are: put stuff from p2 into p unless
+// the well in p is declared as user allocated
 func (p *LHPlate) MergeWith(p2 *LHPlate) {
 	// do nothing if these are not same type
 
@@ -785,4 +787,20 @@ func (p *LHPlate) MarkNonEmptyWellsUserAllocated() {
 			w.SetUserAllocated()
 		}
 	}
+}
+
+func (p *LHPlate) AllNonEmptyWells() []*LHWell {
+	ret := make([]*LHWell, 0, p.Nwells)
+
+	it := NewOneTimeColumnWiseIterator(p)
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		w := p.Wellcoords[wc.FormatA1()]
+
+		if !w.Empty() {
+			ret = append(ret, w)
+		}
+	}
+
+	return ret
 }

@@ -210,6 +210,10 @@ func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
 	return ret
 }
 
+func (w *LHWell) PlateLocation() PlateLocation {
+	return w.WContents.PlateLocation()
+}
+
 func (w *LHWell) WorkingVolume() wunit.Volume {
 	v := wunit.NewVolume(w.Currvol(), w.Vunit)
 	v2 := wunit.NewVolume(w.Rvol, w.Vunit)
@@ -488,6 +492,12 @@ func (well *LHWell) IsTemporary() bool {
 			return false
 		}
 
+		// user allocated wells are never temporary
+
+		if well.IsUserAllocated() {
+			return false
+		}
+
 		t, ok := well.Extra["temporary"]
 
 		if !ok || !t.(bool) {
@@ -495,7 +505,7 @@ func (well *LHWell) IsTemporary() bool {
 		}
 		return true
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in DeclareTemporary()")
+		logger.Debug("Warning: Attempt to access nil well in IsTemporary()")
 	}
 	return false
 }

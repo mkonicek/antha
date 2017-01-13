@@ -89,10 +89,6 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 
 	//inss = append(inss, tfr...)
 
-	for _, v := range inss {
-		fmt.Println(InsToString(v))
-	}
-
 	return inss, nil
 }
 

@@ -1,7 +1,7 @@
 package trace
 
 import (
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	"context"
 	"sync"
 )
 

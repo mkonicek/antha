@@ -1,13 +1,13 @@
 package execute
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/target/mixer"
@@ -44,14 +44,14 @@ func constructOrError(fn func(x string) interface{}, x string) (interface{}, err
 
 // Structure of parameter data for unmarshalling
 type RawParams struct {
-	Parameters map[string]map[string]json.RawMessage
-	Config     *mixer.Opt
+	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
+	Config     *mixer.Opt                            `json:"config"`
 }
 
 // Structure of parameter data for marshalling
 type Params struct {
-	Parameters map[string]map[string]interface{}
-	Config     *mixer.Opt
+	Parameters map[string]map[string]interface{} `json:"parameters"`
+	Config     *mixer.Opt                        `json:"config"`
 }
 
 func findConstructor(typ reflect.Type) constructor {

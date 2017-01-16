@@ -425,8 +425,6 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 		return err
 	}
 
-	request.InstructionChain.Print()
-
 	// convert requests to volumes and determine required stock concentrations
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
 

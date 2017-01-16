@@ -62,6 +62,67 @@ type Run struct {
 	AdditionalValues     []interface{}
 }
 
+func Copy(run Run) (newrun Run) {
+
+	newrun.RunNumber = run.RunNumber
+	newrun.StdNumber = run.StdNumber
+
+	factordescriptors := make([]string, 0)
+
+	for _, value := range run.Factordescriptors {
+		factordescriptors = append(factordescriptors, value)
+	}
+
+	setpoints := make([]interface{}, 0)
+
+	for _, value := range run.Setpoints {
+		setpoints = append(setpoints, value)
+	}
+
+	responsedescriptors := make([]string, 0)
+
+	for _, value := range run.Responsedescriptors {
+		responsedescriptors = append(responsedescriptors, value)
+	}
+
+	responsevalues := make([]interface{}, 0)
+
+	for _, value := range run.ResponseValues {
+		responsevalues = append(responsevalues, value)
+	}
+
+	newrun.Factordescriptors = factordescriptors
+	newrun.Setpoints = setpoints
+	newrun.Responsedescriptors = responsedescriptors
+	newrun.ResponseValues = responsevalues
+
+	additionalheaders := make([]string, 0)
+
+	for _, value := range run.AdditionalHeaders {
+		additionalheaders = append(additionalheaders, value)
+	}
+
+	newrun.AdditionalHeaders = additionalheaders
+
+	additionalsubheaders := make([]string, 0)
+
+	for _, value := range run.AdditionalSubheaders {
+		additionalsubheaders = append(additionalsubheaders, value)
+	}
+
+	newrun.AdditionalSubheaders = additionalsubheaders
+
+	values := make([]interface{}, 0)
+
+	for _, value := range run.AdditionalValues {
+		values = append(values, value)
+	}
+
+	newrun.AdditionalValues = values
+
+	return
+}
+
 func (run Run) AddResponseValue(responsedescriptor string, responsevalue interface{}) {
 
 	for i, descriptor := range run.Responsedescriptors {

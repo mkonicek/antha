@@ -111,95 +111,53 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("ATP", wtype.LTWater, 5.0)
 	add("mastermix_sapI", wtype.LTWater, 1.0)
 	add("standard_cloning_vector_mark_1", wtype.LTDNA, 1.0)
-	// not sure if this is correct
 	add("Q5Polymerase", wtype.LTGlycerol, 1.0)
-	// not sure if this is correct
 	add("GoTaq_ green 2x mastermix", wtype.LTGlycerol, 9999.0)
-	// not sure if this is correct
 	add("DMSO", wtype.LTWater, 1.0)
-	// not sure if this is correct
 	add("pET_GFP", wtype.LTWater, 1.0)
-	// not sure if this is correct
 	add("HC", wtype.LTWater, 1.0)
-	// not sure if this is correct
 	add("GCenhancer", wtype.LTWater, 9999.0)
-	// not sure if this is correct
 	add("Q5buffer", wtype.LTWater, 1.0)
-	// not sure if this is correct
 	add("Q5mastermix", wtype.LTWater, 1.0)
-	// not sure if this is correct
 	add("PrimerFw", wtype.LTDNA, 1.0)
-	// not sure if this is correct
 	add("PrimerRev", wtype.LTDNA, 1.0)
-	// not sure if this is correct
 	add("template_part", wtype.LTDNA, 1.0)
-	// not sure if this is correct
 	add("DNTPs", wtype.LTWater, 1.0)
-	//not sure if this is correct
 	add("ProteinMarker", wtype.LTProtein, 1.0)
-	//still not sure
 	add("ProteinFraction", wtype.LTProtein, 1.0)
-	//not sure what this is!
 	add("EColiLysate", wtype.LTProtein, 1.0)
-	//still not sure....
 	add("SDSbuffer", wtype.LTDetergent, 1.0)
-	//still not sure....
 	add("Load", wtype.LTload, 1.0)
-	//still not sure....
 	add("LB", wtype.LTWater, 1.0)
-	//still not sure....
 	add("TB", wtype.LTWater, 1.0)
-	//still not sure....
 	add("Kanamycin", wtype.LTWater, 1.0)
-	//still not sure....
 	add("Glucose", wtype.LTPostMix, 1.0)
-	//still not sure....
 	add("IPTG", wtype.LTPostMix, 1.0)
-	//still not sure....
 	add("Lactose", wtype.LTWater, 1.0)
-	//still not sure....
 	add("colony", wtype.LTCOLONY, 1.0)
-	//still not sure....
 	add("LB_autoinduction_Amp", wtype.LTWater, 1.0)
-	//still not sure....
 	add("LB_Kan", wtype.LTWater, 1.0)
-	//still not sure....
 	add("Apramycin", wtype.LTWater, 1.0)
-	//still not sure....
 	add("Agar", wtype.LTWater, 1.0)
-	//still not sure....
 	add("X-glc", wtype.LTWater, 1.0)
-	//still not sure....
 	add("X-Glucuro", wtype.LTWater, 1.0)
-	//still not sure....
 	add("BaseGrowthMedium", wtype.LTWater, 1.0)
-	//still not sure....
 	add("SterileWater", wtype.LTWater, 1.0)
-	//still not sure....
 	add("100mMPhosphate", wtype.LTWater, 1.0)
-	//still not sure....
 	add("100g/LGlucose", wtype.LTWater, 1.0)
-	//still not sure....
 	add("10g/LGlucose", wtype.LTWater, 1.0)
-	//still not sure....
 	add("1g/LGlucose", wtype.LTWater, 1.0)
-	//still not sure....
 	add("0.1g/Lglucose", wtype.LTWater, 1.0)
-	//still not sure....
 	add("100g/Lglycerol", wtype.LTWater, 1.0)
-	//still not sure....
 	add("10g/Lglycerol", wtype.LTWater, 1.0)
-	//still not sure....
 	add("1g/Lglycerol", wtype.LTWater, 1.0)
-	//still not sure....
 	add("0.1g/Lglycerol", wtype.LTWater, 1.0)
-	//still not sure....
 	add("100g/Lpeptone", wtype.LTWater, 1.0)
-	//still not sure....
 	add("100g/LYeastExtract", wtype.LTWater, 1.0)
-	//still not sure....
 	add("10g/LYeastExtract", wtype.LTWater, 1.0)
-
+	add("1000ng/ml ATC", wtype.LTWater, 1.0)
+	add("250uM C6", wtype.LTWater, 1.0)
+	add("M9", wtype.LTWater, 1.0)
 	// protein paintbox
 	for _, value := range image.ProteinPaintboxmap {
 		add(value, wtype.LTPostMix, 1.0)

@@ -292,6 +292,12 @@ func (lhc *LHComponent) Concentration() (conc wunit.Concentration) {
 	return conc
 }
 
+// Sets concentration to an LHComponent; assumes conc is valid; overwrites existing concentration
+func (lhc *LHComponent) SetConcentration(conc wunit.Concentration) {
+	lhc.Conc = conc.RawValue()
+	lhc.Cunit = conc.Unit().PrefixedSymbol()
+}
+
 func (lhc *LHComponent) GetVunit() string {
 	return lhc.Vunit
 }

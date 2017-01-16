@@ -211,7 +211,6 @@ func TestSetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -267,7 +266,6 @@ func TestGetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",

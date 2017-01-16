@@ -624,10 +624,8 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 							plateIDs[i] = append(plateIDs[i], p.ID)
 							wellCoords[i] = append(wellCoords[i], wc)
 							vols[i] = append(vols[i], vl)
-							/*
-								vl = vl.Dup()
-								vl.Add(carryvol)
-							*/
+							vl = vl.Dup()
+							vl.Add(carryvol)
 							lhp.RemoveComponent(p.ID, wc, vl)
 						}
 						break

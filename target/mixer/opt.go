@@ -2,7 +2,7 @@ package mixer
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/reflect"
+	"github.com/antha-lang/antha/meta"
 )
 
 var (
@@ -52,7 +52,7 @@ func (a Opt) Merge(x *Opt) Opt {
 	if x == nil {
 		return a
 	}
-	obj, err := reflect.ShallowMerge(a, *x)
+	obj, err := meta.ShallowMerge(a, *x)
 	if err != nil {
 		panic(err)
 	}

@@ -324,9 +324,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 		if len(a) >= channel.Multi {
 			// could be
-			fmt.Println("URGENT")
 			mss := GetMultiSet(a, channel.Multi, pmf, pmt)
-			fmt.Println("MSS: ", mss)
 
 			if len(mss) != 0 {
 				for _, ms := range mss {
@@ -337,7 +335,6 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 	}
 
-	fmt.Println("LEN RET: ", len(ret))
 	if len(ret) == 0 {
 		return nil
 	}
@@ -350,12 +347,9 @@ func GetMultiSet(a []string, channelmulti int, fromplatemulti int, toplatemulti 
 	var next []int
 	for {
 		next, a = GetNextSet(a, channelmulti, fromplatemulti, toplatemulti)
-		fmt.Println("GREEN PEPPERS")
-		fmt.Println(next, " ", a)
 		if next == nil {
 			break
 		}
-		fmt.Println("NUREMBURG")
 
 		ret = append(ret, next)
 	}
@@ -386,9 +380,7 @@ func GetNextSet(a []string, channelmulti int, fromplatemulti int, toplatemulti i
 	// now we just take the first one we find
 
 	ret := getset(r, channelmulti)
-	fmt.Println("RET: ", ret)
 	censa := censoredcopy(a, ret)
-	fmt.Println(censa)
 
 	return ret, censa
 }
@@ -396,12 +388,9 @@ func GetNextSet(a []string, channelmulti int, fromplatemulti int, toplatemulti i
 func getset(a [][]int, mx int) []int {
 	r := make([]int, 0, mx)
 
-	fmt.Println("MX: ", mx)
-
 	for i := 0; i < len(a); i++ {
 		for j := 0; j < len(a[i]); j++ {
 			if a[i][j] != -1 {
-				fmt.Println("I: ", i, " J: ", j, " K: ", a[i][j])
 				r = append(r, a[i][j])
 				// find a diagonal line
 				/*
@@ -423,7 +412,6 @@ func getset(a [][]int, mx int) []int {
 			}
 		}
 	}
-	fmt.Println("LEN R: ", len(r))
 
 	if len(r) == mx {
 		sort.Ints(r)
@@ -509,12 +497,10 @@ func (vs VolumeSet) GetACopy() []wunit.Volume {
 func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	pol := GetPolicyFor(policy, ins)
 
-	fmt.Println(ins.What)
 	ret := make([]RobotInstruction, 0)
 
 	// if we can multi we do this first
 
-	fmt.Println("CAN MULti: ", pol["CAN_MULTI"])
 	if pol["CAN_MULTI"].(bool) {
 		// break out the sets of parallel instructions
 
@@ -588,8 +574,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 			tp.FPlateType = FPlateType
 			tp.TPlateType = TPlateType
 			tp.Channel = mci.Prms
-
-			fmt.Println("TI CHANNEL: ", mci.Prms)
 
 			mci.AddTransferParams(tp)
 		}
@@ -1274,8 +1258,6 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name string) interface{
 func (ins *MultiChannelTransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 
-	fmt.Println("MCI HEAD HERE: ", ins.Prms)
-
 	// make the instructions
 
 	suckinstruction := NewSuckInstruction()
@@ -1432,9 +1414,6 @@ func (ins *LoadTipsMoveInstruction) GetParameter(name string) interface{} {
 }
 
 func (ins *LoadTipsMoveInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	fmt.Println("I LOVE YOU MUMMY")
-	fmt.Println(ins.Well)
-	fmt.Println("I LOVE YOUR EYES")
 	ret := make([]RobotInstruction, 2)
 
 	// move
@@ -1454,7 +1433,6 @@ func (ins *LoadTipsMoveInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms
 	// load tips
 
 	lod := NewLoadTipsInstruction()
-	fmt.Println("LOAD HEAD: ", ins.Head)
 	lod.Head = ins.Head
 	lod.TipType = ins.FPlateType
 	lod.HolderType = ins.FPlateType
@@ -2113,7 +2091,6 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 }
 
 func (ins *SuckInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	fmt.Println("SUCK HEAD: ", ins.Head)
 	ret := make([]RobotInstruction, 0, 1)
 
 	// this is where the policies come into effect
@@ -3583,10 +3560,6 @@ func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *w
 func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int, mirror bool) (RobotInstruction, error) {
 
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(tiptype, channel, mirror, multi)
-
-	fmt.Println("DRIVE MY ROCKET SHIP")
-	fmt.Println(tipwells)
-	fmt.Println("YOU WILL BE REFLECTED")
 
 	if tipwells == nil || terr != nil {
 		/*

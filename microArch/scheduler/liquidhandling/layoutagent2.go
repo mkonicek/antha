@@ -629,7 +629,6 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 					//	logger.Fatal("DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
 					return wtype.LHError(wtype.LH_ERR_DIRE, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
 				}
-				fmt.Println("NEXT EMPTY WELL : ", wc.FormatA1())
 				dummycmp := wtype.NewLHComponent()
 				dummycmp.SetVolume(wunit.NewVolume(100.0, "ul"))
 				plat.Cols[wc.X][wc.Y].Add(dummycmp)

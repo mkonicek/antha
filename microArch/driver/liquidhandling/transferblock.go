@@ -210,17 +210,18 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 	}
 
 	for id, pdm := range h {
+		fmt.Println("LEN PDM: ", len(pdm))
 		dims := platedims[id]
 		switch prm.Orientation {
 		case wtype.LHHChannel:
-			r := get_rows(pdm, prm.Multi, dims.N, prm.Independent, false)
+			r := get_rows(pdm, prm.Multi, dims.N, !prm.Independent, false)
 			if len(ret) == 0 {
 				ret = r
 			} else {
 				ret[0] = append(ret[0], r[0]...)
 			}
 		case wtype.LHVChannel:
-			r := get_cols(pdm, prm.Multi, dims.D, prm.Independent, false)
+			r := get_cols(pdm, prm.Multi, dims.D, !prm.Independent, false)
 			if len(ret) == 0 {
 				ret = r
 			} else {
@@ -298,7 +299,6 @@ func get_row(pdm wtype.Platedestmap, row, multi, wells int, contiguous, full boo
 }
 
 func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) SetOfIDSets {
-	fmt.Println("CONTIGUOUS MUCH? ", contiguous)
 	ret := make(SetOfIDSets, 0, 1)
 	col := 0
 
@@ -321,22 +321,22 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 }
 func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full bool) IDSet {
 	var ret IDSet
+	tipsperwell := 1
+
+	if wells < multi {
+		// if this isn't an even multiple it should be rejected
+
+		if multi%wells != 0 {
+			return ret
+		}
+
+		tipsperwell = multi / wells
+
+	}
+
 	for s := 0; s < len(pdm[col])-2; s++ {
 		ret = make(IDSet, 0, multi)
 		newcol := make([][]*wtype.LHInstruction, len(pdm[col]))
-
-		tipsperwell := 1
-
-		if wells < multi {
-			// if this isn't an even multiple it should be rejected
-
-			if multi%wells != 0 {
-				return ret
-			}
-
-			tipsperwell = multi / wells
-
-		}
 
 		for c := s; c < len(pdm[col]); c++ {
 			if len(pdm[col][c]) >= tipsperwell {

@@ -31,6 +31,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
@@ -1576,14 +1577,19 @@ func (ins *AspirateInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	return nil, nil
 }
 
-func (ins *AspirateInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (ins *AspirateInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
 	}
 	os := []bool{ins.Overstroke}
 
-	driver.Aspirate(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	ret := driver.Aspirate(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
 }
 
 type DispenseInstruction struct {
@@ -1637,14 +1643,20 @@ func (ins *DispenseInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	return nil, nil
 }
 
-func (ins *DispenseInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (ins *DispenseInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
 	}
 
 	os := []bool{false}
-	driver.Dispense(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	ret := driver.Dispense(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type BlowoutInstruction struct {
@@ -1695,7 +1707,7 @@ func (ins *BlowoutInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHP
 	return nil, nil
 }
 
-func (ins *BlowoutInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (ins *BlowoutInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1704,7 +1716,12 @@ func (ins *BlowoutInstruction) OutputTo(driver LiquidhandlingDriver) {
 	for i := 0; i < ins.Multi; i++ {
 		bo[i] = true
 	}
-	driver.Dispense(volumes, bo, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	ret := driver.Dispense(volumes, bo, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
 }
 
 type PTZInstruction struct {
@@ -1739,8 +1756,13 @@ func (ins *PTZInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHPrope
 	return nil, nil
 }
 
-func (ins *PTZInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.ResetPistons(ins.Head, ins.Channel)
+func (ins *PTZInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.ResetPistons(ins.Head, ins.Channel)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
 }
 
 type MoveInstruction struct {
@@ -1807,8 +1829,14 @@ func (ins *MoveInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 	return nil, nil
 }
 
-func (ins *MoveInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head)
+func (ins *MoveInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type MoveRawInstruction struct {
@@ -1886,7 +1914,7 @@ func (ins *MoveRawInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHP
 	return nil, nil
 }
 
-func (ins *MoveRawInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (ins *MoveRawInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	logger.Fatal("Not yet implemented")
 	panic("Not yet implemented")
 }
@@ -1948,8 +1976,14 @@ func (ins *LoadTipsInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	return nil, nil
 }
 
-func (ins *LoadTipsInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.LoadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+func (ins *LoadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.LoadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type UnloadTipsInstruction struct {
@@ -2007,8 +2041,14 @@ func (ins *UnloadTipsInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *
 	return nil, nil
 }
 
-func (ins *UnloadTipsInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.UnloadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+func (ins *UnloadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.UnloadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type SuckInstruction struct {
@@ -2825,8 +2865,14 @@ func (ins *SetPipetteSpeedInstruction) Generate(policy *wtype.LHPolicyRuleSet, p
 	return nil, nil
 }
 
-func (ins *SetPipetteSpeedInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed)
+func (ins *SetPipetteSpeedInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type SetDriveSpeedInstruction struct {
@@ -2861,8 +2907,14 @@ func (ins *SetDriveSpeedInstruction) Generate(policy *wtype.LHPolicyRuleSet, prm
 	return nil, nil
 }
 
-func (ins *SetDriveSpeedInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.SetDriveSpeed(ins.Drive, ins.Speed)
+func (ins *SetDriveSpeedInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.SetDriveSpeed(ins.Drive, ins.Speed)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type InitializeInstruction struct {
@@ -2887,8 +2939,14 @@ func (ins *InitializeInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *
 	return nil, nil
 }
 
-func (ins *InitializeInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.Initialize()
+func (ins *InitializeInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.Initialize()
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type FinalizeInstruction struct {
@@ -2913,8 +2971,14 @@ func (ins *FinalizeInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	return nil, nil
 }
 
-func (ins *FinalizeInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.Finalize()
+func (ins *FinalizeInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.Finalize()
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type WaitInstruction struct {
@@ -2946,8 +3010,14 @@ func (ins *WaitInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 	return nil, nil
 }
 
-func (ins *WaitInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.Wait(ins.Time)
+func (ins *WaitInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.Wait(ins.Time)
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type LightsOnInstruction struct {
@@ -2989,9 +3059,8 @@ func (ins *LightsOnInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	return nil, nil
 }
 
-func (ins *LightsOnInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *LightsOnInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf("Driver error %d : %s", anthadriver.NIM, "Not yet implemented: LightsOnInstruction")
 }
 
 type LightsOffInstruction struct {
@@ -3033,9 +3102,8 @@ func (ins *LightsOffInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *L
 	return nil, nil
 }
 
-func (ins *LightsOffInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *LightsOffInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf("Driver error %d : %s", anthadriver.NIM, "Not yet implemented: LightsOffInstruction")
 }
 
 type OpenInstruction struct {
@@ -3077,9 +3145,8 @@ func (ins *OpenInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 	return nil, nil
 }
 
-func (ins *OpenInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *OpenInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf("Driver error %d : %s", anthadriver.NIM, "Not yet implemented: OpenInstruction")
 }
 
 type CloseInstruction struct {
@@ -3121,9 +3188,8 @@ func (ins *CloseInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHPro
 	return nil, nil
 }
 
-func (ins *CloseInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *CloseInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf("Driver error %d : %s", anthadriver.NIM, "Not yet implemented: CloseInstruction")
 }
 
 type LoadAdaptorInstruction struct {
@@ -3165,9 +3231,8 @@ func (ins *LoadAdaptorInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms 
 	return nil, nil
 }
 
-func (ins *LoadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *LoadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf("Driver error %d : %s", anthadriver.NIM, "Not yet implemented: LoadAdaptor")
 }
 
 type UnloadAdaptorInstruction struct {
@@ -3209,9 +3274,8 @@ func (ins *UnloadAdaptorInstruction) Generate(policy *wtype.LHPolicyRuleSet, prm
 	return nil, nil
 }
 
-func (ins *UnloadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *UnloadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf("Driver error %d : %s", anthadriver.NIM, "Not yet implemented: UnloadAdaptor")
 }
 
 type ResetInstruction struct {
@@ -3522,14 +3586,21 @@ func (ins *MixInstruction) GetParameter(name string) interface{} {
 
 }
 
-func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	vols := make([]float64, len(mi.Volume))
 
 	for i := 0; i < len(mi.Volume); i++ {
 		vols[i] = mi.Volume[i].ConvertTo(wunit.ParsePrefixedUnit("ul"))
 	}
 
-	driver.Mix(mi.Head, vols, mi.PlateType, mi.Cycles, mi.Multi, mi.What, mi.Blowout)
+	ret := driver.Mix(mi.Head, vols, mi.PlateType, mi.Cycles, mi.Multi, mi.What, mi.Blowout)
+
+	if !ret.OK {
+		return fmt.Errorf("Driver error %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 // TODO -- implement MESSAGE

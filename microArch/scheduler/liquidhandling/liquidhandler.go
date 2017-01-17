@@ -173,8 +173,11 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 		//logger.Debug(fmt.Sprintln(liquidhandling.InsToString(ins)))
 		fmt.Println(liquidhandling.InsToString(ins))
-		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
+		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
+		if err != nil {
+			return wtype.LHError(wtype.LH_ERR_DRIV, err.Error())
+		}
 		if timer != nil {
 			d += timer.TimeFor(ins)
 		}

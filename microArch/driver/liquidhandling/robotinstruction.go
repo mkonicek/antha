@@ -39,7 +39,7 @@ type RobotInstruction interface {
 
 type TerminalRobotInstruction interface {
 	RobotInstruction
-	OutputTo(driver LiquidhandlingDriver)
+	OutputTo(driver LiquidhandlingDriver) error
 }
 
 const (

@@ -298,6 +298,7 @@ func get_row(pdm wtype.Platedestmap, row, multi, wells int, contiguous, full boo
 }
 
 func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) SetOfIDSets {
+	fmt.Println("CONTIGUOUS MUCH? ", contiguous)
 	ret := make(SetOfIDSets, 0, 1)
 	col := 0
 

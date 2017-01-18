@@ -61,15 +61,16 @@ type LHPlate struct {
 }
 
 func (plate LHPlate) OutputLayout() {
-	var wc WellCoords
-
-	for ; wc.X < plate.WellsX(); wc.X++ {
-		for ; wc.Y < plate.WellsY(); wc.Y++ {
-			well := plate.Cols[wc.X][wc.Y]
+	for x := 0; x < plate.WellsX(); x += 1 {
+		for y := 0; y < plate.WellsY(); y += 1 {
+			well := plate.Cols[x][y]
 			if well.Currvol() < 0.0001 {
 				continue
 			}
 			fmt.Print("\t\t")
+			var wc WellCoords
+			wc.X = x
+			wc.Y = y
 			fmt.Print(wc.FormatA1(), " ")
 			//for _, c := range well.WContents {
 			fmt.Print(well.WContents.CName, " ")

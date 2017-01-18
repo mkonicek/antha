@@ -202,6 +202,8 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 			platedims[i.PlateID()] = wtype.Rational{pt.WellsX(), pt.WellsY()}
 		}
 
+		fmt.Println(wc.X, " ", wc.Y)
+
 		h[i.PlateID()][wc.X][wc.Y] = append(h[i.PlateID()][wc.X][wc.Y], i)
 	}
 

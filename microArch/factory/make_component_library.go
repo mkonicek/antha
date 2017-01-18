@@ -158,6 +158,21 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("1000ng/ml ATC", wtype.LTWater, 1.0)
 	add("250uM C6", wtype.LTWater, 1.0)
 	add("M9", wtype.LTWater, 1.0)
+	add("HYYest412", wtype.LTNSrc, 1.0)
+	add("HYYest503", wtype.LTNSrc, 1.0)
+	add("HYYest504", wtype.LTNSrc, 1.0)
+	add("PeaPeptone", wtype.LTNSrc, 1.0)
+	add("WheatPeptone", wtype.LTNSrc, 1.0)
+	add("VegPeptone", wtype.LTNSrc, 1.0)
+	add("SoyPeptone", wtype.LTNSrc, 1.0)
+	add("VegExtract", wtype.LTNSrc, 1.0)
+	add("CSL", wtype.LTNSrc, 1.0)
+	add("NH42SO4", wtype.LTNSrc, 1.0)
+	add("Gluc", wtype.LTNSrc, 1.0)
+	add("Suc", wtype.LTNSrc, 1.0)
+	add("Fruc", wtype.LTNSrc, 1.0)
+	add("Malt", wtype.LTNSrc, 1.0)
+
 	// protein paintbox
 	for _, value := range image.ProteinPaintboxmap {
 		add(value, wtype.LTPostMix, 1.0)

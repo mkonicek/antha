@@ -83,7 +83,7 @@ func maketypemap() map[string]reflect.Type {
 
 type AnthaLHPolicyItemSet map[string]AnthaLHPolicyItem
 
-func (alhpis AnthaLHPolicyItemSet) TypeList() string {
+func (alhpis AnthaLHPolicyItemSet) OrderedList() []string {
 	ks := make([]string, 0, len(alhpis))
 
 	for k, _ := range alhpis {
@@ -91,6 +91,12 @@ func (alhpis AnthaLHPolicyItemSet) TypeList() string {
 	}
 
 	sort.Strings(ks)
+
+	return ks
+}
+
+func (alhpis AnthaLHPolicyItemSet) TypeList() string {
+	ks := alhpis.OrderedList()
 
 	s := ""
 

@@ -368,6 +368,7 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 		name := plate.(wtype.Named).GetName()
 		stat = this.Properties.Driver.AddPlateTo(position, plate, name)
 
+		plate.OutputLayout()
 		if stat.Errorcode == driver.ERR {
 			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
 		}

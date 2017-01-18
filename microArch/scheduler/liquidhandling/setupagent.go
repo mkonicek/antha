@@ -152,6 +152,8 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 
 	// place outputs
 
+	fmt.Println(len(output_plate_order), " OUTPUT PLATES")
+
 	for _, pid := range output_plate_order {
 		p := output_plates[pid]
 		allowed, isConstrained := p.IsConstrainedOn(params.Model)
@@ -159,6 +161,8 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 			allowed = make([]string, 0, 1)
 		}
 		position := get_first_available_preference(output_preferences, setup, allowed)
+
+		fmt.Println("\t", position)
 
 		if position == "" {
 			//RaiseError("No positions left for output")
@@ -173,6 +177,8 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 		//logger.Info(fmt.Sprintf("Output plate of type %s in position %s", p.Type, position))
 	}
 
+	fmt.Println(len(input_plate_order), " INPUT PLATES")
+
 	for _, pid := range input_plate_order {
 		p := input_plates[pid]
 
@@ -186,6 +192,8 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 			allowed = make([]string, 0, 1)
 		}
 		position := get_first_available_preference(input_preferences, setup, allowed)
+
+		fmt.Println("\t", position)
 
 		if position == "" {
 			//RaiseError("No positions left for input")

@@ -347,7 +347,7 @@ func (lhpr LHPolicyRuleSet) GetPolicyFor(ins RobotInstruction) LHPolicy {
 		ppl.MergeWith(lhpr.Policies[rule.Name])
 	}
 
-	printPolicyForDebug(ins, rules, ppl)
+	//printPolicyForDebug(ins, rules, ppl)
 
 	return ppl
 }

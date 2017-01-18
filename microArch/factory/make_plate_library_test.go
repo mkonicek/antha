@@ -2,7 +2,6 @@
 package factory
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"strings"
 	"testing"
@@ -18,6 +17,7 @@ var tests = []platetest{
 	platetest{TestPlateName: "reservoir", ExpectedZStart: 10.0, ExpectedHeight: 45.0},
 	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
+	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9, ExpectedHeight: 22.0},
 }
 
 func TestAddRiser(t *testing.T) {
@@ -111,7 +111,7 @@ type deviceExceptions map[string][]string // key is device name, exceptions are 
 
 var exceptions deviceExceptions = map[string][]string{
 	"incubator":       []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
-	"inc_pcr_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator", "SRWFB96"},
+	"inc_pcr_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
 }
 
 func TestDeviceMethods(t *testing.T) {
@@ -161,8 +161,6 @@ func init() {
 		lib: makePlateLibrary(),
 	}
 
-	//defaultPlateInventory.AddAllDevices()
-	//defaultPlateInventory.AddAllRisers()
 }
 
 var testPlateInventory2 *plateLibrary
@@ -213,7 +211,6 @@ func TestSetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -269,7 +266,6 @@ func TestGetConstraints(t *testing.T) {
 
 						positionsinterface, found := testplate.Welltype.Extra[platform]
 						positions, ok := positionsinterface.([]string)
-						//fmt.Println("testplate: ", testname, " Constraints: ", positions)
 						if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 							t.Error(
 								"for", device, "\n",
@@ -291,12 +287,16 @@ func TestGetConstraints(t *testing.T) {
 }
 
 func TestPlateZs(t *testing.T) {
-	allplates := GetPlateList()
+	for _, test := range tests {
 
-	for _, testplatename := range allplates {
+		testplate := GetPlateByType(test.TestPlateName)
 
-		testplate := GetPlateByType(testplatename)
-		fmt.Println("plate:", testplate.Type, "Z start", testplate.WellZStart)
-
+		if testplate.WellZStart != test.ExpectedZStart {
+			t.Error(
+				"for", test.TestPlateName, "\n",
+				"expected height: ", test.ExpectedZStart, "\n",
+				"got height :", testplate.WellZStart, "\n",
+			)
+		}
 	}
 }

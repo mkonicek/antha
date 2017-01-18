@@ -600,10 +600,8 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 							r1[i] = append(r1[i], p.ID)
 							r2[i] = append(r2[i], wc)
 							r3[i] = append(r3[i], vl)
-							/*
-								vl = vl.Dup()
-								vl.Add(carryvol)
-							*/
+							vl = vl.Dup()
+							vl.Add(carryvol)
 							lhp.RemoveComponent(p.ID, wc, vl)
 						}
 						break
@@ -864,6 +862,7 @@ func (p *LHProperties) RestoreUserPlates(up UserPlates) {
 		p.RemovePlateAtPosition(plate.Position)
 		// merge these
 		plate.Plate.MergeWith(oldPlate)
+
 		p.AddPlate(plate.Position, plate.Plate)
 	}
 }

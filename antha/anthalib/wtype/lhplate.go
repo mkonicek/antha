@@ -156,11 +156,11 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 		}
 
 	}
-	//	fmt.Println("FOUND: ", cmp.CName, " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
 	if volGot.LessThan(cmp.Volume()) {
 		return lhp.GetComponent(cmp, exact, mpv)
 	}
+	//fmt.Println("FOUND: ", cmp.CName, " AT: ", ret[0].FormatA1(), " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
 	return ret, vols, true
 }
@@ -665,6 +665,8 @@ func (p *LHPlate) IsUserAllocated() bool {
 	return false
 }
 
+// semantics are: put stuff from p2 into p unless
+// the well in p is declared as user allocated
 func (p *LHPlate) MergeWith(p2 *LHPlate) {
 	// do nothing if these are not same type
 

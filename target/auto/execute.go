@@ -1,11 +1,11 @@
 package auto
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/bvendor/google.golang.org/grpc"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 	"github.com/antha-lang/antha/target"

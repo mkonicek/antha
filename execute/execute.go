@@ -43,7 +43,7 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 		return nil, err
 	}
 
-	ctx := target.WithTarget(WithId(parent, opt.Id), opt.Target)
+	ctx := target.WithTarget(withId(parent, opt.Id), opt.Target)
 
 	r := &resolver{}
 

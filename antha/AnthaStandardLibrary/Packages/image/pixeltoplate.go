@@ -793,7 +793,7 @@ func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolour
 					plateimage.Set(x, y, colour)
 				}
 				// equivalent well position
-				wellposition := wutil.NumToAlpha(y) + strconv.Itoa(x+1)
+				wellposition := wutil.NumToAlpha(y+1) + strconv.Itoa(x+1)
 				fmt.Println(wellposition)
 				wellpositionarray = append(wellpositionarray, wellposition)
 				wellpositiontocolourmap[wellposition] = colour

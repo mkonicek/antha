@@ -33,6 +33,7 @@ import (
 	"unicode"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/component"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/inject"
@@ -75,6 +76,7 @@ protocol {{.Name}}
 // Place golang packages to import here
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
 )
 
 // Parameters to this protocol
@@ -104,8 +106,8 @@ Setup {
 
 // The core process for this protocol. These steps are executed for each input.
 Steps {
-{{.Steps}}
-}
+{{range .Steps}}{{.}}
+{{end}}}
 
 // Run after controls and a steps block are completed to post process any data
 // and provide downstream results
@@ -152,14 +154,14 @@ func validElementName(name string) error {
 	return nil
 }
 
-func writeAn(outputDir, steps string, element *component.Component) error {
+func writeAn(outputDir string, steps []string, element *component.Component) error {
 	type parg struct {
 		Name string
 		Type string
 	}
 	type targ struct {
 		Name       string
-		Steps      string
+		Steps      []string
 		Parameters []parg
 		Data       []parg
 		Inputs     []parg
@@ -258,13 +260,15 @@ func newElement(cmd *cobra.Command, args []string) error {
 
 	// TODO: link params, input, output, and element
 	type input struct {
-		Volumes    []string
-		Option     bool
-		A          float64
-		B          float64
-		String     string
-		ComponentA *wtype.LHComponent
-		ComponentB *wtype.LHComponent
+		A           float64
+		B           float64
+		ComponentA  *wtype.LHComponent
+		ComponentB  *wtype.LHComponent
+		Option      bool
+		String      string
+		StringArray []string
+		VolumeA     wunit.Volume
+		VolumeB     wunit.Volume
 	}
 
 	type output struct {
@@ -273,13 +277,15 @@ func newElement(cmd *cobra.Command, args []string) error {
 	}
 
 	params := map[string]interface{}{
-		"A":          2.99,
-		"B":          -1.0,
-		"ComponentA": "water",
-		"ComponentB": "water",
-		"Option":     false,
-		"String":     "Example",
-		"Volumes":    []string{"1ul", "2ul", "3ul"},
+		"A":           2.99,
+		"B":           -1.0,
+		"ComponentA":  "water",
+		"ComponentB":  "dna",
+		"Option":      false,
+		"String":      "Example",
+		"StringArray": []string{"A", "B", "C"},
+		"VolumeA":     "1ul",
+		"VolumeB":     "2ul",
 	}
 
 	var in input
@@ -305,13 +311,20 @@ func newElement(cmd *cobra.Command, args []string) error {
 				{Name: "MixedComponent", Kind: "Outputs", Type: typeName(out.MixedComponent)},
 				{Name: "Option", Kind: "Parameters", Type: typeName(in.Option)},
 				{Name: "String", Kind: "Parameters", Type: typeName(in.String)},
+				{Name: "StringArray", Kind: "Parameters", Type: typeName(in.StringArray)},
 				{Name: "Sum", Kind: "Data", Type: typeName(out.Sum)},
-				{Name: "Volumes", Kind: "Parameters", Type: typeName(in.Volumes)},
+				{Name: "VolumeA", Kind: "Parameters", Type: typeName(in.VolumeA)},
+				{Name: "VolumeB", Kind: "Parameters", Type: typeName(in.VolumeB)},
 			},
 		},
 	}
 
-	steps := "\tSum = A + B\n\tMixedComponent = Mix(ComponentA, ComponentB)"
+	steps := []string{
+		"\tSum = A + B",
+		"\tsampleA := mixer.Sample(ComponentA, VolumeA)",
+		"\tsampleB := mixer.Sample(ComponentB, VolumeB)",
+		"\tMixedComponent = Mix(sampleA, sampleB)",
+	}
 
 	if err := writeAn(outputDir, steps, element); err != nil {
 		return err

@@ -424,7 +424,7 @@ func MakeColonyPolicy() LHPolicy {
 	policy["DSPZOFFSET"] = 0.0
 	policy["ASPSPEED"] = 3.0
 	policy["DSPSPEED"] = 3.0
-	policy["ASP_WAIT"] = 1.0
+	policy["ASP_WAIT"] = 0.0
 	policy["POST_MIX"] = 1
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"

@@ -202,8 +202,6 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 			platedims[i.PlateID()] = wtype.Rational{pt.WellsX(), pt.WellsY()}
 		}
 
-		fmt.Println(wc.X, " ", wc.Y)
-
 		h[i.PlateID()][wc.X][wc.Y] = append(h[i.PlateID()][wc.X][wc.Y], i)
 	}
 
@@ -212,7 +210,6 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 	}
 
 	for id, pdm := range h {
-		fmt.Println("LEN PDM: ", len(pdm))
 		dims := platedims[id]
 		switch prm.Orientation {
 		case wtype.LHHChannel:
@@ -229,6 +226,9 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 			} else {
 				ret[0] = append(ret[0], r[0]...)
 			}
+
+			// -- wtype.FLEX (this may never actually be used since AFAIK only one machine
+			//    can do this and I think it's been EOL'd
 		}
 	}
 

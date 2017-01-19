@@ -794,3 +794,19 @@ func GetPlateList() []string {
 func GetPlateLibrary() map[string]*wtype.LHPlate {
 	return defaultPlateLibrary.lib
 }
+
+func PlateTypeArray(sa []string) ([]*wtype.LHPlate, error) {
+	r := make([]*wtype.LHPlate, len(sa))
+
+	for i := 0; i < len(sa); i++ {
+		p, err := GetPlateByType(sa[i])
+
+		if err != nil {
+			return nil, err
+		}
+
+		r[i] = p
+	}
+
+	return r, nil
+}

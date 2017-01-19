@@ -157,7 +157,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			} else {
 				s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateIDs[ix])
 				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
-
 				return nil, err
 			}
 
@@ -168,7 +167,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			} else {
 				s := fmt.Sprint("NO DST PLATE FOUND : ", ix, " ", inssIn[j].PlateID())
 				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
-
 				return nil, err
 			}
 

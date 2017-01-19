@@ -210,7 +210,47 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		return nil
 	}
 
-	tfrs := make(map[string][]string, len(ins.What))
+	ret := make([][]int, 0, len(ins.What))
+
+	// the TransferBlock instruction takes into account the destinations being OK
+	// splits instructions into potentially multiable blocks on that basis
+	// and finds sources for them
+
+	// firstly are the sources properly configured?
+
+	npositions := wutil.NUniqueStringsInArray(ins.PosFrom)
+
+	if npositions != 1 {
+		panic("No support for non-rigid heads")
+	}
+
+	nplatetypes := wutil.NUniqueStringsInArray(ins.PltFrom)
+
+	if nplatetypes != 1 {
+		panic("No support for non-rigid heads")
+	}
+
+	pa, err := wtype.PlateTypeArray(ins.PltFrom)
+
+	if err != nil {
+		panic(err)
+	}
+
+	// check source / tip alignment
+
+	if wtype.TipsWellsAligned(channel, pa[0], ins.WellFrom) {
+
+	}
+	//tpw, wellskip := wtype.TipsPerWell(channel, plate)
+
+}
+
+func (ins *TransferInstruction) OLDDONTUSETHISGetParallelSetsFor(channel *wtype.LHChannelParameter) [][]int {
+	// if the channel is not multi just return nil
+
+	if channel.Multi == 1 {
+		return nil
+	}
 
 	// hash out all transfers which are multiable
 
@@ -342,18 +382,16 @@ func getset(a [][]int, mx int) []int {
 			if a[i][j] != -1 {
 				r = append(r, a[i][j])
 				// find a diagonal line
-				/*
-					for l := 1; l < mx; l++ {
-						x := (i + l) % len(a)
-						y := (j + l) % len(a[i])
+				for l := 1; l < mx; l++ {
+					x := (i + l) % len(a)
+					y := (j + l) % len(a[i])
 
-						if a[x][y] != -1 {
-							r = append(r, a[x][y])
-						} else {
-							r = make([]int, 0, mx)
-						}
+					if a[x][y] != -1 {
+						r = append(r, a[x][y])
+					} else {
+						r = make([]int, 0, mx)
 					}
-				*/
+				}
 
 				if len(r) == mx {
 					break
@@ -444,6 +482,7 @@ func (vs VolumeSet) GetACopy() []wunit.Volume {
 }
 
 func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	fmt.Println(InsToString(ins))
 	pol := GetPolicyFor(policy, ins)
 
 	ret := make([]RobotInstruction, 0)
@@ -451,10 +490,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	// if we can multi we do this first
 
 	if pol["CAN_MULTI"].(bool) {
-		// break out the sets of parallel instructions
-
-		// fix this HARD CODE here
-		// this is a bit problematic: we need to define head choice here partly on the
 		// basis of its multi, partly based on volume range
 		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
 
@@ -493,6 +528,8 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 			// get the max transfer volume
 
 			maxvol := vols.MaxMultiTransferVolume()
+
+			fmt.Println("Max transfer volume: ", maxvol.ToString())
 
 			// now set the vols for the transfer and remove this from the instruction's volume
 
@@ -539,6 +576,7 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	sci.Prms = prms.HeadsLoaded[0].Params // TODO Fix Hard Code Here
 
 	for i, _ := range ins.What {
+		fmt.Println("STROKING : ", ins.What[i], " ", ins.Volume[i].ToString())
 		if ins.Volume[i].LessThanFloat(0.001) {
 			continue
 		}

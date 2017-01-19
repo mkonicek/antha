@@ -54,6 +54,24 @@ import (
 //	i1(A)		i2(A B)		i3(A C)
 //	so we have to ensure the components line up
 
+func readableComponentArray(arr []*wtype.LHComponent) string {
+	ret := ""
+
+	for i, v := range arr {
+		if v != nil {
+			ret += fmt.Sprintf("%s:%-6.2f%s", v.CName, v.Vol, v.Vunit)
+		} else {
+			ret += "_nil_"
+		}
+		if i < len(arr)-1 {
+
+			ret += ", "
+		}
+	}
+
+	return ret
+}
+
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 
@@ -91,7 +109,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		// let's start making sense here
 
-		if !allEqual(len(fromPlateIDs), len(fromWells), len(fromvols)) {
+		if !allEqual(len(fromPlateIDs), len(fromWells), len(fromvols), len(cmpSquash)) {
 			panic("Lengths cannot differ here")
 		}
 
@@ -124,6 +142,13 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			}
 
 			var flhp, tlhp *wtype.LHPlate
+
+			// safety first
+
+			if fromPlateIDs[ix] == nil || len(fromPlateIDs[ix]) == 0 {
+				errstr := fmt.Sprintf("Some sources were not found: looking for %v : ix %d %v", readableComponentArray(cmpSquash), ix, fromPlateIDs)
+				return nil, wtype.LHError(wtype.LH_ERR_DIRE, errstr)
+			}
 
 			flhif := robot.PlateLookup[fromPlateIDs[ix][0]]
 
@@ -172,7 +197,13 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				return nil, err
 			}
 
-			vf[ix] = fromvols[j][0]
+			if fromvols[ix] == nil || len(fromvols[ix]) == 0 {
+				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Source %d found for %s (%s) not properly configured", ix, cmpSquash[ix].CName, fromWells[ix][0]))
+				return nil, err
+			}
+
+			vf[ix] = fromvols[ix][0]
+
 			//wlf.Remove(va[ix])
 
 			pf[ix] = robot.PlateIDLookup[fromPlateIDs[ix][0]]

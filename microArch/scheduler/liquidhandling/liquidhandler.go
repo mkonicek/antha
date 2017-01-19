@@ -95,16 +95,49 @@ func (this *Liquidhandler) PlateIDMap() map[string]string {
 	return ret
 }
 
-// high-level function which requests planning and execution for an incoming set of
-// solutions
-func (this *Liquidhandler) MakeSolutions(request *LHRequest) error {
-	// the minimal request which is possible defines what solutions are to be made
+// catch errors early
+func ValidateRequest(request *LHRequest) error {
 	if len(request.LHInstructions) == 0 {
 		return wtype.LHError(wtype.LH_ERR_OTHER, "Nil plan requested: no Mix Instructions present")
 	}
 
+	// no component can have all three of Conc, Vol and TVol set to 0:
+
+	for _, ins := range request.LHInstructions {
+		for i, cmp := range ins.Components {
+			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
+				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)
+
+				for j := 0; j < len(ins.Components); j++ {
+					ss := ins.Components[i].CName
+					if j == i {
+						ss = strings.ToUpper(ss)
+					}
+
+					if j != len(ins.Components)-1 {
+						ss += ", "
+					}
+
+					errstr += ss
+				}
+				return wtype.LHError(wtype.LH_ERR_OTHER, errstr)
+			}
+		}
+	}
+	return nil
+}
+
+// high-level function which requests planning and execution for an incoming set of
+// solutions
+func (this *Liquidhandler) MakeSolutions(request *LHRequest) error {
+	err := ValidateRequest(request)
+
+	if err != nil {
+		return err
+	}
+
 	//f := func() {
-	err := this.Plan(request)
+	err = this.Plan(request)
 	if err != nil {
 		return err
 	}
@@ -172,7 +205,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	for _, ins := range instructions {
 
 		//logger.Debug(fmt.Sprintln(liquidhandling.InsToString(ins)))
-		fmt.Println(liquidhandling.InsToString(ins))
+		//fmt.Println(liquidhandling.InsToString(ins))
 		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
 		if err != nil {

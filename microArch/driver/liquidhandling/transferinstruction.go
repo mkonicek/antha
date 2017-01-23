@@ -31,6 +31,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 type TransferInstruction struct {
@@ -218,16 +219,20 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 	// firstly are the sources properly configured?
 
-	npositions := wutil.NUniqueStringsInArray(ins.PosFrom)
+	npositions := wutil.NUniqueStringsInArray(ins.PltFrom)
 
 	if npositions != 1 {
-		panic("No support for non-rigid heads")
+		// fall back to single-channel
+		// TODO -- find a subset we CAN do, if such exists
+		return nil
 	}
 
-	nplatetypes := wutil.NUniqueStringsInArray(ins.PltFrom)
+	nplatetypes := wutil.NUniqueStringsInArray(ins.TPlateType)
 
 	if nplatetypes != 1 {
-		panic("No support for non-rigid heads")
+		// fall back to single-channel
+		// TODO -- find a subset we CAN do , if such exists
+		return nil
 	}
 
 	pa, err := wtype.PlateTypeArray(ins.PltFrom)
@@ -238,8 +243,10 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 	// check source / tip alignment
 
-	if wtype.TipsWellsAligned(channel, pa[0], ins.WellFrom) {
-
+	if !wtype.TipsWellsAligned(channel, pa[0], ins.WellFrom) {
+		// fall back to single-channel
+		// TODO -- find a subset we CAN do
+		return nil
 	}
 	//tpw, wellskip := wtype.TipsPerWell(channel, plate)
 

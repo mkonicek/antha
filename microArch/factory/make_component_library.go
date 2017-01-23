@@ -172,6 +172,7 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("Suc", wtype.LTNSrc, 1.0)
 	add("Fruc", wtype.LTNSrc, 1.0)
 	add("Malt", wtype.LTNSrc, 1.0)
+	add("water2", wtype.LTNSrc, 1.0)
 
 	// protein paintbox
 	for _, value := range image.ProteinPaintboxmap {

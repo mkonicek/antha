@@ -831,24 +831,14 @@ func MakeHVFlowRatePolicy() LHPolicy {
 }
 
 func MakeCarbonSourcePolicy() LHPolicy {
-	cspolicy := make(LHPolicy, 6)
+	cspolicy := make(LHPolicy, 1)
 	cspolicy["DSPREFERENCE"] = 1
-	cspolicy["CAN_MULTI"] = false
-	cspolicy["CAN_MSA"] = true
-	cspolicy["CAN_SDD"] = true
-	cspolicy["DSPZOFFSET"] = 1.0
-	cspolicy["BLOWOUTVOLUME"] = 50.0
 	return cspolicy
 }
 
 func MakeNitrogenSourcePolicy() LHPolicy {
-	nspolicy := make(LHPolicy, 6)
+	nspolicy := make(LHPolicy, 1)
 	nspolicy["DSPREFERENCE"] = 1
-	nspolicy["CAN_MULTI"] = false
-	nspolicy["CAN_MSA"] = true
-	nspolicy["CAN_SDD"] = true
-	nspolicy["DSPZOFFSET"] = 1.0
-	nspolicy["BLOWOUTVOLUME"] = 50.0
 	return nspolicy
 }
 

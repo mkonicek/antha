@@ -263,6 +263,14 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		return nil
 	}
 
+	// for safety, check dest / tip alignment
+
+	if !wtype.TipsWellsAligned(*channel, *pa[0], ins.WellTo) {
+		// fall back to single-channel
+		// TODO -- find a subset we CAN do
+		return nil
+	}
+
 	// check that we will not require different policies
 
 	if !ins.CheckMultiPolicies() {
@@ -273,7 +281,21 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 	// looks OK
 
-	return [][]int{{0, 1, 2, 3, 4, 5, 6, 7}}
+	ra := make([]int, 0, len(ins.What))
+
+	m := 0
+
+	for i := 0; i < len(ins.What); i++ {
+		if ins.What[i] != "" {
+			m += 1
+		}
+	}
+
+	for i := 0; i < m; i++ {
+		ra = append(ra, i)
+	}
+
+	return [][]int{ra}
 }
 
 func (ins *TransferInstruction) OLDDONTUSETHISGetParallelSetsFor(channel *wtype.LHChannelParameter) [][]int {
@@ -522,7 +544,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	// if we can multi we do this first
 
 	if pol["CAN_MULTI"].(bool) {
-		// basis of its multi, partly based on volume range
 		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
 
 		mci := NewMultiChannelBlockInstruction()

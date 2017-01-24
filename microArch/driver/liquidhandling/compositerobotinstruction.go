@@ -317,6 +317,7 @@ type MultiChannelBlockInstruction struct {
 
 func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 	var v MultiChannelBlockInstruction
+	v.Type = MCB
 	v.What = make([][]string, 0)
 	v.PltFrom = make([][]string, 0)
 	v.PltTo = make([][]string, 0)

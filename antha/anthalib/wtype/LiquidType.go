@@ -36,6 +36,7 @@ const (
 	LTCOLONY
 	LTCOLONYMIX
 	LTDNACELLSMIX
+	LTMultiWater
 )
 
 func LiquidTypeFromString(s string) (LiquidType, error) {
@@ -97,6 +98,8 @@ func LiquidTypeFromString(s string) (LiquidType, error) {
 		return LTCOLONYMIX, nil
 	case "dna_cells_mix":
 		return LTDNACELLSMIX, nil
+	case "multiwater":
+		return LTMultiWater, nil
 	default:
 		return LTWater, fmt.Errorf("no liquid policy found for " + s + " so using default water policy")
 	}
@@ -158,6 +161,8 @@ func LiquidTypeName(lt LiquidType) string {
 		return "colonymix"
 	case LTDNACELLSMIX:
 		return "dna_cells_mix"
+	case LTMultiWater:
+		return "multiwater"
 	default:
 		return "nil"
 	}

@@ -205,6 +205,19 @@ func (vs VolumeSet) MaxMultiTransferVolume() wunit.Volume {
 	return ret
 }
 
+func (ins *TransferInstruction) CheckMultiPolicies() bool {
+	// first iteration: ensure all the WHAT prms are the same
+	// later	  : actually check the policies per channel
+
+	nwhat := wutil.NUniqueStringsInArray(ins.What)
+
+	if nwhat != 1 {
+		return false
+	}
+
+	return true
+}
+
 func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParameter) [][]int {
 	// if the channel is not multi just return nil
 
@@ -212,11 +225,11 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		return nil
 	}
 
-	ret := make([][]int, 0, len(ins.What))
-
 	// the TransferBlock instruction takes into account the destinations being OK
 	// splits instructions into potentially multiable blocks on that basis
 	// and finds sources for them
+
+	// -- the transfer block ensures these instructions are at most multi long
 
 	// firstly are the sources properly configured?
 
@@ -228,7 +241,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		return nil
 	}
 
-	nplatetypes := wutil.NUniqueStringsInArray(ins.TPlateType)
+	nplatetypes := wutil.NUniqueStringsInArray(ins.FPlateType)
 
 	if nplatetypes != 1 {
 		// fall back to single-channel
@@ -236,7 +249,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		return nil
 	}
 
-	pa, err := factory.PlateTypeArray(ins.PltFrom)
+	pa, err := factory.PlateTypeArray(ins.FPlateType)
 
 	if err != nil {
 		panic(err)
@@ -244,7 +257,15 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 	// check source / tip alignment
 
-	if !wtype.TipsWellsAligned(channel, pa[0], ins.WellFrom) {
+	if !wtype.TipsWellsAligned(*channel, *pa[0], ins.WellFrom) {
+		// fall back to single-channel
+		// TODO -- find a subset we CAN do
+		return nil
+	}
+
+	// check that we will not require different policies
+
+	if !ins.CheckMultiPolicies() {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return nil
@@ -252,6 +273,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 	// looks OK
 
+	return [][]int{{0, 1, 2, 3, 4, 5, 6, 7}}
 }
 
 func (ins *TransferInstruction) OLDDONTUSETHISGetParallelSetsFor(channel *wtype.LHChannelParameter) [][]int {
@@ -260,6 +282,8 @@ func (ins *TransferInstruction) OLDDONTUSETHISGetParallelSetsFor(channel *wtype.
 	if channel.Multi == 1 {
 		return nil
 	}
+
+	tfrs := make(map[string][]string)
 
 	// hash out all transfers which are multiable
 
@@ -491,7 +515,6 @@ func (vs VolumeSet) GetACopy() []wunit.Volume {
 }
 
 func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	fmt.Println(InsToString(ins))
 	pol := GetPolicyFor(policy, ins)
 
 	ret := make([]RobotInstruction, 0)
@@ -501,8 +524,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	if pol["CAN_MULTI"].(bool) {
 		// basis of its multi, partly based on volume range
 		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
-
-		fmt.Println("parallel sets: ", parallelsets)
 
 		mci := NewMultiChannelBlockInstruction()
 		mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here
@@ -537,8 +558,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 			// get the max transfer volume
 
 			maxvol := vols.MaxMultiTransferVolume()
-
-			fmt.Println("Max transfer volume: ", maxvol.ToString())
 
 			// now set the vols for the transfer and remove this from the instruction's volume
 
@@ -585,7 +604,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	sci.Prms = prms.HeadsLoaded[0].Params // TODO Fix Hard Code Here
 
 	for i, _ := range ins.What {
-		fmt.Println("STROKING : ", ins.What[i], " ", ins.Volume[i].ToString())
 		if ins.Volume[i].LessThanFloat(0.001) {
 			continue
 		}

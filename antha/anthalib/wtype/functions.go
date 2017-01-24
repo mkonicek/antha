@@ -91,7 +91,7 @@ func ChannelWells(prm LHChannelParameter, plt LHPlate, wellsfrom []string) []str
 		fwc = wc.X
 	}
 
-	ticker := Ticker{TickEvery: tipsperwell, TickBy: wellskip, Val: fwc}
+	ticker := Ticker{TickEvery: tipsperwell, TickBy: wellskip + 1, Val: fwc}
 
 	for i := 0; i < len(wellsfrom); i++ {
 		if channelsused[i] {

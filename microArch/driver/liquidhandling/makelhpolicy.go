@@ -83,7 +83,8 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols := make(map[string]wtype.LHPolicy)
 
 	// what policies do we need?
-	pols["water"] = MakeMultiWaterPolicy()
+	pols["water"] = MakeWaterPolicy()
+	pols["multiwater"] = MakeMultiWaterPolicy()
 	pols["culture"] = MakeCulturePolicy()
 	pols["culturereuse"] = MakeCultureReusePolicy()
 	pols["glycerol"] = MakeGlycerolPolicy()
@@ -507,7 +508,6 @@ func MakeCultureReusePolicy() wtype.LHPolicy {
 	culturepolicy.Set("PRE_MIX", 2)
 	culturepolicy.Set("ASPSPEED", 2.0)
 	culturepolicy.Set("DSPSPEED", 2.0)
-	culturepolicy.Set("CAN_MULTI", true)
 	culturepolicy.Set("CAN_MULTI", false)
 	culturepolicy.Set("CAN_MSA", true)
 	culturepolicy.Set("CAN_SDD", true)

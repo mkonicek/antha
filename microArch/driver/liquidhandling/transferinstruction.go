@@ -32,6 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/factory"
 )
 
 type TransferInstruction struct {
@@ -235,7 +236,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		return nil
 	}
 
-	pa, err := wtype.PlateTypeArray(ins.PltFrom)
+	pa, err := factory.PlateTypeArray(ins.PltFrom)
 
 	if err != nil {
 		panic(err)
@@ -248,7 +249,8 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		// TODO -- find a subset we CAN do
 		return nil
 	}
-	//tpw, wellskip := wtype.TipsPerWell(channel, plate)
+
+	// looks OK
 
 }
 

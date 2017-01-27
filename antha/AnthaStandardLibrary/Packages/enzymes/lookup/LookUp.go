@@ -25,6 +25,7 @@ package lookup
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/REBASE"
@@ -33,13 +34,20 @@ import (
 )
 
 func TypeIIsLookup(name string) (enzyme wtype.TypeIIs, err error) {
-	enz := EnzymeLookup(name)
-
+	enz, err := EnzymeLookup(name)
+	if err != nil {
+		return enzyme, err
+	}
 	enzyme, err = wtype.ToTypeIIs(enz)
 	return
 }
 
-func EnzymeLookup(name string) (enzyme wtype.RestrictionEnzyme) {
+func EnzymeLookup(name string) (enzyme wtype.RestrictionEnzyme, err error) {
+
+	if name == "" {
+		return enzyme, fmt.Errorf(`Error! Enzyme has been specified as "", check the enzymes listed in parameters for "" `)
+	}
+
 	enzymes, err := asset.Asset("rebase/type2.txt")
 	if err != nil {
 		return
@@ -54,10 +62,12 @@ func EnzymeLookup(name string) (enzyme wtype.RestrictionEnzyme) {
 
 		if strings.ToUpper(record.Name) == strings.ToUpper(name) {
 			enzyme = record
+			return enzyme, nil
 		}
 
 	}
-	return enzyme
+
+	return enzyme, fmt.Errorf("No enzyme %s found", name)
 }
 
 func FindEnzymesofClass(class string) (enzymelist []wtype.RestrictionEnzyme) {

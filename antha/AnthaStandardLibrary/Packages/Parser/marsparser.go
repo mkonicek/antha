@@ -687,6 +687,9 @@ func (data MarsData) ReadingsAsAverage(wellname string, emexortime int, fieldval
 	readings := make([]float64, 0)
 	readingtypes := make([]string, 0)
 	readingsforaverage := make([]float64, 0)
+	if _, ok := data.Dataforeachwell[wellname]; !ok {
+		return 0.0, fmt.Errorf(fmt.Sprint("no data for well, ", wellname))
+	}
 	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
 
 		if emexortime == 0 {
@@ -744,9 +747,11 @@ func (data MarsData) AbsorbanceReading(wellname string, wavelength int, readingt
 	return
 }
 
-func (data MarsData) FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int) {
+func (data MarsData) FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int, err error) {
 
-	//differences := make([]float64, 0)
+	if _, ok := data.Dataforeachwell[wellname]; !ok {
+		return 0, fmt.Errorf("no data found for well, %s", wellname)
+	}
 	biggestdifferenceindex := 0
 	biggestdifference := 0.0
 

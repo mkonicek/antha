@@ -44,7 +44,7 @@ const (
 	coolerheight                                float64 = 16.0
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
-	pcrbioshakeadaptorheight                    float64 = 3.5
+	pcrbioshakeadaptorheight                    float64 = 4.5
 )
 
 var platespecificoffset = map[string]float64{

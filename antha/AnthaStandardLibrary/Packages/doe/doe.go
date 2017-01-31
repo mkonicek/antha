@@ -1162,7 +1162,8 @@ func RunsFromDesignPreResponses(designfile string, intfactors []string, dxorjmp 
 	} else if dxorjmp == "JMP" {
 
 		factorcolumns, responsecolumns, _ := findJMPFactorandResponseColumnsinEmptyDesign(designfile)
-
+		fmt.Println("factor columns: ", factorcolumns)
+		fmt.Println("response columns: ", responsecolumns)
 		runs, err = RunsFromJMPDesign(designfile, factorcolumns, responsecolumns, intfactors)
 		if err != nil {
 			return runs, err
@@ -1193,7 +1194,7 @@ func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int)
 
 // add func to auto check for Response and factor status based on empty entries implying Response column
 func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []int, responsecolumns []int, PatternColumn int) {
-
+	var patternfound bool
 	factorcolumns = make([]int, 0)
 	responsecolumns = make([]int, 0)
 
@@ -1211,6 +1212,7 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 		//	descriptors = append(descriptors,descriptor)
 		if strings.ToUpper(descriptor) == "PATTERN" {
 			PatternColumn = j
+			patternfound = true
 		}
 	}
 	// iterate through every run of the design sheet (row) and if all values for that row == "", the column is interpreted as a response
@@ -1218,7 +1220,9 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 		//maxfactorcol := 2
 		for j := 0; j < sheet.MaxCol; j++ {
 
-			if j != PatternColumn && sheet.Cell(i, j).String() != "" {
+			if patternfound && j != PatternColumn && sheet.Cell(i, j).String() != "" {
+				factorcolumns = append(factorcolumns, j)
+			} else if !patternfound && sheet.Cell(i, j).String() != "" {
 				factorcolumns = append(factorcolumns, j)
 			} else if sheet.Cell(i, j).String() == "" {
 
@@ -1228,5 +1232,9 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 		}
 
 	}
+
+	factorcolumns = search.RemoveDuplicateInts(factorcolumns)
+	responsecolumns = search.RemoveDuplicateInts(responsecolumns)
+
 	return
 }

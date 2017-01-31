@@ -271,7 +271,10 @@ func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandar
 // Utility function to check whether a part already has typeIIs ends added
 func CheckForExistingTypeIISEnds(part wtype.DNASequence, enzyme wtype.TypeIIs) (numberofsitesfound int, stickyends5 []string, stickyends3 []string) {
 
-	enz := lookup.EnzymeLookup(enzyme.Name)
+	enz, err := lookup.EnzymeLookup(enzyme.Name)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	sites := Restrictionsitefinder(part, []wtype.RestrictionEnzyme{enz})
 

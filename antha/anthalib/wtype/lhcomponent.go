@@ -25,9 +25,10 @@ package wtype
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"strings"
 	//"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/graph"
 )
@@ -47,7 +48,7 @@ type LHComponent struct {
 	Vunit              string
 	Cunit              string
 	Tvol               float64
-	Smax               float64
+	Smax               float64 // maximum solubility
 	Visc               float64
 	StockConcentration float64
 	Extra              map[string]interface{}

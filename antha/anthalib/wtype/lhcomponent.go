@@ -268,6 +268,13 @@ func (lhc *LHComponent) Concentration() (conc wunit.Concentration) {
 	return conc
 }
 
+func (lhc *LHComponent) HasConcentration() bool {
+	if lhc.Conc != 0.0 && lhc.Cunit != "" {
+		return true
+	}
+	return false
+}
+
 // Sets concentration to an LHComponent; assumes conc is valid; overwrites existing concentration
 func (lhc *LHComponent) SetConcentration(conc wunit.Concentration) {
 	lhc.Conc = conc.RawValue()

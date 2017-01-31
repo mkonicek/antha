@@ -1,6 +1,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -98,6 +99,33 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 	}
 
 	//testNegative(ris, pol, rbt, t)
+	testPositive(ris, pol, rbt, t)
+}
+
+func TestMultichannelSucceedPair(t *testing.T) {
+	// can do 7
+	tb, dstp := getTransferBlock()
+
+	tb.Inss[0].Welladdress = "A1"
+	tb.Inss[1].Welladdress = "B1"
+
+	tb.Inss[2].Welladdress = "C2"
+	tb.Inss[3].Welladdress = "D2"
+
+	tb.Inss[4].Welladdress = "E3"
+	tb.Inss[5].Welladdress = "F3"
+
+	tb.Inss[6].Welladdress = "G4"
+	tb.Inss[7].Welladdress = "H4"
+
+	rbt := getTestRobot(dstp)
+	pol, err := GetLHPolicyForTest()
+	pol.Policies["water"]["CAN_MULTI"] = true
+	ris, err := tb.Generate(pol, rbt)
+	if err != nil {
+		t.Error(err)
+	}
+
 	testPositive(ris, pol, rbt, t)
 }
 
@@ -216,6 +244,14 @@ func TestMultichannelPositive(t *testing.T) {
 
 func testPositive(ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
 
+	for _, ri := range ris {
+		rri2, _ := ri.Generate(pol, rbt)
+		fmt.Println("A GAIN")
+		for _, i2 := range rri2 {
+			fmt.Println(i2)
+		}
+	}
+
 	ins := ris[0]
 
 	ri2, err := ins.Generate(pol, rbt)
@@ -239,4 +275,5 @@ func testPositive(ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHPro
 	if multi == 0 {
 		t.Errorf("Multichannel block not generated")
 	}
+
 }

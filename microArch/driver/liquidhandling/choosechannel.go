@@ -90,7 +90,7 @@ func (sc DefaultChannelScoreFunc) ScoreChannel(vol wunit.Volume, lhcp *wtype.LHC
 	return score
 }
 
-func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParameter, string) {
+func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParameter, *wtype.LHTip) {
 	var headchosen *wtype.LHHead = nil
 	var tipchosen *wtype.LHTip = nil
 	var bestscore ChannelScore = ChannelScore(0.0)
@@ -115,11 +115,11 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	}
 
 	if headchosen == nil {
-		return nil, ""
+		return nil, nil
 	}
 
 	// shouldn't we also return the adaptor?
 	// and probably the whole head rather than just its channel parameters
 
-	return headchosen.GetParams(), tipchosen.Type
+	return headchosen.GetParams(), tipchosen
 }

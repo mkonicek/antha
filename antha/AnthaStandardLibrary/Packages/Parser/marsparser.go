@@ -401,6 +401,9 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 						if err == nil {
 							measurement.RWavelength = ex
 							measurement.EWavelength = em
+							measurement.EBand = exband
+							measurement.RBand = emband
+							measurement.Script = scriptposition
 
 						} else if strings.Contains(parsedatatype[0], "A-") {
 
@@ -657,17 +660,30 @@ func HeaderWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, n
 	return
 }
 
-func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int) (xaxis []time.Duration, yaxis []float64) {
+// optionally specify the script position to use if more than one set of data with shared excitation and emission spectra
+func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64) {
 	xaxis = make([]time.Duration, 0)
 	yaxis = make([]float64, 0)
 	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
 
-		if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength {
+		var checkscriptnumber bool
+
+		if scriptnumber > 0 {
+			checkscriptnumber = true
+		}
+
+		if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength && checkscriptnumber && measurement.Script == scriptnumber {
+
+			xaxis = append(xaxis, measurement.Timestamp)
+			yaxis = append(yaxis, measurement.Reading)
+
+		} else if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength && !checkscriptnumber {
 
 			xaxis = append(xaxis, measurement.Timestamp)
 			yaxis = append(yaxis, measurement.Reading)
 
 		}
+
 	}
 
 	return

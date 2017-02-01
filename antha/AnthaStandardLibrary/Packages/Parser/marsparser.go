@@ -31,6 +31,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/montanaflynn/stats"
 	"github.com/tealeg/xlsx"
 )
@@ -303,14 +304,14 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 									return welldatamap, err
 								}
 								times = append(times, gotime)
-								fmt.Println(times)
+								//fmt.Println(times)
 							} else {
 								gotime, err := ParseTime(spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String())
 								if err != nil {
 									return welldatamap, err
 								}
 								times = append(times, gotime)
-								fmt.Println(times)
+								//fmt.Println(times)
 							}
 
 						}
@@ -386,7 +387,22 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 					if strings.Contains(header, "Temperature") == false && strings.Contains(header, "Volume") == false {
 
 						// handle case of absorbance (may need to add others.. if contains Ex, Ex else number = abs
-						if strings.Contains(parsedatatype[0], "A-") {
+						ex, exband, em, emband, scriptposition, err := parseBracketedColumnHeader(welldata.ReadingType)
+
+						var errstring string
+
+						////////
+						if err != nil {
+							errstring = err.Error()
+						}
+						fmt.Println("ex, exband, em, emband, scriptposition, err", ex, exband, em, emband, scriptposition, errstring)
+						////////
+
+						if err == nil {
+							measurement.RWavelength = ex
+							measurement.EWavelength = em
+
+						} else if strings.Contains(parsedatatype[0], "A-") {
 
 							wavelengthstring = parsedatatype[0][strings.Index(parsedatatype[0], `-`)+1:]
 
@@ -431,16 +447,6 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 								measurement.EWavelength = wavelength
 							}
 
-						} else if strings.Contains(welldata.ReadingType, "(484-8/517.5-9 4)") {
-							measurement.RWavelength = 517
-							measurement.EWavelength = 484
-						} else if strings.Contains(welldata.ReadingType, "(600 2)") {
-							measurement.RWavelength = 600
-							measurement.EWavelength = 600
-							/*} else if strings.Contains(welldata.ReadingType, "(484-8/517.5-9 3)") {
-							measurement.RWavelength = 517
-							measurement.EWavelength = 484
-							*/
 						} else if HeaderContainsWavelength(sheet1, headerrow, j) {
 							if wavelengthrow == 0 && HeaderContainsWavelength(sheet1, headerrow, j) {
 								_, wavelength, err := HeaderWavelength(sheet1, headerrow, j)
@@ -489,6 +495,102 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 		}
 	}
 
+	return
+}
+
+func bracketed(header string) bool {
+
+	header = strings.TrimSpace(header)
+
+	if strings.Contains(header, "(") && strings.Contains(header, ")") {
+		fmt.Println("bracketed: ", true)
+		return true
+	}
+	fmt.Println("bracketed: ", false)
+	return false
+}
+
+func parseBracketedColumnHeader(header string) (ex int, exband int, em int, emband int, scriptposition int, err error) {
+	if bracketed(header) {
+		start := strings.Index(header, "(")
+		header = header[start+1:]
+		header = strings.TrimRight(header, ")")
+
+		if integer, er := strconv.Atoi(header); er == nil {
+			ex = integer
+			em = integer
+			scriptposition = 0
+			return
+		} else if len(strings.Fields(header)) == 2 {
+
+			fields := strings.Fields(header)
+
+			// handle wavelength part
+			if integer, er := strconv.Atoi(fields[0]); er == nil { // single wavelength
+				ex = integer
+				em = integer
+			} else if strings.Count(fields[0], "/") == 1 { // ex and em
+
+				subfields := strings.Split(fields[0], "/")
+				fmt.Println("subfields: ", subfields)
+
+				if len(subfields) == 2 {
+
+					// excitation
+					if integer, er := strconv.Atoi(subfields[0]); er == nil {
+						ex = integer
+					} else if strings.Count(subfields[0], "-") == 1 {
+						exfields := strings.Split(subfields[0], "-")
+
+						// excitation
+						if integer, er := strconv.Atoi(exfields[0]); er == nil {
+							ex = integer
+						} else if f, er := strconv.ParseFloat(exfields[0], 64); er == nil {
+							ex = wutil.RoundInt(f)
+						}
+
+						// band
+						if integer, er := strconv.Atoi(exfields[1]); er == nil {
+							exband = integer
+						}
+					}
+					// and emission
+					if integer, er := strconv.Atoi(subfields[1]); er == nil {
+						em = integer
+					} else if strings.Count(subfields[1], "-") == 1 {
+						emfields := strings.Split(subfields[1], "-")
+
+						// emission
+						if integer, er := strconv.Atoi(emfields[0]); er == nil {
+							em = integer
+						} else if f, er := strconv.ParseFloat(emfields[0], 64); er == nil {
+							em = wutil.RoundInt(f)
+						}
+
+						// band
+						if integer, er := strconv.Atoi(emfields[1]); er == nil {
+							emband = integer
+						}
+					}
+				}
+
+			} else {
+				err = fmt.Errorf("Unknown header type, %s ,found in Mars data file, problem with %s", header, fields[0])
+				return
+			}
+
+			// handle scriptnumber part
+			if integer, er := strconv.Atoi(fields[1]); er == nil {
+				scriptposition = integer
+				return
+			} else {
+				err = fmt.Errorf("Unknown header type, %s ,found in Mars data file, problem with %s", header, fields[1])
+				return
+			}
+
+		}
+	}
+	err = fmt.Errorf("Error with header %s found in Mars data file", header)
 	return
 }
 
@@ -902,4 +1004,8 @@ type PRMeasurement struct {
 	Temp        float64       //int       //   temperature
 	O2          int           // o2 conc when measurement was taken
 	CO2         int           // co2 conc when measurement was taken
+	EBand       int
+	RBand       int
+	Script      int
+	Gain        int
 }

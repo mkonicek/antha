@@ -52,7 +52,7 @@ type LHRequest struct {
 	Output_plate_order       []string
 	Plate_lookup             map[string]string
 	Stockconcs               map[string]float64
-	Policies                 *liquidhandling.LHPolicyRuleSet
+	Policies                 *wtype.LHPolicyRuleSet
 	Input_order              []string
 	Output_order             []string
 	Order_instructions_added []string
@@ -63,6 +63,7 @@ type LHRequest struct {
 	Input_vols_wanting       map[string]wunit.Volume
 	TimeEstimate             float64
 	CarryVolume              wunit.Volume
+	InstructionSets          [][]*wtype.LHInstruction
 	Evaps                    []wtype.VolumeCorrection
 	Options                  LHOptions
 	NUserPlates              int
@@ -207,12 +208,12 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 }
 
 type LHPolicyManager struct {
-	SystemPolicies *liquidhandling.LHPolicyRuleSet
-	UserPolicies   *liquidhandling.LHPolicyRuleSet
+	SystemPolicies *wtype.LHPolicyRuleSet
+	UserPolicies   *wtype.LHPolicyRuleSet
 }
 
-func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *liquidhandling.LHPolicyRuleSet) *liquidhandling.LHPolicyRuleSet {
-	ret := liquidhandling.CloneLHPolicyRuleSet(mgr.SystemPolicies)
+func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSet) *wtype.LHPolicyRuleSet {
+	ret := wtype.CloneLHPolicyRuleSet(mgr.SystemPolicies)
 
 	// things coming in take precedence over things already there
 	ret.MergeWith(mgr.UserPolicies)

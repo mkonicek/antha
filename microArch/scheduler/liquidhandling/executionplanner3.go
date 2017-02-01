@@ -1,4 +1,4 @@
-// /anthalib/driver/liquidhandling/funcs.go: Part of the Antha language
+// anthalib//liquidhandling/newexecutionplanner.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -23,33 +23,37 @@
 package liquidhandling
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-// random helper functions
+// robot here should be a copy... this routine will be destructive of state
+func ExecutionPlanner3(request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
+	ch := request.InstructionChain
 
-func MinMinVol(channels []*wtype.LHChannelParameter) wunit.Volume {
-	mmv := wunit.NewVolume(9999999.0, "ul")
-
-	for _, c := range channels {
-		if c.Minvol.LessThan(mmv) {
-			mmv = c.Minvol
+	for {
+		if ch == nil {
+			break
 		}
+
+		// make a transfer block instruction out of the incoming instructions
+		tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
+		request.InstructionSet.Add(tfb)
+		ch = ch.Child
 	}
 
-	return mmv
-}
+	inx, err := request.InstructionSet.Generate(request.Policies, robot)
 
-func allEqual(nums ...int) bool {
-	if len(nums) <= 1 {
-		return true
+	if err != nil {
+		return nil, err
 	}
 
-	for k := 1; k < len(nums); k++ {
-		if nums[k-1] != nums[k] {
-			return false
-		}
+	instrx := make([]liquidhandling.TerminalRobotInstruction, len(inx))
+	for i := 0; i < len(inx); i++ {
+		instrx[i] = inx[i].(liquidhandling.TerminalRobotInstruction)
 	}
-	return true
+	request.Instructions = instrx
+
+	// TODO -- pass evaporation info back up to request
+
+	return request, nil
 }

@@ -143,13 +143,17 @@ func getNameForID(pc []PlateChoice, id string) string {
 }
 
 func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain *IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
+	// considering only plate assignments,
 	// we have three kinds of solution
 	// 1- ones going to a specific plate
 	// 2- ones going to a specific plate type
 	// 3- ones going to a plate of our choosing
 
-	// find existing assignments
+	// find existing assignments and copy into the plate_choices structure
+	// this may be because 1) the user has set the assignment 2) the assignment derives from a component
 	plate_choices, mapchoices, err := get_and_complete_assignments(request, chain.ValueIDs(), plate_choices, mapchoices)
+
+	// map choices maps layout groups to (temp)plate IDs
 
 	if err != nil {
 		return request, plate_choices, mapchoices, err
@@ -264,6 +268,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 	for _, k := range order {
 		x += 1
 		v := request.LHInstructions[k]
+		// if plate ID set
 		if v.PlateID() != "" {
 			//MixInto
 			i := defined(v.PlateID(), s)
@@ -293,6 +298,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			}
 
 			id, ok := m[mlg]
+			// if no plate assigned so far, assign a temp ID for grouping
 			if !ok {
 				id = wtype.NewUUID()
 				m[mlg] = id
@@ -338,12 +344,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			if i == -1 {
 				logger.Debug("CONTRADICTORY PLATE ID SITUATION ", v)
 			}
-
-			// v2 is not always set - this isn't safe... why did we do it this way?
-			// i think this whole mechanism is pretty shady
-
-			//found := false
-
 			for i2, v2 := range s[i].Wells {
 				if v2 == tx[1] {
 					/*
@@ -395,9 +395,16 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 		// plate, even a virtual one
 		if v.PlateID() == "" {
 			pt := v.Platetype
-
 			// find a plate choice to put it in or return -1 for a new one
-			ass := assignmentWithType(pt, pc)
+			ass := -1
+
+			if pt != "" {
+				ass = assignmentWithType(pt, pc)
+			} else if len(pc) != 0 {
+				// just stick it in the first one
+
+				ass = 0
+			}
 
 			if ass == -1 {
 				// make a new plate
@@ -508,7 +515,7 @@ func assignmentWithType(pt string, pc []PlateChoice) int {
 	for i, v := range pc {
 		if pt == v.Platetype {
 			r = i
-			break
+			//			break
 		}
 	}
 
@@ -582,7 +589,6 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 	//sampletracker := sampletracker.GetSampleTracker()
 	// we need to fill in the platechoice structure then
 	// transfer the info across to the solutions
-
 	//opa := request.Output_assignments
 	opa := make(map[string][]string)
 
@@ -609,21 +615,15 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 
 		for i, _ := range c.Assigned {
 			sID := c.Assigned[i]
-			well := c.Wells[i]
-			/*
-				keep := c.Output[i]
-
-				if !keep {
-					sampletracker.SetLocationOf(sID, c.ID+":"+well)
-					continue
-				}
-			*/
+			well := ""
+			if i < len(c.Wells) {
+				well = c.Wells[i]
+			}
 
 			var assignment string
 
 			if well == "" {
 				wc := plat.NextEmptyWell(it)
-
 				if wc.IsZero() {
 					// something very bad has happened
 					//	logger.Fatal("DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")

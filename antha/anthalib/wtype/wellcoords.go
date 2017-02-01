@@ -8,6 +8,18 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
+// make an array of these from an array of strings
+
+func MakeWellCoordsArray(sa []string) []WellCoords {
+	r := make([]WellCoords, len(sa))
+
+	for i := 0; i < len(sa); i++ {
+		r[i] = MakeWellCoords(sa[i])
+	}
+
+	return r
+}
+
 // convenience comparison operator
 
 func CompareStringWellCoordsCol(sw1, sw2 string) int {

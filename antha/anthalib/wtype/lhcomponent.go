@@ -24,6 +24,7 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -110,13 +111,37 @@ func (lhc *LHComponent) Volume() wunit.Volume {
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
-func (lhc *LHComponent) Remove(v wunit.Volume) {
-	///TODO -- catch errors
+func (lhc *LHComponent) Remove(v wunit.Volume) wunit.Volume {
+	v2 := lhc.Volume()
+
+	if v2.LessThan(v) {
+		lhc.Vol = (0.0)
+		return v2
+	}
+
 	lhc.Vol -= v.ConvertToString(lhc.Vunit)
 
-	if lhc.Vol < 0.0 {
-		lhc.Vol = 0.0
+	return v
+}
+
+func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
+	if lhc.IsZero() {
+		return nil, fmt.Errorf("Cannot sample empty component")
+	} else if lhc.Volume().EqualTo(v) {
+		return lhc, nil
 	}
+
+	c := lhc.Dup()
+	c.ID = NewUUID()
+	v2 := lhc.Remove(v)
+	c.Vunit = v2.Unit().PrefixedSymbol()
+	c.Vol = v2.RawValue()
+	c.AddParentComponent(lhc)
+	lhc.AddDaughterComponent(c)
+	c.Loc = ""
+	c.Destination = ""
+
+	return c, nil
 }
 
 func (lhc *LHComponent) Dup() *LHComponent {
@@ -387,4 +412,122 @@ func parseTree(p string, g *graph.StringGraph) []string {
 	}
 
 	return newnodes
+}
+
+func (lhc *LHComponent) AddVolumeRule(minvol, maxvol float64, pol LHPolicy) error {
+	lhpr, err := lhc.GetPolicies()
+
+	if err != nil {
+		return err
+	}
+
+	rulenum := len(lhpr.Rules)
+
+	name := fmt.Sprintf("UserRule%d", rulenum+1)
+
+	rule := NewLHPolicyRule(name)
+	err = rule.AddNumericConditionOn("VOLUME", minvol, maxvol)
+	if err != nil {
+		return err
+	}
+	lhpr.AddRule(rule, pol)
+
+	err = rule.AddCategoryConditionOn("INSTANCE", lhc.ID)
+	if err != nil {
+		return err
+	}
+
+	err = lhc.SetPolicies(lhpr)
+
+	return err
+}
+
+func (lhc *LHComponent) AddPolicy(pol LHPolicy) error {
+	lhpr, err := lhc.GetPolicies()
+
+	if err != nil {
+		return err
+	}
+
+	rulenum := len(lhpr.Rules)
+
+	name := fmt.Sprintf("UserRule%d", rulenum+1)
+
+	rule := NewLHPolicyRule(name)
+	err = rule.AddCategoryConditionOn("INSTANCE", lhc.ID)
+	if err != nil {
+		return err
+	}
+	lhpr.AddRule(rule, pol)
+
+	err = lhc.SetPolicies(lhpr)
+
+	return err
+
+}
+
+// in future this will be deprecated... should not let user completely reset policies
+func (lhc *LHComponent) SetPolicies(rs *LHPolicyRuleSet) error {
+	buf, err := json.Marshal(rs)
+
+	if err == nil {
+		lhc.Extra["Policies"] = string(buf)
+	}
+
+	return err
+}
+
+func (lhc *LHComponent) GetPolicies() (*LHPolicyRuleSet, error) {
+	var rs LHPolicyRuleSet
+	var err error
+
+	if lhc.Extra == nil {
+		return NewLHPolicyRuleSet(), err
+	}
+
+	ent, ok := lhc.Extra["Policies"]
+
+	if !ok {
+		return NewLHPolicyRuleSet(), err
+	}
+
+	s, ok := ent.(string)
+
+	if !ok {
+		err = fmt.Errorf("Wrong type for policies entry (%v)", ent)
+		return &rs, err
+	}
+
+	ba := []byte(s)
+
+	err = json.Unmarshal(ba, &rs)
+	return &rs, err
+}
+
+func (lhc *LHComponent) IsValuable() bool {
+	if lhc.Extra == nil {
+		return false
+	}
+
+	v, ok := lhc.Extra["valuable"]
+
+	if !ok {
+		return false
+	}
+
+	b, ok := v.(bool)
+
+	if !ok {
+		return false
+	}
+
+	return b
+}
+
+func (lhc *LHComponent) SetValue(b bool) {
+	if lhc.Extra == nil {
+		lhc.Extra = make(map[string]interface{})
+	}
+
+	lhc.Extra["valuable"] = b
 }

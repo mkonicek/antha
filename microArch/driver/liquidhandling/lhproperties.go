@@ -536,31 +536,55 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
+func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, contiguous bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
+	plateIDs = make([][]string, len(cmps))
+	wellCoords = make([][]string, len(cmps))
+	vols = make([][]wunit.Volume, len(cmps))
+
+	if multi > 1 {
+		for _, ipref := range lhp.Input_preferences {
+			p, ok := lhp.Plates[ipref]
+
+			if ok {
+				pids, wcs, vls, err := p.FindComponentsMulti(cmps, ori, multi, contiguous)
+				if err != nil {
+					continue
+				}
+				for i := 0; i < len(cmps); i++ {
+					plateIDs[i] = []string{pids[i]}
+					wellCoords[i] = []string{wcs[i]}
+					vols[i] = []wunit.Volume{vls[i]}
+				}
+
+				return plateIDs, wellCoords, vols, nil
+			}
+		}
+	}
+	return lhp.GetComponentsSingle(cmps, carryvol)
+}
+
+// destructive of state
 // GetComponents takes requests for components at particular volumes
 // + a measure of carry volume
 // returns lists of plate IDs + wells from which to get components or error
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([][]string, [][]string, [][]wunit.Volume, error) {
-	r1 := make([][]string, len(cmps))
-	r2 := make([][]string, len(cmps))
-	r3 := make([][]wunit.Volume, len(cmps))
+
+func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([][]string, [][]string, [][]wunit.Volume, error) {
+	plateIDs := make([][]string, len(cmps))
+	wellCoords := make([][]string, len(cmps))
+	vols := make([][]wunit.Volume, len(cmps))
+
+	// need to disentangle some stuff here
 
 	for i, v := range cmps {
-		r1[i] = make([]string, 0, 1)
-		r2[i] = make([]string, 0, 1)
-		r3[i] = make([]wunit.Volume, 0, 1)
+		plateIDs[i] = make([]string, 0, 1)
+		wellCoords[i] = make([]string, 0, 1)
+		vols[i] = make([]wunit.Volume, 0, 1)
 		foundIt := false
 
 		vdup := v.Dup()
-		/*
-			vdup := v.Dup()
-			vdup.Vol += carryvol.ConvertTo(wunit.ParsePrefixedUnit(vdup.Vunit))
-		*/
 		if v.HasAnyParent() {
-			//fmt.Println("Trying to get component ", v.CName, v.ParentID)
 			// this means it was already made with a previous call
 			tx := strings.Split(v.Loc, ":")
-
-			// maybe we can look it up?
 
 			if len(tx) < 2 || len(v.Loc) == 0 {
 				st := sampletracker.GetSampleTracker()
@@ -568,9 +592,9 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 				tx = strings.Split(loc, ":")
 			}
 
-			r1[i] = append(r1[i], tx[0])
-			r2[i] = append(r2[i], tx[1])
-			r3[i] = append(r3[i], v.Volume().Dup())
+			plateIDs[i] = append(plateIDs[i], tx[0])
+			wellCoords[i] = append(wellCoords[i], tx[1])
+			vols[i] = append(vols[i], v.Volume().Dup())
 
 			vol := v.Volume().Dup()
 			vol.Add(carryvol)
@@ -597,9 +621,9 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 						for ix, _ := range wcarr {
 							wc := wcarr[ix].FormatA1()
 							vl := varr[ix].Dup()
-							r1[i] = append(r1[i], p.ID)
-							r2[i] = append(r2[i], wc)
-							r3[i] = append(r3[i], vl)
+							plateIDs[i] = append(plateIDs[i], p.ID)
+							wellCoords[i] = append(wellCoords[i], wc)
+							vols[i] = append(vols[i], vl)
 							vl = vl.Dup()
 							vl.Add(carryvol)
 							lhp.RemoveComponent(p.ID, wc, vl)
@@ -611,13 +635,13 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 
 			if !foundIt {
 				err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SOURCE FOR ", v.CName, " at volume ", v.Volume().ToString()))
-				return r1, r2, r3, err
+				return plateIDs, wellCoords, vols, err
 			}
 
 		}
 	}
 
-	return r1, r2, r3, nil
+	return plateIDs, wellCoords, vols, nil
 }
 
 func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int) (wells, positions, boxtypes []string, err error) {
@@ -884,4 +908,8 @@ func (p *LHProperties) MinPossibleVolume() wunit.Volume {
 	}
 
 	return minvol
+}
+
+func (p *LHProperties) CanPossiblyDo(v wunit.Volume) bool {
+	return !p.MinPossibleVolume().LessThan(v)
 }

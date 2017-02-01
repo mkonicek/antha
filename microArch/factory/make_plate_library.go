@@ -44,7 +44,8 @@ const (
 	coolerheight                                float64 = 16.0
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
-	pcrbioshakeadaptorheight                    float64 = 4.5
+	bioshake96welladaptorheight                 float64 = 4.5
+	bioshakestandardadaptorheight               float64 = 1.0
 )
 
 var platespecificoffset = map[string]float64{
@@ -127,15 +128,23 @@ type Constraints map[string][]string
 var Devices map[string]Device = map[string]Device{
 	"riser40": Riser{Name: "riser40", Manufacturer: "Cybio", Heightinmm: riserheightinmm, Synonyms: []string{"riser40", "riser"}},
 	"riser20": Riser{Name: "riser20", Manufacturer: "Gilson", Heightinmm: shallowriserheightinmm, Synonyms: []string{"riser20", "shallowriser"}},
-	"incubator": Incubator{
-		Riser:      Riser{Name: "incubator", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm, Synonyms: []string{"incubator", "bioshake"}},
+	"bioshake": Incubator{
+		Riser:      Riser{Name: "bioshake", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm, Synonyms: []string{"incubator", "bioshake"}},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{
 			"Pipetmax": []string{"position_1"},
 		},
 	},
-	"inc_pcr_adaptor": Incubator{
-		Riser:      Riser{Name: "inc_pcr_adaptor", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm + pcrbioshakeadaptorheight, Synonyms: []string{"inc_pcr_adaptor"}},
+	"bioshake_96well_adaptor": Incubator{
+		Riser:      Riser{Name: "bioshake_96well_adaptor", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm + bioshake96welladaptorheight, Synonyms: []string{"bioshake_96well_adaptor"}},
+		Properties: devices.Shaker["3000 T-elm"],
+		PositionConstraints: map[string][]string{
+			"Pipetmax": []string{"position_1"},
+		},
+	},
+
+	"bioshake_standard_adaptor": Incubator{
+		Riser:      Riser{Name: "bioshake_standard_adaptor", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm + bioshakestandardadaptorheight, Synonyms: []string{"bioshake_standard_adaptor"}},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{
 			"Pipetmax": []string{"position_1"},

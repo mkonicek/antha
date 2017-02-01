@@ -364,7 +364,7 @@ func MakePEGPolicy() wtype.LHPolicy {
 	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = false
-	policy["CAN_MULTI"] = false
+	policy["CAN_MULTI"] = true
 	policy["RESET_OVERRIDE"] = true
 	return policy
 }
@@ -379,7 +379,7 @@ func MakeProtoplastPolicy() wtype.LHPolicy {
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	//policy["TOUCHOFF"] = true
 	policy["TIP_REUSE_LIMIT"] = 5
-	policy["CAN_MULTI"] = false
+	policy["CAN_MULTI"] = true
 	return policy
 }
 
@@ -396,7 +396,7 @@ func MakePaintPolicy() wtype.LHPolicy {
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = true
-	policy["CAN_MULTI"] = false
+	policy["CAN_MULTI"] = true
 	return policy
 }
 
@@ -410,7 +410,7 @@ func MakeDispenseAboveLiquidPolicy() wtype.LHPolicy {
 	policy["BLOWOUTVOLUME"] = 50.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = false
-	policy["CAN_MULTI"] = false
+	policy["CAN_MULTI"] = true
 	return policy
 }
 
@@ -425,7 +425,7 @@ func MakeColonyPolicy() wtype.LHPolicy {
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = false
-	policy["CAN_MULTI"] = false
+	policy["CAN_MULTI"] = true
 	policy["RESET_OVERRIDE"] = true
 
 	return policy
@@ -440,7 +440,7 @@ func MakeColonyMixPolicy() wtype.LHPolicy {
 func MakeWaterPolicy() wtype.LHPolicy {
 	waterpolicy := make(wtype.LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
-	waterpolicy["CAN_MULTI"] = false
+	waterpolicy["CAN_MULTI"] = true
 	waterpolicy["CAN_MSA"] = true
 	waterpolicy["CAN_SDD"] = true
 	waterpolicy["DSPZOFFSET"] = 1.0
@@ -490,7 +490,7 @@ func MakePlateOutPolicy() wtype.LHPolicy {
 	culturepolicy["ASPSPEED"] = 4.0
 	culturepolicy["ASPZOFFSET"] = 2.0
 	culturepolicy["DSPSPEED"] = 4.0
-	culturepolicy["CAN_MULTI"] = false
+	culturepolicy["CAN_MULTI"] = true
 	culturepolicy["CAN_MSA"] = false
 	culturepolicy["CAN_SDD"] = false
 	culturepolicy["DSPREFERENCE"] = 0
@@ -528,7 +528,7 @@ func MakeGlycerolPolicy() wtype.LHPolicy {
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["TIP_REUSE_LIMIT"] = 0
-	glycerolpolicy["CAN_MULTI"] = false
+	glycerolpolicy["CAN_MULTI"] = true
 	return glycerolpolicy
 }
 
@@ -555,7 +555,7 @@ func MakeDNAPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 10)
 	dnapolicy["ASPSPEED"] = 2.0
 	dnapolicy["DSPSPEED"] = 2.0
-	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -590,7 +590,7 @@ func MakeDetergentPolicy() wtype.LHPolicy {
 	//        detergentpolicy["POST_MIX"] = 3
 	detergentpolicy["ASPSPEED"] = 1.0
 	detergentpolicy["DSPSPEED"] = 1.0
-	detergentpolicy["CAN_MULTI"] = false
+	detergentpolicy["CAN_MULTI"] = true
 	detergentpolicy["CAN_MSA"] = false
 	detergentpolicy["CAN_SDD"] = false
 	detergentpolicy["DSPREFERENCE"] = 0
@@ -605,7 +605,7 @@ func MakeProteinPolicy() wtype.LHPolicy {
 	proteinpolicy["POST_MIX_VOLUME"] = 50.0
 	proteinpolicy["ASPSPEED"] = 2.0
 	proteinpolicy["DSPSPEED"] = 2.0
-	proteinpolicy["CAN_MULTI"] = false
+	proteinpolicy["CAN_MULTI"] = true
 	proteinpolicy["CAN_MSA"] = false
 	proteinpolicy["CAN_SDD"] = false
 	proteinpolicy["DSPREFERENCE"] = 0
@@ -619,7 +619,7 @@ func MakeLoadPolicy() wtype.LHPolicy {
 	loadpolicy := make(wtype.LHPolicy)
 	loadpolicy["ASPSPEED"] = 1.0
 	loadpolicy["DSPSPEED"] = 0.1
-	loadpolicy["CAN_MULTI"] = false
+	loadpolicy["CAN_MULTI"] = true
 	loadpolicy["CAN_MSA"] = false
 	loadpolicy["CAN_SDD"] = false
 	loadpolicy["TOUCHOFF"] = false
@@ -637,7 +637,7 @@ func MakeLoadWaterPolicy() wtype.LHPolicy {
 	loadpolicy := make(wtype.LHPolicy)
 	loadpolicy["ASPSPEED"] = 1.0
 	loadpolicy["DSPSPEED"] = 0.1
-	loadpolicy["CAN_MULTI"] = false
+	loadpolicy["CAN_MULTI"] = true
 	loadpolicy["CAN_MSA"] = false
 	//loadpolicy["CAN_SDD"] = false
 	loadpolicy["TOUCHOFF"] = false
@@ -655,7 +655,7 @@ func MakeLoadlowPolicy() wtype.LHPolicy {
 	loadpolicy := make(wtype.LHPolicy)
 	loadpolicy["ASPSPEED"] = 1.0
 	loadpolicy["DSPSPEED"] = 1.0
-	loadpolicy["CAN_MULTI"] = false
+	loadpolicy["CAN_MULTI"] = true
 	loadpolicy["CAN_MSA"] = false
 	loadpolicy["CAN_SDD"] = false
 	loadpolicy["TOUCHOFF"] = false
@@ -680,7 +680,7 @@ func MakeNeedToMixPolicy() wtype.LHPolicy {
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -700,7 +700,7 @@ func PreMixPolicy() wtype.LHPolicy {
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -721,7 +721,7 @@ func PostMixPolicy() wtype.LHPolicy {
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0

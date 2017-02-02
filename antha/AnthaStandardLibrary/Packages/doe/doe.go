@@ -945,8 +945,6 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 
 				descriptor = sheet.Cell(0, j).String()
 				factrodescriptor := descriptor
-				fmt.Println(i, j, descriptor)
-
 				cell := sheet.Cell(i, j)
 
 				celltype := cell.Type()

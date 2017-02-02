@@ -437,10 +437,10 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 						} else if strings.Contains(welldata.ReadingType, "(600 2)") {
 							measurement.RWavelength = 600
 							measurement.EWavelength = 600
-							/*} else if strings.Contains(welldata.ReadingType, "(484-8/517.5-9 3)") {
+						} else if strings.Contains(welldata.ReadingType, "(484-8/517.5-9 3)") {
 							measurement.RWavelength = 517
 							measurement.EWavelength = 484
-							*/
+
 						} else if HeaderContainsWavelength(sheet1, headerrow, j) {
 							if wavelengthrow == 0 && HeaderContainsWavelength(sheet1, headerrow, j) {
 								_, wavelength, err := HeaderWavelength(sheet1, headerrow, j)
@@ -555,19 +555,25 @@ func HeaderWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, n
 	return
 }
 
-func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int) (xaxis []time.Duration, yaxis []float64) {
+func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int) (xaxis []time.Duration, yaxis []float64, err error) {
 	xaxis = make([]time.Duration, 0)
 	yaxis = make([]float64, 0)
+	var emfound bool
+	var exfound bool
 	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
 
 		if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength {
-
+			emfound = true
+			exfound = true
+			fmt.Println("hello this should set emfound to true")
 			xaxis = append(xaxis, measurement.Timestamp)
 			yaxis = append(yaxis, measurement.Reading)
 
 		}
 	}
-
+	if emfound != true && exfound != true {
+		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No values found for emWavelength ", emWavelength, " and/or exWavelength ", exWavelength))
+	}
 	return
 }
 

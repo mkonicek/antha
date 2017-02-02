@@ -908,6 +908,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	rule = NewLHPolicyRule("EGEL962Load")
 	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_2")
 	pol = MakeEGEL962Policy()
+
 	lhpr.AddRule(rule, pol)
 
 	return lhpr, nil

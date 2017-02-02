@@ -72,6 +72,10 @@ func makeMixerOpt() (mixer.Opt, error) {
 	opt.OutputPlateType = GetStringSlice("outputPlateType")
 	opt.TipType = GetStringSlice("tipType")
 
+	if b := viper.GetBool("hackTecan"); b {
+		opt.HackTecan = true
+	}
+
 	for _, fn := range GetStringSlice("inputPlates") {
 		p, err := mixer.ParseInputPlateFile(fn)
 		if err != nil {
@@ -240,6 +244,7 @@ func init() {
 	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
 	flags.Int("maxPlates", 0, "Maximum number of plates")
 	flags.Int("maxWells", 0, "Maximum number of wells on a plate")
+	flags.Bool("hackTecan", false, "activate power team tecan hack")
 	flags.Float64("residualVolumeWeight", 0.0, "Residual volume weight")
 	flags.StringSlice("inputPlateType", nil, "Default input plate types (in order of preference)")
 	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")

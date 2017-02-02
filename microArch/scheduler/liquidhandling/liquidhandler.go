@@ -373,9 +373,11 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 		}
 	}
 
-	stat = this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
-	if stat.Errorcode == driver.ERR {
-		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
+	if this.Properties.Mnfr == "Gilson" {
+		stat = this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
+		if stat.Errorcode == driver.ERR {
+			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
+		}
 	}
 
 	return nil

@@ -10,6 +10,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
+	madriver "github.com/antha-lang/antha/microArch/driver"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/factory"
 	planner "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
@@ -289,11 +290,12 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 
 func New(opt Opt, d driver.ExtendedLiquidhandlingDriver) (*Mixer, error) {
 
-	var p *driver.LHProperties
-	status := driver.CommandStatus{OK, "", ""}
+	var p driver.LHProperties
+	status := madriver.CommandStatus{true, madriver.OK, ""}
 	if opt.HackTecan {
-		p = GetLiquidHandlerByType("TecanEvo")
-
+		fmt.Println("HACKING TECAN... DONCHALUVIT?")
+		pp := makeEvo()
+		p = *pp
 	} else {
 		p, status = d.GetCapabilities()
 	}

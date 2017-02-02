@@ -288,7 +288,15 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 }
 
 func New(opt Opt, d driver.ExtendedLiquidhandlingDriver) (*Mixer, error) {
-	p, status := d.GetCapabilities()
+
+	var p *driver.LHProperties
+	status := driver.CommandStatus{OK, "", ""}
+	if opt.HackTecan {
+		p = GetLiquidHandlerByType("TecanEvo")
+
+	} else {
+		p, status = d.GetCapabilities()
+	}
 	if !status.OK {
 		return nil, fmt.Errorf("cannot get capabilities: %s", status.Msg)
 	}

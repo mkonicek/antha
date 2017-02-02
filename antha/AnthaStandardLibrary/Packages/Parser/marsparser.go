@@ -389,18 +389,9 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 						// handle case of absorbance (may need to add others.. if contains Ex, Ex else number = abs
 						ex, exband, em, emband, scriptposition, err := parseBracketedColumnHeader(welldata.ReadingType)
 
-						var errstring string
-
-						////////
-						if err != nil {
-							errstring = err.Error()
-						}
-						fmt.Println("ex, exband, em, emband, scriptposition, err", ex, exband, em, emband, scriptposition, errstring)
-						////////
-
 						if err == nil {
-							measurement.RWavelength = ex
-							measurement.EWavelength = em
+							measurement.RWavelength = em
+							measurement.EWavelength = ex
 							measurement.EBand = exband
 							measurement.RBand = emband
 							measurement.Script = scriptposition
@@ -506,10 +497,8 @@ func bracketed(header string) bool {
 	header = strings.TrimSpace(header)
 
 	if strings.Contains(header, "(") && strings.Contains(header, ")") {
-		fmt.Println("bracketed: ", true)
 		return true
 	}
-	fmt.Println("bracketed: ", false)
 	return false
 }
 
@@ -535,8 +524,6 @@ func parseBracketedColumnHeader(header string) (ex int, exband int, em int, emba
 			} else if strings.Count(fields[0], "/") == 1 { // ex and em
 
 				subfields := strings.Split(fields[0], "/")
-				fmt.Println("subfields: ", subfields)
-
 				if len(subfields) == 2 {
 
 					// excitation
@@ -660,10 +647,48 @@ func HeaderWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, n
 	return
 }
 
-// optionally specify the script position to use if more than one set of data with shared excitation and emission spectra
-func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64) {
+func (data MarsData) AvailableReadings(wellname string) (readingDescriptions []string) {
+
+	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
+
+		var description string
+
+		if measurement.EWavelength == measurement.RWavelength {
+
+			if measurement.Script > 0 {
+				description = fmt.Sprintln("Absorbance: ", measurement.EWavelength, "nm. ", "Script position: ", measurement.Script)
+			} else {
+				if measurement.Script > 0 {
+					description = fmt.Sprintln("Absorbance: ", measurement.EWavelength, "nm. ")
+				}
+			}
+
+		} else {
+
+			if measurement.Script > 0 {
+				description = fmt.Sprintln("Excitation: ", measurement.EWavelength, "nm. ", "Emission: ", measurement.RWavelength, "nm. ", "Script position: ", measurement.Script)
+			} else {
+				if measurement.Script > 0 {
+					description = fmt.Sprintln("Excitation: ", measurement.EWavelength, "nm. ", "Emission: ", measurement.RWavelength)
+				}
+			}
+
+		}
+
+		readingDescriptions = append(readingDescriptions, description)
+	}
+
+	readingDescriptions = search.RemoveDuplicates(readingDescriptions)
+
+	return
+}
+
+func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error) {
+
 	xaxis = make([]time.Duration, 0)
 	yaxis = make([]float64, 0)
+	var emfound bool
+	var exfound bool
 	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
 
 		var checkscriptnumber bool
@@ -673,19 +698,24 @@ func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength 
 		}
 
 		if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength && checkscriptnumber && measurement.Script == scriptnumber {
-
+			emfound = true
+			exfound = true
 			xaxis = append(xaxis, measurement.Timestamp)
 			yaxis = append(yaxis, measurement.Reading)
 
 		} else if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength && !checkscriptnumber {
 
+			emfound = true
+			exfound = true
 			xaxis = append(xaxis, measurement.Timestamp)
 			yaxis = append(yaxis, measurement.Reading)
 
 		}
 
 	}
-
+	if emfound != true && exfound != true {
+		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No values found for emWavelength ", emWavelength, " and/or exWavelength ", exWavelength, ". ", "Available Values found: ", data.AvailableReadings(wellname)))
+	}
 	return
 }
 

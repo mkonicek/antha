@@ -212,6 +212,8 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 			waste = factory.GetTipwasteByType("CyBiotipwaste")
 		} else if params.Model == "Human" {
 			waste = factory.GetTipwasteByType("Manualtipwaste")
+		} else if params.Model == "Evo" {
+			waste = factory.GetTipwasteByType("Tecantipwaste")
 		}
 
 		if waste != nil {

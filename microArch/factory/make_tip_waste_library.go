@@ -30,6 +30,7 @@ func makeTipwastes() map[string]*wtype.LHTipwaste {
 	ret["Gilsontipwaste"] = makeGilsonTipWaste()
 	ret["CyBiotipwaste"] = makeCyBioTipwaste()
 	ret["Manualtipwaste"] = makeManualTipwaste()
+	ret["Tecantipwaste"] = makeTecanTipwaste()
 	return ret
 }
 
@@ -45,6 +46,12 @@ func makeCyBioTipwaste() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 90.5, 171.0, 90.0)
 	w := wtype.NewLHWell("CyBiotipwaste", "", "A1", "ul", 800000.0, 800000.0, shp, 0, 90.5, 171.0, 90.0, 0.0, "mm")
 	lht := wtype.NewLHTipwaste(700, "CyBiotipwaste", "cybio", 90.5, w, 85.5, 45.0, 0.0)
+	return lht
+}
+func makeTecanTipwaste() *wtype.LHTipwaste {
+	shp := wtype.NewShape("box", "mm", 90.5, 171.0, 90.0)
+	w := wtype.NewLHWell("Tecantipwaste", "", "A1", "ul", 800000.0, 800000.0, shp, 0, 90.5, 171.0, 90.0, 0.0, "mm")
+	lht := wtype.NewLHTipwaste(700, "Tecantipwaste", "cybio", 90.5, w, 85.5, 45.0, 0.0)
 	return lht
 }
 

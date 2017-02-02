@@ -748,7 +748,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms
 		if newtipp != nil {
 			newtiptype = newtipp.Type
 		} else {
-			return ret, fmt.Errorf("No tip chosen")
+			return ret, fmt.Errorf("No tip chosen (2a)")
 		}
 		mergedchannel := newchannel.MergeWithTip(newtipp)
 		tipp = newtipp
@@ -956,7 +956,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms 
 	if tipp != nil {
 		tiptype = tipp.Type
 	} else {
-		return ret, fmt.Errorf("No tip chosen")
+		return ret, fmt.Errorf("No tip chosen (2b)")
 	}
 
 	tipget, err := GetTips(tiptype, prms, channel, ins.Multi, false)

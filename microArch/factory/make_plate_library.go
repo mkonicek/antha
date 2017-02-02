@@ -330,11 +330,11 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 5.0       // distance from top left si z9fdJwde of plate to first well
 	ystart = 5.0       // distance from top left side of plate to first well
-	zstart = 7.0       // offset of bottom of deck to bottom of well
+	zstart = 7.0 - 2.0 // offset of bottom of deck to bottom of well
 
 	welltypesmallereppy := wtype.NewLHWell("1.5mlEpp", "", "", "ul", 1500, 25, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
 
-	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 2, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
 	// greiner 384 well plate flat bottom
@@ -688,6 +688,8 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = MakeHighResplateforPicking()
 	plates[plate.Type] = plate
 
+	plate = MakeGreinerFlatBottomBlackPlate()
+	plates[plate.Type] = plate
 	return plates
 }
 
@@ -715,6 +717,13 @@ func MakeGreinerVBottomPlate() *wtype.LHPlate {
 	//	plate = wtype.NewLHPlate("SRWFB96", "Unknown", 8, 12, 15, "mm", welltype, 9, 9, 0.0, 0.0, 2.0)
 	plate := wtype.NewLHPlate("GreinerSWVBottom", "Greiner", 8, 12, 15, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
+	return plate
+}
+func MakeGreinerFlatBottomBlackPlate() *wtype.LHPlate {
+	// shallow round well flat bottom 96
+	rwshp := wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
+	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 500, 10, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
+	plate := wtype.NewLHPlate("greiner96Black", "greiner", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, 1.0)
 	return plate
 }
 

@@ -813,7 +813,13 @@ func MakeEGEL48Policy() LHPolicy {
 	return loadpolicy
 }
 
-func MakeEGEL96Policy() LHPolicy {
+func MakeEGEL961Policy() LHPolicy {
+	loadpolicy := make(LHPolicy, 1)
+	loadpolicy["RESET_OVERRIDE"] = true
+	return loadpolicy
+}
+
+func MakeEGEL962Policy() LHPolicy {
 	loadpolicy := make(LHPolicy, 1)
 	loadpolicy["RESET_OVERRIDE"] = true
 	return loadpolicy
@@ -892,10 +898,16 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	pol = MakeEGEL48Policy()
 	lhpr.AddRule(rule, pol)
 
-	//fix for removing blowout in DNA only if EGEL 96 plate type is used
-	rule = NewLHPolicyRule("EGEL96Load")
+	//fix for removing blowout in DNA only if EGEL 96_1 plate type is used
+	rule = NewLHPolicyRule("EGEL961Load")
 	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_1")
-	pol = MakeEGEL96Policy()
+	pol = MakeEGEL961Policy()
+	lhpr.AddRule(rule, pol)
+
+	//fix for removing blowout in DNA only if EGEL 96_2 plate type is used
+	rule = NewLHPolicyRule("EGEL962Load")
+	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_2")
+	pol = MakeEGEL962Policy()
 	lhpr.AddRule(rule, pol)
 
 	return lhpr, nil

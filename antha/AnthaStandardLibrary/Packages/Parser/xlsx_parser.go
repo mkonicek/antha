@@ -54,7 +54,11 @@ func generateCSVFromXLSXsheet(excelFileName string, sheetIndex int, outputf outp
 		var vals []string
 		if row != nil {
 			for _, cell := range row.Cells {
-				vals = append(vals, fmt.Sprintf("%q", cell.String()))
+				cellstr, err := cell.String()
+				if err != nil {
+					return err
+				}
+				vals = append(vals, fmt.Sprintf("%q", cellstr))
 			}
 			outputf(strings.Join(vals, delimiter) + "\n")
 		}
@@ -76,7 +80,11 @@ func generateCSVFromspecificXLSXsheet(excelFileName string, sheetname string, ou
 				var vals []string
 				if row != nil {
 					for _, cell := range row.Cells {
-						vals = append(vals, fmt.Sprintf("%q", cell.String()))
+						cellstr, err := cell.String()
+						if err != nil {
+							return err
+						}
+						vals = append(vals, fmt.Sprintf("%q", cellstr))
 					}
 					outputf(strings.Join(vals, delimiter) + "\n")
 				}

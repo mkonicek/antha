@@ -599,7 +599,7 @@ func AddWelllocations(DXORJMP string, xlsxfile string, oldsheet int, runnumberto
 
 	sheet := spreadsheet.Sheet(file, oldsheet)
 
-	_ = file.AddSheet("hello")
+	_, _ = file.AddSheet("hello")
 
 	//extracolumn := sheet.MaxCol + 1
 
@@ -680,11 +680,20 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 		}
 
 		for j := 2; j < sheet.MaxCol; j++ {
-			factororresponse := sheet.Cell(0, j).String()
+			factororresponse, err := sheet.Cell(0, j).String()
+
+			if err != nil {
+				return runs, err
+			}
 
 			if strings.Contains(factororresponse, "Factor") {
 
-				descriptor = strings.Split(sheet.Cell(1, j).String(), ":")[1]
+				desc, err := sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
+
+				descriptor = strings.Split(desc, ":")[1]
 				factrodescriptor := descriptor
 				//fmt.Println(i, j, descriptor)
 
@@ -692,7 +701,7 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 
 				celltype := cell.Type()
 
-				_, err := cell.Float()
+				_, err = cell.Float()
 
 				if strings.ToUpper(cell.Value) == "TRUE" {
 					setpoint = true //cell.SetBool(true)
@@ -709,14 +718,21 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 						}
 					}
 				} else {
-					setpoint = cell.String()
+
+					setpoint, err = cell.String()
+					if err != nil {
+						return runs, err
+					}
 				}
 
 				factordescriptors = append(factordescriptors, factrodescriptor)
 				setpoints = append(setpoints, setpoint)
 
 			} else if strings.Contains(factororresponse, "Response") {
-				descriptor = sheet.Cell(1, j).String()
+				descriptor, err = sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
 				responsedescriptor := descriptor
 				//// fmt.Println("response", i, j, descriptor)
 				responsedescriptors = append(responsedescriptors, responsedescriptor)
@@ -737,12 +753,18 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 					}
 					responsevalues = append(responsevalues, responsevalue)
 				} else {
-					responsevalue := cell.String()
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
 					responsevalues = append(responsevalues, responsevalue)
 				}
 
 			} else {
-				descriptor = sheet.Cell(1, j).String()
+				descriptor, err = sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
 				responsedescriptor := descriptor
 
 				otherheaders = append(otherheaders, factororresponse)
@@ -764,7 +786,10 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 					}
 					otherresponsevalues = append(otherresponsevalues, responsevalue)
 				} else {
-					responsevalue := cell.String()
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
 					otherresponsevalues = append(otherresponsevalues, responsevalue)
 				}
 
@@ -800,8 +825,10 @@ func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File)
 	var err error
 
 	xlsxfile = xlsx.NewFile()
-	sheet = xlsxfile.AddSheet("Sheet1")
-
+	sheet, err = xlsxfile.AddSheet("Sheet1")
+	if err != nil {
+		panic(err.Error())
+	}
 	// add headers
 	row = sheet.AddRow()
 
@@ -943,7 +970,10 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 
 			if strings.Contains(factororresponse, "Factor") {
 
-				descriptor = sheet.Cell(0, j).String()
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
 				factrodescriptor := descriptor
 				cell := sheet.Cell(i, j)
 
@@ -966,13 +996,19 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 						}
 					}
 				} else {
-					setpoint = cell.String()
+					setpoint, err = cell.String()
+					if err != nil {
+						return runs, err
+					}
 				}
 				factordescriptors = append(factordescriptors, factrodescriptor)
 				setpoints = append(setpoints, setpoint)
 
 			} else if strings.Contains(factororresponse, "Response") {
-				descriptor = sheet.Cell(0, j).String()
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
 				responsedescriptor := descriptor
 
 				responsedescriptors = append(responsedescriptors, responsedescriptor)
@@ -993,12 +1029,18 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 					}
 					responsevalues = append(responsevalues, responsevalue)
 				} else {
-					responsevalue := cell.String()
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
 					responsevalues = append(responsevalues, responsevalue)
 				}
 
 			} else /*if j != patterncolumn*/ {
-				descriptor = sheet.Cell(0, j).String()
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
 				responsedescriptor := descriptor
 
 				otherheaders = append(otherheaders, factororresponse)
@@ -1020,7 +1062,10 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 					}
 					otherresponsevalues = append(otherresponsevalues, responsevalue)
 				} else {
-					responsevalue := cell.String()
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
 					otherresponsevalues = append(otherresponsevalues, responsevalue)
 				}
 
@@ -1057,8 +1102,10 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 	var err error
 
 	xlsxfile = xlsx.NewFile()
-	sheet = xlsxfile.AddSheet("Sheet1")
-
+	sheet, err = xlsxfile.AddSheet("Sheet1")
+	if err != nil {
+		panic(err.Error())
+	}
 	// new row
 	row = sheet.AddRow()
 
@@ -1182,7 +1229,11 @@ func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int)
 	sheet := spreadsheet.Sheet(file, 0)
 
 	for i := 0; i < sheet.MaxCol; i++ {
-		if search.BinarySearch(responsefactors, i) == false && strings.ToUpper(sheet.Cell(0, i).String()) != "PATTERN" {
+		header, err := sheet.Cell(0, i).String()
+		if err != nil {
+			return factorcolumns
+		}
+		if search.BinarySearch(responsefactors, i) == false && strings.ToUpper(header) != "PATTERN" {
 			factorcolumns = append(factorcolumns, i)
 		}
 	}
@@ -1206,7 +1257,10 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 
 	for j := 0; j < sheet.MaxCol; j++ {
 
-		descriptor := sheet.Cell(0, j).String()
+		descriptor, err := sheet.Cell(0, j).String()
+		if err != nil {
+			panic(err.Error())
+		}
 		//	descriptors = append(descriptors,descriptor)
 		if strings.ToUpper(descriptor) == "PATTERN" {
 			PatternColumn = j
@@ -1218,11 +1272,16 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 		//maxfactorcol := 2
 		for j := 0; j < sheet.MaxCol; j++ {
 
-			if patternfound && j != PatternColumn && sheet.Cell(i, j).String() != "" {
+			cellstr, err := sheet.Cell(i, j).String()
+			if err != nil {
+				panic(err.Error())
+			}
+
+			if patternfound && j != PatternColumn && cellstr != "" {
 				factorcolumns = append(factorcolumns, j)
-			} else if !patternfound && sheet.Cell(i, j).String() != "" {
+			} else if !patternfound && cellstr != "" {
 				factorcolumns = append(factorcolumns, j)
-			} else if sheet.Cell(i, j).String() == "" {
+			} else if cellstr == "" {
 
 				responsecolumns = append(responsecolumns, j)
 			}

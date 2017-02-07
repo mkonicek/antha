@@ -25,6 +25,7 @@ package spreadsheet
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 
@@ -33,7 +34,15 @@ import (
 )
 
 func OpenFile(filename string) (file *xlsx.File, err error) {
-	file, err = xlsx.OpenFile(filename)
+
+	bytes, err := ioutil.ReadFile(filename)
+
+	if err != nil {
+		return
+	}
+
+	file, err = xlsx.OpenBinary(bytes)
+
 	return
 }
 
@@ -89,7 +98,10 @@ func HeaderandDataMap(sheet *xlsx.Sheet, headera1format string, dataminmaxcellco
 	if err != nil {
 		return headerdatamap, err
 	}
-	headerstring := header.String()
+	headerstring, err := header.String()
+	if err != nil {
+		return headerdatamap, err
+	}
 
 	cellcoords, err := ConvertMinMaxtoArray(dataminmaxcellcoords)
 	if err != nil {

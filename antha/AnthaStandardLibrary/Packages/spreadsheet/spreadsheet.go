@@ -46,6 +46,13 @@ func OpenFile(filename string) (file *xlsx.File, err error) {
 	return
 }
 
+func OpenBinary(bytes []byte) (file *xlsx.File, err error) {
+
+	file, err = xlsx.OpenBinary(bytes)
+
+	return
+}
+
 func Sheet(file *xlsx.File, sheetnum int) (sheet *xlsx.Sheet) {
 	sheet = file.Sheets[sheetnum]
 	return

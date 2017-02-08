@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package org.antha_lang.antha.v1;
+
+message Measurement {
+  double value = 1;
+  string unit = 2;
+}

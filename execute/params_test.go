@@ -169,7 +169,7 @@ func TestConstructSlice(t *testing.T) {
 	}
 }
 
-func TestSetTime(t *testing.T) {
+func TestTime(t *testing.T) {
 	type Value map[string]interface{}
 	x := Value{
 		"A": wunit.Time{},
@@ -181,5 +181,19 @@ func TestSetTime(t *testing.T) {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
+	}
+}
+
+func TestConstructFile(t *testing.T) {
+	var x wtype.File
+
+	if err := unmarshal(&x, []byte(`{"name":"mytest","bytes":{"bytes":"aGVsbG8="}}`)); err != nil {
+		t.Fatal(err)
+	} else if e, f := "mytest", x.Name; e != f {
+		t.Errorf("expecting %v but got %v instead", e, f)
+	} else if bs, err := x.ReadAll(); err != nil {
+		t.Error(err)
+	} else if e, f := "hello", string(bs); e != f {
+		t.Errorf("expecting %v but got %v instead", e, f)
 	}
 }

@@ -16,8 +16,6 @@ var (
 	cannotConfigure = errors.New("cannot configure liquid handler")
 )
 
-// TODO(ddn): extend result when protocols can block
-
 // Result of executing a workflow.
 type Result struct {
 	Workflow *workflow.Workflow
@@ -28,12 +26,16 @@ type Result struct {
 type Opt struct {
 	// Target machine configuration
 	Target *target.Target
-	// Raw workflow.
+	// Deprecated for separate assignment of values to workflow. Raw workflow.
 	Workflow *workflow.Desc
-	// Raw parameters.
+	// Deprecated for separate assignment of values to workflow. Raw parameters.
 	Params *RawParams
 	// Job Id.
 	Id string
+	// Deprecated for separate assignment of values to workflow. If true, read
+	// content for each wtype.File from file of the same name in the current
+	// directory.
+	TransitionalReadLocalFiles bool
 }
 
 // Simple entrypoint for one-shot execution of workflows.
@@ -43,7 +45,7 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 		return nil, err
 	}
 
-	if _, err := setParams(parent, w, opt.Params); err != nil {
+	if _, err := setParams(parent, w, opt.Params, opt.TransitionalReadLocalFiles); err != nil {
 		return nil, err
 	}
 

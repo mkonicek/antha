@@ -1,17 +1,21 @@
 package execute
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/meta"
 	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/golang/protobuf/jsonpb"
 )
 
 type constructor func(string) interface{}
@@ -55,54 +59,105 @@ func tryString(data []byte) string {
 	return s
 }
 
-type unmarshaler struct{}
+type unmarshaler struct {
+	ReadLocalFiles bool
+}
 
-func (a *unmarshaler) unmarshalStruct(data []byte, obj interface{}) error {
-	switch obj := obj.(type) {
-	case *wtype.LHTipbox:
-		s := tryString(data)
-		if len(s) != 0 {
-			t, err := constructOrError(func(x string) interface{} { return factory.GetTipByType(x) }, s)
-			if err != nil {
-				return err
-			}
-			*obj = *t.(*wtype.LHTipbox)
-			return nil
+func (a *unmarshaler) unmarshalLHTipbox(data []byte, obj *wtype.LHTipbox) error {
+	s := tryString(data)
+	if len(s) == 0 {
+		return json.Unmarshal(data, obj)
+	}
+	t, err := constructOrError(func(x string) interface{} { return factory.GetTipByType(x) }, s)
+	if err != nil {
+		return err
+	}
+	*obj = *t.(*wtype.LHTipbox)
+	return nil
+}
+
+func (a *unmarshaler) unmarshalLHPlate(data []byte, obj *wtype.LHPlate) error {
+	s := tryString(data)
+	if len(s) == 0 {
+		return json.Unmarshal(data, obj)
+	}
+	t, err := constructOrError(func(x string) interface{} { return factory.GetPlateByType(x) }, s)
+	if err != nil {
+		return err
+	}
+	*obj = *t.(*wtype.LHPlate)
+	return nil
+}
+
+func (a *unmarshaler) unmarshalLHComponent(data []byte, obj *wtype.LHComponent) error {
+	s := tryString(data)
+	if len(s) == 0 {
+		return json.Unmarshal(data, obj)
+	}
+	t, err := constructOrError(func(x string) interface{} { return factory.GetComponentByType(x) }, s)
+	if err != nil {
+		return err
+	}
+	*obj = *t.(*wtype.LHComponent)
+	return nil
+}
+
+func (a *unmarshaler) unmarshalFile(data []byte, obj *wtype.File) error {
+	var blob api.Blob
+	if err := jsonpb.Unmarshal(bytes.NewReader(data), &blob); err != nil {
+		return err
+	}
+
+	hf := blob.GetHostFile()
+	if a.ReadLocalFiles && hf != nil {
+		bs, err := ioutil.ReadFile(hf.Filename)
+		if err != nil {
+			return err
 		}
-	case *wtype.LHPlate:
-		s := tryString(data)
-		if len(s) != 0 {
-			t, err := constructOrError(func(x string) interface{} { return factory.GetPlateByType(x) }, s)
-			if err != nil {
-				return err
-			}
-			*obj = *t.(*wtype.LHPlate)
-			return nil
-		}
-	case *wtype.LHComponent:
-		s := tryString(data)
-		if len(s) != 0 {
-			t, err := constructOrError(func(x string) interface{} { return factory.GetComponentByType(x) }, s)
-			if err != nil {
-				return err
-			}
-			*obj = *t.(*wtype.LHComponent)
-			return nil
+		blob = api.Blob{
+			Name: blob.Name,
+			From: &api.Blob_Bytes{
+				Bytes: &api.FromBytes{
+					Bytes: bs,
+				},
+			},
 		}
 	}
 
-	return json.Unmarshal(data, obj)
+	var f wtype.File
+	if err := f.UnmarshalBlob(&blob); err != nil {
+		return err
+	}
+	*obj = f
+	return nil
 }
 
-func setParam(w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
+func (a *unmarshaler) unmarshalStruct(data []byte, obj interface{}) error {
+	var err error
+	switch obj := obj.(type) {
+	case *wtype.LHTipbox:
+		err = a.unmarshalLHTipbox(data, obj)
+	case *wtype.LHPlate:
+		err = a.unmarshalLHPlate(data, obj)
+	case *wtype.LHComponent:
+		err = a.unmarshalLHComponent(data, obj)
+	case *wtype.File:
+		err = a.unmarshalFile(data, obj)
+	default:
+		err = json.Unmarshal(data, obj)
+	}
+
+	return err
+}
+
+func setParam(um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
 	value, ok := in[name]
 	if !ok {
 		return unknownParam
 	}
 
-	var u unmarshaler
 	if err := meta.UnmarshalJSON(meta.UnmarshalOpt{
-		Struct: u.unmarshalStruct,
+		Struct: um.unmarshalStruct,
 	}, data, &value); err != nil {
 		return err
 	}
@@ -110,9 +165,13 @@ func setParam(w *workflow.Workflow, process, name string, data []byte, in map[st
 	return w.SetParam(workflow.Port{Process: process, Port: name}, value)
 }
 
-func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams) (*mixer.Opt, error) {
+func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams, readLocalFiles bool) (*mixer.Opt, error) {
 	if params == nil {
 		return nil, nil
+	}
+
+	um := &unmarshaler{
+		ReadLocalFiles: readLocalFiles,
 	}
 
 	for process, params := range params.Parameters {
@@ -130,11 +189,12 @@ func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams) (*m
 		}
 		in := inject.MakeValue(cr.Input())
 		for name, value := range params {
-			if err := setParam(w, process, name, value, in); err != nil {
+			if err := setParam(um, w, process, name, value, in); err != nil {
 				return nil, fmt.Errorf("cannot assign parameter %q of process %q to %s: %s",
 					name, process, string(value), err)
 			}
 		}
 	}
+
 	return params.Config, nil
 }

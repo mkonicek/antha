@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package org.antha_lang.antha.v1;
+
+enum State {
+  // Task created (initial state)
+  CREATED = 0;
+  // Task eligible to run
+  SCHEDULED = 1;
+  // Task waiting on external input to run
+  WAITING = 2;
+  // Task running
+  RUNNING = 3;
+  // Task finished running successfully
+  SUCCEEDED = 4;
+  // Task finished running unsuccessfully
+  FAILED = 5;
+}
+
+message Status {
+  State state = 1;
+  // Any message associated with the current state
+  string message_ = 2;
+}

@@ -21,7 +21,7 @@ type Polynomial struct {
 func (m *Polynomial) Reset()                    { *m = Polynomial{} }
 func (m *Polynomial) String() string            { return proto.CompactTextString(m) }
 func (*Polynomial) ProtoMessage()               {}
-func (*Polynomial) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
+func (*Polynomial) Descriptor() ([]byte, []int) { return fileDescriptor7, []int{0} }
 
 func (m *Polynomial) GetCoefficients() []float64 {
 	if m != nil {
@@ -35,10 +35,10 @@ func init() {
 }
 
 func init() {
-	proto.RegisterFile("github.com/antha-lang/antha/api/v1/polynomial.proto", fileDescriptor6)
+	proto.RegisterFile("github.com/antha-lang/antha/api/v1/polynomial.proto", fileDescriptor7)
 }
 
-var fileDescriptor6 = []byte{
+var fileDescriptor7 = []byte{
 	// 126 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0x32, 0x4e, 0xcf, 0x2c, 0xc9,
 	0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x4f, 0xcc, 0x2b, 0xc9, 0x48, 0xd4, 0xcd, 0x49, 0xcc,

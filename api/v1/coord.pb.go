@@ -12,6 +12,7 @@ It is generated from these files:
 	github.com/antha-lang/antha/api/v1/message.proto
 	github.com/antha-lang/antha/api/v1/state.proto
 	github.com/antha-lang/antha/api/v1/task.proto
+	github.com/antha-lang/antha/api/v1/blob.proto
 	github.com/antha-lang/antha/api/v1/polynomial.proto
 
 It has these top-level messages:
@@ -41,6 +42,9 @@ It has these top-level messages:
 	ManualRunTask
 	IncubateTask
 	DataUploadTask
+	Blob
+	FromBytes
+	FromHostFile
 	Polynomial
 */
 package org_antha_lang_antha_v1

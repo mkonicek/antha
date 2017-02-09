@@ -29,7 +29,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"time"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -86,7 +85,7 @@ func readme(cmd *cobra.Command, args []string) error {
 		
 		cybiocommit, err := GitCommit(filepath.Join(gopath(),"github.com/Synthace/CybioXMLDriver"))
 		if err != nil {
-			pipetmaxcommit = fmt.Sprintln("error getting git commit for Synthace/CybioXMLDriver:",err.Error())
+			cybiocommit = fmt.Sprintln("error getting git commit for Synthace/CybioXMLDriver:",err.Error())
 		}
 		fmt.Println("github.com/Synthace/CybioXMLDriver", cybiocommit)
 			

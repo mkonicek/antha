@@ -26,18 +26,23 @@ cd -
 ```
 
 
-2.  branch of antha/elements
+2.  branch of antha-lang/elements
 
 
 ```bash
 cd $GOPATH/src/github.com/antha-lang/elements
 git fetch
-git checkout origin/master
+git checkout ***ELEMENTSCOMMIT****
 cd -
 ```
 
+3. Other Dependencies:
 
-3. (A) Pipetmaxdriver
+```bash
+***OTHERDEPENDENCIES***
+```
+
+4. (A) Pipetmaxdriver
 
 ```bash
 cd $GOPATH/src/github.com/Synthace/PipetMaxDriver
@@ -47,7 +52,7 @@ git checkout ***PIPETMAXDRIVERCOMMIT****
 
 Or
 
-3. (B) CybioDriver
+4. (B) CybioDriver
 
 ```bash
 cd $GOPATH/src/github.com/Synthace/CybioXMLDriver
@@ -58,13 +63,10 @@ cd -
 
 #### Run whenever any source code is changed  (e.g. plate definitions, antha element changes, liquid class changes)
 
-4. Build 
+5. Build 
 
 ```bash
-cd $GOPATH/src/github.com/antha-lang/antha
-make
-go get -v github.com/antha-lang/antha/cmd/...
-cd -
+make current -C $GOPATH/src/github.com/antha-lang/elements
 ```
 
 or

@@ -26,10 +26,14 @@ type Result struct {
 }
 
 type Opt struct {
-	Workflow *workflow.Desc // Or workflow directly
-	Params   *RawParams     // Or parameters directly
-	Target   *target.Target // Target machine configuration
-	Id       string         // Job Id
+	// Target machine configuration
+	Target *target.Target
+	// Raw workflow.
+	Workflow *workflow.Desc
+	// Raw parameters.
+	Params *RawParams
+	// Job Id.
+	Id string
 }
 
 // Simple entrypoint for one-shot execution of workflows.
@@ -39,7 +43,7 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 		return nil, err
 	}
 
-	if _, err := setParams(parent, opt.Params, w); err != nil {
+	if _, err := setParams(parent, w, opt.Params); err != nil {
 		return nil, err
 	}
 

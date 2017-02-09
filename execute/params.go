@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/meta"
 	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/antha/workflow"
@@ -17,18 +17,23 @@ import (
 type constructor func(string) interface{}
 
 var (
-	ptipbox         wtype.LHTipbox
-	pplate          wtype.LHPlate
-	pcomponent      wtype.LHComponent
 	unknownParam    = errors.New("unknown parameter")
 	cannotConstruct = errors.New("cannot construct parameter")
-	nilValue        reflect.Value
-	constructors    = map[reflect.Type]constructor{
-		reflect.TypeOf(ptipbox):    func(x string) interface{} { return factory.GetTipByType(x) },
-		reflect.TypeOf(pplate):     func(x string) interface{} { return factory.GetPlateByType(x) },
-		reflect.TypeOf(pcomponent): func(x string) interface{} { return factory.GetComponentByType(x) },
-	}
 )
+
+// Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
+// Structure of parameter data for unmarshalling.
+type RawParams struct {
+	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
+	Config     *mixer.Opt                            `json:"config"`
+}
+
+// Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
+// Structure of parameter data for marshalling.
+type Params struct {
+	Parameters map[string]map[string]interface{} `json:"parameters"`
+	Config     *mixer.Opt                        `json:"config"`
+}
 
 func constructOrError(fn func(x string) interface{}, x string) (interface{}, error) {
 	var v interface{}
@@ -42,118 +47,70 @@ func constructOrError(fn func(x string) interface{}, x string) (interface{}, err
 	return v, err
 }
 
-// Structure of parameter data for unmarshalling
-type RawParams struct {
-	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
-	Config     *mixer.Opt                            `json:"config"`
+func tryString(data []byte) string {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		s = ""
+	}
+	return s
 }
 
-// Structure of parameter data for marshalling
-type Params struct {
-	Parameters map[string]map[string]interface{} `json:"parameters"`
-	Config     *mixer.Opt                        `json:"config"`
-}
+type unmarshaler struct{}
 
-func findConstructor(typ reflect.Type) constructor {
-	// XXX: consider supporting convertible types too
-	return constructors[typ]
-}
-
-func unmarshalOne(value reflect.Value, data []byte) (reflect.Value, error) {
-	typ := value.Type()
-	newValue := reflect.New(typ).Interface()
-	origErr := json.Unmarshal(data, newValue)
-	if origErr != nil {
-		// Try to run constructor instead
-		var carg string
-		if construct := findConstructor(typ); construct == nil {
-			return nilValue, origErr
-		} else if err := json.Unmarshal(data, &carg); err != nil {
-			return nilValue, fmt.Errorf("%s: %s", err, origErr)
-		} else if v, err := constructOrError(construct, carg); err != nil {
-			return nilValue, fmt.Errorf("%s: %s", err, origErr)
-		} else if v == nil {
-			return nilValue, cannotConstruct
-		} else {
-			newValue = v
+func (a *unmarshaler) unmarshalStruct(data []byte, obj interface{}) error {
+	switch obj := obj.(type) {
+	case *wtype.LHTipbox:
+		s := tryString(data)
+		if len(s) != 0 {
+			t, err := constructOrError(func(x string) interface{} { return factory.GetTipByType(x) }, s)
+			if err != nil {
+				return err
+			}
+			*obj = *t.(*wtype.LHTipbox)
+			return nil
+		}
+	case *wtype.LHPlate:
+		s := tryString(data)
+		if len(s) != 0 {
+			t, err := constructOrError(func(x string) interface{} { return factory.GetPlateByType(x) }, s)
+			if err != nil {
+				return err
+			}
+			*obj = *t.(*wtype.LHPlate)
+			return nil
+		}
+	case *wtype.LHComponent:
+		s := tryString(data)
+		if len(s) != 0 {
+			t, err := constructOrError(func(x string) interface{} { return factory.GetComponentByType(x) }, s)
+			if err != nil {
+				return err
+			}
+			*obj = *t.(*wtype.LHComponent)
+			return nil
 		}
 	}
 
-	return reflect.ValueOf(newValue).Elem(), nil
-}
-
-func unmarshal(value reflect.Value, data []byte) (reflect.Value, error) {
-	typ := value.Type()
-	switch typ.Kind() {
-	case reflect.Slice:
-		raw := make([]json.RawMessage, 0)
-		if err := json.Unmarshal(data, &raw); err != nil {
-			return nilValue, err
-		}
-		s := reflect.MakeSlice(typ, 0, 0)
-		for idx, bs := range raw {
-			svalue := reflect.Zero(typ.Elem())
-			if idx < value.Len() {
-				svalue = reflect.ValueOf(value.Index(idx).Interface())
-			}
-			v, err := unmarshal(svalue, bs)
-			if err != nil {
-				return nilValue, err
-			}
-			s = reflect.Append(s, v)
-		}
-		return s, nil
-	case reflect.Map:
-		raw := make(map[string]json.RawMessage)
-		if err := json.Unmarshal(data, &raw); err != nil {
-			return nilValue, err
-		}
-		m := reflect.MakeMap(typ)
-		for k, bs := range raw {
-			kvalue := reflect.ValueOf(k)
-			mvalue := value.MapIndex(kvalue)
-			if mvalue == nilValue {
-				mvalue = reflect.Zero(typ.Elem())
-			} else {
-				mvalue = reflect.ValueOf(mvalue.Interface())
-			}
-			v, err := unmarshal(mvalue, bs)
-			if err != nil {
-				return nilValue, err
-			}
-			m.SetMapIndex(kvalue, v)
-		}
-		return m, nil
-	case reflect.Struct:
-		return unmarshalOne(value, data)
-	case reflect.Ptr:
-		etyp := typ.Elem()
-		if c := findConstructor(etyp); c == nil {
-			return unmarshal(reflect.Zero(etyp), data)
-		} else if v, err := unmarshalOne(reflect.Zero(etyp), data); err != nil {
-			return nilValue, err
-		} else {
-			return v.Addr(), nil
-		}
-	default:
-		return unmarshalOne(value, data)
-	}
+	return json.Unmarshal(data, obj)
 }
 
 func setParam(w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
-	prototype, ok := in[name]
+	value, ok := in[name]
 	if !ok {
 		return unknownParam
 	}
 
-	value, err := unmarshal(reflect.ValueOf(prototype), data)
-	if err != nil {
+	var u unmarshaler
+	if err := meta.UnmarshalJSON(meta.UnmarshalOpt{
+		Struct: u.unmarshalStruct,
+	}, data, &value); err != nil {
 		return err
 	}
-	return w.SetParam(workflow.Port{Process: process, Port: name}, value.Interface())
+
+	return w.SetParam(workflow.Port{Process: process, Port: name}, value)
 }
 
-func setParams(ctx context.Context, params *RawParams, w *workflow.Workflow) (*mixer.Opt, error) {
+func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams) (*mixer.Opt, error) {
 	if params == nil {
 		return nil, nil
 	}

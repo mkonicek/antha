@@ -33,7 +33,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/http"
+	//"net/http"
 	"os"
 	"strings"
 )
@@ -44,6 +44,11 @@ var reportTemplateCmd = &cobra.Command{
 	RunE:  readme,
 }
 
+var synthacelements string = `cd $GOPATH/src/github.com/Synthace/elements
+git fetch
+git checkout ***COMMIT****
+cd -`
+
 func readme(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 
@@ -53,26 +58,67 @@ func readme(cmd *cobra.Command, args []string) error {
 		return err
 
 	default:
-		var Urlstring string = "https://raw.githubusercontent.com/antha-lang/antha/AnthaAcademyVM2/antha/AnthaStandardLibrary/Packages/Templates/reporttemplate.md"
+		//var Urlstring string = "https://raw.githubusercontent.com/antha-lang/antha/AnthaAcademyVM2/antha/AnthaStandardLibrary/Packages/Templates/reporttemplate.md"
 		file := "report" + fmt.Sprint(time.Now().Format("20060102150405")) + ".md"
 		var err error
 
-		anthacommit, err := GitCommit()
+		anthacommit, err := GitCommit("")
 		if err != nil {
-			return err
+			anthacommit = fmt.Sprintln("error getting git commit for antha-lang/antha:",err.Error())
 		}
-		fmt.Println(anthacommit)
+		fmt.Println("github.com/antha-lang/antha",anthacommit)
+		
+		elementscommit, err := GitCommit(filepath.Join(gopath(),"github.com/antha-lang/elements"))
+		if err != nil {
+			elementscommit = fmt.Sprintln("error getting git commit for antha-lang/elements:",err.Error())
+		}
+		fmt.Println("github.com/antha-lang/elements", elementscommit)
+		
+		synthaceelementscommit, err := GitCommit(filepath.Join(gopath(),"github.com/Synthace/elements"))
+		if err != nil {
+			fmt.Println("error getting git commit for Synthace/elements:",err.Error())
+			synthaceelementscommit = fmt.Sprintln("error getting git commit for Synthace/elements:",err.Error())
+		}
+		fmt.Println("github.com/Synthace/elements", synthaceelementscommit)
+		
+		pipetmaxcommit, err := GitCommit(filepath.Join(gopath(),"github.com/Synthace/PipetMaxDriver"))
+		if err != nil {
+			pipetmaxcommit = fmt.Sprintln("error getting git commit for Synthace/PipetMaxDriver:",err.Error())
+		}
+		fmt.Println("github.com/Synthace/PipetMaxDriver", pipetmaxcommit)
+		
+		cybiocommit, err := GitCommit(filepath.Join(gopath(),"github.com/Synthace/CybioXMLDriver"))
+		if err != nil {
+			pipetmaxcommit = fmt.Sprintln("error getting git commit for Synthace/CybioXMLDriver:",err.Error())
+		}
+		fmt.Println("github.com/Synthace/CybioXMLDriver", cybiocommit)
+		
+		
 		if _, err = os.Stat(file); os.IsNotExist(err) {
 			if err := os.MkdirAll(filepath.Dir(file), 0777); err != nil {
 				return err
 			}
-
+			
+			//// refactoring to open file directly rather than downloading it
+			
+			/*pwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}*/
+			originalfile, err := os.Open(filepath.Join(gopath(),"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Templates/reporttemplate.md"))
+			if err != nil {
+				return err
+			}
+			
+			
+			
+			/*
 			res, err := http.Get(Urlstring)
 			if err != nil {
 				return err
 			}
 			defer res.Body.Close()
-
+			*/
 			f, err := os.Create(file)
 			if err != nil {
 				return err
@@ -80,12 +126,18 @@ func readme(cmd *cobra.Command, args []string) error {
 			defer f.Close()
 
 			var buf bytes.Buffer
-			if _, err := io.Copy(&buf, res.Body); err != nil {
+			if _, err := io.Copy(&buf, originalfile); err != nil {
 				return err
 			}
 			readme := string(buf.Bytes())
 
 			newreadme := strings.Replace(readme, "***ANTHACOMMIT****", anthacommit, 1)
+			newreadme = strings.Replace(newreadme, "***ELEMENTSCOMMIT****", elementscommit, 1)
+			
+			otherdependencies := strings.Replace(synthacelements, "***COMMIT****", synthaceelementscommit, 1)
+			newreadme = strings.Replace(newreadme, "***OTHERDEPENDENCIES***", otherdependencies, 1)
+			newreadme = strings.Replace(newreadme, "***PIPETMAXDRIVERCOMMIT****", pipetmaxcommit, 1)
+			newreadme = strings.Replace(newreadme, "***CYBIODRIVERCOMMIT****", cybiocommit, 1)
 			if err := ioutil.WriteFile(file, []byte(newreadme), 0666); err != nil {
 				return err
 			}

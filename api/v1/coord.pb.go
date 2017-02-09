@@ -14,6 +14,7 @@ It is generated from these files:
 	github.com/antha-lang/antha/api/v1/task.proto
 	github.com/antha-lang/antha/api/v1/blob.proto
 	github.com/antha-lang/antha/api/v1/polynomial.proto
+	github.com/antha-lang/antha/api/v1/workflow.proto
 
 It has these top-level messages:
 	OrdinalCoord
@@ -46,6 +47,13 @@ It has these top-level messages:
 	FromBytes
 	FromHostFile
 	Polynomial
+	Workflow
+	Element
+	Connection
+	ProcessAddress
+	WorkflowParameters
+	ElementParameters
+	MixerOpt
 */
 package org_antha_lang_antha_v1
 

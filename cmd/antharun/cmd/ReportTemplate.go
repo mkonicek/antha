@@ -23,7 +23,6 @@
 package cmd
 
 import (
-	//"encoding/json"
 	"bytes"
 	"fmt"
 	"io"
@@ -33,7 +32,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	//"net/http"
 	"os"
 	"strings"
 )
@@ -58,7 +56,6 @@ func readme(cmd *cobra.Command, args []string) error {
 		return err
 
 	default:
-		//var Urlstring string = "https://raw.githubusercontent.com/antha-lang/antha/AnthaAcademyVM2/antha/AnthaStandardLibrary/Packages/Templates/reporttemplate.md"
 		file := "report" + fmt.Sprint(time.Now().Format("20060102150405")) + ".md"
 		var err error
 
@@ -92,33 +89,17 @@ func readme(cmd *cobra.Command, args []string) error {
 			pipetmaxcommit = fmt.Sprintln("error getting git commit for Synthace/CybioXMLDriver:",err.Error())
 		}
 		fmt.Println("github.com/Synthace/CybioXMLDriver", cybiocommit)
-		
-		
+			
 		if _, err = os.Stat(file); os.IsNotExist(err) {
 			if err := os.MkdirAll(filepath.Dir(file), 0777); err != nil {
 				return err
 			}
 			
-			//// refactoring to open file directly rather than downloading it
-			
-			/*pwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}*/
 			originalfile, err := os.Open(filepath.Join(gopath(),"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Templates/reporttemplate.md"))
 			if err != nil {
 				return err
 			}
 			
-			
-			
-			/*
-			res, err := http.Get(Urlstring)
-			if err != nil {
-				return err
-			}
-			defer res.Body.Close()
-			*/
 			f, err := os.Create(file)
 			if err != nil {
 				return err

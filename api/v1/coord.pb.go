@@ -20,6 +20,7 @@ It has these top-level messages:
 	OrdinalCoord
 	PhysicalCoord
 	InventoryItem
+	None
 	Tipbox
 	Tipwaste
 	DeckPosition

@@ -26,7 +26,11 @@ message InventoryItem {
     DeckPosition deck_position = 8;
     Component component = 9;
     PlateType plate_type = 10;
+    None none = 11;
   }
+}
+
+message None {
 }
 
 // Pipette tips in a box

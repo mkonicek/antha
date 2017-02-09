@@ -22,6 +22,7 @@ func exists(path string) (bool, error) {
 	return true, err
 }
 
+// assumes gopath is in home directory
 func gopath() string {
 	u, err := user.Current()
 	if err != nil {

@@ -56,9 +56,10 @@ func readme(cmd *cobra.Command, args []string) error {
 
 	default:
 		file := "report" + fmt.Sprint(time.Now().Format("20060102150405")) + ".md"
-		var err error
+		var err error  
+		//sdf
 
-		anthacommit, err := GitCommit("")
+		anthacommit, err := GitCommit(filepath.Join(gopath(),"github.com/antha-lang/antha"))
 		if err != nil {
 			anthacommit = fmt.Sprintln("error getting git commit for antha-lang/antha:",err.Error())
 		}

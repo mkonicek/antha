@@ -24,6 +24,7 @@ package parser
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
@@ -35,14 +36,21 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
+// parse mars data from excel filename
 func ParseMarsXLSXOutput(xlsxname string, sheet int) (dataoutput MarsData, err error) {
 
-	clario, headerrowcount, err := ParseHeadLines(xlsxname, sheet)
+	bytes, err := ioutil.ReadFile(xlsxname)
+
 	if err != nil {
 		return
 	}
 
-	wellmap, err := ParseWellData(xlsxname, sheet, headerrowcount)
+	clario, headerrowcount, err := parseHeadLines(bytes, sheet)
+	if err != nil {
+		return
+	}
+
+	wellmap, err := parseWellData(bytes, sheet, headerrowcount)
 	if err != nil {
 		return
 	}
@@ -51,8 +59,25 @@ func ParseMarsXLSXOutput(xlsxname string, sheet int) (dataoutput MarsData, err e
 	return
 }
 
-func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowcount int, err error) {
-	xlsx, err := spreadsheet.OpenFile(xlsxname)
+// parse mars data from excel filename
+func ParseMarsXLSXBinary(xlsxContents []byte, sheet int) (dataoutput MarsData, err error) {
+
+	clario, headerrowcount, err := parseHeadLines(xlsxContents, sheet)
+	if err != nil {
+		return
+	}
+
+	wellmap, err := parseWellData(xlsxContents, sheet, headerrowcount)
+	if err != nil {
+		return
+	}
+	clario.Dataforeachwell = wellmap
+	dataoutput = clario
+	return
+}
+
+func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput MarsData, headerrowcount int, err error) {
+	xlsx, err := spreadsheet.OpenBinary(xlsxBinary)
 
 	if err != nil {
 		return
@@ -69,7 +94,6 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 
 		if str == "" {
 			headerrowcount = i //+ 1
-			// fmt.Println("headerrowcount", headerrowcount)
 			break
 		}
 	}
@@ -165,14 +189,14 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 	return
 }
 
-func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[string]WellData, err error) {
+func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap map[string]WellData, err error) {
 	welldatamap = make(map[string]WellData)
 	var welldata WellData
 	var wavelengthstring string
 	var wavelength int
 	var timestring string
 	var timestamp time.Duration
-	xlsx, err := spreadsheet.OpenFile(xlsxname)
+	xlsx, err := spreadsheet.OpenBinary(xlsxBinary)
 
 	if err != nil {
 		return
@@ -473,9 +497,9 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 								measurement.EWavelength = wavelength
 							}
 
-						} else if HeaderContainsWavelength(sheet1, headerrow, j) {
-							if wavelengthrow == 0 && HeaderContainsWavelength(sheet1, headerrow, j) {
-								_, wavelength, err := HeaderWavelength(sheet1, headerrow, j)
+						} else if headerContainsWavelength(sheet1, headerrow, j) {
+							if wavelengthrow == 0 && headerContainsWavelength(sheet1, headerrow, j) {
+								_, wavelength, err := headerWavelength(sheet1, headerrow, j)
 
 								if err != nil {
 									return welldatamap, err
@@ -625,7 +649,7 @@ func ParseTime(timestring string) (gotime time.Duration, err error) {
 	return
 }
 
-func HeaderContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool) {
+func headerContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool) {
 	headercell, err := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
 
 	if err != nil {
@@ -649,7 +673,7 @@ func HeaderContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno
 	return
 }
 
-func HeaderWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, number int, err error) {
+func headerWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, number int, err error) {
 	headercell, err := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
 
 	if err != nil {

@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -60,7 +61,12 @@ func createContext() (context.Context, error) {
 }
 
 func TestRunFromFile(t *testing.T) {
-	w, err := New(Opt{FromBytes: []byte(condCopyEqualsJson)})
+	var desc *Desc
+	if err := json.Unmarshal([]byte(condCopyEqualsJson), &desc); err != nil {
+		t.Fatal(err)
+	}
+
+	w, err := New(Opt{FromDesc: desc})
 	if err != nil {
 		t.Fatal(err)
 	}

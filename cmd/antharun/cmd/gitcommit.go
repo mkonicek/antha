@@ -37,7 +37,7 @@ func gopath() string {
 	return filepath.Join(u.HomeDir, "go/src")
 }
 
-func GitCommit(path string) (string, error) {
+func gitCommit(path string) (string, error) {
 	cmdName := "git"
 	cmdArgs := []string{"rev-parse", "HEAD"}
 

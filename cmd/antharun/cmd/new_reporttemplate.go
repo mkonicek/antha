@@ -61,32 +61,32 @@ func readme(cmd *cobra.Command, args []string) error {
 	default:
 		var err error  
 
-		anthaCommit, err := GitCommit(filepath.Join(gopath(),"github.com/antha-lang/antha"))
+		anthaCommit, err := gitCommit(filepath.Join(gopath(),"github.com/antha-lang/antha"))
 		if err != nil {
 			anthaCommit = fmt.Sprintln("error getting git commit for antha-lang/antha:",err.Error())
 		}
 		fmt.Println("github.com/antha-lang/antha",anthaCommit)
 		
-		elementsCommit, err := GitCommit(filepath.Join(gopath(),"github.com/antha-lang/elements"))
+		elementsCommit, err := gitCommit(filepath.Join(gopath(),"github.com/antha-lang/elements"))
 		if err != nil {
 			elementsCommit = fmt.Sprintln("error getting git commit for antha-lang/elements:",err.Error())
 		}
 		fmt.Println("github.com/antha-lang/elements", elementsCommit)
 		
-		synthaceElementsCommit, err := GitCommit(filepath.Join(gopath(),"github.com/Synthace/elements"))
+		synthaceElementsCommit, err := gitCommit(filepath.Join(gopath(),"github.com/Synthace/elements"))
 		if err != nil {
 			fmt.Println("error getting git commit for Synthace/elements:",err.Error())
 			synthaceElementsCommit = fmt.Sprintln("error getting git commit for Synthace/elements:",err.Error())
 		}
 		fmt.Println("github.com/Synthace/elements", synthaceElementsCommit)
 		
-		pipetmaxCommit, err := GitCommit(filepath.Join(gopath(),"github.com/Synthace/PipetMaxDriver"))
+		pipetmaxCommit, err := gitCommit(filepath.Join(gopath(),"github.com/Synthace/PipetMaxDriver"))
 		if err != nil {
 			pipetmaxCommit = fmt.Sprintln("error getting git commit for Synthace/PipetMaxDriver:",err.Error())
 		}
 		fmt.Println("github.com/Synthace/PipetMaxDriver", pipetmaxCommit)
 		
-		cybioCommit, err := GitCommit(filepath.Join(gopath(),"github.com/Synthace/CybioXMLDriver"))
+		cybioCommit, err := gitCommit(filepath.Join(gopath(),"github.com/Synthace/CybioXMLDriver"))
 		if err != nil {
 			cybioCommit = fmt.Sprintln("error getting git commit for Synthace/CybioXMLDriver:",err.Error())
 		}

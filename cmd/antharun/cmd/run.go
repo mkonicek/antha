@@ -169,6 +169,10 @@ func (a *runOpt) Run() error {
 		return err
 	}
 
+	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {
+		return err
+	}
+
 	if err := pretty.Timeline(os.Stdout, t, rout); err != nil {
 		return err
 	}

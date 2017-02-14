@@ -348,6 +348,146 @@ TOUCHOFFSET,                         ,float64,          ,mm above wb to touch of
 
 
 */
+//Miniprep Resuspension
+func MakeLTMIX32Policy() LHPolicy {
+	policy := make(LHPolicy, 11)
+	policy["ASPSPEED"] = 10 //really fast?
+	policy["DSPSPEED"] = 10
+	policy["ASPZOFFSET"] = 5.0 //high so doesnt interfere with pellet
+	policy["DSPZOFFSET"] = 5.0
+	policy["POST_MIX"] = 31
+	policy["BLOWOUTVOLUME"] = 100.0
+	policy["POST_MIX_VOLUME"] = 100.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["RESET_OVERRIDE"] = true
+	return policy
+}
+
+//Miniprep Lysis and Precipitation
+func MakeLTMIX8Policy() LHPolicy {
+	policy := make(LHPolicy, 11)
+	policy["ASPSPEED"] = 2
+	policy["DSPSPEED"] = 2
+	policy["ASPZOFFSET"] = 5.0 //high so doesnt interefere with debris?
+	policy["DSPZOFFSET"] = 5.0
+	policy["ASPWAIT"] = 2.0
+	policy["DSPZWAIT"] = 2.0
+	policy["POST_MIX"] = 7
+	policy["BLOWOUTVOLUME"] = 100.0
+	policy["POST_MIX_VOLUME"] = 100.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["RESET_OVERRIDE"] = true
+	return policy
+}
+
+//Miniprep Equilibration
+func MakeLTMIX2Policy() LHPolicy {
+	policy := make(LHPolicy, 11)
+	policy["ASPSPEED"] = 0.78
+	policy["DSPSPEED"] = 0.78
+	policy["ASPZOFFSET"] = 5.0 //high so doesnt interefere with debris?
+	policy["DSPZOFFSET"] = 5.0
+	policy["ASPWAIT"] = 5.0
+	policy["DSPZWAIT"] = 5.0
+	policy["POST_MIX"] = 1
+	policy["BLOWOUTVOLUME"] = 100.0
+	policy["POST_MIX_VOLUME"] = 100.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["RESET_OVERRIDE"] = true
+	return policy
+}
+
+//Miniprep Capture 1
+func MakeLTMIX14Policy() LHPolicy {
+	policy := make(LHPolicy, 11)
+	policy["ASPSPEED"] = 0.25
+	policy["DSPSPEED"] = 0.25
+	policy["ASPZOFFSET"] = 5.0 //high so doesnt interefere with debris?
+	policy["DSPZOFFSET"] = 5.0
+	policy["ASPWAIT"] = 2.0
+	policy["DSPZWAIT"] = 2.0
+	policy["BLOWOUTVOLUME"] = 100.0
+	policy["POST_MIX_VOLUME"] = 100.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["RESET_OVERRIDE"] = true
+	return policy
+}
+
+//Miniprep Capture 2
+func MakeLTMIXCapturePolicy() LHPolicy {
+	policy := make(LHPolicy, 11)
+	policy["ASPSPEED"] = 0.25
+	policy["DSPSPEED"] = 0.25
+	policy["ASPZOFFSET"] = 5.0 //high so doesnt interefere with debris?
+	policy["DSPZOFFSET"] = 5.0
+	policy["ASPWAIT"] = 20.0
+	policy["DSPZWAIT"] = 20.0
+	policy["POST_MIX"] = 13
+	policy["BLOWOUTVOLUME"] = 100.0
+	policy["POST_MIX_VOLUME"] = 100.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["RESET_OVERRIDE"] = true
+	return policy
+}
+
+//Miniprep Wash
+func MakeLTMIX4Policy() LHPolicy {
+	policy := make(LHPolicy, 11)
+	policy["ASPSPEED"] = 2
+	policy["DSPSPEED"] = 2
+	policy["ASPZOFFSET"] = 5.0 //high so doesnt interefere with debris?
+	policy["DSPZOFFSET"] = 5.0
+	policy["ASPWAIT"] = 10.0
+	policy["DSPZWAIT"] = 10.0
+	policy["POST_MIX"] = 3
+	policy["BLOWOUTVOLUME"] = 100.0
+	policy["POST_MIX_VOLUME"] = 100.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["RESET_OVERRIDE"] = true
+	return policy
+}
+
+//Miniprep Drying
+func MakeDryingPolicy() LHPolicy {
+	policy := make(LHPolicy, 11)
+	policy["ASPSPEED"] = 2
+	policy["DSPSPEED"] = 2
+	policy["ASPZOFFSET"] = 200.0 //high so doesnt interefere with debris?
+	policy["DSPZOFFSET"] = 200.0
+	policy["DSPWAIT"] = 300.0
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = false
+	policy["RESET_OVERRIDE"] = false
+	return policy
+}
+
+//Miniprep Elution
+func MakeElutionPolicy() LHPolicy {
+	policy := make(LHPolicy, 11)
+	policy["ASPSPEED"] = 0.3
+	policy["DSPSPEED"] = 9
+	policy["ASPZOFFSET"] = 2.5 //high so doesnt interefere with debris?
+	policy["DSPZOFFSET"] = 2.5
+	policy["ASPWAIT"] = 300.0
+	policy["BLOWOUTVOLUME"] = 50.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = true
+	policy["CAN_MULTI"] = true
+	policy["RESET_OVERRIDE"] = true
+	return policy
+}
 
 func MakePEGPolicy() LHPolicy {
 	policy := make(LHPolicy, 9)

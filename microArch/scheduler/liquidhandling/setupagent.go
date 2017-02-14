@@ -137,7 +137,7 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 				continue
 			}
 			//	params.Tips = append(params.Tips, tb.Tips[0][0])
-			tipz[0] = tb.Tips[0][0]
+			tipz[i] = tb.Tips[0][0]
 		}
 		params.Tips = tipz
 	}

@@ -104,6 +104,7 @@ func (p *compiler) anthaInit() {
 		"Concentration":        "wunit.Concentration",
 		"Density":              "wunit.Density",
 		"Energy":               "wunit.Energy",
+		"File":                 "wtype.File",
 		"FlowRate":             "wunit.FlowRate",
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",

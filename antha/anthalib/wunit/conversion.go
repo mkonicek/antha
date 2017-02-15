@@ -52,7 +52,7 @@ func MasstoVolume(m Mass, d Density) (v Volume) {
 	fmt.Println(mass, density)
 	volume := mass / density // in m^3
 	volume = volume * 1000   // in l
-	v = NewVolume(mass, "l")
+	v = NewVolume(volume, "l")
 
 	return v
 }

@@ -156,9 +156,10 @@ func setParam(um *unmarshaler, w *workflow.Workflow, process, name string, data 
 		return unknownParam
 	}
 
-	if err := meta.UnmarshalJSON(meta.UnmarshalOpt{
+	m := &meta.Unmarshaler{
 		Struct: um.unmarshalStruct,
-	}, data, &value); err != nil {
+	}
+	if err := m.UnmarshalJSON(data, &value); err != nil {
 		return err
 	}
 

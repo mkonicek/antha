@@ -12,9 +12,11 @@ import (
 
 func unmarshal(obj interface{}, data []byte) error {
 	var u unmarshaler
-	if err := meta.UnmarshalJSON(meta.UnmarshalOpt{
+
+	um := &meta.Unmarshaler{
 		Struct: u.unmarshalStruct,
-	}, data, obj); err != nil {
+	}
+	if err := um.UnmarshalJSON(data, obj); err != nil {
 		return err
 	}
 	return nil

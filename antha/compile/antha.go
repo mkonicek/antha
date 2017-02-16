@@ -104,6 +104,7 @@ func (p *compiler) anthaInit() {
 		"Concentration":        "wunit.Concentration",
 		"Density":              "wunit.Density",
 		"Energy":               "wunit.Energy",
+		"File":                 "wtype.File",
 		"FlowRate":             "wunit.FlowRate",
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",
@@ -126,6 +127,7 @@ func (p *compiler) anthaInit() {
 		"Well":                 "wtype.LHWell",
 	}
 	p.imports = map[string]string{
+		"github.com/antha-lang/antha/antha/anthalib/wtype": "wtype.FALSE",
 		"github.com/antha-lang/antha/antha/anthalib/wunit": "wunit.Make_units",
 		"github.com/antha-lang/antha/execute":              "execute.MixInto",
 		"github.com/antha-lang/antha/inject":               "",
@@ -134,19 +136,64 @@ func (p *compiler) anthaInit() {
 	}
 }
 
+func filterDupSpecs(specs []ast.Spec) []ast.Spec {
+	type pair struct {
+		name, path string
+	}
+	seen := make(map[pair]bool)
+	var keep []ast.Spec
+	for _, spec := range specs {
+		ispec, ok := spec.(*ast.ImportSpec)
+		if !ok {
+			keep = append(keep, spec)
+			continue
+		}
+		key := pair{
+			name: ispec.Name.String(),
+			path: ispec.Path.Value,
+		}
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		keep = append(keep, spec)
+	}
+
+	return keep
+}
+
+// getImportInsertPos returns position of last import decl or last decl if no
+// import decl is present.
+func getImportInsertPos(decls []ast.Decl) token.Pos {
+	var lastNode ast.Node
+	for _, d := range decls {
+		gd, ok := d.(*ast.GenDecl)
+		if !ok || gd.Tok != token.IMPORT {
+			if lastNode == nil {
+				lastNode = d
+			}
+			continue
+		}
+		lastNode = gd
+	}
+
+	if lastNode == nil {
+		return token.NoPos
+	}
+	return lastNode.Pos()
+}
+
 // Merges multiple import blocks and then adds paths
 func (p *compiler) addAnthaImports(file *ast.File, paths []string) {
+
 	var specs []ast.Spec
-	var decls []ast.Decl
-	var pos token.Pos // Dummy position to use for generated imports
+	var restDecls []ast.Decl
+	insertPos := getImportInsertPos(file.Decls)
 
 	for _, d := range file.Decls {
 		gd, ok := d.(*ast.GenDecl)
-		if pos == token.NoPos {
-			pos = d.Pos()
-		}
 		if !ok || gd.Tok != token.IMPORT {
-			decls = append(decls, d)
+			restDecls = append(restDecls, d)
 			continue
 		}
 		for _, s := range gd.Specs {
@@ -160,27 +207,26 @@ func (p *compiler) addAnthaImports(file *ast.File, paths []string) {
 				Path: &ast.BasicLit{
 					Kind:     token.STRING,
 					Value:    strconv.Quote(p),
-					ValuePos: pos,
+					ValuePos: insertPos,
 				}})
 	}
 
 	if len(specs) == 0 {
-		if len(decls) != len(file.Decls) {
+		if len(restDecls) != len(file.Decls) {
 			// Clean up empty imports
-			file.Decls = decls
+			file.Decls = restDecls
 		}
 		return
 	}
 
 	merged := &ast.GenDecl{
 		Tok:    token.IMPORT,
-		Lparen: pos,
-		Rparen: pos,
-		Specs:  specs,
+		Lparen: insertPos,
+		Rparen: insertPos,
+		Specs:  filterDupSpecs(specs),
 	}
 
-	decls = append([]ast.Decl{merged}, decls...)
-	file.Decls = decls
+	file.Decls = append([]ast.Decl{merged}, restDecls...)
 	// NB(ddn): tried to sort here, but the following needs proper token.Pos,
 	// which are annoying to generate now. A gofmt on the generated file should
 	// be just as good.

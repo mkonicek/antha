@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package org.antha_lang.antha.v1;
+
+// Unstructured data
+message Blob {
+  // A descriptive name.
+  string name = 1;
+  oneof from {
+    FromBytes bytes = 2;
+    FromHostFile host_file = 3;
+  }
+}
+
+message FromBytes {
+  bytes bytes = 1;
+}
+
+message FromHostFile {
+  string filename = 1;
+}

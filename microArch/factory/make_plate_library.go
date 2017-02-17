@@ -45,7 +45,7 @@ const (
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
 	bioshake96welladaptorheight                 float64 = 4.5
-	bioshakestandardadaptorheight               float64 = 1.0
+	bioshakestandardadaptorheight               float64 = 5.0
 )
 
 var platespecificoffset = map[string]float64{

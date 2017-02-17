@@ -290,8 +290,8 @@
 		},
 		{
 			"path": "github.com/tealeg/xlsx",
-			"revision": "c2885b3e5cb5fb9b241bdab3430ca6e1c1057079",
-			"revisionTime": "2015-07-24T21:09:55+02:00"
+			"revision": "e0f3d7d6cf84b282edb711bc6a23e8dbbd331a13",
+			"revisionTime": "2016-12-21T21:26:27+01:00"
 		},
 		{
 			"path": "github.com/twinj/uuid",

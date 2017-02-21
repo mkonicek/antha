@@ -451,10 +451,10 @@ var EndlinksString = map[string]map[string]map[string][]string{
 	},
 	"Custom": map[string]map[string][]string{
 		"Level0": map[string][]string{
-			"L1Uadaptor":       []string{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
-			"L1Uadaptor + Pro": []string{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
-			//	"TF":               []string{"GTCG", "GGAG"}, // transcription factor e.g. laci (same as L1Uadaptor prefix currently)
-			//	"TF + Pro":         []string{"GTCG", "TTTT"},
+			"L1Uadaptor":                  []string{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
+			"L1Uadaptor + Pro":            []string{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
+			"L1Uadaptor + Pro + 5U":       []string{"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
+			"L1Uadaptor + Pro + 5U + NT1": []string{"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
 			"Pro":                        []string{"GGAG", "TTTT"},
 			"5U":                         []string{"TTTT", "CCAT"}, // 5' untranslated, e.g. rbs // changed from MoClo TACT to TTTT to conform with Protein Paintbox??
 			"5U(f)":                      []string{"TTTT", "CCAT"},
@@ -462,6 +462,8 @@ var EndlinksString = map[string]map[string]map[string][]string{
 			"Pro + 5U":                   []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"NT1":                        []string{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"5U + NT1":                   []string{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"5U + NT1 + CDS1":            []string{"TTTT", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"5U + NT1 + CDS1 + 3U":       []string{"TTTT", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"CDS1":                       []string{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"CDS1 + 3U":                  []string{"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"CDS1 ns":                    []string{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs

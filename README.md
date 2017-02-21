@@ -71,11 +71,17 @@ replacing ``apt-get`` with your package manager.
 curl -O https://storage.googleapis.com/golang/go1.7.3.linux-amd64.tar.gz
 sudo tar -C /usr/local -xzf go1.7.3.linux-amd64.tar.gz
 
+# Add /usr/local/go/bin to the path
+export PATH=$PATH:/usr/local/go/bin
+
 # Install antha external dependencies
 sudo apt-get install -y libglpk-dev libopencv-dev libsqlite3-dev git
 
 # Now, we are ready to get antha
 go get github.com/antha-lang/elements/cmd/...
+
+# add the local go bin to the path
+export PATH=$PATH:$HOME/go/bin
 ```
 
 ### Windows (Native)
@@ -137,7 +143,7 @@ within the docker instance.
 After following the installation instructions for your machine. You can check
 if Antha is working properly by running a test protocol
 ```bash
-cd $HOME/go/src/github.com/antha-lang/elements/workflow/Aliquot
+cd $HOME/go/src/github.com/antha-lang/elements/workflows/examples/Aliquot
 antharun --workflow workflow.json --parameters parameters.yml
 ```
 

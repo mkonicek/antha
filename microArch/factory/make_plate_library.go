@@ -45,7 +45,7 @@ const (
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
 	bioshake96welladaptorheight                 float64 = 4.5
-	bioshakestandardadaptorheight               float64 = 5.0
+	bioshakestandardadaptorheight               float64 = 6.0
 )
 
 var platespecificoffset = map[string]float64{
@@ -560,7 +560,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	wellyoffset = 13.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 3.0       // distance from top left side of plate to first well
 	ystart = -1.0      // distance from top left side of plate to first well
-	zstart = 3.0       // offset of bottom of deck to bottom of well (this includes agar estimate)
+	zstart = 1.0       // offset of bottom of deck to bottom of well (this includes agar estimate)
 
 	wellsperrow = 8
 	wellspercolumn = 6
@@ -595,7 +595,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	wellyoffset = 27.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 11.0      // distance from top left side of plate to first well
 	ystart = 4.0       // distance from top left side of plate to first well
-	zstart = 9.0       // offset of bottom of deck to bottom of well (this includes agar estimate)
+	zstart = 5.5       // offset of bottom of deck to bottom of well (this includes agar estimate)
 
 	wellsperrow = 4
 	wellspercolumn = 3

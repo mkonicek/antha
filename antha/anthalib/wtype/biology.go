@@ -525,3 +525,15 @@ func RevComp(s string) string {
 	s = strings.ToUpper(s)
 	return Comp(Rev(s))
 }
+
+type DNASeqSet []*DNASequence
+
+func (dss DNASeqSet) AsBioSequences() []BioSequence {
+	r := make([]BioSequence, len(dss))
+
+	for i := 0; i < len(dss); i++ {
+		r[i] = BioSequence(dss[i])
+	}
+
+	return r
+}

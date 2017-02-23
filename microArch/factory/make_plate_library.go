@@ -548,13 +548,13 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	xdim = 11.0
 	ydim = 11.0
 	zdim = 19.0
-	bottomh = 3.0
+	bottomh = 2.0
 
 	wellxoffset = 13.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 13.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 3.0       // distance from top left side of plate to first well
 	ystart = -1.0      // distance from top left side of plate to first well
-	zstart = 3.0       // offset of bottom of deck to bottom of well (this includes agar estimate)
+	zstart = 2.0       // offset of bottom of deck to bottom of well (this includes agar estimate)
 
 	wellsperrow = 8
 	wellspercolumn = 6
@@ -578,7 +578,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	wellyoffset = 27.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 11.0      // distance from top left side of plate to first well
 	ystart = 4.0       // distance from top left side of plate to first well
-	zstart = 5.0       // offset of bottom of deck to bottom of well (this includes Agar height estimate)
+	zstart = 9.0       // offset of bottom of deck to bottom of well (this includes Agar height estimate)
 
 	wellsperrow = 4
 	wellspercolumn = 3
@@ -591,7 +591,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plates[plate.Type] = plate
 
 	// update z start to remove agar estimate and make new plate type
-	zstart = 5.0 // offset of bottom of deck to bottom of well
+	zstart = 4.0 // offset of bottom of deck to bottom of well
 	plate = wtype.NewLHPlate("Nuncon12well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 

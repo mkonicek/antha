@@ -52,8 +52,8 @@ var platespecificoffset = map[string]float64{
 	"pcrplate_skirted": gilsonoffsetpcrplate,
 	"greiner384":       gilsonoffsetgreiner,
 	"costar48well":     4.5,
-	"Nuncon12well":     13.5, // this must be wrong!! check z start without riser properly
-	"Nuncon12wellAgar": 13.5, // this must be wrong!! check z start without riser properly
+	"Nuncon12well":     12.0, // this must be wrong!! check z start without riser properly
+	"Nuncon12wellAgar": 12.0, // this must be wrong!! check z start without riser properly
 	"VWR12well":        3.0,
 }
 
@@ -585,7 +585,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	heightinmm = 19.0
 
 	circle = wtype.NewShape("cylinder", "mm", xdim, ydim, zdim)
-	welltype12well := wtype.NewLHWell("Nuncon12well", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	welltype12well := wtype.NewLHWell("Nuncon12well", "", "", "ul", 1000, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("Nuncon12wellAgar", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate

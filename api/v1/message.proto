@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package org.antha_lang.antha.v1;
+
+message GrpcMessage {
+  // Fully qualified message name
+  string name = 1;
+  // Protobuf data
+  bytes data = 2;
+}
+
+message GrpcCall {
+  // Fully qualified rpc call name
+  string method = 1;
+  GrpcMessage args = 2;
+  GrpcMessage reply = 3;
+}

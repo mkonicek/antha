@@ -20,15 +20,15 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"strings"
 	//"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/graph"
 )
@@ -48,7 +48,7 @@ type LHComponent struct {
 	Vunit              string
 	Cunit              string
 	Tvol               float64
-	Smax               float64
+	Smax               float64 // maximum solubility
 	Visc               float64
 	StockConcentration float64
 	Extra              map[string]interface{}
@@ -290,6 +290,13 @@ func (lhc *LHComponent) GetCunit() string {
 func (lhc *LHComponent) Concentration() (conc wunit.Concentration) {
 	conc = wunit.NewConcentration(lhc.Conc, lhc.Cunit)
 	return conc
+}
+
+func (lhc *LHComponent) HasConcentration() bool {
+	if lhc.Conc != 0.0 && lhc.Cunit != "" {
+		return true
+	}
+	return false
 }
 
 // Sets concentration to an LHComponent; assumes conc is valid; overwrites existing concentration

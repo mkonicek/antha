@@ -52,7 +52,7 @@ func MasstoVolume(m Mass, d Density) (v Volume) {
 	fmt.Println(mass, density)
 	volume := mass / density // in m^3
 	volume = volume * 1000   // in l
-	v = NewVolume(mass, "l")
+	v = NewVolume(volume, "l")
 
 	return v
 }
@@ -107,7 +107,9 @@ func VolumeForTargetConcentration(targetconc Concentration, startingconc Concent
 
 	v = MultiplyVolume(totalvol, factor)
 
-	//v = NewVolume(float64((targetconc.SIValue()/startingconc.SIValue())*1000000)*totalvol.SIValue(), "ul")
+	if v.GreaterThan(totalvol) {
+		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetconc.ToString(), " is higher than stock concentration", startingconc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalvol.ToString()))
+	}
 
 	return
 }

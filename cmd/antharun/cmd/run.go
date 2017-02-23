@@ -163,8 +163,13 @@ func (a *runOpt) Run() error {
 		Target:   t.Target,
 		Workflow: wdesc,
 		Params:   params,
+		TransitionalReadLocalFiles: true,
 	})
 	if err != nil {
+		return err
+	}
+
+	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {
 		return err
 	}
 

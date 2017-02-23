@@ -298,6 +298,8 @@ func makeRowFromRaw(rawrow xlsxRow, sheet *Sheet) *Row {
 	}
 	upper++
 
+	row.OutlineLevel = rawrow.OutlineLevel
+
 	row.Cells = make([]*Cell, upper)
 	for i := 0; i < upper; i++ {
 		cell = new(Cell)
@@ -340,16 +342,26 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 				dy := y - sharedFormula.y
 				orig := []byte(sharedFormula.formula)
 				var start, end int
+				var stringLiteral bool
 				for end = 0; end < len(orig); end++ {
 					c := orig[end]
-					if c >= 'A' && c <= 'Z' {
+
+					if c == '"' {
+						stringLiteral = !stringLiteral
+					}
+
+					if stringLiteral {
+						continue // Skip characters in quotes
+					}
+
+					if c >= 'A' && c <= 'Z' || c == '$' {
 						res += string(orig[start:end])
 						start = end
 						end++
 						foundNum := false
 						for ; end < len(orig); end++ {
 							idc := orig[end]
-							if idc >= '0' && idc <= '9' {
+							if idc >= '0' && idc <= '9' || idc == '$' {
 								foundNum = true
 							} else if idc >= 'A' && idc <= 'Z' {
 								if foundNum {
@@ -360,16 +372,14 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 							}
 						}
 						if foundNum {
-							fx, fy, _ := getCoordsFromCellIDString(string(orig[start:end]))
-							fx += dx
-							fy += dy
-							res += getCellIDStringFromCoords(fx, fy)
+							cellID := string(orig[start:end])
+							res += shiftCell(cellID, dx, dy)
 							start = end
 						}
 					}
 				}
 				if start < len(orig) {
-					res += string(orig[start:end])
+					res += string(orig[start:])
 				}
 			}
 		}
@@ -377,6 +387,55 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 		res = f.Content
 	}
 	return strings.Trim(res, " \t\n\r")
+}
+
+// shiftCell returns the cell shifted according to dx and dy taking into consideration of absolute
+// references with dollar sign ($)
+func shiftCell(cellID string, dx, dy int) string {
+	fx, fy, _ := getCoordsFromCellIDString(cellID)
+
+	// Is fixed column?
+	fixedCol := strings.Index(cellID, "$") == 0
+
+	// Is fixed row?
+	fixedRow := strings.LastIndex(cellID, "$") > 0
+
+	if !fixedCol {
+		// Shift column
+		fx += dx
+	}
+
+	if !fixedRow {
+		// Shift row
+		fy += dy
+	}
+
+	// New shifted cell
+	shiftedCellID := getCellIDStringFromCoords(fx, fy)
+
+	if !fixedCol && !fixedRow {
+		return shiftedCellID
+	}
+
+	// There are absolute references, need to put the $ back into the formula.
+	letterPart := strings.Map(letterOnlyMapF, shiftedCellID)
+	numberPart := strings.Map(intOnlyMapF, shiftedCellID)
+
+	result := ""
+
+	if fixedCol {
+		result += "$"
+	}
+
+	result += letterPart
+
+	if fixedRow {
+		result += "$"
+	}
+
+	result += numberPart
+
+	return result
 }
 
 // fillCellData attempts to extract a valid value, usable in
@@ -454,23 +513,26 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 		}
 	}
 
-	// Columns can apply to a range, for convenience we expand the
-	// ranges out into individual column definitions.
-	for _, rawcol := range Worksheet.Cols.Col {
-		// Note, below, that sometimes column definitions can
-		// exist outside the defined dimensions of the
-		// spreadsheet - we deliberately exclude these
-		// columns.
-		for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
-			col := &Col{
-				Min:    rawcol.Min,
-				Max:    rawcol.Max,
-				Hidden: rawcol.Hidden,
-				Width:  rawcol.Width}
-			cols[i-1] = col
-			if file.styles != nil {
-				col.style = file.styles.getStyle(rawcol.Style)
-				col.numFmt = file.styles.getNumberFormat(rawcol.Style)
+	if Worksheet.Cols != nil {
+		// Columns can apply to a range, for convenience we expand the
+		// ranges out into individual column definitions.
+		for _, rawcol := range Worksheet.Cols.Col {
+			// Note, below, that sometimes column definitions can
+			// exist outside the defined dimensions of the
+			// spreadsheet - we deliberately exclude these
+			// columns.
+			for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
+				col := &Col{
+					Min:          rawcol.Min,
+					Max:          rawcol.Max,
+					Hidden:       rawcol.Hidden,
+					Width:        rawcol.Width,
+					OutlineLevel: rawcol.OutlineLevel}
+				cols[i-1] = col
+				if file.styles != nil {
+					col.style = file.styles.getStyle(rawcol.Style)
+					col.numFmt = file.styles.getNumberFormat(rawcol.Style)
+				}
 			}
 		}
 	}
@@ -487,9 +549,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 		// stored data
 		for rawrow.R > (insertRowIndex + 1) {
 			// Put an empty Row into the array
-			index := insertRowIndex - minRow
-			if index < numRows {
-				rows[index] = makeEmptyRow(sheet)
+			if insertRowIndex < numRows {
+				rows[insertRowIndex] = makeEmptyRow(sheet)
 			}
 			insertRowIndex++
 		}
@@ -501,29 +562,49 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 		}
 
 		row.Hidden = rawrow.Hidden
+		height, err := strconv.ParseFloat(rawrow.Ht, 64)
+		if err == nil {
+			row.Height = height
+		}
+		row.isCustom = rawrow.CustomHeight
+		row.OutlineLevel = rawrow.OutlineLevel
 
 		insertColIndex = minCol
 		for _, rawcell := range rawrow.C {
+			h, v, err := Worksheet.MergeCells.getExtent(rawcell.R)
+			if err != nil {
+				panic(err.Error())
+			}
 			x, _, _ := getCoordsFromCellIDString(rawcell.R)
+
+			// K1000000: Prevent panic when the range specified in the spreadsheet
+			//           view exceeds the actual number of columns in the dataset.
 
 			// Some spreadsheets will omit blank cells
 			// from the data.
 			for x > insertColIndex {
 				// Put an empty Cell into the array
-				row.Cells[insertColIndex] = new(Cell)
+				if insertColIndex < len(row.Cells) {
+					row.Cells[insertColIndex] = new(Cell)
+				}
 				insertColIndex++
 			}
 			cellX := insertColIndex
-			cell := row.Cells[cellX]
-			fillCellData(rawcell, reftable, sharedFormulas, cell)
-			if file.styles != nil {
-				cell.style = file.styles.getStyle(rawcell.S)
-				cell.numFmt = file.styles.getNumberFormat(rawcell.S)
+
+			if cellX < len(row.Cells) {
+				cell := row.Cells[cellX]
+				cell.HMerge = h
+				cell.VMerge = v
+				fillCellData(rawcell, reftable, sharedFormulas, cell)
+				if file.styles != nil {
+					cell.style = file.styles.getStyle(rawcell.S)
+					cell.NumFmt = file.styles.getNumberFormat(rawcell.S)
+				}
+				cell.date1904 = file.Date1904
+				// Cell is considered hidden if the row or the column of this cell is hidden
+				cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
+				insertColIndex++
 			}
-			cell.date1904 = file.Date1904
-			// Cell is considered hidden if the row or the column of this cell is hidden
-			cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
-			insertColIndex++
 		}
 		if len(rows) > insertRowIndex {
 			rows[insertRowIndex] = row
@@ -594,6 +675,8 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
 	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
+	sheet.SheetFormat.OutlineLevelCol = worksheet.SheetFormatPr.OutlineLevelCol
+	sheet.SheetFormat.OutlineLevelRow = worksheet.SheetFormatPr.OutlineLevelRow
 
 	result.Sheet = sheet
 	sc <- result
@@ -619,6 +702,10 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		return nil, nil, err
 	}
 	file.Date1904 = workbook.WorkbookPr.Date1904
+
+	for entryNum := range workbook.DefinedNames.DefinedName {
+		file.DefinedNames = append(file.DefinedNames, &workbook.DefinedNames.DefinedName[entryNum])
+	}
 
 	// Only try and read sheets that have corresponding files.
 	// Notably this excludes chartsheets don't right now

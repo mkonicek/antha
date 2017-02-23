@@ -3,13 +3,9 @@ kind: package
 name: github.com/antha-lang/antha
 version: 0.5
 build:
-  baseimage: golang:1.7-wheezy
-  morelines:
-  - RUN apt-get update && apt-get install -y libglpk-dev libsqlite3-dev libopencv-dev
-  volumes:
-  - /certs
-  commands:
-  - tar -C /etc/ssl/certs --dereference --hard-dereference -cz -f - . | tar -C /certs -xz -f -
+  baseimage: docker.synthace.com/synthace/antha:1.7-build
+deploy:
+  baseimage: docker.synthace.com/synthace/golang:1.7-production
 modules:
   golang:
     testpackages:
@@ -18,5 +14,3 @@ modules:
     image:
       copyhostpaths:
       - github.com/antha-lang/antha:antha/examples:/root/examples
-      copyvolumes:
-      - github.com/antha-lang/antha:/certs:/etc/ssl/certs

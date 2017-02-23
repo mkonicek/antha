@@ -188,7 +188,7 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 					curr_plate.PlateName = platename
 					curplaten += 1
 					curr_plate.DeclareTemporary()
-					curr_plate.DeclareAutoallocated()
+					//curr_plate.DeclareAutoallocated()
 				}
 
 				// find somewhere to put it
@@ -225,6 +225,7 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 				st.SetLocationOf(component.ID, location)
 
 				curr_well.Add(newcomponent)
+				curr_well.DeclareAutoallocated()
 				input_plates[curr_plate.ID] = curr_plate
 			}
 		}

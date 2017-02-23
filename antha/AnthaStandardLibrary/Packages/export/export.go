@@ -134,31 +134,6 @@ func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 }
 
 // function to export multiple sequences in fasta format into a single txt file
-// Modify this for the more general case
-/*
-func Makefastaserial(dir string, seqs []*wtype.DNASequence) (string, error) {
-	filename := filepath.Join(anthapath.Path(), fmt.Sprintf("%s.fasta", dir))
-	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
-		return "", err
-	}
-
-	f, err := os.Create(filename)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	for _, seq := range seqs {
-		if _, err := fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
-			return "", err
-		}
-	}
-
-	return filename, nil
-}
-*/
-
-// function to export multiple sequences in fasta format into a single txt file
 // specify whether to save locally or to the anthapath in a specified sub directory dir. File name will use extension ext
 func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wtype.File, string, error) {
 
@@ -194,7 +169,7 @@ func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wt
 }
 
 // Simultaneously export multiple Fasta files and summary files for a series of assembly products
-func FastaAndSeqReport(assemblyparameters enzymes.Assemblyparameters) (fastafiles []wtype.File, summaryfiles []wtype.File, err error) {
+func FastaAndSeqReports(assemblyparameters enzymes.Assemblyparameters) (fastafiles []wtype.File, summaryfiles []wtype.File, err error) {
 
 	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
 

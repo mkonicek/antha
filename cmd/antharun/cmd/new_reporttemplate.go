@@ -27,15 +27,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"time"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"strings"
 	"text/template"
+	"time"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var reportTemplateCmd = &cobra.Command{
-	Use:   "reporttemplate",
+	Use:   "reportTemplate",
 	Short: "produce a report template in Markdown which records commits of dependent Antha repositories",
 	RunE:  readme,
 }
@@ -45,7 +46,7 @@ func init() {
 	newCmd.AddCommand(c)
 }
 
-var synthacelements string = `cd $GOPATH/src/github.com/Synthace/elements
+var synthaceElements string = `cd $GOPATH/src/github.com/Synthace/elements
 git fetch
 git checkout ***COMMIT****
 cd -`
@@ -55,72 +56,70 @@ func readme(cmd *cobra.Command, args []string) error {
 
 	switch viper.GetString("output") {
 	case jsonOutput:
-		_, err := fmt.Println("Json not valid for report templates")
+		_, err := fmt.Println("json not valid for report templates")
 		return err
 
 	default:
-		var err error  
+		var err error
 
-		anthaCommit, err := gitCommit(filepath.Join(gopath(),"github.com/antha-lang/antha"))
+		anthaCommit, err := gitCommit(filepath.Join(gopath(), "github.com/antha-lang/antha"))
 		if err != nil {
-			anthaCommit = fmt.Sprintln("error getting git commit for antha-lang/antha:",err.Error())
+			anthaCommit = fmt.Sprintln("error getting git commit for antha-lang/antha:", err.Error())
 		}
-		fmt.Println("github.com/antha-lang/antha",anthaCommit)
-		
-		elementsCommit, err := gitCommit(filepath.Join(gopath(),"github.com/antha-lang/elements"))
+		fmt.Println("github.com/antha-lang/antha", anthaCommit)
+
+		elementsCommit, err := gitCommit(filepath.Join(gopath(), "github.com/antha-lang/elements"))
 		if err != nil {
-			elementsCommit = fmt.Sprintln("error getting git commit for antha-lang/elements:",err.Error())
+			elementsCommit = fmt.Sprintln("error getting git commit for antha-lang/elements:", err.Error())
 		}
 		fmt.Println("github.com/antha-lang/elements", elementsCommit)
-		
-		synthaceElementsCommit, err := gitCommit(filepath.Join(gopath(),"github.com/Synthace/elements"))
+
+		synthaceElementsCommit, err := gitCommit(filepath.Join(gopath(), "github.com/Synthace/elements"))
 		if err != nil {
-			fmt.Println("error getting git commit for Synthace/elements:",err.Error())
-			synthaceElementsCommit = fmt.Sprintln("error getting git commit for Synthace/elements:",err.Error())
+			fmt.Println("error getting git commit for Synthace/elements:", err.Error())
+			synthaceElementsCommit = fmt.Sprintln("error getting git commit for Synthace/elements:", err.Error())
 		}
 		fmt.Println("github.com/Synthace/elements", synthaceElementsCommit)
-		
-		pipetmaxCommit, err := gitCommit(filepath.Join(gopath(),"github.com/Synthace/PipetMaxDriver"))
+
+		pipetmaxCommit, err := gitCommit(filepath.Join(gopath(), "github.com/Synthace/PipetMaxDriver"))
 		if err != nil {
-			pipetmaxCommit = fmt.Sprintln("error getting git commit for Synthace/PipetMaxDriver:",err.Error())
+			pipetmaxCommit = fmt.Sprintln("error getting git commit for Synthace/PipetMaxDriver:", err.Error())
 		}
 		fmt.Println("github.com/Synthace/PipetMaxDriver", pipetmaxCommit)
-		
-		cybioCommit, err := gitCommit(filepath.Join(gopath(),"github.com/Synthace/CybioXMLDriver"))
+
+		cybioCommit, err := gitCommit(filepath.Join(gopath(), "github.com/Synthace/CybioXMLDriver"))
 		if err != nil {
-			cybioCommit = fmt.Sprintln("error getting git commit for Synthace/CybioXMLDriver:",err.Error())
+			cybioCommit = fmt.Sprintln("error getting git commit for Synthace/CybioXMLDriver:", err.Error())
 		}
 		fmt.Println("github.com/Synthace/CybioXMLDriver", cybioCommit)
-			
-	
-		otherDependencies := strings.Replace(synthacelements, "***COMMIT****", synthaceElementsCommit, 1)
 
-	
-	type targ struct {
-		TripleQuote string
-		ANTHACOMMIT string
-		ELEMENTSCOMMIT string
-		OTHERDEPENDENCIES string
-		PIPETMAXDRIVERCOMMIT string
-		CYBIODRIVERCOMMIT string
-	}
-	arg := targ{
-		TripleQuote:  "```",
-		ANTHACOMMIT: anthaCommit,
-		ELEMENTSCOMMIT: elementsCommit,
-		OTHERDEPENDENCIES: otherDependencies,
-		PIPETMAXDRIVERCOMMIT: pipetmaxCommit,
-		CYBIODRIVERCOMMIT: cybioCommit,
-	}
+		otherDependencies := strings.Replace(synthaceElements, "***COMMIT****", synthaceElementsCommit, 1)
 
-			var out bytes.Buffer
-			if err := template.Must(template.New("").Parse(reportTemplate)).Execute(&out, arg); err != nil {
+		type targ struct {
+			TripleQuote          string
+			ANTHACOMMIT          string
+			ELEMENTSCOMMIT       string
+			OTHERDEPENDENCIES    string
+			PIPETMAXDRIVERCOMMIT string
+			CYBIODRIVERCOMMIT    string
+		}
+		arg := targ{
+			TripleQuote:          "```",
+			ANTHACOMMIT:          anthaCommit,
+			ELEMENTSCOMMIT:       elementsCommit,
+			OTHERDEPENDENCIES:    otherDependencies,
+			PIPETMAXDRIVERCOMMIT: pipetmaxCommit,
+			CYBIODRIVERCOMMIT:    cybioCommit,
+		}
+
+		var out bytes.Buffer
+		if err := template.Must(template.New("").Parse(reportTemplate)).Execute(&out, arg); err != nil {
 			return err
-			}
-			fn := "report" + fmt.Sprint(time.Now().Format("20060102150405")) + ".md"
-			if err := ioutil.WriteFile(fn, out.Bytes(), 0666); err != nil {
+		}
+		fn := "report" + fmt.Sprint(time.Now().Format("20060102150405")) + ".md"
+		if err := ioutil.WriteFile(fn, out.Bytes(), 0666); err != nil {
 			return fmt.Errorf("cannot write file %q: %s", fn, err)
-			}
+		}
 
 		return err
 	}
@@ -245,7 +244,5 @@ or
 {{.TripleQuote}}bash
 mv cybio.xml felixday1.xml
 {{.TripleQuote}}
-
-
 
 `

@@ -289,11 +289,10 @@ func CSV(records [][]string, filename string) (wtype.File, error) {
 	}
 
 	//This code shows how to create an antha File from this buffer which can be downloaded through the UI:
-	var SequencingResultsFile wtype.File
 
-	SequencingResultsFile.Name = filename
+	anthafile.Name = filename
 
-	SequencingResultsFile.WriteAll(buf.Bytes())
+	anthafile.WriteAll(buf.Bytes())
 
 	///// to write this to a file on the command line this is what we'd do (or something similar)
 

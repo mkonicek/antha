@@ -45,15 +45,15 @@ const (
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
 	bioshake96welladaptorheight                 float64 = 4.5
-	bioshakestandardadaptorheight               float64 = 6.0
+	bioshakestandardadaptorheight               float64 = 5.0
 )
 
 var platespecificoffset = map[string]float64{
 	"pcrplate_skirted": gilsonoffsetpcrplate,
 	"greiner384":       gilsonoffsetgreiner,
-	"costar48well":     4.5,
-	"Nuncon12well":     12.0, // this must be wrong!! check z start without riser properly
-	"Nuncon12wellAgar": 12.0, // this must be wrong!! check z start without riser properly
+	"costar48well":     2.0,
+	"Nuncon12well":     11.0, // this must be wrong!! check z start without riser properly
+	"Nuncon12wellAgar": 11.0, // this must be wrong!! check z start without riser properly
 	"VWR12well":        3.0,
 }
 

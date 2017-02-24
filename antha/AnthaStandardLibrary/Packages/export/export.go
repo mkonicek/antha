@@ -311,11 +311,11 @@ func CSV(records [][]string, filename string) (wtype.File, error) {
 // export bytes into a file
 func Binary(data []byte, filename string) (wtype.File, error) {
 	var anthafile wtype.File
+	anthafile.Name = filename
+	anthafile.WriteAll(data)
 	if len(data) == 0 {
 		return anthafile, fmt.Errorf("No data to export into file")
 	}
-	anthafile.Name = filename
-	anthafile.WriteAll(data)
 	return anthafile, nil
 }
 

@@ -548,7 +548,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	xdim = 11.0
 	ydim = 11.0
 	zdim = 19.0
-	bottomh = 2.0
+	bottomh = 3.0
 
 	wellxoffset = 13.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 13.0 //centre of well to centre of neighbouring well in y direction

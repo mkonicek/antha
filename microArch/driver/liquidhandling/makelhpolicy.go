@@ -355,10 +355,10 @@ func MakePEGPolicy() LHPolicy {
 	policy["DSPSPEED"] = 1.5
 	policy["ASP_WAIT"] = 2.0
 	policy["DSP_WAIT"] = 2.0
-	policy["ASPZOFFSET"] = 2.5
-	policy["DSPZOFFSET"] = 2.5
+	policy["ASPZOFFSET"] = 1.0
+	policy["DSPZOFFSET"] = 1.0
 	policy["POST_MIX"] = 3
-	policy["POST_MIX_Z"] = 3.5
+	policy["POST_MIX_Z"] = 1.0
 	policy["BLOWOUTVOLUME"] = 50.0
 	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
@@ -370,13 +370,13 @@ func MakePEGPolicy() LHPolicy {
 
 func MakeProtoplastPolicy() LHPolicy {
 	policy := make(LHPolicy, 7)
-	policy["ASPSPEED"] = 0.15
-	policy["DSPSPEED"] = 0.15
-	policy["ASPZOFFSET"] = 2.5
-	policy["DSPZOFFSET"] = 2.5
+	policy["ASPSPEED"] = 1.5
+	policy["DSPSPEED"] = 1.5
+	policy["ASPZOFFSET"] = 1.0
+	policy["DSPZOFFSET"] = 1.0
 	policy["BLOWOUTVOLUME"] = 100.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	//policy["TOUCHOFF"] = true
+	policy["TOUCHOFF"] = true
 	policy["TIP_REUSE_LIMIT"] = 5
 	policy["CAN_MULTI"] = false
 	return policy

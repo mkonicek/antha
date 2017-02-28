@@ -376,7 +376,7 @@ func MakeProtoplastPolicy() LHPolicy {
 	policy["DSPZOFFSET"] = 1.0
 	policy["BLOWOUTVOLUME"] = 100.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	policy["TOUCHOFF"] = true
+	policy["TOUCHOFF"] = false
 	policy["TIP_REUSE_LIMIT"] = 5
 	policy["CAN_MULTI"] = false
 	return policy
@@ -482,22 +482,24 @@ func MakeCulturePolicy() LHPolicy {
 
 func MakePlateOutPolicy() LHPolicy {
 	culturepolicy := make(LHPolicy, 17)
-	culturepolicy["PRE_MIX"] = 2
-	culturepolicy["PRE_MIX_VOLUME"] = 19.0
-	culturepolicy["PRE_MIX_Z"] = 2.0
-	culturepolicy["PRE_MIX_RATE"] = 4.0
-	culturepolicy["ASPSPEED"] = 4.0
-	culturepolicy["ASPZOFFSET"] = 2.0
-	culturepolicy["DSPSPEED"] = 4.0
+	//culturepolicy["PRE_MIX"] = 1
+	//culturepolicy["PRE_MIX_VOLUME"] = 19.0
+	//culturepolicy["PRE_MIX_Z"] = 1.0
+	//culturepolicy["PRE_MIX_RATE"] = 4.0
+	culturepolicy["ASPSPEED"] = 2.0
+	culturepolicy["ASPZOFFSET"] = 1.0
+	culturepolicy["DSPSPEED"] = 2.0
 	culturepolicy["CAN_MULTI"] = false
-	culturepolicy["CAN_MSA"] = false
-	culturepolicy["CAN_SDD"] = false
-	culturepolicy["DSPREFERENCE"] = 0
+	culturepolicy["ASP_WAIT"] = 2.0
+	culturepolicy["DSP_WAIT"] = 2.0
+	//culturepolicy["CAN_MSA"] = false
+	//culturepolicy["CAN_SDD"] = false
+	//culturepolicy["DSPREFERENCE"] = 0
 	culturepolicy["DSPZOFFSET"] = 0.0
-	culturepolicy["TIP_REUSE_LIMIT"] = 0
+	culturepolicy["TIP_REUSE_LIMIT"] = 7
 	culturepolicy["NO_AIR_DISPENSE"] = true
-	culturepolicy["BLOWOUTVOLUME"] = 0.0
-	culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
+	//culturepolicy["BLOWOUTVOLUME"] = 0.0
+	//culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	culturepolicy["TOUCHOFF"] = false
 
 	return culturepolicy

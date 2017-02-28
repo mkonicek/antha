@@ -490,8 +490,8 @@ func MakePlateOutPolicy() LHPolicy {
 	culturepolicy["ASPZOFFSET"] = 1.0
 	culturepolicy["DSPSPEED"] = 2.0
 	culturepolicy["CAN_MULTI"] = false
-	culturepolicy["ASP_WAIT"] = 2.0
-	culturepolicy["DSP_WAIT"] = 2.0
+	culturepolicy["ASP_WAIT"] = 1.0
+	culturepolicy["DSP_WAIT"] = 1.0
 	//culturepolicy["CAN_MSA"] = false
 	//culturepolicy["CAN_SDD"] = false
 	//culturepolicy["DSPREFERENCE"] = 0

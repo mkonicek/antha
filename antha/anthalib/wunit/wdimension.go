@@ -541,7 +541,7 @@ type Rate struct {
 func NewRate(v float64, unit string) (r Rate, err error) {
 	if unit != `/min` && unit != `/s` {
 		err = fmt.Errorf("Can't make flow rate which aren't in /min or per /s ")
-		panic(err.Error())
+		return
 	}
 
 	approvedtimeunits := []string{"/min", "/s"}

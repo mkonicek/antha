@@ -2,35 +2,47 @@
 package cmd
 
 import (
-	"bufio"
+	"os"
 	"os/exec"
+	"os/user"
+	"path/filepath"
+	"strings"
 )
 
-func GitCommit() (commitID string, err error) {
+// exists returns whether the given file or directory exists or not
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
+}
+
+// assumes GOPATH is in home directory if not set as environment variable
+func gopath() string {
+
+	// if gopath set return gopath
+	if p := os.Getenv("GOPATH"); len(p) != 0 {
+		return filepath.Join(p, "src")
+	}
+	// if not set assume under user's home directory
+	u, err := user.Current()
+	if err != nil {
+		return ""
+	}
+
+	return filepath.Join(u.HomeDir, "go/src")
+}
+
+func gitCommit(path string) (string, error) {
 	cmdName := "git"
 	cmdArgs := []string{"rev-parse", "HEAD"}
 
 	cmd := exec.Command(cmdName, cmdArgs...)
-	cmdReader, err := cmd.StdoutPipe()
-	if err != nil {
-		return commitID, err
-	}
-
-	scanner := bufio.NewScanner(cmdReader)
-	go func() {
-		for scanner.Scan() {
-			commitID = scanner.Text()
-		}
-	}()
-
-	err = cmd.Start()
-	if err != nil {
-		return commitID, err
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		return commitID, err
-	}
-	return commitID, nil
+	cmd.Dir = path
+	commitID, err := cmd.Output()
+	return strings.TrimSpace(string(commitID)), err
 }

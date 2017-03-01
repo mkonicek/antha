@@ -203,7 +203,9 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 	}
 
 	sheet1 := xlsx.Sheets[sheet]
-
+	if sheet1.MaxRow == 0 {
+		return welldatamap, fmt.Errorf("No well data found in Mars data file")
+	}
 	wellrowstart := 0
 	headerrow := headerrows + 2
 	timerow := 0
@@ -740,6 +742,13 @@ func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength 
 	yaxis = make([]float64, 0)
 	var emfound bool
 	var exfound bool
+	if _, found := data.Dataforeachwell[wellname]; !found {
+		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No data found for wellname ", wellname))
+	}
+
+	if len(data.Dataforeachwell[wellname].Data.Readings[0]) == 0 {
+		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No readings found for wellname ", wellname))
+	}
 	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
 
 		var checkscriptnumber bool

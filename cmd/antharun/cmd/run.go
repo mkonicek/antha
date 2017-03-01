@@ -177,7 +177,6 @@ func (a *runOpt) Run() error {
 	// if option is set, add  liquid handling instruction output
 
 	if a.MixInstructionFileName != "" {
-		fmt.Println("OUTPUTING YOUR FILES ")
 		countFiles := 1
 		for _, inst := range rout.Insts {
 			mi, ok := inst.(*target.Mix)

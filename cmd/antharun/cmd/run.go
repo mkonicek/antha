@@ -30,14 +30,18 @@ import (
 	"os"
 	"path"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/cmd/antharun/frontend"
 	"github.com/antha-lang/antha/cmd/antharun/pretty"
 	"github.com/antha-lang/antha/cmd/antharun/spawn"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
+	"github.com/antha-lang/antha/workflow"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -99,11 +103,12 @@ func makeContext() (context.Context, error) {
 }
 
 type runOpt struct {
-	MixerOpt       mixer.Opt
-	Drivers        []string
-	BundleFile     string
-	ParametersFile string
-	WorkflowFile   string
+	MixerOpt               mixer.Opt
+	Drivers                []string
+	BundleFile             string
+	ParametersFile         string
+	WorkflowFile           string
+	MixInstructionFileName string
 }
 
 func (a *runOpt) Run() error {
@@ -169,6 +174,35 @@ func (a *runOpt) Run() error {
 		return err
 	}
 
+	// if option is set, add  liquid handling instruction output
+
+	if a.MixInstructionFileName != "" {
+		fmt.Println("OUTPUTING YOUR FILES ")
+		countFiles := 1
+		for _, inst := range rout.Insts {
+			mi, ok := inst.(*target.Mix)
+
+			if ok {
+				fn := fmt.Sprintf("%s-%d.txt", a.MixInstructionFileName, countFiles)
+				countFiles += 1
+
+				ba := []byte(mi.Request.InstructionText)
+				fb := org_antha_lang_antha_v1.FromBytes{Bytes: ba}
+				bb := org_antha_lang_antha_v1.Blob_Bytes{Bytes: &fb}
+				blb := org_antha_lang_antha_v1.Blob{Name: fn, From: &bb}
+				var f wtype.File
+				e := f.UnmarshalBlob(&blb)
+				if e != nil {
+					panic(fmt.Sprintf("error making file: %s", e.Error))
+				}
+				prcname := fmt.Sprintf("MixInstruction%d", countFiles)
+				port := workflow.Port{Process: prcname, Port: "InstructionText"}
+
+				rout.Workflow.Outputs[port] = f
+			}
+		}
+	}
+
 	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {
 		return err
 	}
@@ -223,11 +257,12 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 	}
 
 	opt := &runOpt{
-		MixerOpt:       mopt,
-		Drivers:        drivers,
-		BundleFile:     viper.GetString("bundle"),
-		ParametersFile: viper.GetString("parameters"),
-		WorkflowFile:   viper.GetString("workflow"),
+		MixerOpt:               mopt,
+		Drivers:                drivers,
+		BundleFile:             viper.GetString("bundle"),
+		ParametersFile:         viper.GetString("parameters"),
+		WorkflowFile:           viper.GetString("workflow"),
+		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 	}
 
 	return opt.Run()
@@ -250,4 +285,5 @@ func init() {
 	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
 	flags.StringSlice("tipType", nil, "Names of permitted tip types")
+	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
 }

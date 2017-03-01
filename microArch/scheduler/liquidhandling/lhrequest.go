@@ -41,7 +41,7 @@ type LHRequest struct {
 	Tips                     []*wtype.LHTipbox
 	InstructionSet           *liquidhandling.RobotInstructionSet
 	Instructions             []liquidhandling.TerminalRobotInstruction
-	InstructionText          []string
+	InstructionText          string
 	Input_assignments        map[string][]string
 	Output_assignments       map[string][]string
 	Input_plates             map[string]*wtype.LHPlate
@@ -170,7 +170,7 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_assignments = make(map[string][]string)
 	lhr.Order_instructions_added = make([]string, 0, 1)
 	lhr.InstructionSet = liquidhandling.NewRobotInstructionSet(nil)
-	lhr.InstructionText = make([]string, 0, 1)
+	lhr.InstructionText = ""
 	lhr.Input_vols_required = make(map[string]wunit.Volume)
 	lhr.Input_vols_supplied = make(map[string]wunit.Volume)
 	lhr.Input_vols_wanting = make(map[string]wunit.Volume)

@@ -370,8 +370,8 @@ func MakePEGPolicy() LHPolicy {
 
 func MakeProtoplastPolicy() LHPolicy {
 	policy := make(LHPolicy, 7)
-	policy["ASPSPEED"] = 1.5
-	policy["DSPSPEED"] = 1.5
+	policy["ASPSPEED"] = 1.0
+	policy["DSPSPEED"] = 1.0
 	policy["ASPZOFFSET"] = 1.0
 	policy["DSPZOFFSET"] = 1.0
 	policy["BLOWOUTVOLUME"] = 100.0

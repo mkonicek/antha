@@ -19,8 +19,8 @@ var tests = []platetest{
 	platetest{TestPlateName: "reservoir", ExpectedZStart: 10.0, ExpectedHeight: 45.0},
 	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
-	platetest{TestPlateName: "Nuncon12well", ExpectedZStart: 5.5, ExpectedHeight: 22.0},
-	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9.0, ExpectedHeight: 22.0},
+	platetest{TestPlateName: "Nuncon12well", ExpectedZStart: 4.0, ExpectedHeight: 19.0},
+	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9.0, ExpectedHeight: 19.0},
 }
 
 func TestAddRiser(t *testing.T) {
@@ -79,12 +79,12 @@ func TestAddRiser(t *testing.T) {
 					"got:", testplate.WellZStart, "\n",
 				)
 			}
-	
+
 			if testPlateInventory2.lib[testname].WellZStart != test.ExpectedZStart+device.GetHeightInmm()-offset {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
-					"Expected plate height:", test.ExpectedZStart, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedZStart+device.GetHeightInmm(), "\n",
+					"Expected plate height:", test.ExpectedZStart, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedZStart+device.GetHeightInmm()-offset, "\n",
 					"got:", testPlateInventory2.lib[testname].WellZStart, "\n",
 				)
 			}

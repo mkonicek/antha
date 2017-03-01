@@ -57,6 +57,7 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	}
 
 	add("water", wtype.LTWater, 9999)
+	add("Overlay", wtype.LTPLATEOUT, 9999)
 	add("PEG", wtype.LTPEG, 9999)
 	add("protoplasts", wtype.LTProtoplasts, 9999)
 	add("fluorescein", wtype.LTWater, 9999)

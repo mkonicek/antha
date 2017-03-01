@@ -110,7 +110,7 @@ func VolumeForTargetConcentration(targetConc Concentration, startingConc Concent
 		return v, fmt.Errorf("Zero value found when converting concentrations to new volume so new volume so set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString())
 
 	} else {
-		err = fmt.Errorf(fmt.Sprint("incompatible units of ", targetConc.ToString(), " and ", startingConc.ToString(), ". ", "Pre-convert both to the same unit (i.e. Mol or gram)."))
+		err = fmt.Errorf(fmt.Sprint("incompatible units of target: ", targetConc.ToString(), " and starting concentration: ", startingConc.ToString(), ". ", "Pre-convert both to the same unit (i.e. Mol or gram)."))
 	}
 
 	v = MultiplyVolume(totalVol, factor)

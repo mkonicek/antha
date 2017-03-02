@@ -31,6 +31,7 @@ import (
 	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/sampletracker"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -71,6 +72,53 @@ type LHProperties struct {
 	Cnfvol               []*wtype.LHChannelParameter
 	Layout               map[string]wtype.Coordinates
 	MaterialType         material.MaterialType
+}
+
+// utility print function
+
+func (p LHProperties) OutputLayout() {
+	fmt.Println("Layout for liquid handler ", p.ID, " type ", p.Mnfr, " ", p.Model)
+	n := p.OrderedPositionNames()
+
+	for _, pos := range n {
+		plateID, ok := p.PosLookup[pos]
+
+		fmt.Print("\tPosition ", pos, " ")
+
+		if !ok {
+			fmt.Println(" Empty")
+		} else {
+			lw := p.PlateLookup[plateID]
+
+			switch lw.(type) {
+			case *wtype.LHPlate:
+				plt := lw.(*wtype.LHPlate)
+				fmt.Println("Plate ", plt.PlateName, " type ", plt.Mnfr, " ", plt.Type, " Contents:")
+				plt.OutputLayout()
+			case *wtype.LHTipbox:
+				tb := lw.(*wtype.LHTipbox)
+				fmt.Println("Tip box ", tb.Mnfr, " ", tb.Type, " ", tb.Boxname, " ", tb.N_clean_tips())
+			case *wtype.LHTipwaste:
+				tw := lw.(*wtype.LHTipwaste)
+				fmt.Println("Tip Waste ", tw.Mnfr, " ", tw.Type, " capacity ", tw.SpaceLeft())
+			default:
+				fmt.Println("Labware :", lw)
+			}
+		}
+	}
+}
+
+func (p LHProperties) OrderedPositionNames() []string {
+	// canonical ordering
+
+	s := make([]string, 0, len(p.Positions))
+	for n, _ := range p.Positions {
+		s = append(s, n)
+	}
+
+	sort.Strings(s)
+
+	return s
 }
 
 // validator for LHProperties structure

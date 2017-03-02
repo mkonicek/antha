@@ -1,0 +1,135 @@
+// Generates instructions to pipette out a defined image onto a defined plate using a defined palette of colours
+protocol PipetteImage
+
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/microArch/factory"
+	"fmt"
+	"image/color"
+)
+
+
+// Input parameters for this protocol (data)
+Parameters (
+	VolumePerWell  Volume
+	Imagefilename string
+	Palettename string
+	//AvailableColours []string
+	OnlythisColour string
+	NotthisColour string
+	//AutoRotate bool
+	//Rotate bool
+)
+
+// Data which is returned from this protocol, and data types
+Data (
+	Numberofpixels int
+)
+
+
+// Physical Inputs to this protocol with types
+Inputs (
+	Colourcomponents []*wtype.LHComponent
+	OutPlate *wtype.LHPlate
+)
+
+// Physical outputs from this protocol with types
+Outputs (
+	Pixels[]*wtype.LHComponent
+)
+
+Requirements {
+	
+}
+
+// Conditions to run on startup
+Setup {
+	
+}
+
+// The core process for this protocol, with the steps to be performed
+// for every input
+Steps {
+	
+	var positiontocolourmap map[string]color.Color
+	
+	availableColours := make([]string,0)
+	
+	for _, component := range Colourcomponents {
+		availableColours = append(availableColours, component.CName)
+	}
+	
+	subpalette := image.MakeSubPallette(Palettename, availableColours)
+	
+	positiontocolourmap, _ = image.ImagetoPlatelayout(Imagefilename, OutPlate, &subpalette, Rotate, AutoRotate) 
+		
+	// get components from factory
+	componentmap := make(map[string]*wtype.LHComponent, 0)
+
+	colourtostringmap := image.AvailableComponentmaps[Palettename]
+	
+	submap := image.MakeSubMapfromMap(colourtostringmap, availableColours)
+
+	for colourname, _ := range submap {
+
+		componentname := colourtostringmap[colourname]
+
+		componentmap[componentname] = factory.GetComponentByType(componentname)
+
+	}
+
+	solutions := make([]*wtype.LHComponent, 0)
+
+	counter := 0
+	
+	for locationkey, colour := range positiontocolourmap {
+		
+		component := componentmap[image.Colourcomponentmap[colour]]
+
+		if component.TypeName() == "dna" {
+			component.Type = wtype.LTDoNotMix//"DoNotMix"
+		}
+		fmt.Println(image.Colourcomponentmap[colour])
+		
+		if OnlythisColour !="" {
+	
+		if image.Colourcomponentmap[colour] == OnlythisColour{
+			counter = counter + 1
+			fmt.Println("wells",counter)
+		pixelSample := mixer.Sample(component, VolumePerWell)
+		solution := MixTo(OutPlate.Type, locationkey, 1, pixelSample)
+		solutions = append(solutions, solution)
+			}
+			
+		}else{
+			if component.CName != NotthisColour{
+			counter = counter + 1
+			fmt.Println("wells",counter)
+		pixelSample := mixer.Sample(component, VolumePerWell)
+		solution := MixTo(OutPlate.Type, locationkey, 1, pixelSample)
+		solutions = append(solutions, solution)
+		}
+		}
+	}
+
+	
+	Pixels = solutions
+	
+	Numberofpixels = len(Pixels)
+	fmt.Println("Pixels =",Numberofpixels)
+	
+}
+// Run after controls and a steps block are completed to
+// post process any data and provide downstream results
+Analysis {
+}
+
+// A block of tests to perform to validate that the sample was processed correctly
+// Optionally, destructive tests can be performed to validate results on a
+// dipstick basis
+Validation {
+	
+}
+

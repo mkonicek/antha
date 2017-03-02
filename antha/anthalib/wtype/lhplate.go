@@ -59,6 +59,27 @@ type LHPlate struct {
 	WellZStart  float64            // offset (mm) to bottom of well in Z direction
 }
 
+func (plate LHPlate) OutputLayout() {
+	for x := 0; x < plate.WellsX(); x += 1 {
+		for y := 0; y < plate.WellsY(); y += 1 {
+			well := plate.Cols[x][y]
+			if well.Currvol() < 0.0001 {
+				continue
+			}
+			fmt.Print("\t\t")
+			var wc WellCoords
+			wc.X = x
+			wc.Y = y
+			fmt.Print(wc.FormatA1(), " ")
+			//for _, c := range well.WContents {
+			fmt.Print(well.WContents.CName, " ")
+			//}
+			fmt.Printf(" %-6.2f%s", well.Currvol(), well.Vunit)
+			fmt.Println()
+		}
+	}
+}
+
 func (lhp LHPlate) Name() string {
 	return lhp.PlateName
 }

@@ -113,6 +113,8 @@ func MakePolicies() map[string]LHPolicy {
 	pols["colony"] = MakeColonyPolicy()
 	pols["colonymix"] = MakeColonyMixPolicy()
 	//      pols["lysate"] = MakeLysatePolicy()
+	pols["carbon_source"] = MakeCarbonSourcePolicy()
+	pols["nitrogen_source"] = MakeNitrogenSourcePolicy()
 
 	/*policies, names := PolicyMaker(Allpairs, "DOE_run", false)
 	for i, policy := range policies {
@@ -442,6 +444,7 @@ func MakeColonyMixPolicy() LHPolicy {
 }
 
 func MakeWaterPolicy() LHPolicy {
+
 	waterpolicy := make(LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
 	//waterpolicy["CAN_MULTI"] = true
@@ -845,6 +848,18 @@ func MakeHVFlowRatePolicy() LHPolicy {
 	policy["ASPSPEED"] = 37
 	policy["DSPSPEED"] = 37
 	return policy
+}
+
+func MakeCarbonSourcePolicy() LHPolicy {
+	cspolicy := make(LHPolicy, 1)
+	cspolicy["DSPREFERENCE"] = 1
+	return cspolicy
+}
+
+func MakeNitrogenSourcePolicy() LHPolicy {
+	nspolicy := make(LHPolicy, 1)
+	nspolicy["DSPREFERENCE"] = 1
+	return nspolicy
 }
 
 func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {

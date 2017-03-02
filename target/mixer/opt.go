@@ -44,6 +44,7 @@ type Opt struct {
 	DriverSpecificTipWastePreferences []string
 	DriverSpecificWashPreferences     []string
 	ModelEvaporation                  bool
+	OutputSort                        bool
 }
 
 // Merge two configs together and return the result. Values in the argument

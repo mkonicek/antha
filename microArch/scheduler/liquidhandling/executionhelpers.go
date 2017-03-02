@@ -141,6 +141,36 @@ func (bg ByGeneration) Less(i, j int) bool {
 	return bg[i].Generation() < bg[j].Generation()
 }
 
+// Optimally - order by component.
+type ByGenerationOpt []*wtype.LHInstruction
+
+func (bg ByGenerationOpt) Len() int      { return len(bg) }
+func (bg ByGenerationOpt) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
+func (bg ByGenerationOpt) Less(i, j int) bool {
+	if bg[i].Generation() == bg[j].Generation() {
+
+		// compare the names of the resultant components
+		c := strings.Compare(bg[i].Result.CName, bg[j].Result.CName)
+
+		if c != 0 {
+			return c < 0
+		}
+
+		// if two components names are equal, then compare the plates
+		c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
+
+		if c != 0 {
+			return c < 0
+		}
+
+		// finally go down columns (nb need to add option)
+
+		return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
+	}
+
+	return bg[i].Generation() < bg[j].Generation()
+}
+
 func set_output_order(rq *LHRequest) error {
 	// sort into equivalence classes by generation
 	// nb that this basically means the ichain stuff is a bit pointless
@@ -148,13 +178,16 @@ func set_output_order(rq *LHRequest) error {
 	// parent-child relationships are working OK
 
 	sorted := insSliceFromMap(rq.LHInstructions)
-
-	sort.Sort(ByGeneration(sorted))
+	if rq.Options.OutputSort {
+		sort.Sort(ByGenerationOpt(sorted))
+	} else {
+		sort.Sort(ByGeneration(sorted))
+	}
 
 	it := NewIChain(nil)
 
 	for _, v := range sorted {
-		//	fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
+		// fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
 
 		it.Add(v)
 	}

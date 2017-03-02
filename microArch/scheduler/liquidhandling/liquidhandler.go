@@ -294,6 +294,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 	this.Properties.RemoveTemporaryComponents()
 	this.FinalProperties.RemoveTemporaryComponents()
+
 	pidm := make(map[string]string, len(this.Properties.Plates))
 	for pos, _ := range this.Properties.Plates {
 		p1, ok1 := this.Properties.Plates[pos]
@@ -370,7 +371,6 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 		plate := this.Properties.PlateLookup[plateid]
 		name := plate.(wtype.Named).GetName()
 		stat = this.Properties.Driver.AddPlateTo(position, plate, name)
-
 		if stat.Errorcode == driver.ERR {
 			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
 		}

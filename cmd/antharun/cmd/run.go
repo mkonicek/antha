@@ -81,6 +81,8 @@ func makeMixerOpt() (mixer.Opt, error) {
 		opt.InputPlates = append(opt.InputPlates, p)
 	}
 
+	opt.OutputSort = viper.GetBool("outputSort")
+
 	return opt, nil
 }
 
@@ -272,4 +274,5 @@ func init() {
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
 	flags.StringSlice("tipType", nil, "Names of permitted tip types")
 	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
+	flags.Bool("OutputSort", false, "Sort execution by output - improves tip usage")
 }

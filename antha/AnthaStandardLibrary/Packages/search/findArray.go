@@ -24,6 +24,7 @@
 package search
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -85,10 +86,10 @@ func RemoveDuplicateInts(elements []int) []int {
 	return result
 }
 
-func RemoveDuplicateInterface(elements []interface{}) []interface{} {
+func RemoveDuplicateFloats(elements []float64) []float64 {
 	// Use map to record duplicates as we find them.
-	encountered := map[interface{}]bool{}
-	result := []interface{}{}
+	encountered := map[float64]bool{}
+	result := []float64{}
 
 	for v := range elements {
 		if encountered[elements[v]] == true {
@@ -102,6 +103,105 @@ func RemoveDuplicateInterface(elements []interface{}) []interface{} {
 	}
 	// Return the new slice.
 	return result
+}
+
+func checkArrayType(elements []interface{}) (arraytype int, err error) {
+	var foundthistype int
+	var foundthesetypes []int
+	for i, element := range elements {
+		if _, found := element.(float64); found {
+			if floatarray != foundthistype && i != 0 {
+				return mixedarray, fmt.Errorf("found different types in []interface{} at %s: %s and %s ", element, floatarray, foundthistype)
+			}
+			foundthistype = floatarray
+			foundthesetypes = append(foundthesetypes, floatarray)
+		} else if _, found := element.(string); found {
+			if stringarray != foundthistype && i != 0 {
+				return mixedarray, fmt.Errorf("found different types in []interface{} at %s: %s and %s ", element, floatarray, foundthistype)
+			}
+			foundthistype = stringarray
+			foundthesetypes = append(foundthesetypes, stringarray)
+		} else if _, found := element.(int); found {
+			if intarray != foundthistype && i != 0 {
+				return mixedarray, fmt.Errorf("found different types in []interface{} at %s: %s and %s ", element, floatarray, foundthistype)
+			}
+			foundthistype = intarray
+			foundthesetypes = append(foundthesetypes, intarray)
+		} else {
+			return unknown, fmt.Errorf("[]element not ints, floats or string: found these types so far: %s", foundthesetypes)
+		}
+	}
+	arraytype = foundthistype
+	return
+}
+
+const (
+	unknown = iota
+	mixedarray
+	floatarray
+	intarray
+	stringarray
+)
+
+func RemoveDuplicateInterface(elements []interface{}) ([]interface{}, error) {
+
+	var unique []interface{}
+
+	if len(elements) == 0 {
+		return unique, fmt.Errorf("No entries in slice! ")
+	}
+
+	t, err := checkArrayType(elements)
+
+	if err != nil {
+		return unique, err
+	}
+
+	if t == intarray {
+		var intelements []int
+		for _, element := range elements {
+			intelements = append(intelements, element.(int))
+		}
+
+		intelements = RemoveDuplicateInts(intelements)
+
+		for j := range intelements {
+			var u interface{}
+			u = intelements[j]
+			unique = append(unique, u)
+		}
+		return unique, nil
+	} else if t == floatarray {
+		var values []float64
+		for _, element := range elements {
+			values = append(values, element.(float64))
+		}
+		values = RemoveDuplicateFloats(values)
+		for j := range values {
+			var u interface{}
+			u = values[j]
+			unique = append(unique, u)
+		}
+		return unique, nil
+	} else if t == stringarray {
+		var values []string
+		for _, element := range elements {
+			values = append(values, element.(string))
+		}
+		values = RemoveDuplicates(values)
+
+		for j := range values {
+			var u interface{}
+			u = values[j]
+			unique = append(unique, u)
+		}
+		return unique, nil
+	} else {
+		return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, array type: %s", t)
+	}
+
+	// Return the new slice.
+	return unique, nil
 }
 
 func RemoveDuplicatesKeysfromMap(elements map[interface{}]interface{}) map[interface{}]interface{} {

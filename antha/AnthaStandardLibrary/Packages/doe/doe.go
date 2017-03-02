@@ -25,6 +25,7 @@ package doe
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -222,6 +223,15 @@ func (run Run) GetFactorValue(factordescriptor string) (factorvalue interface{},
 }
 
 func AddNewResponseFieldandValue(run Run, responsedescriptor string, responsevalue interface{}) (newrun Run) {
+
+	// check if float64 is NaN or Inf
+	if float, found := responsevalue.(float64); found {
+		if math.IsInf(float, 0) {
+			responsevalue = "Inf"
+		} else if math.IsNaN(float) {
+			responsevalue = "Nan"
+		}
+	}
 
 	newrun = run
 
@@ -599,7 +609,7 @@ func AddWelllocations(DXORJMP string, xlsxfile string, oldsheet int, runnumberto
 
 	sheet := spreadsheet.Sheet(file, oldsheet)
 
-	_ = file.AddSheet("hello")
+	_, _ = file.AddSheet("hello")
 
 	//extracolumn := sheet.MaxCol + 1
 
@@ -648,8 +658,8 @@ func AddWelllocations(DXORJMP string, xlsxfile string, oldsheet int, runnumberto
 	return err
 }
 
-func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) {
-	file, err := spreadsheet.OpenFile(xlsx)
+func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err error) {
+	file, err := spreadsheet.OpenFile(filename)
 	if err != nil {
 		return runs, err
 	}
@@ -680,11 +690,20 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 		}
 
 		for j := 2; j < sheet.MaxCol; j++ {
-			factororresponse := sheet.Cell(0, j).String()
+			factororresponse, err := sheet.Cell(0, j).String()
+
+			if err != nil {
+				return runs, err
+			}
 
 			if strings.Contains(factororresponse, "Factor") {
 
-				descriptor = strings.Split(sheet.Cell(1, j).String(), ":")[1]
+				desc, err := sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
+
+				descriptor = strings.Split(desc, ":")[1]
 				factrodescriptor := descriptor
 				//fmt.Println(i, j, descriptor)
 
@@ -692,7 +711,7 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 
 				celltype := cell.Type()
 
-				_, err := cell.Float()
+				_, err = cell.Float()
 
 				if strings.ToUpper(cell.Value) == "TRUE" {
 					setpoint = true //cell.SetBool(true)
@@ -709,14 +728,21 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 						}
 					}
 				} else {
-					setpoint = cell.String()
+
+					setpoint, err = cell.String()
+					if err != nil {
+						return runs, err
+					}
 				}
 
 				factordescriptors = append(factordescriptors, factrodescriptor)
 				setpoints = append(setpoints, setpoint)
 
 			} else if strings.Contains(factororresponse, "Response") {
-				descriptor = sheet.Cell(1, j).String()
+				descriptor, err = sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
 				responsedescriptor := descriptor
 				//// fmt.Println("response", i, j, descriptor)
 				responsedescriptors = append(responsedescriptors, responsedescriptor)
@@ -737,12 +763,18 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 					}
 					responsevalues = append(responsevalues, responsevalue)
 				} else {
-					responsevalue := cell.String()
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
 					responsevalues = append(responsevalues, responsevalue)
 				}
 
 			} else {
-				descriptor = sheet.Cell(1, j).String()
+				descriptor, err = sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
 				responsedescriptor := descriptor
 
 				otherheaders = append(otherheaders, factororresponse)
@@ -764,7 +796,177 @@ func RunsFromDXDesign(xlsx string, intfactors []string) (runs []Run, err error) 
 					}
 					otherresponsevalues = append(otherresponsevalues, responsevalue)
 				} else {
-					responsevalue := cell.String()
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
+					otherresponsevalues = append(otherresponsevalues, responsevalue)
+				}
+
+			}
+		}
+		run.Factordescriptors = factordescriptors
+		run.Responsedescriptors = responsedescriptors
+		run.Setpoints = setpoints
+		run.ResponseValues = responsevalues
+		run.AdditionalHeaders = otherheaders
+		run.AdditionalSubheaders = othersubheaders
+		run.AdditionalValues = otherresponsevalues
+
+		runs = append(runs, run)
+		factordescriptors = make([]string, 0)
+		responsedescriptors = make([]string, 0)
+
+		// assuming this is necessary too
+		otherheaders = make([]string, 0)
+		othersubheaders = make([]string, 0)
+	}
+
+	return
+}
+
+func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, err error) {
+	file, err := spreadsheet.OpenBinary(bytes)
+	if err != nil {
+		return runs, err
+	}
+	sheet := spreadsheet.Sheet(file, 0)
+
+	runs = make([]Run, 0)
+	var run Run
+
+	var setpoint interface{}
+	var descriptor string
+	for i := 3; i < sheet.MaxRow; i++ {
+
+		factordescriptors := make([]string, 0)
+		responsedescriptors := make([]string, 0)
+		setpoints := make([]interface{}, 0)
+		responsevalues := make([]interface{}, 0)
+		otherheaders := make([]string, 0)
+		othersubheaders := make([]string, 0)
+		otherresponsevalues := make([]interface{}, 0)
+
+		run.RunNumber, err = sheet.Cell(i, 1).Int()
+		if err != nil {
+			return runs, err
+		}
+		run.StdNumber, err = sheet.Cell(i, 0).Int()
+		if err != nil {
+			return runs, err
+		}
+
+		for j := 2; j < sheet.MaxCol; j++ {
+			factororresponse, err := sheet.Cell(0, j).String()
+
+			if err != nil {
+				return runs, err
+			}
+
+			if strings.Contains(factororresponse, "Factor") {
+
+				desc, err := sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
+
+				descriptor = strings.Split(desc, ":")[1]
+				factrodescriptor := descriptor
+				//fmt.Println(i, j, descriptor)
+
+				cell := sheet.Cell(i, j)
+
+				celltype := cell.Type()
+
+				_, err = cell.Float()
+
+				if strings.ToUpper(cell.Value) == "TRUE" {
+					setpoint = true //cell.SetBool(true)
+				} else if strings.ToUpper(cell.Value) == "FALSE" {
+					setpoint = false //cell.SetBool(false)
+				} else if celltype == 3 {
+					setpoint = cell.Bool()
+				} else if err == nil || celltype == 1 {
+					setpoint, _ = cell.Float()
+					if search.InSlice(descriptor, intfactors) {
+						setpoint, err = cell.Int()
+						if err != nil {
+							return runs, err
+						}
+					}
+				} else {
+
+					setpoint, err = cell.String()
+					if err != nil {
+						return runs, err
+					}
+				}
+
+				factordescriptors = append(factordescriptors, factrodescriptor)
+				setpoints = append(setpoints, setpoint)
+
+			} else if strings.Contains(factororresponse, "Response") {
+				descriptor, err = sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
+				responsedescriptor := descriptor
+				//// fmt.Println("response", i, j, descriptor)
+				responsedescriptors = append(responsedescriptors, responsedescriptor)
+
+				cell := sheet.Cell(i, j)
+
+				if cell == nil {
+
+					break
+				}
+
+				celltype := cell.Type()
+
+				if celltype == 1 {
+					responsevalue, err := cell.Float()
+					if err != nil {
+						return runs, err
+					}
+					responsevalues = append(responsevalues, responsevalue)
+				} else {
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
+					responsevalues = append(responsevalues, responsevalue)
+				}
+
+			} else {
+				descriptor, err = sheet.Cell(1, j).String()
+				if err != nil {
+					return runs, err
+				}
+				responsedescriptor := descriptor
+
+				otherheaders = append(otherheaders, factororresponse)
+				othersubheaders = append(othersubheaders, responsedescriptor)
+
+				cell := sheet.Cell(i, j)
+
+				if cell == nil {
+
+					break
+				}
+
+				celltype := cell.Type()
+
+				if celltype == 1 {
+					responsevalue, err := cell.Float()
+					if err != nil {
+						return runs, err
+					}
+					otherresponsevalues = append(otherresponsevalues, responsevalue)
+				} else {
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
 					otherresponsevalues = append(otherresponsevalues, responsevalue)
 				}
 
@@ -800,8 +1002,10 @@ func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File)
 	var err error
 
 	xlsxfile = xlsx.NewFile()
-	sheet = xlsxfile.AddSheet("Sheet1")
-
+	sheet, err = xlsxfile.AddSheet("Sheet1")
+	if err != nil {
+		panic(err.Error())
+	}
 	// add headers
 	row = sheet.AddRow()
 
@@ -943,10 +1147,11 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 
 			if strings.Contains(factororresponse, "Factor") {
 
-				descriptor = sheet.Cell(0, j).String()
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
 				factrodescriptor := descriptor
-				fmt.Println(i, j, descriptor)
-
 				cell := sheet.Cell(i, j)
 
 				celltype := cell.Type()
@@ -968,13 +1173,19 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 						}
 					}
 				} else {
-					setpoint = cell.String()
+					setpoint, err = cell.String()
+					if err != nil {
+						return runs, err
+					}
 				}
 				factordescriptors = append(factordescriptors, factrodescriptor)
 				setpoints = append(setpoints, setpoint)
 
 			} else if strings.Contains(factororresponse, "Response") {
-				descriptor = sheet.Cell(0, j).String()
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
 				responsedescriptor := descriptor
 
 				responsedescriptors = append(responsedescriptors, responsedescriptor)
@@ -995,12 +1206,18 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 					}
 					responsevalues = append(responsevalues, responsevalue)
 				} else {
-					responsevalue := cell.String()
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
 					responsevalues = append(responsevalues, responsevalue)
 				}
 
 			} else /*if j != patterncolumn*/ {
-				descriptor = sheet.Cell(0, j).String()
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
 				responsedescriptor := descriptor
 
 				otherheaders = append(otherheaders, factororresponse)
@@ -1022,7 +1239,10 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 					}
 					otherresponsevalues = append(otherresponsevalues, responsevalue)
 				} else {
-					responsevalue := cell.String()
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
 					otherresponsevalues = append(otherresponsevalues, responsevalue)
 				}
 
@@ -1047,7 +1267,164 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 
 	return
 }
+func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumns []int, intfactors []string) (runs []Run, err error) {
+	file, err := spreadsheet.OpenBinary(bytes)
+	if err != nil {
+		return runs, err
+	}
+	sheet := spreadsheet.Sheet(file, 0)
 
+	runs = make([]Run, 0)
+	var run Run
+
+	var setpoint interface{}
+	var descriptor string
+	for i := 1; i < sheet.MaxRow; i++ {
+		//maxfactorcol := 2
+		factordescriptors := make([]string, 0)
+		responsedescriptors := make([]string, 0)
+		setpoints := make([]interface{}, 0)
+		responsevalues := make([]interface{}, 0)
+		otherheaders := make([]string, 0)
+		othersubheaders := make([]string, 0)
+		otherresponsevalues := make([]interface{}, 0)
+
+		run.RunNumber = i //sheet.Cell(i, 1).Int()
+
+		run.StdNumber = i //sheet.Cell(i, 0).Int()
+
+		for j := 0; j < sheet.MaxCol; j++ {
+
+			var factororresponse string
+
+			if search.Contains(factorcolumns, j) {
+				factororresponse = "Factor"
+			} else if search.Contains(responsecolumns, j) {
+				factororresponse = "Response"
+			}
+
+			if strings.Contains(factororresponse, "Factor") {
+
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
+				factrodescriptor := descriptor
+				cell := sheet.Cell(i, j)
+
+				celltype := cell.Type()
+
+				_, err := cell.Float()
+
+				if strings.ToUpper(cell.Value) == "TRUE" {
+					setpoint = true //cell.SetBool(true)
+				} else if strings.ToUpper(cell.Value) == "FALSE" {
+					setpoint = false //cell.SetBool(false)
+				} else if celltype == 3 {
+					setpoint = cell.Bool()
+				} else if err == nil || celltype == 1 {
+					setpoint, _ = cell.Float()
+					if search.InSlice(descriptor, intfactors) {
+						setpoint, err = cell.Int()
+						if err != nil {
+							return runs, err
+						}
+					}
+				} else {
+					setpoint, err = cell.String()
+					if err != nil {
+						return runs, err
+					}
+				}
+				factordescriptors = append(factordescriptors, factrodescriptor)
+				setpoints = append(setpoints, setpoint)
+
+			} else if strings.Contains(factororresponse, "Response") {
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
+				responsedescriptor := descriptor
+
+				responsedescriptors = append(responsedescriptors, responsedescriptor)
+
+				cell := sheet.Cell(i, j)
+
+				if cell == nil {
+
+					break
+				}
+
+				celltype := cell.Type()
+
+				if celltype == 1 {
+					responsevalue, err := cell.Float()
+					if err != nil {
+						return runs, err
+					}
+					responsevalues = append(responsevalues, responsevalue)
+				} else {
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
+					responsevalues = append(responsevalues, responsevalue)
+				}
+
+			} else /*if j != patterncolumn*/ {
+				descriptor, err = sheet.Cell(0, j).String()
+				if err != nil {
+					return runs, err
+				}
+				responsedescriptor := descriptor
+
+				otherheaders = append(otherheaders, factororresponse)
+				othersubheaders = append(othersubheaders, responsedescriptor)
+
+				cell := sheet.Cell(i, j)
+
+				if cell == nil {
+
+					break
+				}
+
+				celltype := cell.Type()
+
+				if celltype == 1 {
+					responsevalue, err := cell.Float()
+					if err != nil {
+						return runs, err
+					}
+					otherresponsevalues = append(otherresponsevalues, responsevalue)
+				} else {
+					responsevalue, err := cell.String()
+					if err != nil {
+						return runs, err
+					}
+					otherresponsevalues = append(otherresponsevalues, responsevalue)
+				}
+
+			}
+		}
+		run.Factordescriptors = factordescriptors
+		run.Responsedescriptors = responsedescriptors
+		run.Setpoints = setpoints
+		run.ResponseValues = responsevalues
+		run.AdditionalHeaders = otherheaders
+		run.AdditionalSubheaders = othersubheaders
+		run.AdditionalValues = otherresponsevalues
+
+		runs = append(runs, run)
+		factordescriptors = make([]string, 0)
+		responsedescriptors = make([]string, 0)
+
+		// assuming this is necessary too
+		otherheaders = make([]string, 0)
+		othersubheaders = make([]string, 0)
+	}
+
+	return
+}
 func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File) {
 
 	// if output is a struct look for a sensible field to print
@@ -1059,8 +1436,10 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 	var err error
 
 	xlsxfile = xlsx.NewFile()
-	sheet = xlsxfile.AddSheet("Sheet1")
-
+	sheet, err = xlsxfile.AddSheet("Sheet1")
+	if err != nil {
+		panic(err.Error())
+	}
 	// new row
 	row = sheet.AddRow()
 
@@ -1162,8 +1541,32 @@ func RunsFromDesignPreResponses(designfile string, intfactors []string, dxorjmp 
 	} else if dxorjmp == "JMP" {
 
 		factorcolumns, responsecolumns, _ := findJMPFactorandResponseColumnsinEmptyDesign(designfile)
-
+		fmt.Println("factor columns: ", factorcolumns)
+		fmt.Println("response columns: ", responsecolumns)
 		runs, err = RunsFromJMPDesign(designfile, factorcolumns, responsecolumns, intfactors)
+		if err != nil {
+			return runs, err
+		}
+	}
+	return
+
+}
+
+func RunsFromDesignPreResponsesContents(designfileContents []byte, intfactors []string, dxorjmp string) (runs []Run, err error) {
+
+	if dxorjmp == "DX" {
+
+		runs, err = RunsFromDXDesignContents(designfileContents, intfactors)
+		if err != nil {
+			return runs, err
+		}
+
+	} else if dxorjmp == "JMP" {
+
+		factorcolumns, responsecolumns, _ := findJMPFactorandResponseColumnsinEmptyDesignContents(designfileContents)
+		fmt.Println("factor columns: ", factorcolumns)
+		fmt.Println("response columns: ", responsecolumns)
+		runs, err = RunsFromJMPDesignContents(designfileContents, factorcolumns, responsecolumns, intfactors)
 		if err != nil {
 			return runs, err
 		}
@@ -1183,7 +1586,11 @@ func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int)
 	sheet := spreadsheet.Sheet(file, 0)
 
 	for i := 0; i < sheet.MaxCol; i++ {
-		if search.BinarySearch(responsefactors, i) == false && strings.ToUpper(sheet.Cell(0, i).String()) != "PATTERN" {
+		header, err := sheet.Cell(0, i).String()
+		if err != nil {
+			return factorcolumns
+		}
+		if search.BinarySearch(responsefactors, i) == false && strings.ToUpper(header) != "PATTERN" {
 			factorcolumns = append(factorcolumns, i)
 		}
 	}
@@ -1193,7 +1600,7 @@ func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int)
 
 // add func to auto check for Response and factor status based on empty entries implying Response column
 func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []int, responsecolumns []int, PatternColumn int) {
-
+	var patternfound bool
 	factorcolumns = make([]int, 0)
 	responsecolumns = make([]int, 0)
 
@@ -1207,10 +1614,14 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 
 	for j := 0; j < sheet.MaxCol; j++ {
 
-		descriptor := sheet.Cell(0, j).String()
+		descriptor, err := sheet.Cell(0, j).String()
+		if err != nil {
+			panic(err.Error())
+		}
 		//	descriptors = append(descriptors,descriptor)
 		if strings.ToUpper(descriptor) == "PATTERN" {
 			PatternColumn = j
+			patternfound = true
 		}
 	}
 	// iterate through every run of the design sheet (row) and if all values for that row == "", the column is interpreted as a response
@@ -1218,9 +1629,16 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 		//maxfactorcol := 2
 		for j := 0; j < sheet.MaxCol; j++ {
 
-			if j != PatternColumn && sheet.Cell(i, j).String() != "" {
+			cellstr, err := sheet.Cell(i, j).String()
+			if err != nil {
+				panic(err.Error())
+			}
+
+			if patternfound && j != PatternColumn && cellstr != "" {
 				factorcolumns = append(factorcolumns, j)
-			} else if sheet.Cell(i, j).String() == "" {
+			} else if !patternfound && cellstr != "" {
+				factorcolumns = append(factorcolumns, j)
+			} else if cellstr == "" {
 
 				responsecolumns = append(responsecolumns, j)
 			}
@@ -1228,5 +1646,64 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 		}
 
 	}
+
+	factorcolumns = search.RemoveDuplicateInts(factorcolumns)
+	responsecolumns = search.RemoveDuplicateInts(responsecolumns)
+
+	return
+}
+
+// add func to auto check for Response and factor status based on empty entries implying Response column
+func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorcolumns []int, responsecolumns []int, PatternColumn int) {
+	var patternfound bool
+	factorcolumns = make([]int, 0)
+	responsecolumns = make([]int, 0)
+
+	file, err := spreadsheet.OpenBinary(bytes)
+	if err != nil {
+		return
+	}
+	sheet := spreadsheet.Sheet(file, 0)
+
+	//descriptors := make([]string, 0)
+
+	for j := 0; j < sheet.MaxCol; j++ {
+
+		descriptor, err := sheet.Cell(0, j).String()
+		if err != nil {
+			panic(err.Error())
+		}
+		//	descriptors = append(descriptors,descriptor)
+		if strings.ToUpper(descriptor) == "PATTERN" {
+			PatternColumn = j
+			patternfound = true
+		}
+	}
+	// iterate through every run of the design sheet (row) and if all values for that row == "", the column is interpreted as a response
+	for i := 1; i < sheet.MaxRow; i++ {
+		//maxfactorcol := 2
+		for j := 0; j < sheet.MaxCol; j++ {
+
+			cellstr, err := sheet.Cell(i, j).String()
+			if err != nil {
+				panic(err.Error())
+			}
+
+			if patternfound && j != PatternColumn && cellstr != "" {
+				factorcolumns = append(factorcolumns, j)
+			} else if !patternfound && cellstr != "" {
+				factorcolumns = append(factorcolumns, j)
+			} else if cellstr == "" {
+
+				responsecolumns = append(responsecolumns, j)
+			}
+
+		}
+
+	}
+
+	factorcolumns = search.RemoveDuplicateInts(factorcolumns)
+	responsecolumns = search.RemoveDuplicateInts(responsecolumns)
+
 	return
 }

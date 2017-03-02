@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package org.antha_lang.antha.v1;
+
+message Polynomial {
+  // Coefficients of a polynomial: a[0] * x^0 + a[1] * x^1 + ... + a[n] * x^n
+  repeated double coefficients = 1;
+}

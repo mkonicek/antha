@@ -3,66 +3,6 @@
 	"ignore": "",
 	"package": [
 		{
-			"path": "",
-			"revision": "cad5a317cd03372c35d86059dd99344b5542a072",
-			"revisionTime": "2015-05-06T14:43:48+09:30"
-		},
-		{
-			"path": "",
-			"revision": "c3eb24aeea63668ebdac08d2e252f20df8b6b1ae",
-			"revisionTime": "2015-03-27T18:25:44-07:00"
-		},
-		{
-			"path": "",
-			"revision": "937a34c9de13",
-			"revisionTime": "2014-12-05T14:04:04+09:00"
-		},
-		{
-			"path": "",
-			"revision": "8d49746f13e4c654088c52685541fcf4cbc8fa59",
-			"revisionTime": "2015-06-10T20:30:30-03:00"
-		},
-		{
-			"path": "",
-			"revision": "dfe268fd2bb5c793f4c083803609fce9806c6f80",
-			"revisionTime": "2015-06-05T17:53:27+12:00"
-		},
-		{
-			"path": "",
-			"revision": "69bea132aeedf01f2bb5eaebeef88ce71ac2a477",
-			"revisionTime": "2015-06-21T20:00:22+10:00"
-		},
-		{
-			"path": "",
-			"revision": "442e588f213303bec7936deba67901f8fc8f18b1",
-			"revisionTime": "2015-01-20T21:22:42-08:00"
-		},
-		{
-			"path": "",
-			"revision": "cad5a317cd03372c35d86059dd99344b5542a072",
-			"revisionTime": "2015-05-06T14:43:48+09:30"
-		},
-		{
-			"path": "",
-			"revision": "cad5a317cd03372c35d86059dd99344b5542a072",
-			"revisionTime": "2015-05-06T14:43:48+09:30"
-		},
-		{
-			"path": "",
-			"revision": "cad5a317cd03372c35d86059dd99344b5542a072",
-			"revisionTime": "2015-05-06T14:43:48+09:30"
-		},
-		{
-			"path": "",
-			"revision": "cad5a317cd03372c35d86059dd99344b5542a072",
-			"revisionTime": "2015-05-06T14:43:48+09:30"
-		},
-		{
-			"path": "",
-			"revision": "cad5a317cd03372c35d86059dd99344b5542a072",
-			"revisionTime": "2015-05-06T14:43:48+09:30"
-		},
-		{
 			"path": "bitbucket.org/zombiezen/gopdf/pdf",
 			"revision": "1c63dc69751b",
 			"revisionTime": "2015-03-17T16:38:09Z"
@@ -350,11 +290,10 @@
 		},
 		{
 			"path": "github.com/tealeg/xlsx",
-			"revision": "c2885b3e5cb5fb9b241bdab3430ca6e1c1057079",
-			"revisionTime": "2015-07-24T21:09:55+02:00"
+			"revision": "e0f3d7d6cf84b282edb711bc6a23e8dbbd331a13",
+			"revisionTime": "2016-12-21T21:26:27+01:00"
 		},
 		{
-			"origin": "github.com/antha-lang/antha/vendor/github.com/twinj/uuid",
 			"path": "github.com/twinj/uuid",
 			"revision": "7bbe408d339787c56ec15568c947c0959db1b275",
 			"revisionTime": "2016-09-09T17:54:38+10:00"
@@ -399,5 +338,6 @@
 			"revision": "8611c35ab31c1c28aa903d33cf8b6e44a399b09e",
 			"revisionTime": "2016-01-10T16:04:37+01:00"
 		}
-	]
+	],
+	"rootPath": "github.com/antha-lang/antha"
 }

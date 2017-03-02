@@ -283,7 +283,11 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 
 	// should change this to rebase lookup; what happens if this fails?
 	//enzyme := TypeIIsEnzymeproperties[enzymename]
-	enzyme, _ := lookup.TypeIIsLookup(enzymename)
+	enzyme, err := lookup.TypeIIsLookup(enzymename)
+
+	if err != nil {
+		return s, successfulassemblies, sites, newDNASequence, err
+	}
 
 	// need to expand this to include other enzyme possibilities
 	if enzyme.Class != "TypeIIs" { // enzyme.Name != "SapI" && enzyme.Name != "BsaI" && enzyme.Name != "BpiI" {
@@ -302,15 +306,22 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		return s, successfulassemblies, sites, newDNASequence, err
 	}
 
+	enzy, err := lookup.EnzymeLookup(enzymename)
+
+	if err != nil {
+		return s, successfulassemblies, sites, newDNASequence, err
+	}
+
 	if len(plasmidproductsfromXprimaryseq) == 1 {
-		sites = Restrictionsitefinder(plasmidproductsfromXprimaryseq[0], []wtype.RestrictionEnzyme{BsaI, SapI, lookup.EnzymeLookup(enzymename)})
+
+		sites = Restrictionsitefinder(plasmidproductsfromXprimaryseq[0], []wtype.RestrictionEnzyme{BsaI, SapI, enzy})
 		newDNASequence = plasmidproductsfromXprimaryseq[0]
 	}
 	// returns first plasmid in array! should be changed later!
 	if len(plasmidproductsfromXprimaryseq) > 1 {
 		sites = make([]Restrictionsites, 0)
 		for i := 0; i < len(plasmidproductsfromXprimaryseq); i++ {
-			sitesperplasmid := Restrictionsitefinder(plasmidproductsfromXprimaryseq[i], []wtype.RestrictionEnzyme{BsaI, SapI, lookup.EnzymeLookup(enzymename)})
+			sitesperplasmid := Restrictionsitefinder(plasmidproductsfromXprimaryseq[i], []wtype.RestrictionEnzyme{BsaI, SapI, enzy})
 			for _, site := range sitesperplasmid {
 				sites = append(sites, site)
 			}
@@ -358,6 +369,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulassemblies int, errors map[string]string, seqs []wtype.DNASequence) {
 
 	seqs = make([]wtype.DNASequence, 0)
+	errors = make(map[string]string) // construct to error
 
 	for _, construct := range parameters {
 		output, _, _, seq, err := Assemblysimulator(construct)
@@ -367,49 +379,62 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 		if err == nil {
 			successfulassemblies += 1
 			continue
-		}
+		} else {
 
-		if strings.Contains(err.Error(), "Failure Joining fragments after digestion") {
-			sitesperpart := make([]Restrictionsites, 0)
-			constructsitesstring := make([]string, 0)
-			constructsitesstring = append(constructsitesstring, output)
-			sitestring := ""
-			enzyme := lookup.EnzymeLookup(construct.Enzymename)
-			sitesperpart = Restrictionsitefinder(construct.Vector, []wtype.RestrictionEnzyme{enzyme})
+			errors[construct.Constructname] = err.Error()
 
-			if sitesperpart[0].Numberofsites != 2 {
-				// need to loop through sitesperpart
+			if strings.Contains(err.Error(), "Failure Joining fragments after digestion") {
+				sitesperpart := make([]Restrictionsites, 0)
+				constructsitesstring := make([]string, 0)
+				constructsitesstring = append(constructsitesstring, output)
+				sitestring := ""
+				enzyme, err := lookup.EnzymeLookup(construct.Enzymename)
+				if err != nil {
 
-				sitepositions := SitepositionString(sitesperpart[0])
-				sitestring = "For " + construct.Vector.Nm + ": " + strconv.Itoa(sitesperpart[0].Numberofsites) + " sites found at positions: " + sitepositions
-				constructsitesstring = append(constructsitesstring, sitestring)
-			}
+					originalerror := errors[construct.Constructname]
 
-			for _, part := range construct.Partsinorder {
-				sitesperpart = Restrictionsitefinder(part, []wtype.RestrictionEnzyme{enzyme})
+					errors[construct.Constructname] = originalerror + " and " + err.Error()
+				}
+				sitesperpart = Restrictionsitefinder(construct.Vector, []wtype.RestrictionEnzyme{enzyme})
+
 				if sitesperpart[0].Numberofsites != 2 {
+					// need to loop through sitesperpart
+
 					sitepositions := SitepositionString(sitesperpart[0])
-					positions := ""
-					if sitesperpart[0].Numberofsites != 0 {
-						positions = fmt.Sprint("at positions:", sitepositions)
-					}
-					sitestring = fmt.Sprint("For ", part.Nm, ": ", strconv.Itoa(sitesperpart[0].Numberofsites), " sites were found ", positions)
+					sitestring = "For " + construct.Vector.Nm + ": " + strconv.Itoa(sitesperpart[0].Numberofsites) + " sites found at positions: " + sitepositions
 					constructsitesstring = append(constructsitesstring, sitestring)
 				}
 
-			}
-			if len(constructsitesstring) != 1 {
-				message := strings.Join(constructsitesstring, "; ")
-				err = fmt.Errorf(message)
-			}
-		}
+				for _, part := range construct.Partsinorder {
+					sitesperpart = Restrictionsitefinder(part, []wtype.RestrictionEnzyme{enzyme})
+					if sitesperpart[0].Numberofsites != 2 {
+						sitepositions := SitepositionString(sitesperpart[0])
+						positions := ""
+						if sitesperpart[0].Numberofsites != 0 {
+							positions = fmt.Sprint("at positions:", sitepositions)
+						}
+						sitestring = fmt.Sprint("For ", part.Nm, ": ", strconv.Itoa(sitesperpart[0].Numberofsites), " sites were found ", positions)
+						constructsitesstring = append(constructsitesstring, sitestring)
+					}
 
-		s = err.Error()
+				}
+				if len(constructsitesstring) != 1 {
+					message := strings.Join(constructsitesstring, "; ")
+					err = fmt.Errorf(message)
+				}
+			}
 
-		if errors == nil {
-			errors = make(map[string]string)
+			s = err.Error()
+
+			/*if errors == nil {
+				errors = make(map[string]string)
+			}*/
+
+			if _, ok := errors[construct.Constructname]; !ok {
+				errors[construct.Constructname] = s
+			}
+
 		}
-		errors[construct.Constructname] = s
 	}
 
 	if successfulassemblies == len(parameters) {

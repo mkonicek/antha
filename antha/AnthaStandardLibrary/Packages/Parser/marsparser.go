@@ -24,43 +24,33 @@ package parser
 
 import (
 	"fmt"
-	//"os"
+	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/montanaflynn/stats"
 	"github.com/tealeg/xlsx"
 )
 
-/*
-// Inputs (parameters)
-var (
-	//filename string = "platereaderexamplefiles/simpleabsorbance.xlsx"
-	//filename string = "platereaderexamplefiles/platereaderxlsxexample.xlsx"
-	filename string = "platereaderexamplefiles/jmresultsinj.xlsx"
-	//filename string = "platereaderexamplefiles/AishaAbsEndpointmethodexample.xlsx"
-	status string
-)
-
-// outputs (Data)
-var (
-	dataoutput MarsData
-)
-*/
+// parse mars data from excel filename
 func ParseMarsXLSXOutput(xlsxname string, sheet int) (dataoutput MarsData, err error) {
 
-	clario, headerrowcount, err := ParseHeadLines(xlsxname, sheet)
+	bytes, err := ioutil.ReadFile(xlsxname)
+
 	if err != nil {
 		return
 	}
-	//cell := sheet1.Cell(0, 0)
 
-	//dataoutput.User = strings.Split(cell.String(), ": ")[1]
+	clario, headerrowcount, err := parseHeadLines(bytes, sheet)
+	if err != nil {
+		return
+	}
 
-	wellmap, err := ParseWellData(xlsxname, sheet, headerrowcount)
+	wellmap, err := parseWellData(bytes, sheet, headerrowcount)
 	if err != nil {
 		return
 	}
@@ -69,10 +59,26 @@ func ParseMarsXLSXOutput(xlsxname string, sheet int) (dataoutput MarsData, err e
 	return
 }
 
-func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowcount int, err error) {
-	xlsx, err := spreadsheet.OpenFile(xlsxname)
+// parse mars data from excel filename
+func ParseMarsXLSXBinary(xlsxContents []byte, sheet int) (dataoutput MarsData, err error) {
 
-	//file, err := os.Open(filename)
+	clario, headerrowcount, err := parseHeadLines(xlsxContents, sheet)
+	if err != nil {
+		return
+	}
+
+	wellmap, err := parseWellData(xlsxContents, sheet, headerrowcount)
+	if err != nil {
+		return
+	}
+	clario.Dataforeachwell = wellmap
+	dataoutput = clario
+	return
+}
+
+func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput MarsData, headerrowcount int, err error) {
+	xlsx, err := spreadsheet.OpenBinary(xlsxBinary)
+
 	if err != nil {
 		return
 	}
@@ -80,9 +86,14 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 	sheet1 := xlsx.Sheets[sheet]
 
 	for i := 0; i < sheet1.MaxRow; i++ {
-		if sheet1.Cell(i, 0).String() == "" {
+		str, err := sheet1.Cell(i, 0).String()
+
+		if err != nil {
+			return dataoutput, headerrowcount, err
+		}
+
+		if str == "" {
 			headerrowcount = i //+ 1
-			// fmt.Println("headerrowcount", headerrowcount)
 			break
 		}
 	}
@@ -99,27 +110,37 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 		return
 	}
 
-	dataoutput.Description = cells[len(cells)-1].String()
+	dataoutput.Description, err = cells[len(cells)-1].String()
+	if err != nil {
+		return
+	}
+
 	for _, cell := range cells {
-		if cell.String()[0:4] == "User" {
-			dataoutput.User = strings.Split(cell.String(), ": ")[1]
+
+		cellstr, err := cell.String()
+
+		if err != nil {
+			return dataoutput, headerrowcount, err
 		}
-		if cell.String()[0:4] == "Path" {
-			dataoutput.Path = strings.Split(cell.String(), ": ")[1]
+
+		if cellstr[0:4] == "User" {
+			dataoutput.User = strings.Split(cellstr, ": ")[1]
 		}
-		if cell.String()[0:7] == "Test ID" {
-			id, err := strconv.Atoi(strings.Split(cell.String(), ": ")[1])
+		if cellstr[0:4] == "Path" {
+			dataoutput.Path = strings.Split(cellstr, ": ")[1]
+		}
+		if cellstr[0:7] == "Test ID" {
+			id, err := strconv.Atoi(strings.Split(cellstr, ": ")[1])
 			if err != nil {
 				return dataoutput, headerrowcount, err
 			}
 			dataoutput.TestID = id
 		}
-		if cell.String()[0:9] == "Test Name" {
-			dataoutput.Testname = strings.Split(cell.String(), ": ")[1]
+		if cellstr[0:9] == "Test Name" {
+			dataoutput.Testname = strings.Split(cellstr, ": ")[1]
 		}
-		if cell.String()[0:4] == "Date" {
-			date := strings.Split(cell.String(), ": ")[1]
-			//fmt.Println(date)
+		if cellstr[0:4] == "Date" {
+			date := strings.Split(cellstr, ": ")[1]
 			dateparts := strings.Split(date, `/`)
 			dateints := make([]int, 0)
 			for _, part := range dateparts {
@@ -134,15 +155,13 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 
 			godate, err = time.Parse("02/01/2006", date)
 			if err != nil {
-				return
+				return dataoutput, headerrowcount, err
 			}
 			dataoutput.Date = godate
-			//fmt.Println(godate)
-			//dataoutput.Date.AddDate(dateints[2], dateints[1], dateints[0])
 
 		}
-		if cell.String()[0:4] == "Time" {
-			stringtime := strings.Split(cell.String(), ": ")[1]
+		if cellstr[0:4] == "Time" {
+			stringtime := strings.Split(cellstr, ": ")[1]
 			if strings.Contains(stringtime, " AM") {
 				stringtime = stringtime[0:strings.Index(stringtime, " AM")]
 			}
@@ -155,39 +174,38 @@ func ParseHeadLines(xlsxname string, sheet int) (dataoutput MarsData, headerrowc
 				return dataoutput, headerrowcount, err
 			}
 			dataoutput.Time = gotime
-			//fmt.Println(gotime)
 		}
-		if cell.String()[0:3] == "ID1" {
-			dataoutput.ID1 = strings.Split(cell.String(), ": ")[1]
+		if cellstr[0:3] == "ID1" {
+			dataoutput.ID1 = strings.Split(cellstr, ": ")[1]
 		}
-		if cell.String()[0:3] == "ID2" {
-			dataoutput.ID2 = strings.Split(cell.String(), ": ")[1]
+		if cellstr[0:3] == "ID2" {
+			dataoutput.ID2 = strings.Split(cellstr, ": ")[1]
 		}
-		if cell.String()[0:3] == "ID3" {
-			dataoutput.ID3 = strings.Split(cell.String(), ": ")[1]
+		if cellstr[0:3] == "ID3" {
+			dataoutput.ID3 = strings.Split(cellstr, ": ")[1]
 		}
 
 	}
 	return
 }
 
-func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[string]WellData, err error) {
+func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap map[string]WellData, err error) {
 	welldatamap = make(map[string]WellData)
 	var welldata WellData
 	var wavelengthstring string
 	var wavelength int
 	var timestring string
 	var timestamp time.Duration
-	xlsx, err := spreadsheet.OpenFile(xlsxname)
+	xlsx, err := spreadsheet.OpenBinary(xlsxBinary)
 
-	//file, err := os.Open(filename)
 	if err != nil {
 		return
 	}
 
 	sheet1 := xlsx.Sheets[sheet]
-
-	//column1 := sheet1.Col(1)
+	if sheet1.MaxRow == 0 {
+		return welldatamap, fmt.Errorf("No well data found in Mars data file")
+	}
 	wellrowstart := 0
 	headerrow := headerrows + 2
 	timerow := 0
@@ -196,28 +214,32 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 	for i := 0; i < sheet1.MaxRow; i++ {
 
 		cell := sheet1.Cell(i, 0)
-		if cell.String() == "A" {
+
+		cellstr, err := cell.String()
+
+		if err != nil {
+			return welldatamap, err
+		}
+
+		if cellstr == "A" {
 			wellrowstart = i
-			//fmt.Println(wellrowstart)
 			break
 		}
 
 	}
-	//if wellrowstart == 15 {
 	wavelengths := make([]int, 0)
 
 	times := make([]time.Duration, 0)
 
-	//find special rows
-	// wavelength or time rows?
-	//fmt.Println(headerrows, headerrow)
 	if wellrowstart-headerrow > 0 {
 		for i := 0; i < wellrowstart-headerrow; i++ {
 
-			rowabove := spreadsheet.Getdatafromrowcol(sheet1, wellrowstart-(i+1), 2).String()
+			rowabove, err := spreadsheet.Getdatafromrowcol(sheet1, wellrowstart-(i+1), 2).String()
+			if err != nil {
+				return welldatamap, err
+			}
 			if strings.Contains(rowabove, "Time") {
 				timerow = wellrowstart - (i + 1)
-				// fmt.Println("timerow:", timerow)
 			} else if strings.Contains(rowabove, "Wavelength") {
 				wavelengthrow = wellrowstart - (i + 1)
 			}
@@ -227,11 +249,13 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 	// check other row names in case the row labels are not in order (this can happen)
 	for i := wellrowstart; i < sheet1.MaxRow; i++ {
 
-		rowname := spreadsheet.Getdatafromrowcol(sheet1, i, 2).String()
-		// fmt.Println("rowname", rowname)
+		rowname, err := spreadsheet.Getdatafromrowcol(sheet1, i, 2).String()
+		if err != nil {
+			return welldatamap, err
+		}
+
 		if strings.Contains(rowname, "Time") {
 			timerow = i
-			// fmt.Println("timerow new:", timerow)
 		} else if strings.Contains(rowname, "Wavelength") {
 			wavelengthrow = i
 		}
@@ -244,7 +268,10 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 
 	for m := 3; m < sheet1.MaxCol; m++ {
 
-		columnheader := spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
+		columnheader, err := spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
+		if err != nil {
+			return welldatamap, err
+		}
 
 		if strings.Contains(columnheader, "Temperature") {
 			tempcolumn = m
@@ -259,13 +286,32 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 
 		if j != timerow && j != wavelengthrow {
 
-			welldata.Name = spreadsheet.Getdatafromrowcol(sheet1, j, 2).String()
-			welldata.Well = spreadsheet.Getdatafromrowcol(sheet1, (j), 0).String() + spreadsheet.Getdatafromrowcol(sheet1, j, 1).String()
+			welldata.Name, err = spreadsheet.Getdatafromrowcol(sheet1, j, 2).String()
+			if err != nil {
+				return welldatamap, err
+			}
 
-			//if j == wellrowstart {
+			part1, err := spreadsheet.Getdatafromrowcol(sheet1, (j), 0).String()
+			if err != nil {
+				return welldatamap, err
+			}
+			part2, err := spreadsheet.Getdatafromrowcol(sheet1, j, 1).String()
+			if err != nil {
+				return welldatamap, err
+			}
+
+			welldata.Well = part1 + part2
+
 			for k := 3; k < sheet1.MaxCol; k++ {
 				if k != tempcolumn && k != injectionvoumecolumn {
-					welldata.ReadingType = spreadsheet.Getdatafromrowcol(sheet1, headerrow, k).String()
+
+					readingtype, err := spreadsheet.Getdatafromrowcol(sheet1, headerrow, k).String()
+
+					if err != nil {
+						return welldatamap, err
+					}
+
+					welldata.ReadingType = readingtype
 
 					if wavelengthrow != 0 {
 						wavelength, err := spreadsheet.Getdatafromrowcol(sheet1, wavelengthrow, k).Int()
@@ -280,7 +326,6 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 					}
 				}
 			}
-			//	}
 
 			for m := 3; m < sheet1.MaxCol; m++ {
 
@@ -293,24 +338,35 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 						break
 					} else {
 						if timerow != 0 {
-							timelabel := spreadsheet.Getdatafromrowcol(sheet1, timerow, 2).String()
+							timelabel, err := spreadsheet.Getdatafromrowcol(sheet1, timerow, 2).String()
+
+							if err != nil {
+								return welldatamap, err
+							}
+
 							if strings.Contains(timelabel, "[s]") {
-								timeplusseconds := spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String() + "s"
+								time, err := spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String()
+
+								if err != nil {
+									return welldatamap, err
+								}
+								timeplusseconds := time + "s"
 								gotime, err := ParseTime(timeplusseconds)
-								// fmt.Println("added s", timeplusseconds)
 
 								if err != nil {
 									return welldatamap, err
 								}
 								times = append(times, gotime)
-								fmt.Println(times)
 							} else {
-								gotime, err := ParseTime(spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String())
+								time, err := spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String()
+								if err != nil {
+									return welldatamap, err
+								}
+								gotime, err := ParseTime(time)
 								if err != nil {
 									return welldatamap, err
 								}
 								times = append(times, gotime)
-								fmt.Println(times)
 							}
 
 						}
@@ -323,19 +379,13 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 
 			maxcol := sheet1.MaxCol
 
-			// this should probably be deleted to avoid cases where last column is not temp
-			/*
-				tempheadercheck := spreadsheet.Getdatafromrowcol(sheet1, headerrow, sheet1.MaxCol-1).String()
-
-				if strings.Contains(tempheadercheck, "Temperature") {
-					maxcol = sheet1.MaxCol - 1
-				}
-			*/
 			for m := 3; m < maxcol; m++ {
 
 				//check header
-				header := spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
-
+				header, err := spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
+				if err != nil {
+					return welldatamap, err
+				}
 				// the measurement itself (if not a special column - e.g. volume injection or temp)
 				if strings.Contains(header, "Temperature") == false && strings.Contains(header, "Volume") == false {
 					measurement.Reading, err = spreadsheet.Getdatafromrowcol(sheet1, j, m).Float()
@@ -353,18 +403,25 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 					// add time row and wavelength row calculators
 					if timerow != 0 {
 						//gotime, err := ParseTime(spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String())
-						timelabel := spreadsheet.Getdatafromrowcol(sheet1, timerow, 2).String()
+						timelabel, err := spreadsheet.Getdatafromrowcol(sheet1, timerow, 2).String()
+						if err != nil {
+							return welldatamap, err
+						}
 
-						if strings.Contains(timelabel, "[s]") && spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String() != "" {
-							timestring = spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String() + "s"
+						timecellcontents, err := spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String()
 
-							// fmt.Println("added s", timestring)
+						if err != nil {
+							return welldatamap, err
+						}
+
+						if strings.Contains(timelabel, "[s]") && timecellcontents != "" {
+							timestring = timecellcontents + "s"
 
 							if err != nil {
 								return welldatamap, err
 							}
-						} else if spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String() != "" {
-							timestring = spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String()
+						} else if timecellcontents != "" {
+							timestring = timecellcontents
 						}
 						timestamp, err = ParseTime(timestring)
 						if err != nil {
@@ -373,20 +430,31 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 						}
 
 						measurement.Timestamp = timestamp
-						// fmt.Println("timestamp:", timestamp)
 					}
 					// need to have some different options here for handling different types
 					// Ex Spectrum, Absorbance reading etc.. Abs spectrum, ex spectrum
-					welldata.ReadingType = spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
 
+					welldata.ReadingType, err = spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
+					if err != nil {
+						return welldatamap, err
+					}
 					parsedatatype := strings.Split(welldata.ReadingType, `(`)
-					// fmt.Println("parsed data", parsedatatype)
+
 					parsedatatype = strings.Split(parsedatatype[1], `)`)
 
 					if strings.Contains(header, "Temperature") == false && strings.Contains(header, "Volume") == false {
 
 						// handle case of absorbance (may need to add others.. if contains Ex, Ex else number = abs
-						if strings.Contains(parsedatatype[0], "A-") {
+						ex, exband, em, emband, scriptposition, err := parseBracketedColumnHeader(welldata.ReadingType)
+
+						if err == nil {
+							measurement.RWavelength = em
+							measurement.EWavelength = ex
+							measurement.EBand = exband
+							measurement.RBand = emband
+							measurement.Script = scriptposition
+
+						} else if strings.Contains(parsedatatype[0], "A-") {
 
 							wavelengthstring = parsedatatype[0][strings.Index(parsedatatype[0], `-`)+1:]
 
@@ -431,19 +499,9 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 								measurement.EWavelength = wavelength
 							}
 
-						} else if strings.Contains(welldata.ReadingType, "(484-8/517.5-9 4)") {
-							measurement.RWavelength = 517
-							measurement.EWavelength = 484
-						} else if strings.Contains(welldata.ReadingType, "(600 2)") {
-							measurement.RWavelength = 600
-							measurement.EWavelength = 600
-							/*} else if strings.Contains(welldata.ReadingType, "(484-8/517.5-9 3)") {
-							measurement.RWavelength = 517
-							measurement.EWavelength = 484
-							*/
-						} else if HeaderContainsWavelength(sheet1, headerrow, j) {
-							if wavelengthrow == 0 && HeaderContainsWavelength(sheet1, headerrow, j) {
-								_, wavelength, err := HeaderWavelength(sheet1, headerrow, j)
+						} else if headerContainsWavelength(sheet1, headerrow, j) {
+							if wavelengthrow == 0 && headerContainsWavelength(sheet1, headerrow, j) {
+								_, wavelength, err := headerWavelength(sheet1, headerrow, j)
 
 								if err != nil {
 									return welldatamap, err
@@ -451,15 +509,6 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 								measurement.RWavelength = wavelength
 								measurement.EWavelength = wavelength
 
-								/*wavelengthstring = parsedatatype[0]
-
-								wavelength, err = strconv.Atoi(wavelengthstring)
-								if err != nil {
-									return welldatamap, err
-								}
-								measurement.RWavelength = wavelength
-								measurement.EWavelength = wavelength
-								*/
 							} else {
 								wavelength, err := spreadsheet.Getdatafromrowcol(sheet1, wavelengthrow, m).Int()
 								if err != nil {
@@ -483,12 +532,101 @@ func ParseWellData(xlsxname string, sheet int, headerrows int) (welldatamap map[
 			output.Readings[0] = set
 			welldata.Data = output
 			welldatamap[welldata.Well] = welldata
-			//fmt.Println(welldata)
-			//fmt.Println(output)
-
 		}
 	}
 
+	return
+}
+
+func bracketed(header string) bool {
+
+	header = strings.TrimSpace(header)
+
+	if strings.Contains(header, "(") && strings.Contains(header, ")") {
+		return true
+	}
+	return false
+}
+
+func parseBracketedColumnHeader(header string) (ex int, exband int, em int, emband int, scriptposition int, err error) {
+	if bracketed(header) {
+		start := strings.Index(header, "(")
+		header = header[start+1:]
+		header = strings.TrimRight(header, ")")
+
+		if integer, er := strconv.Atoi(header); er == nil {
+			ex = integer
+			em = integer
+			scriptposition = 0
+			return
+		} else if len(strings.Fields(header)) == 2 {
+
+			fields := strings.Fields(header)
+
+			// handle wavelength part
+			if integer, er := strconv.Atoi(fields[0]); er == nil { // single wavelength
+				ex = integer
+				em = integer
+			} else if strings.Count(fields[0], "/") == 1 { // ex and em
+
+				subfields := strings.Split(fields[0], "/")
+				if len(subfields) == 2 {
+
+					// excitation
+					if integer, er := strconv.Atoi(subfields[0]); er == nil {
+						ex = integer
+					} else if strings.Count(subfields[0], "-") == 1 {
+						exfields := strings.Split(subfields[0], "-")
+
+						// excitation
+						if integer, er := strconv.Atoi(exfields[0]); er == nil {
+							ex = integer
+						} else if f, er := strconv.ParseFloat(exfields[0], 64); er == nil {
+							ex = wutil.RoundInt(f)
+						}
+
+						// band
+						if integer, er := strconv.Atoi(exfields[1]); er == nil {
+							exband = integer
+						}
+					}
+					// and emission
+					if integer, er := strconv.Atoi(subfields[1]); er == nil {
+						em = integer
+					} else if strings.Count(subfields[1], "-") == 1 {
+						emfields := strings.Split(subfields[1], "-")
+
+						// emission
+						if integer, er := strconv.Atoi(emfields[0]); er == nil {
+							em = integer
+						} else if f, er := strconv.ParseFloat(emfields[0], 64); er == nil {
+							em = wutil.RoundInt(f)
+						}
+
+						// band
+						if integer, er := strconv.Atoi(emfields[1]); er == nil {
+							emband = integer
+						}
+					}
+				}
+
+			} else {
+				err = fmt.Errorf("Unknown header type, %s ,found in Mars data file, problem with %s", header, fields[0])
+				return
+			}
+
+			// handle scriptnumber part
+			if integer, er := strconv.Atoi(fields[1]); er == nil {
+				scriptposition = integer
+				return
+			} else {
+				err = fmt.Errorf("Unknown header type, %s ,found in Mars data file, problem with %s", header, fields[1])
+				return
+			}
+
+		}
+	}
+	err = fmt.Errorf("Error with header %s found in Mars data file", header)
 	return
 }
 
@@ -513,16 +651,20 @@ func ParseTime(timestring string) (gotime time.Duration, err error) {
 	return
 }
 
-func HeaderContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool) {
-	headercell := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
-	//fmt.Println(headercell)
+func headerContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool) {
+	headercell, err := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
+
+	if err != nil {
+		panic(err.Error())
+
+	}
 
 	if strings.Contains(headercell, "(") && strings.Contains(headercell, ")") {
 		start := strings.Index(headercell, "(")
 		finish := strings.Index(headercell, ")")
 
 		isthisanumber := headercell[start+1 : finish]
-		//	fmt.Println(isthisanumber)
+
 		_, err := strconv.Atoi(isthisanumber)
 
 		if err == nil {
@@ -533,16 +675,19 @@ func HeaderContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno
 	return
 }
 
-func HeaderWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, number int, err error) {
-	headercell := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
-	//fmt.Println(headercell)
+func headerWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, number int, err error) {
+	headercell, err := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
+
+	if err != nil {
+		return
+	}
 
 	if strings.Contains(headercell, "(") && strings.Contains(headercell, ")") {
 		start := strings.Index(headercell, "(")
 		finish := strings.Index(headercell, ")")
 
 		isthisanumber := headercell[start+1 : finish]
-		//fmt.Println(isthisanumber)
+
 		number, err = strconv.Atoi(isthisanumber)
 
 		if err == nil {
@@ -555,19 +700,82 @@ func HeaderWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, n
 	return
 }
 
-func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int) (xaxis []time.Duration, yaxis []float64) {
-	xaxis = make([]time.Duration, 0)
-	yaxis = make([]float64, 0)
+func (data MarsData) AvailableReadings(wellname string) (readingDescriptions []string) {
+
 	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
 
-		if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength {
+		var description string
 
+		if measurement.EWavelength == measurement.RWavelength {
+
+			if measurement.Script > 0 {
+				description = fmt.Sprintln("Absorbance: ", measurement.EWavelength, "nm. ", "Script position: ", measurement.Script)
+			} else {
+				if measurement.Script > 0 {
+					description = fmt.Sprintln("Absorbance: ", measurement.EWavelength, "nm. ")
+				}
+			}
+
+		} else {
+
+			if measurement.Script > 0 {
+				description = fmt.Sprintln("Excitation: ", measurement.EWavelength, "nm. ", "Emission: ", measurement.RWavelength, "nm. ", "Script position: ", measurement.Script)
+			} else {
+				if measurement.Script > 0 {
+					description = fmt.Sprintln("Excitation: ", measurement.EWavelength, "nm. ", "Emission: ", measurement.RWavelength)
+				}
+			}
+
+		}
+
+		readingDescriptions = append(readingDescriptions, description)
+	}
+
+	readingDescriptions = search.RemoveDuplicates(readingDescriptions)
+
+	return
+}
+
+func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error) {
+
+	xaxis = make([]time.Duration, 0)
+	yaxis = make([]float64, 0)
+	var emfound bool
+	var exfound bool
+	if _, found := data.Dataforeachwell[wellname]; !found {
+		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No data found for wellname ", wellname))
+	}
+
+	if len(data.Dataforeachwell[wellname].Data.Readings[0]) == 0 {
+		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No readings found for wellname ", wellname))
+	}
+	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
+
+		var checkscriptnumber bool
+
+		if scriptnumber > 0 {
+			checkscriptnumber = true
+		}
+
+		if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength && checkscriptnumber && measurement.Script == scriptnumber {
+			emfound = true
+			exfound = true
+			xaxis = append(xaxis, measurement.Timestamp)
+			yaxis = append(yaxis, measurement.Reading)
+
+		} else if measurement.EWavelength == exWavelength && measurement.RWavelength == emWavelength && !checkscriptnumber {
+
+			emfound = true
+			exfound = true
 			xaxis = append(xaxis, measurement.Timestamp)
 			yaxis = append(yaxis, measurement.Reading)
 
 		}
-	}
 
+	}
+	if emfound != true && exfound != true {
+		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No values found for emWavelength ", emWavelength, " and/or exWavelength ", exWavelength, ". ", "Available Values found: ", data.AvailableReadings(wellname)))
+	}
 	return
 }
 
@@ -687,6 +895,9 @@ func (data MarsData) ReadingsAsAverage(wellname string, emexortime int, fieldval
 	readings := make([]float64, 0)
 	readingtypes := make([]string, 0)
 	readingsforaverage := make([]float64, 0)
+	if _, ok := data.Dataforeachwell[wellname]; !ok {
+		return 0.0, fmt.Errorf(fmt.Sprint("no data for well, ", wellname))
+	}
 	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
 
 		if emexortime == 0 {
@@ -744,9 +955,11 @@ func (data MarsData) AbsorbanceReading(wellname string, wavelength int, readingt
 	return
 }
 
-func (data MarsData) FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int) {
+func (data MarsData) FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int, err error) {
 
-	//differences := make([]float64, 0)
+	if _, ok := data.Dataforeachwell[wellname]; !ok {
+		return 0, fmt.Errorf("no data found for well, %s", wellname)
+	}
 	biggestdifferenceindex := 0
 	biggestdifference := 0.0
 
@@ -828,34 +1041,6 @@ const (
 	EXWAVELENGTH
 )
 
-/*
-func main() {
-
-	//clario, err := ParseHeadLines(filename)
-	clario, err := ParseMarsXLSXOutput(filename)
-	if err != nil {
-		status = err.Error()
-	} else {
-		status = "no problemo"
-	}
-	//cell := sheet1.Cell(0, 0)
-
-	//dataoutput.User = strings.Split(cell.String(), ": ")[1]
-	/*
-		wellmap, err := ParseWellData(filename)
-		if err != nil {
-			status = err.Error()
-		} else {
-			status = "no problemo"
-		}
-*/
-
-//readings, err := clario.ReadingsThat("A1", EMWAVELENGTH, 600)
-//	x, y := clario.TimeCourse("A1", 340, 340)
-//	fmt.Println(status, clario, x, y /*clario.Readings("A1") ,, readings*/)
-
-//}
-//*/
 type MarsData struct {
 	User            string
 	Path            string
@@ -897,4 +1082,8 @@ type PRMeasurement struct {
 	Temp        float64       //int       //   temperature
 	O2          int           // o2 conc when measurement was taken
 	CO2         int           // co2 conc when measurement was taken
+	EBand       int
+	RBand       int
+	Script      int
+	Gain        int
 }

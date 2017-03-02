@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "github.com/antha-lang/antha/api/v1/measurement.proto";
+
+package org.antha_lang.antha.v1;
+
+// Zero-indexed coordinate system in ordinal space: ith item in X, Y, Z space.
+// Origin is back, left, bottom (i.e., left-handed)
+message OrdinalCoord {
+  int32 x = 1;
+  int32 y = 2;
+  int32 z = 3;
+}
+
+message PhysicalCoord {
+  Measurement x = 1;
+  Measurement y = 2;
+  Measurement z = 3;
+}

@@ -10,16 +10,16 @@ var (
 	notAPointer = errors.New("not a pointer")
 )
 
-// Unmarshaler deserializes data into an object
-type Unmarshaler func(data []byte, obj interface{}) error
+// Unmarshal deserializes data into an object
+type UnmarshalFunc func(data []byte, obj interface{}) error
 
-// UnmarshalOpt gives on custom on-the-side unmarshaling functions for specific
+// Unmarshaler gives on custom on-the-side unmarshaling functions for specific
 // golang object kinds.
-type UnmarshalOpt struct {
-	Struct Unmarshaler
+type Unmarshaler struct {
+	Struct UnmarshalFunc
 }
 
-func unmarshalJSON(opt UnmarshalOpt, data []byte, value reflect.Value) (reflect.Value, error) {
+func (a *Unmarshaler) unmarshalJSON(data []byte, value reflect.Value) (reflect.Value, error) {
 	var nilValue reflect.Value
 	typ := value.Type()
 
@@ -35,7 +35,7 @@ func unmarshalJSON(opt UnmarshalOpt, data []byte, value reflect.Value) (reflect.
 			if idx < value.Len() {
 				elem = value.Index(idx)
 			}
-			v, err := unmarshalJSON(opt, bs, elem)
+			v, err := a.unmarshalJSON(bs, elem)
 			if err != nil {
 				return nilValue, err
 			}
@@ -54,7 +54,7 @@ func unmarshalJSON(opt UnmarshalOpt, data []byte, value reflect.Value) (reflect.
 			if !elem.IsValid() {
 				elem = reflect.Zero(typ.Elem())
 			}
-			v, err := unmarshalJSON(opt, bs, elem)
+			v, err := a.unmarshalJSON(bs, elem)
 			if err != nil {
 				return nilValue, err
 			}
@@ -67,7 +67,7 @@ func unmarshalJSON(opt UnmarshalOpt, data []byte, value reflect.Value) (reflect.
 			elem = reflect.Zero(typ.Elem())
 		}
 
-		v, err := unmarshalJSON(opt, data, elem)
+		v, err := a.unmarshalJSON(data, elem)
 		if err != nil {
 			return nilValue, err
 		}
@@ -76,33 +76,37 @@ func unmarshalJSON(opt UnmarshalOpt, data []byte, value reflect.Value) (reflect.
 		return vptr, nil
 	case reflect.Struct:
 		elem := reflect.New(typ)
-		if err := opt.Struct(data, elem.Interface()); err != nil {
+		if a.Struct == nil {
+			break
+		}
+
+		if err := a.Struct(data, elem.Interface()); err != nil {
 			return nilValue, err
 		}
 		return elem.Elem(), nil
 	case reflect.Interface:
 		// Use concrete type
-		return unmarshalJSON(opt, data, value.Elem())
-	default:
-		elem := reflect.New(typ)
-		if err := json.Unmarshal(data, elem.Interface()); err != nil {
-			return nilValue, err
-		}
-		return elem.Elem(), nil
+		return a.unmarshalJSON(data, value.Elem())
 	}
+
+	elem := reflect.New(typ)
+	if err := json.Unmarshal(data, elem.Interface()); err != nil {
+		return nilValue, err
+	}
+	return elem.Elem(), nil
 }
 
 // UnmarshalJSON parses the JSON-encoded data and stores the result in the
 // value pointed to by obj. Custom unmarshaling functions can be specified on
-// the side in opt.
-func UnmarshalJSON(opt UnmarshalOpt, data []byte, obj interface{}) error {
+// the side.
+func (a *Unmarshaler) UnmarshalJSON(data []byte, obj interface{}) error {
 	value := reflect.ValueOf(obj)
 	if value.Kind() != reflect.Ptr {
 		return notAPointer
 	}
 
 	elem := value.Elem()
-	v, err := unmarshalJSON(opt, data, elem)
+	v, err := a.unmarshalJSON(data, elem)
 	if err != nil {
 		return err
 	}

@@ -58,14 +58,14 @@ func TestPEGPolicy(t *testing.T) {
 
 	p := pft.GetPolicyFor(ins1)
 
-	if p["ASPZOFFSET"].(float64) != 2.5 {
-		t.Fatal("ASPZOFFSET for PEG must be 2.5")
+	if p["ASPZOFFSET"].(float64) != 1.0 {
+		t.Fatal("ASPZOFFSET for PEG must be 1.0")
 	}
-	if p["DSPZOFFSET"].(float64) != 2.5 {
-		t.Fatal("DSPZOFFSET for PEG must be 2.5")
+	if p["DSPZOFFSET"].(float64) != 1.0 {
+		t.Fatal("DSPZOFFSET for PEG must be 1.0")
 	}
-	if p["POST_MIX_Z"].(float64) != 3.5 {
-		t.Fatal("POST_MIX_Z for PEG must be 3.5")
+	if p["POST_MIX_Z"].(float64) != 1.0 {
+		t.Fatal("POST_MIX_Z for PEG must be 1.0")
 	}
 
 	for i := 0; i < 100; i++ {

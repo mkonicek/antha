@@ -133,8 +133,7 @@ func UpdateParamTypes(desc *Component) error {
 	}
 
 	for _, v := range params {
-		obj := reflect.Zero(v.Type)
-		if err := add(v.Name, meta.FullTypeName(obj)); err != nil {
+		if err := add(v.Name, meta.NameFromType(v.Type)); err != nil {
 			return err
 		}
 	}

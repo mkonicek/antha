@@ -139,6 +139,10 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 
 	req.Options.ModelEvaporation = a.opt.ModelEvaporation
 
+	// deal with output sorting
+
+	req.Options.OutputSort = a.opt.OutputSort
+
 	err := req.ConfigureYourself()
 	if err != nil {
 		return nil, err

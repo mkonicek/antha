@@ -177,13 +177,10 @@ func set_output_order(rq *LHRequest) error {
 	// however for now it will be maintained to test whether
 	// parent-child relationships are working OK
 
-	//
-	//rq.Output_sort = "optimal"
 	sorted := insSliceFromMap(rq.LHInstructions)
-	if (rq.Output_sort == "optimal") {
-		fmt.Println("optimal output ordering")
+	if rq.Options.OutputSort {
 		sort.Sort(ByGenerationOpt(sorted))
-	} else{
+	} else {
 		sort.Sort(ByGeneration(sorted))
 	}
 

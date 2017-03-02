@@ -30,8 +30,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/cmd/antharun/frontend"
 	"github.com/antha-lang/antha/cmd/antharun/pretty"
 	"github.com/antha-lang/antha/cmd/antharun/spawn"
@@ -41,7 +39,6 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
-	"github.com/antha-lang/antha/workflow"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -174,30 +171,20 @@ func (a *runOpt) Run() error {
 		return err
 	}
 
-	// if option is set, add  liquid handling instruction output
-
+	// if option is set, add liquid handling instruction output
 	if a.MixInstructionFileName != "" {
 		countFiles := 1
 		for _, inst := range rout.Insts {
 			mi, ok := inst.(*target.Mix)
 
-			if ok {
-				fn := fmt.Sprintf("%s-%d.txt", a.MixInstructionFileName, countFiles)
-				countFiles += 1
+			if !ok {
+				continue
+			}
 
-				ba := []byte(mi.Request.InstructionText)
-				fb := org_antha_lang_antha_v1.FromBytes{Bytes: ba}
-				bb := org_antha_lang_antha_v1.Blob_Bytes{Bytes: &fb}
-				blb := org_antha_lang_antha_v1.Blob{Name: fn, From: &bb}
-				var f wtype.File
-				e := f.UnmarshalBlob(&blb)
-				if e != nil {
-					panic(fmt.Sprintf("error making file: %s", e.Error))
-				}
-				prcname := fmt.Sprintf("MixInstruction%d", countFiles)
-				port := workflow.Port{Process: prcname, Port: "InstructionText"}
-
-				rout.Workflow.Outputs[port] = f
+			fn := fmt.Sprintf("%s-%d.txt", a.MixInstructionFileName, countFiles)
+			countFiles += 1
+			if err := ioutil.WriteFile(fn, []byte(mi.Request.InstructionText), 0666); err != nil {
+				return err
 			}
 		}
 	}

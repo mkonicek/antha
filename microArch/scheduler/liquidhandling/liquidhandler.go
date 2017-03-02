@@ -171,6 +171,9 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	for _, ins := range instructions {
 		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
+		str := liquidhandling.InsToString2(ins) + "\n"
+		request.InstructionText += str
+
 		if timer != nil {
 			d += timer.TimeFor(ins)
 		}

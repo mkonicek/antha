@@ -25,6 +25,7 @@ package search
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -105,45 +106,43 @@ func RemoveDuplicateFloats(elements []float64) []float64 {
 	return result
 }
 
-func checkArrayType(elements []interface{}) (arraytype int, err error) {
-	var foundthistype int
-	var foundthesetypes []int
-	for i, element := range elements {
-		if _, found := element.(float64); found {
-			if floatarray != foundthistype && i != 0 {
-				return mixedarray, fmt.Errorf("found different types in []interface{} at %s: %s and %s ", element, floatarray, foundthistype)
-			}
-			foundthistype = floatarray
-			foundthesetypes = append(foundthesetypes, floatarray)
-		} else if _, found := element.(string); found {
-			if stringarray != foundthistype && i != 0 {
-				return mixedarray, fmt.Errorf("found different types in []interface{} at %s: %s and %s ", element, floatarray, foundthistype)
-			}
-			foundthistype = stringarray
-			foundthesetypes = append(foundthesetypes, stringarray)
-		} else if _, found := element.(int); found {
-			if intarray != foundthistype && i != 0 {
-				return mixedarray, fmt.Errorf("found different types in []interface{} at %s: %s and %s ", element, floatarray, foundthistype)
-			}
-			foundthistype = intarray
-			foundthesetypes = append(foundthesetypes, intarray)
+func removeDuplicateInterface(elements []interface{}) []interface{} {
+	// Use map to record duplicates as we find them.
+	encountered := map[interface{}]bool{}
+	var result []interface{}
+
+	for v := range elements {
+		if encountered[elements[v]] == true {
+			// Do not add duplicate.
 		} else {
-			return unknown, fmt.Errorf("[]element not ints, floats or string: found these types so far: %s", foundthesetypes)
+			// Record this element as an encountered element.
+			encountered[elements[v]] = true
+			// Append to result slice.
+			result = append(result, elements[v])
 		}
 	}
-	arraytype = foundthistype
+	// Return the new slice.
+	return result
+}
+
+func checkArrayType(elements []interface{}) (typeName string, err error) {
+	var foundthistype string
+	var foundthesetypes []string
+	for i, element := range elements {
+
+		typeName = reflect.TypeOf(element).Name()
+
+		if typeName != foundthistype && i != 0 {
+			return "mixed types", fmt.Errorf("found different types in []interface{} at %s: %s and %s ", element, typeName, foundthistype)
+		}
+		foundthistype = typeName
+		foundthesetypes = append(foundthesetypes, typeName)
+
+	}
 	return
 }
 
-const (
-	unknown = iota
-	mixedarray
-	floatarray
-	intarray
-	stringarray
-)
-
-func RemoveDuplicateInterface(elements []interface{}) ([]interface{}, error) {
+func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 
 	var unique []interface{}
 
@@ -157,7 +156,7 @@ func RemoveDuplicateInterface(elements []interface{}) ([]interface{}, error) {
 		return unique, err
 	}
 
-	if t == intarray {
+	if t == "int" {
 		var intelements []int
 		for _, element := range elements {
 			intelements = append(intelements, element.(int))
@@ -171,7 +170,7 @@ func RemoveDuplicateInterface(elements []interface{}) ([]interface{}, error) {
 			unique = append(unique, u)
 		}
 		return unique, nil
-	} else if t == floatarray {
+	} else if t == "float64" {
 		var values []float64
 		for _, element := range elements {
 			values = append(values, element.(float64))
@@ -183,7 +182,7 @@ func RemoveDuplicateInterface(elements []interface{}) ([]interface{}, error) {
 			unique = append(unique, u)
 		}
 		return unique, nil
-	} else if t == stringarray {
+	} else if t == "string" {
 		var values []string
 		for _, element := range elements {
 			values = append(values, element.(string))
@@ -197,7 +196,11 @@ func RemoveDuplicateInterface(elements []interface{}) ([]interface{}, error) {
 		}
 		return unique, nil
 	} else {
-		return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, array type: %s", t)
+		unique = removeDuplicateInterface(elements)
+		if len(unique) != len(elements) {
+			return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, length of output differs to input. Array type: %s", t)
+		}
+		return unique, nil
 	}
 
 	// Return the new slice.

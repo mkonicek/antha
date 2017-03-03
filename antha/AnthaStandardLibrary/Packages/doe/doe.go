@@ -26,6 +26,8 @@ package doe
 import (
 	"fmt"
 	"math"
+	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -45,6 +47,21 @@ func (pair DOEPair) LevelCount() (numberoflevels int) {
 	numberoflevels = len(pair.Levels)
 	return
 }
+
+// creates a copy of the pair with reduced factors
+// if an error occurs the orginal pair is returned
+func RemoveDuplicateLevels(pair DOEPair) (reducedpair DOEPair, err error) {
+	reducedpair.Factor = pair.Factor
+	// remove duplicates
+	newlevels, err := search.RemoveDuplicateValues(pair.Levels)
+	if err != nil {
+		return pair, err
+	}
+	reducedpair.Levels = newlevels
+
+	return
+}
+
 func Pair(factordescription string, levels []interface{}) (doepair DOEPair) {
 	doepair.Factor = factordescription
 	doepair.Levels = levels
@@ -134,7 +151,8 @@ func (run Run) EqualTo(run2 Run) (bool, error) {
 	}
 
 	for i, value := range run.Setpoints {
-		if value != run2.Setpoints[i] {
+
+		if !reflect.DeepEqual(value, run2.Setpoints[i]) {
 			return false, fmt.Errorf("setpoints differ between runs at setpoint %s: %s and %s ", i, value, run2.Setpoints[i])
 		}
 	}
@@ -146,7 +164,7 @@ func (run Run) EqualTo(run2 Run) (bool, error) {
 	}
 
 	for i, value := range run.ResponseValues {
-		if value != run2.ResponseValues[i] {
+		if !reflect.DeepEqual(value, run2.ResponseValues[i]) {
 			return false, fmt.Errorf("response values differ between runs at response value %s: %s and %s ", i, value, run2.ResponseValues[i])
 		}
 	}
@@ -503,8 +521,9 @@ func DeleteDuplicateRuns(runs []Run) (uniqueRuns []Run) {
 			previousrun = run
 			uniqueRuns = append(uniqueRuns, run)
 		} else {
-			same, _ := run.EqualTo(previousrun)
+			same, err := run.EqualTo(previousrun)
 			if !same {
+				fmt.Println(err.Error())
 				uniqueRuns = append(uniqueRuns, run)
 			}
 		}
@@ -662,6 +681,14 @@ func MergeFactorNames(factorNames []string) (combinedFactor string) {
 
 type MergedLevel struct {
 	OriginalFactorPairs map[string]interface{}
+}
+
+func (m MergedLevel) Sort() (orderedKeys []string) {
+	for k, _ := range m.OriginalFactorPairs {
+		orderedKeys = append(orderedKeys, k)
+	}
+	sort.Strings(orderedKeys)
+	return
 }
 
 func MakeMergedLevel(factorsInOrder []string, levelsInOrder []interface{}) (m MergedLevel, err error) {

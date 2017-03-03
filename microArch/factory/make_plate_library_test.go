@@ -2,9 +2,11 @@
 package factory
 
 import (
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	//"fmt"
 	"strings"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 )
 
 type platetest struct {
@@ -17,7 +19,8 @@ var tests = []platetest{
 	platetest{TestPlateName: "reservoir", ExpectedZStart: 10.0, ExpectedHeight: 45.0},
 	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
-	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9, ExpectedHeight: 22.0},
+	platetest{TestPlateName: "Nuncon12well", ExpectedZStart: 4.0, ExpectedHeight: 19.0},
+	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9.0, ExpectedHeight: 19.0},
 }
 
 func TestAddRiser(t *testing.T) {
@@ -76,11 +79,12 @@ func TestAddRiser(t *testing.T) {
 					"got:", testplate.WellZStart, "\n",
 				)
 			}
+
 			if testPlateInventory2.lib[testname].WellZStart != test.ExpectedZStart+device.GetHeightInmm()-offset {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
-					"Expected plate height:", test.ExpectedZStart, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedZStart+device.GetHeightInmm(), "\n",
+					"Expected plate height:", test.ExpectedZStart, "+", "device:", device.GetHeightInmm(), "=", test.ExpectedZStart+device.GetHeightInmm()-offset, "\n",
 					"got:", testPlateInventory2.lib[testname].WellZStart, "\n",
 				)
 			}
@@ -104,14 +108,15 @@ type testdevice struct {
 }
 
 var testdevices = []testdevice{
-	testdevice{name: "incubator", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 55.92},
+	testdevice{name: "bioshake", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 55.92},
 }
 
 type deviceExceptions map[string][]string // key is device name, exceptions are the plates which will give a result which differs from norm
 
 var exceptions deviceExceptions = map[string][]string{
-	"incubator":       []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
-	"inc_pcr_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
+	"bioshake":                  []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
+	"bioshake_96well_adaptor":   []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
+	"bioshake_standard_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
 }
 
 func TestDeviceMethods(t *testing.T) {
@@ -292,6 +297,7 @@ func TestPlateZs(t *testing.T) {
 		testplate := GetPlateByType(test.TestPlateName)
 
 		if testplate.WellZStart != test.ExpectedZStart {
+
 			t.Error(
 				"for", test.TestPlateName, "\n",
 				"expected height: ", test.ExpectedZStart, "\n",

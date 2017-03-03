@@ -20,6 +20,10 @@ type Marshaler struct {
 }
 
 func (a *Marshaler) marshalJSON(value reflect.Value) ([]byte, error) {
+	if !value.IsValid() {
+		return []byte("null"), nil
+	}
+
 	typ := value.Type()
 
 	switch typ.Kind() {

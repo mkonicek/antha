@@ -113,6 +113,8 @@ func MakePolicies() map[string]LHPolicy {
 	pols["colony"] = MakeColonyPolicy()
 	pols["colonymix"] = MakeColonyMixPolicy()
 	//      pols["lysate"] = MakeLysatePolicy()
+	pols["carbon_source"] = MakeCarbonSourcePolicy()
+	pols["nitrogen_source"] = MakeNitrogenSourcePolicy()
 
 	/*policies, names := PolicyMaker(Allpairs, "DOE_run", false)
 	for i, policy := range policies {
@@ -355,10 +357,10 @@ func MakePEGPolicy() LHPolicy {
 	policy["DSPSPEED"] = 1.5
 	policy["ASP_WAIT"] = 2.0
 	policy["DSP_WAIT"] = 2.0
-	policy["ASPZOFFSET"] = 2.5
-	policy["DSPZOFFSET"] = 2.5
+	policy["ASPZOFFSET"] = 1.0
+	policy["DSPZOFFSET"] = 1.0
 	policy["POST_MIX"] = 3
-	policy["POST_MIX_Z"] = 3.5
+	policy["POST_MIX_Z"] = 1.0
 	policy["BLOWOUTVOLUME"] = 50.0
 	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
@@ -370,13 +372,13 @@ func MakePEGPolicy() LHPolicy {
 
 func MakeProtoplastPolicy() LHPolicy {
 	policy := make(LHPolicy, 7)
-	policy["ASPSPEED"] = 0.15
-	policy["DSPSPEED"] = 0.15
-	policy["ASPZOFFSET"] = 2.5
-	policy["DSPZOFFSET"] = 2.5
+	policy["ASPSPEED"] = 0.5
+	policy["DSPSPEED"] = 0.5
+	policy["ASPZOFFSET"] = 1.0
+	policy["DSPZOFFSET"] = 1.0
 	policy["BLOWOUTVOLUME"] = 100.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	//policy["TOUCHOFF"] = true
+	policy["TOUCHOFF"] = false
 	policy["TIP_REUSE_LIMIT"] = 5
 	policy["CAN_MULTI"] = false
 	return policy
@@ -442,6 +444,7 @@ func MakeColonyMixPolicy() LHPolicy {
 }
 
 func MakeWaterPolicy() LHPolicy {
+
 	waterpolicy := make(LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
 	//waterpolicy["CAN_MULTI"] = true
@@ -482,22 +485,24 @@ func MakeCulturePolicy() LHPolicy {
 
 func MakePlateOutPolicy() LHPolicy {
 	culturepolicy := make(LHPolicy, 17)
-	culturepolicy["PRE_MIX"] = 2
-	culturepolicy["PRE_MIX_VOLUME"] = 19.0
-	culturepolicy["PRE_MIX_Z"] = 2.0
-	culturepolicy["PRE_MIX_RATE"] = 4.0
-	culturepolicy["ASPSPEED"] = 4.0
-	culturepolicy["ASPZOFFSET"] = 2.0
-	culturepolicy["DSPSPEED"] = 4.0
+	//culturepolicy["PRE_MIX"] = 1
+	//culturepolicy["PRE_MIX_VOLUME"] = 19.0
+	//culturepolicy["PRE_MIX_Z"] = 1.0
+	//culturepolicy["PRE_MIX_RATE"] = 4.0
+	culturepolicy["ASPSPEED"] = 2.0
+	culturepolicy["ASPZOFFSET"] = 1.0
+	culturepolicy["DSPSPEED"] = 2.0
 	culturepolicy["CAN_MULTI"] = false
-	culturepolicy["CAN_MSA"] = false
-	culturepolicy["CAN_SDD"] = false
-	culturepolicy["DSPREFERENCE"] = 0
+	culturepolicy["ASP_WAIT"] = 1.0
+	culturepolicy["DSP_WAIT"] = 1.0
+	//culturepolicy["CAN_MSA"] = false
+	//culturepolicy["CAN_SDD"] = false
+	//culturepolicy["DSPREFERENCE"] = 0
 	culturepolicy["DSPZOFFSET"] = 0.0
-	culturepolicy["TIP_REUSE_LIMIT"] = 0
+	culturepolicy["TIP_REUSE_LIMIT"] = 7
 	culturepolicy["NO_AIR_DISPENSE"] = true
-	culturepolicy["BLOWOUTVOLUME"] = 0.0
-	culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
+	//culturepolicy["BLOWOUTVOLUME"] = 0.0
+	//culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	culturepolicy["TOUCHOFF"] = false
 
 	return culturepolicy
@@ -843,6 +848,18 @@ func MakeHVFlowRatePolicy() LHPolicy {
 	policy["ASPSPEED"] = 37
 	policy["DSPSPEED"] = 37
 	return policy
+}
+
+func MakeCarbonSourcePolicy() LHPolicy {
+	cspolicy := make(LHPolicy, 1)
+	cspolicy["DSPREFERENCE"] = 1
+	return cspolicy
+}
+
+func MakeNitrogenSourcePolicy() LHPolicy {
+	nspolicy := make(LHPolicy, 1)
+	nspolicy["DSPREFERENCE"] = 1
+	return nspolicy
 }
 
 func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {

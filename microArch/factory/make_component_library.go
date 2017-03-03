@@ -57,6 +57,7 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	}
 
 	add("water", wtype.LTWater, 9999)
+	add("Overlay", wtype.LTPLATEOUT, 9999)
 	add("PEG", wtype.LTPEG, 9999)
 	add("protoplasts", wtype.LTProtoplasts, 9999)
 	add("fluorescein", wtype.LTWater, 9999)
@@ -185,6 +186,22 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("Glucose 1g/L", wtype.LTWater, 1.0)
 	add("Glycerol 100g/L", wtype.LTWater, 1.0)
 	add("M9", wtype.LTWater, 1.0)
+	add("HYYest412", wtype.LTNSrc, 1.0)
+	add("HYYest503", wtype.LTNSrc, 1.0)
+	add("HYYest504", wtype.LTNSrc, 1.0)
+	add("PeaPeptone", wtype.LTNSrc, 1.0)
+	add("WheatPeptone", wtype.LTNSrc, 1.0)
+	add("VegPeptone", wtype.LTNSrc, 1.0)
+	add("SoyPeptone", wtype.LTNSrc, 1.0)
+	add("VegExtract", wtype.LTNSrc, 1.0)
+	add("CSL", wtype.LTNSrc, 1.0)
+	add("NH42SO4", wtype.LTNSrc, 1.0)
+	add("Gluc", wtype.LTNSrc, 1.0)
+	add("Suc", wtype.LTNSrc, 1.0)
+	add("Fruc", wtype.LTNSrc, 1.0)
+	add("Malt", wtype.LTNSrc, 1.0)
+	add("water2", wtype.LTNSrc, 1.0)
+
 	// protein paintbox
 	for _, value := range image.ProteinPaintboxmap {
 		add(value, wtype.LTPostMix, 1.0)

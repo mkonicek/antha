@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"encoding/xml"
+	"strings"
 )
 
 // xlsxWorksheet directly maps the worksheet element in the namespace
@@ -14,7 +15,7 @@ type xlsxWorksheet struct {
 	Dimension     xlsxDimension     `xml:"dimension"`
 	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
 	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
-	Cols          xlsxCols          `xml:"cols"`
+	Cols          *xlsxCols         `xml:"cols,omitempty"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
 	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
 	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
@@ -104,6 +105,8 @@ type xlsxPageMargins struct {
 type xlsxSheetFormatPr struct {
 	DefaultColWidth  float64 `xml:"defaultColWidth,attr,omitempty"`
 	DefaultRowHeight float64 `xml:"defaultRowHeight,attr"`
+	OutlineLevelCol  uint8   `xml:"outlineLevelCol,attr,omitempty"`
+	OutlineLevelRow  uint8   `xml:"outlineLevelRow,attr,omitempty"`
 }
 
 // xlsxSheetViews directly maps the sheetViews element in the namespace
@@ -135,8 +138,8 @@ type xlsxSheetView struct {
 	ZoomScaleNormal         float64         `xml:"zoomScaleNormal,attr"`
 	ZoomScalePageLayoutView float64         `xml:"zoomScalePageLayoutView,attr"`
 	WorkbookViewId          int             `xml:"workbookViewId,attr"`
-	Selection               []xlsxSelection `xml:"selection"`
 	Pane                    *xlsxPane       `xml:"pane"`
+	Selection               []xlsxSelection `xml:"selection"`
 }
 
 // xlsxSelection directly maps the selection element in the namespace
@@ -192,13 +195,14 @@ type xlsxCols struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxCol struct {
-	Collapsed   bool    `xml:"collapsed,attr"`
-	Hidden      bool    `xml:"hidden,attr"`
-	Max         int     `xml:"max,attr"`
-	Min         int     `xml:"min,attr"`
-	Style       int     `xml:"style,attr"`
-	Width       float64 `xml:"width,attr"`
-	CustomWidth int     `xml:"customWidth,attr,omitempty"`
+	Collapsed    bool    `xml:"collapsed,attr"`
+	Hidden       bool    `xml:"hidden,attr"`
+	Max          int     `xml:"max,attr"`
+	Min          int     `xml:"min,attr"`
+	Style        int     `xml:"style,attr"`
+	Width        float64 `xml:"width,attr"`
+	CustomWidth  int     `xml:"customWidth,attr,omitempty"`
+	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -229,6 +233,7 @@ type xlsxRow struct {
 	C            []xlsxC `xml:"c"`
 	Ht           string  `xml:"ht,attr,omitempty"`
 	CustomHeight bool    `xml:"customHeight,attr,omitempty"`
+	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
 }
 
 type xlsxMergeCell struct {
@@ -241,20 +246,43 @@ type xlsxMergeCells struct {
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }
 
+// Return the cartesian extent of a merged cell range from its origin
+// cell (the closest merged cell to the to left of the sheet.
+func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
+	if mc == nil {
+		return 0, 0, nil
+	}
+	for _, cell := range mc.Cells {
+		if strings.HasPrefix(cell.Ref, cellRef+":") {
+			parts := strings.Split(cell.Ref, ":")
+			startx, starty, err := getCoordsFromCellIDString(parts[0])
+			if err != nil {
+				return -1, -1, err
+			}
+			endx, endy, err := getCoordsFromCellIDString(parts[1])
+			if err != nil {
+				return -2, -2, err
+			}
+			return endx - startx, endy - starty, nil
+		}
+	}
+	return 0, 0, nil
+}
+
 // xlsxC directly maps the c element in the namespace
-// http://schemas.openxmlformats.org/sprceadsheetml/2006/main -
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxC struct {
 	R string `xml:"r,attr"`           // Cell ID, e.g. A1
 	S int    `xml:"s,attr,omitempty"` // Style reference.
 	T string `xml:"t,attr,omitempty"` // Type.
-	V string `xml:"v"`                // Value
 	F *xlsxF `xml:"f,omitempty"`      // Formula
+	V string `xml:"v,omitempty"`      // Value
 }
 
-// xlsxC directly maps the f element in the namespace
-// http://schemas.openxmlformats.org/sprceadsheetml/2006/main -
+// xlsxF directly maps the f element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxF struct {
@@ -282,7 +310,7 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 		ShowOutlineSymbols:      true,
 		ShowRowColHeaders:       true,
 		ShowZeros:               true,
-		TabSelected:             true,
+		TabSelected:             false,
 		TopLeftCell:             "A1",
 		View:                    "normal",
 		WindowProtection:        false,

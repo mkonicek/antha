@@ -107,22 +107,20 @@ func RemoveDuplicateFloats(elements []float64) []float64 {
 }
 
 func removeDuplicateInterface(elements []interface{}) []interface{} {
-	// Use map to record duplicates as we find them.
-	encountered := map[interface{}]bool{}
-	var result []interface{}
 
-	for v := range elements {
-		if encountered[elements[v]] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[elements[v]] = true
-			// Append to result slice.
-			result = append(result, elements[v])
+	length := len(elements) - 1
+
+	for i := 0; i < length; i++ {
+		for j := i + 1; j <= length; j++ {
+			if reflect.DeepEqual(elements[i], elements[j]) {
+				elements[j] = elements[length]
+				elements = elements[0:length]
+				length--
+				j--
+			}
 		}
 	}
-	// Return the new slice.
-	return result
+	return elements
 }
 
 func checkArrayType(elements []interface{}) (typeName string, err error) {
@@ -142,6 +140,9 @@ func checkArrayType(elements []interface{}) (typeName string, err error) {
 	return
 }
 
+// Removes duplicate values of an input slice of interface values and returns
+// all unique entries in slice, preserving the order of the original slice
+// an error will be returned if length of elements is 0
 func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 
 	var unique []interface{}
@@ -197,9 +198,10 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 		return unique, nil
 	} else {
 		unique = removeDuplicateInterface(elements)
-		if len(unique) != len(elements) {
-			return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, length of output differs to input. Array type: %s", t)
+		if len(unique) == 0 {
+			return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, length of output differs to input: %s and %s: Array type: %s", len(unique), len(elements), t)
 		}
+
 		return unique, nil
 	}
 

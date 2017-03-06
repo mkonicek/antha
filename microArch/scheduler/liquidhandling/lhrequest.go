@@ -67,6 +67,7 @@ type LHRequest struct {
 	Evaps                    []wtype.VolumeCorrection
 	Options                  LHOptions
 	NUserPlates              int
+	Output_sort              bool
 }
 
 func (req *LHRequest) ConfigureYourself() error {

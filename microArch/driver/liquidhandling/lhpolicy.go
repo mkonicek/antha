@@ -347,7 +347,31 @@ func (lhpr LHPolicyRuleSet) GetPolicyFor(ins RobotInstruction) LHPolicy {
 		ppl.MergeWith(lhpr.Policies[rule.Name])
 	}
 
+	//printPolicyForDebug(ins, rules, ppl)
+
 	return ppl
+}
+
+func printPolicyForDebug(ins RobotInstruction, rules []LHPolicyRule, pol LHPolicy) {
+	fmt.Println("*****")
+	fmt.Println("Policy for instruction ", InsToString(ins))
+	fmt.Println()
+	fmt.Println("Active Rules:")
+	fmt.Println("\t Default")
+	for _, r := range rules {
+		fmt.Println("\t", r.Name)
+	}
+	fmt.Println()
+	itemset := MakePolicyItems()
+	fmt.Println("Full output")
+	for _, s := range itemset.OrderedList() {
+		if pol[s] == nil {
+			continue
+		}
+		fmt.Println("\t", s, ": ", pol[s])
+	}
+	fmt.Println("_____")
+
 }
 
 //func (lhpr LHPolicyRuleSet) MarshalJSON() ([]byte, error) {

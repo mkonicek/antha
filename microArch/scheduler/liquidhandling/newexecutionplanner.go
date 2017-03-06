@@ -73,7 +73,6 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 			agg[cmp] = ar
 
 		*/
-
 		if canaggregate(curragg, cmp, request.Output_order, request.LHInstructions) {
 			// true if either curragg empty or cmp is same
 			curragg = append(curragg, ix)
@@ -81,12 +80,10 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 			agg = append(agg, curragg)
 			curragg = make([]int, 0, 1)
 			curragg = append(curragg, ix)
-
 		}
 
 		if request.Options.ModelEvaporation {
 			// we should be able to model evaporation here
-
 			instrx, _ := ris.Generate(request.Policies, rbtcpy)
 
 			if timer != nil {

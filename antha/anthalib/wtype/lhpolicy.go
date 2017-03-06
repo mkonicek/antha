@@ -435,53 +435,6 @@ func (s SortableRules) Swap(i, j int) {
 	s[j] = t
 }
 
-func (lhpr LHPolicyRuleSet) GetPolicyFor(ins RobotInstruction) LHPolicy {
-	// find the set of matching rules
-	rules := make([]LHPolicyRule, 0, len(lhpr.Rules))
-	for _, rule := range lhpr.Rules {
-		if rule.Check(ins) {
-			rules = append(rules, rule)
-		}
-	}
-
-	// sort rules by priority
-	sort.Sort(sortableRules(rules))
-
-	// we might prefer to just merge this in
-
-	ppl := DupLHPolicy(lhpr.Policies["default"])
-
-	for _, rule := range rules {
-		ppl.MergeWith(lhpr.Policies[rule.Name])
-	}
-
-	//printPolicyForDebug(ins, rules, ppl)
-
-	return ppl
-}
-
-func printPolicyForDebug(ins RobotInstruction, rules []LHPolicyRule, pol LHPolicy) {
-	fmt.Println("*****")
-	fmt.Println("Policy for instruction ", InsToString(ins))
-	fmt.Println()
-	fmt.Println("Active Rules:")
-	fmt.Println("\t Default")
-	for _, r := range rules {
-		fmt.Println("\t", r.Name)
-	}
-	fmt.Println()
-	itemset := MakePolicyItems()
-	fmt.Println("Full output")
-	for _, s := range itemset.OrderedList() {
-		if pol[s] == nil {
-			continue
-		}
-		fmt.Println("\t", s, ": ", pol[s])
-	}
-	fmt.Println("_____")
-
-}
-
 type LHCondition interface {
 	Match(interface{}) bool
 	Type() string

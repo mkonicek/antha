@@ -55,7 +55,7 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 		c.Smax = smax
 		components = append(components, c)
 	}
-
+	//add("WAIT", wtype.LTWAIT, 9999)
 	add("water", wtype.LTWater, 9999)
 	add("Overlay", wtype.LTPLATEOUT, 9999)
 	add("PEG", wtype.LTPEG, 9999)

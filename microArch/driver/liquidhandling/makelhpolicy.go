@@ -83,6 +83,7 @@ func MakePolicies() map[string]LHPolicy {
 	pols := make(map[string]LHPolicy)
 
 	// what policies do we need?
+	pols["WAIT"] = MakeWAITPolicy()
 	pols["water"] = MakeWaterPolicy()
 	pols["culture"] = MakeCulturePolicy()
 	pols["culturereuse"] = MakeCultureReusePolicy()
@@ -381,6 +382,17 @@ func MakeProtoplastPolicy() LHPolicy {
 	policy["TOUCHOFF"] = false
 	policy["TIP_REUSE_LIMIT"] = 5
 	policy["CAN_MULTI"] = false
+	return policy
+}
+
+func MakeWAITPolicy() LHPolicy {
+	policy := make(LHPolicy, 6)
+	policy["ASPZOFFSET"] = 30.0
+	policy["DSPZOFFSET"] = 30.0
+	policy["ASP_WAIT"] = 300.0
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = false
+	policy["RESET_OVERRIDE"] = false
 	return policy
 }
 

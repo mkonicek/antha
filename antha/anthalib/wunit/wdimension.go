@@ -146,6 +146,11 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 
 }
 
+func CopyConcentration(v Concentration) Concentration {
+	ret := NewConcentration(v.RawValue(), v.Unit().PrefixedSymbol())
+	return ret
+}
+
 // multiply volume
 func MultiplyConcentration(v Concentration, factor float64) (newconc Concentration) {
 

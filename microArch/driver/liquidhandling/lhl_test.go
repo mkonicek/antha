@@ -120,7 +120,6 @@ func TestBlowWithTipChange(t *testing.T) {
 	pols["POST_MIX"] = 5
 	pols["POST_MIX_VOLUME"] = 100.0
 	pol.AddRule(rule, pols)
-
 	set := NewRobotInstructionSet(bi)
 
 	ris, err := set.Generate(pol, robot)
@@ -153,7 +152,6 @@ func TestBlowNoTipChange(t *testing.T) {
 	pols["POST_MIX"] = 5
 	pols["POST_MIX_VOLUME"] = 10.0
 	pol.AddRule(rule, pols)
-
 	set := NewRobotInstructionSet(bi)
 
 	ris, err := set.Generate(pol, robot)

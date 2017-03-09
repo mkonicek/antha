@@ -229,6 +229,10 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
 
+		fmt.Println("***")
+		fmt.Println(InsToString(tfr))
+		fmt.Println("---")
+
 		insOut = append(insOut, tfr)
 	}
 

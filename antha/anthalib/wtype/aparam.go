@@ -47,14 +47,14 @@ func MakeInstructionParameters() AParamSet {
 	params["REFERENCE"] = AParam{Name: "REFERENCE", Type: typemap["float64"]}
 	params["SPEED"] = AParam{Name: "SPEED", Type: typemap["float64"]}
 	params["TIME"] = AParam{Name: "TIME", Type: typemap["float64"]}
-	params["TIPTYPE"] = AParam{Name: "TIPTYPE", Type: typemap["float64"]}
-	params["TOPLATETYPE"] = AParam{Name: "TOPLATETYPE", Type: typemap["float64"]}
+	params["TIPTYPE"] = AParam{Name: "TIPTYPE", Type: typemap["string"]}
+	params["TOPLATETYPE"] = AParam{Name: "TOPLATETYPE", Type: typemap["string"]}
 	params["TOWELLVOLUME"] = AParam{Name: "TOWELLVOLUME", Type: typemap["float64"]}
 	params["VOLUME"] = AParam{Name: "VOLUME", Type: typemap["float64"]}
 	params["VOLUNT"] = AParam{Name: "VOLUNT", Type: typemap["float64"]}
 	params["WELL"] = AParam{Name: "WELL", Type: typemap["float64"]}
 	params["WELLFROM"] = AParam{Name: "WELLFROM", Type: typemap["string"]}
-	params["WELLFROMVOLUME"] = AParam{Name: "WELLFROMVOLUME", Type: typemap["string"]}
+	params["WELLFROMVOLUME"] = AParam{Name: "WELLFROMVOLUME", Type: typemap["float64"]}
 	params["WELLTO"] = AParam{Name: "WELLTO", Type: typemap["string"]}
 	params["WELLTOVOLUME"] = AParam{Name: "WELLTOVOLUME", Type: typemap["float64"]}
 	params["WELLVOLUME"] = AParam{Name: "WELLVOLUME", Type: typemap["float64"]}

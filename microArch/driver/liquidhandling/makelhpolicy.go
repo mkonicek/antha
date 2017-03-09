@@ -745,26 +745,24 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["CAN_SDD"] = true
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
-
 	defaultpolicy["BLOWOUTVOLUME"] = 50.0
-
 	defaultpolicy["BLOWOUTOFFSET"] = 0.0 //-5.0
-
 	defaultpolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	defaultpolicy["PTZREFERENCE"] = 1
 	defaultpolicy["PTZOFFSET"] = -0.5
-	defaultpolicy["NO_AIR_DISPENSE"] = true
+	defaultpolicy["NO_AIR_DISPENSE"] = true // SERIOUSLY??
 	defaultpolicy["DEFAULTPIPETTESPEED"] = 3.0
 	defaultpolicy["MANUALPTZ"] = false
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
 	// added to diagnose bubble cause
-	defaultpolicy["POST_MIX_Z"] = 0.5
-	defaultpolicy["PRE_MIX_Z"] = 0.5
+	defaultpolicy["POST_MIX_Z"] = 0.5 // dangerous
+	defaultpolicy["PRE_MIX_Z"] = 0.5  //    ""
 	//defaultpolicy["ASP_WAIT"] = 1.0
 	//defaultpolicy["DSP_WAIT"] = 1.0
 	defaultpolicy["PRE_MIX_VOLUME"] = 10.0
 	defaultpolicy["POST_MIX_VOLUME"] = 10.0
+	defaultpolicy["RESET_OVERRIDE"] = false
 	return defaultpolicy
 }
 
@@ -837,14 +835,14 @@ func MakeHVFlowRatePolicy() wtype.LHPolicy {
 	return policy
 }
 
-func MakeCarbonSourcePolicy() LHPolicy {
-	cspolicy := make(LHPolicy, 1)
+func MakeCarbonSourcePolicy() wtype.LHPolicy {
+	cspolicy := make(wtype.LHPolicy, 1)
 	cspolicy["DSPREFERENCE"] = 1
 	return cspolicy
 }
 
-func MakeNitrogenSourcePolicy() LHPolicy {
-	nspolicy := make(LHPolicy, 1)
+func MakeNitrogenSourcePolicy() wtype.LHPolicy {
+	nspolicy := make(wtype.LHPolicy, 1)
 	nspolicy["DSPREFERENCE"] = 1
 	return nspolicy
 }

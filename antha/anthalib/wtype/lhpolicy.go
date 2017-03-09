@@ -210,10 +210,12 @@ func (lhpr *LHPolicyRule) AddCategoryConditionOn(variable, category string) erro
 	err := lhvc.SetCategoric(category)
 
 	if err != nil {
+		fmt.Println("ERROR: ", err)
 		return err
 	}
 
 	lhpr.Conditions = append(lhpr.Conditions, lhvc)
+
 	lhpr.Priority += 1
 	return err
 }
@@ -435,6 +437,16 @@ func (s SortableRules) Swap(i, j int) {
 	s[j] = t
 }
 
+//func (lhpr LHPolicyRuleSet) MarshalJSON() ([]byte, error) {
+//	return
+//}
+
+//func (lhpr LHPolicyRuleSet) UnmarshalJSON(data []byte) error {
+//	test := NewLHPolicyRuleSet()
+//	if err := json.Unmarshal(data, )
+//	return nil
+//}
+
 type LHCondition interface {
 	Match(interface{}) bool
 	Type() string
@@ -455,7 +467,10 @@ func (lhcc LHCategoryCondition) Match(v interface{}) bool {
 			return true
 		}
 	case []string:
-		// true iff all members of the array are the same category
+		// true iff at least one in array and all members of the array are the same category
+		if len(v.([]string)) == 0 {
+			return false
+		}
 		for _, s := range v.([]string) {
 			if !lhcc.Match(s) {
 				return false
@@ -506,8 +521,12 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 			return true
 		}
 	case []float64:
-		//true iff all values are within range
-		// these are simple rules but could need refinement
+		//true iff at least one value all values are within range
+
+		if len(v.([]float64)) == 0 {
+			return false
+		}
+
 		for _, f := range v.([]float64) {
 			if !lhnc.Match(f) {
 				return false

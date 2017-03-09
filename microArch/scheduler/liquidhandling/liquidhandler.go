@@ -212,6 +212,8 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		str := liquidhandling.InsToString2(ins) + "\n"
 		request.InstructionText += str
 
+		fmt.Print(str)
+
 		if timer != nil {
 			d += timer.TimeFor(ins)
 		}

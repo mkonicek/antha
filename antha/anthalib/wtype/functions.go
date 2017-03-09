@@ -12,7 +12,14 @@ func CopyComponentArray(arin []*LHComponent) []*LHComponent {
 	return r
 }
 
+// CURRENT STATUS:
+// if this returns false we can *only* get sets of 8
+// if this reutrns true we will always think there are 8
+// TODO -- the higher level needs to account for the difference
+// between being able ot get all or just some of the components
 func canGet(want, got ComponentVector) bool {
+	c := 0
+
 	for i := 0; i < len(want); i++ {
 		// is there, like, stuff where we need it?
 
@@ -24,15 +31,16 @@ func canGet(want, got ComponentVector) bool {
 
 		// check the component type and junk
 
-		if want[i].CName != got[i].CName {
+		if want[i].CName != got[i].CName && got[i].CName != "" {
 			return false
 		}
 
 		// finally is there enough?
 
-		if got[i].Volume().LessThan(want[i].Volume()) {
+		if got[i].Volume().LessThan(want[i].Volume()) && got[i].CName != "" {
 			return false
 		}
+		c += 1
 	}
 
 	// like, whatever

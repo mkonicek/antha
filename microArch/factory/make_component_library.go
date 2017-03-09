@@ -111,6 +111,7 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("CutsmartBuffer", wtype.LTWater, 1.0)
 	add("ATP", wtype.LTWater, 5.0)
 	add("mastermix_sapI", wtype.LTWater, 1.0)
+	add("mastermix_bsaI", wtype.LTWater, 1.0)
 	add("standard_cloning_vector_mark_1", wtype.LTDNA, 1.0)
 	add("Q5Polymerase", wtype.LTGlycerol, 1.0)
 	add("GoTaq_ green 2x mastermix", wtype.LTGlycerol, 9999.0)

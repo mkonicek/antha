@@ -636,7 +636,7 @@ func sameFactorLevels(run1 Run, run2 Run, factor string) (same bool, err error) 
 		return
 	}
 
-	if value1 == value2 {
+	if reflexct.DeepEqual(value1,value2) {
 		return true, nil
 	}
 
@@ -670,7 +670,7 @@ func mergeFactorLevels(run1 Run, run2 Run, factors []string, newLevel interface{
 }
 
 func mergeStrings(factorNames []string) (combinedFactor string) {
-	combinedFactor = strings.Join(factorNames, "+")
+	combinedFactor = strings.Join(factorNames, wtype.MIXDELIMITER)
 	return
 }
 

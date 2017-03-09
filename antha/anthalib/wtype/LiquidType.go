@@ -12,6 +12,7 @@ type LiquidType int
 
 const (
 	LTNIL = iota
+	LTPause
 	LTWater
 	LTGlycerol
 	LTEthanol
@@ -49,6 +50,8 @@ func LiquidTypeFromString(s string) (LiquidType, error) {
 	}
 
 	switch s {
+	case "Pause":
+		return LTPause, nil
 	case "water":
 		return LTWater, nil
 	case "":
@@ -118,6 +121,8 @@ func LiquidTypeName(lt LiquidType) string {
 	}
 
 	switch lt {
+	case LTPause:
+		return "Pause"
 	case LTWater:
 		return "water"
 	case LTGlycerol:

@@ -26,6 +26,8 @@ package doe
 import (
 	"fmt"
 	"math"
+	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -45,6 +47,21 @@ func (pair DOEPair) LevelCount() (numberoflevels int) {
 	numberoflevels = len(pair.Levels)
 	return
 }
+
+// creates a copy of the pair with reduced factors
+// if an error occurs the orginal pair is returned
+func RemoveDuplicateLevels(pair DOEPair) (reducedpair DOEPair, err error) {
+	reducedpair.Factor = pair.Factor
+	// remove duplicates
+	newlevels, err := search.RemoveDuplicateValues(pair.Levels)
+	if err != nil {
+		return pair, err
+	}
+	reducedpair.Levels = newlevels
+
+	return
+}
+
 func Pair(factordescription string, levels []interface{}) (doepair DOEPair) {
 	doepair.Factor = factordescription
 	doepair.Levels = levels
@@ -124,6 +141,35 @@ func Copy(run Run) (newrun Run) {
 	return
 }
 
+// ignores run order, std order  and additional information but checks all other properties for identical matches
+func (run Run) EqualTo(run2 Run) (bool, error) {
+
+	for i, value := range run.Factordescriptors {
+		if value != run2.Factordescriptors[i] {
+			return false, fmt.Errorf("factors differ between runs at factor %s: %s and %s ", i, value, run2.Factordescriptors[i])
+		}
+	}
+
+	for i, value := range run.Setpoints {
+
+		if !reflect.DeepEqual(value, run2.Setpoints[i]) {
+			return false, fmt.Errorf("setpoints differ between runs at setpoint %s: %s and %s ", i, value, run2.Setpoints[i])
+		}
+	}
+
+	for i, value := range run.Responsedescriptors {
+		if value != run2.Responsedescriptors[i] {
+			return false, fmt.Errorf("responses differ between runs at response %s: %s and %s ", i, value, run2.Responsedescriptors[i])
+		}
+	}
+
+	for i, value := range run.ResponseValues {
+		if !reflect.DeepEqual(value, run2.ResponseValues[i]) {
+			return false, fmt.Errorf("response values differ between runs at response value %s: %s and %s ", i, value, run2.ResponseValues[i])
+		}
+	}
+	return true, nil
+}
 func (run Run) AddResponseValue(responsedescriptor string, responsevalue interface{}) {
 
 	for i, descriptor := range run.Responsedescriptors {
@@ -152,13 +198,11 @@ func (run Run) AllFactors() (headers []string, values []interface{}) {
 	values = make([]interface{}, 0)
 
 	for _, header := range run.Factordescriptors {
-		fmt.Println(header)
 		headers = append(headers, header)
 	}
 	for _, value := range run.Setpoints {
 		values = append(values, value)
 	}
-	fmt.Println(headers, values)
 	return
 }
 
@@ -345,6 +389,26 @@ func AddNewFactorFieldandValue(run Run, factordescriptor string, factorvalue int
 	return
 }
 
+func DeleteFactorField(run Run, factorDescriptor string) (newrun Run) {
+
+	newrun = run
+
+	factorDescriptors := make([]string, 0)
+	factorValues := make([]interface{}, 0)
+
+	for i, descriptor := range run.Factordescriptors {
+		if strings.ToUpper(descriptor) != strings.ToUpper(factorDescriptor) {
+			factorDescriptors = append(factorDescriptors, descriptor)
+			factorValues = append(factorValues, run.Setpoints[i])
+		}
+	}
+
+	newrun.Factordescriptors = factorDescriptors
+	newrun.Setpoints = factorValues
+
+	return
+}
+
 func AddAdditionalValue(run Run, additionalsubheader string, additionalvalue interface{}) (newrun Run) {
 
 	newrun = run
@@ -408,7 +472,6 @@ func AddAdditionalHeaders(run Run, additionalheader string, additionalsubheader 
 	newrun.AdditionalHeaders = headers
 	newrun.AdditionalSubheaders = subheaders
 
-	// fmt.Println("newrun: ", newrun)
 	return
 
 }
@@ -541,6 +604,119 @@ func FixedAndNonFixed(factors []DOEPair) (fixedfactors []DOEPair, nonfixed []DOE
 func IsFixedFactor(factor DOEPair) (yesorno bool) {
 	if len(factor.Levels) == 1 {
 		yesorno = true
+	}
+	return
+}
+
+func sameFactorLevels(run1 Run, run2 Run, factor string) (same bool, err error) {
+	value1, err := run1.GetFactorValue(factor)
+	if err != nil {
+		return
+	}
+	value2, err := run2.GetFactorValue(factor)
+	if err != nil {
+		return
+	}
+
+	if reflect.DeepEqual(value1,value2) {
+		return true, nil
+	}
+
+	return false, fmt.Errorf("Different values found for factor %s: %s and %s", factor, value1, value2)
+}
+
+// intended to be used in conjunction with AllCombinations to merge levels of a series of runs
+// run1 will be used as the master run whose properties will be preferentially inherited in run3
+func mergeFactorLevels(run1 Run, run2 Run, factors []string, newLevel interface{}) (run3 Run, newfactorName string, err error) {
+
+	var factornames []string
+	var deadrun Run
+	run3 = Copy(run1)
+	for _, factor := range factors {
+		if same, err := sameFactorLevels(run1, run2, factor); !same || err != nil {
+			return deadrun, "", err
+		} else {
+			// preserve order of factor names from original design
+			factornames = append(factornames, factor)
+			run3 = DeleteFactorField(run3, factor)
+		}
+	}
+
+	newfactorName = MergeFactorNames(factornames)
+
+	// make new set of runs
+
+	run3 = AddNewFactorFieldandValue(run3, newfactorName, newLevel)
+
+	return
+}
+
+func mergeStrings(factorNames []string) (combinedFactor string) {
+	combinedFactor = strings.Join(factorNames, wtype.MIXDELIMITER)
+	return
+}
+
+func MergeFactorNames(factorNames []string) (combinedFactor string) {
+	combinedFactor = mergeStrings(factorNames)
+	return
+}
+
+type MergedLevel struct {
+	OriginalFactorPairs map[string]interface{}
+}
+
+func (m MergedLevel) Sort() (orderedKeys []string) {
+	for k, _ := range m.OriginalFactorPairs {
+		orderedKeys = append(orderedKeys, k)
+	}
+	sort.Strings(orderedKeys)
+	return
+}
+
+func MakeMergedLevel(factorsInOrder []string, levelsInOrder []interface{}) (m MergedLevel, err error) {
+	pairs := make(map[string]interface{})
+
+	if len(factorsInOrder) != len(levelsInOrder) {
+		return m, fmt.Errorf("unequal length of factors and levels so cannot make mergedLevel")
+	}
+	for i := range factorsInOrder {
+		pairs[factorsInOrder[i]] = levelsInOrder[i]
+	}
+	m.OriginalFactorPairs = pairs
+	return
+}
+
+func findMatchingLevels(run Run, allcombos []Run, factors []string) (matchedrun Run, err error) {
+	var levels []interface{}
+	for _, factor := range factors {
+
+		level, err := run.GetFactorValue(factor)
+		if err == nil {
+			levels = append(levels, level)
+		}
+
+	}
+	m, mergErr := MakeMergedLevel(factors, levels)
+	for _, combo := range allcombos {
+
+		if newrun, _, err := mergeFactorLevels(run, combo, factors, m); err == nil && mergErr == nil {
+			return newrun, nil
+		}
+	}
+	return matchedrun, fmt.Errorf("No matching combination of levels %s found for run %s in %s: last errors: %s and %s", factors, run, allcombos, mergErr.Error(), err.Error())
+}
+
+func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []string) (mergedRuns []Run, err error) {
+
+	mergedRuns = make([]Run, len(originalRuns))
+
+	for i, original := range originalRuns {
+		newRun, err := findMatchingLevels(original, allcombos, factors)
+		if err == nil {
+			mergedRuns[i] = newRun
+		} else {
+			return mergedRuns, err
+		}
 	}
 	return
 }
@@ -1541,8 +1717,7 @@ func RunsFromDesignPreResponses(designfile string, intfactors []string, dxorjmp 
 	} else if dxorjmp == "JMP" {
 
 		factorcolumns, responsecolumns, _ := findJMPFactorandResponseColumnsinEmptyDesign(designfile)
-		fmt.Println("factor columns: ", factorcolumns)
-		fmt.Println("response columns: ", responsecolumns)
+
 		runs, err = RunsFromJMPDesign(designfile, factorcolumns, responsecolumns, intfactors)
 		if err != nil {
 			return runs, err
@@ -1564,8 +1739,7 @@ func RunsFromDesignPreResponsesContents(designfileContents []byte, intfactors []
 	} else if dxorjmp == "JMP" {
 
 		factorcolumns, responsecolumns, _ := findJMPFactorandResponseColumnsinEmptyDesignContents(designfileContents)
-		fmt.Println("factor columns: ", factorcolumns)
-		fmt.Println("response columns: ", responsecolumns)
+
 		runs, err = RunsFromJMPDesignContents(designfileContents, factorcolumns, responsecolumns, intfactors)
 		if err != nil {
 			return runs, err

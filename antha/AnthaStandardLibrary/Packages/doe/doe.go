@@ -618,7 +618,7 @@ func sameFactorLevels(run1 Run, run2 Run, factor string) (same bool, err error) 
 		return
 	}
 
-	if reflexct.DeepEqual(value1,value2) {
+	if reflect.DeepEqual(value1,value2) {
 		return true, nil
 	}
 

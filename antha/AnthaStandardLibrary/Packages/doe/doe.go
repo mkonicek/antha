@@ -34,7 +34,9 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+
 	"github.com/tealeg/xlsx"
 )
 
@@ -46,6 +48,242 @@ type DOEPair struct {
 func (pair DOEPair) LevelCount() (numberoflevels int) {
 	numberoflevels = len(pair.Levels)
 	return
+}
+
+func round(value interface{}) (interface{}, error) {
+	var v interface{}
+	if levelfloat, found := value.(float64); found {
+		levelfloat, err := wutil.Roundto(levelfloat, 6)
+		if err != nil {
+			return v, err
+		}
+		v = levelfloat
+	}
+	return v, nil
+}
+
+// only round floats and concs
+func (pair DOEPair) RoundLevels() (newpair DOEPair, err error) {
+
+	var newlevels []interface{}
+
+	for i, level := range pair.Levels {
+		var v interface{}
+
+		conc, err := HandleConcFactor(pair.Factor, level)
+
+		if err == nil {
+			v = conc.RawValue()
+			newlevels = append(newlevels, v)
+		} else if levelfloat, found := level.(float64); found {
+			levelfloat, err := wutil.Roundto(levelfloat, 6)
+			if err != nil {
+				return newpair, err
+			}
+			v = levelfloat
+			newlevels = append(newlevels, v)
+		} else if merged, found := level.(MergedLevel); found {
+
+			var factors []string
+			var values []interface{}
+
+			for key, value := range merged.OriginalFactorPairs {
+
+				factors = append(factors, key)
+
+				value, err = round(value)
+				if err != nil {
+					return newpair, err
+				}
+				values = append(values, value)
+			}
+
+			newmerged, err := MakeMergedLevel(factors, values)
+
+			if err != nil {
+				return newpair, err
+			}
+
+			v = newmerged
+			newlevels = append(newlevels, v)
+
+		} else {
+			return newpair, fmt.Errorf("cannot round non-float or conc value for level %s, %s: %s", i, level, err.Error())
+		}
+	}
+
+	newpair.Factor = pair.Factor
+	newpair.Levels = newlevels
+
+	return newpair, nil
+}
+
+// returns the maximum level of a DOEPair if the factor is numeric, if the factor is not numeric an error is returned
+func (pair DOEPair) MaxLevel() (maxlevel interface{}, err error) {
+	arraytype, err := search.CheckArrayType(pair.Levels)
+	if err != nil {
+		return maxlevel, err
+	}
+	if arraytype == "float64" {
+		var floats []float64
+		for _, level := range pair.Levels {
+			levelfloat := level.(float64)
+			floats = append(floats, levelfloat)
+		}
+		sort.Float64s(floats)
+
+		return floats[len(floats)-1], nil
+
+	}
+	return maxlevel, fmt.Errorf("cannot sort non-numeric type of %s", arraytype)
+}
+
+// returns the minimum level of a DOEPair if the factor is numeric,
+// if the factor is not numeric an error is returned unless the factor is a MergedLevel comprising of concentration values
+func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
+
+	arraytype, err := search.CheckArrayType(pair.Levels)
+	if err != nil {
+		return minlevel, err
+	}
+	if arraytype == "float64" {
+		var floats []float64
+		for _, level := range pair.Levels {
+			levelfloat := level.(float64)
+			floats = append(floats, levelfloat)
+		}
+		sort.Float64s(floats)
+
+		return floats[0], nil
+
+	} else if arraytype == "MergedLevel" {
+
+		// use first level to get keys
+		// assumes all MergedLevels contain the same merged factors
+		// if all keys are not included the function will error
+		// if len of keys is greater than the first entry the function will return an error
+		masterKeys := pair.Levels[0].(MergedLevel).Sort()
+
+		var keyToLowest = make(map[string]interface{})
+
+		for _, key := range masterKeys {
+
+			var lowestconc wunit.Concentration
+
+			for i, level := range pair.Levels {
+				if i == 0 {
+					concInt, found := level.(MergedLevel).OriginalFactorPairs[key]
+
+					if !found {
+						return minlevel, fmt.Errorf("merged factor %s not found in level %s of %s", key, i, fmt.Sprint(pair))
+					}
+
+					conc, err := HandleConcFactor(key, concInt)
+
+					if err != nil {
+						return minlevel, err
+					}
+
+					lowestconc = conc
+
+				} else {
+					concInt, found := level.(MergedLevel).OriginalFactorPairs[key]
+
+					if !found {
+						return minlevel, fmt.Errorf("merged factor %s not found in level %s of %s", key, i, fmt.Sprint(pair))
+					}
+
+					conc, err := HandleConcFactor(key, concInt)
+
+					if err != nil {
+						return minlevel, err
+					}
+					if conc.LessThan(lowestconc) {
+						lowestconc = conc
+
+					}
+				}
+
+			}
+
+			var v interface{}
+
+			v = lowestconc.RawValue()
+
+			keyToLowest[key] = v
+		}
+
+		var factors []string
+		var values []interface{}
+
+		for k, v := range keyToLowest {
+
+			factors = append(factors, k)
+			values = append(values, v)
+		}
+
+		lowestMerged, err := MakeMergedLevel(factors, values)
+
+		if err != nil {
+			return minlevel, err
+		}
+
+		for _, level := range pair.Levels {
+			merged := level.(MergedLevel)
+
+			if equal, err := merged.EqualToMergeConcs(lowestMerged); equal && err == nil {
+				fmt.Println("same: ", merged, lowestMerged)
+				return level, nil
+			} else {
+				fmt.Println(merged, " not equal to ", lowestMerged, ": ", err.Error())
+			}
+			/*
+				for _ key := range merged.Sort() {
+					concInt := merged.OriginalFactorPairs[key]
+
+					conc, err := doe.HandleConcFactor(key,concInt)
+
+						if err != nil {
+								return maxlevel, err
+
+						}
+
+					if conc.EqualTo(lowestconc){
+
+					}
+				}
+
+			*/
+		}
+		return minlevel, fmt.Errorf("cannot find lowest level of MergedLevel: lowest found %s in %s", fmt.Sprintln(lowestMerged), pairSummary(pair))
+
+	}
+	return minlevel, fmt.Errorf("cannot sort non-numeric type of %s", arraytype)
+}
+
+func pairSummary(pair DOEPair) string {
+	var s []string
+	s = append(s, fmt.Sprintln(pair.Factor))
+	for _, level := range pair.Levels {
+		s = append(s, fmt.Sprintln(level))
+	}
+	return (strings.Join(s, "; "))
+}
+
+// pair a factor with all levels found in runs
+func MakePair(runs []Run, factor string) (allfactorPairs DOEPair, err error) {
+
+	var levels []interface{}
+
+	for _, run := range runs {
+		level, err := run.GetFactorValue(factor)
+
+		if err != nil {
+			return allfactorPairs, err
+		}
+		levels = append(levels, level)
+	}
+	return Pair(factor, levels), nil
 }
 
 // creates a copy of the pair with reduced factors
@@ -513,24 +751,6 @@ func (run Run) GetAdditionalInfo(subheader string) (value interface{}, err error
 	return value, fmt.Errorf("header, ", subheader, " not found in ", run.AdditionalSubheaders)
 }
 
-/*
-func DeleteDuplicateRuns(runs []Run) (uniqueRuns []Run) {
-	var previousrun Run
-	for i, run := range runs {
-		if i == 0 {
-			previousrun = run
-			uniqueRuns = append(uniqueRuns, run)
-		} else {
-			same, err := run.EqualTo(previousrun)
-			if !same {
-				fmt.Println(err.Error())
-				uniqueRuns = append(uniqueRuns, run)
-			}
-		}
-	}
-	return
-}
-*/
 func AddFixedFactors(runs []Run, fixedfactors []DOEPair) (runswithfixedfactors []Run) {
 
 	if len(runs) > 0 {
@@ -636,7 +856,7 @@ func sameFactorLevels(run1 Run, run2 Run, factor string) (same bool, err error) 
 		return
 	}
 
-	if reflexct.DeepEqual(value1,value2) {
+	if reflect.DeepEqual(value1, value2) {
 		return true, nil
 	}
 
@@ -683,12 +903,73 @@ type MergedLevel struct {
 	OriginalFactorPairs map[string]interface{}
 }
 
+// returns keys in alphabetical order; values are returned in the order corresponding to the key order
 func (m MergedLevel) Sort() (orderedKeys []string) {
 	for k, _ := range m.OriginalFactorPairs {
 		orderedKeys = append(orderedKeys, k)
 	}
 	sort.Strings(orderedKeys)
+
 	return
+}
+
+// returns keys in alphabetical order; values are returned in the order corresponding to the key order
+func (m MergedLevel) EqualTo(e MergedLevel) (bool, error) {
+
+	if len(m.OriginalFactorPairs) != len(e.OriginalFactorPairs) {
+		return false, fmt.Errorf("Merged levels are not of equal size")
+	}
+
+	for k, v := range m.OriginalFactorPairs {
+		if !reflect.DeepEqual(e.OriginalFactorPairs[k], v) {
+			return false, fmt.Errorf("original factor %s not found in merged level being evaluated", k)
+		}
+	}
+	return true, nil
+}
+
+// returns keys in alphabetical order; values are returned in the order corresponding to the key order
+func (m MergedLevel) EqualToMergeConcs(e MergedLevel) (bool, error) {
+
+	if len(m.OriginalFactorPairs) != len(e.OriginalFactorPairs) {
+		return false, fmt.Errorf("Merged levels are not of equal size")
+	}
+
+	for k, v := range m.OriginalFactorPairs {
+
+		vconc, err := HandleConcFactor(k, v)
+
+		if err != nil {
+			return false, err
+		}
+
+		econc, err := HandleConcFactor(k, e.OriginalFactorPairs[k])
+
+		if err != nil {
+			return false, err
+		}
+
+		if !concsEqual(vconc, econc) {
+			return false, fmt.Errorf("original factor %s level %s not equal to %s in merged level being evaluated", k, vconc.ToString(), econc.ToString())
+		}
+	}
+	return true, nil
+}
+
+func concsEqual(conc1, conc2 wunit.Concentration) bool {
+
+	roundedconc1, _ := wutil.Roundto(conc1.RawValue(), 6)
+
+	roundedconc2, _ := wutil.Roundto(conc2.RawValue(), 6)
+
+	dif := math.Abs(roundedconc1 - roundedconc2)
+
+	epsilon := math.Nextafter(1, 2) - 1
+
+	if dif < (epsilon*1000) && conc1.Unit().PrefixedSymbol() == conc2.Unit().PrefixedSymbol() {
+		return true
+	}
+	return false
 }
 
 func MakeMergedLevel(factorsInOrder []string, levelsInOrder []interface{}) (m MergedLevel, err error) {
@@ -737,6 +1018,29 @@ func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []strin
 		}
 	}
 	return
+}
+
+func LowestLevelValue(runs []Run, factor string) (value interface{}, err error) {
+
+	// get all levels for the new factor
+	pair, err := MakePair(runs, factor)
+	if err != nil {
+		return value, err
+	}
+	// remove duplicates
+	reducedPair, err := RemoveDuplicateLevels(pair)
+	if err != nil {
+		return value, err
+	}
+
+	roundedpair, err := reducedPair.RoundLevels()
+
+	if err != nil {
+		return value, err
+	}
+
+	return roundedpair.MinLevel()
+
 }
 
 func AllCombinations(factors []DOEPair) (runs []Run) {

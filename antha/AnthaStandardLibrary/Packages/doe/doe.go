@@ -513,24 +513,6 @@ func (run Run) GetAdditionalInfo(subheader string) (value interface{}, err error
 	return value, fmt.Errorf("header, ", subheader, " not found in ", run.AdditionalSubheaders)
 }
 
-/*
-func DeleteDuplicateRuns(runs []Run) (uniqueRuns []Run) {
-	var previousrun Run
-	for i, run := range runs {
-		if i == 0 {
-			previousrun = run
-			uniqueRuns = append(uniqueRuns, run)
-		} else {
-			same, err := run.EqualTo(previousrun)
-			if !same {
-				fmt.Println(err.Error())
-				uniqueRuns = append(uniqueRuns, run)
-			}
-		}
-	}
-	return
-}
-*/
 func AddFixedFactors(runs []Run, fixedfactors []DOEPair) (runswithfixedfactors []Run) {
 
 	if len(runs) > 0 {

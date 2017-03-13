@@ -12,6 +12,7 @@ type Match struct {
 	IDs  []string
 	WCs  []string
 	Vols []wunit.Volume
+	M    []int
 	Sc   float64
 }
 
@@ -50,7 +51,7 @@ func align(want, got ComponentVector, independent bool) Match {
 				continue
 			}
 
-			if want[i].CName == got[i].CName {
+			if want[i].CName == got[j].CName && !want[i].Volume().IsZero() {
 				v1 := want[i].Volume().Dup()
 				v2 := got[j].Volume().Dup()
 				v2.Subtract(v1)
@@ -92,8 +93,13 @@ func align(want, got ComponentVector, independent bool) Match {
 	IDs := make([]string, len(want))
 	WCs := make([]string, len(want))
 	Vols := make([]wunit.Volume, len(want))
+	Ms := make([]int, len(want))
 
-	m := Match{IDs: IDs, WCs: WCs, Vols: Vols, Sc: mxmx}
+	for i := 0; i < len(want); i++ {
+		Ms[i] = -1
+	}
+
+	m := Match{IDs: IDs, WCs: WCs, Vols: Vols, M: Ms, Sc: mxmx}
 
 	if mxi < 0 || mxj < 0 || mxmx <= 0.0 {
 		return m
@@ -114,6 +120,7 @@ func align(want, got ComponentVector, independent bool) Match {
 		IDs[i] = gIDs[j]
 		WCs[i] = gWCs[j]
 		Vols[i] = gVs[j]
+		Ms[i] = j
 
 		bk := mat[i][j].Bk
 
@@ -147,7 +154,18 @@ func matchComponents(want, got ComponentVector, independent bool) (ComponentMatc
 		m.Matches = append(m.Matches, match)
 
 		// deplete
+		c := 0
+		for i := 0; i < len(match.WCs); i++ {
+			if match.WCs[i] != "" {
+				got[match.M[i]].Vol -= want[i].Vol
+				want[i].Vol = 0.0
+				c += 1
+			}
+		}
 
+		if c == len(match.WCs) {
+			break
+		}
 	}
 
 	return m, nil

@@ -146,6 +146,11 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 
 }
 
+func CopyConcentration(v Concentration) Concentration {
+	ret := NewConcentration(v.RawValue(), v.Unit().PrefixedSymbol())
+	return ret
+}
+
 // multiply volume
 func MultiplyConcentration(v Concentration, factor float64) (newconc Concentration) {
 
@@ -413,6 +418,7 @@ var UnitMap = map[string]map[string]Unit{
 		"M/l":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"mMol/L": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
 		"mMol/l": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"X":      Unit{Base: "X", Prefix: "", Multiplier: 1.0},
 	},
 	"Mass": map[string]Unit{
 		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},

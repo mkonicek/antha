@@ -584,7 +584,8 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, contiguous bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
+// returns go: [transfer1][c1c2c3c4...], [transfer2][c1c2c3c4...]
+func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 	plateIDs = make([][]string, len(cmps))
 	wellCoords = make([][]string, len(cmps))
 	vols = make([][]wunit.Volume, len(cmps))
@@ -594,15 +595,20 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 			p, ok := lhp.Plates[ipref]
 
 			if ok {
-				pids, wcs, vls, err := p.FindComponentsMulti(cmps, ori, multi, contiguous)
+				// find components multi can return anywhere between 1x Multi and Multi x 1
+				// transfers as sets
+				pids, wcs, vls, err := p.FindComponentsMulti(cmps, ori, multi, independent)
 				if err != nil {
 					continue
 				}
-				for i := 0; i < len(cmps); i++ {
-					plateIDs[i] = []string{pids[i]}
-					wellCoords[i] = []string{wcs[i]}
-					vols[i] = []wunit.Volume{vls[i]}
-				}
+
+				/*
+					for i := 0; i < len(cmps); i++ {
+						plateIDs[i] = []string{pids[i]}
+						wellCoords[i] = []string{wcs[i]}
+						vols[i] = []wunit.Volume{vls[i]}
+					}
+				*/
 
 				return plateIDs, wellCoords, vols, nil
 			}

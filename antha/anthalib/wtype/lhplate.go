@@ -145,12 +145,12 @@ func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
 	return ret
 }
 
-//plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, contiguous)
+//plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, independent)
 
-func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, contiguous bool) (plateIDs, wellCoords []string, vols []wunit.Volume, err error) {
+func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 
 	for _, c := range cmps {
-		if contiguous && c == nil {
+		if independent && c == nil {
 			err = fmt.Errorf("Cannot do non-contiguous asks")
 			return
 		}
@@ -166,15 +166,33 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, co
 		it = NewRowVectorIterator(lhp, multi)
 	}
 
+	best := 0.0
+	bestMatch := ComponentMatch{}
 	for wv := it.Curr(); it.Valid(); wv = it.Next() {
 		mycmps := lhp.GetContentVector(wv)
-		if canGet(cmps, mycmps) {
-			plateIDs = mycmps.GetPlateIds()
-			wellCoords = mycmps.GetWellCoords()
-			vols = cmps.GetVols()
-			err = nil
+
+		match, errr := matchComponents(cmps, mycmps, independent)
+
+		if errr != nil {
+			err = errr
+			return
+		}
+
+		sc := scoreMatch(match, independent)
+
+		if sc > best {
+			bestMatch = match
+			best = sc
 		}
 	}
+
+	for _, m := range bestMatch.Matches {
+		plateIDs = append(plateIDs, m.IDs)
+		wellCoords = append(wellCoords, m.WCs)
+		vols = append(vols, m.Vols)
+	}
+
+	err = nil
 
 	return
 }

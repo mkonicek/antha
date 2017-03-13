@@ -1,6 +1,19 @@
 package wtype
 
-import "github.com/antha-lang/antha/antha/anthalib/wutil"
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+)
+
+type ComponentMatch struct {
+	Matches []Match
+}
+type Match struct {
+	IDs  []string
+	WCs  []string
+	Vols []wunit.Volume
+	Sc   float64
+}
 
 func CopyComponentArray(arin []*LHComponent) []*LHComponent {
 	r := make([]*LHComponent, len(arin))
@@ -12,39 +25,136 @@ func CopyComponentArray(arin []*LHComponent) []*LHComponent {
 	return r
 }
 
-// CURRENT STATUS:
-// if this returns false we can *only* get sets of 8
-// if this reutrns true we will always think there are 8
-// TODO -- the higher level needs to account for the difference
-// between being able ot get all or just some of the components
-func canGet(want, got ComponentVector) bool {
-	c := 0
+type mt struct {
+	Sc float64
+	Vl float64
+	Bk int
+}
+
+func align(want, got ComponentVector, independent bool) Match {
+	mat := make([][]mt, len(want))
+
+	mxmx := -999999.0
+	mxi := -1
+	mxj := -1
 
 	for i := 0; i < len(want); i++ {
-		// is there, like, stuff where we need it?
+		mat[i] = make([]mt, len(got))
 
-		if want[i] == nil && got[i] == nil {
+		if want[i] == nil {
 			continue
-		} else if (want[i] == nil && got[i] != nil) || (want[i] != nil && got[i] == nil) {
-			return false
 		}
 
-		// check the component type and junk
+		for j := 0; j < len(got); j++ {
+			if got[j] == nil {
+				continue
+			}
 
-		if want[i].CName != got[i].CName && got[i].CName != "" {
-			return false
+			if want[i].CName == got[i].CName {
+				v1 := want[i].Volume().Dup()
+				v2 := got[j].Volume().Dup()
+				v2.Subtract(v1)
+
+				mat[i][j].Vl = v1.ConvertToString("ul")
+				mat[i][j].Sc = v2.ConvertToString("ul")
+
+				mx := 0.0
+				bk := 0
+				if i > 0 && j > 0 {
+					mx = mat[i-1][j-1].Sc
+					bk = 2
+
+					if independent {
+						// gaps allowed
+						if mat[i-1][j].Sc > mx {
+							mx = mat[i-1][j].Sc
+							bk = 1
+						}
+						if mat[i][j-1].Sc > mx {
+							mx = mat[i][j-1].Sc
+							bk = 3
+						}
+					}
+				}
+				mat[i][j].Sc += mx
+				mat[i][j].Bk = bk
+
+				if mat[i][j].Sc > mxmx {
+					mxmx = mat[i][j].Sc
+					mxi = i
+					mxj = j
+				}
+			}
+
 		}
-
-		// finally is there enough?
-
-		if got[i].Volume().LessThan(want[i].Volume()) && got[i].CName != "" {
-			return false
-		}
-		c += 1
 	}
 
-	// like, whatever
-	return true
+	IDs := make([]string, len(want))
+	WCs := make([]string, len(want))
+	Vols := make([]wunit.Volume, len(want))
+
+	m := Match{IDs: IDs, WCs: WCs, Vols: Vols, Sc: mxmx}
+
+	if mxi < 0 || mxj < 0 || mxmx <= 0.0 {
+		return m
+	}
+
+	// get stuff out
+
+	gIDs := got.GetPlateIds()
+	gWCs := got.GetWellCoords()
+	gVs := got.GetVols()
+
+	// get the best
+
+	i := mxi
+	j := mxj
+
+	for {
+		IDs[i] = gIDs[j]
+		WCs[i] = gWCs[j]
+		Vols[i] = gVs[j]
+
+		bk := mat[i][j].Bk
+
+		if bk == 0 {
+			break
+		} else if bk == 1 {
+			i = i - 1
+		} else if bk == 2 {
+			i = i - 1
+			j = j - 1
+		} else if bk == 3 {
+			j = j - 1
+		}
+	}
+
+	return m
+}
+
+func matchComponents(want, got ComponentVector, independent bool) (ComponentMatch, error) {
+	// not sure of the algorithm here:
+	// we want to match as many as possible in one go
+	// then clean up the others
+
+	m := ComponentMatch{Matches: make([]Match, 0, 1)}
+
+	for {
+		match := align(want, got, independent)
+		if match.Sc <= 0.0 {
+			break
+		}
+		m.Matches = append(m.Matches, match)
+
+		// deplete
+
+	}
+
+	return m, nil
+}
+
+func scoreMatch(m ComponentMatch, independent bool) float64 {
+	return 0.0
 }
 
 // are tips going to align to wells?

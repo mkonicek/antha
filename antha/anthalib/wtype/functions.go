@@ -54,9 +54,14 @@ func align(want, got ComponentVector, independent bool) Match {
 			if want[i].CName == got[j].CName && !want[i].Volume().IsZero() {
 				v1 := want[i].Volume().Dup()
 				v2 := got[j].Volume().Dup()
-				v2.Subtract(v1)
 
-				mat[i][j].Vl = v1.ConvertToString("ul")
+				if v1.GreaterThan(v2) {
+					mat[i][j].Vl = v2.ConvertToString("ul")
+					v2 = wunit.ZeroVolume()
+				} else {
+					mat[i][j].Vl = v1.ConvertToString("ul")
+					v2.Subtract(v1)
+				}
 				mat[i][j].Sc = v2.ConvertToString("ul")
 
 				mx := 0.0
@@ -157,8 +162,12 @@ func matchComponents(want, got ComponentVector, independent bool) (ComponentMatc
 		c := 0
 		for i := 0; i < len(match.WCs); i++ {
 			if match.WCs[i] != "" {
+				if got[match.M[i]].Vol >= want[i].Vol {
+					want[i].Vol = 0.0
+				} else {
+					want[i].Vol -= match.Vols[i].ConvertToString(want[i].Vunit)
+				}
 				got[match.M[i]].Vol -= want[i].Vol
-				want[i].Vol = 0.0
 				c += 1
 			}
 		}
@@ -172,7 +181,17 @@ func matchComponents(want, got ComponentVector, independent bool) (ComponentMatc
 }
 
 func scoreMatch(m ComponentMatch, independent bool) float64 {
-	return 0.0
+	s := 0.0
+
+	for _, mtch := range m.Matches {
+		for i := 0; i < len(mtch.Vols); i++ {
+			s += mtch.Vols[i].RawValue()
+		}
+	}
+
+	s /= float64(len(m.Matches))
+
+	return s
 }
 
 // are tips going to align to wells?

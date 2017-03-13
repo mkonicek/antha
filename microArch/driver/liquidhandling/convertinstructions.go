@@ -142,7 +142,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 				// safety first
 
-				if fromPlateIDs[ix] == nil || len(fromPlateIDs[ix]) == 0 {
+				if fromPlateIDs[mt] == nil || len(fromPlateIDs[mt]) == 0 {
 					errstr := fmt.Sprintf("Some sources were not found: looking for %v : ix %d %v", readableComponentArray(cmpSquash), ix, fromPlateIDs)
 					return nil, wtype.LHError(wtype.LH_ERR_DIRE, errstr)
 				}
@@ -158,12 +158,12 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				//    most likely from the same set of 4 contiguous wells
 				// -- must fix below accordingly
 				//
-				flhif := robot.PlateLookup[fromPlateIDs[ix][0]]
+				flhif := robot.PlateLookup[fromPlateIDs[mt][ix]]
 
 				if flhif != nil {
 					flhp = flhif.(*wtype.LHPlate)
 				} else {
-					s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateIDs[ix])
+					s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateIDs[mt][ix])
 					err := wtype.LHError(wtype.LH_ERR_DIRE, s)
 					return nil, err
 				}
@@ -195,7 +195,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				ptwy[ix] = tlhp.WellsY()
 				ptt[ix] = tlhp.Type
 
-				wlf, ok := flhp.WellAtString(fromWells[ix][0])
+				wlf, ok := flhp.WellAtString(fromWells[mt][ix])
 
 				if !ok {
 					//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
@@ -203,23 +203,23 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 					return nil, err
 				}
 
-				if fromvols[ix] == nil || len(fromvols[ix]) == 0 {
-					err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Source %d found for %s (%s) not properly configured", ix, cmpSquash[ix].CName, fromWells[ix][0]))
+				if fromvols[mt] == nil || len(fromvols[mt]) == 0 {
+					err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Source %d found for %s (%s) not properly configured", ix, cmpSquash[ix].CName, fromWells[mt][ix]))
 					return nil, err
 				}
 
-				vf[ix] = fromvols[ix][0]
+				vf[ix] = fromvols[mt][ix]
 
 				//wlf.Remove(va[ix])
 
-				pf[ix] = robot.PlateIDLookup[fromPlateIDs[ix][0]]
-				wf[ix] = fromWells[ix][0]
+				pf[ix] = robot.PlateIDLookup[fromPlateIDs[mt][ix]]
+				wf[ix] = fromWells[mt][ix]
 				pfwx[ix] = flhp.WellsX()
 				pfwy[ix] = flhp.WellsY()
 				ptf[ix] = flhp.Type
 
 				if v.Loc == "" {
-					v.Loc = fromPlateIDs[ix][0] + ":" + fromWells[ix][0]
+					v.Loc = fromPlateIDs[mt][ix] + ":" + fromWells[mt][ix]
 				}
 				// add component to destination
 				// need to ensure data are consistent

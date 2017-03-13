@@ -597,7 +597,7 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 			if ok {
 				// find components multi can return anywhere between 1x Multi and Multi x 1
 				// transfers as sets
-				pids, wcs, vls, err := p.FindComponentsMulti(cmps, ori, multi, independent)
+				plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, independent)
 				if err != nil {
 					continue
 				}
@@ -610,7 +610,7 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 					}
 				*/
 
-				return plateIDs, wellCoords, vols, nil
+				return
 			}
 		}
 	}

@@ -29,6 +29,12 @@ func (cv ComponentVector) getLocTok(x int) []string {
 	ret := make([]string, len(cv))
 	for i, c := range cv {
 		tx := strings.Split(c.Loc, ":")
+
+		if len(tx) <= x {
+			ret[i] = ""
+			continue
+		}
+
 		ret[i] = tx[x]
 	}
 

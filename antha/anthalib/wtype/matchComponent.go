@@ -10,11 +10,11 @@ type ComponentMatch struct {
 	Matches []Match
 }
 type Match struct {
-	IDs  []string
-	WCs  []string
-	Vols []wunit.Volume
-	M    []int
-	Sc   float64
+	IDs  []string       // PlateIDs in 'got' array
+	WCs  []string       // Wellcoords in 'got' array
+	Vols []wunit.Volume // vols (before suck) in 'got'
+	M    []int          // offsets in 'got' array
+	Sc   float64        // total score for this match
 }
 
 type mt struct {
@@ -34,6 +34,20 @@ func printMat(mat [][]mt) {
 }
 
 func align(want, got ComponentVector, independent bool) Match {
+	// ensure things are ok
+
+	for i, v := range want {
+		if v == nil {
+			want[i] = NewLHComponent()
+		}
+
+		g := want[i]
+
+		if g == nil {
+			got[i] = NewLHComponent()
+		}
+	}
+
 	mat := make([][]mt, len(want))
 
 	mxmx := -999999.0
@@ -43,54 +57,58 @@ func align(want, got ComponentVector, independent bool) Match {
 	for i := 0; i < len(want); i++ {
 		mat[i] = make([]mt, len(got))
 
-		if want[i] == nil {
-			continue
-		}
+		// if we must be contiguous then we skip all cells aligned
+		// to rows with zeroes in 'want'
 
 		for j := 0; j < len(got); j++ {
-			if got[j] == nil {
+			// only allow gaps if independent is set
+			if got[j].CName == "" && !independent {
 				continue
 			}
 
-			if want[i].CName == got[j].CName && !want[i].Volume().IsZero() {
-				v1 := want[i].Volume().Dup()
-				v2 := got[j].Volume().Dup()
+			v1 := want[i].Volume().Dup()
+			v2 := got[j].Volume().Dup()
 
-				if v1.GreaterThan(v2) {
-					mat[i][j].Vl = v2.ConvertToString("ul")
-					v2 = wunit.ZeroVolume()
-				} else {
-					mat[i][j].Vl = v1.ConvertToString("ul")
-					v2.Subtract(v1)
-				}
+			if v1.GreaterThan(v2) {
+				mat[i][j].Vl = v2.ConvertToString("ul")
+				v2 = wunit.ZeroVolume()
+			} else {
+				mat[i][j].Vl = v1.ConvertToString("ul")
+				v2.Subtract(v1)
+			}
+
+			if !want[i].Volume().IsZero() {
 				mat[i][j].Sc = v2.ConvertToString("ul")
+			}
 
-				mx := 0.0
-				bk := 0
-				if i > 0 && j > 0 {
-					mx = mat[i-1][j-1].Sc
-					bk = 2
+			mx := 0.0
+			bk := 0
+			if i > 0 && j > 0 {
+				mx = mat[i-1][j-1].Sc
+				bk = 2
 
+				/*
 					if independent {
-						// gaps allowed
-						if mat[i-1][j].Sc > mx {
-							mx = mat[i-1][j].Sc
-							bk = 1
+						if want[i-1] == nil || want[i-1].CName == "" || want[i-1].Vol == 0.0 {
+							if mat[i-1][j].Sc > mx {
+								mx = mat[i-1][j].Sc
+								bk = 1
+							}
 						}
 						if mat[i][j-1].Sc > mx {
 							mx = mat[i][j-1].Sc
 							bk = 3
 						}
 					}
-				}
-				mat[i][j].Sc += mx
-				mat[i][j].Bk = bk
+				*/
+			}
+			mat[i][j].Sc += mx
+			mat[i][j].Bk = bk
 
-				if mat[i][j].Sc > mxmx {
-					mxmx = mat[i][j].Sc
-					mxi = i
-					mxj = j
-				}
+			if mat[i][j].Sc > mxmx {
+				mxmx = mat[i][j].Sc
+				mxi = i
+				mxj = j
 			}
 
 		}

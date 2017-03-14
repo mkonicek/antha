@@ -43,7 +43,7 @@ var (
 	alphabet string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-// Exports creates a wtype.file from the plot data. heights and lengths can be parsed as strings.
+// Export creates a wtype.file from the plot data. Heights and lengths can be parsed from strings i.e. 10cm.
 // If no valid height or length is specified default values of 10cm will be used but an error will also be returned.
 // If the desired filename specified does not contain a file extension, a png file will be used as the default file format.
 func Export(plt *plot.Plot, heightstr string, lengthstr string, filename string) (file wtype.File, err error) {
@@ -89,7 +89,8 @@ func Export(plt *plot.Plot, heightstr string, lengthstr string, filename string)
 	return
 }
 
-// Create a plot from float data. Multiple sets of y values may be specified for a set of x values
+// Create a plot from float data. Multiple sets of y values may be specified for a set of x values.
+// The length of any yvalue dataset must be equal to the length of xvalues or the function will stop and return an error.
 func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error) {
 	// now plot the graph
 

@@ -145,8 +145,6 @@ func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
 	return ret
 }
 
-//plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, independent)
-
 func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 
 	for _, c := range cmps {
@@ -169,9 +167,10 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 	best := 0.0
 	bestMatch := ComponentMatch{}
 	for wv := it.Curr(); it.Valid(); wv = it.Next() {
+		// cmps needs duping here
 		mycmps := lhp.GetContentVector(wv)
 
-		match, errr := matchComponents(cmps, mycmps, independent)
+		match, errr := matchComponents(cmps.Dup(), mycmps, independent)
 
 		if errr != nil {
 			err = errr
@@ -186,13 +185,22 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 		}
 	}
 
-	for _, m := range bestMatch.Matches {
+	for i, m := range bestMatch.Matches {
+		fmt.Println(i, " : ", m.IDs)
+		fmt.Println(i, " : ", m.WCs)
+		fmt.Println(i, " : ", m.Vols)
 		plateIDs = append(plateIDs, m.IDs)
 		wellCoords = append(wellCoords, m.WCs)
 		vols = append(vols, m.Vols)
 	}
 
-	err = nil
+	fmt.Println(plateIDs)
+
+	if best <= 0.0 {
+		err = fmt.Errorf("Not found")
+	} else {
+		err = nil
+	}
 
 	return
 }

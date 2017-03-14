@@ -26,6 +26,7 @@ type mt struct {
 }
 
 func printMat(mat [][]mt) {
+	fmt.Println("*****")
 	for _, v := range mat {
 		for _, x := range v {
 			fmt.Printf("%-5.1f:%-1d ", x.Sc, x.Bk)
@@ -33,6 +34,7 @@ func printMat(mat [][]mt) {
 
 		fmt.Println()
 	}
+	fmt.Println("-----")
 }
 
 func align(want, got ComponentVector, independent bool) Match {
@@ -64,7 +66,7 @@ func align(want, got ComponentVector, independent bool) Match {
 
 		for j := 0; j < len(got); j++ {
 			// only allow gaps if independent is set
-			if got[j].CName == "" && !independent {
+			if (got[j].CName == "" || want[i].CName != got[j].CName) && !independent {
 				continue
 			}
 
@@ -143,6 +145,9 @@ func align(want, got ComponentVector, independent bool) Match {
 	j := mxj
 
 	for {
+		if want[i].Vol == 0 && mat[i][j].Bk == 0 {
+			break
+		}
 		IDs[i] = gIDs[j]
 		WCs[i] = gWCs[j]
 		Vols[i] = gVs[j]

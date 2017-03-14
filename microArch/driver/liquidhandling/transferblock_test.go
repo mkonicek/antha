@@ -150,7 +150,7 @@ func TestMultichannelFailDest(t *testing.T) {
 		t.Errorf("No Transfers made")
 	}
 
-	for x := 0; x < 2; x++ {
+	for x := 0; x < len(ris); x++ {
 		ris[x].(*TransferInstruction).WellTo[1] = "A1"
 		ris[x].(*TransferInstruction).WellTo[3] = "A1"
 		ris[x].(*TransferInstruction).WellTo[5] = "A1"
@@ -160,6 +160,7 @@ func TestMultichannelFailDest(t *testing.T) {
 	testNegative(ris, pol, rbt, t)
 }
 func TestMultiChannelFailSrc(t *testing.T) {
+	fmt.Println("FAIL SRC")
 	// sources not aligned
 	tb, dstp := getTransferBlock()
 	rbt := getTestRobot(dstp)
@@ -169,11 +170,16 @@ func TestMultiChannelFailSrc(t *testing.T) {
 	for i := 0; i < rbt.Plates["position_4"].WellsX(); i++ {
 		rbt.Plates["position_4"].Cols[i][0].Clear()
 	}
+
 	pol, err := GetLHPolicyForTest()
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(pol, rbt)
 	if err != nil {
 		t.Error(err)
+	}
+
+	for _, ins := range ris {
+		fmt.Println(ins.(*TransferInstruction).FPlateType)
 	}
 
 	testNegative(ris, pol, rbt, t)

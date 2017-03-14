@@ -28,18 +28,22 @@ type BasicPlateIterator struct {
 type MultiPlateIterator struct {
 	BasicPlateIterator
 	multi int
-	rule  func(WellCoords, *LHPlate) WellCoords
+	rule  func(PlateIterator) []WellCoords
 	ori   int
 }
 
 func (mpi *MultiPlateIterator) Curr() []WellCoords {
 	wc := mpi.BasicPlateIterator.Curr()
-	wa := make([]WellCoords, mpi.multi)
 
-	for i := 0; i < mpi.multi; i++ {
-		wa[i] = mpi.BasicPlateIterator.Curr()
-		mpi.BasicPlateIterator.Next()
-	}
+	/*
+		wa := make([]WellCoords, mpi.multi)
+		for i := 0; i < mpi.multi; i++ {
+			wa[i] = mpi.BasicPlateIterator.Curr()
+			mpi.BasicPlateIterator.Next()
+		}
+	*/
+
+	wa := mpi.rule(&mpi.BasicPlateIterator)
 
 	mpi.SetCurTo(wc)
 
@@ -52,47 +56,31 @@ func (mpi *MultiPlateIterator) Rewind() []WellCoords {
 }
 
 func (mpi *MultiPlateIterator) Next() []WellCoords {
-	mpi.BasicPlateIterator.Next()
+	_ = mpi.rule(&mpi.BasicPlateIterator)
 	return mpi.Curr()
 }
 
 func (mpi *MultiPlateIterator) Valid() bool {
+	if !mpi.BasicPlateIterator.Valid() {
+		return false
+	}
 	wc := mpi.BasicPlateIterator.Curr()
 
 	valid := true
 
-	for i := 0; i < mpi.multi-1; i++ {
-		wc2 := mpi.BasicPlateIterator.Next()
-		if (mpi.ori == LHVChannel && wc2.X != wc.X) || (mpi.ori == LHHChannel && wc2.Y != wc.Y) {
+	wa := mpi.Curr()
+
+	for i := 0; i < len(wa); i++ {
+		if (mpi.ori == LHVChannel && wa[i].X != wc.X) || (mpi.ori == LHHChannel && wa[i].Y != wc.Y) {
 			valid = false
 			break
 		}
 	}
 
-	mpi.cur = wc
+	// reset
+	mpi.BasicPlateIterator.cur = wc
 
 	return valid
-}
-
-func NewColMultiIteratorRule(multi int) func(WellCoords, *LHPlate) WellCoords {
-	return func(wc WellCoords, p *LHPlate) WellCoords {
-		wc.Y += 1
-		if wc.Y+multi >= p.WellsY() {
-			wc.Y = 0
-			wc.X += 1
-		}
-		return wc
-	}
-}
-func NewRowMultiIteratorRule(multi int) func(WellCoords, *LHPlate) WellCoords {
-	return func(wc WellCoords, p *LHPlate) WellCoords {
-		wc.X += 1
-		if wc.X+multi >= p.WellsX() {
-			wc.X = 0
-			wc.Y += 1
-		}
-		return wc
-	}
 }
 
 func (it *BasicPlateIterator) Rewind() WellCoords {
@@ -214,13 +202,25 @@ func NewOneTimeRowWiseIterator(p *LHPlate) PlateIterator {
 	return &bi
 }
 
+func NewMultiIteratorRule(multi int) func(PlateIterator) []WellCoords {
+	return func(pi PlateIterator) []WellCoords {
+		wc := make([]WellCoords, multi)
+		for i := 0; i < multi; i++ {
+			wc[i] = pi.Curr()
+			pi.Next()
+		}
+
+		return wc
+	}
+}
+
 func NewColVectorIterator(p *LHPlate, multi int) VectorPlateIterator {
 	var bi BasicPlateIterator
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
 	bi.p = p
-	bi.rule = NextInColumn
-	rule := NewColMultiIteratorRule(multi)
+	bi.rule = NextInColumnOnce
+	rule := NewMultiIteratorRule(multi)
 	mi := MultiPlateIterator{bi, multi, rule, LHVChannel}
 	return &mi
 }
@@ -230,8 +230,8 @@ func NewRowVectorIterator(p *LHPlate, multi int) VectorPlateIterator {
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
 	bi.p = p
-	bi.rule = NextInRow
-	rule := NewRowMultiIteratorRule(multi)
+	bi.rule = NextInRowOnce
+	rule := NewMultiIteratorRule(multi)
 	mi := MultiPlateIterator{bi, multi, rule, LHHChannel}
 	return &mi
 }

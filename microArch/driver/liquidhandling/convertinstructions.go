@@ -148,17 +148,10 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 					return nil, wtype.LHError(wtype.LH_ERR_DIRE, errstr)
 				}
 
-				// TODO
-				// -- we should be using the rows (i.e. 1st index)
-				//    as one transfer
-				//    i.e.   if we get ABCDEFGH  in two bits of size 4 we should have
-				//    [
-				//     ABCD	<-- transfer 1
-				//     EFGH	<-- transfer 2
-				//    ]
-				//    most likely from the same set of 4 contiguous wells
-				// -- must fix below accordingly
-				//
+				if fromPlateIDs[mt][ix] == "" {
+					continue
+				}
+
 				flhif := robot.PlateLookup[fromPlateIDs[mt][ix]]
 
 				if flhif != nil {

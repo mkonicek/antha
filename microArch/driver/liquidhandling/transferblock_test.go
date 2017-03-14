@@ -150,10 +150,12 @@ func TestMultichannelFailDest(t *testing.T) {
 		t.Errorf("No Transfers made")
 	}
 
-	ris[0].(*TransferInstruction).WellTo[1] = "A1"
-	ris[0].(*TransferInstruction).WellTo[3] = "A1"
-	ris[0].(*TransferInstruction).WellTo[5] = "A1"
-	ris[0].(*TransferInstruction).WellTo[7] = "A1"
+	for x := 0; x < 2; x++ {
+		ris[x].(*TransferInstruction).WellTo[1] = "A1"
+		ris[x].(*TransferInstruction).WellTo[3] = "A1"
+		ris[x].(*TransferInstruction).WellTo[5] = "A1"
+		ris[x].(*TransferInstruction).WellTo[7] = "A1"
+	}
 
 	testNegative(ris, pol, rbt, t)
 }
@@ -211,8 +213,8 @@ func testNegative(ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHPro
 		}
 
 		for _, ri := range ri2 {
+			fmt.Println(ri.InstructionType(), " ", ri.GetParameter("LIQUIDCLASS"), ri.GetParameter("WELLFROM"), ri.GetParameter("WELLTO"))
 			if ri.InstructionType() != SCB {
-				//fmt.Println(ri.InstructionType(), " ", ri.GetParameter("LIQUIDCLASS"), ri.GetParameter("WELLFROM"), ri.GetParameter("WELLTO"))
 				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter("LIQUIDCLASS"), ri.GetParameter("WELLFROM"), ri.GetParameter("WELLTO"))
 			}
 		}
@@ -243,15 +245,6 @@ func TestMultichannelPositive(t *testing.T) {
 }
 
 func testPositive(ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
-
-	for _, ri := range ris {
-		rri2, _ := ri.Generate(pol, rbt)
-		fmt.Println("A GAIN")
-		for _, i2 := range rri2 {
-			fmt.Println(i2)
-		}
-	}
-
 	ins := ris[0]
 
 	ri2, err := ins.Generate(pol, rbt)

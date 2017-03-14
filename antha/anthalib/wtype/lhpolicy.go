@@ -210,7 +210,6 @@ func (lhpr *LHPolicyRule) AddCategoryConditionOn(variable, category string) erro
 	err := lhvc.SetCategoric(category)
 
 	if err != nil {
-		fmt.Println("ERROR: ", err)
 		return err
 	}
 

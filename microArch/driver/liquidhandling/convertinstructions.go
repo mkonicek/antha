@@ -130,6 +130,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			vt := make([]wunit.Volume, lenToMake) // volume in well to
 			ptt := make([]string, lenToMake)      // plate types
 
+			// is ix really necessary?
 			ix := 0 // counts up cmpsquash
 
 			for j, v := range comps {
@@ -237,9 +238,11 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 			tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
 
-			fmt.Println("***")
-			fmt.Println(InsToString(tfr))
-			fmt.Println("---")
+			/*
+				fmt.Println("***")
+				fmt.Println(InsToString(tfr))
+				fmt.Println("---")
+			*/
 
 			insOut = append(insOut, tfr)
 		}

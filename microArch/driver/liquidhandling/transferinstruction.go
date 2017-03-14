@@ -544,6 +544,8 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	// if we can multi we do this first
 
 	if pol["CAN_MULTI"].(bool) {
+		fmt.Println("TRANSFER CAN MULTI")
+		fmt.Println("OK YOU BITCH ", ins.WellTo)
 		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
 
 		mci := NewMultiChannelBlockInstruction()
@@ -574,6 +576,8 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 				WellTo[i] = ins.WellTo[s]
 				FPlateType[i] = ins.FPlateType[s]
 				TPlateType[i] = ins.TPlateType[s]
+
+				fmt.Println("SET ", i, " ", s, " ", WellFrom[i], " ", WellTo[i])
 			}
 
 			// get the max transfer volume

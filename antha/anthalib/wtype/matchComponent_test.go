@@ -85,7 +85,7 @@ func TestMatchComponent2(t *testing.T) {
 func TestMatchComponent3(t *testing.T) {
 	Nams := []string{"water", "", "water", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	CIDs := []string{"A1", "", "", "D1", "", "", "", ""}
+	CIDs := []string{"A1", "", "D1", "", "", "", "", ""}
 	PIDs := []string{"Plate1", "", "Plate1", "", "", "", "", ""}
 
 	ca := make([]*LHComponent, 8)
@@ -119,9 +119,4 @@ func TestMatchComponent3(t *testing.T) {
 	if len(cm.Matches) != 8 {
 		t.Errorf(fmt.Sprintf("Exactly 8 matches required, got %d", len(cm.Matches)))
 	}
-
-	for _, v := range cm.Matches {
-		fmt.Println(v.Vols)
-	}
-
 }

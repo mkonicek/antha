@@ -1,6 +1,8 @@
 package wtype
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
@@ -19,6 +21,16 @@ type mt struct {
 	Sc float64
 	Vl float64
 	Bk int
+}
+
+func printMat(mat [][]mt) {
+	for _, v := range mat {
+		for _, x := range v {
+			fmt.Printf("%-5.1f:%-1d ", x.Sc, x.Bk)
+		}
+
+		fmt.Println()
+	}
 }
 
 func align(want, got ComponentVector, independent bool) Match {
@@ -152,16 +164,17 @@ func matchComponents(want, got ComponentVector, independent bool) (ComponentMatc
 		for i := 0; i < len(match.WCs); i++ {
 			if match.WCs[i] != "" {
 				if got[match.M[i]].Vol >= want[i].Vol {
+					got[match.M[i]].Vol -= want[i].Vol
 					want[i].Vol = 0.0
 				} else {
+					got[match.M[i]].Vol -= want[i].Vol
 					want[i].Vol -= match.Vols[i].ConvertToString(want[i].Vunit)
 				}
-				got[match.M[i]].Vol -= want[i].Vol
 				c += 1
 			}
 		}
 
-		if c == len(match.WCs) {
+		if c == len(match.WCs) || c == 0 {
 			break
 		}
 	}

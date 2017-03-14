@@ -1,12 +1,10 @@
 package liquidhandling
 
 import (
-	"fmt"
-	"testing"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/factory"
+	"testing"
 )
 
 func getTransferBlock() (TransferBlockInstruction, *wtype.LHPlate) {
@@ -160,7 +158,6 @@ func TestMultichannelFailDest(t *testing.T) {
 	testNegative(ris, pol, rbt, t)
 }
 func TestMultiChannelFailSrc(t *testing.T) {
-	fmt.Println("FAIL SRC")
 	// sources not aligned
 	tb, dstp := getTransferBlock()
 	rbt := getTestRobot(dstp)
@@ -176,10 +173,6 @@ func TestMultiChannelFailSrc(t *testing.T) {
 	ris, err := tb.Generate(pol, rbt)
 	if err != nil {
 		t.Error(err)
-	}
-
-	for _, ins := range ris {
-		fmt.Println(ins.(*TransferInstruction).FPlateType)
 	}
 
 	testNegative(ris, pol, rbt, t)
@@ -201,6 +194,7 @@ func TestMultiChannelFailComponent(t *testing.T) {
 	}
 
 	ris[0].(*TransferInstruction).What[3] = "lemonade"
+	ris[1].(*TransferInstruction).What[3] = "lemonade"
 
 	testNegative(ris, pol, rbt, t)
 }
@@ -219,7 +213,6 @@ func testNegative(ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHPro
 		}
 
 		for _, ri := range ri2 {
-			fmt.Println(ri.InstructionType(), " ", ri.GetParameter("LIQUIDCLASS"), ri.GetParameter("WELLFROM"), ri.GetParameter("WELLTO"))
 			if ri.InstructionType() != SCB {
 				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter("LIQUIDCLASS"), ri.GetParameter("WELLFROM"), ri.GetParameter("WELLTO"))
 			}

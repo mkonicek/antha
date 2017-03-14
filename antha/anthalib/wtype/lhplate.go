@@ -185,16 +185,11 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 		}
 	}
 
-	for i, m := range bestMatch.Matches {
-		fmt.Println(i, " : ", m.IDs)
-		fmt.Println(i, " : ", m.WCs)
-		fmt.Println(i, " : ", m.Vols)
+	for _, m := range bestMatch.Matches {
 		plateIDs = append(plateIDs, m.IDs)
 		wellCoords = append(wellCoords, m.WCs)
 		vols = append(vols, m.Vols)
 	}
-
-	fmt.Println(plateIDs)
 
 	if best <= 0.0 {
 		err = fmt.Errorf("Not found")

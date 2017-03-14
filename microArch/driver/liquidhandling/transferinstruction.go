@@ -90,6 +90,7 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	v.GenericRobotInstruction.Ins = RobotInstruction(&v)
 	return &v
 }
+
 func (ins *TransferInstruction) InstructionType() int {
 	return ins.Type
 }

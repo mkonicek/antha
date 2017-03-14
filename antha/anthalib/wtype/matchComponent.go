@@ -2,7 +2,6 @@ package wtype
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 type ComponentMatch struct {

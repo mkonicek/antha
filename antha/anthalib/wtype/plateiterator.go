@@ -296,7 +296,6 @@ func (tcvi *TickingColVectorIterator) SetCurTo(wc WellCoords) {
 
 func NewTickingColVectorIterator(p *LHPlate, multi, tpw, wpt int) VectorPlateIterator {
 	ticker := &Ticker{TickEvery: tpw, TickBy: wpt}
-
 	return &TickingColVectorIterator{Plate: p, Multi: multi, Ticker: ticker}
 }
 

@@ -159,7 +159,16 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 	var it VectorPlateIterator
 
 	if ori == LHVChannel {
-		it = NewColVectorIterator(lhp, multi)
+		//it = NewColVectorIterator(lhp, multi)
+
+		tpw := multi / lhp.WellsY()
+		wpt := lhp.WellsY() / multi
+
+		if tpw == 0 {
+			tpw = 1
+		}
+
+		it = NewTickingColVectorIterator(lhp, multi, tpw, wpt)
 	} else {
 		it = NewRowVectorIterator(lhp, multi)
 	}
@@ -186,6 +195,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 	}
 
 	for _, m := range bestMatch.Matches {
+		//fmt.Println("BEST MATCH: ", m)
 		plateIDs = append(plateIDs, m.IDs)
 		wellCoords = append(wellCoords, m.WCs)
 		vols = append(vols, m.Vols)

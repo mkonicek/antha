@@ -172,10 +172,6 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 
 		match, errr := matchComponents(cmps.Dup(), mycmps, independent)
 
-		fmt.Println("  CMPS : ", cmps)
-		fmt.Println("MYCMPS : ", mycmps)
-		fmt.Println("MATCH  : ", match)
-
 		if errr != nil {
 			err = errr
 			return
@@ -189,7 +185,6 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 		}
 	}
 
-	fmt.Println("BESTMATCH")
 	for _, m := range bestMatch.Matches {
 		plateIDs = append(plateIDs, m.IDs)
 		wellCoords = append(wellCoords, m.WCs)

@@ -479,13 +479,6 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 
 	request.LHInstructions = instructions
 
-	for _, id := range request.Output_order {
-		ins := instructions[id]
-		for _, c := range ins.Components {
-			fmt.Println("DAVID: ", c.CName)
-		}
-	}
-
 	request.Stockconcs = stockconcs
 
 	// looks at components, determines what inputs are required

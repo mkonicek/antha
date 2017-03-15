@@ -204,6 +204,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 	for _, ins := range instructions {
 
+		fmt.Println(liquidhandling.InsToString(ins))
 		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
 		if err != nil {
@@ -212,7 +213,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		str := liquidhandling.InsToString2(ins) + "\n"
 		request.InstructionText += str
 
-		fmt.Print(str)
+		//fmt.Println(liquidhandling.InsToString(ins))
 
 		if timer != nil {
 			d += timer.TimeFor(ins)
@@ -249,6 +250,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				}
 				lp := lastPlate[i]
 				lw := lastWell[i]
+
+				if lp == "" {
+					continue
+				}
 
 				ppp := this.Properties.PlateLookup[lp].(*wtype.LHPlate)
 
@@ -473,6 +478,14 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	}
 
 	request.LHInstructions = instructions
+
+	for _, id := range request.Output_order {
+		ins := instructions[id]
+		for _, c := range ins.Components {
+			fmt.Println("DAVID: ", c.CName)
+		}
+	}
+
 	request.Stockconcs = stockconcs
 
 	// looks at components, determines what inputs are required

@@ -967,3 +967,11 @@ func (p *LHProperties) MinPossibleVolume() wunit.Volume {
 func (p *LHProperties) CanPossiblyDo(v wunit.Volume) bool {
 	return !p.MinPossibleVolume().LessThan(v)
 }
+
+func (p *LHProperties) IsAddressable(pos string, crd wtype.WellCoords, channel, reference int, offsetX, offsetY, offsetZ float64) bool {
+	// can we reach well 'crd' at position 'pos' using channel 'channel' at reference 'reference' with
+	// the given offsets?
+
+	// yes (this will improve, honest!)
+	return true
+}

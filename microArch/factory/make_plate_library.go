@@ -772,6 +772,9 @@ func PlateTypeArray(sa []string) ([]*wtype.LHPlate, error) {
 	r := make([]*wtype.LHPlate, len(sa))
 
 	for i := 0; i < len(sa); i++ {
+		if sa[i] == "" {
+			continue
+		}
 		p := GetPlateByType(sa[i])
 
 		if p == nil {

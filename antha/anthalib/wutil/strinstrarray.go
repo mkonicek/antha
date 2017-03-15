@@ -12,11 +12,13 @@ func StrInStrArray(s string, a []string) bool {
 	return false
 }
 
-func NUniqueStringsInArray(a []string) int {
+func NUniqueStringsInArray(a []string, excludeBlanks bool) int {
 	m := make(map[string]bool, len(a))
 
 	for _, v := range a {
-		m[v] = true
+		if !(v == "" && excludeBlanks) {
+			m[v] = true
+		}
 	}
 
 	return len(reflect.ValueOf(m).MapKeys())

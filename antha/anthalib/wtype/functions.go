@@ -1,6 +1,8 @@
 package wtype
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
@@ -20,6 +22,8 @@ func TipsWellsAligned(prm LHChannelParameter, plt LHPlate, wellsfrom []string) b
 	// 2) compare to wells requested
 
 	channelwells := ChannelWells(prm, plt, wellsfrom)
+
+	// only works if all are filled
 
 	return wutil.StringArrayEqual(channelwells, wellsfrom)
 }

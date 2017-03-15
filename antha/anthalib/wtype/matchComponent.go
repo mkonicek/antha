@@ -70,19 +70,26 @@ func align(want, got ComponentVector, independent bool) Match {
 				continue
 			}
 
-			v1 := want[i].Volume().Dup()
-			v2 := got[j].Volume().Dup()
-
-			if v1.GreaterThan(v2) {
-				mat[i][j].Vl = v2.ConvertToString("ul")
-				v2 = wunit.ZeroVolume()
+			if want[i].CName != got[j].CName {
+				// we set this to no volume
+				mat[i][j].Vl = 0.0
+				mat[i][j].Sc = 0.0
 			} else {
-				mat[i][j].Vl = v1.ConvertToString("ul")
-				v2.Subtract(v1)
-			}
 
-			if !want[i].Volume().IsZero() {
-				mat[i][j].Sc = v2.ConvertToString("ul")
+				v1 := want[i].Volume().Dup()
+				v2 := got[j].Volume().Dup()
+
+				if v1.GreaterThan(v2) {
+					mat[i][j].Vl = v2.ConvertToString("ul")
+					v2 = wunit.ZeroVolume()
+				} else {
+					mat[i][j].Vl = v1.ConvertToString("ul")
+					v2.Subtract(v1)
+				}
+
+				if !want[i].Volume().IsZero() {
+					mat[i][j].Sc = v2.ConvertToString("ul")
+				}
 			}
 
 			mx := 0.0

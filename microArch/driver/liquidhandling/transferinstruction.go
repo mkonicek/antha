@@ -35,6 +35,16 @@ import (
 	"github.com/antha-lang/antha/microArch/factory"
 )
 
+func firstInArray(a []*wtype.LHPlate) *wtype.LHPlate {
+	for _, v := range a {
+		if v != nil {
+			return v
+		}
+	}
+
+	return nil
+}
+
 type TransferInstruction struct {
 	GenericRobotInstruction
 	Type       int
@@ -198,7 +208,7 @@ func (vs VolumeSet) MaxMultiTransferVolume() wunit.Volume {
 	ret := vs.Vols[0]
 
 	for _, v := range vs.Vols {
-		if v.LessThan(ret) {
+		if v.LessThan(ret) && !v.IsZero() {
 			ret = v
 		}
 	}
@@ -210,7 +220,7 @@ func (ins *TransferInstruction) CheckMultiPolicies() bool {
 	// first iteration: ensure all the WHAT prms are the same
 	// later	  : actually check the policies per channel
 
-	nwhat := wutil.NUniqueStringsInArray(ins.What)
+	nwhat := wutil.NUniqueStringsInArray(ins.What, true)
 
 	if nwhat != 1 {
 		return false
@@ -223,6 +233,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	// if the channel is not multi just return nil
 
 	if channel.Multi == 1 {
+		fmt.Println("CHANNEL IS NOT MULTI > 1")
 		return nil
 	}
 
@@ -231,22 +242,25 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	// and finds sources for them
 
 	// -- the transfer block ensures these instructions are at most multi long
+	// all of the below assumes we can't span multiple plates
 
 	// firstly are the sources properly configured?
 
-	npositions := wutil.NUniqueStringsInArray(ins.PltFrom)
+	npositions := wutil.NUniqueStringsInArray(ins.PltFrom, true)
 
 	if npositions != 1 {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do, if such exists
+		fmt.Println("MORE THAN ONE SRC")
 		return nil
 	}
 
-	nplatetypes := wutil.NUniqueStringsInArray(ins.FPlateType)
+	nplatetypes := wutil.NUniqueStringsInArray(ins.FPlateType, true)
 
 	if nplatetypes != 1 {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do , if such exists
+		fmt.Println("MORE THAN ONE PLATE TYPE")
 		return nil
 	}
 
@@ -258,17 +272,37 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 
 	// check source / tip alignment
 
-	if !wtype.TipsWellsAligned(*channel, *pa[0], ins.WellFrom) {
+	plate := firstInArray(pa)
+
+	if plate == nil {
+		panic("No from plates in instruction")
+	}
+
+	if !wtype.TipsWellsAligned(*channel, *plate, ins.WellFrom) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
+		fmt.Println("SRC TIPS WELLS NOT ALIGNED")
 		return nil
+	}
+
+	pa, err = factory.PlateTypeArray(ins.TPlateType)
+
+	if err != nil {
+		panic(err)
+	}
+
+	plate = firstInArray(pa)
+
+	if plate == nil {
+		panic("No to plates in instruction")
 	}
 
 	// for safety, check dest / tip alignment
 
-	if !wtype.TipsWellsAligned(*channel, *pa[0], ins.WellTo) {
+	if !wtype.TipsWellsAligned(*channel, *plate, ins.WellTo) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
+		fmt.Println("DST TIPS WELLS NOT ALIGNED")
 		return nil
 	}
 
@@ -277,23 +311,36 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	if !ins.CheckMultiPolicies() {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
+		fmt.Println("MULTI POLICIES NO GOOD BOYEE")
 		return nil
 	}
 
 	// looks OK
 
-	ra := make([]int, 0, len(ins.What))
+	/*
+		ra := make([]int, 0, len(ins.What))
 
-	m := 0
+		m := 0
+
+		for i := 0; i < len(ins.What); i++ {
+			if ins.What[i] != "" {
+				m += 1
+			}
+		}
+
+		for i := 0; i < m; i++ {
+			ra = append(ra, i)
+		}
+	*/
+
+	ra := make([]int, channel.Multi)
 
 	for i := 0; i < len(ins.What); i++ {
 		if ins.What[i] != "" {
-			m += 1
+			ra[i] = i
+		} else {
+			ra[i] = -1
 		}
-	}
-
-	for i := 0; i < m; i++ {
-		ra = append(ra, i)
 	}
 
 	return [][]int{ra}
@@ -537,7 +584,83 @@ func (vs VolumeSet) GetACopy() []wunit.Volume {
 	return r
 }
 
+func countSetSize(set []int) int {
+	c := 0
+	for _, v := range set {
+		if v != -1 {
+			c += 1
+		}
+	}
+
+	return c
+}
+
+func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
+	// trims out leading blanks for now... will eventually call
+	// CanAddress on prms
+	wh := make([]string, len(ins.What))
+	pf := make([]string, len(ins.What))
+	pt := make([]string, len(ins.What))
+	wf := make([]string, len(ins.What))
+	wt := make([]string, len(ins.What))
+	vl := make([]wunit.Volume, len(ins.What))
+	fpt := make([]string, len(ins.What))
+	tpt := make([]string, len(ins.What))
+	fpwx := make([]int, len(ins.What))
+	fpwy := make([]int, len(ins.What))
+	tpwx := make([]int, len(ins.What))
+	tpwy := make([]int, len(ins.What))
+	fv := make([]wunit.Volume, len(ins.What))
+	tv := make([]wunit.Volume, len(ins.What))
+
+	ix := -1
+	for i := 0; i < len(ins.What); i++ {
+		if ix > -1 {
+			ix += 1
+		}
+
+		if ins.What[i] != "" {
+			if ix == -1 {
+				ix = 0
+			}
+			wh[ix] = ins.What[i]
+			pf[ix] = ins.PltFrom[i]
+			pt[ix] = ins.PltTo[i]
+			wf[ix] = ins.WellFrom[i]
+			wt[ix] = ins.WellTo[i]
+			vl[ix] = ins.Volume[i]
+			fpt[ix] = ins.FPlateType[i]
+			tpt[ix] = ins.TPlateType[i]
+			fpwx[ix] = ins.FPlateWX[i]
+			fpwy[ix] = ins.FPlateWY[i]
+			tpwx[ix] = ins.TPlateWX[i]
+			tpwy[ix] = ins.TPlateWY[i]
+			fv[ix] = ins.FVolume[i]
+			tv[ix] = ins.TVolume[i]
+		}
+	}
+
+	ins.What = wh
+	ins.PltFrom = pf
+	ins.PltTo = pt
+	ins.WellFrom = wf
+	ins.WellTo = wt
+	ins.Volume = vl
+	ins.FPlateType = fpt
+	ins.TPlateType = tpt
+	ins.FPlateWX = fpwx
+	ins.FPlateWY = fpwy
+	ins.TPlateWX = tpwx
+	ins.TPlateWY = tpwy
+	ins.FVolume = fv
+	ins.TVolume = tv
+}
+
 func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	//  set the channel  choices first by cleaning out initial empties
+
+	ins.ChooseChannels(prms)
+
 	pol := GetPolicyFor(policy, ins)
 
 	ret := make([]RobotInstruction, 0)
@@ -548,10 +671,11 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
 
 		mci := NewMultiChannelBlockInstruction()
-		mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here
-		mci.Prms = prms.HeadsLoaded[0].Params        // TODO Remove Hard code here
+		//mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here
+		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here
 		for _, set := range parallelsets {
 			// assemble the info
+			mci.Multi = countSetSize(set)
 
 			vols := NewVolumeSet(len(set))
 			fvols := NewVolumeSet(len(set))
@@ -565,6 +689,9 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 			TPlateType := make([]string, len(set))
 
 			for i, s := range set {
+				if s == -1 {
+					continue
+				}
 				vols.Vols[i] = wunit.CopyVolume(ins.Volume[s])
 				fvols.Vols[i] = wunit.CopyVolume(ins.FVolume[s])
 				tvols.Vols[i] = wunit.CopyVolume(ins.TVolume[s])
@@ -576,7 +703,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 				FPlateType[i] = ins.FPlateType[s]
 				TPlateType[i] = ins.TPlateType[s]
 			}
-
 			// get the max transfer volume
 
 			maxvol := vols.MaxMultiTransferVolume()
@@ -584,6 +710,9 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 			// now set the vols for the transfer and remove this from the instruction's volume
 
 			for i, _ := range vols.Vols {
+				if set[i] == -1 {
+					continue
+				}
 				vols.Vols[i] = wunit.CopyVolume(maxvol)
 				ins.Volume[set[i]].Subtract(maxvol)
 
@@ -612,7 +741,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 			tp.FPlateType = FPlateType
 			tp.TPlateType = TPlateType
 			tp.Channel = mci.Prms
-
 			mci.AddTransferParams(tp)
 		}
 

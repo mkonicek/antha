@@ -72,8 +72,13 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 	return ret
 }
 
+//
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
+
+	// TODO TODO TODO
+	// -- we have to choose channels somewhere... probably during the *generate* method
+	//    of transferinstruction
 
 	for i := 0; i < inssIn.MaxLen(); i++ {
 		cmps := inssIn.CompsAt(i)
@@ -97,6 +102,8 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			independent = channelprms.Independent
 		}
 
+		// the alignment here just says component i comes from fromWells[i]
+		// it says nothing about which channel should be used
 		fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent)
 
 		if err != nil {
@@ -105,20 +112,20 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		// mt counts up the arrays got by GetComponents
 		for mt := 0; mt < len(fromPlateIDs); mt++ {
-			wh := make([]string, len(cmps))       //
-			pf := make([]string, len(cmps))       //
-			pt := make([]string, len(cmps))       //
-			wf := make([]string, len(cmps))       //
-			wt := make([]string, len(cmps))       //
-			ptf := make([]string, len(cmps))      //
-			ptt := make([]string, len(cmps))      //
-			va := make([]wunit.Volume, len(cmps)) //
-			vf := make([]wunit.Volume, len(cmps))
-			vt := make([]wunit.Volume, len(cmps))
-			pfwx := make([]int, len(cmps)) //
-			pfwy := make([]int, len(cmps)) //
-			ptwx := make([]int, len(cmps)) //
-			ptwy := make([]int, len(cmps)) //
+			wh := make([]string, len(cmps))       //	what
+			pf := make([]string, len(cmps))       //	position from
+			pt := make([]string, len(cmps))       //	position to
+			wf := make([]string, len(cmps))       //	well from
+			wt := make([]string, len(cmps))       //	well to
+			ptf := make([]string, len(cmps))      //	plate type from
+			ptt := make([]string, len(cmps))      //	plate type to
+			va := make([]wunit.Volume, len(cmps)) //	volume
+			vf := make([]wunit.Volume, len(cmps)) //	volume in well from
+			vt := make([]wunit.Volume, len(cmps)) //	volume in well to
+			pfwx := make([]int, len(cmps))        //	plate from wells x
+			pfwy := make([]int, len(cmps))        //	  "     "    "   y
+			ptwx := make([]int, len(cmps))        //	  "    to    "   x
+			ptwy := make([]int, len(cmps))        //	  "     "    "   y
 
 			for ci := 0; ci < len(cmps); ci++ {
 				if fromPlateIDs[mt][ci] == "" {

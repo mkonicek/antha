@@ -364,3 +364,44 @@ func TestNonMatchComponent(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Expected 0 matches, got %d", len(cm.Matches)))
 	}
 }
+func TestMatchAllDifferentComponent(t *testing.T) {
+	c := NewLHComponent()
+	c.CName = "water"
+	c.Vol = 200.0
+
+	CNames := []string{"rum", "gin", "vodka", "brandy", "whisky", "sambuca", "kahluha", "grappa"}
+	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
+	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
+
+	got := make([]*LHComponent, 8)
+
+	for i := 0; i < 8; i++ {
+		got[i] = c.Dup()
+		got[i].Loc = PIDs[i] + ":" + CIDs[i]
+		got[i].CName = CNames[i]
+	}
+
+	d := NewLHComponent()
+	d.CName = "water"
+	d.Vol = 20.0
+
+	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
+	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
+
+	want := make([]*LHComponent, 8)
+	for i := 0; i < 8; i++ {
+		want[i] = d.Dup()
+		want[i].Loc = PID2s[i] + ":" + CID2s[i]
+		want[i].CName = CNames[i]
+	}
+
+	cm, err := matchComponents(want, got, false)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if len(cm.Matches) != 1 {
+		t.Errorf(fmt.Sprintf("Exsctly one match required, got %d", len(cm.Matches)))
+	}
+}

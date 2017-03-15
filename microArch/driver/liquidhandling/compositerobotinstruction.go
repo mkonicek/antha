@@ -50,6 +50,14 @@ func (tp TransferParams) ToString() string {
 	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType)
 }
 
+func (tp TransferParams) Zero() bool {
+	if tp.What == "" {
+		return true
+	}
+
+	return false
+}
+
 type MultiTransferParams struct {
 	What       []string
 	PltFrom    []string
@@ -405,12 +413,27 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
+func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
+	v := make([]wunit.Volume, 0, 1)
+	seen := make(map[string]bool)
+	for _, vv := range ins.Volume[0] {
+		if !vv.IsZero() && !seen[vv.ToString()] {
+			seen[vv.ToString()] = true
+			v = append(v, vv)
+		}
+	}
+
+	return v
+}
+
 func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	pol := GetPolicyFor(policy, ins)
 	ret := make([]RobotInstruction, 0)
 	// get some tips
 
-	channel, tipp := ChooseChannel(ins.Volume[0][0], prms)
+	// we no longer require ins.volume[0][0] to be set
+	// as we move to independent we need to get all volumes
+	channel, tipp := ChooseChannel(ins.GetVolumes()[0], prms)
 	tiptype := ""
 	if tipp != nil {
 		tiptype = tipp.Type
@@ -756,6 +779,9 @@ func (ins *MultiChannelTransferInstruction) Generate(policy *wtype.LHPolicyRuleS
 	blowinstruction.Prms = ins.Prms
 
 	for i := 0; i < len(ins.Volume); i++ {
+		if ins.Volume[i].IsZero() {
+			continue
+		}
 		suckinstruction.AddTransferParams(ins.Params(i))
 		blowinstruction.AddTransferParams(ins.Params(i))
 	}
@@ -2874,7 +2900,7 @@ func (ins *ResetInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHPro
 	blow.Head = ins.Prms.Head
 	bov := wunit.NewVolume(pol["BLOWOUTVOLUME"].(float64), pol["BLOWOUTVOLUMEUNIT"].(string))
 	blow.Volume = append(blow.Volume, bov)
-	blow.Multi = len(ins.What)
+	blow.Multi = getMulti(ins.What)
 	blow.Plt = ins.TPlateType
 	blow.What = ins.What
 
@@ -3166,4 +3192,15 @@ func DropTips(tiptype string, params *LHProperties, channel *wtype.LHChannelPara
 	ins.TPlateType = tipwastetypes
 	ins.Multi = multi
 	return ins, nil
+}
+
+func getMulti(w []string) int {
+	c := 0
+	for _, v := range w {
+		if v != "" {
+			c += 1
+		}
+	}
+
+	return c
 }

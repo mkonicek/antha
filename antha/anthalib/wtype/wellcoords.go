@@ -8,6 +8,24 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
+func WCArrayFromStrings(arr []string) []WellCoords {
+	ret := make([]WellCoords, len(arr))
+
+	for i, s := range arr {
+		ret[i] = MakeWellCoords(s)
+	}
+
+	return ret
+}
+
+func A1ArrayFromWellCoords(arr []WellCoords) []string {
+	ret := make([]string, len(arr))
+	for i, v := range arr {
+		ret[i] = v.FormatA1()
+	}
+	return ret
+}
+
 // make an array of these from an array of strings
 
 func MakeWellCoordsArray(sa []string) []WellCoords {

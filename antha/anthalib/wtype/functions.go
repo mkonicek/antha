@@ -137,3 +137,13 @@ func TipsPerWell(prm LHChannelParameter, p LHPlate) (int, int) {
 
 	return tpw, wellskip
 }
+
+func FirstIndexInStrArray(s string, a []string) int {
+	for i, v := range a {
+		if v == s {
+			return i
+		}
+	}
+
+	return -1
+}

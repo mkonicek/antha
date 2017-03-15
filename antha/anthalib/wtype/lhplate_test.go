@@ -14,6 +14,18 @@ func makeplatefortest() *LHPlate {
 	p := NewLHPlate("testplate", "none", 8, 12, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
+func make384platefortest() *LHPlate {
+	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
+	welltype := NewLHWell("DSW384", "", "", "ul", 50, 5, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("testplate", "none", 16, 24, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	return p
+}
+func make1536platefortest() *LHPlate {
+	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
+	welltype := NewLHWell("DSW1536", "", "", "ul", 15, 1, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("testplate", "none", 32, 48, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	return p
+}
 
 func TestPlateCreation(t *testing.T) {
 	p := makeplatefortest()

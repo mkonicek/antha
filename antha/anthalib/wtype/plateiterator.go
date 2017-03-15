@@ -1,5 +1,7 @@
 package wtype
 
+import "fmt"
+
 type PlateIterator interface {
 	Rewind() WellCoords
 	Next() WellCoords
@@ -212,6 +214,90 @@ func NewMultiIteratorRule(multi int) func(PlateIterator) []WellCoords {
 
 		return wc
 	}
+}
+
+type TickingColVectorIterator struct {
+	Plate  *LHPlate
+	Multi  int
+	Ticker *Ticker
+	start  int
+}
+
+func (tcvi *TickingColVectorIterator) Rewind() []WellCoords {
+	tcvi.Ticker = &Ticker{Val: tcvi.start, TickEvery: tcvi.Ticker.TickEvery, TickBy: tcvi.Ticker.TickBy}
+	return tcvi.Curr()
+}
+
+func (tcvi *TickingColVectorIterator) Next() []WellCoords {
+	tcvi.Ticker.Val += 1
+	end := tcvi.Ticker.Val + ((tcvi.Multi - 1) * tcvi.Ticker.TickBy)
+
+	if end/tcvi.Plate.WellsY() > tcvi.Ticker.Val/tcvi.Plate.WellsY() {
+		tcvi.Ticker.Val = end
+	}
+
+	if end >= tcvi.Plate.WellsX()*tcvi.Plate.WellsY() {
+		return []WellCoords{}
+	}
+
+	return tcvi.Curr()
+}
+
+func (tcvi *TickingColVectorIterator) Curr() []WellCoords {
+	offsets := make([]int, tcvi.Multi)
+	save := tcvi.Ticker.Dup()
+	for i := 0; i < tcvi.Multi; i++ {
+		offsets[i] = tcvi.Ticker.Val
+		tcvi.Ticker.Tick()
+	}
+	tcvi.Ticker = save
+	return tcvi.Plate.GetWellCoordsFromOrdering(offsets, BYCOLUMN)
+}
+
+func (tcvi *TickingColVectorIterator) Valid() bool {
+	end := tcvi.Ticker.Val + ((tcvi.Multi - 1) * tcvi.Ticker.TickBy)
+
+	if end >= tcvi.Plate.WellsX()*tcvi.Plate.WellsY() {
+		return false
+	}
+
+	wcs := tcvi.Curr()
+	col := -1
+	//fmt.Println(A1ArrayFromWellCoords(wcs))
+	for _, wc := range wcs {
+		if wc.X < 0 || wc.Y < 0 {
+			return false
+		}
+		// are all rows and columns in bounds?
+		if wc.X >= tcvi.Plate.WellsX() || wc.Y >= tcvi.Plate.WellsY() {
+			fmt.Println("BND")
+			return false
+		}
+
+		// are they all in the same column?
+		if col == -1 {
+			col = wc.X
+		} else if col != wc.X {
+			fmt.Println("COL")
+			return false
+		}
+	}
+
+	return true
+}
+
+func (tcvi *TickingColVectorIterator) SetStartTo(wc WellCoords) {
+	tcvi.start = tcvi.Plate.GetOrderingFromA1WellCoords([]string{wc.FormatA1()}, BYCOLUMN)[0]
+}
+func (tcvi *TickingColVectorIterator) SetCurTo(wc WellCoords) {
+	v := tcvi.Plate.GetOrderingFromA1WellCoords([]string{wc.FormatA1()}, BYCOLUMN)[0]
+	tcvi.Ticker = &Ticker{Val: v, TickEvery: tcvi.Ticker.TickEvery, TickBy: tcvi.Ticker.TickBy}
+}
+
+func NewTickingColVectorIterator(p *LHPlate, multi, tpw, wpt int) VectorPlateIterator {
+	ticker := &Ticker{TickEvery: tpw, TickBy: wpt}
+
+	return &TickingColVectorIterator{Plate: p, Multi: multi, Ticker: ticker}
 }
 
 func NewColVectorIterator(p *LHPlate, multi int) VectorPlateIterator {

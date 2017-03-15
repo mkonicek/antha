@@ -386,6 +386,45 @@ func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
 	return
 }
 
+func (lhp *LHPlate) GetWellCoordsFromOrdering(ordinals []int, byrow bool) []WellCoords {
+	wc := lhp.GetA1WellCoordsFromOrdering(ordinals, byrow)
+	return WCArrayFromStrings(wc)
+}
+
+func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []string {
+	wps := lhp.AllWellPositions(byrow)
+
+	ret := make([]string, 0, len(wps))
+
+	for _, v := range ordinals {
+		if v < 0 {
+			panic("No negative wells allowed")
+		}
+		if v > len(wps)-1 {
+			panic("No wells out of bounds allowed")
+		}
+		ret = append(ret, wps[v])
+	}
+
+	return ret
+}
+func (lhp *LHPlate) GetOrderingFromWellCoords(wc []WellCoords, byrow bool) []int {
+	wa1 := A1ArrayFromWellCoords(wc)
+	return lhp.GetOrderingFromA1WellCoords(wa1, byrow)
+}
+
+func (lhp *LHPlate) GetOrderingFromA1WellCoords(wa1 []string, byrow bool) []int {
+	wps := lhp.AllWellPositions(byrow)
+
+	ret := make([]int, len(wa1))
+
+	for i, v := range wa1 {
+		ret[i] = FirstIndexInStrArray(v, wps)
+	}
+
+	return ret
+}
+
 // @implement named
 
 func (lhp *LHPlate) GetName() string {

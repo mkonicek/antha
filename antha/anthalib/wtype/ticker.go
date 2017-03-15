@@ -7,6 +7,10 @@ type Ticker struct {
 	tick      int
 }
 
+func (t *Ticker) Dup() *Ticker {
+	return &Ticker{TickEvery: t.TickEvery, TickBy: t.TickBy, Val: t.Val, tick: t.tick}
+}
+
 func (t *Ticker) Tick() int {
 	t.tick += 1
 

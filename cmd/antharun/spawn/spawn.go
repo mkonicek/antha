@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -41,11 +40,7 @@ func parse(bs []byte) (string, error) {
 	if len(ss) == 0 {
 		return "", fmt.Errorf("cannot parse %q", s)
 	}
-	u, err := url.Parse(ss[len(ss)-1])
-	if err != nil {
-		return "", err
-	}
-	return u.String(), nil
+	return ss[len(ss)-1], nil
 }
 
 func (a *Spawned) Uri() (string, error) {

@@ -133,7 +133,7 @@ func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 	return anthafile, filename, err
 }
 
-// function to export multiple sequences in fasta format into a specified directory
+// function to export multiple sequences in fasta format into a specified file
 // specify whether to save locally or to the anthapath in a specified sub directory dir.
 func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wtype.File, string, error) {
 

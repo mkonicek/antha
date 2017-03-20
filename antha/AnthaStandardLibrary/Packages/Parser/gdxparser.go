@@ -96,6 +96,13 @@ func ParseGDX(filename string) ([]enzymes.Assemblyparameters, error) {
 	}
 }
 
+func ParseGDXBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("no data found")
+	}
+	return stringToAssemblyParameters(data)
+}
+
 func stringToAssemblyParameters(str []byte) ([]enzymes.Assemblyparameters, error) {
 
 	var gdx Project

@@ -66,6 +66,35 @@ func generateCSVFromXLSXsheet(excelFileName string, sheetIndex int, outputf outp
 	return nil
 }
 
+func generateCSVFromXLSXsheetBinary(excelFileContents []byte, sheetIndex int, outputf outputer) error {
+	xlFile, error := xlsx.OpenBinary(excelFileContents)
+	if error != nil {
+		return error
+	}
+	sheetLen := len(xlFile.Sheets)
+	switch {
+	case sheetLen == 0:
+		return errors.New("This XLSX file contains no sheets.")
+	case sheetIndex >= sheetLen:
+		return fmt.Errorf("No sheet %d available, please select a sheet between 0 and %d\n", sheetIndex, sheetLen-1)
+	}
+	sheet := xlFile.Sheets[sheetIndex]
+	for _, row := range sheet.Rows {
+		var vals []string
+		if row != nil {
+			for _, cell := range row.Cells {
+				cellstr, err := cell.String()
+				if err != nil {
+					return err
+				}
+				vals = append(vals, fmt.Sprintf("%q", cellstr))
+			}
+			outputf(strings.Join(vals, delimiter) + "\n")
+		}
+	}
+	return nil
+}
+
 func generateCSVFromspecificXLSXsheet(excelFileName string, sheetname string, outputf outputer) error {
 	xlFile, error := xlsx.OpenFile(excelFileName)
 	if error != nil {
@@ -113,6 +142,29 @@ func ParseExcel(filename string) ([]enzymes.Assemblyparameters, error) {
 	if pl, err := Xlsxparser(filename, 0, "partslist"); err != nil {
 		return nil, err
 	} else if dl, err := Xlsxparser(filename, 1, "designlist"); err != nil {
+		return nil, err
+	} else {
+		return Assemblyfromcsv(dl.Name(), pl.Name()), nil
+	}
+}
+
+func xlsxparserBinary(data []byte, sheetIndex int, outputprefix string) (f *os.File, err error) {
+	f, err = ioutil.TempFile("", outputprefix)
+	if err != nil {
+		return
+	}
+
+	printer := func(s string) {
+		_, _ = f.WriteString(s)
+	}
+	err = generateCSVFromXLSXsheetBinary(data, sheetIndex, printer)
+	return
+}
+
+func ParseExcelBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
+	if pl, err := xlsxparserBinary(data, 0, "partslist"); err != nil {
+		return nil, err
+	} else if dl, err := xlsxparserBinary(data, 1, "designlist"); err != nil {
 		return nil, err
 	} else {
 		return Assemblyfromcsv(dl.Name(), pl.Name()), nil

@@ -96,6 +96,10 @@ func ParseGDX(filename string) ([]enzymes.Assemblyparameters, error) {
 	}
 }
 
+// Parses the contents of a typeIIs assembly design file in gdx format.
+// The output will be []Assembly Parameters which can be used in the Assemblysimulator or Digestionsimulator functions.
+// The design file is expected to follow a format as shown in the provided example files
+// An error will be returned if no data is found within the .gdx design file or if the file is not in the expected format.
 func ParseGDXBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("no data found")

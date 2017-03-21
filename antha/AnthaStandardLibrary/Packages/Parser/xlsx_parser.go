@@ -161,8 +161,8 @@ func xlsxparserBinary(data []byte, sheetIndex int, outputprefix string) (f *os.F
 	return
 }
 
-// Parses the contents of a typeIIs assembly design file in xlsx format.
-// The output will be []Assembly Parameters which can be used in the Assemblysimulator or Digestionsimulator functions.
+// Parses the contents of a typeIIs assembly design file in xlsx format. An example file is provided: "Assembly_Input_Controls.xlsx"
+// The output will be []enzymes.AssemblyParameters which can be used in the enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.
 // The design file is expected to follow a format as shown in the provided example files
 // An error will be returned if no data is found within the .xlsx design file or if the file is not in the expected format.
 func ParseExcelBinary(data []byte) ([]enzymes.Assemblyparameters, error) {

@@ -387,12 +387,12 @@ func MakeProtoplastPolicy() LHPolicy {
 
 func MakePausePolicy() LHPolicy {
 	policy := make(LHPolicy, 6)
-	policy["ASPZOFFSET"] = 60.0
-	policy["DSPZOFFSET"] = 60.0
+	//policy["ASPZOFFSET"] = 60.0
+	//policy["DSPZOFFSET"] = 60.0
 	policy["DSP_WAIT"] = 20.0
-	policy["TOUCHOFF"] = false
-	policy["CAN_MULTI"] = false
-	policy["RESET_OVERRIDE"] = false
+	//policy["TOUCHOFF"] = false
+	//policy["CAN_MULTI"] = false
+	//policy["RESET_OVERRIDE"] = false
 	return policy
 }
 

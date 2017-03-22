@@ -104,6 +104,7 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("dna_part", wtype.LTDNA, 1.0)
 	add("dna", wtype.LTDNA, 1.0)
 	add("SapI", wtype.LTGlycerol, 1.0)
+	add("BsaI", wtype.LTGlycerol, 1.0)
 	add("T4Ligase", wtype.LTGlycerol, 1.0)
 	add("EcoRI", wtype.LTGlycerol, 1.0)
 	add("EnzMastermix: 1/2 SapI; 1/2 T4 Ligase", wtype.LTGlycerol, 1.0)

@@ -20,11 +20,12 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for exporting to file
+// Package for exporting to files
 package export
 
 import (
 	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -47,15 +48,17 @@ const (
 )
 
 // function to export a standard report of sequence properties to a txt file
-func Exporttofile(dir string, seq wtype.BioSequence) (string, error) {
+func SequenceReport(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
+
+	var anthafile wtype.File
 	filename := filepath.Join(anthapath.Path(), fmt.Sprintf("%s_%s.txt", dir, seq.Name()))
 	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
-		return "", err
+		return anthafile, "", err
 	}
 
 	f, err := os.Create(filename)
 	if err != nil {
-		return "", err
+		return anthafile, "", err
 	}
 	defer f.Close()
 
@@ -98,52 +101,43 @@ func Exporttofile(dir string, seq wtype.BioSequence) (string, error) {
 
 	_, err = io.Copy(f, &buf)
 
-	return filename, err
+	allbytes := streamToByte(f)
+
+	anthafile.Name = filename
+	anthafile.WriteAll(allbytes)
+
+	return anthafile, filename, err
 }
 
 // function to export a sequence to a txt file
-func ExportFasta(dir string, seq wtype.BioSequence) (string, error) {
+func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
+	var anthafile wtype.File
 	filename := filepath.Join(anthapath.Path(), fmt.Sprintf("%s_%s.fasta", dir, seq.Name()))
 	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
-		return "", err
+		return anthafile, "", err
 	}
 
 	f, err := os.Create(filename)
 	if err != nil {
-		return "", err
+		return anthafile, "", err
 	}
 	defer f.Close()
 
 	_, err = fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence())
 
-	return filename, err
+	allbytes := streamToByte(f)
+
+	anthafile.Name = filename
+	anthafile.WriteAll(allbytes)
+
+	return anthafile, filename, err
 }
 
-// function to export multiple sequences in fasta format into a single txt file
-// Modify this for the more general case
-func Makefastaserial(dir string, seqs []*wtype.DNASequence) (string, error) {
-	filename := filepath.Join(anthapath.Path(), fmt.Sprintf("%s.fasta", dir))
-	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
-		return "", err
-	}
+// function to export multiple sequences in fasta format into a specified file
+// specify whether to save locally or to the anthapath in a specified sub directory dir.
+func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wtype.File, string, error) {
 
-	f, err := os.Create(filename)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	for _, seq := range seqs {
-		if _, err := fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
-			return "", err
-		}
-	}
-
-	return filename, nil
-}
-
-func Makefastaserial2(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (string, error) {
-
+	var anthafile wtype.File
 	var filename string
 	if makeinanthapath {
 		filename = filepath.Join(anthapath.Path(), fmt.Sprintf("%s.fasta", dir))
@@ -151,25 +145,31 @@ func Makefastaserial2(makeinanthapath bool, dir string, seqs []wtype.DNASequence
 		filename = filepath.Join(fmt.Sprintf("%s.fasta", dir))
 	}
 	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
-		return "", err
+		return anthafile, "", err
 	}
 
 	f, err := os.Create(filename)
 	if err != nil {
-		return "", err
+		return anthafile, "", err
 	}
 	defer f.Close()
 
 	for _, seq := range seqs {
 		if _, err := fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
-			return "", err
+			return anthafile, "", err
 		}
 	}
 
-	return filename, nil
+	allbytes := streamToByte(f)
+
+	anthafile.Name = filename
+	anthafile.WriteAll(allbytes)
+
+	return anthafile, filename, nil
 }
 
-func ExportFastaandSummaryforEachSeq(assemblyparameters enzymes.Assemblyparameters) (err error) {
+// Simultaneously export multiple Fasta files and summary files for a series of assembly products
+func FastaAndSeqReports(assemblyparameters enzymes.Assemblyparameters) (fastafiles []wtype.File, summaryfiles []wtype.File, err error) {
 
 	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
 
@@ -177,31 +177,36 @@ func ExportFastaandSummaryforEachSeq(assemblyparameters enzymes.Assemblyparamete
 	//enzyme := TypeIIsEnzymeproperties[enzymename]
 	enzyme, err := lookup.TypeIIsLookup(enzymename)
 	if err != nil {
-		return err
+		return fastafiles, summaryfiles, err
 	}
 	//assemble (note that sapIenz is found in package enzymes)
 	_, plasmidproductsfromXprimaryseq, err := enzymes.JoinXnumberofparts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 
 	if err != nil {
-		return err
+		return fastafiles, summaryfiles, err
 	}
 
 	for _, assemblyproduct := range plasmidproductsfromXprimaryseq {
 		filename := filepath.Join(anthapath.Path(), assemblyparameters.Constructname)
-		if _, err := Exporttofile(filename, &assemblyproduct); err != nil {
-			return err
-		}
+		if summary, _, err := SequenceReport(filename, &assemblyproduct); err != nil {
+			return fastafiles, summaryfiles, err
+		} else {
+			summaryfiles = append(summaryfiles, summary)
 
-		if _, err := ExportFasta(filename, &assemblyproduct); err != nil {
-			return err
+		}
+		if fasta, _, err := Fasta(filename, &assemblyproduct); err != nil {
+			return fastafiles, summaryfiles, err
+		} else {
+			fastafiles = append(fastafiles, fasta)
 		}
 	}
 
-	return nil
+	return fastafiles, summaryfiles, nil
 }
 
-func ExportFastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameters []enzymes.Assemblyparameters) (string, error) {
-
+// Simultaneously export a single Fasta file containing the assembled sequences for a series of assembly products
+func FastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameters []enzymes.Assemblyparameters) (wtype.File, string, error) {
+	var anthafile wtype.File
 	seqs := make([]wtype.DNASequence, 0)
 
 	for _, assemblyparameters := range multipleassemblyparameters {
@@ -209,57 +214,130 @@ func ExportFastaSerialfromMultipleAssemblies(dirname string, multipleassemblypar
 		enzymename := strings.ToUpper(assemblyparameters.Enzymename)
 
 		// should change this to rebase lookup; what happens if this fails?
-		//enzyme := TypeIIsEnzymeproperties[enzymename]
 		enzyme, err := lookup.TypeIIsLookup(enzymename)
 		if err != nil {
-			return "", err
+			return anthafile, "", err
 		}
-		//assemble (note that sapIenz is found in package enzymes)
+		//assemble
 		_, plasmidproductsfromXprimaryseq, err := enzymes.JoinXnumberofparts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 		if err != nil {
-			return "", err
+			return anthafile, "", err
 		}
 
 		for _, assemblyproduct := range plasmidproductsfromXprimaryseq {
-
-			/*	fileprefix := anthapath.Dirpath() + "/"
-				tojoin := make([]string, 0)
-				tojoin = append(tojoin, fileprefix, assemblyparameters.Constructname)
-				filename := strings.Join(tojoin, "")
-				Exporttofile(filename, &assemblyproduct)
-				ExportFasta(filename, &assemblyproduct)*/
-
 			seqs = append(seqs, assemblyproduct)
 		}
 
 	}
 
-	return Makefastaserial2(ANTHAPATH, dirname, seqs)
+	return FastaSerial(ANTHAPATH, dirname, seqs)
 }
 
-func ExporttoTextFile(filename string, data []string) error {
+// export data in the format of an array of strings to a file
+func TextFile(filename string, data []string) (wtype.File, error) {
+
+	var anthafile wtype.File
+
 	f, err := os.Create(filename)
 	if err != nil {
-		return err
+		return anthafile, err
 	}
 	defer f.Close()
 
 	for _, str := range data {
+
 		if _, err := fmt.Fprintln(f, str); err != nil {
-			return err
+			return anthafile, err
 		}
 	}
+	alldata := stringsToBytes(data)
+	anthafile.Name = filename
 
-	return nil
+	anthafile.WriteAll(alldata)
+
+	return anthafile, nil
 }
 
-func ExporttoJSON(data interface{}, filename string) (err error) {
+// Export any data as a json object in  a file
+func JSON(data interface{}, filename string) (anthafile wtype.File, err error) {
 	bytes, err := json.Marshal(data)
 
 	if err != nil {
-		return err
+		return anthafile, err
 	}
 
 	ioutil.WriteFile(filename, bytes, 0644)
-	return nil
+
+	anthafile.Name = filename
+	anthafile.WriteAll(bytes)
+	return anthafile, nil
+}
+
+// Export a 2D array of string data as a csv file
+func CSV(records [][]string, filename string) (wtype.File, error) {
+	var anthafile wtype.File
+	var buf bytes.Buffer
+
+	/// use the buffer to create a csv writer
+	w := csv.NewWriter(&buf)
+
+	// write all records to the buffer
+	w.WriteAll(records) // calls Flush internally
+
+	if err := w.Error(); err != nil {
+		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
+	}
+
+	//This code shows how to create an antha File from this buffer which can be downloaded through the UI:
+
+	anthafile.Name = filename
+
+	anthafile.WriteAll(buf.Bytes())
+
+	///// to write this to a file on the command line this is what we'd do (or something similar)
+
+	// also create a file on os
+	file, _ := os.Create(filename)
+	defer file.Close()
+
+	// this time we'll use the file to create the writer instead of a buffer (anything which fulfils the writer interface can be used here ... checkout golang io.Writer and io.Reader)
+	fw := csv.NewWriter(file)
+
+	// same as before ...
+	fw.WriteAll(records)
+	return anthafile, nil
+}
+
+// export bytes into a file
+func Binary(data []byte, filename string) (wtype.File, error) {
+	var anthafile wtype.File
+	anthafile.Name = filename
+	anthafile.WriteAll(data)
+	if len(data) == 0 {
+		return anthafile, fmt.Errorf("No data to export into file")
+	}
+	return anthafile, nil
+}
+
+// export a stream into a file
+func Stream(stream io.Reader, filename string) (wtype.File, error) {
+	return Binary(streamToByte(stream), filename)
+}
+
+func stringsToBytes(data []string) []byte {
+	var alldata []byte
+
+	for _, str := range data {
+		bts := []byte(str)
+		for i := range bts {
+			alldata = append(alldata, bts[i])
+		}
+	}
+	return alldata
+}
+
+func streamToByte(stream io.Reader) []byte {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(stream)
+	return buf.Bytes()
 }

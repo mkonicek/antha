@@ -360,6 +360,8 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		err = fmt.Errorf(s)
 	}
 
+	newDNASequence.Nm = assemblyparameters.Constructname
+
 	return s, successfulassemblies, sites, newDNASequence, err
 }
 

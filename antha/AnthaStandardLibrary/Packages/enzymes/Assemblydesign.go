@@ -164,10 +164,114 @@ func AddStandardStickyEnds(part wtype.DNASequence, assemblystandard string, leve
 	return Partwithends
 }
 
+// this func needs to add recognition site + spacer + correct overhang in correct orientation
+func AddL1UAdaptor(part wtype.DNASequence, assemblystandard string, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
+
+	enzyme, err := lookUpEnzyme(assemblystandard, level)
+
+	if err != nil {
+		return newpart, err
+	}
+
+	bittoadd, _, err := lookUpOverhangs(assemblystandard, level, class)
+
+	if err != nil {
+		return newpart, err
+	}
+
+	if reverseOrientation {
+		bittoadd = wtype.RevComp(bittoadd)
+	}
+
+	bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	partwithends := Addoverhang(part.Seq, bittoadd5prime, "5prime")
+
+	newpart = part.Dup()
+	newpart.Seq = partwithends
+	return
+}
+
+func AddL1DAdaptor(part wtype.DNASequence, assemblystandard string, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
+
+	enzyme, err := lookUpEnzyme(assemblystandard, level)
+
+	if err != nil {
+		return newpart, err
+	}
+	_, bittoadd3, err := lookUpOverhangs(assemblystandard, level, class)
+
+	if err != nil {
+		return newpart, err
+	}
+
+	if reverseOrientation {
+		bittoadd3 = wtype.RevComp(bittoadd3)
+	}
+
+	bittoadd3prime := Makeoverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	partwithends := Addoverhang(part.Seq, bittoadd3prime, "3prime")
+
+	newpart = part.Dup()
+	newpart.Seq = partwithends
+	return
+}
+
+// look up enzyme according to assembly standard and level.
+// Errors will be returned if an entry is missing
+func lookUpEnzyme(assemblyStandard string, level string) (enzyme wtype.TypeIIs, err error) {
+	enzymeStandard, found := Enzymelookup[assemblyStandard]
+
+	if !found {
+		return enzyme, fmt.Errorf("No enzyme found for standard %s", assemblyStandard)
+	}
+
+	enzyme, found = enzymeStandard[level]
+
+	if !found {
+		return enzyme, fmt.Errorf("No level found for enzyme for standard %s at level %s", assemblyStandard, level)
+	}
+	return enzyme, nil
+}
+
+// look up overhangs according to assembly standard, level and part class.
+// Errors will be returned if an entry is missing or overhangs are found to be empty
+func lookUpOverhangs(assemblyStandard string, level string, class string) (upstream string, downstream string, err error) {
+	standard, found := EndlinksString[assemblyStandard]
+
+	if !found {
+		return "", "", fmt.Errorf("No assembly standard %s found", assemblyStandard)
+	}
+
+	level1, found := standard[level]
+
+	if !found {
+		return "", "", fmt.Errorf("No Level: %s found for standard %s", level, assemblyStandard)
+	}
+
+	overhangs, found := level1[class]
+
+	if !found {
+		return "", "", fmt.Errorf("No overhangs found for %s in standard %s", class, assemblyStandard)
+	}
+
+	if len(overhangs) != 2 {
+		return "", "", fmt.Errorf("found %d overhangs for %s in standard %s, expecting %d: overhangs: %s", len(overhangs), class, assemblyStandard, 2, overhangs)
+
+	}
+
+	if overhangs[0] == "" {
+		return overhangs[0], overhangs[1], fmt.Errorf("blunt 5' overhang found for %s in standard %s, expecting %d", class, assemblyStandard, 2)
+	}
+
+	if overhangs[1] == "" {
+		return overhangs[0], overhangs[1], fmt.Errorf("blunt 3' overhang found for %s in standard %s, expecting %d", class, assemblyStandard, 2)
+	}
+
+	return overhangs[0], overhangs[1], nil
+}
+
 // Adds sticky ends to dna part according to the class identifier (e.g. PRO, 5U, CDS)
 func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblystandard string, level string, class string) (Partwithends wtype.DNASequence, err error) {
-
-	//vectorends := Vectorends[assemblystandard][level] // this could also look up Endlinks[assemblystandard][level][numberofparts][0]
 
 	enzyme := Enzymelookup[assemblystandard][level]
 
@@ -583,19 +687,6 @@ var Enzymelookup = map[string]map[string]wtype.TypeIIs{
 		"Level0": SapIenz,
 	},
 }
-
-/*
-func AdaptPartsForNextLevel(parts []wtype.DNASequence, assemblystandard string, level string, class string) (newparts []wtype.DNASequence) {
-	newparts = make([]wtype.DNASequence, 0)
-
-	enzyme := Enzymelookup[assemblystandard][level]
-
-	enzyme.RestrictionEnzyme
-
-	UpstreamAdaptor := AddStandardStickyEndsfromClass(parts[0], assemblystandard, level, class)
-
-	return
-}*/
 
 /*
 var MoClo AssemblyStandard{

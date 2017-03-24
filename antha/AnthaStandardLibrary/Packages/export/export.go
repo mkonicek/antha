@@ -123,9 +123,17 @@ func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 	}
 	defer f.Close()
 
-	_, err = fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence())
+	var buf bytes.Buffer
 
-	allbytes := streamToByte(f)
+	_, err = fmt.Fprintf(&buf, ">%s\n%s\n", seq.Name(), seq.Sequence())
+
+	allbytes := streamToByte(&buf)
+
+	_, err = io.Copy(f, &buf)
+
+	if err != nil {
+		return anthafile, "", err
+	}
 
 	anthafile.Name = filename
 	anthafile.WriteAll(allbytes)
@@ -152,15 +160,29 @@ func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wt
 	if err != nil {
 		return anthafile, "", err
 	}
+
 	defer f.Close()
 
+	var buf bytes.Buffer
+
 	for _, seq := range seqs {
-		if _, err := fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
+		if _, err := fmt.Fprintf(&buf, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
 			return anthafile, "", err
 		}
 	}
 
-	allbytes := streamToByte(f)
+	allbytes := streamToByte(&buf)
+
+	_, err = io.Copy(f, &buf)
+
+	if err != nil {
+		return anthafile, "", err
+	}
+
+	if len(allbytes) == 0 {
+		return anthafile, "", fmt.Errorf("empty Fasta file created for seqs")
+
+	}
 
 	anthafile.Name = filename
 	anthafile.WriteAll(allbytes)

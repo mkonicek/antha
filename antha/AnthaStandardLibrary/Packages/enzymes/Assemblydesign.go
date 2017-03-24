@@ -459,7 +459,8 @@ var EndlinksString = map[string]map[string]map[string][]string{
 			"5U":                                []string{"TTTT", "CCAT"}, // 5' untranslated, e.g. rbs // changed from MoClo TACT to TTTT to conform with Protein Paintbox??
 			"5U(f)":                             []string{"TTTT", "CCAT"},
 			"Pro + 5U(f)":                       []string{"GGAG", "CCAT"},
-			"Pro + 5U":                          []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"Pro + 5U":                          []string{"GGAG", "CCAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"Pro + 5U + NT1":                    []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"NT1":                               []string{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"5U + NT1":                          []string{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"5U + NT1 + CDS1":                   []string{"TTTT", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs

@@ -164,55 +164,62 @@ func AddStandardStickyEnds(part wtype.DNASequence, assemblystandard string, leve
 	return Partwithends
 }
 
-// this func needs to add recognition site + spacer + correct overhang in correct orientation
-func AddL1UAdaptor(part wtype.DNASequence, assemblystandard string, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
+// This func adds an upstream (5') adaptor for making a level 0 part compatible for Level 1 hierarchical assembly, specifying the desired level 1 class the level0 part should be made into.
+// TypeIIs recognition site + spacer + correct overhang in correct orientation will be added according to the correct enzyme at a specified level according to a specified
+// assembly standard.
+// If reverseOrientation is set to true the adaptor will be added such that the level 1 part will bind in the reverse orientation.
+func AddL1UAdaptor(part wtype.DNASequence, assemblyStandard string, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
 
-	enzyme, err := lookUpEnzyme(assemblystandard, level)
+	enzyme, err := lookUpEnzyme(assemblyStandard, level)
 
 	if err != nil {
 		return newpart, err
 	}
 
-	bittoadd, _, err := lookUpOverhangs(assemblystandard, level, class)
+	bitToAdd, _, err := lookUpOverhangs(assemblyStandard, level, class)
 
 	if err != nil {
 		return newpart, err
 	}
 
 	if reverseOrientation {
-		bittoadd = wtype.RevComp(bittoadd)
+		bitToAdd = wtype.RevComp(bitToAdd)
 	}
 
-	bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-	partwithends := Addoverhang(part.Seq, bittoadd5prime, "5prime")
+	bitToAdd5prime := Makeoverhang(enzyme, "5prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	partWithEnds := Addoverhang(part.Seq, bitToAdd5prime, "5prime")
 
 	newpart = part.Dup()
-	newpart.Seq = partwithends
+	newpart.Seq = partWithEnds
 	return
 }
 
-func AddL1DAdaptor(part wtype.DNASequence, assemblystandard string, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
+// This func adds a downstream (3') adaptor for making a level 0 part compatible for Level 1 hierarchical assembly, specifying the desired level 1 class the level0 part should be made into.
+// TypeIIs recognition site + spacer + correct overhang in correct orientation will be added according to the correct enzyme at a specified level according to a specified
+// assembly standard.
+// If reverseOrientation is set to true the adaptor will be added such that the level 1 part will bind in the reverse orientation.
+func AddL1DAdaptor(part wtype.DNASequence, assemblyStandard string, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
 
-	enzyme, err := lookUpEnzyme(assemblystandard, level)
+	enzyme, err := lookUpEnzyme(assemblyStandard, level)
 
 	if err != nil {
 		return newpart, err
 	}
-	_, bittoadd3, err := lookUpOverhangs(assemblystandard, level, class)
+	_, bitToAdd, err := lookUpOverhangs(assemblyStandard, level, class)
 
 	if err != nil {
 		return newpart, err
 	}
 
 	if reverseOrientation {
-		bittoadd3 = wtype.RevComp(bittoadd3)
+		bitToAdd = wtype.RevComp(bitToAdd)
 	}
 
-	bittoadd3prime := Makeoverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-	partwithends := Addoverhang(part.Seq, bittoadd3prime, "3prime")
+	bitToAdd3prime := Makeoverhang(enzyme, "3prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	partWithEnds := Addoverhang(part.Seq, bitToAdd3prime, "3prime")
 
 	newpart = part.Dup()
-	newpart.Seq = partwithends
+	newpart.Seq = partWithEnds
 	return
 }
 

@@ -429,6 +429,7 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	if err != nil {
 		return err
 	}
+
 	// looks at components, determines what inputs are required
 	request, err = this.GetInputs(request)
 

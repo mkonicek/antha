@@ -274,13 +274,11 @@ type Assemblyparameters struct {
 	Partsinorder  []wtype.BioSequence
 }*/
 
-func Insert(assemblyparameters Assemblyparameters) (insert wtype.DNASequence, err error) {
+// This will perform an assembly simulation excluding the vector and return the largest fragment calculated to assemble.
+func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence, err error) {
 
-	// fetch enzyme properties from map (this is basically a look up table for those who don't know)
 	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
 
-	// should change this to rebase lookup; what happens if this fails?
-	//enzyme := TypeIIsEnzymeproperties[enzymename]
 	enzyme, err := lookup.TypeIIsLookup(enzymename)
 
 	if err != nil {
@@ -313,6 +311,8 @@ func Insert(assemblyparameters Assemblyparameters) (insert wtype.DNASequence, er
 	}
 
 	insert = biggest(seqs)
+
+	insert.Nm = assemblyparameters.Constructname + "_Insert"
 
 	if err != nil {
 		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())

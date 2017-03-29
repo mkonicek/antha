@@ -274,6 +274,54 @@ type Assemblyparameters struct {
 	Partsinorder  []wtype.BioSequence
 }*/
 
+// This will perform an assembly simulation excluding the vector and return the largest fragment calculated to assemble.
+func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence, err error) {
+
+	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
+
+	enzyme, err := lookup.TypeIIsLookup(enzymename)
+
+	if err != nil {
+		return insert, err
+	}
+
+	// need to expand this to include other enzyme possibilities
+	if enzyme.Class != "TypeIIs" {
+		s := fmt.Sprint(enzymename, ": Incorrect Enzyme or no enzyme specified")
+		err = fmt.Errorf(s)
+		return insert, err
+	}
+
+	first, rest, err := split(assemblyparameters.Partsinorder, 0)
+
+	if err != nil {
+		return insert, err
+	}
+
+	partialassemblies, _, err := JoinXnumberofparts(first, rest, enzyme)
+
+	var seqs []wtype.DNASequence
+
+	for i, failed := range partialassemblies {
+		seq, err := failed.ToDNASequence("fragment" + strconv.Itoa(i+1))
+		if err != nil {
+			return insert, err
+		}
+		seqs = append(seqs, seq)
+	}
+
+	insert = biggest(seqs)
+
+	insert.Nm = assemblyparameters.Constructname + "_Insert"
+
+	if err != nil {
+		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
+		return insert, err
+	}
+
+	return
+}
+
 // Simulate assembly success; returns status, number of correct assemblies, any sites found
 func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, successfulassemblies int, sites []Restrictionsites, newDNASequence wtype.DNASequence, err error) {
 
@@ -301,7 +349,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 
 	if err != nil {
 		//s = "Failure Joining fragments after digestion" //
-		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err)
+		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
 		s = err.Error()
 		return s, successfulassemblies, sites, newDNASequence, err
 	}
@@ -347,13 +395,24 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		s = err.Error()
 	}
 
-	if len(plasmidproductsfromXprimaryseq) == 0 && len(failedassemblies) != 0 {
+	if len(plasmidproductsfromXprimaryseq) == 0 && len(failedassemblies) > 0 {
 
 		s = fmt.Sprint("Ooh, only partial assembly expected: ", assemblyparameters.Partsinorder[(len(assemblyparameters.Partsinorder)-1)].Nm, " and ", assemblyparameters.Vector.Nm, ": ", "Not compatible, check ends")
 
 		err = fmt.Errorf(s)
-		//err = fmt.Errorf(funk, err.Error())
-		//s = err.Error()
+
+		var seqs []wtype.DNASequence
+
+		for i, failed := range failedassemblies {
+			seq, err := failed.ToDNASequence("fragment" + strconv.Itoa(i+1))
+			if err != nil {
+				return s, successfulassemblies, sites, newDNASequence, err
+			}
+			seqs = append(seqs, seq)
+		}
+
+		return s, successfulassemblies, sites, biggest(seqs), err
+
 	}
 
 	if s != "Yay! this should work" {
@@ -363,6 +422,44 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	newDNASequence.Nm = assemblyparameters.Constructname
 
 	return s, successfulassemblies, sites, newDNASequence, err
+}
+
+func biggest(entries []wtype.DNASequence) wtype.DNASequence {
+
+	var value wtype.DNASequence
+	var number int
+
+	for _, str := range entries {
+		if len(str.Seq) > number {
+			number = len(str.Seq)
+			value = str
+		}
+	}
+
+	return value
+}
+
+func split(entries []wtype.DNASequence, entryPositionInSlice int) (split wtype.DNASequence, rest []wtype.DNASequence, err error) {
+
+	if len(entries) == 0 {
+		return split, rest, fmt.Errorf("no sequences to split")
+	}
+
+	if entryPositionInSlice >= len(entries) {
+		return split, rest, fmt.Errorf("cannot take entry %d from slice of length %d", entryPositionInSlice, len(entries))
+	}
+
+	for i, entry := range entries {
+
+		if i == entryPositionInSlice {
+			split = entry
+		} else {
+			rest = append(rest, entry)
+		}
+
+	}
+
+	return split, rest, nil
 }
 
 // MultipleAssemblies will perform simulated assemblies on multiple constructs

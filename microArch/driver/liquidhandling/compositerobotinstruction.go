@@ -433,6 +433,11 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 
 	// we no longer require ins.volume[0][0] to be set
 	// as we move to independent we need to get all volumes
+
+	// MIS DEBUG HERE --> this crashes, should not be generating
+	// 		      MCBs with no volumes
+
+	fmt.Println(ins.Volume)
 	channel, tipp := ChooseChannel(ins.GetVolumes()[0], prms)
 	tiptype := ""
 	if tipp != nil {

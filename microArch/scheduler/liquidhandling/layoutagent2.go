@@ -24,13 +24,14 @@ package liquidhandling
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/sampletracker"
-	"strings"
 )
 
 func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
@@ -225,9 +226,11 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 
 				if ok {
 					x.Loc = remap[tx[0]] + ":" + tx[1]
+					fmt.Println("REMAP SET")
 					sampletracker.SetLocationOf(x.ID, x.Loc)
 				} else {
 					x.Loc = tx[0] + ":" + tx[1]
+					fmt.Println("FIRST SET")
 					sampletracker.SetLocationOf(x.ID, x.Loc)
 				}
 			}

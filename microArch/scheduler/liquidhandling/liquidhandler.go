@@ -694,10 +694,11 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		if volb.GreaterThanFloat(0.0001) {
 			vmap3[k] = volb
 		}
-		/*
+		// toggle HERE for DEBUG
+		if false {
 			volc := vmap[k]
 			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
-		*/
+		}
 	}
 
 	(*request).Input_vols_required = vmap

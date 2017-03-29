@@ -168,6 +168,10 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 			tpw = 1
 		}
 
+		if wpt == 0 {
+			wpt = 1
+		}
+
 		it = NewTickingColVectorIterator(lhp, multi, tpw, wpt)
 	} else {
 		it = NewRowVectorIterator(lhp, multi)
@@ -194,11 +198,14 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 		}
 	}
 
+	fmt.Println("BEST MATCH")
+	fmt.Println("YO BOY: ", len(bestMatch.Matches))
 	for _, m := range bestMatch.Matches {
-		//fmt.Println("BEST MATCH: ", m)
 		plateIDs = append(plateIDs, m.IDs)
 		wellCoords = append(wellCoords, m.WCs)
 		vols = append(vols, m.Vols)
+
+		fmt.Println(m)
 	}
 
 	if best <= 0.0 {

@@ -76,10 +76,6 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 
-	// TODO TODO TODO
-	// -- we have to choose channels somewhere... probably during the *generate* method
-	//    of transferinstruction
-
 	for i := 0; i < inssIn.MaxLen(); i++ {
 		cmps := inssIn.CompsAt(i)
 		lenToMake := 0
@@ -128,7 +124,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			ptwy := make([]int, len(cmps))        //	  "     "    "   y
 
 			for ci := 0; ci < len(cmps); ci++ {
-				if fromPlateIDs[mt][ci] == "" {
+				if len(fromPlateIDs[mt]) <= ci || fromPlateIDs[mt][ci] == "" {
 					continue
 				}
 
@@ -141,7 +137,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				ppf, ok := robot.PlateIDLookup[fromPlateIDs[mt][ci]]
 
 				if !ok {
-					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: input plate ID not found on robot - please report this error")
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: input plate ID not found on robot - please report this error to the authors")
 				}
 
 				pf[ci] = ppf
@@ -151,7 +147,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID()]
 
 				if !ok {
-					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error")
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")
 				}
 
 				pt[ci] = ppt
@@ -169,7 +165,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				srcPlate, ok := robot.Plates[ppf]
 
 				if !ok {
-					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: input plate ID not found on robot (#2) - please report this error")
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: input plate ID not found on robot (#2) - please report this error to the authors")
 				}
 
 				ptf[ci] = srcPlate.Type
@@ -179,7 +175,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				dstPlate, ok := robot.Plates[ppt]
 
 				if !ok {
-					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error")
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")
 				}
 
 				ptt[ci] = dstPlate.Type
@@ -193,7 +189,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				wellFrom, ok := srcPlate.Wellcoords[wf[ci]]
 
 				if !ok {
-					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error")
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")
 				}
 
 				vf[ci] = wellFrom.CurrVolume()
@@ -203,7 +199,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				wellTo, ok := dstPlate.Wellcoords[wt[ci]]
 
 				if !ok {
-					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error")
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error to the authors")
 				}
 
 				vt[ci] = wellTo.CurrVolume()
@@ -218,17 +214,24 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				ptwx[ci] = dstPlate.WellsX()
 				ptwy[ci] = dstPlate.WellsY()
 
-				// do the bookkeeping
+				// do the bookkeeping... iff we're not doing multi (?!)
 
+				// TODO TODO TODO -- make this fix unnecessary
+				//				if multi > 1 {
 				cmpFrom := wellFrom.Remove(va[ci])
 
+				fmt.Println("GET: ", wf[ci], " ", va[ci], " ", ptf[ci], " ", wellFrom.WContents.CName, " ", wellFrom.WContents.Vol, " MULTI: ", multi)
+
 				if cmpFrom == nil {
-					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error")
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
 				}
 
 				wellTo.Add(cmpFrom)
 
+				fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 			}
+
+			//}
 
 			tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
 			insOut = append(insOut, tfr)

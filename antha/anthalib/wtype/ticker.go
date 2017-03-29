@@ -14,7 +14,7 @@ func (t *Ticker) Dup() *Ticker {
 func (t *Ticker) Tick() int {
 	t.tick += 1
 
-	if t.tick%t.TickEvery == 0 {
+	if (t.tick)%t.TickEvery == 0 {
 		t.Val += t.TickBy
 	}
 

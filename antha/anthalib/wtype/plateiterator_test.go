@@ -74,3 +74,31 @@ func TestTickingPlateIterator3(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Expected 192 cols, got %d", c))
 	}
 }
+
+func TestTickingPlateIterator4(t *testing.T) {
+	p := make24platefortest()
+
+	it := NewTickingColVectorIterator(p, 8, 2, 1)
+	c := 0
+	for wv := it.Curr(); it.Valid(); wv = it.Next() {
+		wv = wv
+		c += 1
+	}
+	if c != 6 {
+		t.Errorf(fmt.Sprintf("Expected 6 cols, got %d ", c))
+	}
+}
+
+func TestTickingPlateIterator5(t *testing.T) {
+	p := make6platefortest()
+
+	it := NewTickingColVectorIterator(p, 8, 4, 1)
+	c := 0
+	for wv := it.Curr(); it.Valid(); wv = it.Next() {
+		wv = wv
+		c += 1
+	}
+	if c != 3 {
+		t.Errorf(fmt.Sprintf("Expected 3 cols, got %d ", c))
+	}
+}

@@ -1,7 +1,5 @@
 package wtype
 
-import "fmt"
-
 type PlateIterator interface {
 	Rewind() WellCoords
 	Next() WellCoords
@@ -229,11 +227,19 @@ func (tcvi *TickingColVectorIterator) Rewind() []WellCoords {
 }
 
 func (tcvi *TickingColVectorIterator) Next() []WellCoords {
-	tcvi.Ticker.Val += 1
-	end := tcvi.Ticker.Val + ((tcvi.Multi - 1) * tcvi.Ticker.TickBy)
+	tcvi.Ticker = &Ticker{Val: tcvi.Ticker.Val + 1, TickEvery: tcvi.Ticker.TickEvery, TickBy: tcvi.Ticker.TickBy}
 
-	if end/tcvi.Plate.WellsY() > tcvi.Ticker.Val/tcvi.Plate.WellsY() {
-		tcvi.Ticker.Val = end
+	tickRaw := tcvi.Ticker.Dup()
+
+	end := 0
+
+	for i := 0; i < tcvi.Multi-1; i++ {
+		tickRaw.Tick()
+		end = tickRaw.Val
+		if end/tcvi.Plate.WellsY() > tcvi.Ticker.Val/tcvi.Plate.WellsY() {
+			tcvi.Ticker = &Ticker{Val: end, TickEvery: tcvi.Ticker.TickEvery, TickBy: tcvi.Ticker.TickBy}
+			break
+		}
 	}
 
 	if end >= tcvi.Plate.WellsX()*tcvi.Plate.WellsY() {
@@ -255,10 +261,15 @@ func (tcvi *TickingColVectorIterator) Curr() []WellCoords {
 }
 
 func (tcvi *TickingColVectorIterator) Valid() bool {
-	end := tcvi.Ticker.Val + ((tcvi.Multi - 1) * tcvi.Ticker.TickBy)
+	mx := tcvi.Plate.WellsX()*tcvi.Plate.WellsY() - 1
 
-	if end >= tcvi.Plate.WellsX()*tcvi.Plate.WellsY() {
-		return false
+	tck := tcvi.Ticker.Dup()
+
+	for i := 0; i < tcvi.Multi-1; i++ {
+		if tck.Val > mx {
+			return false
+		}
+		tck.Tick()
 	}
 
 	wcs := tcvi.Curr()
@@ -268,9 +279,9 @@ func (tcvi *TickingColVectorIterator) Valid() bool {
 		if wc.X < 0 || wc.Y < 0 {
 			return false
 		}
+
 		// are all rows and columns in bounds?
 		if wc.X >= tcvi.Plate.WellsX() || wc.Y >= tcvi.Plate.WellsY() {
-			fmt.Println("BND")
 			return false
 		}
 
@@ -278,7 +289,6 @@ func (tcvi *TickingColVectorIterator) Valid() bool {
 		if col == -1 {
 			col = wc.X
 		} else if col != wc.X {
-			fmt.Println("COL")
 			return false
 		}
 	}

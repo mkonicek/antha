@@ -25,6 +25,7 @@ package entrez
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -44,6 +45,18 @@ var (
 	retries = 5
 )
 
+func appendError(err error, err2 error) (newErr error) {
+
+	if err == nil && err2 == nil {
+		return nil
+	} else if err == nil {
+		return err2
+	} else if err2 == nil {
+		return err
+	}
+	return fmt.Errorf("Errors: " + err.Error() + ": " + err2.Error())
+}
+
 // This queries the selected database saving the record to file
 // Database options are nucleotide, Protein, Gene. For full list see http://www.ncbi.nlm.nih.gov/books/NBK25497/table/chapter2.T._entrez_unique_identifiers_ui/?report=objectonly
 // Return type includes but must match the database type. See http://www.ncbi.nlm.nih.gov/books/NBK25499/table/chapter4.T._valid_values_of__retmode_and/?report=objectonly
@@ -54,12 +67,13 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 	//tempdir, err := ioutil.TempDir(anthapath.Path(), "entrez")
 	//filename = filepath.Join(tempdir, out)
 
+	fmt.Println("Filename: ", out)
 	filename = out // filepath.Join(anthapath.Path(), out)
 
 	h := biogo.History{}
 	s, err := biogo.DoSearch(database, query, nil, &h, tool, email)
 	if err != nil {
-		return filename, []byte{}, err
+		return filename, []byte{}, appendError(fmt.Errorf("Error in biogo.DoSearch: "), err)
 	}
 
 	var of *os.File
@@ -74,7 +88,7 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 	}
 	of, err = os.Create(filename)
 	if err != nil {
-		return filename, []byte{}, err
+		return filename, []byte{}, appendError(fmt.Errorf("Error in creating file %s:", filename), err)
 	}
 	defer of.Close()
 
@@ -110,18 +124,18 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 			}
 		}
 		if err != nil {
-			return filename, []byte{}, err
+			return filename, []byte{}, appendError(fmt.Errorf("Error in fetching record"), err)
 		}
 
 		_n, err := io.Copy(of, buf)
 		n += _n
 		if err != nil {
-			return filename, []byte{}, err
+			return filename, []byte{}, appendError(fmt.Errorf("Error in copying to buffer"), err)
 		}
 
 	}
 	if bn != n {
-		//fmt.Fprintf(os.Stdout, "Writethrough mismatch: %d != %d\n", bn, n)
+		fmt.Fprintf(os.Stdout, "Writethrough mismatch: %d != %d\n", bn, n)
 	}
 
 	fileInfo, _ := of.Stat()
@@ -130,14 +144,18 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 
 	// read file into bytes
 	buffer := bufio.NewReader(of)
-	_, err = buffer.Read(contentsinbytes)
+	newsize, err := buffer.Read(contentsinbytes)
 
 	of.Close()
 	//contentsinbytes, err = ioutil.ReadAll(of)
-	/*if err != nil {
-		fmt.Println("line 153", err.Error())
-	}*/
-	return filename, contentsinbytes, err
+	if err != nil {
+		return filename, contentsinbytes, fmt.Errorf("Error line 153: %s, number of bytes read: %d", err.Error(), newsize)
+	}
+
+	if len(contentsinbytes) == 0 {
+		return filename, contentsinbytes, fmt.Errorf("no data returned from looking up records")
+	}
+	return filename, contentsinbytes, nil
 }
 
 // This retrieves sequence of any type from any NCBI sequence database

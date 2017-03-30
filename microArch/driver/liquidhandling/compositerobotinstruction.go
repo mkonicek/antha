@@ -2104,6 +2104,8 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
+// MIS XXX -- separate out channel-level parameters from head-level ones
+
 func (ins *SuckInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0, 1)
 
@@ -2151,35 +2153,6 @@ func (ins *SuckInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 		spd.Speed = entryspeed.(float64)
 		ret = append(ret, spd)
 
-		/*
-			// now move into the liquid
-			mov = NewMoveInstruction()
-			mov.Head = ins.Head
-			mov.Pos = ins.PltFrom
-			mov.Plt = ins.FPlateType
-			mov.Well = ins.WellFrom
-			mov.WVolume = ins.FVolume
-			ref := SafeGetInt(pol, "ASPREFERENCE")
-			ofx := SafeGetF64(pol, "ASPXOFFSET")
-			ofy := SafeGetF64(pol, "ASPYOFFSET")
-			ofz := SafeGetF64(pol, "ASPZOFFSET")
-
-			// TODO -- different offsets per channel
-
-			for i := 0; i < ins.Multi; i++ {
-				mov.Reference = append(mov.Reference, ref)
-				mov.OffsetX = append(mov.OffsetX, ofx)
-				mov.OffsetY = append(mov.OffsetY, ofy)
-				mov.OffsetZ = append(mov.OffsetZ, ofz)
-			}
-
-			ret = append(ret, mov)
-			// reset the drive speed
-			spd = NewSetDriveSpeedInstruction()
-			spd.Drive = "Z"
-			spd.Speed = pol["DEFAULTZSPEED"].(float64)
-			ret = append(ret, spd)
-		*/
 	}
 
 	// do we pre-mix?
@@ -2201,6 +2174,14 @@ func (ins *SuckInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 		_, ok := pol["PRE_MIX_VOLUME"]
 		mix.Volume = ins.Volume
 		mixvol := SafeGetF64(pol, "PRE_MIX_VOLUME")
+
+		// if not set we use the instruction value
+
+		// XXX -- only looking at first vol specified
+		if mixvol == 0.0 {
+			mixvol = ins.Volume[0].ConvertToString("ul")
+		}
+
 		vmixvol := wunit.NewVolume(mixvol, "ul")
 
 		// TODO -- corresponding checks when set
@@ -2684,6 +2665,11 @@ func (ins *BlowInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 		_, ok := pol["POST_MIX_VOLUME"]
 		mix.Volume = ins.Volume
 		mixvol := SafeGetF64(pol, "POST_MIX_VOLUME")
+
+		if mixvol == 0.0 {
+			mixvol = ins.Volume[0].ConvertToString("ul")
+		}
+
 		vmixvol := wunit.NewVolume(mixvol, "ul")
 
 		// check the volume

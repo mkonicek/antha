@@ -745,9 +745,6 @@ func PostMixPolicy() LHPolicy {
 
 func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy := make(LHPolicy, 27)
-	// don't set this here -- use defaultpipette speed or there will be inconsistencies
-	// defaultpolicy["ASPSPEED"] = 3.0
-	// defaultpolicy["DSPSPEED"] = 3.0
 	defaultpolicy["OFFSETZADJUST"] = 0.0
 	defaultpolicy["TOUCHOFF"] = false
 	defaultpolicy["TOUCHOFFSET"] = 0.5
@@ -760,11 +757,8 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["CAN_SDD"] = true
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
-
 	defaultpolicy["BLOWOUTVOLUME"] = 50.0
-
 	defaultpolicy["BLOWOUTOFFSET"] = 0.0 //-5.0
-
 	defaultpolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	defaultpolicy["PTZREFERENCE"] = 1
 	defaultpolicy["PTZOFFSET"] = -0.5
@@ -773,13 +767,8 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["MANUALPTZ"] = false
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
-	// added to diagnose bubble cause
 	defaultpolicy["POST_MIX_Z"] = 0.5
 	defaultpolicy["PRE_MIX_Z"] = 0.5
-	//defaultpolicy["ASP_WAIT"] = 1.0
-	//defaultpolicy["DSP_WAIT"] = 1.0
-	defaultpolicy["PRE_MIX_VOLUME"] = 10.0
-	defaultpolicy["POST_MIX_VOLUME"] = 10.0
 
 	return defaultpolicy
 }

@@ -134,6 +134,13 @@ func DNAregion(sequence wtype.DNASequence, startposition int, endposition int) (
 
 	//define region in sequence to create primer. NB: Sequence position will start from 0 not 1.
 	if endposition > startposition {
+		// fix properly!!!
+		if startposition == 0 {
+			startposition = 1
+		}
+		if endposition > len(dnaseq) {
+			endposition = len(dnaseq) - 1
+		}
 		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:endposition])
 	} else if endposition < startposition && sequence.Plasmid {
 		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:]+dnaseq[:endposition])

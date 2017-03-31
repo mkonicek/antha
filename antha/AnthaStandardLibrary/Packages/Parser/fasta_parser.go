@@ -27,7 +27,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"errors"
-	//"fmt"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -100,7 +100,7 @@ func FASTAtoLinearDNASeqs(filename string) (seqs []wtype.DNASequence, err error)
 
 }
 
-// This will retrieve seq from FASTA file
+// This will retrieve seq from FASTA file of type string
 func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error) {
 
 	var nofeatures []wtype.Feature
@@ -127,6 +127,33 @@ func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error
 	}
 	return
 
+}
+
+// This will retrieve seq from FASTA file of type file
+func FASTAtoDNASeqsBinary(data []byte) (seqs []wtype.DNASequence, err error) {
+	if len(data) == 0 {
+		return seqs, fmt.Errorf("Cannot parse fasta file. File is empty.")
+	} else {
+		fastaFh := bytes.NewReader(data)
+
+		seqs = make([]wtype.DNASequence, 0)
+
+		var seq wtype.DNASequence
+		for _, record := range FastaParse(fastaFh) {
+			plasmidstatus := ""
+
+			if strings.Contains(strings.ToUpper(record.Desc), "PLASMID") || strings.Contains(strings.ToUpper(record.Desc), "CIRCULAR") || strings.Contains(strings.ToUpper(record.Desc), "VECTOR") {
+				plasmidstatus = "PLASMID"
+			}
+			seq, err = wtype.MakeDNASequence(record.Id, record.Seq, []string{plasmidstatus})
+			if err != nil {
+				return seqs, err
+			}
+			seqs = append(seqs, seq)
+		}
+
+		return
+	}
 }
 
 func FastatoDNASequences(inputfilename string) (seqs []wtype.DNASequence, err error) {

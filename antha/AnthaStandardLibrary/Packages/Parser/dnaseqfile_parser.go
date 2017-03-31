@@ -25,6 +25,7 @@ package parser
 import (
 	"fmt"
 	//"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -33,10 +34,8 @@ import (
 func DNAFiletoDNASequence(filename string, plasmid bool) (sequences []wtype.DNASequence, err error) {
 
 	sequences = make([]wtype.DNASequence, 0)
-
 	var seqs []wtype.DNASequence
 	var seq wtype.DNASequence
-	//for _, file := range files {
 	switch fn := filename; {
 	case strings.HasSuffix(fn, ".gdx"):
 
@@ -45,11 +44,6 @@ func DNAFiletoDNASequence(filename string, plasmid bool) (sequences []wtype.DNAS
 			sequences = append(sequences, seq)
 		}
 	case strings.HasSuffix(fn, ".fasta"):
-		/*if plasmid {
-			seqs, err = FASTAtoPlasmidDNASeqs(filename)
-		} else {
-			seqs, err = FASTAtoLinearDNASeqs(filename)
-		}*/
 		seqs, err = FastatoDNASequences(filename)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
@@ -58,6 +52,42 @@ func DNAFiletoDNASequence(filename string, plasmid bool) (sequences []wtype.DNAS
 
 		seq, err = GenbanktoFeaturelessDNASequence(filename)
 
+		sequences = append(sequences, seq)
+	default:
+		err = fmt.Errorf("non valid sequence file")
+	}
+
+	if err != nil {
+		return seqs, err
+	}
+	//}
+	return
+}
+
+// Creates a DNASequence from a sequence file of format: .gdx .fasta .gb
+func DNAFileToDNASequenceBinary(filename wtype.File, plasmid bool) (sequences []wtype.DNASequence, err error) {
+
+	data, err := filename.ReadAll()
+	if err != nil {
+		fmt.Errorf("Cannot parse file. File is empty.")
+	}
+	sequences = make([]wtype.DNASequence, 0)
+	var seqs []wtype.DNASequence
+	var seq wtype.DNASequence
+
+	switch fn := filename.Name; {
+	case filepath.Ext(fn) == ".gdx":
+		seqs, err = GDXtoDNASequenceBinary(data)
+		for _, seq := range seqs {
+			sequences = append(sequences, seq)
+		}
+	case filepath.Ext(fn) == ".fasta":
+		seqs, err = FASTAtoDNASeqsBinary(data)
+		for _, seq := range seqs {
+			sequences = append(sequences, seq)
+		}
+	case filepath.Ext(fn) == ".gb":
+		seq, err = GenbanktoFeaturelessDNASequenceBinary(data)
 		sequences = append(sequences, seq)
 	default:
 		err = fmt.Errorf("non valid sequence file")

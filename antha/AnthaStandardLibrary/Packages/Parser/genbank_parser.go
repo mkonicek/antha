@@ -81,6 +81,24 @@ func GenbanktoFeaturelessDNASequence(filename string) (wtype.DNASequence, error)
 	return HandleGenbank(genbanklines)
 }
 
+//Parses file of type .gb to DNASequence. Features are not annotated
+func GenbanktoFeaturelessDNASequenceBinary(data []byte) (wtype.DNASequence, error) {
+	line := ""
+	genbanklines := make([]string, 0)
+	buffer := bytes.NewBuffer(data)
+	scanner := bufio.NewScanner(buffer)
+	for scanner.Scan() {
+		line = fmt.Sprintln(scanner.Text())
+		genbanklines = append(genbanklines, line)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return wtype.DNASequence{}, err
+	}
+
+	return HandleGenbank(genbanklines)
+}
+
 func GenbankFeaturetoDNASequence(filename string, featurename string) (wtype.DNASequence, error) {
 	line := ""
 	genbanklines := make([]string, 0)

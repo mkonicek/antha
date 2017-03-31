@@ -177,3 +177,30 @@ func GDXtoDNASequence(filename string) (parts_list []wtype.DNASequence, err erro
 
 	return parts_list, err
 }
+
+//This is a function to parse file type .gdx to a DNA sequence of type []wtype.DNASequence
+func GDXtoDNASequenceBinary(data []byte) (parts_list []wtype.DNASequence, err error) {
+	var gdx Project
+	err = xml.Unmarshal(data, &gdx)
+	if err != nil {
+		return parts_list, err
+	}
+
+	parts_list = make([]wtype.DNASequence, 0)
+
+	for _, a := range gdx.DesignConstruct {
+		for _, b := range a.DNAElements {
+			var newseq wtype.DNASequence
+			for i := 0; i < len(a.DNAElements); i++ {
+				newseq.Nm = b.Label
+				newseq.Seq = b.Sequence
+				if a.Plasmid == "true" {
+					newseq.Plasmid = true
+				}
+				parts_list = append(parts_list, newseq)
+			}
+		}
+	}
+
+	return parts_list, err
+}

@@ -3,6 +3,7 @@
 package image
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	goimage "image"
@@ -470,13 +471,15 @@ func MakeGoimageNRGBA(imagefilename string) (nrgba *goimage.NRGBA) {
 	return
 }
 
-func Posterize(imagefilename string, levels int) (posterized *goimage.NRGBA, newfilename string) {
+func Posterize(data []byte, levels int) (posterized *goimage.NRGBA, newfilename string) {
 
 	var newcolor color.NRGBA
 	numberofAreas := 256 / (levels)
 	numberofValues := 255 / (levels - 1)
 
-	img, err := imaging.Open(imagefilename)
+	buf := bytes.NewReader(data)
+
+	img, err := imaging.Decode(buf)
 	if err != nil {
 		panic(err)
 	}
@@ -561,7 +564,7 @@ func Posterize(imagefilename string, levels int) (posterized *goimage.NRGBA, new
 	return
 }
 
-func ResizeImagetoPlate(imagefilename string, plate *wtype.LHPlate, algorithm imaging.ResampleFilter, rotate bool) (plateimage *goimage.NRGBA) {
+func ResizeImagetoPlate(data []byte, plate *wtype.LHPlate, algorithm imaging.ResampleFilter, rotate bool) (plateimage *goimage.NRGBA) {
 
 	// input files (just 1 in this case)
 	files := []string{imagefilename}
@@ -570,8 +573,9 @@ func ResizeImagetoPlate(imagefilename string, plate *wtype.LHPlate, algorithm im
 	//availablecolours := chosencolourpalette //palette.WebSafe
 
 	//var plateimages []image.Image
+	buf := bytes.NewReader(data)
 
-	img, err := imaging.Open(files[0])
+	img, err := imaging.Decode(buf)
 	if err != nil {
 		panic(err)
 	}
@@ -760,7 +764,6 @@ func MakeSmallPalleteFromImage(imagefilename string, plate *wtype.LHPlate, rotat
 // create a map of pixel to plate position from processing a given image with a chosen colour palette.
 // It's recommended to use at least 384 well plate
 // if autorotate == true, rotate is overridden
-
 func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, numberofpixels int, newname string) {
 
 	var plateimage *goimage.NRGBA

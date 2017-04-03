@@ -95,6 +95,7 @@ func MakePolicies() map[string]LHPolicy {
 	pols["NeedToMix"] = MakeNeedToMixPolicy()
 	pols["PreMix"] = PreMixPolicy()
 	pols["PostMix"] = PostMixPolicy()
+	pols["MegaMix"] = MegaMixPolicy()
 	pols["viscous"] = MakeViscousPolicy()
 	pols["Paint"] = MakePaintPolicy()
 
@@ -730,6 +731,23 @@ func PostMixPolicy() LHPolicy {
 	//dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
+	dnapolicy["ASPSPEED"] = 3.74
+	dnapolicy["DSPSPEED"] = 3.74
+	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MSA"] = false
+	dnapolicy["CAN_SDD"] = false
+	dnapolicy["DSPREFERENCE"] = 0
+	dnapolicy["DSPZOFFSET"] = 0.5
+	dnapolicy["TIP_REUSE_LIMIT"] = 0
+	dnapolicy["NO_AIR_DISPENSE"] = true
+	return dnapolicy
+
+}
+
+func MegaMixPolicy() LHPolicy {
+	dnapolicy := make(LHPolicy, 12)
+	dnapolicy["POST_MIX"] = 10
+	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
 	dnapolicy["CAN_MULTI"] = false

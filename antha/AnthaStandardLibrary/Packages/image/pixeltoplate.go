@@ -764,15 +764,15 @@ func Export(img *goimage.NRGBA, filename string) (file wtype.File, err error) {
 	if filepath.Ext(filename) == "" {
 		imageFormat = imaging.PNG
 		filename = filename + "." + "png"
-	} else if filepath.Ext(filename) == "png" {
+	} else if filepath.Ext(filename) == ".png" {
 		imageFormat = imaging.PNG
-	} else if filepath.Ext(filename) == "jpg" || filepath.Ext(filename) == "jpeg" {
+	} else if filepath.Ext(filename) == ".jpg" || filepath.Ext(filename) == ".jpeg" {
 		imageFormat = imaging.JPEG
-	} else if filepath.Ext(filename) == "tif" || filepath.Ext(filename) == "tiff" {
+	} else if filepath.Ext(filename) == ".tif" || filepath.Ext(filename) == ".tiff" {
 		imageFormat = imaging.TIFF
-	} else if filepath.Ext(filename) == "gif" {
+	} else if filepath.Ext(filename) == ".gif" {
 		imageFormat = imaging.GIF
-	} else if filepath.Ext(filename) == "BMP" {
+	} else if filepath.Ext(filename) == ".BMP" {
 		imageFormat = imaging.BMP
 	} else {
 		return file, fmt.Errorf("unsupported image file format: %s", filepath.Ext(filename))

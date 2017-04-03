@@ -3,6 +3,7 @@
 package image
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	goimage "image"
@@ -285,7 +286,6 @@ func MakeSubPallette(palettename string, colournames []string) (subpalette color
 
 	subpalette = palettefromMap(submap)
 
-	fmt.Println("length of subpalette: ", len(subpalette), subpalette)
 	return
 
 }
@@ -544,8 +544,6 @@ func Posterize(imagefilename string, levels int) (posterized *goimage.NRGBA, new
 			}
 			newcolor.B = uint8(bint)
 
-			// fmt.Println("x,y", x, y, "r,g,b,a", r, g, b, a, "newcolour", newcolor)
-
 			posterized.Set(x, y, newcolor)
 
 		}
@@ -757,13 +755,52 @@ func MakeSmallPalleteFromImage(imagefilename string, plate *wtype.LHPlate, rotat
 	return
 }
 
+// export image to file
+// image format is derived from filename extension
+func Export(img *goimage.NRGBA, filename string) (file wtype.File, err error) {
+
+	var imageFormat imaging.Format
+
+	if filepath.Ext(filename) == "" {
+		imageFormat = imaging.PNG
+		filename = filename + "." + "png"
+	} else if filepath.Ext(filename) == "png" {
+		imageFormat = imaging.PNG
+	} else if filepath.Ext(filename) == "jpg" || filepath.Ext(filename) == "jpeg" {
+		imageFormat = imaging.JPEG
+	} else if filepath.Ext(filename) == "tif" || filepath.Ext(filename) == "tiff" {
+		imageFormat = imaging.TIFF
+	} else if filepath.Ext(filename) == "gif" {
+		imageFormat = imaging.GIF
+	} else if filepath.Ext(filename) == "BMP" {
+		imageFormat = imaging.BMP
+	} else {
+		return file, fmt.Errorf("unsupported image file format: %s", filepath.Ext(filename))
+	}
+
+	var buf bytes.Buffer
+
+	err = imaging.Encode(&buf, img, imageFormat)
+
+	if err != nil {
+		return
+	}
+
+	err = file.WriteAll(buf.Bytes())
+
+	if err != nil {
+		return
+	}
+
+	file.Name = filename
+
+	return
+}
+
 // create a map of pixel to plate position from processing a given image with a chosen colour palette.
 // It's recommended to use at least 384 well plate
 // if autorotate == true, rotate is overridden
-
-func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, numberofpixels int, newname string) {
-
-	var plateimage *goimage.NRGBA
+func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, plateimage *goimage.NRGBA, newname string) {
 
 	if autorotate {
 		plateimage = ResizeImagetoPlateAutoRotate(imagefilename, plate, imaging.CatmullRom)
@@ -794,7 +831,6 @@ func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolour
 				}
 				// equivalent well position
 				wellposition := wutil.NumToAlpha(y+1) + strconv.Itoa(x+1)
-				fmt.Println(wellposition)
 				wellpositionarray = append(wellpositionarray, wellposition)
 				wellpositiontocolourmap[wellposition] = colour
 
@@ -828,7 +864,6 @@ func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolour
 			// fmt.Println("palette colour number:", chosencolourpalette.Index(combo))
 		}
 	*/
-	numberofpixels = len(colourarray)
 	// fmt.Println("numberofpixels:", numberofpixels)
 
 	return

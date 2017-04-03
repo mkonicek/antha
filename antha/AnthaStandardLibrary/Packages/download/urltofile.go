@@ -33,20 +33,6 @@ func File(url string, filename string) (file wtype.File, err error) {
 		buf.Write(bodyBytes)
 	}
 
-
-	/*
-	res, err := http.Get(url)
-	if err != nil {
-		return file, err
-	}
-	defer res.Body.Close()
-
-	if _, err := io.Copy(buf, res.Body); err != nil {
-		return file, err
-	}
-	*/
-
-
 	//returning wtype.File
 	file.WriteAll(buf.Bytes())
 	file.Name = filename

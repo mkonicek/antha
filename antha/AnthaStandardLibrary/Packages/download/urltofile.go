@@ -4,28 +4,32 @@ package download
 import (
 	"io"
 	"net/http"
-	"os"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"bytes"
 )
 
 // File downloads the data at a url to the given filename. If there is an error, the file will contain the partially downloaded data.
-func File(url string, filename string) (err error) {
+func File(url string, filename string) (file wtype.File, err error) {
 
-  res, err := http.Get(url)
-
+	//Downloading
+	res, err := http.Get(url)
 	if err != nil {
-		return err
+		return file, err
 	}
 	defer res.Body.Close()
 
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
 
-	if _, err := io.Copy(f, res.Body); err != nil {
-		return err
+	var buf bytes.Buffer
+
+	if _, err := io.Copy(buf, res.Body); err != nil {
+		return file, err
 	}
 
-	return nil
+
+	//returning wtype.File
+	file.WriteAll(buf.Bytes())
+	file.Name = filename
+
+
+	return file, err
 }

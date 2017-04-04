@@ -10,7 +10,7 @@ import (
 	"io"
 )
 
-func DownloadFile(url string, fileName string) (file wtype.File, err error) {
+func File(url string, fileName string) (file wtype.File, err error) {
 
 	//--------------------------------------------------------------------------------
 	//Given a URL and a desired file name, this function will return the whole content of the response into a wtype.DownloadFile object.

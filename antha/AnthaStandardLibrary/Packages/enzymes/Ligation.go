@@ -421,6 +421,19 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 
 	newDNASequence.Nm = assemblyparameters.Constructname
 
+	// check binding. Exact matches only.
+	insert, err := assemblyparameters.Insert()
+
+	if err != nil {
+		return s, successfulassemblies, sites, newDNASequence, err
+	}
+
+	insertsites := FindSeqsinSeqs(newDNASequence.Sequence(), []string{insert.Sequence()})
+
+	if len(sites) != 1 {
+		return s, successfulassemblies, sites, newDNASequence, fmt.Errorf("Found %d Insert %s sites in full assembled sequence %s", len(insertsites[0].Positions), insert.Sequence(), newDNASequence.Sequence())
+	}
+
 	return s, successfulassemblies, sites, newDNASequence, err
 }
 

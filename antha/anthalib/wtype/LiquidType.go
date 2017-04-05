@@ -10,8 +10,12 @@ import (
 
 type LiquidType int
 
+func (l LiquidType) String() string {
+	return LiquidTypeName(l)
+}
+
 const (
-	LTNIL = iota
+	LTNIL LiquidType = iota
 	LTWater
 	LTGlycerol
 	LTEthanol

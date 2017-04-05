@@ -95,6 +95,7 @@ func MakePolicies() map[string]LHPolicy {
 	pols["NeedToMix"] = MakeNeedToMixPolicy()
 	pols["PreMix"] = PreMixPolicy()
 	pols["PostMix"] = PostMixPolicy()
+	pols["MegaMix"] = MegaMixPolicy()
 	pols["viscous"] = MakeViscousPolicy()
 	pols["Paint"] = MakePaintPolicy()
 
@@ -528,13 +529,16 @@ func MakeCultureReusePolicy() LHPolicy {
 }
 
 func MakeGlycerolPolicy() LHPolicy {
-	glycerolpolicy := make(LHPolicy, 6)
+	glycerolpolicy := make(LHPolicy, 9)
 	glycerolpolicy["ASPSPEED"] = 1.5
 	glycerolpolicy["DSPSPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["TIP_REUSE_LIMIT"] = 0
 	glycerolpolicy["CAN_MULTI"] = false
+	glycerolpolicy["POST_MIX"] = 3
+	glycerolpolicy["POST_MIX_VOLUME"] = 20.0
+	glycerolpolicy["POST_MIX_RATE"] = 3.74
 	return glycerolpolicy
 }
 
@@ -740,11 +744,25 @@ func PostMixPolicy() LHPolicy {
 
 }
 
+func MegaMixPolicy() LHPolicy {
+	dnapolicy := make(LHPolicy, 12)
+	dnapolicy["POST_MIX"] = 10
+	dnapolicy["POST_MIX_RATE"] = 3.74
+	dnapolicy["ASPSPEED"] = 3.74
+	dnapolicy["DSPSPEED"] = 3.74
+	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MSA"] = false
+	dnapolicy["CAN_SDD"] = false
+	dnapolicy["DSPREFERENCE"] = 0
+	dnapolicy["DSPZOFFSET"] = 0.5
+	dnapolicy["TIP_REUSE_LIMIT"] = 0
+	dnapolicy["NO_AIR_DISPENSE"] = true
+	return dnapolicy
+
+}
+
 func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy := make(LHPolicy, 27)
-	// don't set this here -- use defaultpipette speed or there will be inconsistencies
-	// defaultpolicy["ASPSPEED"] = 3.0
-	// defaultpolicy["DSPSPEED"] = 3.0
 	defaultpolicy["OFFSETZADJUST"] = 0.0
 	defaultpolicy["TOUCHOFF"] = false
 	defaultpolicy["TOUCHOFFSET"] = 0.5
@@ -757,11 +775,8 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["CAN_SDD"] = true
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
-
 	defaultpolicy["BLOWOUTVOLUME"] = 50.0
-
 	defaultpolicy["BLOWOUTOFFSET"] = 0.0 //-5.0
-
 	defaultpolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	defaultpolicy["PTZREFERENCE"] = 1
 	defaultpolicy["PTZOFFSET"] = -0.5
@@ -770,13 +785,8 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["MANUALPTZ"] = false
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
-	// added to diagnose bubble cause
 	defaultpolicy["POST_MIX_Z"] = 0.5
 	defaultpolicy["PRE_MIX_Z"] = 0.5
-	//defaultpolicy["ASP_WAIT"] = 1.0
-	//defaultpolicy["DSP_WAIT"] = 1.0
-	defaultpolicy["PRE_MIX_VOLUME"] = 10.0
-	defaultpolicy["POST_MIX_VOLUME"] = 10.0
 
 	return defaultpolicy
 }

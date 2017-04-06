@@ -61,7 +61,7 @@ func VolumetoMass(v Volume, d Density) (m Mass) {
 	//mass := m.SIValue()
 	density := d.SIValue()
 
-	volume := v.SIValue() //* 1000 // convert m^3 to l
+	volume := v.SIValue() / 1000 // convert m^3 to l
 
 	mass := volume * density // in m^3
 

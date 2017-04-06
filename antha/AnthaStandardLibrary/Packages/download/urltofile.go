@@ -10,13 +10,10 @@ import (
 	"io"
 )
 
+//File takes a URL and a desired file name, and returns the whole content of the response into a wtype.DownloadFile object.
 func File(url string, fileName string) (file wtype.File, err error) {
 
-	//--------------------------------------------------------------------------------
-	//Given a URL and a desired file name, this function will return the whole content of the response into a wtype.DownloadFile object.
-	//--------------------------------------------------------------------------------
-
-	//intializing global buffer object
+	//intializing local buffer object
 	var buf bytes.Buffer
 
 	//requesting

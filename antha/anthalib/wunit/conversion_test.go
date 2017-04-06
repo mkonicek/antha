@@ -14,9 +14,10 @@ type concConversionTest struct {
 }
 
 type massConversionTest struct {
-	Conc Concentration
-	Vol  Volume
-	Mass Mass
+	Conc  Concentration
+	Vol   Volume
+	Mass  Mass
+	Error bool
 }
 
 type densityConversionTest struct {
@@ -59,19 +60,21 @@ var tests1 = []concConversionTest{
 	concConversionTest{StockConc: x100, TargetConc: x2, TotalVolume: ul100, VolumeNeeded: NewVolume(2.0, "ul")},
 	concConversionTest{StockConc: mMPerL1, TargetConc: uMPerL10, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
 	concConversionTest{StockConc: mPerL01, TargetConc: mMPerL1, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
+	concConversionTest{StockConc: mPerL01, TargetConc: uMPer0, TotalVolume: ul100, VolumeNeeded: l0},
 }
 
 var tests2 = []massConversionTest{
-	massConversionTest{Conc: NewConcentration(1.0, "g/L"), Mass: NewMass(1000.0, "mg"), Vol: NewVolume(1.0, "l")},
-	massConversionTest{Conc: NewConcentration(1.0, "kg/L"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1.0, "l")},
-	massConversionTest{Conc: NewConcentration(0.1, "mg/L"), Mass: NewMass(0.1, "mg"), Vol: NewVolume(1.0, "l")},
-	massConversionTest{Conc: NewConcentration(100, "ng/ul"), Mass: NewMass(100, "ng"), Vol: NewVolume(1.0, "ul")},
-	massConversionTest{Conc: NewConcentration(0, "g/l"), Mass: NewMass(0, "g"), Vol: NewVolume(1.0, "l")},
+	massConversionTest{Conc: NewConcentration(1.0, "g/L"), Mass: NewMass(1000.0, "mg"), Vol: NewVolume(1.0, "l"), Error: false},
+	massConversionTest{Conc: NewConcentration(1.0, "kg/L"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1.0, "l"), Error: false},
+	massConversionTest{Conc: NewConcentration(0.1, "mg/L"), Mass: NewMass(0.1, "mg"), Vol: NewVolume(1.0, "l"), Error: false},
+	massConversionTest{Conc: NewConcentration(100, "ng/ul"), Mass: NewMass(100, "ng"), Vol: NewVolume(1.0, "ul"), Error: false},
+	massConversionTest{Conc: NewConcentration(0, "g/l"), Mass: NewMass(0, "g"), Vol: NewVolume(1.0, "l"), Error: true},
 }
 
 var tests3 = []densityConversionTest{
 	densityConversionTest{Density: NewDensity(1.0, "kg/m^3"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1000, "l")},
 	densityConversionTest{Density: NewDensity(1000.0, "kg/m^3"), Mass: NewMass(1.0, "g"), Vol: NewVolume(1, "ml")},
+	densityConversionTest{Density: NewDensity(1000.0, "kg/m^3"), Mass: NewMass(0.0, "g"), Vol: NewVolume(0, "l")},
 }
 
 func TestVolumeForTargetConcentration(t *testing.T) {
@@ -128,14 +131,19 @@ func TestVolumeForTargetMass(t *testing.T) {
 
 		vol, err := VolumeForTargetMass(test.Mass, test.Conc)
 
-		if err != nil {
+		if err != nil && !test.Error {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
 				"got error:", err.Error(), "\n",
 			)
+		} else if err == nil && test.Error {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"expected error but got none.", "\n",
+			)
 		}
 
-		if !vol.EqualTo(test.Vol) {
+		if !vol.EqualTo(test.Vol) && !test.Error {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
 				"Expected vol:", test.Vol.ToString(), "\n",
@@ -152,14 +160,6 @@ func TestMasstoVolume(t *testing.T) {
 
 		vol := MasstoVolume(test.Mass, test.Density)
 
-		/*
-			if err != nil {
-				t.Error(
-					"for", fmt.Sprintf("%+v", test), "\n",
-					"got error:", err.Error(), "\n",
-				)
-			}
-		*/
 		if !vol.EqualTo(test.Vol) {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
@@ -177,14 +177,6 @@ func TestVolumetoMass(t *testing.T) {
 
 		mass := VolumetoMass(test.Vol, test.Density)
 
-		/*
-			if err != nil {
-				t.Error(
-					"for", fmt.Sprintf("%+v", test), "\n",
-					"got error:", err.Error(), "\n",
-				)
-			}
-		*/
 		if !mass.EqualTo(test.Mass) {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",

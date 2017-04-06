@@ -13,6 +13,18 @@ type concConversionTest struct {
 	VolumeNeeded Volume
 }
 
+type massConversionTest struct {
+	Conc Concentration
+	Vol  Volume
+	Mass Mass
+}
+
+type densityConversionTest struct {
+	Density Density
+	Vol     Volume
+	Mass    Mass
+}
+
 var (
 	// Some Concentrations
 	nilConc Concentration
@@ -49,6 +61,19 @@ var tests1 = []concConversionTest{
 	concConversionTest{StockConc: mPerL01, TargetConc: mMPerL1, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
 }
 
+var tests2 = []massConversionTest{
+	massConversionTest{Conc: NewConcentration(1.0, "g/L"), Mass: NewMass(1000.0, "mg"), Vol: NewVolume(1.0, "l")},
+	massConversionTest{Conc: NewConcentration(1.0, "kg/L"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1.0, "l")},
+	massConversionTest{Conc: NewConcentration(0.1, "mg/L"), Mass: NewMass(0.1, "mg"), Vol: NewVolume(1.0, "l")},
+	massConversionTest{Conc: NewConcentration(100, "ng/ul"), Mass: NewMass(100, "ng"), Vol: NewVolume(1.0, "ul")},
+	massConversionTest{Conc: NewConcentration(0, "g/l"), Mass: NewMass(0, "g"), Vol: NewVolume(1.0, "l")},
+}
+
+var tests3 = []densityConversionTest{
+	densityConversionTest{Density: NewDensity(1.0, "kg/m^3"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1000, "l")},
+	densityConversionTest{Density: NewDensity(1000.0, "kg/m^3"), Mass: NewMass(1.0, "g"), Vol: NewVolume(1, "ml")},
+}
+
 func TestVolumeForTargetConcentration(t *testing.T) {
 
 	for _, test := range tests1 {
@@ -67,6 +92,104 @@ func TestVolumeForTargetConcentration(t *testing.T) {
 				"for", fmt.Sprintf("%+v", test), "\n",
 				"Expected Vol:", test.VolumeNeeded.ToString(), "\n",
 				"Got Vol:", vol.ToString(), "\n",
+			)
+		}
+
+	}
+}
+
+func TestMassForTargetConcentration(t *testing.T) {
+
+	for _, test := range tests2 {
+
+		mass, err := MassForTargetConcentration(test.Conc, test.Vol)
+
+		if err != nil {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"got error:", err.Error(), "\n",
+			)
+		}
+
+		if !mass.EqualTo(test.Mass) {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected mass:", test.Mass.ToString(), "\n",
+				"Got mass:", mass.ToString(), "\n",
+			)
+		}
+
+	}
+}
+
+func TestVolumeForTargetMass(t *testing.T) {
+
+	for _, test := range tests2 {
+
+		vol, err := VolumeForTargetMass(test.Mass, test.Conc)
+
+		if err != nil {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"got error:", err.Error(), "\n",
+			)
+		}
+
+		if !vol.EqualTo(test.Vol) {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected vol:", test.Vol.ToString(), "\n",
+				"Got vol:", vol.ToString(), "\n",
+			)
+		}
+
+	}
+}
+
+func TestMasstoVolume(t *testing.T) {
+
+	for _, test := range tests3 {
+
+		vol := MasstoVolume(test.Mass, test.Density)
+
+		/*
+			if err != nil {
+				t.Error(
+					"for", fmt.Sprintf("%+v", test), "\n",
+					"got error:", err.Error(), "\n",
+				)
+			}
+		*/
+		if !vol.EqualTo(test.Vol) {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected vol:", test.Vol.ToString(), "\n",
+				"Got vol:", vol.ToString(), "\n",
+			)
+		}
+
+	}
+}
+
+func TestVolumetoMass(t *testing.T) {
+
+	for _, test := range tests3 {
+
+		mass := VolumetoMass(test.Vol, test.Density)
+
+		/*
+			if err != nil {
+				t.Error(
+					"for", fmt.Sprintf("%+v", test), "\n",
+					"got error:", err.Error(), "\n",
+				)
+			}
+		*/
+		if !mass.EqualTo(test.Mass) {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected mass:", test.Mass.ToString(), "\n",
+				"Got mass:", mass.ToString(), "\n",
 			)
 		}
 

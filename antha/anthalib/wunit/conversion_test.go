@@ -1,4 +1,3 @@
-// make_plate_library_test.go
 package wunit
 
 import (

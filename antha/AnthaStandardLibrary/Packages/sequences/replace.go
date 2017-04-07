@@ -196,6 +196,12 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 		if err != nil {
 			return newseq, err
 		}
+		if tempseq != sequence.Seq {
+			return tempseq, fmt.Errorf("New sequence is the same as old sequence")
+		}
+		newseq = sequence.Dup()
+		newseq.Seq = tempseq.Seq
+		return newseq, nil
 	}
 
 	if len(seqsfound) == 2 {
@@ -212,10 +218,16 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 		if err != nil {
 			return newseq, err
 		}
+		if tempseq != sequence.Seq {
+			return newseq, fmt.Errorf("New sequence is the same as old sequence")
+		}
+		newseq = sequence.Dup()
+		newseq.Seq = tempseq.Seq
+		return newseq, nil
 
 	}
 
-	newseq = sequence
+	newseq = sequence.Dup()
 	newseq.Seq = tempseq.Seq
 	return
 }

@@ -167,6 +167,7 @@ func RemoveSiteOnestrand(sequence wtype.DNASequence, enzymeseq string, otherseqs
 	return
 }
 
+// todo: fix this func
 func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, otherseqstoavoid []string) (newseq wtype.DNASequence, err error) {
 
 	var tempseq wtype.DNASequence
@@ -194,9 +195,9 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 
 		tempseq, err = RemoveSiteOnestrand(sequence, thingtoreplace, allthingstoavoid)
 		if err != nil {
-			return newseq, err
+			return tempseq, err
 		}
-		if tempseq != sequence.Seq {
+		if tempseq.Seq != sequence.Seq {
 			return tempseq, fmt.Errorf("New sequence is the same as old sequence")
 		}
 		newseq = sequence.Dup()
@@ -218,7 +219,7 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 		if err != nil {
 			return newseq, err
 		}
-		if tempseq != sequence.Seq {
+		if tempseq.Seq != sequence.Seq {
 			return newseq, fmt.Errorf("New sequence is the same as old sequence")
 		}
 		newseq = sequence.Dup()

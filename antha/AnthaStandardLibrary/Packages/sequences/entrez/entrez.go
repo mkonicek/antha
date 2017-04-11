@@ -26,13 +26,11 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	//"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	parser "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	biogo "github.com/biogo/ncbi/entrez"
@@ -51,9 +49,6 @@ var (
 func RetrieveRecords(query string, database string, Max int, ReturnType string, out string) (filename string, contentsinbytes []byte, err error) {
 	// query database
 
-	//tempdir, err := ioutil.TempDir(anthapath.Path(), "entrez")
-	//filename = filepath.Join(tempdir, out)
-
 	filename = out // filepath.Join(anthapath.Path(), out)
 
 	h := biogo.History{}
@@ -63,9 +58,6 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 	}
 
 	var of *os.File
-	/*if err := os.Mkdir(filepath.Dir(out), 0777); err != nil {
-		return err
-	}*/
 
 	dir, _ := filepath.Split(filename)
 
@@ -133,14 +125,10 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 	_, err = buffer.Read(contentsinbytes)
 
 	of.Close()
-	//contentsinbytes, err = ioutil.ReadAll(of)
-	/*if err != nil {
-		fmt.Println("line 153", err.Error())
-	}*/
 	return filename, contentsinbytes, err
 }
 
-// This retrieves sequence of any type from any NCBI sequence database --------------------------------------------------------------------------
+// This retrieves sequence of any type from any NCBI sequence database
 func RetrieveSequence(id string, database string, filename wtype.File) (seq wtype.DNASequence, filepathandname string, err error) {
 
 	filepathandname, _, err = RetrieveRecords(id, database, 1, "gb", filename.Name)

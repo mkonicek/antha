@@ -77,7 +77,7 @@ func genbanktoFeaturelessDNASequence(filename string) (wtype.DNASequence, error)
 		return wtype.DNASequence{}, err
 	}
 
-	return HandleGenbank(genbanklines)
+	return handleGenbank(genbanklines)
 }
 
 //Parses file of type .gb to DNASequence. Features are not annotated
@@ -95,20 +95,17 @@ func GenbanktoFeaturelessDNASequence(data []byte) (wtype.DNASequence, error) {
 		return wtype.DNASequence{}, err
 	}
 
-	return HandleGenbank(genbanklines)
+	return handleGenbank(genbanklines)
 }
 
-//Parses filename of type .gb to DNASequence. Features are annotated //change to type file
-func GenbankFeaturetoDNASequence(filename string, featurename string) (wtype.DNASequence, error) {
+//Parses filename of type .gb to DNASequence. Features are annotated
+func GenbankFeaturetoDNASequence(data []byte, featurename string) (wtype.DNASequence, error) {
 	line := ""
 	genbanklines := make([]string, 0)
-	file, err := os.Open(filename)
-	if err != nil {
-		return wtype.DNASequence{}, err
-	}
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	buffer := bytes.NewBuffer(data)
+	scanner := bufio.NewScanner(buffer)
+
 	for scanner.Scan() {
 		line = fmt.Sprintln(scanner.Text())
 		genbanklines = append(genbanklines, line)
@@ -118,7 +115,7 @@ func GenbankFeaturetoDNASequence(filename string, featurename string) (wtype.DNA
 		return wtype.DNASequence{}, err
 	}
 
-	annotated, err := HandleGenbank(genbanklines)
+	annotated, err := handleGenbank(genbanklines)
 	if err != nil {
 		return wtype.DNASequence{}, err
 	}
@@ -136,10 +133,7 @@ func GenbankFeaturetoDNASequence(filename string, featurename string) (wtype.DNA
 }
 
 func GenbanktoAnnotatedSeq(file []byte) (annotated wtype.DNASequence, err error) {
-	//contents, err := file.ReadAll()
-	//if err != nil {
-	//	return
-	//}
+
 	annotated, err = genbankContentstoAnnotatedSeq(file)
 	return
 }
@@ -160,7 +154,7 @@ func genbankContentstoAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNAS
 		return
 	}
 
-	annotated, err = HandleGenbank(genbanklines)
+	annotated, err = handleGenbank(genbanklines)
 
 	return
 }
@@ -185,7 +179,7 @@ func genbanktoAnnotatedSeq(filename string) (annotated wtype.DNASequence, err er
 		return wtype.DNASequence{}, err
 	}
 
-	return HandleGenbank(genbanklines)
+	return handleGenbank(genbanklines)
 }
 
 func ParseGenbankfile(file *os.File) (wtype.DNASequence, error) {
@@ -203,12 +197,12 @@ func ParseGenbankfile(file *os.File) (wtype.DNASequence, error) {
 		return wtype.DNASequence{}, err
 	}
 
-	return HandleGenbank(genbanklines)
+	return handleGenbank(genbanklines)
 }
 
-func HandleGenbank(lines []string) (annotatedseq wtype.DNASequence, err error) {
+func handleGenbank(lines []string) (annotatedseq wtype.DNASequence, err error) {
 	if lines[0][0:5] == `LOCUS` {
-		name, _, _, circular, _, err := Locusline(lines[0])
+		name, _, _, circular, _, err := locusLine(lines[0])
 
 		if err != nil {
 			return annotatedseq, err
@@ -216,14 +210,14 @@ func HandleGenbank(lines []string) (annotatedseq wtype.DNASequence, err error) {
 
 		seq := HandleSequence(lines)
 
-		features := HandleFeatures(lines, seq, "DNA")
+		features := handleFeatures(lines, seq, "DNA")
 		annotatedseq, err = wtype.MakeAnnotatedSeq(name, seq, circular, features)
 	} else {
 		err = fmt.Errorf("no LOCUS found on first line")
 	}
 	return
 }
-func Locusline(line string) (name string, seqlength int, seqtype string, circular bool, date string, err error) {
+func locusLine(line string) (name string, seqlength int, seqtype string, circular bool, date string, err error) {
 
 	fields := strings.SplitN(line, " ", 2)
 	restofline := fields[1]
@@ -239,7 +233,8 @@ func Locusline(line string) (name string, seqlength int, seqtype string, circula
 	fmt.Println(len(fields))
 	if len(fields) > 1 {
 		if len(fields) < 5 {
-			fmt.Errorf("The locusline does not contain enough elements or is not formatted correctly. Please check file.")
+			err = fmt.Errorf("The locusline does not contain enough elements or is not formatted correctly. Please check file.")
+			return
 		}
 		name = fields[0]
 		i, newerr := strconv.Atoi(fields[1])
@@ -339,14 +334,15 @@ func Featureline1(line string) (reverse bool, class string, startposition int, e
 				}
 				endposition, err = strconv.Atoi(strings.TrimRight(ss[1], "\n"))
 				if err != nil {
-					fmt.Println(err.Error())
+					return
 				}
+
 			}
 		}
 	}
 	return
 }
-func Featureline2(line string) (description string, found bool) {
+func featureline2(line string) (description string, found bool) {
 
 	fields := strings.Split(line, " ")
 
@@ -417,7 +413,7 @@ func Featureline2(line string) (description string, found bool) {
 	return
 }
 
-func HandleFeature(lines []string) (description string, reverse bool, class string, startposition int, endposition int, err error) {
+func handleFeature(lines []string) (description string, reverse bool, class string, startposition int, endposition int, err error) {
 
 	if len(lines) > 0 {
 		reverse, class, startposition, endposition, err := Featureline1(lines[0])
@@ -428,7 +424,7 @@ func HandleFeature(lines []string) (description string, reverse bool, class stri
 		}
 
 		for i := 1; i < len(lines); i++ {
-			description, found := Featureline2(lines[i])
+			description, found := featureline2(lines[i])
 			if found {
 				return description, reverse, class, startposition, endposition, err
 			}
@@ -438,7 +434,7 @@ func HandleFeature(lines []string) (description string, reverse bool, class stri
 	}
 	return
 }
-func DetectFeature(lines []string) (detected bool, startlineindex int, endlineindex int) {
+func detectFeature(lines []string) (detected bool, startlineindex int, endlineindex int) {
 
 	for i := 0; i < len(lines); i++ {
 
@@ -450,7 +446,7 @@ func DetectFeature(lines []string) (detected bool, startlineindex int, endlinein
 			startlineindex = i
 		}
 
-		_, found := Featureline2(lines[i])
+		_, found := featureline2(lines[i])
 		if found {
 			endlineindex = i + 1
 		}
@@ -463,7 +459,7 @@ func DetectFeature(lines []string) (detected bool, startlineindex int, endlinein
 
 	return
 }
-func HandleFeatures(lines []string, seq string, seqtype string) (features []wtype.Feature) {
+func handleFeatures(lines []string, seq string, seqtype string) (features []wtype.Feature) {
 	featurespresent := false
 	for _, line := range lines {
 		if strings.Contains(line, "FEATURES") {
@@ -486,10 +482,10 @@ func HandleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 	linesatstart := lines
 	for i := 0; i < len(linesatstart); i++ {
 
-		detected, start, end := DetectFeature(lines)
+		detected, start, end := detectFeature(lines)
 
 		if detected {
-			description, reverse, class, startposition, endposition, err := HandleFeature(lines[start:end])
+			description, reverse, class, startposition, endposition, err := handleFeature(lines[start:end])
 			if err != nil {
 				panic(err.Error())
 			}

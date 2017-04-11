@@ -28,7 +28,6 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	//"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -158,19 +157,11 @@ func FASTAtoDNASeqs(data []byte) (seqs []wtype.DNASequence, err error) {
 
 func FastatoDNASequences(inputfilename []byte) (seqs []wtype.DNASequence, err error) {
 	//fastaFh, err := inputfilename.ReadAll()
-	//if err != nil {
-	//	return
-	//}
-	//defer fastaFh.Close()
 
 	seqs = make([]wtype.DNASequence, 0)
 
 	var seq wtype.DNASequence
 
-	/*records := make([][]string, 0)
-	seq := make([]string, 0)
-	seq = []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
-	records = append(records, seq)*/
 	for _, record := range FastaParse(inputfilename) {
 		plasmidstatus := ""
 		//seqtype := "DNA"
@@ -224,7 +215,6 @@ func FastaParse(fastaFh []byte) []Fasta {
 	buffer := bytes.NewBuffer(fastaFh)
 
 	scanner := bufio.NewScanner(buffer)
-	// scanner.Split(bufio.ScanLines)
 	header := ""
 	var seq bytes.Buffer
 
@@ -273,9 +263,7 @@ func Fastatocsv(inputfilename wtype.File, outputfileprefix string) (csvfile *os.
 	if err != nil {
 		return
 	}
-	//defer fastaFh.Close()
 
-	//csvfile, err := os.Create(outputfilename)
 	csvfile, err = ioutil.TempFile(os.TempDir(), "csv")
 	if err != nil {
 		return

@@ -24,8 +24,6 @@
 package sequences
 
 import (
-	//"fmt"
-	// "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"strconv"
 	"strings"
 
@@ -86,8 +84,6 @@ func MakeFeature(name string, seq string, start int, end int, sequencetype strin
 		orf, orftrue := FindORF(seq)
 		if orftrue == true {
 			feature.Protseq = orf.ProtSeq
-			//feature.StartPosition = orf.StartPosition
-			//feature.EndPosition = orf.EndPosition
 		}
 	}
 	return feature

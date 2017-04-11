@@ -116,11 +116,7 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 
 		// initialise parts into map
 		partslist[key] = value
-		/*if _, alreadyinmap := initialpartslist[key]; !alreadyinmap {
-			partslist[key] = value
-			fmt.Println("adding ", key, " to inventory")
-		}*/
-		// add by name too
+
 		if _, alreadyinmap := initialpartslist[value.Nm]; !alreadyinmap {
 			partslist[value.Nm] = value
 			fmt.Println("adding ", value.Nm, " to inventory")
@@ -135,7 +131,7 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 		if err != nil {
 			fmt.Errorf("File cannot be read")
 		}
-		//file := filepath.Join(anthapath.Path(), filename) //best to refactor here...
+
 		filename := file.Name
 		if filepath.Ext(filename) == ".fasta" {
 			sequences, _ := parser.FastatoDNASequences(data)

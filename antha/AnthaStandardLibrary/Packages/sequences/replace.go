@@ -441,10 +441,10 @@ func ReplaceCodoninORF(sequence wtype.DNASequence, startandendoforf StartEndPair
 			}
 
 			options := CodonOptions(codontochange)
+
 			for _, option := range options {
-				tempseq := ReplacePosition(sequence.Seq, pair, option)
-				seqslice := tempseq[startandendoforf[0]-1 : startandendoforf[1]]
-				temporf, _ := FindORF(seqslice)
+				tempseq := ReplacePosition(seqslice, pair, option)
+				temporf, _ := FindORF(tempseq)
 
 				sitesfound := search.Findallthings(tempseq, seqstoavoid)
 

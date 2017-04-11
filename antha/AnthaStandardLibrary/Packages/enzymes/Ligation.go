@@ -29,6 +29,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
+
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -298,7 +299,11 @@ func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence,
 		return insert, err
 	}
 
-	partialassemblies, _, err := JoinXnumberofparts(first, rest, enzyme)
+	partialassemblies, fullPlasmids, err := JoinXnumberofparts(first, rest, enzyme)
+
+	if len(fullPlasmids) > 0 {
+		return insert, fmt.Errorf("Insert sequence expected to self-ligate: %+v", fullPlasmids)
+	}
 
 	var seqs []wtype.DNASequence
 
@@ -310,7 +315,30 @@ func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence,
 		seqs = append(seqs, seq)
 	}
 
-	insert = biggest(seqs)
+	_, _, _, fullAssembly, err := Assemblysimulator(assemblyparameters)
+
+	if err != nil {
+		return insert, err
+	}
+
+	var biggest wtype.DNASequence
+
+	for i, partAssembly := range partialassemblies {
+		assembly, err := partAssembly.ToDNASequence("Fragment" + strconv.Itoa(i+1))
+
+		if err != nil {
+			return insert, err
+		}
+		if len(FindSeqsinSeqs(fullAssembly.Seq, []string{assembly.Seq})) > 0 && len(assembly.Seq) > len(biggest.Seq) {
+			biggest = assembly
+		}
+	}
+
+	if biggest.Seq == "" {
+		return insert, fmt.Errorf("Insert sequence not calculated to be within assembled sequence %s, %s. Partial assemblies found: %+v. Original parameters: %+v", assemblyparameters.Constructname, fullAssembly.Seq, partialassemblies, assemblyparameters)
+	} else {
+		insert = biggest
+	}
 
 	insert.Nm = assemblyparameters.Constructname + "_Insert"
 

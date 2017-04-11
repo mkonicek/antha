@@ -58,7 +58,6 @@ func (feat *Feature) Coordinates() (pair []int) {
 func (annotated DNASequence) FeatureNames() (featurenames []string) {
 
 	featurenames = make([]string, 0)
-
 	for _, feature := range annotated.Features {
 		featurenames = append(featurenames, feature.Name)
 	}
@@ -70,6 +69,18 @@ func (annotated DNASequence) FeatureStart(featurename string) (featureStart int)
 	for _, feature := range annotated.Features {
 		if feature.Name == featurename {
 			featureStart = feature.StartPosition
+			return
+		}
+
+	}
+	return
+}
+
+func (annotated DNASequence) FeatureEnd(featurename string) (featureEnd int) {
+
+	for _, feature := range annotated.Features {
+		if feature.Name == featurename {
+			featureEnd = feature.EndPosition
 			return
 		}
 
@@ -112,7 +123,7 @@ func MakeAnnotatedSeq(name string, seq string, circular bool, features []Feature
 	for _, feature := range features {
 		if strings.Contains(seq, feature.DNASeq) {
 			feature.StartPosition = strings.Index(seq, feature.DNASeq)
-			feature.EndPosition = feature.EndPosition + feature.StartPosition
+			feature.EndPosition = feature.EndPosition + feature.StartPosition //This seems wrong?
 		} else if strings.Contains(seq, RevComp(feature.DNASeq)) {
 			feature.StartPosition = strings.Index(seq, feature.DNASeq)
 			feature.EndPosition = feature.EndPosition + feature.StartPosition

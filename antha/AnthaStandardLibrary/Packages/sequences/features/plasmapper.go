@@ -2,10 +2,8 @@
 package features
 
 import (
-	"path/filepath"
 	"strings"
 
-	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 
@@ -45,19 +43,21 @@ const (
 )
 */
 
+var commonFeatures string = ``
+
 var (
-	plasmapperfile string = filepath.Join(anthapath.Path(), "FSD.fasta")
+	plasmapperfile []byte = []byte(commonFeatures)
 )
 
 type FeatureMap map[string][]wtype.DNASequence
 
-func MakeFeatureMap(filename string) (featuremap FeatureMap, err error) {
+func MakeFeatureMap(contents []byte) (featuremap FeatureMap, err error) {
 
 	featuremap = make(FeatureMap)
 
 	matchingseqs := make([]wtype.DNASequence, 0)
 
-	seqs, err := parser.FastatoDNASequences(filename)
+	seqs, err := parser.FastatoDNASequences(contents)
 	if err != nil {
 		return featuremap, err
 	}
@@ -76,9 +76,10 @@ func MakeFeatureMap(filename string) (featuremap FeatureMap, err error) {
 	return
 }
 
+// should be initialised to produce a feature map from different sources
 func MakePlasmapperMap() (featuremap FeatureMap, err error) {
 
-	featuremap, err = MakeFeatureMap(plasmapperfile)
+	featuremap, err = MakeFeatureMap(plasmapperfile) //-----------------------------------------------------------------------------------
 	return
 }
 

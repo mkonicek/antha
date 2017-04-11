@@ -149,7 +149,7 @@ func stringToAssemblyParameters(str []byte) ([]enzymes.Assemblyparameters, error
 	return construct_list, nil
 }
 
-func GDXtoDNASequence(filename string) (parts_list []wtype.DNASequence, err error) {
+func gDXtoDNASequence(filename string) (parts_list []wtype.DNASequence, err error) {
 	str, _ := ioutil.ReadFile(filename)
 
 	var gdx Project
@@ -179,7 +179,7 @@ func GDXtoDNASequence(filename string) (parts_list []wtype.DNASequence, err erro
 }
 
 //This is a function to parse file type .gdx to a DNA sequence of type []wtype.DNASequence
-func GDXtoDNASequenceBinary(data []byte) (parts_list []wtype.DNASequence, err error) {
+func GDXtoDNASequence(data []byte) (parts_list []wtype.DNASequence, err error) {
 	var gdx Project
 	err = xml.Unmarshal(data, &gdx)
 	if err != nil {

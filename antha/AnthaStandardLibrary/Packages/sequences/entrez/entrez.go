@@ -26,7 +26,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"io/ioutil"
+	//"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -140,20 +140,21 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 	return filename, contentsinbytes, err
 }
 
-// This retrieves sequence of any type from any NCBI sequence database
-func RetrieveSequence(id string, database string, filename string) (seq wtype.DNASequence, filepathandname string, err error) {
+// This retrieves sequence of any type from any NCBI sequence database --------------------------------------------------------------------------
+func RetrieveSequence(id string, database string, filename wtype.File) (seq wtype.DNASequence, filepathandname string, err error) {
 
-	filepathandname, _, err = RetrieveRecords(id, database, 1, "gb", filename)
+	filepathandname, _, err = RetrieveRecords(id, database, 1, "gb", filename.Name)
 
 	if err != nil {
 		return wtype.DNASequence{}, filepathandname, err
 	}
 
-	_, err = ioutil.ReadFile(filepathandname)
+	//_, err = ioutil.ReadFile(filepathandname)
+	data, err := filename.ReadAll()
 	//contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), filename))
 
 	//file := filepath.Join(anthapath.Path(), filename)
-	seq, err = parser.GenbanktoAnnotatedSeq(filepathandname)
+	seq, err = parser.GenbanktoAnnotatedSeq(data)
 	if err != nil {
 		return wtype.DNASequence{}, filepathandname, err
 	}
@@ -163,7 +164,7 @@ func RetrieveSequence(id string, database string, filename string) (seq wtype.DN
 }
 
 // This will retrieve vector using fasta or db
-func RetrieveVector(id string, filename string) (seq wtype.DNASequence, filepathandname string, err error) {
+func RetrieveVector(id string, filename wtype.File) (seq wtype.DNASequence, filepathandname string, err error) {
 	/*//first check if vector sequence is in fasta file
 	if seq, err := parser.RetrieveSeqFromFASTA(id, filepath.Join(anthapath.Path(), "vectors.txt")); err != nil {
 		// if not in refactor, check db*/

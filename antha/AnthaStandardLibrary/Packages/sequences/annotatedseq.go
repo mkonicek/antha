@@ -25,7 +25,7 @@ package sequences
 
 import (
 	//"fmt"
-	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	// "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"strconv"
 	"strings"
 
@@ -48,38 +48,46 @@ func ORFs2Features(orfs []ORF) (features []wtype.Feature) {
 	return
 }
 
-func MakeFeature(name string, seq string, sequencetype string, class string, reverse string) (feature wtype.Feature) {
+func MakeFeature(name string, seq string, start int, end int, sequencetype string, class string, reverse string) (feature wtype.Feature) {
 
 	feature.Name = name
 	feature.DNASeq = strings.ToUpper(seq)
-
-	//features := make([]Feature,0)
-	//feature := Feature
-	//// fmt.Println("len seq =", len(seq))
 	feature.Class = class
-	if sequencetype == "aa" {
-		feature.DNASeq = RevTranslatetoNstring(seq)
-		feature.Protseq = seq
-		feature.StartPosition = 1
-		feature.EndPosition = len(feature.DNASeq)
-		// fmt.Println("len seq =", len(feature.DNASeq))
-	} else {
-		feature.DNASeq = seq
-		feature.StartPosition = 1
-		feature.EndPosition = len(seq)
-		// fmt.Println("len seq =", len(seq))
-	}
-
 	if reverse == "Reverse" {
 		feature.Reverse = true
 	}
-	if feature.Class == "orf" {
+
+	if sequencetype == "aa" {
+		feature.DNASeq = RevTranslatetoNstring(seq)
+		feature.Protseq = seq
+		feature.StartPosition = start
+		feature.EndPosition = end
+	} else {
+		if feature.Reverse == false {
+			feature.DNASeq = seq
+		}
+		if feature.Reverse == true {
+			seq = wtype.RevComp(seq)
+			feature.DNASeq = seq
+		}
+		feature.StartPosition = start
+		feature.EndPosition = end
+
+		if feature.Class == "gene" || feature.Class == "CDS" {
+			orf, orftrue := FindORF(seq)
+			if orftrue == true {
+				feature.Protseq = orf.ProtSeq
+
+			}
+		}
+	}
+
+	if feature.Class == "ORF" || feature.Class == "orf" {
 		orf, orftrue := FindORF(seq)
 		if orftrue == true {
-			// fmt.Println("orftrue!)")
 			feature.Protseq = orf.ProtSeq
-			feature.StartPosition = orf.StartPosition
-			feature.EndPosition = orf.EndPosition
+			//feature.StartPosition = orf.StartPosition
+			//feature.EndPosition = orf.EndPosition
 		}
 	}
 	return feature

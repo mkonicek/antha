@@ -26,46 +26,13 @@ import (
 	"fmt"
 	//"os"
 	"path/filepath"
-	"strings"
+	//"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func DNAFiletoDNASequence(filename string, plasmid bool) (sequences []wtype.DNASequence, err error) {
-
-	sequences = make([]wtype.DNASequence, 0)
-	var seqs []wtype.DNASequence
-	var seq wtype.DNASequence
-	switch fn := filename; {
-	case strings.HasSuffix(fn, ".gdx"):
-
-		seqs, err = GDXtoDNASequence(filename)
-		for _, seq := range seqs {
-			sequences = append(sequences, seq)
-		}
-	case strings.HasSuffix(fn, ".fasta"):
-		seqs, err = FastatoDNASequences(filename)
-		for _, seq := range seqs {
-			sequences = append(sequences, seq)
-		}
-	case strings.HasSuffix(fn, ".gb"):
-
-		seq, err = GenbanktoFeaturelessDNASequence(filename)
-
-		sequences = append(sequences, seq)
-	default:
-		err = fmt.Errorf("non valid sequence file")
-	}
-
-	if err != nil {
-		return seqs, err
-	}
-	//}
-	return
-}
-
 // Creates a DNASequence from a sequence file of format: .gdx .fasta .gb
-func DNAFileToDNASequenceBinary(filename wtype.File, plasmid bool) (sequences []wtype.DNASequence, err error) {
+func DNAFileToDNASequence(filename wtype.File, plasmid bool) (sequences []wtype.DNASequence, err error) {
 
 	data, err := filename.ReadAll()
 	if err != nil {
@@ -77,17 +44,17 @@ func DNAFileToDNASequenceBinary(filename wtype.File, plasmid bool) (sequences []
 
 	switch fn := filename.Name; {
 	case filepath.Ext(fn) == ".gdx":
-		seqs, err = GDXtoDNASequenceBinary(data)
+		seqs, err = GDXtoDNASequence(data)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
 	case filepath.Ext(fn) == ".fasta":
-		seqs, err = FASTAtoDNASeqsBinary(data)
+		seqs, err = FASTAtoDNASeqs(data)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
 	case filepath.Ext(fn) == ".gb":
-		seq, err = GenbanktoFeaturelessDNASequenceBinary(data)
+		seq, err = GenbanktoFeaturelessDNASequence(data)
 		sequences = append(sequences, seq)
 	default:
 		err = fmt.Errorf("non valid sequence file")

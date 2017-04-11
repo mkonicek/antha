@@ -28,7 +28,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"io"
+	//"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -53,10 +53,10 @@ func RetrieveSeqFromFASTA(id string, filename string) (seq wtype.DNASequence, er
 		return
 	}
 
-	fastaFh := bytes.NewReader(allparts)
+	//fastaFh := bytes.NewReader(allparts)
 
 	// then retrieve the particular record
-	for _, record := range FastaParse(fastaFh) {
+	for _, record := range FastaParse(allparts) {
 		if strings.Contains(record.Id, id) {
 			seq = wtype.DNASequence{record.Id, record.Seq, true, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
 			return
@@ -86,10 +86,10 @@ func FASTAtoLinearDNASeqs(filename string) (seqs []wtype.DNASequence, err error)
 		return
 	}
 
-	fastaFh := bytes.NewReader(allparts)
+	//fastaFh := bytes.NewReader(allparts)
 
 	// then retrieve the particular record
-	for _, record := range FastaParse(fastaFh) {
+	for _, record := range FastaParse(allparts) {
 		//if strings.Contains(record.Id, id) {
 		seq = wtype.DNASequence{record.Id, record.Seq, false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
 
@@ -115,10 +115,10 @@ func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error
 		return
 	}
 
-	fastaFh := bytes.NewReader(allparts)
+	//fastaFh := bytes.NewReader(allparts)
 
 	// then retrieve the particular record
-	for _, record := range FastaParse(fastaFh) {
+	for _, record := range FastaParse(allparts) {
 		//if strings.Contains(record.Id, id) {
 		seq = wtype.DNASequence{record.Id, record.Seq, true, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
 
@@ -130,16 +130,16 @@ func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error
 }
 
 // This will retrieve seq from FASTA file of type file
-func FASTAtoDNASeqsBinary(data []byte) (seqs []wtype.DNASequence, err error) {
+func FASTAtoDNASeqs(data []byte) (seqs []wtype.DNASequence, err error) {
 	if len(data) == 0 {
 		return seqs, fmt.Errorf("Cannot parse fasta file. File is empty.")
 	} else {
-		fastaFh := bytes.NewReader(data)
+		//fastaFh := bytes.NewReader(data)
 
 		seqs = make([]wtype.DNASequence, 0)
 
 		var seq wtype.DNASequence
-		for _, record := range FastaParse(fastaFh) {
+		for _, record := range FastaParse(data) {
 			plasmidstatus := ""
 
 			if strings.Contains(strings.ToUpper(record.Desc), "PLASMID") || strings.Contains(strings.ToUpper(record.Desc), "CIRCULAR") || strings.Contains(strings.ToUpper(record.Desc), "VECTOR") {
@@ -156,12 +156,12 @@ func FASTAtoDNASeqsBinary(data []byte) (seqs []wtype.DNASequence, err error) {
 	}
 }
 
-func FastatoDNASequences(inputfilename string) (seqs []wtype.DNASequence, err error) {
-	fastaFh, err := os.Open(inputfilename)
-	if err != nil {
-		return
-	}
-	defer fastaFh.Close()
+func FastatoDNASequences(inputfilename []byte) (seqs []wtype.DNASequence, err error) {
+	//fastaFh, err := inputfilename.ReadAll()
+	//if err != nil {
+	//	return
+	//}
+	//defer fastaFh.Close()
 
 	seqs = make([]wtype.DNASequence, 0)
 
@@ -171,7 +171,7 @@ func FastatoDNASequences(inputfilename string) (seqs []wtype.DNASequence, err er
 	seq := make([]string, 0)
 	seq = []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
 	records = append(records, seq)*/
-	for _, record := range FastaParse(fastaFh) {
+	for _, record := range FastaParse(inputfilename) {
 		plasmidstatus := ""
 		//seqtype := "DNA"
 		//class := "not specified"
@@ -219,10 +219,11 @@ func Build_fasta(header string, seq bytes.Buffer) (Record Fasta) {
 
 // new new version
 
-func FastaParse(fastaFh io.Reader) []Fasta {
+func FastaParse(fastaFh []byte) []Fasta {
 	var outputs []Fasta
+	buffer := bytes.NewBuffer(fastaFh)
 
-	scanner := bufio.NewScanner(fastaFh)
+	scanner := bufio.NewScanner(buffer)
 	// scanner.Split(bufio.ScanLines)
 	header := ""
 	var seq bytes.Buffer
@@ -267,12 +268,12 @@ func FastaParse(fastaFh io.Reader) []Fasta {
 	return outputs
 }
 
-func Fastatocsv(inputfilename string, outputfileprefix string) (csvfile *os.File, err error) {
-	fastaFh, err := os.Open(inputfilename)
+func Fastatocsv(inputfilename wtype.File, outputfileprefix string) (csvfile *os.File, err error) {
+	fastaFh, err := inputfilename.ReadAll()
 	if err != nil {
 		return
 	}
-	defer fastaFh.Close()
+	//defer fastaFh.Close()
 
 	//csvfile, err := os.Create(outputfilename)
 	csvfile, err = ioutil.TempFile(os.TempDir(), "csv")

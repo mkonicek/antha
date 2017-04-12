@@ -81,7 +81,11 @@ func genbanktoFeaturelessDNASequence(filename string) (wtype.DNASequence, error)
 }
 
 //Parses file of type .gb to DNASequence. Features are not annotated
-func GenbanktoFeaturelessDNASequence(data []byte) (wtype.DNASequence, error) {
+func GenbanktoFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence, error) {
+	data, err := sequenceFile.ReadAll()
+	if err != nil {
+		fmt.Errorf("Error reading file. Please check file.")
+	}
 	line := ""
 	genbanklines := make([]string, 0)
 	buffer := bytes.NewBuffer(data)
@@ -132,19 +136,19 @@ func GenbankFeaturetoDNASequence(data []byte, featurename string) (wtype.DNASequ
 	return standardseq, fmt.Errorf(errstr)
 }
 
-func GenbanktoAnnotatedSeq(file []byte) (annotated wtype.DNASequence, err error) {
-
-	annotated, err = genbankContentstoAnnotatedSeq(file)
+func GenbanktoAnnotatedSeq(file wtype.File) (annotated wtype.DNASequence, err error) {
+	data, err := file.ReadAll()
+	annotated, err = GenbankContentstoAnnotatedSeq(data)
 	return
 }
 
-func genbankContentstoAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNASequence, err error) {
+func GenbankContentstoAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNASequence, err error) {
 	line := ""
 	genbanklines := make([]string, 0)
 
-	file := bytes.NewBuffer(contentsinbytes)
+	data := bytes.NewBuffer(contentsinbytes)
 
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(data)
 	for scanner.Scan() {
 		line = fmt.Sprintln(scanner.Text())
 		genbanklines = append(genbanklines, line)
@@ -276,7 +280,7 @@ func Cleanup(line string) (cleanarray []string) {
 	return
 }
 
-func Featureline1(line string) (reverse bool, class string, startposition int, endposition int, err error) {
+func featureline1(line string) (reverse bool, class string, startposition int, endposition int, err error) {
 
 	newarray := Cleanup(line)
 
@@ -416,7 +420,7 @@ func featureline2(line string) (description string, found bool) {
 func handleFeature(lines []string) (description string, reverse bool, class string, startposition int, endposition int, err error) {
 
 	if len(lines) > 0 {
-		reverse, class, startposition, endposition, err := Featureline1(lines[0])
+		reverse, class, startposition, endposition, err := featureline1(lines[0])
 
 		if err != nil {
 			fmt.Errorf("Error with Featureline1 func", lines[0])

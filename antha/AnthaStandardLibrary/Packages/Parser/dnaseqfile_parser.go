@@ -24,37 +24,31 @@ package parser
 
 import (
 	"fmt"
-	//"os"
 	"path/filepath"
-	//"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 // Creates a DNASequence from a sequence file of format: .gdx .fasta .gb
-func DNAFileToDNASequence(filename wtype.File, plasmid bool) (sequences []wtype.DNASequence, err error) {
+func DNAFileToDNASequence(sequenceFile wtype.File, plasmid bool) (sequences []wtype.DNASequence, err error) {
 
-	data, err := filename.ReadAll()
-	if err != nil {
-		fmt.Errorf("Cannot parse file. File is empty.")
-	}
 	sequences = make([]wtype.DNASequence, 0)
 	var seqs []wtype.DNASequence
 	var seq wtype.DNASequence
 
-	switch fn := filename.Name; {
+	switch fn := sequenceFile.Name; {
 	case filepath.Ext(fn) == ".gdx":
-		seqs, err = GDXtoDNASequence(data)
+		seqs, err = GDXtoDNASequence(sequenceFile)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
 	case filepath.Ext(fn) == ".fasta":
-		seqs, err = FASTAtoDNASeqs(data)
+		seqs, err = FASTAtoDNASeqs(sequenceFile)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
 	case filepath.Ext(fn) == ".gb":
-		seq, err = GenbanktoFeaturelessDNASequence(data)
+		seq, err = GenbanktoFeaturelessDNASequence(sequenceFile)
 		sequences = append(sequences, seq)
 	default:
 		err = fmt.Errorf("non valid sequence file")

@@ -344,7 +344,7 @@ func TestGenbanktoAnnotatedSeq(t *testing.T) {
 
 	for _, test := range tests {
 		data := test.fileContents
-		sequence, err := GenbanktoAnnotatedSeq(data)
+		sequence, err := GenbankContentstoAnnotatedSeq(data)
 
 		if err != nil {
 			t.Error(

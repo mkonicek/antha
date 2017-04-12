@@ -127,14 +127,10 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 	}
 
 	for _, file := range allfiles {
-		data, err := file.ReadAll()
-		if err != nil {
-			fmt.Errorf("File cannot be read")
-		}
 
 		filename := file.Name
 		if filepath.Ext(filename) == ".fasta" {
-			sequences, _ := parser.FastatoDNASequences(data)
+			sequences, _ := parser.FastatoDNASequences(file)
 
 			for _, seq := range sequences {
 				if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
@@ -145,7 +141,7 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 				}
 			}
 		} else if filepath.Ext(filename) == ".gb" {
-			seq, _ := parser.GenbanktoAnnotatedSeq(data)
+			seq, _ := parser.GenbanktoAnnotatedSeq(file)
 			if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
 				partslist[seq.Nm] = seq
 			} else {

@@ -129,20 +129,15 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 }
 
 // This retrieves sequence of any type from any NCBI sequence database
-func RetrieveSequence(id string, database string, filename wtype.File) (seq wtype.DNASequence, filepathandname string, err error) {
+func RetrieveSequence(id string, database string, sequenceFile wtype.File) (seq wtype.DNASequence, filepathandname string, err error) {
 
-	filepathandname, _, err = RetrieveRecords(id, database, 1, "gb", filename.Name)
+	filepathandname, _, err = RetrieveRecords(id, database, 1, "gb", sequenceFile.Name)
 
 	if err != nil {
 		return wtype.DNASequence{}, filepathandname, err
 	}
 
-	//_, err = ioutil.ReadFile(filepathandname)
-	data, err := filename.ReadAll()
-	//contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), filename))
-
-	//file := filepath.Join(anthapath.Path(), filename)
-	seq, err = parser.GenbanktoAnnotatedSeq(data)
+	seq, err = parser.GenbanktoAnnotatedSeq(sequenceFile)
 	if err != nil {
 		return wtype.DNASequence{}, filepathandname, err
 	}

@@ -57,7 +57,7 @@ func MakeFeatureMap(contents []byte) (featuremap FeatureMap, err error) {
 
 	matchingseqs := make([]wtype.DNASequence, 0)
 
-	seqs, err := parser.FastatoDNASequences(contents)
+	seqs, err := parser.FastaContentstoDNASequences(contents)
 	if err != nil {
 		return featuremap, err
 	}

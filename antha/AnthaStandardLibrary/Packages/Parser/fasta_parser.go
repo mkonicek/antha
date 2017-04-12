@@ -129,7 +129,8 @@ func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error
 }
 
 // This will retrieve seq from FASTA file of type file
-func FASTAtoDNASeqs(data []byte) (seqs []wtype.DNASequence, err error) {
+func FASTAtoDNASeqs(FastaFile wtype.File) (seqs []wtype.DNASequence, err error) {
+	data, err := FastaFile.ReadAll()
 	if len(data) == 0 {
 		return seqs, fmt.Errorf("Cannot parse fasta file. File is empty.")
 	} else {
@@ -155,30 +156,24 @@ func FASTAtoDNASeqs(data []byte) (seqs []wtype.DNASequence, err error) {
 	}
 }
 
-func FastatoDNASequences(inputfilename []byte) (seqs []wtype.DNASequence, err error) {
-	//fastaFh, err := inputfilename.ReadAll()
+// Convert a sequence file in Fasta format to an array of DNASequence.
+// If the header does not contain the key workf PLASMID, the sequence will be assumed to be linear.
+func FastatoDNASequences(sequenceFile wtype.File) (seqs []wtype.DNASequence, err error) {
+	data, err := sequenceFile.ReadAll()
 
-	seqs = make([]wtype.DNASequence, 0)
+	return FastaContentstoDNASequences(data)
+}
 
-	var seq wtype.DNASequence
+func FastaContentstoDNASequences(data []byte) (seqs []wtype.DNASequence, err error) {
 
-	for _, record := range FastaParse(inputfilename) {
+	for _, record := range FastaParse(data) {
 		plasmidstatus := ""
-		//seqtype := "DNA"
-		//class := "not specified"
+
 		if strings.Contains(strings.ToUpper(record.Desc), "PLASMID") || strings.Contains(strings.ToUpper(record.Desc), "CIRCULAR") || strings.Contains(strings.ToUpper(record.Desc), "VECTOR") {
 			plasmidstatus = "PLASMID"
 		}
-		/*	if strings.Contains(record.Desc, "Amino acid") || strings.Contains(record.Id, "aa") {
-				seqtype = "AA"
-			}
 
-			if strings.Contains(record.Desc, "Class:") {
-				uptoclass := strings.Index(record.Desc, "Class:")
-				prefix := uptoclass + len("class:")
-				class = record.Desc[prefix:]
-			}*/
-		seq, err = wtype.MakeDNASequence(record.Id, record.Seq, []string{plasmidstatus})
+		seq, err := wtype.MakeDNASequence(record.Id, record.Seq, []string{plasmidstatus})
 		if err != nil {
 			return seqs, err
 		}

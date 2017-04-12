@@ -179,7 +179,8 @@ func gDXtoDNASequence(filename string) (parts_list []wtype.DNASequence, err erro
 }
 
 //This is a function to parse file type .gdx to a DNA sequence of type []wtype.DNASequence
-func GDXtoDNASequence(data []byte) (parts_list []wtype.DNASequence, err error) {
+func GDXtoDNASequence(sequenceFile wtype.File) (parts_list []wtype.DNASequence, err error) {
+	data, err := sequenceFile.ReadAll()
 	var gdx Project
 	err = xml.Unmarshal(data, &gdx)
 	if err != nil {

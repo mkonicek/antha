@@ -123,7 +123,7 @@ func MakeAnnotatedSeq(name string, seq string, circular bool, features []Feature
 	for _, feature := range features {
 		if strings.Contains(seq, feature.DNASeq) {
 			feature.StartPosition = strings.Index(seq, feature.DNASeq)
-			feature.EndPosition = feature.EndPosition + feature.StartPosition //This seems wrong?
+			feature.EndPosition = feature.EndPosition + feature.StartPosition
 		} else if strings.Contains(seq, RevComp(feature.DNASeq)) {
 			feature.StartPosition = strings.Index(seq, feature.DNASeq)
 			feature.EndPosition = feature.EndPosition + feature.StartPosition

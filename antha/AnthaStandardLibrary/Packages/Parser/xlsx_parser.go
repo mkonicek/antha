@@ -83,7 +83,11 @@ func generateCSVFromXLSXsheetBinary(excelFileContents []byte, sheetIndex int, ou
 		var vals []string
 		if row != nil {
 			for _, cell := range row.Cells {
+
 				cellstr, err := cell.String()
+				//this is new---------------------------------------------------------------------------------------
+				cellstr = strings.TrimSpace(cellstr)
+
 				if err != nil {
 					return err
 				}

@@ -176,14 +176,14 @@ func AddL1UAdaptor(part wtype.DNASequence, assemblyStandard string, level string
 		return newpart, err
 	}
 
-	bitToAdd, _, err := lookUpOverhangs(assemblyStandard, level, class)
+	bitToAdd, bitToAdd3, err := lookUpOverhangs(assemblyStandard, level, class)
 
 	if err != nil {
 		return newpart, err
 	}
 
 	if reverseOrientation {
-		bitToAdd = wtype.RevComp(bitToAdd)
+		bitToAdd = wtype.RevComp(bitToAdd3)
 	}
 
 	bitToAdd5prime := Makeoverhang(enzyme, "5prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
@@ -205,14 +205,14 @@ func AddL1DAdaptor(part wtype.DNASequence, assemblyStandard string, level string
 	if err != nil {
 		return newpart, err
 	}
-	_, bitToAdd, err := lookUpOverhangs(assemblyStandard, level, class)
+	bitToAdd5, bitToAdd, err := lookUpOverhangs(assemblyStandard, level, class)
 
 	if err != nil {
 		return newpart, err
 	}
 
 	if reverseOrientation {
-		bitToAdd = wtype.RevComp(bitToAdd)
+		bitToAdd = wtype.RevComp(bitToAdd5)
 	}
 
 	bitToAdd3prime := Makeoverhang(enzyme, "3prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))

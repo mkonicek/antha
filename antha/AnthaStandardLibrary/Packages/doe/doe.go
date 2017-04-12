@@ -618,7 +618,7 @@ func sameFactorLevels(run1 Run, run2 Run, factor string) (same bool, err error) 
 		return
 	}
 
-	if reflect.DeepEqual(value1,value2) {
+	if reflect.DeepEqual(value1, value2) {
 		return true, nil
 	}
 
@@ -1680,6 +1680,8 @@ func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfi
 	}
 	if dxorjmp == "JMP" {
 		xlsxfile = JMPXLSXFilefromRuns(runs, outputfilename)
+	} else {
+		panic("Unknown design file format when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)")
 	}
 	return
 }
@@ -1701,6 +1703,8 @@ func RunsFromDesign(designfile string, intfactors []string, responsecolumns []in
 		if err != nil {
 			return runs, err
 		}
+	} else {
+		err = fmt.Errorf("Unknown design file format. Please specify File type as JMP or DX (Design Expert)")
 	}
 	return
 }
@@ -1722,6 +1726,8 @@ func RunsFromDesignPreResponses(designfile string, intfactors []string, dxorjmp 
 		if err != nil {
 			return runs, err
 		}
+	} else {
+		err = fmt.Errorf("Unknown design file format. Please specify File type as JMP or DX (Design Expert)")
 	}
 	return
 
@@ -1744,6 +1750,8 @@ func RunsFromDesignPreResponsesContents(designfileContents []byte, intfactors []
 		if err != nil {
 			return runs, err
 		}
+	} else {
+		err = fmt.Errorf("Unknown design file format. Please specify File type as JMP or DX (Design Expert)")
 	}
 	return
 
@@ -1835,7 +1843,7 @@ func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorc
 
 	file, err := spreadsheet.OpenBinary(bytes)
 	if err != nil {
-		return
+		panic(err.Error())
 	}
 	sheet := spreadsheet.Sheet(file, 0)
 

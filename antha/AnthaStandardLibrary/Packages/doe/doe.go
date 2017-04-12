@@ -1843,11 +1843,9 @@ func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorc
 
 	file, err := spreadsheet.OpenBinary(bytes)
 	if err != nil {
-		panic(err.Error())
+		return
 	}
 	sheet := spreadsheet.Sheet(file, 0)
-
-	//descriptors := make([]string, 0)
 
 	for j := 0; j < sheet.MaxCol; j++ {
 
@@ -1855,7 +1853,6 @@ func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorc
 		if err != nil {
 			panic(err.Error())
 		}
-		//	descriptors = append(descriptors,descriptor)
 		if strings.ToUpper(descriptor) == "PATTERN" {
 			PatternColumn = j
 			patternfound = true

@@ -45,19 +45,19 @@ var (
 // This queries the selected database saving the record to file
 // Database options are nucleotide, Protein, Gene. For full list see http://www.ncbi.nlm.nih.gov/books/NBK25497/table/chapter2.T._entrez_unique_identifiers_ui/?report=objectonly
 // Return type includes but must match the database type. See http://www.ncbi.nlm.nih.gov/books/NBK25499/table/chapter4.T._valid_values_of__retmode_and/?report=objectonly
-// Query can be any string but it is recommended to use GI number if one specific record is requred.
-func RetrieveRecords(query string, database string, Max int, ReturnType string, out string) (filename string, contentsinbytes []byte, err error) {
+// Query can be any string but it is recommended to use GI number if one specific record is required.
+func RetrieveRecords(query string, database string, Max int, ReturnType string) (contentsinbytes []byte, err error) {
 	// query database
-
-	filename = out // filepath.Join(anthapath.Path(), out)
 
 	h := biogo.History{}
 	s, err := biogo.DoSearch(database, query, nil, &h, tool, email)
 	if err != nil {
-		return filename, []byte{}, err
+		return []byte{}, err
 	}
 
 	var of *os.File
+
+	filename := "temp.gb"
 
 	dir, _ := filepath.Split(filename)
 
@@ -66,7 +66,7 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 	}
 	of, err = os.Create(filename)
 	if err != nil {
-		return filename, []byte{}, err
+		return []byte{}, err
 	}
 	defer of.Close()
 
@@ -102,13 +102,13 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 			}
 		}
 		if err != nil {
-			return filename, []byte{}, err
+			return []byte{}, err
 		}
 
 		_n, err := io.Copy(of, buf)
 		n += _n
 		if err != nil {
-			return filename, []byte{}, err
+			return []byte{}, err
 		}
 
 	}
@@ -125,35 +125,33 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 	_, err = buffer.Read(contentsinbytes)
 
 	of.Close()
-	return filename, contentsinbytes, err
+	return contentsinbytes, err
 }
 
 // This retrieves sequence of any type from any NCBI sequence database
-func RetrieveSequence(id string, database string, sequenceFile wtype.File) (seq wtype.DNASequence, filepathandname string, err error) {
+func RetrieveSequence(id string, database string) (seq wtype.DNASequence, err error) {
 
-	filepathandname, _, err = RetrieveRecords(id, database, 1, "gb", sequenceFile.Name)
+	contents, err := RetrieveRecords(id, database, 1, "gb")
 
 	if err != nil {
-		return wtype.DNASequence{}, filepathandname, err
+		return wtype.DNASequence{}, err
 	}
 
-	seq, err = parser.GenbanktoAnnotatedSeq(sequenceFile)
+	seq, err = parser.GenbankContentsToAnnotatedSeq(contents)
 	if err != nil {
-		return wtype.DNASequence{}, filepathandname, err
+		return wtype.DNASequence{}, err
 	}
 	seq.Seq = strings.ToUpper(seq.Seq)
 
-	return seq, filepathandname, err
+	return seq, err
 }
 
 // This will retrieve vector using fasta or db
-func RetrieveVector(id string, filename wtype.File) (seq wtype.DNASequence, filepathandname string, err error) {
+func RetrieveVector(id string) (seq wtype.DNASequence, err error) {
 	/*//first check if vector sequence is in fasta file
 	if seq, err := parser.RetrieveSeqFromFASTA(id, filepath.Join(anthapath.Path(), "vectors.txt")); err != nil {
 		// if not in refactor, check db*/
-	seq, filepathandname, err = RetrieveSequence(id, "nucleotide", filename)
+	seq, err = RetrieveSequence(id, "nucleotide")
 	return
-	/*} else {
-		return seq, nil
-	}*/
+
 }

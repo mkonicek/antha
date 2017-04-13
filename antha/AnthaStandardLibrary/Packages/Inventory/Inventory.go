@@ -141,7 +141,7 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 				}
 			}
 		} else if filepath.Ext(filename) == ".gb" {
-			seq, _ := parser.GenbanktoAnnotatedSeq(file)
+			seq, _ := parser.GenbankToAnnotatedSeq(file)
 			if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
 				partslist[seq.Nm] = seq
 			} else {

@@ -104,11 +104,14 @@ func rotate_vector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASeq
 
 	// we just ensure the first one is first in the sequence... if there's more than one
 	// it's not our problem
+	if len(vector.Seq) == 0 {
+		return ret, fmt.Errorf("No Sequence found for %s so cannot rotate", vector.Nm)
+	}
 
 	ix := strings.Index(strings.ToUpper(ret.Seq), strings.ToUpper(enzyme.RecognitionSequence))
 
 	if ix == -1 {
-		err := fmt.Errorf("No restriction sites found in vector - cannot rotate")
+		err := fmt.Errorf("No restriction sites for %s found in vector %s - cannot rotate", enzyme.Name, vector.Nm)
 		return ret, err
 	}
 
@@ -158,7 +161,7 @@ func rotate_vector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASeq
 func JoinXnumberofparts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
 
 	if vector.Seq == "" {
-		err = fmt.Errorf("No Vector sequence found")
+		err = fmt.Errorf("No Vector sequence found for vector %s", vector.Nm)
 		return assembledfragments, plasmidproducts, err
 	}
 	// there are two cases: either the vector comes in same way parts do
@@ -315,7 +318,7 @@ func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence,
 	insert.Nm = assemblyparameters.Constructname + "_Insert"
 
 	if err != nil {
-		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
+		err = fmt.Errorf("Failure Calculating Insert fragment after digestion: %s", err.Error())
 		return insert, err
 	}
 
@@ -348,7 +351,6 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	failedassemblies, plasmidproductsfromXprimaryseq, err := JoinXnumberofparts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 
 	if err != nil {
-		//s = "Failure Joining fragments after digestion" //
 		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
 		s = err.Error()
 		return s, successfulassemblies, sites, newDNASequence, err
@@ -381,7 +383,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	s = "hmmm I'm confused, this doesn't seem to make any sense"
 
 	if len(plasmidproductsfromXprimaryseq) == 0 && len(failedassemblies) == 0 {
-		err = fmt.Errorf("Nope! this construct won't work: ", err)
+		err = fmt.Errorf("Nope! construct %s  won't work: %s", assemblyparameters.Constructname, err)
 		s = err.Error()
 	}
 	if len(plasmidproductsfromXprimaryseq) == 1 {

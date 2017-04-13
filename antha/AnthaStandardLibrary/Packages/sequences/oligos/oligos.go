@@ -497,7 +497,7 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 
 	feature := seq.GetFeatureByName(targetfeaturename)
 	if feature == nil {
-		panicstatement := fmt.Sprintln("feature: ", targetfeaturename, " not found amongst ", seq.FeatureNames())
+		panicstatement := fmt.Sprintf("feature: %s not found amongst features: %+v", targetfeaturename, seq.Features)
 		panic(panicstatement)
 	}
 

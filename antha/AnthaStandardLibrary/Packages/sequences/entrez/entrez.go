@@ -71,14 +71,14 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string) 
 	var of *os.File
 
 	var extension string
-	
-	if string.HasPrefix(ReturnType,"."){
+
+	if strings.HasPrefix(ReturnType, ".") {
 		extension = ReturnType
-	}else{
-		extension = "."+ ReturnType
+	} else {
+		extension = "." + ReturnType
 	}
 
-	filename := "query"+extension
+	filename := "query" + extension
 
 	dir, _ := filepath.Split(filename)
 

@@ -269,7 +269,7 @@ func RemoveDuplicateSequences(elements []wtype.DNASequence) []wtype.DNASequence 
 	return result
 }
 
-func RemoveDuplicateFeatures(elements []wtype.Feature) []wtype.Feature {
+/*func RemoveDuplicateFeatures(elements []wtype.Feature) []wtype.Feature {
 	// Use map to record duplicates as we find them.
 	encountered := map[wtype.Feature]bool{}
 	result := []wtype.Feature{}
@@ -286,4 +286,4 @@ func RemoveDuplicateFeatures(elements []wtype.Feature) []wtype.Feature {
 	}
 	// Return the new slice.
 	return result
-}
+}*/

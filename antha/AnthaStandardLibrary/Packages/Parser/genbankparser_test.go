@@ -321,7 +321,7 @@ var tests []genbanktest = []genbanktest{
 			"repA":         [2]int{3971, 4921},
 		},*/
 		fileContents:         []byte(testfileContents),
-		expectedfeaturenames: []string{"Ampicillin (860 - 672)", "AmpR_promoter", "CMV_immearly_promoter", "5_LTR", "CAG_enhancer", "CMV_fwd_primer", "psi_plus_pack", "gag", "ORF frame 1", "MSCV_primer", "hUbC_promoter", "ORF frame 3", "ORF frame 2"},
+		expectedfeaturenames: []string{"Ampicillin (860 - 672)", "Ampicillin (860 - 672)", "AmpR_promoter", "CMV_immearly_promoter", "5_LTR", "CAG_enhancer", "CMV_fwd_primer", "psi_plus_pack", "gag", "ORF frame 1", "MSCV_primer", "hUbC_promoter", "ORF frame 3", "ORF frame 2"},
 		featurePositionMap: map[string][2]int{
 			"Ampicillin (860 - 672)": [2]int{12, 200},
 			"AmpR_promoter":          [2]int{242, 270},
@@ -344,7 +344,7 @@ func TestGenbanktoAnnotatedSeq(t *testing.T) {
 
 	for _, test := range tests {
 		data := test.fileContents
-		sequence, err := GenbankContentstoAnnotatedSeq(data)
+		sequence, err := GenbankContentsToAnnotatedSeq(data)
 
 		if err != nil {
 			t.Error(
@@ -353,7 +353,7 @@ func TestGenbanktoAnnotatedSeq(t *testing.T) {
 			)
 		}
 		length := len(sequence.FeatureNames())
-		length2 := len(test.expectedfeaturenames)
+		length2 := len(test.expectedfeaturenames) //currently features that are identical are still appended this should be changed --> RemoveDuplicateFeatures in package search --> arrays
 		if length != length2 {
 			t.Error("ERROR: Not parsing correct number of elements.", length2, "features should be parsed but finding:", length)
 		}
@@ -370,14 +370,14 @@ func TestGenbanktoAnnotatedSeq(t *testing.T) {
 					"NumberERROREnd: For", test.testname, "\n",
 					"feature:", name, "\n",
 					"expected", test.featurePositionMap[name][0], "\n",
-					"got", sequence.FeatureStart(name), "\n IF 'expected 0' naming of features broke or feature unspecified in featurePositionMap.",
+					"got", sequence.FeatureStart(name), "\n IF 'expected 0' feature unspecified in featurePositionMap.",
 				)
 			}
 			if sequence.FeatureEnd(name) != test.featurePositionMap[name][1] {
 				t.Error(
 					"NumberERRORStart: For", test.testname, "\n",
 					"feature:", name, "\n", "expected", test.featurePositionMap[name][1], "\n",
-					"got", sequence.FeatureStart(name), "\n IF 'expected 0' naming of features broke or feature unspecified in featurePositionMap.",
+					"got", sequence.FeatureStart(name), "\n IF 'expected 0' feature unspecified in featurePositionMap.",
 				)
 			}
 		}

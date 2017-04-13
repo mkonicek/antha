@@ -30,7 +30,7 @@ import (
 )
 
 // Creates a DNASequence from a sequence file of format: .gdx .fasta .gb
-func DNAFileToDNASequence(sequenceFile wtype.File, plasmid bool) (sequences []wtype.DNASequence, err error) {
+func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequence, err error) {
 
 	sequences = make([]wtype.DNASequence, 0)
 	var seqs []wtype.DNASequence
@@ -51,7 +51,7 @@ func DNAFileToDNASequence(sequenceFile wtype.File, plasmid bool) (sequences []wt
 		seq, err = GenbanktoFeaturelessDNASequence(sequenceFile)
 		sequences = append(sequences, seq)
 	default:
-		err = fmt.Errorf("non valid sequence file")
+		err = fmt.Errorf("non valid sequence file format: %s", filepath.Ext(fn))
 	}
 
 	if err != nil {

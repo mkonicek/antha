@@ -30,7 +30,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -136,13 +136,16 @@ func GenbankFeaturetoDNASequence(data []byte, featurename string) (wtype.DNASequ
 	return standardseq, fmt.Errorf(errstr)
 }
 
-func GenbanktoAnnotatedSeq(file wtype.File) (annotated wtype.DNASequence, err error) {
+func GenbankToAnnotatedSeq(file wtype.File) (annotated wtype.DNASequence, err error) {
 	data, err := file.ReadAll()
-	annotated, err = GenbankContentstoAnnotatedSeq(data)
+	if err != nil {
+		return
+	}
+	annotated, err = GenbankContentsToAnnotatedSeq(data)
 	return
 }
 
-func GenbankContentstoAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNASequence, err error) {
+func GenbankContentsToAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNASequence, err error) {
 	line := ""
 	genbanklines := make([]string, 0)
 
@@ -214,8 +217,14 @@ func handleGenbank(lines []string) (annotatedseq wtype.DNASequence, err error) {
 
 		seq := HandleSequence(lines)
 
-		features := handleFeatures(lines, seq, "DNA")
-		annotatedseq, err = wtype.MakeAnnotatedSeq(name, seq, circular, features)
+		features, err := handleFeatures(lines, seq, "DNA")
+		if err != nil {
+			return annotatedseq, err
+		}
+		annotatedseq, err = sequences.MakeAnnotatedSeq(name, seq, circular, features)
+		if err != nil {
+			return annotatedseq, err
+		}
 	} else {
 		err = fmt.Errorf("no LOCUS found on first line")
 	}
@@ -294,7 +303,7 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 		if s[0] == '>' {
 			s = s[1:]
 		}
-		fmt.Println(s)
+		//fmt.Println(s)
 		if strings.Contains(s, `join`) {
 			err = fmt.Errorf("double position of feature!!", s, "adding as one feature only for now")
 			s = strings.Replace(s, "Join(", "", -1)
@@ -423,7 +432,7 @@ func handleFeature(lines []string) (description string, reverse bool, class stri
 		reverse, class, startposition, endposition, err := featureline1(lines[0])
 
 		if err != nil {
-			fmt.Errorf("Error with Featureline1 func", lines[0])
+			fmt.Errorf("Error with Featureline1 func %s", lines[0])
 			return description, reverse, class, startposition, endposition, err
 		}
 
@@ -463,7 +472,7 @@ func detectFeature(lines []string) (detected bool, startlineindex int, endlinein
 
 	return
 }
-func handleFeatures(lines []string, seq string, seqtype string) (features []wtype.Feature) {
+func handleFeatures(lines []string, seq string, seqtype string) (features []wtype.Feature, err error) {
 	featurespresent := false
 	for _, line := range lines {
 		if strings.Contains(line, "FEATURES") {
@@ -491,7 +500,7 @@ func handleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 		if detected {
 			description, reverse, class, startposition, endposition, err := handleFeature(lines[start:end])
 			if err != nil {
-				panic(err.Error())
+				return features, err
 			}
 			rev := ""
 			if reverse {
@@ -506,12 +515,12 @@ func handleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 			features = append(features, feature)
 			lines = lines[end:len(lines)]
 			if start > end {
-				return
+				return features, fmt.Errorf("Start position cannot be greater than end position in feature")
 			}
 		}
 
 	}
-	features = search.RemoveDuplicateFeatures(features)
+	//features = search.DuplicateFeatures(features)
 
 	return
 

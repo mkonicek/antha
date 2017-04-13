@@ -270,6 +270,31 @@ type Assemblyparameters struct {
 	Partsinorder  []wtype.DNASequence `json:"parts_in_order"`
 }
 
+func names(seqs []wtype.DNASequence) []string {
+	var nms []string
+	for i := range seqs {
+		nms = append(nms, seqs[i].Nm)
+	}
+	return nms
+}
+
+// returns a summary of the names of all components specified in the Assemblyparameters variable
+func (assemblyparameters Assemblyparameters) ToString() string {
+	return fmt.Sprintf("Assembly: %s, Enzyme: %s, Vector: %s, Parts: %s", assemblyparameters.Constructname, assemblyparameters.Enzymename, assemblyparameters.Vector.Nm, strings.Join(names(assemblyparameters.Partsinorder), ";"))
+
+}
+
+// returns a summary of multiple Assemblyparameters separated by a line break for each
+func AssemblySummary(params []Assemblyparameters) string {
+
+	var summaries []string
+	for _, assembly := range params {
+		summaries = append(summaries, assembly.ToString())
+	}
+
+	return strings.Join(summaries, "\n")
+}
+
 /*type AA_DNA_Assemblyparameters struct {
 	Constructname string
 	Enzymename    string

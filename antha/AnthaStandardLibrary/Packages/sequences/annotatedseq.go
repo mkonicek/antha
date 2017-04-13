@@ -24,6 +24,7 @@
 package sequences
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -87,4 +88,32 @@ func MakeFeature(name string, seq string, start int, end int, sequencetype strin
 		}
 	}
 	return feature
+}
+
+func MakeAnnotatedSeq(name string, seq string, circular bool, features []wtype.Feature) (annotated wtype.DNASequence, err error) {
+	annotated.Nm = name
+	annotated.Seq = seq
+	annotated.Plasmid = circular
+
+	var newFeatures []wtype.Feature
+
+	for _, feature := range features {
+		positions := FindSeqsinSeqs(seq, []string{feature.DNASeq})
+
+		if len(positions) > 0 {
+			for i := range positions {
+				featureSeq := positions[i]
+
+				for j := range featureSeq.Positions {
+					feature.StartPosition, feature.EndPosition = featureSeq.Positions[j], featureSeq.Positions[j]+len(featureSeq.Thing)-1
+					newFeatures = append(newFeatures, feature)
+				}
+			}
+		} else if len(positions) == 0 {
+			err = fmt.Errorf("%s sequence %s not found in sequence %s ", feature.Name, feature.DNASeq, seq)
+		}
+
+	}
+	annotated.Features = newFeatures
+	return
 }

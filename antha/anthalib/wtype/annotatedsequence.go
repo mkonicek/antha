@@ -23,7 +23,6 @@
 package wtype
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -46,6 +45,7 @@ type Feature struct {
 	EndPosition   int    `json:"end_position"`
 	DNASeq        string `json:"dna_seq"`
 	Protseq       string `json:"prot_seq"`
+	//Synonyms      map[string]string `json:"synonyms"`
 	//Status        string
 }
 
@@ -111,28 +111,6 @@ func AddFeatures(annotated DNASequence, features []Feature) (updated DNASequence
 	for _, feature := range features {
 		annotated.Features = append(annotated.Features, feature)
 	}
-	return
-}
-
-func MakeAnnotatedSeq(name string, seq string, circular bool, features []Feature) (annotated DNASequence, err error) {
-	annotated.Nm = name
-	//annotated.Seq.Nm = name
-	annotated.Seq = seq //.Seq = seq
-	annotated.Plasmid = circular
-
-	for _, feature := range features {
-		if strings.Contains(seq, feature.DNASeq) {
-			feature.StartPosition = strings.Index(seq, feature.DNASeq)
-			feature.EndPosition = feature.EndPosition + feature.StartPosition
-		} else if strings.Contains(seq, RevComp(feature.DNASeq)) {
-			feature.StartPosition = strings.Index(seq, feature.DNASeq)
-			feature.EndPosition = feature.EndPosition + feature.StartPosition
-			err = fmt.Errorf(feature.Name, " Feature only found in reverse direction")
-		} else {
-			err = fmt.Errorf(feature.Name, " not found in sequence")
-		}
-	}
-	annotated.Features = features
 	return
 }
 

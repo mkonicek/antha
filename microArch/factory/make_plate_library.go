@@ -340,6 +340,17 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
+	// Eppendorfrack with lid holders
+
+	wellxoffset = 36.0 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
+	xstart = 13.5      // distance from top left si z9fdJwde of plate to first well
+	ystart = 5.0       // distance from top left side of plate to first well
+	zstart = 7.0 - 1.0 // offset of bottom of deck to bottom of well
+
+	plate = wtype.NewLHPlate("eppendorfrack424_1.5ml_lidholder", "Unknown", 4, 3, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+
 	// greiner 384 well plate flat bottom
 
 	bottomtype = wtype.LHWBFLAT

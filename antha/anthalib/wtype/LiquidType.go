@@ -171,6 +171,8 @@ func LiquidTypeName(lt LiquidType) string {
 		return "carbon_source"
 	case LTNSrc:
 		return "nitrogen_source"
+	case LTMegaMix:
+		return "MegaMix"
 	default:
 		return "nil"
 	}

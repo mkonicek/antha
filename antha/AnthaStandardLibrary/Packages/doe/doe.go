@@ -1680,7 +1680,7 @@ func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfi
 	} else if dxorjmp == "JMP" {
 		xlsxfile = JMPXLSXFilefromRuns(runs, outputfilename)
 	} else {
-		panic("Unknown design file format when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)")
+		panic(fmt.Sprintf("Unknown design file format %s when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)", dxorjmp))
 	}
 	return
 }

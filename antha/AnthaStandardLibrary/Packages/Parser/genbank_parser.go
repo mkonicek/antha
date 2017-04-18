@@ -54,7 +54,7 @@ func GenbanktoSimpleSeq(filename string) (string, error) {
 		return "", err
 	}
 
-	return HandleSequence(genbanklines), nil
+	return handleSequence(genbanklines), nil
 }
 
 func genbanktoFeaturelessDNASequence(filename string) (wtype.DNASequence, error) {
@@ -215,7 +215,7 @@ func handleGenbank(lines []string) (annotatedseq wtype.DNASequence, err error) {
 			return annotatedseq, err
 		}
 
-		seq := HandleSequence(lines)
+		seq := handleSequence(lines)
 
 		features, err := handleFeatures(lines, seq, "DNA")
 		if err != nil {
@@ -243,7 +243,6 @@ func locusLine(line string) (name string, seqlength int, seqtype string, circula
 		}
 	}
 	fields = newarray
-	//fmt.Println(len(fields))
 	if len(fields) > 1 {
 		if len(fields) < 5 {
 			err = fmt.Errorf("The locusline does not contain enough elements or is not formatted correctly. Please check file.")
@@ -296,14 +295,12 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 	class = newarray[0]
 
 	for _, s := range newarray {
-		fmt.Println(newarray)
 		if s[0] == '<' {
 			s = s[1:]
 		}
 		if s[0] == '>' {
 			s = s[1:]
 		}
-		//fmt.Println(s)
 		if strings.Contains(s, `join`) {
 			err = fmt.Errorf("double position of feature!!", s, "adding as one feature only for now")
 			s = strings.Replace(s, "Join(", "", -1)
@@ -530,7 +527,7 @@ var (
 	illegal string = "1234567890"
 )
 
-func HandleSequence(lines []string) (dnaseq string) {
+func handleSequence(lines []string) (dnaseq string) {
 	originallines := len(lines)
 	originfound := false
 

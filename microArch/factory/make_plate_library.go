@@ -234,6 +234,12 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate := wtype.NewLHPlate("DSW96", "Unknown", 8, 12, 44.1, "mm", deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates[plate.Type] = plate
 
+	// IDT/ABgene 1.2 ml storage plate AB0564
+	idtshp := wtype.NewShape("cylinder", "mm", 7, 7, 39.35)
+	idtroundwell96 := wtype.NewLHWell("IDT96", "", "", "ul", 1200, 200, idtshp, wtype.LHWBU, 7, 7, 39.35, 3, "mm")
+	plate = wtype.NewLHPlate("IDT96", "Unknown", 8, 12, 42.5, "mm", idtroundwell96, 9, 9, 0, 0, 3)
+	plates[plate.Type] = plate
+
 	// 24 well deep square well plate on riser
 
 	bottomtype := wtype.LHWBV // 0 = flat, 2 = v shaped

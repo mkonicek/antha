@@ -243,7 +243,7 @@ func locusLine(line string) (name string, seqlength int, seqtype string, circula
 		}
 	}
 	fields = newarray
-	fmt.Println(len(fields))
+	//fmt.Println(len(fields))
 	if len(fields) > 1 {
 		if len(fields) < 5 {
 			err = fmt.Errorf("The locusline does not contain enough elements or is not formatted correctly. Please check file.")

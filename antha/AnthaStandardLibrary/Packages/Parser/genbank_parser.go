@@ -301,8 +301,9 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 		if s[0] == '>' {
 			s = s[1:]
 		}
+		var warning error
 		if strings.Contains(s, `join`) {
-			err = fmt.Errorf("double position of feature!!", s, "adding as one feature only for now")
+			warning = fmt.Errorf("double position of feature!!", s, "adding as one feature only for now")
 			s = strings.Replace(s, "Join(", "", -1)
 			s = strings.Replace(s, ")", "", -1)
 			joinhandler := strings.Split(s, `,`)
@@ -311,7 +312,6 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 
 			split = strings.Split(joinhandler[1], "..")
 			endposition, err = strconv.Atoi(strings.TrimRight(split[1], "\n"))
-
 		} else {
 			if strings.Contains(s, `complement`) {
 				reverse = true
@@ -348,8 +348,13 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 				}
 
 			}
+
+		}
+		if err == nil {
+			err = warning
 		}
 	}
+
 	return
 }
 func featureline2(line string) (description string, found bool) {

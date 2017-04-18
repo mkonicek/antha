@@ -99,8 +99,8 @@ func FASTAtoLinearDNASeqs(filename string) (seqs []wtype.DNASequence, err error)
 
 }
 
-// This will retrieve seq from FASTA file of type string
-func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error) {
+// This will retrieve seq from FASTA file of type wtype.File
+func FASTAtoPlasmidDNASeqs(file wtype.File) (seqs []wtype.DNASequence, err error) {
 
 	var nofeatures []wtype.Feature
 
@@ -108,7 +108,7 @@ func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error
 
 	var seq wtype.DNASequence
 
-	allparts, err := ioutil.ReadFile(filename)
+	allparts, err := file.ReadAll()
 	if err != nil {
 		// fmt.Println("error:", err)
 		return

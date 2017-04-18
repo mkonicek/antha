@@ -1677,8 +1677,7 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfile *xlsx.File) {
 	if dxorjmp == "DX" {
 		xlsxfile = DXXLSXFilefromRuns(runs, outputfilename)
-	}
-	if dxorjmp == "JMP" {
+	} else if dxorjmp == "JMP" {
 		xlsxfile = JMPXLSXFilefromRuns(runs, outputfilename)
 	} else {
 		panic("Unknown design file format when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)")

@@ -309,9 +309,14 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 			joinhandler := strings.Split(s, `,`)
 			split := strings.Split(joinhandler[0], "..")
 			startposition, err = strconv.Atoi(split[0])
-
+			if err != nil {
+					return
+				}
 			split = strings.Split(joinhandler[1], "..")
 			endposition, err = strconv.Atoi(strings.TrimRight(split[1], "\n"))
+			if err != nil {
+					return
+				}
 		} else {
 			if strings.Contains(s, `complement`) {
 				reverse = true

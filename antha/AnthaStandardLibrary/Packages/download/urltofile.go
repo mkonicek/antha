@@ -1,45 +1,31 @@
 // Package download provides convenience functions for downloading files
-
-
 package download
 
 import (
-	"net/http"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"bytes"
 	"io"
+	"net/http"
+	"os"
 )
 
-//File takes a URL and a desired file name, and returns the whole content of the response into a wtype.DownloadFile object.
-func File(url string, fileName string) (file wtype.File, err error) {
+// File downloads the data at a url to the given filename. If there is an error, the file will contain the partially downloaded data.
+func File(url string, filename string) (err error) {
 
-	//intializing local buffer object
-	var buf bytes.Buffer
+  res, err := http.Get(url)
 
-	//requesting
-	var client http.Client
-	resp, err := client.Get(url)
 	if err != nil {
-		return file, err
+		return err
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	//passing the response body to the bytes buffer
-	if resp.StatusCode == http.StatusOK { // OK
-		_, err := io.Copy(&buf, resp.Body)
-		if err != nil {
-			return file, err
-		}
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
 
-	//creating the wtype.DownloadFile object
-	if err := file.WriteAll(buf.Bytes());
-	err != nil {
-		return file, err
+	if _, err := io.Copy(f, res.Body); err != nil {
+		return err
 	}
 
-	file.Name = fileName
-
-
-	return file, err
+	return nil
 }

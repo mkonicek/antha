@@ -704,7 +704,7 @@ func ResizeImagetoPlate(imagefilename string, plate *wtype.LHPlate, algorithm im
 
 }
 
-//ResizeImageToPlateAutoRotate will resize an image to fit the number of wells on a plate and rotate the image by 270 degrees. We treat wells as pixels.
+//ResizeImageToPlateAutoRotate will resize an image to fit the number of wells on a plate and if the image is in portrait the image will be rotated by 270 degrees to optimise resolution on the plate.
 func ResizeImagetoPlateAutoRotate(imagefilename string, plate *wtype.LHPlate, algorithm imaging.ResampleFilter) (plateimage *goimage.NRGBA) {
 
 	// input files (just 1 in this case)

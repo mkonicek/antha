@@ -42,12 +42,12 @@ func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequenc
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
-	case filepath.Ext(fn) == ".fasta":
+	case filepath.Ext(fn) == ".fasta" || filepath.Ext(fn) == ".fa":
 		seqs, err = FASTAtoDNASeqs(sequenceFile)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
-	case filepath.Ext(fn) == ".gb":
+	case filepath.Ext(fn) == ".gb" || filepath.Ext(fn) == ".gbk":
 		seq, err = GenbanktoFeaturelessDNASequence(sequenceFile)
 		sequences = append(sequences, seq)
 	default:
@@ -57,6 +57,5 @@ func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequenc
 	if err != nil {
 		return seqs, err
 	}
-	//}
 	return
 }

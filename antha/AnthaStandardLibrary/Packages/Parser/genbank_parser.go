@@ -26,59 +26,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
-
-func GenbanktoSimpleSeq(filename string) (string, error) {
-	var line string
-	genbanklines := make([]string, 0)
-	file, err := os.Open(filename)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line = fmt.Sprintln(scanner.Text())
-		genbanklines = append(genbanklines, line)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-
-	return handleSequence(genbanklines), nil
-}
-
-func genbanktoFeaturelessDNASequence(filename string) (wtype.DNASequence, error) {
-	line := ""
-	genbanklines := make([]string, 0)
-	var file *os.File
-	file, err := os.Open(filename)
-	if err != nil {
-		return wtype.DNASequence{}, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line = fmt.Sprintln(scanner.Text())
-		genbanklines = append(genbanklines, line)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return wtype.DNASequence{}, err
-	}
-
-	return handleGenbank(genbanklines)
-}
 
 //Parses file of type .gb to DNASequence. Features are not annotated
 func GenbanktoFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence, error) {
@@ -102,10 +55,16 @@ func GenbanktoFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence
 	return handleGenbank(genbanklines)
 }
 
-//Parses filename of type .gb to DNASequence. Features are annotated
-func GenbankFeaturetoDNASequence(data []byte, featurename string) (wtype.DNASequence, error) {
+//Parses a feature from a genbank file into a DNASequence.
+func GenbankFeaturetoDNASequence(file wtype.File, featurename string) (wtype.DNASequence, error) {
 	line := ""
 	genbanklines := make([]string, 0)
+
+	data, err := file.ReadAll()
+
+	if err != nil {
+		return wtype.DNASequence{}, err
+	}
 
 	buffer := bytes.NewBuffer(data)
 	scanner := bufio.NewScanner(buffer)
@@ -136,6 +95,7 @@ func GenbankFeaturetoDNASequence(data []byte, featurename string) (wtype.DNASequ
 	return standardseq, fmt.Errorf(errstr)
 }
 
+// parses a genbank file into a DNASEquence making features from annotations
 func GenbankToAnnotatedSeq(file wtype.File) (annotated wtype.DNASequence, err error) {
 	data, err := file.ReadAll()
 	if err != nil {
@@ -145,6 +105,7 @@ func GenbankToAnnotatedSeq(file wtype.File) (annotated wtype.DNASequence, err er
 	return
 }
 
+// parses contents of a genbank file into a DNASEquence making features from annotations
 func GenbankContentsToAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNASequence, err error) {
 	line := ""
 	genbanklines := make([]string, 0)
@@ -164,47 +125,6 @@ func GenbankContentsToAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNAS
 	annotated, err = handleGenbank(genbanklines)
 
 	return
-}
-
-func genbanktoAnnotatedSeq(filename string) (annotated wtype.DNASequence, err error) {
-
-	line := ""
-	genbanklines := make([]string, 0)
-	file, err := os.Open(filename)
-	if err != nil {
-		return wtype.DNASequence{}, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line = fmt.Sprintln(scanner.Text())
-		genbanklines = append(genbanklines, line)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return wtype.DNASequence{}, err
-	}
-
-	return handleGenbank(genbanklines)
-}
-
-func ParseGenbankfile(file *os.File) (wtype.DNASequence, error) {
-	line := ""
-	genbanklines := make([]string, 0)
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line = fmt.Sprintln(scanner.Text())
-		genbanklines = append(genbanklines, line)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return wtype.DNASequence{}, err
-	}
-
-	return handleGenbank(genbanklines)
 }
 
 func handleGenbank(lines []string) (annotatedseq wtype.DNASequence, err error) {
@@ -274,7 +194,7 @@ func locusLine(line string) (name string, seqlength int, seqtype string, circula
 
 	return
 }
-func Cleanup(line string) (cleanarray []string) {
+func cleanup(line string) (cleanarray []string) {
 	fields := strings.Split(line, " ")
 
 	for _, s := range fields {
@@ -290,7 +210,7 @@ func Cleanup(line string) (cleanarray []string) {
 
 func featureline1(line string) (reverse bool, class string, startposition int, endposition int, err error) {
 
-	newarray := Cleanup(line)
+	newarray := cleanup(line)
 
 	class = newarray[0]
 
@@ -310,13 +230,13 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 			split := strings.Split(joinhandler[0], "..")
 			startposition, err = strconv.Atoi(split[0])
 			if err != nil {
-					return
-				}
+				return
+			}
 			split = strings.Split(joinhandler[1], "..")
 			endposition, err = strconv.Atoi(strings.TrimRight(split[1], "\n"))
 			if err != nil {
-					return
-				}
+				return
+			}
 		} else {
 			if strings.Contains(s, `complement`) {
 				reverse = true

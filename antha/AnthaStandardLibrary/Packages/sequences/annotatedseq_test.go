@@ -60,7 +60,7 @@ var genbanktests = []genbanktest{
 
 func TestMakeFeature(t *testing.T) {
 	for _, test := range genbanktests {
-		result := MakeFeature(test.featurename, test.seq, test.sequencetype, test.class, test.reverse)
+		result := MakeFeature(test.featurename, test.seq, test.startposition, test.endposition, test.sequencetype, test.class, test.reverse)
 
 		if result.StartPosition != test.startposition {
 			t.Error(

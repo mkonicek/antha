@@ -84,15 +84,19 @@ func ParsetoAssemblyParameters(filename string) ([]enzymes.Assemblyparameters, e
 	if str, err := ioutil.ReadFile(filename); err != nil {
 		return nil, err
 	} else {
-		return stringToAssemblyParameters(str)
+		return gdxToAssemblyParameters(str)
 	}
 }
 
-func ParseGDX(filename string) ([]enzymes.Assemblyparameters, error) {
-	if str, err := ioutil.ReadFile(filename); err != nil {
+// Parses a typeIIs assembly design file in gdx format. An example file is provided: "Assembly_Input_Controls.gdx"
+// The output will be []enzymes.AssemblyParameters which can be used in the enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.
+// The design file is expected to follow a format as shown in the provided example files
+// An error will be returned if no data is found within the .gdx design file or if the file is not in the expected format.
+func ParseGDX(file wtype.File) ([]enzymes.Assemblyparameters, error) {
+	if data, err := file.ReadAll(); err != nil {
 		return nil, err
 	} else {
-		return stringToAssemblyParameters(str)
+		return gdxToAssemblyParameters(data)
 	}
 }
 
@@ -104,15 +108,15 @@ func ParseGDXBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("no data found")
 	}
-	return stringToAssemblyParameters(data)
+	return gdxToAssemblyParameters(data)
 }
 
-func stringToAssemblyParameters(str []byte) ([]enzymes.Assemblyparameters, error) {
+func gdxToAssemblyParameters(data []byte) ([]enzymes.Assemblyparameters, error) {
 
 	var gdx Project
 
 	construct_list := make([]enzymes.Assemblyparameters, 0)
-	err := xml.Unmarshal(str, &gdx)
+	err := xml.Unmarshal(data, &gdx)
 	if err != nil {
 		return construct_list, err
 	}
@@ -147,35 +151,6 @@ func stringToAssemblyParameters(str []byte) ([]enzymes.Assemblyparameters, error
 		construct_list = append(construct_list, newconstruct)
 	}
 	return construct_list, nil
-}
-
-func gDXtoDNASequence(filename string) (parts_list []wtype.DNASequence, err error) {
-	str, _ := ioutil.ReadFile(filename)
-
-	var gdx Project
-
-	err = xml.Unmarshal(str, &gdx)
-	if err != nil {
-		return parts_list, err
-	}
-
-	parts_list = make([]wtype.DNASequence, 0)
-
-	for _, a := range gdx.DesignConstruct {
-		for _, b := range a.DNAElements {
-			var newseq wtype.DNASequence
-			for i := 0; i < len(a.DNAElements); i++ {
-				newseq.Nm = b.Label
-				newseq.Seq = b.Sequence
-				if a.Plasmid == "true" {
-					newseq.Plasmid = true
-				}
-				parts_list = append(parts_list, newseq)
-			}
-		}
-	}
-
-	return parts_list, err
 }
 
 //This is a function to parse file type .gdx to a DNA sequence of type []wtype.DNASequence

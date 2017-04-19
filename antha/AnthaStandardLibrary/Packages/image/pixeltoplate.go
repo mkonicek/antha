@@ -16,9 +16,7 @@ import (
 	"strings"
 
 	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
-	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/disintegration/imaging"
 )
@@ -1052,68 +1050,3 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 	}
 	return imaging.Clone(img)
 }
-
-//-------------------------------------------------------------------------------------------------
-//Liquid handling functions to be deprecated
-//-------------------------------------------------------------------------------------------------
-
-//  Final function for blending colours to make and image. Uses a given map of position to colour generated from the image processing function  along with lists of available colours, components and plate types
-func PipetteImagebyBlending(OutPlate *wtype.LHPlate, positiontocolourmap map[string]color.Color, cyan *wtype.LHComponent, magenta *wtype.LHComponent, yellow *wtype.LHComponent, black *wtype.LHComponent, volumeperfullcolour wunit.Volume) (finalsolutions []*wtype.LHComponent) {
-
-	solutions := make([]*wtype.LHComponent, 0)
-
-	for locationkey, colour := range positiontocolourmap {
-
-		components := make([]*wtype.LHComponent, 0)
-
-		cmyk := ColourtoCMYK(colour)
-
-		cyanvol := wunit.NewVolume((float64(cmyk.C) * volumeperfullcolour.SIValue()), "l")
-		yellowvol := wunit.NewVolume((float64(cmyk.Y) * volumeperfullcolour.SIValue()), "l")
-		magentavol := wunit.NewVolume((float64(cmyk.M) * volumeperfullcolour.SIValue()), "l")
-		blackvol := wunit.NewVolume((float64(cmyk.K) * volumeperfullcolour.SIValue()), "l")
-
-		cyanSample := mixer.Sample(cyan, cyanvol)
-		components = append(components, cyanSample)
-		yellowSample := mixer.Sample(yellow, yellowvol)
-		components = append(components, yellowSample)
-		magentaSample := mixer.Sample(magenta, magentavol)
-		components = append(components, magentaSample)
-		blackSample := mixer.Sample(black, blackvol)
-		components = append(components, blackSample)
-		solution := mixer.MixTo(OutPlate.Type, locationkey, 1, components...)
-		solutions = append(solutions, solution)
-	}
-
-	finalsolutions = solutions
-	return
-}
-
-//  Final function for blending colours to make and image. Uses a given map of position to colour generated from the image processing function  along with lists of available colours, components and plate types
-func PipetteImageGrayscale(OutPlate *wtype.LHPlate, positiontocolourmap map[string]color.Color, water *wtype.LHComponent, black *wtype.LHComponent, volumeperfullcolour wunit.Volume) (finalsolutions []*wtype.LHComponent) {
-
-	solutions := make([]*wtype.LHComponent, 0)
-
-	for locationkey, colour := range positiontocolourmap {
-
-		components := make([]*wtype.LHComponent, 0)
-
-		gray := ColourtoGrayscale(colour)
-
-		if gray.Y < 255 {
-			watervol := wunit.NewVolume((float64(255-gray.Y) * volumeperfullcolour.SIValue()), "l")
-			waterSample := mixer.Sample(water, watervol)
-			components = append(components, waterSample)
-		}
-		blackvol := wunit.NewVolume((float64(gray.Y) * volumeperfullcolour.SIValue()), "l")
-		blackSample := mixer.Sample(black, blackvol)
-		components = append(components, blackSample)
-
-		solution := mixer.MixTo(OutPlate.Type, locationkey, 1, components...)
-		solutions = append(solutions, solution)
-	}
-
-	finalsolutions = solutions
-	return
-}
-

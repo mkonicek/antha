@@ -30,6 +30,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	//"time"
 )
 
@@ -81,7 +83,7 @@ http://pubchem.ncbi.nlm.nih.gov/rest/pug/substance/sourceid/DTP.NCI/<operation s
 
 */
 
-func MakeInputspec(domain string, namespace string, identifiers []string) (inputspec string) {
+func makeInputspec(domain string, namespace string, identifiers []string) (inputspec string) {
 	// see comment above for structure
 	//<domain> = substance | compound | assay | <other inputs>
 
@@ -125,7 +127,7 @@ http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2244/property/MolecularFor
 
 */
 
-func MakeOperationspec(spec string, optionalconditions []string) (operationspec string) {
+func makeOperationspec(spec string, optionalconditions []string) (operationspec string) {
 	// see comment above for structure
 	// spec = 1 of: record | <compound property> | synonyms | sids | cids | aids | assaysummary | classification | <xrefs> | description | conformers
 
@@ -169,7 +171,7 @@ JSONP takes an optional callback function name (which defaults to “callback”
 http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2244/property/MolecularFormula/JSONP?callback=my_callback
 
 */
-func MakeOutputspec(spec string, optionalcallbackname string) (outputspec string) {
+func makeOutputspec(spec string, optionalcallbackname string) (outputspec string) {
 	// see comment above for structure
 	// spec = 1 of: <output specification> = XML | ASNT | ASNB | JSON | JSONP [ ?callback=<callback name> ] | SDF | CSV | PNG | TXT
 
@@ -184,8 +186,9 @@ func MakeOutputspec(spec string, optionalcallbackname string) (outputspec string
 	return outputspec
 }
 
-func PugLookup(inputspec string, operationspec string, outputspec string, operation_options string) ([]byte, error) {
-	pugprepend := "http://pubchem.ncbi.nlm.nih.gov/rest/pug"
+var pugprepend string = "http://pubchem.ncbi.nlm.nih.gov/rest/pug"
+
+func pugLookup(inputspec string, operationspec string, outputspec string, operation_options string) ([]byte, error) {
 
 	array := make([]string, 0)
 	array = append(array, pugprepend, inputspec, operationspec, outputspec)
@@ -215,10 +218,10 @@ func PugLookup(inputspec string, operationspec string, outputspec string, operat
 func Compoundproperties(name string) (string, error) {
 	// need this structure: http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/MolecularFormula,MolecularWeight/JSON
 
-	inputspec := MakeInputspec("compound", "name", []string{name})
-	operationspec := MakeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
-	outputspec := MakeOutputspec("JSON", "")
-	output, err := PugLookup(inputspec, operationspec, outputspec, "")
+	inputspec := makeInputspec("compound", "name", []string{name})
+	operationspec := makeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
+	outputspec := makeOutputspec("JSON", "")
+	output, err := pugLookup(inputspec, operationspec, outputspec, "")
 	if err != nil {
 		return "", err
 	}
@@ -226,13 +229,14 @@ func Compoundproperties(name string) (string, error) {
 	return string(output), nil
 }
 
+// Lookup and make a molecule based on molecule name
 func MakeMolecule(name string) (Molecule, error) {
 	// need this structure: http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/MolecularFormula,MolecularWeight/JSON
 
-	inputspec := MakeInputspec("compound", "name", []string{name})
-	operationspec := MakeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
-	outputspec := MakeOutputspec("JSON", "")
-	output, err := PugLookup(inputspec, operationspec, outputspec, "")
+	inputspec := makeInputspec("compound", "name", []string{name})
+	operationspec := makeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
+	outputspec := makeOutputspec("JSON", "")
+	output, err := pugLookup(inputspec, operationspec, outputspec, "")
 	if err != nil {
 		return Molecule{}, err
 	}
@@ -270,6 +274,7 @@ type Properties struct {
 	CID              int     `json:"CID"`
 }
 
+// The principle type returned from querying the pubchem database if the molecule is not defined as a substance.
 type Molecule struct {
 	Moleculename     string
 	MolecularFormula string  `json:"MolecularFormula"`
@@ -277,16 +282,43 @@ type Molecule struct {
 	CID              int     `json:"CID"`
 }
 
-func (molecule Molecule) WeightPerVol(molarity float64) (weightpervol float64) {
-	weightpervol = molarity * molecule.MolecularWeight
+// Converts a concentration in mol/L to a g/L concentration
+func (molecule Molecule) GramPerL(molarity wunit.Concentration) (weightpervol wunit.Concentration) {
+	weightpervol = molarity.GramPerL(molecule.MolecularWeight)
 	return
 }
 
+// Converts a concentration in g/L to a mol/L concentration
+func (molecule Molecule) MolPerL(weightpervol wunit.Concentration) (molarity wunit.Concentration) {
+	molarity = weightpervol.MolPerL(molecule.MolecularWeight)
+	return
+}
+
+// Returns the concentration in g/L required for 1 mol/L of the molecule
+func (molecule Molecule) MolarConcentration() (weightpervol wunit.Concentration) {
+	molarity := wunit.NewConcentration(1, "M/l")
+	weightpervol = molarity.GramPerL(molecule.MolecularWeight)
+	return
+}
+
+// Returns the mass in g required for 1 mol of the molecule
+func (molecule Molecule) MolarMass() (weight wunit.Mass) {
+	weight = wunit.NewMass(molecule.MolecularWeight, "g")
+	return
+}
+
+// Returns a summary fo the molecule properties
+func (molecule Molecule) ToString() string {
+	return fmt.Sprint("Name: ", molecule.Moleculename, "Formula: ", molecule.MolecularFormula, "MolecularWeight: ", molecule.MolecularWeight, "g/mol", "CID: ", molecule.CID)
+}
+
+// distinct from a molecule in that a substance does not possess a clear Molecular formula or molecular wieght. e.g. Bovine Serum Albumin.
 type Substance struct {
 	Substancename string
 	SID           int `json:"SID"`
 }
 
+// Make an array of molecules based on molecule names
 func MakeMolecules(names []string) ([]Molecule, error) {
 	var molecules []Molecule
 

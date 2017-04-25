@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/antha-lang/antha/bvendor/google.golang.org/grpc"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 	"github.com/antha-lang/antha/target"
+	"google.golang.org/grpc"
 )
 
 // Run an instruction based on current target

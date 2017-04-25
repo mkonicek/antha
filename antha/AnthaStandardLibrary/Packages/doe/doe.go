@@ -1999,9 +1999,10 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfile *xlsx.File) {
 	if dxorjmp == "DX" {
 		xlsxfile = DXXLSXFilefromRuns(runs, outputfilename)
-	}
-	if dxorjmp == "JMP" {
+	} else if dxorjmp == "JMP" {
 		xlsxfile = JMPXLSXFilefromRuns(runs, outputfilename)
+	} else {
+		panic(fmt.Sprintf("Unknown design file format %s when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)", dxorjmp))
 	}
 	return
 }
@@ -2023,6 +2024,8 @@ func RunsFromDesign(designfile string, intfactors []string, responsecolumns []in
 		if err != nil {
 			return runs, err
 		}
+	} else {
+		err = fmt.Errorf("Unknown design file format. Please specify File type as JMP or DX (Design Expert)")
 	}
 	return
 }
@@ -2044,6 +2047,8 @@ func RunsFromDesignPreResponses(designfile string, intfactors []string, dxorjmp 
 		if err != nil {
 			return runs, err
 		}
+	} else {
+		err = fmt.Errorf("Unknown design file format. Please specify File type as JMP or DX (Design Expert)")
 	}
 	return
 
@@ -2066,6 +2071,8 @@ func RunsFromDesignPreResponsesContents(designfileContents []byte, intfactors []
 		if err != nil {
 			return runs, err
 		}
+	} else {
+		err = fmt.Errorf("Unknown design file format. Please specify File type as JMP or DX (Design Expert)")
 	}
 	return
 
@@ -2161,15 +2168,12 @@ func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorc
 	}
 	sheet := spreadsheet.Sheet(file, 0)
 
-	//descriptors := make([]string, 0)
-
 	for j := 0; j < sheet.MaxCol; j++ {
 
 		descriptor, err := sheet.Cell(0, j).String()
 		if err != nil {
 			panic(err.Error())
 		}
-		//	descriptors = append(descriptors,descriptor)
 		if strings.ToUpper(descriptor) == "PATTERN" {
 			PatternColumn = j
 			patternfound = true

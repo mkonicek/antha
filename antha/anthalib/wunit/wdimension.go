@@ -290,12 +290,18 @@ type Moles struct {
 
 // generate a new Amount in moles
 func NewAmount(v float64, unit string) Moles {
-	if unit != "M" {
-		panic("Can't make amounts which aren't in moles")
+	details, ok := UnitMap["Amount"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Amount"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved Amount unit %q, approved units are %s", unit, approved))
 	}
 
-	m := Moles{NewMeasurement(v, "", unit)}
-	return m
+	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
+
 }
 
 // defines Amount to be a SubstanceQuantity
@@ -395,8 +401,8 @@ var UnitMap = map[string]map[string]Unit{
 	"Concentration": map[string]Unit{
 		"mg/ml":  Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
 		"g/L":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"kg/l":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
-		"kg/L":   Unit{Base: "g/l", Prefix: "", Multiplier: 0.001},
+		"kg/l":   Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
+		"kg/L":   Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
 		"g/l":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
 		"mg/L":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"mg/l":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
@@ -413,12 +419,15 @@ var UnitMap = map[string]map[string]Unit{
 		"uM":     Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
 		"nM":     Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
 		"mM/l":   Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mM/L":   Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
 		"uM/l":   Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
 		"nM/l":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
 		"M/l":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/L":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"mMol/L": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
 		"mMol/l": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
 		"X":      Unit{Base: "X", Prefix: "", Multiplier: 1.0},
+		"x":      Unit{Base: "X", Prefix: "", Multiplier: 1.0},
 	},
 	"Mass": map[string]Unit{
 		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
@@ -426,6 +435,18 @@ var UnitMap = map[string]map[string]Unit{
 		"mg": Unit{Base: "g", Prefix: "m", Multiplier: 1.0},
 		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
 		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
+	},
+	"Amount": map[string]Unit{
+		"pMol": Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
+		"nMol": Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
+		"uMol": Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
+		"mMol": Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
+		"Mol":  Unit{Base: "M", Prefix: "", Multiplier: 1.0},
+		"pM":   Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
+		"nM":   Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
+		"uM":   Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
+		"mM":   Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
+		"M":    Unit{Base: "M", Prefix: "", Multiplier: 1.0},
 	},
 }
 

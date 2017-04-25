@@ -25,17 +25,11 @@ package Inventory
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-
-	parser "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	//"log"
-	//"os"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
+	parser "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 // what about cutting 3prime to recognition site?
@@ -112,6 +106,8 @@ func Partslist() (partslist map[string]wtype.DNASequence) {
 	return
 }
 
+var allfiles []wtype.File // to do: initialise this list of files from the a sequence inventory or local anthapath
+
 func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 	partslist = make(map[string]wtype.DNASequence)
 
@@ -120,11 +116,7 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 
 		// initialise parts into map
 		partslist[key] = value
-		/*if _, alreadyinmap := initialpartslist[key]; !alreadyinmap {
-			partslist[key] = value
-			fmt.Println("adding ", key, " to inventory")
-		}*/
-		// add by name too
+
 		if _, alreadyinmap := initialpartslist[value.Nm]; !alreadyinmap {
 			partslist[value.Nm] = value
 			fmt.Println("adding ", value.Nm, " to inventory")
@@ -134,30 +126,10 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 		}
 	}
 
-	files := make([]string, 0)
-	// look for all parts in anthapath
-	d, err := os.Open(anthapath.Path())
-	if err != nil {
-		return nil, err
-	}
-	defer d.Close()
-
-	allfiles, err := d.Readdir(-1)
-	if err != nil {
-		return nil, err
-	}
-
-	//Determine if file extension is ".fasta"
 	for _, file := range allfiles {
-		if /*filepath.Ext(file.Name()) == ".gb" ||*/ filepath.Ext(file.Name()) == ".fasta" {
-			files = append(files, file.Name())
-		}
-	}
 
-	for _, filename := range files {
-		file := filepath.Join(anthapath.Path(), filename)
-
-		if filepath.Ext(file) == ".fasta" {
+		filename := file.Name
+		if filepath.Ext(filename) == ".fasta" {
 			sequences, _ := parser.FastatoDNASequences(file)
 
 			for _, seq := range sequences {
@@ -168,8 +140,8 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 					//return
 				}
 			}
-		} else if filepath.Ext(file) == ".gb" {
-			seq, _ := parser.GenbanktoAnnotatedSeq(file)
+		} else if filepath.Ext(filename) == ".gb" {
+			seq, _ := parser.GenbankToAnnotatedSeq(file)
 			if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
 				partslist[seq.Nm] = seq
 			} else {

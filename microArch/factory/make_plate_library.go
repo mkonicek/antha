@@ -234,6 +234,12 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate := wtype.NewLHPlate("DSW96", "Unknown", 8, 12, 44.1, "mm", deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates[plate.Type] = plate
 
+	// IDT/ABgene 1.2 ml storage plate AB0564
+	idtshp := wtype.NewShape("cylinder", "mm", 7, 7, 39.35)
+	idtroundwell96 := wtype.NewLHWell("IDT96", "", "", "ul", 1200, 100, idtshp, wtype.LHWBU, 7, 7, 39.35, 3, "mm")
+	plate = wtype.NewLHPlate("IDT96", "Unknown", 8, 12, 42.5, "mm", idtroundwell96, 9, 9, 0, 0, 3)
+	plates[plate.Type] = plate
+
 	// 24 well deep square well plate on riser
 
 	bottomtype := wtype.LHWBV // 0 = flat, 2 = v shaped
@@ -270,7 +276,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	// deep well strip trough 12
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
-	trough12 := wtype.NewLHWell("DWST12", "", "", "ul", 15000, 3500, stshp, wtype.LHWBV, 8.2, 72, 41.3, 4.7, "mm")
+	trough12 := wtype.NewLHWell("DWST12", "", "", "ul", 15000, 5000, stshp, wtype.LHWBV, 8.2, 72, 41.3, 4.7, "mm")
 	plate = wtype.NewLHPlate("DWST12", "Unknown", 1, 12, 44.1, "mm", trough12, 9, 9, 0, 30.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates[plate.Type] = plate
 
@@ -338,6 +344,17 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltypesmallereppy := wtype.NewLHWell("1.5mlEpp", "", "", "ul", 1500, 50, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
 
 	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+
+	// Eppendorfrack with lid holders
+
+	wellxoffset = 36.0 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
+	xstart = 13.5      // distance from top left si z9fdJwde of plate to first well
+	ystart = 5.0       // distance from top left side of plate to first well
+	zstart = 7.0 - 1.0 // offset of bottom of deck to bottom of well
+
+	plate = wtype.NewLHPlate("eppendorfrack424_1.5ml_lidholder", "Unknown", 4, 3, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
 	// greiner 384 well plate flat bottom

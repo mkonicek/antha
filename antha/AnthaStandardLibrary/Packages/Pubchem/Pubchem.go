@@ -306,12 +306,13 @@ func (molecule Molecule) MolarMass() (weight wunit.Mass) {
 	return
 }
 
-// Returns a summary fo the molecule properties
+// Returns a summary of the molecule properties
 func (molecule Molecule) ToString() string {
 	return fmt.Sprint("Name: ", molecule.Moleculename, "Formula: ", molecule.MolecularFormula, "MolecularWeight: ", molecule.MolecularWeight, "g/mol", "CID: ", molecule.CID)
 }
 
 // distinct from a molecule in that a substance does not possess a clear Molecular formula or molecular wieght. e.g. Bovine Serum Albumin.
+// not currently implemented as an output returned by querying the pubchem database
 type Substance struct {
 	Substancename string
 	SID           int `json:"SID"`

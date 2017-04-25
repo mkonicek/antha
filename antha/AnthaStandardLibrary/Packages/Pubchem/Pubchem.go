@@ -30,7 +30,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	//"time"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 // https://pubchem.ncbi.nlm.nih.gov/pug_rest/PUG_REST.html#_Toc409516757
@@ -81,7 +82,7 @@ http://pubchem.ncbi.nlm.nih.gov/rest/pug/substance/sourceid/DTP.NCI/<operation s
 
 */
 
-func MakeInputspec(domain string, namespace string, identifiers []string) (inputspec string) {
+func makeInputspec(domain string, namespace string, identifiers []string) (inputspec string) {
 	// see comment above for structure
 	//<domain> = substance | compound | assay | <other inputs>
 
@@ -125,7 +126,7 @@ http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2244/property/MolecularFor
 
 */
 
-func MakeOperationspec(spec string, optionalconditions []string) (operationspec string) {
+func makeOperationspec(spec string, optionalconditions []string) (operationspec string) {
 	// see comment above for structure
 	// spec = 1 of: record | <compound property> | synonyms | sids | cids | aids | assaysummary | classification | <xrefs> | description | conformers
 
@@ -169,7 +170,7 @@ JSONP takes an optional callback function name (which defaults to “callback”
 http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2244/property/MolecularFormula/JSONP?callback=my_callback
 
 */
-func MakeOutputspec(spec string, optionalcallbackname string) (outputspec string) {
+func makeOutputspec(spec string, optionalcallbackname string) (outputspec string) {
 	// see comment above for structure
 	// spec = 1 of: <output specification> = XML | ASNT | ASNB | JSON | JSONP [ ?callback=<callback name> ] | SDF | CSV | PNG | TXT
 
@@ -184,8 +185,9 @@ func MakeOutputspec(spec string, optionalcallbackname string) (outputspec string
 	return outputspec
 }
 
-func PugLookup(inputspec string, operationspec string, outputspec string, operation_options string) ([]byte, error) {
-	pugprepend := "http://pubchem.ncbi.nlm.nih.gov/rest/pug"
+var pugprepend string = "http://pubchem.ncbi.nlm.nih.gov/rest/pug"
+
+func pugLookup(inputspec string, operationspec string, outputspec string, operation_options string) ([]byte, error) {
 
 	array := make([]string, 0)
 	array = append(array, pugprepend, inputspec, operationspec, outputspec)
@@ -215,45 +217,15 @@ func PugLookup(inputspec string, operationspec string, outputspec string, operat
 func Compoundproperties(name string) (string, error) {
 	// need this structure: http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/MolecularFormula,MolecularWeight/JSON
 
-	inputspec := MakeInputspec("compound", "name", []string{name})
-	operationspec := MakeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
-	outputspec := MakeOutputspec("JSON", "")
-	output, err := PugLookup(inputspec, operationspec, outputspec, "")
+	inputspec := makeInputspec("compound", "name", []string{name})
+	operationspec := makeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
+	outputspec := makeOutputspec("JSON", "")
+	output, err := pugLookup(inputspec, operationspec, outputspec, "")
 	if err != nil {
 		return "", err
 	}
 
 	return string(output), nil
-}
-
-func MakeMolecule(name string) (Molecule, error) {
-	// need this structure: http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/MolecularFormula,MolecularWeight/JSON
-
-	inputspec := MakeInputspec("compound", "name", []string{name})
-	operationspec := MakeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
-	outputspec := MakeOutputspec("JSON", "")
-	output, err := PugLookup(inputspec, operationspec, outputspec, "")
-	if err != nil {
-		return Molecule{}, err
-	}
-
-	var pubchemtable Pubchemtable
-
-	if err := json.Unmarshal(output, &pubchemtable); err != nil {
-		return Molecule{}, err
-
-	}
-
-	var molecule Molecule
-	molecule.Moleculename = name
-
-	if len(pubchemtable.Propertytable) < 1 {
-		return molecule, errors.New(fmt.Sprint("No property table for ", name, " got this from pubchem: ", pubchemtable))
-	}
-	molecule.CID = pubchemtable.Propertytable[0].CID
-	molecule.MolecularFormula = pubchemtable.Propertytable[0].MolecularFormula
-	molecule.MolecularWeight = pubchemtable.Propertytable[0].MolecularWeight
-	return molecule, nil
 }
 
 type Pubchemtable struct {
@@ -270,32 +242,97 @@ type Properties struct {
 	CID              int     `json:"CID"`
 }
 
+// The principle type returned from querying the pubchem database if the molecule is not defined as a substance.
 type Molecule struct {
-	Moleculename     string
+	Name             string
 	MolecularFormula string  `json:"MolecularFormula"`
 	MolecularWeight  float64 `json:"MolecularWeight"`
 	CID              int     `json:"CID"`
 }
 
-func (molecule Molecule) WeightPerVol(molarity float64) (weightpervol float64) {
-	weightpervol = molarity * molecule.MolecularWeight
+// Converts a concentration in mol/L to a g/L concentration
+func (molecule Molecule) GramPerL(molarity wunit.Concentration) (weightpervol wunit.Concentration) {
+	weightpervol = molarity.GramPerL(molecule.MolecularWeight)
 	return
 }
 
-type Substance struct {
-	Substancename string
-	SID           int `json:"SID"`
+// Converts a concentration in g/L to a mol/L concentration
+func (molecule Molecule) MolPerL(weightpervol wunit.Concentration) (molarity wunit.Concentration) {
+	molarity = weightpervol.MolPerL(molecule.MolecularWeight)
+	return
 }
 
+// Returns the concentration in g/L required for 1 mol/L of the molecule
+func (molecule Molecule) MolarConcentration() (weightpervol wunit.Concentration) {
+	molarity := wunit.NewConcentration(1, "M/l")
+	weightpervol = molarity.GramPerL(molecule.MolecularWeight)
+	return
+}
+
+// Returns the mass in g required for 1 mol of the molecule
+func (molecule Molecule) MolarMass() (weight wunit.Mass) {
+	weight = wunit.NewMass(molecule.MolecularWeight, "g")
+	return
+}
+
+// Returns a summary of the molecule properties
+func (molecule Molecule) ToString() string {
+	return fmt.Sprint("Name: ", molecule.Name, "Formula: ", molecule.MolecularFormula, "MolecularWeight: ", molecule.MolecularWeight, "g/mol", "CID: ", molecule.CID)
+}
+
+// Lookup and make a molecule based on molecule name
+func MakeMolecule(name string) (Molecule, error) {
+	// need this structure: http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/MolecularFormula,MolecularWeight/JSON
+
+	inputspec := makeInputspec("compound", "name", []string{name})
+	operationspec := makeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
+	outputspec := makeOutputspec("JSON", "")
+	output, err := pugLookup(inputspec, operationspec, outputspec, "")
+	if err != nil {
+		return Molecule{}, err
+	}
+
+	var pubchemtable Pubchemtable
+
+	if err := json.Unmarshal(output, &pubchemtable); err != nil {
+		return Molecule{}, err
+
+	}
+
+	var molecule Molecule
+	molecule.Name = name
+
+	if len(pubchemtable.Propertytable) < 1 {
+		return molecule, errors.New(fmt.Sprint("No property table for ", name, " got this from pubchem: ", pubchemtable))
+	}
+	molecule.CID = pubchemtable.Propertytable[0].CID
+	molecule.MolecularFormula = pubchemtable.Propertytable[0].MolecularFormula
+	molecule.MolecularWeight = pubchemtable.Propertytable[0].MolecularWeight
+	return molecule, nil
+}
+
+// Make an array of molecules based on molecule names
+// If any errors are encountered they will be aggregated and returned at the end.
 func MakeMolecules(names []string) ([]Molecule, error) {
 	var molecules []Molecule
-
+	var errs []string
 	for _, name := range names {
 		molecule, err := MakeMolecule(name)
 		if err != nil {
-			return nil, err
+			errs = append(errs, err.Error())
+		} else {
+			molecules = append(molecules, molecule)
 		}
-		molecules = append(molecules, molecule)
+	}
+	if len(errs) > 0 {
+		return molecules, fmt.Errorf(strings.Join(errs, ";"))
 	}
 	return molecules, nil
+}
+
+// distinct from a molecule in that a substance does not possess a clear Molecular formula or molecular wieght. e.g. Bovine Serum Albumin.
+// not currently implemented as an output returned by querying the pubchem database
+type Substance struct {
+	Name string
+	SID  int `json:"SID"`
 }

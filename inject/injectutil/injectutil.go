@@ -2,8 +2,8 @@
 package injectutil
 
 import (
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/inject"
+	"golang.org/x/net/context"
 )
 
 // Multidimensial product space. Each map field is a finite dimension defined

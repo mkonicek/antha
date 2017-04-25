@@ -8,11 +8,11 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/material"
 	wtype "github.com/antha-lang/antha/antha/anthalib/wtype"
 	wunit "github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
-	"github.com/antha-lang/antha/bvendor/google.golang.org/grpc"
 	pb "github.com/antha-lang/antha/driver/pb/lh"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 type Driver struct {

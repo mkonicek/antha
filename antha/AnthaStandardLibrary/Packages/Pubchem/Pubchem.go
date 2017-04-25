@@ -32,7 +32,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	//"time"
 )
 
 // https://pubchem.ncbi.nlm.nih.gov/pug_rest/PUG_REST.html#_Toc409516757

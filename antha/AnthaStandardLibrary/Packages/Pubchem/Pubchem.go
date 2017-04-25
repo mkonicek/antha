@@ -228,37 +228,6 @@ func Compoundproperties(name string) (string, error) {
 	return string(output), nil
 }
 
-// Lookup and make a molecule based on molecule name
-func MakeMolecule(name string) (Molecule, error) {
-	// need this structure: http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/MolecularFormula,MolecularWeight/JSON
-
-	inputspec := makeInputspec("compound", "name", []string{name})
-	operationspec := makeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
-	outputspec := makeOutputspec("JSON", "")
-	output, err := pugLookup(inputspec, operationspec, outputspec, "")
-	if err != nil {
-		return Molecule{}, err
-	}
-
-	var pubchemtable Pubchemtable
-
-	if err := json.Unmarshal(output, &pubchemtable); err != nil {
-		return Molecule{}, err
-
-	}
-
-	var molecule Molecule
-	molecule.Moleculename = name
-
-	if len(pubchemtable.Propertytable) < 1 {
-		return molecule, errors.New(fmt.Sprint("No property table for ", name, " got this from pubchem: ", pubchemtable))
-	}
-	molecule.CID = pubchemtable.Propertytable[0].CID
-	molecule.MolecularFormula = pubchemtable.Propertytable[0].MolecularFormula
-	molecule.MolecularWeight = pubchemtable.Propertytable[0].MolecularWeight
-	return molecule, nil
-}
-
 type Pubchemtable struct {
 	Pubchemjson `json:"PropertyTable"`
 }
@@ -311,11 +280,35 @@ func (molecule Molecule) ToString() string {
 	return fmt.Sprint("Name: ", molecule.Moleculename, "Formula: ", molecule.MolecularFormula, "MolecularWeight: ", molecule.MolecularWeight, "g/mol", "CID: ", molecule.CID)
 }
 
-// distinct from a molecule in that a substance does not possess a clear Molecular formula or molecular wieght. e.g. Bovine Serum Albumin.
-// not currently implemented as an output returned by querying the pubchem database
-type Substance struct {
-	Substancename string
-	SID           int `json:"SID"`
+// Lookup and make a molecule based on molecule name
+func MakeMolecule(name string) (Molecule, error) {
+	// need this structure: http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/MolecularFormula,MolecularWeight/JSON
+
+	inputspec := makeInputspec("compound", "name", []string{name})
+	operationspec := makeOperationspec("property", []string{"MolecularFormula", "MolecularWeight"})
+	outputspec := makeOutputspec("JSON", "")
+	output, err := pugLookup(inputspec, operationspec, outputspec, "")
+	if err != nil {
+		return Molecule{}, err
+	}
+
+	var pubchemtable Pubchemtable
+
+	if err := json.Unmarshal(output, &pubchemtable); err != nil {
+		return Molecule{}, err
+
+	}
+
+	var molecule Molecule
+	molecule.Moleculename = name
+
+	if len(pubchemtable.Propertytable) < 1 {
+		return molecule, errors.New(fmt.Sprint("No property table for ", name, " got this from pubchem: ", pubchemtable))
+	}
+	molecule.CID = pubchemtable.Propertytable[0].CID
+	molecule.MolecularFormula = pubchemtable.Propertytable[0].MolecularFormula
+	molecule.MolecularWeight = pubchemtable.Propertytable[0].MolecularWeight
+	return molecule, nil
 }
 
 // Make an array of molecules based on molecule names
@@ -330,4 +323,11 @@ func MakeMolecules(names []string) ([]Molecule, error) {
 		molecules = append(molecules, molecule)
 	}
 	return molecules, nil
+}
+
+// distinct from a molecule in that a substance does not possess a clear Molecular formula or molecular wieght. e.g. Bovine Serum Albumin.
+// not currently implemented as an output returned by querying the pubchem database
+type Substance struct {
+	Substancename string
+	SID           int `json:"SID"`
 }

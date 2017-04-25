@@ -6,10 +6,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
+	"golang.org/x/net/context"
 )
 
 func shouldWait(inst target.Inst) bool {

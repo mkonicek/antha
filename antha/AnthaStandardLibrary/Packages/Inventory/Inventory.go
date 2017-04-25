@@ -99,7 +99,7 @@ var initialpartslist = map[string]wtype.DNASequence{
 }
 
 func Partslist() (partslist map[string]wtype.DNASequence) {
-	partslist, err := LookforParts()
+	partslist, err := LookforParts(initialpartslist, allfiles)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -108,7 +108,34 @@ func Partslist() (partslist map[string]wtype.DNASequence) {
 
 var allfiles []wtype.File // to do: initialise this list of files from the a sequence inventory or local anthapath
 
-func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
+func FilesToPartsList(allfiles []wtype.File) (partslist map[string]wtype.DNASequence, err error) {
+	for _, file := range allfiles {
+
+		filename := file.Name
+		if filepath.Ext(filename) == ".fasta" {
+			sequences, _ := parser.FastatoDNASequences(file)
+
+			for _, seq := range sequences {
+				if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
+					partslist[seq.Nm] = seq
+				} else {
+					err = fmt.Errorf("cannot add " + seq.Nm + " to inventory partslist as already found, change the name")
+				}
+			}
+		} else if filepath.Ext(filename) == ".gb" {
+			seq, _ := parser.GenbankToAnnotatedSeq(file)
+			if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
+				partslist[seq.Nm] = seq
+			} else {
+				err = fmt.Errorf("cannot add " + seq.Nm + " to inventory partslist as already found, change the name")
+			}
+
+		}
+	}
+	return
+}
+
+func LookforParts(initialpartslist map[string]wtype.DNASequence, allfiles []wtype.File) (partslist map[string]wtype.DNASequence, err error) {
 	partslist = make(map[string]wtype.DNASequence)
 
 	// first add PartsList above
@@ -122,7 +149,6 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 			fmt.Println("adding ", value.Nm, " to inventory")
 		} else {
 			err = fmt.Errorf("cannot add " + key + " to inventory partslist as already found, change the name")
-			//return
 		}
 	}
 
@@ -137,7 +163,6 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 					partslist[seq.Nm] = seq
 				} else {
 					err = fmt.Errorf("cannot add " + seq.Nm + " to inventory partslist as already found, change the name")
-					//return
 				}
 			}
 		} else if filepath.Ext(filename) == ".gb" {
@@ -146,7 +171,6 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 				partslist[seq.Nm] = seq
 			} else {
 				err = fmt.Errorf("cannot add " + seq.Nm + " to inventory partslist as already found, change the name")
-				//	return
 			}
 
 		}

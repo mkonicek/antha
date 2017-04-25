@@ -244,7 +244,7 @@ type Properties struct {
 
 // The principle type returned from querying the pubchem database if the molecule is not defined as a substance.
 type Molecule struct {
-	Moleculename     string
+	Name             string
 	MolecularFormula string  `json:"MolecularFormula"`
 	MolecularWeight  float64 `json:"MolecularWeight"`
 	CID              int     `json:"CID"`
@@ -277,7 +277,7 @@ func (molecule Molecule) MolarMass() (weight wunit.Mass) {
 
 // Returns a summary of the molecule properties
 func (molecule Molecule) ToString() string {
-	return fmt.Sprint("Name: ", molecule.Moleculename, "Formula: ", molecule.MolecularFormula, "MolecularWeight: ", molecule.MolecularWeight, "g/mol", "CID: ", molecule.CID)
+	return fmt.Sprint("Name: ", molecule.Name, "Formula: ", molecule.MolecularFormula, "MolecularWeight: ", molecule.MolecularWeight, "g/mol", "CID: ", molecule.CID)
 }
 
 // Lookup and make a molecule based on molecule name
@@ -300,7 +300,7 @@ func MakeMolecule(name string) (Molecule, error) {
 	}
 
 	var molecule Molecule
-	molecule.Moleculename = name
+	molecule.Name = name
 
 	if len(pubchemtable.Propertytable) < 1 {
 		return molecule, errors.New(fmt.Sprint("No property table for ", name, " got this from pubchem: ", pubchemtable))
@@ -312,15 +312,20 @@ func MakeMolecule(name string) (Molecule, error) {
 }
 
 // Make an array of molecules based on molecule names
+// If any errors are encountered they will be aggregated and returned at the end.
 func MakeMolecules(names []string) ([]Molecule, error) {
 	var molecules []Molecule
-
+	var errs []string
 	for _, name := range names {
 		molecule, err := MakeMolecule(name)
 		if err != nil {
-			return nil, err
+			errs = append(errs, err.Error())
+		} else {
+			molecules = append(molecules, molecule)
 		}
-		molecules = append(molecules, molecule)
+	}
+	if len(errs) > 0 {
+		return molecules, fmt.Errorf(strings.Join(errs, ";"))
 	}
 	return molecules, nil
 }
@@ -328,6 +333,6 @@ func MakeMolecules(names []string) ([]Molecule, error) {
 // distinct from a molecule in that a substance does not possess a clear Molecular formula or molecular wieght. e.g. Bovine Serum Albumin.
 // not currently implemented as an output returned by querying the pubchem database
 type Substance struct {
-	Substancename string
-	SID           int `json:"SID"`
+	Name string
+	SID  int `json:"SID"`
 }

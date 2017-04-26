@@ -137,7 +137,7 @@ within the docker instance.
 After following the installation instructions for your machine. You can check
 if Antha is working properly by running a test protocol
 ```bash
-cd $HOME/go/src/github.com/antha-lang/elements/workflow/Aliquot
+cd $HOME/go/src/github.com/antha-lang/elements/workflows/examples/Aliquot
 antharun --workflow workflow.json --parameters parameters.yml
 ```
 

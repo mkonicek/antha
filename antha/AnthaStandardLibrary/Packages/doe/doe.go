@@ -445,12 +445,12 @@ func (run Run) AllFactors() (headers []string, values []interface{}) {
 }
 
 func (run Run) GetResponseValue(responsedescriptor string) (responsevalue interface{}, err error) {
-
+	var errs []string
 	var tempresponsevalue interface{}
 	headers, _ := run.AllResponses()
 
 	errstr := fmt.Sprint("response descriptor", responsedescriptor, "not found in ", headers)
-	err = fmt.Errorf(errstr)
+	errs = append(errs, errstr)
 	for i, descriptor := range run.Responsedescriptors {
 		if strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(responsedescriptor)) {
 			responsevalue = run.ResponseValues[i]
@@ -458,18 +458,16 @@ func (run Run) GetResponseValue(responsedescriptor string) (responsevalue interf
 		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(descriptor)), strings.TrimSpace(strings.ToUpper(responsedescriptor))) {
 
 			errstr := fmt.Sprint("response descriptor", responsedescriptor, "found within ", descriptor, "but no exact match")
-			err = fmt.Errorf(errstr)
+			errs = append(errs, errstr)
 			tempresponsevalue = run.ResponseValues[i]
-			return tempresponsevalue, err
 		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(responsedescriptor)), strings.TrimSpace(strings.ToUpper(descriptor))) {
 
 			errstr := fmt.Sprint("response descriptors of ", descriptor, "found within ", responsedescriptor, "but not exact match")
-			err = fmt.Errorf(errstr)
+			errs = append(errs, errstr)
 			tempresponsevalue = run.ResponseValues[i]
-			return tempresponsevalue, err
 		}
 	}
-
+	err = fmt.Errorf(strings.Join(errs, "\n"))
 	responsevalue = tempresponsevalue
 	return
 }
@@ -479,27 +477,25 @@ func (run Run) GetFactorValue(factordescriptor string) (factorvalue interface{},
 	var tempresponsevalue interface{}
 	headers, values := run.AllFactors()
 
+	var errs []string
+
 	errstr := fmt.Sprint("factor descriptor ", factordescriptor, " not found in ", headers, values)
-	err = fmt.Errorf(errstr)
+	errs = append(errs, errstr)
 	for i, descriptor := range run.Factordescriptors {
 		if strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(factordescriptor)) {
 			factorvalue = run.Setpoints[i]
 			return factorvalue, nil
 		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(descriptor)), strings.TrimSpace(strings.ToUpper(factordescriptor))) {
-
-			errstr := fmt.Sprint("factor descriptor", factordescriptor, "found within ", descriptor, "but no exact match")
-			err = fmt.Errorf(errstr)
+			errstr := fmt.Sprint("factor descriptor ", factordescriptor, "found within ", descriptor, " but no exact match")
+			errs = append(errs, errstr)
 			tempresponsevalue = run.Setpoints[i]
-			return tempresponsevalue, err
 		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(factordescriptor)), strings.TrimSpace(strings.ToUpper(descriptor))) {
-
 			errstr := fmt.Sprint("factor descriptors of ", descriptor, "found within ", factordescriptor, "but not exact match")
-			err = fmt.Errorf(errstr)
+			errs = append(errs, errstr)
 			tempresponsevalue = run.Setpoints[i]
-			return tempresponsevalue, err
 		}
 	}
-
+	err = fmt.Errorf(strings.Join(errs, "\n"))
 	factorvalue = tempresponsevalue
 	return
 }

@@ -909,7 +909,7 @@ func (m MergedLevel) Sort() (orderedKeys []string) {
 	return
 }
 
-// returns keys in alphabetical order; values are returned in the order corresponding to the key order
+// Evaluates whether two merged levels are equal
 func (m MergedLevel) EqualTo(e MergedLevel) (bool, error) {
 
 	if len(m.OriginalFactorPairs) != len(e.OriginalFactorPairs) {
@@ -924,7 +924,7 @@ func (m MergedLevel) EqualTo(e MergedLevel) (bool, error) {
 	return true, nil
 }
 
-// returns keys in alphabetical order; values are returned in the order corresponding to the key order
+// Evaluates whether two merged levels are equal
 func (m MergedLevel) EqualToMergeConcs(e MergedLevel) (bool, error) {
 
 	if len(m.OriginalFactorPairs) != len(e.OriginalFactorPairs) {
@@ -1306,7 +1306,9 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-
+		if allEmpty(setpoints) && allEmpty(responsevalues) {
+			return
+		}
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -1473,7 +1475,9 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-
+		if allEmpty(setpoints) && allEmpty(responsevalues) {
+			return
+		}
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -1749,7 +1753,9 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-
+		if allEmpty(setpoints) && allEmpty(responsevalues) {
+			return
+		}
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -1761,6 +1767,16 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 
 	return
 }
+
+func allEmpty(array []interface{}) bool {
+	for _, entry := range array {
+		if len(fmt.Sprint(entry)) != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumns []int, intfactors []string) (runs []Run, err error) {
 	file, err := spreadsheet.OpenBinary(bytes)
 	if err != nil {
@@ -1907,7 +1923,9 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-
+		if allEmpty(setpoints) && allEmpty(responsevalues) {
+			return
+		}
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)

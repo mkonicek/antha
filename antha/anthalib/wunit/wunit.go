@@ -318,7 +318,7 @@ func (cm *ConcreteMeasurement) EqualToFloat(f float64) bool {
 }
 
 func (cm *ConcreteMeasurement) ToString() string {
-	return fmt.Sprintf("%-6.3f%s", cm.RawValue(), cm.Unit().PrefixedSymbol())
+	return fmt.Sprintf("%.3g %s", cm.RawValue(), cm.Unit().PrefixedSymbol())
 }
 
 /**********/

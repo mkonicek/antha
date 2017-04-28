@@ -895,8 +895,9 @@ func MergeFactorNames(factorNames []string) (combinedFactor string) {
 	return
 }
 
+// product of merging two factor levels and retaining the original merged factor level pairs in a map
 type MergedLevel struct {
-	OriginalFactorPairs map[string]interface{}
+	OriginalFactorPairs map[string]interface{} // map of original factor names to levels e.g. "Glucose":"10uM", "Glycerol mM": 0
 }
 
 // returns keys in alphabetical order; values are returned in the order corresponding to the key order
@@ -968,6 +969,7 @@ func concsEqual(conc1, conc2 wunit.Concentration) bool {
 	return false
 }
 
+// Merges an array of factors into a single merged level type using arrays of factor names and levels in order
 func MakeMergedLevel(factorsInOrder []string, levelsInOrder []interface{}) (m MergedLevel, err error) {
 	pairs := make(map[string]interface{})
 
@@ -1016,6 +1018,7 @@ func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []strin
 	return
 }
 
+// return the lowest level value for a specified factor name from an array of runs
 func LowestLevelValue(runs []Run, factor string) (value interface{}, err error) {
 
 	// get all levels for the new factor
@@ -1039,6 +1042,7 @@ func LowestLevelValue(runs []Run, factor string) (value interface{}, err error) 
 
 }
 
+// combine all factor pairs to make all possible combinations of runs
 func AllCombinations(factors []DOEPair) (runs []Run) {
 
 	//fixed, nonfixed := FixedAndNonFixed(factors)
@@ -1075,11 +1079,10 @@ func AllCombinations(factors []DOEPair) (runs []Run) {
 		}
 
 	}
-	//runs = AddFixedFactors(runs, fixed)
 	return
 }
 
-func ParseRunWellPair(pair string, nameappendage string) (runnumber int, well string, err error) {
+func parseRunWellPair(pair string, nameappendage string) (runnumber int, well string, err error) {
 	split := strings.Split(pair, ":")
 
 	numberstring := strings.SplitAfter(split[0], nameappendage)
@@ -1127,7 +1130,7 @@ func AddWelllocations(DXORJMP string, xlsxfile string, oldsheet int, runnumberto
 
 	for i := 3; i < sheet.MaxRow; i++ {
 		for _, pair := range runnumbertowellcombos {
-			runnumber, well, err := ParseRunWellPair(pair, nameappendage)
+			runnumber, well, err := parseRunWellPair(pair, nameappendage)
 			if err != nil {
 				return err
 			}

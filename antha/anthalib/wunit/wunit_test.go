@@ -139,11 +139,11 @@ func ExampleEight() {
 	fmt.Println(meas3.Unit().ToString())
 	fmt.Println(pu3.PrefixedSymbol())
 	// Output:
-	// 10.000GHz  is  10   GHz
-	// 50.000MHz  is  0.05   GHz
-	// 50.000MHz  is  50   MHz
-	// 10.000GHz  is  10000   MHz
-	// 10.000l
+	// 10 GHz  is  10   GHz
+	// 50 MHz  is  0.05   GHz
+	// 50 MHz  is  50   MHz
+	// 10 GHz  is  10000   MHz
+	// 10 l
 	// Name: litre Symbol: l Conversion: 1    BaseUnit: l
 	// l
 }

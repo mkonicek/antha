@@ -139,11 +139,11 @@ func ExampleEight() {
 	fmt.Println(meas3.Unit().ToString())
 	fmt.Println(pu3.PrefixedSymbol())
 	// Output:
-	// 10.000GHz  is  10   GHz
-	// 50.000MHz  is  0.05   GHz
-	// 50.000MHz  is  50   MHz
-	// 10.000GHz  is  10000   MHz
-	// 10.000l
+	// 10 GHz  is  10   GHz
+	// 50 MHz  is  0.05   GHz
+	// 50 MHz  is  50   MHz
+	// 10 GHz  is  10000   MHz
+	// 10 l
 	// Name: litre Symbol: l Conversion: 1    BaseUnit: l
 	// l
 }
@@ -187,12 +187,12 @@ var units = []testunit{
 }
 
 var concs = []testunit{
-	{value: 2.0000000000000003e-06, prefix: "", unit: "g/l", prefixedunit: "g/l", siresult: 2.0000000000000005e-09, toSIString: "0.000 g/l"},
-	{value: 2.0000000000000003e-06, prefix: "k", unit: "g/l", prefixedunit: "kg/l", siresult: 2.0000000000000005e-06, toSIString: "0.000 kg/l"},
-	{value: 2.05, prefix: "m", unit: "g/l", prefixedunit: "mg/l", siresult: 2.05e-06, toSIString: "2.050 mg/l"},
-	{value: 2.05, prefix: "m", unit: "Mol/l", prefixedunit: "mMol/l", siresult: 0.0020499999999999997, toSIString: "2.050 mM/l"},
-	{value: 2.05, prefix: "m", unit: "g/l", prefixedunit: "ng/ul", siresult: 2.05e-06, toSIString: "2.050 mg/l"},
-	{value: 10, prefix: "", unit: "X", prefixedunit: "X", siresult: 10, toSIString: "10.000X"},
+	{value: 2.0000000000000003e-06, prefix: "", unit: "g/l", prefixedunit: "g/l", siresult: 2.0000000000000005e-09, toSIString: "2e-06 g/l"},
+	{value: 2.0000000000000003e-06, prefix: "k", unit: "g/l", prefixedunit: "kg/l", siresult: 2.0000000000000005e-06, toSIString: "2e-06 kg/l"},
+	{value: 2.05, prefix: "m", unit: "g/l", prefixedunit: "mg/l", siresult: 2.05e-06, toSIString: "2.05 mg/l"},
+	{value: 2.05, prefix: "m", unit: "Mol/l", prefixedunit: "mMol/l", siresult: 0.0020499999999999997, toSIString: "2.05 mM/l"},
+	{value: 2.05, prefix: "m", unit: "g/l", prefixedunit: "ng/ul", siresult: 2.05e-06, toSIString: "2.05 mg/l"},
+	{value: 10, prefix: "", unit: "X", prefixedunit: "X", siresult: 10, toSIString: "10 X"},
 }
 
 type VolumeArithmetic struct {

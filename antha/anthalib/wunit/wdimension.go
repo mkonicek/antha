@@ -410,6 +410,7 @@ var UnitMap = map[string]map[string]Unit{
 		"ug/l":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
 		"ng/L":   Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
 		"ng/l":   Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"ug/ml":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"ng/ul":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"ng/ml":  Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
 		"Mol/L":  Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},

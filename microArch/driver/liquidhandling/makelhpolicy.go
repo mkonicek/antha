@@ -184,8 +184,14 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 
 	}
 	if DXORJMP == "DX" {
+		contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), dxdesignfilename))
 
-		runs, err = RunsFromDXDesign(filepath.Join(anthapath.Path(), dxdesignfilename), intfactors)
+		if err != nil {
+			return policies, names, runs, err
+		}
+
+		runs, err = RunsFromDXDesignContents(contents, intfactors)
+
 		if err != nil {
 			return policies, names, runs, err
 		}
@@ -195,7 +201,13 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 		factorcolumns := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
 		responsecolumns := []int{14, 15, 16, 17}
 
-		runs, err = RunsFromJMPDesign(filepath.Join(anthapath.Path(), dxdesignfilename), factorcolumns, responsecolumns, intfactors)
+		contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), dxdesignfilename))
+
+		if err != nil {
+			return policies, names, runs, err
+		}
+
+		runs, err = RunsFromJMPDesignContents(contents, factorcolumns, responsecolumns, intfactors)
 		if err != nil {
 			return policies, names, runs, err
 		}

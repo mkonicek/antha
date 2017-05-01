@@ -56,6 +56,15 @@ func allEmpty(array []interface{}) bool {
 	return true
 }
 
+func rowEmpty(sheet *xlsx.Sheet, rownumber int) bool {
+	for i := 0; i < sheet.MaxCol; i++ {
+		if cell := sheet.Cell(rownumber, i); len(strings.TrimSpace(fmt.Sprint(cell))) > 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func AddWelllocations(DXORJMP string, xlsxfile string, oldsheet int, runnumbertowellcombos []string, nameappendage string, pathtosave string, extracolumnheaders []string, extracolumnvalues []interface{}) error {
 
 	var xlsxcell *xlsx.Cell
@@ -128,7 +137,12 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 
 	var setpoint interface{}
 	var descriptor string
+
 	for i := 3; i < sheet.MaxRow; i++ {
+
+		if rowEmpty(sheet, i) {
+			return
+		}
 
 		factordescriptors := make([]string, 0)
 		responsedescriptors := make([]string, 0)
@@ -270,9 +284,7 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-		if allEmpty(setpoints) && allEmpty(responsevalues) {
-			return
-		}
+
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -300,6 +312,11 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 	var descriptor string
 	for i := 1; i < sheet.MaxRow; i++ {
 		//maxfactorcol := 2
+
+		if rowEmpty(sheet, i) {
+			return
+		}
+
 		factordescriptors := make([]string, 0)
 		responsedescriptors := make([]string, 0)
 		setpoints := make([]interface{}, 0)
@@ -432,9 +449,6 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-		if allEmpty(setpoints) && allEmpty(responsevalues) {
-			return
-		}
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -610,7 +624,9 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 	var setpoint interface{}
 	var descriptor string
 	for i := 3; i < sheet.MaxRow; i++ {
-
+		if rowEmpty(sheet, i) {
+			return
+		}
 		factordescriptors := make([]string, 0)
 		responsedescriptors := make([]string, 0)
 		setpoints := make([]interface{}, 0)
@@ -751,9 +767,7 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-		if allEmpty(setpoints) && allEmpty(responsevalues) {
-			return
-		}
+
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -780,6 +794,11 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 	var descriptor string
 	for i := 1; i < sheet.MaxRow; i++ {
 		//maxfactorcol := 2
+
+		if rowEmpty(sheet, i) {
+			return
+		}
+
 		factordescriptors := make([]string, 0)
 		responsedescriptors := make([]string, 0)
 		setpoints := make([]interface{}, 0)
@@ -912,9 +931,7 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-		if allEmpty(setpoints) && allEmpty(responsevalues) {
-			return
-		}
+
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)

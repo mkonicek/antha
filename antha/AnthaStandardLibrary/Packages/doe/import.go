@@ -30,8 +30,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 
 	"github.com/tealeg/xlsx"
 )
@@ -52,6 +50,18 @@ func parseRunWellPair(pair string, nameappendage string) (runnumber int, well st
 func allEmpty(array []interface{}) bool {
 	for _, entry := range array {
 		if len(fmt.Sprint(entry)) != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func rowEmpty(sheet *xlsx.Sheet, rownumber int) bool {
+	for i := 0; i < sheet.MaxCol; i++ {
+		cell := sheet.Cell(rownumber, i)
+		str, _ := cell.String()
+
+		if len(strings.TrimSpace(str)) > 0 {
 			return false
 		}
 	}
@@ -130,7 +140,12 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 
 	var setpoint interface{}
 	var descriptor string
+
 	for i := 3; i < sheet.MaxRow; i++ {
+
+		if rowEmpty(sheet, i) {
+			return
+		}
 
 		factordescriptors := make([]string, 0)
 		responsedescriptors := make([]string, 0)
@@ -272,9 +287,7 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-		if allEmpty(setpoints) && allEmpty(responsevalues) {
-			return
-		}
+
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -284,121 +297,6 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 		othersubheaders = make([]string, 0)
 	}
 
-	return
-}
-
-func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File) {
-
-	// if output is a struct look for a sensible field to print
-
-	var sheet *xlsx.Sheet
-	var row *xlsx.Row
-	var cell *xlsx.Cell
-	var err error
-
-	xlsxfile = xlsx.NewFile()
-	sheet, err = xlsxfile.AddSheet("Sheet1")
-	if err != nil {
-		panic(err.Error())
-	}
-	// add headers
-	row = sheet.AddRow()
-
-	// 2 blank cells
-	cell = row.AddCell()
-	cell.Value = ""
-	cell = row.AddCell()
-	cell.Value = ""
-
-	// take factor and run descriptors from first run (assuming they're all the same)
-	for i, _ := range runs[0].Factordescriptors {
-		cell = row.AddCell()
-		cell.Value = "Factor " + strconv.Itoa(i+1)
-
-	}
-	for i, _ := range runs[0].Responsedescriptors {
-		cell = row.AddCell()
-		cell.Value = "Response " + strconv.Itoa(i+1)
-
-	}
-	for _, additionalheader := range runs[0].AdditionalHeaders {
-		cell = row.AddCell()
-		cell.Value = additionalheader
-
-	}
-	// new row
-	row = sheet.AddRow()
-
-	// add Std and Run number headers
-	cell = row.AddCell()
-	cell.Value = "Std"
-	cell = row.AddCell()
-	cell.Value = "Run"
-
-	// then add subheadings and descriptors
-	for i, descriptor := range runs[0].Factordescriptors {
-		letter := wutil.NumToAlpha(i + 1)
-		cell = row.AddCell()
-		cell.Value = letter + ":" + descriptor
-
-	}
-	for _, descriptor := range runs[0].Responsedescriptors {
-		cell = row.AddCell()
-		cell.Value = descriptor
-
-	}
-	for _, descriptor := range runs[0].AdditionalSubheaders {
-		cell = row.AddCell()
-		cell.Value = descriptor
-
-	}
-
-	// add blank row
-
-	row = sheet.AddRow()
-
-	//add data 1 row per run
-	for _, run := range runs {
-
-		row = sheet.AddRow()
-		// Std
-		cell = row.AddCell()
-		cell.SetValue(run.StdNumber)
-
-		// Run
-		cell = row.AddCell()
-		cell.SetValue(run.RunNumber)
-
-		// factors
-		for _, factor := range run.Setpoints {
-
-			cell = row.AddCell()
-
-			dna, amIdna := factor.(wtype.DNASequence)
-			if amIdna {
-				cell.SetValue(dna.Nm)
-			} else {
-				cell.SetValue(factor) //= factor.(string)
-			}
-
-		}
-
-		// responses
-		for _, response := range run.ResponseValues {
-			cell = row.AddCell()
-			cell.SetValue(response)
-		}
-
-		// additional
-		for _, additional := range run.AdditionalValues {
-			cell = row.AddCell()
-			cell.SetValue(additional)
-		}
-	}
-	err = xlsxfile.Save(outputfilename)
-	if err != nil {
-		fmt.Printf(err.Error())
-	}
 	return
 }
 
@@ -417,6 +315,11 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 	var descriptor string
 	for i := 1; i < sheet.MaxRow; i++ {
 		//maxfactorcol := 2
+
+		if rowEmpty(sheet, i) {
+			return
+		}
+
 		factordescriptors := make([]string, 0)
 		responsedescriptors := make([]string, 0)
 		setpoints := make([]interface{}, 0)
@@ -549,9 +452,6 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-		if allEmpty(setpoints) && allEmpty(responsevalues) {
-			return
-		}
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -727,7 +627,9 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 	var setpoint interface{}
 	var descriptor string
 	for i := 3; i < sheet.MaxRow; i++ {
-
+		if rowEmpty(sheet, i) {
+			return
+		}
 		factordescriptors := make([]string, 0)
 		responsedescriptors := make([]string, 0)
 		setpoints := make([]interface{}, 0)
@@ -868,9 +770,7 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-		if allEmpty(setpoints) && allEmpty(responsevalues) {
-			return
-		}
+
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)
@@ -897,6 +797,11 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 	var descriptor string
 	for i := 1; i < sheet.MaxRow; i++ {
 		//maxfactorcol := 2
+
+		if rowEmpty(sheet, i) {
+			return
+		}
+
 		factordescriptors := make([]string, 0)
 		responsedescriptors := make([]string, 0)
 		setpoints := make([]interface{}, 0)
@@ -1029,9 +934,7 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 		run.AdditionalHeaders = otherheaders
 		run.AdditionalSubheaders = othersubheaders
 		run.AdditionalValues = otherresponsevalues
-		if allEmpty(setpoints) && allEmpty(responsevalues) {
-			return
-		}
+
 		runs = append(runs, run)
 		factordescriptors = make([]string, 0)
 		responsedescriptors = make([]string, 0)

@@ -58,7 +58,10 @@ func allEmpty(array []interface{}) bool {
 
 func rowEmpty(sheet *xlsx.Sheet, rownumber int) bool {
 	for i := 0; i < sheet.MaxCol; i++ {
-		if cell := sheet.Cell(rownumber, i); len(strings.TrimSpace(fmt.Sprint(cell))) > 0 {
+		cell := sheet.Cell(rownumber, i)
+		str, _ := cell.String()
+
+		if len(strings.TrimSpace(str)) > 0 {
 			return false
 		}
 	}

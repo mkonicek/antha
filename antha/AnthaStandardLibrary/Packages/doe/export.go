@@ -104,6 +104,121 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 	return
 }
 
+func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File) {
+
+	// if output is a struct look for a sensible field to print
+
+	var sheet *xlsx.Sheet
+	var row *xlsx.Row
+	var cell *xlsx.Cell
+	var err error
+
+	xlsxfile = xlsx.NewFile()
+	sheet, err = xlsxfile.AddSheet("Sheet1")
+	if err != nil {
+		panic(err.Error())
+	}
+	// add headers
+	row = sheet.AddRow()
+
+	// 2 blank cells
+	cell = row.AddCell()
+	cell.Value = ""
+	cell = row.AddCell()
+	cell.Value = ""
+
+	// take factor and run descriptors from first run (assuming they're all the same)
+	for i, _ := range runs[0].Factordescriptors {
+		cell = row.AddCell()
+		cell.Value = "Factor " + strconv.Itoa(i+1)
+
+	}
+	for i, _ := range runs[0].Responsedescriptors {
+		cell = row.AddCell()
+		cell.Value = "Response " + strconv.Itoa(i+1)
+
+	}
+	for _, additionalheader := range runs[0].AdditionalHeaders {
+		cell = row.AddCell()
+		cell.Value = additionalheader
+
+	}
+	// new row
+	row = sheet.AddRow()
+
+	// add Std and Run number headers
+	cell = row.AddCell()
+	cell.Value = "Std"
+	cell = row.AddCell()
+	cell.Value = "Run"
+
+	// then add subheadings and descriptors
+	for i, descriptor := range runs[0].Factordescriptors {
+		letter := wutil.NumToAlpha(i + 1)
+		cell = row.AddCell()
+		cell.Value = letter + ":" + descriptor
+
+	}
+	for _, descriptor := range runs[0].Responsedescriptors {
+		cell = row.AddCell()
+		cell.Value = descriptor
+
+	}
+	for _, descriptor := range runs[0].AdditionalSubheaders {
+		cell = row.AddCell()
+		cell.Value = descriptor
+
+	}
+
+	// add blank row
+
+	row = sheet.AddRow()
+
+	//add data 1 row per run
+	for _, run := range runs {
+
+		row = sheet.AddRow()
+		// Std
+		cell = row.AddCell()
+		cell.SetValue(run.StdNumber)
+
+		// Run
+		cell = row.AddCell()
+		cell.SetValue(run.RunNumber)
+
+		// factors
+		for _, factor := range run.Setpoints {
+
+			cell = row.AddCell()
+
+			dna, amIdna := factor.(wtype.DNASequence)
+			if amIdna {
+				cell.SetValue(dna.Nm)
+			} else {
+				cell.SetValue(factor) //= factor.(string)
+			}
+
+		}
+
+		// responses
+		for _, response := range run.ResponseValues {
+			cell = row.AddCell()
+			cell.SetValue(response)
+		}
+
+		// additional
+		for _, additional := range run.AdditionalValues {
+			cell = row.AddCell()
+			cell.SetValue(additional)
+		}
+	}
+	err = xlsxfile.Save(outputfilename)
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+	return
+}
+
 func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfile *xlsx.File) {
 	if dxorjmp == "DX" {
 		xlsxfile = DXXLSXFilefromRuns(runs, outputfilename)

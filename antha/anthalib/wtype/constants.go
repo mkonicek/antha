@@ -24,3 +24,5 @@ package wtype
 
 // the standard delimiter to be used when concatenating mixed components into a new component name
 const MIXDELIMITER = "+"
+
+const EPSILON_64 = 1.0e-24

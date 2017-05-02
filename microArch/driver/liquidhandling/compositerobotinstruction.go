@@ -436,7 +436,6 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 
 	// MIS DEBUG HERE --> this crashes, should not be generating
 	// 		      MCBs with no volumes
-
 	fmt.Println(ins.Volume)
 	channel, tipp := ChooseChannel(ins.GetVolumes()[0], prms)
 	tiptype := ""

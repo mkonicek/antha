@@ -467,11 +467,11 @@ func (lhcc LHCategoryCondition) Match(v interface{}) bool {
 		}
 	case []string:
 		// true iff at least one in array and all members of the array are the same category
-		if len(v.([]string)) == 0 {
+		if len(v.([]string)) == 0 || numInStringArray(v.([]string)) == 0 {
 			return false
 		}
 		for _, s := range v.([]string) {
-			if !lhcc.Match(s) {
+			if !lhcc.Match(s) && s != "" {
 				return false
 			}
 		}
@@ -521,13 +521,13 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 		}
 	case []float64:
 		//true iff at least one value all values are within range
-
-		if len(v.([]float64)) == 0 {
+		// how to deal with nulls?
+		if len(v.([]float64)) == 0 || numInFloatArray(v.([]float64)) == 0 {
 			return false
 		}
 
 		for _, f := range v.([]float64) {
-			if !lhnc.Match(f) {
+			if !lhnc.Match(f) && f > EPSILON_64 {
 				return false
 			}
 		}
@@ -548,4 +548,24 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 
 	} // switch
 	return false
+}
+
+func numInStringArray(a []string) int {
+	c := 0
+	for _, s := range a {
+		if s != "" {
+			c += 1
+		}
+	}
+	return c
+}
+
+func numInFloatArray(a []float64) int {
+	c := 0
+	for _, f := range a {
+		if f > EPSILON_64 {
+			c += 1
+		}
+	}
+	return c
 }

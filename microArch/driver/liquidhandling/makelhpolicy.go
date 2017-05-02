@@ -96,6 +96,7 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols["NeedToMix"] = MakeNeedToMixPolicy()
 	pols["PreMix"] = PreMixPolicy()
 	pols["PostMix"] = PostMixPolicy()
+	pols["MegaMix"] = MegaMixPolicy()
 	pols["viscous"] = MakeViscousPolicy()
 	pols["Paint"] = MakePaintPolicy()
 
@@ -184,8 +185,14 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 
 	}
 	if DXORJMP == "DX" {
+		contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), dxdesignfilename))
 
-		runs, err = RunsFromDXDesign(filepath.Join(anthapath.Path(), dxdesignfilename), intfactors)
+		if err != nil {
+			return policies, names, runs, err
+		}
+
+		runs, err = RunsFromDXDesignContents(contents, intfactors)
+
 		if err != nil {
 			return policies, names, runs, err
 		}
@@ -195,7 +202,13 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 		factorcolumns := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
 		responsecolumns := []int{14, 15, 16, 17}
 
-		runs, err = RunsFromJMPDesign(filepath.Join(anthapath.Path(), dxdesignfilename), factorcolumns, responsecolumns, intfactors)
+		contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), dxdesignfilename))
+
+		if err != nil {
+			return policies, names, runs, err
+		}
+
+		runs, err = RunsFromJMPDesignContents(contents, factorcolumns, responsecolumns, intfactors)
 		if err != nil {
 			return policies, names, runs, err
 		}
@@ -519,13 +532,16 @@ func MakeCultureReusePolicy() wtype.LHPolicy {
 }
 
 func MakeGlycerolPolicy() wtype.LHPolicy {
-	glycerolpolicy := make(wtype.LHPolicy, 6)
+	glycerolpolicy := make(wtype.LHPolicy, 9)
 	glycerolpolicy["ASPSPEED"] = 1.5
 	glycerolpolicy["DSPSPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["TIP_REUSE_LIMIT"] = 0
 	glycerolpolicy["CAN_MULTI"] = false
+	glycerolpolicy["POST_MIX"] = 3
+	glycerolpolicy["POST_MIX_VOLUME"] = 20.0
+	glycerolpolicy["POST_MIX_RATE"] = 3.74
 	return glycerolpolicy
 }
 
@@ -728,11 +744,25 @@ func PostMixPolicy() wtype.LHPolicy {
 	return dnapolicy
 }
 
+func MegaMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 12)
+	dnapolicy["POST_MIX"] = 10
+	dnapolicy["POST_MIX_RATE"] = 3.74
+	dnapolicy["ASPSPEED"] = 3.74
+	dnapolicy["DSPSPEED"] = 3.74
+	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MSA"] = false
+	dnapolicy["CAN_SDD"] = false
+	dnapolicy["DSPREFERENCE"] = 0
+	dnapolicy["DSPZOFFSET"] = 0.5
+	dnapolicy["TIP_REUSE_LIMIT"] = 0
+	dnapolicy["NO_AIR_DISPENSE"] = true
+	return dnapolicy
+
+}
+
 func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy := make(wtype.LHPolicy, 27)
-	// don't set this here -- use defaultpipette speed or there will be inconsistencies
-	// defaultpolicy["ASPSPEED"] = 3.0
-	// defaultpolicy["DSPSPEED"] = 3.0
 	defaultpolicy["OFFSETZADJUST"] = 0.0
 	defaultpolicy["TOUCHOFF"] = false
 	defaultpolicy["TOUCHOFFSET"] = 0.5
@@ -756,14 +786,8 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["MANUALPTZ"] = false
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
-	// added to diagnose bubble cause
-	defaultpolicy["POST_MIX_Z"] = 0.5 // dangerous
-	defaultpolicy["PRE_MIX_Z"] = 0.5  //    ""
-	//defaultpolicy["ASP_WAIT"] = 1.0
-	//defaultpolicy["DSP_WAIT"] = 1.0
-	defaultpolicy["PRE_MIX_VOLUME"] = 10.0
-	defaultpolicy["POST_MIX_VOLUME"] = 10.0
-	defaultpolicy["RESET_OVERRIDE"] = false
+	defaultpolicy["POST_MIX_Z"] = 0.5
+	defaultpolicy["PRE_MIX_Z"] = 0.5
 	return defaultpolicy
 }
 

@@ -39,6 +39,7 @@ const (
 	LTMultiWater
 	LTCSrc
 	LTNSrc
+	LTMegaMix
 )
 
 func LiquidTypeFromString(s string) (LiquidType, error) {
@@ -106,6 +107,8 @@ func LiquidTypeFromString(s string) (LiquidType, error) {
 		return LTCSrc, nil
 	case "nitrogen_source":
 		return LTNSrc, nil
+	case "MegaMix":
+		return LTMegaMix, nil
 	default:
 		return LTWater, fmt.Errorf("no liquid policy found for " + s + " so using default water policy")
 	}
@@ -173,6 +176,8 @@ func LiquidTypeName(lt LiquidType) string {
 		return "carbon_source"
 	case LTNSrc:
 		return "nitrogen_source"
+	case LTMegaMix:
+		return "MegaMix"
 	default:
 		return "nil"
 	}

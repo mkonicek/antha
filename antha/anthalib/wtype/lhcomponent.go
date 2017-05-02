@@ -65,12 +65,20 @@ func (lhc *LHComponent) CNID() string {
 }
 
 func (lhc *LHComponent) Generation() int {
-	g, ok := lhc.Extra["Generation"]
-
-	if ok {
-		return g.(int)
+	gen, ok := lhc.Extra["Generation"]
+	if !ok {
+		return 0
 	}
 
+	genInt, ok := gen.(int)
+	if ok {
+		return genInt
+	}
+
+	genFloat, ok := gen.(float64)
+	if ok {
+		return int(genFloat)
+	}
 	return 0
 }
 

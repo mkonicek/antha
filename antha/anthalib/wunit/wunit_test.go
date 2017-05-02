@@ -25,8 +25,9 @@ package wunit
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func StoreMeasurement(m Measurement) {
@@ -138,11 +139,11 @@ func ExampleEight() {
 	fmt.Println(meas3.Unit().ToString())
 	fmt.Println(pu3.PrefixedSymbol())
 	// Output:
-	// 10.000GHz  is  10   GHz
-	// 50.000MHz  is  0.05   GHz
-	// 50.000MHz  is  50   MHz
-	// 10.000GHz  is  10000   MHz
-	// 10.000l
+	// 10 GHz  is  10   GHz
+	// 50 MHz  is  0.05   GHz
+	// 50 MHz  is  50   MHz
+	// 10 GHz  is  10000   MHz
+	// 10 l
 	// Name: litre Symbol: l Conversion: 1    BaseUnit: l
 	// l
 }
@@ -177,19 +178,21 @@ type testunit struct {
 	unit         string
 	prefixedunit string
 	siresult     float64
+	toSIString   string
 }
 
 var units = []testunit{
-	{2.0000000000000003e-06, "", "l", "l", 2.0000000000000003e-06},
-	{2.05, "u", "l", "ul", 2.05e-6},
+	{2.0000000000000003e-06, "", "l", "l", 2.0000000000000003e-06, "0.000 l"},
+	{2.05, "u", "l", "ul", 2.05e-6, "2.000 ul"},
 }
 
 var concs = []testunit{
-	{2.0000000000000003e-06, "", "g/l", "g/l", 2.0000000000000003e-06},
-	{2.0000000000000003e-06, "", "kg/l", "kg/l", 2.0000000000000005e-09},
-	{2.05, "m", "g/l", "mg/l", 0.0020499999999999997},
-	{2.05, "m", "Mol/l", "mMol/l", 0.0020499999999999997},
-	{2.05, "m", "g/l", "ng/ul", 0.0020499999999999997},
+	{value: 2.0000000000000003e-06, prefix: "", unit: "g/l", prefixedunit: "g/l", siresult: 2.0000000000000005e-09, toSIString: "2e-06 g/l"},
+	{value: 2.0000000000000003e-06, prefix: "k", unit: "g/l", prefixedunit: "kg/l", siresult: 2.0000000000000005e-06, toSIString: "2e-06 kg/l"},
+	{value: 2.05, prefix: "m", unit: "g/l", prefixedunit: "mg/l", siresult: 2.05e-06, toSIString: "2.05 mg/l"},
+	{value: 2.05, prefix: "m", unit: "Mol/l", prefixedunit: "mMol/l", siresult: 0.0020499999999999997, toSIString: "2.05 mM/l"},
+	{value: 2.05, prefix: "m", unit: "g/l", prefixedunit: "ng/ul", siresult: 2.05e-06, toSIString: "2.05 mg/l"},
+	{value: 10, prefix: "", unit: "X", prefixedunit: "X", siresult: 10, toSIString: "10 X"},
 }
 
 type VolumeArithmetic struct {
@@ -355,7 +358,7 @@ var concarithmetictests = []ConcArithmetic{
 		Difference: NewConcentration(999990, "ng/ul"),
 		Factor:     10.0,
 		Product:    NewConcentration(10000000, "ng/ul"),
-		Quotient:   NewConcentration(100000, "ng/ul"),
+		Quotient:   NewConcentration(100, "g/l"),
 	},
 	{
 		ValueA:     NewConcentration(1, "Mol/l"),
@@ -432,6 +435,13 @@ func TestNewConcentration(t *testing.T) {
 				"For", testunit.value, testunit.prefixedunit, "\n",
 				"expected", testunit.siresult, "\n",
 				"got", r.SIValue(), "\n",
+			)
+		}
+		if r.ToString() != testunit.toSIString {
+			t.Error(
+				"For", testunit.value, testunit.prefixedunit, "\n",
+				"expected", testunit.toSIString, "\n",
+				"got", r.ToString(), "\n",
 			)
 		}
 	}

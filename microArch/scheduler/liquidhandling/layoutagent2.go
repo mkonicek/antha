@@ -169,6 +169,16 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 
 	remap := make_plates(request, chain.ValueIDs())
 
+	// I fix da map
+
+	for k, v := range remap {
+		for kk, vv := range mapchoices {
+			if vv == k {
+				mapchoices[kk] = v
+			}
+		}
+	}
+
 	// give them names
 
 	for _, v := range request.Output_plates {

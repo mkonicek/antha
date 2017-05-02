@@ -32,6 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/microArch/factory"
 )
 
 func TestStockConcs(*testing.T) {
@@ -78,6 +79,48 @@ func configure_request_simple(rq *LHRequest) {
 		ins.AddProduct(GetComponentForTest("water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
+
+}
+
+func TestTipOverridePositive(t *testing.T) {
+	lh := GetLiquidHandlerForTest()
+	rq := GetLHRequestForTest()
+	configure_request_simple(rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	tpz := make([]*wtype.LHTipbox, 1)
+	tpz[0] = factory.GetTipboxByType("Gilson20")
+
+	rq.Tips = tpz
+
+	rq.ConfigureYourself()
+
+	err := lh.Plan(rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
+	}
+
+}
+func TestTipOverrideNegative(t *testing.T) {
+	lh := GetLiquidHandlerForTest()
+	rq := GetLHRequestForTest()
+	configure_request_simple(rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	tpz := make([]*wtype.LHTipbox, 1)
+	tpz[0] = factory.GetTipboxByType("Gilson200")
+
+	rq.Tips = tpz
+
+	rq.ConfigureYourself()
+
+	err := lh.Plan(rq)
+
+	if err.Error() != "No tip chosen (1)" {
+		t.Fatal(fmt.Sprint("Unexpected error planning with no inputs: ", err, " Expected: 'No tip chosen (1)'"))
+	}
+
 }
 
 func TestPlateReuse(t *testing.T) {

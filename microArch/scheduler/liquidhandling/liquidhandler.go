@@ -78,7 +78,6 @@ func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
 	lh.SetupAgent = BasicSetupAgent
 	lh.LayoutAgent = ImprovedLayoutAgent
 	lh.ExecutionPlanner = ImprovedExecutionPlanner
-	//lh.ExecutionPlanner = ExecutionPlanner3
 	lh.Properties = properties
 	lh.FinalProperties = properties
 	lh.plateIDMap = make(map[string]string)
@@ -845,7 +844,16 @@ func (this *Liquidhandler) ExecutionPlan(request *LHRequest) (*LHRequest, error)
 	this.FinalProperties = this.Properties.Dup()
 	temprobot := this.Properties.Dup()
 	saved_plates := this.Properties.SaveUserPlates()
-	rq, err := this.ExecutionPlanner(request, this.Properties)
+
+	var rq *LHRequest
+	var err error
+
+	if request.Options.ExecutionPlannerVersion == "ep3" {
+		rq, err = ExecutionPlanner3(request, this.Properties)
+	} else {
+		rq, err = this.ExecutionPlanner(request, this.Properties)
+	}
+
 	this.FinalProperties = temprobot
 
 	this.Properties.RestoreUserPlates(saved_plates)

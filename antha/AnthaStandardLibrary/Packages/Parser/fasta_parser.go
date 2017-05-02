@@ -27,8 +27,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"errors"
-	//"fmt"
-	"io"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -36,27 +35,25 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
+// intermediate structure containing contents of Fasta file as strings
 type Fasta struct {
 	Id   string
 	Desc string
 	Seq  string
 }
 
-// This will retrieve seq from FASTA file
-func RetrieveSeqFromFASTA(id string, filename string) (seq wtype.DNASequence, err error) {
+// This will retrieve seq from FASTA file using the sequence ID found in the file
+func RetrieveSeqFromFASTA(id string, fastaFile wtype.File) (seq wtype.DNASequence, err error) {
 
 	var nofeatures []wtype.Feature
 
-	allparts, err := ioutil.ReadFile(filename)
+	allparts, err := fastaFile.ReadAll()
 	if err != nil {
-		// fmt.Println("error:", err)
 		return
 	}
 
-	fastaFh := bytes.NewReader(allparts)
-
 	// then retrieve the particular record
-	for _, record := range FastaParse(fastaFh) {
+	for _, record := range fastaParse(allparts) {
 		if strings.Contains(record.Id, id) {
 			seq = wtype.DNASequence{record.Id, record.Seq, true, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
 			return
@@ -72,7 +69,7 @@ func RetrieveSeqFromFASTA(id string, filename string) (seq wtype.DNASequence, er
 }
 
 // This will retrieve seq from FASTA file
-func FASTAtoLinearDNASeqs(filename string) (seqs []wtype.DNASequence, err error) {
+func FASTAtoLinearDNASeqs(fastaFile wtype.File) (seqs []wtype.DNASequence, err error) {
 
 	var nofeatures []wtype.Feature
 
@@ -80,28 +77,22 @@ func FASTAtoLinearDNASeqs(filename string) (seqs []wtype.DNASequence, err error)
 
 	var seq wtype.DNASequence
 
-	allparts, err := ioutil.ReadFile(filename)
+	allparts, err := fastaFile.ReadAll()
 	if err != nil {
-		// fmt.Println("error:", err)
 		return
 	}
 
-	fastaFh := bytes.NewReader(allparts)
-
 	// then retrieve the particular record
-	for _, record := range FastaParse(fastaFh) {
-		//if strings.Contains(record.Id, id) {
+	for _, record := range fastaParse(allparts) {
 		seq = wtype.DNASequence{record.Id, record.Seq, false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
-
 		seqs = append(seqs, seq)
-
 	}
 	return
 
 }
 
-// This will retrieve seq from FASTA file
-func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error) {
+// This will retrieve sequences from a FASTA file of type wtype.File and set all sequences to plasmids
+func FASTAtoPlasmidDNASeqs(file wtype.File) (seqs []wtype.DNASequence, err error) {
 
 	var nofeatures []wtype.Feature
 
@@ -109,17 +100,13 @@ func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error
 
 	var seq wtype.DNASequence
 
-	allparts, err := ioutil.ReadFile(filename)
+	allparts, err := file.ReadAll()
 	if err != nil {
-		// fmt.Println("error:", err)
 		return
 	}
 
-	fastaFh := bytes.NewReader(allparts)
-
 	// then retrieve the particular record
-	for _, record := range FastaParse(fastaFh) {
-		//if strings.Contains(record.Id, id) {
+	for _, record := range fastaParse(allparts) {
 		seq = wtype.DNASequence{record.Id, record.Seq, true, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
 
 		seqs = append(seqs, seq)
@@ -129,38 +116,54 @@ func FASTAtoPlasmidDNASeqs(filename string) (seqs []wtype.DNASequence, err error
 
 }
 
-func FastatoDNASequences(inputfilename string) (seqs []wtype.DNASequence, err error) {
-	fastaFh, err := os.Open(inputfilename)
-	if err != nil {
+// This will retrieve seq from FASTA file of type file.
+// If the header of a sequence contains PLASMID, VECTOR or CIRCULAR it will be  interpreted as a plasmid, otherwise it will be set to linear.
+func FASTAtoDNASeqs(FastaFile wtype.File) (seqs []wtype.DNASequence, err error) {
+	data, err := FastaFile.ReadAll()
+	if len(data) == 0 {
+		return seqs, fmt.Errorf("Cannot parse fasta file. File is empty.")
+	} else {
+
+		seqs = make([]wtype.DNASequence, 0)
+
+		var seq wtype.DNASequence
+		for _, record := range fastaParse(data) {
+			plasmidstatus := ""
+
+			if strings.Contains(strings.ToUpper(record.Desc), "PLASMID") || strings.Contains(strings.ToUpper(record.Desc), "CIRCULAR") || strings.Contains(strings.ToUpper(record.Desc), "VECTOR") {
+				plasmidstatus = "PLASMID"
+			}
+			seq, err = wtype.MakeDNASequence(record.Id, record.Seq, []string{plasmidstatus})
+			if err != nil {
+				return seqs, err
+			}
+			seqs = append(seqs, seq)
+		}
+
 		return
 	}
-	defer fastaFh.Close()
+}
 
-	seqs = make([]wtype.DNASequence, 0)
+// Convert a sequence file in Fasta format to an array of DNASequence.
+// If the header does not contain the key words PLASMID, CIRCULAR or VECTOR the sequence will be assumed to be linear.
+func FastatoDNASequences(sequenceFile wtype.File) (seqs []wtype.DNASequence, err error) {
+	data, err := sequenceFile.ReadAll()
 
-	var seq wtype.DNASequence
+	return FastaContentstoDNASequences(data)
+}
 
-	/*records := make([][]string, 0)
-	seq := make([]string, 0)
-	seq = []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
-	records = append(records, seq)*/
-	for _, record := range FastaParse(fastaFh) {
+// Convert the contents of a sequence file in Fasta format to an array of DNASequence.
+// If the header does not contain the key words PLASMID, CIRCULAR or VECTOR the sequence will be assumed to be linear.
+func FastaContentstoDNASequences(data []byte) (seqs []wtype.DNASequence, err error) {
+
+	for _, record := range fastaParse(data) {
 		plasmidstatus := ""
-		//seqtype := "DNA"
-		//class := "not specified"
+
 		if strings.Contains(strings.ToUpper(record.Desc), "PLASMID") || strings.Contains(strings.ToUpper(record.Desc), "CIRCULAR") || strings.Contains(strings.ToUpper(record.Desc), "VECTOR") {
 			plasmidstatus = "PLASMID"
 		}
-		/*	if strings.Contains(record.Desc, "Amino acid") || strings.Contains(record.Id, "aa") {
-				seqtype = "AA"
-			}
 
-			if strings.Contains(record.Desc, "Class:") {
-				uptoclass := strings.Index(record.Desc, "Class:")
-				prefix := uptoclass + len("class:")
-				class = record.Desc[prefix:]
-			}*/
-		seq, err = wtype.MakeDNASequence(record.Id, record.Seq, []string{plasmidstatus})
+		seq, err := wtype.MakeDNASequence(record.Id, record.Seq, []string{plasmidstatus})
 		if err != nil {
 			return seqs, err
 		}
@@ -170,7 +173,7 @@ func FastatoDNASequences(inputfilename string) (seqs []wtype.DNASequence, err er
 	return
 }
 
-func Build_fasta(header string, seq bytes.Buffer) (Record Fasta) {
+func build_fasta(header string, seq bytes.Buffer) (Record Fasta) {
 	fields := strings.SplitN(header, " ", 2)
 
 	var record Fasta
@@ -190,13 +193,11 @@ func Build_fasta(header string, seq bytes.Buffer) (Record Fasta) {
 	return Record
 }
 
-// new new version
-
-func FastaParse(fastaFh io.Reader) []Fasta {
+func fastaParse(fastaFh []byte) []Fasta {
 	var outputs []Fasta
+	buffer := bytes.NewBuffer(fastaFh)
 
-	scanner := bufio.NewScanner(fastaFh)
-	// scanner.Split(bufio.ScanLines)
+	scanner := bufio.NewScanner(buffer)
 	header := ""
 	var seq bytes.Buffer
 
@@ -211,22 +212,18 @@ func FastaParse(fastaFh io.Reader) []Fasta {
 				continue
 			}
 
-			// line := scanner.Text()
-
 			if line[0] == '>' {
 				// If we stored a previous identifier, get the DNA string and map to the
 				// identifier and clear the string
 				if header != "" {
 					// outputChannel <- build_fasta(header, seq.String())
-					outputs = append(outputs, Build_fasta(header, seq))
+					outputs = append(outputs, build_fasta(header, seq))
 					header = ""
 					seq.Reset()
 				}
 
 				// Standard FASTA identifiers look like: ">id desc"
 				header = line[1:]
-				//// fmt.Println(" header: ", header)
-				//header = strings.Join(line[1:], " ")
 
 			} else {
 				// Append here since multi-line DNA strings are possible
@@ -235,19 +232,17 @@ func FastaParse(fastaFh io.Reader) []Fasta {
 		}
 	}
 
-	outputs = append(outputs, Build_fasta(header, seq))
+	outputs = append(outputs, build_fasta(header, seq))
 
 	return outputs
 }
 
-func Fastatocsv(inputfilename string, outputfileprefix string) (csvfile *os.File, err error) {
-	fastaFh, err := os.Open(inputfilename)
+func Fastatocsv(inputfilename wtype.File, outputfileprefix string) (csvfile *os.File, err error) {
+	fastaFh, err := inputfilename.ReadAll()
 	if err != nil {
 		return
 	}
-	defer fastaFh.Close()
 
-	//csvfile, err := os.Create(outputfilename)
 	csvfile, err = ioutil.TempFile(os.TempDir(), "csv")
 	if err != nil {
 		return
@@ -257,11 +252,11 @@ func Fastatocsv(inputfilename string, outputfileprefix string) (csvfile *os.File
 	seq := make([]string, 0)
 	seq = []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
 	records = append(records, seq)
-	for _, record := range FastaParse(fastaFh) {
+	for _, record := range fastaParse(fastaFh) {
 		plasmidstatus := "FALSE"
 		seqtype := "DNA"
 		class := "not specified"
-		if strings.Contains(record.Desc, "Plasmid") || strings.Contains(record.Id, "Circular") || strings.Contains(record.Id, "Vector") {
+		if strings.Contains(record.Id, "Plasmid") || strings.Contains(record.Id, "Circular") || strings.Contains(record.Id, "Vector") {
 			plasmidstatus = "TRUE"
 		}
 		if strings.Contains(record.Desc, "Amino acid") || strings.Contains(record.Id, "aa") {

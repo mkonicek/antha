@@ -48,7 +48,6 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 	evaps := make([]wtype.VolumeCorrection, 0, 10)
 	for ix, insID := range request.Output_order {
 		//	request.InstructionSet.Add(ConvertInstruction(request.LHInstructions[insID], robot))
-
 		ris := liquidhandling.NewRobotInstructionSet(nil)
 
 		transIns, err := ConvertInstruction(request.LHInstructions[insID], robot, request.CarryVolume)

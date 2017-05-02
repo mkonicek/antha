@@ -83,6 +83,8 @@ func makeMixerOpt() (mixer.Opt, error) {
 
 	opt.OutputSort = viper.GetBool("outputSort")
 
+	opt.UseNewExecutionPlanner = viper.GetBool("WithMulti")
+
 	return opt, nil
 }
 
@@ -275,4 +277,5 @@ func init() {
 	flags.StringSlice("tipType", nil, "Names of permitted tip types")
 	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
 	flags.Bool("OutputSort", false, "Sort execution by output - improves tip usage")
+	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
 }

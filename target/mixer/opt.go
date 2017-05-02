@@ -45,6 +45,7 @@ type Opt struct {
 	DriverSpecificWashPreferences     []string
 	ModelEvaporation                  bool
 	OutputSort                        bool
+	UseNewExecutionPlanner            bool
 }
 
 // Merge two configs together and return the result. Values in the argument

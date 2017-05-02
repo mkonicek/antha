@@ -1,8 +1,9 @@
 package liquidhandling
 
 type LHOptions struct {
-	ModelEvaporation bool
-	OutputSort       bool
+	ModelEvaporation        bool
+	OutputSort              bool
+	ExecutionPlannerVersion string
 }
 
 func NewLHOptions() LHOptions {

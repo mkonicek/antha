@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"math"
 )
 
 // structure defining a base unit
@@ -271,6 +272,7 @@ func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
 	if v < cm.RawValue() {
 		return true
 	}
+	//fmt.Println(v, "not greater than", cm)
 	return false
 }
 
@@ -293,9 +295,14 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	}
 	// returns true if this is equal to m
 	v := m.ConvertTo(cm.Unit())
-	if v == cm.RawValue() {
+
+	dif := math.Abs(v - cm.RawValue())
+
+	epsilon := math.Nextafter(1, 2) - 1
+	if dif < (epsilon * 10000) {
 		return true
 	}
+
 	return false
 }
 
@@ -311,7 +318,7 @@ func (cm *ConcreteMeasurement) EqualToFloat(f float64) bool {
 }
 
 func (cm *ConcreteMeasurement) ToString() string {
-	return fmt.Sprintf("%-6.3f%s", cm.RawValue(), cm.Unit().PrefixedSymbol())
+	return fmt.Sprintf("%.3g %s", cm.RawValue(), cm.Unit().PrefixedSymbol())
 }
 
 /**********/

@@ -77,8 +77,8 @@ func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
 	lh := Liquidhandler{}
 	lh.SetupAgent = BasicSetupAgent
 	lh.LayoutAgent = ImprovedLayoutAgent
-	//	lh.ExecutionPlanner = ImprovedExecutionPlanner
-	lh.ExecutionPlanner = ExecutionPlanner3
+	lh.ExecutionPlanner = ImprovedExecutionPlanner
+	//lh.ExecutionPlanner = ExecutionPlanner3
 	lh.Properties = properties
 	lh.FinalProperties = properties
 	lh.plateIDMap = make(map[string]string)

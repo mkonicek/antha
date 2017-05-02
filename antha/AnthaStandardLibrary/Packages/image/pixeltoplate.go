@@ -19,6 +19,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/disintegration/imaging"
+	"errors"
 )
 
 //-------------------------------------------------------
@@ -249,6 +250,25 @@ func MakeGoimageNRGBA(imagefilename string) (nrgba *goimage.NRGBA) {
 
 	nrgba = imaging.Clone(img)
 	return
+}
+
+//OpenFile will take a wtype.File object and return the contents as image.NRGBA
+func OpenFile (file wtype.File)( nrgba *goimage.NRGBA, err error){
+
+	data, err := file.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	buf := bytes.NewReader(data)
+
+	img, err := imaging.Decode(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	nrgba = imaging.Clone(img)
+	return nrgba, nil
 }
 
 // export image to file
@@ -577,16 +597,16 @@ func ColourtoGrayscale(colour color.Color) (gray color.Gray) {
 }
 
 //Posterize will posterize an image. This refers to changing an image to use only a small number of different tones.
-func Posterize(imagefilename string, levels int) (posterized *goimage.NRGBA, newfilename string) {
+func Posterize(img *goimage.NRGBA, levels int) (posterized *goimage.NRGBA, err error) {
+
+	//We cannot posterize with only one level.
+	if levels == 1 {
+		return nil, errors.New("Cannot posterize with only one level.")
+	}
 
 	var newcolor color.NRGBA
 	numberofAreas := 256 / (levels)
 	numberofValues := 255 / (levels - 1)
-
-	img, err := imaging.Open(imagefilename)
-	if err != nil {
-		panic(err)
-	}
 
 	posterized = imaging.Clone(img)
 
@@ -656,14 +676,7 @@ func Posterize(imagefilename string, levels int) (posterized *goimage.NRGBA, new
 		}
 	}
 
-	// rename file
-	splitfilename := strings.Split(imagefilename, `.`)
-
-	newfilename = filepath.Join(fmt.Sprint(splitfilename[0], "_posterized", `.`, splitfilename[1]))
-	// save
-
-	imaging.Save(posterized, newfilename)
-	return
+	return posterized, nil
 }
 
 //ResizeImageToPlate will resize an image to fit the number of wells on a plate. We treat wells as pixels.
@@ -1050,3 +1063,9 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 	}
 	return imaging.Clone(img)
 }
+
+
+//--------------------------------------------------
+//My own functions
+//--------------------------------------------------
+

@@ -597,16 +597,16 @@ func ColourtoGrayscale(colour color.Color) (gray color.Gray) {
 }
 
 //Posterize will posterize an image. This refers to changing an image to use only a small number of different tones.
-func Posterize(img *goimage.NRGBA, levels int) (posterized *goimage.NRGBA, err error) {
-
-	//We cannot posterize with only one level.
-	if levels == 1 {
-		return nil, errors.New("Cannot posterize with only one level.")
-	}
+func Posterize(imagefilename string, levels int) (posterized *goimage.NRGBA, newfilename string) {
 
 	var newcolor color.NRGBA
 	numberofAreas := 256 / (levels)
 	numberofValues := 255 / (levels - 1)
+
+	img, err := imaging.Open(imagefilename)
+	if err != nil {
+		panic(err)
+	}
 
 	posterized = imaging.Clone(img)
 
@@ -676,7 +676,14 @@ func Posterize(img *goimage.NRGBA, levels int) (posterized *goimage.NRGBA, err e
 		}
 	}
 
-	return posterized, nil
+	// rename file
+	splitfilename := strings.Split(imagefilename, `.`)
+
+	newfilename = filepath.Join(fmt.Sprint(splitfilename[0], "_posterized", `.`, splitfilename[1]))
+	// save
+
+	imaging.Save(posterized, newfilename)
+	return
 }
 
 //ResizeImageToPlate will resize an image to fit the number of wells on a plate. We treat wells as pixels.

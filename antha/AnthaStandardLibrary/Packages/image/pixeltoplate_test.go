@@ -66,13 +66,7 @@ func TestOpenFile(t *testing.T) {
 
 func TestPosterize(t *testing.T) {
 
-	img, err := PathToImg("/home/cachemoi/gocode/src/github.com/antha-lang/elements/an/GIF/DataGIF/img/F1.jpg")
-	check(err)
-
-	postImg, err:=Posterize(img,2)
-	if err != nil {
-		t.Error(err)
-	}
+	postImg, _ := Posterize("/home/cachemoi/gocode/src/github.com/antha-lang/elements/an/GIF/DataGIF/img/F1.jpg",2)
 
 	if postImg != nil {
 		t.Log("image posterized")
@@ -80,8 +74,4 @@ func TestPosterize(t *testing.T) {
 		t.Error("posterize() returned nil")
 	}
 
-}
-
-func TestResizeImagetoPlate(t *testing.T) {
-	ResizeImagetoPlate()
 }

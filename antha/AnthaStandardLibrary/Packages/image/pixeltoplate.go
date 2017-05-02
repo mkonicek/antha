@@ -19,7 +19,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/disintegration/imaging"
-	"errors"
 )
 
 //-------------------------------------------------------
@@ -1076,3 +1075,6 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 //My own functions
 //--------------------------------------------------
 
+func FindClosestColor (){
+
+}

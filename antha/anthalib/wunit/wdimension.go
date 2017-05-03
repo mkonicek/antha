@@ -151,7 +151,7 @@ func CopyConcentration(v Concentration) Concentration {
 	return ret
 }
 
-// multiply volume
+// multiply concentration
 func MultiplyConcentration(v Concentration, factor float64) (newconc Concentration) {
 
 	newconc = NewConcentration(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
@@ -159,10 +159,28 @@ func MultiplyConcentration(v Concentration, factor float64) (newconc Concentrati
 
 }
 
-// divide volume
+// divide concentration
 func DivideConcentration(v Concentration, factor float64) (newconc Concentration) {
 
 	newconc = NewConcentration(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// add concentrations
+func AddConcentrations(concs []Concentration) (newconc Concentration) {
+
+	var tempconc Concentration
+	tempconc = NewConcentration(0.0, "nM/L")
+	for _, conc := range concs {
+		if tempconc.Unit().PrefixedSymbol() == conc.Unit().PrefixedSymbol() {
+			conc = NewConcentration(tempconc.RawValue()+conc.RawValue(), tempconc.Unit().PrefixedSymbol())
+			newconc = tempconc
+		} else {
+			tempconc = NewConcentration(tempconc.SIValue()+conc.SIValue(), tempconc.Unit().BaseSISymbol())
+			newconc = tempconc
+		}
+	}
 	return
 
 }
@@ -422,6 +440,11 @@ var UnitMap = map[string]map[string]Unit{
 		"mM/L":   Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
 		"uM/l":   Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
 		"nM/l":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nM/L":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"pM/l":   Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/L":   Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"fM/l":   Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fM/L":   Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
 		"M/l":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"M/L":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"mMol/L": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},

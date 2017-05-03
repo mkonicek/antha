@@ -123,7 +123,7 @@ func removeDuplicateInterface(elements []interface{}) []interface{} {
 	return elements
 }
 
-func checkArrayType(elements []interface{}) (typeName string, err error) {
+func CheckArrayType(elements []interface{}) (typeName string, err error) {
 	var foundthistype string
 	var foundthesetypes []string
 	for i, element := range elements {
@@ -151,7 +151,7 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 		return unique, fmt.Errorf("No entries in slice! ")
 	}
 
-	t, err := checkArrayType(elements)
+	t, err := CheckArrayType(elements)
 
 	if err != nil {
 		return unique, err

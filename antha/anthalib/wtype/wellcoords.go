@@ -145,31 +145,35 @@ func MakeWellCoords(wc string) WellCoords {
 
 // make well coordinates in the "A1" convention
 func MakeWellCoordsA1(a1 string) WellCoords {
-	if !MatchString("^[A-Z]{1,}[0-9]{1,2}$", a1) {
+	re := regexp.MustCompile(`^([A-Z]{1,})([0-9]{1,2})$`)
+	matches := re.FindStringSubmatch(a1)
+
+	if matches == nil {
 		return WellCoords{-1, -1}
 	}
-	re, _ := regexp.Compile("[A-Z]{1,}")
-	ix := re.FindIndex([]byte(a1))
-	endC := ix[1]
+	/*
+		re, _ := regexp.Compile("[A-Z]{1,}")
+		ix := re.FindIndex([]byte(a1))
+		endC := ix[1]
+	*/
 
-	X := wutil.ParseInt(a1[endC:len(a1)]) - 1
-	Y := wutil.AlphaToNum(string(a1[0:endC])) - 1
+	X := wutil.ParseInt(matches[2]) - 1
+	Y := wutil.AlphaToNum(matches[1]) - 1
 
 	return WellCoords{X, Y}
 }
 
 // make well coordinates in the "1A" convention
 func MakeWellCoords1A(a1 string) WellCoords {
+	re := regexp.MustCompile(`^([0-9]{1,2})([A-Z]{1,})$`)
+	matches := re.FindStringSubmatch(a1)
 
-	if !MatchString("[0-9]{1,2}[A-Z]{1,}", a1) {
+	if matches == nil {
 		return WellCoords{-1, -1}
 	}
-	re, _ := regexp.Compile("[A-Z]{1,}")
-	ix := re.FindIndex([]byte(a1))
-	startC := ix[0]
 
-	Y := wutil.AlphaToNum(string(a1[startC:len(a1)])) - 1
-	X := wutil.ParseInt(a1[0:startC]) - 1
+	Y := wutil.AlphaToNum(matches[2]) - 1
+	X := wutil.ParseInt(matches[1]) - 1
 	return WellCoords{X, Y}
 }
 

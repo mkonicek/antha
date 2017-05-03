@@ -848,7 +848,7 @@ func (this *Liquidhandler) ExecutionPlan(request *LHRequest) (*LHRequest, error)
 	var rq *LHRequest
 	var err error
 
-	if true || request.Options.ExecutionPlannerVersion == "ep3" {
+	if request.Options.ExecutionPlannerVersion == "ep3" {
 		rq, err = ExecutionPlanner3(request, this.Properties)
 	} else {
 		rq, err = this.ExecutionPlanner(request, this.Properties)

@@ -67,7 +67,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		lenToMake := 0
 		for _, c := range cmps {
 			if c != nil {
-				fmt.Print(c.CName, " ")
 				lenToMake += 1
 			}
 		}

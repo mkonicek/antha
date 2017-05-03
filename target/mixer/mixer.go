@@ -139,9 +139,7 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 
 	// try to do better multichannel execution planning?
 
-	if a.opt.UseNewExecutionPlanner {
-		req.Options.ExecutionPlannerVersion = "ep3"
-	}
+	req.Options.ExecutionPlannerVersion = a.opt.PlanningVersion
 
 	// model evaporation?
 

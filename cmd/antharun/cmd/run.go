@@ -83,7 +83,12 @@ func makeMixerOpt() (mixer.Opt, error) {
 
 	opt.OutputSort = viper.GetBool("outputSort")
 
-	opt.UseNewExecutionPlanner = viper.GetBool("WithMulti")
+	executionPlannerVersion := "ep2"
+	if viper.GetBool("WithMulti") {
+		executionPlannerVersion = "ep3"
+	}
+
+	opt.PlanningVersion = executionPlannerVersion
 
 	return opt, nil
 }

@@ -36,6 +36,9 @@ func ExecutionPlanner3(request *LHRequest, robot *liquidhandling.LHProperties) (
 		}
 
 		// make a transfer block instruction out of the incoming instructions
+		// -- essentially each node of the topological graph is passed wholesale
+		// into the instruction generator to be teased apart as appropriate
+
 		tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
 		request.InstructionSet.Add(tfb)
 		ch = ch.Child

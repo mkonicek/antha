@@ -183,6 +183,11 @@ func set_output_order(rq *LHRequest) error {
 
 	it := NewIChain(nil)
 
+	// aggregation of instructions effectively happens here. This entire level is
+	// passed as a block to the instruction generator as a TransferBlock (TFB)
+	// to be picked apart sequentially into sets which can be serviced simultaneously
+	// etc.
+
 	for _, v := range sorted {
 		// fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
 

@@ -28,32 +28,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-//	this section aggregates instructions with the following constraints:
-//
-//	1) obey any requirement to do one sample at a time
-//		-- bullet bitten: we cannot permit transfer to split up any multichannel instructions
-//		   into singles here... this is a bit tricky but we must make it so
-//		   some revision to how pragmas work may be needed: extend only to component type etc.
-//
-//	here is what a single sample assembled one component at a time looks like
-//	|
-//	|		here is one sample assembled all at once looks like
-//	|		|
-//	i1(A)		i2(A B C)	--> the LHIVector contains these two, maxlen = 3, CmpAt (0) = [A A]
-//	--										  CmpAt (1) = [  B]
-//	i3(B) <------									  CmpAt (2) = [  C]
-//	--          |-- these two are done separately (so they're boring)
-//	i4(C) <------
-//
-// 	this should produce the output:
-//	TFR(A A d1 d2), TFR(B d2), TFR(C d2), TFR(B d1), TFR(C d1)
-//	iow it does i1 + first part of i2 in parallel, then the rest of i2 then i3 then i4
-
-// 	issue is we cannot tolerate this situation
-//
-//	i1(A)		i2(A B)		i3(A C)
-//	so we have to ensure the components line up
-
 func readableComponentArray(arr []*wtype.LHComponent) string {
 	ret := ""
 
@@ -73,6 +47,18 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 }
 
 //
+//
+//	at this point (i.e. in a TransferBlock) the instructions have been grouped into sets
+//	with simultaneously servicable destinations - row or column-wise depending on the head
+//	orientation chosen
+//
+//	The main goal here is to find sources in appropriate structure (rows or columns)
+//	to allow them to be done simultaneously. This essentially follows a greedy strategy
+//	in which the required components are aligned to the available sources to see how many
+//	can be taken at once. There are some tricks involved to make this work with troughs
+//	etc.
+//
+
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 

@@ -661,6 +661,44 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	ins.TVolume = tv
 }
 
+//	This section divides transfers into multi and single channel blocks (MCB,SCB respectively)
+//      with the constraint that it must respect user requests for atomicity
+//
+//	The constraint comes from the fact that an instruction can be a request to mix several
+//	components atomically - i.e. once the first component has been moved the rest must follow
+//	immediately. This is compatible with multichannel operation in some cases but not others
+//
+//	if multichannel is not allowed for any of the components then it will at this point revert
+//	to single-channel operation as follows:
+//	(in the below assume all volumes are identical)
+//
+//	input: 	LHIVector([A], [B], [C])
+//	output:
+//		without multichannel:
+//			SCB([A,B,C], [d1, d2, d3])
+//		with multichannel   :
+//			MCB([A,B,C], [d1, d2, d3])
+//
+//	For reference, vectors including atomic mixes look like this
+//
+//	LHIVector([A,B,C], [A], [A])
+//
+//	output:
+//		without multichannel:
+//			SCB([A,B,C,A,A],[d1,d1,d1,d2,d3])
+//
+//		with multichannel:
+//			MCB([A,A,A],[d1,d2,d3]), SCB([B,C],[d1,d1])
+//
+//	The following is always mapped to single-channel operation
+//
+//		LHIVector([A,B], [A,C])
+//
+//	output:
+//		either case:
+//			SCB([A,B,A,C],[d1,d1,d2,d2])
+//
+
 func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	//  set the channel  choices first by cleaning out initial empties
 

@@ -24,6 +24,10 @@ func (ti TransferBlockInstruction) InstructionType() int {
 	return TFB
 }
 
+// this attempts to find arrays of destinations which can potentially be done simultaneously
+// via multichannel operation. At present this means they must be aligned in rows or columns
+// depending on the robot type and configuration
+
 func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
 	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()

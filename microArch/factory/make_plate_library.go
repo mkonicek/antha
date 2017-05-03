@@ -497,11 +497,10 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//	plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, 0.0, 0.0, 2.0)
 	//	plates[plate.Type] = plate
 
-	//refactored for reverse position
-
+	//E-GEL 48 (reverse) position
 	ep48g := wtype.NewShape("trap", "mm", 2, 4, 2)
 	//can't reach all wells; change to 24 wells per row?
-	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 25, 0, ep48g, wtype.LHWBFLAT, 2, 4, 2, 2, "mm")
+	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 20, 0, ep48g, wtype.LHWBFLAT, 2, 4, 2, 2, "mm")
 	//welltype = wtype.NewLHWell("384flat", "", "", "ul", 100, 10, square, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 	//plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, -1.0, 17.25, 49.5)
 	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
@@ -512,27 +511,19 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	plates[gelplate.Type] = gelplate
 
-	// E-GEL 96 definition
-
+	//E-GEL 96 definition
 	//same welltype as EPAGE
-
-	// due to staggering of wells: 1 96well gel is set up as two well types
+	//due to staggering of wells: 1 96well gel is set up as two well types
 
 	// 1st type
 	//can't reach all wells; change to 12 wells per row?
-
 	gelplate = wtype.NewLHPlate("EGEL96_1", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -9.0, -0.5, riserheightinmm+5.5)
-
 	gelplate.SetConstrained("Pipetmax", gelconsar)
-
 	plates[gelplate.Type] = gelplate
 
 	// 2nd type
-
 	gelplate = wtype.NewLHPlate("EGEL96_2", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -5.0, 9, riserheightinmm+5.5)
-
 	gelplate.SetConstrained("Pipetmax", gelconsar)
-
 	plates[gelplate.Type] = gelplate
 
 	// falcon 6 well plate with Agar flat bottom with 4ml per well

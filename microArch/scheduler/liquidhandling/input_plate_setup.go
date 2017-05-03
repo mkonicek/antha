@@ -222,7 +222,6 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 					volume.Subtract(curr_well.WorkingVolume())
 				}
 
-				fmt.Println("INPUT SETUP SETLOCATION")
 				st.SetLocationOf(component.ID, location)
 
 				curr_well.Add(newcomponent)

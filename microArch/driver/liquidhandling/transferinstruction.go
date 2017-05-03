@@ -233,7 +233,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	// if the channel is not multi just return nil
 
 	if channel.Multi == 1 {
-		fmt.Println("CHANNEL IS NOT MULTI > 1")
+		//fmt.Println("CHANNEL IS NOT MULTI > 1")
 		return nil
 	}
 
@@ -257,7 +257,6 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	if npositions != 1 {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do, if such exists
-		fmt.Println("MORE THAN ONE SRC")
 		return nil
 	}
 
@@ -266,7 +265,6 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	if nplatetypes != 1 {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do , if such exists
-		fmt.Println("MORE THAN ONE PLATE TYPE")
 		return nil
 	}
 
@@ -287,7 +285,6 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	if !wtype.TipsWellsAligned(*channel, *plate, ins.WellFrom) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
-		fmt.Println("SRC TIPS WELLS NOT ALIGNED")
 		return nil
 	}
 
@@ -308,7 +305,6 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	if !wtype.TipsWellsAligned(*channel, *plate, ins.WellTo) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
-		fmt.Println("DST TIPS WELLS NOT ALIGNED")
 		return nil
 	}
 
@@ -317,7 +313,6 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	if !ins.CheckMultiPolicies() {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
-		fmt.Println("MULTI POLICIES NO GOOD BOYEE")
 		return nil
 	}
 
@@ -338,10 +333,6 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 			ra = append(ra, i)
 		}
 	*/
-
-	fmt.Println("WAT? ", ins.What)
-	fmt.Println("WELSSS: ", ins.WellFrom)
-	fmt.Println("DIME BAR: ", channel.Multi, " GRR: ", len(ins.What))
 
 	ra := make([]int, channel.Multi)
 
@@ -682,7 +673,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	// if we can multi we do this first
 
 	if pol["CAN_MULTI"].(bool) {
-		fmt.Println("YES WE CAN!!")
 		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
 
 		mci := NewMultiChannelBlockInstruction()
@@ -691,11 +681,6 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 		for _, set := range parallelsets {
 			// assemble the info
 			mci.Multi = countSetSize(set)
-
-			// MIS DEBUG PRINT
-			fmt.Println("SET SIZE: ", mci.Multi)
-			fmt.Println("SET ____: ", set)
-
 			vols := NewVolumeSet(len(set))
 			fvols := NewVolumeSet(len(set))
 			tvols := NewVolumeSet(len(set))

@@ -25,7 +25,6 @@ func (ti TransferBlockInstruction) InstructionType() int {
 }
 
 func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
-	fmt.Println("TFB GENERATE YOU HOUND")
 	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()
 	inss := make([]RobotInstruction, 0, 1)
@@ -38,8 +37,6 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	// list of ids
 	parallel_sets, prm, err := get_parallel_sets_robot(ti.Inss, robot, policy)
 
-	fmt.Println("THERE ARE ", len(parallel_sets), " PARALLEL SETS HERE: ")
-
 	// what if prm is nil?
 
 	if err != nil {
@@ -47,7 +44,6 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	}
 
 	for _, set := range parallel_sets {
-		fmt.Println("SET SIZE HERE: ", len(set))
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
 

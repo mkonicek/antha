@@ -236,11 +236,9 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 
 				if ok {
 					x.Loc = remap[tx[0]] + ":" + tx[1]
-					fmt.Println("REMAP SET")
 					sampletracker.SetLocationOf(x.ID, x.Loc)
 				} else {
 					x.Loc = tx[0] + ":" + tx[1]
-					fmt.Println("FIRST SET")
 					sampletracker.SetLocationOf(x.ID, x.Loc)
 				}
 			}

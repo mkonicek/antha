@@ -608,7 +608,6 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 			}
 		}
 	}
-	fmt.Println("YES GOING DOWN")
 	return lhp.GetComponentsSingle(cmps, carryvol)
 }
 
@@ -623,9 +622,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
 
-	fmt.Println("GETTING")
-	fmt.Println(cmps)
-
 	// need to disentangle some stuff here
 
 	for i, v := range cmps {
@@ -636,31 +632,13 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 
 		vdup := v.Dup()
 		if v.HasAnyParent() {
-			fmt.Println(v.ID, " HAS A PARENT")
 			// this means it was already made with a previous call
 			tx := strings.Split(v.Loc, ":")
 
 			if len(tx) < 2 || len(v.Loc) == 0 {
-				fmt.Println("NO LOCATION HERE: ")
 				st := sampletracker.GetSampleTracker()
 				loc, _ := st.GetLocationOf(v.ID)
 				tx = strings.Split(loc, ":")
-			}
-
-			fmt.Println("WELL HERE'S A LOCATION NOW: ", tx)
-
-			for xxx := 1; xxx < 10; xxx++ {
-				ppp := fmt.Sprintf("position_%d", xxx)
-				pppp := lhp.Plates[ppp]
-				if pppp != nil {
-					fmt.Println(ppp, " ", pppp.ID, " ", pppp.Name())
-
-					if pppp.ID == tx[0] {
-						fmt.Println("AND HERES WHAT WE GOT THERE")
-						fmt.Println(pppp.Wellcoords[tx[1]].WContents.CName, " ", pppp.Wellcoords[tx[1]].WContents.Vol)
-					}
-
-				}
 			}
 
 			plateIDs[i] = append(plateIDs[i], tx[0])
@@ -678,7 +656,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 
 		} else {
 			for _, ipref := range lhp.Input_preferences {
-				fmt.Println("NO PARENT HERE")
 				// check if the plate at position ipref has the
 				// component we seek
 
@@ -712,9 +689,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 
 		}
 	}
-
-	fmt.Println("GOT THEM FROM ")
-	fmt.Println(wellCoords, " ", vols)
 
 	return plateIDs, wellCoords, vols, nil
 }
@@ -841,7 +815,6 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 
 	r := p.RemoveComponent(well, volume)
 
-	fmt.Println("LARRY: ", p.Wellcoords[well].WContents.CName, " ", p.Wellcoords[well].WContents.Vol)
 	if r == nil {
 		logger.Info(fmt.Sprint("CAN'T REMOVE COMPONENT ", plateID, " ", well, " ", volume.ToString()))
 		return false

@@ -81,6 +81,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		lenToMake := 0
 		for _, c := range cmps {
 			if c != nil {
+				fmt.Print(c.CName, " ")
 				lenToMake += 1
 			}
 		}
@@ -220,7 +221,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				//				if multi > 1 {
 				cmpFrom := wellFrom.Remove(va[ci])
 
-				fmt.Println("GET: ", wf[ci], " ", va[ci], " ", ptf[ci], " ", wellFrom.WContents.CName, " ", wellFrom.WContents.Vol, " MULTI: ", multi)
+				//fmt.Println("GET: ", wh[ci], " ", wf[ci], " ", va[ci], " ", ptf[ci], " ", wellFrom.WContents.CName, " ", wellFrom.WContents.Vol, " MULTI: ", multi)
 
 				if cmpFrom == nil {
 					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
@@ -228,7 +229,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 				wellTo.Add(cmpFrom)
 
-				fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
+				//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 			}
 
 			//}

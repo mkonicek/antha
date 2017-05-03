@@ -1,10 +1,8 @@
 package sampletracker
 
 import (
-	"fmt"
-	"sync"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"sync"
 )
 
 var stLock sync.Mutex
@@ -79,9 +77,6 @@ func (st *SampleTracker) setLocationOf(ID string, loc string) {
 func (st *SampleTracker) SetLocationOf(ID string, loc string) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
-
-	fmt.Println("SET LOCATION OF ", ID, " to ", loc)
-
 	st.setLocationOf(ID, loc)
 }
 
@@ -112,9 +107,6 @@ func (st *SampleTracker) GetLocationOf(ID string) (string, bool) {
 func (st *SampleTracker) UpdateIDOf(ID string, newID string) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
-
-	fmt.Println("UPDATING ID OF ", ID, " TO ", newID)
-
 	_, ok := st.records[ID]
 	if ok {
 		st.records[newID] = st.records[ID]

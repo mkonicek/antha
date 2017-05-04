@@ -72,16 +72,16 @@ var ProteinPaintboxmap = map[color.Color]string{
 
 	// Chromogenic proteins
 	color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)}:  "BlitzenBlue",
-	color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)}:   "DreidelTeal",
+	color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)}:  "DreidelTeal",
 	color.RGBA{R: uint8(107), G: uint8(80), B: uint8(140), A: uint8(255)}:  "VirginiaViolet",
 	color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)}:  "VixenPurple",
-	color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)}:   "TinselPurple",
-	color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)}:   "MaccabeePurple",
+	color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)}:  "TinselPurple",
+	color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)}:  "MaccabeePurple",
 	color.RGBA{R: uint8(152), G: uint8(76), B: uint8(128), A: uint8(255)}:  "DonnerMagenta",
 	color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)}:  "CupidPink",
 	color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)}:  "SeraphinaPink",
-	color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)}:   "ScroogeOrange",
-	color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)}: "LeorOrange",
+	color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)}:  "ScroogeOrange",
+	color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)}: 	"LeorOrange",
 
 	// fluorescent proteins
 
@@ -686,24 +686,9 @@ func Posterize(imagefilename string, levels int) (posterized *goimage.NRGBA, new
 }
 
 //ResizeImageToPlate will resize an image to fit the number of wells on a plate. We treat wells as pixels.
-func ResizeImagetoPlate(imagefilename string, plate *wtype.LHPlate, algorithm imaging.ResampleFilter, rotate bool) (plateimage *goimage.NRGBA) {
-
-	// input files (just 1 in this case)
-	files := []string{imagefilename}
-
-	// Colour palette to use // this would relate to a map of components of these available colours in factory
-	//availablecolours := chosencolourpalette //palette.WebSafe
-
-	//var plateimages []image.Image
-
-	img, err := imaging.Open(files[0])
-	if err != nil {
-		panic(err)
-	}
+func ResizeImagetoPlate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imaging.ResampleFilter, rotate bool) (plateimage *goimage.NRGBA) {
 
 	if img.Bounds().Dy() != plate.WellsY() {
-		// fmt.Println("hey we're not so different", img.Bounds().Dy(), plate.WellsY())
-		// have the option of changing the resize algorithm here
 
 		if rotate {
 			img = imaging.Rotate270(img)
@@ -716,28 +701,15 @@ func ResizeImagetoPlate(imagefilename string, plate *wtype.LHPlate, algorithm im
 		}
 		//plateimages = append(plateimages,plateimage)
 	} else {
-		// fmt.Println("i'm the same!!!")
-		plateimage = toNRGBA(img)
+		// if the size is the same, simply return the image
+		plateimage = img
 	}
 	return
 
 }
 
 //ResizeImageToPlateAutoRotate will resize an image to fit the number of wells on a plate and if the image is in portrait the image will be rotated by 270 degrees to optimise resolution on the plate.
-func ResizeImagetoPlateAutoRotate(imagefilename string, plate *wtype.LHPlate, algorithm imaging.ResampleFilter) (plateimage *goimage.NRGBA) {
-
-	// input files (just 1 in this case)
-	files := []string{imagefilename}
-
-	// Colour palette to use // this would relate to a map of components of these available colours in factory
-	//availablecolours := chosencolourpalette //palette.WebSafe
-
-	//var plateimages []image.Image
-
-	img, err := imaging.Open(files[0])
-	if err != nil {
-		panic(err)
-	}
+func ResizeImagetoPlateAutoRotate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imaging.ResampleFilter) (plateimage *goimage.NRGBA) {
 
 	if img.Bounds().Dy() != plate.WellsY() {
 		// fmt.Println("hey we're not so different", img.Bounds().Dy(), plate.WellsY())
@@ -821,9 +793,9 @@ func CheckAllResizealgorithms(imagefilename string, plate *wtype.LHPlate, rotate
 }
 
 //MakePalleteFromImage will make a color Palette from an image resized to fit a given plate type.
-func MakePalleteFromImage(imagefilename string, plate *wtype.LHPlate, rotate bool) (newpallette color.Palette) {
+func MakePalleteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool) (newpallette color.Palette) {
 
-	plateimage := ResizeImagetoPlate(imagefilename, plate, imaging.CatmullRom, rotate)
+	plateimage := ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
 
 	colourarray := make([]color.Color, 0)
 
@@ -843,9 +815,9 @@ func MakePalleteFromImage(imagefilename string, plate *wtype.LHPlate, rotate boo
 }
 
 //MakeSmallPalleteFromImage will make a color Palette from an image resized to fit a given plate type using Plan9 Palette
-func MakeSmallPalleteFromImage(imagefilename string, plate *wtype.LHPlate, rotate bool) (newpallette color.Palette) {
+func MakeSmallPalleteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool) (newpallette color.Palette) {
 
-	plateimage := ResizeImagetoPlate(imagefilename, plate, imaging.CatmullRom, rotate)
+	plateimage := ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
 	//image, _ := imaging.Open(imagefilename)
 
 	//plateimage := imaging.Clone(image)
@@ -890,19 +862,18 @@ func MakeSmallPalleteFromImage(imagefilename string, plate *wtype.LHPlate, rotat
 // create a map of pixel to plate position from processing a given image with a chosen colour palette.
 // It's recommended to use at least 384 well plate
 // if autorotate == true, rotate is overridden
-func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, plateimage *goimage.NRGBA, newname string) {
+func ImagetoPlatelayout(img *goimage.NRGBA, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, plateimage *goimage.NRGBA, newname string) {
 
 	if autorotate {
-		plateimage = ResizeImagetoPlateAutoRotate(imagefilename, plate, imaging.CatmullRom)
+		plateimage = ResizeImagetoPlateAutoRotate(img, plate, imaging.CatmullRom)
 	} else {
-		plateimage = ResizeImagetoPlate(imagefilename, plate, imaging.CatmullRom, rotate)
+		plateimage = ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
 	}
 	// make map of well position to colour: (array for time being)
 
 	wellpositionarray := make([]string, 0)
 	colourarray := make([]color.Color, 0)
 	wellpositiontocolourmap = make(map[string]color.Color, 0)
-	// need to extend for 1536 plates
 
 	// Find out colour at each position:
 	for y := 0; y < plateimage.Bounds().Dy(); y++ {
@@ -929,40 +900,13 @@ func ImagetoPlatelayout(imagefilename string, plate *wtype.LHPlate, chosencolour
 		}
 	}
 
-	// rename file
-	splitfilename := strings.Split(imagefilename, `.`)
-
-	newname = splitfilename[0] + "_plateformat" + `.` + splitfilename[1]
-	// save
-	err := imaging.Save(plateimage, newname)
-	if err != nil {
-		panic(err)
-	}
-
-	// choose colour palette from top
-
-	//arrayfrompalette := make([]color.Color, 0)
-	/*
-		for i, combo := range colourarray {
-			// fmt.Println("for well position ", wellpositionarray[i], ":")
-			r, g, b, a := combo.RGBA()
-
-			// fmt.Println("colour (r,g,b,a)= ", r/256, g/256, b/256, a/256)
-
-			// closest palette colour
-			// fmt.Println("palette colour:", chosencolourpalette.Convert(combo))
-			// fmt.Println("palette colour number:", chosencolourpalette.Index(combo))
-		}
-	*/
-	// fmt.Println("numberofpixels:", numberofpixels)
-
 	return
 }
 
 //PrintFPImagePreview will take an image, plate type, and colors from visiblemap/uvmap and (use to) save the resulting processed image.
-func PrintFPImagePreview(imagefile string, plate *wtype.LHPlate, rotate bool, visiblemap, uvmap map[color.Color]string) {
+func PrintFPImagePreview(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, visiblemap, uvmap map[color.Color]string) {
 
-	plateimage := ResizeImagetoPlate(imagefile, plate, imaging.CatmullRom, rotate)
+	plateimage := ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
 
 	uvpalette := palettefromMap(uvmap)
 
@@ -978,16 +922,6 @@ func PrintFPImagePreview(imagefile string, plate *wtype.LHPlate, rotate bool, vi
 			plateimage.Set(x, y, uvcolour)
 
 		}
-	}
-
-	// rename file
-	splitfilename := strings.Split(imagefile, `.`)
-
-	newname := splitfilename[0] + "_plateformat_UV" + `.` + splitfilename[1]
-	// save
-	err := imaging.Save(plateimage, newname)
-	if err != nil {
-		panic(err)
 	}
 
 	// repeat for visible
@@ -1022,15 +956,6 @@ func PrintFPImagePreview(imagefile string, plate *wtype.LHPlate, rotate bool, vi
 		}
 	}
 
-	// rename file
-	splitfilename = strings.Split(imagefile, `.`)
-
-	newname = splitfilename[0] + "_plateformat_vis" + `.` + splitfilename[1]
-	// save
-	err = imaging.Save(plateimage, newname)
-	if err != nil {
-		panic(err)
-	}
 	return
 }
 
@@ -1074,7 +999,16 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 //--------------------------------------------------
 //My own functions
 //--------------------------------------------------
+/*
 
-func FindClosestColor (){
+func ProcessImage (img *goimage.NRGBA, plate *wtype.LHPlate) (resizedImg goimage.NRGBA, imgPalette color.Palette){
 
 }
+
+func FindClosestColor (col *color.Color, pal *color.Palette)(closeCol color.Color){
+
+	closeCol = pal.Convert(col)
+	return closeCol
+
+}
+*/

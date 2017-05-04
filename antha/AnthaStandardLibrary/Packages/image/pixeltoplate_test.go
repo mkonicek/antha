@@ -5,6 +5,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"io/ioutil"
 	goimage "image"
+	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/disintegration/imaging"
 )
 
 func check(e error) {
@@ -13,7 +15,7 @@ func check(e error) {
     }
 }
 
-func PathToImg (filePath string)(*goimage.NRGBA, error){
+func OpenImg (filePath string)(*goimage.NRGBA, error){
 
 	var file wtype.File
 
@@ -38,9 +40,9 @@ func TestOpenFile(t *testing.T) {
 	var gifFile wtype.File
 
 	// example images
-	jpgPath := "/home/cachemoi/gocode/src/github.com/antha-lang/elements/an/GIF/DataGIF/img/F1.jpg"
-	pngPath := "/home/cachemoi/gocode/src/github.com/antha-lang/elements/an/GIF/DataGIF/img/F1.png"
-	gifPath := "/home/cachemoi/gocode/src/github.com/antha-lang/elements/an/GIF/DataGIF/img/nyanCat.gif"
+	jpgPath := "/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/F1.jpg"
+	pngPath := "/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/F1.png"
+	gifPath := "/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/nyanCat.gif"
 
 	//getting bytes
 	jpgDat, err := ioutil.ReadFile(jpgPath)
@@ -66,7 +68,7 @@ func TestOpenFile(t *testing.T) {
 
 func TestPosterize(t *testing.T) {
 
-	postImg, _ := Posterize("/home/cachemoi/gocode/src/github.com/antha-lang/elements/an/GIF/DataGIF/img/F1.jpg",2)
+	postImg, _ := Posterize("/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/F1.jpg",2)
 
 	if postImg != nil {
 		t.Log("image posterized")
@@ -74,4 +76,19 @@ func TestPosterize(t *testing.T) {
 		t.Error("posterize() returned nil")
 	}
 
+}
+
+func TestResizeImagetoPlate(t *testing.T) {
+
+	// example image
+	jpgPath := "/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/F1.jpg"
+
+	img , err := OpenImg(jpgPath)
+	check(err)
+	t.Log(img.Rect)
+
+	//example plate
+	plate := factory.GetPlateByType("DSW24")
+
+	ResizeImagetoPlate(img, plate, imaging.Lanczos, true)
 }

@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"

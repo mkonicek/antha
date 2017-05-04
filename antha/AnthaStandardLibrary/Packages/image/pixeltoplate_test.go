@@ -5,8 +5,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"io/ioutil"
 	goimage "image"
-	"github.com/antha-lang/antha/microArch/factory"
-	"github.com/disintegration/imaging"
 )
 
 func check(e error) {
@@ -65,7 +63,7 @@ func TestOpenFile(t *testing.T) {
 	OpenFile(gifFile)
 	t.Log("Opened GIF")
 }
-
+/*
 func TestPosterize(t *testing.T) {
 
 	postImg, _ := Posterize("/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/F1.jpg",2)
@@ -88,7 +86,8 @@ func TestResizeImagetoPlate(t *testing.T) {
 	t.Log(img.Rect)
 
 	//example plate
-	plate := factory.GetPlateByType("DSW24")
+	//plate := factory.GetPlateByType("DSW24")
 
-	ResizeImagetoPlate(img, plate, imaging.Lanczos, true)
+	//ResizeImagetoPlate(img, plate, imaging.Lanczos, true)
 }
+*/

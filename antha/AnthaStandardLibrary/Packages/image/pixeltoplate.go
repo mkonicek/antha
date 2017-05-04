@@ -729,24 +729,14 @@ func ResizeImagetoPlateAutoRotate(img *goimage.NRGBA, plate *wtype.LHPlate, algo
 }
 
 //CheckAllResizeAlgorithms will use the different algorithms in a algorithm library to resize an image to a given platetype.
-func CheckAllResizealgorithms(imagefilename string, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) {
-	// input files (just 1 in this case)
-	files := []string{imagefilename}
-	var dir string
-
-	var plateimage *goimage.NRGBA
+func CheckAllResizealgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) (plateimage *goimage.NRGBA) {
 
 	// Colour palette to use // this would relate to a map of components of these available colours in factory
 	//availablecolours := chosencolourpalette //palette.WebSafe
 
 	//var plateimages []image.Image
 
-	for key, algorithm := range algorithms {
-
-		img, err := imaging.Open(files[0])
-		if err != nil {
-			panic(err)
-		}
+	for _ , algorithm := range algorithms {
 
 		if rotate {
 			img = imaging.Rotate270(img)
@@ -767,23 +757,9 @@ func CheckAllResizealgorithms(imagefilename string, plate *wtype.LHPlate, rotate
 			plateimage = toNRGBA(img)
 		}
 
-		// rename file
-		splitfilename := strings.Split(imagefilename, `.`)
-
-		dir = splitfilename[0]
-
-		// make dir
-
-		os.MkdirAll(dir, 0777)
-
-		newname := filepath.Join(dir, fmt.Sprint(splitfilename[0], "_", key, "_plateformat", `.`, splitfilename[1]))
-		// save
-		err = imaging.Save(plateimage, newname)
-		if err != nil {
-			panic(err)
-		}
-
 	}
+
+	return
 }
 
 //MakePalleteFromImage will make a color Palette from an image resized to fit a given plate type.

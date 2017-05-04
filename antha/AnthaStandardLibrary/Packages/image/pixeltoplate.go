@@ -240,17 +240,6 @@ var ProteinPaintboxSubsetmap = map[color.Color]string{
 //image input/output manipulation
 //----------------------------------------------------------------------------
 
-//to be deprecated
-func MakeGoimageNRGBA(imagefilename string) (nrgba *goimage.NRGBA) {
-	img, err := imaging.Open(imagefilename)
-	if err != nil {
-		panic(err)
-	}
-
-	nrgba = imaging.Clone(img)
-	return
-}
-
 //OpenFile will take a wtype.File object and return the contents as image.NRGBA
 func OpenFile (file wtype.File)( nrgba *goimage.NRGBA, err error){
 

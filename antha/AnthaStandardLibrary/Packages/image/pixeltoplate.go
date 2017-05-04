@@ -261,43 +261,20 @@ func OpenFile (file wtype.File)( nrgba *goimage.NRGBA, err error){
 
 // export image to file
 // image format is derived from filename extension
-//To be deprecated
-func Export(img *goimage.NRGBA, filename string) (file wtype.File, err error) {
+func Export(img *goimage.NRGBA) (file wtype.File, err error) {
 
 	var imageFormat imaging.Format
-
-	if filepath.Ext(filename) == "" {
-		imageFormat = imaging.PNG
-		filename = filename + "." + "png"
-	} else if filepath.Ext(filename) == ".png" {
-		imageFormat = imaging.PNG
-	} else if filepath.Ext(filename) == ".jpg" || filepath.Ext(filename) == ".jpeg" {
-		imageFormat = imaging.JPEG
-	} else if filepath.Ext(filename) == ".tif" || filepath.Ext(filename) == ".tiff" {
-		imageFormat = imaging.TIFF
-	} else if filepath.Ext(filename) == ".gif" {
-		imageFormat = imaging.GIF
-	} else if filepath.Ext(filename) == ".BMP" {
-		imageFormat = imaging.BMP
-	} else {
-		return file, fmt.Errorf("unsupported image file format: %s", filepath.Ext(filename))
-	}
-
 	var buf bytes.Buffer
 
 	err = imaging.Encode(&buf, img, imageFormat)
-
 	if err != nil {
 		return
 	}
 
 	err = file.WriteAll(buf.Bytes())
-
 	if err != nil {
 		return
 	}
-
-	file.Name = filename
 
 	return
 }

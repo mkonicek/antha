@@ -22,7 +22,15 @@
 
 package wtype
 
+import (
+	"math"
+)
+
 // the standard delimiter to be used when concatenating mixed components into a new component name
 const MIXDELIMITER = "+"
 
-const EPSILON_64 = 1.0e-24
+//constasafunc
+
+func EPSILON_64() float64 {
+	return math.Nextafter(1, 2) - 1
+}

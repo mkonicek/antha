@@ -527,7 +527,7 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 		}
 
 		for _, f := range v.([]float64) {
-			if !lhnc.Match(f) && f > EPSILON_64 {
+			if !lhnc.Match(f) && f > EPSILON_64() {
 				return false
 			}
 		}
@@ -563,7 +563,7 @@ func numInStringArray(a []string) int {
 func numInFloatArray(a []float64) int {
 	c := 0
 	for _, f := range a {
-		if f > EPSILON_64 {
+		if f > EPSILON_64() {
 			c += 1
 		}
 	}

@@ -88,6 +88,8 @@ func makeMixerOpt() (mixer.Opt, error) {
 		executionPlannerVersion = "ep3"
 	}
 
+	opt.PrintInstructions = viper.GetBool("PrintInstructions")
+
 	opt.PlanningVersion = executionPlannerVersion
 
 	return opt, nil
@@ -283,4 +285,5 @@ func init() {
 	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
 	flags.Bool("OutputSort", false, "Sort execution by output - improves tip usage")
 	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
+	flags.Bool("PrintInstructions", false, "Output the raw instructions sent to the driver")
 }

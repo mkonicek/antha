@@ -203,7 +203,9 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 	for _, ins := range instructions {
 
-		fmt.Println(liquidhandling.InsToString(ins))
+		if (*request).Options.PrintInstructions {
+			fmt.Println(liquidhandling.InsToString(ins))
+		}
 		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
 		if err != nil {

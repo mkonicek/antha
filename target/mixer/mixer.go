@@ -141,6 +141,10 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 
 	req.Options.ExecutionPlannerVersion = a.opt.PlanningVersion
 
+	// print instructions?
+
+	req.Options.PrintInstructions = a.opt.PrintInstructions
+
 	// model evaporation?
 
 	req.Options.ModelEvaporation = a.opt.ModelEvaporation

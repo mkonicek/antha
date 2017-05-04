@@ -831,7 +831,7 @@ func MakeSmallPalleteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate 
 // create a map of pixel to plate position from processing a given image with a chosen colour palette.
 // It's recommended to use at least 384 well plate
 // if autorotate == true, rotate is overridden
-func ImagetoPlatelayout(img *goimage.NRGBA, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, plateimage *goimage.NRGBA, newname string) {
+func ImagetoPlatelayout(img *goimage.NRGBA, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, plateimage *goimage.NRGBA) {
 
 	if autorotate {
 		plateimage = ResizeImagetoPlateAutoRotate(img, plate, imaging.CatmullRom)

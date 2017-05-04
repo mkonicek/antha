@@ -54,8 +54,8 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 
 			/// if value and unit are separate fields
 			if field == key && i != 0 {
-				_, err := strconv.ParseFloat(fields[i-1], 64)
-				if err == nil {
+				f, err := strconv.ParseFloat(fields[i-1], 64)
+				if err == nil && f != 0 {
 					if len(key) > unitmatchlength {
 						longestmatchedunit = key
 						unitmatchlength = len(key)
@@ -64,6 +64,12 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 						valueandunit = valueString + unit
 					}
 
+				} else if strings.Contains(field, key) {
+					if len(key) > unitmatchlength {
+						longestmatchedunit = key
+						unitmatchlength = len(key)
+						valueandunit = field
+					}
 				}
 				// if value and unit are one joined field
 			} else if strings.Contains(field, key) {
@@ -76,6 +82,21 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 		}
 	}
 
+	// append other fields into one
+	//if len(fields) > 3 {
+	//	return false, conc, componentname
+	/*
+		var namefields []string
+
+		for _, field := range fields {
+			if field != longestmatchedunit && field != valueString {
+				namefields = append(namefields, field)
+			}
+		}
+		componentNameOnly = strings.Join(namefields, " ")
+	*/
+	//} else {
+
 	for _, field := range fields {
 		if len(fields) == 2 && field != longestmatchedunit {
 			componentNameOnly = field
@@ -84,6 +105,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 		}
 	}
 
+	//}
 	// if no match, return original component name
 	if unitmatchlength == 0 {
 		return false, conc, componentname
@@ -107,6 +129,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 
 	conc = NewConcentration(value, longestmatchedunit)
 	containsconc = true
+
 	return containsconc, conc, componentNameOnly
 }
 

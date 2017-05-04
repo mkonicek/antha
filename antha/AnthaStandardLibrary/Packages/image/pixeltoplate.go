@@ -929,21 +929,3 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 	}
 	return imaging.Clone(img)
 }
-
-
-//--------------------------------------------------
-//My own functions
-//--------------------------------------------------
-/*
-
-func ProcessImage (img *goimage.NRGBA, plate *wtype.LHPlate) (resizedImg goimage.NRGBA, imgPalette color.Palette){
-
-}
-
-func FindClosestColor (col *color.Color, pal *color.Palette)(closeCol color.Color){
-
-	closeCol = pal.Convert(col)
-	return closeCol
-
-}
-*/

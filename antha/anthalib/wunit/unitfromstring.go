@@ -28,7 +28,16 @@ import (
 	"strings"
 )
 
-// utility function to parse concentration from a component name
+func NormaliseUnit(unit string) (normalisedunit string) {
+
+	cm := NewPMeasurement(0, unit)
+
+	normalisedunit = cm.Unit().PrefixedSymbol()
+	return
+}
+
+// Utility function to parse concentration from a component name.
+// Not currently robust to situations where the component name (without the concentration) is more than one field (e.g. ammonium sulphate) or if the component name is a concatenation of component names (e.g. 1mM Glucose + 10mM Glycerol).
 func ParseConcentration(componentname string) (containsconc bool, conc Concentration, componentNameOnly string) {
 
 	approvedunits := UnitMap["Concentration"]
@@ -37,10 +46,33 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 	var unitmatchlength int
 	var longestmatchedunit string
 	var valueandunit string
+	var unit string
+	var valueString string
 
 	for key, _ := range approvedunits {
-		for _, field := range fields {
-			if strings.Contains(field, key) {
+		for i, field := range fields {
+
+			/// if value and unit are separate fields
+			if field == key && i != 0 {
+				f, err := strconv.ParseFloat(fields[i-1], 64)
+				if err == nil && f != 0 {
+					if len(key) > unitmatchlength {
+						longestmatchedunit = key
+						unitmatchlength = len(key)
+						valueString = fields[i-1]
+						unit = field
+						valueandunit = valueString + unit
+					}
+
+				} else if strings.Contains(field, key) {
+					if len(key) > unitmatchlength {
+						longestmatchedunit = key
+						unitmatchlength = len(key)
+						valueandunit = field
+					}
+				}
+				// if value and unit are one joined field
+			} else if strings.Contains(field, key) {
 				if len(key) > unitmatchlength {
 					longestmatchedunit = key
 					unitmatchlength = len(key)
@@ -50,12 +82,30 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 		}
 	}
 
+	// append other fields into one
+	//if len(fields) > 3 {
+	//	return false, conc, componentname
+	/*
+		var namefields []string
+
+		for _, field := range fields {
+			if field != longestmatchedunit && field != valueString {
+				namefields = append(namefields, field)
+			}
+		}
+		componentNameOnly = strings.Join(namefields, " ")
+	*/
+	//} else {
+
 	for _, field := range fields {
 		if len(fields) == 2 && field != longestmatchedunit {
+			componentNameOnly = field
+		} else if len(fields) == 3 && field != longestmatchedunit && field != valueString {
 			componentNameOnly = field
 		}
 	}
 
+	//}
 	// if no match, return original component name
 	if unitmatchlength == 0 {
 		return false, conc, componentname
@@ -79,6 +129,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 
 	conc = NewConcentration(value, longestmatchedunit)
 	containsconc = true
+
 	return containsconc, conc, componentNameOnly
 }
 

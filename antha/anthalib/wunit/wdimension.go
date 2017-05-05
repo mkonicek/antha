@@ -168,14 +168,19 @@ func DivideConcentration(v Concentration, factor float64) (newconc Concentration
 }
 
 // add concentrations
-func AddConcentrations(concs []Concentration) (newconc Concentration) {
+func AddConcentrations(concs []Concentration) (newconc Concentration, err error) {
 
 	var tempconc Concentration
-	tempconc = NewConcentration(0.0, "nM/L")
+	unit := concs[0].Unit().PrefixedSymbol()
+	tempconc = NewConcentration(0.0, unit)
+
 	for _, conc := range concs {
 		if tempconc.Unit().PrefixedSymbol() == conc.Unit().PrefixedSymbol() {
-			conc = NewConcentration(tempconc.RawValue()+conc.RawValue(), tempconc.Unit().PrefixedSymbol())
+			tempconc = NewConcentration(tempconc.RawValue()+conc.RawValue(), tempconc.Unit().PrefixedSymbol())
 			newconc = tempconc
+		} else if tempconc.Unit().BaseSISymbol() != conc.Unit().BaseSISymbol() {
+			err = fmt.Errorf("Cannot add units with base g/l to M/l, please bring concs to same base. ")
+			panic(err.Error())
 		} else {
 			tempconc = NewConcentration(tempconc.SIValue()+conc.SIValue(), tempconc.Unit().BaseSISymbol())
 			newconc = tempconc

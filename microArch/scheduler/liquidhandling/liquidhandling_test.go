@@ -316,3 +316,20 @@ func TestBeforeVsAfter(t *testing.T) {
 	}
 
 }
+
+func TestEP3(t *testing.T) {
+	lh := GetLiquidHandlerForTest()
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got planning error: ", err))
+	}
+
+}

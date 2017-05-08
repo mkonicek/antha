@@ -51,6 +51,8 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 	// find the minimum and maximum required concentrations
 	// across all the instructions
+
+	// -- migrate this to chains of dependent instructions
 	for _, instruction := range instructions {
 		components := instruction.Components
 

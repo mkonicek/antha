@@ -27,7 +27,7 @@ type Opt struct {
 	InputPlateType       []string
 	OutputPlateType      []string
 	TipType              []string
-	PlanningVersion      *int
+	PlanningVersion      string
 
 	// Two methods of populating Opt.InputPlates
 	InputPlateData [][]byte         // From contents of files
@@ -45,6 +45,7 @@ type Opt struct {
 	DriverSpecificWashPreferences     []string
 	ModelEvaporation                  bool
 	OutputSort                        bool
+	PrintInstructions                 bool
 }
 
 // Merge two configs together and return the result. Values in the argument

@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 type RobotInstructionSet struct {
@@ -43,8 +44,7 @@ func (ri *RobotInstructionSet) Add(ins RobotInstruction) {
 	ri.instructions = append(ri.instructions, ris)
 }
 
-// destructive of state of robot
-func (ri *RobotInstructionSet) Generate(lhpr *LHPolicyRuleSet, lhpm *LHProperties) ([]RobotInstruction, error) {
+func (ri *RobotInstructionSet) Generate(lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0, 1)
 
 	if ri.parent != nil {

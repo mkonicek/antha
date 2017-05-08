@@ -146,7 +146,7 @@ func ParsePlateCSV(inData io.Reader) (*ParsePlateResult, error) {
 
 		conc, cunit, err := parseUnit(get(rec, 5), get(rec, 6), "ng/ul")
 		if err != nil {
-			warnings = append(warnings, fmt.Sprintf("line %d: unknown volume %q, defaulting to \"%f%s\": %s", lineNo, get(rec, 5)+get(rec, 6), conc, cunit, err))
+			warnings = append(warnings, fmt.Sprintf("line %d: unknown concentration %q, defaulting to \"%f%s\": %s", lineNo, get(rec, 5)+get(rec, 6), conc, cunit, err))
 		}
 		concentration := wunit.NewConcentration(conc, cunit)
 

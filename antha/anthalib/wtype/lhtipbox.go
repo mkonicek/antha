@@ -218,9 +218,16 @@ func (tb *LHTipbox) GetTips(mirror bool, multi, orient int) []string {
 	}
 
 	tb.NTips -= len(ret)
-	return ret
+	return reverse(ret)
 }
 
+func reverse(ar []string) []string {
+	ret := make([]string, 0, len(ar))
+	for k := len(ar) - 1; k >= 0; k-- {
+		ret = append(ret, ar[k])
+	}
+	return ret
+}
 func (tb *LHTipbox) Refresh() {
 	initialize_tips(tb, tb.Tiptype)
 }

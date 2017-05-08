@@ -68,6 +68,7 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	gPerL100 := wunit.NewConcentration(100, "g/L")
 
 	add("water", wtype.LTWater, 9999, defaultConc)
+	add("multiwater", wtype.LTMultiWater, 9999, defaultConc)
 	add("DNA_ladder", wtype.LTload, 9999, defaultConc)
 	add("LoadingDye", wtype.LTWater, 9999, defaultConc)
 	add("Overlay", wtype.LTPLATEOUT, 9999, defaultConc)

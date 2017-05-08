@@ -120,7 +120,6 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 
 	instrx := make([]liquidhandling.TerminalRobotInstruction, len(inx))
 	for i := 0; i < len(inx); i++ {
-		//fmt.Println(liquidhandling.InsToString(inx[i]))
 		instrx[i] = inx[i].(liquidhandling.TerminalRobotInstruction)
 	}
 	request.Instructions = instrx

@@ -399,6 +399,35 @@ func TestDivideConcentration(t *testing.T) {
 
 }
 
+func TestAddConcentrations(t *testing.T) {
+	for _, testunit := range concarithmetictests {
+		//var concs []Concentration
+		//concs = append(concs,testunit.ValueA)
+		//concs = append(concs,testunit.ValueB)
+		r, err := AddConcentrations([]Concentration{testunit.ValueA, testunit.ValueB})
+		if err != nil {
+			t.Error(
+				"Add Concentration returns error ", err.Error(), "should return nil \n",
+			)
+		}
+		if r.SIValue() != testunit.Sum.SIValue() {
+			t.Error(
+				"For addition of ", testunit.ValueA, "and", testunit.ValueB, "\n",
+				"expected", testunit.Sum, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+	_, err := AddConcentrations([]Concentration{concarithmetictests[0].ValueA, concarithmetictests[4].ValueA})
+	if err == nil {
+		t.Error(
+			"Expected Errorf but got nil. Adding of two different bases (g/l and M/l) should not be possible \n",
+		)
+	}
+
+}
+
 func TestNewMeasurement(t *testing.T) {
 	for _, testunit := range units {
 		r := NewMeasurement(testunit.value, testunit.prefix, testunit.unit)

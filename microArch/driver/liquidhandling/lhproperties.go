@@ -650,7 +650,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 			/// XXX -- adding carry volumes is all very well but
 			// assumes we have made more of this component than we really need!
 			// -- this may just need to be removed pending a better fix
-			lhp.RemoveComponent(tx[0], tx[1], vol)
+			//lhp.RemoveComponent(tx[0], tx[1], vol)
 
 			foundIt = true
 

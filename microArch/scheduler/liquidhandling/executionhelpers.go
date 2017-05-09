@@ -349,7 +349,9 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			}
 
 			vf = append(vf, wlf.CurrVolume())
-			//wlf.Remove(va[ix])
+			vrm := v2.Dup()
+			vrm.Add(carryvol)
+			wlf.Remove(vrm)
 
 			pf = append(pf, robot.PlateIDLookup[fromPlateIDs[i][xx]])
 			wf = append(wf, fromWellss[i][xx])

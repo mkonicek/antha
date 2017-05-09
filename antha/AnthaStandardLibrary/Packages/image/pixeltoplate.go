@@ -694,12 +694,10 @@ func ResizeImagetoPlateAutoRotate(img *goimage.NRGBA, plate *wtype.LHPlate, algo
 }
 
 //CheckAllResizeAlgorithms will use the different algorithms in a algorithm library to resize an image to a given platetype.
-func CheckAllResizealgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) (plateimage *goimage.NRGBA) {
+func CheckAllResizealgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) ([]*goimage.NRGBA) {
 
-	// Colour palette to use // this would relate to a map of components of these available colours in factory
-	//availablecolours := chosencolourpalette //palette.WebSafe
-
-	//var plateimages []image.Image
+	var plateImages []*goimage.NRGBA
+	var plateImage *goimage.NRGBA
 
 	for _ , algorithm := range algorithms {
 
@@ -711,20 +709,25 @@ func CheckAllResizealgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate b
 			// fmt.Println("hey we're not so different", img.Bounds().Dy(), plate.WellsY())
 			// have the option of changing the resize algorithm here
 			var aspectratio float64 = float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
+
 			if aspectratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
-				plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
+
+				plateImage = imaging.Resize(img, 0, plate.WlsY, algorithm)
+				plateImages = append(plateImages, plateImage)
+
 			} else {
-				plateimage = imaging.Resize(img, plate.WlsX, 0, algorithm)
+				plateImage = imaging.Resize(img, plate.WlsX, 0, algorithm)
+				plateImages = append(plateImages, plateImage)
 			}
 			//plateimages = append(plateimages,plateimage)
 		} else {
 			// fmt.Println("i'm the same!!!")
-			plateimage = toNRGBA(img)
+			plateImage = img
 		}
 
 	}
 
-	return
+	return plateImages
 }
 
 //MakePalleteFromImage will make a color Palette from an image resized to fit a given plate type.

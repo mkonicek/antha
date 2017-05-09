@@ -241,6 +241,12 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = wtype.NewLHPlate("IDT96", "Unknown", 8, 12, 42.5, "mm", idtroundwell96, 9, 9, 0, 0, 3)
 	plates[plate.Type] = plate
 
+	//4 column reservoir plate Phenix Research Products RRI3051; Fisher cat# NC0336913
+	fourcolumnshp := wtype.NewShape("box", "mm", 26, 71, 42)
+	fourcolumnwell := wtype.NewLHWell("FourColumnWell", "", "", "ul", 73000, 500, fourcolumnshp, wtype.LHWBV, 26, 71, 42, 2, "mm")
+	plate = wtype.NewLHPlate("FourColumnReservoir", "Unknown", 1, 4, 44, "mm", fourcolumnwell, 26, 1, 9, 50, 2)
+	plates[plate.Type] = plate
+
 	// 24 well deep square well plate on riser
 
 	bottomtype := wtype.LHWBV // 0 = flat, 2 = v shaped

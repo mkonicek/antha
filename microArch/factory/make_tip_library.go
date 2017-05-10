@@ -65,7 +65,7 @@ func makeTipLibrary() map[string]*wtype.LHTipbox {
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 	w.Extra["Tipeffectiveheight"] = 44.7
-	tip = wtype.NewLHTip("gilson", "Gilson200", 10.0, 200.0, "ul")
+	tip = wtype.NewLHTip("gilson", "Gilson200", 2.0, 200.0, "ul")
 	tb = wtype.NewLHTipbox(8, 12, 60.13, "Gilson", "DF200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
 	tips[tip.Type] = tb
 	tips[tb.Type] = tb

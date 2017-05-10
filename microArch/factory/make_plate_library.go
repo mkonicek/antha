@@ -244,7 +244,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//4 column reservoir plate Phenix Research Products RRI3051; Fisher cat# NC0336913
 	fourcolumnshp := wtype.NewShape("box", "mm", 26, 71, 42)
 	fourcolumnwell := wtype.NewLHWell("FourColumnWell", "", "", "ul", 73000, 500, fourcolumnshp, wtype.LHWBV, 26, 71, 42, 2, "mm")
-	plate = wtype.NewLHPlate("FourColumnReservoir", "Unknown", 1, 4, 44, "mm", fourcolumnwell, 26, 1, 9, 50, 2)
+	plate = wtype.NewLHPlate("FourColumnReservoir", "Unknown", 1, 4, 44, "mm", fourcolumnwell, 26, 1, 9, 31, 2) //WellYStart is not accurate, but would not visualise correctly unless set to this value, cant diagnose
 	plates[plate.Type] = plate
 
 	// 24 well deep square well plate on riser

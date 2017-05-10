@@ -176,7 +176,7 @@ func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 	}
 
 	//if vol <= max {
-	if !Max.GreaterThanRounded(Vol, 1) {
+	if !Vol.GreaterThanRounded(Max, 1) {
 		ret = append(ret, Vol)
 		return ret, nil
 	}

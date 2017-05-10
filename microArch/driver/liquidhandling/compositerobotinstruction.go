@@ -223,6 +223,8 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 
 		tvs, err := TransferVolumes(ins.Volume[t], mergedchannel.Minvol, mergedchannel.Maxvol)
 
+		//fmt.Println("VOL ", ins.Volume[t].ToString(), " IN ", len(tvs), " GOES: ", mergedchannel.Minvol.ToString(), " MIN ", mergedchannel.Maxvol.ToString(), " MAX")
+
 		if err != nil {
 			return ret, err
 		}

@@ -436,7 +436,15 @@ func handleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 
 			// Warning! this needs to change to handle cases where start and position assignment has failed rather than just ignoring the problem
 			if startposition != 0 && endposition != 0 {
-				feature = sequences.MakeFeature(description, seq[startposition-1:endposition], startposition, endposition, seqtype, class, rev)
+				fmt.Println("Start: ", startposition, "End: ", endposition, "Sequence length: ", len(seq))
+				var sequence string
+				if endposition < startposition {
+					sequence = seq[endposition:] + seq[:startposition]
+				}else{
+					sequence = seq[startposition-1:endposition]
+				}
+
+				feature = sequences.MakeFeature(description, sequence, startposition, endposition, seqtype, class, rev)
 			}
 
 			features = append(features, feature)

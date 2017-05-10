@@ -87,6 +87,9 @@ func MakeFeature(name string, seq string, start int, end int, sequencetype strin
 			feature.Protseq = orf.ProtSeq
 		}
 	}
+
+
+
 	return feature
 }
 

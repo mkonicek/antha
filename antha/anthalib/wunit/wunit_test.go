@@ -476,3 +476,71 @@ func TestNewConcentration(t *testing.T) {
 	}
 
 }
+
+func TestRoundedComparisons(t *testing.T) {
+	v1 := NewVolume(0.5, "ul")
+	v2 := NewVolume(0.4999999, "ul")
+
+	vrai := v1.GreaterThanRounded(v2, 7)
+
+	if !vrai {
+		t.Error(
+			"For", v1.ToString(), " >_7 ", v2.ToString(), "\n",
+			"expected true\n",
+			"got false\n",
+		)
+	}
+
+	faux := v1.LessThanRounded(v2, 7)
+
+	if faux {
+		t.Error(
+			"For", v1.ToString(), " <_7 ", v2.ToString(), "\n",
+			"expected false\n",
+			"got true\n",
+		)
+	}
+
+	faux = v1.EqualToRounded(v2, 8)
+
+	if faux {
+		t.Error(
+			"For", v1.ToString(), " ==_7 ", v2.ToString(), "\n",
+			"expected false\n",
+			"got true\n",
+		)
+
+	}
+
+	vrai = v1.EqualToRounded(v2, 6)
+
+	if !vrai {
+		t.Error(
+			"For", v1.ToString(), " ==_6 ", v2.ToString(), "\n",
+			"expected true\n",
+			"got false\n",
+		)
+
+	}
+
+	faux = v1.LessThanRounded(v2, 6)
+
+	if faux {
+		t.Error(
+			"For", v1.ToString(), " <_6 ", v2.ToString(), "\n",
+			"expected false\n",
+			"got true\n",
+		)
+	}
+
+	faux = v1.GreaterThanRounded(v2, 6)
+
+	if faux {
+		t.Error(
+			"For", v1.ToString(), " >_6 ", v2.ToString(), "\n",
+			"expected false\n",
+			"got true\n",
+		)
+
+	}
+}

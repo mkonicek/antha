@@ -218,6 +218,7 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 				} else {
 					newcomponent = component.Dup()
 					newcomponent.Vol = curr_well.MaxVol
+					newcomponent.Vunit = curr_well.Vunit
 					newcomponent.Loc = location
 					volume.Subtract(curr_well.WorkingVolume())
 				}

@@ -178,11 +178,11 @@ func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, m
 
 func (lhcp *LHChannelParameter) MergeWithTip(tip *LHTip) *LHChannelParameter {
 	lhcp2 := *lhcp
-	if tip.MinVol.GreaterThan(lhcp2.Minvol) {
+	if tip.MinVol.GreaterThanRounded(lhcp2.Minvol, 1) {
 		lhcp2.Minvol = wunit.CopyVolume(tip.MinVol)
 	}
 
-	if tip.MaxVol.LessThan(lhcp2.Maxvol) {
+	if tip.MaxVol.LessThanRounded(lhcp2.Maxvol, 1) {
 		lhcp2.Maxvol = wunit.CopyVolume(tip.MaxVol)
 	}
 

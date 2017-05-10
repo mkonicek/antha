@@ -169,17 +169,14 @@ func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 	min := Min.RawValue()
 	max := Max.RawValue()
 
-	if vol < min {
-		/*
-			logger.Fatal(fmt.Sprintf("Error: %f below min vol %f", vol, min))
-			panic(errors.New(fmt.Sprintf("Error: %f below min vol %f", vol, min)))
-		*/
-
+	//	if vol < min {
+	if Vol.LessThanRounded(Min, 1) {
 		err := wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Liquid Handler cannot service volume requested: %f - minimum volume is %f", vol, min))
 		return ret, err
 	}
 
-	if vol <= max {
+	//if vol <= max {
+	if !Max.GreaterThanRounded(Vol, 1) {
 		ret = append(ret, Vol)
 		return ret, nil
 	}

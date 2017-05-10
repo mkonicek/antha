@@ -1,7 +1,6 @@
 package liquidhandling
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -27,13 +26,15 @@ func (sc DefaultChannelScoreFunc) ScoreCombinedChannel(vol wunit.Volume, head *w
 	// higher is better
 	// 0 == don't bother
 
+	/// NOT USING ADAPTOR??? XXX XXX XXX
+
 	// first we merge the parameters together and see if we can do this at all
 
 	lhcp := head.Params.MergeWithTip(tip)
 
 	// we should always make sure we do not send a volume which is too low
 
-	if lhcp.Minvol.GreaterThan(vol) {
+	if lhcp.Minvol.GreaterThanRounded(vol, 1) {
 		return 0
 	}
 

@@ -31,6 +31,10 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
+func TipChosenError(v wunit.Volume) string {
+	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler. Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString())
+}
+
 type TransferParams struct {
 	What       string
 	PltFrom    string
@@ -186,7 +190,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 	if tipp != nil {
 		tiptype = tipp.Type
 	} else {
-		return ret, fmt.Errorf("No tip chosen (1)")
+		return ret, fmt.Errorf(TipChosenError(ins.Volume[0]))
 	}
 
 	ins.Prms = channel
@@ -212,7 +216,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 		if newtipp != nil {
 			newtiptype = newtipp.Type
 		} else {
-			return ret, fmt.Errorf("No tip chosen")
+			return ret, fmt.Errorf(TipChosenError(ins.Volume[t]))
 		}
 		mergedchannel := newchannel.MergeWithTip(newtipp)
 		tipp = newtipp
@@ -442,7 +446,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 	if tipp != nil {
 		tiptype = tipp.Type
 	} else {
-		return ret, fmt.Errorf("No tip chosen")
+		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0]))
 	}
 
 	tipget, err := GetTips(tiptype, prms, channel, ins.Multi, false)
@@ -467,7 +471,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 		if newtip != nil {
 			newtiptype = newtip.Type
 		} else {
-			return ret, fmt.Errorf("No tip chosen (3)")
+			return ret, fmt.Errorf(TipChosenError(ins.Volume[0][0]))
 		}
 
 		var last_thing *wtype.LHComponent
@@ -3116,7 +3120,7 @@ func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *w
 	if newtip != nil {
 		newtiptype = newtip.Type
 	} else {
-		return ret, fmt.Errorf("No tip chosen (4)")
+		return ret, fmt.Errorf(TipChosenError(vol))
 	}
 
 	mergedchannel := newchannel.MergeWithTip(newtip)

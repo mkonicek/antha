@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"math"
 )
 
@@ -233,6 +234,53 @@ func (cm *ConcreteMeasurement) IsZero() bool {
 	return false
 }
 
+// less sensitive comparison operators
+
+func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {
+	// nil means less than everything
+	if cm == nil {
+		return true
+	}
+	// returns true if this is less than m
+	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
+	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
+
+	if v > v2 {
+		return true
+	}
+
+	return false
+
+}
+
+func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
+	if cm == nil {
+		return false
+	}
+	// returns true if this is greater than m
+	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
+	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
+	if v < v2 {
+		return true
+	}
+	return false
+
+}
+
+func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
+	// this is not equal to anything
+
+	if cm == nil {
+		return false
+	}
+
+	// returns true if this is equal to m
+	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
+	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
+
+	return v == v2
+}
+
 // comparison operators
 
 func (cm *ConcreteMeasurement) LessThan(m Measurement) bool {
@@ -272,7 +320,6 @@ func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
 	if v < cm.RawValue() {
 		return true
 	}
-	//fmt.Println(v, "not greater than", cm)
 	return false
 }
 
@@ -287,6 +334,7 @@ func (cm *ConcreteMeasurement) GreaterThanFloat(f float64) bool {
 	return false
 }
 
+// XXX This should be made more literal and rounded behaviour explicitly called for by user
 func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	// this is not equal to anything
 

@@ -1,9 +1,11 @@
 package liquidhandling
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"math"
 )
 
 // it would probably make more sense for this to be a method of the robot

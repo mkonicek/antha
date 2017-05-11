@@ -137,6 +137,16 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 		}
 	}
 
+	// try to do better multichannel execution planning?
+
+	req.Options.ExecutionPlannerVersion = a.opt.PlanningVersion
+
+	// print instructions?
+
+	req.Options.PrintInstructions = a.opt.PrintInstructions
+
+	// model evaporation?
+
 	req.Options.ModelEvaporation = a.opt.ModelEvaporation
 
 	// deal with output sorting

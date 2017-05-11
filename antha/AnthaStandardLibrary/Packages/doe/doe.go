@@ -24,6 +24,7 @@
 package doe
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"reflect"
@@ -78,7 +79,7 @@ func (pair DOEPair) RoundLevels() (newpair DOEPair, err error) {
 			}
 			v = levelfloat
 			newlevels = append(newlevels, v)
-		} else if merged, found := level.(MergedLevel); found {
+		} else if merged, err := ToMergedLevel(level); err == nil {
 
 			var factors []string
 			var values []interface{}
@@ -152,13 +153,22 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 
 		return floats[0], nil
 
-	} else if arraytype == "MergedLevel" {
+		// added test for serialised MergedLevel which are not caught be search.CheckArrayType.
+		// assumes all levels are same type and so evaluates first entry, if this is not the case it will be caught in the loop
+	} else if _, err := ToMergedLevel(pair.Levels[0]); arraytype == "MergedLevel" || err == nil {
 
 		// use first level to get keys
 		// assumes all MergedLevels contain the same merged factors
 		// if all keys are not included the function will error
 		// if len of keys is greater than the first entry the function will return an error
-		masterKeys := pair.Levels[0].(MergedLevel).Sort()
+
+		merged, err := ToMergedLevel(pair.Levels[0])
+
+		if err != nil {
+			return minlevel, err
+		}
+
+		masterKeys := merged.Sort()
 
 		var keyToLowest = make(map[string]interface{})
 
@@ -168,7 +178,12 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 
 			for i, level := range pair.Levels {
 				if i == 0 {
-					concInt, found := level.(MergedLevel).OriginalFactorPairs[key]
+					merged, err := ToMergedLevel(level)
+
+					if err != nil {
+						return minlevel, err
+					}
+					concInt, found := merged.OriginalFactorPairs[key]
 
 					if !found {
 						return minlevel, fmt.Errorf("merged factor %s not found in level %s of %s", key, i, fmt.Sprint(pair))
@@ -183,7 +198,13 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 					lowestconc = conc
 
 				} else {
-					concInt, found := level.(MergedLevel).OriginalFactorPairs[key]
+					merged, err := ToMergedLevel(level)
+
+					if err != nil {
+						return minlevel, err
+					}
+
+					concInt, found := merged.OriginalFactorPairs[key]
 
 					if !found {
 						return minlevel, fmt.Errorf("merged factor %s not found in level %s of %s", key, i, fmt.Sprint(pair))
@@ -225,7 +246,11 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 		}
 
 		for _, level := range pair.Levels {
-			merged := level.(MergedLevel)
+			merged, err := ToMergedLevel(level)
+
+			if err != nil {
+				return minlevel, err
+			}
 
 			if equal, err := merged.EqualToMergeConcs(lowestMerged); equal && err == nil {
 				fmt.Println("same: ", merged, lowestMerged)
@@ -893,7 +918,7 @@ func MergeFactorNames(factorNames []string) (combinedFactor string) {
 
 // product of merging two factor levels and retaining the original merged factor level pairs in a map
 type MergedLevel struct {
-	OriginalFactorPairs map[string]interface{} // map of original factor names to levels e.g. "Glucose":"10uM", "Glycerol mM": 0
+	OriginalFactorPairs map[string]interface{} `json:OriginalFactorPairs` // map of original factor names to levels e.g. "Glucose":"10uM", "Glycerol mM": 0
 }
 
 // returns keys in alphabetical order; values are returned in the order corresponding to the key order
@@ -975,7 +1000,21 @@ func MakeMergedLevel(factorsInOrder []string, levelsInOrder []interface{}) (m Me
 	for i := range factorsInOrder {
 		pairs[factorsInOrder[i]] = levelsInOrder[i]
 	}
+
 	m.OriginalFactorPairs = pairs
+	return
+}
+
+// Casts a valid interface into a MergedLevel. Independent of serialisation history.
+// If the value cannot be cast into a merged level an error is returned.
+func ToMergedLevel(level interface{}) (m MergedLevel, err error) {
+
+	bts, err := json.Marshal(level)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(bts, &m)
+
 	return
 }
 

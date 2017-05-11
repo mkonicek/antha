@@ -399,6 +399,35 @@ func TestDivideConcentration(t *testing.T) {
 
 }
 
+func TestAddConcentrations(t *testing.T) {
+	for _, testunit := range concarithmetictests {
+		//var concs []Concentration
+		//concs = append(concs,testunit.ValueA)
+		//concs = append(concs,testunit.ValueB)
+		r, err := AddConcentrations([]Concentration{testunit.ValueA, testunit.ValueB})
+		if err != nil {
+			t.Error(
+				"Add Concentration returns error ", err.Error(), "should return nil \n",
+			)
+		}
+		if r.SIValue() != testunit.Sum.SIValue() {
+			t.Error(
+				"For addition of ", testunit.ValueA, "and", testunit.ValueB, "\n",
+				"expected", testunit.Sum, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+	_, err := AddConcentrations([]Concentration{concarithmetictests[0].ValueA, concarithmetictests[4].ValueA})
+	if err == nil {
+		t.Error(
+			"Expected Errorf but got nil. Adding of two different bases (g/l and M/l) should not be possible \n",
+		)
+	}
+
+}
+
 func TestNewMeasurement(t *testing.T) {
 	for _, testunit := range units {
 		r := NewMeasurement(testunit.value, testunit.prefix, testunit.unit)
@@ -446,4 +475,72 @@ func TestNewConcentration(t *testing.T) {
 		}
 	}
 
+}
+
+func TestRoundedComparisons(t *testing.T) {
+	v1 := NewVolume(0.5, "ul")
+	v2 := NewVolume(0.4999999, "ul")
+
+	vrai := v1.GreaterThanRounded(v2, 7)
+
+	if !vrai {
+		t.Error(
+			"For", v1.ToString(), " >_7 ", v2.ToString(), "\n",
+			"expected true\n",
+			"got false\n",
+		)
+	}
+
+	faux := v1.LessThanRounded(v2, 7)
+
+	if faux {
+		t.Error(
+			"For", v1.ToString(), " <_7 ", v2.ToString(), "\n",
+			"expected false\n",
+			"got true\n",
+		)
+	}
+
+	faux = v1.EqualToRounded(v2, 8)
+
+	if faux {
+		t.Error(
+			"For", v1.ToString(), " ==_7 ", v2.ToString(), "\n",
+			"expected false\n",
+			"got true\n",
+		)
+
+	}
+
+	vrai = v1.EqualToRounded(v2, 6)
+
+	if !vrai {
+		t.Error(
+			"For", v1.ToString(), " ==_6 ", v2.ToString(), "\n",
+			"expected true\n",
+			"got false\n",
+		)
+
+	}
+
+	faux = v1.LessThanRounded(v2, 6)
+
+	if faux {
+		t.Error(
+			"For", v1.ToString(), " <_6 ", v2.ToString(), "\n",
+			"expected false\n",
+			"got true\n",
+		)
+	}
+
+	faux = v1.GreaterThanRounded(v2, 6)
+
+	if faux {
+		t.Error(
+			"For", v1.ToString(), " >_6 ", v2.ToString(), "\n",
+			"expected false\n",
+			"got true\n",
+		)
+
+	}
 }

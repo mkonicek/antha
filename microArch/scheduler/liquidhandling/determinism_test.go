@@ -14,7 +14,7 @@ func configure_request_quitebig(rq *LHRequest) {
 	mmx := GetComponentForTest("mastermix_sapI", wunit.NewVolume(5000.0, "ul"))
 	part := GetComponentForTest("dna", wunit.NewVolume(5000.0, "ul"))
 
-	for k := 0; k < 100; k++ {
+	for k := 0; k < 130; k++ {
 		ins := wtype.NewLHInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(21.0, "ul"))
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(21.0, "ul"))
@@ -25,6 +25,7 @@ func configure_request_quitebig(rq *LHRequest) {
 		ins.AddComponent(ps)
 		ins.AddProduct(GetComponentForTest("water", wunit.NewVolume(43.0, "ul")))
 		ins.Result.CName = fmt.Sprintf("DANGER_MIX_%d", k)
+		ins.SetGeneration(k + 1)
 		rq.Add_instruction(ins)
 	}
 }
@@ -89,7 +90,7 @@ func TestLayoutDeterminism(t *testing.T) {
 		}
 
 		if was != is {
-			t.Fatal("Think again, boyo - your layout ain't deterministic nohow")
+			t.Fatal(fmt.Sprintf("Think again, boyo - your layout ain't deterministic nohow %s =/= %s", was, is))
 		}
 	}
 }

@@ -10,8 +10,32 @@ import (
 
 func makeplatefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("DSW96", "", "", "ul", 1000, 100, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("DSW96", "", "", "ul", 200, 10, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("testplate", "none", 8, 12, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	return p
+}
+func make384platefortest() *LHPlate {
+	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
+	welltype := NewLHWell("DSW384", "", "", "ul", 50, 5, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("testplate", "none", 16, 24, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	return p
+}
+func make1536platefortest() *LHPlate {
+	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
+	welltype := NewLHWell("DSW1536", "", "", "ul", 15, 1, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("testplate", "none", 32, 48, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	return p
+}
+func make24platefortest() *LHPlate {
+	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
+	welltype := NewLHWell("DSW24", "", "", "ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("testplate", "none", 4, 6, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	return p
+}
+func make6platefortest() *LHPlate {
+	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
+	welltype := NewLHWell("6wellplate", "", "", "ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("testplate", "none", 2, 3, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
@@ -192,5 +216,45 @@ func TestMergeWith(t *testing.T) {
 
 	if !(p1.Wellcoords["A2"].WContents.CName == "Butter" && p1.Wellcoords["A2"].WContents.Vol == 80.0 && p1.Wellcoords["A2"].WContents.Vunit == "ul") {
 		t.Fatal("Error: MergeWith should add non user-allocated components to  plate merged with")
+	}
+}
+
+func makeCV(name string, vol float64) ComponentVector {
+	c := NewLHComponent()
+	c.Type = LTWater
+	c.CName = name
+	c.Vol = vol
+	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
+	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
+
+	got := make([]*LHComponent, 8)
+
+	for i := 0; i < 8; i++ {
+		got[i] = c.Dup()
+		got[i].Loc = PIDs[i] + ":" + CIDs[i]
+	}
+
+	return got
+}
+
+func makecomponent(cname string, vol float64) *LHComponent {
+	c := NewLHComponent()
+	c.Type = LTWater
+	c.CName = cname
+	c.Vol = vol
+	c.Vunit = "ul"
+	return c
+}
+
+func TestFindCompMulti1(t *testing.T) {
+	p := makeplatefortest()
+	c := makecomponent("water", 1600.0)
+	p.AddComponent(c, true)
+	cv := makeCV("water", 50.0)
+
+	pids, _, _, _ := p.FindComponentsMulti(cv, LHVChannel, 8, false)
+
+	if len(pids) == 0 {
+		t.Errorf("Didn't find a simple column of water... should have")
 	}
 }

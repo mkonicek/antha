@@ -24,6 +24,7 @@ package factory
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -773,4 +774,23 @@ func GetPlateList() []string {
 
 func GetPlateLibrary() map[string]*wtype.LHPlate {
 	return defaultPlateLibrary.lib
+}
+
+func PlateTypeArray(sa []string) ([]*wtype.LHPlate, error) {
+	r := make([]*wtype.LHPlate, len(sa))
+
+	for i := 0; i < len(sa); i++ {
+		if sa[i] == "" {
+			continue
+		}
+		p := GetPlateByType(sa[i])
+
+		if p == nil {
+			return nil, fmt.Errorf("Plate type not found: %s", sa[i])
+		}
+
+		r[i] = p
+	}
+
+	return r, nil
 }

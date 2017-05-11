@@ -269,14 +269,7 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 	r.LHProperties = r.Liquidhandler.Properties
 
 	if err != nil {
-		// depending on what went wrong we might error out or return
-		// an error instruction
-
-		if wtype.LHErrorIsInternal(err) {
-			return nil, err
-		} else {
-			return &target.CmpError{Error: err, Dev: a}, nil
-		}
+		return nil, err
 	}
 
 	// TODO: Desired filename not exposed in current driver interface, so pick

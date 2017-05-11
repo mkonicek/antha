@@ -37,16 +37,17 @@ import (
 
 // heights in mm
 const (
-	offset                                      float64 = 0.25
-	gilsonoffsetpcrplate                        float64 = 2.0 // 2.136
-	gilsonoffsetgreiner                         float64 = 2.0
-	riserheightinmm                             float64 = 40.0 - offset
-	shallowriserheightinmm                      float64 = 20.25 - offset
-	coolerheight                                float64 = 16.0
-	pcrtuberack496                              float64 = 28.0
-	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
-	bioshake96welladaptorheight                 float64 = 4.5
-	bioshakestandardadaptorheight               float64 = 5.0
+	offset                                              float64 = 0.25
+	gilsonoffsetpcrplate                                float64 = 2.0 // 2.136
+	gilsonoffsetgreiner                                 float64 = 2.0
+	riserheightinmm                                     float64 = 40.0 - offset
+	shallowriserheightinmm                              float64 = 20.25 - offset
+	coolerheight                                        float64 = 16.0
+	pcrtuberack496                                      float64 = 28.0
+	valueformaxheadtonotintoDSWplatewithp20tips         float64 = 4.5
+	valueformaxheadtonotintoFourColumnsplatewithp20tips float64 = 6.0
+	bioshake96welladaptorheight                         float64 = 4.5
+	bioshakestandardadaptorheight                       float64 = 5.0
 )
 
 var platespecificoffset = map[string]float64{
@@ -244,7 +245,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//4 column reservoir plate Phenix Research Products RRI3051; Fisher cat# NC0336913
 	fourcolumnshp := wtype.NewShape("box", "mm", 26, 71, 42)
 	fourcolumnwell := wtype.NewLHWell("FourColumnWell", "", "", "ul", 73000, 500, fourcolumnshp, wtype.LHWBV, 26, 71, 42, 2, "mm")
-	plate = wtype.NewLHPlate("FourColumnReservoir", "Unknown", 1, 4, 44, "mm", fourcolumnwell, 26, 1, 9, 31, 2) //WellYStart is not accurate, but would not visualise correctly unless set to this value, cant diagnose
+	plate = wtype.NewLHPlate("FourColumnReservoir", "Unknown", 1, 4, 44, "mm", fourcolumnwell, 26, 1, 9, 31, valueformaxheadtonotintoFourColumnsplatewithp20tips) //WellYStart is not accurate, but would not visualise correctly unless set to this value, cant diagnose
 	plates[plate.Type] = plate
 
 	// 24 well deep square well plate on riser

@@ -822,6 +822,12 @@ func MakeLVDNAMixPolicy() wtype.LHPolicy {
 	return dnapolicy
 }
 
+func MakeEPAGE48Policy() wtype.LHPolicy {
+	loadpolicy := make(wtype.LHPolicy, 1)
+	loadpolicy["RESET_OVERRIDE"] = true
+	return loadpolicy
+}
+
 func MakeEGEL48Policy() wtype.LHPolicy {
 	loadpolicy := make(wtype.LHPolicy, 1)
 	loadpolicy["RESET_OVERRIDE"] = true
@@ -919,8 +925,14 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used
-	rule = wtype.NewLHPolicyRule("EGEL48Load")
+	rule = wtype.NewLHPolicyRule("EPAGE48Load")
 	rule.AddCategoryConditionOn("TOPLATETYPE", "EPAGE48")
+	pol = MakeEPAGE48Policy()
+	lhpr.AddRule(rule, pol)
+
+	//fix for removing blowout in DNA only if EGEL 48 plate type is used
+	rule = wtype.NewLHPolicyRule("EGEL48Load")
+	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL48")
 	pol = MakeEGEL48Policy()
 	lhpr.AddRule(rule, pol)
 

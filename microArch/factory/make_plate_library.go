@@ -498,7 +498,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//	plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, 0.0, 0.0, 2.0)
 	//	plates[plate.Type] = plate
 
-	//E-GEL 48 (reverse) position
+	//E-PAGE 48 (reverse) position
 	ep48g := wtype.NewShape("trap", "mm", 2, 4, 2)
 	//can't reach all wells; change to 24 wells per row?
 	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 20, 0, ep48g, wtype.LHWBFLAT, 2, 4, 2, 2, "mm")
@@ -510,6 +510,12 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	gelconsar := []string{"position_9"}
 	gelplate.SetConstrained("Pipetmax", gelconsar)
 
+	plates[gelplate.Type] = gelplate
+
+	//E-GEL 48 (reverse) position
+	gelplate = wtype.NewLHPlate("EGEL48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
+
+	gelplate.SetConstrained("Pipetmax", gelconsar)
 	plates[gelplate.Type] = gelplate
 
 	//E-GEL 96 definition

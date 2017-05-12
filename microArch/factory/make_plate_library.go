@@ -514,7 +514,6 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	//E-GEL 48 (reverse) position
 	gelplate = wtype.NewLHPlate("EGEL48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
-
 	gelplate.SetConstrained("Pipetmax", gelconsar)
 	plates[gelplate.Type] = gelplate
 

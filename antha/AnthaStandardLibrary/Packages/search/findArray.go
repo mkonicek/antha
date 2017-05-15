@@ -123,7 +123,7 @@ func removeDuplicateInterface(elements []interface{}) []interface{} {
 	return elements
 }
 
-func checkArrayType(elements []interface{}) (typeName string, err error) {
+func CheckArrayType(elements []interface{}) (typeName string, err error) {
 	var foundthistype string
 	var foundthesetypes []string
 	for i, element := range elements {
@@ -151,7 +151,7 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 		return unique, fmt.Errorf("No entries in slice! ")
 	}
 
-	t, err := checkArrayType(elements)
+	t, err := CheckArrayType(elements)
 
 	if err != nil {
 		return unique, err
@@ -268,3 +268,22 @@ func RemoveDuplicateSequences(elements []wtype.DNASequence) []wtype.DNASequence 
 	// Return the new slice.
 	return result
 }
+
+/*func RemoveDuplicateFeatures(elements []wtype.Feature) []wtype.Feature {
+	// Use map to record duplicates as we find them.
+	encountered := map[wtype.Feature]bool{}
+	result := []wtype.Feature{}
+
+	for v := range elements {
+		if encountered[elements[v]] == true {
+			// Do not add duplicate.
+		} else {
+			// Record this element as an encountered element.
+			encountered[(elements[v])] = true
+			// Append to result slice.
+			result = append(result, elements[v])
+		}
+	}
+	// Return the new slice.
+	return result
+}*/

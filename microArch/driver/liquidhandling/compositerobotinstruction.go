@@ -24,15 +24,16 @@ package liquidhandling
 
 import (
 	"fmt"
-	"math"
-	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
 )
+
+func TipChosenError(v wunit.Volume, prms *LHProperties) string {
+	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (current minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString())
+}
 
 type TransferParams struct {
 	What       string
@@ -51,6 +52,14 @@ type TransferParams struct {
 
 func (tp TransferParams) ToString() string {
 	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType)
+}
+
+func (tp TransferParams) Zero() bool {
+	if tp.What == "" {
+		return true
+	}
+
+	return false
 }
 
 type MultiTransferParams struct {
@@ -84,550 +93,8 @@ func NewMultiTransferParams(multi int) MultiTransferParams {
 	return v
 }
 
-// TODO -- refactor to pass actual plates through
-type TransferInstruction struct {
-	Type       int
-	Platform   string
-	What       []string
-	PltFrom    []string
-	PltTo      []string
-	WellFrom   []string
-	WellTo     []string
-	Volume     []wunit.Volume
-	FPlateType []string
-	TPlateType []string
-	FPlateWX   []int
-	FPlateWY   []int
-	TPlateWX   []int
-	TPlateWY   []int
-	FVolume    []wunit.Volume
-	TVolume    []wunit.Volume
-}
-
-func (ti *TransferInstruction) ToString() string {
-	s := fmt.Sprintf("%s ", Robotinstructionnames[ti.Type])
-	for i := 0; i < len(ti.What); i++ {
-		s += ti.ParamSet(i).ToString()
-		s += "\n"
-	}
-
-	return s
-}
-
-func (ti *TransferInstruction) ParamSet(n int) TransferParams {
-	return TransferParams{ti.What[n], ti.PltFrom[n], ti.PltTo[n], ti.WellFrom[n], ti.WellTo[n], ti.Volume[n], ti.FPlateType[n], ti.TPlateType[n], ti.FVolume[n], ti.TVolume[n], nil, ""}
-}
-
-func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int) *TransferInstruction {
-	var v TransferInstruction
-	v.Type = TFR
-	v.What = what
-	v.PltFrom = pltfrom
-	v.PltTo = pltto
-	v.WellFrom = wellfrom
-	v.WellTo = wellto
-	v.Volume = volume
-	v.FPlateType = fplatetype
-	v.TPlateType = tplatetype
-	v.FVolume = fvolume
-	v.TVolume = tvolume
-	v.FPlateWX = FPlateWX
-	v.FPlateWY = FPlateWY
-	v.TPlateWX = TPlateWX
-	v.TPlateWY = TPlateWY
-	return &v
-}
-func (ins *TransferInstruction) InstructionType() int {
-	return ins.Type
-}
-
-func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) {
-	ins.What = append(ins.What, ins2.What...)
-	ins.PltFrom = append(ins.PltFrom, ins2.PltFrom...)
-	ins.PltTo = append(ins.PltTo, ins2.PltTo...)
-	ins.WellFrom = append(ins.WellFrom, ins2.WellFrom...)
-	ins.WellTo = append(ins.WellTo, ins2.WellTo...)
-	ins.Volume = append(ins.Volume, ins2.Volume...)
-	ins.FPlateType = append(ins.FPlateType, ins2.FPlateType...)
-	ins.TPlateType = append(ins.TPlateType, ins2.TPlateType...)
-	ins.FPlateWX = append(ins.FPlateWX, ins2.FPlateWX...)
-	ins.FPlateWY = append(ins.FPlateWY, ins2.FPlateWY...)
-	ins.TPlateWX = append(ins.TPlateWX, ins2.TPlateWX...)
-	ins.TPlateWY = append(ins.TPlateWY, ins2.TPlateWY...)
-	ins.FVolume = append(ins.FVolume, ins2.FVolume...)
-	ins.TVolume = append(ins.TVolume, ins2.TVolume...)
-}
-
-func (ins *TransferInstruction) GetParameter(name string) interface{} {
-	switch name {
-	case "LIQUIDCLASS":
-		return ins.What
-	case "VOLUME":
-		return ins.Volume
-	case "VOLUNT":
-		return nil
-	case "FROMPLATETYPE":
-		return ins.FPlateType
-	case "WELLFROMVOLUME":
-		return ins.FVolume
-	case "POSFROM":
-		return ins.PltFrom
-	case "POSTO":
-		return ins.PltTo
-	case "WELLFROM":
-		return ins.WellFrom
-	case "WELLTO":
-		return ins.WellTo
-	case "WELLTOVOLUME":
-		return ins.TVolume
-	case "TOPLATETYPE":
-		return ins.TPlateType
-	case "FPLATEWX":
-		return ins.FPlateWX
-	case "FPLATEWY":
-		return ins.FPlateWY
-	case "TPLATEWX":
-		return ins.TPlateWX
-	case "TPLATEWY":
-		return ins.TPlateWY
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "PLATFORM":
-		return ins.Platform
-	}
-	return nil
-}
-
-func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
-	ret := make([]wunit.Volume, 0)
-
-	vol := Vol.ConvertTo(Min.Unit())
-	min := Min.RawValue()
-	max := Max.RawValue()
-
-	if vol < min {
-		/*
-			logger.Fatal(fmt.Sprintf("Error: %f below min vol %f", vol, min))
-			panic(errors.New(fmt.Sprintf("Error: %f below min vol %f", vol, min)))
-		*/
-
-		err := wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Liquid Handler cannot service volume requested: %f - minimum volume is %f", vol, min))
-		return ret, err
-	}
-
-	if vol <= max {
-		ret = append(ret, Vol)
-		return ret, nil
-	}
-
-	// vol is > max, need to know by how much
-	// if vol/max = n then we do n+1 equal transfers of vol / (n+1)
-	// this should never be outside the range
-
-	n, _ := math.Modf(vol / max)
-
-	n += 1
-
-	// should make sure of no rounding errors here... we want to
-	// make sure these are within the resolution of the channel
-
-	for i := 0; i < int(n); i++ {
-		ret = append(ret, wunit.NewVolume(vol/n, Vol.Unit().PrefixedSymbol()))
-	}
-
-	return ret, nil
-}
-
-func (vs VolumeSet) MaxMultiTransferVolume() wunit.Volume {
-	// the minimum volume in the set
-
-	ret := vs.Vols[0]
-
-	for _, v := range vs.Vols {
-		if v.LessThan(ret) {
-			ret = v
-		}
-	}
-
-	return ret
-}
-
-func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParameter) [][]int {
-	// if the channel is not multi just return nil
-
-	if channel.Multi == 1 {
-		return nil
-	}
-
-	tfrs := make(map[string][]string, len(ins.What))
-
-	// hash out all transfers which are multiable
-
-	for i, _ := range ins.What {
-		var tcoord int = -1
-		var fcoord int = -1
-		var tc2 int = -1
-		var fc2 int = -1
-		var pmt int = -1
-		var pmf int = -1
-		wcFrom := wtype.MakeWellCoordsA1(ins.WellFrom[i])
-		wcTo := wtype.MakeWellCoordsA1(ins.WellTo[i])
-
-		if channel.Orientation == wtype.LHVChannel {
-			// we hash on the X
-			tcoord = wcTo.X
-			fcoord = wcFrom.X
-			tc2 = wcTo.Y
-			fc2 = wcFrom.Y
-			pmf = ins.FPlateWY[i]
-			pmt = ins.TPlateWY[i]
-		} else {
-			// horizontal orientation
-			// hash on the Y
-			tcoord = wcTo.Y
-			fcoord = wcFrom.Y
-			tc2 = wcTo.X
-			fc2 = wcFrom.X
-			pmf = ins.FPlateWX[i]
-			pmt = ins.TPlateWX[i]
-		}
-
-		pltF := ins.PltFrom[i]
-		pltT := ins.PltTo[i]
-
-		// make hash key
-
-		hashkey := fmt.Sprintf("%s:%s:%d:%s:%d:%d:%d", ins.What[i], pltF, fcoord, pltT, tcoord, pmf, pmt)
-
-		a, ok := tfrs[hashkey]
-
-		if !ok {
-			a = make([]string, 0, channel.Multi)
-		}
-
-		val := fmt.Sprintf("%d,%d,%d", fc2, tc2, i)
-		a = append(a, val)
-		tfrs[hashkey] = a
-	}
-
-	ret := make([][]int, 0, len(ins.What))
-
-	// now have we got any which are multiable?
-	// the elements of each array are transfers with
-	// a common source component, row/column and plate on either side
-	// now we must check whether the *other* coords match up
-	for k, a := range tfrs {
-		tx := strings.Split(k, ":")
-		pmf, _ := strconv.Atoi(tx[5])
-		pmt, _ := strconv.Atoi(tx[6])
-
-		//		fmt.Println("transfer ", k, " len : ", len(a))
-		if len(a) >= channel.Multi {
-			// could be
-			mss := GetMultiSet(a, channel.Multi, pmf, pmt)
-
-			//fmt.Println("Multiset length: ", len(mss))
-
-			if len(mss) != 0 {
-				for _, ms := range mss {
-					ret = append(ret, ms)
-				}
-			}
-		}
-
-	}
-
-	if len(ret) == 0 {
-		return nil
-	}
-
-	return ret
-}
-
-func GetMultiSet(a []string, channelmulti int, fromplatemulti int, toplatemulti int) [][]int {
-	ret := make([][]int, 0, 2)
-	var next []int
-	for {
-		next, a = GetNextSet(a, channelmulti, fromplatemulti, toplatemulti)
-		if next == nil {
-			break
-		}
-
-		ret = append(ret, next)
-	}
-
-	return ret
-}
-
-func GetNextSet(a []string, channelmulti int, fromplatemulti int, toplatemulti int) ([]int, []string) {
-	r := make([][]int, fromplatemulti)
-	for i := 0; i < fromplatemulti; i++ {
-		r[i] = make([]int, toplatemulti)
-		for j := 0; j < toplatemulti; j++ {
-			r[i][j] = -1
-		}
-	}
-
-	// this is simply a greedy algorithm, it may miss things
-	for _, s := range a {
-		tx := strings.Split(s, ",")
-
-		i, _ := strconv.Atoi(tx[0])
-		j, _ := strconv.Atoi(tx[1])
-		k, _ := strconv.Atoi(tx[2])
-
-		r[i][j] = k
-	}
-	// now we just take the first one we find
-
-	ret := getset(r, channelmulti)
-	censa := censoredcopy(a, ret)
-
-	//fmt.Println("RET: ", ret, " CENSA: ", censa)
-
-	return ret, censa
-}
-
-func getset(a [][]int, mx int) []int {
-	r := make([]int, 0, mx)
-
-	for i := 0; i < len(a); i++ {
-		for j := 0; j < len(a[i]); j++ {
-			if a[i][j] != -1 {
-				r = append(r, a[i][j])
-				// find a diagonal line
-				for l := 1; l < mx; l++ {
-					x := (i + l) % len(a)
-					y := (j + l) % len(a[i])
-
-					if a[x][y] != -1 {
-						r = append(r, a[x][y])
-					} else {
-						r = make([]int, 0, mx)
-					}
-				}
-
-				if len(r) == mx {
-					break
-				}
-			}
-		}
-	}
-
-	if len(r) == mx {
-		sort.Ints(r)
-		return r
-	} else {
-		return nil
-	}
-}
-
-func censoredcopy(a []string, b []int) []string {
-	if b == nil {
-		return a
-	}
-
-	r := make([]string, 0, len(a)-len(b))
-
-	for _, x := range a {
-		tx := strings.Split(x, ",")
-		i, _ := strconv.Atoi(tx[2])
-		if IsIn(i, b) {
-			continue
-		}
-		r = append(r, x)
-	}
-
-	return r
-}
-
-func IsIn(i int, a []int) bool {
-	for _, x := range a {
-		if i == x {
-			return true
-		}
-	}
-
-	return false
-}
-
-// helper thing
-
-type VolumeSet struct {
-	Vols []wunit.Volume
-}
-
-func NewVolumeSet(n int) VolumeSet {
-	var vs VolumeSet
-	vs.Vols = make([]wunit.Volume, n)
-	for i := 0; i < n; i++ {
-		vs.Vols[i] = (wunit.NewVolume(0.0, "ul"))
-	}
-	return vs
-}
-
-func (vs VolumeSet) Add(v wunit.Volume) {
-	for i := 0; i < len(vs.Vols); i++ {
-		vs.Vols[i].Add(v)
-	}
-}
-
-func (vs VolumeSet) Sub(v wunit.Volume) []wunit.Volume {
-	ret := make([]wunit.Volume, len(vs.Vols))
-	for i := 0; i < len(vs.Vols); i++ {
-		vs.Vols[i].Subtract(v)
-		ret[i] = wunit.CopyVolume(v)
-	}
-	return ret
-}
-
-func (vs VolumeSet) SetEqualTo(v wunit.Volume) {
-	for i := 0; i < len(vs.Vols); i++ {
-		vs.Vols[i] = wunit.CopyVolume(v)
-	}
-}
-
-func (vs VolumeSet) GetACopy() []wunit.Volume {
-	r := make([]wunit.Volume, len(vs.Vols))
-	for i := 0; i < len(vs.Vols); i++ {
-		r[i] = wunit.CopyVolume(vs.Vols[i])
-	}
-	return r
-}
-
-func (ins *TransferInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	pol := policy.GetPolicyFor(ins)
-
-	ret := make([]RobotInstruction, 0)
-
-	// if we can multi we do this first
-
-	if pol["CAN_MULTI"].(bool) {
-		// break out the sets of parallel instructions
-
-		// fix this HARD CODE here
-		// this is a bit problematic: we need to define head choice here partly on the
-		// basis of its multi, partly based on volume range
-		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
-
-		//fmt.Println("PARALLEL SETS FOUND: ", parallelsets)
-
-		mci := NewMultiChannelBlockInstruction()
-		mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here
-		mci.Prms = prms.HeadsLoaded[0].Params        // TODO Remove Hard code here
-		for _, set := range parallelsets {
-			// assemble the info
-
-			vols := NewVolumeSet(len(set))
-			fvols := NewVolumeSet(len(set))
-			tvols := NewVolumeSet(len(set))
-			What := make([]string, len(set))
-			PltFrom := make([]string, len(set))
-			PltTo := make([]string, len(set))
-			WellFrom := make([]string, len(set))
-			WellTo := make([]string, len(set))
-			FPlateType := make([]string, len(set))
-			TPlateType := make([]string, len(set))
-
-			for i, s := range set {
-				vols.Vols[i] = wunit.CopyVolume(ins.Volume[s])
-				fvols.Vols[i] = wunit.CopyVolume(ins.FVolume[s])
-				tvols.Vols[i] = wunit.CopyVolume(ins.TVolume[s])
-				What[i] = ins.What[s]
-				PltFrom[i] = ins.PltFrom[s]
-				PltTo[i] = ins.PltTo[s]
-				WellFrom[i] = ins.WellFrom[s]
-				WellTo[i] = ins.WellTo[s]
-				FPlateType[i] = ins.FPlateType[s]
-				TPlateType[i] = ins.TPlateType[s]
-			}
-
-			// get the max transfer volume
-
-			maxvol := vols.MaxMultiTransferVolume()
-
-			// now set the vols for the transfer and remove this from the instruction's volume
-
-			for i, _ := range vols.Vols {
-				vols.Vols[i] = wunit.CopyVolume(maxvol)
-				ins.Volume[set[i]].Subtract(maxvol)
-
-				// set the from and to volumes for the relevant part of the instruction
-				// NB -- this is a design issue which should probably be fixed: at the moment
-				// if we have two instructions which refer to the same underlying well their
-				// volume levels will not be in sync
-				// therefore this implementation is not correct as regards changes of underlying
-				// state
-				//... instead the right thing would be for all of these instructions to reference
-				// plate objects instead - this will work OK as long as we have a shared memory
-				// system... otherwise we'll need to use channels
-				ins.FVolume[set[i]].Subtract(maxvol)
-				ins.TVolume[set[i]].Add(maxvol)
-			}
-
-			tp := NewMultiTransferParams(mci.Multi)
-			tp.What = What
-			tp.Volume = vols.Vols
-			tp.FVolume = fvols.Vols
-			tp.TVolume = tvols.Vols
-			tp.PltFrom = PltFrom
-			tp.PltTo = PltTo
-			tp.WellFrom = WellFrom
-			tp.WellTo = WellTo
-			tp.FPlateType = FPlateType
-			tp.TPlateType = TPlateType
-			tp.Channel = mci.Prms
-			mci.AddTransferParams(tp)
-		}
-
-		if len(parallelsets) > 0 {
-			ret = append(ret, mci)
-		}
-	}
-
-	// mop up all the single instructions which are left
-	sci := NewSingleChannelBlockInstruction()
-	sci.Prms = prms.HeadsLoaded[0].Params // TODO Fix Hard Code Here
-
-	for i, _ := range ins.What {
-		if ins.Volume[i].LessThanFloat(0.001) {
-			continue
-		}
-		if i != 0 && (ins.What[i] != ins.What[i-1]) {
-			if len(sci.Volume) > 0 {
-				ret = append(ret, sci)
-			}
-			sci = NewSingleChannelBlockInstruction()
-			sci.Prms = prms.HeadsLoaded[0].Params
-		}
-
-		var tp TransferParams
-
-		tp.What = ins.What[i]
-		tp.PltFrom = ins.PltFrom[i]
-		tp.PltTo = ins.PltTo[i]
-		tp.WellFrom = ins.WellFrom[i]
-		tp.WellTo = ins.WellTo[i]
-		tp.Volume = wunit.CopyVolume(ins.Volume[i])
-		tp.FVolume = wunit.CopyVolume(ins.FVolume[i])
-		tp.TVolume = wunit.CopyVolume(ins.TVolume[i])
-		tp.FPlateType = ins.FPlateType[i]
-		tp.TPlateType = ins.TPlateType[i]
-		sci.AddTransferParams(tp)
-
-		// make sure we keep volumes up to date
-
-		ins.FVolume[i].Subtract(ins.Volume[i])
-		ins.TVolume[i].Add(ins.Volume[i])
-	}
-	if len(sci.Volume) > 0 {
-		ret = append(ret, sci)
-	}
-
-	return ret, nil
-}
-
 type SingleChannelBlockInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -655,6 +122,7 @@ func NewSingleChannelBlockInstruction() *SingleChannelBlockInstruction {
 	v.TVolume = make([]wunit.Volume, 0)
 	v.FPlateType = make([]string, 0)
 	v.TPlateType = make([]string, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 
@@ -712,7 +180,7 @@ func (ins *SingleChannelBlockInstruction) GetParameter(name string) interface{} 
 	return nil
 }
 
-func (ins *SingleChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 	// get tips
 	channel, tipp := ChooseChannel(ins.Volume[0], prms)
@@ -722,11 +190,11 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms
 	if tipp != nil {
 		tiptype = tipp.Type
 	} else {
-		return ret, fmt.Errorf("No tip chosen (1)")
+		return ret, fmt.Errorf(TipChosenError(ins.Volume[0], prms))
 	}
 
 	ins.Prms = channel
-	pol := policy.GetPolicyFor(ins)
+	pol := GetPolicyFor(policy, ins)
 	tipget, err := GetTips(tiptype, prms, channel, 1, false)
 
 	if err != nil {
@@ -748,12 +216,14 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms
 		if newtipp != nil {
 			newtiptype = newtipp.Type
 		} else {
-			return ret, fmt.Errorf("No tip chosen")
+			return ret, fmt.Errorf(TipChosenError(ins.Volume[t], prms))
 		}
 		mergedchannel := newchannel.MergeWithTip(newtipp)
 		tipp = newtipp
 
 		tvs, err := TransferVolumes(ins.Volume[t], mergedchannel.Minvol, mergedchannel.Maxvol)
+
+		//fmt.Println("VOL ", ins.Volume[t].ToString(), " IN ", len(tvs), " GOES: ", mergedchannel.Minvol.ToString(), " MIN ", mergedchannel.Maxvol.ToString(), " MAX")
 
 		if err != nil {
 			return ret, err
@@ -861,6 +331,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms
 }
 
 type MultiChannelBlockInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       [][]string
 	PltFrom    [][]string
@@ -878,6 +349,7 @@ type MultiChannelBlockInstruction struct {
 
 func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 	var v MultiChannelBlockInstruction
+	v.Type = MCB
 	v.What = make([][]string, 0)
 	v.PltFrom = make([][]string, 0)
 	v.PltTo = make([][]string, 0)
@@ -888,6 +360,7 @@ func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 	v.TPlateType = make([][]string, 0)
 	v.FVolume = make([][]wunit.Volume, 0)
 	v.TVolume = make([][]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 
@@ -946,17 +419,35 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *MultiChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	pol := policy.GetPolicyFor(ins)
+func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
+	v := make([]wunit.Volume, 0, 1)
+	seen := make(map[string]bool)
+	for _, vv := range ins.Volume[0] {
+		if !vv.IsZero() && !seen[vv.ToString()] {
+			seen[vv.ToString()] = true
+			v = append(v, vv)
+		}
+	}
+
+	return v
+}
+
+func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	pol := GetPolicyFor(policy, ins)
 	ret := make([]RobotInstruction, 0)
 	// get some tips
 
-	channel, tipp := ChooseChannel(ins.Volume[0][0], prms)
+	// we no longer require ins.volume[0][0] to be set
+	// as we move to independent we need to get all volumes
+
+	// MIS DEBUG HERE --> this crashes, should not be generating
+	// 		      MCBs with no volumes
+	channel, tipp := ChooseChannel(ins.GetVolumes()[0], prms)
 	tiptype := ""
 	if tipp != nil {
 		tiptype = tipp.Type
 	} else {
-		return ret, fmt.Errorf("No tip chosen")
+		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
 	}
 
 	tipget, err := GetTips(tiptype, prms, channel, ins.Multi, false)
@@ -981,7 +472,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms 
 		if newtip != nil {
 			newtiptype = newtip.Type
 		} else {
-			return ret, fmt.Errorf("No tip chosen (3)")
+			return ret, fmt.Errorf(TipChosenError(ins.Volume[0][0], prms))
 		}
 
 		var last_thing *wtype.LHComponent
@@ -1065,7 +556,6 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms 
 			mci.TPlateType = ins.TPlateType[t]
 			mci.Multi = ins.Multi
 			mci.Prms = newchannel.MergeWithTip(newtip)
-
 			ret = append(ret, mci)
 
 			tiptype = newtiptype
@@ -1088,6 +578,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *LHPolicyRuleSet, prms 
 }
 
 type SingleChannelTransferInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       string
 	PltFrom    string
@@ -1168,7 +659,7 @@ func (ins *SingleChannelTransferInstruction) GetParameter(name string) interface
 	return nil
 }
 
-func (ins *SingleChannelTransferInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SingleChannelTransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 	// make the instructions
 
@@ -1197,6 +688,7 @@ func (ins *SingleChannelTransferInstruction) Generate(policy *LHPolicyRuleSet, p
 }
 
 type MultiChannelTransferInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -1283,7 +775,7 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name string) interface{
 	return nil
 }
 
-func (ins *MultiChannelTransferInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MultiChannelTransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 
 	// make the instructions
@@ -1296,6 +788,9 @@ func (ins *MultiChannelTransferInstruction) Generate(policy *LHPolicyRuleSet, pr
 	blowinstruction.Prms = ins.Prms
 
 	for i := 0; i < len(ins.Volume); i++ {
+		if ins.Volume[i].IsZero() {
+			continue
+		}
 		suckinstruction.AddTransferParams(ins.Params(i))
 		blowinstruction.AddTransferParams(ins.Params(i))
 	}
@@ -1307,6 +802,7 @@ func (ins *MultiChannelTransferInstruction) Generate(policy *LHPolicyRuleSet, pr
 }
 
 type StateChangeInstruction struct {
+	GenericRobotInstruction
 	Type     int
 	OldState *wtype.LHChannelParameter
 	NewState *wtype.LHChannelParameter
@@ -1335,11 +831,12 @@ func (ins *StateChangeInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *StateChangeInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *StateChangeInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
 type ChangeAdaptorInstruction struct {
+	GenericRobotInstruction
 	Type           int
 	Head           int
 	DropPosition   string
@@ -1384,7 +881,7 @@ func (ins *ChangeAdaptorInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *ChangeAdaptorInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *ChangeAdaptorInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 4)
 	/*
 		ret[0]=NewMoveInstruction(ins.DropPosition,...)
@@ -1397,6 +894,7 @@ func (ins *ChangeAdaptorInstruction) Generate(policy *LHPolicyRuleSet, prms *LHP
 }
 
 type LoadTipsMoveInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	Head       int
 	Well       []string
@@ -1438,7 +936,7 @@ func (ins *LoadTipsMoveInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *LoadTipsMoveInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LoadTipsMoveInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
 	// move
@@ -1472,6 +970,7 @@ func (ins *LoadTipsMoveInstruction) Generate(policy *LHPolicyRuleSet, prms *LHPr
 }
 
 type UnloadTipsMoveInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	Head       int
 	PltTo      []string
@@ -1513,7 +1012,7 @@ func (ins *UnloadTipsMoveInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *UnloadTipsMoveInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *UnloadTipsMoveInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
 	// move
@@ -1547,6 +1046,7 @@ func (ins *UnloadTipsMoveInstruction) Generate(policy *LHPolicyRuleSet, prms *LH
 }
 
 type AspirateInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	Head       int
 	Volume     []wunit.Volume
@@ -1595,21 +1095,27 @@ func (ins *AspirateInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *AspirateInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *AspirateInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *AspirateInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (ins *AspirateInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
 	}
 	os := []bool{ins.Overstroke}
 
-	driver.Aspirate(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	ret := driver.Aspirate(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
 }
 
 type DispenseInstruction struct {
+	GenericRobotInstruction
 	Type     int
 	Head     int
 	Volume   []wunit.Volume
@@ -1655,21 +1161,28 @@ func (ins *DispenseInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *DispenseInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *DispenseInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *DispenseInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (ins *DispenseInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
 	}
 
 	os := []bool{false}
-	driver.Dispense(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	ret := driver.Dispense(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type BlowoutInstruction struct {
+	GenericRobotInstruction
 	Type     int
 	Head     int
 	Volume   []wunit.Volume
@@ -1712,11 +1225,11 @@ func (ins *BlowoutInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *BlowoutInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *BlowoutInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *BlowoutInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (ins *BlowoutInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1725,10 +1238,16 @@ func (ins *BlowoutInstruction) OutputTo(driver LiquidhandlingDriver) {
 	for i := 0; i < ins.Multi; i++ {
 		bo[i] = true
 	}
-	driver.Dispense(volumes, bo, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	ret := driver.Dispense(volumes, bo, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
 }
 
 type PTZInstruction struct {
+	GenericRobotInstruction
 	Type    int
 	Head    int
 	Channel int
@@ -1755,15 +1274,21 @@ func (ins *PTZInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *PTZInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *PTZInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *PTZInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.ResetPistons(ins.Head, ins.Channel)
+func (ins *PTZInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.ResetPistons(ins.Head, ins.Channel)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
 }
 
 type MoveInstruction struct {
+	GenericRobotInstruction
 	Type      int
 	Head      int
 	Pos       []string
@@ -1822,15 +1347,22 @@ func (ins *MoveInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *MoveInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MoveInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *MoveInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head)
+func (ins *MoveInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type MoveRawInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	Head       int
 	What       []string
@@ -1900,16 +1432,17 @@ func (ins *MoveRawInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *MoveRawInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MoveRawInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *MoveRawInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (ins *MoveRawInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	logger.Fatal("Not yet implemented")
 	panic("Not yet implemented")
 }
 
 type LoadTipsInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	Head       int
 	Pos        []string
@@ -1961,15 +1494,22 @@ func (ins *LoadTipsInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *LoadTipsInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LoadTipsInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *LoadTipsInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.LoadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+func (ins *LoadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.LoadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type UnloadTipsInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	Head       int
 	Channels   []int
@@ -2019,15 +1559,22 @@ func (ins *UnloadTipsInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *UnloadTipsInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *UnloadTipsInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *UnloadTipsInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.UnloadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+func (ins *UnloadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.UnloadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type SuckInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	Head       int
 	What       []string
@@ -2051,6 +1598,7 @@ func NewSuckInstruction() *SuckInstruction {
 	v.Volume = make([]wunit.Volume, 0)
 	v.FPlateType = make([]string, 0)
 	v.FVolume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *SuckInstruction) InstructionType() int {
@@ -2104,14 +1652,13 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-// MIS XXX -- separate out channel-level parameters from head-level ones
-
-func (ins *SuckInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SuckInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	// MIS XXX -- separate out channel-level parameters from head-level ones
 	ret := make([]RobotInstruction, 0, 1)
 
 	// this is where the policies come into effect
 
-	pol := policy.GetPolicyFor(ins)
+	pol := GetPolicyFor(policy, ins)
 
 	// offsets
 	ofx := SafeGetF64(pol, "ASPXOFFSET")
@@ -2364,6 +1911,7 @@ func (ins *SuckInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 }
 
 type BlowInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	Head       int
 	What       []string
@@ -2386,6 +1934,7 @@ func NewBlowInstruction() *BlowInstruction {
 	v.Volume = make([]wunit.Volume, 0)
 	v.TPlateType = make([]string, 0)
 	v.TVolume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *BlowInstruction) InstructionType() int {
@@ -2447,11 +1996,11 @@ func (scti *BlowInstruction) Params() MultiTransferParams {
 	return tp
 }
 
-func (ins *BlowInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *BlowInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 	// apply policies here
 
-	pol := policy.GetPolicyFor(ins)
+	pol := GetPolicyFor(policy, ins)
 	// first, are we breaking up the move?
 
 	ofx := SafeGetF64(pol, "DSPXOFFSET")
@@ -2789,6 +2338,7 @@ func (ins *BlowInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties
 }
 
 type SetPipetteSpeedInstruction struct {
+	GenericRobotInstruction
 	Type    int
 	Head    int
 	Channel int
@@ -2818,15 +2368,22 @@ func (ins *SetPipetteSpeedInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *SetPipetteSpeedInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SetPipetteSpeedInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *SetPipetteSpeedInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed)
+func (ins *SetPipetteSpeedInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type SetDriveSpeedInstruction struct {
+	GenericRobotInstruction
 	Type  int
 	Drive string
 	Speed float64
@@ -2853,15 +2410,22 @@ func (ins *SetDriveSpeedInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *SetDriveSpeedInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SetDriveSpeedInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *SetDriveSpeedInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.SetDriveSpeed(ins.Drive, ins.Speed)
+func (ins *SetDriveSpeedInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.SetDriveSpeed(ins.Drive, ins.Speed)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type InitializeInstruction struct {
+	GenericRobotInstruction
 	Type int
 }
 
@@ -2878,15 +2442,22 @@ func (ins *InitializeInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *InitializeInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *InitializeInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *InitializeInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.Initialize()
+func (ins *InitializeInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.Initialize()
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type FinalizeInstruction struct {
+	GenericRobotInstruction
 	Type int
 }
 
@@ -2903,15 +2474,22 @@ func (ins *FinalizeInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *FinalizeInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *FinalizeInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *FinalizeInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.Finalize()
+func (ins *FinalizeInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.Finalize()
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type WaitInstruction struct {
+	GenericRobotInstruction
 	Type int
 	Time float64
 }
@@ -2935,15 +2513,22 @@ func (ins *WaitInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *WaitInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *WaitInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *WaitInstruction) OutputTo(driver LiquidhandlingDriver) {
-	driver.Wait(ins.Time)
+func (ins *WaitInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	ret := driver.Wait(ins.Time)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 type LightsOnInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -2977,16 +2562,16 @@ func (ins *LightsOnInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *LightsOnInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LightsOnInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *LightsOnInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *LightsOnInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LightsOnInstruction")
 }
 
 type LightsOffInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -3020,16 +2605,16 @@ func (ins *LightsOffInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *LightsOffInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LightsOffInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *LightsOffInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *LightsOffInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LightsOffInstruction")
 }
 
 type OpenInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -3063,16 +2648,16 @@ func (ins *OpenInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *OpenInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *OpenInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *OpenInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *OpenInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: OpenInstruction")
 }
 
 type CloseInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -3106,16 +2691,16 @@ func (ins *CloseInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *CloseInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *CloseInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *CloseInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *CloseInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: CloseInstruction")
 }
 
 type LoadAdaptorInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -3149,16 +2734,16 @@ func (ins *LoadAdaptorInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *LoadAdaptorInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LoadAdaptorInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *LoadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *LoadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LoadAdaptor")
 }
 
 type UnloadAdaptorInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -3192,16 +2777,16 @@ func (ins *UnloadAdaptorInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (ins *UnloadAdaptorInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *UnloadAdaptorInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *UnloadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) {
-	logger.Fatal("Not yet implemented")
-	panic("Not yet implemented")
+func (ins *UnloadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: UnloadAdaptor")
 }
 
 type ResetInstruction struct {
+	GenericRobotInstruction
 	Type       int
 	What       []string
 	PltFrom    []string
@@ -3228,6 +2813,7 @@ func NewResetInstruction() *ResetInstruction {
 	ri.TPlateType = make([]string, 0)
 	ri.FVolume = make([]wunit.Volume, 0)
 	ri.TVolume = make([]wunit.Volume, 0)
+	ri.GenericRobotInstruction.Ins = &ri
 	return &ri
 }
 
@@ -3288,8 +2874,8 @@ func (ins *ResetInstruction) AddMultiTransferParams(mtp MultiTransferParams) {
 	ins.Prms = mtp.Channel
 }
 
-func (ins *ResetInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	pol := policy.GetPolicyFor(ins)
+func (ins *ResetInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	pol := GetPolicyFor(policy, ins)
 	ret := make([]RobotInstruction, 0)
 
 	mov := NewMoveInstruction()
@@ -3308,7 +2894,7 @@ func (ins *ResetInstruction) Generate(policy *LHPolicyRuleSet, prms *LHPropertie
 	blow.Head = ins.Prms.Head
 	bov := wunit.NewVolume(pol["BLOWOUTVOLUME"].(float64), pol["BLOWOUTVOLUMEUNIT"].(string))
 	blow.Volume = append(blow.Volume, bov)
-	blow.Multi = len(ins.What)
+	blow.Multi = getMulti(ins.What)
 	blow.Plt = ins.TPlateType
 	blow.What = ins.What
 
@@ -3345,6 +2931,7 @@ func (ins *ResetInstruction) Generate(policy *LHPolicyRuleSet, prms *LHPropertie
 }
 
 type MoveMixInstruction struct {
+	GenericRobotInstruction
 	Type      int
 	Head      int
 	Plt       []string
@@ -3421,7 +3008,7 @@ func (ins *MoveMixInstruction) InstructionType() int {
 	return MMX
 }
 
-func (ins *MoveMixInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MoveMixInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
 	// move
@@ -3456,6 +3043,7 @@ func (ins *MoveMixInstruction) Generate(policy *LHPolicyRuleSet, prms *LHPropert
 }
 
 type MixInstruction struct {
+	GenericRobotInstruction
 	Type      int
 	Head      int
 	Volume    []wunit.Volume
@@ -3482,7 +3070,7 @@ func (mi *MixInstruction) InstructionType() int {
 	return mi.Type
 }
 
-func (ins *MixInstruction) Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MixInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -3505,14 +3093,21 @@ func (ins *MixInstruction) GetParameter(name string) interface{} {
 
 }
 
-func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) {
+func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	vols := make([]float64, len(mi.Volume))
 
 	for i := 0; i < len(mi.Volume); i++ {
 		vols[i] = mi.Volume[i].ConvertTo(wunit.ParsePrefixedUnit("ul"))
 	}
 
-	driver.Mix(mi.Head, vols, mi.PlateType, mi.Cycles, mi.Multi, mi.What, mi.Blowout)
+	ret := driver.Mix(mi.Head, vols, mi.PlateType, mi.Cycles, mi.Multi, mi.What, mi.Blowout)
+
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+
+	return nil
+
 }
 
 // TODO -- implement MESSAGE
@@ -3526,7 +3121,7 @@ func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *w
 	if newtip != nil {
 		newtiptype = newtip.Type
 	} else {
-		return ret, fmt.Errorf("No tip chosen (4)")
+		return ret, fmt.Errorf(TipChosenError(vol, prms))
 	}
 
 	mergedchannel := newchannel.MergeWithTip(newtip)
@@ -3591,4 +3186,15 @@ func DropTips(tiptype string, params *LHProperties, channel *wtype.LHChannelPara
 	ins.TPlateType = tipwastetypes
 	ins.Multi = multi
 	return ins, nil
+}
+
+func getMulti(w []string) int {
+	c := 0
+	for _, v := range w {
+		if v != "" {
+			c += 1
+		}
+	}
+
+	return c
 }

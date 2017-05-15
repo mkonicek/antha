@@ -40,6 +40,7 @@ const (
 	LTCOLONY
 	LTCOLONYMIX
 	LTDNACELLSMIX
+	LTMultiWater
 	LTCSrc
 	LTNSrc
 	LTMegaMix
@@ -104,6 +105,8 @@ func LiquidTypeFromString(s string) (LiquidType, error) {
 		return LTCOLONYMIX, nil
 	case "dna_cells_mix":
 		return LTDNACELLSMIX, nil
+	case "multiwater":
+		return LTMultiWater, nil
 	case "carbon_source":
 		return LTCSrc, nil
 	case "nitrogen_source":
@@ -171,10 +174,14 @@ func LiquidTypeName(lt LiquidType) string {
 		return "colonymix"
 	case LTDNACELLSMIX:
 		return "dna_cells_mix"
+	case LTMultiWater:
+		return "multiwater"
 	case LTCSrc:
 		return "carbon_source"
 	case LTNSrc:
 		return "nitrogen_source"
+	case LTMegaMix:
+		return "MegaMix"
 	default:
 		return "nil"
 	}

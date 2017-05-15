@@ -61,7 +61,7 @@ func VolumetoMass(v Volume, d Density) (m Mass) {
 	//mass := m.SIValue()
 	density := d.SIValue()
 
-	volume := v.SIValue() //* 1000 // convert m^3 to l
+	volume := v.SIValue() / 1000 // convert m^3 to l
 
 	mass := volume * density // in m^3
 
@@ -70,7 +70,13 @@ func VolumetoMass(v Volume, d Density) (m Mass) {
 }
 
 func VolumeForTargetMass(targetmass Mass, startingconc Concentration) (v Volume, err error) {
-	fmt.Println("Base units ", startingconc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit())
+
+	if targetmass.RawValue() == 0.0 || startingconc.RawValue() == 0.0 {
+		v = NewVolume(0.0, "ul")
+
+		return v, fmt.Errorf("Zero value found when converting concentration and mass to new volume so new volume set to zero: target mass: %s; starting concentration: %s", targetmass.ToString(), startingconc.ToString())
+
+	}
 
 	if startingconc.Unit().PrefixedSymbol() == "ng/ul" && targetmass.Unit().PrefixedSymbol() == "ng" {
 		v = NewVolume(float64((targetmass.RawValue() / startingconc.RawValue())), "ul")

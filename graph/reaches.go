@@ -1,5 +1,7 @@
 package graph
 
+import "errors"
+
 // Merge n and src into dst, modifying dst. Assumes src != dst.
 func mergeInto(n Node, src, dst map[Node]bool) {
 	dst[n] = true
@@ -8,53 +10,61 @@ func mergeInto(n Node, src, dst map[Node]bool) {
 	}
 }
 
+//
+
+var (
+	reachesSeen = errors.New("reaches already seen")
+)
+
 // Compute reachability over graph. A reaches B if there is a path from A to B.
 func Reaches(g Graph) Graph {
 	reaches := make(map[Node]map[Node]bool)
 
-	// Get int set for node i
-	get := func(n Node) map[Node]bool {
-		m, ok := reaches[n]
-		if ok {
-			return m
-		}
-		m = make(map[Node]bool)
-		reaches[n] = m
-		return m
-	}
-
-	// Initialize
-	changed := make(map[Node]bool)
+	// Compute reachability of nodes in turn; reuse reachability of previously
+	// processed nodes
 	for i, inum := 0, g.NumNodes(); i < inum; i++ {
-		node := g.Node(i)
-		changed[node] = true
-	}
+		sameAs := make(map[Node]bool)
+		root := g.Node(i)
+		// Visiting always includes root, differentiate between cyclic and
+		// acyclic cases
+		rootSeen := false
 
-	// Fixpoint
-	for len(changed) != 0 {
-		next := make(map[Node]bool)
+		vr, _ := Visit(VisitOpt{
+			Root:  root,
+			Graph: g,
+			Seen: func(n Node) error {
+				if n == root {
+					rootSeen = true
+				}
+				return nil
+			},
+			Visitor: func(n Node) error {
+				_, seen := reaches[n]
+				if seen {
+					sameAs[n] = true
+					return reachesSeen
+				}
+				return nil
+			},
+		})
 
-		for node := range changed {
-			src := get(node)
-			for j, jnum := 0, g.NumOuts(node); j < jnum; j++ {
-				neigh := g.Out(node, j)
-				dst := get(neigh)
-				prev := len(dst)
-				if node != neigh {
-					mergeInto(node, src, dst)
-				} else {
-					dst[node] = true
-				}
-				if len(dst) != prev {
-					next[neigh] = true
-				}
+		rs := make(map[Node]bool)
+		for _, v := range vr.Seen.Values() {
+			rs[v] = true
+		}
+		if !rootSeen {
+			delete(rs, root)
+		}
+
+		for same := range sameAs {
+			for v := range reaches[same] {
+				rs[v] = true
 			}
 		}
 
-		changed = next
+		reaches[root] = rs
 	}
 
-	// Reaches is all the nodes that reach n
 	ret := &qgraph{
 		Outs: make(map[Node][]Node),
 	}
@@ -67,6 +77,5 @@ func Reaches(g Graph) Graph {
 		}
 	}
 
-	// Reverse to get nodes that n can reach
-	return Reverse(ret)
+	return ret
 }

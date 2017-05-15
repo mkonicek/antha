@@ -176,14 +176,14 @@ func AddL1UAdaptor(part wtype.DNASequence, assemblyStandard string, level string
 		return newpart, err
 	}
 
-	bitToAdd, _, err := lookUpOverhangs(assemblyStandard, level, class)
+	bitToAdd, bitToAdd3, err := lookUpOverhangs(assemblyStandard, level, class)
 
 	if err != nil {
 		return newpart, err
 	}
 
 	if reverseOrientation {
-		bitToAdd = wtype.RevComp(bitToAdd)
+		bitToAdd = wtype.RevComp(bitToAdd3)
 	}
 
 	bitToAdd5prime := Makeoverhang(enzyme, "5prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
@@ -205,14 +205,14 @@ func AddL1DAdaptor(part wtype.DNASequence, assemblyStandard string, level string
 	if err != nil {
 		return newpart, err
 	}
-	_, bitToAdd, err := lookUpOverhangs(assemblyStandard, level, class)
+	bitToAdd5, bitToAdd, err := lookUpOverhangs(assemblyStandard, level, class)
 
 	if err != nil {
 		return newpart, err
 	}
 
 	if reverseOrientation {
-		bitToAdd = wtype.RevComp(bitToAdd)
+		bitToAdd = wtype.RevComp(bitToAdd5)
 	}
 
 	bitToAdd3prime := Makeoverhang(enzyme, "3prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
@@ -564,20 +564,23 @@ var EndlinksString = map[string]map[string]map[string][]string{
 		"Level0": map[string][]string{
 			"L1Uadaptor":                  []string{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
 			"L1Uadaptor + Pro":            []string{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
+			"L1Uadaptor + Pro(MoClo)":     []string{"GTCG", "TACT"}, // original MoClo overhang of TACT
 			"L1Uadaptor + Pro + 5U":       []string{"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
 			"L1Uadaptor + Pro + 5U + NT1": []string{"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
-			"Pro":                               []string{"GGAG", "TTTT"},
-			"5U":                                []string{"TTTT", "CCAT"}, // 5' untranslated, e.g. rbs // changed from MoClo TACT to TTTT to conform with Protein Paintbox??
-			"5U(f)":                             []string{"TTTT", "CCAT"},
+			"Pro":                               []string{"GGAG", "TTTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+			"5U":                                []string{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+			"5U(f)":                             []string{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
 			"Pro + 5U(f)":                       []string{"GGAG", "CCAT"},
-			"Pro + 5U":                          []string{"GGAG", "CCAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"Pro + 5U":                          []string{"GGAG", "CCAT"},
 			"Pro + 5U + NT1":                    []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"NT1":                               []string{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"5U + NT1":                          []string{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"5U + NT1 + CDS1":                   []string{"TTTT", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"5U + NT1 + CDS1 + 3U":              []string{"TTTT", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"5U(MoClo) + NT1":                   []string{"TACT", "TATG"}, //original MoClo overhang of TACT
+			"5U + NT1 + CDS1":                   []string{"TTTT", "GCTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+			"5U + NT1 + CDS1 + 3U":              []string{"TTTT", "CCCC"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox and changed GGTA to CCCC to conform with Protein Paintbox
 			"CDS1":                              []string{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS1 + 3U":                         []string{"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs
+			"CDS1 + 3U":                         []string{"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs and changed GGTA to CCCC to conform with Protein Paintbox
+			"CDS1 + 3U(MoClo)":                  []string{"TATG", "GGTA"}, //original MoClo overhang of GGTA
 			"CDS1 ns":                           []string{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"CDS1 + CT + 3U + Ter + L1Dadaptor": []string{"TATG", "TAAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
 			"NT2":                        []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
@@ -585,13 +588,14 @@ var EndlinksString = map[string]map[string]map[string][]string{
 			"CDS2 ns":                    []string{"AGGT", "TTCG"},
 			"CDS2":                       []string{"AGGT", "GCTT"},
 			"CT":                         []string{"TTCG", "GCTT"},
-			"3U":                         []string{"GCTT", "CCCC"}, // should we cahnge this from GGTA to CCCC to conform with Protein Paintbox??
+			"3U":                         []string{"GCTT", "CCCC"}, //changed GGTA to CCCC to conform with Protein Paintbox
 			"Ter":                        []string{"CCCC", "CGCT"},
 			"3U + Ter":                   []string{"GCTT", "CGCT"},
 			"3U + Ter + L1Dadaptor":      []string{"GCTT", "TAAT"},
 			"CT + 3U + Ter + L1Dadaptor": []string{"TTCG", "TAAT"},
 			"L1Dadaptor":                 []string{"CGCT", "TAAT"},
 			"Ter + L1Dadaptor":           []string{"CCCC", "TAAT"},
+			"Ter(MoClo) + L1Dadaptor":    []string{"GGTA", "TAAT"},
 		},
 		"Level1": map[string][]string{
 			"Device1": []string{"GAA", "ACC"},

@@ -133,7 +133,7 @@ func ParsePlateCSV(inData io.Reader) (*ParsePlateResult, error) {
 			continue
 		}
 
-		ctype, err := wtype.LiquidTypeFromString(ctypeField)
+		ctype, err := wtype.LiquidTypeFromString(wtype.PolicyName(ctypeField))
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("line %d: unknown component type %q, defaulting to %q: %s", lineNo, ctypeField, wtype.LiquidTypeName(ctype), err))
 		}

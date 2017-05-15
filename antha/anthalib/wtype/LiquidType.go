@@ -8,9 +8,19 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+type PolicyName string
+
+func (l PolicyName) String() string {
+	return string(l)
+}
+
+func PolicyNameFromString(s string) PolicyName {
+	return PolicyName(s)
+}
+
 type LiquidType int
 
-func (l LiquidType) String() string {
+func (l LiquidType) String() PolicyName {
 	return LiquidTypeName(l)
 }
 
@@ -46,9 +56,9 @@ const (
 	LTMegaMix
 )
 
-func LiquidTypeFromString(s string) (LiquidType, error) {
+func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 
-	match, number := liquidtype.LiquidTypeFromPolicyDOE(s)
+	match, number := liquidtype.LiquidTypeFromPolicyDOE(s.String())
 
 	if match {
 		return LiquidType(number), nil
@@ -114,17 +124,17 @@ func LiquidTypeFromString(s string) (LiquidType, error) {
 	case "MegaMix":
 		return LTMegaMix, nil
 	default:
-		return LTWater, fmt.Errorf("no liquid policy found for " + s + " so using default water policy")
+		return LTWater, fmt.Errorf("no liquid policy found for " + s.String() + " so using default water policy")
 	}
-	return LTWater, fmt.Errorf("no liquid policy found for " + s + " so using default water policy")
+	return LTWater, fmt.Errorf("no liquid policy found for " + s.String() + " so using default water policy")
 }
 
-func LiquidTypeName(lt LiquidType) string {
+func LiquidTypeName(lt LiquidType) PolicyName {
 
 	match, str := liquidtype.StringFromLiquidTypeNumber(int(lt))
 
 	if match {
-		return str
+		return PolicyName(str)
 	}
 
 	switch lt {

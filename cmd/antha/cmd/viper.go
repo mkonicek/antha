@@ -6,7 +6,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Workaround for a bug in viper: string slice flags like:
+// GetStringSlice gets a slice of values for a key.
+//
+// It is workaround for a bug in viper: string slice flags like:
 //  ["a", "b"]
 // are flattened to a string slice like this:
 //  ["[a,b]"]

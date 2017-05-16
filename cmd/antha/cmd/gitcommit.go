@@ -1,4 +1,3 @@
-// gitcommit
 package cmd
 
 import (

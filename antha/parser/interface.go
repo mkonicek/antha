@@ -31,13 +31,14 @@ package parser
 import (
 	"bytes"
 	"errors"
-	"github.com/antha-lang/antha/antha/ast"
-	"github.com/antha-lang/antha/antha/token"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/ast"
+	"github.com/antha-lang/antha/antha/token"
 )
 
 // If src != nil, readSource converts src to a []byte if possible;

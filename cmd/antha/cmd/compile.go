@@ -1,5 +1,5 @@
-// antha/cmd/antha/antha.go: Part of the Antha language
-// Copyright (C) 2014 The Antha authors. All rights reserved.
+// compile.go: Part of the Antha language
+// Copyright (C) 2017 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,11 +20,10 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package main
+package cmd
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -35,51 +34,84 @@ import (
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/compile"
 	"github.com/antha-lang/antha/antha/parser"
-	"github.com/antha-lang/antha/antha/scanner"
 	"github.com/antha-lang/antha/antha/token"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // execution variables
 var (
-	exitCode   = 0
-	fileSet    = token.NewFileSet() // per process FileSet
-	parserMode parser.Mode
+	fileSet = token.NewFileSet() // per process FileSet
 )
 
 // parameters to control code formatting
 const (
 	tabWidth    = 8
 	printerMode = compile.UseSpaces | compile.TabIndent
+	parserMode  = parser.ParseComments
 )
 
-// command line parameters
-var (
-	// main operation modes
-	trace     = flag.Bool("trace", false, "show AST trace")
-	allErrors = flag.Bool("errors", false, "report all errors (not just the first 10 on different lines)")
-	genOutDir = flag.String("outdir", "", "output directory for generated files")
-)
-
-func usage() {
-	fmt.Fprintf(os.Stderr, "usage: antha [flags] [path ...]\n")
-	flag.PrintDefaults()
-	os.Exit(2)
+var compileCmd = &cobra.Command{
+	Use:   "compile",
+	Short: "Compile antha element",
+	RunE:  runCompile,
 }
 
-// utility function
-func report(err error) {
-	scanner.PrintError(os.Stderr, err)
-	exitCode = 2
-}
+func runCompile(cmd *cobra.Command, args []string) error {
+	viper.BindPFlags(cmd.Flags())
 
-func initParserMode() {
-	parserMode = parser.ParseComments
-	if *allErrors {
-		parserMode |= parser.AllErrors
+	o := output{
+		OutDir: viper.GetString("outdir"),
 	}
-	if *trace {
-		parserMode |= parser.Trace
+	if err := o.Init(); err != nil {
+		return err
 	}
+	defer o.Close()
+
+	// try to parse standard input if no files or directories were passed in
+	if len(args) == 0 {
+		if err := processFile(processFileOptions{
+			Filename: "-",
+			In:       os.Stdin,
+			Stdin:    true,
+			OutDir:   o.Dir(),
+		}); err != nil {
+			return err
+		}
+	}
+
+	// parse every filename or directory passed in as input
+	for _, path := range args {
+		switch dir, err := os.Stat(path); {
+		case err != nil:
+			return err
+		case dir.IsDir():
+			filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+				// Ignore previous errors
+				if isAnthaFile(f) {
+					// TODO this might be an issue since we have to analyse the contents in
+					// order to establish whether more than one component exist
+					err = processFile(processFileOptions{
+						Filename: path,
+						OutDir:   o.Dir(),
+					})
+					if err != nil {
+						return err
+					}
+				}
+				return err
+			})
+		default:
+			if err := processFile(processFileOptions{
+				Filename: path,
+				OutDir:   o.Dir(),
+			}); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // Utility function to check file extension
@@ -87,16 +119,6 @@ func isAnthaFile(f os.FileInfo) bool {
 	// ignore non-Antha or Go files
 	name := f.Name()
 	return !f.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".an")
-}
-
-func main() {
-	// call gofmtMain in a separate function
-	// so that it can use defer and have them
-	// run before the exit.
-	if err := anthaMain(); err != nil {
-		report(err)
-	}
-	os.Exit(exitCode)
 }
 
 // Remove files from dir with suffix
@@ -157,15 +179,9 @@ func (a *output) Init() error {
 	return nil
 }
 
-// Write out a file which was generated from another file. Generate the output
-// file name based on desired output dir and base name. Makes sure that output
-// directory exists as well.
-func write(from, dir, name string, bs []byte) error {
-	if len(dir) == 0 {
-		dir = filepath.Dir(from)
-	}
-	fname := filepath.Join(dir, name)
-	if err := mkdirp(filepath.Dir(fname)); err != nil {
+// Write out a file. Makes sure that output directory exists as well.
+func write(fname string, bs []byte) error {
+	if err := os.MkdirAll(filepath.Dir(fname), 0777); err != nil {
 		return err
 	}
 	f, err := os.OpenFile(fname, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0666)
@@ -173,94 +189,8 @@ func write(from, dir, name string, bs []byte) error {
 		return err
 	}
 	defer f.Close()
-	n, err := io.Copy(f, bytes.NewBuffer(bs))
-	if err != nil {
-		return err
-	}
-	if n < int64(len(bs)) {
-		return fmt.Errorf("short write")
-	}
-	return nil
-}
-
-func anthaMain() error {
-	flag.Usage = usage
-	flag.Parse()
-
-	initParserMode()
-
-	o := output{
-		OutDir: *genOutDir,
-	}
-	if err := o.Init(); err != nil {
-		return err
-	}
-	defer o.Close()
-
-	// try to parse standard input if no files or directories were passed in
-	if flag.NArg() == 0 {
-		if err := processFile(processFileOptions{
-			Filename: "-",
-			In:       os.Stdin,
-			Stdin:    true,
-			OutDir:   o.Dir(),
-		}); err != nil {
-			return err
-		}
-	}
-
-	// parse every filename or directory passed in as input
-	for i := 0; i < flag.NArg(); i++ {
-		path := flag.Arg(i)
-		switch dir, err := os.Stat(path); {
-		case err != nil:
-			return err
-		case dir.IsDir():
-			filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-				// Ignore previous errors
-				if isAnthaFile(f) {
-					// TODO this might be an issue since we have to analyse the contents in
-					// order to establish whether more than one component exist
-					err = processFile(processFileOptions{
-						Filename: path,
-						OutDir:   o.Dir(),
-					})
-					if err != nil {
-						report(err)
-					}
-				}
-				return err
-			})
-		default:
-			if err := processFile(processFileOptions{
-				Filename: path,
-				OutDir:   o.Dir(),
-			}); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// Make directory if it doesn't already exist
-func mkdirp(dir string) error {
-	dir, err := filepath.Abs(dir)
-	if err != nil {
-		return err
-	}
-	fi, err := os.Stat(dir)
-	if err != nil {
-		if err := os.Mkdir(dir, 0775); err != nil {
-			return err
-		}
-		return nil
-	}
-	if !fi.IsDir() {
-		return fmt.Errorf("%s exists and is not a directory", dir)
-	}
-	return nil
+	_, err = io.Copy(f, bytes.NewBuffer(bs))
+	return err
 }
 
 type processFileOptions struct {
@@ -270,8 +200,8 @@ type processFileOptions struct {
 	OutDir   string // empty string means output to same directory as Filename
 }
 
-// If in == nil, the source is the contents of the file with the given filename.
-// @argument graph bool wether we want the output for a single component or a graph binary
+// If in == nil, the source is the contents of the file with the given
+// filename.
 func processFile(opt processFileOptions) error {
 	if opt.In == nil {
 		f, err := os.Open(opt.Filename)
@@ -299,7 +229,7 @@ func processFile(opt processFileOptions) error {
 	compName := file.Name.Name
 
 	var buf bytes.Buffer
-	compiler := &compile.Config{Mode: printerMode, Tabwidth: tabWidth, Package: filepath.Base(opt.OutDir)}
+	compiler := &compile.Config{Mode: printerMode, Tabwidth: tabWidth, Package: "main"}
 	if err := compiler.Fprint(&buf, fileSet, file); err != nil {
 		return err
 	}
@@ -308,8 +238,13 @@ func processFile(opt processFileOptions) error {
 		res = adjust(src, res)
 	}
 
-	outFile := fmt.Sprintf("%s_.go", compName)
-	if err := write(opt.Filename, opt.OutDir, outFile, res); err != nil {
+	dir := opt.OutDir
+	if len(dir) == 0 {
+		dir = filepath.Dir(opt.Filename)
+	}
+
+	outFile := filepath.Join(dir, fmt.Sprintf("%s_.go", compName))
+	if err := write(outFile, res); err != nil {
 		return err
 	}
 
@@ -423,4 +358,12 @@ func matchSpace(orig []byte, src []byte) []byte {
 	}
 	b.Write(after)
 	return b.Bytes()
+}
+
+func init() {
+	c := compileCmd
+	flags := c.Flags()
+	RootCmd.AddCommand(c)
+
+	flags.String("outdir", "", "output directory for generated files")
 }

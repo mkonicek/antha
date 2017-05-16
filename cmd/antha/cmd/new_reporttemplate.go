@@ -46,7 +46,7 @@ func init() {
 	newCmd.AddCommand(c)
 }
 
-var synthaceElements string = `cd $GOPATH/src/github.com/Synthace/elements
+var synthaceElements = `cd $GOPATH/src/github.com/Synthace/elements
 git fetch
 git checkout ***COMMIT****
 cd -`
@@ -125,7 +125,7 @@ func readme(cmd *cobra.Command, args []string) error {
 	}
 }
 
-var reportTemplate string = `
+var reportTemplate = `
 ## Aim:
 
 

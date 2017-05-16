@@ -31,9 +31,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/antha-lang/antha/cmd/antharun/frontend"
-	"github.com/antha-lang/antha/cmd/antharun/pretty"
-	"github.com/antha-lang/antha/cmd/antharun/spawn"
+	"github.com/antha-lang/antha/cmd/antha/frontend"
+	"github.com/antha-lang/antha/cmd/antha/pretty"
+	"github.com/antha-lang/antha/cmd/antha/spawn"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/inject"
@@ -51,11 +51,9 @@ const (
 )
 
 var runCmd = &cobra.Command{
-	Use:           "antharun",
-	Short:         "Run an antha workflow",
-	RunE:          runWorkflow,
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Use:   "run",
+	Short: "Run an antha workflow",
+	RunE:  runWorkflow,
 }
 
 func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
@@ -86,18 +84,17 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 
 	opt.OutputSort = viper.GetBool("outputSort")
 
-	executionPlannerVersion := ""
-	if viper.GetBool("WithMulti") {
+	executionPlannerVersion := "ep2"
+	if viper.GetBool("withMulti") {
 		executionPlannerVersion = "ep3"
 	}
 
-	opt.PrintInstructions = viper.GetBool("PrintInstructions")
-
+	opt.PrintInstructions = viper.GetBool("printInstructions")
 	opt.PlanningVersion = executionPlannerVersion
 
-	opt.UseDriverTipTracking = viper.GetBool("UseDriverTipTracking")
+	opt.UseDriverTipTracking = viper.GetBool("useDriverTipTracking")
 
-	opt.LegacyVolume = viper.GetBool("LegacyVolumeTracking")
+	opt.LegacyVolume = viper.GetBool("legacyVolumeTracking")
 
 	return opt, nil
 }
@@ -204,7 +201,7 @@ func (a *runOpt) Run() error {
 			}
 
 			fn := fmt.Sprintf("%s-%d.txt", a.MixInstructionFileName, countFiles)
-			countFiles += 1
+			countFiles++
 			if err := ioutil.WriteFile(fn, []byte(mi.Request.InstructionText), 0666); err != nil {
 				return err
 			}
@@ -215,7 +212,11 @@ func (a *runOpt) Run() error {
 
 	if a.TestBundleFileName != "" {
 		expected := workflowtest.SaveTestOutputs(rout, "")
-		bundleWithOutputs := executeutil.Bundle{*wdesc, *params, expected}
+		bundleWithOutputs := executeutil.Bundle{
+			Desc:      *wdesc,
+			RawParams: *params,
+			TestOpt:   expected,
+		}
 		serializedOutputs, err := json.Marshal(bundleWithOutputs)
 
 		if err != nil {
@@ -264,11 +265,12 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("cannot start package %s: %s", p, err)
 			} else if err := s.Start(); err != nil {
 				return fmt.Errorf("cannot start package %s: %s", p, err)
-			} else if uri, err := s.Uri(); err != nil {
-				return fmt.Errorf("cannot parse port for package %s: %s", p, err)
-			} else {
-				drivers = append(drivers, uri)
 			}
+			uri, err := s.URI()
+			if err != nil {
+				return fmt.Errorf("cannot parse port for package %s: %s", p, err)
+			}
+			drivers = append(drivers, uri)
 		case "tcp":
 			drivers = append(drivers, u.Host)
 		default:
@@ -298,24 +300,24 @@ func init() {
 	c := runCmd
 	flags := c.Flags()
 
-	//RootCmd.AddCommand(c)
-	flags.String("parameters", "parameters.json", "Parameters to workflow")
-	flags.String("workflow", "workflow.json", "Workflow definition file")
-	flags.String("bundle", "", "Input bundle with parameters and workflow together (overrides parameter and workflow arguments)")
-	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
-	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
+	RootCmd.AddCommand(c)
+	flags.Bool("legacyVolumeTracking", false, "Do not track volumes for intermediate components")
+	flags.Bool("outputSort", false, "Sort execution by output - improves tip usage")
+	flags.Bool("printInstructions", false, "Output the raw instructions sent to the driver")
+	flags.Bool("useDriverTipTracking", false, "If the driver has tip tracking available, use it")
+	flags.Bool("withMulti", false, "Allow use of new multichannel planning")
+	flags.Float64("residualVolumeWeight", 0.0, "Residual volume weight")
 	flags.Int("maxPlates", 0, "Maximum number of plates")
 	flags.Int("maxWells", 0, "Maximum number of wells on a plate")
-	flags.Float64("residualVolumeWeight", 0.0, "Residual volume weight")
-	flags.StringSlice("inputPlateType", nil, "Default input plate types (in order of preference)")
-	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
-	flags.StringSlice("inputPlates", nil, "File containing input plates")
-	flags.StringSlice("tipType", nil, "Names of permitted tip types")
-	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
-	flags.Bool("OutputSort", false, "Sort execution by output - improves tip usage")
-	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
-	flags.Bool("PrintInstructions", false, "Output the raw instructions sent to the driver")
-	flags.Bool("UseDriverTipTracking", false, "If the driver has tip tracking available, use it")
+	flags.String("bundle", "", "Input bundle with parameters and workflow together (overrides parameter and workflow arguments)")
 	flags.String("makeTestBundle", "", "Generate json format bundle for testing and put it here")
-	flags.Bool("LegacyVolumeTracking", false, "Do not track volumes for intermediate components")
+	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
+	flags.String("parameters", "parameters.json", "Parameters to workflow")
+	flags.String("workflow", "workflow.json", "Workflow definition file")
+	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
+	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
+	flags.StringSlice("inputPlateType", nil, "Default input plate types (in order of preference)")
+	flags.StringSlice("inputPlates", nil, "File containing input plates")
+	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
+	flags.StringSlice("tipType", nil, "Names of permitted tip types")
 }

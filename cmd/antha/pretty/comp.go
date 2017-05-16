@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/antha-lang/antha/cmd/antharun/comp"
+	"github.com/antha-lang/antha/cmd/antha/comp"
 )
 
 func Components(out io.Writer, cs []comp.Component) error {

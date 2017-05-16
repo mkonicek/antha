@@ -1,4 +1,4 @@
-// main.go: Part of the Antha language
+// list.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -20,12 +20,38 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package main
+package cmd
 
 import (
-	"github.com/antha-lang/antha/cmd/antharun/cmd"
+	"fmt"
+	"strings"
+
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd.Execute(nil)
+const (
+	jsonOutput = "json"
+	yamlOutput = "yaml"
+	textOutput = "text"
+	csvOutput  = "csv"
+)
+
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List antha properties",
+}
+
+func init() {
+	c := listCmd
+	flags := c.PersistentFlags()
+	RootCmd.AddCommand(c)
+
+	flags.String(
+		"output",
+		textOutput,
+		fmt.Sprintf("Output format: one of {%s}", strings.Join([]string{
+			textOutput,
+			yamlOutput,
+			jsonOutput,
+		}, ",")))
 }

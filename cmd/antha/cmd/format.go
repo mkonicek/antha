@@ -1,5 +1,5 @@
-// antha/cmd/andtha/doc.go: Part of the Antha language
-// Copyright (C) 2014 The Antha authors. All rights reserved.
+// compile.go: Part of the Antha language
+// Copyright (C) 2017 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,21 +20,40 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-/*
-Antha is the primary cross-compiler for antha.
-It parses Antha Element definitions to create the underyling Go source
-which is in turn compiled using the regular Go tool chain.
+package cmd
 
-Without an explicit input parameter it parses from stdin, and will output to stdout.
-Given a directory or antha source file, it will generate .go files for each antha input.
+import (
+	"go/format"
+	"io/ioutil"
+	"os"
 
-Usage:
-	anthamt [flags] [path ...]
+	"github.com/spf13/cobra"
+)
 
-The flags are:
-	-trace
-		Shows the entire AST while parsing, to debug parse errors
-	-errors
-		Print all (including spurious) errors.
-*/
-package main
+var formatCmd = &cobra.Command{
+	Use:   "format",
+	Short: "Format an antha element",
+	RunE:  runFormat,
+}
+
+func runFormat(cmd *cobra.Command, args []string) error {
+	src, err := ioutil.ReadFile(args[0])
+	if err != nil {
+		return err
+	}
+
+	out, err := format.Source(src)
+	if err != nil {
+		return err
+	}
+
+	os.Stdout.Write(out)
+
+	return nil
+}
+
+func init() {
+	c := formatCmd
+	//flags := c.Flags()
+	RootCmd.AddCommand(c)
+}

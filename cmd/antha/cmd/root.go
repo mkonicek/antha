@@ -30,8 +30,13 @@ import (
 
 var cfgFile string
 
-// This represents the base command when called without any subcommands
-var RootCmd = runCmd
+// RootCmd is base command when called without any subcommands
+var RootCmd = &cobra.Command{
+	Use:           "antha",
+	Short:         "Antha command line tool",
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
 
 // Library of components available to workflows
 var library []component.Component

@@ -13,15 +13,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/antha-lang/antha/cmd/antharun/writer"
+	"github.com/antha-lang/antha/cmd/antha/writer"
 	"github.com/mattn/go-colorable"
 	"github.com/mgutz/ansi"
 )
 
 var (
-	notStarted      = errors.New("not started")
-	alreadyFinished = errors.New("already finished")
-	timeoutError    = errors.New("timed out waiting for server to start")
+	errNotStarted      = errors.New("not started")
+	errAlreadyFinished = errors.New("already finished")
+	errTimeout         = errors.New("timed out waiting for server to start")
 )
 
 type fn func() error
@@ -43,16 +43,16 @@ func parse(bs []byte) (string, error) {
 	return ss[len(ss)-1], nil
 }
 
-func (a *Spawned) Uri() (string, error) {
+func (a *Spawned) URI() (string, error) {
 	if a.Command.Process == nil {
-		return "", notStarted
+		return "", errNotStarted
 	}
 
 	select {
 	case <-time.After(5 * time.Second):
-		return "", timeoutError
+		return "", errTimeout
 	case <-a.done:
-		return "", alreadyFinished
+		return "", errAlreadyFinished
 	case <-a.firstLine.Done:
 		return parse(a.firstLine.Bytes())
 	}
@@ -71,15 +71,14 @@ func (a *Spawned) Close() (err error) {
 func (a *Spawned) Start() error {
 	if err := a.Command.Start(); err != nil {
 		return err
-	} else {
-		go func() {
-			defer close(a.done)
-			a.Command.Wait()
-		}()
-		a.closers = append(a.closers, func() error {
-			return a.Command.Process.Kill()
-		})
 	}
+	go func() {
+		defer close(a.done)
+		a.Command.Wait()
+	}()
+	a.closers = append(a.closers, func() error {
+		return a.Command.Process.Kill()
+	})
 	return nil
 }
 

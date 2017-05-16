@@ -27,8 +27,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/antha-lang/antha/cmd/antharun/comp"
-	"github.com/antha-lang/antha/cmd/antharun/pretty"
+	"github.com/antha-lang/antha/cmd/antha/comp"
+	"github.com/antha-lang/antha/cmd/antha/pretty"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

@@ -23,21 +23,45 @@
 package cmd
 
 import (
-	"go/format"
+	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 
+	"github.com/antha-lang/antha/antha/format"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var formatCmd = &cobra.Command{
-	Use:   "format",
+	Use:   "format [path ...]",
 	Short: "Format an antha element",
 	RunE:  runFormat,
 }
 
-func runFormat(cmd *cobra.Command, args []string) error {
-	src, err := ioutil.ReadFile(args[0])
+type walker struct {
+	Write bool
+}
+
+const chmodSupported = runtime.GOOS != "windows"
+
+func (w *walker) Walk(path string, fi os.FileInfo, err error) error {
+	if err != nil {
+		return err
+	}
+
+	if fi.IsDir() {
+		return nil
+	}
+
+	if !strings.HasSuffix(path, ".an") {
+		return nil
+	}
+
+	src, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -47,13 +71,62 @@ func runFormat(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	os.Stdout.Write(out)
+	if !w.Write {
+		os.Stdout.Write(out)
+		return nil
+	}
+
+	if bytes.Equal(src, out) {
+		return nil
+	}
+
+	bak, err := ioutil.TempFile(filepath.Dir(path), filepath.Base(path))
+	if err != nil {
+		return err
+	}
+	defer bak.Close()
+	defer func() {
+		if err != nil {
+			os.Remove(bak.Name())
+		}
+	}()
+
+	if chmodSupported {
+		if err = bak.Chmod(fi.Mode()); err != nil {
+			return err
+		}
+	}
+
+	_, err = io.Copy(bak, bytes.NewReader(out))
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(bak.Name(), path)
+
+	return err
+}
+
+func runFormat(cmd *cobra.Command, args []string) error {
+	viper.BindPFlags(cmd.Flags())
+
+	w := walker{
+		Write: viper.GetBool("write"),
+	}
+
+	for _, arg := range args {
+		if err := filepath.Walk(arg, w.Walk); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
 func init() {
 	c := formatCmd
-	//flags := c.Flags()
+	flags := c.Flags()
 	RootCmd.AddCommand(c)
+
+	flags.BoolP("write", "w", false, "Write result to (source) file instead of stdout")
 }

@@ -1,5 +1,5 @@
-// antha/compiler/generator.go: Part of the Antha language
-// Copyright (C) 2014 The Antha authors. All rights reserved.
+// antha.go: Part of the Antha language
+// Copyright (C) 2017 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -48,8 +48,8 @@ const (
 )
 
 var (
-	unknownToken = errors.New("unknown token")
-	badRun       = errors.New("bad run instruction")
+	errUnknownToken = errors.New("unknown token")
+	errBadRun       = errors.New("bad run instruction")
 )
 
 // An input or an output
@@ -78,7 +78,11 @@ func (p *compiler) anthaInit() {
 	p.inputs = make(map[string]param)
 	p.outputs = make(map[string]param)
 	p.reuseMap = make(map[token.Token]map[string]bool)
-	for _, tok := range []token.Token{token.ANALYSIS, token.VALIDATION, token.STEPS, token.SETUP, token.REQUIREMENTS} {
+	for _, tok := range []token.Token{token.ANALYSIS,
+		token.VALIDATION,
+		token.STEPS,
+		token.SETUP,
+		token.REQUIREMENTS} {
 		p.reuseMap[tok] = make(map[string]bool)
 	}
 	p.intrinsics = map[string]string{
@@ -237,6 +241,8 @@ func (p *compiler) addAnthaImports(file *ast.File, paths []string) {
 // Return appropriate go type string for an antha (type) expr
 func (p *compiler) getTypeString(e ast.Expr) (res string) {
 	switch t := e.(type) {
+	case nil:
+		res = ""
 	case *ast.Ident:
 		if v, ok := p.types[t.Name]; ok {
 			res = v
@@ -245,10 +251,11 @@ func (p *compiler) getTypeString(e ast.Expr) (res string) {
 		}
 	case *ast.SelectorExpr:
 		res = p.getTypeString(t.X) + "." + t.Sel.Name
+	case *ast.BasicLit:
+		res = t.Value
 	case *ast.ArrayType:
-		// note: array types can use a param as the length, so must be
-		// allocated and treated as a slice since they can be dynamic
-		res = "[]" + p.getTypeString(t.Elt)
+		bound := p.getTypeString(t.Len)
+		res = "[" + bound + "]" + p.getTypeString(t.Elt)
 	case *ast.StarExpr:
 		res = "*" + p.getTypeString(t.X)
 	case *ast.MapType:
@@ -262,6 +269,8 @@ func (p *compiler) getTypeString(e ast.Expr) (res string) {
 // Return appropriate go configuration type for an antha (type) expr
 func (p *compiler) getConfigTypeString(e ast.Expr) (res string) {
 	switch t := e.(type) {
+	case nil:
+		res = ""
 	case *ast.Ident:
 		if v, ok := p.types[t.Name]; ok {
 			res = v
@@ -271,15 +280,13 @@ func (p *compiler) getConfigTypeString(e ast.Expr) (res string) {
 		return
 	case *ast.SelectorExpr:
 		res = p.getConfigTypeString(t.X) + "." + t.Sel.Name
-		return
+	case *ast.BasicLit:
+		res = t.Value
 	case *ast.ArrayType:
-		// note: array types can use a param as the length, so must be
-		// allocated and treated as a slice since they can be dynamic
-		res = "[]" + p.getConfigTypeString(t.Elt)
-		return
+		bound := p.getConfigTypeString(t.Len)
+		res = "[" + bound + "]" + p.getConfigTypeString(t.Elt)
 	case *ast.StarExpr:
 		res = "wtype.FromFactory"
-		return
 	default:
 		log.Panicln("Invalid type spec to get type of: ", reflect.TypeOf(e), t)
 	}
@@ -605,7 +612,7 @@ func init() {
 			params.Outputs = append(params.Outputs, f)
 			params.SOutputs = append(params.SOutputs, f)
 		default:
-			return unknownToken
+			return errUnknownToken
 		}
 		params.PDesc = append(params.PDesc, pdesc{
 			Name: strconv.Quote(name),
@@ -776,13 +783,13 @@ func (p *compiler) inspectForIntrinsics(node ast.Node) bool {
 	//  FunRun(_ctx, FunInputs_{A: v, B: v})
 	rewriteRun := func(call *ast.CallExpr) error {
 		if len(call.Args) != 3 {
-			return badRun
+			return errBadRun
 		} else if fun, ok := call.Args[0].(*ast.Ident); !ok {
-			return badRun
+			return errBadRun
 		} else if params, ok := call.Args[1].(*ast.CompositeLit); !ok {
-			return badRun
+			return errBadRun
 		} else if inputs, ok := call.Args[2].(*ast.CompositeLit); !ok {
-			return badRun
+			return errBadRun
 		} else {
 			call.Fun = ast.NewIdent(fun.Name + runStepsIntrinsic)
 			call.Args = []ast.Expr{

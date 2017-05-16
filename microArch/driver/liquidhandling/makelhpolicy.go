@@ -307,10 +307,10 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 //        return proteinpolicy
 //}
 
-func GetPolicyByName(policyname string) (lhpolicy wtype.LHPolicy, policypresent bool) {
+func GetPolicyByName(policyname wtype.PolicyName) (lhpolicy wtype.LHPolicy, policypresent bool) {
 	policymap := MakePolicies()
 
-	lhpolicy, policypresent = policymap[policyname]
+	lhpolicy, policypresent = policymap[policyname.String()]
 	return
 }
 

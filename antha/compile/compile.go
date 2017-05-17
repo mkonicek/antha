@@ -1239,6 +1239,7 @@ func (p *trimmer) Write(data []byte) (n int, err error) {
 // A Mode value is a set of flags (or 0). They control printing.
 type Mode uint
 
+// Valid modes
 const (
 	RawFormat Mode = 1 << iota // do not use a tabwriter; if set, UseSpaces is ignored
 	TabIndent                  // use tabs for indentation independent of UseSpaces

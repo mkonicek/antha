@@ -20,14 +20,15 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Implementations called from nodes.go
+// Package compile implements the antha source-to-source transformation
 package compile
 
 import (
 	"bytes"
+	"text/template"
+
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/token"
-	"text/template"
 )
 
 // Called from node.go walker to print antha code blocks

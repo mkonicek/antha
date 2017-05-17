@@ -214,6 +214,7 @@ func NewMultiIteratorRule(multi int) func(PlateIterator) []WellCoords {
 	}
 }
 
+// still an issue with this generating out-of-bounds wells in single mode?!
 type TickingColVectorIterator struct {
 	Plate  *LHPlate
 	Multi  int

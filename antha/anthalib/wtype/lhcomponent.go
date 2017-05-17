@@ -27,7 +27,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pubchem"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Pubchem"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	//"github.com/antha-lang/antha/microArch/logger"

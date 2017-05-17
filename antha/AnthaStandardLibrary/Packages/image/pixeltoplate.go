@@ -261,7 +261,7 @@ func OpenFile (file wtype.File)( nrgba *goimage.NRGBA, err error){
 
 // export image to file
 // image format is derived from filename extension
-func Export(img *goimage.NRGBA) (file wtype.File, err error) {
+func Export(img *goimage.NRGBA, fileName string) (file wtype.File, err error) {
 
 	var imageFormat imaging.Format
 	var buf bytes.Buffer
@@ -275,6 +275,8 @@ func Export(img *goimage.NRGBA) (file wtype.File, err error) {
 	if err != nil {
 		return
 	}
+
+	file.Name = fileName
 
 	return
 }
@@ -566,7 +568,7 @@ func Posterize(img *goimage.NRGBA, levels int) (posterized *goimage.NRGBA, err e
 
 	//We cannot posterize with only one level.
 	if levels == 1 {
-		return nil, errors.New("Cannot posterize with only one level.")
+		return nil, errors.New("Cannot posterize with only one level")
 	}
 
 	var newcolor color.NRGBA
@@ -641,7 +643,7 @@ func Posterize(img *goimage.NRGBA, levels int) (posterized *goimage.NRGBA, err e
 		}
 	}
 
-	return posterized, nil
+	return posterized, err
 }
 
 //ResizeImageToPlate will resize an image to fit the number of wells on a plate. We treat wells as pixels.

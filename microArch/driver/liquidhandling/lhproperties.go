@@ -584,31 +584,56 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
+// returns go: [transfer1][c1c2c3c4...], [transfer2][c1c2c3c4...]
+func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
+	plateIDs = make([][]string, len(cmps))
+	wellCoords = make([][]string, len(cmps))
+	vols = make([][]wunit.Volume, len(cmps))
+
+	// might just do this this way
+	if multi > 1 {
+		//for _, ipref := range lhp.Input_preferences {
+		for _, ipref := range lhp.OrderedMergedPlatePrefs() {
+			p, ok := lhp.Plates[ipref]
+
+			if ok {
+				// find components multi can return anywhere between 1x Multi and Multi x 1
+				// transfers as sets
+				plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, independent)
+				if err != nil {
+					continue
+				}
+
+				return
+			}
+		}
+	}
+	return lhp.GetComponentsSingle(cmps, carryvol)
+}
+
+// maybe deprecate the below?
+
 // GetComponents takes requests for components at particular volumes
 // + a measure of carry volume
 // returns lists of plate IDs + wells from which to get components or error
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([][]string, [][]string, [][]wunit.Volume, error) {
-	r1 := make([][]string, len(cmps))
-	r2 := make([][]string, len(cmps))
-	r3 := make([][]wunit.Volume, len(cmps))
+
+func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([][]string, [][]string, [][]wunit.Volume, error) {
+	plateIDs := make([][]string, len(cmps))
+	wellCoords := make([][]string, len(cmps))
+	vols := make([][]wunit.Volume, len(cmps))
+
+	// need to disentangle some stuff here
 
 	for i, v := range cmps {
-		r1[i] = make([]string, 0, 1)
-		r2[i] = make([]string, 0, 1)
-		r3[i] = make([]wunit.Volume, 0, 1)
+		plateIDs[i] = make([]string, 0, 1)
+		wellCoords[i] = make([]string, 0, 1)
+		vols[i] = make([]wunit.Volume, 0, 1)
 		foundIt := false
 
 		vdup := v.Dup()
-		/*
-			vdup := v.Dup()
-			vdup.Vol += carryvol.ConvertTo(wunit.ParsePrefixedUnit(vdup.Vunit))
-		*/
 		if v.HasAnyParent() {
-			//fmt.Println("Trying to get component ", v.CName, v.ParentID)
 			// this means it was already made with a previous call
 			tx := strings.Split(v.Loc, ":")
-
-			// maybe we can look it up?
 
 			if len(tx) < 2 || len(v.Loc) == 0 {
 				st := sampletracker.GetSampleTracker()
@@ -616,16 +641,16 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 				tx = strings.Split(loc, ":")
 			}
 
-			r1[i] = append(r1[i], tx[0])
-			r2[i] = append(r2[i], tx[1])
-			r3[i] = append(r3[i], v.Volume().Dup())
+			plateIDs[i] = append(plateIDs[i], tx[0])
+			wellCoords[i] = append(wellCoords[i], tx[1])
+			vols[i] = append(vols[i], v.Volume().Dup())
 
 			vol := v.Volume().Dup()
 			vol.Add(carryvol)
 			/// XXX -- adding carry volumes is all very well but
 			// assumes we have made more of this component than we really need!
 			// -- this may just need to be removed pending a better fix
-			lhp.RemoveComponent(tx[0], tx[1], vol)
+			//lhp.RemoveComponent(tx[0], tx[1], vol)
 
 			foundIt = true
 
@@ -645,12 +670,12 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 						for ix, _ := range wcarr {
 							wc := wcarr[ix].FormatA1()
 							vl := varr[ix].Dup()
-							r1[i] = append(r1[i], p.ID)
-							r2[i] = append(r2[i], wc)
-							r3[i] = append(r3[i], vl)
+							plateIDs[i] = append(plateIDs[i], p.ID)
+							wellCoords[i] = append(wellCoords[i], wc)
+							vols[i] = append(vols[i], vl)
 							vl = vl.Dup()
 							vl.Add(carryvol)
-							lhp.RemoveComponent(p.ID, wc, vl)
+							//				lhp.RemoveComponent(p.ID, wc, vl)
 						}
 						break
 					}
@@ -659,13 +684,13 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 
 			if !foundIt {
 				err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SOURCE FOR ", v.CName, " at volume ", v.Volume().ToString()))
-				return r1, r2, r3, err
+				return plateIDs, wellCoords, vols, err
 			}
 
 		}
 	}
 
-	return r1, r2, r3, nil
+	return plateIDs, wellCoords, vols, nil
 }
 
 func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int) (wells, positions, boxtypes []string, err error) {
@@ -932,4 +957,48 @@ func (p *LHProperties) MinPossibleVolume() wunit.Volume {
 	}
 
 	return minvol
+}
+
+func (p *LHProperties) CanPossiblyDo(v wunit.Volume) bool {
+	return !p.MinPossibleVolume().LessThan(v)
+}
+
+func (p *LHProperties) IsAddressable(pos string, crd wtype.WellCoords, channel, reference int, offsetX, offsetY, offsetZ float64) bool {
+	// can we reach well 'crd' at position 'pos' using channel 'channel' at reference 'reference' with
+	// the given offsets?
+
+	// yes (this will improve, honest!)
+	return true
+}
+
+func dupStrArr(sa []string) []string {
+	ret := make([]string, len(sa))
+
+	for i, v := range sa {
+		ret[i] = v
+	}
+
+	return ret
+}
+
+func inStrArr(s string, sa []string) bool {
+	for _, v := range sa {
+		if s == v {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *LHProperties) OrderedMergedPlatePrefs() []string {
+	r := dupStrArr(p.Input_preferences)
+
+	for _, pr := range p.Output_preferences {
+		if !inStrArr(pr, r) {
+			r = append(r, pr)
+		}
+	}
+
+	return r
 }

@@ -1,4 +1,4 @@
-// /anthalib/driver/liquidhandling/lhpolicy.go: Part of the Antha language
+// anthalib/wtype/lhpolicy.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -20,15 +20,13 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package liquidhandling
+package wtype
 
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"reflect"
 )
 
 const (
@@ -38,6 +36,104 @@ const (
 
 // this structure defines parameters
 type LHPolicy map[string]interface{}
+
+func NewLHPolicy() LHPolicy {
+	pol := make(LHPolicy)
+	return pol
+}
+
+func (plhp *LHPolicy) Set(item string, value interface{}) error {
+	var err error
+	alhpis := MakePolicyItems()
+
+	alhpi, ok := alhpis[item]
+
+	if !ok {
+		err = fmt.Errorf("No such LHPolicy item %s", item)
+	} else {
+		if reflect.TypeOf(value) != alhpi.Type {
+			err = fmt.Errorf("LHPolicy item %s needs value of type %t not %t", item, alhpi.Type, reflect.TypeOf(value))
+		} else {
+			(*plhp)[item] = value
+		}
+	}
+
+	return err
+}
+
+func (plhp *LHPolicy) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	*plhp = make(map[string]interface{})
+	lhp := *plhp
+	items := MakePolicyItems()
+
+	err := json.Unmarshal(data, &m)
+
+	if err != nil {
+		return err
+	}
+
+	for k, v := range m {
+		alhpi, ok := items[k]
+
+		if !ok {
+			return fmt.Errorf("Policy item %s unknown", k)
+		}
+
+		switch alhpi.Type.Name() {
+		case "float64":
+			tv, ok := v.(float64)
+			if !ok {
+				return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+			}
+			lhp[k] = tv
+		case "int":
+			tv, ok := v.(int)
+
+			if !ok {
+				tv2, ok2 := v.(float64)
+				if ok2 {
+					tv = int(tv2)
+				} else {
+					return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+				}
+			}
+			lhp[k] = tv
+		case "string":
+			tv, ok := v.(string)
+			if !ok {
+				return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+			}
+			lhp[k] = tv
+		case "bool":
+			tv, ok := v.(bool)
+			if !ok {
+				return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+			}
+			lhp[k] = tv
+		case "wunit.Volume":
+			tv, ok := v.(wunit.Volume)
+			if !ok {
+				return fmt.Errorf("Wrong type for %s: should be %s got %s", k, alhpi.Type.Name(), reflect.TypeOf(v))
+			}
+			lhp[k] = tv
+		}
+	}
+
+	return nil
+}
+
+func (lhp LHPolicy) IsEqualTo(lh2 LHPolicy) bool {
+	for k, v := range lhp {
+		v2 := lh2[k]
+
+		if v2 != v {
+			return false
+		}
+
+	}
+	return true
+}
 
 func DupLHPolicy(in LHPolicy) LHPolicy {
 	ret := make(LHPolicy, len(in))
@@ -75,6 +171,18 @@ func NewLHPolicyRule(name string) LHPolicyRule {
 }
 
 func (lhpr *LHPolicyRule) AddNumericConditionOn(variable string, low, up float64) error {
+	params := MakeInstructionParameters()
+
+	t, ok := params[variable]
+
+	if !ok {
+		return fmt.Errorf("No instruction defines parameter %s", variable)
+	}
+
+	if t.Type != reflect.TypeOf(3.2) {
+		return fmt.Errorf("Parameter %s is not numeric", variable)
+	}
+
 	lhvc := NewLHVariableCondition(variable)
 	err := lhvc.SetNumeric(low, up)
 
@@ -87,6 +195,17 @@ func (lhpr *LHPolicyRule) AddNumericConditionOn(variable string, low, up float64
 }
 
 func (lhpr *LHPolicyRule) AddCategoryConditionOn(variable, category string) error {
+	params := MakeInstructionParameters()
+
+	t, ok := params[variable]
+
+	if !ok {
+		return fmt.Errorf("No instruction defines parameter %s", variable)
+	}
+
+	if t.Type != reflect.TypeOf("thisisastring") {
+		return fmt.Errorf("Parameter %s is not categoric", variable)
+	}
 	lhvc := NewLHVariableCondition(variable)
 	err := lhvc.SetCategoric(category)
 
@@ -95,17 +214,9 @@ func (lhpr *LHPolicyRule) AddCategoryConditionOn(variable, category string) erro
 	}
 
 	lhpr.Conditions = append(lhpr.Conditions, lhvc)
+
 	lhpr.Priority += 1
 	return err
-}
-
-func (lhpr LHPolicyRule) Check(ins RobotInstruction) bool {
-	for _, condition := range lhpr.Conditions {
-		if !condition.Check(ins) {
-			return false
-		}
-	}
-	return true
 }
 
 // this just looks for the same conditions, doesn't matter if
@@ -168,38 +279,22 @@ func (lh *LHVariableCondition) UnmarshalJSON(data []byte) error {
 		}
 		//Try now with the condition
 		if v, ex := t["Condition"]; ex {
-			//Watch out, even empty data will marshal into lhnumeric condition
-			next, err := json.Marshal(v)
-			if err != nil {
-				return err
-			}
-			lhcc := LHCategoryCondition{}
-			if err := json.Unmarshal(next, &lhcc); err == nil {
+			// manual ftw
+
+			mp := v.(map[string]interface{})
+
+			_, cat := mp["Category"]
+			_, num := mp["Upper"]
+			if cat {
+				lhcc := LHCategoryCondition{Category: mp["Categor"].(string)}
 				lh.Condition = lhcc
+			} else if num {
+				lhnc := LHNumericCondition{Upper: mp["Upper"].(float64), Lower: mp["Lower"].(float64)}
+				lh.Condition = lhnc
 			} else {
-				lhnc := LHNumericCondition{}
-				if err := json.Unmarshal(next, &lhnc); err == nil {
-					lh.Condition = lhnc
-				} else {
-					return fmt.Errorf("No Suitable Condition Format could be found")
-				}
+				return fmt.Errorf("No Suitable Condition Format could be found")
 			}
-			//Revert back to doing it manually if new types are added, and the numeric  conditions
-			// are causing trouble
-			//switch c := v.(type){
-			//case map[string]interface{}:
-			//	if cc, ex := c["Category"]; ex {
-			//		if cond, ok := cc.(string); ok {
-			//			lh.Condition = LHCategoryCondition{cond}
-			//		} else {
-			//			return fmt.Errorf("Could not detect Category Type when unmarshaling LHVariableCondition")
-			//		}
-			//	} else {
-			//		return fmt.Errorf("Could not find Category when unmarshaling LHVariableCondition")
-			//	}
-			//default:
-			//	return fmt.Errorf("Could not parse json for LHVariableCondition")
-			//}
+
 		} else {
 			return fmt.Errorf("Could not find Condition when unmarshaling LHVariableCondition")
 		}
@@ -217,11 +312,7 @@ func NewLHVariableCondition(testvariable string) LHVariableCondition {
 
 func (lhvc *LHVariableCondition) SetNumeric(low, up float64) error {
 	if low > up {
-		/*
-			logger.Fatal("Nonsensical numeric condition requested")
-			panic("Nonsensical numeric condition requested")
-		*/
-		return wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Numeric condition requested with lower limit (%f) greater than upper limit (%f), which is not allowed", low, up))
+		return LHError(LH_ERR_POLICY, fmt.Sprintf("Numeric condition requested with lower limit (%f) greater than upper limit (%f), which is not allowed", low, up))
 	}
 	lhvc.Condition = LHNumericCondition{up, low}
 	return nil
@@ -229,11 +320,7 @@ func (lhvc *LHVariableCondition) SetNumeric(low, up float64) error {
 
 func (lhvc *LHVariableCondition) SetCategoric(category string) error {
 	if category == "" {
-		/*
-			logger.Fatal("No empty categoric conditions can be made")
-			panic("No empty categoric conditions can be made")
-		*/
-		return wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Categoric condition %s has an empty category, which is not allowed", category))
+		return LHError(LH_ERR_POLICY, fmt.Sprintf("Categoric condition %s has an empty category, which is not allowed", category))
 	}
 	lhvc.Condition = LHCategoryCondition{category}
 	return nil
@@ -246,15 +333,37 @@ func (lhvc LHVariableCondition) IsEqualTo(other LHVariableCondition) bool {
 	return lhvc.Condition.IsEqualTo(other.Condition)
 }
 
-func (lhvc LHVariableCondition) Check(ins RobotInstruction) bool {
-	v := ins.GetParameter(lhvc.TestVariable)
-
-	return lhvc.Condition.Match(v)
-}
-
 type LHPolicyRuleSet struct {
 	Policies map[string]LHPolicy
 	Rules    map[string]LHPolicyRule
+}
+
+func (lhpr *LHPolicyRuleSet) IsEqualTo(lhp2 *LHPolicyRuleSet) bool {
+	if len(lhpr.Policies) != len(lhp2.Policies) {
+		return false
+	}
+
+	for name, _ := range lhpr.Rules {
+		p1, ok1 := lhpr.Policies[name]
+		p2, ok2 := lhp2.Policies[name]
+
+		if !(ok1 && ok2) {
+			return false
+		}
+
+		r1, ok1 := lhpr.Rules[name]
+		r2, ok2 := lhp2.Rules[name]
+
+		if !(ok1 && ok2) {
+			return false
+		}
+
+		if !(p1.IsEqualTo(p2) && r1.IsEqualTo(r2)) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func NewLHPolicyRuleSet() *LHPolicyRuleSet {
@@ -302,13 +411,13 @@ func (lhpr *LHPolicyRuleSet) MergeWith(other *LHPolicyRuleSet) {
 	}
 }
 
-type sortableRules []LHPolicyRule
+type SortableRules []LHPolicyRule
 
-func (s sortableRules) Len() int {
+func (s SortableRules) Len() int {
 	return len(s)
 }
 
-func (s sortableRules) Less(i, j int) bool {
+func (s SortableRules) Less(i, j int) bool {
 	if s[i].Priority != s[j].Priority {
 		// (numerically) highest priority wins
 		return s[i].Priority < s[j].Priority
@@ -321,57 +430,10 @@ func (s sortableRules) Less(i, j int) bool {
 	}
 }
 
-func (s sortableRules) Swap(i, j int) {
+func (s SortableRules) Swap(i, j int) {
 	t := s[i]
 	s[i] = s[j]
 	s[j] = t
-}
-
-func (lhpr LHPolicyRuleSet) GetPolicyFor(ins RobotInstruction) LHPolicy {
-	// find the set of matching rules
-	rules := make([]LHPolicyRule, 0, len(lhpr.Rules))
-	for _, rule := range lhpr.Rules {
-		if rule.Check(ins) {
-			rules = append(rules, rule)
-		}
-	}
-
-	// sort rules by priority
-	sort.Sort(sortableRules(rules))
-
-	// we might prefer to just merge this in
-
-	ppl := DupLHPolicy(lhpr.Policies["default"])
-
-	for _, rule := range rules {
-		ppl.MergeWith(lhpr.Policies[rule.Name])
-	}
-
-	//printPolicyForDebug(ins, rules, ppl)
-
-	return ppl
-}
-
-func printPolicyForDebug(ins RobotInstruction, rules []LHPolicyRule, pol LHPolicy) {
-	fmt.Println("*****")
-	fmt.Println("Policy for instruction ", InsToString(ins))
-	fmt.Println()
-	fmt.Println("Active Rules:")
-	fmt.Println("\t Default")
-	for _, r := range rules {
-		fmt.Println("\t", r.Name)
-	}
-	fmt.Println()
-	itemset := MakePolicyItems()
-	fmt.Println("Full output")
-	for _, s := range itemset.OrderedList() {
-		if pol[s] == nil {
-			continue
-		}
-		fmt.Println("\t", s, ": ", pol[s])
-	}
-	fmt.Println("_____")
-
 }
 
 //func (lhpr LHPolicyRuleSet) MarshalJSON() ([]byte, error) {
@@ -395,7 +457,7 @@ type LHCategoryCondition struct {
 }
 
 func (lhcc LHCategoryCondition) Match(v interface{}) bool {
-	////logger.Debug(fmt.Sprintln("CATEGORY MATCH ON ", lhcc.Category))
+	//fmt.Println(fmt.Sprintln("CATEGORY MATCH ON ", lhcc.Category, " ", v))
 
 	switch v.(type) {
 	case string:
@@ -404,9 +466,12 @@ func (lhcc LHCategoryCondition) Match(v interface{}) bool {
 			return true
 		}
 	case []string:
-		// true iff all members of the array are the same category
+		// true iff at least one in array and all members of the array are the same category
+		if len(v.([]string)) == 0 || numInStringArray(v.([]string)) == 0 {
+			return false
+		}
 		for _, s := range v.([]string) {
-			if !lhcc.Match(s) {
+			if !lhcc.Match(s) && s != "" {
 				return false
 			}
 		}
@@ -446,7 +511,7 @@ func (lhnc LHNumericCondition) IsEqualTo(other LHCondition) bool {
 }
 
 func (lhnc LHNumericCondition) Match(v interface{}) bool {
-	////logger.Debug(fmt.Sprintln("NUMERIC MATCH: ", lhnc.Lower, " ", lhnc.Upper, " ", v))
+	//fmt.Println(fmt.Sprintln("NUMERIC MATCH: ", lhnc.Lower, " ", lhnc.Upper, " ", v))
 	switch v.(type) {
 	case float64:
 		f := v.(float64)
@@ -455,10 +520,14 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 			return true
 		}
 	case []float64:
-		//true iff all values are within range
-		// these are simple rules but could need refinement
+		//true iff at least one value all values are within range
+		// how to deal with nulls?
+		if len(v.([]float64)) == 0 || numInFloatArray(v.([]float64)) == 0 {
+			return false
+		}
+
 		for _, f := range v.([]float64) {
-			if !lhnc.Match(f) {
+			if !lhnc.Match(f) && f > EPSILON_64() {
 				return false
 			}
 		}
@@ -479,4 +548,24 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 
 	} // switch
 	return false
+}
+
+func numInStringArray(a []string) int {
+	c := 0
+	for _, s := range a {
+		if s != "" {
+			c += 1
+		}
+	}
+	return c
+}
+
+func numInFloatArray(a []float64) int {
+	c := 0
+	for _, f := range a {
+		if f > EPSILON_64() {
+			c += 1
+		}
+	}
+	return c
 }

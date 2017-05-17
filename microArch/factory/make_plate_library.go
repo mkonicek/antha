@@ -24,6 +24,7 @@ package factory
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -238,6 +239,12 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	idtshp := wtype.NewShape("cylinder", "mm", 7, 7, 39.35)
 	idtroundwell96 := wtype.NewLHWell("IDT96", "", "", "ul", 1200, 100, idtshp, wtype.LHWBU, 7, 7, 39.35, 3, "mm")
 	plate = wtype.NewLHPlate("IDT96", "Unknown", 8, 12, 42.5, "mm", idtroundwell96, 9, 9, 0, 0, 3)
+	plates[plate.Type] = plate
+
+	//4 column reservoir plate Phenix Research Products RRI3051; Fisher cat# NC0336913
+	fourcolumnshp := wtype.NewShape("box", "mm", 26, 71, 42)
+	fourcolumnwell := wtype.NewLHWell("FourColumnWell", "", "", "ul", 73000, 3000, fourcolumnshp, wtype.LHWBV, 26, 71, 42, 2, "mm")
+	plate = wtype.NewLHPlate("FourColumnReservoir", "Unknown", 1, 4, 44, "mm", fourcolumnwell, 26, 1, 9.5, 31, 1) //WellYStart is not accurate, but would not visualise correctly unless set to this value, cant diagnose
 	plates[plate.Type] = plate
 
 	// 24 well deep square well plate on riser
@@ -497,7 +504,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//	plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, 0.0, 0.0, 2.0)
 	//	plates[plate.Type] = plate
 
-	//E-GEL 48 (reverse) position
+	//E-PAGE 48 (reverse) position
 	ep48g := wtype.NewShape("trap", "mm", 2, 4, 2)
 	//can't reach all wells; change to 24 wells per row?
 	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 20, 0, ep48g, wtype.LHWBFLAT, 2, 4, 2, 2, "mm")
@@ -509,6 +516,11 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	gelconsar := []string{"position_9"}
 	gelplate.SetConstrained("Pipetmax", gelconsar)
 
+	plates[gelplate.Type] = gelplate
+
+	//E-GEL 48 (reverse) position
+	gelplate = wtype.NewLHPlate("EGEL48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
+	gelplate.SetConstrained("Pipetmax", gelconsar)
 	plates[gelplate.Type] = gelplate
 
 	//E-GEL 96 definition
@@ -773,4 +785,23 @@ func GetPlateList() []string {
 
 func GetPlateLibrary() map[string]*wtype.LHPlate {
 	return defaultPlateLibrary.lib
+}
+
+func PlateTypeArray(sa []string) ([]*wtype.LHPlate, error) {
+	r := make([]*wtype.LHPlate, len(sa))
+
+	for i := 0; i < len(sa); i++ {
+		if sa[i] == "" {
+			continue
+		}
+		p := GetPlateByType(sa[i])
+
+		if p == nil {
+			return nil, fmt.Errorf("Plate type not found: %s", sa[i])
+		}
+
+		r[i] = p
+	}
+
+	return r, nil
 }

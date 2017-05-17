@@ -133,6 +133,87 @@ func (lhp LHPlate) String() string {
 	)
 }
 
+func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
+	ret := make([]*LHComponent, len(wv))
+
+	for i, wc := range wv {
+		ret[i] = lhp.Wellcoords[wc.FormatA1()].WContents.Dup()
+		wv := lhp.Wellcoords[wc.FormatA1()].WorkingVolume()
+		ret[i].Vol = wv.ConvertToString(ret[i].Vunit)
+	}
+
+	return ret
+}
+
+func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
+
+	for _, c := range cmps {
+		if independent && c == nil {
+			err = fmt.Errorf("Cannot do non-contiguous asks")
+			return
+		}
+	}
+
+	err = fmt.Errorf("Not found")
+
+	var it VectorPlateIterator
+
+	if ori == LHVChannel {
+		//it = NewColVectorIterator(lhp, multi)
+
+		tpw := multi / lhp.WellsY()
+		wpt := lhp.WellsY() / multi
+
+		if tpw == 0 {
+			tpw = 1
+		}
+
+		if wpt == 0 {
+			wpt = 1
+		}
+
+		it = NewTickingColVectorIterator(lhp, multi, tpw, wpt)
+	} else {
+		it = NewRowVectorIterator(lhp, multi)
+	}
+
+	best := 0.0
+	bestMatch := ComponentMatch{}
+	for wv := it.Curr(); it.Valid(); wv = it.Next() {
+		// cmps needs duping here
+		mycmps := lhp.GetContentVector(wv)
+
+		match, errr := matchComponents(cmps.Dup(), mycmps, independent)
+
+		if errr != nil {
+			err = errr
+			return
+		}
+
+		sc := scoreMatch(match, independent)
+
+		if sc > best {
+			bestMatch = match
+			best = sc
+		}
+	}
+
+	for _, m := range bestMatch.Matches {
+		plateIDs = append(plateIDs, m.IDs)
+		wellCoords = append(wellCoords, m.WCs)
+		vols = append(vols, m.Vols)
+	}
+
+	if best <= 0.0 {
+		err = fmt.Errorf("Not found")
+	} else {
+		err = nil
+	}
+
+	return
+}
+
+// this gets ONE component... possibly from several wells
 func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess
@@ -183,6 +264,46 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 	//fmt.Println("FOUND: ", cmp.CName, " AT: ", ret[0].FormatA1(), " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
 	return ret, vols, true
+}
+
+// convenience method
+
+func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoords, err error) {
+	ret := make([]WellCoords, 0, 1)
+
+	v := wunit.NewVolume(cmp.Vol, cmp.Vunit)
+	wv := wunit.NewVolume(lhp.Welltype.MaxVol, lhp.Welltype.Vunit)
+
+	if v.GreaterThan(wv) && !overflow {
+		return ret, fmt.Errorf("Too much to put in a single well of this type")
+	}
+
+	it := NewOneTimeColumnWiseIterator(lhp)
+
+	vt := wunit.ZeroVolume()
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		wl := lhp.Wellcoords[wc.FormatA1()]
+
+		if !wl.Empty() {
+			continue
+		}
+
+		c, e := cmp.Sample(wv)
+
+		if e != nil {
+			return ret, e
+		}
+
+		ret = append(ret, wc)
+		wl.Add(c)
+		vt.Add(c.Volume())
+		if vt.EqualTo(v) {
+			return ret, nil
+		}
+	}
+
+	return ret, fmt.Errorf("Not enough empty wells")
 }
 
 // convenience method
@@ -276,6 +397,45 @@ func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
 
 	}
 	return
+}
+
+func (lhp *LHPlate) GetWellCoordsFromOrdering(ordinals []int, byrow bool) []WellCoords {
+	wc := lhp.GetA1WellCoordsFromOrdering(ordinals, byrow)
+	return WCArrayFromStrings(wc)
+}
+
+func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []string {
+	wps := lhp.AllWellPositions(byrow)
+
+	ret := make([]string, 0, len(wps))
+
+	for _, v := range ordinals {
+		if v < 0 {
+			panic("No negative wells allowed")
+		}
+		if v > len(wps)-1 {
+			panic("No wells out of bounds allowed")
+		}
+		ret = append(ret, wps[v])
+	}
+
+	return ret
+}
+func (lhp *LHPlate) GetOrderingFromWellCoords(wc []WellCoords, byrow bool) []int {
+	wa1 := A1ArrayFromWellCoords(wc)
+	return lhp.GetOrderingFromA1WellCoords(wa1, byrow)
+}
+
+func (lhp *LHPlate) GetOrderingFromA1WellCoords(wa1 []string, byrow bool) []int {
+	wps := lhp.AllWellPositions(byrow)
+
+	ret := make([]int, len(wa1))
+
+	for i, v := range wa1 {
+		ret[i] = FirstIndexInStrArray(v, wps)
+	}
+
+	return ret
 }
 
 // @implement named

@@ -63,8 +63,8 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 						unit = field
 						valueandunit = valueString + unit
 					}
-
-				} else if strings.Contains(field, key) {
+					// support for cases where concentration unit is given but no value
+				} else if trimmed := strings.Trim(field, "()"); trimmed == key {
 					if len(key) > unitmatchlength {
 						longestmatchedunit = key
 						unitmatchlength = len(key)
@@ -72,7 +72,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 					}
 				}
 				// if value and unit are one joined field
-			} else if strings.Contains(field, key) {
+			} else if trimmed := strings.Trim(field, "()"); strings.HasSuffix(field, key) || strings.HasSuffix(trimmed, key) {
 				if len(key) > unitmatchlength {
 					longestmatchedunit = key
 					unitmatchlength = len(key)

@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pubchem"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	//"github.com/antha-lang/antha/microArch/logger"
@@ -112,6 +113,10 @@ func (lhc *LHComponent) Name() string {
 
 func (lhc *LHComponent) TypeName() string {
 	return LiquidTypeName(lhc.Type).String()
+}
+
+func (lhc *LHComponent) PolicyName() PolicyName {
+	return PolicyName(LiquidTypeName(lhc.Type).String())
 }
 
 func (lhc *LHComponent) Volume() wunit.Volume {
@@ -305,6 +310,15 @@ func (lhc *LHComponent) HasConcentration() bool {
 		return true
 	}
 	return false
+}
+
+func (lhc *LHComponent) MolecularWeight() (float64, error) {
+	molecule, err := pubchem.MakeMolecule(lhc.CName)
+	if err != nil {
+		return 0.0, err
+	}
+
+	return molecule.MolecularWeight, nil
 }
 
 // Sets concentration to an LHComponent; assumes conc is valid; overwrites existing concentration

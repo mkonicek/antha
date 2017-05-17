@@ -312,6 +312,8 @@ func (lhc *LHComponent) HasConcentration() bool {
 	return false
 }
 
+// This function uses the exact component name to search the pubchem database for a molecular weight.
+// If no match is found or the database cannot be conected to for any reason an error will be returned.
 func (lhc *LHComponent) MolecularWeight() (float64, error) {
 	molecule, err := pubchem.MakeMolecule(lhc.CName)
 	if err != nil {

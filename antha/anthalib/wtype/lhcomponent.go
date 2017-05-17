@@ -95,8 +95,8 @@ func (lhc *LHComponent) IsZero() bool {
 
 const SEQSKEY = "DNASequences"
 
-// Return a component list from a component.
-// Users should use getSubComponents function.
+// Return a sequence list from a component.
+// Users should use GetDNASequences method.
 func (lhc *LHComponent) getSequences() (seqs []DNASequence, err error) {
 
 	seqsValue, found := lhc.Extra[SEQSKEY]
@@ -127,9 +127,9 @@ func (lhc *LHComponent) getSequences() (seqs []DNASequence, err error) {
 	return
 }
 
-// Add a component list to a component.
+// Add a sequence list to a component.
 // Any existing component list will be overwritten.
-// Users should use add SubComponents function
+// Users should use addDNASequence and UpdateDNASequence methods
 func (lhc *LHComponent) setSequences(seqList []DNASequence) error {
 
 	lhc.Extra[SEQSKEY] = seqList
@@ -147,7 +147,7 @@ func containsSeq(seqs []DNASequence, seq DNASequence, checkSeqs bool) (bool, []i
 				positionsFound = append(positionsFound, i)
 			}
 		} else {
-			if seqs[i].Sequence() == seq.Sequence() && seqs[i].Plasmid == seq.Plasmid {
+			if strings.ToUpper(seqs[i].Sequence()) == strings.ToUpper(seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
 				positionsFound = append(positionsFound, i)
 			}
 		}
@@ -169,8 +169,8 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence) error {
 		return err
 	}
 
-	if found, _ := containsSeq(seqList, seq, true); found {
-		return fmt.Errorf("LHComponent %s already contains sequence %s in sequences %+v", seq.Name(), seqList)
+	if found, positions, _ := lhc.FindDNASequence(seq); found {
+		return fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v", seq.Name(), positions, seqList)
 	}
 
 	seqList = append(seqList, seq)
@@ -179,7 +179,27 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence) error {
 	return err
 }
 
-// Replaces an existing DNASequence to the LHComponent. If a Sequence does not exist, the sequence is added and an error is returned
+// Replaces an existing DNASequence to the LHComponent.
+// Search is based upon both name of the sequence and sequence.
+// If multiple copies of the sequence exists and error is returned.
+// If a Sequence does not exist, the sequence is added and an error is returned.
+func (lhc *LHComponent) FindDNASequence(seq DNASequence) (found bool, positions []int, err error) {
+
+	seqList, err := lhc.getSequences()
+
+	if err != nil {
+		return
+	}
+
+	found, positions = containsSeq(seqList, seq, true)
+
+	return
+}
+
+// Replaces an existing DNASequence to the LHComponent.
+// Search is based upon both name of the sequence and sequence.
+// If multiple copies of the sequence exists and error is returned.
+// If a Sequence does not exist, the sequence is added and an error is returned.
 func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 
 	seqList, err := lhc.getSequences()
@@ -188,7 +208,7 @@ func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 		return err
 	}
 
-	if found, positions := containsSeq(seqList, seq, true); found {
+	if found, positions, _ := lhc.FindDNASequence(seq); found {
 		if len(positions) > 1 {
 			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v in sequences %+v", seq.Name(), positions, seqList)
 		}
@@ -208,7 +228,77 @@ func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 	return fmt.Errorf("Sequence %s did not previously exist in %s so added.", seq.Name(), lhc.Name())
 }
 
-// Returns a DNA Sequence asociated with an LHComponent.
+func deleteSeq(seqList []DNASequence, position int) (newseqList []DNASequence, err error) {
+
+	if position >= len(seqList) {
+		return seqList, fmt.Errorf("Cannot delete sequence from positon in %d in sequence list as list only contains %d entries", position, len(seqList))
+	}
+
+	if position == 0 {
+		if len(seqList) > 1 {
+			newseqList = append(seqList[position+1:])
+			return
+		} else {
+			return []DNASequence{}, nil
+		}
+	} else if position == len(seqList)-1 {
+		newseqList = append(seqList[:position-1])
+		return
+	} else {
+		newseqList = append(seqList[:position], seqList[position+1:]...)
+		return
+	}
+
+}
+
+// Replaces an existing DNASequence to the LHComponent.
+// Search is based upon both name of the sequence and sequence.
+// If multiple copies of the sequence exists and error is returned.
+// If a Sequence does not exist, the sequence is added and an error is returned.
+func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
+
+	seqList, err := lhc.getSequences()
+
+	if err != nil {
+		return err
+	}
+
+	if found, positions, _ := lhc.FindDNASequence(seq); found {
+		if len(positions) > 1 {
+			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v in sequences %+v", seq.Name(), positions, seqList)
+		}
+		if len(positions) == 1 {
+			seqList, err = deleteSeq(seqList, positions[0])
+			if err != nil {
+				return err
+			}
+			err = lhc.setSequences(seqList)
+			return err
+		}
+	}
+
+	return fmt.Errorf("Sequence %s did not previously exist in %s so could not be deleted.", seq.Name(), lhc.Name())
+}
+
+func (lhc *LHComponent) RemoveDNASequenceAtPosition(int) error {
+
+	seqList, err := lhc.getSequences()
+
+	if err != nil {
+		return err
+	}
+
+	seqList, err = deleteSeq(seqList, positions[0])
+	if err != nil {
+		return err
+	}
+	err = lhc.setSequences(seqList)
+
+	return err
+
+}
+
+// Returns DNA Sequences asociated with an LHComponent.
 // An error is also returned indicating whether a sequence was found.
 func (lhc *LHComponent) DNASequences() ([]DNASequence, error) {
 	return lhc.getSequences()

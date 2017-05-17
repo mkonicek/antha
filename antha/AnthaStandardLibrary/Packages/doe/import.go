@@ -30,7 +30,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
-
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/tealeg/xlsx"
 )
 
@@ -561,12 +561,11 @@ func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorc
 	for i := 1; i < sheet.MaxRow; i++ {
 		//maxfactorcol := 2
 		for j := 0; j < sheet.MaxCol; j++ {
-
 			cellstr, err := sheet.Cell(i, j).String()
-			if err != nil {
-				panic(err.Error())
-			}
 
+			if err != nil {
+				panic(fmt.Sprintf("Error parsing cell column: %s row: %d. Error: %s", wutil.NumToAlpha(j+1), i+1, err.Error()))
+			}
 			if patternfound && j != PatternColumn && cellstr != "" {
 				factorcolumns = append(factorcolumns, j)
 			} else if !patternfound && cellstr != "" {
@@ -980,7 +979,7 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 
 			cellstr, err := sheet.Cell(i, j).String()
 			if err != nil {
-				panic(err.Error())
+				panic(fmt.Sprintf("Error parsing cell column: %s row: %d. Error: %s", wutil.NumToAlpha(j+1), i+1, err.Error()))
 			}
 
 			if patternfound && j != PatternColumn && cellstr != "" {

@@ -141,20 +141,55 @@ func (bg ByGeneration) Less(i, j int) bool {
 	return bg[i].Generation() < bg[j].Generation()
 }
 
+// Optimally - order by component.
+type ByGenerationOpt []*wtype.LHInstruction
+
+func (bg ByGenerationOpt) Len() int      { return len(bg) }
+func (bg ByGenerationOpt) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
+func (bg ByGenerationOpt) Less(i, j int) bool {
+	if bg[i].Generation() == bg[j].Generation() {
+
+		// compare the names of the resultant components
+		c := strings.Compare(bg[i].Result.CName, bg[j].Result.CName)
+
+		if c != 0 {
+			return c < 0
+		}
+
+		// if two components names are equal, then compare the plates
+		c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
+
+		if c != 0 {
+			return c < 0
+		}
+
+		// finally go down columns (nb need to add option)
+
+		return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
+	}
+
+	return bg[i].Generation() < bg[j].Generation()
+}
+
 func set_output_order(rq *LHRequest) error {
 	// sort into equivalence classes by generation
-	// nb that this basically means the ichain stuff is a bit pointless
-	// however for now it will be maintained to test whether
-	// parent-child relationships are working OK
 
 	sorted := insSliceFromMap(rq.LHInstructions)
-
-	sort.Sort(ByGeneration(sorted))
+	if rq.Options.OutputSort {
+		sort.Sort(ByGenerationOpt(sorted))
+	} else {
+		sort.Sort(ByGeneration(sorted))
+	}
 
 	it := NewIChain(nil)
 
+	// aggregation of instructions effectively happens here. This entire level is
+	// passed as a block to the instruction generator as a TransferBlock (TFB)
+	// to be picked apart sequentially into sets which can be serviced simultaneously
+	// etc.
+
 	for _, v := range sorted {
-		//	fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
+		// fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
 
 		it.Add(v)
 	}
@@ -162,6 +197,8 @@ func set_output_order(rq *LHRequest) error {
 	rq.Output_order = it.Flatten()
 
 	rq.InstructionChain = it
+
+	//rq.InstructionSets = make_instruction_sets(it)
 
 	return nil
 }
@@ -214,6 +251,7 @@ func merge_transfers(insIn []driver.RobotInstruction, aggregates [][]int) []driv
 	return ret
 }
 
+// TODO -- refactor this to pass robot through
 func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, carryvol wunit.Volume) (insOut *driver.TransferInstruction, err error) {
 	cmps := insIn.Components
 
@@ -227,7 +265,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	wh := make([]string, 0, lenToMake)       // component types
 	va := make([]wunit.Volume, 0, lenToMake) // volumes
 
-	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol)
+	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol, wtype.LHVChannel, 1, true)
 
 	if err != nil {
 		return nil, err
@@ -311,7 +349,9 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			}
 
 			vf = append(vf, wlf.CurrVolume())
-			//wlf.Remove(va[ix])
+			vrm := v2.Dup()
+			vrm.Add(carryvol)
+			wlf.Remove(vrm)
 
 			pf = append(pf, robot.PlateIDLookup[fromPlateIDs[i][xx]])
 			wf = append(wf, fromWellss[i][xx])
@@ -338,6 +378,23 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 		}
 	}
 
-	ti := driver.TransferInstruction{Type: driver.TFR, What: wh, Volume: va, PltTo: pt, WellTo: wt, TPlateWX: ptwx, TPlateWY: ptwy, PltFrom: pf, WellFrom: wf, FPlateWX: pfwx, FPlateWY: pfwy, FVolume: vf, TVolume: vt, FPlateType: ptf, TPlateType: ptt}
-	return &ti, nil
+	//ti := driver.TransferInstruction{Type: driver.TFR, What: wh, Volume: va, PltTo: pt, WellTo: wt, TPlateWX: ptwx, TPlateWY: ptwy, PltFrom: pf, WellFrom: wf, FPlateWX: pfwx, FPlateWY: pfwy, FVolume: vf, TVolume: vt, FPlateType: ptf, TPlateType: ptt}
+
+	ti := driver.NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
+
+	// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int
+	return ti, nil
 }
+
+/*
+func make_instruction_sets(ic *IChain) [][]*wtype.LHInstruction {
+	for {
+		if ic == nil {
+			break
+		}
+
+
+		ic = ic.Child
+	}
+}
+*/

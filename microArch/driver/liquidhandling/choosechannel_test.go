@@ -58,7 +58,12 @@ func TestDefaultChooser(t *testing.T) {
 	types := getTypes1()
 
 	for i, vol := range vols {
-		prm, tiptype := ChooseChannel(vol, lhp)
+		prm, tip := ChooseChannel(vol, lhp)
+		tiptype := ""
+
+		if tip != nil {
+			tiptype = tip.Type
+		}
 
 		mxr := maxvols[i]
 		mnr := minvols[i]

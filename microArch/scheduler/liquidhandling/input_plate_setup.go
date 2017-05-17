@@ -25,10 +25,12 @@ package liquidhandling
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 type InputSorter struct {
@@ -73,8 +75,8 @@ func (is InputSorter) Less(i, j int) bool {
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
 func input_plate_setup(request *LHRequest) (*LHRequest, error) {
+	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
-	//	logger.Debug("in input plate setup")
 	input_platetypes := (*request).Input_platetypes
 	if input_platetypes == nil || len(input_platetypes) == 0 {
 		// XXX this is dangerous... until input_plate_linear is replaced we will hit big problems here
@@ -100,7 +102,6 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 	var curr_plate *wtype.LHPlate
 
 	inputs := (*request).Input_solutions
-	//	input_order := (*request).Input_order
 
 	input_order := make([]string, len((*request).Input_order))
 	for i, v := range (*request).Input_order {
@@ -109,7 +110,7 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in
-	//	input_volumes := make(map[string]wunit.Volume, len(inputs))
+
 	input_volumes := request.Input_vols_wanting
 
 	// sort to make deterministic
@@ -124,8 +125,6 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 	weights_constraints := request.Input_setup_weights
 
 	// get the assignment
-
-	//well_count_assignments := choose_plate_assignments(input_volumes, input_platetypes, weights_constraints)
 
 	var well_count_assignments map[string]map[*wtype.LHPlate]int
 
@@ -146,15 +145,21 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 			continue
 		}
 
-		// inputs[cname][0] -- this is the first little spritz required
-		// should probably refactor this to aggregate first
+		// this needs to get the right thing:
+		// -- anonymous components are fine but
+		//    identified ones need to come out correctly
 		component := inputs[cname][0]
-		//logger.Debug(fmt.Sprintln("Plate_setup - component", cname, ":"))
 
 		well_assignments, ok := well_count_assignments[cname]
 
+		// is this really OK?!
 		if !ok {
 			continue
+		}
+
+		// check here
+		if isInstance(cname) && len(well_assignments) != 1 {
+			return request, fmt.Errorf("Error: Autoallocated mix-in-place components cannot be spread across multiple wells")
 		}
 
 		//logger.Debug(fmt.Sprintln("Well assignments: ", well_assignments))
@@ -163,9 +168,17 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 		ass := make([]string, 0, 3)
 
 		// best hack so far: add an extra well of everything
-		// except we should do this at the end
+		// in case we run out
 		for platetype, nwells := range well_assignments {
-			for i := 0; i < nwells+1; i++ {
+
+			WellTot := nwells + 1
+
+			// unless it's an instance
+			if isInstance(cname) {
+				WellTot = nwells
+			}
+
+			for i := 0; i < WellTot; i++ {
 				curr_plate = plates_in_play[platetype.Type]
 
 				if curr_plate == nil {
@@ -175,7 +188,7 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 					curr_plate.PlateName = platename
 					curplaten += 1
 					curr_plate.DeclareTemporary()
-					curr_plate.DeclareAutoallocated()
+					//curr_plate.DeclareAutoallocated()
 				}
 
 				// find somewhere to put it
@@ -195,11 +208,24 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 				location := curr_plate.ID + ":" + curr_well.Crds
 				ass = append(ass, location)
 
-				newcomponent := component.Dup()
-				newcomponent.Vol = curr_well.MaxVol
-				newcomponent.Loc = location
-				volume.Subtract(curr_well.WorkingVolume())
+				var newcomponent *wtype.LHComponent
+
+				if isInstance(cname) {
+					newcomponent = component
+					newcomponent.Loc = location
+					// don't let these get deleted...
+					curr_well.SetUserAllocated()
+				} else {
+					newcomponent = component.Dup()
+					newcomponent.Vol = curr_well.MaxVol
+					newcomponent.Loc = location
+					volume.Subtract(curr_well.WorkingVolume())
+				}
+
+				st.SetLocationOf(component.ID, location)
+
 				curr_well.Add(newcomponent)
+				curr_well.DeclareAutoallocated()
 				input_plates[curr_plate.ID] = curr_plate
 			}
 		}
@@ -225,4 +251,13 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 
 	//return input_plates, input_assignments
 	return request, nil
+}
+
+func isInstance(s string) bool {
+	// we need to forbid this prefix in component names
+	if strings.HasPrefix(s, "CNID:") {
+		return true
+	} else {
+		return false
+	}
 }

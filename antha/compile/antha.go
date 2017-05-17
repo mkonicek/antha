@@ -82,16 +82,17 @@ func (p *compiler) anthaInit() {
 		p.reuseMap[tok] = make(map[string]bool)
 	}
 	p.intrinsics = map[string]string{
-		"Centrifuge":    "execute.Centrifuge",
-		"Electroshock":  "execute.Electroshock",
-		"Errorf":        "execute.Errorf",
-		"Handle":        "execute.Handle",
-		"Incubate":      "execute.Incubate",
-		"Mix":           "execute.Mix",
-		"MixInto":       "execute.MixInto",
-		"MixNamed":      "execute.MixNamed",
-		"MixTo":         "execute.MixTo",
-		"ReadEM":        "execute.ReadEM",
+		"Centrifuge":   "execute.Centrifuge",
+		"Electroshock": "execute.Electroshock",
+		"Errorf":       "execute.Errorf",
+		"Handle":       "execute.Handle",
+		"Incubate":     "execute.Incubate",
+		"Mix":          "execute.Mix",
+		"MixInto":      "execute.MixInto",
+		"MixNamed":     "execute.MixNamed",
+		"MixTo":        "execute.MixTo",
+		"ReadEM":       "execute.ReadEM",
+		//	"Wait":          "execute.Wait",
 		"SetInputPlate": "execute.SetInputPlate",
 	}
 	p.types = map[string]string{
@@ -101,14 +102,20 @@ func (p *compiler) anthaInit() {
 		"Area":                 "wunit.Area",
 		"Capacitance":          "wunit.Capacitance",
 		"Component":            "wtype.LHComponent",
+		"LHComponent":          "wtype.LHComponent",
 		"Concentration":        "wunit.Concentration",
+		"DNASequence":          "wtype.DNASequence",
 		"Density":              "wunit.Density",
 		"Energy":               "wunit.Energy",
+		"File":                 "wtype.File",
 		"FlowRate":             "wunit.FlowRate",
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",
 		"Length":               "wunit.Length",
+		"LiquidType":           "wtype.LiquidType",
 		"Mass":                 "wunit.Mass",
+		"PolicyName":           "wtype.PolicyName",
+		"LHPlate":              "wtype.LHPlate",
 		"Plate":                "wtype.LHPlate",
 		"Pressure":             "wunit.Pressure",
 		"Rate":                 "wunit.Rate",
@@ -126,6 +133,7 @@ func (p *compiler) anthaInit() {
 		"Well":                 "wtype.LHWell",
 	}
 	p.imports = map[string]string{
+		"github.com/antha-lang/antha/antha/anthalib/wtype": "wtype.FALSE",
 		"github.com/antha-lang/antha/antha/anthalib/wunit": "wunit.Make_units",
 		"github.com/antha-lang/antha/execute":              "execute.MixInto",
 		"github.com/antha-lang/antha/inject":               "",
@@ -134,19 +142,64 @@ func (p *compiler) anthaInit() {
 	}
 }
 
+func filterDupSpecs(specs []ast.Spec) []ast.Spec {
+	type pair struct {
+		name, path string
+	}
+	seen := make(map[pair]bool)
+	var keep []ast.Spec
+	for _, spec := range specs {
+		ispec, ok := spec.(*ast.ImportSpec)
+		if !ok {
+			keep = append(keep, spec)
+			continue
+		}
+		key := pair{
+			name: ispec.Name.String(),
+			path: ispec.Path.Value,
+		}
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		keep = append(keep, spec)
+	}
+
+	return keep
+}
+
+// getImportInsertPos returns position of last import decl or last decl if no
+// import decl is present.
+func getImportInsertPos(decls []ast.Decl) token.Pos {
+	var lastNode ast.Node
+	for _, d := range decls {
+		gd, ok := d.(*ast.GenDecl)
+		if !ok || gd.Tok != token.IMPORT {
+			if lastNode == nil {
+				lastNode = d
+			}
+			continue
+		}
+		lastNode = gd
+	}
+
+	if lastNode == nil {
+		return token.NoPos
+	}
+	return lastNode.Pos()
+}
+
 // Merges multiple import blocks and then adds paths
 func (p *compiler) addAnthaImports(file *ast.File, paths []string) {
+
 	var specs []ast.Spec
-	var decls []ast.Decl
-	var pos token.Pos // Dummy position to use for generated imports
+	var restDecls []ast.Decl
+	insertPos := getImportInsertPos(file.Decls)
 
 	for _, d := range file.Decls {
 		gd, ok := d.(*ast.GenDecl)
-		if pos == token.NoPos {
-			pos = d.Pos()
-		}
 		if !ok || gd.Tok != token.IMPORT {
-			decls = append(decls, d)
+			restDecls = append(restDecls, d)
 			continue
 		}
 		for _, s := range gd.Specs {
@@ -160,27 +213,26 @@ func (p *compiler) addAnthaImports(file *ast.File, paths []string) {
 				Path: &ast.BasicLit{
 					Kind:     token.STRING,
 					Value:    strconv.Quote(p),
-					ValuePos: pos,
+					ValuePos: insertPos,
 				}})
 	}
 
 	if len(specs) == 0 {
-		if len(decls) != len(file.Decls) {
+		if len(restDecls) != len(file.Decls) {
 			// Clean up empty imports
-			file.Decls = decls
+			file.Decls = restDecls
 		}
 		return
 	}
 
 	merged := &ast.GenDecl{
 		Tok:    token.IMPORT,
-		Lparen: pos,
-		Rparen: pos,
-		Specs:  specs,
+		Lparen: insertPos,
+		Rparen: insertPos,
+		Specs:  filterDupSpecs(specs),
 	}
 
-	decls = append([]ast.Decl{merged}, decls...)
-	file.Decls = decls
+	file.Decls = append([]ast.Decl{merged}, restDecls...)
 	// NB(ddn): tried to sort here, but the following needs proper token.Pos,
 	// which are annoying to generate now. A gofmt on the generated file should
 	// be just as good.
@@ -286,9 +338,9 @@ func (p *compiler) generate() {
 func sortKeys(m map[string]param) []string {
 	sorted := make([]string, len(m))
 	i := 0
-	for k, _ := range m {
+	for k := range m {
 		sorted[i] = k
-		i += 1
+		i++
 	}
 	sort.Strings(sorted)
 	return sorted
@@ -321,7 +373,7 @@ func relativeTo(bases []string, name string) (string, error) {
 
 	// In reverse alphabetical to ensure longest match first
 	sort.Strings(prefixes)
-	for idx := len(prefixes) - 1; idx >= 0; idx -= 1 {
+	for idx := len(prefixes) - 1; idx >= 0; idx-- {
 		p := prefixes[idx]
 		if !strings.HasPrefix(absName, p) {
 			continue
@@ -592,23 +644,24 @@ func (p *compiler) sugarAST(d []ast.Decl) {
 		case *ast.AnthaDecl:
 			ast.Inspect(decl.Body, p.inspectForIntrinsics)
 			ast.Inspect(decl.Body, p.inspectForParams)
-			p.sugarForTypes(decl.Body)
+			ast.Inspect(decl.Body, p.inspectForSugar)
 		}
 	}
 }
 
 // Return appropriate nested SelectorExpr for the replacement for Identifier
 func (p *compiler) sugarForIdent(t *ast.Ident) ast.Expr {
-	if v, ok := p.types[t.Name]; ok {
-		cs := strings.Split(v, ".")
-		var base ast.Expr = &ast.Ident{NamePos: t.NamePos, Name: cs[0]}
-		for _, c := range cs[1:] {
-			base = &ast.SelectorExpr{X: base, Sel: &ast.Ident{NamePos: t.NamePos, Name: c}}
-		}
-		return base
-	} else {
+	v, ok := p.types[t.Name]
+	if !ok {
 		return t
 	}
+
+	cs := strings.Split(v, ".")
+	var base ast.Expr = &ast.Ident{NamePos: t.NamePos, Name: cs[0]}
+	for _, c := range cs[1:] {
+		base = &ast.SelectorExpr{X: base, Sel: &ast.Ident{NamePos: t.NamePos, Name: c}}
+	}
+	return base
 }
 
 // Return appropriate go type for an antha (type) expr
@@ -617,24 +670,34 @@ func (p *compiler) sugarForType(t ast.Expr) ast.Expr {
 	case nil:
 	case *ast.Ident:
 		return p.sugarForIdent(t)
+
 	case *ast.ParenExpr:
 		return &ast.ParenExpr{Lparen: t.Lparen, X: p.sugarForType(t.X), Rparen: t.Rparen}
+
 	case *ast.SelectorExpr:
 		return t
+
 	case *ast.StarExpr:
 		return &ast.StarExpr{Star: t.Star, X: p.sugarForType(t.X)}
+
 	case *ast.ArrayType:
 		return &ast.ArrayType{Lbrack: t.Lbrack, Len: t.Len, Elt: p.sugarForType(t.Elt)}
+
 	case *ast.StructType:
 		return &ast.StructType{Struct: t.Struct, Fields: p.sugarForFieldList(t.Fields), Incomplete: t.Incomplete}
+
 	case *ast.FuncType:
 		return &ast.FuncType{Func: t.Func, Params: p.sugarForFieldList(t.Params), Results: p.sugarForFieldList(t.Results)}
+
 	case *ast.InterfaceType:
 		return &ast.InterfaceType{Interface: t.Interface, Methods: p.sugarForFieldList(t.Methods), Incomplete: t.Incomplete}
+
 	case *ast.MapType:
 		return &ast.MapType{Map: t.Map, Key: p.sugarForType(t.Key), Value: p.sugarForType(t.Value)}
+
 	case *ast.ChanType:
 		return &ast.ChanType{Begin: t.Begin, Arrow: t.Arrow, Dir: t.Dir, Value: p.sugarForType(t.Value)}
+
 	default:
 		log.Panicf("unexpected expression %s of type %s", t, reflect.TypeOf(t))
 	}
@@ -654,28 +717,46 @@ func (p *compiler) sugarForFieldList(t *ast.FieldList) *ast.FieldList {
 }
 
 // Replace bare antha types with go qualified names
-func (p *compiler) sugarForTypes(root ast.Node) ast.Node {
-	ast.Inspect(root, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case nil:
-			return false
-		case *ast.FuncLit:
-			n.Type = p.sugarForType(n.Type).(*ast.FuncType)
-			return false
-		case *ast.CompositeLit:
-			n.Type = p.sugarForType(n.Type)
-			return false
-		case *ast.TypeAssertExpr:
-			n.Type = p.sugarForType(n.Type)
-			return false
-		case *ast.ValueSpec:
-			n.Type = p.sugarForType(n.Type)
-			return false
-		default:
-			return true
-		}
-	})
-	return root
+func (p *compiler) inspectForSugar(n ast.Node) bool {
+	switch n := n.(type) {
+	case nil:
+		return false
+
+	case *ast.MapType:
+		n.Key = p.sugarForType(n.Key)
+		n.Value = p.sugarForType(n.Value)
+		return false
+
+	case *ast.ArrayType:
+		n.Elt = p.sugarForType(n.Elt)
+		return false
+
+	case *ast.ChanType:
+		n.Value = p.sugarForType(n.Value)
+		return false
+
+	case *ast.Field:
+		n.Type = p.sugarForType(n.Type)
+		return false
+
+	case *ast.FuncLit:
+		n.Type = p.sugarForType(n.Type).(*ast.FuncType)
+		return false
+
+	case *ast.CompositeLit:
+		n.Type = p.sugarForType(n.Type)
+		return false
+
+	case *ast.TypeAssertExpr:
+		n.Type = p.sugarForType(n.Type)
+		return false
+
+	case *ast.ValueSpec:
+		n.Type = p.sugarForType(n.Type)
+		return false
+	}
+
+	return true
 }
 
 // Replace bare antha identifiers with go qualified names
@@ -689,7 +770,7 @@ func (p *compiler) inspectForParams(node ast.Node) bool {
 		}
 	}
 
-	rewriteAssignLhs := func(node *ast.AssignStmt) {
+	rewriteAssignLHS := func(node *ast.AssignStmt) {
 		for j := range node.Lhs {
 			if ident, ok := node.Lhs[j].(*ast.Ident); ok {
 				isUpper := ident.Name[0:1] == strings.ToUpper(ident.Name[0:1])
@@ -701,10 +782,13 @@ func (p *compiler) inspectForParams(node ast.Node) bool {
 	}
 
 	switch n := node.(type) {
+
 	case nil:
 		return false
+
 	case *ast.AssignStmt:
-		rewriteAssignLhs(n)
+		rewriteAssignLHS(n)
+
 	case *ast.KeyValueExpr:
 		if _, identKey := n.Key.(*ast.Ident); identKey {
 			// Skip identifiers that are keys
@@ -713,6 +797,7 @@ func (p *compiler) inspectForParams(node ast.Node) bool {
 		}
 	case *ast.Ident:
 		rewriteIdent(n)
+
 	case *ast.SelectorExpr:
 		// Skip identifiers that are field accesses
 		ast.Inspect(n.X, p.inspectForParams)

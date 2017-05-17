@@ -41,6 +41,7 @@ type LHRequest struct {
 	Tips                     []*wtype.LHTipbox
 	InstructionSet           *liquidhandling.RobotInstructionSet
 	Instructions             []liquidhandling.TerminalRobotInstruction
+	InstructionText          string
 	Input_assignments        map[string][]string
 	Output_assignments       map[string][]string
 	Input_plates             map[string]*wtype.LHPlate
@@ -52,7 +53,7 @@ type LHRequest struct {
 	Output_plate_order       []string
 	Plate_lookup             map[string]string
 	Stockconcs               map[string]float64
-	Policies                 *liquidhandling.LHPolicyRuleSet
+	Policies                 *wtype.LHPolicyRuleSet
 	Input_order              []string
 	Output_order             []string
 	Order_instructions_added []string
@@ -63,9 +64,11 @@ type LHRequest struct {
 	Input_vols_wanting       map[string]wunit.Volume
 	TimeEstimate             float64
 	CarryVolume              wunit.Volume
+	InstructionSets          [][]*wtype.LHInstruction
 	Evaps                    []wtype.VolumeCorrection
 	Options                  LHOptions
 	NUserPlates              int
+	Output_sort              bool
 }
 
 func (req *LHRequest) ConfigureYourself() error {
@@ -78,19 +81,50 @@ func (req *LHRequest) ConfigureYourself() error {
 		inputs = make(map[string][]*wtype.LHComponent)
 	}
 
+	// we need to make an exception of components which are used literally
+	// i.e. anything used in a mix-in-place; these don't add to the general
+	// store of anonymous components to be sampled from
+
+	uniques := make(map[wtype.PlateLocation]*wtype.LHComponent, len(req.LHInstructions))
+
+	for _, ins := range req.LHInstructions {
+		// If provenance info is brought in here this becomes unsafe
+		if ins.IsMixInPlace() && !ins.HasAnyParent() {
+			if !ins.Components[0].PlateLocation().IsZero() {
+				uniques[ins.Components[0].PlateLocation()] = ins.Components[0]
+			} else {
+				// this will be autoallocated
+			}
+		}
+	}
+
 	for _, v := range req.Input_plates {
 		for _, w := range v.Wellcoords {
 			if w.Empty() {
 				continue
 			}
-			c := w.Contents().Dup()
-			// issue here -- not accounting for working volume of well
-			vvvvvv := c.Volume()
-			vvvvvv.Subtract(w.ResidualVolume())
-			c.SetVolume(vvvvvv)
-			ar := inputs[c.CName]
-			ar = append(ar, c)
-			inputs[c.CName] = ar
+
+			// special case for components treated literally
+
+			cmp, ok := uniques[w.PlateLocation()]
+
+			if ok {
+				// unique components (where instances matter) are
+				// identified using CNID()
+				ar := inputs[cmp.CNID()]
+				ar = append(ar, cmp)
+				inputs[cmp.CNID()] = ar
+			} else {
+				// bulk components (where instances don't matter) are
+				// identified using just CName
+				c := w.Contents().Dup()
+				vvvvvv := c.Volume()
+				vvvvvv.Subtract(w.ResidualVolume())
+				c.SetVolume(vvvvvv)
+				ar := inputs[c.CName]
+				ar = append(ar, c)
+				inputs[c.CName] = ar
+			}
 		}
 	}
 
@@ -138,6 +172,7 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_assignments = make(map[string][]string)
 	lhr.Order_instructions_added = make([]string, 0, 1)
 	lhr.InstructionSet = liquidhandling.NewRobotInstructionSet(nil)
+	lhr.InstructionText = ""
 	lhr.Input_vols_required = make(map[string]wunit.Volume)
 	lhr.Input_vols_supplied = make(map[string]wunit.Volume)
 	lhr.Input_vols_wanting = make(map[string]wunit.Volume)
@@ -176,12 +211,12 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 }
 
 type LHPolicyManager struct {
-	SystemPolicies *liquidhandling.LHPolicyRuleSet
-	UserPolicies   *liquidhandling.LHPolicyRuleSet
+	SystemPolicies *wtype.LHPolicyRuleSet
+	UserPolicies   *wtype.LHPolicyRuleSet
 }
 
-func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *liquidhandling.LHPolicyRuleSet) *liquidhandling.LHPolicyRuleSet {
-	ret := liquidhandling.CloneLHPolicyRuleSet(mgr.SystemPolicies)
+func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSet) *wtype.LHPolicyRuleSet {
+	ret := wtype.CloneLHPolicyRuleSet(mgr.SystemPolicies)
 
 	// things coming in take precedence over things already there
 	ret.MergeWith(mgr.UserPolicies)

@@ -131,12 +131,15 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 	// these should be distinct... we should check really
 	// ...eventually
 	if len(tips) != 0 {
-		for _, tb := range tips {
+		tipz := make([]*wtype.LHTip, len(tips))
+		for i, tb := range tips {
 			if tb == nil {
 				continue
 			}
-			params.Tips = append(params.Tips, tb.Tips[0][0])
+			//	params.Tips = append(params.Tips, tb.Tips[0][0])
+			tipz[i] = tb.Tips[0][0]
 		}
+		params.Tips = tipz
 	}
 
 	setup := make(map[string]interface{})

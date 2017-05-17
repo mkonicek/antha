@@ -24,6 +24,7 @@
 package enzymes
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -241,6 +242,77 @@ type Digestedfragment struct {
 	TopStickyend_3prime    string
 	BottomStickyend_5prime string
 	BottomStickyend_3prime string
+}
+
+// Assumes phosphorylation since result of digestion.
+// todo:  Check and fix the construction of the digested fragment...
+// This may be produced incorrectly so the error capture steps have been commented out to ensure the Insert function returns the expected result!
+func (fragment Digestedfragment) ToDNASequence(name string) (seq wtype.DNASequence, err error) {
+
+	seq = wtype.MakeLinearDNASequence(name, fragment.Topstrand)
+
+	var overhangstr string
+	var overhangtype int
+
+	/* //
+	if len(fragment.BottomStickyend_5prime) > 0 && len(fragment.TopStickyend_5prime) > 0 {
+		return seq, fmt.Errorf("Cannot have 5' top %s and bottom %s strand overhangs on same sequence: ", fragment.BottomStickyend_5prime, fragment.TopStickyend_5prime)
+	}
+	*/
+
+	if len(fragment.TopStickyend_3prime) > 0 && len(fragment.BottomStickyend_3prime) > 0 {
+		return seq, fmt.Errorf("Cannot have 3' top %s and bottom %s strand overhangs on same sequence: ", fragment.TopStickyend_3prime, fragment.BottomStickyend_3prime)
+	}
+
+	if len(fragment.TopStickyend_5prime) > 0 /*&& len(fragment.BottomStickyend_5prime) == 0*/ {
+		overhangstr = fragment.TopStickyend_5prime
+		overhangtype = wtype.OVERHANG
+	} else if len(fragment.TopStickyend_5prime) == 0 && len(fragment.BottomStickyend_5prime) == 0 {
+		overhangstr = fragment.TopStickyend_5prime
+		overhangtype = wtype.BLUNT
+	} else if len(fragment.BottomStickyend_5prime) > 0 && len(fragment.TopStickyend_5prime) == 0 {
+		overhangstr = fragment.BottomStickyend_5prime
+		overhangtype = wtype.UNDERHANG
+	} else {
+		return seq, fmt.Errorf("Cannot make valid combination of overhangs with this fragment: %+v", fragment)
+
+	}
+
+	var overhang5 = wtype.Overhang{
+		End:             5,
+		Type:            overhangtype,
+		Length:          len(overhangstr),
+		Sequence:        overhangstr,
+		Phosphorylation: true,
+	}
+
+	seq.Overhang5prime = overhang5
+
+	if len(fragment.TopStickyend_3prime) > 0 && len(fragment.BottomStickyend_3prime) == 0 {
+		overhangstr = fragment.TopStickyend_3prime
+		overhangtype = wtype.OVERHANG
+	} else if len(fragment.TopStickyend_3prime) == 0 && len(fragment.BottomStickyend_3prime) == 0 {
+		overhangstr = fragment.TopStickyend_3prime
+		overhangtype = wtype.BLUNT
+	} else if len(fragment.BottomStickyend_3prime) > 0 && len(fragment.TopStickyend_3prime) == 0 {
+		overhangstr = fragment.BottomStickyend_3prime
+		overhangtype = wtype.UNDERHANG
+	} else {
+		return seq, fmt.Errorf("Cannot make valid combination of overhangs with this fragment: %+v", fragment)
+
+	}
+
+	var overhang3 = wtype.Overhang{
+		End:             3,
+		Type:            overhangtype,
+		Length:          len(overhangstr),
+		Sequence:        overhangstr,
+		Phosphorylation: true,
+	}
+
+	seq.Overhang3prime = overhang3
+
+	return
 }
 
 // utility function

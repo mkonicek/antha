@@ -20,17 +20,17 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
-	"strings"
-	"time"
 )
 
 const (
@@ -208,6 +208,10 @@ func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
 
 	w.Contents().Remove(v)
 	return ret
+}
+
+func (w *LHWell) PlateLocation() PlateLocation {
+	return w.WContents.PlateLocation()
 }
 
 func (w *LHWell) WorkingVolume() wunit.Volume {
@@ -488,6 +492,12 @@ func (well *LHWell) IsTemporary() bool {
 			return false
 		}
 
+		// user allocated wells are never temporary
+
+		if well.IsUserAllocated() {
+			return false
+		}
+
 		t, ok := well.Extra["temporary"]
 
 		if !ok || !t.(bool) {
@@ -495,7 +505,7 @@ func (well *LHWell) IsTemporary() bool {
 		}
 		return true
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in DeclareTemporary()")
+		logger.Debug("Warning: Attempt to access nil well in IsTemporary()")
 	}
 	return false
 }

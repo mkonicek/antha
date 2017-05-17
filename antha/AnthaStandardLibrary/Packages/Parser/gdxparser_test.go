@@ -6964,7 +6964,7 @@ func TestStringToAssemblyParameters(t *testing.T) {
 </Project>
 `}}
 	for _, in := range ins {
-		if out, err := stringToAssemblyParameters([]byte(in.content)); err != nil {
+		if out, err := gdxToAssemblyParameters([]byte(in.content)); err != nil {
 			t.Fatal(err)
 		} else if len(out) != in.count {
 			t.Fatalf("Expecting %d constructs, found %d", in.count, len(out))

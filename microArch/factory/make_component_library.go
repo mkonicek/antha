@@ -27,6 +27,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 type alreadyAdded struct {
@@ -48,7 +49,7 @@ func (a *notFound) Error() string {
 func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	var components []*wtype.LHComponent
 
-	add := func(name string, typ wtype.LiquidType, smax float64) {
+	add := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration) {
 		c := wtype.NewLHComponent()
 		c.CName = name
 		c.Type = typ
@@ -56,158 +57,170 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 		components = append(components, c)
 	}
 
-	add("water", wtype.LTWater, 9999)
-	add("PEG", wtype.LTPEG, 9999)
-	add("protoplasts", wtype.LTProtoplasts, 9999)
-	add("fluorescein", wtype.LTWater, 9999)
-	add("ethanol", wtype.LTWater, 9999)
-	add("whiteFabricDye", wtype.LTGlycerol, 9999)
-	add("blackFabricDye", wtype.LTGlycerol, 9999)
-	add("Some component in factory", wtype.LTWater, 9999)
-	add("neb5compcells", wtype.LTCulture, 1.0)
-	add("mediaonculture", wtype.LTNeedToMix, 1.0)
-	add("10x_M9Salts", wtype.LTWater, 9999)
-	add("100x_MEMVitamins", wtype.LTWater, 9999)
-	add("Yeast extract", wtype.LTWater, 9999)
-	add("Tryptone", wtype.LTWater, 9999)
-	add("Glycerol", wtype.LTPostMix, 9999)
-	add("culture", wtype.LTCulture, 9999)
+	var defaultConc wunit.Concentration
+	x2 := wunit.NewConcentration(2, "X")
+	x10 := wunit.NewConcentration(10, "X")
+	x100 := wunit.NewConcentration(100, "X")
+
+	gPerL01 := wunit.NewConcentration(0.1, "g/L")
+	gPerL1 := wunit.NewConcentration(1, "g/L")
+	gPerL10 := wunit.NewConcentration(10, "g/L")
+	gPerL100 := wunit.NewConcentration(100, "g/L")
+
+	add("water", wtype.LTWater, 9999, defaultConc)
+	add("multiwater", wtype.LTMultiWater, 9999, defaultConc)
+	add("DNA_ladder", wtype.LTload, 9999, defaultConc)
+	add("LoadingDye", wtype.LTWater, 9999, defaultConc)
+	add("Overlay", wtype.LTPLATEOUT, 9999, defaultConc)
+	add("PEG", wtype.LTPEG, 9999, defaultConc)
+	add("protoplasts", wtype.LTProtoplasts, 9999, defaultConc)
+	add("fluorescein", wtype.LTWater, 9999, defaultConc)
+	add("ethanol", wtype.LTWater, 9999, defaultConc)
+	add("whiteFabricDye", wtype.LTGlycerol, 9999, defaultConc)
+	add("blackFabricDye", wtype.LTGlycerol, 9999, defaultConc)
+	add("Some component in factory", wtype.LTWater, 9999, defaultConc)
+	add("neb5compcells", wtype.LTCulture, 1.0, defaultConc)
+	add("mediaonculture", wtype.LTNeedToMix, 1.0, defaultConc)
+	add("10x_M9Salts", wtype.LTWater, 9999, x10)
+	add("100x_MEMVitamins", wtype.LTWater, 9999, x100)
+	add("Yeast extract", wtype.LTWater, 9999, defaultConc)
+	add("Tryptone", wtype.LTWater, 9999, defaultConc)
+	add("Glycerol", wtype.LTPostMix, 9999, defaultConc)
+	add("culture", wtype.LTCulture, 9999, defaultConc)
 	// the pubchem name for tartrazine
-	add("Acid yellow 23", wtype.LTWater, 9999)
-	add("tartrazine", wtype.LTWater, 9999)
-	add("tartrazinePostMix", wtype.LTPostMix, 9999)
-	add("tartrazineNeedtoMix", wtype.LTNeedToMix, 9999)
-	add("tartrazine_DNA", wtype.LTDNA, 9999)
-	add("tartrazine_Glycerol", wtype.LTGlycerol, 9999)
-	add("Yellow_ink", wtype.LTPAINT, 9999)
-	add("Cyan", wtype.LTPAINT, 9999)
-	add("Magenta", wtype.LTPAINT, 9999)
-	add("transparent", wtype.LTWater, 9999)
-	add("Black", wtype.LTPAINT, 9999)
-	add("Paint", wtype.LTPostMix, 9999)
-	add("yellow", wtype.LTWater, 9999)
-	add("blue", wtype.LTWater, 9999)
-	add("darkblue", wtype.LTWater, 9999)
-	add("grey", wtype.LTWater, 9999)
-	add("green", wtype.LTWater, 9999)
-	add("red", wtype.LTWater, 9999)
-	add("white", wtype.LTWater, 9999)
-	add("black", wtype.LTWater, 9999)
-	add("purple", wtype.LTWater, 9999)
-	add("pink", wtype.LTWater, 9999)
-	add("orange", wtype.LTWater, 9999)
-	add("DNAsolution", wtype.LTDNA, 1.0)
-	add("1kb DNA Ladder", wtype.LTDNA, 10.0)
-	add("restrictionenzyme", wtype.LTGlycerol, 1.0)
-	add("bsa", wtype.LTWater, 100)
-	add("dna_part", wtype.LTDNA, 1.0)
-	add("dna", wtype.LTDNA, 1.0)
-	add("SapI", wtype.LTGlycerol, 1.0)
-	add("T4Ligase", wtype.LTGlycerol, 1.0)
-	add("EcoRI", wtype.LTGlycerol, 1.0)
-	add("EnzMastermix: 1/2 SapI; 1/2 T4 Ligase", wtype.LTGlycerol, 1.0)
-	add("TypeIIsbuffer: 2/11 10xCutsmart; 1/11 1mM ATP; 8/11 Water", wtype.LTWater, 9999)
-	add("CutsmartBuffer", wtype.LTWater, 1.0)
-	add("ATP", wtype.LTWater, 5.0)
-	add("mastermix_sapI", wtype.LTWater, 1.0)
-	add("standard_cloning_vector_mark_1", wtype.LTDNA, 1.0)
-	// not sure if this is correct
-	add("Q5Polymerase", wtype.LTGlycerol, 1.0)
-	// not sure if this is correct
-	add("GoTaq_ green 2x mastermix", wtype.LTGlycerol, 9999.0)
-	// not sure if this is correct
-	add("DMSO", wtype.LTWater, 1.0)
-	// not sure if this is correct
-	add("pET_GFP", wtype.LTWater, 1.0)
-	// not sure if this is correct
-	add("HC", wtype.LTWater, 1.0)
-	// not sure if this is correct
-	add("GCenhancer", wtype.LTWater, 9999.0)
-	// not sure if this is correct
-	add("Q5buffer", wtype.LTWater, 1.0)
-	// not sure if this is correct
-	add("Q5mastermix", wtype.LTWater, 1.0)
-	// not sure if this is correct
-	add("PrimerFw", wtype.LTDNA, 1.0)
-	// not sure if this is correct
-	add("PrimerRev", wtype.LTDNA, 1.0)
-	// not sure if this is correct
-	add("template_part", wtype.LTDNA, 1.0)
-	// not sure if this is correct
-	add("DNTPs", wtype.LTWater, 1.0)
-	//not sure if this is correct
-	add("ProteinMarker", wtype.LTProtein, 1.0)
-	//still not sure
-	add("ProteinFraction", wtype.LTProtein, 1.0)
-	//not sure what this is!
-	add("EColiLysate", wtype.LTProtein, 1.0)
-	//still not sure....
-	add("SDSbuffer", wtype.LTDetergent, 1.0)
-	//still not sure....
-	add("Load", wtype.LTload, 1.0)
-	//still not sure....
-	add("LB", wtype.LTWater, 1.0)
-	//still not sure....
-	add("TB", wtype.LTWater, 1.0)
-	//still not sure....
-	add("Kanamycin", wtype.LTWater, 1.0)
-	//still not sure....
-	add("Glucose", wtype.LTPostMix, 1.0)
-	//still not sure....
-	add("IPTG", wtype.LTPostMix, 1.0)
-	//still not sure....
-	add("Lactose", wtype.LTWater, 1.0)
-	//still not sure....
-	add("colony", wtype.LTCOLONY, 1.0)
-	//still not sure....
-	add("LB_autoinduction_Amp", wtype.LTWater, 1.0)
-	//still not sure....
-	add("LB_Kan", wtype.LTWater, 1.0)
-	//still not sure....
-	add("Apramycin", wtype.LTWater, 1.0)
-	//still not sure....
-	add("Agar", wtype.LTWater, 1.0)
-	//still not sure....
-	add("X-glc", wtype.LTWater, 1.0)
-	//still not sure....
-	add("X-Glucuro", wtype.LTWater, 1.0)
-	//still not sure....
-	add("BaseGrowthMedium", wtype.LTWater, 1.0)
-	//still not sure....
-	add("SterileWater", wtype.LTWater, 1.0)
-	//still not sure....
-	add("100mMPhosphate", wtype.LTWater, 1.0)
-	//still not sure....
-	add("100g/LGlucose", wtype.LTWater, 1.0)
-	//still not sure....
-	add("10g/LGlucose", wtype.LTWater, 1.0)
-	//still not sure....
-	add("1g/LGlucose", wtype.LTWater, 1.0)
-	//still not sure....
-	add("0.1g/Lglucose", wtype.LTWater, 1.0)
-	//still not sure....
-	add("100g/Lglycerol", wtype.LTWater, 1.0)
-	//still not sure....
-	add("10g/Lglycerol", wtype.LTWater, 1.0)
-	//still not sure....
-	add("1g/Lglycerol", wtype.LTWater, 1.0)
-	//still not sure....
-	add("0.1g/Lglycerol", wtype.LTWater, 1.0)
-	//still not sure....
-	add("100g/Lpeptone", wtype.LTWater, 1.0)
-	//still not sure....
-	add("100g/LYeastExtract", wtype.LTWater, 1.0)
-	//still not sure....
-	add("10g/LYeastExtract", wtype.LTWater, 1.0)
-	//still not sure....
-	add("1000ng/ml ATC", wtype.LTWater, 1.0)
-	//still not sure....
-	add("250uM C6", wtype.LTWater, 1.0)
-	//still not sure....
-	add("M9", wtype.LTWater, 1.0)
+	add("Acid yellow 23", wtype.LTWater, 9999, defaultConc)
+	add("tartrazine", wtype.LTWater, 9999, defaultConc)
+	add("tartrazinePostMix", wtype.LTPostMix, 9999, defaultConc)
+	add("tartrazineNeedtoMix", wtype.LTNeedToMix, 9999, defaultConc)
+	add("tartrazine_DNA", wtype.LTDNA, 9999, defaultConc)
+	add("tartrazine_Glycerol", wtype.LTGlycerol, 9999, defaultConc)
+	add("Yellow_ink", wtype.LTPAINT, 9999, defaultConc)
+	add("Cyan", wtype.LTPAINT, 9999, defaultConc)
+	add("Magenta", wtype.LTPAINT, 9999, defaultConc)
+	add("transparent", wtype.LTWater, 9999, defaultConc)
+	add("Black", wtype.LTPAINT, 9999, defaultConc)
+	add("Paint", wtype.LTPostMix, 9999, defaultConc)
+	add("yellow", wtype.LTWater, 9999, defaultConc)
+	add("blue", wtype.LTWater, 9999, defaultConc)
+	add("darkblue", wtype.LTWater, 9999, defaultConc)
+	add("grey", wtype.LTWater, 9999, defaultConc)
+	add("green", wtype.LTWater, 9999, defaultConc)
+	add("red", wtype.LTWater, 9999, defaultConc)
+	add("white", wtype.LTWater, 9999, defaultConc)
+	add("black", wtype.LTWater, 9999, defaultConc)
+	add("purple", wtype.LTWater, 9999, defaultConc)
+	add("pink", wtype.LTWater, 9999, defaultConc)
+	add("orange", wtype.LTWater, 9999, defaultConc)
+	add("DNAsolution", wtype.LTDNA, 1.0, defaultConc)
+	add("1kb DNA Ladder", wtype.LTDNA, 10.0, defaultConc)
+	add("restrictionenzyme", wtype.LTGlycerol, 1.0, defaultConc)
+	add("bsa", wtype.LTWater, 100, defaultConc)
+	add("dna_part", wtype.LTDNA, 1.0, defaultConc)
+	add("dna", wtype.LTDNA, 1.0, defaultConc)
+	add("SapI", wtype.LTGlycerol, 1.0, defaultConc)
+	add("BsaI", wtype.LTGlycerol, 1.0, defaultConc)
+	add("T4Ligase", wtype.LTGlycerol, 1.0, defaultConc)
+	add("EcoRI", wtype.LTGlycerol, 1.0, defaultConc)
+	add("EnzMastermix: 1/2 SapI; 1/2 T4 Ligase", wtype.LTGlycerol, 1.0, defaultConc)
+	add("TypeIIsbuffer: 2/11 10xCutsmart; 1/11 1mM ATP; 8/11 Water", wtype.LTWater, 9999, defaultConc)
+	add("CutsmartBuffer", wtype.LTWater, 1.0, defaultConc)
+	add("ATP", wtype.LTWater, 5.0, defaultConc)
+	add("mastermix_sapI", wtype.LTWater, 1.0, defaultConc)
+	add("mastermix_bsaI", wtype.LTWater, 1.0, defaultConc)
+	add("standard_cloning_vector_mark_1", wtype.LTDNA, 1.0, defaultConc)
+	add("Q5Polymerase", wtype.LTGlycerol, 1.0, defaultConc)
+	add("GoTaq_ green 2x mastermix", wtype.LTGlycerol, 9999.0, x2)
+	add("DMSO", wtype.LTWater, 1.0, defaultConc)
+	add("pET_GFP", wtype.LTWater, 1.0, defaultConc)
+	add("HC", wtype.LTWater, 1.0, defaultConc)
+	add("GCenhancer", wtype.LTWater, 9999.0, defaultConc)
+	add("Q5buffer", wtype.LTWater, 1.0, defaultConc)
+	add("Q5mastermix", wtype.LTWater, 1.0, defaultConc)
+	add("PrimerFw", wtype.LTDNA, 1.0, defaultConc)
+	add("PrimerRev", wtype.LTDNA, 1.0, defaultConc)
+	add("template_part", wtype.LTDNA, 1.0, defaultConc)
+	add("DNTPs", wtype.LTWater, 1.0, defaultConc)
+	add("ProteinMarker", wtype.LTProtein, 1.0, defaultConc)
+	add("ProteinFraction", wtype.LTProtein, 1.0, defaultConc)
+	add("EColiLysate", wtype.LTProtein, 1.0, defaultConc)
+	add("SDSbuffer", wtype.LTDetergent, 1.0, defaultConc)
+	add("Load", wtype.LTload, 1.0, defaultConc)
+	add("LB", wtype.LTWater, 1.0, defaultConc)
+	add("TB", wtype.LTWater, 1.0, defaultConc)
+	add("Kanamycin", wtype.LTWater, 1.0, defaultConc)
+	add("Glucose", wtype.LTPostMix, 1.0, defaultConc)
+	add("IPTG", wtype.LTPostMix, 1.0, defaultConc)
+	add("Lactose", wtype.LTWater, 1.0, defaultConc)
+	add("colony", wtype.LTCOLONY, 1.0, defaultConc)
+	add("LB_autoinduction_Amp", wtype.LTWater, 1.0, defaultConc)
+	add("LB_Kan", wtype.LTWater, 1.0, defaultConc)
+	add("Apramycin", wtype.LTWater, 1.0, defaultConc)
+	add("Agar", wtype.LTWater, 1.0, defaultConc)
+	add("X-glc", wtype.LTWater, 1.0, defaultConc)
+	add("X-Glucuro", wtype.LTWater, 1.0, defaultConc)
+	add("BaseGrowthMedium", wtype.LTWater, 1.0, defaultConc)
+	add("SterileWater", wtype.LTWater, 1.0, defaultConc)
+	add("100mMPhosphate", wtype.LTWater, 1.0, wunit.NewConcentration(100, "mM"))
+	add("100g/LGlucose", wtype.LTWater, 1.0, gPerL100)
+	add("10g/LGlucose", wtype.LTWater, 1.0, gPerL10)
+	add("1g/LGlucose", wtype.LTWater, 1.0, gPerL1)
+	add("0.1g/Lglucose", wtype.LTWater, 1.0, gPerL01)
+	add("100g/Lglycerol", wtype.LTWater, 1.0, gPerL100)
+	add("10g/Lglycerol", wtype.LTWater, 1.0, gPerL10)
+	add("1g/Lglycerol", wtype.LTWater, 1.0, gPerL1)
+	add("0.1g/Lglycerol", wtype.LTWater, 1.0, gPerL01)
+	add("100g/Lpeptone", wtype.LTWater, 1.0, gPerL100)
+	add("100g/LYeastExtract", wtype.LTWater, 1.0, gPerL100)
+	add("10g/LYeastExtract", wtype.LTWater, 1.0, gPerL10)
+	add("100g/L Glucose", wtype.LTWater, 1.0, gPerL100)
+	add("10g/L Glucose", wtype.LTWater, 1.0, gPerL10)
+	add("1g/L Glucose", wtype.LTWater, 1.0, gPerL1)
+	add("0.1g/L glucose", wtype.LTWater, 1.0, gPerL01)
+	add("100g/L glycerol", wtype.LTWater, 1.0, gPerL100)
+	add("10g/L glycerol", wtype.LTWater, 1.0, gPerL10)
+	add("1g/L glycerol", wtype.LTWater, 1.0, gPerL1)
+	add("0.1g/L glycerol", wtype.LTWater, 1.0, gPerL01)
+	add("100g/L peptone", wtype.LTWater, 1.0, gPerL100)
+	add("100g/L YeastExtract", wtype.LTWater, 1.0, gPerL100)
+	add("10g/L YeastExtract", wtype.LTWater, 1.0, gPerL10)
+	add("1000ng/ml ATC", wtype.LTWater, 1.0, wunit.NewConcentration(1000, "ng/ml"))
+	add("ATC", wtype.LTWater, 1.0, defaultConc)
+	add("C6", wtype.LTWater, 1.0, defaultConc)
+	add("C12", wtype.LTWater, 1.0, defaultConc)
+	add("250uM C6", wtype.LTWater, 1.0, wunit.NewConcentration(250, "uM"))
+	add("25uM C6", wtype.LTWater, 1.0, wunit.NewConcentration(25, "uM"))
+	add("2.5uM C6", wtype.LTWater, 1.0, wunit.NewConcentration(2.5, "uM"))
+	add("0.25uM C6", wtype.LTWater, 1.0, wunit.NewConcentration(0.25, "uM"))
+	add("0.025uM C6", wtype.LTWater, 1.0, wunit.NewConcentration(0.025, "uM"))
+	add("250g/L C6", wtype.LTWater, 1.0, wunit.NewConcentration(250, "g/L"))
+	add("25g/L C6", wtype.LTWater, 1.0, wunit.NewConcentration(25, "g/L"))
+	add("2.5g/L C6", wtype.LTWater, 1.0, wunit.NewConcentration(2.5, "g/L"))
+	add("0.25g/L C6", wtype.LTWater, 1.0, wunit.NewConcentration(0.25, "g/L"))
+	add("0.025g/L C6", wtype.LTWater, 1.0, wunit.NewConcentration(0.025, "g/L"))
+	add("IPTG 1mM", wtype.LTWater, 1.0, wunit.NewConcentration(1, "mM"))
+	add("Glucose 100g/L", wtype.LTWater, 1.0, gPerL100)
+	add("Glucose 1g/L", wtype.LTWater, 1.0, gPerL1)
+	add("Glycerol 100g/L", wtype.LTWater, 1.0, gPerL100)
+	add("M9", wtype.LTWater, 1.0, defaultConc)
+	add("HYYest412", wtype.LTNSrc, 1.0, defaultConc)
+	add("HYYest503", wtype.LTNSrc, 1.0, defaultConc)
+	add("HYYest504", wtype.LTNSrc, 1.0, defaultConc)
+	add("PeaPeptone", wtype.LTNSrc, 1.0, defaultConc)
+	add("WheatPeptone", wtype.LTNSrc, 1.0, defaultConc)
+	add("VegPeptone", wtype.LTNSrc, 1.0, defaultConc)
+	add("SoyPeptone", wtype.LTNSrc, 1.0, defaultConc)
+	add("VegExtract", wtype.LTNSrc, 1.0, defaultConc)
+	add("CSL", wtype.LTNSrc, 1.0, defaultConc)
+	add("NH42SO4", wtype.LTNSrc, 1.0, defaultConc)
+	add("Gluc", wtype.LTNSrc, 1.0, defaultConc)
+	add("Suc", wtype.LTNSrc, 1.0, defaultConc)
+	add("Fruc", wtype.LTNSrc, 1.0, defaultConc)
+	add("Malt", wtype.LTNSrc, 1.0, defaultConc)
+	add("water2", wtype.LTNSrc, 1.0, defaultConc)
+	add("GibsonMastermix", wtype.LTPostMix, 1.0, wunit.NewConcentration(2, "X"))
 	// protein paintbox
 	for _, value := range image.ProteinPaintboxmap {
-		add(value, wtype.LTPostMix, 1.0)
+		add(value, wtype.LTPostMix, 1.0, defaultConc)
 	}
 
 	cmap := make(map[string]*wtype.LHComponent)

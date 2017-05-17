@@ -134,6 +134,13 @@ func DNAregion(sequence wtype.DNASequence, startposition int, endposition int) (
 
 	//define region in sequence to create primer. NB: Sequence position will start from 0 not 1.
 	if endposition > startposition {
+		// fix properly!!!
+		if startposition == 0 {
+			startposition = 1
+		}
+		if endposition > len(dnaseq) {
+			endposition = len(dnaseq) - 1
+		}
 		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:endposition])
 	} else if endposition < startposition && sequence.Plasmid {
 		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:]+dnaseq[:endposition])
@@ -152,6 +159,10 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 
 	//var start int
 	//var end int
+
+	if maxlength > len(seq.Sequence()) {
+		return oligoseq, fmt.Errorf("Sequence %s %s too small to design primer for or max length of primer %d too long", seq.Nm, seq.Seq, maxlength)
+	}
 
 	region := strings.ToUpper(seq.Sequence())
 
@@ -213,6 +224,10 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 	//var end int
 
 	// get the reverse complement of the region
+
+	if maxlength > len(seq.Sequence()) {
+		return oligoseq, fmt.Errorf("Sequence %s %s too small to design primer for or max length of primer %d too long", seq.Nm, seq.Seq, maxlength)
+	}
 
 	region := seq.Sequence()
 	revregion := sequences.RevComp(region)
@@ -490,7 +505,7 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 
 	feature := seq.GetFeatureByName(targetfeaturename)
 	if feature == nil {
-		panicstatement := fmt.Sprintln("feature: ", targetfeaturename, " not found amongst ", seq.FeatureNames())
+		panicstatement := fmt.Sprintf("feature: %s not found amongst features: %+v", targetfeaturename, seq.Features)
 		panic(panicstatement)
 	}
 

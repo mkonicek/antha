@@ -122,6 +122,14 @@ var (
 	}
 )
 
+func validIGEMTypeOptions() string {
+	var options []string
+	for key, _ := range IgemTypeCodes {
+		options = append(options, key)
+	}
+	return strings.Join(options, "\n")
+}
+
 func MakeFastaURL(partname string) (Urlstring string) {
 	// see comment above for structure
 	//<domain> = substance | compound | assay | <other inputs>
@@ -204,17 +212,6 @@ func makeRegistryfile() ([]byte, error) {
 	return ioutil.ReadFile(file)
 }
 
-//[Part name] [First character of status] [Part Id Number] [Part type] [Short description]
-/*
-func ParseFastaOutput(fastaoutput []byte) (fastarecords []FastaPart) {
-
-	fastaFh := bytes.NewReader(fastaoutput)
-
-	fastarecords = FastaParse(fastaFh)
-
-	return fastarecords
-}
-*/
 type FastaPart struct {
 	Part_id         string
 	Desc            string
@@ -267,15 +264,11 @@ func FastaParse(fastaFh io.Reader) []FastaPart {
 			continue
 		}
 
-		// line := scanner.Text()
-
 		if line[0] == '>' {
 			// If we stored a previous identifier, get the DNA string and map to the
 			// identifier and clear the string
 			if header != "" {
-				// outputChannel <- build_fasta(header, seq.String())
 				outputs = append(outputs, Build_fasta(header, seq))
-				// fmt.Println(record.id, len(record.seq))
 				header = ""
 				seq.Reset()
 			}
@@ -299,41 +292,23 @@ func CountPartsinRegistryContaining(keystrings []string) (numberofparts int) {
 	if err != nil {
 		return
 	}
-	/*allparts, err := ioutil.ReadFile("iGem_registry.txt")
-	if err != nil {
-		fmt.Println("error:", err)
-	}*/
+
 	fastaFh := bytes.NewReader(allparts)
 
-	//fasta := parser.FastaParse(allparts)
 	records := make([][]string, 0)
 	seq := make([]string, 0)
-	//seq = []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
 	records = append(records, seq)
 	for _, record := range FastaParse(fastaFh) {
-		/*plasmidstatus := "FALSE"
-		seqtype := "DNA"
-		class := "not specified"*/
 
 		if search.Containsallthings(record.Desc, keystrings) {
 			numberofparts = numberofparts + 1
 		}
-		/*	if strings.Contains(record.Desc, "Amino acid") || strings.Contains(record.Id, "aa") {
-				seqtype = "AA"
-			}
 
-			if strings.Contains(record.Desc, "Class:") {
-				uptoclass := strings.Index(record.Desc, "Class:")
-				prefix := uptoclass + len("class:")
-				class = record.Desc[prefix:]
-			}
-			seq = []string{record.Id, record.Seq, plasmidstatus, seqtype, class}*/
-		/*records = append(records, seq)*/
 	}
 	return numberofparts
 }
 
-func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool) (listofpartIDs []string, idtodescriptionmap map[string]string) {
+func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool) (listofpartIDs []string, idtodescriptionmap map[string]string, err error) {
 
 	idtodescriptionmap = make(map[string]string)
 
@@ -344,26 +319,25 @@ func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool)
 
 	fastaFh := bytes.NewReader(allparts)
 
-	//fasta := parser.FastaParse(allparts)
 	records := make([][]string, 0)
 	seq := make([]string, 0)
-	//seq = []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
 	records = append(records, seq)
 
 	listofpartIDs = make([]string, 0)
 
+	bba_code, ok := IgemTypeCodes[strings.ToUpper(partype)]
+
+	if !ok {
+		err = fmt.Errorf("Part Type %s not found, valid options are: %s", partype, validIGEMTypeOptions())
+		return
+	}
+
 	for _, record := range FastaParse(fastaFh) {
-		/*plasmidstatus := "FALSE"
-		seqtype := "DNA"
-		class := "not specified"*/
-		bba_code, ok := IgemTypeCodes[strings.ToUpper(partype)]
-		i := 0
 
 		if exacttypecodeonly && ok && search.Containsallthings(record.Desc, keystrings) && record.Seq_data != "" && strings.Contains(record.Part_name, bba_code) {
 
 			listofpartIDs = append(listofpartIDs, record.Part_name)
 			idtodescriptionmap[record.Part_name] = record.Desc
-			i++
 		} else if !exacttypecodeonly && search.Containsallthings(record.Desc, keystrings) && strings.Contains(strings.ToUpper(record.Part_type), strings.ToUpper(partype)) && record.Seq_data != "" {
 			listofpartIDs = append(listofpartIDs, record.Part_name)
 			idtodescriptionmap[record.Part_name] = record.Desc
@@ -372,19 +346,8 @@ func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool)
 			idtodescriptionmap[record.Part_name] = record.Desc
 		}
 
-		/*	if strings.Contains(record.Desc, "Amino acid") || strings.Contains(record.Id, "aa") {
-				seqtype = "AA"
-			}
-
-			if strings.Contains(record.Desc, "Class:") {
-				uptoclass := strings.Index(record.Desc, "Class:")
-				prefix := uptoclass + len("class:")
-				class = record.Desc[prefix:]
-			}
-			seq = []string{record.Id, record.Seq, plasmidstatus, seqtype, class}*/
-		/*records = append(records, seq)*/
 	}
-	return listofpartIDs, idtodescriptionmap
+	return listofpartIDs, idtodescriptionmap, nil
 }
 
 func ParseOutput(xmldata []byte) (parsedxml Rsbpml) {
@@ -393,8 +356,6 @@ func ParseOutput(xmldata []byte) (parsedxml Rsbpml) {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-
-	//fmt.Println(parsedxml)
 
 	return parsedxml
 }
@@ -414,47 +375,32 @@ func LookUp(parts []string) (parsedxml Rsbpml) {
 	if len(parts) > 14 {
 
 		partslice := parts[0:14]
-		//fmt.Println("len(partslice) =", len(partslice))
 
 		parsedxml = Partpropertiesmini(partslice)
 
-		//var parts []Part
 		newparsedxml := make([]Part, 0)
-		//	fmt.Println("len(parsedxml.Partlist[0].Parts) =", len(parsedxml.Partlist[0].Parts))
 		for _, part := range parsedxml.Partlist[0].Parts {
 			newparsedxml = append(newparsedxml, part)
 		}
 
 		var parsedxml Rsbpml
-		//n := 0
 		partsleft := (len(parts) - len(partslice))
-		/*if partsleft > 10 {
-			n = 10
-		} else {
-			n = len(parts) - 10
-		}
-		*/
+		fmt.Println("parts left = ", partsleft)
 		for i := 10; i < len(parts); i = i + 14 {
 			partslice = parts[i : i+14]
 			parsedxml = Partpropertiesmini(partslice)
-			//	fmt.Println("len(parsedxml.Partlist[0].Parts) =", len(parsedxml.Partlist[0].Parts))
 			for _, part := range parsedxml.Partlist[0].Parts {
 				newparsedxml = append(newparsedxml, part)
-				//			fmt.Println("len(newparsedxml)", len(newparsedxml))
 			}
 			var parsedxml Rsbpml
 			partsleft = partsleft - len(partslice)
-			fmt.Println("parts left = ", partsleft)
 			if partsleft < 14 {
-				//for i := 0; i < len(parts); i = i + 10 {
 				partslice = parts[len(parts)-partsleft : len(parts)]
 				parsedxml = Partpropertiesmini(partslice)
 
 				for _, part := range parsedxml.Partlist[0].Parts {
 					newparsedxml = append(newparsedxml, part)
-					//				fmt.Println("len(newparsedxml)", len(newparsedxml))
 					parsedxml.Partlist[0].Parts = newparsedxml
-					//				fmt.Println("newparsedxml", newparsedxml)
 
 				}
 				{
@@ -470,7 +416,6 @@ func LookUp(parts []string) (parsedxml Rsbpml) {
 }
 
 // Add Get funcs to get data from Rsbpml? Would be much faster
-
 func (parsedxml *Rsbpml) Sequence(partname string) (sequence string) {
 
 	for _, part := range parsedxml.Partlist[0].Parts {
@@ -503,7 +448,6 @@ func (parsedxml *Rsbpml) Categories(partname string) (result Categories) {
 		}
 	}
 
-	//result = strings.ToUpper(result)
 	return
 }
 
@@ -600,11 +544,6 @@ func GetResults(partname string) (results string) {
 // change to object based method call
 func GetResultsfromSubset(partname string, parsedxml Rsbpml) (results string) {
 
-	/*parts := make([]string, 0)
-	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml = ParseOutput(urloutput)*/
 	for _, part := range parsedxml.Partlist[0].Parts {
 		if part.Part_name == partname {
 			results = part.Part_results
@@ -612,8 +551,6 @@ func GetResultsfromSubset(partname string, parsedxml Rsbpml) (results string) {
 	}
 
 	results = strings.ToUpper(results)
-
-	//desc = parsedxml.Partlist[0].Parts[0].Part_short_desc // [0].Seq_data
 
 	return results
 }
@@ -646,11 +583,6 @@ func GetDescription(partname string) (desc string) {
 
 func GetDescriptionfromSubset(partname string, parsedxml Rsbpml) (desc string) {
 
-	/*parts := make([]string, 0)
-	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml = ParseOutput(urloutput)*/
 	for _, part := range parsedxml.Partlist[0].Parts {
 		if part.Part_name == partname {
 			desc = part.Part_short_desc
@@ -658,8 +590,6 @@ func GetDescriptionfromSubset(partname string, parsedxml Rsbpml) (desc string) {
 	}
 
 	desc = strings.ToUpper(desc)
-
-	//desc = parsedxml.Partlist[0].Parts[0].Part_short_desc // [0].Seq_data
 
 	return desc
 }
@@ -739,10 +669,6 @@ type Scar struct {
 	Scar_sequence string `xml:"scar_sequence"`
 }
 
-/*type Sequences struct {
-	Sequencelist []Sequence `xml:"sequences"`
-}
-*/
 type Sequence struct {
 	Seq_data string `xml:"seq_data"`
 }

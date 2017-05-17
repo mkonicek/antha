@@ -27,11 +27,12 @@ import (
 	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"encoding/json"
+	"math/rand"
+	"strings"
+
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/blast"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"math/rand"
-	"strings"
 )
 
 // the following are all physical things; we need a way to separate
@@ -321,10 +322,12 @@ func (seq *DNASequence) MolecularWeight() float64 {
 	phosphate3prime := seq.Overhang3prime.Phosphorylation
 	singlestranded := seq.Singlestranded
 
-	numberofAs := strings.Count(fwdsequence, "A")
-	numberofTs := strings.Count(fwdsequence, "T")
-	numberofCs := strings.Count(fwdsequence, "C")
-	numberofGs := strings.Count(fwdsequence, "G")
+	upperCase := func(s string) string { return strings.ToUpper(s) }
+
+	numberofAs := strings.Count(upperCase(fwdsequence), "A")
+	numberofTs := strings.Count(upperCase(fwdsequence), "T")
+	numberofCs := strings.Count(upperCase(fwdsequence), "C")
+	numberofGs := strings.Count(upperCase(fwdsequence), "G")
 	massofAs := (float64(numberofAs) * nucleotidegpermol["A"])
 	massofTs := (float64(numberofTs) * nucleotidegpermol["T"])
 	massofCs := (float64(numberofCs) * nucleotidegpermol["C"])
@@ -524,4 +527,16 @@ func Comp(s string) string {
 func RevComp(s string) string {
 	s = strings.ToUpper(s)
 	return Comp(Rev(s))
+}
+
+type DNASeqSet []*DNASequence
+
+func (dss DNASeqSet) AsBioSequences() []BioSequence {
+	r := make([]BioSequence, len(dss))
+
+	for i := 0; i < len(dss); i++ {
+		r[i] = BioSequence(dss[i])
+	}
+
+	return r
 }

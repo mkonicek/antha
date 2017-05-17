@@ -20,10 +20,10 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -48,21 +48,37 @@ type LHComponent struct {
 	Vunit              string
 	Cunit              string
 	Tvol               float64
-	Smax               float64
+	Smax               float64 // maximum solubility
 	Visc               float64
 	StockConcentration float64
 	Extra              map[string]interface{}
-	Loc                string
+	Loc                string // refactor to PlateLocation
 	Destination        string
 }
 
-func (lhc *LHComponent) Generation() int {
-	g, ok := lhc.Extra["Generation"]
+func (lhc *LHComponent) PlateLocation() PlateLocation {
+	return PlateLocationFromString(lhc.Loc)
+}
 
-	if ok {
-		return g.(int)
+func (lhc *LHComponent) CNID() string {
+	return fmt.Sprintf("CNID:%s:%s", lhc.CName, lhc.ID)
+}
+
+func (lhc *LHComponent) Generation() int {
+	gen, ok := lhc.Extra["Generation"]
+	if !ok {
+		return 0
 	}
 
+	genInt, ok := gen.(int)
+	if ok {
+		return genInt
+	}
+
+	genFloat, ok := gen.(float64)
+	if ok {
+		return int(genFloat)
+	}
 	return 0
 }
 
@@ -143,20 +159,44 @@ func (lhc *LHComponent) Name() string {
 }
 
 func (lhc *LHComponent) TypeName() string {
-	return LiquidTypeName(lhc.Type)
+	return LiquidTypeName(lhc.Type).String()
 }
 
 func (lhc *LHComponent) Volume() wunit.Volume {
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
-func (lhc *LHComponent) Remove(v wunit.Volume) {
-	///TODO -- catch errors
+func (lhc *LHComponent) Remove(v wunit.Volume) wunit.Volume {
+	v2 := lhc.Volume()
+
+	if v2.LessThan(v) {
+		lhc.Vol = (0.0)
+		return v2
+	}
+
 	lhc.Vol -= v.ConvertToString(lhc.Vunit)
 
-	if lhc.Vol < 0.0 {
-		lhc.Vol = 0.0
+	return v
+}
+
+func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
+	if lhc.IsZero() {
+		return nil, fmt.Errorf("Cannot sample empty component")
+	} else if lhc.Volume().EqualTo(v) {
+		return lhc, nil
 	}
+
+	c := lhc.Dup()
+	c.ID = NewUUID()
+	v2 := lhc.Remove(v)
+	c.Vunit = v2.Unit().PrefixedSymbol()
+	c.Vol = v2.RawValue()
+	c.AddParentComponent(lhc)
+	lhc.AddDaughterComponent(c)
+	c.Loc = ""
+	c.Destination = ""
+
+	return c, nil
 }
 
 func (lhc *LHComponent) Dup() *LHComponent {
@@ -308,6 +348,13 @@ func (lhc *LHComponent) Concentration() (conc wunit.Concentration) {
 	return conc
 }
 
+func (lhc *LHComponent) HasConcentration() bool {
+	if lhc.Conc != 0.0 && lhc.Cunit != "" {
+		return true
+	}
+	return false
+}
+
 // Sets concentration to an LHComponent; assumes conc is valid; overwrites existing concentration
 func (lhc *LHComponent) SetConcentration(conc wunit.Concentration) {
 	lhc.Conc = conc.RawValue()
@@ -319,7 +366,7 @@ func (lhc *LHComponent) GetVunit() string {
 }
 
 func (lhc *LHComponent) GetType() string {
-	return LiquidTypeName(lhc.Type)
+	return LiquidTypeName(lhc.Type).String()
 }
 
 func NewLHComponent() *LHComponent {
@@ -420,4 +467,122 @@ func parseTree(p string, g *graph.StringGraph) []string {
 	}
 
 	return newnodes
+}
+
+func (lhc *LHComponent) AddVolumeRule(minvol, maxvol float64, pol LHPolicy) error {
+	lhpr, err := lhc.GetPolicies()
+
+	if err != nil {
+		return err
+	}
+
+	rulenum := len(lhpr.Rules)
+
+	name := fmt.Sprintf("UserRule%d", rulenum+1)
+
+	rule := NewLHPolicyRule(name)
+	err = rule.AddNumericConditionOn("VOLUME", minvol, maxvol)
+	if err != nil {
+		return err
+	}
+	lhpr.AddRule(rule, pol)
+
+	err = rule.AddCategoryConditionOn("INSTANCE", lhc.ID)
+	if err != nil {
+		return err
+	}
+
+	err = lhc.SetPolicies(lhpr)
+
+	return err
+}
+
+func (lhc *LHComponent) AddPolicy(pol LHPolicy) error {
+	lhpr, err := lhc.GetPolicies()
+
+	if err != nil {
+		return err
+	}
+
+	rulenum := len(lhpr.Rules)
+
+	name := fmt.Sprintf("UserRule%d", rulenum+1)
+
+	rule := NewLHPolicyRule(name)
+	err = rule.AddCategoryConditionOn("INSTANCE", lhc.ID)
+	if err != nil {
+		return err
+	}
+	lhpr.AddRule(rule, pol)
+
+	err = lhc.SetPolicies(lhpr)
+
+	return err
+
+}
+
+// in future this will be deprecated... should not let user completely reset policies
+func (lhc *LHComponent) SetPolicies(rs *LHPolicyRuleSet) error {
+	buf, err := json.Marshal(rs)
+
+	if err == nil {
+		lhc.Extra["Policies"] = string(buf)
+	}
+
+	return err
+}
+
+func (lhc *LHComponent) GetPolicies() (*LHPolicyRuleSet, error) {
+	var rs LHPolicyRuleSet
+	var err error
+
+	if lhc.Extra == nil {
+		return NewLHPolicyRuleSet(), err
+	}
+
+	ent, ok := lhc.Extra["Policies"]
+
+	if !ok {
+		return NewLHPolicyRuleSet(), err
+	}
+
+	s, ok := ent.(string)
+
+	if !ok {
+		err = fmt.Errorf("Wrong type for policies entry (%v)", ent)
+		return &rs, err
+	}
+
+	ba := []byte(s)
+
+	err = json.Unmarshal(ba, &rs)
+	return &rs, err
+}
+
+func (lhc *LHComponent) IsValuable() bool {
+	if lhc.Extra == nil {
+		return false
+	}
+
+	v, ok := lhc.Extra["valuable"]
+
+	if !ok {
+		return false
+	}
+
+	b, ok := v.(bool)
+
+	if !ok {
+		return false
+	}
+
+	return b
+}
+
+func (lhc *LHComponent) SetValue(b bool) {
+	if lhc.Extra == nil {
+		lhc.Extra = make(map[string]interface{})
+	}
+
+	lhc.Extra["valuable"] = b
 }

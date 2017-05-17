@@ -48,7 +48,7 @@ func TestTypeSugaring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	compiler.sugarForTypes(expr)
+	ast.Inspect(expr, compiler.inspectForSugar)
 	var buf1, buf2 bytes.Buffer
 	if err := compiler.Fprint(&buf1, fset, expr); err != nil {
 		t.Fatal(err)

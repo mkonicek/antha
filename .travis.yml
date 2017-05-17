@@ -1,12 +1,14 @@
 language: go
 go:
-  - 1.7
+- 1.7
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y libglpk-dev libopencv-dev libcv-dev libhighgui-dev
-  - go get golang.org/x/net/context
+- sudo apt-get update -qq
+- sudo apt-get install -y libglpk-dev libopencv-dev libcv-dev libhighgui-dev protobuf-compiler
+- go get github.com/golang/protobuf/proto
+- go get github.com/golang/protobuf/protoc-gen-go
+- go get golang.org/x/net/context
+- go get google.golang.org/grpc
 script: make test
 notifications:
-  hipchat:
-    rooms:
-      secure: oRlFaQSGPEs0Rgnvg13A3HTcKQH0byULQm6Ak6zLTPdNkkMMS7Sr1i0Gi+KuX22hQxRh76E6lDXxrc4D3RWix+RdjRrwP6s2KRJxTCHkx9tMOdrRQNJyEx8amwcn1/9PEymqPu2R1tm47/mNMz849KusTJ/AbWQxgDQfnjjwH5SoNuS0s0SfJKWEVaFMlHsM3PDZGZkQ41IgczGpTkwPgsCAFBlDEtMPsi0k0RqnSVriANgesNzW07N9tpVkwYBhLuIE3j7AZAY9fPY0XM2ZjDmfODu9S7BxMLSrG62YlaefPw2EdH6vv2j0kC5FWaVClBFv2EznNcyajwlnyBKJPUeN2iZjY5lMC1vjdtokFRvXf7IMMhk4ofLJg3uVkB3xcP7x3Tk71X2AVHEJ9I+RQrRW92tP5YPvNxvboyIvQvid8z+NjPrE/hFFLiAYUWNVQdqX9F6I0ols7tP3KWuPGz+sFFueY5M/+OXH3AbogJk9NFgsczlO0T8uU5KJR6A+80U6LrXKYG6TA8dvR7AAJGZXzas45ABHTng0Io8tIWhn5naJYSDN7EGErea3HtbmJlSPCgYOaO/U3Y9YMh5fnP/Lp7KPwAIy780rwCBnrNFTUaHLGHCe13WF5KkXy+lcdy/G1HG6/eFzgJ7lPeAtUxZAudfpW9z4cNBhAmcNu18=
+  slack:
+    secure: P2JFOgAACLACdu7mq7fn8quA9zQL+bjrxUTY4r5+h96kY18ftBaL9xkURhmyxBS31fh4odI4LHy1Se6vRCZQfL7+AzzBqDrkjwezjN1TXY8XCFR3kV/Qes6QFFA4gYaSHYPw7ump+iU36EtR3veXf6eRmdu3WWuiRxCm/LS1y6qfhdnqVEO4x9/xLwyA6mnxTJ8AM9VS772Do6vrPSTGk2KhAj4Hy5kBZCeNf1vIJAKDj5e8oqUwfbZeRlHj9oPTISBlFYXmYdDM9iaVgtRoRNiuHl4NBdqIgDyhYo/Pqetg+JeZjWdOkMH9uu3p9tkEoJ371uDaoGpRf61ptfvxowr697IrWGiMXSNjKrxoKAvchUBUggFvklFCUlhxG1GQvEgG39GrT6rQswQSTwbU09ZHlpno7H4X3QedjeyEe0s/yfypHyQBjkS4JsPqGuEhdOov9i0lAeLd0tgU4DRjdhOfbFmR+TgvvQU7OTQ95+XRl4T6jUbIJoHvuYny+OyEyxHeT00Zo3gtlmuJOxmxGnxBqnVgZkglPI2D2AIT1do88lg70hnGMmuenTlP4gPUk9VT2iaCDZIwSA0O4c5UjGlxVieoO2L4mNbwAZJr3YBS/izyLqM6CUf2i9TzxuKPwsu1XRzeW3U+IgguqU4mvyYopyLnkzD7MuF52WXqbho=

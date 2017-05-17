@@ -229,7 +229,8 @@ func MolesDNA(mass wunit.Mass, mw float64) (moles float64) {
 
 // calculate molar concentration of DNA sample
 func GtoMolarConc(conc wunit.Concentration, mw float64) (molesperL float64) {
-	concSI := conc.SIValue()
+	// convert SI kg/l into g/l
+	concSI := conc.SIValue() * 1000
 	molesperL = concSI / mw
 	return molesperL
 }

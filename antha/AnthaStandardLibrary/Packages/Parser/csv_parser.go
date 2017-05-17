@@ -197,3 +197,58 @@ func Assemblyfromcsv(designfile string, partsfile string) (assemblyparameters []
 
 	return assemblyparameters
 }
+
+func PCRReactionfromcsv(designfile string) (pcrReaction []PCRReaction) {
+	designedconstructs := ReadPCRDesign(designfile)
+	for _, c := range designedconstructs {
+		var newpcrReaction PCRReaction
+		newpcrReaction.ReactionName = c[0]
+		newpcrReaction.Template = c[1]
+		newpcrReaction.PrimerPair[0] = c[2]
+		newpcrReaction.PrimerPair[1] = c[3]
+		pcrReaction = append(pcrReaction, newpcrReaction)
+	}
+	return
+}
+
+func ReadPCRDesign(filename string) [][]string {
+
+	var constructs [][]string
+
+	csvfile, err := os.Open(filename)
+
+	if err != nil {
+		fmt.Println(err)
+		return constructs
+	}
+
+	defer csvfile.Close()
+
+	reader := csv.NewReader(csvfile)
+
+	reader.FieldsPerRecord = -1 // see the Reader struct information below
+
+	rawCSVdata, err := reader.ReadAll()
+
+	if err != nil {
+		panic(err)
+	}
+
+	// sanity check, display to standard output
+	for _, each := range rawCSVdata {
+		var parts []string
+
+		if len(each[0]) > 0 {
+			if string(strings.TrimSpace(each[0])[0]) != "#" {
+				for _, p := range each {
+					if p != "" {
+						parts = append(parts, strings.TrimSpace(p))
+					}
+				}
+				constructs = append(constructs, parts)
+			}
+		}
+	}
+
+	return constructs
+}

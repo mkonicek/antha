@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/tealeg/xlsx"
 )
 
@@ -156,7 +157,6 @@ func xlsxparserBinary(data []byte, sheetIndex int, outputprefix string) (f *os.F
 	if err != nil {
 		return
 	}
-
 	printer := func(s string) {
 		_, _ = f.WriteString(s)
 	}
@@ -176,4 +176,23 @@ func ParseExcelBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 	} else {
 		return Assemblyfromcsv(dl.Name(), pl.Name()), nil
 	}
+}
+
+type PCRReaction struct {
+	ReactionName string
+	Template     string
+	PrimerPair   [2]string
+}
+
+func ParsePCRExcel(filename wtype.File) ([]PCRReaction, error) {
+	data, err := filename.ReadAll()
+	var pcrreaction []PCRReaction
+	if err != nil {
+		err = fmt.Errorf(err.Error())
+	} else {
+		pl, err := xlsxparserBinary(data, 0, "Sheet1")
+		pcrreaction = PCRReactionfromcsv(pl.Name())
+		return pcrreaction, err
+	}
+	return pcrreaction, err
 }

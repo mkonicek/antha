@@ -93,52 +93,125 @@ func (lhc *LHComponent) IsZero() bool {
 	return false
 }
 
-// Adds DNASequence to the LHComponent. If a Sequence already exists an error is returned and the sequence is not replaced
-func (lhc *LHComponent) SetDNASequence(seq DNASequence) error {
-	g, ok := lhc.Extra["DNASequence"]
+const SEQSKEY = "DNASequences"
 
-	if ok {
-		gseqeunce := g.(DNASequence)
-		return fmt.Errorf("LHComponent already contains sequence ", gseqeunce.Name())
-	} else {
-		lhc.Extra["DNASequence"] = seq
-		return nil
+// Return a component list from a component.
+// Users should use getSubComponents function.
+func (lhc *LHComponent) getSequences() (seqs []DNASequence, err error) {
+
+	seqsValue, found := lhc.Extra[SEQSKEY]
+
+	if !found {
+		return seqs, fmt.Errorf("No Sequences list found")
 	}
 
+	_, ok := seqsValue.([]DNASequence)
+
+	if !ok {
+		return seqs, fmt.Errorf("Looking for sequences in LHComponent %s but object is not an array of DNASequences", lhc.Name())
+	}
+
+	var bts []byte
+
+	bts, err = json.Marshal(seqsValue)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(bts, &seqs)
+
+	if err != nil {
+		err = fmt.Errorf("Problem getting %s sequences. Sequences found: %+v; error: %s", lhc.Name(), seqsValue, err.Error())
+	}
+
+	return
+}
+
+// Add a component list to a component.
+// Any existing component list will be overwritten.
+// Users should use add SubComponents function
+func (lhc *LHComponent) setSequences(seqList []DNASequence) error {
+
+	lhc.Extra[SEQSKEY] = seqList
+
 	return nil
+}
+
+func containsSeq(seqs []DNASequence, seq DNASequence, checkSeqs bool) (bool, []int) {
+
+	var positionsFound []int
+
+	for i := range seqs {
+		if !checkSeqs {
+			if seqs[i].Name() == seq.Name() {
+				positionsFound = append(positionsFound, i)
+			}
+		} else {
+			if seqs[i].Sequence() == seq.Sequence() && seqs[i].Plasmid == seq.Plasmid {
+				positionsFound = append(positionsFound, i)
+			}
+		}
+	}
+
+	if len(positionsFound) > 0 {
+		return true, positionsFound
+	}
+
+	return false, positionsFound
+}
+
+// Adds DNASequence to the LHComponent. If a Sequence already exists an error is returned and the sequence is not replaced
+func (lhc *LHComponent) AddDNASequence(seq DNASequence) error {
+
+	seqList, err := lhc.getSequences()
+
+	if err != nil {
+		return err
+	}
+
+	if found, _ := containsSeq(seqList, seq, true); found {
+		return fmt.Errorf("LHComponent %s already contains sequence %s in sequences %+v", seq.Name(), seqList)
+	}
+
+	seqList = append(seqList, seq)
+	err = lhc.setSequences(seqList)
+
+	return err
 }
 
 // Replaces an existing DNASequence to the LHComponent. If a Sequence does not exist, the sequence is added and an error is returned
 func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
-	_, ok := lhc.Extra["DNASequence"]
 
-	if !ok {
-		lhc.Extra["DNASequence"] = seq
-		return fmt.Errorf("No previous DNASequence found; added sequence ", seq.Name())
-	} else {
-		lhc.Extra["DNASequence"] = seq
-		return nil
+	seqList, err := lhc.getSequences()
+
+	if err != nil {
+		return err
 	}
 
-	return nil
+	if found, positions := containsSeq(seqList, seq, true); found {
+		if len(positions) > 1 {
+			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v in sequences %+v", seq.Name(), positions, seqList)
+		}
+		if len(positions) == 1 {
+			seqList[positions[0]] = seq
+			err = lhc.setSequences(seqList)
+			return err
+		}
+	}
+
+	err = lhc.AddDNASequence(seq)
+
+	if err != nil {
+		return err
+	}
+
+	return fmt.Errorf("Sequence %s did not previously exist in %s so added.", seq.Name(), lhc.Name())
 }
 
 // Returns a DNA Sequence asociated with an LHComponent.
-// A boolean is also returned indicating whether a sequence was found.
-func (lhc *LHComponent) DNASequence() (DNASequence, bool) {
-
-	var seq DNASequence
-
-	g, ok := lhc.Extra["DNASequence"]
-
-	if !ok {
-		return seq, false
-	} else {
-		seq = g.(DNASequence)
-		return seq, true
-	}
-
-	return seq, false
+// An error is also returned indicating whether a sequence was found.
+func (lhc *LHComponent) DNASequences() ([]DNASequence, error) {
+	return lhc.getSequences()
 }
 
 func (lhc *LHComponent) SetVolume(v wunit.Volume) {

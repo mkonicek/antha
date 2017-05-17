@@ -316,7 +316,7 @@ func (p *compiler) transform(src *ast.File) {
 		src.Name.Name = p.Package
 	}
 
-	p.sugarAST(src.Decls)
+	p.sugarDecls(src.Decls)
 	p.removeParamDecls(src)
 
 	var imports []string
@@ -638,19 +638,50 @@ func init() {
 }
 
 // Update AST for antha semantics
-func (p *compiler) sugarAST(d []ast.Decl) {
-	for i := range d {
-		switch decl := d[i].(type) {
-		case *ast.AnthaDecl:
-			ast.Inspect(decl.Body, p.inspectForIntrinsics)
-			ast.Inspect(decl.Body, p.inspectForParams)
-			ast.Inspect(decl.Body, p.inspectForSugar)
-		}
+func (p *compiler) sugarDecls(decls []ast.Decl) {
+	for _, d := range decls {
+		p.sugarDecl(d)
 	}
 }
 
+func (p *compiler) sugarDecl(d ast.Decl) {
+	switch d := d.(type) {
+	case *ast.AnthaDecl:
+		ast.Inspect(d.Body, p.inspectForIntrinsics)
+		ast.Inspect(d.Body, p.inspectForParams)
+		ast.Inspect(d.Body, p.inspectForSugar)
+	case *ast.GenDecl:
+		d.Specs = p.sugarSpecs(d.Specs)
+	case *ast.FuncDecl:
+		d.Recv = p.sugarFieldList(d.Recv)
+		d.Type = p.sugarExpr(d.Type).(*ast.FuncType)
+		ast.Inspect(d.Body, p.inspectForSugar)
+	}
+}
+
+func (p *compiler) sugarSpecs(specs []ast.Spec) (ret []ast.Spec) {
+	for _, spec := range specs {
+		ret = append(ret, p.sugarSpec(spec))
+	}
+	return
+}
+
+func (p *compiler) sugarSpec(spec ast.Spec) ast.Spec {
+	switch spec := spec.(type) {
+	case *ast.TypeSpec:
+		return &ast.TypeSpec{
+			Comment: spec.Comment,
+			Doc:     spec.Doc,
+			Name:    spec.Name,
+			Type:    p.sugarExpr(spec.Type),
+		}
+	}
+
+	return spec
+}
+
 // Return appropriate nested SelectorExpr for the replacement for Identifier
-func (p *compiler) sugarForIdent(t *ast.Ident) ast.Expr {
+func (p *compiler) sugarIdent(t *ast.Ident) ast.Expr {
 	v, ok := p.types[t.Name]
 	if !ok {
 		return t
@@ -665,38 +696,70 @@ func (p *compiler) sugarForIdent(t *ast.Ident) ast.Expr {
 }
 
 // Return appropriate go type for an antha (type) expr
-func (p *compiler) sugarForType(t ast.Expr) ast.Expr {
+func (p *compiler) sugarExpr(t ast.Expr) ast.Expr {
 	switch t := t.(type) {
 	case nil:
 	case *ast.Ident:
-		return p.sugarForIdent(t)
+		return p.sugarIdent(t)
 
 	case *ast.ParenExpr:
-		return &ast.ParenExpr{Lparen: t.Lparen, X: p.sugarForType(t.X), Rparen: t.Rparen}
+		return &ast.ParenExpr{
+			Lparen: t.Lparen,
+			X:      p.sugarExpr(t.X),
+			Rparen: t.Rparen,
+		}
 
 	case *ast.SelectorExpr:
 		return t
 
 	case *ast.StarExpr:
-		return &ast.StarExpr{Star: t.Star, X: p.sugarForType(t.X)}
+		return &ast.StarExpr{
+			Star: t.Star,
+			X:    p.sugarExpr(t.X),
+		}
 
 	case *ast.ArrayType:
-		return &ast.ArrayType{Lbrack: t.Lbrack, Len: t.Len, Elt: p.sugarForType(t.Elt)}
+		return &ast.ArrayType{
+			Lbrack: t.Lbrack,
+			Len:    t.Len,
+			Elt:    p.sugarExpr(t.Elt),
+		}
 
 	case *ast.StructType:
-		return &ast.StructType{Struct: t.Struct, Fields: p.sugarForFieldList(t.Fields), Incomplete: t.Incomplete}
+		return &ast.StructType{
+			Struct:     t.Struct,
+			Fields:     p.sugarFieldList(t.Fields),
+			Incomplete: t.Incomplete,
+		}
 
 	case *ast.FuncType:
-		return &ast.FuncType{Func: t.Func, Params: p.sugarForFieldList(t.Params), Results: p.sugarForFieldList(t.Results)}
+		return &ast.FuncType{
+			Func:    t.Func,
+			Params:  p.sugarFieldList(t.Params),
+			Results: p.sugarFieldList(t.Results),
+		}
 
 	case *ast.InterfaceType:
-		return &ast.InterfaceType{Interface: t.Interface, Methods: p.sugarForFieldList(t.Methods), Incomplete: t.Incomplete}
+		return &ast.InterfaceType{
+			Interface:  t.Interface,
+			Methods:    p.sugarFieldList(t.Methods),
+			Incomplete: t.Incomplete,
+		}
 
 	case *ast.MapType:
-		return &ast.MapType{Map: t.Map, Key: p.sugarForType(t.Key), Value: p.sugarForType(t.Value)}
+		return &ast.MapType{
+			Map:   t.Map,
+			Key:   p.sugarExpr(t.Key),
+			Value: p.sugarExpr(t.Value),
+		}
 
 	case *ast.ChanType:
-		return &ast.ChanType{Begin: t.Begin, Arrow: t.Arrow, Dir: t.Dir, Value: p.sugarForType(t.Value)}
+		return &ast.ChanType{
+			Begin: t.Begin,
+			Arrow: t.Arrow,
+			Dir:   t.Dir,
+			Value: p.sugarExpr(t.Value),
+		}
 
 	default:
 		log.Panicf("unexpected expression %s of type %s", t, reflect.TypeOf(t))
@@ -705,13 +768,13 @@ func (p *compiler) sugarForType(t ast.Expr) ast.Expr {
 	return t
 }
 
-func (p *compiler) sugarForFieldList(t *ast.FieldList) *ast.FieldList {
+func (p *compiler) sugarFieldList(t *ast.FieldList) *ast.FieldList {
 	if t == nil {
 		return nil
 	}
 	var fields []*ast.Field
 	for _, f := range t.List {
-		fields = append(fields, &ast.Field{Doc: f.Doc, Names: f.Names, Type: p.sugarForType(f.Type), Tag: f.Tag, Comment: f.Comment})
+		fields = append(fields, &ast.Field{Doc: f.Doc, Names: f.Names, Type: p.sugarExpr(f.Type), Tag: f.Tag, Comment: f.Comment})
 	}
 	return &ast.FieldList{Opening: t.Opening, List: fields, Closing: t.Closing}
 }
@@ -723,36 +786,36 @@ func (p *compiler) inspectForSugar(n ast.Node) bool {
 		return false
 
 	case *ast.MapType:
-		n.Key = p.sugarForType(n.Key)
-		n.Value = p.sugarForType(n.Value)
+		n.Key = p.sugarExpr(n.Key)
+		n.Value = p.sugarExpr(n.Value)
 		return false
 
 	case *ast.ArrayType:
-		n.Elt = p.sugarForType(n.Elt)
+		n.Elt = p.sugarExpr(n.Elt)
 		return false
 
 	case *ast.ChanType:
-		n.Value = p.sugarForType(n.Value)
+		n.Value = p.sugarExpr(n.Value)
 		return false
 
 	case *ast.Field:
-		n.Type = p.sugarForType(n.Type)
+		n.Type = p.sugarExpr(n.Type)
 		return false
 
 	case *ast.FuncLit:
-		n.Type = p.sugarForType(n.Type).(*ast.FuncType)
+		n.Type = p.sugarExpr(n.Type).(*ast.FuncType)
 		return false
 
 	case *ast.CompositeLit:
-		n.Type = p.sugarForType(n.Type)
+		n.Type = p.sugarExpr(n.Type)
 		return false
 
 	case *ast.TypeAssertExpr:
-		n.Type = p.sugarForType(n.Type)
+		n.Type = p.sugarExpr(n.Type)
 		return false
 
 	case *ast.ValueSpec:
-		n.Type = p.sugarForType(n.Type)
+		n.Type = p.sugarExpr(n.Type)
 		return false
 	}
 

@@ -147,7 +147,9 @@ func containsSeq(seqs []DNASequence, seq DNASequence, checkSeqs bool) (bool, []i
 				positionsFound = append(positionsFound, i)
 			}
 		} else {
-			if strings.ToUpper(seqs[i].Sequence()) == strings.ToUpper(seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
+			if seqs[i].Name() == seq.Name() {
+				positionsFound = append(positionsFound, i)
+			} else if strings.ToUpper(seqs[i].Sequence()) == strings.ToUpper(seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
 				positionsFound = append(positionsFound, i)
 			}
 		}
@@ -163,18 +165,15 @@ func containsSeq(seqs []DNASequence, seq DNASequence, checkSeqs bool) (bool, []i
 // Adds DNASequence to the LHComponent. If a Sequence already exists an error is returned and the sequence is not replaced
 func (lhc *LHComponent) AddDNASequence(seq DNASequence) error {
 
-	seqList, err := lhc.getSequences()
-
-	if err != nil {
-		return err
-	}
+	// skip error checking: if no sequence list is present one will be created later anyway
+	seqList, _ := lhc.getSequences()
 
 	if _, positions, err := lhc.FindDNASequence(seq); err == nil {
-		return fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v", seq.Name(), positions, seqList)
+		return fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v", lhc.Name(), seq.Name(), positions, seqList)
 	}
 
 	seqList = append(seqList, seq)
-	err = lhc.setSequences(seqList)
+	err := lhc.setSequences(seqList)
 
 	return err
 }
@@ -200,6 +199,7 @@ func (lhc *LHComponent) FindDNASequence(seq DNASequence) (seqs []DNASequence, po
 	for i := range positions {
 		seqs = append(seqs, seqList[i])
 	}
+
 	return
 }
 
@@ -217,7 +217,7 @@ func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 
 	if seqs, positions, err := lhc.FindDNASequence(seq); err == nil {
 		if len(positions) > 1 {
-			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v: %+v", seq.Name(), positions, seqs)
+			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v: %+v", lhc.Name(), seq.Name(), positions, seqs)
 		}
 		if len(positions) == 1 {
 			seqList[positions[0]] = seq
@@ -238,7 +238,7 @@ func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 func deleteSeq(seqList []DNASequence, position int) (newseqList []DNASequence, err error) {
 
 	if position >= len(seqList) {
-		return seqList, fmt.Errorf("Cannot delete sequence from positon in %d in sequence list as list only contains %d entries", position, len(seqList))
+		return seqList, fmt.Errorf("Cannot delete sequence from position in %d in sequence list as list only contains %d entries", position, len(seqList))
 	}
 
 	if position == 0 {

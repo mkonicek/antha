@@ -332,7 +332,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	wellxoffset = 18.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 5.0       // distance from top left side of plate to first well
-	ystart = 5.0       // distance from top left side of plate to first well
+	ystart = 10.0      // distance from top left side of plate to first well
 	zstart = 6.0       // offset of bottom of deck to bottom of well
 
 	welltype2mleppy := wtype.NewLHWell("2mlEpp", "", "", "ul", 2000, 25, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
@@ -344,8 +344,8 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	wellxoffset = 18.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
-	xstart = 5.0       // distance from top left si z9fdJwde of plate to first well
-	ystart = 5.0       // distance from top left side of plate to first well
+	xstart = 5.0       // distance from top left side of plate to first well
+	ystart = 10.0      // distance from top left side of plate to first well
 	zstart = 7.0 - 1.0 // offset of bottom of deck to bottom of well
 
 	welltypesmallereppy := wtype.NewLHWell("1.5mlEpp", "", "", "ul", 1500, 50, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
@@ -357,8 +357,8 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	wellxoffset = 36.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
-	xstart = 13.5      // distance from top left si z9fdJwde of plate to first well
-	ystart = 5.0       // distance from top left side of plate to first well
+	xstart = 13.5      // distance from top left side of plate to first well
+	ystart = 10.0      // distance from top left side of plate to first well
 	zstart = 7.0 - 1.0 // offset of bottom of deck to bottom of well
 
 	plate = wtype.NewLHPlate("eppendorfrack424_1.5ml_lidholder", "Unknown", 4, 3, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)

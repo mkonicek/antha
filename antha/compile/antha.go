@@ -316,7 +316,7 @@ func (p *compiler) transform(src *ast.File) {
 		src.Name.Name = p.Package
 	}
 
-	p.sugarAST(src.Decls)
+	p.sugar(src.Decls)
 	p.removeParamDecls(src)
 
 	var imports []string
@@ -638,19 +638,21 @@ func init() {
 }
 
 // Update AST for antha semantics
-func (p *compiler) sugarAST(d []ast.Decl) {
-	for i := range d {
-		switch decl := d[i].(type) {
+func (p *compiler) sugar(decls []ast.Decl) {
+	for _, d := range decls {
+		switch d := d.(type) {
 		case *ast.AnthaDecl:
-			ast.Inspect(decl.Body, p.inspectForIntrinsics)
-			ast.Inspect(decl.Body, p.inspectForParams)
-			ast.Inspect(decl.Body, p.inspectForSugar)
+			ast.Inspect(d.Body, p.inspectForIntrinsics)
+			ast.Inspect(d.Body, p.inspectForParams)
+			ast.Inspect(d.Body, p.inspectForSugar)
+		default:
+			ast.Inspect(d, p.inspectForSugar)
 		}
 	}
 }
 
 // Return appropriate nested SelectorExpr for the replacement for Identifier
-func (p *compiler) sugarForIdent(t *ast.Ident) ast.Expr {
+func (p *compiler) sugarIdent(t *ast.Ident) ast.Expr {
 	v, ok := p.types[t.Name]
 	if !ok {
 		return t
@@ -665,98 +667,98 @@ func (p *compiler) sugarForIdent(t *ast.Ident) ast.Expr {
 }
 
 // Return appropriate go type for an antha (type) expr
-func (p *compiler) sugarForType(t ast.Expr) ast.Expr {
+func (p *compiler) sugarExpr(t ast.Node) ast.Expr {
 	switch t := t.(type) {
 	case nil:
+		return nil
+
 	case *ast.Ident:
-		return p.sugarForIdent(t)
+		return p.sugarIdent(t)
 
 	case *ast.ParenExpr:
-		return &ast.ParenExpr{Lparen: t.Lparen, X: p.sugarForType(t.X), Rparen: t.Rparen}
+		t.X = p.sugarExpr(t.X)
 
 	case *ast.SelectorExpr:
-		return t
 
 	case *ast.StarExpr:
-		return &ast.StarExpr{Star: t.Star, X: p.sugarForType(t.X)}
+		t.X = p.sugarExpr(t.X)
 
 	case *ast.ArrayType:
-		return &ast.ArrayType{Lbrack: t.Lbrack, Len: t.Len, Elt: p.sugarForType(t.Elt)}
+		t.Elt = p.sugarExpr(t.Elt)
 
 	case *ast.StructType:
-		return &ast.StructType{Struct: t.Struct, Fields: p.sugarForFieldList(t.Fields), Incomplete: t.Incomplete}
+		ast.Inspect(t, p.inspectForSugar)
 
 	case *ast.FuncType:
-		return &ast.FuncType{Func: t.Func, Params: p.sugarForFieldList(t.Params), Results: p.sugarForFieldList(t.Results)}
+		ast.Inspect(t, p.inspectForSugar)
 
 	case *ast.InterfaceType:
-		return &ast.InterfaceType{Interface: t.Interface, Methods: p.sugarForFieldList(t.Methods), Incomplete: t.Incomplete}
+		ast.Inspect(t, p.inspectForSugar)
 
 	case *ast.MapType:
-		return &ast.MapType{Map: t.Map, Key: p.sugarForType(t.Key), Value: p.sugarForType(t.Value)}
+		t.Key = p.sugarExpr(t.Key)
+		t.Value = p.sugarExpr(t.Value)
 
 	case *ast.ChanType:
-		return &ast.ChanType{Begin: t.Begin, Arrow: t.Arrow, Dir: t.Dir, Value: p.sugarForType(t.Value)}
+		t.Value = p.sugarExpr(t.Value)
 
 	default:
 		log.Panicf("unexpected expression %s of type %s", t, reflect.TypeOf(t))
 	}
 
-	return t
+	return t.(ast.Expr)
 }
 
-func (p *compiler) sugarForFieldList(t *ast.FieldList) *ast.FieldList {
-	if t == nil {
-		return nil
+func inspectExprList(exprs []ast.Expr, w func(ast.Node) bool) {
+	for _, expr := range exprs {
+		ast.Inspect(expr, w)
 	}
-	var fields []*ast.Field
-	for _, f := range t.List {
-		fields = append(fields, &ast.Field{Doc: f.Doc, Names: f.Names, Type: p.sugarForType(f.Type), Tag: f.Tag, Comment: f.Comment})
-	}
-	return &ast.FieldList{Opening: t.Opening, List: fields, Closing: t.Closing}
 }
 
-// Replace bare antha types with go qualified names
+// Replace bare antha types with go qualified names.
+//
+// Changing all idents blindly would be simpler but opt instead with only
+// replacing idents that appear in types.
 func (p *compiler) inspectForSugar(n ast.Node) bool {
 	switch n := n.(type) {
 	case nil:
-		return false
-
-	case *ast.MapType:
-		n.Key = p.sugarForType(n.Key)
-		n.Value = p.sugarForType(n.Value)
-		return false
-
-	case *ast.ArrayType:
-		n.Elt = p.sugarForType(n.Elt)
-		return false
-
-	case *ast.ChanType:
-		n.Value = p.sugarForType(n.Value)
-		return false
 
 	case *ast.Field:
-		n.Type = p.sugarForType(n.Type)
-		return false
+		n.Type = p.sugarExpr(n.Type)
+
+	case *ast.TypeSpec:
+		n.Type = p.sugarExpr(n.Type)
+
+	case *ast.MapType:
+		n.Key = p.sugarExpr(n.Key)
+		n.Value = p.sugarExpr(n.Value)
+
+	case *ast.ArrayType:
+		n.Elt = p.sugarExpr(n.Elt)
+
+	case *ast.ChanType:
+		n.Value = p.sugarExpr(n.Value)
 
 	case *ast.FuncLit:
-		n.Type = p.sugarForType(n.Type).(*ast.FuncType)
-		return false
+		n.Type = p.sugarExpr(n.Type).(*ast.FuncType)
+		ast.Inspect(n.Body, p.inspectForSugar)
 
 	case *ast.CompositeLit:
-		n.Type = p.sugarForType(n.Type)
-		return false
+		n.Type = p.sugarExpr(n.Type)
+		inspectExprList(n.Elts, p.inspectForSugar)
 
 	case *ast.TypeAssertExpr:
-		n.Type = p.sugarForType(n.Type)
-		return false
+		n.Type = p.sugarExpr(n.Type)
 
 	case *ast.ValueSpec:
-		n.Type = p.sugarForType(n.Type)
-		return false
+		n.Type = p.sugarExpr(n.Type)
+		inspectExprList(n.Values, p.inspectForSugar)
+
+	default:
+		return true
 	}
 
-	return true
+	return false
 }
 
 // Replace bare antha identifiers with go qualified names

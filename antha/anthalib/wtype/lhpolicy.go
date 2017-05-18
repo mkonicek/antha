@@ -349,7 +349,7 @@ func (lhpr *LHPolicyRuleSet) SetOption(optname string, value interface{}) error 
 		err = fmt.Errorf("No such LHPolicy option %s", optname)
 	} else {
 		if reflect.TypeOf(value) != opt.Type {
-			err = fmt.Errorf("LHPolicy option %s needs value of type %t not %t", optname, opt.Type, reflect.TypeOf(value))
+			err = fmt.Errorf("LHPolicy option %s needs value of type %T not %T", optname, opt.Type, reflect.TypeOf(value))
 		} else {
 			lhpr.Options[optname] = value
 		}

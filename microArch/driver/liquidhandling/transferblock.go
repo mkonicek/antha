@@ -236,12 +236,6 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 			if len(ret) == 0 {
 				ret = r
 			} else {
-				// what this was *meant* to do (I think) is
-				// stack dests from multiple plates on top of each other
-				// however that isn't really what it actually does.
-				// in fact the whole multiple plate thing isn't being
-				// properly handled here... so that's the bit htat needs
-				// sorting out
 				ret = append(ret, r...)
 			}
 

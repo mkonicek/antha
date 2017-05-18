@@ -29,6 +29,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/PCR"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -198,10 +199,11 @@ func Assemblyfromcsv(designfile string, partsfile string) (assemblyparameters []
 	return assemblyparameters
 }
 
-func PCRReactionfromcsv(designfile string) (pcrReaction []PCRReaction) {
-	designedconstructs := ReadPCRDesign(designfile)
+func pcrReactionfromcsv(designfile string) (pcrReaction []PCR.PCRReaction) {
+
+	designedconstructs := readPCRDesign(designfile)
 	for _, c := range designedconstructs {
-		var newpcrReaction PCRReaction
+		var newpcrReaction PCR.PCRReaction
 		newpcrReaction.ReactionName = c[0]
 		newpcrReaction.Template = c[1]
 		newpcrReaction.PrimerPair[0] = c[2]
@@ -211,7 +213,7 @@ func PCRReactionfromcsv(designfile string) (pcrReaction []PCRReaction) {
 	return
 }
 
-func ReadPCRDesign(filename string) [][]string {
+func readPCRDesign(filename string) [][]string {
 
 	var constructs [][]string
 

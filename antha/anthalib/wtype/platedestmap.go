@@ -1,5 +1,9 @@
 package wtype
 
+import (
+	"fmt"
+)
+
 type Platedestmap [][][]*LHInstruction
 
 func NewPlatedestmap() Platedestmap {
@@ -14,4 +18,18 @@ func NewPlatedestmap() Platedestmap {
 	}
 
 	return h
+}
+
+func (pdm Platedestmap) Print() {
+	for x := 0; x < 96; x++ {
+		fmt.Print(x, " : ")
+
+		for y := 0; y < 96; y++ {
+			if len(pdm[x][y]) != 0 {
+				fmt.Print(y, "--", len(pdm[x][y]), " ")
+			}
+		}
+
+		fmt.Println()
+	}
 }

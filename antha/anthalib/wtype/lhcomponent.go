@@ -169,7 +169,7 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence) error {
 		return err
 	}
 
-	if found, positions, _ := lhc.FindDNASequence(seq); found {
+	if _, positions, err := lhc.FindDNASequence(seq); err == nil {
 		return fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v", seq.Name(), positions, seqList)
 	}
 
@@ -183,16 +183,23 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence) error {
 // Search is based upon both name of the sequence and sequence.
 // If multiple copies of the sequence exists and error is returned.
 // If a Sequence does not exist, the sequence is added and an error is returned.
-func (lhc *LHComponent) FindDNASequence(seq DNASequence) (found bool, positions []int, err error) {
+func (lhc *LHComponent) FindDNASequence(seq DNASequence) (seqs []DNASequence, positions []int, err error) {
 
 	seqList, err := lhc.getSequences()
 
 	if err != nil {
 		return
 	}
-
+	var found bool
 	found, positions = containsSeq(seqList, seq, true)
 
+	if !found {
+		err = fmt.Errorf("Sequence %s not found associated with %s.", seq.Name(), lhc.Name())
+		return
+	}
+	for i := range positions {
+		seqs = append(seqs, seqList[i])
+	}
 	return
 }
 
@@ -208,9 +215,9 @@ func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 		return err
 	}
 
-	if found, positions, _ := lhc.FindDNASequence(seq); found {
+	if seqs, positions, err := lhc.FindDNASequence(seq); err == nil {
 		if len(positions) > 1 {
-			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v in sequences %+v", seq.Name(), positions, seqList)
+			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v: %+v", seq.Name(), positions, seqs)
 		}
 		if len(positions) == 1 {
 			seqList[positions[0]] = seq
@@ -251,7 +258,7 @@ func deleteSeq(seqList []DNASequence, position int) (newseqList []DNASequence, e
 
 }
 
-// Replaces an existing DNASequence to the LHComponent.
+// Removes an existing DNASequence to the LHComponent.
 // Search is based upon both name of the sequence and sequence.
 // If multiple copies of the sequence exists and error is returned.
 // If a Sequence does not exist, the sequence is added and an error is returned.
@@ -263,9 +270,9 @@ func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 		return err
 	}
 
-	if found, positions, _ := lhc.FindDNASequence(seq); found {
+	if seqs, positions, err := lhc.FindDNASequence(seq); err == nil {
 		if len(positions) > 1 {
-			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v in sequences %+v", seq.Name(), positions, seqList)
+			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v: %+v", seq.Name(), positions, seqs)
 		}
 		if len(positions) == 1 {
 			seqList, err = deleteSeq(seqList, positions[0])
@@ -280,7 +287,9 @@ func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 	return fmt.Errorf("Sequence %s did not previously exist in %s so could not be deleted.", seq.Name(), lhc.Name())
 }
 
-func (lhc *LHComponent) RemoveDNASequenceAtPosition(int) error {
+// Remove a DNA sequence from a specific position.
+// Designed for cases where FindDNASequnce() method returns multiple instances of the dna sequence.
+func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 
 	seqList, err := lhc.getSequences()
 
@@ -288,7 +297,7 @@ func (lhc *LHComponent) RemoveDNASequenceAtPosition(int) error {
 		return err
 	}
 
-	seqList, err = deleteSeq(seqList, positions[0])
+	seqList, err = deleteSeq(seqList, position)
 	if err != nil {
 		return err
 	}

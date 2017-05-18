@@ -105,12 +105,6 @@ func (lhc *LHComponent) getSequences() (seqs []DNASequence, err error) {
 		return seqs, fmt.Errorf("No Sequences list found")
 	}
 
-	_, ok := seqsValue.([]DNASequence)
-
-	if !ok {
-		return seqs, fmt.Errorf("Looking for sequences in LHComponent %s but object is not an array of DNASequences", lhc.Name())
-	}
-
 	var bts []byte
 
 	bts, err = json.Marshal(seqsValue)
@@ -272,7 +266,7 @@ func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 
 	if seqs, positions, err := lhc.FindDNASequence(seq); err == nil {
 		if len(positions) > 1 {
-			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v: %+v", seq.Name(), positions, seqs)
+			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v: %+v", lhc.Name(), seq.Name(), positions, seqs)
 		}
 		if len(positions) == 1 {
 			seqList, err = deleteSeq(seqList, positions[0])

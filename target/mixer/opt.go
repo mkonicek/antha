@@ -46,6 +46,7 @@ type Opt struct {
 	ModelEvaporation                  bool
 	OutputSort                        bool
 	PrintInstructions                 bool
+	UseDriverTipTracking              bool
 }
 
 // Merge two configs together and return the result. Values in the argument

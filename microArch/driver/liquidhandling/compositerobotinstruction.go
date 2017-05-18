@@ -181,6 +181,9 @@ func (ins *SingleChannelBlockInstruction) GetParameter(name string) interface{} 
 }
 
 func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+
+	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
+
 	ret := make([]RobotInstruction, 0)
 	// get tips
 	channel, tipp := ChooseChannel(ins.Volume[0], prms)
@@ -195,7 +198,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 
 	ins.Prms = channel
 	pol := GetPolicyFor(policy, ins)
-	tipget, err := GetTips(tiptype, prms, channel, 1, false)
+	tipget, err := GetTips(tiptype, prms, channel, 1, false, usetiptracking)
 
 	if err != nil {
 		return ret, err
@@ -267,7 +270,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 				}
 				ret = append(ret, tipdrp)
 
-				tipget, err := GetTips(newtiptype, prms, newchannel, 1, false)
+				tipget, err := GetTips(newtiptype, prms, newchannel, 1, false, usetiptracking)
 
 				if err != nil {
 					return ret, err
@@ -433,6 +436,8 @@ func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
 }
 
 func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
+
 	pol := GetPolicyFor(policy, ins)
 	ret := make([]RobotInstruction, 0)
 	// get some tips
@@ -450,7 +455,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
 	}
 
-	tipget, err := GetTips(tiptype, prms, channel, ins.Multi, false)
+	tipget, err := GetTips(tiptype, prms, channel, ins.Multi, false, usetiptracking)
 	if err != nil {
 		return ret, err
 	}
@@ -520,7 +525,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 				}
 				ret = append(ret, tipdrp)
 
-				tipget, err := GetTips(newtiptype, prms, newchannel, ins.Multi, false)
+				tipget, err := GetTips(newtiptype, prms, newchannel, ins.Multi, false, usetiptracking)
 				if err != nil {
 					return ret, err
 				}
@@ -3112,7 +3117,7 @@ func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) error {
 
 // TODO -- implement MESSAGE
 
-func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *wtype.LHChannelParameter, multi int, oneshot bool) ([]RobotInstruction, error) {
+func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *wtype.LHChannelParameter, multi int, oneshot, usetiptracking bool) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0, 2)
 	newchannel, newtip := ChooseChannel(vol, prms)
 
@@ -3137,7 +3142,7 @@ func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *w
 	}
 	ret = append(ret, tipdrp)
 
-	tipget, err := GetTips(newtiptype, prms, newchannel, multi, false)
+	tipget, err := GetTips(newtiptype, prms, newchannel, multi, false, usetiptracking)
 	if err != nil {
 		return ret, err
 	}
@@ -3145,9 +3150,9 @@ func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *w
 	return ret, err
 }
 
-func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int, mirror bool) (RobotInstruction, error) {
+func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int, mirror, usetiptracking bool) (RobotInstruction, error) {
 
-	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(tiptype, channel, mirror, multi)
+	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(tiptype, channel, mirror, multi, usetiptracking)
 
 	if tipwells == nil || terr != nil {
 		/*

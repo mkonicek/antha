@@ -218,7 +218,7 @@ func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol w
 		fmt.Println("\t", r.Name)
 	}
 	fmt.Println()
-	itemset := MakePolicyItems()
+	itemset := wtype.MakePolicyItems()
 	fmt.Println("Full output")
 	for _, s := range itemset.OrderedList() {
 		if pol[s] == nil {

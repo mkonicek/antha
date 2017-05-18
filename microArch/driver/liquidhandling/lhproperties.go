@@ -721,7 +721,7 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 			continue
 		}
 		wells = bx.GetTips(mirror, multi, channel.Orientation)
-		if wells != nil {
+		if wells != nil && len(wells) == multi {
 			foundit = true
 			for i := 0; i < multi; i++ {
 				positions[i] = pos

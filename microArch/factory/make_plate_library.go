@@ -340,26 +340,38 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = wtype.NewLHPlate("Kombi2mlEpp", "Unknown", 4, 2, 45, "mm", welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
-	// Eppendorfrack
+	// Eppendorfrack 425 for 2ml tubes
 
 	wellxoffset = 18.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
-	xstart = 5.0       // distance from top left side of plate to first well
-	ystart = 10.0      // distance from top left side of plate to first well
-	zstart = 7.0 - 1.0 // offset of bottom of deck to bottom of well
+	xstart = 4.5       // distance from top left side of plate to first well
+	ystart = 9         // distance from top left side of plate to first well
+	zstart = 5.0       // offset of bottom of deck to bottom of well
 
 	welltypesmallereppy := wtype.NewLHWell("1.5mlEpp", "", "", "ul", 1500, 50, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
 
 	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
-	// Eppendorfrack with lid holders
+	// Eppendorfrack 424 with lid holders and using 2ml tubes
 
 	wellxoffset = 36.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
-	xstart = 13.5      // distance from top left side of plate to first well
-	ystart = 10.0      // distance from top left side of plate to first well
-	zstart = 7.0 - 1.0 // offset of bottom of deck to bottom of well
+	xstart = 14.0      // distance from top left side of plate to first well
+	ystart = 9         // distance from top left side of plate to first well
+	zstart = 5.0       // offset of bottom of deck to bottom of well
+
+	plate = wtype.NewLHPlate("eppendorfrack424_2ml_lidholder", "Unknown", 4, 3, 45, "mm", welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+
+	// Eppendorfrack 424 with lid holders and using 1.5ml tubes
+
+	wellxoffset = 36.0 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
+	xstart = 14.0      // distance from top left side of plate to first well
+	ystart = 9         // distance from top left side of plate to first well
+	zstart = 9         // offset of bottom of deck to bottom of well
+	zstart = 4.5       // offset of bottom of deck to bottom of well
 
 	plate = wtype.NewLHPlate("eppendorfrack424_1.5ml_lidholder", "Unknown", 4, 3, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate

@@ -703,7 +703,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 	return plateIDs, wellCoords, vols, nil
 }
 
-func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int) (wells, positions, boxtypes []string, err error) {
+func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
 	positions = make([]string, multi)
 	boxtypes = make([]string, multi)
 
@@ -731,13 +731,16 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 			continue
 		}
 		wells = bx.GetTips(mirror, multi, channel.Orientation)
-		if wells != nil {
+		if wells != nil && len(wells) == multi {
 			foundit = true
 			for i := 0; i < multi; i++ {
 				positions[i] = pos
 				boxtypes[i] = bx.Boxname
 			}
 			break
+		} else if usetiptracking && lhp.HasTipTracking() {
+			bx.Refresh()
+			return lhp.GetCleanTips(tiptype, channel, mirror, multi, usetiptracking)
 		}
 	}
 
@@ -762,7 +765,7 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 			return nil, nil, nil, err
 		}
 
-		return lhp.GetCleanTips(tiptype, channel, mirror, multi)
+		return lhp.GetCleanTips(tiptype, channel, mirror, multi, usetiptracking)
 		//		return nil, nil, nil
 	}
 
@@ -1011,4 +1014,14 @@ func (p *LHProperties) OrderedMergedPlatePrefs() []string {
 	}
 
 	return r
+}
+
+func (p LHProperties) HasTipTracking() bool {
+	// TODO --> improve this
+
+	if p.Mnfr == "Gilson" && p.Model == "Pipetmax" {
+		return true
+	}
+
+	return false
 }

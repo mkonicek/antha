@@ -75,6 +75,9 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 	}
 
 	req := planner.NewLHRequest()
+
+	req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking)
+
 	prop := a.properties.Dup()
 	prop.Driver = a.properties.Driver
 	plan := planner.Init(prop)

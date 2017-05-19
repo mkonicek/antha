@@ -17,6 +17,7 @@ var (
 		OutputPlateType:      []string{"pcrplate_skirted_riser20"},
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
+		PlanningVersion:      "ep2",
 	}
 )
 
@@ -55,6 +56,7 @@ func (a Opt) Merge(x *Opt) Opt {
 	if x == nil {
 		return a
 	}
+
 	obj, err := meta.ShallowMerge(a, *x)
 	if err != nil {
 		panic(err)

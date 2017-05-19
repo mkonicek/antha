@@ -301,6 +301,11 @@ func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 
 }
 
+// Remove all DNASequences from the component.
+func (lhc *LHComponent) RemoveDNASequences() error {
+	return lhc.setSequences([]DNASequence{})
+}
+
 // Returns DNA Sequences asociated with an LHComponent.
 // An error is also returned indicating whether a sequence was found.
 func (lhc *LHComponent) DNASequences() ([]DNASequence, error) {

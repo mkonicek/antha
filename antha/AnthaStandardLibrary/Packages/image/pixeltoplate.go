@@ -14,11 +14,12 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"errors"
+
 	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/disintegration/imaging"
-	"errors"
 )
 
 //-------------------------------------------------------
@@ -35,6 +36,7 @@ var availablecolours = []color.Color{
 	color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},   // red
 	color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},   // black
 }
+
 // map of RGB colour to description for use as key in crossreferencing colour to component in other maps
 var Colourcomponentmap = map[color.Color]string{
 	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
@@ -45,6 +47,7 @@ var Colourcomponentmap = map[color.Color]string{
 	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}:       "black",
 	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)}:         "transparent",
 }
+
 // map of RGB colour to description for use as key in crossreferencing colour to component in other maps
 var Neon = map[color.Color]string{
 	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}:       "black",
@@ -62,6 +65,7 @@ var Neon = map[color.Color]string{
 	color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)}:   "Magenta",
 	//color.RGBA{R: uint8(251), G: uint8(156), B: uint8(110), A: uint8(255)}: "skin",
 }
+
 // Image resizing resample filters from disintegration package
 var AllResampleFilters = map[string]imaging.ResampleFilter{
 	"Cosine": imaging.Cosine, "Welch": imaging.Welch, "Blackman": imaging.Blackman, "Hamming": imaging.Hamming, "Hann": imaging.Hann, "Lanczos": imaging.Lanczos, "Bartlett": imaging.Bartlett, "Guassian": imaging.Gaussian, "BSpline": imaging.BSpline, "CatmullRom": imaging.CatmullRom, "MitchellNetravali": imaging.MitchellNetravali, "Hermite": imaging.Hermite, "Linear": imaging.Linear, "Box": imaging.Box, "NearestNeighbour": imaging.NearestNeighbor,
@@ -72,16 +76,16 @@ var ProteinPaintboxmap = map[color.Color]string{
 
 	// Chromogenic proteins
 	color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)}:  "BlitzenBlue",
-	color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)}:  "DreidelTeal",
+	color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)}:   "DreidelTeal",
 	color.RGBA{R: uint8(107), G: uint8(80), B: uint8(140), A: uint8(255)}:  "VirginiaViolet",
 	color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)}:  "VixenPurple",
-	color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)}:  "TinselPurple",
-	color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)}:  "MaccabeePurple",
+	color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)}:   "TinselPurple",
+	color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)}:   "MaccabeePurple",
 	color.RGBA{R: uint8(152), G: uint8(76), B: uint8(128), A: uint8(255)}:  "DonnerMagenta",
 	color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)}:  "CupidPink",
 	color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)}:  "SeraphinaPink",
-	color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)}:  "ScroogeOrange",
-	color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)}: 	"LeorOrange",
+	color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)}:   "ScroogeOrange",
+	color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)}: "LeorOrange",
 
 	// fluorescent proteins
 
@@ -235,13 +239,12 @@ var ProteinPaintboxSubsetmap = map[color.Color]string{
 	//color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
 }
 
-
 //----------------------------------------------------------------------------
 //image input/output manipulation
 //----------------------------------------------------------------------------
 
 //OpenFile will take a wtype.File object and return the contents as image.NRGBA
-func OpenFile (file wtype.File)( nrgba *goimage.NRGBA, err error){
+func OpenFile(file wtype.File) (nrgba *goimage.NRGBA, err error) {
 
 	data, err := file.ReadAll()
 	if err != nil {
@@ -264,6 +267,24 @@ func OpenFile (file wtype.File)( nrgba *goimage.NRGBA, err error){
 func Export(img *goimage.NRGBA, fileName string) (file wtype.File, err error) {
 
 	var imageFormat imaging.Format
+
+	if filepath.Ext(fileName) == "" {
+		imageFormat = imaging.PNG
+		fileName = fileName + "." + "png"
+	} else if filepath.Ext(fileName) == ".png" {
+		imageFormat = imaging.PNG
+	} else if filepath.Ext(fileName) == ".jpg" || filepath.Ext(fileName) == ".jpeg" {
+		imageFormat = imaging.JPEG
+	} else if filepath.Ext(fileName) == ".tif" || filepath.Ext(fileName) == ".tiff" {
+		imageFormat = imaging.TIFF
+	} else if filepath.Ext(fileName) == ".gif" {
+		imageFormat = imaging.GIF
+	} else if filepath.Ext(fileName) == ".BMP" {
+		imageFormat = imaging.BMP
+	} else {
+		return file, fmt.Errorf("unsupported image file format: %s", filepath.Ext(fileName))
+	}
+
 	var buf bytes.Buffer
 
 	err = imaging.Encode(&buf, img, imageFormat)
@@ -696,12 +717,12 @@ func ResizeImagetoPlateAutoRotate(img *goimage.NRGBA, plate *wtype.LHPlate, algo
 }
 
 //CheckAllResizeAlgorithms will use the different algorithms in a algorithm library to resize an image to a given platetype.
-func CheckAllResizealgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) ([]*goimage.NRGBA) {
+func CheckAllResizealgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) []*goimage.NRGBA {
 
 	var plateImages []*goimage.NRGBA
 	var plateImage *goimage.NRGBA
 
-	for _ , algorithm := range algorithms {
+	for _, algorithm := range algorithms {
 
 		if rotate {
 			img = imaging.Rotate270(img)

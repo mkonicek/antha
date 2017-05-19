@@ -156,7 +156,6 @@ func xlsxparserBinary(data []byte, sheetIndex int, outputprefix string) (f *os.F
 	if err != nil {
 		return
 	}
-
 	printer := func(s string) {
 		_, _ = f.WriteString(s)
 	}

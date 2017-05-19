@@ -230,7 +230,6 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 	// if the channel is not multi just return nil
 
 	if channel.Multi == 1 {
-		//fmt.Println("CHANNEL IS NOT MULTI > 1")
 		return nil
 	}
 

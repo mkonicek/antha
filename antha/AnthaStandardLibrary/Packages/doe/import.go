@@ -30,7 +30,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
-
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/tealeg/xlsx"
 )
 
@@ -143,158 +143,157 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 
 	for i := 3; i < sheet.MaxRow; i++ {
 
-		if rowEmpty(sheet, i) {
-			return
-		}
+		if !rowEmpty(sheet, i) {
 
-		factordescriptors := make([]string, 0)
-		responsedescriptors := make([]string, 0)
-		setpoints := make([]interface{}, 0)
-		responsevalues := make([]interface{}, 0)
-		otherheaders := make([]string, 0)
-		othersubheaders := make([]string, 0)
-		otherresponsevalues := make([]interface{}, 0)
+			factordescriptors := make([]string, 0)
+			responsedescriptors := make([]string, 0)
+			setpoints := make([]interface{}, 0)
+			responsevalues := make([]interface{}, 0)
+			otherheaders := make([]string, 0)
+			othersubheaders := make([]string, 0)
+			otherresponsevalues := make([]interface{}, 0)
 
-		run.RunNumber, err = sheet.Cell(i, 1).Int()
-		if err != nil {
-			return runs, err
-		}
-		run.StdNumber, err = sheet.Cell(i, 0).Int()
-		if err != nil {
-			return runs, err
-		}
-
-		for j := 2; j < sheet.MaxCol; j++ {
-			factororresponse, err := sheet.Cell(0, j).String()
-
+			run.RunNumber, err = sheet.Cell(i, 1).Int()
+			if err != nil {
+				return runs, err
+			}
+			run.StdNumber, err = sheet.Cell(i, 0).Int()
 			if err != nil {
 				return runs, err
 			}
 
-			if strings.Contains(factororresponse, "Factor") {
+			for j := 2; j < sheet.MaxCol; j++ {
+				factororresponse, err := sheet.Cell(0, j).String()
 
-				desc, err := sheet.Cell(1, j).String()
 				if err != nil {
 					return runs, err
 				}
 
-				descriptor = strings.Split(desc, ":")[1]
-				factrodescriptor := descriptor
-				//fmt.Println(i, j, descriptor)
+				if strings.Contains(factororresponse, "Factor") {
 
-				cell := sheet.Cell(i, j)
+					desc, err := sheet.Cell(1, j).String()
+					if err != nil {
+						return runs, err
+					}
 
-				celltype := cell.Type()
+					descriptor = strings.Split(desc, ":")[1]
+					factrodescriptor := descriptor
+					//fmt.Println(i, j, descriptor)
 
-				_, err = cell.Float()
+					cell := sheet.Cell(i, j)
 
-				if strings.ToUpper(cell.Value) == "TRUE" {
-					setpoint = true //cell.SetBool(true)
-				} else if strings.ToUpper(cell.Value) == "FALSE" {
-					setpoint = false //cell.SetBool(false)
-				} else if celltype == 3 {
-					setpoint = cell.Bool()
-				} else if err == nil || celltype == 1 {
-					setpoint, _ = cell.Float()
-					if search.InSlice(descriptor, intfactors) {
-						setpoint, err = cell.Int()
+					celltype := cell.Type()
+
+					_, err = cell.Float()
+
+					if strings.ToUpper(cell.Value) == "TRUE" {
+						setpoint = true //cell.SetBool(true)
+					} else if strings.ToUpper(cell.Value) == "FALSE" {
+						setpoint = false //cell.SetBool(false)
+					} else if celltype == 3 {
+						setpoint = cell.Bool()
+					} else if err == nil || celltype == 1 {
+						setpoint, _ = cell.Float()
+						if search.InSlice(descriptor, intfactors) {
+							setpoint, err = cell.Int()
+							if err != nil {
+								return runs, err
+							}
+						}
+					} else {
+
+						setpoint, err = cell.String()
 						if err != nil {
 							return runs, err
 						}
 					}
+
+					factordescriptors = append(factordescriptors, factrodescriptor)
+					setpoints = append(setpoints, setpoint)
+
+				} else if strings.Contains(factororresponse, "Response") {
+					descriptor, err = sheet.Cell(1, j).String()
+					if err != nil {
+						return runs, err
+					}
+					responsedescriptor := descriptor
+					//// fmt.Println("response", i, j, descriptor)
+					responsedescriptors = append(responsedescriptors, responsedescriptor)
+
+					cell := sheet.Cell(i, j)
+
+					if cell == nil {
+
+						break
+					}
+
+					celltype := cell.Type()
+
+					if celltype == 1 {
+						responsevalue, err := cell.Float()
+						if err != nil {
+							return runs, err
+						}
+						responsevalues = append(responsevalues, responsevalue)
+					} else {
+						responsevalue, err := cell.String()
+						if err != nil {
+							return runs, err
+						}
+						responsevalues = append(responsevalues, responsevalue)
+					}
+
 				} else {
-
-					setpoint, err = cell.String()
+					descriptor, err = sheet.Cell(1, j).String()
 					if err != nil {
 						return runs, err
 					}
-				}
+					responsedescriptor := descriptor
 
-				factordescriptors = append(factordescriptors, factrodescriptor)
-				setpoints = append(setpoints, setpoint)
+					otherheaders = append(otherheaders, factororresponse)
+					othersubheaders = append(othersubheaders, responsedescriptor)
 
-			} else if strings.Contains(factororresponse, "Response") {
-				descriptor, err = sheet.Cell(1, j).String()
-				if err != nil {
-					return runs, err
-				}
-				responsedescriptor := descriptor
-				//// fmt.Println("response", i, j, descriptor)
-				responsedescriptors = append(responsedescriptors, responsedescriptor)
+					cell := sheet.Cell(i, j)
 
-				cell := sheet.Cell(i, j)
+					if cell == nil {
 
-				if cell == nil {
-
-					break
-				}
-
-				celltype := cell.Type()
-
-				if celltype == 1 {
-					responsevalue, err := cell.Float()
-					if err != nil {
-						return runs, err
+						break
 					}
-					responsevalues = append(responsevalues, responsevalue)
-				} else {
-					responsevalue, err := cell.String()
-					if err != nil {
-						return runs, err
+
+					celltype := cell.Type()
+
+					if celltype == 1 {
+						responsevalue, err := cell.Float()
+						if err != nil {
+							return runs, err
+						}
+						otherresponsevalues = append(otherresponsevalues, responsevalue)
+					} else {
+						responsevalue, err := cell.String()
+						if err != nil {
+							return runs, err
+						}
+						otherresponsevalues = append(otherresponsevalues, responsevalue)
 					}
-					responsevalues = append(responsevalues, responsevalue)
+
 				}
-
-			} else {
-				descriptor, err = sheet.Cell(1, j).String()
-				if err != nil {
-					return runs, err
-				}
-				responsedescriptor := descriptor
-
-				otherheaders = append(otherheaders, factororresponse)
-				othersubheaders = append(othersubheaders, responsedescriptor)
-
-				cell := sheet.Cell(i, j)
-
-				if cell == nil {
-
-					break
-				}
-
-				celltype := cell.Type()
-
-				if celltype == 1 {
-					responsevalue, err := cell.Float()
-					if err != nil {
-						return runs, err
-					}
-					otherresponsevalues = append(otherresponsevalues, responsevalue)
-				} else {
-					responsevalue, err := cell.String()
-					if err != nil {
-						return runs, err
-					}
-					otherresponsevalues = append(otherresponsevalues, responsevalue)
-				}
-
 			}
+			run.Factordescriptors = factordescriptors
+			run.Responsedescriptors = responsedescriptors
+			run.Setpoints = setpoints
+			run.ResponseValues = responsevalues
+			run.AdditionalHeaders = otherheaders
+			run.AdditionalSubheaders = othersubheaders
+			run.AdditionalValues = otherresponsevalues
+
+			runs = append(runs, run)
+			factordescriptors = make([]string, 0)
+			responsedescriptors = make([]string, 0)
+
+			// assuming this is necessary too
+			otherheaders = make([]string, 0)
+			othersubheaders = make([]string, 0)
 		}
-		run.Factordescriptors = factordescriptors
-		run.Responsedescriptors = responsedescriptors
-		run.Setpoints = setpoints
-		run.ResponseValues = responsevalues
-		run.AdditionalHeaders = otherheaders
-		run.AdditionalSubheaders = othersubheaders
-		run.AdditionalValues = otherresponsevalues
-
-		runs = append(runs, run)
-		factordescriptors = make([]string, 0)
-		responsedescriptors = make([]string, 0)
-
-		// assuming this is necessary too
-		otherheaders = make([]string, 0)
-		othersubheaders = make([]string, 0)
 	}
 
 	return
@@ -314,151 +313,149 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 	var setpoint interface{}
 	var descriptor string
 	for i := 1; i < sheet.MaxRow; i++ {
-		//maxfactorcol := 2
 
-		if rowEmpty(sheet, i) {
-			return
-		}
+		if !rowEmpty(sheet, i) {
 
-		factordescriptors := make([]string, 0)
-		responsedescriptors := make([]string, 0)
-		setpoints := make([]interface{}, 0)
-		responsevalues := make([]interface{}, 0)
-		otherheaders := make([]string, 0)
-		othersubheaders := make([]string, 0)
-		otherresponsevalues := make([]interface{}, 0)
+			factordescriptors := make([]string, 0)
+			responsedescriptors := make([]string, 0)
+			setpoints := make([]interface{}, 0)
+			responsevalues := make([]interface{}, 0)
+			otherheaders := make([]string, 0)
+			othersubheaders := make([]string, 0)
+			otherresponsevalues := make([]interface{}, 0)
 
-		run.RunNumber = i //sheet.Cell(i, 1).Int()
+			run.RunNumber = i //sheet.Cell(i, 1).Int()
 
-		run.StdNumber = i //sheet.Cell(i, 0).Int()
+			run.StdNumber = i //sheet.Cell(i, 0).Int()
 
-		for j := 0; j < sheet.MaxCol; j++ {
+			for j := 0; j < sheet.MaxCol; j++ {
 
-			var factororresponse string
+				var factororresponse string
 
-			if search.Contains(factorcolumns, j) {
-				factororresponse = "Factor"
-			} else if search.Contains(responsecolumns, j) {
-				factororresponse = "Response"
-			}
-
-			if strings.Contains(factororresponse, "Factor") {
-
-				descriptor, err = sheet.Cell(0, j).String()
-				if err != nil {
-					return runs, err
+				if search.Contains(factorcolumns, j) {
+					factororresponse = "Factor"
+				} else if search.Contains(responsecolumns, j) {
+					factororresponse = "Response"
 				}
-				factrodescriptor := descriptor
-				cell := sheet.Cell(i, j)
 
-				celltype := cell.Type()
+				if strings.Contains(factororresponse, "Factor") {
 
-				_, err := cell.Float()
+					descriptor, err = sheet.Cell(0, j).String()
+					if err != nil {
+						return runs, err
+					}
+					factrodescriptor := descriptor
+					cell := sheet.Cell(i, j)
 
-				if strings.ToUpper(cell.Value) == "TRUE" {
-					setpoint = true //cell.SetBool(true)
-				} else if strings.ToUpper(cell.Value) == "FALSE" {
-					setpoint = false //cell.SetBool(false)
-				} else if celltype == 3 {
-					setpoint = cell.Bool()
-				} else if err == nil || celltype == 1 {
-					setpoint, _ = cell.Float()
-					if search.InSlice(descriptor, intfactors) {
-						setpoint, err = cell.Int()
+					celltype := cell.Type()
+
+					_, err := cell.Float()
+
+					if strings.ToUpper(cell.Value) == "TRUE" {
+						setpoint = true //cell.SetBool(true)
+					} else if strings.ToUpper(cell.Value) == "FALSE" {
+						setpoint = false //cell.SetBool(false)
+					} else if celltype == 3 {
+						setpoint = cell.Bool()
+					} else if err == nil || celltype == 1 {
+						setpoint, _ = cell.Float()
+						if search.InSlice(descriptor, intfactors) {
+							setpoint, err = cell.Int()
+							if err != nil {
+								return runs, err
+							}
+						}
+					} else {
+						setpoint, err = cell.String()
 						if err != nil {
 							return runs, err
 						}
 					}
-				} else {
-					setpoint, err = cell.String()
+					factordescriptors = append(factordescriptors, factrodescriptor)
+					setpoints = append(setpoints, setpoint)
+
+				} else if strings.Contains(factororresponse, "Response") {
+					descriptor, err = sheet.Cell(0, j).String()
 					if err != nil {
 						return runs, err
 					}
-				}
-				factordescriptors = append(factordescriptors, factrodescriptor)
-				setpoints = append(setpoints, setpoint)
+					responsedescriptor := descriptor
 
-			} else if strings.Contains(factororresponse, "Response") {
-				descriptor, err = sheet.Cell(0, j).String()
-				if err != nil {
-					return runs, err
-				}
-				responsedescriptor := descriptor
+					responsedescriptors = append(responsedescriptors, responsedescriptor)
 
-				responsedescriptors = append(responsedescriptors, responsedescriptor)
+					cell := sheet.Cell(i, j)
 
-				cell := sheet.Cell(i, j)
+					if cell == nil {
 
-				if cell == nil {
+						break
+					}
 
-					break
-				}
+					celltype := cell.Type()
 
-				celltype := cell.Type()
+					if celltype == 1 {
+						responsevalue, err := cell.Float()
+						if err != nil {
+							return runs, err
+						}
+						responsevalues = append(responsevalues, responsevalue)
+					} else {
+						responsevalue, err := cell.String()
+						if err != nil {
+							return runs, err
+						}
+						responsevalues = append(responsevalues, responsevalue)
+					}
 
-				if celltype == 1 {
-					responsevalue, err := cell.Float()
+				} else /*if j != patterncolumn*/ {
+					descriptor, err = sheet.Cell(0, j).String()
 					if err != nil {
 						return runs, err
 					}
-					responsevalues = append(responsevalues, responsevalue)
-				} else {
-					responsevalue, err := cell.String()
-					if err != nil {
-						return runs, err
+					responsedescriptor := descriptor
+
+					otherheaders = append(otherheaders, factororresponse)
+					othersubheaders = append(othersubheaders, responsedescriptor)
+
+					cell := sheet.Cell(i, j)
+
+					if cell == nil {
+
+						break
 					}
-					responsevalues = append(responsevalues, responsevalue)
-				}
 
-			} else /*if j != patterncolumn*/ {
-				descriptor, err = sheet.Cell(0, j).String()
-				if err != nil {
-					return runs, err
-				}
-				responsedescriptor := descriptor
+					celltype := cell.Type()
 
-				otherheaders = append(otherheaders, factororresponse)
-				othersubheaders = append(othersubheaders, responsedescriptor)
-
-				cell := sheet.Cell(i, j)
-
-				if cell == nil {
-
-					break
-				}
-
-				celltype := cell.Type()
-
-				if celltype == 1 {
-					responsevalue, err := cell.Float()
-					if err != nil {
-						return runs, err
+					if celltype == 1 {
+						responsevalue, err := cell.Float()
+						if err != nil {
+							return runs, err
+						}
+						otherresponsevalues = append(otherresponsevalues, responsevalue)
+					} else {
+						responsevalue, err := cell.String()
+						if err != nil {
+							return runs, err
+						}
+						otherresponsevalues = append(otherresponsevalues, responsevalue)
 					}
-					otherresponsevalues = append(otherresponsevalues, responsevalue)
-				} else {
-					responsevalue, err := cell.String()
-					if err != nil {
-						return runs, err
-					}
-					otherresponsevalues = append(otherresponsevalues, responsevalue)
-				}
 
+				}
 			}
-		}
-		run.Factordescriptors = factordescriptors
-		run.Responsedescriptors = responsedescriptors
-		run.Setpoints = setpoints
-		run.ResponseValues = responsevalues
-		run.AdditionalHeaders = otherheaders
-		run.AdditionalSubheaders = othersubheaders
-		run.AdditionalValues = otherresponsevalues
-		runs = append(runs, run)
-		factordescriptors = make([]string, 0)
-		responsedescriptors = make([]string, 0)
+			run.Factordescriptors = factordescriptors
+			run.Responsedescriptors = responsedescriptors
+			run.Setpoints = setpoints
+			run.ResponseValues = responsevalues
+			run.AdditionalHeaders = otherheaders
+			run.AdditionalSubheaders = othersubheaders
+			run.AdditionalValues = otherresponsevalues
+			runs = append(runs, run)
+			factordescriptors = make([]string, 0)
+			responsedescriptors = make([]string, 0)
 
-		// assuming this is necessary too
-		otherheaders = make([]string, 0)
-		othersubheaders = make([]string, 0)
+			// assuming this is necessary too
+			otherheaders = make([]string, 0)
+			othersubheaders = make([]string, 0)
+		}
 	}
 
 	return
@@ -561,12 +558,11 @@ func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorc
 	for i := 1; i < sheet.MaxRow; i++ {
 		//maxfactorcol := 2
 		for j := 0; j < sheet.MaxCol; j++ {
-
 			cellstr, err := sheet.Cell(i, j).String()
-			if err != nil {
-				panic(err.Error())
-			}
 
+			if err != nil {
+				panic(fmt.Sprintf("Error parsing cell column: %s row: %d. Error: %s", wutil.NumToAlpha(j+1), i+1, err.Error()))
+			}
 			if patternfound && j != PatternColumn && cellstr != "" {
 				factorcolumns = append(factorcolumns, j)
 			} else if !patternfound && cellstr != "" {
@@ -627,157 +623,157 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 	var setpoint interface{}
 	var descriptor string
 	for i := 3; i < sheet.MaxRow; i++ {
-		if rowEmpty(sheet, i) {
-			return
-		}
-		factordescriptors := make([]string, 0)
-		responsedescriptors := make([]string, 0)
-		setpoints := make([]interface{}, 0)
-		responsevalues := make([]interface{}, 0)
-		otherheaders := make([]string, 0)
-		othersubheaders := make([]string, 0)
-		otherresponsevalues := make([]interface{}, 0)
+		if !rowEmpty(sheet, i) {
 
-		run.RunNumber, err = sheet.Cell(i, 1).Int()
-		if err != nil {
-			return runs, err
-		}
-		run.StdNumber, err = sheet.Cell(i, 0).Int()
-		if err != nil {
-			return runs, err
-		}
+			factordescriptors := make([]string, 0)
+			responsedescriptors := make([]string, 0)
+			setpoints := make([]interface{}, 0)
+			responsevalues := make([]interface{}, 0)
+			otherheaders := make([]string, 0)
+			othersubheaders := make([]string, 0)
+			otherresponsevalues := make([]interface{}, 0)
 
-		for j := 2; j < sheet.MaxCol; j++ {
-			factororresponse, err := sheet.Cell(0, j).String()
-
+			run.RunNumber, err = sheet.Cell(i, 1).Int()
+			if err != nil {
+				return runs, err
+			}
+			run.StdNumber, err = sheet.Cell(i, 0).Int()
 			if err != nil {
 				return runs, err
 			}
 
-			if strings.Contains(factororresponse, "Factor") {
+			for j := 2; j < sheet.MaxCol; j++ {
+				factororresponse, err := sheet.Cell(0, j).String()
 
-				desc, err := sheet.Cell(1, j).String()
 				if err != nil {
 					return runs, err
 				}
 
-				descriptor = strings.Split(desc, ":")[1]
-				factrodescriptor := descriptor
-				//fmt.Println(i, j, descriptor)
+				if strings.Contains(factororresponse, "Factor") {
 
-				cell := sheet.Cell(i, j)
+					desc, err := sheet.Cell(1, j).String()
+					if err != nil {
+						return runs, err
+					}
 
-				celltype := cell.Type()
+					descriptor = strings.Split(desc, ":")[1]
+					factrodescriptor := descriptor
+					//fmt.Println(i, j, descriptor)
 
-				_, err = cell.Float()
+					cell := sheet.Cell(i, j)
 
-				if strings.ToUpper(cell.Value) == "TRUE" {
-					setpoint = true //cell.SetBool(true)
-				} else if strings.ToUpper(cell.Value) == "FALSE" {
-					setpoint = false //cell.SetBool(false)
-				} else if celltype == 3 {
-					setpoint = cell.Bool()
-				} else if err == nil || celltype == 1 {
-					setpoint, _ = cell.Float()
-					if search.InSlice(descriptor, intfactors) {
-						setpoint, err = cell.Int()
+					celltype := cell.Type()
+
+					_, err = cell.Float()
+
+					if strings.ToUpper(cell.Value) == "TRUE" {
+						setpoint = true //cell.SetBool(true)
+					} else if strings.ToUpper(cell.Value) == "FALSE" {
+						setpoint = false //cell.SetBool(false)
+					} else if celltype == 3 {
+						setpoint = cell.Bool()
+					} else if err == nil || celltype == 1 {
+						setpoint, _ = cell.Float()
+						if search.InSlice(descriptor, intfactors) {
+							setpoint, err = cell.Int()
+							if err != nil {
+								return runs, err
+							}
+						}
+					} else {
+
+						setpoint, err = cell.String()
 						if err != nil {
 							return runs, err
 						}
 					}
+
+					factordescriptors = append(factordescriptors, factrodescriptor)
+					setpoints = append(setpoints, setpoint)
+
+				} else if strings.Contains(factororresponse, "Response") {
+					descriptor, err = sheet.Cell(1, j).String()
+					if err != nil {
+						return runs, err
+					}
+					responsedescriptor := descriptor
+					//// fmt.Println("response", i, j, descriptor)
+					responsedescriptors = append(responsedescriptors, responsedescriptor)
+
+					cell := sheet.Cell(i, j)
+
+					if cell == nil {
+
+						break
+					}
+
+					celltype := cell.Type()
+
+					if celltype == 1 {
+						responsevalue, err := cell.Float()
+						if err != nil {
+							return runs, err
+						}
+						responsevalues = append(responsevalues, responsevalue)
+					} else {
+						responsevalue, err := cell.String()
+						if err != nil {
+							return runs, err
+						}
+						responsevalues = append(responsevalues, responsevalue)
+					}
+
 				} else {
-
-					setpoint, err = cell.String()
+					descriptor, err = sheet.Cell(1, j).String()
 					if err != nil {
 						return runs, err
 					}
-				}
+					responsedescriptor := descriptor
 
-				factordescriptors = append(factordescriptors, factrodescriptor)
-				setpoints = append(setpoints, setpoint)
+					otherheaders = append(otherheaders, factororresponse)
+					othersubheaders = append(othersubheaders, responsedescriptor)
 
-			} else if strings.Contains(factororresponse, "Response") {
-				descriptor, err = sheet.Cell(1, j).String()
-				if err != nil {
-					return runs, err
-				}
-				responsedescriptor := descriptor
-				//// fmt.Println("response", i, j, descriptor)
-				responsedescriptors = append(responsedescriptors, responsedescriptor)
+					cell := sheet.Cell(i, j)
 
-				cell := sheet.Cell(i, j)
+					if cell == nil {
 
-				if cell == nil {
-
-					break
-				}
-
-				celltype := cell.Type()
-
-				if celltype == 1 {
-					responsevalue, err := cell.Float()
-					if err != nil {
-						return runs, err
+						break
 					}
-					responsevalues = append(responsevalues, responsevalue)
-				} else {
-					responsevalue, err := cell.String()
-					if err != nil {
-						return runs, err
+
+					celltype := cell.Type()
+
+					if celltype == 1 {
+						responsevalue, err := cell.Float()
+						if err != nil {
+							return runs, err
+						}
+						otherresponsevalues = append(otherresponsevalues, responsevalue)
+					} else {
+						responsevalue, err := cell.String()
+						if err != nil {
+							return runs, err
+						}
+						otherresponsevalues = append(otherresponsevalues, responsevalue)
 					}
-					responsevalues = append(responsevalues, responsevalue)
+
 				}
-
-			} else {
-				descriptor, err = sheet.Cell(1, j).String()
-				if err != nil {
-					return runs, err
-				}
-				responsedescriptor := descriptor
-
-				otherheaders = append(otherheaders, factororresponse)
-				othersubheaders = append(othersubheaders, responsedescriptor)
-
-				cell := sheet.Cell(i, j)
-
-				if cell == nil {
-
-					break
-				}
-
-				celltype := cell.Type()
-
-				if celltype == 1 {
-					responsevalue, err := cell.Float()
-					if err != nil {
-						return runs, err
-					}
-					otherresponsevalues = append(otherresponsevalues, responsevalue)
-				} else {
-					responsevalue, err := cell.String()
-					if err != nil {
-						return runs, err
-					}
-					otherresponsevalues = append(otherresponsevalues, responsevalue)
-				}
-
 			}
+			run.Factordescriptors = factordescriptors
+			run.Responsedescriptors = responsedescriptors
+			run.Setpoints = setpoints
+			run.ResponseValues = responsevalues
+			run.AdditionalHeaders = otherheaders
+			run.AdditionalSubheaders = othersubheaders
+			run.AdditionalValues = otherresponsevalues
+
+			runs = append(runs, run)
+			factordescriptors = make([]string, 0)
+			responsedescriptors = make([]string, 0)
+
+			// assuming this is necessary too
+			otherheaders = make([]string, 0)
+			othersubheaders = make([]string, 0)
 		}
-		run.Factordescriptors = factordescriptors
-		run.Responsedescriptors = responsedescriptors
-		run.Setpoints = setpoints
-		run.ResponseValues = responsevalues
-		run.AdditionalHeaders = otherheaders
-		run.AdditionalSubheaders = othersubheaders
-		run.AdditionalValues = otherresponsevalues
-
-		runs = append(runs, run)
-		factordescriptors = make([]string, 0)
-		responsedescriptors = make([]string, 0)
-
-		// assuming this is necessary too
-		otherheaders = make([]string, 0)
-		othersubheaders = make([]string, 0)
 	}
 
 	return
@@ -796,152 +792,150 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 	var setpoint interface{}
 	var descriptor string
 	for i := 1; i < sheet.MaxRow; i++ {
-		//maxfactorcol := 2
 
-		if rowEmpty(sheet, i) {
-			return
-		}
+		if !rowEmpty(sheet, i) {
 
-		factordescriptors := make([]string, 0)
-		responsedescriptors := make([]string, 0)
-		setpoints := make([]interface{}, 0)
-		responsevalues := make([]interface{}, 0)
-		otherheaders := make([]string, 0)
-		othersubheaders := make([]string, 0)
-		otherresponsevalues := make([]interface{}, 0)
+			factordescriptors := make([]string, 0)
+			responsedescriptors := make([]string, 0)
+			setpoints := make([]interface{}, 0)
+			responsevalues := make([]interface{}, 0)
+			otherheaders := make([]string, 0)
+			othersubheaders := make([]string, 0)
+			otherresponsevalues := make([]interface{}, 0)
 
-		run.RunNumber = i //sheet.Cell(i, 1).Int()
+			run.RunNumber = i //sheet.Cell(i, 1).Int()
 
-		run.StdNumber = i //sheet.Cell(i, 0).Int()
+			run.StdNumber = i //sheet.Cell(i, 0).Int()
 
-		for j := 0; j < sheet.MaxCol; j++ {
+			for j := 0; j < sheet.MaxCol; j++ {
 
-			var factororresponse string
+				var factororresponse string
 
-			if search.Contains(factorcolumns, j) {
-				factororresponse = "Factor"
-			} else if search.Contains(responsecolumns, j) {
-				factororresponse = "Response"
-			}
-
-			if strings.Contains(factororresponse, "Factor") {
-
-				descriptor, err = sheet.Cell(0, j).String()
-				if err != nil {
-					return runs, err
+				if search.Contains(factorcolumns, j) {
+					factororresponse = "Factor"
+				} else if search.Contains(responsecolumns, j) {
+					factororresponse = "Response"
 				}
-				factrodescriptor := descriptor
-				cell := sheet.Cell(i, j)
 
-				celltype := cell.Type()
+				if strings.Contains(factororresponse, "Factor") {
 
-				_, err := cell.Float()
+					descriptor, err = sheet.Cell(0, j).String()
+					if err != nil {
+						return runs, err
+					}
+					factrodescriptor := descriptor
+					cell := sheet.Cell(i, j)
 
-				if strings.ToUpper(cell.Value) == "TRUE" {
-					setpoint = true //cell.SetBool(true)
-				} else if strings.ToUpper(cell.Value) == "FALSE" {
-					setpoint = false //cell.SetBool(false)
-				} else if celltype == 3 {
-					setpoint = cell.Bool()
-				} else if err == nil || celltype == 1 {
-					setpoint, _ = cell.Float()
-					if search.InSlice(descriptor, intfactors) {
-						setpoint, err = cell.Int()
+					celltype := cell.Type()
+
+					_, err := cell.Float()
+
+					if strings.ToUpper(cell.Value) == "TRUE" {
+						setpoint = true //cell.SetBool(true)
+					} else if strings.ToUpper(cell.Value) == "FALSE" {
+						setpoint = false //cell.SetBool(false)
+					} else if celltype == 3 {
+						setpoint = cell.Bool()
+					} else if err == nil || celltype == 1 {
+						setpoint, _ = cell.Float()
+						if search.InSlice(descriptor, intfactors) {
+							setpoint, err = cell.Int()
+							if err != nil {
+								return runs, err
+							}
+						}
+					} else {
+						setpoint, err = cell.String()
 						if err != nil {
 							return runs, err
 						}
 					}
-				} else {
-					setpoint, err = cell.String()
+					factordescriptors = append(factordescriptors, factrodescriptor)
+					setpoints = append(setpoints, setpoint)
+
+				} else if strings.Contains(factororresponse, "Response") {
+					descriptor, err = sheet.Cell(0, j).String()
 					if err != nil {
 						return runs, err
 					}
-				}
-				factordescriptors = append(factordescriptors, factrodescriptor)
-				setpoints = append(setpoints, setpoint)
+					responsedescriptor := descriptor
 
-			} else if strings.Contains(factororresponse, "Response") {
-				descriptor, err = sheet.Cell(0, j).String()
-				if err != nil {
-					return runs, err
-				}
-				responsedescriptor := descriptor
+					responsedescriptors = append(responsedescriptors, responsedescriptor)
 
-				responsedescriptors = append(responsedescriptors, responsedescriptor)
+					cell := sheet.Cell(i, j)
 
-				cell := sheet.Cell(i, j)
+					if cell == nil {
 
-				if cell == nil {
+						break
+					}
 
-					break
-				}
+					celltype := cell.Type()
 
-				celltype := cell.Type()
+					if celltype == 1 {
+						responsevalue, err := cell.Float()
+						if err != nil {
+							return runs, err
+						}
+						responsevalues = append(responsevalues, responsevalue)
+					} else {
+						responsevalue, err := cell.String()
+						if err != nil {
+							return runs, err
+						}
+						responsevalues = append(responsevalues, responsevalue)
+					}
 
-				if celltype == 1 {
-					responsevalue, err := cell.Float()
+				} else /*if j != patterncolumn*/ {
+					descriptor, err = sheet.Cell(0, j).String()
 					if err != nil {
 						return runs, err
 					}
-					responsevalues = append(responsevalues, responsevalue)
-				} else {
-					responsevalue, err := cell.String()
-					if err != nil {
-						return runs, err
+					responsedescriptor := descriptor
+
+					otherheaders = append(otherheaders, factororresponse)
+					othersubheaders = append(othersubheaders, responsedescriptor)
+
+					cell := sheet.Cell(i, j)
+
+					if cell == nil {
+
+						break
 					}
-					responsevalues = append(responsevalues, responsevalue)
-				}
 
-			} else /*if j != patterncolumn*/ {
-				descriptor, err = sheet.Cell(0, j).String()
-				if err != nil {
-					return runs, err
-				}
-				responsedescriptor := descriptor
+					celltype := cell.Type()
 
-				otherheaders = append(otherheaders, factororresponse)
-				othersubheaders = append(othersubheaders, responsedescriptor)
-
-				cell := sheet.Cell(i, j)
-
-				if cell == nil {
-
-					break
-				}
-
-				celltype := cell.Type()
-
-				if celltype == 1 {
-					responsevalue, err := cell.Float()
-					if err != nil {
-						return runs, err
+					if celltype == 1 {
+						responsevalue, err := cell.Float()
+						if err != nil {
+							return runs, err
+						}
+						otherresponsevalues = append(otherresponsevalues, responsevalue)
+					} else {
+						responsevalue, err := cell.String()
+						if err != nil {
+							return runs, err
+						}
+						otherresponsevalues = append(otherresponsevalues, responsevalue)
 					}
-					otherresponsevalues = append(otherresponsevalues, responsevalue)
-				} else {
-					responsevalue, err := cell.String()
-					if err != nil {
-						return runs, err
-					}
-					otherresponsevalues = append(otherresponsevalues, responsevalue)
-				}
 
+				}
 			}
+			run.Factordescriptors = factordescriptors
+			run.Responsedescriptors = responsedescriptors
+			run.Setpoints = setpoints
+			run.ResponseValues = responsevalues
+			run.AdditionalHeaders = otherheaders
+			run.AdditionalSubheaders = othersubheaders
+			run.AdditionalValues = otherresponsevalues
+
+			runs = append(runs, run)
+			factordescriptors = make([]string, 0)
+			responsedescriptors = make([]string, 0)
+
+			// assuming this is necessary too
+			otherheaders = make([]string, 0)
+			othersubheaders = make([]string, 0)
 		}
-		run.Factordescriptors = factordescriptors
-		run.Responsedescriptors = responsedescriptors
-		run.Setpoints = setpoints
-		run.ResponseValues = responsevalues
-		run.AdditionalHeaders = otherheaders
-		run.AdditionalSubheaders = othersubheaders
-		run.AdditionalValues = otherresponsevalues
-
-		runs = append(runs, run)
-		factordescriptors = make([]string, 0)
-		responsedescriptors = make([]string, 0)
-
-		// assuming this is necessary too
-		otherheaders = make([]string, 0)
-		othersubheaders = make([]string, 0)
 	}
 
 	return
@@ -980,7 +974,7 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 
 			cellstr, err := sheet.Cell(i, j).String()
 			if err != nil {
-				panic(err.Error())
+				panic(fmt.Sprintf("Error parsing cell column: %s row: %d. Error: %s", wutil.NumToAlpha(j+1), i+1, err.Error()))
 			}
 
 			if patternfound && j != PatternColumn && cellstr != "" {

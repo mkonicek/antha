@@ -160,27 +160,27 @@ func containsSeq(seqs []DNASequence, seq DNASequence, checkSeqs bool) (bool, []i
 }
 
 const (
-	FORCEADD bool = true // Optional parameter to use in AddDNASequence method to override error check preventing addition of a duplicate sequence.
+	FORCE bool = true // Optional parameter to use in AddDNASequence method to override error check preventing addition of a duplicate sequence.
 )
 
 // Adds DNASequence to the LHComponent.
 // If a Sequence already exists an error is returned and the sequence is not added
 // unless an additional boolean argument (FORCEADD or true) is specified to ignore duplicates.
 // A warning will be returned in either case if a duplicate sequence is already found.
-func (lhc *LHComponent) AddDNASequence(seq DNASequence, ignoreDuplicates ...bool) error {
+func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 	var err error
 	// skip error checking: if no sequence list is present one will be created later anyway
 	seqList, _ := lhc.getSequences()
 
 	if _, positions, err := lhc.FindDNASequence(seq); err == nil {
 
-		if len(ignoreDuplicates) == 0 {
-			err = fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v. To FORCEADD the sequence add FORCEADD as an argument when using AddDNASequence: i.e. AddDNASequence(sequence, wtype.FORCEADD)", lhc.Name(), seq.Name(), positions, seqList)
+		if len(options) == 0 {
+			err = fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v. To add the sequence anyway add FORCE as an argument when using AddDNASequence: i.e. AddDNASequence(sequence, wtype.FORCE)", lhc.Name(), seq.Name(), positions, seqList)
 			return err
-		} else if !ignoreDuplicates[0] {
-			err = fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v. To FORCEADD the sequence add FORCEADD as an argument when using AddDNASequence: i.e. AddDNASequence(sequence, wtype.FORCEADD)", lhc.Name(), seq.Name(), positions, seqList)
+		} else if !options[0] {
+			err = fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v. To add the sequence anywayadd FORCE as an argument when using AddDNASequence: i.e. AddDNASequence(sequence, wtype.FORCE)", lhc.Name(), seq.Name(), positions, seqList)
 			return err
-		} else if ignoreDuplicates[0] {
+		} else if options[0] {
 			err = fmt.Errorf("Warning: LHComponent %s already contains sequence %s at positions %+v in sequences %+v but was added.", lhc.Name(), seq.Name(), positions, seqList)
 		}
 	}

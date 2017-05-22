@@ -350,7 +350,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	welltypesmallereppy := wtype.NewLHWell("1.5mlEpp", "", "", "ul", 1500, 50, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
 
-	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate("eppendorfrack425_2ml", "Unknown", 4, 6, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
 	// Eppendorfrack 424 with lid holders and using 2ml tubes

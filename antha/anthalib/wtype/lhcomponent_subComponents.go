@@ -33,12 +33,12 @@ import (
 )
 
 // List of the components and corresponding concentrations contained within an LHComponent
-type componentList struct {
+type ComponentList struct {
 	Components map[string]Concentration `json:"Components"`
 }
 
 // add a single entry to a component list
-func (c componentList) Add(component *LHComponent, conc Concentration) (newlist componentList) {
+func (c ComponentList) Add(component *LHComponent, conc Concentration) (newlist ComponentList) {
 	complist := make(map[string]Concentration)
 	for k, v := range c.Components {
 		complist[k] = v
@@ -53,7 +53,7 @@ func (c componentList) Add(component *LHComponent, conc Concentration) (newlist 
 
 // Get a single concentration set point for a named component present in a component list.
 // An error will be returned if the component is not present.
-func (c componentList) Get(component *LHComponent) (conc Concentration, err error) {
+func (c ComponentList) Get(component *LHComponent) (conc Concentration, err error) {
 	conc, found := c.Components[component.CName]
 
 	if found {
@@ -66,7 +66,7 @@ func (c componentList) Get(component *LHComponent) (conc Concentration, err erro
 
 // Get a single concentration set point using just the name of a component present in a component list.
 // An error will be returned if the component is not present.
-func (c componentList) GetByName(component string) (conc Concentration, err error) {
+func (c ComponentList) GetByName(component string) (conc Concentration, err error) {
 	conc, found := c.Components[component]
 
 	if found {
@@ -79,7 +79,7 @@ func (c componentList) GetByName(component string) (conc Concentration, err erro
 
 // List all Components and concentration set points presnet in a component list.
 // if verbose is set to true the field annotations for each component and concentration will be included for each component.
-func (c componentList) List(verbose bool) string {
+func (c ComponentList) List(verbose bool) string {
 	var ALTMIXDELIMITER = "---"
 	var s []string
 
@@ -104,7 +104,7 @@ func (c componentList) List(verbose bool) string {
 }
 
 // Returns all component names present in component list, sorted in alphabetical order.
-func (c componentList) AllComponents() []string {
+func (c ComponentList) AllComponents() []string {
 	var s []string
 
 	for k, _ := range c.Components {
@@ -149,7 +149,7 @@ func (component *LHComponent) AddSubComponent(subcomponent *LHComponent, conc Co
 
 		complist[subcomponent.CName] = conc
 
-		var newlist componentList
+		var newlist ComponentList
 
 		newlist = newlist.Add(subcomponent, conc)
 
@@ -198,14 +198,14 @@ func (component *LHComponent) AddSubComponent(subcomponent *LHComponent, conc Co
 }
 
 // utility function to allow the object properties to be retained when serialised
-func serialise(compList componentList) ([]byte, error) {
+func serialise(compList ComponentList) ([]byte, error) {
 
 	return json.Marshal(compList)
 }
 
 // utility function to allow the object properties to be retained when serialised
-func deserialise(data []byte) (compList componentList, err error) {
-	compList = componentList{}
+func deserialise(data []byte) (compList ComponentList, err error) {
+	compList = ComponentList{}
 	err = json.Unmarshal(data, &compList)
 	return
 }
@@ -214,7 +214,7 @@ const HISTORY = "History"
 
 // Return a component list from a component.
 // Users should use getSubComponents function.
-func (comp *LHComponent) getHistory() (compList componentList, err error) {
+func (comp *LHComponent) getHistory() (compList ComponentList, err error) {
 
 	history, found := comp.Extra[HISTORY]
 
@@ -241,7 +241,7 @@ func (comp *LHComponent) getHistory() (compList componentList, err error) {
 // Add a component list to a component.
 // Any existing component list will be overwritten.
 // Users should use add SubComponents function
-func (comp *LHComponent) setHistory(compList componentList) error {
+func (comp *LHComponent) setHistory(compList ComponentList) error {
 
 	comp.Extra[HISTORY] = compList // serialisedList
 
@@ -250,7 +250,7 @@ func (comp *LHComponent) setHistory(compList componentList) error {
 
 // Add a component list to a component.
 // Any existing component list will be overwritten
-func (component *LHComponent) AddSubComponents(allsubComponents componentList) error {
+func (component *LHComponent) AddSubComponents(allsubComponents ComponentList) error {
 
 	for _, compName := range allsubComponents.AllComponents() {
 		var comp LHComponent
@@ -274,7 +274,7 @@ func (component *LHComponent) AddSubComponents(allsubComponents componentList) e
 }
 
 // return a component list from a component
-func (component *LHComponent) GetSubComponents() (componentMap componentList, err error) {
+func (component *LHComponent) GetSubComponents() (componentMap ComponentList, err error) {
 
 	components, err := component.getHistory()
 

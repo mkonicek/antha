@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/PCR"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pcr"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 //This function takes in a pcr design file (.xlsx or .csv) and converts this into an array of type PCRReactions.
-func ParsePCRExcel(designfile wtype.File) ([]PCR.PCRReaction, error) {
+func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 
 	data, err := designfile.ReadAll()
-	var pcrreaction []PCR.PCRReaction
+	var pcrreaction []pcr.Reaction
 	if err != nil {
 		err = fmt.Errorf(err.Error())
 	} else {

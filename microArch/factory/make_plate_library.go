@@ -534,7 +534,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plates[gelplate.Type] = gelplate
 
 	// 2nd type
-	gelplate = wtype.NewLHPlate("EGEL96_2", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -5.0, 9, riserheightinmm+5.5)
+	gelplate = wtype.NewLHPlate("EGEL96_2", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -5.0, 14, riserheightinmm+5.5)
 	gelplate.SetConstrained("Pipetmax", gelconsar)
 	plates[gelplate.Type] = gelplate
 

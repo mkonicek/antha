@@ -510,7 +510,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 20, 0, ep48g, wtype.LHWBFLAT, 2, 4, 2, 2, "mm")
 	//welltype = wtype.NewLHWell("384flat", "", "", "ul", 100, 10, square, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 	//plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, -1.0, 17.25, 49.5)
-	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
+	gelplate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -10.0, 32.0, riserheightinmm+4.5)
 	//plate = wtype.NewLHPlate("greiner384", "Unknown", 16, 24, 14, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	gelconsar := []string{"position_9"}

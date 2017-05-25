@@ -151,7 +151,7 @@ func CopyConcentration(v Concentration) Concentration {
 	return ret
 }
 
-// multiply volume
+// multiply concentration
 func MultiplyConcentration(v Concentration, factor float64) (newconc Concentration) {
 
 	newconc = NewConcentration(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
@@ -159,10 +159,35 @@ func MultiplyConcentration(v Concentration, factor float64) (newconc Concentrati
 
 }
 
-// divide volume
+// divide concentration
 func DivideConcentration(v Concentration, factor float64) (newconc Concentration) {
 
 	newconc = NewConcentration(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// add concentrations
+func AddConcentrations(concs []Concentration) (newconc Concentration, err error) {
+
+	if len(concs) == 0 {
+		err = fmt.Errorf("Array of concentrations empty, nil value returned")
+	}
+	var tempconc Concentration
+	unit := concs[0].Unit().PrefixedSymbol()
+	tempconc = NewConcentration(0.0, unit)
+
+	for _, conc := range concs {
+		if tempconc.Unit().PrefixedSymbol() == conc.Unit().PrefixedSymbol() {
+			tempconc = NewConcentration(tempconc.RawValue()+conc.RawValue(), tempconc.Unit().PrefixedSymbol())
+			newconc = tempconc
+		} else if tempconc.Unit().BaseSISymbol() != conc.Unit().BaseSISymbol() {
+			err = fmt.Errorf("Cannot add units with base g/l to M/l, please bring concs to same base. ")
+		} else {
+			tempconc = NewConcentration(tempconc.SIValue()+conc.SIValue(), tempconc.Unit().BaseSISymbol())
+			newconc = tempconc
+		}
+	}
 	return
 
 }
@@ -290,12 +315,18 @@ type Moles struct {
 
 // generate a new Amount in moles
 func NewAmount(v float64, unit string) Moles {
-	if unit != "M" {
-		panic("Can't make amounts which aren't in moles")
+	details, ok := UnitMap["Amount"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Amount"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved Amount unit %q, approved units are %s", unit, approved))
 	}
 
-	m := Moles{NewMeasurement(v, "", unit)}
-	return m
+	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
+
 }
 
 // defines Amount to be a SubstanceQuantity
@@ -404,6 +435,7 @@ var UnitMap = map[string]map[string]Unit{
 		"ug/l":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
 		"ng/L":   Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
 		"ng/l":   Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"ug/ml":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"ng/ul":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"ng/ml":  Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
 		"Mol/L":  Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
@@ -416,6 +448,11 @@ var UnitMap = map[string]map[string]Unit{
 		"mM/L":   Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
 		"uM/l":   Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
 		"nM/l":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nM/L":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"pM/l":   Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/L":   Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"fM/l":   Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fM/L":   Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
 		"M/l":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"M/L":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"mMol/L": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
@@ -429,6 +466,18 @@ var UnitMap = map[string]map[string]Unit{
 		"mg": Unit{Base: "g", Prefix: "m", Multiplier: 1.0},
 		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
 		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
+	},
+	"Amount": map[string]Unit{
+		"pMol": Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
+		"nMol": Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
+		"uMol": Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
+		"mMol": Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
+		"Mol":  Unit{Base: "M", Prefix: "", Multiplier: 1.0},
+		"pM":   Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
+		"nM":   Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
+		"uM":   Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
+		"mM":   Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
+		"M":    Unit{Base: "M", Prefix: "", Multiplier: 1.0},
 	},
 }
 

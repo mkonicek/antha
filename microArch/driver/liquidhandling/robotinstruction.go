@@ -25,23 +25,26 @@ package liquidhandling
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"sort"
 )
 
 type RobotInstruction interface {
 	InstructionType() int
 	GetParameter(name string) interface{}
-	Generate(policy *LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	Check(lhpr wtype.LHPolicyRule) bool
 }
 
 type TerminalRobotInstruction interface {
 	RobotInstruction
-	OutputTo(driver LiquidhandlingDriver)
+	OutputTo(driver LiquidhandlingDriver) error
 }
 
 const (
 	TFR int = iota // Transfer
-	CTF            // Channel Transfer
+	TFB            // Transfer block
 	SCB            // Single channel transfer block
 	MCB            // Multi channel transfer block
 	SCT            // Single channel transfer
@@ -76,7 +79,7 @@ const (
 	MIX            // Mix
 )
 
-var Robotinstructionnames = []string{"TFR", "CTF", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX"}
+var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX"}
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED"}
 
@@ -187,4 +190,66 @@ func concatintarray(a []int) string {
 
 	return r
 
+}
+
+// empty struct to hang methods on
+type GenericRobotInstruction struct {
+	Ins RobotInstruction
+}
+
+func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
+	for _, vcondition := range rule.Conditions {
+		v := gri.Ins.GetParameter(vcondition.TestVariable)
+		vrai := vcondition.Condition.Match(v)
+		if !vrai {
+			return false
+		}
+	}
+	return true
+}
+
+func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol wtype.LHPolicy) {
+	fmt.Println("*****")
+	fmt.Println("Policy for instruction ", InsToString(ins))
+	fmt.Println()
+	fmt.Println("Active Rules:")
+	fmt.Println("\t Default")
+	for _, r := range rules {
+		fmt.Println("\t", r.Name)
+	}
+	fmt.Println()
+	itemset := wtype.MakePolicyItems()
+	fmt.Println("Full output")
+	for _, s := range itemset.OrderedList() {
+		if pol[s] == nil {
+			continue
+		}
+		fmt.Println("\t", s, ": ", pol[s])
+	}
+	fmt.Println("_____")
+
+}
+
+func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPolicy {
+	// find the set of matching rules
+	rules := make([]wtype.LHPolicyRule, 0, len(lhpr.Rules))
+	for _, rule := range lhpr.Rules {
+		if ins.Check(rule) {
+			rules = append(rules, rule)
+		}
+	}
+
+	// sort rules by priority
+	sort.Sort(wtype.SortableRules(rules))
+
+	// we might prefer to just merge this in
+
+	ppl := wtype.DupLHPolicy(lhpr.Policies["default"])
+
+	for _, rule := range rules {
+		ppl.MergeWith(lhpr.Policies[rule.Name])
+	}
+
+	//printPolicyForDebug(ins, rules, ppl)
+	return ppl
 }

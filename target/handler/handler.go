@@ -7,10 +7,10 @@ import (
 	"io"
 
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/bvendor/github.com/golang/protobuf/proto"
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
+	"github.com/golang/protobuf/proto"
 )
 
 var (

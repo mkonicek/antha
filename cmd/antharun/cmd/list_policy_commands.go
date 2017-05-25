@@ -28,7 +28,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -64,7 +64,7 @@ func listPolicyCommands(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 
 	var cs simplePolicyCommands
-	for _, c := range liquidhandling.GetPolicyConsequents() {
+	for _, c := range wtype.GetPolicyConsequents() {
 		cs = append(cs, simplePolicyCommand{
 			Name: c.Name,
 			Type: c.TypeName(),

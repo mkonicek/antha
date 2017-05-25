@@ -24,6 +24,7 @@ package factory
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -234,6 +235,18 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate := wtype.NewLHPlate("DSW96", "Unknown", 8, 12, 44.1, "mm", deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates[plate.Type] = plate
 
+	// IDT/ABgene 1.2 ml storage plate AB0564
+	idtshp := wtype.NewShape("cylinder", "mm", 7, 7, 39.35)
+	idtroundwell96 := wtype.NewLHWell("IDT96", "", "", "ul", 1200, 100, idtshp, wtype.LHWBU, 7, 7, 39.35, 3, "mm")
+	plate = wtype.NewLHPlate("IDT96", "Unknown", 8, 12, 42.5, "mm", idtroundwell96, 9, 9, 0, 0, 3)
+	plates[plate.Type] = plate
+
+	//4 column reservoir plate Phenix Research Products RRI3051; Fisher cat# NC0336913
+	fourcolumnshp := wtype.NewShape("box", "mm", 26, 71, 42)
+	fourcolumnwell := wtype.NewLHWell("FourColumnWell", "", "", "ul", 73000, 3000, fourcolumnshp, wtype.LHWBV, 26, 71, 42, 2, "mm")
+	plate = wtype.NewLHPlate("FourColumnReservoir", "Unknown", 1, 4, 44, "mm", fourcolumnwell, 26, 1, 9.5, 31, 1) //WellYStart is not accurate, but would not visualise correctly unless set to this value, cant diagnose
+	plates[plate.Type] = plate
+
 	// 24 well deep square well plate on riser
 
 	bottomtype := wtype.LHWBV // 0 = flat, 2 = v shaped
@@ -303,7 +316,12 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	// pcr plate with 496rack
 
-	plate = wtype.NewLHPlate("pcrplate_with_496rack", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, pcrtuberack496-2.5)
+	plate = wtype.NewLHPlate("pcrplate_with_496rack", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, pcrtuberack496)
+	plates[plate.Type] = plate
+
+	// 0.2ml strip tubes with 496rack
+
+	plate = wtype.NewLHPlate("strip_tubes_0.2ml_with_496rack", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, pcrtuberack496-2.5)
 	plates[plate.Type] = plate
 
 	// pcr plate skirted
@@ -319,7 +337,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	wellxoffset = 18.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 5.0       // distance from top left side of plate to first well
-	ystart = 5.0       // distance from top left side of plate to first well
+	ystart = 10.0      // distance from top left side of plate to first well
 	zstart = 6.0       // offset of bottom of deck to bottom of well
 
 	welltype2mleppy := wtype.NewLHWell("2mlEpp", "", "", "ul", 2000, 25, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
@@ -327,17 +345,51 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = wtype.NewLHPlate("Kombi2mlEpp", "Unknown", 4, 2, 45, "mm", welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
-	// Eppendorfrack
+	// Eppendorfrack 425 for 2ml tubes
 
 	wellxoffset = 18.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
-	xstart = 5.0       // distance from top left si z9fdJwde of plate to first well
-	ystart = 5.0       // distance from top left side of plate to first well
-	zstart = 7.0 - 1.0 // offset of bottom of deck to bottom of well
+	xstart = 4.5       // distance from top left side of plate to first well
+	ystart = 9         // distance from top left side of plate to first well
+	zstart = 5.0       // offset of bottom of deck to bottom of well
+
+	plate = wtype.NewLHPlate("eppendorfrack425_2ml", "Unknown", 4, 6, 45, "mm", welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+
+	// Eppendorfrack 425 for 1.5ml tubes
+
+	wellxoffset = 18.0 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
+	xstart = 4.5       // distance from top left side of plate to first well
+	ystart = 9         // distance from top left side of plate to first well
+	zstart = 5.0       // offset of bottom of deck to bottom of well
 
 	welltypesmallereppy := wtype.NewLHWell("1.5mlEpp", "", "", "ul", 1500, 50, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
 
 	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+
+	// Eppendorfrack 424 with lid holders and using 2ml tubes
+
+	wellxoffset = 36.0 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
+	xstart = 14.0      // distance from top left side of plate to first well
+	ystart = 9         // distance from top left side of plate to first well
+	zstart = 5.0       // offset of bottom of deck to bottom of well
+
+	plate = wtype.NewLHPlate("eppendorfrack424_2ml_lidholder", "Unknown", 4, 3, 45, "mm", welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plates[plate.Type] = plate
+
+	// Eppendorfrack 424 with lid holders and using 1.5ml tubes
+
+	wellxoffset = 36.0 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
+	xstart = 14.0      // distance from top left side of plate to first well
+	ystart = 9         // distance from top left side of plate to first well
+	zstart = 9         // offset of bottom of deck to bottom of well
+	zstart = 4.5       // offset of bottom of deck to bottom of well
+
+	plate = wtype.NewLHPlate("eppendorfrack424_1.5ml_lidholder", "Unknown", 4, 3, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
 	// greiner 384 well plate flat bottom
@@ -480,11 +532,10 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//	plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, 0.0, 0.0, 2.0)
 	//	plates[plate.Type] = plate
 
-	//refactored for reverse position
-
+	//E-PAGE 48 (reverse) position
 	ep48g := wtype.NewShape("trap", "mm", 2, 4, 2)
 	//can't reach all wells; change to 24 wells per row?
-	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 25, 0, ep48g, wtype.LHWBFLAT, 2, 4, 2, 2, "mm")
+	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 20, 0, ep48g, wtype.LHWBFLAT, 2, 4, 2, 2, "mm")
 	//welltype = wtype.NewLHWell("384flat", "", "", "ul", 100, 10, square, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 	//plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, -1.0, 17.25, 49.5)
 	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
@@ -495,27 +546,24 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	plates[gelplate.Type] = gelplate
 
-	// E-GEL 96 definition
+	//E-GEL 48 (reverse) position
+	gelplate = wtype.NewLHPlate("EGEL48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
+	gelplate.SetConstrained("Pipetmax", gelconsar)
+	plates[gelplate.Type] = gelplate
 
+	//E-GEL 96 definition
 	//same welltype as EPAGE
-
-	// due to staggering of wells: 1 96well gel is set up as two well types
+	//due to staggering of wells: 1 96well gel is set up as two well types
 
 	// 1st type
 	//can't reach all wells; change to 12 wells per row?
-
 	gelplate = wtype.NewLHPlate("EGEL96_1", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -9.0, -0.5, riserheightinmm+5.5)
-
 	gelplate.SetConstrained("Pipetmax", gelconsar)
-
 	plates[gelplate.Type] = gelplate
 
 	// 2nd type
-
 	gelplate = wtype.NewLHPlate("EGEL96_2", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -5.0, 9, riserheightinmm+5.5)
-
 	gelplate.SetConstrained("Pipetmax", gelconsar)
-
 	plates[gelplate.Type] = gelplate
 
 	// falcon 6 well plate with Agar flat bottom with 4ml per well
@@ -765,4 +813,23 @@ func GetPlateList() []string {
 
 func GetPlateLibrary() map[string]*wtype.LHPlate {
 	return defaultPlateLibrary.lib
+}
+
+func PlateTypeArray(sa []string) ([]*wtype.LHPlate, error) {
+	r := make([]*wtype.LHPlate, len(sa))
+
+	for i := 0; i < len(sa); i++ {
+		if sa[i] == "" {
+			continue
+		}
+		p := GetPlateByType(sa[i])
+
+		if p == nil {
+			return nil, fmt.Errorf("Plate type not found: %s", sa[i])
+		}
+
+		r[i] = p
+	}
+
+	return r, nil
 }

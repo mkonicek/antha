@@ -102,11 +102,14 @@ func rotate_vector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASeq
 
 	// we just ensure the first one is first in the sequence... if there's more than one
 	// it's not our problem
+	if len(vector.Seq) == 0 {
+		return ret, fmt.Errorf("No Sequence found for %s so cannot rotate", vector.Nm)
+	}
 
 	ix := strings.Index(strings.ToUpper(ret.Seq), strings.ToUpper(enzyme.RecognitionSequence))
 
 	if ix == -1 {
-		err := fmt.Errorf("No restriction sites found in vector - cannot rotate")
+		err := fmt.Errorf("No restriction sites for %s found in vector %s - cannot rotate", enzyme.Name, vector.Nm)
 		return ret, err
 	}
 
@@ -156,7 +159,7 @@ func rotate_vector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASeq
 func JoinXnumberofparts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
 
 	if vector.Seq == "" {
-		err = fmt.Errorf("No Vector sequence found")
+		err = fmt.Errorf("No Vector sequence found for vector %s", vector.Nm)
 		return assembledfragments, plasmidproducts, err
 	}
 	// there are two cases: either the vector comes in same way parts do
@@ -265,6 +268,31 @@ type Assemblyparameters struct {
 	Partsinorder  []wtype.DNASequence `json:"parts_in_order"`
 }
 
+func names(seqs []wtype.DNASequence) []string {
+	var nms []string
+	for i := range seqs {
+		nms = append(nms, seqs[i].Nm)
+	}
+	return nms
+}
+
+// returns a summary of the names of all components specified in the Assemblyparameters variable
+func (assemblyparameters Assemblyparameters) ToString() string {
+	return fmt.Sprintf("Assembly: %s, Enzyme: %s, Vector: %s, Parts: %s", assemblyparameters.Constructname, assemblyparameters.Enzymename, assemblyparameters.Vector.Nm, strings.Join(names(assemblyparameters.Partsinorder), ";"))
+
+}
+
+// returns a summary of multiple Assemblyparameters separated by a line break for each
+func AssemblySummary(params []Assemblyparameters) string {
+
+	var summaries []string
+	for _, assembly := range params {
+		summaries = append(summaries, assembly.ToString())
+	}
+
+	return strings.Join(summaries, "\n")
+}
+
 /*type AA_DNA_Assemblyparameters struct {
 	Constructname string
 	Enzymename    string
@@ -340,7 +368,7 @@ func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence,
 	insert.Nm = assemblyparameters.Constructname + "_Insert"
 
 	if err != nil {
-		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
+		err = fmt.Errorf("Failure Calculating Insert fragment after digestion: %s", err.Error())
 		return insert, err
 	}
 
@@ -373,7 +401,6 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	failedassemblies, plasmidproductsfromXprimaryseq, err := JoinXnumberofparts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 
 	if err != nil {
-		//s = "Failure Joining fragments after digestion" //
 		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
 		s = err.Error()
 		return s, successfulassemblies, sites, newDNASequence, err
@@ -406,7 +433,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	s = "hmmm I'm confused, this doesn't seem to make any sense"
 
 	if len(plasmidproductsfromXprimaryseq) == 0 && len(failedassemblies) == 0 {
-		err = fmt.Errorf("Nope! this construct won't work: ", err)
+		err = fmt.Errorf("Nope! construct %s  won't work: %s", assemblyparameters.Constructname, err)
 		s = err.Error()
 	}
 	if len(plasmidproductsfromXprimaryseq) == 1 {

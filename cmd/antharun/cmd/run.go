@@ -83,6 +83,17 @@ func makeMixerOpt() (mixer.Opt, error) {
 
 	opt.OutputSort = viper.GetBool("outputSort")
 
+	executionPlannerVersion := ""
+	if viper.GetBool("WithMulti") {
+		executionPlannerVersion = "ep3"
+	}
+
+	opt.PrintInstructions = viper.GetBool("PrintInstructions")
+
+	opt.PlanningVersion = executionPlannerVersion
+
+	opt.UseDriverTipTracking = viper.GetBool("UseDriverTipTracking")
+
 	return opt, nil
 }
 
@@ -275,4 +286,7 @@ func init() {
 	flags.StringSlice("tipType", nil, "Names of permitted tip types")
 	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
 	flags.Bool("OutputSort", false, "Sort execution by output - improves tip usage")
+	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
+	flags.Bool("PrintInstructions", false, "Output the raw instructions sent to the driver")
+	flags.Bool("UseDriverTipTracking", false, "If the driver has tip tracking available, use it")
 }

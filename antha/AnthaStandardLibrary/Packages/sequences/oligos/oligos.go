@@ -160,6 +160,10 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 	//var start int
 	//var end int
 
+	if maxlength > len(seq.Sequence()) {
+		return oligoseq, fmt.Errorf("Sequence %s %s too small to design primer for or max length of primer %d too long", seq.Nm, seq.Seq, maxlength)
+	}
+
 	region := strings.ToUpper(seq.Sequence())
 
 	for start := 0; start < maxlength; start++ {
@@ -220,6 +224,10 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 	//var end int
 
 	// get the reverse complement of the region
+
+	if maxlength > len(seq.Sequence()) {
+		return oligoseq, fmt.Errorf("Sequence %s %s too small to design primer for or max length of primer %d too long", seq.Nm, seq.Seq, maxlength)
+	}
 
 	region := seq.Sequence()
 	revregion := sequences.RevComp(region)
@@ -497,7 +505,7 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 
 	feature := seq.GetFeatureByName(targetfeaturename)
 	if feature == nil {
-		panicstatement := fmt.Sprintln("feature: ", targetfeaturename, " not found amongst ", seq.FeatureNames())
+		panicstatement := fmt.Sprintf("feature: %s not found amongst features: %+v", targetfeaturename, seq.Features)
 		panic(panicstatement)
 	}
 

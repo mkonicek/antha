@@ -167,6 +167,7 @@ func RemoveSiteOnestrand(sequence wtype.DNASequence, enzymeseq string, otherseqs
 	return
 }
 
+// todo: fix this func
 func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, otherseqstoavoid []string) (newseq wtype.DNASequence, err error) {
 
 	var tempseq wtype.DNASequence
@@ -194,8 +195,14 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 
 		tempseq, err = RemoveSiteOnestrand(sequence, thingtoreplace, allthingstoavoid)
 		if err != nil {
-			return newseq, err
+			return tempseq, err
 		}
+		if tempseq.Seq != sequence.Seq {
+			return tempseq, fmt.Errorf("New sequence is the same as old sequence")
+		}
+		newseq = sequence.Dup()
+		newseq.Seq = tempseq.Seq
+		return newseq, nil
 	}
 
 	if len(seqsfound) == 2 {
@@ -212,10 +219,16 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 		if err != nil {
 			return newseq, err
 		}
+		if tempseq.Seq != sequence.Seq {
+			return newseq, fmt.Errorf("New sequence is the same as old sequence")
+		}
+		newseq = sequence.Dup()
+		newseq.Seq = tempseq.Seq
+		return newseq, nil
 
 	}
 
-	newseq = sequence
+	newseq = sequence.Dup()
 	newseq.Seq = tempseq.Seq
 	return
 }
@@ -392,7 +405,6 @@ func AAPosition(dnaposition int) (aaposition int) {
 func CodonOptions(codon string) (replacementoptions []string) {
 
 	aa := DNAtoAASeq([]string{codon})
-	// fmt.Println("aa: ", aa, "for ", codon)
 
 	replacementoptions = RevCodonTable[aa]
 	return
@@ -413,26 +425,26 @@ func ReplaceCodoninORF(sequence wtype.DNASequence, startandendoforf StartEndPair
 
 	// only handling cases where orf is not in reverse strand currently
 	if startandendoforf[0] < startandendoforf[1] {
+
+		if position < startandendoforf[0] || position > startandendoforf[1] {
+			return sequence, codontochange, option, fmt.Errorf("position %d specified is out of range of orf start and finish specified %+v for %s", position, startandendoforf, sequence.Nm)
+
+		}
 		fmt.Println(1)
 		seqslice := sequence.Seq[startandendoforf[0]-1 : startandendoforf[1]]
 		orf, orftrue := FindORF(seqslice)
 		fmt.Println(2, orf)
 		if orftrue /*&& len(orf.DNASeq) == len(seqslice)*/ {
-			codontochange, pair, err := Codonfromposition(orf.DNASeq, (position - startandendoforf[0]))
+			codontochange, pair, err := Codonfromposition(seqslice, (position - startandendoforf[0]))
 			if err != nil {
-				fmt.Println(err.Error())
+				return sequence, codontochange, option, err
 			}
-			// fmt.Println("STATUS of codon from position:", orf.DNASeq, position, (position - startandendoforf[0] - 1))
-			// fmt.Println("codon to change:", codontochange, "pair", pair)
 
 			options := CodonOptions(codontochange)
-			// fmt.Println("options:", options)
+
 			for _, option := range options {
-				tempseq := ReplacePosition(sequence.Seq, pair, option)
-				// fmt.Println("tempseq with replacedcodon: ", tempseq, "pair: ", pair, "option: ", option)
-				seqslice := tempseq[startandendoforf[0]-1 : startandendoforf[1]]
-				// fmt.Println("seqslice!!!", seqslice)
-				temporf, _ := FindORF(seqslice)
+				tempseq := ReplacePosition(seqslice, pair, option)
+				temporf, _ := FindORF(tempseq)
 
 				sitesfound := search.Findallthings(tempseq, seqstoavoid)
 
@@ -443,6 +455,11 @@ func ReplaceCodoninORF(sequence wtype.DNASequence, startandendoforf StartEndPair
 				}
 
 			}
+			err = fmt.Errorf("No satisfactory alternative codon options found to replace codon: %+v in options %+v", codontochange, options)
+			return sequence, codontochange, option, err
+		} else {
+			err = fmt.Errorf("No orf found in sequence %s positions %d to %d", sequence.Nm, startandendoforf[0], startandendoforf[1])
+			return sequence, codontochange, option, err
 		}
 	} else {
 		newseq = sequence
@@ -465,17 +482,18 @@ func ReplacePosition(sequence string, position StartEndPair, replacement string)
 
 func Codonfromposition(sequence string, dnaposition int) (codontoreturn string, position StartEndPair, err error) {
 
+	if dnaposition > len(sequence) {
+		return codontoreturn, position, fmt.Errorf("dnaposition %d is out of range of sequence length: %d", dnaposition, len(sequence))
+	}
+
 	nucleotides := []rune(sequence)
-	//// fmt.Println("codons=", string(codons))
 	res := ""
 	aas := make([]string, 0)
 	codon := ""
 	for i, r := range nucleotides {
 		res = res + string(r)
-		//fmt.Printf("i%d r %c\n", i, r)
 
 		if i > 0 && (i+1)%3 == 0 {
-			//fmt.Printf("=>(%d) '%v'\n", i, res)
 			codon = res
 			aas = append(aas, res)
 			res = ""
@@ -492,5 +510,5 @@ func Codonfromposition(sequence string, dnaposition int) (codontoreturn string, 
 			return
 		}
 	}
-	return
+	return codontoreturn, position, fmt.Errorf("No replacement codon found at position %d in sequence %s length %d", dnaposition, sequence, len(sequence))
 }

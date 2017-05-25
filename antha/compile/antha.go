@@ -1,5 +1,5 @@
-// antha/compiler/generator.go: Part of the Antha language
-// Copyright (C) 2014 The Antha authors. All rights reserved.
+// antha.go: Part of the Antha language
+// Copyright (C) 2017 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -48,8 +48,8 @@ const (
 )
 
 var (
-	unknownToken = errors.New("unknown token")
-	badRun       = errors.New("bad run instruction")
+	errUnknownToken = errors.New("unknown token")
+	errBadRun       = errors.New("bad run instruction")
 )
 
 // An input or an output
@@ -78,20 +78,25 @@ func (p *compiler) anthaInit() {
 	p.inputs = make(map[string]param)
 	p.outputs = make(map[string]param)
 	p.reuseMap = make(map[token.Token]map[string]bool)
-	for _, tok := range []token.Token{token.ANALYSIS, token.VALIDATION, token.STEPS, token.SETUP, token.REQUIREMENTS} {
+	for _, tok := range []token.Token{token.ANALYSIS,
+		token.VALIDATION,
+		token.STEPS,
+		token.SETUP,
+		token.REQUIREMENTS} {
 		p.reuseMap[tok] = make(map[string]bool)
 	}
 	p.intrinsics = map[string]string{
-		"Centrifuge":    "execute.Centrifuge",
-		"Electroshock":  "execute.Electroshock",
-		"Errorf":        "execute.Errorf",
-		"Handle":        "execute.Handle",
-		"Incubate":      "execute.Incubate",
-		"Mix":           "execute.Mix",
-		"MixInto":       "execute.MixInto",
-		"MixNamed":      "execute.MixNamed",
-		"MixTo":         "execute.MixTo",
-		"ReadEM":        "execute.ReadEM",
+		"Centrifuge":   "execute.Centrifuge",
+		"Electroshock": "execute.Electroshock",
+		"Errorf":       "execute.Errorf",
+		"Handle":       "execute.Handle",
+		"Incubate":     "execute.Incubate",
+		"Mix":          "execute.Mix",
+		"MixInto":      "execute.MixInto",
+		"MixNamed":     "execute.MixNamed",
+		"MixTo":        "execute.MixTo",
+		"ReadEM":       "execute.ReadEM",
+		//	"Wait":          "execute.Wait",
 		"SetInputPlate": "execute.SetInputPlate",
 	}
 	p.types = map[string]string{
@@ -101,7 +106,9 @@ func (p *compiler) anthaInit() {
 		"Area":                 "wunit.Area",
 		"Capacitance":          "wunit.Capacitance",
 		"Component":            "wtype.LHComponent",
+		"LHComponent":          "wtype.LHComponent",
 		"Concentration":        "wunit.Concentration",
+		"DNASequence":          "wtype.DNASequence",
 		"Density":              "wunit.Density",
 		"Energy":               "wunit.Energy",
 		"File":                 "wtype.File",
@@ -109,7 +116,10 @@ func (p *compiler) anthaInit() {
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",
 		"Length":               "wunit.Length",
+		"LiquidType":           "wtype.LiquidType",
 		"Mass":                 "wunit.Mass",
+		"PolicyName":           "wtype.PolicyName",
+		"LHPlate":              "wtype.LHPlate",
 		"Plate":                "wtype.LHPlate",
 		"Pressure":             "wunit.Pressure",
 		"Rate":                 "wunit.Rate",
@@ -236,6 +246,8 @@ func (p *compiler) addAnthaImports(file *ast.File, paths []string) {
 // Return appropriate go type string for an antha (type) expr
 func (p *compiler) getTypeString(e ast.Expr) (res string) {
 	switch t := e.(type) {
+	case nil:
+		res = ""
 	case *ast.Ident:
 		if v, ok := p.types[t.Name]; ok {
 			res = v
@@ -244,10 +256,11 @@ func (p *compiler) getTypeString(e ast.Expr) (res string) {
 		}
 	case *ast.SelectorExpr:
 		res = p.getTypeString(t.X) + "." + t.Sel.Name
+	case *ast.BasicLit:
+		res = t.Value
 	case *ast.ArrayType:
-		// note: array types can use a param as the length, so must be
-		// allocated and treated as a slice since they can be dynamic
-		res = "[]" + p.getTypeString(t.Elt)
+		bound := p.getTypeString(t.Len)
+		res = "[" + bound + "]" + p.getTypeString(t.Elt)
 	case *ast.StarExpr:
 		res = "*" + p.getTypeString(t.X)
 	case *ast.MapType:
@@ -261,6 +274,8 @@ func (p *compiler) getTypeString(e ast.Expr) (res string) {
 // Return appropriate go configuration type for an antha (type) expr
 func (p *compiler) getConfigTypeString(e ast.Expr) (res string) {
 	switch t := e.(type) {
+	case nil:
+		res = ""
 	case *ast.Ident:
 		if v, ok := p.types[t.Name]; ok {
 			res = v
@@ -270,15 +285,13 @@ func (p *compiler) getConfigTypeString(e ast.Expr) (res string) {
 		return
 	case *ast.SelectorExpr:
 		res = p.getConfigTypeString(t.X) + "." + t.Sel.Name
-		return
+	case *ast.BasicLit:
+		res = t.Value
 	case *ast.ArrayType:
-		// note: array types can use a param as the length, so must be
-		// allocated and treated as a slice since they can be dynamic
-		res = "[]" + p.getConfigTypeString(t.Elt)
-		return
+		bound := p.getConfigTypeString(t.Len)
+		res = "[" + bound + "]" + p.getConfigTypeString(t.Elt)
 	case *ast.StarExpr:
 		res = "wtype.FromFactory"
-		return
 	default:
 		log.Panicln("Invalid type spec to get type of: ", reflect.TypeOf(e), t)
 	}
@@ -310,7 +323,7 @@ func (p *compiler) transform(src *ast.File) {
 		src.Name.Name = p.Package
 	}
 
-	p.sugarAST(src.Decls)
+	p.sugar(src.Decls)
 	p.removeParamDecls(src)
 
 	var imports []string
@@ -332,9 +345,9 @@ func (p *compiler) generate() {
 func sortKeys(m map[string]param) []string {
 	sorted := make([]string, len(m))
 	i := 0
-	for k, _ := range m {
+	for k := range m {
 		sorted[i] = k
-		i += 1
+		i++
 	}
 	sort.Strings(sorted)
 	return sorted
@@ -367,7 +380,7 @@ func relativeTo(bases []string, name string) (string, error) {
 
 	// In reverse alphabetical to ensure longest match first
 	sort.Strings(prefixes)
-	for idx := len(prefixes) - 1; idx >= 0; idx -= 1 {
+	for idx := len(prefixes) - 1; idx >= 0; idx-- {
 		p := prefixes[idx]
 		if !strings.HasPrefix(absName, p) {
 			continue
@@ -604,7 +617,7 @@ func init() {
 			params.Outputs = append(params.Outputs, f)
 			params.SOutputs = append(params.SOutputs, f)
 		default:
-			return unknownToken
+			return errUnknownToken
 		}
 		params.PDesc = append(params.PDesc, pdesc{
 			Name: strconv.Quote(name),
@@ -632,96 +645,127 @@ func init() {
 }
 
 // Update AST for antha semantics
-func (p *compiler) sugarAST(d []ast.Decl) {
-	for i := range d {
-		switch decl := d[i].(type) {
+func (p *compiler) sugar(decls []ast.Decl) {
+	for _, d := range decls {
+		switch d := d.(type) {
 		case *ast.AnthaDecl:
-			ast.Inspect(decl.Body, p.inspectForIntrinsics)
-			ast.Inspect(decl.Body, p.inspectForParams)
-			p.sugarForTypes(decl.Body)
+			ast.Inspect(d.Body, p.inspectForIntrinsics)
+			ast.Inspect(d.Body, p.inspectForParams)
+			ast.Inspect(d.Body, p.inspectForSugar)
+		default:
+			ast.Inspect(d, p.inspectForSugar)
 		}
 	}
 }
 
 // Return appropriate nested SelectorExpr for the replacement for Identifier
-func (p *compiler) sugarForIdent(t *ast.Ident) ast.Expr {
-	if v, ok := p.types[t.Name]; ok {
-		cs := strings.Split(v, ".")
-		var base ast.Expr = &ast.Ident{NamePos: t.NamePos, Name: cs[0]}
-		for _, c := range cs[1:] {
-			base = &ast.SelectorExpr{X: base, Sel: &ast.Ident{NamePos: t.NamePos, Name: c}}
-		}
-		return base
-	} else {
+func (p *compiler) sugarIdent(t *ast.Ident) ast.Expr {
+	v, ok := p.types[t.Name]
+	if !ok {
 		return t
 	}
+
+	cs := strings.Split(v, ".")
+	var base ast.Expr = &ast.Ident{NamePos: t.NamePos, Name: cs[0]}
+	for _, c := range cs[1:] {
+		base = &ast.SelectorExpr{X: base, Sel: &ast.Ident{NamePos: t.NamePos, Name: c}}
+	}
+	return base
 }
 
 // Return appropriate go type for an antha (type) expr
-func (p *compiler) sugarForType(t ast.Expr) ast.Expr {
+func (p *compiler) sugarExpr(t ast.Node) ast.Expr {
 	switch t := t.(type) {
 	case nil:
+		return nil
+
 	case *ast.Ident:
-		return p.sugarForIdent(t)
+		return p.sugarIdent(t)
+
 	case *ast.ParenExpr:
-		return &ast.ParenExpr{Lparen: t.Lparen, X: p.sugarForType(t.X), Rparen: t.Rparen}
+		t.X = p.sugarExpr(t.X)
+
 	case *ast.SelectorExpr:
-		return t
+
 	case *ast.StarExpr:
-		return &ast.StarExpr{Star: t.Star, X: p.sugarForType(t.X)}
+		t.X = p.sugarExpr(t.X)
+
 	case *ast.ArrayType:
-		return &ast.ArrayType{Lbrack: t.Lbrack, Len: t.Len, Elt: p.sugarForType(t.Elt)}
+		t.Elt = p.sugarExpr(t.Elt)
+
 	case *ast.StructType:
-		return &ast.StructType{Struct: t.Struct, Fields: p.sugarForFieldList(t.Fields), Incomplete: t.Incomplete}
+		ast.Inspect(t, p.inspectForSugar)
+
 	case *ast.FuncType:
-		return &ast.FuncType{Func: t.Func, Params: p.sugarForFieldList(t.Params), Results: p.sugarForFieldList(t.Results)}
+		ast.Inspect(t, p.inspectForSugar)
+
 	case *ast.InterfaceType:
-		return &ast.InterfaceType{Interface: t.Interface, Methods: p.sugarForFieldList(t.Methods), Incomplete: t.Incomplete}
+		ast.Inspect(t, p.inspectForSugar)
+
 	case *ast.MapType:
-		return &ast.MapType{Map: t.Map, Key: p.sugarForType(t.Key), Value: p.sugarForType(t.Value)}
+		t.Key = p.sugarExpr(t.Key)
+		t.Value = p.sugarExpr(t.Value)
+
 	case *ast.ChanType:
-		return &ast.ChanType{Begin: t.Begin, Arrow: t.Arrow, Dir: t.Dir, Value: p.sugarForType(t.Value)}
+		t.Value = p.sugarExpr(t.Value)
+
 	default:
 		log.Panicf("unexpected expression %s of type %s", t, reflect.TypeOf(t))
 	}
 
-	return t
+	return t.(ast.Expr)
 }
 
-func (p *compiler) sugarForFieldList(t *ast.FieldList) *ast.FieldList {
-	if t == nil {
-		return nil
+func inspectExprList(exprs []ast.Expr, w func(ast.Node) bool) {
+	for _, expr := range exprs {
+		ast.Inspect(expr, w)
 	}
-	var fields []*ast.Field
-	for _, f := range t.List {
-		fields = append(fields, &ast.Field{Doc: f.Doc, Names: f.Names, Type: p.sugarForType(f.Type), Tag: f.Tag, Comment: f.Comment})
-	}
-	return &ast.FieldList{Opening: t.Opening, List: fields, Closing: t.Closing}
 }
 
-// Replace bare antha types with go qualified names
-func (p *compiler) sugarForTypes(root ast.Node) ast.Node {
-	ast.Inspect(root, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case nil:
-			return false
-		case *ast.FuncLit:
-			n.Type = p.sugarForType(n.Type).(*ast.FuncType)
-			return false
-		case *ast.CompositeLit:
-			n.Type = p.sugarForType(n.Type)
-			return false
-		case *ast.TypeAssertExpr:
-			n.Type = p.sugarForType(n.Type)
-			return false
-		case *ast.ValueSpec:
-			n.Type = p.sugarForType(n.Type)
-			return false
-		default:
-			return true
-		}
-	})
-	return root
+// Replace bare antha types with go qualified names.
+//
+// Changing all idents blindly would be simpler but opt instead with only
+// replacing idents that appear in types.
+func (p *compiler) inspectForSugar(n ast.Node) bool {
+	switch n := n.(type) {
+	case nil:
+
+	case *ast.Field:
+		n.Type = p.sugarExpr(n.Type)
+
+	case *ast.TypeSpec:
+		n.Type = p.sugarExpr(n.Type)
+
+	case *ast.MapType:
+		n.Key = p.sugarExpr(n.Key)
+		n.Value = p.sugarExpr(n.Value)
+
+	case *ast.ArrayType:
+		n.Elt = p.sugarExpr(n.Elt)
+
+	case *ast.ChanType:
+		n.Value = p.sugarExpr(n.Value)
+
+	case *ast.FuncLit:
+		n.Type = p.sugarExpr(n.Type).(*ast.FuncType)
+		ast.Inspect(n.Body, p.inspectForSugar)
+
+	case *ast.CompositeLit:
+		n.Type = p.sugarExpr(n.Type)
+		inspectExprList(n.Elts, p.inspectForSugar)
+
+	case *ast.TypeAssertExpr:
+		n.Type = p.sugarExpr(n.Type)
+
+	case *ast.ValueSpec:
+		n.Type = p.sugarExpr(n.Type)
+		inspectExprList(n.Values, p.inspectForSugar)
+
+	default:
+		return true
+	}
+
+	return false
 }
 
 // Replace bare antha identifiers with go qualified names
@@ -735,7 +779,7 @@ func (p *compiler) inspectForParams(node ast.Node) bool {
 		}
 	}
 
-	rewriteAssignLhs := func(node *ast.AssignStmt) {
+	rewriteAssignLHS := func(node *ast.AssignStmt) {
 		for j := range node.Lhs {
 			if ident, ok := node.Lhs[j].(*ast.Ident); ok {
 				isUpper := ident.Name[0:1] == strings.ToUpper(ident.Name[0:1])
@@ -747,10 +791,13 @@ func (p *compiler) inspectForParams(node ast.Node) bool {
 	}
 
 	switch n := node.(type) {
+
 	case nil:
 		return false
+
 	case *ast.AssignStmt:
-		rewriteAssignLhs(n)
+		rewriteAssignLHS(n)
+
 	case *ast.KeyValueExpr:
 		if _, identKey := n.Key.(*ast.Ident); identKey {
 			// Skip identifiers that are keys
@@ -759,6 +806,7 @@ func (p *compiler) inspectForParams(node ast.Node) bool {
 		}
 	case *ast.Ident:
 		rewriteIdent(n)
+
 	case *ast.SelectorExpr:
 		// Skip identifiers that are field accesses
 		ast.Inspect(n.X, p.inspectForParams)
@@ -775,13 +823,13 @@ func (p *compiler) inspectForIntrinsics(node ast.Node) bool {
 	//  FunRun(_ctx, FunInputs_{A: v, B: v})
 	rewriteRun := func(call *ast.CallExpr) error {
 		if len(call.Args) != 3 {
-			return badRun
+			return errBadRun
 		} else if fun, ok := call.Args[0].(*ast.Ident); !ok {
-			return badRun
+			return errBadRun
 		} else if params, ok := call.Args[1].(*ast.CompositeLit); !ok {
-			return badRun
+			return errBadRun
 		} else if inputs, ok := call.Args[2].(*ast.CompositeLit); !ok {
-			return badRun
+			return errBadRun
 		} else {
 			call.Fun = ast.NewIdent(fun.Name + runStepsIntrinsic)
 			call.Args = []ast.Expr{

@@ -17,6 +17,7 @@ var (
 		OutputPlateType:      []string{"pcrplate_skirted_riser20"},
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
+		PlanningVersion:      "ep2",
 	}
 )
 
@@ -27,7 +28,7 @@ type Opt struct {
 	InputPlateType       []string
 	OutputPlateType      []string
 	TipType              []string
-	PlanningVersion      *int
+	PlanningVersion      string
 
 	// Two methods of populating Opt.InputPlates
 	InputPlateData [][]byte         // From contents of files
@@ -45,6 +46,8 @@ type Opt struct {
 	DriverSpecificWashPreferences     []string
 	ModelEvaporation                  bool
 	OutputSort                        bool
+	PrintInstructions                 bool
+	UseDriverTipTracking              bool
 }
 
 // Merge two configs together and return the result. Values in the argument
@@ -53,6 +56,7 @@ func (a Opt) Merge(x *Opt) Opt {
 	if x == nil {
 		return a
 	}
+
 	obj, err := meta.ShallowMerge(a, *x)
 	if err != nil {
 		panic(err)

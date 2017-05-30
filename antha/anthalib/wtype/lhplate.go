@@ -897,3 +897,23 @@ func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 
 	return ret
 }
+
+func (p *LHPlate) IsSpecial() bool {
+	if p == nil || p.Welltype.Extra == nil {
+		return false
+	}
+
+	s, ok := p.Welltype.Extra["IMSPECIAL"]
+
+	if !ok || !s.(bool) {
+		return false
+	}
+
+	return true
+}
+
+func (p *LHPlate) DeclareSpecial() {
+	if p != nil && p.Welltype.Extra != nil {
+		p.Welltype.Extra["IMSPECIAL"] = true
+	}
+}

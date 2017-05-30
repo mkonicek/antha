@@ -111,7 +111,7 @@ func (lhc *LHComponent) Name() string {
 }
 
 func (lhc *LHComponent) TypeName() string {
-	return LiquidTypeName(lhc.Type)
+	return LiquidTypeName(lhc.Type).String()
 }
 
 func (lhc *LHComponent) Volume() wunit.Volume {
@@ -318,7 +318,7 @@ func (lhc *LHComponent) GetVunit() string {
 }
 
 func (lhc *LHComponent) GetType() string {
-	return LiquidTypeName(lhc.Type)
+	return LiquidTypeName(lhc.Type).String()
 }
 
 func NewLHComponent() *LHComponent {

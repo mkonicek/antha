@@ -17,6 +17,7 @@ var (
 		OutputPlateType:      []string{"pcrplate_skirted_riser20"},
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
+		PlanningVersion:      "ep2",
 	}
 )
 
@@ -46,6 +47,7 @@ type Opt struct {
 	ModelEvaporation                  bool
 	OutputSort                        bool
 	PrintInstructions                 bool
+	UseDriverTipTracking              bool
 }
 
 // Merge two configs together and return the result. Values in the argument
@@ -54,6 +56,7 @@ func (a Opt) Merge(x *Opt) Opt {
 	if x == nil {
 		return a
 	}
+
 	obj, err := meta.ShallowMerge(a, *x)
 	if err != nil {
 		panic(err)

@@ -235,8 +235,8 @@ func TestLHComponentSampleStuff(t *testing.T) {
 }
 
 type testpair struct {
-	ltstring string
-	ltint    int
+	ltstring PolicyName
+	ltint    LiquidType
 	err      error
 }
 
@@ -247,7 +247,7 @@ func TestLiquidTypeFromString(t *testing.T) {
 	for _, lt := range lts {
 
 		ltnum, err := LiquidTypeFromString(lt.ltstring)
-		if int(ltnum) != lt.ltint {
+		if ltnum != lt.ltint {
 			t.Error("running LiquidTypeFromString on ", lt.ltstring, "expected", lt.ltint, "got", ltnum)
 		}
 		if err != nil {

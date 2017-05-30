@@ -307,10 +307,10 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 //        return proteinpolicy
 //}
 
-func GetPolicyByName(policyname string) (lhpolicy wtype.LHPolicy, policypresent bool) {
+func GetPolicyByName(policyname wtype.PolicyName) (lhpolicy wtype.LHPolicy, policypresent bool) {
 	policymap := MakePolicies()
 
-	lhpolicy, policypresent = policymap[policyname]
+	lhpolicy, policypresent = policymap[policyname.String()]
 	return
 }
 
@@ -822,19 +822,7 @@ func MakeLVDNAMixPolicy() wtype.LHPolicy {
 	return dnapolicy
 }
 
-func MakeEGEL48Policy() wtype.LHPolicy {
-	loadpolicy := make(wtype.LHPolicy, 1)
-	loadpolicy["RESET_OVERRIDE"] = true
-	return loadpolicy
-}
-
-func MakeEGEL961Policy() wtype.LHPolicy {
-	loadpolicy := make(wtype.LHPolicy, 1)
-	loadpolicy["RESET_OVERRIDE"] = true
-	return loadpolicy
-}
-
-func MakeEGEL962Policy() wtype.LHPolicy {
+func TurnOffBlowoutPolicy() wtype.LHPolicy {
 	loadpolicy := make(wtype.LHPolicy, 1)
 	loadpolicy["RESET_OVERRIDE"] = true
 	return loadpolicy
@@ -919,21 +907,27 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used
-	rule = wtype.NewLHPolicyRule("EGEL48Load")
+	rule = wtype.NewLHPolicyRule("EPAGE48Load")
 	rule.AddCategoryConditionOn("TOPLATETYPE", "EPAGE48")
-	pol = MakeEGEL48Policy()
+	pol = TurnOffBlowoutPolicy()
+	lhpr.AddRule(rule, pol)
+
+	//fix for removing blowout in DNA only if EGEL 48 plate type is used
+	rule = wtype.NewLHPolicyRule("EGEL48Load")
+	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL48")
+	pol = TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 96_1 plate type is used
 	rule = wtype.NewLHPolicyRule("EGEL961Load")
 	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_1")
-	pol = MakeEGEL961Policy()
+	pol = TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 96_2 plate type is used
 	rule = wtype.NewLHPolicyRule("EGEL962Load")
 	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_2")
-	pol = MakeEGEL962Policy()
+	pol = TurnOffBlowoutPolicy()
 
 	lhpr.AddRule(rule, pol)
 

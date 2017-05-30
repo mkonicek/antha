@@ -114,9 +114,9 @@ var testdevices = []testdevice{
 type deviceExceptions map[string][]string // key is device name, exceptions are the plates which will give a result which differs from norm
 
 var exceptions deviceExceptions = map[string][]string{
-	"bioshake":                  []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
-	"bioshake_96well_adaptor":   []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
-	"bioshake_standard_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "Nuncon12wellAgarD_incubator"},
+	"bioshake":                  []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
+	"bioshake_96well_adaptor":   []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
+	"bioshake_standard_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
 }
 
 func TestDeviceMethods(t *testing.T) {

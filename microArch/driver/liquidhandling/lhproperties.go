@@ -608,6 +608,7 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 			}
 		}
 	}
+	// if we really can't get anywhere, try this badger
 	return lhp.GetComponentsSingle(cmps, carryvol)
 }
 
@@ -621,6 +622,14 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 	plateIDs := make([][]string, len(cmps))
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
+
+	// groan
+
+	localplates := make(map[string]*wtype.LHPlate, len(lhp.Plates))
+
+	for k, v := range lhp.Plates {
+		localplates[k] = v.DupKeepIDs()
+	}
 
 	// need to disentangle some stuff here
 
@@ -645,8 +654,8 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 			wellCoords[i] = append(wellCoords[i], tx[1])
 			vols[i] = append(vols[i], v.Volume().Dup())
 
-			vol := v.Volume().Dup()
-			vol.Add(carryvol)
+			//vol := v.Volume().Dup()
+			//vol.Add(carryvol)
 			/// XXX -- adding carry volumes is all very well but
 			// assumes we have made more of this component than we really need!
 			// -- this may just need to be removed pending a better fix
@@ -659,7 +668,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 				// check if the plate at position ipref has the
 				// component we seek
 
-				p, ok := lhp.Plates[ipref]
+				p, ok := localplates[ipref]
 				if ok {
 					// whaddya got?
 					// nb this won't work if we need to split a volume across several plates
@@ -675,7 +684,8 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 							vols[i] = append(vols[i], vl)
 							vl = vl.Dup()
 							vl.Add(carryvol)
-							//				lhp.RemoveComponent(p.ID, wc, vl)
+							//lhp.RemoveComponent(p.ID, wc, vl)
+							p.RemoveComponent(wc, vl)
 						}
 						break
 					}
@@ -693,7 +703,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 	return plateIDs, wellCoords, vols, nil
 }
 
-func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int) (wells, positions, boxtypes []string, err error) {
+func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
 	positions = make([]string, multi)
 	boxtypes = make([]string, multi)
 
@@ -721,13 +731,16 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 			continue
 		}
 		wells = bx.GetTips(mirror, multi, channel.Orientation)
-		if wells != nil {
+		if wells != nil && len(wells) == multi {
 			foundit = true
 			for i := 0; i < multi; i++ {
 				positions[i] = pos
 				boxtypes[i] = bx.Boxname
 			}
 			break
+		} else if usetiptracking && lhp.HasTipTracking() {
+			bx.Refresh()
+			return lhp.GetCleanTips(tiptype, channel, mirror, multi, usetiptracking)
 		}
 	}
 
@@ -752,7 +765,7 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 			return nil, nil, nil, err
 		}
 
-		return lhp.GetCleanTips(tiptype, channel, mirror, multi)
+		return lhp.GetCleanTips(tiptype, channel, mirror, multi, usetiptracking)
 		//		return nil, nil, nil
 	}
 
@@ -1001,4 +1014,14 @@ func (p *LHProperties) OrderedMergedPlatePrefs() []string {
 	}
 
 	return r
+}
+
+func (p LHProperties) HasTipTracking() bool {
+	// TODO --> improve this
+
+	if p.Mnfr == "Gilson" && p.Model == "Pipetmax" {
+		return true
+	}
+
+	return false
 }

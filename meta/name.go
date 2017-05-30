@@ -23,17 +23,23 @@ func NameFromType(t reflect.Type) string {
 	}
 
 	switch t.Kind() {
+
 	case reflect.Array:
 		return fmt.Sprintf("[%d]%s", t.Len(), NameFromType(t.Elem()))
+
 	case reflect.Chan:
 		switch t.ChanDir() {
+
 		case reflect.BothDir:
 			return fmt.Sprintf("chan %s", NameFromType(t.Elem()))
+
 		case reflect.RecvDir:
 			return fmt.Sprintf("<-chan %s", NameFromType(t.Elem()))
+
 		case reflect.SendDir:
 			return fmt.Sprintf("chan<- %s", NameFromType(t.Elem()))
 		}
+
 	case reflect.Func:
 		var ins []string
 		for i, n := 0, t.NumIn(); i < n; i += 1 {
@@ -44,16 +50,20 @@ func NameFromType(t reflect.Type) string {
 			outs = append(outs, NameFromType(t.In(i)))
 		}
 		return joinWith(" ", fmt.Sprintf("func(%s)", strings.Join(ins, ",")), strings.Join(outs, ","))
+
 	case reflect.Interface:
 		return joinWith(".", t.PkgPath(), t.Name())
+
 	case reflect.Map:
 		return fmt.Sprintf("map[%s]%s", NameFromType(t.Key()), NameFromType(t.Elem()))
+
 	case reflect.Ptr:
 		return fmt.Sprintf("*%s", NameFromType(t.Elem()))
+
 	case reflect.Slice:
 		return fmt.Sprintf("[]%s", NameFromType(t.Elem()))
-	case reflect.Struct:
-		return joinWith(".", t.PkgPath(), t.Name())
+
 	}
-	return t.Name()
+
+	return joinWith(".", t.PkgPath(), t.Name())
 }

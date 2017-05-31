@@ -541,17 +541,19 @@ func MakeGlycerolPolicy() wtype.LHPolicy {
 	glycerolpolicy["CAN_MULTI"] = false
 	glycerolpolicy["POST_MIX"] = 3
 	glycerolpolicy["POST_MIX_VOLUME"] = 20.0
-	glycerolpolicy["POST_MIX_RATE"] = 3.74
+	glycerolpolicy["POST_MIX_RATE"] = 3.74 // Should this be the same rate as the asp and dsp speeds?
 	return glycerolpolicy
 }
 
 func MakeViscousPolicy() wtype.LHPolicy {
-	glycerolpolicy := make(wtype.LHPolicy, 4)
+	glycerolpolicy := make(wtype.LHPolicy, 7)
 	glycerolpolicy["ASPSPEED"] = 1.5
 	glycerolpolicy["DSPSPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
-	//glycerolpolicy["TIP_REUSE_LIMIT"] = 0
+	glycerolpolicy["CAN_MULTI"] = false
+	glycerolpolicy["POST_MIX"] = 3
+	glycerolpolicy["POST_MIX_RATE"] = 1.5
 	return glycerolpolicy
 }
 func MakeSolventPolicy() wtype.LHPolicy {

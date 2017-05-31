@@ -345,6 +345,8 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	plate = wtype.NewLHPlate("Kombi2mlEpp", "Unknown", 4, 2, 45, "mm", welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
+
 	// Eppendorfrack 425 for 2ml tubes
 
 	wellxoffset = 18.0 // centre of well to centre of neighbouring well in x direction
@@ -354,6 +356,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	zstart = 5.0       // offset of bottom of deck to bottom of well
 
 	plate = wtype.NewLHPlate("eppendorfrack425_2ml", "Unknown", 4, 6, 45, "mm", welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	// Eppendorfrack 425 for 1.5ml tubes
@@ -367,6 +370,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltypesmallereppy := wtype.NewLHWell("1.5mlEpp", "", "", "ul", 1500, 50, eppy, wtype.LHWBV, 8.2, 8.2, 45, 4.7, "mm")
 
 	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	// Eppendorfrack 424 with lid holders and using 2ml tubes
@@ -378,6 +382,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	zstart = 5.0       // offset of bottom of deck to bottom of well
 
 	plate = wtype.NewLHPlate("eppendorfrack424_2ml_lidholder", "Unknown", 4, 3, 45, "mm", welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	// Eppendorfrack 424 with lid holders and using 1.5ml tubes
@@ -390,6 +395,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	zstart = 4.5       // offset of bottom of deck to bottom of well
 
 	plate = wtype.NewLHPlate("eppendorfrack424_1.5ml_lidholder", "Unknown", 4, 3, 45, "mm", welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	// greiner 384 well plate flat bottom
@@ -543,12 +549,14 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 
 	gelconsar := []string{"position_9"}
 	gelplate.SetConstrained("Pipetmax", gelconsar)
+	gelplate.DeclareSpecial() // Do this for racks, other very unusual plate types
 
 	plates[gelplate.Type] = gelplate
 
 	//E-GEL 48 (reverse) position
 	gelplate = wtype.NewLHPlate("EGEL48", "Invitrogen", 2, 26, 48.5, "mm", egelwell, 4.5, 33.75, -1.0, 18.0, riserheightinmm+4.5)
 	gelplate.SetConstrained("Pipetmax", gelconsar)
+	gelplate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[gelplate.Type] = gelplate
 
 	//E-GEL 96 definition
@@ -559,11 +567,13 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	//can't reach all wells; change to 12 wells per row?
 	gelplate = wtype.NewLHPlate("EGEL96_1", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -9.0, -0.5, riserheightinmm+5.5)
 	gelplate.SetConstrained("Pipetmax", gelconsar)
+	gelplate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[gelplate.Type] = gelplate
 
 	// 2nd type
 	gelplate = wtype.NewLHPlate("EGEL96_2", "Invitrogen", 4, 13, 48.5, "mm", egelwell, 9, 18.0, -5.0, 9, riserheightinmm+5.5)
 	gelplate.SetConstrained("Pipetmax", gelconsar)
+	gelplate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[gelplate.Type] = gelplate
 
 	// falcon 6 well plate with Agar flat bottom with 4ml per well

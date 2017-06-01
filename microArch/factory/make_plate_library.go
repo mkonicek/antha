@@ -43,7 +43,7 @@ const (
 	riserheightinmm                             float64 = 40.0 - offset
 	shallowriserheightinmm                      float64 = 20.25 - offset
 	coolerheight                                float64 = 16.0
-	isofreezecoolerheight                       float64 = 11.0
+	isofreezecoolerheight                       float64 = 12.0
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
 	bioshake96welladaptorheight                 float64 = 4.5

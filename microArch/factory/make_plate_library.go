@@ -43,6 +43,7 @@ const (
 	riserheightinmm                             float64 = 40.0 - offset
 	shallowriserheightinmm                      float64 = 20.25 - offset
 	coolerheight                                float64 = 16.0
+	isofreezecoolerheight                       float64 = 11.0
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
 	bioshake96welladaptorheight                 float64 = 4.5
@@ -312,6 +313,10 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	pcrplatewell.SetAfVFunc(afs)
 
 	plate = wtype.NewLHPlate("pcrplate_with_cooler", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, coolerheight+0.5)
+	plates[plate.Type] = plate
+
+	// pcr plate with isofreeze_cooler
+	plate = wtype.NewLHPlate("pcrplate_with_isofreeze_cooler", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, isofreezecoolerheight)
 	plates[plate.Type] = plate
 
 	// pcr plate with 496rack

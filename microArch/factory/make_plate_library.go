@@ -42,6 +42,7 @@ const (
 	gilsonoffsetgreiner                         float64 = 2.0
 	riserheightinmm                             float64 = 40.0 - offset
 	shallowriserheightinmm                      float64 = 20.25 - offset
+	shallowriser18heightinmm                    float64 = 18.25 - offset
 	coolerheight                                float64 = 16.0
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5
@@ -130,6 +131,7 @@ type Constraints map[string][]string
 var Devices map[string]Device = map[string]Device{
 	"riser40": Riser{Name: "riser40", Manufacturer: "Cybio", Heightinmm: riserheightinmm, Synonyms: []string{"riser40", "riser"}},
 	"riser20": Riser{Name: "riser20", Manufacturer: "Gilson", Heightinmm: shallowriserheightinmm, Synonyms: []string{"riser20", "shallowriser"}},
+	"riser18": Riser{Name: "riser18", Manufacturer: "Gilson", Heightinmm: shallowriser18heightinmm, Synonyms: []string{"riser18", "shallowriser18"}},
 	"bioshake": Incubator{
 		Riser:      Riser{Name: "bioshake", Manufacturer: "QInstruments", Heightinmm: incubatorheightinmm, Synonyms: []string{"bioshake"}},
 		Properties: devices.Shaker["3000 T-elm"],

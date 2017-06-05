@@ -42,7 +42,7 @@ const (
 	gilsonoffsetgreiner                         float64 = 2.0
 	riserheightinmm                             float64 = 40.0 - offset
 	shallowriserheightinmm                      float64 = 20.25 - offset
-	shallowriser18heightinmm                    float64 = 18.25 - offset
+	shallowriser18heightinmm                    float64 = 18.75 - offset
 	coolerheight                                float64 = 16.0
 	pcrtuberack496                              float64 = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips float64 = 4.5

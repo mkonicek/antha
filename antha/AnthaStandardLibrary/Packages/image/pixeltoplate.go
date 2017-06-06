@@ -1325,8 +1325,10 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlat
 	var anthaPix		AnthaPix
 	var anthaImgPix		[]AnthaPix
 
-	//Verify that the plate is the same size and the digital image
-
+	//Verify that the plate is the same size as the digital image. If not resize.
+	if goImg.Bounds().Dy() != anthaImgPlate.WellsY(){
+		goImg = ResizeImagetoPlateMin(goImg, anthaImgPlate)
+	}
 
 	//Iterate over pixels
 	b := goImg.Bounds()
@@ -1334,10 +1336,10 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlat
 		for x := b.Min.X; x < b.Max.X; x++ {
 			//getting rgba values for the image pixel
 			r,g,b,a := goImg.At(x,y).RGBA()
-			var goPix = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+			var goPixColor = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
 
 			//finding the anthacolor closest to the one given in the palette
-			var anthaColor = anthaPalette.Convert(goPix)
+			var anthaColor = anthaPalette.Convert(goPixColor)
 			anthaPix.Color = anthaColor
 
 			//figuring out the pixel location on the plate

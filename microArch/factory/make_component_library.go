@@ -25,7 +25,7 @@ package factory
 import (
 	"sort"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
+	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -219,10 +219,12 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("water2", wtype.LTNSrc, 1.0, defaultConc)
 	add("GibsonMastermix", wtype.LTPostMix, 1.0, wunit.NewConcentration(2, "X"))
 
+	/*
 	// protein paintbox
 	for _, value := range image.ProteinPaintboxmap {
 		add(value, wtype.LTPostMix, 1.0, defaultConc)
 	}
+	*/
 
 	cmap := make(map[string]*wtype.LHComponent)
 	for _, c := range components {

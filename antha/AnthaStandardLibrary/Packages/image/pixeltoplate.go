@@ -1165,20 +1165,21 @@ var librarySets = map[string][]string{
 //Set of types to use antha with conventional colors (paint)
 type AnthaColor struct {
 	Color 			color.NRGBA
-	Component		wtype.LHComponent
+	Component		*wtype.LHComponent
 }
 
 type AnthaPalette struct {
-	Colors			[]AnthaColor
+	AnthaColors			[]AnthaColor
+	Palette				color.Palette
 }
 
 type AnthaPix struct {
 	Color 			AnthaColor
-	Location		wtype.LHWell
+	Location		wtype.WellCoords
 }
 
 type AnthaImg struct {
-	Plate 			wtype.LHPlate
+	Plate 			*wtype.LHPlate
 	Pix				[]AnthaPix
 	Palette			AnthaPalette
 }
@@ -1227,11 +1228,65 @@ func SelectColor (colID string) (palette color.Palette) {
 }
 
 //---------------------------------------------------
+//Base types to antha types conversion
+//---------------------------------------------------
+
+// Convert returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
+func (p AnthaPalette) Convert(c color.Color) AnthaColor {
+
+	//getting color of the current anthacolors in the anthaPalette
+	anthaColors := p.AnthaColors
+
+	if len(anthaColors) == 0 {
+		var err error
+		err.Error()
+	}
+	return anthaColors[p.Index(c)]
+}
+
+//Given a color, finds the closest one in an anthapalette and returns the index for the anthacolor
+func (p AnthaPalette) Index (c color.Color) int{
+
+	cr, cg, cb, ca := c.RGBA()
+  	ret, bestSum := 0, uint32(1<<32-1)
+  	for i, _ := range p.AnthaColors {
+
+		//getting color of the current anthacolor in the anthaPalette
+		extractedColor := p.AnthaColors[i].Color
+
+  		vr, vg, vb, va := extractedColor.RGBA()
+  		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)
+  		if sum < bestSum {
+  			if sum == 0 {
+  				return i
+  			}
+  			ret, bestSum = i, sum
+  		}
+  	}
+  	return ret
+}
+
+// an internal goimage function
+// sqDiff returns the squared-difference of x and y, shifted by 2 so that
+// adding four of those won't overflow a uint32.
+//
+// x and y are both assumed to be in the range [0, 0xffff].
+func sqDiff(x, y uint32) uint32 {
+	var d uint32
+	if x > y {
+		d = x - y
+	} else {
+		d = y - x
+	}
+	return (d * d) >> 2
+}
+
+//---------------------------------------------------
 //Object constructors
 //---------------------------------------------------
 
 //This will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
-func MakeAnthaColorPalette (palette color.Palette, LHComponents []wtype.LHComponent) (anthaPalette AnthaPalette){
+func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent) (anthaPalette AnthaPalette){
 
 	//global placeholders
 	var err error
@@ -1252,37 +1307,51 @@ func MakeAnthaColorPalette (palette color.Palette, LHComponents []wtype.LHCompon
 			//Passing the LHComponent to the anthaColor
 			anthaColor.Component = LHComponents[i]
 
-			//appending created color to the palette
-			anthaPalette.Colors = append(anthaPalette.Colors, anthaColor)
+			//appending created color to the AnthaPalette
+			anthaPalette.AnthaColors = append(anthaPalette.AnthaColors, anthaColor)
 		}
 	}
 
-	fmt.Println(anthaPalette.Colors)
+	//appending the palette object to anthapalette (so we can use its coupled functions)
+	anthaPalette.Palette = palette
 
 	return
 }
 
-//unfinished
-func MakeAnthaImg (goImg *goimage.NRGBA, palette *color.Palette) (anthaImg *AnthaImg){
+//This function will create an AnthaImage object from a digital image.
+func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlate *wtype.LHPlate) (anthaImg AnthaImg){
 
 	//Global placeholders
-	var closestColor color.Color
-	var anthaImgPalette color.Palette
+	var anthaPix		AnthaPix
+	var anthaImgPix		[]AnthaPix
 
-	goImg.Bounds().Dx()
-	goImg.Bounds().Dy()
+	//Verify that the plate is the same size and the digital image
 
-	//iterate over pixels
+
+	//Iterate over pixels
 	b := goImg.Bounds()
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
-			closestColor = palette.Convert(goImg.At(x,y))
-			anthaImgPalette = append(anthaImgPalette, closestColor)
-			//fmt.Println(closestColor)
+			//getting rgba values for the image pixel
+			r,g,b,a := goImg.At(x,y).RGBA()
+			var goPix = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
 
+			//finding the anthacolor closest to the one given in the palette
+			var anthaColor = anthaPalette.Convert(goPix)
+			anthaPix.Color = anthaColor
 
+			//figuring out the pixel location on the plate
+			anthaPix.Location = wtype.WellCoords{x,y}
+
+			//appending the pixel to the array that will go in the AnthaImage
+			anthaImgPix = append(anthaImgPix, anthaPix)
 		}
 	}
+
+	//initiating complete image object
+	anthaImg.Pix = anthaImgPix
+	anthaImg.Palette = anthaPalette
+	anthaImg.Plate = anthaImgPlate
 
 	return
 }

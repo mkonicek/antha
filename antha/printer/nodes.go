@@ -1561,16 +1561,6 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.adjBlock(p.distanceFrom(d.Pos()), vtab, d.Body)
 }
 
-// Spits out the Antha code, verbatim for now
-func (p *printer) anthaDecl(d *ast.AnthaDecl) {
-	p.setComment(d.Doc)
-	//p.print(d.Pos(), d.Tok, blank)
-	p.print(d.Pos(), d.Tok)
-
-	//p.expr(d.Name)
-	p.adjBlock(p.distanceFrom(d.Pos()), vtab, d.Body)
-}
-
 func (p *printer) decl(decl ast.Decl) {
 	switch d := decl.(type) {
 	case *ast.BadDecl:
@@ -1579,8 +1569,6 @@ func (p *printer) decl(decl ast.Decl) {
 		p.genDecl(d)
 	case *ast.FuncDecl:
 		p.funcDecl(d)
-	case *ast.AnthaDecl:
-		p.anthaDecl(d)
 	default:
 		panic("unreachable")
 	}

@@ -84,7 +84,7 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 
 	opt.OutputSort = viper.GetBool("outputSort")
 
-	executionPlannerVersion := "ep2"
+	executionPlannerVersion := ""
 	if viper.GetBool("withMulti") {
 		executionPlannerVersion = "ep3"
 	}
@@ -93,7 +93,6 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 	opt.PlanningVersion = executionPlannerVersion
 
 	opt.UseDriverTipTracking = viper.GetBool("useDriverTipTracking")
-
 	opt.LegacyVolume = viper.GetBool("legacyVolumeTracking")
 
 	return opt, nil

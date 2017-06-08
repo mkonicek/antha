@@ -39,6 +39,7 @@ func TestTypeSugaring(t *testing.T) {
 	fset := token.NewFileSet()
 	compiler.init(cfg, fset, nodeSizes)
 
+	antha := NewAntha()
 	expr, err := parser.ParseExpr("func(x Volume) Concentration { x := Volume }")
 	if err != nil {
 		t.Fatal(err)
@@ -48,7 +49,7 @@ func TestTypeSugaring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ast.Inspect(expr, compiler.inspectForSugar)
+	ast.Inspect(expr, antha.inspectTypes)
 	var buf1, buf2 bytes.Buffer
 	if err := compiler.Fprint(&buf1, fset, expr); err != nil {
 		t.Fatal(err)

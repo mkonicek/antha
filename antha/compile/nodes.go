@@ -32,9 +32,10 @@ package compile
 
 import (
 	"bytes"
+	"unicode/utf8"
+
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/token"
-	"unicode/utf8"
 )
 
 // Formatting issues:
@@ -1568,8 +1569,6 @@ func (p *compiler) decl(decl ast.Decl) {
 		p.genDecl(d)
 	case *ast.FuncDecl:
 		p.funcDecl(d)
-	case *ast.AnthaDecl:
-		p.anthaDecl(d)
 	default:
 		panic("unreachable")
 	}
@@ -1617,9 +1616,6 @@ func (p *compiler) declList(list []ast.Decl) {
 // output when compiled is always a package
 // so translate protocol etc into package
 func (p *compiler) file(src *ast.File) {
-	p.analyze(src)
-	p.transform(src)
-
 	p.setComment(src.Doc)
 
 	// Print package name
@@ -1629,6 +1625,4 @@ func (p *compiler) file(src *ast.File) {
 	// print (transformed) declarations
 	p.declList(src.Decls)
 	p.print(newline)
-
-	p.generate()
 }

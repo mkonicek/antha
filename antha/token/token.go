@@ -154,7 +154,7 @@ const (
 	OUTPUTS
 	ANALYSIS
 	VALIDATION
-	//TIME_CRITICAL To be added
+	MESSAGE
 
 	keyword_end
 )
@@ -269,7 +269,7 @@ var tokens = [...]string{
 	OUTPUTS:      "Outputs",
 	ANALYSIS:     "Analysis",
 	VALIDATION:   "Validation",
-	//TIME_CRITICAL: "time_critical", TODO: add back
+	MESSAGE:      "Message",
 }
 
 // String returns the string corresponding to the token tok.

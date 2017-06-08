@@ -1,5 +1,5 @@
-// antha/compile/compile.go: Part of the Antha language
-// Copyright (C) 2014 The Antha authors. All rights reserved.
+// compile.go: Part of the Antha language
+// Copyright (C) 2017 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,9 +20,12 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// package compile declares the functions required to translate an
-// Antha AST into a go source file
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
+// Package compile declares the functions required to translate an Antha AST
+// into a go source file
 package compile
 
 import (
@@ -110,9 +113,6 @@ type compiler struct {
 	// Cache of most recently computed line position.
 	cachedPos  token.Pos
 	cachedLine int // line corresponding to cachedPos
-
-	// State needed to parse Antha nodes
-	antha
 }
 
 func (p *compiler) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node]int) {
@@ -123,7 +123,6 @@ func (p *compiler) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node
 	p.wsbuf = make([]whiteSpace, 0, 16) // whitespace sequences are short
 	p.nodeSizes = nodeSizes
 	p.cachedPos = -1
-	p.anthaInit()
 }
 
 func (p *compiler) internalError(msg ...interface{}) {
@@ -1249,10 +1248,9 @@ const (
 
 // A Config node controls the output of Fprint.
 type Config struct {
-	Mode     Mode   // default: 0
-	Tabwidth int    // default: 8
-	Indent   int    // default: 0 (all code is indented at least by this much)
-	Package  string // if non-nil, override package name
+	Mode     Mode // default: 0
+	Tabwidth int  // default: 8
+	Indent   int  // default: 0 (all code is indented at least by this much)
 }
 
 // fprint implements Fprint and takes a nodesSizes map for setting up the compiler state.

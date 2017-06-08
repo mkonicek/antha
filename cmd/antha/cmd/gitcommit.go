@@ -22,7 +22,6 @@ func exists(path string) (bool, error) {
 
 // assumes GOPATH is in home directory if not set as environment variable
 func gopath() string {
-
 	// if gopath set return gopath
 	if p := os.Getenv("GOPATH"); len(p) != 0 {
 		return filepath.Join(p, "src")

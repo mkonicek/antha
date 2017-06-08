@@ -33,12 +33,13 @@ package parser
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/ast"
-	"github.com/antha-lang/antha/antha/scanner"
-	"github.com/antha-lang/antha/antha/token"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/antha-lang/antha/antha/ast"
+	"github.com/antha-lang/antha/antha/scanner"
+	"github.com/antha-lang/antha/antha/token"
 )
 
 // The parser structure holds the parser's internal state.
@@ -521,7 +522,7 @@ func syncStmt(p *parser) {
 func syncDecl(p *parser) {
 	for {
 		switch p.tok {
-		case token.CONST, token.TYPE, token.VAR, token.PARAMETERS:
+		case token.CONST, token.TYPE, token.VAR, token.PARAMETERS, token.MESSAGE:
 			// see comments in syncStmt
 			if p.pos == p.syncPos && p.syncCnt < 10 {
 				p.syncCnt++
@@ -1180,7 +1181,7 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 			p.resolve(x)
 		}
 		return x
-	case token.PARAMETERS, token.INPUTS, token.OUTPUTS, token.DATA:
+	case token.PARAMETERS, token.INPUTS, token.OUTPUTS, token.DATA, token.MESSAGE:
 		x := p.parseToken(p.tok)
 		if !lhs {
 			p.resolve(x)
@@ -2507,7 +2508,7 @@ func (p *parser) parseDecl(sync func(*parser)) ast.Decl {
 
 	var f parseSpecFunction
 	switch p.tok {
-	case token.CONST, token.VAR, token.INPUTS, token.PARAMETERS, token.DATA, token.OUTPUTS:
+	case token.CONST, token.VAR, token.INPUTS, token.PARAMETERS, token.DATA, token.OUTPUTS, token.MESSAGE:
 		f = p.parseValueSpec
 
 	// Antha extension

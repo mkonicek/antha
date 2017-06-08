@@ -29,14 +29,15 @@ package printer
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/ast"
-	"github.com/antha-lang/antha/antha/token"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 	"unicode"
+
+	"github.com/antha-lang/antha/antha/ast"
+	"github.com/antha-lang/antha/antha/token"
 )
 
 const (
@@ -1027,8 +1028,6 @@ func getDoc(n ast.Node) *ast.CommentGroup {
 	case *ast.FuncDecl:
 		return n.Doc
 	case *ast.File:
-		return n.Doc
-	case *ast.AnthaDecl:
 		return n.Doc
 	}
 	return nil

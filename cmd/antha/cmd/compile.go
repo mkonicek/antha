@@ -20,11 +20,16 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package cmd
 
 import (
 	"bytes"
-	"fmt"
+	"crypto/sha256"
+	"errors"
 	"io"
 	"io/ioutil"
 	"os"
@@ -39,216 +44,108 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	parserMode = parser.ParseComments
+)
+
 // execution variables
 var (
 	fileSet = token.NewFileSet() // per process FileSet
 )
 
-// parameters to control code formatting
-const (
-	tabWidth    = 8
-	printerMode = compile.UseSpaces | compile.TabIndent
-	parserMode  = parser.ParseComments
+var (
+	errNotAnthaFile = errors.New("not antha file")
 )
 
 var compileCmd = &cobra.Command{
 	Use:   "compile",
-	Short: "Compile antha element",
+	Short: "Compile an antha element",
 	RunE:  runCompile,
 }
 
 func runCompile(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 
-	o := output{
-		OutDir: viper.GetString("outdir"),
-	}
-	if err := o.Init(); err != nil {
-		return err
-	}
-	defer o.Close()
-
-	// try to parse standard input if no files or directories were passed in
-	if len(args) == 0 {
-		if err := processFile(processFileOptions{
-			Filename: "-",
-			In:       os.Stdin,
-			Stdin:    true,
-			OutDir:   o.Dir(),
-		}); err != nil {
-			return err
-		}
-	}
+	outdir := viper.GetString("outdir")
 
 	// parse every filename or directory passed in as input
+	var lastErr error
 	for _, path := range args {
-		switch dir, err := os.Stat(path); {
-		case err != nil:
-			return err
-		case dir.IsDir():
-			filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-				// Ignore previous errors
-				if isAnthaFile(f) {
-					// TODO this might be an issue since we have to analyse the contents in
-					// order to establish whether more than one component exist
-					err = processFile(processFileOptions{
-						Filename: path,
-						OutDir:   o.Dir(),
-					})
-					if err != nil {
-						return err
-					}
-				}
-				return err
-			})
-		default:
-			if err := processFile(processFileOptions{
-				Filename: path,
-				OutDir:   o.Dir(),
-			}); err != nil {
+		err := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+			// Ignore previous errors
+			if f == nil {
 				return err
 			}
+
+			if f.IsDir() {
+				return err
+			}
+
+			if !isAnthaFile(f.Name()) {
+				return err
+			}
+
+			dir := outdir
+			if len(dir) == 0 {
+				dir = filepath.Dir(path)
+			}
+
+			return processFile(path, dir)
+		})
+
+		if lastErr == nil && err != nil {
+			lastErr = err
+		}
+	}
+
+	return lastErr
+}
+
+// isAnthaFile returns if file matches antha file naming convention
+func isAnthaFile(name string) bool {
+	return strings.HasSuffix(name, ".an")
+}
+
+// processFile generates the corresponding go code for an antha file.
+func processFile(filename, outdir string) error {
+	src, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	file, adjust, err := parse(fileSet, filename, src, false)
+	if err != nil {
+		return err
+	} else if adjust != nil {
+		return errNotAnthaFile
+	}
+
+	h := sha256.New()
+	io.Copy(h, bytes.NewReader(src))
+
+	antha := compile.NewAntha()
+	antha.SourceSHA256 = h.Sum(nil)
+
+	if err := antha.Transform(fileSet, file); err != nil {
+		return err
+	}
+
+	files, err := antha.Generate(fileSet, file)
+	if err != nil {
+		return err
+	}
+
+	for name, bs := range files {
+		outFile := filepath.Join(outdir, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(outFile), 0777); err != nil {
+			return err
+		}
+		if err := ioutil.WriteFile(outFile, bs, 0666); err != nil {
+			return err
 		}
 	}
 
 	return nil
-}
-
-// Utility function to check file extension
-func isAnthaFile(f os.FileInfo) bool {
-	// ignore non-Antha or Go files
-	name := f.Name()
-	return !f.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".an")
-}
-
-// Remove files from dir with suffix
-func removeFiles(dir, suffix string) error {
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return err
-	}
-	for _, v := range fis {
-		if !strings.HasSuffix(v.Name(), suffix) {
-			continue
-		}
-		if err := os.RemoveAll(filepath.Join(dir, v.Name())); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-type output struct {
-	OutDir  string
-	outName string
-	dir     string
-}
-
-func (a *output) Dir() string {
-	if len(a.OutDir) == 0 {
-		return a.dir
-	}
-	return a.OutDir
-}
-
-func (a *output) Close() error {
-	if len(a.dir) == 0 {
-		return nil
-	}
-	return os.RemoveAll(a.dir)
-}
-
-func (a *output) Init() error {
-	if len(a.OutDir) == 0 {
-		n, err := ioutil.TempDir("", "antha")
-		if err != nil {
-			return err
-		}
-		a.dir = n
-		return nil
-	}
-
-	p, err := filepath.Abs(a.OutDir)
-	if err != nil {
-		return err
-	}
-	a.outName = filepath.Base(p)
-	if err := removeFiles(p, "_.go"); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Write out a file. Makes sure that output directory exists as well.
-func write(fname string, bs []byte) error {
-	if err := os.MkdirAll(filepath.Dir(fname), 0777); err != nil {
-		return err
-	}
-	f, err := os.OpenFile(fname, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0666)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = io.Copy(f, bytes.NewBuffer(bs))
-	return err
-}
-
-type processFileOptions struct {
-	Filename string
-	In       io.Reader
-	Stdin    bool
-	OutDir   string // empty string means output to same directory as Filename
-}
-
-// If in == nil, the source is the contents of the file with the given
-// filename.
-func processFile(opt processFileOptions) error {
-	if opt.In == nil {
-		f, err := os.Open(opt.Filename)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		opt.In = f
-	}
-
-	src, err := ioutil.ReadAll(opt.In)
-	if err != nil {
-		return err
-	}
-
-	file, adjust, err := parse(fileSet, opt.Filename, src, opt.Stdin)
-	if err != nil {
-		return err
-	}
-
-	if file.Tok != token.PROTOCOL {
-		return fmt.Errorf("%s is not a valid Antha file", opt.Filename)
-	}
-	// Extract protocol name
-	compName := file.Name.Name
-
-	var buf bytes.Buffer
-	compiler := &compile.Config{Mode: printerMode, Tabwidth: tabWidth, Package: "main"}
-	if err := compiler.Fprint(&buf, fileSet, file); err != nil {
-		return err
-	}
-	res := buf.Bytes()
-	if adjust != nil {
-		res = adjust(src, res)
-	}
-
-	dir := opt.OutDir
-	if len(dir) == 0 {
-		dir = filepath.Dir(opt.Filename)
-	}
-
-	outFile := filepath.Join(dir, fmt.Sprintf("%s_.go", compName))
-	if err := write(outFile, res); err != nil {
-		return err
-	}
-
-	return err
 }
 
 // parse parses src, which was read from filename,
@@ -365,5 +262,5 @@ func init() {
 	flags := c.Flags()
 	RootCmd.AddCommand(c)
 
-	flags.String("outdir", "", "output directory for generated files")
+	flags.String("outdir", "", "output directory for generated files; if empty use directory of source file")
 }

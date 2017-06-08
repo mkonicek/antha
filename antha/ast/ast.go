@@ -30,10 +30,11 @@
 package ast
 
 import (
-	"github.com/antha-lang/antha/antha/token"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/antha-lang/antha/antha/token"
 )
 
 // ----------------------------------------------------------------------------
@@ -932,9 +933,10 @@ type (
 	//	token.TYPE        *TypeSpec
 	//	token.VAR         *ValueSpec
 	//  token.PARAMETERS  *ValueSpec
-	//  token.DATA		 *ValueSpec
+	//  token.DATA		  *ValueSpec
 	//  token.INPUTS      *ValueSpec
-	//  token.OUTPUTS	 *ValueSpec
+	//  token.OUTPUTS	  *ValueSpec
+	//  token.MESSAGE     *ValueSpec
 	//
 	GenDecl struct {
 		Doc    *CommentGroup // associated documentation; or nil

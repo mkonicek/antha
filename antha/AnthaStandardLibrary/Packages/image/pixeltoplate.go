@@ -1188,6 +1188,7 @@ type AnthaImg struct {
 type LivingColor struct {
 	RGBA			color.NRGBA
 	Seq				wtype.DNASequence
+	Component		wtype.LHComponent
 }
 
 type LivingPalette struct {
@@ -1196,7 +1197,7 @@ type LivingPalette struct {
 
 type LivingPix struct {
 	Color			LivingColor
-	Location 		wtype.LHWell
+	Location 		wtype.WellCoords
 }
 
 type LivingImg struct {
@@ -1220,9 +1221,9 @@ func SelectLibrary (libID string)(palette color.Palette) {
 	return
 }
 
-func SelectColor (colID string) (palette color.Palette) {
+func SelectColor (colID string) (color color.Color) {
 
-	palette = append(palette, colors[colID])
+	color = colors[colID]
 
 	return
 }
@@ -1237,10 +1238,12 @@ func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 	//getting color of the current anthacolors in the anthaPalette
 	anthaColors := p.AnthaColors
 
+	//Checking if there are no colors in the given palette
 	if len(anthaColors) == 0 {
 		var err error
 		err.Error()
 	}
+
 	return anthaColors[p.Index(c)]
 }
 
@@ -1319,11 +1322,12 @@ func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent)
 }
 
 //This function will create an AnthaImage object from a digital image.
-func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlate *wtype.LHPlate) (anthaImg AnthaImg){
+func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlate *wtype.LHPlate) (outputImg *AnthaImg, resizedImg *goimage.NRGBA){
 
 	//Global placeholders
 	var anthaPix		AnthaPix
 	var anthaImgPix		[]AnthaPix
+	var anthaImg		AnthaImg
 
 	//Verify that the plate is the same size as the digital image. If not resize.
 	if goImg.Bounds().Dy() != anthaImgPlate.WellsY(){
@@ -1338,7 +1342,7 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlat
 			r,g,b,a := goImg.At(x,y).RGBA()
 			var goPixColor = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
 
-			//finding the anthacolor closest to the one given in the palette
+			//finding the anthaColor closest to the one given in the palette
 			var anthaColor = anthaPalette.Convert(goPixColor)
 			anthaPix.Color = anthaColor
 
@@ -1355,7 +1359,7 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlat
 	anthaImg.Palette = anthaPalette
 	anthaImg.Plate = anthaImgPlate
 
-	return
+	return &anthaImg, goImg
 }
 
 //---------------------------------------------------

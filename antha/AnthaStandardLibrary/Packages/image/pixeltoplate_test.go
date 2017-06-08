@@ -28,7 +28,7 @@ func TestMakeAnthaImg(t *testing.T) {
 	var testFile wtype.File
 	palette := SelectLibrary("UV")
 
-	dat, err := ioutil.ReadFile("/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/F1.png")
+	dat, err := ioutil.ReadFile("/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/dream_92445bf88d.jpg")
 	if err != nil{
 		t.Error(err)
 	}
@@ -56,9 +56,28 @@ func TestMakeAnthaImg(t *testing.T) {
 	t.Log(plate.ID)
 
 	//testing function
-	anthaImg := MakeAnthaImg(imgBase, anthaPalette, plate)
+	anthaImg, resizedImg := MakeAnthaImg(imgBase, anthaPalette, plate)
 
-	t.Log(anthaImg.Pix[0].Location)
+	t.Log(anthaImg)
+
+	//TODO: delete that
+	//element testing
+
+	exportedFile,err := Export(resizedImg,"imgBase")
+	if err != nil {
+		t.Error(err)
+	}
+
+	bytes, err := exportedFile.ReadAll()
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = ioutil.WriteFile("/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/resizedFile.jpg", bytes, 0644)
+	if err != nil {
+		t.Error(err)
+	}
+
 }
 
 func TestMakeAnthaPalette(t *testing.T) {

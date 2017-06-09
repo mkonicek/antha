@@ -6,6 +6,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"io/ioutil"
 	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/download"
 )
 
 func TestSelectLibrary (t *testing.T) {
@@ -24,21 +25,19 @@ func TestSelectColors(t *testing.T) {
 
 func TestMakeAnthaImg(t *testing.T) {
 
-	//opening test image
-	var testFile wtype.File
+	//downloading image for the test
+	imgFile , err := download.File("http://orig08.deviantart.net/a19f/f/2008/117/6/7/8_bit_mario_by_superjerk.jpg", "Downloaded file")
+	if err != nil{
+		t.Error(err)
+	}
+
+	//opening image
+	imgBase, err := OpenFile(imgFile)
+	if err != nil{
+		t.Error(err)
+	}
+
 	palette := SelectLibrary("UV")
-
-	dat, err := ioutil.ReadFile("/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/dream_92445bf88d.jpg")
-	if err != nil{
-		t.Error(err)
-	}
-	testFile.WriteAll(dat)
-
-	//reading image file
-	imgBase, err := OpenFile(testFile)
-	if err != nil{
-		t.Error(err)
-	}
 
 	//initiating components
 	var components []*wtype.LHComponent
@@ -59,24 +58,7 @@ func TestMakeAnthaImg(t *testing.T) {
 	anthaImg, resizedImg := MakeAnthaImg(imgBase, anthaPalette, plate)
 
 	t.Log(anthaImg)
-
-	//TODO: delete that
-	//element testing
-
-	exportedFile,err := Export(resizedImg,"imgBase")
-	if err != nil {
-		t.Error(err)
-	}
-
-	bytes, err := exportedFile.ReadAll()
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = ioutil.WriteFile("/home/cachemoi/gocode/src/github.com/cachemoi/playing/img/resizedFile.jpg", bytes, 0644)
-	if err != nil {
-		t.Error(err)
-	}
+	t.Log(resizedImg)
 
 }
 

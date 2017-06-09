@@ -219,12 +219,42 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("water2", wtype.LTNSrc, 1.0, defaultConc)
 	add("GibsonMastermix", wtype.LTPostMix, 1.0, wunit.NewConcentration(2, "X"))
 
-	/*
-	// protein paintbox
-	for _, value := range image.ProteinPaintboxmap {
-		add(value, wtype.LTPostMix, 1.0, defaultConc)
-	}
-	*/
+	//ProteinPaintBox Data
+	add ("CometGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("CayenneRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("JuniperGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("SeraphinaPink", wtype.LTPostMix, 1.0, defaultConc)
+	add ("FrostyCFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("GuajilloRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("SerranoRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("CupidPink", wtype.LTPostMix, 1.0, defaultConc)
+	add ("MaccabeePurple", wtype.LTPostMix, 1.0, defaultConc)
+	add ("ScroogeOrange", wtype.LTPostMix, 1.0, defaultConc)
+	add ("CindylouCFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("YetiYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("KringleYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("BlazeYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("verywhite", wtype.LTPostMix, 1.0, defaultConc)
+	add ("TinselPurple", wtype.LTPostMix, 1.0, defaultConc)
+	add ("IvyGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("VixenPurple", wtype.LTPostMix, 1.0, defaultConc)
+	add ("LeorOrange", wtype.LTPostMix, 1.0, defaultConc)
+	add ("FresnoRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("BlitzenBlue", wtype.LTPostMix, 1.0, defaultConc)
+	add ("YukonOFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("E.coli", wtype.LTPostMix, 1.0, defaultConc)
+	add ("DonnerMagenta", wtype.LTPostMix, 1.0, defaultConc)
+	add ("MarleyYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("CratchitYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("DasherGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("RudolphRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("TannenGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("TwinkleCFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("VirginiaViolet", wtype.LTPostMix, 1.0, defaultConc)
+	add ("HollyGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("PaprikaRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add ("veryblack", wtype.LTPostMix, 1.0, defaultConc)
+	add ("DreidelTeal", wtype.LTPostMix, 1.0, defaultConc)
 
 	cmap := make(map[string]*wtype.LHComponent)
 	for _, c := range components {

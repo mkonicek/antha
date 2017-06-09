@@ -4,7 +4,6 @@ import (
 	"testing"
 	"reflect"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"io/ioutil"
 	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/download"
 )

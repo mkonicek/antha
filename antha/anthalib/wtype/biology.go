@@ -23,14 +23,12 @@
 package wtype
 
 import (
-	"fmt"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"strings"
 
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
+	nblast "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/blast"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -103,7 +101,7 @@ type BioSequence interface {
 	Sequence() string
 	Append(string)
 	Prepend(string)
-	Blast() ([]Hit, error)
+	Blast() ([]nblast.Hit, error)
 	MolecularWeight() float64
 }
 
@@ -115,7 +113,7 @@ type DNA struct {
 
 // DNAsequence is a type of Biosequence
 type DNASequence struct {
-	Nm             string    `json:"jm"`
+	Nm             string    `json:"nm"`
 	Seq            string    `json:"seq"`
 	Plasmid        bool      `json:"plasmid"`
 	Singlestranded bool      `json:"single_stranded"`
@@ -295,7 +293,7 @@ func (dna *DNASequence) Append(s string) {
 func (dna *DNASequence) Prepend(s string) {
 	dna.Seq = s + dna.Seq
 }
-func (seq *DNASequence) Blast() (hits []Hit, err error) {
+func (seq *DNASequence) Blast() (hits []nblast.Hit, err error) {
 	hits, err = blast.MegaBlastN(seq.Seq)
 	return
 }
@@ -371,7 +369,7 @@ func (rna *RNASequence) Append(s string) {
 func (rna *RNASequence) Prepend(s string) {
 	rna.Seq = s + rna.Seq
 }
-func (seq *RNASequence) Blast() (hits []Hit, err error) {
+func (seq *RNASequence) Blast() (hits []nblast.Hit, err error) {
 	hits, err = blast.MegaBlastN(seq.Seq)
 	return
 }
@@ -404,7 +402,7 @@ func (prot *ProteinSequence) Prepend(s string) {
 	prot.Seq = s + prot.Seq
 }
 
-func (seq *ProteinSequence) Blast() (hits []Hit, err error) {
+func (seq *ProteinSequence) Blast() (hits []nblast.Hit, err error) {
 	hits, err = blast.MegaBlastP(seq.Seq)
 	return
 }

@@ -232,6 +232,10 @@ func (tb *LHTipbox) Refresh() {
 	initialize_tips(tb, tb.Tiptype)
 }
 
+func (tb *LHTipbox) Refill() {
+	tb.Refresh()
+}
+
 func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	nr := tipbox.Nrows
 	nc := tipbox.Ncols

@@ -110,6 +110,15 @@ func MakePolicyItems() AParamSet {
 	return alhpis
 }
 
+func GetLHPolicyOptions() AParamSet {
+	ps := make(AParamSet, 5)
+	tm := maketypemap()
+
+	ps["USE_DRIVER_TIP_TRACKING"] = AParam{Name: "USE_DRIVER_TIP_TRACKING", Type: tm["bool"], Desc: "If driver has the option to use its own tip tracking, do so"}
+
+	return ps
+}
+
 // a typed parameter, with description
 type AParam struct {
 	Name string
@@ -143,7 +152,7 @@ func maketypemap() map[string]reflect.Type {
 
 type AParamSet map[string]AParam
 
-func (alhpis AParamSet) TypeList() string {
+func (alhpis AParamSet) OrderedList() []string {
 	ks := make([]string, 0, len(alhpis))
 
 	for k, _ := range alhpis {
@@ -151,6 +160,12 @@ func (alhpis AParamSet) TypeList() string {
 	}
 
 	sort.Strings(ks)
+
+	return ks
+}
+
+func (alhpis AParamSet) TypeList() string {
+	ks := alhpis.OrderedList()
 
 	s := ""
 

@@ -97,7 +97,7 @@ const SEQSKEY = "DNASequences"
 
 // Return a sequence list from a component.
 // Users should use GetDNASequences method.
-func (lhc *LHComponent) getSequences() (seqs []DNASequence, err error) {
+func (lhc *LHComponent) getDNASequences() (seqs []DNASequence, err error) {
 
 	seqsValue, found := lhc.Extra[SEQSKEY]
 
@@ -124,7 +124,7 @@ func (lhc *LHComponent) getSequences() (seqs []DNASequence, err error) {
 // Add a sequence list to a component.
 // Any existing component list will be overwritten.
 // Users should use addDNASequence and UpdateDNASequence methods
-func (lhc *LHComponent) setSequences(seqList []DNASequence) error {
+func (lhc *LHComponent) setDNASequences(seqList []DNASequence) error {
 
 	lhc.Extra[SEQSKEY] = seqList
 
@@ -170,7 +170,7 @@ const (
 func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 	var err error
 	// skip error checking: if no sequence list is present one will be created later anyway
-	seqList, _ := lhc.getSequences()
+	seqList, _ := lhc.getDNASequences()
 
 	if _, positions, err := lhc.FindDNASequence(seq); err == nil {
 
@@ -186,7 +186,7 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 	}
 
 	seqList = append(seqList, seq)
-	lhc.setSequences(seqList)
+	lhc.setDNASequences(seqList)
 
 	return err
 }
@@ -197,7 +197,7 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 // If a Sequence does not exist, the sequence is added and an error is returned.
 func (lhc *LHComponent) FindDNASequence(seq DNASequence) (seqs []DNASequence, positions []int, err error) {
 
-	seqList, err := lhc.getSequences()
+	seqList, err := lhc.getDNASequences()
 
 	if err != nil {
 		return
@@ -222,7 +222,7 @@ func (lhc *LHComponent) FindDNASequence(seq DNASequence) (seqs []DNASequence, po
 // If a Sequence does not exist, the sequence is added and an error is returned.
 func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 
-	seqList, err := lhc.getSequences()
+	seqList, err := lhc.getDNASequences()
 
 	if err != nil {
 		return err
@@ -234,7 +234,7 @@ func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 		}
 		if len(positions) == 1 {
 			seqList[positions[0]] = seq
-			err = lhc.setSequences(seqList)
+			err = lhc.setDNASequences(seqList)
 			return err
 		}
 	}
@@ -277,7 +277,7 @@ func deleteSeq(seqList []DNASequence, position int) (newseqList []DNASequence, e
 // If a Sequence does not exist, the sequence is added and an error is returned.
 func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 
-	seqList, err := lhc.getSequences()
+	seqList, err := lhc.getDNASequences()
 
 	if err != nil {
 		return err
@@ -292,7 +292,7 @@ func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 			if err != nil {
 				return err
 			}
-			err = lhc.setSequences(seqList)
+			err = lhc.setDNASequences(seqList)
 			return err
 		}
 	}
@@ -304,7 +304,7 @@ func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 // Designed for cases where FindDNASequnce() method returns multiple instances of the dna sequence.
 func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 
-	seqList, err := lhc.getSequences()
+	seqList, err := lhc.getDNASequences()
 
 	if err != nil {
 		return err
@@ -314,7 +314,7 @@ func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 	if err != nil {
 		return err
 	}
-	err = lhc.setSequences(seqList)
+	err = lhc.setDNASequences(seqList)
 
 	return err
 
@@ -322,13 +322,13 @@ func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 
 // Remove all DNASequences from the component.
 func (lhc *LHComponent) RemoveDNASequences() error {
-	return lhc.setSequences([]DNASequence{})
+	return lhc.setDNASequences([]DNASequence{})
 }
 
 // Returns DNA Sequences asociated with an LHComponent.
 // An error is also returned indicating whether a sequence was found.
 func (lhc *LHComponent) DNASequences() ([]DNASequence, error) {
-	return lhc.getSequences()
+	return lhc.getDNASequences()
 }
 
 func (lhc *LHComponent) SetVolume(v wunit.Volume) {

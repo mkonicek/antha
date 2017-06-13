@@ -2,7 +2,6 @@
 package factory
 
 import (
-	//"fmt"
 	"strings"
 	"testing"
 

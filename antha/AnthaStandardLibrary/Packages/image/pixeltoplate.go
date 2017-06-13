@@ -1235,15 +1235,14 @@ func SelectColor (colID string) (color color.Color) {
 // Convert returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
 func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 
-	//getting color of the current anthacolors in the anthaPalette
+	//getting colors of the current anthacolors in the anthaPalette
 	anthaColors := p.AnthaColors
 
 	//Checking if there are no colors in the given palette
 	if len(anthaColors) == 0 {
-		var err error
-		err.Error()
+		fmt.Println(errors.New("No color found in the given palette"))
 	}
-
+	
 	return anthaColors[p.Index(c)]
 }
 
@@ -1289,11 +1288,12 @@ func sqDiff(x, y uint32) uint32 {
 //---------------------------------------------------
 
 //This will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
-func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent) (anthaPalette AnthaPalette){
+func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette{
 
 	//global placeholders
 	var err error
 	var anthaColor AnthaColor
+	var anthaPalette AnthaPalette
 
 	//checking that there are enough LHComponents to make the Palette
 	if len(palette) != len(LHComponents) {
@@ -1318,11 +1318,11 @@ func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent)
 	//appending the palette object to anthapalette (so we can use its coupled functions)
 	anthaPalette.Palette = palette
 
-	return
+	return &anthaPalette
 }
 
 //This function will create an AnthaImage object from a digital image.
-func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlate *wtype.LHPlate) (outputImg *AnthaImg, resizedImg *goimage.NRGBA){
+func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlate *wtype.LHPlate) (outputImg *AnthaImg, resizedImg *goimage.NRGBA){
 
 	//Global placeholders
 	var anthaPix		AnthaPix
@@ -1341,7 +1341,6 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette AnthaPalette, anthaImgPlat
 			//getting rgba values for the image pixel
 			r,g,b,a := goImg.At(x,y).RGBA()
 			var goPixColor = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
-
 			//finding the anthaColor closest to the one given in the palette
 			var anthaColor = anthaPalette.Convert(goPixColor)
 			anthaPix.Color = anthaColor

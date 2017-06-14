@@ -115,7 +115,7 @@ type DNA struct {
 
 // DNAsequence is a type of Biosequence
 type DNASequence struct {
-	Nm             string    `json:"jm"`
+	Nm             string    `json:"nm"`
 	Seq            string    `json:"seq"`
 	Plasmid        bool      `json:"plasmid"`
 	Singlestranded bool      `json:"single_stranded"`

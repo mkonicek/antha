@@ -1242,7 +1242,7 @@ func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 	if len(anthaColors) == 0 {
 		fmt.Println(errors.New("No color found in the given palette"))
 	}
-	
+
 	return anthaColors[p.Index(c)]
 }
 
@@ -1355,7 +1355,7 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPla
 
 	//initiating complete image object
 	anthaImg.Pix = anthaImgPix
-	anthaImg.Palette = anthaPalette
+	anthaImg.Palette = *anthaPalette
 	anthaImg.Plate = anthaImgPlate
 
 	return &anthaImg, goImg

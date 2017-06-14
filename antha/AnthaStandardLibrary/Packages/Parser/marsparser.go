@@ -32,9 +32,20 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+
 	"github.com/montanaflynn/stats"
 	"github.com/tealeg/xlsx"
 )
+
+// minimal interface to support existing antha elements which use plate reader data (AddPlateReder_Results and AddGFPODPlateReaderResults)
+type PlateReaderData interface {
+	BlankCorrect(wellnames []string, blanknames []string, wavelength int, readingtypekeyword string) (blankcorrectedaverage float64, err error)
+	ReadingsAsAverage(wellname string, emexortime int, fieldvalue interface{}, readingtypekeyword string) (average float64, err error)
+	FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int, err error)
+	TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error)
+}
+
+//////////////////////////
 
 // parse mars data from excel filename
 func ParseMarsXLSXOutput(xlsxname string, sheet int) (dataoutput MarsData, err error) {
@@ -891,6 +902,9 @@ func (data MarsData) ReadingsAsFloats(wellname string, emexortime int, fieldvalu
 	return
 }
 
+// field value is the value which the data is to be filtered by,
+// e.g. if filtering by time, this would be the time at which to return readings for;
+// if filtering by excitation wavelength, this would be the wavelength at which to return readings for
 func (data MarsData) ReadingsAsAverage(wellname string, emexortime int, fieldvalue interface{}, readingtypekeyword string) (average float64, err error) {
 	readings := make([]float64, 0)
 	readingtypes := make([]string, 0)

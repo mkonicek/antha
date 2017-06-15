@@ -593,37 +593,43 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) low res with 96 well map
 
 	bottomtype = wtype.LHWBFLAT
-	xdim = 4.0
-	ydim = 4.0
-	zdim = 14.0
-	bottomh = 1.0
+	xdim = 5.5
+	ydim = 5.5
+	zdim = 15
+	bottomh = 1.4
 
-	wellxoffset = 4.5 // centre of well to centre of neighbouring well in x direction
-	wellyoffset = 4.5 //centre of well to centre of neighbouring well in y direction
-	xstart = -2.5     // distance from top left side of plate to first well
-	ystart = -2.5     // distance from top left side of plate to first well
-	zstart = 3.5      //5.5 // offset of bottom of deck to bottom of well
+	wellxoffset = 9 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 9 //centre of well to centre of neighbouring well in y direction
+	xstart = 0      // distance from top left side of plate to first well
+	ystart = 0      // distance from top left side of plate to first well
+	zstart = 3.5    //5.5 // offset of bottom of deck to bottom of well
 
 	// greiner one well with 50ml of agar in
-	plate = wtype.NewLHPlate("Agarplateforpicking96", "Unknown", 8, 12, 14, "mm", pcrplatewell, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	pcrplatewellforpicking := wtype.NewLHWell("pcrplate", "", "", "ul", 5, 1, cone, wtype.LHWBU, xdim, ydim, zdim, bottomh, "mm")
+
+	plate = wtype.NewLHPlate("Agarplateforpicking96", "Unknown", 8, 12, 14, "mm", pcrplatewellforpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) low res with 48 well map
 
 	bottomtype = wtype.LHWBFLAT
-	xdim = 4.0
-	ydim = 4.0
-	zdim = 14.0
+	xdim = 11.0
+	ydim = 11.0
+	zdim = 19.0
 	bottomh = 1.0
 
-	wellxoffset = 4.5 // centre of well to centre of neighbouring well in x direction
-	wellyoffset = 4.5 //centre of well to centre of neighbouring well in y direction
-	xstart = -2.5     // distance from top left side of plate to first well
-	ystart = -2.5     // distance from top left side of plate to first well
-	zstart = 3.5      //5.5 // offset of bottom of deck to bottom of well
+	wellxoffset = 13.0 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 13.0 //centre of well to centre of neighbouring well in y direction
+	xstart = 3.0       // distance from top left side of plate to first well
+	ystart = -1.0      // distance from top left side of plate to first well
+	zstart = 3.5       //5.5 // offset of bottom of deck to bottom of well
 
 	// greiner one well with 50ml of agar in
-	plate = wtype.NewLHPlate("Agarplateforpicking48", "Unknown", 6, 8, 14, "mm", welltypecostar48, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	welltypecostar48forpicking := wtype.NewLHWell("costar48well", "", "", "ul", 10, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+
+	plate = wtype.NewLHPlate("Agarplateforpicking48", "Unknown", 6, 8, 14, "mm", welltypecostar48forpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates[plate.Type] = plate
 
 	/// placeholder for non plate container for testing

@@ -277,6 +277,26 @@ type Overhang struct {
 	Phosphorylation bool   `json:"phosphorylation"`
 }
 
+func (oh Overhang) OverHangAt5PrimeEnd() (sequence string) {
+	if oh.End == 5 {
+		if oh.Type == OVERHANG {
+			return oh.Sequence
+		}
+
+	}
+	return ""
+}
+
+func (oh Overhang) OverHangAt3PrimeEnd() (sequence string) {
+	if oh.End == 3 {
+		if oh.Type == OVERHANG {
+			return oh.Sequence
+		}
+
+	}
+	return ""
+}
+
 func (dna *DNASequence) Sequence() string {
 	return dna.Seq
 }

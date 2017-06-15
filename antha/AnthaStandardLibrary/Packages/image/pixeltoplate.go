@@ -1206,6 +1206,10 @@ type LivingImg struct {
 	Palette			LivingPalette
 }
 
+type LivingGIF struct {
+	Frames				[]LivingImg
+}
+
 //---------------------------------------------------
 //Data Manipulation
 //---------------------------------------------------

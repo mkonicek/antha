@@ -673,11 +673,13 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltype12well := wtype.NewLHWell("Nuncon12well", "", "", "ul", 1000, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("Nuncon12wellAgar", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	// update z start to remove agar estimate and make new plate type
 	zstart = 4.0 // offset of bottom of deck to bottom of well
 	plate = wtype.NewLHPlate("Nuncon12well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	//VWR 12 Well Plate 734-2324 NO AGAR
@@ -702,6 +704,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltypevwr12 := wtype.NewLHWell("VWR12", "", "", "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("VWR12well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltypevwr12, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	//Nunclon 8 well Plate 167064 DOW
@@ -725,6 +728,8 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltypenunc8 := wtype.NewLHWell("nuncsquare", "", "", "ul", 3000, 10, nuncsquare, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("nunc8well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltypenunc8, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
+
 	plates[plate.Type] = plate
 
 	plate = MakeGreinerVBottomPlate()

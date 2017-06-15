@@ -623,6 +623,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltype6well := wtype.NewLHWell("falcon6well", "", "", "ul", 4000, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("falcon6wellAgar", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype6well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	// Costar 48 well plate flat bottom
@@ -647,6 +648,7 @@ func makePlateLibrary() map[string]*wtype.LHPlate {
 	welltypecostart48 := wtype.NewLHWell("costar48well", "", "", "ul", 1000, 100, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("costar48well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltypecostart48, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates[plate.Type] = plate
 
 	// Nunclon 12 well plate with Agar flat bottom 2ml per well

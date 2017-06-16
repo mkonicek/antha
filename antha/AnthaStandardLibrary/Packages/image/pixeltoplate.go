@@ -1315,9 +1315,11 @@ func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent)
 
 		for i := range palette{
 
-			//converting to NRGBA and passing to the AnthaColor object
-			r,g,b,a := palette[i].RGBA()
-			var NRGBA = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+			//Using type assertion to convert to NRGBA and passing to the AnthaColor object
+			NRGBA , ok := palette[i].(color.NRGBA)
+			if ok == false {
+				fmt.Println(errors.New("Impossible to convert color interface"))
+			}
 			anthaColor.Color = NRGBA
 
 			//Passing the LHComponent to the anthaColor

@@ -1156,6 +1156,15 @@ var librarySets = map[string][]string{
 			"KringleYFP",
 			"RudolphRFP",
 	},
+	"Paints" : {
+			"blue",
+			"yellow",
+			"green",
+			"red",
+			"black",
+			"transparent",
+			"white",
+	},
 }
 
 //---------------------------------------------------

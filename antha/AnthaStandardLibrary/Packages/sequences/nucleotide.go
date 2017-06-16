@@ -49,6 +49,7 @@ func Illegalnucleotides(fwdsequence wtype.DNASequence) (pass bool, illegalfound 
 		//	// fmt.Println("iiiiiilllllllllegal array!!!", illegalarray)
 		illegalfound = Findallthings((strings.ToUpper(fwdsequence.Seq)), illegalarray)
 		//fmt.Println(len(illegalfound))
+		fmt.Println("length", len(illegalfound))
 	} else if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(wobble))) == true {
 		pass = false
 		fmt.Println("wobbles here")

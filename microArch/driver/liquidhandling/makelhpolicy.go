@@ -501,14 +501,9 @@ func MakePlateOutPolicy() wtype.LHPolicy {
 	culturepolicy["CAN_MULTI"] = false
 	culturepolicy["ASP_WAIT"] = 1.0
 	culturepolicy["DSP_WAIT"] = 1.0
-	//culturepolicy["CAN_MSA"] = false
-	//culturepolicy["CAN_SDD"] = false
-	//culturepolicy["DSPREFERENCE"] = 0
 	culturepolicy["DSPZOFFSET"] = 0.0
 	culturepolicy["TIP_REUSE_LIMIT"] = 7
 	culturepolicy["NO_AIR_DISPENSE"] = true
-	//culturepolicy["BLOWOUTVOLUME"] = 0.0
-	//culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	culturepolicy["TOUCHOFF"] = false
 	culturepolicy["RESET_OVERRIDE"] = true
 	return culturepolicy

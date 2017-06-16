@@ -84,9 +84,12 @@ func TestMakeAnthaPalette(t *testing.T) {
 }
 
 func TestSelectLivingColorLibrary(t *testing.T){
-	SelectLivingColorLibrary("ProteinPaintBox")
+	livingColors := SelectLivingColorLibrary("ProteinPaintBox")
+	t.Log(livingColors)
 }
 
 func TestSelectLivingColor(t *testing.T){
-	SelectLivingColorLibrary("UVDasherGFP")
+	livingColor := SelectLivingColor("UVDasherGFP")
+
+	t.Log(livingColor)
 }

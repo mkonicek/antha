@@ -1283,10 +1283,10 @@ func SelectLivingColor (colID string)(color LivingColor){
 }
 
 //---------------------------------------------------
-//Base types to antha types conversion
+//Utility functions
 //---------------------------------------------------
 
-// Convert returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
+// Returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
 func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 
 	//getting colors of the current anthacolors in the anthaPalette
@@ -1300,7 +1300,7 @@ func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 	return anthaColors[p.Index(c)]
 }
 
-//Given a color, finds the closest one in an anthapalette and returns the index for the anthacolor
+// Given a color, finds the closest one in an anthapalette and returns the index for the anthacolor
 func (p AnthaPalette) Index (c color.Color) int{
 
 	cr, cg, cb, ca := c.RGBA()
@@ -1309,6 +1309,42 @@ func (p AnthaPalette) Index (c color.Color) int{
 
 		//getting color of the current anthacolor in the anthaPalette
 		extractedColor := p.AnthaColors[i].Color
+
+  		vr, vg, vb, va := extractedColor.RGBA()
+  		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)
+  		if sum < bestSum {
+  			if sum == 0 {
+  				return i
+  			}
+  			ret, bestSum = i, sum
+  		}
+  	}
+  	return ret
+}
+
+// Returns the LivingPalette LivingColor closest to c in Euclidean R,G,B space.
+func (p LivingPalette) Convert(c color.Color) LivingColor {
+
+	//getting colors of the LivingColors in the LivingPalette
+	livingColors := p.LivingColors
+
+	//Checking if there are no colors in the given palette
+	if len(livingColors) == 0 {
+		fmt.Println(errors.New("No color found in the given palette"))
+	}
+
+	return livingColors[p.Index(c)]
+}
+
+// Given a color, finds the closest one in a LivingPalette and returns the index for the LivingPalette
+func (p LivingPalette) Index (c color.Color) int{
+
+	cr, cg, cb, ca := c.RGBA()
+  	ret, bestSum := 0, uint32(1<<32-1)
+  	for i, _ := range p.LivingColors {
+
+		//getting color of the current anthacolor in the anthaPalette
+		extractedColor := p.LivingColors[i].Color
 
   		vr, vg, vb, va := extractedColor.RGBA()
   		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)

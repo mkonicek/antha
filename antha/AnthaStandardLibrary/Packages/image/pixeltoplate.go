@@ -1167,6 +1167,12 @@ var librarySets = map[string][]string{
 	},
 }
 
+/*
+var LivingColors = map[string]LivingColor{
+	"DasherGFP"  : LivingColor{color.RGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},"atgacggcattgacggaaggtgcaaaactgtttgagaaagagatcccgtatatcaccgaactggaaggcgacgtcgaaggtatgaaatttatcattaaaggcgagggtaccggtgacgcgaccacgggtaccattaaagcgaaatacatctgcactacgggcgacctgccggtcccgtgggcaaccctggtgagcaccctgagctacggtgttcagtgtttcgccaagtacccgagccacatcaaggatttctttaagagcgccatgccggaaggttatacccaagagcgtaccatcagcttcgaaggcgacggcgtgtacaagacgcgtgctatggttacctacgaacgcggttctatctacaatcgtgtcacgctgactggtgagaactttaagaaagacggtcacattctgcgtaagaacgttgcattccaatgcccgccaagcattctgtatattctgcctgacaccgttaacaatggcatccgcgttgagttcaaccaggcgtacgatattgaaggtgtgaccgaaaaactggttaccaaatgcagccaaatgaatcgtccgttggcgggctccgcggcagtgcatatcccgcgttatcatcacattacctaccacaccaaactgagcaaagaccgcgacgagcgccgtgatcacatgtgtctggtagaggtcgtgaaagcggttgatctggacacgtatcagtaatgagaattctgtacactcgag"}
+}
+*/
+
 //---------------------------------------------------
 //Types
 //---------------------------------------------------
@@ -1195,9 +1201,9 @@ type AnthaImg struct {
 
 //Set of types to use antha with biological colors
 type LivingColor struct {
-	RGBA			color.NRGBA
+	Color			color.NRGBA
 	Seq				wtype.DNASequence
-	Component		wtype.LHComponent
+	Component		*wtype.LHComponent
 }
 
 type LivingPalette struct {
@@ -1300,6 +1306,15 @@ func sqDiff(x, y uint32) uint32 {
 //Object constructors
 //---------------------------------------------------
 
+//Object constructor for a LivingColor
+func MakeLivingColor(color *color.NRGBA, seq *wtype.DNASequence, component *wtype.LHComponent) (livingColor *LivingColor){
+
+
+	livingColor = &LivingColor{*color,*seq,component}
+
+	return livingColor
+}
+
 //This will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
 func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette{
 
@@ -1315,9 +1330,11 @@ func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent)
 
 		for i := range palette{
 
-			//converting to NRGBA and passing to the AnthaColor object
-			r,g,b,a := palette[i].RGBA()
-			var NRGBA = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+			//Using type assertion to convert to NRGBA and passing to the AnthaColor object
+			NRGBA , ok := palette[i].(color.NRGBA)
+			if ok == false {
+				fmt.Println(errors.New("Impossible to convert color interface"))
+			}
 			anthaColor.Color = NRGBA
 
 			//Passing the LHComponent to the anthaColor

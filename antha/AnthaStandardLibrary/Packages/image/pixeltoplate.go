@@ -20,6 +20,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/disintegration/imaging"
+	"github.com/antha-lang/antha/microArch/factory"
 )
 
 //-------------------------------------------------------
@@ -964,6 +965,7 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 //Data
 //---------------------------------------------------
 
+//Collection of colors
 var colors = map[string]color.Color{
 
 	//ProteinPaintBox under natural light
@@ -1064,6 +1066,7 @@ var colors = map[string]color.Color{
 	"UVMagenta" :		color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)},
 }
 
+//Collection of color IDs
 var librarySets = map[string][]string{
 	"UV" : {"UVCupidPink",
 			"UVyellow",
@@ -1167,11 +1170,22 @@ var librarySets = map[string][]string{
 	},
 }
 
-/*
-var LivingColors = map[string]LivingColor{
-	"DasherGFP"  : LivingColor{color.RGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},"atgacggcattgacggaaggtgcaaaactgtttgagaaagagatcccgtatatcaccgaactggaaggcgacgtcgaaggtatgaaatttatcattaaaggcgagggtaccggtgacgcgaccacgggtaccattaaagcgaaatacatctgcactacgggcgacctgccggtcccgtgggcaaccctggtgagcaccctgagctacggtgttcagtgtttcgccaagtacccgagccacatcaaggatttctttaagagcgccatgccggaaggttatacccaagagcgtaccatcagcttcgaaggcgacggcgtgtacaagacgcgtgctatggttacctacgaacgcggttctatctacaatcgtgtcacgctgactggtgagaactttaagaaagacggtcacattctgcgtaagaacgttgcattccaatgcccgccaagcattctgtatattctgcctgacaccgttaacaatggcatccgcgttgagttcaaccaggcgtacgatattgaaggtgtgaccgaaaaactggttaccaaatgcagccaaatgaatcgtccgttggcgggctccgcggcagtgcatatcccgcgttatcatcacattacctaccacaccaaactgagcaaagaccgcgacgagcgccgtgatcacatgtgtctggtagaggtcgtgaaagcggttgatctggacacgtatcagtaatgagaattctgtacactcgag"}
+//Living Colors, we use a minimalist object constructor with set defaults to facilitate editing this library
+var livingColors = map[string]LivingColor{
+	"UVDasherGFP"  : *MakeLivingColor(&color.NRGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},
+	"atgacggcattgacggaaggtgcaaaactgtttgagaaagagatcccgtatatcaccgaactggaaggcgacgtcgaaggtatgaaatttatcattaaaggcgagggtaccggtgacgcgaccacgggtaccattaaagcgaaatacatctgcactacgggcgacctgccggtcccgtgggcaaccctggtgagcaccctgagctacggtgttcagtgtttcgccaagtacccgagccacatcaaggatttctttaagagcgccatgccggaaggttatacccaagagcgtaccatcagcttcgaaggcgacggcgtgtacaagacgcgtgctatggttacctacgaacgcggttctatctacaatcgtgtcacgctgactggtgagaactttaagaaagacggtcacattctgcgtaagaacgttgcattccaatgcccgccaagcattctgtatattctgcctgacaccgttaacaatggcatccgcgttgagttcaaccaggcgtacgatattgaaggtgtgaccgaaaaactggttaccaaatgcagccaaatgaatcgtccgttggcgggctccgcggcagtgcatatcccgcgttatcatcacattacctaccacaccaaactgagcaaagaccgcgacgagcgccgtgatcacatgtgtctggtagaggtcgtgaaagcggttgatctggacacgtatcagtaatgagaattctgtacactcgag"),
+	"UVRudolphRFP"  : *MakeLivingColor(&color.NRGBA{R: uint8(218), G: uint8(92), B: uint8(69), A: uint8(255)},
+	"atgtccctgtcgaaacaagtactgccacacgatgttaagatgcgctatcatatggatggctgcgttaatggtcattctttcaccattgagggtgaaggtgcaggcaaaccgtatgagggcaagaagatcttggaactgcgcgtgacgaaaggtggcccgctgccttttgcgttcgatatcctgagcagcgtttttacctacggtaaccgttgtttttgcgagtatccagaggacatgccggactactttaaacagagcctgccggaaggtcattcttgggaacgcaccctgatgtttgaggatggcggttgtggtacggcgagcgcgcacatttccctggacaagaactgcttcgtgcacaagagcaccttccacggcgtcaatttcccggcaaacggtccggtcatgcaaaagaaagctatgaactgggagccgagcagcgaactgattacggcgtgcgacggtatcctgaaaggcgatgtgaccatgtttctgttgctggaaggtggccaccgtcttaaatgtcagttcaccaccagctacaaagcccacaaggcagttaagatgccgccgaatcacattatcgaacacgtgcttgttaaaaaagaggttgccgacggctttcagatccaagagcatgcggtcgcaaagcacttcaccgtcgacgttaaagaaacgtaatgagaattctgtacactcgag"),
 }
-*/
+
+//Collection of living color IDs
+var livingColorSets = map[string][]string {
+	"ProteinPaintBox": {
+		"UVDasherGFP",
+		"UVRudolphRFP",
+	},
+}
+
 
 //---------------------------------------------------
 //Types
@@ -1207,7 +1221,7 @@ type LivingColor struct {
 }
 
 type LivingPalette struct {
-	Color			[]LivingColor
+	LivingColors			[]LivingColor
 }
 
 type LivingPix struct {
@@ -1229,6 +1243,7 @@ type LivingGIF struct {
 //Data Manipulation
 //---------------------------------------------------
 
+//standard colors selectiion
 func SelectLibrary (libID string)(palette color.Palette) {
 
 	selectedLib := librarySets[libID]
@@ -1243,6 +1258,26 @@ func SelectLibrary (libID string)(palette color.Palette) {
 func SelectColor (colID string) (color color.Color) {
 
 	color = colors[colID]
+
+	return
+}
+
+//living colors selection
+func SelectLivingColorLibrary (libID string)(palette LivingPalette) {
+
+	selectedLib := livingColorSets[libID]
+
+	for _, colorID := range selectedLib {
+
+		palette.LivingColors = append(palette.LivingColors, livingColors[colorID])
+	}
+
+	return
+}
+
+func SelectLivingColor (colID string)(color LivingColor){
+
+	color = livingColors[colID]
 
 	return
 }
@@ -1306,11 +1341,17 @@ func sqDiff(x, y uint32) uint32 {
 //Object constructors
 //---------------------------------------------------
 
-//Object constructor for a LivingColor
-func MakeLivingColor(color *color.NRGBA, seq *wtype.DNASequence, component *wtype.LHComponent) (livingColor *LivingColor){
+//Object constructor for a LivingColor with default settings
+func MakeLivingColor(color *color.NRGBA, seq string) (livingColor *LivingColor){
 
+	//generating DNA sequence object
+	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
 
-	livingColor = &LivingColor{*color,*seq,component}
+	//use water as LHComponent
+	component := factory.GetComponentByType("water")
+
+	//populate livingColor
+	livingColor = &LivingColor{*color,DNASequence,component}
 
 	return livingColor
 }
@@ -1330,13 +1371,11 @@ func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent)
 
 		for i := range palette{
 
-			//Using type assertion to convert to NRGBA and passing to the AnthaColor object
-			NRGBA , ok := palette[i].(color.NRGBA)
-			if ok == false {
-				fmt.Println(errors.New("Impossible to convert color interface"))
-			}
+			//converting to NRGBA and passing to the AnthaColor object
+			r,g,b,a := palette[i].RGBA()
+			var NRGBA = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
 			anthaColor.Color = NRGBA
-
+			
 			//Passing the LHComponent to the anthaColor
 			anthaColor.Component = LHComponents[i]
 

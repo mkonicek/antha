@@ -510,6 +510,7 @@ func MakePlateOutPolicy() wtype.LHPolicy {
 	//culturepolicy["BLOWOUTVOLUME"] = 0.0
 	//culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	culturepolicy["TOUCHOFF"] = false
+	culturepolicy["RESET_OVERRIDE"] = true
 	return culturepolicy
 }
 

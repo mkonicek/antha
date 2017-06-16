@@ -1242,10 +1242,10 @@ func SelectColor (colID string) (color color.Color) {
 }
 
 //---------------------------------------------------
-//Base types to antha types conversion
+//Utility functions
 //---------------------------------------------------
 
-// Convert returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
+// Returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
 func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 
 	//getting colors of the current anthacolors in the anthaPalette

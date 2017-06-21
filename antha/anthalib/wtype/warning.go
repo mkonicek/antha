@@ -28,3 +28,8 @@ type Warning string
 func (w Warning) Error() string {
 	return string(w)
 }
+
+// generate a new Warning
+func NewWarning(s string) Warning {
+	return Warning(s)
+}

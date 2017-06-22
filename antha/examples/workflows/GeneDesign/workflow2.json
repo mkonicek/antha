@@ -1,8 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "Design1": {
-            "component": "GeneDesign"
-        }
-    }
-}

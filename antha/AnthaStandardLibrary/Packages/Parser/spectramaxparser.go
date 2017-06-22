@@ -22,100 +22,167 @@
 package parser
 
 import (
+	"bufio"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/Synthace/antha/antha/anthalib/wunit"
 )
 
+const timeFormat = "15:04 01/02/2006"
+
+type customTime struct {
+	time.Time
+}
+
+//XMLExperiment is exported so requires a comment
 type SpectraMaxData struct {
-	Experiment Experiment `xml:"Experiment"`
+	Name       xml.Name           ` xml:"Experiment"`
+	Experiment []XMLPlateSections `xml:"PlateSections"`
 }
 
-type Experiment struct {
-	PlateSections `xml:"PlateSections"`
+//XMLPlateSections is exported so requires a comment
+type XMLPlateSections struct {
+	PlateSections []XMLPlateSection `xml:"PlateSection"`
 }
 
-type PlateSections struct {
-	PlateSections []PlateSection `xml:"PlateSection"`
+//XMLPlateSection is exported so requires a comment
+type XMLPlateSection struct {
+	Name               string                `xml:"Name,attr"`
+	InstrumentInfo     string                `xml:"InstrumentInfo,attr"`
+	ReadTime           customTime            `xml:"ReadTime,attr"`
+	Barcode            string                `xml:"Barcode"`
+	InstrumentSettings XMLInstrumentSettings `xml:"InstrumentSettings"`
+	Wavelengths        []Reading             `xml:"Wavelengths"`
+	TemperatureData    wunit.Temperature     `xml:"TemperatureData"`
 }
 
-type PlateSection struct {
-	Name               string             `xml:"Name,attr"`
-	InstrumentInfo     string             `xml:"InstrumentInfo,attr"`
-	ReadTime           time.Duration      `xml:"ReadTime,attr"`
-	Barcode            string             `xml:"Barcode"`
-	InstrumentSettings InstrumentSettings `xml:"InstrumentSettings"`
-	Wavelengths        []Reading          `xml:"Wavelengths"`
-	TemperatureData    wunit.Temperature  `xml:"TemperatureData"`
-}
-
-type InstrumentSettings struct {
+//XMLInstrumentSettings is exported so requires a comment
+type XMLInstrumentSettings struct {
 	ReadMode           ReadMode           `xml:"ReadMode,attr"`
 	ReadType           ReadType           `xml:"ReadType,attr"`
-	PlateType          wtype.LHPlate      `xml:"PlateType,attr"` // may need to change to a string for now since it's unlikely the plate names in the platereader software will correspond to those in antha
+	PlateType          string             `xml:"PlateType,attr"` // may need to change to a string for now since it's unlikely the plate names in the platereader software will correspond to those in antha
 	AutoMix            bool               `xml:"AutoMix"`
 	MoreSettings       MoreSettings       `xml:"MoreSettings"`
 	WavelengthSettings WavelengthSettings `xml:"WavelengthSettings"`
 }
 
+// ReadMode  is exported so requires a comment
 type ReadMode string // or could just make this a string
 
+// Absorbance is exported so requires a comment
 const (
 	Absorbance ReadMode = "Absorbance"
 )
 
+// ReadType is exported so requires a comment
 type ReadType string // or could just make this a string
 
+//Endpoint  is exported so requires a comment
 const (
 	Endpoint ReadType = "Endpoint"
 )
 
+//WavelengthSettings is exported so requires a comment
 type WavelengthSettings struct {
-	NumberOfWavelengths int          `xml: "NumberOfWavelengths,attr"`
-	Wavelengths         []Wavelength `xml:"Wavelength"`
+	NumberOfWavelengths int      `xml:"NumberOfWavelengths,attr"`
+	Wavelength          []string `xml:"Wavelength"`
 }
 
+//Wavelength is exported so requires a comment
 type Wavelength struct {
-	Index   int `xml:"Index,attr"`
-	WLength int `xml:"Wavelength"`
-	//WavelengthIndex int `xml: "WavelengthIndex,attr"`
+	Index int     `xml:"WavelengthIndex,attr"`
+	Wells []Wells `xml: "Wells"`
 }
 
+//MoreSettings is exported so requires a comment
 type MoreSettings struct {
-	Calibrate     bool   `xml:"Calibrate"`
+	Calibrate     string `xml:"Calibrate"`
 	CarriageSpeed string `xml:"CarriageSpeed"`
 	ReadOrder     string `xml:"ReadOrder"`
 }
 
+//Reading is exported so requires a comment
 type Reading struct {
 	Wavelength Wavelength `xml:"Wavelength"`
-	Wells      Wells      `xml:"Wells"`
+	Wells      []Well     `xml:"Wells"`
 }
 
+//Wells is exported so requires a comment
 type Wells struct {
 	Wells []Well `xml:"Well"`
 }
 
+//Well is exported so requires a comment
 type Well struct {
 	ID      string  `xml:"ID,attr"`
 	Name    string  `xml:"Name,attr"`
 	Row     int     `xml:"Row,attr"`
-	Column  int     `xml:"Column,attr"`
+	Column  int     `xml:"Col,attr"`
 	RawData float64 `xml:"RawData"`
 }
 
+func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	const shortForm = timeFormat // yyyymmdd date format
+	var v string
+	d.DecodeElement(&v, &start)
+	parse, err := time.Parse(shortForm, v)
+	if err != nil {
+		return err
+	}
+	*c = customTime{parse}
+	return nil
+}
+
+func (c *customTime) UnmarshalXMLAttr(attr xml.Attr) error {
+	parse, _ := time.Parse(timeFormat, attr.Value)
+	*c = customTime{parse}
+	return nil
+}
+
+//
 func ParseSpectraMaxData(xmlFileContents []byte) (dataOutput SpectraMaxData, err error) {
+
+	/*
+		buff := bytes.NewBuffer(xmlFileContents)
+
+		decoder := xml.NewDecoder(NewValidUTF8Reader(buff))
+
+		err = decoder.Decode(&dataOutput)
+
+	*/
+
+	// add header
+	xmlFileContents = []byte(xml.Header + string(xmlFileContents))
 
 	err = xml.Unmarshal(xmlFileContents, &dataOutput)
 
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+	pretty, err := json.MarshalIndent(dataOutput, "", "  ")
 
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	fmt.Printf("%s", string(pretty))
 	return
+}
+
+func readExperiment(reader io.Reader) ([]XMLPlateSections, error) {
+
+	var spectraMaxData SpectraMaxData
+	if err := xml.NewDecoder(reader).Decode(&spectraMaxData); err != nil {
+		return nil, err
+	}
+
+	return spectraMaxData.Experiment, nil
 }
 
 // readingtypekeyword is irrelevant for this data set but needed to conform to the current interface!
@@ -165,4 +232,38 @@ func (s SpectraMaxData) FindOptimalWavelength(wellname string, blankname string,
 // scriptnumber is irrelevant for this data set but needed to conform to the current interface!
 func (s SpectraMaxData) TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error) {
 	return
+}
+
+//
+// ValidUTF8Reader implements a Reader which reads only bytes that constitute valid UTF-8
+type ValidUTF8Reader struct {
+	buffer *bufio.Reader
+}
+
+// Function Read reads bytes in the byte array b. n is the number of bytes read.
+func (rd ValidUTF8Reader) Read(b []byte) (n int, err error) {
+	for {
+		var r rune
+		var size int
+		r, size, err = rd.buffer.ReadRune()
+		if err != nil {
+			return
+		}
+		if r == unicode.ReplacementChar && size == 1 {
+			continue
+		} else if n+size < len(b) {
+			fmt.Println("replacing: ", string(r))
+			utf8.EncodeRune(b[n:], r)
+			n += size
+		} else {
+			rd.buffer.UnreadRune()
+			break
+		}
+	}
+	return
+}
+
+// NewValidUTF8Reader constructs a new ValidUTF8Reader that wraps an existing io.Reader
+func NewValidUTF8Reader(rd io.Reader) ValidUTF8Reader {
+	return ValidUTF8Reader{bufio.NewReader(rd)}
 }

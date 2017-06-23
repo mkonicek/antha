@@ -23,6 +23,7 @@ package parser
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -120,11 +121,11 @@ type Wells struct {
 
 //Well is exported so requires a comment
 type Well struct {
-	ID      string  `xml:"ID,attr"`
-	Name    string  `xml:"Name,attr"`
-	Row     int     `xml:"Row,attr"`
-	Column  int     `xml:"Col,attr"`
-	RawData float64 `xml:"RawData"`
+	ID      string    `xml:"ID,attr"`
+	Name    string    `xml:"Name,attr"`
+	Row     int       `xml:"Row,attr"`
+	Column  int       `xml:"Col,attr"`
+	RawData []float64 `xml:"RawData"`
 }
 
 func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -148,19 +149,16 @@ func (c *customTime) UnmarshalXMLAttr(attr xml.Attr) error {
 //
 func ParseSpectraMaxData(xmlFileContents []byte) (dataOutput SpectraMaxData, err error) {
 
-	/*
-		buff := bytes.NewBuffer(xmlFileContents)
-
-		decoder := xml.NewDecoder(NewValidUTF8Reader(buff))
-
-		err = decoder.Decode(&dataOutput)
-
-	*/
-
 	// add header
 	xmlFileContents = []byte(xml.Header + string(xmlFileContents))
 
-	err = xml.Unmarshal(xmlFileContents, &dataOutput)
+	buff := bytes.NewBuffer(xmlFileContents)
+
+	decoder := xml.NewDecoder(NewValidUTF8Reader(buff))
+
+	err = decoder.Decode(&dataOutput)
+
+	//err = xml.Unmarshal(xmlFileContents, &dataOutput)
 
 	if err != nil {
 		fmt.Println("error:", err)

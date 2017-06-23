@@ -22,8 +22,6 @@ func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 		return nil
 	case *target.Wait:
 		return nil
-	case *target.CmpError:
-		return nil
 	default:
 		return fmt.Errorf("unknown instruction %T", inst)
 	}

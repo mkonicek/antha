@@ -134,6 +134,7 @@ func (p *compiler) anthaInit() {
 		"Velocity":             "wunit.Velocity",
 		"Voltage":              "wunit.Voltage",
 		"Volume":               "wunit.Volume",
+		"Warning":              "wtype.Warning",
 		"Well":                 "wtype.LHWell",
 	}
 	p.imports = map[string]string{

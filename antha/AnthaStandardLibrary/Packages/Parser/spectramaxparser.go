@@ -31,7 +31,7 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
-	"github.com/Synthace/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/montanaflynn/stats"
 )
 

@@ -23,10 +23,8 @@ package parser
 
 import (
 	"bytes"
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -123,13 +121,13 @@ type Wells struct {
 
 //Well is exported so requires a comment
 type Well struct {
-	ID       string `xml:"ID,attr"`
-	WellID   string `xml:"WellID,attr"`
+	ID       string `xml:"ID,attr"`     // Single reading
+	WellID   string `xml:"WellID,attr"` // Scan data
 	Name     string `xml:"Name,attr"`
 	Row      int    `xml:"Row,attr"`
 	Column   int    `xml:"Col,attr"`
 	RawData  string `xml:"RawData"`
-	WaveData string `xml:"WaveData"`
+	WaveData string `xml:"WaveData"` // Scan data
 }
 
 type WavelengthReading struct {
@@ -222,7 +220,6 @@ func (c *customTime) UnmarshalXMLAttr(attr xml.Attr) error {
 }
 
 //
-
 func ParseSpectraMaxData(xmlFileContents []byte) (dataOutput SpectraMaxData, err error) {
 
 	s, err := decodeUTF16(xmlFileContents)
@@ -237,60 +234,33 @@ func ParseSpectraMaxData(xmlFileContents []byte) (dataOutput SpectraMaxData, err
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	pretty, err := json.MarshalIndent(dataOutput, "", "  ")
 
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-
-	fmt.Printf("%s", string(pretty))
 	return
-}
-
-func readExperiment(reader io.Reader) ([]XMLPlateSections, error) {
-
-	var spectraMaxData SpectraMaxData
-	if err := xml.NewDecoder(reader).Decode(&spectraMaxData); err != nil {
-		return nil, err
-	}
-
-	return spectraMaxData.Experiment, nil
 }
 
 // readingtypekeyword is irrelevant for this data set but needed to conform to the current interface!
 func (s SpectraMaxData) BlankCorrect(wellnames []string, blanknames []string, wavelength int, readingtypekeyword string) (blankcorrectedaverage float64, err error) {
 	var data []float64
 	var blankdata []float64
+
+	// replace with Readings method
 	for _, well := range wellnames {
-		wellData, err := s.GetDataByWell(well)
 
+		reading, err := s.ReadingsAsAverage(well, 1, wavelength, readingtypekeyword)
 		if err != nil {
 			return blankcorrectedaverage, err
 		}
-
-		reading, err := readingAtWavelength(wellData, wavelength)
-
-		if err != nil {
-			return blankcorrectedaverage, err
-		}
-
 		data = append(data, reading)
 
 	}
 
+	// replace with Readings method
 	for _, blankWell := range blanknames {
-		wellData, err := s.GetDataByWell(blankWell)
 
+		reading, err := s.ReadingsAsAverage(blankWell, 1, wavelength, readingtypekeyword)
 		if err != nil {
 			return blankcorrectedaverage, err
 		}
-
-		reading, err := readingAtWavelength(wellData, wavelength)
-
-		if err != nil {
-			return blankcorrectedaverage, err
-		}
-
 		blankdata = append(blankdata, reading)
 
 	}
@@ -373,12 +343,45 @@ func (s SpectraMaxData) ReadingsAsAverage(wellname string, emexortime int, field
 }
 
 // readingtypekeyword is irrelevant for this data set but needed to conform to the current interface!
+// field value is the value which the data is to be filtered by,
+func (s SpectraMaxData) AbsorbanceReading(wellname string, wavelength int, readingtypekeyword string) (average float64, err error) {
+	return s.ReadingsAsAverage(wellname, 1, wavelength, readingtypekeyword)
+}
+
+// readingtypekeyword is irrelevant for this data set but needed to conform to the current interface!
 func (s SpectraMaxData) FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int, err error) {
 
-	return 472, nil
+	wellData, err := s.GetDataByWell(wellname)
+
+	if err != nil {
+		return wavelength, err
+	}
+
+	blankData, err := s.GetDataByWell(blankname)
+
+	if err != nil {
+		return wavelength, err
+	}
+
+	biggestdifferenceindex := 0
+	biggestdifference := 0.0
+
+	for i, reading := range wellData {
+
+		difference := reading.Reading - blankData[i].Reading
+
+		if difference > biggestdifference && reading.Wavelength == blankData[i].Wavelength {
+			biggestdifferenceindex = i
+		}
+
+	}
+
+	wavelength = wellData[biggestdifferenceindex].Wavelength
+	return wavelength, nil
 }
 
 // scriptnumber is irrelevant for this data set but needed to conform to the current interface!
+// not yet implemented
 func (s SpectraMaxData) TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error) {
 	return
 }

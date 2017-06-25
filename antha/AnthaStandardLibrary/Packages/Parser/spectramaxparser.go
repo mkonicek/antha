@@ -22,17 +22,19 @@
 package parser
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 	"time"
-	"unicode"
+	"unicode/utf16"
 	"unicode/utf8"
 
 	"github.com/Synthace/antha/antha/anthalib/wunit"
+	"github.com/montanaflynn/stats"
 )
 
 const timeFormat = "15:04 01/02/2006"
@@ -121,11 +123,84 @@ type Wells struct {
 
 //Well is exported so requires a comment
 type Well struct {
-	ID      string    `xml:"ID,attr"`
-	Name    string    `xml:"Name,attr"`
-	Row     int       `xml:"Row,attr"`
-	Column  int       `xml:"Col,attr"`
-	RawData []float64 `xml:"RawData"`
+	ID       string `xml:"ID,attr"`
+	WellID   string `xml:"WellID,attr"`
+	Name     string `xml:"Name,attr"`
+	Row      int    `xml:"Row,attr"`
+	Column   int    `xml:"Col,attr"`
+	RawData  string `xml:"RawData"`
+	WaveData string `xml:"WaveData"`
+}
+
+type WavelengthReading struct {
+	Wavelength int
+	Reading    float64
+}
+
+func (w Well) IsScanData() bool {
+	if len(w.WaveData) > 0 {
+		return true
+	}
+	return false
+}
+
+func readingAtWavelength(readings []WavelengthReading, wavelength int) (reading float64, err error) {
+	for _, reading := range readings {
+		if reading.Wavelength == wavelength {
+			return reading.Reading, nil
+		}
+	}
+	return 0.0, fmt.Errorf("No reading found for wavelength %d: found: %+v", wavelength, readings)
+}
+
+func (s SpectraMaxData) GetDataByWell(wellName string) (readings []WavelengthReading, err error) {
+
+	wells := s.Experiment[0].PlateSections[0].Wavelengths[0].Wavelength.Wells[0].Wells
+	var w Well
+	var wellFound bool
+
+	for _, well := range wells {
+		if well.Name == wellName {
+			w = well
+			wellFound = true
+			break
+		}
+	}
+
+	if !wellFound {
+		return readings, fmt.Errorf("No readings found for well %s: found: %+v", wellName, s.Experiment[0].PlateSections[0].Wavelengths[0])
+	}
+
+	if w.IsScanData() {
+		dataStrings := strings.Fields(w.RawData)
+		wavelengthsStrings := strings.Fields(w.WaveData)
+
+		for i := range wavelengthsStrings {
+			wavelength, err := strconv.Atoi(wavelengthsStrings[i])
+			if err != nil {
+				return readings, err
+			}
+			data, err := strconv.ParseFloat(dataStrings[i], 64)
+			if err != nil {
+				return readings, err
+			}
+
+			var reading WavelengthReading
+			reading.Wavelength = wavelength
+			reading.Reading = data
+
+			readings = append(readings, reading)
+
+		}
+
+		if len(readings) == 0 {
+			return readings, fmt.Errorf("No readings found for well %s: found: %+v", wellName, wells)
+		}
+
+	} else {
+		return readings, fmt.Errorf("Only Spectramax data in scan format is currently supported. Please run Absorbance reading as scan")
+	}
+	return
 }
 
 func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -147,18 +222,17 @@ func (c *customTime) UnmarshalXMLAttr(attr xml.Attr) error {
 }
 
 //
+
 func ParseSpectraMaxData(xmlFileContents []byte) (dataOutput SpectraMaxData, err error) {
 
-	// add header
-	xmlFileContents = []byte(xml.Header + string(xmlFileContents))
+	s, err := decodeUTF16(xmlFileContents)
+	if err != nil {
+		panic(err)
+	}
 
-	buff := bytes.NewBuffer(xmlFileContents)
+	utf8XMLContents := []byte(s)
 
-	decoder := xml.NewDecoder(NewValidUTF8Reader(buff))
-
-	err = decoder.Decode(&dataOutput)
-
-	//err = xml.Unmarshal(xmlFileContents, &dataOutput)
+	err = xml.Unmarshal(utf8XMLContents, &dataOutput)
 
 	if err != nil {
 		fmt.Println("error:", err)
@@ -185,8 +259,54 @@ func readExperiment(reader io.Reader) ([]XMLPlateSections, error) {
 
 // readingtypekeyword is irrelevant for this data set but needed to conform to the current interface!
 func (s SpectraMaxData) BlankCorrect(wellnames []string, blanknames []string, wavelength int, readingtypekeyword string) (blankcorrectedaverage float64, err error) {
+	var data []float64
+	var blankdata []float64
+	for _, well := range wellnames {
+		wellData, err := s.GetDataByWell(well)
 
-	return
+		if err != nil {
+			return blankcorrectedaverage, err
+		}
+
+		reading, err := readingAtWavelength(wellData, wavelength)
+
+		if err != nil {
+			return blankcorrectedaverage, err
+		}
+
+		data = append(data, reading)
+
+	}
+
+	for _, blankWell := range blanknames {
+		wellData, err := s.GetDataByWell(blankWell)
+
+		if err != nil {
+			return blankcorrectedaverage, err
+		}
+
+		reading, err := readingAtWavelength(wellData, wavelength)
+
+		if err != nil {
+			return blankcorrectedaverage, err
+		}
+
+		blankdata = append(blankdata, reading)
+
+	}
+
+	mean, err := stats.Mean(data)
+	if err != nil {
+		return blankcorrectedaverage, err
+	}
+	blankmean, err := stats.Mean(blankdata)
+	if err != nil {
+		return blankcorrectedaverage, err
+	}
+
+	blankcorrectedaverage = mean - blankmean
+
+	return blankcorrectedaverage, err
 }
 
 // emexortime is selected from the constants above
@@ -217,14 +337,45 @@ return
 // e.g. if filtering by time, this would be the time at which to return readings for;
 // if filtering by excitation wavelength, this would be the wavelength at which to return readings for
 func (s SpectraMaxData) ReadingsAsAverage(wellname string, emexortime int, fieldvalue interface{}, readingtypekeyword string) (average float64, err error) {
+	var data []float64
+	var wavelength int
 
-	return
+	if emexortime == 1 || emexortime == 2 {
+		var ok bool
+
+		wavelength, ok = fieldvalue.(int)
+
+		if !ok {
+			return average, fmt.Errorf("fieldvalue must be a wavelength if emexortime is set to EMWAVELENGTH or EXWAVELENGTH")
+		}
+	}
+
+	wellData, err := s.GetDataByWell(wellname)
+
+	if err != nil {
+		return average, err
+	}
+
+	reading, err := readingAtWavelength(wellData, wavelength)
+
+	if err != nil {
+		return average, err
+	}
+
+	data = append(data, reading)
+
+	average, err = stats.Mean(data)
+	if err != nil {
+		return average, err
+	}
+
+	return average, err
 }
 
 // readingtypekeyword is irrelevant for this data set but needed to conform to the current interface!
 func (s SpectraMaxData) FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int, err error) {
 
-	return
+	return 472, nil
 }
 
 // scriptnumber is irrelevant for this data set but needed to conform to the current interface!
@@ -232,36 +383,25 @@ func (s SpectraMaxData) TimeCourse(wellname string, exWavelength int, emWaveleng
 	return
 }
 
-//
-// ValidUTF8Reader implements a Reader which reads only bytes that constitute valid UTF-8
-type ValidUTF8Reader struct {
-	buffer *bufio.Reader
-}
+func decodeUTF16(b []byte) (string, error) {
 
-// Function Read reads bytes in the byte array b. n is the number of bytes read.
-func (rd ValidUTF8Reader) Read(b []byte) (n int, err error) {
-	for {
-		var r rune
-		var size int
-		r, size, err = rd.buffer.ReadRune()
-		if err != nil {
-			return
-		}
-		if r == unicode.ReplacementChar && size == 1 {
-			continue
-		} else if n+size < len(b) {
-			fmt.Println("replacing: ", string(r))
-			utf8.EncodeRune(b[n:], r)
-			n += size
-		} else {
-			rd.buffer.UnreadRune()
-			break
-		}
+	if len(b)%2 != 0 {
+		return "", fmt.Errorf("Must have even length byte slice")
 	}
-	return
-}
 
-// NewValidUTF8Reader constructs a new ValidUTF8Reader that wraps an existing io.Reader
-func NewValidUTF8Reader(rd io.Reader) ValidUTF8Reader {
-	return ValidUTF8Reader{bufio.NewReader(rd)}
+	u16s := make([]uint16, 1)
+
+	ret := &bytes.Buffer{}
+
+	b8buf := make([]byte, 4)
+
+	lb := len(b)
+	for i := 0; i < lb; i += 2 {
+		u16s[0] = uint16(b[i]) + (uint16(b[i+1]) << 8)
+		r := utf16.Decode(u16s)
+		n := utf8.EncodeRune(b8buf, r[0])
+		ret.Write(b8buf[:n])
+	}
+
+	return ret.String(), nil
 }

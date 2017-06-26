@@ -268,26 +268,8 @@ func (data MarsData) ReadingsAsAverage(wellname string, emexortime int, fieldval
 }
 
 func (data MarsData) AbsorbanceReading(wellname string, wavelength int, readingtypekeyword string) (average float64, err error) {
-	readings := make([]float64, 0)
-	readingtypes := make([]string, 0)
-	readingsforaverage := make([]float64, 0)
-	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
 
-		if measurement.RWavelength == wavelength {
-			readings = append(readings, measurement.Reading)
-			readingtypes = append(readingtypes, data.Dataforeachwell[wellname].ReadingType)
-
-		}
-
-		for i, readingtype := range readingtypes {
-			if strings.Contains(readingtype, readingtypekeyword) {
-				readingsforaverage = append(readingsforaverage, readings[i])
-			}
-		}
-	}
-	average, err = stats.Mean(readingsforaverage)
-
-	return
+	return data.ReadingsAsAverage(wellname, EMWAVELENGTH, wavelength, readingtypekeyword)
 }
 
 func (data MarsData) FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int, err error) {

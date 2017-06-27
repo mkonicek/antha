@@ -522,7 +522,7 @@ func syncStmt(p *parser) {
 func syncDecl(p *parser) {
 	for {
 		switch p.tok {
-		case token.CONST, token.TYPE, token.VAR, token.PARAMETERS, token.MESSAGE:
+		case token.CONST, token.TYPE, token.VAR, token.INPUTS, token.DATA, token.OUTPUTS, token.PARAMETERS, token.MESSAGE:
 			// see comments in syncStmt
 			if p.pos == p.syncPos && p.syncCnt < 10 {
 				p.syncCnt++
@@ -1181,12 +1181,6 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 			p.resolve(x)
 		}
 		return x
-	case token.PARAMETERS, token.INPUTS, token.OUTPUTS, token.DATA, token.MESSAGE:
-		x := p.parseToken(p.tok)
-		if !lhs {
-			p.resolve(x)
-		}
-		return x
 
 	case token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING:
 		x := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
@@ -1708,7 +1702,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 
 	switch p.tok {
 	case
-		token.DEFINE, token.ASSIGN, token.ADD_ASSIGN, // antha addon
+		token.DEFINE, token.ASSIGN, token.ADD_ASSIGN,
 		token.SUB_ASSIGN, token.MUL_ASSIGN, token.QUO_ASSIGN,
 		token.REM_ASSIGN, token.AND_ASSIGN, token.OR_ASSIGN,
 		token.XOR_ASSIGN, token.SHL_ASSIGN, token.SHR_ASSIGN, token.AND_NOT_ASSIGN:
@@ -1788,22 +1782,6 @@ func (p *parser) parseCallExpr(callType string) *ast.CallExpr {
 	}
 	return nil
 }
-
-// Temporarily removed ANTHA keyword
-//func (p *parser) parseMixStmt() ast.Stmt {
-//	if p.trace {
-//		defer un(trace(p, "MixStmt"))
-//	}
-
-//	pos := p.expect(token.MIX)
-//	call := p.parseCallExpr("mix")
-//	p.expectSemi()
-//	if call == nil {
-//		return &ast.BadStmt{From: pos, To: pos + 3} // len("mix")
-//	}
-
-//	return &ast.GoStmt{Go: pos, Call: call}
-//}
 
 func (p *parser) parseGoStmt() ast.Stmt {
 	if p.trace {
@@ -2198,7 +2176,6 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
 		token.LBRACK, token.STRUCT, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT: // unary operators
-		//token.AS: // ANTHA extensions
 		s, _ = p.parseSimpleStmt(labelOk)
 		// because of the required look-ahead, labeled statements are
 		// parsed by parseSimpleStmt - don't expect a semicolon after
@@ -2353,6 +2330,61 @@ func (p *parser) parseTypeSpec(doc *ast.CommentGroup, _ token.Token, _ int) ast.
 	return spec
 }
 
+func (p *parser) parseUnnamedAnthaSpec(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
+	return p.parseAnthaSpec(doc, keyword, iota, false)
+}
+
+func (p *parser) parseNamedAnthaSpec(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
+	return p.parseAnthaSpec(doc, keyword, iota, true)
+}
+
+func (p *parser) parseAnthaSpec(doc *ast.CommentGroup, keyword token.Token, _ int, named bool) ast.Spec {
+	if p.trace {
+		defer un(trace(p, keyword.String()+"Spec"))
+	}
+
+	var ident *ast.Ident
+	if !named {
+		ident = &ast.Ident{NamePos: p.pos, Name: keyword.String()}
+	} else {
+		ident = p.parseIdent()
+	}
+
+	// Go spec: The scope of a type identifier declared inside a function begins
+	// at the identifier in the TypeSpec and ends at the end of the innermost
+	// containing block.
+	// (Global identifiers are resolved in a separate phase after parsing.)
+	spec := &ast.TypeSpec{Doc: doc, Name: ident}
+	p.declare(spec, nil, p.topScope, ast.Typ, ident)
+
+	lbrace := p.expect(token.LBRACE)
+	scope := ast.NewScope(nil) // struct scope
+	var list []*ast.Field
+	for p.tok == token.IDENT || p.tok == token.MUL || p.tok == token.LPAREN {
+		// a field declaration cannot start with a '(' but we accept
+		// it here for more robust parsing and better error messages
+		// (parseFieldDecl will check and complain if necessary)
+		list = append(list, p.parseFieldDecl(scope))
+	}
+	rbrace := p.expect(token.RBRACE)
+
+	typ := &ast.StructType{
+		Struct: p.pos,
+		Fields: &ast.FieldList{
+			Opening: lbrace,
+			List:    list,
+			Closing: rbrace,
+		},
+	}
+	p.resolve(typ)
+
+	spec.Type = typ
+	p.expectSemi() // call before accessing p.linecomment
+	spec.Comment = p.lineComment
+
+	return spec
+}
+
 func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.GenDecl {
 	if p.trace {
 		defer un(trace(p, "GenDecl("+keyword.String()+")"))
@@ -2414,7 +2446,7 @@ func (p *parser) parseReceiver(scope *ast.Scope) *ast.FieldList {
 	return par
 }
 
-// Antha block parser (cascades to function parser right now, TODO, better control
+// Antha block parser (cascades to function parser right now)
 func (p *parser) parseAnthaDecl() *ast.AnthaDecl {
 	if p.trace {
 		defer un(trace(p, "AnthaDecl"))
@@ -2508,8 +2540,14 @@ func (p *parser) parseDecl(sync func(*parser)) ast.Decl {
 
 	var f parseSpecFunction
 	switch p.tok {
-	case token.CONST, token.VAR, token.INPUTS, token.PARAMETERS, token.DATA, token.OUTPUTS, token.MESSAGE:
+	case token.CONST, token.VAR:
 		f = p.parseValueSpec
+
+	case token.INPUTS, token.PARAMETERS, token.DATA, token.OUTPUTS:
+		f = p.parseUnnamedAnthaSpec
+
+	case token.MESSAGE:
+		f = p.parseNamedAnthaSpec
 
 	// Antha extension
 	case token.REQUIREMENTS, token.STEPS, token.SETUP, token.ANALYSIS, token.VALIDATION:

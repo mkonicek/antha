@@ -932,11 +932,11 @@ type (
 	//	token.CONST       *ValueSpec
 	//	token.TYPE        *TypeSpec
 	//	token.VAR         *ValueSpec
-	//  token.PARAMETERS  *ValueSpec
-	//  token.DATA		  *ValueSpec
-	//  token.INPUTS      *ValueSpec
-	//  token.OUTPUTS	  *ValueSpec
-	//  token.MESSAGE     *ValueSpec
+	//	token.PARAMETERS  *TypeSpec
+	//	token.DATA        *TypeSpec
+	//	token.INPUTS      *TypeSpec
+	//	token.OUTPUTS     *TypeSpec
+	//	token.MESSAGE     *TypeSpec
 	//
 	GenDecl struct {
 		Doc    *CommentGroup // associated documentation; or nil

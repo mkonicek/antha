@@ -144,17 +144,17 @@ const (
 	VAR
 
 	// Antha extensions
-	PROTOCOL
-	PARAMETERS
+	ANALYSIS
 	DATA
 	INPUTS
+	MESSAGE
+	OUTPUTS
+	PARAMETERS
+	PROTOCOL
 	REQUIREMENTS
 	SETUP
 	STEPS
-	OUTPUTS
-	ANALYSIS
 	VALIDATION
-	MESSAGE
 
 	keyword_end
 )
@@ -355,3 +355,8 @@ func (tok Token) IsOperator() bool { return operator_beg < tok && tok < operator
 // it returns false otherwise.
 //
 func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
+
+// IsAnthaExtension returns true for tokens corresponding to antha keyword extensions;
+// it returns false otherwise.
+//
+func (tok Token) IsAnthaExtension() bool { return ANALYSIS <= tok && tok < VALIDATION }

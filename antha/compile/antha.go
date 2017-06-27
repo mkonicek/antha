@@ -32,12 +32,11 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	rdebug "runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
 	"text/template"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/parser"
@@ -84,16 +83,24 @@ func throwErrorf(pos token.Pos, format string, args ...interface{}) {
 	})
 }
 
-// A Message is an input or an output
-type Message struct {
-	Name string      // Name
-	Type string      // Fully qualified type name
-	Desc string      // Freeform description
-	Kind token.Token // One of token.{DATA, PARAMETERS, OUTPUTS, INPUTS, MESSAGE}
+// A Field is a field of a message
+type Field struct {
+	Name string
+	Type ast.Expr // Fully qualified go type name
+	Doc  string
+	Tag  string
 }
 
-func (p Message) isOutput() bool {
-	switch p.Kind {
+// A Message is an input or an output or user defined type
+type Message struct {
+	Name   string
+	Doc    string
+	Fields []*Field
+	Kind   token.Token // One of token.{DATA, PARAMETERS, OUTPUTS, INPUTS, MESSAGE}
+}
+
+func isOutput(tok token.Token) bool {
+	switch tok {
 	case token.OUTPUTS, token.DATA:
 		return true
 	default:
@@ -101,8 +108,8 @@ func (p Message) isOutput() bool {
 	}
 }
 
-func (p Message) isInput() bool {
-	switch p.Kind {
+func isInput(tok token.Token) bool {
+	switch tok {
 	case token.INPUTS, token.PARAMETERS:
 		return true
 	default:
@@ -125,9 +132,11 @@ func manglePackageName(pkg string) string {
 
 // An importReq is a request to add an import
 type importReq struct {
-	Path    string
-	Name    string
-	UseExpr string
+	Path         string // Package path
+	Name         string // Package identifier
+	UseExpr      string // Dummy expression to supress unused imports
+	Added        bool   // Has the import already been added?
+	ProtoPackage string // Protobuf package this import cooresponds to
 }
 
 // Antha is a preprocessing pass from antha file to go file
@@ -138,26 +147,43 @@ type Antha struct {
 	Desc string
 	// Package of element
 	Package string
-	// Messages of an element
+	// Messages of an element as well as inputs and outputs
 	Messages []*Message
 
-	// message by name
-	messageByName map[string]*Message
-	blocksUsed    map[token.Token]bool
+	// inputs or outputs of an element but not messages
+	tokenByParamName map[string]token.Token
+	blocksUsed       map[token.Token]bool
 	// Replacements for identifiers in expressions in functions
 	intrinsics map[string]string
-	// Replacement for type names in type expressions and types and type lists
+	// Replacement for go type names in type expressions and types and type lists
 	types map[string]string
 	// Additional imports to add
 	importReqs   []*importReq
-	importByName map[string]string
-	// externalPackages
-	externalPackages []string
+	importByName map[string]*importReq
+	importProtos []string
+	// externalCallPackages
+	externalCallPackages []string
 }
 
 // NewAntha creates a new antha pass
 func NewAntha() *Antha {
-	p := &Antha{}
+	p := &Antha{
+		importByName: make(map[string]*importReq),
+	}
+
+	p.importProtos = []string{
+		"github.com/antha-lang/antha/api/v1/blob.proto",
+		"github.com/antha-lang/antha/api/v1/coord.proto",
+		"github.com/antha-lang/antha/api/v1/element.proto",
+		"github.com/antha-lang/antha/api/v1/empty.proto",
+		"github.com/antha-lang/antha/api/v1/inventory.proto",
+		"github.com/antha-lang/antha/api/v1/measurement.proto",
+		"github.com/antha-lang/antha/api/v1/message.proto",
+		"github.com/antha-lang/antha/api/v1/polynomial.proto",
+		"github.com/antha-lang/antha/api/v1/state.proto",
+		"github.com/antha-lang/antha/api/v1/task.proto",
+		"github.com/antha-lang/antha/api/v1/workflow.proto",
+	}
 
 	p.intrinsics = map[string]string{
 		"Centrifuge":    "execute.Centrifuge",
@@ -177,6 +203,7 @@ func NewAntha() *Antha {
 		"SetInputPlate": "execute.SetInputPlate",
 		//	"Wait":          "execute.Wait",
 	}
+
 	p.types = map[string]string{
 		"Amount":               "wunit.Amount",
 		"Angle":                "wunit.Angle",
@@ -192,7 +219,6 @@ func NewAntha() *Antha {
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",
 		"IncubateOpt":          "execute.IncubateOpt",
-		"LHComponent":          "wtype.LHComponent",
 		"LHComponent":          "wtype.LHComponent",
 		"LHPlate":              "wtype.LHPlate",
 		"LHTip":                "wtype.LHTip",
@@ -214,25 +240,35 @@ func NewAntha() *Antha {
 		"Volume":               "wunit.Volume",
 		"Warning":              "wtype.Warning",
 	}
-	p.importReqs = append(p.importReqs,
-		&importReq{
-			Path: "context",
-		}, &importReq{
-			Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
-			UseExpr: "wtype.FALSE",
-		}, &importReq{
-			Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",
-			UseExpr: "wunit.Make_units",
-		}, &importReq{
-			Path:    "github.com/antha-lang/antha/execute",
-			UseExpr: "execute.MixInto",
-		}, &importReq{
-			Path: "github.com/antha-lang/element",
-		}, &importReq{
-			Path: "github.com/antha-lang/element/lrpc",
-		}, &importReq{
-			Path: "github.com/hashicorp/go-plugin",
-		})
+
+	// TODO: add usage tracking to replace UseExpr
+	p.addImportReq(&importReq{
+		Path: "context",
+	})
+	p.addImportReq(&importReq{
+		Path: "fmt",
+	})
+	p.addImportReq(&importReq{
+		Path: "errors",
+	})
+	p.addImportReq(&importReq{
+		Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
+		UseExpr: "wtype.FALSE",
+	})
+	p.addImportReq(&importReq{
+		Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",
+		UseExpr: "wunit.Make_units",
+	})
+	p.addImportReq(&importReq{
+		Path:    "github.com/antha-lang/antha/execute",
+		UseExpr: "execute.MixInto",
+	})
+	p.addImportReq(&importReq{
+		Path:         "github.com/antha-lang/antha/api/v1",
+		Name:         "api",
+		UseExpr:      "api.State_CREATED",
+		ProtoPackage: "org.antha_lang.antha.v1",
+	})
 
 	return p
 }
@@ -302,6 +338,10 @@ func (p *Antha) addImports(file *ast.File) {
 	}
 
 	for _, req := range p.importReqs {
+		if req.Added {
+			continue
+		}
+
 		imp := &ast.ImportSpec{
 			Path: &ast.BasicLit{
 				Kind:     token.STRING,
@@ -381,7 +421,54 @@ func unwrapRecover(res interface{}, fileSet *token.FileSet, pos token.Pos) error
 	if ok {
 		return fmt.Errorf("%s:%d: %s", p.Filename, p.Line, msg)
 	}
+	// TODO: remove below
+	rdebug.PrintStack()
 	return fmt.Errorf("%s: %s", p.Filename, msg)
+}
+
+func getGoPackage(filename string) string {
+	filename, _ = relativeTo(getGoPath(), filename)
+	dir := filepath.ToSlash(filepath.Dir(filename))
+	if strings.HasPrefix(dir, "src/") {
+		return dir[len("src/"):]
+	}
+	return dir
+}
+
+func reverse(xs []string) (ret []string) {
+	for idx := len(xs) - 1; idx >= 0; idx-- {
+		ret = append(ret, xs[idx])
+	}
+	return
+}
+
+func getProtobufPackage(goPackage string) string {
+	var parts []string
+	idx := strings.Index(goPackage, "/")
+	if idx >= 0 {
+		parts = append(parts, reverse(strings.Split(goPackage[:idx], "."))...)
+		goPackage = goPackage[idx+1:]
+	}
+	parts = append(parts, strings.Split(goPackage, "/")...)
+
+	var ret []string
+	for _, part := range parts {
+		if len(part) == 0 {
+			continue
+		}
+		r := part
+		r = strings.Map(func(r rune) rune {
+			switch r {
+			case '-', '.':
+				return '_'
+			default:
+				return r
+			}
+		}, part)
+		ret = append(ret, r)
+	}
+
+	return strings.Join(ret, ".")
 }
 
 // Transform rewrites AST to go standard primitives
@@ -404,9 +491,7 @@ func (p *Antha) Transform(fileSet *token.FileSet, src *ast.File) (err error) {
 	p.Desc = src.Doc.Text()
 
 	file := fileSet.File(src.Package)
-	name := file.Name()
-	name, _ = relativeTo(getGoPath(), name)
-	p.Package = filepath.ToSlash(filepath.Dir(name))
+	p.Package = getGoPackage(file.Name())
 
 	if e, f := protocolName, path.Base(p.Package); e != f {
 		return fmt.Errorf("%s: expecting protocol %s to be in directory %s", file.Name(), protocolName, e)
@@ -415,25 +500,38 @@ func (p *Antha) Transform(fileSet *token.FileSet, src *ast.File) (err error) {
 	p.recordImports(src.Decls)
 	p.recordBlocks(src.Decls)
 	p.recordMessages(src.Decls)
-	messageByName, err := validateMessages(p.Messages)
-	if err != nil {
+	if err := p.validateMessages(p.Messages); err != nil {
 		return err
 	}
-	p.messageByName = messageByName
 
 	p.desugar(fileSet, src)
 
-	for _, pkg := range p.externalPackages {
-		p.importReqs = append(p.importReqs, &importReq{
+	for _, pkg := range p.externalCallPackages {
+		p.addImportReq(&importReq{
 			Name: manglePackageName(pkg),
 			Path: pkg,
 		})
 	}
 
+	p.addImportReq(&importReq{
+		Path: p.Package,
+		Name: "protobuf",
+	})
+
 	p.addImports(src)
 	p.addUses(src)
 
 	return
+}
+
+func (p *Antha) addImportReq(req *importReq) {
+	name := req.Name
+	if len(name) == 0 {
+		name = path.Base(req.Path)
+	}
+
+	p.importReqs = append(p.importReqs, req)
+	p.importByName[name] = req
 }
 
 // Usually $GOPATH but if not set, future versions of go will assume $HOME/go
@@ -478,8 +576,6 @@ func relativeTo(bases []string, name string) (string, error) {
 }
 
 func (p *Antha) recordImports(decls []ast.Decl) {
-	p.importByName = make(map[string]string)
-
 	for _, decl := range decls {
 		gd, ok := decl.(*ast.GenDecl)
 		if !ok || gd.Tok != token.IMPORT {
@@ -488,7 +584,16 @@ func (p *Antha) recordImports(decls []ast.Decl) {
 
 		for _, spec := range gd.Specs {
 			im := spec.(*ast.ImportSpec)
-			p.importByName[im.Name.String()] = im.Path.Value
+
+			req := &importReq{
+				Added: true,
+				Path:  im.Path.Value,
+			}
+			if im.Name != nil {
+				req.Name = im.Name.String()
+			}
+
+			p.addImportReq(req)
 		}
 	}
 }
@@ -508,6 +613,17 @@ func (p *Antha) recordBlocks(decls []ast.Decl) {
 
 // recordMessages records all the spec definitions for inputs and outputs to element
 func (p *Antha) recordMessages(decls []ast.Decl) {
+	join := func(xs ...string) string {
+		var ret []string
+		for _, x := range xs {
+			if len(x) == 0 {
+				continue
+			}
+			ret = append(ret, x)
+		}
+		return strings.Join(ret, "\n")
+	}
+
 	for _, decl := range decls {
 		decl, ok := decl.(*ast.GenDecl)
 		if !ok {
@@ -519,41 +635,95 @@ func (p *Antha) recordMessages(decls []ast.Decl) {
 		}
 
 		for _, spec := range decl.Specs {
-			spec := spec.(*ast.ValueSpec)
-			var descs []string
-			if spec.Doc != nil {
-				descs = append(descs, spec.Doc.Text())
+			spec, ok := spec.(*ast.TypeSpec)
+			if !ok {
+				throwErrorf(spec.Pos(), "expecting type")
 			}
-			if spec.Comment != nil {
-				descs = append(descs, spec.Comment.Text())
+			typ, ok := spec.Type.(*ast.StructType)
+			if !ok {
+				throwErrorf(spec.Pos(), "expecting struct type")
 			}
-			for _, name := range spec.Names {
-				// XXX: Check message types
-				p.Messages = append(p.Messages, &Message{
-					Name: name.String(),
-					Type: p.getTypeString(spec.Type),
-					Desc: strings.Join(descs, "\n"),
-					Kind: decl.Tok,
-				})
+
+			var fields []*Field
+			for _, field := range typ.Fields.List {
+				for _, name := range field.Names {
+					f := &Field{
+						Name: name.String(),
+						Type: p.desugarTypeExpr(field.Type),
+						Doc:  join(field.Comment.Text(), field.Doc.Text()),
+					}
+					if field.Tag != nil {
+						f.Tag = field.Tag.Value
+					}
+					fields = append(fields, f)
+				}
 			}
+
+			p.Messages = append(p.Messages, &Message{
+				Name:   spec.Name.String(),
+				Fields: fields,
+				Doc:    join(decl.Doc.Text(), spec.Comment.Text(), spec.Doc.Text()),
+				Kind:   decl.Tok,
+			})
 		}
 	}
 }
 
-func validateMessages(messages []*Message) (map[string]*Message, error) {
-	m := make(map[string]*Message)
-	for _, msg := range messages {
-		r, _ := utf8.DecodeRuneInString(msg.Name)
-		if !unicode.In(r, unicode.Lu) {
-			return nil, fmt.Errorf("%s %s must begin with an upper case letter", msg.Kind.String(), msg.Name)
+func uniqueFields(fields []*Field) error {
+	seen := make(map[string]bool)
+	for _, f := range fields {
+		if seen[f.Name] {
+			return fmt.Errorf("%s already declared", f.Name)
 		}
-		if _, seen := m[msg.Name]; seen {
-			return nil, fmt.Errorf("%s already declared", msg.Name)
+		seen[f.Name] = true
+	}
+
+	return nil
+}
+
+func (p *Antha) validateMessages(messages []*Message) error {
+	p.tokenByParamName = make(map[string]token.Token)
+
+	seen := make(map[string]*Message)
+
+	for _, msg := range messages {
+		name := msg.Name
+
+		switch k := msg.Kind; k {
+
+		case token.MESSAGE:
+			if !ast.IsExported(name) {
+				return fmt.Errorf("%s %s must begin with an upper case letter", k, name)
+			}
+
+		default:
+			for _, field := range msg.Fields {
+
+				if _, seen := p.tokenByParamName[field.Name]; seen {
+					return fmt.Errorf("%s already declared", name)
+				}
+				p.tokenByParamName[field.Name] = msg.Kind
+			}
 		}
 
-		m[msg.Name] = msg
+		for _, field := range msg.Fields {
+			if !ast.IsExported(field.Name) {
+				return fmt.Errorf("field %s must begin with an upper case letter", name)
+			}
+		}
+
+		if _, seen := seen[name]; seen {
+			return fmt.Errorf("%s already declared", name)
+		}
+
+		seen[name] = msg
+
+		if err := uniqueFields(msg.Fields); err != nil {
+			return err
+		}
 	}
-	return m, nil
+
+	return nil
 }
 
 func (p *Antha) generateMain(fileSet *token.FileSet, file *ast.File) ([]byte, error) {
@@ -578,8 +748,172 @@ func (p *Antha) generateMain(fileSet *token.FileSet, file *ast.File) ([]byte, er
 	return out.Bytes(), nil
 }
 
+func (p *Antha) getProtobufType(e ast.Expr, used map[*importReq]bool) string {
+	switch t := e.(type) {
+
+	case nil:
+		return ""
+
+	case *ast.Ident:
+		switch t.Name {
+		case "int", "int32":
+			return "int32"
+		case "int64":
+			return "int64"
+		case "float":
+			return "float"
+		case "float64":
+			return "double"
+		}
+		return t.Name
+
+	case *ast.SelectorExpr:
+		if lhs, ok := t.X.(*ast.Ident); ok {
+			importReq, ok := p.importByName[lhs.Name]
+			if !ok {
+				throwErrorf(e.Pos(), "unknown package in protobuf: %s", lhs.Name)
+			}
+			pkg := importReq.ProtoPackage
+			if len(pkg) == 0 {
+				pkg = getProtobufPackage(importReq.Path)
+			}
+			used[importReq] = true
+			return pkg + "." + t.Sel.Name
+		}
+
+	case *ast.BasicLit:
+		return t.Value
+
+	case *ast.ArrayType:
+		return fmt.Sprintf("repeated %s", p.getProtobufType(t.Elt, used))
+
+	case *ast.StarExpr:
+		return p.getProtobufType(t.X, used)
+
+	case *ast.MapType:
+		return fmt.Sprintf("map<%s,%s>", p.getProtobufType(t.Key, used), p.getProtobufType(t.Value, used))
+
+	}
+
+	throwErrorf(e.Pos(), "invalid type in protobuf: %T", e)
+	return ""
+}
+
 func (p *Antha) generateProto() ([]byte, error) {
-	return nil, fmt.Errorf("XXXX")
+	var tmpl = `syntax = "proto3";
+package {{ .PackageName }};
+option go_package = "protobuf";
+
+{{ range .Imports }}import "{{ . }}";
+{{ end }}
+{{ range .Messages }}{{ if .Desc }}{{ .Desc }}{{ end }}
+message {{ .Name }} {
+{{ range .Fields }}{{ if .Desc }}{{ .Desc }}{{ end }}
+  {{ .Type }} {{ .Name }} = {{ .Tag }};
+{{ end }}
+}
+{{ end }}
+service Element {
+  rpc Run(Request) returns (Response);
+  rpc Run(org.antha_lang.antha.v1.Empty) returns (org.antha_lang.antha.v1.ElementMetadata);
+}
+`
+	fmtDoc := func(indent, s string) string {
+		if len(s) == 0 {
+			return s
+		}
+
+		comment := indent + "// "
+		s = strings.TrimSpace(s)
+		s = strings.Replace(s, "\n", "\n"+comment, -1)
+		return comment + s
+	}
+
+	merge := func(messages []*Message, merged, aname, bname string) (ret []*Message) {
+		var a Message
+		var b Message
+		for _, msg := range messages {
+			if msg.Name == aname {
+				a = *msg
+				continue
+			}
+			if msg.Name == bname {
+				b = *msg
+				continue
+			}
+			ret = append(ret, msg)
+		}
+		ret = append(ret, &Message{
+			Name:   merged,
+			Doc:    a.Doc + b.Doc,
+			Fields: append(a.Fields, b.Fields...),
+		})
+
+		return
+	}
+
+	type field struct {
+		Desc string
+		Type string
+		Name string
+		Tag  int
+	}
+
+	type message struct {
+		Name   string
+		Desc   string
+		Fields []field
+	}
+
+	type tvars struct {
+		PackageName string
+		Imports     []string
+		Messages    []message
+	}
+
+	tv := tvars{
+		PackageName: getProtobufPackage(p.Package),
+	}
+
+	messages := p.Messages
+	messages = merge(messages, "Request", "Parameters", "Inputs")
+	messages = merge(messages, "Response", "Data", "Outputs")
+
+	used := make(map[*importReq]bool)
+	for _, msg := range messages {
+		m := message{
+			Name: msg.Name,
+			Desc: fmtDoc("", msg.Doc),
+		}
+		for idx, f := range msg.Fields {
+			m.Fields = append(m.Fields, field{
+				Desc: fmtDoc("  ", f.Doc),
+				Type: p.getProtobufType(f.Type, used),
+				Name: f.Name,
+				Tag:  idx + 1,
+			})
+		}
+		tv.Messages = append(tv.Messages, m)
+	}
+
+	tv.Imports = append(tv.Imports, p.importProtos...)
+	for req := range used {
+		// TODO: we assume that only system packages have this field set
+		if len(req.ProtoPackage) != 0 {
+			continue
+		}
+
+		tv.Imports = append(tv.Imports, path.Join(req.Path, "element.proto"))
+	}
+
+	sort.Strings(tv.Imports)
+
+	var out bytes.Buffer
+	if err := template.Must(template.New("").Parse(tmpl)).Execute(&out, tv); err != nil {
+		return nil, err
+	}
+
+	return out.Bytes(), nil
 }
 
 // Generate returns files with slash names to complete antha to go
@@ -595,74 +929,64 @@ func (p *Antha) Generate(fileSet *token.FileSet, file *ast.File) (map[string][]b
 		return nil, err
 	}
 
+	defaultGo := []byte("//go:generate protoc -I. -Ivendor --go_out=plugins=grpc:. element.proto\npackage protobuf\n")
+
 	return map[string][]byte{
 		"server/main.go": mainBs,
 		"element.proto":  protoBs,
+		"element.go":     defaultGo,
 	}, nil
 }
 
 func (p *Antha) addUses(src *ast.File) {
-	decl := &ast.GenDecl{
-		Tok: token.VAR,
-	}
 
 	for _, req := range p.importReqs {
 		if len(req.UseExpr) == 0 {
 			continue
 		}
+		decl := &ast.GenDecl{
+			Tok: token.VAR,
+		}
+
 		decl.Specs = append(decl.Specs, &ast.ValueSpec{
 			Names:  identList("_"),
 			Values: []ast.Expr{mustParseExpr(req.UseExpr)},
 		})
+		src.Decls = append(src.Decls, decl)
+	}
+}
+
+func encodeByteArray(bs []byte) string {
+	var buf bytes.Buffer
+	buf.WriteString("[]byte {\n")
+	for len(bs) > 0 {
+		n := 16
+		if n > len(bs) {
+			n = len(bs)
+		}
+
+		for _, c := range bs[:n] {
+			buf.WriteString("0x")
+			buf.WriteString(hex.EncodeToString([]byte{c}))
+			buf.WriteString(",")
+		}
+
+		buf.WriteString("\n")
+
+		bs = bs[n:]
 	}
 
-	src.Decls = append(src.Decls, decl)
+	buf.WriteString("}")
+
+	return buf.String()
 }
 
 // printFunctions generates synthetic antha functions and data stuctures
 func (p *Antha) printFunctions(out io.Writer) error {
 	var tmpl = `
-type _Element struct {}
+type Element struct {}
 
-type Input struct {
-	{{range .Inputs}}{{.Name}} {{.Type}}
-	{{end}}
-}
-
-type Output struct {
-	{{range .Outputs}}{{.Name}} {{.Type}}
-	{{end}}
-}
-
-func (_Element) Run(req *element.Values) (*element.Values, error) {
-	ctx := context.Background()
-
-	var args Input
-	if err := element.AssignFrom(req, &args, element.AssignModeLE); err != nil {
-		return nil, err
-	}
-	out, err := _Run(ctx, &args)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp element.Values
-	if err := element.AssignTo(&resp, out, element.AssignModeOW); err != nil {
-		return nil, err
-	}
-
-	return &resp, nil
-}
-
-func (_Element) Metadata() (*element.Metadata, error) {
-	return _Metadata, nil
-}
-
-func (_Element) VersionInfo() (*element.VersionInfo, error) {
-	return _VersionInfo, nil
-}
-
-func _Run(_ctx context.Context, input *Input) (output *Output, err error) {
+func (Element) Run(_ctx context.Context, request *protobuf.Request) (response *protobuf.Response, err error) {
 	defer func() {
 		if res := recover(); res != nil {
 			e, ok := res.(error)
@@ -673,97 +997,25 @@ func _Run(_ctx context.Context, input *Input) (output *Output, err error) {
 			}
 		}
 	}()
-	output = &Output{}
-	{{if .HasSetup}}_Setup(_ctx, input, output){{end}}
-	{{if .HasSteps}}_Steps(_ctx, input, output){{end}}
-	{{if .HasAnalysis}}_Analysis(_ctx, input, output){{end}}
-	{{if .HasValidation}}_Validation(_ctx, input, output){{end}}
+	response = &protobuf.Response{}
+	{{if .HasSetup}}_Setup(_ctx, request, response){{end}}
+	{{if .HasSteps}}_Steps(_ctx, request, response){{end}}
+	{{if .HasAnalysis}}_Analysis(_ctx, request, response){{end}}
+	{{if .HasValidation}}_Validation(_ctx, request, response){{end}}
 	return
 }
 
-{{range .Calls}}
-func {{.Name}}(_ctx context.Context, input *{{.InputType}}) *{{.OutputType}} {
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: lrpc.HandshakeConfig,
-		Plugins:         map[string]plugin.Plugin{
-			"element": &lrpc.Plugin{},
-		},
-	})
-	defer client.Kill()
-
-	rpcClient, err := client.Client()
-	if err != nil {
-		panic(err)
-	}
-
-	raw, err := rpcClient.Dispense("element")
-	if err != nil {
-		panic(err)
-	}
-
-	var req element.Values
-	if err := element.AssignTo(&req, input, element.AssignModeOW); err != nil {
-		return panic(err)
-	}
-
-	resp, err := raw.(element.Element).Run(req)
-	if err != nil {
-		panic(err)
-	}
-
-	var output {{.OutputType}}
-	if err := element.AssignFrom(resp, &output, element.AssignModeGE); err != nil {
-		panic(err)
-	}
-
-	return &output
-}
-{{end}}
-
-func main() {
-	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: lrpc.HandshakeConfig,
-		Plugins:         map[string]plugin.Plugin{
-			"element": &lrpc.Plugin{Impl: new(_Element)},
-		},
-	})
+func (Element) Metadata(_ctx context.Context, request *api.Empty) (*api.ElementMetadata, error) {
+	return _metadata, nil
 }
 
 var (
-	_Metadata *element.Metadata
-	_VersionInfo *element.VersionInfo
+	_metadata *api.ElementMetadata
 )
 
 func init() {
-	var obj struct {
-		Input
-		Output
-	}
-
-	_Metadata = &element.Metadata {
-		CommentDoc: {{.CommentDoc}},
-		Package:    {{.Package}},
-		Ports: []*element.Port {
-			{{range .Ports}}&element.Port{
-				Name:       {{.Name}},
-				PortType:   {{.PortType}},
-				CommentDoc: {{.CommentDoc}},
-				Type:       element.FullTypeName(obj.{{.RawName}}),
-			},
-			{{end}}
-		},
-	}
-
-	_VersionInfo = &element.VersionInfo {
-		ElementSHA256: {{.SHA256}},
-		Dependencies:  []*element.Dependency {
-			{{range .Dependencies}}&element.Dependency{
-				Package:   {{.Package}},
-				GitCommit: {{.GitCommit}},
-				Dirty:     {{.Dirty}},
-			},
-			{{end}}
-		},
+	_metadata = &api.ElementMetadata {
+		SourceSha256: {{.SHA256}},
 	}
 }
 `
@@ -773,10 +1025,10 @@ func init() {
 	}
 
 	type port struct {
-		Name       string
-		RawName    string
-		PortType   string
-		CommentDoc string
+		Name     string
+		RawName  string
+		PortType string
+		Doc      string
 	}
 
 	type call struct {
@@ -807,7 +1059,7 @@ func init() {
 	}
 
 	tv := tvars{
-		SHA256:        strconv.Quote(hex.EncodeToString(p.SourceSHA256)),
+		SHA256:        encodeByteArray(p.SourceSHA256),
 		CommentDoc:    strconv.Quote(p.Desc),
 		Package:       strconv.Quote(p.Package),
 		HasSteps:      p.blocksUsed[token.STEPS],
@@ -817,7 +1069,7 @@ func init() {
 	}
 
 	seen := make(map[string]bool)
-	for _, pkg := range p.externalPackages {
+	for _, pkg := range p.externalCallPackages {
 		if seen[pkg] {
 			continue
 		}
@@ -830,30 +1082,6 @@ func init() {
 			Name:       mangledFunc,
 			InputType:  mangledPackage + ".Input",
 			OutputType: mangledPackage + ".Output",
-		})
-	}
-
-	// XXX dependencies
-
-	for _, msg := range p.Messages {
-		f := field{Name: msg.Name, Type: msg.Type}
-		switch msg.Kind {
-
-		case token.INPUTS, token.PARAMETERS:
-			tv.Inputs = append(tv.Inputs, f)
-
-		case token.DATA, token.OUTPUTS:
-			tv.Outputs = append(tv.Outputs, f)
-
-		default:
-			return errUnknownToken
-		}
-
-		tv.Ports = append(tv.Ports, &port{
-			RawName:    msg.Name,
-			Name:       strconv.Quote(msg.Name),
-			CommentDoc: strconv.Quote(msg.Desc),
-			PortType:   fmt.Sprintf("element.%sPort", msg.Kind.String()),
 		})
 	}
 
@@ -893,41 +1121,13 @@ func mustParseExpr(x string) ast.Expr {
 	return r
 }
 
-func valueSpecsToFieldList(specs []ast.Spec) *ast.FieldList {
-	ret := &ast.FieldList{}
-	for _, spec := range specs {
-		v := spec.(*ast.ValueSpec)
-		field := &ast.Field{
-			Doc:     v.Doc,
-			Names:   v.Names,
-			Type:    v.Type,
-			Comment: v.Comment,
-		}
-		ret.List = append(ret.List, field)
-	}
-	return ret
-}
-
 // desugarGenDecl returns standard go ast for antha GenDecls
 func (p *Antha) desugarGenDecl(d *ast.GenDecl) {
 	if !isAnthaGenDeclToken(d.Tok) {
 		return
 	}
 
-	// var ( ... ) => type _xxx struct { ... }
-	name := ast.NewIdent("_" + d.Tok.String())
 	d.Tok = token.TYPE
-	fieldList := valueSpecsToFieldList(d.Specs)
-	d.Lparen = token.NoPos
-
-	d.Specs = []ast.Spec{
-		&ast.TypeSpec{
-			Name: name,
-			Type: &ast.StructType{
-				Fields: fieldList,
-			},
-		},
-	}
 }
 
 // desugarAnthaDecl returns standard go ast for antha decl.
@@ -935,7 +1135,7 @@ func (p *Antha) desugarGenDecl(d *ast.GenDecl) {
 // E.g.,
 //   Validation
 // to
-//   _Validation(_ctx context.Context, _input *Input, _output *Output)
+//   _Validation(_ctx context.Context, _input *protobuf.Request, _output *protobuf.Response)
 func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.AnthaDecl) ast.Decl {
 	f := &ast.FuncDecl{
 		Doc:  d.Doc,
@@ -954,11 +1154,11 @@ func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.A
 				},
 				&ast.Field{
 					Names: identList("_input"),
-					Type:  mustParseExpr("*Input"),
+					Type:  mustParseExpr("*protobuf.Request"),
 				},
 				&ast.Field{
 					Names: identList("_output"),
-					Type:  mustParseExpr("*Output"),
+					Type:  mustParseExpr("*protobuf.Response"),
 				},
 			},
 		},
@@ -1105,13 +1305,14 @@ func (p *Antha) inspectTypes(n ast.Node) bool {
 func (p *Antha) inspectParamUses(node ast.Node) bool {
 	// desugar if it is a known param
 	rewriteIdent := func(node *ast.Ident) {
-		msg, ok := p.messageByName[node.Name]
+		tok, ok := p.tokenByParamName[node.Name]
 		if !ok {
 			return
 		}
-		if msg.isOutput() {
+
+		if isOutput(tok) {
 			node.Name = "_output." + node.Name
-		} else if msg.isInput() {
+		} else if isInput(tok) {
 			node.Name = "_input." + node.Name
 		}
 	}
@@ -1123,8 +1324,8 @@ func (p *Antha) inspectParamUses(node ast.Node) bool {
 				continue
 			}
 
-			param, ok := p.messageByName[ident.Name]
-			if !ok || !param.isOutput() {
+			param, ok := p.tokenByParamName[ident.Name]
+			if !ok || !isOutput(param) {
 				continue
 			}
 
@@ -1186,7 +1387,7 @@ func (p *Antha) rewriteRunSteps(call *ast.CallExpr) {
 		throwErrorf(call.Pos(), err.Error())
 	}
 
-	p.externalPackages = append(p.externalPackages, pkg)
+	p.externalCallPackages = append(p.externalCallPackages, pkg)
 
 	mangledPackage := manglePackageName(pkg)
 	mangledFunc := "_" + runStepsIntrinsic + mangledPackage

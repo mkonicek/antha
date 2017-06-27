@@ -1350,6 +1350,37 @@ func (p *printer) valueSpec(s *ast.ValueSpec, keepType bool) {
 	}
 }
 
+func (p *printer) anthaSpec(tok token.Token, spec ast.Spec, n int, doIndent bool) {
+	switch s := spec.(type) {
+
+	case *ast.TypeSpec:
+		p.setComment(s.Doc)
+		if tok == token.MESSAGE {
+			p.print(blank)
+			p.expr(s.Name)
+			if n != 1 {
+				p.print(vtab)
+			}
+		}
+
+		expr := s.Type
+		p.print(expr.Pos())
+		switch x := expr.(type) {
+
+		case *ast.StructType:
+			p.fieldList(x.Fields, true, x.Incomplete)
+
+		default:
+			panic("unreachable")
+		}
+
+		p.setComment(s.Comment)
+
+	default:
+		panic("unreachable")
+	}
+}
+
 // The parameter n is the number of specs in the group. If doIndent is set,
 // multi-line identifier lists in the spec are indented when the first
 // linebreak is encountered.
@@ -1400,9 +1431,11 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 
 func (p *printer) genDecl(d *ast.GenDecl) {
 	p.setComment(d.Doc)
-	p.print(d.Pos(), d.Tok, blank)
+	p.print(d.Pos(), d.Tok)
 
 	if d.Lparen.IsValid() {
+		p.print(blank)
+
 		// group of parenthesized declarations
 		p.print(d.Lparen, token.LPAREN)
 		if n := len(d.Specs); n > 0 {
@@ -1432,9 +1465,11 @@ func (p *printer) genDecl(d *ast.GenDecl) {
 			p.print(unindent, formfeed)
 		}
 		p.print(d.Rparen, token.RPAREN)
-
+	} else if d.Tok.IsAnthaExtension() {
+		p.anthaSpec(d.Tok, d.Specs[0], 1, true)
 	} else {
 		// single declaration
+		p.print(blank)
 		p.spec(d.Specs[0], 1, true)
 	}
 }
@@ -1561,6 +1596,12 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.adjBlock(p.distanceFrom(d.Pos()), vtab, d.Body)
 }
 
+func (p *printer) anthaDecl(d *ast.AnthaDecl) {
+	p.setComment(d.Doc)
+	p.print(d.Pos(), d.Tok)
+	p.adjBlock(p.distanceFrom(d.Pos()), vtab, d.Body)
+}
+
 func (p *printer) decl(decl ast.Decl) {
 	switch d := decl.(type) {
 	case *ast.BadDecl:
@@ -1569,6 +1610,8 @@ func (p *printer) decl(decl ast.Decl) {
 		p.genDecl(d)
 	case *ast.FuncDecl:
 		p.funcDecl(d)
+	case *ast.AnthaDecl:
+		p.anthaDecl(d)
 	default:
 		panic("unreachable")
 	}

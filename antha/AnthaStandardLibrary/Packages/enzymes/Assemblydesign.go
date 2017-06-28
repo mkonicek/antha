@@ -534,153 +534,7 @@ func Makeoverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer 
 
 }
 
-// Map describing the sticky ends required for each class of an assembly standard at  a particular level.
-var EndlinksString = map[string]map[string]map[string][]string{
-	"MoClo": map[string]map[string][]string{
-		"Level0": map[string][]string{
-			"Pro":         []string{"GGAG", "TACT"},
-			"5U":          []string{"TACT", "CCAT"},
-			"5U(f)":       []string{"TACT", "CCAT"},
-			"Pro + 5U(f)": []string{"GGAG", "CCAT"},
-			"Pro + 5U":    []string{"GGAG", "AATG"},
-			"NT1":         []string{"CCAT", "AATG"},
-			"5U + NT1":    []string{"TACT", "AATG"},
-			"CDS1":        []string{"AATG", "GCTT"},
-			"CDS1 ns":     []string{"AATG", "TTCG"},
-			"NT2":         []string{"AATG", "AGGT"},
-			"SP":          []string{"AATG", "AGGT"},
-			"CDS2 ns":     []string{"AGGT", "TTCG"},
-			"CDS2":        []string{"AGGT", "GCTT"},
-			"CT":          []string{"TTCG", "GCTT"},
-			"3U":          []string{"GCTT", "GGTA"},
-			"Ter":         []string{"GGTA", "CGCT"},
-			"3U + Ter":    []string{"GCTT", "CGCT"},
-		},
-	},
-	"Custom": map[string]map[string][]string{
-		"Level0": map[string][]string{
-			"L1Uadaptor":                  []string{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
-			"L1Uadaptor + Pro":            []string{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
-			"L1Uadaptor + Pro(MoClo)":     []string{"GTCG", "TACT"}, // original MoClo overhang of TACT
-			"L1Uadaptor + Pro + 5U":       []string{"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
-			"L1Uadaptor + Pro + 5U + NT1": []string{"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
-			"Pro":                               []string{"GGAG", "TTTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-			"5U":                                []string{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-			"5U(f)":                             []string{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-			"Pro + 5U(f)":                       []string{"GGAG", "CCAT"},
-			"Pro + 5U":                          []string{"GGAG", "CCAT"},
-			"Pro + 5U + NT1":                    []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"NT1":                               []string{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"5U + NT1":                          []string{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"5U(MoClo) + NT1":                   []string{"TACT", "TATG"}, //original MoClo overhang of TACT
-			"5U + NT1 + CDS1":                   []string{"TTTT", "GCTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-			"5U + NT1 + CDS1 + 3U":              []string{"TTTT", "CCCC"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox and changed GGTA to CCCC to conform with Protein Paintbox
-			"CDS1":                              []string{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS1 + 3U":                         []string{"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs and changed GGTA to CCCC to conform with Protein Paintbox
-			"CDS1 + 3U(MoClo)":                  []string{"TATG", "GGTA"}, //original MoClo overhang of GGTA
-			"CDS1 ns":                           []string{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS1 + CT + 3U + Ter + L1Dadaptor": []string{"TATG", "TAAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"NT2":                        []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"SP":                         []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS2 ns":                    []string{"AGGT", "TTCG"},
-			"CDS2":                       []string{"AGGT", "GCTT"},
-			"CT":                         []string{"TTCG", "GCTT"},
-			"3U":                         []string{"GCTT", "CCCC"}, //changed GGTA to CCCC to conform with Protein Paintbox
-			"Ter":                        []string{"CCCC", "CGCT"},
-			"3U + Ter":                   []string{"GCTT", "CGCT"},
-			"3U + Ter + L1Dadaptor":      []string{"GCTT", "TAAT"},
-			"CT + 3U + Ter + L1Dadaptor": []string{"TTCG", "TAAT"},
-			"L1Dadaptor":                 []string{"CGCT", "TAAT"},
-			"Ter + L1Dadaptor":           []string{"CCCC", "TAAT"},
-			"Ter(MoClo) + L1Dadaptor":    []string{"GGTA", "TAAT"},
-		},
-		"Level1": map[string][]string{
-			"Device1": []string{"GAA", "ACC"},
-			"Device2": []string{"ACC", "CTG"},
-			"Device3": []string{"CTG", "GGT"},
-		},
-	},
-	"Antibody": map[string]map[string][]string{
-		"Heavy": map[string][]string{
-			"Part1": []string{"GCG", "TCG"},
-			"Part2": []string{"TGG", "CTG"},
-			"Part3": []string{"CTG", "AAG"},
-		},
-		"Light": map[string][]string{
-			"Part1": []string{"GCG", "TCG"},
-			"Part2": []string{"TGG", "CTG"},
-			"Part3": []string{"CTG", "AAG"},
-		},
-	},
-	"MoClo_Raven": map[string]map[string][]string{
-		"Level0": map[string][]string{
-			"Pro":         []string{"GAGG", "TACT"},
-			"5U":          []string{"TACT", "CCAT"},
-			"5U(f)":       []string{"TACT", "CCAT"},
-			"Pro + 5U(f)": []string{"GGAG", "CCAT"},
-			"Pro + 5U":    []string{"GGAG", "AATG"},
-			"NT1":         []string{"CCAT", "AATG"},
-			"5U + NT1":    []string{"TACT", "AATG"},
-			"CDS1":        []string{"AATG", "GCTT"},
-			"CDS1 ns":     []string{"AATG", "TTCG"},
-			"NT2":         []string{"AATG", "AGGT"},
-			"SP":          []string{"AATG", "AGGT"},
-			"CDS2 ns":     []string{"AGGT", "TTCG"},
-			"CDS2":        []string{"AGGT", "GCTT"},
-			"CT":          []string{"TTCG", "GCTT"},
-			"3U":          []string{"GCTT", "GGTA"},
-			"Ter":         []string{"GGTA", "CGCT"},
-			"3U + Ter":    []string{"GCTT", "GCTT"}, // both same ! look into this
-		},
-	},
-}
-
-// map of standard vector ends for various assembly standards
-var Vectorends = map[string]map[string][]string{
-	// array of strings returned correspond to [3'overhang and 5'overhang]
-	"MoClo_Raven": map[string][]string{
-		"Level0": []string{"AAGC", "CCTC"}, //
-		"Level1": []string{"", ""},
-	},
-	"MoClo": map[string][]string{
-		"Level0": []string{"CGCT", "GGAG"}, //
-		"Level1": []string{"", ""},
-	},
-	"Custom": map[string][]string{
-		"Level0": []string{"TAAT", "GTCG"},
-		"Level1": []string{"GGT", "GAA"},
-	},
-	"Antibody": map[string][]string{
-		"Heavy": []string{"GCG", "AAG"},
-		"Light": []string{"", ""},
-	},
-	"Electra": map[string][]string{
-		"Level0": []string{"GGT", "ATG"},
-		"Level1": []string{"", ""},
-	},
-}
-
-// map of enzymes used at each level of an assembly standard
-var Enzymelookup = map[string]map[string]wtype.TypeIIs{
-	// array of strings returned correspond to 5'overhang and 3'overhang
-	"MoClo_Raven": map[string]wtype.TypeIIs{
-		"Level0": BsaIenz,
-		"Level1": BpiIenz,
-	},
-	"MoClo": map[string]wtype.TypeIIs{
-		"Level0": BsaIenz,
-		"Level1": BpiIenz,
-	},
-	"Custom": map[string]wtype.TypeIIs{
-		"Level0": BsaIenz,
-		"Level1": SapIenz,
-	},
-	"Antibody": map[string]wtype.TypeIIs{
-		"Heavy": SapIenz,
-		"Light": SapIenz,
-	},
-}
-
+// Assembly standards
 var availableStandards = map[string]AssemblyStandard{
 	"Custom":      customStandard,
 	"MoClo":       customStandard,
@@ -688,11 +542,20 @@ var availableStandards = map[string]AssemblyStandard{
 	"Antibody":    customStandard,
 }
 
-func LookUpAssemblyStandard(name string) (standard AssemblyStandard, err error) {
+func allStandards() (standards []string) {
+	for k, _ := range availableStandards {
+		standards = append(standards, k)
+	}
+	sort.Strings(standards)
+	return
+}
+
+// Lookup TypeIIs assembly standard by name
+func LookupAssemblyStandard(name string) (standard AssemblyStandard, err error) {
 	var found bool
 	standard, found = availableStandards[name]
 	if !found {
-		err = fmt.Errorf("assembly standard %s not found", name)
+		err = fmt.Errorf("assembly standard %s not found. Vslid options are: %s", name, strings.Join(allStandards(), ";"))
 	}
 	return
 }

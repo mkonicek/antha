@@ -127,7 +127,6 @@ func BasicMeltingTemp(primersequence wtype.DNASequence) (meltingtemp wunit.Tempe
 
 // define region in DNA sequence
 // this is directionless and does not check for reverse complement
-// if endposition < startposition and sequence is a plasmid then the end of sequence will be used
 func DNAregion(sequence wtype.DNASequence, startposition int, endposition int) (region wtype.DNASequence) {
 
 	dnaseq := sequence.Sequence()
@@ -138,12 +137,18 @@ func DNAregion(sequence wtype.DNASequence, startposition int, endposition int) (
 		if startposition == 0 {
 			startposition = 1
 		}
+
 		if endposition > len(dnaseq) {
 			endposition = len(dnaseq) - 1
+			message := fmt.Sprint("endposition ", endposition, " exceeds length of sequence ", sequence.Name(), " Length: ", len(sequence.Sequence()))
+			panic(message)
 		}
 		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:endposition])
 	} else if endposition < startposition && sequence.Plasmid {
 		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:]+dnaseq[:endposition])
+	} else if endposition < startposition && !sequence.Plasmid {
+		message := fmt.Sprint("DNA Region start position cannot be larger than end position for linear dna fragments. startposition: ", startposition, "endposition", endposition, "Sequence:", sequence)
+		panic(message)
 	}
 	return
 

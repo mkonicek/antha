@@ -134,7 +134,6 @@ func VectorEnds(vector wtype.DNASequence, enzyme wtype.TypeIIs) (desiredstickyen
 func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wtype.DNASequence, enzyme wtype.TypeIIs) (partswithends []wtype.DNASequence) {
 
 	partswithends = make([]wtype.DNASequence, 0)
-	var partwithends wtype.DNASequence
 
 	// find sticky ends from cutting vector with enzyme
 
@@ -169,12 +168,13 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 	desiredstickyend3prime := ""
 
 	for i := 0; i < len(parts); i++ {
+		var partwithends wtype.DNASequence
+
 		if i == (len(parts) - 1) {
 			desiredstickyend3prime = vector3primestickyend
 		}
 
 		sites, sticky5s, sticky3s := CheckForExistingTypeIISEnds(parts[i], enzyme)
-		//sites, _, _ := CheckForExistingTypeIISEnds(parts[i], enzyme)
 
 		if sites == 0 {
 			partwithends = AddCustomEnds(parts[i], enzyme, desiredstickyend5prime, desiredstickyend3prime)
@@ -184,9 +184,10 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 			panic(fmt.Sprint("cutting part ", parts[i], " with", enzyme, " results in ", sites, "cut sites with 5 prime fragment overhangs: ", sticky5s, " and 3 prime fragment overhangs: ", sticky3s, ". Wanted: 5prime: ", desiredstickyend5prime, " 3prime: ", desiredstickyend3prime))
 		}
 		partwithends.Nm = parts[i].Nm
+
 		partswithends = append(partswithends, partwithends)
 
-		desiredstickyend5prime = Suffix(partwithends.Seq, enzyme.RestrictionEnzyme.EndLength)
+		desiredstickyend5prime = Suffix(parts[i].Seq, enzyme.RestrictionEnzyme.EndLength)
 
 	}
 

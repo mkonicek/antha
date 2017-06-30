@@ -297,13 +297,17 @@ func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblyStandard Ass
 		return partWithEnds, err
 	}
 
-	bittoadd = findMinimumAdditional5PrimeAddition(bittoadd, part)
+	// This code will find the minimal additional overhang to add
+	// with this commented out the full overhang is added
+	//bittoadd = findMinimumAdditional5PrimeAddition(bittoadd, part)
 
 	bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
 
 	partwith5primeend := Addoverhang(part.Seq, bittoadd5prime, "5prime")
 
-	bittoadd3 = findMinimumAdditional3PrimeAddition(bittoadd3, part)
+	// This code will find the minimal additional overhang to add
+	// with this commented out the full overhang is added
+	//bittoadd3 = findMinimumAdditional3PrimeAddition(bittoadd3, part)
 
 	bittoadd3prime := Makeoverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
 

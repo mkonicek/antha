@@ -35,6 +35,24 @@ import (
 	//features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
 )
 
+func fragmentsToDNASequences(fragments []Digestedfragment) (sequences []wtype.DNASequence, err error) {
+
+	var errs []string
+
+	for i, fragment := range fragments {
+		seq, err := fragment.ToDNASequence("fragment" + strconv.Itoa(i))
+		sequences = append(sequences, seq)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+
+	if len(errs) > 0 {
+		err = fmt.Errorf(strings.Join(errs, ";"))
+	}
+	return
+}
+
 func jointwoparts(upstreampart []Digestedfragment, downstreampart []Digestedfragment) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
 
 	sequencestojoin := make([]string, 0)

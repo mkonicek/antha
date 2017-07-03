@@ -67,9 +67,9 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string) 
 	}
 
 	var (
-		buf   = &bytes.Buffer{}
-		p     = &biogo.Parameters{RetMax: Max, RetType: ReturnType, RetMode: "text"}
-		bn, n int64
+		buf = &bytes.Buffer{}
+		p   = &biogo.Parameters{RetMax: Max, RetType: ReturnType, RetMode: "text"}
+		bn  int64
 	)
 
 	for p.RetStart = 0; p.RetStart < s.Count; p.RetStart += p.RetMax {

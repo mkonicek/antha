@@ -10,6 +10,7 @@ const (
 	LHIEND = iota
 	LHIMIX
 	LHIWAI
+	LHIPRM
 )
 
 func InsType(i int) string {

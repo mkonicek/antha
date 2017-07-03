@@ -38,12 +38,12 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func ReadGeneFiles(genefiles []string) {
+func ReadGeneFiles(genefiles []wtype.File) {
 
 	geneseqs := make([]interface{}, 0)
 
 	for _, genefile := range genefiles {
-		genes, err := parser.DNAFiletoDNASequence(genefile, false)
+		genes, err := parser.DNAFileToDNASequence(genefile)
 
 		file, err := parser.Fastatocsv(genefile, "output.csv")
 		if err != nil {

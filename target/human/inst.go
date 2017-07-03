@@ -41,7 +41,7 @@ func (a *Human) makeFromMove(c *ast.Move) (*target.Manual, error) {
 	from := extractFromUseNodes(c.From...)
 	return &target.Manual{
 		Dev:     a,
-		Label:   "Move",
+		Label:   "move",
 		Details: fmt.Sprintf("Move %q to %s", from, c.ToLoc),
 	}, nil
 }
@@ -59,21 +59,20 @@ func (a *Human) makeFromCommand(c *ast.Command) (*target.Manual, error) {
 	case *wtype.LHInstruction:
 		return &target.Manual{
 			Dev:     a,
-			Label:   "Mix",
+			Label:   "mix",
 			Details: prettyMixDetails(from, inst),
 		}, nil
 	case *ast.IncubateInst:
 		return &target.Manual{
 			Dev:     a,
-			Label:   "Incubate",
+			Label:   "incubate",
 			Details: fmt.Sprintf("Incubate %q at %s for %s", from, inst.Temp.ToString(), inst.Time.ToString()),
 			Time:    inst.Time.Seconds(),
 		}, nil
 	case *ast.HandleInst:
 		return &target.Manual{
-			Dev:     a,
-			Label:   "Handle",
-			Details: inst.Group,
+			Dev:   a,
+			Label: inst.Group,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unknown inst %T", inst)

@@ -31,6 +31,10 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
+func TipChosenError(v wunit.Volume, prms *LHProperties) string {
+	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (current minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString())
+}
+
 type TransferParams struct {
 	What       string
 	PltFrom    string
@@ -48,6 +52,14 @@ type TransferParams struct {
 
 func (tp TransferParams) ToString() string {
 	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType)
+}
+
+func (tp TransferParams) Zero() bool {
+	if tp.What == "" {
+		return true
+	}
+
+	return false
 }
 
 type MultiTransferParams struct {
@@ -169,12 +181,24 @@ func (ins *SingleChannelBlockInstruction) GetParameter(name string) interface{} 
 }
 
 func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+
+	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
+
 	ret := make([]RobotInstruction, 0)
 	// get tips
-	channel, tiptype := ChooseChannel(ins.Volume[0], prms)
+	channel, tipp := ChooseChannel(ins.Volume[0], prms)
+
+	tiptype := ""
+
+	if tipp != nil {
+		tiptype = tipp.Type
+	} else {
+		return ret, fmt.Errorf(TipChosenError(ins.Volume[0], prms))
+	}
+
 	ins.Prms = channel
 	pol := GetPolicyFor(policy, ins)
-	tipget, err := GetTips(tiptype, prms, channel, 1, false)
+	tipget, err := GetTips(tiptype, prms, channel, 1, false, usetiptracking)
 
 	if err != nil {
 		return ret, err
@@ -190,8 +214,19 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
-		newchannel, newtiptype := ChooseChannel(ins.Volume[t], prms)
-		tvs, err := TransferVolumes(ins.Volume[t], newchannel.Minvol, newchannel.Maxvol)
+		newchannel, newtipp := ChooseChannel(ins.Volume[t], prms)
+		newtiptype := ""
+		if newtipp != nil {
+			newtiptype = newtipp.Type
+		} else {
+			return ret, fmt.Errorf(TipChosenError(ins.Volume[t], prms))
+		}
+		mergedchannel := newchannel.MergeWithTip(newtipp)
+		tipp = newtipp
+
+		tvs, err := TransferVolumes(ins.Volume[t], mergedchannel.Minvol, mergedchannel.Maxvol)
+
+		//fmt.Println("VOL ", ins.Volume[t].ToString(), " IN ", len(tvs), " GOES: ", mergedchannel.Minvol.ToString(), " MIN ", mergedchannel.Maxvol.ToString(), " MAX")
 
 		if err != nil {
 			return ret, err
@@ -235,7 +270,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 				}
 				ret = append(ret, tipdrp)
 
-				tipget, err := GetTips(newtiptype, prms, newchannel, 1, false)
+				tipget, err := GetTips(newtiptype, prms, newchannel, 1, false, usetiptracking)
 
 				if err != nil {
 					return ret, err
@@ -261,7 +296,7 @@ func (ins *SingleChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet
 			stci.TPlateType = ins.TPlateType[t]
 			stci.FVolume = wunit.CopyVolume(ins.FVolume[t])
 			stci.TVolume = wunit.CopyVolume(ins.TVolume[t])
-			stci.Prms = channel
+			stci.Prms = channel.MergeWithTip(tipp)
 			stci.TipType = tiptype
 			ret = append(ret, stci)
 			last_thing = this_thing
@@ -387,13 +422,40 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
+func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
+	v := make([]wunit.Volume, 0, 1)
+	seen := make(map[string]bool)
+	for _, vv := range ins.Volume[0] {
+		if !vv.IsZero() && !seen[vv.ToString()] {
+			seen[vv.ToString()] = true
+			v = append(v, vv)
+		}
+	}
+
+	return v
+}
+
 func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
+
 	pol := GetPolicyFor(policy, ins)
 	ret := make([]RobotInstruction, 0)
 	// get some tips
-	//eesh... potential conflict here
-	channel, tiptype := ChooseChannel(ins.Volume[0][0], prms)
-	tipget, err := GetTips(tiptype, prms, channel, ins.Multi, false)
+
+	// we no longer require ins.volume[0][0] to be set
+	// as we move to independent we need to get all volumes
+
+	// MIS DEBUG HERE --> this crashes, should not be generating
+	// 		      MCBs with no volumes
+	channel, tipp := ChooseChannel(ins.GetVolumes()[0], prms)
+	tiptype := ""
+	if tipp != nil {
+		tiptype = tipp.Type
+	} else {
+		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
+	}
+
+	tipget, err := GetTips(tiptype, prms, channel, ins.Multi, false, usetiptracking)
 	if err != nil {
 		return ret, err
 	}
@@ -410,7 +472,14 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 		}
 
 		// choose tips
-		newchannel, newtiptype := ChooseChannel(ins.Volume[0][0], prms)
+		newchannel, newtip := ChooseChannel(ins.Volume[0][0], prms)
+		newtiptype := ""
+		if newtip != nil {
+			newtiptype = newtip.Type
+		} else {
+			return ret, fmt.Errorf(TipChosenError(ins.Volume[0][0], prms))
+		}
+
 		var last_thing *wtype.LHComponent
 		last_thing = nil
 		var dirty bool
@@ -456,7 +525,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 				}
 				ret = append(ret, tipdrp)
 
-				tipget, err := GetTips(newtiptype, prms, newchannel, ins.Multi, false)
+				tipget, err := GetTips(newtiptype, prms, newchannel, ins.Multi, false, usetiptracking)
 				if err != nil {
 					return ret, err
 				}
@@ -491,8 +560,7 @@ func (ins *MultiChannelBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet,
 			mci.FPlateType = ins.FPlateType[t]
 			mci.TPlateType = ins.TPlateType[t]
 			mci.Multi = ins.Multi
-			//mci.Prms = ins.Prms
-			mci.Prms = channel
+			mci.Prms = newchannel.MergeWithTip(newtip)
 			ret = append(ret, mci)
 
 			tiptype = newtiptype
@@ -725,6 +793,9 @@ func (ins *MultiChannelTransferInstruction) Generate(policy *wtype.LHPolicyRuleS
 	blowinstruction.Prms = ins.Prms
 
 	for i := 0; i < len(ins.Volume); i++ {
+		if ins.Volume[i].IsZero() {
+			continue
+		}
 		suckinstruction.AddTransferParams(ins.Params(i))
 		blowinstruction.AddTransferParams(ins.Params(i))
 	}
@@ -1587,6 +1658,7 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 }
 
 func (ins *SuckInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	// MIS XXX -- separate out channel-level parameters from head-level ones
 	ret := make([]RobotInstruction, 0, 1)
 
 	// this is where the policies come into effect
@@ -1633,35 +1705,6 @@ func (ins *SuckInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 		spd.Speed = entryspeed.(float64)
 		ret = append(ret, spd)
 
-		/*
-			// now move into the liquid
-			mov = NewMoveInstruction()
-			mov.Head = ins.Head
-			mov.Pos = ins.PltFrom
-			mov.Plt = ins.FPlateType
-			mov.Well = ins.WellFrom
-			mov.WVolume = ins.FVolume
-			ref := SafeGetInt(pol, "ASPREFERENCE")
-			ofx := SafeGetF64(pol, "ASPXOFFSET")
-			ofy := SafeGetF64(pol, "ASPYOFFSET")
-			ofz := SafeGetF64(pol, "ASPZOFFSET")
-
-			// TODO -- different offsets per channel
-
-			for i := 0; i < ins.Multi; i++ {
-				mov.Reference = append(mov.Reference, ref)
-				mov.OffsetX = append(mov.OffsetX, ofx)
-				mov.OffsetY = append(mov.OffsetY, ofy)
-				mov.OffsetZ = append(mov.OffsetZ, ofz)
-			}
-
-			ret = append(ret, mov)
-			// reset the drive speed
-			spd = NewSetDriveSpeedInstruction()
-			spd.Drive = "Z"
-			spd.Speed = pol["DEFAULTZSPEED"].(float64)
-			ret = append(ret, spd)
-		*/
 	}
 
 	// do we pre-mix?
@@ -1683,6 +1726,14 @@ func (ins *SuckInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 		_, ok := pol["PRE_MIX_VOLUME"]
 		mix.Volume = ins.Volume
 		mixvol := SafeGetF64(pol, "PRE_MIX_VOLUME")
+
+		// if not set we use the instruction value
+
+		// XXX -- only looking at first vol specified
+		if mixvol == 0.0 {
+			mixvol = ins.Volume[0].ConvertToString("ul")
+		}
+
 		vmixvol := wunit.NewVolume(mixvol, "ul")
 
 		// TODO -- corresponding checks when set
@@ -2168,6 +2219,11 @@ func (ins *BlowInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProp
 		_, ok := pol["POST_MIX_VOLUME"]
 		mix.Volume = ins.Volume
 		mixvol := SafeGetF64(pol, "POST_MIX_VOLUME")
+
+		if mixvol == 0.0 {
+			mixvol = ins.Volume[0].ConvertToString("ul")
+		}
+
 		vmixvol := wunit.NewVolume(mixvol, "ul")
 
 		// check the volume
@@ -2843,7 +2899,7 @@ func (ins *ResetInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHPro
 	blow.Head = ins.Prms.Head
 	bov := wunit.NewVolume(pol["BLOWOUTVOLUME"].(float64), pol["BLOWOUTVOLUMEUNIT"].(string))
 	blow.Volume = append(blow.Volume, bov)
-	blow.Multi = len(ins.What)
+	blow.Multi = getMulti(ins.What)
 	blow.Plt = ins.TPlateType
 	blow.What = ins.What
 
@@ -3061,11 +3117,21 @@ func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) error {
 
 // TODO -- implement MESSAGE
 
-func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *wtype.LHChannelParameter, multi int, oneshot bool) ([]RobotInstruction, error) {
+func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *wtype.LHChannelParameter, multi int, oneshot, usetiptracking bool) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0, 2)
-	newchannel, newtiptype := ChooseChannel(vol, prms)
+	newchannel, newtip := ChooseChannel(vol, prms)
 
-	if !newchannel.CanMove(vol, oneshot) {
+	newtiptype := ""
+
+	if newtip != nil {
+		newtiptype = newtip.Type
+	} else {
+		return ret, fmt.Errorf(TipChosenError(vol, prms))
+	}
+
+	mergedchannel := newchannel.MergeWithTip(newtip)
+
+	if !mergedchannel.CanMove(vol, oneshot) {
 		return ret, fmt.Errorf("No channel can move a volume of %s in one shot", vol.ToString())
 	}
 
@@ -3076,7 +3142,7 @@ func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *w
 	}
 	ret = append(ret, tipdrp)
 
-	tipget, err := GetTips(newtiptype, prms, newchannel, multi, false)
+	tipget, err := GetTips(newtiptype, prms, newchannel, multi, false, usetiptracking)
 	if err != nil {
 		return ret, err
 	}
@@ -3084,9 +3150,9 @@ func ChangeTips(tiptype string, vol wunit.Volume, prms *LHProperties, channel *w
 	return ret, err
 }
 
-func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int, mirror bool) (RobotInstruction, error) {
+func GetTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int, mirror, usetiptracking bool) (RobotInstruction, error) {
 
-	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(tiptype, channel, mirror, multi)
+	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(tiptype, channel, mirror, multi, usetiptracking)
 
 	if tipwells == nil || terr != nil {
 		/*
@@ -3125,4 +3191,15 @@ func DropTips(tiptype string, params *LHProperties, channel *wtype.LHChannelPara
 	ins.TPlateType = tipwastetypes
 	ins.Multi = multi
 	return ins, nil
+}
+
+func getMulti(w []string) int {
+	c := 0
+	for _, v := range w {
+		if v != "" {
+			c += 1
+		}
+	}
+
+	return c
 }

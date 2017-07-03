@@ -28,18 +28,22 @@ type BasicPlateIterator struct {
 type MultiPlateIterator struct {
 	BasicPlateIterator
 	multi int
-	rule  func(WellCoords, *LHPlate) WellCoords
+	rule  func(PlateIterator) []WellCoords
 	ori   int
 }
 
 func (mpi *MultiPlateIterator) Curr() []WellCoords {
 	wc := mpi.BasicPlateIterator.Curr()
-	wa := make([]WellCoords, mpi.multi)
 
-	for i := 0; i < mpi.multi; i++ {
-		wa[i] = mpi.BasicPlateIterator.Curr()
-		mpi.BasicPlateIterator.Next()
-	}
+	/*
+		wa := make([]WellCoords, mpi.multi)
+		for i := 0; i < mpi.multi; i++ {
+			wa[i] = mpi.BasicPlateIterator.Curr()
+			mpi.BasicPlateIterator.Next()
+		}
+	*/
+
+	wa := mpi.rule(&mpi.BasicPlateIterator)
 
 	mpi.SetCurTo(wc)
 
@@ -52,47 +56,31 @@ func (mpi *MultiPlateIterator) Rewind() []WellCoords {
 }
 
 func (mpi *MultiPlateIterator) Next() []WellCoords {
-	mpi.BasicPlateIterator.Next()
+	_ = mpi.rule(&mpi.BasicPlateIterator)
 	return mpi.Curr()
 }
 
 func (mpi *MultiPlateIterator) Valid() bool {
+	if !mpi.BasicPlateIterator.Valid() {
+		return false
+	}
 	wc := mpi.BasicPlateIterator.Curr()
 
 	valid := true
 
-	for i := 0; i < mpi.multi-1; i++ {
-		wc2 := mpi.BasicPlateIterator.Next()
-		if (mpi.ori == LHVChannel && wc2.X != wc.X) || (mpi.ori == LHHChannel && wc2.Y != wc.Y) {
+	wa := mpi.Curr()
+
+	for i := 0; i < len(wa); i++ {
+		if (mpi.ori == LHVChannel && wa[i].X != wc.X) || (mpi.ori == LHHChannel && wa[i].Y != wc.Y) {
 			valid = false
 			break
 		}
 	}
 
-	mpi.cur = wc
+	// reset
+	mpi.BasicPlateIterator.cur = wc
 
 	return valid
-}
-
-func NewColMultiIteratorRule(multi int) func(WellCoords, *LHPlate) WellCoords {
-	return func(wc WellCoords, p *LHPlate) WellCoords {
-		wc.Y += 1
-		if wc.Y+multi >= p.WellsY() {
-			wc.Y = 0
-			wc.X += 1
-		}
-		return wc
-	}
-}
-func NewRowMultiIteratorRule(multi int) func(WellCoords, *LHPlate) WellCoords {
-	return func(wc WellCoords, p *LHPlate) WellCoords {
-		wc.X += 1
-		if wc.X+multi >= p.WellsX() {
-			wc.X = 0
-			wc.Y += 1
-		}
-		return wc
-	}
 }
 
 func (it *BasicPlateIterator) Rewind() WellCoords {
@@ -214,13 +202,121 @@ func NewOneTimeRowWiseIterator(p *LHPlate) PlateIterator {
 	return &bi
 }
 
+func NewMultiIteratorRule(multi int) func(PlateIterator) []WellCoords {
+	return func(pi PlateIterator) []WellCoords {
+		wc := make([]WellCoords, multi)
+		for i := 0; i < multi; i++ {
+			wc[i] = pi.Curr()
+			pi.Next()
+		}
+
+		return wc
+	}
+}
+
+// still an issue with this generating out-of-bounds wells in single mode?!
+type TickingColVectorIterator struct {
+	Plate  *LHPlate
+	Multi  int
+	Ticker *Ticker
+	start  int
+}
+
+func (tcvi *TickingColVectorIterator) Rewind() []WellCoords {
+	tcvi.Ticker = &Ticker{Val: tcvi.start, TickEvery: tcvi.Ticker.TickEvery, TickBy: tcvi.Ticker.TickBy}
+	return tcvi.Curr()
+}
+
+func (tcvi *TickingColVectorIterator) Next() []WellCoords {
+	tcvi.Ticker = &Ticker{Val: tcvi.Ticker.Val + 1, TickEvery: tcvi.Ticker.TickEvery, TickBy: tcvi.Ticker.TickBy}
+
+	tickRaw := tcvi.Ticker.Dup()
+
+	end := 0
+
+	for i := 0; i < tcvi.Multi-1; i++ {
+		tickRaw.Tick()
+		end = tickRaw.Val
+		if end/tcvi.Plate.WellsY() > tcvi.Ticker.Val/tcvi.Plate.WellsY() {
+			tcvi.Ticker = &Ticker{Val: end, TickEvery: tcvi.Ticker.TickEvery, TickBy: tcvi.Ticker.TickBy}
+			break
+		}
+	}
+
+	if end >= tcvi.Plate.WellsX()*tcvi.Plate.WellsY() {
+		return []WellCoords{}
+	}
+
+	return tcvi.Curr()
+}
+
+func (tcvi *TickingColVectorIterator) Curr() []WellCoords {
+	offsets := make([]int, tcvi.Multi)
+	save := tcvi.Ticker.Dup()
+	for i := 0; i < tcvi.Multi; i++ {
+		offsets[i] = tcvi.Ticker.Val
+		tcvi.Ticker.Tick()
+	}
+	tcvi.Ticker = save
+	return tcvi.Plate.GetWellCoordsFromOrdering(offsets, BYCOLUMN)
+}
+
+func (tcvi *TickingColVectorIterator) Valid() bool {
+	mx := tcvi.Plate.WellsX()*tcvi.Plate.WellsY() - 1
+
+	tck := tcvi.Ticker.Dup()
+
+	for i := 0; i < tcvi.Multi-1; i++ {
+		if tck.Val > mx {
+			return false
+		}
+		tck.Tick()
+	}
+
+	wcs := tcvi.Curr()
+	col := -1
+	//fmt.Println(A1ArrayFromWellCoords(wcs))
+	for _, wc := range wcs {
+		if wc.X < 0 || wc.Y < 0 {
+			return false
+		}
+
+		// are all rows and columns in bounds?
+		if wc.X >= tcvi.Plate.WellsX() || wc.Y >= tcvi.Plate.WellsY() {
+			return false
+		}
+
+		// are they all in the same column?
+		if col == -1 {
+			col = wc.X
+		} else if col != wc.X {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (tcvi *TickingColVectorIterator) SetStartTo(wc WellCoords) {
+	tcvi.start = tcvi.Plate.GetOrderingFromA1WellCoords([]string{wc.FormatA1()}, BYCOLUMN)[0]
+}
+func (tcvi *TickingColVectorIterator) SetCurTo(wc WellCoords) {
+	v := tcvi.Plate.GetOrderingFromA1WellCoords([]string{wc.FormatA1()}, BYCOLUMN)[0]
+	tcvi.Ticker = &Ticker{Val: v, TickEvery: tcvi.Ticker.TickEvery, TickBy: tcvi.Ticker.TickBy}
+}
+
+func NewTickingColVectorIterator(p *LHPlate, multi, tpw, wpt int) VectorPlateIterator {
+	ticker := &Ticker{TickEvery: tpw, TickBy: wpt}
+	return &TickingColVectorIterator{Plate: p, Multi: multi, Ticker: ticker}
+}
+
 func NewColVectorIterator(p *LHPlate, multi int) VectorPlateIterator {
 	var bi BasicPlateIterator
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
 	bi.p = p
-	bi.rule = NextInColumn
-	rule := NewColMultiIteratorRule(multi)
+	bi.rule = NextInColumnOnce
+	rule := NewMultiIteratorRule(multi)
 	mi := MultiPlateIterator{bi, multi, rule, LHVChannel}
 	return &mi
 }
@@ -230,8 +326,8 @@ func NewRowVectorIterator(p *LHPlate, multi int) VectorPlateIterator {
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
 	bi.p = p
-	bi.rule = NextInRow
-	rule := NewRowMultiIteratorRule(multi)
+	bi.rule = NextInRowOnce
+	rule := NewMultiIteratorRule(multi)
 	mi := MultiPlateIterator{bi, multi, rule, LHHChannel}
 	return &mi
 }

@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import (
@@ -66,12 +65,20 @@ func (lhc *LHComponent) CNID() string {
 }
 
 func (lhc *LHComponent) Generation() int {
-	g, ok := lhc.Extra["Generation"]
-
-	if ok {
-		return g.(int)
+	gen, ok := lhc.Extra["Generation"]
+	if !ok {
+		return 0
 	}
 
+	genInt, ok := gen.(int)
+	if ok {
+		return genInt
+	}
+
+	genFloat, ok := gen.(float64)
+	if ok {
+		return int(genFloat)
+	}
 	return 0
 }
 
@@ -104,7 +111,7 @@ func (lhc *LHComponent) Name() string {
 }
 
 func (lhc *LHComponent) TypeName() string {
-	return LiquidTypeName(lhc.Type)
+	return LiquidTypeName(lhc.Type).String()
 }
 
 func (lhc *LHComponent) Volume() wunit.Volume {
@@ -311,7 +318,7 @@ func (lhc *LHComponent) GetVunit() string {
 }
 
 func (lhc *LHComponent) GetType() string {
-	return LiquidTypeName(lhc.Type)
+	return LiquidTypeName(lhc.Type).String()
 }
 
 func NewLHComponent() *LHComponent {

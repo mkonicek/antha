@@ -19,9 +19,36 @@ type ParsePlateResult struct {
 	Warnings []string
 }
 
-func validName(name string) error {
-	invalid := "+"
-	valid := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+type ValidationConfig struct {
+	valid   string
+	invalid string
+}
+
+func (vc ValidationConfig) ValidChars() string {
+	return vc.valid
+}
+
+func (vc ValidationConfig) InvalidChars() string {
+	return vc.invalid
+}
+
+func DefaultValidationConfig() ValidationConfig {
+	return ValidationConfig{
+		invalid: "+",
+		valid:   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+	}
+}
+
+func PermissiveValidationConfig() ValidationConfig {
+	return ValidationConfig{
+		invalid: "",
+		valid:   "+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+	}
+}
+func validName(name string, vc ValidationConfig) error {
+
+	invalid := vc.InvalidChars()
+	valid := vc.ValidChars()
 
 	if strings.ContainsAny(name, invalid) {
 		return fmt.Errorf("name %q contains an invalid character %q", name, invalid)
@@ -51,6 +78,10 @@ func validWell(well wtype.WellCoords, plate *wtype.LHPlate) error {
 	return nil
 }
 
+func ParsePlateCSV(inData io.Reader) (*ParsePlateResult, error) {
+	return ParsePlateCSVWithValidationConfig(inData, DefaultValidationConfig())
+}
+
 // CSV plate format: (? denotes optional, whitespace for clarity)
 //
 //   <plate type> , <plate name ?>
@@ -59,7 +90,7 @@ func validWell(well wtype.WellCoords, plate *wtype.LHPlate) error {
 //   ...
 //
 // TODO: refactor if/when Opt loses raw []byte and file as InputPlate options
-func ParsePlateCSV(inData io.Reader) (*ParsePlateResult, error) {
+func ParsePlateCSVWithValidationConfig(inData io.Reader, vc ValidationConfig) (*ParsePlateResult, error) {
 	// Get returning "" if idx >= len(xs)
 	get := func(xs []string, idx int) string {
 		if len(xs) <= idx {
@@ -128,12 +159,12 @@ func ParsePlateCSV(inData io.Reader) (*ParsePlateResult, error) {
 			continue
 		}
 
-		if err := validName(cname); err != nil {
+		if err := validName(cname, vc); err != nil {
 			warnings = append(warnings, fmt.Sprintf("line %d skipped: %s", lineNo, err))
 			continue
 		}
 
-		ctype, err := wtype.LiquidTypeFromString(ctypeField)
+		ctype, err := wtype.LiquidTypeFromString(wtype.PolicyName(ctypeField))
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("line %d: unknown component type %q, defaulting to %q: %s", lineNo, ctypeField, wtype.LiquidTypeName(ctype), err))
 		}

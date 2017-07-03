@@ -24,8 +24,6 @@
 package sequences
 
 import (
-	"fmt"
-
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"strings"
@@ -38,34 +36,26 @@ import (
 
 // Check for illegal nucleotides
 func Illegalnucleotides(fwdsequence wtype.DNASequence) (pass bool, illegalfound []Thingfound, wobblefound []Thingfound) {
-	illegal := "§1234567890-=qweryiop[]sdfhjkl;'zxvbm,./!@£$%^&*()_+" // update to include wobble nucleotides etc
-	wobble := "NXBHVDMKSWRY"
-	//seq := strings.ToUpper(fwdsequence.Seq)
+	illegal := "§1234567890-=qeiop[]fjl;'z,./!@£$%^&*()_+?" // removed all instances of IUPAC nucleotides
+	wobble := "NXBHVDMKSWRYU"                               //IUPAC nucleotides
+
 	if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(illegal))) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(illegal)) == true {
-		fmt.Println(pass)
+
 		pass = false
-		// fmt.Println("Contains illegal characters")
 		illegalarray := strings.Split(illegal, "")
-		//	// fmt.Println("iiiiiilllllllllegal array!!!", illegalarray)
-		illegalfound = Findallthings((strings.ToUpper(fwdsequence.Seq)), illegalarray)
-		//fmt.Println(len(illegalfound))
+		illegalfound = Findallthings((strings.ToLower(fwdsequence.Seq)), illegalarray)
 
-	}
+	} else if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), wobble) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(wobble)) == true {
 
-	if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(wobble))) == true {
 		pass = false
-		// fmt.Println("Contains wobble nucleotides")
 		wobblearray := strings.Split(wobble, "")
-		//// fmt.Println("wobble array!!!", wobblearray)
 		wobblefound = Findallthings((strings.ToUpper(fwdsequence.Seq)), wobblearray)
-		//fmt.Println(len(wobblefound))
 
 	} else {
-		pass = true
-		// fmt.Println("illegal characters pass")
-	}
-	//wtype.Makeseq(Foldername, &sequence)
 
+		pass = true
+
+	}
 	return pass, illegalfound, wobblefound
 }
 
@@ -229,7 +219,8 @@ func MolesDNA(mass wunit.Mass, mw float64) (moles float64) {
 
 // calculate molar concentration of DNA sample
 func GtoMolarConc(conc wunit.Concentration, mw float64) (molesperL float64) {
-	concSI := conc.SIValue()
+	// convert SI kg/l into g/l
+	concSI := conc.SIValue() * 1000
 	molesperL = concSI / mw
 	return molesperL
 }

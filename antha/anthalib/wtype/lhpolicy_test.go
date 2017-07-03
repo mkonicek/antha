@@ -74,3 +74,24 @@ func MakeTestPolicy() LHPolicy {
 
 	return defaultpolicy
 }
+
+func TestPolicyOption(t *testing.T) {
+	rs := NewLHPolicyRuleSet()
+	err := rs.SetOption("USE_DRIVER_TIP_TRACKING", false)
+
+	if err != nil {
+		t.Errorf("Expected nil return when setting USE_DRIVER_TIP_TRACKING, got %v", err)
+	}
+
+	err = rs.SetOption("USE_DRIVER_TIP_TRACKING", true)
+
+	if err != nil {
+		t.Errorf("Expected nil return when setting USE_DRIVER_TIP_TRACKING, got %v", err)
+	}
+
+	err = rs.SetOption("USE_DRIVER_TIP_TRACKING", 3)
+
+	if err == nil {
+		t.Errorf("Trying to set a boolean value to an int should fail but did not")
+	}
+}

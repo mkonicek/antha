@@ -48,7 +48,6 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 	evaps := make([]wtype.VolumeCorrection, 0, 10)
 	for ix, insID := range request.Output_order {
 		//	request.InstructionSet.Add(ConvertInstruction(request.LHInstructions[insID], robot))
-
 		ris := liquidhandling.NewRobotInstructionSet(nil)
 
 		transIns, err := ConvertInstruction(request.LHInstructions[insID], robot, request.CarryVolume)
@@ -73,7 +72,6 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 			agg[cmp] = ar
 
 		*/
-
 		if canaggregate(curragg, cmp, request.Output_order, request.LHInstructions) {
 			// true if either curragg empty or cmp is same
 			curragg = append(curragg, ix)
@@ -81,12 +79,10 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 			agg = append(agg, curragg)
 			curragg = make([]int, 0, 1)
 			curragg = append(curragg, ix)
-
 		}
 
 		if request.Options.ModelEvaporation {
 			// we should be able to model evaporation here
-
 			instrx, _ := ris.Generate(request.Policies, rbtcpy)
 
 			if timer != nil {
@@ -124,7 +120,6 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 
 	instrx := make([]liquidhandling.TerminalRobotInstruction, len(inx))
 	for i := 0; i < len(inx); i++ {
-		//fmt.Println(liquidhandling.InsToString(inx[i]))
 		instrx[i] = inx[i].(liquidhandling.TerminalRobotInstruction)
 	}
 	request.Instructions = instrx

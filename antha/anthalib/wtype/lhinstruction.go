@@ -24,7 +24,7 @@ func InsType(i int) string {
 	return ret
 }
 
-//  instruction to a liquid handler
+//  high-level instruction to a liquid handler
 type LHInstruction struct {
 	ID               string
 	ProductID        string

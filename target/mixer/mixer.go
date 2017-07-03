@@ -75,6 +75,9 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 	}
 
 	req := planner.NewLHRequest()
+
+	req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking)
+
 	prop := a.properties.Dup()
 	prop.Driver = a.properties.Driver
 	plan := planner.Init(prop)
@@ -137,7 +140,21 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 		}
 	}
 
+	// try to do better multichannel execution planning?
+
+	req.Options.ExecutionPlannerVersion = a.opt.PlanningVersion
+
+	// print instructions?
+
+	req.Options.PrintInstructions = a.opt.PrintInstructions
+
+	// model evaporation?
+
 	req.Options.ModelEvaporation = a.opt.ModelEvaporation
+
+	// deal with output sorting
+
+	req.Options.OutputSort = a.opt.OutputSort
 
 	err := req.ConfigureYourself()
 	if err != nil {
@@ -255,14 +272,7 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 	r.LHProperties = r.Liquidhandler.Properties
 
 	if err != nil {
-		// depending on what went wrong we might error out or return
-		// an error instruction
-
-		if wtype.LHErrorIsInternal(err) {
-			return nil, err
-		} else {
-			return &target.CmpError{Error: err, Dev: a}, nil
-		}
+		return nil, err
 	}
 
 	// TODO: Desired filename not exposed in current driver interface, so pick

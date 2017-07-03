@@ -36,6 +36,7 @@ import (
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/spf13/cobra"
@@ -80,6 +81,19 @@ func makeMixerOpt() (mixer.Opt, error) {
 		opt.InputPlates = append(opt.InputPlates, p)
 	}
 
+	opt.OutputSort = viper.GetBool("outputSort")
+
+	executionPlannerVersion := ""
+	if viper.GetBool("WithMulti") {
+		executionPlannerVersion = "ep3"
+	}
+
+	opt.PrintInstructions = viper.GetBool("PrintInstructions")
+
+	opt.PlanningVersion = executionPlannerVersion
+
+	opt.UseDriverTipTracking = viper.GetBool("UseDriverTipTracking")
+
 	return opt, nil
 }
 
@@ -99,11 +113,12 @@ func makeContext() (context.Context, error) {
 }
 
 type runOpt struct {
-	MixerOpt       mixer.Opt
-	Drivers        []string
-	BundleFile     string
-	ParametersFile string
-	WorkflowFile   string
+	MixerOpt               mixer.Opt
+	Drivers                []string
+	BundleFile             string
+	ParametersFile         string
+	WorkflowFile           string
+	MixInstructionFileName string
 }
 
 func (a *runOpt) Run() error {
@@ -163,8 +178,31 @@ func (a *runOpt) Run() error {
 		Target:   t.Target,
 		Workflow: wdesc,
 		Params:   params,
+		TransitionalReadLocalFiles: true,
 	})
 	if err != nil {
+		return err
+	}
+
+	// if option is set, add liquid handling instruction output
+	if a.MixInstructionFileName != "" {
+		countFiles := 1
+		for _, inst := range rout.Insts {
+			mi, ok := inst.(*target.Mix)
+
+			if !ok {
+				continue
+			}
+
+			fn := fmt.Sprintf("%s-%d.txt", a.MixInstructionFileName, countFiles)
+			countFiles += 1
+			if err := ioutil.WriteFile(fn, []byte(mi.Request.InstructionText), 0666); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {
 		return err
 	}
 
@@ -218,11 +256,12 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 	}
 
 	opt := &runOpt{
-		MixerOpt:       mopt,
-		Drivers:        drivers,
-		BundleFile:     viper.GetString("bundle"),
-		ParametersFile: viper.GetString("parameters"),
-		WorkflowFile:   viper.GetString("workflow"),
+		MixerOpt:               mopt,
+		Drivers:                drivers,
+		BundleFile:             viper.GetString("bundle"),
+		ParametersFile:         viper.GetString("parameters"),
+		WorkflowFile:           viper.GetString("workflow"),
+		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 	}
 
 	return opt.Run()
@@ -245,4 +284,9 @@ func init() {
 	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
 	flags.StringSlice("tipType", nil, "Names of permitted tip types")
+	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
+	flags.Bool("OutputSort", false, "Sort execution by output - improves tip usage")
+	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
+	flags.Bool("PrintInstructions", false, "Output the raw instructions sent to the driver")
+	flags.Bool("UseDriverTipTracking", false, "If the driver has tip tracking available, use it")
 }

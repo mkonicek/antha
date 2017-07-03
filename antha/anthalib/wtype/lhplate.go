@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import (
@@ -58,6 +57,27 @@ type LHPlate struct {
 	WellXStart  float64            // offset (mm) to first well in X direction
 	WellYStart  float64            // offset (mm) to first well in Y direction
 	WellZStart  float64            // offset (mm) to bottom of well in Z direction
+}
+
+func (plate LHPlate) OutputLayout() {
+	for x := 0; x < plate.WellsX(); x += 1 {
+		for y := 0; y < plate.WellsY(); y += 1 {
+			well := plate.Cols[x][y]
+			if well.Currvol() < 0.0001 {
+				continue
+			}
+			fmt.Print("\t\t")
+			var wc WellCoords
+			wc.X = x
+			wc.Y = y
+			fmt.Print(wc.FormatA1(), " ")
+			//for _, c := range well.WContents {
+			fmt.Print(well.WContents.CName, " ")
+			//}
+			fmt.Printf(" %-6.2f%s", well.Currvol(), well.Vunit)
+			fmt.Println()
+		}
+	}
 }
 
 func (lhp LHPlate) Name() string {
@@ -125,12 +145,10 @@ func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
 	return ret
 }
 
-//plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, contiguous)
-
-func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, contiguous bool) (plateIDs, wellCoords []string, vols []wunit.Volume, err error) {
+func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 
 	for _, c := range cmps {
-		if contiguous && c == nil {
+		if independent && c == nil {
 			err = fmt.Errorf("Cannot do non-contiguous asks")
 			return
 		}
@@ -141,19 +159,55 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, co
 	var it VectorPlateIterator
 
 	if ori == LHVChannel {
-		it = NewColVectorIterator(lhp, multi)
+		//it = NewColVectorIterator(lhp, multi)
+
+		tpw := multi / lhp.WellsY()
+		wpt := lhp.WellsY() / multi
+
+		if tpw == 0 {
+			tpw = 1
+		}
+
+		if wpt == 0 {
+			wpt = 1
+		}
+
+		it = NewTickingColVectorIterator(lhp, multi, tpw, wpt)
 	} else {
 		it = NewRowVectorIterator(lhp, multi)
 	}
 
+	best := 0.0
+	bestMatch := ComponentMatch{}
 	for wv := it.Curr(); it.Valid(); wv = it.Next() {
+		// cmps needs duping here
 		mycmps := lhp.GetContentVector(wv)
-		if canGet(cmps, mycmps) {
-			plateIDs = mycmps.GetPlateIds()
-			wellCoords = mycmps.GetWellCoords()
-			vols = cmps.GetVols()
-			err = nil
+
+		match, errr := matchComponents(cmps.Dup(), mycmps, independent)
+
+		if errr != nil {
+			err = errr
+			return
 		}
+
+		sc := scoreMatch(match, independent)
+
+		if sc > best {
+			bestMatch = match
+			best = sc
+		}
+	}
+
+	for _, m := range bestMatch.Matches {
+		plateIDs = append(plateIDs, m.IDs)
+		wellCoords = append(wellCoords, m.WCs)
+		vols = append(vols, m.Vols)
+	}
+
+	if best <= 0.0 {
+		err = fmt.Errorf("Not found")
+	} else {
+		err = nil
 	}
 
 	return
@@ -343,6 +397,45 @@ func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
 
 	}
 	return
+}
+
+func (lhp *LHPlate) GetWellCoordsFromOrdering(ordinals []int, byrow bool) []WellCoords {
+	wc := lhp.GetA1WellCoordsFromOrdering(ordinals, byrow)
+	return WCArrayFromStrings(wc)
+}
+
+func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []string {
+	wps := lhp.AllWellPositions(byrow)
+
+	ret := make([]string, 0, len(wps))
+
+	for _, v := range ordinals {
+		if v < 0 {
+			panic("No negative wells allowed")
+		}
+		if v > len(wps)-1 {
+			panic("No wells out of bounds allowed")
+		}
+		ret = append(ret, wps[v])
+	}
+
+	return ret
+}
+func (lhp *LHPlate) GetOrderingFromWellCoords(wc []WellCoords, byrow bool) []int {
+	wa1 := A1ArrayFromWellCoords(wc)
+	return lhp.GetOrderingFromA1WellCoords(wa1, byrow)
+}
+
+func (lhp *LHPlate) GetOrderingFromA1WellCoords(wa1 []string, byrow bool) []int {
+	wps := lhp.AllWellPositions(byrow)
+
+	ret := make([]int, len(wa1))
+
+	for i, v := range wa1 {
+		ret[i] = FirstIndexInStrArray(v, wps)
+	}
+
+	return ret
 }
 
 // @implement named
@@ -544,9 +637,9 @@ func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *LHComponent {
 		return nil
 	}
 
-	err := w.Remove(vol)
+	cmp := w.Remove(vol)
 
-	return err
+	return cmp
 }
 
 func (p *LHPlate) DeclareTemporary() {
@@ -803,4 +896,24 @@ func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 	}
 
 	return ret
+}
+
+func (p *LHPlate) IsSpecial() bool {
+	if p == nil || p.Welltype.Extra == nil {
+		return false
+	}
+
+	s, ok := p.Welltype.Extra["IMSPECIAL"]
+
+	if !ok || !s.(bool) {
+		return false
+	}
+
+	return true
+}
+
+func (p *LHPlate) DeclareSpecial() {
+	if p != nil && p.Welltype.Extra != nil {
+		p.Welltype.Extra["IMSPECIAL"] = true
+	}
 }

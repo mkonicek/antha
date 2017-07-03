@@ -5,7 +5,6 @@ package workflow
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -250,8 +249,7 @@ func (a *Workflow) AddEdge(src, tgt Port) error {
 
 // Options for creating a new Workflow
 type Opt struct {
-	FromBytes []byte
-	FromDesc  *Desc
+	FromDesc *Desc
 }
 
 // Create a new Workflow
@@ -264,10 +262,6 @@ func New(opt Opt) (*Workflow, error) {
 	var desc *Desc
 	if opt.FromDesc != nil {
 		desc = opt.FromDesc
-	} else if opt.FromBytes != nil {
-		if err := json.Unmarshal(opt.FromBytes, &desc); err != nil {
-			return nil, err
-		}
 	} else {
 		desc = &Desc{}
 	}

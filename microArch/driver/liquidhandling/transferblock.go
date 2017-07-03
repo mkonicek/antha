@@ -24,6 +24,10 @@ func (ti TransferBlockInstruction) InstructionType() int {
 	return TFB
 }
 
+// this attempts to find arrays of destinations which can potentially be done simultaneously
+// via multichannel operation. At present this means they must be aligned in rows or columns
+// depending on the robot type and configuration
+
 func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
 	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()
@@ -34,6 +38,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	for _, ins := range ti.Inss {
 		insm[ins.ID] = ins
 	}
+
 	// list of ids
 	parallel_sets, prm, err := get_parallel_sets_robot(ti.Inss, robot, policy)
 
@@ -44,6 +49,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	}
 
 	for _, set := range parallel_sets {
+
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
 
@@ -64,12 +70,12 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 
 	// stuff that can't be done in parallel
 	insset := make([]*wtype.LHInstruction, 0, 1)
-
+	c := 0
 	for _, ins := range ti.Inss {
 		if seen[ins.ID] {
 			continue
 		}
-
+		c += 1
 		insset = append(insset, ins)
 	}
 
@@ -167,7 +173,6 @@ func (ibc InsByCol) Less(i, j int) bool {
 
 // limited to SBS format plates for now
 func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
-
 	// surely not
 
 	if len(ins) == 0 {
@@ -179,10 +184,17 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 
 	ret := make(SetOfIDSets, 0, 1)
 
+	// h maps plate IDs to platedestmaps
+	// platedestmaps are 2d arrays of instructions arranged
+	// to mirror the layout of a plate (in fact limited to a 96x96 grid, but
+	// that's pretty big by comparison to any existing plate)
+
 	h := make(map[string]wtype.Platedestmap, 2)
+
 	platedims := make(map[string]wtype.Rational)
 
 	prm := head.GetParams()
+
 	for _, i := range ins {
 		wc := wtype.MakeWellCoords(i.Welladdress)
 
@@ -217,20 +229,22 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 			if len(ret) == 0 {
 				ret = r
 			} else {
-				ret[0] = append(ret[0], r[0]...)
+				ret = append(ret, r...)
 			}
 		case wtype.LHVChannel:
 			r := get_cols(pdm, prm.Multi, dims.D, !prm.Independent, false)
 			if len(ret) == 0 {
 				ret = r
 			} else {
-				ret[0] = append(ret[0], r[0]...)
+				ret = append(ret, r...)
 			}
 
 			// -- wtype.FLEX (this may never actually be used since AFAIK only one machine
 			//    can do this and I think it's been EOL'd
 		}
 	}
+
+	// ret here is just splurged straight out
 
 	return ret, nil
 }

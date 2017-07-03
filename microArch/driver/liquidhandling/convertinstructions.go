@@ -28,32 +28,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-//	this section aggregates instructions with the following constraints:
-//
-//	1) obey any requirement to do one sample at a time
-//		-- bullet bitten: we cannot permit transfer to split up any multichannel instructions
-//		   into singles here... this is a bit tricky but we must make it so
-//		   some revision to how pragmas work may be needed: extend only to component type etc.
-//
-//	here is what a single sample assembled one thing at a time looks like
-//	|
-//	|		here is one sample assembled one component at a time looks like
-//	|		|
-//	i1(A)		i2(A B C)	--> the LHIVector contains these two, maxlen = 3, CmpAt (0) = [A A]
-//	--										  CmpAt (1) = [  B]
-//	i3(B) <------									  CmpAt (2) = [  C]
-//	--          |-- these two are done separately (so they're boring)
-//	i4(C) <------
-//
-// 	this should produce the output:
-//	TFR(A A d1 d2), TFR(B d2), TFR(C d2), TFR(B d1), TFR(C d1)
-//	iow it does i1 + first part of i2 in parallel, then the rest of i2 then i3 then i4
-
-// 	issue is we cannot tolerate this situation
-//
-//	i1(A)		i2(A B)		i3(A C)
-//	so we have to ensure the components line up
-
 func readableComponentArray(arr []*wtype.LHComponent) string {
 	ret := ""
 
@@ -72,18 +46,28 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 	return ret
 }
 
+//
+//
+//	at this point (i.e. in a TransferBlock) the instructions have been grouped into sets
+//	with simultaneously servicable destinations - row or column-wise depending on the head
+//	orientation chosen
+//
+//	The main goal here is to find sources in appropriate structure (rows or columns)
+//	to allow them to be done simultaneously. This essentially follows a greedy strategy
+//	in which the required components are aligned to the available sources to see how many
+//	can be taken at once. There are some tricks involved to make this work with troughs
+//	etc.
+//
+
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 
 	for i := 0; i < inssIn.MaxLen(); i++ {
-		comps := inssIn.CompsAt(i)
+		cmps := inssIn.CompsAt(i)
 		lenToMake := 0
-		// remove spaces between components
-		cmpSquash := make([]*wtype.LHComponent, 0, lenToMake)
-		for _, c := range comps {
+		for _, c := range cmps {
 			if c != nil {
 				lenToMake += 1
-				cmpSquash = append(cmpSquash, c)
 			}
 		}
 
@@ -91,11 +75,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			// don't make empty transfers
 			continue
 		}
-
-		wh := make([]string, lenToMake)       // component types
-		va := make([]wunit.Volume, lenToMake) // volumes
-		// six parameters applying to the source
-		// TODO --> this should create components if not already found
 
 		orientation := wtype.LHVChannel
 		independent := false
@@ -105,131 +84,144 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			independent = channelprms.Independent
 		}
 
-		fromPlateIDs, fromWells, fromvols, err := robot.GetComponents(cmpSquash, carryvol, orientation, multi, independent)
-
-		// let's start making sense here
-
-		if !allEqual(len(fromPlateIDs), len(fromWells), len(fromvols), len(cmpSquash)) {
-			panic("Lengths cannot differ here")
-		}
+		// the alignment here just says component i comes from fromWells[i]
+		// it says nothing about which channel should be used
+		fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent)
 
 		if err != nil {
 			return nil, err
 		}
 
-		pf := make([]string, lenToMake)       // src plate positions
-		wf := make([]string, lenToMake)       // src wells
-		pfwx := make([]int, lenToMake)        // src plate X dim
-		pfwy := make([]int, lenToMake)        // src plate Y dim
-		vf := make([]wunit.Volume, lenToMake) // volumes
-		ptf := make([]string, lenToMake)      // plate types
+		// mt counts up the arrays got by GetComponents
+		for mt := 0; mt < len(fromPlateIDs); mt++ {
+			wh := make([]string, len(cmps))       //	what
+			pf := make([]string, len(cmps))       //	position from
+			pt := make([]string, len(cmps))       //	position to
+			wf := make([]string, len(cmps))       //	well from
+			wt := make([]string, len(cmps))       //	well to
+			ptf := make([]string, len(cmps))      //	plate type from
+			ptt := make([]string, len(cmps))      //	plate type to
+			va := make([]wunit.Volume, len(cmps)) //	volume
+			vf := make([]wunit.Volume, len(cmps)) //	volume in well from
+			vt := make([]wunit.Volume, len(cmps)) //	volume in well to
+			pfwx := make([]int, len(cmps))        //	plate from wells x
+			pfwy := make([]int, len(cmps))        //	  "     "    "   y
+			ptwx := make([]int, len(cmps))        //	  "    to    "   x
+			ptwy := make([]int, len(cmps))        //	  "     "    "   y
 
-		// six parameters applying to the destination
+			for ci := 0; ci < len(cmps); ci++ {
+				if len(fromPlateIDs[mt]) <= ci || fromPlateIDs[mt][ci] == "" {
+					continue
+				}
 
-		pt := make([]string, lenToMake)       // dest plate positions
-		wt := make([]string, lenToMake)       // dest wells
-		ptwx := make([]int, lenToMake)        // dimensions of plate pipetting to (X)
-		ptwy := make([]int, lenToMake)        // dimensions of plate pipetting to (Y)
-		vt := make([]wunit.Volume, lenToMake) // volume in well to
-		ptt := make([]string, lenToMake)      // plate types
+				// what type is this component?
 
-		ix := 0 // counts up cmpsquash
+				wh[ci] = cmps[ci].TypeName()
 
-		for j, v := range comps {
+				// source plate position
 
-			if comps[j] == nil {
-				continue
+				ppf, ok := robot.PlateIDLookup[fromPlateIDs[mt][ci]]
+
+				if !ok {
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: input plate ID not found on robot - please report this error to the authors")
+				}
+
+				pf[ci] = ppf
+
+				// destination plate position
+
+				ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID()]
+
+				if !ok {
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")
+				}
+
+				pt[ci] = ppt
+
+				// source well
+
+				wf[ci] = fromWells[mt][ci]
+
+				// destination well
+
+				wt[ci] = inssIn[ci].Welladdress
+
+				// source plate type
+
+				srcPlate, ok := robot.Plates[ppf]
+
+				if !ok {
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: input plate ID not found on robot (#2) - please report this error to the authors")
+				}
+
+				ptf[ci] = srcPlate.Type
+
+				// destination plate type
+
+				dstPlate, ok := robot.Plates[ppt]
+
+				if !ok {
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")
+				}
+
+				ptt[ci] = dstPlate.Type
+
+				// volume being moved
+
+				va[ci] = vols[mt][ci]
+
+				// source well volume
+
+				wellFrom, ok := srcPlate.Wellcoords[wf[ci]]
+
+				if !ok {
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")
+				}
+
+				vf[ci] = wellFrom.CurrVolume()
+
+				// dest well volume
+
+				wellTo, ok := dstPlate.Wellcoords[wt[ci]]
+
+				if !ok {
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error to the authors")
+				}
+
+				vt[ci] = wellTo.CurrVolume()
+
+				// source plate dimensions
+
+				pfwx[ci] = srcPlate.WellsX()
+				pfwy[ci] = srcPlate.WellsY()
+
+				// dest plate dimensions
+
+				ptwx[ci] = dstPlate.WellsX()
+				ptwy[ci] = dstPlate.WellsY()
+
+				// do the bookkeeping... iff we're not doing multi (?!)
+
+				// TODO TODO TODO -- make this fix unnecessary
+				//				if multi > 1 {
+				cmpFrom := wellFrom.Remove(va[ci])
+
+				//fmt.Println("GET: ", wh[ci], " ", wf[ci], " ", va[ci], " ", ptf[ci], " ", wellFrom.WContents.CName, " ", wellFrom.WContents.Vol, " MULTI: ", multi)
+
+				if cmpFrom == nil {
+					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
+				}
+
+				wellTo.Add(cmpFrom)
+
+				//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 			}
 
-			var flhp, tlhp *wtype.LHPlate
+			//}
 
-			// safety first
-
-			if fromPlateIDs[ix] == nil || len(fromPlateIDs[ix]) == 0 {
-				errstr := fmt.Sprintf("Some sources were not found: looking for %v : ix %d %v", readableComponentArray(cmpSquash), ix, fromPlateIDs)
-				return nil, wtype.LHError(wtype.LH_ERR_DIRE, errstr)
-			}
-
-			flhif := robot.PlateLookup[fromPlateIDs[ix][0]]
-
-			if flhif != nil {
-				flhp = flhif.(*wtype.LHPlate)
-			} else {
-				s := fmt.Sprint("NO SRC PLATE FOUND : ", ix, " ", fromPlateIDs[ix])
-				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
-				return nil, err
-			}
-
-			tlhif := robot.PlateLookup[inssIn[j].PlateID()]
-
-			if tlhif != nil {
-				tlhp = tlhif.(*wtype.LHPlate)
-			} else {
-				s := fmt.Sprint("NO DST PLATE FOUND : ", ix, " ", inssIn[j].PlateID())
-				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
-				return nil, err
-			}
-
-			wlt, ok := tlhp.WellAtString(inssIn[j].Welladdress)
-
-			if !ok {
-				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", inssIn[j].Welladdress, " not found on dest plate ", inssIn[j].PlateID))
-				return nil, err
-			}
-
-			v2 := wunit.NewVolume(v.Vol, v.Vunit)
-			vt[ix] = wlt.CurrVolume()
-			wh[ix] = v.TypeName()
-			va[ix] = v2
-			pt[ix] = robot.PlateIDLookup[inssIn[j].PlateID()]
-			wt[ix] = inssIn[j].Welladdress
-			ptwx[ix] = tlhp.WellsX()
-			ptwy[ix] = tlhp.WellsY()
-			ptt[ix] = tlhp.Type
-
-			wlf, ok := flhp.WellAtString(fromWells[ix][0])
-
-			if !ok {
-				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
-				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateIDs[ix]))
-				return nil, err
-			}
-
-			if fromvols[ix] == nil || len(fromvols[ix]) == 0 {
-				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Source %d found for %s (%s) not properly configured", ix, cmpSquash[ix].CName, fromWells[ix][0]))
-				return nil, err
-			}
-
-			vf[ix] = fromvols[ix][0]
-
-			//wlf.Remove(va[ix])
-
-			pf[ix] = robot.PlateIDLookup[fromPlateIDs[ix][0]]
-			wf[ix] = fromWells[ix][0]
-			pfwx[ix] = flhp.WellsX()
-			pfwy[ix] = flhp.WellsY()
-			ptf[ix] = flhp.Type
-
-			if v.Loc == "" {
-				v.Loc = fromPlateIDs[ix][0] + ":" + fromWells[ix][0]
-			}
-			// add component to destination
-			// need to ensure data are consistent
-			vd := v.Dup()
-			vd.ID = wlf.WContents.ID
-			vd.ParentID = wlf.WContents.ParentID
-			wlt.Add(vd)
-
-			// add daughter ID to component in
-
-			wlf.WContents.AddDaughterComponent(wlt.WContents)
-
-			ix += 1
+			tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
+			insOut = append(insOut, tfr)
 		}
-
-		tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
-
-		insOut = append(insOut, tfr)
 	}
 
 	return insOut, nil

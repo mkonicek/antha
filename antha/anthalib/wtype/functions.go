@@ -12,39 +12,14 @@ func CopyComponentArray(arin []*LHComponent) []*LHComponent {
 	return r
 }
 
-func canGet(want, got ComponentVector) bool {
-	for i := 0; i < len(want); i++ {
-		// is there, like, stuff where we need it?
-
-		if want[i] == nil && got[i] == nil {
-			continue
-		} else if (want[i] == nil && got[i] != nil) || (want[i] != nil && got[i] == nil) {
-			return false
-		}
-
-		// check the component type and junk
-
-		if want[i].CName != got[i].CName {
-			return false
-		}
-
-		// finally is there enough?
-
-		if got[i].Volume().LessThan(want[i].Volume()) {
-			return false
-		}
-	}
-
-	// like, whatever
-	return true
-}
-
 // are tips going to align to wells?
 func TipsWellsAligned(prm LHChannelParameter, plt LHPlate, wellsfrom []string) bool {
 	// 1) find well coords for channels given parameters
 	// 2) compare to wells requested
 
 	channelwells := ChannelWells(prm, plt, wellsfrom)
+
+	// only works if all are filled
 
 	return wutil.StringArrayEqual(channelwells, wellsfrom)
 }
@@ -161,4 +136,14 @@ func TipsPerWell(prm LHChannelParameter, p LHPlate) (int, int) {
 	}
 
 	return tpw, wellskip
+}
+
+func FirstIndexInStrArray(s string, a []string) int {
+	for i, v := range a {
+		if v == s {
+			return i
+		}
+	}
+
+	return -1
 }

@@ -52,7 +52,7 @@ func MasstoVolume(m Mass, d Density) (v Volume) {
 	fmt.Println(mass, density)
 	volume := mass / density // in m^3
 	volume = volume * 1000   // in l
-	v = NewVolume(mass, "l")
+	v = NewVolume(volume, "l")
 
 	return v
 }
@@ -61,7 +61,7 @@ func VolumetoMass(v Volume, d Density) (m Mass) {
 	//mass := m.SIValue()
 	density := d.SIValue()
 
-	volume := v.SIValue() //* 1000 // convert m^3 to l
+	volume := v.SIValue() / 1000 // convert m^3 to l
 
 	mass := volume * density // in m^3
 
@@ -70,7 +70,13 @@ func VolumetoMass(v Volume, d Density) (m Mass) {
 }
 
 func VolumeForTargetMass(targetmass Mass, startingconc Concentration) (v Volume, err error) {
-	fmt.Println("Base units ", startingconc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit())
+
+	if targetmass.RawValue() == 0.0 || startingconc.RawValue() == 0.0 {
+		v = NewVolume(0.0, "ul")
+
+		return v, fmt.Errorf("Zero value found when converting concentration and mass to new volume so new volume set to zero: target mass: %s; starting concentration: %s", targetmass.ToString(), startingconc.ToString())
+
+	}
 
 	if startingconc.Unit().PrefixedSymbol() == "ng/ul" && targetmass.Unit().PrefixedSymbol() == "ng" {
 		v = NewVolume(float64((targetmass.RawValue() / startingconc.RawValue())), "ul")
@@ -95,20 +101,28 @@ func VolumeForTargetMass(targetmass Mass, startingconc Concentration) (v Volume,
 	return
 }
 
-func VolumeForTargetConcentration(targetconc Concentration, startingconc Concentration, totalvol Volume) (v Volume, err error) {
+// returns the volume required to convert a starting concentration to a target concentration of volume total volume
+// returns an error if the concentration units are incompatible (M/l and g/L) or if the target concentration is higher than the stock concentration
+// if either concentration is zero a volume of 0ul will be returned with an error
+func VolumeForTargetConcentration(targetConc Concentration, startingConc Concentration, totalVol Volume) (v Volume, err error) {
 
 	var factor float64
 
-	if startingconc.Unit().BaseSIUnit() == targetconc.Unit().BaseSIUnit() {
-		factor = targetconc.SIValue() / startingconc.SIValue()
+	if startingConc.Unit().BaseSIUnit() == targetConc.Unit().BaseSIUnit() {
+		factor = targetConc.SIValue() / startingConc.SIValue()
+	} else if startingConc.RawValue() == 0.0 || targetConc.RawValue() == 0.0 || totalVol.RawValue() == 0.0 {
+		v = NewVolume(0.0, "ul")
+
+		return v, fmt.Errorf("Zero value found when converting concentrations to new volume so new volume so set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString())
+
 	} else {
-		err = fmt.Errorf("incompatible units of ", targetconc.ToString(), " and ", startingconc.ToString())
+		err = fmt.Errorf(fmt.Sprint("incompatible units of target: ", targetConc.ToString(), " and starting concentration: ", startingConc.ToString(), ". ", "Pre-convert both to the same unit (i.e. Mol or gram)."))
 	}
 
-	v = MultiplyVolume(totalvol, factor)
+	v = MultiplyVolume(totalVol, factor)
 
-	if v.GreaterThan(totalvol) {
-		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetconc.ToString(), " is higher than stock concentration", startingconc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalvol.ToString()))
+	if v.GreaterThan(totalVol) {
+		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration", startingConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
 	}
 
 	return

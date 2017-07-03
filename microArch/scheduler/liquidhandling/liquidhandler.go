@@ -77,8 +77,7 @@ func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
 	lh := Liquidhandler{}
 	lh.SetupAgent = BasicSetupAgent
 	lh.LayoutAgent = ImprovedLayoutAgent
-	//	lh.ExecutionPlanner = ImprovedExecutionPlanner
-	lh.ExecutionPlanner = ExecutionPlanner3
+	lh.ExecutionPlanner = ImprovedExecutionPlanner
 	lh.Properties = properties
 	lh.FinalProperties = properties
 	lh.plateIDMap = make(map[string]string)
@@ -204,13 +203,19 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 	for _, ins := range instructions {
 
-		//logger.Debug(fmt.Sprintln(liquidhandling.InsToString(ins)))
-		//fmt.Println(liquidhandling.InsToString(ins))
+		if (*request).Options.PrintInstructions {
+			fmt.Println(liquidhandling.InsToString(ins))
+		}
 		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
 		if err != nil {
 			return wtype.LHError(wtype.LH_ERR_DRIV, err.Error())
 		}
+		str := liquidhandling.InsToString2(ins) + "\n"
+		request.InstructionText += str
+
+		//fmt.Println(liquidhandling.InsToString(ins))
+
 		if timer != nil {
 			d += timer.TimeFor(ins)
 		}
@@ -246,6 +251,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				}
 				lp := lastPlate[i]
 				lw := lastWell[i]
+
+				if lp == "" {
+					continue
+				}
 
 				ppp := this.Properties.PlateLookup[lp].(*wtype.LHPlate)
 
@@ -331,6 +340,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 	this.Properties.RemoveTemporaryComponents()
 	this.FinalProperties.RemoveTemporaryComponents()
+
 	pidm := make(map[string]string, len(this.Properties.Plates))
 	for pos, _ := range this.Properties.Plates {
 		p1, ok1 := this.Properties.Plates[pos]
@@ -412,7 +422,6 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 		name := plate.(wtype.Named).GetName()
 
 		stat = this.Properties.Driver.AddPlateTo(position, plate, name)
-
 		if stat.Errorcode == driver.ERR {
 			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
 		}
@@ -470,6 +479,7 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	}
 
 	request.LHInstructions = instructions
+
 	request.Stockconcs = stockconcs
 
 	// looks at components, determines what inputs are required
@@ -685,10 +695,11 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		if volb.GreaterThanFloat(0.0001) {
 			vmap3[k] = volb
 		}
-		/*
+		// toggle HERE for DEBUG
+		if false {
 			volc := vmap[k]
 			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
-		*/
+		}
 	}
 
 	(*request).Input_vols_required = vmap
@@ -835,7 +846,16 @@ func (this *Liquidhandler) ExecutionPlan(request *LHRequest) (*LHRequest, error)
 	this.FinalProperties = this.Properties.Dup()
 	temprobot := this.Properties.Dup()
 	saved_plates := this.Properties.SaveUserPlates()
-	rq, err := this.ExecutionPlanner(request, this.Properties)
+
+	var rq *LHRequest
+	var err error
+
+	if request.Options.ExecutionPlannerVersion == "ep3" {
+		rq, err = ExecutionPlanner3(request, this.Properties)
+	} else {
+		rq, err = this.ExecutionPlanner(request, this.Properties)
+	}
+
 	this.FinalProperties = temprobot
 
 	this.Properties.RestoreUserPlates(saved_plates)

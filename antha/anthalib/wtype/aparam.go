@@ -47,14 +47,14 @@ func MakeInstructionParameters() AParamSet {
 	params["REFERENCE"] = AParam{Name: "REFERENCE", Type: typemap["float64"]}
 	params["SPEED"] = AParam{Name: "SPEED", Type: typemap["float64"]}
 	params["TIME"] = AParam{Name: "TIME", Type: typemap["float64"]}
-	params["TIPTYPE"] = AParam{Name: "TIPTYPE", Type: typemap["float64"]}
-	params["TOPLATETYPE"] = AParam{Name: "TOPLATETYPE", Type: typemap["float64"]}
+	params["TIPTYPE"] = AParam{Name: "TIPTYPE", Type: typemap["string"]}
+	params["TOPLATETYPE"] = AParam{Name: "TOPLATETYPE", Type: typemap["string"]}
 	params["TOWELLVOLUME"] = AParam{Name: "TOWELLVOLUME", Type: typemap["float64"]}
 	params["VOLUME"] = AParam{Name: "VOLUME", Type: typemap["float64"]}
 	params["VOLUNT"] = AParam{Name: "VOLUNT", Type: typemap["float64"]}
 	params["WELL"] = AParam{Name: "WELL", Type: typemap["float64"]}
 	params["WELLFROM"] = AParam{Name: "WELLFROM", Type: typemap["string"]}
-	params["WELLFROMVOLUME"] = AParam{Name: "WELLFROMVOLUME", Type: typemap["string"]}
+	params["WELLFROMVOLUME"] = AParam{Name: "WELLFROMVOLUME", Type: typemap["float64"]}
 	params["WELLTO"] = AParam{Name: "WELLTO", Type: typemap["string"]}
 	params["WELLTOVOLUME"] = AParam{Name: "WELLTOVOLUME", Type: typemap["float64"]}
 	params["WELLVOLUME"] = AParam{Name: "WELLVOLUME", Type: typemap["float64"]}
@@ -110,6 +110,15 @@ func MakePolicyItems() AParamSet {
 	return alhpis
 }
 
+func GetLHPolicyOptions() AParamSet {
+	ps := make(AParamSet, 5)
+	tm := maketypemap()
+
+	ps["USE_DRIVER_TIP_TRACKING"] = AParam{Name: "USE_DRIVER_TIP_TRACKING", Type: tm["bool"], Desc: "If driver has the option to use its own tip tracking, do so"}
+
+	return ps
+}
+
 // a typed parameter, with description
 type AParam struct {
 	Name string
@@ -143,7 +152,7 @@ func maketypemap() map[string]reflect.Type {
 
 type AParamSet map[string]AParam
 
-func (alhpis AParamSet) TypeList() string {
+func (alhpis AParamSet) OrderedList() []string {
 	ks := make([]string, 0, len(alhpis))
 
 	for k, _ := range alhpis {
@@ -151,6 +160,12 @@ func (alhpis AParamSet) TypeList() string {
 	}
 
 	sort.Strings(ks)
+
+	return ks
+}
+
+func (alhpis AParamSet) TypeList() string {
+	ks := alhpis.OrderedList()
 
 	s := ""
 

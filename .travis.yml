@@ -3,8 +3,11 @@ go:
 - 1.7
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -y libglpk-dev libopencv-dev libcv-dev libhighgui-dev
+- sudo apt-get install -y libglpk-dev libopencv-dev libcv-dev libhighgui-dev protobuf-compiler
+- go get github.com/golang/protobuf/proto
+- go get github.com/golang/protobuf/protoc-gen-go
 - go get golang.org/x/net/context
+- go get google.golang.org/grpc
 script: make test
 notifications:
   slack:

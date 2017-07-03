@@ -214,6 +214,7 @@ func (lhpr *LHPolicyRule) AddCategoryConditionOn(variable, category string) erro
 	}
 
 	lhpr.Conditions = append(lhpr.Conditions, lhvc)
+
 	lhpr.Priority += 1
 	return err
 }
@@ -335,6 +336,29 @@ func (lhvc LHVariableCondition) IsEqualTo(other LHVariableCondition) bool {
 type LHPolicyRuleSet struct {
 	Policies map[string]LHPolicy
 	Rules    map[string]LHPolicyRule
+	Options  map[string]interface{}
+}
+
+func (lhpr *LHPolicyRuleSet) SetOption(optname string, value interface{}) error {
+	var err error
+	opts := GetLHPolicyOptions()
+
+	// opt is of type aParam, which defines what
+	// the parameter means and what type it has
+	opt, ok := opts[optname]
+
+	if !ok {
+		err = fmt.Errorf("No such LHPolicy option %s", optname)
+	} else {
+		if reflect.TypeOf(value) != opt.Type {
+			err = fmt.Errorf("LHPolicy option %s needs value of type %s not %T", optname, opt.Type.Name(), value)
+		} else {
+			lhpr.Options[optname] = value
+		}
+	}
+
+	return err
+
 }
 
 func (lhpr *LHPolicyRuleSet) IsEqualTo(lhp2 *LHPolicyRuleSet) bool {
@@ -369,6 +393,7 @@ func NewLHPolicyRuleSet() *LHPolicyRuleSet {
 	var lhpr LHPolicyRuleSet
 	lhpr.Policies = make(map[string]LHPolicy)
 	lhpr.Rules = make(map[string]LHPolicyRule)
+	lhpr.Options = make(map[string]interface{})
 	return &lhpr
 }
 
@@ -435,6 +460,16 @@ func (s SortableRules) Swap(i, j int) {
 	s[j] = t
 }
 
+//func (lhpr LHPolicyRuleSet) MarshalJSON() ([]byte, error) {
+//	return
+//}
+
+//func (lhpr LHPolicyRuleSet) UnmarshalJSON(data []byte) error {
+//	test := NewLHPolicyRuleSet()
+//	if err := json.Unmarshal(data, )
+//	return nil
+//}
+
 type LHCondition interface {
 	Match(interface{}) bool
 	Type() string
@@ -455,9 +490,12 @@ func (lhcc LHCategoryCondition) Match(v interface{}) bool {
 			return true
 		}
 	case []string:
-		// true iff all members of the array are the same category
+		// true iff at least one in array and all members of the array are the same category
+		if len(v.([]string)) == 0 || numInStringArray(v.([]string)) == 0 {
+			return false
+		}
 		for _, s := range v.([]string) {
-			if !lhcc.Match(s) {
+			if !lhcc.Match(s) && s != "" {
 				return false
 			}
 		}
@@ -506,10 +544,14 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 			return true
 		}
 	case []float64:
-		//true iff all values are within range
-		// these are simple rules but could need refinement
+		//true iff at least one value all values are within range
+		// how to deal with nulls?
+		if len(v.([]float64)) == 0 || numInFloatArray(v.([]float64)) == 0 {
+			return false
+		}
+
 		for _, f := range v.([]float64) {
-			if !lhnc.Match(f) {
+			if !lhnc.Match(f) && f > EPSILON_64() {
 				return false
 			}
 		}
@@ -530,4 +572,24 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 
 	} // switch
 	return false
+}
+
+func numInStringArray(a []string) int {
+	c := 0
+	for _, s := range a {
+		if s != "" {
+			c += 1
+		}
+	}
+	return c
+}
+
+func numInFloatArray(a []float64) int {
+	c := 0
+	for _, f := range a {
+		if f > EPSILON_64() {
+			c += 1
+		}
+	}
+	return c
 }

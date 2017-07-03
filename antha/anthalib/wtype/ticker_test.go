@@ -1,8 +1,6 @@
 package wtype
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestTicker(t *testing.T) {
 	testTicker(t, 1, 1, 0)

@@ -46,7 +46,13 @@ func RoundDown(v float64) (int, error) {
 	return int(math.Floor(v)), nil
 }
 
+func RoundIgnoreNan(input float64, p int) float64 {
+	r, _ := Roundto(input, p)
+	return r
+}
+
 func Roundto(input float64, places int) (rounded float64, err error) {
 	rounded, err = stats.Round(input, places)
+
 	return
 }

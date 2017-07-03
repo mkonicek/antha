@@ -24,13 +24,14 @@ package liquidhandling
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/sampletracker"
-	"strings"
 )
 
 func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
@@ -167,6 +168,16 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 	// make specific plates... this may mean splitting stuff out into multiple plates
 
 	remap := make_plates(request, chain.ValueIDs())
+
+	// I fix da map
+
+	for k, v := range remap {
+		for kk, vv := range mapchoices {
+			if vv == k {
+				mapchoices[kk] = v
+			}
+		}
+	}
 
 	// give them names
 

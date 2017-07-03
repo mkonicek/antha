@@ -23,12 +23,10 @@
 package entrez
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -68,29 +66,6 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string) 
 		return []byte{}, appendError(fmt.Errorf("Error in biogo.DoSearch: "), err)
 	}
 
-	var of *os.File
-
-	var extension string
-
-	if strings.HasPrefix(ReturnType, ".") {
-		extension = ReturnType
-	} else {
-		extension = "." + ReturnType
-	}
-
-	filename := "query" + extension
-
-	dir, _ := filepath.Split(filename)
-
-	if dir != "" {
-		err = os.MkdirAll(dir, 0777)
-	}
-	of, err = os.Create(filename)
-	if err != nil {
-		return []byte{}, appendError(fmt.Errorf("Error in creating file %s:", filename), err)
-	}
-	defer of.Close()
-
 	var (
 		buf   = &bytes.Buffer{}
 		p     = &biogo.Parameters{RetMax: Max, RetType: ReturnType, RetMode: "text"}
@@ -100,9 +75,8 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string) 
 	for p.RetStart = 0; p.RetStart < s.Count; p.RetStart += p.RetMax {
 		var t int
 		for t = 0; t < retries; t++ {
-			buf.Reset()
-			s := time.Duration(1) * time.Second // limit queries to < 3 per second
-			time.Sleep(s)
+			sleep := time.Duration(1) * time.Second // limit queries to < 3 per second
+			time.Sleep(sleep)
 
 			var (
 				r   io.ReadCloser
@@ -115,6 +89,7 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string) 
 				}
 				continue
 			}
+
 			_bn, err = io.Copy(buf, r)
 			bn += _bn
 			r.Close()
@@ -125,35 +100,16 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string) 
 		if err != nil {
 			return []byte{}, appendError(fmt.Errorf("Error in fetching record"), err)
 		}
-
-		_n, err := io.Copy(of, buf)
-		n += _n
-		if err != nil {
-			return []byte{}, appendError(fmt.Errorf("Error in copying to buffer"), err)
-		}
-
-	}
-	if bn != n {
-		fmt.Fprintf(os.Stdout, "Writethrough mismatch: %d != %d\n", bn, n)
 	}
 
-	fileInfo, _ := of.Stat()
-	var size int64 = fileInfo.Size()
-	contentsinbytes = make([]byte, size)
+	contentsinbytes, err = ioutil.ReadAll(buf)
 
-	// read file into bytes
-	buffer := bufio.NewReader(of)
-	newsize, err := buffer.Read(contentsinbytes)
-
-	of.Close()
-
-	//contentsinbytes, err = ioutil.ReadAll(of)
 	if err != nil {
-		return contentsinbytes, fmt.Errorf("Error line 153: %s, number of bytes read: %d", err.Error(), newsize)
+		return contentsinbytes, fmt.Errorf("Error reading record: %s", err.Error())
 	}
 
 	if len(contentsinbytes) == 0 {
-		return contentsinbytes, fmt.Errorf("no data returned from looking up records")
+		return contentsinbytes, fmt.Errorf("no data returned from looking up query %s in %s", query, database)
 	}
 	return contentsinbytes, nil
 }

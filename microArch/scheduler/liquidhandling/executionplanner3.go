@@ -24,7 +24,7 @@ package liquidhandling
 
 import (
 	"context"
-
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -37,12 +37,19 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			break
 		}
 
-		// make a transfer block instruction out of the incoming instructions
-		// -- essentially each node of the topological graph is passed wholesale
-		// into the instruction generator to be teased apart as appropriate
+		if len(ch.Values) == 1 && ch.Values[0].Type == wtype.LHIPRM {
+			// if this is a solitary prompt instruction just generate the requisite prompt instruction
+			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
+			request.InstructionSet.Add(prm)
+		} else {
+			// otherwise...
+			// make a transfer block instruction out of the incoming instructions
+			// -- essentially each node of the topological graph is passed wholesale
+			// into the instruction generator to be teased apart as appropriate
 
-		tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
-		request.InstructionSet.Add(tfb)
+			tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
+			request.InstructionSet.Add(tfb)
+		}
 		ch = ch.Child
 	}
 

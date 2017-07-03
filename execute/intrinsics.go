@@ -59,6 +59,28 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	return inst.Comp
 }
 
+// prompt... works pretty much like Handle does
+// but passes the instruction to the planner
+// in future this should generate handles as side-effects
+
+type PromptOpt struct {
+	Component *wtype.LHComponent
+	Message   string
+}
+
+func Prompt(ctx context.Context, opt PromptOpt) *commandInst {
+	inst := wtype.NewLHInstruction()
+	inst.SetGeneration(opt.Component.Generation())
+
+	return &commandInst{
+		Args: []*wtype.LHComponent{opt.Component},
+		Comp: opt.Component,
+		Command: &ast.Command{
+			Inst: inst,
+		},
+	}
+}
+
 func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	st := sampletracker.GetSampleTracker()
 	in := opt.Component

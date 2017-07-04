@@ -53,7 +53,7 @@ func appendError(err error, err2 error) (newErr error) {
 	return fmt.Errorf("Errors: " + err.Error() + ": " + err2.Error())
 }
 
-// This queries the selected database saving the record to file
+// This queries the selected database saving the record to bytes
 // Database options are nucleotide, Protein, Gene. For full list see http://www.ncbi.nlm.nih.gov/books/NBK25497/table/chapter2.T._entrez_unique_identifiers_ui/?report=objectonly
 // Return type includes but must match the database type. See http://www.ncbi.nlm.nih.gov/books/NBK25499/table/chapter4.T._valid_values_of__retmode_and/?report=objectonly
 // Query can be any string but it is recommended to use GI number if one specific record is required.
@@ -98,7 +98,7 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string) 
 			}
 		}
 		if err != nil {
-			return []byte{}, appendError(fmt.Errorf("Error in fetching record"), err)
+			return []byte{}, appendError(fmt.Errorf("Error in fetching record %s", query), err)
 		}
 	}
 

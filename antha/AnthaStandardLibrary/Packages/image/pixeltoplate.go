@@ -1466,6 +1466,78 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPla
 	return &anthaImg, goImg
 }
 
+//This function will create a LivingImage object from a digital image.
+func MakeLivingImg (goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImgPlate *wtype.LHPlate) (outputImg *LivingImg, resizedImg *goimage.NRGBA){
+
+	//Global placeholders
+	var livingPix		LivingPix
+	var livingImgPix	[]LivingPix
+	var livingImg		LivingImg
+
+	//Verify that the plate is the same size as the digital image. If not resize.
+	if goImg.Bounds().Dy() != livingImgPlate.WellsY(){
+		goImg = ResizeImagetoPlateMin(goImg, livingImgPlate)
+	}
+
+	//Iterate over pixels
+	b := goImg.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			//getting rgba values for the image pixel
+			r,g,b,a := goImg.At(x,y).RGBA()
+			var goPixColor = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+			//finding the anthaColor closest to the one given in the palette
+			var anthaColor = livingPalette.Convert(goPixColor)
+			livingPix.Color = anthaColor
+
+			//figuring out the pixel location on the plate
+			livingPix.Location = wtype.WellCoords{x,y}
+
+			//appending the pixel to the array that will go in the AnthaImage
+			livingImgPix = append(livingImgPix, livingPix)
+		}
+	}
+
+	//initiating complete image object
+	livingImg.Pix = livingImgPix
+	livingImg.Palette = *livingPalette
+	livingImg.Plate = *livingImgPlate
+
+	return &livingImg, goImg
+}
+
+//This will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
+func MakeLivingPalette (InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
+
+	//global placeholders
+	var err error
+
+	//checking that there are enough LHComponents to make the Palette
+	if len(InputPalette.LivingColors) != len(LHComponents) {
+		fmt.Errorf(err.Error())
+	} else {
+		//Adding the LHComponents to the livingColors
+		for i := range InputPalette.LivingColors {
+			InputPalette.LivingColors[i].Component = LHComponents[i]
+		}
+	}
+
+	return &InputPalette
+}
+
+//This will make a LivingGIF object given a slice of LivingImg
+func MakeLivingGIF (imgs []LivingImg) *LivingGIF {
+
+	var livingGIF LivingGIF
+
+	for _, img := range imgs {
+		livingGIF.Frames = append(livingGIF.Frames, img)
+	}
+
+	return &livingGIF
+}
+
+
 //---------------------------------------------------
 //Image manipulation
 //---------------------------------------------------

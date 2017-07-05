@@ -13,28 +13,6 @@ type Inst interface {
 	GetTimeEstimate() float64
 }
 
-type CmpError struct {
-	Dev     Device
-	Depends []Inst
-	Error   error
-}
-
-func (a *CmpError) Device() Device {
-	return a.Dev
-}
-
-func (a *CmpError) DependsOn() []Inst {
-	return a.Depends
-}
-
-func (a *CmpError) SetDependsOn(x []Inst) {
-	a.Depends = x
-}
-
-func (a *CmpError) GetTimeEstimate() float64 {
-	return 0.0
-}
-
 type Incubate struct {
 	Dev     Device
 	Depends []Inst

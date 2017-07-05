@@ -13,13 +13,14 @@ const (
 	LHIPRM
 )
 
+var InsNames = []string{"END", "MIX", "WAIT", "PROMPT"}
+
 func InsType(i int) string {
-	insnames := []string{"END", "MIX", "WAIT"}
 
 	ret := ""
 
-	if i >= 0 && i < len(insnames) {
-		ret = insnames[i]
+	if i >= 0 && i < len(InsNames) {
+		ret = InsNames[i]
 	}
 
 	return ret
@@ -46,14 +47,30 @@ type LHInstruction struct {
 	gen              int
 	PlateName        string
 	OutPlate         *LHPlate
+	Message          string
 }
 
-func NewLHInstruction() *LHInstruction {
+// privatised in favour of specific instruction constructors
+func newLHInstruction() *LHInstruction {
 	var lhi LHInstruction
 	lhi.ID = GetUUID()
 	lhi.Majorlayoutgroup = -1
 	return &lhi
 }
+
+func NewLHMixInstruction() *LHInstruction {
+	lhi := newLHInstruction()
+	lhi.Type = LHIMIX
+	return lhi
+
+}
+
+func NewLHPromptInstruction() *LHInstruction {
+	lhi := newLHInstruction()
+	lhi.Type = LHIPRM
+	return lhi
+}
+
 func (inst *LHInstruction) AddProduct(cmp *LHComponent) {
 	inst.Result = cmp
 	inst.ProductID = cmp.ID

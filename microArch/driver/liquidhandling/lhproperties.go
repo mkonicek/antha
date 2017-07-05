@@ -110,6 +110,12 @@ func (p LHProperties) OutputLayout() {
 	}
 }
 
+func (p LHProperties) CanPrompt() bool {
+	// presently true for all varieties of liquid handlers
+	// TODO (when no longer the case): revise!
+	return true
+}
+
 func (p LHProperties) OrderedPositionNames() []string {
 	// canonical ordering
 
@@ -650,6 +656,10 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 				st := sampletracker.GetSampleTracker()
 				loc, _ := st.GetLocationOf(v.ID)
 				tx = strings.Split(loc, ":")
+			}
+
+			if len(tx) < 2 {
+				panic(fmt.Sprintf("NO LOCATION FOUND FOR COMPONENT: %s %s %s", v.ID, v.CName, v.Volume().ToString()))
 			}
 
 			plateIDs[i] = append(plateIDs[i], tx[0])

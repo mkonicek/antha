@@ -34,12 +34,15 @@ func (a *Mixer) String() string {
 
 func (a *Mixer) CanCompile(req ast.Request) bool {
 	// TODO: Add specific volume constraints
+	cp := a.properties.CanPrompt()
 	can := ast.Request{
-		MixVol: req.MixVol,
+		MixVol:    req.MixVol,
+		CanPrompt: &cp,
 	}
 	if !req.Matches(can) {
 		return false
 	}
+
 	return can.Contains(req)
 }
 

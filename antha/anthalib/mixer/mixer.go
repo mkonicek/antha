@@ -42,7 +42,7 @@ func SampleAll(l *wtype.LHComponent) *wtype.LHComponent {
 // take a sample of volume v from this liquid
 func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
-	ret.ID = l.ID
+	//	ret.ID = l.ID
 
 	l.AddDaughterComponent(ret)
 	if l.HasAnyParent() {
@@ -69,7 +69,7 @@ func MultiSample(l []*wtype.LHComponent, v []wunit.Volume) []*wtype.LHComponent 
 	for i, j := range l {
 		ret := wtype.NewLHComponent()
 		vi := v[i]
-		ret.ID = j.ID
+		//	ret.ID = j.ID
 		j.AddDaughterComponent(ret)
 		if j.HasAnyParent() {
 			ret.ParentID = j.ParentID
@@ -92,7 +92,7 @@ func MultiSample(l []*wtype.LHComponent, v []wunit.Volume) []*wtype.LHComponent 
 // take a sample of this liquid and aim for a particular concentration
 func SampleForConcentration(l *wtype.LHComponent, c wunit.Concentration) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
-	ret.ID = l.ID
+	//	ret.ID = l.ID
 	l.AddDaughterComponent(ret)
 	if l.HasAnyParent() {
 		ret.ParentID = l.ParentID
@@ -116,7 +116,7 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 	v := wunit.MasstoVolume(m, d)
 
 	ret := wtype.NewLHComponent()
-	ret.ID = s.ID
+	//	ret.ID = s.ID
 	s.AddDaughterComponent(ret)
 	if s.HasAnyParent() {
 		ret.ParentID = s.ParentID
@@ -139,7 +139,7 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
 
-	ret.ID = l.ID
+	//	ret.ID = l.ID
 	l.AddDaughterComponent(ret)
 	if l.HasAnyParent() {
 		ret.ParentID = l.ParentID
@@ -190,7 +190,7 @@ type MixOptions struct {
 func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	r := opt.Instruction
 	if r == nil {
-		r = wtype.NewLHInstruction()
+		r = wtype.NewLHMixInstruction()
 	}
 	r.Components = opt.Components
 

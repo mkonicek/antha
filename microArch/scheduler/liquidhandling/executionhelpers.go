@@ -126,6 +126,8 @@ func (bg ByGeneration) Less(i, j int) bool {
 	if bg[i].Generation() == bg[j].Generation() {
 
 		// compare the plate names (which must exist now)
+		//	 -- oops, I think this has ben violated by moving the sort
+		// 	 TODO check and fix
 
 		c := strings.Compare(bg[i].PlateName, bg[j].PlateName)
 
@@ -171,10 +173,43 @@ func (bg ByGenerationOpt) Less(i, j int) bool {
 	return bg[i].Generation() < bg[j].Generation()
 }
 
+func aggregateAppropriateInstructions(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
+	agg := make([]map[string]*wtype.LHInstruction, len(wtype.InsNames))
+	for i := 0; i < len(wtype.InsNames); i++ {
+		agg[i] = make(map[string]*wtype.LHInstruction, 10)
+	}
+
+	for _, ins := range inss {
+		// just prompts
+		if ins.Type == wtype.LHIPRM {
+			cur := agg[ins.Type][ins.Message]
+			if cur == nil || cur.Generation() < ins.Generation() {
+				agg[ins.Type][ins.Message] = ins
+			}
+		}
+	}
+
+	// now filter
+	insout := make([]*wtype.LHInstruction, 0, len(inss))
+	for _, ins := range inss {
+		if ins.Type == wtype.LHIPRM {
+			if agg[ins.Type][ins.Message].ID != ins.ID {
+				continue
+			}
+		}
+		insout = append(insout, ins)
+	}
+
+	return insout
+}
+
 func set_output_order(rq *LHRequest) error {
 	// sort into equivalence classes by generation
 
 	sorted := insSliceFromMap(rq.LHInstructions)
+
+	sorted = aggregateAppropriateInstructions(sorted)
+
 	if rq.Options.OutputSort {
 		sort.Sort(ByGenerationOpt(sorted))
 	} else {
@@ -193,6 +228,8 @@ func set_output_order(rq *LHRequest) error {
 
 		it.Add(v)
 	}
+
+	it.Print()
 
 	rq.Output_order = it.Flatten()
 

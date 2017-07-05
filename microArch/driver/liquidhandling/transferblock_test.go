@@ -26,7 +26,7 @@ func getTransferBlock(ctx context.Context) (TransferBlockInstruction, *wtype.LHP
 		c.Vol = 100.0
 		c.Vunit = "ul"
 		c.SetSample(true)
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 		ins.Components = append(ins.Components, c)
 
 		c2, err := inventory.NewComponent(ctx, "tartrazine")

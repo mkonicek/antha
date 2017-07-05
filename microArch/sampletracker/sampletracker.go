@@ -1,8 +1,10 @@
 package sampletracker
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"fmt"
 	"sync"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 var stLock sync.Mutex
@@ -77,6 +79,7 @@ func (st *SampleTracker) setLocationOf(ID string, loc string) {
 func (st *SampleTracker) SetLocationOf(ID string, loc string) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
+	fmt.Println("SET LOCATION OF ", ID, " TO ", loc)
 	st.setLocationOf(ID, loc)
 }
 
@@ -85,12 +88,14 @@ func (st *SampleTracker) getLocationOf(ID string) (string, bool) {
 		return "", false
 	}
 
+	fmt.Println("GET LOCATION: OF ", ID)
 	s, ok := st.records[ID]
 
 	// look to see if there's a forwarding address
 	// can this lead to an out of date location???
 
 	if !ok {
+		fmt.Println("NOT FOUND, FORWARD? ", st.forwards[ID])
 		return st.getLocationOf(st.forwards[ID])
 	}
 
@@ -107,6 +112,7 @@ func (st *SampleTracker) GetLocationOf(ID string) (string, bool) {
 func (st *SampleTracker) UpdateIDOf(ID string, newID string) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
+	fmt.Println("UPDATING: ID ", ID, " TO ", newID)
 	_, ok := st.records[ID]
 	if ok {
 		st.records[newID] = st.records[ID]

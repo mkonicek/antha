@@ -14,7 +14,7 @@ func TestIChain(t *testing.T) {
 	s := []string{"A", "B", "C", "D", "E", "F"}
 
 	for _, k := range s {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 
 		cmp := wtype.NewLHComponent()
 
@@ -52,7 +52,7 @@ func TestIChain2(t *testing.T) {
 	}
 
 	for i, k := range cmps {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 		ins.AddComponent(k)
 		if i != len(s)-1 {
 			ins.AddProduct(cmps[i+1])
@@ -99,7 +99,7 @@ func TestIChain3(t *testing.T) {
 	cmps = append(cmps, cmp)
 
 	for i, k := range cmps {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 		ins.AddComponent(k)
 		if i != len(s)-1 && cmp.ID != "Z" && cmp.ID != "Y" {
 			ins.AddProduct(cmps[i+1])

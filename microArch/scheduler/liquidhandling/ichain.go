@@ -49,12 +49,20 @@ func (it *IChain) GetChild() *IChain {
 func (it *IChain) Print() {
 	fmt.Println("****")
 	fmt.Println("\tPARENT NIL: ", it.Parent == nil)
-	fmt.Print("\tINPUTS: ", len(it.Values), ":")
-	for i := 0; i < len(it.Values[0].Components); i++ {
-		fmt.Print(" ", it.Values[0].Components[i].CName)
-	}
+	if len(it.Values) > 0 {
+		if it.Values[0].Type == wtype.LHIMIX {
+			fmt.Print("\tINPUTS: ", len(it.Values), ":")
+			for i := 0; i < len(it.Values[0].Components); i++ {
+				fmt.Print(" ", it.Values[0].Components[i].CName)
+			}
+		} else if it.Values[0].Type == wtype.LHIPRM {
+			fmt.Print("PROMPT ", it.Values[0].Message)
+		} else {
+			fmt.Print("WTF? ", wtype.InsType(it.Values[0].Type))
+		}
 
-	fmt.Println()
+		fmt.Println()
+	}
 	if it.Child != nil {
 		it.Child.Print()
 	}

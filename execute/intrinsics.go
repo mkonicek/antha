@@ -63,20 +63,40 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 // but passes the instruction to the planner
 // in future this should generate handles as side-effects
 
-type PromptOpt struct {
-	Component *wtype.LHComponent
-	Message   string
+type PromptOpts struct {
+	Component   *wtype.LHComponent
+	ComponentIn *wtype.LHComponent
+	Message     string
 }
 
-func Prompt(ctx context.Context, opt PromptOpt) *commandInst {
-	inst := wtype.NewLHInstruction()
-	inst.SetGeneration(opt.Component.Generation())
+func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *wtype.LHComponent {
+	// sadly need to update everything
+	comp := component.Dup()
+	comp.ID = wtype.GetUUID()
+	comp.BlockID = wtype.NewBlockID(getId(ctx))
+	comp.SetGeneration(comp.Generation() + 1)
+	getMaker(ctx).UpdateAfterInst(component.ID, comp.ID)
+	pinst := prompt(ctx, PromptOpts{Component: comp, ComponentIn: component, Message: message})
+	trace.Issue(ctx, pinst)
+	return component
+}
 
+func prompt(ctx context.Context, opts PromptOpts) *commandInst {
+	inst := wtype.NewLHMixInstruction()
+	inst.SetGeneration(opts.ComponentIn.Generation())
+	inst.Message = opts.Message
+
+	// do we update and return component as with Handle?!
+	// this requires fixing the issue with id tracking...
+	// will aim for this as a stretch goal
+
+	cp := true
 	return &commandInst{
-		Args: []*wtype.LHComponent{opt.Component},
-		Comp: opt.Component,
+		Args: []*wtype.LHComponent{opts.ComponentIn},
+		Comp: opts.Component,
 		Command: &ast.Command{
-			Inst: inst,
+			Inst:     inst,
+			Requests: []ast.Request{ast.Request{CanPrompt: &cp}},
 		},
 	}
 }

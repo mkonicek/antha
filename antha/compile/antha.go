@@ -100,6 +100,7 @@ func (p *compiler) anthaInit() {
 		"NewPlate":     "execute.NewPlate",
 		//	"Wait":          "execute.Wait",
 		"SetInputPlate": "execute.SetInputPlate",
+		"Prompt":        "execute.Prompt",
 	}
 	p.types = map[string]string{
 		"Amount":               "wunit.Amount",

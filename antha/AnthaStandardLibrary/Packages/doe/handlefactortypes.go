@@ -25,6 +25,7 @@ package doe
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -134,6 +135,28 @@ func HandleLHComponentFactor(header string, value interface{}) (component *wtype
 		} else {
 			component = factory.GetComponentByType("water")
 			component.CName = str
+		}
+
+	} else {
+		err = fmt.Errorf("problem with type of ", value, " expected string")
+		return
+	}
+	return
+}
+
+// parses a factor name and value and returns an LHComponent.
+// If the value cannot be converted to a valid component an error is returned.
+func HandleLHPlateFactor(header string, value interface{}) (plate *wtype.LHPlate, err error) {
+
+	str, found := value.(string)
+
+	if found {
+		infactory := factory.PlateInFactory(str)
+
+		if infactory {
+			plate = factory.GetPlateByType(str)
+		} else {
+			err = fmt.Errorf("Plate %s not found. Valid options are %s", str, strings.Join(factory.GetPlateList(), ";"))
 		}
 
 	} else {

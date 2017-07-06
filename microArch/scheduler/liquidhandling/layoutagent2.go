@@ -60,8 +60,7 @@ func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquid
 		ch = ch.Child
 	}
 
-	// let's make things nice and simple
-
+	// prune out dead instructions from the assignments
 	filtered := make(map[string][]string)
 
 	for k, insAr := range request.Output_assignments {
@@ -125,6 +124,10 @@ func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []Plat
 func find_insID(plateID, wellcoords string, rq *LHRequest) string {
 	r := ""
 	for _, ins := range rq.LHInstructions {
+		// ignore non-mix instructions
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
 		if ins.PlateID() == plateID && ins.Welladdress == wellcoords {
 			r = ins.ID
 			break
@@ -209,6 +212,10 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	order := chain.ValueIDs()
 	for _, id := range order {
 		v := request.LHInstructions[id]
+		// ignore non-mix
+		if v.Type != wtype.LHIMIX {
+			continue
+		}
 		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
 		lk2[v.Result.ID] = v.ID
 	}
@@ -288,6 +295,12 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 	for _, k := range order {
 		x += 1
 		v := request.LHInstructions[k]
+
+		// ignore non-mixes
+		if v.Type != wtype.LHIMIX {
+			continue
+		}
+
 		// if plate ID set
 		if v.PlateID() != "" {
 			//MixInto
@@ -340,8 +353,15 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				s[i].Output = append(s[i].Output, true)
 			}
 		} else if v.IsMixInPlace() {
+			fmt.Println("WAH")
 			// the first component sets the destination
 			// and now it should indeed be set
+
+			fmt.Println("V HAS ", len(v.Components), " COMPONENTS")
+
+			if len(v.Components) == 0 {
+				continue
+			}
 
 			addr, ok := st.GetLocationOf(v.Components[0].ID)
 
@@ -411,6 +431,13 @@ func defined(s string, pc []PlateChoice) int {
 func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, order []string) ([]PlateChoice, error) {
 	for _, k := range order {
 		v := request.LHInstructions[k]
+
+		// ignore non-mix instructions
+
+		if v.Type != wtype.LHIMIX {
+			continue
+		}
+
 		// this id may be temporary, only things without it still are not assigned to a
 		// plate, even a virtual one
 		if v.PlateID() == "" {
@@ -580,6 +607,13 @@ func make_plates(ctx context.Context, request *LHRequest, order []string) (map[s
 	//for k, v := range request.LHInstructions {
 	for _, k := range order {
 		v := request.LHInstructions[k]
+
+		// ignore non-mix instructions
+
+		if v.Type != wtype.LHIMIX {
+			continue
+		}
+
 		_, skip := remap[v.PlateID()]
 
 		if skip {

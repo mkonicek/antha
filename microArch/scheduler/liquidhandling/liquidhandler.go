@@ -565,11 +565,9 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		components := instruction.Components
 
 		for ix, component := range components {
-			// ignore anything which is made in another mix
-			// XXX if provenance info comes in this is not safe
-			// since something can not have been made in a previous mix
-			// and yet still answer yes to this question
-			if component.HasAnyParent() {
+			// Ignore components which already exist
+
+			if component.IsInstance() {
 				continue
 			}
 
@@ -584,24 +582,24 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 				ordH[component.CNID()] = len(ordH)
 			} else {
 
-				cmps, ok := inputs[component.CName]
+				cmps, ok := inputs[component.Kind()]
 				if !ok {
 					cmps = make([]*wtype.LHComponent, 0, 3)
-					allinputs = append(allinputs, component.CName)
+					allinputs = append(allinputs, component.Kind())
 				}
 
-				_, ok = ordH[component.CName]
+				_, ok = ordH[component.Kind()]
 
 				if !ok {
-					ordH[component.CName] = len(ordH)
+					ordH[component.Kind()] = len(ordH)
 				}
 
 				cmps = append(cmps, component)
-				inputs[component.CName] = cmps
+				inputs[component.Kind()] = cmps
 
 				// similarly add the volumes up
 
-				vol := vmap[component.CName]
+				vol := vmap[component.Kind()]
 
 				if vol.IsNil() {
 					vol = wunit.NewVolume(0.0, "ul")
@@ -614,7 +612,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 				v2a.Add(request.CarryVolume)
 				vol.Add(v2a)
 
-				vmap[component.CName] = vol
+				vmap[component.Kind()] = vol
 			}
 
 			/*
@@ -697,7 +695,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG
-		if false {
+		if true {
 			volc := vmap[k]
 			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
 		}

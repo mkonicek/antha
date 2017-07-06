@@ -2,6 +2,7 @@ package execute
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -32,6 +33,7 @@ func incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	comp.BlockID = wtype.NewBlockID(getID(ctx))
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
+	fmt.Println("UPDATING HERE (1)")
 	st.UpdateIDOf(in.ID, comp.ID)
 
 	return &commandInst{
@@ -109,6 +111,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	comp.BlockID = wtype.NewBlockID(getID(ctx))
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
+	fmt.Println("HANDLE ", opt.Label, "UPDATING HERE (2)", in.CName)
 	st.UpdateIDOf(in.ID, comp.ID)
 
 	var sels []ast.NameValue
@@ -197,7 +200,7 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 
 	inst.SetGeneration(mx)
 	result.SetGeneration(mx + 1)
-
+	result.DeclareInstance()
 	inst.ProductID = result.ID
 
 	return &commandInst{

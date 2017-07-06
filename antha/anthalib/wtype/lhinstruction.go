@@ -100,6 +100,14 @@ func (ins *LHInstruction) SetPlateID(pid string) {
 }
 
 func (ins *LHInstruction) IsMixInPlace() bool {
+	if ins == nil {
+		return false
+	}
+
+	if len(ins.Components) == 0 {
+		return false
+	}
+
 	smp := ins.Components[0].IsSample()
 	return !smp
 }

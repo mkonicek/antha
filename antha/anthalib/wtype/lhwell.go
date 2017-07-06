@@ -154,8 +154,15 @@ func (w *LHWell) Contents() *LHComponent {
 	// be careful
 	if w == nil {
 		logger.Debug("CONTENTS OF NIL WELL REQUESTED")
+		// XXX XXX XXX see below ... returning nil here makes a lot more sense
 		return NewLHComponent()
 	}
+	// this makes no sense - we should maintain the
+	// contract that the contents of a well are fixed,
+	// not make a new content
+	// XXX XXX XXX
+	// --> mark this for imminent cleanup
+	//     best replacement: set well contents then return that
 	if w.WContents == nil {
 		return NewLHComponent()
 	}
@@ -164,17 +171,21 @@ func (w *LHWell) Contents() *LHComponent {
 }
 
 func (w *LHWell) Currvol() float64 {
+	// XXX insulate this from nil wells
 	return w.Contents().Vol
 }
 
 func (w *LHWell) CurrVolume() wunit.Volume {
+	// XXX insulate this from nil wells
 	return w.Contents().Volume()
 }
 
 func (w *LHWell) MaxVolume() wunit.Volume {
+	// XXX insulate this from nil wells
 	return wunit.NewVolume(w.MaxVol, w.Vunit)
 }
 func (w *LHWell) Add(c *LHComponent) {
+	// XXX insulate this from nil wells
 	//wasEmpty := w.Empty()
 	mv := wunit.NewVolume(w.MaxVol, w.Vunit)
 	cv := wunit.NewVolume(c.Vol, c.Vunit)
@@ -186,6 +197,7 @@ func (w *LHWell) Add(c *LHComponent) {
 		logger.Debug("WARNING: OVERFULL WELL AT ", w.Crds)
 	}
 
+	fmt.Println("WELL ", w.Crds, " MIX HERE ")
 	w.Contents().Mix(c)
 
 	//if wasEmpty {
@@ -196,6 +208,7 @@ func (w *LHWell) Add(c *LHComponent) {
 }
 
 func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
+	// XXX insulate this from nil wells
 	// if the volume is too high we complain
 
 	if v.GreaterThan(w.CurrentVolume()) {
@@ -211,10 +224,12 @@ func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
 }
 
 func (w *LHWell) PlateLocation() PlateLocation {
+	// XXX insulate this from nil wells
 	return w.WContents.PlateLocation()
 }
 
 func (w *LHWell) WorkingVolume() wunit.Volume {
+	// XXX insulate this from nil wells
 	v := wunit.NewVolume(w.Currvol(), w.Vunit)
 	v2 := wunit.NewVolume(w.Rvol, w.Vunit)
 	v.Subtract(v2)
@@ -222,25 +237,30 @@ func (w *LHWell) WorkingVolume() wunit.Volume {
 }
 
 func (w *LHWell) ResidualVolume() wunit.Volume {
+	// XXX insulate this from nil wells
 	v := wunit.NewVolume(w.Rvol, w.Vunit)
 	return v
 }
 
 func (w *LHWell) CurrentVolume() wunit.Volume {
+	// XXX insulate this from nil wells
 	return w.Contents().Volume()
 }
 
 //@implement Location
 
 func (lhw *LHWell) Location_ID() string {
+	// XXX insulate this from nil wells
 	return lhw.ID
 }
 
 func (lhw *LHWell) Location_Name() string {
+	// XXX insulate this from nil wells
 	return lhw.Platetype
 }
 
 func (lhw *LHWell) Shape() *Shape {
+	// XXX insulate this from nil wells
 	if lhw.WShape == nil {
 		// return the non-shape
 		return NewNilShape()
@@ -252,15 +272,26 @@ func (lhw *LHWell) Shape() *Shape {
 // @deprecate Well
 
 func (w *LHWell) ContainerType() string {
+	if w == nil {
+		return ""
+	}
 	return w.Platetype
 }
 
 func (w *LHWell) Clear() {
+	if w == nil {
+		return
+	}
 	w.WContents = NewLHComponent()
 	w.WContents.Loc = w.Plateid + ":" + w.Crds
 }
 
 func (w *LHWell) Empty() bool {
+	// nil wells are empty
+	if w == nil {
+		return true
+	}
+
 	if w.Currvol() <= 0.000001 {
 		return true
 	} else {
@@ -270,6 +301,7 @@ func (w *LHWell) Empty() bool {
 
 // copy of instance
 func (lhw *LHWell) Dup() *LHWell {
+	// XXX insulate this from nil wells
 	cp := NewLHWell(lhw.Platetype, lhw.Plateid, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, lhw.Dunit)
 
 	for k, v := range lhw.Extra {
@@ -283,6 +315,9 @@ func (lhw *LHWell) Dup() *LHWell {
 
 // copy of type
 func (lhw *LHWell) CDup() *LHWell {
+	if lhw == nil {
+		return nil
+	}
 	cp := NewLHWell(lhw.Platetype, lhw.Plateid, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, lhw.Dunit)
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
@@ -291,6 +326,9 @@ func (lhw *LHWell) CDup() *LHWell {
 	return cp
 }
 func (lhw *LHWell) DupKeepIDs() *LHWell {
+	if lhw == nil {
+		return nil
+	}
 	cp := NewLHWell(lhw.Platetype, lhw.Plateid, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, lhw.Dunit)
 
 	for k, v := range lhw.Extra {
@@ -306,6 +344,7 @@ func (lhw *LHWell) DupKeepIDs() *LHWell {
 }
 
 func (lhw *LHWell) CalculateMaxCrossSectionArea() (ca wunit.Area, err error) {
+	// XXX insulate this from nil wells
 
 	ca, err = lhw.Shape().MaxCrossSectionalArea()
 
@@ -314,6 +353,7 @@ func (lhw *LHWell) CalculateMaxCrossSectionArea() (ca wunit.Area, err error) {
 
 func (lhw *LHWell) AreaForVolume() wunit.Area {
 
+	// XXX insulate this from nil wells
 	ret := wunit.NewArea(0.0, "m^2")
 
 	vf := lhw.GetAfVFunc()
@@ -331,16 +371,19 @@ func (lhw *LHWell) AreaForVolume() wunit.Area {
 }
 
 func (lhw *LHWell) HeightForVolume() wunit.Length {
+	// XXX insulate this from nil wells
 	ret := wunit.NewLength(0.0, "m")
 
 	return ret
 }
 
 func (lhw *LHWell) SetAfVFunc(f string) {
+	// XXX insulate this from nil wells
 	lhw.Extra["afvfunc"] = f
 }
 
 func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
+	// XXX insulate this from nil wells
 	f, ok := lhw.Extra["afvfunc"]
 
 	if !ok {
@@ -356,6 +399,7 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 }
 
 func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
+	// XXX insulate this from nil wells
 
 	if lhw.Bottom == 0 { // flat
 		vol, err = lhw.Shape().Volume()
@@ -375,6 +419,8 @@ func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape 
 	var well LHWell
 
 	well.WContents = NewLHComponent()
+	well.WContents.DeclareInstance()
+
 	//well.ID = "well-" + GetUUID()
 	well.ID = GetUUID()
 	well.Platetype = platetype
@@ -584,12 +630,14 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 }
 
 func (w *LHWell) ResetPlateID(newID string) {
+	// XXX insulate this from nil wells
 	ltx := strings.Split(w.WContents.Loc, ":")
 	w.WContents.Loc = newID + ":" + ltx[1]
 	w.Plateid = newID
 }
 
 func (w *LHWell) IsUserAllocated() bool {
+	// XXX insulate this from nil wells
 	if w.Extra == nil {
 		return false
 	}
@@ -604,6 +652,9 @@ func (w *LHWell) IsUserAllocated() bool {
 }
 
 func (w *LHWell) SetUserAllocated() {
+	if w == nil {
+		return
+	}
 	if w.Extra == nil {
 		w.Extra = make(map[string]interface{})
 	}
@@ -611,8 +662,34 @@ func (w *LHWell) SetUserAllocated() {
 }
 
 func (w *LHWell) ClearUserAllocated() {
+	if w == nil {
+		return
+	}
 	if w.Extra == nil {
 		w.Extra = make(map[string]interface{})
 	}
 	w.Extra["UserAllocated"] = false
+}
+
+func (w *LHWell) Contains(cmp *LHComponent) bool {
+	// obviously empty wells don't contain anything
+	if w.Empty() {
+		return false
+	}
+	// request for a specific component
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			//  look for the ID of its parent (we don't allow sampling from samples yet)
+			fmt.Println("Request for sample of: ", cmp.CName, " :", cmp.ParentID, ": WELL CONTS: ", w.WContents.CName, " :", w.WContents.ID, ":")
+			return cmp.ParentID == w.WContents.ID
+		} else {
+			// if this is just the whole component we check for *its* Id
+			fmt.Println("Request for instance: ", cmp.CName, " ", cmp.ID, " WELL CONTS: ", w.WContents.CName, " ", w.WContents.ID)
+			return cmp.ID == w.WContents.ID
+		}
+	} else {
+		// sufficient to be of same types
+		fmt.Println("Request for type: ", cmp.CName, " ", cmp.ID, " WELL CONTS: ", w.WContents.CName, " ", w.WContents.ID)
+		return cmp.IsSameKindAs(w.WContents)
+	}
 }

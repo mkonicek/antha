@@ -48,7 +48,7 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 
 //
 //
-//	at this point (i.e. in a TransferBlock) the instructions have been grouped into sets
+//	at this point (i.e. in a TransferBlock) the instructions have potentially been grouped into sets
 //	with simultaneously servicable destinations - row or column-wise depending on the head
 //	orientation chosen
 //
@@ -109,6 +109,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			ptwx := make([]int, len(cmps))        //	  "    to    "   x
 			ptwy := make([]int, len(cmps))        //	  "     "    "   y
 
+			// ci indexes inssIn
 			for ci := 0; ci < len(cmps); ci++ {
 				if len(fromPlateIDs[mt]) <= ci || fromPlateIDs[mt][ci] == "" {
 					continue
@@ -213,6 +214,11 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				}
 
 				wellTo.Add(cmpFrom)
+
+				// make sure the wellTo gets the right ID (ultimately)
+
+				cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Result.ID)
+				wellTo.WContents.ID = inssIn[ci].Result.ID
 
 				//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 			}

@@ -24,6 +24,8 @@
 package mixer
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -43,11 +45,10 @@ func SampleAll(l *wtype.LHComponent) *wtype.LHComponent {
 func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
 	//	ret.ID = l.ID
+	fmt.Println("SAMPLE ID WOO ", ret.ID, "PARENT: ", l.ID)
 
 	l.AddDaughterComponent(ret)
-	if l.HasAnyParent() {
-		ret.ParentID = l.ParentID
-	}
+	ret.ParentID = l.ID
 	ret.CName = l.Name()
 	ret.Type = l.Type
 	ret.Vol = v.RawValue()
@@ -71,9 +72,7 @@ func MultiSample(l []*wtype.LHComponent, v []wunit.Volume) []*wtype.LHComponent 
 		vi := v[i]
 		//	ret.ID = j.ID
 		j.AddDaughterComponent(ret)
-		if j.HasAnyParent() {
-			ret.ParentID = j.ParentID
-		}
+		ret.ParentID = j.ID
 		ret.CName = j.Name()
 		ret.Type = j.Type
 		ret.Vol = vi.RawValue()
@@ -94,9 +93,7 @@ func SampleForConcentration(l *wtype.LHComponent, c wunit.Concentration) *wtype.
 	ret := wtype.NewLHComponent()
 	//	ret.ID = l.ID
 	l.AddDaughterComponent(ret)
-	if l.HasAnyParent() {
-		ret.ParentID = l.ParentID
-	}
+	ret.ParentID = l.ID
 	ret.CName = l.Name()
 	ret.Type = l.Type
 	ret.Conc = c.RawValue()
@@ -118,9 +115,7 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 	ret := wtype.NewLHComponent()
 	//	ret.ID = s.ID
 	s.AddDaughterComponent(ret)
-	if s.HasAnyParent() {
-		ret.ParentID = s.ParentID
-	}
+	ret.ParentID = s.ID
 	ret.CName = s.Name()
 	ret.Type = s.Type
 	ret.Vol = v.RawValue()
@@ -138,12 +133,11 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 // edited to take into account the volume of the other solution components
 func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
+	fmt.Println("STV ID HERE: ", ret.ID)
 
-	//	ret.ID = l.ID
 	l.AddDaughterComponent(ret)
-	if l.HasAnyParent() {
-		ret.ParentID = l.ParentID
-	}
+	ret.ParentID = l.ID
+
 	ret.CName = l.Name()
 	ret.Type = l.Type
 	ret.Tvol = v.RawValue()

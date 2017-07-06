@@ -294,6 +294,9 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 	lenToMake := len(insIn.Components)
 
+	fmt.Println("MIX (IN PLACE: ", insIn.IsMixInPlace(), ") CMPS ", len(cmps), " RES: ", insIn.Result.ID, " NAME: ", insIn.Result.CName, " ADDRESS: ", insIn.Welladdress)
+	fmt.Println("FIRST CMPID: ", cmps[0].ID, " AND NAME ", cmps[0].CName)
+	fmt.Println("---")
 	if insIn.IsMixInPlace() {
 		lenToMake = lenToMake - 1
 		cmps = cmps[1:len(cmps)]
@@ -399,14 +402,15 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 				v.Loc = fromPlateIDs[i][xx] + ":" + fromWellss[i][xx]
 			}
 			// add component to destination
-			// need to ensure data are consistent
+
+			// ensure we keep results straight
 			vd := v.Dup()
 			vd.ID = wlf.WContents.ID
 			vd.ParentID = wlf.WContents.ParentID
 			wlt.Add(vd)
 
-			// add daughter ID to component in
-
+			// TODO -- danger here, is result definitely set?
+			wlt.WContents.ID = insIn.Result.ID
 			wlf.WContents.AddDaughterComponent(wlt.WContents)
 
 			//fmt.Println("HERE GOES: ", i, wh[i], vf[i].ToString(), vt[i].ToString(), va[i].ToString(), pt[i], wt[i], pf[i], wf[i], pfwx[i], pfwy[i], ptwx[i], ptwy[i])

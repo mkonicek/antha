@@ -20,6 +20,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/disintegration/imaging"
+	"github.com/antha-lang/antha/microArch/factory"
 )
 
 //-------------------------------------------------------
@@ -964,6 +965,7 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 //Data
 //---------------------------------------------------
 
+//Collection of colors
 var colors = map[string]color.Color{
 
 	//ProteinPaintBox under natural light
@@ -1064,6 +1066,7 @@ var colors = map[string]color.Color{
 	"UVMagenta" :		color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)},
 }
 
+//Collection of color IDs
 var librarySets = map[string][]string{
 	"UV" : {"UVCupidPink",
 			"UVyellow",
@@ -1167,6 +1170,23 @@ var librarySets = map[string][]string{
 	},
 }
 
+//Living Colors, we use a minimalist object constructor with set defaults to facilitate editing this library
+var livingColors = map[string]LivingColor{
+	"UVDasherGFP"  : *MakeLivingColor(&color.NRGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},
+	"atgacggcattgacggaaggtgcaaaactgtttgagaaagagatcccgtatatcaccgaactggaaggcgacgtcgaaggtatgaaatttatcattaaaggcgagggtaccggtgacgcgaccacgggtaccattaaagcgaaatacatctgcactacgggcgacctgccggtcccgtgggcaaccctggtgagcaccctgagctacggtgttcagtgtttcgccaagtacccgagccacatcaaggatttctttaagagcgccatgccggaaggttatacccaagagcgtaccatcagcttcgaaggcgacggcgtgtacaagacgcgtgctatggttacctacgaacgcggttctatctacaatcgtgtcacgctgactggtgagaactttaagaaagacggtcacattctgcgtaagaacgttgcattccaatgcccgccaagcattctgtatattctgcctgacaccgttaacaatggcatccgcgttgagttcaaccaggcgtacgatattgaaggtgtgaccgaaaaactggttaccaaatgcagccaaatgaatcgtccgttggcgggctccgcggcagtgcatatcccgcgttatcatcacattacctaccacaccaaactgagcaaagaccgcgacgagcgccgtgatcacatgtgtctggtagaggtcgtgaaagcggttgatctggacacgtatcagtaatgagaattctgtacactcgag"),
+	"UVRudolphRFP"  : *MakeLivingColor(&color.NRGBA{R: uint8(218), G: uint8(92), B: uint8(69), A: uint8(255)},
+	"atgtccctgtcgaaacaagtactgccacacgatgttaagatgcgctatcatatggatggctgcgttaatggtcattctttcaccattgagggtgaaggtgcaggcaaaccgtatgagggcaagaagatcttggaactgcgcgtgacgaaaggtggcccgctgccttttgcgttcgatatcctgagcagcgtttttacctacggtaaccgttgtttttgcgagtatccagaggacatgccggactactttaaacagagcctgccggaaggtcattcttgggaacgcaccctgatgtttgaggatggcggttgtggtacggcgagcgcgcacatttccctggacaagaactgcttcgtgcacaagagcaccttccacggcgtcaatttcccggcaaacggtccggtcatgcaaaagaaagctatgaactgggagccgagcagcgaactgattacggcgtgcgacggtatcctgaaaggcgatgtgaccatgtttctgttgctggaaggtggccaccgtcttaaatgtcagttcaccaccagctacaaagcccacaaggcagttaagatgccgccgaatcacattatcgaacacgtgcttgttaaaaaagaggttgccgacggctttcagatccaagagcatgcggtcgcaaagcacttcaccgtcgacgttaaagaaacgtaatgagaattctgtacactcgag"),
+}
+
+//Collection of living color IDs
+var livingColorSets = map[string][]string {
+	"ProteinPaintBox": {
+		"UVDasherGFP",
+		"UVRudolphRFP",
+	},
+}
+
+
 //---------------------------------------------------
 //Types
 //---------------------------------------------------
@@ -1195,13 +1215,13 @@ type AnthaImg struct {
 
 //Set of types to use antha with biological colors
 type LivingColor struct {
-	RGBA			color.NRGBA
+	Color			color.NRGBA
 	Seq				wtype.DNASequence
-	Component		wtype.LHComponent
+	Component		*wtype.LHComponent
 }
 
 type LivingPalette struct {
-	Color			[]LivingColor
+	LivingColors			[]LivingColor
 }
 
 type LivingPix struct {
@@ -1223,6 +1243,7 @@ type LivingGIF struct {
 //Data Manipulation
 //---------------------------------------------------
 
+//standard colors selectiion
 func SelectLibrary (libID string)(palette color.Palette) {
 
 	selectedLib := librarySets[libID]
@@ -1237,6 +1258,26 @@ func SelectLibrary (libID string)(palette color.Palette) {
 func SelectColor (colID string) (color color.Color) {
 
 	color = colors[colID]
+
+	return
+}
+
+//living colors selection
+func SelectLivingColorLibrary (libID string)(palette LivingPalette) {
+
+	selectedLib := livingColorSets[libID]
+
+	for _, colorID := range selectedLib {
+
+		palette.LivingColors = append(palette.LivingColors, livingColors[colorID])
+	}
+
+	return
+}
+
+func SelectLivingColor (colID string)(color LivingColor){
+
+	color = livingColors[colID]
 
 	return
 }
@@ -1259,7 +1300,7 @@ func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 	return anthaColors[p.Index(c)]
 }
 
-//Given a color, finds the closest one in an anthapalette and returns the index for the anthacolor
+// Given a color, finds the closest one in an anthapalette and returns the index for the anthacolor
 func (p AnthaPalette) Index (c color.Color) int{
 
 	cr, cg, cb, ca := c.RGBA()
@@ -1268,6 +1309,42 @@ func (p AnthaPalette) Index (c color.Color) int{
 
 		//getting color of the current anthacolor in the anthaPalette
 		extractedColor := p.AnthaColors[i].Color
+
+  		vr, vg, vb, va := extractedColor.RGBA()
+  		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)
+  		if sum < bestSum {
+  			if sum == 0 {
+  				return i
+  			}
+  			ret, bestSum = i, sum
+  		}
+  	}
+  	return ret
+}
+
+// Returns the LivingPalette LivingColor closest to c in Euclidean R,G,B space.
+func (p LivingPalette) Convert(c color.Color) LivingColor {
+
+	//getting colors of the LivingColors in the LivingPalette
+	livingColors := p.LivingColors
+
+	//Checking if there are no colors in the given palette
+	if len(livingColors) == 0 {
+		fmt.Println(errors.New("No color found in the given palette"))
+	}
+
+	return livingColors[p.Index(c)]
+}
+
+// Given a color, finds the closest one in a LivingPalette and returns the index for the LivingPalette
+func (p LivingPalette) Index (c color.Color) int{
+
+	cr, cg, cb, ca := c.RGBA()
+  	ret, bestSum := 0, uint32(1<<32-1)
+  	for i, _ := range p.LivingColors {
+
+		//getting color of the current anthacolor in the anthaPalette
+		extractedColor := p.LivingColors[i].Color
 
   		vr, vg, vb, va := extractedColor.RGBA()
   		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)
@@ -1299,6 +1376,21 @@ func sqDiff(x, y uint32) uint32 {
 //---------------------------------------------------
 //Object constructors
 //---------------------------------------------------
+
+//Object constructor for a LivingColor with default settings
+func MakeLivingColor(color *color.NRGBA, seq string) (livingColor *LivingColor){
+
+	//generating DNA sequence object
+	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
+
+	//use water as LHComponent
+	component := factory.GetComponentByType("water")
+
+	//populate livingColor
+	livingColor = &LivingColor{*color,DNASequence,component}
+
+	return livingColor
+}
 
 //This will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
 func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette{
@@ -1373,6 +1465,78 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPla
 
 	return &anthaImg, goImg
 }
+
+//This function will create a LivingImage object from a digital image.
+func MakeLivingImg (goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImgPlate *wtype.LHPlate) (outputImg *LivingImg, resizedImg *goimage.NRGBA){
+
+	//Global placeholders
+	var livingPix		LivingPix
+	var livingImgPix	[]LivingPix
+	var livingImg		LivingImg
+
+	//Verify that the plate is the same size as the digital image. If not resize.
+	if goImg.Bounds().Dy() != livingImgPlate.WellsY(){
+		goImg = ResizeImagetoPlateMin(goImg, livingImgPlate)
+	}
+
+	//Iterate over pixels
+	b := goImg.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			//getting rgba values for the image pixel
+			r,g,b,a := goImg.At(x,y).RGBA()
+			var goPixColor = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+			//finding the anthaColor closest to the one given in the palette
+			var anthaColor = livingPalette.Convert(goPixColor)
+			livingPix.Color = anthaColor
+
+			//figuring out the pixel location on the plate
+			livingPix.Location = wtype.WellCoords{x,y}
+
+			//appending the pixel to the array that will go in the AnthaImage
+			livingImgPix = append(livingImgPix, livingPix)
+		}
+	}
+
+	//initiating complete image object
+	livingImg.Pix = livingImgPix
+	livingImg.Palette = *livingPalette
+	livingImg.Plate = *livingImgPlate
+
+	return &livingImg, goImg
+}
+
+//This will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
+func MakeLivingPalette (InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
+
+	//global placeholders
+	var err error
+
+	//checking that there are enough LHComponents to make the Palette
+	if len(InputPalette.LivingColors) != len(LHComponents) {
+		fmt.Errorf(err.Error())
+	} else {
+		//Adding the LHComponents to the livingColors
+		for i := range InputPalette.LivingColors {
+			InputPalette.LivingColors[i].Component = LHComponents[i]
+		}
+	}
+
+	return &InputPalette
+}
+
+//This will make a LivingGIF object given a slice of LivingImg
+func MakeLivingGIF (imgs []LivingImg) *LivingGIF {
+
+	var livingGIF LivingGIF
+
+	for _, img := range imgs {
+		livingGIF.Frames = append(livingGIF.Frames, img)
+	}
+
+	return &livingGIF
+}
+
 
 //---------------------------------------------------
 //Image manipulation

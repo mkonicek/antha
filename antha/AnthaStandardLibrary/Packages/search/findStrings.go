@@ -49,16 +49,12 @@ func (thing Thingfound) ToString() (descriptions string) {
 }
 
 // not perfect yet! issue with byte conversion of certain characters!
-// PLEASE STOP PRINTING SO MUCH
+// This returns positions in user format (i.e. the first position of the sequence will be 1 not 0)
 func Findall(bigthing string, smallthing string) (positions []int) {
 
 	positions = make([]int, 0)
 	count := strings.Count(bigthing, smallthing)
-	/*
-		fmt.Println("count", count)
-		fmt.Println("big seq", bigthing)
-		fmt.Println("small seq", smallthing)
-	*/
+
 	if smallthing == "" {
 		return
 	}
@@ -66,18 +62,11 @@ func Findall(bigthing string, smallthing string) (positions []int) {
 
 		pos := (strings.Index(bigthing, smallthing))
 		restofbigthing := bigthing[(pos + 1):]
-		//// fmt.Println("seq", bigthing)
-		//// fmt.Println("rest,", restofbigthing)
-		//pos = pos
-		//// fmt.Println("pos = ", pos)
+
 		for i := 0; i < count; i++ {
-			//// fmt.Println("pos = ", pos)
 			positions = append(positions, (pos + 1))
-			//// fmt.Println("positions", positions)
 			pos = pos + (strings.Index(restofbigthing, smallthing) + 1)
-			//// fmt.Println("pos2 = ", pos)
 			restofbigthing = bigthing[(pos + 1):]
-			//// fmt.Println("rest2,", restofbigthing)
 		}
 	}
 	return positions

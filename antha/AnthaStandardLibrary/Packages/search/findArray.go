@@ -133,10 +133,12 @@ func CheckArrayType(elements []interface{}) (typeName string, err error) {
 		if typeName != foundthistype && i != 0 {
 			return "mixed types", fmt.Errorf("found different types in []interface{} at %s: %s and %s ", element, typeName, foundthistype)
 		}
+
 		foundthistype = typeName
 		foundthesetypes = append(foundthesetypes, typeName)
 
 	}
+
 	return
 }
 

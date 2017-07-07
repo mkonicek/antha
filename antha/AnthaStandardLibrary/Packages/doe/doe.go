@@ -105,7 +105,7 @@ func (pair DOEPair) RoundLevels() (newpair DOEPair, err error) {
 			newlevels = append(newlevels, v)
 
 		} else {
-			return newpair, fmt.Errorf("cannot round non-float or conc value for level %s, %s: %s", i, level, err.Error())
+			return newpair, fmt.Errorf("cannot round non-float or conc value for level %d, %s: %s", i, level, err.Error())
 		}
 	}
 

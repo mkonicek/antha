@@ -903,34 +903,42 @@ func (lh *Liquidhandler) fix_post_ids() {
 }
 
 func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
-
-	for _, i := range rq.LHInstructions {
-		tx := strings.Split(i.Result.Loc, ":")
+	// Instructions updating a well
+	assignment := make(map[*wtype.LHWell]*wtype.LHInstruction)
+	for _, inst := range rq.LHInstructions {
+		tx := strings.Split(inst.Result.Loc, ":")
 
 		newid, ok := lh.plateIDMap[tx[0]]
-
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", tx[0]))
 		}
 
 		ip, ok := lh.FinalProperties.PlateLookup[newid]
-
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate %s", newid))
 		}
 
 		p, ok := ip.(*wtype.LHPlate)
-
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Got %s, should have *wtype.LHPlate", reflect.TypeOf(ip)))
 		}
 
-		w, ok := p.Wellcoords[tx[1]]
+		well, ok := p.Wellcoords[tx[1]]
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No well %s on plate %s", tx[1], tx[0]))
 		}
 
-		w.WContents.CName = i.Result.CName
+		oldInst := assignment[well]
+		if oldInst == nil {
+			assignment[well] = inst
+		} else if prev, cur := oldInst.Result.Generation(), inst.Result.Generation(); prev < cur {
+			assignment[well] = inst
+		}
 	}
+
+	for well, inst := range assignment {
+		well.WContents.CName = inst.Result.CName
+	}
+
 	return nil
 }

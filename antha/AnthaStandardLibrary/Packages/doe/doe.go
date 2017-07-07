@@ -278,6 +278,27 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 		}
 		return minlevel, fmt.Errorf("cannot find lowest level of MergedLevel: lowest found %s in %s", fmt.Sprintln(lowestMerged), pairSummary(pair))
 
+	} else if arraytype == "string" {
+		var lowest int
+		var lowestconc wunit.Concentration
+		for i, level := range pair.Levels {
+
+			conc, err := HandleConcFactor(pair.Factor, level)
+
+			if err != nil {
+				return minlevel, fmt.Errorf("cannot sort: non-numeric type of %s found and not possible to convert level %d level %s into concentration", arraytype, i, level)
+
+			}
+			if i == 0 {
+				lowest = i
+				lowestconc = conc
+			} else if conc.LessThanRounded(lowestconc, 9) {
+				lowest = i
+				lowestconc = conc
+			}
+
+		}
+		return pair.Levels[lowest], nil
 	}
 	return minlevel, fmt.Errorf("cannot sort non-numeric type of %s", arraytype)
 }

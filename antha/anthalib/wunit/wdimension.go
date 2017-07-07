@@ -192,6 +192,24 @@ func AddConcentrations(concs []Concentration) (newconc Concentration, err error)
 
 }
 
+// subtract concentrations
+func SubtractConcentrations(OriginalConc Concentration, subtractConcs []Concentration) (newConcentration Concentration) {
+
+	tempConc := (CopyConcentration(OriginalConc))
+	for _, conc := range subtractConcs {
+		if tempConc.Unit().PrefixedSymbol() == conc.Unit().PrefixedSymbol() {
+			newConcentration = NewConcentration(tempConc.RawValue()-conc.RawValue(), tempConc.Unit().PrefixedSymbol())
+			tempConc = (CopyConcentration(newConcentration))
+		} else {
+			newConcentration = NewConcentration(tempConc.SIValue()-conc.SIValue(), tempConc.Unit().BaseSISymbol())
+			tempConc = (CopyConcentration(newConcentration))
+		}
+
+	}
+	return
+
+}
+
 func (v Volume) Dup() Volume {
 	ret := NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
 	return ret

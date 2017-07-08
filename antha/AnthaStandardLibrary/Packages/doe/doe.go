@@ -943,6 +943,21 @@ type MergedLevel struct {
 }
 
 // returns keys in alphabetical order; values are returned in the order corresponding to the key order
+func (m MergedLevel) UnMerge() (factors []string, setpoints []interface{}) {
+
+	sortedKeys := m.Sort()
+
+	for _, key := range sortedKeys {
+
+		setpoint := m.OriginalFactorPairs[key]
+		factors = append(factors, key)
+		setpoints = append(setpoints, setpoint)
+	}
+
+	return
+}
+
+// returns keys in alphabetical order; values are returned in the order corresponding to the key order
 func (m MergedLevel) Sort() (orderedKeys []string) {
 	for k, _ := range m.OriginalFactorPairs {
 		orderedKeys = append(orderedKeys, k)
@@ -1070,6 +1085,27 @@ func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []strin
 		} else {
 			return mergedRuns, err
 		}
+	}
+	return
+}
+
+// Un merge mergedlevels into original factors and levels
+func UnMergeRuns(mergedRuns []Run) (originalRuns []Run) {
+
+	originalRuns = make([]Run, len(mergedRuns))
+
+	for i, run := range mergedRuns {
+		var newrun Run = Copy(run)
+		for j, setpoint := range run.Setpoints {
+			if merged, ok := setpoint.(MergedLevel); ok {
+				factors, setpoints := merged.UnMerge()
+				for k := range factors {
+					newrun = AddNewFactorFieldandValue(newrun, factors[k], setpoints[k])
+				}
+				newrun = DeleteFactorField(newrun, run.Factordescriptors[j])
+			}
+		}
+		originalRuns[i] = newrun
 	}
 	return
 }

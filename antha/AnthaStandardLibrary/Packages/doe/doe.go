@@ -105,7 +105,7 @@ func (pair DOEPair) RoundLevels() (newpair DOEPair, err error) {
 			newlevels = append(newlevels, v)
 
 		} else {
-			return newpair, fmt.Errorf("cannot round non-float or conc value for level %s, %s: %s", i, level, err.Error())
+			return newpair, fmt.Errorf("cannot round non-float or conc value for level %d, %s: %s", i, level, err.Error())
 		}
 	}
 
@@ -278,6 +278,27 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 		}
 		return minlevel, fmt.Errorf("cannot find lowest level of MergedLevel: lowest found %s in %s", fmt.Sprintln(lowestMerged), pairSummary(pair))
 
+	} else if arraytype == "string" {
+		var lowest int
+		var lowestconc wunit.Concentration
+		for i, level := range pair.Levels {
+
+			conc, err := HandleConcFactor(pair.Factor, level)
+
+			if err != nil {
+				return minlevel, fmt.Errorf("cannot sort: non-numeric type of %s found and not possible to convert level %d level %s into concentration", arraytype, i, level)
+
+			}
+			if i == 0 {
+				lowest = i
+				lowestconc = conc
+			} else if conc.LessThanRounded(lowestconc, 9) {
+				lowest = i
+				lowestconc = conc
+			}
+
+		}
+		return pair.Levels[lowest], nil
 	}
 	return minlevel, fmt.Errorf("cannot sort non-numeric type of %s", arraytype)
 }
@@ -922,6 +943,21 @@ type MergedLevel struct {
 }
 
 // returns keys in alphabetical order; values are returned in the order corresponding to the key order
+func (m MergedLevel) UnMerge() (factors []string, setpoints []interface{}) {
+
+	sortedKeys := m.Sort()
+
+	for _, key := range sortedKeys {
+
+		setpoint := m.OriginalFactorPairs[key]
+		factors = append(factors, key)
+		setpoints = append(setpoints, setpoint)
+	}
+
+	return
+}
+
+// returns keys in alphabetical order; values are returned in the order corresponding to the key order
 func (m MergedLevel) Sort() (orderedKeys []string) {
 	for k, _ := range m.OriginalFactorPairs {
 		orderedKeys = append(orderedKeys, k)
@@ -1049,6 +1085,27 @@ func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []strin
 		} else {
 			return mergedRuns, err
 		}
+	}
+	return
+}
+
+// Un merge mergedlevels into original factors and levels
+func UnMergeRuns(mergedRuns []Run) (originalRuns []Run) {
+
+	originalRuns = make([]Run, len(mergedRuns))
+
+	for i, run := range mergedRuns {
+		var newrun Run = Copy(run)
+		for j, setpoint := range run.Setpoints {
+			if merged, ok := setpoint.(MergedLevel); ok {
+				factors, setpoints := merged.UnMerge()
+				for k := range factors {
+					newrun = AddNewFactorFieldandValue(newrun, factors[k], setpoints[k])
+				}
+				newrun = DeleteFactorField(newrun, run.Factordescriptors[j])
+			}
+		}
+		originalRuns[i] = newrun
 	}
 	return
 }

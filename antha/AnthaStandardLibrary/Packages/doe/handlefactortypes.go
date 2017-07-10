@@ -25,9 +25,12 @@ package doe
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/factory"
 )
 
 // parses a factor name and value and returns an antha concentration.
@@ -71,5 +74,94 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 		return anthaConc, err
 	}
 
+	return
+}
+
+// parses a factor name and value and returns an antha Volume.
+// If the value cannot be converted to a valid Volume an error is returned.
+func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Volume, err error) {
+
+	if rawVolString, found := value.(string); found {
+
+		vol, err := wunit.ParseVolume(rawVolString)
+
+		if err == nil {
+			anthaVolume = vol
+		} else {
+			err = fmt.Errorf("No valid Volume found in ", rawVolString)
+			return anthaVolume, err
+		}
+
+		// if float use vol unit from header component
+	} else if rawVolFloat, found := value.(float64); found {
+
+		// handle floating point imprecision
+		rawVolFloat, err = wutil.Roundto(rawVolFloat, 6)
+
+		if err != nil {
+			return anthaVolume, err
+		}
+		vol, err := wunit.ParseVolume(header)
+
+		if err == nil {
+
+			volUnit := vol.Unit().PrefixedSymbol()
+
+			anthaVolume = wunit.NewVolume(rawVolFloat, volUnit)
+		} else {
+			err = fmt.Errorf("No valid Volume found in component %s so can't assign a Volume unit to value", header)
+			return anthaVolume, err
+		}
+
+	} else {
+		err = fmt.Errorf("problem with type of ", value, " expected string or float")
+		return anthaVolume, err
+	}
+
+	return
+}
+
+// parses a factor name and value and returns an LHComponent.
+// If the value cannot be converted to a valid component an error is returned.
+func HandleLHComponentFactor(header string, value interface{}) (component *wtype.LHComponent, err error) {
+
+	str, found := value.(string)
+
+	if found {
+		infactory := factory.ComponentInFactory(str)
+
+		if infactory {
+			component = factory.GetComponentByType(str)
+		} else {
+			component = factory.GetComponentByType("water")
+			component.CName = str
+		}
+
+	} else {
+		err = fmt.Errorf("problem with type of ", value, " expected string")
+		return
+	}
+	return
+}
+
+// parses a factor name and value and returns an LHComponent.
+// If the value cannot be converted to a valid component an error is returned.
+func HandleLHPlateFactor(header string, value interface{}) (plate *wtype.LHPlate, err error) {
+
+	str, found := value.(string)
+
+	if found {
+		infactory := factory.PlateInFactory(str)
+
+		if infactory {
+			plate = factory.GetPlateByType(str)
+		} else {
+			err = fmt.Errorf("Plate %s not found. Valid options are %s", str, strings.Join(factory.GetPlateList(), ";"))
+		}
+
+	} else {
+		err = fmt.Errorf("problem with type of ", value, " expected string")
+		return
+	}
 	return
 }

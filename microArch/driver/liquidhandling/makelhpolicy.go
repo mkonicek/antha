@@ -90,7 +90,6 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols["glycerol"] = MakeGlycerolPolicy()
 	pols["solvent"] = MakeSolventPolicy()
 	pols["default"] = MakeDefaultPolicy()
-	pols["foamy"] = MakeFoamyPolicy()
 	pols["dna"] = MakeDNAPolicy()
 	pols["DoNotMix"] = MakeDefaultPolicy()
 	pols["NeedToMix"] = MakeNeedToMixPolicy()
@@ -475,16 +474,7 @@ func MakeMultiWaterPolicy() wtype.LHPolicy {
 	pol["DESCRIPTION"] = "Default policy designed for pipetting water but permitting multichannel use. Includes a blowout step for added accuracy and no post mixing."
 	return pol
 }
-func MakeFoamyPolicy() wtype.LHPolicy {
-	foamypolicy := make(wtype.LHPolicy, 6)
-	foamypolicy.Set("DSPREFERENCE", 0)
-	foamypolicy.Set("TOUCHOFF", true)
-	foamypolicy.Set("CAN_MULTI", false)
-	foamypolicy.Set("CAN_MSA", false)
-	foamypolicy.Set("CAN_SDD", true)
-	foamypolicy.Set("DESCRIPTION", "Designed for foamy liquids.")
-	return foamypolicy
-}
+
 func MakeCulturePolicy() wtype.LHPolicy {
 	culturepolicy := make(wtype.LHPolicy, 10)
 	culturepolicy.Set("PRE_MIX", 2)

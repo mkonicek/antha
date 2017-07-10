@@ -681,26 +681,6 @@ func MakeLoadWaterPolicy() wtype.LHPolicy {
 	return loadpolicy
 }
 
-func MakeLoadlowPolicy() wtype.LHPolicy {
-	loadpolicy := make(wtype.LHPolicy)
-	loadpolicy["ASPSPEED"] = 1.0
-	loadpolicy["DSPSPEED"] = 1.0
-	loadpolicy["CAN_MULTI"] = false
-	loadpolicy["CAN_MSA"] = false
-	loadpolicy["CAN_SDD"] = false
-	loadpolicy["TOUCHOFF"] = false
-	loadpolicy["TIP_REUSE_LIMIT"] = 0
-	loadpolicy["DSPZOFFSET"] = 0.5
-	loadpolicy["NO_AIR_DISPENSE"] = true
-	loadpolicy["TOUCHOFF"] = false
-	loadpolicy["BLOWOUTREFERENCE"] = 1
-	loadpolicy["BLOWOUTOFFSET"] = 0.0
-	loadpolicy["BLOWOUTVOLUME"] = 0.0
-	loadpolicy["BLOWOUTVOLUMEUNIT"] = "ul"
-	loadpolicy["DESCRIPTION"] = "Policy designed for loading samples into agarose gel wells at faster rate than Load. Very slow dispense rate, no tip reuse and no blowout."
-	return loadpolicy
-}
-
 func MakeNeedToMixPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 16)
 	dnapolicy["POST_MIX"] = 3
@@ -875,12 +855,14 @@ func MakeHVFlowRatePolicy() wtype.LHPolicy {
 func MakeCarbonSourcePolicy() wtype.LHPolicy {
 	cspolicy := make(wtype.LHPolicy, 1)
 	cspolicy["DSPREFERENCE"] = 1
+	cspolicy["DESCRIPTION"] = "Custom policy for carbon source which dispenses above destination solution."
 	return cspolicy
 }
 
 func MakeNitrogenSourcePolicy() wtype.LHPolicy {
 	nspolicy := make(wtype.LHPolicy, 1)
 	nspolicy["DSPREFERENCE"] = 1
+	nspolicy["DESCRIPTION"] = "Custom policy for nitrogen source which dispenses above destination solution."
 	return nspolicy
 }
 

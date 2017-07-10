@@ -197,7 +197,6 @@ func (w *LHWell) Add(c *LHComponent) {
 		logger.Debug("WARNING: OVERFULL WELL AT ", w.Crds)
 	}
 
-	fmt.Println("WELL ", w.Crds, " MIX HERE ")
 	w.Contents().Mix(c)
 
 	//if wasEmpty {
@@ -680,16 +679,13 @@ func (w *LHWell) Contains(cmp *LHComponent) bool {
 	if cmp.IsInstance() {
 		if cmp.IsSample() {
 			//  look for the ID of its parent (we don't allow sampling from samples yet)
-			fmt.Println("Request for sample of: ", cmp.CName, " :", cmp.ParentID, ": WELL CONTS: ", w.WContents.CName, " :", w.WContents.ID, ":")
 			return cmp.ParentID == w.WContents.ID
 		} else {
 			// if this is just the whole component we check for *its* Id
-			fmt.Println("Request for instance: ", cmp.CName, " ", cmp.ID, " WELL CONTS: ", w.WContents.CName, " ", w.WContents.ID)
 			return cmp.ID == w.WContents.ID
 		}
 	} else {
 		// sufficient to be of same types
-		fmt.Println("Request for type: ", cmp.CName, " ", cmp.ID, " WELL CONTS: ", w.WContents.CName, " ", w.WContents.ID)
 		return cmp.IsSameKindAs(w.WContents)
 	}
 }

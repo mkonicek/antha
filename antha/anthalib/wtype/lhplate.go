@@ -238,8 +238,6 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume) ([]We
 		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 
-			fmt.Println("FOUND VOLUME ", v.ToString())
-
 			if v.LessThan(volWant) {
 				continue
 			}

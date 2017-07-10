@@ -80,20 +80,16 @@ func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *
 	getMaker(ctx).UpdateAfterInst(component.ID, comp.ID)
 	pinst := prompt(ctx, PromptOpts{Component: comp, ComponentIn: component, Message: message})
 	trace.Issue(ctx, pinst)
-	return component
+	return comp
 }
 
 func prompt(ctx context.Context, opts PromptOpts) *commandInst {
 	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
-	ins.Result = opts.Component
-	ins.AddComponent(opts.ComponentIn)
-
-	// do we update and return component as with Handle?!
-	// this requires fixing the issue with id tracking...
-	// will aim for this as a stretch goal
-
+	//inst.Result = opts.Component
+	inst.AddProduct(opts.Component)
+	inst.AddComponent(opts.ComponentIn)
 	cp := true
 	return &commandInst{
 		Args: []*wtype.LHComponent{opts.ComponentIn},

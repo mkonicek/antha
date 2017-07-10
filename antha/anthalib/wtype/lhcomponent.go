@@ -513,7 +513,6 @@ func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	cmp.AddParentComponent(cmp2)
 	//	cmp.ID = "component-" + GetUUID()
 	cmp.ID = GetUUID()
-	fmt.Println("MIX RESULT: ", cmp.CName, " ID OUT: ", cmp.ID)
 	cmp2.AddDaughterComponent(cmp)
 }
 

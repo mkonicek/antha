@@ -65,8 +65,8 @@ func getEdges(n *wtype.LHInstruction, inss map[string]*wtype.LHInstruction) []*w
 	// it's going to
 
 	for _, cmp := range n.Components {
+		// inss answers the question "which instruction made this?"
 		lhi, ok := inss[cmp.ID]
-
 		if ok {
 			ret = append(ret, lhi)
 		}

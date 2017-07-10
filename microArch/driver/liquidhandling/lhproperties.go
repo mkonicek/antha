@@ -712,7 +712,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 
 	// cmps are requests for components
 	for i, cmp := range cmps {
-		fmt.Println("GET: ", cmp.CName)
 		plateIDs[i] = make([]string, 0, 1)
 		wellCoords[i] = make([]string, 0, 1)
 		vols[i] = make([]wunit.Volume, 0, 1)
@@ -724,11 +723,8 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 			// check if the plate at position ipref has the
 			// component we seek
 
-			fmt.Println("I PREF: ", ipref)
-
 			p, ok := localplates[ipref]
 			if ok {
-				fmt.Println("GOT A PLATE")
 				// whaddya got?
 				// nb this won't work if we need to split a volume across several plates
 				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume())

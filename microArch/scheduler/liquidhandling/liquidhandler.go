@@ -472,6 +472,11 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	// assert we should have some instruction ordering
+
+	if len(request.Output_order) == 0 {
+		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
+	}
 	// convert requests to volumes and determine required stock concentrations
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
 
@@ -695,7 +700,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG
-		if true {
+		if false {
 			volc := vmap[k]
 			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
 		}

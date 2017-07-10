@@ -214,12 +214,14 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		v := request.LHInstructions[id]
 		// ignore non-mix
 		if v.Type != wtype.LHIMIX {
+			// the current contract on non-mix instructions is to pass in just one
+			// component as an input and one as an output
+			// on which basis we need only make sure the result has the same location
+			// as the input
+			v.Result.Loc = v.Components[0].Loc
 			continue
-		} else {
-			fmt.Println(v.Type, " ", wtype.LHIMIX, " WAAAAH? ")
 		}
 
-		fmt.Println("YOU SHITTING ME? ", v)
 		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
 		lk2[v.Result.ID] = v.ID
 	}
@@ -357,24 +359,27 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				s[i].Output = append(s[i].Output, true)
 			}
 		} else if v.IsMixInPlace() {
-			fmt.Println("WAH")
 			// the first component sets the destination
 			// and now it should indeed be set
 
-			fmt.Println("V HAS ", len(v.Components), " COMPONENTS")
-
+			// really?
 			if len(v.Components) == 0 {
 				continue
 			}
 
-			addr, ok := st.GetLocationOf(v.Components[0].ID)
+			addr := v.Components[0].Loc
 
-			if !ok {
-				err := wtype.LHError(wtype.LH_ERR_DIRE, "MIX IN PLACE WITH NO LOCATION SET")
-				return s, m, err
+			if v.Components[0].Loc == "" {
+				addr, ok := st.GetLocationOf(v.Components[0].ID)
+
+				if !ok {
+					err := wtype.LHError(wtype.LH_ERR_DIRE, "MIX IN PLACE WITH NO LOCATION SET")
+					return s, m, err
+				}
+
+				v.Components[0].Loc = addr
 			}
 
-			v.Components[0].Loc = addr
 			tx := strings.Split(addr, ":")
 			request.LHInstructions[k].Welladdress = tx[1]
 			request.LHInstructions[k].SetPlateID(tx[0])

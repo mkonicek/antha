@@ -178,11 +178,17 @@ type ByColumn []*wtype.LHInstruction
 func (bg ByColumn) Len() int      { return len(bg) }
 func (bg ByColumn) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
 func (bg ByColumn) Less(i, j int) bool {
+	// compare any messages present (only really applies to prompts)
+	c := strings.Compare(bg[i].Message, bg[j].Message)
+
+	if c != 0 {
+		return c < 0
+	}
 	// compare the plate names (which must exist now)
 	//	 -- oops, I think this has ben violated by moving the sort
 	// 	 TODO check and fix
 
-	c := strings.Compare(bg[i].PlateName, bg[j].PlateName)
+	c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
 
 	if c != 0 {
 		return c < 0
@@ -199,8 +205,16 @@ type ByResultComponent []*wtype.LHInstruction
 func (bg ByResultComponent) Len() int      { return len(bg) }
 func (bg ByResultComponent) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
 func (bg ByResultComponent) Less(i, j int) bool {
+	// compare any messages present
+
+	c := strings.Compare(bg[i].Message, bg[j].Message)
+
+	if c != 0 {
+		return c < 0
+	}
+
 	// compare the names of the resultant components
-	c := strings.Compare(bg[i].Result.CName, bg[j].Result.CName)
+	c = strings.Compare(bg[i].Result.CName, bg[j].Result.CName)
 
 	if c != 0 {
 		return c < 0
@@ -252,13 +266,14 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations
+	// *IN REVERSE ORDER*
+
 	// this routine defines equivalence classes of nodes
 
 	for _, n := range sortedNodes {
 		addToIChain(ic, n, tg)
 	}
 
-	// finally we sort outputs
 	sortOutputs(ic, sort)
 
 	return ic
@@ -272,7 +287,7 @@ func sortOutputs(ic *IChain, byComponent bool) {
 	}
 
 	if byComponent {
-		sort.Sort(ByComponent(ic.Values))
+		sort.Sort(ByResultComponent(ic.Values))
 	} else {
 		sort.Sort(ByColumn(ic.Values))
 	}
@@ -291,95 +306,72 @@ func findNode(ic *IChain, n graph.Node, tg graph.Graph) *IChain {
 	} else if ic.Child != nil {
 		return findNode(ic.Child, n, tg)
 	} else {
-		return NewIChain(ic)
+		newNode := NewIChain(ic)
+		ic.Child = newNode
+		return newNode
 	}
 }
 
 func thisNode(ic *IChain, n graph.Node, tg graph.Graph) bool {
-	inEdges := nodeIns(n, tg)
+	// if this looks weird it's because "output" below really means "input"
+	// since we have reversed dependency order
 
-	// if this node has no in edges we return immediately
-	if len(inEdges) == 0 {
+	// 1 if this node has no outputs it belongs at the top of the chain
+
+	if tg.NumOuts(n) == 0 {
 		return true
 	}
 
-	// look one up the chain to see if this instruction is in the output
-	outEdges := chainOuts(ic, tg)
+	// 2 if this node does have outputs and this chain node is the top
+	//   it does not belong here
 
-	if len(outEdges == 0) {
-		// this node has ins but the parent in the chain has no outs, so not this one
+	if ic.Parent == nil {
 		return false
 	}
 
-	// compare the sets
+	// 3 if this node outputs any of the nodes in the parent it belongs here
 
-	return len(meetInsSets(inEdges, outEdges)) != 0
-}
+	for i := 0; i < tg.NumOuts(n); i++ {
+		o := tg.Out(n, i)
 
-func nodeIns(n graph.Node, tg graph.Graph) []*wtype.LHInstruction {
-	ins := n.(*wtype.LHInstruction)
-
-	r := make([]*wtype.LHInstruction, 0, 10)
-
-	for insFrom, v := range tg.Edges {
-		for _, e := range v {
-			ins2 := v.(*wtype.LHInstruction)
-			if ins2 == ins {
-				r = append(r, insFrom.(*wtype.LHInstruction))
-				break
+		for _, ins := range ic.Parent.Values {
+			if o == graph.Node(ins) {
+				return true
 			}
 		}
 	}
 
-	return r
+	return false
 }
 
-func chainOuts(ic *IChain, tg graph.Graph) []*wtype.LHInstruction {
-	// we don't really care about duplicates in this list so just take unions
-	ret := make([]*wtype.LHInstruction, 0, 2*len(ic.Values))
-
-	for _, v := range ret.Values {
-		edge := tg.Edges[graph.Node(v)]
-
-		for _, i := range edge {
-			ret = append(ret, i.(*wtype.LHInstruction))
-		}
+func getInstructionSet(rq *LHRequest) []*wtype.LHInstruction {
+	ret := make([]*wtype.LHInstruction, 0, len(rq.LHInstructions))
+	for _, v := range rq.LHInstructions {
+		ret = append(ret, v)
 	}
 
 	return ret
 }
 
-func meetInsSets(ins, outs []*wtype.LHInstruction) []*wtype.LHInstruction {
-	m := make(map[*wtype.LHInstruction]bool, len(ins))
-
-	for _, i := range ins {
-		m[i] = true
-	}
-
-	r := make([]string, 0, len(outs))
-
-	for _, o := range outs {
-		if m[o] {
-			r = append(r, o)
-		}
-	}
-
-	return r
-}
-
 func set_output_order(rq *LHRequest) error {
-	// use topoSort
-	tg := makeTGraph(rq.LHInstructions)
+	// guarantee all nodes are dependency-ordered
 
-	// TODO --> add NodeOrder definition to allow output sorting
-	sorted, err := graph.TopoSort(TopoSortOpt{Graph: tg})
+	unsorted := getInstructionSet(rq)
+
+	tg := makeTGraph(unsorted)
+	sorted, err := graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
 	if err != nil {
 		return err
 	}
 
-	it := convertToInstructionChain(sorted, rq.Options.OutputSort)
+	// make into equivalence classes and sort according to defined order
+	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort)
+
+	// populate the request
 	rq.InstructionChain = it
+	rq.Output_order = it.Flatten()
+
 	return nil
 }
 
@@ -404,8 +396,6 @@ func set_output_order_orig(rq *LHRequest) error {
 	// etc.
 
 	for _, v := range sorted {
-		// fmt.Println("V: ", v.Result.CName, " ID: ", v.Result.ID, " PARENTS: ", v.ParentString(), " GENERATION: ", v.Generation())
-
 		it.Add(v)
 	}
 
@@ -442,13 +432,29 @@ func merge_instructions(insIn []driver.RobotInstruction, aggregates [][]int) []d
 
 		// otherwise more than one here
 
-		newtfr := insIn[ar[0]].(*driver.TransferInstruction)
+		newtfr, ok := insIn[ar[0]].(*driver.TransferInstruction)
 
-		for k := 1; k < len(ar); k++ {
-			newtfr.MergeWith(insIn[ar[k]].(*driver.TransferInstruction))
+		if ok {
+			for k := 1; k < len(ar); k++ {
+				newtfr.MergeWith(insIn[ar[k]].(*driver.TransferInstruction))
+			}
+
+			ret = append(ret, newtfr)
+		} else {
+			// must be a message
+			ins1 := insIn[ar[0]]
+			ret = append(ret, ins1)
+
+			// put in any distinct instructions
+
+			for i := 1; i < len(ar); i++ {
+				if insIn[ar[i]].(*driver.MessageInstruction).Message != ins1.(*driver.MessageInstruction).Message {
+					ret = append(ret, insIn[ar[i]])
+					ins1 = insIn[ar[i]]
+				}
+			}
+
 		}
-
-		ret = append(ret, newtfr)
 	}
 
 	return ret
@@ -460,11 +466,6 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 	lenToMake := len(insIn.Components)
 
-	/*	TODO -- remove
-		fmt.Println("MIX (IN PLACE: ", insIn.IsMixInPlace(), ") CMPS ", len(cmps), " RES: ", insIn.Result.ID, " NAME: ", insIn.Result.CName, " ADDRESS: ", insIn.Welladdress)
-		fmt.Println("FIRST CMPID: ", cmps[0].ID, " AND NAME ", cmps[0].CName)
-		fmt.Println("---")
-	*/
 	if insIn.IsMixInPlace() {
 		lenToMake = lenToMake - 1
 		cmps = cmps[1:len(cmps)]

@@ -22,6 +22,16 @@ func NewIChain(parent *IChain) *IChain {
 	return &it
 }
 
+func (it *IChain) Reverse() {
+	if it.Child != nil {
+		it.Child.Reverse()
+	}
+	// swap parent and child
+	p := it.Parent
+	it.Parent = it.Child
+	it.Child = p
+}
+
 func (it *IChain) ValueIDs() []string {
 	r := make([]string, 0, 1)
 

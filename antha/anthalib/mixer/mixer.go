@@ -44,9 +44,8 @@ func SampleAll(l *wtype.LHComponent) *wtype.LHComponent {
 // take a sample of volume v from this liquid
 func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
+	fmt.Println("SAMPLING: ", l.CName)
 	//	ret.ID = l.ID
-	fmt.Println("SAMPLE ID WOO ", ret.ID, "PARENT: ", l.ID)
-
 	l.AddDaughterComponent(ret)
 	ret.ParentID = l.ID
 	ret.CName = l.Name()

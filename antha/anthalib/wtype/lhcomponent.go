@@ -784,7 +784,7 @@ func (lhc *LHComponent) SetValue(b bool) {
 	lhc.Extra["valuable"] = b
 }
 
-const InstanceMarker = "INSTANCE"
+const instanceMarker = "INSTANCE"
 
 func (lhc *LHComponent) DeclareInstance() {
 	// everything starts off as a Type
@@ -795,7 +795,7 @@ func (lhc *LHComponent) DeclareInstance() {
 			lhc.Extra = make(map[string]interface{})
 		}
 
-		lhc.Extra[InstanceMarker] = true
+		lhc.Extra[instanceMarker] = true
 	}
 }
 
@@ -804,7 +804,7 @@ func (lhc *LHComponent) IsInstance() bool {
 		return false
 	}
 
-	temp, ok := lhc.Extra[InstanceMarker]
+	temp, ok := lhc.Extra[instanceMarker]
 
 	if !ok {
 		return false
@@ -813,7 +813,7 @@ func (lhc *LHComponent) IsInstance() bool {
 	b, ok := temp.(bool)
 
 	if !ok {
-		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Curently set to %v", InstanceMarker, b))
+		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Curently set to %v", instanceMarker, b))
 	}
 
 	return b
@@ -823,7 +823,7 @@ func (lhc *LHComponent) DeclareNotInstance() {
 	// explicitly set instance status to false
 
 	lhc.DeclareInstance() // lazy: make sure instance status is initialised
-	lhc.Extra[InstanceMarker] = false
+	lhc.Extra[instanceMarker] = false
 }
 
 func (lhc *LHComponent) IsSameKindAs(c2 *LHComponent) bool {

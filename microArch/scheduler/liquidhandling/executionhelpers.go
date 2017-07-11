@@ -368,6 +368,8 @@ func set_output_order(rq *LHRequest) error {
 	// make into equivalence classes and sort according to defined order
 	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort)
 
+	it.Print()
+
 	// populate the request
 	rq.InstructionChain = it
 	rq.Output_order = it.Flatten()
@@ -474,6 +476,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	wh := make([]string, 0, lenToMake)       // component types
 	va := make([]wunit.Volume, 0, lenToMake) // volumes
 
+	fmt.Println("CONVERT ", insIn.ID, " ", wtype.InsType(insIn.Type), " ", insIn.Result.CName)
 	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol, wtype.LHVChannel, 1, true)
 
 	if err != nil {

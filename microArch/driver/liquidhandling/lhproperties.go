@@ -748,7 +748,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 		}
 
 		if !foundIt {
-			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SOURCE FOR ", cmp.CName, " at volume ", cmp.Volume().ToString()))
+			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("749: NO SOURCE FOR ", cmp.CName, " at volume ", cmp.Volume().ToString()))
 			return plateIDs, wellCoords, vols, err
 		}
 	}

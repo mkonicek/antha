@@ -464,6 +464,20 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 //
 
 func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
+	// confess, woman
+
+	fmt.Println("I CONFESS")
+	for _, ins := range request.LHInstructions {
+		fmt.Print(wtype.InsType(ins.Type), " ", ins.ID, " ")
+
+		for _, c := range ins.Components {
+			fmt.Print(c.CName, " --- ")
+		}
+
+		fmt.Println(":", ins.Result.CName)
+	}
+	fmt.Println("NOT YOU")
+
 	// figure out the output order
 
 	err := set_output_order(request)
@@ -471,6 +485,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("OO: ", len(request.Output_order), " LHI: ", len(request.LHInstructions))
 
 	// assert we should have some instruction ordering
 

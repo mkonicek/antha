@@ -235,6 +235,7 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume) ([]We
 		}
 
 		//if w.Contents().CName == cmp.CName {
+		fmt.Println(cmp.CName, " Instance: ", cmp.IsInstance(), " ", w.Contents().CName)
 		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 

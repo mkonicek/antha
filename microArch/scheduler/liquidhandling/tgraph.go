@@ -66,7 +66,14 @@ func getEdges(n *wtype.LHInstruction, inss map[string]*wtype.LHInstruction) []*w
 
 	for _, cmp := range n.Components {
 		// inss answers the question "which instruction made this?"
-		lhi, ok := inss[cmp.ID]
+		// for samples we need to ask for the parent component
+		var lhi *wtype.LHInstruction
+		var ok bool
+		if cmp.IsSample() {
+			lhi, ok = inss[cmp.ParentID]
+		} else {
+			lhi, ok = inss[cmp.ID]
+		}
 		if ok {
 			ret = append(ret, lhi)
 		}

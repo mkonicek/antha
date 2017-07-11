@@ -227,6 +227,7 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume) ([]We
 	// find any well with at least as much as we need
 	// if exists, return, if not then fall through
 
+	fmt.Println("TRYING FOR ", cmp.CName, " ", cmp.ID, " INST? ", cmp.IsInstance())
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
@@ -235,7 +236,6 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume) ([]We
 		}
 
 		//if w.Contents().CName == cmp.CName {
-		fmt.Println(cmp.CName, " Instance: ", cmp.IsInstance(), " ", w.Contents().CName)
 		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 

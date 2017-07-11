@@ -296,15 +296,21 @@ func sortOutputs(ic *IChain, byComponent bool) {
 }
 
 func addToIChain(ic *IChain, n graph.Node, tg graph.Graph) {
-	cur := findNode(ic, n, tg)
+	deps := make(map[graph.Node]bool)
+
+	for i := 0; i < tg.NumOuts(n); i++ {
+		deps[tg.Out(n, i)] = true
+	}
+
+	cur := findNode(ic, n, tg, deps)
 	cur.Values = append(cur.Values, n.(*wtype.LHInstruction))
 }
 
-func findNode(ic *IChain, n graph.Node, tg graph.Graph) *IChain {
-	if thisNode(ic, n, tg) {
+func findNode(ic *IChain, n graph.Node, tg graph.Graph, deps map[graph.Node]bool) *IChain {
+	if thisNode(ic, n, tg, deps) {
 		return ic
 	} else if ic.Child != nil {
-		return findNode(ic.Child, n, tg)
+		return findNode(ic.Child, n, tg, deps)
 	} else {
 		newNode := NewIChain(ic)
 		ic.Child = newNode
@@ -312,34 +318,25 @@ func findNode(ic *IChain, n graph.Node, tg graph.Graph) *IChain {
 	}
 }
 
-func thisNode(ic *IChain, n graph.Node, tg graph.Graph) bool {
+func thisNode(ic *IChain, n graph.Node, tg graph.Graph, deps map[graph.Node]bool) bool {
 	// if this looks weird it's because "output" below really means "input"
 	// since we have reversed dependency order
 
-	// 1 if this node has no outputs it belongs at the top of the chain
+	// delete any deps satisfied by this node
 
-	if tg.NumOuts(n) == 0 {
+	if ic.Parent != nil {
+		for _, v := range ic.Parent.Values {
+			delete(deps, graph.Node(v))
+		}
+	}
+
+	// have we seen all of the outputs? If so, stop here
+
+	if len(deps) == 0 {
 		return true
 	}
 
-	// 2 if this node does have outputs and this chain node is the top
-	//   it does not belong here
-
-	if ic.Parent == nil {
-		return false
-	}
-
-	// 3 if this node outputs any of the nodes in the parent it belongs here
-
-	for i := 0; i < tg.NumOuts(n); i++ {
-		o := tg.Out(n, i)
-
-		for _, ins := range ic.Parent.Values {
-			if o == graph.Node(ins) {
-				return true
-			}
-		}
-	}
+	// if not
 
 	return false
 }
@@ -364,6 +361,20 @@ func set_output_order(rq *LHRequest) error {
 	if err != nil {
 		return err
 	}
+	// confess, woman
+
+	fmt.Println("I CONFESS")
+	for _, nod := range sorted {
+		ins := nod.(*wtype.LHInstruction)
+		fmt.Print(wtype.InsType(ins.Type), " ", ins.ID, " ")
+
+		for _, c := range ins.Components {
+			fmt.Print(c.CName, " --- ")
+		}
+
+		fmt.Println(":", ins.Result.CName, "(", ins.Result.ID, ")")
+	}
+	fmt.Println("NOT YOU")
 
 	// make into equivalence classes and sort according to defined order
 	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort)

@@ -63,10 +63,11 @@ func (it *IChain) Print() {
 		if it.Values[0].Type == wtype.LHIMIX {
 			fmt.Print("\tINPUTS: ", len(it.Values), ":")
 			for j := 0; j < len(it.Values); j++ {
-				fmt.Printf("%2d: ", j)
+				fmt.Printf("%2d: %s ", j, it.Values[j].ID)
 				for i := 0; i < len(it.Values[j].Components); i++ {
-					fmt.Print(" ", it.Values[j].Components[i].CName)
+					fmt.Print(" ", it.Values[j].Components[i].CName, " (", it.Values[j].Components[i].ID, ") ")
 				}
+				fmt.Print(":", it.Values[j].Result.ID)
 				fmt.Printf("-- ")
 			}
 		} else if it.Values[0].Type == wtype.LHIPRM {

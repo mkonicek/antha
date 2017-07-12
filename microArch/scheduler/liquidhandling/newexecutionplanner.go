@@ -59,7 +59,7 @@ func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *li
 			ris.Add(prm)
 			instrx = append(instrx, prm)
 		} else {
-			transIns, err := ConvertInstruction(ins, robot, request.CarryVolume)
+			transIns, err := ConvertInstruction(ins, robot, request.CarryVolume, request.UseLegacyVolume())
 
 			if err != nil {
 				return request, err

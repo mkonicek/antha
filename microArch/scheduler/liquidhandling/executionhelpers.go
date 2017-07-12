@@ -474,7 +474,7 @@ func merge_instructions(insIn []driver.RobotInstruction, aggregates [][]int) []d
 }
 
 // TODO -- refactor this to pass robot through
-func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, carryvol wunit.Volume) (insOut *driver.TransferInstruction, err error) {
+func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, carryvol wunit.Volume, legacyVolume bool) (insOut *driver.TransferInstruction, err error) {
 	cmps := insIn.Components
 
 	lenToMake := len(insIn.Components)
@@ -488,7 +488,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	va := make([]wunit.Volume, 0, lenToMake) // volumes
 
 	fmt.Println("CONVERT ", insIn.ID, " ", wtype.InsType(insIn.Type), " ", insIn.Result.CName)
-	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol, wtype.LHVChannel, 1, true)
+	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol, wtype.LHVChannel, 1, true, legacyVolume)
 
 	if err != nil {
 		return nil, err

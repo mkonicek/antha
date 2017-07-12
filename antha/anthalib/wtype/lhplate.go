@@ -214,7 +214,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 }
 
 // this gets ONE component... possibly from several wells
-func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
@@ -241,8 +241,11 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume) ([]We
 
 			fmt.Println("FOUND IT AT VOLUME ", v.ToString())
 
-			if v.LessThan(volWant) {
-				continue
+			// check volume unless this is an instance and we are tolerating this
+			if !cmp.IsInstance() || !legacyVolume {
+				if v.LessThan(volWant) {
+					continue
+				}
 			}
 
 			volGot.Add(volWant)

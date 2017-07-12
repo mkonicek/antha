@@ -593,7 +593,7 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 }
 
 // returns go: [transfer1][c1c2c3c4...], [transfer2][c1c2c3c4...]
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
+func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 	plateIDs = make([][]string, len(cmps))
 	wellCoords = make([][]string, len(cmps))
 	vols = make([][]wunit.Volume, len(cmps))
@@ -617,7 +617,7 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 		}
 	}
 	// if we really can't get anywhere, try this badger
-	return lhp.GetComponentsSingle(cmps, carryvol)
+	return lhp.GetComponentsSingle(cmps, carryvol, legacyVolume)
 }
 
 func GetLocTox(cmp *wtype.LHComponent) ([]string, error) {
@@ -697,7 +697,7 @@ func (lhp *LHProperties) mergeInputOutputPreferences() []string {
 // the ID may or may not refer to an instance which is previously made
 // but by this point we must have concrete locations for everything
 
-func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([][]string, [][]string, [][]wunit.Volume, error) {
+func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
 	plateIDs := make([][]string, len(cmps))
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
@@ -727,7 +727,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 			if ok {
 				// whaddya got?
 				// nb this won't work if we need to split a volume across several plates
-				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume())
+				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume(), legacyVolume)
 
 				if ok {
 					foundIt = true
@@ -760,7 +760,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 // + a measure of carry volume
 // returns lists of plate IDs + wells from which to get components or error
 
-func (lhp *LHProperties) legacyGetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume) ([][]string, [][]string, [][]wunit.Volume, error) {
+func (lhp *LHProperties) legacyGetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
 	plateIDs := make([][]string, len(cmps))
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
@@ -825,7 +825,7 @@ func (lhp *LHProperties) legacyGetComponentsSingle(cmps []*wtype.LHComponent, ca
 				if ok {
 					// whaddya got?
 					// nb this won't work if we need to split a volume across several plates
-					wcarr, varr, ok := p.BetterGetComponent(vdup, lhp.MinPossibleVolume())
+					wcarr, varr, ok := p.BetterGetComponent(vdup, lhp.MinPossibleVolume(), legacyVolume)
 
 					if ok {
 						foundIt = true

@@ -207,6 +207,11 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 	lhr.Input_plates[p.ID] = p
 }
 
+func (lhr *LHRequest) UseLegacyVolume() bool {
+	// magically create extra volumes for intermediates?
+	return lhr.Options.LegacyVolume
+}
+
 type LHPolicyManager struct {
 	SystemPolicies *wtype.LHPolicyRuleSet
 	UserPolicies   *wtype.LHPolicyRuleSet

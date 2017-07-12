@@ -59,7 +59,7 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 //	etc.
 //
 
-func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
+func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 
 	for i := 0; i < inssIn.MaxLen(); i++ {
@@ -86,7 +86,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		// the alignment here just says component i comes from fromWells[i]
 		// it says nothing about which channel should be used
-		fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent)
+		fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent, legacyVolume)
 
 		if err != nil {
 			return nil, err

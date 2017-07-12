@@ -173,6 +173,11 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	req.Options.OutputSort = a.opt.OutputSort
 
+	// legacy volume use
+
+	fmt.Println("SETTING REQ OPTIONS LEGACYVOLUME TO :", a.opt.LegacyVolume)
+	req.Options.LegacyVolume = a.opt.LegacyVolume
+
 	err := req.ConfigureYourself()
 	if err != nil {
 		return nil, err

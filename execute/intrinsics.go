@@ -179,7 +179,7 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 
 	fmt.Print("MIXING: ", inst.ID, " ")
 	for _, c := range inst.Components {
-		fmt.Print(c.CName, ":::", c.ID, " ")
+		fmt.Print(c.CName, ":::", c.ID, ":::", c.Volume().ToString(), " ")
 	}
 
 	fmt.Println("RESULT: ", inst.Result.CName, "(", inst.Result.ID, ")")

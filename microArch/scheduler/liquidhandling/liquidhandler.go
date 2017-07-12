@@ -913,12 +913,12 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 	// Instructions updating a well
 	assignment := make(map[*wtype.LHWell]*wtype.LHInstruction)
 	for _, inst := range rq.LHInstructions {
-		tx := strings.Split(inst.Result.Loc, ":")
-
+		// ignore non -mix instructions
 		if inst.Type != wtype.LHIMIX {
 			continue
 		}
 
+		tx := strings.Split(inst.Result.Loc, ":")
 		newid, ok := lh.plateIDMap[tx[0]]
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", tx[0]))

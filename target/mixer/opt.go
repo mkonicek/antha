@@ -18,6 +18,7 @@ var (
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
 		PlanningVersion:      "ep2",
+		LegacyVolume:         true,
 	}
 )
 

@@ -115,7 +115,7 @@ type DNA struct {
 
 // DNAsequence is a type of Biosequence
 type DNASequence struct {
-	Nm             string    `json:"jm"`
+	Nm             string    `json:"nm"`
 	Seq            string    `json:"seq"`
 	Plasmid        bool      `json:"plasmid"`
 	Singlestranded bool      `json:"single_stranded"`
@@ -275,6 +275,26 @@ type Overhang struct {
 	Length          int    `json:"length"`
 	Sequence        string `json:"sequence"`
 	Phosphorylation bool   `json:"phosphorylation"`
+}
+
+func (oh Overhang) OverHangAt5PrimeEnd() (sequence string) {
+	if oh.End == 5 {
+		if oh.Type == OVERHANG {
+			return oh.Sequence
+		}
+
+	}
+	return ""
+}
+
+func (oh Overhang) OverHangAt3PrimeEnd() (sequence string) {
+	if oh.End == 3 {
+		if oh.Type == OVERHANG {
+			return oh.Sequence
+		}
+
+	}
+	return ""
 }
 
 func (dna *DNASequence) Sequence() string {

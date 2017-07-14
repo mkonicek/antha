@@ -28,13 +28,7 @@ import (
 	"strconv"
 	"strings"
 
-	//"os"
-	//"path/filepath"
-
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -42,7 +36,6 @@ import (
 
 type Primer struct {
 	wtype.DNASequence
-	//Sequence    string
 	Length      int
 	GCContent   float64
 	Reverse     bool
@@ -127,23 +120,29 @@ func BasicMeltingTemp(primersequence wtype.DNASequence) (meltingtemp wunit.Tempe
 
 // define region in DNA sequence
 // this is directionless and does not check for reverse complement
-// if endposition < startposition and sequence is a plasmid then the end of sequence will be used
+// assumes positions stated are in user format (i.e. first position is 1 and not 0)
 func DNAregion(sequence wtype.DNASequence, startposition int, endposition int) (region wtype.DNASequence) {
 
 	dnaseq := sequence.Sequence()
 
-	//define region in sequence to create primer. NB: Sequence position will start from 0 not 1.
+	//define region in sequence to create primer.
 	if endposition > startposition {
 		// fix properly!!!
 		if startposition == 0 {
 			startposition = 1
 		}
+
 		if endposition > len(dnaseq) {
-			endposition = len(dnaseq) - 1
+			message := fmt.Sprint("endposition ", endposition, " exceeds length of sequence ", sequence.Name(), " Length: ", len(dnaseq))
+			panic(message)
+			//endposition = len(dnaseq) - 1
 		}
 		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:endposition])
 	} else if endposition < startposition && sequence.Plasmid {
 		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:]+dnaseq[:endposition])
+	} else if endposition < startposition && !sequence.Plasmid {
+		message := fmt.Sprint("DNA Region start position cannot be larger than end position for linear dna fragments. startposition: ", startposition, "endposition", endposition, "Sequence:", sequence)
+		panic(message)
 	}
 	return
 
@@ -300,7 +299,7 @@ func FindPositioninSequence(largeSequence wtype.DNASequence, smallSequence wtype
 	}
 	//if !seqsfound[0].Reverse {
 	start = seqsfound[0].Positions[0]
-	end = seqsfound[0].Positions[0] + len(smallSequence.Sequence())
+	end = seqsfound[0].Positions[0] + len(smallSequence.Sequence()) - 1
 	//}
 	return
 }

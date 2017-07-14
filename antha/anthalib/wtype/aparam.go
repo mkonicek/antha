@@ -107,6 +107,7 @@ func MakePolicyItems() AParamSet {
 	alhpis["DONT_BE_DIRTY"] = AParam{Name: "DONT_BE_DIRTY", Type: typemap["bool"], Desc: "Don't switch this off"}
 	alhpis["NO_AIR_DISPENSE"] = AParam{Name: "NO_AIR_DISPENSE", Type: typemap["bool"], Desc: "Prevent dispensing anywhere other than under liquid?"}
 	alhpis["CAN_MSA"] = AParam{Name: "CAN_MSA", Type: typemap["bool"], Desc: "Permissible to aspirate from multiple sources? -- currently non functional"}
+	alhpis["DESCRIPTION"] = AParam{Name: "DESCRIPTION", Type: typemap["string"], Desc: "Summary of LHPolicy to present to the user"}
 	return alhpis
 }
 

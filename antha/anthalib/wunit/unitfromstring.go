@@ -48,7 +48,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 	var valueandunit string
 	var unit string
 	var valueString string
-
+	var notConcFields []string
 	for key, _ := range approvedunits {
 		for i, field := range fields {
 
@@ -62,6 +62,12 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 						valueString = fields[i-1]
 						unit = field
 						valueandunit = valueString + unit
+						if (i - 1) > 0 {
+							notConcFields = append(notConcFields, fields[:i-1]...)
+						}
+						if len(fields) > i+1 {
+							notConcFields = append(notConcFields, fields[i+1:]...)
+						}
 					}
 					// support for cases where concentration unit is given but no value
 				} else if trimmed := strings.Trim(field, "()"); trimmed == key {
@@ -69,6 +75,12 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 						longestmatchedunit = key
 						unitmatchlength = len(key)
 						valueandunit = field
+						if i > 0 {
+							notConcFields = append(notConcFields, fields[:i]...)
+						}
+						if len(fields) > i+1 {
+							notConcFields = append(notConcFields, fields[i+1:]...)
+						}
 					}
 				}
 				// if value and unit are one joined field
@@ -77,6 +89,12 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 					longestmatchedunit = key
 					unitmatchlength = len(key)
 					valueandunit = field
+					if i > 0 {
+						notConcFields = append(notConcFields, fields[:i]...)
+					}
+					if len(fields) > i+1 {
+						notConcFields = append(notConcFields, fields[i+1:]...)
+					}
 				}
 			}
 		}
@@ -97,13 +115,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 	*/
 	//} else {
 
-	for _, field := range fields {
-		if len(fields) == 2 && field != longestmatchedunit {
-			componentNameOnly = field
-		} else if len(fields) == 3 && field != longestmatchedunit && field != valueString {
-			componentNameOnly = field
-		}
-	}
+	componentNameOnly = strings.Join(notConcFields, " ")
 
 	//}
 	// if no match, return original component name

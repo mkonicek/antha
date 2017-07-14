@@ -3,6 +3,7 @@ package mixer
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -54,6 +55,43 @@ func samePlate(a, b *wtype.LHPlate) error {
 	}
 
 	return nil
+}
+
+func containsInvalidCharWarning(warnings []string) bool {
+	for _, v := range warnings {
+		if strings.Contains(v, "contains an invalid character \"+\"") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func TestParsePlateWithValidation(t *testing.T) {
+	file := []byte(
+		`
+pcrplate_with_cooler,
+A1,water+soil,water,50.0,ul,
+A4,tea,water,50.0,ul,
+A5,milk,water,100.0,ul,
+`)
+	r, err := ParsePlateCSVWithValidationConfig(bytes.NewBuffer(file), DefaultValidationConfig())
+
+	if err != nil {
+		t.Errorf("Failed to parse plate: %s ", err.Error)
+	}
+	if !containsInvalidCharWarning(r.Warnings) {
+		t.Errorf("Default validation config must forbid + signs in component names")
+	}
+	r, err = ParsePlateCSVWithValidationConfig(bytes.NewBuffer(file), PermissiveValidationConfig())
+
+	if err != nil {
+		t.Errorf("Failed to parse plate: %s ", err.Error)
+	}
+
+	if containsInvalidCharWarning(r.Warnings) {
+		t.Errorf("Permissive validation config must allow + signs in component names")
+	}
 }
 
 func TestParsePlate(t *testing.T) {

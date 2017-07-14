@@ -48,16 +48,19 @@ func (a *notFound) Error() string {
 
 func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	var components []*wtype.LHComponent
+	var nilConc wunit.Concentration
 
 	add := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration) {
 		c := wtype.NewLHComponent()
 		c.CName = name
 		c.Type = typ
 		c.Smax = smax
+		if conc != nilConc {
+			c.SetConcentration(conc)
+		}
 		components = append(components, c)
 	}
-
-	var defaultConc wunit.Concentration
+	var defaultConc wunit.Concentration = nilConc
 	x2 := wunit.NewConcentration(2, "X")
 	x10 := wunit.NewConcentration(10, "X")
 	x100 := wunit.NewConcentration(100, "X")

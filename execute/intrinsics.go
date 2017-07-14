@@ -89,6 +89,7 @@ func prompt(ctx context.Context, opts PromptOpts) *commandInst {
 	//inst.Result = opts.Component
 	inst.AddProduct(opts.Component)
 	inst.AddComponent(opts.ComponentIn)
+	fmt.Println("PROMPTING FROM ", opts.ComponentIn.ID, " TO ", opts.Component.ID)
 	cp := true
 	return &commandInst{
 		Args: []*wtype.LHComponent{opts.ComponentIn},

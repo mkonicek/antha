@@ -439,18 +439,20 @@ func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape 
 	return &well
 }
 
-// this function tries to find somewhere to put something... it was written before
-// i had an iterator. fml
+// this function is somewhat buggy... need to define its responsibilities better
+// MIS --> HERE IS THE PROBLEM !! !! !! DEBUG DEBUG XXX XXX XXX
 func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LHWell, bool) {
+	fmt.Println("IT IS HERE")
 	vol := component.Vol
 
 	it := NewOneTimeColumnWiseIterator(plate)
 
 	if curwell != nil {
+		fmt.Println("currwell !=nil")
 		// quick check to see if we have room
 		vol_left := get_vol_left(curwell)
 
-		if vol_left >= vol {
+		if vol_left >= vol && curwell.Contains(component) {
 			// fine we can just return this one
 			return curwell, true
 		}
@@ -470,19 +472,29 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 		new_well = plate.Wellcoords[crds]
 
 		if new_well.Empty() {
+			fmt.Println("NEW WELL ", crds, " EMPTY")
 			break
 		}
-		cnts := new_well.Contents()
+		/*
+			cnts := new_well.Contents()
 
-		cont := cnts.Name()
-		if cont != component.Name() {
+			cont := cnts.Name()
+			// oops... need to check if this is an instance or not
+			if cont != component.Name() {
+				continue
+			}
+		*/
+		if !new_well.Contains(component) {
 			continue
 		}
-
 		vol_left := get_vol_left(new_well)
 
 		if vol < vol_left {
+			fmt.Println("VOL LESS THAN VOL LEFT ", crds, " ", vol, " ", vol_left)
+			fmt.Println("THIS SHOULD RETURN A NEW WELL OR SOMETHING--- LOOK HERE LOOK HERE")
 			break
+		} else {
+			fmt.Println("NOT ENOUGH ROOM: ", vol, " ", vol_left)
 		}
 	}
 
@@ -677,15 +689,19 @@ func (w *LHWell) Contains(cmp *LHComponent) bool {
 	}
 	// request for a specific component
 	if cmp.IsInstance() {
+		fmt.Println("YES ITS AN INSTANCE")
 		if cmp.IsSample() {
 			//  look for the ID of its parent (we don't allow sampling from samples yet)
+			fmt.Println("SAMPLE, IDS EQUAL? ", cmp.ParentID == w.WContents.ID)
 			return cmp.ParentID == w.WContents.ID
 		} else {
 			// if this is just the whole component we check for *its* Id
+			fmt.Println("NORMAL, IDS EQUAL? ", cmp.ID == w.WContents.ID)
 			return cmp.ID == w.WContents.ID
 		}
 	} else {
 		// sufficient to be of same types
+		fmt.Println("NOT AN INSTANCE, SAME? ", cmp.IsSameKindAs(w.WContents))
 		return cmp.IsSameKindAs(w.WContents)
 	}
 }

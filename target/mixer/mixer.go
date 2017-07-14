@@ -80,6 +80,8 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	req := planner.NewLHRequest()
 
+	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
+
 	req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking)
 
 	prop := a.properties.Dup()

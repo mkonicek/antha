@@ -606,10 +606,14 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			// what if this is a mix in place?
 			if ix == 0 && !component.IsSample() {
 				// these components come in as instances -- hence 1 per well
+				// but if not allocated we need to do so
 				inputs[component.CNID()] = make([]*wtype.LHComponent, 0, 1)
 				inputs[component.CNID()] = append(inputs[component.CNID()], component)
 				allinputs = append(allinputs, component.CNID())
 				vmap[component.CNID()] = component.Volume()
+				component.DeclareInstance()
+
+				fmt.Println("ASKING FOR MIX IN PLACE ALLOC FOR ", component.CNID(), " AT VOLUME ", component.Volume())
 
 				// if this already exists do nothing
 				_, ok := ordH[component.CNID()]

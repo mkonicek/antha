@@ -350,10 +350,64 @@ func getInstructionSet(rq *LHRequest) []*wtype.LHInstruction {
 	return ret
 }
 
+func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
+	// merge dependencies of any prompts which have a message in common
+	prMessage := make(map[string][]*wtype.LHInstruction, len(inss))
+	insOut := make([]*wtype.LHInstruction, 0, len(inss))
+
+	for _, ins := range inss {
+		if ins.Type == wtype.LHIPRM {
+			iar, ok := prMessage[ins.Message]
+
+			if !ok {
+				iar = make([]*wtype.LHInstruction, 0, len(inss))
+			}
+
+			iar = append(iar, ins)
+
+			prMessage[ins.Message] = iar
+		} else {
+			insOut = append(insOut, ins)
+		}
+	}
+
+	// aggregate instructions
+	// TODO --> user control of scope of this aggregation
+	//          i.e. break every plate, some other subset
+
+	for msg, ar := range prMessage {
+		ins := wtype.NewLHPromptInstruction()
+		ins.Message = msg
+		ins.Result = wtype.NewLHComponent()
+		for _, ins2 := range ar {
+			for _, cmp := range ins2.Components {
+				ins.Components = append(ins.Components, cmp)
+				fmt.Println("PASSING ", cmp.ID, " THROUGH TO ", ins2.Result.ID, " LOC: ", cmp.Loc, " RES LOC: ", ins2.Result.Loc)
+				ins.PassThrough[cmp.ID] = ins2.Result
+			}
+		}
+
+		insOut = append(insOut, ins)
+	}
+
+	return insOut
+}
+
 func set_output_order(rq *LHRequest) error {
 	// guarantee all nodes are dependency-ordered
 
 	unsorted := getInstructionSet(rq)
+
+	unsorted = aggregatePromptsWithSameMessage(unsorted)
+
+	// make sure the request contains the new instructions if aggregation has occured here
+
+	for _, ins := range unsorted {
+		_, ok := rq.LHInstructions[ins.ID]
+		if !ok {
+			rq.LHInstructions[ins.ID] = ins
+		}
+	}
 
 	tg := makeTGraph(unsorted)
 	sorted, err := graph.TopoSort(graph.TopoSortOpt{Graph: tg})

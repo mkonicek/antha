@@ -48,6 +48,7 @@ type LHInstruction struct {
 	PlateName        string
 	OutPlate         *LHPlate
 	Message          string
+	PassThrough      map[string]*LHComponent // 1:1 pass through, only applies to prompts
 }
 
 // privatised in favour of specific instruction constructors
@@ -55,6 +56,7 @@ func newLHInstruction() *LHInstruction {
 	var lhi LHInstruction
 	lhi.ID = GetUUID()
 	lhi.Majorlayoutgroup = -1
+	lhi.PassThrough = make(map[string]*LHComponent, 1)
 	return &lhi
 }
 

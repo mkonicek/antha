@@ -48,10 +48,19 @@ func (tg *tGraph) Add(n *wtype.LHInstruction, edges []*wtype.LHInstruction) {
 	}
 }
 
+// for mixes this is 1:1
+// but prompts may be aggregated first
 func resultCmpMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 	res := make(map[string]*wtype.LHInstruction, len(inss))
 	for _, ins := range inss {
-		res[ins.Result.ID] = ins
+		if ins.Type == wtype.LHIMIX {
+			res[ins.Result.ID] = ins
+		} else if ins.Type == wtype.LHIPRM {
+			// we use passthrough instead
+			for _, cmp := range ins.PassThrough {
+				res[cmp.ID] = ins
+			}
+		}
 	}
 
 	return res

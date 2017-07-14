@@ -60,20 +60,19 @@ func (it *IChain) Print() {
 	fmt.Println("****")
 	fmt.Println("\tPARENT NIL: ", it.Parent == nil)
 	if len(it.Values) > 0 {
-		if it.Values[0].Type == wtype.LHIMIX {
-			fmt.Print("\tINPUTS: ", len(it.Values), ":")
-			for j := 0; j < len(it.Values); j++ {
-				fmt.Printf("%2d: %s ", j, it.Values[j].ID)
+		for j := 0; j < len(it.Values); j++ {
+			if it.Values[j].Type == wtype.LHIMIX {
+				fmt.Printf("MIX    %2d: %s ", j, it.Values[j].ID)
 				for i := 0; i < len(it.Values[j].Components); i++ {
 					fmt.Print(" ", it.Values[j].Components[i].CName, " (", it.Values[j].Components[i].ID, ") ")
 				}
 				fmt.Print(":", it.Values[j].Result.ID)
 				fmt.Printf("-- ")
+			} else if it.Values[j].Type == wtype.LHIPRM {
+				fmt.Print("PROMPT ", it.Values[j].Message, "-- ")
+			} else {
+				fmt.Print("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
 			}
-		} else if it.Values[0].Type == wtype.LHIPRM {
-			fmt.Print("PROMPT ", it.Values[0].Message)
-		} else {
-			fmt.Print("WTF? ", wtype.InsType(it.Values[0].Type))
 		}
 
 		fmt.Println()

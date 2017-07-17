@@ -43,7 +43,7 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 
 	// If some nodes are not reachable from roots, there must be a cycle
 	if len(seen) != g.NumNodes() {
-		return nil, fmt.Errorf("cycle containing %q", someNode(g, seen))
+		return nil, fmt.Errorf("cycle containing %T", someNode(g, seen))
 	}
 
 	ret := &ast.Bundle{}

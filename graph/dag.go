@@ -41,7 +41,7 @@ func (a *topoOrder) cycleError() error {
 	if len(a.Cycle) == 0 {
 		return nil
 	} else {
-		return fmt.Errorf("cycle containing %q", a.Cycle[0])
+		return fmt.Errorf("cycle containing %p", a.Cycle[0])
 	}
 }
 
@@ -96,7 +96,7 @@ func TransitiveReduction(graph Graph) (Graph, error) {
 	if err := IsDag(graph); err != nil {
 		// TODO(ddn): transitive reductions exist for cyclic graphs but we just
 		// can't use SSSP to find them
-		return nil, fmt.Errorf("not yet implemented: cycle %s", err)
+		return nil, fmt.Errorf("not yet implemented: %s", err)
 	}
 
 	dag := Schedule(graph)

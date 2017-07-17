@@ -1418,13 +1418,12 @@ func MakeLivingColor(color *color.NRGBA, seq string) (livingColor *LivingColor){
 func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette{
 
 	//global placeholders
-	var err error
 	var anthaColor AnthaColor
 	var anthaPalette AnthaPalette
 
 	//checking that there are enough LHComponents to make the Palette
 	if len(palette) != len(LHComponents) {
-		fmt.Errorf(err.Error())
+		panic(fmt.Sprintf("Not enough LHComponents to make Palette"))
 	}else{
 
 		for i := range palette{

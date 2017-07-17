@@ -10,15 +10,17 @@ import (
 
 func TestSelectLibrary (t *testing.T) {
 
-	palette := SelectLibrary("UV")
-	t.Log(palette)
+	palette, err := SelectLibrary("UV")
+	t.Log(palette, err)
 	t.Log(reflect.TypeOf(palette))
 
 }
 
 func TestSelectColors(t *testing.T) {
 
-	palette :=  SelectColor("JuniperGFP")
+	palette, err :=  SelectColor("JuniperGFP")
+	t.Log(err)
+
 	t.Log(palette)
 }
 
@@ -36,8 +38,9 @@ func TestMakeAnthaImg(t *testing.T) {
 		t.Error(err)
 	}
 
-	palette := SelectLibrary("UV")
+	palette, err := SelectLibrary("UV")
 
+	t.Log(err)
 	//initiating components
 	var components []*wtype.LHComponent
 	component := factory.GetComponentByType("Gluc")
@@ -64,8 +67,9 @@ func TestMakeAnthaImg(t *testing.T) {
 func TestMakeAnthaPalette(t *testing.T) {
 
 	//getting palette
-	palette := SelectLibrary("UV")
+	palette, err := SelectLibrary("UV")
 	t.Log(len(palette))
+	t.Log(err)
 
 	//initiating component
 	var components []*wtype.LHComponent
@@ -84,12 +88,15 @@ func TestMakeAnthaPalette(t *testing.T) {
 }
 
 func TestSelectLivingColorLibrary(t *testing.T){
-	livingColors := SelectLivingColorLibrary("ProteinPaintBox")
+	livingColors, err := SelectLivingColorLibrary("ProteinPaintBox")
+	t.Log(err)
+
 	t.Log(livingColors)
 }
 
 func TestSelectLivingColor(t *testing.T){
-	livingColor := SelectLivingColor("UVDasherGFP")
+	livingColor, err := SelectLivingColor("UVDasherGFP")
+	t.Log(err)
 
 	t.Log(livingColor)
 }
@@ -117,7 +124,8 @@ func TestMakeLivingImg(t *testing.T) {
     }
 
 	//Selecting livingPalette
-	selectedPalette := SelectLivingColorLibrary("ProteinPaintBox")
+	selectedPalette, err := SelectLivingColorLibrary("ProteinPaintBox")
+	t.Log(err)
 
 	//Making palette
 	livingPalette := MakeLivingPalette(selectedPalette,components)
@@ -161,7 +169,8 @@ func TestMakeLivingGIF(t *testing.T) {
     }
 
 	//Selecting livingPalette
-	selectedPalette := SelectLivingColorLibrary("ProteinPaintBox")
+	selectedPalette, err := SelectLivingColorLibrary("ProteinPaintBox")
+	t.Log(err)
 
 	//Making palette
 	livingPalette := MakeLivingPalette(selectedPalette,components)

@@ -1244,9 +1244,14 @@ type LivingGIF struct {
 //---------------------------------------------------
 
 //standard colors selectiion
-func SelectLibrary (libID string)(palette color.Palette) {
+func SelectLibrary (libID string)(palette color.Palette,err error) {
 
-	selectedLib := librarySets[libID]
+	selectedLib, found := librarySets[libID]
+	//Checking for an empty return value
+	if !found {
+		err = fmt.Errorf("library %s not found so could not make palette",libID)
+		return
+	}
 
 	for _, colID := range selectedLib {
 		palette = append(palette, colors[colID])
@@ -1255,29 +1260,46 @@ func SelectLibrary (libID string)(palette color.Palette) {
 	return
 }
 
-func SelectColor (colID string) (color color.Color) {
+func SelectColor (colID string) (selectedColor color.Color, err error) {
 
-	color = colors[colID]
+	selectedColor = colors[colID]
+	//Checking for an empty return value
+	if  selectedColor == (color.NRGBA{}) {
+		err = fmt.Errorf("library %s not found so could not make palette",colID)
+		return
+	}
 
 	return
 }
 
 //living colors selection
-func SelectLivingColorLibrary (libID string)(palette LivingPalette) {
+func SelectLivingColorLibrary (libID string)(palette LivingPalette, err error) {
 
-	selectedLib := livingColorSets[libID]
+	selectedLib, found := livingColorSets[libID]
+
+	//Checking for an empty return value
+	if !found {
+		err = fmt.Errorf("library %s not found so could not make palette",libID)
+		return
+	}
+
 
 	for _, colorID := range selectedLib {
-
 		palette.LivingColors = append(palette.LivingColors, livingColors[colorID])
 	}
 
 	return
 }
 
-func SelectLivingColor (colID string)(color LivingColor){
+func SelectLivingColor (colID string)(selectedColor LivingColor, err error){
 
-	color = livingColors[colID]
+	selectedColor = livingColors[colID]
+
+	//Checking for an empty return value
+	if  selectedColor.Color == (color.NRGBA{}) {
+		err = fmt.Errorf("library %s not found so could not make palette",colID)
+		return
+	}
 
 	return
 }

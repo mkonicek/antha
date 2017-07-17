@@ -870,6 +870,12 @@ func GetPlateByType(typ string) *wtype.LHPlate {
 	return defaultPlateLibrary.GetPlateByType(typ)
 }
 
+// Check if plate name matches plate in the factory
+func PlateInFactory(typ string) bool {
+	_, ok := defaultPlateLibrary.lib[typ]
+	return ok
+}
+
 func (i *plateLibrary) GetPlateByType(typ string) *wtype.LHPlate {
 	p, ok := i.lib[typ]
 	if !ok {

@@ -192,6 +192,24 @@ func AddConcentrations(concs []Concentration) (newconc Concentration, err error)
 
 }
 
+// subtract concentrations
+func SubtractConcentrations(OriginalConc Concentration, subtractConcs []Concentration) (newConcentration Concentration) {
+
+	tempConc := (CopyConcentration(OriginalConc))
+	for _, conc := range subtractConcs {
+		if tempConc.Unit().PrefixedSymbol() == conc.Unit().PrefixedSymbol() {
+			newConcentration = NewConcentration(tempConc.RawValue()-conc.RawValue(), tempConc.Unit().PrefixedSymbol())
+			tempConc = (CopyConcentration(newConcentration))
+		} else {
+			newConcentration = NewConcentration(tempConc.SIValue()-conc.SIValue(), tempConc.Unit().BaseSISymbol())
+			tempConc = (CopyConcentration(newConcentration))
+		}
+
+	}
+	return
+
+}
+
 func (v Volume) Dup() Volume {
 	ret := NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
 	return ret
@@ -424,41 +442,48 @@ type Unit struct {
 
 var UnitMap = map[string]map[string]Unit{
 	"Concentration": map[string]Unit{
-		"mg/ml":  Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"g/L":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"kg/l":   Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
-		"kg/L":   Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
-		"g/l":    Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"mg/L":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"mg/l":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ug/L":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"ug/l":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"ng/L":   Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"ng/l":   Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"ug/ml":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ng/ul":  Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ng/ml":  Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"Mol/L":  Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"Mol/l":  Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"M":      Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"mM":     Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"uM":     Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"nM":     Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"mM/l":   Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mM/L":   Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"uM/l":   Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"nM/l":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"nM/L":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"pM/l":   Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"pM/L":   Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"fM/l":   Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"fM/L":   Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"M/l":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"M/L":    Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"mMol/L": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mMol/l": Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"X":      Unit{Base: "X", Prefix: "", Multiplier: 1.0},
-		"x":      Unit{Base: "X", Prefix: "", Multiplier: 1.0},
+		"mg/ml":   Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"g/L":     Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"kg/l":    Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
+		"kg/L":    Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
+		"g/l":     Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"mg/L":    Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"mg/l":    Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/L":    Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"ug/l":    Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"ng/L":    Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"ng/l":    Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"ug/ml":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ng/ul":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ng/ml":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"Mol/L":   Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"Mol/l":   Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M":       Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"mM":      Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"uM":      Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"nM":      Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"mM/l":    Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mM/L":    Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"uM/l":    Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"uM/L":    Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"nM/l":    Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nM/L":    Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"pM/l":    Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/ul":   Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"pMol/ul": Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"pM/L":    Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"fM/l":    Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fM/ul":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"fMol/ul": Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"fM/L":    Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"M/l":     Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/L":     Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"mMol/L":  Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/l":  Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"X":       Unit{Base: "X", Prefix: "", Multiplier: 1.0},
+		"x":       Unit{Base: "X", Prefix: "", Multiplier: 1.0},
+		"U/l":     Unit{Base: "U/l", Prefix: "", Multiplier: 1.0},
+		"U/ml":    Unit{Base: "U/l", Prefix: "", Multiplier: 1000.0},
 	},
 	"Mass": map[string]Unit{
 		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
@@ -501,13 +526,10 @@ type SubstanceQuantity interface {
 	Quantity() Measurement
 }
 
-func (conc *Concentration) GramPerL(molecularweight float64) (conc_g Concentration) {
-	if conc.Munit.BaseSISymbol() == "g/l" {
-		conc_g = *conc
-	}
+func (conc Concentration) GramPerL(molecularweight float64) (conc_g Concentration) {
 
 	if conc.Munit.BaseSISymbol() == "kg/l" {
-		conc_g = *conc
+		conc_g = conc
 	}
 
 	if conc.Munit.BaseSISymbol() == "M/l" {
@@ -516,17 +538,16 @@ func (conc *Concentration) GramPerL(molecularweight float64) (conc_g Concentrati
 	return conc_g
 }
 
-func (conc *Concentration) MolPerL(molecularweight float64) (conc_M Concentration) {
-	if conc.Munit.BaseSISymbol() == "g/l" {
-		conc_M = NewConcentration((conc.SIValue() / molecularweight), "M/l")
-	}
+func (conc Concentration) MolPerL(molecularweight float64) (conc_M Concentration) {
 
 	if conc.Munit.BaseSISymbol() == "kg/l" {
-		conc_M = NewConcentration((conc.SIValue() / molecularweight), "M/l")
+		// convert from kg to g to work out g/mol
+		conversionFactor := 1000.0
+		conc_M = NewConcentration((conc.SIValue() * conversionFactor / molecularweight), "M/l")
 	}
 
 	if conc.Munit.BaseSISymbol() == "M/l" {
-		conc_M = *conc
+		conc_M = conc
 	}
 	return conc_M
 }

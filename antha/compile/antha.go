@@ -710,6 +710,8 @@ func (p *compiler) sugarExpr(t ast.Node) ast.Expr {
 	case *ast.ChanType:
 		t.Value = p.sugarExpr(t.Value)
 
+	case *ast.Ellipsis:
+
 	default:
 		log.Panicf("unexpected expression %s of type %s", t, reflect.TypeOf(t))
 	}

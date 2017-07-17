@@ -23,18 +23,20 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/factory"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 // v2.0 should be another linear program - basically just want to optimize
 // positioning in the face of constraints
 
 // default setup agent
-func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
+func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
 	// this is quite tricky and requires extensive interaction with the liquid handling
 	// parameters
 
@@ -207,22 +209,21 @@ func BasicSetupAgent(request *LHRequest, params *liquidhandling.LHProperties) (*
 
 	if s == 0 {
 		var waste *wtype.LHTipwaste
+		var err error
 		// this should be added to the automagic config setup... however it will require adding to the
 		// representation of the liquid handler
 		if params.Model == "Pipetmax" {
-			waste = factory.GetTipwasteByType("Gilsontipwaste")
+			waste, err = inventory.NewTipwaste(ctx, "Gilsontipwaste")
 		} else if params.Model == "GeneTheatre" || params.Model == "Felix" {
-			waste = factory.GetTipwasteByType("CyBiotipwaste")
+			waste, err = inventory.NewTipwaste(ctx, "CyBiotipwaste")
 		} else if params.Model == "Human" {
-			waste = factory.GetTipwasteByType("Manualtipwaste")
+			waste, err = inventory.NewTipwaste(ctx, "Manualtipwaste")
 		}
 
-		if waste != nil {
-			params.AddTipWaste(waste)
-		} else {
-			err := wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprint("No tip waste defined for model ", params.Model))
-			return nil, err
+		if err != nil {
+			return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("No tip waste defined for model %s: %s", params.Model, err))
 		}
+		params.AddTipWaste(waste)
 	}
 	//request.Setup = setup
 	request.Plate_lookup = plate_lookup

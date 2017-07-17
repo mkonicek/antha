@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -31,9 +32,9 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
@@ -65,9 +66,9 @@ import (
 type Liquidhandler struct {
 	Properties       *liquidhandling.LHProperties
 	FinalProperties  *liquidhandling.LHProperties
-	SetupAgent       func(*LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	LayoutAgent      func(*LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	ExecutionPlanner func(*LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	SetupAgent       func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	LayoutAgent      func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	ExecutionPlanner func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
 	PolicyManager    *LHPolicyManager
 	plateIDMap       map[string]string // which plates are before / after versions
 }
@@ -128,7 +129,7 @@ func ValidateRequest(request *LHRequest) error {
 
 // high-level function which requests planning and execution for an incoming set of
 // solutions
-func (this *Liquidhandler) MakeSolutions(request *LHRequest) error {
+func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest) error {
 	err := ValidateRequest(request)
 
 	if err != nil {
@@ -136,7 +137,7 @@ func (this *Liquidhandler) MakeSolutions(request *LHRequest) error {
 	}
 
 	//f := func() {
-	err = this.Plan(request)
+	err = this.Plan(ctx, request)
 	if err != nil {
 		return err
 	}
@@ -462,7 +463,7 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 // paused, which should be tricky but possible.
 //
 
-func (this *Liquidhandler) Plan(request *LHRequest) error {
+func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// figure out the output order
 
 	err := set_output_order(request)
@@ -490,27 +491,27 @@ func (this *Liquidhandler) Plan(request *LHRequest) error {
 	}
 	// define the input plates
 	// should be merged with the above
-	request, err = input_plate_setup(request)
+	request, err = input_plate_setup(ctx, request)
 
 	if err != nil {
 		return err
 	}
 
 	// set up the mapping of the outputs
-	request, err = this.Layout(request)
+	request, err = this.Layout(ctx, request)
 
 	if err != nil {
 		return err
 	}
 
 	// next we need to determine the liquid handler setup
-	request, err = this.Setup(request)
+	request, err = this.Setup(ctx, request)
 	if err != nil {
 		return err
 	}
 
 	// now make instructions
-	request, err = this.ExecutionPlan(request)
+	request, err = this.ExecutionPlan(ctx, request)
 
 	if err != nil {
 		return err
@@ -800,14 +801,17 @@ func DefineOrderOrFail(mapin map[string]map[string]int) ([]string, error) {
 }
 */
 // define which labware to use
-func (this *Liquidhandler) GetPlates(plates map[string]*wtype.LHPlate, major_layouts map[int][]string, ptype *wtype.LHPlate) map[string]*wtype.LHPlate {
+func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wtype.LHPlate, major_layouts map[int][]string, ptype *wtype.LHPlate) (map[string]*wtype.LHPlate, error) {
 	if plates == nil {
 		plates = make(map[string]*wtype.LHPlate, len(major_layouts))
 
 		// assign new plates
 		for i := 0; i < len(major_layouts); i++ {
 			//newplate := wtype.New_Plate(ptype)
-			newplate := factory.GetPlateByType(ptype.Type)
+			newplate, err := inventory.NewPlate(ctx, ptype.Type)
+			if err != nil {
+				return nil, err
+			}
 			plates[newplate.ID] = newplate
 		}
 	}
@@ -822,26 +826,26 @@ func (this *Liquidhandler) GetPlates(plates map[string]*wtype.LHPlate, major_lay
 		plates[k] = plate
 	}
 
-	return plates
+	return plates, nil
 }
 
 // generate setup for the robot
-func (this *Liquidhandler) Setup(request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) Setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
 	// assign the plates to positions
 	// this needs to be parameterizable
-	return this.SetupAgent(request, this.Properties)
+	return this.SetupAgent(ctx, request, this.Properties)
 }
 
 // generate the output layout
-func (this *Liquidhandler) Layout(request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) Layout(ctx context.Context, request *LHRequest) (*LHRequest, error) {
 	// assign the results to destinations
 	// again needs to be parameterized
 
-	return this.LayoutAgent(request, this.Properties)
+	return this.LayoutAgent(ctx, request, this.Properties)
 }
 
 // make the instructions for executing this request
-func (this *Liquidhandler) ExecutionPlan(request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest) (*LHRequest, error) {
 	// necessary??
 	this.FinalProperties = this.Properties.Dup()
 	temprobot := this.Properties.Dup()
@@ -851,9 +855,9 @@ func (this *Liquidhandler) ExecutionPlan(request *LHRequest) (*LHRequest, error)
 	var err error
 
 	if request.Options.ExecutionPlannerVersion == "ep3" {
-		rq, err = ExecutionPlanner3(request, this.Properties)
+		rq, err = ExecutionPlanner3(ctx, request, this.Properties)
 	} else {
-		rq, err = this.ExecutionPlanner(request, this.Properties)
+		rq, err = this.ExecutionPlanner(ctx, request, this.Properties)
 	}
 
 	this.FinalProperties = temprobot

@@ -1,6 +1,7 @@
 package human
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/antha-lang/antha/ast"
@@ -76,7 +77,7 @@ func getKey(n ast.Node) (r interface{}) {
 	return
 }
 
-func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
+func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	addDep := func(in, dep target.Inst) {
 		in.SetDependsOn(append(in.DependsOn(), dep))
 	}

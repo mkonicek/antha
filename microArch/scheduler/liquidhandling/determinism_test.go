@@ -1,18 +1,22 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"testing"
 )
 
-func configure_request_quitebig(rq *LHRequest) {
-	water := GetComponentForTest("water", wunit.NewVolume(5000.0, "ul"))
-	mmx := GetComponentForTest("mastermix_sapI", wunit.NewVolume(5000.0, "ul"))
-	part := GetComponentForTest("dna", wunit.NewVolume(5000.0, "ul"))
+func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(5000.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(5000.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(5000.0, "ul"))
 
 	for k := 0; k < 130; k++ {
 		ins := wtype.NewLHInstruction()
@@ -23,28 +27,37 @@ func configure_request_quitebig(rq *LHRequest) {
 		ins.AddComponent(ws)
 		ins.AddComponent(mmxs)
 		ins.AddComponent(ps)
-		ins.AddProduct(GetComponentForTest("water", wunit.NewVolume(43.0, "ul")))
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(43.0, "ul")))
 		ins.Result.CName = fmt.Sprintf("DANGER_MIX_%d", k)
 		ins.SetGeneration(k + 1)
 		rq.Add_instruction(ins)
 	}
 }
 
-func GetItHere(t *testing.T) (*Liquidhandler, *LHRequest) {
-	lh := GetLiquidHandlerForTest()
+func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wtype.LHComponent {
+	c, err := inventory.NewComponent(ctx, name)
+	if err != nil {
+		panic(err)
+	}
+
+	c.SetVolume(vol)
+	return c
+}
+
+func GetItHere(ctx context.Context) (*Liquidhandler, *LHRequest, error) {
+	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
-	configure_request_quitebig(rq)
+	configure_request_quitebig(ctx, rq)
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
 	rq.ConfigureYourself()
 
-	err := lh.Plan(rq)
-
+	err := lh.Plan(ctx, rq)
 	if err != nil {
-		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
+		return nil, nil, err
 	}
-	return lh, rq
+	return lh, rq, nil
 }
 
 func whereISthatplate(name string, robot *liquidhandling.LHProperties) string {
@@ -72,10 +85,18 @@ func itshere(name string, plate *wtype.LHPlate) bool {
 
 func TestLayoutDeterminism(t *testing.T) {
 	t.Skip() // pending final changes
-	lastLH, _ := GetItHere(t)
+
+	ctx := testinventory.NewContext(context.Background())
+	lastLH, _, err := GetItHere(ctx)
+	if err != nil {
+		t.Fatalf("Got an error planning with no inputs: %s", err)
+	}
 
 	for i := 0; i < 10; i++ {
-		lh, _ := GetItHere(t)
+		lh, _, err := GetItHere(ctx)
+		if err != nil {
+			t.Fatalf("Got an error planning with no inputs: %s", err)
+		}
 
 		was := whereISthatplate("DANGER_MIX_0", lastLH.FinalProperties)
 

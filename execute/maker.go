@@ -14,7 +14,7 @@ type maker struct {
 	afterSample map[string][]string
 	// Map from from wtype world to ast world
 	byComp map[*wtype.LHComponent]*ast.UseComp
-	byId   map[string][]*ast.UseComp
+	byID   map[string][]*ast.UseComp
 }
 
 func newMaker() *maker {
@@ -22,7 +22,7 @@ func newMaker() *maker {
 		afterInst:   make(map[string][]string),
 		afterSample: make(map[string][]string),
 		byComp:      make(map[*wtype.LHComponent]*ast.UseComp),
-		byId:        make(map[string][]*ast.UseComp),
+		byID:        make(map[string][]*ast.UseComp),
 	}
 }
 
@@ -35,7 +35,7 @@ func (a *maker) makeComp(c *wtype.LHComponent) *ast.UseComp {
 		a.byComp[c] = u
 	}
 
-	a.byId[c.ID] = append(a.byId[c.ID], u)
+	a.byID[c.ID] = append(a.byID[c.ID], u)
 
 	return u
 }
@@ -52,7 +52,7 @@ func (a *maker) makeCommand(in *commandInst) ast.Node {
 
 // Samples of the same component share the same id.
 func (a *maker) resolveReuses() {
-	for _, uses := range a.byId {
+	for _, uses := range a.byID {
 		// HACK: assume that samples are used in sequentially; remove when
 		// dependencies are tracked individually
 
@@ -77,19 +77,19 @@ func (a *maker) resolveReuses() {
 
 // Manifest dependencies across opaque blocks
 func (a *maker) resolveUpdates(m map[string][]string) {
-	for oldId, newIds := range m {
+	for oldID, newIDs := range m {
 		// Uses by id are sequential from resolveReuses, so it is sufficient to
 		// match first use to last def
-		for _, newId := range newIds {
-			if len(a.byId[newId]) == 0 {
+		for _, newID := range newIDs {
+			if len(a.byID[newID]) == 0 {
 				continue
 			}
-			if len(a.byId[oldId]) == 0 {
+			if len(a.byID[oldID]) == 0 {
 				continue
 			}
 
-			new := a.byId[newId][0]
-			old := a.byId[oldId][len(a.byId[oldId])-1]
+			new := a.byID[newID][0]
+			old := a.byID[oldID][len(a.byID[oldID])-1]
 			new.From = append(new.From, old)
 		}
 	}

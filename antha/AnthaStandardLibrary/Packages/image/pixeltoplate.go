@@ -1262,9 +1262,9 @@ func SelectLibrary (libID string)(palette color.Palette) {
 
 func SelectColor (colID string) (selectedColor color.Color) {
 
-	selectedColor = colors[colID]
+	selectedColor, found := colors[colID]
 	//Checking for an empty return value
-	if  selectedColor == (color.NRGBA{}) {
+	if  !found {
 		panic(fmt.Sprintf("library %s not found so could not make palette",colID))
 		return
 	}
@@ -1293,10 +1293,10 @@ func SelectLivingColorLibrary (libID string)(palette LivingPalette) {
 
 func SelectLivingColor (colID string)(selectedColor LivingColor){
 
-	selectedColor = livingColors[colID]
+	selectedColor, found := livingColors[colID]
 
 	//Checking for an empty return value
-	if  selectedColor.Color == (color.NRGBA{}) {
+	if  !found {
 		panic(fmt.Sprintf("library %s not found so could not make palette",colID))
 		return
 	}

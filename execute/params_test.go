@@ -174,7 +174,7 @@ func TestConstructSlice(t *testing.T) {
 		&wtype.LHTipbox{},
 		&wtype.LHPlate{},
 	}
-	tb1, err := inventory.NewPlate(ctx, "CyBio250Tipbox")
+	tb1, err := inventory.NewTipbox(ctx, "CyBio250Tipbox")
 	if err != nil {
 		t.Fatal(err)
 	}

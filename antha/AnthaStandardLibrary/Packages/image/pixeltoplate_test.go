@@ -10,16 +10,15 @@ import (
 
 func TestSelectLibrary (t *testing.T) {
 
-	palette, err := SelectLibrary("UV")
-	t.Log(palette, err)
+	palette:= SelectLibrary("UV")
+	t.Log(palette)
 	t.Log(reflect.TypeOf(palette))
 
 }
 
 func TestSelectColors(t *testing.T) {
 
-	palette, err :=  SelectColor("JuniperGFP")
-	t.Log(err)
+	palette:=  SelectColor("JuniperGFP")
 
 	t.Log(palette)
 }
@@ -38,7 +37,7 @@ func TestMakeAnthaImg(t *testing.T) {
 		t.Error(err)
 	}
 
-	palette, err := SelectLibrary("UV")
+	palette := SelectLibrary("UV")
 
 	t.Log(err)
 	//initiating components
@@ -67,9 +66,8 @@ func TestMakeAnthaImg(t *testing.T) {
 func TestMakeAnthaPalette(t *testing.T) {
 
 	//getting palette
-	palette, err := SelectLibrary("UV")
+	palette := SelectLibrary("UV")
 	t.Log(len(palette))
-	t.Log(err)
 
 	//initiating component
 	var components []*wtype.LHComponent
@@ -88,15 +86,13 @@ func TestMakeAnthaPalette(t *testing.T) {
 }
 
 func TestSelectLivingColorLibrary(t *testing.T){
-	livingColors, err := SelectLivingColorLibrary("ProteinPaintBox")
-	t.Log(err)
+	livingColors := SelectLivingColorLibrary("ProteinPaintBox")
 
 	t.Log(livingColors)
 }
 
 func TestSelectLivingColor(t *testing.T){
-	livingColor, err := SelectLivingColor("UVDasherGFP")
-	t.Log(err)
+	livingColor := SelectLivingColor("UVDasherGFP")
 
 	t.Log(livingColor)
 }
@@ -124,8 +120,7 @@ func TestMakeLivingImg(t *testing.T) {
     }
 
 	//Selecting livingPalette
-	selectedPalette, err := SelectLivingColorLibrary("ProteinPaintBox")
-	t.Log(err)
+	selectedPalette  := SelectLivingColorLibrary("ProteinPaintBox")
 
 	//Making palette
 	livingPalette := MakeLivingPalette(selectedPalette,components)
@@ -169,8 +164,7 @@ func TestMakeLivingGIF(t *testing.T) {
     }
 
 	//Selecting livingPalette
-	selectedPalette, err := SelectLivingColorLibrary("ProteinPaintBox")
-	t.Log(err)
+	selectedPalette  := SelectLivingColorLibrary("ProteinPaintBox")
 
 	//Making palette
 	livingPalette := MakeLivingPalette(selectedPalette,components)

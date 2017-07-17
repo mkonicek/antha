@@ -1244,12 +1244,12 @@ type LivingGIF struct {
 //---------------------------------------------------
 
 //standard colors selectiion
-func SelectLibrary (libID string)(palette color.Palette,err error) {
+func SelectLibrary (libID string)(palette color.Palette) {
 
 	selectedLib, found := librarySets[libID]
 	//Checking for an empty return value
 	if !found {
-		err = fmt.Errorf("library %s not found so could not make palette",libID)
+		panic(fmt.Sprintf("library %s not found so could not make palette",libID))
 		return
 	}
 
@@ -1260,12 +1260,12 @@ func SelectLibrary (libID string)(palette color.Palette,err error) {
 	return
 }
 
-func SelectColor (colID string) (selectedColor color.Color, err error) {
+func SelectColor (colID string) (selectedColor color.Color) {
 
 	selectedColor = colors[colID]
 	//Checking for an empty return value
 	if  selectedColor == (color.NRGBA{}) {
-		err = fmt.Errorf("library %s not found so could not make palette",colID)
+		panic(fmt.Sprintf("library %s not found so could not make palette",colID))
 		return
 	}
 
@@ -1273,13 +1273,13 @@ func SelectColor (colID string) (selectedColor color.Color, err error) {
 }
 
 //living colors selection
-func SelectLivingColorLibrary (libID string)(palette LivingPalette, err error) {
+func SelectLivingColorLibrary (libID string)(palette LivingPalette) {
 
 	selectedLib, found := livingColorSets[libID]
 
 	//Checking for an empty return value
 	if !found {
-		err = fmt.Errorf("library %s not found so could not make palette",libID)
+		panic(fmt.Sprintf("library %s not found so could not make palette",libID))
 		return
 	}
 
@@ -1291,13 +1291,13 @@ func SelectLivingColorLibrary (libID string)(palette LivingPalette, err error) {
 	return
 }
 
-func SelectLivingColor (colID string)(selectedColor LivingColor, err error){
+func SelectLivingColor (colID string)(selectedColor LivingColor){
 
 	selectedColor = livingColors[colID]
 
 	//Checking for an empty return value
 	if  selectedColor.Color == (color.NRGBA{}) {
-		err = fmt.Errorf("library %s not found so could not make palette",colID)
+		panic(fmt.Sprintf("library %s not found so could not make palette",colID))
 		return
 	}
 

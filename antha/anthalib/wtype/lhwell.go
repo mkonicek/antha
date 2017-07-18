@@ -171,21 +171,29 @@ func (w *LHWell) Contents() *LHComponent {
 }
 
 func (w *LHWell) Currvol() float64 {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return 0.0
+	}
 	return w.Contents().Vol
 }
 
 func (w *LHWell) CurrVolume() wunit.Volume {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
 	return w.Contents().Volume()
 }
 
 func (w *LHWell) MaxVolume() wunit.Volume {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
 	return wunit.NewVolume(w.MaxVol, w.Vunit)
 }
 func (w *LHWell) Add(c *LHComponent) {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return
+	}
 	//wasEmpty := w.Empty()
 	mv := wunit.NewVolume(w.MaxVol, w.Vunit)
 	cv := wunit.NewVolume(c.Vol, c.Vunit)
@@ -207,7 +215,9 @@ func (w *LHWell) Add(c *LHComponent) {
 }
 
 func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return nil
+	}
 	// if the volume is too high we complain
 
 	if v.GreaterThan(w.CurrentVolume()) {
@@ -223,12 +233,16 @@ func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
 }
 
 func (w *LHWell) PlateLocation() PlateLocation {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return ZeroPlateLocation()
+	}
 	return w.WContents.PlateLocation()
 }
 
 func (w *LHWell) WorkingVolume() wunit.Volume {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
 	v := wunit.NewVolume(w.Currvol(), w.Vunit)
 	v2 := wunit.NewVolume(w.Rvol, w.Vunit)
 	v.Subtract(v2)
@@ -236,30 +250,40 @@ func (w *LHWell) WorkingVolume() wunit.Volume {
 }
 
 func (w *LHWell) ResidualVolume() wunit.Volume {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
 	v := wunit.NewVolume(w.Rvol, w.Vunit)
 	return v
 }
 
 func (w *LHWell) CurrentVolume() wunit.Volume {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
 	return w.Contents().Volume()
 }
 
 //@implement Location
 
 func (lhw *LHWell) Location_ID() string {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return ""
+	}
 	return lhw.ID
 }
 
 func (lhw *LHWell) Location_Name() string {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return ""
+	}
 	return lhw.Platetype
 }
 
 func (lhw *LHWell) Shape() *Shape {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return NewNilShape()
+	}
 	if lhw.WShape == nil {
 		// return the non-shape
 		return NewNilShape()
@@ -300,7 +324,9 @@ func (w *LHWell) Empty() bool {
 
 // copy of instance
 func (lhw *LHWell) Dup() *LHWell {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return nil
+	}
 	cp := NewLHWell(lhw.Platetype, lhw.Plateid, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, lhw.Dunit)
 
 	for k, v := range lhw.Extra {
@@ -343,7 +369,9 @@ func (lhw *LHWell) DupKeepIDs() *LHWell {
 }
 
 func (lhw *LHWell) CalculateMaxCrossSectionArea() (ca wunit.Area, err error) {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return
+	}
 
 	ca, err = lhw.Shape().MaxCrossSectionalArea()
 
@@ -352,7 +380,9 @@ func (lhw *LHWell) CalculateMaxCrossSectionArea() (ca wunit.Area, err error) {
 
 func (lhw *LHWell) AreaForVolume() wunit.Area {
 
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return wunit.ZeroArea()
+	}
 	ret := wunit.NewArea(0.0, "m^2")
 
 	vf := lhw.GetAfVFunc()
@@ -370,19 +400,25 @@ func (lhw *LHWell) AreaForVolume() wunit.Area {
 }
 
 func (lhw *LHWell) HeightForVolume() wunit.Length {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return wunit.ZeroLength()
+	}
 	ret := wunit.NewLength(0.0, "m")
 
 	return ret
 }
 
 func (lhw *LHWell) SetAfVFunc(f string) {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return
+	}
 	lhw.Extra["afvfunc"] = f
 }
 
 func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return wutil.Quadratic{}
+	}
 	f, ok := lhw.Extra["afvfunc"]
 
 	if !ok {
@@ -398,7 +434,9 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 }
 
 func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
-	// XXX insulate this from nil wells
+	if lhw == nil {
+		return wunit.ZeroVolume(), fmt.Errorf("Nil well has no max volume")
+	}
 
 	if lhw.Bottom == 0 { // flat
 		vol, err = lhw.Shape().Volume()
@@ -638,14 +676,18 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 }
 
 func (w *LHWell) ResetPlateID(newID string) {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return
+	}
 	ltx := strings.Split(w.WContents.Loc, ":")
 	w.WContents.Loc = newID + ":" + ltx[1]
 	w.Plateid = newID
 }
 
 func (w *LHWell) IsUserAllocated() bool {
-	// XXX insulate this from nil wells
+	if w == nil {
+		return false
+	}
 	if w.Extra == nil {
 		return false
 	}

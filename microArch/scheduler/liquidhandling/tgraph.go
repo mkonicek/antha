@@ -5,7 +5,7 @@ import (
 	"github.com/antha-lang/antha/graph"
 )
 
-func makeTGraph(inss []*wtype.LHInstruction) tGraph {
+func MakeTGraph(inss []*wtype.LHInstruction) tGraph {
 	edges := make(map[*wtype.LHInstruction][]*wtype.LHInstruction, len(inss))
 	rcm := resultCmpMap(inss)
 

@@ -19,7 +19,7 @@ func TestTGraph(t *testing.T) {
 		cmpIn = cmpOut
 	}
 
-	tgraph := makeTGraph(tIns)
+	tgraph := MakeTGraph(tIns)
 
 	arrEq := func(ar1 []*wtype.LHInstruction, ar2 []*wtype.LHInstruction) bool {
 		if len(ar1) != len(ar2) {

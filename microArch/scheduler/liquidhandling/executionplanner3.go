@@ -38,7 +38,6 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			break
 		}
 
-		fmt.Println("HERE's MA ICHAIN: ", ch.Values)
 		if len(ch.Values) == 1 && ch.Values[0].Type == wtype.LHIPRM {
 			// if this is a solitary prompt instruction just generate the requisite message
 			prm := liquidhandling.NewMessageInstruction(ch.Values[0])

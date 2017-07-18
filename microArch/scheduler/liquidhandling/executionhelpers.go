@@ -461,7 +461,7 @@ func set_output_order(rq *LHRequest) error {
 
 	unsorted := getInstructionSet(rq)
 
-	tg := makeTGraph(unsorted)
+	tg := MakeTGraph(unsorted)
 	sorted, err := graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
 	if err != nil {
@@ -489,7 +489,7 @@ func set_output_order(rq *LHRequest) error {
 	}
 
 	// sort again post aggregation
-	tg = makeTGraph(sortedAsIns)
+	tg = MakeTGraph(sortedAsIns)
 	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
 	if err != nil {

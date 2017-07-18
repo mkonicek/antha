@@ -21,19 +21,21 @@ import (
 type constructor func(string) interface{}
 
 var (
-	unknownParam    = errors.New("unknown parameter")
-	cannotConstruct = errors.New("cannot construct parameter")
+	errUnknownParam    = errors.New("unknown parameter")
+	errCannotConstruct = errors.New("cannot construct parameter")
 )
 
+// RawParams is the structure of parameter data for unmarshalling.
+//
 // Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
-// Structure of parameter data for unmarshalling.
 type RawParams struct {
 	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
 	Config     *mixer.Opt                            `json:"config"`
 }
 
+// Params is the structure of parameter data for marshalling.
+//
 // Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
-// Structure of parameter data for marshalling.
 type Params struct {
 	Parameters map[string]map[string]interface{} `json:"parameters"`
 	Config     *mixer.Opt                        `json:"config"`
@@ -153,7 +155,7 @@ func (a *unmarshaler) unmarshalStruct(data []byte, obj interface{}) error {
 func setParam(um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
 	value, ok := in[name]
 	if !ok {
-		return unknownParam
+		return errUnknownParam
 	}
 
 	m := &meta.Unmarshaler{

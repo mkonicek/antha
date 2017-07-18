@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	cannotConfigure = errors.New("cannot configure liquid handler")
+	errCannotConfigure = errors.New("cannot configure liquid handler")
 )
 
 // Result of executing a workflow.
@@ -23,6 +23,7 @@ type Result struct {
 	Insts    []target.Inst
 }
 
+// An Opt are options for Run.
 type Opt struct {
 	// Target machine configuration
 	Target *target.Target
@@ -38,7 +39,7 @@ type Opt struct {
 	TransitionalReadLocalFiles bool
 }
 
-// Simple entrypoint for one-shot execution of workflows.
+// Run is simple entrypoint for one-shot execution of workflows.
 func Run(parent context.Context, opt Opt) (*Result, error) {
 	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
 	if err != nil {
@@ -49,7 +50,7 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 		return nil, err
 	}
 
-	ctx := target.WithTarget(withId(parent, opt.Id), opt.Target)
+	ctx := target.WithTarget(withID(parent, opt.Id), opt.Target)
 
 	r := &resolver{}
 

@@ -103,7 +103,6 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols["protein"] = MakeProteinPolicy()
 	pols["detergent"] = MakeDetergentPolicy()
 	pols["load"] = MakeLoadPolicy()
-	pols["loadlow"] = MakeLoadPolicy()
 	pols["loadwater"] = MakeLoadWaterPolicy()
 	pols["DispenseAboveLiquid"] = MakeDispenseAboveLiquidPolicy()
 	pols["PEG"] = MakePEGPolicy()

@@ -2,8 +2,6 @@ package execute
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -89,7 +87,8 @@ func prompt(ctx context.Context, opts PromptOpts) *commandInst {
 	//inst.Result = opts.Component
 	inst.AddProduct(opts.Component)
 	inst.AddComponent(opts.ComponentIn)
-	fmt.Println("PROMPTING FROM ", opts.ComponentIn.ID, " TO ", opts.Component.ID)
+	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
+
 	cp := true
 	return &commandInst{
 		Args: []*wtype.LHComponent{opts.ComponentIn},
@@ -177,13 +176,6 @@ func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
 func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	inst.BlockID = wtype.NewBlockID(getID(ctx))
 	inst.Result.BlockID = inst.BlockID
-
-	fmt.Print("MIXING: ", inst.ID, " ")
-	for _, c := range inst.Components {
-		fmt.Print(c.CName, ":::", c.ID, ":::", c.Volume().ToString(), " ")
-	}
-
-	fmt.Println("RESULT: ", inst.Result.CName, "(", inst.Result.ID, ")")
 
 	result := inst.Result
 	result.BlockID = inst.BlockID

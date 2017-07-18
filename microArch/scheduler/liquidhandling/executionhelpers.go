@@ -350,24 +350,84 @@ func getInstructionSet(rq *LHRequest) []*wtype.LHInstruction {
 	return ret
 }
 
-func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
+// is n1 an ancestor of n2?
+func ancestor(n1, n2 graph.Node, topolGraph graph.Graph) bool {
+	if n1 == n2 {
+		return true
+	}
+
+	for i := 0; i < topolGraph.NumOuts(n2); i++ {
+		if ancestor(n1, topolGraph.Out(n2, i), topolGraph) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// track back and see if one depends on the other
+func related(i1, i2 *wtype.LHInstruction, topolGraph graph.Graph) bool {
+	if ancestor(graph.Node(i1), graph.Node(i2), topolGraph) || ancestor(graph.Node(i2), graph.Node(i1), topolGraph) {
+		return true
+	}
+
+	return false
+}
+
+func canAggHere(ar []*wtype.LHInstruction, ins *wtype.LHInstruction, topolGraph graph.Graph) bool {
+	for _, i2 := range ar {
+		if related(ins, i2, topolGraph) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// we can only append if we don't create cycles
+// this function makes sure this is OK
+func appendSensitively(iar [][]*wtype.LHInstruction, ins *wtype.LHInstruction, topolGraph graph.Graph) [][]*wtype.LHInstruction {
+	done := false
+	for i := 0; i < len(iar); i++ {
+		ar := iar[i]
+		// just add to the first available one
+		if canAggHere(ar, ins, topolGraph) {
+			ar = append(ar, ins)
+			iar[i] = ar
+			done = true
+			break
+		}
+	}
+
+	if !done {
+		ar := make([]*wtype.LHInstruction, 0, 1)
+		ar = append(ar, ins)
+		iar = append(iar, ar)
+	}
+
+	return iar
+}
+
+func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph graph.Graph) []graph.Node {
 	// merge dependencies of any prompts which have a message in common
-	prMessage := make(map[string][]*wtype.LHInstruction, len(inss))
-	insOut := make([]*wtype.LHInstruction, 0, len(inss))
+	prMessage := make(map[string][][]*wtype.LHInstruction, len(inss))
+	insOut := make([]graph.Node, 0, len(inss))
 
 	for _, ins := range inss {
 		if ins.Type == wtype.LHIPRM {
 			iar, ok := prMessage[ins.Message]
 
 			if !ok {
-				iar = make([]*wtype.LHInstruction, 0, len(inss))
+				iar = make([][]*wtype.LHInstruction, 0, len(inss)/2)
 			}
 
-			iar = append(iar, ins)
+			//iar = append(iar, ins)
+
+			iar = appendSensitively(iar, ins, topolGraph)
 
 			prMessage[ins.Message] = iar
 		} else {
-			insOut = append(insOut, ins)
+			insOut = append(insOut, graph.Node(ins))
 		}
 	}
 
@@ -375,19 +435,21 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction) []*wtype.LHIns
 	// TODO --> user control of scope of this aggregation
 	//          i.e. break every plate, some other subset
 
-	for msg, ar := range prMessage {
-		ins := wtype.NewLHPromptInstruction()
-		ins.Message = msg
-		ins.Result = wtype.NewLHComponent()
-		for _, ins2 := range ar {
-			for _, cmp := range ins2.Components {
-				ins.Components = append(ins.Components, cmp)
-				fmt.Println("PASSING ", cmp.ID, " THROUGH TO ", ins2.Result.ID, " LOC: ", cmp.Loc, " RES LOC: ", ins2.Result.Loc)
-				ins.PassThrough[cmp.ID] = ins2.Result
+	for msg, iar := range prMessage {
+		// single message may appear multiply in the chain
+		for _, ar := range iar {
+			ins := wtype.NewLHPromptInstruction()
+			ins.Message = msg
+			ins.Result = wtype.NewLHComponent()
+			for _, ins2 := range ar {
+				for _, cmp := range ins2.Components {
+					ins.Components = append(ins.Components, cmp)
+					ins.PassThrough[cmp.ID] = ins2.Result
+				}
 			}
+			insOut = append(insOut, graph.Node(ins))
 		}
 
-		insOut = append(insOut, ins)
 	}
 
 	return insOut
@@ -395,19 +457,9 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction) []*wtype.LHIns
 
 func set_output_order(rq *LHRequest) error {
 	// guarantee all nodes are dependency-ordered
+	// in order to aggregate without introducing cycles
 
 	unsorted := getInstructionSet(rq)
-
-	unsorted = aggregatePromptsWithSameMessage(unsorted)
-
-	// make sure the request contains the new instructions if aggregation has occured here
-
-	for _, ins := range unsorted {
-		_, ok := rq.LHInstructions[ins.ID]
-		if !ok {
-			rq.LHInstructions[ins.ID] = ins
-		}
-	}
 
 	tg := makeTGraph(unsorted)
 	sorted, err := graph.TopoSort(graph.TopoSortOpt{Graph: tg})
@@ -415,25 +467,38 @@ func set_output_order(rq *LHRequest) error {
 	if err != nil {
 		return err
 	}
-	// confess, woman
 
-	fmt.Println("I CONFESS")
-	for _, nod := range sorted {
-		ins := nod.(*wtype.LHInstruction)
-		fmt.Print(wtype.InsType(ins.Type), " ", ins.ID, " ")
+	sortedAsIns := make([]*wtype.LHInstruction, len(sorted))
 
-		for _, c := range ins.Components {
-			fmt.Print(c.CName, " --- ")
-		}
-
-		fmt.Println(":", ins.Result.CName, "(", ins.Result.ID, ")")
+	for i := 0; i < len(sorted); i++ {
+		sortedAsIns[i] = sorted[i].(*wtype.LHInstruction)
 	}
-	fmt.Println("NOT YOU")
+
+	sorted = aggregatePromptsWithSameMessage(sortedAsIns, tg)
+
+	// make sure the request contains the new instructions if aggregation has occurred here
+
+	sortedAsIns = make([]*wtype.LHInstruction, len(sorted))
+	for i, nIns := range sorted {
+		ins := nIns.(*wtype.LHInstruction)
+		sortedAsIns[i] = ins
+		_, ok := rq.LHInstructions[ins.ID]
+		if !ok {
+			rq.LHInstructions[ins.ID] = ins
+		}
+	}
+
+	// sort again post aggregation
+
+	tg = makeTGraph(sortedAsIns)
+	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
+
+	if err != nil {
+		return err
+	}
 
 	// make into equivalence classes and sort according to defined order
 	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort)
-
-	it.Print()
 
 	// populate the request
 	rq.InstructionChain = it
@@ -541,7 +606,6 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	wh := make([]string, 0, lenToMake)       // component types
 	va := make([]wunit.Volume, 0, lenToMake) // volumes
 
-	fmt.Println("CONVERT ", insIn.ID, " ", wtype.InsType(insIn.Type), " ", insIn.Result.CName)
 	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol, wtype.LHVChannel, 1, true, legacyVolume)
 
 	if err != nil {

@@ -24,8 +24,6 @@
 package mixer
 
 import (
-	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -44,7 +42,6 @@ func SampleAll(l *wtype.LHComponent) *wtype.LHComponent {
 // take a sample of volume v from this liquid
 func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
-	fmt.Println("SAMPLING: ", l.CName, " FROM ", l.ID, " TO ", ret.ID)
 	//	ret.ID = l.ID
 	l.AddDaughterComponent(ret)
 	ret.ParentID = l.ID
@@ -132,8 +129,6 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 // edited to take into account the volume of the other solution components
 func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
-	fmt.Println("STV ID HERE: ", ret.ID)
-
 	l.AddDaughterComponent(ret)
 	ret.ParentID = l.ID
 

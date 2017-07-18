@@ -712,7 +712,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 
 	// cmps are requests for components
 	for i, cmp := range cmps {
-		fmt.Println("HAVE A CRAPPY DAY", cmp.CName)
 		plateIDs[i] = make([]string, 0, 1)
 		wellCoords[i] = make([]string, 0, 1)
 		vols[i] = make([]wunit.Volume, 0, 1)

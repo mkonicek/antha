@@ -212,10 +212,8 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	order := chain.ValueIDs()
 	for _, id := range order {
 		v := request.LHInstructions[id]
-		fmt.Println("MAKE ME A MAP FOR ", id, " ", v.Result.CName, "(", v.Result.ID, ")")
 		// pass ID through chain if not a mix
 		if v.Type != wtype.LHIMIX {
-			fmt.Println("NOT A MIX")
 			// the current contract on non-mix instructions is to pass in just one
 			// component as an input and one as an output
 			// on which basis we need only make sure the result has the same location
@@ -223,7 +221,6 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 			// set pass throughs
 
 			for i := 0; i < len(v.Components); i++ {
-				fmt.Println("PASSTHRU: SETTING ", v.Components[i].ID, " LOC TO ", v.Components[i].Loc)
 				v.PassThrough[v.Components[i].ID].Loc = v.Components[i].Loc
 			}
 			continue
@@ -248,7 +245,6 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		}
 
 		// now we put the actual result in
-		fmt.Println("AAPPENDING: ", v.ID, " RESULT: ", v.Result.CName, " ", v.Result.ID)
 		lkp[v.ID] = append(lkp[v.ID], v.Result)
 	}
 
@@ -256,7 +252,6 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 
 	// now map the output assignments in
 	for k, v := range request.Output_assignments {
-		fmt.Println("ASSIGNING: ", k)
 		for _, id := range v {
 			l := lkp[id]
 			for _, x := range l {
@@ -266,12 +261,10 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 				_, ok := remap[tx[0]]
 
 				if ok {
-					fmt.Println("SETTING ", x.ID, " LOC to ", remap[tx[0]]+":"+tx[1])
 					x.Loc = remap[tx[0]] + ":" + tx[1]
 					sampletracker.SetLocationOf(x.ID, x.Loc)
 				} else {
 					x.Loc = tx[0] + ":" + tx[1]
-					fmt.Println("SETTING ", x.ID, " LOC tp ", x.Loc, " ... 2")
 					sampletracker.SetLocationOf(x.ID, x.Loc)
 				}
 			}
@@ -320,7 +313,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 		// if plate ID set
 		if v.PlateID() != "" {
-			fmt.Println(v.ID, " HAS A PLATE ID: ", v.PlateID())
 			//MixInto
 			i := defined(v.PlateID(), s)
 
@@ -339,7 +331,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			}
 
 		} else if v.Majorlayoutgroup != -1 || v.PlateName != "" {
-			fmt.Println(v.ID, " HAS A : ", v.Majorlayoutgroup, " ", v.PlateName)
 			//MixTo / MixNamed
 			nm := "Output_plate"
 			mlg := fmt.Sprintf("%d", v.Majorlayoutgroup)
@@ -372,7 +363,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				s[i].Output = append(s[i].Output, true)
 			}
 		} else if v.IsMixInPlace() {
-			fmt.Println(v.ID, " IS A MIX IN PLACE")
 			// the first component sets the destination
 			// and now it should indeed be set
 
@@ -383,12 +373,8 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 			addr := v.Components[0].Loc
 
-			fmt.Println("HAS ADDR: ", addr)
-
 			if v.Components[0].Loc == "" {
 				addr, ok := st.GetLocationOf(v.Components[0].ID)
-
-				fmt.Println("NO HAS THIS ADR: ", addr)
 
 				if !ok {
 					fmt.Println("COMPONENTS: ")
@@ -433,7 +419,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 		} else {
 			// bare mix
 			// this is handled later
-			fmt.Println(v.ID, "THIS IS HANDLED LATER")
 		}
 	}
 
@@ -470,8 +455,6 @@ func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, or
 			continue
 		}
 
-		fmt.Println("I WANT THIS: ", v.ID, " RESULT: ", v.Result.ID)
-
 		// this id may be temporary, only things without it still are not assigned to a
 		// plate, even a virtual one
 		if v.PlateID() == "" {
@@ -480,17 +463,14 @@ func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, or
 			ass := -1
 
 			if pt != "" {
-				fmt.Println("I GOT ONE")
 				ass = assignmentWithType(pt, pc)
 			} else if len(pc) != 0 {
 				// just stick it in the first one
-				fmt.Println("I NOT GOT ONE")
 				ass = 0
 			}
 
 			if ass == -1 {
 				// make a new plate
-				fmt.Println("MAKE NEW ONE")
 				ass = len(pc)
 				pc = append(pc, PlateChoice{Platetype: chooseAPlate(request, v), Assigned: []string{v.ID}, ID: wtype.GetUUID(), Wells: []string{""}, Name: "Output_plate_" + v.ID[0:6], Output: []bool{true}})
 				continue
@@ -686,7 +666,6 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 	opa := make(map[string][]string)
 
 	for _, c := range pc {
-		fmt.Println("ASSIGNED TO ", c.ID, " ", c.Assigned)
 		// make a temporary plate to hold info
 
 		plat, err := inventory.NewPlate(ctx, c.Platetype)

@@ -198,8 +198,6 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 				// find somewhere to put it
 				curr_well, ok = wtype.Get_Next_Well(curr_plate, component, curr_well)
 
-				fmt.Println("CURR WELL", curr_well.Crds)
-
 				if !ok {
 					// if no space, reset
 					plates_in_play[platetype.Type] = nil
@@ -213,7 +211,6 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 				location := curr_plate.ID + ":" + curr_well.Crds
 				ass = append(ass, location)
-				fmt.Println("ASSIGNING ", component.ID, " TO ", location)
 
 				var newcomponent *wtype.LHComponent
 

@@ -24,12 +24,12 @@ package liquidhandling
 
 import (
 	"fmt"
-	"sort"
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/graph"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"sort"
+	"strings"
 )
 
 const (
@@ -173,6 +173,51 @@ func (bg ByGenerationOpt) Less(i, j int) bool {
 	return bg[i].Generation() < bg[j].Generation()
 }
 
+type ByColumn []*wtype.LHInstruction
+
+func (bg ByColumn) Len() int      { return len(bg) }
+func (bg ByColumn) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
+func (bg ByColumn) Less(i, j int) bool {
+	// compare the plate names (which must exist now)
+	//	 -- oops, I think this has ben violated by moving the sort
+	// 	 TODO check and fix
+
+	c := strings.Compare(bg[i].PlateName, bg[j].PlateName)
+
+	if c != 0 {
+		return c < 0
+	}
+
+	// Go Down Columns
+
+	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
+}
+
+// Optimally - order by component.
+type ByResultComponent []*wtype.LHInstruction
+
+func (bg ByResultComponent) Len() int      { return len(bg) }
+func (bg ByResultComponent) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
+func (bg ByResultComponent) Less(i, j int) bool {
+	// compare the names of the resultant components
+	c := strings.Compare(bg[i].Result.CName, bg[j].Result.CName)
+
+	if c != 0 {
+		return c < 0
+	}
+
+	// if two components names are equal, then compare the plates
+	c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
+
+	if c != 0 {
+		return c < 0
+	}
+
+	// finally go down columns (nb need to add option)
+
+	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
+}
+
 func aggregateAppropriateInstructions(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
 	agg := make([]map[string]*wtype.LHInstruction, len(wtype.InsNames))
 	for i := 0; i < len(wtype.InsNames); i++ {
@@ -203,7 +248,142 @@ func aggregateAppropriateInstructions(inss []*wtype.LHInstruction) []*wtype.LHIn
 	return insout
 }
 
+func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool) *IChain {
+	ic := NewIChain(nil)
+
+	// the nodes are now ordered according to dependency relations
+	// this routine defines equivalence classes of nodes
+
+	for _, n := range sortedNodes {
+		addToIChain(ic, n, tg)
+	}
+
+	// finally we sort outputs
+	sortOutputs(ic, sort)
+
+	return ic
+}
+
+func sortOutputs(ic *IChain, byComponent bool) {
+	// recursively progress through the chain, sorting values as we go
+
+	if ic == nil {
+		return
+	}
+
+	if byComponent {
+		sort.Sort(ByComponent(ic.Values))
+	} else {
+		sort.Sort(ByColumn(ic.Values))
+	}
+
+	sortOutputs(ic.Child, byComponent)
+}
+
+func addToIChain(ic *IChain, n graph.Node, tg graph.Graph) {
+	cur := findNode(ic, n, tg)
+	cur.Values = append(cur.Values, n.(*wtype.LHInstruction))
+}
+
+func findNode(ic *IChain, n graph.Node, tg graph.Graph) *IChain {
+	if thisNode(ic, n, tg) {
+		return ic
+	} else if ic.Child != nil {
+		return findNode(ic.Child, n, tg)
+	} else {
+		return NewIChain(ic)
+	}
+}
+
+func thisNode(ic *IChain, n graph.Node, tg graph.Graph) bool {
+	inEdges := nodeIns(n, tg)
+
+	// if this node has no in edges we return immediately
+	if len(inEdges) == 0 {
+		return true
+	}
+
+	// look one up the chain to see if this instruction is in the output
+	outEdges := chainOuts(ic, tg)
+
+	if len(outEdges == 0) {
+		// this node has ins but the parent in the chain has no outs, so not this one
+		return false
+	}
+
+	// compare the sets
+
+	return len(meetInsSets(inEdges, outEdges)) != 0
+}
+
+func nodeIns(n graph.Node, tg graph.Graph) []*wtype.LHInstruction {
+	ins := n.(*wtype.LHInstruction)
+
+	r := make([]*wtype.LHInstruction, 0, 10)
+
+	for insFrom, v := range tg.Edges {
+		for _, e := range v {
+			ins2 := v.(*wtype.LHInstruction)
+			if ins2 == ins {
+				r = append(r, insFrom.(*wtype.LHInstruction))
+				break
+			}
+		}
+	}
+
+	return r
+}
+
+func chainOuts(ic *IChain, tg graph.Graph) []*wtype.LHInstruction {
+	// we don't really care about duplicates in this list so just take unions
+	ret := make([]*wtype.LHInstruction, 0, 2*len(ic.Values))
+
+	for _, v := range ret.Values {
+		edge := tg.Edges[graph.Node(v)]
+
+		for _, i := range edge {
+			ret = append(ret, i.(*wtype.LHInstruction))
+		}
+	}
+
+	return ret
+}
+
+func meetInsSets(ins, outs []*wtype.LHInstruction) []*wtype.LHInstruction {
+	m := make(map[*wtype.LHInstruction]bool, len(ins))
+
+	for _, i := range ins {
+		m[i] = true
+	}
+
+	r := make([]string, 0, len(outs))
+
+	for _, o := range outs {
+		if m[o] {
+			r = append(r, o)
+		}
+	}
+
+	return r
+}
+
 func set_output_order(rq *LHRequest) error {
+	// use topoSort
+	tg := makeTGraph(rq.LHInstructions)
+
+	// TODO --> add NodeOrder definition to allow output sorting
+	sorted, err := graph.TopoSort(TopoSortOpt{Graph: tg})
+
+	if err != nil {
+		return err
+	}
+
+	it := convertToInstructionChain(sorted, rq.Options.OutputSort)
+	rq.InstructionChain = it
+	return nil
+}
+
+func set_output_order_orig(rq *LHRequest) error {
 	// sort into equivalence classes by generation
 
 	sorted := insSliceFromMap(rq.LHInstructions)
@@ -250,21 +430,7 @@ func (bo ByOrdinal) Less(i, j int) bool {
 	return bo[i][0] < bo[j][0]
 }
 
-/*
-func flatten_aggregates(agg map[string][]int) [][]int {
-	ret := make([][]int, 0, len(agg))
-
-	for _, v := range agg {
-		ret = append(ret, v)
-	}
-
-	sort.Sort(ByOrdinal(ret))
-
-	return ret
-}
-*/
-
-func merge_transfers(insIn []driver.RobotInstruction, aggregates [][]int) []driver.RobotInstruction {
+func merge_instructions(insIn []driver.RobotInstruction, aggregates [][]int) []driver.RobotInstruction {
 	ret := make([]driver.RobotInstruction, 0, len(insIn))
 
 	for _, ar := range aggregates {
@@ -294,9 +460,11 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 	lenToMake := len(insIn.Components)
 
-	fmt.Println("MIX (IN PLACE: ", insIn.IsMixInPlace(), ") CMPS ", len(cmps), " RES: ", insIn.Result.ID, " NAME: ", insIn.Result.CName, " ADDRESS: ", insIn.Welladdress)
-	fmt.Println("FIRST CMPID: ", cmps[0].ID, " AND NAME ", cmps[0].CName)
-	fmt.Println("---")
+	/*	TODO -- remove
+		fmt.Println("MIX (IN PLACE: ", insIn.IsMixInPlace(), ") CMPS ", len(cmps), " RES: ", insIn.Result.ID, " NAME: ", insIn.Result.CName, " ADDRESS: ", insIn.Welladdress)
+		fmt.Println("FIRST CMPID: ", cmps[0].ID, " AND NAME ", cmps[0].CName)
+		fmt.Println("---")
+	*/
 	if insIn.IsMixInPlace() {
 		lenToMake = lenToMake - 1
 		cmps = cmps[1:len(cmps)]
@@ -328,12 +496,6 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	ptf := make([]string, 0, lenToMake)      // plate types
 
 	for i, v := range cmps {
-		/*
-			if insIn.IsMixInPlace() && i == 0 {
-				continue
-			}
-		*/
-
 		for xx, _ := range fromPlateIDs[i] {
 			// get dem big ole plates out
 			// TODO -- pass them in instead of all this nonsense
@@ -418,23 +580,8 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 		}
 	}
 
-	//ti := driver.TransferInstruction{Type: driver.TFR, What: wh, Volume: va, PltTo: pt, WellTo: wt, TPlateWX: ptwx, TPlateWY: ptwy, PltFrom: pf, WellFrom: wf, FPlateWX: pfwx, FPlateWY: pfwy, FVolume: vf, TVolume: vt, FPlateType: ptf, TPlateType: ptt}
-
+	// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int
 	ti := driver.NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
 
-	// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int
 	return ti, nil
 }
-
-/*
-func make_instruction_sets(ic *IChain) [][]*wtype.LHInstruction {
-	for {
-		if ic == nil {
-			break
-		}
-
-
-		ic = ic.Child
-	}
-}
-*/

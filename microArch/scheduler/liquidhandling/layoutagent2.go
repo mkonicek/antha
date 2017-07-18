@@ -215,7 +215,11 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		// ignore non-mix
 		if v.Type != wtype.LHIMIX {
 			continue
+		} else {
+			fmt.Println(v.Type, " ", wtype.LHIMIX, " WAAAAH? ")
 		}
+
+		fmt.Println("YOU SHITTING ME? ", v)
 		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
 		lk2[v.Result.ID] = v.ID
 	}

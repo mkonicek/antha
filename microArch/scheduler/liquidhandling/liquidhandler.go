@@ -910,6 +910,10 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 	for _, inst := range rq.LHInstructions {
 		tx := strings.Split(inst.Result.Loc, ":")
 
+		if inst.Type != wtype.LHIMIX {
+			continue
+		}
+
 		newid, ok := lh.plateIDMap[tx[0]]
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", tx[0]))

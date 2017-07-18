@@ -84,9 +84,11 @@ func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *
 }
 
 func prompt(ctx context.Context, opts PromptOpts) *commandInst {
-	inst := wtype.NewLHMixInstruction()
+	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
+	ins.Result = opts.Component
+	ins.AddComponent(opts.ComponentIn)
 
 	// do we update and return component as with Handle?!
 	// this requires fixing the issue with id tracking...

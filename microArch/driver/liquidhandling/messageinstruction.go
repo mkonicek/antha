@@ -1,6 +1,9 @@
 package liquidhandling
 
-import "github.com/antha-lang/antha/antha/anthalib/wtype"
+import (
+	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+)
 
 type MessageInstruction struct {
 	GenericRobotInstruction
@@ -11,7 +14,7 @@ type MessageInstruction struct {
 func NewMessageInstruction(lhi *wtype.LHInstruction) *MessageInstruction {
 	msi := MessageInstruction{}
 	msi.Type = MSG
-	msi.GenericRobotInstruction.Ins = &msi
+	msi.Message = lhi.Message
 
 	return &msi
 }
@@ -21,9 +24,22 @@ func (msi *MessageInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHP
 }
 
 func (msi *MessageInstruction) GetParameter(name string) interface{} {
-	return msi.Message
+	if name == "MESSAGE" {
+		return msi.Message
+	}
+	return nil
 }
 
 func (msi *MessageInstruction) InstructionType() int {
 	return msi.Type
+}
+
+func (msi *MessageInstruction) OutputTo(driver LiquidhandlingDriver) error {
+	//level int, title, text string, showcancel bool
+
+	ret := driver.Message(0, "", msi.Message, false)
+	if !ret.OK {
+		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	}
+	return nil
 }

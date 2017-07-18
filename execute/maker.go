@@ -127,7 +127,9 @@ func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
 
 		// Contains all descendents rather then direct ones
 		for _, kid := range strings.Split(comp.DaughterID, "_") {
-			a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
+			if comp.ID != kid {
+				a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
+			}
 		}
 	}
 

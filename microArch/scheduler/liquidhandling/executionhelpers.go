@@ -489,7 +489,6 @@ func set_output_order(rq *LHRequest) error {
 	}
 
 	// sort again post aggregation
-
 	tg = makeTGraph(sortedAsIns)
 	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 

@@ -19,6 +19,13 @@ func GetLHRequestForTest() *LHRequest {
 	return req
 }
 
+func GetComponentForTest(name string, vol wunit.Volume) *wtype.LHComponent {
+	c := factory.GetComponentByType(name).Dup()
+	c.ID = wtype.GetUUID() // XXX -> refactor Dup to change ID
+	c.SetVolume(vol)
+	return c
+}
+
 func TestNoInstructions(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 	req := GetLHRequestForTest()

@@ -3,6 +3,7 @@ package liquidhandling
 import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"reflect"
 )
 
 type ComparisonOpt struct {
@@ -15,9 +16,9 @@ type ComparisonResult struct {
 
 func mergeMovs(ris []RobotInstruction) []RobotInstruction {
 	insOut := make([]RobotInstruction, 0, len(ris))
-	for i := 0; i < len(ris)-1; i++ {
+	for i := 0; i < len(ris); i++ {
 		ins := ris[i]
-		if InstructionTypeName(ins) == "MOV" {
+		if InstructionTypeName(ins) == "MOV" && (i != len(ris)-1) {
 			next := ris[i+1]
 			if InstructionTypeName(next) == "ASP" {
 				insOut = append(insOut, MovAsp{Asp: next.(*AspirateInstruction), Mov: ins.(*MoveInstruction)})
@@ -27,6 +28,9 @@ func mergeMovs(ris []RobotInstruction) []RobotInstruction {
 				i += 1 // skip
 			} else if InstructionTypeName(next) == "MIX" {
 				insOut = append(insOut, MovMix{Mix: next.(*MixInstruction), Mov: ins.(*MoveInstruction)})
+				i += 1 // skip
+			} else if InstructionTypeName(next) == "BLO" {
+				insOut = append(insOut, MovBlo{Blo: next.(*BlowoutInstruction), Mov: ins.(*MoveInstruction)})
 				i += 1 // skip
 			} else {
 				insOut = append(insOut, ins)
@@ -141,6 +145,27 @@ func (md MovDsp) Check(lhpr wtype.LHPolicyRule) bool {
 	return false
 }
 
+type MovBlo struct {
+	Mov *MoveInstruction
+	Blo *BlowoutInstruction
+}
+
+func (mb MovBlo) InstructionType() int {
+	return MBL
+}
+
+func (mb MovBlo) GetParameter(name string) interface{} {
+	return getParameter(name, mb.Mov, mb.Blo)
+}
+
+func (mb MovBlo) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	return []RobotInstruction{}, nil
+}
+
+func (mb MovBlo) Check(lhpr wtype.LHPolicyRule) bool {
+	return false
+}
+
 type MovMix struct {
 	Mov *MoveInstruction
 	Mix *MixInstruction
@@ -175,8 +200,8 @@ func compareInstructions(index int, ins1, ins2 RobotInstruction, paramsToCompare
 		p1 := ins1.GetParameter(prm)
 		p2 := ins2.GetParameter(prm)
 
-		if p1 != p2 {
-			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameters %s differ (%v %v", index, InstructionTypeName(ins1), p1, p2))
+		if !reflect.DeepEqual(p1, p2) {
+			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameters %s differ (%v %v)", index, InstructionTypeName(ins1), p1, p2))
 		}
 	}
 
@@ -233,6 +258,7 @@ func CompareAll() map[string][]string {
 	r = mergeSets(r, CompareWells())
 	r = mergeSets(r, CompareOffsets())
 	r = mergeSets(r, CompareReferences())
+	r = mergeSets(r, ComparePlateTypes())
 	return r
 }
 
@@ -246,19 +272,20 @@ func CompareReferences() map[string][]string {
 
 func CompareAspReference() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"REFERENCE"}
+	ret["MOVASP"] = []string{"REFERENCE", "WHAT"}
 	return ret
 }
 
 func CompareDspReference() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"REFERENCE"}
+	ret["MOVDSP"] = []string{"REFERENCE", "WHAT"}
+	ret["MOVBLO"] = []string{"REFERENCE", "WHAT"}
 	return ret
 }
 
 func CompareMixReference() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVMIX"] = []string{"REFERENCE"}
+	ret["MOVMIX"] = []string{"REFERENCE", "WHAT"}
 	return ret
 }
 
@@ -272,27 +299,30 @@ func CompareOffsets() map[string][]string {
 
 func CompareSourceOffsets() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ"}
+	ret["MOVASP"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
 	return ret
 }
 func CompareDestOffsets() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ"}
+	ret["MOVDSP"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
+	ret["MOVBLO"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
 	return ret
 }
 func CompareMixOffsets() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVMIX"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ"}
+	ret["MOVMIX"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
 	return ret
 }
 func CompareVolume() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["ASP"] = []string{"VOLUME"}
-	ret["MOVASP"] = []string{"VOLUME"}
-	ret["DSP"] = []string{"VOLUME"}
-	ret["MOVDSP"] = []string{"VOLUME"}
-	ret["MIX"] = []string{"VOLUME"}
-	ret["MOVMIX"] = []string{"VOLUME"}
+	ret["ASP"] = []string{"VOLUME", "WHAT"}
+	ret["MOVASP"] = []string{"VOLUME", "WHAT"}
+	ret["DSP"] = []string{"VOLUME", "WHAT"}
+	ret["MOVDSP"] = []string{"VOLUME", "WHAT"}
+	ret["BLO"] = []string{"VOLUME", "WHAT"}
+	ret["MOVBLO"] = []string{"VOLUME", "WHAT"}
+	ret["MIX"] = []string{"VOLUME", "WHAT"}
+	ret["MOVMIX"] = []string{"VOLUME", "WHAT"}
 	return ret
 }
 
@@ -305,13 +335,14 @@ func ComparePositions() map[string][]string {
 
 func CompareSourcePosition() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"POSTO"}
+	ret["MOVASP"] = []string{"POSTO", "WHAT"}
 	return ret
 }
 
 func CompareDestPosition() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"POSTO"}
+	ret["MOVDSP"] = []string{"POSTO", "WHAT"}
+	ret["MOVBLO"] = []string{"POSTO", "WHAT"}
 	return ret
 }
 
@@ -324,12 +355,33 @@ func CompareWells() map[string][]string {
 
 func CompareSourceWell() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"WELLTO"}
+	ret["MOVASP"] = []string{"WELLTO", "WHAT"}
 	return ret
 }
 
 func CompareDestWell() map[string][]string {
 	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"WELLTO"}
+	ret["MOVDSP"] = []string{"WELLTO", "WHAT"}
+	ret["MOVBLO"] = []string{"WELLTO", "WHAT"}
+	return ret
+}
+
+func ComparePlateTypes() map[string][]string {
+	ret := make(map[string][]string, 2)
+	ret = mergeSets(ret, CompareSourcePlateType())
+	ret = mergeSets(ret, CompareDestPlateType())
+	return ret
+}
+
+func CompareSourcePlateType() map[string][]string {
+	ret := make(map[string][]string, 2)
+	ret["MOVASP"] = []string{"PLATE", "WHAT"}
+	return ret
+}
+
+func CompareDestPlateType() map[string][]string {
+	ret := make(map[string][]string, 2)
+	ret["MOVDSP"] = []string{"PLATE", "WHAT"}
+	ret["MOVBLO"] = []string{"PLATE", "WHAT"}
 	return ret
 }

@@ -159,7 +159,7 @@ func TestBlowNoTipChange(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedIns := []int{MOV, DSP, MOV, MMX, MOV, BLO}
+	expectedIns := []int{MOV, DSP, MOV, MIX, MOV, BLO}
 
 	if len(ris) != len(expectedIns) {
 		t.Fatal(fmt.Sprintf("Error: Expected %d instructions, got %d", len(expectedIns), len(ris)))

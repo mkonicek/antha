@@ -18,6 +18,7 @@ type commandInst struct {
 	Command *ast.Command
 }
 
+// SetInputPlate notifies the planner about an input plate
 func SetInputPlate(ctx context.Context, plate *wtype.LHPlate) {
 	st := sampletracker.GetSampleTracker()
 	st.SetInputPlate(plate)
@@ -27,7 +28,7 @@ func incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	st := sampletracker.GetSampleTracker()
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getId(ctx))
+	comp.BlockID = wtype.NewBlockID(getID(ctx))
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
 	st.UpdateIDOf(in.ID, comp.ID)
@@ -50,6 +51,7 @@ func incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	}
 }
 
+// Incubate incubates a component
 func Incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature, time wunit.Time, shaking bool) *wtype.LHComponent {
 	inst := incubate(ctx, in, temp, time, shaking)
 	trace.Issue(ctx, inst)
@@ -61,7 +63,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	in := opt.Component
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getId(ctx))
+	comp.BlockID = wtype.NewBlockID(getID(ctx))
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
 	st.UpdateIDOf(in.ID, comp.ID)
@@ -93,6 +95,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	}
 }
 
+// A HandleOpt are options to Handle
 type HandleOpt struct {
 	Component *wtype.LHComponent
 	Label     string
@@ -100,6 +103,7 @@ type HandleOpt struct {
 	Calls     []driver.Call
 }
 
+// Handle performs a low level instruction on a component
 func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 	inst := handle(ctx, opt)
 	trace.Issue(ctx, inst)
@@ -110,7 +114,7 @@ func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 //         the actual plate info?
 //        - two choices here: 1) we upgrade the sample tracker; 2) we pass the plate in somehow
 func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
-	inst.BlockID = wtype.NewBlockID(getId(ctx))
+	inst.BlockID = wtype.NewBlockID(getID(ctx))
 	inst.Result.BlockID = inst.BlockID
 
 	result := inst.Result
@@ -151,12 +155,14 @@ func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.LHComp
 	return inst.Comp
 }
 
+// Mix mixes components
 func Mix(ctx context.Context, components ...*wtype.LHComponent) *wtype.LHComponent {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components: components,
 	}))
 }
 
+// MixInto mixes components
 func MixInto(ctx context.Context, outplate *wtype.LHPlate, address string, components ...*wtype.LHComponent) *wtype.LHComponent {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components:  components,
@@ -165,6 +171,7 @@ func MixInto(ctx context.Context, outplate *wtype.LHPlate, address string, compo
 	}))
 }
 
+// MixNamed mixes components
 func MixNamed(ctx context.Context, outplatetype, address string, platename string, components ...*wtype.LHComponent) *wtype.LHComponent {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components: components,
@@ -174,8 +181,10 @@ func MixNamed(ctx context.Context, outplatetype, address string, platename strin
 	}))
 }
 
+// MixTo mixes components
+//
+// TODO: Addresses break dependence information. Deprecated.
 func MixTo(ctx context.Context, outplatetype, address string, platenum int, components ...*wtype.LHComponent) *wtype.LHComponent {
-	// TODO: Addresses break dependence information. Deprecated.
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components: components,
 		PlateType:  outplatetype,

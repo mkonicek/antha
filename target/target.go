@@ -5,7 +5,6 @@ package target
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/antha-lang/antha/ast"
 )
@@ -39,14 +38,6 @@ type Target struct {
 
 func New() *Target {
 	return &Target{}
-}
-
-func (a *Target) String() string {
-	var r []string
-	for _, d := range a.devices {
-		r = append(r, fmt.Sprint(d))
-	}
-	return fmt.Sprint(r)
 }
 
 func (a *Target) canCompile(d Device, reqs ...ast.Request) bool {

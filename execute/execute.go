@@ -18,9 +18,10 @@ var (
 
 // Result of executing a workflow.
 type Result struct {
-	Workflow *workflow.Workflow
-	Input    []ast.Node
-	Insts    []target.Inst
+	Workflow    *workflow.Workflow
+	Input       []ast.Node
+	Insts       []target.Inst
+	TestOutputs test.Outputs
 }
 
 type Opt struct {

@@ -3,7 +3,6 @@ package inventory
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -11,6 +10,8 @@ import (
 var (
 	// ErrUnknownType is returned if type is not in inventory
 	ErrUnknownType = errors.New("unknown type")
+
+	errCannotListPlates = errors.New("cannot list plates")
 )
 
 const (
@@ -34,6 +35,10 @@ type Inventory interface {
 	NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error)
 	NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipwaste, error)
 	NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error)
+}
+
+type hasXXXGetPlates interface {
+	XXXGetPlates(ctx context.Context) ([]*wtype.LHPlate, error)
 }
 
 // NewContext returns a context with the given inventory
@@ -65,7 +70,14 @@ func NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error) {
 	return fromContext(ctx).NewTipbox(ctx, typ)
 }
 
+// XXXNewPlates is a transitional call that will be removed once the planner
+// requires input plate types to be explicitly set.
 func XXXNewPlates(ctx context.Context) ([]*wtype.LHPlate, error) {
-	// TODO: decide if this will be supported
-	return nil, fmt.Errorf("not implemented")
+	inv := GetInventory(ctx)
+	xInv, ok := inv.(hasXXXGetPlates)
+	if !ok {
+		return nil, errCannotListPlates
+	}
+
+	return xInv.XXXGetPlates(ctx)
 }

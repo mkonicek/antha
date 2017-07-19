@@ -48,6 +48,12 @@ func (i *testInventory) NewTipwaste(ctx context.Context, typ string) (*wtype.LHT
 	return tw.Dup(), nil
 }
 
+func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.LHPlate, error) {
+	plates := GetPlates(ctx)
+	return plates, nil
+}
+
+// NewContext creates a new test inventory context
 func NewContext(ctx context.Context) context.Context {
 	inv := &testInventory{
 		componentByName: make(map[string]*wtype.LHComponent),
@@ -91,6 +97,7 @@ func NewContext(ctx context.Context) context.Context {
 	return inventory.NewContext(ctx, inv)
 }
 
+// GetTipboxes returns the tipboxes in a test inventory context
 func GetTipboxes(ctx context.Context) []*wtype.LHTipbox {
 	inv := inventory.GetInventory(ctx).(*testInventory)
 	var tbs []*wtype.LHTipbox
@@ -105,6 +112,7 @@ func GetTipboxes(ctx context.Context) []*wtype.LHTipbox {
 	return tbs
 }
 
+// GetPlates returns the plates in a test inventory context
 func GetPlates(ctx context.Context) []*wtype.LHPlate {
 	inv := inventory.GetInventory(ctx).(*testInventory)
 	var ps []*wtype.LHPlate
@@ -119,6 +127,7 @@ func GetPlates(ctx context.Context) []*wtype.LHPlate {
 	return ps
 }
 
+// GetComponents returns the components in a test inventory context
 func GetComponents(ctx context.Context) []*wtype.LHComponent {
 	inv := inventory.GetInventory(ctx).(*testInventory)
 	var cs []*wtype.LHComponent

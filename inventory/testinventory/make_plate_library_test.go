@@ -38,7 +38,7 @@ func TestAddRiser(t *testing.T) {
 
 			newPlates := addRiser(testPlate, device)
 			if e, f := 0, len(newPlates); e == f {
-				t.Errorf("expected some plates but none found", e, f)
+				t.Errorf("expected some plates but none found")
 				continue
 			}
 

@@ -42,17 +42,17 @@ type Opt struct {
 
 // Run is a simple entrypoint for one-shot execution of workflows.
 func Run(parent context.Context, opt Opt) (*Result, error) {
+	ctx := target.WithTarget(withID(parent, opt.Id), opt.Target)
+	ctx = testinventory.NewContext(ctx)
+
 	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := setParams(parent, w, opt.Params, opt.TransitionalReadLocalFiles); err != nil {
+	if _, err := setParams(ctx, w, opt.Params, opt.TransitionalReadLocalFiles); err != nil {
 		return nil, err
 	}
-
-	ctx := target.WithTarget(withID(parent, opt.Id), opt.Target)
-	ctx = testinventory.NewContext(ctx)
 
 	r := &resolver{}
 

@@ -39,7 +39,7 @@ func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wt
 	if err != nil {
 		panic(err)
 	}
-
+	c.ID = wtype.GetUUID()
 	c.SetVolume(vol)
 	return c
 }

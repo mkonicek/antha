@@ -3,10 +3,9 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"testing"
-
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"testing"
 )
 
 func GetLiquidHandlerForTest(ctx context.Context) *Liquidhandler {
@@ -17,13 +16,6 @@ func GetLiquidHandlerForTest(ctx context.Context) *Liquidhandler {
 func GetLHRequestForTest() *LHRequest {
 	req := NewLHRequest()
 	return req
-}
-
-func GetComponentForTest(name string, vol wunit.Volume) *wtype.LHComponent {
-	c := factory.GetComponentByType(name).Dup()
-	c.ID = wtype.GetUUID() // XXX -> refactor Dup to change ID
-	c.SetVolume(vol)
-	return c
 }
 
 func TestNoInstructions(t *testing.T) {

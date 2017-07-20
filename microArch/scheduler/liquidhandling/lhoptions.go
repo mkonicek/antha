@@ -5,6 +5,7 @@ type LHOptions struct {
 	OutputSort              bool
 	ExecutionPlannerVersion string
 	PrintInstructions       bool
+	LegacyVolume            bool
 }
 
 func NewLHOptions() LHOptions {

@@ -3,10 +3,9 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"testing"
-
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"testing"
 )
 
 func GetLiquidHandlerForTest(ctx context.Context) *Liquidhandler {

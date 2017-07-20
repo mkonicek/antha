@@ -246,6 +246,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	welltype6well := wtype.NewLHWell("falcon6well", "", "", "ul", 4000, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("falcon6wellAgar", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltype6well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
 	// Costar 48 well plate flat bottom
@@ -270,6 +271,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	welltypecostar48 := wtype.NewLHWell("costar48well", "", "", "ul", 1000, 100, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("costar48well", "Unknown", wellspercolumn, wellsperrow, heightinmm, "mm", welltypecostar48, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
 	// Block Kombi 2ml

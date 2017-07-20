@@ -107,6 +107,15 @@ func listComponents(cmd *cobra.Command, args []string) error {
 
 		_, err := fmt.Println(strings.Join(lines, "\n"))
 		return err
+	case csvOutput:
+		var lines []string
+		lines = append(lines, "ComponentNames,LiquidTypeName")
+		for _, c := range cs {
+			lines = append(lines, c.Name+","+c.LiquidType)
+		}
+
+		_, err := fmt.Println(strings.Join(lines, "\n"))
+		return err
 	default:
 		return fmt.Errorf("unknown output format %q", output)
 	}

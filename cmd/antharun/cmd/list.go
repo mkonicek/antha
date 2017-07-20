@@ -33,6 +33,7 @@ const (
 	jsonOutput = "json"
 	yamlOutput = "yaml"
 	textOutput = "text"
+	csvOutput  = "csv"
 )
 
 var listCmd = &cobra.Command{

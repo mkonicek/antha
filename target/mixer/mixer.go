@@ -34,12 +34,15 @@ func (a *Mixer) String() string {
 
 func (a *Mixer) CanCompile(req ast.Request) bool {
 	// TODO: Add specific volume constraints
+	cp := a.properties.CanPrompt()
 	can := ast.Request{
-		MixVol: req.MixVol,
+		MixVol:    req.MixVol,
+		CanPrompt: &cp,
 	}
 	if !req.Matches(can) {
 		return false
 	}
+
 	return can.Contains(req)
 }
 
@@ -76,6 +79,8 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	}
 
 	req := planner.NewLHRequest()
+
+	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
 
 	req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking)
 
@@ -169,6 +174,10 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	// deal with output sorting
 
 	req.Options.OutputSort = a.opt.OutputSort
+
+	// legacy volume use
+
+	req.Options.LegacyVolume = a.opt.LegacyVolume
 
 	err := req.ConfigureYourself()
 	if err != nil {

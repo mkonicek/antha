@@ -120,6 +120,16 @@ func listPlates(cmd *cobra.Command, args []string) error {
 
 		_, err := fmt.Println(strings.Join(lines, "\n"))
 		return err
+	case csvOutput:
+		var lines []string
+		lines = append(lines, "PlateName,Properties")
+		for _, p := range ps {
+			prop := fmt.Sprintf("%d by %d,%s,%s shaped %s wells",
+				p.WellsX, p.WellsY, p.WellShape, p.WellBottom, p.MaxWellVolume)
+			lines = append(lines, p.Type+","+prop)
+		}
+		_, err := fmt.Println(strings.Join(lines, "\n"))
+		return err
 	default:
 		return fmt.Errorf("unknown output format %q", output)
 	}

@@ -472,6 +472,11 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	// assert we should have some instruction ordering
+
+	if len(request.Output_order) == 0 {
+		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
+	}
 	// convert requests to volumes and determine required stock concentrations
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
 
@@ -537,6 +542,32 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	return nil
 }
 
+// resolve question of where something is requested to go
+const NoID = "NOID"
+const NoName = "NONAME"
+const NoWell = "NOWELL"
+
+func assembleLoc(ins *wtype.LHInstruction) string {
+	id := NoID
+	if ins.PlateID() != "" {
+		id = ins.PlateID()
+	}
+
+	name := NoName
+
+	if ins.PlateName != "" {
+		name = ins.PlateName
+	}
+
+	well := NoWell
+
+	if ins.Welladdress != "" {
+		well = ins.Welladdress
+	}
+
+	return strings.Join([]string{id, name, well}, ":")
+}
+
 // sort out inputs
 func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	instructions := (*request).LHInstructions
@@ -552,12 +583,13 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	}
 
 	inputs := make(map[string][]*wtype.LHComponent, 3)
-	//order := make(map[string]map[string]int, 3)
 	vmap := make(map[string]wunit.Volume)
 
 	allinputs := make([]string, 0, 10)
 
 	ordH := make(map[string]int, len(instructions))
+
+	inPlaceLocations := make(map[string]string, len(instructions))
 
 	//	for _, instruction := range instructions {
 	for _, insID := range request.Output_order {
@@ -565,43 +597,51 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		components := instruction.Components
 
 		for ix, component := range components {
-			// ignore anything which is made in another mix
-			// XXX if provenance info comes in this is not safe
-			// since something can not have been made in a previous mix
-			// and yet still answer yes to this question
-			if component.HasAnyParent() {
+			// Ignore components which already exist
+
+			if component.IsInstance() {
 				continue
 			}
 
 			// what if this is a mix in place?
 			if ix == 0 && !component.IsSample() {
 				// these components come in as instances -- hence 1 per well
+				// but if not allocated we need to do so
 				inputs[component.CNID()] = make([]*wtype.LHComponent, 0, 1)
 				inputs[component.CNID()] = append(inputs[component.CNID()], component)
 				allinputs = append(allinputs, component.CNID())
 				vmap[component.CNID()] = component.Volume()
+				component.DeclareInstance()
 
-				ordH[component.CNID()] = len(ordH)
+				// if this already exists do nothing
+				_, ok := ordH[component.CNID()]
+
+				if !ok {
+					ordH[component.CNID()] = len(ordH)
+					// assign like this: ID:NAME:WELL
+					// if ID is blank we call it NOID
+					loc := assembleLoc(instruction)
+					inPlaceLocations[component.CNID()] = loc
+				}
 			} else {
-
-				cmps, ok := inputs[component.CName]
+				cmps, ok := inputs[component.Kind()]
 				if !ok {
 					cmps = make([]*wtype.LHComponent, 0, 3)
-					allinputs = append(allinputs, component.CName)
+					allinputs = append(allinputs, component.Kind())
 				}
 
-				_, ok = ordH[component.CName]
+				_, ok = ordH[component.Kind()]
 
 				if !ok {
-					ordH[component.CName] = len(ordH)
+					ordH[component.Kind()] = len(ordH)
 				}
 
 				cmps = append(cmps, component)
-				inputs[component.CName] = cmps
+				inputs[component.Kind()] = cmps
 
 				// similarly add the volumes up
 
-				vol := vmap[component.CName]
+				vol := vmap[component.Kind()]
 
 				if vol.IsNil() {
 					vol = wunit.NewVolume(0.0, "ul")
@@ -614,50 +654,11 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 				v2a.Add(request.CarryVolume)
 				vol.Add(v2a)
 
-				vmap[component.CName] = vol
+				vmap[component.Kind()] = vol
 			}
-
-			/*
-
-				for j := 0; j < len(components); j++ {
-					// again exempt those parented components
-					if components[j].HasAnyParent() {
-						continue
-					}
-					if component.Order < components[j].Order {
-						m, ok := order[component.CName]
-						if !ok {
-							m = make(map[string]int, len(components))
-							order[component.CName] = m
-						}
-
-						m[components[j].CName] += 1
-					} else {
-						m, ok := order[components[j].CName]
-						if !ok {
-							m = make(map[string]int, len(components))
-							order[components[j].CName] = m
-						}
-						m[component.CName] += 1
-					}
-
-				}
-			*/
 		}
 	}
 
-	/*
-		// define component ordering
-
-		component_order, err := DefineOrderOrFail(order)
-
-		if err != nil {
-			return request, err
-		}
-
-		(*request).Input_order = component_order
-
-	*/
 	// work out how much we have and how much we need
 	// need to consider what to do with IDs
 
@@ -736,70 +737,6 @@ func OrdinalFromHash(m map[string]int) ([]string, error) {
 	return s, nil
 }
 
-/*
-func DefineOrderOrFail(mapin map[string]map[string]int) ([]string, error) {
-	cmps := make([]string, 0, 1)
-
-	for name, _ := range mapin {
-		cmps = append(cmps, name)
-	}
-
-	ord := make([][]string, len(cmps))
-
-	mx := 0
-	for i := 0; i < len(cmps); i++ {
-		cnt := 0
-		for j := 0; j < len(cmps); j++ {
-			if i == j {
-				continue
-			}
-
-			// PREVIOUSLY
-			// only one side can be > 0
-			// NOW we don't care
-
-			c1 := mapin[cmps[i]][cmps[j]]
-			//c2 := mapin[cmps[j]][cmps[i]]
-
-			// if c1 > 0 we add to the count
-
-			if c1 > 0 {
-				cnt += 1
-			}
-		}
-
-		a := ord[cnt]
-
-		if a == nil {
-			a = make([]string, 0, 3)
-		}
-
-		a = append(a, cmps[i])
-		if cnt > mx {
-			mx = cnt
-		}
-		ord[cnt] = a
-	}
-
-	ret := make([]string, 0, len(cmps))
-
-	// take in reverse order
-	if len(cmps) > 0 {
-		for j := mx; j >= 0; j-- {
-			a := ord[j]
-			if a == nil {
-				continue
-			}
-
-			for _, name := range a {
-				ret = append(ret, name)
-			}
-		}
-	}
-
-	return ret, nil
-}
-*/
 // define which labware to use
 func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wtype.LHPlate, major_layouts map[int][]string, ptype *wtype.LHPlate) (map[string]*wtype.LHPlate, error) {
 	if plates == nil {
@@ -910,8 +847,12 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 	// Instructions updating a well
 	assignment := make(map[*wtype.LHWell]*wtype.LHInstruction)
 	for _, inst := range rq.LHInstructions {
-		tx := strings.Split(inst.Result.Loc, ":")
+		// ignore non -mix instructions
+		if inst.Type != wtype.LHIMIX {
+			continue
+		}
 
+		tx := strings.Split(inst.Result.Loc, ":")
 		newid, ok := lh.plateIDMap[tx[0]]
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", tx[0]))

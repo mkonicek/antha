@@ -69,7 +69,7 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
 
 	for k := 0; k < 9; k++ {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(8.0, "ul"))
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))

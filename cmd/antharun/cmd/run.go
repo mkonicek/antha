@@ -95,6 +95,8 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 
 	opt.UseDriverTipTracking = viper.GetBool("UseDriverTipTracking")
 
+	opt.LegacyVolume = viper.GetBool("LegacyVolumeTracking")
+
 	return opt, nil
 }
 
@@ -291,4 +293,5 @@ func init() {
 	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
 	flags.Bool("PrintInstructions", false, "Output the raw instructions sent to the driver")
 	flags.Bool("UseDriverTipTracking", false, "If the driver has tip tracking available, use it")
+	flags.Bool("LegacyVolumeTracking", false, "Do not track volumes for intermediate components")
 }

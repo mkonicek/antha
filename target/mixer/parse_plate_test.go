@@ -2,11 +2,13 @@ package mixer
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.LHComponent {
@@ -68,6 +70,8 @@ func containsInvalidCharWarning(warnings []string) bool {
 }
 
 func TestParsePlateWithValidation(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	file := []byte(
 		`
 pcrplate_with_cooler,
@@ -75,7 +79,7 @@ A1,water+soil,water,50.0,ul,
 A4,tea,water,50.0,ul,
 A5,milk,water,100.0,ul,
 `)
-	r, err := ParsePlateCSVWithValidationConfig(bytes.NewBuffer(file), DefaultValidationConfig())
+	r, err := ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
 
 	if err != nil {
 		t.Errorf("Failed to parse plate: %s ", err.Error)
@@ -83,7 +87,7 @@ A5,milk,water,100.0,ul,
 	if !containsInvalidCharWarning(r.Warnings) {
 		t.Errorf("Default validation config must forbid + signs in component names")
 	}
-	r, err = ParsePlateCSVWithValidationConfig(bytes.NewBuffer(file), PermissiveValidationConfig())
+	r, err = ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), PermissiveValidationConfig())
 
 	if err != nil {
 		t.Errorf("Failed to parse plate: %s ", err.Error)
@@ -100,6 +104,8 @@ func TestParsePlate(t *testing.T) {
 		Expected   *wtype.LHPlate
 		NoWarnings bool
 	}
+
+	ctx := testinventory.NewContext(context.Background())
 
 	suite := []testCase{
 		testCase{
@@ -173,7 +179,7 @@ C1,neb5compcells,culture,20.5,ul,0,mg/l
 	}
 
 	for _, tc := range suite {
-		p, err := ParsePlateCSV(bytes.NewBuffer(tc.File))
+		p, err := ParsePlateCSV(ctx, bytes.NewBuffer(tc.File))
 		if err != nil {
 			t.Error(err)
 		}

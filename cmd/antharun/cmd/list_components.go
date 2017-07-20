@@ -23,12 +23,13 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/ghodss/yaml"
 	"github.com/mgutz/ansi"
 	"github.com/spf13/cobra"
@@ -68,8 +69,10 @@ func listComponents(cmd *cobra.Command, args []string) error {
 		return ansi.Color(x, "red")
 	}
 
+	ctx := testinventory.NewContext(context.Background())
+
 	var cs simpleComponents
-	for _, c := range factory.GetComponents() {
+	for _, c := range testinventory.GetComponents(ctx) {
 		cs = append(cs, simpleComponent{
 			Name:       c.CName,
 			LiquidType: c.TypeName(),

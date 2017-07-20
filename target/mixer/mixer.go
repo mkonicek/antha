@@ -4,14 +4,15 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/inventory"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/factory"
 	planner "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
@@ -62,7 +63,7 @@ type lhreq struct {
 	*planner.Liquidhandler // ... and its associated planner
 }
 
-func (a *Mixer) makeLhreq() (*lhreq, error) {
+func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	// MIS -- this might be a hole. We probably need to invoke the sample tracker here
 	addPlate := func(req *planner.LHRequest, ip *wtype.LHPlate) error {
 		if _, seen := req.Input_plates[ip.ID]; seen {
@@ -98,26 +99,39 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 
 	if p := a.opt.InputPlateType; len(p) != 0 {
 		for _, v := range p {
-			req.Input_platetypes = append(req.Input_platetypes, factory.GetPlateByType(v))
+			p, err := inventory.NewPlate(ctx, v)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Input_platetypes = append(req.Input_platetypes, p)
 		}
 	}
 
 	if p := a.opt.OutputPlateType; len(p) != 0 {
 		for _, v := range p {
-			req.Output_platetypes = append(req.Output_platetypes, factory.GetPlateByType(v))
+			p, err := inventory.NewPlate(ctx, v)
+			if err != nil {
+				return nil, err
+			}
+			req.Output_platetypes = append(req.Output_platetypes, p)
 		}
 	}
 
 	if p := a.opt.TipType; len(p) != 0 {
 		for _, v := range p {
-			req.Tips = append(req.Tips, factory.GetTipByType(v))
+			t, err := inventory.NewTipbox(ctx, v)
+			if err != nil {
+				return nil, err
+			}
+			req.Tips = append(req.Tips, t)
 		}
 	}
 
 	if p := a.opt.InputPlateData; len(p) != 0 {
 		for idx, bs := range p {
 			buf := bytes.NewBuffer(bs)
-			r, err := ParsePlateCSV(buf)
+			r, err := ParsePlateCSV(ctx, buf)
 			if err != nil {
 				return nil, fmt.Errorf("cannot parse data at idx %d: %s", idx, err)
 			}
@@ -168,7 +182,7 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 	}, nil
 }
 
-func (a *Mixer) Compile(nodes []ast.Node) ([]target.Inst, error) {
+func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	var mixes []*wtype.LHInstruction
 	for _, node := range nodes {
 		if c, ok := node.(*ast.Command); !ok {
@@ -179,7 +193,7 @@ func (a *Mixer) Compile(nodes []ast.Node) ([]target.Inst, error) {
 			mixes = append(mixes, m)
 		}
 	}
-	if inst, err := a.makeMix(mixes); err != nil {
+	if inst, err := a.makeMix(ctx, mixes); err != nil {
 		return nil, err
 	} else {
 		return []target.Inst{inst}, nil
@@ -217,7 +231,7 @@ func (a *Mixer) saveFile(name string) ([]byte, error) {
 	}
 }
 
-func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
+func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (target.Inst, error) {
 	hasPlate := func(plates []*wtype.LHPlate, typ, id string) bool {
 		for _, p := range plates {
 			if p.Type == typ && (id == "" || p.ID == id) {
@@ -239,7 +253,7 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 		return
 	}
 
-	r, err := a.makeLhreq()
+	r, err := a.makeLhreq(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -258,14 +272,17 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 
 	for _, mix := range mixes {
 		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID()) {
-			p := factory.GetPlateByType(mix.Platetype)
+			p, err := inventory.NewPlate(ctx, mix.Platetype)
+			if err != nil {
+				return nil, err
+			}
 			p.ID = mix.PlateID()
 			r.LHRequest.Output_platetypes = append(r.LHRequest.Output_platetypes, p)
 		}
 		r.LHRequest.Add_instruction(mix)
 	}
 
-	err = r.Liquidhandler.MakeSolutions(r.LHRequest)
+	err = r.Liquidhandler.MakeSolutions(ctx, r.LHRequest)
 	// MIS XXX XXX XXX unfortunately we need to make sure this stays up to date
 	// would be better to remove this and just use the ones the liquid handler
 	// holds

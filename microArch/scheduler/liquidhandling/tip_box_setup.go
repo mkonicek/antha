@@ -23,19 +23,20 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory"
 	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
 //  TASK: 	Determine number of tip boxes of each type
 // INPUT: 	instructions
 //OUTPUT: 	arrays of tip boxes
-func (lh *Liquidhandler) Tip_box_setup(request *LHRequest) (*LHRequest, error) {
+func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
 	tip_boxes := make([]*wtype.LHTipbox, 0)
 
 	// the instructions have been generated at this point so we just need to go through and count the tips used
@@ -114,13 +115,20 @@ func (lh *Liquidhandler) Tip_box_setup(request *LHRequest) (*LHRequest, error) {
 			continue
 		}
 
-		tbt := factory.GetTipByType(actualtiptype)
+		tbt, err := inventory.NewTipbox(ctx, actualtiptype)
+		if err != nil {
+			return nil, err
+		}
+
 		ntbx := (newtips_needed-1)/tbt.NTips + 1
 
 		fmt.Println("newtips needed: ", newtips_needed, " : ", tbt.NTips, " NTBX: ", ntbx)
 
 		for i := 0; i < ntbx; i++ {
-			tbt2 := factory.GetTipByType(actualtiptype)
+			tbt2, err := inventory.NewTipbox(ctx, actualtiptype)
+			if err != nil {
+				return nil, err
+			}
 			tip_boxes = append(tip_boxes, tbt2)
 			tiplocs2 = append(tiplocs2, ar2[i])
 		}

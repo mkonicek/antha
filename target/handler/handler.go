@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -81,7 +82,7 @@ func (a *Handler) merge(nodes []ast.Node) (*ast.HandleInst, error) {
 	return ret, nil
 }
 
-func (a *Handler) Compile(nodes []ast.Node) ([]target.Inst, error) {
+func (a *Handler) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	addDep := func(in, dep target.Inst) {
 		in.SetDependsOn(append(in.DependsOn(), dep))
 	}

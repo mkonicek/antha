@@ -96,6 +96,8 @@ func (p *compiler) anthaInit() {
 		"MixNamed":     "execute.MixNamed",
 		"MixTo":        "execute.MixTo",
 		"ReadEM":       "execute.ReadEM",
+		"NewComponent": "execute.NewComponent",
+		"NewPlate":     "execute.NewPlate",
 		//	"Wait":          "execute.Wait",
 		"SetInputPlate": "execute.SetInputPlate",
 	}

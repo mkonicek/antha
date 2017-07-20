@@ -1,21 +1,31 @@
 package liquidhandling
 
 import (
+	"context"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/factory"
 )
 
 func TestInputSampleAutoAllocate(t *testing.T) {
-	rbt := makeGilson()
+	ctx := testinventory.NewContext(context.Background())
+
+	rbt := makeGilson(ctx)
 	rq := NewLHRequest()
 
-	cmp1 := factory.GetComponentByType("water")
-	cmp2 := factory.GetComponentByType("dna_part")
+	cmp1, err := inventory.NewComponent(ctx, inventory.WaterType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmp2, err := inventory.NewComponent(ctx, "dna_part")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	s1 := mixer.Sample(cmp1, wunit.NewVolume(50.0, "ul"))
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
@@ -31,7 +41,10 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 
 	rq.LHInstructions[ins.ID] = ins
 
-	pl := factory.GetPlateByType("pcrplate_skirted_riser20")
+	pl, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
 
@@ -39,7 +52,7 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 
 	lh := Init(rbt)
 
-	lh.Plan(rq)
+	lh.Plan(ctx, rq)
 
 	expected := make(map[string]float64)
 
@@ -56,11 +69,11 @@ func testSetup(rbt *liquidhandling.LHProperties, expected map[string]float64, t 
 				v, ok := expected[w.WContents.CName]
 
 				if !ok {
-					t.Errorf("ERROR: unexpected component in plating area: ", w.WContents.CName)
+					t.Errorf("unexpected component in plating area: %s", w.WContents.CName)
 				}
 
 				if v != w.WContents.Vol {
-					t.Errorf("ERROR: Volume of component ", w.WContents.CName, " was ", w.WContents.Vol, " should be ", v)
+					t.Errorf("volume of component %s was %v should be %v", w.WContents.CName, w.WContents.Vol, v)
 				}
 
 				delete(expected, w.WContents.CName)
@@ -69,16 +82,24 @@ func testSetup(rbt *liquidhandling.LHProperties, expected map[string]float64, t 
 	}
 
 	if len(expected) != 0 {
-		t.Errorf("ERROR: Expected components remaining: ", expected)
+		t.Errorf("unexpected components remaining: %v", expected)
 	}
 
 }
 func TestInPlaceAutoAllocate(t *testing.T) {
-	rbt := makeGilson()
+	ctx := testinventory.NewContext(context.Background())
+
+	rbt := makeGilson(ctx)
 	rq := NewLHRequest()
 
-	cmp1 := factory.GetComponentByType("water")
-	cmp2 := factory.GetComponentByType("dna_part")
+	cmp1, err := inventory.NewComponent(ctx, inventory.WaterType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmp2, err := inventory.NewComponent(ctx, "dna_part")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	cmp1.Vol = 100.0
 	cmp2.Vol = 50.0
@@ -94,7 +115,10 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 
 	rq.LHInstructions[ins.ID] = ins
 
-	pl := factory.GetPlateByType("pcrplate_skirted_riser20")
+	pl, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
 
@@ -102,7 +126,7 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 
 	lh := Init(rbt)
 
-	lh.Plan(rq)
+	lh.Plan(ctx, rq)
 
 	expected := make(map[string]float64)
 

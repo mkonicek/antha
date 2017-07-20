@@ -325,8 +325,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			wlt, ok := tlhp.WellAtString(insIn.Welladdress)
 
 			if !ok {
-				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", insIn.Welladdress, " not found on dest plate ", insIn.PlateID))
-				return nil, err
+				return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Well %s not found on dest plate %s", insIn.Welladdress, insIn.PlateID()))
 			}
 
 			//v2 := wunit.NewVolume(v.Vol, v.Vunit)

@@ -23,7 +23,9 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -44,11 +46,11 @@ func (ri *RobotInstructionSet) Add(ins RobotInstruction) {
 	ri.instructions = append(ri.instructions, ris)
 }
 
-func (ri *RobotInstructionSet) Generate(lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) ([]RobotInstruction, error) {
+func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0, 1)
 
 	if ri.parent != nil {
-		arr, err := ri.parent.Generate(lhpr, lhpm)
+		arr, err := ri.parent.Generate(ctx, lhpr, lhpm)
 
 		if err != nil {
 			return ret, err
@@ -66,7 +68,7 @@ func (ri *RobotInstructionSet) Generate(lhpr *wtype.LHPolicyRuleSet, lhpm *LHPro
 	}
 
 	for _, ins := range ri.instructions {
-		arr, err := ins.Generate(lhpr, lhpm)
+		arr, err := ins.Generate(ctx, lhpr, lhpm)
 
 		if err != nil {
 			return arr, err

@@ -23,18 +23,20 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/material"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/microArch/factory"
-	"github.com/antha-lang/antha/microArch/logger"
-	"github.com/antha-lang/antha/microArch/sampletracker"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/antha-lang/antha/antha/anthalib/material"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/microArch/logger"
+	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 // describes a liquid handler, its capabilities and current state
@@ -703,7 +705,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 	return plateIDs, wellCoords, vols, nil
 }
 
-func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
+func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
 	positions = make([]string, multi)
 	boxtypes = make([]string, multi)
 
@@ -740,7 +742,7 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 			break
 		} else if usetiptracking && lhp.HasTipTracking() {
 			bx.Refresh()
-			return lhp.GetCleanTips(tiptype, channel, mirror, multi, usetiptracking)
+			return lhp.GetCleanTips(ctx, tiptype, channel, mirror, multi, usetiptracking)
 		}
 	}
 
@@ -751,11 +753,10 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 
 	if !foundit {
 		// try adding a new tip box
-		bx := factory.GetTipboxByType(tiptype)
+		bx, err := inventory.NewTipbox(ctx, tiptype)
 
-		if bx == nil {
-			err = wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("No tipbox of type ", tiptype, " is known"))
-			return nil, nil, nil, err
+		if err != nil {
+			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type ", tiptype, " found: %s", err))
 		}
 
 		r := lhp.AddTipBox(bx)
@@ -765,7 +766,7 @@ func (lhp *LHProperties) GetCleanTips(tiptype string, channel *wtype.LHChannelPa
 			return nil, nil, nil, err
 		}
 
-		return lhp.GetCleanTips(tiptype, channel, mirror, multi, usetiptracking)
+		return lhp.GetCleanTips(ctx, tiptype, channel, mirror, multi, usetiptracking)
 		//		return nil, nil, nil
 	}
 

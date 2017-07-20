@@ -25,8 +25,8 @@ package liquidhandling
 import (
 	"fmt"
 
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/Synthace/go-glpk/glpk"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func choose_stock_concentrations(minrequired map[string]float64, maxrequired map[string]float64, Smax map[string]float64, vmin float64, T map[string]float64) map[string]float64 {
@@ -64,9 +64,9 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 	names := make([]string, nc)
 
 	cur := 0
-	for name, _ := range minrequired {
+	for name := range minrequired {
 		names[cur] = name
-		cur += 1
+		cur++
 	}
 
 	lp := glpk.New()
@@ -83,12 +83,12 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 
 	for _, name := range names {
 		lp.SetRowBnds(cur, glpk.UP, -999999.0, (-1.0*vmin*maxrequired[name])/(T[name]*minrequired[name]))
-		cur += 1
+		cur++
 	}
 
 	for _, name := range names {
 		lp.SetRowBnds(cur, glpk.UP, -999999.0, (-1.0 * maxrequired[name] / Smax[name]))
-		cur += 1
+		cur++
 	}
 
 	lp.SetRowBnds(cur, glpk.UP, 0.0, 1.0)
@@ -97,13 +97,10 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 
 	lp.AddCols(nc)
 
-	cur = 1
-	for _, name := range names {
-		name = name
-		lp.SetObjCoef(cur, -1.0)
-		lp.SetColName(cur, fmt.Sprintf("X%d", cur))
-		lp.SetColBnds(cur, glpk.LO, 0.0, 0.0)
-		cur += 1
+	for idx := range names {
+		lp.SetObjCoef(idx+1, -1.0)
+		lp.SetColName(idx+1, fmt.Sprintf("X%d", cur))
+		lp.SetColBnds(idx+1, glpk.LO, 0.0, 0.0)
 	}
 
 	cur = 1
@@ -117,7 +114,7 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 			row := make([]float64, nc+1)
 			row[i+1] = -1.0
 			lp.SetMatRow(cur, ind, row)
-			cur += 1
+			cur++
 		}
 	}
 	// now the sum constraint
@@ -147,7 +144,7 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 	cur = 1
 	for _, name := range names {
 		concentrations[name] = maxrequired[name] / lp.ColPrim(cur)
-		cur += 1
+		cur++
 	}
 
 	return concentrations

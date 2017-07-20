@@ -23,17 +23,19 @@
 package liquidhandling
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"sort"
 )
 
 type RobotInstruction interface {
 	InstructionType() int
 	GetParameter(name string) interface{}
-	Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
 	Check(lhpr wtype.LHPolicyRule) bool
 }
 

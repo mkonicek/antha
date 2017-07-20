@@ -1,6 +1,7 @@
 package human
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/antha-lang/antha/ast"
@@ -9,18 +10,22 @@ import (
 )
 
 const (
-	HumanByHumanCost = 50  // Cost of manually moving from another human device
-	HumanByXCost     = 100 // Cost of manually moving from any non-human device
+	// HumanByHumanCost is the cost of manually moving from another human device
+	HumanByHumanCost = 50
+	// HumanByXCost is the cost of manually moving from any non-human device
+	HumanByXCost = 100
 )
 
 var (
 	_ target.Device = &Human{}
 )
 
+// A Human is a device that can do anything
 type Human struct {
 	opt Opt
 }
 
+// CanCompile implements device CanCompile
 func (a *Human) CanCompile(req ast.Request) bool {
 	can := ast.Request{
 		Move: req.Move,
@@ -50,6 +55,7 @@ func (a *Human) CanCompile(req ast.Request) bool {
 	return can.Contains(req)
 }
 
+// MoveCost implements target.device MoveCost
 func (a *Human) MoveCost(from target.Device) int {
 	if _, ok := from.(*Human); ok {
 		return HumanByHumanCost
@@ -76,17 +82,57 @@ func getKey(n ast.Node) (r interface{}) {
 	return
 }
 
-func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
+func keepNodes(keep map[graph.Node]bool, dag *graph.SDag) (roots []graph.Node) {
+	next := dag.Roots
+	for len(next) > 0 {
+		last := len(next) - 1
+		r := next[last]
+		next = next[:last]
+
+		if keep[r] {
+			roots = append(roots, r)
+			continue
+		}
+
+		next = append(next, dag.Visit(r)...)
+	}
+
+	return
+}
+
+func orderNodes(keep map[graph.Node]target.Inst, g graph.Graph) (ret []graph.Node) {
+	order, _ := graph.TopoSort(graph.TopoSortOpt{
+		Graph: g,
+	})
+
+	for _, n := range order {
+		if keep[n] != nil {
+			ret = append(ret, n)
+		}
+	}
+
+	return
+}
+
+// Compile implements target.device Compile
+func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	addDep := func(in, dep target.Inst) {
 		in.SetDependsOn(append(in.DependsOn(), dep))
 	}
 
-	g := ast.Deps(nodes)
+	g := ast.ToGraph(ast.ToGraphOpt{
+		Roots:     nodes,
+		WhichDeps: ast.DataDeps,
+	})
+	isRoot := make(map[graph.Node]bool)
+	for _, n := range nodes {
+		isRoot[n] = true
+	}
 
 	entry := &target.Wait{}
 	exit := &target.Wait{}
 	var insts []target.Inst
-	inst := make(map[ast.Node]target.Inst)
+	isRep := make(map[graph.Node]target.Inst)
 
 	insts = append(insts, entry)
 
@@ -94,10 +140,13 @@ func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 	// available to be executed (graph.Reverse)
 	dag := graph.Schedule(graph.Reverse(g))
 	for len(dag.Roots) > 0 {
+		roots := keepNodes(isRoot, dag)
+
 		var next []graph.Node
+
 		// Gather
 		same := make(map[interface{}][]ast.Node)
-		for _, r := range dag.Roots {
+		for _, r := range roots {
 			n := r.(ast.Node)
 			key := getKey(n)
 			same[key] = append(same[key], n)
@@ -116,9 +165,8 @@ func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 			in := a.coalesce(ins)
 			insts = append(insts, in)
 
-			for _, n := range nodes {
-				inst[n] = in
-			}
+			// Pick a representative
+			isRep[nodes[0]] = in
 		}
 
 		dag.Roots = next
@@ -126,14 +174,19 @@ func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 
 	insts = append(insts, exit)
 
-	for i, inum := 0, g.NumNodes(); i < inum; i += 1 {
-		n := g.Node(i).(ast.Node)
-		in := inst[n]
-		for j, jnum := 0, g.NumOuts(n); j < jnum; j += 1 {
-			kid := g.Out(n, j).(ast.Node)
-			kidIn := inst[kid]
-			addDep(in, kidIn)
+	order := orderNodes(isRep, g)
+	for idx, node := range order {
+		n := node.(ast.Node)
+		in := isRep[n]
+
+		if idx-1 >= 0 {
+			prev := order[idx-1].(ast.Node)
+			prevNode := isRep[prev]
+			if in != prevNode {
+				addDep(in, prevNode)
+			}
 		}
+
 		addDep(in, entry)
 		addDep(exit, in)
 	}
@@ -141,12 +194,14 @@ func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
 	return insts, nil
 }
 
+// An Opt is a set of options to configure a human device
 type Opt struct {
 	CanMix      bool
 	CanIncubate bool
 	CanHandle   bool
 }
 
+// New returns a new human device
 func New(opt Opt) *Human {
 	return &Human{opt}
 }

@@ -24,6 +24,8 @@ type TestInput struct {
 	Params       *execute.RawParams
 	WorkflowPath string
 	Workflow     *workflow.Desc
+	ExpectedPath string
+	Expected     *workflowtest.TestOpt
 	Dir          string
 }
 

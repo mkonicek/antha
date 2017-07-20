@@ -36,6 +36,7 @@ import (
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
@@ -55,7 +56,7 @@ var runCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
-func makeMixerOpt() (mixer.Opt, error) {
+func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 	opt := mixer.Opt{}
 	if i := viper.GetInt("maxPlates"); i != 0 {
 		f := float64(i)
@@ -74,7 +75,7 @@ func makeMixerOpt() (mixer.Opt, error) {
 	opt.TipType = GetStringSlice("tipType")
 
 	for _, fn := range GetStringSlice("inputPlates") {
-		p, err := mixer.ParseInputPlateFile(fn)
+		p, err := mixer.ParseInputPlateFile(ctx, fn)
 		if err != nil {
 			return opt, err
 		}
@@ -219,6 +220,7 @@ func (a *runOpt) Run() error {
 
 func runWorkflow(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
+	ctx := testinventory.NewContext(context.Background())
 
 	var drivers []string
 	for idx, uri := range GetStringSlice("driver") {
@@ -250,7 +252,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	mopt, err := makeMixerOpt()
+	mopt, err := makeMixerOpt(ctx)
 	if err != nil {
 		return err
 	}

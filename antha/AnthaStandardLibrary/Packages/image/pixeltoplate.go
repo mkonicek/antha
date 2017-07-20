@@ -4,7 +4,9 @@ package image
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	goimage "image"
 	"image/color"
@@ -14,13 +16,11 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"errors"
-
 	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/disintegration/imaging"
-	"github.com/antha-lang/antha/microArch/factory"
 )
 
 //-------------------------------------------------------
@@ -447,7 +447,7 @@ func reversepalettemap(colourmap map[color.Color]string) (stringmap map[string]c
 		if ok == true {
 			alreadyinthere := stringmap[value]
 
-			err = fmt.Errorf("attempt to add value", key, "for key", value, "to stringmap", stringmap, "failed due to duplicate entry", alreadyinthere)
+			err = fmt.Errorf("attempt to add value %s for key %s to stringmap %s failed due to duplicate entry %s", key, value, stringmap, alreadyinthere)
 		} else {
 			stringmap[value] = key
 		}
@@ -467,7 +467,7 @@ func reversestringtopalettemap(stringmap map[string]color.Color) (colourmap map[
 		if ok == true {
 			alreadyinthere := colourmap[value]
 
-			err = fmt.Errorf("attempt to add value", key, "for key", value, "to colourmap", colourmap, "failed due to duplicate entry", alreadyinthere)
+			err = fmt.Errorf("attempt to add value %s for key %s to colourmap %s failed due to duplicate entry %s", key, value, colourmap, alreadyinthere)
 		} else {
 			colourmap[value] = key
 		}
@@ -969,223 +969,231 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 var colors = map[string]color.Color{
 
 	//ProteinPaintBox under natural light
-	"JuniperGFP" :		color.RGBA{R: uint8(194), G: uint8(164), B: uint8(72), A: uint8(255)},
-	"CindylouCFP" :		color.RGBA{R: uint8(224), G: uint8(120), B: uint8(240), A: uint8(254)},
-	"YetiYFP" :			color.RGBA{R: uint8(251), G: uint8(176), B: uint8(0), A: uint8(255)},
-	"CometGFP" :		color.RGBA{R: uint8(222), G: uint8(221), B: uint8(68), A: uint8(255)},
-	"DasherGFP" :		color.RGBA{R: uint8(209), G: uint8(214), B: uint8(0), A: uint8(255)},
-	"HollyGFP" :		color.RGBA{R: uint8(216), G: uint8(231), B: uint8(15), A: uint8(255)},
-	"YukonOFP" :		color.RGBA{R: uint8(251), G: uint8(102), B: uint8(79), A: uint8(255)},
-	"DonnerMagenta" :	color.RGBA{R: uint8(152), G: uint8(76), B: uint8(128), A: uint8(255)},
-	"ScroogeOrange" :	color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)},
-	"SerranoRFP" :		color.RGBA{R: uint8(248), G: uint8(84), B: uint8(149), A: uint8(255)},
-	"BlazeYFP" :		color.RGBA{R: uint8(255), G: uint8(255), B: uint8(146), A: uint8(255)},
-	"verywhite" :		color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
-	"CupidPink" :		color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)},
-	"IvyGFP" :			color.RGBA{R: uint8(225), G: uint8(222), B: uint8(120), A: uint8(255)},
-	"MaccabeePurple" :	color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)},
-	"MarleyYFP" :		color.RGBA{R: uint8(250), G: uint8(210), B: uint8(0), A: uint8(255)},
-	"CratchitYFP" :		color.RGBA{R: uint8(255), G: uint8(194), B: uint8(0), A: uint8(255)},
-	"CayenneRFP" :		color.RGBA{R: uint8(248), G: uint8(64), B: uint8(148), A: uint8(255)},
-	"E.coli" :			color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)},
-	"BlitzenBlue" :		color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)},
-	"TinselPurple" :	color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)},
-	"KringleYFP" :		color.RGBA{R: uint8(231), G: uint8(173), B: uint8(0), A: uint8(255)},
-	"GuajilloRFP" :		color.RGBA{R: uint8(241), G: uint8(84), B: uint8(152), A: uint8(255)},
-	"PaprikaRFP" :		color.RGBA{R: uint8(247), G: uint8(132), B: uint8(179), A: uint8(255)},
-	"TannenGFP" :		color.RGBA{R: uint8(243), G: uint8(138), B: uint8(112), A: uint8(255)},
-	"veryblack" :		color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)},
-	"VixenPurple" :		color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)},
-	"SeraphinaPink" :	color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)},
-	"RudolphRFP" :		color.RGBA{R: uint8(215), G: uint8(72), B: uint8(76), A: uint8(255)},
-	"DreidelTeal" :		color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)},
-	"LeorOrange" :		color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)},
-	"FrostyCFP" :		color.RGBA{R: uint8(224), G: uint8(120), B: uint8(140), A: uint8(255)},
-	"TwinkleCFP" :		color.RGBA{R: uint8(196), G: uint8(183), B: uint8(138), A: uint8(255)},
-	"VirginiaViolet" :	color.RGBA{R: uint8(107), G: uint8(80), B: uint8(140), A: uint8(255)},
-	"FresnoRFP" :		color.RGBA{R: uint8(244), G: uint8(63), B: uint8(150), A: uint8(255)},
+	"JuniperGFP":     color.RGBA{R: uint8(194), G: uint8(164), B: uint8(72), A: uint8(255)},
+	"CindylouCFP":    color.RGBA{R: uint8(224), G: uint8(120), B: uint8(240), A: uint8(254)},
+	"YetiYFP":        color.RGBA{R: uint8(251), G: uint8(176), B: uint8(0), A: uint8(255)},
+	"CometGFP":       color.RGBA{R: uint8(222), G: uint8(221), B: uint8(68), A: uint8(255)},
+	"DasherGFP":      color.RGBA{R: uint8(209), G: uint8(214), B: uint8(0), A: uint8(255)},
+	"HollyGFP":       color.RGBA{R: uint8(216), G: uint8(231), B: uint8(15), A: uint8(255)},
+	"YukonOFP":       color.RGBA{R: uint8(251), G: uint8(102), B: uint8(79), A: uint8(255)},
+	"DonnerMagenta":  color.RGBA{R: uint8(152), G: uint8(76), B: uint8(128), A: uint8(255)},
+	"ScroogeOrange":  color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)},
+	"SerranoRFP":     color.RGBA{R: uint8(248), G: uint8(84), B: uint8(149), A: uint8(255)},
+	"BlazeYFP":       color.RGBA{R: uint8(255), G: uint8(255), B: uint8(146), A: uint8(255)},
+	"verywhite":      color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
+	"CupidPink":      color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)},
+	"IvyGFP":         color.RGBA{R: uint8(225), G: uint8(222), B: uint8(120), A: uint8(255)},
+	"MaccabeePurple": color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)},
+	"MarleyYFP":      color.RGBA{R: uint8(250), G: uint8(210), B: uint8(0), A: uint8(255)},
+	"CratchitYFP":    color.RGBA{R: uint8(255), G: uint8(194), B: uint8(0), A: uint8(255)},
+	"CayenneRFP":     color.RGBA{R: uint8(248), G: uint8(64), B: uint8(148), A: uint8(255)},
+	"E.coli":         color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)},
+	"BlitzenBlue":    color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)},
+	"TinselPurple":   color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)},
+	"KringleYFP":     color.RGBA{R: uint8(231), G: uint8(173), B: uint8(0), A: uint8(255)},
+	"GuajilloRFP":    color.RGBA{R: uint8(241), G: uint8(84), B: uint8(152), A: uint8(255)},
+	"PaprikaRFP":     color.RGBA{R: uint8(247), G: uint8(132), B: uint8(179), A: uint8(255)},
+	"TannenGFP":      color.RGBA{R: uint8(243), G: uint8(138), B: uint8(112), A: uint8(255)},
+	"veryblack":      color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)},
+	"VixenPurple":    color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)},
+	"SeraphinaPink":  color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)},
+	"RudolphRFP":     color.RGBA{R: uint8(215), G: uint8(72), B: uint8(76), A: uint8(255)},
+	"DreidelTeal":    color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)},
+	"LeorOrange":     color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)},
+	"FrostyCFP":      color.RGBA{R: uint8(224), G: uint8(120), B: uint8(140), A: uint8(255)},
+	"TwinkleCFP":     color.RGBA{R: uint8(196), G: uint8(183), B: uint8(138), A: uint8(255)},
+	"VirginiaViolet": color.RGBA{R: uint8(107), G: uint8(80), B: uint8(140), A: uint8(255)},
+	"FresnoRFP":      color.RGBA{R: uint8(244), G: uint8(63), B: uint8(150), A: uint8(255)},
 
 	//Generic colors under natural light
-	"blue" :			color.RGBA{R: uint8(13), G: uint8(105), B: uint8(171), A: uint8(255)},
-	"yellow" :			color.RGBA{R: uint8(245), G: uint8(205), B: uint8(47), A: uint8(255)},
-	"green" :			color.RGBA{R: uint8(75), G: uint8(151), B: uint8(74), A: uint8(255)},
-	"red" :				color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},
-	"black" :			color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)},
-	"transparent" :		color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)},
-	"white" :			color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
+	"blue":        color.RGBA{R: uint8(13), G: uint8(105), B: uint8(171), A: uint8(255)},
+	"yellow":      color.RGBA{R: uint8(245), G: uint8(205), B: uint8(47), A: uint8(255)},
+	"green":       color.RGBA{R: uint8(75), G: uint8(151), B: uint8(74), A: uint8(255)},
+	"red":         color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},
+	"black":       color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)},
+	"transparent": color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)},
+	"white":       color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
 
 	//UV Protein PaintBox under UV light
-	"UVCupidPink" :		color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)},
-	"UVScroogeOrange" :		color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)},
-	"UVFrostyCFP" :		color.RGBA{R: uint8(0), G: uint8(255), B: uint8(255), A: uint8(255)},
-	"UVMarleyYFP" :		color.RGBA{R: uint8(236), G: uint8(255), B: uint8(0), A: uint8(255)},
-	"UVCometGFP" :		color.RGBA{R: uint8(0), G: uint8(254), B: uint8(0), A: uint8(255)},
-	"UVDasherGFP" :		color.RGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},
-	"UVSerranoRFP" :		color.RGBA{R: uint8(254), G: uint8(23), B: uint8(127), A: uint8(255)},
-	"UVVirginiaViolet" :		color.RGBA{R: uint8(107), G: uint8(80), B: uint8(140), A: uint8(255)},
-	"UVBlazeYFP" :		color.RGBA{R: uint8(254), G: uint8(255), B: uint8(83), A: uint8(255)},
-	"UVFresnoRFP" :		color.RGBA{R: uint8(255), G: uint8(0), B: uint8(166), A: uint8(255)},
-	"UVJuniperGFP" :		color.RGBA{R: uint8(0), G: uint8(231), B: uint8(162), A: uint8(255)},
-	"UVCindylouCFP" :		color.RGBA{R: uint8(0), G: uint8(254), B: uint8(255), A: uint8(255)},
-	"UVCratchitYFP" :		color.RGBA{R: uint8(240), G: uint8(254), B: uint8(0), A: uint8(255)},
-	"UVPaprikaRFP" :		color.RGBA{R: uint8(252), G: uint8(65), B: uint8(136), A: uint8(255)},
-	"UVSeraphinaPink" :		color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)},
-	"UVMaccabeePurple" :		color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)},
-	"UVLeorOrange" :		color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)},
-	"UVHollyGFP" :		color.RGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(254)},
-	"UVTannenGFP" :		color.RGBA{R: uint8(179), G: uint8(119), B: uint8(57), A: uint8(255)},
-	"UVverywhite" :		color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
-	"UVTinselPurple" :		color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)},
-	"UVRudolphRFP" :		color.RGBA{R: uint8(218), G: uint8(92), B: uint8(69), A: uint8(255)},
-	"UVE.coli" :		color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)},
-	"UVBlitzenBlue" :		color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)},
-	"UVKringleYFP" :		color.RGBA{R: uint8(239), G: uint8(255), B: uint8(0), A: uint8(255)},
-	"UVGuajilloRFP" :		color.RGBA{R: uint8(255), G: uint8(8), B: uint8(138), A: uint8(255)},
-	"UVE.coli pUC19 on sgal" :		color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)},
-	"UVYetiYFP" :		color.RGBA{R: uint8(253), G: uint8(230), B: uint8(39), A: uint8(255)},
-	"UVDonnerMagenta" :		color.RGBA{R: uint8(152), G: uint8(76), B: uint8(128), A: uint8(255)},
-	"UVIvyGFP" :		color.RGBA{R: uint8(0), G: uint8(232), B: uint8(216), A: uint8(255)},
-	"UVCayenneRFP" :		color.RGBA{R: uint8(255), G: uint8(24), B: uint8(138), A: uint8(255)},
-	"UVTwinkleCFP" :		color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)},
-	"UVYukonOFP" :		color.RGBA{R: uint8(254), G: uint8(179), B: uint8(18), A: uint8(255)},
-	"UVVixenPurple" :		color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)},
+	"UVCupidPink":            color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)},
+	"UVScroogeOrange":        color.RGBA{R: uint8(215), G: uint8(96), B: uint8(86), A: uint8(255)},
+	"UVFrostyCFP":            color.RGBA{R: uint8(0), G: uint8(255), B: uint8(255), A: uint8(255)},
+	"UVMarleyYFP":            color.RGBA{R: uint8(236), G: uint8(255), B: uint8(0), A: uint8(255)},
+	"UVCometGFP":             color.RGBA{R: uint8(0), G: uint8(254), B: uint8(0), A: uint8(255)},
+	"UVDasherGFP":            color.RGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},
+	"UVSerranoRFP":           color.RGBA{R: uint8(254), G: uint8(23), B: uint8(127), A: uint8(255)},
+	"UVVirginiaViolet":       color.RGBA{R: uint8(107), G: uint8(80), B: uint8(140), A: uint8(255)},
+	"UVBlazeYFP":             color.RGBA{R: uint8(254), G: uint8(255), B: uint8(83), A: uint8(255)},
+	"UVFresnoRFP":            color.RGBA{R: uint8(255), G: uint8(0), B: uint8(166), A: uint8(255)},
+	"UVJuniperGFP":           color.RGBA{R: uint8(0), G: uint8(231), B: uint8(162), A: uint8(255)},
+	"UVCindylouCFP":          color.RGBA{R: uint8(0), G: uint8(254), B: uint8(255), A: uint8(255)},
+	"UVCratchitYFP":          color.RGBA{R: uint8(240), G: uint8(254), B: uint8(0), A: uint8(255)},
+	"UVPaprikaRFP":           color.RGBA{R: uint8(252), G: uint8(65), B: uint8(136), A: uint8(255)},
+	"UVSeraphinaPink":        color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)},
+	"UVMaccabeePurple":       color.RGBA{R: uint8(82), G: uint8(35), B: uint8(119), A: uint8(255)},
+	"UVLeorOrange":           color.RGBA{R: uint8(228), G: uint8(110), B: uint8(104), A: uint8(255)},
+	"UVHollyGFP":             color.RGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(254)},
+	"UVTannenGFP":            color.RGBA{R: uint8(179), G: uint8(119), B: uint8(57), A: uint8(255)},
+	"UVverywhite":            color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
+	"UVTinselPurple":         color.RGBA{R: uint8(77), G: uint8(11), B: uint8(137), A: uint8(255)},
+	"UVRudolphRFP":           color.RGBA{R: uint8(218), G: uint8(92), B: uint8(69), A: uint8(255)},
+	"UVE.coli":               color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)},
+	"UVBlitzenBlue":          color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)},
+	"UVKringleYFP":           color.RGBA{R: uint8(239), G: uint8(255), B: uint8(0), A: uint8(255)},
+	"UVGuajilloRFP":          color.RGBA{R: uint8(255), G: uint8(8), B: uint8(138), A: uint8(255)},
+	"UVE.coli pUC19 on sgal": color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)},
+	"UVYetiYFP":              color.RGBA{R: uint8(253), G: uint8(230), B: uint8(39), A: uint8(255)},
+	"UVDonnerMagenta":        color.RGBA{R: uint8(152), G: uint8(76), B: uint8(128), A: uint8(255)},
+	"UVIvyGFP":               color.RGBA{R: uint8(0), G: uint8(232), B: uint8(216), A: uint8(255)},
+	"UVCayenneRFP":           color.RGBA{R: uint8(255), G: uint8(24), B: uint8(138), A: uint8(255)},
+	"UVTwinkleCFP":           color.RGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)},
+	"UVYukonOFP":             color.RGBA{R: uint8(254), G: uint8(179), B: uint8(18), A: uint8(255)},
+	"UVVixenPurple":          color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)},
 
 	//Generic colors under UV light
-	"UVblack" :		color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)},
-	"UVgreen" :		color.RGBA{R: uint8(0), G: uint8(177), B: uint8(94), A: uint8(255)},
-	"UVyellow" :		color.RGBA{R: uint8(244), G: uint8(231), B: uint8(0), A: uint8(255)},
-	"UVorange" :		color.RGBA{R: uint8(255), G: uint8(118), B: uint8(0), A: uint8(255)},
-	"UVwhite" :		color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
-	"UVgrey" :		color.RGBA{R: uint8(149), G: uint8(156), B: uint8(161), A: uint8(255)},
-	"UVpurple" :		color.RGBA{R: uint8(117), G: uint8(51), B: uint8(127), A: uint8(255)},
-	"UVdarkblue" :		color.RGBA{R: uint8(25), G: uint8(60), B: uint8(152), A: uint8(255)},
-	"UVblue" :		color.RGBA{R: uint8(0), G: uint8(125), B: uint8(200), A: uint8(255)},
-	"UVred" :		color.RGBA{R: uint8(255), G: uint8(39), B: uint8(51), A: uint8(255)},
-	"UVpink" :		color.RGBA{R: uint8(235), G: uint8(41), B: uint8(123), A: uint8(255)},
-	"UVCyan" :		color.RGBA{R: uint8(0), G: uint8(174), B: uint8(239), A: uint8(255)},
-	"UVMagenta" :		color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)},
+	"UVblack":    color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)},
+	"UVgreen":    color.RGBA{R: uint8(0), G: uint8(177), B: uint8(94), A: uint8(255)},
+	"UVyellow":   color.RGBA{R: uint8(244), G: uint8(231), B: uint8(0), A: uint8(255)},
+	"UVorange":   color.RGBA{R: uint8(255), G: uint8(118), B: uint8(0), A: uint8(255)},
+	"UVwhite":    color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
+	"UVgrey":     color.RGBA{R: uint8(149), G: uint8(156), B: uint8(161), A: uint8(255)},
+	"UVpurple":   color.RGBA{R: uint8(117), G: uint8(51), B: uint8(127), A: uint8(255)},
+	"UVdarkblue": color.RGBA{R: uint8(25), G: uint8(60), B: uint8(152), A: uint8(255)},
+	"UVblue":     color.RGBA{R: uint8(0), G: uint8(125), B: uint8(200), A: uint8(255)},
+	"UVred":      color.RGBA{R: uint8(255), G: uint8(39), B: uint8(51), A: uint8(255)},
+	"UVpink":     color.RGBA{R: uint8(235), G: uint8(41), B: uint8(123), A: uint8(255)},
+	"UVCyan":     color.RGBA{R: uint8(0), G: uint8(174), B: uint8(239), A: uint8(255)},
+	"UVMagenta":  color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)},
 }
 
 //Collection of color IDs
 var librarySets = map[string][]string{
-	"UV" : {"UVCupidPink",
-			"UVyellow",
-			"UVVixenPurple",
-			"UVIvyGFP",
-			"UVDasherGFP",
-			"UVPaprikaRFP",
-			"UVLeorOrange",
-			"UVTannenGFP",
-			"UVDonnerMagenta",
-			"UVTwinkleCFP",
-			"UVSerranoRFP",
-			"UVE.coli pUC19 on sgal",
-			"UVorange",
-			"UVCyan",
-			"UVMagenta",
-			"UVTinselPurple",
-			"UVpink",
-			"UVVirginiaViolet",
-			"UVCayenneRFP",
-			"UVgreen",
-			"UVFresnoRFP",
-			"UVKringleYFP",
-			"UVdarkblue",
-			"UVMarleyYFP",
-			"UVCometGFP",
-			"UVSeraphinaPink",
-			"UVGuajilloRFP",
-			"UVBlazeYFP",
-			"UVblack",
-			"UVblue",
-			"UVJuniperGFP",
-			"UVCindylouCFP",
-			"UVRudolphRFP",
-			"UVBlitzenBlue",
-			"UVpurple",
-			"UVred",
-			"UVCratchitYFP",
-			"UVgrey",
-			"UVverywhite",
-			"UVHollyGFP",
-			"UVwhite",
-			"UVMaccabeePurple",
-			"UVYukonOFP",
-			"UVE.coli",
-			"UVYetiYFP",
-			"UVScroogeOrange",
-			"UVFrostyCFP",
+	"UV": {"UVCupidPink",
+		"UVyellow",
+		"UVVixenPurple",
+		"UVIvyGFP",
+		"UVDasherGFP",
+		"UVPaprikaRFP",
+		"UVLeorOrange",
+		"UVTannenGFP",
+		"UVDonnerMagenta",
+		"UVTwinkleCFP",
+		"UVSerranoRFP",
+		"UVE.coli pUC19 on sgal",
+		"UVorange",
+		"UVCyan",
+		"UVMagenta",
+		"UVTinselPurple",
+		"UVpink",
+		"UVVirginiaViolet",
+		"UVCayenneRFP",
+		"UVgreen",
+		"UVFresnoRFP",
+		"UVKringleYFP",
+		"UVdarkblue",
+		"UVMarleyYFP",
+		"UVCometGFP",
+		"UVSeraphinaPink",
+		"UVGuajilloRFP",
+		"UVBlazeYFP",
+		"UVblack",
+		"UVblue",
+		"UVJuniperGFP",
+		"UVCindylouCFP",
+		"UVRudolphRFP",
+		"UVBlitzenBlue",
+		"UVpurple",
+		"UVred",
+		"UVCratchitYFP",
+		"UVgrey",
+		"UVverywhite",
+		"UVHollyGFP",
+		"UVwhite",
+		"UVMaccabeePurple",
+		"UVYukonOFP",
+		"UVE.coli",
+		"UVYetiYFP",
+		"UVScroogeOrange",
+		"UVFrostyCFP",
 	},
-	"VisibleLight" : {"JuniperGFP",
-			"YukonOFP",
-			"CayenneRFP",
-			"E.coli",
-			"PaprikaRFP",
-			"IvyGFP",
-			"HollyGFP",
-			"verywhite",
-			"DreidelTeal",
-			"LeorOrange",
-			"DasherGFP",
-			"BlazeYFP",
-			"veryblack",
-			"SeraphinaPink",
-			"green",
-			"VixenPurple",
-			"CometGFP",
-			"SerranoRFP",
-			"MarleyYFP",
-			"DonnerMagenta",
-			"red",
-			"FrostyCFP",
-			"transparent",
-			"white",
-			"YetiYFP",
-			"BlitzenBlue",
-			"TwinkleCFP",
-			"yellow",
-			"black",
-			"ScroogeOrange",
-			"blue",
-			"CindylouCFP",
-			"GuajilloRFP",
-			"TannenGFP",
-			"CupidPink",
-			"MaccabeePurple",
-			"VirginiaViolet",
-			"FresnoRFP",
-			"CratchitYFP",
-			"TinselPurple",
-			"KringleYFP",
-			"RudolphRFP",
+	"VisibleLight": {"JuniperGFP",
+		"YukonOFP",
+		"CayenneRFP",
+		"E.coli",
+		"PaprikaRFP",
+		"IvyGFP",
+		"HollyGFP",
+		"verywhite",
+		"DreidelTeal",
+		"LeorOrange",
+		"DasherGFP",
+		"BlazeYFP",
+		"veryblack",
+		"SeraphinaPink",
+		"green",
+		"VixenPurple",
+		"CometGFP",
+		"SerranoRFP",
+		"MarleyYFP",
+		"DonnerMagenta",
+		"red",
+		"FrostyCFP",
+		"transparent",
+		"white",
+		"YetiYFP",
+		"BlitzenBlue",
+		"TwinkleCFP",
+		"yellow",
+		"black",
+		"ScroogeOrange",
+		"blue",
+		"CindylouCFP",
+		"GuajilloRFP",
+		"TannenGFP",
+		"CupidPink",
+		"MaccabeePurple",
+		"VirginiaViolet",
+		"FresnoRFP",
+		"CratchitYFP",
+		"TinselPurple",
+		"KringleYFP",
+		"RudolphRFP",
 	},
-	"Paints" : {
-			"blue",
-			"yellow",
-			"green",
-			"red",
-			"black",
-			"transparent",
-			"white",
+	"Paints": {
+		"blue",
+		"yellow",
+		"green",
+		"red",
+		"black",
+		"transparent",
+		"white",
 	},
+}
+
+type livingColor struct {
+	Color *color.NRGBA
+	Seq   string
 }
 
 //Living Colors, we use a minimalist object constructor with set defaults to facilitate editing this library
-var livingColors = map[string]LivingColor{
-	"UVDasherGFP"  : *MakeLivingColor(&color.NRGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},
-	"atgacggcattgacggaaggtgcaaaactgtttgagaaagagatcccgtatatcaccgaactggaaggcgacgtcgaaggtatgaaatttatcattaaaggcgagggtaccggtgacgcgaccacgggtaccattaaagcgaaatacatctgcactacgggcgacctgccggtcccgtgggcaaccctggtgagcaccctgagctacggtgttcagtgtttcgccaagtacccgagccacatcaaggatttctttaagagcgccatgccggaaggttatacccaagagcgtaccatcagcttcgaaggcgacggcgtgtacaagacgcgtgctatggttacctacgaacgcggttctatctacaatcgtgtcacgctgactggtgagaactttaagaaagacggtcacattctgcgtaagaacgttgcattccaatgcccgccaagcattctgtatattctgcctgacaccgttaacaatggcatccgcgttgagttcaaccaggcgtacgatattgaaggtgtgaccgaaaaactggttaccaaatgcagccaaatgaatcgtccgttggcgggctccgcggcagtgcatatcccgcgttatcatcacattacctaccacaccaaactgagcaaagaccgcgacgagcgccgtgatcacatgtgtctggtagaggtcgtgaaagcggttgatctggacacgtatcagtaatgagaattctgtacactcgag"),
-	"UVRudolphRFP"  : *MakeLivingColor(&color.NRGBA{R: uint8(218), G: uint8(92), B: uint8(69), A: uint8(255)},
-	"atgtccctgtcgaaacaagtactgccacacgatgttaagatgcgctatcatatggatggctgcgttaatggtcattctttcaccattgagggtgaaggtgcaggcaaaccgtatgagggcaagaagatcttggaactgcgcgtgacgaaaggtggcccgctgccttttgcgttcgatatcctgagcagcgtttttacctacggtaaccgttgtttttgcgagtatccagaggacatgccggactactttaaacagagcctgccggaaggtcattcttgggaacgcaccctgatgtttgaggatggcggttgtggtacggcgagcgcgcacatttccctggacaagaactgcttcgtgcacaagagcaccttccacggcgtcaatttcccggcaaacggtccggtcatgcaaaagaaagctatgaactgggagccgagcagcgaactgattacggcgtgcgacggtatcctgaaaggcgatgtgaccatgtttctgttgctggaaggtggccaccgtcttaaatgtcagttcaccaccagctacaaagcccacaaggcagttaagatgccgccgaatcacattatcgaacacgtgcttgttaaaaaagaggttgccgacggctttcagatccaagagcatgcggtcgcaaagcacttcaccgtcgacgttaaagaaacgtaatgagaattctgtacactcgag"),
+var livingColors = map[string]livingColor{
+	"UVDasherGFP": livingColor{
+		Color: &color.NRGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},
+		Seq:   "atgacggcattgacggaaggtgcaaaactgtttgagaaagagatcccgtatatcaccgaactggaaggcgacgtcgaaggtatgaaatttatcattaaaggcgagggtaccggtgacgcgaccacgggtaccattaaagcgaaatacatctgcactacgggcgacctgccggtcccgtgggcaaccctggtgagcaccctgagctacggtgttcagtgtttcgccaagtacccgagccacatcaaggatttctttaagagcgccatgccggaaggttatacccaagagcgtaccatcagcttcgaaggcgacggcgtgtacaagacgcgtgctatggttacctacgaacgcggttctatctacaatcgtgtcacgctgactggtgagaactttaagaaagacggtcacattctgcgtaagaacgttgcattccaatgcccgccaagcattctgtatattctgcctgacaccgttaacaatggcatccgcgttgagttcaaccaggcgtacgatattgaaggtgtgaccgaaaaactggttaccaaatgcagccaaatgaatcgtccgttggcgggctccgcggcagtgcatatcccgcgttatcatcacattacctaccacaccaaactgagcaaagaccgcgacgagcgccgtgatcacatgtgtctggtagaggtcgtgaaagcggttgatctggacacgtatcagtaatgagaattctgtacactcgag",
+	},
+	"UVRudolphRFP": livingColor{
+		Color: &color.NRGBA{R: uint8(218), G: uint8(92), B: uint8(69), A: uint8(255)},
+		Seq:   "atgtccctgtcgaaacaagtactgccacacgatgttaagatgcgctatcatatggatggctgcgttaatggtcattctttcaccattgagggtgaaggtgcaggcaaaccgtatgagggcaagaagatcttggaactgcgcgtgacgaaaggtggcccgctgccttttgcgttcgatatcctgagcagcgtttttacctacggtaaccgttgtttttgcgagtatccagaggacatgccggactactttaaacagagcctgccggaaggtcattcttgggaacgcaccctgatgtttgaggatggcggttgtggtacggcgagcgcgcacatttccctggacaagaactgcttcgtgcacaagagcaccttccacggcgtcaatttcccggcaaacggtccggtcatgcaaaagaaagctatgaactgggagccgagcagcgaactgattacggcgtgcgacggtatcctgaaaggcgatgtgaccatgtttctgttgctggaaggtggccaccgtcttaaatgtcagttcaccaccagctacaaagcccacaaggcagttaagatgccgccgaatcacattatcgaacacgtgcttgttaaaaaagaggttgccgacggctttcagatccaagagcatgcggtcgcaaagcacttcaccgtcgacgttaaagaaacgtaatgagaattctgtacactcgag",
+	},
 }
 
 //Collection of living color IDs
-var livingColorSets = map[string][]string {
+var livingColorSets = map[string][]string{
 	"ProteinPaintBox": {
 		"UVDasherGFP",
 		"UVRudolphRFP",
 	},
 }
-
 
 //---------------------------------------------------
 //Types
@@ -1193,50 +1201,50 @@ var livingColorSets = map[string][]string {
 
 //Set of types to use antha with conventional colors (paint)
 type AnthaColor struct {
-	Color 			color.NRGBA
-	Component		*wtype.LHComponent
+	Color     color.NRGBA
+	Component *wtype.LHComponent
 }
 
 type AnthaPalette struct {
-	AnthaColors			[]AnthaColor
-	Palette				color.Palette
+	AnthaColors []AnthaColor
+	Palette     color.Palette
 }
 
 type AnthaPix struct {
-	Color 			AnthaColor
-	Location		wtype.WellCoords
+	Color    AnthaColor
+	Location wtype.WellCoords
 }
 
 type AnthaImg struct {
-	Plate 			*wtype.LHPlate
-	Pix				[]AnthaPix
-	Palette			AnthaPalette
+	Plate   *wtype.LHPlate
+	Pix     []AnthaPix
+	Palette AnthaPalette
 }
 
 //Set of types to use antha with biological colors
 type LivingColor struct {
-	Color			color.NRGBA
-	Seq				wtype.DNASequence
-	Component		*wtype.LHComponent
+	Color     color.NRGBA
+	Seq       wtype.DNASequence
+	Component *wtype.LHComponent
 }
 
 type LivingPalette struct {
-	LivingColors			[]LivingColor
+	LivingColors []LivingColor
 }
 
 type LivingPix struct {
-	Color			LivingColor
-	Location 		wtype.WellCoords
+	Color    LivingColor
+	Location wtype.WellCoords
 }
 
 type LivingImg struct {
-	Plate 			wtype.LHPlate
-	Pix				[]LivingPix
-	Palette			LivingPalette
+	Plate   wtype.LHPlate
+	Pix     []LivingPix
+	Palette LivingPalette
 }
 
 type LivingGIF struct {
-	Frames				[]LivingImg
+	Frames []LivingImg
 }
 
 //---------------------------------------------------
@@ -1244,13 +1252,12 @@ type LivingGIF struct {
 //---------------------------------------------------
 
 //standard colors selectiion
-func SelectLibrary (libID string)(palette color.Palette) {
+func SelectLibrary(libID string) (palette color.Palette) {
 
 	selectedLib, found := librarySets[libID]
 	//Checking for an empty return value
 	if !found {
-		panic(fmt.Sprintf("library %s not found so could not make palette",libID))
-		return
+		panic(fmt.Sprintf("library %s not found so could not make palette", libID))
 	}
 
 	for _, colID := range selectedLib {
@@ -1260,48 +1267,48 @@ func SelectLibrary (libID string)(palette color.Palette) {
 	return
 }
 
-func SelectColor (colID string) (selectedColor color.Color) {
+func SelectColor(colID string) (selectedColor color.Color) {
 
 	selectedColor, found := colors[colID]
 	//Checking for an empty return value
-	if  !found {
-		panic(fmt.Sprintf("library %s not found so could not make palette",colID))
-		return
+	if !found {
+		panic(fmt.Sprintf("library %s not found so could not make palette", colID))
 	}
 
 	return
 }
 
 //living colors selection
-func SelectLivingColorLibrary (libID string)(palette LivingPalette) {
+func SelectLivingColorLibrary(ctx context.Context, libID string) (palette LivingPalette) {
 
 	selectedLib, found := livingColorSets[libID]
 
 	//Checking for an empty return value
 	if !found {
-		panic(fmt.Sprintf("library %s not found so could not make palette",libID))
-		return
+		panic(fmt.Sprintf("library %s not found so could not make palette", libID))
 	}
 
-
 	for _, colorID := range selectedLib {
-		palette.LivingColors = append(palette.LivingColors, livingColors[colorID])
+		c := livingColors[colorID]
+		lc := MakeLivingColor(ctx, c.Color, c.Seq)
+
+		palette.LivingColors = append(palette.LivingColors, *lc)
 	}
 
 	return
 }
 
-func SelectLivingColor (colID string)(selectedColor LivingColor){
+func SelectLivingColor(ctx context.Context, colID string) LivingColor {
 
-	selectedColor, found := livingColors[colID]
+	c, found := livingColors[colID]
 
 	//Checking for an empty return value
-	if  !found {
-		panic(fmt.Sprintf("library %s not found so could not make palette",colID))
-		return
+	if !found {
+		panic(fmt.Sprintf("library %s not found so could not make palette", colID))
 	}
 
-	return
+	lc := MakeLivingColor(ctx, c.Color, c.Seq)
+	return *lc
 }
 
 //---------------------------------------------------
@@ -1323,25 +1330,25 @@ func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 }
 
 // Given a color, finds the closest one in an anthapalette and returns the index for the anthacolor
-func (p AnthaPalette) Index (c color.Color) int{
+func (p AnthaPalette) Index(c color.Color) int {
 
 	cr, cg, cb, ca := c.RGBA()
-  	ret, bestSum := 0, uint32(1<<32-1)
-  	for i, _ := range p.AnthaColors {
+	ret, bestSum := 0, uint32(1<<32-1)
+	for i, _ := range p.AnthaColors {
 
 		//getting color of the current anthacolor in the anthaPalette
 		extractedColor := p.AnthaColors[i].Color
 
-  		vr, vg, vb, va := extractedColor.RGBA()
-  		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)
-  		if sum < bestSum {
-  			if sum == 0 {
-  				return i
-  			}
-  			ret, bestSum = i, sum
-  		}
-  	}
-  	return ret
+		vr, vg, vb, va := extractedColor.RGBA()
+		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)
+		if sum < bestSum {
+			if sum == 0 {
+				return i
+			}
+			ret, bestSum = i, sum
+		}
+	}
+	return ret
 }
 
 // Returns the LivingPalette LivingColor closest to c in Euclidean R,G,B space.
@@ -1359,25 +1366,25 @@ func (p LivingPalette) Convert(c color.Color) LivingColor {
 }
 
 // Given a color, finds the closest one in a LivingPalette and returns the index for the LivingPalette
-func (p LivingPalette) Index (c color.Color) int{
+func (p LivingPalette) Index(c color.Color) int {
 
 	cr, cg, cb, ca := c.RGBA()
-  	ret, bestSum := 0, uint32(1<<32-1)
-  	for i, _ := range p.LivingColors {
+	ret, bestSum := 0, uint32(1<<32-1)
+	for i, _ := range p.LivingColors {
 
 		//getting color of the current anthacolor in the anthaPalette
 		extractedColor := p.LivingColors[i].Color
 
-  		vr, vg, vb, va := extractedColor.RGBA()
-  		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)
-  		if sum < bestSum {
-  			if sum == 0 {
-  				return i
-  			}
-  			ret, bestSum = i, sum
-  		}
-  	}
-  	return ret
+		vr, vg, vb, va := extractedColor.RGBA()
+		sum := sqDiff(cr, vr) + sqDiff(cg, vg) + sqDiff(cb, vb) + sqDiff(ca, va)
+		if sum < bestSum {
+			if sum == 0 {
+				return i
+			}
+			ret, bestSum = i, sum
+		}
+	}
+	return ret
 }
 
 // an internal goimage function
@@ -1400,22 +1407,25 @@ func sqDiff(x, y uint32) uint32 {
 //---------------------------------------------------
 
 //Object constructor for a LivingColor with default settings
-func MakeLivingColor(color *color.NRGBA, seq string) (livingColor *LivingColor){
+func MakeLivingColor(ctx context.Context, color *color.NRGBA, seq string) (livingColor *LivingColor) {
 
 	//generating DNA sequence object
 	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
 
 	//use water as LHComponent
-	component := factory.GetComponentByType("water")
+	component, err := inventory.NewComponent(ctx, "water")
+	if err != nil {
+		panic(err)
+	}
 
 	//populate livingColor
-	livingColor = &LivingColor{*color,DNASequence,component}
+	livingColor = &LivingColor{*color, DNASequence, component}
 
 	return livingColor
 }
 
 //This will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
-func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette{
+func MakeAnthaPalette(palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette {
 
 	//global placeholders
 	var anthaColor AnthaColor
@@ -1424,13 +1434,13 @@ func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent)
 	//checking that there are enough LHComponents to make the Palette
 	if len(palette) != len(LHComponents) {
 		panic(fmt.Sprintf("Not enough LHComponents to make Palette"))
-	}else{
+	} else {
 
-		for i := range palette{
+		for i := range palette {
 
 			//converting to NRGBA and passing to the AnthaColor object
-			r,g,b,a := palette[i].RGBA()
-			var NRGBA = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+			r, g, b, a := palette[i].RGBA()
+			var NRGBA = color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
 			anthaColor.Color = NRGBA
 
 			//Passing the LHComponent to the anthaColor
@@ -1448,15 +1458,15 @@ func MakeAnthaPalette (palette color.Palette, LHComponents []*wtype.LHComponent)
 }
 
 //This function will create an AnthaImage object from a digital image.
-func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlate *wtype.LHPlate) (outputImg *AnthaImg, resizedImg *goimage.NRGBA){
+func MakeAnthaImg(goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlate *wtype.LHPlate) (outputImg *AnthaImg, resizedImg *goimage.NRGBA) {
 
 	//Global placeholders
-	var anthaPix		AnthaPix
-	var anthaImgPix		[]AnthaPix
-	var anthaImg		AnthaImg
+	var anthaPix AnthaPix
+	var anthaImgPix []AnthaPix
+	var anthaImg AnthaImg
 
 	//Verify that the plate is the same size as the digital image. If not resize.
-	if goImg.Bounds().Dy() != anthaImgPlate.WellsY(){
+	if goImg.Bounds().Dy() != anthaImgPlate.WellsY() {
 		goImg = ResizeImagetoPlateMin(goImg, anthaImgPlate)
 	}
 
@@ -1465,14 +1475,14 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPla
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			//getting rgba values for the image pixel
-			r,g,b,a := goImg.At(x,y).RGBA()
-			var goPixColor = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+			r, g, b, a := goImg.At(x, y).RGBA()
+			var goPixColor = color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
 			//finding the anthaColor closest to the one given in the palette
 			var anthaColor = anthaPalette.Convert(goPixColor)
 			anthaPix.Color = anthaColor
 
 			//figuring out the pixel location on the plate
-			anthaPix.Location = wtype.WellCoords{x,y}
+			anthaPix.Location = wtype.WellCoords{X: x, Y: y}
 
 			//appending the pixel to the array that will go in the AnthaImage
 			anthaImgPix = append(anthaImgPix, anthaPix)
@@ -1488,15 +1498,15 @@ func MakeAnthaImg (goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPla
 }
 
 //This function will create a LivingImage object from a digital image.
-func MakeLivingImg (goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImgPlate *wtype.LHPlate) (outputImg *LivingImg, resizedImg *goimage.NRGBA){
+func MakeLivingImg(goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImgPlate *wtype.LHPlate) (outputImg *LivingImg, resizedImg *goimage.NRGBA) {
 
 	//Global placeholders
-	var livingPix		LivingPix
-	var livingImgPix	[]LivingPix
-	var livingImg		LivingImg
+	var livingPix LivingPix
+	var livingImgPix []LivingPix
+	var livingImg LivingImg
 
 	//Verify that the plate is the same size as the digital image. If not resize.
-	if goImg.Bounds().Dy() != livingImgPlate.WellsY(){
+	if goImg.Bounds().Dy() != livingImgPlate.WellsY() {
 		goImg = ResizeImagetoPlateMin(goImg, livingImgPlate)
 	}
 
@@ -1505,14 +1515,14 @@ func MakeLivingImg (goImg *goimage.NRGBA, livingPalette *LivingPalette, livingIm
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			//getting rgba values for the image pixel
-			r,g,b,a := goImg.At(x,y).RGBA()
-			var goPixColor = color.NRGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+			r, g, b, a := goImg.At(x, y).RGBA()
+			var goPixColor = color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
 			//finding the anthaColor closest to the one given in the palette
 			var anthaColor = livingPalette.Convert(goPixColor)
 			livingPix.Color = anthaColor
 
 			//figuring out the pixel location on the plate
-			livingPix.Location = wtype.WellCoords{x,y}
+			livingPix.Location = wtype.WellCoords{X: x, Y: y}
 
 			//appending the pixel to the array that will go in the AnthaImage
 			livingImgPix = append(livingImgPix, livingPix)
@@ -1528,14 +1538,14 @@ func MakeLivingImg (goImg *goimage.NRGBA, livingPalette *LivingPalette, livingIm
 }
 
 //This will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
-func MakeLivingPalette (InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
+func MakeLivingPalette(InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
 
 	//global placeholders
 	var err error
 
 	//checking that there are enough LHComponents to make the Palette
 	if len(InputPalette.LivingColors) != len(LHComponents) {
-		fmt.Errorf(err.Error())
+		fmt.Println(err.Error())
 	} else {
 		//Adding the LHComponents to the livingColors
 		for i := range InputPalette.LivingColors {
@@ -1547,7 +1557,7 @@ func MakeLivingPalette (InputPalette LivingPalette, LHComponents []*wtype.LHComp
 }
 
 //This will make a LivingGIF object given a slice of LivingImg
-func MakeLivingGIF (imgs []LivingImg) *LivingGIF {
+func MakeLivingGIF(imgs []LivingImg) *LivingGIF {
 
 	var livingGIF LivingGIF
 
@@ -1557,7 +1567,6 @@ func MakeLivingGIF (imgs []LivingImg) *LivingGIF {
 
 	return &livingGIF
 }
-
 
 //---------------------------------------------------
 //Image manipulation

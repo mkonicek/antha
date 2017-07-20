@@ -4,17 +4,17 @@ package liquidhandling
 // so has no public calls to return liquid handlers
 
 import (
+	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	. "github.com/antha-lang/antha/microArch/factory"
 )
 
-func SetUpTipsFor(lhp *liquidhandling.LHProperties) *liquidhandling.LHProperties {
-	tips := GetTipList()
-	for _, tt := range tips {
-		tb := GetTipByType(tt)
+func setUpTipsFor(ctx context.Context, lhp *liquidhandling.LHProperties) *liquidhandling.LHProperties {
+	for _, tb := range testinventory.GetTipboxes(ctx) {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
 			lhp.Tips = append(lhp.Tips, tb.Tips[0][0])
 		}
@@ -22,13 +22,13 @@ func SetUpTipsFor(lhp *liquidhandling.LHProperties) *liquidhandling.LHProperties
 	return lhp
 }
 
-func makeLiquidhandlerLibrary() map[string]*liquidhandling.LHProperties {
+func makeLiquidhandlerLibrary(ctx context.Context) map[string]*liquidhandling.LHProperties {
 	robots := make(map[string]*liquidhandling.LHProperties, 2)
-	robots["GilsonPipetmax"] = makeGilson()
+	robots["GilsonPipetmax"] = makeGilson(ctx)
 	return robots
 }
 
-func makeGilson() *liquidhandling.LHProperties {
+func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	// gilson pipetmax
 
 	layout := make(map[string]wtype.Coordinates)
@@ -45,7 +45,7 @@ func makeGilson() *liquidhandling.LHProperties {
 		xp = x0
 		for x := 0; x < 3; x++ {
 			posname := fmt.Sprintf("position_%d", i+1)
-			crds := wtype.Coordinates{xp, yp, zp}
+			crds := wtype.Coordinates{X: xp, Y: yp, Z: zp}
 			layout[posname] = crds
 			i += 1
 			xp += xi
@@ -54,7 +54,7 @@ func makeGilson() *liquidhandling.LHProperties {
 	}
 	lhp := liquidhandling.NewLHProperties(9, "Pipetmax", "Gilson", "discrete", "disposable", layout)
 	// get tips permissible from the factory
-	SetUpTipsFor(lhp)
+	setUpTipsFor(ctx, lhp)
 
 	//lhp.Tip_preferences = []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"}
 	//lhp.Tip_preferences = []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_7"}

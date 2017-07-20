@@ -1,5 +1,4 @@
-// /anthalib/factory/make_component_library.go: Part of the Antha language
-// Copyright (C) 2015 The Antha authors. All rights reserved.
+// Copyright (C) 2017 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,47 +19,28 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package factory
+package testinventory
 
 import (
-	"sort"
-
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/image"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-type alreadyAdded struct {
-	Name string
-}
-
-func (a *alreadyAdded) Error() string {
-	return "component " + a.Name + " already added"
-}
-
-type notFound struct {
-	Name string
-}
-
-func (a *notFound) Error() string {
-	return "component " + a.Name + " not found"
-}
-
-func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
+func makeComponents() []*wtype.LHComponent {
 	var components []*wtype.LHComponent
-	var nilConc wunit.Concentration
+	var defaultConc wunit.Concentration
 
 	add := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration) {
 		c := wtype.NewLHComponent()
 		c.CName = name
 		c.Type = typ
 		c.Smax = smax
-		if conc != nilConc {
+		if conc != defaultConc {
 			c.SetConcentration(conc)
 		}
 		components = append(components, c)
 	}
-	var defaultConc wunit.Concentration = nilConc
+
 	x2 := wunit.NewConcentration(2, "X")
 	x10 := wunit.NewConcentration(10, "X")
 	x100 := wunit.NewConcentration(100, "X")
@@ -223,113 +203,41 @@ func makeComponentLibrary() (map[string]*wtype.LHComponent, error) {
 	add("GibsonMastermix", wtype.LTPostMix, 1.0, wunit.NewConcentration(2, "X"))
 
 	//ProteinPaintBox Data
-	add ("CometGFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("CayenneRFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("JuniperGFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("SeraphinaPink", wtype.LTPostMix, 1.0, defaultConc)
-	add ("FrostyCFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("GuajilloRFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("SerranoRFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("CupidPink", wtype.LTPostMix, 1.0, defaultConc)
-	add ("MaccabeePurple", wtype.LTPostMix, 1.0, defaultConc)
-	add ("ScroogeOrange", wtype.LTPostMix, 1.0, defaultConc)
-	add ("CindylouCFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("YetiYFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("KringleYFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("BlazeYFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("verywhite", wtype.LTPostMix, 1.0, defaultConc)
-	add ("TinselPurple", wtype.LTPostMix, 1.0, defaultConc)
-	add ("IvyGFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("VixenPurple", wtype.LTPostMix, 1.0, defaultConc)
-	add ("LeorOrange", wtype.LTPostMix, 1.0, defaultConc)
-	add ("FresnoRFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("BlitzenBlue", wtype.LTPostMix, 1.0, defaultConc)
-	add ("YukonOFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("E.coli", wtype.LTPostMix, 1.0, defaultConc)
-	add ("DonnerMagenta", wtype.LTPostMix, 1.0, defaultConc)
-	add ("MarleyYFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("CratchitYFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("DasherGFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("RudolphRFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("TannenGFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("TwinkleCFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("VirginiaViolet", wtype.LTPostMix, 1.0, defaultConc)
-	add ("HollyGFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("PaprikaRFP", wtype.LTPostMix, 1.0, defaultConc)
-	add ("veryblack", wtype.LTPostMix, 1.0, defaultConc)
-	add ("DreidelTeal", wtype.LTPostMix, 1.0, defaultConc)
+	add("CometGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("CayenneRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("JuniperGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("SeraphinaPink", wtype.LTPostMix, 1.0, defaultConc)
+	add("FrostyCFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("GuajilloRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("SerranoRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("CupidPink", wtype.LTPostMix, 1.0, defaultConc)
+	add("MaccabeePurple", wtype.LTPostMix, 1.0, defaultConc)
+	add("ScroogeOrange", wtype.LTPostMix, 1.0, defaultConc)
+	add("CindylouCFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("YetiYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("KringleYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("BlazeYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("verywhite", wtype.LTPostMix, 1.0, defaultConc)
+	add("TinselPurple", wtype.LTPostMix, 1.0, defaultConc)
+	add("IvyGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("VixenPurple", wtype.LTPostMix, 1.0, defaultConc)
+	add("LeorOrange", wtype.LTPostMix, 1.0, defaultConc)
+	add("FresnoRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("BlitzenBlue", wtype.LTPostMix, 1.0, defaultConc)
+	add("YukonOFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("E.coli", wtype.LTPostMix, 1.0, defaultConc)
+	add("DonnerMagenta", wtype.LTPostMix, 1.0, defaultConc)
+	add("MarleyYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("CratchitYFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("DasherGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("RudolphRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("TannenGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("TwinkleCFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("VirginiaViolet", wtype.LTPostMix, 1.0, defaultConc)
+	add("HollyGFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("PaprikaRFP", wtype.LTPostMix, 1.0, defaultConc)
+	add("veryblack", wtype.LTPostMix, 1.0, defaultConc)
+	add("DreidelTeal", wtype.LTPostMix, 1.0, defaultConc)
 
-	cmap := make(map[string]*wtype.LHComponent)
-	for _, c := range components {
-		if _, seen := cmap[c.CName]; seen {
-			return nil, &alreadyAdded{Name: c.CName}
-		}
-		cmap[c.CName] = c
-	}
-
-	return cmap, nil
-}
-
-type componentLibrary struct {
-	lib map[string]*wtype.LHComponent
-}
-
-var defaultComponentLibrary *componentLibrary
-
-func init() {
-	lib, err := makeComponentLibrary()
-	if err != nil {
-		panic(err)
-	}
-
-	defaultComponentLibrary = &componentLibrary{
-		lib: lib,
-	}
-}
-
-func (i *componentLibrary) GetComponentByType(typ string) *wtype.LHComponent {
-	c, ok := i.lib[typ]
-	if !ok {
-		panic(&notFound{Name: typ})
-	}
-	return c.Dup()
-}
-
-func (i *componentLibrary) GetComponent(typ string) (*wtype.LHComponent, error) {
-	c, ok := i.lib[typ]
-	if !ok {
-		return nil, &notFound{Name: typ}
-	}
-	return c.Dup(), nil
-}
-
-func ComponentInFactory(typ string) bool {
-	_, ok := defaultComponentLibrary.lib[typ]
-	return ok
-}
-
-func GetComponents() []*wtype.LHComponent {
-	var comps []*wtype.LHComponent
-	for _, c := range defaultComponentLibrary.lib {
-		comps = append(comps, c)
-	}
-
-	return wtype.CopyComponentArray(comps)
-}
-
-// TODO: deprecate
-func GetComponentList() []string {
-	comps := GetComponents()
-	var names []string
-	for _, c := range comps {
-		names = append(names, c.CName)
-	}
-
-	sort.Strings(names)
-
-	return names
-}
-
-func GetComponentByType(typ string) *wtype.LHComponent {
-	return defaultComponentLibrary.GetComponentByType(typ)
+	return components
 }

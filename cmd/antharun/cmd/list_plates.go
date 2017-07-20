@@ -23,6 +23,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -30,7 +31,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/ghodss/yaml"
 	"github.com/mgutz/ansi"
 	"github.com/spf13/cobra"
@@ -74,8 +75,10 @@ func listPlates(cmd *cobra.Command, args []string) error {
 		return ansi.Color(x, "red")
 	}
 
+	ctx := testinventory.NewContext(context.Background())
+
 	var ps simplePlates
-	for _, p := range factory.GetPlateLibrary() {
+	for _, p := range testinventory.GetPlates(ctx) {
 		ps = append(ps, simplePlate{
 			Type:          p.Type,
 			WellsX:        p.WellsX(),

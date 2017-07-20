@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -43,7 +44,7 @@ func (a *incubator) CanCompile(req ast.Request) bool {
 	return req.Time != nil || req.Temp != nil
 }
 
-func (a *incubator) Compile(nodes []ast.Node) ([]target.Inst, error) {
+func (a *incubator) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	for _, n := range nodes {
 		if c, ok := n.(*ast.Command); !ok {
 			return nil, fmt.Errorf("unexpected node %T", n)
@@ -66,8 +67,10 @@ func (a *incubator) String() string {
 }
 
 func TestWellFormed(t *testing.T) {
+	ctx := context.Background()
+
 	var nodes []ast.Node
-	for idx := 0; idx < 4; idx += 1 {
+	for idx := 0; idx < 4; idx++ {
 		m := &ast.Command{
 			Requests: []ast.Request{
 				ast.Request{
@@ -106,7 +109,7 @@ func TestWellFormed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if insts, err := Compile(machine, nodes); err != nil {
+	if insts, err := Compile(ctx, machine, nodes); err != nil {
 		t.Fatal(err)
 	} else if l := len(insts); l == 0 {
 		t.Errorf("expected > %d instructions found %d", 0, l)

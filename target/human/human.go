@@ -1,6 +1,7 @@
 package human
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/antha-lang/antha/ast"
@@ -114,7 +115,7 @@ func orderNodes(keep map[graph.Node]target.Inst, g graph.Graph) (ret []graph.Nod
 }
 
 // Compile implements target.device Compile
-func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
+func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	addDep := func(in, dep target.Inst) {
 		in.SetDependsOn(append(in.DependsOn(), dep))
 	}

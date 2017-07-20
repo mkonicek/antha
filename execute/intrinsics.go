@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/trace"
 )
@@ -110,6 +111,24 @@ func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 	return inst.Comp
 }
 
+// NewComponent returns a new component given a component type
+func NewComponent(ctx context.Context, typ string) *wtype.LHComponent {
+	c, err := inventory.NewComponent(ctx, typ)
+	if err != nil {
+		Errorf(ctx, "cannot make component %s: %s", typ, err)
+	}
+	return c
+}
+
+// NewPlate returns a new plate given a plate type
+func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
+	p, err := inventory.NewPlate(ctx, typ)
+	if err != nil {
+		Errorf(ctx, "cannot make plate %s: %s", typ, err)
+	}
+	return p
+}
+
 // TODO -- LOC etc. will be passed through OK but what about
 //         the actual plate info?
 //        - two choices here: 1) we upgrade the sample tracker; 2) we pass the plate in somehow
@@ -192,29 +211,3 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 		PlateNum:   platenum,
 	}))
 }
-
-/*
-
-func Wait(ctx context.Context, time wunit.Time) {
-	wait(ctx, time)
-}
-
-func wait(ctx context.Context, time wunit.Time) {
-	// generate the correct intrinsic
-	inst := &commandInst{
-		Args: []*wunit.Time{&time},
-		Command: &ast.Command{
-			Inst: &ast.WaitInst{
-				Time: time,
-			},
-			Requests: []ast.Request{
-				ast.Request{
-					Time: ast.NewPoint(time.SIValue()),
-				},
-			},
-		},
-	}
-	trace.Issue(ctx, inst)
-}
-
-*/

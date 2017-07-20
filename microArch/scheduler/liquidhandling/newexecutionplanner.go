@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"context"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -30,7 +31,7 @@ import (
 )
 
 // robot here should be a copy... this routine will be destructive of state
-func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
+func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
 	rbtcpy := robot.Dup()
 
 	// get timer to assess evaporation etc.
@@ -83,7 +84,7 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 
 		if request.Options.ModelEvaporation {
 			// we should be able to model evaporation here
-			instrx, _ := ris.Generate(request.Policies, rbtcpy)
+			instrx, _ := ris.Generate(ctx, request.Policies, rbtcpy)
 
 			if timer != nil {
 				var totaltime time.Duration
@@ -112,7 +113,7 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 
 	// 4 -- make the low-level instructions
 
-	inx, err := request.InstructionSet.Generate(request.Policies, robot)
+	inx, err := request.InstructionSet.Generate(ctx, request.Policies, robot)
 
 	if err != nil {
 		return nil, err

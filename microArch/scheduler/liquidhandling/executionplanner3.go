@@ -23,11 +23,13 @@
 package liquidhandling
 
 import (
+	"context"
+
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 // robot here should be a copy... this routine will be destructive of state
-func ExecutionPlanner3(request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
+func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
 	ch := request.InstructionChain
 
 	for {
@@ -44,7 +46,7 @@ func ExecutionPlanner3(request *LHRequest, robot *liquidhandling.LHProperties) (
 		ch = ch.Child
 	}
 
-	inx, err := request.InstructionSet.Generate(request.Policies, robot)
+	inx, err := request.InstructionSet.Generate(ctx, request.Policies, robot)
 
 	if err != nil {
 		return nil, err

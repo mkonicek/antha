@@ -10,7 +10,7 @@ import (
 // Build rooted graph
 func makeRoot(nodes []ast.Node) (ast.Node, error) {
 	someNode := func(g graph.Graph, m map[graph.Node]bool) graph.Node {
-		for i, inum := 0, g.NumNodes(); i < inum; i += 1 {
+		for i, inum := 0, g.NumNodes(); i < inum; i++ {
 			n := g.Node(i)
 			if !m[n] {
 				return n
@@ -66,7 +66,7 @@ func buildReachingUses(g *ast.Graph) map[ast.Node][]*ast.UseComp {
 
 	merge := func(n ast.Node) []*ast.UseComp {
 		var vs []*ast.UseComp
-		for i, inum := 0, g.NumOuts(n); i < inum; i += 1 {
+		for i, inum := 0, g.NumOuts(n); i < inum; i++ {
 			pred := g.Out(n, i).(ast.Node)
 			switch pred := pred.(type) {
 			case *ast.Command:

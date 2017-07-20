@@ -377,10 +377,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				addr, ok := st.GetLocationOf(v.Components[0].ID)
 
 				if !ok {
-					fmt.Println("COMPONENTS: ")
-					for _, c := range v.Components {
-						fmt.Println(c.CName, " ", c.ID)
-					}
 					err := wtype.LHError(wtype.LH_ERR_DIRE, "MIX IN PLACE WITH NO LOCATION SET")
 					return s, m, err
 				}

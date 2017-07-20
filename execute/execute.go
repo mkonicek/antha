@@ -24,7 +24,7 @@ type Result struct {
 	Insts    []target.Inst
 }
 
-// An Opt contains options to Run.
+// An Opt are options for Run.
 type Opt struct {
 	// Target machine configuration
 	Target *target.Target

@@ -50,10 +50,10 @@ func (a *maker) makeCommand(in *commandInst) ast.Node {
 	return out
 }
 
-// Samples of the same component share the same id.
+// resolveReuses tracks samples of the same component sharing the same id.
 func (a *maker) resolveReuses() {
 	for _, uses := range a.byID {
-		// HACK: assume that samples are used in sequentially; remove when
+		// HACK: assume that samples are used sequentially; remove when
 		// dependencies are tracked individually
 
 		// Make sure we don't introduce any loops
@@ -110,8 +110,8 @@ func (a *maker) removeMultiEdges() {
 	}
 }
 
-func (a *maker) UpdateAfterInst(oldId, newId string) {
-	a.afterInst[oldId] = append(a.afterInst[oldId], newId)
+func (a *maker) UpdateAfterInst(oldID, newID string) {
+	a.afterInst[oldID] = append(a.afterInst[oldID], newID)
 }
 
 // Normalize commands into well-formed AST
@@ -127,7 +127,9 @@ func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
 
 		// Contains all descendents rather then direct ones
 		for _, kid := range strings.Split(comp.DaughterID, "_") {
-			a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
+			if comp.ID != kid {
+				a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
+			}
 		}
 	}
 

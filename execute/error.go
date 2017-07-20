@@ -5,11 +5,12 @@ import (
 	"fmt"
 )
 
-// An Error returned during execution
+// An Error reported by user code
 type Error struct {
 	Message string
 }
 
+// Error returns the error message
 func (a *Error) Error() string {
 	return a.Message
 }

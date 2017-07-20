@@ -1,8 +1,9 @@
 package liquidhandling
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 func testInstructions1() []RobotInstruction {
@@ -32,7 +33,7 @@ func testInstructions1() []RobotInstruction {
 	insS = append(insS, ins)
 	ins = NewMoveInstruction()
 	ins.(*MoveInstruction).OffsetX = append(ins.(*MoveInstruction).OffsetZ, 0.5)
-	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 1)
+	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 0)
 	ins.(*MoveInstruction).Pos = append(ins.(*MoveInstruction).Pos, "position_2")
 	ins.(*MoveInstruction).Plt = append(ins.(*MoveInstruction).Plt, "DSW96")
 	ins.(*MoveInstruction).Well = append(ins.(*MoveInstruction).Well, "C3")
@@ -75,7 +76,7 @@ func testInstructions2() []RobotInstruction {
 	insS = append(insS, ins)
 	ins = NewMoveInstruction()
 	ins.(*MoveInstruction).OffsetX = append(ins.(*MoveInstruction).OffsetZ, 0.5)
-	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 1)
+	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 0)
 	ins.(*MoveInstruction).Pos = append(ins.(*MoveInstruction).Pos, "position_1")
 	ins.(*MoveInstruction).Plt = append(ins.(*MoveInstruction).Plt, "DSW96")
 	ins.(*MoveInstruction).Well = append(ins.(*MoveInstruction).Well, "C3")
@@ -138,7 +139,24 @@ func TestBasicComparison(t *testing.T) {
 
 	ret = CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: CompareAll()})
 
-	if len(ret.Errors) != 5 {
-		t.Errorf("Expected 5 errors, got %d: %v", len(ret.Errors), ret.Errors)
+	if len(ret.Errors) != 6 {
+		t.Errorf("Expected 6 errors, got %d: %v", len(ret.Errors), ret.Errors)
 	}
+}
+
+func TestComparisonoptions(t *testing.T) {
+	inss1 := testInstructions1()
+	inss2 := testInstructions2()
+
+	expected := []int{0, 0, 0, 0, 3, 3}
+	prms := []map[string][]string{CompareReferences(), CompareOffsets(), CompareWells(), ComparePlateTypes(), CompareVolumes(), ComparePositions()}
+	names := []string{"References", "Offsets", "Wells", "PlateTypes", "Volumes", "Positions"}
+
+	for i := 0; i < len(expected); i++ {
+		ret := CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: prms[i]})
+		if len(ret.Errors) != expected[i] {
+			t.Errorf("Comparison %s expected %d errors got %d (%v)", names[i], expected[i], len(ret.Errors), ret.Errors)
+		}
+	}
+
 }

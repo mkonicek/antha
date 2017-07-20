@@ -201,7 +201,7 @@ func compareInstructions(index int, ins1, ins2 RobotInstruction, paramsToCompare
 		p2 := ins2.GetParameter(prm)
 
 		if !reflect.DeepEqual(p1, p2) {
-			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameters %s differ (%v %v)", index, InstructionTypeName(ins1), p1, p2))
+			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameter %s differ (%v %v)", index, InstructionTypeName(ins1), prm, p1, p2))
 		}
 	}
 
@@ -253,7 +253,7 @@ func mergeSets(s1, s2 map[string][]string) map[string][]string {
 
 func CompareAll() map[string][]string {
 	r := make(map[string][]string, 3)
-	r = mergeSets(r, CompareVolume())
+	r = mergeSets(r, CompareVolumes())
 	r = mergeSets(r, ComparePositions())
 	r = mergeSets(r, CompareWells())
 	r = mergeSets(r, CompareOffsets())
@@ -313,7 +313,7 @@ func CompareMixOffsets() map[string][]string {
 	ret["MOVMIX"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
 	return ret
 }
-func CompareVolume() map[string][]string {
+func CompareVolumes() map[string][]string {
 	ret := make(map[string][]string, 2)
 	ret["ASP"] = []string{"VOLUME", "WHAT"}
 	ret["MOVASP"] = []string{"VOLUME", "WHAT"}
@@ -330,6 +330,7 @@ func ComparePositions() map[string][]string {
 	ret := make(map[string][]string, 2)
 	ret = mergeSets(ret, CompareSourcePosition())
 	ret = mergeSets(ret, CompareDestPosition())
+	ret = mergeSets(ret, CompareMixPosition())
 	return ret
 }
 
@@ -343,6 +344,12 @@ func CompareDestPosition() map[string][]string {
 	ret := make(map[string][]string, 2)
 	ret["MOVDSP"] = []string{"POSTO", "WHAT"}
 	ret["MOVBLO"] = []string{"POSTO", "WHAT"}
+	return ret
+}
+
+func CompareMixPosition() map[string][]string {
+	ret := make(map[string][]string, 2)
+	ret["MOVMIX"] = []string{"POSTO", "WHAT"}
 	return ret
 }
 

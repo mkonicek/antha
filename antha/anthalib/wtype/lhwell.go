@@ -478,7 +478,6 @@ func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape 
 }
 
 // this function is somewhat buggy... need to define its responsibilities better
-// MIS --> HERE IS THE PROBLEM !! !! !! DEBUG DEBUG XXX XXX XXX
 func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LHWell, bool) {
 	vol := component.Vol
 
@@ -525,11 +524,7 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 		vol_left := get_vol_left(new_well)
 
 		if vol < vol_left {
-			fmt.Println("VOL LESS THAN VOL LEFT ", crds, " ", vol, " ", vol_left)
-			fmt.Println("THIS SHOULD RETURN A NEW WELL OR SOMETHING--- LOOK HERE LOOK HERE")
 			break
-		} else {
-			fmt.Println("NOT ENOUGH ROOM: ", vol, " ", vol_left)
 		}
 	}
 

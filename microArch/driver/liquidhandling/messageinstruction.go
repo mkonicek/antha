@@ -1,6 +1,7 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -19,7 +20,7 @@ func NewMessageInstruction(lhi *wtype.LHInstruction) *MessageInstruction {
 	return &msi
 }
 
-func (msi *MessageInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (msi *MessageInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 

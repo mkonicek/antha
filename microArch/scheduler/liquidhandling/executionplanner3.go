@@ -24,7 +24,6 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )

@@ -72,7 +72,7 @@ func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *
 	// sadly need to update everything
 	comp := component.Dup()
 	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getId(ctx))
+	comp.BlockID = wtype.NewBlockID(getID(ctx))
 	comp.SetGeneration(comp.Generation() + 1)
 	getMaker(ctx).UpdateAfterInst(component.ID, comp.ID)
 	pinst := prompt(ctx, PromptOpts{Component: comp, ComponentIn: component, Message: message})

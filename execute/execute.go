@@ -10,6 +10,7 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflowtest"
 )
 
 var (
@@ -21,7 +22,7 @@ type Result struct {
 	Workflow    *workflow.Workflow
 	Input       []ast.Node
 	Insts       []target.Inst
-	TestOutputs test.Outputs
+	TestOutputs workflowtest.Outputs
 }
 
 type Opt struct {

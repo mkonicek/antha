@@ -1,6 +1,7 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"reflect"
@@ -43,6 +44,19 @@ func mergeMovs(ris []RobotInstruction) []RobotInstruction {
 	return insOut
 }
 
+func CompareTestInstructionSets(setA, setB []interface{}, opt ComparisonOpt) ComparisonResult {
+	// convert
+	cnv := func(s []interface{}) []RobotInstruction {
+		r := make([]RobotInstruction, len(s))
+		for i, n := range s {
+			r[i] = n.(RobotInstruction)
+		}
+		return r
+	}
+
+	return CompareInstructionSets(cnv(setA), cnv(setB), opt)
+}
+
 func CompareInstructionSets(setA, setB []RobotInstruction, opt ComparisonOpt) ComparisonResult {
 	setAMerged := mergeMovs(setA)
 	setBMerged := mergeMovs(setB)
@@ -77,7 +91,7 @@ func orderedInstructionComparison(setA, setB []RobotInstruction, opt ComparisonO
 
    InstructionType() int
    GetParameter(name string) interface{}
-   Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+   Generate(ctx context.Context,policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
    Check(lhpr wtype.LHPolicyRule) bool
 
 */
@@ -116,7 +130,7 @@ func (ma MovAsp) GetParameter(name string) interface{} {
 	return getParameter(name, ma.Mov, ma.Asp)
 }
 
-func (ma MovAsp) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ma MovAsp) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 
@@ -137,7 +151,7 @@ func (md MovDsp) GetParameter(name string) interface{} {
 	return getParameter(name, md.Mov, md.Dsp)
 }
 
-func (md MovDsp) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (md MovDsp) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 
@@ -158,7 +172,7 @@ func (mb MovBlo) GetParameter(name string) interface{} {
 	return getParameter(name, mb.Mov, mb.Blo)
 }
 
-func (mb MovBlo) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (mb MovBlo) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 
@@ -179,7 +193,7 @@ func (mm MovMix) GetParameter(name string) interface{} {
 	return getParameter(name, mm.Mov, mm.Mix)
 }
 
-func (mm MovMix) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (mm MovMix) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 
@@ -251,7 +265,7 @@ func mergeSets(s1, s2 map[string][]string) map[string][]string {
 
 // convenience sets of parameters to compare
 
-func CompareAll() map[string][]string {
+func CompareAllParameters() map[string][]string {
 	r := make(map[string][]string, 3)
 	r = mergeSets(r, CompareVolumes())
 	r = mergeSets(r, ComparePositions())

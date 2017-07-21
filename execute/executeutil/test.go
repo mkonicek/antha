@@ -24,7 +24,6 @@ type TestInput struct {
 	Params       *execute.RawParams
 	WorkflowPath string
 	Workflow     *workflow.Desc
-	ExpectedPath string
 	Expected     *workflowtest.TestOpt
 	Dir          string
 }
@@ -176,7 +175,7 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 			return nil, fmt.Errorf("error reading %q", input.ParamsPath, err)
 		}
 
-		wdesc, params, err := Unmarshal(UnmarshalOpt{
+		wdesc, params, expected, err := Unmarshal(UnmarshalOpt{
 			BundleData:   bdata,
 			ParamsData:   pdata,
 			WorkflowData: wdata,
@@ -186,6 +185,7 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 		}
 		input.Params = params
 		input.Workflow = wdesc
+		input.Expected = expected
 	}
 
 	sort.Sort(TestInputs(inputs))

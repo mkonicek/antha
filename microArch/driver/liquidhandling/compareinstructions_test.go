@@ -129,7 +129,7 @@ func TestBasicComparison(t *testing.T) {
 	inss1 := testInstructions1()
 	inss2 := testInstructions1()
 
-	ret := CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: CompareAll()})
+	ret := CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: CompareAllParameters()})
 
 	if len(ret.Errors) != 0 {
 		t.Errorf("Expected 0 errors, got %d: %v", len(ret.Errors), ret.Errors)
@@ -137,7 +137,7 @@ func TestBasicComparison(t *testing.T) {
 
 	inss2 = testInstructions2()
 
-	ret = CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: CompareAll()})
+	ret = CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: CompareAllParameters()})
 
 	if len(ret.Errors) != 6 {
 		t.Errorf("Expected 6 errors, got %d: %v", len(ret.Errors), ret.Errors)

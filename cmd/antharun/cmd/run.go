@@ -207,7 +207,9 @@ func (a *runOpt) Run() error {
 	// if option is set, cache outputs for testing
 
 	if a.OutputFileName != "" {
-		serializedOutputs, err := json.Marshal(rout.TestOutputs)
+		expected := workflowtest.SaveTestOutputs(rout, "")
+		bundleWithOutputs := executeutil.Bundle{wdesc, params, expected}
+		serializedOutputs, err := json.Marshal(bundleWithOutputs)
 
 		if err != nil {
 			return err

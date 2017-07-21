@@ -11,7 +11,6 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
-	"github.com/antha-lang/antha/workflowtest"
 )
 
 var (
@@ -20,10 +19,9 @@ var (
 
 // Result of executing a workflow.
 type Result struct {
-	Workflow    *workflow.Workflow
-	Input       []ast.Node
-	Insts       []target.Inst
-	TestOutputs workflowtest.Outputs
+	Workflow *workflow.Workflow
+	Input    []ast.Node
+	Insts    []target.Inst
 }
 
 // An Opt are options for Run.

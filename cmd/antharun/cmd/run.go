@@ -112,7 +112,7 @@ func makeContext() (context.Context, error) {
 			return nil, fmt.Errorf("error adding protocol %q: %s", desc.Name, err)
 		}
 	}
-	return ctx, nil
+	return testinventory.NewContext(ctx), nil
 }
 
 type runOpt struct {

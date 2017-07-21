@@ -7,7 +7,6 @@ import (
 	"errors"
 
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
@@ -43,7 +42,6 @@ type Opt struct {
 // Run is a simple entrypoint for one-shot execution of workflows.
 func Run(parent context.Context, opt Opt) (*Result, error) {
 	ctx := target.WithTarget(withID(parent, opt.Id), opt.Target)
-	ctx = testinventory.NewContext(ctx)
 
 	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
 	if err != nil {

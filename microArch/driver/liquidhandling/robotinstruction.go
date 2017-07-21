@@ -273,3 +273,101 @@ func HasParameter(s string, ins RobotInstruction) bool {
 
 	return true
 }
+
+type SetOfRobotInstructions struct {
+	Instructions []RobotInstruction
+}
+
+func (sori SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
+	// first stage -- find the instructions
+
+	var objectMap map[string]*json.RawMessage
+
+	err := json.Unmarshal(b, &objectMap)
+
+	if err != nil {
+		return err
+	}
+
+	// second stage -- unpack into an array
+
+	var arrI []*json.RawMessage
+	mess := objectMap["Instructions"]
+	err = json.Unmarshal(*mess, &arrI)
+
+	if err != nil {
+		return err
+	}
+
+	sori.Instructions = make([]RobotInstruction, len(arrI))
+	mapForTypeCheck := make(map[string]interface{}, 10)
+	for i := 0; i < len(arrI); i++ {
+		mess := arrI[i]
+		err = json.Unmarshal(*mess, &mapForTypeCheck)
+
+		if err != nil {
+			return err
+		}
+
+		_, ok := mapForTypeCheck["Type"]
+
+		if !ok {
+			return fmt.Errorf("Malformed instruction")
+		}
+
+		tf64, ok := mapForTypeCheck["Type"].(float64)
+
+		if !ok {
+			return fmt.Errorf("Malformed instruction - Type field must be numeric, got %T", mapForTypeCheck["Type"])
+		}
+
+		//motherofallswitches ugh
+
+		t := int(tf64)
+
+		var ins RobotInstruction
+
+		switch t {
+		case INI:
+			ins = NewInitializeInstruction()
+		case ASP:
+			ins = NewAspirateInstruction()
+		case DSP:
+			ins = NewDispenseInstruction()
+		case MIX:
+			ins = NewMixInstruction()
+		case SPS:
+			ins = NewSetPipetteSpeedInstruction()
+		case SDS:
+			ins = NewSetDriveSpeedInstruction()
+		case BLO:
+			ins = NewBlowoutInstruction()
+		case LOD:
+			ins = NewLoadTipsInstruction()
+		case MOV:
+			ins = NewMoveInstruction()
+		case PTZ:
+			ins = NewPTZInstruction()
+		case ULD:
+			ins = NewUnloadTipsInstruction()
+		case FIN:
+			ins = NewFinalizeInstruction()
+		default:
+			return fmt.Errorf("Unknown instruction type: %d", t)
+		}
+
+		// finally unmarshal
+
+		err = json.Unmarshal(*mess, &ins)
+
+		if err != nil {
+			return err
+		}
+
+		// add to array
+
+		sori.Instructions[i] = ins
+	}
+
+	return nil
+}

@@ -15,6 +15,7 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflowtest"
 )
 
 // A test input

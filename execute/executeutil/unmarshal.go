@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflowtest"
 	"github.com/ghodss/yaml"
 )
 

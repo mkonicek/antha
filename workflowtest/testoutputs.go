@@ -20,7 +20,7 @@ type TestResults struct {
 }
 
 type MixTaskResult struct {
-	Instructions []liquidhandling.RobotInstruction
+	Instructions SetOfRobotInstructions
 }
 
 func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []liquidhandling.RobotInstruction {
@@ -34,7 +34,7 @@ func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []l
 	return insOut
 }
 
-func CompareTestResults(runResult execute.Result, opt TestOpt) error {
+func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 	// pull out mix tasks from the Result
 
 	mixTasks := getMixTasks(runResult)
@@ -57,7 +57,7 @@ func CompareTestResults(runResult execute.Result, opt TestOpt) error {
 	return errors.New(errstr)
 }
 
-func SaveTestOutputs(runResult execute.Result, comparisonOptions string) TestOpt {
+func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOpt {
 	// get mix tasks
 	mixTasks := getMixTasks(runResult)
 
@@ -86,7 +86,7 @@ func joinErrors(errors []error) string {
 	return strings.Join(r, "\n")
 }
 
-func getMixTasks(runResult execute.Result) []*target.Mix {
+func getMixTasks(runResult *execute.Result) []*target.Mix {
 	ret := make([]*target.Mix, 0, len(runResult.Insts))
 
 	for _, inst := range runResult.Insts {

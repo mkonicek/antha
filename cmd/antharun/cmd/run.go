@@ -24,6 +24,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -40,6 +41,7 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
+	"github.com/antha-lang/antha/workflowtest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -120,7 +122,7 @@ type runOpt struct {
 	ParametersFile         string
 	WorkflowFile           string
 	MixInstructionFileName string
-	OutputFileName         string
+	TestBundleFileName     string
 }
 
 func (a *runOpt) Run() error {
@@ -144,7 +146,7 @@ func (a *runOpt) Run() error {
 		}
 	}
 
-	wdesc, params, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
+	wdesc, params, _, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
 		WorkflowData: wdata,
 		BundleData:   bdata,
 		ParamsData:   pdata,
@@ -206,16 +208,16 @@ func (a *runOpt) Run() error {
 
 	// if option is set, cache outputs for testing
 
-	if a.OutputFileName != "" {
+	if a.TestBundleFileName != "" {
 		expected := workflowtest.SaveTestOutputs(rout, "")
-		bundleWithOutputs := executeutil.Bundle{wdesc, params, expected}
+		bundleWithOutputs := executeutil.Bundle{*wdesc, *params, expected}
 		serializedOutputs, err := json.Marshal(bundleWithOutputs)
 
 		if err != nil {
 			return err
 		}
 
-		if err := ioutil.WriteFile(a.OutputFileName, serializedOutputs, 0666); err != nil {
+		if err := ioutil.WriteFile(a.TestBundleFileName, serializedOutputs, 0666); err != nil {
 			return err
 		}
 	}
@@ -281,7 +283,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		ParametersFile:         viper.GetString("parameters"),
 		WorkflowFile:           viper.GetString("workflow"),
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
-		OutputFileName:         viper.GetString("outputFileName"),
+		TestBundleFileName:     viper.GetString("makeTestBundle"),
 	}
 
 	return opt.Run()
@@ -309,5 +311,5 @@ func init() {
 	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
 	flags.Bool("PrintInstructions", false, "Output the raw instructions sent to the driver")
 	flags.Bool("UseDriverTipTracking", false, "If the driver has tip tracking available, use it")
-	flags.Bool("outputFileName", "", "Generate json format output file and put it here")
+	flags.String("makeTestBundle", "", "Generate json format bundle for testing and put it here")
 }

@@ -332,6 +332,10 @@ func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 		var ins RobotInstruction
 
 		switch t {
+		case RAP:
+			ins = NewRemoveAllPlatesInstruction()
+		case APT:
+			ins = NewAddPlateToInstruction("", "", nil)
 		case INI:
 			ins = NewInitializeInstruction()
 		case ASP:

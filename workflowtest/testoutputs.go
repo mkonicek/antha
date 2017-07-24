@@ -72,7 +72,11 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 		}
 	}
 
-	return errors.New(errstr)
+	if errstr != "" {
+		return errors.New(errstr)
+	} else {
+		return nil
+	}
 }
 
 func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.LHPlate {
@@ -103,11 +107,11 @@ func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOp
 	}
 
 	results := TestResults{MixTaskResults: mixTaskResults}
-	return TestOpt{Results: results, ComparisonOptions: comparisonOptions}
+	return TestOpt{Results: results, ComparisonOptions: comparisonOptions, CompareOutputs: true}
 }
 func unpackOutputComparisonOptions(optIn string) MixOutputComparisonOptions {
 	// v0 do the sensible thing
-	return ComparePlateTypesNamesVolumes()
+	return ComparePlateTypesVolumes()
 }
 
 func unpackInstructionComparisonOptions(optIn string) map[string][]string {

@@ -9,10 +9,11 @@ import (
 // instructions to deal with robot setup
 
 type RemoveAllPlatesInstruction struct {
+	Type int
 }
 
 func NewRemoveAllPlatesInstruction() *RemoveAllPlatesInstruction {
-	rapi := RemoveAllPlatesInstruction{}
+	rapi := RemoveAllPlatesInstruction{Type: RAP}
 	return &rapi
 }
 
@@ -39,13 +40,14 @@ func (rapi *RemoveAllPlatesInstruction) OutputTo(drv LiquidhandlingDriver) error
 }
 
 type AddPlateToInstruction struct {
+	Type     int
 	Position string
 	Name     string
 	Plate    interface{}
 }
 
 func NewAddPlateToInstruction(position, name string, plate interface{}) *AddPlateToInstruction {
-	ins := AddPlateToInstruction{Position: position, Name: name, Plate: plate}
+	ins := AddPlateToInstruction{Type: APT, Position: position, Name: name, Plate: plate}
 	return &ins
 }
 

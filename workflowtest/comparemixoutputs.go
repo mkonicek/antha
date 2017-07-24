@@ -69,7 +69,10 @@ func compareOutputMaps(outputMapWant, outputMapGot outputMap) ComparisonResult {
 
 	// establish the order of comparison
 	getKeysOrdered := func(m outputMap) []string {
-		keys := make([]string, len(m))
+		keys := make([]string, 0, len(m))
+		for k, _ := range m {
+			keys = append(keys, k)
+		}
 		sort.Strings(keys)
 		return keys
 	}

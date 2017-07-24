@@ -2,6 +2,7 @@ package executeutil
 
 import (
 	"errors"
+
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflowtest"
@@ -49,6 +50,7 @@ func Unmarshal(opt UnmarshalOpt) (*workflow.Desc, *execute.RawParams, *workflowt
 		desc.Processes = bundle.Processes
 		param.Config = bundle.Config
 		param.Parameters = bundle.Parameters
+		expected = bundle.TestOpt
 	} else {
 		if err := unmarshal(opt.WorkflowData, &desc); err != nil {
 			return nil, nil, nil, err

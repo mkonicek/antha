@@ -15,12 +15,11 @@ type TestOpt struct {
 }
 
 type TestResults struct {
-	//Instructions []interface{}
 	MixTaskResults []MixTaskResult
 }
 
 type MixTaskResult struct {
-	Instructions SetOfRobotInstructions
+	Instructions liquidhandling.SetOfRobotInstructions
 }
 
 func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []liquidhandling.RobotInstruction {
@@ -46,8 +45,9 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 	errstr := ""
 
 	for i := 0; i < len(mixTasks); i++ {
-		genIns1 := opt.Results.MixTaskResults[i].Instructions // already RobotInstructions
+		genIns1 := opt.Results.MixTaskResults[i].Instructions.RobotInstructions // already RobotInstructions
 		genIns2 := generaliseInstructions(mixTasks[i].Request.Instructions)
+
 		ssss := joinErrors(liquidhandling.CompareInstructionSets(genIns1, genIns2, liquidhandling.ComparisonOpt{unpackOpt(opt.ComparisonOptions)}).Errors)
 		if ssss != "" {
 			errstr += ssss + "\n"
@@ -64,11 +64,10 @@ func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOp
 	mixTaskResults := make([]MixTaskResult, len(mixTasks))
 
 	for i := 0; i < len(mixTasks); i++ {
-		mixTaskResults[i] = MixTaskResult{Instructions: generaliseInstructions(mixTasks[i].Request.Instructions)}
+		mixTaskResults[i] = MixTaskResult{Instructions: liquidhandling.SetOfRobotInstructions{RobotInstructions: generaliseInstructions(mixTasks[i].Request.Instructions)}}
 	}
 
 	results := TestResults{MixTaskResults: mixTaskResults}
-
 	return TestOpt{Results: results, ComparisonOptions: comparisonOptions}
 }
 

@@ -83,13 +83,15 @@ const (
 	MDS            // MOV DSP	    ""       ""
 	MVM            // MOV MIX           ""       ""
 	MBL            // MOV BLO	    ""       ""
+	RAP            // RemoveAllPlates
+	APT            // AddPlateTo
 )
 
 func InstructionTypeName(ins RobotInstruction) string {
 	return Robotinstructionnames[ins.InstructionType()]
 }
 
-var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO"}
+var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT"}
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED"}
 
@@ -275,10 +277,10 @@ func HasParameter(s string, ins RobotInstruction) bool {
 }
 
 type SetOfRobotInstructions struct {
-	Instructions []RobotInstruction
+	RobotInstructions []RobotInstruction
 }
 
-func (sori SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
+func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 	// first stage -- find the instructions
 
 	var objectMap map[string]*json.RawMessage
@@ -292,14 +294,14 @@ func (sori SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 	// second stage -- unpack into an array
 
 	var arrI []*json.RawMessage
-	mess := objectMap["Instructions"]
+	mess := objectMap["RobotInstructions"]
 	err = json.Unmarshal(*mess, &arrI)
 
 	if err != nil {
 		return err
 	}
 
-	sori.Instructions = make([]RobotInstruction, len(arrI))
+	sori.RobotInstructions = make([]RobotInstruction, len(arrI))
 	mapForTypeCheck := make(map[string]interface{}, 10)
 	for i := 0; i < len(arrI); i++ {
 		mess := arrI[i]
@@ -350,6 +352,8 @@ func (sori SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 			ins = NewPTZInstruction()
 		case ULD:
 			ins = NewUnloadTipsInstruction()
+		case WAI:
+			ins = NewWaitInstruction()
 		case FIN:
 			ins = NewFinalizeInstruction()
 		default:
@@ -366,7 +370,7 @@ func (sori SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 
 		// add to array
 
-		sori.Instructions[i] = ins
+		sori.RobotInstructions[i] = ins
 	}
 
 	return nil

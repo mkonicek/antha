@@ -15,7 +15,7 @@ func TestInstructionMarshal(t *testing.T) {
 	arr = append(arr, NewDispenseInstruction())
 	arr = append(arr, NewMoveInstruction())
 
-	marshalled, err := json.Marshal(SetOfRobotInstructions{Instructions: arr})
+	marshalled, err := json.Marshal(SetOfRobotInstructions{RobotInstructions: arr})
 
 	if err != nil {
 		t.Error(err)
@@ -31,7 +31,7 @@ func TestInstructionMarshal(t *testing.T) {
 
 	expected := []string{"MOV", "ASP", "MOV", "DSP", "MOV"}
 
-	got := insTypeArr(unmarshalled.Instructions)
+	got := insTypeArr(unmarshalled.RobotInstructions)
 
 	if !reflect.DeepEqual(expected, got) {
 		fmt.Errorf("Expected  %v got %v", expected, got)

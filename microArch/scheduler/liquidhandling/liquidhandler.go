@@ -184,7 +184,16 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 
 // run the request via the driver
 func (this *Liquidhandler) Execute(request *LHRequest) error {
-	// set up the robot
+
+	if (*request).Instructions == nil {
+		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
+	}
+	// add setup instructions to the request instruction stream
+
+	this.add_setup_instructions(request)
+
+	// set up the robot with extra calls not included in instructions
+
 	err := this.do_setup(request)
 
 	if err != nil {
@@ -192,10 +201,6 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	}
 
 	instructions := (*request).Instructions
-
-	if instructions == nil {
-		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
-	}
 
 	// some timing info for the log (only) for now
 
@@ -408,12 +413,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) do_setup(rq *LHRequest) error {
-	stat := this.Properties.Driver.RemoveAllPlates()
+func (this *Liquidhandler) add_setup_instructions(rq *LHRequest) {
+	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, len(rq.Instructions)+10)
 
-	if stat.Errorcode == driver.ERR {
-		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-	}
+	instructions = append(instructions, liquidhandling.NewRemoveAllPlatesInstruction())
 
 	for position, plateid := range this.Properties.PosLookup {
 		if plateid == "" {
@@ -422,11 +425,33 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 		plate := this.Properties.PlateLookup[plateid]
 		name := plate.(wtype.Named).GetName()
 
-		stat = this.Properties.Driver.AddPlateTo(position, plate, name)
+		ins := liquidhandling.NewAddPlateToInstruction(position, plate, name)
+
+		instructions = append(instructions, ins)
+	}
+}
+
+func (this *Liquidhandler) do_setup(rq *LHRequest) error {
+	/*
+		stat := this.Properties.Driver.RemoveAllPlates()
+
 		if stat.Errorcode == driver.ERR {
 			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
 		}
-	}
+
+		for position, plateid := range this.Properties.PosLookup {
+			if plateid == "" {
+				continue
+			}
+			plate := this.Properties.PlateLookup[plateid]
+			name := plate.(wtype.Named).GetName()
+
+			stat = this.Properties.Driver.AddPlateTo(position, plate, name)
+			if stat.Errorcode == driver.ERR {
+				return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
+			}
+		}
+	*/
 
 	stat = this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
 	if stat.Errorcode == driver.ERR {

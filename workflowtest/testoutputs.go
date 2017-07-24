@@ -3,6 +3,7 @@ package workflowtest
 import (
 	"errors"
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/target"
@@ -20,6 +21,7 @@ type TestResults struct {
 
 type MixTaskResult struct {
 	Instructions liquidhandling.SetOfRobotInstructions
+	Outputs      []*wtype.LHPlate
 }
 
 func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []liquidhandling.RobotInstruction {

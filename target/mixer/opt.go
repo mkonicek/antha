@@ -18,6 +18,7 @@ var (
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
 		PlanningVersion:      "ep2",
+		LegacyVolume:         true,
 	}
 )
 
@@ -48,6 +49,7 @@ type Opt struct {
 	OutputSort                        bool
 	PrintInstructions                 bool
 	UseDriverTipTracking              bool
+	LegacyVolume                      bool // don't track volumes for intermediates
 }
 
 // Merge two configs together and return the result. Values in the argument

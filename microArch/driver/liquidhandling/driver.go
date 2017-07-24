@@ -47,6 +47,7 @@ type LiquidhandlingDriver interface {
 	AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus
 	RemoveAllPlates() driver.CommandStatus
 	RemovePlateAt(position string) driver.CommandStatus
+	Message(level int, title, text string, showcancel bool) driver.CommandStatus
 }
 
 type ExtendedLiquidhandlingDriver interface {
@@ -67,6 +68,5 @@ type ExtendedLiquidhandlingDriver interface {
 	// refactored into other interfaces?
 	Open() driver.CommandStatus
 	Close() driver.CommandStatus
-	Message(level int, title, text string, showcancel bool) driver.CommandStatus
 	GetOutputFile() (string, driver.CommandStatus)
 }

@@ -3118,8 +3118,6 @@ func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) error {
 
 }
 
-// TODO -- implement MESSAGE
-
 func ChangeTips(ctx context.Context, tiptype string, vol wunit.Volume, prms *LHProperties, channel *wtype.LHChannelParameter, multi int, oneshot, usetiptracking bool) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0, 2)
 	newchannel, newtip := ChooseChannel(vol, prms)

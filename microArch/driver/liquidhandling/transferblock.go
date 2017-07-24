@@ -61,7 +61,8 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		}
 
 		// aggregates across components
-		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi)
+		//TODO --> allow setting legacy volume if necessary
+		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false)
 		if err != nil {
 			panic(err)
 		}
@@ -85,7 +86,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	// prm here will be nil unless len(insset)==0
 	// we must either tolerate this or do something else
 
-	tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1)
+	tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false)
 
 	if err != nil {
 		panic(err)

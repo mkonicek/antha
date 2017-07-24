@@ -2,7 +2,6 @@ package execute
 
 import (
 	"context"
-
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -57,6 +56,48 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	inst := incubate(ctx, in, temp, time, shaking)
 	trace.Issue(ctx, inst)
 	return inst.Comp
+}
+
+// prompt... works pretty much like Handle does
+// but passes the instruction to the planner
+// in future this should generate handles as side-effects
+
+type PromptOpts struct {
+	Component   *wtype.LHComponent
+	ComponentIn *wtype.LHComponent
+	Message     string
+}
+
+func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *wtype.LHComponent {
+	// sadly need to update everything
+	comp := component.Dup()
+	comp.ID = wtype.GetUUID()
+	comp.BlockID = wtype.NewBlockID(getID(ctx))
+	comp.SetGeneration(comp.Generation() + 1)
+	getMaker(ctx).UpdateAfterInst(component.ID, comp.ID)
+	pinst := prompt(ctx, PromptOpts{Component: comp, ComponentIn: component, Message: message})
+	trace.Issue(ctx, pinst)
+	return comp
+}
+
+func prompt(ctx context.Context, opts PromptOpts) *commandInst {
+	inst := wtype.NewLHPromptInstruction()
+	inst.SetGeneration(opts.ComponentIn.Generation())
+	inst.Message = opts.Message
+	//inst.Result = opts.Component
+	inst.AddProduct(opts.Component)
+	inst.AddComponent(opts.ComponentIn)
+	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
+
+	cp := true
+	return &commandInst{
+		Args: []*wtype.LHComponent{opts.ComponentIn},
+		Comp: opts.Component,
+		Command: &ast.Command{
+			Inst:     inst,
+			Requests: []ast.Request{ast.Request{CanPrompt: &cp}},
+		},
+	}
 }
 
 func handle(ctx context.Context, opt HandleOpt) *commandInst {
@@ -155,7 +196,7 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 
 	inst.SetGeneration(mx)
 	result.SetGeneration(mx + 1)
-
+	result.DeclareInstance()
 	inst.ProductID = result.ID
 
 	return &commandInst{

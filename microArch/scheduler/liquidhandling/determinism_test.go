@@ -19,7 +19,7 @@ func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
 	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(5000.0, "ul"))
 
 	for k := 0; k < 130; k++ {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(21.0, "ul"))
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(21.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
@@ -39,7 +39,7 @@ func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wt
 	if err != nil {
 		panic(err)
 	}
-
+	c.ID = wtype.GetUUID()
 	c.SetVolume(vol)
 	return c
 }

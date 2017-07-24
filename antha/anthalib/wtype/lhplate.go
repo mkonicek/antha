@@ -214,7 +214,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 }
 
 // this gets ONE component... possibly from several wells
-func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
@@ -234,15 +234,15 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 			continue
 		}
 
-		if w.Contents().CName == cmp.CName {
-			if exact && w.Contents().ID != cmp.ID {
-				continue
-			}
-
+		//if w.Contents().CName == cmp.CName {
+		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 
-			if v.LessThan(volWant) {
-				continue
+			// check volume unless this is an instance and we are tolerating this
+			if !cmp.IsInstance() || !legacyVolume {
+				if v.LessThan(volWant) {
+					continue
+				}
 			}
 
 			volGot.Add(volWant)
@@ -259,7 +259,7 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 	}
 
 	if volGot.LessThan(cmp.Volume()) {
-		return lhp.GetComponent(cmp, exact, mpv)
+		return lhp.GetComponent(cmp, mpv)
 	}
 	//fmt.Println("FOUND: ", cmp.CName, " AT: ", ret[0].FormatA1(), " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
@@ -308,7 +308,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 
 // convenience method
 
-func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
 	it := NewOneTimeColumnWiseIterator(lhp)
@@ -319,16 +319,7 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume)
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
-		/*
-			if !w.Empty() {
-				logger.Debug(fmt.Sprint("WANT: ", cmp.CName, " :: ", wc.FormatA1(), " ", w.Contents().CName, " ", w.CurrVolume().ToString()))
-			}
-		*/
-		if w.Contents().CName == cmp.CName {
-			if exact && w.Contents().ID != cmp.ID {
-				continue
-			}
-
+		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 			if v.LessThan(mpv) {
 				continue

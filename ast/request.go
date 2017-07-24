@@ -14,11 +14,12 @@ type NameValue struct {
 }
 
 type Request struct {
-	MixVol   *Interval
-	Temp     *Interval
-	Time     *Interval
-	Move     []Movement
-	Selector []NameValue
+	MixVol    *Interval
+	Temp      *Interval
+	Time      *Interval
+	Move      []Movement
+	Selector  []NameValue
+	CanPrompt *bool
 }
 
 func makeMovementMap(vs []Movement) map[interface{}]int {
@@ -46,6 +47,45 @@ func mapContains(a, b map[interface{}]int) bool {
 	return true
 }
 
+func pBoolsEqual(a, b *bool) bool {
+	if a == nil && b == nil {
+		return true
+	} else if a == nil || b == nil {
+		return false
+	}
+
+	return *a == *b
+}
+
+func pBoolContains(a, b *bool) bool {
+	// undefined b's are contained in everything
+	if b == nil {
+		return true
+	}
+
+	// undefined a's are empty
+	if a == nil {
+		return false
+	}
+
+	return *a == *b
+}
+
+func pBoolMeet(a, b *bool) *bool {
+	// preserve defined values
+
+	if a == nil && b == nil {
+		return nil
+	} else if a == nil {
+		return b
+	} else if b == nil {
+		return a
+	}
+
+	r := *a && *b
+	return &r
+}
+
 // A >= B?
 func (reqA Request) Contains(reqB Request) bool {
 	if !reqA.MixVol.Contains(reqB.MixVol) {
@@ -63,6 +103,10 @@ func (reqA Request) Contains(reqB Request) bool {
 	if !mapContains(makeNameValueMap(reqA.Selector), makeNameValueMap(reqB.Selector)) {
 		return false
 	}
+	if !pBoolContains(reqA.CanPrompt, reqB.CanPrompt) {
+		return false
+	}
+
 	return true
 }
 
@@ -74,6 +118,7 @@ func Meet(reqs ...Request) (req Request) {
 		req.Time = req.Time.Meet(r.Time)
 		req.Move = append(req.Move, r.Move...)
 		req.Selector = append(req.Selector, r.Selector...)
+		req.CanPrompt = pBoolMeet(req.CanPrompt, r.CanPrompt)
 	}
 	return
 }
@@ -93,6 +138,9 @@ func (reqA Request) Matches(reqB Request) bool {
 		return false
 	}
 	if len(reqA.Selector) != 0 && len(reqB.Selector) == 0 {
+		return false
+	}
+	if reqA.CanPrompt != nil && reqB.CanPrompt == nil {
 		return false
 	}
 	return true

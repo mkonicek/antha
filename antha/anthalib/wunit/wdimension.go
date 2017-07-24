@@ -40,6 +40,10 @@ func EZLength(v float64) Length {
 	return NewLength(v, "m")
 }
 
+func ZeroLength() Length {
+	return EZLength(0.0)
+}
+
 // make a length
 func NewLength(v float64, unit string) Length {
 	l := Length{NewPMeasurement(v, unit)}
@@ -71,6 +75,10 @@ func NewArea(v float64, unit string) (a Area) {
 	}
 
 	return
+}
+
+func ZeroArea() Area {
+	return NewArea(0.0, "m^2")
 }
 
 // volume -- strictly speaking of course this is length^3

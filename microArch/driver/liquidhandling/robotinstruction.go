@@ -79,6 +79,7 @@ const (
 	UAD            // Unload Adaptor
 	MMX            // Move and Mix
 	MIX            // Mix
+	MSG            // Message
 	MAS            // MOV ASP	-- used by tests
 	MDS            // MOV DSP	    ""       ""
 	MVM            // MOV MIX           ""       ""
@@ -91,9 +92,9 @@ func InstructionTypeName(ins RobotInstruction) string {
 	return Robotinstructionnames[ins.InstructionType()]
 }
 
-var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT"}
+var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT"}
 
-var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED"}
+var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE"}
 
 func InsToString(ins RobotInstruction) string {
 	s := ""
@@ -146,6 +147,7 @@ func InsToString(ins RobotInstruction) string {
 }
 
 func InsToString2(ins RobotInstruction) string {
+	// IS THIS IT?!
 	b, _ := json.Marshal(ins)
 	return string(b)
 }

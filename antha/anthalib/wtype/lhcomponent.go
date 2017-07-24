@@ -467,6 +467,12 @@ func (cmp *LHComponent) AddDaughterComponent(cmp2 *LHComponent) {
 	cmp.DaughterID += cmp2.ID
 }
 
+func (cmp *LHComponent) ReplaceDaughterID(ID1, ID2 string) {
+	if cmp.DaughterID != "" {
+		cmp.DaughterID = strings.Replace(cmp.DaughterID, ID1, ID2, 1)
+	}
+}
+
 func (cmp *LHComponent) MixPreserveTvol(cmp2 *LHComponent) {
 	cmp.Mix(cmp2)
 	if cmp2.Vol == 0.00 && cmp2.Tvol > 0.00 {
@@ -480,6 +486,7 @@ func (cmp *LHComponent) MixPreserveTvol(cmp2 *LHComponent) {
 	}
 }
 
+// add cmp2 to cmp
 func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	//wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
@@ -775,4 +782,61 @@ func (lhc *LHComponent) SetValue(b bool) {
 	}
 
 	lhc.Extra["valuable"] = b
+}
+
+const instanceMarker = "INSTANCE"
+
+func (lhc *LHComponent) DeclareInstance() {
+	// everything starts off as a Type
+	// instancehood must inherit
+
+	if lhc != nil {
+		if lhc.Extra == nil {
+			lhc.Extra = make(map[string]interface{})
+		}
+
+		lhc.Extra[instanceMarker] = true
+	}
+}
+
+func (lhc *LHComponent) IsInstance() bool {
+	if lhc == nil || lhc.Extra == nil {
+		return false
+	}
+
+	temp, ok := lhc.Extra[instanceMarker]
+
+	if !ok {
+		return false
+	}
+
+	b, ok := temp.(bool)
+
+	if !ok {
+		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Curently set to %v", instanceMarker, b))
+	}
+
+	return b
+}
+
+func (lhc *LHComponent) DeclareNotInstance() {
+	// explicitly set instance status to false
+
+	lhc.DeclareInstance() // lazy: make sure instance status is initialised
+	lhc.Extra[instanceMarker] = false
+}
+
+func (lhc *LHComponent) IsSameKindAs(c2 *LHComponent) bool {
+	// v0: amounts to same CName
+
+	return lhc.Kind() == c2.Kind()
+
+	// v1: Explicit kind IDs separate from names (TODO)
+}
+
+func (lhc *LHComponent) Kind() string {
+	// v0: it's the name
+	return lhc.CName
+
+	// v1: distinct IDs for underlying liquid types
 }

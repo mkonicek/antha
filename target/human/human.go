@@ -51,7 +51,6 @@ func (a *Human) CanCompile(req ast.Request) bool {
 	if !req.Matches(can) {
 		return false
 	}
-
 	return can.Contains(req)
 }
 

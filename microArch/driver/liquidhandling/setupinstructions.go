@@ -1,6 +1,7 @@
 package liquidhandling
 
 import (
+	"context"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver"
 )
@@ -18,11 +19,13 @@ func NewRemoveAllPlatesInstruction() *RemoveAllPlatesInstruction {
 func (rapi *RemoveAllPlatesInstruction) InstructionType() int {
 	return RAP
 }
-
+func (rapi *RemoveAllPlatesInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	return []RobotInstruction{}, nil
+}
 func (rapi *RemoveAllPlatesInstruction) GetParameter(name string) interface{} {
 	return nil
 }
-func (rapi *RemoveAllPlatesInstruction) check(lhpr wtype.LHPolicyRule) bool {
+func (rapi *RemoveAllPlatesInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 	return false
 }
 func (rapi *RemoveAllPlatesInstruction) OutputTo(drv LiquidhandlingDriver) error {
@@ -50,6 +53,9 @@ func (apti *AddPlateToInstruction) InstructionType() int {
 	return APT
 }
 
+func (apti *AddPlateToInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	return []RobotInstruction{}, nil
+}
 func (apti *AddPlateToInstruction) GetParameter(name string) interface{} {
 	switch name {
 	case "POSITION":
@@ -64,7 +70,7 @@ func (apti *AddPlateToInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func (apti *AddPlateToInstruction) check(lhpr wtype.LHPolicyRule) bool {
+func (apti *AddPlateToInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 	return false
 }
 func (apti *AddPlateToInstruction) OutputTo(drv LiquidhandlingDriver) error {

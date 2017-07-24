@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"reflect"
 )
 
@@ -83,31 +82,6 @@ func orderedInstructionComparison(setA, setB []RobotInstruction, opt ComparisonO
 		errs := compareInstructions(i, setA[i], setB[i], opt.InstructionParameters[InstructionTypeName(setA[i])])
 		errors = append(errors, errs...)
 	}
-
-	return ComparisonResult{Errors: errors}
-}
-
-// mostly comes down to comparing the results
-type TestPlate struct {
-	PlateType string
-	Contents  map[string]wunit.Volume
-}
-
-func unorderedInstructionComparison(setA, setB []RobotInstruction, opt ComparisonOpt) ComparisonResult {
-	// cache outputs
-
-	outputsA := makeOutputs(seta)
-	outputsB := makeOutputs(setB)
-
-	return compareOutputs(outputsA, outputsB, opt)
-}
-
-func makeOutputs(instrx []RobotInstruction) []TestPlate {
-	positions := make(map[string]*wtype.LHPlate, 9)
-
-}
-
-func compareOutputs() ComparisonResult {
 
 	return ComparisonResult{Errors: errors}
 }

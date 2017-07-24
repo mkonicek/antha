@@ -425,10 +425,12 @@ func (this *Liquidhandler) add_setup_instructions(rq *LHRequest) {
 		plate := this.Properties.PlateLookup[plateid]
 		name := plate.(wtype.Named).GetName()
 
-		ins := liquidhandling.NewAddPlateToInstruction(position, plate, name)
+		ins := liquidhandling.NewAddPlateToInstruction(position, name, plate)
 
 		instructions = append(instructions, ins)
 	}
+	instructions = append(instructions, rq.Instructions...)
+	rq.Instructions = instructions
 }
 
 func (this *Liquidhandler) do_setup(rq *LHRequest) error {
@@ -453,7 +455,7 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 		}
 	*/
 
-	stat = this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
+	stat := this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
 	if stat.Errorcode == driver.ERR {
 		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
 	}

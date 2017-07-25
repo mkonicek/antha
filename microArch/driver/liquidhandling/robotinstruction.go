@@ -359,7 +359,7 @@ func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 		case ULD:
 			ins = NewUnloadTipsInstruction()
 		case MSG:
-			ins = NewMessageInstruction()
+			ins = NewMessageInstruction(nil)
 		case WAI:
 			ins = NewWaitInstruction()
 		case FIN:

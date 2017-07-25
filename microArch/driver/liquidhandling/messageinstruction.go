@@ -15,7 +15,9 @@ type MessageInstruction struct {
 func NewMessageInstruction(lhi *wtype.LHInstruction) *MessageInstruction {
 	msi := MessageInstruction{}
 	msi.Type = MSG
-	msi.Message = lhi.Message
+	if lhi != nil {
+		msi.Message = lhi.Message
+	}
 
 	return &msi
 }

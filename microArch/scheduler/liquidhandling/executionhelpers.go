@@ -699,6 +699,8 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 			// ensure we keep results straight
 			vd := v.Dup()
+			// volumes need to come from volss
+			vd.Vol = v2.ConvertToString(vd.Vunit)
 			vd.ID = wlf.WContents.ID
 			vd.ParentID = wlf.WContents.ParentID
 			wlt.Add(vd)

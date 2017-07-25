@@ -179,6 +179,11 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 
 	OutputSetup(this.Properties)
 
+	// and afer
+
+	fmt.Println("SETUP AFTER: ")
+	OutputSetup(this.FinalProperties)
+
 	return nil
 }
 
@@ -853,6 +858,8 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 		if strings.Contains(v.GetName(), "Input") {
 			wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
 		}
+
+		v.OutputLayout()
 	}
 
 	logger.Debug("Tipwastes: ")

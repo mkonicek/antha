@@ -124,43 +124,16 @@ func AddVolumes(vols []Volume) (newvolume Volume) {
 // subtract volumes
 func SubtractVolumes(OriginalVol Volume, subtractvols []Volume) (newvolume Volume) {
 
-	tempvol := (CopyVolume(OriginalVol))
-	newvolume = (CopyVolume(tempvol))
+	newvolume = (CopyVolume(OriginalVol))
 
 	volToSubtract := AddVolumes(subtractvols)
 
 	newvolume.Subtract(volToSubtract)
 
 	if math.IsInf(newvolume.RawValue(), 0) {
-		fmt.Println("original: ", OriginalVol, "vols to subtract:", subtractvols)
+		fmt.Println("Infinity value found for volume. Original: ", OriginalVol, ". Vols to subtract:", subtractvols)
 	}
 
-	/*
-		fmt.Println("original: ", tempvol, newvolume)
-
-		for i, vol := range subtractvols {
-			if math.IsInf(vol.RawValue(), -1) {
-				message := fmt.Sprintln("bad volume with volume: ", i)
-				panic(message)
-			}
-			if !math.IsInf(vol.RawValue(), 0) {
-				fmt.Println("hi ", i, vol)
-				if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() && vol.RawValue() > 0.0 {
-					newvolume = NewVolume(tempvol.RawValue()-vol.RawValue(), tempvol.Unit().PrefixedSymbol())
-					tempvol = (CopyVolume(newvolume))
-				} else {
-					newvolume = NewVolume(tempvol.SIValue()-vol.SIValue(), tempvol.Unit().BaseSISymbol())
-					tempvol = (CopyVolume(newvolume))
-				}
-				fmt.Println("tempvol: ", tempvol, "Newvolume:", newvolume)
-			}
-		}
-
-		if math.IsInf(newvolume.RawValue(), 0) {
-			message := fmt.Sprintln("bad volume with volume bwoy ")
-			panic(message)
-		}
-	*/
 	return
 
 }

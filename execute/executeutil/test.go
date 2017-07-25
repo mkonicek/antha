@@ -15,6 +15,7 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflowtest"
 )
 
 // A test input
@@ -24,6 +25,7 @@ type TestInput struct {
 	Params       *execute.RawParams
 	WorkflowPath string
 	Workflow     *workflow.Desc
+	Expected     *workflowtest.TestOpt
 	Dir          string
 }
 
@@ -174,7 +176,7 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 			return nil, fmt.Errorf("error reading %q", input.ParamsPath, err)
 		}
 
-		wdesc, params, err := Unmarshal(UnmarshalOpt{
+		bundle, err := Unmarshal(UnmarshalOpt{
 			BundleData:   bdata,
 			ParamsData:   pdata,
 			WorkflowData: wdata,
@@ -182,8 +184,9 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error parsing %q: %s", strings.Join(input.Paths(), ","), err)
 		}
-		input.Params = params
-		input.Workflow = wdesc
+		input.Params = &(bundle.RawParams)
+		input.Workflow = &(bundle.Desc)
+		input.Expected = &(bundle.TestOpt)
 	}
 
 	sort.Sort(TestInputs(inputs))

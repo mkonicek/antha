@@ -148,7 +148,6 @@ func (a *runOpt) Run() error {
 		}
 	}
 
-	//wdesc, params, _, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
 	bundle, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
 		WorkflowData: wdata,
 		BundleData:   bdata,

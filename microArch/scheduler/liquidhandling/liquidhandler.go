@@ -472,6 +472,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	if request.Options.PrintInstructions {
+		request.InstructionChain.Print()
+	}
+
 	// assert we should have some instruction ordering
 
 	if len(request.Output_order) == 0 {

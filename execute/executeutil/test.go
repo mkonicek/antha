@@ -176,7 +176,7 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 			return nil, fmt.Errorf("error reading %q", input.ParamsPath, err)
 		}
 
-		wdesc, params, expected, err := Unmarshal(UnmarshalOpt{
+		bundle, err := Unmarshal(UnmarshalOpt{
 			BundleData:   bdata,
 			ParamsData:   pdata,
 			WorkflowData: wdata,
@@ -184,9 +184,9 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error parsing %q: %s", strings.Join(input.Paths(), ","), err)
 		}
-		input.Params = params
-		input.Workflow = wdesc
-		input.Expected = expected
+		input.Params = &(bundle.RawParams)
+		input.Workflow = &(bundle.Desc)
+		input.Expected = &(bundle.TestOpt)
 	}
 
 	sort.Sort(TestInputs(inputs))

@@ -32,9 +32,9 @@ type Bundle struct {
 }
 
 // Parse parameters and workflow.
-func Unmarshal(opt UnmarshalOpt) (*workflow.Desc, *execute.RawParams, *workflowtest.TestOpt, error) {
+func Unmarshal(opt UnmarshalOpt) (*Bundle, error) {
 	if len(opt.BundleData) != 0 && (len(opt.ParamsData) != 0 || len(opt.WorkflowData) != 0) {
-		return nil, nil, nil, bundleWithParams
+		return nil, bundleWithParams
 	}
 
 	var desc workflow.Desc
@@ -44,7 +44,7 @@ func Unmarshal(opt UnmarshalOpt) (*workflow.Desc, *execute.RawParams, *workflowt
 
 	if len(opt.BundleData) != 0 {
 		if err := unmarshal(opt.BundleData, &bundle); err != nil {
-			return nil, nil, nil, err
+			return nil, err
 		}
 		desc.Connections = bundle.Connections
 		desc.Processes = bundle.Processes
@@ -53,18 +53,19 @@ func Unmarshal(opt UnmarshalOpt) (*workflow.Desc, *execute.RawParams, *workflowt
 		expected = bundle.TestOpt
 	} else {
 		if err := unmarshal(opt.WorkflowData, &desc); err != nil {
-			return nil, nil, nil, err
+			return nil, err
 		}
 		if err := unmarshal(opt.ParamsData, &param); err != nil {
-			return nil, nil, nil, err
+			return nil, err
 		}
 	}
 
 	if len(desc.Processes) == 0 {
-		return nil, nil, nil, noElements
+		return nil, noElements
 	} else if len(param.Parameters) == 0 {
-		return nil, nil, nil, noParameters
+		return nil, noParameters
 	}
 
-	return &desc, &param, &expected, nil
+	bdl := Bundle{desc, param, expected}
+	return &bdl, nil
 }

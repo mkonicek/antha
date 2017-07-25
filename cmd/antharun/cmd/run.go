@@ -148,7 +148,8 @@ func (a *runOpt) Run() error {
 		}
 	}
 
-	wdesc, params, _, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
+	//wdesc, params, _, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
+	bundle, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
 		WorkflowData: wdata,
 		BundleData:   bdata,
 		ParamsData:   pdata,
@@ -156,6 +157,9 @@ func (a *runOpt) Run() error {
 	if err != nil {
 		return err
 	}
+
+	wdesc := &(bundle.Desc)
+	params := &(bundle.RawParams)
 
 	mixerOpt := mixer.DefaultOpt.Merge(params.Config).Merge(&a.MixerOpt)
 	opt := auto.Opt{

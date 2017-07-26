@@ -50,3 +50,10 @@ func makeManualTipwaste() *wtype.LHTipwaste {
 	lht := wtype.NewLHTipwaste(1000000, "Manualtipwaste", "ACMEBagsInc", 90.5, w, 85.5, 45.0, 0.0)
 	return lht
 }
+
+func makeTecanTipwaste() *wtype.LHTipwaste {
+	shp := wtype.NewShape("box", "mm", 90.5, 171.0, 90.0)
+	w := wtype.NewLHWell("manualtipwaste", "", "A1", "ul", 800000.0, 800000.0, shp, 0, 90.5, 171.0, 90.0, 0.0, "mm")
+	lht := wtype.NewLHTipwaste(2000, "TecanWasteChute", "Tecan", 90.5, w, 85.5, 45.0, 0.0)
+	return lht
+}

@@ -125,13 +125,11 @@ func AddVolumes(vols []Volume) (newvolume Volume) {
 func SubtractVolumes(OriginalVol Volume, subtractvols []Volume) (newvolume Volume) {
 
 	newvolume = (CopyVolume(OriginalVol))
-
 	volToSubtract := AddVolumes(subtractvols)
-
 	newvolume.Subtract(volToSubtract)
-
+	
 	if math.IsInf(newvolume.RawValue(), 0) {
-		fmt.Println("Infinity value found for volume. Original: ", OriginalVol, ". Vols to subtract:", subtractvols)
+		panic(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols))
 	}
 
 	return

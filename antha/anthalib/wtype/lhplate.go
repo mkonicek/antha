@@ -908,3 +908,25 @@ func (p *LHPlate) DeclareSpecial() {
 		p.Welltype.Extra["IMSPECIAL"] = true
 	}
 }
+
+// @implement SBSLabware
+
+/*
+type SBSLabware interface {
+	NumRows() int
+	NumCols() int
+	PlateHeight() float64
+}
+*/
+
+func (p *LHPlate) NumRows() int {
+	return p.WellsY()
+}
+
+func (p *LHPlate) NumCols() int {
+	return p.WellsX()
+}
+
+func (p *LHPlate) PlateHeight() float64 {
+	return p.Height
+}

@@ -570,20 +570,33 @@ func AddNewResponseFieldandValue(run Run, responsedescriptor string, responseval
 	return
 }
 
+// Add a new response field. The response field will be added with a blank response value.
+// The field will only be added if the response is not already present.
 func AddNewResponseField(run Run, responsedescriptor string) (newrun Run) {
 
 	newrun = run
 
 	responsedescriptors := make([]string, len(run.Responsedescriptors))
-	responsevalues := make([]interface{}, len(run.ResponseValues)+1)
+	responsevalues := make([]interface{}, len(run.ResponseValues))
 
-	responsedescriptors = run.Responsedescriptors
+	var skip bool
+
+	for i, descriptor := range run.Responsedescriptors {
+		if strings.ToUpper(descriptor) == strings.ToUpper(responsedescriptor) {
+			skip = true
+		}
+		responsedescriptors[i] = run.Responsedescriptors[i]
+	}
 
 	for i := range run.ResponseValues {
 		responsevalues[i] = run.ResponseValues[i]
 	}
-	responsedescriptors = append(responsedescriptors, responsedescriptor)
 
+	if !skip {
+		responsedescriptors = append(responsedescriptors, responsedescriptor)
+		var nilvalue interface{}
+		responsevalues = append(run.ResponseValues, nilvalue)
+	}
 	newrun.Responsedescriptors = responsedescriptors
 	newrun.ResponseValues = responsevalues
 

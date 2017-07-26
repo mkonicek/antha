@@ -142,33 +142,6 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	// now give me some answers
-
-	/*
-		for _, id := range this.FinalProperties.PosLookup {
-			p, ok := this.FinalProperties.PlateLookup[id]
-			if !ok {
-				continue
-			}
-			switch p.(type) {
-			case *wtype.LHPlate:
-				pl := p.(*wtype.LHPlate)
-				for _, c := range pl.Cols {
-					for _, w := range c {
-						if !w.Empty() {
-							fmt.Print(w.Crds, " ")
-							fmt.Print(pl.PlateName, " ")
-							fmt.Print(pl.Type, " ")
-							fmt.Print(w.WContents.CName, " ")
-							fmt.Print(w.WContents.Vol, " ")
-							fmt.Println()
-						}
-					}
-				}
-			}
-		}
-	*/
-
 	err = this.Execute(request)
 
 	if err != nil {
@@ -331,6 +304,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 			return err
 		}
 
+		// what's it like here?
+
 		for crd, unroundedvol := range wellmap {
 			rv, _ := wutil.Roundto(unroundedvol.RawValue(), 1)
 			vol := wunit.NewVolume(rv, unroundedvol.Unit().PrefixedSymbol())
@@ -379,7 +354,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	}
 
 	// this is many shades of wrong but likely to save us a lot of time
-	for _, pos := range this.Properties.Output_preferences {
+	for _, pos := range this.Properties.InputSearchPreferences() {
 		p1, ok1 := this.Properties.Plates[pos]
 		p2, ok2 := this.FinalProperties.Plates[pos]
 
@@ -394,7 +369,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 							// there's no strict separation between outputs and
 							// inputs here
 							// the call below is essentially "is this an input?"
-							if w.IsAutoallocated() || w.IsUserAllocated() {
+							if w.IsAutoallocated() || w.IsUserAllocated() || !w.WContents.IsInstance() {
 								continue
 							}
 							w2.Clear()

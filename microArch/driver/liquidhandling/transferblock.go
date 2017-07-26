@@ -236,6 +236,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			}
 		case wtype.LHVChannel:
 			r := get_cols(pdm, prm.Multi, dims.D, !prm.Independent, false)
+
 			if len(ret) == 0 {
 				ret = r
 			} else {

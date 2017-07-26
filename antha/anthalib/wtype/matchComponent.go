@@ -143,7 +143,6 @@ func align(want, got ComponentVector, independent bool) Match {
 
 	gIDs := got.GetPlateIds()
 	gWCs := got.GetWellCoords()
-	//gVs := got.GetVols()
 
 	// get the best
 
@@ -151,9 +150,10 @@ func align(want, got ComponentVector, independent bool) Match {
 	j := mxj
 
 	for {
-		if want[i].Vol == 0 && mat[i][j].Bk == 0 {
+		if want[i].Vol == 0 && mat[i][j].Bk == 0 || mat[i][j].Vl == 0 {
 			break
 		}
+
 		IDs[i] = gIDs[j]
 		WCs[i] = gWCs[j]
 		Vols[i] = wunit.NewVolume(mat[i][j].Vl, "ul")

@@ -549,7 +549,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 				}
 			*/
 			mci := NewMultiChannelTransferInstruction()
-			vols.SetEqualTo(vol)
+			vols.SetEqualTo(vol, ins.Multi)
 			mci.What = ins.What[t]
 			mci.Volume = vols.GetACopy()
 			mci.FVolume = fvols.GetACopy()
@@ -562,6 +562,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.TPlateType = ins.TPlateType[t]
 			mci.Multi = ins.Multi
 			mci.Prms = newchannel.MergeWithTip(newtip)
+
 			ret = append(ret, mci)
 
 			tiptype = newtiptype

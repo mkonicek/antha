@@ -200,15 +200,29 @@ func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 	return ret, nil
 }
 
-func (vs VolumeSet) MaxMultiTransferVolume() wunit.Volume {
-	// the minimum volume in the set
+func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
+	// the minimum volume in the set... ensuring that we what we leave is
+	// either 0 or minLeave or greater
 
-	ret := vs.Vols[0]
+	ret := vs.Vols[0].Dup()
 
 	for _, v := range vs.Vols {
 		if v.LessThan(ret) && !v.IsZero() {
-			ret = v
+			ret = v.Dup()
 		}
+	}
+
+	vs2 := vs.Dup().Sub(ret)
+
+	if !vs2.NonZeros().Min().IsZero() && vs2.NonZeros().Min().LessThan(minLeave) {
+		//slightly inefficient but we refuse to leave less than minleave
+		ret.Subtract(minLeave)
+	}
+
+	// fail if ret is now < 0
+
+	if ret.LessThan(wunit.ZeroVolume()) {
+		ret = wunit.ZeroVolume()
 	}
 
 	return ret
@@ -228,13 +242,16 @@ func (ins *TransferInstruction) CheckMultiPolicies() bool {
 }
 
 func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, error) {
-	var plates []*wtype.LHPlate
-	for _, typ := range types {
+	plates := make([]*wtype.LHPlate, len(types))
+	for i, typ := range types {
+		if typ == "" {
+			continue
+		}
 		p, err := inventory.NewPlate(ctx, typ)
 		if err != nil {
 			return nil, err
 		}
-		plates = append(plates, p)
+		plates[i] = p
 	}
 	return plates, nil
 }
@@ -327,23 +344,12 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, channel 
 
 	// looks OK
 
-	/*
-		ra := make([]int, 0, len(ins.What))
-
-		m := 0
-
-		for i := 0; i < len(ins.What); i++ {
-			if ins.What[i] != "" {
-				m += 1
-			}
-		}
-
-		for i := 0; i < m; i++ {
-			ra = append(ra, i)
-		}
-	*/
-
 	ra := make([]int, channel.Multi)
+
+	// init
+	for i := 0; i < channel.Multi; i++ {
+		ra[i] = -1
+	}
 
 	// some issues here in that ins.What might not
 	// be the right size:
@@ -575,19 +581,23 @@ func (vs VolumeSet) Add(v wunit.Volume) {
 	}
 }
 
-func (vs VolumeSet) Sub(v wunit.Volume) []wunit.Volume {
+func (vs VolumeSet) Sub(v wunit.Volume) VolumeSet {
 	ret := make([]wunit.Volume, len(vs.Vols))
 	for i := 0; i < len(vs.Vols); i++ {
-		vs.Vols[i].Subtract(v)
-		ret[i] = wunit.CopyVolume(v)
+		ret[i] = wunit.CopyVolume(vs.Vols[i])
+		ret[i].Subtract(v)
 	}
-	return ret
+	return VolumeSet{Vols: ret}
 }
 
-func (vs VolumeSet) SetEqualTo(v wunit.Volume) {
-	for i := 0; i < len(vs.Vols); i++ {
+func (vs VolumeSet) SetEqualTo(v wunit.Volume, multi int) {
+	for i := 0; i < multi; i++ {
 		vs.Vols[i] = wunit.CopyVolume(v)
 	}
+}
+
+func (vs VolumeSet) Dup() VolumeSet {
+	return VolumeSet{Vols: vs.GetACopy()}
 }
 
 func (vs VolumeSet) GetACopy() []wunit.Volume {
@@ -596,6 +606,33 @@ func (vs VolumeSet) GetACopy() []wunit.Volume {
 		r[i] = wunit.CopyVolume(vs.Vols[i])
 	}
 	return r
+}
+
+func (vs VolumeSet) NonZeros() VolumeSet {
+	vols := make([]wunit.Volume, 0, len(vs.Vols))
+
+	for _, v := range vs.Vols {
+		if !v.IsZero() {
+			vols = append(vols, v)
+		}
+	}
+
+	return VolumeSet{Vols: vols}
+}
+
+func (vs VolumeSet) Min() wunit.Volume {
+	if len(vs.Vols) == 0 {
+		return wunit.ZeroVolume()
+	}
+	v := vs.Vols[0]
+
+	for i := 1; i < len(vs.Vols); i++ {
+		if vs.Vols[i].LessThan(v) {
+			v = vs.Vols[i].Dup()
+		}
+	}
+
+	return v
 }
 
 func countSetSize(set []int) int {
@@ -709,6 +746,7 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 //
 
 func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+
 	//  set the channel  choices first by cleaning out initial empties
 
 	ins.ChooseChannels(prms)
@@ -756,7 +794,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 			}
 			// get the max transfer volume
 
-			maxvol := vols.MaxMultiTransferVolume()
+			maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume())
 
 			// now set the vols for the transfer and remove this from the instruction's volume
 
@@ -808,6 +846,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		if ins.Volume[i].LessThanFloat(0.001) {
 			continue
 		}
+
 		if i != 0 && (ins.What[i] != ins.What[i-1]) {
 			if len(sci.Volume) > 0 {
 				ret = append(ret, sci)

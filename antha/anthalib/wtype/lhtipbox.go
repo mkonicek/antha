@@ -247,3 +247,24 @@ func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	tipbox.NTips = tipbox.Nrows * tipbox.Ncols
 	return tipbox
 }
+
+/*
+type SBSLabware interface {
+	NumRows() int
+	NumCols() int
+	PlateHeight() float64
+}
+*/
+
+// @implement SBSLabware
+
+func (tipbox *LHTipbox) NumRows() int {
+	return tipbox.Nrows
+}
+func (tipbox *LHTipbox) NumCols() int {
+	return tipbox.Ncols
+}
+
+func (tipbox *LHTipbox) PlateHeight() float64 {
+	return tipbox.Height
+}

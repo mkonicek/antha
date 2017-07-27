@@ -223,6 +223,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			waste, err = inventory.NewTipwaste(ctx, "CyBiotipwaste")
 		} else if params.Model == "Human" {
 			waste, err = inventory.NewTipwaste(ctx, "Manualtipwaste")
+		} else if params.Model == "Evo" {
+			waste, err = inventory.NewTipwaste(ctx, "Tecantipwaste")
 		}
 
 		if err != nil {

@@ -368,13 +368,22 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 						if ok {
 							// there's no strict separation between outputs and
 							// inputs here
-							// the call below is essentially "is this an input?"
-							if w.IsAutoallocated() || w.IsUserAllocated() || !w.WContents.IsInstance() {
+							if w.IsAutoallocated() {
 								continue
+							} else if w.IsUserAllocated() {
+								// swap old and new
+								c := w.WContents.Dup()
+								w.Clear()
+								c2 := w2.WContents.Dup()
+								w2.Clear()
+								w.Add(c2)
+								w2.Add(c)
+							} else {
+								// replace
+								w2.Clear()
+								w2.Add(w.WContents)
+								w.Clear()
 							}
-							w2.Clear()
-							w2.Add(w.WContents)
-							w.Clear()
 						}
 					}
 				}
@@ -797,7 +806,7 @@ func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest
 	// necessary??
 	this.FinalProperties = this.Properties.Dup()
 	temprobot := this.Properties.Dup()
-	saved_plates := this.Properties.SaveUserPlates()
+	//saved_plates := this.Properties.SaveUserPlates()
 
 	var rq *LHRequest
 	var err error
@@ -810,7 +819,7 @@ func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest
 
 	this.FinalProperties = temprobot
 
-	this.Properties.RestoreUserPlates(saved_plates)
+	//this.Properties.RestoreUserPlates(saved_plates)
 
 	return rq, err
 }

@@ -111,7 +111,7 @@ func makePlates() (plates []*wtype.LHPlate) {
 func makeBasicPlates() (plates []*wtype.LHPlate) {
 	// deep square well 96
 	swshp := wtype.NewShape("box", "mm", 8.2, 8.2, 41.3)
-	deepsquarewell := wtype.NewLHWell("DSW96", "", "", "ul", 2000, 200, swshp, wtype.LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	deepsquarewell := wtype.NewLHWell("DSW96", "", "", "ul", 2000, 500, swshp, wtype.LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
 	plate := wtype.NewLHPlate("DSW96", "Unknown", 8, 12, 44.1, "mm", deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates = append(plates, plate)
 

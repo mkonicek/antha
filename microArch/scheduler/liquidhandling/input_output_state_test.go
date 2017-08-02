@@ -2,13 +2,15 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
-	"reflect"
-	"testing"
 )
 
 type initFinalCmp struct {
@@ -23,18 +25,245 @@ func (ifc initFinalCmp) IsZero() bool {
 	return reflect.DeepEqual(v, ifc)
 }
 
-func TestStateBeforeAfter(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-	rq := makeRequest()
-	lh := makeLiquidhandler(ctx)
+func getComponents(ctx context.Context, t *testing.T) (cmp1, cmp2 *wtype.LHComponent) {
 	cmp1, err := inventory.NewComponent(ctx, inventory.WaterType)
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmp2, err := inventory.NewComponent(ctx, "dna_part")
+	cmp2, err = inventory.NewComponent(ctx, "dna_part")
 	if err != nil {
 		t.Fatal(err)
 	}
+	return
+}
+
+func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+	rq := makeRequest()
+	lh := makeLiquidhandler(ctx)
+
+	cmp1, cmp2 := getComponents(ctx, t)
+
+	cmp1.Vol = 100.0
+	cmp2.Vol = 50.0
+
+	pl2, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pl2.Cols[0][0].Add(cmp1)
+	pl2.Cols[0][1].Add(cmp2)
+
+	mo := mixer.MixOptions{
+		Components: []*wtype.LHComponent{cmp1, cmp2},
+	}
+
+	ins := mixer.GenericMix(mo)
+
+	rq.LHInstructions[ins.ID] = ins
+
+	pl, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+
+	rq.AddUserPlate(pl2)
+
+	rq.ConfigureYourself()
+
+	lh.Plan(ctx, rq)
+
+	expected := make(map[string][]initFinalCmp)
+
+	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 5.0}}
+
+	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water+dna_part", VolI: 100.0, VolF: 144.5}}
+
+	compareInitFinalStates(t, lh, expected)
+
+	fmt.Println("BEFORE")
+	for _, p := range lh.Properties.Plates {
+		fmt.Println(p.PlateName)
+		p.OutputLayout()
+	}
+	fmt.Println("AFTER")
+	for _, p := range lh.FinalProperties.Plates {
+		fmt.Println(p.PlateName)
+		p.OutputLayout()
+	}
+}
+
+func TestBeforeVsAfterUserPlateDest(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+	rq := makeRequest()
+	lh := makeLiquidhandler(ctx)
+
+	cmp1, cmp2 := getComponents(ctx, t)
+
+	cmp1.Vol = 100.0
+	cmp2.Vol = 50.0
+
+	pl2, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pl2.Cols[0][0].Add(cmp1)
+	pl2.Cols[0][1].Add(cmp2)
+
+	s1 := mixer.Sample(cmp1, wunit.NewVolume(25.0, "ul"))
+	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
+
+	mo := mixer.MixOptions{
+		Components:  []*wtype.LHComponent{s1, s2},
+		PlateType:   "pcrplate_skirted_riser20",
+		Address:     "C1",
+		Destination: pl2,
+	}
+
+	ins := mixer.GenericMix(mo)
+
+	rq.LHInstructions[ins.ID] = ins
+
+	pl, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+
+	rq.AddUserPlate(pl2)
+
+	rq.ConfigureYourself()
+
+	lh.Plan(ctx, rq)
+
+	expected := make(map[string][]initFinalCmp)
+
+	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
+
+	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+
+	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
+
+	compareInitFinalStates(t, lh, expected)
+}
+
+func TestBeforeVsAfterUserPlate(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+	rq := makeRequest()
+	lh := makeLiquidhandler(ctx)
+
+	cmp1, cmp2 := getComponents(ctx, t)
+
+	cmp1.Vol = 100.0
+	cmp2.Vol = 50.0
+
+	s1 := mixer.Sample(cmp1, wunit.NewVolume(25.0, "ul"))
+	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
+
+	mo := mixer.MixOptions{
+		Components: []*wtype.LHComponent{s1, s2},
+		PlateType:  "pcrplate_skirted_riser20",
+		Address:    "C1",
+		PlateNum:   1,
+	}
+
+	ins := mixer.GenericMix(mo)
+
+	rq.LHInstructions[ins.ID] = ins
+
+	pl, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+
+	pl2, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pl2.Cols[0][0].Add(cmp1)
+	pl2.Cols[0][1].Add(cmp2)
+
+	rq.AddUserPlate(pl2)
+
+	rq.ConfigureYourself()
+
+	lh.Plan(ctx, rq)
+
+	expected := make(map[string][]initFinalCmp)
+
+	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
+
+	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+
+	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
+
+	compareInitFinalStates(t, lh, expected)
+}
+func TestBeforeVsAfterMixInPlace(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+	rq := makeRequest()
+	lh := makeLiquidhandler(ctx)
+
+	cmp1, cmp2 := getComponents(ctx, t)
+
+	cmp1.Vol = 100.0
+	cmp2.Vol = 50.0
+
+	mo := mixer.MixOptions{
+		Components: []*wtype.LHComponent{cmp1, cmp2},
+	}
+
+	ins := mixer.GenericMix(mo)
+
+	rq.LHInstructions[ins.ID] = ins
+
+	pl, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+
+	rq.ConfigureYourself()
+
+	lh.Plan(ctx, rq)
+
+	expected := make(map[string][]initFinalCmp)
+
+	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 5.0}}
+
+	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water+dna_part", VolI: 100.0, VolF: 144.5}}
+
+	compareInitFinalStates(t, lh, expected)
+	fmt.Println("BEFORE")
+	for _, p := range lh.Properties.Plates {
+		fmt.Println(p.PlateName)
+		p.OutputLayout()
+	}
+	fmt.Println("AFTER")
+	for _, p := range lh.FinalProperties.Plates {
+		fmt.Println(p.PlateName)
+		p.OutputLayout()
+	}
+}
+
+func TestBeforeVsAfterAutoAllocate(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+	rq := makeRequest()
+	lh := makeLiquidhandler(ctx)
+
+	cmp1, cmp2 := getComponents(ctx, t)
 
 	s1 := mixer.Sample(cmp1, wunit.NewVolume(50.0, "ul"))
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
@@ -60,17 +289,6 @@ func TestStateBeforeAfter(t *testing.T) {
 	rq.ConfigureYourself()
 
 	lh.Plan(ctx, rq)
-
-	/*
-		expectedInitial := make(map[string]float64)
-		expectedInitial["dna_part"] = 30.5
-		expectedInitial["water"] = 55.5
-
-		expectedFinal := make(map[string]float64)
-		expectedFinal["water+dna_part"] = 75.0
-		expectedFinal["water"] = 5.0
-		expectedFinal["dna_part"] = 5.0
-	*/
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -143,18 +361,28 @@ func compareInitFinalStates(t *testing.T, lh *Liquidhandler, expected map[string
 				w := p.Wellcoords[crd]
 				w2 := p2.Wellcoords[crd]
 
+				e1 := w.Empty()
+				e2 := w2.Empty()
+
+				if e1 && e2 {
+					continue
+				}
+
 				v, ok3 := expected[w2.WContents.CName]
 
 				if ok3 {
 					ifc := findWells(w, w2, v)
 
 					if ifc.IsZero() {
-						t.Errorf("Extraneous components in before / after: %s %f %s %f", w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
+						t.Errorf("Extra components of type %s in before / after: %s %f %s %f", w2.WContents.CName, w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
 					}
 
 					// good, delete this now
 
 					expected[w2.WContents.CName] = del(ifc, v, false)
+				} else {
+					t.Errorf("Unexpected components in before / after: %s %f %s %f", w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
+
 				}
 			}
 		}

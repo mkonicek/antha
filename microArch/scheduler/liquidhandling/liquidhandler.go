@@ -324,8 +324,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 	// finally get rid of any temporary stuff
 
-	this.Properties.RemoveIntermediaryComponents()
-	this.FinalProperties.RemoveIntermediaryComponents()
+	this.Properties.RemoveUnusedAutoallocatedComponents()
+	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
 
 	pidm := make(map[string]string, len(this.Properties.Plates))
 	for pos, _ := range this.Properties.Plates {

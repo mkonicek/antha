@@ -1004,10 +1004,11 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 	return true
 }
 
-// RemoveIntermediaryComponents removes any and all components that represent any stage of the liquid handling
-// execution that do not represent a input or output phase. In direct translation to component states that
+// RemoveUnusedAutoallocatedComponents removes any autoallocated component wells
+// that didn't end up getting used
+// In direct translation to component states that
 // means any components that are temporary _and_ autoallocated.
-func (lhp *LHProperties) RemoveIntermediaryComponents() {
+func (lhp *LHProperties) RemoveUnusedAutoallocatedComponents() {
 	ids := make([]string, 0, 1)
 	for _, p := range lhp.Plates {
 		if p.IsTemporary() && p.IsAutoallocated() {

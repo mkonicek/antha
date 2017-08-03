@@ -66,7 +66,7 @@ func (it *IChain) Print() {
 				for i := 0; i < len(it.Values[j].Components); i++ {
 					fmt.Print(" ", it.Values[j].Components[i].CName, " (", it.Values[j].Components[i].ID, ") ")
 				}
-				fmt.Print(":", it.Values[j].Result.ID)
+				fmt.Print(":", it.Values[j].Result.ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Printf("-- ")
 			} else if it.Values[j].Type == wtype.LHIPRM {
 				fmt.Print("PROMPT ", it.Values[j].Message, "-- ")

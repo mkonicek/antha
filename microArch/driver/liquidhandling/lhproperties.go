@@ -1004,19 +1004,20 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 	return true
 }
 
-func (lhp *LHProperties) RemoveTemporaryComponents() {
+// RemoveUnusedAutoallocatedComponents removes any autoallocated component wells
+// that didn't end up getting used
+// In direct translation to component states that
+// means any components that are temporary _and_ autoallocated.
+func (lhp *LHProperties) RemoveUnusedAutoallocatedComponents() {
 	ids := make([]string, 0, 1)
 	for _, p := range lhp.Plates {
-		// if the whole plate is temporary we can just delete the whole thing
-		if p.IsTemporary() {
+		if p.IsTemporary() && p.IsAutoallocated() {
 			ids = append(ids, p.ID)
 			continue
 		}
 
-		// now remove any components in wells still marked temporary
-
 		for _, w := range p.Wellcoords {
-			if w.IsTemporary() {
+			if w.IsTemporary() && w.IsAutoallocated() {
 				w.Clear()
 			}
 		}

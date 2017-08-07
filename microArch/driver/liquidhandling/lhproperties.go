@@ -1072,6 +1072,28 @@ func (lhp *LHProperties) CheckTipPrefCompatibility(prefs []string) bool {
 			return true
 		}
 
+	} else if lhp.Mnfr == "Tecan" {
+		// fall through
+		return lhp.CheckPreferenceCompatibility(prefs)
+	}
+
+	return true
+}
+
+func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
+	// if we find any preference which is not compliant we reject the array
+
+	prefix := ""
+	if lhp.Mnfr == "Tecan" {
+		prefix = lhp.Mnfr + "Pos_"
+	} else if lhp.Mnfr == "Gilson" || lhp.Mnfr == "CyBio" && lhp.Model == "Felix" {
+		prefix = "position_"
+	}
+
+	for _, p := range prefs {
+		if !strings.HasPrefix(p, prefix) {
+			return false
+		}
 	}
 
 	return true

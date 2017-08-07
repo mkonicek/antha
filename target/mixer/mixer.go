@@ -335,16 +335,23 @@ func New(opt Opt, d driver.ExtendedLiquidhandlingDriver) (*Mixer, error) {
 		}
 	}
 
-	update(&p.Input_preferences, opt.DriverSpecificInputPreferences)
-	update(&p.Output_preferences, opt.DriverSpecificOutputPreferences)
+	if len(opt.DriverSpecificInputPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificInputPreferences) {
+		update(&p.Input_preferences, opt.DriverSpecificInputPreferences)
+	}
+	if len(opt.DriverSpecificOutputPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificOutputPreferences) {
+		update(&p.Output_preferences, opt.DriverSpecificOutputPreferences)
+	}
 
 	if len(opt.DriverSpecificTipPreferences) != 0 && p.CheckTipPrefCompatibility(opt.DriverSpecificTipPreferences) {
 		update(&p.Tip_preferences, opt.DriverSpecificTipPreferences)
 	}
 
-	update(&p.Tipwaste_preferences, opt.DriverSpecificTipWastePreferences)
-	update(&p.Wash_preferences, opt.DriverSpecificWashPreferences)
-
+	if len(opt.DriverSpecificTipWastePreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificTipWastePreferences) {
+		update(&p.Tipwaste_preferences, opt.DriverSpecificTipWastePreferences)
+	}
+	if len(opt.DriverSpecificWashPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificWashPreferences) {
+		update(&p.Wash_preferences, opt.DriverSpecificWashPreferences)
+	}
 	p.Driver = d
 	return &Mixer{driver: d, properties: &p, opt: opt}, nil
 }

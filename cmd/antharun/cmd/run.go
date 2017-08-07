@@ -125,6 +125,7 @@ type runOpt struct {
 	WorkflowFile           string
 	MixInstructionFileName string
 	TestBundleFileName     string
+	RunTest                bool
 }
 
 func (a *runOpt) Run() error {
@@ -227,6 +228,15 @@ func (a *runOpt) Run() error {
 		}
 	}
 
+	if a.RunTest {
+		err := workflowtest.CompareTestResults(rout, bundle.TestOpt)
+		if err != nil {
+			return err
+		} else {
+			fmt.Println("TEST BUNDLE COMPARISON OK")
+		}
+	}
+
 	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {
 		return err
 	}
@@ -289,6 +299,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		WorkflowFile:           viper.GetString("workflow"),
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 		TestBundleFileName:     viper.GetString("makeTestBundle"),
+		RunTest:                viper.GetBool("RunTest"),
 	}
 
 	return opt.Run()
@@ -318,4 +329,5 @@ func init() {
 	flags.Bool("UseDriverTipTracking", false, "If the driver has tip tracking available, use it")
 	flags.String("makeTestBundle", "", "Generate json format bundle for testing and put it here")
 	flags.Bool("LegacyVolumeTracking", false, "Do not track volumes for intermediate components")
+	flags.Bool("RunTest", false, "If bundle contains test, use it")
 }

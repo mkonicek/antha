@@ -72,28 +72,27 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	}
 
 	// stuff that can't be done in parallel
-	insset := make([]*wtype.LHInstruction, 0, 1)
-	c := 0
 	for _, ins := range ti.Inss {
 		if seen[ins.ID] {
 			continue
 		}
-		c += 1
-		insset = append(insset, ins)
-	}
+		//insset = append(insset, ins)
 
-	// now make transfer and append
-	// prm here will be nil unless len(insset)==0
-	// we must either tolerate this or do something else
+		// now make transfer and append
+		// prm here will be nil unless len(insset)==0
+		// we must either tolerate this or do something else
 
-	tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false)
+		insset := []*wtype.LHInstruction{ins}
 
-	if err != nil {
-		panic(err)
-	}
+		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false)
 
-	for _, tf := range tfr {
-		inss = append(inss, RobotInstruction(tf))
+		if err != nil {
+			panic(err)
+		}
+
+		for _, tf := range tfr {
+			inss = append(inss, RobotInstruction(tf))
+		}
 	}
 
 	//inss = append(inss, tfr...)

@@ -458,7 +458,7 @@ func MakeColonyMixPolicy() wtype.LHPolicy {
 func MakeWaterPolicy() wtype.LHPolicy {
 	waterpolicy := make(wtype.LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
-	waterpolicy["CAN_MULTI"] = false
+	waterpolicy["CAN_MULTI"] = true
 	waterpolicy["CAN_MSA"] = true
 	waterpolicy["CAN_SDD"] = true
 	waterpolicy["DSPZOFFSET"] = 1.0
@@ -567,7 +567,7 @@ func MakeDNAPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 12)
 	dnapolicy["ASPSPEED"] = 2.0
 	dnapolicy["DSPSPEED"] = 2.0
-	dnapolicy["CAN_MULTI"] = false
+	//dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -680,7 +680,7 @@ func MakeNeedToMixPolicy() wtype.LHPolicy {
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	//dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -723,7 +723,7 @@ func PostMixPolicy() wtype.LHPolicy {
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	//dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -740,7 +740,7 @@ func MegaMixPolicy() wtype.LHPolicy {
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	//dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -761,8 +761,7 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["ASPZOFFSET"] = 0.5
 	defaultpolicy["DSPREFERENCE"] = 0
 	defaultpolicy["DSPZOFFSET"] = 0.5
-	//defaultpolicy["CAN_MULTI"] = true
-	defaultpolicy["CAN_MULTI"] = false
+	defaultpolicy["CAN_MULTI"] = true
 	defaultpolicy["CAN_MSA"] = false
 	defaultpolicy["CAN_SDD"] = true
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100

@@ -65,6 +65,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	for i := 0; i < inssIn.MaxLen(); i++ {
 		cmps := inssIn.CompsAt(i)
 		lenToMake := 0
+
 		for _, c := range cmps {
 			if c != nil {
 				lenToMake += 1
@@ -93,6 +94,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		}
 
 		// mt counts up the arrays got by GetComponents
+		// each array refers to a transfer
 		for mt := 0; mt < len(fromPlateIDs); mt++ {
 			wh := make([]string, len(cmps))       //	what
 			pf := make([]string, len(cmps))       //	position from
@@ -109,7 +111,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			ptwx := make([]int, len(cmps))        //	  "    to    "   x
 			ptwy := make([]int, len(cmps))        //	  "     "    "   y
 
-			// ci indexes inssIn
+			// ci counts up cmps
 			for ci := 0; ci < len(cmps); ci++ {
 				if len(fromPlateIDs[mt]) <= ci || fromPlateIDs[mt][ci] == "" {
 					continue
@@ -142,8 +144,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				// source well
 
 				wf[ci] = fromWells[mt][ci]
-
-				// destination well
 
 				wt[ci] = inssIn[ci].Welladdress
 

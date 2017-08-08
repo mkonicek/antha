@@ -8,6 +8,9 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+
+	"image/color"
+	"reflect"
 )
 
 func TestSelectLibrary(t *testing.T) {
@@ -133,6 +136,7 @@ func TestMakeLivingImg(t *testing.T) {
 
 	//testing function
 	MakeLivingImg(imgBase, livingPalette, plate)
+
 }
 
 func TestMakeLivingGIF(t *testing.T) {
@@ -191,4 +195,90 @@ func TestMakeLivingGIF(t *testing.T) {
 	//------------------------------------------------
 
 	MakeLivingGIF(anthaImgs)
+
+}
+
+func TestAnthaPrintWorkflow(t *testing.T){
+
+	ctx := testinventory.NewContext(context.Background())
+
+	//downloading image for the test
+	imgFile, err := download.File("http://orig08.deviantart.net/a19f/f/2008/117/6/7/8_bit_mario_by_superjerk.jpg", "Downloaded file")
+	if err != nil {
+		t.Error(err)
+	}
+
+	//opening image
+	imgBase, err := OpenFile(imgFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	palette := SelectLibrary("UV")
+
+	//initiating components
+	var components []*wtype.LHComponent
+	component, err := inventory.NewComponent(ctx, "Gluc")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//making the array to make palette. It's the same length than the array from the "UV" library
+	for i := 1; i < 48; i++ {
+		components = append(components, component.Dup())
+	}
+	//getting palette
+	anthaPalette := MakeAnthaPalette(palette, components)
+
+	//getting plate
+	plate, err := inventory.NewPlate(ctx, "greiner384")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//testing function
+	MakeAnthaImg(imgBase, anthaPalette, plate)
+
+
+	//------------------------------------------------------------------
+	//ELEMENT TESTING
+	//------------------------------------------------------------------
+
+	//testing function
+	AnthaImage, _ := MakeAnthaImg(imgBase, anthaPalette, plate)
+	ColorToExclude := "white"    //Background color which we do not want to print, leave blank if you want to print all colors.
+
+	//------------------------------------------------------------------
+	//Globals
+	//------------------------------------------------------------------
+
+	var colorToExclude color.Color
+
+	if ColorToExclude == "" {
+		colorToExclude = color.NRGBA{}
+	} else {
+		colorToExclude = SelectColor(ColorToExclude)
+	}
+
+	//------------------------------------------------------------------
+	//Iterating through each pixels in the image and pipetting them
+	//------------------------------------------------------------------
+
+	counter := 0
+	for _, pix := range AnthaImage.Pix {
+
+		t.Log(reflect.TypeOf(colorToExclude))
+		r,g,b,a := pix.Color.Color.RGBA()
+		asRGBA := color.RGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
+
+		//Skipping pixel if it is of the background color
+		if reflect.DeepEqual(colorToExclude, asRGBA) {
+			t.Log("white detected")
+			continue
+		}
+
+		counter++
+	}
+
+	t.Log(counter)
 }

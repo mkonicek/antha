@@ -301,10 +301,14 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (targ
 		return nil, err
 	}
 
-	// TODO: Desired filename not exposed in current driver interface, so pick
-	// a name. So far, at least Gilson software cares what the filename is, so
-	// use .sqlite for compatibility
-	name := strings.Replace(fmt.Sprintf("%s.sqlite", time.Now().Format(time.RFC3339)), ":", "_", -1)
+	name := a.opt.DriverOutputFileName
+	if len(name) == 0 {
+		// TODO: Desired filename not exposed in current driver interface, so pick
+		// a name. So far, at least Gilson software cares what the filename is, so
+		// use .sqlite for compatibility
+		name = strings.Replace(fmt.Sprintf("%s.sqlite", time.Now().Format(time.RFC3339)), ":", "_", -1)
+	}
+
 	tarball, err := a.saveFile(name)
 	if err != nil {
 		return nil, err

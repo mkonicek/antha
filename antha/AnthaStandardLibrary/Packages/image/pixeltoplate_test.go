@@ -11,6 +11,10 @@ import (
 
 	"image/color"
 	"reflect"
+
+	"image/gif"
+	"os"
+	"image/jpeg"
 )
 
 func TestSelectLibrary(t *testing.T) {
@@ -92,7 +96,7 @@ func TestSelectLivingColorLibrary(t *testing.T) {
 
 func TestSelectLivingColor(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
-	SelectLivingColor(ctx, "UVDasherGFP")
+	SelectLivingColor(ctx, "DasherGFP")
 }
 
 func TestMakeLivingImg(t *testing.T) {
@@ -118,7 +122,7 @@ func TestMakeLivingImg(t *testing.T) {
 	}
 
 	//making the array to make palette. It's the same length than the array from the "ProteinPaintbox" library
-	for i := 1; i < 3; i++ {
+	for i := 1; i < 7; i++ {
 		components = append(components, component.Dup())
 	}
 
@@ -166,7 +170,7 @@ func TestMakeLivingGIF(t *testing.T) {
 	}
 
 	//making the array to make palette. It's the same length than the array from the "ProteinPaintbox" library
-	for i := 1; i < 3; i++ {
+	for i := 1; i < 7; i++ {
 		components = append(components, component.Dup())
 	}
 
@@ -266,14 +270,11 @@ func TestAnthaPrintWorkflow(t *testing.T){
 
 	counter := 0
 	for _, pix := range AnthaImage.Pix {
-
-		t.Log(reflect.TypeOf(colorToExclude))
 		r,g,b,a := pix.Color.Color.RGBA()
 		asRGBA := color.RGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
 
 		//Skipping pixel if it is of the background color
 		if reflect.DeepEqual(colorToExclude, asRGBA) {
-			t.Log("white detected")
 			continue
 		}
 
@@ -281,4 +282,39 @@ func TestAnthaPrintWorkflow(t *testing.T){
 	}
 
 	t.Log(counter)
+}
+
+func TestParseGIF(t *testing.T){
+
+	//downloading GIF for the test
+	//RAINBOWSPINNER
+	//https://media.giphy.com/media/XUHmgf1ij7dOU/source.gif
+	//BUTTERFLY
+	//https://www.google.co.uk/search?q=artsy+gif&source=lnms&tbm=isch&sa=X&ved=0ahUKEwi08uHk1szVAhUBAsAKHR6DAWUQ_AUICigB&biw=1301&bih=654#imgrc=iWSaQhyp0mvc5M:
+	GIFFile, err := download.File("https://media.giphy.com/media/XUHmgf1ij7dOU/source.gif", "Downloaded GIF")
+	if err != nil {
+		t.Error(err)
+	}
+
+	//opening GIF
+	GIF, err := OpenGIF(GIFFile)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//saving Image
+	fimg, err := os.Create("/home/cachemoi/gocode/src/github.com/cachemoi/GIF/doc/img/GIFImgTest.jpg")
+	jpeg.Encode(fimg, GIF.Image[5], &jpeg.Options{jpeg.DefaultQuality})
+
+	//saving GIF
+	//There's a bug with the Linux Library which means you'll have to open the resulting file in a browser
+	fgif, err := os.Create("/home/cachemoi/gocode/src/github.com/cachemoi/GIF/doc/GIF/results.gif")
+	err = gif.EncodeAll(fgif,GIF)
+	if err != nil {
+		t.Error(err)
+	}
+
+
+
+
 }

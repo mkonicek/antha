@@ -21,6 +21,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/disintegration/imaging"
+	"image/gif"
 )
 
 //-------------------------------------------------------
@@ -261,6 +262,26 @@ func OpenFile(file wtype.File) (nrgba *goimage.NRGBA, err error) {
 
 	nrgba = imaging.Clone(img)
 	return nrgba, nil
+}
+
+func OpenGIF(file wtype.File)(GIF *gif.GIF, err error){
+
+	//returning bytes
+	data, err := file.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	//converting bytes to io.reader type
+	reader := bytes.NewReader(data)
+
+
+	GIF, err = gif.DecodeAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return GIF, nil
 }
 
 // export image to file
@@ -1565,12 +1586,11 @@ func MakeLivingImg(goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImg
 //This will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
 func MakeLivingPalette(InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
 
-	//global placeholders
-	var err error
-
 	//checking that there are enough LHComponents to make the Palette
 	if len(InputPalette.LivingColors) != len(LHComponents) {
-		fmt.Println(err.Error())
+
+		panic("Different number of LivingColors an LHComponent used to make a LivingPalette")
+
 	} else {
 		//Adding the LHComponents to the livingColors
 		for i := range InputPalette.LivingColors {

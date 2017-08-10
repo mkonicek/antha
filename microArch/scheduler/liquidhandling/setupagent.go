@@ -109,7 +109,12 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		*/
 		// order them according to when they are first used
 		for _, insID := range request.Output_order {
+
 			ins := request.LHInstructions[insID]
+			// ignore non-mixes
+			if ins.Type != wtype.LHIMIX {
+				continue
+			}
 			tx := strings.Split(ins.Result.Loc, ":")
 			pa := tx[0]
 			notInInputs := !isInStrArr(pa, input_plate_order)
@@ -218,6 +223,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			waste, err = inventory.NewTipwaste(ctx, "CyBiotipwaste")
 		} else if params.Model == "Human" {
 			waste, err = inventory.NewTipwaste(ctx, "Manualtipwaste")
+		} else if params.Model == "Evo" {
+			waste, err = inventory.NewTipwaste(ctx, "Tecantipwaste")
 		}
 
 		if err != nil {

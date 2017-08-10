@@ -142,33 +142,6 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	// now give me some answers
-
-	/*
-		for _, id := range this.FinalProperties.PosLookup {
-			p, ok := this.FinalProperties.PlateLookup[id]
-			if !ok {
-				continue
-			}
-			switch p.(type) {
-			case *wtype.LHPlate:
-				pl := p.(*wtype.LHPlate)
-				for _, c := range pl.Cols {
-					for _, w := range c {
-						if !w.Empty() {
-							fmt.Print(w.Crds, " ")
-							fmt.Print(pl.PlateName, " ")
-							fmt.Print(pl.Type, " ")
-							fmt.Print(w.WContents.CName, " ")
-							fmt.Print(w.WContents.Vol, " ")
-							fmt.Println()
-						}
-					}
-				}
-			}
-		}
-	*/
-
 	err = this.Execute(request)
 
 	if err != nil {
@@ -179,12 +152,26 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 
 	OutputSetup(this.Properties)
 
+	// and afer
+
+	fmt.Println("SETUP AFTER: ")
+	OutputSetup(this.FinalProperties)
+
 	return nil
 }
 
 // run the request via the driver
 func (this *Liquidhandler) Execute(request *LHRequest) error {
-	// set up the robot
+
+	if (*request).Instructions == nil {
+		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
+	}
+	// add setup instructions to the request instruction stream
+
+	this.add_setup_instructions(request)
+
+	// set up the robot with extra calls not included in instructions
+
 	err := this.do_setup(request)
 
 	if err != nil {
@@ -192,10 +179,6 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	}
 
 	instructions := (*request).Instructions
-
-	if instructions == nil {
-		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
-	}
 
 	// some timing info for the log (only) for now
 
@@ -321,6 +304,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 			return err
 		}
 
+		// what's it like here?
+
 		for crd, unroundedvol := range wellmap {
 			rv, _ := wutil.Roundto(unroundedvol.RawValue(), 1)
 			vol := wunit.NewVolume(rv, unroundedvol.Unit().PrefixedSymbol())
@@ -339,8 +324,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 	// finally get rid of any temporary stuff
 
-	this.Properties.RemoveTemporaryComponents()
-	this.FinalProperties.RemoveTemporaryComponents()
+	this.Properties.RemoveUnusedAutoallocatedComponents()
+	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
 
 	pidm := make(map[string]string, len(this.Properties.Plates))
 	for pos, _ := range this.Properties.Plates {
@@ -369,7 +354,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	}
 
 	// this is many shades of wrong but likely to save us a lot of time
-	for _, pos := range this.Properties.Output_preferences {
+	for _, pos := range this.Properties.InputSearchPreferences() {
 		p1, ok1 := this.Properties.Plates[pos]
 		p2, ok2 := this.FinalProperties.Plates[pos]
 
@@ -383,13 +368,22 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 						if ok {
 							// there's no strict separation between outputs and
 							// inputs here
-							// the call below is essentially "is this an input?"
-							if w.IsAutoallocated() || w.IsUserAllocated() {
+							if w.IsAutoallocated() {
 								continue
+							} else if w.IsUserAllocated() {
+								// swap old and new
+								c := w.WContents.Dup()
+								w.Clear()
+								c2 := w2.WContents.Dup()
+								w2.Clear()
+								w.Add(c2)
+								w2.Add(c)
+							} else {
+								// replace
+								w2.Clear()
+								w2.Add(w.WContents)
+								w.Clear()
 							}
-							w2.Clear()
-							w2.Add(w.WContents)
-							w.Clear()
 						}
 					}
 				}
@@ -408,12 +402,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) do_setup(rq *LHRequest) error {
-	stat := this.Properties.Driver.RemoveAllPlates()
+func (this *Liquidhandler) add_setup_instructions(rq *LHRequest) {
+	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, len(rq.Instructions)+10)
 
-	if stat.Errorcode == driver.ERR {
-		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-	}
+	instructions = append(instructions, liquidhandling.NewRemoveAllPlatesInstruction())
 
 	for position, plateid := range this.Properties.PosLookup {
 		if plateid == "" {
@@ -422,13 +414,37 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 		plate := this.Properties.PlateLookup[plateid]
 		name := plate.(wtype.Named).GetName()
 
-		stat = this.Properties.Driver.AddPlateTo(position, plate, name)
+		ins := liquidhandling.NewAddPlateToInstruction(position, name, plate)
+
+		instructions = append(instructions, ins)
+	}
+	instructions = append(instructions, rq.Instructions...)
+	rq.Instructions = instructions
+}
+
+func (this *Liquidhandler) do_setup(rq *LHRequest) error {
+	/*
+		stat := this.Properties.Driver.RemoveAllPlates()
+
 		if stat.Errorcode == driver.ERR {
 			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
 		}
-	}
 
-	stat = this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
+		for position, plateid := range this.Properties.PosLookup {
+			if plateid == "" {
+				continue
+			}
+			plate := this.Properties.PlateLookup[plateid]
+			name := plate.(wtype.Named).GetName()
+
+			stat = this.Properties.Driver.AddPlateTo(position, plate, name)
+			if stat.Errorcode == driver.ERR {
+				return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
+			}
+		}
+	*/
+
+	stat := this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
 	if stat.Errorcode == driver.ERR {
 		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
 	}
@@ -470,6 +486,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	if err != nil {
 		return err
+	}
+
+	if request.Options.PrintInstructions {
+		request.InstructionChain.Print()
 	}
 
 	// assert we should have some instruction ordering
@@ -786,7 +806,7 @@ func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest
 	// necessary??
 	this.FinalProperties = this.Properties.Dup()
 	temprobot := this.Properties.Dup()
-	saved_plates := this.Properties.SaveUserPlates()
+	//saved_plates := this.Properties.SaveUserPlates()
 
 	var rq *LHRequest
 	var err error
@@ -799,7 +819,7 @@ func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest
 
 	this.FinalProperties = temprobot
 
-	this.Properties.RestoreUserPlates(saved_plates)
+	//this.Properties.RestoreUserPlates(saved_plates)
 
 	return rq, err
 }
@@ -822,6 +842,8 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 		if strings.Contains(v.GetName(), "Input") {
 			wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
 		}
+
+		v.OutputLayout()
 	}
 
 	logger.Debug("Tipwastes: ")

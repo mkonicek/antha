@@ -1161,6 +1161,8 @@ func (ins *DispenseInstruction) GetParameter(name string) interface{} {
 		return ins.LLF
 	case "PLT":
 		return ins.Plt
+	case "PLATE":
+		return ins.Plt
 	case "PLATFORM":
 		return ins.Platform
 	}
@@ -3063,7 +3065,7 @@ type MixInstruction struct {
 func NewMixInstruction() *MixInstruction {
 	var mi MixInstruction
 
-	mi.Type = MMX
+	mi.Type = MIX
 	mi.Volume = make([]wunit.Volume, 0)
 	mi.PlateType = make([]string, 0)
 	mi.Cycles = make([]int, 0)

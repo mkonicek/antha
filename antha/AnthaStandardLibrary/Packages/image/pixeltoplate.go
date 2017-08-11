@@ -1452,24 +1452,6 @@ func sqDiff(x, y uint32) uint32 {
 //Object constructors
 //---------------------------------------------------
 
-//Object constructor for a LivingColor with default settings
-func MakeLivingColor(ctx context.Context, color *color.NRGBA, seq string) (livingColor *LivingColor) {
-
-	//generating DNA sequence object
-	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
-
-	//use water as LHComponent
-	component, err := inventory.NewComponent(ctx, "water")
-	if err != nil {
-		panic(err)
-	}
-
-	//populate livingColor
-	livingColor = &LivingColor{*color, DNASequence, component}
-
-	return livingColor
-}
-
 //This will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
 func MakeAnthaPalette(palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette {
 
@@ -1543,6 +1525,42 @@ func MakeAnthaImg(goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlat
 	return &anthaImg, goImg
 }
 
+//Object constructor for a LivingColor with default settings
+func MakeLivingColor(ctx context.Context, color *color.NRGBA, seq string) (livingColor *LivingColor) {
+
+	//generating DNA sequence object
+	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
+
+	//use water as LHComponent
+	component, err := inventory.NewComponent(ctx, "water")
+	if err != nil {
+		panic(err)
+	}
+
+	//populate livingColor
+	livingColor = &LivingColor{*color, DNASequence, component}
+
+	return livingColor
+}
+
+//This will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
+func MakeLivingPalette(InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
+
+	//checking that there are enough LHComponents to make the Palette
+	if len(InputPalette.LivingColors) != len(LHComponents) {
+
+		panic("Different number of LivingColors an LHComponent used to make a LivingPalette")
+
+	} else {
+		//Adding the LHComponents to the livingColors
+		for i := range InputPalette.LivingColors {
+			InputPalette.LivingColors[i].Component = LHComponents[i]
+		}
+	}
+
+	return &InputPalette
+}
+
 //This function will create a LivingImage object from a digital image.
 func MakeLivingImg(goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImgPlate *wtype.LHPlate) (outputImg *LivingImg, resizedImg *goimage.NRGBA) {
 
@@ -1581,24 +1599,6 @@ func MakeLivingImg(goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImg
 	livingImg.Plate = *livingImgPlate
 
 	return &livingImg, goImg
-}
-
-//This will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
-func MakeLivingPalette(InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
-
-	//checking that there are enough LHComponents to make the Palette
-	if len(InputPalette.LivingColors) != len(LHComponents) {
-
-		panic("Different number of LivingColors an LHComponent used to make a LivingPalette")
-
-	} else {
-		//Adding the LHComponents to the livingColors
-		for i := range InputPalette.LivingColors {
-			InputPalette.LivingColors[i].Component = LHComponents[i]
-		}
-	}
-
-	return &InputPalette
 }
 
 //This will make a LivingGIF object given a slice of LivingImg
@@ -1642,4 +1642,19 @@ func ResizeImagetoPlateMin(img *goimage.NRGBA, plate *wtype.LHPlate) (plateImage
 	}
 	return
 
+}
+
+//Given two frame number and a GIF, this function will extract those frames and return an array of the images
+func ParseGIF(GIF *gif.GIF, frameNum []int)(imgs []*goimage.NRGBA){
+
+
+	for _, Num := range frameNum {
+
+		//convert image from image.Paletted to image.NRGBA
+		convertedImg :=  toNRGBA(GIF.Image[Num])
+
+		imgs = append(imgs, convertedImg)
+	}
+
+	return imgs
 }

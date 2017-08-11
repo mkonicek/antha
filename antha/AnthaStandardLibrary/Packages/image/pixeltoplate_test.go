@@ -280,11 +280,9 @@ func TestAnthaPrintWorkflow(t *testing.T){
 
 		counter++
 	}
-
-	t.Log(counter)
 }
 
-func TestParseGIF(t *testing.T){
+func TestOpenGIF(t *testing.T){
 
 	//downloading GIF for the test
 	//RAINBOWSPINNER
@@ -302,6 +300,7 @@ func TestParseGIF(t *testing.T){
 		t.Error(err)
 	}
 
+
 	//saving Image
 	fimg, err := os.Create("/home/cachemoi/gocode/src/github.com/cachemoi/GIF/doc/img/GIFImgTest.jpg")
 	jpeg.Encode(fimg, GIF.Image[5], &jpeg.Options{jpeg.DefaultQuality})
@@ -313,8 +312,30 @@ func TestParseGIF(t *testing.T){
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestParseGIF(t *testing.T) {
+
+	GIFFile, err := download.File("https://media.giphy.com/media/XUHmgf1ij7dOU/source.gif", "Downloaded GIF")
+	if err != nil {
+		t.Error(err)
+	}
+
+	//opening GIF
+	GIF, err := OpenGIF(GIFFile)
+	if err != nil {
+		t.Error(err)
+	}
 
 
+	imgs := ParseGIF(GIF, []int{1,6})
+	//saving Image
+	fimg, err := os.Create("/home/cachemoi/gocode/src/github.com/cachemoi/GIF/doc/img/GIFImgTest.jpg")
+	if err != nil {
+		t.Error(err)
+	}
+	jpeg.Encode(fimg, imgs[0], &jpeg.Options{jpeg.DefaultQuality})
 
 
 }
+

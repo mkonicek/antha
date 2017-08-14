@@ -2,6 +2,7 @@ package wtype
 
 import (
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"testing"
 )
 
@@ -237,6 +238,7 @@ func TestMatchComponentIndependent(t *testing.T) {
 	}
 
 	if len(cm.Matches) != 4 {
+		fmt.Println(cm.Matches)
 		t.Errorf(fmt.Sprintf("Exactly 4 matches required, got %d", len(cm.Matches)))
 	}
 
@@ -403,5 +405,54 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 
 	if len(cm.Matches) != 1 {
 		t.Errorf(fmt.Sprintf("Exsctly one match required, got %d", len(cm.Matches)))
+	}
+}
+
+func TestAlign(t *testing.T) {
+	w := make([]*LHComponent, 3)
+	g := make([]*LHComponent, 3)
+
+	CIDs := []string{"A1", "B1", "C1"}
+	p1 := "Plate1"
+	p2 := "Plate2"
+
+	vW := wunit.NewVolume(20.0, "ul")
+	vG := wunit.NewVolume(200.0, "ul")
+
+	cN := "water"
+
+	// independent case
+
+	for i := 0; i < 3; i++ {
+		w[i] = NewLHComponent()
+		g[i] = NewLHComponent()
+
+		/*__*/
+		g[i].Loc = p1 + ":" + CIDs[i]
+		g[i].CName = cN
+		g[i].Vol = vG.RawValue()
+
+		if i != 1 {
+			w[i].Loc = p2 + ":" + CIDs[i]
+			w[i].CName = cN
+			w[i].Vol = vW.RawValue()
+		}
+	}
+	m := align(w, g, true)
+
+	if len(m.IDs) != 3 {
+		t.Errorf("Error: expected 3 IDs got %d", len(m.IDs))
+	}
+
+	expID := []string{p1, "", p1}
+	expCR := []string{"A1", "", "C1"}
+	expV := []wunit.Volume{vW.Dup(), wunit.ZeroVolume(), vW.Dup()}
+	expM := []int{0, -1, 2}
+	expSc := 360.0
+
+	expected := Match{IDs: expID, WCs: expCR, Vols: expV, M: expM, Sc: expSc}
+
+	if !reflect.DeepEqual(m, expected) {
+		t.Errorf("Expected %v got %v", expected, m)
 	}
 }

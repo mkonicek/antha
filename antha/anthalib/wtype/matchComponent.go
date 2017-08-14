@@ -3,6 +3,7 @@ package wtype
 import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"reflect"
 )
 
 // TODO --> deal with, e.g., 384 well plates
@@ -18,6 +19,22 @@ type Match struct {
 	Sc   float64        // total score for this match
 }
 
+func (m Match) Equals(m2 Match) bool {
+	eqV := func(va, v2 []wunit.Volume) bool {
+		if len(va) != len(v2) {
+			return false
+		}
+		for i := 0; i < len(va); i++ {
+			if !va[i].EqualTo(v2[i]) {
+				return false
+			}
+		}
+		return true
+	}
+
+	return reflect.DeepEqual(m.IDs, m2.IDs) && reflect.DeepEqual(m.WCs, m2.WCs) && reflect.DeepEqual(m.M, m2.M) && eqV(m.Vols, m2.Vols) && m.Sc == m2.Sc
+}
+
 type mt struct {
 	Sc float64
 	Vl float64
@@ -26,9 +43,10 @@ type mt struct {
 
 func printMat(mat [][]mt) {
 	fmt.Println("*****")
-	for _, v := range mat {
-		for _, x := range v {
-			fmt.Printf("%-5.1f:%-1d ", x.Sc, x.Bk)
+	for i, v := range mat {
+		for j, x := range v {
+			x = x
+			fmt.Printf("(%d,%d):%-5.1f:%-1d ", i, j, mat[i][j].Sc, mat[i][j].Bk)
 		}
 
 		fmt.Println()
@@ -97,20 +115,10 @@ func align(want, got ComponentVector, independent bool) Match {
 				mx = mat[i-1][j-1].Sc
 				bk = 2
 
-				/*
-					if independent {
-						if want[i-1] == nil || want[i-1].CName == "" || want[i-1].Vol == 0.0 {
-							if mat[i-1][j].Sc > mx {
-								mx = mat[i-1][j].Sc
-								bk = 1
-							}
-						}
-						if mat[i][j-1].Sc > mx {
-							mx = mat[i][j-1].Sc
-							bk = 3
-						}
-					}
-				*/
+				// we do not allow horizontal or vertical moves unless the
+				// robot can change the tip spacing
+				// which is currently unsupported since we haven't seen any liquid handlers
+				// that can do it
 			}
 			mat[i][j].Sc += mx
 			mat[i][j].Bk = bk
@@ -150,17 +158,20 @@ func align(want, got ComponentVector, independent bool) Match {
 	j := mxj
 
 	for {
-		if want[i].Vol == 0 && mat[i][j].Bk == 0 || mat[i][j].Vl == 0 {
+		if want[i].Vol == 0 && mat[i][j].Bk == 0 || mat[i][j].Vl == 0 && !independent {
 			break
 		}
 
-		IDs[i] = gIDs[j]
-		WCs[i] = gWCs[j]
+		if mat[i][j].Vl != 0 {
+			IDs[i] = gIDs[j]
+			WCs[i] = gWCs[j]
+			Ms[i] = j
+		}
 		Vols[i] = wunit.NewVolume(mat[i][j].Vl, "ul")
-		Ms[i] = j
 
 		bk := mat[i][j].Bk
 
+		// bk==1 || bk==3 not currently supported but left here for future use
 		if bk == 0 {
 			break
 		} else if bk == 1 {

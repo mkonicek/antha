@@ -336,6 +336,5 @@ func TestParseGIF(t *testing.T) {
 	}
 	jpeg.Encode(fimg, imgs[0], &jpeg.Options{jpeg.DefaultQuality})
 
-
 }
 

@@ -1354,6 +1354,7 @@ func SelectLivingColor(ctx context.Context, colID string) LivingColor {
 	}
 
 	lc := MakeLivingColor(ctx, c.Color, c.Seq)
+
 	return *lc
 }
 

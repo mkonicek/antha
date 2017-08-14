@@ -679,7 +679,7 @@ func MakeNeedToMixPolicy() wtype.LHPolicy {
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	//dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -722,7 +722,7 @@ func PostMixPolicy() wtype.LHPolicy {
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	//dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -739,7 +739,7 @@ func MegaMixPolicy() wtype.LHPolicy {
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	//dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -762,6 +762,7 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["DSPZOFFSET"] = 0.5
 	defaultpolicy["CAN_MSA"] = false
 	defaultpolicy["CAN_SDD"] = true
+	defaultpolicy["CAN_MULTI"] = false
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
 	defaultpolicy["BLOWOUTVOLUME"] = 50.0

@@ -139,6 +139,7 @@ func align(want, got ComponentVector, independent bool) Match {
 
 	for i := 0; i < len(want); i++ {
 		Ms[i] = -1
+		Vols[i] = wunit.ZeroVolume()
 	}
 
 	m := Match{IDs: IDs, WCs: WCs, Vols: Vols, M: Ms, Sc: mxmx}
@@ -184,14 +185,17 @@ func align(want, got ComponentVector, independent bool) Match {
 		}
 	}
 
+	fmt.Println("MATTT")
+	printMat(mat)
+	fmt.Println("TTTAM")
+
 	return m
 }
 
+// matchComponents needs to aim to find all that it can
+// except we might need to find from multiple sources
+// have to redefine the rules here.
 func matchComponents(want, got ComponentVector, independent bool) (ComponentMatch, error) {
-	// not sure of the algorithm here:
-	// we want to match as many as possible in one go
-	// then clean up the others
-
 	m := ComponentMatch{Matches: make([]Match, 0, 1)}
 
 	for {
@@ -205,6 +209,7 @@ func matchComponents(want, got ComponentVector, independent bool) (ComponentMatc
 		c := 0
 		for i := 0; i < len(match.WCs); i++ {
 			if match.WCs[i] != "" {
+				fmt.Println("DEPLETE: ", i, " ", match.WCs[i], " ", got[match.M[i]].Vol)
 				if got[match.M[i]].Vol >= want[i].Vol {
 					got[match.M[i]].Vol -= want[i].Vol
 					want[i].Vol = 0.0
@@ -216,10 +221,18 @@ func matchComponents(want, got ComponentVector, independent bool) (ComponentMatc
 			}
 		}
 
+		fmt.Println("C: ", c, " LMWCS: ", len(match.WCs))
 		if c == len(match.WCs) || c == 0 {
 			break
 		}
 	}
+
+	fmt.Println("LEFT WANTING? ")
+
+	for _, cmp := range want {
+		fmt.Println("CMP ", cmp.CName, " ", cmp.Vol)
+	}
+	fmt.Println("AITHANKYOU")
 
 	return m, nil
 }

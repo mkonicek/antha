@@ -604,13 +604,17 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 		for _, ipref := range lhp.OrderedMergedPlatePrefs() {
 			p, ok := lhp.Plates[ipref]
 
+			// ERROR: this needs to find the best combination of sources
+			// across all plates
 			if ok {
 				// find components multi can return anywhere between 1x Multi and Multi x 1
 				// transfers as sets
+				fmt.Println("PFCM.... LHProperties 610")
 				plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, independent)
 				if err != nil {
 					continue
 				}
+				fmt.Println("ATTAHERE")
 
 				return
 			}

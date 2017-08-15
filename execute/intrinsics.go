@@ -176,7 +176,6 @@ func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
 func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	inst.BlockID = wtype.NewBlockID(getID(ctx))
 	inst.Result.BlockID = inst.BlockID
-
 	result := inst.Result
 	result.BlockID = inst.BlockID
 

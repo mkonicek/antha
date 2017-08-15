@@ -149,6 +149,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 
 	for _, c := range cmps {
 		if independent && c == nil {
+			// HERE HERE HERE -->  INDEPENDENT MULTI NEEDS THIS
 			err = fmt.Errorf("Cannot do non-contiguous asks")
 			return
 		}
@@ -179,16 +180,24 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 
 	best := 0.0
 	bestMatch := ComponentMatch{}
+	/// MIS --> debug multichannel leads me here
+	//          -- for some reason it's not picking up ONE of the transfers..
+	//	       clearly an annoying edge here somewhere
+	//		well G6 in the M$ protocol
 	for wv := it.Curr(); it.Valid(); wv = it.Next() {
 		// cmps needs duping here
 		mycmps := lhp.GetContentVector(wv)
 
+		fmt.Println("INVOKE")
 		match, errr := matchComponents(cmps.Dup(), mycmps, independent)
 
 		if errr != nil {
 			err = errr
 			return
 		}
+
+		// issue here: this only ever keeps one match
+		// matchComponents needs to return multiple matches
 
 		sc := scoreMatch(match, independent)
 
@@ -203,6 +212,12 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 		wellCoords = append(wellCoords, m.WCs)
 		vols = append(vols, m.Vols)
 	}
+
+	fmt.Println("BEST AMTCH CHRHE: ")
+	fmt.Println(plateIDs)
+	fmt.Println(wellCoords)
+	fmt.Println(vols)
+	fmt.Println("---")
 
 	if best <= 0.0 {
 		err = fmt.Errorf("Not found")

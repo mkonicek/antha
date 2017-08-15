@@ -3,6 +3,7 @@ package wtype
 import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"reflect"
 	"testing"
 )
 
@@ -42,6 +43,49 @@ func TestMatchComponent(t *testing.T) {
 	if len(cm.Matches) != 1 {
 		t.Errorf(fmt.Sprintf("Exsctly one match required, got %d", len(cm.Matches)))
 	}
+}
+func TestMatchComponentPickupVolumes(t *testing.T) {
+	c := NewLHComponent()
+	c.CName = "water"
+	vls := []float64{100.0, 100.0, 25.0, 25.0}
+	CIDs := []string{"A1", "B1", "C1", "D1"}
+	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1"}
+
+	got := make([]*LHComponent, 4)
+
+	for i := 0; i < 4; i++ {
+		got[i] = c.Dup()
+		got[i].Vol = vls[i]
+		got[i].Loc = PIDs[i] + ":" + CIDs[i]
+	}
+
+	d := NewLHComponent()
+	d.CName = "water"
+
+	vls2 := []float64{110.0, 110.0, 30.0}
+	CID2s := []string{"A1", "B1", "F1"}
+	PID2s := []string{"Plate2", "Plate2", "Plate2"}
+
+	want := make([]*LHComponent, 3)
+	for i := 0; i < 3; i++ {
+		want[i] = d.Dup()
+		want[i].Loc = PID2s[i] + ":" + CID2s[i]
+		want[i].Vol = vls2[i]
+	}
+
+	cm, err := matchComponents(want, got, false)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	fmt.Println("TWO...FIVE")
+
+	for _, m := range cm.Matches {
+		fmt.Println(m)
+	}
+
+	fmt.Println("ZERO...ZERO...ZERO")
 }
 
 func TestMatchComponentSrcSubset(t *testing.T) {
@@ -408,7 +452,7 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 	}
 }
 
-func TestAlign(t *testing.T) {
+func TestAlignIndependent(t *testing.T) {
 	w := make([]*LHComponent, 3)
 	g := make([]*LHComponent, 3)
 
@@ -449,6 +493,53 @@ func TestAlign(t *testing.T) {
 	expV := []wunit.Volume{vW.Dup(), wunit.ZeroVolume(), vW.Dup()}
 	expM := []int{0, -1, 2}
 	expSc := 360.0
+
+	expected := Match{IDs: expID, WCs: expCR, Vols: expV, M: expM, Sc: expSc}
+
+	if !reflect.DeepEqual(m, expected) {
+		t.Errorf("Expected %v got %v", expected, m)
+	}
+}
+
+func TestAlignIndependent2(t *testing.T) {
+	w := make([]*LHComponent, 8)
+	g := make([]*LHComponent, 8)
+
+	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
+	p1 := "Plate1"
+	p2 := "Plate2"
+
+	vW := wunit.NewVolume(20.0, "ul")
+	vG := wunit.NewVolume(200.0, "ul")
+
+	cN := "water"
+
+	for i := 0; i < 8; i++ {
+		w[i] = NewLHComponent()
+		g[i] = NewLHComponent()
+
+		/*__*/
+		g[i].Loc = p1 + ":" + CIDs[i]
+		g[i].CName = cN
+		g[i].Vol = vG.RawValue()
+
+		if i%2 != 1 {
+			w[i].Loc = p2 + ":" + CIDs[i]
+			w[i].CName = cN
+			w[i].Vol = vW.RawValue()
+		}
+	}
+	m := align(w, g, true)
+
+	if len(m.IDs) != 8 {
+		t.Errorf("Error: expected 8 IDs got %d", len(m.IDs))
+	}
+
+	expID := []string{p1, "", p1, "", p1, "", p1, ""}
+	expCR := []string{"A1", "", "C1", "", "E1", "", "G1", ""}
+	expV := []wunit.Volume{vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume()}
+	expM := []int{0, -1, 2, -1, 4, -1, 6, -1}
+	expSc := 720.0
 
 	expected := Match{IDs: expID, WCs: expCR, Vols: expV, M: expM, Sc: expSc}
 

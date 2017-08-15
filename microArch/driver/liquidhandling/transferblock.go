@@ -76,6 +76,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		if seen[ins.ID] {
 			continue
 		}
+
 		//insset = append(insset, ins)
 
 		// now make transfer and append

@@ -192,49 +192,20 @@ func align(want, got ComponentVector, independent bool) Match {
 	return m
 }
 
-// matchComponents needs to aim to find all that it can
-// except we might need to find from multiple sources
-// have to redefine the rules here.
-func matchComponents(want, got ComponentVector, independent bool) (ComponentMatch, error) {
-	m := ComponentMatch{Matches: make([]Match, 0, 1)}
+const NotFoundError = "Not found"
 
-	for {
-		match := align(want, got, independent)
-		if match.Sc <= 0.0 {
-			break
-		}
-		m.Matches = append(m.Matches, match)
+// matchComponents takes one bite each time... the best it can find
+// needs to be run repeatedly to pick everything up
+// TODO: needs to supply more options
+func MatchComponents(want, got ComponentVector, independent bool) (Match, error) {
 
-		// deplete
-		c := 0
-		for i := 0; i < len(match.WCs); i++ {
-			if match.WCs[i] != "" {
-				fmt.Println("DEPLETE: ", i, " ", match.WCs[i], " ", got[match.M[i]].Vol)
-				if got[match.M[i]].Vol >= want[i].Vol {
-					got[match.M[i]].Vol -= want[i].Vol
-					want[i].Vol = 0.0
-				} else {
-					got[match.M[i]].Vol -= want[i].Vol
-					want[i].Vol -= match.Vols[i].ConvertToString(want[i].Vunit)
-				}
-				c += 1
-			}
-		}
+	match := align(want, got, independent)
 
-		fmt.Println("C: ", c, " LMWCS: ", len(match.WCs))
-		if c == len(match.WCs) || c == 0 {
-			break
-		}
+	if match.Sc <= 0.0 {
+		return Match{}, fmt.Errorf(NotFoundError)
 	}
 
-	fmt.Println("LEFT WANTING? ")
-
-	for _, cmp := range want {
-		fmt.Println("CMP ", cmp.CName, " ", cmp.Vol)
-	}
-	fmt.Println("AITHANKYOU")
-
-	return m, nil
+	return match, nil
 }
 
 func scoreMatch(m ComponentMatch, independent bool) float64 {

@@ -145,6 +145,8 @@ func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
 	return ret
 }
 
+// deprecated
+/*
 func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 
 	for _, c := range cmps {
@@ -227,6 +229,8 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 
 	return
 }
+
+*/
 
 // this gets ONE component... possibly from several wells
 func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {

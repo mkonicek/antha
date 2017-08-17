@@ -1,7 +1,6 @@
 package wtype
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"reflect"
 	"testing"
@@ -34,15 +33,69 @@ func TestMatchComponent(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	match, err := MatchComponents(want, got, false)
 
 	if err != nil {
 		t.Errorf(err.Error())
 	}
 
-	if len(cm.Matches) != 1 {
-		t.Errorf(fmt.Sprintf("Exsctly one match required, got %d", len(cm.Matches)))
+	/*
+		type Match struct {
+			IDs  []string       // PlateIDs in 'got' array
+			WCs  []string       // Wellcoords in 'got' array
+			Vols []wunit.Volume // vols (before suck) in 'got'
+			M    []int          // offsets in 'got' array
+			Sc   float64        // total score for this match
+		}
+	*/
+
+	expected := Match{
+		IDs:  PIDs,
+		WCs:  CIDs,
+		Vols: toVolArr(20.0, 8),
+		M:    seq(0, 8, 1),
+		Sc:   1160.0,
 	}
+
+	if !reflect.DeepEqual(expected, match) {
+		t.Errorf("%v =/= %v", match, expected)
+	}
+}
+
+func toVolArr(v float64, n int) []wunit.Volume {
+	ret := make([]wunit.Volume, n)
+
+	for i := 0; i < n; i++ {
+		ret[i] = wunit.NewVolume(v, "ul")
+	}
+	return ret
+}
+
+func seq(start, length, increment int) []int {
+	r := make([]int, length)
+	x := start
+	for i := 0; i < length; i++ {
+		r[i] = x
+		x += increment
+	}
+}
+
+func updateDsts(m Match, ca []*LHComponent) {
+	for i, v := range m.Vols {
+		ca[i].Vol -= v.RawValue()
+		if ca[i].Vol < 0.0 {
+			ca[i].Vol = 0.0
+		}
+	}
+}
+
+func dstsDone(ca []*LHComponent) bool {
+	for _, c := range ca {
+		if ca.Vol > 0.0 {
+			return false
+		}
+	}
+	return true
 }
 func TestMatchComponentPickupVolumes(t *testing.T) {
 	c := NewLHComponent()
@@ -73,19 +126,20 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 		want[i].Vol = vls2[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	for i := 0; i < 3; i++ {
+		m, err := MatchComponents(want, got, false)
 
-	if err != nil {
-		t.Errorf(err.Error())
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		updateDsts(m, want)
 	}
 
-	fmt.Println("TWO...FIVE")
-
-	for _, m := range cm.Matches {
-		fmt.Println(m)
+	if !dstsDone(want) {
+		t.Errorf("Still need sources")
 	}
 
-	fmt.Println("ZERO...ZERO...ZERO")
 }
 
 func TestMatchComponentSrcSubset(t *testing.T) {
@@ -119,14 +173,18 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	for i := 0; i < 2; i++ {
+		m, err := MatchComponents(want, got, false)
 
-	if err != nil {
-		t.Errorf(err.Error())
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		updateDsts(m, want)
 	}
 
-	if len(cm.Matches) != 2 {
-		t.Errorf(fmt.Sprintf("Exactly two matches required, got %d", len(cm.Matches)))
+	if !dstsDone(want) {
+		t.Errorf("Still need sources")
 	}
 }
 
@@ -158,15 +216,19 @@ func TestMatchComponent2(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	for i := 0; i < 8; i++ {
+		m, err := MatchComponents(want, got, false)
 
-	if err != nil {
-		t.Errorf(err.Error())
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		updateDsts(m, want)
 	}
 
-	if len(cm.Matches) != 8 {
-		t.Errorf(fmt.Sprintf("Exactly 8 matches required, got %d", len(cm.Matches)))
+	if !dstsDone(want) {
+		t.Errorf("Still need sources")
 	}
+
 }
 
 func TestMatchComponent2b(t *testing.T) {
@@ -197,14 +259,21 @@ func TestMatchComponent2b(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, true)
+	for i := 0; i < 8; i++ {
+		if dstsDone(want) {
+			t.Errorf("Done before iteration %d, should require 8 iterations", i+1)
+		}
+		m, err := MatchComponents(want, got, true)
 
-	if err != nil {
-		t.Errorf(err.Error())
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		updateDsts(m, want)
 	}
 
-	if len(cm.Matches) != 8 {
-		t.Errorf(fmt.Sprintf("Exactly 8 matches required, got %d", len(cm.Matches)))
+	if !dstsDone(want) {
+		t.Errorf("Still need sources")
 	}
 }
 
@@ -236,14 +305,22 @@ func TestMatchComponent3(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	for i := 0; i < 8; i++ {
+		if dstsDone(want) {
+			t.Errorf("Done before iteration %d, should require 8", i+1)
+		}
 
-	if err != nil {
-		t.Errorf(err.Error())
+		m, err := MatchComponents(want, got, false)
+
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		updateDsts(m, want)
 	}
 
-	if len(cm.Matches) != 8 {
-		t.Errorf(fmt.Sprintf("Exactly 8 matches required, got %d", len(cm.Matches)))
+	if !dstsDone(want) {
+		t.Errorf("Still need sources")
 	}
 }
 
@@ -275,15 +352,20 @@ func TestMatchComponentIndependent(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, true)
+	for i := 0; i < 4; i++ {
+		if dstsDone(want) {
+			t.Errorf("Done before iteration %d, should require 4", i+1)
+		}
+		m, err := MatchComponents(want, got, true)
 
-	if err != nil {
-		t.Errorf(err.Error())
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		updateDsts(m, want)
 	}
 
-	if len(cm.Matches) != 4 {
-		fmt.Println(cm.Matches)
-		t.Errorf(fmt.Sprintf("Exactly 4 matches required, got %d", len(cm.Matches)))
+	if !dstsDone(want) {
+		t.Errorf("Still require sources")
 	}
 
 }
@@ -321,15 +403,22 @@ func TestMatch7Subcomponents(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	for i := 0; i < 1; i++ {
+		if dstsDone(want) {
+			t.Errorf("Done before iteration %d, should require 1", i+1)
+		}
+		m, err := MatchComponents(want, got, false)
 
-	if err != nil {
-		t.Errorf(err.Error())
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		updateDsts(m, want)
 	}
 
-	if len(cm.Matches) != 1 {
-		t.Errorf(fmt.Sprintf("Exsctly one match required, got %d", len(cm.Matches)))
+	if !dstsDone(want) {
+		t.Errorf("Still need sources")
 	}
+
 }
 
 func TestMatch7Subcomponents8wanted(t *testing.T) {
@@ -362,15 +451,19 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	for i := 0; i < 2; i++ {
+		if dstsDone(want) {
+			t.Errorf("Done after %d iterations, should require 2", i+1)
+		}
+		m, err := MatchComponents(want, got, false)
 
-	if err != nil {
-		t.Errorf(err.Error())
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		updateDsts(m, want)
 	}
 
-	if len(cm.Matches) != 2 {
-		t.Errorf(fmt.Sprintf("Exsctly two matches required, got %d", len(cm.Matches)))
-	}
 }
 
 func TestNonMatchComponent(t *testing.T) {
@@ -400,14 +493,16 @@ func TestNonMatchComponent(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	m, err := MatchComponents(want, got, false)
 
 	if err != nil {
 		t.Errorf(err.Error())
 	}
 
-	if len(cm.Matches) != 0 {
-		t.Errorf(fmt.Sprintf("Expected 0 matches, got %d", len(cm.Matches)))
+	updateDsts(m, want)
+
+	if dstsDone(want) {
+		t.Errorf("Negative test failed: sources were found when none were available")
 	}
 }
 func TestMatchAllDifferentComponent(t *testing.T) {
@@ -441,15 +536,18 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 		want[i].CName = CNames[i]
 	}
 
-	cm, err := matchComponents(want, got, false)
+	m, err := MatchComponents(want, got, false)
 
 	if err != nil {
 		t.Errorf(err.Error())
 	}
 
-	if len(cm.Matches) != 1 {
-		t.Errorf(fmt.Sprintf("Exsctly one match required, got %d", len(cm.Matches)))
+	updateDsts(m, want)
+
+	if !dstsDone(want) {
+		t.Errorf("Still want sources")
 	}
+
 }
 
 func TestAlignIndependent(t *testing.T) {

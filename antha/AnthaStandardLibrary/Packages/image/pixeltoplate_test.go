@@ -9,9 +9,6 @@ import (
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 
-	"image/color"
-	"reflect"
-
 	"image/gif"
 	"os"
 	"image/jpeg"
@@ -145,7 +142,6 @@ func TestMakeLivingImg(t *testing.T) {
 
 func TestMakeLivingGIF(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
-
 	//------------------------------------------------
 	//Making antha image
 	//------------------------------------------------
@@ -199,7 +195,6 @@ func TestMakeLivingGIF(t *testing.T) {
 	//------------------------------------------------
 
 	MakeLivingGIF(anthaImgs)
-
 }
 
 func TestAnthaPrintWorkflow(t *testing.T){
@@ -243,43 +238,6 @@ func TestAnthaPrintWorkflow(t *testing.T){
 	//testing function
 	MakeAnthaImg(imgBase, anthaPalette, plate)
 
-
-	//------------------------------------------------------------------
-	//ELEMENT TESTING
-	//------------------------------------------------------------------
-
-	//testing function
-	AnthaImage, _ := MakeAnthaImg(imgBase, anthaPalette, plate)
-	ColorToExclude := "white"    //Background color which we do not want to print, leave blank if you want to print all colors.
-
-	//------------------------------------------------------------------
-	//Globals
-	//------------------------------------------------------------------
-
-	var colorToExclude color.Color
-
-	if ColorToExclude == "" {
-		colorToExclude = color.NRGBA{}
-	} else {
-		colorToExclude = SelectColor(ColorToExclude)
-	}
-
-	//------------------------------------------------------------------
-	//Iterating through each pixels in the image and pipetting them
-	//------------------------------------------------------------------
-
-	counter := 0
-	for _, pix := range AnthaImage.Pix {
-		r,g,b,a := pix.Color.Color.RGBA()
-		asRGBA := color.RGBA{uint8(r),uint8(g),uint8(b),uint8(a)}
-
-		//Skipping pixel if it is of the background color
-		if reflect.DeepEqual(colorToExclude, asRGBA) {
-			continue
-		}
-
-		counter++
-	}
 }
 
 func TestOpenGIF(t *testing.T){

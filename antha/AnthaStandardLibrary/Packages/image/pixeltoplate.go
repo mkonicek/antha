@@ -22,6 +22,7 @@ import (
 	"github.com/antha-lang/antha/inventory"
 	"github.com/disintegration/imaging"
 	"image/gif"
+	"reflect"
 )
 
 //-------------------------------------------------------
@@ -1269,6 +1270,7 @@ type AnthaImg struct {
 
 //Set of types to use antha with biological colors
 type LivingColor struct {
+	ID		string
 	Color     color.NRGBA
 	Seq       wtype.DNASequence
 	Component *wtype.LHComponent
@@ -1336,7 +1338,7 @@ func SelectLivingColorLibrary(ctx context.Context, libID string) (palette Living
 
 	for _, colorID := range selectedLib {
 		c := livingColors[colorID]
-		lc := MakeLivingColor(ctx, c.Color, c.Seq)
+		lc := MakeLivingColor(ctx, colorID, c.Color, c.Seq)
 
 		palette.LivingColors = append(palette.LivingColors, *lc)
 	}
@@ -1353,7 +1355,7 @@ func SelectLivingColor(ctx context.Context, colID string) LivingColor {
 		panic(fmt.Sprintf("library %s not found so could not make palette", colID))
 	}
 
-	lc := MakeLivingColor(ctx, c.Color, c.Seq)
+	lc := MakeLivingColor(ctx, colID, c.Color, c.Seq)
 
 	return *lc
 }
@@ -1396,6 +1398,20 @@ func (p AnthaPalette) Index(c color.Color) int {
 		}
 	}
 	return ret
+}
+
+// Returns a bool indicating if the AnthaColor is already in the AnthaPalette
+func (p AnthaPalette) CheckPresence(c AnthaColor) (ok bool) {
+
+	ok = false
+
+	for _, pc := range p.AnthaColors{
+		if reflect.DeepEqual(pc,c) {
+			ok =  true
+		}
+	}
+
+	return ok
 }
 
 // Returns the LivingPalette LivingColor closest to c in Euclidean R,G,B space.
@@ -1447,6 +1463,31 @@ func sqDiff(x, y uint32) uint32 {
 		d = y - x
 	}
 	return (d * d) >> 2
+}
+
+// Returns a bool indicating if the LivingColor is already in the LivingPalette
+func (p LivingPalette) CheckPresence(c LivingColor) (ok bool) {
+
+	ok = false
+
+	for _, pc := range p.LivingColors{
+		if reflect.DeepEqual(pc,c) {
+			ok =  true
+		}
+	}
+
+	return ok
+}
+
+// Returns a bool indicating if the LivingPixel is the same as the given one
+func (p1 LivingPix) Compare(p2 LivingPix) (same bool) {
+
+	if reflect.DeepEqual(p1,p2) {
+		return true
+	}else{
+		return false
+	}
+
 }
 
 //---------------------------------------------------
@@ -1527,7 +1568,7 @@ func MakeAnthaImg(goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlat
 }
 
 //Object constructor for a LivingColor with default settings
-func MakeLivingColor(ctx context.Context, color *color.NRGBA, seq string) (livingColor *LivingColor) {
+func MakeLivingColor(ctx context.Context, ID string, color *color.NRGBA, seq string) (livingColor *LivingColor) {
 
 	//generating DNA sequence object
 	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
@@ -1539,7 +1580,7 @@ func MakeLivingColor(ctx context.Context, color *color.NRGBA, seq string) (livin
 	}
 
 	//populate livingColor
-	livingColor = &LivingColor{*color, DNASequence, component}
+	livingColor = &LivingColor{ID, *color, DNASequence, component}
 
 	return livingColor
 }

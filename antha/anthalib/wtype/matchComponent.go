@@ -54,9 +54,7 @@ func printMat(mat [][]mt) {
 	fmt.Println("-----")
 }
 
-func align(want, got ComponentVector, independent bool) Match {
-	// ensure things are ok
-
+func align(want, got ComponentVector, independent, debug bool) Match {
 	for i, v := range want {
 		if v == nil {
 			want[i] = NewLHComponent()
@@ -92,7 +90,6 @@ func align(want, got ComponentVector, independent bool) Match {
 				mat[i][j].Vl = 0.0
 				mat[i][j].Sc = 0.0
 			} else {
-
 				v1 := want[i].Volume().Dup()
 				v2 := got[j].Volume().Dup()
 
@@ -105,7 +102,8 @@ func align(want, got ComponentVector, independent bool) Match {
 				}
 
 				if !want[i].Volume().IsZero() {
-					mat[i][j].Sc = v2.ConvertToString("ul")
+					//	mat[i][j].Sc = v2.ConvertToString("ul")
+					mat[i][j].Sc = mat[i][j].Vl
 				}
 			}
 
@@ -185,9 +183,9 @@ func align(want, got ComponentVector, independent bool) Match {
 		}
 	}
 
-	fmt.Println("MATTT")
-	printMat(mat)
-	fmt.Println("TTTAM")
+	if debug {
+		printMat(mat)
+	}
 
 	return m
 }
@@ -197,9 +195,9 @@ const NotFoundError = "Not found"
 // matchComponents takes one bite each time... the best it can find
 // needs to be run repeatedly to pick everything up
 // TODO: needs to supply more options
-func MatchComponents(want, got ComponentVector, independent bool) (Match, error) {
+func MatchComponents(want, got ComponentVector, independent, debug bool) (Match, error) {
 
-	match := align(want, got, independent)
+	match := align(want, got, independent, debug)
 
 	if match.Sc <= 0.0 {
 		return Match{}, fmt.Errorf(NotFoundError)

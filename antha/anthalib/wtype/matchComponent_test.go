@@ -1,9 +1,10 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"reflect"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 func TestMatchComponent(t *testing.T) {
@@ -33,28 +34,18 @@ func TestMatchComponent(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	match, err := MatchComponents(want, got, false)
+	match, err := MatchComponents(want, got, false, false)
 
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-
-	/*
-		type Match struct {
-			IDs  []string       // PlateIDs in 'got' array
-			WCs  []string       // Wellcoords in 'got' array
-			Vols []wunit.Volume // vols (before suck) in 'got'
-			M    []int          // offsets in 'got' array
-			Sc   float64        // total score for this match
-		}
-	*/
 
 	expected := Match{
 		IDs:  PIDs,
 		WCs:  CIDs,
 		Vols: toVolArr(20.0, 8),
 		M:    seq(0, 8, 1),
-		Sc:   1160.0,
+		Sc:   160.0,
 	}
 
 	if !reflect.DeepEqual(expected, match) {
@@ -78,10 +69,26 @@ func seq(start, length, increment int) []int {
 		r[i] = x
 		x += increment
 	}
+
+	return r
 }
 
+func updateSrcs(m Match, ca []*LHComponent) {
+	for i, v := range m.Vols {
+		if m.M[i] == -1 {
+			continue
+		}
+		ca[m.M[i]].Vol -= v.RawValue()
+		if ca[m.M[i]].Vol < 0.0 {
+			ca[m.M[i]].Vol = 0.0
+		}
+	}
+}
 func updateDsts(m Match, ca []*LHComponent) {
 	for i, v := range m.Vols {
+		if m.M[i] == -1 {
+			continue
+		}
 		ca[i].Vol -= v.RawValue()
 		if ca[i].Vol < 0.0 {
 			ca[i].Vol = 0.0
@@ -91,16 +98,22 @@ func updateDsts(m Match, ca []*LHComponent) {
 
 func dstsDone(ca []*LHComponent) bool {
 	for _, c := range ca {
-		if ca.Vol > 0.0 {
+		if c.Vol > 0.0 {
 			return false
 		}
 	}
 	return true
 }
+
+// presently does not enforce same volume
+// per tip rule... how was I doing that in the past?
+// I think it's enforced on the level above... we will have to
+// revise to permit multi
+
 func TestMatchComponentPickupVolumes(t *testing.T) {
 	c := NewLHComponent()
 	c.CName = "water"
-	vls := []float64{100.0, 100.0, 25.0, 25.0}
+	vls := []float64{100.0, 100.0, 5.0, 5.0}
 	CIDs := []string{"A1", "B1", "C1", "D1"}
 	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1"}
 
@@ -115,7 +128,7 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 	d := NewLHComponent()
 	d.CName = "water"
 
-	vls2 := []float64{110.0, 110.0, 30.0}
+	vls2 := []float64{100.0, 50.0, 30.0}
 	CID2s := []string{"A1", "B1", "F1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2"}
 
@@ -126,13 +139,16 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 		want[i].Vol = vls2[i]
 	}
 
-	for i := 0; i < 3; i++ {
-		m, err := MatchComponents(want, got, false)
+	for i := 0; i < 2; i++ {
+		if dstsDone(want) {
+			t.Errorf("Done before iteration %d, should require 2 iterations", i+1)
+		}
+		m, err := MatchComponents(want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-
+		updateSrcs(m, got)
 		updateDsts(m, want)
 	}
 
@@ -174,12 +190,16 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 	}
 
 	for i := 0; i < 2; i++ {
-		m, err := MatchComponents(want, got, false)
+		if dstsDone(want) {
+			t.Errorf("Done before iteration %d, should require 2 iterations", i+1)
+		}
+		m, err := MatchComponents(want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
 		}
 
+		updateSrcs(m, got)
 		updateDsts(m, want)
 	}
 
@@ -217,11 +237,15 @@ func TestMatchComponent2(t *testing.T) {
 	}
 
 	for i := 0; i < 8; i++ {
-		m, err := MatchComponents(want, got, false)
+		if dstsDone(want) {
+			t.Errorf("Done before iteration %d, should require 8 iterations", i+1)
+		}
+		m, err := MatchComponents(want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
 		}
+		updateSrcs(m, got)
 		updateDsts(m, want)
 	}
 
@@ -263,12 +287,13 @@ func TestMatchComponent2b(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 8 iterations", i+1)
 		}
-		m, err := MatchComponents(want, got, true)
+		m, err := MatchComponents(want, got, true, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
 		}
 
+		updateSrcs(m, got)
 		updateDsts(m, want)
 	}
 
@@ -310,12 +335,13 @@ func TestMatchComponent3(t *testing.T) {
 			t.Errorf("Done before iteration %d, should require 8", i+1)
 		}
 
-		m, err := MatchComponents(want, got, false)
+		m, err := MatchComponents(want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
 		}
 
+		updateSrcs(m, got)
 		updateDsts(m, want)
 	}
 
@@ -356,11 +382,12 @@ func TestMatchComponentIndependent(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 4", i+1)
 		}
-		m, err := MatchComponents(want, got, true)
+		m, err := MatchComponents(want, got, true, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
 		}
+		updateSrcs(m, got)
 		updateDsts(m, want)
 	}
 
@@ -407,11 +434,12 @@ func TestMatch7Subcomponents(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 1", i+1)
 		}
-		m, err := MatchComponents(want, got, false)
+		m, err := MatchComponents(want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
 		}
+		updateSrcs(m, got)
 		updateDsts(m, want)
 	}
 
@@ -455,12 +483,13 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done after %d iterations, should require 2", i+1)
 		}
-		m, err := MatchComponents(want, got, false)
+		m, err := MatchComponents(want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
 		}
 
+		updateSrcs(m, got)
 		updateDsts(m, want)
 	}
 
@@ -493,12 +522,13 @@ func TestNonMatchComponent(t *testing.T) {
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	m, err := MatchComponents(want, got, false)
+	m, err := MatchComponents(want, got, false, false)
 
-	if err != nil {
+	if err.Error() != NotFoundError {
 		t.Errorf(err.Error())
 	}
 
+	updateSrcs(m, got)
 	updateDsts(m, want)
 
 	if dstsDone(want) {
@@ -536,12 +566,13 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 		want[i].CName = CNames[i]
 	}
 
-	m, err := MatchComponents(want, got, false)
+	m, err := MatchComponents(want, got, false, false)
 
 	if err != nil {
 		t.Errorf(err.Error())
 	}
 
+	updateSrcs(m, got)
 	updateDsts(m, want)
 
 	if !dstsDone(want) {
@@ -580,7 +611,7 @@ func TestAlignIndependent(t *testing.T) {
 			w[i].Vol = vW.RawValue()
 		}
 	}
-	m := align(w, g, true)
+	m := align(w, g, true, false)
 
 	if len(m.IDs) != 3 {
 		t.Errorf("Error: expected 3 IDs got %d", len(m.IDs))
@@ -590,7 +621,7 @@ func TestAlignIndependent(t *testing.T) {
 	expCR := []string{"A1", "", "C1"}
 	expV := []wunit.Volume{vW.Dup(), wunit.ZeroVolume(), vW.Dup()}
 	expM := []int{0, -1, 2}
-	expSc := 360.0
+	expSc := 40.0
 
 	expected := Match{IDs: expID, WCs: expCR, Vols: expV, M: expM, Sc: expSc}
 
@@ -627,7 +658,7 @@ func TestAlignIndependent2(t *testing.T) {
 			w[i].Vol = vW.RawValue()
 		}
 	}
-	m := align(w, g, true)
+	m := align(w, g, true, false)
 
 	if len(m.IDs) != 8 {
 		t.Errorf("Error: expected 8 IDs got %d", len(m.IDs))
@@ -637,7 +668,7 @@ func TestAlignIndependent2(t *testing.T) {
 	expCR := []string{"A1", "", "C1", "", "E1", "", "G1", ""}
 	expV := []wunit.Volume{vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume()}
 	expM := []int{0, -1, 2, -1, 4, -1, 6, -1}
-	expSc := 720.0
+	expSc := 80.0
 
 	expected := Match{IDs: expID, WCs: expCR, Vols: expV, M: expM, Sc: expSc}
 

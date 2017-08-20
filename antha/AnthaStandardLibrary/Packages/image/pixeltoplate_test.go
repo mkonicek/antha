@@ -12,6 +12,7 @@ import (
 	"image/gif"
 	"os"
 	"image/jpeg"
+	"fmt"
 )
 
 func TestSelectLibrary(t *testing.T) {
@@ -286,7 +287,7 @@ func TestParseGIF(t *testing.T) {
 	}
 
 
-	imgs := ParseGIF(GIF, []int{1,6})
+	imgs, _  := ParseGIF(GIF, []int{1,6})
 	//saving Image
 	fimg, err := os.Create("/home/cachemoi/gocode/src/github.com/cachemoi/GIF/doc/img/GIFImgTest.jpg")
 	if err != nil {
@@ -296,3 +297,50 @@ func TestParseGIF(t *testing.T) {
 
 }
 
+func TestGetState (t *testing.T){
+	ctx := testinventory.NewContext(context.Background())
+
+	lp := SelectLivingColorLibrary(ctx,"ProteinPaintBox")
+	lip,_  := inventory.NewPlate(ctx, "greiner384")
+	//------------------------------------------------
+	//Getting GIF
+	//------------------------------------------------
+
+	//downloading GIF for the test
+	//RAINBOWSPINNER
+	//https://media.giphy.com/media/XUHmgf1ij7dOU/source.gif
+	//BUTTERFLY
+	//https://www.google.co.uk/search?q=artsy+gif&source=lnms&tbm=isch&sa=X&ved=0ahUKEwi08uHk1szVAhUBAsAKHR6DAWUQ_AUICigB&biw=1301&bih=654#imgrc=iWSaQhyp0mvc5M:
+	GIFFile, err := download.File("http://orig03.deviantart.net/c7a3/f/2012/258/9/1/ani_rainbow_by_engineerjr-d5et1sk.gif", "Downloaded GIF")
+	if err != nil {
+		t.Error(err)
+	}
+
+	//opening GIF
+	GIF, err := OpenGIF(GIFFile)
+	if err != nil {
+		t.Error(err)
+	}
+
+	imgs, err := ParseGIF(GIF, []int{1,4})
+	if err != nil{
+		fmt.Println(err)
+	}
+
+	li1, _  := MakeLivingImg(imgs[0],&lp,lip)
+	li2, _  := MakeLivingImg(imgs[1],&lp,lip)
+
+	var lia []LivingImg
+
+	lia = append(lia,*li1,*li2)
+	//------------------------------------------------
+	//Testing GIF functions
+	//------------------------------------------------
+
+	LivingGIF := MakeLivingGIF(lia)
+
+	states := LivingGIF.GetStates()
+
+	t.Log(states)
+
+}

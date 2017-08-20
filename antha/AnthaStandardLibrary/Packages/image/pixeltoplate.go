@@ -23,6 +23,7 @@ import (
 	"github.com/disintegration/imaging"
 	"image/gif"
 	"reflect"
+	"regexp"
 )
 
 //-------------------------------------------------------
@@ -1490,6 +1491,72 @@ func (p1 LivingPix) Compare(p2 LivingPix) (same bool) {
 
 }
 
+//Returns an array of unique state changes in a LivingGIF
+func (g1 LivingGIF) GetStates () ([][]string){
+
+	//error checking
+	if len(g1.Frames) > 2 {
+		panic("cannot get states of GIF with more than 1 frame")
+	}
+
+	if len(g1.Frames[0].Pix) != len(g1.Frames[1].Pix){
+		panic("different no of pixels in frames")
+	}
+
+	//globals
+	stateList := make(map[int][]string)
+	stateNum := 0
+
+	//finding each state change and put them into the global map
+	for _, frame := range g1.Frames{
+
+		for _, pix := range frame.Pix{
+
+			stateList[stateNum] = append(stateList[stateNum], pix.Color.ID)
+			stateNum++
+		}
+
+		stateNum = 0
+	}
+
+	//remove duplicates
+	//concatenate state lists to use computationally efficient maps (this is necessary, using arrays takes way too long)
+	stateListNm := []string{}
+
+	for _, state := range stateList {
+
+		nm := state[0] + "-" + state[1]
+		stateListNm = append(stateListNm, nm)
+
+	}
+
+
+	//removing duplicate values
+	seen := make(map[string]struct{}, len(stateListNm))
+	j := 0
+	for _, stateNm := range stateListNm {
+		if _, ok := seen[stateNm]; ok {
+			continue
+		}
+		seen[stateNm] = struct{}{}
+        stateListNm[j] = stateNm
+        j++
+	}
+	stateListNm = stateListNm[:j]
+
+	//parsing resulting strings to arrays to make more sense in returned data
+	uniqueStates := [][]string{}
+
+	for _, state := range stateListNm{
+		var re = regexp.MustCompile(`\w+`)
+
+		match := re.FindAllString(state, -1)
+		uniqueStates = append(uniqueStates, match)
+	}
+
+	return uniqueStates
+}
+
 //---------------------------------------------------
 //Object constructors
 //---------------------------------------------------
@@ -1687,9 +1754,28 @@ func ResizeImagetoPlateMin(img *goimage.NRGBA, plate *wtype.LHPlate) (plateImage
 }
 
 //Given two frame number and a GIF, this function will extract those frames and return an array of the images
-func ParseGIF(GIF *gif.GIF, frameNum []int)(imgs []*goimage.NRGBA){
+func ParseGIF(GIF *gif.GIF, frameNum []int)(imgs []*goimage.NRGBA, err error){
+
+	//error check
+
+	//finding maximum number in the given array (no go builtins for this)
+	var largest int
+
+	for _, n :=range frameNum{
+
+		if n>largest {
+			largest = n
+		} else {
+			continue
+		}
+	}
+
+	if len(GIF.Image) <= largest{
+		panic(fmt.Errorf("Frame number to be extracted is out of bound of the possible frame. The GIF has %d frames (we use array notation to extract, so starts at 0)", len(GIF.Image)))
+	}
 
 
+	//extracting frames
 	for _, Num := range frameNum {
 
 		//convert image from image.Paletted to image.NRGBA
@@ -1698,5 +1784,5 @@ func ParseGIF(GIF *gif.GIF, frameNum []int)(imgs []*goimage.NRGBA){
 		imgs = append(imgs, convertedImg)
 	}
 
-	return imgs
+	return imgs, nil
 }

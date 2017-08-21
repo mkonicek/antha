@@ -8,10 +8,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
-
-	"image/gif"
-	"os"
-	"image/jpeg"
 	"fmt"
 )
 
@@ -254,23 +250,8 @@ func TestOpenGIF(t *testing.T){
 	}
 
 	//opening GIF
-	GIF, err := OpenGIF(GIFFile)
-	if err != nil {
-		t.Error(err)
-	}
+	OpenGIF(GIFFile)
 
-
-	//saving Image
-	fimg, err := os.Create("/home/cachemoi/gocode/src/github.com/cachemoi/GIF/doc/img/GIFImgTest.jpg")
-	jpeg.Encode(fimg, GIF.Image[5], &jpeg.Options{jpeg.DefaultQuality})
-
-	//saving GIF
-	//There's a bug with the Linux Library which means you'll have to open the resulting file in a browser
-	fgif, err := os.Create("/home/cachemoi/gocode/src/github.com/cachemoi/GIF/doc/GIF/results.gif")
-	err = gif.EncodeAll(fgif,GIF)
-	if err != nil {
-		t.Error(err)
-	}
 }
 
 func TestParseGIF(t *testing.T) {
@@ -286,14 +267,7 @@ func TestParseGIF(t *testing.T) {
 		t.Error(err)
 	}
 
-
-	imgs, _  := ParseGIF(GIF, []int{1,6})
-	//saving Image
-	fimg, err := os.Create("/home/cachemoi/gocode/src/github.com/cachemoi/GIF/doc/img/GIFImgTest.jpg")
-	if err != nil {
-		t.Error(err)
-	}
-	jpeg.Encode(fimg, imgs[0], &jpeg.Options{jpeg.DefaultQuality})
+	ParseGIF(GIF, []int{1,6})
 
 }
 

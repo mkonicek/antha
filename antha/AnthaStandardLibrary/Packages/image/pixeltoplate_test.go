@@ -9,7 +9,6 @@ import (
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"io/ioutil"
-	"path/filepath"
 )
 
 func TestSelectLibrary(t *testing.T) {
@@ -26,8 +25,7 @@ func TestMakeAnthaImg(t *testing.T) {
 	var imgFile wtype.File
 
 	//getting image file for the test
-	absPath, _ := filepath.Abs("../image/testdata/spaceinvader.png")
-	bytes, err := ioutil.ReadFile(absPath)
+	bytes, err := ioutil.ReadFile("testdata/spaceinvader.png")
 	if err != nil {
 		t.Error(err)
 	}
@@ -106,8 +104,7 @@ func TestMakeLivingImg(t *testing.T) {
 	var imgFile wtype.File
 
 	//getting image file for the test
-	absPath, _ := filepath.Abs("../image/testdata/spaceinvader.png")
-	bytes, err := ioutil.ReadFile(absPath)
+	bytes, err := ioutil.ReadFile("testdata/spaceinvader.png")
 	if err != nil {
 		t.Error(err)
 	}
@@ -155,8 +152,7 @@ func TestMakeLivingGIF(t *testing.T) {
 	var gifFile wtype.File
 
 	//getting gif file for the test
-	absPath, _ := filepath.Abs("../image/testdata/deepDream.gif")
-	bytes, err := ioutil.ReadFile(absPath)
+	bytes, err := ioutil.ReadFile("testdata/deepDream.gif")
 	if err != nil {
 		t.Error(err)
 	}
@@ -215,8 +211,7 @@ func TestAnthaPrintWorkflow(t *testing.T) {
 	var imgFile wtype.File
 
 	//getting image for the test
-	absPath, _ := filepath.Abs("../image/testdata/spaceinvader.png")
-	bytes, err := ioutil.ReadFile(absPath)
+	bytes, err := ioutil.ReadFile("testdata/spaceinvader.png")
 	if err != nil {
 		t.Error(err)
 	}
@@ -261,8 +256,7 @@ func TestOpenGIF(t *testing.T) {
 	var gifFile wtype.File
 
 	//getting gif file for the test
-	absPath, _ := filepath.Abs("../image/testdata/deepDream.gif")
-	bytes, err := ioutil.ReadFile(absPath)
+	bytes, err := ioutil.ReadFile("testdata/deepDream.gif")
 	if err != nil {
 		t.Error(err)
 	}
@@ -279,8 +273,7 @@ func TestParseGIF(t *testing.T) {
 	var gifFile wtype.File
 
 	//getting gif for the test
-	absPath, _ := filepath.Abs("../image/testdata/deepDream.gif")
-	bytes, err := ioutil.ReadFile(absPath)
+	bytes, err := ioutil.ReadFile("testdata/deepDream.gif")
 	if err != nil {
 		t.Error(err)
 	}
@@ -306,8 +299,7 @@ func TestGetState(t *testing.T) {
 	var gifFile wtype.File
 
 	//getting gif for the test
-	absPath, _ := filepath.Abs("../image/testdata/deepDream.gif")
-	bytes, err := ioutil.ReadFile(absPath)
+	bytes, err := ioutil.ReadFile("testdata/deepDream.gif")
 	if err != nil {
 		t.Error(err)
 	}

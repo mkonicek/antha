@@ -373,6 +373,7 @@ func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
 	if lhc.IsZero() {
 		return nil, fmt.Errorf("Cannot sample empty component")
 	} else if lhc.Volume().EqualTo(v) {
+		// not setting sample?!
 		return lhc, nil
 	}
 
@@ -385,6 +386,7 @@ func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
 	lhc.AddDaughterComponent(c)
 	c.Loc = ""
 	c.Destination = ""
+	c.Extra = lhc.GetExtra()
 
 	return c, nil
 }
@@ -406,6 +408,7 @@ func (lhc *LHComponent) Dup() *LHComponent {
 	for k, v := range lhc.Extra {
 		c.Extra[k] = v
 	}
+
 	c.Loc = lhc.Loc
 	c.Destination = lhc.Destination
 	c.ParentID = lhc.ParentID
@@ -514,6 +517,10 @@ func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	//	cmp.ID = "component-" + GetUUID()
 	cmp.ID = GetUUID()
 	cmp2.AddDaughterComponent(cmp)
+
+	// result should not be a sample
+
+	cmp.SetSample(false)
 }
 
 // @implement Liquid
@@ -528,7 +535,14 @@ func (lhc *LHComponent) GetVisc() float64 {
 }
 
 func (lhc *LHComponent) GetExtra() map[string]interface{} {
-	return lhc.Extra
+	x := make(map[string]interface{}, len(lhc.Extra))
+
+	// shallow copy only...
+	for k, v := range lhc.Extra {
+		x[k] = v
+	}
+
+	return x
 }
 
 func (lhc *LHComponent) GetConc() float64 {
@@ -586,7 +600,7 @@ func (cmp *LHComponent) String() string {
 		l = "NOPLATE:NOWELL"
 	}
 
-	return id + ":" + l + ":" + v
+	return id + ":" + cmp.CName + ":" + l + ":" + v
 }
 
 func (cmp *LHComponent) ParentTree() graph.StringGraph {

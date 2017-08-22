@@ -949,3 +949,30 @@ func (p *LHPlate) NumCols() int {
 func (p *LHPlate) PlateHeight() float64 {
 	return p.Height
 }
+
+func componentList(vec ComponentVector) map[string]bool {
+	r := make(map[string]bool, len(vec))
+	for _, c := range vec {
+		if c != nil {
+			if c.Vol > 0.0 {
+				r[c.CName] = true
+			}
+		}
+	}
+
+	return r
+}
+
+func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector) ComponentVector {
+	wants := componentList(cmps)
+	cv := p.GetContentVector(wv)
+	fcv := make([]*LHComponent, len(cv))
+
+	for i := 0; i < len(cv); i++ {
+		if cv[i] != nil && wants[cv[i].FullyQualifiedName()] {
+			fcv[i] = cv[i]
+		}
+	}
+
+	return fcv
+}

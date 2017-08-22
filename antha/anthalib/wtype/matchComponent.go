@@ -55,6 +55,7 @@ func printMat(mat [][]mt) {
 }
 
 func align(want, got ComponentVector, independent, debug bool) Match {
+	fmt.Println("YES")
 	for i, v := range want {
 		if v == nil {
 			want[i] = NewLHComponent()
@@ -198,6 +199,8 @@ const NotFoundError = "Not found"
 func MatchComponents(want, got ComponentVector, independent, debug bool) (Match, error) {
 
 	match := align(want, got, independent, debug)
+
+	fmt.Println("MATCH COMPONENTS : ", match)
 
 	if match.Sc <= 0.0 {
 		return Match{}, fmt.Errorf(NotFoundError)

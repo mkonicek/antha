@@ -840,3 +840,19 @@ func (lhc *LHComponent) Kind() string {
 
 	// v1: distinct IDs for underlying liquid types
 }
+
+func (cmp *LHComponent) FullyQualifiedName() string {
+	// this should be equivalent to the checks done by LHWell.Contains()
+
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			return cmp.ParentID + ":" + cmp.Kind()
+		} else {
+			return cmp.ID + ":" + cmp.Kind()
+
+		}
+
+	} else {
+		return cmp.Kind()
+	}
+}

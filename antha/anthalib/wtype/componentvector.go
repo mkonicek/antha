@@ -48,6 +48,32 @@ func (cv ComponentVector) GetVols() []wunit.Volume {
 	return ret
 }
 
+func (cv ComponentVector) Empty() bool {
+	for _, c := range cv {
+		if c != nil && c.Vol > 0.0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (cv ComponentVector) ToSumHash() map[string]wunit.Volume {
+	ret := make(map[string]wunit.Volume, len(cv))
+
+	for _, c := range cv {
+		v, ok := ret[c.FullyQualifiedName()]
+
+		if !ok {
+			v = wunit.ZeroVolume()
+			ret[c.FullyQualifiedName()] = v
+		}
+		v.Add(c.Volume())
+	}
+
+	return ret
+}
+
 func (cv ComponentVector) GetPlateIds() []string {
 	return cv.getLocTok(0)
 }

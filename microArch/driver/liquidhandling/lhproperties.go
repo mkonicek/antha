@@ -592,6 +592,7 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
+/*
 // returns go: [transfer1][c1c2c3c4...], [transfer2][c1c2c3c4...]
 func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 	plateIDs = make([][]string, len(cmps))
@@ -623,6 +624,7 @@ func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit
 	// if we really can't get anywhere, try this badger
 	return lhp.GetComponentsSingle(cmps, carryvol, legacyVolume)
 }
+*/
 
 func GetLocTox(cmp *wtype.LHComponent) ([]string, error) {
 	// try the cmp's own loc

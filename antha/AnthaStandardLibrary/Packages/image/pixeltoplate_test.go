@@ -50,7 +50,8 @@ func TestMakeAnthaImg(t *testing.T) {
 	}
 
 	//making the array to make palette. It's the same length than the array from the "UV" library
-	for i := 1; i < 48; i++ {
+	for i := 1; i <= len(SelectLibrary("UV")); i++ {
+
 		components = append(components, component.Dup())
 	}
 	//getting palette

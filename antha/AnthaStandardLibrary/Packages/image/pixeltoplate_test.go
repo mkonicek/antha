@@ -50,7 +50,7 @@ func TestMakeAnthaImg(t *testing.T) {
 	}
 
 	//making the array to make palette. It's the same length than the array from the "UV" library
-	for i := 1; i <= len(SelectLibrary("UV")); i++ {
+	for i := 1; i <= len(palette); i++ {
 
 		components = append(components, component.Dup())
 	}
@@ -81,7 +81,7 @@ func TestMakeAnthaPalette(t *testing.T) {
 	}
 
 	//making the array to test. It's the same length than the array from the "UV" library
-	for i := 1; i < 48; i++ {
+	for i := 1; i <= len(palette); i++ {
 		components = append(components, component.Dup())
 	}
 
@@ -127,13 +127,13 @@ func TestMakeLivingImg(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	//making the array to make palette. It's the same length than the array from the "ProteinPaintbox" library
-	for i := 1; i < 7; i++ {
-		components = append(components, component.Dup())
-	}
-
 	//Selecting livingPalette
 	selectedPalette := SelectLivingColorLibrary(ctx, "ProteinPaintBox")
+
+	//making the array to make palette. It's the same length than the array from the "ProteinPaintbox" library
+	for i := 1; i <= len(selectedPalette.LivingColors); i++ {
+		components = append(components, component.Dup())
+	}
 
 	//Making palette
 	livingPalette := MakeLivingPalette(selectedPalette, components)
@@ -176,13 +176,13 @@ func TestMakeLivingGIF(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	//making the array to make palette. It's the same length than the array from the "ProteinPaintbox" library
-	for i := 1; i < len(livingColors); i++ {
-		components = append(components, component.Dup())
-	}
-
 	//Selecting livingPalette
 	selectedPalette := SelectLivingColorLibrary(ctx, "ProteinPaintBox")
+
+	//making the array to make palette. It's the same length than the array from the "ProteinPaintbox" library
+	for i := 1; i <= len(selectedPalette.LivingColors); i++ {
+		components = append(components, component.Dup())
+	}
 
 	//Making palette
 	livingPalette := MakeLivingPalette(selectedPalette, components)
@@ -239,7 +239,7 @@ func TestAnthaPrintWorkflow(t *testing.T) {
 	}
 
 	//making the array to make palette. It's the same length than the array from the "UV" library
-	for i := 1; i < 48; i++ {
+	for i := 1; i <= len(palette); i++ {
 		components = append(components, component.Dup())
 	}
 	//getting palette

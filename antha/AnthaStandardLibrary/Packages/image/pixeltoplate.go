@@ -1731,7 +1731,7 @@ func MakeLivingGIF(imgs []LivingImg) *LivingGIF {
 //Image manipulation
 //---------------------------------------------------
 
-// Minimalist resize function. Uses Lanczos resampling, which is the best but slowest method.
+// ResizeImagetoPlateMin is a Minimalist resize function. Uses Lanczos resampling, which is the best but slowest method.
 func ResizeImagetoPlateMin(img *goimage.NRGBA, plate *wtype.LHPlate) (plateImage *goimage.NRGBA) {
 
 	if img.Bounds().Dy() != plate.WellsY() {

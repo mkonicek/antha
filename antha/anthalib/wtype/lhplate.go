@@ -424,6 +424,7 @@ func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []st
 			panic("No negative wells allowed")
 		}
 		if v > len(wps)-1 {
+			fmt.Println("LEN WPS - 1", len(wps)-1, " V: ", v)
 			panic("No wells out of bounds allowed")
 		}
 		ret = append(ret, wps[v])

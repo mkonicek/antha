@@ -55,7 +55,6 @@ func printMat(mat [][]mt) {
 }
 
 func align(want, got ComponentVector, independent, debug bool) Match {
-	fmt.Println("YES")
 	for i, v := range want {
 		if v == nil {
 			want[i] = NewLHComponent()
@@ -75,12 +74,18 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 	mxj := -1
 
 	for i := 0; i < len(want); i++ {
+		if want[i] == nil {
+			continue
+		}
 		mat[i] = make([]mt, len(got))
 
 		// if we must be contiguous then we skip all cells aligned
 		// to rows with zeroes in 'want'
 
 		for j := 0; j < len(got); j++ {
+			if got[j] == nil {
+				continue
+			}
 			// only allow gaps if independent is set
 			if (got[j].CName == "" || want[i].CName != got[j].CName) && !independent {
 				continue
@@ -197,10 +202,7 @@ const NotFoundError = "Not found"
 // needs to be run repeatedly to pick everything up
 // TODO: needs to supply more options
 func MatchComponents(want, got ComponentVector, independent, debug bool) (Match, error) {
-
 	match := align(want, got, independent, debug)
-
-	fmt.Println("MATCH COMPONENTS : ", match)
 
 	if match.Sc <= 0.0 {
 		return Match{}, fmt.Errorf(NotFoundError)

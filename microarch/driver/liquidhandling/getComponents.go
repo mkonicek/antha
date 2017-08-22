@@ -54,7 +54,6 @@ func newReply() GetComponentsReply {
 func areWeDoneYet(cmps wtype.ComponentVector) bool {
 	for _, c := range cmps {
 		if c.Vol != 0 {
-			fmt.Println("NOT DONE YET! ", c.CName, " NEEDS ", c.Vol)
 			return false
 		}
 	}
@@ -100,7 +99,6 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
 				// cmps needs duping here
 				mycmps := p.GetFilteredContentVector(wv, cmps) // dups components
-
 				if mycmps.Empty() {
 					continue
 				}
@@ -164,13 +162,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	currCmps := opt.Cmps.Dup()
 	done := false
 
-	// we can't take more than 1 transfer each at this stage
-	stuckCounter := len(currCmps)
-
 	for {
-		if stuckCounter == 0 {
-			return GetComponentsReply{}, fmt.Errorf("GOT STUCK")
-		}
 		done = areWeDoneYet(currCmps)
 		if done {
 			break
@@ -179,20 +171,18 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		if !sourceVolumesOK(srcs, currCmps) {
 			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes")
 		}
-
 		bestMatch := wtype.Match{Sc: -1.0}
 		var bestSrc wtype.ComponentVector
-
 		// srcs is chunked up to conform to what can be accessed by the LH
 		for _, src := range srcs {
-			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, true)
+			if src.Empty() {
+				continue
+			}
+			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, false)
 
-			if err.Error() != wtype.NotFoundError {
-				fmt.Println("BREAKING EARLY")
+			if err != nil && err.Error() != wtype.NotFoundError {
 				return rep, err
 			}
-
-			fmt.Println("NEW MATCH: ", match)
 
 			if match.Sc > bestMatch.Sc {
 				bestMatch = match
@@ -206,8 +196,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		updateDests(currCmps, bestMatch)
 
 		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))
-
-		stuckCounter -= 1
 	}
 
 	return rep, nil
@@ -224,10 +212,8 @@ func updateSources(src wtype.ComponentVector, match wtype.Match) wtype.Component
 }
 
 func updateDests(dst wtype.ComponentVector, match wtype.Match) wtype.ComponentVector {
-	fmt.Println("UPDATING DESTS ", match)
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
-			fmt.Println("REMOVING ", i, " SRC ", match.M[i], " ", match.Vols[i], " WAS ", dst[i].Vol)
 			dst[i].Vol -= match.Vols[i].ConvertToString(dst[i].Vunit)
 		}
 	}

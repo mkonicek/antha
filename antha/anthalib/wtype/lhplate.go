@@ -955,7 +955,7 @@ func componentList(vec ComponentVector) map[string]bool {
 	for _, c := range vec {
 		if c != nil {
 			if c.Vol > 0.0 {
-				r[c.CName] = true
+				r[c.FullyQualifiedName()] = true
 			}
 		}
 	}

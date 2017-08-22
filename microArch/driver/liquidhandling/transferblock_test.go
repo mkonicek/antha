@@ -191,9 +191,8 @@ func TestMultichannelFailDest(t *testing.T) {
 	testNegative(ctx, ris, pol, rbt, t)
 }
 func TestMultiChannelFailSrc(t *testing.T) {
-	// this actually works now
+	// this actually works
 	t.Skip()
-
 	ctx := testinventory.NewContext(context.Background())
 
 	// sources not aligned
@@ -229,8 +228,9 @@ func TestMultiChannelFailComponent(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ris) < 1 {
-		t.Errorf("No Transfers made")
+	if len(ris) < 2 {
+		t.Errorf("Not enough Transfers made")
+		return
 	}
 
 	ris[0].(*TransferInstruction).What[3] = "lemonade"
@@ -286,6 +286,10 @@ func TestMultichannelPositive(t *testing.T) {
 }
 
 func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
+	if len(ris) < 1 {
+		t.Errorf("No instructions to test positive")
+		return
+	}
 	ins := ris[0]
 
 	ri2, err := ins.Generate(ctx, pol, rbt)
@@ -309,5 +313,4 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	if multi == 0 {
 		t.Errorf("Multichannel block not generated")
 	}
-
 }

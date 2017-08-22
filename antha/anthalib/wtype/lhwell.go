@@ -456,7 +456,8 @@ func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape 
 	var well LHWell
 
 	well.WContents = NewLHComponent()
-	well.WContents.DeclareInstance()
+	// hey wait a sec... why?
+	//well.WContents.DeclareInstance()
 
 	//well.ID = "well-" + GetUUID()
 	well.ID = GetUUID()

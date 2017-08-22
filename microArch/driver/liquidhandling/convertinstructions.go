@@ -87,7 +87,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		// the alignment here just says component i comes from fromWells[i]
 		// it says nothing about which channel should be used
-		fmt.Println("RGC : Convertinstructions 90")
 		//fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent, legacyVolume)
 
 		/*
@@ -258,10 +257,6 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 	//}
 
 	tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
-	fmt.Println("wellFROOOM: ", wf)
-	fmt.Println("possFROOOM: ", pf)
-	fmt.Println("wellTOOOOO: ", wt) //DEBUG REMOVE
-	fmt.Println("possTOOOOO: ", pt)
 	insOut = append(insOut, tfr)
 
 	return insOut, nil

@@ -21,6 +21,9 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/disintegration/imaging"
+	"image/gif"
+	"reflect"
+	"regexp"
 )
 
 //-------------------------------------------------------
@@ -261,6 +264,26 @@ func OpenFile(file wtype.File) (nrgba *goimage.NRGBA, err error) {
 
 	nrgba = imaging.Clone(img)
 	return nrgba, nil
+}
+
+// OpenGIF will take in a wtype.File object and decode the bytes to return a GIF object
+func OpenGIF(file wtype.File) (GIF *gif.GIF, err error) {
+
+	//returning bytes
+	data, err := file.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	//converting bytes to io.reader type
+	reader := bytes.NewReader(data)
+
+	GIF, err = gif.DecodeAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return GIF, nil
 }
 
 // export image to file
@@ -965,7 +988,7 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 //Data
 //---------------------------------------------------
 
-//Collection of colors
+// Collection of colors
 var colors = map[string]color.Color{
 
 	//ProteinPaintBox under natural light
@@ -1066,7 +1089,7 @@ var colors = map[string]color.Color{
 	"UVMagenta":  color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)},
 }
 
-//Collection of color IDs
+// Collection of color IDs
 var librarySets = map[string][]string{
 	"UV": {"UVCupidPink",
 		"UVyellow",
@@ -1175,23 +1198,48 @@ type livingColor struct {
 	Seq   string
 }
 
-//Living Colors, we use a minimalist object constructor with set defaults to facilitate editing this library
+// Living Colors, we use a minimalist object constructor with set defaults to facilitate editing this library
 var livingColors = map[string]livingColor{
-	"UVDasherGFP": livingColor{
+	"DasherGFP": livingColor{
 		Color: &color.NRGBA{R: uint8(0), G: uint8(255), B: uint8(0), A: uint8(255)},
-		Seq:   "atgacggcattgacggaaggtgcaaaactgtttgagaaagagatcccgtatatcaccgaactggaaggcgacgtcgaaggtatgaaatttatcattaaaggcgagggtaccggtgacgcgaccacgggtaccattaaagcgaaatacatctgcactacgggcgacctgccggtcccgtgggcaaccctggtgagcaccctgagctacggtgttcagtgtttcgccaagtacccgagccacatcaaggatttctttaagagcgccatgccggaaggttatacccaagagcgtaccatcagcttcgaaggcgacggcgtgtacaagacgcgtgctatggttacctacgaacgcggttctatctacaatcgtgtcacgctgactggtgagaactttaagaaagacggtcacattctgcgtaagaacgttgcattccaatgcccgccaagcattctgtatattctgcctgacaccgttaacaatggcatccgcgttgagttcaaccaggcgtacgatattgaaggtgtgaccgaaaaactggttaccaaatgcagccaaatgaatcgtccgttggcgggctccgcggcagtgcatatcccgcgttatcatcacattacctaccacaccaaactgagcaaagaccgcgacgagcgccgtgatcacatgtgtctggtagaggtcgtgaaagcggttgatctggacacgtatcagtaatgagaattctgtacactcgag",
+		Seq:   "ATGACGGCATTGACGGAAGGTGCAAAACTGTTTGAGAAAGAGATCCCGTATATCACCGAACTGGAAGGCGACGTCGAAGGTATGAAATTTATCATTAAAGGCGAGGGTACCGGTGACGCGACCACGGGTACCATTAAAGCGAAATACATCTGCACTACGGGCGACCTGCCGGTCCCGTGGGCAACCCTGGTGAGCACCCTGAGCTACGGTGTTCAGTGTTTCGCCAAGTACCCGAGCCACATCAAGGATTTCTTTAAGAGCGCCATGCCGGAAGGTTATACCCAAGAGCGTACCATCAGCTTCGAAGGCGACGGCGTGTACAAGACGCGTGCTATGGTTACCTACGAACGCGGTTCTATCTACAATCGTGTCACGCTGACTGGTGAGAACTTTAAGAAAGACGGTCACATTCTGCGTAAGAACGTTGCATTCCAATGCCCGCCAAGCATTCTGTATATTCTGCCTGACACCGTTAACAATGGCATCCGCGTTGAGTTCAACCAGGCGTACGATATTGAAGGTGTGACCGAAAAACTGGTTACCAAATGCAGCCAAATGAATCGTCCGTTGGCGGGCTCCGCGGCAGTGCATATCCCGCGTTATCATCACATTACCTACCACACCAAACTGAGCAAAGACCGCGACGAGCGCCGTGATCACATGTGTCTGGTAGAGGTCGTGAAAGCGGTTGATCTGGACACGTATCAGTAATGAGAATTCTGTACACTCGAG",
 	},
-	"UVRudolphRFP": livingColor{
+	"RudolphRFP": livingColor{
 		Color: &color.NRGBA{R: uint8(218), G: uint8(92), B: uint8(69), A: uint8(255)},
 		Seq:   "atgtccctgtcgaaacaagtactgccacacgatgttaagatgcgctatcatatggatggctgcgttaatggtcattctttcaccattgagggtgaaggtgcaggcaaaccgtatgagggcaagaagatcttggaactgcgcgtgacgaaaggtggcccgctgccttttgcgttcgatatcctgagcagcgtttttacctacggtaaccgttgtttttgcgagtatccagaggacatgccggactactttaaacagagcctgccggaaggtcattcttgggaacgcaccctgatgtttgaggatggcggttgtggtacggcgagcgcgcacatttccctggacaagaactgcttcgtgcacaagagcaccttccacggcgtcaatttcccggcaaacggtccggtcatgcaaaagaaagctatgaactgggagccgagcagcgaactgattacggcgtgcgacggtatcctgaaaggcgatgtgaccatgtttctgttgctggaaggtggccaccgtcttaaatgtcagttcaccaccagctacaaagcccacaaggcagttaagatgccgccgaatcacattatcgaacacgtgcttgttaaaaaagaggttgccgacggctttcagatccaagagcatgcggtcgcaaagcacttcaccgtcgacgttaaagaaacgtaatgagaattctgtacactcgag",
 	},
+	"FresnoRFP": livingColor{
+		Color: &color.NRGBA{R: uint8(255), G: uint8(0), B: uint8(166), A: uint8(255)},
+		Seq:   "AATAGCCTGATTAAAGAGAATATGCACATGAAGCTGTACATGGAAGGCACGGTGAATAACCACCACTTCAAATGCACCAGCGAGGGTGAGGGTAAACCGTATGAAGGCACCCAAACGATGCGTATCAAAGTTGTTGAGGGTGGCCCGTTGCCGTTTGCGTTCGACATTTTAGCGACGAGCTTTATGTATGGCTCTCGTACGTTTATCAAGTACCCGAAGGGTATTCCGGACTTTTTCAAACAATCTTTTCCAGAGGGTTTCACCTGGGAGCGCGTGACTCGCTACGAAGATGGCGGCGTCGTGACCGCAACGCAGGATACCTCCCTGGAAGATGGCTGCCTGGTCTACCACGTTCAGGTCCGTGGTGTCAATTTCCCGAGCAATGGTCCGGTTATGCAGAAGAAAACCCTGGGTTGGGAACCGAACACCGAGATGTTGTATCCTGCAGATGGTGGCCTGGAAGGTCGCAGCGACATGGCATTGAAACTGGTCGGTGGCGGCCATCTGAGCTGTAGCTTCGTGACCACGTATCGTTCGAAGAAAACGGTCGGTAACATCAAAATGCCGGGTATTCACGCGGTTGACCACCGTCTGGTGCGCATTAAAGAAGCCGACAAAGAGACTTACGTGGAGCAACATGAAGTAGCCGTTGCGAAATTTGCTGGTTTGGGCGGTGGTATGGACGAACTGTACAAATGAGAATTCTGTACACTCGAG",
+	},
+	"MarleyYFP": livingColor{
+		Color: &color.NRGBA{R: uint8(236), G: uint8(255), B: uint8(0), A: uint8(255)},
+		Seq:   "ACGGCATTGACGGAAGGTGCAAAACTGTTTGAGAAAGAGATCCCGTATATCACCGAACTGGAAGGCGACGTCGAAGGTATGAAATTTATCATTAAAGGCGAGGGTACCGGTGACGCGAGCGTTGGTAAGGTCGACGCGCAGTTTATCTGCACCACGGGTGACGTCCCGGTGCCGTGGAGCACGTTGGTGACGACGCTGACTTACGGTGCCCAATGTTTCGCGAAATATCCGCGTCACATCGCAGACTTCTTCAAATCCTGTATGCCGGAAGGTTATGTGCAAGAGCGCACTATTACCTTTGAGGGTGACGGTGTCTTTAAGACCCGTGCCGAAGTGACCTTCGAAAACGGTAGCGTTTACAACCGTGTCAAGCTGAATGGCCAGGGTTTCAAAAAGGATGGTCACGTTCTGGGTAAGAATCTGGAATTCAACTTCACCCCACACTGCCTGTACATCTGGGGCGATCAAGCGAATCATGGTCTGAAAAGCGCATTTAAGGTGATGCACGAGATTACCGGCTCCAAAGAAGATTTCATCGTGGCTGATCACACCCAGATGAATACCCCGATTGGCGGTGGCCCTGTGCACGTTCCGGAATATCATCACATTACCTACCATGTCACGCTGAGCAAGGATGTTACCGACCATCGCGACCACCTGAACATCGTAGAGGTTATCAAAGCAGTGGACCTGGAGACGTATCGCTAATGAGAATTCTGTACACTCGAG",
+	},
+	"TwinkleCFP": livingColor{
+		Color: &color.NRGBA{R: uint8(27), G: uint8(79), B: uint8(146), A: uint8(255)},
+		Seq:   "TCGTCTGGTGCCAAATTGTTTGAAAAGAAGATCCCGTATATCACTGAACTCGAGGGCGACGTCAATGGTATGAAGTTTACCATTCATGGTAAAGGTACCGGCGATGCGACCACGGGTAAAATTAAAGCGCAGTTCATCTGCACTACGGGCGACGTTCCGGTCCCGTGGGCAACCCTGGTGAGCACCCTGAGCTACGGTGTTCAGTGTTTCGCCAAGTACCCGAGCGAGCTGAAGGATTTCTTTAAGAGCTGCATGCCGGAAGGTTATGTTCAAGAGCGTACCATCACCTTCGAAGGCGACGGCGTGTTTAGGACGCGTGCTGAGGTTACCTTTGAAAACGGTTCTGTCTACAATCGTGTCACTCTGACTGGCGAGGGTTTTAAGAAAGACGGTCACATTCTGCGTAAGAACGTTGCATTCCAATGCCCGCCAGATATTGTGTATATTCTGCCTGACACCGTTAACAATGGCATCCGCGTTGAGTTCAACCAGGCGTACGATATTGAAGGTGTGACCGAAAAACTGGTTACCAAATGCAGCCAAATGAATCGTCCGTTGGCGGGCTCCGCGGCAGTGCATATCCCGCGTTATCATCACCTGAGCAAACACACCAAACTGAGCAAAGACCGCGACGAGCGCCGTGATCACATGTGTCTGGTAGAGGTCGTGAAAGCGGTTGATCTGGACACGTATCAGTAATGAGAATTCTGTACACTCGAG",
+	},
+	"mTagBFP": livingColor{
+		Color: &color.NRGBA{},
+		Seq:   "GTGTCTAAGGGCGAGGAGCTGATTAAGGAGAACATGCACATGAAGCTGTACATGGAGGGCACCGTGGACAACCATCACTTCAAGTGCACATCCGAGGGCGAAGGCAAGCCCTACGAGGGCACCCAGACCATGAGAATCAAGGTGGTCGAGGGCGGCCCTCTCCCCTTCGCCTTCGACATCCTGGCTACTAGCTTCCTCTACGGCAGCAAGACCTTCATCAACCACACCCAGGGCATCCCCGACTTCTTCAAGCAGTCCTTCCCTGAGGGCTTCACATGGGAGAGAGTCACCACATACGAAGACGGGGGCGTGCTGACCGCTACCCAGGACACCAGCCTCCAGGACGGCTGCCTCATCTACAACGTCAAGATCAGAGGGGTGAACTTCACATCCAACGGCCCTGTGATGCAGAAGAAAACACTCGGCTGGGAGGCCTTCACCGAGACGCTGTACCCCGCTGACGGCGGCCTGGAAGGCAGAAACGACATGGCCCTGAAGCTCGTGGGCGGGAGCCATCTGATCGCAAACGCCAAGACCACATATAGATCCAAGAAACCCGCTAAGAACCTCAAGATGCCTGGCGTCTACTATGTGGACTACAGACTGGAAAGAATCAAGGAGGCCAACAACGAAACCTACGTCGAGCAGCACGAGGTGGCAGTGGCCAGATACTGCGACCTCCCTAGCAAACTGGGGCACAAGCTTAATTAATGAGAATTCTGTACACTCGAG",
+	},
+	//since this should be the background this is set to pure white.
+	"Nil": livingColor{
+		Color: &color.NRGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)},
+		Seq:   "CCAAATGCACCCTTACCACGAAGACAGGATTGTCCGATCCTATATTACGACTTTGGCAGGGGGTTCGCAAGTCCCACCCCAAACGATGCTGAAGGCTCAGGTTACACAGGCACAAGTACTATATATACGAGTTCCCGCTCTTAACCTGGATCGAATGCAGAATCATGCATCGTACCACTGTGTTCGTGTCATCTAGGACGGGCGCAAAGGATATATAATTCAATTAAGAATACCTTATATTATTGTACACCTACCGGTCACCAGCCAACAATGTGCGGATGGCGTTACGACTTACTGGGCCTGATCTCACCGCTTTAGATACCGCACACTGGGCAATACGAGGTAAAGCCAGTCACCCAGTGTCGATCAACAGCTAACGTAACGGTAAGAGGCTCACAAA",
+	},
 }
 
-//Collection of living color IDs
+// Collection of living color IDs
 var livingColorSets = map[string][]string{
 	"ProteinPaintBox": {
-		"UVDasherGFP",
-		"UVRudolphRFP",
+		"DasherGFP",
+		"FresnoRFP",
+		"MarleyYFP",
+		"TwinkleCFP",
+		"mTagBFP",
+		"Nil",
 	},
 }
 
@@ -1199,50 +1247,58 @@ var livingColorSets = map[string][]string{
 //Types
 //---------------------------------------------------
 
-//Set of types to use antha with conventional colors (paint)
+// An AnthaColor represents a color linked to an LHComponent
 type AnthaColor struct {
 	Color     color.NRGBA
 	Component *wtype.LHComponent
 }
 
+// An AnthaPalette is an array of anthaColors
 type AnthaPalette struct {
 	AnthaColors []AnthaColor
 	Palette     color.Palette
 }
 
+// An AnthaPix is a pixel linked to an anthaColor, and thereby an LHComponent
 type AnthaPix struct {
 	Color    AnthaColor
 	Location wtype.WellCoords
 }
 
+// An AnthaImg represents an image where pixels are linked
 type AnthaImg struct {
 	Plate   *wtype.LHPlate
 	Pix     []AnthaPix
 	Palette AnthaPalette
 }
 
-//Set of types to use antha with biological colors
+// A LivingColor links a color to physical information such as DNASequence and LHcomponent
 type LivingColor struct {
+	ID        string
 	Color     color.NRGBA
 	Seq       wtype.DNASequence
 	Component *wtype.LHComponent
 }
 
+// A LivingPalette holds an array of livingColor
 type LivingPalette struct {
 	LivingColors []LivingColor
 }
 
+// A LivingPix represents a pixel alongs
 type LivingPix struct {
 	Color    LivingColor
 	Location wtype.WellCoords
 }
 
+//A livingImg is a representation of an image linked to biological data
 type LivingImg struct {
 	Plate   wtype.LHPlate
 	Pix     []LivingPix
 	Palette LivingPalette
 }
 
+//A LivingGIF is a representation of a GIF linked to biological data
 type LivingGIF struct {
 	Frames []LivingImg
 }
@@ -1251,7 +1307,7 @@ type LivingGIF struct {
 //Data Manipulation
 //---------------------------------------------------
 
-//standard colors selectiion
+// SelectLibrary will select a hardcoded set of colors and return them as a palette object
 func SelectLibrary(libID string) (palette color.Palette) {
 
 	selectedLib, found := librarySets[libID]
@@ -1267,6 +1323,7 @@ func SelectLibrary(libID string) (palette color.Palette) {
 	return
 }
 
+// SelectColor will return the desired color from a string ID
 func SelectColor(colID string) (selectedColor color.Color) {
 
 	selectedColor, found := colors[colID]
@@ -1278,7 +1335,7 @@ func SelectColor(colID string) (selectedColor color.Color) {
 	return
 }
 
-//living colors selection
+// SelectLivingColorLibrary will return a the desired set of livingcolors given an ID
 func SelectLivingColorLibrary(ctx context.Context, libID string) (palette LivingPalette) {
 
 	selectedLib, found := livingColorSets[libID]
@@ -1290,7 +1347,7 @@ func SelectLivingColorLibrary(ctx context.Context, libID string) (palette Living
 
 	for _, colorID := range selectedLib {
 		c := livingColors[colorID]
-		lc := MakeLivingColor(ctx, c.Color, c.Seq)
+		lc := MakeLivingColor(ctx, colorID, c.Color, c.Seq)
 
 		palette.LivingColors = append(palette.LivingColors, *lc)
 	}
@@ -1298,6 +1355,7 @@ func SelectLivingColorLibrary(ctx context.Context, libID string) (palette Living
 	return
 }
 
+// SelectLivingColor will return a LivingColor given its ID
 func SelectLivingColor(ctx context.Context, colID string) LivingColor {
 
 	c, found := livingColors[colID]
@@ -1307,7 +1365,8 @@ func SelectLivingColor(ctx context.Context, colID string) LivingColor {
 		panic(fmt.Sprintf("library %s not found so could not make palette", colID))
 	}
 
-	lc := MakeLivingColor(ctx, c.Color, c.Seq)
+	lc := MakeLivingColor(ctx, colID, c.Color, c.Seq)
+
 	return *lc
 }
 
@@ -1315,7 +1374,7 @@ func SelectLivingColor(ctx context.Context, colID string) LivingColor {
 //Utility functions
 //---------------------------------------------------
 
-// Returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
+// Convert returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
 func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 
 	//getting colors of the current anthacolors in the anthaPalette
@@ -1329,7 +1388,7 @@ func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 	return anthaColors[p.Index(c)]
 }
 
-// Given a color, finds the closest one in an anthapalette and returns the index for the anthacolor
+// Index finds the closest color in an anthapalette and returns the index for the anthacolor
 func (p AnthaPalette) Index(c color.Color) int {
 
 	cr, cg, cb, ca := c.RGBA()
@@ -1351,7 +1410,19 @@ func (p AnthaPalette) Index(c color.Color) int {
 	return ret
 }
 
-// Returns the LivingPalette LivingColor closest to c in Euclidean R,G,B space.
+// CheckPresence returns a bool indicating if the AnthaColor is already in the AnthaPalette
+func (p AnthaPalette) CheckPresence(c AnthaColor) bool {
+
+	for _, pc := range p.AnthaColors {
+		if reflect.DeepEqual(pc, c) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Convert returns the LivingPalette LivingColor closest to c in Euclidean R,G,B space.
 func (p LivingPalette) Convert(c color.Color) LivingColor {
 
 	//getting colors of the LivingColors in the LivingPalette
@@ -1365,7 +1436,7 @@ func (p LivingPalette) Convert(c color.Color) LivingColor {
 	return livingColors[p.Index(c)]
 }
 
-// Given a color, finds the closest one in a LivingPalette and returns the index for the LivingPalette
+// Index finds the closest color in a LivingPalette and returns the index for the LivingPalette
 func (p LivingPalette) Index(c color.Color) int {
 
 	cr, cg, cb, ca := c.RGBA()
@@ -1402,29 +1473,100 @@ func sqDiff(x, y uint32) uint32 {
 	return (d * d) >> 2
 }
 
+// CheckPresence returns a bool indicating if the LivingColor is already in the LivingPalette
+func (p LivingPalette) CheckPresence(c LivingColor) bool {
+
+	for _, pc := range p.LivingColors {
+		if reflect.DeepEqual(pc, c) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Compare returns a bool indicating if the LivingPixel is the same as the given one
+func (p1 LivingPix) Compare(p2 LivingPix) (same bool) {
+
+	if reflect.DeepEqual(p1, p2) {
+		return true
+	} else {
+		return false
+	}
+
+}
+
+// GetStates returns an array of unique state changes in a LivingGIF
+func (g1 LivingGIF) GetStates() [][]string {
+
+	//error checking
+	if len(g1.Frames) > 2 {
+		panic("cannot get states of GIF with more than 1 frame")
+	}
+
+	if len(g1.Frames[0].Pix) != len(g1.Frames[1].Pix) {
+		panic("different no of pixels in frames")
+	}
+
+	//globals
+	stateList := make(map[int][]string)
+	stateNum := 0
+
+	//finding each state change and put them into the global map
+	for _, frame := range g1.Frames {
+
+		for _, pix := range frame.Pix {
+
+			stateList[stateNum] = append(stateList[stateNum], pix.Color.ID)
+			stateNum++
+		}
+
+		stateNum = 0
+	}
+
+	//remove duplicates
+	//concatenate state lists to use computationally efficient maps (this is necessary, using arrays takes way too long)
+	var stateListNm []string
+
+	for _, state := range stateList {
+
+		nm := state[0] + "-" + state[1]
+		stateListNm = append(stateListNm, nm)
+
+	}
+
+	//removing duplicate values
+	seen := make(map[string]struct{}, len(stateListNm))
+	j := 0
+	for _, stateNm := range stateListNm {
+		if _, ok := seen[stateNm]; ok {
+			continue
+		}
+		seen[stateNm] = struct{}{}
+		stateListNm[j] = stateNm
+		j++
+	}
+	stateListNm = stateListNm[:j]
+
+	//parsing resulting strings to arrays to make more sense in returned data
+	uniqueStates := [][]string{}
+
+	var re = regexp.MustCompile(`\w+`)
+
+	for _, state := range stateListNm {
+
+		match := re.FindAllString(state, -1)
+		uniqueStates = append(uniqueStates, match)
+	}
+
+	return uniqueStates
+}
+
 //---------------------------------------------------
 //Object constructors
 //---------------------------------------------------
 
-//Object constructor for a LivingColor with default settings
-func MakeLivingColor(ctx context.Context, color *color.NRGBA, seq string) (livingColor *LivingColor) {
-
-	//generating DNA sequence object
-	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
-
-	//use water as LHComponent
-	component, err := inventory.NewComponent(ctx, "water")
-	if err != nil {
-		panic(err)
-	}
-
-	//populate livingColor
-	livingColor = &LivingColor{*color, DNASequence, component}
-
-	return livingColor
-}
-
-//This will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
+// MakeAnthaPalette will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
 func MakeAnthaPalette(palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette {
 
 	//global placeholders
@@ -1457,7 +1599,7 @@ func MakeAnthaPalette(palette color.Palette, LHComponents []*wtype.LHComponent) 
 	return &anthaPalette
 }
 
-//This function will create an AnthaImage object from a digital image.
+// MakeAnthaImg will create an AnthaImage object from a digital image.
 func MakeAnthaImg(goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlate *wtype.LHPlate) (outputImg *AnthaImg, resizedImg *goimage.NRGBA) {
 
 	//Global placeholders
@@ -1497,7 +1639,43 @@ func MakeAnthaImg(goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlat
 	return &anthaImg, goImg
 }
 
-//This function will create a LivingImage object from a digital image.
+// MakeLivingColor is an object constructor for a LivingColor with default settings
+func MakeLivingColor(ctx context.Context, ID string, color *color.NRGBA, seq string) (livingColor *LivingColor) {
+
+	//generating DNA sequence object
+	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
+
+	//use water as LHComponent
+	component, err := inventory.NewComponent(ctx, "dna")
+	if err != nil {
+		panic(err)
+	}
+
+	//populate livingColor
+	livingColor = &LivingColor{ID, *color, DNASequence, component}
+
+	return livingColor
+}
+
+// MakeLivingPalette will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
+func MakeLivingPalette(InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
+
+	//checking that there are enough LHComponents to make the Palette
+	if len(InputPalette.LivingColors) != len(LHComponents) {
+
+		panic("Different number of LivingColors an LHComponent used to make a LivingPalette")
+
+	} else {
+		//Adding the LHComponents to the livingColors
+		for i := range InputPalette.LivingColors {
+			InputPalette.LivingColors[i].Component = LHComponents[i]
+		}
+	}
+
+	return &InputPalette
+}
+
+// MakeLivingImg will create a LivingImage object from a digital image.
 func MakeLivingImg(goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImgPlate *wtype.LHPlate) (outputImg *LivingImg, resizedImg *goimage.NRGBA) {
 
 	//Global placeholders
@@ -1537,26 +1715,7 @@ func MakeLivingImg(goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImg
 	return &livingImg, goImg
 }
 
-//This will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
-func MakeLivingPalette(InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
-
-	//global placeholders
-	var err error
-
-	//checking that there are enough LHComponents to make the Palette
-	if len(InputPalette.LivingColors) != len(LHComponents) {
-		fmt.Println(err.Error())
-	} else {
-		//Adding the LHComponents to the livingColors
-		for i := range InputPalette.LivingColors {
-			InputPalette.LivingColors[i].Component = LHComponents[i]
-		}
-	}
-
-	return &InputPalette
-}
-
-//This will make a LivingGIF object given a slice of LivingImg
+// MakeLivingGIF makes a LivingGIF object given a slice of LivingImg
 func MakeLivingGIF(imgs []LivingImg) *LivingGIF {
 
 	var livingGIF LivingGIF
@@ -1572,7 +1731,7 @@ func MakeLivingGIF(imgs []LivingImg) *LivingGIF {
 //Image manipulation
 //---------------------------------------------------
 
-//Minimalist resize function. Uses Lanczos resampling, which is the best but slowest method.
+// ResizeImagetoPlateMin is a Minimalist resize function. Uses Lanczos resampling, which is the best but slowest method.
 func ResizeImagetoPlateMin(img *goimage.NRGBA, plate *wtype.LHPlate) (plateImage *goimage.NRGBA) {
 
 	if img.Bounds().Dy() != plate.WellsY() {
@@ -1597,4 +1756,37 @@ func ResizeImagetoPlateMin(img *goimage.NRGBA, plate *wtype.LHPlate) (plateImage
 	}
 	return
 
+}
+
+// ParseGIF will extract those frames from a GIF object and return an array of the images
+func ParseGIF(GIF *gif.GIF, frameNum []int) (imgs []*goimage.NRGBA, err error) {
+
+	//error check
+
+	//finding maximum number in the given array (no go builtins for this)
+	var largest int
+
+	for _, n := range frameNum {
+
+		if n > largest {
+			largest = n
+		} else {
+			continue
+		}
+	}
+
+	if len(GIF.Image) <= largest {
+		panic(fmt.Errorf("Frame number to be extracted is out of bound of the possible frame. The GIF has %d frames (we use array notation to extract, so starts at 0)", len(GIF.Image)))
+	}
+
+	//extracting frames
+	for _, Num := range frameNum {
+
+		//convert image from image.Paletted to image.NRGBA
+		convertedImg := toNRGBA(GIF.Image[Num])
+
+		imgs = append(imgs, convertedImg)
+	}
+
+	return imgs, nil
 }

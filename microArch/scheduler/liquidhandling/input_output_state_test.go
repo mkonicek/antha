@@ -2,14 +2,13 @@ package liquidhandling
 
 import (
 	"context"
-	"reflect"
-	"testing"
-
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"reflect"
+	"testing"
 )
 
 type initFinalCmp struct {

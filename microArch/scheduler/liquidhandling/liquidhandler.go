@@ -78,7 +78,8 @@ func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
 	lh := Liquidhandler{}
 	lh.SetupAgent = BasicSetupAgent
 	lh.LayoutAgent = ImprovedLayoutAgent
-	lh.ExecutionPlanner = ImprovedExecutionPlanner
+	//lh.ExecutionPlanner = ImprovedExecutionPlanner
+	lh.ExecutionPlanner = ExecutionPlanner3
 	lh.Properties = properties
 	lh.FinalProperties = properties
 	lh.plateIDMap = make(map[string]string)
@@ -311,6 +312,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 			vol := wunit.NewVolume(rv, unroundedvol.Unit().PrefixedSymbol())
 			well := plate.Wellcoords[crd]
 			well2 := plate2.Wellcoords[crd]
+
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
 				well2.WContents.SetVolume(vol)

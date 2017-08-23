@@ -192,7 +192,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 
 		// update sources
 
-		updateSources(bestSrc, bestMatch)
+		updateSources(bestSrc, bestMatch, opt.Carryvol)
 		updateDests(currCmps, bestMatch)
 
 		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))
@@ -201,10 +201,12 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	return rep, nil
 }
 
-func updateSources(src wtype.ComponentVector, match wtype.Match) wtype.ComponentVector {
+func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol wunit.Volume) wtype.ComponentVector {
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
-			src[match.M[i]].Vol -= match.Vols[i].ConvertToString(src[match.M[i]].Vunit)
+			volSub := wunit.CopyVolume(match.Vols[i])
+			volSub.Add(carryVol)
+			src[match.M[i]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit) //match.Vols[i].ConvertToString(src[match.M[i]].Vunit)
 		}
 	}
 

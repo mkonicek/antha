@@ -105,7 +105,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		}
 
 		for _, t := range parallelTransfers.Transfers {
-			transfers, err := makeTransfers(t, cmps, robot, inssIn)
+			transfers, err := makeTransfers(t, cmps, robot, inssIn, carryvol)
 
 			if err != nil {
 				return nil, err
@@ -119,7 +119,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	return insOut, nil
 }
 
-func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent, robot *LHProperties, inssIn []*wtype.LHInstruction) ([]*TransferInstruction, error) {
+func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
 	fromPlateIDs := parallelTransfer.PlateIDs
 	fromWells := parallelTransfer.WellCoords
 	vols := parallelTransfer.Vols
@@ -232,13 +232,9 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		ptwx[ci] = dstPlate.WellsX()
 		ptwy[ci] = dstPlate.WellsY()
 
-		// do the bookkeeping... iff we're not doing multi (?!)
-
-		// TODO TODO TODO -- make this fix unnecessary
-		//				if multi > 1 {
 		cmpFrom := wellFrom.Remove(va[ci])
-
-		//fmt.Println("GET: ", wh[ci], " ", wf[ci], " ", va[ci], " ", ptf[ci], " ", wellFrom.WContents.CName, " ", wellFrom.WContents.Vol, " MULTI: ", multi)
+		// silently remove the carry
+		wellFrom.Remove(carryvol)
 
 		if cmpFrom == nil {
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")

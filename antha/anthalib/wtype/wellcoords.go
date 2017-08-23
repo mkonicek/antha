@@ -8,6 +8,24 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
+func A1ArrayFromWells(wells []*LHWell) []string {
+	return A1ArrayFromWellCoords(WCArrayFromWells(wells))
+}
+
+func WCArrayFromWells(wells []*LHWell) []WellCoords {
+	ret := make([]WellCoords, 0, len(wells))
+
+	for _, w := range wells {
+		if w == nil {
+			continue
+		}
+
+		ret = append(ret, MakeWellCoords(w.Crds))
+	}
+
+	return ret
+}
+
 func WCArrayFromStrings(arr []string) []WellCoords {
 	ret := make([]WellCoords, len(arr))
 
@@ -36,6 +54,38 @@ func MakeWellCoordsArray(sa []string) []WellCoords {
 	}
 
 	return r
+}
+
+func WCArrayCols(wcA []WellCoords) []int {
+	return squashedIntFromWCA(wcA, 0)
+}
+
+func WCArrayRows(wcA []WellCoords) []int {
+	return squashedIntFromWCA(wcA, 1)
+}
+
+func containsInt(i int, ia []int) bool {
+	for _, ii := range ia {
+		if i == ii {
+			return true
+		}
+	}
+	return false
+}
+
+func squashedIntFromWCA(wcA []WellCoords, which int) []int {
+	ret := make([]int, 0, len(wcA))
+	for _, wc := range wcA {
+		v := wc.X
+		if which == 1 {
+			v = wc.Y
+		}
+
+		if !containsInt(v, ret) {
+			ret = append(ret, v)
+		}
+	}
+	return ret
 }
 
 // convenience comparison operator

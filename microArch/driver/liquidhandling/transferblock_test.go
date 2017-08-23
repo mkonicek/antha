@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -283,6 +284,52 @@ func TestMultichannelPositive(t *testing.T) {
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)
+}
+
+func TestIndependentMultichannelPositive(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	tb, dstp := getTransferBlock(ctx)
+
+	ins := make([]*wtype.LHInstruction, 0, len(tb.Inss)-1)
+
+	for i := 0; i < len(tb.Inss); i++ {
+		// make one hole
+		if i == 4 {
+			continue
+		}
+		ins = append(ins, tb.Inss[i])
+	}
+
+	tb.Inss = ins
+
+	rbt := getTestRobot(ctx, dstp)
+
+	// allow independent multichannel activity
+	rbt.HeadsLoaded[0].Params.Independent = true
+
+	pol, err := GetLHPolicyForTest()
+
+	// allow multi
+
+	pol.Policies["water"]["CAN_MULTI"] = true
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(ris) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
+	}
+
+	for _, ins := range ris {
+		fmt.Println(InsToString(ins))
+	}
+
+	testPositive(ctx, ris, pol, rbt, t)
+	t.Errorf("LOOK AT THE SOURCES... SOMETHING BAD HAS HAPPENED IN ALIGN>...")
 }
 
 func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {

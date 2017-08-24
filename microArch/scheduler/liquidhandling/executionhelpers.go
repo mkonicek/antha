@@ -462,6 +462,7 @@ func set_output_order(rq *LHRequest) error {
 	unsorted := getInstructionSet(rq)
 
 	tg := MakeTGraph(unsorted)
+
 	sorted, err := graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
 	if err != nil {

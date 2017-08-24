@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -42,14 +43,22 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 
 	approvedunits := UnitMap["Concentration"]
 
+	var sortedKeys []string
+
+	for k, _ := range approvedunits {
+		sortedKeys = append(sortedKeys, k)
+	}
+
+	sort.Strings(sortedKeys)
+
 	fields := strings.Fields(componentname)
 	var unitmatchlength int
 	var longestmatchedunit string
 	var valueandunit string
 	var unit string
 	var valueString string
-
-	for key, _ := range approvedunits {
+	var notConcFields []string
+	for _, key := range sortedKeys {
 		for i, field := range fields {
 
 			/// if value and unit are separate fields
@@ -57,55 +66,58 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 				f, err := strconv.ParseFloat(fields[i-1], 64)
 				if err == nil && f != 0 {
 					if len(key) > unitmatchlength {
+						notConcFields = make([]string, 0)
 						longestmatchedunit = key
 						unitmatchlength = len(key)
 						valueString = fields[i-1]
 						unit = field
 						valueandunit = valueString + unit
+						if (i - 1) > 0 {
+							notConcFields = append(notConcFields, fields[:i-1]...)
+						}
+						if len(fields) > i+1 {
+							notConcFields = append(notConcFields, fields[i+1:]...)
+						}
+						//break
 					}
 					// support for cases where concentration unit is given but no value
 				} else if trimmed := strings.Trim(field, "()"); trimmed == key {
 					if len(key) > unitmatchlength {
+						notConcFields = make([]string, 0)
 						longestmatchedunit = key
 						unitmatchlength = len(key)
 						valueandunit = field
+						if i > 0 {
+							notConcFields = append(notConcFields, fields[:i]...)
+						}
+						if len(fields) > i+1 {
+							notConcFields = append(notConcFields, fields[i+1:]...)
+						}
+						//break
 					}
 				}
 				// if value and unit are one joined field
+				// change this to separate number and match rest of valueandunit
 			} else if trimmed := strings.Trim(field, "()"); strings.HasSuffix(field, key) || strings.HasSuffix(trimmed, key) {
 				if len(key) > unitmatchlength {
+					notConcFields = make([]string, 0)
 					longestmatchedunit = key
 					unitmatchlength = len(key)
 					valueandunit = field
+					if i > 0 {
+						notConcFields = append(notConcFields, fields[:i]...)
+					}
+					if len(fields) > i+1 {
+						notConcFields = append(notConcFields, fields[i+1:]...)
+					}
+					//break
 				}
 			}
 		}
 	}
 
-	// append other fields into one
-	//if len(fields) > 3 {
-	//	return false, conc, componentname
-	/*
-		var namefields []string
+	componentNameOnly = strings.Join(notConcFields, " ")
 
-		for _, field := range fields {
-			if field != longestmatchedunit && field != valueString {
-				namefields = append(namefields, field)
-			}
-		}
-		componentNameOnly = strings.Join(namefields, " ")
-	*/
-	//} else {
-
-	for _, field := range fields {
-		if len(fields) == 2 && field != longestmatchedunit {
-			componentNameOnly = field
-		} else if len(fields) == 3 && field != longestmatchedunit && field != valueString {
-			componentNameOnly = field
-		}
-	}
-
-	//}
 	// if no match, return original component name
 	if unitmatchlength == 0 {
 		return false, conc, componentname

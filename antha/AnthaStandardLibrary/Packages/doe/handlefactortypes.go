@@ -24,10 +24,13 @@
 package doe
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/inventory"
 )
 
 // parses a factor name and value and returns an antha concentration.
@@ -72,4 +75,85 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 	}
 
 	return
+}
+
+// parses a factor name and value and returns an antha Volume.
+// If the value cannot be converted to a valid Volume an error is returned.
+func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Volume, err error) {
+
+	if rawVolString, found := value.(string); found {
+
+		vol, err := wunit.ParseVolume(rawVolString)
+
+		if err == nil {
+			anthaVolume = vol
+		} else {
+			err = fmt.Errorf("No valid Volume found in ", rawVolString)
+			return anthaVolume, err
+		}
+
+		// if float use vol unit from header component
+	} else if rawVolFloat, found := value.(float64); found {
+
+		// handle floating point imprecision
+		rawVolFloat, err = wutil.Roundto(rawVolFloat, 6)
+
+		if err != nil {
+			return anthaVolume, err
+		}
+		vol, err := wunit.ParseVolume(header)
+
+		if err == nil {
+
+			volUnit := vol.Unit().PrefixedSymbol()
+
+			anthaVolume = wunit.NewVolume(rawVolFloat, volUnit)
+		} else {
+			err = fmt.Errorf("No valid Volume found in component %s so can't assign a Volume unit to value", header)
+			return anthaVolume, err
+		}
+
+	} else {
+		err = fmt.Errorf("problem with type of ", value, " expected string or float")
+		return anthaVolume, err
+	}
+
+	return
+}
+
+// HandleLHComponentFactory parses a factor name and value and returns an
+// LHComponent.
+//
+// If the value cannot be converted to a valid component an error is returned.
+func HandleLHComponentFactor(ctx context.Context, header string, value interface{}) (*wtype.LHComponent, error) {
+	str, found := value.(string)
+	if !found {
+		return nil, fmt.Errorf("value %T is not a string", value)
+	}
+
+	component, err := inventory.NewComponent(ctx, str)
+	if err == nil {
+		return component, nil
+	}
+
+	if err == inventory.ErrUnknownType {
+		component, err = inventory.NewComponent(ctx, inventory.WaterType)
+		component.CName = str
+		return component, err
+	}
+
+	return nil, err
+}
+
+// HandleLHPlateFactor parses a factor name and value and returns an
+// LHComponent.
+//
+// If the value cannot be converted to a valid component an error is returned.
+func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) (*wtype.LHPlate, error) {
+	str, found := value.(string)
+	if !found {
+		return nil, fmt.Errorf("value %T is not a string", value)
+	}
+
+	return inventory.NewPlate(ctx, str)
 }

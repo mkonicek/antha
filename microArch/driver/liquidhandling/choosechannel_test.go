@@ -1,12 +1,13 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	. "github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func getVols() []wunit.Volume {
@@ -160,13 +161,13 @@ func makeTestLH() *LHProperties {
 
 	return lhp
 }
+
 func SetUpTipsFor(lhp *LHProperties) *LHProperties {
-	tips := GetTipList()
+	ctx := testinventory.NewContext(context.Background())
 
 	seen := make(map[string]bool)
 
-	for _, tt := range tips {
-		tb := GetTipByType(tt)
+	for _, tb := range testinventory.GetTipboxes(ctx) {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
 			tip := tb.Tips[0][0]
 			str := tip.Mnfr + tip.Type + tip.MinVol.ToString() + tip.MaxVol.ToString()

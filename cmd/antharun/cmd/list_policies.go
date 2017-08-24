@@ -110,6 +110,21 @@ func listPolicies(cmd *cobra.Command, args []string) error {
 
 		_, err := fmt.Println(strings.Join(lines, "\n"))
 		return err
+	case csvOutput:
+		var lines []string
+		lines = append(lines, "PolicyName,Properties")
+
+		for _, p := range ps {
+			var kvs []string
+			for k, v := range p.Properties {
+				kvs = append(kvs, fmt.Sprintf("%s: %v", k, v))
+			}
+			sort.Strings(kvs)
+
+			lines = append(lines, p.Name+","+strings.Join(kvs, ","))
+		}
+		_, err := fmt.Println(strings.Join(lines, "\n"))
+		return err
 	default:
 		return fmt.Errorf("unknown output format %q", output)
 	}

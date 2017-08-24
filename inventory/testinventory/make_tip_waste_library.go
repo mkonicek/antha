@@ -1,5 +1,4 @@
-// /anthalib/factory/make_tip_waste_library.go: Part of the Antha language
-// Copyright (C) 2015 The Antha authors. All rights reserved.
+// Copyright (C) 2017 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,23 +19,19 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package factory
+package testinventory
 
 import "github.com/antha-lang/antha/antha/anthalib/wtype"
 
-func makeTipwastes() map[string]*wtype.LHTipwaste {
-	ret := make(map[string]*wtype.LHTipwaste, 1)
-
-	ret["Gilsontipwaste"] = makeGilsonTipWaste()
-	ret["CyBiotipwaste"] = makeCyBioTipwaste()
-	ret["Manualtipwaste"] = makeManualTipwaste()
-	return ret
+func makeTipwastes() (tipwastes []*wtype.LHTipwaste) {
+	tipwastes = append(tipwastes, makeGilsonTipWaste(), makeCyBioTipwaste(), makeManualTipwaste(), makeTecanTipwaste())
+	return
 }
 
 func makeGilsonTipWaste() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 123.0, 80.0, 92.0)
 	w := wtype.NewLHWell("Gilsontipwaste", "", "A1", "ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(600, "gilsontipwaste", "gilson", 92.0, w, 49.5, 31.5, 0.0)
+	lht := wtype.NewLHTipwaste(600, "Gilsontipwaste", "gilson", 92.0, w, 49.5, 31.5, 0.0)
 	return lht
 }
 
@@ -52,23 +47,13 @@ func makeCyBioTipwaste() *wtype.LHTipwaste {
 func makeManualTipwaste() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 90.5, 171.0, 90.0)
 	w := wtype.NewLHWell("manualtipwaste", "", "A1", "ul", 800000.0, 800000.0, shp, 0, 90.5, 171.0, 90.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(1000000, "TipWasteBag", "ACMEBagsInc", 90.5, w, 85.5, 45.0, 0.0)
+	lht := wtype.NewLHTipwaste(1000000, "Manualtipwaste", "ACMEBagsInc", 90.5, w, 85.5, 45.0, 0.0)
 	return lht
 }
 
-func GetTipwasteByType(typ string) *wtype.LHTipwaste {
-	tipwastes := makeTipwastes()
-	t := tipwastes[typ]
-	return t.Dup()
-}
-
-func TipwasteList() []string {
-	tipwastes := makeTipwastes()
-	kz := make([]string, len(tipwastes))
-	x := 0
-	for name, _ := range tipwastes {
-		kz[x] = name
-		x += 1
-	}
-	return kz
+func makeTecanTipwaste() *wtype.LHTipwaste {
+	shp := wtype.NewShape("box", "mm", 90.5, 171.0, 90.0)
+	w := wtype.NewLHWell("Tecantipwaste", "", "A1", "ul", 800000.0, 800000.0, shp, 0, 90.5, 171.0, 90.0, 0.0, "mm")
+	lht := wtype.NewLHTipwaste(2000, "Tecantipwaste", "Tecan", 90.5, w, 85.5, 45.0, 0.0)
+	return lht
 }

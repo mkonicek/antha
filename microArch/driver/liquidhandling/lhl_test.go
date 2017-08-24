@@ -1,11 +1,14 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/factory"
-	"testing"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func makeGilson() *LHProperties {
@@ -82,14 +85,28 @@ func makeGilson() *LHProperties {
 	return lhp
 }
 
-func makeTestGilson() *LHProperties {
+func makeTestGilson(ctx context.Context) (*LHProperties, error) {
 	params := makeGilson()
 
-	params.AddTipWaste(factory.GetTipwasteByType("Gilsontipwaste"))
-	params.AddTipBox(factory.GetTipboxByType("DL10 Tip Rack (PIPETMAX 8x20)"))
-	params.AddTipBox(factory.GetTipboxByType("DF200 Tip Rack (PIPETMAX 8x200)"))
+	tw, err := inventory.NewTipwaste(ctx, "Gilsontipwaste")
+	if err != nil {
+		return nil, err
+	}
+	params.AddTipWaste(tw)
 
-	return params
+	tb, err := inventory.NewTipbox(ctx, "DL10 Tip Rack (PIPETMAX 8x20)")
+	if err != nil {
+		return nil, err
+	}
+	params.AddTipBox(tb)
+
+	tb, err = inventory.NewTipbox(ctx, "DF200 Tip Rack (PIPETMAX 8x200)")
+	if err != nil {
+		return nil, err
+	}
+	params.AddTipBox(tb)
+
+	return params, nil
 }
 
 func getTestBlowout(robot *LHProperties) RobotInstruction {
@@ -110,7 +127,13 @@ func getTestBlowout(robot *LHProperties) RobotInstruction {
 
 func TestBlowWithTipChange(t *testing.T) {
 	t.Skip()
-	robot := makeTestGilson()
+
+	ctx := testinventory.NewContext(context.Background())
+	robot, err := makeTestGilson(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	bi := getTestBlowout(robot)
 	pol, _ := GetLHPolicyForTest()
 
@@ -122,7 +145,7 @@ func TestBlowWithTipChange(t *testing.T) {
 	pol.AddRule(rule, pols)
 	set := NewRobotInstructionSet(bi)
 
-	ris, err := set.Generate(pol, robot)
+	ris, err := set.Generate(ctx, pol, robot)
 
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +165,13 @@ func TestBlowWithTipChange(t *testing.T) {
 }
 
 func TestBlowNoTipChange(t *testing.T) {
-	robot := makeTestGilson()
+	ctx := testinventory.NewContext(context.Background())
+
+	robot, err := makeTestGilson(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	bi := getTestBlowout(robot)
 	pol, _ := GetLHPolicyForTest()
 
@@ -154,12 +183,12 @@ func TestBlowNoTipChange(t *testing.T) {
 	pol.AddRule(rule, pols)
 	set := NewRobotInstructionSet(bi)
 
-	ris, err := set.Generate(pol, robot)
+	ris, err := set.Generate(ctx, pol, robot)
 
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedIns := []int{MOV, DSP, MOV, MMX, MOV, BLO}
+	expectedIns := []int{MOV, DSP, MOV, MIX, MOV, BLO}
 
 	if len(ris) != len(expectedIns) {
 		t.Fatal(fmt.Sprintf("Error: Expected %d instructions, got %d", len(expectedIns), len(ris)))

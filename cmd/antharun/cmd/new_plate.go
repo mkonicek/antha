@@ -22,10 +22,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,11 +51,10 @@ func newPlate(cmd *cobra.Command, args []string) error {
 	ptype := args[0]
 	file := args[1]
 
-	inv := factory.GetPlateLibrary()
-
-	plate, ok := inv[ptype]
-	if !ok {
-		return fmt.Errorf("invalid plate type %q", ptype)
+	ctx := testinventory.NewContext(context.Background())
+	plate, err := inventory.NewPlate(ctx, ptype)
+	if err != nil {
+		return fmt.Errorf("cannot make plate %q %s", ptype, err)
 	}
 	return wtype.AutoExportPlateCSV(file, plate)
 }

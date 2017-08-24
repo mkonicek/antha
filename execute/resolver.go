@@ -44,7 +44,7 @@ func (a *resolver) resolve(ctx context.Context, instObjs []interface{}) (map[int
 		return nil, err
 	}
 
-	insts, err := codegen.Compile(t, nodes)
+	insts, err := codegen.Compile(ctx, t, nodes)
 	if err != nil {
 		return nil, err
 	}

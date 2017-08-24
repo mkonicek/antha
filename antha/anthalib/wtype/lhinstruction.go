@@ -10,15 +10,17 @@ const (
 	LHIEND = iota
 	LHIMIX
 	LHIWAI
+	LHIPRM
 )
 
+var InsNames = []string{"END", "MIX", "WAIT", "PROMPT"}
+
 func InsType(i int) string {
-	insnames := []string{"END", "MIX", "WAIT"}
 
 	ret := ""
 
-	if i >= 0 && i < len(insnames) {
-		ret = insnames[i]
+	if i >= 0 && i < len(InsNames) {
+		ret = InsNames[i]
 	}
 
 	return ret
@@ -45,14 +47,32 @@ type LHInstruction struct {
 	gen              int
 	PlateName        string
 	OutPlate         *LHPlate
+	Message          string
+	PassThrough      map[string]*LHComponent // 1:1 pass through, only applies to prompts
 }
 
-func NewLHInstruction() *LHInstruction {
+// privatised in favour of specific instruction constructors
+func newLHInstruction() *LHInstruction {
 	var lhi LHInstruction
 	lhi.ID = GetUUID()
 	lhi.Majorlayoutgroup = -1
+	lhi.PassThrough = make(map[string]*LHComponent, 1)
 	return &lhi
 }
+
+func NewLHMixInstruction() *LHInstruction {
+	lhi := newLHInstruction()
+	lhi.Type = LHIMIX
+	return lhi
+
+}
+
+func NewLHPromptInstruction() *LHInstruction {
+	lhi := newLHInstruction()
+	lhi.Type = LHIPRM
+	return lhi
+}
+
 func (inst *LHInstruction) AddProduct(cmp *LHComponent) {
 	inst.Result = cmp
 	inst.ProductID = cmp.ID
@@ -82,6 +102,14 @@ func (ins *LHInstruction) SetPlateID(pid string) {
 }
 
 func (ins *LHInstruction) IsMixInPlace() bool {
+	if ins == nil {
+		return false
+	}
+
+	if len(ins.Components) == 0 {
+		return false
+	}
+
 	smp := ins.Components[0].IsSample()
 	return !smp
 }

@@ -23,18 +23,19 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
-func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
+func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
 	// do this multiply based on the order in the chain
 
 	ch := request.InstructionChain
@@ -51,7 +52,7 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 		if ch == nil {
 			break
 		}
-		request, pc, mp, err = LayoutStage(request, params, ch, pc, mp)
+		request, pc, mp, err = LayoutStage(ctx, request, params, ch, pc, mp)
 		k += 1
 		if err != nil {
 			break
@@ -59,8 +60,7 @@ func ImprovedLayoutAgent(request *LHRequest, params *liquidhandling.LHProperties
 		ch = ch.Child
 	}
 
-	// let's make things nice and simple
-
+	// prune out dead instructions from the assignments
 	filtered := make(map[string][]string)
 
 	for k, insAr := range request.Output_assignments {
@@ -124,6 +124,10 @@ func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []Plat
 func find_insID(plateID, wellcoords string, rq *LHRequest) string {
 	r := ""
 	for _, ins := range rq.LHInstructions {
+		// ignore non-mix instructions
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
 		if ins.PlateID() == plateID && ins.Welladdress == wellcoords {
 			r = ins.ID
 			break
@@ -143,7 +147,7 @@ func getNameForID(pc []PlateChoice, id string) string {
 	return fmt.Sprintf("Output_plate_%s", id[0:6])
 }
 
-func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain *IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
+func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties, chain *IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
 	// considering only plate assignments,
 	// we have three kinds of solution
 	// 1- ones going to a specific plate
@@ -161,13 +165,19 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 	}
 	// now we know what remains unassigned, we assign it
 
-	plate_choices = choose_plates(request, plate_choices, chain.ValueIDs())
+	plate_choices, err = choose_plates(ctx, request, plate_choices, chain.ValueIDs())
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	// now we have solutions of type 1 & 2
 
 	// make specific plates... this may mean splitting stuff out into multiple plates
 
-	remap := make_plates(request, chain.ValueIDs())
+	remap, err := make_plates(ctx, request, chain.ValueIDs())
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	// I fix da map
 
@@ -190,7 +200,9 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 	// now we have solutions of type 1 only -- we just need to
 	// say where on each plate they will go
 	// this needs to set Output_assignments
-	make_layouts(request, plate_choices)
+	if err := make_layouts(ctx, request, plate_choices); err != nil {
+		return nil, nil, nil, err
+	}
 
 	lkp := make(map[string][]*wtype.LHComponent)
 	lk2 := make(map[string]string)
@@ -200,6 +212,20 @@ func LayoutStage(request *LHRequest, params *liquidhandling.LHProperties, chain 
 	order := chain.ValueIDs()
 	for _, id := range order {
 		v := request.LHInstructions[id]
+		// pass ID through chain if not a mix
+		if v.Type != wtype.LHIMIX {
+			// the current contract on non-mix instructions is to pass in just one
+			// component as an input and one as an output
+			// on which basis we need only make sure the result has the same location
+			// as the input
+			// set pass throughs
+
+			for i := 0; i < len(v.Components); i++ {
+				v.PassThrough[v.Components[i].ID].Loc = v.Components[i].Loc
+			}
+			continue
+		}
+
 		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
 		lk2[v.Result.ID] = v.ID
 	}
@@ -279,6 +305,12 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 	for _, k := range order {
 		x += 1
 		v := request.LHInstructions[k]
+
+		// ignore non-mixes
+		if v.Type != wtype.LHIMIX {
+			continue
+		}
+
 		// if plate ID set
 		if v.PlateID() != "" {
 			//MixInto
@@ -334,14 +366,24 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			// the first component sets the destination
 			// and now it should indeed be set
 
-			addr, ok := st.GetLocationOf(v.Components[0].ID)
-
-			if !ok {
-				err := wtype.LHError(wtype.LH_ERR_DIRE, "MIX IN PLACE WITH NO LOCATION SET")
-				return s, m, err
+			// really?
+			if len(v.Components) == 0 {
+				continue
 			}
 
-			v.Components[0].Loc = addr
+			addr := v.Components[0].Loc
+
+			if v.Components[0].Loc == "" {
+				addr, ok := st.GetLocationOf(v.Components[0].ID)
+
+				if !ok {
+					err := wtype.LHError(wtype.LH_ERR_DIRE, "MIX IN PLACE WITH NO LOCATION SET")
+					return s, m, err
+				}
+
+				v.Components[0].Loc = addr
+			}
+
 			tx := strings.Split(addr, ":")
 			request.LHInstructions[k].Welladdress = tx[1]
 			request.LHInstructions[k].SetPlateID(tx[0])
@@ -399,9 +441,16 @@ func defined(s string, pc []PlateChoice) int {
 	return r
 }
 
-func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []PlateChoice {
+func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, order []string) ([]PlateChoice, error) {
 	for _, k := range order {
 		v := request.LHInstructions[k]
+
+		// ignore non-mix instructions
+
+		if v.Type != wtype.LHIMIX {
+			continue
+		}
+
 		// this id may be temporary, only things without it still are not assigned to a
 		// plate, even a virtual one
 		if v.PlateID() == "" {
@@ -413,7 +462,6 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 				ass = assignmentWithType(pt, pc)
 			} else if len(pc) != 0 {
 				// just stick it in the first one
-
 				ass = 0
 			}
 
@@ -436,7 +484,10 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 	pc2 := make([]PlateChoice, 0, len(pc))
 
 	for _, v := range pc {
-		plate := factory.GetPlateByType(v.Platetype)
+		plate, err := inventory.NewPlate(ctx, v.Platetype)
+		if err != nil {
+			return nil, err
+		}
 
 		// chop the assignments up
 
@@ -457,7 +508,8 @@ func choose_plates(request *LHRequest, pc []PlateChoice, order []string) []Plate
 			request.LHInstructions[i].PlateName = c.Name
 		}
 	}
-	return pc2
+
+	return pc2, nil
 }
 
 // chop the assignments up modulo plate size
@@ -562,11 +614,18 @@ func plateidarray(arr []*wtype.LHPlate) []string {
 // we have potentially added extra theoretical plates above
 // now we make real plates and swap them in
 
-func make_plates(request *LHRequest, order []string) map[string]string {
+func make_plates(ctx context.Context, request *LHRequest, order []string) (map[string]string, error) {
 	remap := make(map[string]string)
 	//for k, v := range request.LHInstructions {
 	for _, k := range order {
 		v := request.LHInstructions[k]
+
+		// ignore non-mix instructions
+
+		if v.Type != wtype.LHIMIX {
+			continue
+		}
+
 		_, skip := remap[v.PlateID()]
 
 		if skip {
@@ -580,10 +639,9 @@ func make_plates(request *LHRequest, order []string) map[string]string {
 
 		// need to assign a new plate
 		if !(ok || ok2) {
-			plate := factory.GetPlateByType(v.Platetype)
-
-			if plate == nil {
-				logger.Fatal(fmt.Sprintln("Output mapping: no such plate type: ", v.Platetype))
+			plate, err := inventory.NewPlate(ctx, v.Platetype)
+			if err != nil {
+				return nil, fmt.Errorf("cannot make plate %s: %s", v.Platetype, err)
 			}
 			plate.PlateName = request.LHInstructions[k].PlateName
 			request.Output_plates[plate.ID] = plate
@@ -593,10 +651,10 @@ func make_plates(request *LHRequest, order []string) map[string]string {
 
 	}
 
-	return remap
+	return remap, nil
 }
 
-func make_layouts(request *LHRequest, pc []PlateChoice) error {
+func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) error {
 	//sampletracker := sampletracker.GetSampleTracker()
 	// we need to fill in the platechoice structure then
 	// transfer the info across to the solutions
@@ -606,7 +664,10 @@ func make_layouts(request *LHRequest, pc []PlateChoice) error {
 	for _, c := range pc {
 		// make a temporary plate to hold info
 
-		plat := factory.GetPlateByType(c.Platetype)
+		plat, err := inventory.NewPlate(ctx, c.Platetype)
+		if err != nil {
+			return err
+		}
 
 		// make an iterator for it
 

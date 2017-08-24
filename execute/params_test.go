@@ -1,20 +1,24 @@
 package execute
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/meta"
-	"github.com/antha-lang/antha/microArch/factory"
 )
 
-func unmarshal(obj interface{}, data []byte) error {
+func unmarshal(ctx context.Context, obj interface{}, data []byte) error {
 	var u unmarshaler
 
 	um := &meta.Unmarshaler{
-		Struct: u.unmarshalStruct,
+		Struct: func(bs []byte, obj interface{}) error {
+			return u.unmarshalStruct(ctx, bs, obj)
+		},
 	}
 	if err := um.UnmarshalJSON(data, obj); err != nil {
 		return err
@@ -23,11 +27,13 @@ func unmarshal(obj interface{}, data []byte) error {
 }
 
 func TestString(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Value string
 	var x Value
 	golden := Value("hello")
 
-	if err := unmarshal(&x, []byte(`"hello"`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`"hello"`)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -35,10 +41,12 @@ func TestString(t *testing.T) {
 }
 
 func TestInt(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Value int
 	var x Value
 	golden := Value(1)
-	if err := unmarshal(&x, []byte(`1`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`1`)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -46,6 +54,8 @@ func TestInt(t *testing.T) {
 }
 
 func TestStruct(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Value struct {
 		A string
 		B int
@@ -53,7 +63,7 @@ func TestStruct(t *testing.T) {
 	var x Value
 	golden := Value{A: "hello", B: 1}
 
-	if err := unmarshal(&x, []byte(`{"A": "hello", "B": 1}`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`{"A": "hello", "B": 1}`)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -61,6 +71,8 @@ func TestStruct(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Elem struct {
 		A string
 		B int
@@ -71,7 +83,7 @@ func TestMap(t *testing.T) {
 		"A": Elem{A: "hello", B: 1},
 		"B": Elem{A: "hello", B: 2},
 	}
-	if err := unmarshal(&x, []byte(`{"A": {"A": "hello", "B": 1}, "B": {"A": "hello", "B": 2} }`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`{"A": {"A": "hello", "B": 1}, "B": {"A": "hello", "B": 2} }`)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -79,6 +91,8 @@ func TestMap(t *testing.T) {
 }
 
 func TestSlice(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Elem struct {
 		A string
 		B int
@@ -89,7 +103,7 @@ func TestSlice(t *testing.T) {
 		Elem{A: "hello", B: 1},
 		Elem{A: "hello", B: 2},
 	}
-	if err := unmarshal(&x, []byte(`[ {"A": "hello", "B": 1}, {"A": "hello", "B": 2} ]`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`[ {"A": "hello", "B": 1}, {"A": "hello", "B": 2} ]`)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -97,37 +111,47 @@ func TestSlice(t *testing.T) {
 }
 
 func TestConstruct(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	var x wtype.LHTipbox
-	if err := unmarshal(&x, []byte(`"CyBio250Tipbox"`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`"CyBio250Tipbox"`)); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestConstructMapFailure(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Elem struct {
 		A string
 		T *wtype.LHTipbox
 	}
 	type Value map[string]Elem
 	var x Value
-	if err := unmarshal(&x, []byte(`{"A": {"A": "hello", "T": "CyBio250Tipbox"} }`)); err == nil {
+	if err := unmarshal(ctx, &x, []byte(`{"A": {"A": "hello", "T": "CyBio250Tipbox"} }`)); err == nil {
 		t.Fatal("expecting failure but got success")
 	}
 }
 
 func TestConstructMap(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Value map[string]interface{}
 	x := Value{
 		"A": &wtype.LHTipbox{},
 		"B": 0,
 		"C": "",
 	}
+	tb, err := inventory.NewTipbox(ctx, "CyBio250Tipbox")
+	if err != nil {
+		t.Fatal(err)
+	}
 	golden := Value{
-		"A": factory.GetTipboxByType("CyBio250Tipbox"),
+		"A": tb,
 		"B": 1,
 		"C": "hello",
 	}
-	if err := unmarshal(&x, []byte(`{"A": "CyBio250Tipbox", "B": 1, "C": "hello" }`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`{"A": "CyBio250Tipbox", "B": 1, "C": "hello" }`)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x["B"], golden["B"]) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -143,16 +167,26 @@ func TestConstructMap(t *testing.T) {
 }
 
 func TestConstructSlice(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Value []interface{}
 	x := Value{
 		&wtype.LHTipbox{},
 		&wtype.LHPlate{},
 	}
-	golden := Value{
-		factory.GetTipboxByType("CyBio250Tipbox"),
-		factory.GetPlateByType("pcrplate_with_cooler"),
+	tb1, err := inventory.NewTipbox(ctx, "CyBio250Tipbox")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if err := unmarshal(&x, []byte(`[ "CyBio250Tipbox", "pcrplate_with_cooler" ]`)); err != nil {
+	tb2, err := inventory.NewPlate(ctx, "pcrplate_with_cooler")
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden := Value{
+		tb1,
+		tb2,
+	}
+	if err := unmarshal(ctx, &x, []byte(`[ "CyBio250Tipbox", "pcrplate_with_cooler" ]`)); err != nil {
 		t.Fatal(err)
 	} else if len(x) != 2 {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -172,6 +206,8 @@ func TestConstructSlice(t *testing.T) {
 }
 
 func TestTime(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type Value map[string]interface{}
 	x := Value{
 		"A": wunit.Time{},
@@ -179,7 +215,7 @@ func TestTime(t *testing.T) {
 	golden := Value{
 		"A": wunit.NewTime(60.0, "s"),
 	}
-	if err := unmarshal(&x, []byte(`{ "A": "60s" }`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`{ "A": "60s" }`)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -187,9 +223,10 @@ func TestTime(t *testing.T) {
 }
 
 func TestConstructFile(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
 	var x wtype.File
 
-	if err := unmarshal(&x, []byte(`{"name":"mytest","bytes":{"bytes":"aGVsbG8="}}`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`{"name":"mytest","bytes":{"bytes":"aGVsbG8="}}`)); err != nil {
 		t.Fatal(err)
 	} else if e, f := "mytest", x.Name; e != f {
 		t.Errorf("expecting %v but got %v instead", e, f)

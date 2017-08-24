@@ -1,6 +1,7 @@
 package mixer
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory"
 )
 
 type ParsePlateResult struct {
@@ -78,8 +79,8 @@ func validWell(well wtype.WellCoords, plate *wtype.LHPlate) error {
 	return nil
 }
 
-func ParsePlateCSV(inData io.Reader) (*ParsePlateResult, error) {
-	return ParsePlateCSVWithValidationConfig(inData, DefaultValidationConfig())
+func ParsePlateCSV(ctx context.Context, inData io.Reader) (*ParsePlateResult, error) {
+	return ParsePlateCSVWithValidationConfig(ctx, inData, DefaultValidationConfig())
 }
 
 // CSV plate format: (? denotes optional, whitespace for clarity)
@@ -90,7 +91,7 @@ func ParsePlateCSV(inData io.Reader) (*ParsePlateResult, error) {
 //   ...
 //
 // TODO: refactor if/when Opt loses raw []byte and file as InputPlate options
-func ParsePlateCSVWithValidationConfig(inData io.Reader, vc ValidationConfig) (*ParsePlateResult, error) {
+func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc ValidationConfig) (*ParsePlateResult, error) {
 	// Get returning "" if idx >= len(xs)
 	get := func(xs []string, idx int) string {
 		if len(xs) <= idx {
@@ -126,9 +127,9 @@ func ParsePlateCSVWithValidationConfig(inData io.Reader, vc ValidationConfig) (*
 	}
 
 	plateType := rec[0]
-	plate := factory.GetPlateByType(plateType)
-	if plate == nil {
-		return nil, fmt.Errorf("unknown plate type: ", plateType)
+	plate, err := inventory.NewPlate(ctx, plateType)
+	if err != nil {
+		return nil, fmt.Errorf("cannot make plate %s: %s", plateType, err)
 	}
 
 	plate.PlateName = get(rec, 1)
@@ -201,7 +202,7 @@ func ParsePlateCSVWithValidationConfig(inData io.Reader, vc ValidationConfig) (*
 	}, nil
 }
 
-func parsePlateFile(filename string) (*ParsePlateResult, error) {
+func parsePlateFile(ctx context.Context, filename string) (*ParsePlateResult, error) {
 	f, err := os.Open(filename)
 
 	if err != nil {
@@ -209,13 +210,13 @@ func parsePlateFile(filename string) (*ParsePlateResult, error) {
 	}
 
 	defer f.Close()
-	return ParsePlateCSV(f)
+	return ParsePlateCSV(ctx, f)
 }
 
-// Convenience function for parsing a plate from file. Will splat out
-// warnings to stdout.
-func ParseInputPlateFile(filename string) (*wtype.LHPlate, error) {
-	r, err := parsePlateFile(filename)
+// Convenience function for parsing a plate from file. Will splat out warnings
+// to stdout.
+func ParseInputPlateFile(ctx context.Context, filename string) (*wtype.LHPlate, error) {
+	r, err := parsePlateFile(ctx, filename)
 	if err != nil {
 		return nil, err
 	}

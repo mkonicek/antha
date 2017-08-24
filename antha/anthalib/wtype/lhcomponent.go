@@ -93,6 +93,244 @@ func (lhc *LHComponent) IsZero() bool {
 	return false
 }
 
+const SEQSKEY = "DNASequences"
+
+// Return a sequence list from a component.
+// Users should use GetDNASequences method.
+func (lhc *LHComponent) getDNASequences() (seqs []DNASequence, err error) {
+
+	seqsValue, found := lhc.Extra[SEQSKEY]
+
+	if !found {
+		return seqs, fmt.Errorf("No Sequences list found")
+	}
+
+	var bts []byte
+
+	bts, err = json.Marshal(seqsValue)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(bts, &seqs)
+
+	if err != nil {
+		err = fmt.Errorf("Problem getting %s sequences. Sequences found: %+v; error: %s", lhc.Name(), seqsValue, err.Error())
+	}
+
+	return
+}
+
+// Add a sequence list to a component.
+// Any existing component list will be overwritten.
+// Users should use addDNASequence and UpdateDNASequence methods
+func (lhc *LHComponent) setDNASequences(seqList []DNASequence) error {
+
+	lhc.Extra[SEQSKEY] = seqList
+
+	return nil
+}
+
+// Returns the positions of any matching instances of a sequence in a slice of sequences.
+// If checkSeqs is set to false, only the name will be checked;
+// if checkSeqs is set to true, matching sequences with different names will also be checked.
+func containsSeq(seqs []DNASequence, seq DNASequence, checkSeqs bool) (bool, []int) {
+
+	var positionsFound []int
+
+	for i := range seqs {
+		if !checkSeqs {
+			if seqs[i].Name() == seq.Name() {
+				positionsFound = append(positionsFound, i)
+			}
+		} else {
+			if seqs[i].Name() == seq.Name() {
+				positionsFound = append(positionsFound, i)
+			} else if strings.ToUpper(seqs[i].Sequence()) == strings.ToUpper(seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
+				positionsFound = append(positionsFound, i)
+			}
+		}
+	}
+
+	if len(positionsFound) > 0 {
+		return true, positionsFound
+	}
+
+	return false, positionsFound
+}
+
+const (
+	FORCE bool = true // Optional parameter to use in AddDNASequence method to override error check preventing addition of a duplicate sequence.
+)
+
+// Adds DNASequence to the LHComponent.
+// If a Sequence already exists an error is returned and the sequence is not added
+// unless an additional boolean argument (FORCEADD or true) is specified to ignore duplicates.
+// A warning will be returned in either case if a duplicate sequence is already found.
+func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
+	var err error
+	// skip error checking: if no sequence list is present one will be created later anyway
+	seqList, _ := lhc.getDNASequences()
+
+	if _, positions, err := lhc.FindDNASequence(seq); err == nil {
+
+		if len(options) == 0 {
+			err = fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v. To add the sequence anyway add FORCE as an argument when using AddDNASequence: i.e. AddDNASequence(sequence, wtype.FORCE)", lhc.Name(), seq.Name(), positions, seqList)
+			return err
+		} else if !options[0] {
+			err = fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v. To add the sequence anywayadd FORCE as an argument when using AddDNASequence: i.e. AddDNASequence(sequence, wtype.FORCE)", lhc.Name(), seq.Name(), positions, seqList)
+			return err
+		} else if options[0] {
+			err = fmt.Errorf("Warning: LHComponent %s already contains sequence %s at positions %+v in sequences %+v but was added.", lhc.Name(), seq.Name(), positions, seqList)
+		}
+	}
+
+	seqList = append(seqList, seq)
+	lhc.setDNASequences(seqList)
+
+	return err
+}
+
+// Replaces an existing DNASequence to the LHComponent.
+// Search is based upon both name of the sequence and sequence.
+// If multiple copies of the sequence exists and error is returned.
+// If a Sequence does not exist, the sequence is added and an error is returned.
+func (lhc *LHComponent) FindDNASequence(seq DNASequence) (seqs []DNASequence, positions []int, err error) {
+
+	seqList, err := lhc.getDNASequences()
+
+	if err != nil {
+		return
+	}
+	var found bool
+	found, positions = containsSeq(seqList, seq, true)
+
+	if !found {
+		err = fmt.Errorf("Sequence %s not found associated with %s.", seq.Name(), lhc.Name())
+		return
+	}
+	for i := range positions {
+		seqs = append(seqs, seqList[i])
+	}
+
+	return
+}
+
+// Replaces an existing DNASequence to the LHComponent.
+// Search is based upon both name of the sequence and sequence.
+// If multiple copies of the sequence exists and error is returned.
+// If a Sequence does not exist, the sequence is added and an error is returned.
+func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
+
+	seqList, err := lhc.getDNASequences()
+
+	if err != nil {
+		return err
+	}
+
+	if seqs, positions, err := lhc.FindDNASequence(seq); err == nil {
+		if len(positions) > 1 {
+			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v: %+v", lhc.Name(), seq.Name(), positions, seqs)
+		}
+		if len(positions) == 1 {
+			seqList[positions[0]] = seq
+			err = lhc.setDNASequences(seqList)
+			return err
+		}
+	}
+
+	err = lhc.AddDNASequence(seq)
+
+	if err != nil {
+		return err
+	}
+
+	return fmt.Errorf("Sequence %s did not previously exist in %s so added.", seq.Name(), lhc.Name())
+}
+
+func deleteSeq(seqList []DNASequence, position int) (newseqList []DNASequence, err error) {
+
+	if position >= len(seqList) {
+		return seqList, fmt.Errorf("Cannot delete sequence from position in %d in sequence list as list only contains %d entries", position, len(seqList))
+	}
+
+	if position == 0 {
+		if len(seqList) > 1 {
+			newseqList = append(seqList[position+1:])
+			return
+		} else {
+			return []DNASequence{}, nil
+		}
+	} else if position == len(seqList)-1 {
+		newseqList = append(seqList[:position-1])
+		return
+	} else {
+		newseqList = append(seqList[:position], seqList[position+1:]...)
+		return
+	}
+
+}
+
+// Removes an existing DNASequence to the LHComponent.
+// Search is based upon both name of the sequence and sequence.
+// If multiple copies of the sequence exists and error is returned.
+// If a Sequence does not exist, the sequence is added and an error is returned.
+func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
+
+	seqList, err := lhc.getDNASequences()
+
+	if err != nil {
+		return err
+	}
+
+	if seqs, positions, err := lhc.FindDNASequence(seq); err == nil {
+		if len(positions) > 1 {
+			return fmt.Errorf("LHComponent %s contains multiple instances of sequence %s  at positions %+v: %+v", lhc.Name(), seq.Name(), positions, seqs)
+		}
+		if len(positions) == 1 {
+			seqList, err = deleteSeq(seqList, positions[0])
+			if err != nil {
+				return err
+			}
+			err = lhc.setDNASequences(seqList)
+			return err
+		}
+	}
+
+	return fmt.Errorf("Sequence %s did not previously exist in %s so could not be deleted.", seq.Name(), lhc.Name())
+}
+
+// Remove a DNA sequence from a specific position.
+// Designed for cases where FindDNASequnce() method returns multiple instances of the dna sequence.
+func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
+
+	seqList, err := lhc.getDNASequences()
+
+	if err != nil {
+		return err
+	}
+
+	seqList, err = deleteSeq(seqList, position)
+	if err != nil {
+		return err
+	}
+	err = lhc.setDNASequences(seqList)
+
+	return err
+
+}
+
+// Remove all DNASequences from the component.
+func (lhc *LHComponent) RemoveDNASequences() error {
+	return lhc.setDNASequences([]DNASequence{})
+}
+
+// Returns DNA Sequences asociated with an LHComponent.
+// An error is also returned indicating whether a sequence was found.
+func (lhc *LHComponent) DNASequences() ([]DNASequence, error) {
+	return lhc.getDNASequences()
+}
+
 func (lhc *LHComponent) SetVolume(v wunit.Volume) {
 	lhc.Vol = v.RawValue()
 	lhc.Vunit = v.Unit().PrefixedSymbol()
@@ -135,6 +373,7 @@ func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
 	if lhc.IsZero() {
 		return nil, fmt.Errorf("Cannot sample empty component")
 	} else if lhc.Volume().EqualTo(v) {
+		// not setting sample?!
 		return lhc, nil
 	}
 
@@ -147,6 +386,7 @@ func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
 	lhc.AddDaughterComponent(c)
 	c.Loc = ""
 	c.Destination = ""
+	c.Extra = lhc.GetExtra()
 
 	return c, nil
 }
@@ -168,6 +408,7 @@ func (lhc *LHComponent) Dup() *LHComponent {
 	for k, v := range lhc.Extra {
 		c.Extra[k] = v
 	}
+
 	c.Loc = lhc.Loc
 	c.Destination = lhc.Destination
 	c.ParentID = lhc.ParentID
@@ -229,6 +470,12 @@ func (cmp *LHComponent) AddDaughterComponent(cmp2 *LHComponent) {
 	cmp.DaughterID += cmp2.ID
 }
 
+func (cmp *LHComponent) ReplaceDaughterID(ID1, ID2 string) {
+	if cmp.DaughterID != "" {
+		cmp.DaughterID = strings.Replace(cmp.DaughterID, ID1, ID2, 1)
+	}
+}
+
 func (cmp *LHComponent) MixPreserveTvol(cmp2 *LHComponent) {
 	cmp.Mix(cmp2)
 	if cmp2.Vol == 0.00 && cmp2.Tvol > 0.00 {
@@ -242,6 +489,7 @@ func (cmp *LHComponent) MixPreserveTvol(cmp2 *LHComponent) {
 	}
 }
 
+// add cmp2 to cmp
 func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	//wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
@@ -269,6 +517,10 @@ func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	//	cmp.ID = "component-" + GetUUID()
 	cmp.ID = GetUUID()
 	cmp2.AddDaughterComponent(cmp)
+
+	// result should not be a sample
+
+	cmp.SetSample(false)
 }
 
 // @implement Liquid
@@ -283,7 +535,14 @@ func (lhc *LHComponent) GetVisc() float64 {
 }
 
 func (lhc *LHComponent) GetExtra() map[string]interface{} {
-	return lhc.Extra
+	x := make(map[string]interface{}, len(lhc.Extra))
+
+	// shallow copy only...
+	for k, v := range lhc.Extra {
+		x[k] = v
+	}
+
+	return x
 }
 
 func (lhc *LHComponent) GetConc() float64 {
@@ -341,7 +600,7 @@ func (cmp *LHComponent) String() string {
 		l = "NOPLATE:NOWELL"
 	}
 
-	return id + ":" + l + ":" + v
+	return id + ":" + cmp.CName + ":" + l + ":" + v
 }
 
 func (cmp *LHComponent) ParentTree() graph.StringGraph {
@@ -537,4 +796,61 @@ func (lhc *LHComponent) SetValue(b bool) {
 	}
 
 	lhc.Extra["valuable"] = b
+}
+
+const instanceMarker = "INSTANCE"
+
+func (lhc *LHComponent) DeclareInstance() {
+	// everything starts off as a Type
+	// instancehood must inherit
+
+	if lhc != nil {
+		if lhc.Extra == nil {
+			lhc.Extra = make(map[string]interface{})
+		}
+
+		lhc.Extra[instanceMarker] = true
+	}
+}
+
+func (lhc *LHComponent) IsInstance() bool {
+	if lhc == nil || lhc.Extra == nil {
+		return false
+	}
+
+	temp, ok := lhc.Extra[instanceMarker]
+
+	if !ok {
+		return false
+	}
+
+	b, ok := temp.(bool)
+
+	if !ok {
+		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Curently set to %v", instanceMarker, b))
+	}
+
+	return b
+}
+
+func (lhc *LHComponent) DeclareNotInstance() {
+	// explicitly set instance status to false
+
+	lhc.DeclareInstance() // lazy: make sure instance status is initialised
+	lhc.Extra[instanceMarker] = false
+}
+
+func (lhc *LHComponent) IsSameKindAs(c2 *LHComponent) bool {
+	// v0: amounts to same CName
+
+	return lhc.Kind() == c2.Kind()
+
+	// v1: Explicit kind IDs separate from names (TODO)
+}
+
+func (lhc *LHComponent) Kind() string {
+	// v0: it's the name
+	return lhc.CName
+
+	// v1: distinct IDs for underlying liquid types
 }

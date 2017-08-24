@@ -5,6 +5,7 @@
 package pick
 
 import (
+	"context"
 	"fmt"
 	"os"
 	//"path"
@@ -23,7 +24,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory"
 	//"code.google.com/p/draw2d/draw2d"
 	"github.com/disintegration/imaging"
 	//"github.com/hybridgroup/go-opencv/opencv"
@@ -31,7 +32,7 @@ import (
 	//"../opencv" // can be used in forks, comment in real application
 )
 
-func PickAndExportCSV(imagefile string, exportFileName string, plate *wtype.LHPlate, numbertopick int, setplateperimeterfirst bool, rotate bool) (wells []string, err error) {
+func PickAndExportCSV(ctx context.Context, imagefile string, exportFileName string, plate *wtype.LHPlate, numbertopick int, setplateperimeterfirst bool, rotate bool) (wells []string, err error) {
 	var topleft opencv.Point
 	var bottomright opencv.Point
 	var topright opencv.Point
@@ -227,7 +228,7 @@ func PickAndExportCSV(imagefile string, exportFileName string, plate *wtype.LHPl
 					newname := splitfilename[0] + "_picked" + `.` + splitfilename[1]
 					opencv.SaveImage(newname, img, 0)
 
-					err = ExportCSV(exportFileName, plate, "ColonyPlate", wells, "colonynumber", "colony")
+					err = ExportCSV(ctx, exportFileName, plate, "ColonyPlate", wells, "colonynumber", "colony")
 					os.Exit(0)
 					return
 				}
@@ -237,14 +238,14 @@ func PickAndExportCSV(imagefile string, exportFileName string, plate *wtype.LHPl
 
 					newname := splitfilename[0] + "_picked" + `.` + splitfilename[1]
 					opencv.SaveImage(newname, img, 0)
-					err = ExportCSV(exportFileName, plate, "ColonyPlate", wells, "colonynumber", "colony")
+					err = ExportCSV(ctx, exportFileName, plate, "ColonyPlate", wells, "colonynumber", "colony")
 					os.Exit(0)
 					return
 				}
 				if rotate == false && setplateperimeterfirst == false && counter == numbertopick {
 					//return
 
-					err = ExportCSV(exportFileName, plate, "ColonyPlate", wells, "colonynumber", "colony")
+					err = ExportCSV(ctx, exportFileName, plate, "ColonyPlate", wells, "colonynumber", "colony")
 					os.Exit(0)
 					return
 				}
@@ -296,7 +297,7 @@ func PickAndExportCSV(imagefile string, exportFileName string, plate *wtype.LHPl
 	return
 }
 
-func PickAndExportWelltoColourJSON(imagefile string, exportFileName string, plate *wtype.LHPlate, numbertopick int, setplateperimeterfirst bool, rotate bool) (wells []string, welltoColourmap map[string]color.Color, err error) {
+func PickAndExportWelltoColourJSON(ctx context.Context, imagefile string, exportFileName string, plate *wtype.LHPlate, numbertopick int, setplateperimeterfirst bool, rotate bool) (wells []string, welltoColourmap map[string]color.Color, err error) {
 	var topleft opencv.Point
 	var bottomright opencv.Point
 	var topright opencv.Point
@@ -521,7 +522,7 @@ func PickAndExportWelltoColourJSON(imagefile string, exportFileName string, plat
 
 					ioutil.WriteFile(exportFileName+".json", bytes, 0644)
 
-					err = ExportCSV(exportFileName+".csv", plate, "ColonyPlate", wells, "colonynumber", "colony")
+					err = ExportCSV(ctx, exportFileName+".csv", plate, "ColonyPlate", wells, "colonynumber", "colony")
 					os.Exit(0)
 					return
 				}
@@ -540,7 +541,7 @@ func PickAndExportWelltoColourJSON(imagefile string, exportFileName string, plat
 
 					ioutil.WriteFile(exportFileName+".json", bytes, 0644)
 
-					err = ExportCSV(exportFileName+".csv", plate, "ColonyPlate", wells, "colonynumber", "colony")
+					err = ExportCSV(ctx, exportFileName+".csv", plate, "ColonyPlate", wells, "colonynumber", "colony")
 					os.Exit(0)
 					return
 				}
@@ -555,7 +556,7 @@ func PickAndExportWelltoColourJSON(imagefile string, exportFileName string, plat
 
 					ioutil.WriteFile(exportFileName+".json", bytes, 0644)
 
-					err = ExportCSV(exportFileName+".csv", plate, "ColonyPlate", wells, "colonynumber", "colony")
+					err = ExportCSV(ctx, exportFileName+".csv", plate, "ColonyPlate", wells, "colonynumber", "colony")
 					os.Exit(0)
 					return
 				}
@@ -609,7 +610,7 @@ func PickAndExportWelltoColourJSON(imagefile string, exportFileName string, plat
 	return
 }
 
-func PickAndExportCSVMap(imagefile string, exportFileName string, plate *wtype.LHPlate, reactiontonumbertopickmap map[string]int, setplateperimeterfirst bool, rotate bool) (wells []string, err error) {
+func PickAndExportCSVMap(ctx context.Context, imagefile string, exportFileName string, plate *wtype.LHPlate, reactiontonumbertopickmap map[string]int, setplateperimeterfirst bool, rotate bool) (wells []string, err error) {
 
 	var numbertopick int
 	var names = make([]string, 0)
@@ -817,7 +818,7 @@ func PickAndExportCSVMap(imagefile string, exportFileName string, plate *wtype.L
 					newname := splitfilename[0] + "_picked" + `.` + splitfilename[1]
 					opencv.SaveImage(newname, img, 0)
 
-					err = ExportCSVMultipleNames(exportFileName, plate, "ColonyPlate", wells, names, "colony")
+					err = ExportCSVMultipleNames(ctx, exportFileName, plate, "ColonyPlate", wells, names, "colony")
 					os.Exit(0)
 					return
 				}
@@ -827,14 +828,14 @@ func PickAndExportCSVMap(imagefile string, exportFileName string, plate *wtype.L
 
 					newname := splitfilename[0] + "_picked" + `.` + splitfilename[1]
 					opencv.SaveImage(newname, img, 0)
-					err = ExportCSVMultipleNames(exportFileName, plate, "ColonyPlate", wells, names, "colony")
+					err = ExportCSVMultipleNames(ctx, exportFileName, plate, "ColonyPlate", wells, names, "colony")
 					os.Exit(0)
 					return
 				}
 				if rotate == false && setplateperimeterfirst == false && counter == numbertopick {
 					//return
 
-					err = ExportCSVMultipleNames(exportFileName, plate, "ColonyPlate", wells, names, "colony")
+					err = ExportCSVMultipleNames(ctx, exportFileName, plate, "ColonyPlate", wells, names, "colony")
 					os.Exit(0)
 					return
 				}
@@ -1926,7 +1927,7 @@ func PixelstoWellPositionFromRectangle(x, y int, plate *wtype.LHPlate, topleft, 
 	return
 }
 
-func ExportCSV(ExportFileName string, plateForCoordinates *wtype.LHPlate, platename string, wellstopick []string, nameprepend, liquidtypename string) (err error) {
+func ExportCSV(ctx context.Context, ExportFileName string, plateForCoordinates *wtype.LHPlate, platename string, wellstopick []string, nameprepend, liquidtypename string) (err error) {
 	fmt.Println("Generating csv output file with well coordinates for each colony")
 	liquids := make([]*wtype.LHComponent, 0)
 	volumes := make([]wunit.Volume, 0)
@@ -1939,7 +1940,11 @@ func ExportCSV(ExportFileName string, plateForCoordinates *wtype.LHPlate, platen
 
 	for i := range wellstopick {
 		volumes = append(volumes, colonyvol)
-		liquid := factory.GetComponentByType(liquidtypename)
+		liquid, err := inventory.NewComponent(ctx, liquidtypename)
+		if err != nil {
+			return err
+		}
+
 		liquid.CName = nameprepend + strconv.Itoa(i)
 		liquids = append(liquids, liquid)
 	}
@@ -1948,7 +1953,7 @@ func ExportCSV(ExportFileName string, plateForCoordinates *wtype.LHPlate, platen
 	return
 }
 
-func ExportCSVMultipleNames(ExportFileName string, plateForCoordinates *wtype.LHPlate, platename string, wellstopick []string, names []string, liquidtypename string) (err error) {
+func ExportCSVMultipleNames(ctx context.Context, ExportFileName string, plateForCoordinates *wtype.LHPlate, platename string, wellstopick []string, names []string, liquidtypename string) (err error) {
 	fmt.Println("Generating csv output file with well coordinates for each colony")
 	liquids := make([]*wtype.LHComponent, 0)
 	volumes := make([]wunit.Volume, 0)
@@ -1965,7 +1970,11 @@ func ExportCSVMultipleNames(ExportFileName string, plateForCoordinates *wtype.LH
 
 	for i := range wellstopick {
 		volumes = append(volumes, colonyvol)
-		liquid := factory.GetComponentByType(liquidtypename)
+		liquid, err := inventory.NewComponent(ctx, liquidtypename)
+		if err != nil {
+			return err
+		}
+
 		liquid.CName = names[i]
 		liquids = append(liquids, liquid)
 	}

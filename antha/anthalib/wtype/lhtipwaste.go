@@ -89,3 +89,26 @@ func (lht *LHTipwaste) Dispose(n int) bool {
 	lht.Contents += n
 	return true
 }
+
+/*
+type SBSLabware interface {
+	NumRows() int
+	NumCols() int
+	PlateHeight() float64
+}
+*/
+
+// @implement SBSLabware
+
+func (lht *LHTipwaste) NumRows() int {
+	// this might change at some point...
+	return 1
+}
+
+func (lht *LHTipwaste) NumCols() int {
+	return 1
+}
+
+func (lht *LHTipwaste) PlateHeight() float64 {
+	return lht.Height
+}

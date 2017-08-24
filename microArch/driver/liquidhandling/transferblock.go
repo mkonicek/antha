@@ -1,11 +1,13 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/factory"
-	"strings"
+	"github.com/antha-lang/antha/inventory"
 )
 
 type TransferBlockInstruction struct {
@@ -28,7 +30,7 @@ func (ti TransferBlockInstruction) InstructionType() int {
 // via multichannel operation. At present this means they must be aligned in rows or columns
 // depending on the robot type and configuration
 
-func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
+func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
 	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()
 	inss := make([]RobotInstruction, 0, 1)
@@ -40,7 +42,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	}
 
 	// list of ids
-	parallel_sets, prm, err := get_parallel_sets_robot(ti.Inss, robot, policy)
+	parallel_sets, prm, err := get_parallel_sets_robot(ctx, ti.Inss, robot, policy)
 
 	// what if prm is nil?
 
@@ -59,7 +61,8 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 		}
 
 		// aggregates across components
-		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi)
+		//TODO --> allow setting legacy volume if necessary
+		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false)
 		if err != nil {
 			panic(err)
 		}
@@ -83,7 +86,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 	// prm here will be nil unless len(insset)==0
 	// we must either tolerate this or do something else
 
-	tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1)
+	tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false)
 
 	if err != nil {
 		panic(err)
@@ -101,7 +104,7 @@ func (ti TransferBlockInstruction) Generate(policy *wtype.LHPolicyRuleSet, robot
 type IDSet []string
 type SetOfIDSets []IDSet
 
-func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, policy *wtype.LHPolicyRuleSet) (SetOfIDSets, *wtype.LHChannelParameter, error) {
+func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, robot *LHProperties, policy *wtype.LHPolicyRuleSet) (SetOfIDSets, *wtype.LHChannelParameter, error) {
 	//  depending on the configuration and options we may have to try and
 	//  use one or both of H / V or... whatever
 	//  -- issue is this choice and choosechannel conflict with one another
@@ -123,7 +126,7 @@ func get_parallel_sets_robot(ins []*wtype.LHInstruction, robot *LHProperties, po
 		}
 
 		// also TODO here -- allow adaptor changes
-		sids, err := get_parallel_sets_head(head, ins)
+		sids, err := get_parallel_sets_head(ctx, head, ins)
 
 		if err != nil {
 			return SetOfIDSets{}, &wtype.LHChannelParameter{}, err
@@ -172,7 +175,7 @@ func (ibc InsByCol) Less(i, j int) bool {
 }
 
 // limited to SBS format plates for now
-func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
+func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
 	// surely not
 
 	if len(ins) == 0 {
@@ -205,10 +208,10 @@ func get_parallel_sets_head(head *wtype.LHHead, ins []*wtype.LHInstruction) (Set
 
 			// gerrabirrovinfo on the plate type
 			// is this always set??
-			pt := factory.GetPlateByType(i.Platetype)
+			pt, err := inventory.NewPlate(ctx, i.Platetype)
 
-			if pt == nil {
-				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type %s", i.Platetype))
+			if err != nil {
+				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type %s found: %s", i.Platetype, err))
 			}
 
 			platedims[i.PlateID()] = wtype.Rational{pt.WellsX(), pt.WellsY()}

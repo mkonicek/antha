@@ -24,6 +24,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -36,9 +37,11 @@ import (
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
+	"github.com/antha-lang/antha/workflowtest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -55,7 +58,7 @@ var runCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
-func makeMixerOpt() (mixer.Opt, error) {
+func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 	opt := mixer.Opt{}
 	if i := viper.GetInt("maxPlates"); i != 0 {
 		f := float64(i)
@@ -74,7 +77,7 @@ func makeMixerOpt() (mixer.Opt, error) {
 	opt.TipType = GetStringSlice("tipType")
 
 	for _, fn := range GetStringSlice("inputPlates") {
-		p, err := mixer.ParseInputPlateFile(fn)
+		p, err := mixer.ParseInputPlateFile(ctx, fn)
 		if err != nil {
 			return opt, err
 		}
@@ -94,6 +97,8 @@ func makeMixerOpt() (mixer.Opt, error) {
 
 	opt.UseDriverTipTracking = viper.GetBool("UseDriverTipTracking")
 
+	opt.LegacyVolume = viper.GetBool("LegacyVolumeTracking")
+
 	return opt, nil
 }
 
@@ -109,7 +114,7 @@ func makeContext() (context.Context, error) {
 			return nil, fmt.Errorf("error adding protocol %q: %s", desc.Name, err)
 		}
 	}
-	return ctx, nil
+	return testinventory.NewContext(ctx), nil
 }
 
 type runOpt struct {
@@ -119,6 +124,7 @@ type runOpt struct {
 	ParametersFile         string
 	WorkflowFile           string
 	MixInstructionFileName string
+	TestBundleFileName     string
 }
 
 func (a *runOpt) Run() error {
@@ -142,7 +148,7 @@ func (a *runOpt) Run() error {
 		}
 	}
 
-	wdesc, params, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
+	bundle, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
 		WorkflowData: wdata,
 		BundleData:   bdata,
 		ParamsData:   pdata,
@@ -150,6 +156,9 @@ func (a *runOpt) Run() error {
 	if err != nil {
 		return err
 	}
+
+	wdesc := &(bundle.Desc)
+	params := &(bundle.RawParams)
 
 	mixerOpt := mixer.DefaultOpt.Merge(params.Config).Merge(&a.MixerOpt)
 	opt := auto.Opt{
@@ -202,6 +211,22 @@ func (a *runOpt) Run() error {
 		}
 	}
 
+	// if option is set, cache outputs for testing
+
+	if a.TestBundleFileName != "" {
+		expected := workflowtest.SaveTestOutputs(rout, "")
+		bundleWithOutputs := executeutil.Bundle{*wdesc, *params, expected}
+		serializedOutputs, err := json.Marshal(bundleWithOutputs)
+
+		if err != nil {
+			return err
+		}
+
+		if err := ioutil.WriteFile(a.TestBundleFileName, serializedOutputs, 0666); err != nil {
+			return err
+		}
+	}
+
 	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {
 		return err
 	}
@@ -219,6 +244,7 @@ func (a *runOpt) Run() error {
 
 func runWorkflow(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
+	ctx := testinventory.NewContext(context.Background())
 
 	var drivers []string
 	for idx, uri := range GetStringSlice("driver") {
@@ -250,7 +276,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	mopt, err := makeMixerOpt()
+	mopt, err := makeMixerOpt(ctx)
 	if err != nil {
 		return err
 	}
@@ -262,6 +288,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		ParametersFile:         viper.GetString("parameters"),
 		WorkflowFile:           viper.GetString("workflow"),
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
+		TestBundleFileName:     viper.GetString("makeTestBundle"),
 	}
 
 	return opt.Run()
@@ -289,4 +316,6 @@ func init() {
 	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
 	flags.Bool("PrintInstructions", false, "Output the raw instructions sent to the driver")
 	flags.Bool("UseDriverTipTracking", false, "If the driver has tip tracking available, use it")
+	flags.String("makeTestBundle", "", "Generate json format bundle for testing and put it here")
+	flags.Bool("LegacyVolumeTracking", false, "Do not track volumes for intermediate components")
 }

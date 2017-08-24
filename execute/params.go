@@ -11,8 +11,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/meta"
-	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/golang/protobuf/jsonpb"
@@ -21,19 +21,21 @@ import (
 type constructor func(string) interface{}
 
 var (
-	unknownParam    = errors.New("unknown parameter")
-	cannotConstruct = errors.New("cannot construct parameter")
+	errUnknownParam    = errors.New("unknown parameter")
+	errCannotConstruct = errors.New("cannot construct parameter")
 )
 
+// RawParams is the structure of parameter data for unmarshalling.
+//
 // Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
-// Structure of parameter data for unmarshalling.
 type RawParams struct {
 	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
 	Config     *mixer.Opt                            `json:"config"`
 }
 
+// Params is the structure of parameter data for marshalling.
+//
 // Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
-// Structure of parameter data for marshalling.
 type Params struct {
 	Parameters map[string]map[string]interface{} `json:"parameters"`
 	Config     *mixer.Opt                        `json:"config"`
@@ -63,42 +65,42 @@ type unmarshaler struct {
 	ReadLocalFiles bool
 }
 
-func (a *unmarshaler) unmarshalLHTipbox(data []byte, obj *wtype.LHTipbox) error {
+func (a *unmarshaler) unmarshalLHTipbox(ctx context.Context, data []byte, obj *wtype.LHTipbox) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := constructOrError(func(x string) interface{} { return factory.GetTipByType(x) }, s)
+	t, err := inventory.NewTipbox(ctx, s)
 	if err != nil {
 		return err
 	}
-	*obj = *t.(*wtype.LHTipbox)
+	*obj = *t
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHPlate(data []byte, obj *wtype.LHPlate) error {
+func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wtype.LHPlate) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := constructOrError(func(x string) interface{} { return factory.GetPlateByType(x) }, s)
+	t, err := inventory.NewPlate(ctx, s)
 	if err != nil {
 		return err
 	}
-	*obj = *t.(*wtype.LHPlate)
+	*obj = *t
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHComponent(data []byte, obj *wtype.LHComponent) error {
+func (a *unmarshaler) unmarshalLHComponent(ctx context.Context, data []byte, obj *wtype.LHComponent) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := constructOrError(func(x string) interface{} { return factory.GetComponentByType(x) }, s)
+	t, err := inventory.NewComponent(ctx, s)
 	if err != nil {
 		return err
 	}
-	*obj = *t.(*wtype.LHComponent)
+	*obj = *t
 	return nil
 }
 
@@ -132,15 +134,15 @@ func (a *unmarshaler) unmarshalFile(data []byte, obj *wtype.File) error {
 	return nil
 }
 
-func (a *unmarshaler) unmarshalStruct(data []byte, obj interface{}) error {
+func (a *unmarshaler) unmarshalStruct(ctx context.Context, data []byte, obj interface{}) error {
 	var err error
 	switch obj := obj.(type) {
 	case *wtype.LHTipbox:
-		err = a.unmarshalLHTipbox(data, obj)
+		err = a.unmarshalLHTipbox(ctx, data, obj)
 	case *wtype.LHPlate:
-		err = a.unmarshalLHPlate(data, obj)
+		err = a.unmarshalLHPlate(ctx, data, obj)
 	case *wtype.LHComponent:
-		err = a.unmarshalLHComponent(data, obj)
+		err = a.unmarshalLHComponent(ctx, data, obj)
 	case *wtype.File:
 		err = a.unmarshalFile(data, obj)
 	default:
@@ -150,14 +152,16 @@ func (a *unmarshaler) unmarshalStruct(data []byte, obj interface{}) error {
 	return err
 }
 
-func setParam(um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
+func setParam(ctx context.Context, um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
 	value, ok := in[name]
 	if !ok {
-		return unknownParam
+		return errUnknownParam
 	}
 
 	m := &meta.Unmarshaler{
-		Struct: um.unmarshalStruct,
+		Struct: func(data []byte, obj interface{}) error {
+			return um.unmarshalStruct(ctx, data, obj)
+		},
 	}
 	if err := m.UnmarshalJSON(data, &value); err != nil {
 		return err
@@ -190,7 +194,7 @@ func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams, rea
 		}
 		in := inject.MakeValue(cr.Input())
 		for name, value := range params {
-			if err := setParam(um, w, process, name, value, in); err != nil {
+			if err := setParam(ctx, um, w, process, name, value, in); err != nil {
 				return nil, fmt.Errorf("cannot assign parameter %q of process %q to %s: %s",
 					name, process, string(value), err)
 			}

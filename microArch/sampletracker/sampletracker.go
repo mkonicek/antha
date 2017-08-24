@@ -1,8 +1,9 @@
 package sampletracker
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"sync"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 var stLock sync.Mutex

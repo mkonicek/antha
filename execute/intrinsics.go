@@ -2,12 +2,12 @@ package execute
 
 import (
 	"context"
-
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/trace"
 )
@@ -18,6 +18,7 @@ type commandInst struct {
 	Command *ast.Command
 }
 
+// SetInputPlate notifies the planner about an input plate
 func SetInputPlate(ctx context.Context, plate *wtype.LHPlate) {
 	st := sampletracker.GetSampleTracker()
 	st.SetInputPlate(plate)
@@ -27,7 +28,7 @@ func incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	st := sampletracker.GetSampleTracker()
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getId(ctx))
+	comp.BlockID = wtype.NewBlockID(getID(ctx))
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
 	st.UpdateIDOf(in.ID, comp.ID)
@@ -50,10 +51,53 @@ func incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 	}
 }
 
+// Incubate incubates a component
 func Incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature, time wunit.Time, shaking bool) *wtype.LHComponent {
 	inst := incubate(ctx, in, temp, time, shaking)
 	trace.Issue(ctx, inst)
 	return inst.Comp
+}
+
+// prompt... works pretty much like Handle does
+// but passes the instruction to the planner
+// in future this should generate handles as side-effects
+
+type PromptOpts struct {
+	Component   *wtype.LHComponent
+	ComponentIn *wtype.LHComponent
+	Message     string
+}
+
+func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *wtype.LHComponent {
+	// sadly need to update everything
+	comp := component.Dup()
+	comp.ID = wtype.GetUUID()
+	comp.BlockID = wtype.NewBlockID(getID(ctx))
+	comp.SetGeneration(comp.Generation() + 1)
+	getMaker(ctx).UpdateAfterInst(component.ID, comp.ID)
+	pinst := prompt(ctx, PromptOpts{Component: comp, ComponentIn: component, Message: message})
+	trace.Issue(ctx, pinst)
+	return comp
+}
+
+func prompt(ctx context.Context, opts PromptOpts) *commandInst {
+	inst := wtype.NewLHPromptInstruction()
+	inst.SetGeneration(opts.ComponentIn.Generation())
+	inst.Message = opts.Message
+	//inst.Result = opts.Component
+	inst.AddProduct(opts.Component)
+	inst.AddComponent(opts.ComponentIn)
+	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
+
+	cp := true
+	return &commandInst{
+		Args: []*wtype.LHComponent{opts.ComponentIn},
+		Comp: opts.Component,
+		Command: &ast.Command{
+			Inst:     inst,
+			Requests: []ast.Request{ast.Request{CanPrompt: &cp}},
+		},
+	}
 }
 
 func handle(ctx context.Context, opt HandleOpt) *commandInst {
@@ -61,7 +105,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	in := opt.Component
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getId(ctx))
+	comp.BlockID = wtype.NewBlockID(getID(ctx))
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
 	st.UpdateIDOf(in.ID, comp.ID)
@@ -93,6 +137,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	}
 }
 
+// A HandleOpt are options to Handle
 type HandleOpt struct {
 	Component *wtype.LHComponent
 	Label     string
@@ -100,17 +145,36 @@ type HandleOpt struct {
 	Calls     []driver.Call
 }
 
+// Handle performs a low level instruction on a component
 func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 	inst := handle(ctx, opt)
 	trace.Issue(ctx, inst)
 	return inst.Comp
 }
 
+// NewComponent returns a new component given a component type
+func NewComponent(ctx context.Context, typ string) *wtype.LHComponent {
+	c, err := inventory.NewComponent(ctx, typ)
+	if err != nil {
+		Errorf(ctx, "cannot make component %s: %s", typ, err)
+	}
+	return c
+}
+
+// NewPlate returns a new plate given a plate type
+func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
+	p, err := inventory.NewPlate(ctx, typ)
+	if err != nil {
+		Errorf(ctx, "cannot make plate %s: %s", typ, err)
+	}
+	return p
+}
+
 // TODO -- LOC etc. will be passed through OK but what about
 //         the actual plate info?
 //        - two choices here: 1) we upgrade the sample tracker; 2) we pass the plate in somehow
 func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
-	inst.BlockID = wtype.NewBlockID(getId(ctx))
+	inst.BlockID = wtype.NewBlockID(getID(ctx))
 	inst.Result.BlockID = inst.BlockID
 
 	result := inst.Result
@@ -132,7 +196,7 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 
 	inst.SetGeneration(mx)
 	result.SetGeneration(mx + 1)
-
+	result.DeclareInstance()
 	inst.ProductID = result.ID
 
 	return &commandInst{
@@ -151,12 +215,14 @@ func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.LHComp
 	return inst.Comp
 }
 
+// Mix mixes components
 func Mix(ctx context.Context, components ...*wtype.LHComponent) *wtype.LHComponent {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components: components,
 	}))
 }
 
+// MixInto mixes components
 func MixInto(ctx context.Context, outplate *wtype.LHPlate, address string, components ...*wtype.LHComponent) *wtype.LHComponent {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components:  components,
@@ -165,6 +231,7 @@ func MixInto(ctx context.Context, outplate *wtype.LHPlate, address string, compo
 	}))
 }
 
+// MixNamed mixes components
 func MixNamed(ctx context.Context, outplatetype, address string, platename string, components ...*wtype.LHComponent) *wtype.LHComponent {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components: components,
@@ -174,8 +241,10 @@ func MixNamed(ctx context.Context, outplatetype, address string, platename strin
 	}))
 }
 
+// MixTo mixes components
+//
+// TODO: Addresses break dependence information. Deprecated.
 func MixTo(ctx context.Context, outplatetype, address string, platenum int, components ...*wtype.LHComponent) *wtype.LHComponent {
-	// TODO: Addresses break dependence information. Deprecated.
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components: components,
 		PlateType:  outplatetype,
@@ -183,29 +252,3 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 		PlateNum:   platenum,
 	}))
 }
-
-/*
-
-func Wait(ctx context.Context, time wunit.Time) {
-	wait(ctx, time)
-}
-
-func wait(ctx context.Context, time wunit.Time) {
-	// generate the correct intrinsic
-	inst := &commandInst{
-		Args: []*wunit.Time{&time},
-		Command: &ast.Command{
-			Inst: &ast.WaitInst{
-				Time: time,
-			},
-			Requests: []ast.Request{
-				ast.Request{
-					Time: ast.NewPoint(time.SIValue()),
-				},
-			},
-		},
-	}
-	trace.Issue(ctx, inst)
-}
-
-*/

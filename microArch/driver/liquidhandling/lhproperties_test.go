@@ -1,15 +1,23 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/microArch/factory"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func TestSavePlates(t *testing.T) {
 	lhp := makeTestLH()
-	p := factory.GetPlateByType("pcrplate_skirted")
+	ctx := testinventory.NewContext(context.Background())
+
+	p, err := inventory.NewPlate(ctx, "pcrplate_skirted")
+	if err != nil {
+		t.Fatal(err)
+	}
 	c := wtype.NewLHComponent()
 	v := 100.0
 	pos := "position_1"

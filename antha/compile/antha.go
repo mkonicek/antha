@@ -96,8 +96,11 @@ func (p *compiler) anthaInit() {
 		"MixNamed":     "execute.MixNamed",
 		"MixTo":        "execute.MixTo",
 		"ReadEM":       "execute.ReadEM",
+		"NewComponent": "execute.NewComponent",
+		"NewPlate":     "execute.NewPlate",
 		//	"Wait":          "execute.Wait",
 		"SetInputPlate": "execute.SetInputPlate",
+		"Prompt":        "execute.Prompt",
 	}
 	p.types = map[string]string{
 		"Amount":               "wunit.Amount",
@@ -134,6 +137,7 @@ func (p *compiler) anthaInit() {
 		"Velocity":             "wunit.Velocity",
 		"Voltage":              "wunit.Voltage",
 		"Volume":               "wunit.Volume",
+		"Warning":              "wtype.Warning",
 		"Well":                 "wtype.LHWell",
 	}
 	p.imports = map[string]string{
@@ -708,6 +712,8 @@ func (p *compiler) sugarExpr(t ast.Node) ast.Expr {
 
 	case *ast.ChanType:
 		t.Value = p.sugarExpr(t.Value)
+
+	case *ast.Ellipsis:
 
 	default:
 		log.Panicf("unexpected expression %s of type %s", t, reflect.TypeOf(t))

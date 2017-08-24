@@ -2,14 +2,20 @@ package mixer
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
-func makeTestPlate(in *wtype.LHPlate) *wtype.LHPlate {
-	out := factory.GetPlateByType(in.Type)
+func makeTestPlate(ctx context.Context, in *wtype.LHPlate) *wtype.LHPlate {
+	out, err := inventory.NewPlate(ctx, in.Type)
+	if err != nil {
+		panic(err)
+	}
+
 	out.PlateName = in.PlateName
 	for coord, well := range in.Wellcoords {
 		out.WellAt(wtype.MakeWellCoordsA1(coord)).Add(well.WContents)
@@ -18,6 +24,8 @@ func makeTestPlate(in *wtype.LHPlate) *wtype.LHPlate {
 }
 
 func TestMarshalPlateCSV(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
 	type testCase struct {
 		Plate    *wtype.LHPlate
 		Expected []byte
@@ -32,7 +40,7 @@ A1,water,water,50,ul,0,
 A4,tea,water,50,ul,0,
 A5,milk,water,100,ul,0,
 `),
-			Plate: makeTestPlate(&wtype.LHPlate{
+			Plate: makeTestPlate(ctx, &wtype.LHPlate{
 				PlateName: "Input_plate_1",
 				Type:      "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
@@ -70,7 +78,7 @@ pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
 A1,water,water,140.5,ul,0,
 C1,neb5compcells,culture,20.5,ul,0,
 `),
-			Plate: makeTestPlate(&wtype.LHPlate{
+			Plate: makeTestPlate(ctx, &wtype.LHPlate{
 				PlateName: "Input_plate_1",
 				Type:      "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{

@@ -2,14 +2,9 @@ package wtype
 
 import (
 	"bytes"
-	"errors"
 
 	api "github.com/antha-lang/antha/api/v1"
 	"github.com/golang/protobuf/jsonpb"
-)
-
-var (
-	missingBytes = errors.New("missing bytes")
 )
 
 // Representation of a file.
@@ -30,13 +25,8 @@ func (a *File) WriteAll(data []byte) error {
 }
 
 func (a *File) UnmarshalBlob(blob *api.Blob) error {
-	b := blob.GetBytes()
-	if b == nil {
-		return missingBytes
-	}
-
 	a.Name = blob.Name
-	a.bytes = b.Bytes
+	a.bytes = blob.GetBytes().GetBytes()
 
 	return nil
 }

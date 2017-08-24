@@ -4,6 +4,7 @@
 package codegen
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"sort"
@@ -33,7 +34,7 @@ type ir struct {
 
 // Print out IR for debugging
 func (a *ir) Print(g graph.Graph, out io.Writer) error {
-	shortId := func(x string) string {
+	shortID := func(x string) string {
 		for _, p := range strings.Split(x, "-") {
 			return p
 		}
@@ -80,7 +81,7 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 			if !ok {
 				return ""
 			}
-			return fmt.Sprintf("%s (%s)", u.Value.CName, shortId(u.Value.ID))
+			return fmt.Sprintf("%s (%s)", u.Value.CName, shortID(u.Value.ID))
 		},
 		func(x interface{}) string {
 			n, ok := x.(*target.Manual)
@@ -129,7 +130,7 @@ func (a *ir) partition(opt graph.PartitionTreeOpt) (*graph.TreePartition, error)
 		Parts: make(map[graph.Node]int),
 	}
 	// Simple first-fit algorithm but handles arbitrary graph structures
-	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i++ {
 		n := opt.Tree.Node(i)
 		ret.Parts[n] = opt.Colors(n)[0]
 	}
@@ -167,7 +168,7 @@ func (a devicesByType) Less(i, j int) bool {
 func (a *ir) assignDevices(t *target.Target) error {
 	// A bundle's requests is the sum of its children
 	bundleReqs := func(n *ast.Bundle) (reqs []ast.Request) {
-		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i += 1 {
+		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i++ {
 			kid := a.Commands.Out(n, i)
 			if c, ok := kid.(*ast.Command); ok {
 				reqs = append(reqs, c.Requests...)
@@ -177,7 +178,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 	}
 
 	colors := make(map[ast.Node][]target.Device)
-	for i, inum := 0, a.Commands.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, a.Commands.NumNodes(); i < inum; i++ {
 		n := a.Commands.Node(i).(ast.Node)
 		var reqs []ast.Request
 		isBundle := false
@@ -196,7 +197,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 			if isBundle {
 				devices = append(devices, human.New(human.Opt{}))
 			} else {
-				return fmt.Errorf("no device can handle constraints %s", ast.Meet(reqs...))
+				return fmt.Errorf("no device can handle constraints %v", ast.Meet(reqs...))
 			}
 		}
 		sort.Stable(devicesByType(devices))
@@ -247,7 +248,7 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 
 	kidRun := func(n ast.Node) *drun {
 		m := make(map[*drun]bool)
-		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i += 1 {
+		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i++ {
 			kid := a.Commands.Out(n, i).(ast.Node)
 			m[run[kid]] = true
 			if device[kid] != device[n] {
@@ -293,7 +294,7 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 
 // Run plan through device-specific planners. Adjust assignment based on
 // planner capabilities and return output.
-func (a *ir) tryPlan() error {
+func (a *ir) tryPlan(ctx context.Context) error {
 	dg := graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
@@ -332,7 +333,7 @@ func (a *ir) tryPlan() error {
 
 	output := make(map[*drun][]target.Inst)
 	for _, d := range runs {
-		insts, err := d.Device.Compile(cmds[d])
+		insts, err := d.Device.Compile(ctx, cmds[d])
 		if err != nil {
 			return err
 		}
@@ -389,13 +390,13 @@ func splice(head, tail target.Inst, insts []target.Inst) {
 }
 
 // Create move of dependencies if necessary
-func (a *ir) addMove(t *target.Target, dnode graph.Node, run *drun) error {
+func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, run *drun) error {
 	rewrite := func(n ast.Node, cs []*ast.UseComp, move *ast.Move) {
 		m := make(map[ast.Node]bool)
 		for _, c := range cs {
 			m[c] = true
 		}
-		for i, inum := 0, a.Graph.NumOuts(n); i < inum; i += 1 {
+		for i, inum := 0, a.Graph.NumOuts(n); i < inum; i++ {
 			out := a.Graph.Out(n, i).(ast.Node)
 			if m[out] {
 				a.Graph.SetOut(n, i, move)
@@ -414,9 +415,9 @@ func (a *ir) addMove(t *target.Target, dnode graph.Node, run *drun) error {
 	}
 
 	moves := make(map[target.Device][]ast.Node)
-	for i, inum := 0, a.DeviceDeps.NumOrigs(dnode); i < inum; i += 1 {
+	for i, inum := 0, a.DeviceDeps.NumOrigs(dnode); i < inum; i++ {
 		n := a.DeviceDeps.Orig(dnode, i).(ast.Node)
-		for j, jnum := 0, a.Commands.NumOuts(n); j < jnum; j += 1 {
+		for j, jnum := 0, a.Commands.NumOuts(n); j < jnum; j++ {
 			out := a.Commands.Out(n, j).(ast.Node)
 			if run == a.assignment[out] {
 				continue
@@ -451,12 +452,12 @@ func (a *ir) addMove(t *target.Target, dnode graph.Node, run *drun) error {
 	splice(tail, nil, a.output[run])
 
 	for dev, ms := range moves {
-		if ins, err := dev.Compile(ms); err != nil {
+		ins, err := dev.Compile(ctx, ms)
+		if err != nil {
 			return nil
-		} else {
-			splice(head, tail, ins)
-			insts = append(insts, ins...)
 		}
+		splice(head, tail, ins)
+		insts = append(insts, ins...)
 	}
 
 	a.output[run] = append(insts, a.output[run]...)
@@ -464,7 +465,7 @@ func (a *ir) addMove(t *target.Target, dnode graph.Node, run *drun) error {
 }
 
 // Add implied moves between devices
-func (a *ir) addMoves(t *target.Target) error {
+func (a *ir) addMoves(ctx context.Context, t *target.Target) error {
 	a.DeviceDeps = graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
@@ -485,7 +486,7 @@ func (a *ir) addMoves(t *target.Target) error {
 		}
 		someNode := a.DeviceDeps.Orig(n, 0).(ast.Node)
 		run := a.assignment[someNode]
-		if err := a.addMove(t, n, run); err != nil {
+		if err := a.addMove(ctx, t, n, run); err != nil {
 			return err
 		}
 	}
@@ -502,7 +503,7 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 	}
 
 	// Insert instructions
-	for i, inum := 0, a.DeviceDeps.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, a.DeviceDeps.NumNodes(); i < inum; i++ {
 		n := a.DeviceDeps.Node(i)
 		someNode := a.DeviceDeps.Orig(n, 0).(ast.Node)
 		run := a.assignment[someNode]
@@ -511,10 +512,10 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 	}
 
 	// Add tree edges
-	for i, inum := 0, a.DeviceDeps.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, a.DeviceDeps.NumNodes(); i < inum; i++ {
 		n := a.DeviceDeps.Node(i)
 		nentry := ig.entry[n]
-		for j, jnum := 0, a.DeviceDeps.NumOuts(n); j < jnum; j += 1 {
+		for j, jnum := 0, a.DeviceDeps.NumOuts(n); j < jnum; j++ {
 			dst := a.DeviceDeps.Out(n, j)
 			dexit := ig.exit[dst]
 			ig.dependsOn[nentry] = append(ig.dependsOn[nentry], dexit)
@@ -541,7 +542,7 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 	var insts []target.Inst
 	for _, n := range order {
 		var depends []target.Inst
-		for j, jnum := 0, sg.NumOuts(n); j < jnum; j += 1 {
+		for j, jnum := 0, sg.NumOuts(n); j < jnum; j++ {
 			depends = append(depends, sg.Out(n, j).(target.Inst))
 		}
 
@@ -634,26 +635,34 @@ func (a *instGraph) addInsts(root graph.Node, insts []target.Inst) {
 // configuration. This supports incremental compilation, so roots may refer to
 // nodes that have already been compiled, in which case, the result may refer
 // to previously generated instructions.
-func Compile(t *target.Target, roots []ast.Node) ([]target.Inst, error) {
+func Compile(ctx context.Context, t *target.Target, roots []ast.Node) ([]target.Inst, error) {
 	if len(roots) == 0 {
 		return nil, nil
 	}
 
-	if root, err := makeRoot(roots); err != nil {
+	root, err := makeRoot(roots)
+	if err != nil {
 		return nil, fmt.Errorf("invalid program: %s", err)
-	} else if ir, err := build(root); err != nil {
-		return nil, fmt.Errorf("invalid program: %s", err)
-	} else if err := ir.assignDevices(t); err != nil {
-		return nil, fmt.Errorf("error assigning devices with target configuration %s: %s", t, err)
-	} else if err := ir.tryPlan(); err != nil {
-		return nil, fmt.Errorf("error planning: %s", err)
-	} else if err := ir.addMoves(t); err != nil {
-		return nil, fmt.Errorf("error adding moves: %s", err)
-	} else if insts, err := ir.genInsts(); err != nil {
-		return nil, fmt.Errorf("error generating instructions: %s", err)
-	} else if err := ir.setOutputs(); err != nil {
-		return nil, fmt.Errorf("error setting outputs: %s", err)
-	} else {
-		return insts, nil
 	}
+	ir, err := build(root)
+	if err != nil {
+		return nil, fmt.Errorf("invalid program: %s", err)
+	}
+	if err := ir.assignDevices(t); err != nil {
+		return nil, fmt.Errorf("error assigning devices with target configuration %s: %s", t, err)
+	}
+	if err := ir.tryPlan(ctx); err != nil {
+		return nil, fmt.Errorf("error planning: %s", err)
+	}
+	if err := ir.addMoves(ctx, t); err != nil {
+		return nil, fmt.Errorf("error adding moves: %s", err)
+	}
+	insts, err := ir.genInsts()
+	if err != nil {
+		return nil, fmt.Errorf("error generating instructions: %s", err)
+	}
+	if err := ir.setOutputs(); err != nil {
+		return nil, fmt.Errorf("error setting outputs: %s", err)
+	}
+	return insts, nil
 }

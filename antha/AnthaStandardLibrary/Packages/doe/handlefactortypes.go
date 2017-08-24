@@ -77,6 +77,18 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 	return
 }
 
+func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.LHComponent, concentration wunit.Concentration, err error) {
+	concentration, err = HandleConcFactor(header, value)
+
+	if err != nil {
+		return
+	}
+
+	component, err = HandleLHComponentFactor(ctx, header, value)
+
+	return
+}
+
 // parses a factor name and value and returns an antha Volume.
 // If the value cannot be converted to a valid Volume an error is returned.
 func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Volume, err error) {

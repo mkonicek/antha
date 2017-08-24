@@ -686,7 +686,7 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 	zstart := 2.0      // offset of bottom of deck to bottom of well
 
 	rwshp := wtype.NewShape("cylinder", "mm", 6.2, 6.2, 10.0)
-	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 250, 1, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 250, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate := wtype.NewLHPlate("GreinerSWVBottom", "Greiner", 8, 12, 15, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 

@@ -34,16 +34,3 @@ func TestSelector(t *testing.T) {
 		t.Errorf("%v should contain %v", reqAB, reqB)
 	}
 }
-
-func TestMatches(t *testing.T) {
-	reqA := Request{Time: NewPoint(1.0)}
-	reqB := Request{}
-	reqC := Request{Time: NewPoint(2.0)}
-
-	if reqA.Matches(reqB) {
-		t.Errorf("%v only %v", reqA, reqB)
-	}
-	if !reqA.Matches(reqC) {
-		t.Errorf("%v not only %v", reqA, reqB)
-	}
-}

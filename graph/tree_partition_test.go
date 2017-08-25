@@ -32,7 +32,7 @@ func checkPartition(opt PartitionTreeOpt) (*TreePartition, error) {
 		return r, fmt.Errorf("expected %d found %d", lt, lr)
 	}
 
-	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i++ {
 		n := opt.Tree.Node(i)
 		if c, hasColor := r.Parts[n]; !hasColor {
 			return r, fmt.Errorf("expecting color for node %q but found none", n)
@@ -69,15 +69,15 @@ func BenchmarkMinWeightTree(b *testing.B) {
 	N := struct{ Tree, Color int }{Tree: logN, Color: (logN+1)/2 + 1}
 
 	var colors []int
-	for i := 0; i < N.Color; i += 1 {
+	for i := 0; i < N.Color; i++ {
 		colors = append(colors, i+1)
 	}
 
 	weights := make(map[struct{ A, B int }]int)
 	// Make weight space sparse enough for interesting patterns to occur
 	maxWeight := N.Color * N.Color * N.Color * N.Color
-	for i := 0; i < N.Color; i += 1 {
-		for j := 0; j < N.Color; j += 1 {
+	for i := 0; i < N.Color; i++ {
+		for j := 0; j < N.Color; j++ {
 			k := struct{ A, B int }{A: i + 1, B: j + 1}
 			weights[k] = rand.Intn(maxWeight) + 1
 		}
@@ -85,7 +85,7 @@ func BenchmarkMinWeightTree(b *testing.B) {
 
 	makeTree := func(n int) (Graph, Node) {
 		m := make(map[string][]string)
-		for i := 0; i < n; i += 1 {
+		for i := 0; i < n; i++ {
 			id := fmt.Sprintf("v%d", i)
 			kid1 := fmt.Sprintf("v%d", 2*i+1)
 			kid2 := fmt.Sprintf("v%d", 2*i+2)

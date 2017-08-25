@@ -165,7 +165,7 @@ func (a *runOpt) Run() error {
 		MaybeArgs: []interface{}{mixerOpt},
 	}
 	for _, uri := range a.Drivers {
-		opt.Endpoints = append(opt.Endpoints, auto.Endpoint{Uri: uri})
+		opt.Endpoints = append(opt.Endpoints, auto.Endpoint{URI: uri})
 	}
 	t, err := auto.New(opt)
 	if err != nil {

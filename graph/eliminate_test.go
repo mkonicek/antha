@@ -180,7 +180,7 @@ func TestHarderGraphEliminate(t *testing.T) {
 			return 1
 		},
 	})
-	for i, inum := 0, eg.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, eg.NumNodes(); i < inum; i++ {
 		n := eg.Node(i)
 		if eg.NumOuts(n) != 0 {
 			continue

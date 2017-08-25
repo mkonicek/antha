@@ -8,7 +8,7 @@ func TestIntSetAdd(t *testing.T) {
 	is := NewIntSet()
 
 	if a := is.Add(); a != nil {
-		t.Errorf("expected %q found %q", nil, a)
+		t.Errorf("expected %v found %v", nil, a)
 	} else if a, b := is.Add(1), is.Add(1); a == nil || b == nil || a != b {
 		t.Errorf("expected %q == %q", a, b)
 	} else if a, b := is.Add(1, 2), is.Add(2, 1); a == nil || b == nil || a != b {

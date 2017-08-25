@@ -6,6 +6,7 @@ import (
 	"github.com/antha-lang/antha/ast"
 )
 
+// A Device is a scheduling plugin
 type Device interface {
 	CanCompile(ast.Request) bool // Can this device compile this request
 	MoveCost(from Device) int    // A non-negative cost to move to this device

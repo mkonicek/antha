@@ -11,6 +11,7 @@ import (
 	"github.com/antha-lang/antha/target/handler"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"
+	"github.com/antha-lang/antha/target/shakerincubator"
 	"google.golang.org/grpc"
 )
 
@@ -28,6 +29,7 @@ func (a *tryer) Driver(ctx context.Context, conn *grpc.ClientConn, arg interface
 		return err
 	}
 	switch reply.Type {
+
 	case "antha.runner.v1.Runner":
 		r := runner.NewRunnerClient(conn)
 		reply, err := r.SupportedRunTypes(ctx, &runner.SupportedRunTypesRequest{})
@@ -37,21 +39,27 @@ func (a *tryer) Driver(ctx context.Context, conn *grpc.ClientConn, arg interface
 		for _, typ := range reply.Types {
 			a.Auto.runners[typ] = append(a.Auto.runners[typ], r)
 		}
+
 	case "antha.shakerincubator.v1.ShakerIncubator":
-		h := &handler.Handler{
-			Labels: []ast.NameValue{
+		s := &shakerincubator.ShakerIncubator{}
+		a.HumanOpt.CanIncubate = false
+		a.Auto.handler[s] = conn
+		return a.Auto.Target.AddDevice(s)
+
+	default:
+		h := handler.New(
+			[]ast.NameValue{
 				ast.NameValue{
 					Name:  "antha.driver.v1.TypeReply.type",
-					Value: "antha.shakerincubator.v1.ShakerIncubator",
+					Value: reply.Type,
 				},
 			},
-		}
+		)
 		a.HumanOpt.CanHandle = false
 		a.Auto.handler[h] = conn
 		return a.Auto.Target.AddDevice(h)
-	default:
-		return noMatch
 	}
+
 	return nil
 }
 
@@ -89,5 +97,5 @@ func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{})
 		}
 	}
 
-	return noMatch
+	return errNoMatch
 }

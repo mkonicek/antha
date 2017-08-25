@@ -232,8 +232,9 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	return r
 }
 
-// XXX The functions below will be deleted soon as they do not generate liquid handling
-//     instructions
+// TODO: he functions below will be deleted soon as they do not generate liquid
+// handling instructions
+
 // Mix the specified wtype.LHComponents together and leave the destination TBD
 func Mix(components ...*wtype.LHComponent) *wtype.LHComponent {
 	r := GenericMix(MixOptions{
@@ -242,7 +243,7 @@ func Mix(components ...*wtype.LHComponent) *wtype.LHComponent {
 	return r.Result
 }
 
-// Mix the specified wtype.LHComponents together into a specific plate
+// MixInto the specified wtype.LHComponents together into a specific plate
 func MixInto(destination *wtype.LHPlate, address string, components ...*wtype.LHComponent) *wtype.LHComponent {
 	r := GenericMix(MixOptions{
 		Components:  components,
@@ -253,7 +254,7 @@ func MixInto(destination *wtype.LHPlate, address string, components ...*wtype.LH
 	return r.Result
 }
 
-// Mix the specified wtype.LHComponents together into a plate of a particular type
+// MixTo the specified wtype.LHComponents together into a plate of a particular type
 func MixTo(platetype string, address string, platenum int, components ...*wtype.LHComponent) *wtype.LHComponent {
 	r := GenericMix(MixOptions{
 		Components: components,

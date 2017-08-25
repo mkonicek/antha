@@ -2,6 +2,7 @@ package execute
 
 import (
 	"context"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -9,6 +10,7 @@ import (
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
+	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 )
 
@@ -24,7 +26,29 @@ func SetInputPlate(ctx context.Context, plate *wtype.LHPlate) {
 	st.SetInputPlate(plate)
 }
 
-func incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature, time wunit.Time, shaking bool) *commandInst {
+// An IncubateOpt are options to an incubate command
+type IncubateOpt struct {
+	// Time for which to incubate component
+	Time wunit.Time
+	// Temperature at which to incubate component
+	Temp wunit.Temperature
+	// Rate at which to shake incubator (force is device dependent)
+	ShakeRate wunit.Rate
+	// Radius at which ShakeRate is defined
+	ShakeRadius wunit.Length
+
+	// Time for which to pre-heat incubator
+	PreTemp wunit.Temperature
+	// Temperature at which to pre-heat incubator
+	PreTime wunit.Time
+	// Rate at which to pre-heat incubator
+	PreShakeRate wunit.Rate
+	// Radius at which PreShakeRate is defined
+	PreShakeRadius wunit.Length
+}
+
+// Incubate incubates a component
+func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtype.LHComponent {
 	st := sampletracker.GetSampleTracker()
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
@@ -32,28 +56,32 @@ func incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
 	st.UpdateIDOf(in.ID, comp.ID)
-
-	return &commandInst{
+	inst := &commandInst{
 		Args: []*wtype.LHComponent{in},
 		Comp: comp,
 		Command: &ast.Command{
 			Inst: &ast.IncubateInst{
-				Time: time,
-				Temp: temp,
-			},
-			Requests: []ast.Request{
-				ast.Request{
-					Time: ast.NewPoint(time.SIValue()),
-					Temp: ast.NewPoint(temp.SIValue()),
-				},
+				Time:           opt.Time,
+				Temp:           opt.Temp,
+				ShakeRate:      opt.ShakeRate,
+				ShakeRadius:    opt.ShakeRadius,
+				PreTemp:        opt.PreTemp,
+				PreTime:        opt.PreTime,
+				PreShakeRate:   opt.PreShakeRate,
+				PreShakeRadius: opt.PreShakeRadius,
 			},
 		},
 	}
-}
 
-// Incubate incubates a component
-func Incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature, time wunit.Time, shaking bool) *wtype.LHComponent {
-	inst := incubate(ctx, in, temp, time, shaking)
+	// TODO: revisit when ast.Request architecture is removed as this command
+	// cannot be assigned independently. It needs to be linked with a previous
+	// Incubate. For now assume just one incubator and use explicit selector
+	inst.Command.Requests = append(inst.Command.Requests, ast.Request{
+		Selector: []ast.NameValue{
+			target.DriverSelectorV1ShakerIncubator,
+		},
+	})
+
 	trace.Issue(ctx, inst)
 	return inst.Comp
 }
@@ -62,12 +90,13 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, temp wunit.Temperature
 // but passes the instruction to the planner
 // in future this should generate handles as side-effects
 
-type PromptOpts struct {
+type promptOpts struct {
 	Component   *wtype.LHComponent
 	ComponentIn *wtype.LHComponent
 	Message     string
 }
 
+// Prompt user with a message during mixer execution
 func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *wtype.LHComponent {
 	// sadly need to update everything
 	comp := component.Dup()
@@ -75,12 +104,12 @@ func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *
 	comp.BlockID = wtype.NewBlockID(getID(ctx))
 	comp.SetGeneration(comp.Generation() + 1)
 	getMaker(ctx).UpdateAfterInst(component.ID, comp.ID)
-	pinst := prompt(ctx, PromptOpts{Component: comp, ComponentIn: component, Message: message})
+	pinst := prompt(ctx, promptOpts{Component: comp, ComponentIn: component, Message: message})
 	trace.Issue(ctx, pinst)
 	return comp
 }
 
-func prompt(ctx context.Context, opts PromptOpts) *commandInst {
+func prompt(ctx context.Context, opts promptOpts) *commandInst {
 	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
@@ -89,13 +118,18 @@ func prompt(ctx context.Context, opts PromptOpts) *commandInst {
 	inst.AddComponent(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
 
-	cp := true
 	return &commandInst{
 		Args: []*wtype.LHComponent{opts.ComponentIn},
 		Comp: opts.Component,
 		Command: &ast.Command{
-			Inst:     inst,
-			Requests: []ast.Request{ast.Request{CanPrompt: &cp}},
+			Inst: inst,
+			Requests: []ast.Request{
+				ast.Request{
+					Selector: []ast.NameValue{
+						target.DriverSelectorV1Prompter,
+					},
+				},
+			},
 		},
 	}
 }
@@ -113,10 +147,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	var sels []ast.NameValue
 
 	if len(opt.Selector) == 0 {
-		sels = append(sels, ast.NameValue{
-			Name:  "antha.driver.v1.TypeReply.type",
-			Value: "antha.human.v1.Human",
-		})
+		sels = append(sels, target.DriverSelectorV1Human)
 	} else {
 		for n, v := range opt.Selector {
 			sels = append(sels, ast.NameValue{Name: n, Value: v})
@@ -184,7 +215,11 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	var reqs []ast.Request
 	// from the protocol POV components need to be passed by value
 	for i, c := range wtype.CopyComponentArray(inst.Components) {
-		reqs = append(reqs, ast.Request{MixVol: ast.NewPoint(c.Volume().SIValue())})
+		reqs = append(reqs, ast.Request{
+			Selector: []ast.NameValue{
+				target.DriverSelectorV1Mixer,
+			},
+		})
 		c.Order = i
 
 		//result.MixPreserveTvol(c)

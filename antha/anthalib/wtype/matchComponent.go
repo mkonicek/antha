@@ -119,10 +119,8 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 				mx = mat[i-1][j-1].Sc
 				bk = 2
 
-				// we do not allow horizontal or vertical moves unless the
-				// robot can change the tip spacing
-				// which is currently unsupported since we haven't seen any liquid handlers
-				// that can do it
+				// TODO --> Tecans allow tip spacing changes, need to know limits
+				//          of this and provide parameters to see how far this can go
 			}
 			mat[i][j].Sc += mx
 			mat[i][j].Bk = bk

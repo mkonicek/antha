@@ -56,6 +56,11 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		insset := make([]*wtype.LHInstruction, len(set))
 
 		for i, id := range set {
+			// parallel sets are arranged in accordance with destination layout
+			// hence can include gaps
+			if id == "" {
+				continue
+			}
 			seen[id] = true
 			insset[i] = insm[id]
 		}
@@ -200,6 +205,10 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 	prm := head.GetParams()
 
 	for _, i := range ins {
+		// ignore empty instructions
+		if len(i.Components) == 0 {
+			continue
+		}
 		wc := wtype.MakeWellCoords(i.Welladdress)
 
 		_, ok := h[i.PlateID()]
@@ -323,6 +332,16 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 	ret := make(SetOfIDSets, 0, 1)
 	col := 0
 
+	countUsed := func(sa []string) int {
+		c := 0
+		for _, v := range sa {
+			if v != "" {
+				c += 1
+			}
+		}
+		return c
+	}
+
 	for {
 		if col >= len(pdm) {
 			break
@@ -330,7 +349,7 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 
 		colset := get_col(pdm, col, multi, wells, contiguous, full)
 
-		if len(colset) != 0 {
+		if countUsed(colset) != 0 {
 			ret = append(ret, colset)
 		} else {
 			col += 1
@@ -356,24 +375,30 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 	}
 
 	for s := 0; s < len(pdm[col])-2; s++ {
-		ret = make(IDSet, 0, multi)
+		ret = make(IDSet, multi)
 		newcol := make([][]*wtype.LHInstruction, len(pdm[col]))
-
+		used := 0 // number of instructions returned
+		offset := 0
 		for c := s; c < len(pdm[col]); c++ {
 			if len(pdm[col][c]) >= tipsperwell {
 				for x := 0; x < tipsperwell; x++ {
 					id := pdm[col][c][x].ID
-					ret = append(ret, id)
+					//ret = append(ret, id)
+					ret[offset] = id
+					offset += 1
+					used += 1
 				}
 				newcol[c] = pdm[col][c][tipsperwell:]
 			} else if contiguous {
 				break
+			} else {
+				offset += tipsperwell
 			}
 		}
 
-		if len(ret) != multi && full {
+		if used != multi && full {
 			return make(IDSet, 0, 1)
-		} else if len(ret) == 0 {
+		} else if used == 0 {
 			continue
 		} else {
 			pdm[col] = newcol

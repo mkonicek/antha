@@ -1,8 +1,9 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func CopyComponentArray(arin []*LHComponent) []*LHComponent {

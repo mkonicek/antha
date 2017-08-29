@@ -2,7 +2,6 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -324,12 +323,7 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
 	}
 
-	for _, ins := range ris {
-		fmt.Println(InsToString(ins))
-	}
-
 	testPositive(ctx, ris, pol, rbt, t)
-	t.Errorf("LOOK AT THE SOURCES... SOMETHING BAD HAS HAPPENED IN ALIGN>...")
 }
 
 func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {

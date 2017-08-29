@@ -1,10 +1,10 @@
 package wtype
 
 import (
+	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"reflect"
 	"testing"
-
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 func TestMatchComponent(t *testing.T) {
@@ -669,6 +669,59 @@ func TestAlignIndependent2(t *testing.T) {
 	expV := []wunit.Volume{vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume(), vW.Dup(), wunit.ZeroVolume()}
 	expM := []int{0, -1, 2, -1, 4, -1, 6, -1}
 	expSc := 80.0
+
+	expected := Match{IDs: expID, WCs: expCR, Vols: expV, M: expM, Sc: expSc}
+
+	if !reflect.DeepEqual(m, expected) {
+		t.Errorf("Expected %v got %v", expected, m)
+	}
+}
+
+func TestAlignIndependent3(t *testing.T) {
+	w := make([]*LHComponent, 0, 8)
+	g := make([]*LHComponent, 8)
+
+	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
+	p1 := "Plate1"
+	p2 := "Plate2"
+
+	vW := wunit.NewVolume(20.0, "ul")
+	vG := wunit.NewVolume(200.0, "ul")
+
+	cN := "water"
+
+	for i := 0; i < 8; i++ {
+		wcmp := NewLHComponent()
+		wcmp.Loc = p2 + ":" + CIDs[i]
+		wcmp.CName = cN
+		wcmp.Vol = vW.RawValue()
+
+		g[i] = NewLHComponent()
+
+		/*__*/
+		g[i].Loc = p1 + ":" + CIDs[i]
+		g[i].CName = cN
+		g[i].Vol = vG.RawValue()
+
+		if i != 6 {
+			w = append(w, wcmp)
+		}
+	}
+	m := align(w, g, true, true)
+
+	if len(m.IDs) != 8 {
+		t.Errorf("Error: expected 8 IDs got %d", len(m.IDs))
+	}
+
+	expID := []string{p1, p1, p1, p1, p1, p1, "", p1}
+	expCR := []string{"A1", "B1", "C1", "D1", "E1", "F1", "", "H1"}
+	expV := []wunit.Volume{vW.Dup(), vW.Dup(), vW.Dup(), vW.Dup(), vW.Dup(), vW.Dup(), wunit.ZeroVolume(), vW.Dup()}
+	expM := []int{0, 1, 2, 3, 4, 5, -1, 7}
+	expSc := 140.0
+
+	fmt.Println("GOTGOTGOT")
+	fmt.Println(m)
+	fmt.Println("TOGTOGTOG")
 
 	expected := Match{IDs: expID, WCs: expCR, Vols: expV, M: expM, Sc: expSc}
 

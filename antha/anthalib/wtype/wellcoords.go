@@ -81,6 +81,12 @@ func squashedIntFromWCA(wcA []WellCoords, which int) []int {
 			v = wc.Y
 		}
 
+		// ignore nils
+
+		if v == -1 {
+			continue
+		}
+
 		if !containsInt(v, ret) {
 			ret = append(ret, v)
 		}

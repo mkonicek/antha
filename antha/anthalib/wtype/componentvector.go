@@ -62,6 +62,10 @@ func (cv ComponentVector) ToSumHash() map[string]wunit.Volume {
 	ret := make(map[string]wunit.Volume, len(cv))
 
 	for _, c := range cv {
+		// skip nil components
+		if c == nil {
+			continue
+		}
 		v, ok := ret[c.FullyQualifiedName()]
 
 		if !ok {

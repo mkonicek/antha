@@ -187,6 +187,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 	if len(ins) == 0 {
 		return nil, fmt.Errorf("No instructions")
 	}
+
 	// sort instructions to keep components together
 
 	//sort.Sort(InsByComponent(ins))
@@ -348,7 +349,6 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 		}
 
 		colset := get_col(pdm, col, multi, wells, contiguous, full)
-
 		if countUsed(colset) != 0 {
 			ret = append(ret, colset)
 		} else {
@@ -394,6 +394,10 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 			} else {
 				offset += tipsperwell
 			}
+
+			if offset == multi {
+				break
+			}
 		}
 
 		if used != multi && full {
@@ -402,6 +406,7 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 			continue
 		} else {
 			pdm[col] = newcol
+
 			return ret
 		}
 	}

@@ -31,7 +31,7 @@ func (cv ComponentVector) GetNames() []string {
 
 	for i := 0; i < len(cv); i++ {
 		if cv[i] != nil {
-			sa[i] = cv[i].CName
+			sa[i] = cv[i].FullyQualifiedName()
 		}
 	}
 
@@ -42,7 +42,11 @@ func (cv ComponentVector) GetVols() []wunit.Volume {
 	ret := make([]wunit.Volume, len(cv))
 
 	for i, c := range cv {
-		ret[i] = wunit.NewVolume(c.Vol, c.Vunit)
+		if c == nil {
+			ret[i] = wunit.ZeroVolume()
+		} else {
+			ret[i] = wunit.NewVolume(c.Vol, c.Vunit)
+		}
 	}
 
 	return ret

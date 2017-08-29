@@ -1,8 +1,13 @@
 package codegen
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/target"
 )
 
@@ -33,6 +38,28 @@ func isIncubator(dev target.Device) bool {
 	})
 
 	return incubates && !human
+}
+
+// Hacky function to identify metadata for incubator setup in lieu of better
+// device modeling;
+func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.LHPlate, error) {
+	var ret []*wtype.LHPlate
+	for _, plate := range prop.Plates {
+		switch {
+		case strings.HasSuffix(plate.Type, "bioshake"):
+			fallthrough
+		case strings.HasSuffix(plate.Type, "bioshake_96well_adaptor"):
+			fallthrough
+		case strings.HasSuffix(plate.Type, "bioshake_standard_adaptor"):
+			ret = append(ret, plate)
+		}
+	}
+
+	if len(ret) == 0 {
+		return nil, fmt.Errorf("no incubation plates found")
+	}
+
+	return ret, nil
 }
 
 // addImplicitMixNodes adds additional setup for mix nodes
@@ -67,7 +94,19 @@ func (a *ir) addImplicitMixInsts() error {
 			continue
 		}
 
-		a.initializers = append(a.initializers, &target.SetupIncubator{})
+		if len(mixes) != 1 {
+			return fmt.Errorf("advanced incubator setup not yet supported")
+		}
+
+		incPlates, err := findIncubationPlates(mixes[0].Properties)
+		if err != nil {
+			return err
+		}
+
+		a.initializers = append(a.initializers, &target.SetupIncubator{
+			Mix:              mixes[0],
+			IncubationPlates: incPlates,
+		})
 	}
 
 	for _, mix := range mixes {

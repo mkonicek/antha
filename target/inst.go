@@ -3,6 +3,7 @@ package target
 import (
 	"time"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
@@ -76,6 +77,9 @@ type SetupMixer struct {
 // A SetupIncubator is a task to setup an incubator
 type SetupIncubator struct {
 	Manual
+	// Corresponding mix
+	Mix              *Mix
+	IncubationPlates []*wtype.LHPlate
 }
 
 var (

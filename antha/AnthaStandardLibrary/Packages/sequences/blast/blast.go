@@ -354,7 +354,6 @@ func MegaBlastN(query string) (hits []blast.Hit, err error) {
 		return
 	}
 	hits, err = Hits(o)
-	//fmt.Println(hits)
 	if err != nil {
 		return
 	}

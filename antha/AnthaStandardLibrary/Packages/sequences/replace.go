@@ -39,6 +39,57 @@ func Siteinorfs(Features features, site string) bool {
 }
 */
 
+// FindSeq searches for a DNA sequence within a larger DNA sequence
+func FindSeq(bigsequence, smallsequence wtype.DNASequence) (seqsfound []search.Thingfound) {
+
+	bigseq := strings.ToUpper(bigsequence.Sequence())
+
+	var seqfound search.Thingfound
+
+	seq := strings.ToUpper(smallsequence.Sequence())
+	if strings.Contains(bigseq, seq) {
+		seqfound.Thing = seq
+		seqfound.Positions = search.Findall(bigseq, seq)
+		seqsfound = append(seqsfound, seqfound)
+	}
+
+	revseq := strings.ToUpper(RevComp(seq))
+	if strings.Contains(bigseq, revseq) {
+		seqfound.Thing = revseq
+		seqfound.Positions = search.Findall(bigseq, revseq)
+		seqfound.Reverse = true
+		seqsfound = append(seqsfound, seqfound)
+	}
+
+	return seqsfound
+}
+
+// FindSeq searches for a DNA sequence within a larger DNA sequence
+// Will look for sequences which partially match based on mismatch tolerance
+func FindSeqWithMisMatches(bigsequence, smallsequence wtype.DNASequence, mismatchTolerance int) (seqsfound []search.Thingfound) {
+
+	bigseq := strings.ToUpper(bigsequence.Sequence())
+
+	var seqfound search.Thingfound
+
+	seq := strings.ToUpper(smallsequence.Sequence())
+	if strings.Contains(bigseq, seq) {
+		seqfound.Thing = seq
+		seqfound.Positions = search.Findall(bigseq, seq)
+		seqsfound = append(seqsfound, seqfound)
+	}
+
+	revseq := strings.ToUpper(RevComp(seq))
+	if strings.Contains(bigseq, revseq) {
+		seqfound.Thing = revseq
+		seqfound.Positions = search.Findall(bigseq, revseq)
+		seqfound.Reverse = true
+		seqsfound = append(seqsfound, seqfound)
+	}
+
+	return seqsfound
+}
+
 // refactor strings to DNASequences to enable handling plasmid sequences
 func FindSeqsinSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thingfound) {
 

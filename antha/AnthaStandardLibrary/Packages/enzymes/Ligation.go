@@ -29,10 +29,12 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
+	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/typeiis"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	commonfeatures "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/plasmid"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	//features "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/features"
 )
 
 func fragmentsToDNASequences(fragments []Digestedfragment) (sequences []wtype.DNASequence, err error) {
@@ -52,6 +54,10 @@ func fragmentsToDNASequences(fragments []Digestedfragment) (sequences []wtype.DN
 	}
 	return
 }
+
+// add code to check for duplicate sticky end parts to prevent simulation of assembly of all backbones
+// func uniqueEnds (upFragment, downFragment Digestedfragment, endsUsedSoFar []string) bool {}
+// or even better to check for presence of correct antibiotic resistance
 
 func jointwoparts(upstreampart []Digestedfragment, downstreampart []Digestedfragment) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
 
@@ -175,6 +181,87 @@ func rotate_vector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASeq
 	return ret, nil
 }
 
+func allPartOrders(parts []wtype.DNASequence) (allCombos [][]wtype.DNASequence) {
+
+	partNumToSeq := make(map[int]wtype.DNASequence)
+	var nums []int
+
+	for i := range parts {
+		partNumToSeq[i] = parts[i]
+		nums = append(nums, i)
+	}
+
+	numbercombos := permutations(nums)
+
+	allCombos = make([][]wtype.DNASequence, len(numbercombos))
+
+	for i := range allCombos {
+		var combo []wtype.DNASequence
+		for _, num := range numbercombos[i] {
+			combo = append(combo, partNumToSeq[num])
+		}
+		allCombos[i] = combo
+	}
+
+	return
+}
+
+func permutations(arr []int) [][]int {
+	var helper func([]int, int)
+	res := [][]int{}
+
+	helper = func(arr []int, n int) {
+		if n == 1 {
+			tmp := make([]int, len(arr))
+			copy(tmp, arr)
+			res = append(res, tmp)
+		} else {
+			for i := 0; i < n; i++ {
+				helper(arr, n-1)
+				if n%2 == 1 {
+					tmp := arr[i]
+					arr[i] = arr[n-1]
+					arr[n-1] = tmp
+				} else {
+					tmp := arr[0]
+					arr[0] = arr[n-1]
+					arr[n-1] = tmp
+				}
+			}
+		}
+	}
+	helper(arr, len(arr))
+	return res
+}
+
+func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
+
+	var errs []string
+
+	var allPartCombos [][]wtype.DNASequence = allPartOrders(partsInAnyOrder)
+
+	for _, partOrder := range allPartCombos {
+		partialassemblies, plasmids, err := JoinXnumberofparts(vector, partOrder, enzyme)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+		for i := range partialassemblies {
+			assembledfragments = append(assembledfragments, partialassemblies[i])
+		}
+		for j := range plasmids {
+			plasmidproducts = append(plasmidproducts, plasmids[j])
+		}
+	}
+
+	if len(errs) > 0 && len(plasmidproducts) == 0 {
+		err = fmt.Errorf(strings.Join(errs, ";"))
+	}
+
+	plasmidproducts = search.RemoveDuplicateSequences(plasmidproducts)
+
+	return
+}
+
 // key function for returning an error message, arrays of partially assembled fragments and fully assembled fragments from performing typeIIS assembly on a vector and array of parts
 func JoinXnumberofparts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
 
@@ -280,20 +367,20 @@ func JoinXnumberofparts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 }
 */
 
-// struct containing all information required to use AssemblySimulator function
-type Assemblyparameters struct {
-	Constructname string              `json:"construct_name"`
-	Enzymename    string              `json:"enzyme_name"`
-	Vector        wtype.DNASequence   `json:"vector"`
-	Partsinorder  []wtype.DNASequence `json:"parts_in_order"`
-}
-
 func names(seqs []wtype.DNASequence) []string {
 	var nms []string
 	for i := range seqs {
 		nms = append(nms, seqs[i].Nm)
 	}
 	return nms
+}
+
+// struct containing all information required to use AssemblySimulator function
+type Assemblyparameters struct {
+	Constructname string              `json:"construct_name"`
+	Enzymename    string              `json:"enzyme_name"`
+	Vector        wtype.DNASequence   `json:"vector"`
+	Partsinorder  []wtype.DNASequence `json:"parts_in_order"`
 }
 
 // returns a summary of the names of all components specified in the Assemblyparameters variable
@@ -369,7 +456,7 @@ func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence,
 }
 
 // Simulate assembly success; returns status, number of correct assemblies, any sites found
-func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, successfulassemblies int, sites []Restrictionsites, newDNASequence wtype.DNASequence, err error) {
+func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, successfulassemblies int, sites []Restrictionsites, newDNASequences []wtype.DNASequence, err error) {
 
 	// fetch enzyme properties from map (this is basically a look up table for those who don't know)
 	successfulassemblies = 0
@@ -380,35 +467,34 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	enzyme, err := lookup.TypeIIsLookup(enzymename)
 
 	if err != nil {
-		return s, successfulassemblies, sites, newDNASequence, err
+		return s, successfulassemblies, sites, newDNASequences, err
 	}
 
 	// need to expand this to include other enzyme possibilities
 	if enzyme.Class != "TypeIIs" { // enzyme.Name != "SapI" && enzyme.Name != "BsaI" && enzyme.Name != "BpiI" {
 		s = fmt.Sprint(enzymename, ": Incorrect Enzyme or no enzyme specified")
 		err = fmt.Errorf(s)
-		return s, successfulassemblies, sites, newDNASequence, err
+		return s, successfulassemblies, sites, newDNASequences, err
 	}
 
 	//assemble (note that sapIenz is found in package enzymes)
-	failedassemblies, plasmidproductsfromXprimaryseq, err := JoinXnumberofparts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
+	failedassemblies, plasmidproductsfromXprimaryseq, err := FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 
 	if err != nil {
 		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
 		s = err.Error()
-		return s, successfulassemblies, sites, newDNASequence, err
+		return s, successfulassemblies, sites, plasmidproductsfromXprimaryseq, err
 	}
 
 	enzy, err := lookup.EnzymeLookup(enzymename)
 
 	if err != nil {
-		return s, successfulassemblies, sites, newDNASequence, err
+		return s, successfulassemblies, sites, plasmidproductsfromXprimaryseq, err
 	}
 
 	if len(plasmidproductsfromXprimaryseq) == 1 {
 
 		sites = Restrictionsitefinder(plasmidproductsfromXprimaryseq[0], []wtype.RestrictionEnzyme{BsaI, SapI, enzy})
-		newDNASequence = plasmidproductsfromXprimaryseq[0]
 	}
 	// returns first plasmid in array! should be changed later!
 	if len(plasmidproductsfromXprimaryseq) > 1 {
@@ -419,8 +505,6 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 				sites = append(sites, site)
 			}
 		}
-		//return first for now
-		newDNASequence = plasmidproductsfromXprimaryseq[0]
 	}
 
 	s = "hmmm I'm confused, this doesn't seem to make any sense"
@@ -434,10 +518,26 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		successfulassemblies = successfulassemblies + 1
 	}
 
+	// remove invalid plasmids
+	var validPlasmids []wtype.DNASequence
+
+	for _, seq := range plasmidproductsfromXprimaryseq {
+		plasmid, oris, markers, _ := commonfeatures.ValidPlasmid(seq)
+		if plasmid && len(oris) == 1 && len(markers) == 1 {
+			validPlasmids = append(validPlasmids, seq)
+		}
+	}
+
+	plasmidproductsfromXprimaryseq = validPlasmids
+
 	if len(plasmidproductsfromXprimaryseq) > 1 {
 
-		err = fmt.Errorf("Yay! this should work but there seems to be more than one possible plasmid which could form %s", err)
-		s = err.Error()
+		var errormessage string
+		if err != nil {
+			errormessage = err.Error()
+		}
+		merr := fmt.Errorf("Yay! this should work but there seems to be %d possible plasmids which could form: %+v", len(plasmidproductsfromXprimaryseq), errormessage, plasmidproductsfromXprimaryseq)
+		s = merr.Error()
 	}
 
 	if len(plasmidproductsfromXprimaryseq) == 0 && len(failedassemblies) > 0 {
@@ -451,22 +551,23 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		for i, failed := range failedassemblies {
 			seq, err := failed.ToDNASequence("fragment" + strconv.Itoa(i+1))
 			if err != nil {
-				return s, successfulassemblies, sites, newDNASequence, err
+				return s, successfulassemblies, sites, plasmidproductsfromXprimaryseq, err
 			}
 			seqs = append(seqs, seq)
 		}
 
-		return s, successfulassemblies, sites, biggest(seqs), err
+		return s, successfulassemblies, sites, seqs, err
 
 	}
 
-	if s != "Yay! this should work" {
+	if !strings.Contains(s, "Yay! this should work") {
 		err = fmt.Errorf(s)
 	}
+	for _, newDNASequence := range plasmidproductsfromXprimaryseq {
+		newDNASequence.Nm = assemblyparameters.Constructname
+	}
 
-	newDNASequence.Nm = assemblyparameters.Constructname
-
-	return s, successfulassemblies, sites, newDNASequence, err
+	return s, successfulassemblies, sites, plasmidproductsfromXprimaryseq, err
 }
 
 func biggest(entries []wtype.DNASequence) wtype.DNASequence {
@@ -517,9 +618,10 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 
 	for _, construct := range parameters {
 		output, _, _, seq, err := Assemblysimulator(construct)
-
-		seqs = append(seqs, seq)
-
+		// add first sequence only
+		if len(seq) > 0 {
+			seqs = append(seqs, seq[0])
+		}
 		if err == nil {
 			successfulassemblies += 1
 			continue

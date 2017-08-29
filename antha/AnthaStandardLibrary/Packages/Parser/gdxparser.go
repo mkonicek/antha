@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -151,32 +152,4 @@ func gdxToAssemblyParameters(data []byte) ([]enzymes.Assemblyparameters, error) 
 		construct_list = append(construct_list, newconstruct)
 	}
 	return construct_list, nil
-}
-
-//This is a function to parse file type .gdx to a DNA sequence of type []wtype.DNASequence
-func GDXtoDNASequence(sequenceFile wtype.File) (parts_list []wtype.DNASequence, err error) {
-	data, err := sequenceFile.ReadAll()
-	var gdx Project
-	err = xml.Unmarshal(data, &gdx)
-	if err != nil {
-		return parts_list, err
-	}
-
-	parts_list = make([]wtype.DNASequence, 0)
-
-	for _, a := range gdx.DesignConstruct {
-		for _, b := range a.DNAElements {
-			var newseq wtype.DNASequence
-			for i := 0; i < len(a.DNAElements); i++ {
-				newseq.Nm = b.Label
-				newseq.Seq = b.Sequence
-				if a.Plasmid == "true" {
-					newseq.Plasmid = true
-				}
-				parts_list = append(parts_list, newseq)
-			}
-		}
-	}
-
-	return parts_list, err
 }

@@ -81,7 +81,6 @@ func OverlapCheck(seq1 string, seq2 string) (maxpercentOverlapofsmallest float64
 
 		maxnumberofbpOverlap = biggestsofar
 		overlappingseq = overlapsofar
-		// fmt.Println("refseq:", refseq, "testseq:", testseq)
 
 		maxpercentOverlapofsmallest = float64(maxnumberofbpOverlap) / float64(len(testseq))
 	}
@@ -156,9 +155,6 @@ func DNAregion(sequence wtype.DNASequence, startposition int, endposition int) (
 // overlapthresholdwithseqstoavoid allows maximum permissable partial overlap to be specified by the user, if set to -1 any overlap is tolerated
 func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (oligoseq Primer, err error) {
 
-	//var start int
-	//var end int
-
 	if maxlength > len(seq.Sequence()) {
 		return oligoseq, fmt.Errorf("Sequence %s %s too small to design primer for or max length of primer %d too long", seq.Nm, seq.Seq, maxlength)
 	}
@@ -179,11 +175,7 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 
 			meltingtemp := BasicMeltingTemp(ssoligo)
 
-			//fmt.Println(ssoligo.Seq, temppercentage, meltingtemp.ToString())
-
 			bindingsites := CheckNonSpecificBinding(seq, ssoligo)
-
-			// fmt.Println("binding sites:", bindingsites)
 
 			if len(seqstoavoid) > 0 && overlapthresholdwithseqstoavoid > 0 {
 				for _, seq := range seqstoavoid {
@@ -196,7 +188,6 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 			}
 
 			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && search.InSlice(tempoligoseq, seqstoavoid) == false && overlapthresholdfail == false {
-				// fmt.Println("found good primer!", tempoligoseq, temppercentage)
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -245,11 +236,7 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 
 			meltingtemp := BasicMeltingTemp(ssoligo)
 
-			//fmt.Println(ssoligo.Seq, temppercentage, meltingtemp.ToString())
-
 			bindingsites := CheckNonSpecificBinding(seq, ssoligo)
-
-			// fmt.Println("binding sites:", bindingsites)
 
 			if len(seqstoavoid) > 0 && overlapthresholdwithseqstoavoid > 0 {
 				for _, seq := range seqstoavoid {
@@ -262,7 +249,6 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 			}
 
 			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && search.InSlice(tempoligoseq, seqstoavoid) == false && overlapthresholdfail == false {
-				// fmt.Println("found good primer!", tempoligoseq, temppercentage)
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -275,10 +261,6 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 			}
 		}
 	}
-
-	//}else {
-	//	// fmt.Println("no oligos")
-	//	}
 
 	return
 }
@@ -581,8 +563,7 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 
 // checks for EXACT matches only
 func CheckNonSpecificBinding(fullseq, primerseq wtype.DNASequence) (count int) {
-	seqsfound := sequences.FindSeqsinSeqs(fullseq.Sequence(), []string{primerseq.Sequence()})
-
+	seqsfound := sequences.FindSeq(fullseq, primerseq)
 	count = len(seqsfound)
 	return
 }

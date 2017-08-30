@@ -14,7 +14,6 @@ import (
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
-	"github.com/antha-lang/antha/target/mixer"
 )
 
 const (
@@ -30,6 +29,8 @@ type ir struct {
 	reachingUses map[ast.Node][]*ast.UseComp // Reaching comps
 	assignment   map[ast.Node]*drun          // From Commands/Root to device runs
 	output       map[*drun][]target.Inst     // Output of device-specific planners
+	initializers []target.Inst               // Intializers
+	finalizers   []target.Inst               // Finalizers in reverse order
 }
 
 // Print out IR for debugging
@@ -137,26 +138,33 @@ func (a *ir) partition(opt graph.PartitionTreeOpt) (*graph.TreePartition, error)
 	return ret, nil
 }
 
-type devicesByType []target.Device
+// Partition a slice into non-human devices followed by human ones
+type partitionByHuman []target.Device
 
-func (a devicesByType) Len() int {
+func (a partitionByHuman) Len() int {
 	return len(a)
 }
 
-func (a devicesByType) Swap(i, j int) {
+func (a partitionByHuman) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-func (a devicesByType) Less(i, j int) bool {
-	_, ok1 := a[i].(*mixer.Mixer)
-	_, ok2 := a[i].(*mixer.Mixer)
+func (a partitionByHuman) Less(i, j int) bool {
+	req := ast.Request{
+		Selector: []ast.NameValue{
+			target.DriverSelectorV1Human,
+		},
+	}
+
+	human1 := a[i].CanCompile(req)
+	human2 := a[j].CanCompile(req)
 	switch {
-	case ok1 && ok2:
+	case human1 && human2:
 		return false // Equal
-	case ok1 && !ok2:
-		return true
-	case !ok1 && ok2:
+	case human1 && !human2:
 		return false
+	case !human1 && human2:
+		return true
 	default:
 		return false // Equal
 	}
@@ -200,7 +208,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 				return fmt.Errorf("no device can handle constraints %v", ast.Meet(reqs...))
 			}
 		}
-		sort.Stable(devicesByType(devices))
+		sort.Stable(partitionByHuman(devices))
 		colors[n] = devices
 	}
 
@@ -342,7 +350,7 @@ func (a *ir) tryPlan(ctx context.Context) error {
 
 	a.output = output
 
-	return nil
+	return a.addImplicitInsts(runs)
 }
 
 // Find best device to move a component between two devices
@@ -362,6 +370,13 @@ func findBestMoveDevice(t *target.Target, from, to ast.Node, fromD, toD *drun) t
 	return minD
 }
 
+func appendToDepends(inst target.Inst, insts ...target.Inst) {
+	var next []target.Inst
+	next = append(next, inst.DependsOn()...)
+	next = append(next, insts...)
+	inst.SetDependsOn(next)
+}
+
 // NB(ddn): Could blindly add edges from insts to head, but would like
 // Compile() to be able to introduce instructions that just depend on the start
 // or end (or neither) of a device run.
@@ -375,22 +390,23 @@ func findBestMoveDevice(t *target.Target, from, to ast.Node, fromD, toD *drun) t
 func splice(head, tail target.Inst, insts []target.Inst) {
 	if len(insts) == 0 {
 		if head != nil && tail != nil {
-			tail.SetDependsOn(append(tail.DependsOn(), head))
+			appendToDepends(tail, head)
 		}
 		return
 	}
 	oldH := insts[0]
 	oldT := insts[len(insts)-1]
 	if head != nil {
-		oldH.SetDependsOn(append(oldH.DependsOn(), head))
+		appendToDepends(oldH, head)
 	}
 	if tail != nil {
-		tail.SetDependsOn(append(tail.DependsOn(), oldT))
+		appendToDepends(tail, oldT)
 	}
 }
 
 // Create move of dependencies if necessary
 func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, run *drun) error {
+
 	rewrite := func(n ast.Node, cs []*ast.UseComp, move *ast.Move) {
 		m := make(map[ast.Node]bool)
 		for _, c := range cs {
@@ -431,7 +447,10 @@ func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, ru
 				return fmt.Errorf("cannot find any device to move inputs")
 			} else {
 				// Add move
-				m := &ast.Move{From: cs, ToLoc: fmt.Sprintf("%p", dev)}
+				m := &ast.Move{
+					From:  cs,
+					ToLoc: fmt.Sprintf("%p", dev),
+				}
 				moves[dev] = append(moves[dev], m)
 				a.assignment[m] = getRun(dev)
 				rewrite(n, cs, m)
@@ -443,9 +462,9 @@ func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, ru
 		return nil
 	}
 
-	var insts []target.Inst
 	head := &target.Wait{}
 	tail := &target.Wait{}
+	var insts []target.Inst
 	insts = append(insts, head, tail)
 
 	splice(head, tail, nil)
@@ -454,13 +473,15 @@ func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, ru
 	for dev, ms := range moves {
 		ins, err := dev.Compile(ctx, ms)
 		if err != nil {
-			return nil
+			return err
 		}
+
 		splice(head, tail, ins)
 		insts = append(insts, ins...)
 	}
 
 	a.output[run] = append(insts, a.output[run]...)
+
 	return nil
 }
 
@@ -480,6 +501,11 @@ func (a *ir) addMoves(ctx context.Context, t *target.Target) error {
 		return err
 	}
 
+	// Disable move pass because it is unused
+	if true {
+		return nil
+	}
+
 	for _, n := range order {
 		if a.DeviceDeps.NumOrigs(n) == 0 {
 			return fmt.Errorf("no instructions for node %q", n)
@@ -494,13 +520,16 @@ func (a *ir) addMoves(ctx context.Context, t *target.Target) error {
 	return nil
 }
 
+func reverseInsts(insts []target.Inst) (ret []target.Inst) {
+	for idx := len(insts) - 1; idx >= 0; idx-- {
+		ret = append(ret, insts[idx])
+	}
+	return
+}
+
 // Lower plan to instructions
 func (a *ir) genInsts() ([]target.Inst, error) {
-	ig := &instGraph{
-		entry:     make(map[graph.Node]target.Inst),
-		exit:      make(map[graph.Node]target.Inst),
-		dependsOn: make(map[target.Inst][]target.Inst),
-	}
+	ig := newInstGraph()
 
 	// Insert instructions
 	for i, inum := 0, a.DeviceDeps.NumNodes(); i < inum; i++ {
@@ -508,8 +537,11 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 		someNode := a.DeviceDeps.Orig(n, 0).(ast.Node)
 		run := a.assignment[someNode]
 		insts := a.output[run]
-		ig.addInsts(n, insts)
+		ig.addRootedInsts(n, insts)
 	}
+
+	ig.addInitializers(a.initializers)
+	ig.addFinalizers(reverseInsts(a.finalizers))
 
 	// Add tree edges
 	for i, inum := 0, a.DeviceDeps.NumNodes(); i < inum; i++ {
@@ -569,68 +601,6 @@ func (a *ir) setOutputs() error {
 	return nil
 }
 
-// Dependencies between target instructions. Can't use target.Graph because we
-// are using this to build the initial DependsOn relation.
-type instGraph struct {
-	insts     []target.Inst
-	dependsOn map[target.Inst][]target.Inst
-	entry     map[graph.Node]target.Inst
-	exit      map[graph.Node]target.Inst
-}
-
-func (a *instGraph) NumNodes() int {
-	return len(a.insts)
-}
-
-func (a *instGraph) Node(i int) graph.Node {
-	return a.insts[i]
-}
-
-func (a *instGraph) NumOuts(n graph.Node) int {
-	return len(a.dependsOn[n.(target.Inst)])
-}
-
-func (a *instGraph) Out(n graph.Node, i int) graph.Node {
-	return a.dependsOn[n.(target.Inst)][i]
-}
-
-func (a *instGraph) addInsts(root graph.Node, insts []target.Inst) {
-	exit := &target.Wait{}
-	entry := &target.Wait{}
-
-	a.entry[root] = entry
-	a.exit[root] = exit
-
-	// Add dependencies
-	a.dependsOn[exit] = append(a.dependsOn[exit], entry)
-	for idx, in := range insts {
-		if idx == 0 {
-			a.dependsOn[in] = append(a.dependsOn[in], entry)
-		}
-		if idx == len(insts)-1 {
-			a.dependsOn[exit] = append(a.dependsOn[exit], in)
-		}
-		for _, v := range in.DependsOn() {
-			a.dependsOn[in] = append(a.dependsOn[in], v)
-		}
-	}
-
-	// Add nodes
-	toAdd := make(map[target.Inst]bool)
-	toAdd[entry] = true
-	toAdd[exit] = true
-	for _, in := range insts {
-		toAdd[in] = true
-		for _, v := range in.DependsOn() {
-			toAdd[v] = true
-		}
-	}
-
-	for in := range toAdd {
-		a.insts = append(a.insts, in)
-	}
-}
-
 // Compile an expression program into a sequence of instructions for a target
 // configuration. This supports incremental compilation, so roots may refer to
 // nodes that have already been compiled, in which case, the result may refer
@@ -654,9 +624,11 @@ func Compile(ctx context.Context, t *target.Target, roots []ast.Node) ([]target.
 	if err := ir.tryPlan(ctx); err != nil {
 		return nil, fmt.Errorf("error planning: %s", err)
 	}
+
 	if err := ir.addMoves(ctx, t); err != nil {
 		return nil, fmt.Errorf("error adding moves: %s", err)
 	}
+
 	insts, err := ir.genInsts()
 	if err != nil {
 		return nil, fmt.Errorf("error generating instructions: %s", err)
@@ -664,5 +636,23 @@ func Compile(ctx context.Context, t *target.Target, roots []ast.Node) ([]target.
 	if err := ir.setOutputs(); err != nil {
 		return nil, fmt.Errorf("error setting outputs: %s", err)
 	}
+
+	// TODO: discard programs that create multiple setups until we get their
+	// semantics correct; also true of incubating components under multiple
+	// conditions
+	var setupMixes int
+	var setupIncubators int
+	for _, inst := range insts {
+		switch inst.(type) {
+		case *target.SetupMixer:
+			setupMixes++
+		case *target.SetupIncubator:
+			setupIncubators++
+		}
+	}
+	if setupMixes > 1 || setupIncubators > 1 {
+		return nil, fmt.Errorf("multiple incubates or multiple mixes not supported")
+	}
+
 	return insts, nil
 }

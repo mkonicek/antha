@@ -9,7 +9,9 @@ var (
 	defaultMaxPlates            = 4.5
 	defaultMaxWells             = 278.0
 	defaultResidualVolumeWeight = 1.0
-	DefaultOpt                  = Opt{
+
+	// DefaultOpt is the default Mixer Opt
+	DefaultOpt = Opt{
 		MaxPlates:            &defaultMaxPlates,
 		MaxWells:             &defaultMaxWells,
 		ResidualVolumeWeight: &defaultResidualVolumeWeight,
@@ -22,6 +24,7 @@ var (
 	}
 )
 
+// Opt are options for a Mixer
 type Opt struct {
 	MaxPlates            *float64
 	MaxWells             *float64

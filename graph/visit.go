@@ -1,7 +1,9 @@
 package graph
 
+// A Visitor is a function over graph nodes
 type Visitor func(Node) error
 
+// VisitOpt is a set of options to Visit
 type VisitOpt struct {
 	Root         Node    // Root of traversal
 	Graph        Graph   // Graph to traverse
@@ -10,6 +12,7 @@ type VisitOpt struct {
 	BreadthFirst bool    // Visit nodes breadth first
 }
 
+// A VisitResult is the result of Visit
 type VisitResult struct {
 	Seen      NodeSet
 	Frontiers []NodeSet // If VisitOpt.BreadthFirst, successive frontiers are placed here
@@ -33,9 +36,9 @@ func (a dists) Values() (ret []Node) {
 	return
 }
 
-// Apply a visitor to each node reachable from root in some order. Return nodes
-// visited. If visitor returns an error, stop traversal early and pass returned
-// error.
+// Visit applies a visitor to each node reachable from root in some order.
+// Returns nodes visited. If visitor returns an error, stop traversal early and
+// pass returned error.
 func Visit(opt VisitOpt) (res *VisitResult, err error) {
 	apply := func(v Visitor, n Node) error {
 		if v != nil {
@@ -77,7 +80,7 @@ func Visit(opt VisitOpt) (res *VisitResult, err error) {
 		}
 
 		if err = apply(opt.Visitor, p.Node); err != nil {
-			if err == TraversalDone {
+			if err == ErrTraversalDone {
 				break
 			} else {
 				continue
@@ -86,7 +89,7 @@ func Visit(opt VisitOpt) (res *VisitResult, err error) {
 
 		nextDist := p.Dist + 1
 
-		for i, num := 0, opt.Graph.NumOuts(p.Node); i < num; i += 1 {
+		for i, num := 0, opt.Graph.NumOuts(p.Node); i < num; i++ {
 			wl = append(wl, pair{opt.Graph.Out(p.Node, i), nextDist})
 		}
 	}

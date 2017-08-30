@@ -40,19 +40,19 @@ func samePlate(a, b *wtype.LHPlate) error {
 		}
 		volA, volB := compA.Vol, compB.Vol
 		if volA != volB {
-			return fmt.Errorf("different volume in well %q: %d != %d", addr, volA, volB)
+			return fmt.Errorf("different volume in well %q: %f != %f", addr, volA, volB)
 		}
 		vunitA, vunitB := compA.Vunit, compB.Vunit
 		if vunitA != vunitB && volA != 0.0 {
-			return fmt.Errorf("different volume unit in well %q: %d != %d", addr, vunitA, vunitB)
+			return fmt.Errorf("different volume unit in well %q: %s != %s", addr, vunitA, vunitB)
 		}
 		concA, concB := compA.Conc, compB.Conc
 		if concA != concB {
-			return fmt.Errorf("different concentration in well %q: %d != %d", addr, concA, concB)
+			return fmt.Errorf("different concentration in well %q: %f != %f", addr, concA, concB)
 		}
 		cunitA, cunitB := compA.Cunit, compB.Cunit
 		if cunitA != cunitB && concA != 0.0 {
-			return fmt.Errorf("different concetration unit in well %q: %d != %d", addr, cunitA, cunitB)
+			return fmt.Errorf("different concetration unit in well %q: %s != %s", addr, cunitA, cunitB)
 		}
 	}
 
@@ -82,7 +82,7 @@ A5,milk,water,100.0,ul,
 	r, err := ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
 
 	if err != nil {
-		t.Errorf("Failed to parse plate: %s ", err.Error)
+		t.Errorf("Failed to parse plate: %s ", err.Error())
 	}
 	if !containsInvalidCharWarning(r.Warnings) {
 		t.Errorf("Default validation config must forbid + signs in component names")
@@ -90,7 +90,7 @@ A5,milk,water,100.0,ul,
 	r, err = ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), PermissiveValidationConfig())
 
 	if err != nil {
-		t.Errorf("Failed to parse plate: %s ", err.Error)
+		t.Errorf("Failed to parse plate: %s ", err.Error())
 	}
 
 	if containsInvalidCharWarning(r.Warnings) {

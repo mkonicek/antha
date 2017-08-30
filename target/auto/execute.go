@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Run an instruction based on current target
+// Execute runs an instruction based on current target
 func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 	switch inst := inst.(type) {
 	case *target.Mix:

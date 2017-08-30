@@ -31,7 +31,7 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 			Root:  root,
 			Visitor: func(n graph.Node) error {
 				if seen[n] {
-					return graph.NextNode
+					return graph.ErrNextNode
 				}
 				return nil
 			},

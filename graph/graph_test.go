@@ -9,7 +9,7 @@ func sameElements(a, b []string) error {
 	makeM := func(xs []string) map[string]int {
 		m := make(map[string]int)
 		for _, x := range xs {
-			m[x] += 1
+			m[x]++
 		}
 		return m
 	}

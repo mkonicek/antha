@@ -5,9 +5,10 @@ import (
 	"strings"
 )
 
+// A Labeler is a function that returns a string given an object
 type Labeler func(interface{}) string
 
-// Only support dot output
+// PrintOpt are options for Print. Currently only supports dot output.
 type PrintOpt struct {
 	Graph        Graph
 	NodeLabelers []Labeler
@@ -21,6 +22,7 @@ func defaultLabeler(n interface{}) string {
 	return fmt.Sprintf("%+v", n)
 }
 
+// Print returns a string version of a Graph
 func Print(opt PrintOpt) string {
 	var lines []string
 
@@ -33,7 +35,7 @@ func Print(opt PrintOpt) string {
 
 	nodes := make(map[Node]string)
 	lines = append(lines, "digraph {")
-	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i++ {
 		n := opt.Graph.Node(i)
 		name := fmt.Sprintf("v%d", i)
 		nodes[n] = name
@@ -46,10 +48,10 @@ func Print(opt PrintOpt) string {
 		lines = append(lines, fmt.Sprintf("%s [label=%q];", name, strings.Join(labels, "\n")))
 	}
 
-	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i++ {
 		src := opt.Graph.Node(i)
 		sname := nodes[src]
-		for j, jnum := 0, opt.Graph.NumOuts(src); j < jnum; j += 1 {
+		for j, jnum := 0, opt.Graph.NumOuts(src); j < jnum; j++ {
 			dst := opt.Graph.Out(src, j)
 			dname := nodes[dst]
 			lines = append(lines, fmt.Sprintf("%s->%s;", sname, dname))

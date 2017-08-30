@@ -55,25 +55,29 @@ func prettyMixDetails(from string, inst *wtype.LHInstruction) string {
 
 func (a *Human) makeFromCommand(c *ast.Command) (*target.Manual, error) {
 	from := extractFromNodes(c.From...)
+
 	switch inst := c.Inst.(type) {
+
 	case *wtype.LHInstruction:
 		return &target.Manual{
 			Dev:     a,
 			Label:   "mix",
 			Details: prettyMixDetails(from, inst),
 		}, nil
+
 	case *ast.IncubateInst:
 		return &target.Manual{
 			Dev:     a,
 			Label:   "incubate",
 			Details: fmt.Sprintf("Incubate %q at %s for %s", from, inst.Temp.ToString(), inst.Time.ToString()),
-			Time:    inst.Time.Seconds(),
 		}, nil
+
 	case *ast.HandleInst:
 		return &target.Manual{
 			Dev:   a,
 			Label: inst.Group,
 		}, nil
+
 	default:
 		return nil, fmt.Errorf("unknown inst %T", inst)
 	}
@@ -93,13 +97,9 @@ func (a *Human) coalesce(ms []*target.Manual) target.Inst {
 		return ms[0]
 	}
 
-	var maxSec float64
 	labels := make(map[string]bool)
 	details := make(map[string]bool)
 	for _, m := range ms {
-		if t := m.GetTimeEstimate(); maxSec < t {
-			maxSec = t
-		}
 		labels[m.Label] = true
 		details[m.Details] = true
 	}
@@ -108,7 +108,6 @@ func (a *Human) coalesce(ms []*target.Manual) target.Inst {
 		Dev:     ms[0].Dev,
 		Label:   sortAndJoin(labels, ";"),
 		Details: sortAndJoin(details, "\n"),
-		Time:    maxSec,
 	}
 }
 

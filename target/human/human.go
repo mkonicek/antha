@@ -28,29 +28,23 @@ type Human struct {
 // CanCompile implements device CanCompile
 func (a *Human) CanCompile(req ast.Request) bool {
 	can := ast.Request{
-		Move: req.Move,
 		Selector: []ast.NameValue{
-			ast.NameValue{
-				// TODO: Remove hard coded strings
-				Name:  "antha.driver.v1.TypeReply.type",
-				Value: "antha.human.v1.Human",
-			},
+			target.DriverSelectorV1Human,
 		},
 	}
-	if a.opt.CanMix {
-		can.MixVol = req.MixVol
-	}
+
 	if a.opt.CanIncubate {
-		can.Temp = req.Temp
-		can.Time = req.Time
-	}
-	if a.opt.CanHandle {
-		can.Selector = req.Selector
+		can.Selector = append(can.Selector, target.DriverSelectorV1ShakerIncubator)
 	}
 
-	if !req.Matches(can) {
-		return false
+	if a.opt.CanMix {
+		can.Selector = append(can.Selector, target.DriverSelectorV1Mixer)
 	}
+
+	if a.opt.CanHandle {
+		can.Selector = append(can.Selector, req.Selector...)
+	}
+
 	return can.Contains(req)
 }
 
@@ -197,7 +191,9 @@ func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, e
 type Opt struct {
 	CanMix      bool
 	CanIncubate bool
-	CanHandle   bool
+
+	// CanHandle is deprecated
+	CanHandle bool
 }
 
 // New returns a new human device

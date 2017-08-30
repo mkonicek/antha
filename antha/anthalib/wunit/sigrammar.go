@@ -29,7 +29,13 @@ func (a *SIPrefixedUnitGrammar) Parse(in string) error {
 
 	pos = a.matchUnit(in, pos, false)
 	if pos < 0 {
-		return noMatch
+		pos = a.matchUnit(in, 0, true)
+		if pos < 0 {
+			return noMatch
+		}
+
+		a.AddUnitPlusPrefixNode()
+		return nil
 	}
 
 	pos = a.matchPrefix(in, 0, true)

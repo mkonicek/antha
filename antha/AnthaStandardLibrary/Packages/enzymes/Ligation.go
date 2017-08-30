@@ -315,22 +315,14 @@ func JoinXnumberofparts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 
 		doublestrandedpart = MakedoublestrandedDNA(partsinorder[i])
 		digestedpart := DigestionPairs(doublestrandedpart, enzyme)
-		//for _, newfragments := range assembledfragments {
 
 		assembledfragments, plasmidproducts, newerr = jointwoparts(assembledfragments, digestedpart)
-		//err = newerr
 
 		if newerr != nil {
-			//	if err != nil {
 			message := fmt.Sprint(partsinorder[i-1].Nm, " and ", partsinorder[i].Nm, ": ", newerr.Error())
 			err = fmt.Errorf(message)
-			//	} else {
-			//		message := fmt.Sprint(partsinorder[i - 1].Nm, " and ", partsinorder[i].Nm, ": ", newerr.Error())
-			//		err = fmt.Errorf(message)
-			//	}
 			return
 		}
-		//}
 	}
 
 	partnames := make([]string, 0)
@@ -513,22 +505,23 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		err = fmt.Errorf("Nope! construct %s  won't work: %s", assemblyparameters.Constructname, err)
 		s = err.Error()
 	}
-	if len(plasmidproductsfromXprimaryseq) == 1 {
-		s = "Yay! this should work"
-		successfulassemblies = successfulassemblies + 1
-	}
 
 	// remove invalid plasmids
 	var validPlasmids []wtype.DNASequence
 
 	for _, seq := range plasmidproductsfromXprimaryseq {
-		plasmid, oris, markers, _ := commonfeatures.ValidPlasmid(seq)
-		if plasmid && len(oris) == 1 && len(markers) == 1 {
+		plasmid, _, _, _ := commonfeatures.ValidPlasmid(seq)
+		if plasmid {
 			validPlasmids = append(validPlasmids, seq)
 		}
 	}
 
 	plasmidproductsfromXprimaryseq = validPlasmids
+
+	if len(plasmidproductsfromXprimaryseq) == 1 {
+		s = "Yay! this should work"
+		successfulassemblies = successfulassemblies + 1
+	}
 
 	if len(plasmidproductsfromXprimaryseq) > 1 {
 
@@ -671,10 +664,6 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 			}
 
 			s = err.Error()
-
-			/*if errors == nil {
-				errors = make(map[string]string)
-			}*/
 
 			if _, ok := errors[construct.Constructname]; !ok {
 				errors[construct.Constructname] = s

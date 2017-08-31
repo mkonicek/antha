@@ -336,6 +336,7 @@ func pairdigestedfragments(digestedtopstrand []string, digestedbottomstrand []st
 	return pairs
 }
 
+// DigestionPairs digests a doublestranded pair of DNASequence with a TypeIIs restriction enzyme into an array of DigestedFragments
 func DigestionPairs(Doublestrandedpair []wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (digestionproducts []Digestedfragment) {
 	topstrands, topstickyends5, topstickyends3 := TypeIIsdigest(Doublestrandedpair[0], typeIIsenzyme)
 

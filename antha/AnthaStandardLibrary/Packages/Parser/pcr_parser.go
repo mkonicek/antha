@@ -43,10 +43,10 @@ func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 	return pcrreaction, err
 }
 
-func pcrReactionfromcsv(designfile string, sequencefile string) (pcrReaction []pcr.Reaction, err error) {
+func pcrReactionfromcsv(designFile string, sequenceFile string) (pcrReaction []pcr.Reaction, err error) {
 
-	designedconstructs := readPCRDesign(designfile)
-	sequences := readPCRDesign(sequencefile)
+	designedconstructs := readPCRDesign(designFile)
+	sequences := readPCRDesign(sequenceFile)
 	for _, c := range designedconstructs {
 		var newpcrReaction pcr.Reaction
 		newpcrReaction.ReactionName = c[0]
@@ -56,7 +56,7 @@ func pcrReactionfromcsv(designfile string, sequencefile string) (pcrReaction []p
 		pcrReaction = append(pcrReaction, newpcrReaction)
 	}
 
-	var Status string
+	var status string
 
 	for b, _ := range pcrReaction {
 		var x int
@@ -67,7 +67,7 @@ func pcrReactionfromcsv(designfile string, sequencefile string) (pcrReaction []p
 					if d[0] == c[0] {
 						y++
 						if y > 1 {
-							Status = (Status + "Part " + c[0] + " defined more than once in Sheet1 please specify a single entry. ")
+							status = (status + "Part " + c[0] + " defined more than once in Sheet1 please specify a single entry. ")
 						}
 					}
 				}
@@ -86,11 +86,11 @@ func pcrReactionfromcsv(designfile string, sequencefile string) (pcrReaction []p
 
 		}
 		if x < 3 {
-			Status = (Status + "Please specify all parts for reaction " + pcrReaction[b].ReactionName + " in Sheet1. ")
+			status = (status + "Please specify all parts for reaction " + pcrReaction[b].ReactionName + " in Sheet1. ")
 		}
 	}
-	if Status != "" {
-		err = fmt.Errorf(Status)
+	if status != "" {
+		err = fmt.Errorf(status)
 	}
 	return
 }
@@ -102,7 +102,7 @@ func readPCRDesign(filename string) [][]string {
 	csvfile, err := os.Open(filename)
 
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 		return constructs
 	}
 

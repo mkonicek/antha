@@ -179,6 +179,12 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate = wtype.NewLHPlate("DWR1", "Unknown", 1, 1, 44.1, "mm", singlewelltrough, 9, 9, 49.5, 0.0, 0.0)
 	plates = append(plates, plate)
 
+	// 250ml box reservoir (working vol estimated to be 100ml to prevent spillage on moving decks)
+	reservoirbox := wtype.NewShape("box", "mm", 121, 80, 40) // 39?
+	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 100000, 10000, reservoirbox, wtype.LHWBFLAT, 121, 80, 40, 3, "mm")
+	plate = wtype.NewLHPlate("reservoir", "unknown", 1, 1, 40, "mm", welltypereservoir, 1, 1, 0.0, 0.0, 0.0)
+	plates = append(plates, plate)
+
 	// well area function
 	// -- determined empirically since inverse cubic was giving us some numerical issues
 	areaf := wutil.Quartic{A: -3.3317851312e-09, B: 0.00000225834467, C: -0.0006305492472, D: 0.1328156706978, E: 0}
@@ -383,11 +389,9 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	plate = wtype.NewLHPlate("nunc1536", "Unknown", 32, 48, 7, "mm", welltype1536, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
-	// 250ml box reservoir (working vol estimated to be 100ml to prevent spillage on moving decks)
-	reservoirbox := wtype.NewShape("box", "mm", 71, 107, 38) // 39?
-	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 100000, 10000, reservoirbox, 0, 107, 71, 38, 3, "mm")
-	plate = wtype.NewLHPlate("reservoir", "unknown", 1, 1, 45, "mm", welltypereservoir, 58, 13, 0, 0, 10)
-	plates = append(plates, plate)
+
+
+
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) high res
 

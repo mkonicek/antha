@@ -19,7 +19,7 @@ var (
 // A GenericHandler is a configurable version of a Handler suitable for mixins
 type GenericHandler struct {
 	Labels             []ast.NameValue
-	GenFunc            func(dev target.Device, cmd interface{}) ([]target.Inst, error)
+	GenFunc            func(cmd interface{}) ([]target.Inst, error)
 	FilterFieldsForKey func(interface{}) (interface{}, error)
 }
 
@@ -134,7 +134,7 @@ func (a *GenericHandler) Compile(ctx context.Context, nodes []ast.Node) ([]targe
 				continue
 			}
 
-			ins, err := a.GenFunc(a, cmd.Inst)
+			ins, err := a.GenFunc(cmd.Inst)
 			if err != nil {
 				return nil, err
 			}

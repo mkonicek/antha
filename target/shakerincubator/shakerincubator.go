@@ -14,17 +14,17 @@ import (
 
 // A ShakerIncubator is a device that can shake and incubate things
 type ShakerIncubator struct {
-	*handler.GenericHandler
+	handler.GenericHandler
 }
 
 // New returns a new shaker incubator
 func New() *ShakerIncubator {
 	ret := &ShakerIncubator{}
-	ret.GenericHandler = &handler.GenericHandler{
+	ret.GenericHandler = handler.GenericHandler{
 		Labels: []ast.NameValue{
 			target.DriverSelectorV1ShakerIncubator,
 		},
-		GenFunc: ret.makeInsts,
+		GenFunc: ret.generate,
 	}
 	return ret
 }
@@ -89,7 +89,7 @@ func (a *ShakerIncubator) shakeStart(rate wunit.Rate, length wunit.Length) drive
 	}
 }
 
-func (a *ShakerIncubator) makeInsts(dev target.Device, cmd interface{}) ([]target.Inst, error) {
+func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 	inc, ok := cmd.(*ast.IncubateInst)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T found %T instead", inc, cmd)
@@ -100,7 +100,7 @@ func (a *ShakerIncubator) makeInsts(dev target.Device, cmd interface{}) ([]targe
 	var insts []target.Inst
 
 	initializers = append(initializers, &target.Run{
-		Dev:   dev,
+		Dev:   a,
 		Label: "open incubator carrier",
 		Calls: []driver.Call{
 			a.carrierOpen(),
@@ -112,7 +112,7 @@ func (a *ShakerIncubator) makeInsts(dev target.Device, cmd interface{}) ([]targe
 	})
 
 	initializers = append(initializers, &target.Run{
-		Dev:   dev,
+		Dev:   a,
 		Label: "close incubator carrier",
 		Calls: []driver.Call{
 			a.carrierClose(),
@@ -120,7 +120,7 @@ func (a *ShakerIncubator) makeInsts(dev target.Device, cmd interface{}) ([]targe
 	})
 
 	finalizers = append(finalizers, &target.Run{
-		Dev:   dev,
+		Dev:   a,
 		Label: "turn off incubator",
 		Calls: a.reset(),
 	})
@@ -135,7 +135,7 @@ func (a *ShakerIncubator) makeInsts(dev target.Device, cmd interface{}) ([]targe
 		}
 
 		insts = append(insts, &target.Run{
-			Dev:   dev,
+			Dev:   a,
 			Label: "pre incubate",
 			Calls: calls,
 		})
@@ -153,7 +153,7 @@ func (a *ShakerIncubator) makeInsts(dev target.Device, cmd interface{}) ([]targe
 	}
 
 	insts = append(insts, &target.Run{
-		Dev:          dev,
+		Dev:          a,
 		Label:        "start incubator",
 		Calls:        calls,
 		Initializers: initializers,

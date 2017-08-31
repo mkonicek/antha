@@ -391,6 +391,12 @@ func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
 	return c, nil
 }
 
+func (lhc *LHComponent) Cp() *LHComponent {
+	c := lhc.Dup()
+	c.ID = GetUUID()
+	return c
+}
+
 func (lhc *LHComponent) Dup() *LHComponent {
 	c := NewLHComponent()
 	c.ID = lhc.ID

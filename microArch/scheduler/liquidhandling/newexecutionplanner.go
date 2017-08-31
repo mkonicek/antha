@@ -50,9 +50,11 @@ func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *li
 
 	for ix, insID := range request.Output_order {
 		//	request.InstructionSet.Add(ConvertInstruction(request.LHInstructions[insID], robot))
-		ris := liquidhandling.NewRobotInstructionSet(nil)
 
 		ins := request.LHInstructions[insID]
+
+		ris := liquidhandling.NewRobotInstructionSet(nil)
+
 		if ins.Type == wtype.LHIPRM {
 			// prompt
 			prm := liquidhandling.NewMessageInstruction(ins)

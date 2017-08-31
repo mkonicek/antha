@@ -537,6 +537,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	// remove dummy mix-in-place instructions
+
+	request = removeDummyInstructions(request)
+
 	// now make instructions
 	request, err = this.ExecutionPlan(ctx, request)
 
@@ -910,4 +914,50 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 	}
 
 	return nil
+}
+
+func dummy(ins *wtype.LHInstruction) bool {
+	if ins.IsMixInPlace() && len(ins.Components) == 1 {
+		// instructions of this form generally mean "do nothing"
+		// but have very useful side-effects
+		return true
+	}
+
+	return false
+}
+
+func removeDummyInstructions(rq *LHRequest) *LHRequest {
+	toRemove := make(map[string]bool, len(rq.LHInstructions))
+	for _, ins := range rq.LHInstructions {
+		if dummy(ins) {
+			toRemove[ins.ID] = true
+		}
+	}
+
+	if len(toRemove) == 0 {
+		//no dummies
+		return rq
+	}
+
+	oo := make([]string, 0, len(rq.Output_order)-len(toRemove))
+
+	for _, ins := range rq.Output_order {
+		if toRemove[ins] {
+			continue
+		} else {
+			oo = append(oo, ins)
+		}
+	}
+
+	if len(oo) != len(rq.Output_order)-len(toRemove) {
+		panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.Output_order), len(toRemove), len(oo)))
+	}
+
+	rq.Output_order = oo
+
+	// prune instructionChain
+
+	rq.InstructionChain.PruneOut(toRemove)
+
+	return rq
 }

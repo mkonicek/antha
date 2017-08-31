@@ -22,6 +22,44 @@ func NewIChain(parent *IChain) *IChain {
 	return &it
 }
 
+func (it *IChain) PruneOut(Remove map[string]bool) *IChain {
+	if it == nil || len(Remove) == 0 || len(it.Values) == 0 {
+		return it
+	}
+
+	it.Child = it.Child.PruneOut(Remove)
+
+	newValues := make([]*wtype.LHInstruction, 0, len(it.Values))
+
+	for _, v := range it.Values {
+		if Remove[v.ID] {
+			continue
+		}
+		newValues = append(newValues, v)
+		delete(Remove, v.ID)
+	}
+
+	// if we've removed a whole layer, get rid of it
+
+	if len(newValues) == 0 {
+
+		if it.Child != nil {
+			it.Child.Parent = it.Parent
+		}
+
+		if it.Parent != nil {
+			it.Parent.Child = it.Child
+		}
+
+		return it.Child
+
+	} else {
+		it.Values = newValues
+		return it
+	}
+
+}
+
 func (it *IChain) Reverse() {
 	if it.Child != nil {
 		it.Child.Reverse()

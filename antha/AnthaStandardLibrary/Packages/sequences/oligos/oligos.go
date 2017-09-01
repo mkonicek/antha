@@ -265,49 +265,6 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 	return
 }
 
-// directionless Positions
-func FindPositioninSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
-	//positions, err := search.Findall(largeSequence.Sequence(), smallSequence.Sequence())
-
-	seqsfound := sequences.FindSeqsinSeqs(strings.ToUpper(largeSequence.Sequence()), []string{strings.ToUpper(smallSequence.Sequence())})
-
-	/*if err != nil {
-		return
-	} else */if len(seqsfound) != 1 {
-
-		errstr := fmt.Sprint(strconv.Itoa(len(seqsfound)), " sequences of ", smallSequence.Nm, " ", smallSequence.Seq, " found in ", largeSequence.Nm, " ", largeSequence.Seq)
-		err = fmt.Errorf(errstr)
-		return
-	}
-	//if !seqsfound[0].Reverse {
-	start = seqsfound[0].Positions[0]
-	end = seqsfound[0].Positions[0] + len(smallSequence.Sequence()) - 1
-	//}
-	return
-}
-
-// Directional Positions
-func FindDirectionalPositioninSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
-	//positions, err := search.Findall(largeSequence.Sequence(), smallSequence.Sequence())
-
-	seqsfound := sequences.FindSeqsinSeqs(largeSequence.Sequence(), []string{smallSequence.Sequence()})
-
-	/*if err != nil {
-		return
-	} else */if len(seqsfound) != 1 {
-		err = fmt.Errorf(strconv.Itoa(len(seqsfound)), " seqs found of ", smallSequence.Nm, " in ", largeSequence.Nm)
-		return
-	}
-	if !seqsfound[0].Reverse {
-		start = seqsfound[0].Positions[0]
-		end = seqsfound[0].Positions[0] + len(smallSequence.Sequence())
-	} else {
-		end = seqsfound[0].Positions[0]
-		start = seqsfound[0].Positions[0] + len(smallSequence.Sequence())
-	}
-	return
-}
-
 func DesignFWDPRimerstoCoverFullSequence(seq wtype.DNASequence, sequenceinterval int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers []Primer) {
 
 	primers = make([]Primer, 0)
@@ -561,10 +518,10 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 	return
 }
 
-// checks for EXACT matches only
-func CheckNonSpecificBinding(fullseq, primerseq wtype.DNASequence) (count int) {
-	seqsfound := sequences.FindSeq(fullseq, primerseq)
-	count = len(seqsfound)
+// CheckNonSpecificBinding checks for number of EXACT matches of a primerSeq in a fullSeq.
+func CheckNonSpecificBinding(fullSeq, primerSeq wtype.DNASequence) (count int) {
+	seqsfound := sequences.FindSeq(&fullSeq, &primerSeq)
+	count = len(seqsfound.Positions)
 	return
 }
 

@@ -94,7 +94,7 @@ func FindSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchRes
 
 	// if a vector, attempt rotation of bigsequence vector index 1 position at a time.
 	if bigSequence.Plasmid && !smallSequence.Plasmid {
-		for i := range bigSequence.Seq {
+		for i := range smallSequence.Seq {
 			var tempSequence wtype.DNASequence
 			tempSequence.Nm = "test"
 			var tempseq string

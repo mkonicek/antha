@@ -20,12 +20,11 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with and manipulating dna sequences in extension to methods available in wtype
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
 import (
 	"fmt"
-	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -53,12 +52,9 @@ func RevtranslatetoN(aa wtype.ProteinSequence) (NNN wtype.DNASequence) {
 	}
 	nnn := strings.Join(n_array, "")
 
-	//if (len(nnn)) == (3 * (len(aa.Seq))) {
-
 	NNN.Nm = aa.Nm
 	NNN.Seq = nnn
 	NNN.Plasmid = false
-	//}
 	return NNN
 
 }
@@ -94,24 +90,6 @@ func RevTranslatetoNstring(aa string) (NNN string) {
 
 }
 
-/*
-// need to update according to findORF
-func Translatestring (seq string) (aa string,err error) {
-
-	array := make([]string,0)
-
-	if len(seq) != 0 {
-	//character should be every three characters
-	for _, character := range seq {
-		array = append(array,character)
-	}
-	aa = DNAtoAASeq(array)
-	}else {
-		err = fmt.Errorf("No DNA sequence!")
-	}
-	return
-}
-*/
 // Translate dna sequence into amino acid sequence; need to update to deal with wobble
 
 var RevCodonTable = map[string][]string{
@@ -507,25 +485,20 @@ func Findorfsinstrand(seq string) (orfs []ORF) {
 	orfs = make([]ORF, 0)
 	neworf, orftrue := FindORF(seq)
 	if orftrue == false {
-		// fmt.Println("no orfs:", neworf)
 		return
 	}
 	if len(neworf.ProtSeq) > 20 {
 		orfs = append(orfs, neworf)
 	}
-	//// fmt.Println("LEEEEEEEEEEENNNGth of Orfs", orfs)
 	newseq := seq[(neworf.StartPosition):]
-	//for _, s := range newseq
 	orf1 := neworf
 	i := 0
 	for {
 
-		// fmt.Println("orf1 start=", orf1.StartPosition)
 		neworf, orftrue := FindORF(newseq)
 		if orftrue == false {
 			return
 		}
-		// fmt.Println("Prior to start position reassignment=", neworf)
 		newseq = newseq[(neworf.StartPosition):]
 		neworf.StartPosition = (neworf.StartPosition + orf1.StartPosition)
 		neworf.EndPosition = (neworf.EndPosition + orf1.StartPosition)
@@ -534,12 +507,8 @@ func Findorfsinstrand(seq string) (orfs []ORF) {
 		if len(neworf.ProtSeq) > 20 {
 			orfs = append(orfs, neworf)
 		}
-		// fmt.Println("orfs", orfs, "len(orfs)", len(orfs))
 		i++
-		// fmt.Println("i=", i)
-		// fmt.Println("newseq", newseq, "neworf", neworf, "orftrue", orftrue)
 	}
-	/**/
 
 	return orfs
 }
@@ -549,26 +518,20 @@ func FindNonOverlappingORFsinstrand(seq string) (orfs []ORF) {
 	orfs = make([]ORF, 0)
 	neworf, orftrue := FindORF(seq)
 	if orftrue == false {
-		// fmt.Println("no orfs")
 		return
 	}
 	if len(neworf.ProtSeq) > 20 {
 		orfs = append(orfs, neworf)
 	}
 
-	//// fmt.Println("LEEEEEEEEEEENNNGth of Orfs", orfs)
 	newseq := seq[(neworf.StartPosition):]
-	//for _, s := range newseq
 	orf1 := neworf
 	i := 0
 	for {
-
-		// fmt.Println("orf1 start=", orf1.StartPosition)
 		neworf, orftrue := FindORF(newseq)
 		if orftrue == false {
 			break
 		}
-		// fmt.Println("Prior to start position reassignment=", neworf)
 		newseq = newseq[(neworf.EndPosition):]
 		neworf.StartPosition = (neworf.StartPosition + orf1.StartPosition)
 		neworf.EndPosition = (neworf.EndPosition + orf1.StartPosition)
@@ -576,12 +539,8 @@ func FindNonOverlappingORFsinstrand(seq string) (orfs []ORF) {
 		if len(neworf.ProtSeq) > 20 {
 			orfs = append(orfs, neworf)
 		}
-		// fmt.Println("orfs", orfs, "len(orfs)", len(orfs))
 		i++
-		// fmt.Println("i=", i)
-		// fmt.Println("newseq", newseq, "neworf", neworf, "orftrue", orftrue)
 	}
-	/**/
 
 	return orfs
 }
@@ -602,56 +561,6 @@ func LookforSpecificORF(seq string, targetAASeq string) (present bool) {
 	}
 	return present
 }
-
-/*
-Intended to find non-overlapping orfs ... more comprehensive to find all orfs + Incorrect position assignment at present
-
-func FindFullorfs(seq string) (orfs []ORF) {
-
-	orfs = make([]ORF, 0)
-	neworf, orftrue := FindORF(seq)
-	if orftrue == false {
-		// fmt.Println("no orfs")
-	}
-	orfs = append(orfs, neworf)
-
-	//// fmt.Println("LEEEEEEEEEEENNNGth of Orfs", orfs)
-	newseq := seq[(neworf.EndPosition):]
-	//for _, s := range newseq
-	orf1 := neworf
-	i := 0
-	for {
-
-		// fmt.Println("FULLL ORF orf1 start=", orf1.StartPosition)
-		neworf, orftrue := FindORF(newseq)
-		if orftrue == false {
-			break
-		}
-		// fmt.Println("FULLL ORF Prior to start position reassignment=", neworf)
-		// New code to fix incorrect position assignment
-		//position := Findall(seq, neworf.DNASeq)
-		//neworf.StartPosition = position[0]
-		//neworf.EndPosition = (position[0] + (len(neworf.DNASeq)) - 1)
-
-		newseq = newseq[(neworf.EndPosition):]
-		// fmt.Println("FULLL seq after cut=", newseq)
-
-		//old code
-		neworf.StartPosition = (neworf.StartPosition + orf1.StartPosition)
-		neworf.EndPosition = (neworf.EndPosition + orf1.StartPosition)
-
-		orf1 = neworf
-		orfs = append(orfs, neworf)
-		// fmt.Println("orfs", orfs, "len(orfs)", len(orfs))
-		i++
-		// fmt.Println("i=", i)
-		// fmt.Println("newseq", newseq, "neworf", neworf, "orftrue", orftrue)
-	}
-
-
-	return orfs
-}
-*/
 
 // all orfs above 20 amino acids
 func FindallORFs(seq string) []ORF {
@@ -712,15 +621,3 @@ type features struct {
 	TopstrandORFS    []ORF
 	BottomstrandORFS []ORF
 }
-
-/*
-func DoublestrandedFullORFS(seq string) (features features) {
-	features.TopstrandORFS = FindFullorfs(seq)
-	//// fmt.Println("SEEEEEEEEEQQQQQQQQQQQ", seq)
-	revseq := RevComp(strings.ToUpper(seq))
-	//// fmt.Println("REEEVVVVSEQ", revseq)
-	// numbering needs to be reversed!
-	features.BottomstrandORFS = FindFullorfs(revseq)
-	return features
-}
-*/

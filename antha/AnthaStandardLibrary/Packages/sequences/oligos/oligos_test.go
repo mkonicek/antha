@@ -228,26 +228,3 @@ func TestDNARegion(t *testing.T) {
 
 	}
 }
-
-func TestFindPositioninSequence(t *testing.T) {
-	for _, test := range regionTests {
-		start, end, err := FindPositioninSequence(test.LargeSeq, test.SmallSeq)
-
-		if err == nil && start != test.Start {
-			t.Error(
-				"For", test.LargeSeq.Nm, "\n",
-				"expected Start:", test.Start, "\n",
-				"got", start, "\n",
-			)
-		}
-
-		if err == nil && end != test.End {
-			t.Error(
-				"For", test.LargeSeq.Nm, "\n",
-				"expected End:", test.End, "\n",
-				"got", end, "\n",
-			)
-		}
-
-	}
-}

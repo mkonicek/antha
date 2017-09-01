@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with and manipulating dna sequences in extension to methods available in wtype
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
 import (
@@ -38,37 +38,6 @@ func Siteinorfs(Features features, site string) bool {
 
 }
 */
-
-// refactor strings to DNASequences to enable handling plasmid sequences
-func FindSeqsinSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thingfound) {
-
-	bigseq = strings.ToUpper(bigseq)
-
-	var seqfound search.Thingfound
-	seqsfound = make([]search.Thingfound, 0)
-	// fmt.Println("looking for ", smallseqs)
-	for _, seq := range smallseqs {
-		seq = strings.ToUpper(seq)
-		if strings.Contains(bigseq, seq) {
-			// fmt.Println("Fwd seq found")
-			seqfound.Thing = seq
-			seqfound.Positions = search.Findall(bigseq, seq)
-			seqsfound = append(seqsfound, seqfound)
-		}
-	}
-	for _, seq := range smallseqs {
-		revseq := strings.ToUpper(RevComp(seq))
-		if strings.Contains(bigseq, revseq) {
-			// fmt.Println("rev seq found")
-			seqfound.Thing = revseq
-			seqfound.Positions = search.Findall(bigseq, revseq)
-			seqfound.Reverse = true
-			seqsfound = append(seqsfound, seqfound)
-		}
-	}
-
-	return seqsfound
-}
 
 var Algorithmlookuptable = map[string]ReplacementAlgorithm{
 	"ReplacebyComplement": ReplaceBycomplement,

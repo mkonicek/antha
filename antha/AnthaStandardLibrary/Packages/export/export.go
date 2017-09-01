@@ -202,7 +202,7 @@ func FastaAndSeqReports(assemblyparameters enzymes.Assemblyparameters) (fastafil
 		return fastafiles, summaryfiles, err
 	}
 	//assemble (note that sapIenz is found in package enzymes)
-	_, plasmidproductsfromXprimaryseq, err := enzymes.JoinXnumberofparts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
+	_, plasmidproductsfromXprimaryseq, err := enzymes.JoinXNumberOfParts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 
 	if err != nil {
 		return fastafiles, summaryfiles, err
@@ -241,7 +241,7 @@ func FastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameter
 			return anthafile, "", err
 		}
 		//assemble
-		_, plasmidproductsfromXprimaryseq, err := enzymes.JoinXnumberofparts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
+		_, plasmidproductsfromXprimaryseq, err := enzymes.JoinXNumberOfParts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 		if err != nil {
 			return anthafile, "", err
 		}

@@ -20,7 +20,8 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package parser
+// package genbank converts DNA sequence files in genbank format into a set of DNA sequences.
+package genbank
 
 import (
 	"bufio"
@@ -34,7 +35,7 @@ import (
 )
 
 //Parses file of type .gb to DNASequence. Features are not annotated
-func GenbanktoFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence, error) {
+func GenbankToFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence, error) {
 	data, err := sequenceFile.ReadAll()
 	if err != nil {
 		fmt.Errorf("Error reading file. Please check file.")
@@ -56,7 +57,7 @@ func GenbanktoFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence
 }
 
 //Parses a feature from a genbank file into a DNASequence.
-func GenbankFeaturetoDNASequence(file wtype.File, featurename string) (wtype.DNASequence, error) {
+func GenbankFeatureToDNASequence(file wtype.File, featurename string) (wtype.DNASequence, error) {
 	line := ""
 	genbanklines := make([]string, 0)
 

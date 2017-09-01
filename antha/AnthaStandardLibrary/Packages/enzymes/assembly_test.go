@@ -64,7 +64,7 @@ func TestAssembly(t *testing.T) {
 		}
 
 		last := len(parts) - 1
-		output, count, _, seq, err := Assemblysimulator(Assemblyparameters{
+		output, count, _, seqs, err := Assemblysimulator(Assemblyparameters{
 			Enzymename:   "sapi",
 			Vector:       parts[last],
 			Partsinorder: parts[:last],
@@ -93,8 +93,8 @@ func TestAssembly(t *testing.T) {
 			}
 		}
 
-		if len(seq.Seq) != expected_len {
-			t.Fatal(fmt.Sprintf("Data %d error: length %d is not equal to expected %d", idx, len(seq.Seq), expected_len))
+		if len(seqs[0].Seq) != expected_len {
+			t.Fatal(fmt.Sprintf("Data %d error: length %d is not equal to expected %d", idx, len(seqs[0].Seq), expected_len))
 		}
 	}
 }

@@ -33,3 +33,8 @@ type HandleInst struct {
 	Selector map[string]string
 	Calls    []driver.Call
 }
+
+// A PromptInst is a high-level command to prompt a human
+type PromptInst struct {
+	Message string
+}

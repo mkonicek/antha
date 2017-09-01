@@ -47,18 +47,23 @@ type IncubateOpt struct {
 	PreShakeRadius wunit.Length
 }
 
-// Incubate incubates a component
-func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtype.LHComponent {
+func newCompFromComp(ctx context.Context, in *wtype.LHComponent) *wtype.LHComponent {
 	st := sampletracker.GetSampleTracker()
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
 	comp.BlockID = wtype.NewBlockID(getID(ctx))
+	comp.SetGeneration(comp.Generation() + 1)
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
 	st.UpdateIDOf(in.ID, comp.ID)
+	return comp
+}
+
+// Incubate incubates a component
+func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtype.LHComponent {
 	inst := &commandInst{
 		Args: []*wtype.LHComponent{in},
-		Comp: comp,
+		Comp: newCompFromComp(ctx, in),
 		Command: &ast.Command{
 			Inst: &ast.IncubateInst{
 				Time:           opt.Time,
@@ -90,30 +95,51 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtyp
 // but passes the instruction to the planner
 // in future this should generate handles as side-effects
 
-type promptOpts struct {
+type mixerPromptOpts struct {
 	Component   *wtype.LHComponent
 	ComponentIn *wtype.LHComponent
 	Message     string
 }
 
-// Prompt user with a message during mixer execution
-func Prompt(ctx context.Context, component *wtype.LHComponent, message string) *wtype.LHComponent {
-	// sadly need to update everything
-	comp := component.Dup()
-	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getID(ctx))
-	comp.SetGeneration(comp.Generation() + 1)
-	getMaker(ctx).UpdateAfterInst(component.ID, comp.ID)
-	pinst := prompt(ctx, promptOpts{Component: comp, ComponentIn: component, Message: message})
-	trace.Issue(ctx, pinst)
-	return comp
+// MixerPrompt prompts user with a message during mixer execution
+func MixerPrompt(ctx context.Context, in *wtype.LHComponent, message string) *wtype.LHComponent {
+	inst := mixerPrompt(ctx,
+		mixerPromptOpts{
+			Component:   newCompFromComp(ctx, in),
+			ComponentIn: in,
+			Message:     message,
+		},
+	)
+	trace.Issue(ctx, inst)
+	return inst.Comp
 }
 
-func prompt(ctx context.Context, opts promptOpts) *commandInst {
+// Prompt prompts user with a message
+func Prompt(ctx context.Context, in *wtype.LHComponent, message string) *wtype.LHComponent {
+	inst := &commandInst{
+		Args: []*wtype.LHComponent{in},
+		Comp: newCompFromComp(ctx, in),
+		Command: &ast.Command{
+			Inst: &ast.PromptInst{
+				Message: message,
+			},
+		},
+	}
+
+	inst.Command.Requests = append(inst.Command.Requests, ast.Request{
+		Selector: []ast.NameValue{
+			target.DriverSelectorV1Human,
+		},
+	})
+
+	trace.Issue(ctx, inst)
+	return inst.Comp
+}
+
+func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
-	//inst.Result = opts.Component
 	inst.AddProduct(opts.Component)
 	inst.AddComponent(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
@@ -135,14 +161,7 @@ func prompt(ctx context.Context, opts promptOpts) *commandInst {
 }
 
 func handle(ctx context.Context, opt HandleOpt) *commandInst {
-	st := sampletracker.GetSampleTracker()
-	in := opt.Component
-	comp := in.Dup()
-	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getID(ctx))
-
-	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
-	st.UpdateIDOf(in.ID, comp.ID)
+	comp := newCompFromComp(ctx, opt.Component)
 
 	var sels []ast.NameValue
 
@@ -155,7 +174,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	}
 
 	return &commandInst{
-		Args: []*wtype.LHComponent{in},
+		Args: []*wtype.LHComponent{opt.Component},
 		Comp: comp,
 		Command: &ast.Command{
 			Inst: &ast.HandleInst{

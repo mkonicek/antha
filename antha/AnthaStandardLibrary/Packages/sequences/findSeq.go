@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with and manipulating dna sequences in extension to methods available in wtype
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
 import (
@@ -215,10 +215,10 @@ func findSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsfound SearchRes
 	return
 }
 
-// FindSeqsinSeqs searches for small sequences (as strings) in a big sequence.
+// FindSeqsInSeqs searches for small sequences (as strings) in a big sequence.
 // The sequence is considered to be linear and matches will not be found if the sequence is circular and the sequence overlaps the end of the sequence.
 // In this case, FindSeqs should be used.
-func FindSeqsinSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thingfound) {
+func FindSeqsInSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thingfound) {
 
 	bigseq = strings.ToUpper(bigseq)
 
@@ -245,10 +245,10 @@ func FindSeqsinSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thing
 	return seqsfound
 }
 
-// FindPositioninSequence returns directionless Positions; if a feature is found in the reverse orientation the first position found
+// FindPositionInSequence returns directionless Positions; if a feature is found in the reverse orientation the first position found
 // in the sequence will be returned rather than the start of the feature.
 // If more than one matching feature is found an error will be returned.
-func FindPositioninSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
+func FindPositionInSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
 
 	seqsfound := FindSeq(&largeSequence, &smallSequence)
 
@@ -261,9 +261,9 @@ func FindPositioninSequence(largeSequence wtype.DNASequence, smallSequence wtype
 	return
 }
 
-// FindDirectionalPositioninSequence returns the directional Positions of the feature.
+// FindDirectionalPositionInSequence returns the directional Positions of the feature.
 // If more than one matching feature is found an error will be returned.
-func FindDirectionalPositioninSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
+func FindDirectionalPositionInSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
 	seqsfound := FindSeq(&largeSequence, &smallSequence)
 
 	if len(seqsfound.Positions) != 1 {

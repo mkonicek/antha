@@ -20,6 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
+// package fasta converts DNA sequence files in FASTA format into a set of DNA sequences.
 package fasta
 
 import (

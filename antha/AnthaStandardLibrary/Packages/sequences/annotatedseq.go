@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with and manipulating dna sequences in extension to methods available in wtype
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
 import (
@@ -98,7 +98,7 @@ func MakeAnnotatedSeq(name string, seq string, circular bool, features []wtype.F
 	var newFeatures []wtype.Feature
 
 	for _, feature := range features {
-		positions := FindSeqsinSeqs(seq, []string{feature.DNASeq})
+		positions := FindSeqsInSeqs(seq, []string{feature.DNASeq})
 
 		if len(positions) > 0 {
 			for i := range positions {

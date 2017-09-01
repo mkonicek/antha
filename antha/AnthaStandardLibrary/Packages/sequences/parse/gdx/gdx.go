@@ -19,7 +19,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// gdx.go
+// package gdx converts DNA sequence files in .gdx format into a set of DNA sequences.
 package gdx
 
 import (
@@ -29,31 +29,31 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-// GDXtoDNASequence parses DNA sequence files in .gdx format into a set of DNA sequences of type []wtype.DNASequence
-func GDXtoDNASequence(sequenceFile wtype.File) (parts_list []wtype.DNASequence, err error) {
+// GDXToDNASequence parses DNA sequence files in .gdx format into a set of DNA sequences of type []wtype.DNASequence
+func GDXToDNASequence(sequenceFile wtype.File) (partsList []wtype.DNASequence, err error) {
 	data, err := sequenceFile.ReadAll()
 	var gdx parse.Project
 	err = xml.Unmarshal(data, &gdx)
 
 	if err != nil {
-		return parts_list, err
+		return partsList, err
 	}
 
-	parts_list = make([]wtype.DNASequence, 0)
+	partsList = make([]wtype.DNASequence, 0)
 
-	for _, a := range gdx.DesignConstruct {
-		for _, b := range a.DNAElements {
+	for _, construct := range gdx.DesignConstruct {
+		for _, dnaElement := range construct.DNAElements {
 			var newseq wtype.DNASequence
-			for i := 0; i < len(a.DNAElements); i++ {
-				newseq.Nm = b.Label
-				newseq.Seq = b.Sequence
-				if a.Plasmid == "true" {
+			for counter := 0; counter < len(construct.DNAElements); counter++ {
+				newseq.Nm = dnaElement.Label
+				newseq.Seq = dnaElement.Sequence
+				if construct.Plasmid == "true" {
 					newseq.Plasmid = true
 				}
-				parts_list = append(parts_list, newseq)
+				partsList = append(partsList, newseq)
 			}
 		}
 	}
 
-	return parts_list, err
+	return partsList, err
 }

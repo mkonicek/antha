@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with and manipulating dna sequences in extension to methods available in wtype
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
 import (
@@ -143,7 +143,7 @@ func TestFindSeq(t *testing.T) {
 func TestFindPositioninSequence(t *testing.T) {
 	for _, test := range regionTests {
 		for _, position := range test.Positions {
-			start, end, err := FindPositioninSequence(*test.LargeSeq, *test.SmallSeq)
+			start, end, err := FindPositionInSequence(*test.LargeSeq, *test.SmallSeq)
 			testStart, testEnd := position.HumanFriendly(true)
 			if err == nil && start != testStart {
 				t.Error(

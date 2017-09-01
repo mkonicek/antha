@@ -383,7 +383,7 @@ func DesignFWDPRimerstoCoverSequence(seq wtype.DNASequence, targetseq string, se
 		}
 	}
 
-	seqsfound := sequences.FindSeqsinSeqs(seq.Sequence(), []string{targetseq})
+	seqsfound := sequences.FindSeqsInSeqs(seq.Sequence(), []string{targetseq})
 
 	if len(seqsfound) != 1 {
 		panicstatement := fmt.Sprintln("found ", len(seqsfound), " instances of ", targetseq, " in ", seq)
@@ -458,7 +458,7 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 
 	targetseq := feature.DNASeq
 
-	seqsfound := sequences.FindSeqsinSeqs(seq.Sequence(), []string{targetseq})
+	seqsfound := sequences.FindSeqsInSeqs(seq.Sequence(), []string{targetseq})
 
 	if len(seqsfound) != 1 {
 		panicstatement := fmt.Sprintln("found ", len(seqsfound), " instances of ", targetseq, " in ", seq)

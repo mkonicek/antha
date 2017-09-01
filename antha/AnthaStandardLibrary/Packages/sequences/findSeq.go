@@ -94,50 +94,49 @@ func FindSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchRes
 
 	// if a vector, attempt rotation of bigsequence vector index 1 position at a time.
 	if bigSequence.Plasmid && !smallSequence.Plasmid {
-		for i := range smallSequence.Seq {
-			var tempSequence wtype.DNASequence
-			tempSequence.Nm = "test"
-			var tempseq string
-			if i > 0 {
-				tempseq += bigSequence.Seq[i:]
-				tempseq += bigSequence.Seq[:i]
-				tempSequence.Seq = tempseq
+		i := len(smallSequence.Seq) - 1
+		var tempSequence wtype.DNASequence
+		tempSequence.Nm = "test"
+		var tempseq string
+		if i > 0 {
+			tempseq += bigSequence.Seq[i:]
+			tempseq += bigSequence.Seq[:i]
+			tempSequence.Seq = tempseq
 
-				tempSeqsFound := findSeq(&tempSequence, smallSequence)
+			tempSeqsFound := findSeq(&tempSequence, smallSequence)
 
-				for j, positionPair := range tempSeqsFound.Positions {
+			for j, positionPair := range tempSeqsFound.Positions {
 
-					var skip bool
+				var skip bool
 
-					if (positionPair.EndPosition + i) > len(bigSequence.Seq) {
-						positionPair.EndPosition = positionPair.EndPosition + i - len(bigSequence.Seq)
-					} else {
-						positionPair.EndPosition = positionPair.EndPosition + i
-					}
-
-					if (positionPair.StartPosition + i) > len(bigSequence.Seq) {
-						// correct position offset
-						positionPair.StartPosition = positionPair.StartPosition + i - len(bigSequence.Seq)
-					} else {
-						positionPair.StartPosition = positionPair.StartPosition + i
-					}
-					tempSeqsFound.Positions[j] = positionPair
-					// check if any new positions found
-					for _, oldPosition := range newPairs {
-						// if already present set skip to true
-						if equalPositionPairs(positionPair, oldPosition) {
-							skip = true
-						}
-					}
-					// if no skip set add to pairs
-					if !skip {
-						newPairs = append(newPairs, positionPair)
-					}
+				if (positionPair.EndPosition + i) > len(bigSequence.Seq) {
+					positionPair.EndPosition = positionPair.EndPosition + i - len(bigSequence.Seq)
+				} else {
+					positionPair.EndPosition = positionPair.EndPosition + i
 				}
 
+				if (positionPair.StartPosition + i) > len(bigSequence.Seq) {
+					// correct position offset
+					positionPair.StartPosition = positionPair.StartPosition + i - len(bigSequence.Seq)
+				} else {
+					positionPair.StartPosition = positionPair.StartPosition + i
+				}
+				tempSeqsFound.Positions[j] = positionPair
+				// check if any new positions found
+				for _, oldPosition := range newPairs {
+					// if already present set skip to true
+					if equalPositionPairs(positionPair, oldPosition) {
+						skip = true
+					}
+				}
+				// if no skip set add to pairs
+				if !skip {
+					newPairs = append(newPairs, positionPair)
+				}
 			}
 
 		}
+
 	}
 
 	seqsFound.Positions = newPairs

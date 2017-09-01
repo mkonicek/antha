@@ -138,38 +138,6 @@ func rotate_vector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASeq
 		return ret, err
 	}
 
-	/*thingsfound := FindSeqsinSeqs(ret.Seq, []string{enzyme.RecognitionSequence})
-
-	if len(thingsfound) == 0 {
-		err := fmt.Errorf("No restriction sites found in vector - cannot rotate")
-		return ret, err
-	}
-	if len(thingsfound) != 2 {
-		errstr := fmt.Sprint(len(thingsfound), "restriction sites found in vector - cannot rotate")
-
-		err := fmt.Errorf(errstr)
-		return ret, err
-	}
-
-	if len(thingsfound[0].Positions) > 1 {
-
-		errstr := fmt.Sprint(len(thingsfound[0].Positions), "restriction sites found in vector - cannot rotate")
-
-		err := fmt.Errorf(errstr)
-		return ret, err
-	}*/
-	/*
-			if thingsfound[0].Reverse {
-				err := fmt.Errorf("first site is reverse")
-				return ret, err
-			}
-			if thingsfound[1].Reverse {
-				err := fmt.Errorf("second site is reverse")
-				return ret, err
-			}
-
-		ix := thingsfound[0].Positions[0]
-	*/
 	newseq := ""
 
 	newseq += ret.Seq[ix:]
@@ -448,52 +416,41 @@ func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence,
 	return
 }
 
-// Simulate assembly success; returns status, number of correct assemblies, any sites found
+// Assemblysimulator simulate assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.
 func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, successfulassemblies int, sites []Restrictionsites, newDNASequences []wtype.DNASequence, err error) {
 
-	// fetch enzyme properties from map (this is basically a look up table for those who don't know)
-	successfulassemblies = 0
+	// fetch enzyme properties
 	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
 
-	// should change this to rebase lookup; what happens if this fails?
-	//enzyme := TypeIIsEnzymeproperties[enzymename]
 	enzyme, err := lookup.TypeIIsLookup(enzymename)
 
 	if err != nil {
 		return s, successfulassemblies, sites, newDNASequences, err
 	}
 
-	// need to expand this to include other enzyme possibilities
-	if enzyme.Class != "TypeIIs" { // enzyme.Name != "SapI" && enzyme.Name != "BsaI" && enzyme.Name != "BpiI" {
+	if enzyme.Class != "TypeIIs" {
 		s = fmt.Sprint(enzymename, ": Incorrect Enzyme or no enzyme specified")
 		err = fmt.Errorf(s)
 		return s, successfulassemblies, sites, newDNASequences, err
 	}
 
-	//assemble (note that sapIenz is found in package enzymes)
-	failedassemblies, plasmidproductsfromXprimaryseq, err := FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
+	failedAssemblies, plasmidProducts, err := FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 
 	if err != nil {
 		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
 		s = err.Error()
-		return s, successfulassemblies, sites, plasmidproductsfromXprimaryseq, err
+		return s, successfulassemblies, sites, plasmidProducts, err
 	}
 
-	enzy, err := lookup.EnzymeLookup(enzymename)
-
-	if err != nil {
-		return s, successfulassemblies, sites, plasmidproductsfromXprimaryseq, err
+	if len(plasmidProducts) == 1 {
+		sites = Restrictionsitefinder(plasmidProducts[0], []wtype.RestrictionEnzyme{BsaI, SapI, enzyme.RestrictionEnzyme})
 	}
 
-	if len(plasmidproductsfromXprimaryseq) == 1 {
-
-		sites = Restrictionsitefinder(plasmidproductsfromXprimaryseq[0], []wtype.RestrictionEnzyme{BsaI, SapI, enzy})
-	}
-	// returns first plasmid in array! should be changed later!
-	if len(plasmidproductsfromXprimaryseq) > 1 {
+	// returns sites found in first plasmid in array! should be changed later!
+	if len(plasmidProducts) > 1 {
 		sites = make([]Restrictionsites, 0)
-		for i := 0; i < len(plasmidproductsfromXprimaryseq); i++ {
-			sitesperplasmid := Restrictionsitefinder(plasmidproductsfromXprimaryseq[i], []wtype.RestrictionEnzyme{BsaI, SapI, enzy})
+		for i := 0; i < len(plasmidProducts); i++ {
+			sitesperplasmid := Restrictionsitefinder(plasmidProducts[i], []wtype.RestrictionEnzyme{BsaI, SapI, enzyme.RestrictionEnzyme})
 			for _, site := range sitesperplasmid {
 				sites = append(sites, site)
 			}
@@ -502,39 +459,39 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 
 	s = "hmmm I'm confused, this doesn't seem to make any sense"
 
-	if len(plasmidproductsfromXprimaryseq) == 0 && len(failedassemblies) == 0 {
-		err = fmt.Errorf("Nope! construct %s  won't work: %s", assemblyparameters.Constructname, err)
+	if len(plasmidProducts) == 0 && len(failedAssemblies) == 0 {
+		err = fmt.Errorf("Nope! construct design %s won't work: %s", assemblyparameters.Constructname, err.Error())
 		s = err.Error()
 	}
 
 	// remove invalid plasmids
 	var validPlasmids []wtype.DNASequence
 
-	for _, seq := range plasmidproductsfromXprimaryseq {
+	for _, seq := range plasmidProducts {
 		validPlasmid, _, _, _ := plasmid.ValidPlasmid(seq)
 		if validPlasmid {
 			validPlasmids = append(validPlasmids, seq)
 		}
 	}
 
-	plasmidproductsfromXprimaryseq = validPlasmids
+	plasmidProducts = validPlasmids
 
-	if len(plasmidproductsfromXprimaryseq) == 1 {
+	if len(plasmidProducts) == 1 {
 		s = "Yay! this should work"
 		successfulassemblies = successfulassemblies + 1
 	}
 
-	if len(plasmidproductsfromXprimaryseq) > 1 {
+	if len(plasmidProducts) > 1 {
 
 		var errormessage string
 		if err != nil {
 			errormessage = err.Error()
 		}
-		merr := fmt.Errorf("Yay! this should work but there seems to be %d possible plasmids which could form: %+v", len(plasmidproductsfromXprimaryseq), errormessage, plasmidproductsfromXprimaryseq)
+		merr := fmt.Errorf("Yay! this should work but there seems to be %d possible plasmids which could form: %+v", len(plasmidProducts), errormessage, plasmidProducts)
 		s = merr.Error()
 	}
 
-	if len(plasmidproductsfromXprimaryseq) == 0 && len(failedassemblies) > 0 {
+	if len(plasmidProducts) == 0 && len(failedAssemblies) > 0 {
 
 		s = fmt.Sprint("Ooh, only partial assembly expected: ", assemblyparameters.Partsinorder[(len(assemblyparameters.Partsinorder)-1)].Nm, " and ", assemblyparameters.Vector.Nm, ": ", "Not compatible, check ends")
 
@@ -542,10 +499,10 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 
 		var seqs []wtype.DNASequence
 
-		for i, failed := range failedassemblies {
+		for i, failed := range failedAssemblies {
 			seq, err := failed.ToDNASequence("fragment" + strconv.Itoa(i+1))
 			if err != nil {
-				return s, successfulassemblies, sites, plasmidproductsfromXprimaryseq, err
+				return s, successfulassemblies, sites, plasmidProducts, err
 			}
 			seqs = append(seqs, seq)
 		}
@@ -557,11 +514,11 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	if !strings.Contains(s, "Yay! this should work") {
 		err = fmt.Errorf(s)
 	}
-	for _, newDNASequence := range plasmidproductsfromXprimaryseq {
+	for _, newDNASequence := range plasmidProducts {
 		newDNASequence.Nm = assemblyparameters.Constructname
 	}
 
-	return s, successfulassemblies, sites, plasmidproductsfromXprimaryseq, err
+	return s, successfulassemblies, sites, plasmidProducts, err
 }
 
 func biggest(entries []wtype.DNASequence) wtype.DNASequence {

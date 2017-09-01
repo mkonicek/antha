@@ -131,7 +131,7 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 
 		filename := file.Name
 		if filepath.Ext(filename) == ".fasta" {
-			sequences, _ := fasta.FastatoDNASequences(file)
+			sequences, _ := fasta.FastaToDNASequences(file)
 
 			for _, seq := range sequences {
 				if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {

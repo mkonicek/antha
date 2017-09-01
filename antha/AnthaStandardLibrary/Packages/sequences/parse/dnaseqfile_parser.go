@@ -46,7 +46,7 @@ func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequenc
 			sequences = append(sequences, seq)
 		}
 	case filepath.Ext(fn) == ".fasta" || filepath.Ext(fn) == ".fa":
-		seqs, err = fasta.FASTAtoDNASeqs(sequenceFile)
+		seqs, err = fasta.FastaToDNASequences(sequenceFile)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}

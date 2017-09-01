@@ -4004,6 +4004,8 @@ func MakePlasmapperMap() (featuremap FeatureMap, err error) {
 	return
 }
 
+// ValidPlasmid evaluates whether a test sequence is curcular, contains any origins of replications and selection markers.
+// The features are evaluated for exact matches against a restricted list of common features defined as the variable commonfeatures.
 func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, selectionmarkers []string, err error) {
 	if sequence.Plasmid == true {
 		plasmid = true
@@ -4030,7 +4032,7 @@ func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, sele
 		oriseqs = append(oriseqs, oriseq)
 	}
 	for _, oriseq := range oriseqs {
-		if len(sequences.FindSeq(sequence, oriseq)) > 0 {
+		if len(sequences.FindSeq(&sequence, &oriseq).Positions) > 0 {
 			oris = append(oris, oriseq.Name())
 		}
 	}
@@ -4042,7 +4044,7 @@ func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, sele
 	}
 
 	for _, markerseq := range markerseqs {
-		if len(sequences.FindSeq(sequence, markerseq)) > 0 {
+		if len(sequences.FindSeq(&sequence, &markerseq).Positions) > 0 {
 			selectionmarkers = append(selectionmarkers, markerseq.Name())
 		}
 	}

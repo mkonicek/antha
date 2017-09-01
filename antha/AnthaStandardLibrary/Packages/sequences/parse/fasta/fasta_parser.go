@@ -27,7 +27,6 @@ import (
 	"bytes"
 	"encoding/csv"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -35,7 +34,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-// intermediate structure containing contents of Fasta file as strings
+// Fasta represents the intermediate structure containing contents of Fasta file as strings
 type Fasta struct {
 	Id   string
 	Desc string
@@ -116,39 +115,13 @@ func FASTAtoPlasmidDNASeqs(file wtype.File) (seqs []wtype.DNASequence, err error
 
 }
 
-// This will retrieve seq from FASTA file of type file.
-// If the header of a sequence contains PLASMID, VECTOR or CIRCULAR it will be  interpreted as a plasmid, otherwise it will be set to linear.
-func FASTAtoDNASeqs(FastaFile wtype.File) (seqs []wtype.DNASequence, err error) {
-	data, err := FastaFile.ReadAll()
-	if len(data) == 0 {
-		return seqs, fmt.Errorf("Cannot parse fasta file. File is empty.")
-	} else {
-
-		seqs = make([]wtype.DNASequence, 0)
-
-		var seq wtype.DNASequence
-		for _, record := range fastaParse(data) {
-			plasmidstatus := ""
-
-			if strings.Contains(strings.ToUpper(record.Desc), "PLASMID") || strings.Contains(strings.ToUpper(record.Desc), "CIRCULAR") || strings.Contains(strings.ToUpper(record.Desc), "VECTOR") {
-				plasmidstatus = "PLASMID"
-			}
-			seq, err = wtype.MakeDNASequence(record.Id, record.Seq, []string{plasmidstatus})
-			if err != nil {
-				return seqs, err
-			}
-			seqs = append(seqs, seq)
-		}
-
-		return
-	}
-}
-
 // Convert a sequence file in Fasta format to an array of DNASequence.
 // If the header does not contain the key words PLASMID, CIRCULAR or VECTOR the sequence will be assumed to be linear.
-func FastatoDNASequences(sequenceFile wtype.File) (seqs []wtype.DNASequence, err error) {
+func FastaToDNASequences(sequenceFile wtype.File) (seqs []wtype.DNASequence, err error) {
 	data, err := sequenceFile.ReadAll()
-
+	if err != nil {
+		return
+	}
 	return FastaContentstoDNASequences(data)
 }
 

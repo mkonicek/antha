@@ -43,50 +43,50 @@ func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 	return pcrreaction, err
 }
 
-func pcrReactionfromcsv(designFile string, sequenceFile string) (pcrReaction []pcr.Reaction, err error) {
+func pcrReactionfromcsv(designFile string, sequenceFile string) (pcrReactions []pcr.Reaction, err error) {
 
-	designedconstructs := readPCRDesign(designFile)
-	sequences := readPCRDesign(sequenceFile)
-	for _, c := range designedconstructs {
+	pcrDesigns := readPCRDesign(designFile)
+	partSequences := readPCRDesign(sequenceFile)
+	for _, pcrDesignFields := range pcrDesigns {
 		var newpcrReaction pcr.Reaction
-		newpcrReaction.ReactionName = c[0]
-		newpcrReaction.Template.Nm = c[1]
-		newpcrReaction.PrimerPair[0].Nm = c[2]
-		newpcrReaction.PrimerPair[1].Nm = c[3]
-		pcrReaction = append(pcrReaction, newpcrReaction)
+		newpcrReaction.ReactionName = pcrDesignFields[0]
+		newpcrReaction.Template.Nm = pcrDesignFields[1]
+		newpcrReaction.PrimerPair[0].Nm = pcrDesignFields[2]
+		newpcrReaction.PrimerPair[1].Nm = pcrDesignFields[3]
+		pcrReactions = append(pcrReactions, newpcrReaction)
 	}
 
 	var status string
 
-	for b, _ := range pcrReaction {
-		var x int
-		for _, c := range sequences {
+	for i, pcrReaction := range pcrReactions {
+		var reactionPartCounter int
+		for _, sequenceField := range partSequences {
 			var y int
-			if b == 0 {
-				for _, d := range sequences { //check for duplicate entries in list
-					if d[0] == c[0] {
+			if i == 0 {
+				for _, seqField := range partSequences { //check for duplicate entries in list
+					if seqField[0] == sequenceField[0] {
 						y++
 						if y > 1 {
-							status = (status + "Part " + c[0] + " defined more than once in Sheet1 please specify a single entry. ")
+							status = (status + "Part " + sequenceField[0] + " defined more than once in Sheet1 please specify a single entry. ")
 						}
 					}
 				}
 			}
 
-			if c[0] == pcrReaction[b].Template.Nm {
-				pcrReaction[b].Template.Seq = c[1]
-				x++
-			} else if c[0] == pcrReaction[b].PrimerPair[0].Nm {
-				pcrReaction[b].PrimerPair[0].Seq = c[1]
-				x++
-			} else if c[0] == pcrReaction[b].PrimerPair[1].Nm {
-				pcrReaction[b].PrimerPair[1].Seq = c[1]
-				x++
+			if sequenceField[0] == pcrReaction.Template.Nm {
+				pcrReaction.Template.Seq = sequenceField[1]
+				reactionPartCounter++
+			} else if sequenceField[0] == pcrReaction.PrimerPair[0].Nm {
+				pcrReaction.PrimerPair[0].Seq = sequenceField[1]
+				reactionPartCounter++
+			} else if sequenceField[0] == pcrReaction.PrimerPair[1].Nm {
+				pcrReaction.PrimerPair[1].Seq = sequenceField[1]
+				reactionPartCounter++
 			}
 
 		}
-		if x < 3 {
-			status = (status + "Please specify all parts for reaction " + pcrReaction[b].ReactionName + " in Sheet1. ")
+		if reactionPartCounter < 3 {
+			status = (status + "Please specify all parts for reaction " + pcrReactions[i].ReactionName + " in Sheet1. ")
 		}
 	}
 	if status != "" {
@@ -119,14 +119,15 @@ func readPCRDesign(filename string) [][]string {
 	}
 
 	// sanity check, display to standard output
-	for _, each := range rawCSVdata {
+	for _, record := range rawCSVdata {
 		var parts []string
 
-		if len(each[0]) > 0 {
-			if string(strings.TrimSpace(each[0])[0]) != "#" {
-				for _, p := range each {
-					if p != "" {
-						parts = append(parts, strings.TrimSpace(p))
+		if len(record[0]) > 0 {
+			if string(strings.TrimSpace(record[0])[0]) != "#" {
+				for _, partName := range record {
+					trimmed := strings.TrimSpace(partName)
+					if trimmed != "" {
+						parts = append(parts, trimmed)
 					}
 				}
 				constructs = append(constructs, parts)

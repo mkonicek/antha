@@ -42,7 +42,7 @@ func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequenc
 
 	switch fn := sequenceFile.Name; {
 	case filepath.Ext(fn) == ".gdx":
-		seqs, err = gdx.GDXtoDNASequence(sequenceFile)
+		seqs, err = gdx.GDXToDNASequence(sequenceFile)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
@@ -52,7 +52,7 @@ func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequenc
 			sequences = append(sequences, seq)
 		}
 	case filepath.Ext(fn) == ".gb" || filepath.Ext(fn) == ".gbk":
-		seq, err = genbank.GenbanktoFeaturelessDNASequence(sequenceFile)
+		seq, err = genbank.GenbankToFeaturelessDNASequence(sequenceFile)
 		sequences = append(sequences, seq)
 	default:
 		err = fmt.Errorf("non valid sequence file format: %s", filepath.Ext(fn))

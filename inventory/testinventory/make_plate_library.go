@@ -176,13 +176,13 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	// deep well reservoir
 	rshp := wtype.NewShape("box", "mm", 115.0, 72.0, 41.3)
 	singlewelltrough := wtype.NewLHWell("DWR1", "", "", "ul", 300000, 20000, rshp, wtype.LHWBV, 115, 72, 41.3, 4.7, "mm")
-	plate = wtype.NewLHPlate("DWR1", "Unknown", 1, 1, 44.1, "mm", singlewelltrough, 9, 9, 49.5, 0.0, 0.0)
+	plate = wtype.NewLHPlate("DWR1", "Unknown", 1, 1, 44.1, "mm", singlewelltrough, 9, 9, 0.0, 0.0, 0.0)
 	plates = append(plates, plate)
 
-	// 250ml box reservoir (working vol estimated to be 100ml to prevent spillage on moving decks)
+	// 250ml box reservoir
 	reservoirbox := wtype.NewShape("box", "mm", 121, 80, 40) // 39?
-	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 100000, 10000, reservoirbox, wtype.LHWBFLAT, 121, 80, 40, 3, "mm")
-	plate = wtype.NewLHPlate("reservoir", "unknown", 1, 1, 40, "mm", welltypereservoir, 1, 1, 0.0, 0.0, 0.0)
+	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 200000, 40000, reservoirbox, wtype.LHWBFLAT, 121, 80, 40, 3, "mm")
+	plate = wtype.NewLHPlate("reservoir", "unknown", 1, 1, 40, "mm", welltypereservoir, 1, 1, 49.5, 31.0, 0.0)
 	plates = append(plates, plate)
 
 	// well area function

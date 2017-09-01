@@ -2,11 +2,12 @@ package human
 
 import (
 	"context"
-	"reflect"
+	"fmt"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/target/handler"
 )
 
 const (
@@ -22,7 +23,27 @@ var (
 
 // A Human is a device that can do anything
 type Human struct {
-	opt Opt
+	opt  Opt
+	impl *handler.GenericHandler
+}
+
+// An Opt is a set of options to configure a human device
+type Opt struct {
+	CanMix      bool
+	CanIncubate bool
+
+	// CanHandle is deprecated
+	CanHandle bool
+}
+
+// New returns a new human device
+func New(opt Opt) *Human {
+	h := &Human{opt: opt}
+	h.impl = &handler.GenericHandler{
+		GenFunc: h.generate,
+	}
+
+	return h
 }
 
 // CanCompile implements device CanCompile
@@ -56,147 +77,52 @@ func (a *Human) MoveCost(from target.Device) int {
 	return HumanByXCost
 }
 
-func (a *Human) String() string {
-	return "Human"
-}
-
-// Return key for node for grouping
-func getKey(n ast.Node) (r interface{}) {
-	// Group by value for HandleInst and Incubate and type otherwise
-	if c, ok := n.(*ast.Command); !ok {
-		r = reflect.TypeOf(n)
-	} else if h, ok := c.Inst.(*ast.HandleInst); ok {
-		r = h.Group
-	} else if i, ok := c.Inst.(*ast.IncubateInst); ok {
-		r = i.Temp.ToString() + " " + i.Time.ToString()
-	} else {
-		r = reflect.TypeOf(c.Inst)
-	}
-	return
-}
-
-func keepNodes(keep map[graph.Node]bool, dag *graph.SDag) (roots []graph.Node) {
-	next := dag.Roots
-	for len(next) > 0 {
-		last := len(next) - 1
-		r := next[last]
-		next = next[:last]
-
-		if keep[r] {
-			roots = append(roots, r)
-			continue
-		}
-
-		next = append(next, dag.Visit(r)...)
-	}
-
-	return
-}
-
-func orderNodes(keep map[graph.Node]target.Inst, g graph.Graph) (ret []graph.Node) {
-	order, _ := graph.TopoSort(graph.TopoSortOpt{
-		Graph: g,
-	})
-
-	for _, n := range order {
-		if keep[n] != nil {
-			ret = append(ret, n)
-		}
-	}
-
-	return
-}
-
 // Compile implements target.device Compile
 func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
-	addDep := func(in, dep target.Inst) {
-		in.SetDependsOn(append(in.DependsOn(), dep))
-	}
+	return a.impl.Compile(ctx, nodes)
+}
 
-	g := ast.ToGraph(ast.ToGraphOpt{
-		Roots:     nodes,
-		WhichDeps: ast.DataDeps,
-	})
-	isRoot := make(map[graph.Node]bool)
-	for _, n := range nodes {
-		isRoot[n] = true
-	}
+func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 
-	entry := &target.Wait{}
-	exit := &target.Wait{}
 	var insts []target.Inst
-	isRep := make(map[graph.Node]target.Inst)
 
-	insts = append(insts, entry)
+	switch cmd := cmd.(type) {
 
-	// Maximally coalesce repeated commands according to when they are first
-	// available to be executed (graph.Reverse)
-	dag := graph.Schedule(graph.Reverse(g))
-	for len(dag.Roots) > 0 {
-		roots := keepNodes(isRoot, dag)
+	case *wtype.LHInstruction:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "mix",
+			Details: prettyMixDetails(cmd),
+		})
 
-		var next []graph.Node
+	case *ast.IncubateInst:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "incubate",
+			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
+		})
 
-		// Gather
-		same := make(map[interface{}][]ast.Node)
-		for _, r := range roots {
-			n := r.(ast.Node)
-			key := getKey(n)
-			same[key] = append(same[key], n)
-			next = append(next, dag.Visit(r)...)
-		}
-		// Apply
-		for _, nodes := range same {
-			var ins []*target.Manual
-			for _, n := range nodes {
-				in, err := a.makeInst(n)
-				if err != nil {
-					return nil, err
-				}
-				ins = append(ins, in)
-			}
-			in := a.coalesce(ins)
-			insts = append(insts, in)
+	case *ast.HandleInst:
+		insts = append(insts, &target.Manual{
+			Dev:   a,
+			Label: cmd.Group,
+		})
 
-			// Pick a representative
-			isRep[nodes[0]] = in
-		}
+	case *ast.PromptInst:
+		insts = append(insts, &target.Prompt{
+			Message: cmd.Message,
+		})
 
-		dag.Roots = next
-	}
-
-	insts = append(insts, exit)
-
-	order := orderNodes(isRep, g)
-	for idx, node := range order {
-		n := node.(ast.Node)
-		in := isRep[n]
-
-		if idx-1 >= 0 {
-			prev := order[idx-1].(ast.Node)
-			prevNode := isRep[prev]
-			if in != prevNode {
-				addDep(in, prevNode)
-			}
-		}
-
-		addDep(in, entry)
-		addDep(exit, in)
+	default:
+		return nil, fmt.Errorf("unknown inst %T", cmd)
 	}
 
 	return insts, nil
 }
 
-// An Opt is a set of options to configure a human device
-type Opt struct {
-	CanMix      bool
-	CanIncubate bool
-
-	// CanHandle is deprecated
-	CanHandle bool
-}
-
-// New returns a new human device
-func New(opt Opt) *Human {
-	return &Human{opt}
+func prettyMixDetails(inst *wtype.LHInstruction) string {
+	if len(inst.PlateName) != 0 || len(inst.Welladdress) != 0 {
+		return fmt.Sprintf("mix %q[%q]", inst.PlateName, inst.Welladdress)
+	}
+	return "mix"
 }

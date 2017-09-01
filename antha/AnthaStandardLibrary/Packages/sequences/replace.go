@@ -48,7 +48,7 @@ type ReplacementAlgorithm func(sequence, thingtoreplace string, otherseqstoavoid
 
 func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []string) (replacement string, err error) {
 
-	seqsfound := FindSeqsInSeqs(sequence, []string{thingtoreplace})
+	seqsfound := FindSeqsinSeqs(sequence, []string{thingtoreplace})
 	if len(seqsfound) == 1 {
 		for _, instance := range seqsfound {
 			if instance.Reverse == true {
@@ -66,7 +66,7 @@ func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []str
 			replacementnucleotide := Comp(string(thingtoreplace[i]))
 			replacement := strings.Replace(thingtoreplace, string(thingtoreplace[i]), replacementnucleotide, 1)
 			newseq := strings.Replace(sequence, thingtoreplace, replacement, -1)
-			checksitesfoundagain := FindSeqsInSeqs(newseq, allthingstoavoid)
+			checksitesfoundagain := FindSeqsinSeqs(newseq, allthingstoavoid)
 			if len(checksitesfoundagain) == 0 {
 				// fmt.Println("all things removed")
 				return replacement, err
@@ -109,7 +109,7 @@ func RemoveSiteOnestrand(sequence wtype.DNASequence, enzymeseq string, otherseqs
 		replacementnucleotide := Comp(string(enzymeseq[i]))
 		replacement := strings.Replace(enzymeseq, string(enzymeseq[i]), replacementnucleotide, 1)
 		newseq.Seq = strings.Replace(sequence.Seq, enzymeseq, replacement, -1)
-		checksitesfoundagain := FindSeqsInSeqs(newseq.Seq, allthingstoavoid)
+		checksitesfoundagain := FindSeqsinSeqs(newseq.Seq, allthingstoavoid)
 		if len(checksitesfoundagain) == 0 {
 			// fmt.Println("all things removed, first try")
 			return
@@ -146,7 +146,7 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 	allthingstoavoid = append(allthingstoavoid, enzyme.RecognitionSequence)
 	allthingstoavoid = append(allthingstoavoid, RevComp(enzyme.RecognitionSequence))
 
-	seqsfound := FindSeqsInSeqs(sequence.Seq, []string{enzyme.RecognitionSequence})
+	seqsfound := FindSeqsinSeqs(sequence.Seq, []string{enzyme.RecognitionSequence})
 	// fmt.Println("RemoveSite: ", seqsfound)
 	if len(seqsfound) == 0 {
 		return

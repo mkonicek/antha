@@ -98,7 +98,7 @@ func MakeAnnotatedSeq(name string, seq string, circular bool, features []wtype.F
 	var newFeatures []wtype.Feature
 
 	for _, feature := range features {
-		positions := FindSeqsInSeqs(seq, []string{feature.DNASeq})
+		positions := FindSeqsinSeqs(seq, []string{feature.DNASeq})
 
 		if len(positions) > 0 {
 			for i := range positions {

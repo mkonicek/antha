@@ -218,7 +218,7 @@ func findSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsfound SearchRes
 // FindSeqsInSeqs searches for small sequences (as strings) in a big sequence.
 // The sequence is considered to be linear and matches will not be found if the sequence is circular and the sequence overlaps the end of the sequence.
 // In this case, FindSeqs should be used.
-func FindSeqsInSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thingfound) {
+func FindSeqsinSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thingfound) {
 
 	bigseq = strings.ToUpper(bigseq)
 

@@ -83,7 +83,13 @@ func (pair PositionPair) CodeFriendly(ignoredirection ...bool) (start, end int) 
 
 // FindSeq searches for a DNA sequence within a larger DNA sequence and returns all matches on both coding and complimentary strands.
 func FindSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchResult) {
-
+	if len(smallSequence.Sequence()) > len(bigSequence.Sequence()) {
+		seqsFound = SearchResult{
+			Template: bigSequence,
+			Query:    smallSequence,
+		}
+		return
+	}
 	seqsFound = findSeq(bigSequence, smallSequence)
 
 	originalPairs := seqsFound.Positions

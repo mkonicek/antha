@@ -90,7 +90,7 @@ func MakePlasmapperFeatures() (featuremap FeatureMap, err error) {
 	return
 }
 
-// ValidPlasmid evaluates whether a test sequence is curcular, contains any origins of replications and selection markers.
+// ValidPlasmid evaluates whether a test sequence is circular, contains any origins of replications and selection markers.
 // The features are evaluated for exact matches against a restricted list of common features defined as the variable commonfeatures.
 func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, selectionmarkers []string, err error) {
 	if sequence.Plasmid == true {

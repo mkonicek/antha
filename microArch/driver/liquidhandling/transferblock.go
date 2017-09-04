@@ -43,7 +43,6 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 	// list of ids
 	parallel_sets, prm, err := get_parallel_sets_robot(ctx, ti.Inss, robot, policy)
-
 	// what if prm is nil?
 
 	if err != nil {
@@ -51,7 +50,6 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	}
 
 	for _, set := range parallel_sets {
-
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
 
@@ -140,6 +138,8 @@ func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, ro
 
 		possible_sets = append(possible_sets, sids)
 		corresponding_params = append(corresponding_params, head.GetParams())
+
+		fmt.Println("GET PARAMS: ", head.GetParams())
 	}
 
 	// don't even bother if there are no possible sets

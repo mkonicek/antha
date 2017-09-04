@@ -14,6 +14,14 @@ func (cv ComponentVector) String() string {
 	return s
 }
 
+func (cv ComponentVector) DeleteAllBelowVolume(vol wunit.Volume) {
+	for i := 0; i < len(cv); i++ {
+		if cv[i] != nil && cv[i].Volume().LessThan(vol) {
+			cv[i] = nil
+		}
+	}
+}
+
 func (cv ComponentVector) Dup() ComponentVector {
 	ret := make(ComponentVector, len(cv))
 

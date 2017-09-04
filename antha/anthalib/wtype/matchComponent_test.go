@@ -1,10 +1,10 @@
 package wtype
 
 import (
-	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"reflect"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 func TestMatchComponent(t *testing.T) {
@@ -392,7 +392,7 @@ func TestMatchComponentIndependent(t *testing.T) {
 	}
 
 	if !dstsDone(want) {
-		t.Errorf("Still require sources")
+		t.Errorf("Still require sources: %v", want)
 	}
 
 }
@@ -705,9 +705,12 @@ func TestAlignIndependent3(t *testing.T) {
 
 		if i != 6 {
 			w = append(w, wcmp)
+		} else {
+			w = append(w, NewLHComponent())
 		}
 	}
-	m := align(w, g, true, true)
+
+	m := align(w, g, true, false)
 
 	if len(m.IDs) != 8 {
 		t.Errorf("Error: expected 8 IDs got %d", len(m.IDs))
@@ -718,10 +721,6 @@ func TestAlignIndependent3(t *testing.T) {
 	expV := []wunit.Volume{vW.Dup(), vW.Dup(), vW.Dup(), vW.Dup(), vW.Dup(), vW.Dup(), wunit.ZeroVolume(), vW.Dup()}
 	expM := []int{0, 1, 2, 3, 4, 5, -1, 7}
 	expSc := 140.0
-
-	fmt.Println("GOTGOTGOT")
-	fmt.Println(m)
-	fmt.Println("TOGTOGTOG")
 
 	expected := Match{IDs: expID, WCs: expCR, Vols: expV, M: expM, Sc: expSc}
 

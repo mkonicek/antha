@@ -473,6 +473,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		}
 
 		// choose tips
+		// INMC: DO THIS PER CHANNEL
 		newchannel, newtip := ChooseChannel(ins.Volume[0][0], prms)
 		newtiptype := ""
 		if newtip != nil {
@@ -497,6 +498,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 
 		for _, vol := range tvs {
 			// determine whether to change tips
+			// INMC: DO THIS PER CHANNEL
 			change_tips := false
 			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || channel != newchannel
@@ -3152,15 +3154,12 @@ func ChangeTips(ctx context.Context, tiptype string, vol wunit.Volume, prms *LHP
 	return ret, err
 }
 
+// INMC: NEEDS TO TAKE ARRAY OF CHANNELS RATHER THAN MULTI
 func GetTips(ctx context.Context, tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int, mirror, usetiptracking bool) (RobotInstruction, error) {
 
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(ctx, tiptype, channel, mirror, multi, usetiptracking)
 
 	if tipwells == nil || terr != nil {
-		/*
-			logger.Fatal("No tips left")
-			panic("NO TIPS LEFT BOYO")
-		*/
 		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("PICKUP: type: ", tiptype, " n: ", multi, " mirror: ", mirror))
 		return NewLoadTipsMoveInstruction(), err
 	}

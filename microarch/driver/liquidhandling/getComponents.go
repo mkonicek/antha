@@ -88,7 +88,7 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
@@ -98,7 +98,7 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 			it := getPlateIterator(p, ori, multi)
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
 				// cmps needs duping here
-				mycmps := p.GetFilteredContentVector(wv, cmps) // dups components
+				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume) // dups components
 				if mycmps.Empty() {
 					continue
 				}
@@ -154,7 +154,11 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	rep := newReply()
 	// build list of possible sources -- this is simply a ComponentVector of all the possible sources
 
-	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi)
+	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
+
+	for _, s := range srcs {
+		fmt.Println("SRC: ", s)
+	}
 
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
@@ -178,7 +182,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			if src.Empty() {
 				continue
 			}
-			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, false)
+			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, true)
 
 			if err != nil && err.Error() != wtype.NotFoundError {
 				return rep, err
@@ -187,6 +191,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			if match.Sc > bestMatch.Sc {
 				bestMatch = match
 				bestSrc = src
+				fmt.Println(src)
 			}
 		}
 
@@ -196,7 +201,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 
 		// update sources
 
-		updateSources(bestSrc, bestMatch, opt.Carryvol)
+		updateSources(bestSrc, bestMatch, opt.Carryvol, lhp.MinPossibleVolume())
 		updateDests(currCmps, bestMatch)
 
 		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))
@@ -205,7 +210,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	return rep, nil
 }
 
-func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol wunit.Volume) wtype.ComponentVector {
+func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPossibleVolume wunit.Volume) wtype.ComponentVector {
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			volSub := wunit.CopyVolume(match.Vols[i])
@@ -213,6 +218,8 @@ func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol wunit.
 			src[match.M[i]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit) //match.Vols[i].ConvertToString(src[match.M[i]].Vunit)
 		}
 	}
+
+	src.DeleteAllBelowVolume(minPossibleVolume)
 
 	return src
 }

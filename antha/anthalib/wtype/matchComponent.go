@@ -46,7 +46,7 @@ func printMat(mat [][]mt) {
 	for i, v := range mat {
 		for j, x := range v {
 			x = x
-			fmt.Printf("(%d,%d):%-5.1f:%-1d ", i, j, mat[i][j].Sc, mat[i][j].Bk)
+			fmt.Printf("(%d,%d):%-5.1f:%-1d:%-5.1f ", i, j, mat[i][j].Sc, mat[i][j].Bk, mat[i][j].Vl)
 		}
 
 		fmt.Println()
@@ -60,7 +60,7 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 			want[i] = NewLHComponent()
 		}
 
-		g := want[i]
+		g := got[i]
 
 		if g == nil {
 			got[i] = NewLHComponent()
@@ -83,16 +83,15 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 		// to rows with zeroes in 'want'
 
 		for j := 0; j < len(got); j++ {
+			// only allow gaps if independent is set
 			if got[j] == nil {
 				continue
 			}
-			// only allow gaps if independent is set
 			if (got[j].CName == "" || want[i].CName != got[j].CName) && !independent {
 				continue
 			}
 
 			if want[i].CName != got[j].CName {
-				// we set this to no volume
 				mat[i][j].Vl = 0.0
 				mat[i][j].Sc = 0.0
 			} else {

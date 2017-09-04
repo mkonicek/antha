@@ -915,7 +915,7 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 }
 
 func dummy(ins *wtype.LHInstruction) bool {
-	if ins.IsMixInPlace() && len(ins.Components) == 1 {
+	if wtype.InsType(ins.Type) == "MIX" && ins.IsMixInPlace() && len(ins.Components) == 1 {
 		// instructions of this form generally mean "do nothing"
 		// but have very useful side-effects
 		return true

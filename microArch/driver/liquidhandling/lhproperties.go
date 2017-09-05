@@ -1081,18 +1081,36 @@ func (lhp *LHProperties) CheckTipPrefCompatibility(prefs []string) bool {
 	return true
 }
 
+// CheckPreferenceCompatibility returns if the device specific configuration
+// positions are compatible with the current device.
 func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
-	// if we find any preference which is not compliant we reject the array
+	// TODO: Not the most portable or extensible way
 
-	prefix := ""
+	var checkFn func(string) bool
+
 	if lhp.Mnfr == "Tecan" {
-		prefix = lhp.Mnfr + "Pos_"
+		checkFn = func(pos string) bool {
+			return strings.HasPrefix(pos, "TecanPos_")
+		}
 	} else if lhp.Mnfr == "Gilson" || lhp.Mnfr == "CyBio" && lhp.Model == "Felix" {
-		prefix = "position_"
+		checkFn = func(pos string) bool {
+			return strings.HasPrefix(pos, "position_")
+		}
+	} else if lhp.Mnfr == "CyBio" && lhp.Model == "GeneTheatre" {
+		checkFn = func(pos string) bool {
+			if len(pos) != 2 {
+				return false
+			}
+			return 'A' <= pos[0] && pos[0] <= 'D' && '0' <= pos[1] && pos[1] <= '9'
+		}
+	}
+
+	if checkFn == nil {
+		return true
 	}
 
 	for _, p := range prefs {
-		if !strings.HasPrefix(p, prefix) {
+		if !checkFn(p) {
 			return false
 		}
 	}

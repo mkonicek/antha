@@ -1100,7 +1100,7 @@ func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
 			if len(pos) != 2 {
 				return false
 			}
-			return 'A' <= pos[0] && pos[0] <= 'Z' && '0' <= pos[1] && pos[1] <= '9'
+			return 'A' <= pos[0] && pos[0] <= 'D' && '0' <= pos[1] && pos[1] <= '9'
 		}
 	}
 

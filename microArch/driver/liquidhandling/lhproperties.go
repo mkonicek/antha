@@ -719,12 +719,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 
 		cmpdup := cmp.Dup()
 
-		if cmp.IsSample() {
-			fmt.Println("SEEKING SMPL:", cmp.CName, " ", cmp.ParentID)
-
-		} else {
-			fmt.Println("SEEKING ", cmp.CNID())
-		}
 		// searches all plates: input and output
 		for _, ipref := range lhp.InputSearchPreferences() {
 			// check if the plate at position ipref has the
@@ -732,9 +726,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 
 			p, ok := localplates[ipref]
 			if ok && !p.Empty() {
-				fmt.Println("GOT THIS")
-				p.OutputLayout()
-				fmt.Println("********")
 				// whaddya got?
 				// nb this won't work if we need to split a volume across several plates
 				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume(), legacyVolume)

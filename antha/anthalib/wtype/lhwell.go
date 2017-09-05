@@ -735,3 +735,14 @@ func (w *LHWell) Contains(cmp *LHComponent) bool {
 		return cmp.IsSameKindAs(w.WContents)
 	}
 }
+
+func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
+	if w.WContents.ID == IDBefore {
+		previous := w.WContents
+		after.AddParentComponent(previous)
+		w.WContents = after
+		return true
+	}
+
+	return false
+}

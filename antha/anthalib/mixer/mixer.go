@@ -24,6 +24,8 @@
 package mixer
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -54,6 +56,8 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret.Visc = l.GetVisc()
 	ret.SetSample(true)
 
+	fmt.Println("SAMPLE ", l.CNID(), " ", v.ToString(), " ", ret.CNID())
+	fmt.Println()
 	//logger.Track(fmt.Sprintf("SAMPLE V %s %s %s", l.ID, ret.ID, v.ToString()))
 
 	return ret
@@ -180,6 +184,18 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	if r == nil {
 		r = wtype.NewLHMixInstruction()
 	}
+	fmt.Println("MIX ")
+	for _, c := range opt.Components {
+		fmt.Print("\t", c.CName, " ")
+		if c.IsSample() {
+			fmt.Print(" SMP: ", c.ParentID)
+		} else {
+			fmt.Print(" CMP: ", c.ID)
+		}
+		fmt.Println()
+		fmt.Println()
+	}
+
 	r.Components = opt.Components
 
 	if opt.Result != nil {
@@ -195,6 +211,8 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		}
 		r.Result.SetGeneration(mx)
 	}
+
+	fmt.Println("\tRESULT: ", r.Result.ID)
 
 	if opt.Destination != nil {
 		r.ContainerType = opt.Destination.Type

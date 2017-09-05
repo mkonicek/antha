@@ -718,13 +718,23 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 		foundIt := false
 
 		cmpdup := cmp.Dup()
+
+		if cmp.IsSample() {
+			fmt.Println("SEEKING SMPL:", cmp.CName, " ", cmp.ParentID)
+
+		} else {
+			fmt.Println("SEEKING ", cmp.CNID())
+		}
 		// searches all plates: input and output
 		for _, ipref := range lhp.InputSearchPreferences() {
 			// check if the plate at position ipref has the
 			// component we seek
 
 			p, ok := localplates[ipref]
-			if ok {
+			if ok && !p.Empty() {
+				fmt.Println("GOT THIS")
+				p.OutputLayout()
+				fmt.Println("********")
 				// whaddya got?
 				// nb this won't work if we need to split a volume across several plates
 				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume(), legacyVolume)
@@ -1198,5 +1208,20 @@ func (p LHProperties) HasTipTracking() bool {
 		return true
 	}
 
+	return false
+}
+
+func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.LHComponent) {
+	for s, c := range updates {
+		p.UpdateComponentID(s, c)
+	}
+}
+
+func (p *LHProperties) UpdateComponentID(from string, to *wtype.LHComponent) bool {
+	for _, p := range p.Plates {
+		if p.FindAndUpdateID(from, to) {
+			return true
+		}
+	}
 	return false
 }

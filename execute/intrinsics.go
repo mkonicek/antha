@@ -2,6 +2,7 @@ package execute
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -143,6 +144,8 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst.AddProduct(opts.Component)
 	inst.AddComponent(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
+
+	fmt.Println("MIXER PROMPT::: ", opts.ComponentIn.ID, " TO ", opts.Component.ID)
 
 	return &commandInst{
 		Args: []*wtype.LHComponent{opts.ComponentIn},

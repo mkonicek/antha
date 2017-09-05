@@ -22,6 +22,12 @@ func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 		return nil
 	case *target.Wait:
 		return nil
+	case *target.Order:
+		return nil
+	case *target.PlatePrep:
+		return nil
+	case *target.SetupMixer:
+		return nil
 	default:
 		return fmt.Errorf("unknown instruction %T", inst)
 	}

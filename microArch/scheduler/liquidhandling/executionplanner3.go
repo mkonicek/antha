@@ -41,6 +41,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			// if this is a solitary prompt instruction just generate the requisite message
 			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
 			request.InstructionSet.Add(prm)
+			robot.UpdateComponentIDs(ch.Values[0].PassThrough)
 		} else {
 			// otherwise...
 			// make a transfer block instruction out of the incoming instructions

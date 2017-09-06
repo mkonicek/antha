@@ -327,10 +327,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	this.Properties.RemoveUnusedAutoallocatedComponents()
 	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
 
-	pidm := make(map[string]string, len(this.Properties.Plates))
-	for pos, _ := range this.Properties.Plates {
-		p1, ok1 := this.Properties.Plates[pos]
-		p2, ok2 := this.FinalProperties.Plates[pos]
+	pidm := make(map[string]string, len(this.Properties.PlateLookup))
+	for pos, _ := range this.Properties.PlateLookup {
+		p1, ok1 := this.Properties.PlateLookup[pos]
+		p2, ok2 := this.FinalProperties.PlateLookup[pos]
 
 		if (!ok1 && ok2) || (ok1 && !ok2) {
 
@@ -342,18 +342,19 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				fmt.Println("AFTER  HAS: ", p2)
 			}
 
-			return (wtype.LHError(8, fmt.Sprintf("Plate disappeared from position %s", pos)))
+			return (wtype.LHError(8, fmt.Sprintf("object disappeared from position %s", pos)))
 		}
 
 		if !(ok1 && ok2) {
 			continue
 		}
 
-		this.plateIDMap[p1.ID] = p2.ID
-		pidm[p2.ID] = p1.ID
-	}
+		p1ID := p1.(wtype.AnthaObject).GetID()
+		p2ID := p2.(wtype.AnthaObject).GetID()
 
-	// make sure plate ID map also includes initial and final waste and tipbox states
+		this.plateIDMap[p1ID] = p2ID
+		pidm[p2ID] = p1ID
+	}
 
 	// this is many shades of wrong but likely to save us a lot of time
 	for _, pos := range this.Properties.InputSearchPreferences() {

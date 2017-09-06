@@ -327,10 +327,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	this.Properties.RemoveUnusedAutoallocatedComponents()
 	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
 
-	pidm := make(map[string]string, len(this.Properties.PlateLookup))
-	for pos, _ := range this.Properties.PlateLookup {
-		p1, ok1 := this.Properties.PlateLookup[pos]
-		p2, ok2 := this.FinalProperties.PlateLookup[pos]
+	pidm := make(map[string]string, len(this.Properties.PosLookup))
+	for pos, _ := range this.Properties.PosLookup {
+		p1, ok1 := this.Properties.PlateLookup[this.Properties.PosLookup[pos]]
+		p2, ok2 := this.FinalProperties.PlateLookup[this.FinalProperties.PosLookup[pos]]
 
 		if (!ok1 && ok2) || (ok1 && !ok2) {
 

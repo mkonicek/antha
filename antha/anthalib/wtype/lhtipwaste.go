@@ -18,6 +18,10 @@ type LHTipwaste struct {
 	AsWell     *LHWell
 }
 
+func (tw LHTipwaste) GetID() string {
+	return tw.ID
+}
+
 func (tw LHTipwaste) SpaceLeft() int {
 	return tw.Contents - tw.Capacity
 }

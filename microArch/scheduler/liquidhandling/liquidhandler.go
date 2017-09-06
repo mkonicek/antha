@@ -353,6 +353,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 		pidm[p2.ID] = p1.ID
 	}
 
+	// make sure plate ID map also includes initial and final waste and tipbox states
+
 	// this is many shades of wrong but likely to save us a lot of time
 	for _, pos := range this.Properties.InputSearchPreferences() {
 		p1, ok1 := this.Properties.Plates[pos]

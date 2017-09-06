@@ -59,6 +59,11 @@ type LHPlate struct {
 	WellZStart  float64            // offset (mm) to bottom of well in Z direction
 }
 
+//@implement AnthaObject
+func (plate LHPlate) GetID() string {
+	return plate.ID
+}
+
 func (plate LHPlate) OutputLayout() {
 	for x := 0; x < plate.WellsX(); x += 1 {
 		for y := 0; y < plate.WellsY(); y += 1 {

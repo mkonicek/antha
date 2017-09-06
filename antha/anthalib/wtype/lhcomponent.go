@@ -56,6 +56,10 @@ type LHComponent struct {
 	Destination        string
 }
 
+func (lhc LHComponent) GetID() string {
+	return lhc.ID
+}
+
 func (lhc *LHComponent) PlateLocation() PlateLocation {
 	return PlateLocationFromString(lhc.Loc)
 }

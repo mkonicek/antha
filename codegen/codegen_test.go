@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -22,28 +23,19 @@ func (a *incubateInst) DependsOn() []target.Inst {
 	return a.Depends
 }
 
-func (a *incubateInst) Error() error {
-	return nil
-}
-
 func (a *incubateInst) SetDependsOn(xs []target.Inst) {
 	a.Depends = xs
-}
-
-func (a *incubateInst) GetTimeEstimate() float64 {
-	return 0.0
 }
 
 type incubator struct{}
 
 func (a *incubator) CanCompile(req ast.Request) bool {
-	if req.MixVol != nil {
-		return false
-	}
-	return req.Time != nil || req.Temp != nil
+	can := ast.Request{}
+	can.Selector = append(can.Selector, target.DriverSelectorV1ShakerIncubator)
+	return can.Contains(req)
 }
 
-func (a *incubator) Compile(nodes []ast.Node) ([]target.Inst, error) {
+func (a *incubator) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	for _, n := range nodes {
 		if c, ok := n.(*ast.Command); !ok {
 			return nil, fmt.Errorf("unexpected node %T", n)
@@ -61,17 +53,17 @@ func (a *incubator) MoveCost(from target.Device) int {
 	return human.HumanByXCost - 1
 }
 
-func (a *incubator) String() string {
-	return "Incubator"
-}
-
 func TestWellFormed(t *testing.T) {
+	ctx := context.Background()
+
 	var nodes []ast.Node
-	for idx := 0; idx < 4; idx += 1 {
+	for idx := 0; idx < 4; idx++ {
 		m := &ast.Command{
 			Requests: []ast.Request{
 				ast.Request{
-					MixVol: ast.NewInterval(0.1, 1.0),
+					Selector: []ast.NameValue{
+						target.DriverSelectorV1Mixer,
+					},
 				},
 			},
 			Inst: &wtype.LHInstruction{},
@@ -87,8 +79,9 @@ func TestWellFormed(t *testing.T) {
 		i := &ast.Command{
 			Requests: []ast.Request{
 				ast.Request{
-					Temp: ast.NewPoint(25),
-					Time: ast.NewPoint(60 * 60),
+					Selector: []ast.NameValue{
+						target.DriverSelectorV1ShakerIncubator,
+					},
 				},
 			},
 			Inst: &ast.IncubateInst{},
@@ -106,7 +99,7 @@ func TestWellFormed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if insts, err := Compile(machine, nodes); err != nil {
+	if insts, err := Compile(ctx, machine, nodes); err != nil {
 		t.Fatal(err)
 	} else if l := len(insts); l == 0 {
 		t.Errorf("expected > %d instructions found %d", 0, l)

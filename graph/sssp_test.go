@@ -50,7 +50,7 @@ func TestShortestPaths(t *testing.T) {
 		if d, ok := dist[k]; !ok {
 			t.Errorf("did not find dist for node %q", k)
 		} else if d != v {
-			t.Errorf("expected %d for node %q found", v, k, d)
+			t.Errorf("expected %d for node %q found %d instead", v, k, d)
 		}
 	}
 }

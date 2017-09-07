@@ -2,39 +2,138 @@
 package parser
 
 import (
+	"encoding/csv"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/PCR"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pcr"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 //This function takes in a pcr design file (.xlsx or .csv) and converts this into an array of type PCRReactions.
-func ParsePCRExcel(designfile wtype.File) ([]PCR.PCRReaction, error) {
+func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 
 	data, err := designfile.ReadAll()
-	var pcrreaction []PCR.PCRReaction
+	var pcrreaction []pcr.Reaction
+
 	if err != nil {
 		err = fmt.Errorf(err.Error())
 	} else {
 
 		switch {
 		case filepath.Ext(designfile.Name) == ".xlsx":
+			csvfile1, err := xlsxparserBinary(data, 0, "Sheet2")
+			csvfile2, err := xlsxparserBinary(data, 1, "Sheet2")
 
-			csvfile, err := xlsxparserBinary(data, 0, "Sheet1") //this returns a file os.file
-
-			pcrreaction = pcrReactionfromcsv(csvfile.Name())
+			pcrreaction, err = pcrReactionfromcsv(csvfile2.Name(), csvfile1.Name())
 			return pcrreaction, err
 
-		case filepath.Ext(designfile.Name) == ".csv":
-			pcrreaction = pcrReactionfromcsv(designfile.Name)
-			return pcrreaction, err
+		//case filepath.Ext(designfile.Name) == ".csv":
+		//	pcrreaction = pcrReactionfromcsv(designfile.Name)
+		//	return pcrreaction, err
 
-		case filepath.Ext(designfile.Name) != ".csv" && filepath.Ext(designfile.Name) != ".xlsx":
-			err = fmt.Errorf("File format not supported please use .csv or .xlsx file. ")
+		case filepath.Ext(designfile.Name) != ".xlsx": //".csv" && filepath.Ext(designfile.Name) != ".xlsx":
+			err = fmt.Errorf("File format not supported please use .xlsx file. ")
 			return nil, err
 		}
 		return pcrreaction, err
 	}
 	return pcrreaction, err
+}
+
+func pcrReactionfromcsv(designFile string, sequenceFile string) (pcrReactions []pcr.Reaction, err error) {
+
+	pcrDesigns := readPCRDesign(designFile)
+	partSequences := readPCRDesign(sequenceFile)
+	for _, pcrDesignFields := range pcrDesigns {
+		var newpcrReaction pcr.Reaction
+		newpcrReaction.ReactionName = pcrDesignFields[0]
+		newpcrReaction.Template.Nm = pcrDesignFields[1]
+		newpcrReaction.PrimerPair[0].Nm = pcrDesignFields[2]
+		newpcrReaction.PrimerPair[1].Nm = pcrDesignFields[3]
+		pcrReactions = append(pcrReactions, newpcrReaction)
+	}
+
+	var status string
+
+	for i, pcrReaction := range pcrReactions {
+		var reactionPartCounter int
+		for _, sequenceField := range partSequences {
+			var y int
+			if i == 0 {
+				for _, seqField := range partSequences { //check for duplicate entries in list
+					if seqField[0] == sequenceField[0] {
+						y++
+						if y > 1 {
+							status = (status + "Part " + sequenceField[0] + " defined more than once in Sheet1 please specify a single entry. ")
+						}
+					}
+				}
+			}
+
+			if sequenceField[0] == pcrReaction.Template.Nm {
+				pcrReaction.Template.Seq = sequenceField[1]
+				reactionPartCounter++
+			} else if sequenceField[0] == pcrReaction.PrimerPair[0].Nm {
+				pcrReaction.PrimerPair[0].Seq = sequenceField[1]
+				reactionPartCounter++
+			} else if sequenceField[0] == pcrReaction.PrimerPair[1].Nm {
+				pcrReaction.PrimerPair[1].Seq = sequenceField[1]
+				reactionPartCounter++
+			}
+
+		}
+		if reactionPartCounter < 3 {
+			status = (status + "Please specify all parts for reaction " + pcrReactions[i].ReactionName + " in Sheet1. ")
+		}
+	}
+	if status != "" {
+		err = fmt.Errorf(status)
+	}
+	return
+}
+
+func readPCRDesign(filename string) [][]string {
+
+	var constructs [][]string
+
+	csvfile, err := os.Open(filename)
+
+	if err != nil {
+		panic(err)
+		return constructs
+	}
+
+	defer csvfile.Close()
+
+	reader := csv.NewReader(csvfile)
+
+	reader.FieldsPerRecord = -1 // see the Reader struct information below
+
+	rawCSVdata, err := reader.ReadAll()
+
+	if err != nil {
+		panic(err)
+	}
+
+	// sanity check, display to standard output
+	for _, record := range rawCSVdata {
+		var parts []string
+
+		if len(record[0]) > 0 {
+			if string(strings.TrimSpace(record[0])[0]) != "#" {
+				for _, partName := range record {
+					trimmed := strings.TrimSpace(partName)
+					if trimmed != "" {
+						parts = append(parts, trimmed)
+					}
+				}
+				constructs = append(constructs, parts)
+			}
+		}
+	}
+
+	return constructs
 }

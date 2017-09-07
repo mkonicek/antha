@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
+// MarshalPlateCSV writes a plate to a CSV file
 func MarshalPlateCSV(plate *wtype.LHPlate) ([]byte, error) {
 	var records [][]string
 	records = append(records, []string{

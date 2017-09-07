@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"context"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -30,7 +31,7 @@ import (
 )
 
 // robot here should be a copy... this routine will be destructive of state
-func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
+func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
 	rbtcpy := robot.Dup()
 
 	// get timer to assess evaporation etc.
@@ -44,34 +45,40 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 	agg := make([][]int, 0, 1)
 	curragg := make([]int, 0, 1)
 
-	transfers := make([]liquidhandling.RobotInstruction, 0, len(request.LHInstructions))
+	instrx := make([]liquidhandling.RobotInstruction, 0, len(request.LHInstructions))
 	evaps := make([]wtype.VolumeCorrection, 0, 10)
+
 	for ix, insID := range request.Output_order {
 		//	request.InstructionSet.Add(ConvertInstruction(request.LHInstructions[insID], robot))
+
+		ins := request.LHInstructions[insID]
+
 		ris := liquidhandling.NewRobotInstructionSet(nil)
 
-		transIns, err := ConvertInstruction(request.LHInstructions[insID], robot, request.CarryVolume)
+		if ins.Type == wtype.LHIPRM {
+			// prompt
+			prm := liquidhandling.NewMessageInstruction(ins)
+			ris.Add(prm)
+			instrx = append(instrx, prm)
+			robot.UpdateComponentIDs(ins.PassThrough) // prompting changes IDs
+		} else {
+			transIns, err := ConvertInstruction(ins, robot, request.CarryVolume, request.UseLegacyVolume())
 
-		if err != nil {
-			return request, err
+			if err != nil {
+				return request, err
+			}
+			ris.Add(transIns)
+			instrx = append(instrx, transIns)
 		}
 
-		ris.Add(transIns)
+		var cmp string // partition key
 
-		transfers = append(transfers, transIns)
+		if request.LHInstructions[insID].Type == wtype.LHIMIX {
+			cmp = request.LHInstructions[insID].ComponentsMoving()
+		} else if request.LHInstructions[insID].Type == wtype.LHIPRM {
+			cmp = request.LHInstructions[insID].Message
+		}
 
-		cmp := request.LHInstructions[insID].ComponentsMoving()
-
-		/*
-			ar, ok := agg[cmp]
-			if !ok {
-				ar = make([]int, 0, 1)
-			}
-
-			ar = append(ar, ix)
-			agg[cmp] = ar
-
-		*/
 		if canaggregate(curragg, cmp, request.Output_order, request.LHInstructions) {
 			// true if either curragg empty or cmp is same
 			curragg = append(curragg, ix)
@@ -83,12 +90,14 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 
 		if request.Options.ModelEvaporation {
 			// we should be able to model evaporation here
-			instrx, _ := ris.Generate(request.Policies, rbtcpy)
+			instrx, _ := ris.Generate(ctx, request.Policies, rbtcpy)
 
 			if timer != nil {
 				var totaltime time.Duration
 				for _, instr := range instrx {
 					totaltime += timer.TimeFor(instr)
+					// PROMPTS really screw this up... this should generate
+					// a warning. We will assume zero time
 				}
 
 				// evaporate stuff
@@ -102,27 +111,27 @@ func ImprovedExecutionPlanner(request *LHRequest, robot *liquidhandling.LHProper
 
 	// 2 -- see if any of the above can be aggregated, if so we merge them
 
-	transfers = merge_transfers(transfers, agg)
+	mergedInstructions := merge_instructions(instrx, agg)
 
 	// 3 -- add them to the instruction set
 
-	for _, tfr := range transfers {
-		request.InstructionSet.Add(tfr)
+	for _, ins := range mergedInstructions {
+		request.InstructionSet.Add(ins)
 	}
 
 	// 4 -- make the low-level instructions
 
-	inx, err := request.InstructionSet.Generate(request.Policies, robot)
+	inx, err := request.InstructionSet.Generate(ctx, request.Policies, robot)
 
 	if err != nil {
 		return nil, err
 	}
 
-	instrx := make([]liquidhandling.TerminalRobotInstruction, len(inx))
+	finalInstrx := make([]liquidhandling.TerminalRobotInstruction, len(inx))
 	for i := 0; i < len(inx); i++ {
-		instrx[i] = inx[i].(liquidhandling.TerminalRobotInstruction)
+		finalInstrx[i] = inx[i].(liquidhandling.TerminalRobotInstruction)
 	}
-	request.Instructions = instrx
+	request.Instructions = finalInstrx
 
 	request.Evaps = evaps
 
@@ -135,5 +144,24 @@ func canaggregate(agg []int, cmp string, outorder []string, cmps map[string]*wty
 		return true
 	}
 
-	return cmps[outorder[agg[0]]].ComponentsMoving() == cmp
+	if !singleInstructionType(agg, outorder, cmps) {
+		return false
+	}
+
+	if cmps[outorder[agg[0]]].Type == wtype.LHIPRM {
+		return cmps[outorder[agg[0]]].Message == cmp
+	} else {
+		return cmps[outorder[agg[0]]].ComponentsMoving() == cmp
+	}
+}
+
+func singleInstructionType(agg []int, outorder []string, cmps map[string]*wtype.LHInstruction) bool {
+	instype := cmps[outorder[agg[0]]].Type
+	for i := 1; i < len(agg); i++ {
+		if cmps[outorder[agg[i]]].Type != instype {
+			return false
+		}
+	}
+
+	return true
 }

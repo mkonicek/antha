@@ -25,6 +25,7 @@ package enzymes
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
@@ -56,11 +57,83 @@ func LengthofPrefixOverlap(seq string, subseq string) (number int, end string) {
 }
 */
 
+/*
+// Checks for duplicate ends in the list of parts to assemble
+// This code is completely wrong!!! it needs to digest the fragements first!
+func CheckEndCompatibility(fragments []wtype.DNASequence)err error{
+
+	type partEnd struct{
+		Parts []string
+		End string
+	}
+
+	// Check that parts have unique overhangs
+	var endMap = make(map[string]partEnd)
+	var errs []string
+	for _, part := range PartswithOverhangs {
+		prefix := wtype.Prefix(part.OverHang(),restrictionenzyme.EndLength)
+		suffix := wtype.Prefix(part.Sequence(),restrictionenzyme.EndLength)
+
+		if prefix == suffix {
+			errs = append(errs,fmt.Sprintf("5 prime end %s of part %s same as 3 prime end",prefix, part.Name()))
+		}
+
+		if end, found := endMap[prefix];found{
+			end.Parts = append(end.Parts,part.Name())
+			if len(end.Parts)>2{
+				errs = append(errs,fmt.Sprintf("5 prime end %s of part %s already found in more than one other part %s ",end.End, part.Name(),strings.Join(end.Parts,";")))
+			}
+		}else{
+			endMap[prefix]= partEnd{Parts:[]string{part.Name()},End: prefix}
+		}
+
+		if end, found := endMap[suffix];found{
+			end.Parts = append(end.Parts,part.Name())
+			if len(end.Parts)>2{
+				errs = append(errs,fmt.Sprintf("3 prime end %s of part %s already found in more than one other part %s ",end.End, part.Name(),strings.Join(end.Parts,";")))
+			}
+
+		}else{
+			endMap[suffix]= partEnd{Parts:[]string{part.Name()},End: suffix}
+		}
+	}
+	if len(errs)> 0{
+		err = fmt.Errorf(strings.Join(errs,";"))
+	}
+	return
+}
+*/
+
+func VectorEnds(vector wtype.DNASequence, enzyme wtype.TypeIIs) (desiredstickyend5prime string, vector3primestickyend string) {
+	// find sticky ends from cutting vector with enzyme
+
+	fragments, stickyends5, _ := TypeIIsdigest(vector, enzyme)
+
+	// add better logic for the scenarios where the vector is cut more than twice or we want to add fragment in either direction
+	// picks largest fragment
+
+	for i := 0; i < len(stickyends5)-1; i++ {
+
+		currentlargestfragment := ""
+
+		if stickyends5[i] != "" && len(fragments[i]) > len(currentlargestfragment) {
+
+			currentlargestfragment = fragments[i]
+			// RevComp() // fill in later
+			vector3primestickyend = stickyends5[i]
+			desiredstickyend5prime = stickyends5[i+1]
+			/*{
+				break
+			}*/
+		}
+	}
+	return
+}
+
 // Key general function to design parts for assembly based on type IIs enzyme, parts in order, fixed vector sequence (containing sites for the corresponding enzyme).
 func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wtype.DNASequence, enzyme wtype.TypeIIs) (partswithends []wtype.DNASequence) {
 
 	partswithends = make([]wtype.DNASequence, 0)
-	var partwithends wtype.DNASequence
 
 	// find sticky ends from cutting vector with enzyme
 
@@ -95,11 +168,23 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 	desiredstickyend3prime := ""
 
 	for i := 0; i < len(parts); i++ {
+		var partwithends wtype.DNASequence
+
 		if i == (len(parts) - 1) {
 			desiredstickyend3prime = vector3primestickyend
 		}
-		partwithends = AddCustomEnds(parts[i], enzyme, desiredstickyend5prime, desiredstickyend3prime)
+
+		sites, sticky5s, sticky3s := CheckForExistingTypeIISEnds(parts[i], enzyme)
+
+		if sites == 0 {
+			partwithends = AddCustomEnds(parts[i], enzyme, desiredstickyend5prime, desiredstickyend3prime)
+		} else if sites == 2 && InSlice(desiredstickyend5prime, sticky5s) && InSlice(desiredstickyend3prime, sticky3s) {
+			partwithends = parts[i]
+		} else {
+			panic(fmt.Sprint("cutting part ", parts[i], " with", enzyme, " results in ", sites, "cut sites with 5 prime fragment overhangs: ", sticky5s, " and 3 prime fragment overhangs: ", sticky3s, ". Wanted: 5prime: ", desiredstickyend5prime, " 3prime: ", desiredstickyend3prime))
+		}
 		partwithends.Nm = parts[i].Nm
+
 		partswithends = append(partswithends, partwithends)
 
 		desiredstickyend5prime = Suffix(parts[i].Seq, enzyme.RestrictionEnzyme.EndLength)
@@ -109,66 +194,11 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 	return partswithends
 }
 
-// Adds sticky ends to a dna part based upon an assembly standard (e.g. MoClo) and position of part within an array.
-func AddStandardStickyEnds(part wtype.DNASequence, assemblystandard string, level string, numberofparts int, position int) (Partwithends wtype.DNASequence) {
-
-	if part.Seq != "" {
-		if position > numberofparts {
-			panic("Cannot have position greater than number of parts")
-		}
-		/*if position == 0 {
-			("1st position = 1, not 0")
-		}
-		*/
-		vectorends := Vectorends[assemblystandard][level] // this could also look up [assemblystandard][level][numberofparts][0]
-
-		enzyme := Enzymelookup[assemblystandard][level]
-
-		bittoadd := Endlinks[assemblystandard][level][numberofparts][position]
-		if strings.HasPrefix(part.Seq, bittoadd) == true {
-			bittoadd = ""
-		}
-
-		// This code will look for subparts of a standard overhang to add the minimum number of additional nucleotides with a partial match e.g. AATG contains ATG only so we just add A
-
-		truncated := bittoadd[1:]
-		// fmt.Println("truncated", truncated)
-		if strings.HasPrefix(part.Seq, truncated) == true {
-			//truncated = bittoadd[:1]
-			//// fmt.Println("truncated", truncated)
-			bittoadd = bittoadd[:1]
-		}
-
-		bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-		// fmt.Println("bittoadd5prime", bittoadd5prime)
-		partwith5primeend := Addoverhang(part.Seq, bittoadd5prime, "5prime")
-
-		bittoadd3 := Endlinks[assemblystandard][level][numberofparts][position+1]
-		// fmt.Println("bittoadd3", bittoadd3)
-
-		if numberofparts == position {
-			bittoadd3 = RevComp(vectorends[0])
-		}
-		if strings.HasSuffix(part.Seq, bittoadd3) == true {
-			bittoadd3 = ""
-		}
-		//// fmt.Println("bittoadd3", bittoadd3)
-		bittoadd3prime := Makeoverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-		// fmt.Println("bittoadd3prime", bittoadd3prime)
-		partwithends := Addoverhang(partwith5primeend, bittoadd3prime, "3prime")
-
-		Partwithends.Nm = part.Nm
-		Partwithends.Plasmid = part.Plasmid
-		Partwithends.Seq = partwithends
-	}
-	return Partwithends
-}
-
 // This func adds an upstream (5') adaptor for making a level 0 part compatible for Level 1 hierarchical assembly, specifying the desired level 1 class the level0 part should be made into.
 // TypeIIs recognition site + spacer + correct overhang in correct orientation will be added according to the correct enzyme at a specified level according to a specified
 // assembly standard.
 // If reverseOrientation is set to true the adaptor will be added such that the level 1 part will bind in the reverse orientation.
-func AddL1UAdaptor(part wtype.DNASequence, assemblyStandard string, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
+func AddL1UAdaptor(part wtype.DNASequence, assemblyStandard AssemblyStandard, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
 
 	enzyme, err := lookUpEnzyme(assemblyStandard, level)
 
@@ -198,7 +228,7 @@ func AddL1UAdaptor(part wtype.DNASequence, assemblyStandard string, level string
 // TypeIIs recognition site + spacer + correct overhang in correct orientation will be added according to the correct enzyme at a specified level according to a specified
 // assembly standard.
 // If reverseOrientation is set to true the adaptor will be added such that the level 1 part will bind in the reverse orientation.
-func AddL1DAdaptor(part wtype.DNASequence, assemblyStandard string, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
+func AddL1DAdaptor(part wtype.DNASequence, assemblyStandard AssemblyStandard, level string, class string, reverseOrientation bool) (newpart wtype.DNASequence, err error) {
 
 	enzyme, err := lookUpEnzyme(assemblyStandard, level)
 
@@ -225,157 +255,163 @@ func AddL1DAdaptor(part wtype.DNASequence, assemblyStandard string, level string
 
 // look up enzyme according to assembly standard and level.
 // Errors will be returned if an entry is missing
-func lookUpEnzyme(assemblyStandard string, level string) (enzyme wtype.TypeIIs, err error) {
-	enzymeStandard, found := Enzymelookup[assemblyStandard]
+func lookUpEnzyme(assemblyStandard AssemblyStandard, level string) (enzyme wtype.TypeIIs, err error) {
 
-	if !found {
-		return enzyme, fmt.Errorf("No enzyme found for standard %s", assemblyStandard)
+	assemblyLevel, err := assemblyStandard.GetLevel(level)
+
+	if err != nil {
+		return enzyme, err
 	}
 
-	enzyme, found = enzymeStandard[level]
+	enzyme = assemblyLevel.GetEnzyme()
 
-	if !found {
-		return enzyme, fmt.Errorf("No level found for enzyme for standard %s at level %s", assemblyStandard, level)
-	}
 	return enzyme, nil
 }
 
 // look up overhangs according to assembly standard, level and part class.
 // Errors will be returned if an entry is missing or overhangs are found to be empty
-func lookUpOverhangs(assemblyStandard string, level string, class string) (upstream string, downstream string, err error) {
-	standard, found := EndlinksString[assemblyStandard]
+func lookUpOverhangs(assemblyStandard AssemblyStandard, level string, class string) (upstream string, downstream string, err error) {
 
-	if !found {
-		return "", "", fmt.Errorf("No assembly standard %s found", assemblyStandard)
+	assemblyLevel, err := assemblyStandard.GetLevel(level)
+
+	if err != nil {
+		return "", "", err
 	}
 
-	level1, found := standard[level]
+	ends, err := assemblyLevel.GetPartOverhangs(class)
 
-	if !found {
-		return "", "", fmt.Errorf("No Level: %s found for standard %s", level, assemblyStandard)
-	}
-
-	overhangs, found := level1[class]
-
-	if !found {
-		return "", "", fmt.Errorf("No overhangs found for %s in standard %s", class, assemblyStandard)
-	}
-
-	if len(overhangs) != 2 {
-		return "", "", fmt.Errorf("found %d overhangs for %s in standard %s, expecting %d: overhangs: %s", len(overhangs), class, assemblyStandard, 2, overhangs)
-
-	}
-
-	if overhangs[0] == "" {
-		return overhangs[0], overhangs[1], fmt.Errorf("blunt 5' overhang found for %s in standard %s, expecting %d", class, assemblyStandard, 2)
-	}
-
-	if overhangs[1] == "" {
-		return overhangs[0], overhangs[1], fmt.Errorf("blunt 3' overhang found for %s in standard %s, expecting %d", class, assemblyStandard, 2)
-	}
-
-	return overhangs[0], overhangs[1], nil
+	return ends.Upstream, ends.Downstream, err
 }
 
 // Adds sticky ends to dna part according to the class identifier (e.g. PRO, 5U, CDS)
-func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblystandard string, level string, class string) (Partwithends wtype.DNASequence, err error) {
+func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblyStandard AssemblyStandard, level string, class string) (partWithEnds wtype.DNASequence, err error) {
 
-	enzyme := Enzymelookup[assemblystandard][level]
+	enzyme, err := lookUpEnzyme(assemblyStandard, level)
 
-	bitstoadd, found := EndlinksString[assemblystandard][level][class]
+	if err != nil {
+		return partWithEnds, err
+	}
+	bittoadd, bittoadd3, err := lookUpOverhangs(assemblyStandard, level, class)
 
-	if !found {
-		err = fmt.Errorf("Class " + class + " not found in Assmbly standard map of " + assemblystandard + " level " + level)
-		return Partwithends, err
+	if err != nil {
+		return partWithEnds, err
 	}
 
-	bittoadd := bitstoadd[0]
-	if strings.HasPrefix(part.Seq, bittoadd) == true {
-		bittoadd = ""
-	}
-
-	// This code will look for subparts of a standard overhang to add the minimum number of additional nucleotides with a partial match e.g. AATG contains ATG only so we just add A
-
-	truncated := bittoadd[1:]
-	// fmt.Println("truncated", truncated)
-	if strings.HasPrefix(part.Seq, truncated) == true {
-		//truncated = bittoadd[:1]
-		//// fmt.Println("truncated", truncated)
-		bittoadd = bittoadd[:1]
-	}
+	// This code will find the minimal additional overhang to add
+	// with this commented out the full overhang is added
+	//bittoadd = findMinimumAdditional5PrimeAddition(bittoadd, part)
 
 	bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-	// fmt.Println("bittoadd5prime", bittoadd5prime)
+
 	partwith5primeend := Addoverhang(part.Seq, bittoadd5prime, "5prime")
 
-	bittoadd3 := bitstoadd[1]
-	// fmt.Println("bittoadd3", bittoadd3)
+	// This code will find the minimal additional overhang to add
+	// with this commented out the full overhang is added
+	//bittoadd3 = findMinimumAdditional3PrimeAddition(bittoadd3, part)
 
-	if strings.HasSuffix(part.Seq, bittoadd3) == true {
-		bittoadd3 = ""
-	}
-	//// fmt.Println("bittoadd3", bittoadd3)
 	bittoadd3prime := Makeoverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-	// fmt.Println("bittoadd3prime", bittoadd3prime)
+
 	partwithends := Addoverhang(partwith5primeend, bittoadd3prime, "3prime")
 
-	Partwithends.Nm = part.Nm
-	Partwithends.Plasmid = part.Plasmid
-	Partwithends.Seq = partwithends
+	partWithEnds.Nm = part.Nm
+	partWithEnds.Plasmid = part.Plasmid
+	partWithEnds.Seq = partwithends
 
-	return Partwithends, err
+	return partWithEnds, err
+}
+
+func upper(s string) string {
+	return strings.ToUpper(s)
+}
+
+func findMinimumAdditional3PrimeAddition(desiredstickyend3prime string, part wtype.DNASequence) (bittoadd string) {
+
+	var present string
+
+	// This code will look for subparts of a standard overhang to add the minimum number of additional nucleotides with a partial match e.g. AATG contains ATG only so we just add A
+	for i := 0; i < len(desiredstickyend3prime)+1; i++ {
+		truncated := desiredstickyend3prime[:i]
+		fmt.Println("Part: ", part.Name(), "Desired 3 prime:", desiredstickyend3prime, "Truncated: ", truncated)
+		if strings.HasSuffix(upper(part.Seq), upper(truncated)) {
+			present = truncated
+		}
+	}
+	if len(present) == len(desiredstickyend3prime) {
+		bittoadd = ""
+	} else if len(present) > 0 {
+		bittoadd = desiredstickyend3prime[len(present):]
+	} else {
+		bittoadd = desiredstickyend3prime
+	}
+	fmt.Println("Part: ", part.Name(), "Desired 3 prime:", desiredstickyend3prime, "Final: ", bittoadd)
+	return
+}
+
+func findMinimumAdditional5PrimeAddition(desiredstickyend5prime string, part wtype.DNASequence) (bittoadd string) {
+	// This code will look for subparts of a standard overhang to add the minimum number of additional nucleotides with a partial match e.g. AATG contains ATG only so we just add A
+
+	var present string
+
+	for i := len(desiredstickyend5prime) - 1; i >= 0; i-- {
+		truncated := desiredstickyend5prime[i:]
+		fmt.Println("Part: ", part.Name(), "Desired 5 prime:", desiredstickyend5prime, "Truncated: ", truncated)
+		if strings.HasPrefix(upper(part.Seq), upper(truncated)) {
+			present = truncated
+		}
+	}
+	if len(present) == len(desiredstickyend5prime) {
+		bittoadd = ""
+	} else if len(present) > 0 {
+		fmt.Println(desiredstickyend5prime, present)
+		bittoadd = desiredstickyend5prime[:len(present)+1]
+	} else {
+		bittoadd = desiredstickyend5prime
+	}
+	fmt.Println("Part: ", part.Name(), "Desired 5 prime:", desiredstickyend5prime, "Final: ", bittoadd)
+	return
 }
 
 // Adds ends to the part sequence based upon enzyme chosen and the desired overhangs after digestion
 func AddCustomEnds(part wtype.DNASequence, enzyme wtype.TypeIIs, desiredstickyend5prime string, desiredstickyend3prime string) (Partwithends wtype.DNASequence) {
 
-	bittoadd := desiredstickyend5prime
-	if strings.HasPrefix(part.Seq, bittoadd) == true {
-		bittoadd = ""
-	}
-	bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	fmt.Println("Old part: ", Partwithends)
 
+	///
+
+	bittoadd := findMinimumAdditional5PrimeAddition(desiredstickyend5prime, part)
+
+	bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
 	partwith5primeend := Addoverhang(part.Seq, bittoadd5prime, "5prime")
 
-	bittoadd3 := desiredstickyend3prime
-
-	if strings.HasSuffix(part.Seq, bittoadd3) == true {
-		bittoadd3 = ""
-	}
+	bittoadd3 := findMinimumAdditional3PrimeAddition(desiredstickyend3prime, part)
 
 	bittoadd3prime := Makeoverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-
 	partwithends := Addoverhang(partwith5primeend, bittoadd3prime, "3prime")
 
 	Partwithends.Nm = part.Nm
 	Partwithends.Plasmid = part.Plasmid
 	Partwithends.Seq = partwithends
+	fmt.Println("New part: ", Partwithends)
 	return Partwithends
 }
 
 // Add compatible ends to an array of parts based on the rules of a typeIIS assembly standard
-func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandard string, level string, optionalpartclasses []string) (partswithends []wtype.DNASequence, err error) {
+func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandard AssemblyStandard, level string, partClasses []string) (partswithends []wtype.DNASequence, err error) {
 
-	partswithends = make([]wtype.DNASequence, 0)
-	var partwithends wtype.DNASequence
-
-	if len(optionalpartclasses) != 0 {
-		if len(optionalpartclasses) == len(parts) {
-			for i := 0; i < len(parts); i++ {
-				partwithends, err = AddStandardStickyEndsfromClass(parts[i], assemblystandard, level, optionalpartclasses[i])
-				if err != nil {
-					return []wtype.DNASequence{}, err
-				}
-				partswithends = append(partswithends, partwithends)
-			}
-		}
-	} else {
-
+	if len(partClasses) == len(parts) {
 		for i := 0; i < len(parts); i++ {
-			partwithends = AddStandardStickyEnds(parts[i], assemblystandard, level, (len(parts)), i+1)
+			var partwithends wtype.DNASequence
+
+			partwithends, err = AddStandardStickyEndsfromClass(parts[i], assemblystandard, level, partClasses[i])
+			if err != nil {
+				return []wtype.DNASequence{}, err
+			}
 			partswithends = append(partswithends, partwithends)
 		}
+	} else {
+		return partswithends, fmt.Errorf("Number of parts %d (%+v) does not match number of classes specified %d (%+v)", len(parts), partNames(parts), len(partClasses), partClasses)
 	}
+
 	return partswithends, err
 }
 
@@ -503,215 +539,267 @@ func Makeoverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer 
 
 }
 
-// map of 5' sticky ends required for parts in an assembly standard based purely on number of parts for assembly and position of each part in the array
-var Endlinks = map[string]map[string]map[int]map[int]string{
-	//map["assembly strategy"]map[number of parts]map[part number]"sticky end to add"
-	"MoClo_Raven": map[string]map[int]map[int]string{
-		"Level0": map[int]map[int]string{
-			4: map[int]string{ // overall number of parts in assembly
-				0: "AAGC", // position of part in assembly used as key
-				1: "GAGG",
-				2: "TACT",
-				3: "AATG",
-				4: "AGGT",
+// Assembly standards
+var availableStandards = map[string]AssemblyStandard{
+	"Custom":      customStandard,
+	"MoClo":       customStandard,
+	"MoClo_Raven": customStandard,
+	"Antibody":    customStandard,
+}
+
+func allStandards() (standards []string) {
+	for k, _ := range availableStandards {
+		standards = append(standards, k)
+	}
+	sort.Strings(standards)
+	return
+}
+
+// Lookup TypeIIs assembly standard by name
+func LookupAssemblyStandard(name string) (standard AssemblyStandard, err error) {
+	var found bool
+	standard, found = availableStandards[name]
+	if !found {
+		err = fmt.Errorf("assembly standard %s not found. Vslid options are: %s", name, strings.Join(allStandards(), ";"))
+	}
+	return
+}
+
+var mocloStandard = AssemblyStandard{
+	Name: "MoClo",
+	Levels: map[string]AssemblyLevel{
+		"Level0": AssemblyLevel{
+			Enzyme: BsaIenz,
+			PartOverhangs: map[string]StandardOverhangs{
+				"Pro":         StandardOverhangs{"GGAG", "TACT"},
+				"5U":          StandardOverhangs{"TACT", "CCAT"},
+				"5U(f)":       StandardOverhangs{"TACT", "CCAT"},
+				"Pro + 5U(f)": StandardOverhangs{"GGAG", "CCAT"},
+				"Pro + 5U":    StandardOverhangs{"GGAG", "AATG"},
+				"NT1":         StandardOverhangs{"CCAT", "AATG"},
+				"5U + NT1":    StandardOverhangs{"TACT", "AATG"},
+				"CDS1":        StandardOverhangs{"AATG", "GCTT"},
+				"CDS1 ns":     StandardOverhangs{"AATG", "TTCG"},
+				"NT2":         StandardOverhangs{"AATG", "AGGT"},
+				"SP":          StandardOverhangs{"AATG", "AGGT"},
+				"CDS2 ns":     StandardOverhangs{"AGGT", "TTCG"},
+				"CDS2":        StandardOverhangs{"AGGT", "GCTT"},
+				"CT":          StandardOverhangs{"TTCG", "GCTT"},
+				"3U":          StandardOverhangs{"GCTT", "GGTA"},
+				"Ter":         StandardOverhangs{"GGTA", "CGCT"},
+				"3U + Ter":    StandardOverhangs{"GCTT", "CGCT"},
 			},
+			EntryVectorEnds: StandardOverhangs{"TAAT", "GTCG"},
+		},
+		"Level1": AssemblyLevel{
+			Enzyme:          BpiIenz,
+			PartOverhangs:   map[string]StandardOverhangs{},
+			EntryVectorEnds: StandardOverhangs{"", ""},
 		},
 	},
-	"MoClo": map[string]map[int]map[int]string{
-		"Level0": map[int]map[int]string{
-			4: map[int]string{
-				0: "AAGC",
-				1: "GGTA",
-				2: "",
-				3: "",
-				4: "",
+}
+
+var mocloRavenStandard = AssemblyStandard{
+	Name: "MoClo_Raven",
+	Levels: map[string]AssemblyLevel{
+		"Level0": AssemblyLevel{
+			Enzyme: BsaIenz,
+			PartOverhangs: map[string]StandardOverhangs{
+				"Pro":         StandardOverhangs{"GAGG", "TACT"},
+				"5U":          StandardOverhangs{"TACT", "CCAT"},
+				"5U(f)":       StandardOverhangs{"TACT", "CCAT"},
+				"Pro + 5U(f)": StandardOverhangs{"GGAG", "CCAT"},
+				"Pro + 5U":    StandardOverhangs{"GGAG", "AATG"},
+				"NT1":         StandardOverhangs{"CCAT", "AATG"},
+				"5U + NT1":    StandardOverhangs{"TACT", "AATG"},
+				"CDS1":        StandardOverhangs{"AATG", "GCTT"},
+				"CDS1 ns":     StandardOverhangs{"AATG", "TTCG"},
+				"NT2":         StandardOverhangs{"AATG", "AGGT"},
+				"SP":          StandardOverhangs{"AATG", "AGGT"},
+				"CDS2 ns":     StandardOverhangs{"AGGT", "TTCG"},
+				"CDS2":        StandardOverhangs{"AGGT", "GCTT"},
+				"CT":          StandardOverhangs{"TTCG", "GCTT"},
+				"3U":          StandardOverhangs{"GCTT", "GGTA"},
+				"Ter":         StandardOverhangs{"GGTA", "CGCT"},
+				"3U + Ter":    StandardOverhangs{"GCTT", "GCTT"}, // both same ! look into this
 			},
+			EntryVectorEnds: StandardOverhangs{"AAGC", "CCTC"},
+		},
+		"Level1": AssemblyLevel{
+			Enzyme:          BpiIenz,
+			PartOverhangs:   map[string]StandardOverhangs{},
+			EntryVectorEnds: StandardOverhangs{"", ""},
 		},
 	},
-	"Electra": map[string]map[int]map[int]string{
-		"Level0": map[int]map[int]string{
-			1: map[int]string{
-				0: "ATG",
+}
+
+var customStandard = AssemblyStandard{
+	Name: "Custom",
+	Levels: map[string]AssemblyLevel{
+		"Level0": AssemblyLevel{
+			Enzyme: BsaIenz,
+			PartOverhangs: map[string]StandardOverhangs{
+				"L1Uadaptor":                  StandardOverhangs{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro":            StandardOverhangs{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro(MoClo)":     StandardOverhangs{"GTCG", "TACT"}, // original MoClo overhang of TACT
+				"L1Uadaptor + Pro + 5U":       StandardOverhangs{"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro + 5U + NT1": StandardOverhangs{"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
+				"Pro":                               StandardOverhangs{"GGAG", "TTTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+				"5U":                                StandardOverhangs{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+				"5U(f)":                             StandardOverhangs{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+				"Pro + 5U(f)":                       StandardOverhangs{"GGAG", "CCAT"},
+				"Pro + 5U":                          StandardOverhangs{"GGAG", "CCAT"},
+				"Pro + 5U + NT1":                    StandardOverhangs{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"NT1":                               StandardOverhangs{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"5U + NT1":                          StandardOverhangs{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"5U(MoClo) + NT1":                   StandardOverhangs{"TACT", "TATG"}, //original MoClo overhang of TACT
+				"5U + NT1 + CDS1":                   StandardOverhangs{"TTTT", "GCTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+				"5U + NT1 + CDS1 + 3U":              StandardOverhangs{"TTTT", "CCCC"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox and changed GGTA to CCCC to conform with Protein Paintbox
+				"CDS1":                              StandardOverhangs{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"CDS1 + 3U":                         StandardOverhangs{"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs and changed GGTA to CCCC to conform with Protein Paintbox
+				"CDS1 + 3U(MoClo)":                  StandardOverhangs{"TATG", "GGTA"}, //original MoClo overhang of GGTA
+				"CDS1 ns":                           StandardOverhangs{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"CDS1 + CT + 3U + Ter + L1Dadaptor": StandardOverhangs{"TATG", "TAAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"NT2":                        StandardOverhangs{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"SP":                         StandardOverhangs{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"CDS2 ns":                    StandardOverhangs{"AGGT", "TTCG"},
+				"CDS2":                       StandardOverhangs{"AGGT", "GCTT"},
+				"CT":                         StandardOverhangs{"TTCG", "GCTT"},
+				"3U":                         StandardOverhangs{"GCTT", "CCCC"}, //changed GGTA to CCCC to conform with Protein Paintbox
+				"Ter":                        StandardOverhangs{"CCCC", "CGCT"},
+				"3U + Ter":                   StandardOverhangs{"GCTT", "CGCT"},
+				"3U + Ter + L1Dadaptor":      StandardOverhangs{"GCTT", "TAAT"},
+				"CT + 3U + Ter + L1Dadaptor": StandardOverhangs{"TTCG", "TAAT"},
+				"L1Dadaptor":                 StandardOverhangs{"CGCT", "TAAT"},
+				"Ter + L1Dadaptor":           StandardOverhangs{"CCCC", "TAAT"},
+				"Ter(MoClo) + L1Dadaptor":    StandardOverhangs{"GGTA", "TAAT"},
 			},
+			EntryVectorEnds: StandardOverhangs{"TAAT", "GTCG"},
+		},
+		"Level1": AssemblyLevel{
+			Enzyme: SapIenz,
+			PartOverhangs: map[string]StandardOverhangs{
+				"Device1": StandardOverhangs{"GAA", "ACC"},
+				"Device2": StandardOverhangs{"ACC", "CTG"},
+				"Device3": StandardOverhangs{"CTG", "GGT"},
+			},
+			EntryVectorEnds: StandardOverhangs{"GGT", "GAA"},
 		},
 	},
 }
 
-// Map describing the sticky ends required for each class of an assembly standard at  a particular level.
-var EndlinksString = map[string]map[string]map[string][]string{
-	"MoClo": map[string]map[string][]string{
-		"Level0": map[string][]string{
-			"Pro":         []string{"GGAG", "TACT"},
-			"5U":          []string{"TACT", "CCAT"},
-			"5U(f)":       []string{"TACT", "CCAT"},
-			"Pro + 5U(f)": []string{"GGAG", "CCAT"},
-			"Pro + 5U":    []string{"GGAG", "AATG"},
-			"NT1":         []string{"CCAT", "AATG"},
-			"5U + NT1":    []string{"TACT", "AATG"},
-			"CDS1":        []string{"AATG", "GCTT"},
-			"CDS1 ns":     []string{"AATG", "TTCG"},
-			"NT2":         []string{"AATG", "AGGT"},
-			"SP":          []string{"AATG", "AGGT"},
-			"CDS2 ns":     []string{"AGGT", "TTCG"},
-			"CDS2":        []string{"AGGT", "GCTT"},
-			"CT":          []string{"TTCG", "GCTT"},
-			"3U":          []string{"GCTT", "GGTA"},
-			"Ter":         []string{"GGTA", "CGCT"},
-			"3U + Ter":    []string{"GCTT", "CGCT"},
+var antibodyStandard = AssemblyStandard{
+	Name: "Antibody",
+	Levels: map[string]AssemblyLevel{
+		"Heavy": AssemblyLevel{
+			Enzyme: SapIenz,
+			PartOverhangs: map[string]StandardOverhangs{
+				"Part1": StandardOverhangs{"GCG", "TCG"},
+				"Part2": StandardOverhangs{"TGG", "CTG"},
+				"Part3": StandardOverhangs{"CTG", "AAG"},
+			},
+			EntryVectorEnds: StandardOverhangs{"GCG", "AAG"},
+		},
+		"Light": AssemblyLevel{
+			Enzyme: SapIenz,
+			PartOverhangs: map[string]StandardOverhangs{
+				"Part1": StandardOverhangs{"GCG", "TCG"},
+				"Part2": StandardOverhangs{"TGG", "CTG"},
+				"Part3": StandardOverhangs{"CTG", "AAG"},
+			},
+			EntryVectorEnds: StandardOverhangs{"GCG", "AAG"},
 		},
 	},
-	"Custom": map[string]map[string][]string{
-		"Level0": map[string][]string{
-			"L1Uadaptor":                  []string{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
-			"L1Uadaptor + Pro":            []string{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
-			"L1Uadaptor + Pro(MoClo)":     []string{"GTCG", "TACT"}, // original MoClo overhang of TACT
-			"L1Uadaptor + Pro + 5U":       []string{"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
-			"L1Uadaptor + Pro + 5U + NT1": []string{"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
-			"Pro":                               []string{"GGAG", "TTTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-			"5U":                                []string{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-			"5U(f)":                             []string{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-			"Pro + 5U(f)":                       []string{"GGAG", "CCAT"},
-			"Pro + 5U":                          []string{"GGAG", "CCAT"},
-			"Pro + 5U + NT1":                    []string{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"NT1":                               []string{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"5U + NT1":                          []string{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"5U(MoClo) + NT1":                   []string{"TACT", "TATG"}, //original MoClo overhang of TACT
-			"5U + NT1 + CDS1":                   []string{"TTTT", "GCTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-			"5U + NT1 + CDS1 + 3U":              []string{"TTTT", "CCCC"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox and changed GGTA to CCCC to conform with Protein Paintbox
-			"CDS1":                              []string{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS1 + 3U":                         []string{"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs and changed GGTA to CCCC to conform with Protein Paintbox
-			"CDS1 + 3U(MoClo)":                  []string{"TATG", "GGTA"}, //original MoClo overhang of GGTA
-			"CDS1 ns":                           []string{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS1 + CT + 3U + Ter + L1Dadaptor": []string{"TATG", "TAAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"NT2":                        []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"SP":                         []string{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-			"CDS2 ns":                    []string{"AGGT", "TTCG"},
-			"CDS2":                       []string{"AGGT", "GCTT"},
-			"CT":                         []string{"TTCG", "GCTT"},
-			"3U":                         []string{"GCTT", "CCCC"}, //changed GGTA to CCCC to conform with Protein Paintbox
-			"Ter":                        []string{"CCCC", "CGCT"},
-			"3U + Ter":                   []string{"GCTT", "CGCT"},
-			"3U + Ter + L1Dadaptor":      []string{"GCTT", "TAAT"},
-			"CT + 3U + Ter + L1Dadaptor": []string{"TTCG", "TAAT"},
-			"L1Dadaptor":                 []string{"CGCT", "TAAT"},
-			"Ter + L1Dadaptor":           []string{"CCCC", "TAAT"},
-			"Ter(MoClo) + L1Dadaptor":    []string{"GGTA", "TAAT"},
-		},
-		"Level1": map[string][]string{
-			"Device1": []string{"GAA", "ACC"},
-			"Device2": []string{"ACC", "CTG"},
-			"Device3": []string{"CTG", "GGT"},
-		},
-	},
-	"Antibody": map[string]map[string][]string{
-		"Heavy": map[string][]string{
-			"Part1": []string{"GCG", "TCG"},
-			"Part2": []string{"TGG", "CTG"},
-			"Part3": []string{"CTG", "AAG"},
-		},
-		"Light": map[string][]string{
-			"Part1": []string{"GCG", "TCG"},
-			"Part2": []string{"TGG", "CTG"},
-			"Part3": []string{"CTG", "AAG"},
-		},
-	},
-	"MoClo_Raven": map[string]map[string][]string{
-		"Level0": map[string][]string{
-			"Pro":         []string{"GAGG", "TACT"},
-			"5U":          []string{"TACT", "CCAT"},
-			"5U(f)":       []string{"TACT", "CCAT"},
-			"Pro + 5U(f)": []string{"GGAG", "CCAT"},
-			"Pro + 5U":    []string{"GGAG", "AATG"},
-			"NT1":         []string{"CCAT", "AATG"},
-			"5U + NT1":    []string{"TACT", "AATG"},
-			"CDS1":        []string{"AATG", "GCTT"},
-			"CDS1 ns":     []string{"AATG", "TTCG"},
-			"NT2":         []string{"AATG", "AGGT"},
-			"SP":          []string{"AATG", "AGGT"},
-			"CDS2 ns":     []string{"AGGT", "TTCG"},
-			"CDS2":        []string{"AGGT", "GCTT"},
-			"CT":          []string{"TTCG", "GCTT"},
-			"3U":          []string{"GCTT", "GGTA"},
-			"Ter":         []string{"GGTA", "CGCT"},
-			"3U + Ter":    []string{"GCTT", "GCTT"}, // both same ! look into this
-		},
-	},
-}
-
-const (
-	// for indexing part position based on part name/class
-	VECTOR = iota
-	PROMOTER
-	RBS
-	CDS
-	TERMINATOR
-)
-
-// map of standard vector ends for various assembly standards
-var Vectorends = map[string]map[string][]string{
-	// array of strings returned correspond to [3'overhang and 5'overhang]
-	"MoClo_Raven": map[string][]string{
-		"Level0": []string{"AAGC", "CCTC"}, //
-		"Level1": []string{"", ""},
-	},
-	"MoClo": map[string][]string{
-		"Level0": []string{"CGCT", "GGAG"}, //
-		"Level1": []string{"", ""},
-	},
-	"Synthace": map[string][]string{
-		"Level0": []string{"GGT", "GAA"},
-		"Level1": []string{"", ""},
-	},
-	"Custom": map[string][]string{
-		"Level0": []string{"TAAT", "GTCG"},
-		"Level1": []string{"GGT", "GAA"},
-	},
-	"Antibody": map[string][]string{
-		"Heavy": []string{"GCG", "AAG"},
-		"Light": []string{"", ""},
-	},
-	"Electra": map[string][]string{
-		"Level0": []string{"GGT", "ATG"},
-		"Level1": []string{"", ""},
-	},
-}
-
-// map of enzymes used at each level of an assembly standard
-var Enzymelookup = map[string]map[string]wtype.TypeIIs{
-	// array of strings returned correspond to 5'overhang and 3'overhang
-	"MoClo_Raven": map[string]wtype.TypeIIs{
-		"Level0": BsaIenz,
-		"Level1": BpiIenz,
-	},
-	"MoClo": map[string]wtype.TypeIIs{
-		"Level0": BsaIenz,
-		"Level1": BpiIenz,
-	},
-	"Custom": map[string]wtype.TypeIIs{
-		"Level0": BsaIenz,
-		"Level1": SapIenz,
-	},
-	"Antibody": map[string]wtype.TypeIIs{
-		"Heavy": SapIenz,
-		"Light": SapIenz,
-	},
-	"Electra": map[string]wtype.TypeIIs{
-		"Level0": SapIenz,
-	},
-}
-
-/*
-var MoClo AssemblyStandard{
-	[]AssemblyStandardLevel{{BsaIenz,"Level0"},{BpiIenz,"Level1"}}"Moclo"}
-
-*/
-type AssemblyStandardLevel struct {
-	Enzyme    wtype.TypeIIs
-	Levelname string
 }
 
 type AssemblyStandard struct {
-	Endstable       map[string]map[string]map[int]map[int]string
-	EnzymeTable     map[string]map[string]wtype.TypeIIs
-	VectorEndstable map[string]map[string][]string // Vector 5prime can also be found in Endstable position 0
+	Name   string
+	Levels map[string]AssemblyLevel
+}
+
+func (l AssemblyStandard) Enzyme(level string) (enz wtype.TypeIIs, err error) {
+
+	assemblyLevel, err := l.GetLevel(level)
+	if err != nil {
+		return enz, err
+	}
+	enz = assemblyLevel.GetEnzyme()
+	return
+}
+
+func (l AssemblyStandard) LevelNames() []string {
+
+	var ls []string
+	for lev, _ := range l.Levels {
+		ls = append(ls, lev)
+	}
+
+	sort.Strings(ls)
+
+	return ls
+}
+
+func (l AssemblyStandard) GetLevel(level string) (assemblyLevel AssemblyLevel, err error) {
+
+	assemblyLevel, found := l.Levels[level]
+	if !found {
+		return assemblyLevel, fmt.Errorf("No level %s found for assembly standard %s, found %+v", level, l.Name, l.LevelNames())
+	}
+	return
+}
+
+type AssemblyLevel struct {
+	Enzyme          wtype.TypeIIs
+	PartOverhangs   map[string]StandardOverhangs
+	EntryVectorEnds StandardOverhangs // Vector 5prime can also be found in Endstable position 0
+}
+
+type StandardOverhangs struct {
+	Upstream   string
+	Downstream string
+}
+
+func (l AssemblyLevel) AnnotationOptions() []string {
+	var ls []string
+	for class, _ := range l.PartOverhangs {
+		ls = append(ls, class)
+	}
+
+	sort.Strings(ls)
+	return ls
+}
+
+func (l AssemblyLevel) GetEnzyme() wtype.TypeIIs {
+	return l.Enzyme
+}
+
+func (l AssemblyLevel) GetVectorEnds() StandardOverhangs {
+	return l.EntryVectorEnds
+}
+
+func (l AssemblyLevel) GetPartOverhangs(class string) (overhangs StandardOverhangs, err error) {
+
+	overhangs, found := l.PartOverhangs[class]
+
+	if !found {
+		return overhangs, fmt.Errorf("No overhangs found for %s in assembly standard: found: %+v", class, l.AnnotationOptions())
+	}
+
+	if overhangs.Upstream == "" {
+		return overhangs, fmt.Errorf("blunt 5' overhang found for %s", class)
+	}
+
+	if overhangs.Downstream == "" {
+		return overhangs, fmt.Errorf("blunt 3' overhang found for %s", class)
+	}
+
+	return
+}
+
+func partNames(parts []wtype.DNASequence) []string {
+	var names []string
+	for _, part := range parts {
+		names = append(names, part.Name())
+	}
+	return names
 }

@@ -2,10 +2,13 @@ package mixer
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.LHComponent {
@@ -37,23 +40,62 @@ func samePlate(a, b *wtype.LHPlate) error {
 		}
 		volA, volB := compA.Vol, compB.Vol
 		if volA != volB {
-			return fmt.Errorf("different volume in well %q: %d != %d", addr, volA, volB)
+			return fmt.Errorf("different volume in well %q: %f != %f", addr, volA, volB)
 		}
 		vunitA, vunitB := compA.Vunit, compB.Vunit
 		if vunitA != vunitB && volA != 0.0 {
-			return fmt.Errorf("different volume unit in well %q: %d != %d", addr, vunitA, vunitB)
+			return fmt.Errorf("different volume unit in well %q: %s != %s", addr, vunitA, vunitB)
 		}
 		concA, concB := compA.Conc, compB.Conc
 		if concA != concB {
-			return fmt.Errorf("different concentration in well %q: %d != %d", addr, concA, concB)
+			return fmt.Errorf("different concentration in well %q: %f != %f", addr, concA, concB)
 		}
 		cunitA, cunitB := compA.Cunit, compB.Cunit
 		if cunitA != cunitB && concA != 0.0 {
-			return fmt.Errorf("different concetration unit in well %q: %d != %d", addr, cunitA, cunitB)
+			return fmt.Errorf("different concetration unit in well %q: %s != %s", addr, cunitA, cunitB)
 		}
 	}
 
 	return nil
+}
+
+func containsInvalidCharWarning(warnings []string) bool {
+	for _, v := range warnings {
+		if strings.Contains(v, "contains an invalid character \"+\"") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func TestParsePlateWithValidation(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	file := []byte(
+		`
+pcrplate_with_cooler,
+A1,water+soil,water,50.0,ul,
+A4,tea,water,50.0,ul,
+A5,milk,water,100.0,ul,
+`)
+	r, err := ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
+
+	if err != nil {
+		t.Errorf("Failed to parse plate: %s ", err.Error())
+	}
+	if !containsInvalidCharWarning(r.Warnings) {
+		t.Errorf("Default validation config must forbid + signs in component names")
+	}
+	r, err = ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), PermissiveValidationConfig())
+
+	if err != nil {
+		t.Errorf("Failed to parse plate: %s ", err.Error())
+	}
+
+	if containsInvalidCharWarning(r.Warnings) {
+		t.Errorf("Permissive validation config must allow + signs in component names")
+	}
 }
 
 func TestParsePlate(t *testing.T) {
@@ -62,6 +104,8 @@ func TestParsePlate(t *testing.T) {
 		Expected   *wtype.LHPlate
 		NoWarnings bool
 	}
+
+	ctx := testinventory.NewContext(context.Background())
 
 	suite := []testCase{
 		testCase{
@@ -135,7 +179,7 @@ C1,neb5compcells,culture,20.5,ul,0,mg/l
 	}
 
 	for _, tc := range suite {
-		p, err := ParsePlateCSV(bytes.NewBuffer(tc.File))
+		p, err := ParsePlateCSV(ctx, bytes.NewBuffer(tc.File))
 		if err != nil {
 			t.Error(err)
 		}

@@ -86,18 +86,22 @@ func (p *compiler) anthaInit() {
 		p.reuseMap[tok] = make(map[string]bool)
 	}
 	p.intrinsics = map[string]string{
-		"Centrifuge":   "execute.Centrifuge",
-		"Electroshock": "execute.Electroshock",
-		"Errorf":       "execute.Errorf",
-		"Handle":       "execute.Handle",
-		"Incubate":     "execute.Incubate",
-		"Mix":          "execute.Mix",
-		"MixInto":      "execute.MixInto",
-		"MixNamed":     "execute.MixNamed",
-		"MixTo":        "execute.MixTo",
-		"ReadEM":       "execute.ReadEM",
-		//	"Wait":          "execute.Wait",
+		"Centrifuge":    "execute.Centrifuge",
+		"Electroshock":  "execute.Electroshock",
+		"Errorf":        "execute.Errorf",
+		"Handle":        "execute.Handle",
+		"Incubate":      "execute.Incubate",
+		"Mix":           "execute.Mix",
+		"MixInto":       "execute.MixInto",
+		"MixNamed":      "execute.MixNamed",
+		"MixTo":         "execute.MixTo",
+		"MixerPrompt":   "execute.MixerPrompt",
+		"NewComponent":  "execute.NewComponent",
+		"NewPlate":      "execute.NewPlate",
+		"Prompt":        "execute.Prompt",
+		"ReadEM":        "execute.ReadEM",
 		"SetInputPlate": "execute.SetInputPlate",
+		//	"Wait":          "execute.Wait",
 	}
 	p.types = map[string]string{
 		"Amount":               "wunit.Amount",
@@ -106,7 +110,6 @@ func (p *compiler) anthaInit() {
 		"Area":                 "wunit.Area",
 		"Capacitance":          "wunit.Capacitance",
 		"Component":            "wtype.LHComponent",
-		"LHComponent":          "wtype.LHComponent",
 		"Concentration":        "wunit.Concentration",
 		"DNASequence":          "wtype.DNASequence",
 		"Density":              "wunit.Density",
@@ -115,12 +118,14 @@ func (p *compiler) anthaInit() {
 		"FlowRate":             "wunit.FlowRate",
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",
+		"IncubateOpt":          "execute.IncubateOpt",
+		"LHComponent":          "wtype.LHComponent",
+		"LHPlate":              "wtype.LHPlate",
 		"Length":               "wunit.Length",
 		"LiquidType":           "wtype.LiquidType",
 		"Mass":                 "wunit.Mass",
-		"PolicyName":           "wtype.PolicyName",
-		"LHPlate":              "wtype.LHPlate",
 		"Plate":                "wtype.LHPlate",
+		"PolicyName":           "wtype.PolicyName",
 		"Pressure":             "wunit.Pressure",
 		"Rate":                 "wunit.Rate",
 		"Resistance":           "wunit.Resistance",
@@ -134,6 +139,7 @@ func (p *compiler) anthaInit() {
 		"Velocity":             "wunit.Velocity",
 		"Voltage":              "wunit.Voltage",
 		"Volume":               "wunit.Volume",
+		"Warning":              "wtype.Warning",
 		"Well":                 "wtype.LHWell",
 	}
 	p.imports = map[string]string{
@@ -708,6 +714,8 @@ func (p *compiler) sugarExpr(t ast.Node) ast.Expr {
 
 	case *ast.ChanType:
 		t.Value = p.sugarExpr(t.Value)
+
+	case *ast.Ellipsis:
 
 	default:
 		log.Panicf("unexpected expression %s of type %s", t, reflect.TypeOf(t))

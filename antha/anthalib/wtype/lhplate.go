@@ -59,6 +59,11 @@ type LHPlate struct {
 	WellZStart  float64            // offset (mm) to bottom of well in Z direction
 }
 
+//@implement AnthaObject
+func (plate LHPlate) GetID() string {
+	return plate.ID
+}
+
 func (plate LHPlate) OutputLayout() {
 	for x := 0; x < plate.WellsX(); x += 1 {
 		for y := 0; y < plate.WellsY(); y += 1 {
@@ -72,9 +77,15 @@ func (plate LHPlate) OutputLayout() {
 			wc.Y = y
 			fmt.Print(wc.FormatA1(), " ")
 			//for _, c := range well.WContents {
-			fmt.Print(well.WContents.CName, " ")
+			//	fmt.Print(well.WContents.CN, " ")
+			if well.WContents.IsInstance() {
+				fmt.Print(well.WContents.CNID(), " ")
+			} else {
+				fmt.Print(well.WContents.CName, " ")
+			}
 			//}
 			fmt.Printf(" %-6.2f%s", well.Currvol(), well.Vunit)
+			fmt.Println()
 			fmt.Println()
 		}
 	}
@@ -214,7 +225,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 }
 
 // this gets ONE component... possibly from several wells
-func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
@@ -234,15 +245,15 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 			continue
 		}
 
-		if w.Contents().CName == cmp.CName {
-			if exact && w.Contents().ID != cmp.ID {
-				continue
-			}
-
+		//if w.Contents().CName == cmp.CName {
+		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 
-			if v.LessThan(volWant) {
-				continue
+			// check volume unless this is an instance and we are tolerating this
+			if !cmp.IsInstance() || !legacyVolume {
+				if v.LessThan(volWant) {
+					continue
+				}
 			}
 
 			volGot.Add(volWant)
@@ -259,7 +270,7 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 	}
 
 	if volGot.LessThan(cmp.Volume()) {
-		return lhp.GetComponent(cmp, exact, mpv)
+		return lhp.GetComponent(cmp, mpv)
 	}
 	//fmt.Println("FOUND: ", cmp.CName, " AT: ", ret[0].FormatA1(), " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
@@ -308,7 +319,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 
 // convenience method
 
-func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
 	it := NewOneTimeColumnWiseIterator(lhp)
@@ -319,16 +330,7 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume)
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
-		/*
-			if !w.Empty() {
-				logger.Debug(fmt.Sprint("WANT: ", cmp.CName, " :: ", wc.FormatA1(), " ", w.Contents().CName, " ", w.CurrVolume().ToString()))
-			}
-		*/
-		if w.Contents().CName == cmp.CName {
-			if exact && w.Contents().ID != cmp.ID {
-				continue
-			}
-
+		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 			if v.LessThan(mpv) {
 				continue
@@ -461,6 +463,15 @@ func (lhp *LHPlate) WellsX() int {
 
 func (lhp *LHPlate) WellsY() int {
 	return lhp.WlsY
+}
+
+func (lhp *LHPlate) Empty() bool {
+	for _, w := range lhp.Wellcoords {
+		if !w.Empty() {
+			return false
+		}
+	}
+	return true
 }
 
 func (lhp *LHPlate) NextEmptyWell(it PlateIterator) WellCoords {
@@ -896,4 +907,55 @@ func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 	}
 
 	return ret
+}
+
+func (p *LHPlate) IsSpecial() bool {
+	if p == nil || p.Welltype.Extra == nil {
+		return false
+	}
+
+	s, ok := p.Welltype.Extra["IMSPECIAL"]
+
+	if !ok || !s.(bool) {
+		return false
+	}
+
+	return true
+}
+
+func (p *LHPlate) DeclareSpecial() {
+	if p != nil && p.Welltype.Extra != nil {
+		p.Welltype.Extra["IMSPECIAL"] = true
+	}
+}
+
+// @implement SBSLabware
+
+/*
+type SBSLabware interface {
+	NumRows() int
+	NumCols() int
+	PlateHeight() float64
+}
+*/
+
+func (p *LHPlate) NumRows() int {
+	return p.WellsY()
+}
+
+func (p *LHPlate) NumCols() int {
+	return p.WellsX()
+}
+
+func (p *LHPlate) PlateHeight() float64 {
+	return p.Height
+}
+
+func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
+	for _, w := range p.Wellcoords {
+		if w.UpdateContentID(before, after) {
+			return true
+		}
+	}
+	return false
 }

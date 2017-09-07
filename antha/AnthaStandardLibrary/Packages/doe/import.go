@@ -368,7 +368,8 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 					} else {
 						setpoint, err = cell.String()
 						if err != nil {
-							return runs, err
+							// This is returning errors erroneously so we'll skip this
+							//return runs, err
 						}
 					}
 					factordescriptors = append(factordescriptors, factrodescriptor)
@@ -561,7 +562,11 @@ func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorc
 			cellstr, err := sheet.Cell(i, j).String()
 
 			if err != nil {
-				panic(fmt.Sprintf("Error parsing cell column: %s row: %d. Error: %s", wutil.NumToAlpha(j+1), i+1, err.Error()))
+				// This is returning errors erroneously so we'll skip this
+
+				// This should not fail so we'll ignore the error message
+
+				//panic(fmt.Sprintf("Error parsing cell column: %s row: %d. Error: %s", wutil.NumToAlpha(j+1), i+1, err.Error()))
 			}
 			if patternfound && j != PatternColumn && cellstr != "" {
 				factorcolumns = append(factorcolumns, j)

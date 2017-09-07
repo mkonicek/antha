@@ -39,7 +39,7 @@ func (t *LHTimer) TimeFor(r RobotInstruction) time.Duration {
 			cyc, ok := prm.([]int)
 
 			if ok {
-				d *= max(cyc)
+				d = time.Duration(int64(max(cyc)) * int64(d))
 			}
 		}
 

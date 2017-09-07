@@ -65,12 +65,12 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 
 					if lookForSubComponents {
 
-						compsubcomponents, err := wtype.GetSubComponents(comp)
+						compsubcomponents, err := GetSubComponents(comp)
 						if err != nil {
 							return false, -1, err
 						}
 
-						componentSubcomponents, err := wtype.GetSubComponents(component)
+						componentSubcomponents, err := GetSubComponents(component)
 						if err != nil {
 							return false, -1, err
 						}
@@ -90,12 +90,12 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 			} else {
 				if lookForSubComponents {
 
-					compsubcomponents, err := wtype.GetSubComponents(comp)
+					compsubcomponents, err := GetSubComponents(comp)
 					if err != nil {
 						return false, -1, err
 					}
 
-					componentSubcomponents, err := wtype.GetSubComponents(component)
+					componentSubcomponents, err := GetSubComponents(component)
 					if err != nil {
 						return false, -1, err
 					}
@@ -119,7 +119,7 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 }
 
 func componentSummary(component *wtype.LHComponent) string {
-	subComps, err := wtype.GetSubComponents(component)
+	subComps, err := GetSubComponents(component)
 	var message string
 	if err != nil {
 		message = err.Error()

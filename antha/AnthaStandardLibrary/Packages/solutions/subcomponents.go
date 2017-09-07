@@ -1,5 +1,5 @@
-// liquidhandling/lhtypes.Go: Part of the Antha language
-// Copyright (C) 2014 the Antha authors. All rights reserved.
+// Part of the Antha language
+// Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -16,11 +16,12 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 // For more information relating to the software or licensing issues please
-// contact license@antha-lang.Org or write to the Antha team c/o
+// contact license@antha-lang.org or write to the Antha team c/o
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package wtype
+// solutions is a utility package for working with solutions of LHComponents
+package solutions
 
 import (
 	"encoding/json"
@@ -28,6 +29,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
@@ -37,7 +39,7 @@ type ComponentList struct {
 }
 
 // add a single entry to a component list
-func (c ComponentList) Add(component *LHComponent, conc wunit.Concentration) (newlist ComponentList) {
+func (c ComponentList) Add(component *wtype.LHComponent, conc wunit.Concentration) (newlist ComponentList) {
 	complist := make(map[string]wunit.Concentration)
 	for k, v := range c.Components {
 		complist[k] = v
@@ -52,7 +54,7 @@ func (c ComponentList) Add(component *LHComponent, conc wunit.Concentration) (ne
 
 // Get a single concentration set point for a named component present in a component list.
 // An error will be returned if the component is not present.
-func (c ComponentList) Get(component *LHComponent) (conc wunit.Concentration, err error) {
+func (c ComponentList) Get(component *wtype.LHComponent) (conc wunit.Concentration, err error) {
 	conc, found := c.Components[component.CName]
 
 	if found {
@@ -131,7 +133,7 @@ func (a *notFound) Error() string {
 }
 
 // returns error if component already found
-func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wunit.Concentration) (*LHComponent, error) {
+func AddSubComponent(component *wtype.LHComponent, subcomponent *wtype.LHComponent, conc wunit.Concentration) (*wtype.LHComponent, error) {
 	var err error
 
 	if component == nil {
@@ -195,10 +197,10 @@ func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wun
 
 // Add a component list to a component.
 // Any existing component list will be overwritten
-func AddSubComponents(component *LHComponent, allsubComponents ComponentList) (*LHComponent, error) {
+func AddSubComponents(component *wtype.LHComponent, allsubComponents ComponentList) (*wtype.LHComponent, error) {
 
 	for _, compName := range allsubComponents.AllComponents() {
-		var comp LHComponent
+		var comp wtype.LHComponent
 
 		comp.CName = compName
 
@@ -219,7 +221,7 @@ func AddSubComponents(component *LHComponent, allsubComponents ComponentList) (*
 }
 
 // return a component list from a component
-func GetSubComponents(component *LHComponent) (componentMap ComponentList, err error) {
+func GetSubComponents(component *wtype.LHComponent) (componentMap ComponentList, err error) {
 
 	components, err := getHistory(component)
 
@@ -249,7 +251,7 @@ func deserialise(data []byte) (compList ComponentList, err error) {
 
 // Return a component list from a component.
 // Users should use getSubComponents function.
-func getHistory(comp *LHComponent) (compList ComponentList, err error) {
+func getHistory(comp *wtype.LHComponent) (compList ComponentList, err error) {
 
 	history, found := comp.Extra["History"]
 
@@ -276,7 +278,7 @@ func getHistory(comp *LHComponent) (compList ComponentList, err error) {
 // Add a component list to a component.
 // Any existing component list will be overwritten.
 // Users should use add SubComponents function
-func setHistory(comp *LHComponent, compList ComponentList) (*LHComponent, error) {
+func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHComponent, error) {
 
 	comp.Extra["History"] = compList // serialisedList
 

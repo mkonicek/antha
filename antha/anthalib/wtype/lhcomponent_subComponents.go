@@ -25,21 +25,20 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sort"
 	"strings"
 
-	. "github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 // List of the components and corresponding concentrations contained within an LHComponent
 type ComponentList struct {
-	Components map[string]Concentration `json:"Components"`
+	Components map[string]wunit.Concentration `json:"Components"`
 }
 
 // add a single entry to a component list
-func (c ComponentList) Add(component *LHComponent, conc Concentration) (newlist ComponentList) {
-	complist := make(map[string]Concentration)
+func (c ComponentList) Add(component *LHComponent, conc wunit.Concentration) (newlist ComponentList) {
+	complist := make(map[string]wunit.Concentration)
 	for k, v := range c.Components {
 		complist[k] = v
 	}
@@ -53,7 +52,7 @@ func (c ComponentList) Add(component *LHComponent, conc Concentration) (newlist 
 
 // Get a single concentration set point for a named component present in a component list.
 // An error will be returned if the component is not present.
-func (c ComponentList) Get(component *LHComponent) (conc Concentration, err error) {
+func (c ComponentList) Get(component *LHComponent) (conc wunit.Concentration, err error) {
 	conc, found := c.Components[component.CName]
 
 	if found {
@@ -66,7 +65,7 @@ func (c ComponentList) Get(component *LHComponent) (conc Concentration, err erro
 
 // Get a single concentration set point using just the name of a component present in a component list.
 // An error will be returned if the component is not present.
-func (c ComponentList) GetByName(component string) (conc Concentration, err error) {
+func (c ComponentList) GetByName(component string) (conc wunit.Concentration, err error) {
 	conc, found := c.Components[component]
 
 	if found {
@@ -80,7 +79,6 @@ func (c ComponentList) GetByName(component string) (conc Concentration, err erro
 // List all Components and concentration set points presnet in a component list.
 // if verbose is set to true the field annotations for each component and concentration will be included for each component.
 func (c ComponentList) List(verbose bool) string {
-	var ALTMIXDELIMITER = "---"
 	var s []string
 
 	for k, v := range c.Components {
@@ -98,7 +96,7 @@ func (c ComponentList) List(verbose bool) string {
 	if verbose {
 		list = strings.Join(s, ";")
 	} else {
-		list = strings.Join(s, ALTMIXDELIMITER)
+		list = strings.Join(s, "---")
 	}
 	return list
 }
@@ -116,36 +114,34 @@ func (c ComponentList) AllComponents() []string {
 	return s
 }
 
-func (component *LHComponent) ComponentSummary() string {
-	subComps, err := component.GetSubComponents()
-	var message string
-	if err != nil {
-		message = err.Error()
-	} else {
-		message = subComps.List(true)
-	}
+type alreadyAdded struct {
+	Name string
+}
 
-	conc := "No concentration found"
+func (a *alreadyAdded) Error() string {
+	return "component " + a.Name + " already added"
+}
 
-	if component.HasConcentration() {
-		conc = component.Concentration().ToString()
-	}
+type notFound struct {
+	Name string
+}
 
-	return fmt.Sprint("Component Name: ", component.CName, "Conc: ", conc, ". SubComponents: ", message)
+func (a *notFound) Error() string {
+	return "component " + a.Name + " not found"
 }
 
 // returns error if component already found
-func (component *LHComponent) AddSubComponent(subcomponent *LHComponent, conc Concentration) error {
+func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wunit.Concentration) (*LHComponent, error) {
 	var err error
 
 	if component == nil {
-		return fmt.Errorf("No component specified so cannot add subcomponent")
+		return nil, fmt.Errorf("No component specified so cannot add subcomponent")
 	}
 	if subcomponent == nil {
-		return fmt.Errorf("No subcomponent specified so cannot add subcomponent")
+		return nil, fmt.Errorf("No subcomponent specified so cannot add subcomponent")
 	}
-	if _, found := component.Extra[HISTORY]; !found {
-		complist := make(map[string]Concentration)
+	if _, found := component.Extra["History"]; !found {
+		complist := make(map[string]wunit.Concentration)
 
 		complist[subcomponent.CName] = conc
 
@@ -155,46 +151,87 @@ func (component *LHComponent) AddSubComponent(subcomponent *LHComponent, conc Co
 
 		if len(newlist.Components) == 0 {
 
-			return fmt.Errorf("No subcomponent added! list still empty")
+			return component, fmt.Errorf("No subcomponent added! list still empty")
 		}
 
 		if _, err := newlist.Get(subcomponent); err != nil {
-			return fmt.Errorf("No subcomponent added, no subcomponent to get: %s!", err.Error())
+			return component, fmt.Errorf("No subcomponent added, no subcomponent to get: %s!", err.Error())
 
 		}
 
-		err = component.setHistory(newlist)
+		component, err = setHistory(component, newlist)
 
 		if err != nil {
-			return err
+			return component, err
 		}
 
-		history, err := component.getHistory()
+		history, err := getHistory(component)
 
 		if err != nil {
-			return fmt.Errorf("Error getting History for %s: %s", component.CName, err.Error())
+			return component, fmt.Errorf("Error getting History for %s: %s", component.CName, err.Error())
 		}
 
 		if len(history.Components) == 0 {
-			return fmt.Errorf("No history added!")
+			return component, fmt.Errorf("No history added!")
 		}
-		return nil
+		return component, nil
 	} else {
 
-		history, err := component.getHistory()
+		history, err := getHistory(component)
 
 		if err != nil {
-			return err
+			return component, err
 		}
 
 		if _, found := history.Components[subcomponent.CName]; !found {
 			history = history.Add(subcomponent, conc)
-			err = component.setHistory(history)
-			return err
+			component, err = setHistory(component, history)
+			return component, err
 		} else {
-			return &alreadyAdded{Name: subcomponent.CName}
+			return component, &alreadyAdded{Name: subcomponent.CName}
 		}
 	}
+}
+
+// Add a component list to a component.
+// Any existing component list will be overwritten
+func AddSubComponents(component *LHComponent, allsubComponents ComponentList) (*LHComponent, error) {
+
+	for _, compName := range allsubComponents.AllComponents() {
+		var comp LHComponent
+
+		comp.CName = compName
+
+		conc, err := allsubComponents.Get(&comp)
+
+		if err != nil {
+			return component, err
+		}
+
+		component, err = AddSubComponent(component, &comp, conc)
+
+		if err != nil {
+			return component, err
+		}
+	}
+
+	return component, nil
+}
+
+// return a component list from a component
+func GetSubComponents(component *LHComponent) (componentMap ComponentList, err error) {
+
+	components, err := getHistory(component)
+
+	if err != nil {
+		return componentMap, fmt.Errorf("Error getting componentList for %s: %s", component.CName, err.Error())
+	}
+
+	if len(components.Components) == 0 {
+		return components, fmt.Errorf("No sub components found for %s", component.CName)
+	}
+
+	return components, nil
 }
 
 // utility function to allow the object properties to be retained when serialised
@@ -210,13 +247,11 @@ func deserialise(data []byte) (compList ComponentList, err error) {
 	return
 }
 
-const HISTORY = "History"
-
 // Return a component list from a component.
 // Users should use getSubComponents function.
-func (comp *LHComponent) getHistory() (compList ComponentList, err error) {
+func getHistory(comp *LHComponent) (compList ComponentList, err error) {
 
-	history, found := comp.Extra[HISTORY]
+	history, found := comp.Extra["History"]
 
 	if !found {
 		return compList, fmt.Errorf("No component list found")
@@ -241,193 +276,9 @@ func (comp *LHComponent) getHistory() (compList ComponentList, err error) {
 // Add a component list to a component.
 // Any existing component list will be overwritten.
 // Users should use add SubComponents function
-func (comp *LHComponent) setHistory(compList ComponentList) error {
+func setHistory(comp *LHComponent, compList ComponentList) (*LHComponent, error) {
 
-	comp.Extra[HISTORY] = compList // serialisedList
+	comp.Extra["History"] = compList // serialisedList
 
-	return nil
-}
-
-// Add a component list to a component.
-// Any existing component list will be overwritten
-func (component *LHComponent) AddSubComponents(allsubComponents ComponentList) error {
-
-	for _, compName := range allsubComponents.AllComponents() {
-		var comp LHComponent
-
-		comp.CName = compName
-
-		conc, err := allsubComponents.Get(&comp)
-
-		if err != nil {
-			return err
-		}
-
-		err = component.AddSubComponent(&comp, conc)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// return a component list from a component
-func (component *LHComponent) GetSubComponents() (componentMap ComponentList, err error) {
-
-	components, err := component.getHistory()
-
-	if err != nil {
-		return componentMap, fmt.Errorf("Error getting componentList for %s: %s", component.CName, err.Error())
-	}
-
-	if len(components.Components) == 0 {
-		return components, fmt.Errorf("No sub components found for %s", component.CName)
-	}
-
-	return components, nil
-}
-
-// Looks for a component matching on name only.
-// If more than one component present the first component will be returned with no error
-func FindComponent(components []*LHComponent, componentName string) (component *LHComponent, err error) {
-	for _, comp := range components {
-		if comp.CName == componentName {
-			return comp, nil
-		}
-	}
-	return component, fmt.Errorf("No component found with name %s in component list", componentName)
-}
-
-// Looks for components matching name, concentration and all sub components (including their concentrations).
-// A position of -1 is returned if no match found.
-// If the component does not contain a concentration, the name will be matched only
-// if multiple matches are found the first will be returned
-func ContainsComponent(components []*LHComponent, component *LHComponent, lookForSubComponents bool) (found bool, position int, err error) {
-
-	var errs []string
-
-	// normalise names for more robust evaluation
-	var normalisedComponentName string
-
-	if len(strings.Fields(component.CName)) == 2 {
-		normalisedComponentName = normalise(component.CName)
-	} else {
-		normalisedComponentName = component.CName
-	}
-
-	for i, comp := range components {
-
-		if !comp.HasConcentration() {
-			errs = append(errs, fmt.Sprintf("cannot compare component in list %s without a concentration", comp.CName))
-		}
-
-		// normalise names for more robust evaluation
-		var normalisedCompName string
-
-		if len(strings.Fields(comp.CName)) == 2 {
-			normalisedCompName = normalise(comp.CName)
-		} else {
-			normalisedCompName = comp.CName
-		}
-
-		if normalisedCompName == normalisedComponentName {
-
-			if component.HasConcentration() && comp.HasConcentration() {
-				if comp.Concentration().EqualTo(component.Concentration()) {
-					if lookForSubComponents {
-
-						compsubcomponents, err := comp.GetSubComponents()
-						if err != nil {
-							return false, -1, err
-						}
-
-						componentSubcomponents, err := component.GetSubComponents()
-						if err != nil {
-							return false, -1, err
-						}
-
-						if reflect.DeepEqual(compsubcomponents, componentSubcomponents) {
-							return true, i, nil
-						} else {
-							errs = append(errs, fmt.Sprintf("Subcomponents lists not equal for %s and %s: Respective lists: %+v and %+v", comp.CName, component.CName, compsubcomponents, componentSubcomponents))
-
-						}
-					} else {
-						return true, i, nil
-					}
-				} else {
-					errs = append(errs, comp.CName+"concentration "+comp.Concentration().ToString()+" not equal to "+component.CName+" "+component.Concentration().ToString())
-				}
-			} else {
-				if lookForSubComponents {
-
-					compsubcomponents, err := comp.GetSubComponents()
-					if err != nil {
-						return false, -1, err
-					}
-
-					componentSubcomponents, err := component.GetSubComponents()
-					if err != nil {
-						return false, -1, err
-					}
-
-					if reflect.DeepEqual(compsubcomponents, componentSubcomponents) {
-						return true, i, nil
-					} else {
-						errs = append(errs, fmt.Sprintf("Subcomponents lists not equal for %s and %s: Respective lists: %+v and %+v", comp.CName, component.CName, compsubcomponents, componentSubcomponents))
-
-					}
-				} else {
-					return true, i, nil
-				}
-			}
-		} else {
-			errs = append(errs, comp.CName+" name not equal to "+component.CName)
-		}
-	}
-
-	return false, -1, fmt.Errorf("component %s not found in list: %s. : Errors for each: %s", component.ComponentSummary(), componentNames(components), strings.Join(errs, "\n"))
-}
-
-func componentNames(components []*LHComponent) (names []string) {
-	for _, component := range components {
-		names = append(names, component.CName)
-	}
-	return
-}
-
-// if the component name contains a concentration the concentration name will be normalised
-// e.g. 10ng/ul glucose will be normalised to 10 mg/l glucose or 10mM glucose to 10 mM/l glucose or 10mM/l glucose to 10 mM/l glucose or glucose 10mM/l to 10 mM/l glucose
-// A concatanenated name such as 10g/L glucose + 10g/L yeast extract will be returned with no modifications
-func normalise(name string) (normalised string) {
-
-	if strings.Contains(name, MIXDELIMITER) {
-		return name
-	}
-
-	containsConc, conc, nameonly := ParseConcentration(name)
-
-	if containsConc {
-		return conc.ToString() + " " + nameonly
-	} else {
-		return name
-	}
-}
-
-type alreadyAdded struct {
-	Name string
-}
-
-func (a *alreadyAdded) Error() string {
-	return "component " + a.Name + " already added"
-}
-
-type notFound struct {
-	Name string
-}
-
-func (a *notFound) Error() string {
-	return "component " + a.Name + " not found"
+	return comp, nil
 }

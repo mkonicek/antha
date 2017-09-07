@@ -70,6 +70,10 @@ func NewLHTipbox(nrows, ncols int, height float64, manufacturer, boxtype string,
 	return initialize_tips(&tipbox, tiptype)
 }
 
+func (tb LHTipbox) GetID() string {
+	return tb.ID
+}
+
 func (tb LHTipbox) String() string {
 	return fmt.Sprintf(
 		`LHTipbox {

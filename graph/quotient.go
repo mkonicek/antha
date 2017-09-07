@@ -1,6 +1,6 @@
 package graph
 
-// Quotient graph
+// QGraph is a quotient graph
 type QGraph interface {
 	Graph
 	OrigGraph() Graph    // Original graph that this graph was constructed from
@@ -50,6 +50,7 @@ func (a *qgraph) Orig(n Node, i int) Node {
 	return n
 }
 
+// MakeQuotientOpt are options to MakeQuotient
 type MakeQuotientOpt struct {
 	Graph         Graph
 	Colorer       func(Node) interface{}
@@ -58,9 +59,9 @@ type MakeQuotientOpt struct {
 	KeepSelfEdges bool
 }
 
-// Return a quotient graph. Nodes with the same color merged into a single
-// node. A colorless node is treated as having a color distinct from any other
-// node.
+// MakeQuotient returns a quotient graph. Nodes with the same color merged into
+// a single node. A colorless node is treated as having a color distinct from
+// any other node.
 func MakeQuotient(opt MakeQuotientOpt) QGraph {
 	ret := &qgraph{
 		Graph: opt.Graph,
@@ -71,7 +72,7 @@ func MakeQuotient(opt MakeQuotientOpt) QGraph {
 	cnodes := make(map[interface{}]Node)
 	newNodes := make(map[Node]Node)
 
-	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i++ {
 		node := opt.Graph.Node(i)
 
 		switch {
@@ -99,7 +100,7 @@ func MakeQuotient(opt MakeQuotientOpt) QGraph {
 
 	for node, newNode := range newNodes {
 		neighs := make(map[Node]bool)
-		for i, inum := 0, opt.Graph.NumOuts(node); i < inum; i += 1 {
+		for i, inum := 0, opt.Graph.NumOuts(node); i < inum; i++ {
 			n := opt.Graph.Out(node, i)
 			// Filter out not present neighbors
 			if k, ok := newNodes[n]; ok {

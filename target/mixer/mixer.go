@@ -22,6 +22,7 @@ var (
 	_ target.Device = &Mixer{}
 )
 
+// A Mixer is a device plugin for mixer devices
 type Mixer struct {
 	driver     driver.ExtendedLiquidhandlingDriver
 	properties *driver.LHProperties // Prototype to create fresh properties
@@ -32,20 +33,22 @@ func (a *Mixer) String() string {
 	return "Mixer"
 }
 
+// CanCompile implements a Device
 func (a *Mixer) CanCompile(req ast.Request) bool {
 	// TODO: Add specific volume constraints
-	cp := a.properties.CanPrompt()
 	can := ast.Request{
-		MixVol:    req.MixVol,
-		CanPrompt: &cp,
+		Selector: []ast.NameValue{
+			target.DriverSelectorV1Mixer,
+			target.DriverSelectorV1Prompter,
+		},
 	}
-	if !req.Matches(can) {
-		return false
+	if a.properties.CanPrompt() {
+		can.Selector = append(can.Selector, target.DriverSelectorV1Prompter)
 	}
-
 	return can.Contains(req)
 }
 
+// MoveCost implements a Device
 func (a *Mixer) MoveCost(from target.Device) int {
 	if from == a {
 		return 0
@@ -53,6 +56,7 @@ func (a *Mixer) MoveCost(from target.Device) int {
 	return human.HumanByXCost + 1
 }
 
+// FileType returns the file type for generated files
 func (a *Mixer) FileType() (ftype string) {
 	if m := a.properties.Mnfr; len(m) != 0 {
 		ftype = fmt.Sprintf("application/%s", strings.ToLower(m))
@@ -71,11 +75,10 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	addPlate := func(req *planner.LHRequest, ip *wtype.LHPlate) error {
 		if _, seen := req.Input_plates[ip.ID]; seen {
 			return fmt.Errorf("plate %q already added", ip.ID)
-		} else {
-			//req.Input_plates[ip.ID] = ip
-			req.AddUserPlate(ip)
-			return nil
 		}
+		//req.Input_plates[ip.ID] = ip
+		req.AddUserPlate(ip)
+		return nil
 	}
 
 	req := planner.NewLHRequest()
@@ -191,6 +194,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	}, nil
 }
 
+// Compile implements a Device
 func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	var mixes []*wtype.LHInstruction
 	for _, node := range nodes {
@@ -202,11 +206,13 @@ func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, e
 			mixes = append(mixes, m)
 		}
 	}
-	if inst, err := a.makeMix(ctx, mixes); err != nil {
+
+	mix, err := a.makeMix(ctx, mixes)
+	if err != nil {
 		return nil, err
-	} else {
-		return []target.Inst{inst}, nil
 	}
+
+	return target.SequentialOrder(mix), nil
 }
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {
@@ -240,7 +246,7 @@ func (a *Mixer) saveFile(name string) ([]byte, error) {
 	}
 }
 
-func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (target.Inst, error) {
+func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*target.Mix, error) {
 	hasPlate := func(plates []*wtype.LHPlate, typ, id string) bool {
 		for _, p := range plates {
 			if p.Type == typ && (id == "" || p.ID == id) {
@@ -250,7 +256,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (targ
 		return false
 	}
 
-	getId := func(mixes []*wtype.LHInstruction) (r wtype.BlockID) {
+	getID := func(mixes []*wtype.LHInstruction) (r wtype.BlockID) {
 		m := make(map[wtype.BlockID]bool)
 		for _, mix := range mixes {
 			m[mix.BlockID] = true
@@ -277,7 +283,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (targ
 		}
 	}
 
-	r.LHRequest.BlockID = getId(mixes)
+	r.LHRequest.BlockID = getID(mixes)
 
 	for _, mix := range mixes {
 		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID()) {
@@ -292,9 +298,8 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (targ
 	}
 
 	err = r.Liquidhandler.MakeSolutions(ctx, r.LHRequest)
-	// MIS XXX XXX XXX unfortunately we need to make sure this stays up to date
-	// would be better to remove this and just use the ones the liquid handler
-	// holds
+	// TODO: MIS unfortunately we need to make sure this stays up to date would
+	// be better to remove this and just use the ones the liquid handler holds
 	r.LHProperties = r.Liquidhandler.Properties
 
 	if err != nil {
@@ -327,6 +332,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (targ
 	}, nil
 }
 
+// New creates a new Mixer
 func New(opt Opt, d driver.ExtendedLiquidhandlingDriver) (*Mixer, error) {
 	p, status := d.GetCapabilities()
 	if !status.OK {

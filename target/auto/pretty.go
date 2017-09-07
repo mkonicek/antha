@@ -7,7 +7,7 @@ import (
 	"github.com/antha-lang/antha/target"
 )
 
-// Return human description of instruction
+// Pretty returns a human description of instruction
 func (a *Auto) Pretty(inst target.Inst) string {
 	switch inst := inst.(type) {
 	case *target.Mix:

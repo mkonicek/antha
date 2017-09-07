@@ -8,11 +8,13 @@ type intpair struct {
 	A, B *intpair
 }
 
+// An IntSet is a set of integers
 type IntSet struct {
 	nodes  map[intpair]*intpair
 	leaves map[int]*intpair
 }
 
+// NewIntSet returns a new IntSet
 func NewIntSet() *IntSet {
 	return &IntSet{
 		nodes:  make(map[intpair]*intpair),
@@ -20,7 +22,7 @@ func NewIntSet() *IntSet {
 	}
 }
 
-// Return a unique identifier for a set of ints
+// Add returns a unique identifier for a set of ints
 func (a *IntSet) Add(xs ...int) interface{} {
 	sort.Ints(xs)
 

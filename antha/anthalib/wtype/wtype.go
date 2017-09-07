@@ -22,3 +22,8 @@
 
 // Package wtype contains core Antha types
 package wtype
+
+// all physical objects defined by Antha must have IDs
+type AnthaObject interface {
+	GetID() string
+}

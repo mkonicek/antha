@@ -20,12 +20,16 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package parser
+// package parse converts DNA sequence files into a set of DNA sequences.
+package parse
 
 import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/fasta"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/gdx"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/genbank"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -38,17 +42,17 @@ func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequenc
 
 	switch fn := sequenceFile.Name; {
 	case filepath.Ext(fn) == ".gdx":
-		seqs, err = GDXtoDNASequence(sequenceFile)
+		seqs, err = gdx.GDXToDNASequence(sequenceFile)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
 	case filepath.Ext(fn) == ".fasta" || filepath.Ext(fn) == ".fa":
-		seqs, err = FASTAtoDNASeqs(sequenceFile)
+		seqs, err = fasta.FastaToDNASequences(sequenceFile)
 		for _, seq := range seqs {
 			sequences = append(sequences, seq)
 		}
 	case filepath.Ext(fn) == ".gb" || filepath.Ext(fn) == ".gbk":
-		seq, err = GenbanktoFeaturelessDNASequence(sequenceFile)
+		seq, err = genbank.GenbankToFeaturelessDNASequence(sequenceFile)
 		sequences = append(sequences, seq)
 	default:
 		err = fmt.Errorf("non valid sequence file format: %s", filepath.Ext(fn))

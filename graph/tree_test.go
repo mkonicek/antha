@@ -53,7 +53,7 @@ func TestTreeVisit(t *testing.T) {
 				return nil
 			}
 			sum := 0
-			for i, inum := 0, g.NumOuts(n); i < inum; i += 1 {
+			for i, inum := 0, g.NumOuts(n); i < inum; i++ {
 				k := g.Out(n, i).(string)
 				sum += v[k]
 			}

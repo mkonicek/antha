@@ -15,24 +15,29 @@ import (
 	"github.com/antha-lang/antha/inventory"
 )
 
+// ParsePlateResult is the result of parsing a plate
 type ParsePlateResult struct {
 	Plate    *wtype.LHPlate
 	Warnings []string
 }
 
+// ValidationConfig specifies how to parse a plate
 type ValidationConfig struct {
 	valid   string
 	invalid string
 }
 
+// ValidChars are the characters that are valid in a component name
 func (vc ValidationConfig) ValidChars() string {
 	return vc.valid
 }
 
+// InvalidChars are the characters that are invalid in a component name
 func (vc ValidationConfig) InvalidChars() string {
 	return vc.invalid
 }
 
+// DefaultValidationConfig is the default validation config
 func DefaultValidationConfig() ValidationConfig {
 	return ValidationConfig{
 		invalid: "+",
@@ -40,12 +45,14 @@ func DefaultValidationConfig() ValidationConfig {
 	}
 }
 
+// PermissiveValidationConfig is a looser validation config
 func PermissiveValidationConfig() ValidationConfig {
 	return ValidationConfig{
 		invalid: "",
 		valid:   "+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
 	}
 }
+
 func validName(name string, vc ValidationConfig) error {
 
 	invalid := vc.InvalidChars()
@@ -79,10 +86,13 @@ func validWell(well wtype.WellCoords, plate *wtype.LHPlate) error {
 	return nil
 }
 
+// ParsePlateCSV parses a plate
 func ParsePlateCSV(ctx context.Context, inData io.Reader) (*ParsePlateResult, error) {
 	return ParsePlateCSVWithValidationConfig(ctx, inData, DefaultValidationConfig())
 }
 
+// ParsePlateCSVWithValidationConfig parses a csv file into a plate.
+//
 // CSV plate format: (? denotes optional, whitespace for clarity)
 //
 //   <plate type> , <plate name ?>
@@ -138,7 +148,7 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 	}
 
 	var warnings []string
-	for lineNo := 1; true; lineNo += 1 {
+	for lineNo := 1; true; lineNo++ {
 		rec, err := csvr.Read()
 		if err == io.EOF {
 			break
@@ -213,8 +223,8 @@ func parsePlateFile(ctx context.Context, filename string) (*ParsePlateResult, er
 	return ParsePlateCSV(ctx, f)
 }
 
-// Convenience function for parsing a plate from file. Will splat out warnings
-// to stdout.
+// ParseInputPlateFile is convenience function for parsing a plate from file.
+// Will splat out warnings to stdout.
 func ParseInputPlateFile(ctx context.Context, filename string) (*wtype.LHPlate, error) {
 	r, err := parsePlateFile(ctx, filename)
 	if err != nil {

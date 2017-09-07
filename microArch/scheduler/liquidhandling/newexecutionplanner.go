@@ -60,6 +60,7 @@ func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *li
 			prm := liquidhandling.NewMessageInstruction(ins)
 			ris.Add(prm)
 			instrx = append(instrx, prm)
+			robot.UpdateComponentIDs(ins.PassThrough) // prompting changes IDs
 		} else {
 			transIns, err := ConvertInstruction(ins, robot, request.CarryVolume, request.UseLegacyVolume())
 

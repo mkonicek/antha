@@ -59,6 +59,11 @@ type LHPlate struct {
 	WellZStart  float64            // offset (mm) to bottom of well in Z direction
 }
 
+//@implement AnthaObject
+func (plate LHPlate) GetID() string {
+	return plate.ID
+}
+
 func (plate LHPlate) OutputLayout() {
 	for x := 0; x < plate.WellsX(); x += 1 {
 		for y := 0; y < plate.WellsY(); y += 1 {
@@ -72,9 +77,15 @@ func (plate LHPlate) OutputLayout() {
 			wc.Y = y
 			fmt.Print(wc.FormatA1(), " ")
 			//for _, c := range well.WContents {
-			fmt.Print(well.WContents.CName, " ")
+			//	fmt.Print(well.WContents.CN, " ")
+			if well.WContents.IsInstance() {
+				fmt.Print(well.WContents.CNID(), " ")
+			} else {
+				fmt.Print(well.WContents.CName, " ")
+			}
 			//}
 			fmt.Printf(" %-6.2f%s", well.Currvol(), well.Vunit)
+			fmt.Println()
 			fmt.Println()
 		}
 	}
@@ -472,6 +483,15 @@ func (lhp *LHPlate) WellsX() int {
 
 func (lhp *LHPlate) WellsY() int {
 	return lhp.WlsY
+}
+
+func (lhp *LHPlate) Empty() bool {
+	for _, w := range lhp.Wellcoords {
+		if !w.Empty() {
+			return false
+		}
+	}
+	return true
 }
 
 func (lhp *LHPlate) NextEmptyWell(it PlateIterator) WellCoords {
@@ -982,4 +1002,12 @@ func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector
 	}
 
 	return fcv
+}
+func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
+	for _, w := range p.Wellcoords {
+		if w.UpdateContentID(before, after) {
+			return true
+		}
+	}
+	return false
 }

@@ -30,7 +30,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pcr"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -128,9 +127,6 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 					if strings.ToUpper(each[2]) == "1" {
 						part.Plasmid = true
 					}
-					/*	if each[2] == 1 {
-						part.Plasmid = true
-					}*/
 					if strings.ToUpper(each[2]) == "PLASMID" {
 						part.Plasmid = true
 					}
@@ -149,9 +145,6 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 					if strings.ToUpper(each[2]) == "0" {
 						part.Plasmid = false
 					}
-					/*	if each[2] == 0 {
-						part.Plasmid = false
-					}*/
 				}
 
 				parts = append(parts, part)
@@ -197,98 +190,4 @@ func Assemblyfromcsv(designfile string, partsfile string) (assemblyparameters []
 	}
 
 	return assemblyparameters
-}
-
-func pcrReactionfromcsv(designfile string, sequencefile string) (pcrReaction []pcr.Reaction, err error) {
-
-	designedconstructs := readPCRDesign(designfile)
-	sequences := readPCRDesign(sequencefile)
-	for _, c := range designedconstructs {
-		var newpcrReaction pcr.Reaction
-		newpcrReaction.ReactionName = c[0]
-		newpcrReaction.Template.Nm = c[1]
-		newpcrReaction.PrimerPair[0].Nm = c[2]
-		newpcrReaction.PrimerPair[1].Nm = c[3]
-		pcrReaction = append(pcrReaction, newpcrReaction)
-	}
-
-	var Status string
-
-	for b, _ := range pcrReaction {
-		var x int
-		for _, c := range sequences {
-			var y int
-			if b == 0 {
-				for _, d := range sequences { //check for duplicate entries in list
-					if d[0] == c[0] {
-						y++
-						if y > 1 {
-							Status = (Status + "Part " + c[0] + " defined more than once in Sheet1 please specify a single entry. ")
-						}
-					}
-				}
-			}
-
-			if c[0] == pcrReaction[b].Template.Nm {
-				pcrReaction[b].Template.Seq = c[1]
-				x++
-			} else if c[0] == pcrReaction[b].PrimerPair[0].Nm {
-				pcrReaction[b].PrimerPair[0].Seq = c[1]
-				x++
-			} else if c[0] == pcrReaction[b].PrimerPair[1].Nm {
-				pcrReaction[b].PrimerPair[1].Seq = c[1]
-				x++
-			}
-
-		}
-		if x < 3 {
-			Status = (Status + "Please specify all parts for reaction " + pcrReaction[b].ReactionName + " in Sheet1. ")
-		}
-	}
-	if Status != "" {
-		err = fmt.Errorf(Status)
-	}
-	return
-}
-
-func readPCRDesign(filename string) [][]string {
-
-	var constructs [][]string
-
-	csvfile, err := os.Open(filename)
-
-	if err != nil {
-		fmt.Println(err)
-		return constructs
-	}
-
-	defer csvfile.Close()
-
-	reader := csv.NewReader(csvfile)
-
-	reader.FieldsPerRecord = -1 // see the Reader struct information below
-
-	rawCSVdata, err := reader.ReadAll()
-
-	if err != nil {
-		panic(err)
-	}
-
-	// sanity check, display to standard output
-	for _, each := range rawCSVdata {
-		var parts []string
-
-		if len(each[0]) > 0 {
-			if string(strings.TrimSpace(each[0])[0]) != "#" {
-				for _, p := range each {
-					if p != "" {
-						parts = append(parts, strings.TrimSpace(p))
-					}
-				}
-				constructs = append(constructs, parts)
-			}
-		}
-	}
-
-	return constructs
 }

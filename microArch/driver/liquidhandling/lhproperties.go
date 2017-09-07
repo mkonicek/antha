@@ -724,13 +724,14 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 		foundIt := false
 
 		cmpdup := cmp.Dup()
+
 		// searches all plates: input and output
 		for _, ipref := range lhp.InputSearchPreferences() {
 			// check if the plate at position ipref has the
 			// component we seek
 
 			p, ok := localplates[ipref]
-			if ok {
+			if ok && !p.Empty() {
 				// whaddya got?
 				// nb this won't work if we need to split a volume across several plates
 				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume(), legacyVolume)
@@ -1086,18 +1087,36 @@ func (lhp *LHProperties) CheckTipPrefCompatibility(prefs []string) bool {
 	return true
 }
 
+// CheckPreferenceCompatibility returns if the device specific configuration
+// positions are compatible with the current device.
 func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
-	// if we find any preference which is not compliant we reject the array
+	// TODO: Not the most portable or extensible way
 
-	prefix := ""
+	var checkFn func(string) bool
+
 	if lhp.Mnfr == "Tecan" {
-		prefix = lhp.Mnfr + "Pos_"
+		checkFn = func(pos string) bool {
+			return strings.HasPrefix(pos, "TecanPos_")
+		}
 	} else if lhp.Mnfr == "Gilson" || lhp.Mnfr == "CyBio" && lhp.Model == "Felix" {
-		prefix = "position_"
+		checkFn = func(pos string) bool {
+			return strings.HasPrefix(pos, "position_")
+		}
+	} else if lhp.Mnfr == "CyBio" && lhp.Model == "GeneTheatre" {
+		checkFn = func(pos string) bool {
+			if len(pos) != 2 {
+				return false
+			}
+			return 'A' <= pos[0] && pos[0] <= 'D' && '0' <= pos[1] && pos[1] <= '9'
+		}
+	}
+
+	if checkFn == nil {
+		return true
 	}
 
 	for _, p := range prefs {
-		if !strings.HasPrefix(p, prefix) {
+		if !checkFn(p) {
 			return false
 		}
 	}
@@ -1204,5 +1223,20 @@ func (p LHProperties) HasTipTracking() bool {
 		return true
 	}
 
+	return false
+}
+
+func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.LHComponent) {
+	for s, c := range updates {
+		p.UpdateComponentID(s, c)
+	}
+}
+
+func (p *LHProperties) UpdateComponentID(from string, to *wtype.LHComponent) bool {
+	for _, p := range p.Plates {
+		if p.FindAndUpdateID(from, to) {
+			return true
+		}
+	}
 	return false
 }

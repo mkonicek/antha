@@ -28,7 +28,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	parser "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/fasta"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/genbank"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -130,7 +131,7 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 
 		filename := file.Name
 		if filepath.Ext(filename) == ".fasta" {
-			sequences, _ := parser.FastatoDNASequences(file)
+			sequences, _ := fasta.FastaToDNASequences(file)
 
 			for _, seq := range sequences {
 				if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
@@ -141,7 +142,7 @@ func LookforParts() (partslist map[string]wtype.DNASequence, err error) {
 				}
 			}
 		} else if filepath.Ext(filename) == ".gb" {
-			seq, _ := parser.GenbankToAnnotatedSeq(file)
+			seq, _ := genbank.GenbankToAnnotatedSeq(file)
 			if _, alreadyinmap := partslist[seq.Nm]; !alreadyinmap {
 				partslist[seq.Nm] = seq
 			} else {

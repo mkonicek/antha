@@ -28,10 +28,10 @@ func makeSortedGraph(g Graph, less LessThan) *qgraph {
 		Outs: make(map[Node][]Node),
 	}
 
-	for i, inum := 0, g.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, g.NumNodes(); i < inum; i++ {
 		n := g.Node(i)
 		ret.Nodes = append(ret.Nodes, n)
-		for j, jnum := 0, g.NumOuts(n); j < jnum; j += 1 {
+		for j, jnum := 0, g.NumOuts(n); j < jnum; j++ {
 			ret.Outs[n] = append(ret.Outs[n], g.Out(n, j))
 		}
 		sort.Sort(&nodeSliceSorter{

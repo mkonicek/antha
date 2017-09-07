@@ -30,7 +30,7 @@ import (
 	"strings"
 	"time"
 
-	parser "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/genbank"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	biogo "github.com/biogo/ncbi/entrez"
 )
@@ -123,7 +123,7 @@ func RetrieveSequence(id string, database string) (seq wtype.DNASequence, err er
 		return wtype.DNASequence{}, err
 	}
 
-	seq, err = parser.GenbankContentsToAnnotatedSeq(contents)
+	seq, err = genbank.GenbankContentsToAnnotatedSeq(contents)
 	if err != nil {
 		return wtype.DNASequence{}, err
 	}

@@ -76,6 +76,10 @@ type LHWell struct {
 	Plate     *LHPlate `gotopb:"-" json:"-"`
 }
 
+//@implement AnthaObject
+func (well LHWell) GetID() string {
+	return well.ID
+}
 func (w LHWell) String() string {
 	return fmt.Sprintf(
 		`LHWELL{
@@ -735,4 +739,15 @@ func (w *LHWell) Contains(cmp *LHComponent) bool {
 		// sufficient to be of same types
 		return cmp.IsSameKindAs(w.WContents)
 	}
+}
+
+func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
+	if w.WContents.ID == IDBefore {
+		previous := w.WContents
+		after.AddParentComponent(previous)
+		w.WContents = after
+		return true
+	}
+
+	return false
 }

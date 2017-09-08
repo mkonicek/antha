@@ -47,10 +47,6 @@ type LHTip struct {
 	Head        int
 */
 
-func (tip LHTip) GetID() string {
-	return tip.ID
-}
-
 func (tip *LHTip) GetParams() *LHChannelParameter {
 	// be safe
 	if tip.IsNil() {

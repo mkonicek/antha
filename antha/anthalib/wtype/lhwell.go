@@ -76,10 +76,6 @@ type LHWell struct {
 	Plate     *LHPlate `gotopb:"-" json:"-"`
 }
 
-//@implement AnthaObject
-func (well LHWell) GetID() string {
-	return well.ID
-}
 func (w LHWell) String() string {
 	return fmt.Sprintf(
 		`LHWELL{

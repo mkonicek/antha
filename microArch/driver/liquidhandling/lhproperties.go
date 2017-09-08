@@ -863,23 +863,28 @@ func (lhp *LHProperties) legacyGetComponentsSingle(cmps []*wtype.LHComponent, ca
 	return plateIDs, wellCoords, vols, nil
 }
 
-func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
-	positions = make([]string, multi)
-	boxtypes = make([]string, multi)
+func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
 
-	// hack -- count tips left
-	n_tips_left := 0
-	for _, pos := range lhp.Tip_preferences {
-		bx, ok := lhp.Tipboxes[pos]
+	subsets := makeChannelSubsets(tiptype, channel)
 
-		if !ok || bx.Tiptype.Type != tiptype {
-			continue
+	for _, set := range subsets {
+		sw, sp, sb, err := getCleanTipSubset(ctx, set, usetiptracking)
+
+		if err != nil {
+			return err
 		}
 
-		n_tips_left += bx.N_clean_tips()
+		wells = append(wells, sw)
+		positions = append(positions, sp)
+		boxtypes = append(boxtypes, sb)
 	}
 
-	//	logger.Debug(fmt.Sprintf("There are %d clean tips of type %s left", n_tips_left, tiptype))
+	return wells, positions, boxtypes, nil
+}
+
+func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
+	positions = make([]string, len(tipParams.Mask))
+	boxtypes = make([]string, len(tipParams.Mask))
 
 	foundit := false
 

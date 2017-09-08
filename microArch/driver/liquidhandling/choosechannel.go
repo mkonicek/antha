@@ -1,10 +1,10 @@
 package liquidhandling
 
 import (
-	"math"
-
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"math"
 )
 
 // it would probably make more sense for this to be a method of the robot
@@ -125,4 +125,22 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	// and probably the whole head rather than just its channel parameters
 
 	return headchosen.GetParams(), tipchosen
+}
+
+func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []string, error) {
+	prmA := make([]*wtype.LHChannelParameter, len(vols))
+	tipA := make([]string, len(vols))
+
+	// we choose individually
+
+	for i := 0; i < len(vols); i++ {
+		prm, tip := ChooseChannel(vols[i], prms)
+		if tip == nil {
+			return prmA, tipA, fmt.Errorf(TipChosenError(vols[i], prms))
+		}
+		prmA[i] = prm
+		tipA[i] = tip.Type
+	}
+
+	return prmA, tipA, nil
 }

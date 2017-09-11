@@ -24,7 +24,10 @@
 package eng
 
 import (
+	"fmt"
+
 	"math"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -54,7 +57,7 @@ func KLa_squaremicrowell(D float64, dv float64, ai float64, RE float64, a float6
 } // a little unclear whether exp is e to (afr^b) from paper but assumed this is the case
 */
 
-func KLaSquareMicrowell(D float64, dv float64, ai float64, RE float64, a float64, froude float64, b float64) (float64, error) {
+func KLaSquareMicrowell(D float64, wellDiameter wunit.Length, ai float64, RE float64, a float64, froude float64, b float64) (float64, error) {
 
 	/*
 		klainputs := fmt.Sprintln("D: ",D,"dv: ", dv,"ai: ", ai,"Re: ", Re,"a: ", a,"Fr: ", Fr,"b: ", b)
@@ -75,11 +78,35 @@ func KLaSquareMicrowell(D float64, dv float64, ai float64, RE float64, a float64
 		}
 	*/
 	//
+
+	klainputs := fmt.Sprintln(fmt.Sprintln("D = ", D), fmt.Sprintln("wellDiameter = ", wellDiameter), fmt.Sprintln("ai = ", ai), fmt.Sprintln("RE = ", RE), fmt.Sprintln("a = ", a), fmt.Sprintln("Froude number = ", froude), fmt.Sprintln("b = ", b))
+
+	dv := wellDiameter.ConvertTo(wunit.ParsePrefixedUnit("m"))
+
 	part1 := ((3.94E-4) * (D / dv) * ai * (math.Pow(RE, 1.91)))
 
 	exponent := a * (math.Pow(froude, b))
 
 	part2a := float64(math.Pow(math.E, exponent))
+
+	var errorMessages []string = []string{
+		fmt.Sprintln(fmt.Sprintln("Calculation inputs: "), klainputs),
+		fmt.Sprintln(fmt.Sprintln("Derived values: "),
+			fmt.Sprintln("math.Pow(RE, 1.91) = ", math.Pow(RE, 1.91)),
+			fmt.Sprintln("math.Pow(froude, b) = ", math.Pow(froude, b)),
+			fmt.Sprintln("exponent = a * (math.Pow(froude, b)) = ", a*(math.Pow(froude, b))),
+			fmt.Sprintln("e", math.E, "^", (a*(math.Pow(froude, b))), "= ", math.Pow(math.E, exponent))),
+	}
+
+	if math.IsNaN(part2a) {
+		err := fmt.Errorf("Calculated Kla is not a number due to sub calculation. %s = %f where exponent %s =  %f", "math.Pow(math.E, exponent) , %s = %f", "a * (math.Pow(froude, b)). Inputs = %s", a*(math.Pow(froude, b)), errorMessages)
+		return 0.0, err
+	}
+
+	if math.IsInf(part2a, 0) {
+		err := fmt.Errorf("Calculated Kla is infinity due to sub calculation. %s = %f. Inputs = %s", "math.Pow(math.E, exponent)", math.Pow(math.E, exponent), strings.Join(errorMessages, "\n"))
+		return 0.0, err
+	}
 
 	part2 := float64(part2a)
 
@@ -112,18 +139,25 @@ func KLa_squaremicrowell(D float64, dv float64, ai float64, RE float64, a float6
 */
 
 // RE calculates the Reynolds number for mixing fluid in a shaken microwell plate.
-func RE(ro float64, n float64, mu float64, dv float64) float64 { // Reynolds number
+// is dv really the well diameter and not the shaking amplitude?
+func RE(ro float64, n float64, mu float64, wellDiameter wunit.Length) float64 { // Reynolds number
+
+	dv := wellDiameter.ConvertTo(wunit.ParsePrefixedUnit("m"))
 
 	return (ro * n * dv * 2 / mu)
 }
 
-func ShakerSpeed(TargetRE float64, ro float64, mu float64, dv float64) (rate wunit.Rate, err error) /*float64*/ { // calulate shaker speed from target Reynolds number
+func ShakerSpeed(TargetRE float64, ro float64, mu float64, wellDiameter wunit.Length) (rate wunit.Rate, err error) /*float64*/ { // calulate shaker speed from target Reynolds number
+
+	dv := wellDiameter.ConvertTo(wunit.ParsePrefixedUnit("m"))
+
 	rps := (TargetRE * mu / (ro * dv * 2))
 	rate, err = wunit.NewRate(rps, "/s")
 	return rate, err
 }
 
-func Froude(dt float64, n float64, g float64) float64 { // froude number  dt = shaken diamter in m
+func Froude(shakingDiameter wunit.Length, n float64, g float64) float64 { // froude number  dt = shaken diamter in m
+	dt := shakingDiameter.ConvertTo(wunit.ParsePrefixedUnit("m"))
 	return (dt * (math.Pow((2 * math.Pi * n), 2)) / (2 * g))
 }
 

@@ -24,7 +24,6 @@
 package eng
 
 import (
-	//	"fmt"
 	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -55,8 +54,43 @@ func KLa_squaremicrowell(D float64, dv float64, ai float64, RE float64, a float6
 } // a little unclear whether exp is e to (afr^b) from paper but assumed this is the case
 */
 
-func KLa_squaremicrowell(D float64, dv float64, ai float64, RE float64, a float64, froude float64, b float64) float64 {
-	return ((3.94E-4) * (D / dv) * ai * (math.Pow(RE, 1.91)) * (math.Pow(math.E, (a * (math.Pow(froude, b))))))
+func KLaSquareMicrowell(D float64, dv float64, ai float64, RE float64, a float64, froude float64, b float64) (float64, error) {
+
+	/*
+		klainputs := fmt.Sprintln("D: ",D,"dv: ", dv,"ai: ", ai,"Re: ", Re,"a: ", a,"Fr: ", Fr,"b: ", b)
+
+		var errorMessages []string = []string{
+				fmt.Sprintln("Calculation inputs: ", klainputs),
+				fmt.Sprintln("Derived values: ", "math.Pow(RE, 1.91): ", math.Pow(Re, 1.91), "math.Pow(froude, b): ", math.Pow(Fr, b), "(math.Pow(math.E, (a * (math.Pow(froude, b))))): ", (math.Exp(a * (math.Pow(Fr, b)))), "a * (math.Pow(froude, b)): ", a*(math.Pow(Fr, b))),
+				fmt.Sprintln("e", math.E, "power", (a * (math.Pow(Fr, b)))),
+		}
+
+
+		if math.IsNaN(CalculatedKla) {
+			Errorf("Calculated Kla is not a number. %s",strings.Join(errorMessages,";"))
+		}
+
+		if math.IsInf(CalculatedKla,0) {
+			Errorf("Calculated Kla is infinite. %s",strings.Join(errorMessages,";"))
+		}
+	*/
+	//
+	part1 := ((3.94E-4) * (D / dv) * ai * (math.Pow(RE, 1.91)))
+
+	exponent := a * (math.Pow(froude, b))
+
+	part2a := float64(math.Pow(math.E, exponent))
+
+	part2 := float64(part2a)
+
+	klaresult := part1 * part2
+
+	return klaresult, nil
+	//
+
+	// original return
+	//return ((3.94E-4) * (D / dv) * ai * (math.Pow(RE, 1.91)) * (math.Pow(math.E, (a * (math.Pow(froude, b)))))), nil
+
 } // a little unclear whether exp is e to (afr^b) from paper but assumed this is the case
 
 /*
@@ -76,17 +110,17 @@ func KLa_squaremicrowell(D float64, dv float64, ai float64, RE float64, a float6
 	return klaresult
 } // a little unclear whether exp is e to (afr^b) from paper but assumed this is the case
 */
+
+// RE calculates the Reynolds number for mixing fluid in a shaken microwell plate.
 func RE(ro float64, n float64, mu float64, dv float64) float64 { // Reynolds number
 
 	return (ro * n * dv * 2 / mu)
 }
 
-func Shakerspeed(TargetRE float64, ro float64, mu float64, dv float64) (rate wunit.Rate) /*float64*/ { // calulate shaker speed from target Reynolds number
+func ShakerSpeed(TargetRE float64, ro float64, mu float64, dv float64) (rate wunit.Rate, err error) /*float64*/ { // calulate shaker speed from target Reynolds number
 	rps := (TargetRE * mu / (ro * dv * 2))
-	rate, _ = wunit.NewRate(rps, "/s")
-	//rate = rpm
-
-	return rate
+	rate, err = wunit.NewRate(rps, "/s")
+	return rate, err
 }
 
 func Froude(dt float64, n float64, g float64) float64 { // froude number  dt = shaken diamter in m
@@ -95,10 +129,16 @@ func Froude(dt float64, n float64, g float64) float64 { // froude number  dt = s
 
 const G float64 = 9.81 //acceleration due to gravity in meters per second squared
 
-//Micheletti 2006:
-
-func Ncrit_srw(sigma float64, dv float64, Vl float64, ro float64, dt float64) (rate wunit.Rate) {
-	rps := math.Sqrt((sigma * dv) / (4 * math.Pi * Vl * ro * dt)) //unit = per S // established for srw with Vl = 200ul
+// NcritSRW calculates the minimal mixing velocity, in revolutions per second,
+// to achieve turbulent flow when mixing a shaken shallow round well microtitre plate.
+//
+// Calculation from Micheletti 2006
+// sigma = Surface tension in N/m
+// dv = microwell vessel diameter in m
+// ro = density, kg / m^3
+// dt = shaking amplitude
+func NcritSRW(sigma float64, dv wunit.Length, liquidVolume wunit.Volume, ro float64, dt float64) (rate wunit.Rate) {
+	rps := math.Sqrt((sigma * dv.ConvertTo(wunit.ParsePrefixedUnit("m"))) / (4 * math.Pi * liquidVolume.SIValue() * ro * dt)) //unit = per S // established for srw with Vl = 200ul
 	rate, _ = wunit.NewRate(rps, "/s")
 	return rate
 	//sigma = liquid surface tension N /m; dt = shaken diamter in m

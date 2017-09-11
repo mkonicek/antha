@@ -74,6 +74,24 @@ func (tb LHTipbox) GetID() string {
 	return tb.ID
 }
 
+func (tb LHTipbox) Output() string {
+	s := ""
+	for j := 0; j < tb.NumRows(); j++ {
+		for i := 0; i < tb.NumCols(); i++ {
+			if tb.Tips[i][j] == nil {
+				s += "."
+			} else if tb.Tips[i][j].Dirty {
+				s += "*"
+			} else {
+				s += "o"
+			}
+		}
+		s += "\n"
+	}
+
+	return s
+}
+
 func (tb LHTipbox) String() string {
 	return fmt.Sprintf(
 		`LHTipbox {
@@ -149,9 +167,160 @@ func (tb *LHTipbox) N_clean_tips() int {
 	return c
 }
 
-// actually useful functions
-// TODO implement Mirror
+func trim(ba []bool) []bool {
+	r := make([]bool, 0, len(ba))
+	s := -1
+	e := -1
 
+	for i := 0; i < len(ba); i++ {
+		if ba[i] {
+			if s == -1 {
+				s = i
+			}
+
+			e = i
+		}
+	}
+
+	for i := s; i <= e; i++ {
+		r = append(r, ba[i])
+	}
+
+	return r
+}
+
+// returns wells with tips in
+// -- this needs to align the tips to get with the channels
+// since there's no strict requirement to fix here
+func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int) []string {
+	if ori == LHVChannel {
+		for i := 0; i < tb.NumCols(); i++ {
+			r := tb.searchCleanTips(i, trim(mask), ori)
+			if r != nil && len(r) != 0 {
+				tb.Remove(r)
+				return r
+			}
+		}
+	} else if ori == LHHChannel {
+		for i := 0; i < tb.NumRows(); i++ {
+			r := tb.searchCleanTips(i, trim(mask), ori)
+			if r != nil && len(r) != 0 {
+				tb.Remove(r)
+				return r
+			}
+		}
+	}
+
+	// not found or unknown orientation
+	return []string{}
+}
+
+func (tb *LHTipbox) Remove(sa []string) bool {
+	ar := WCArrayFromStrings(sa)
+
+	for _, wc := range ar {
+		if wc.X < 0 {
+			continue
+		}
+		if wc.X >= len(tb.Tips) || wc.Y >= len(tb.Tips[wc.X]) || tb.Tips[wc.X][wc.Y] == nil {
+			return false
+		}
+
+		tb.Tips[wc.X][wc.Y] = nil
+	}
+
+	return true
+}
+
+func inflateMask(mask []bool, offset, size int) []bool {
+	r := make([]bool, size)
+
+	for i := offset; i < len(mask); i++ {
+		r[i+offset] = mask[i]
+	}
+
+	return r
+}
+
+func maskToWellCoords(mask []bool, offset, ori int) []string {
+	wc := make([]WellCoords, len(mask))
+
+	for i := 0; i < len(mask); i++ {
+		wc[i] = WellCoords{X: -1, Y: -1}
+
+		curWC := WellCoords{X: -1, Y: -1}
+
+		if ori == LHVChannel {
+			curWC = WellCoords{X: offset, Y: i}
+		} else if ori == LHHChannel {
+			curWC = WellCoords{X: i, Y: offset}
+		}
+
+		if mask[i] {
+			wc[i] = curWC
+		}
+	}
+
+	r := make([]string, len(wc))
+
+	for i := 0; i < len(wc); i++ {
+		if wc[i].X != -1 {
+			r[i] = wc[i].FormatA1()
+		}
+	}
+
+	return r
+}
+
+func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori int) []string {
+	r := make([]string, 0, 1)
+
+	if ori == LHVChannel {
+		df := tb.NumRows() - len(mask) + 1
+		for i := 0; i < df; i++ {
+			m := inflateMask(mask, i, tb.NumRows())
+			if tb.hasCleanTips(offset, m, ori) {
+				return maskToWellCoords(m, offset, ori)
+			}
+		}
+	} else if ori == LHHChannel {
+		df := tb.NumCols() - len(mask) + 1
+		for i := 0; i < df; i++ {
+			m := inflateMask(mask, i, tb.NumCols())
+			if tb.hasCleanTips(offset, m, ori) {
+				return maskToWellCoords(m, offset, ori)
+			}
+		}
+
+	}
+
+	return r
+}
+
+// fails iff for true mask[i] there is no corresponding clean tip
+func (tb *LHTipbox) hasCleanTips(offset int, mask []bool, ori int) bool {
+	if ori == LHVChannel {
+		for i := 0; i < len(mask); i++ {
+			if mask[i] && (tb.Tips[offset][i] == nil || tb.Tips[offset][i].Dirty) {
+				return false
+			}
+		}
+
+		return true
+	} else if ori == LHHChannel {
+		for i := 0; i < len(mask); i++ {
+			if mask[i] && (tb.Tips[i][offset] == nil || !tb.Tips[i][offset].Dirty) {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return false
+}
+
+// deprecated shortly
 func (tb *LHTipbox) GetTips(mirror bool, multi, orient int) []string {
 	// this removes the tips as well
 	var ret []string = nil
@@ -251,14 +420,6 @@ func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	tipbox.NTips = tipbox.Nrows * tipbox.Ncols
 	return tipbox
 }
-
-/*
-type SBSLabware interface {
-	NumRows() int
-	NumCols() int
-	PlateHeight() float64
-}
-*/
 
 // @implement SBSLabware
 

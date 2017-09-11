@@ -138,8 +138,6 @@ func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, ro
 
 		possible_sets = append(possible_sets, sids)
 		corresponding_params = append(corresponding_params, head.GetParams())
-
-		fmt.Println("GET PARAMS: ", head.GetParams())
 	}
 
 	// don't even bother if there are no possible sets

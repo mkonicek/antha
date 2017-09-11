@@ -127,20 +127,22 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	return headchosen.GetParams(), tipchosen
 }
 
-func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []string, error) {
+func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []*wtype.LHTip, []string, error) {
 	prmA := make([]*wtype.LHChannelParameter, len(vols))
-	tipA := make([]string, len(vols))
+	tipA := make([]*wtype.LHTip, len(vols))
+	tipTypeA := make([]string, len(vols))
 
 	// we choose individually
 
 	for i := 0; i < len(vols); i++ {
 		prm, tip := ChooseChannel(vols[i], prms)
 		if tip == nil {
-			return prmA, tipA, fmt.Errorf(TipChosenError(vols[i], prms))
+			return prmA, tipA, tipTypeA, fmt.Errorf(TipChosenError(vols[i], prms))
 		}
 		prmA[i] = prm
-		tipA[i] = tip.Type
+		tipA[i] = tip.Dup()
+		tipTypeA[i] = tip.Type
 	}
 
-	return prmA, tipA, nil
+	return prmA, tipA, tipTypeA, nil
 }

@@ -67,3 +67,7 @@ func TestSavePlates(t *testing.T) {
 	}
 
 }
+
+func TestMakeChannelSubset(t *testing.T) {
+	t.Errorf("WRITE THIS TEST PLEASE")
+}

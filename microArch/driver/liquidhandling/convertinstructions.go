@@ -100,8 +100,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		parallelTransfers, err := robot.GetComponents(GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: orientation, Multi: multi, Independent: independent, LegacyVolume: legacyVolume})
 
-		fmt.Println("GOT ", parallelTransfers)
-
 		if err != nil {
 			return nil, err
 		}

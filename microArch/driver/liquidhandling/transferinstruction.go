@@ -25,7 +25,6 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -163,50 +162,13 @@ func (ins *TransferInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
-func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
-	ret := make([]wunit.Volume, 0)
-
-	vol := Vol.ConvertTo(Min.Unit())
-	min := Min.RawValue()
-	max := Max.RawValue()
-
-	//	if vol < min {
-	if Vol.LessThanRounded(Min, 1) {
-		err := wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Liquid Handler cannot service volume requested: %f - minimum volume is %f", vol, min))
-		return ret, err
-	}
-
-	//if vol <= max {
-	if !Vol.GreaterThanRounded(Max, 1) {
-		ret = append(ret, Vol)
-		return ret, nil
-	}
-
-	// vol is > max, need to know by how much
-	// if vol/max = n then we do n+1 equal transfers of vol / (n+1)
-	// this should never be outside the range
-
-	n, _ := math.Modf(vol / max)
-
-	n += 1
-
-	// should make sure of no rounding errors here... we want to
-	// make sure these are within the resolution of the channel
-
-	for i := 0; i < int(n); i++ {
-		ret = append(ret, wunit.NewVolume(vol/n, Vol.Unit().PrefixedSymbol()))
-	}
-
-	return ret, nil
-}
-
 func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
 	// the minimum volume in the set... ensuring that we what we leave is
 	// either 0 or minLeave or greater
 
-	ret := vs.Vols[0].Dup()
+	ret := vs[0].Dup()
 
-	for _, v := range vs.Vols {
+	for _, v := range vs {
 		if v.LessThan(ret) && !v.IsZero() {
 			ret = v.Dup()
 		}
@@ -560,92 +522,6 @@ func IsIn(i int, a []int) bool {
 	return false
 }
 
-// helper thing
-
-type VolumeSet struct {
-	Vols []wunit.Volume
-}
-
-func NewVolumeSet(n int) VolumeSet {
-	var vs VolumeSet
-	vs.Vols = make([]wunit.Volume, n)
-	for i := 0; i < n; i++ {
-		vs.Vols[i] = (wunit.NewVolume(0.0, "ul"))
-	}
-	return vs
-}
-
-func (vs VolumeSet) Add(v wunit.Volume) {
-	for i := 0; i < len(vs.Vols); i++ {
-		vs.Vols[i].Add(v)
-	}
-}
-
-func (vs VolumeSet) Sub(v wunit.Volume) VolumeSet {
-	ret := make([]wunit.Volume, len(vs.Vols))
-	for i := 0; i < len(vs.Vols); i++ {
-		ret[i] = wunit.CopyVolume(vs.Vols[i])
-		ret[i].Subtract(v)
-	}
-	return VolumeSet{Vols: ret}
-}
-
-func (vs VolumeSet) SetEqualTo(v wunit.Volume, multi int) {
-	for i := 0; i < multi; i++ {
-		vs.Vols[i] = wunit.CopyVolume(v)
-	}
-}
-
-func (vs VolumeSet) Dup() VolumeSet {
-	return VolumeSet{Vols: vs.GetACopy()}
-}
-
-func (vs VolumeSet) GetACopy() []wunit.Volume {
-	r := make([]wunit.Volume, len(vs.Vols))
-	for i := 0; i < len(vs.Vols); i++ {
-		r[i] = wunit.CopyVolume(vs.Vols[i])
-	}
-	return r
-}
-
-func (vs VolumeSet) NonZeros() VolumeSet {
-	vols := make([]wunit.Volume, 0, len(vs.Vols))
-
-	for _, v := range vs.Vols {
-		if !v.IsZero() {
-			vols = append(vols, v)
-		}
-	}
-
-	return VolumeSet{Vols: vols}
-}
-
-func (vs VolumeSet) Min() wunit.Volume {
-	if len(vs.Vols) == 0 {
-		return wunit.ZeroVolume()
-	}
-	v := vs.Vols[0]
-
-	for i := 1; i < len(vs.Vols); i++ {
-		if vs.Vols[i].LessThan(v) {
-			v = vs.Vols[i].Dup()
-		}
-	}
-
-	return v
-}
-
-func countSetSize(set []int) int {
-	c := 0
-	for _, v := range set {
-		if v != -1 {
-			c += 1
-		}
-	}
-
-	return c
-}
-
 func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	// trims out leading blanks for now... will eventually call
 	// CanAddress on prms
@@ -781,9 +657,9 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 				if s == -1 {
 					continue
 				}
-				vols.Vols[i] = wunit.CopyVolume(ins.Volume[s])
-				fvols.Vols[i] = wunit.CopyVolume(ins.FVolume[s])
-				tvols.Vols[i] = wunit.CopyVolume(ins.TVolume[s])
+				vols[i] = wunit.CopyVolume(ins.Volume[s])
+				fvols[i] = wunit.CopyVolume(ins.FVolume[s])
+				tvols[i] = wunit.CopyVolume(ins.TVolume[s])
 				What[i] = ins.What[s]
 				PltFrom[i] = ins.PltFrom[s]
 				PltTo[i] = ins.PltTo[s]
@@ -798,11 +674,11 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 			// now set the vols for the transfer and remove this from the instruction's volume
 
-			for i, _ := range vols.Vols {
+			for i, _ := range vols {
 				if set[i] == -1 {
 					continue
 				}
-				vols.Vols[i] = wunit.CopyVolume(maxvol)
+				vols[i] = wunit.CopyVolume(maxvol)
 				ins.Volume[set[i]].Subtract(maxvol)
 
 				// set the from and to volumes for the relevant part of the instruction
@@ -820,9 +696,9 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 			tp := NewMultiTransferParams(mci.Multi)
 			tp.What = What
-			tp.Volume = vols.Vols
-			tp.FVolume = fvols.Vols
-			tp.TVolume = tvols.Vols
+			tp.Volume = vols
+			tp.FVolume = fvols
+			tp.TVolume = tvols
 			tp.PltFrom = PltFrom
 			tp.PltTo = PltTo
 			tp.WellFrom = WellFrom

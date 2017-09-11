@@ -156,10 +156,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
 
-	for _, s := range srcs {
-		fmt.Println("SRC: ", s)
-	}
-
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
 
@@ -182,7 +178,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			if src.Empty() {
 				continue
 			}
-			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, true)
+			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, false)
 
 			if err != nil && err.Error() != wtype.NotFoundError {
 				return rep, err
@@ -191,7 +187,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			if match.Sc > bestMatch.Sc {
 				bestMatch = match
 				bestSrc = src
-				fmt.Println(src)
 			}
 		}
 

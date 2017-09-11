@@ -34,8 +34,8 @@ var (
 			"d":     19.0,
 			"xs":    0.1,    //0.62198 * pws / (pa - pws), // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 			"x":     0.01,   //0.62198 * pw / (pa - pw),   // equations not working
-			"ro":    999.97, //density, kg 􏰀/ m􏰁3
-			"mu":    0.001,  //viscosity at 20degrees, kg 􏰀/ m􏰁 /􏰀 s
+			"ro":    999.97, //density, kg / m^3
+			"mu":    0.001,  //viscosity at 20degrees, kg / m / s
 			"sigma": 0.072,  //Surface tension in N/m from Wikipedia at 25 degrees
 			"Lm":    334000, //(J/kg) //latent heat of melting (J/kg, Btu/lb)
 		},

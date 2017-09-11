@@ -23,43 +23,44 @@
 // Example labware definitions
 package labware
 
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+)
+
 var (
 	//radius = 0.005 // radius of surface in m
 
 	// map of some labware properties
 
-	Labwaregeometry = map[string]map[string]float64{
-		"96DSW_axygen": map[string]float64{
+	Labwaregeometry = map[string]map[string]interface{}{
+		"96DSW_axygen": map[string]interface{}{
 			"numberofwells": 96.0,
 			//"Surfacearea":   0.000005,
 			"Height": 0.01, // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 			"Radius": 0.001,
 			"dv":     0.017,
 		},
-		"96DRW_axygen": map[string]float64{
+		"96DRW_axygen": map[string]interface{}{
 			"numberofwells": 96.0,
 			//"Surfacearea":   0.00004,
 			"Height": 10.0, // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 			"Radius": 0.001,
 		},
-		"DSW24": map[string]float64{ //24 square wells, pyramidal bases (DOT Scientific, Inc., Burton, MI)
+		"DSW24": map[string]interface{}{ //24 square wells, pyramidal bases (DOT Scientific, Inc., Burton, MI)
 			"numberofwells":     24.0,
 			"numberofwellsides": 4.0,
-			"height_m":          0.043, //m
-			"width_m":           0.017, //m
-			"breadth_m":         0.017, //m
-			"dv":                0.017, //m
+			"dv":                wunit.NewLength(17.0, "mm"),
 			//"Surfacearea":       0.000289, //m2 surface area in contact with air when stationary
-			"Height": 43.0, //mm used in evaporation calculator ... correct to SI units
-			"Radius": 17.0, //mm used in evaporation calculator ... correct to SI units
+			"Height": wunit.NewLength(43.0, "mm"), //mm used in evaporation calculator ... correct to SI units
+			"Radius": wunit.NewLength(17.0, "mm"), //mm used in evaporation calculator ... correct to SI units
 			"a":      0.88,
 			"b":      1.24,
-			"ai":     96.0,   //initial specific surface area, /m
-			"Δx":     0.002,  // wall thickness m
-			"k":      0.1,    // plastic thermal conductivity J s-1 m-1 °C-1 for polypropylene ~0.1-0.22 http://www.engineeringtoolbox.com/thermal-conductivity-d_429.html
-			"A":      0.0003, // plasticsurfacearea m2 in contact with ?
+			"ai":     96.0,                         //initial specific surface area, /m
+			"Δx":     wunit.NewLength(2.0, "mm"),   // wall thickness in m
+			"k":      0.1,                          // plastic thermal conductivity J s-1 m-1 °C-1 for polypropylene ~0.1-0.22 http://www.engineeringtoolbox.com/thermal-conductivity-d_429.html
+			"A":      wunit.NewArea(0.0003, "m^2"), // plasticsurfacearea m2 in contact with ?
 		},
-		"pcrplate_skirted": map[string]float64{
+		"pcrplate_skirted": map[string]interface{}{
 			"numberofwells":     96.0,
 			"numberofwellsides": 1.0,
 			"height_m":          0.02075, //m
@@ -76,7 +77,7 @@ var (
 			"k":      0.1,      // plastic thermal conductivity J s-1 m-1 °C-1 for polypropylene ~0.1-0.22 http://www.engineeringtoolbox.com/thermal-conductivity-d_429.html
 			"A":      0.000198, // plasticsurfacearea m2 in contact with ?
 		},
-		"greiner_384": map[string]float64{ //
+		"greiner_384": map[string]interface{}{ //
 			"numberofwells":     384.0,
 			"numberofwellsides": 4.0,
 			"height_m":          0.01,  //m

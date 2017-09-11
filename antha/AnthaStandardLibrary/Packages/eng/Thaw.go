@@ -24,10 +24,12 @@
 package eng
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Labware"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Liquidclasses"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"math"
 )
 
 /*Heat Required to Melt a Solid
@@ -104,7 +106,20 @@ func Hc_air(v float64) (hc_air float64) {
 func ConvectionPowertransferred(hc_air float64, Platetype string, SurfaceTemp wunit.Temperature, BulkTemp wunit.Temperature) (convectionpowertransferred float64) {
 	surfaceTemp := SurfaceTemp.SIValue()
 	bulkTemp := BulkTemp.SIValue()
-	return (hc_air * labware.Labwaregeometry[Platetype]["A"] * (surfaceTemp - bulkTemp))
+
+	area, err := lookUpProperty(Platetype, "A")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	typedArea, ok := area.(wunit.Area)
+
+	if !ok {
+		panic(fmt.Sprint("expecting wunit.Area type for %+v", area))
+	}
+
+	return (hc_air * typedArea.ConvertTo(wunit.ParsePrefixedUnit("m^2")) * (surfaceTemp - bulkTemp))
 }
 
 /*
@@ -119,10 +134,60 @@ Reference https://www.physicsforums.com/threads/calculate-how-long-it-will-take-
 
 */
 
-func ConductionPowertransferred(Platetype string, SurfaceTemp wunit.Temperature, BulkTemp wunit.Temperature) (conductionpowertransferred float64) { // W or J/s
+func lookUpProperty(plateType, propertyName string) (property interface{}, err error) {
+	plateProperties, found := labware.Labwaregeometry[plateType]
+
+	if !found {
+		err = fmt.Errorf("no properties found for platetype %s, found %+v", plateType, labware.Labwaregeometry)
+		return
+	}
+
+	property, found = plateProperties[propertyName]
+
+	if !found {
+		err = fmt.Errorf(`no properties found for %s for platetype %s, found %+v`, propertyName, plateType, plateProperties)
+	}
+
+	return
+}
+
+func ConductionPowertransferred(plateType string, SurfaceTemp wunit.Temperature, BulkTemp wunit.Temperature) (conductionpowertransferred float64) { // W or J/s
 	surfaceTemp := SurfaceTemp.SIValue()
 	bulkTemp := BulkTemp.SIValue()
-	return (labware.Labwaregeometry[Platetype]["k"] * labware.Labwaregeometry[Platetype]["A"] * ((surfaceTemp - bulkTemp) / labware.Labwaregeometry[Platetype]["Δx"]))
+
+	a, err := lookUpProperty(plateType, "A")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	area, ok := a.(wunit.Area)
+
+	if !ok {
+		panic(fmt.Sprint("expecting wunit.Area type for %+v", a))
+	}
+
+	k, err := lookUpProperty(plateType, "k")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	kfloat, ok := k.(float64)
+
+	deltaXInterface, err := lookUpProperty(plateType, "Δx")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	deltaX, ok := deltaXInterface.(wunit.Length)
+
+	if !ok {
+		panic(fmt.Sprint("expecting wunit.Length type for %+v", deltaXInterface))
+	}
+
+	return (kfloat * area.ConvertTo(wunit.ParsePrefixedUnit("m^2")) * ((surfaceTemp - bulkTemp) / deltaX.ConvertTo(wunit.ParsePrefixedUnit("m"))))
 }
 
 func Thawtime(convectionpowertransferred float64, conductionpowertransferred float64, q float64) (Thawtimerequired wunit.Time) { //(liquid string, airvelocity float64) float64 {

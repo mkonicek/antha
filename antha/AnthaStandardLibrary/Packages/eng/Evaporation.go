@@ -25,9 +25,10 @@ package eng
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Liquidclasses"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"math"
 )
 
 func Θ(liquid string, airvelocity wunit.Velocity) (float64, error) {

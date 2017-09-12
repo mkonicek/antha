@@ -214,28 +214,69 @@ func trimToMask(wells []string, mask []bool) []string {
 	return ret
 }
 
+/*
+
+	GetTipsMasked:
+		mask 	- an array stating pattern of tips required... must be at most a column or row long
+		       	  which depends on ori
+		ori  	- int specifying which orientation of LHVChannel / LHHChannel
+		canTrim - bool specifying whether to remove leading and trailing "false" values
+
+
+	Behaviour:
+		search tip box for clean tips which fit the stated pattern, row-by-row or column-by-column
+		depending on which orientation is set
+
+		if canTrim is true then it is assumed that the head / box alignment can change
+*/
+
 // find tips that fit the pattern and return in the same format
-func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int) []string {
+func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string, error) {
+	possiblyTrimmedMask := mask
+
+	if canTrim {
+		possiblyTrimmedMask = trim(mask)
+	} else {
+		err := checkLen(mask, ori, tb)
+		if err != nil {
+			return []string{}, err
+		}
+	}
+
 	if ori == LHVChannel {
 		for i := 0; i < tb.NumCols(); i++ {
-			r := tb.searchCleanTips(i, mask, ori)
+			r := tb.searchCleanTips(i, possiblyTrimmedMask, ori)
 			if r != nil && len(r) != 0 {
 				tb.Remove(r)
-				return trimToMask(r, mask)
+				return trimToMask(r, possiblyTrimmedMask), nil
 			}
 		}
 	} else if ori == LHHChannel {
 		for i := 0; i < tb.NumRows(); i++ {
-			r := tb.searchCleanTips(i, mask, ori)
+			r := tb.searchCleanTips(i, possiblyTrimmedMask, ori)
 			if r != nil && len(r) != 0 {
 				tb.Remove(r)
-				return trimToMask(r, mask)
+				return trimToMask(r, possiblyTrimmedMask), nil
 			}
 		}
 	}
 
 	// not found or unknown orientation
-	return []string{}
+	return []string{}, fmt.Errorf("Not found or unknown orientation")
+}
+
+func checkLen(mask []bool, ori int, tb *LHTipbox) error {
+	if ori == LHHChannel {
+		if len(mask) != tb.NumCols() {
+			return fmt.Errorf("Error: CanTrim=false only applies if mask length is identical to tipbox block size")
+		}
+	} else if ori == LHVChannel {
+		if len(mask) != tb.NumRows() {
+			return fmt.Errorf("Error: CanTrim=false only applies if mask length is identical to tipbox block size")
+		}
+	}
+
+	return nil
 }
 
 func (tb *LHTipbox) Remove(sa []string) bool {

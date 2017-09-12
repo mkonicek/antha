@@ -54,7 +54,11 @@ func TestGetTipsMasked(t *testing.T) {
 	mask := []bool{true}
 
 	for i := 0; i < 96; i++ {
-		wells := tb.GetTipsMasked(mask, LHVChannel)
+		wells, err := tb.GetTipsMasked(mask, LHVChannel, true)
+
+		if err != nil {
+			t.Errorf(err.Error())
+		}
 
 		if wells[0] == "" {
 			t.Errorf("Ran out of tips too soon (%d)", i)
@@ -73,7 +77,10 @@ func TestGetTipsMasked2(t *testing.T) {
 	mask[2] = true
 
 	for i := 0; i < 12; i++ {
-		wells := tb.GetTipsMasked(mask, LHVChannel)
+		wells, err := tb.GetTipsMasked(mask, LHVChannel, false)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
 
 		if wells[2] == "" {
 			t.Errorf("Ran out of tips too soon (%d)", i)
@@ -104,4 +111,18 @@ func TesthasCleanTips(t *testing.T) {
 			t.Errorf("Offset %d mask %v has no clean tip but cleams to", i, m)
 		}
 	}
+}
+
+func TestTrimToMask(t *testing.T) {
+	wells := make([]string, 8)
+	wells[1] = "B1"
+	mask := []bool{true}
+
+	trimmed := trimToMask(wells, mask)
+	expected := []string{"B1"}
+
+	if !reflect.DeepEqual(expected, trimmed) {
+		t.Errorf("Expected %v, got %v", expected, trimmed)
+	}
+
 }

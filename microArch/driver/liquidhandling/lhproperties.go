@@ -888,6 +888,17 @@ func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, cha
 	return wells, positions, boxtypes, nil
 }
 
+func countMultiB(ar []bool) int {
+	r := 0
+	for _, v := range ar {
+		if v {
+			r += 1
+		}
+	}
+
+	return r
+}
+
 // this function only returns true if we can get all tips at once
 // TODO -- support not getting in a single operation
 func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
@@ -895,16 +906,21 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 	boxtypes = make([]string, len(tipParams.Mask))
 
 	foundit := false
-	multi := len(tipParams.Mask)
+	multi := countMultiB(tipParams.Mask)
 
 	for _, pos := range lhp.Tip_preferences {
 		bx, ok := lhp.Tipboxes[pos]
 		if !ok || bx.Tiptype.Type != tipParams.TipType {
 			continue
 		}
-		wells = bx.GetTipsMasked(tipParams.Mask, tipParams.Channel.Orientation)
+		wells, err = bx.GetTipsMasked(tipParams.Mask, tipParams.Channel.Orientation, true)
+
+		if err != nil {
+			return wells, positions, boxtypes, err
+		}
+		fmt.Println("WELLS HERE: ", wells)
 		// TODO -- support partial collections
-		if wells != nil && len(wells) == multi {
+		if wells != nil && countMulti(wells) == multi {
 			foundit = true
 			for i := 0; i < multi; i++ {
 				if tipParams.Mask[i] {

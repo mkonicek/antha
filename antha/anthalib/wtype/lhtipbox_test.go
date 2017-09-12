@@ -56,8 +56,7 @@ func TestGetTipsMasked(t *testing.T) {
 	for i := 0; i < 96; i++ {
 		wells := tb.GetTipsMasked(mask, LHVChannel)
 
-		// now is this the right contract? Are we returning the inflated or deflated version?
-		if wells[0] == "" {
+		if wells[i%8] == "" {
 			t.Errorf("Ran out of tips too soon (%d)", i)
 		}
 	}

@@ -246,7 +246,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Result.ID)
 		wellTo.WContents.ID = inssIn[ci].Result.ID
-
+		wellTo.WContents.DeclareInstance()
 		//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 	}
 

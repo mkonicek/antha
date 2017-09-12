@@ -494,6 +494,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	if request.Options.PrintInstructions {
+		for _, ins := range request.LHInstructions {
+			fmt.Println(ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ", ins.PlateID, " ", ins.Welladdress, ": ", ins.ProductID)
+		}
 		request.InstructionChain.Print()
 	}
 

@@ -235,7 +235,7 @@ func (tb *LHTipbox) Remove(sa []string) bool {
 func inflateMask(mask []bool, offset, size int) []bool {
 	r := make([]bool, size)
 
-	for i := offset; i < len(mask); i++ {
+	for i := 0; i < len(mask); i++ {
 		r[i+offset] = mask[i]
 	}
 

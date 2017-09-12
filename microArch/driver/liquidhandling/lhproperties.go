@@ -894,8 +894,6 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 	multi := len(tipParams.Mask)
 
 	for _, pos := range lhp.Tip_preferences {
-		//	for i := len(lhp.Tip_preferences) - 1; i >= 0; i-- {
-		//		pos := lhp.Tip_preferences[i]
 		bx, ok := lhp.Tipboxes[pos]
 		if !ok || bx.Tiptype.Type != tipParams.TipType {
 			continue

@@ -921,7 +921,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 		// TODO -- support partial collections
 		if wells != nil && countMulti(wells) == multi {
 			foundit = true
-			for i := 0; i < multi; i++ {
+			for i := 0; i < len(wells); i++ {
 				if tipParams.Mask[i] {
 					positions[i] = pos
 					boxtypes[i] = bx.Boxname

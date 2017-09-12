@@ -3129,41 +3129,6 @@ func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) error {
 
 }
 
-/*
-func ChangeTips(ctx context.Context, tiptype string, vol wunit.Volume, prms *LHProperties, channel *wtype.LHChannelParameter, multi int, oneshot, usetiptracking bool) ([]RobotInstruction, error) {
-	ret := make([]RobotInstruction, 0, 2)
-	newchannel, newtip := ChooseChannel(vol, prms)
-
-	newtiptype := ""
-
-	if newtip != nil {
-		newtiptype = newtip.Type
-	} else {
-		return ret, fmt.Errorf(TipChosenError(vol, prms))
-	}
-
-	mergedchannel := newchannel.MergeWithTip(newtip)
-
-	if !mergedchannel.CanMove(vol, oneshot) {
-		return ret, fmt.Errorf("No channel can move a volume of %s in one shot", vol.ToString())
-	}
-
-	tipdrp, err := DropTips(tiptype, prms, channel)
-
-	if err != nil {
-		return ret, err
-	}
-	ret = append(ret, tipdrp)
-
-	tipget, err := GetTips(ctx, newtiptype, prms, newchannel, multi, false, usetiptracking)
-	if err != nil {
-		return ret, err
-	}
-	ret = append(ret, tipget)
-	return ret, err
-}
-*/
-
 func countMulti(sa []string) int {
 	r := 0
 	for _, s := range sa {

@@ -1,8 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "PickColonies": {
-            "component": "PickColonies"
-        }
-    }
-}

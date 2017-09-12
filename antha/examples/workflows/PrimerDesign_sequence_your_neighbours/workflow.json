@@ -1,8 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "PrimerDesign": {
-            "component": "PrimerDesign_sequence_your_neighbours"
-        }
-    }
-}

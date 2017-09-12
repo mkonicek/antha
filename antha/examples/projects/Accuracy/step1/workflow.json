@@ -1,8 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "AccuracyTest": {
-            "component": "AccuracyTest_2"
-        }
-    }
-}

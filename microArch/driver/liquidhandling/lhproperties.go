@@ -865,6 +865,8 @@ func (lhp *LHProperties) legacyGetComponentsSingle(cmps []*wtype.LHComponent, ca
 
 func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
 
+	// these are merged into subsets with tip and channel types in common here
+	// each subset has a mask which is the same size as the number of channels available
 	subsets, err2 := makeChannelSubsets(tiptype, channel)
 
 	if err2 != nil {
@@ -886,6 +888,8 @@ func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, cha
 	return wells, positions, boxtypes, nil
 }
 
+// this function only returns true if we can get all tips at once
+// TODO -- support not getting in a single operation
 func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
 	positions = make([]string, len(tipParams.Mask))
 	boxtypes = make([]string, len(tipParams.Mask))

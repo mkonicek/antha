@@ -67,3 +67,16 @@ func TestSavePlates(t *testing.T) {
 	}
 
 }
+
+func TestGetFirstDefined(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		sa := make([]string, 100)
+		sa[i] = "big"
+
+		d := getFirstDefined(sa)
+
+		if d != i {
+			t.Errorf("getFirstDefined returned %d, should have returned %d", d, i)
+		}
+	}
+}

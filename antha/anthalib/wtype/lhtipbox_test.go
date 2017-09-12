@@ -56,7 +56,26 @@ func TestGetTipsMasked(t *testing.T) {
 	for i := 0; i < 96; i++ {
 		wells := tb.GetTipsMasked(mask, LHVChannel)
 
-		if wells[i%8] == "" {
+		if wells[0] == "" {
+			t.Errorf("Ran out of tips too soon (%d)", i)
+		}
+	}
+}
+
+func TestGetTipsMasked2(t *testing.T) {
+	// func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string)
+	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	w := NewLHWell("mytypeWell", "", "A1", "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul")
+	tb := NewLHTipbox(8, 12, 120.0, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+	mask := make([]bool, 8)
+	mask[2] = true
+
+	for i := 0; i < 12; i++ {
+		wells := tb.GetTipsMasked(mask, LHVChannel)
+
+		if wells[2] == "" {
 			t.Errorf("Ran out of tips too soon (%d)", i)
 		}
 	}

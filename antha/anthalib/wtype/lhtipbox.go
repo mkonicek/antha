@@ -189,24 +189,47 @@ func trim(ba []bool) []bool {
 	return r
 }
 
-// returns wells with tips in
-// -- this needs to align the tips to get with the channels
-// since there's no strict requirement to fix here
+func trimToMask(wells []string, mask []bool) []string {
+	if len(mask) >= len(wells) {
+		return wells
+	}
+	ret := make([]string, len(mask))
+	s := false
+	x := 0
+	for i := 0; i < len(wells); i++ {
+		if wells[i] != "" && !s {
+			s = true
+		}
+
+		if s {
+			ret[x] = wells[i]
+			x += 1
+		}
+
+		if x == len(mask) {
+			break
+		}
+	}
+
+	return ret
+}
+
+// find tips that fit the pattern and return in the same format
 func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int) []string {
 	if ori == LHVChannel {
 		for i := 0; i < tb.NumCols(); i++ {
-			r := tb.searchCleanTips(i, trim(mask), ori)
+			r := tb.searchCleanTips(i, mask, ori)
 			if r != nil && len(r) != 0 {
 				tb.Remove(r)
-				return r
+				return trimToMask(r, mask)
 			}
 		}
 	} else if ori == LHHChannel {
 		for i := 0; i < tb.NumRows(); i++ {
-			r := tb.searchCleanTips(i, trim(mask), ori)
+			r := tb.searchCleanTips(i, mask, ori)
 			if r != nil && len(r) != 0 {
 				tb.Remove(r)
-				return r
+				return trimToMask(r, mask)
 			}
 		}
 	}

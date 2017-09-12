@@ -171,6 +171,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		if !sourceVolumesOK(srcs, currCmps) {
 			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes")
 		}
+
 		bestMatch := wtype.Match{Sc: -1.0}
 		var bestSrc wtype.ComponentVector
 		// srcs is chunked up to conform to what can be accessed by the LH

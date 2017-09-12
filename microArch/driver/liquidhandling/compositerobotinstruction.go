@@ -3198,12 +3198,6 @@ func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, chann
 		return []RobotInstruction{NewLoadTipsMoveInstruction()}, err
 	}
 
-	fmt.Println("TIPTYPE: ", tiptypes)
-	fmt.Println("CHANNEL: ", channel)
-	fmt.Println("TIPWELL: ", tipwells)
-	fmt.Println("TIPBOXP: ", tipboxpositions)
-	fmt.Println("TIPBOXT: ", tipboxtypes)
-
 	inss := make([]RobotInstruction, 0, 1)
 
 	for i := 0; i < len(tipwells); i++ {

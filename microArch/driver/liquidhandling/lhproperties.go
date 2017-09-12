@@ -918,7 +918,6 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 		if err != nil {
 			return wells, positions, boxtypes, err
 		}
-		fmt.Println("WELLS HERE: ", wells)
 		// TODO -- support partial collections
 		if wells != nil && countMulti(wells) == multi {
 			foundit = true

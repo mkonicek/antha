@@ -309,9 +309,17 @@ func DNA(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment
 	return fwdResult, nil
 }
 
-func dnaFWDAlignment(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
+func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
 
-	seq1, seq2 = replaceN(seq1), replaceN(seq2)
+	seq1, seq2 := replaceN(template), replaceN(query)
+
+	if template.Plasmid {
+		var tempseq string
+		rotationSize := len(query.Seq) - 1
+		tempseq += seq1.Seq[rotationSize:]
+		tempseq += seq1.Seq[:rotationSize]
+		seq1.Seq = tempseq
+	}
 
 	fsa := &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq1.Sequence()))}
 	fsa.Alpha = alphabet.DNAgapped
@@ -322,8 +330,8 @@ func dnaFWDAlignment(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix
 	if err == nil {
 		fa := align.Format(fsa, fsb, aln, '-')
 		alignment = Result{
-			Template:  &seq1,
-			Query:     &seq2,
+			Template:  &template,
+			Query:     &query,
 			Algorithm: alignMentMatrix,
 			Alignment: formatMisMatches(Alignment{
 				TemplateResult: fmt.Sprint(fa[0]),

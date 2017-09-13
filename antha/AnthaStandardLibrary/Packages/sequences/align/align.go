@@ -56,8 +56,8 @@ func (r Result) Identity() float64 {
 // Gaps returns the number of gaps in the aligned query sequence result
 func (r Result) Gaps() int {
 	var gapCount int
-	for _, letter := range r.Alignment.QueryResult {
-		if letter == GAP {
+	for i, letter := range r.Alignment.QueryResult {
+		if letter == GAP || rune(r.Alignment.TemplateResult[i]) == GAP {
 			gapCount++
 		}
 	}
@@ -101,12 +101,12 @@ func (r Result) LongestContinuousSequence() wtype.DNASequence {
 	var longest []string
 	var seq []string
 	for i, char := range r.Alignment.QueryResult {
+		if len(seq) > len(longest) {
+			longest = seq
+		}
 		if !isMismatch(char, rune(r.Alignment.TemplateResult[i])) && !isGap(char) && !isGap(rune(r.Alignment.TemplateResult[i])) {
 			seq = append(seq, string(char))
 		} else {
-			if len(seq) > len(longest) {
-				longest = seq
-			}
 			// reset
 			seq = make([]string, 0)
 		}

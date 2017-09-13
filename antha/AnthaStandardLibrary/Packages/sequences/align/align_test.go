@@ -9,16 +9,17 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-type alignMentTest struct {
+type alignmentTest struct {
 	Name          string
 	Seq1, Seq2    wtype.DNASequence
 	Alignment     string
+	Identity      float64
 	ScoringMatrix ScoringMatrix
 }
 
 var (
-	tests []alignMentTest = []alignMentTest{
-		alignMentTest{
+	tests []alignmentTest = []alignmentTest{
+		alignmentTest{
 			Name: "Test1",
 			Seq1: wtype.DNASequence{
 				Nm:  "Seq1",
@@ -29,9 +30,10 @@ var (
 				Seq: "GACAGACGA",
 			},
 			Alignment:     fmt.Sprintf("%s\n%s\n", "GACAGACTAGA", "GACAGAC--GA"),
+			Identity:      0.8181818181818182,
 			ScoringMatrix: Fitted,
 		},
-		alignMentTest{
+		alignmentTest{
 			Name: "Test2",
 			Seq1: wtype.DNASequence{
 				Nm:  "Seq3",
@@ -41,10 +43,11 @@ var (
 				Nm:  "Seq4",
 				Seq: "GTTGACA",
 			},
+			Identity:      1,
 			Alignment:     fmt.Sprintf("%s\n%s\n", "GTTGACA", "GTTGACA"),
 			ScoringMatrix: Fitted,
 		},
-		alignMentTest{
+		alignmentTest{
 			Name: "Test3",
 			Seq1: wtype.DNASequence{
 				Nm:  "Seq5",
@@ -54,16 +57,45 @@ var (
 				Nm:  "Seq6",
 				Seq: "GTTGAGACAAGATTCACG",
 			},
-			Alignment:     fmt.Sprintf("%s\n%s\n", "GTTGACAGACTTTATTCACG", "GTTGA--GACAAGATTCACG"),
+			Alignment:     fmt.Sprintf("%s\n%s\n", "GTTGACAGACtttATTCACG", "GTTGA--GACaagATTCACG"),
+			Identity:      0.75,
 			ScoringMatrix: FittedAffine,
 		},
+		alignmentTest{
+			Name: "TerminatorAlignmentCorrect",
+			Seq1: wtype.DNASequence{
+				Nm:  "SequencingResult",
+				Seq: "CGCGacgtAaTACGACTcaCTATAGGgCGAATTGGCGGAAGGCCGTCAAGGCCGCATGAAGGGCGCGCCAGGTCTCAGGTACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATGTAGAAGAGCTAATAGAGACCATTAATTAACAACCTGGGCCTCATGGGCCTTCCGCTCACTGCCCGCTTTCCAGTCGGGAAACCTGTCGTGCCAGCTGCATTAACATGGTCATAGCTGTTTCCTTGCGTATTGGGCGCTCTCCGCTTCCTCGCTCACTGACTCGCTGCGCTCGGTCGTTCGGGTAAAGCCTGGGGTGCCTAATGAGCAAAAGGCCAGCAAAAGGCCAGGAACCGTAAAAAGGCCGCGTTGCTGGCGTTTTTCCATAGGCTCCGCCCCCCTGACGAGCATCACAAAAATCGACGCTCAAGTCAGAGGTGGCGAAACCCGACAGGACTATAAAGATACCAGGCGTTTCCCCCTGGAAGCTCCCTCGTGCGCTCTCCTGTTCCGACCCTGCCGCTTACCGGATACCTGTCCGCCTTTCTCCCTTCGGGAAGCGTGGCGCTTTCTCATAGCTCACGCTGTAGGTATCTCAGTTCGGTGTAGGTCGTTCGCTCCAAGCTGGGCTGTGTGCACGAACCCCCcGTTCAGCCCGACCGCTGCGCCTTATCCGGTAACTATCGTCTTGAGTCCAACCCGGTAAGACACGACTTATCGCCACTGGCAGCAGCCACTGGTAACAGGATTAGCAGAGCGAGGTATGTaggCGGTGCTACAGAGTTCTTGAAGTGGTGGCCTAACTACGGCTACACTagAAGAACAGTATTTGGtaTCTGCGCTCTGCtgAaGCCAGTTaccttcggAAAAanagTTggAaGCTCTTGATCCGGcnaacAAaCcac",
+			},
+			Seq2: wtype.DNASequence{
+				Nm:  "TerSequence",
+				Seq: "GGTCTCAGGTACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATGTAGAAGAGCTAATAGAGACC",
+			},
+			Identity:      1,
+			Alignment:     fmt.Sprintf("%s\n%s\n", "GGTCTCAGGTACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATGTAGAAGAGCTAATAGAGACC", "GGTCTCAGGTACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATGTAGAAGAGCTAATAGAGACC"),
+			ScoringMatrix: Fitted,
+		},
+		/*alignmentTest{
+			Name: "MismatchingAlignmentReverse",
+			Seq1: wtype.DNASequence{
+				Nm:  "TemplateSequence",
+				Seq: "ctcatgaccaaaatcccttaacgtgagttacgcgcgcgtcgttccactgagcgtcagaccccgtagaaaagatcaaaggatcttcttgagatcctttttttctgcgcgtaatctgctgcttgcaaacaaaaaaaccaccgctaccagcggtggtttgtttgccggatcaagagctaccaactctttttccgaaggtaactggcttcagcagagcgcagataccaaatactgttcttctagtgtagccgtagttagcccaccacttcaagaactctgtagcaccgcctacatacctcgctctgctaatcctgttaccagtggctgctgccagtggcgataagtcgtgtcttaccgggttggactcaagacgatagttaccggataaggcgcagcggtcgggctgaacggggggttcgtgcacacagcccagcttggagcgaacgacctacaccgaactgagatacctacagcgtgagctatgagaaagcgccacgcttcccgaagggagaaaggcggacaggtatccggtaagcggcagggtcggaacaggagagcgcacgagggagcttccagggggaaacgcctggtatctttatagtcctgtcgggtttcgccacctctgacttgagcgtcgatttttgtgatgctcgtcaggggggcggagcctatggaaaaacgccagcaacgcggcctttttacggttcctggccttttgctggccttttgctcacatgttctttcctgcgttatcccctgattctgtggataaccgtattaccgcctttgagtgagctgataccgctcgccgcagccgaacgaccgagcgcagcgagtcagtgagcgaggaagcggaaggcgagagtagggaactgccaggcatcaaactaagcagaaggcccctgacggatggcctttttgcgtttctacaaactctttctgtgttgtaaaacgacggccagtcttaagctcgggccccctgggcggttctgataacgagtaatcgttaatccgcaaataacgtaaaaacccgcttcggcgggtttttttatggggggagtttagggaaagagcatttgtcagaatatttaagggcgcctgtcactttgcttgatatatgagaattatttaaccttataaatgagaaaaaagcaacgcactttaaataagatacgttgctttttcgattgatgaacacctataattaaactattcatctattatttatgattttttgtatatacaatatttctagtttgttaaagagaattaagaaaataaatctcgaaaataataaagggaaaatcagtttttgatatcaaaattatacatgtcaacgataatacaaaatataatacaaactataagatgttatcagtatttattatgcatttagaataaattttgtGTCGGCTCTTCAACCTGTGTCGCCCTTAATTGTGAGCGGATAACAATTACGAGCTTCATGCACAGTGAAATCATGAAAAATTTATTTGCTTTGTGAGCGGATAACAATTATAATATGTGGAATTGTGAGCGCTCACAATTCCACAACGGTTTCCCTCTAGAAATAATTTTGTTTAACTACTAATCTCATATATCAAATATAGGGTGGATCATATGACGGCATTGACGGAAGGTGCAAAACTGTTTGAGAAAGAGATCCCGTATATCACCGAACTGGAAGGCGACGTCGAAGGTATGAAATTTATCATTAAAGGCGAGGGTACCGGTGACGCGACCACGGGTACCATTAAAGCGAAATACATCTGCACTACGGGCGACCTGCCGGTCCCGTGGGCAACCCTGGTGAGCACCCTGAGCTACGGTGTTCAGTGTTTCGCCAAGTACCCGAGCCACATCAAGGATTTCTTTAAGAGCGCCATGCCGGAAGGTTATACCCAAGAGCGTACCATCAGCTTCGAAGGCGACGGCGTGTACAAGACGCGTGCTATGGTTACCTACGAACGCGGTTCTATCTACAATCGTGTCACGCTGACTGGTGAGAACTTTAAGAAAGACGGTCACATTCTGCGTAAGAACGTTGCATTCCAATGCCCGCCAAGCATTCTGTATATTCTGCCTGACACCGTTAACAATGGCATCCGCGTTGAGTTCAACCAGGCGTACGATATTGAAGGTGTGACCGAAAAACTGGTTACCAAATGCAGCCAAATGAATCGTCCGTTGGCGGGCTCCGCGGCAGTGCATATCCCGCGTTATCATCACATTACCTACCACACCAAACTGAGCAAAGACCGCGACGAGCGCCGTGATCACATGTGTCTGGTAGAGGTCGTGAAAGCGGTTGATCTGGACACGTATCAGTAATGAGAATTCTGTACACTCGAGGGTACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATGTAGAAGAGCtaatgaccccaagggcgacaccccctaattagcccgggcgaaaggcccagtctttcgactgagcctttcgttttatttgatgcctggcagttccctactctcgcatggggagtccccacactaccatcggcgctacggcgtttcacttctgagttcggcatggggtcaggtgggaccaccgcgctactgccgccaggcaaacaaggggtgttatgagccatattcaggtataaatgggctcgcgataatgttcagaattggttaattggttgtaacactgacccctatttgtttatttttctaaatacattcaaatatgtatccgctcatgagacaataaccctgataaatgcttcaataatattgaaaaaggaagaatatgagccatattcaacgggaaacgtcgaggccgcgattaaattccaacatggatgctgatttatatgggtataaatgggctcgcgataatgtcgggcaatcaggtgcgacaatctatcgcttgtatgggaagcccgatgcgccagagttgtttctgaaacatggcaaaggtagcgttgccaatgatgttacagatgagatggtcagactaaactggctgacggaatttatgccacttccgaccatcaagcattttatccgtactcctgatgatgcatggttactcaccactgcgatccccggaaaaacagcgttccaggtattagaagaatatcctgattcaggtgaaaatattgttgatgcgctggcagtgttcctgcgccggttgcactcgattcctgtttgtaattgtccttttaacagcgatcgcgtatttcgcctcgctcaggcgcaatcacgaatgaataacggtttggttgatgcgagtgattttgatgacgagcgtaatggctggcctgttgaacaagtctggaaagaaatgcataaacttttgccattctcaccggattcagtcgtcactcatggtgatttctcacttgataaccttatttttgacgaggggaaattaataggttgtattgatgttggacgagtcggaatcgcagaccgataccaggatcttgccatcctatggaactgcctcggtgagttttctccttcattacagaaacggctttttcaaaaatatggtattgataatcctgatatgaataaattgcagtttcatttgatgctcgatgagtttttctaagcggcgcgccatcgaatggcgcaaaacctttcgcggtatggcatgatagcgcccggaagagagtcaattcagggtggtgaatatgaaaccagtaacgttatacgatgtcgcagagtatgccggtgtctcttatcagaccgtttcccgcgtggtgaaccaggccagccacgtttctgcgaaaacgcgggaaaaagtggaagcggcgatggcggagctgaattacattcccaaccgcgtggcacaacaactggcgggcaaacagtcgttgctgattggcgttgccacctccagtctggccctgcacgcgccgtcgcaaattgtcgcggcgattaaatctcgcgccgatcaactgggtgccagcgtggtggtgtcgatggtagaacgaagcggcgtcgaagcctgtaaagcggcggtgcacaatcttctcgcgcaacgcgtcagtgggctgatcattaactatccgctggatgaccaggatgccattgctgtggaagctgcctgcactaatgttccggcgttatttcttgatgtctctgaccagacacccatcaacagtattattttctcccatgaggacggtacgcgactgggcgtggagcatctggtcgcattgggtcaccagcaaatcgcgctgttagcgggcccattaagttctgtctcggcgcgtctgcgtctggctggctggcataaatatctcactcgcaatcaaattcagccgatagcggaacgggaaggcgactggagtgccatgtccggttttcaacaaaccatgcaaatgctgaatgagggcatcgttcccactgcgatgctggttgccaacgatcagatggcgctgggcgcaatgcgcgccattaccgagtccgggctgcgcgttggtgcggatatctcggtagtgggatacgacgataccgaagatagctcatgttatatcccgccgttaaccaccatcaaacaggattttcgcctgctggggcaaaccagcgtggaccgcttgctgcaactctctcagggccaggcggtgaagggcaatcagctgttgccagtctcactggtgaaaagaaaaaccaccctggcgcccaatacgcaaaccgcctctccccgcgcgttggccgattcattaatgcagctggcacgacaggtttcccgactggaaagcgggcagtga",
+			},
+			Seq2: wtype.DNASequence{
+				Nm:  "ReverseSequencingResult",
+				Seq: wtype.RevComp("CCGGGGATACGCGGTGGTCCACCTGACCCCATGCCGAACTCAGAAGTGAAACGCCGTAGCGCCGATGGTAGTGTGGGGACTCCCCATGCGAGAGTAGGGAACTGCCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGCCCGGGCTAATTAGGGGGTGTCGCCCTTGGGGTCATTAGCTCTTCTACATATAAACGCAGAAAGGCCCACCCGAAGGTGAGCCAGTGTGACTCTAGTAGAGAGCGTTCACCGACAAACAACAGATAAAACGAAAGGCCCAGTCTTTCGACTGAGCCTTTCGTTTTATTTGATGCCTGGGGGGCTCGAGTGTACAGAATTCTCATTACTGATACGTGTCCAGATCAACCGCTTTCACGACCTCTACCAGACACATGTGATCACGGCGCTCGTCGCGGTCTTTGCTCAGTTTGGTGTGGTAGGTAATGTGATGATAACGCGGGATATGCACTGCCGCGGAGCCCGCCAACGGACGATTCATTTGGCTGCATTTGGTAACCAGTTTTTCGGTCACACCTTCAATATCGTACGCCTGGTTGAACTCAACGCGGATGCCATTGTTAACGGTGTCAGGCAGAATATACAGAATGCTTGGCGGGCATTGGAATGCAACGTTCTTACGCAGAATGTGACCGTCTTTCTTAAAGTTCTCACCAGTCAGCGTGACACGATTGTAGATAGAACCGCGTTCGTAGGTAACCATAGCACGCGTCTTGTACACGCCGTCGCCTTCGAAGCTGATGGTACGCTCTTGGGTATAACCTTCCGGCATGGCGCTCTTAAAGAAATCCTTGATGTGGCTCGGGTACTTGGCGAAACACTGAACACCGTAGCTCAGGGTGCTCACCAGGGTTGCCCACGGGACCGGCAGGTCGCCCGTAGTGCAGATGTATTTTCGCTTTAATGGTACCCGTGGTCGCGTCACGGGTACCCTCGCCTTTTATGATAAATTTCATACCTTCGACGTCGCCTTTCCAGGTTCGGTGATATACGGGATCTCTTTCTCAACCAGTTTTGCACCTTCCGTCATGCGGTCATATGATCCACCCTTATATTTGAATATATGGAGATTAAAAGGTTAAACAAAATTAATTTCTAGAAGGGAAACCGTTTGTGGGAATTGTGGAACGCCTCACATCCACATATTATAATGGTATCCGCTCCAAAGGCAATTAATTTCATGGAATACTGTCATGAAGACTCGAATGTTATCGCTTCACAATTAAGGGGGCGACACATCGGTGTGTAGA"),
+			},
+			Identity:      0.1995048484,
+			Alignment:     fmt.Sprintf("%s\n%s\n", "GGTCTCAGGTACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATGTAGAAGAGCTAATAGAGACC", "GGTCTCAGGTACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATGTAGAAGAGCTAATAGAGACC"),
+			ScoringMatrix: Fitted,
+		},*/
 	}
 )
 
 // Align two dna sequences based on a specified scoring matrix
 func TestAlign(t *testing.T) {
 	for _, test := range tests {
-		alignment, err := Align(test.Seq1, test.Seq2, test.ScoringMatrix)
+		alignment, err := DNA(test.Seq1, test.Seq2, test.ScoringMatrix)
 
 		if err != nil {
 			t.Error(
@@ -71,12 +103,27 @@ func TestAlign(t *testing.T) {
 				"got error:", err.Error(), "\n",
 			)
 		}
-		if alignment != test.Alignment {
+		if alignment.String() != test.Alignment {
 			t.Error(
 				"For", test.Name, "\n",
-				"expected:", test.Alignment, "\n",
-				"got:", alignment, "\n",
+				"expected:", "\n",
+				test.Alignment,
+				"got:", "\n",
+				alignment,
 			)
 		}
+		if alignment.Identity() != test.Identity {
+			t.Error(
+				"For", test.Name, "\n",
+				"expected Identity:", test.Identity, "\n",
+				"got:", alignment.Identity(), "\n",
+			)
+		}
+		fmt.Println(test.Name, "Coverage:", alignment.Coverage(),
+			"Positions in template: ", alignment.Positions().Positions,
+			"Matches: ", alignment.Matches(),
+			"Mismatches: ", alignment.Mismatches(),
+			"Gaps: ", alignment.Gaps(),
+		)
 	}
 }

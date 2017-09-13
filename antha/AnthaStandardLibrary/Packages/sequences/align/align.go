@@ -4,7 +4,9 @@ package align
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/biogo/biogo/align"
 	"github.com/biogo/biogo/alphabet"
@@ -20,6 +22,94 @@ import (
 // and Protein provided by the biogo/alphabet package satisfy this.
 type ScoringMatrix interface {
 	Align(reference, query align.AlphabetSlicer) ([]feat.Pair, error)
+}
+
+// Result stores the full results of an alignment of a query against a template sequence, including the algorithm used.
+type Result struct {
+	Template  wtype.BioSequence
+	Query     wtype.BioSequence
+	Algorithm ScoringMatrix
+	Alignment Alignment
+}
+
+// String prints alignment result in form of two aligned sequence strings printed on parallel lines.
+func (r Result) String() string {
+	return fmt.Sprintf("%s\n%s\n", r.Alignment.TemplateResult, r.Alignment.QueryResult)
+}
+
+// Identity returns the percentage of matching nucleotides of query in the template sequence
+// a value between 0 and 1 is returned
+// 1 = 100%; 0 = 0%
+func (r Result) Identity() float64 {
+	var totalCount int
+	var matchCount int
+
+	for i := range r.Alignment.QueryResult {
+		if r.Alignment.QueryResult[i] == r.Alignment.TemplateResult[i] {
+			matchCount++
+		}
+		totalCount++
+	}
+	return float64(matchCount) / float64(totalCount)
+}
+
+// Gaps returns the number of gaps in the aligned query sequence result
+func (r Result) Gaps() int {
+	var gapCount int
+	for _, letter := range r.Alignment.QueryResult {
+		if letter == GAP {
+			gapCount++
+		}
+	}
+	return gapCount
+}
+
+// Matches returns the number of matched nucleotides between the aligned query
+// sequence and aligned template sequence.
+func (r Result) Matches() int {
+	var matchCount int
+	for i := range r.Alignment.QueryResult {
+		if r.Alignment.QueryResult[i] == r.Alignment.TemplateResult[i] {
+			matchCount++
+		}
+	}
+	return matchCount
+}
+
+// Mismatches returns the number of mismatched nucleotides between the aligned query
+// sequence and aligned template sequence.
+func (r Result) Mismatches() int {
+	var mismatchCount int
+	for i := range r.Alignment.QueryResult {
+		if isMismatch(rune(r.Alignment.QueryResult[i]), rune(r.Alignment.TemplateResult[i])) {
+			mismatchCount++
+		}
+	}
+	return mismatchCount
+}
+
+// Coverage returns the percentage of matching nucleotides of alignment to the template sequence
+// a value between 0 and 1 is returned
+// 1 = 100%; 0 = 0%
+func (r Result) Coverage() float64 {
+	return float64(len(r.Alignment.TemplateResult)) / float64(len(r.Template.Sequence()))
+	//return float64(len(r.Alignment.QueryResult)) / float64(len(r.Query.Sequence()))
+}
+
+func (r Result) Positions() (result sequences.SearchResult) {
+	templateSeq, ok := r.Template.(*wtype.DNASequence)
+	if !ok {
+		err := fmt.Errorf("Cannot cast template into DNASequence, alignment currently only supports DNASequence alignment")
+		panic(err)
+	}
+	querySeq := wtype.DNASequence{Nm: r.Query.Name() + "_alingment", Seq: r.Query.Sequence()}
+	return sequences.FindSeq(templateSeq, &querySeq)
+}
+
+// Alignment stores the string result of an alignment of a query sequence against a template
+type Alignment struct {
+	TemplateResult string
+	QueryResult    string
 }
 
 var (
@@ -109,6 +199,7 @@ var (
 		{-1, -1, -1, -1, 2},
 	}
 
+	// SW is the Smith-Waterman aligner type. Matrix is a square scoring matrix with the last column and last row specifying gap penalties. Currently gap opening is not considered.
 	// w(gap) = 0
 	// w(match) = +2
 	// w(mismatch) = -1
@@ -142,7 +233,7 @@ var (
 	}
 )
 
-// Align aligns two sequences using a specified scoring algorithm.
+// DNA aligns two DNA sequences using a specified scoring algorithm.
 // It returns an alignment description or an error if the scoring matrix is not square, or the sequence data types or alphabets do not match.
 // algorithms available are:
 // Fitted: a modified Needleman-Wunsch algorithm which finds a local region of the reference with high similarity to the query.
@@ -151,7 +242,37 @@ var (
 // NWAffine: the affine gap penalty Needleman-Wunsch algorithm
 // SW1 and SW2: the Smith-Waterman algorithm
 // SWAffine: the affine gap penalty Smith-Waterman
-func Align(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment string, err error) {
+// Alignment of the reverse complement of the query sequence will also be attempted and if the number of matches is higher the reverse alignment is returned
+// In the resulting alignment, mismatches are represented by lower case letters, gaps represented by the GAP character "-".
+func DNA(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
+
+	fwdResult, err := dnaFWDAlignment(seq1, seq2, alignMentMatrix)
+
+	if err != nil {
+		return
+	}
+
+	revQuery := seq2
+
+	revQuery.Seq = wtype.RevComp(seq2.Seq)
+
+	revResult, err := dnaFWDAlignment(seq1, revQuery, alignMentMatrix)
+
+	if err != nil {
+		return fwdResult, fmt.Errorf(fmt.Sprintf("Error with aligning reverse complement of query sequence %s: %s", seq2.Nm, err.Error()))
+	}
+
+	if revResult.Matches() > fwdResult.Matches() {
+		return revResult, nil
+	}
+
+	return fwdResult, nil
+}
+
+func dnaFWDAlignment(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
+
+	seq1, seq2 = replaceN(seq1), replaceN(seq2)
+
 	fsa := &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq1.Sequence()))}
 	fsa.Alpha = alphabet.DNAgapped
 	fsb := &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq2.Sequence()))}
@@ -159,9 +280,80 @@ func Align(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignme
 
 	aln, err := alignMentMatrix.Align(fsa, fsb)
 	if err == nil {
-		fmt.Printf("%s\n", aln)
 		fa := align.Format(fsa, fsb, aln, '-')
-		alignment = fmt.Sprintf("%s\n%s\n", fa[0], fa[1])
+		alignment = Result{
+			Template:  &seq1,
+			Query:     &seq2,
+			Algorithm: alignMentMatrix,
+			Alignment: formatMisMatches(Alignment{
+				TemplateResult: fmt.Sprint(fa[0]),
+				QueryResult:    fmt.Sprint(fa[1]),
+			}),
+		}
 	}
 	return
+}
+
+// the biogo implementation of alignment requires the N nucleotides to be repalced with -
+func replaceN(seq wtype.DNASequence) wtype.DNASequence {
+
+	var newSeq []string
+
+	for _, letter := range seq.Seq {
+		if strings.ToUpper(string(letter)) == "N" {
+			letter = rune('-')
+		}
+		newSeq = append(newSeq, string(letter))
+	}
+
+	seq.Seq = strings.Join(newSeq, "")
+
+	return seq
+}
+
+// changes mismatched nucleotides to lower case
+func formatMisMatches(alignment Alignment) (formattedAlignment Alignment) {
+
+	var formattedQuery []string
+	var formattedTemplate []string
+	for i := range alignment.QueryResult {
+		var queryChar string
+		var templateChar string
+		if isMismatch(rune(alignment.QueryResult[i]), rune(alignment.TemplateResult[i])) {
+			queryChar = strings.ToLower(string(alignment.QueryResult[i]))
+			templateChar = strings.ToLower(string(alignment.TemplateResult[i]))
+		} else {
+			queryChar = string(alignment.QueryResult[i])
+			templateChar = string(alignment.TemplateResult[i])
+		}
+		formattedQuery = append(formattedQuery, queryChar)
+		formattedTemplate = append(formattedTemplate, templateChar)
+	}
+	formattedAlignment = Alignment{
+		TemplateResult: strings.Join(formattedTemplate, ""),
+		QueryResult:    strings.Join(formattedQuery, ""),
+	}
+	return
+}
+
+// standard character representing an alignment gap
+const GAP rune = rune('-')
+
+func isGap(character rune) bool {
+	if character == GAP {
+		return true
+	}
+	return false
+}
+
+func isMismatch(character1, character2 rune) bool {
+
+	if isGap(character1) || isGap(character2) {
+		return false
+	}
+
+	if character1 != character2 {
+		return true
+	}
+	return false
 }

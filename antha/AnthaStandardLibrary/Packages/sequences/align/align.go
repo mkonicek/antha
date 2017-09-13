@@ -96,13 +96,36 @@ func (r Result) Coverage() float64 {
 	//return float64(len(r.Alignment.QueryResult)) / float64(len(r.Query.Sequence()))
 }
 
+// LongestContinuousSequence returns the longest unbroken chain of matches as a dna sequence
+func (r Result) LongestContinuousSequence() wtype.DNASequence {
+	var longest []string
+	var seq []string
+	for i, char := range r.Alignment.QueryResult {
+		if !isMismatch(char, rune(r.Alignment.TemplateResult[i])) && !isGap(char) && !isGap(rune(r.Alignment.TemplateResult[i])) {
+			seq = append(seq, string(char))
+		} else {
+			if len(seq) > len(longest) {
+				longest = seq
+			}
+			// reset
+			seq = make([]string, 0)
+		}
+	}
+	if len(longest) == 0 {
+		longest = seq
+	}
+	return wtype.DNASequence{Nm: r.Query.Name() + "_alignment", Seq: strings.Join(longest, "")}
+}
+
+// Positions returns a SearchResult detailing the positions in the template sequence
+// of the longest continuous matching sequence from the alignment.
 func (r Result) Positions() (result sequences.SearchResult) {
 	templateSeq, ok := r.Template.(*wtype.DNASequence)
 	if !ok {
 		err := fmt.Errorf("Cannot cast template into DNASequence, alignment currently only supports DNASequence alignment")
 		panic(err)
 	}
-	querySeq := wtype.DNASequence{Nm: r.Query.Name() + "_alingment", Seq: r.Query.Sequence()}
+	querySeq := r.LongestContinuousSequence()
 	return sequences.FindSeq(templateSeq, &querySeq)
 }
 
@@ -233,6 +256,23 @@ var (
 	}
 )
 
+// Algorithms provides a map to lookup ScoringMatrix algorithms based on names.
+// Algorithms available:
+// Fitted: a modified Needleman-Wunsch algorithm which finds a local region of the reference with high similarity to the query.
+// FittedAffine: a modified Needleman-Wunsch algorithm which finds a local region of the reference with high similarity to the query.
+// NW: the Needleman-Wunsch algorithm
+// NWAffine: the affine gap penalty Needleman-Wunsch algorithm
+// SW1 and SW2: the Smith-Waterman algorithm
+var Algorithms map[string]ScoringMatrix = map[string]ScoringMatrix{
+	"Fitted":       Fitted,
+	"FittedAffine": FittedAffine,
+	"NW":           NW,
+	"NWAffine":     NWAffine,
+	"SW1":          SW1,
+	"SW2":          SW2,
+	"SWAffine":     SWAffine,
+}
+
 // DNA aligns two DNA sequences using a specified scoring algorithm.
 // It returns an alignment description or an error if the scoring matrix is not square, or the sequence data types or alphabets do not match.
 // algorithms available are:
@@ -242,7 +282,7 @@ var (
 // NWAffine: the affine gap penalty Needleman-Wunsch algorithm
 // SW1 and SW2: the Smith-Waterman algorithm
 // SWAffine: the affine gap penalty Smith-Waterman
-// Alignment of the reverse complement of the query sequence will also be attempted and if the number of matches is higher the reverse alignment is returned
+// Alignment of the reverse complement of the query sequence will also be attempted and if the number of matches is higher the reverse alignment is returned.
 // In the resulting alignment, mismatches are represented by lower case letters, gaps represented by the GAP character "-".
 func DNA(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
 

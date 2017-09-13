@@ -104,6 +104,36 @@ var (
 			Alignment:     fmt.Sprintf("%s\n%s\n", "CACGGTTGACA", "CACGGTTGACA"),
 			ScoringMatrix: Fitted,
 		},
+		alignmentTest{
+			Name: "plasmidAlignmentTest2",
+			Seq1: wtype.DNASequence{
+				Nm:      "Seq3Plasmid",
+				Seq:     "GTTGACAGACTAGATTCACG",
+				Plasmid: true,
+			},
+			Seq2: wtype.DNASequence{
+				Nm:  "Seq4",
+				Seq: "GTTGACAGA",
+			},
+			Identity:      1,
+			Alignment:     fmt.Sprintf("%s\n%s\n", "GTTGACAGA", "GTTGACAGA"),
+			ScoringMatrix: Fitted,
+		}, /*
+			alignmentTest{
+				Name: "bigQueryagainstSmallTemplate",
+				Seq1: wtype.DNASequence{
+					Nm:      "Seq3Plasmid",
+					Seq:     "GTTGACAGA",
+					Plasmid: false,
+				},
+				Seq2: wtype.DNASequence{
+					Nm:  "Seq4",
+					Seq: "GTTGACAGACTAGATTCACG",
+				},
+				Identity:      1,
+				Alignment:     fmt.Sprintf("%s\n%s\n", "GTTGACAGA", "GTTGACAGA"),
+				ScoringMatrix: Fitted,
+			},*/
 	}
 )
 

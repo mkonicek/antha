@@ -302,24 +302,22 @@ func DNA(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment
 		return fwdResult, fmt.Errorf(fmt.Sprintf("Error with aligning reverse complement of query sequence %s: %s", seq2.Nm, err.Error()))
 	}
 
-	if revResult.Matches() > fwdResult.Matches() {
-		return revResult, nil
+	if len(seq2.Seq) > len(seq1.Seq) {
+		if err == nil {
+			err = fmt.Errorf("query sequence is larger than template, this may result in an unusual alignment")
+		}
 	}
 
-	return fwdResult, nil
+	if revResult.Matches() > fwdResult.Matches() {
+		return revResult, err
+	}
+
+	return fwdResult, err
 }
 
 func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
 
 	seq1, seq2 := replaceN(template), replaceN(query)
-
-	if template.Plasmid {
-		var tempseq string
-		rotationSize := len(query.Seq) - 1
-		tempseq += seq1.Seq[rotationSize:]
-		tempseq += seq1.Seq[:rotationSize]
-		seq1.Seq = tempseq
-	}
 
 	fsa := &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq1.Sequence()))}
 	fsa.Alpha = alphabet.DNAgapped
@@ -339,6 +337,43 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringM
 			}),
 		}
 	}
+
+	// if plasmid we must try again with rotating vector the length of query sequence
+	// in case the alignment crosses the end and start of the plasmid sequence
+	if template.Plasmid {
+		var tempseq string
+		rotationSize := len(query.Seq) - 1
+
+		if rotationSize > len(seq1.Seq) {
+			return
+		}
+
+		tempseq += seq1.Seq[rotationSize:]
+		tempseq += seq1.Seq[:rotationSize]
+		seq1.Seq = tempseq
+
+		fsa = &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq1.Sequence()))}
+		fsa.Alpha = alphabet.DNAgapped
+		fsb = &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq2.Sequence()))}
+		fsb.Alpha = alphabet.DNAgapped
+		aln, err := alignMentMatrix.Align(fsa, fsb)
+		if err == nil {
+			fa := align.Format(fsa, fsb, aln, '-')
+			rotatedAlignment := Result{
+				Template:  &template,
+				Query:     &query,
+				Algorithm: alignMentMatrix,
+				Alignment: formatMisMatches(Alignment{
+					TemplateResult: fmt.Sprint(fa[0]),
+					QueryResult:    fmt.Sprint(fa[1]),
+				}),
+			}
+			if rotatedAlignment.Matches() > alignment.Matches() {
+				alignment = rotatedAlignment
+			}
+		}
+	}
+
 	return
 }
 

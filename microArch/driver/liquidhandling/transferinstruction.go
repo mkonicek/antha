@@ -633,6 +633,9 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	// if we can multi we do this first
 
+	// TODO TODO TODO XXX XXX XXX get rid
+	fmt.Println("SERIOUSLY::::GET RID OF THIS")
+	pol["CAN_MULTI"] = true
 	if pol["CAN_MULTI"].(bool) {
 		parallelsets := ins.GetParallelSetsFor(ctx, prms.HeadsLoaded[0].Params)
 

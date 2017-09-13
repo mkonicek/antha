@@ -135,6 +135,9 @@ func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannel
 	// we choose individually
 
 	for i := 0; i < len(vols); i++ {
+		if vols[i].IsZero() {
+			continue
+		}
 		prm, tip := ChooseChannel(vols[i], prms)
 		if tip == nil {
 			return prmA, tipA, tipTypeA, fmt.Errorf(TipChosenError(vols[i], prms))

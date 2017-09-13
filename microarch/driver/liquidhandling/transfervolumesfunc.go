@@ -60,6 +60,9 @@ func TransferVolumesMulti(vols VolumeSet, chans []*wtype.LHChannelParameter) ([]
 	ks := make([]int, len(vols))
 
 	for i := 0; i < len(vols); i++ {
+		if chans[i] == nil {
+			continue
+		}
 		vv1 := vols[i].ConvertTo(chans[i].Maxvol.Unit())
 		ks[i] = wutil.RoundInt(vv1 / chans[i].Maxvol.RawValue())
 	}

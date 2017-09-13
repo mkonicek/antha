@@ -32,7 +32,7 @@ func makeChannelSubsets(tiptypes []string, channels []*wtype.LHChannelParameter)
 	tta := dupSA(tiptypes)
 	cha := dupCHA(channels)
 
-	for i := 0; i < len(tiptypes); i++ {
+	for i := 0; i <= len(tiptypes); i++ {
 		ts := ""
 		var ch *wtype.LHChannelParameter
 		mask := make([]bool, len(tiptypes))

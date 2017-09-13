@@ -795,6 +795,10 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name string) interface{
 func (ins *MultiChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 
+	if len(ins.Volume) == 0 {
+		return ret, nil
+	}
+
 	// make the instructions
 
 	suckinstruction := NewSuckInstruction()
@@ -806,6 +810,7 @@ func (ins *MultiChannelTransferInstruction) Generate(ctx context.Context, policy
 		if ins.Volume[i].IsZero() {
 			continue
 		}
+		fmt.Println("YO ADD ", i, " ", ins.Params(i))
 		suckinstruction.AddTransferParams(ins.Params(i))
 		blowinstruction.AddTransferParams(ins.Params(i))
 	}
@@ -1998,6 +2003,7 @@ func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
 	ins.Volume = append(ins.Volume, tp.Volume)
 	ins.TPlateType = append(ins.TPlateType, tp.TPlateType)
 	ins.TVolume = append(ins.TVolume, tp.TVolume)
+	ins.Prms = tp.Channel
 	ins.Head = tp.Channel.Head
 	ins.TipType = tp.TipType
 }
@@ -2343,9 +2349,11 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	// allow policies to override completely
 
 	overridereset := SafeGetBool(pol, "RESET_OVERRIDE")
+	fmt.Println("______", ins.Params())
 
 	if weneedtoreset && !overridereset {
 		resetinstruction := NewResetInstruction()
+
 		resetinstruction.AddMultiTransferParams(ins.Params())
 		resetinstruction.Prms = ins.Prms
 		ret = append(ret, resetinstruction)
@@ -3153,6 +3161,7 @@ func getFirstDefined(sa []string) int {
 
 func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, channel []*wtype.LHChannelParameter, usetiptracking bool) ([]RobotInstruction, error) {
 
+	fmt.Println("GET TIPS: ", tiptypes)
 	// GetCleanTips returns enough sets of tip boxes to get all distinct tip types
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(ctx, tiptypes, channel, usetiptracking)
 

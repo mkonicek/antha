@@ -1,6 +1,10 @@
 package liquidhandling
 
-import "github.com/antha-lang/antha/antha/anthalib/wtype"
+import (
+	"fmt"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+)
 
 type LHIVector []*wtype.LHInstruction
 
@@ -37,4 +41,15 @@ func (lhiv LHIVector) CompsAt(i int) []*wtype.LHComponent {
 	}
 
 	return ret
+}
+
+func (lhiv LHIVector) Generations() string {
+	s := ""
+	for _, i := range lhiv {
+		if i == nil {
+			continue
+		}
+		s += fmt.Sprintf("%d,", i.Generation())
+	}
+	return s
 }

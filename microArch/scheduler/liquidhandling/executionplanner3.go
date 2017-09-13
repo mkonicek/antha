@@ -37,8 +37,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			break
 		}
 
-		if len(ch.Values) == 1 && ch.Values[0].Type == wtype.LHIPRM {
-			// if this is a solitary prompt instruction just generate the requisite message
+		if ch.Values[0].Type == wtype.LHIPRM {
 			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
 			request.InstructionSet.Add(prm)
 			robot.UpdateComponentIDs(ch.Values[0].PassThrough)

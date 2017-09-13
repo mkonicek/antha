@@ -915,9 +915,11 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 		}
 		wells, err = bx.GetTipsMasked(tipParams.Mask, tipParams.Channel.Orientation, true)
 
-		if err != nil {
-			return wells, positions, boxtypes, err
-		}
+		/*
+			if err != nil && !bx.Empty() {
+				return wells, positions, boxtypes, err
+			}
+		*/
 		// TODO -- support partial collections
 		if wells != nil && countMulti(wells) == multi {
 			foundit = true

@@ -87,11 +87,14 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 			if got[j] == nil {
 				continue
 			}
-			if (got[j].CName == "" || want[i].CName != got[j].CName) && !independent {
+			// CName might not always match
+			//if (got[j].CName == "" || want[i].CName != got[j].CName) && !independent {
+			if (got[j].CName == "" || !want[i].Matches(got[j])) && !independent {
 				continue
 			}
 
-			if want[i].CName != got[j].CName {
+			//if want[i].CName != got[j].CName {
+			if !want[i].Matches(got[j]) {
 				mat[i][j].Vl = 0.0
 				mat[i][j].Sc = 0.0
 			} else {

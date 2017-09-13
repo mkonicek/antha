@@ -220,7 +220,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			pt, err := inventory.NewPlate(ctx, i.Platetype)
 
 			if err != nil {
-				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type %s found: %s", i.Platetype, err))
+				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type exists for ID %s - requested was %s", i.PlateID(), i.Platetype))
 			}
 
 			platedims[i.PlateID()] = wtype.Rational{pt.WellsX(), pt.WellsY()}

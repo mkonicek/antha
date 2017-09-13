@@ -797,11 +797,6 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 		concstr := strconv.FormatFloat(concfloat, 'G', -1, 64)
-		/*
-			fmt.Println("len(wells)", len(wells))
-			fmt.Println("len(liquids)", len(liquids))
-			fmt.Println("len(Volumes)", len(Volumes))
-		*/
 
 		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), concstr, concs[i].Unit().PrefixedSymbol()}
 		records = append(records, record)
@@ -976,7 +971,7 @@ func componentList(vec ComponentVector) map[string]bool {
 	for _, c := range vec {
 		if c != nil {
 			if c.Vol > 0.0 {
-				r[c.FullyQualifiedName()] = true
+				r[c.IDOrName()] = true
 			}
 		}
 	}
@@ -986,6 +981,7 @@ func componentList(vec ComponentVector) map[string]bool {
 
 func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume) ComponentVector {
 	cv := p.GetFilteredContentVector(wv, cmps)
+
 	cv.DeleteAllBelowVolume(mpv)
 	return cv
 }
@@ -996,7 +992,7 @@ func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector
 	fcv := make([]*LHComponent, len(cv))
 
 	for i := 0; i < len(cv); i++ {
-		if cv[i] != nil && wants[cv[i].FullyQualifiedName()] {
+		if cv[i] != nil && wants[cv[i].IDOrName()] {
 			fcv[i] = cv[i]
 		}
 	}

@@ -243,7 +243,6 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		wellTo.Add(cmpFrom)
 
 		// make sure the wellTo gets the right ID (ultimately)
-
 		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Result.ID)
 		wellTo.WContents.ID = inssIn[ci].Result.ID
 		wellTo.WContents.DeclareInstance()

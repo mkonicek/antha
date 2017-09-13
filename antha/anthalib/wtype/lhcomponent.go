@@ -56,6 +56,22 @@ type LHComponent struct {
 	Destination        string
 }
 
+func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {
+	// request for a specific component
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			//  look for the ID of its parent (we don't allow sampling from samples yet)
+			return cmp.ParentID == cmp2.ID
+		} else {
+			// if this is just the whole component we check for *its* Id
+			return cmp.ID == cmp2.ID
+		}
+	} else {
+		// sufficient to be of same types
+		return cmp.IsSameKindAs(cmp2)
+	}
+}
+
 func (lhc LHComponent) GetID() string {
 	return lhc.ID
 }
@@ -865,7 +881,23 @@ func (lhc *LHComponent) Kind() string {
 	// v1: distinct IDs for underlying liquid types
 }
 
-func (cmp *LHComponent) FullyQualifiedName() string {
+func (cmp LHComponent) IDOrName() string {
+	// as below but omits kind name to allow users to reset
+
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			return cmp.ParentID
+		} else {
+			return cmp.ID
+		}
+
+	} else {
+		return cmp.Kind()
+	}
+
+}
+
+func (cmp LHComponent) FullyQualifiedName() string {
 	// this should be equivalent to the checks done by LHWell.Contains()
 
 	if cmp.IsInstance() {

@@ -73,6 +73,10 @@ func NewLHPromptInstruction() *LHInstruction {
 	return lhi
 }
 
+func (inst *LHInstruction) InsType() string {
+	return InsType(inst.Type)
+}
+
 func (inst *LHInstruction) AddProduct(cmp *LHComponent) {
 	inst.Result = cmp
 	inst.ProductID = cmp.ID

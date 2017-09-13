@@ -723,22 +723,11 @@ func (w *LHWell) ClearUserAllocated() {
 
 func (w *LHWell) Contains(cmp *LHComponent) bool {
 	// obviously empty wells don't contain anything
-	if w.Empty() {
+	if w.Empty() || cmp == nil {
 		return false
 	}
-	// request for a specific component
-	if cmp.IsInstance() {
-		if cmp.IsSample() {
-			//  look for the ID of its parent (we don't allow sampling from samples yet)
-			return cmp.ParentID == w.WContents.ID
-		} else {
-			// if this is just the whole component we check for *its* Id
-			return cmp.ID == w.WContents.ID
-		}
-	} else {
-		// sufficient to be of same types
-		return cmp.IsSameKindAs(w.WContents)
-	}
+	// components are the keepers of this information
+	return cmp.Matches(w.WContents)
 }
 
 func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {

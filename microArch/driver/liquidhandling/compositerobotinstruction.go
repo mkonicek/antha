@@ -285,8 +285,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 				}
 				ret = append(ret, tipdrp)
 
-				// TODO mirroring
-
 				tt, chanA := tipArrays(newchannel.Multi)
 				tt[0] = newtiptype
 				chanA[0] = newchannel

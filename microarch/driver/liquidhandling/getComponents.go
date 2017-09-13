@@ -53,7 +53,7 @@ func newReply() GetComponentsReply {
 
 func areWeDoneYet(cmps wtype.ComponentVector) bool {
 	for _, c := range cmps {
-		if c.Vol != 0 {
+		if c != nil && c.Vol != 0 {
 			return false
 		}
 	}
@@ -114,6 +114,7 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) bool {
 	collSrcs := sumSources(srcs)
 	collDsts := dests.ToSumHash()
+
 	result := subHash(collSrcs, collDsts)
 
 	return result.AllVolsPosOrZero()
@@ -179,6 +180,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			if src.Empty() {
 				continue
 			}
+
 			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, false)
 
 			if err != nil && err.Error() != wtype.NotFoundError {
@@ -211,7 +213,7 @@ func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPo
 		if match.M[i] != -1 {
 			volSub := wunit.CopyVolume(match.Vols[i])
 			volSub.Add(carryVol)
-			src[match.M[i]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit) //match.Vols[i].ConvertToString(src[match.M[i]].Vunit)
+			src[match.M[i]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit)
 		}
 	}
 

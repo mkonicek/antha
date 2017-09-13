@@ -494,8 +494,15 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	if request.Options.PrintInstructions {
-		for _, ins := range request.LHInstructions {
-			fmt.Println(ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ", ins.PlateID, " ", ins.Welladdress, ": ", ins.ProductID)
+		for _, insID := range request.Output_order {
+			ins := request.LHInstructions[insID]
+			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID(), ") ", ins.Welladdress, ": ", ins.ProductID)
+
+			if ins.IsMixInPlace() {
+				fmt.Print(" INPLACE")
+			}
+
+			fmt.Println()
 		}
 		request.InstructionChain.Print()
 	}

@@ -16,7 +16,7 @@ type platetest struct {
 }
 
 var tests = []platetest{
-	platetest{TestPlateName: "reservoir", ExpectedZStart: 10.0, ExpectedHeight: 45.0},
+	platetest{TestPlateName: "reservoir", ExpectedZStart: 0.0, ExpectedHeight: 40.0},
 	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
 	platetest{TestPlateName: "Nuncon12well", ExpectedZStart: 4.0, ExpectedHeight: 19.0},

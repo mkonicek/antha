@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"math"
 )
 
@@ -45,50 +44,42 @@ func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 	return ret, nil
 }
 
+// multichannel version of above
+// TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error)
+
 func TransferVolumesMulti(vols VolumeSet, chans []*wtype.LHChannelParameter) ([]VolumeSet, error) {
-	max := func(a []int) int {
-		m := a[0]
-		for i := 1; i < len(a); i++ {
-			if a[i] > m {
-				m = a[i]
-			}
-		}
-
-		return m
-	}
-
-	ks := make([]int, len(vols))
-
+	// aggregate vertically
+	mods := make([]VolumeSet, len(vols))
+	mx := 0
 	for i := 0; i < len(vols); i++ {
 		if chans[i] == nil {
 			continue
 		}
-		vv1 := vols[i].ConvertTo(chans[i].Maxvol.Unit())
-		ks[i] = wutil.RoundInt(vv1 / chans[i].Maxvol.RawValue())
-	}
+		mod, err := TransferVolumes(vols[i], chans[i].Minvol, chans[i].Maxvol)
 
-	left := vols.Dup()
-	ret := make([]VolumeSet, max(ks)+1)
-
-	for i := 0; i < max(ks)+1; i++ {
-		r := NewVolumeSet(len(ks))
-		for j := 0; j < len(ks); j++ {
-			if ks[j] > 0 {
-				if left[j].LessThan(chans[i].Minvol) {
-					return ret, fmt.Errorf("Insufficient remaining volume in multichannel transfer")
-				}
-				r[j] = chans[i].Maxvol.Dup()
-				left[j].Subtract(chans[i].Maxvol)
-			} else if ks[j] == 0 {
-				r[j] = left[j].Dup()
-			} else {
-				// r[j] is left as 0.0
-			}
-
-			ks[j] -= 1
+		if err != nil {
+			return []VolumeSet{}, err
 		}
 
-		ret[i] = r
+		mods[i] = mod
+		if len(mod) > mx {
+			mx = len(mod)
+		}
+
+	}
+
+	ret := make([]VolumeSet, mx)
+
+	for j := 0; j < mx; j++ {
+		vs := make(VolumeSet, len(vols))
+
+		for i := 0; i < len(vols); i++ {
+			if j < len(mods[i]) {
+				vs[i] = mods[i][j]
+			}
+		}
+
+		ret[j] = vs
 	}
 
 	return ret, nil

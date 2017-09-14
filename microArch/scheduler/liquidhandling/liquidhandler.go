@@ -191,6 +191,13 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		if (*request).Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
 		}
+		_, ok := ins.(liquidhandling.TerminalRobotInstruction)
+
+		if !ok {
+			fmt.Printf("ERROR: Got instruction ", liquidhandling.InsToString(ins), "which is wrong type")
+			continue
+		}
+
 		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
 		if err != nil {

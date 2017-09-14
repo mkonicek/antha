@@ -503,6 +503,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		}
 
 		for _, vols := range tvs {
+			fmt.Println("VOLS: ", vols)
 			// determine whether to change tips
 			// INMC: DO THIS PER CHANNEL
 			change_tips := false

@@ -24,6 +24,8 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
@@ -59,9 +61,18 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		return nil, err
 	}
 
-	instrx := make([]liquidhandling.TerminalRobotInstruction, len(inx))
+	instrx := make([]liquidhandling.TerminalRobotInstruction, 0, len(inx))
 	for i := 0; i < len(inx); i++ {
-		instrx[i] = inx[i].(liquidhandling.TerminalRobotInstruction)
+		_, ok := inx[i].(liquidhandling.TerminalRobotInstruction)
+
+		fmt.Println(liquidhandling.InsToString(inx[i]))
+
+		if !ok {
+			fmt.Println("ERROR: Instruction wrong type (", liquidhandling.InstructionTypeName(inx[i]), ")")
+			continue
+		}
+
+		instrx = append(instrx, inx[i].(liquidhandling.TerminalRobotInstruction))
 	}
 	request.Instructions = instrx
 

@@ -191,7 +191,6 @@ func tipArrays(multi int) ([]string, []*wtype.LHChannelParameter) {
 }
 
 func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 
 	ret := make([]RobotInstruction, 0)
@@ -526,6 +525,10 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			}
 
 			if change_tips {
+				fmt.Println("CHANGE TIPS:")
+				fmt.Println("\tCHANNELS DIFF:", !reflect.DeepEqual(channels, newchannels))
+				fmt.Println("\tTIPTYPES DIFF:", !reflect.DeepEqual(tiptypes, newtiptypes))
+				fmt.Println("\tCNAME CHECK  :", last_thing != nil && this_thing.CName != last_thing.CName)
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters
 				tipdrp, err := DropTips(newtiptypes, prms, channels)
@@ -1522,7 +1525,7 @@ func (ins *LoadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 }
 
 func (ins *LoadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
-	ret := driver.LoadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+	ret := driver.LoadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
 	}
@@ -1587,7 +1590,7 @@ func (ins *UnloadTipsInstruction) Generate(ctx context.Context, policy *wtype.LH
 }
 
 func (ins *UnloadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
-	ret := driver.UnloadTips(ins.Channels, ins.Head, len(ins.TipType), ins.HolderType, ins.Pos, ins.Well)
+	ret := driver.UnloadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
 	}

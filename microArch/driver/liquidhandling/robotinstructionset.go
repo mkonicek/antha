@@ -65,6 +65,8 @@ func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolic
 				ri.Add(ins)
 			}
 		}
+
+		fmt.Println("RIS GENERATE: ", InsToString(ri.parent))
 	}
 
 	for _, ins := range ri.instructions {

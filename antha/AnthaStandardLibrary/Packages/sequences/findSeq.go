@@ -48,6 +48,71 @@ type PositionPair struct {
 	Reverse       bool
 }
 
+// Start returns the start position of the PositionPair
+// by default this will return a directional human friendly position
+func (p PositionPair) Start(options ...string) int {
+	start, _ := p.Coordinates(options...)
+	return start
+}
+
+// End returns the end position of the PositionPair
+// by default this will return a directional human friendly position
+func (p PositionPair) End(options ...string) int {
+	_, end := p.Coordinates(options...)
+	return end
+}
+
+// ignores case
+func containsString(slice []string, testString string) bool {
+
+	upper := func(s string) string { return strings.ToUpper(s) }
+
+	for _, str := range slice {
+		if upper(str) == upper(testString) {
+			return true
+		}
+	}
+	return false
+}
+
+// Coordinates returns the start and end positions of the feature
+// by default this will return the start position followed by the end position
+func (p *PositionPair) Coordinates(options ...string) (start, end int) {
+	start, end = p.StartPosition, p.EndPosition
+	if containsString(options, wtype.CODEFRIENDLY) {
+		start--
+		end--
+	}
+	if containsString(options, wtype.IGNOREDIRECTION) {
+		if start > end {
+			return end, start
+		}
+	}
+	return start, end
+}
+
+// PositionPairSet obeys the sort interface making the position pairs to be sorted
+// in ascending start position.
+// Direction is ignored during sorting.
+type PositionPairSet []PositionPair
+
+func (p PositionPairSet) Len() int {
+	return len(p)
+}
+
+func (p PositionPairSet) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func (p PositionPairSet) Less(i, j int) bool {
+	starti, endi := p[i].HumanFriendly(IGNOREDIRECTION)
+
+	startj, endj := p[j].HumanFriendly(IGNOREDIRECTION)
+
+	return starti < startj && endi < endj
+
+}
+
 // IGNOREDIRECTION is a boolean constant to specify direction of a feature position
 // should be ignored when returning start and end positions of a feature.
 // If selected, the start position will be the first position at which the feature is encountered regardless of orientation.

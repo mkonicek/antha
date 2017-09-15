@@ -99,29 +99,34 @@ func (p *PositionPair) Coordinates(options ...string) (start, end int) {
 	return start, end
 }
 
-// PositionPairSet obeys the sort interface making the position pairs to be sorted
+// ByPositionPairStartPosition obeys the sort interface making the position pairs to be sorted
 // in ascending start position.
 // Direction is ignored during sorting.
-type PositionPairSet []PositionPair
+type ByPositionPairStartPosition []PositionPair
 
 // Len returns the number of PositionPairs in PositionPairSet
-func (p PositionPairSet) Len() int {
+func (p PositionPairSetByStartPosition) Len() int {
 	return len(p)
 }
 
 // Swap changes positions of two entries in a PositionPairSet
-func (p PositionPairSet) Swap(i, j int) {
+func (p PositionPairSetByStartPosition) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-// Less evaluates whether the entry of PositionPairSet with index i is less than entry with index j
-// the directionless start position and endposition is used to assess this
-func (p PositionPairSet) Less(i, j int) bool {
+// Less evaluates whether the entry of PositionPairSet with index j is less than entry with index i
+// the directionless start position is used to assess this.
+// If the start positions are the same the end position is used.
+func (p PositionPairSetByStartPosition) Less(i, j int) bool {
 	starti, endi := p[i].HumanFriendly(IGNOREDIRECTION)
 
 	startj, endj := p[j].HumanFriendly(IGNOREDIRECTION)
 
-	return starti < startj && endi < endj
+	if startj == starti {
+		return endi > endj
+	}
+
+	return starti > startj
 
 }
 

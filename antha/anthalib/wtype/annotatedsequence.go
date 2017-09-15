@@ -37,22 +37,56 @@ const (
 	Misc
 )
 */
+
 type Feature struct {
 	Name          string `json:"name"`
 	Class         string `json:"class	"` //int // defined by constants above
 	Reverse       bool   `json:"reverse"`
-	StartPosition int    `json:"start_position"`
-	EndPosition   int    `json:"end_position"`
+	StartPosition int    `json:"start_position"` // in human friendly format
+	EndPosition   int    `json:"end_position"`   // in human friendly format
 	DNASeq        string `json:"dna_seq"`
 	Protseq       string `json:"prot_seq"`
 	//Synonyms      map[string]string `json:"synonyms"`
 	//Status        string
 }
 
-func (feat *Feature) Coordinates() (pair []int) {
-	pair[0] = feat.StartPosition
-	pair[1] = feat.EndPosition
-	return
+func (f Feature) DNASequence() DNASequence {
+	return DNASequence{Nm: f.Name, Seq: f.DNASeq}
+}
+
+const (
+	HUMANFRIENDLY   = "humanFriendly"
+	CODEFRIENDLY    = "codeFriendly"
+	IGNOREDIRECTION = "ignoreDirection"
+)
+
+// ignores case
+func containsString(slice []string, testString string) bool {
+
+	upper := func(s string) string { return strings.ToUpper(s) }
+
+	for _, str := range slice {
+		if upper(str) == upper(testString) {
+			return true
+		}
+	}
+	return false
+}
+
+// Coordinates returns the start and end positions of the feature
+// by default this will return the start position followed by the end position
+func (feat *Feature) Coordinates(options ...string) (start, end int) {
+	start, end = feat.StartPosition, feat.EndPosition
+	if containsString(options, CODEFRIENDLY) {
+		start--
+		end--
+	}
+	if containsString(options, IGNOREDIRECTION) {
+		if start > end {
+			return end, start
+		}
+	}
+	return start, end
 }
 
 func (annotated DNASequence) FeatureNames() (featurenames []string) {

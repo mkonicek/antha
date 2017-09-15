@@ -55,8 +55,20 @@ func (f Feature) DNASequence() DNASequence {
 }
 
 const (
-	HUMANFRIENDLY   = "humanFriendly"
-	CODEFRIENDLY    = "codeFriendly"
+	// Option to feed into coordinates method.
+	// HUMANFRIENDLY returns a sequence PositionPair's start and end positions in a human friendly format
+	// i.e. in a Sequence "ATGTGTTG" position 1 is A, 2 is T.
+	HUMANFRIENDLY = "humanFriendly"
+
+	// Option to feed into coordinates method.
+	// CODEFRIENDLY returns a sequence PositionPair's start and end positions in a code friendly format
+	// i.e. in a Sequence "ATGTGTTG" position 0 is A, 1 is T.
+	CODEFRIENDLY = "codeFriendly"
+
+	// Option to feed into coordinates method.
+	// IGNOREDIRECTION is a constant to specify that direction of a feature position
+	// should be ignored when returning start and end positions of a feature.
+	// If selected, the start position will be the first position at which the feature is encountered regardless of orientation.
 	IGNOREDIRECTION = "ignoreDirection"
 )
 
@@ -74,7 +86,15 @@ func containsString(slice []string, testString string) bool {
 }
 
 // Coordinates returns the start and end positions of the feature
-// by default this will return the start position followed by the end position
+// by default this will return the start position followed by the end position in human friendly format
+// Available options are:
+// HUMANFRIENDLY returns a sequence PositionPair's start and end positions in a human friendly format
+// i.e. in a Sequence "ATGTGTTG" position 1 is A, 2 is T.
+// CODEFRIENDLY returns a sequence PositionPair's start and end positions in a code friendly format
+// i.e. in a Sequence "ATGTGTTG" position 0 is A, 1 is T.
+// IGNOREDIRECTION is a constant to specify that direction of a feature position
+// should be ignored when returning start and end positions of a feature.
+// If selected, the start position will be the first position at which the feature is encountered regardless of orientation.
 func (feat *Feature) Coordinates(options ...string) (start, end int) {
 	start, end = feat.StartPosition, feat.EndPosition
 	if containsString(options, CODEFRIENDLY) {

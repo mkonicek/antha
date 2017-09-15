@@ -76,7 +76,15 @@ func containsString(slice []string, testString string) bool {
 }
 
 // Coordinates returns the start and end positions of the feature
-// by default this will return the start position followed by the end position
+// by default this will return the start position followed by the end position in human friendly format
+// Availabe options are:
+// HUMANFRIENDLY returns a sequence PositionPair's start and end positions in a human friendly format
+// i.e. in a Sequence "ATGTGTTG" position 1 is A, 2 is T.
+// CODEFRIENDLY returns a sequence PositionPair's start and end positions in a code friendly format
+// i.e. in a Sequence "ATGTGTTG" position 0 is A, 1 is T.
+// IGNOREDIRECTION is a constant to specify that direction of a feature position
+// should be ignored when returning start and end positions of a feature.
+// If selected, the start position will be the first position at which the feature is encountered regardless of orientation.
 func (p *PositionPair) Coordinates(options ...string) (start, end int) {
 	start, end = p.StartPosition, p.EndPosition
 	if containsString(options, wtype.CODEFRIENDLY) {
@@ -96,14 +104,18 @@ func (p *PositionPair) Coordinates(options ...string) (start, end int) {
 // Direction is ignored during sorting.
 type PositionPairSet []PositionPair
 
+// Len returns the number of PositionPairs in PositionPairSet
 func (p PositionPairSet) Len() int {
 	return len(p)
 }
 
+// Swap changes positions of two entries in a PositionPairSet
 func (p PositionPairSet) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
+// Less evaluates whether the entry of PositionPairSet with index i is less than entry with index j
+// the directionless start position and endposition is used to assess this
 func (p PositionPairSet) Less(i, j int) bool {
 	starti, endi := p[i].HumanFriendly(IGNOREDIRECTION)
 

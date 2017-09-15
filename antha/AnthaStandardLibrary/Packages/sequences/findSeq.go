@@ -105,19 +105,19 @@ func (p *PositionPair) Coordinates(options ...string) (start, end int) {
 type ByPositionPairStartPosition []PositionPair
 
 // Len returns the number of PositionPairs in PositionPairSet
-func (p PositionPairSetByStartPosition) Len() int {
+func (p ByPositionPairStartPosition) Len() int {
 	return len(p)
 }
 
 // Swap changes positions of two entries in a PositionPairSet
-func (p PositionPairSetByStartPosition) Swap(i, j int) {
+func (p ByPositionPairStartPosition) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
 // Less evaluates whether the entry of PositionPairSet with index j is less than entry with index i
 // the directionless start position is used to assess this.
 // If the start positions are the same the end position is used.
-func (p PositionPairSetByStartPosition) Less(i, j int) bool {
+func (p ByPositionPairStartPosition) Less(i, j int) bool {
 	starti, endi := p[i].HumanFriendly(IGNOREDIRECTION)
 
 	startj, endj := p[j].HumanFriendly(IGNOREDIRECTION)

@@ -140,7 +140,7 @@ var (
 // Align two dna sequences based on a specified scoring matrix
 func TestAlign(t *testing.T) {
 	for _, test := range tests {
-		alignment, err := DNA(test.Seq1, test.Seq2, test.ScoringMatrix)
+		alignment, err := DNA(replaceN(test.Seq1), replaceN(test.Seq2), test.ScoringMatrix)
 
 		if err != nil {
 			t.Error(

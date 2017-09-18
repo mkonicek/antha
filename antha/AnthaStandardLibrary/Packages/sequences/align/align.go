@@ -317,7 +317,19 @@ func DNA(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment
 
 func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
 
-	seq1, seq2 := replaceN(template), replaceN(query)
+	if containsN(template) {
+		err = fmt.Errorf("template sequence %s contains N values. Please replace these with - before running alignment", template.Name())
+		return
+	}
+
+	if containsN(query) {
+		err = fmt.Errorf("query sequence %s contains N values. Please replace these with - before running alignment", query.Name())
+		return
+	}
+
+	var errs []string
+
+	seq1, seq2 := template, query
 
 	fsa := &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq1.Sequence()))}
 	fsa.Alpha = alphabet.DNAgapped
@@ -336,6 +348,8 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringM
 				QueryResult:    fmt.Sprint(fa[1]),
 			}),
 		}
+	} else {
+		errs = append(errs, err.Error())
 	}
 
 	// if plasmid we must try again with rotating vector the length of query sequence
@@ -344,12 +358,12 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringM
 		var tempseq string
 		rotationSize := len(query.Seq) - 1
 
-		if rotationSize > len(seq1.Seq) {
+		if rotationSize > len(template.Seq) {
 			return
 		}
 
-		tempseq += seq1.Seq[rotationSize:]
-		tempseq += seq1.Seq[:rotationSize]
+		tempseq += template.Seq[rotationSize:]
+		tempseq += template.Seq[:rotationSize]
 		seq1.Seq = tempseq
 
 		fsa = &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq1.Sequence()))}
@@ -371,13 +385,28 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringM
 			if rotatedAlignment.Matches() > alignment.Matches() {
 				alignment = rotatedAlignment
 			}
+		} else {
+			errs = append(errs, err.Error())
 		}
+	}
+
+	if len(errs) > 0 {
+		err = fmt.Errorf("Errors: %s", strings.Join(errs, ";"))
 	}
 
 	return
 }
 
-// the biogo implementation of alignment requires the N nucleotides to be repalced with -
+func containsN(seq wtype.DNASequence) bool {
+	for _, letter := range seq.Seq {
+		if strings.ToUpper(string(letter)) == "N" {
+			return true
+		}
+	}
+	return false
+}
+
+// the biogo implementation of alignment requires the N nucleotides to be replaced with -
 func replaceN(seq wtype.DNASequence) wtype.DNASequence {
 
 	var newSeq []string
@@ -385,6 +414,23 @@ func replaceN(seq wtype.DNASequence) wtype.DNASequence {
 	for _, letter := range seq.Seq {
 		if strings.ToUpper(string(letter)) == "N" {
 			letter = rune('-')
+		}
+		newSeq = append(newSeq, string(letter))
+	}
+
+	seq.Seq = strings.Join(newSeq, "")
+
+	return seq
+}
+
+// convert all instances of - back to N
+func replaceDash(seq wtype.DNASequence) wtype.DNASequence {
+
+	var newSeq []string
+
+	for _, letter := range seq.Seq {
+		if strings.ToUpper(string(letter)) == "-" {
+			letter = rune('N')
 		}
 		newSeq = append(newSeq, string(letter))
 	}

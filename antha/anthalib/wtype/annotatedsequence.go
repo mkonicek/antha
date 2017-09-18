@@ -37,22 +37,76 @@ const (
 	Misc
 )
 */
+
 type Feature struct {
 	Name          string `json:"name"`
 	Class         string `json:"class	"` //int // defined by constants above
 	Reverse       bool   `json:"reverse"`
-	StartPosition int    `json:"start_position"`
-	EndPosition   int    `json:"end_position"`
+	StartPosition int    `json:"start_position"` // in human friendly format
+	EndPosition   int    `json:"end_position"`   // in human friendly format
 	DNASeq        string `json:"dna_seq"`
 	Protseq       string `json:"prot_seq"`
 	//Synonyms      map[string]string `json:"synonyms"`
 	//Status        string
 }
 
-func (feat *Feature) Coordinates() (pair []int) {
-	pair[0] = feat.StartPosition
-	pair[1] = feat.EndPosition
-	return
+func (f Feature) DNASequence() DNASequence {
+	return DNASequence{Nm: f.Name, Seq: f.DNASeq}
+}
+
+const (
+	// Option to feed into coordinates method.
+	// HUMANFRIENDLY returns a sequence PositionPair's start and end positions in a human friendly format
+	// i.e. in a Sequence "ATGTGTTG" position 1 is A, 2 is T.
+	HUMANFRIENDLY = "humanFriendly"
+
+	// Option to feed into coordinates method.
+	// CODEFRIENDLY returns a sequence PositionPair's start and end positions in a code friendly format
+	// i.e. in a Sequence "ATGTGTTG" position 0 is A, 1 is T.
+	CODEFRIENDLY = "codeFriendly"
+
+	// Option to feed into coordinates method.
+	// IGNOREDIRECTION is a constant to specify that direction of a feature position
+	// should be ignored when returning start and end positions of a feature.
+	// If selected, the start position will be the first position at which the feature is encountered regardless of orientation.
+	IGNOREDIRECTION = "ignoreDirection"
+)
+
+// ignores case
+func containsString(slice []string, testString string) bool {
+
+	upper := func(s string) string { return strings.ToUpper(s) }
+
+	for _, str := range slice {
+		if upper(str) == upper(testString) {
+			return true
+		}
+	}
+	return false
+}
+
+// Coordinates returns the start and end positions of the feature
+// by default this will return the start position followed by the end position in human friendly format
+// Available options are:
+// HUMANFRIENDLY returns a sequence PositionPair's start and end positions in a human friendly format
+// i.e. in a Sequence "ATGTGTTG" position 1 is A, 2 is T.
+// CODEFRIENDLY returns a sequence PositionPair's start and end positions in a code friendly format
+// i.e. in a Sequence "ATGTGTTG" position 0 is A, 1 is T.
+// IGNOREDIRECTION is a constant to specify that direction of a feature position
+// should be ignored when returning start and end positions of a feature.
+// If selected, the start position will be the first position at which the feature is encountered regardless of orientation.
+func (feat *Feature) Coordinates(options ...string) (start, end int) {
+	start, end = feat.StartPosition, feat.EndPosition
+	if containsString(options, CODEFRIENDLY) {
+		start--
+		end--
+	}
+	if containsString(options, IGNOREDIRECTION) {
+		if start > end {
+			return end, start
+		}
+	}
+	return start, end
 }
 
 func (annotated DNASequence) FeatureNames() (featurenames []string) {

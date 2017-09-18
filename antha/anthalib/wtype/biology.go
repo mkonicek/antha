@@ -24,8 +24,6 @@ package wtype
 
 import (
 	"fmt"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"encoding/json"
 	"math/rand"
 	"strings"

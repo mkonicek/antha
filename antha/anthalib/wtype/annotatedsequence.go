@@ -26,30 +26,55 @@ import (
 	"strings"
 )
 
-/*
+// feature class options based on genbank conventions
 const (
-	orf = iota
-	Promoter
-	Ribosomebindingsite
-	TranslationInitSite
-	Origin
-	Marker
-	Misc
-)
-*/
+	ORF           = "ORF"
+	CDS           = "CDS"
+	GENE          = "gene"
+	MISC_FEATURE  = "misc_feature"
+	PROMOTER      = "promoter"
+	TRNA          = "tRNA"
+	RRNA          = "rRNA"
+	NCRNA         = "ncRNA"
+	REGULATORY    = "regulatory"
+	REPEAT_REGION = "repeat_region"
 
+	/*
+		Promoter
+		Ribosomebindingsite
+		TranslationInitSite
+		Origin
+		Marker
+		Misc*/
+)
+
+// Feature describes a feature within a sequence, it's position in the sequence, in human friendly format,
+// a protein sequence if applicablae and a class.
+// Use the MakeFeature and AddFeature functions from the sequences packages.
+// valid class fields are:
+/*
+	ORF = "ORF"
+	CDS = "CDS"
+	GENE = "gene"
+	MISC_FEATURE = "misc_feature"
+	PROMOTER = "promoter"
+	TRNA = "tRNA"
+	RRNA = "rRNA"
+	NCRNA = "ncRNA"
+	REGULATORY = "regulatory"
+	REPEAT_REGION = "repeat_region"
+*/
 type Feature struct {
 	Name          string `json:"name"`
-	Class         string `json:"class	"` //int // defined by constants above
+	Class         string `json:"class	"` //  defined by constants above
 	Reverse       bool   `json:"reverse"`
 	StartPosition int    `json:"start_position"` // in human friendly format
 	EndPosition   int    `json:"end_position"`   // in human friendly format
 	DNASeq        string `json:"dna_seq"`
 	Protseq       string `json:"prot_seq"`
-	//Synonyms      map[string]string `json:"synonyms"`
-	//Status        string
 }
 
+// DNASequence returns the linear DNA sequence of the feature.
 func (f Feature) DNASequence() DNASequence {
 	return DNASequence{Nm: f.Name, Seq: f.DNASeq}
 }
@@ -109,6 +134,21 @@ func (feat *Feature) Coordinates(options ...string) (start, end int) {
 	return start, end
 }
 
+// Start returns the start position of the Feature
+// by default this will return a directional human friendly position
+func (f *Feature) Start(options ...string) int {
+	start, _ := f.Coordinates(options...)
+	return start
+}
+
+// End returns the end position of the Feature
+// by default this will return a directional human friendly position
+func (f *Feature) End(options ...string) int {
+	_, end := f.Coordinates(options...)
+	return end
+}
+
+// FeatureNames returns a list of all feature names in the sequence
 func (annotated DNASequence) FeatureNames() (featurenames []string) {
 
 	featurenames = make([]string, 0)
@@ -118,69 +158,23 @@ func (annotated DNASequence) FeatureNames() (featurenames []string) {
 	return
 }
 
-func (annotated DNASequence) FeatureStart(featurename string) (featureStart int) {
+// GetFeatureByName returns all features found which match the specified feature name.
+// Searches are not case sensitive.
+func (annotated DNASequence) GetFeatureByName(featureName string) (returnedFeatures []Feature) {
 
 	for _, feature := range annotated.Features {
-		if feature.Name == featurename {
-			featureStart = feature.StartPosition
-			return
+		if strings.Contains(strings.ToUpper(feature.Name), strings.ToUpper(featureName)) {
+			returnedFeatures = append(returnedFeatures, feature)
 		}
 
 	}
 	return
 }
 
-func (annotated DNASequence) FeatureEnd(featurename string) (featureEnd int) {
-
-	for _, feature := range annotated.Features {
-		if feature.Name == featurename {
-			featureEnd = feature.EndPosition
-			return
-		}
-
-	}
-	return
-}
-
-func (annotated DNASequence) GetFeatureByName(featurename string) (returnedfeature *Feature) {
-
-	for _, feature := range annotated.Features {
-		if strings.Contains(strings.ToUpper(feature.Name), strings.ToUpper(featurename)) {
-			returnedfeature = &feature
-			return
-		}
-
-	}
-	return
-}
+// delete this and use sequences.AddFeatures()
 
 func Annotate(dnaseq DNASequence, features []Feature) (annotated DNASequence) {
 	annotated = dnaseq
 	annotated.Features = features
 	return
-}
-
-func AddFeatures(annotated DNASequence, features []Feature) (updated DNASequence) {
-
-	for _, feature := range features {
-		annotated.Features = append(annotated.Features, feature)
-	}
-	return
-}
-
-func ConcatenateFeatures(name string, featuresinorder []Feature) (annotated DNASequence) {
-
-	annotated.Nm = name
-	//annotated.Seq.Nm = name
-	annotated.Seq = featuresinorder[0].DNASeq
-	annotated.Features = make([]Feature, 0)
-	annotated.Features = append(annotated.Features, featuresinorder[0])
-	for i := 1; i < len(featuresinorder); i++ {
-		nextfeature := featuresinorder[i]
-		nextfeature.StartPosition = nextfeature.StartPosition + annotated.Features[i-1].EndPosition
-		nextfeature.EndPosition = nextfeature.EndPosition + annotated.Features[i-1].EndPosition
-		annotated.Seq = annotated.Seq + featuresinorder[i].DNASeq
-		annotated.Features = append(annotated.Features, nextfeature)
-	}
-	return annotated
 }

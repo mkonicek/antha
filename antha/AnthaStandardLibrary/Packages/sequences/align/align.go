@@ -482,7 +482,6 @@ func isMismatch(character1, character2 rune) bool {
 	}
 
 	if strings.ToUpper(string(character1)) != strings.ToUpper(string(character2)) {
-		fmt.Println("not same: ", string(character1), string(character2))
 		return true
 	}
 	return false

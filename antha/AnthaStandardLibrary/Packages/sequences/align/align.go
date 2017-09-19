@@ -284,9 +284,9 @@ var Algorithms map[string]ScoringMatrix = map[string]ScoringMatrix{
 // SWAffine: the affine gap penalty Smith-Waterman
 // Alignment of the reverse complement of the query sequence will also be attempted and if the number of matches is higher the reverse alignment is returned.
 // In the resulting alignment, mismatches are represented by lower case letters, gaps represented by the GAP character "-".
-func DNA(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
+func DNA(seq1, seq2 wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
 
-	fwdResult, err := dnaFWDAlignment(seq1, seq2, alignMentMatrix)
+	fwdResult, err := dnaFWDAlignment(seq1, seq2, alignmentMatrix)
 
 	if err != nil {
 		return
@@ -296,7 +296,7 @@ func DNA(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment
 
 	revQuery.Seq = wtype.RevComp(seq2.Seq)
 
-	revResult, err := dnaFWDAlignment(seq1, revQuery, alignMentMatrix)
+	revResult, err := dnaFWDAlignment(seq1, revQuery, alignmentMatrix)
 
 	if err != nil {
 		return fwdResult, fmt.Errorf(fmt.Sprintf("Error with aligning reverse complement of query sequence %s: %s", seq2.Nm, err.Error()))
@@ -315,7 +315,7 @@ func DNA(seq1, seq2 wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment
 	return fwdResult, err
 }
 
-func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringMatrix) (alignment Result, err error) {
+func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
 
 	if containsN(template) {
 		err = fmt.Errorf("template sequence %s contains N values. Please replace these with - before running alignment", template.Name())
@@ -336,13 +336,13 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringM
 	fsb := &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq2.Sequence()))}
 	fsb.Alpha = alphabet.DNAgapped
 
-	aln, err := alignMentMatrix.Align(fsa, fsb)
+	aln, err := alignmentMatrix.Align(fsa, fsb)
 	if err == nil {
 		fa := align.Format(fsa, fsb, aln, '-')
 		alignment = Result{
 			Template:  &template,
 			Query:     &query,
-			Algorithm: alignMentMatrix,
+			Algorithm: alignmentMatrix,
 			Alignment: formatMisMatches(Alignment{
 				TemplateResult: fmt.Sprint(fa[0]),
 				QueryResult:    fmt.Sprint(fa[1]),
@@ -370,13 +370,13 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignMentMatrix ScoringM
 		fsa.Alpha = alphabet.DNAgapped
 		fsb = &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq2.Sequence()))}
 		fsb.Alpha = alphabet.DNAgapped
-		aln, err := alignMentMatrix.Align(fsa, fsb)
+		aln, err := alignmentMatrix.Align(fsa, fsb)
 		if err == nil {
 			fa := align.Format(fsa, fsb, aln, '-')
 			rotatedAlignment := Result{
 				Template:  &template,
 				Query:     &query,
-				Algorithm: alignMentMatrix,
+				Algorithm: alignmentMatrix,
 				Alignment: formatMisMatches(Alignment{
 					TemplateResult: fmt.Sprint(fa[0]),
 					QueryResult:    fmt.Sprint(fa[1]),

@@ -452,8 +452,8 @@ func formatMisMatches(alignment Alignment) (formattedAlignment Alignment) {
 			queryChar = strings.ToLower(string(alignment.QueryResult[i]))
 			templateChar = strings.ToLower(string(alignment.TemplateResult[i]))
 		} else {
-			queryChar = string(alignment.QueryResult[i])
-			templateChar = string(alignment.TemplateResult[i])
+			queryChar = strings.ToUpper(string(alignment.QueryResult[i]))
+			templateChar = strings.ToUpper(string(alignment.TemplateResult[i]))
 		}
 		formattedQuery = append(formattedQuery, queryChar)
 		formattedTemplate = append(formattedTemplate, templateChar)
@@ -481,7 +481,8 @@ func isMismatch(character1, character2 rune) bool {
 		return false
 	}
 
-	if character1 != character2 {
+	if strings.ToUpper(string(character1)) != strings.ToUpper(string(character2)) {
+		fmt.Println("not same: ", string(character1), string(character2))
 		return true
 	}
 	return false

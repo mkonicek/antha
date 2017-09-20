@@ -7,10 +7,13 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/biogo/biogo/align"
 	"github.com/biogo/biogo/alphabet"
 	"github.com/biogo/biogo/feat"
+	"github.com/biogo/biogo/seq"
 	"github.com/biogo/biogo/seq/linear"
 )
 
@@ -130,9 +133,26 @@ func (r Result) Positions() (result sequences.SearchResult) {
 }
 
 // Alignment stores the string result of an alignment of a query sequence against a template
+// The original RawAlignments are also included
 type Alignment struct {
-	TemplateResult string
-	QueryResult    string
+	TemplateResult    string
+	QueryResult       string
+	Raw               []RawAlignment
+	TemplatePositions []int
+	QueryPositions    []int
+}
+
+// RawAlignment contains the positions aligned between the template and query sequences
+type RawAlignment struct {
+	TemplateAlignment Position
+	QueryAlignment    Position
+}
+
+// Position contains the start, end and length of an alignment in a specified sequence
+type Position struct {
+	Start  int
+	End    int
+	Length int
 }
 
 var (
@@ -309,6 +329,7 @@ func DNA(seq1, seq2 wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment
 	}
 
 	if revResult.Matches() > fwdResult.Matches() {
+		correctForRevComp(revResult)
 		return revResult, err
 	}
 
@@ -338,14 +359,35 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 
 	aln, err := alignmentMatrix.Align(fsa, fsb)
 	if err == nil {
-		fa := align.Format(fsa, fsb, aln, '-')
+		var rawAlignments []RawAlignment
+		for i := range aln {
+
+			rawAlignemnt := RawAlignment{
+				TemplateAlignment: Position{
+					Start:  aln[i].Features()[0].Start(),
+					End:    aln[i].Features()[0].End(),
+					Length: aln[i].Features()[0].Len(),
+				},
+				QueryAlignment: Position{
+					Start:  aln[i].Features()[1].Start(),
+					End:    aln[i].Features()[1].End(),
+					Length: aln[i].Features()[1].Len(),
+				},
+			}
+			rawAlignments = append(rawAlignments, rawAlignemnt)
+
+		}
+		fa, positions := format(fsa, fsb, aln, '-')
 		alignment = Result{
 			Template:  &template,
 			Query:     &query,
 			Algorithm: alignmentMatrix,
 			Alignment: formatMisMatches(Alignment{
-				TemplateResult: fmt.Sprint(fa[0]),
-				QueryResult:    fmt.Sprint(fa[1]),
+				TemplateResult:    fmt.Sprint(fa[0]),
+				QueryResult:       fmt.Sprint(fa[1]),
+				Raw:               rawAlignments,
+				TemplatePositions: positions[0],
+				QueryPositions:    positions[1],
 			}),
 		}
 	} else {
@@ -372,14 +414,49 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 		fsb.Alpha = alphabet.DNAgapped
 		aln, err := alignmentMatrix.Align(fsa, fsb)
 		if err == nil {
-			fa := align.Format(fsa, fsb, aln, '-')
+			var rawAlignments []RawAlignment
+			for i := range aln {
+
+				rawAlignemnt := RawAlignment{
+					TemplateAlignment: Position{
+						Start:  aln[i].Features()[0].Start(),
+						End:    aln[i].Features()[0].End(),
+						Length: aln[i].Features()[0].Len(),
+					},
+					QueryAlignment: Position{
+						Start:  aln[i].Features()[1].Start(),
+						End:    aln[i].Features()[1].End(),
+						Length: aln[i].Features()[1].Len(),
+					},
+				}
+				rawAlignments = append(rawAlignments, rawAlignemnt)
+
+			}
+			fa, positions := format(fsa, fsb, aln, '-')
+
+			// correct rotation for template positions
+			for n := range positions[0] {
+
+				var newPos int
+
+				if positions[0][n]+rotationSize > len(template.Seq) {
+					newPos = positions[0][n] + rotationSize - len(template.Seq)
+				} else {
+					newPos = positions[0][n] + rotationSize
+				}
+				positions[0][n] = newPos
+			}
+
 			rotatedAlignment := Result{
 				Template:  &template,
 				Query:     &query,
 				Algorithm: alignmentMatrix,
 				Alignment: formatMisMatches(Alignment{
-					TemplateResult: fmt.Sprint(fa[0]),
-					QueryResult:    fmt.Sprint(fa[1]),
+					TemplateResult:    fmt.Sprint(fa[0]),
+					QueryResult:       fmt.Sprint(fa[1]),
+					Raw:               rawAlignments,
+					TemplatePositions: positions[0],
+					QueryPositions:    positions[1],
 				}),
 			}
 			if rotatedAlignment.Matches() > alignment.Matches() {
@@ -395,6 +472,43 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 	}
 
 	return
+}
+
+// format returns a [2]alphabet.Slice representing the formatted alignment of a and b described by the
+// list of feature pairs in f, with gap used to fill gaps in the alignment.
+// variation based on align.Format from biogo library
+func format(templateSeq, querySeq seq.Slicer, alignedPairs []feat.Pair, gap alphabet.Letter) ([2]alphabet.Slice, [2][]int) {
+	var originalSeqs, alignedSeqs [2]alphabet.Slice
+	var newPositions [2][]int
+	for i, sequence := range [2]seq.Slicer{templateSeq, querySeq} {
+		originalSeqs[i] = sequence.Slice()
+		alignedSeqs[i] = originalSeqs[i].Make(0, 0)
+	}
+	for _, pair := range alignedPairs {
+		features := pair.Features()
+		for i := range alignedSeqs {
+			if features[i].Len() == 0 {
+				switch alignedSeqs[i].(type) {
+				case alphabet.Letters:
+					alignedSeqs[i] = alignedSeqs[i].Append(alphabet.Letters(gap.Repeat(features[1-i].Len())))
+					for counter := features[1-i].Start(); counter < features[1-i].End(); counter++ {
+						newPositions[i] = append(newPositions[i], features[1-i].Start()+1)
+					}
+				case alphabet.QLetters:
+					alignedSeqs[i] = alignedSeqs[i].Append(alphabet.QLetters(alphabet.QLetter{L: gap}.Repeat(features[1-i].Len())))
+					for counter := features[1-i].Start(); counter < features[1-i].End(); counter++ {
+						newPositions[i] = append(newPositions[i], features[1-i].Start()+1)
+					}
+				}
+			} else {
+				alignedSeqs[i] = alignedSeqs[i].Append(originalSeqs[i].Slice(features[i].Start(), features[i].End()))
+				for counter := features[i].Start(); counter < features[i].End(); counter++ {
+					newPositions[i] = append(newPositions[i], counter+1)
+				}
+			}
+		}
+	}
+	return alignedSeqs, newPositions
 }
 
 func containsN(seq wtype.DNASequence) bool {
@@ -445,6 +559,7 @@ func formatMisMatches(alignment Alignment) (formattedAlignment Alignment) {
 
 	var formattedQuery []string
 	var formattedTemplate []string
+
 	for i := range alignment.QueryResult {
 		var queryChar string
 		var templateChar string
@@ -458,11 +573,47 @@ func formatMisMatches(alignment Alignment) (formattedAlignment Alignment) {
 		formattedQuery = append(formattedQuery, queryChar)
 		formattedTemplate = append(formattedTemplate, templateChar)
 	}
-	formattedAlignment = Alignment{
-		TemplateResult: strings.Join(formattedTemplate, ""),
-		QueryResult:    strings.Join(formattedQuery, ""),
-	}
+	formattedAlignment = alignment
+	// replace alignment values
+	formattedAlignment.TemplateResult = strings.Join(formattedTemplate, "")
+	formattedAlignment.QueryResult = strings.Join(formattedQuery, "")
+
 	return
+}
+
+// correct positions to be that of reverse complement following manual reverse complement of strand before alignment.
+func correctForRevComp(alignment Result) (formattedAlignment Result) {
+
+	correctPositions := make([]int, len(alignment.Alignment.QueryPositions))
+
+	for i := range alignment.Alignment.QueryPositions {
+		correctPositions[len(alignment.Alignment.QueryPositions)-1-i] = alignment.Alignment.QueryPositions[i]
+	}
+	formattedAlignment = alignment
+
+	formattedAlignment.Alignment.QueryPositions = correctPositions
+
+	return
+}
+
+func colourFormat(alignment string) (formatted string) {
+	var newstring []string
+	for _, letter := range alignment {
+		if strings.ToUpper(string(letter)) == "A" {
+			newstring = append(newstring, text.Red(string(letter)))
+		}
+		if strings.ToUpper(string(letter)) == "T" {
+			newstring = append(newstring, text.Yellow(string(letter)))
+		}
+		if strings.ToUpper(string(letter)) == "C" {
+			newstring = append(newstring, text.Blue(string(letter)))
+		}
+		if strings.ToUpper(string(letter)) == "G" {
+			newstring = append(newstring, text.Magenta(string(letter)))
+		}
+	}
+
+	return strings.Join(newstring, "")
 }
 
 // standard character representing an alignment gap

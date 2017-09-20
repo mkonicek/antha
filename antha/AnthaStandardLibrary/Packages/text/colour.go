@@ -31,36 +31,46 @@ import (
 
 // Prints a description highlighted in red followed by the value in unformatted text
 func Print(description string, value interface{}) (fmtd string) {
-
 	fmtd = fmt.Sprintln(ansi.Color(description, "red"), value)
 	return
 }
 
-func Annotate(stringtoannotate string, colour string) (fmtd string) {
-	// currently leads to undesired behaviour with string manipulation
-	//fmtd = fmt.Sprint(ansi.Color(stringtoannotate, colour))
-	_ = colour
-	fmtd = stringtoannotate
-	return
+// Red changes string colour to red
+func Red(s string) string {
+	return ansi.Color(s, "red")
 }
 
-/*
-func Printfield( value interface{}) (fmtd string) {
-
-	switch myValue := value.(type){
-		case string:
-		fmt.Println(myValue)
-		case Hit:
-		fmt.Printf("%+v\n", myValue)
-		default:
-		// fmt.Println("Type not handled: ", reflect.TypeOf(value))
-	}
-
-	//a := &Hsp{Len: "afoo"}
-	val := reflect.Indirect(reflect.ValueOf(value))
-	desc := fmt.Sprint(val.Type().Field(0).Name)
-
-	fmtd = fmt.Sprint(ansi.Color(desc, "red"), value)
-	return
+// Blue changes string colour to blue
+func Blue(s string) string {
+	return ansi.Color(s, "blue")
 }
-*/
+
+// Green changes string colour to green
+func Green(s string) string {
+	return ansi.Color(s, "green")
+}
+
+// Yellow changes string colour to yellow
+func Yellow(s string) string {
+	return ansi.Color(s, "yellow")
+}
+
+// Magenta changes string colour to magenta
+func Magenta(s string) string {
+	return ansi.Color(s, "magenta")
+}
+
+// Cyan changes string colour to cyan
+func Cyan(s string) string {
+	return ansi.Color(s, "cyan")
+}
+
+// White changes string colour to white
+func White(s string) string {
+	return ansi.Color(s, "white")
+}
+
+// Black changes string colour to black
+func Black(s string) string {
+	return ansi.Color(s, "black")
+}

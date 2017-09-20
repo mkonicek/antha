@@ -31,7 +31,6 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -453,8 +452,6 @@ func AddStandardVectorEnds (vector wtype.DNASequence, standard, level string) (v
 
 // Lowest level function to add an overhang to a sequence as a string
 func Addoverhang(seq string, bittoadd string, end string) (seqwithoverhang string) {
-
-	bittoadd = text.Annotate(bittoadd, "blue")
 
 	if end == "5prime" {
 		seqwithoverhang = strings.Join([]string{bittoadd, seq}, "")

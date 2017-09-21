@@ -103,6 +103,7 @@ func (r Result) Coverage() float64 {
 func (r Result) LongestContinuousSequence() wtype.DNASequence {
 	var longest []string
 	var seq []string
+
 	for i, char := range r.Alignment.QueryResult {
 		if len(seq) > len(longest) {
 			longest = seq
@@ -114,10 +115,35 @@ func (r Result) LongestContinuousSequence() wtype.DNASequence {
 			seq = make([]string, 0)
 		}
 	}
-	if len(longest) == 0 {
+	if len(seq) > len(longest) {
 		longest = seq
 	}
-	return wtype.DNASequence{Nm: r.Query.Name() + "_alignment", Seq: strings.Join(longest, "")}
+
+	var newSeq string
+
+	// if three positions in a row are in descending order
+	// the sequence looks like a reverse sequence
+	// it's possible that with a plasmid, two positions could be descending but not three
+	looksLikeReverseSequence := func(positions []int) bool {
+		var quitelookslikeRev bool
+		for i, position := range positions {
+			if i > 0 {
+				if position < positions[i-1] && quitelookslikeRev {
+					return true
+				} else if position < positions[i-1] {
+					quitelookslikeRev = true
+				}
+			}
+		}
+		return false
+	}
+	if looksLikeReverseSequence(r.Alignment.TemplatePositions) {
+		newSeq = wtype.RevComp(strings.Join(longest, ""))
+	} else {
+		newSeq = strings.Join(longest, "")
+	}
+
+	return wtype.DNASequence{Nm: r.Query.Name() + "_alignment", Seq: newSeq}
 }
 
 // Positions returns a SearchResult detailing the positions in the template sequence
@@ -329,7 +355,7 @@ func DNA(seq1, seq2 wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment
 	}
 
 	if revResult.Matches() > fwdResult.Matches() {
-		correctForRevComp(revResult)
+		revResult = correctForRevComp(revResult)
 		return revResult, err
 	}
 
@@ -581,18 +607,29 @@ func formatMisMatches(alignment Alignment) (formattedAlignment Alignment) {
 	return
 }
 
-// correct positions to be that of reverse complement following manual reverse complement of strand before alignment.
+// correctForRevComp corrects positions to be that of reverse complement following manual reverse complement of strand before alignment.
+// also corrects the query sequence back to the original.
 func correctForRevComp(alignment Result) (formattedAlignment Result) {
 
-	correctPositions := make([]int, len(alignment.Alignment.QueryPositions))
+	correctPositions := make([]int, len(alignment.Alignment.TemplatePositions))
 
-	for i := range alignment.Alignment.QueryPositions {
-		correctPositions[len(alignment.Alignment.QueryPositions)-1-i] = alignment.Alignment.QueryPositions[i]
+	for i := range alignment.Alignment.TemplatePositions {
+		correctPositions[len(alignment.Alignment.TemplatePositions)-1-i] = alignment.Alignment.TemplatePositions[i]
 	}
+
 	formattedAlignment = alignment
 
-	formattedAlignment.Alignment.QueryPositions = correctPositions
+	formattedAlignment.Alignment.TemplatePositions = correctPositions
 
+	revQuery, ok := formattedAlignment.Query.(*wtype.DNASequence)
+
+	if !ok {
+		panic("cannot correct for reverse compliment if sequence is not DNA")
+	}
+
+	revQuery.Seq = wtype.RevComp(revQuery.Seq)
+
+	formattedAlignment.Query = revQuery
 	return
 }
 

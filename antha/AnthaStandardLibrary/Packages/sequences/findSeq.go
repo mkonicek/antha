@@ -114,7 +114,7 @@ func (p ByPositionPairStartPosition) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-// Less evaluates whether the entry of PositionPairSet with index j is less than entry with index i
+// Less evaluates whether the entry of PositionPairSet with index i is less than entry with index j
 // the directionless start position is used to assess this.
 // If the start positions are the same the end position is used.
 func (p ByPositionPairStartPosition) Less(i, j int) bool {
@@ -123,10 +123,10 @@ func (p ByPositionPairStartPosition) Less(i, j int) bool {
 	startj, endj := p[j].HumanFriendly(IGNOREDIRECTION)
 
 	if startj == starti {
-		return endi > endj
+		return endi < endj
 	}
 
-	return starti > startj
+	return starti < startj
 
 }
 

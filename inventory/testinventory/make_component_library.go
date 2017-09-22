@@ -52,6 +52,7 @@ func makeComponents() []*wtype.LHComponent {
 
 	add("water", wtype.LTWater, 9999, defaultConc)
 	add("multiwater", wtype.LTMultiWater, 9999, defaultConc)
+	add("PBS", wtype.LTWater, 9999, defaultConc)
 	add("DNA_ladder", wtype.LTload, 9999, defaultConc)
 	add("LoadingDye", wtype.LTVISCOUS, 9999, defaultConc)
 	add("Overlay", wtype.LTPLATEOUT, 9999, defaultConc)
@@ -63,6 +64,7 @@ func makeComponents() []*wtype.LHComponent {
 	add("blackFabricDye", wtype.LTPAINT, 9999, defaultConc)
 	add("Some component in factory", wtype.LTWater, 9999, defaultConc)
 	add("neb5compcells", wtype.LTCulture, 1.0, defaultConc)
+	add("TOP10compcells", wtype.LTCulture, 1.0, defaultConc)
 	add("mediaonculture", wtype.LTNeedToMix, 1.0, defaultConc)
 	add("10x_M9Salts", wtype.LTWater, 9999, x10)
 	add("100x_MEMVitamins", wtype.LTWater, 9999, x100)
@@ -129,6 +131,7 @@ func makeComponents() []*wtype.LHComponent {
 	add("SDSbuffer", wtype.LTDetergent, 1.0, defaultConc)
 	add("Load", wtype.LTload, 1.0, defaultConc)
 	add("LB", wtype.LTWater, 1.0, defaultConc)
+	add("SOC", wtype.LTWater, 1.0, defaultConc)
 	add("TB", wtype.LTWater, 1.0, defaultConc)
 	add("Kanamycin", wtype.LTWater, 1.0, defaultConc)
 	add("Glucose", wtype.LTPostMix, 1.0, defaultConc)

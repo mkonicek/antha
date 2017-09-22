@@ -564,7 +564,8 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.WellTo = ins.WellTo[t]
 			mci.FPlateType = ins.FPlateType[t]
 			mci.TPlateType = ins.TPlateType[t]
-			mci.Multi = ins.Multi
+			//mci.Multi = ins.Multi
+			mci.Multi = countMulti(ins.PltFrom[t])
 			prms := make([]*wtype.LHChannelParameter, ins.Multi)
 			//mci.Prms = newchannel.MergeWithTip(newtip)
 
@@ -1778,6 +1779,8 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		if ok {
 			v := make([]wunit.Volume, ins.Multi)
+			fmt.Println("INS MULTI ", ins.Multi)
+			fmt.Println("BUT VOLS :", ins.Volume)
 			for i := 0; i < ins.Multi; i++ {
 				vl := wunit.NewVolume(mixvol, "ul")
 				v[i] = vl

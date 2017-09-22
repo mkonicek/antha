@@ -903,6 +903,16 @@ func countMultiB(ar []bool) int {
 	return r
 }
 
+func copyToRightLength(sa []string, m int) []string {
+	r := make([]string, m)
+
+	for i := 0; i < len(sa); i++ {
+		r[i] = sa[i]
+	}
+
+	return r
+}
+
 // this function only returns true if we can get all tips at once
 // TODO -- support not getting in a single operation
 func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
@@ -924,6 +934,13 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 				return wells, positions, boxtypes, err
 			}
 		*/
+
+		// update wells
+
+		if len(wells) != len(positions) {
+			wells = copyToRightLength(wells, len(positions))
+		}
+
 		// TODO -- support partial collections
 		if wells != nil && countMulti(wells) == multi {
 			foundit = true

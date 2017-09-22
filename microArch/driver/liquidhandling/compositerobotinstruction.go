@@ -810,11 +810,12 @@ func (ins *MultiChannelTransferInstruction) Generate(ctx context.Context, policy
 	suckinstruction.Multi = ins.Multi
 	blowinstruction.Multi = ins.Multi
 
+	c := 0
 	for i := 0; i < len(ins.Volume); i++ {
 		if ins.Volume[i].IsZero() {
 			continue
 		}
-		fmt.Println("YO ADD ", i, " ", ins.Params(i))
+		c += 1
 		suckinstruction.AddTransferParams(ins.Params(i))
 		blowinstruction.AddTransferParams(ins.Params(i))
 	}
@@ -963,6 +964,12 @@ func (ins *LoadTipsMoveInstruction) GetParameter(name string) interface{} {
 func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
+	fmt.Println("WHOEVER HAD LOST A TREASURE")
+	fmt.Println(ins.FPosition)
+	fmt.Println(ins.Well)
+	fmt.Println(ins.FPlateType)
+	fmt.Println("I KNEW THAT NIGHT THAT I HAD GAINED ONE")
+
 	// move
 
 	mov := NewMoveInstruction()
@@ -970,10 +977,12 @@ func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.
 	mov.Pos = ins.FPosition
 	mov.Well = ins.Well
 	mov.Plt = ins.FPlateType
-	mov.Reference = append(mov.Reference, 0)
-	mov.OffsetX = append(mov.OffsetX, 0.0)
-	mov.OffsetY = append(mov.OffsetY, 0.0)
-	mov.OffsetZ = append(mov.OffsetZ, 0.0)
+	for i := 0; i < len(ins.Well); i++ {
+		mov.Reference = append(mov.Reference, 0)
+		mov.OffsetX = append(mov.OffsetX, 0.0)
+		mov.OffsetY = append(mov.OffsetY, 0.0)
+		mov.OffsetZ = append(mov.OffsetZ, 0.0)
+	}
 	mov.Platform = ins.Platform
 	ret[0] = mov
 
@@ -1046,10 +1055,12 @@ func (ins *UnloadTipsMoveInstruction) Generate(ctx context.Context, policy *wtyp
 	mov.Pos = ins.PltTo
 	mov.Well = ins.WellTo
 	mov.Plt = ins.TPlateType
-	mov.Reference = append(mov.Reference, 0)
-	mov.OffsetX = append(mov.OffsetX, 0.0)
-	mov.OffsetY = append(mov.OffsetY, 0.0)
-	mov.OffsetZ = append(mov.OffsetZ, 0.0)
+	for i := 0; i < len(mov.Pos); i++ {
+		mov.Reference = append(mov.Reference, 0)
+		mov.OffsetX = append(mov.OffsetX, 0.0)
+		mov.OffsetY = append(mov.OffsetY, 0.0)
+		mov.OffsetZ = append(mov.OffsetZ, 0.0)
+	}
 	mov.Platform = ins.Platform
 	ret[0] = mov
 
@@ -2913,17 +2924,21 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	mov.Plt = ins.TPlateType
 	mov.WVolume = ins.TVolume
 	mov.Head = ins.Prms.Head
-	mov.Reference = append(mov.Reference, pol["BLOWOUTREFERENCE"].(int))
-	mov.OffsetX = append(mov.OffsetX, 0.0)
-	mov.OffsetY = append(mov.OffsetY, 0.0)
-	mov.OffsetZ = append(mov.OffsetZ, pol["BLOWOUTOFFSET"].(float64))
+	for i := 0; i < len(mov.Pos); i++ {
+		mov.Reference = append(mov.Reference, pol["BLOWOUTREFERENCE"].(int))
+		mov.OffsetX = append(mov.OffsetX, 0.0)
+		mov.OffsetY = append(mov.OffsetY, 0.0)
+		mov.OffsetZ = append(mov.OffsetZ, pol["BLOWOUTOFFSET"].(float64))
+	}
 
 	blow := NewBlowoutInstruction()
 
 	blow.Head = ins.Prms.Head
 	bov := wunit.NewVolume(pol["BLOWOUTVOLUME"].(float64), pol["BLOWOUTVOLUMEUNIT"].(string))
-	blow.Volume = append(blow.Volume, bov)
 	blow.Multi = getMulti(ins.What)
+	for i := 0; i < blow.Multi; i++ {
+		blow.Volume = append(blow.Volume, bov)
+	}
 	blow.Plt = ins.TPlateType
 	blow.What = ins.What
 
@@ -3164,8 +3179,6 @@ func getFirstDefined(sa []string) int {
 }
 
 func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, channel []*wtype.LHChannelParameter, usetiptracking bool) ([]RobotInstruction, error) {
-
-	fmt.Println("GET TIPS: ", tiptypes)
 	// GetCleanTips returns enough sets of tip boxes to get all distinct tip types
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(ctx, tiptypes, channel, usetiptracking)
 

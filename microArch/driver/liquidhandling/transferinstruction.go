@@ -644,7 +644,9 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here
 		for _, set := range parallelsets {
 			// assemble the info
-			mci.Multi = countSetSize(set)
+			//mci.Multi = countSetSize(set)
+			fmt.Println("LEN SET: ", len(set))
+			mci.Multi = len(set)
 			vols := NewVolumeSet(len(set))
 			fvols := NewVolumeSet(len(set))
 			tvols := NewVolumeSet(len(set))

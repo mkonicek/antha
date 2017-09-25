@@ -394,9 +394,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate = wtype.NewLHPlate("nunc1536", "Unknown", 32, 48, 7, "mm", welltype1536, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
-
-
-
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) high res
 
 	bottomtype = wtype.LHWBFLAT
@@ -517,6 +514,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	welltypecostar48forpicking := wtype.NewLHWell("costar48well", "", "", "ul", 10, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("Agarplateforpicking48", "Unknown", 6, 8, 14, "mm", welltypecostar48forpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial()
 	plates = append(plates, plate)
 
 	/// placeholder for non plate container for testing

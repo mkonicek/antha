@@ -462,7 +462,8 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	// we no longer require ins.volume[0][0] to be set
 	// as we move to independent we need to get all volumes
 
-	channels, _, tiptypes, err := ChooseChannels(ins.GetVolumes(), prms)
+	//channels, _, tiptypes, err := ChooseChannels(ins.GetVolumes(), prms)
+	channels, _, tiptypes, err := ChooseChannels(ins.Volume[0], prms)
 	if err != nil {
 		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
 	}
@@ -484,7 +485,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		}
 
 		// choose tips
-		newchannels, newtips, newtiptypes, err := ChooseChannels(ins.Volume[0], prms)
+		newchannels, newtips, newtiptypes, err := ChooseChannels(ins.Volume[t], prms)
 		if err != nil {
 			return ret, err
 		}
@@ -527,7 +528,9 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			if change_tips {
 				fmt.Println("CHANGE TIPS:")
 				fmt.Println("\tCHANNELS DIFF:", !reflect.DeepEqual(channels, newchannels))
+				fmt.Println("\t\t", channels, newchannels)
 				fmt.Println("\tTIPTYPES DIFF:", !reflect.DeepEqual(tiptypes, newtiptypes))
+				fmt.Println("\t\t", tiptypes, newtiptypes)
 				fmt.Println("\tCNAME CHECK  :", last_thing != nil && this_thing.CName != last_thing.CName)
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters

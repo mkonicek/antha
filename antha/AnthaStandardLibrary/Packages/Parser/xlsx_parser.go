@@ -30,6 +30,8 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/tealeg/xlsx"
 )
 
@@ -175,4 +177,37 @@ func ParseExcelBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 	} else {
 		return Assemblyfromcsv(dl.Name(), pl.Name()), nil
 	}
+}
+
+// MakePartsFromXLSXPartsList parse the parts in an xlsx format design file into a list of LHComponents.
+// The concentration will be set if a concentration column is present in the parts list.
+// If no concentrations are found the parts list will be created with no concentrations and an error returned.
+func MakePartsFromXLSXPartsList(data []byte) (parts []*wtype.LHComponent, concMap map[string]wunit.Concentration, err error) {
+	pl, err := xlsxparserBinary(data, 0, "partslist")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	partSeqs := ReadParts(pl.Name())
+
+	partNamesInOrder, concMap, err := readPartConcentrations(pl.Name())
+
+	if err != nil {
+		// don't return if the first error is no concentration column found
+		if !strings.Contains(err.Error(), `Errors encountered parsing part concentrations: No column header found containing part "Concentration"`) {
+			return
+		}
+	}
+
+	for _, partName := range partNamesInOrder {
+		newComponent := wtype.NewLHComponent()
+		newComponent.CName = partName
+		if concMap[partName].RawValue != nil {
+			newComponent.SetConcentration(concMap[partName])
+		}
+		newComponent.AddDNASequence(partSeqs[partName])
+		parts = append(parts, newComponent)
+	}
+
+	return
 }

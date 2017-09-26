@@ -26,6 +26,7 @@ package doe
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -35,24 +36,28 @@ import (
 
 // parses a factor name and value and returns an antha concentration.
 // If the value cannot be converted to a valid concentration an error is returned.
+// If the header contains a valid concentration unit a number can be specified as the value.
 func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concentration, err error) {
 
-	if rawconcstring, found := value.(string); found {
+	var floatValue float64
+	var floatFound bool
 
-		containsconc, conc, _ := wunit.ParseConcentration(rawconcstring)
+	rawconcfloat, found := value.(float64)
 
-		if containsconc {
-			anthaConc = conc
-		} else {
-			err = fmt.Errorf("No valid conc found in ", rawconcstring)
-			return anthaConc, err
+	if found {
+		floatValue = rawconcfloat
+	} else {
+		rawconcstring, found := value.(string)
+		var floatParseErr error
+		if floatValue, floatParseErr = strconv.ParseFloat(rawconcstring, 64); found && floatParseErr == nil {
+			floatFound = true
 		}
+	}
 
-		// if float use conc unit from header component
-	} else if rawconcfloat, found := value.(float64); found {
+	if floatFound {
 
 		// handle floating point imprecision
-		rawconcfloat, err = wutil.Roundto(rawconcfloat, 6)
+		floatValue, err = wutil.Roundto(floatValue, 6)
 
 		if err != nil {
 			return anthaConc, err
@@ -63,12 +68,24 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 
 			concunit := conc.Unit().PrefixedSymbol()
 
-			anthaConc = wunit.NewConcentration(rawconcfloat, concunit)
+			anthaConc = wunit.NewConcentration(floatValue, concunit)
 		} else {
 			err = fmt.Errorf("No valid conc found in component %s so can't assign a concentration unit to value", header)
 			return anthaConc, err
 		}
 
+	} else if rawconcstring, found := value.(string); found {
+
+		containsconc, conc, _ := wunit.ParseConcentration(rawconcstring)
+
+		if containsconc {
+			anthaConc = conc
+		} else {
+			err = fmt.Errorf("No valid conc found in %s", rawconcstring)
+			return anthaConc, err
+		}
+
+		// if float use conc unit from header component
 	} else {
 		err = fmt.Errorf("problem with type of ", value, " expected string or float")
 		return anthaConc, err

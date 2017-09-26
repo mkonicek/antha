@@ -443,14 +443,14 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	}
 
 	if len(plasmidProducts) == 1 {
-		sites = Restrictionsitefinder(plasmidProducts[0], []wtype.RestrictionEnzyme{BsaI, SapI, enzyme.RestrictionEnzyme})
+		sites = Restrictionsitefinder(plasmidProducts[0], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
 	}
 
 	// returns sites found in first plasmid in array! should be changed later!
 	if len(plasmidProducts) > 1 {
 		sites = make([]Restrictionsites, 0)
 		for i := 0; i < len(plasmidProducts); i++ {
-			sitesperplasmid := Restrictionsitefinder(plasmidProducts[i], []wtype.RestrictionEnzyme{BsaI, SapI, enzyme.RestrictionEnzyme})
+			sitesperplasmid := Restrictionsitefinder(plasmidProducts[i], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
 			for _, site := range sitesperplasmid {
 				sites = append(sites, site)
 			}

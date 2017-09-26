@@ -87,7 +87,6 @@ BBa_R... = Regulatory parts
 BBa_S... = Intermediate parts
 BBa_V... = Cell strain parts
 */
-
 const (
 	GENERIC          = "BBa_B"
 	PROTEINCODING    = "BBa_C"

@@ -32,10 +32,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-/*const (
-	reftemp wunit.Temperature{25,"C"}
-)
-*/
 type PHperdegC float64
 
 type PHMeasurement struct {

@@ -41,12 +41,12 @@ type ComponentListSample struct {
 	Volume wunit.Volume
 }
 
-// MixComponentLists merges two ComponentListSamples.
+// mixComponentLists merges two componentListSamples.
 // When two ComponentListSamples are mixed a new diluted ComponentList is generated.
 // An error may be generated if two components with the same name exist within the two lists with incompatible concentration units.
 // In this instance, the molecular weight for that component will be looked up in pubchem in order to change the units in both lists to g/l,
 // which will be able to be added.
-func MixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
+func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
 
 	var errs []string
 
@@ -101,7 +101,7 @@ func MixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 // this is to prevent potential duplication since if a component has a list of sub components the name
 // is considered to be an alias and the component list the true meaning of what the component is.
 // if any sample concentration of zero is found the component list will be made but an error returned.
-func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, err error) {
+func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, err error) {
 
 	var errs []string
 
@@ -115,10 +115,12 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 					errs = append(errs, "zero concentration found for sample "+sample.CName)
 				}
 				newComponentList.Components[sample.Name()] = sample.Concentration()
+				mixSteps = append(mixSteps, ComponentListSample{newComponentList, sample.Volume()})
 			}
 		}
 
 		if i < len(samples)-1 {
+
 			nextSample := samples[i+1]
 			nextList, err := GetSubComponents(nextSample)
 			if err != nil {
@@ -128,17 +130,23 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 				}
 				nextList.Components[sample.Name()] = nextSample.Concentration()
 			}
-			newComponentList, err = MixComponentLists(ComponentListSample{newComponentList, sample.Volume()}, ComponentListSample{nextList, nextSample.Volume()})
+
+			previousMixStep := ComponentListSample{newComponentList, sample.Volume()}
+			nextMixStep := ComponentListSample{nextList, nextSample.Volume()}
+			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
 			if err != nil {
 				errs = append(errs, err.Error())
 			}
+
+			mixSteps = append(mixSteps, nextMixStep)
+
 		}
 	}
 
 	if len(errs) > 0 {
 		err = fmt.Errorf(strings.Join(errs, "; "))
 	}
-	return newComponentList, nil
+	return newComponentList, mixSteps, nil
 }
 
 // List of the components and corresponding concentrations contained within an LHComponent

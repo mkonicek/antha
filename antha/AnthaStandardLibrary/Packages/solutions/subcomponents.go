@@ -29,9 +29,71 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Pubchem"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
+
+// ComponentListSample is a sample of a Component list at a specified volume
+// when two ComponentListSamples are mixed a new diluted ComponentList is generated
+type ComponentListSample struct {
+	ComponentList
+	Volume wunit.Volume
+}
+
+// MixComponentLists merges two ComponentListSamples.
+// When two ComponentListSamples are mixed a new diluted ComponentList is generated.
+// An error may be generated if two components with the same name exist within the two lists with incompatible concentration units.
+// In this instance, the molecular weight for that component will be looked up in pubchem in order to change the units in both lists to g/l,
+// which will be able to be added.
+func MixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
+
+	var errs []string
+
+	complist := make(map[string]wunit.Concentration)
+
+	sample1DilutionRatio := sample1.Volume.SIValue() / (sample1.Volume.SIValue() + sample2.Volume.SIValue())
+
+	for key, conc := range sample1.Components {
+		newConc := wunit.MultiplyConcentration(conc, sample1DilutionRatio)
+		complist[key] = newConc
+	}
+
+	sample2DilutionRatio := sample2.Volume.SIValue() / (sample1.Volume.SIValue() + sample2.Volume.SIValue())
+
+	for key, conc := range sample1.Components {
+		newConc := wunit.MultiplyConcentration(conc, sample2DilutionRatio)
+
+		if existingConc, found := complist[key]; found {
+			sumOfConcs, newerr := wunit.AddConcentrations([]wunit.Concentration{newConc, existingConc})
+			if newerr != nil {
+				// attempt unifying base units
+				molecule, newerr := pubchem.MakeMolecule(key)
+				if newerr != nil {
+					errs = append(errs, newerr.Error())
+				} else {
+					newConcG := molecule.GramPerL(newConc)
+					existingConcG := molecule.GramPerL(existingConc)
+
+					sumOfConcs, newerr = wunit.AddConcentrations([]wunit.Concentration{newConcG, existingConcG})
+					if newerr != nil {
+						errs = append(errs, newerr.Error())
+					}
+				}
+			}
+			complist[key] = sumOfConcs
+		} else {
+			complist[key] = newConc
+		}
+	}
+	newList.Components = complist
+
+	if len(errs) > 0 {
+		err = fmt.Errorf(strings.Join(errs, "; "))
+	}
+
+	return
+}
 
 // List of the components and corresponding concentrations contained within an LHComponent
 type ComponentList struct {

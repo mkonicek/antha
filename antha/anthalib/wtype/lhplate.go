@@ -685,6 +685,10 @@ func (p *LHPlate) IsAutoallocated() bool {
 // The caller is required to set the well locations and volumes explicitely with this function.
 func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wells []string, liquids []*LHComponent, volumes []wunit.Volume) (file File, err error) {
 
+	if len(wells) != len(liquids) || len(liquids) != len(volumes) {
+		err = fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
+	}
+
 	records := make([][]string, 0)
 
 	headerrecord := []string{plate.Type, plateName, "", "", "", "", ""}
@@ -709,9 +713,9 @@ func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wel
 	return exportCSV(records, outputFileName)
 }
 
-// AutoExportPlateCSV exports an LHPlate and its contents as a csv file
-// This is not 100% safe to use in elements since,
-// currently, at the time of running an element, the scheduler  will not have allocated positions
+// AutoExportPlateCSV exports an LHPlate and its contents as a csv file.
+// This is not 100% safe to use in elements since, currently,
+// at the time of running an element, the scheduler  will not have allocated positions
 // for the components so, for example, accurate well information cannot currently be obtained with this function.
 // If allocating wells manually use the ExportPlateCSV function and explicitely set the sample locations and volumes.
 func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err error) {

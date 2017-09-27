@@ -100,7 +100,7 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 // This will only add the component name itself to the new component list if the sample has no components
 // this is to prevent potential duplication since if a component has a list of sub components the name
 // is considered to be an alias and the component list the true meaning of what the component is.
-// if any sample concentration of zero is found the component list will be made but an error returned.
+// If any sample concentration of zero is found the component list will be made but an error returned.
 func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, err error) {
 
 	var errs []string

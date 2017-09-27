@@ -23,6 +23,7 @@
 package wtype
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -680,26 +681,19 @@ func (p *LHPlate) IsAutoallocated() bool {
 	return true
 }
 
-func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wells []string, liquids []*LHComponent, Volumes []wunit.Volume) error {
-
-	csvfile, err := os.Create(outputpilename)
-	if err != nil {
-		return err
-	}
-
-	defer csvfile.Close()
+// ExportPlateCSV a exports an LHPlate and its contents as a csv file.
+// The caller is required to set the well locations and volumes explicitely with this function.
+func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wells []string, liquids []*LHComponent, volumes []wunit.Volume) (file File, err error) {
 
 	records := make([][]string, 0)
 
-	//record := make([]string, 0)
-
-	headerrecord := []string{plate.Type, platename, "", "", "", "", ""}
+	headerrecord := []string{plate.Type, plateName, "", "", "", "", ""}
 
 	records = append(records, headerrecord)
 
 	for i, well := range wells {
 
-		volfloat := Volumes[i].RawValue()
+		volfloat := volumes[i].RawValue()
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 
@@ -708,26 +702,19 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 			liquids[i].Cunit = "mg/l"
 		}
 
-		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, Volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
+		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
 		records = append(records, record)
 	}
 
-	csvwriter := csv.NewWriter(csvfile)
-
-	for _, record := range records {
-
-		err = csvwriter.Write(record)
-
-		if err != nil {
-			return err
-		}
-	}
-	csvwriter.Flush()
-
-	return err
+	return exportCSV(records, outputFileName)
 }
 
-func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
+// AutoExportPlateCSV exports an LHPlate and its contents as a csv file
+// This is not 100% safe to use in elements since,
+// currently, at the time of running an element, the scheduler  will not have allocated positions
+// for the components so, for example, accurate well information cannot currently be obtained with this function.
+// If allocating wells manually use the ExportPlateCSV function and explicitely set the sample locations and volumes.
+func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err error) {
 
 	var platename string = plate.PlateName
 	var wells = make([]string, 0)
@@ -751,15 +738,7 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 		}
 	}
 
-	csvfile, err := os.Create(outputfilename)
-	if err != nil {
-		return err
-	}
-	defer csvfile.Close()
-
 	records := make([][]string, 0)
-
-	//record := make([]string, 0)
 
 	headerrecord := []string{plate.Type, platename, "LiquidType ", "Vol", "Vol Unit", "Conc", "Conc Unit"}
 
@@ -772,29 +751,47 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 		concstr := strconv.FormatFloat(concfloat, 'G', -1, 64)
-		/*
-			fmt.Println("len(wells)", len(wells))
-			fmt.Println("len(liquids)", len(liquids))
-			fmt.Println("len(Volumes)", len(Volumes))
-		*/
 
 		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), concstr, concs[i].Unit().PrefixedSymbol()}
 		records = append(records, record)
 	}
 
-	csvwriter := csv.NewWriter(csvfile)
+	return exportCSV(records, outputFileName)
+}
 
-	for _, record := range records {
+// Export a 2D array of string data as a csv file
+func exportCSV(records [][]string, filename string) (File, error) {
+	var anthafile File
+	var buf bytes.Buffer
 
-		err = csvwriter.Write(record)
+	/// use the buffer to create a csv writer
+	w := csv.NewWriter(&buf)
 
-		if err != nil {
-			return err
-		}
+	// write all records to the buffer
+	w.WriteAll(records) // calls Flush internally
+
+	if err := w.Error(); err != nil {
+		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
 	}
-	csvwriter.Flush()
 
-	return err
+	//This code shows how to create an antha File from this buffer which can be downloaded through the UI:
+
+	anthafile.Name = filename
+
+	anthafile.WriteAll(buf.Bytes())
+
+	///// to write this to a file on the command line this is what we'd do (or something similar)
+
+	// also create a file on os
+	file, _ := os.Create(filename)
+	defer file.Close()
+
+	// this time we'll use the file to create the writer instead of a buffer (anything which fulfils the writer interface can be used here ... checkout golang io.Writer and io.Reader)
+	fw := csv.NewWriter(file)
+
+	// same as before ...
+	fw.WriteAll(records)
+	return anthafile, nil
 }
 
 func (p *LHPlate) SetConstrained(platform string, positions []string) {

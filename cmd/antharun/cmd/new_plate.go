@@ -56,7 +56,8 @@ func newPlate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("cannot make plate %q %s", ptype, err)
 	}
-	return wtype.AutoExportPlateCSV(file, plate)
+	_, err = wtype.AutoExportPlateCSV(file, plate)
+	return err
 }
 
 func init() {

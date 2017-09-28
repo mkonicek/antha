@@ -1949,7 +1949,7 @@ func ExportCSV(ctx context.Context, ExportFileName string, plateForCoordinates *
 		liquids = append(liquids, liquid)
 	}
 
-	err = wtype.ExportPlateCSV(ExportFileName, plateForCoordinates, platename, wellstopick, liquids, volumes)
+	_, err = wtype.ExportPlateCSV(ExportFileName, plateForCoordinates, platename, wellstopick, liquids, volumes)
 	return
 }
 
@@ -1979,7 +1979,7 @@ func ExportCSVMultipleNames(ctx context.Context, ExportFileName string, plateFor
 		liquids = append(liquids, liquid)
 	}
 
-	err = wtype.ExportPlateCSV(ExportFileName, plateForCoordinates, platename, wellstopick, liquids, volumes)
+	_, err = wtype.ExportPlateCSV(ExportFileName, plateForCoordinates, platename, wellstopick, liquids, volumes)
 	return
 }
 

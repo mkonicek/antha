@@ -2,6 +2,7 @@ package wtype
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -257,4 +258,49 @@ func TestFindCompMulti1(t *testing.T) {
 	if len(pids) == 0 {
 		t.Errorf("Didn't find a simple column of water... should have")
 	}
+}
+
+func TestAddGetClearData(t *testing.T) {
+	p := makeplatefortest()
+
+	dat := AnthaData{Name: "OD", Data: "3.5"}
+	err := p.AddData("OD", dat)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	d, err := p.GetData("OD")
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if !reflect.DeepEqual(d, dat) {
+		t.Errorf("Expected %v got %v", dat, d)
+	}
+
+	err = p.ClearData("OD")
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	d, err = p.GetData("OD")
+
+	if err == nil || err.Error() != "Data OD not found or not a string" {
+		t.Errorf("ClearData should clear data but has not")
+	}
+
+	err = p.AddData("IMSPECIAL", dat)
+
+	if err == nil || err.Error() != "Invalid key for setting data: IMSPECIAL - IMSPECIAL is a system key used by plates" {
+		t.Errorf("Adding data with a reserved key should fail but does not")
+	}
+
+	_, ok := (interface{}(p)).(Annotatable)
+
+	if !ok {
+		t.Errorf("Plate does not satisfy Annotatable")
+	}
+
 }

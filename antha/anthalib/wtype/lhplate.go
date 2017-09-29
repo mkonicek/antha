@@ -25,14 +25,14 @@ package wtype
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"os"
-	"strconv"
-	"time"
-
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
+	"os"
+	"strconv"
+	"time"
 )
 
 // structure describing a microplate
@@ -954,4 +954,105 @@ func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
 		}
 	}
 	return false
+}
+
+// @implement Annotatable
+
+func (p *LHPlate) AddData(k string, d AnthaData) error {
+	err := p.checkExtra(fmt.Sprintf("cannot add data %s", k))
+
+	if err != nil {
+		return err
+	}
+
+	// nb -- in future disallow already set keys as well?
+	err = p.CheckExtraKey(k)
+
+	if err != nil {
+		return fmt.Errorf("Invalid key for setting data: %s - %s", k, err.Error())
+	}
+
+	marshalleD, err := json.Marshal(d)
+
+	if err != nil {
+		return err
+	}
+
+	p.Welltype.Extra[k] = marshalleD
+
+	return nil
+
+}
+
+func (p *LHPlate) ClearData(k string) error {
+	err := p.checkExtra(fmt.Sprintf("cannot clear data %s", k))
+
+	if err != nil {
+		return err
+	}
+
+	delete(p.Welltype.Extra, k)
+
+	return nil
+}
+
+func (p *LHPlate) checkExtra(s string) error {
+	if p == nil {
+		return fmt.Errorf("nil plate: %s", s)
+	}
+
+	if p.Welltype == nil {
+		return fmt.Errorf("corrupt plate - missing well type: %s", s)
+	}
+
+	if p.Welltype.Extra == nil {
+		return fmt.Errorf("corrupt well type - %s", s)
+	}
+
+	return nil
+}
+
+func (p LHPlate) GetData(k string) (d AnthaData, err error) {
+
+	err = (&p).checkExtra(fmt.Sprintf("Cannot get data %s", k))
+
+	if err != nil {
+		return d, err
+	}
+
+	err = p.CheckExtraKey(k)
+
+	if err != nil {
+		return d, fmt.Errorf("Invalid key for getting data:%s - %s", k, err.Error())
+	}
+
+	marshalleD, ok := p.Welltype.Extra[k].([]byte)
+
+	if !ok {
+		return d, fmt.Errorf("Data %s not found or not a string", k)
+	}
+
+	err = json.Unmarshal(marshalleD, &d)
+
+	if err != nil {
+		return d, err
+	}
+
+	return d, nil
+}
+
+//
+
+func (p LHPlate) CheckExtraKey(k string) error {
+	reserved := []string{"IMSPECIAL", "Pipetmax"}
+
+	if wutil.StrInStrArray(k, reserved) {
+		return fmt.Errorf("%s is a system key used by plates", k)
+	}
+
+	if p.Welltype == nil {
+		return fmt.Errorf("No valid well")
+	}
+
+	return p.Welltype.CheckExtraKey(k)
 }

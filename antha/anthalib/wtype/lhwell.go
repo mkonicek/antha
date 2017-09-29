@@ -746,3 +746,13 @@ func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 
 	return false
 }
+
+func (w LHWell) CheckExtraKey(s string) error {
+	reserved := []string{"protected", "afvfunc", "temporary", "autoallocated", "UserAllocated"}
+
+	if wutil.StrInStrArray(s, reserved) {
+		return fmt.Errorf("%s is a system key used by plates", s)
+	}
+
+	return nil
+}

@@ -46,6 +46,7 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 
 	if found {
 		floatValue = rawconcfloat
+		floatFound = true
 	} else {
 		rawconcstring, found := value.(string)
 		var floatParseErr error
@@ -87,7 +88,7 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 
 		// if float use conc unit from header component
 	} else {
-		err = fmt.Errorf("problem with type of ", value, " expected string or float")
+		err = fmt.Errorf("problem with type of %T expected string or float", value)
 		return anthaConc, err
 	}
 

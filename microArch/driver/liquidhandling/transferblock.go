@@ -43,6 +43,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 	// list of ids
 	parallel_sets, prm, err := get_parallel_sets_robot(ctx, ti.Inss, robot, policy)
+
 	// what if prm is nil?
 
 	if err != nil {
@@ -66,6 +67,9 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
 		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false)
+
+		fmt.Println("GREPME: 'OW MANY TRANSFERS MISTER 'OMES? ", len(tfr))
+
 		if err != nil {
 			//panic(err)
 			return inss, err

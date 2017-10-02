@@ -1,0 +1,8 @@
+package Optimization
+
+type ConstrainedOptimizer interface {
+	AddConstraint(c Constraint) error
+	RemoveConstraint(c Constraint) error
+	AddObjective(o Objective) error
+	Run() (Result, error)
+}

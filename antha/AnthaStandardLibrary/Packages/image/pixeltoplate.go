@@ -1,5 +1,3 @@
-// pixeltoplate.go
-// image.go
 package image
 
 import (
@@ -11,9 +9,12 @@ import (
 	goimage "image"
 	"image/color"
 	"image/color/palette"
+	"image/gif"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
+	"regexp"
 	"strconv"
 
 	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
@@ -21,27 +22,19 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/disintegration/imaging"
-	"image/gif"
-	"reflect"
-	"regexp"
 )
 
-//-------------------------------------------------------
-//GLOBALS
-//-------------------------------------------------------
-
-var Chosencolourpalette color.Palette = availablecolours //palette.WebSafe
-//var websafe color.Palette = palette.WebSafe
-var availablecolours = []color.Color{
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}, //white
-	color.RGBA{R: uint8(13), G: uint8(105), B: uint8(171), A: uint8(255)},  //blue
+var availableColours = []color.Color{
+	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}, // white
+	color.RGBA{R: uint8(13), G: uint8(105), B: uint8(171), A: uint8(255)},  // blue
 	color.RGBA{R: uint8(245), G: uint8(205), B: uint8(47), A: uint8(255)},  // yellow
 	color.RGBA{R: uint8(75), G: uint8(151), B: uint8(74), A: uint8(255)},   // green
 	color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},   // red
 	color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},   // black
 }
 
-// map of RGB colour to description for use as key in crossreferencing colour to component in other maps
+// Colourcomponentmap is a map of RGB colour to description for use as key in
+// crossreferencing colour to component in other maps. Very badly named.
 var Colourcomponentmap = map[color.Color]string{
 	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
 	color.RGBA{R: uint8(13), G: uint8(105), B: uint8(171), A: uint8(255)}:  "blue",
@@ -52,8 +45,7 @@ var Colourcomponentmap = map[color.Color]string{
 	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)}:         "transparent",
 }
 
-// map of RGB colour to description for use as key in crossreferencing colour to component in other maps
-var Neon = map[color.Color]string{
+var neonComponentMap = map[color.Color]string{
 	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}:       "black",
 	color.RGBA{R: uint8(149), G: uint8(156), B: uint8(161), A: uint8(255)}: "grey",
 	color.RGBA{R: uint8(117), G: uint8(51), B: uint8(127), A: uint8(255)}:  "purple",
@@ -67,15 +59,28 @@ var Neon = map[color.Color]string{
 	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
 	color.RGBA{R: uint8(0), G: uint8(174), B: uint8(239), A: uint8(255)}:   "Cyan",
 	color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)}:   "Magenta",
-	//color.RGBA{R: uint8(251), G: uint8(156), B: uint8(110), A: uint8(255)}: "skin",
 }
 
-// Image resizing resample filters from disintegration package
+// AllResampleFilters are the resample filters from disintegration package
 var AllResampleFilters = map[string]imaging.ResampleFilter{
-	"Cosine": imaging.Cosine, "Welch": imaging.Welch, "Blackman": imaging.Blackman, "Hamming": imaging.Hamming, "Hann": imaging.Hann, "Lanczos": imaging.Lanczos, "Bartlett": imaging.Bartlett, "Guassian": imaging.Gaussian, "BSpline": imaging.BSpline, "CatmullRom": imaging.CatmullRom, "MitchellNetravali": imaging.MitchellNetravali, "Hermite": imaging.Hermite, "Linear": imaging.Linear, "Box": imaging.Box, "NearestNeighbour": imaging.NearestNeighbor,
+	"Cosine":            imaging.Cosine,
+	"Welch":             imaging.Welch,
+	"Blackman":          imaging.Blackman,
+	"Hamming":           imaging.Hamming,
+	"Hann":              imaging.Hann,
+	"Lanczos":           imaging.Lanczos,
+	"Bartlett":          imaging.Bartlett,
+	"Guassian":          imaging.Gaussian,
+	"BSpline":           imaging.BSpline,
+	"CatmullRom":        imaging.CatmullRom,
+	"MitchellNetravali": imaging.MitchellNetravali,
+	"Hermite":           imaging.Hermite,
+	"Linear":            imaging.Linear,
+	"Box":               imaging.Box,
+	"NearestNeighbour":  imaging.NearestNeighbor,
 }
-var Emptycolourarray color.Palette
-var ProteinPaintboxmap = map[color.Color]string{
+
+var proteinPaintboxMap = map[color.Color]string{
 	// under visible light
 
 	// Chromogenic proteins
@@ -131,7 +136,8 @@ var ProteinPaintboxmap = map[color.Color]string{
 	// plus white as a blank (or comment out to use EiraCFP)
 	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
 }
-var UVProteinPaintboxmap = map[color.Color]string{
+
+var uvProteinPaintboxMap = map[color.Color]string{
 
 	// Chromogenic proteins same colours as visible
 	color.RGBA{R: uint8(70), G: uint8(105), B: uint8(172), A: uint8(255)}:  "BlitzenBlue",
@@ -181,7 +187,8 @@ var UVProteinPaintboxmap = map[color.Color]string{
 	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}:       "E.coli pUC19 on sgal",
 	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
 }
-var ProteinPaintboxSubsetmap = map[color.Color]string{
+
+var proteinPaintboxSubsetMap = map[color.Color]string{
 	// under visible light
 
 	// Chromogenic proteins
@@ -243,13 +250,8 @@ var ProteinPaintboxSubsetmap = map[color.Color]string{
 	//color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
 }
 
-//----------------------------------------------------------------------------
-//image input/output manipulation
-//----------------------------------------------------------------------------
-
-//OpenFile will take a wtype.File object and return the contents as image.NRGBA
-func OpenFile(file wtype.File) (nrgba *goimage.NRGBA, err error) {
-
+// OpenFile takes a wtype.File object and return the contents as image.NRGBA
+func OpenFile(file wtype.File) (*goimage.NRGBA, error) {
 	data, err := file.ReadAll()
 	if err != nil {
 		return nil, err
@@ -262,12 +264,11 @@ func OpenFile(file wtype.File) (nrgba *goimage.NRGBA, err error) {
 		return nil, err
 	}
 
-	nrgba = imaging.Clone(img)
-	return nrgba, nil
+	return imaging.Clone(img), nil
 }
 
-// OpenGIF will take in a wtype.File object and decode the bytes to return a GIF object
-func OpenGIF(file wtype.File) (GIF *gif.GIF, err error) {
+// OpenGIF takes in a wtype.File object and decode the bytes to return a GIF object
+func OpenGIF(file wtype.File) (*gif.GIF, error) {
 
 	//returning bytes
 	data, err := file.ReadAll()
@@ -278,18 +279,16 @@ func OpenGIF(file wtype.File) (GIF *gif.GIF, err error) {
 	//converting bytes to io.reader type
 	reader := bytes.NewReader(data)
 
-	GIF, err = gif.DecodeAll(reader)
+	img, err := gif.DecodeAll(reader)
 	if err != nil {
 		return nil, err
 	}
 
-	return GIF, nil
+	return img, nil
 }
 
-// export image to file
-// image format is derived from filename extension
+// Export an image to file. The image format is derived from filename extension
 func Export(img *goimage.NRGBA, fileName string) (file wtype.File, err error) {
-
 	var imageFormat imaging.Format
 
 	if filepath.Ext(fileName) == "" {
@@ -326,253 +325,225 @@ func Export(img *goimage.NRGBA, fileName string) (file wtype.File, err error) {
 	return
 }
 
-//----------------------------------------------------------------------------
-//Palette Libraries manipulation
-//----------------------------------------------------------------------------
+// AvailablePalettes returns all the (hardcoded) palettes in the library. The
+// keys are the pallette names.
+func AvailablePalettes() map[string]color.Palette {
 
-//AvailablePalettes will return all the (hardcoded) palettes in the library. The keys are the pallette names
-func AvailablePalettes() (availablepalettes map[string]color.Palette) {
+	var avail = make(map[string]color.Palette)
 
-	availablepalettes = make(map[string]color.Palette)
-
-	availablepalettes["Palette1"] = palettefromMap(Colourcomponentmap) //Chosencolourpalette,
-	availablepalettes["Neon"] = palettefromMap(Neon)
-	availablepalettes["WebSafe"] = palette.WebSafe //websafe,
-	availablepalettes["Plan9"] = palette.Plan9
-	availablepalettes["ProteinPaintboxVisible"] = palettefromMap(ProteinPaintboxmap)
-	availablepalettes["ProteinPaintboxUV"] = palettefromMap(UVProteinPaintboxmap)
-	availablepalettes["ProteinPaintboxSubset"] = palettefromMap(ProteinPaintboxSubsetmap)
-	availablepalettes["Gray"] = MakeGreyScalePalette()
-	availablepalettes["None"] = Emptycolourarray
+	avail["Palette1"] = paletteFromMap(Colourcomponentmap) //Chosencolourpalette,
+	avail["Neon"] = paletteFromMap(neonComponentMap)
+	avail["WebSafe"] = palette.WebSafe //websafe,
+	avail["Plan9"] = palette.Plan9
+	avail["ProteinPaintboxVisible"] = paletteFromMap(proteinPaintboxMap)
+	avail["ProteinPaintboxUV"] = paletteFromMap(uvProteinPaintboxMap)
+	avail["ProteinPaintboxSubset"] = paletteFromMap(proteinPaintboxSubsetMap)
+	avail["Gray"] = MakeGreyScalePalette()
+	avail["None"] = color.Palette{}
 
 	if _, err := os.Stat(filepath.Join(anthapath.Path(), "testcolours.json")); err == nil {
-		invmap, err := MakelatestcolourMap(filepath.Join(anthapath.Path(), "testcolours.json"))
+		invmap, err := makeLatestColourMap(filepath.Join(anthapath.Path(), "testcolours.json"))
 		if err != nil {
 			panic(err.Error())
 		}
-		availablepalettes["inventory"] = palettefromMap(invmap)
+		avail["inventory"] = paletteFromMap(invmap)
 	}
 
 	if _, err := os.Stat(filepath.Join(anthapath.Path(), "UVtestcolours.json")); err == nil {
-		uvinvmap, err := MakelatestcolourMap(filepath.Join(anthapath.Path(), "UVtestcolours.json"))
+		uvinvmap, err := makeLatestColourMap(filepath.Join(anthapath.Path(), "UVtestcolours.json"))
 		if err != nil {
 			panic(err.Error())
 		}
-		availablepalettes["UVinventory"] = palettefromMap(uvinvmap)
+		avail["UVinventory"] = paletteFromMap(uvinvmap)
 	}
-	return
+	return avail
 }
 
-//AvailableComponentMaps returns available palettes in a map
-func AvailableComponentmaps() (componentmaps map[string]map[color.Color]string) {
-	componentmaps = make(map[string]map[color.Color]string)
-	componentmaps["Palette1"] = Colourcomponentmap
-	componentmaps["Neon"] = Neon
-	componentmaps["ProteinPaintboxVisible"] = ProteinPaintboxmap
-	componentmaps["ProteinPaintboxUV"] = UVProteinPaintboxmap
-	componentmaps["ProteinPaintboxSubset"] = ProteinPaintboxSubsetmap
+// AvailableComponentmaps returns available palettes in a map. Bad name.
+func AvailableComponentmaps() map[string]map[color.Color]string {
+	var componentMaps = make(map[string]map[color.Color]string)
+	componentMaps["Palette1"] = Colourcomponentmap
+	componentMaps["Neon"] = neonComponentMap
+	componentMaps["ProteinPaintboxVisible"] = proteinPaintboxMap
+	componentMaps["ProteinPaintboxUV"] = uvProteinPaintboxMap
+	componentMaps["ProteinPaintboxSubset"] = proteinPaintboxSubsetMap
 
 	if _, err := os.Stat(filepath.Join(anthapath.Path(), "testcolours.json")); err == nil {
-		invmap, err := MakelatestcolourMap(filepath.Join(anthapath.Path(), "testcolours.json"))
+		invmap, err := makeLatestColourMap(filepath.Join(anthapath.Path(), "testcolours.json"))
 		if err != nil {
 			panic(err.Error())
 		}
 
-		componentmaps["inventory"] = invmap
+		componentMaps["inventory"] = invmap
 	}
 	if _, err := os.Stat(filepath.Join(anthapath.Path(), "UVtestcolours.json")); err == nil {
-		uvinvmap, err := MakelatestcolourMap(filepath.Join(anthapath.Path(), "UVtestcolours.json"))
+		uvinvmap, err := makeLatestColourMap(filepath.Join(anthapath.Path(), "UVtestcolours.json"))
 		if err != nil {
 			panic(err.Error())
 		}
 
-		componentmaps["UVinventory"] = uvinvmap
+		componentMaps["UVinventory"] = uvinvmap
 	}
-	return
+	return componentMaps
 }
 
-//VisibleEquivalentMaps returns just the proteinPaintboxUV color map
-func Visibleequivalentmaps() map[string]map[color.Color]string {
-	visibleequivalentmaps := make(map[string]map[color.Color]string)
-	visibleequivalentmaps["ProteinPaintboxUV"] = ProteinPaintboxmap
+// visibleEquivalentMaps returns just the proteinPaintboxUV color map
+func visibleEquivalentMaps() map[string]map[color.Color]string {
+	componentMaps := make(map[string]map[color.Color]string)
+	componentMaps["ProteinPaintboxUV"] = proteinPaintboxMap
 
 	if _, err := os.Stat(filepath.Join(anthapath.Path(), "testcolours.json")); err == nil {
-		invmap, err := MakelatestcolourMap(filepath.Join(anthapath.Path(), "testcolours.json"))
+		m, err := makeLatestColourMap(filepath.Join(anthapath.Path(), "testcolours.json"))
 		if err != nil {
 			panic(err.Error())
 		}
-		visibleequivalentmaps["UVinventory"] = invmap
+		componentMaps["UVinventory"] = m
 	}
-	return visibleequivalentmaps
+	return componentMaps
 }
 
-//PaletteFromMap returns a palette of all colors in it given a color map.
-func palettefromMap(colourmap map[color.Color]string) (palette color.Palette) {
-
-	array := make([]color.Color, 0)
-
-	for key, _ := range colourmap {
-
-		array = append(array, key)
+// paletteFromMap returns a palette of all colors in it given a color map.
+func paletteFromMap(colourmap map[color.Color]string) (palette color.Palette) {
+	for key := range colourmap {
+		palette = append(palette, key)
 	}
 
-	palette = array
 	return
 
 }
 
-//MakelatestcolourMap will take a json file and return map with color objects as keys to their ID.
-func MakelatestcolourMap(jsonmapfilename string) (colourtostringmap map[color.Color]string, err error) {
-	var stringtonrgbamap *map[string]color.NRGBA = &map[string]color.NRGBA{}
+// makeLatestColourMap will take a json file and return map with color objects as keys to their ID.
+func makeLatestColourMap(jsonmapfilename string) (colourToName map[color.Color]string, err error) {
+	var nameToRGB map[string]color.NRGBA
 
 	data, err := ioutil.ReadFile(jsonmapfilename)
 
 	if err != nil {
-		return colourtostringmap, err
+		return colourToName, err
 	}
 
-	err = json.Unmarshal(data, stringtonrgbamap)
+	err = json.Unmarshal(data, &nameToRGB)
 	if err != nil {
-		return colourtostringmap, err
+		return colourToName, err
 	}
 
-	stringtocolourmap := make(map[string]color.Color)
-	for key, value := range *stringtonrgbamap {
-		stringtocolourmap[key] = value
+	nameToColor := make(map[string]color.Color)
+	for key, value := range nameToRGB {
+		nameToColor[key] = value
 	}
 
-	colourtostringmap, err = reversestringtopalettemap(stringtocolourmap)
+	colourToName, err = invertNameToPaletteMap(nameToColor)
 
-	return colourtostringmap, err
+	return colourToName, err
 }
 
-//MakeGreyScalePalette will return a palette of grey shades
-func MakeGreyScalePalette() (graypalette []color.Color) {
-
-	graypalette = make([]color.Color, 0)
-	var shadeofgray color.Gray
+// MakeGreyScalePalette returns a palette of grey shades
+func MakeGreyScalePalette() []color.Color {
+	var greyPalette []color.Color
 	for i := 0; i < 256; i++ {
-		shadeofgray = color.Gray{Y: uint8(i)}
-		graypalette = append(graypalette, shadeofgray)
+		greyPalette = append(greyPalette, color.Gray{Y: uint8(i)})
 	}
 
-	return
+	return greyPalette
 }
 
-//ReversePaletteMap reverses the keys and values in a colormap. The color names become keys for the color objects
-func reversepalettemap(colourmap map[color.Color]string) (stringmap map[string]color.Color, err error) {
+// invertPaletteToNameMap reverses the keys and values in a colormap. The color
+// names become keys for the color objects
+func invertPaletteToNameMap(colourMap map[color.Color]string) (map[string]color.Color, error) {
+	var nameMap = make(map[string]color.Color)
 
-	stringmap = make(map[string]color.Color, len(colourmap))
-
-	for key, value := range colourmap {
-
-		_, ok := stringmap[value]
-		if ok == true {
-			alreadyinthere := stringmap[value]
-
-			err = fmt.Errorf("attempt to add value %s for key %s to stringmap %s failed due to duplicate entry %s", key, value, stringmap, alreadyinthere)
-		} else {
-			stringmap[value] = key
+	for key, value := range colourMap {
+		old, seen := nameMap[value]
+		if seen {
+			return nil, fmt.Errorf("error inserting key %s value %s: value %s already present", key, value, old)
 		}
-		// fmt.Println("key:", key, "value", value)
+		nameMap[value] = key
 	}
-	return
+	return nameMap, nil
 }
 
-//ReverseStringToPaletteMap reverses the keys and values in a colormap. The color objects become keys for the color names
-func reversestringtopalettemap(stringmap map[string]color.Color) (colourmap map[color.Color]string, err error) {
+// invertNameToPaletteMap reverses the keys and values in a colormap. The
+// color objects become keys for the color names
+func invertNameToPaletteMap(nameMap map[string]color.Color) (map[color.Color]string, error) {
+	var colourMap = make(map[color.Color]string)
 
-	colourmap = make(map[color.Color]string, len(stringmap))
-
-	for key, value := range stringmap {
-
-		_, ok := colourmap[value]
-		if ok == true {
-			alreadyinthere := colourmap[value]
-
-			err = fmt.Errorf("attempt to add value %s for key %s to colourmap %s failed due to duplicate entry %s", key, value, colourmap, alreadyinthere)
-		} else {
-			colourmap[value] = key
+	for key, value := range nameMap {
+		old, seen := colourMap[value]
+		if seen {
+			return nil, fmt.Errorf("error inserting key %s value %s: value %s already present", key, value, old)
 		}
-		// fmt.Println("key:", key, "value", value)
+
+		colourMap[value] = key
 	}
-	return
+	return colourMap, nil
 }
 
-//MakeSubMapFromMap extracts colors from a color library Given colour names.
-func MakeSubMapfromMap(existingmap map[color.Color]string, colournames []string) (newmap map[color.Color]string) {
+// MakeSubMapfromMap extracts colors from a color library Given colour names.
+// Bad name.
+func MakeSubMapfromMap(colourMap map[color.Color]string, colourNames []string) map[color.Color]string {
+	var newMap = make(map[color.Color]string)
 
-	newmap = make(map[color.Color]string, 0)
-
-	reversedmap, err := reversepalettemap(existingmap)
+	nameMap, err := invertPaletteToNameMap(colourMap)
 
 	if err != nil {
-		panic("can't reverse this colour map" + err.Error())
+		panic(err)
 	}
 
-	for _, colourname := range colournames {
-
-		colour := reversedmap[colourname]
+	for _, name := range colourNames {
+		colour := nameMap[name]
 
 		if colour != nil {
-			newmap[colour] = colourname
+			newMap[colour] = name
 		}
 	}
 
-	return
+	return newMap
 }
 
-//MakeSubPallette extracts colors from a palette given a slice of colour names
-func MakeSubPallette(palettename string, colournames []string) (subpalette color.Palette) {
-	palettemap := AvailableComponentmaps()[palettename]
+// MakeSubPallette extracts colors from a palette given a slice of colour
+// names. Bad name.
+func MakeSubPallette(paletteName string, colourNames []string) color.Palette {
+	paletteMap := AvailableComponentmaps()[paletteName]
 
-	submap := MakeSubMapfromMap(palettemap, colournames)
+	subMap := MakeSubMapfromMap(paletteMap, colourNames)
 
-	subpalette = palettefromMap(submap)
-
-	return
-
+	return paletteFromMap(subMap)
 }
 
-//RemoveDuplicatesKeysfromMap will loop over a map of colors to find and delete duplicates. Entries with duplicate keys are deleted.
+// RemoveDuplicatesKeysfromMap will loop over a map of colors to find and
+// delete duplicates. Entries with duplicate keys are deleted.
 func RemoveDuplicatesKeysfromMap(elements map[string]color.Color) map[string]color.Color {
-	// Use map to record duplicates as we find them.
-	encountered := map[string]bool{}
-	result := make(map[string]color.Color, 0)
+	var encountered map[string]bool
+	result := make(map[string]color.Color)
 
 	for key, v := range elements {
 
-		if encountered[key] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[key] = true
-			// Append to result slice.
-			result[key] = v
+		if encountered[key] {
+			continue
 		}
+
+		encountered[key] = true
+		result[key] = v
 	}
-	// Return the new slice.
+
 	return result
 }
 
-//RemoveDuplicatesKeysValuesfromMap will loop over a map of colors to find and delete duplicates. Entries with duplicate values are deleted.
+// RemoveDuplicatesValuesfromMap will loop over a map of colors to find and
+// delete duplicates. Entries with duplicate values are deleted.
 func RemoveDuplicatesValuesfromMap(elements map[string]color.Color) map[string]color.Color {
-	// Use map to record duplicates as we find them.
-	encountered := map[color.Color]bool{}
-	result := make(map[string]color.Color, 0)
+	var encountered map[color.Color]bool
+	result := make(map[string]color.Color)
 
 	for key, v := range elements {
 
-		if encountered[v] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[v] = true
-			// Append to result slice.
-			result[key] = v
+		if encountered[v] {
+			continue
 		}
+
+		encountered[v] = true
+		result[key] = v
 	}
-	// Return the new slice.
 	return result
 }
 
@@ -580,20 +551,13 @@ func RemoveDuplicatesValuesfromMap(elements map[string]color.Color) map[string]c
 //Image manipulations
 //----------------------------------------------------------------------------
 
-//PaletteFromColorArray make a palette from a slice of colors.
-func paletteFromColorarray(colors []color.Color) (palette color.Palette) {
-
-	var newpalette color.Palette
-
-	newpalette = colors
-
-	palette = newpalette
-
-	//palette = &newpalette
-	return
+// paletteFromColorarray makes a palette from a slice of colors.
+func paletteFromColorarray(colors []color.Color) color.Palette {
+	var newPalette color.Palette = colors
+	return newPalette
 }
 
-//ColourtoCMYK will convert an object with the color interface to color.CYMK
+// ColourtoCMYK will convert an object with the color interface to color.CYMK
 func ColourtoCMYK(colour color.Color) (cmyk color.CMYK) {
 	// fmt.Println("colour", colour)
 	r, g, b, _ := colour.RGBA()
@@ -601,26 +565,26 @@ func ColourtoCMYK(colour color.Color) (cmyk color.CMYK) {
 	return
 }
 
-//ColourtoGrayscale will convert an object with the color interface to color.Gray
-func ColourtoGrayscale(colour color.Color) (gray color.Gray) {
+// ColourtoGrayscale will convert an object with the color interface to
+// color.Gray
+func ColourtoGrayscale(colour color.Color) color.Gray {
 	r, g, b, _ := colour.RGBA()
-	gray.Y = uint8((0.2126 * float64(r)) + (0.7152 * float64(g)) + (0.0722 * float64(b)))
-	return
+	return color.Gray{
+		Y: uint8((0.2126 * float64(r)) + (0.7152 * float64(g)) + (0.0722 * float64(b))),
+	}
 }
 
-//Posterize will posterize an image. This refers to changing an image to use only a small number of different tones.
-func Posterize(img *goimage.NRGBA, levels int) (posterized *goimage.NRGBA, err error) {
-
+// Posterize changes an image to use only a small number of different tones.
+func Posterize(img *goimage.NRGBA, levels int) (*goimage.NRGBA, error) {
 	//We cannot posterize with only one level.
 	if levels == 1 {
 		return nil, errors.New("Cannot posterize with only one level")
 	}
 
-	var newcolor color.NRGBA
-	numberofAreas := 256 / (levels)
-	numberofValues := 255 / (levels - 1)
+	numberOfAreas := 256 / (levels)
+	numberOfValues := 255 / (levels - 1)
 
-	posterized = imaging.Clone(img)
+	posterized := imaging.Clone(img)
 
 	for x := 0; x < img.Bounds().Dx(); x++ {
 		for y := 0; y < img.Bounds().Dy(); y++ {
@@ -634,266 +598,222 @@ func Posterize(img *goimage.NRGBA, levels int) (posterized *goimage.NRGBA, err e
 			if r == 0 {
 				rnew = 0
 			} else {
-				rfloat := (float64(r/256) / float64(numberofAreas))
+				rfloat := (float64(r/256) / float64(numberOfAreas))
 
 				rinttemp, err := wutil.RoundDown(rfloat)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
-				rnew = float64(rinttemp) * float64(numberofValues)
+				rnew = float64(rinttemp) * float64(numberOfValues)
 			}
 			if g == 0 {
 				gnew = 0
 			} else {
-				gfloat := (float64(g/256) / float64(numberofAreas))
+				gfloat := (float64(g/256) / float64(numberOfAreas))
 
 				ginttemp, err := wutil.RoundDown(gfloat)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
-				gnew = float64(ginttemp) * float64(numberofValues)
+				gnew = float64(ginttemp) * float64(numberOfValues)
 			}
 			if b == 0 {
 				bnew = 0
 			} else {
-				bfloat := (float64(b/256) / float64(numberofAreas))
+				bfloat := (float64(b/256) / float64(numberOfAreas))
 
 				binttemp, err := wutil.RoundDown(bfloat)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
-				bnew = float64(binttemp) * float64(numberofValues)
+				bnew = float64(binttemp) * float64(numberOfValues)
 			}
+			var newcolor color.NRGBA
 			newcolor.A = uint8(a)
 
 			rint, err := wutil.RoundDown(rnew)
 
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 			newcolor.R = uint8(rint)
 			gint, err := wutil.RoundDown(gnew)
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 			newcolor.G = uint8(gint)
 			bint, err := wutil.RoundDown(bnew)
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 			newcolor.B = uint8(bint)
 
 			posterized.Set(x, y, newcolor)
-
 		}
 	}
 
-	return posterized, err
+	return posterized, nil
 }
 
-//ResizeImageToPlate will resize an image to fit the number of wells on a plate. We treat wells as pixels.
-func ResizeImagetoPlate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imaging.ResampleFilter, rotate bool) (plateimage *goimage.NRGBA) {
+// ResizeImagetoPlate resizes an image to fit the number of wells on a plate.
+// We treat wells as pixels. Bad name.
+func ResizeImagetoPlate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imaging.ResampleFilter, rotate bool) *goimage.NRGBA {
 
-	if img.Bounds().Dy() != plate.WellsY() {
-
-		if rotate {
-			img = imaging.Rotate270(img)
-		}
-		var aspectratio float64 = float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
-		if aspectratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
-			plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
-		} else {
-			plateimage = imaging.Resize(img, plate.WlsX, 0, algorithm)
-		}
-		//plateimages = append(plateimages,plateimage)
-	} else {
-		// if the size is the same, simply return the image
-		plateimage = img
+	if img.Bounds().Dy() == plate.WellsY() {
+		return img
 	}
-	return
 
-}
-
-//ResizeImageToPlateAutoRotate will resize an image to fit the number of wells on a plate and if the image is in portrait the image will be rotated by 270 degrees to optimise resolution on the plate.
-func ResizeImagetoPlateAutoRotate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imaging.ResampleFilter) (plateimage *goimage.NRGBA) {
-
-	if img.Bounds().Dy() != plate.WellsY() {
-		// fmt.Println("hey we're not so different", img.Bounds().Dy(), plate.WellsY())
-		// have the option of changing the resize algorithm here
-
-		if img.Bounds().Dy() > img.Bounds().Dx() {
-			// fmt.Println("Auto Rotating image")
-			img = imaging.Rotate270(img)
-		}
-		var aspectratio float64 = float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
-		if aspectratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
-			plateimage = imaging.Resize(img, 0, plate.WlsY, algorithm)
-		} else {
-			plateimage = imaging.Resize(img, plate.WlsX, 0, algorithm)
-		}
-		//plateimages = append(plateimages,plateimage)
-	} else {
-		// fmt.Println("i'm the same!!!")
-		plateimage = toNRGBA(img)
+	if rotate {
+		img = imaging.Rotate270(img)
 	}
-	return
+	ratio := float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
+	if ratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
+		return imaging.Resize(img, 0, plate.WlsY, algorithm)
+	}
+	return imaging.Resize(img, plate.WlsX, 0, algorithm)
 
 }
 
-//CheckAllResizeAlgorithms will use the different algorithms in a algorithm library to resize an image to a given platetype.
+// ResizeImagetoPlateAutoRotate resizes an image to fit the number of wells on
+// a plate and if the image is in portrait the image will be rotated by 270
+// degrees to optimise resolution on the plate.
+func ResizeImagetoPlateAutoRotate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imaging.ResampleFilter) *goimage.NRGBA {
+	if img.Bounds().Dy() == plate.WellsY() {
+		return toNRGBA(img)
+	}
+
+	if img.Bounds().Dy() > img.Bounds().Dx() {
+		img = imaging.Rotate270(img)
+	}
+	ratio := float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
+	if ratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
+		return imaging.Resize(img, 0, plate.WlsY, algorithm)
+	}
+	return imaging.Resize(img, plate.WlsX, 0, algorithm)
+
+}
+
+// CheckAllResizealgorithms resizes an image using a variety of different
+// algorithms.
 func CheckAllResizealgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) []*goimage.NRGBA {
-
 	var plateImages []*goimage.NRGBA
-	var plateImage *goimage.NRGBA
 
 	for _, algorithm := range algorithms {
+		resized := ResizeImagetoPlate(img, plate, algorithm, rotate)
 
-		if rotate {
-			img = imaging.Rotate270(img)
-		}
-
-		if img.Bounds().Dy() != plate.WellsY() {
-			// fmt.Println("hey we're not so different", img.Bounds().Dy(), plate.WellsY())
-			// have the option of changing the resize algorithm here
-			var aspectratio float64 = float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
-
-			if aspectratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
-
-				plateImage = imaging.Resize(img, 0, plate.WlsY, algorithm)
-				plateImages = append(plateImages, plateImage)
-
-			} else {
-				plateImage = imaging.Resize(img, plate.WlsX, 0, algorithm)
-				plateImages = append(plateImages, plateImage)
-			}
-			//plateimages = append(plateimages,plateimage)
-		} else {
-			// fmt.Println("i'm the same!!!")
-			plateImage = img
-		}
+		plateImages = append(plateImages, resized)
 
 	}
 
 	return plateImages
 }
 
-//MakePalleteFromImage will make a color Palette from an image resized to fit a given plate type.
-func MakePalleteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool) (newpallette color.Palette) {
+// MakePaletteFromImage will make a color Palette from an image resized to fit
+// a given plate type.
+func MakePaletteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool) color.Palette {
+	plateImage := ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
 
-	plateimage := ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
-
-	colourarray := make([]color.Color, 0)
+	var colours []color.Color
 
 	// Find out colour at each position:
-	for y := 0; y < plateimage.Bounds().Dy(); y++ {
-		for x := 0; x < plateimage.Bounds().Dx(); x++ {
+	for y := 0; y < plateImage.Bounds().Dy(); y++ {
+		for x := 0; x < plateImage.Bounds().Dx(); x++ {
 			// colour or pixel in RGB
-			colour := plateimage.At(x, y)
-			colourarray = append(colourarray, colour)
+			colour := plateImage.At(x, y)
+			colours = append(colours, colour)
 
 		}
 	}
 
-	newpallette = paletteFromColorarray(colourarray)
-
-	return
+	return paletteFromColorarray(colours)
 }
 
-//MakeSmallPalleteFromImage will make a color Palette from an image resized to fit a given plate type using Plan9 Palette
-func MakeSmallPalleteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool) (newpallette color.Palette) {
+// MakeSmallPalleteFromImage will make a color Palette from an image resized to
+// fit a given plate type using Plan9 Palette
+func MakeSmallPalleteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool) color.Palette {
+	plateImage := ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
 
-	plateimage := ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
-	//image, _ := imaging.Open(imagefilename)
+	// use Plan9 as palette for first round to keep number of colours down to a
+	// manageable level
+	palette := AvailablePalettes()["Plan9"]
 
-	//plateimage := imaging.Clone(image)
-
-	// use Plan9 as pallette for first round to keep number of colours down to a manageable level
-
-	chosencolourpalette := AvailablePalettes()["Plan9"]
-
-	colourmap := make(map[color.Color]bool, 0)
+	seen := make(map[color.Color]bool)
 
 	// Find out colour at each position:
-	for y := 0; y < plateimage.Bounds().Dy(); y++ {
-		for x := 0; x < plateimage.Bounds().Dx(); x++ {
+	for y := 0; y < plateImage.Bounds().Dy(); y++ {
+		for x := 0; x < plateImage.Bounds().Dx(); x++ {
 			// colour or pixel in RGB
-			colour := plateimage.At(x, y)
+			colour := plateImage.At(x, y)
 
 			if colour != nil {
-
-				colour = chosencolourpalette.Convert(colour)
-				_, ok := colourmap[colour]
+				colour = palette.Convert(colour)
 				// change colour to colour from a palette
-				if !ok {
-					colourmap[colour] = true
-				}
-
+				seen[colour] = true
 			}
 		}
 	}
 
-	newcolourarray := make([]color.Color, 0)
+	var colors []color.Color
 
-	for colour, _ := range colourmap {
-		newcolourarray = append(newcolourarray, colour)
+	for colour := range seen {
+		colors = append(colors, colour)
 	}
 
-	newpallette = paletteFromColorarray(newcolourarray)
-
-	return
+	return paletteFromColorarray(colors)
 }
 
-//ImagetoPlatelayout will take an image, plate type, and palette and return a map of well position to colors.
-// create a map of pixel to plate position from processing a given image with a chosen colour palette.
-// It's recommended to use at least 384 well plate
-// if autorotate == true, rotate is overridden
-func ImagetoPlatelayout(img *goimage.NRGBA, plate *wtype.LHPlate, chosencolourpalette *color.Palette, rotate bool, autorotate bool) (wellpositiontocolourmap map[string]color.Color, plateimage *goimage.NRGBA) {
-
-	if autorotate {
-		plateimage = ResizeImagetoPlateAutoRotate(img, plate, imaging.CatmullRom)
+// ImagetoPlatelayout takes an image, plate type, and palette and returns a map
+// of well position to colors. Creates a map of pixel to plate position from
+// processing a given image with a chosen colour palette.  It's recommended to
+// use at least 384 well plate if autorotate == true, rotate is overridden
+func ImagetoPlatelayout(img *goimage.NRGBA, plate *wtype.LHPlate, palette *color.Palette, rotate bool, autoRotate bool) (map[string]color.Color, *goimage.NRGBA) {
+	var plateImage *goimage.NRGBA
+	if autoRotate {
+		plateImage = ResizeImagetoPlateAutoRotate(img, plate, imaging.CatmullRom)
 	} else {
-		plateimage = ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
+		plateImage = ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
 	}
-	// make map of well position to colour: (array for time being)
 
-	wellpositionarray := make([]string, 0)
-	colourarray := make([]color.Color, 0)
-	wellpositiontocolourmap = make(map[string]color.Color, 0)
+	// make map of well position to colour: (array for time being)
+	var wellPositions []string
+	var colours []color.Color
+	positionToColour := make(map[string]color.Color)
 
 	// Find out colour at each position:
-	for y := 0; y < plateimage.Bounds().Dy(); y++ {
-		for x := 0; x < plateimage.Bounds().Dx(); x++ {
-			// colour or pixel in RGB
-			colour := plateimage.At(x, y)
-			// fmt.Println("x,y,colour, palette", x, y, colour, chosencolourpalette)
+	for y := 0; y < plateImage.Bounds().Dy(); y++ {
+		for x := 0; x < plateImage.Bounds().Dx(); x++ {
+			colour := plateImage.At(x, y)
 
-			if colour != nil {
-
-				if chosencolourpalette != nil && chosencolourpalette != &Emptycolourarray && len([]color.Color(*chosencolourpalette)) > 0 {
-					// change colour to colour from a palette
-					colour = chosencolourpalette.Convert(colour)
-					// fmt.Println("x,y,colour", x, y, colour)
-					plateimage.Set(x, y, colour)
-				}
-				// equivalent well position
-				wellposition := wutil.NumToAlpha(y+1) + strconv.Itoa(x+1)
-				wellpositionarray = append(wellpositionarray, wellposition)
-				wellpositiontocolourmap[wellposition] = colour
-
-				colourarray = append(colourarray, colour)
+			if colour == nil {
+				continue
 			}
+
+			if palette != nil && len(*palette) != 0 {
+				// change colour to colour from a palette
+				colour = palette.Convert(colour)
+				// fmt.Println("x,y,colour", x, y, colour)
+				plateImage.Set(x, y, colour)
+			}
+
+			// equivalent well position
+			pos := wutil.NumToAlpha(y+1) + strconv.Itoa(x+1)
+			wellPositions = append(wellPositions, pos)
+			positionToColour[pos] = colour
+
+			colours = append(colours, colour)
 		}
 	}
 
-	return
+	return positionToColour, plateImage
 }
 
-//PrintFPImagePreview will take an image, plate type, and colors from visiblemap/uvmap and (use to) save the resulting processed image.
+// PrintFPImagePreview takes an image, plate type, and colors from
+// visiblemap/uvmap and (use to) save the resulting processed image.
 func PrintFPImagePreview(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, visiblemap, uvmap map[color.Color]string) {
 
 	plateimage := ResizeImagetoPlate(img, plate, imaging.CatmullRom, rotate)
 
-	uvpalette := palettefromMap(uvmap)
+	uvpalette := paletteFromMap(uvmap)
 
 	// Find out colour at each position under UV:
 	for y := 0; y < plateimage.Bounds().Dy(); y++ {
@@ -925,7 +845,7 @@ func PrintFPImagePreview(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, 
 			colourstring := uvmap[rgba]
 			// fmt.Println("colourstring", colourstring)
 			// change colour to colour of same cell + fluorescent protein under visible light
-			stringkeymap, err := reversepalettemap(visiblemap)
+			stringkeymap, err := invertPaletteToNameMap(visiblemap)
 			if err != nil {
 				panic(err)
 			}
@@ -944,29 +864,21 @@ func PrintFPImagePreview(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, 
 	return
 }
 
-//MakeStringToComponentMap make a map linking LHcomponents to colours, and assign them to well
-func MakestringtoComponentMap(keys []string, componentlist []*wtype.LHComponent) (componentmap map[string]*wtype.LHComponent, err error) {
+// makeNameComponentMap makes a map linking LHcomponents to colours, and
+// assigns them to well
+func makeNameToComponentMap(keys []string, components []*wtype.LHComponent) (map[string]*wtype.LHComponent, error) {
 
-	componentmap = make(map[string]*wtype.LHComponent, 0)
-	var previouserror error = nil
-	for i, key := range keys {
-		for j, component := range componentlist {
+	componentMap := make(map[string]*wtype.LHComponent)
+	for _, key := range keys {
+		for _, component := range components {
 
 			if component.CName == key {
-				componentmap[key] = component
+				componentMap[key] = component
 				break
-			}
-			if i == len(keys) {
-
-				err = fmt.Errorf(previouserror.Error(), "+", "no key and component found for", keys, key)
-			}
-			if j == len(componentlist) {
-
-				err = fmt.Errorf(previouserror.Error(), "+", "no key and component found for", component.CName)
 			}
 		}
 	}
-	return
+	return componentMap, nil
 }
 
 // toNRGBA is used internally to convert any image type to NRGBA.
@@ -980,16 +892,8 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 	return imaging.Clone(img)
 }
 
-//---------------------------------------------------
-//Experimental development
-//---------------------------------------------------
-
-//---------------------------------------------------
-//Data
-//---------------------------------------------------
-
-// Collection of colors
-var colors = map[string]color.Color{
+// colourLibrary is a ollection of colours
+var colourLibrary = map[string]color.Color{
 
 	//ProteinPaintBox under natural light
 	"JuniperGFP":     color.RGBA{R: uint8(194), G: uint8(164), B: uint8(72), A: uint8(255)},
@@ -1291,7 +1195,7 @@ type LivingPix struct {
 	Location wtype.WellCoords
 }
 
-//A livingImg is a representation of an image linked to biological data
+// A LivingImg is a representation of an image linked to biological data
 type LivingImg struct {
 	Plate   wtype.LHPlate
 	Pix     []LivingPix
@@ -1317,7 +1221,7 @@ func SelectLibrary(libID string) (palette color.Palette) {
 	}
 
 	for _, colID := range selectedLib {
-		palette = append(palette, colors[colID])
+		palette = append(palette, colourLibrary[colID])
 	}
 
 	return
@@ -1326,7 +1230,7 @@ func SelectLibrary(libID string) (palette color.Palette) {
 // SelectColor will return the desired color from a string ID
 func SelectColor(colID string) (selectedColor color.Color) {
 
-	selectedColor, found := colors[colID]
+	selectedColor, found := colourLibrary[colID]
 	//Checking for an empty return value
 	if !found {
 		panic(fmt.Sprintf("library %s not found so could not make palette", colID))
@@ -1370,10 +1274,6 @@ func SelectLivingColor(ctx context.Context, colID string) LivingColor {
 	return *lc
 }
 
-//---------------------------------------------------
-//Utility functions
-//---------------------------------------------------
-
 // Convert returns the AnthaPalette AnthaColor closest to c in Euclidean R,G,B space.
 func (p AnthaPalette) Convert(c color.Color) AnthaColor {
 
@@ -1393,7 +1293,7 @@ func (p AnthaPalette) Index(c color.Color) int {
 
 	cr, cg, cb, ca := c.RGBA()
 	ret, bestSum := 0, uint32(1<<32-1)
-	for i, _ := range p.AnthaColors {
+	for i := range p.AnthaColors {
 
 		//getting color of the current anthacolor in the anthaPalette
 		extractedColor := p.AnthaColors[i].Color
@@ -1441,7 +1341,7 @@ func (p LivingPalette) Index(c color.Color) int {
 
 	cr, cg, cb, ca := c.RGBA()
 	ret, bestSum := 0, uint32(1<<32-1)
-	for i, _ := range p.LivingColors {
+	for i := range p.LivingColors {
 
 		//getting color of the current anthacolor in the anthaPalette
 		extractedColor := p.LivingColors[i].Color
@@ -1490,9 +1390,8 @@ func (p1 LivingPix) Compare(p2 LivingPix) (same bool) {
 
 	if reflect.DeepEqual(p1, p2) {
 		return true
-	} else {
-		return false
 	}
+	return false
 
 }
 
@@ -1562,19 +1461,16 @@ func (g1 LivingGIF) GetStates() [][]string {
 	return uniqueStates
 }
 
-//---------------------------------------------------
-//Object constructors
-//---------------------------------------------------
-
-// MakeAnthaPalette will make a palette of Colors linked to LHcomponents. They are merged according to their order in the slice
-func MakeAnthaPalette(palette color.Palette, LHComponents []*wtype.LHComponent) *AnthaPalette {
+// MakeAnthaPalette will make a palette of Colors linked to LHcomponents. They
+// are merged according to their order in the slice
+func MakeAnthaPalette(palette color.Palette, components []*wtype.LHComponent) *AnthaPalette {
 
 	//global placeholders
 	var anthaColor AnthaColor
 	var anthaPalette AnthaPalette
 
 	//checking that there are enough LHComponents to make the Palette
-	if len(palette) != len(LHComponents) {
+	if len(palette) != len(components) {
 		panic(fmt.Sprintf("Not enough LHComponents to make Palette"))
 	} else {
 
@@ -1586,7 +1482,7 @@ func MakeAnthaPalette(palette color.Palette, LHComponents []*wtype.LHComponent) 
 			anthaColor.Color = NRGBA
 
 			//Passing the LHComponent to the anthaColor
-			anthaColor.Component = LHComponents[i]
+			anthaColor.Component = components[i]
 
 			//appending created color to the AnthaPalette
 			anthaPalette.AnthaColors = append(anthaPalette.AnthaColors, anthaColor)
@@ -1658,21 +1554,21 @@ func MakeLivingColor(ctx context.Context, ID string, color *color.NRGBA, seq str
 }
 
 // MakeLivingPalette will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
-func MakeLivingPalette(InputPalette LivingPalette, LHComponents []*wtype.LHComponent) *LivingPalette {
+func MakeLivingPalette(palette LivingPalette, components []*wtype.LHComponent) *LivingPalette {
 
 	//checking that there are enough LHComponents to make the Palette
-	if len(InputPalette.LivingColors) != len(LHComponents) {
+	if len(palette.LivingColors) != len(components) {
 
 		panic("Different number of LivingColors an LHComponent used to make a LivingPalette")
 
 	} else {
 		//Adding the LHComponents to the livingColors
-		for i := range InputPalette.LivingColors {
-			InputPalette.LivingColors[i].Component = LHComponents[i]
+		for i := range palette.LivingColors {
+			palette.LivingColors[i].Component = components[i]
 		}
 	}
 
-	return &InputPalette
+	return &palette
 }
 
 // MakeLivingImg will create a LivingImage object from a digital image.
@@ -1727,38 +1623,28 @@ func MakeLivingGIF(imgs []LivingImg) *LivingGIF {
 	return &livingGIF
 }
 
-//---------------------------------------------------
-//Image manipulation
-//---------------------------------------------------
+// ResizeImagetoPlateMin is a minimalist resize function. Uses Lanczos
+// resampling, which is the best but slowest method.
+func ResizeImagetoPlateMin(img *goimage.NRGBA, plate *wtype.LHPlate) *goimage.NRGBA {
 
-// ResizeImagetoPlateMin is a Minimalist resize function. Uses Lanczos resampling, which is the best but slowest method.
-func ResizeImagetoPlateMin(img *goimage.NRGBA, plate *wtype.LHPlate) (plateImage *goimage.NRGBA) {
-
-	if img.Bounds().Dy() != plate.WellsY() {
-
-		if img.Bounds().Dy() > img.Bounds().Dx() {
-			//Rotate image to better fit the plate
-			img = imaging.Rotate270(img)
-		}
-
-		var aspectratio float64 = float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
-
-		//Resize image
-		if aspectratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
-			plateImage = imaging.Resize(img, 0, plate.WlsY, imaging.Lanczos)
-		} else {
-			plateImage = imaging.Resize(img, plate.WlsX, 0, imaging.Lanczos)
-		}
-
-	} else {
-		// This occures if the image are of the same size
-		plateImage = img
+	if img.Bounds().Dy() == plate.WellsY() {
+		return img
 	}
-	return
 
+	if img.Bounds().Dy() > img.Bounds().Dx() {
+		img = imaging.Rotate270(img)
+	}
+
+	ratio := float64(img.Bounds().Dx()) / float64(img.Bounds().Dy())
+
+	if ratio <= float64(plate.WellsX())/float64(plate.WellsY()) {
+		return imaging.Resize(img, 0, plate.WlsY, imaging.Lanczos)
+	} else {
+		return imaging.Resize(img, plate.WlsX, 0, imaging.Lanczos)
+	}
 }
 
-// ParseGIF will extract those frames from a GIF object and return an array of the images
+// ParseGIF extracts frames from a GIF object and return an array of the images
 func ParseGIF(GIF *gif.GIF, frameNum []int) (imgs []*goimage.NRGBA, err error) {
 
 	//error check

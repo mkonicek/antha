@@ -83,6 +83,12 @@
 			"revisionTime": "2015-05-25T17:13:20-04:00"
 		},
 		{
+			"checksumSHA1": "YRXw3j8f1qWaXNiUMDoUT02g+2U=",
+			"path": "github.com/biogo/biogo/align",
+			"revision": "2fcb9b14416ac1572368eca0e5c1394594930375",
+			"revisionTime": "2017-06-20T10:58:10+02:00"
+		},
+		{
 			"path": "github.com/biogo/ncbi/blast",
 			"revision": "1f2a04055962f693a4fb3d85adc4e0c156b60685",
 			"revisionTime": "2015-10-27T08:49:08+10:30"

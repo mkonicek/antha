@@ -48,6 +48,88 @@ type PositionPair struct {
 	Reverse       bool
 }
 
+// Start returns the start position of the PositionPair
+// by default this will return a directional human friendly position
+func (p PositionPair) Start(options ...string) int {
+	start, _ := p.Coordinates(options...)
+	return start
+}
+
+// End returns the end position of the PositionPair
+// by default this will return a directional human friendly position
+func (p PositionPair) End(options ...string) int {
+	_, end := p.Coordinates(options...)
+	return end
+}
+
+// ignores case
+func containsString(slice []string, testString string) bool {
+
+	upper := func(s string) string { return strings.ToUpper(s) }
+
+	for _, str := range slice {
+		if upper(str) == upper(testString) {
+			return true
+		}
+	}
+	return false
+}
+
+// Coordinates returns the start and end positions of the feature
+// by default this will return the start position followed by the end position in human friendly format
+// Availabe options are:
+// HUMANFRIENDLY returns a sequence PositionPair's start and end positions in a human friendly format
+// i.e. in a Sequence "ATGTGTTG" position 1 is A, 2 is T.
+// CODEFRIENDLY returns a sequence PositionPair's start and end positions in a code friendly format
+// i.e. in a Sequence "ATGTGTTG" position 0 is A, 1 is T.
+// IGNOREDIRECTION is a constant to specify that direction of a feature position
+// should be ignored when returning start and end positions of a feature.
+// If selected, the start position will be the first position at which the feature is encountered regardless of orientation.
+func (p *PositionPair) Coordinates(options ...string) (start, end int) {
+	start, end = p.StartPosition, p.EndPosition
+	if containsString(options, wtype.CODEFRIENDLY) {
+		start--
+		end--
+	}
+	if containsString(options, wtype.IGNOREDIRECTION) {
+		if start > end {
+			return end, start
+		}
+	}
+	return start, end
+}
+
+// ByPositionPairStartPosition obeys the sort interface making the position pairs to be sorted
+// in ascending start position.
+// Direction is ignored during sorting.
+type ByPositionPairStartPosition []PositionPair
+
+// Len returns the number of PositionPairs in PositionPairSet
+func (p ByPositionPairStartPosition) Len() int {
+	return len(p)
+}
+
+// Swap changes positions of two entries in a PositionPairSet
+func (p ByPositionPairStartPosition) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+// Less evaluates whether the entry of PositionPairSet with index i is less than entry with index j
+// the directionless start position is used to assess this.
+// If the start positions are the same the end position is used.
+func (p ByPositionPairStartPosition) Less(i, j int) bool {
+	starti, endi := p[i].HumanFriendly(IGNOREDIRECTION)
+
+	startj, endj := p[j].HumanFriendly(IGNOREDIRECTION)
+
+	if startj == starti {
+		return endi < endj
+	}
+
+	return starti < startj
+
+}
+
 // IGNOREDIRECTION is a boolean constant to specify direction of a feature position
 // should be ignored when returning start and end positions of a feature.
 // If selected, the start position will be the first position at which the feature is encountered regardless of orientation.

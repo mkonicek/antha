@@ -36,7 +36,6 @@ import (
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
-	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 // the liquid handler structure defines the interface to a particular liquid handling
@@ -336,10 +335,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	this.Properties.RemoveUnusedAutoallocatedComponents()
 	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
 
-	pidm := make(map[string]string, len(this.Properties.PosLookup))
-	for pos, _ := range this.Properties.PosLookup {
-		p1, ok1 := this.Properties.PlateLookup[this.Properties.PosLookup[pos]]
-		p2, ok2 := this.FinalProperties.PlateLookup[this.FinalProperties.PosLookup[pos]]
+	pidm := make(map[string]string, len(this.Properties.Plates))
+	for pos, _ := range this.Properties.Plates {
+		p1, ok1 := this.Properties.Plates[pos]
+		p2, ok2 := this.FinalProperties.Plates[pos]
 
 		if (!ok1 && ok2) || (ok1 && !ok2) {
 
@@ -351,18 +350,15 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				fmt.Println("AFTER  HAS: ", p2)
 			}
 
-			return (wtype.LHError(8, fmt.Sprintf("object disappeared from position %s", pos)))
+			return (wtype.LHError(8, fmt.Sprintf("Plate disappeared from position %s", pos)))
 		}
 
 		if !(ok1 && ok2) {
 			continue
 		}
 
-		p1ID := p1.(wtype.AnthaObject).GetID()
-		p2ID := p2.(wtype.AnthaObject).GetID()
-
-		this.plateIDMap[p1ID] = p2ID
-		pidm[p2ID] = p1ID
+		this.plateIDMap[p1.ID] = p2.ID
+		pidm[p2.ID] = p1.ID
 	}
 
 	// this is many shades of wrong but likely to save us a lot of time
@@ -617,16 +613,6 @@ func assembleLoc(ins *wtype.LHInstruction) string {
 // sort out inputs
 func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	instructions := (*request).LHInstructions
-
-	// ensure input plates is sorted out correctly
-
-	st := sampletracker.GetSampleTracker()
-
-	parr := st.GetInputPlates()
-
-	for _, p := range parr {
-		request.Input_plates[p.ID] = p
-	}
 
 	inputs := make(map[string][]*wtype.LHComponent, 3)
 	vmap := make(map[string]wunit.Volume)

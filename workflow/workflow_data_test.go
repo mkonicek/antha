@@ -9,21 +9,21 @@ var condCopyEqualsJson = `
     },
     "connections": [
         {
-            "src": {
+            "source": {
                 "process": "Equals",
                 "port": "Out"
             },
-            "tgt": {
+            "target": {
                 "process": "Cond",
                 "port": "Cond"
             }
         },
         {
-            "src": {
+            "source": {
                 "process": "Cond",
                 "port": "Out"
             },
-            "tgt": {
+            "target": {
                 "process": "Copy",
                 "port": "In"
             }

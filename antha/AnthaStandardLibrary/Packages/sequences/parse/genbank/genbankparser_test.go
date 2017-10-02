@@ -323,8 +323,8 @@ var tests []genbanktest = []genbanktest{
 		fileContents:         []byte(testfileContents),
 		expectedfeaturenames: []string{"Ampicillin (860 - 672)", "Ampicillin (860 - 672)", "AmpR_promoter", "CMV_immearly_promoter", "5_LTR", "CAG_enhancer", "CMV_fwd_primer", "psi_plus_pack", "gag", "ORF frame 1", "MSCV_primer", "hUbC_promoter", "ORF frame 3", "ORF frame 2"},
 		featurePositionMap: map[string][2]int{
-			"Ampicillin (860 - 672)": [2]int{12, 200},
-			"AmpR_promoter":          [2]int{242, 270},
+			"Ampicillin (860 - 672)": [2]int{200, 12},
+			"AmpR_promoter":          [2]int{270, 242},
 			"CMV_immearly_promoter":  [2]int{492, 1067},
 			"5_LTR":                  [2]int{556, 1249},
 			"CAG_enhancer":           [2]int{571, 858},
@@ -335,7 +335,7 @@ var tests []genbanktest = []genbanktest{
 			"MSCV_primer":            [2]int{2057, 2079},
 			"hUbC_promoter":          [2]int{2193, 3408},
 			"ORF frame 3":            [2]int{3462, 8498},
-			"ORF frame 2":            [2]int{4188, 6863},
+			"ORF frame 2":            [2]int{6863, 4188},
 		},
 	},
 }

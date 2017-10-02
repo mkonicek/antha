@@ -38,8 +38,8 @@ type Process struct {
 }
 
 type Connection struct {
-	Src Port `json:"src"`
-	Tgt Port `json:"tgt"`
+	Src Port `json:"source"`
+	Tgt Port `json:"target"`
 }
 
 // Description of a workflow. Structure inherited from and is a subset of

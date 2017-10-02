@@ -158,7 +158,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
-	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 500, 10, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
+	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
 	plate = wtype.NewLHPlate("SRWFB96", "Unknown", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, 1.0)
 	plates = append(plates, plate)
 
@@ -181,6 +181,12 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	singlewelltrough := wtype.NewLHWell("DWR1", "", "", "ul", 300000, 20000, rshp, wtype.LHWBV, 115, 72, 41.3, 4.7, "mm")
 	plate = wtype.NewLHPlate("DWR1", "Unknown", 1, 1, 44.1, "mm", singlewelltrough, 9, 9, 49.5, 0.0, 0.0)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
+	plates = append(plates, plate)
+
+	// 250ml box reservoir
+	reservoirbox := wtype.NewShape("box", "mm", 121, 80, 40) // 39?
+	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 200000, 40000, reservoirbox, wtype.LHWBFLAT, 121, 80, 40, 3, "mm")
+	plate = wtype.NewLHPlate("reservoir", "unknown", 1, 1, 40, "mm", welltypereservoir, 1, 1, 49.5, 31.0, 0.0)
 	plates = append(plates, plate)
 
 	// well area function
@@ -387,11 +393,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	plate = wtype.NewLHPlate("nunc1536", "Unknown", 32, 48, 7, "mm", welltype1536, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
-	// 250ml box reservoir (working vol estimated to be 100ml to prevent spillage on moving decks)
-	reservoirbox := wtype.NewShape("box", "mm", 71, 107, 38) // 39?
-	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 100000, 10000, reservoirbox, 0, 107, 71, 38, 3, "mm")
-	plate = wtype.NewLHPlate("reservoir", "unknown", 1, 1, 45, "mm", welltypereservoir, 58, 13, 0, 0, 10)
-	plates = append(plates, plate)
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) high res
 
@@ -513,6 +514,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	welltypecostar48forpicking := wtype.NewLHWell("costar48well", "", "", "ul", 10, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("Agarplateforpicking48", "Unknown", 6, 8, 14, "mm", welltypecostar48forpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate.DeclareSpecial()
 	plates = append(plates, plate)
 
 	/// placeholder for non plate container for testing
@@ -690,7 +692,7 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 	zstart := 2.0      // offset of bottom of deck to bottom of well
 
 	rwshp := wtype.NewShape("cylinder", "mm", 6.2, 6.2, 10.0)
-	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 500, 1, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate := wtype.NewLHPlate("GreinerSWVBottom", "Greiner", 8, 12, 15, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
@@ -700,7 +702,7 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 func makeGreinerFlatBottomBlackPlate() *wtype.LHPlate {
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
-	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 500, 10, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
+	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
 	plate := wtype.NewLHPlate("greiner96Black", "greiner", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, 1.0)
 	return plate
 }

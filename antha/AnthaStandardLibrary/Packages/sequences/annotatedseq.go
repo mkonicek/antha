@@ -90,6 +90,7 @@ func MakeFeature(name string, seq string, start int, end int, sequencetype strin
 	return feature
 }
 
+// MakeAnnotatedSeq makes a DNA sequence adding the specified features with their correct positions in the sequence specified in human friendly format.
 func MakeAnnotatedSeq(name string, seq string, circular bool, features []wtype.Feature) (annotated wtype.DNASequence, err error) {
 	annotated.Nm = name
 	annotated.Seq = seq
@@ -98,18 +99,15 @@ func MakeAnnotatedSeq(name string, seq string, circular bool, features []wtype.F
 	var newFeatures []wtype.Feature
 
 	for _, feature := range features {
-		positions := FindSeqsinSeqs(seq, []string{feature.DNASeq})
+		featureDNASequence := feature.DNASequence()
+		featurePositionsFound := FindSeq(&annotated, &featureDNASequence)
 
-		if len(positions) > 0 {
-			for i := range positions {
-				featureSeq := positions[i]
-
-				for j := range featureSeq.Positions {
-					feature.StartPosition, feature.EndPosition = featureSeq.Positions[j], featureSeq.Positions[j]+len(featureSeq.Thing)-1
-					newFeatures = append(newFeatures, feature)
-				}
+		if len(featurePositionsFound.Positions) > 0 {
+			for _, positionPair := range featurePositionsFound.Positions {
+				feature.StartPosition, feature.EndPosition = positionPair.HumanFriendly()
+				newFeatures = append(newFeatures, feature)
 			}
-		} else if len(positions) == 0 {
+		} else if len(featurePositionsFound.Positions) == 0 {
 			err = fmt.Errorf("%s sequence %s not found in sequence %s ", feature.Name, feature.DNASeq, seq)
 		}
 

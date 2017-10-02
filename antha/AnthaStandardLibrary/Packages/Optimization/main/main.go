@@ -112,8 +112,9 @@ func OptimizeAssembly(problem AssemblyProblem, constraints Constraints, paramete
 }
 
 type Population struct {
-	Members []PointSet1D
-	Problem AssemblyProblem
+	Members     []PointSet1D
+	Problem     AssemblyProblem
+	FitnessTest func(f int, fs []int) bool
 }
 
 type FitnessValues struct {
@@ -130,11 +131,11 @@ func (p *Population) Regenerate(scores FitnessValues, prm Optimization.AssemblyO
 
 		// choose a member
 
-		mem1 := p.Pick(nil)
+		mem1 := p.Pick(scores, nil)
 
 		recomP, _ := prm.GetFloat("recom_p")
 		if r < recomP {
-			mem2 := p.Pick(mem1)
+			mem2 := p.Pick(scores, mem1)
 			mem1 = p.Recombine(mem1, mem2, prm, cnstr)
 		} else {
 			mem1 = p.Mutate(mem1, prm, cnstr)
@@ -148,7 +149,7 @@ func (p *Population) Regenerate(scores FitnessValues, prm Optimization.AssemblyO
 	return &ret
 }
 
-func (p *Population) Pick(m PointSet1D) PointSet1D {
+func (p *Population) Pick(fit FitnessValues, m PointSet1D) PointSet1D {
 	var picked PointSet1D
 
 	for {
@@ -156,9 +157,16 @@ func (p *Population) Pick(m PointSet1D) PointSet1D {
 			break
 		}
 
-		i := rand.Intn(len(p.Members))
+		for {
+			i := rand.Intn(len(p.Members))
 
-		picked = p.Members[i]
+			picked = p.Members[i]
+
+			if p.FitnessTest(fit.Fit[i], fit.Fit) {
+				break
+			}
+
+		}
 	}
 
 	return picked
@@ -193,6 +201,10 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 
 	last := 0
 	for i := 0; i < len(m); i++ {
+		if m[i] < 0 || m[i] >= p.Len {
+			return false
+		}
+
 		d := dist(last, m[i])
 
 		if d < cnstr.MinLen || d > cnstr.MaxLen {
@@ -220,7 +232,34 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 }
 
 func (p *Population) Recombine(m1, m2 PointSet1D, prm Optimization.AssemblyOptimizerParameters, cnstr Constraints) PointSet1D {
-	mem := make(PointSet1D, 0, len(m1))
+	// we will keep retrying until it works (or we give up, which we may)
+	var mem PointSet1D
+
+	for {
+		l := len(m1)
+
+		if len(m2) > l {
+			l = len(m2)
+		}
+
+		mem = make(PointSet1D, 0, l)
+
+		for i := 0; i < l; i++ {
+			if rand.Intn(100) > 49 {
+				if i < len(m1) {
+					mem = append(mem, m1[i])
+				}
+			} else {
+				if i < len(m2) {
+					mem = append(mem, m2[i])
+				}
+			}
+		}
+
+		if valid(mem, p.Problem, cnstr) {
+			break
+		}
+	}
 
 	// sort the member
 	sort.Ints(mem)
@@ -277,11 +316,27 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 }
 
 func (p *Population) addMutation(mem PointSet1D, prm Optimization.AssemblyOptimizerParameters, cnstr Constraints) PointSet1D {
-	// choose a spot
+	for {
+		m := mem.Dup()
+		// choose a spot
+
+		l := rand.Intn(p.Problem.Len)
+
+		// append to m
+
+		m = append(m, l)
+
+		// check if it's OK
+
+		if valid(m, p.Problem, cnstr) {
+			mem = m
+			break
+		}
+
+	}
 
 	// sort the member
 	sort.Ints(mem)
-
 	return mem
 }
 
@@ -311,15 +366,58 @@ func (pop *Population) delMutation(mem PointSet1D, prm Optimization.AssemblyOpti
 	}
 }
 
-func (p *Population) movMutation(mem PointSet1D, prm Optimization.AssemblyOptimizerParameters, cnstr Constraints) PointSet1D {
+func (pop *Population) movMutation(mem PointSet1D, prm Optimization.AssemblyOptimizerParameters, cnstr Constraints) PointSet1D {
 	for {
+		m := mem.Dup()
+
 		// choose a position
+		p := rand.Intn(len(m))
 
-		p := rand.Intn(len(mem))
+		// move it
 
-		p = p
+		stepSize, _ := prm.GetInt("STEPSIZE")
+		s := rand.Intn(stepSize*2 + 1)
+		s -= stepSize
+		m[p] += s
 
+		if valid(m, pop.Problem, cnstr) {
+			mem = m
+			break
+		}
 	}
+
+	// sort the member
+
+	sort.Ints(mem)
+	return mem
+}
+
+func scale(f int, fs []int) float64 {
+	max := fs[0]
+	min := fs[0]
+
+	for _, v := range fs {
+		if v < min {
+			min = v
+		}
+		if v > max {
+			max = v
+		}
+	}
+
+	return float64(f-min) / float64(max-min)
+}
+
+func scaledFitnessTest(f int, fs []int) bool {
+	s := scale(f, fs)
+
+	r := rand.Float64()
+
+	if r > s {
+		return true
+	}
+
+	return false
 }
 
 func NewPop(problem AssemblyProblem, constraints Constraints, parameters Optimization.AssemblyOptimizerParameters) *Population {
@@ -330,7 +428,7 @@ func NewPop(problem AssemblyProblem, constraints Constraints, parameters Optimiz
 		members = append(members, NewMember(problem, constraints, parameters))
 	}
 
-	p := Population{Members: members, Problem: problem}
+	p := Population{Members: members, Problem: problem, FitnessTest: scaledFitnessTest}
 
 	return &p
 }

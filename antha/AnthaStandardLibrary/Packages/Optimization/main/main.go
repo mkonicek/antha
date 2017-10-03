@@ -19,11 +19,11 @@ func DefaultParameters() Optimization.AssemblyOptimizerParameters {
 		prm["step_size"] = 3
 		prm["pop_size"] = 100
 	*/
-	prm.Set("max_iterations", 100)
-	prm.Set("recom_p", 0.25)
-	prm.Set("mut_p", 0.25)
-	prm.Set("step_size", 3)
-	prm.Set("pop_size", 100)
+	prm.Set("max_iterations", 200)
+	prm.Set("recom_p", 0.5)
+	prm.Set("mut_p", 0.5)
+	prm.Set("step_size", 1)
+	prm.Set("pop_size", 250)
 
 	return prm
 }
@@ -151,14 +151,13 @@ func OptimizeAssembly(problem AssemblyProblem, constraints Constraints, paramete
 		pop = pop.Regenerate(scores, parameters, constraints)
 		scores = pop.Assess()
 
-		fmt.Println("NEW SCORES", scores)
-
 		if scores.BestScore < bestScore {
 			bestScore = scores.BestScore
 			bestMember = scores.BestMember.Dup()
 		}
 	}
 
+	fmt.Println("PROB: ", problem)
 	fmt.Println("BEST: ", bestScore)
 	fmt.Println("MEM : ", bestMember)
 }
@@ -201,10 +200,9 @@ func (p *Population) Regenerate(scores FitnessValues, prm Optimization.AssemblyO
 		}
 
 		newMembers = append(newMembers, mem1)
-		fmt.Println("NOW WE ARE ", len(newMembers))
 	}
 
-	ret := Population{Members: newMembers}
+	ret := Population{Members: newMembers, Problem: p.Problem, FitnessTest: p.FitnessTest}
 
 	return &ret
 }
@@ -212,7 +210,7 @@ func (p *Population) Regenerate(scores FitnessValues, prm Optimization.AssemblyO
 func (p *Population) Pick(fit FitnessValues, m PointSet1D) PointSet1D {
 	var picked PointSet1D
 
-	for {
+	for tries := 0; tries < len(fit.Fit); tries++ {
 		if picked != nil && !reflect.DeepEqual(picked, m) {
 			break
 		}
@@ -239,7 +237,7 @@ func (pop *Population) Assess() FitnessValues {
 	bestAt := -1
 
 	for i := 0; i < len(pop.Members); i++ {
-		fit[i] = Cost(pop.Members[i], pop.Problem.Mutations)
+		fit[i] = Cost(pop.Members[i], pop.Problem)
 
 		if bestAt == -1 || best > fit[i] {
 			best = fit[i]
@@ -262,14 +260,12 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 	last := 0
 	for i := 0; i < len(m); i++ {
 		if m[i] < 0 || m[i] >= p.Len {
-			//		fmt.Println("FAIL 1: ", m[i])
 			return false
 		}
 
 		d := dist(last, m[i])
 
 		if d < cnstr.MinLen || d > cnstr.MaxLen {
-			//			fmt.Println("FAIL 2: ", cnstr.MinLen, " </= ", d, " </= ", cnstr.MaxLen)
 			return false
 		}
 
@@ -278,7 +274,6 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 		dTM := p.Mutations.MinDistTo(m[i])
 
 		if dTM < cnstr.MinDistToMut {
-			//			fmt.Println("FAIL 3: ", dTM, " >= ", cnstr.MinDistToMut)
 			return false
 		}
 
@@ -288,7 +283,6 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 	d := dist(m[len(m)-1], p.Len)
 
 	if d < cnstr.MinLen || d > cnstr.MaxLen {
-		//		fmt.Println("FAIL 4: ", cnstr.MinLen, " </= ", d, " </= ", cnstr.MaxLen)
 		return false
 	}
 
@@ -347,7 +341,6 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 				// can't add more
 				continue
 			}
-			fmt.Println("ADD")
 			ret := p.addMutation(mem, prm, cnstr)
 			if ret != nil {
 				mem = ret
@@ -359,7 +352,6 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 				// can't delete
 				continue
 			}
-			fmt.Println("DEL")
 			ret := p.delMutation(mem, prm, cnstr)
 
 			if ret != nil {
@@ -372,7 +364,6 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 				// can't move
 				continue
 			}
-			fmt.Println("MOV")
 			ret := p.movMutation(mem, prm, cnstr)
 			if ret != nil {
 				stop = true
@@ -389,9 +380,6 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 }
 
 func (p *Population) addMutation(mem PointSet1D, prm Optimization.AssemblyOptimizerParameters, cnstr Constraints) PointSet1D {
-	fmt.Println("ARE WE OK? ", valid(mem, p.Problem, cnstr))
-	fmt.Println(mem)
-
 	for {
 		m := mem.Dup()
 		// choose a spot
@@ -404,6 +392,7 @@ func (p *Population) addMutation(mem PointSet1D, prm Optimization.AssemblyOptimi
 
 		// check if it's OK
 
+		sort.Ints(m)
 		if valid(m, p.Problem, cnstr) {
 			mem = m
 			break
@@ -411,7 +400,6 @@ func (p *Population) addMutation(mem PointSet1D, prm Optimization.AssemblyOptimi
 	}
 
 	// sort the member
-	sort.Ints(mem)
 	return mem
 }
 
@@ -437,7 +425,9 @@ func (pop *Population) delMutation(mem PointSet1D, prm Optimization.AssemblyOpti
 		if (prev - next + 1) < cnstr.MaxLen {
 			// must already be > minlen
 
-			ret := append(mem[:p], mem[p+1:]...)
+			ret := make(PointSet1D, len(mem)-1)
+			ret = append(ret, mem[:p]...)
+			ret = append(ret, mem[p+1:]...)
 
 			if valid(ret, pop.Problem, cnstr) {
 				return ret
@@ -495,12 +485,12 @@ func scale(f int, fs []int) float64 {
 	return float64(f-min) / float64(max-min)
 }
 
-func scaledFitnessTest(f int, fs []int) bool {
+func ScaledFitnessTest(f int, fs []int) bool {
 	s := scale(f, fs)
 
 	r := rand.Float64()
 
-	if r > s {
+	if r > s || s >= 1.0 {
 		return true
 	}
 
@@ -508,6 +498,18 @@ func scaledFitnessTest(f int, fs []int) bool {
 }
 
 func NewPop(problem AssemblyProblem, constraints Constraints, parameters Optimization.AssemblyOptimizerParameters) *Population {
+	sft := func(f int, fs []int) bool {
+		s := scale(f, fs)
+
+		r := rand.Float64()
+
+		if r > s {
+			return true
+		}
+
+		return false
+	}
+	sft = sft
 	popSize, _ := parameters.GetInt("pop_size")
 	members := make([]PointSet1D, 0, popSize)
 
@@ -515,7 +517,7 @@ func NewPop(problem AssemblyProblem, constraints Constraints, parameters Optimiz
 		members = append(members, NewMember(problem, constraints, parameters))
 	}
 
-	p := Population{Members: members, Problem: problem, FitnessTest: scaledFitnessTest}
+	p := Population{Members: members, Problem: problem, FitnessTest: ScaledFitnessTest}
 
 	return &p
 }
@@ -572,14 +574,18 @@ func makeMember(problem AssemblyProblem, constraints Constraints) PointSet1D {
 	return ret
 }
 
-func Cost(k PointSet1D, x PointSet2D) int {
+func Cost(k PointSet1D, problem AssemblyProblem) int {
+	x := problem.Mutations
 	last := 0
 
 	sort.Sort(x)
 	sort.Ints(k)
 
+	kk := k.Dup()
+	kk = append(kk, problem.Len)
+
 	tot := 0
-	for _, p := range k {
+	for _, p := range kk {
 		s := p - last + 1 // score for a segment
 		m := 1            // mutation multiplier
 		for _, p2 := range x {

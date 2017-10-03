@@ -47,7 +47,6 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 }
 
 //
-//
 //	at this point (i.e. in a TransferBlock) the instructions have potentially been grouped into sets
 //	with simultaneously servicable destinations - row or column-wise depending on the head
 //	orientation chosen

@@ -62,14 +62,23 @@ func (gmp genericMapParameters) GetBool(s string) (bool, bool) {
 	return b, true
 }
 
+func (gmp genericMapParameters) Set(s string, v interface{}) {
+	gmp[s] = v
+}
+
 type GAParameters struct {
 	genericMapParameters
+}
+
+func NewGAParameters() GAParameters {
+	m := make(map[string]interface{})
+	return GAParameters{genericMapParameters: m}
 }
 
 func (gap GAParameters) MethodName() string {
 	return "GA"
 }
 func (gap GAParameters) MaxIterations() int {
-	it, _ := gap.GetInt("MaxIterations")
+	it, _ := gap.GetInt("max_iterations")
 	return it
 }

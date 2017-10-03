@@ -18,7 +18,7 @@ type SequenceProvider interface {
 type AssemblyOptimizerParameters interface {
 	MethodName() string
 	MaxIterations() int
-	// other stuff here
+	Set(string, interface{})
 	GetInt(string) (int, bool)
 	GetFloat(string) (float64, bool)
 	GetString(string) (string, bool)

@@ -7,13 +7,61 @@ import (
 	"math/rand"
 	"reflect"
 	"sort"
+	"time"
 )
 
-func main() {
-	// read in sequence file
+func DefaultParameters() Optimization.AssemblyOptimizerParameters {
+	prm := NewGAParameters()
+	/*
+		prm["max_iterations"] = 100
+		prm["recom_p"] = 0.25
+		prm["mut_p"] = 0.25
+		prm["step_size"] = 3
+		prm["pop_size"] = 100
+	*/
+	prm.Set("max_iterations", 100)
+	prm.Set("recom_p", 0.25)
+	prm.Set("mut_p", 0.25)
+	prm.Set("step_size", 3)
+	prm.Set("pop_size", 100)
 
-	// get any parameters
-	// whatever
+	return prm
+}
+
+func DefaultConstraints() Constraints {
+	return Constraints{
+		MaxLen:       500,
+		MinLen:       10,
+		MaxSplits:    4,
+		MinDistToMut: 2,
+	}
+}
+
+func BasicProblem() AssemblyProblem {
+	length := 1000
+	mut := make(PointSet2D, 0, 3)
+
+	mut = append(mut, Point2D{X: 100, Y: 4})
+	mut = append(mut, Point2D{X: 200, Y: 3})
+	mut = append(mut, Point2D{X: 600, Y: 8})
+
+	return AssemblyProblem{Len: length, Mutations: mut}
+}
+
+// TODO --> end constraints for assembly
+// 	    costs for ends ?
+
+func main() {
+
+	rand.Seed(time.Now().UnixNano())
+	//func OptimizeAssembly(problem AssemblyProblem, constraints Constraints, parameters Optimization.AssemblyOptimizerParameters) {
+
+	prm := DefaultParameters()
+	cnstr := DefaultConstraints()
+	problem := BasicProblem()
+
+	OptimizeAssembly(problem, cnstr, prm)
+
 }
 
 type PointSet1D []int
@@ -93,13 +141,17 @@ func OptimizeAssembly(problem AssemblyProblem, constraints Constraints, paramete
 	//    pairs of k_js
 
 	pop := NewPop(problem, constraints, parameters)
+
 	scores := pop.Assess()
+
 	bestScore := scores.BestScore
 	bestMember := scores.BestMember.Dup()
 
 	for time := 1; time <= parameters.MaxIterations(); time++ {
 		pop = pop.Regenerate(scores, parameters, constraints)
 		scores = pop.Assess()
+
+		fmt.Println("NEW SCORES", scores)
 
 		if scores.BestScore < bestScore {
 			bestScore = scores.BestScore
@@ -127,21 +179,29 @@ func (p *Population) Regenerate(scores FitnessValues, prm Optimization.AssemblyO
 	newMembers := make([]PointSet1D, 0, len(p.Members))
 
 	for i := 0; i < len(p.Members); i++ {
-		r := rand.Float64()
-
 		// choose a member
 
 		mem1 := p.Pick(scores, nil)
 
+		// decide what to do
+		r := rand.Float64()
 		recomP, _ := prm.GetFloat("recom_p")
 		if r < recomP {
 			mem2 := p.Pick(scores, mem1)
 			mem1 = p.Recombine(mem1, mem2, prm, cnstr)
 		} else {
-			mem1 = p.Mutate(mem1, prm, cnstr)
+			for {
+				mem1 = p.Mutate(mem1, prm, cnstr)
+				mp, _ := prm.GetFloat("mut_p")
+				f := rand.Float64()
+				if f > mp {
+					break
+				}
+			}
 		}
 
 		newMembers = append(newMembers, mem1)
+		fmt.Println("NOW WE ARE ", len(newMembers))
 	}
 
 	ret := Population{Members: newMembers}
@@ -202,12 +262,14 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 	last := 0
 	for i := 0; i < len(m); i++ {
 		if m[i] < 0 || m[i] >= p.Len {
+			//		fmt.Println("FAIL 1: ", m[i])
 			return false
 		}
 
 		d := dist(last, m[i])
 
 		if d < cnstr.MinLen || d > cnstr.MaxLen {
+			//			fmt.Println("FAIL 2: ", cnstr.MinLen, " </= ", d, " </= ", cnstr.MaxLen)
 			return false
 		}
 
@@ -216,6 +278,7 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 		dTM := p.Mutations.MinDistTo(m[i])
 
 		if dTM < cnstr.MinDistToMut {
+			//			fmt.Println("FAIL 3: ", dTM, " >= ", cnstr.MinDistToMut)
 			return false
 		}
 
@@ -225,6 +288,7 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 	d := dist(m[len(m)-1], p.Len)
 
 	if d < cnstr.MinLen || d > cnstr.MaxLen {
+		//		fmt.Println("FAIL 4: ", cnstr.MinLen, " </= ", d, " </= ", cnstr.MaxLen)
 		return false
 	}
 
@@ -274,6 +338,7 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 	)
 
 	for {
+		stop := false
 		// we might add, delete or move
 		move := rand.Intn(3)
 		switch move {
@@ -282,9 +347,11 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 				// can't add more
 				continue
 			}
+			fmt.Println("ADD")
 			ret := p.addMutation(mem, prm, cnstr)
 			if ret != nil {
 				mem = ret
+				stop = true
 				break
 			}
 		case DELETE:
@@ -292,11 +359,12 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 				// can't delete
 				continue
 			}
-
+			fmt.Println("DEL")
 			ret := p.delMutation(mem, prm, cnstr)
 
 			if ret != nil {
 				mem = ret
+				stop = true
 				break
 			}
 		default: // i.e. MOVE
@@ -304,11 +372,16 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 				// can't move
 				continue
 			}
+			fmt.Println("MOV")
 			ret := p.movMutation(mem, prm, cnstr)
 			if ret != nil {
+				stop = true
 				mem = ret
 				break
 			}
+		}
+		if stop {
+			break
 		}
 	}
 
@@ -316,6 +389,9 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 }
 
 func (p *Population) addMutation(mem PointSet1D, prm Optimization.AssemblyOptimizerParameters, cnstr Constraints) PointSet1D {
+	fmt.Println("ARE WE OK? ", valid(mem, p.Problem, cnstr))
+	fmt.Println(mem)
+
 	for {
 		m := mem.Dup()
 		// choose a spot
@@ -332,7 +408,6 @@ func (p *Population) addMutation(mem PointSet1D, prm Optimization.AssemblyOptimi
 			mem = m
 			break
 		}
-
 	}
 
 	// sort the member
@@ -341,7 +416,8 @@ func (p *Population) addMutation(mem PointSet1D, prm Optimization.AssemblyOptimi
 }
 
 func (pop *Population) delMutation(mem PointSet1D, prm Optimization.AssemblyOptimizerParameters, cnstr Constraints) PointSet1D {
-	for {
+	// should be pretty sure we've tried everything
+	for tries := 0; tries < len(mem)*2; tries++ {
 		p := rand.Intn(len(mem))
 
 		prev := 0
@@ -361,13 +437,19 @@ func (pop *Population) delMutation(mem PointSet1D, prm Optimization.AssemblyOpti
 		if (prev - next + 1) < cnstr.MaxLen {
 			// must already be > minlen
 
-			return append(mem[:p], mem[p+1:]...)
+			ret := append(mem[:p], mem[p+1:]...)
+
+			if valid(ret, pop.Problem, cnstr) {
+				return ret
+			}
 		}
 	}
+	return nil
 }
 
 func (pop *Population) movMutation(mem PointSet1D, prm Optimization.AssemblyOptimizerParameters, cnstr Constraints) PointSet1D {
-	for {
+	moved := false
+	for tries := 0; tries < len(mem)*2; tries++ {
 		m := mem.Dup()
 
 		// choose a position
@@ -375,15 +457,20 @@ func (pop *Population) movMutation(mem PointSet1D, prm Optimization.AssemblyOpti
 
 		// move it
 
-		stepSize, _ := prm.GetInt("STEPSIZE")
+		stepSize, _ := prm.GetInt("step_size")
 		s := rand.Intn(stepSize*2 + 1)
 		s -= stepSize
 		m[p] += s
 
 		if valid(m, pop.Problem, cnstr) {
+			moved = true
 			mem = m
 			break
 		}
+	}
+
+	if !moved {
+		return nil
 	}
 
 	// sort the member
@@ -421,7 +508,7 @@ func scaledFitnessTest(f int, fs []int) bool {
 }
 
 func NewPop(problem AssemblyProblem, constraints Constraints, parameters Optimization.AssemblyOptimizerParameters) *Population {
-	popSize, _ := parameters.GetInt("POPSIZE")
+	popSize, _ := parameters.GetInt("pop_size")
 	members := make([]PointSet1D, 0, popSize)
 
 	for i := 0; i < popSize; i++ {
@@ -453,15 +540,13 @@ func makeMember(problem AssemblyProblem, constraints Constraints) PointSet1D {
 
 	minSplit := problem.Len / constraints.MaxLen
 
-	if constraints.MaxSplits > minSplit {
+	if constraints.MaxSplits < minSplit {
 		panic("too long for this number of splits")
 	}
 
-	nSplit := rand.Intn(constraints.MaxSplits-minSplit) + minSplit
-
-	// now place the n split points
-
 	for {
+		nSplit := rand.Intn(constraints.MaxSplits-minSplit) + minSplit
+		// now place the n split points
 		last := 0
 		for i := 0; i < nSplit; i++ {
 			p := rand.Intn(constraints.MaxLen-constraints.MinLen) + constraints.MinLen + last
@@ -479,6 +564,8 @@ func makeMember(problem AssemblyProblem, constraints Constraints) PointSet1D {
 			// start again!
 			ret = make(PointSet1D, 0, constraints.MaxSplits)
 			continue
+		} else {
+			break
 		}
 	}
 

@@ -27,7 +27,7 @@ import (
 )
 
 type Absorbance struct {
-	WellLocation	string
+	WellLocation	WellCoords
 	Reading    	float64
 	Wavelength 	float64
 	Pathlength 	wunit.Length

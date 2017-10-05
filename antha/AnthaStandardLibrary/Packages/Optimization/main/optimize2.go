@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Synthace/go-glpk/glpk"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Optimization"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func OptimizeAssembly2(problem AssemblyProblem, constraints Constraints, parameters Optimization.AssemblyOptimizerParameters) {
@@ -63,29 +64,44 @@ func SolveSplit(split PointSet3D, problem AssemblyProblem, constraints Constrain
 		lp.SetColName(cur, fmt.Sprintf("split-%d", cur))
 		lp.SetColKind(cur, glpk.IV)
 		lp.SetColBnds(cur, glpk.DB, float64(pt.X), float64(pt.Y))
+		fmt.Println("COEF: ", pt.Z, " LO: ", pt.X, " HI: ", pt.Y)
 		cur += 1
 	}
 
 	// add row bounds etc
 
-	cur = 1
 	lp.AddRows(len(split) + 1)
-
+	cur = 1
 	for i := 0; i < len(split)+1; i++ {
+		row := make([]float64, len(split))
+		for j := 0; j < len(split); j++ {
+			if j == i-1 && j != len(split)-1 {
+				row[j] = -1.0
+			} else if j == i || (j == i-1 && j == len(split)-1) {
+				row[j] = 1.0
+			}
+		}
+		if i < len(split) {
+			fmt.Println("ROW: ", row, " ", constraints.MinLen, " ", constraints.MaxLen)
+			lp.SetRowBnds(cur, glpk.DB, float64(constraints.MinLen), float64(constraints.MaxLen))
+		} else {
+			fmt.Println("ROW: ", row, " ", problem.Len-constraints.MaxLen, " ", problem.Len-constraints.MinLen)
+			lp.SetRowBnds(cur, glpk.DB, float64(problem.Len-constraints.MaxLen), float64(problem.Len-constraints.MinLen))
+		}
+		ind := wutil.Series(0, len(split)-1)
+		lp.SetMatRow(cur, ind, row)
 		cur += 1
-		lp.SetRowBnds(cur, glpk.DB, float64(constraints.MinLen), float64(constraints.MaxLen))
 	}
-
-	panic("SET MAT ROWS")
 
 	iocp := glpk.NewIocp()
 	iocp.SetPresolve(true)
 	//debug
-	iocp.SetMsgLev(0)
+	iocp.SetMsgLev(3)
+
 	lp.Intopt(iocp)
 
 	solution = make(PointSet1D, len(problem.Mutations))
-	for i := 0; i < len(problem.Mutations); i++ {
+	for i := 0; i < len(split); i++ {
 		solution[i] = int(lp.MipColVal(i + 1))
 	}
 

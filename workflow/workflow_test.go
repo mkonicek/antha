@@ -48,11 +48,11 @@ func createContext() (context.Context, error) {
 	}
 	if err := inject.Add(ctx, inject.Name{Repo: "Copy"}, &inject.FuncRunner{
 		RunFunc: func(_ context.Context, value inject.Value) (inject.Value, error) {
-			if a, ok := value["In"].(string); !ok {
+			a, ok := value["In"].(string)
+			if !ok {
 				return nil, fmt.Errorf("cannot read parameter In")
-			} else {
-				return map[string]interface{}{"Out": a}, nil
 			}
+			return map[string]interface{}{"Out": a}, nil
 		},
 	}); err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func createContext() (context.Context, error) {
 
 func TestRunFromFile(t *testing.T) {
 	var desc *Desc
-	if err := json.Unmarshal([]byte(condCopyEqualsJson), &desc); err != nil {
+	if err := json.Unmarshal([]byte(condCopyEqualsJSON), &desc); err != nil {
 		t.Fatal(err)
 	}
 

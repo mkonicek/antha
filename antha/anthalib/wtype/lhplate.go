@@ -803,16 +803,26 @@ func (p *LHPlate) SetConstrained(platform string, positions []string) {
 }
 
 func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
-	var pos []string
-
 	par, ok := p.Welltype.Extra[platform]
-
-	if ok {
-		pos = par.([]string)
-		return pos, true
+	if !ok {
+		return nil, false
 	}
 
-	return pos, false
+	switch par := par.(type) {
+
+	case []string:
+		return par, true
+
+	case []interface{}:
+		var pos []string
+		for _, v := range par {
+			pos = append(pos, v.(string))
+		}
+		return pos, true
+
+	default:
+		panic(fmt.Sprintf("unknown type %T", par))
+	}
 
 }
 

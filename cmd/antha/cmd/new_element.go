@@ -81,24 +81,24 @@ import (
 )
 
 // Parameters to this protocol
-Parameters (
+Parameters {
 {{range .Parameters}}	{{.Name}} {{.Type}}
-{{end}})
+{{end}}}
 
 // Output data of this protocol
-Data (
+Data {
 {{range .Data}}	{{.Name}} {{.Type}}
-{{end}})
+{{end}}}
 
 // Physical inputs to this protocol
-Inputs (
+Inputs {
 {{range .Inputs}}	{{.Name}} {{.Type}}
-{{end}})
+{{end}}}
 
 // Physical outputs to this protocol
-Outputs (
+Outputs {
 {{range .Outputs}}	{{.Name}} {{.Type}}
-{{end}})
+{{end}}}
 
 // Conditions to run on startup
 Setup {

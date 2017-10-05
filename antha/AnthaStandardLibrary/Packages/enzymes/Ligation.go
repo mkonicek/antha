@@ -460,7 +460,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	s = "hmmm I'm confused, this doesn't seem to make any sense"
 
 	if len(plasmidProducts) == 0 && len(failedAssemblies) == 0 {
-		err = fmt.Errorf("Nope! construct design %s won't work: %s", assemblyparameters.Constructname, err.Error())
+		err = fmt.Errorf("Nope! construct design %s not predicted to form any ligated parts", assemblyparameters.ToString())
 		s = err.Error()
 	}
 

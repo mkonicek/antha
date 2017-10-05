@@ -299,7 +299,7 @@ func RemoveDuplicatesKeysFromMap(elements map[string]color.Color) map[string]col
 // RemoveDuplicatesValuesFromMap will loop over a map of colors to find and
 // delete duplicates. Entries with duplicate values are deleted.
 func RemoveDuplicatesValuesFromMap(elements map[string]color.Color) map[string]color.Color {
-	var encountered map[color.Color]bool
+	encountered := make(map[color.Color]bool)
 	result := make(map[string]color.Color)
 
 	for key, v := range elements {

@@ -30,6 +30,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -58,8 +59,8 @@ var (
 )
 
 var compileCmd = &cobra.Command{
-	Use:   "compile",
-	Short: "Compile an antha element",
+	Use:   "compile <files or directories>",
+	Short: "Compile antha elements",
 	RunE:  runCompile,
 }
 
@@ -67,38 +68,60 @@ func runCompile(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 
 	outdir := viper.GetString("outdir")
+	outPackage := viper.GetString("outputPackage")
+
+	if len(outdir) == 0 {
+		return fmt.Errorf("missing outdir")
+	}
 
 	// parse every filename or directory passed in as input
-	var lastErr error
+	root := compile.NewAnthaRoot(outPackage)
+
+	var errs []error
+
 	for _, path := range args {
-		err := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-			// Ignore previous errors
-			if f == nil {
+		if err := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+			if err != nil {
 				return err
 			}
 
 			if f.IsDir() {
-				return err
+				return nil
 			}
 
 			if !isAnthaFile(f.Name()) {
-				return err
+				return nil
 			}
 
-			dir := outdir
-			if len(dir) == 0 {
-				dir = filepath.Dir(path)
+			// Collect errors processing errors
+			if err := processFile(root, path, outdir); err != nil {
+				errs = append(errs, err)
 			}
 
-			return processFile(path, dir)
-		})
-
-		if lastErr == nil && err != nil {
-			lastErr = err
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
 
-	return lastErr
+	for _, err := range errs {
+		fmt.Println(err)
+	}
+
+	if len(errs) != 0 {
+		return fmt.Errorf("some files did not compile")
+	}
+
+	files, err := root.Generate()
+	if err != nil {
+		return err
+	}
+
+	if err := writeAnthaFiles(files, outdir); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // isAnthaFile returns if file matches antha file naming convention
@@ -106,8 +129,37 @@ func isAnthaFile(name string) bool {
 	return strings.HasSuffix(name, ".an")
 }
 
+func writeAnthaFile(outFile string, file *compile.AnthaFile) error {
+	dst, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	src := file.NewReader()
+	defer src.Close()
+
+	_, err = io.Copy(dst, src)
+	return err
+}
+
+func writeAnthaFiles(files *compile.AnthaFiles, outDir string) error {
+	for _, file := range files.Files() {
+		outFile := filepath.Join(outDir, filepath.FromSlash(file.Name))
+		if err := os.MkdirAll(filepath.Dir(outFile), 0777); err != nil {
+			return err
+		}
+
+		if err := writeAnthaFile(outFile, file); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // processFile generates the corresponding go code for an antha file.
-func processFile(filename, outdir string) error {
+func processFile(root *compile.AnthaRoot, filename, outdir string) error {
 	src, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
@@ -123,7 +175,7 @@ func processFile(filename, outdir string) error {
 	h := sha256.New()
 	io.Copy(h, bytes.NewReader(src))
 
-	antha := compile.NewAntha()
+	antha := compile.NewAntha(root)
 	antha.SourceSHA256 = h.Sum(nil)
 
 	if err := antha.Transform(fileSet, file); err != nil {
@@ -135,17 +187,7 @@ func processFile(filename, outdir string) error {
 		return err
 	}
 
-	for name, bs := range files {
-		outFile := filepath.Join(outdir, filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(outFile), 0777); err != nil {
-			return err
-		}
-		if err := ioutil.WriteFile(outFile, bs, 0666); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return writeAnthaFiles(files, outdir)
 }
 
 // parse parses src, which was read from filename,
@@ -262,5 +304,6 @@ func init() {
 	flags := c.Flags()
 	RootCmd.AddCommand(c)
 
-	flags.String("outdir", "", "output directory for generated files; if empty use directory of source file")
+	flags.String("outdir", "", "output directory for generated files")
+	flags.String("outputPackage", "", "base package name for generated files")
 }

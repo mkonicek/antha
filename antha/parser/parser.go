@@ -1182,6 +1182,11 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		}
 		return x
 
+	case token.PARAMETERS, token.INPUTS:
+		x := &ast.Ident{NamePos: p.pos, Name: p.tok.String()}
+		p.next()
+		return x
+
 	case token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING:
 		x := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
 		p.next()
@@ -2338,6 +2343,8 @@ func (p *parser) parseNamedAnthaSpec(doc *ast.CommentGroup, keyword token.Token,
 	return p.parseAnthaSpec(doc, keyword, iota, true)
 }
 
+// parseAnthaSpec is a specialization of parseTypeSpec that handles the
+// implicit `type` token that is omitted for Antha message types.
 func (p *parser) parseAnthaSpec(doc *ast.CommentGroup, keyword token.Token, _ int, named bool) ast.Spec {
 	if p.trace {
 		defer un(trace(p, keyword.String()+"Spec"))

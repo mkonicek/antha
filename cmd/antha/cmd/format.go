@@ -24,6 +24,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -49,6 +50,13 @@ type walker struct {
 const chmodSupported = runtime.GOOS != "windows"
 
 func (w *walker) Walk(path string, fi os.FileInfo, err error) error {
+	if err := w.walk(path, fi, err); err != nil {
+		return fmt.Errorf("%s: %s", path, err)
+	}
+	return nil
+}
+
+func (w *walker) walk(path string, fi os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}

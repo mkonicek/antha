@@ -25,6 +25,7 @@ package compile
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -40,7 +41,6 @@ import (
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/parser"
 	"github.com/antha-lang/antha/antha/token"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -1302,7 +1302,7 @@ func identList(name string) []*ast.Ident {
 func mustParseExpr(x string) ast.Expr {
 	r, err := parser.ParseExpr(x)
 	if err != nil {
-		panic(errors.Wrap(err, x))
+		panic(fmt.Errorf("cannot parse %s: %s", x, err))
 	}
 	return r
 }

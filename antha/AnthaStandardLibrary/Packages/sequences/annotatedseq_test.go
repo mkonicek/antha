@@ -24,13 +24,7 @@
 package sequences
 
 import (
-	//"fmt"
-	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
-	//"strconv"
-	//"strings"
 	"testing"
-
-	//"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 type genbanktest struct {

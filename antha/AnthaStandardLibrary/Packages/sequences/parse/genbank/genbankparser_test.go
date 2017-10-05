@@ -1,6 +1,7 @@
 package genbank
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -365,21 +366,35 @@ func TestGenbanktoAnnotatedSeq(t *testing.T) {
 			)
 		}
 		for _, name := range sequence.FeatureNames() {
-			if sequence.FeatureStart(name) != test.featurePositionMap[name][0] {
-				t.Error(
-					"NumberERROREnd: For", test.testname, "\n",
-					"feature:", name, "\n",
-					"expected", test.featurePositionMap[name][0], "\n",
-					"got", sequence.FeatureStart(name), "\n IF 'expected 0' feature unspecified in featurePositionMap.",
-				)
+			features := sequence.GetFeatureByName(name)
+			if len(features) > 0 {
+				if len(features) > 1 {
+					fmt.Println(
+						"For", test.testname, "\n",
+						"feature:", name, "\n",
+						"expected positions:", test.featurePositionMap[name], "\n",
+						"got more positions: ", len(features), "\n",
+					)
+				}
+				for _, feature := range features {
+					if feature.Start() != test.featurePositionMap[name][0] {
+						t.Error(
+							"NumberERROREnd: For", test.testname, "\n",
+							"feature:", name, "\n",
+							"expected", test.featurePositionMap[name][0], "\n",
+							"got", feature.Start(), "\n IF 'expected 0' feature unspecified in featurePositionMap.",
+						)
+					}
+					if feature.End() != test.featurePositionMap[name][1] {
+						t.Error(
+							"NumberERRORStart: For", test.testname, "\n",
+							"feature:", name, "\n", "expected", test.featurePositionMap[name][1], "\n",
+							"got", feature.End(), "\n IF 'expected 0' feature unspecified in featurePositionMap.",
+						)
+					}
+				}
 			}
-			if sequence.FeatureEnd(name) != test.featurePositionMap[name][1] {
-				t.Error(
-					"NumberERRORStart: For", test.testname, "\n",
-					"feature:", name, "\n", "expected", test.featurePositionMap[name][1], "\n",
-					"got", sequence.FeatureStart(name), "\n IF 'expected 0' feature unspecified in featurePositionMap.",
-				)
-			}
+
 		}
 	}
 

@@ -267,12 +267,6 @@ func NewAntha(root *AnthaRoot) *Antha {
 		Path: "context",
 	})
 	p.addImportReq(&importReq{
-		Path: "fmt",
-	})
-	p.addImportReq(&importReq{
-		Path: "errors",
-	})
-	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
 		UseExpr: "wtype.FALSE",
 	})
@@ -1131,21 +1125,14 @@ func encodeByteArray(bs []byte) string {
 
 // printFunctions generates synthetic antha functions and data stuctures
 func (p *Antha) printFunctions(out io.Writer) error {
+	// TODO: put the recover handler here when we get to multi-address space
+	// execution. In single-address space, the caller assumes that execeptions
+	// will bubble up through Run.
 	var tmpl = `
 type Element struct {
 }
 
 func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
-	defer func() {
-		if res := recover(); res != nil {
-			e, ok := res.(error)
-			if ok {
-				err = e
-			} else {
-				err = errors.New(fmt.Sprint(res))
-			}
-		}
-	}()
 	response = &{{ .ModelPackage }}.Output{}
 	{{if .HasSetup}}_Setup(_ctx, request, response){{end}}
 	{{if .HasSteps}}_Steps(_ctx, request, response){{end}}

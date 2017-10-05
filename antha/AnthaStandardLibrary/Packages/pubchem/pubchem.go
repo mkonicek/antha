@@ -1,4 +1,4 @@
-// antha/AnthaStandardLibrary/Packages/Pubchem/Pubchem.go: Part of the Antha language
+// antha/AnthaStandardLibrary/Packages/pubchem/pubchem.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or

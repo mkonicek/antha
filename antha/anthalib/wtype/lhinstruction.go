@@ -73,6 +73,11 @@ func NewLHPromptInstruction() *LHInstruction {
 	return lhi
 }
 
+// GetID returns the ID of the instruction, useful for interfaces
+func (inst *LHInstruction) GetID() string {
+	return inst.ID
+}
+
 func (inst *LHInstruction) AddProduct(cmp *LHComponent) {
 	inst.Result = cmp
 	inst.ProductID = cmp.ID

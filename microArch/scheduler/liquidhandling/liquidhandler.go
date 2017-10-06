@@ -36,7 +36,6 @@ import (
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
-	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 // the liquid handler structure defines the interface to a particular liquid handling
@@ -595,16 +594,6 @@ func assembleLoc(ins *wtype.LHInstruction) string {
 // sort out inputs
 func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	instructions := (*request).LHInstructions
-
-	// ensure input plates is sorted out correctly
-
-	st := sampletracker.GetSampleTracker()
-
-	parr := st.GetInputPlates()
-
-	for _, p := range parr {
-		request.Input_plates[p.ID] = p
-	}
 
 	inputs := make(map[string][]*wtype.LHComponent, 3)
 	vmap := make(map[string]wunit.Volume)

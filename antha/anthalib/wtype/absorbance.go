@@ -27,11 +27,12 @@ import (
 )
 
 type Absorbance struct {
-	Reading    float64
-	Wavelength float64
-	Pathlength wunit.Length
-	Status     []string
-	Reader     string
+	WellLocation	WellCoords
+	Reading    	float64
+	Wavelength 	float64
+	Pathlength 	wunit.Length
+	Status     	[]string
+	Reader     	string
 }
 
 type Reading interface {

@@ -441,9 +441,12 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 		}
 	}
 
-	feature := seq.GetFeatureByName(targetfeaturename)
-	if feature == nil {
+	features := seq.GetFeatureByName(targetfeaturename)
+	if len(features) == 0 {
 		panicstatement := fmt.Sprintf("feature: %s not found amongst features: %+v", targetfeaturename, seq.Features)
+		panic(panicstatement)
+	} else if len(features) > 1 {
+		panicstatement := fmt.Sprintf("feature: %s found %d times amongst features: %+v", targetfeaturename, len(features), seq.Features)
 		panic(panicstatement)
 	}
 
@@ -456,7 +459,7 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 		}
 	*/
 
-	targetseq := feature.DNASeq
+	targetseq := features[0].DNASeq
 
 	seqsfound := sequences.FindSeqsinSeqs(seq.Sequence(), []string{targetseq})
 

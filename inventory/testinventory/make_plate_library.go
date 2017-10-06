@@ -158,7 +158,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
-	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 500, 10, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
+	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
 	plate = wtype.NewLHPlate("SRWFB96", "Unknown", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, 1.0)
 	plates = append(plates, plate)
 
@@ -692,7 +692,7 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 	zstart := 2.0      // offset of bottom of deck to bottom of well
 
 	rwshp := wtype.NewShape("cylinder", "mm", 6.2, 6.2, 10.0)
-	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 500, 1, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate := wtype.NewLHPlate("GreinerSWVBottom", "Greiner", 8, 12, 15, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
@@ -702,7 +702,7 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 func makeGreinerFlatBottomBlackPlate() *wtype.LHPlate {
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
-	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 500, 10, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
+	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
 	plate := wtype.NewLHPlate("greiner96Black", "greiner", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, 1.0)
 	return plate
 }

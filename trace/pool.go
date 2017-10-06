@@ -11,7 +11,8 @@ type poolKey int
 
 const thePoolKey poolKey = 0
 
-var poolDoneError error = errors.New("trace: done error") // Dummy error to signal sucessful execution
+// Dummy error to signal sucessful execution
+var errPoolDone error = errors.New("trace: done error")
 
 type poolCtx struct {
 	context.Context
@@ -35,7 +36,7 @@ func (a *poolCtx) Err() error {
 	if a.err == nil {
 		return a.Context.Err()
 	}
-	if a.err == poolDoneError {
+	if a.err == errPoolDone {
 		return nil
 	}
 	return a.err
@@ -124,7 +125,7 @@ func decrement(pctx *poolCtx, tr *trace, delta int, err error) {
 		cancel = err
 	}
 	if pctx.alive == 0 && cancel == nil {
-		cancel = poolDoneError
+		cancel = errPoolDone
 	}
 	if cancel != nil {
 		pctx.cancelWithLock(cancel)

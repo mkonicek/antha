@@ -63,7 +63,7 @@ func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput dataset.MarsData, 
 	}
 
 	if sheet > len(xlsx.Sheets)-1 {
-		err = fmt.Errorf("Sheet number %d specified does not exist in file, only found %d sheets. Note: Sheet number counting begins at 0", sheet, len(xlsx.Sheets))
+		err = fmt.Errorf("Sheet number %d specified does not exist in file, only found %d sheets. Remember that sheet position starts from 0 (i.e. the first sheet position is 0 not 1).", sheet, len(xlsx.Sheets))
 		return
 	}
 	sheet1 := xlsx.Sheets[sheet]

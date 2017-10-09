@@ -371,8 +371,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				continue
 			}
 
-			addr := v.Components[0].Loc
-
 			if v.Components[0].Loc == "" {
 				addr, ok := st.GetLocationOf(v.Components[0].ID)
 
@@ -384,7 +382,9 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				v.Components[0].Loc = addr
 			}
 
+			addr := v.Components[0].Loc
 			tx := strings.Split(addr, ":")
+
 			request.LHInstructions[k].Welladdress = tx[1]
 			request.LHInstructions[k].SetPlateID(tx[0])
 

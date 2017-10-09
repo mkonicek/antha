@@ -29,7 +29,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Pubchem"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pubchem"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"

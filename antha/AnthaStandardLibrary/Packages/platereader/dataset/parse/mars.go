@@ -62,6 +62,10 @@ func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput dataset.MarsData, 
 		return
 	}
 
+	if sheet > len(xlsx.Sheets)-1 {
+		err = fmt.Errorf("Sheet number %d specified does not exist in file, only found %d sheets. Remember that sheet position starts from 0 (i.e. the first sheet position is 0 not 1).", sheet, len(xlsx.Sheets))
+		return
+	}
 	sheet1 := xlsx.Sheets[sheet]
 
 	for i := 0; i < sheet1.MaxRow; i++ {
@@ -102,23 +106,23 @@ func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput dataset.MarsData, 
 			return dataoutput, headerrowcount, err
 		}
 
-		if cellstr[0:4] == "User" {
+	  if strings.HasPrefix(cellstr, "User") {
 			dataoutput.User = strings.Split(cellstr, ": ")[1]
 		}
-		if cellstr[0:4] == "Path" {
+		if strings.HasPrefix(cellstr, "Path") {
 			dataoutput.Path = strings.Split(cellstr, ": ")[1]
 		}
-		if cellstr[0:7] == "Test ID" {
+		if strings.HasPrefix(cellstr, "Test ID") {
 			id, err := strconv.Atoi(strings.Split(cellstr, ": ")[1])
 			if err != nil {
 				return dataoutput, headerrowcount, err
 			}
 			dataoutput.TestID = id
 		}
-		if cellstr[0:9] == "Test Name" {
+		if strings.HasPrefix(cellstr, "Test Name") {
 			dataoutput.Testname = strings.Split(cellstr, ": ")[1]
 		}
-		if cellstr[0:4] == "Date" {
+		if strings.HasPrefix(cellstr, "Date") {
 			date := strings.Split(cellstr, ": ")[1]
 			dateparts := strings.Split(date, `/`)
 			dateints := make([]int, 0)
@@ -139,7 +143,7 @@ func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput dataset.MarsData, 
 			dataoutput.Date = godate
 
 		}
-		if cellstr[0:4] == "Time" {
+		if strings.HasPrefix(cellstr, "Time") {
 			stringtime := strings.Split(cellstr, ": ")[1]
 			if strings.Contains(stringtime, " AM") {
 				stringtime = stringtime[0:strings.Index(stringtime, " AM")]
@@ -154,13 +158,13 @@ func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput dataset.MarsData, 
 			}
 			dataoutput.Time = gotime
 		}
-		if cellstr[0:3] == "ID1" {
+		if strings.HasPrefix(cellstr, "ID1") {
 			dataoutput.ID1 = strings.Split(cellstr, ": ")[1]
 		}
-		if cellstr[0:3] == "ID2" {
+		if strings.HasPrefix(cellstr, "ID2") {
 			dataoutput.ID2 = strings.Split(cellstr, ": ")[1]
 		}
-		if cellstr[0:3] == "ID3" {
+		if strings.HasPrefix(cellstr, "ID3")  {
 			dataoutput.ID3 = strings.Split(cellstr, ": ")[1]
 		}
 

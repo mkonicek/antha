@@ -1,6 +1,10 @@
 package wtype
 
-import "testing"
+import (
+	"encoding/json"
+	"reflect"
+	"testing"
+)
 
 func TestSampleBehaviour(t *testing.T) {
 	c := NewLHComponent()
@@ -46,5 +50,28 @@ func TestSampleBehaviour(t *testing.T) {
 
 	if c2.IsSample() {
 		t.Errorf("Duplicates must not remain linked")
+	}
+}
+
+func TestComponentSerialize(t *testing.T) {
+	c := NewLHComponent()
+	c.CName = "water"
+
+	b, err := json.Marshal(c)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	c2 := NewLHComponent()
+
+	err = json.Unmarshal(b, &c2)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if !reflect.DeepEqual(c, c2) {
+		t.Errorf("COMPONENTS NOT EQUAL AFTER MARSHAL/UNMARSHAL")
 	}
 }

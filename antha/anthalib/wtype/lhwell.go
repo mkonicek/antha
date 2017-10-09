@@ -722,7 +722,6 @@ func (w *LHWell) Contains(cmp *LHComponent) bool {
 		return false
 	}
 	// request for a specific component
-	fmt.Println("CONTAINS CALL CMP: ", cmp, " CNT KIND ", w.WContents.Kind(), " INS: ", cmp.IsInstance(), " SMP: ", cmp.IsSample(), " KND: ", cmp.IsSameKindAs(w.WContents), " ID: ", cmp.ID, " PID: ", cmp.ParentID, " WID: ", w.WContents.ID)
 	if cmp.IsInstance() {
 		if cmp.IsSample() {
 			//  look for the ID of its parent (we don't allow sampling from samples yet)

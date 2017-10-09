@@ -32,7 +32,6 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/plasmid"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -98,10 +97,7 @@ func jointwoparts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 		}
 	}
 	if len(assembledfragments) == 0 && len(plasmidproducts) == 0 {
-		errstr := fmt.Sprintln("fragments aren't compatible, check ends",
-			text.Print("upstream fragments:", upstreampart),
-			text.Print("downstream fragements:", downstreampart))
-
+		errstr := fmt.Sprintln("fragments aren't compatible, check ends.")
 		err = fmt.Errorf(errstr)
 	}
 	return assembledfragments, plasmidproducts, err

@@ -134,7 +134,7 @@ func readPartConcentrations(fileName string) (partNamesInOrder []string, concMap
 				errs = append(errs, fmt.Sprintf(`No column header found containing part "Concentration". Please add this. Found %v`, header))
 			}
 
-		} else if len(row) > 0 {
+		} else if !rowEmpty(row) {
 
 			var partName string
 			var partConc wunit.Concentration
@@ -145,18 +145,18 @@ func readPartConcentrations(fileName string) (partNamesInOrder []string, concMap
 
 			partNamesInOrder = append(partNamesInOrder, partName)
 
-			if partName == "" {
+			if strings.TrimSpace(partName) == "" {
 				break
 			}
 
-			if concColumn < len(row)-1 && concColumn >= 0 {
+			if concColumn < len(row) && concColumn >= 0 {
 
 				partConc, err = doe.HandleConcFactor(header[concColumn], interface{}(row[concColumn]))
 				if err != nil {
 					errs = append(errs, err.Error())
 				}
 			} else {
-				errs = append(errs, fmt.Sprintf("no concentration given for %s", partName))
+				errs = append(errs, fmt.Sprintf("no concentration given for %s: concColumn %d, cells with date in row %d", partName, concColumn, len(row)))
 			}
 
 			if _, found := concMap[partName]; found {
@@ -172,6 +172,15 @@ func readPartConcentrations(fileName string) (partNamesInOrder []string, concMap
 	}
 	return
 
+}
+
+func rowEmpty(row []string) bool {
+	for _, cell := range row {
+		if len(strings.TrimSpace(cell)) > 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func ReadParts(filename string) map[string]wtype.DNASequence {

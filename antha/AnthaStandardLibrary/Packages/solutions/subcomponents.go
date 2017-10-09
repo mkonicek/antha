@@ -30,6 +30,8 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Pubchem"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -86,6 +88,32 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 			complist[key] = newConc
 		}
 	}
+
+	for key, conc := range sample2.Components {
+		newConc := wunit.MultiplyConcentration(conc, sample1DilutionRatio)
+
+		if existingConc, found := complist[key]; found {
+			sumOfConcs, newerr := wunit.AddConcentrations([]wunit.Concentration{newConc, existingConc})
+			if newerr != nil {
+				// attempt unifying base units
+				molecule, newerr := pubchem.MakeMolecule(key)
+				if newerr != nil {
+					errs = append(errs, newerr.Error())
+				} else {
+					newConcG := molecule.GramPerL(newConc)
+					existingConcG := molecule.GramPerL(existingConc)
+
+					sumOfConcs, newerr = wunit.AddConcentrations([]wunit.Concentration{newConcG, existingConcG})
+					if newerr != nil {
+						errs = append(errs, newerr.Error())
+					}
+				}
+			}
+			complist[key] = sumOfConcs
+		} else {
+			complist[key] = newConc
+		}
+	}
 	newList.Components = complist
 
 	if len(errs) > 0 {
@@ -111,12 +139,15 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			newComponentList, err = GetSubComponents(sample)
 			if err != nil {
 				newComponentList.Components = make(map[string]wunit.Concentration)
-				if sample.Concentration().RawValue() == 0 {
+				if sample.Conc == 0 {
 					errs = append(errs, "zero concentration found for sample "+sample.CName)
+					newComponentList.Components[sample.Name()] = wunit.NewConcentration(0.0, "g/L")
+				} else {
+					newComponentList.Components[sample.Name()] = sample.Concentration()
 				}
-				newComponentList.Components[sample.Name()] = sample.Concentration()
 				mixSteps = append(mixSteps, ComponentListSample{newComponentList, sample.Volume()})
 			}
+
 		}
 
 		if i < len(samples)-1 {
@@ -125,15 +156,19 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			nextList, err := GetSubComponents(nextSample)
 			if err != nil {
 				nextList.Components = make(map[string]wunit.Concentration)
-				if nextSample.Concentration().RawValue() == 0 {
+				if nextSample.Conc == 0 {
 					errs = append(errs, "zero concentration found for sample "+sample.CName)
+					nextList.Components[sample.Name()] = wunit.NewConcentration(0.0, "g/L")
+				} else {
+					nextList.Components[sample.Name()] = nextSample.Concentration()
 				}
-				nextList.Components[sample.Name()] = nextSample.Concentration()
 			}
 
 			previousMixStep := ComponentListSample{newComponentList, sample.Volume()}
 			nextMixStep := ComponentListSample{nextList, nextSample.Volume()}
 			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
+
+			fmt.Println(i, text.Red(fmt.Sprintf("%+v", previousMixStep)), text.Blue(fmt.Sprintf("%+v", nextMixStep)))
 			if err != nil {
 				errs = append(errs, err.Error())
 			}
@@ -176,7 +211,7 @@ func (c ComponentList) Get(component *wtype.LHComponent) (conc wunit.Concentrati
 	if found {
 		return conc, nil
 	} else {
-		return conc, &notFound{Name: component.CName}
+		return conc, &notFound{Name: component.CName, All: c.AllComponents()}
 	}
 	return
 }
@@ -189,7 +224,7 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 	if found {
 		return conc, nil
 	} else {
-		return conc, &notFound{Name: component}
+		return conc, &notFound{Name: component, All: c.AllComponents()}
 	}
 	return
 }
@@ -242,10 +277,11 @@ func (a *alreadyAdded) Error() string {
 
 type notFound struct {
 	Name string
+	All  []string
 }
 
 func (a *notFound) Error() string {
-	return "component " + a.Name + " not found"
+	return "component " + a.Name + " not found. Found: " + strings.Join(a.All, ";")
 }
 
 // returns error if component already found

@@ -38,6 +38,14 @@ func (a *GenericHandler) MoveCost(target.Device) int {
 }
 
 func (a GenericHandler) serialize(obj interface{}) (string, error) {
+	type hasGetID interface {
+		GetID() string
+	}
+
+	if g, ok := obj.(hasGetID); ok {
+		return g.GetID(), nil
+	}
+
 	var out bytes.Buffer
 	var err error
 	enc := gob.NewEncoder(&out)

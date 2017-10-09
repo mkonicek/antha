@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package org.antha_lang.antha.v1;
+
+message Empty {}

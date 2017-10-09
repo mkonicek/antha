@@ -30,12 +30,13 @@ package format
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/parser"
 	"github.com/antha-lang/antha/antha/printer"
 	"github.com/antha-lang/antha/antha/token"
-	"io"
-	"strings"
 )
 
 var config = printer.Config{Mode: printer.UseSpaces | printer.TabIndent, Tabwidth: 8}
@@ -192,6 +193,7 @@ func parse(fset *token.FileSet, src []byte) (interface{}, error) {
 	if err == nil {
 		return file, nil
 	}
+
 	// If the source is missing a package clause, try as a source fragment; otherwise fail.
 	if !strings.Contains(err.Error(), "expected 'package'") {
 		return nil, err

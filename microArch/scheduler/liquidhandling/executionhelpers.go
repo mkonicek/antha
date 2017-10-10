@@ -24,14 +24,12 @@ package liquidhandling
 
 import (
 	"fmt"
-	"sort"
-	"strings"
-
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/graph"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"sort"
+	"strings"
 )
 
 const (
@@ -703,10 +701,6 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			// ensure we keep results straight
 			vd := v.Dup()
 			// volumes need to come from volss
-
-			if vd.Vunit == "" {
-				panic(text.Red(wlf.WContents.CName))
-			}
 			vd.Vol = v2.ConvertToString(vd.Vunit)
 			vd.ID = wlf.WContents.ID
 			vd.ParentID = wlf.WContents.ParentID

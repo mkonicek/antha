@@ -103,7 +103,7 @@ func CopyVolume(v Volume) Volume {
 }
 
 // Add volumes
-func AddVolumes(vols []Volume) (newvolume Volume) {
+func AddVolumes(vols ...Volume) (newvolume Volume) {
 
 	var tempvol Volume
 	tempvol = NewVolume(0.0, "ul")
@@ -176,7 +176,7 @@ func DivideConcentration(v Concentration, factor float64) (newconc Concentration
 }
 
 // add concentrations
-func AddConcentrations(concs []Concentration) (newconc Concentration, err error) {
+func AddConcentrations(concs ...Concentration) (newconc Concentration, err error) {
 
 	if len(concs) == 0 {
 		err = fmt.Errorf("Array of concentrations empty, nil value returned")
@@ -190,10 +190,11 @@ func AddConcentrations(concs []Concentration) (newconc Concentration, err error)
 			tempconc = NewConcentration(tempconc.RawValue()+conc.RawValue(), tempconc.Unit().PrefixedSymbol())
 			newconc = tempconc
 		} else if tempconc.Unit().BaseSISymbol() != conc.Unit().BaseSISymbol() {
-			err = fmt.Errorf("Cannot add units with base g/l to M/l, please bring concs to same base. ")
+			err = fmt.Errorf("Cannot add units with base %s to %s, please bring concs to same base. ", tempconc.Unit().BaseSISymbol(), conc.Unit().BaseSISymbol())
 		} else {
 			tempconc = NewConcentration(tempconc.SIValue()+conc.SIValue(), tempconc.Unit().BaseSISymbol())
 			newconc = tempconc
+			fmt.Println("in here", tempconc)
 		}
 	}
 	return

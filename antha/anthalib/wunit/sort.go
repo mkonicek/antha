@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	noValues error = fmt.Errorf("empty slice specified in sort function")
+	noValues error = fmt.Errorf("empty slice specified as argument to sort function")
 )
 
 type incompatibleUnits struct {
@@ -44,7 +44,7 @@ func (err incompatibleUnits) Error() string {
 // SortConcentrations sorts a set of Concentration values.
 // An error will be returned if no values are specified or the base units of any of the concentrations are incompatible,
 // e.g. units of X and g/l would not be compatible.
-func SortConcentrations(concs []Concentration) (newConcs []Concentration, err error) {
+func SortConcentrations(concs []Concentration) (sorted []Concentration, err error) {
 	if len(concs) == 0 {
 		return concs, noValues
 	}
@@ -54,10 +54,10 @@ func SortConcentrations(concs []Concentration) (newConcs []Concentration, err er
 				return concs, err
 			}
 		}
-		newConcs = append(newConcs, concs[i])
+		sorted = append(sorted, concs[i])
 	}
 
-	sort.Sort(concentrationSet(newConcs))
+	sort.Sort(concentrationSet(sorted))
 
 	return
 }

@@ -56,18 +56,14 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 
 	sample1DilutionRatio := sample1.Volume.SIValue() / (sample1.Volume.SIValue() + sample2.Volume.SIValue())
 
-	for key, conc := range sample1.Components {
-		newConc := wunit.MultiplyConcentration(conc, sample1DilutionRatio)
-		complist[key] = newConc
-	}
-
 	sample2DilutionRatio := sample2.Volume.SIValue() / (sample1.Volume.SIValue() + sample2.Volume.SIValue())
 
 	for key, conc := range sample1.Components {
-		newConc := wunit.MultiplyConcentration(conc, sample2DilutionRatio)
+
+		newConc := wunit.MultiplyConcentration(conc, sample1DilutionRatio)
 
 		if existingConc, found := complist[key]; found {
-			sumOfConcs, newerr := wunit.AddConcentrations([]wunit.Concentration{newConc, existingConc})
+			sumOfConcs, newerr := wunit.AddConcentrations(newConc, existingConc)
 			if newerr != nil {
 				// attempt unifying base units
 				molecule, newerr := pubchem.MakeMolecule(key)
@@ -77,7 +73,7 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 					newConcG := molecule.GramPerL(newConc)
 					existingConcG := molecule.GramPerL(existingConc)
 
-					sumOfConcs, newerr = wunit.AddConcentrations([]wunit.Concentration{newConcG, existingConcG})
+					sumOfConcs, newerr = wunit.AddConcentrations(newConcG, existingConcG)
 					if newerr != nil {
 						errs = append(errs, newerr.Error())
 					}
@@ -90,10 +86,12 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 	}
 
 	for key, conc := range sample2.Components {
-		newConc := wunit.MultiplyConcentration(conc, sample1DilutionRatio)
+		newConc := wunit.MultiplyConcentration(conc, sample2DilutionRatio)
+
+		fmt.Println(text.Cyan(key), newConc, conc, sample2DilutionRatio)
 
 		if existingConc, found := complist[key]; found {
-			sumOfConcs, newerr := wunit.AddConcentrations([]wunit.Concentration{newConc, existingConc})
+			sumOfConcs, newerr := wunit.AddConcentrations(newConc, existingConc)
 			if newerr != nil {
 				// attempt unifying base units
 				molecule, newerr := pubchem.MakeMolecule(key)
@@ -103,7 +101,7 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 					newConcG := molecule.GramPerL(newConc)
 					existingConcG := molecule.GramPerL(existingConc)
 
-					sumOfConcs, newerr = wunit.AddConcentrations([]wunit.Concentration{newConcG, existingConcG})
+					sumOfConcs, newerr = wunit.AddConcentrations(newConcG, existingConcG)
 					if newerr != nil {
 						errs = append(errs, newerr.Error())
 					}
@@ -132,10 +130,35 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, err error) {
 
 	var errs []string
+	var nonZeroVols []wunit.Volume
+	var forTotalVol wunit.Volume
+	// top up volume will only be used if a SampleForTotalVolume command is used
+	var bufferIndex int = -1
+
+	for i, sample := range samples {
+		if sample.Volume().RawValue() == 0.0 && sample.Tvol > 0 {
+			forTotalVol = wunit.NewVolume(sample.Tvol, sample.Vunit)
+			bufferIndex = i
+		}
+		nonZeroVols = append(nonZeroVols, sample.Volume())
+	}
+
+	topUpVolume := wunit.SubtractVolumes(forTotalVol, nonZeroVols)
+
+	var volsSoFar []wunit.Volume
 
 	for i, sample := range samples {
 
+		var volToAdd wunit.Volume
+
+		if i == bufferIndex {
+			volToAdd = topUpVolume
+		} else {
+			volToAdd = sample.Volume()
+		}
+
 		if i == 0 {
+
 			newComponentList, err = GetSubComponents(sample)
 			if err != nil {
 				newComponentList.Components = make(map[string]wunit.Concentration)
@@ -145,9 +168,9 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 				} else {
 					newComponentList.Components[sample.Name()] = sample.Concentration()
 				}
-				mixSteps = append(mixSteps, ComponentListSample{newComponentList, sample.Volume()})
+				mixSteps = append(mixSteps, ComponentListSample{newComponentList, volToAdd})
 			}
-
+			volsSoFar = append(volsSoFar, volToAdd)
 		}
 
 		if i < len(samples)-1 {
@@ -158,17 +181,28 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 				nextList.Components = make(map[string]wunit.Concentration)
 				if nextSample.Conc == 0 {
 					errs = append(errs, "zero concentration found for sample "+sample.CName)
-					nextList.Components[sample.Name()] = wunit.NewConcentration(0.0, "g/L")
+					nextList.Components[nextSample.Name()] = wunit.NewConcentration(0.0, "g/L")
 				} else {
-					nextList.Components[sample.Name()] = nextSample.Concentration()
+					nextList.Components[nextSample.Name()] = nextSample.Concentration()
 				}
 			}
+			volOfPreviousSamples := wunit.AddVolumes(volsSoFar...)
 
-			previousMixStep := ComponentListSample{newComponentList, sample.Volume()}
-			nextMixStep := ComponentListSample{nextList, nextSample.Volume()}
+			previousMixStep := ComponentListSample{newComponentList, volOfPreviousSamples}
+			if i != 0 {
+				volsSoFar = append(volsSoFar, volToAdd)
+			}
+			var nexSampleVolToAdd wunit.Volume
+
+			if i+1 == bufferIndex {
+				nexSampleVolToAdd = topUpVolume
+			} else {
+				nexSampleVolToAdd = nextSample.Volume()
+			}
+			nextMixStep := ComponentListSample{nextList, nexSampleVolToAdd}
 			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
 
-			fmt.Println(i, text.Red(fmt.Sprintf("%+v", previousMixStep)), text.Blue(fmt.Sprintf("%+v", nextMixStep)))
+			fmt.Println(i, text.Red(fmt.Sprintf("%+v", previousMixStep)), text.Green(fmt.Sprintf("next: %+v", nextMixStep)), text.Blue(fmt.Sprintf("New: %+v", newComponentList)))
 			if err != nil {
 				errs = append(errs, err.Error())
 			}
@@ -176,6 +210,10 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			mixSteps = append(mixSteps, nextMixStep)
 
 		}
+
+		volOfPreviousSamples := wunit.AddVolumes(volsSoFar...)
+
+		fmt.Println(text.Yellow(fmt.Sprintln(i, volOfPreviousSamples, volsSoFar, sample.CName, sample.Volume())))
 	}
 
 	if len(errs) > 0 {

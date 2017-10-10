@@ -405,6 +405,7 @@ func (lhc *LHComponent) Dup() *LHComponent {
 	c.Type = lhc.Type
 	c.Vol = lhc.Vol
 	c.Conc = lhc.Conc
+	c.Cunit = lhc.Cunit
 	c.Vunit = lhc.Vunit
 	c.Tvol = lhc.Tvol
 	c.Smax = lhc.Smax

@@ -29,7 +29,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -499,7 +498,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 	// convert requests to volumes and determine required stock concentrations
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
-	fmt.Println(text.Yellow(fmt.Sprintln(request)))
 
 	if err != nil {
 		return err

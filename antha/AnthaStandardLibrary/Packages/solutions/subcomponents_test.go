@@ -2,8 +2,7 @@
 package solutions
 
 import (
-	"reflect"
-
+	"math"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -120,6 +119,19 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 	},
 }
 
+func equal(list1, list2 ComponentList) bool {
+	for key, value1 := range list1.Components {
+		if value2, found := list2.Components[key]; found {
+			if math.Abs(value1.SIValue()-value2.SIValue()) > 0.0001 {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
 // Align two dna sequences based on a specified scoring matrix
 func TestSimulateMix(t *testing.T) {
 	for _, test := range tests {
@@ -131,7 +143,7 @@ func TestSimulateMix(t *testing.T) {
 				"got error:", err.Error(), "\n",
 			)
 		}
-		if !reflect.DeepEqual(mixed, test.mixedList) {
+		if !equal(mixed, test.mixedList) {
 			t.Error(
 				"For", test.name, "\n",
 				"expected:", "\n",

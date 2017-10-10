@@ -73,6 +73,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 		totalvol := 0.0
 
 		for _, component := range components {
+
 			// what sort of component is it?
 			conc := component.Conc
 			tvol := component.Tvol
@@ -169,8 +170,14 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	}
 
 	for cmp, arr := range mconcs {
-		min, _ := wunit.MinConcentration(arr)
-		max, _ := wunit.MaxConcentration(arr)
+		min, err := wunit.MinConcentration(arr)
+		if err != nil {
+			return nil, nil, err
+		}
+		max, err := wunit.MaxConcentration(arr)
+		if err != nil {
+			return nil, nil, err
+		}
 		minrequired[cmp] = min
 		maxrequired[cmp] = max
 		// if smax undefined we need to deal  - we assume infinite solubility!!
@@ -294,6 +301,27 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	}
 
 	return newInstructions, stockConcs, nil
+}
+
+func isMixSimulation(comp *wtype.LHComponent) bool {
+
+	sim, found := comp.Extra["Simulation"]
+
+	if !found {
+		return false
+	}
+
+	whoAmI, ok := sim.(bool)
+
+	if !ok {
+		return false
+	}
+
+	return whoAmI
+}
+
+func setSimulation(comp *wtype.LHComponent) {
+	comp.Extra["Simulation"] = true
 }
 
 // converts all to SI Values, all entries must have the same SI base unit or an error will be returned.

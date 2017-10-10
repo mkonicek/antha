@@ -223,12 +223,12 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 		arrSvol := make([]*wtype.LHComponent, 0, len(components))
 		cmpvol := 0.0
 		totalvol := 0.0
-		totalvolunit := ""
+		totalvolunit := "ul"
 
 		for _, component := range components {
 			// what sort of component is it?
 			// what is the total volume ?
-			if component.Conc != 0.0 {
+			if component.Conc != 0.0 && !skipSampleForConcentrationCalc {
 				arrCncs = append(arrCncs, component)
 			} else if component.Tvol != 0.0 {
 				arrTvol = append(arrTvol, component)

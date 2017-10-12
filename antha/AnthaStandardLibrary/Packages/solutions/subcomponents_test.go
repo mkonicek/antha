@@ -119,6 +119,50 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 	},
 }
 
+type serialComponentlistTest struct {
+	name      string
+	sample1   ComponentListSample
+	sample2   ComponentListSample
+	sample3   ComponentListSample
+	mixedList ComponentList
+}
+
+var serialTests []serialComponentlistTest = []serialComponentlistTest{
+	serialComponentlistTest{
+		sample1: ComponentListSample{
+			ComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"water": wunit.NewConcentration(0, "g/L"),
+				},
+			},
+			Volume: wunit.NewVolume(8, "ul"),
+		},
+		sample2: ComponentListSample{
+			ComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"dna": wunit.NewConcentration(1, "g/L"),
+				},
+			},
+			Volume: wunit.NewVolume(1, "ul"),
+		},
+		sample3: ComponentListSample{
+			ComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"dna2": wunit.NewConcentration(1, "g/L"),
+				},
+			},
+			Volume: wunit.NewVolume(1, "ul"),
+		},
+		mixedList: ComponentList{
+			Components: map[string]wunit.Concentration{
+				"water": wunit.NewConcentration(0, "g/L"),
+				"dna":   wunit.NewConcentration(0.1, "g/L"),
+				"dna2":  wunit.NewConcentration(0.1, "g/L"),
+			},
+		},
+	},
+}
+
 func equal(list1, list2 ComponentList) bool {
 	for key, value1 := range list1.Components {
 		if value2, found := list2.Components[key]; found {
@@ -132,7 +176,6 @@ func equal(list1, list2 ComponentList) bool {
 	return true
 }
 
-// Align two dna sequences based on a specified scoring matrix
 func TestSimulateMix(t *testing.T) {
 	for _, test := range tests {
 		mixed, err := mixComponentLists(test.sample1, test.sample2)
@@ -143,6 +186,36 @@ func TestSimulateMix(t *testing.T) {
 				"got error:", err.Error(), "\n",
 			)
 		}
+		if !equal(mixed, test.mixedList) {
+			t.Error(
+				"For", test.name, "\n",
+				"expected:", "\n",
+				test.mixedList,
+				"got:", "\n",
+				mixed,
+			)
+		}
+	}
+}
+
+func TestSerialMix(t *testing.T) {
+	for _, test := range serialTests {
+		intermediate, err := mixComponentLists(test.sample1, test.sample2)
+
+		if err != nil {
+			t.Error(
+				"For", test.name, "\n",
+				"got error:", err.Error(), "\n",
+			)
+		}
+
+		intermediateSample := ComponentListSample{
+			ComponentList: intermediate,
+			Volume:        wunit.AddVolumes(test.sample1.Volume, test.sample2.Volume),
+		}
+
+		mixed, err := mixComponentLists(intermediateSample, test.sample3)
+
 		if !equal(mixed, test.mixedList) {
 			t.Error(
 				"For", test.name, "\n",

@@ -30,7 +30,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pubchem"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -87,8 +86,6 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 
 	for key, conc := range sample2.Components {
 		newConc := wunit.MultiplyConcentration(conc, sample2DilutionRatio)
-
-		fmt.Println(text.Cyan(key), newConc, conc, sample2DilutionRatio)
 
 		if existingConc, found := complist[key]; found {
 			sumOfConcs, newerr := wunit.AddConcentrations(newConc, existingConc)
@@ -202,7 +199,6 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			nextMixStep := ComponentListSample{nextList, nexSampleVolToAdd}
 			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
 
-			fmt.Println(i, text.Red(fmt.Sprintf("%+v", previousMixStep)), text.Green(fmt.Sprintf("next: %+v", nextMixStep)), text.Blue(fmt.Sprintf("New: %+v", newComponentList)))
 			if err != nil {
 				errs = append(errs, err.Error())
 			}
@@ -211,9 +207,6 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 
 		}
 
-		volOfPreviousSamples := wunit.AddVolumes(volsSoFar...)
-
-		fmt.Println(text.Yellow(fmt.Sprintln(i, volOfPreviousSamples, volsSoFar, sample.CName, sample.Volume())))
 	}
 
 	if len(errs) > 0 {

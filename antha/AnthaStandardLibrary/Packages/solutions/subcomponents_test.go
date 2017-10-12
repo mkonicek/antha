@@ -2,7 +2,8 @@
 package solutions
 
 import (
-	"math"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -190,23 +191,27 @@ var serialTests []serialComponentlistTest = []serialComponentlistTest{
 			Components: map[string]wunit.Concentration{
 				"LB": wunit.NewConcentration(0, "g/L"),
 				"Ferric Chloride (uM)": wunit.NewConcentration(10, "mM"),
-				"Glucose (g/L)":        wunit.NewConcentration(5, "g/L"),
+				"Glucose (g/L)":        wunit.NewConcentration(5.01, "g/L"),
 			},
 		},
 	},
 }
 
-func equal(list1, list2 ComponentList) bool {
+func equal(list1, list2 ComponentList) error {
+	var notEqual []string
 	for key, value1 := range list1.Components {
 		if value2, found := list2.Components[key]; found {
-			if math.Abs(value1.SIValue()-value2.SIValue()) > 0.0001 {
-				return false
+			if fmt.Sprintf("%.2e", value1.SIValue()) != fmt.Sprintf("%.2e", value2.SIValue()) {
+				notEqual = append(notEqual, key+" "+fmt.Sprint(value1)+" in list 1 and "+fmt.Sprint(value2)+" in list 2.")
 			}
 		} else {
-			return false
+			notEqual = append(notEqual, key+" not found in list2. ")
 		}
 	}
-	return true
+	if len(notEqual) > 0 {
+		return fmt.Errorf(strings.Join(notEqual, ". \n"))
+	}
+	return nil
 }
 
 func TestSimulateMix(t *testing.T) {
@@ -219,13 +224,18 @@ func TestSimulateMix(t *testing.T) {
 				"got error:", err.Error(), "\n",
 			)
 		}
-		if !equal(mixed, test.mixedList) {
+
+		err = equal(mixed, test.mixedList)
+
+		if err != nil {
 			t.Error(
 				"For", test.name, "\n",
 				"expected:", "\n",
 				test.mixedList,
 				"got:", "\n",
 				mixed,
+				"Error: ", "\n",
+				err.Error(),
 			)
 		}
 	}
@@ -249,13 +259,17 @@ func TestSerialMix(t *testing.T) {
 
 		mixed, err := mixComponentLists(intermediateSample, test.sample3)
 
-		if !equal(mixed, test.mixedList) {
+		err = equal(mixed, test.mixedList)
+
+		if err != nil {
 			t.Error(
 				"For", test.name, "\n",
 				"expected:", "\n",
 				test.mixedList,
 				"got:", "\n",
 				mixed,
+				"Error: ", "\n",
+				err.Error(),
 			)
 		}
 	}

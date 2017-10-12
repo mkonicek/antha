@@ -183,12 +183,15 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 					nextList.Components[nextSample.Name()] = nextSample.Concentration()
 				}
 			}
-			volOfPreviousSamples := wunit.AddVolumes(volsSoFar...)
 
-			previousMixStep := ComponentListSample{newComponentList, volOfPreviousSamples}
 			if i != 0 {
 				volsSoFar = append(volsSoFar, volToAdd)
 			}
+
+			volOfPreviousSamples := wunit.AddVolumes(volsSoFar...)
+
+			previousMixStep := ComponentListSample{newComponentList, volOfPreviousSamples}
+
 			var nexSampleVolToAdd wunit.Volume
 
 			if i+1 == bufferIndex {

@@ -161,6 +161,39 @@ var serialTests []serialComponentlistTest = []serialComponentlistTest{
 			},
 		},
 	},
+	serialComponentlistTest{
+		sample1: ComponentListSample{
+			ComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"LB": wunit.NewConcentration(0, "g/L"),
+				},
+			},
+			Volume: wunit.NewVolume(1.05e+04-(5.26e+03+351), "ul"),
+		},
+		sample2: ComponentListSample{
+			ComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"Ferric Chloride (uM)": wunit.NewConcentration(20, "mM"),
+				},
+			},
+			Volume: wunit.NewVolume(5.26e+03, "ul"),
+		},
+		sample3: ComponentListSample{
+			ComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"Glucose (g/L)": wunit.NewConcentration(150, "g/L"),
+				},
+			},
+			Volume: wunit.NewVolume(351, "ul"),
+		},
+		mixedList: ComponentList{
+			Components: map[string]wunit.Concentration{
+				"LB": wunit.NewConcentration(0, "g/L"),
+				"Ferric Chloride (uM)": wunit.NewConcentration(10, "mM"),
+				"Glucose (g/L)":        wunit.NewConcentration(5, "g/L"),
+			},
+		},
+	},
 }
 
 func equal(list1, list2 ComponentList) bool {

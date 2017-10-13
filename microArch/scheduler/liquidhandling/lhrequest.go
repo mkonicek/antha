@@ -25,6 +25,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -52,7 +53,7 @@ type LHRequest struct {
 	Output_platetypes     []*wtype.LHPlate
 	Output_plate_order    []string
 	Plate_lookup          map[string]string
-	Stockconcs            map[string]float64
+	Stockconcs            map[string]wunit.Concentration
 	Policies              *wtype.LHPolicyRuleSet
 	Input_order           []string
 	Output_order          []string
@@ -163,7 +164,7 @@ func NewLHRequest() *LHRequest {
 	lhr.Output_plate_order = make([]string, 0, 1)
 	lhr.Input_plate_order = make([]string, 0, 1)
 	lhr.Plate_lookup = make(map[string]string)
-	lhr.Stockconcs = make(map[string]float64)
+	lhr.Stockconcs = make(map[string]wunit.Concentration)
 	lhr.Input_order = make([]string, 0)
 	lhr.Output_order = make([]string, 0)
 	lhr.OutputIteratorFactory = wtype.NewOneTimeColumnWiseIterator

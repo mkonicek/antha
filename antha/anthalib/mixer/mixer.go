@@ -52,6 +52,11 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret.Extra = l.GetExtra()
 	ret.Smax = l.GetSmax()
 	ret.Visc = l.GetVisc()
+	if l.Conc > 0 && len(l.Cunit) > 0 {
+		ret.SetConcentration(wunit.NewConcentration(l.Conc, l.Cunit))
+	}
+	//ret.Conc = l.Conc
+	//ret.Cunit = l.Cunit
 	ret.SetSample(true)
 
 	//logger.Track(fmt.Sprintf("SAMPLE V %s %s %s", l.ID, ret.ID, v.ToString()))

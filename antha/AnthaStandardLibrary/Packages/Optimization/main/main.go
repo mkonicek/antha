@@ -60,7 +60,7 @@ func main() {
 	cnstr := DefaultConstraints()
 	problem := BasicProblem()
 
-	OptimizeAssembly2(problem, cnstr, prm)
+	OptimizeAssembly(problem, cnstr, prm)
 
 }
 

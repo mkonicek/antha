@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 type SeqSet []string
@@ -57,4 +60,28 @@ func Distinct(sa []string) []string {
 
 	}
 	return r
+}
+
+type MSA []*wtype.BioSequence
+
+func parseFasta(ba []byte) (MSA, err) {
+	expr := ""
+
+	matches := regexp.FindAllStringSubmatch(string(ba), -1)
+}
+
+func readMSA(fn string) (MSA, error) {
+	ba, err := ioutil.ReadFile(fn)
+
+	if err != nil {
+		return nil, err
+	}
+
+	MSA, err := parseFasta(ba)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return MSA, nil
 }

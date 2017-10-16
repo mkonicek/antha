@@ -267,6 +267,9 @@ func NewAntha(root *AnthaRoot) *Antha {
 		Path: "context",
 	})
 	p.addImportReq(&importReq{
+		Path: "encoding/json",
+	})
+	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
 		UseExpr: "wtype.FALSE",
 	})
@@ -1128,16 +1131,29 @@ func (p *Antha) printFunctions(out io.Writer) error {
 	// TODO: put the recover handler here when we get to multi-address space
 	// execution. In single-address space, the caller assumes that execeptions
 	// will bubble up through Run.
+
+	// NB: serialize in Run to enforce serialization barrier between element
+	// calls
 	var tmpl = `
 type Element struct {
 }
 
 func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
+	bs, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	var in *{{ .ModelPackage }}.Input
+	if err := json.Unmarshal(bs, &in); err != nil {
+		return nil, err
+	}
+
 	response = &{{ .ModelPackage }}.Output{}
-	{{if .HasSetup}}_Setup(_ctx, request, response){{end}}
-	{{if .HasSteps}}_Steps(_ctx, request, response){{end}}
-	{{if .HasAnalysis}}_Analysis(_ctx, request, response){{end}}
-	{{if .HasValidation}}_Validation(_ctx, request, response){{end}}
+	{{if .HasSetup}}_Setup(_ctx, in, response){{end}}
+	{{if .HasSteps}}_Steps(_ctx, in, response){{end}}
+	{{if .HasAnalysis}}_Analysis(_ctx, in, response){{end}}
+	{{if .HasValidation}}_Validation(_ctx, in, response){{end}}
 	return
 }
 

@@ -1,7 +1,10 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
+	//	"github.com/kylelemons/godebug/pretty"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -144,7 +147,7 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 	}
 	assertWellsEqual("HWells != Rows", ws1, ws2)
 	assertWellsEqual("Rows != Cols", ws2, ws3)
-	assertWellsEqual("Cols != WellCoords", ws3, ws4)
+	assertWellsEqual("Cols != Wellcoords", ws3, ws4)
 
 	// Check pointer-ID equality
 	comp := make(map[string]*LHComponent)
@@ -257,4 +260,59 @@ func TestFindCompMulti1(t *testing.T) {
 	if len(pids) == 0 {
 		t.Errorf("Didn't find a simple column of water... should have")
 	}
+}
+
+func TestLHPlateSerialize(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+	_, err := p.AddComponent(c, false)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	b, err := json.Marshal(p)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	var p2 *LHPlate
+
+	err = json.Unmarshal(b, &p2)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	// check stuff
+
+	for i, w := range p.Wellcoords {
+		w2 := p2.Wellcoords[i]
+
+		if !reflect.DeepEqual(w.WContents, w2.WContents) {
+			t.Errorf("%v =/= %v", w.WContents, w2.WContents)
+		}
+	}
+
+	for i := 0; i < p2.WellsX(); i++ {
+		for j := 0; j < p2.WellsY(); j++ {
+			wc := WellCoords{X: i, Y: j}
+
+			w := p2.Wellcoords[wc.FormatA1()]
+
+			//fmt.Printf("%s: r: %p %s c: %p %s w: %p %s\n", wc.FormatA1(), p2.Rows[j][i], p2.Rows[j][i].Crds, p2.Cols[i][j], p2.Cols[i][j].Crds, w, w.Crds)
+
+			w.WContents.CName = wc.FormatA1()
+			if p2.Rows[j][i].WContents.CName != wc.FormatA1() || p2.Cols[i][j].WContents.CName != wc.FormatA1() || p2.HWells[w.ID].WContents.CName != wc.FormatA1() {
+				fmt.Println(p2.Cols[i][j].WContents.CName)
+				fmt.Println(p2.Rows[j][i].WContents.CName)
+				t.Errorf("Error: Wells inconsistent at position %s", wc.FormatA1())
+			}
+
+		}
+	}
+
 }

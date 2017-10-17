@@ -117,3 +117,56 @@ func Makeseq(dir string, seq BioSequence) string {
 
 	return filename
 }
+func (res BlastResults) QueryCentredAlignment() []AlignedBioSequence {
+	ret := make([]AlignedBioSequence, 0, len(res.Hits))
+
+	for _, h := range res.Hits {
+		qry, sbj := h.Alignments[0].CentreToQuery(res.Query)
+		ret = append(ret, AlignedBioSequence{Query: qry, Subject: sbj, Score: h.Score})
+	}
+
+	return ret
+}
+
+type SimpleAlignment []AlignedBioSequence
+
+func (aln SimpleAlignment) Column(i int) string {
+	if i < 0 || i >= len(aln[0].Subject) {
+		panic(fmt.Sprintf("Error: Cannot take column %d in alignment of length %d", i, len(aln[0].Subject)))
+	}
+
+	r := ""
+
+	for s := 0; s < len(aln); s++ {
+		c := string(aln[s].Subject[i])
+
+		if c != "-" {
+			r += c
+		}
+	}
+
+	return r
+}
+
+func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
+	s := ""
+	r := ""
+	for i := 1; i < aln.Qstart; i++ {
+		r += "-"
+		s += string(q[i-1])
+	}
+
+	for i := 0; i < len(aln.Qseq); i++ {
+		if aln.Qseq[i] != '-' {
+			r += string(aln.Sseq[i])
+			s += string(aln.Qseq[i])
+		}
+	}
+
+	for i := aln.Qend; i < len(q); i++ {
+		r += "-"
+		s += string(q[i-1])
+	}
+
+	return s, r
+}

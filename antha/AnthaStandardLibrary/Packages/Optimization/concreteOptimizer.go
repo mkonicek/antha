@@ -1,6 +1,7 @@
 package Optimization
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"math/rand"
 	"reflect"
@@ -149,6 +150,8 @@ func OptimizeAssembly(query string, seqs wtype.ReallySimpleAlignment, constraint
 	// make the problem
 
 	problem := msaToAssemblyProblem(seqs, query)
+
+	fmt.Println("HERES THE PROBLEM: ", problem)
 
 	// solve the problem
 

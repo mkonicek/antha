@@ -152,7 +152,7 @@ func (aln ReallySimpleAlignment) Column(i int) string {
 
 // find column of length j slices at pos i
 func (aln ReallySimpleAlignment) MultiColumn(i, j int) []string {
-	if i < 0 || i >= len(aln[0])-j {
+	if i < 0 || i >= len(aln[0])-j+1 {
 		panic(fmt.Sprintf("Error: Cannot take column %d of size %d in alignment of length %d", i, j, len(aln[0])))
 	}
 

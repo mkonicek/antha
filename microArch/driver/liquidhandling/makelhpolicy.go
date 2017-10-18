@@ -983,13 +983,13 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol20)
 
 	adjustNeedToMix = wtype.NewLHPolicyRule("needtopremixFrom100ul")
-	adjustNeedToMix.AddCategoryConditionOn("LIQUIDCLASS", "PreMix")
+	adjustNeedToMix.AddCategoryConditionOn("LIQUIDCLASS", "NeedToMix")
 	adjustNeedToMix.AddNumericConditionOn("WELLFROMVOLUME", 100.0, 200.0)
 
 	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol100)
 
-	adjustNeedToMix = wtype.NewLHPolicyRule("premixFrom200ul")
-	adjustNeedToMix.AddCategoryConditionOn("LIQUIDCLASS", "PreMix")
+	adjustNeedToMix = wtype.NewLHPolicyRule("needtopremixFrom200ul")
+	adjustNeedToMix.AddCategoryConditionOn("LIQUIDCLASS", "NeedToMix")
 	adjustNeedToMix.AddNumericConditionOn("WELLFROMVOLUME", 200.0, 1000.0)
 
 	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol200)

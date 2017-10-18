@@ -130,6 +130,43 @@ func (res BlastResults) QueryCentredAlignment() []AlignedBioSequence {
 
 type SimpleAlignment []AlignedBioSequence
 
+type ReallySimpleAlignment []string
+
+func (aln ReallySimpleAlignment) Column(i int) string {
+	if i < 0 || i >= len(aln[0]) {
+		panic(fmt.Sprintf("Error: Cannot take column %d in alignment of length %d", i, len(aln[0])))
+	}
+
+	r := ""
+
+	for s := 0; s < len(aln); s++ {
+		c := string(aln[s][i])
+
+		if c != "-" {
+			r += c
+		}
+	}
+
+	return r
+}
+
+// find column of length j slices at pos i
+func (aln ReallySimpleAlignment) MultiColumn(i, j int) []string {
+	if i < 0 || i >= len(aln[0])-j {
+		panic(fmt.Sprintf("Error: Cannot take column %d of size %d in alignment of length %d", i, j, len(aln[0])))
+	}
+
+	r := make([]string, 0, len(aln))
+
+	for s := 0; s < len(aln); s++ {
+		c := string(aln[s][i : i+j])
+
+		r = append(r, c)
+	}
+
+	return r
+}
+
 func (aln SimpleAlignment) Column(i int) string {
 	if i < 0 || i >= len(aln[0].Subject) {
 		panic(fmt.Sprintf("Error: Cannot take column %d in alignment of length %d", i, len(aln[0].Subject)))

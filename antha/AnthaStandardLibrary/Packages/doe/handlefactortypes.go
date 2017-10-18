@@ -34,7 +34,7 @@ import (
 	"github.com/antha-lang/antha/inventory"
 )
 
-// parses a factor name and value and returns an antha concentration.
+// HandleConcFactor parses a factor name and value and returns an antha concentration.
 // If the value cannot be converted to a valid concentration an error is returned.
 // If the header contains a valid concentration unit a number can be specified as the value.
 func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concentration, err error) {
@@ -95,7 +95,21 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 	return
 }
 
-// parses a factor name and value and returns an antha Volume.
+// HandleComponentWithConcentration returns both LHComponent and Concentration from a component name with concentration in a DOE design.
+// If no valid concentration is found or an invalid component name is specifed an error is returned.
+func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.LHComponent, concentration wunit.Concentration, err error) {
+	concentration, err = HandleConcFactor(header, value)
+
+	if err != nil {
+		return
+	}
+
+	component, err = HandleLHComponentFactor(ctx, header, value)
+
+	return
+}
+
+// HandleVolumeFactor parses a factor name and value and returns an antha Volume.
 // If the value cannot be converted to a valid Volume an error is returned.
 func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Volume, err error) {
 
@@ -139,7 +153,7 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 	return
 }
 
-// HandleLHComponentFactory parses a factor name and value and returns an
+// HandleLHComponentFactor parses a factor name and value and returns an
 // LHComponent.
 //
 // If the value cannot be converted to a valid component an error is returned.

@@ -18,6 +18,8 @@ func (a *Auto) Pretty(inst target.Inst) string {
 		return prettyManual(inst)
 	case *target.Wait:
 		return "Wait"
+	case *target.Prompt:
+		return prettyPrompt(inst)
 	default:
 		return fmt.Sprintf("unknown instruction %T", inst)
 	}
@@ -33,4 +35,8 @@ func prettyMix(inst *target.Mix) string {
 
 func prettyRun(inst *target.Run) string {
 	return fmt.Sprintf("[run] %s", inst.Label)
+}
+
+func prettyPrompt(ins *target.Prompt) string {
+	return fmt.Sprintf("[prm] %s", ins.Message)
 }

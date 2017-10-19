@@ -18,11 +18,11 @@ func DefaultParameters() AssemblyOptimizerParameters {
 		prm["step_size"] = 3
 		prm["pop_size"] = 100
 	*/
-	prm.Set("max_iterations", 200)
+	prm.Set("max_iterations", 1000)
 	prm.Set("recom_p", 0.5)
 	prm.Set("mut_p", 0.5)
 	prm.Set("step_size", 1)
-	prm.Set("pop_size", 250)
+	prm.Set("pop_size", 1000)
 
 	return prm
 }

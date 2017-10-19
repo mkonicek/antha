@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/meta"
 )
@@ -38,6 +39,7 @@ type ComponentDesc struct {
 // Component is an antha component / element.
 type Component struct {
 	Name        string
+	Stage       api.ElementStage
 	Constructor func() interface{}
 	Desc        ComponentDesc
 }

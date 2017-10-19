@@ -106,7 +106,7 @@ func makeContext() (context.Context, error) {
 		if !ok {
 			return nil, fmt.Errorf("component %q has unexpected type %T", desc.Name, obj)
 		}
-		if err := inject.Add(ctx, inject.Name{Repo: desc.Name}, runner); err != nil {
+		if err := inject.Add(ctx, inject.Name{Repo: desc.Name, Stage: desc.Stage}, runner); err != nil {
 			return nil, fmt.Errorf("error adding protocol %q: %s", desc.Name, err)
 		}
 	}

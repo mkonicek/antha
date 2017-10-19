@@ -4,28 +4,31 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	api "github.com/antha-lang/antha/api/v1"
 )
 
-var alreadyAdded = errors.New("already added")
+var errAlreadyAdded = errors.New("already added")
 
 type registry struct {
 	lock   sync.Mutex
 	parent context.Context
 	reg    map[Name]Runner
-	// TODO: add remote registries...
 }
 
-// Unique identifier for Runner
+// Name uniquely identifiers a inject.Runner
 type Name struct {
-	Host string // Host
-	Repo string // Name
-	Tag  string // Version
+	Host  string // Host
+	Repo  string // Name
+	Tag   string // Version
+	Stage api.ElementStage
 }
 
-// Query for a Runner
+// NameQuery is a query for a Runner
 type NameQuery struct {
-	Repo string // Name
-	Tag  string // Version
+	Repo  string // Name
+	Tag   string // Version
+	Stage api.ElementStage
 }
 
 func (a *registry) Add(name Name, runner Runner) error {
@@ -36,7 +39,7 @@ func (a *registry) Add(name Name, runner Runner) error {
 		a.reg = make(map[Name]Runner)
 	}
 	if r := a.reg[name]; r != nil {
-		return alreadyAdded
+		return errAlreadyAdded
 	}
 	a.reg[name] = runner
 	return nil
@@ -46,10 +49,14 @@ func (a *registry) Find(query NameQuery) ([]Runner, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	name := Name{Repo: query.Repo, Tag: query.Tag}
-	if r := a.reg[name]; r == nil {
-		return nil, nil
-	} else {
-		return []Runner{r}, nil
+	name := Name{
+		Repo:  query.Repo,
+		Tag:   query.Tag,
+		Stage: query.Stage,
 	}
+	r := a.reg[name]
+	if r == nil {
+		return nil, nil
+	}
+	return []Runner{r}, nil
 }

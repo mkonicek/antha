@@ -184,7 +184,10 @@ func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams, rea
 		if err != nil {
 			return nil, fmt.Errorf("cannot get component for process %q: %s", process, err)
 		}
-		runner, err := inject.Find(ctx, inject.NameQuery{Repo: c})
+		runner, err := inject.Find(ctx, inject.NameQuery{
+			Repo:  c,
+			Stage: api.ElementStage_STEPS,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("unknown component %q: %s", c, err)
 		}

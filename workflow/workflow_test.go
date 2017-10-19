@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
 )
 
@@ -16,7 +17,7 @@ const (
 func createContext() (context.Context, error) {
 	ctx := inject.NewContext(context.Background())
 
-	if err := inject.Add(ctx, inject.Name{Repo: "Equals"}, &inject.FuncRunner{
+	if err := inject.Add(ctx, inject.Name{Repo: "Equals", Stage: api.ElementStage_STEPS}, &inject.FuncRunner{
 		RunFunc: func(_ context.Context, value inject.Value) (inject.Value, error) {
 			if a, ok := value["A"].(string); !ok {
 				return nil, fmt.Errorf("cannot read parameter A")
@@ -29,7 +30,7 @@ func createContext() (context.Context, error) {
 	}); err != nil {
 		return nil, err
 	}
-	if err := inject.Add(ctx, inject.Name{Repo: "Cond"}, &inject.FuncRunner{
+	if err := inject.Add(ctx, inject.Name{Repo: "Cond", Stage: api.ElementStage_STEPS}, &inject.FuncRunner{
 		RunFunc: func(_ context.Context, value inject.Value) (inject.Value, error) {
 			if a, ok := value["True"].(string); !ok {
 				return nil, fmt.Errorf("cannot read parameter True")
@@ -46,7 +47,7 @@ func createContext() (context.Context, error) {
 	}); err != nil {
 		return nil, err
 	}
-	if err := inject.Add(ctx, inject.Name{Repo: "Copy"}, &inject.FuncRunner{
+	if err := inject.Add(ctx, inject.Name{Repo: "Copy", Stage: api.ElementStage_STEPS}, &inject.FuncRunner{
 		RunFunc: func(_ context.Context, value inject.Value) (inject.Value, error) {
 			a, ok := value["In"].(string)
 			if !ok {

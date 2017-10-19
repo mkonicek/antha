@@ -888,6 +888,81 @@ func MakeNitrogenSourcePolicy() wtype.LHPolicy {
 	return nspolicy
 }
 
+// NewConditionalRule makes a new LHPolicyRule with conditions to apply to an LHPolicy.
+//
+// An error is returned if an invalid Condition Class or SetPoint is specified.
+// The valid Setpoints can be found in wtype.MakeInstructionParameters()
+func NewConditionalRule(ruleName string, conditions ...condition) (wtype.LHPolicyRule, error) {
+	var errs []string
+
+	rule := wtype.NewLHPolicyRule(ruleName)
+	for _, condition := range conditions {
+		err := condition.AddToRule(rule)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return rule, fmt.Errorf(strings.Join(errs, ".\n"))
+	}
+	return rule, nil
+}
+
+type condition interface {
+	AddToRule(wtype.LHPolicyRule) error
+}
+
+type categoricCondition struct {
+	Class    string
+	SetPoint string
+}
+
+type conditionRange struct {
+	Lower float64
+	Upper float64
+}
+
+func (c categoricCondition) AddToRule(rule wtype.LHPolicyRule) error {
+	return rule.AddCategoryConditionOn(c.Class, c.SetPoint)
+}
+
+type numericCondition struct {
+	Class string
+	Range conditionRange
+}
+
+func (c numericCondition) AddToRule(rule wtype.LHPolicyRule) error {
+	return rule.AddNumericConditionOn(c.Class, c.Range.Lower, c.Range.Upper)
+}
+
+// Conditions based on liquid policy used
+var (
+	OnSmartMix  = categoricCondition{"LIQUIDCLASS", "SmartMix"}
+	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
+	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
+	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
+)
+
+// Conditions based on volume of liquid that a sample is being pipetted into at the destination well
+var (
+	IntoLessThan20ul          = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{Lower: 0.0, Upper: 20.0}}
+	IntoBetween20ulAnd50ul    = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{20.0, 50.0}}
+	IntoBetween50ulAnd100ul   = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{50.0, 100.0}}
+	IntoBetween100ulAnd200ul  = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{100.0, 200.0}}
+	IntoBetween200ulAnd1000ul = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{200.0, 1000.0}}
+)
+
+// Conditions based on volume of liquid being transferred
+var (
+	LessThan20ul = numericCondition{Class: "VOLUME", Range: conditionRange{0.0, 20.0}}
+)
+
+// Conditions based on volume of liquid in source well from which a sample is taken
+var (
+	FromBetween100ulAnd200ul  = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{100.0, 200.0}}
+	FromBetween200ulAnd1000ul = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{200.0, 1000.0}}
+)
+
 func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	// make some policies
 
@@ -907,47 +982,57 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 		lhpr.AddRule(rule, policy)
 	}
 
-	adjustPostMix := wtype.NewLHPolicyRule("mixInto20ul")
-	adjustPostMix.AddCategoryConditionOn("LIQUIDCLASS", "SmartMix")
-	adjustPostMix.AddNumericConditionOn("TOWELLVOLUME", 20.0, 50.0)
+	adjustPostMix, err := NewConditionalRule("mixInto20ul", OnSmartMix, IntoBetween20ulAnd50ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
 	adjustVol20 := AdjustPostMixVolume(wunit.NewVolume(20, "ul"))
+	adjustVol50 := AdjustPostMixVolume(wunit.NewVolume(50, "ul"))
+	adjustVol100 := AdjustPostMixVolume(wunit.NewVolume(100, "ul"))
+	adjustVol200 := AdjustPostMixVolume(wunit.NewVolume(200, "ul"))
 
 	lhpr.AddRule(adjustPostMix, adjustVol20)
 
-	adjustPostMix = wtype.NewLHPolicyRule("mixInto50ul")
-	adjustPostMix.AddCategoryConditionOn("LIQUIDCLASS", "SmartMix")
-	adjustPostMix.AddNumericConditionOn("TOWELLVOLUME", 50.0, 100.0)
-	adjustVol50 := AdjustPostMixVolume(wunit.NewVolume(50, "ul"))
+	adjustPostMix50, err := NewConditionalRule("mixInto50ul", OnSmartMix, IntoBetween50ulAnd100ul)
 
-	lhpr.AddRule(adjustPostMix, adjustVol50)
+	if err != nil {
+		return lhpr, err
+	}
 
-	adjustPostMix = wtype.NewLHPolicyRule("mixInto100ul")
-	adjustPostMix.AddCategoryConditionOn("LIQUIDCLASS", "SmartMix")
-	adjustPostMix.AddNumericConditionOn("TOWELLVOLUME", 100.0, 200.0)
-	adjustVol100 := AdjustPostMixVolume(wunit.NewVolume(100, "ul"))
+	lhpr.AddRule(adjustPostMix50, adjustVol50)
 
-	lhpr.AddRule(adjustPostMix, adjustVol100)
+	adjustPostMix100, err := NewConditionalRule("mixInto100ul", OnSmartMix, IntoBetween100ulAnd200ul)
 
-	adjustPostMix = wtype.NewLHPolicyRule("mixInto200ul")
-	adjustPostMix.AddCategoryConditionOn("LIQUIDCLASS", "SmartMix")
-	adjustPostMix.AddNumericConditionOn("TOWELLVOLUME", 200.0, 500.0)
-	adjustVol200 := AdjustPostMixVolume(wunit.NewVolume(200, "ul"))
+	if err != nil {
+		return lhpr, err
+	}
 
-	lhpr.AddRule(adjustPostMix, adjustVol200)
+	lhpr.AddRule(adjustPostMix100, adjustVol100)
+
+	adjustPostMix200, err := NewConditionalRule("mixInto200ul", OnSmartMix, IntoBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPostMix200, adjustVol200)
 
 	// adjust original PostMix and NeedToMix policy to only set post mix volume if low volume.
+	postmix20ul, err := NewConditionalRule("PostMix20ul", OnPostMix, LessThan20ul)
 
-	postmix20ul := wtype.NewLHPolicyRule("PostMix20ul")
-	postmix20ul.AddCategoryConditionOn("LIQUIDCLASS", "PostMix")
-	postmix20ul.AddNumericConditionOn("VOLUME", 0.0, 20.0)
+	if err != nil {
+		return lhpr, err
+	}
 
 	lhpr.AddRule(postmix20ul, adjustVol20)
 
-	needToMix20ul := wtype.NewLHPolicyRule("NeedToMix20ul")
-	needToMix20ul.AddCategoryConditionOn("LIQUIDCLASS", "PostMix")
-	needToMix20ul.AddNumericConditionOn("VOLUME", 0.0, 20.0)
+	needToMix20ul, err := NewConditionalRule("NeedToMix20ul", OnNeedToMix, LessThan20ul)
 
-	needToMix20ul.AddCategoryConditionOn("LIQUIDCLASS", "NeedToMix")
+	if err != nil {
+		return lhpr, err
+	}
 
 	lhpr.AddRule(needToMix20ul, adjustVol20)
 
@@ -957,42 +1042,54 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	adjustPreMixVol200 := AdjustPreMixVolume(wunit.NewVolume(200, "ul"))
 
 	// PreMix
-	adjustPreMix := wtype.NewLHPolicyRule("preMix20ul")
-	adjustPreMix.AddCategoryConditionOn("LIQUIDCLASS", "PreMix")
-	adjustPreMix.AddNumericConditionOn("VOLUME", 0.0, 20.0)
+	adjustPreMix, err := NewConditionalRule("preMix20ul", OnPreMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
 
 	lhpr.AddRule(adjustPreMix, adjustPreMixVol20)
 
-	adjustPreMix = wtype.NewLHPolicyRule("needtopremixFrom100ul")
-	adjustPreMix.AddCategoryConditionOn("LIQUIDCLASS", "PreMix")
-	adjustPreMix.AddNumericConditionOn("WELLFROMVOLUME", 100.0, 200.0)
+	adjustPreMix100ul, err := NewConditionalRule("PreMixFrom100ul", OnPreMix, FromBetween100ulAnd200ul)
 
-	lhpr.AddRule(adjustPreMix, adjustPreMixVol100)
+	if err != nil {
+		return lhpr, err
+	}
 
-	adjustPreMix = wtype.NewLHPolicyRule("premixFrom200ul")
-	adjustPreMix.AddCategoryConditionOn("LIQUIDCLASS", "PreMix")
-	adjustPreMix.AddNumericConditionOn("WELLFROMVOLUME", 200.0, 1000.0)
+	lhpr.AddRule(adjustPreMix100ul, adjustPreMixVol100)
 
-	lhpr.AddRule(adjustPreMix, adjustPreMixVol200)
+	adjustPreMix200ul, err := NewConditionalRule("PreMixFrom200ul", OnPreMix, FromBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPreMix200ul, adjustPreMixVol200)
 
 	// NeedToMix
-	adjustNeedToMix := wtype.NewLHPolicyRule("needtopreMix20ul")
-	adjustNeedToMix.AddCategoryConditionOn("LIQUIDCLASS", "NeedToMix")
-	adjustNeedToMix.AddNumericConditionOn("VOLUME", 0.0, 20.0)
+	adjustNeedToMix, err := NewConditionalRule("NeedToPreMix20ul", OnNeedToMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
 
 	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol20)
 
-	adjustNeedToMix = wtype.NewLHPolicyRule("needtopremixFrom100ul")
-	adjustNeedToMix.AddCategoryConditionOn("LIQUIDCLASS", "NeedToMix")
-	adjustNeedToMix.AddNumericConditionOn("WELLFROMVOLUME", 100.0, 200.0)
+	adjustNeedToMix100ul, err := NewConditionalRule("NeedToPreMixFrom100ul", OnNeedToMix, FromBetween100ulAnd200ul)
 
-	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol100)
+	if err != nil {
+		return lhpr, err
+	}
 
-	adjustNeedToMix = wtype.NewLHPolicyRule("needtopremixFrom200ul")
-	adjustNeedToMix.AddCategoryConditionOn("LIQUIDCLASS", "NeedToMix")
-	adjustNeedToMix.AddNumericConditionOn("WELLFROMVOLUME", 200.0, 1000.0)
+	lhpr.AddRule(adjustNeedToMix100ul, adjustPreMixVol100)
 
-	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol200)
+	adjustNeedToMix200ul, err := NewConditionalRule("NeedToPreMixFrom200ul", OnNeedToMix, FromBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustNeedToMix200ul, adjustPreMixVol200)
 
 	// hack to fix plate type problems
 	// this really should be removed asap

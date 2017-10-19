@@ -130,6 +130,7 @@ func (res BlastResults) QueryCentredAlignment() []AlignedBioSequence {
 
 type SimpleAlignment []AlignedBioSequence
 
+// no guarantees... it's just some strings
 type ReallySimpleAlignment []string
 
 func (aln ReallySimpleAlignment) Column(i int) string {

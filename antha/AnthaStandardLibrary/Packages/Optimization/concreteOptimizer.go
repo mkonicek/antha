@@ -18,7 +18,7 @@ func DefaultParameters() AssemblyOptimizerParameters {
 		prm["step_size"] = 3
 		prm["pop_size"] = 100
 	*/
-	prm.Set("max_iterations", 200)
+	prm.Set("max_iterations", 2000)
 	prm.Set("recom_p", 0.5)
 	prm.Set("mut_p", 0.5)
 	prm.Set("step_size", 1)
@@ -31,7 +31,7 @@ func DefaultConstraints() Constraints {
 	return Constraints{
 		MaxLen:       500,
 		MinLen:       10,
-		MaxSplits:    4,
+		MaxSplits:    3,
 		MinDistToMut: 2,
 	}
 }
@@ -151,8 +151,6 @@ func OptimizeAssembly(query string, seqs wtype.ReallySimpleAlignment, constraint
 
 	problem := msaToAssemblyProblem(seqs, query)
 
-	fmt.Println("HERES THE PROBLEM: ", problem)
-
 	// solve the problem
 
 	prms := DefaultParameters()
@@ -168,6 +166,8 @@ func OptimizeAssembly(query string, seqs wtype.ReallySimpleAlignment, constraint
 		}
 	}
 
+	fmt.Println("BEST SCORE ", bestScore, " Mem: ", bestMem)
+
 	return makeFragmentsFromSolution(bestMem, seqs)
 }
 
@@ -176,11 +176,11 @@ func makeFragmentsFromSolution(solution PointSet1D, seqs wtype.ReallySimpleAlign
 
 	last := 0
 	for i := 0; i < len(solution); i++ {
-		r = append(r, Distinct(seqs.MultiColumn(last, solution[i]-last+1)))
-		last = solution[i]
+		r = append(r, Distinct(seqs.MultiColumn(last, solution[i]-last)))
+		last = solution[i] - 1
 	}
 
-	r = append(r, Distinct(seqs.MultiColumn(last, len(seqs[0])-last+1)))
+	r = append(r, Distinct(seqs.MultiColumn(last, len(seqs[0])-last)))
 
 	return r
 }
@@ -194,7 +194,7 @@ func msaToAssemblyProblem(seqs wtype.ReallySimpleAlignment, query string) Assemb
 		if len(n) > 1 {
 			// mutations are recorded as occurring in the middle of the position
 			// so we need to ensure that the minimum distance is set to 2
-			ps2d = append(ps2d, Point2D{X: i + 1, Y: len(n) - 1})
+			ps2d = append(ps2d, Point2D{X: i + 1, Y: len(n)})
 		}
 	}
 
@@ -281,7 +281,6 @@ func (p *Population) Regenerate(scores FitnessValues, prm AssemblyOptimizerParam
 
 func (p *Population) Pick(fit FitnessValues, m PointSet1D) PointSet1D {
 	var picked PointSet1D
-
 	for tries := 0; tries < len(fit.Fit); tries++ {
 		if picked != nil && !reflect.DeepEqual(picked, m) {
 			break
@@ -391,7 +390,7 @@ func dist(a, b int) int {
 }
 
 func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
-	if len(m) > cnstr.MaxSplits {
+	if len(m) > cnstr.MaxSplits || len(m) == 0 {
 		return false
 	}
 
@@ -627,6 +626,10 @@ func scale(f int, fs []int) float64 {
 		}
 	}
 
+	if max == min {
+		return 1.0
+	}
+
 	return float64(f-min) / float64(max-min)
 }
 
@@ -685,7 +688,7 @@ func makeMember(problem AssemblyProblem, constraints Constraints) PointSet1D {
 
 	// minimum number of splits is len(problem.Seq) / constraints.MaxLen (integer div)
 
-	minSplit := len(problem.Seq) / constraints.MaxLen
+	minSplit := 3 * len(problem.Seq) / constraints.MaxLen
 
 	if constraints.MaxSplits < minSplit {
 		panic("too long for this number of splits")

@@ -30,12 +30,12 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
-type Opt struct{}
-
+// A Frontend is a deprecated object to maintain loging state
 type Frontend struct {
 	shutdowns []func() error
 }
 
+// Shutdown closes any open connections
 func (a *Frontend) Shutdown() (err error) {
 	for _, fn := range a.shutdowns {
 		if e := fn(); e != nil {
@@ -53,9 +53,9 @@ func (a *middleware) Log(lvl logger.LogLevel, ts int64, source, msg string, extr
 	if lvl == logger.TRACK {
 		return
 	}
-	fmt.Fprint(a.out, msg)
-	fmt.Fprint(a.out, extra...)
-	fmt.Fprint(a.out, "\n")
+	fmt.Fprint(a.out, msg)      // nolint
+	fmt.Fprint(a.out, extra...) // nolint
+	fmt.Fprint(a.out, "\n")     // nolint
 }
 
 func (a *middleware) Measure(ts int64, source, msg string, extra ...interface{}) {}
@@ -64,7 +64,8 @@ func (a *middleware) Sensor(ts int64, source, msg string, extra ...interface{}) 
 
 func (a *middleware) Data(ts int64, data interface{}, extra ...interface{}) {}
 
-func New(opt Opt) (*Frontend, error) {
+// New creates a new frontend
+func New() (*Frontend, error) {
 	mw := &middleware{out: os.Stdout}
 	logger.RegisterMiddleware(mw)
 

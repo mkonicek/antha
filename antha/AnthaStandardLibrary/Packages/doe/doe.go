@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for facilitating DOE methodology in antha
+// Package doe facilitates DOE methodology in antha
 package doe
 
 import (
@@ -59,7 +59,7 @@ func round(value interface{}) (interface{}, error) {
 	return v, nil
 }
 
-// only round floats and concs
+// RoundLevels round floats and concs
 func (pair DOEPair) RoundLevels() (newpair DOEPair, err error) {
 
 	var newlevels []interface{}
@@ -115,7 +115,8 @@ func (pair DOEPair) RoundLevels() (newpair DOEPair, err error) {
 	return newpair, nil
 }
 
-// returns the maximum level of a DOEPair if the factor is numeric, if the factor is not numeric an error is returned
+// MaxLevel returns the maximum level of a DOEPair if the factor is numeric, if
+// the factor is not numeric an error is returned
 func (pair DOEPair) MaxLevel() (maxlevel interface{}, err error) {
 	arraytype, err := search.CheckArrayType(pair.Levels)
 	if err != nil {
@@ -135,8 +136,9 @@ func (pair DOEPair) MaxLevel() (maxlevel interface{}, err error) {
 	return maxlevel, fmt.Errorf("cannot sort non-numeric type of %s", arraytype)
 }
 
-// returns the minimum level of a DOEPair if the factor is numeric,
-// if the factor is not numeric an error is returned unless the factor is a MergedLevel comprising of concentration values
+// MinLevel returns the minimum level of a DOEPair if the factor is numeric, if
+// the factor is not numeric an error is returned unless the factor is a
+// MergedLevel comprising of concentration values
 func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 
 	arraytype, err := search.CheckArrayType(pair.Levels)
@@ -186,7 +188,7 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 					concInt, found := merged.OriginalFactorPairs[key]
 
 					if !found {
-						return minlevel, fmt.Errorf("merged factor %s not found in level %s of %s", key, i, fmt.Sprint(pair))
+						return minlevel, fmt.Errorf("merged factor %s not found in level %d of %s", key, i, fmt.Sprint(pair))
 					}
 
 					conc, err := HandleConcFactor(key, concInt)
@@ -207,7 +209,7 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 					concInt, found := merged.OriginalFactorPairs[key]
 
 					if !found {
-						return minlevel, fmt.Errorf("merged factor %s not found in level %s of %s", key, i, fmt.Sprint(pair))
+						return minlevel, fmt.Errorf("merged factor %s not found in level %d of %s", key, i, fmt.Sprint(pair))
 					}
 
 					conc, err := HandleConcFactor(key, concInt)
@@ -255,26 +257,8 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 			if equal, err := merged.EqualToMergeConcs(lowestMerged); equal && err == nil {
 				fmt.Println("same: ", merged, lowestMerged)
 				return level, nil
-			} else {
-				fmt.Println(merged, " not equal to ", lowestMerged, ": ", err.Error())
 			}
-			/*
-				for _ key := range merged.Sort() {
-					concInt := merged.OriginalFactorPairs[key]
-
-					conc, err := doe.HandleConcFactor(key,concInt)
-
-						if err != nil {
-								return maxlevel, err
-
-						}
-
-					if conc.EqualTo(lowestconc){
-
-					}
-				}
-
-			*/
+			fmt.Println(merged, " not equal to ", lowestMerged, ": ", err.Error())
 		}
 		return minlevel, fmt.Errorf("cannot find lowest level of MergedLevel: lowest found %s in %s", fmt.Sprintln(lowestMerged), pairSummary(pair))
 
@@ -312,7 +296,7 @@ func pairSummary(pair DOEPair) string {
 	return (strings.Join(s, "; "))
 }
 
-// pair a factor with all levels found in runs
+// MakePair pairs a factor with all levels found in runs
 func MakePair(runs []Run, factor string) (allfactorPairs DOEPair, err error) {
 
 	var levels []interface{}
@@ -328,8 +312,8 @@ func MakePair(runs []Run, factor string) (allfactorPairs DOEPair, err error) {
 	return Pair(factor, levels), nil
 }
 
-// creates a copy of the pair with reduced factors
-// if an error occurs the orginal pair is returned
+// RemoveDuplicateLevels creates a copy of the pair with reduced factors if an
+// error occurs the orginal pair is returned
 func RemoveDuplicateLevels(pair DOEPair) (reducedpair DOEPair, err error) {
 	reducedpair.Factor = pair.Factor
 	// remove duplicates
@@ -421,31 +405,32 @@ func Copy(run Run) (newrun Run) {
 	return
 }
 
-// ignores run order, std order  and additional information but checks all other properties for identical matches
+// EqualTo compares Runs but ignores run order, std order  and additional
+// information but checks all other properties for identical matches
 func (run Run) EqualTo(run2 Run) (bool, error) {
 
 	for i, value := range run.Factordescriptors {
 		if value != run2.Factordescriptors[i] {
-			return false, fmt.Errorf("factors differ between runs at factor %s: %s and %s ", i, value, run2.Factordescriptors[i])
+			return false, fmt.Errorf("factors differ between runs at factor %d: %s and %s ", i, value, run2.Factordescriptors[i])
 		}
 	}
 
 	for i, value := range run.Setpoints {
 
 		if !reflect.DeepEqual(value, run2.Setpoints[i]) {
-			return false, fmt.Errorf("setpoints differ between runs at setpoint %s: %s and %s ", i, value, run2.Setpoints[i])
+			return false, fmt.Errorf("setpoints differ between runs at setpoint %d: %s and %s ", i, value, run2.Setpoints[i])
 		}
 	}
 
 	for i, value := range run.Responsedescriptors {
 		if value != run2.Responsedescriptors[i] {
-			return false, fmt.Errorf("responses differ between runs at response %s: %s and %s ", i, value, run2.Responsedescriptors[i])
+			return false, fmt.Errorf("responses differ between runs at response %d: %s and %s ", i, value, run2.Responsedescriptors[i])
 		}
 	}
 
 	for i, value := range run.ResponseValues {
 		if !reflect.DeepEqual(value, run2.ResponseValues[i]) {
-			return false, fmt.Errorf("response values differ between runs at response value %s: %s and %s ", i, value, run2.ResponseValues[i])
+			return false, fmt.Errorf("response values differ between runs at response value %d: %s and %s ", i, value, run2.ResponseValues[i])
 		}
 	}
 	return true, nil
@@ -570,8 +555,9 @@ func AddNewResponseFieldandValue(run Run, responsedescriptor string, responseval
 	return
 }
 
-// Add a new response field. The response field will be added with a blank response value.
-// The field will only be added if the response is not already present.
+// AddNewResponseField adds a new response field. The response field will be
+// added with a blank response value.  The field will only be added if the
+// response is not already present.
 func AddNewResponseField(run Run, responsedescriptor string) (newrun Run) {
 
 	newrun = run
@@ -798,8 +784,7 @@ func (run Run) GetAdditionalInfo(subheader string) (value interface{}, err error
 
 		}
 	}
-	// fmt.Println("Header: ", subheader)
-	return value, fmt.Errorf("header, ", subheader, " not found in ", run.AdditionalSubheaders)
+	return value, fmt.Errorf("header %s not found in %v", subheader, run.AdditionalSubheaders)
 }
 
 func AddFixedFactors(runs []Run, fixedfactors []DOEPair) (runswithfixedfactors []Run) {
@@ -924,11 +909,10 @@ func mergeFactorLevels(run1 Run, run2 Run, factors []string, newLevel interface{
 	for _, factor := range factors {
 		if same, err := sameFactorLevels(run1, run2, factor); !same || err != nil {
 			return deadrun, "", err
-		} else {
-			// preserve order of factor names from original design
-			factornames = append(factornames, factor)
-			run3 = DeleteFactorField(run3, factor)
 		}
+		// preserve order of factor names from original design
+		factornames = append(factornames, factor)
+		run3 = DeleteFactorField(run3, factor)
 	}
 
 	newfactorName = MergeFactorNames(factornames)
@@ -950,12 +934,14 @@ func MergeFactorNames(factorNames []string) (combinedFactor string) {
 	return
 }
 
-// product of merging two factor levels and retaining the original merged factor level pairs in a map
+// A MergedLevel is the product of merging two factor levels and retaining the
+// original merged factor level pairs in a map
 type MergedLevel struct {
-	OriginalFactorPairs map[string]interface{} `json:OriginalFactorPairs` // map of original factor names to levels e.g. "Glucose":"10uM", "Glycerol mM": 0
+	OriginalFactorPairs map[string]interface{} `json:"OriginalFactorPairs"` // map of original factor names to levels e.g. "Glucose":"10uM", "Glycerol mM": 0
 }
 
-// returns keys in alphabetical order; values are returned in the order corresponding to the key order
+// UnMerge returns keys in alphabetical order; values are returned in the order
+// corresponding to the key order
 func (m MergedLevel) UnMerge() (factors []string, setpoints []interface{}) {
 
 	sortedKeys := m.Sort()
@@ -970,9 +956,10 @@ func (m MergedLevel) UnMerge() (factors []string, setpoints []interface{}) {
 	return
 }
 
-// returns keys in alphabetical order; values are returned in the order corresponding to the key order
+// Sort returns keys in alphabetical order; values are returned in the order
+// corresponding to the key order
 func (m MergedLevel) Sort() (orderedKeys []string) {
-	for k, _ := range m.OriginalFactorPairs {
+	for k := range m.OriginalFactorPairs {
 		orderedKeys = append(orderedKeys, k)
 	}
 	sort.Strings(orderedKeys)
@@ -980,7 +967,7 @@ func (m MergedLevel) Sort() (orderedKeys []string) {
 	return
 }
 
-// Evaluates whether two merged levels are equal
+// EqualTo evaluates whether two merged levels are equal
 func (m MergedLevel) EqualTo(e MergedLevel) (bool, error) {
 
 	if len(m.OriginalFactorPairs) != len(e.OriginalFactorPairs) {
@@ -995,7 +982,7 @@ func (m MergedLevel) EqualTo(e MergedLevel) (bool, error) {
 	return true, nil
 }
 
-// Evaluates whether two merged levels are equal
+// EqualToMergeConcs evaluates whether two merged levels are equal
 func (m MergedLevel) EqualToMergeConcs(e MergedLevel) (bool, error) {
 
 	if len(m.OriginalFactorPairs) != len(e.OriginalFactorPairs) {
@@ -1039,7 +1026,8 @@ func concsEqual(conc1, conc2 wunit.Concentration) bool {
 	return false
 }
 
-// Merges an array of factors into a single merged level type using arrays of factor names and levels in order
+// MakeMergedLevel merges an array of factors into a single merged level type
+// using arrays of factor names and levels in order
 func MakeMergedLevel(factorsInOrder []string, levelsInOrder []interface{}) (m MergedLevel, err error) {
 	pairs := make(map[string]interface{})
 
@@ -1054,8 +1042,9 @@ func MakeMergedLevel(factorsInOrder []string, levelsInOrder []interface{}) (m Me
 	return
 }
 
-// Casts a valid interface into a MergedLevel. Independent of serialisation history.
-// If the value cannot be cast into a merged level an error is returned.
+// ToMergedLevel casts a valid interface into a MergedLevel. Independent of
+// serialisation history.  If the value cannot be cast into a merged level an
+// error is returned.
 func ToMergedLevel(level interface{}) (m MergedLevel, err error) {
 
 	bts, err := json.Marshal(level)
@@ -1084,7 +1073,7 @@ func findMatchingLevels(run Run, allcombos []Run, factors []string) (matchedrun 
 			return newrun, nil
 		}
 	}
-	return matchedrun, fmt.Errorf("No matching combination of levels %s found for run %s in %s: last errors: %s and %s", factors, run, allcombos, mergErr.Error(), err.Error())
+	return matchedrun, fmt.Errorf("No matching combination of levels %s found for run %v in %v: last errors: %s and %s", factors, run, allcombos, mergErr.Error(), err.Error())
 }
 
 func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []string) (mergedRuns []Run, err error) {
@@ -1102,13 +1091,13 @@ func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []strin
 	return
 }
 
-// Un merge mergedlevels into original factors and levels
+// UnMergeRuns turns mergedlevels into original factors and levels
 func UnMergeRuns(mergedRuns []Run) (originalRuns []Run) {
 
 	originalRuns = make([]Run, len(mergedRuns))
 
 	for i, run := range mergedRuns {
-		var newrun Run = Copy(run)
+		newrun := Copy(run)
 		for j, setpoint := range run.Setpoints {
 			if merged, ok := setpoint.(MergedLevel); ok {
 				factors, setpoints := merged.UnMerge()
@@ -1123,7 +1112,8 @@ func UnMergeRuns(mergedRuns []Run) (originalRuns []Run) {
 	return
 }
 
-// return the lowest level value for a specified factor name from an array of runs
+// LowestLevelValue returns the lowest level value for a specified factor name
+// from an array of runs
 func LowestLevelValue(runs []Run, factor string) (value interface{}, err error) {
 
 	// get all levels for the new factor
@@ -1147,7 +1137,8 @@ func LowestLevelValue(runs []Run, factor string) (value interface{}, err error) 
 
 }
 
-// combine all factor pairs to make all possible combinations of runs
+// AllCombinations combines all factor pairs to make all possible combinations
+// of runs
 func AllCombinations(factors []DOEPair) (runs []Run) {
 
 	//fixed, nonfixed := FixedAndNonFixed(factors)

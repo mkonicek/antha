@@ -19,6 +19,7 @@
 // contact license@antha-lang.org or write to the Antha team c/o
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
+
 package parse
 
 import (
@@ -31,7 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/platereader/dataset"
 )
 
-//
+// ParseSpectraMaxData parses spectra data from an XML file
 func ParseSpectraMaxData(xmlFileContents []byte) (dataOutput dataset.SpectraMaxData, err error) {
 
 	s, err := decodeUTF16(xmlFileContents)

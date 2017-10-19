@@ -72,14 +72,14 @@ func TestRelativeToGoPath(t *testing.T) {
 	}
 
 	cases := []TestCase{
-		TestCase{GoPath: []string{"/go"}, Name: "/go/file", Expected: "file"},
-		TestCase{GoPath: []string{"/go"}, Name: "file", Expected: "file"},
-		TestCase{GoPath: []string{"/nogo"}, Name: "/go/file", Expected: "/go/file"},
-		TestCase{GoPath: []string{"/go", "/go/deeper"}, Name: "/go/file", Expected: "file"},
-		TestCase{GoPath: []string{"/go", "/go/deeper"}, Name: "/go/deeper/file", Expected: "file"},
+		TestCase{GoPath: []string{"/xx"}, Name: "/xx/file", Expected: "file"},
+		TestCase{GoPath: []string{"/xx"}, Name: "file", Expected: "file"},
+		TestCase{GoPath: []string{"/noxx"}, Name: "/xx/file", Expected: "/xx/file"},
+		TestCase{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/file", Expected: "file"},
+		TestCase{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/deeper/file", Expected: "file"},
 	}
 
-	for _, c := range cases {
+	for idx, c := range cases {
 		var goPath []string
 		for _, v := range c.GoPath {
 			goPath = append(goPath, filepath.FromSlash(v))
@@ -89,11 +89,11 @@ func TestRelativeToGoPath(t *testing.T) {
 
 		f, err := relativeTo(goPath, name)
 		if c.HasError && err == nil {
-			t.Errorf("%+v: expected error but found success", c)
+			t.Errorf("%d: %+v: expected error but found success", idx, c)
 		} else if err != nil {
-			t.Errorf("%+v: %s", c, err)
+			t.Errorf("%d: %+v: %s", idx, c, err)
 		} else if expected != f {
-			t.Errorf("%+v: expected %q found %q", c, expected, f)
+			t.Errorf("%d: %+v: expected %q found %q", idx, c, expected, f)
 		}
 	}
 }

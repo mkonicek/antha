@@ -13,9 +13,11 @@ var (
 	_ target.Device = DataSource{}
 )
 
+// A DataSource is a generic device that provides data asynchronously
 type DataSource struct {
 }
 
+// CanCompile implements a device
 func (ds DataSource) CanCompile(req ast.Request) bool {
 	can := ast.Request{
 		Selector: []ast.NameValue{
@@ -25,17 +27,17 @@ func (ds DataSource) CanCompile(req ast.Request) bool {
 	return can.Contains(req)
 }
 
+// MoveCost implements a device
 func (ds DataSource) MoveCost(from target.Device) int {
 	return human.HumanByXCost + 1 // same as a mixer
 }
 
+// Compile implements a device
 func (ds DataSource) Compile(ctx context.Context, cmds []ast.Node) (insts []target.Inst, err error) {
 	ret := make([]target.Inst, 0, 1)
 
-	// only support one command... for now?
-
 	if len(cmds) != 1 {
-		return ret, fmt.Errorf("Multiple GetData commands not supported (%d received)", len(cmds))
+		return ret, fmt.Errorf("multiple GetData commands not supported (%d received)", len(cmds))
 	}
 
 	// XXX: rest of parameters
@@ -51,11 +53,11 @@ func (ds DataSource) Compile(ctx context.Context, cmds []ast.Node) (insts []targ
 		return nil, fmt.Errorf("cannot compile %T", c.Inst)
 	}
 
-	ret = append(ret, &target.AwaitData{
-		Dev:     ds,
-		Tags:    m.Tags,
-		AwaitID: m.AwaitID,
-	})
-
-	return ret, nil
+	return []target.Inst{
+		&target.AwaitData{
+			Dev:     ds,
+			Tags:    m.Tags,
+			AwaitID: m.AwaitID,
+		},
+	}, nil
 }

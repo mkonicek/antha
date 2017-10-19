@@ -229,7 +229,7 @@ func writeBundle(outputDir string, element *component.Component, params map[stri
 	}
 
 	fn := filepath.Join(outputDir, element.Name+".bundle.json")
-	if err := ioutil.WriteFile(fn, bs, 0666); err != nil {
+	if err := ioutil.WriteFile(fn, bs, 0600); err != nil {
 		return fmt.Errorf("cannot write file %q: %s", fn, err)
 	}
 	return nil
@@ -255,7 +255,7 @@ func newElement(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("element name %q is invalid: %s", name, err)
 	}
 
-	if err := os.MkdirAll(outputDir, 0777); err != nil {
+	if err := os.MkdirAll(outputDir, 0700); err != nil {
 		return fmt.Errorf("cannot make directory %q: %s", outputDir, err)
 	}
 

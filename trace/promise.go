@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-// Placeholder for value to be returned by an instruction
+// A Promise is placeholder for value to be returned by an instruction
 type Promise struct {
 	lock      sync.Mutex
 	construct func(interface{}) Value

@@ -12,6 +12,7 @@ import (
 	"github.com/antha-lang/antha/target/auto"
 )
 
+// Timeline creates a pretty printed timeline for an execute.Result
 func Timeline(out io.Writer, a *auto.Auto, result *execute.Result) error {
 	g := &target.Graph{
 		Insts: result.Insts,
@@ -19,7 +20,7 @@ func Timeline(out io.Writer, a *auto.Auto, result *execute.Result) error {
 
 	dag := graph.Schedule(graph.Reverse(g))
 	var lines []string
-	for round := 1; len(dag.Roots) != 0; round += 1 {
+	for round := 1; len(dag.Roots) != 0; round++ {
 		lines = append(lines, fmt.Sprintf("== Round %2d:\n", round))
 		var next []graph.Node
 		for _, n := range dag.Roots {
@@ -31,7 +32,7 @@ func Timeline(out io.Writer, a *auto.Auto, result *execute.Result) error {
 		dag.Roots = next
 	}
 
-	lines = append(lines, fmt.Sprint("== Workflow Outputs:\n"))
+	lines = append(lines, "== Workflow Outputs:\n")
 
 	for k, v := range result.Workflow.Outputs {
 		var s string

@@ -63,20 +63,23 @@ func newCompFromComp(ctx context.Context, in *wtype.LHComponent) *wtype.LHCompon
 
 // Incubate incubates a component
 func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtype.LHComponent {
+	// nolint: gosimple
+	innerInst := &ast.IncubateInst{
+		Time:           opt.Time,
+		Temp:           opt.Temp,
+		ShakeRate:      opt.ShakeRate,
+		ShakeRadius:    opt.ShakeRadius,
+		PreTemp:        opt.PreTemp,
+		PreTime:        opt.PreTime,
+		PreShakeRate:   opt.PreShakeRate,
+		PreShakeRadius: opt.PreShakeRadius,
+	}
+
 	inst := &commandInst{
 		Args: []*wtype.LHComponent{in},
 		Comp: []*wtype.LHComponent{newCompFromComp(ctx, in)},
 		Command: &ast.Command{
-			Inst: &ast.IncubateInst{
-				Time:           opt.Time,
-				Temp:           opt.Temp,
-				ShakeRate:      opt.ShakeRate,
-				ShakeRadius:    opt.ShakeRadius,
-				PreTemp:        opt.PreTemp,
-				PreTime:        opt.PreTime,
-				PreShakeRate:   opt.PreShakeRate,
-				PreShakeRadius: opt.PreShakeRadius,
-			},
+			Inst: innerInst,
 		},
 	}
 
@@ -320,7 +323,7 @@ func AwaitData(
 	switch t := object.(type) {
 	case *wtype.LHPlate:
 	default:
-		return fmt.Errorf("Cannot wait for data on %v type, only LHPlate allowed.", t)
+		return fmt.Errorf("cannot wait for data on %v type, only LHPlate allowed", t)
 	}
 
 	// Get Data Request

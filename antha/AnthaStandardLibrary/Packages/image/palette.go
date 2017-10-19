@@ -154,21 +154,6 @@ func AvailableComponentMaps() map[string]map[color.Color]string {
 	return componentMaps
 }
 
-// visibleEquivalentMaps returns just the proteinPaintboxUV color map
-func visibleEquivalentMaps() map[string]map[color.Color]string {
-	componentMaps := make(map[string]map[color.Color]string)
-	componentMaps["ProteinPaintboxUV"] = proteinPaintboxMap
-
-	if _, err := os.Stat(filepath.Join(anthapath.Path(), "testcolours.json")); err == nil {
-		m, err := makeLatestColourMap(filepath.Join(anthapath.Path(), "testcolours.json"))
-		if err != nil {
-			panic(err.Error())
-		}
-		componentMaps["UVinventory"] = m
-	}
-	return componentMaps
-}
-
 // paletteFromMap returns a palette of all colors in it given a color map.
 func paletteFromMap(colourmap map[color.Color]string) (palette color.Palette) {
 	for key := range colourmap {
@@ -280,7 +265,7 @@ func MakeSubPalette(paletteName string, colourNames []string) color.Palette {
 // RemoveDuplicatesKeysFromMap will loop over a map of colors to find and
 // delete duplicates. Entries with duplicate keys are deleted.
 func RemoveDuplicatesKeysFromMap(elements map[string]color.Color) map[string]color.Color {
-	var encountered map[string]bool
+	encountered := make(map[string]bool)
 	result := make(map[string]color.Color)
 
 	for key, v := range elements {

@@ -183,8 +183,8 @@ type Prompt struct {
 // Wait is a virtual instruction to hang dependencies on. A better name might
 // been no-op.
 type Wait struct {
-	dependsMixin
 	noDeviceMixin
+	dependsMixin
 }
 
 // TimedWait is a wait for a period of time.
@@ -219,6 +219,7 @@ type AwaitData struct {
 	ReplaceParam      string
 }
 
-func (gd *AwaitData) Device() Device {
-	return gd.Dev
+// Device implements an Inst
+func (d *AwaitData) Device() Device {
+	return d.Dev
 }

@@ -26,7 +26,8 @@ var (
 
 type fn func() error
 
-type Spawned struct {
+// Server manages spawned servers
+type Server struct {
 	Command   *exec.Cmd
 	done      chan bool
 	closers   []fn
@@ -43,7 +44,8 @@ func parse(bs []byte) (string, error) {
 	return ss[len(ss)-1], nil
 }
 
-func (a *Spawned) URI() (string, error) {
+// URI returns the URI that the spawned server expects connections on
+func (a *Server) URI() (string, error) {
 	if a.Command.Process == nil {
 		return "", errNotStarted
 	}
@@ -58,7 +60,8 @@ func (a *Spawned) URI() (string, error) {
 	}
 }
 
-func (a *Spawned) Close() (err error) {
+// Close closes all connections
+func (a *Server) Close() (err error) {
 	for _, c := range a.closers {
 		if e := c(); e != nil {
 			err = e
@@ -68,27 +71,30 @@ func (a *Spawned) Close() (err error) {
 	return
 }
 
-func (a *Spawned) Start() error {
-	if err := a.Command.Start(); err != nil {
-		return err
+// Start connects to a server
+func (a *Server) Start() (err error) {
+	if err = a.Command.Start(); err != nil {
+		return
 	}
 	go func() {
 		defer close(a.done)
-		a.Command.Wait()
+		err = a.Command.Wait()
 	}()
+
 	a.closers = append(a.closers, func() error {
 		return a.Command.Process.Kill()
 	})
-	return nil
+
+	return
 }
 
 // Copy output until stop byte is reached
 type copyUntil struct {
-	Stop byte      // Byte to stop copying at
 	Done chan bool // If not nil, signal when done
-	done bool
 	buf  bytes.Buffer
 	lock sync.Mutex
+	Stop byte // Byte to stop copying at
+	done bool
 }
 
 func (a *copyUntil) Bytes() []byte {
@@ -118,13 +124,17 @@ func (a *copyUntil) Write(bs []byte) (n int, err error) {
 			}
 			break
 		}
-		a.buf.WriteByte(b)
+		if e := a.buf.WriteByte(b); e != nil && err != nil {
+			err = e
+		}
 	}
 	return
 }
 
-func GoPackage(gopackage string, prefix string) (*Spawned, error) {
+// GoPackage returns a Spawned server given is go package
+func GoPackage(gopackage string, prefix string) (*Server, error) {
 	runCmd := func(out io.Writer, prog string, args ...string) error {
+		// nolint: gas
 		c := exec.Command(prog, args...)
 		c.Stdin = os.Stdin
 		if out == nil {
@@ -149,7 +159,7 @@ func GoPackage(gopackage string, prefix string) (*Spawned, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &Spawned{
+	s := &Server{
 		done: make(chan bool),
 		firstLine: copyUntil{
 			Stop: '\n',
@@ -167,6 +177,7 @@ func GoPackage(gopackage string, prefix string) (*Spawned, error) {
 	w1 := writer.New(colorable.NewColorableStdout(), p)
 	w2 := writer.New(colorable.NewColorableStderr(), p)
 
+	// nolint: gas
 	cmd := exec.Command(spath, "-port", "0")
 	cmd.Stdout = io.MultiWriter(w1, &s.firstLine)
 	cmd.Stderr = w2

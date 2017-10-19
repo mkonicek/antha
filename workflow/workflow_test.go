@@ -10,10 +10,6 @@ import (
 	"github.com/antha-lang/antha/inject"
 )
 
-const (
-	dataDir = "testdata"
-)
-
 func createContext() (context.Context, error) {
 	ctx := inject.NewContext(context.Background())
 

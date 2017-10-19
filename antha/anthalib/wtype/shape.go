@@ -80,7 +80,7 @@ func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 	} else if boxlike {
 		area = wunit.NewArea(sh.H*sh.W, areaunit)
 	} else {
-		err = fmt.Errorf("No method to work out cross sectional area for shape %s yet Circular? %s", sh.ShapeName, circular)
+		err = fmt.Errorf("No method to work out cross sectional area for shape %s yet Circular? %b", sh.ShapeName, circular)
 	}
 	return
 }

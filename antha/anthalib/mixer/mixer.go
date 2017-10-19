@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Core Antha package dealing with mixing and sampling in Antha
+// Package mixer deals with mixing and sampling in Antha
 package mixer
 
 import (
@@ -28,18 +28,12 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-// mix needs to define the interface with liquid handling
-// in order to do this it has to make the appropriate liquid handling
-// request structure
-
-// take all of this liquid
+// SampleAll takes all of this liquid
 func SampleAll(l *wtype.LHComponent) *wtype.LHComponent {
 	return Sample(l, l.Volume())
 }
 
-// below need to account for having locations for liquids specified...
-
-// take a sample of volume v from this liquid
+// Sample takes a sample of volume v from this liquid
 func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
 	//	ret.ID = l.ID
@@ -64,7 +58,8 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	return ret
 }
 
-// take an array of samples and array of corresponding volumes and sample them all
+// MultiSample takes an array of samples and array of corresponding volumes and
+// sample them all
 func MultiSample(l []*wtype.LHComponent, v []wunit.Volume) []*wtype.LHComponent {
 	reta := make([]*wtype.LHComponent, 0)
 
@@ -89,7 +84,8 @@ func MultiSample(l []*wtype.LHComponent, v []wunit.Volume) []*wtype.LHComponent 
 	return reta
 }
 
-// take a sample of this liquid and aim for a particular concentration
+// SampleForConcentration takes a sample of this liquid and aims for a
+// particular concentration
 func SampleForConcentration(l *wtype.LHComponent, c wunit.Concentration) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
 	//	ret.ID = l.ID
@@ -108,6 +104,7 @@ func SampleForConcentration(l *wtype.LHComponent, c wunit.Concentration) *wtype.
 	return ret
 }
 
+// SampleMass takes a sample of this liquid and aims for a particular mass
 func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHComponent {
 
 	// calculate volume to add from density
@@ -129,9 +126,9 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 	return ret
 }
 
-// take a sample ofs this liquid to be used to make the solution up to
-// a particular total volume
-// edited to take into account the volume of the other solution components
+// SampleForTotalVolume takes a sample ofs this liquid to be used to make the
+// solution up to a particular total volume edited to take into account the
+// volume of the other solution components
 func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
 	l.AddDaughterComponent(ret)
@@ -150,25 +147,7 @@ func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHCompone
 	return ret
 }
 
-/*
-func SampleSolidtoLiquid(s wtype.Powder, m wunit.Mass, d wunit.Density) *wtype.LHComponent {
-
-	// calculate volume to add from density
-	v := wunit.MasstoVolume(m, d)
-
-	ret := wtype.NewLHComponent()
-	ret.CName = s.Name()
-	ret.Type = s.GetType()
-	ret.Vol = v.RawValue()
-	ret.Vunit = v.Unit().PrefixedSymbol()
-	ret.Extra = s.GetExtra()
-	ret.Smax = s.GetSmax()
-	ret.Visc = s.GetVisc()
-
-	return ret
-}
-*/
-
+// MixOptions are options to GenericMix
 type MixOptions struct {
 	Components  []*wtype.LHComponent // Components to mix (required)
 	Instruction *wtype.LHInstruction // used to be LHSolution
@@ -180,6 +159,7 @@ type MixOptions struct {
 	PlateName   string               // which (named) plate to stick these on
 }
 
+// GenericMix is the general mixing entry point
 func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	r := opt.Instruction
 	if r == nil {

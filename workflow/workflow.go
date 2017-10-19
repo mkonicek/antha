@@ -92,7 +92,6 @@ func (a *node) setParam(port string, value interface{}) error {
 
 // Workflow is the state to execute a workflow
 type Workflow struct {
-	roots   []*node
 	nodes   map[string]*node
 	Outputs map[Port]interface{} // Values generated that were not connected to another process
 }

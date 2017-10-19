@@ -24,152 +24,14 @@ package compile
 
 import (
 	"bytes"
-	"flag"
-	"io/ioutil"
 	"testing"
-	"time"
 
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/parser"
 	"github.com/antha-lang/antha/antha/token"
 )
 
-const (
-	dataDir  = "testdata"
-	tabwidth = 8
-)
-
-var update = flag.Bool("update", false, "update golden files")
-
 var fset = token.NewFileSet()
-
-func lineString(text []byte, i int) string {
-	i0 := i
-	for i < len(text) && text[i] != '\n' {
-		i++
-	}
-	return string(text[i0:i])
-}
-
-type checkMode uint
-
-const (
-	export checkMode = 1 << iota
-	rawFormat
-)
-
-func runcheck(t *testing.T, source, golden string, mode checkMode) {
-	// parse source
-	prog, err := parser.ParseFile(fset, source, nil, parser.ParseComments)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	// filter exports if necessary
-	if mode&export != 0 {
-		ast.FileExports(prog) // ignore result
-		prog.Comments = nil   // don't print comments that are not in AST
-	}
-
-	// determine printer configuration
-	cfg := Config{Tabwidth: tabwidth}
-	if mode&rawFormat != 0 {
-		cfg.Mode |= RawFormat
-	}
-
-	// format source
-	var buf bytes.Buffer
-	if err := cfg.Fprint(&buf, fset, prog); err != nil {
-		t.Error(err)
-	}
-	res := buf.Bytes()
-
-	// formatted source must be valid
-	if _, err := parser.ParseFile(fset, "", res, 0); err != nil {
-		t.Error(err)
-		t.Logf("\n%s", res)
-		return
-	}
-
-	// update golden files if necessary
-	if *update {
-		if err := ioutil.WriteFile(golden, res, 0644); err != nil {
-			t.Error(err)
-		}
-		return
-	}
-
-	// get golden
-	gld, err := ioutil.ReadFile(golden)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	// compare lengths
-	if len(res) != len(gld) {
-		t.Errorf("len = %d, expected %d (= len(%s))", len(res), len(gld), golden)
-	}
-
-	// compare contents
-	for i, line, offs := 0, 1, 0; i < len(res) && i < len(gld); i++ {
-		ch := res[i]
-		if ch != gld[i] {
-			t.Errorf("%s:%d:%d: %s", source, line, i-offs+1, lineString(res, offs))
-			t.Errorf("%s:%d:%d: %s", golden, line, i-offs+1, lineString(gld, offs))
-			t.Error()
-			return
-		}
-		if ch == '\n' {
-			line++
-			offs = i + 1
-		}
-	}
-}
-
-func check(t *testing.T, source, golden string, mode checkMode) {
-	// start a timer to produce a time-out signal
-	tc := make(chan int)
-	go func() {
-		time.Sleep(10 * time.Second) // plenty of a safety margin, even for very slow machines
-		tc <- 0
-	}()
-
-	// run the test
-	cc := make(chan int)
-	go func() {
-		runcheck(t, source, golden, mode)
-		cc <- 0
-	}()
-
-	// wait for the first finisher
-	select {
-	case <-tc:
-		// test running past time out
-		t.Errorf("%s: running too slowly", source)
-	case <-cc:
-		// test finished within alloted time margin
-	}
-}
-
-type entry struct {
-	source, golden string
-	mode           checkMode
-}
-
-// Use go test -update to create/update the respective golden files.
-var data = []entry{
-	{"empty.input", "empty.golden", 0},
-	//	{"comments.input", "comments.golden", 0},
-	//	{"comments.input", "comments.x", export},
-	//	{"linebreaks.input", "linebreaks.golden", 0},
-	//	{"expressions.input", "expressions.golden", 0},
-	//	{"expressions.input", "expressions.raw", rawFormat},
-	//	{"declarations.input", "declarations.golden", 0},
-	//	{"statements.input", "statements.golden", 0},
-	//	{"slow.input", "slow.golden", 0},
-}
 
 // TestLineComments, using a simple test case, checks that consequtive line
 // comments are properly terminated with a newline even if the AST position
@@ -190,7 +52,9 @@ func TestLineComments(t *testing.T) {
 
 	var buf bytes.Buffer
 	fset = token.NewFileSet() // use the wrong file set
-	Fprint(&buf, fset, f)
+	if err := Fprint(&buf, fset, f); err != nil {
+		t.Fatal(err)
+	}
 
 	nlines := 0
 	for _, ch := range buf.Bytes() {
@@ -223,7 +87,9 @@ func init() {
 // Verify that the printer doesn't crash if the AST contains BadXXX nodes.
 
 // ddn: test disabled because additional boilerplate throws off comparisons
-func xTestBadNodes(t *testing.T) {
+func TestIllegalProgram(t *testing.T) {
+	t.Skip("disabled due to boilerplate")
+
 	const src = "package p\n("
 	//	const res = "package p\nBadDecl\n"
 	const res = "package p\n\nimport \"github.com/antha-lang/antha/antha/execute\"\nimport \"github.com/Synthace/goflow\"\nimport \"sync\"\nimport \"encoding/json\"\n//import \"log\"\n//import \"bytes\"\n//import \"io\"\n\n\n\nBadDecl\n// AsyncBag functions\nfunc (e *P) Complete(params interface{}) {\n\tp := params.(PParamBlock)\n\tif p.Error {\n\n\t\treturn\n\t}\n\tr := new(PResultBlock)\n\te.startup.Do(func() { e.setup(p) })\n\te.steps(p, r)\n\tif r.Error {\n\n\t\treturn\n\t}\n\n\te.analysis(p, r)\n\t\tif r.Error {\n\n\n\t\treturn\n\t}\n\n\te.validation(p, r)\n\t\tif r.Error {\n\n\t\treturn\n\t}\n\n}\n\n// empty function for interface support\nfunc (e *P) anthaElement() {}\n\n// init function, read characterization info from seperate file to validate ranges?\nfunc (e *P) init() {\n\te.params = make(map[execute.ThreadID]*execute.AsyncBag)\n}\n\nfunc NewP() interface{} {//*P {\n\te := new(P)\n\te.init()\n\treturn e\n}\n\n// Mapper function\nfunc (e *P) Map(m map[string]interface{}) interface{} {\n\tvar res PParamBlock\n\tres.Error = false \n\n\n\treturn res\n}\n\n\ntype P struct {\n\tflow.Component                    // component \"superclass\" embedded\n\tlock           sync.Mutex\n\tstartup        sync.Once\n\tparams         map[execute.ThreadID]*execute.AsyncBag\n}\n\ntype PParamBlock struct{\n\tID\t\texecute.ThreadID\n\tError\tbool\n}\ntype PResultBlock struct{\n\tID\t\texecute.ThreadID\n\tError\tbool\n}\ntype PJSONBlock struct{\n\tID\t\t\t*execute.ThreadID\n\tError\t\t*bool\n}\n" //TODO review the intention of this test
@@ -232,7 +98,9 @@ func xTestBadNodes(t *testing.T) {
 		t.Error("expected illegal program") // error in test
 	}
 	var buf bytes.Buffer
-	Fprint(&buf, fset, f)
+	if err := Fprint(&buf, fset, f); err != nil {
+		t.Fatal(err)
+	}
 	if buf.String() != res {
 		t.Errorf("got %q, expected %q", buf.String(), res)
 	}
@@ -329,14 +197,16 @@ func idents(f *ast.File) <-chan *ast.Ident {
 // identCount returns the number of identifiers found in f.
 func identCount(f *ast.File) int {
 	n := 0
-	for _ = range idents(f) {
+	for range idents(f) {
 		n++
 	}
 	return n
 }
 
 // NB(ddn): test disabled because additional boilerplate throws off comparisons
-func xTestSourcePos(t *testing.T) {
+func TestSourcePos(t *testing.T) {
+	t.Skip("disabled due to boilerplate")
+
 	const src = `
 package p
 import ( "go/printer"; "math" )

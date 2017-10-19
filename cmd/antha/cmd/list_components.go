@@ -63,7 +63,9 @@ func (a simpleComponents) Len() int {
 }
 
 func listComponents(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	red := func(x string) string {
 		return ansi.Color(x, "red")

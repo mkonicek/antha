@@ -310,9 +310,6 @@ func TestLHPlateSerialize(t *testing.T) {
 }
 
 func TestAddGetClearData(t *testing.T) {
-	// Static check for it a plate is Annotatable
-	var _ Annotatable = (*LHPlate)(nil)
-
 	dat := []byte("3.5")
 
 	t.Run("basic", func(t *testing.T) {

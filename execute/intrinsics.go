@@ -2,10 +2,12 @@ package execute
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/inventory"
@@ -305,4 +307,55 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 		Address:    address,
 		PlateNum:   platenum,
 	}))
+}
+
+// AwaitData breaks execution pending return of requested data
+func AwaitData(
+	ctx context.Context,
+	object Annotatable,
+	meta *api.DeviceMetadata,
+	nextElement, replacedParam string,
+	nextInputs, elementOutputs api.ElementParameters) error {
+
+	switch t := object.(type) {
+	case *wtype.LHPlate:
+	default:
+		return fmt.Errorf("Cannot wait for data on %v type, only LHPlate allowed.", t)
+	}
+
+	// Get Data Request
+	req := ast.Request{
+		Selector: []ast.NameValue{
+			target.DriverSelectorV1DataSource,
+		},
+	}
+
+	// Update all components
+	plate := object.(*wtype.LHPlate)
+
+	allComp := plate.AllContents()
+	updatedComp := []*wtype.LHComponent{}
+
+	for _, c := range allComp {
+		updatedComp = append(updatedComp, newCompFromComp(ctx, c))
+	}
+
+	// Create Instruction
+	inst := &commandInst{
+		Args: allComp,
+		Command: &ast.Command{
+			Requests: []ast.Request{req},
+			Inst: &ast.AwaitInst{
+				Tags:              meta.Tags,
+				AwaitID:           plate.ID,
+				NextElement:       nextElement,
+				NextElementParams: nextInputs,
+				ReplaceParam:      replacedParam,
+			},
+		},
+		Comp: updatedComp,
+	}
+
+	trace.Issue(ctx, inst)
+	return nil
 }

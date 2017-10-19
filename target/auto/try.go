@@ -15,19 +15,21 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Common state amount amount tryers
+// Common state for tryers
 type tryer struct {
 	Auto      *Auto
 	MaybeArgs []interface{}
 	HumanOpt  human.Opt
 }
 
+// XXX ADD STUFF HERE
 func (a *tryer) Driver(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	c := driver.NewDriverClient(conn)
 	reply, err := c.DriverType(ctx, &driver.TypeRequest{})
 	if err != nil {
 		return err
 	}
+
 	switch reply.Type {
 
 	case "antha.runner.v1.Runner":

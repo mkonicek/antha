@@ -39,6 +39,10 @@ var (
 		Name:  DriverSelectorV1Name,
 		Value: "antha.prompter.v1.Prompter",
 	}
+	DriverSelectorV1DataSource = ast.NameValue{
+		Name:  DriverSelectorV1Name,
+		Value: "antha.datasource.v1.DataSource",
+	}
 )
 
 type targetKey int

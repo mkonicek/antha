@@ -45,7 +45,7 @@ func (a *maker) makeCommand(in *commandInst) ast.Node {
 		in.Command.From = append(in.Command.From, a.makeComp(arg))
 	}
 
-	out := a.makeComp(in.Comp)
+	out := a.makeComp(in.Comp[0])
 	out.From = append(out.From, in.Command)
 	return out
 }
@@ -122,9 +122,6 @@ func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
 	}
 
 	for comp := range a.byComp {
-		// Cannot use comp.ParentId because it is new.ParentID = old.ParentID
-		// rather than new.ParentID = old.ID . Use DaughterComponent instead.
-
 		// Contains all descendents rather then direct ones
 		for _, kid := range strings.Split(comp.DaughterID, "_") {
 			if comp.ID != kid {

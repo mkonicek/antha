@@ -423,14 +423,12 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 
 	if !ok {
 		return nil
-	} else {
-		x, err := wutil.UnmarshalFunc([]byte(f.(string)))
-		if err != nil {
-			logger.Fatal(fmt.Sprintf("Can't unmarshal function, error: %s", err.Error))
-		}
-		return x
 	}
-	return nil
+	x, err := wutil.UnmarshalFunc([]byte(f.(string)))
+	if err != nil {
+		panic(fmt.Sprintf("Can't unmarshal function, error: %s", err))
+	}
+	return x
 }
 
 func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
@@ -745,4 +743,15 @@ func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 	}
 
 	return false
+}
+
+// CheckExtraKey checks if the key is a reserved name
+func (w LHWell) CheckExtraKey(s string) error {
+	reserved := []string{"protected", "afvfunc", "temporary", "autoallocated", "UserAllocated"}
+
+	if wutil.StrInStrArray(s, reserved) {
+		return fmt.Errorf("%s is a system key used by plates", s)
+	}
+
+	return nil
 }

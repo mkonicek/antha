@@ -16,7 +16,7 @@ import (
 
 type commandInst struct {
 	Args    []*wtype.LHComponent
-	Comp    *wtype.LHComponent
+	Comp    []*wtype.LHComponent
 	Command *ast.Command
 }
 
@@ -63,7 +63,7 @@ func newCompFromComp(ctx context.Context, in *wtype.LHComponent) *wtype.LHCompon
 func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtype.LHComponent {
 	inst := &commandInst{
 		Args: []*wtype.LHComponent{in},
-		Comp: newCompFromComp(ctx, in),
+		Comp: []*wtype.LHComponent{newCompFromComp(ctx, in)},
 		Command: &ast.Command{
 			Inst: &ast.IncubateInst{
 				Time:           opt.Time,
@@ -88,7 +88,7 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtyp
 	})
 
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.Comp[0]
 }
 
 // prompt... works pretty much like Handle does
@@ -111,14 +111,14 @@ func MixerPrompt(ctx context.Context, in *wtype.LHComponent, message string) *wt
 		},
 	)
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.Comp[0]
 }
 
 // Prompt prompts user with a message
 func Prompt(ctx context.Context, in *wtype.LHComponent, message string) *wtype.LHComponent {
 	inst := &commandInst{
 		Args: []*wtype.LHComponent{in},
-		Comp: newCompFromComp(ctx, in),
+		Comp: []*wtype.LHComponent{newCompFromComp(ctx, in)},
 		Command: &ast.Command{
 			Inst: &ast.PromptInst{
 				Message: message,
@@ -133,7 +133,7 @@ func Prompt(ctx context.Context, in *wtype.LHComponent, message string) *wtype.L
 	})
 
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.Comp[0]
 }
 
 func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
@@ -146,7 +146,7 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 
 	return &commandInst{
 		Args: []*wtype.LHComponent{opts.ComponentIn},
-		Comp: opts.Component,
+		Comp: []*wtype.LHComponent{opts.Component},
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
@@ -175,7 +175,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 
 	return &commandInst{
 		Args: []*wtype.LHComponent{opt.Component},
-		Comp: comp,
+		Comp: []*wtype.LHComponent{comp},
 		Command: &ast.Command{
 			Inst: &ast.HandleInst{
 				Group:    opt.Label,
@@ -199,7 +199,7 @@ type HandleOpt struct {
 func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 	inst := handle(ctx, opt)
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.Comp[0]
 }
 
 // NewComponent returns a new component given a component type
@@ -259,14 +259,14 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 			Requests: reqs,
 			Inst:     inst,
 		},
-		Comp: result,
+		Comp: []*wtype.LHComponent{result},
 	}
 }
 
 func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.LHComponent {
 	inst := mix(ctx, generic)
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.Comp[0]
 }
 
 // Mix mixes components

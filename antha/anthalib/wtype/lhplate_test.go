@@ -3,7 +3,6 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
-	//	"github.com/kylelemons/godebug/pretty"
 	"reflect"
 	"strings"
 	"testing"
@@ -281,13 +280,9 @@ func TestLHPlateSerialize(t *testing.T) {
 
 	var p2 *LHPlate
 
-	err = json.Unmarshal(b, &p2)
-
-	if err != nil {
+	if err = json.Unmarshal(b, &p2); err != nil {
 		t.Errorf(err.Error())
 	}
-
-	// check stuff
 
 	for i, w := range p.Wellcoords {
 		w2 := p2.Wellcoords[i]
@@ -303,8 +298,6 @@ func TestLHPlateSerialize(t *testing.T) {
 
 			w := p2.Wellcoords[wc.FormatA1()]
 
-			//fmt.Printf("%s: r: %p %s c: %p %s w: %p %s\n", wc.FormatA1(), p2.Rows[j][i], p2.Rows[j][i].Crds, p2.Cols[i][j], p2.Cols[i][j].Crds, w, w.Crds)
-
 			w.WContents.CName = wc.FormatA1()
 			if p2.Rows[j][i].WContents.CName != wc.FormatA1() || p2.Cols[i][j].WContents.CName != wc.FormatA1() || p2.HWells[w.ID].WContents.CName != wc.FormatA1() {
 				fmt.Println(p2.Cols[i][j].WContents.CName)
@@ -314,5 +307,60 @@ func TestLHPlateSerialize(t *testing.T) {
 
 		}
 	}
+}
 
+func TestAddGetClearData(t *testing.T) {
+	// Static check for it a plate is Annotatable
+	var _ Annotatable = (*LHPlate)(nil)
+
+	dat := []byte("3.5")
+
+	t.Run("basic", func(t *testing.T) {
+		p := makeplatefortest()
+
+		if err := p.SetData("OD", dat); err != nil {
+			t.Errorf(err.Error())
+		}
+		d, err := p.GetData("OD")
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		if !reflect.DeepEqual(d, dat) {
+			t.Errorf("Expected %v got %v", dat, d)
+		}
+	})
+
+	t.Run("clear", func(t *testing.T) {
+		p := makeplatefortest()
+
+		if err := p.SetData("OD", dat); err != nil {
+			t.Errorf(err.Error())
+		}
+
+		if err := p.ClearData("OD"); err != nil {
+			t.Errorf(err.Error())
+		}
+
+		if _, err := p.GetData("OD"); err == nil {
+			t.Errorf("ClearData should clear data but has not")
+		}
+	})
+
+	t.Run("cannot update special", func(t *testing.T) {
+		p := makeplatefortest()
+		if err := p.SetData("IMSPECIAL", dat); err == nil {
+			t.Errorf("Adding data with a reserved key should fail but does not")
+		}
+	})
+
+}
+
+func TestGetAllComponents(t *testing.T) {
+	p := makeplatefortest()
+
+	cmps := p.AllContents()
+
+	if len(cmps) != p.WellsX()*p.WellsY() {
+		t.Errorf("Expected %d components got %d", p.WellsX()*p.WellsY(), len(cmps))
+	}
 }

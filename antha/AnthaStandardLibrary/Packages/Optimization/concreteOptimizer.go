@@ -18,7 +18,7 @@ func DefaultParameters() AssemblyOptimizerParameters {
 		prm["step_size"] = 3
 		prm["pop_size"] = 100
 	*/
-	prm.Set("max_iterations", 2000)
+	prm.Set("max_iterations", 200)
 	prm.Set("recom_p", 0.5)
 	prm.Set("mut_p", 0.5)
 	prm.Set("step_size", 1)
@@ -35,24 +35,6 @@ func DefaultConstraints() Constraints {
 		MinDistToMut: 2,
 	}
 }
-
-// TODO --> end constraints for assembly
-// 	    costs for ends ?
-
-/*
-func main() {
-
-	rand.Seed(time.Now().UnixNano())
-	//func OptimizeAssembly(problem AssemblyProblem, constraints Constraints, parameters Optimization.AssemblyOptimizerParameters) {
-
-	prm := DefaultParameters()
-	cnstr := DefaultConstraints()
-	problem := BasicProblem()
-
-	OptimizeAssembly(problem, cnstr, prm)
-
-}
-*/
 
 type PointSet1D []int
 
@@ -150,6 +132,8 @@ func OptimizeAssembly(query string, seqs wtype.ReallySimpleAlignment, constraint
 	// make the problem
 
 	problem := msaToAssemblyProblem(seqs, query)
+
+	fmt.Println("PROBLEM ", problem)
 
 	// solve the problem
 
@@ -396,7 +380,7 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 
 	last := 0
 	for i := 0; i < len(m); i++ {
-		if m[i] < 0 || m[i] >= len(p.Seq) {
+		if m[i] < 0 || m[i] >= len(p.Seq)*3 {
 			return false
 		}
 
@@ -417,7 +401,7 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 		last = m[i]
 	}
 
-	d := dist(m[len(m)-1], len(p.Seq))
+	d := dist(m[len(m)-1], len(p.Seq)*3)
 
 	if d < cnstr.MinLen || d > cnstr.MaxLen {
 		return false
@@ -528,7 +512,7 @@ func (p *Population) addMutation(mem PointSet1D, prm AssemblyOptimizerParameters
 		m := mem.Dup()
 		// choose a spot
 
-		l := rand.Intn(len(p.Problem.Seq))
+		l := rand.Intn(len(p.Problem.Seq) * 3)
 
 		// append to m
 
@@ -558,7 +542,7 @@ func (pop *Population) delMutation(mem PointSet1D, prm AssemblyOptimizerParamete
 			prev = mem[p-1]
 		}
 
-		next := len(pop.Problem.Seq)
+		next := len(pop.Problem.Seq) * 3
 
 		if p < len(mem)-1 {
 			next = mem[p+1]
@@ -706,7 +690,7 @@ func makeMember(problem AssemblyProblem, constraints Constraints) PointSet1D {
 
 		// the only remaining question is if the last position is invalid
 
-		left := len(problem.Seq) - last
+		left := len(problem.Seq)*3 - last
 
 		// or if the mutation distance is too low
 
@@ -730,7 +714,7 @@ func Cost(k PointSet1D, problem AssemblyProblem) int {
 	sort.Ints(k)
 
 	kk := k.Dup()
-	kk = append(kk, len(problem.Seq))
+	kk = append(kk, len(problem.Seq)*3)
 
 	tot := 0
 	for _, p := range kk {

@@ -56,6 +56,7 @@ const (
 	LTNSrc
 	LTMegaMix
 	LTSolvent
+	LTSmartMix
 )
 
 func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
@@ -127,6 +128,8 @@ func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 		return LTMegaMix, nil
 	case "solvent":
 		return LTSolvent, nil
+	case "SmartMix":
+		return LTSmartMix, nil
 	case "default":
 		return LTDefault, nil
 	default:
@@ -198,6 +201,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "nitrogen_source"
 	case LTMegaMix:
 		return "MegaMix"
+	case LTSmartMix:
+		return "SmartMix"
 	default:
 		return "nil"
 	}

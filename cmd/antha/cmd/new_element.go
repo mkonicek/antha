@@ -172,7 +172,7 @@ func writeAn(outputDir string, steps []string, element *component.Component) err
 		Name:  element.Name,
 		Steps: steps,
 	}
-	for _, p := range element.Desc.Params {
+	for _, p := range element.Description.Params {
 		switch p.Kind {
 		case "Parameters":
 			arg.Parameters = append(arg.Parameters, parg{Name: p.Name, Type: p.Type})
@@ -236,7 +236,9 @@ func writeBundle(outputDir string, element *component.Component, params map[stri
 }
 
 func newElement(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	var name, outputDir string
 
@@ -303,7 +305,7 @@ func newElement(cmd *cobra.Command, args []string) error {
 				Out: &output{},
 			}
 		},
-		Desc: component.ComponentDesc{
+		Description: component.Description{
 			Params: []component.ParamDesc{
 				{Name: "A", Kind: "Parameters", Type: typeName(in.A)},
 				{Name: "B", Kind: "Parameters", Type: typeName(in.B)},

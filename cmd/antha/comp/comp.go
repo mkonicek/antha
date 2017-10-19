@@ -6,6 +6,9 @@ import (
 	"github.com/antha-lang/antha/component"
 )
 
+// TODO: replace with api defintions
+
+// A Port is an input to a component
 type Port struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"`
@@ -13,8 +16,9 @@ type Port struct {
 	Kind        string `json:"kind"`
 }
 
+// A Component is an element to execute
 type Component struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Path        string `json:"path"`
@@ -22,16 +26,17 @@ type Component struct {
 	OutPorts    []Port `json:"out_ports"`
 }
 
+// New creates Component messages from components
 func New(lib []component.Component) ([]Component, error) {
 	var cs []Component
 	for _, v := range lib {
 		c := Component{
-			Id:          v.Name,
+			ID:          v.Name,
 			Name:        v.Name,
-			Description: v.Desc.Desc,
-			Path:        v.Desc.Path,
+			Description: v.Description.Desc,
+			Path:        v.Description.Path,
 		}
-		for _, p := range v.Desc.Params {
+		for _, p := range v.Description.Params {
 			port := Port{
 				Name:        p.Name,
 				Type:        p.Type,

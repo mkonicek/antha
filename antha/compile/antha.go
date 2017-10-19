@@ -48,9 +48,9 @@ const (
 	runStepsIntrinsic        = "RunSteps"
 	awaitDataIntrinsic       = "AwaitData"
 	lineNumberConstName      = "_lineNumber"
+	elementProto             = "element.proto"
 	elementPackage           = "element"
 	elementFilename          = "element.go"
-	elementProto             = "element.proto"
 	modelPackage             = "model"
 	modelFilename            = "model.go"
 )
@@ -61,14 +61,8 @@ const (
 )
 
 var (
-	errUnknownToken = errors.New("unknown token")
 	errNotAnthaFile = errors.New("not antha file")
 )
-
-type parseError interface {
-	error
-	Pos() token.Pos
-}
 
 type posError struct {
 	message string
@@ -78,6 +72,7 @@ type posError struct {
 func (e posError) Error() string {
 	return e.message
 }
+
 func (e posError) Pos() token.Pos {
 	return e.pos
 }
@@ -374,9 +369,7 @@ func (p *Antha) addImports(file *ast.File) {
 			restDecls = append(restDecls, d)
 			continue
 		}
-		for _, s := range gd.Specs {
-			specs = append(specs, s)
-		}
+		specs = append(specs, gd.Specs...)
 	}
 
 	for _, req := range p.importReqs {
@@ -502,8 +495,7 @@ func getProtobufPackage(goPackage string) string {
 		if len(part) == 0 {
 			continue
 		}
-		r := part
-		r = strings.Map(func(r rune) rune {
+		r := strings.Map(func(r rune) rune {
 			switch r {
 			case '-', '.':
 				return '_'
@@ -596,9 +588,7 @@ func relativeTo(bases []string, name string) (string, error) {
 	}
 
 	var prefixes []string
-	for _, v := range bases {
-		prefixes = append(prefixes, v)
-	}
+	prefixes = append(prefixes, bases...)
 
 	// In reverse alphabetical to ensure longest match first
 	sort.Strings(prefixes)
@@ -781,7 +771,9 @@ func (p *Antha) generateElement(fileSet *token.FileSet, file *ast.File) ([]byte,
 	pat := regexp.MustCompile(fmt.Sprintf(`const %s = "([^"\n\r]+)"`, lineNumberConstName))
 	main := pat.ReplaceAll(buf.Bytes(), []byte(`//line $1`))
 	var out bytes.Buffer
-	io.Copy(&out, bytes.NewReader(main))
+	if _, err := io.Copy(&out, bytes.NewReader(main)); err != nil {
+		return nil, err
+	}
 
 	if err := p.printFunctions(&out); err != nil {
 		return nil, err
@@ -1077,7 +1069,14 @@ func (p *Antha) Generate(fileSet *token.FileSet, file *ast.File) (*AnthaFiles, e
 		return nil, err
 	}
 
-	modelBs, err := p.generateModel()
+	var modelBs []byte
+
+	if true {
+		modelBs, err = p.generateModel()
+	} else {
+		modelBs, err = p.generateProto()
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -1234,9 +1233,9 @@ func GetComponent() []*component.Component{
 	return []*component.Component{ 
 			&component.Component{
 			Name: {{ .ElementName }},
-			Type: api.RunnerType_STEPS,
+			Stage: api.ElementStage_STEPS,
 			Constructor: _newRunner,
-			Desc: component.ComponentDesc{
+			Description: component.Description{
 				Desc: {{ .Desc }},
 				Path: {{ .Path }},
 				Params: []component.ParamDesc{
@@ -1251,9 +1250,9 @@ func GetComponent() []*component.Component{
 		},
 			&component.Component{
 			Name: {{ .ElementName }},
-			Type: api.RunnerType_ANALYSIS,
+			Stage: api.ElementStage_ANALYSIS,
 			Constructor: _newAVRunner,
-			Desc: component.ComponentDesc{
+			Description: component.Description{
 				Desc: {{ .Desc }},
 				Path: {{ .Path }},
 			},
@@ -1271,11 +1270,6 @@ func init() {
 	}
 }
 `
-	type Field struct {
-		Name string
-		Type string
-	}
-
 	type Param struct {
 		Name     string
 		BareName string
@@ -1700,6 +1694,7 @@ func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
 			Kind:  token.STRING,
 			Value: strconv.Quote(proto.ReplacedParam.Name),
 		},
+		mustParseExpr(fmt.Sprintf("%s(inject.MakeValue(_output))", serializeParamsIntrinsic)),
 		&ast.CallExpr{
 			Fun: mustParseExpr(serializeParamsIntrinsic),
 			Args: []ast.Expr{
@@ -1807,7 +1802,7 @@ func (p *Antha) inspectIntrinsics(node ast.Node) bool {
 		if ident.Name == runStepsIntrinsic {
 			p.rewriteRunSteps(n)
 		} else if ident.Name == awaitDataIntrinsic {
-			p.rewriteWaitData(n)
+			p.rewriteAwaitData(n)
 		} else if desugar, ok := p.intrinsics[ident.Name]; ok {
 			ident.Name = desugar
 			n.Args = append([]ast.Expr{ast.NewIdent("_ctx")}, n.Args...)

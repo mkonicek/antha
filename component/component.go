@@ -29,8 +29,8 @@ type ParamDesc struct {
 	Type string // Full go type name
 }
 
-// ComponentDesc is a description of a component.
-type ComponentDesc struct {
+// Description is a description of a component.
+type Description struct {
 	Desc   string
 	Path   string
 	Params []ParamDesc
@@ -41,7 +41,7 @@ type Component struct {
 	Name        string
 	Stage       api.ElementStage
 	Constructor func() interface{}
-	Desc        ComponentDesc
+	Description Description
 }
 
 // NewParams returns new objects instances for each input and output parameter.
@@ -140,8 +140,8 @@ func UpdateParamTypes(desc *Component) error {
 		}
 	}
 
-	for i, p := range desc.Desc.Params {
-		t := &desc.Desc.Params[i].Type
+	for i, p := range desc.Description.Params {
+		t := &desc.Description.Params[i].Type
 		if len(*t) == 0 {
 			*t = ts[p.Name]
 		}

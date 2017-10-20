@@ -27,7 +27,7 @@ func TestMergeDisjoint(t *testing.T) {
 	} else if e, f := "Alpha", a.S; e != f {
 		t.Errorf("expecting %q found %q", e, f)
 	} else if e, f := 1.0, a.F; e != f {
-		t.Errorf("expecting %q found %q", e, f)
+		t.Errorf("expecting %f found %f", e, f)
 	}
 
 	if m, err := ShallowMerge(&A{S: "Alpha"}, &A{F: 1.0}); err != nil {
@@ -37,7 +37,7 @@ func TestMergeDisjoint(t *testing.T) {
 	} else if e, f := "Alpha", a.S; e != f {
 		t.Errorf("expecting %q found %q", e, f)
 	} else if e, f := 1.0, a.F; e != f {
-		t.Errorf("expecting %q found %q", e, f)
+		t.Errorf("expecting %f found %f", e, f)
 	}
 }
 
@@ -49,7 +49,7 @@ func TestMergeOverride(t *testing.T) {
 	} else if e, f := "Beta", a.S; e != f {
 		t.Errorf("expecting %q found %q", e, f)
 	} else if e, f := 1.0, a.F; e != f {
-		t.Errorf("expecting %q found %q", e, f)
+		t.Errorf("expecting %f found %f", e, f)
 	}
 
 	if m, err := ShallowMerge(&A{S: "Alpha", F: 1.0}, &A{S: "Beta"}); err != nil {
@@ -59,7 +59,7 @@ func TestMergeOverride(t *testing.T) {
 	} else if e, f := "Beta", a.S; e != f {
 		t.Errorf("expecting %q found %q", e, f)
 	} else if e, f := 1.0, a.F; e != f {
-		t.Errorf("expecting %q found %q", e, f)
+		t.Errorf("expecting %f found %f", e, f)
 	}
 }
 

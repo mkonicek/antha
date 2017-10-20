@@ -20,28 +20,26 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for plotting data
 package plot
 
 import (
 	"github.com/sajari/regression"
 )
 
-func Rsquared(xname string, xvalues []float64, yname string, yvalues []float64) (rsquared float64, variance float64, formula string) {
-
+// RSquared computes R^2
+func RSquared(xname string, xvalues []float64, yname string, yvalues []float64) (rsquared float64, variance float64, formula string) {
 	var r regression.Regression
-	r.SetObservedName(yname)
-	r.SetVarName(0, xname)
 
-	for i, _ := range xvalues {
-		r.AddDataPoint(regression.DataPoint{Observed: yvalues[i], Variables: []float64{xvalues[i]}})
-		//r.AddDataPoint(regression.DataPoint{Observed: ControlCurvePoints + 1, Variables: ControlConcentrations})
+	r.SetObserved(yname)
+	r.SetVar(0, xname)
+
+	for i := range xvalues {
+		r.Train(regression.DataPoint(yvalues[i], []float64{xvalues[i]}))
 	}
-	r.RunLinearRegression()
-	_ = r.GetRegCoeff(0)
-	//c := r.GetRegCoeff(1)
-	rsquared = r.Rsquared
-	variance = r.VarianceObserved
+	r.Run() // nolint
+
+	rsquared = r.R2
+	variance = r.Varianceobserved
 	formula = r.Formula
 	return
 }

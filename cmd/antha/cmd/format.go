@@ -80,7 +80,8 @@ func (w *walker) walk(path string, fi os.FileInfo, err error) error {
 	}
 
 	if !w.Write {
-		os.Stdout.Write(out)
+		os.Stdout.Write(out) // nolint
+
 		return nil
 	}
 
@@ -92,10 +93,11 @@ func (w *walker) walk(path string, fi os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
-	defer bak.Close()
+	defer bak.Close() // nolint: errcheck
+
 	defer func() {
 		if err != nil {
-			os.Remove(bak.Name())
+			os.Remove(bak.Name()) // nolint
 		}
 	}()
 
@@ -116,7 +118,9 @@ func (w *walker) walk(path string, fi os.FileInfo, err error) error {
 }
 
 func runFormat(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	w := walker{
 		Write: viper.GetBool("write"),

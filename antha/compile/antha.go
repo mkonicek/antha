@@ -44,13 +44,15 @@ import (
 )
 
 const (
-	runStepsIntrinsic   = "RunSteps"
-	lineNumberConstName = "_lineNumber"
-	elementPackage      = "element"
-	elementFilename     = "element.go"
-	elementProto        = "element.proto"
-	modelPackage        = "model"
-	modelFilename       = "model.go"
+	serializeParamsIntrinsic = "inject.SerializeValueToElementParameters"
+	runStepsIntrinsic        = "RunSteps"
+	awaitDataIntrinsic       = "AwaitData"
+	lineNumberConstName      = "_lineNumber"
+	elementProto             = "element.proto"
+	elementPackage           = "element"
+	elementFilename          = "element.go"
+	modelPackage             = "model"
+	modelFilename            = "model.go"
 )
 
 const (
@@ -59,14 +61,8 @@ const (
 )
 
 var (
-	errUnknownToken = errors.New("unknown token")
 	errNotAnthaFile = errors.New("not antha file")
 )
-
-type parseError interface {
-	error
-	Pos() token.Pos
-}
 
 type posError struct {
 	message string
@@ -76,6 +72,7 @@ type posError struct {
 func (e posError) Error() string {
 	return e.message
 }
+
 func (e posError) Pos() token.Pos {
 	return e.pos
 }
@@ -234,6 +231,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Concentration":        "wunit.Concentration",
 		"DNASequence":          "wtype.DNASequence",
 		"Density":              "wunit.Density",
+		"DeviceMetadata":       "api.DeviceMetadata",
 		"Energy":               "wunit.Energy",
 		"File":                 "wtype.File",
 		"FlowRate":             "wunit.FlowRate",
@@ -292,6 +290,11 @@ func NewAntha(root *AnthaRoot) *Antha {
 	})
 	p.addImportReq(&importReq{
 		Path: "github.com/antha-lang/antha/inject",
+	})
+
+	p.addImportReq(&importReq{
+		Path:    "encoding/json",
+		UseExpr: "json.Unmarshal",
 	})
 
 	return p
@@ -366,9 +369,7 @@ func (p *Antha) addImports(file *ast.File) {
 			restDecls = append(restDecls, d)
 			continue
 		}
-		for _, s := range gd.Specs {
-			specs = append(specs, s)
-		}
+		specs = append(specs, gd.Specs...)
 	}
 
 	for _, req := range p.importReqs {
@@ -494,8 +495,7 @@ func getProtobufPackage(goPackage string) string {
 		if len(part) == 0 {
 			continue
 		}
-		r := part
-		r = strings.Map(func(r rune) rune {
+		r := strings.Map(func(r rune) rune {
 			switch r {
 			case '-', '.':
 				return '_'
@@ -588,9 +588,7 @@ func relativeTo(bases []string, name string) (string, error) {
 	}
 
 	var prefixes []string
-	for _, v := range bases {
-		prefixes = append(prefixes, v)
-	}
+	prefixes = append(prefixes, bases...)
 
 	// In reverse alphabetical to ensure longest match first
 	sort.Strings(prefixes)
@@ -773,7 +771,9 @@ func (p *Antha) generateElement(fileSet *token.FileSet, file *ast.File) ([]byte,
 	pat := regexp.MustCompile(fmt.Sprintf(`const %s = "([^"\n\r]+)"`, lineNumberConstName))
 	main := pat.ReplaceAll(buf.Bytes(), []byte(`//line $1`))
 	var out bytes.Buffer
-	io.Copy(&out, bytes.NewReader(main))
+	if _, err := io.Copy(&out, bytes.NewReader(main)); err != nil {
+		return nil, err
+	}
 
 	if err := p.printFunctions(&out); err != nil {
 		return nil, err
@@ -1069,7 +1069,14 @@ func (p *Antha) Generate(fileSet *token.FileSet, file *ast.File) (*AnthaFiles, e
 		return nil, err
 	}
 
-	modelBs, err := p.generateModel()
+	var modelBs []byte
+
+	if true {
+		modelBs, err = p.generateModel()
+	} else {
+		modelBs, err = p.generateProto()
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -1157,10 +1164,35 @@ func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (re
 	return
 }
 
+func (Element) RunAnalysisValidation(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
+	response = &{{ .ModelPackage }}.Output{}
+	{{if .HasAnalysis}}_Analysis(_ctx, request, response){{end}}
+	{{if .HasValidation}}_Validation(_ctx, request, response){{end}}
+	return
+}
+
 func (Element) Metadata(_ctx context.Context, request *api.Empty) (*api.ElementMetadata, error) {
 	return _metadata, nil
 }
 
+func _newAVRunner() interface{} {
+	elem := &Element{}
+	return &inject.CheckedRunner {
+		RunFunc: func(_ctx context.Context, value inject.Value) (inject.Value, error) {
+			request := &{{ .ModelPackage }}.Input{}
+			if err := inject.Assign(value, request); err != nil {
+				return nil, err
+			}
+			resp, err := elem.RunAnalysisValidation(_ctx, request)
+			if err != nil {
+				return nil, err
+			}
+			return inject.MakeValue(resp), nil
+		},
+		In: &{{ .ModelPackage }}.Input{},
+		Out: &{{ .ModelPackage }}.Output{},
+	}
+}
 func _newRunner() interface{} {
 	elem := &Element{}
 	return &inject.CheckedRunner {
@@ -1197,20 +1229,32 @@ func RunSteps(_ctx context.Context, request *{{ .ModelPackage }}.Input) (*{{ .Mo
 	return &output
 }
 
-func GetComponent() *component.Component{
-	return &component.Component{
-		Name: {{ .ElementName }},
-		Constructor: _newRunner,
-		Desc: component.ComponentDesc{
-			Desc: {{ .Desc }},
-			Path: {{ .Path }},
-			Params: []component.ParamDesc{
-				{{range .Params}}component.ParamDesc{
-					Name: {{ .Name }},
-					Desc: {{ .Desc }},
-					Kind: {{ .Kind }},
+func GetComponent() []*component.Component{
+	return []*component.Component{ 
+			&component.Component{
+			Name: {{ .ElementName }},
+			Stage: api.ElementStage_STEPS,
+			Constructor: _newRunner,
+			Description: component.Description{
+				Desc: {{ .Desc }},
+				Path: {{ .Path }},
+				Params: []component.ParamDesc{
+					{{range .Params}}component.ParamDesc{
+						Name: {{ .Name }},
+						Desc: {{ .Desc }},
+						Kind: {{ .Kind }},
+					},
+					{{end}}
 				},
-				{{end}}
+			},
+		},
+			&component.Component{
+			Name: {{ .ElementName }},
+			Stage: api.ElementStage_ANALYSIS,
+			Constructor: _newAVRunner,
+			Description: component.Description{
+				Desc: {{ .Desc }},
+				Path: {{ .Path }},
 			},
 		},
 	}
@@ -1226,15 +1270,12 @@ func init() {
 	}
 }
 `
-	type Field struct {
-		Name string
-		Type string
-	}
-
 	type Param struct {
-		Name string
-		Desc string
-		Kind string
+		Name     string
+		BareName string
+		Desc     string
+		Kind     string
+		BareKind string
 	}
 
 	type TVars struct {
@@ -1267,9 +1308,11 @@ func init() {
 	for _, msg := range p.messages {
 		for _, field := range msg.Fields {
 			tv.Params = append(tv.Params, Param{
-				Name: strconv.Quote(field.Name),
-				Desc: strconv.Quote(field.Doc),
-				Kind: strconv.Quote(msg.Name),
+				Name:     strconv.Quote(field.Name),
+				BareName: field.Name,
+				Desc:     strconv.Quote(field.Doc),
+				Kind:     strconv.Quote(msg.Name),
+				BareKind: msg.Name,
 			})
 		}
 	}
@@ -1547,32 +1590,189 @@ func (p *Antha) inspectParamUses(node ast.Node) bool {
 	return true
 }
 
+type awaitDataPrototype struct {
+	Annotatee     *ast.Ident
+	Metadata      ast.Expr
+	NextElement   *ast.Ident
+	ReplacedParam *ast.Ident
+	Params        *ast.CompositeLit
+	Inputs        *ast.CompositeLit
+}
+
+func parseAwaitData(call *ast.CallExpr) *awaitDataPrototype {
+	if len(call.Args) != 6 {
+		return nil
+	}
+
+	annotatee, ok := call.Args[0].(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	metadata := call.Args[1]
+
+	nextElement, ok := call.Args[2].(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	replacedParam, ok := call.Args[3].(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	params, ok := call.Args[4].(*ast.CompositeLit)
+	if !ok {
+		return nil
+	}
+
+	inputs, ok := call.Args[5].(*ast.CompositeLit)
+	if !ok {
+		return nil
+	}
+
+	return &awaitDataPrototype{
+		Annotatee:     annotatee,
+		Metadata:      metadata,
+		NextElement:   nextElement,
+		ReplacedParam: replacedParam,
+		Params:        params,
+		Inputs:        inputs,
+	}
+}
+
+// rewriteAwaitData transforms
+//   AwaitData(
+//   	annotatee,
+//      metadata,
+// 		nextElement,
+//      replacedParam,
+// 		nextParameters,
+// 		nextInput)
+// to
+//   execute.AwaitData(
+//		_ctx,
+//		annotatee,
+// 		metadata,
+//		nextElement,
+//      replacedParam,
+// 		serializeParams(inject.MakeValue(nextParams + nextInput)),
+//      serializeParams(inject.MakeValue(elementData + elementOutput)))
+func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
+	proto := parseAwaitData(call)
+	if proto == nil {
+		var p awaitDataPrototype
+		throwErrorf(call.Pos(),
+			"expecting %s(%s) found %s(%s)",
+			awaitDataIntrinsic,
+			strings.Join(typesToString(p.Annotatee, p.Metadata, p.NextElement, p.ReplacedParam, p.Params, p.Inputs), ","),
+			awaitDataIntrinsic,
+			strings.Join(typesToString(call.Args...), ","),
+		)
+	}
+
+	modelPkg := path.Join(p.root.outputPackageBase, proto.NextElement.Name, modelPackage)
+	modelReq := p.addExternalPackage(modelPkg)
+
+	nextElement := proto.NextElement.Name
+
+	if proto.NextElement.Name == "nil" {
+		nextElement = ""
+	}
+
+	call.Fun = mustParseExpr("execute." + awaitDataIntrinsic)
+
+	call.Args = []ast.Expr{
+		ast.NewIdent("_ctx"),
+		proto.Annotatee,
+		proto.Metadata,
+		&ast.BasicLit{
+			Kind:  token.STRING,
+			Value: strconv.Quote(nextElement),
+		},
+		&ast.BasicLit{
+			Kind:  token.STRING,
+			Value: strconv.Quote(proto.ReplacedParam.Name),
+		},
+		mustParseExpr(fmt.Sprintf("%s(inject.MakeValue(_output))", serializeParamsIntrinsic)),
+		&ast.CallExpr{
+			Fun: mustParseExpr(serializeParamsIntrinsic),
+			Args: []ast.Expr{
+				&ast.CallExpr{
+					Fun: mustParseExpr("inject.MakeValue"),
+					Args: []ast.Expr{
+						&ast.CompositeLit{
+							Type: mustParseExpr(modelReq.Name + ".Input"),
+							Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
+						},
+					},
+				},
+			},
+		},
+		mustParseExpr(fmt.Sprintf("%s(inject.MakeValue(_output))", serializeParamsIntrinsic)),
+	}
+
+}
+
+type runStepsPrototype struct {
+	Callee *ast.Ident
+	Params *ast.CompositeLit
+	Inputs *ast.CompositeLit
+}
+
+func parseRunSteps(call *ast.CallExpr) *runStepsPrototype {
+	if len(call.Args) != 3 {
+		return nil
+	}
+	ident, ok := call.Args[0].(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	params, ok := call.Args[1].(*ast.CompositeLit)
+	if !ok {
+		return nil
+	}
+	inputs, ok := call.Args[2].(*ast.CompositeLit)
+	if !ok {
+		return nil
+	}
+
+	return &runStepsPrototype{
+		Callee: ident,
+		Params: params,
+		Inputs: inputs,
+	}
+}
+
+// typesToString returns the type strings of a set of expressions
+func typesToString(objs ...ast.Expr) (ret []string) {
+	for _, obj := range objs {
+		ret = append(ret, fmt.Sprintf("%T", obj))
+	}
+	return
+}
+
 // rewriteRunSteps transforms
 //  RunSteps(Fun, _{A: v}, _{B: v}
 // to
 //  target.RunSteps(_ctx, &model.Inputs{A: v, B: v})
 func (p *Antha) rewriteRunSteps(call *ast.CallExpr) {
-	if len(call.Args) != 3 {
-		throwErrorf(call.Pos(), "%s takes three arguments", runStepsIntrinsic)
-	}
-	ident, ok := call.Args[0].(*ast.Ident)
-	if !ok {
-		throwErrorf(call.Pos(), "first argument of %s must be an identifier found %T instead",
-			runStepsIntrinsic, call.Args[0])
-	}
-
-	params, ok := call.Args[1].(*ast.CompositeLit)
-	if !ok {
-		throwErrorf(call.Pos(), "second argument of %s must be a struct literal", runStepsIntrinsic)
-	}
-	inputs, ok := call.Args[2].(*ast.CompositeLit)
-	if !ok {
-		throwErrorf(call.Pos(), "third argument of %s must be a struct literal", runStepsIntrinsic)
+	proto := parseRunSteps(call)
+	if proto == nil {
+		var p runStepsPrototype
+		throwErrorf(call.Pos(),
+			"expecting %s(%s) found %s(%s)",
+			runStepsIntrinsic,
+			strings.Join(typesToString(p.Callee, p.Params, p.Inputs), ","),
+			runStepsIntrinsic,
+			strings.Join(typesToString(call.Args...), ","),
+		)
 	}
 
-	elementPkg := path.Join(p.root.outputPackageBase, ident.Name, elementPackage)
+	elementPkg := path.Join(p.root.outputPackageBase, proto.Callee.Name, elementPackage)
 	elementReq := p.addExternalPackage(elementPkg)
-	modelPkg := path.Join(p.root.outputPackageBase, ident.Name, modelPackage)
+	modelPkg := path.Join(p.root.outputPackageBase, proto.Callee.Name, modelPackage)
 	modelReq := p.addExternalPackage(modelPkg)
 
 	call.Fun = mustParseExpr(elementReq.Name + "." + runStepsIntrinsic)
@@ -1583,7 +1783,7 @@ func (p *Antha) rewriteRunSteps(call *ast.CallExpr) {
 			Op: token.AND,
 			X: &ast.CompositeLit{
 				Type: mustParseExpr(modelReq.Name + ".Input"),
-				Elts: append(params.Elts, inputs.Elts...),
+				Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
 			},
 		},
 	}
@@ -1601,6 +1801,8 @@ func (p *Antha) inspectIntrinsics(node ast.Node) bool {
 
 		if ident.Name == runStepsIntrinsic {
 			p.rewriteRunSteps(n)
+		} else if ident.Name == awaitDataIntrinsic {
+			p.rewriteAwaitData(n)
 		} else if desugar, ok := p.intrinsics[ident.Name]; ok {
 			ident.Name = desugar
 			n.Args = append([]ast.Expr{ast.NewIdent("_ctx")}, n.Args...)

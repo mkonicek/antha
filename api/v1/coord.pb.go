@@ -16,6 +16,7 @@ It is generated from these files:
 	github.com/antha-lang/antha/api/v1/workflow.proto
 	github.com/antha-lang/antha/api/v1/empty.proto
 	github.com/antha-lang/antha/api/v1/element.proto
+	github.com/antha-lang/antha/api/v1/device.proto
 
 It has these top-level messages:
 	OrdinalCoord
@@ -58,6 +59,7 @@ It has these top-level messages:
 	MixerOpt
 	Empty
 	ElementMetadata
+	DeviceMetadata
 */
 package org_antha_lang_antha_v1
 

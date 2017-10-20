@@ -18,11 +18,8 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 )
 
-type constructor func(string) interface{}
-
 var (
-	errUnknownParam    = errors.New("unknown parameter")
-	errCannotConstruct = errors.New("cannot construct parameter")
+	errUnknownParam = errors.New("unknown parameter")
 )
 
 // RawParams is the structure of parameter data for unmarshalling.
@@ -39,18 +36,6 @@ type RawParams struct {
 type Params struct {
 	Parameters map[string]map[string]interface{} `json:"parameters"`
 	Config     *mixer.Opt                        `json:"config"`
-}
-
-func constructOrError(fn func(x string) interface{}, x string) (interface{}, error) {
-	var v interface{}
-	var err error
-	defer func() {
-		if res := recover(); res != nil {
-			err = fmt.Errorf("error making %q: %s", x, res)
-		}
-	}()
-	v = fn(x)
-	return v, err
 }
 
 func tryString(data []byte) string {
@@ -163,7 +148,7 @@ func setParam(ctx context.Context, um *unmarshaler, w *workflow.Workflow, proces
 			return um.unmarshalStruct(ctx, data, obj)
 		},
 	}
-	if err := m.UnmarshalJSON(data, &value); err != nil {
+	if err := m.Unmarshal(data, &value); err != nil {
 		return err
 	}
 
@@ -184,7 +169,10 @@ func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams, rea
 		if err != nil {
 			return nil, fmt.Errorf("cannot get component for process %q: %s", process, err)
 		}
-		runner, err := inject.Find(ctx, inject.NameQuery{Repo: c})
+		runner, err := inject.Find(ctx, inject.NameQuery{
+			Repo:  c,
+			Stage: api.ElementStage_STEPS,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("unknown component %q: %s", c, err)
 		}

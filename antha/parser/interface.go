@@ -75,6 +75,7 @@ func readSource(filename string, src interface{}) ([]byte, error) {
 //
 type Mode uint
 
+// Parsing modes
 const (
 	PackageClauseOnly Mode             = 1 << iota // stop parsing after package clause
 	ImportsOnly                                    // stop parsing after import declarations
@@ -111,7 +112,7 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 		return nil, err
 	}
 
-	var p parser
+	var p parseLHSList
 	defer func() {
 		if e := recover(); e != nil {
 			_ = e.(bailout) // re-panics if it's not a bailout
@@ -156,7 +157,11 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 	if err != nil {
 		return nil, err
 	}
-	defer fd.Close()
+	defer func() {
+		if err := fd.Close(); err != nil && first == nil {
+			first = err
+		}
+	}()
 
 	list, err := fd.Readdir(-1)
 	if err != nil {
@@ -192,7 +197,7 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 // in error messages is the empty string.
 //
 func ParseExpr(x string) (ast.Expr, error) {
-	var p parser
+	var p parseLHSList
 	p.init(token.NewFileSet(), "", []byte(x), 0)
 
 	// Set up pkg-level scopes to avoid nil-pointer errors.
@@ -201,7 +206,7 @@ func ParseExpr(x string) (ast.Expr, error) {
 	// in case of an erroneous x.
 	p.openScope()
 	p.pkgScope = p.topScope
-	e := p.parseRhsOrType()
+	e := p.parseRHSOrType()
 	p.closeScope()
 	assert(p.topScope == nil, "unbalanced scopes")
 

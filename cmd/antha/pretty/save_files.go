@@ -25,6 +25,7 @@ func (a *saver) saveFiles(obj interface{}) ([]byte, error) {
 	return json.Marshal(obj)
 }
 
+// SaveFiles writes out any files in the execute.Result
 func SaveFiles(out io.Writer, result *execute.Result) error {
 	var s saver
 	m := &meta.Marshaler{
@@ -33,7 +34,7 @@ func SaveFiles(out io.Writer, result *execute.Result) error {
 
 	for _, output := range result.Workflow.Outputs {
 		// Just marshal for the side-effect
-		if _, err := m.MarshalJSON(output); err != nil {
+		if _, err := m.Marshal(output); err != nil {
 			return err
 		}
 	}

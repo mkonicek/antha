@@ -46,6 +46,7 @@ func NewContext(ctx context.Context, inv Inventory) context.Context {
 	return context.WithValue(ctx, theCtxKey, inv)
 }
 
+// GetInventory returns an Inventory instance from Context
 func GetInventory(ctx context.Context) Inventory {
 	return fromContext(ctx)
 }

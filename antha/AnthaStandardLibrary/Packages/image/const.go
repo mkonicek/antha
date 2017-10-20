@@ -6,17 +6,8 @@ import (
 	"path/filepath"
 
 	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
-	"github.com/disintegration/imaging"
+	imaging "github.com/disintegration/imaging"
 )
-
-var availableColours = []color.Color{
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}, // white
-	color.RGBA{R: uint8(13), G: uint8(105), B: uint8(171), A: uint8(255)},  // blue
-	color.RGBA{R: uint8(245), G: uint8(205), B: uint8(47), A: uint8(255)},  // yellow
-	color.RGBA{R: uint8(75), G: uint8(151), B: uint8(74), A: uint8(255)},   // green
-	color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},   // red
-	color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},   // black
-}
 
 // colourComponentMap is a map of RGB colour to description for use as key in
 // crossreferencing colour to component in other maps.

@@ -10,10 +10,12 @@ type injectKey int
 
 const theInjectKey injectKey = 0
 
-var noRegistry = errors.New("no registry found")
-var funcNotFound = errors.New("not found")
+var (
+	errNoRegistry   = errors.New("no registry found")
+	errFuncNotFound = errors.New("not found")
+)
 
-// Create a new inject context
+// NewContext creates a new inject context
 func NewContext(parent context.Context) context.Context {
 	return context.WithValue(parent, theInjectKey, &registry{parent: parent})
 }
@@ -30,11 +32,12 @@ func getRegistry(parent context.Context) *registry {
 func Add(parent context.Context, name Name, runner Runner) error {
 	reg := getRegistry(parent)
 	if reg == nil {
-		return noRegistry
+		return errNoRegistry
 	}
 	return reg.Add(name, runner)
 }
 
+// Find returns a Runner given a query
 func Find(parent context.Context, query NameQuery) (Runner, error) {
 	type result struct {
 		runner Runner
@@ -53,7 +56,7 @@ func Find(parent context.Context, query NameQuery) (Runner, error) {
 		for _, runner := range runners {
 			results = append(results, result{level: level, runner: runner})
 		}
-		level += 1
+		level++
 		ctx = reg.parent
 		reg = getRegistry(ctx)
 	}
@@ -62,7 +65,7 @@ func Find(parent context.Context, query NameQuery) (Runner, error) {
 	for _, r := range results {
 		return r.runner, nil
 	}
-	return nil, funcNotFound
+	return nil, errFuncNotFound
 }
 
 // Call a function that satisfies the query

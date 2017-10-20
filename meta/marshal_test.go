@@ -16,7 +16,7 @@ func TestMarshalString(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -29,7 +29,7 @@ func TestMarshalInt(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -49,7 +49,7 @@ func TestMarshalStruct(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -69,7 +69,7 @@ func TestMarshalPtrStruct(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -96,7 +96,7 @@ func TestMarshalMap(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -116,7 +116,7 @@ func TestMarshalSlice(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -136,7 +136,7 @@ func TestMarshalMapInterface(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -154,7 +154,7 @@ func TestMarshalSliceInterface(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -172,7 +172,7 @@ func TestMarshalInterface(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)
@@ -191,7 +191,7 @@ func TestMarshalPtrInterface(t *testing.T) {
 
 	var m Marshaler
 
-	if bs, err := m.MarshalJSON(x); err != nil {
+	if bs, err := m.Marshal(x); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(golden, bs) {
 		t.Errorf("expecting %q but got %q instead", golden, bs)

@@ -29,10 +29,10 @@ func toNRGBA(img goimage.Image) *goimage.NRGBA {
 
 // ResizeImageToPlate resizes an image to fit the number of wells on a plate.
 // We treat wells as pixels. Bad name.
-func ResizeImageToPlate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imaging.ResampleFilter, rotate bool) *goimage.NRGBA {
+func ResizeImageToPlate(img goimage.Image, plate *wtype.LHPlate, algorithm imaging.ResampleFilter, rotate bool) *goimage.NRGBA {
 
 	if img.Bounds().Dy() == plate.WellsY() {
-		return img
+		return toNRGBA(img)
 	}
 
 	if rotate {
@@ -49,7 +49,7 @@ func ResizeImageToPlate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imag
 // ResizeImageToPlateAutoRotate resizes an image to fit the number of wells on
 // a plate and if the image is in portrait the image will be rotated by 270
 // degrees to optimise resolution on the plate.
-func ResizeImageToPlateAutoRotate(img *goimage.NRGBA, plate *wtype.LHPlate, algorithm imaging.ResampleFilter) *goimage.NRGBA {
+func ResizeImageToPlateAutoRotate(img goimage.Image, plate *wtype.LHPlate, algorithm imaging.ResampleFilter) *goimage.NRGBA {
 	if img.Bounds().Dy() == plate.WellsY() {
 		return toNRGBA(img)
 	}
@@ -67,7 +67,7 @@ func ResizeImageToPlateAutoRotate(img *goimage.NRGBA, plate *wtype.LHPlate, algo
 
 // CheckAllResizeAlgorithms resizes an image using a variety of different
 // algorithms.
-func CheckAllResizeAlgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) []*goimage.NRGBA {
+func CheckAllResizeAlgorithms(img goimage.Image, plate *wtype.LHPlate, rotate bool, algorithms map[string]imaging.ResampleFilter) []*goimage.NRGBA {
 	var plateImages []*goimage.NRGBA
 
 	for _, algorithm := range algorithms {
@@ -82,7 +82,7 @@ func CheckAllResizeAlgorithms(img *goimage.NRGBA, plate *wtype.LHPlate, rotate b
 
 // MakePaletteFromImage will make a color Palette from an image resized to fit
 // a given plate type.
-func MakePaletteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool) color.Palette {
+func MakePaletteFromImage(img goimage.Image, plate *wtype.LHPlate, rotate bool) color.Palette {
 	plateImage := ResizeImageToPlate(img, plate, imaging.CatmullRom, rotate)
 
 	var colours []color.Color
@@ -102,7 +102,7 @@ func MakePaletteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool)
 
 // MakeSmallPaletteFromImage will make a color Palette from an image resized to
 // fit a given plate type using Plan9 Palette
-func MakeSmallPaletteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool) color.Palette {
+func MakeSmallPaletteFromImage(img goimage.Image, plate *wtype.LHPlate, rotate bool) color.Palette {
 	plateImage := ResizeImageToPlate(img, plate, imaging.CatmullRom, rotate)
 
 	// use Plan9 as palette for first round to keep number of colours down to a
@@ -134,11 +134,11 @@ func MakeSmallPaletteFromImage(img *goimage.NRGBA, plate *wtype.LHPlate, rotate 
 	return paletteFromColorarray(colors)
 }
 
-// ImageToPlateLayout takes an image, plate type, and palette and returns a map
+// ToPlateLayout takes an image, plate type, and palette and returns a map
 // of well position to colors. Creates a map of pixel to plate position from
 // processing a given image with a chosen colour palette.  It's recommended to
 // use at least 384 well plate if autorotate == true, rotate is overridden
-func ImageToPlateLayout(img *goimage.NRGBA, plate *wtype.LHPlate, palette *color.Palette, rotate bool, autoRotate bool) (map[string]color.Color, *goimage.NRGBA) {
+func ToPlateLayout(img goimage.Image, plate *wtype.LHPlate, palette *color.Palette, rotate bool, autoRotate bool) (map[string]color.Color, *goimage.NRGBA) {
 	var plateImage *goimage.NRGBA
 	if autoRotate {
 		plateImage = ResizeImageToPlateAutoRotate(img, plate, imaging.CatmullRom)
@@ -147,8 +147,6 @@ func ImageToPlateLayout(img *goimage.NRGBA, plate *wtype.LHPlate, palette *color
 	}
 
 	// make map of well position to colour: (array for time being)
-	var wellPositions []string
-	var colours []color.Color
 	positionToColour := make(map[string]color.Color)
 
 	// Find out colour at each position:
@@ -169,10 +167,7 @@ func ImageToPlateLayout(img *goimage.NRGBA, plate *wtype.LHPlate, palette *color
 
 			// equivalent well position
 			pos := wutil.NumToAlpha(y+1) + strconv.Itoa(x+1)
-			wellPositions = append(wellPositions, pos)
 			positionToColour[pos] = colour
-
-			colours = append(colours, colour)
 		}
 	}
 
@@ -181,7 +176,7 @@ func ImageToPlateLayout(img *goimage.NRGBA, plate *wtype.LHPlate, palette *color
 
 // PrintFPImagePreview takes an image, plate type, and colors from
 // visiblemap/uvmap and (use to) save the resulting processed image.
-func PrintFPImagePreview(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, visiblemap, uvmap map[color.Color]string) {
+func PrintFPImagePreview(img goimage.Image, plate *wtype.LHPlate, rotate bool, visiblemap, uvmap map[color.Color]string) {
 
 	plateimage := ResizeImageToPlate(img, plate, imaging.CatmullRom, rotate)
 
@@ -223,7 +218,7 @@ func PrintFPImagePreview(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, 
 			}
 			// fmt.Println("stringkeymap", stringkeymap)
 			viscolour, ok := stringkeymap[colourstring]
-			if ok != true {
+			if !ok {
 				errmessage := fmt.Sprintln("colourstring", colourstring, "not found in map", stringkeymap, "len", len(stringkeymap))
 				panic(errmessage)
 			}
@@ -232,25 +227,6 @@ func PrintFPImagePreview(img *goimage.NRGBA, plate *wtype.LHPlate, rotate bool, 
 
 		}
 	}
-
-	return
-}
-
-// makeNameComponentMap makes a map linking LHcomponents to colours, and
-// assigns them to well
-func makeNameToComponentMap(keys []string, components []*wtype.LHComponent) (map[string]*wtype.LHComponent, error) {
-
-	componentMap := make(map[string]*wtype.LHComponent)
-	for _, key := range keys {
-		for _, component := range components {
-
-			if component.CName == key {
-				componentMap[key] = component
-				break
-			}
-		}
-	}
-	return componentMap, nil
 }
 
 // An AnthaPix is a pixel linked to an anthaColor, and thereby an LHComponent
@@ -347,12 +323,7 @@ func (p LivingPalette) CheckPresence(c LivingColor) bool {
 
 // Compare returns a bool indicating if the LivingPixel is the same as the given one
 func (p1 LivingPix) Compare(p2 LivingPix) (same bool) {
-
-	if reflect.DeepEqual(p1, p2) {
-		return true
-	}
-	return false
-
+	return reflect.DeepEqual(p1, p2)
 }
 
 // GetStates returns an array of unique state changes in a LivingGIF
@@ -456,7 +427,7 @@ func MakeAnthaPalette(palette color.Palette, components []*wtype.LHComponent) *A
 }
 
 // MakeAnthaImg will create an AnthaImage object from a digital image.
-func MakeAnthaImg(goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlate *wtype.LHPlate) (outputImg *AnthaImg, resizedImg *goimage.NRGBA) {
+func MakeAnthaImg(goImg goimage.Image, anthaPalette *AnthaPalette, anthaImgPlate *wtype.LHPlate) (outputImg *AnthaImg, resizedImg *goimage.NRGBA) {
 
 	//Global placeholders
 	var anthaPix AnthaPix
@@ -492,7 +463,7 @@ func MakeAnthaImg(goImg *goimage.NRGBA, anthaPalette *AnthaPalette, anthaImgPlat
 	anthaImg.Palette = *anthaPalette
 	anthaImg.Plate = anthaImgPlate
 
-	return &anthaImg, goImg
+	return &anthaImg, goImg.(*goimage.NRGBA)
 }
 
 // MakeLivingColor is an object constructor for a LivingColor with default settings
@@ -532,7 +503,7 @@ func MakeLivingPalette(palette LivingPalette, components []*wtype.LHComponent) *
 }
 
 // MakeLivingImg will create a LivingImage object from a digital image.
-func MakeLivingImg(goImg *goimage.NRGBA, livingPalette *LivingPalette, livingImgPlate *wtype.LHPlate) (outputImg *LivingImg, resizedImg *goimage.NRGBA) {
+func MakeLivingImg(goImg goimage.Image, livingPalette *LivingPalette, livingImgPlate *wtype.LHPlate) (outputImg *LivingImg, resizedImg goimage.Image) {
 
 	//Global placeholders
 	var livingPix LivingPix
@@ -576,19 +547,17 @@ func MakeLivingGIF(imgs []LivingImg) *LivingGIF {
 
 	var livingGIF LivingGIF
 
-	for _, img := range imgs {
-		livingGIF.Frames = append(livingGIF.Frames, img)
-	}
+	livingGIF.Frames = append(livingGIF.Frames, imgs...)
 
 	return &livingGIF
 }
 
 // ResizeImageToPlateMin is a minimalist resize function. Uses Lanczos
 // resampling, which is the best but slowest method.
-func ResizeImageToPlateMin(img *goimage.NRGBA, plate *wtype.LHPlate) *goimage.NRGBA {
+func ResizeImageToPlateMin(img goimage.Image, plate *wtype.LHPlate) *goimage.NRGBA {
 
 	if img.Bounds().Dy() == plate.WellsY() {
-		return img
+		return toNRGBA(img)
 	}
 
 	if img.Bounds().Dy() > img.Bounds().Dx() {

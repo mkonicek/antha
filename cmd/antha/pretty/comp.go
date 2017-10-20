@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/cmd/antha/comp"
 )
 
+// Components returns a pretty printed version of comp.Component
 func Components(out io.Writer, cs []comp.Component) error {
 	var lines []string
 

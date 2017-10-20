@@ -88,11 +88,13 @@ func GetComponents() (comps []component.Component, err error) {
 		}
 	}()
 
-	add := func(d *component.Component) {
-		if err := component.UpdateParamTypes(d); err != nil {
-			panic(err)
+	add := func(da []*component.Component) {
+		for _, d := range da {
+			if err := component.UpdateParamTypes(d); err != nil {
+				panic(err)
+			}
+			comps = append(comps, *d)
 		}
-		comps = append(comps, *d)
 	}
 	{{ range .Packages }}add({{ .Name }}.GetComponent())
 	{{ end }}

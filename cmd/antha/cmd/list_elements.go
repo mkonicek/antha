@@ -41,15 +41,17 @@ var listElementsCmd = &cobra.Command{
 }
 
 func listElements(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	paths := make(map[string]string)
-	for _, comp := range library {
-		p, seen := paths[comp.Name]
+	for _, c := range library {
+		p, seen := paths[c.Name]
 		if seen {
-			return fmt.Errorf("protocol %q defined in more than one file %q and %q", comp.Name, p, comp.Desc.Path)
+			return fmt.Errorf("protocol %q defined in more than one file %q and %q", c.Name, p, c.Description.Path)
 		}
-		paths[comp.Name] = comp.Desc.Path
+		paths[c.Name] = c.Description.Path
 	}
 
 	cs, err := comp.New(library)

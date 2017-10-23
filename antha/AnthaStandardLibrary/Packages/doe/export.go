@@ -52,6 +52,9 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 	row = sheet.AddRow()
 
 	// then add subheadings and descriptors
+	if len(runs) == 0 {
+		return
+	}
 	for _, descriptor := range runs[0].Factordescriptors {
 
 		cell = row.AddCell()

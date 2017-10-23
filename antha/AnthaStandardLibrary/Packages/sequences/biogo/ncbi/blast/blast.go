@@ -26,7 +26,7 @@ package blast
 import (
 	"errors"
 	"fmt"
-	"github.com/biogo/ncbi/ncbi"
+	"github.com/biogo/ncbi"
 	"io"
 	"net/url"
 	"reflect"

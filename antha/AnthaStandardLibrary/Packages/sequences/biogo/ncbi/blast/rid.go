@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/biogo/ncbi/ncbi"
+	"github.com/biogo/ncbi"
 	"golang.org/x/net/html"
 )
 

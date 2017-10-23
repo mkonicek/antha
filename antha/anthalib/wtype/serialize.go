@@ -46,23 +46,28 @@ func (lhp *LHPlate) UnmarshalJSON(b []byte) error {
 
 // serializable, stripped-down version of the LHPlate
 type SLHPlate struct {
-	ID         string
-	Inst       string
-	Loc        string
-	Name       string
-	Type       string
-	Mnfr       string
-	WellsX     int
-	WellsY     int
-	Nwells     int
-	Height     float64
-	Hunit      string
-	Welltype   *LHWell
-	Wellcoords map[string]*LHWell
+	ID          string
+	Inst        string
+	Loc         string
+	Name        string
+	Type        string
+	Mnfr        string
+	WellsX      int
+	WellsY      int
+	Nwells      int
+	Height      float64
+	Hunit       string
+	Welltype    *LHWell
+	Wellcoords  map[string]*LHWell
+	WellXOffset float64 // distance (mm) between well centres in X direction
+	WellYOffset float64 // distance (mm) between well centres in Y direction
+	WellXStart  float64 // offset (mm) to first well in X direction
+	WellYStart  float64 // offset (mm) to first well in Y direction
+	WellZStart  float64 // offset (mm) to bottom of well in Z direction
 }
 
 func (p *LHPlate) ToSLHPLate() SLHPlate {
-	return SLHPlate{ID: p.ID, Inst: p.Inst, Loc: p.Loc, Name: p.PlateName, Type: p.Type, Mnfr: p.Mnfr, WellsX: p.WlsX, WellsY: p.WlsY, Nwells: p.Nwells, Height: p.Height, Hunit: p.Hunit, Welltype: p.Welltype, Wellcoords: p.Wellcoords}
+	return SLHPlate{ID: p.ID, Inst: p.Inst, Loc: p.Loc, Name: p.PlateName, Type: p.Type, Mnfr: p.Mnfr, WellsX: p.WlsX, WellsY: p.WlsY, Nwells: p.Nwells, Height: p.Height, Hunit: p.Hunit, Welltype: p.Welltype, Wellcoords: p.Wellcoords, WellXOffset: p.WellXOffset, WellYOffset: p.WellYOffset, WellXStart: p.WellXStart, WellYStart: p.WellYStart, WellZStart: p.WellZStart}
 }
 
 func (slhp SLHPlate) FillPlate(plate *LHPlate) {
@@ -79,6 +84,11 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 	plate.Hunit = slhp.Hunit
 	plate.Welltype = slhp.Welltype
 	plate.Wellcoords = slhp.Wellcoords
+	plate.WellXOffset = slhp.WellXOffset
+	plate.WellYOffset = slhp.WellYOffset
+	plate.WellXStart = slhp.WellXStart
+	plate.WellYStart = slhp.WellYStart
+	plate.WellZStart = slhp.WellZStart
 	makeRows(plate)
 	makeCols(plate)
 	plate.HWells = make(map[string]*LHWell, len(plate.Wellcoords))

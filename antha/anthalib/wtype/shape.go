@@ -104,12 +104,12 @@ func (sh *Shape) Volume() (volume wunit.Volume, err error) {
 		boxlike = true
 	}
 
-	if cylinder && sh.Height() == sh.Width() {
+	if cylinder && sh.Height().EqualTo(sh.Width()) {
 		volume = wunit.NewVolume(math.Pi*sh.H*sh.H*sh.D, volumeunit)
 	} else if boxlike {
 		volume = wunit.NewVolume(sh.H*sh.W*sh.D, volumeunit)
 	} else {
-		err = fmt.Errorf("No method to work out volume for shape", sh.ShapeName, "yet")
+		err = fmt.Errorf("No method to work out volume for shape %s yet. ", sh.ShapeName)
 	}
 	return
 }

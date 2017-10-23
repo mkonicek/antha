@@ -93,6 +93,7 @@ type PH struct {
 	Temp      wunit.Temperature // temperature at which pH value corresponds.
 }
 
+// ToString returns the PH value as a string.
 func (ph PH) ToString() string {
 	return fmt.Sprintf("PH %.2f +/- %.2f at %s", ph.Value, ph.Precision, ph.Temp.ToString())
 }

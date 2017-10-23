@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for facilitating DOE methodology in antha
 package doe
 
 import (
@@ -133,12 +132,12 @@ func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File)
 	cell.Value = ""
 
 	// take factor and run descriptors from first run (assuming they're all the same)
-	for i, _ := range runs[0].Factordescriptors {
+	for i := range runs[0].Factordescriptors {
 		cell = row.AddCell()
 		cell.Value = "Factor " + strconv.Itoa(i+1)
 
 	}
-	for i, _ := range runs[0].Responsedescriptors {
+	for i := range runs[0].Responsedescriptors {
 		cell = row.AddCell()
 		cell.Value = "Response " + strconv.Itoa(i+1)
 

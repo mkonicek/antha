@@ -61,7 +61,9 @@ func (a simplePolicyCommands) Len() int {
 }
 
 func listPolicyCommands(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	var cs simplePolicyCommands
 	for _, c := range wtype.GetPolicyConsequents() {

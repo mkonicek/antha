@@ -63,7 +63,7 @@ func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 	if sh.LengthUnit == "mm" {
 		areaunit = "mm^2" //sh.LengthUnit + `^` + strconv.Itoa(2)
 	} else {
-		err = fmt.Errorf("sh.Lengthunit =", sh.LengthUnit)
+		err = fmt.Errorf("sh.Lengthunit = %s", sh.LengthUnit)
 		logger.Debug(err.Error())
 	}
 	var circular bool
@@ -80,7 +80,7 @@ func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 	} else if boxlike {
 		area = wunit.NewArea(sh.H*sh.W, areaunit)
 	} else {
-		err = fmt.Errorf("No method to work out cross sectional area for shape", sh.ShapeName, "yet", "Circular?", circular)
+		err = fmt.Errorf("No method to work out cross sectional area for shape %s yet Circular? %b", sh.ShapeName, circular)
 	}
 	return
 }
@@ -92,7 +92,7 @@ func (sh *Shape) Volume() (volume wunit.Volume, err error) {
 	if sh.LengthUnit == "mm" {
 		volumeunit = "ul"
 	} else {
-		err = fmt.Errorf("can't handle conversion of", sh.LengthUnit, "to volume unit yet")
+		err = fmt.Errorf("can't handle conversion of %s to volume unit yet", sh.LengthUnit)
 	}
 
 	var cylinder bool

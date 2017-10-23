@@ -20,8 +20,9 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for plotting data. This package uses the gonum plot library Plot type.
-// Produce a plot using the Plot function and then export into an antha filetype using the Export function
+// Package plot provides methods for plotting data. This package uses the gonum
+// plot library Plot type.  Produce a plot using the Plot function and then
+// export into an antha filetype using the Export function
 package plot
 
 import (
@@ -32,15 +33,11 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/gonum/plot"
-	"github.com/gonum/plot/plotter"
-	"github.com/gonum/plot/plotutil"
-	"github.com/gonum/plot/vg"
 	"github.com/tealeg/xlsx"
-)
-
-var (
-	alphabet string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg"
 )
 
 // Export creates a wtype.file from the plot data. Heights and lengths can be parsed from strings i.e. 10cm.
@@ -81,16 +78,20 @@ func Export(plt *plot.Plot, heightstr string, lengthstr string, filename string)
 	}
 
 	var out bytes.Buffer
-	w.WriteTo(&out)
+	_, err = w.WriteTo(&out)
+	if err != nil {
+		return
+	}
 
 	file.Name = filename
-	file.WriteAll(out.Bytes())
-
+	err = file.WriteAll(out.Bytes())
 	return
 }
 
-// Create a plot from float data. Multiple sets of y values may be specified for a set of x values.
-// The length of any yvalue dataset must be equal to the length of xvalues or the function will stop and return an error.
+// Plot creates a plot from float data. Multiple sets of y values may be
+// specified for a set of x values.  The length of any yvalue dataset must be
+// equal to the length of xvalues or the function will stop and return an
+// error.
 func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error) {
 	// now plot the graph
 
@@ -98,10 +99,11 @@ func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error
 	pts := make([]plotter.XYer, 0) //len(Xdatarange))
 
 	// each specific set for each datapoint
-	for index, ydataset := range Yvaluearray {
+	for _, ydataset := range Yvaluearray {
 
 		if len(ydataset) != len(Xvalues) {
-			err = fmt.Errorf("cannot plot x by y as ", Xvalues, " is not the same length as dataset", index+1, " ", ydataset, " of ", Yvaluearray)
+			return nil, fmt.Errorf("cannot plot x by y: x length %d is not the same as y length %d",
+				len(Xvalues), len(ydataset))
 		}
 
 		xys := make(plotter.XYs, len(ydataset))
@@ -149,7 +151,10 @@ func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error
 		ptsinterface = append(ptsinterface, pt)
 	}
 
-	plotutil.AddScatters(plt, ptsinterface...) //AddScattersXYer(plt, pts)
+	err = plotutil.AddScatters(plt, ptsinterface...) //AddScattersXYer(plt, pts)
+	if err != nil {
+		return
+	}
 
 	plt.Legend.Top = true
 	plt.Legend.Left = true
@@ -157,28 +162,14 @@ func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error
 	return
 }
 
-// Add axes titles to the plot
-func AddAxesTitles(plt *plot.Plot, xtitle string, ytitle string) {
-
+// AddAxisTitles adds axis titles to the plot
+func AddAxisTitles(plt *plot.Plot, xtitle string, ytitle string) {
 	plt.X.Label.Text = xtitle
 	plt.Y.Label.Text = ytitle
-
 }
 
-/*
-func AddLegend(plt *plot.Plot, titles []string)(err error) {
-
-	for i, title := range titles {
-
-	err = plotutil.AddLinePoints(plt,)
-
-	plt.Legend.Add(plt,title,plt.)
-
-	}
-
-}
-*/
-func PlotfromMinMaxpairs(sheet *xlsx.Sheet, Xminmax []string, Yminmaxarray [][]string, Exportedfilename string) {
+// FromMinMaxPairs creates a plot from a spreadsheet.
+func FromMinMaxPairs(sheet *xlsx.Sheet, Xminmax []string, Yminmaxarray [][]string, Exportedfilename string) {
 	Xdatarange, err := spreadsheet.ConvertMinMaxtoArray(Xminmax)
 	if err != nil {
 		fmt.Println(Xminmax, Xdatarange)
@@ -193,17 +184,17 @@ func PlotfromMinMaxpairs(sheet *xlsx.Sheet, Xminmax []string, Yminmaxarray [][]s
 			panic(err)
 		}
 		if len(Xdatarange) != len(Ydatarange) {
-			panicmessage := fmt.Errorf("for index", i, "of array", "len(Xdatarange) != len(Ydatarange)")
-			panic(panicmessage.Error())
+			panicmessage := fmt.Sprint("for index", i, "of array", "len(Xdatarange) != len(Ydatarange)")
+			panic(panicmessage)
 		}
 		Ydatarangearray = append(Ydatarangearray, Ydatarange)
 		fmt.Println(Ydatarange)
 	}
-	Plotfromspreadsheet(sheet, Xdatarange, Ydatarangearray, Exportedfilename)
+	FromSpreadsheet(sheet, Xdatarange, Ydatarangearray, Exportedfilename)
 }
 
-// Xdatarange would consist of an array of
-func Plotfromspreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray [][]string, Exportedfilename string) {
+// FromSpreadsheet creates a plot from a spreadsheet.
+func FromSpreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray [][]string, Exportedfilename string) {
 
 	// now plot the graph
 
@@ -290,10 +281,13 @@ func Plotfromspreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray
 		ptsinterface = append(ptsinterface, pt)
 	}
 
-	plotutil.AddScatters(plt, ptsinterface...) //pts[0], pts[1], pts[2], pts[3], pts[4])
+	if err := plotutil.AddScatters(plt, ptsinterface...); err != nil {
+		panic(err)
+	}
 
-	length, _ := vg.ParseLength("10cm")
+	length, _ := vg.ParseLength("10cm") // nolint
 
-	plt.Save(length, length, Exportedfilename)
-
+	if err := plt.Save(length, length, Exportedfilename); err != nil {
+		panic(err)
+	}
 }

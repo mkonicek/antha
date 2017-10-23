@@ -79,9 +79,7 @@ func TestNodeSet(t *testing.T) {
 	ns["c"] = true
 
 	var r []Node
-	for _, n := range ns.Values() {
-		r = append(r, n)
-	}
+	r = append(r, ns.Values()...)
 	if err := sameElements(toString(r), []string{"a", "b", "c"}); err != nil {
 		t.Error(err)
 	}

@@ -40,7 +40,9 @@ var newPlateCmd = &cobra.Command{
 }
 
 func newPlate(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	switch len(args) {
 	case 0:

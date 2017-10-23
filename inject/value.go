@@ -7,18 +7,21 @@ import (
 )
 
 var (
-	notStructOrValue = errors.New("not pointer to struct or map[string]interface{}")
-	duplicateField   = errors.New("duplicate field")
-	stringType       = reflect.TypeOf("")
-	zeroValue        reflect.Value
+	errNotStructOrValue = errors.New("not pointer to struct or map[string]interface{}")
+	errDuplicateField   = errors.New("duplicate field")
 )
 
-// Input and output of injectable functions. Implementation of named and typed
-// function parameters.
+var (
+	stringType = reflect.TypeOf("")
+	zeroValue  reflect.Value
+)
+
+// A Value is an input or output of injectable functions. It models named and
+// typed function parameters.
 type Value map[string]interface{}
 
-// Concatenate the fields of one value with another. Returns an error if one
-// value shares the same fields as another.
+// Concat concatenates the fields of one value with another. Returns an error
+// if one value shares the same fields as another.
 func (a Value) Concat(b Value) (Value, error) {
 	r := make(Value)
 	for k, v := range a {
@@ -26,7 +29,7 @@ func (a Value) Concat(b Value) (Value, error) {
 	}
 	for k, v := range b {
 		if _, seen := r[k]; seen {
-			return nil, duplicateField
+			return nil, errDuplicateField
 		}
 		r[k] = v
 	}
@@ -48,7 +51,7 @@ func makeValue(value reflect.Value) Value {
 	case reflect.Struct:
 		m = make(Value)
 		typ := value.Type()
-		for idx, l := 0, value.NumField(); idx < l; idx += 1 {
+		for idx, l := 0, value.NumField(); idx < l; idx++ {
 			name := typ.Field(idx).Name
 			m[name] = value.Field(idx).Interface()
 		}
@@ -59,6 +62,7 @@ func makeValue(value reflect.Value) Value {
 	return m
 }
 
+// MakeValue makes a value from an object
 func MakeValue(x interface{}) Value {
 	return makeValue(reflect.ValueOf(x))
 }
@@ -93,7 +97,7 @@ func makeMapFields(value reflect.Value) map[string]reflect.Value {
 func makeStructFields(value reflect.Value) map[string]reflect.Value {
 	typ := value.Type()
 	fields := make(map[string]reflect.Value)
-	for i, n := 0, typ.NumField(); i < n; i += 1 {
+	for i, n := 0, typ.NumField(); i < n; i++ {
 		sf := typ.Field(i)
 		v := value.Field(i)
 		// Try to resolve interfaces to concrete type
@@ -119,7 +123,7 @@ func makeFields(value reflect.Value) (map[string]reflect.Value, error) {
 	case isStringMap(value):
 		return makeMapFields(value), nil
 	}
-	return nil, notStructOrValue
+	return nil, errNotStructOrValue
 }
 
 func nilable(v reflect.Value) bool {
@@ -176,22 +180,22 @@ func assign(from, to interface{}, set, ignoreMissing bool) error {
 	return nil
 }
 
-// Return if src is assignable to dst. Typing rule is as follows: (1) every
-// field of src must have a field of the same name in dst, (2) the type of the
-// src field must be golang assignable to the dst field, and (3) the dst fields
-// must be golang settable (i.e., have an address).
+// AssignableTo returns if src is assignable to dst. Typing rule is as follows:
+// (1) every field of src must have a field of the same name in dst, (2) the
+// type of the src field must be golang assignable to the dst field, and (3)
+// the dst fields must be golang settable (i.e., have an address).
 func AssignableTo(src, dst interface{}) error {
 	return assign(src, dst, false, false)
 }
 
-// Assign values from Value or struct to Value or struct. If src is not
+// Assign assigns values from Value or struct to Value or struct. If src is not
 // AssignableTo dst, return an error.
 func Assign(src, dst interface{}) error {
 	return assign(src, dst, true, false)
 }
 
-// Assign some values from Value or struct to Value or struct. Like Assign
-// but ignore fields in src that are not present in dst.
+// AssignSome assigns some values from Value or struct to Value or struct. Like
+// Assign but ignore fields in src that are not present in dst.
 func AssignSome(src, dst interface{}) error {
 	return assign(src, dst, true, true)
 }

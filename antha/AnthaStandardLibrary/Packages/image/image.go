@@ -88,8 +88,7 @@ func ColourToGrayscale(colour color.Color) (gray color.Gray) {
 
 // Export exports an image to file. The image format is derived from the
 // filename extension.
-func Export(img *image.NRGBA, fileName string) (file wtype.File, err error) {
-
+func Export(img image.Image, fileName string) (file wtype.File, err error) {
 	var imageFormat imaging.Format
 
 	if filepath.Ext(fileName) == "" {
@@ -128,7 +127,7 @@ func Export(img *image.NRGBA, fileName string) (file wtype.File, err error) {
 
 // Posterize posterizes an image. This refers to changing an image to use only
 // a small number of different tones.
-func Posterize(img *image.NRGBA, levels int) (*image.NRGBA, error) {
+func Posterize(img image.Image, levels int) (*image.NRGBA, error) {
 
 	if levels == 1 {
 		return nil, errors.New("Cannot posterize with only one level")

@@ -52,7 +52,9 @@ git checkout ***COMMIT****
 cd -`
 
 func readme(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	switch viper.GetString("output") {
 	case jsonOutput:
@@ -116,7 +118,7 @@ func readme(cmd *cobra.Command, args []string) error {
 		if err := template.Must(template.New("").Parse(reportTemplate)).Execute(&out, arg); err != nil {
 			return err
 		}
-		fn := "report" + fmt.Sprint(time.Now().Format("20060102150405")) + ".md"
+		fn := fmt.Sprintf("report%s.md", time.Now().Format("20060102150405"))
 		if err := ioutil.WriteFile(fn, out.Bytes(), 0666); err != nil {
 			return fmt.Errorf("cannot write file %q: %s", fn, err)
 		}

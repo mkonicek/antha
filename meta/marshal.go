@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	mapKeyIsNotString = errors.New("map key is not string")
+	errMapKeyIsNotString = errors.New("map key is not string")
 )
 
-// Marshaler serializes data into an object
+// MarshalFunc serializes data into an object
 type MarshalFunc func(obj interface{}) ([]byte, error)
 
 // Marshaler gives on custom on-the-side marshaling functions for specific
@@ -44,7 +44,7 @@ func (a *Marshaler) marshalJSON(value reflect.Value) ([]byte, error) {
 		for _, kvalue := range value.MapKeys() {
 			key, ok := kvalue.Interface().(string)
 			if !ok {
-				return nil, mapKeyIsNotString
+				return nil, errMapKeyIsNotString
 			}
 			elem := value.MapIndex(kvalue)
 			bs, err := a.marshalJSON(elem)
@@ -77,9 +77,9 @@ func (a *Marshaler) marshalJSON(value reflect.Value) ([]byte, error) {
 	return json.Marshal(value.Interface())
 }
 
-// MarshalJSON parses obj and returns its serialization. Custom marshaling
+// Marshal parses obj and returns its serialization. Custom marshaling
 // functions can be specified on the side.
-func (a *Marshaler) MarshalJSON(obj interface{}) ([]byte, error) {
+func (a *Marshaler) Marshal(obj interface{}) ([]byte, error) {
 	value := reflect.ValueOf(obj)
 
 	return a.marshalJSON(value)

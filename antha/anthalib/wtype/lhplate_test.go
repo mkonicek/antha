@@ -1,7 +1,9 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -144,7 +146,7 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 	}
 	assertWellsEqual("HWells != Rows", ws1, ws2)
 	assertWellsEqual("Rows != Cols", ws2, ws3)
-	assertWellsEqual("Cols != WellCoords", ws3, ws4)
+	assertWellsEqual("Cols != Wellcoords", ws3, ws4)
 
 	// Check pointer-ID equality
 	comp := make(map[string]*LHComponent)
@@ -256,5 +258,106 @@ func TestFindCompMulti1(t *testing.T) {
 
 	if len(pids) == 0 {
 		t.Errorf("Didn't find a simple column of water... should have")
+	}
+}
+
+func TestLHPlateSerialize(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+	_, err := p.AddComponent(c, false)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	b, err := json.Marshal(p)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	var p2 *LHPlate
+
+	if err = json.Unmarshal(b, &p2); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	for i, w := range p.Wellcoords {
+		w2 := p2.Wellcoords[i]
+
+		if !reflect.DeepEqual(w.WContents, w2.WContents) {
+			t.Errorf("%v =/= %v", w.WContents, w2.WContents)
+		}
+	}
+
+	for i := 0; i < p2.WellsX(); i++ {
+		for j := 0; j < p2.WellsY(); j++ {
+			wc := WellCoords{X: i, Y: j}
+
+			w := p2.Wellcoords[wc.FormatA1()]
+
+			w.WContents.CName = wc.FormatA1()
+			if p2.Rows[j][i].WContents.CName != wc.FormatA1() || p2.Cols[i][j].WContents.CName != wc.FormatA1() || p2.HWells[w.ID].WContents.CName != wc.FormatA1() {
+				fmt.Println(p2.Cols[i][j].WContents.CName)
+				fmt.Println(p2.Rows[j][i].WContents.CName)
+				t.Errorf("Error: Wells inconsistent at position %s", wc.FormatA1())
+			}
+
+		}
+	}
+}
+
+func TestAddGetClearData(t *testing.T) {
+	dat := []byte("3.5")
+
+	t.Run("basic", func(t *testing.T) {
+		p := makeplatefortest()
+
+		if err := p.SetData("OD", dat); err != nil {
+			t.Errorf(err.Error())
+		}
+		d, err := p.GetData("OD")
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		if !reflect.DeepEqual(d, dat) {
+			t.Errorf("Expected %v got %v", dat, d)
+		}
+	})
+
+	t.Run("clear", func(t *testing.T) {
+		p := makeplatefortest()
+
+		if err := p.SetData("OD", dat); err != nil {
+			t.Errorf(err.Error())
+		}
+
+		if err := p.ClearData("OD"); err != nil {
+			t.Errorf(err.Error())
+		}
+
+		if _, err := p.GetData("OD"); err == nil {
+			t.Errorf("ClearData should clear data but has not")
+		}
+	})
+
+	t.Run("cannot update special", func(t *testing.T) {
+		p := makeplatefortest()
+		if err := p.SetData("IMSPECIAL", dat); err == nil {
+			t.Errorf("Adding data with a reserved key should fail but does not")
+		}
+	})
+
+}
+
+func TestGetAllComponents(t *testing.T) {
+	p := makeplatefortest()
+
+	cmps := p.AllContents()
+
+	if len(cmps) != p.WellsX()*p.WellsY() {
+		t.Errorf("Expected %d components got %d", p.WellsX()*p.WellsY(), len(cmps))
 	}
 }

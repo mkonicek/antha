@@ -8,7 +8,7 @@ type resolverKey int
 
 const theResolverKey resolverKey = 0
 
-// Return values for some instructions
+// A Resolver returns values for some instructions
 type Resolver func(ctx context.Context, insts []interface{}) (values map[int]interface{}, err error)
 
 type resolverCtx struct {
@@ -16,9 +16,9 @@ type resolverCtx struct {
 	Resolver Resolver
 }
 
-// Create a new resolver context. When all pool contexts are blocked on Reads,
-// the Tracer calls Resolvers to compute the promised values. If there are no
-// Resolvers, the promised values are nil.
+// WithResolver creates a new resolver context. When all pool contexts are
+// blocked on Reads, the Tracer calls Resolvers to compute the promised values.
+// If there are no Resolvers, the promised values are nil.
 func WithResolver(parent context.Context, resolver Resolver) context.Context {
 	return context.WithValue(parent, theResolverKey, &resolverCtx{
 		Parent:   parent,

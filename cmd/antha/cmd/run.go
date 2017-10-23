@@ -46,10 +46,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	defaultPort = 50051
-)
-
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run an antha workflow",
@@ -67,7 +63,7 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 		opt.MaxWells = &f
 	}
 	if i := viper.GetFloat64("residualVolumeWeight"); i != 0 {
-		f := float64(i)
+		f := i
 		opt.ResidualVolumeWeight = &f
 	}
 	opt.InputPlateType = GetStringSlice("inputPlateType")
@@ -106,7 +102,7 @@ func makeContext() (context.Context, error) {
 		if !ok {
 			return nil, fmt.Errorf("component %q has unexpected type %T", desc.Name, obj)
 		}
-		if err := inject.Add(ctx, inject.Name{Repo: desc.Name}, runner); err != nil {
+		if err := inject.Add(ctx, inject.Name{Repo: desc.Name, Stage: desc.Stage}, runner); err != nil {
 			return nil, fmt.Errorf("error adding protocol %q: %s", desc.Name, err)
 		}
 	}
@@ -168,11 +164,11 @@ func (a *runOpt) Run() error {
 		return err
 	}
 
-	fe, err := frontend.New(frontend.Opt{})
+	fe, err := frontend.New()
 	if err != nil {
 		return err
 	}
-	defer fe.Shutdown()
+	defer fe.Shutdown() // nolint: errcheck
 
 	ctx, err := makeContext()
 	if err != nil {
@@ -243,7 +239,10 @@ func (a *runOpt) Run() error {
 }
 
 func runWorkflow(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
+
 	ctx := testinventory.NewContext(context.Background())
 
 	var drivers []string
@@ -258,7 +257,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 			p := u.Host + u.Path
 			s, err := spawn.GoPackage(p, fmt.Sprintf("%d %s", idx, path.Base(u.Path)))
 			if s != nil {
-				defer s.Close()
+				defer s.Close() // nolint: errcheck
 			}
 			if err != nil {
 				return fmt.Errorf("cannot start package %s: %s", p, err)

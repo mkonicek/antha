@@ -42,7 +42,7 @@ func checkPartition(opt PartitionTreeOpt) (*TreePartition, error) {
 	}
 
 	sum := 0
-	VisitTree(VisitTreeOpt{
+	if err := VisitTree(VisitTreeOpt{
 		Tree: opt.Tree,
 		Root: opt.Root,
 		PreOrder: func(n, parent Node, err error) error {
@@ -51,7 +51,10 @@ func checkPartition(opt PartitionTreeOpt) (*TreePartition, error) {
 			}
 			return nil
 		},
-	})
+	}); err != nil {
+		return nil, err
+	}
+
 	if sum != r.Weight {
 		return r, fmt.Errorf("expected weight %d found %d", sum, r.Weight)
 	}

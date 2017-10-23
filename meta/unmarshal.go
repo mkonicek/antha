@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	notAPointer = errors.New("not a pointer")
+	errNotAPointer = errors.New("not a pointer")
 )
 
-// Unmarshal deserializes data into an object
+// UnmarshalFunc deserializes data into an object
 type UnmarshalFunc func(data []byte, obj interface{}) error
 
 // Unmarshaler gives on custom on-the-side unmarshaling functions for specific
@@ -47,7 +47,7 @@ func (a *Unmarshaler) unmarshalJSON(data []byte, value reflect.Value) (reflect.V
 		if err := json.Unmarshal(data, &raw); err != nil {
 			return nilValue, err
 		}
-		map_ := reflect.MakeMap(typ)
+		aMap := reflect.MakeMap(typ)
 		for k, bs := range raw {
 			kvalue := reflect.ValueOf(k)
 			elem := value.MapIndex(kvalue)
@@ -58,9 +58,9 @@ func (a *Unmarshaler) unmarshalJSON(data []byte, value reflect.Value) (reflect.V
 			if err != nil {
 				return nilValue, err
 			}
-			map_.SetMapIndex(kvalue, v)
+			aMap.SetMapIndex(kvalue, v)
 		}
-		return map_, nil
+		return aMap, nil
 	case reflect.Ptr:
 		elem := value.Elem()
 		if !elem.IsValid() {
@@ -96,13 +96,13 @@ func (a *Unmarshaler) unmarshalJSON(data []byte, value reflect.Value) (reflect.V
 	return elem.Elem(), nil
 }
 
-// UnmarshalJSON parses the JSON-encoded data and stores the result in the
+// Unmarshal parses the JSON-encoded data and stores the result in the
 // value pointed to by obj. Custom unmarshaling functions can be specified on
 // the side.
-func (a *Unmarshaler) UnmarshalJSON(data []byte, obj interface{}) error {
+func (a *Unmarshaler) Unmarshal(data []byte, obj interface{}) error {
 	value := reflect.ValueOf(obj)
 	if value.Kind() != reflect.Ptr {
-		return notAPointer
+		return errNotAPointer
 	}
 
 	elem := value.Elem()

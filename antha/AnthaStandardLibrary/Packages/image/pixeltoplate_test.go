@@ -27,7 +27,9 @@ func TestMakeAnthaImg(t *testing.T) {
 	}
 
 	var imgFile wtype.File
-	imgFile.WriteAll(data)
+	if err := imgFile.WriteAll(data); err != nil {
+		t.Fatal(err)
+	}
 
 	//opening image
 	imgBase, err := OpenFile(imgFile)
@@ -104,7 +106,9 @@ func TestMakeLivingImg(t *testing.T) {
 	}
 
 	var imgFile wtype.File
-	imgFile.WriteAll(data)
+	if err := imgFile.WriteAll(data); err != nil {
+		t.Fatal(err)
+	}
 
 	//opening image
 	imgBase, err := OpenFile(imgFile)
@@ -150,7 +154,9 @@ func TestMakeLivingGIF(t *testing.T) {
 	}
 
 	var imgFile wtype.File
-	imgFile.WriteAll(data)
+	if err := imgFile.WriteAll(data); err != nil {
+		t.Fatal(err)
+	}
 
 	//opening image
 	imgBase, err := OpenFile(imgFile)
@@ -206,7 +212,9 @@ func TestAnthaPrintWorkflow(t *testing.T) {
 	}
 
 	var imgFile wtype.File
-	imgFile.WriteAll(data)
+	if err := imgFile.WriteAll(data); err != nil {
+		t.Fatal(err)
+	}
 
 	//opening image
 	imgBase, err := OpenFile(imgFile)
@@ -248,7 +256,9 @@ func TestParseGIF(t *testing.T) {
 	}
 
 	var imgFile wtype.File
-	imgFile.WriteAll(data)
+	if err := imgFile.WriteAll(data); err != nil {
+		t.Fatal(err)
+	}
 
 	//opening GIF
 	gif, err := OpenGIF(imgFile)
@@ -256,7 +266,9 @@ func TestParseGIF(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ParseGIF(gif, []int{1, 6})
+	if _, err := ParseGIF(gif, []int{1, 6}); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestGetState(t *testing.T) {
@@ -268,7 +280,9 @@ func TestGetState(t *testing.T) {
 	}
 
 	var imgFile wtype.File
-	imgFile.WriteAll(data)
+	if err := imgFile.WriteAll(data); err != nil {
+		t.Fatal(err)
+	}
 
 	//opening GIF
 	gif, err := OpenGIF(imgFile)

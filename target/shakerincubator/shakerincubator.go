@@ -140,7 +140,7 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 			Calls: calls,
 		})
 		insts = append(insts, &target.TimedWait{
-			Duration: time.Duration(float64(inc.PreTime.Seconds()) * float64(time.Second)),
+			Duration: time.Duration(inc.PreTime.Seconds() * float64(time.Second)),
 		})
 	}
 
@@ -162,7 +162,7 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 
 	if !inc.Time.IsNil() {
 		insts = append(insts, &target.TimedWait{
-			Duration: time.Duration(float64(inc.Time.Seconds()) * float64(time.Second)),
+			Duration: time.Duration(inc.Time.Seconds() * float64(time.Second)),
 		})
 	}
 

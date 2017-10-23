@@ -54,17 +54,17 @@ func CompareWellCoordsCol(w1, w2 WellCoords) int {
 		return -1
 	} else if dx > 0 {
 		return 1
-	} else {
-		if dy < 0 {
-			return -1
-		} else if dy > 0 {
-			return 1
-		} else {
-			return 0
-		}
 	}
-	return 0
+
+	if dy < 0 {
+		return -1
+	} else if dy > 0 {
+		return 1
+	} else {
+		return 0
+	}
 }
+
 func CompareStringWellCoordsRow(sw1, sw2 string) int {
 	w1 := MakeWellCoords(sw1)
 	w2 := MakeWellCoords(sw2)
@@ -79,16 +79,14 @@ func CompareWellCoordsRow(w1, w2 WellCoords) int {
 		return -1
 	} else if dy > 0 {
 		return 1
-	} else {
-		if dx < 0 {
-			return -1
-		} else if dx > 0 {
-			return 1
-		} else {
-			return 0
-		}
 	}
-	return 0
+	if dx < 0 {
+		return -1
+	} else if dx > 0 {
+		return 1
+	} else {
+		return 0
+	}
 }
 
 // convenience structure for handling well coordinates

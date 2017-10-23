@@ -219,7 +219,8 @@ func parsePlateFile(ctx context.Context, filename string) (*ParsePlateResult, er
 		return nil, err
 	}
 
-	defer f.Close()
+	defer f.Close() // nolint: errcheck
+
 	return ParsePlateCSV(ctx, f)
 }
 

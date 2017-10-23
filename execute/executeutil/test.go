@@ -13,7 +13,7 @@ import (
 	"github.com/antha-lang/antha/workflowtest"
 )
 
-// A test input
+// A TestInput is a workflow, its iputs and expected output
 type TestInput struct {
 	BundlePath   string
 	ParamsPath   string
@@ -24,6 +24,7 @@ type TestInput struct {
 	Dir          string
 }
 
+// Paths returns the filepaths that this TestInput was created from
 func (a TestInput) Paths() (rs []string) {
 	if len(a.BundlePath) != 0 {
 		rs = append(rs, a.BundlePath)
@@ -37,24 +38,24 @@ func (a TestInput) Paths() (rs []string) {
 	return
 }
 
-type TestInputs []*TestInput
+type byPath []*TestInput
 
-func (a TestInputs) Len() int {
+func (a byPath) Len() int {
 	return len(a)
 }
 
-func (a TestInputs) Less(i, j int) bool {
+func (a byPath) Less(i, j int) bool {
 	if a[i].WorkflowPath == a[j].WorkflowPath {
 		return a[i].ParamsPath < a[j].ParamsPath
 	}
 	return a[i].WorkflowPath < a[j].WorkflowPath
 }
 
-func (a TestInputs) Swap(i, j int) {
+func (a byPath) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-// Find any test inputs under basePath.
+// FindTestInputs finds any test inputs under basePath.
 func FindTestInputs(basePath string) ([]*TestInput, error) {
 	wfiles := make(map[string][]string)
 	pfiles := make(map[string][]string)
@@ -162,13 +163,13 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 		var wdata, pdata, bdata []byte
 		var err error
 		if bdata, err = open(input.BundlePath); err != nil {
-			return nil, fmt.Errorf("error reading %q", input.BundlePath, err)
+			return nil, fmt.Errorf("error reading %q: %s", input.BundlePath, err)
 		}
 		if wdata, err = open(input.WorkflowPath); err != nil {
-			return nil, fmt.Errorf("error reading %q", input.WorkflowPath, err)
+			return nil, fmt.Errorf("error reading %q: %s", input.WorkflowPath, err)
 		}
 		if pdata, err = open(input.ParamsPath); err != nil {
-			return nil, fmt.Errorf("error reading %q", input.ParamsPath, err)
+			return nil, fmt.Errorf("error reading %q: %s", input.ParamsPath, err)
 		}
 
 		bundle, err := Unmarshal(UnmarshalOpt{
@@ -184,7 +185,7 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 		input.Expected = &(bundle.TestOpt)
 	}
 
-	sort.Sort(TestInputs(inputs))
+	sort.Sort(byPath(inputs))
 
 	return inputs, nil
 }

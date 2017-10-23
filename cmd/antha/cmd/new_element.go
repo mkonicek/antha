@@ -172,7 +172,7 @@ func writeAn(outputDir string, steps []string, element *component.Component) err
 		Name:  element.Name,
 		Steps: steps,
 	}
-	for _, p := range element.Desc.Params {
+	for _, p := range element.Description.Params {
 		switch p.Kind {
 		case "Parameters":
 			arg.Parameters = append(arg.Parameters, parg{Name: p.Name, Type: p.Type})
@@ -229,14 +229,16 @@ func writeBundle(outputDir string, element *component.Component, params map[stri
 	}
 
 	fn := filepath.Join(outputDir, element.Name+".bundle.json")
-	if err := ioutil.WriteFile(fn, bs, 0666); err != nil {
+	if err := ioutil.WriteFile(fn, bs, 0600); err != nil {
 		return fmt.Errorf("cannot write file %q: %s", fn, err)
 	}
 	return nil
 }
 
 func newElement(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	var name, outputDir string
 
@@ -255,7 +257,7 @@ func newElement(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("element name %q is invalid: %s", name, err)
 	}
 
-	if err := os.MkdirAll(outputDir, 0777); err != nil {
+	if err := os.MkdirAll(outputDir, 0700); err != nil {
 		return fmt.Errorf("cannot make directory %q: %s", outputDir, err)
 	}
 
@@ -303,7 +305,7 @@ func newElement(cmd *cobra.Command, args []string) error {
 				Out: &output{},
 			}
 		},
-		Desc: component.ComponentDesc{
+		Description: component.Description{
 			Params: []component.ParamDesc{
 				{Name: "A", Kind: "Parameters", Type: typeName(in.A)},
 				{Name: "B", Kind: "Parameters", Type: typeName(in.B)},

@@ -26,13 +26,12 @@ package blast
 import (
 	"errors"
 	"fmt"
+	"github.com/biogo/ncbi"
 	"io"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/biogo/ncbi"
 )
 
 var (

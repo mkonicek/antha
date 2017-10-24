@@ -168,6 +168,13 @@ func (aln ReallySimpleAlignment) MultiColumn(i, j int) []string {
 	return r
 }
 
+func (aln ReallySimpleAlignment) TrimToFrame(frame int) ReallySimpleAlignment {
+	trim1 := ReallySimpleAlignment(aln.MultiColumn(3-frame, len(aln[0])+frame-3))
+	endFrame := len(trim1[0]) % 3
+
+	return trim1.MultiColumn(0, len(trim1[0])-endFrame)
+}
+
 func (aln SimpleAlignment) Column(i int) string {
 	if i < 0 || i >= len(aln[0].Subject) {
 		panic(fmt.Sprintf("Error: Cannot take column %d in alignment of length %d", i, len(aln[0].Subject)))

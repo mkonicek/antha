@@ -146,24 +146,18 @@ func setPH(comp *wtype.LHComponent, ph PHMeasurement) (*wtype.LHComponent, error
 	return comp, nil
 }
 
-/*
-func (ph *PHMeasurement) TempCompensation(reftemp wunit.Temperature, tempcoefficientforsolution PHperdegC) (compensatedph float64) {
+// TempCompensation adjusts a PH value based on a measured temperature and the solutionTemperaratureCoefficient.
+// This is the measured coefficient for a solution for the change in pH with temperature for that solution.
+func TempCompensation(ph PH, newTemp wunit.Temperature, solutionTemperaratureCoefficient PHperdegC) (compensatedPH PH) {
 
-	ph.RefTemp = &reftemp //.SIValue()
-	ph.TemperatureCoefficient = &tempcoefficientforsolution
+	tempDiff := newTemp.SIValue() - ph.Temp.SIValue()
 
-	tempdiff := ph.Temp.SIValue() - ph.RefTemp.SIValue()
+	compensatedPH = ph
 
-	compensatedph = ph.PHValue + (float64(tempcoefficientforsolution) * tempdiff)
-	ph.TempCorrected = &compensatedph
+	compensatedPH.Value = ph.Value + (float64(solutionTemperaratureCoefficient) * tempDiff)
+	compensatedPH.Temp = newTemp
 	return
 }
-*/
-// placeholder
-
-/*func MeasurePH(*wtype.LHComponent) (measurement float64) {
-	return 7.0
-}*/
 
 /*
 // this should be performed on an LHComponent

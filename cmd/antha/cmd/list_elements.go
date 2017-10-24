@@ -46,6 +46,7 @@ func listElements(cmd *cobra.Command, args []string) error {
 	}
 
 	paths := make(map[string]string)
+	comps := runComponents()
 	for _, c := range library {
 		p, seen := paths[c.Name]
 		if seen {
@@ -54,7 +55,7 @@ func listElements(cmd *cobra.Command, args []string) error {
 		paths[c.Name] = c.Description.Path
 	}
 
-	cs, err := comp.New(library)
+	cs, err := comp.New(comps)
 	if err != nil {
 		return err
 	}

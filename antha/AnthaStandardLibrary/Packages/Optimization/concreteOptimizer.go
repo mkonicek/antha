@@ -160,11 +160,11 @@ func makeFragmentsFromSolution(solution PointSet1D, seqs wtype.ReallySimpleAlign
 
 	last := 0
 	for i := 0; i < len(solution); i++ {
-		r = append(r, Distinct(seqs.MultiColumn(last, solution[i]-last)))
+		r = append(r, Distinct(seqs.MultiColumn(last, solution[i]-(last+1))))
 		last = solution[i] - 1
 	}
 
-	r = append(r, Distinct(seqs.MultiColumn(last, len(seqs[0])-last)))
+	r = append(r, Distinct(seqs.MultiColumn(last, len(seqs[0])-(last+1))))
 
 	return r
 }

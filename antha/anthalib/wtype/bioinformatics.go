@@ -169,7 +169,10 @@ func (aln ReallySimpleAlignment) MultiColumn(i, j int) []string {
 }
 
 func (aln ReallySimpleAlignment) TrimToFrame(frame int) ReallySimpleAlignment {
-	trim1 := ReallySimpleAlignment(aln.MultiColumn(3-frame, len(aln[0])+frame-3))
+	trim1 := aln
+	if frame != 0 {
+		trim1 = ReallySimpleAlignment(aln.MultiColumn(3-frame, len(aln[0])+frame-3))
+	}
 	endFrame := len(trim1[0]) % 3
 
 	return trim1.MultiColumn(0, len(trim1[0])-endFrame)

@@ -47,7 +47,7 @@ func listElements(cmd *cobra.Command, args []string) error {
 
 	paths := make(map[string]string)
 	comps := runComponents()
-	for _, c := range library {
+	for _, c := range comps {
 		p, seen := paths[c.Name]
 		if seen {
 			return fmt.Errorf("protocol %q defined in more than one file %q and %q", c.Name, p, c.Description.Path)

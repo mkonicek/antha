@@ -32,11 +32,11 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-// Option is a
+// Option is a type for use as an argument in the SetOrderInfo function.
 type Option string
 
 const (
-	// Force overwriting of Order Details of an LHComponent.
+	// Force overwriting of Order Details of an LHComponent in the SetOrderInfo function.
 	FORCEUPDATE Option = "FORCE"
 )
 

@@ -294,6 +294,10 @@ func TestLHPlateSerialize(t *testing.T) {
 		}
 	}
 
+	fMErr := func(s string) string {
+		return s + " not maintained after marshal/unmarshal"
+	}
+
 	for i := 0; i < p2.WellsX(); i++ {
 		for j := 0; j < p2.WellsY(); j++ {
 			wc := WellCoords{X: i, Y: j}
@@ -308,6 +312,55 @@ func TestLHPlateSerialize(t *testing.T) {
 			}
 
 		}
+	}
+
+	// check extraneous parameters
+
+	if p.ID != p2.ID {
+		t.Errorf(fMErr("ID"))
+	}
+
+	if p.PlateName != p2.PlateName {
+		t.Errorf(fMErr("Plate name"))
+	}
+
+	if p.Type != p2.Type {
+		t.Errorf(fMErr("Type"))
+	}
+
+	if p.Mnfr != p2.Mnfr {
+		t.Errorf(fMErr("Manufacturer"))
+	}
+
+	if p.Nwells != p2.Nwells {
+		t.Errorf(fMErr("NWells"))
+	}
+
+	if p.Height != p2.Height {
+		t.Errorf(fMErr("Height"))
+	}
+
+	if p.Hunit != p2.Hunit {
+		t.Errorf(fMErr("Hunit"))
+	}
+
+	if p.WellXOffset != p2.WellXOffset {
+		t.Errorf(fMErr("WellXOffset"))
+	}
+
+	if p.WellYOffset != p2.WellYOffset {
+		t.Errorf(fMErr("WellYOffset"))
+	}
+
+	if p.WellXStart != p2.WellXStart {
+		t.Errorf(fMErr("WellXStart"))
+	}
+	if p.WellYStart != p2.WellYStart {
+		t.Errorf(fMErr("WellYStart"))
+	}
+
+	if p.WellZStart != p2.WellZStart {
+		t.Errorf(fMErr("WellZStart"))
 	}
 }
 

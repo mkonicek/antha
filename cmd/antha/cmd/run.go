@@ -329,15 +329,4 @@ func init() {
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
 	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
 	flags.StringSlice("tipType", nil, "Names of permitted tip types")
-<<<<<<< HEAD:cmd/antharun/cmd/run.go
-	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
-	flags.Bool("OutputSort", false, "Sort execution by output - improves tip usage")
-	flags.Bool("WithMulti", false, "Allow use of new multichannel planning")
-	flags.Bool("PrintInstructions", false, "Output the raw instructions sent to the driver")
-	flags.Bool("UseDriverTipTracking", false, "If the driver has tip tracking available, use it")
-	flags.String("makeTestBundle", "", "Generate json format bundle for testing and put it here")
-	flags.Bool("LegacyVolumeTracking", false, "Do not track volumes for intermediate components")
-	flags.Bool("RunTest", false, "If bundle contains test, use it")
-=======
->>>>>>> master:cmd/antha/cmd/run.go
 }

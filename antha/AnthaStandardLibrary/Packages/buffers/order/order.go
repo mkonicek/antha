@@ -24,6 +24,7 @@ package order
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -36,18 +37,18 @@ import (
 type Option string
 
 const (
-	// Force overwriting of Order Details of an LHComponent in the SetOrderInfo function.
-	FORCEUPDATE Option = "FORCE"
+	// Force overwriting of Order Details of a wtype.LHComponent in the SetOrderInfo function.
+	ForceUpdate Option = "FORCEUPDATE"
 )
 
-// Key to look up order details from an LHComponent.
-const ORDERDETAILS = "ORDERDETAILS"
+// Key to look up order details from a wtype.LHComponent.
+const OrderDetails = "ORDERDETAILS"
 
 var (
-	errNotFound = fmt.Errorf("No order info found")
+	errNotFound = errors.New("no order info found")
 )
 
-// Details stores the order details of an LHComponent
+// Details stores the order details of a wtype.LHComponent
 type Details struct {
 
 	// Name of Manufacturer.
@@ -66,7 +67,7 @@ type Details struct {
 	StorageRequirements StorageConditions
 }
 
-// StorageConditions stores any restrictions .
+// StorageConditions stores any restrictions.
 type StorageConditions struct {
 	// Minimum Temperature recommended for storage.
 	MinTemp wunit.Temperature
@@ -90,7 +91,7 @@ func (s StorageConditions) String() string {
 // GetOrderDetails returns order Details for a component.
 func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) {
 
-	order, found := comp.Extra[ORDERDETAILS]
+	order, found := comp.Extra[OrderDetails]
 
 	if !found {
 		return orderDetails, errNotFound
@@ -106,14 +107,14 @@ func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) 
 	err = json.Unmarshal(bts, &orderDetails)
 
 	if err != nil {
-		err = fmt.Errorf("Problem getting %s order details. Error: %s", comp.Name(), err.Error())
+		err = fmt.Errorf("problem getting %s order details: %s", comp.Name(), err.Error())
 	}
 
 	return
 }
 
-// SetOrderDetails adds order details to an LHComponent.
-// An error will be returned if order details are already encountered unless the FORCEUPDATE option is used as an Option argument in the function.
+// SetOrderDetails adds order details to a wtype.LHComponent.
+// An error will be returned if order details are already encountered unless the ForceUpdate option is used as an Option argument in the function.
 // In which case any existing order details will be overwritten.
 func SetOrderDetails(comp *wtype.LHComponent, orderDetails Details, options ...Option) (*wtype.LHComponent, error) {
 
@@ -121,17 +122,15 @@ func SetOrderDetails(comp *wtype.LHComponent, orderDetails Details, options ...O
 	existingDetails, err := GetOrderDetails(comp)
 
 	if err == errNotFound {
-		comp.Extra[ORDERDETAILS] = orderDetails
+		comp.Extra[OrderDetails] = orderDetails
 		return comp, nil
 	} else if err == nil {
-		if !inOptions(FORCEUPDATE, options) {
-			return comp, fmt.Errorf("component %s already contains order info %v. Use order FORCEUPDATE to override.", comp.Name(), existingDetails)
+		if !inOptions(ForceUpdate, options) {
+			return comp, fmt.Errorf("component %s already contains order info %v. Use order ForceUpdate to override.", comp.Name(), existingDetails)
 		}
 	} else {
 		return comp, err
 	}
-
-	comp.Extra[ORDERDETAILS] = orderDetails
 
 	return comp, nil
 }

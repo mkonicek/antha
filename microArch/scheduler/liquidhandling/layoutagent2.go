@@ -95,6 +95,20 @@ func map_in_user_plates(rq *LHRequest, pc []PlateChoice) []PlateChoice {
 	return pc
 }
 
+func findInPC(ass, w string, pc PlateChoice) int {
+
+	i := -1
+
+	for ix := 0; ix < len(pc.Assigned); ix++ {
+		if pc.Assigned[ix] == ass && pc.Wells[ix] == w {
+			i = ix
+			break
+		}
+	}
+
+	return i
+}
+
 func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
 	nm := p.PlateName
 
@@ -113,9 +127,13 @@ func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []Plat
 		if i == -1 {
 			pc = append(pc, PlateChoice{Platetype: p.Type, Assigned: []string{cnt.ID}, ID: p.ID, Wells: []string{wc.FormatA1()}, Name: nm, Output: []bool{false}})
 		} else {
-			pc[i].Assigned = append(pc[i].Assigned, cnt.ID)
-			pc[i].Wells = append(pc[i].Wells, wc.FormatA1())
-			pc[i].Output = append(pc[i].Output, false)
+			ass := findInPC(cnt.ID, wc.FormatA1(), pc[i])
+
+			if ass == -1 {
+				pc[i].Assigned = append(pc[i].Assigned, cnt.ID)
+				pc[i].Wells = append(pc[i].Wells, wc.FormatA1())
+				pc[i].Output = append(pc[i].Output, false)
+			}
 		}
 	}
 	return pc
@@ -371,8 +389,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				continue
 			}
 
-			addr := v.Components[0].Loc
-
 			if v.Components[0].Loc == "" {
 				addr, ok := st.GetLocationOf(v.Components[0].ID)
 
@@ -384,7 +400,9 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				v.Components[0].Loc = addr
 			}
 
+			addr := v.Components[0].Loc
 			tx := strings.Split(addr, ":")
+
 			request.LHInstructions[k].Welladdress = tx[1]
 			request.LHInstructions[k].SetPlateID(tx[0])
 

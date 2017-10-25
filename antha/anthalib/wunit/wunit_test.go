@@ -271,7 +271,7 @@ func TestSubstractVolumes(t *testing.T) {
 
 func TestAddVolumes(t *testing.T) {
 	for _, testunit := range volumearithmetictests {
-		r := AddVolumes([]Volume{testunit.VolumeA, testunit.VolumeB})
+		r := AddVolumes(testunit.VolumeA, testunit.VolumeB)
 		if r.SIValue() != testunit.Sum.SIValue() {
 			t.Error(
 				"For", testunit.VolumeA, "+", testunit.VolumeB, "\n",
@@ -404,7 +404,7 @@ func TestAddConcentrations(t *testing.T) {
 		//var concs []Concentration
 		//concs = append(concs,testunit.ValueA)
 		//concs = append(concs,testunit.ValueB)
-		r, err := AddConcentrations([]Concentration{testunit.ValueA, testunit.ValueB})
+		r, err := AddConcentrations(testunit.ValueA, testunit.ValueB)
 		if err != nil {
 			t.Error(
 				"Add Concentration returns error ", err.Error(), "should return nil \n",
@@ -419,7 +419,7 @@ func TestAddConcentrations(t *testing.T) {
 		}
 	}
 
-	_, err := AddConcentrations([]Concentration{concarithmetictests[0].ValueA, concarithmetictests[4].ValueA})
+	_, err := AddConcentrations(concarithmetictests[0].ValueA, concarithmetictests[4].ValueA)
 	if err == nil {
 		t.Error(
 			"Expected Errorf but got nil. Adding of two different bases (g/l and M/l) should not be possible \n",

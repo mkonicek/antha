@@ -28,16 +28,16 @@ package scanner
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/token"
 	"io"
 	"os"
 	"sort"
+
+	"github.com/antha-lang/antha/antha/token"
 )
 
-// In an ErrorList, an error is represented by an *Error.
-// The position Pos, if valid, points to the beginning of
-// the offending token, and the error condition is described
-// by Msg.
+// An Error in scanning. In an ErrorList, an error is represented by an *Error.
+// The position Pos, if valid, points to the beginning of the offending token,
+// and the error condition is described by Msg.
 //
 type Error struct {
 	Pos token.Position
@@ -142,9 +142,9 @@ func (p ErrorList) Err() error {
 func PrintError(w io.Writer, err error) {
 	if list, ok := err.(ErrorList); ok {
 		for _, e := range list {
-			fmt.Fprintf(w, "%s\n", e)
+			fmt.Fprintf(w, "%s\n", e) // nolint
 		}
 	} else if err != nil {
-		fmt.Fprintf(w, "%s\n", err)
+		fmt.Fprintf(w, "%s\n", err) // nolint
 	}
 }

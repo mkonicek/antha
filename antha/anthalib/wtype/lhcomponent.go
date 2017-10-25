@@ -80,6 +80,17 @@ func (lhc *LHComponent) PlateLocation() PlateLocation {
 	return PlateLocationFromString(lhc.Loc)
 }
 
+// PlateID returns the id of a plate or the empty string
+func (lhc *LHComponent) PlateID() string {
+	loc := lhc.PlateLocation()
+
+	if !loc.IsZero() {
+		return loc.ID
+	}
+
+	return ""
+}
+
 func (lhc *LHComponent) CNID() string {
 	return fmt.Sprintf("CNID:%s:%s", lhc.CName, lhc.ID)
 }
@@ -425,6 +436,7 @@ func (lhc *LHComponent) Dup() *LHComponent {
 	c.Type = lhc.Type
 	c.Vol = lhc.Vol
 	c.Conc = lhc.Conc
+	c.Cunit = lhc.Cunit
 	c.Vunit = lhc.Vunit
 	c.Tvol = lhc.Tvol
 	c.Smax = lhc.Smax

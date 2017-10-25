@@ -3,13 +3,15 @@ package workflowtest
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/target"
-	"strings"
 )
 
+// A TestOpt is an option for running a test
 type TestOpt struct {
 	ComparisonOptions   string
 	CompareInstructions bool
@@ -17,10 +19,12 @@ type TestOpt struct {
 	Results             TestResults
 }
 
+// TestResults are the results of running a set of tests
 type TestResults struct {
 	MixTaskResults []MixTaskResult
 }
 
+// A MixTaskResult is the result if running a mix task
 type MixTaskResult struct {
 	Instructions liquidhandling.SetOfRobotInstructions
 	Outputs      map[string]*wtype.LHPlate
@@ -42,9 +46,16 @@ func compareOutputs(outputs1, outputs2 map[string]*wtype.LHPlate, opt TestOpt) s
 }
 
 func compareInstructions(genIns1, genIns2 []liquidhandling.RobotInstruction, opt TestOpt) string {
-	return joinErrors(liquidhandling.CompareInstructionSets(genIns1, genIns2, liquidhandling.ComparisonOpt{unpackInstructionComparisonOptions(opt.ComparisonOptions)}).Errors)
+	return joinErrors(
+		liquidhandling.CompareInstructionSets(
+			genIns1,
+			genIns2,
+			liquidhandling.ComparisonOpt{
+				InstructionParameters: unpackInstructionComparisonOptions(opt.ComparisonOptions),
+			}).Errors)
 }
 
+// CompareTestResults compares an execution with an expected output
 func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 	// pull out mix tasks from the Result
 
@@ -74,9 +85,8 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 
 	if errstr != "" {
 		return errors.New(errstr)
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.LHPlate {
@@ -95,6 +105,7 @@ func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.LHPlate {
 	return outputs
 }
 
+// SaveTestOutputs extracts a TestOpt from an execution result
 func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOpt {
 	// get mix tasks
 	mixTasks := getMixTasks(runResult)
@@ -103,15 +114,24 @@ func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOp
 
 	for i := 0; i < len(mixTasks); i++ {
 		outputs := getMixTaskOutputs(mixTasks[i])
-		mixTaskResults[i] = MixTaskResult{Instructions: liquidhandling.SetOfRobotInstructions{RobotInstructions: generaliseInstructions(mixTasks[i].Request.Instructions)}, Outputs: outputs}
+		mixTaskResults[i] = MixTaskResult{
+			Instructions: liquidhandling.SetOfRobotInstructions{
+				RobotInstructions: generaliseInstructions(mixTasks[i].Request.Instructions),
+			}, Outputs: outputs,
+		}
 	}
 
 	results := TestResults{MixTaskResults: mixTaskResults}
-	return TestOpt{Results: results, ComparisonOptions: comparisonOptions, CompareOutputs: true}
+	return TestOpt{
+		Results:           results,
+		ComparisonOptions: comparisonOptions,
+		CompareOutputs:    true,
+	}
 }
-func unpackOutputComparisonOptions(optIn string) MixOutputComparisonOptions {
+
+func unpackOutputComparisonOptions(optIn string) ComparisonMode {
 	// v0 do the sensible thing
-	return ComparePlateTypesVolumes()
+	return ComparePlateTypesVolumes
 }
 
 func unpackInstructionComparisonOptions(optIn string) map[string][]string {

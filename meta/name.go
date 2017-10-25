@@ -6,10 +6,12 @@ import (
 	"strings"
 )
 
+// FullTypeName returns the full type name of an object
 func FullTypeName(obj interface{}) string {
 	return NameFromType(reflect.TypeOf(obj))
 }
 
+// NameFromType returns the full type name from a reflect.Type
 func NameFromType(t reflect.Type) string {
 	// Like join but ignore empty strings
 	joinWith := func(sep string, args ...string) string {
@@ -42,11 +44,11 @@ func NameFromType(t reflect.Type) string {
 
 	case reflect.Func:
 		var ins []string
-		for i, n := 0, t.NumIn(); i < n; i += 1 {
+		for i, n := 0, t.NumIn(); i < n; i++ {
 			ins = append(ins, NameFromType(t.In(i)))
 		}
 		var outs []string
-		for i, n := 0, t.NumOut(); i < n; i += 1 {
+		for i, n := 0, t.NumOut(); i < n; i++ {
 			outs = append(outs, NameFromType(t.In(i)))
 		}
 		return joinWith(" ", fmt.Sprintf("func(%s)", strings.Join(ins, ",")), strings.Join(outs, ","))

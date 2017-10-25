@@ -113,6 +113,11 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 			Message: cmd.Message,
 		})
 
+	case *ast.AwaitInst:
+		insts = append(insts, &target.Prompt{
+			Message: fmt.Sprintf("Now get some data for %s %s", cmd.Tags, cmd.AwaitID),
+		})
+
 	default:
 		return nil, fmt.Errorf("unknown inst %T", cmd)
 	}

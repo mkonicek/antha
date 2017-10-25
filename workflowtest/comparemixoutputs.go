@@ -2,43 +2,30 @@ package workflowtest
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"reflect"
 	"sort"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-type MixOutputComparisonOptions struct {
-	CompareWells      bool
-	ComparePositions  bool
-	ComparePlateTypes bool
-	CompareVolumes    bool
-	ComparePlateNames bool
-}
+// A ComparisonMode is an option for comparing outputs
+type ComparisonMode int
 
-func CompareEveryting() MixOutputComparisonOptions {
-	return MixOutputComparisonOptions{
-		CompareWells:      true,
-		ComparePositions:  true,
-		ComparePlateTypes: true,
-		CompareVolumes:    true,
-		ComparePlateNames: true,
-	}
-}
+// Possible comparison modes
+const (
+	CompareWells ComparisonMode = 1 << iota
+	ComparePositions
+	ComparePlateTypes
+	ComparePlateNames
+	CompareVolumes
+)
 
-func ComparePlateTypesVolumes() MixOutputComparisonOptions {
-	return MixOutputComparisonOptions{
-		CompareVolumes:    true,
-		ComparePlateTypes: true,
-	}
-}
-
-func ComparePlateTypesNamesVolumes() MixOutputComparisonOptions {
-	return MixOutputComparisonOptions{
-		CompareVolumes:    true,
-		ComparePlateTypes: true,
-		ComparePlateNames: true,
-	}
-}
+// Predefined comparison modes
+const (
+	CompareEverything             = CompareWells | ComparePositions | ComparePlateTypes | CompareVolumes | ComparePlateNames
+	ComparePlateTypesVolumes      = ComparePlateTypes | CompareVolumes
+	ComparePlateTypesNamesVolumes = CompareVolumes | ComparePlateTypes | ComparePlateNames
+)
 
 type componentInfo struct {
 	Well      string
@@ -68,13 +55,15 @@ func (ci componentInfo) HashKey() string {
 	return s
 }
 
+// A ComparisonResult is the output of comparing outputs
 type ComparisonResult struct {
 	Errors []error
 }
 
 type outputMap map[string][]componentInfo
 
-func CompareMixOutputs(want, got map[string]*wtype.LHPlate, opts MixOutputComparisonOptions) ComparisonResult {
+// CompareMixOutputs compares mix outputs
+func CompareMixOutputs(want, got map[string]*wtype.LHPlate, opts ComparisonMode) ComparisonResult {
 	// do we have the same number of things coming out at the
 	// same volumes or whatever
 
@@ -90,7 +79,7 @@ func compareOutputMaps(outputMapWant, outputMapGot outputMap) ComparisonResult {
 	// establish the order of comparison
 	getKeysOrdered := func(m outputMap) []string {
 		keys := make([]string, 0, len(m))
-		for k, _ := range m {
+		for k := range m {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
@@ -195,7 +184,7 @@ func missingExtra(cpWant, cpGot []componentInfo) (missing, extra []componentInfo
 	return
 }
 
-func getOutputMap(res map[string]*wtype.LHPlate, opts MixOutputComparisonOptions) outputMap {
+func getOutputMap(res map[string]*wtype.LHPlate, opts ComparisonMode) outputMap {
 	outputMap := make(map[string][]componentInfo)
 	instM := make(map[string]int)
 
@@ -231,39 +220,26 @@ func getOutputMap(res map[string]*wtype.LHPlate, opts MixOutputComparisonOptions
 	return outputMap
 }
 
-/*
-
-type MixOutputComparisonOptions struct {
-	CompareWells      bool
-	ComparePositions  bool
-	ComparePlateTypes bool
-	CompareVolumes    bool
-	ComparePlateNames bool
-}
-
-
-*/
-
-func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts MixOutputComparisonOptions) componentInfo {
+func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts ComparisonMode) componentInfo {
 	var well, position, platename, platetype, volume string
 
-	if opts.CompareWells {
+	if opts&CompareWells != 0 {
 		well = wellIn.Crds
 	}
 
-	if opts.ComparePositions {
+	if opts&ComparePositions != 0 {
 		position = positionIn
 	}
 
-	if opts.ComparePlateTypes {
+	if opts&ComparePlateTypes != 0 {
 		platetype = wellIn.Platetype
 	}
 
-	if opts.CompareVolumes {
+	if opts&CompareVolumes != 0 {
 		volume = wellIn.CurrVolume().ToString()
 	}
 
-	if opts.ComparePlateNames {
+	if opts&ComparePlateNames != 0 {
 		platename = plateNameIn
 	}
 

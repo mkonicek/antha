@@ -40,9 +40,9 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 	var errs []string
 
 	// normalise names for more robust evaluation
-	var normalisedComponentName string
+	//var normalisedComponentName string
 
-	normalisedComponentName = NormaliseName(component.CName)
+	//normalisedComponentName = NormaliseName(component.CName)
 	//_,_, normalisedComponentName = wunit.ParseConcentration(component.CName)
 
 	for i, comp := range components {
@@ -52,12 +52,12 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 		}
 
 		// normalise names for more robust evaluation
-		var normalisedCompName string
+		//var normalisedCompName string
 
-		normalisedCompName = NormaliseName(comp.CName)
+		//normalisedCompName = NormaliseName(comp.CName)
 		//_,_, normalisedCompName = wunit.ParseConcentration(comp.CName)
 
-		if normalisedCompName == normalisedComponentName {
+		if comp.CName == component.CName {
 
 			if component.HasConcentration() && comp.HasConcentration() {
 

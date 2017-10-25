@@ -709,6 +709,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vd.ID = wlf.WContents.ID
 			vd.ParentID = wlf.WContents.ParentID
 			wlt.Add(vd)
+
 			// TODO -- danger here, is result definitely set?
 			wlt.WContents.ID = insIn.Result.ID
 			wlf.WContents.AddDaughterComponent(wlt.WContents)

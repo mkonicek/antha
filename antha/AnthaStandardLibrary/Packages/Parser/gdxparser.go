@@ -75,36 +75,42 @@ func Parse(filename string) (parts_list []string, err error) {
 	nconstructs := 0
 	for _, c := range gdx.DesignConstruct {
 		parts_list[nconstructs] = "Construct: " + strconv.Itoa(nconstructs) + " n parts: " + strconv.Itoa(len(c.DNAElements)+len(c.AAElements))
-		nconstructs += 1
+		nconstructs++
 	}
 
 	return parts_list, err
 }
 
-func ParsetoAssemblyParameters(filename string) ([]enzymes.Assemblyparameters, error) {
-	if str, err := ioutil.ReadFile(filename); err != nil {
+func ParseToAssemblyParameters(filename string) ([]enzymes.Assemblyparameters, error) {
+	str, err := ioutil.ReadFile(filename)
+	if err != nil {
 		return nil, err
-	} else {
-		return gdxToAssemblyParameters(str)
 	}
+	return gdxToAssemblyParameters(str)
 }
 
-// Parses a typeIIs assembly design file in gdx format. An example file is provided: "Assembly_Input_Controls.gdx"
-// The output will be []enzymes.AssemblyParameters which can be used in the enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.
-// The design file is expected to follow a format as shown in the provided example files
-// An error will be returned if no data is found within the .gdx design file or if the file is not in the expected format.
+// ParsesGDX parses a typeIIs assembly design file in gdx format. An example
+// file is provided: "Assembly_Input_Controls.gdx" The output will be
+// []enzymes.AssemblyParameters which can be used in the
+// enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.  The
+// design file is expected to follow a format as shown in the provided example
+// files An error will be returned if no data is found within the .gdx design
+// file or if the file is not in the expected format.
 func ParseGDX(file wtype.File) ([]enzymes.Assemblyparameters, error) {
-	if data, err := file.ReadAll(); err != nil {
+	data, err := file.ReadAll()
+	if err != nil {
 		return nil, err
-	} else {
-		return gdxToAssemblyParameters(data)
 	}
+	return gdxToAssemblyParameters(data)
 }
 
-// Parses the contents of a typeIIs assembly design file in gdx format. An example file is provided: "Assembly_Input_Controls.gdx"
-// The output will be []enzymes.AssemblyParameters which can be used in the enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.
-// The design file is expected to follow a format as shown in the provided example files
-// An error will be returned if no data is found within the .gdx design file or if the file is not in the expected format.
+// ParseGDXBinary parses the contents of a typeIIs assembly design file in gdx
+// format. An example file is provided: "Assembly_Input_Controls.gdx" The
+// output will be []enzymes.AssemblyParameters which can be used in the
+// enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.  The
+// design file is expected to follow a format as shown in the provided example
+// files An error will be returned if no data is found within the .gdx design
+// file or if the file is not in the expected format.
 func ParseGDXBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("no data found")

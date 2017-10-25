@@ -50,10 +50,8 @@ func (a *Auto) Close() error {
 }
 
 // New makes target by inspecting a set of network services
-func New(opt Opt) (*Auto, error) {
-	var err error
-
-	ret := &Auto{
+func New(opt Opt) (ret *Auto, err error) {
+	ret = &Auto{
 		Target:  target.New(),
 		runners: make(map[string][]runner.RunnerClient),
 		handler: make(map[target.Device]*grpc.ClientConn),
@@ -63,7 +61,7 @@ func New(opt Opt) (*Auto, error) {
 		if err == nil {
 			return
 		}
-		ret.Close()
+		err = ret.Close()
 	}()
 
 	tryer := &tryer{
@@ -77,17 +75,16 @@ func New(opt Opt) (*Auto, error) {
 		var conn *grpc.ClientConn
 		conn, err = grpc.Dial(ep.URI, grpc.WithInsecure())
 		if err != nil {
-			return nil, err
+			return
 		}
 		ret.Conns = append(ret.Conns, conn)
 
 		if err = tryer.Try(ctx, conn, ep.Arg); err != nil {
-			return nil, err
+			return
 		}
 	}
 
-	if err = ret.Target.AddDevice(human.New(tryer.HumanOpt)); err != nil {
-		return nil, err
-	}
-	return ret, nil
+	ret.Target.AddDevice(human.New(tryer.HumanOpt))
+
+	return
 }

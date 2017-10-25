@@ -23,6 +23,7 @@
 package cmd
 
 import (
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/component"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,6 +40,16 @@ var RootCmd = &cobra.Command{
 
 // Library of components available to workflows
 var library []component.Component
+
+func runComponents() (ret []component.Component) {
+	for _, comp := range library {
+		if comp.Stage != api.ElementStage_STEPS {
+			continue
+		}
+		ret = append(ret, comp)
+	}
+	return
+}
 
 // Execute adds all child commands to the root command sets flags
 // appropriately.  This is called by main.main(). It only needs to happen once
@@ -67,5 +78,5 @@ func initConfig() {
 	viper.AutomaticEnv()             // read in environment variables that match
 
 	// If a config file is found, read it in.
-	viper.ReadInConfig()
+	viper.ReadInConfig() // nolint
 }

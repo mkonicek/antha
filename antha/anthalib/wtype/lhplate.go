@@ -965,3 +965,93 @@ func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
 	}
 	return false
 }
+
+// SetData implements Annotatable
+func (p *LHPlate) SetData(key string, data []byte) error {
+	if err := p.checkExtra(fmt.Sprintf("cannot add data %s", key)); err != nil {
+		return err
+	}
+
+	// nb -- in future disallow already set keys as well?
+	if err := p.CheckExtraKey(key); err != nil {
+		return fmt.Errorf("invalid key %s: %s", key, err)
+	}
+
+	p.Welltype.Extra[key] = data
+
+	return nil
+
+}
+
+// ClearData removes data with the given name
+func (p *LHPlate) ClearData(k string) error {
+	err := p.checkExtra(fmt.Sprintf("cannot clear data %s", k))
+
+	if err != nil {
+		return err
+	}
+
+	delete(p.Welltype.Extra, k)
+
+	return nil
+}
+
+func (p *LHPlate) checkExtra(s string) error {
+	if p == nil {
+		return fmt.Errorf("nil plate: %s", s)
+	}
+
+	if p.Welltype == nil {
+		return fmt.Errorf("corrupt plate - missing well type: %s", s)
+	}
+
+	if p.Welltype.Extra == nil {
+		return fmt.Errorf("corrupt well type - %s", s)
+	}
+
+	return nil
+}
+
+func (p LHPlate) GetData(key string) ([]byte, error) {
+	if err := p.checkExtra(fmt.Sprintf("cannot get key %s", key)); err != nil {
+		return nil, err
+	}
+
+	if err := p.CheckExtraKey(key); err != nil {
+		return nil, fmt.Errorf("invalid key %s: %s", key, err)
+	}
+
+	bs, ok := p.Welltype.Extra[key].([]byte)
+	if !ok {
+		return nil, fmt.Errorf("key %s not found", key)
+	}
+
+	return bs, nil
+}
+
+// CheckExtraKey checks if the key is a reserved name
+func (p LHPlate) CheckExtraKey(k string) error {
+	reserved := []string{"IMSPECIAL", "Pipetmax"}
+
+	if wutil.StrInStrArray(k, reserved) {
+		return fmt.Errorf("%s is a system key used by plates", k)
+	}
+
+	if p.Welltype == nil {
+		return fmt.Errorf("No valid well")
+	}
+
+	return p.Welltype.CheckExtraKey(k)
+}
+
+// AllContents returns all the components on the plate
+func (p *LHPlate) AllContents() []*LHComponent {
+	ret := make([]*LHComponent, 0, len(p.Wellcoords))
+	for _, c := range p.Cols {
+		for _, w := range c {
+			ret = append(ret, w.WContents)
+		}
+	}
+
+	return ret
+}

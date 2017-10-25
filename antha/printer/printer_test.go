@@ -175,6 +175,10 @@ func runcheck(t *testing.T, source, golden string, mode checkMode) {
 		// (This is very difficult to achieve in general and for now
 		// it is only checked for files explicitly marked as such.)
 		res, err = format(gld, mode)
+		if err != nil {
+			t.Error(err)
+		}
+
 		if err := diff(golden, fmt.Sprintf("format(%s)", golden), gld, res); err != nil {
 			t.Errorf("golden is not idempotent: %s", err)
 		}
@@ -255,7 +259,9 @@ func TestLineComments(t *testing.T) {
 
 	var buf bytes.Buffer
 	fset = token.NewFileSet() // use the wrong file set
-	Fprint(&buf, fset, f)
+	if err := Fprint(&buf, fset, f); err != nil {
+		t.Fatal(err)
+	}
 
 	nlines := 0
 	for _, ch := range buf.Bytes() {
@@ -294,7 +300,10 @@ func TestBadNodes(t *testing.T) {
 		t.Error("expected illegal program") // error in test
 	}
 	var buf bytes.Buffer
-	Fprint(&buf, fset, f)
+	if err := Fprint(&buf, fset, f); err != nil {
+		t.Fatal(err)
+	}
+
 	if buf.String() != res {
 		t.Errorf("got %q, expected %q", buf.String(), res)
 	}
@@ -381,7 +390,7 @@ func idents(f *ast.File) <-chan *ast.Ident {
 // identCount returns the number of identifiers found in f.
 func identCount(f *ast.File) int {
 	n := 0
-	for _ = range idents(f) {
+	for range idents(f) {
 		n++
 	}
 	return n
@@ -529,7 +538,10 @@ func TestBaseIndent(t *testing.T) {
 	var buf bytes.Buffer
 	for indent := 0; indent < 4; indent++ {
 		buf.Reset()
-		(&Config{Tabwidth: tabwidth, Indent: indent}).Fprint(&buf, fset, file)
+		if err := (&Config{Tabwidth: tabwidth, Indent: indent}).Fprint(&buf, fset, file); err != nil {
+			t.Fatal(err)
+		}
+
 		// all code must be indented by at least 'indent' tabs
 		lines := bytes.Split(buf.Bytes(), []byte{'\n'})
 		for i, line := range lines {

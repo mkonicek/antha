@@ -92,12 +92,8 @@ func TestWellFormed(t *testing.T) {
 	}
 
 	machine := target.New()
-	if err := machine.AddDevice(human.New(human.Opt{CanMix: true})); err != nil {
-		t.Fatal(err)
-	}
-	if err := machine.AddDevice(&incubator{}); err != nil {
-		t.Fatal(err)
-	}
+	machine.AddDevice(human.New(human.Opt{CanMix: true}))
+	machine.AddDevice(&incubator{})
 
 	if insts, err := Compile(ctx, machine, nodes); err != nil {
 		t.Fatal(err)

@@ -1,4 +1,3 @@
-// pcr_parser
 package parser
 
 import (
@@ -12,7 +11,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-//This function takes in a pcr design file (.xlsx or .csv) and converts this into an array of type PCRReactions.
+// ParsePCRExc3el takes in a pcr design file (.xlsx or .csv) and converts this
+// into an array of type PCRReactions.
 func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 
 	data, err := designfile.ReadAll()
@@ -103,7 +103,6 @@ func readPCRDesign(filename string) [][]string {
 
 	if err != nil {
 		panic(err)
-		return constructs
 	}
 
 	defer csvfile.Close()

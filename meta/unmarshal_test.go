@@ -13,7 +13,7 @@ func TestString(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`"hello"`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`"hello"`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -27,7 +27,7 @@ func TestInt(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`1`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`1`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -44,7 +44,7 @@ func TestStruct(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`{"A": "hello", "B": 1}`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`{"A": "hello", "B": 1}`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -61,7 +61,7 @@ func TestPtrStruct(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`{"A": "hello", "B": 1}`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`{"A": "hello", "B": 1}`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -82,7 +82,7 @@ func TestMap(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`{"A": {"A": "hello", "B": 1}, "B": {"A": "hello", "B": 2} }`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`{"A": {"A": "hello", "B": 1}, "B": {"A": "hello", "B": 2} }`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -102,7 +102,7 @@ func TestSlice(t *testing.T) {
 	}
 
 	var u Unmarshaler
-	if err := u.UnmarshalJSON([]byte(`[ {"A": "hello", "B": 1}, {"A": "hello", "B": 2} ]`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`[ {"A": "hello", "B": 1}, {"A": "hello", "B": 2} ]`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -124,7 +124,7 @@ func TestMapInterface(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`{ "A":"`+kitchenZero+`"}`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`{ "A":"`+kitchenZero+`"}`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -142,7 +142,7 @@ func TestSliceInterface(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`["`+kitchenZero+`"]`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`["`+kitchenZero+`"]`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -161,7 +161,7 @@ func TestPtrInterface(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`"`+kitchenZero+`"`), &ptr); err != nil {
+	if err := u.Unmarshal([]byte(`"`+kitchenZero+`"`), &ptr); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(goldenPtr, ptr) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -178,7 +178,7 @@ func TestInterface(t *testing.T) {
 
 	var u Unmarshaler
 
-	if err := u.UnmarshalJSON([]byte(`"`+kitchenZero+`"`), &x); err != nil {
+	if err := u.Unmarshal([]byte(`"`+kitchenZero+`"`), &x); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(golden, x) {
 		t.Errorf("expecting %v but got %v instead", golden, x)

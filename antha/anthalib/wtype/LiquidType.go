@@ -135,7 +135,6 @@ func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 	default:
 		return LTDefault, fmt.Errorf("no liquid policy found for " + s.String() + " so using default policy")
 	}
-	return LTDefault, fmt.Errorf("no liquid policy found for " + s.String() + " so using default policy")
 }
 
 func LiquidTypeName(lt LiquidType) PolicyName {

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sync"
 
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/trace"
 )
@@ -91,7 +92,6 @@ func (a *node) setParam(port string, value interface{}) error {
 
 // Workflow is the state to execute a workflow
 type Workflow struct {
-	roots   []*node
 	nodes   map[string]*node
 	Outputs map[Port]interface{} // Values generated that were not connected to another process
 }
@@ -144,7 +144,12 @@ func updateOutParams(n *node, out inject.Value, unmatched map[Port]interface{}) 
 }
 
 func (a *Workflow) run(ctx context.Context, n *node) ([]*node, error) {
-	out, err := inject.Call(ctx, inject.NameQuery{Repo: n.FuncName}, n.Params)
+	query := inject.NameQuery{
+		Repo:  n.FuncName,
+		Stage: api.ElementStage_STEPS,
+	}
+	out, err := inject.Call(ctx, query, n.Params)
+
 	if err != nil {
 		return nil, err
 	}

@@ -452,7 +452,7 @@ func (p *printer) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool) 
 			if i > 0 {
 				p.linebreak(p.lineFor(f.Pos()), 1, ignore, p.linesFrom(line) > 0)
 			}
-			extraTabs := 0
+			var extraTabs int
 			p.setComment(f.Doc)
 			p.recordLine(&line)
 			if len(f.Names) > 0 {
@@ -903,8 +903,6 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 	default:
 		panic("unreachable")
 	}
-
-	return
 }
 
 func (p *printer) expr0(x ast.Expr, depth int) {
@@ -1254,8 +1252,6 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 	default:
 		panic("unreachable")
 	}
-
-	return
 }
 
 // ----------------------------------------------------------------------------

@@ -20,6 +20,7 @@ func shouldWait(inst target.Inst) bool {
 	return false
 }
 
+// Run executes an execute.Result against the given auto target.
 func Run(out io.Writer, in io.Reader, a *auto.Auto, result *execute.Result) error {
 	if _, err := fmt.Fprintf(out, "== Running Workflow:\n"); err != nil {
 		return err
@@ -34,7 +35,7 @@ func Run(out io.Writer, in io.Reader, a *auto.Auto, result *execute.Result) erro
 
 		var skip bool
 		if shouldWait(inst) {
-			fmt.Fprintf(out, " (Run? [yes,skip]) ")
+			fmt.Fprintf(out, " (Run? [yes,skip]) ") // nolint
 			s, err := bin.ReadString('\n')
 			if err != nil {
 				return err
@@ -47,7 +48,7 @@ func Run(out io.Writer, in io.Reader, a *auto.Auto, result *execute.Result) erro
 
 		if !skip {
 			if err := a.Execute(ctx, inst); err != nil {
-				fmt.Fprintf(out, " [FAIL]\n")
+				fmt.Fprintf(out, " [FAIL]\n") // nolint
 				return err
 			}
 		}

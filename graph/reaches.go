@@ -2,16 +2,6 @@ package graph
 
 import "errors"
 
-// Merge n and src into dst, modifying dst. Assumes src != dst.
-func mergeInto(n Node, src, dst map[Node]bool) {
-	dst[n] = true
-	for k := range src {
-		dst[k] = true
-	}
-}
-
-//
-
 var (
 	errReachesSeen = errors.New("reaches already seen")
 )

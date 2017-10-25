@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for reading file formats, in particular focused toward dna sequence parsing
 package parser
 
 import (
@@ -107,8 +106,8 @@ func readPartConcentrations(fileName string) (partNamesInOrder []string, concMap
 
 	var errs []string
 
-	var nameColumn int = -1
-	var concColumn int = -1
+	var nameColumn = -1
+	var concColumn = -1
 
 	for i, row := range rawCSVdata {
 

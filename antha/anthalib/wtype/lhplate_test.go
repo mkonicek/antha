@@ -3,7 +3,6 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
-	//	"github.com/kylelemons/godebug/pretty"
 	"reflect"
 	"strings"
 	"testing"
@@ -281,13 +280,9 @@ func TestLHPlateSerialize(t *testing.T) {
 
 	var p2 *LHPlate
 
-	err = json.Unmarshal(b, &p2)
-
-	if err != nil {
+	if err = json.Unmarshal(b, &p2); err != nil {
 		t.Errorf(err.Error())
 	}
-
-	// check stuff
 
 	for i, w := range p.Wellcoords {
 		w2 := p2.Wellcoords[i]
@@ -297,13 +292,15 @@ func TestLHPlateSerialize(t *testing.T) {
 		}
 	}
 
+	fMErr := func(s string) string {
+		return s + " not maintained after marshal/unmarshal"
+	}
+
 	for i := 0; i < p2.WellsX(); i++ {
 		for j := 0; j < p2.WellsY(); j++ {
 			wc := WellCoords{X: i, Y: j}
 
 			w := p2.Wellcoords[wc.FormatA1()]
-
-			//fmt.Printf("%s: r: %p %s c: %p %s w: %p %s\n", wc.FormatA1(), p2.Rows[j][i], p2.Rows[j][i].Crds, p2.Cols[i][j], p2.Cols[i][j].Crds, w, w.Crds)
 
 			w.WContents.CName = wc.FormatA1()
 			if p2.Rows[j][i].WContents.CName != wc.FormatA1() || p2.Cols[i][j].WContents.CName != wc.FormatA1() || p2.HWells[w.ID].WContents.CName != wc.FormatA1() {
@@ -315,4 +312,105 @@ func TestLHPlateSerialize(t *testing.T) {
 		}
 	}
 
+	// check extraneous parameters
+
+	if p.ID != p2.ID {
+		t.Errorf(fMErr("ID"))
+	}
+
+	if p.PlateName != p2.PlateName {
+		t.Errorf(fMErr("Plate name"))
+	}
+
+	if p.Type != p2.Type {
+		t.Errorf(fMErr("Type"))
+	}
+
+	if p.Mnfr != p2.Mnfr {
+		t.Errorf(fMErr("Manufacturer"))
+	}
+
+	if p.Nwells != p2.Nwells {
+		t.Errorf(fMErr("NWells"))
+	}
+
+	if p.Height != p2.Height {
+		t.Errorf(fMErr("Height"))
+	}
+
+	if p.Hunit != p2.Hunit {
+		t.Errorf(fMErr("Hunit"))
+	}
+
+	if p.WellXOffset != p2.WellXOffset {
+		t.Errorf(fMErr("WellXOffset"))
+	}
+
+	if p.WellYOffset != p2.WellYOffset {
+		t.Errorf(fMErr("WellYOffset"))
+	}
+
+	if p.WellXStart != p2.WellXStart {
+		t.Errorf(fMErr("WellXStart"))
+	}
+	if p.WellYStart != p2.WellYStart {
+		t.Errorf(fMErr("WellYStart"))
+	}
+
+	if p.WellZStart != p2.WellZStart {
+		t.Errorf(fMErr("WellZStart"))
+	}
+}
+
+func TestAddGetClearData(t *testing.T) {
+	dat := []byte("3.5")
+
+	t.Run("basic", func(t *testing.T) {
+		p := makeplatefortest()
+
+		if err := p.SetData("OD", dat); err != nil {
+			t.Errorf(err.Error())
+		}
+		d, err := p.GetData("OD")
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		if !reflect.DeepEqual(d, dat) {
+			t.Errorf("Expected %v got %v", dat, d)
+		}
+	})
+
+	t.Run("clear", func(t *testing.T) {
+		p := makeplatefortest()
+
+		if err := p.SetData("OD", dat); err != nil {
+			t.Errorf(err.Error())
+		}
+
+		if err := p.ClearData("OD"); err != nil {
+			t.Errorf(err.Error())
+		}
+
+		if _, err := p.GetData("OD"); err == nil {
+			t.Errorf("ClearData should clear data but has not")
+		}
+	})
+
+	t.Run("cannot update special", func(t *testing.T) {
+		p := makeplatefortest()
+		if err := p.SetData("IMSPECIAL", dat); err == nil {
+			t.Errorf("Adding data with a reserved key should fail but does not")
+		}
+	})
+
+}
+
+func TestGetAllComponents(t *testing.T) {
+	p := makeplatefortest()
+
+	cmps := p.AllContents()
+
+	if len(cmps) != p.WellsX()*p.WellsY() {
+		t.Errorf("Expected %d components got %d", p.WellsX()*p.WellsY(), len(cmps))
+	}
 }

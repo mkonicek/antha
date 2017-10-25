@@ -308,7 +308,7 @@ func (sol LHSolution) String() string {
 	for _, c := range sol.Components {
 		one = one + fmt.Sprintf("[%s], ", c.CName)
 	}
-	two := fmt.Sprintf("%s, %s, %s, %g, %s, %g, %d, %d",
+	two := fmt.Sprintf("%s, %s, %s, %g, %s, %g, %g, %d, %d",
 		sol.ContainerType,
 		sol.Welladdress,
 		sol.Platetype,

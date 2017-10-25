@@ -65,7 +65,9 @@ var compileCmd = &cobra.Command{
 }
 
 func runCompile(cmd *cobra.Command, args []string) error {
-	viper.BindPFlags(cmd.Flags())
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
 
 	outdir := viper.GetString("outdir")
 	outPackage := viper.GetString("outputPackage")
@@ -130,14 +132,14 @@ func isAnthaFile(name string) bool {
 }
 
 func writeAnthaFile(outFile string, file *compile.AnthaFile) error {
-	dst, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
+	dst, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
-	defer dst.Close()
+	defer dst.Close() // nolint: errcheck
 
 	src := file.NewReader()
-	defer src.Close()
+	defer src.Close() // nolint: errcheck
 
 	_, err = io.Copy(dst, src)
 	return err
@@ -146,7 +148,7 @@ func writeAnthaFile(outFile string, file *compile.AnthaFile) error {
 func writeAnthaFiles(files *compile.AnthaFiles, outDir string) error {
 	for _, file := range files.Files() {
 		outFile := filepath.Join(outDir, filepath.FromSlash(file.Name))
-		if err := os.MkdirAll(filepath.Dir(outFile), 0777); err != nil {
+		if err := os.MkdirAll(filepath.Dir(outFile), 0700); err != nil {
 			return err
 		}
 
@@ -173,7 +175,9 @@ func processFile(root *compile.AnthaRoot, filename, outdir string) error {
 	}
 
 	h := sha256.New()
-	io.Copy(h, bytes.NewReader(src))
+	if _, err := io.Copy(h, bytes.NewReader(src)); err != nil {
+		return err
+	}
 
 	antha := compile.NewAntha(root)
 	antha.SourceSHA256 = h.Sum(nil)
@@ -291,11 +295,12 @@ func matchSpace(orig []byte, src []byte) []byte {
 			src = nil
 		}
 		if len(line) > 0 && line[0] != '\n' { // not blank
-			b.Write(indent)
+			b.Write(indent) // nolint: errcheck
 		}
 		b.Write(line)
 	}
-	b.Write(after)
+	b.Write(after) // nolint: errcheck
+
 	return b.Bytes()
 }
 

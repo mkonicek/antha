@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for facilitating DOE methodology in antha
 package doe
 
 import (
@@ -120,7 +119,7 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 		if err == nil {
 			anthaVolume = vol
 		} else {
-			err = fmt.Errorf("No valid Volume found in ", rawVolString)
+			err = fmt.Errorf("No valid Volume found in %s", rawVolString)
 			return anthaVolume, err
 		}
 
@@ -146,7 +145,7 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 		}
 
 	} else {
-		err = fmt.Errorf("problem with type of ", value, " expected string or float")
+		err = fmt.Errorf("problem with type of %v expected string or float", value)
 		return anthaVolume, err
 	}
 

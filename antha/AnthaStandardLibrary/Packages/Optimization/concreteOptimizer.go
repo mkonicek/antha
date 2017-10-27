@@ -2,11 +2,12 @@ package Optimization
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"math/rand"
 	"reflect"
 	"sort"
 	"time"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 func DefaultParameters() AssemblyOptimizerParameters {
@@ -164,7 +165,7 @@ func makeFragmentsFromSolution(solution PointSet1D, seqs wtype.ReallySimpleAlign
 		last = solution[i] - 1
 	}
 
-	r = append(r, Distinct(seqs.MultiColumn(last, len(seqs[0])-(last+1))))
+	r = append(r, Distinct(seqs.MultiColumn(last, len(seqs[0])-(last))))
 
 	return r
 }
@@ -330,7 +331,7 @@ func isIn(s string, endsToAvoid []string) bool {
 
 func makeSplits(seq string, p, endLen int, endsToAvoid []string) []string {
 	r := make([]string, 0, endLen+1)
-	for i := 0; i < endLen; i++ {
+	for i := 0; i < 1; i++ {
 		end := string(seq[p+i : p+endLen])
 
 		if isIn(end, endsToAvoid) {

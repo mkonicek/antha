@@ -646,12 +646,12 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 				return nil, err
 			}
 
-			tlhif := robot.PlateLookup[insIn.PlateID()]
+			tlhif := robot.PlateLookup[insIn.PlateID]
 
 			if tlhif != nil {
 				tlhp = tlhif.(*wtype.LHPlate)
 			} else {
-				s := fmt.Sprint("NO DST PLATE FOUND : ", i, " ", xx, " ", insIn.PlateID())
+				s := fmt.Sprint("NO DST PLATE FOUND : ", i, " ", xx, " ", insIn.PlateID)
 				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
 
 				return nil, err
@@ -660,7 +660,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			wlt, ok := tlhp.WellAtString(insIn.Welladdress)
 
 			if !ok {
-				return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Well %s not found on dest plate %s", insIn.Welladdress, insIn.PlateID()))
+				return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Well %s not found on dest plate %s", insIn.Welladdress, insIn.PlateID))
 			}
 
 			//v2 := wunit.NewVolume(v.Vol, v.Vunit)
@@ -668,7 +668,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vt = append(vt, wlt.CurrVolume())
 			wh = append(wh, v.TypeName())
 			va = append(va, v2)
-			pt = append(pt, robot.PlateIDLookup[insIn.PlateID()])
+			pt = append(pt, robot.PlateIDLookup[insIn.PlateID])
 			wt = append(wt, insIn.Welladdress)
 			ptwx = append(ptwx, tlhp.WellsX())
 			ptwy = append(ptwy, tlhp.WellsY())

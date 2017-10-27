@@ -36,7 +36,7 @@ type LHInstruction struct {
 	Components       []*LHComponent
 	ContainerType    string
 	Welladdress      string
-	plateID          string
+	PlateID          string
 	Platetype        string
 	Vol              float64
 	Type             int
@@ -98,12 +98,12 @@ func (ins *LHInstruction) SetGeneration(i int) {
 	ins.gen = i
 }
 
-func (ins *LHInstruction) PlateID() string {
-	return ins.plateID
+func (ins *LHInstruction) GetPlateID() string {
+	return ins.PlateID
 }
 
 func (ins *LHInstruction) SetPlateID(pid string) {
-	ins.plateID = pid
+	ins.PlateID = pid
 }
 
 func (ins *LHInstruction) IsMixInPlace() bool {

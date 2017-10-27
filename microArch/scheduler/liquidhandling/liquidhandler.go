@@ -572,8 +572,8 @@ const NoWell = "NOWELL"
 
 func assembleLoc(ins *wtype.LHInstruction) string {
 	id := NoID
-	if ins.PlateID() != "" {
-		id = ins.PlateID()
+	if ins.PlateID != "" {
+		id = ins.PlateID
 	}
 
 	name := NoName

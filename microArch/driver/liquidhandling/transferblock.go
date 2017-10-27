@@ -201,10 +201,10 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 	for _, i := range ins {
 		wc := wtype.MakeWellCoords(i.Welladdress)
 
-		_, ok := h[i.PlateID()]
+		_, ok := h[i.PlateID]
 
 		if !ok {
-			h[i.PlateID()] = wtype.NewPlatedestmap()
+			h[i.PlateID] = wtype.NewPlatedestmap()
 
 			// gerrabirrovinfo on the plate type
 			// is this always set??
@@ -214,10 +214,10 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type %s found: %s", i.Platetype, err))
 			}
 
-			platedims[i.PlateID()] = wtype.Rational{pt.WellsX(), pt.WellsY()}
+			platedims[i.PlateID] = wtype.Rational{pt.WellsX(), pt.WellsY()}
 		}
 
-		h[i.PlateID()][wc.X][wc.Y] = append(h[i.PlateID()][wc.X][wc.Y], i)
+		h[i.PlateID][wc.X][wc.Y] = append(h[i.PlateID][wc.X][wc.Y], i)
 	}
 
 	if len(h) == 0 {

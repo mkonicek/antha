@@ -131,7 +131,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 				// destination plate position
 
-				ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID()]
+				ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID]
 
 				if !ok {
 					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")

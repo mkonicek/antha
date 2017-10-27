@@ -83,6 +83,26 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 
 }
 
+func configure_request_bigger(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
+
+	for k := 0; k < 99; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.Sample(water, wunit.NewVolume(8.0, "ul"))
+		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
+		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
+
+		ins.AddComponent(ws)
+		ins.AddComponent(mmxs)
+		ins.AddComponent(ps)
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
 func TestTipOverridePositive(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 

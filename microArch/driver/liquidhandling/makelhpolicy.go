@@ -742,7 +742,7 @@ func SmartMixPolicy() wtype.LHPolicy {
 	policy["POST_MIX_RATE"] = 3.74
 	policy["ASPSPEED"] = 3.74
 	policy["DSPSPEED"] = 3.74
-	policy["CAN_MULTI"] = true
+	policy["CAN_MULTI"] = false
 	policy["CAN_MSA"] = false
 	policy["CAN_SDD"] = false
 	policy["DSPREFERENCE"] = 0

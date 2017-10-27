@@ -302,12 +302,12 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 	r.LHRequest.BlockID = getID(mixes)
 
 	for _, mix := range mixes {
-		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID()) {
+		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID) {
 			p, err := inventory.NewPlate(ctx, mix.Platetype)
 			if err != nil {
 				return nil, err
 			}
-			p.ID = mix.PlateID()
+			p.ID = mix.PlateID
 			r.LHRequest.Output_platetypes = append(r.LHRequest.Output_platetypes, p)
 		}
 		r.LHRequest.Add_instruction(mix)

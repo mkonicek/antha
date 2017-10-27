@@ -29,6 +29,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
@@ -53,6 +54,7 @@ func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquid
 			break
 		}
 		request, pc, mp, err = LayoutStage(ctx, request, params, ch, pc, mp)
+
 		k += 1
 		if err != nil {
 			break
@@ -146,7 +148,7 @@ func find_insID(plateID, wellcoords string, rq *LHRequest) string {
 		if ins.Type != wtype.LHIMIX {
 			continue
 		}
-		if ins.PlateID() == plateID && ins.Welladdress == wellcoords {
+		if ins.PlateID == plateID && ins.Welladdress == wellcoords {
 			r = ins.ID
 			break
 		}
@@ -330,19 +332,20 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 		}
 
 		// if plate ID set
-		if v.PlateID() != "" {
+		if v.PlateID != "" {
 			//MixInto
-			i := defined(v.PlateID(), s)
+			i := defined(v.PlateID, s)
 
 			nm := v.PlateName
 
 			if nm == "" {
-				nm = fmt.Sprintf("Output_plate_%s", v.PlateID()[0:6])
+				nm = fmt.Sprintf("Output_plate_%s", v.PlateID[0:6])
 			}
 
 			if i == -1 {
-				s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: v.PlateID(), Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
+				s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: v.PlateID, Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
 			} else {
+
 				s[i].Assigned = append(s[i].Assigned, v.ID)
 				s[i].Wells = append(s[i].Wells, v.Welladdress)
 				s[i].Output = append(s[i].Output, true)
@@ -376,9 +379,19 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			if i == -1 {
 				s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: id, Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
 			} else {
-				s[i].Assigned = append(s[i].Assigned, v.ID)
-				s[i].Wells = append(s[i].Wells, v.Welladdress)
-				s[i].Output = append(s[i].Output, true)
+				// check if this well is used... if so, we need another plate
+
+				if v.Welladdress != "" && wutil.StrInStrArray(v.Welladdress, s[i].Wells) {
+					id := wtype.NewUUID()
+					request.LHInstructions[k].SetPlateID(id)
+					s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: v.PlateID, Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
+
+				} else {
+
+					s[i].Assigned = append(s[i].Assigned, v.ID)
+					s[i].Wells = append(s[i].Wells, v.Welladdress)
+					s[i].Output = append(s[i].Output, true)
+				}
 			}
 		} else if v.IsMixInPlace() {
 			// the first component sets the destination
@@ -471,7 +484,7 @@ func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, or
 
 		// this id may be temporary, only things without it still are not assigned to a
 		// plate, even a virtual one
-		if v.PlateID() == "" {
+		if v.PlateID == "" {
 			pt := v.Platetype
 			// find a plate choice to put it in or return -1 for a new one
 			ass := -1
@@ -644,16 +657,16 @@ func make_plates(ctx context.Context, request *LHRequest, order []string) (map[s
 			continue
 		}
 
-		_, skip := remap[v.PlateID()]
+		_, skip := remap[v.PlateID]
 
 		if skip {
-			request.LHInstructions[k].SetPlateID(remap[v.PlateID()])
+			request.LHInstructions[k].SetPlateID(remap[v.PlateID])
 			continue
 		}
-		_, ok := request.Output_plates[v.PlateID()]
+		_, ok := request.Output_plates[v.PlateID]
 
 		// we don't remap input plates
-		_, ok2 := request.Input_plates[v.PlateID()]
+		_, ok2 := request.Input_plates[v.PlateID]
 
 		// need to assign a new plate
 		if !(ok || ok2) {
@@ -663,8 +676,8 @@ func make_plates(ctx context.Context, request *LHRequest, order []string) (map[s
 			}
 			plate.PlateName = request.LHInstructions[k].PlateName
 			request.Output_plates[plate.ID] = plate
-			remap[v.PlateID()] = plate.ID
-			request.LHInstructions[k].SetPlateID(remap[v.PlateID()])
+			remap[v.PlateID] = plate.ID
+			request.LHInstructions[k].SetPlateID(remap[v.PlateID])
 		}
 
 	}

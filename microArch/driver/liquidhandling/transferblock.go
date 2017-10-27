@@ -214,23 +214,23 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 		}
 		wc := wtype.MakeWellCoords(i.Welladdress)
 
-		_, ok := h[i.PlateID()]
+		_, ok := h[i.PlateID]
 
 		if !ok {
-			h[i.PlateID()] = wtype.NewPlatedestmap()
+			h[i.PlateID] = wtype.NewPlatedestmap()
 
 			// gerrabirrovinfo on the plate type
 			// is this always set??
 			pt, err := inventory.NewPlate(ctx, i.Platetype)
 
 			if err != nil {
-				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type exists for ID %s - requested was %s", i.PlateID(), i.Platetype))
+				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type exists for ID %s - requested was %s", i.PlateID, i.Platetype))
 			}
 
-			platedims[i.PlateID()] = wtype.Rational{pt.WellsX(), pt.WellsY()}
+			platedims[i.PlateID] = wtype.Rational{pt.WellsX(), pt.WellsY()}
 		}
 
-		h[i.PlateID()][wc.X][wc.Y] = append(h[i.PlateID()][wc.X][wc.Y], i)
+		h[i.PlateID][wc.X][wc.Y] = append(h[i.PlateID][wc.X][wc.Y], i)
 	}
 
 	if len(h) == 0 {

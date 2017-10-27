@@ -499,7 +499,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if request.Options.PrintInstructions {
 		for _, insID := range request.Output_order {
 			ins := request.LHInstructions[insID]
-			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID(), ") ", ins.Welladdress, ": ", ins.ProductID)
+			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductID)
 
 			if ins.IsMixInPlace() {
 				fmt.Print(" INPLACE")
@@ -591,8 +591,8 @@ const NoWell = "NOWELL"
 
 func assembleLoc(ins *wtype.LHInstruction) string {
 	id := NoID
-	if ins.PlateID() != "" {
-		id = ins.PlateID()
+	if ins.PlateID != "" {
+		id = ins.PlateID
 	}
 
 	name := NoName

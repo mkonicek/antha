@@ -159,8 +159,6 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			continue
 		}
 
-		// what type is this component?
-
 		wh[ci] = cmps[ci].TypeName()
 
 		// source plate position
@@ -175,7 +173,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		// destination plate position
 
-		ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID()]
+		ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID]
 
 		if !ok {
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")

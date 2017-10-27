@@ -286,7 +286,7 @@ func (lh *LHVariableCondition) UnmarshalJSON(data []byte) error {
 			_, cat := mp["Category"]
 			_, num := mp["Upper"]
 			if cat {
-				lhcc := LHCategoryCondition{Category: mp["Categor"].(string)}
+				lhcc := LHCategoryCondition{Category: mp["Category"].(string)}
 				lh.Condition = lhcc
 			} else if num {
 				lhnc := LHNumericCondition{Upper: mp["Upper"].(float64), Lower: mp["Lower"].(float64)}

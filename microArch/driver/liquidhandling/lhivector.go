@@ -37,7 +37,7 @@ func (lhiv LHIVector) CompsAt(i int) []*wtype.LHComponent {
 		}
 
 		ret[ix] = ins.Components[i].Dup()
-		ret[ix].Loc = ins.PlateID() + ":" + ins.Welladdress
+		ret[ix].Loc = ins.PlateID + ":" + ins.Welladdress
 	}
 
 	return ret

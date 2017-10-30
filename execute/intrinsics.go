@@ -238,6 +238,9 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	var reqs []ast.Request
 	// from the protocol POV components need to be passed by value
 	for i, c := range wtype.CopyComponentArray(inst.Components) {
+		if c.CName == "" {
+			panic("Nameless Component used in Mix - this is not permitted")
+		}
 		reqs = append(reqs, ast.Request{
 			Selector: []ast.NameValue{
 				target.DriverSelectorV1Mixer,

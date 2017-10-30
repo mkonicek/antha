@@ -53,8 +53,6 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	//ret.Cunit = l.Cunit
 	ret.SetSample(true)
 
-	//logger.Track(fmt.Sprintf("SAMPLE V %s %s %s", l.ID, ret.ID, v.ToString()))
-
 	return ret
 }
 
@@ -76,7 +74,6 @@ func MultiSample(l []*wtype.LHComponent, v []wunit.Volume) []*wtype.LHComponent 
 		ret.Extra = j.GetExtra()
 		ret.Smax = j.GetSmax()
 		ret.Visc = j.GetVisc()
-		//	logger.Track(fmt.Sprintf("SAMPLE V %s %s %s", j.ID, ret.ID, vi.ToString()))
 		ret.SetSample(true)
 		reta = append(reta, ret)
 	}
@@ -100,7 +97,6 @@ func SampleForConcentration(l *wtype.LHComponent, c wunit.Concentration) *wtype.
 	ret.Smax = l.GetSmax()
 	ret.Visc = l.GetVisc()
 	ret.SetSample(true)
-	//logger.Track(fmt.Sprintf("SAMPLE C %s %s %s", l.ID, ret.ID, c.ToString()))
 	return ret
 }
 
@@ -121,7 +117,6 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 	ret.Extra = s.GetExtra()
 	ret.Smax = s.GetSmax()
 	ret.Visc = s.GetVisc()
-	//logger.Track(fmt.Sprintf("SAMPLE M %s %s %s %s", s.ID, ret.ID, m.ToString(), d.ToString()))
 	ret.SetSample(true)
 	return ret
 }
@@ -142,7 +137,6 @@ func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHCompone
 	ret.Extra = l.GetExtra()
 	ret.Smax = l.GetSmax()
 	ret.Visc = l.GetVisc()
-	//logger.Track(fmt.Sprintf("SAMPLE T %s %s %s", l.ID, ret.ID, v.ToString()))
 	ret.SetSample(true)
 	return ret
 }
@@ -211,8 +205,6 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	for _, v := range r.Components {
 		s += v.CName + "-" + v.ID + " "
 	}
-
-	//fmt.Println("GENERATION: ", r.Result.Generation(), "MIXING : ", s, " RESULT: ", r.Result.CName+"-"+r.Result.ID)
 
 	return r
 }

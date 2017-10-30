@@ -333,7 +333,6 @@ func makeSplits(seq string, p, endLen int, endsToAvoid []string) []string {
 	r := make([]string, 0, endLen+1)
 	for i := 0; i < 1; i++ {
 		end := string(seq[p+i : p+endLen])
-
 		if isIn(end, endsToAvoid) {
 			continue
 		}

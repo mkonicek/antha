@@ -503,7 +503,6 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		}
 
 		for _, vols := range tvs {
-			fmt.Println("VOLS: ", vols)
 			// determine whether to change tips
 			// INMC: DO THIS PER CHANNEL
 			change_tips := false
@@ -526,12 +525,6 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			}
 
 			if change_tips {
-				fmt.Println("CHANGE TIPS:")
-				fmt.Println("\tCHANNELS DIFF:", !reflect.DeepEqual(channels, newchannels))
-				fmt.Println("\t\t", channels, newchannels)
-				fmt.Println("\tTIPTYPES DIFF:", !reflect.DeepEqual(tiptypes, newtiptypes))
-				fmt.Println("\t\t", tiptypes, newtiptypes)
-				fmt.Println("\tCNAME CHECK  :", last_thing != nil && this_thing.CName != last_thing.CName)
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters
 				tipdrp, err := DropTips(newtiptypes, prms, channels)
@@ -967,12 +960,6 @@ func (ins *LoadTipsMoveInstruction) GetParameter(name string) interface{} {
 
 func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
-
-	fmt.Println("WHOEVER HAD LOST A TREASURE")
-	fmt.Println(ins.FPosition)
-	fmt.Println(ins.Well)
-	fmt.Println(ins.FPlateType)
-	fmt.Println("I KNEW THAT NIGHT THAT I HAD GAINED ONE")
 
 	// move
 
@@ -1782,8 +1769,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		if ok {
 			v := make([]wunit.Volume, ins.Multi)
-			fmt.Println("INS MULTI ", ins.Multi)
-			fmt.Println("BUT VOLS :", ins.Volume)
 			for i := 0; i < ins.Multi; i++ {
 				vl := wunit.NewVolume(mixvol, "ul")
 				v[i] = vl
@@ -2370,7 +2355,6 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	// allow policies to override completely
 
 	overridereset := SafeGetBool(pol, "RESET_OVERRIDE")
-	fmt.Println("______", ins.Params())
 
 	if weneedtoreset && !overridereset {
 		resetinstruction := NewResetInstruction()

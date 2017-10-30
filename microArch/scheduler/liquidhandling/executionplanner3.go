@@ -65,8 +65,6 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 	for i := 0; i < len(inx); i++ {
 		_, ok := inx[i].(liquidhandling.TerminalRobotInstruction)
 
-		fmt.Println(liquidhandling.InsToString(inx[i]))
-
 		if !ok {
 			fmt.Println("ERROR: Instruction wrong type (", liquidhandling.InstructionTypeName(inx[i]), ")")
 			continue

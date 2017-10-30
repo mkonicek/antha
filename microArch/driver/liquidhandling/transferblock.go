@@ -68,8 +68,6 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		//TODO --> allow setting legacy volume if necessary
 		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false)
 
-		fmt.Println("GREPME: 'OW MANY TRANSFERS MISTER 'OMES? ", len(tfr))
-
 		if err != nil {
 			//panic(err)
 			return inss, err

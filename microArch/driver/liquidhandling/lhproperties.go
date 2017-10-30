@@ -869,16 +869,12 @@ func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, cha
 	// each subset has a mask which is the same size as the number of channels available
 	subsets, err2 := makeChannelSubsets(tiptype, channel)
 
-	fmt.Println("SUB SETS: ", subsets, " ERR: ", err2)
-
 	if err2 != nil {
 		return [][]string{}, [][]string{}, [][]string{}, err2
 	}
 
 	for _, set := range subsets {
 		sw, sp, sb, err := lhp.getCleanTipSubset(ctx, set, usetiptracking)
-
-		fmt.Println("SET: ", set)
 
 		if err != nil {
 			return [][]string{}, [][]string{}, [][]string{}, err

@@ -176,13 +176,12 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		bestMatch := wtype.Match{Sc: -1.0}
 		var bestSrc wtype.ComponentVector
 		// srcs is chunked up to conform to what can be accessed by the LH
-		fmt.Println("FINDME: HERE")
 		for _, src := range srcs {
 			if src.Empty() {
 				continue
 			}
 
-			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, true)
+			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, false)
 
 			if err != nil && err.Error() != wtype.NotFoundError {
 				return rep, err

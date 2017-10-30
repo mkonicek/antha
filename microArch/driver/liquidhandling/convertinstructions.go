@@ -117,9 +117,10 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 			return r
 		}
+
+		count = count
 		for _, t := range parallelTransfers.Transfers {
 			// TODO prevent multiple separate transfers coming out of this
-			fmt.Println("GOT ", count(t.Vols), " TRANSFERS HERE", " ", cmps)
 			transfers, err := makeTransfers(t, cmps, robot, inssIn, carryvol)
 
 			if err != nil {

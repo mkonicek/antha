@@ -55,11 +55,6 @@ func printMat(mat [][]mt) {
 }
 
 func align(want, got ComponentVector, independent, debug bool) Match {
-	fmt.Println("ALIGN")
-	fmt.Println(want)
-	fmt.Println("-----")
-	fmt.Println(got)
-	fmt.Println("END")
 	for i, v := range want {
 		if v == nil {
 			want[i] = NewLHComponent()

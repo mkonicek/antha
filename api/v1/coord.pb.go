@@ -54,9 +54,7 @@ It has these top-level messages:
 	Element
 	Connection
 	ProcessAddress
-	WorkflowParameters
-	ElementParameters
-	MixerOpt
+	MixerConfig
 	Empty
 	ElementMetadata
 	DeviceMetadata

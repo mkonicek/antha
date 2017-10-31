@@ -44,15 +44,14 @@ import (
 )
 
 const (
-	serializeParamsIntrinsic = "inject.SerializeValueToElementParameters"
-	runStepsIntrinsic        = "RunSteps"
-	awaitDataIntrinsic       = "AwaitData"
-	lineNumberConstName      = "_lineNumber"
-	elementProto             = "element.proto"
-	elementPackage           = "element"
-	elementFilename          = "element.go"
-	modelPackage             = "model"
-	modelFilename            = "model.go"
+	runStepsIntrinsic   = "RunSteps"
+	awaitDataIntrinsic  = "AwaitData"
+	lineNumberConstName = "_lineNumber"
+	elementProto        = "element.proto"
+	elementPackage      = "element"
+	elementFilename     = "element.go"
+	modelPackage        = "model"
+	modelFilename       = "model.go"
 )
 
 const (
@@ -1656,8 +1655,8 @@ func parseAwaitData(call *ast.CallExpr) *awaitDataPrototype {
 // 		metadata,
 //		nextElement,
 //      replacedParam,
-// 		serializeParams(inject.MakeValue(nextParams + nextInput)),
-//      serializeParams(inject.MakeValue(elementData + elementOutput)))
+// 		inject.MakeValue(nextParams + nextInput),
+//      inject.MakeValue(_output))
 func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
 	proto := parseAwaitData(call)
 	if proto == nil {
@@ -1694,24 +1693,17 @@ func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
 			Kind:  token.STRING,
 			Value: strconv.Quote(proto.ReplacedParam.Name),
 		},
-		mustParseExpr(fmt.Sprintf("%s(inject.MakeValue(_output))", serializeParamsIntrinsic)),
+		mustParseExpr("inject.MakeValue(_output)"),
 		&ast.CallExpr{
-			Fun: mustParseExpr(serializeParamsIntrinsic),
+			Fun: mustParseExpr("inject.MakeValue"),
 			Args: []ast.Expr{
-				&ast.CallExpr{
-					Fun: mustParseExpr("inject.MakeValue"),
-					Args: []ast.Expr{
-						&ast.CompositeLit{
-							Type: mustParseExpr(modelReq.Name + ".Input"),
-							Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
-						},
-					},
+				&ast.CompositeLit{
+					Type: mustParseExpr(modelReq.Name + ".Input"),
+					Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
 				},
 			},
 		},
-		mustParseExpr(fmt.Sprintf("%s(inject.MakeValue(_output))", serializeParamsIntrinsic)),
 	}
-
 }
 
 type runStepsPrototype struct {

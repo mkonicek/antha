@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	api "github.com/antha-lang/antha/api/v1"
+	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
@@ -211,12 +211,8 @@ func SequentialOrder(insts ...Inst) []Inst {
 // AwaitData is a raw data-getting request
 type AwaitData struct {
 	dependsMixin
-	Dev               Device
-	Tags              []string
-	AwaitID           string
-	NextElement       string
-	NextElementParams api.ElementParameters
-	ReplaceParam      string
+	Dev  Device
+	Inst *ast.AwaitInst
 }
 
 // Device implements an Inst

@@ -2,8 +2,8 @@ package ast
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/driver"
+	"github.com/antha-lang/antha/inject"
 )
 
 // An IncubateInst is a high-level command to incubate a component
@@ -42,14 +42,16 @@ type PromptInst struct {
 
 // An AwaitInst is a command that suspends execution pending data input
 type AwaitInst struct {
-	// user-definable devic3 tags
+	// user-definable device tags
 	Tags []string
 	// ID we are waiting on
 	AwaitID string
 	// Next element in recursive chain
 	NextElement string
-	// Parameters to next element
-	NextElementParams api.ElementParameters
+	// Input to next element
+	NextElementInput inject.Value
 	// Parameter that will receive the awaited data
 	ReplaceParam string
+	// Output of current element
+	CurrentElementOutput inject.Value
 }

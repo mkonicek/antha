@@ -10,15 +10,14 @@ import (
 )
 
 var (
-	_ target.Device = DataSource{}
+	_ target.Device = (*DataSource)(nil)
 )
 
 // A DataSource is a generic device that provides data asynchronously
-type DataSource struct {
-}
+type DataSource struct{}
 
 // CanCompile implements a device
-func (ds DataSource) CanCompile(req ast.Request) bool {
+func (ds *DataSource) CanCompile(req ast.Request) bool {
 	can := ast.Request{
 		Selector: []ast.NameValue{
 			target.DriverSelectorV1DataSource,
@@ -28,19 +27,16 @@ func (ds DataSource) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a device
-func (ds DataSource) MoveCost(from target.Device) int {
+func (ds *DataSource) MoveCost(from target.Device) int {
 	return human.HumanByXCost + 1 // same as a mixer
 }
 
 // Compile implements a device
-func (ds DataSource) Compile(ctx context.Context, cmds []ast.Node) (insts []target.Inst, err error) {
-	ret := make([]target.Inst, 0, 1)
-
+func (ds *DataSource) Compile(ctx context.Context, cmds []ast.Node) (insts []target.Inst, err error) {
 	if len(cmds) != 1 {
-		return ret, fmt.Errorf("multiple GetData commands not supported (%d received)", len(cmds))
+		return nil, fmt.Errorf("multiple GetData commands not supported (%d received)", len(cmds))
 	}
 
-	// XXX: rest of parameters
 	node := cmds[0]
 
 	c, ok := node.(*ast.Command)
@@ -55,9 +51,8 @@ func (ds DataSource) Compile(ctx context.Context, cmds []ast.Node) (insts []targ
 
 	return []target.Inst{
 		&target.AwaitData{
-			Dev:     ds,
-			Tags:    m.Tags,
-			AwaitID: m.AwaitID,
+			Dev:  ds,
+			Inst: m,
 		},
 	}, nil
 }

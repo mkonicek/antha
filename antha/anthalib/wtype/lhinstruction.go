@@ -1,6 +1,7 @@
 package wtype
 
 import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"strings"
 )
 
@@ -181,4 +182,29 @@ func (ins *LHInstruction) ComponentsMoving() string {
 
 func (ins *LHInstruction) Wellcoords() WellCoords {
 	return MakeWellCoords(ins.Welladdress)
+}
+
+func (ins *LHInstruction) AdjustVolumesBy(r float64) {
+	// each subcomponent is assumed to scale linearly
+	rr := r / float64(len(ins.Components))
+	for _, c := range ins.Components {
+		c.Vol *= rr
+	}
+
+	ins.Result.Vol *= r
+}
+
+func (ins *LHInstruction) InputVolumeMap() map[string]wunit.Volume {
+	r := make(map[string]wunit.Volume, len(ins.Components))
+	for _, c := range ins.Components {
+		v, ok := r[c.FullyQualifiedName()]
+
+		if ok {
+			v.Add(c.Volume())
+		} else {
+			r[c.FullyQualifiedName()] = c.Volume()
+		}
+	}
+
+	return r
 }

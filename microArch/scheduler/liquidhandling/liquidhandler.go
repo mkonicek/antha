@@ -526,6 +526,15 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	request.Stockconcs = stockconcs
 
+	if request.Options.FixVolumes {
+		// see if volumes can be corrected
+		request, err = FixVolumes(request)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	// looks at components, determines what inputs are required
 	request, err = this.GetInputs(request)
 

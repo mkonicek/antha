@@ -490,6 +490,7 @@ func (cmp *LHComponent) HasAnyParent() bool {
 	return false
 }
 
+// XXX XXX XXX --> This is no longer consistent... need to revise urgently
 func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 	if cmp.ParentID != "" {
 		cmp.ParentID += "_"
@@ -865,7 +866,7 @@ func (lhc *LHComponent) IsInstance() bool {
 	b, ok := temp.(bool)
 
 	if !ok {
-		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Curently set to %v", instanceMarker, b))
+		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Currently set to %v", instanceMarker, b))
 	}
 
 	return b

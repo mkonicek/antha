@@ -119,31 +119,45 @@ type runOpt struct {
 	TestBundleFileName     string
 }
 
-func (a *runOpt) Run() error {
+type runInput struct {
+	BundleFile     string
+	ParametersFile string
+	WorkflowFile   string
+}
+
+func unmarshalRunInput(in *runInput) (*executeutil.Bundle, error) {
 	var wdata, pdata, bdata []byte
 	var err error
 
-	if len(a.BundleFile) != 0 {
-		bdata, err = ioutil.ReadFile(a.BundleFile)
+	if len(in.BundleFile) != 0 {
+		bdata, err = ioutil.ReadFile(in.BundleFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
-		wdata, err = ioutil.ReadFile(a.WorkflowFile)
+		wdata, err = ioutil.ReadFile(in.WorkflowFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		pdata, err = ioutil.ReadFile(a.ParametersFile)
+		pdata, err = ioutil.ReadFile(in.ParametersFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	bundle, err := executeutil.Unmarshal(executeutil.UnmarshalOpt{
+	return executeutil.Unmarshal(executeutil.UnmarshalOpt{
 		WorkflowData: wdata,
 		BundleData:   bdata,
 		ParamsData:   pdata,
+	})
+}
+
+func (a *runOpt) Run() error {
+	bundle, err := unmarshalRunInput(&runInput{
+		BundleFile:     a.BundleFile,
+		ParametersFile: a.ParametersFile,
+		WorkflowFile:   a.WorkflowFile,
 	})
 	if err != nil {
 		return err

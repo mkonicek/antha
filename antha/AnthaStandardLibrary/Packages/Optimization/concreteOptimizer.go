@@ -129,7 +129,7 @@ type AssemblyProblem struct {
 	Seq       string     // actual sequence
 }
 
-func OptimizeAssembly(query string, seqs wtype.ReallySimpleAlignment, constraints Constraints) [][]string {
+func OptimizeAssembly(query string, seqs wtype.ReallySimpleAlignment, constraints Constraints) ([][]string, []string) {
 	// make the problem
 
 	problem := msaToAssemblyProblem(seqs, query)
@@ -153,7 +153,9 @@ func OptimizeAssembly(query string, seqs wtype.ReallySimpleAlignment, constraint
 
 	fmt.Println("BEST SCORE ", bestScore, " Mem: ", bestMem)
 
-	return makeFragmentsFromSolution(bestMem, seqs)
+	//func getEnds(mem PointSet1D, query string, endLen int, endsToAvoid []string) []string {
+	ends := getEnds(bestMem, constraints.Query, constraints.EndLen, constraints.EndsToAvoid)
+	return makeFragmentsFromSolution(bestMem, seqs), ends
 }
 
 func makeFragmentsFromSolution(solution PointSet1D, seqs wtype.ReallySimpleAlignment) [][]string {
@@ -303,19 +305,34 @@ func (pop *Population) Assess() FitnessValues {
 	return FitnessValues{Fit: fit, BestScore: best, BestMember: pop.Members[bestAt].Dup()}
 }
 
-func goodEnds(mem PointSet1D, query string, endLen int, endsToAvoid []string) bool {
-	// make all splits for each
+func getEnds(mem PointSet1D, query string, endLen int, endsToAvoid []string) []string {
 
+	allSplitz := getSplitz(mem, query, endLen, endsToAvoid)
+
+	ret := make([]string, 0, len(allSplitz))
+
+	for _, s := range allSplitz {
+		ret = append(ret, s[0])
+	}
+
+	return ret
+}
+
+func getSplitz(mem PointSet1D, query string, endLen int, endsToAvoid []string) [][]string {
 	allSplitz := make([][]string, 0, len(mem))
 	for _, p := range mem {
 		splitz := makeSplits(query, p, endLen, endsToAvoid)
 
-		if len(splitz) == 0 {
-			return false
-		}
-
 		allSplitz = append(allSplitz, splitz)
 	}
+
+	return allSplitz
+}
+
+func goodEnds(mem PointSet1D, query string, endLen int, endsToAvoid []string) bool {
+	// make all splits for each
+
+	allSplitz := getSplitz(mem, query, endLen, endsToAvoid)
 
 	return endsOK(allSplitz, make(map[string]bool))
 }
@@ -332,7 +349,7 @@ func isIn(s string, endsToAvoid []string) bool {
 func makeSplits(seq string, p, endLen int, endsToAvoid []string) []string {
 	r := make([]string, 0, endLen+1)
 	for i := 0; i < 1; i++ {
-		end := string(seq[p+i : p+endLen])
+		end := string(seq[p+i-1 : p+endLen-1])
 		if isIn(end, endsToAvoid) {
 			continue
 		}

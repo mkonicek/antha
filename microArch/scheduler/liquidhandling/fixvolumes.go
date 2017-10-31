@@ -7,7 +7,6 @@ import (
 func FixVolumes(request *LHRequest) (*LHRequest, error) {
 	// we go up through the chain
 	// first find the end
-	request.InstructionChain.Print()
 	wantedVolumes := make(map[string]wunit.Volume)
 	for chainEnd := findChainEnd(request.InstructionChain); chainEnd != nil; chainEnd = chainEnd.Parent {
 		stageVolumes, err := findUpdateInstructionVolumes(chainEnd, wantedVolumes)
@@ -25,15 +24,17 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume) (m
 	newWanted := make(map[string]wunit.Volume)
 	for _, ins := range ch.Values {
 		wantVol, ok := wanted[ins.Result.FullyQualifiedName()]
-
 		if ok && wantVol.GreaterThan(ins.Result.Volume()) {
 			r := wantVol.RawValue() / ins.Result.Volume().ConvertTo(wantVol.Unit())
 			ins.AdjustVolumesBy(r)
+
 			delete(wanted, ins.Result.FullyQualifiedName())
 		}
 
-		newWanted = mapAdd(newWanted, ins.InputVolumeMap())
+		newWanted = mapAdd(newWanted, ins.InputVolumeMap(wunit.NewVolume(0.5, "ul")))
 	}
+
+	newWanted = mapAdd(wanted, newWanted)
 
 	return newWanted, nil
 }

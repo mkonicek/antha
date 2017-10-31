@@ -194,15 +194,17 @@ func (ins *LHInstruction) AdjustVolumesBy(r float64) {
 	ins.Result.Vol *= r
 }
 
-func (ins *LHInstruction) InputVolumeMap() map[string]wunit.Volume {
+func (ins *LHInstruction) InputVolumeMap(addition wunit.Volume) map[string]wunit.Volume {
 	r := make(map[string]wunit.Volume, len(ins.Components))
 	for _, c := range ins.Components {
 		v, ok := r[c.FullyQualifiedName()]
 
 		if ok {
 			v.Add(c.Volume())
+			v.Add(addition)
 		} else {
 			r[c.FullyQualifiedName()] = c.Volume()
+			r[c.FullyQualifiedName()].Add(addition)
 		}
 	}
 

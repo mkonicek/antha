@@ -551,7 +551,7 @@ var UnitMap = map[string]map[string]Unit{
 
 // ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
 func ValidConcentrationUnit(unit string) error {
-	details, ok := UnitMap["Concentration"][unit]
+	_, ok := UnitMap["Concentration"][unit]
 	if !ok {
 		var approved []string
 		for u := range UnitMap["Concentration"] {
@@ -560,6 +560,7 @@ func ValidConcentrationUnit(unit string) error {
 		sort.Strings(approved)
 		return fmt.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved)
 	}
+	return nil
 }
 
 // make a new concentration in SI units... either M/l or kg/l

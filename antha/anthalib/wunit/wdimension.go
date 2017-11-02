@@ -122,12 +122,12 @@ func AddVolumes(vols []Volume) (newvolume Volume) {
 }
 
 // subtract volumes
-func SubtractVolumes(OriginalVol Volume, subtractvols []Volume) (newvolume Volume) {
+func SubtractVolumes(OriginalVol Volume, subtractvols ...Volume) (newvolume Volume) {
 
 	newvolume = (CopyVolume(OriginalVol))
 	volToSubtract := AddVolumes(subtractvols)
 	newvolume.Subtract(volToSubtract)
-	
+
 	if math.IsInf(newvolume.RawValue(), 0) {
 		panic(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols))
 	}
@@ -199,7 +199,7 @@ func AddConcentrations(concs []Concentration) (newconc Concentration, err error)
 }
 
 // subtract concentrations
-func SubtractConcentrations(OriginalConc Concentration, subtractConcs []Concentration) (newConcentration Concentration) {
+func SubtractConcentrations(OriginalConc Concentration, subtractConcs ...Concentration) (newConcentration Concentration) {
 
 	tempConc := (CopyConcentration(OriginalConc))
 	for _, conc := range subtractConcs {

@@ -237,16 +237,16 @@ func AddConcentrations(concs ...Concentration) (newconc Concentration, err error
 // An error is returned if the concentration units are incompatible.
 func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concentration) (newConcentration Concentration, err error) {
 
-	tempConc := (CopyConcentration(originalConc))
+	newConcentration = (CopyConcentration(originalConc))
 
-	concToSubtract, err := AddConcentrations(subtractConcs)
+	concToSubtract, err := AddConcentrations(subtractConcs...)
 	if err != nil {
 		return
 	}
 	newConcentration.Subtract(concToSubtract)
 
 	if math.IsInf(newConcentration.RawValue(), 0) {
-		err = fmt.Errorf(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols))
+		err = fmt.Errorf(fmt.Sprintln("Infinity value found subtracting concentrations. Original: ", originalConc, ". Vols to subtract:", subtractConcs))
 		return
 	}
 
@@ -547,6 +547,19 @@ var UnitMap = map[string]map[string]Unit{
 		"mM":   Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
 		"M":    Unit{Base: "M", Prefix: "", Multiplier: 1.0},
 	},
+}
+
+// ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
+func ValidConcentrationUnit(unit string) error {
+	details, ok := UnitMap["Concentration"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Concentration"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		return fmt.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved)
+	}
 }
 
 // make a new concentration in SI units... either M/l or kg/l

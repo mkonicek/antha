@@ -9,16 +9,22 @@ import (
 	imaging "github.com/disintegration/imaging"
 )
 
+var (
+	White       = color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}
+	Black       = color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}
+	Transparent = color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)}
+)
+
 // colourComponentMap is a map of RGB colour to description for use as key in
 // crossreferencing colour to component in other maps.
 var colourComponentMap = map[color.Color]string{
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
-	color.RGBA{R: uint8(13), G: uint8(105), B: uint8(171), A: uint8(255)}:  "blue",
-	color.RGBA{R: uint8(245), G: uint8(205), B: uint8(47), A: uint8(255)}:  "yellow",
-	color.RGBA{R: uint8(75), G: uint8(151), B: uint8(74), A: uint8(255)}:   "green",
-	color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)}:   "red",
-	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}:       "black",
-	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)}:         "transparent",
+	color.RGBA{R: uint8(13), G: uint8(105), B: uint8(171), A: uint8(255)}: "blue",
+	color.RGBA{R: uint8(245), G: uint8(205), B: uint8(47), A: uint8(255)}: "yellow",
+	color.RGBA{R: uint8(75), G: uint8(151), B: uint8(74), A: uint8(255)}:  "green",
+	color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)}:  "red",
+	White:       "white",
+	Black:       "black",
+	Transparent: "transparent",
 }
 
 var neonComponentMap = map[color.Color]string{

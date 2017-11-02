@@ -140,7 +140,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 		nonZeroVols = append(nonZeroVols, sample.Volume())
 	}
 
-	topUpVolume := wunit.SubtractVolumes(forTotalVol, nonZeroVols)
+	topUpVolume := wunit.SubtractVolumes(forTotalVol, nonZeroVols...)
 
 	var volsSoFar []wunit.Volume
 

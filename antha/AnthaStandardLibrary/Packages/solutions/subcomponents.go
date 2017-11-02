@@ -268,7 +268,17 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 func (c ComponentList) List(verbose bool) string {
 	var s []string
 
-	for k, v := range c.Components {
+	var sortedKeys []string
+
+	for key, _ := range c.Components {
+		sortedKeys = append(sortedKeys, key)
+	}
+
+	sort.Strings(sortedKeys)
+
+	for _, k := range sortedKeys {
+
+		v := c.Components[k]
 
 		var message string
 		if verbose {

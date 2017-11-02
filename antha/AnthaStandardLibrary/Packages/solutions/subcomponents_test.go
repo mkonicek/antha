@@ -2,8 +2,6 @@
 package solutions
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -197,23 +195,6 @@ var serialTests []serialComponentlistTest = []serialComponentlistTest{
 	},
 }
 
-func equal(list1, list2 ComponentList) error {
-	var notEqual []string
-	for key, value1 := range list1.Components {
-		if value2, found := list2.Components[key]; found {
-			if fmt.Sprintf("%.2e", value1.SIValue()) != fmt.Sprintf("%.2e", value2.SIValue()) {
-				notEqual = append(notEqual, key+" "+fmt.Sprint(value1)+" in list 1 and "+fmt.Sprint(value2)+" in list 2.")
-			}
-		} else {
-			notEqual = append(notEqual, key+" not found in list2. ")
-		}
-	}
-	if len(notEqual) > 0 {
-		return fmt.Errorf(strings.Join(notEqual, ". \n"))
-	}
-	return nil
-}
-
 func TestSimulateMix(t *testing.T) {
 	for _, test := range tests {
 		mixed, err := mixComponentLists(test.sample1, test.sample2)
@@ -225,7 +206,7 @@ func TestSimulateMix(t *testing.T) {
 			)
 		}
 
-		err = equal(mixed, test.mixedList)
+		err = EqualLists(mixed, test.mixedList)
 
 		if err != nil {
 			t.Error(
@@ -259,7 +240,7 @@ func TestSerialMix(t *testing.T) {
 
 		mixed, err := mixComponentLists(intermediateSample, test.sample3)
 
-		err = equal(mixed, test.mixedList)
+		err = EqualLists(mixed, test.mixedList)
 
 		if err != nil {
 			t.Error(

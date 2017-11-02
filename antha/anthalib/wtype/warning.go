@@ -22,14 +22,23 @@
 
 package wtype
 
+import "fmt"
+
 // Representation of a non fatal error in Antha which implements the golang error interface.
 type Warning string
 
+// Error returns a string error message.
 func (w Warning) Error() string {
 	return string(w)
 }
 
-// generate a new Warning
-func NewWarning(s string) Warning {
-	return Warning(s)
+// NewWarning generate a new Warning Sprint formats using the default formats for its arguments.
+// Spaces are added between operands when neither is a string.
+func NewWarning(arguments ...interface{}) Warning {
+	return Warning(fmt.Sprint(arguments))
+}
+
+// NewWarningf generates a new Warning from a formatted string.
+func NewWarningf(format string, arguments ...interface{}) Warning {
+	return Warning(fmt.Sprintf(format, arguments))
 }

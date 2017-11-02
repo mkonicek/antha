@@ -42,7 +42,8 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		if ch.Values[0].Type == wtype.LHIPRM {
 			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
 			request.InstructionSet.Add(prm)
-			robot.UpdateComponentIDs(ch.Values[0].PassThrough)
+			//		robot.UpdateComponentIDs(ch.Values[0].PassThrough)
+			// thhis is now done in the generation process
 		} else {
 			// otherwise...
 			// make a transfer block instruction out of the incoming instructions
@@ -50,6 +51,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			// into the instruction generator to be teased apart as appropriate
 
 			tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
+
 			request.InstructionSet.Add(tfb)
 		}
 		ch = ch.Child

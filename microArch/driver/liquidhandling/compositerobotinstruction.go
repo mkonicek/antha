@@ -465,6 +465,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	//channels, _, tiptypes, err := ChooseChannels(ins.GetVolumes(), prms)
 	channels, _, tiptypes, err := ChooseChannels(ins.Volume[0], prms)
 	if err != nil {
+		fmt.Println("THREE")
 		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
 	}
 

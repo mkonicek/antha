@@ -60,6 +60,10 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 			want[i] = NewLHComponent()
 		}
 
+		if i >= len(got) {
+			continue
+		}
+
 		g := got[i]
 
 		if g == nil {

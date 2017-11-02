@@ -726,9 +726,22 @@ func (w *LHWell) Contains(cmp *LHComponent) bool {
 
 func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 	if w.WContents.ID == IDBefore {
-		previous := w.WContents
-		after.AddParentComponent(previous)
-		w.WContents = after
+		/*
+			previous := w.WContents
+			after.AddParentComponent(previous)
+			after.Loc = w.WContents.Loc
+
+			fmt.Println("UPDATE BEFORE: ", w.WContents.CName, " ", w.WContents.Vol, " ", after.CName, " ", after.Vol)
+
+			w.WContents = after
+		*/
+
+		fmt.Println("LOC BEFORE: ", w.WContents.Loc)
+
+		w.WContents.AddParentComponent(w.WContents)
+		w.WContents.ID = after.ID
+		w.WContents.CName = after.CName
+
 		return true
 	}
 

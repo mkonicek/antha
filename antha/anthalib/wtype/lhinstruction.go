@@ -52,6 +52,14 @@ type LHInstruction struct {
 	PassThrough      map[string]*LHComponent // 1:1 pass through, only applies to prompts
 }
 
+func (lhi *LHInstruction) GetPlateType() string {
+	if lhi.OutPlate != nil {
+		return lhi.OutPlate.Type
+	} else {
+		return lhi.Platetype
+	}
+}
+
 // privatised in favour of specific instruction constructors
 func newLHInstruction() *LHInstruction {
 	var lhi LHInstruction
@@ -186,9 +194,8 @@ func (ins *LHInstruction) Wellcoords() WellCoords {
 
 func (ins *LHInstruction) AdjustVolumesBy(r float64) {
 	// each subcomponent is assumed to scale linearly
-	rr := r / float64(len(ins.Components))
 	for _, c := range ins.Components {
-		c.Vol *= rr
+		c.Vol *= r
 	}
 
 	ins.Result.Vol *= r

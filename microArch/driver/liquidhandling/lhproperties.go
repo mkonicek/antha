@@ -592,40 +592,6 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
-/*
-// returns go: [transfer1][c1c2c3c4...], [transfer2][c1c2c3c4...]
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
-	plateIDs = make([][]string, len(cmps))
-	wellCoords = make([][]string, len(cmps))
-	vols = make([][]wunit.Volume, len(cmps))
-
-	// might just do this this way
-	if multi > 1 {
-		//for _, ipref := range lhp.Input_preferences {
-		for _, ipref := range lhp.OrderedMergedPlatePrefs() {
-			p, ok := lhp.Plates[ipref]
-
-			// ERROR: this needs to find the best combination of sources
-			// across all plates
-			if ok {
-				// find components multi can return anywhere between 1x Multi and Multi x 1
-				// transfers as sets
-				fmt.Println("PFCM.... LHProperties 610")
-				plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, independent)
-				if err != nil {
-					continue
-				}
-				fmt.Println("ATTAHERE")
-
-				return
-			}
-		}
-	}
-	// if we really can't get anywhere, try this badger
-	return lhp.GetComponentsSingle(cmps, carryvol, legacyVolume)
-}
-*/
-
 func GetLocTox(cmp *wtype.LHComponent) ([]string, error) {
 	// try the cmp's own loc
 
@@ -1288,10 +1254,14 @@ func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.LHComponent)
 }
 
 func (p *LHProperties) UpdateComponentID(from string, to *wtype.LHComponent) bool {
+	fmt.Println("UPDATE ID OF ", from, " TO ", to.ID)
 	for _, p := range p.Plates {
+		fmt.Println("\t\tTRYING: ", p.PlateName, " ", p.Type)
 		if p.FindAndUpdateID(from, to) {
+			fmt.Println("\tDONE")
 			return true
 		}
 	}
+	fmt.Println("\tNOT DONE")
 	return false
 }

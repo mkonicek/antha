@@ -24,6 +24,7 @@
 package mixer
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -180,6 +181,34 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		r.Platetype = opt.Destination.Type
 		r.SetPlateID(opt.Destination.ID)
 		r.OutPlate = opt.Destination
+
+		// if we know the well as well we should ensure that non-empty wells are respected
+		if opt.Address != "" {
+			w, ok := opt.Destination.Wellcoords[opt.Address]
+
+			if !ok {
+				panic(fmt.Sprintf("Cannot find well %s on plate %s name %s type %s", opt.Address, r.OutPlate.ID, r.OutPlate.Name, r.OutPlate.Type))
+			}
+
+			if !w.Empty() {
+				// the instruction version has to remain unchanged
+				// the returned version in the protocol has to be mixed
+				w.WContents.Loc = r.OutPlate.ID + ":" + opt.Address
+				r.Result = w.WContents.Dup()
+				for _, c := range opt.Components {
+					r.Result.MixPreserveTvol(c)
+				}
+				// we also need to make sure the instruction explicitly mentions the component
+				cmps := make([]*wtype.LHComponent, 0, len(opt.Components)+1)
+				cmps = append(cmps, w.WContents.Dup())
+				cmps = append(cmps, opt.Components...)
+				opt.Components = cmps
+				r.Components = wtype.CopyComponentArray(cmps)
+			} else {
+				w.WContents = r.Result
+			}
+			//r.Result.Loc = r.OutPlate.ID + ":" + opt.Address
+		}
 	}
 
 	if opt.PlateType != "" {
@@ -197,13 +226,6 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 
 	if opt.PlateName != "" {
 		r.PlateName = opt.PlateName
-	}
-
-	// oh yus oh yus oh yus
-
-	s := ""
-	for _, v := range r.Components {
-		s += v.CName + "-" + v.ID + " "
 	}
 
 	return r

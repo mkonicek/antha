@@ -59,6 +59,12 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 //
 
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
+
+	fmt.Println("CONVERTING ", len(inssIn), " INSTRUCTIONS")
+	fmt.Println("ROBOT STATE NOW")
+	robot.OutputLayout()
+	fmt.Println("OFF YOU GO")
+
 	insOut = make([]*TransferInstruction, 0, 1)
 
 	for i := 0; i < inssIn.MaxLen(); i++ {
@@ -66,8 +72,8 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		lenToMake := 0
 
 		for _, c := range cmps {
-
 			if c != nil {
+				fmt.Println("CONVERT: ", c)
 				if c.CName == "" {
 					panic("COMPONENTS MUST HAVE NAMES")
 				}
@@ -107,6 +113,8 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			return nil, err
 		}
 
+		fmt.Println("GET")
+
 		count := func(is []wunit.Volume) int {
 			r := 0
 			for _, i := range is {
@@ -117,6 +125,8 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 			return r
 		}
+
+		fmt.Println("PARALLEL TRANSFERS: ", parallelTransfers.Transfers)
 
 		count = count
 		for _, t := range parallelTransfers.Transfers {
@@ -159,6 +169,8 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 	ptwy := make([]int, len(cmps))        //	  "     "    "   y
 
 	// ci counts up cmps
+
+	fmt.Println("COUNT UP", len(cmps))
 	for ci := 0; ci < len(cmps); ci++ {
 		if len(fromPlateIDs) <= ci || fromPlateIDs[ci] == "" {
 			continue
@@ -253,8 +265,11 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		if cmpFrom == nil {
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
 		}
-
 		wellTo.Add(cmpFrom)
+
+		// make sure the cmp loc is set
+
+		wellTo.WContents.Loc = wellTo.Plateid + ":" + wellTo.Crds
 
 		// make sure the wellTo gets the right ID (ultimately)
 		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Result.ID)

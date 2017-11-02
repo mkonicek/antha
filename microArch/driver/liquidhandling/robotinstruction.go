@@ -23,17 +23,19 @@
 package liquidhandling
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"sort"
 )
 
 type RobotInstruction interface {
 	InstructionType() int
 	GetParameter(name string) interface{}
-	Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
 	Check(lhpr wtype.LHPolicyRule) bool
 }
 
@@ -77,11 +79,22 @@ const (
 	UAD            // Unload Adaptor
 	MMX            // Move and Mix
 	MIX            // Mix
+	MSG            // Message
+	MAS            // MOV ASP	-- used by tests
+	MDS            // MOV DSP	    ""       ""
+	MVM            // MOV MIX           ""       ""
+	MBL            // MOV BLO	    ""       ""
+	RAP            // RemoveAllPlates
+	APT            // AddPlateTo
 )
 
-var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX"}
+func InstructionTypeName(ins RobotInstruction) string {
+	return Robotinstructionnames[ins.InstructionType()]
+}
 
-var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED"}
+var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT"}
+
+var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE"}
 
 func InsToString(ins RobotInstruction) string {
 	s := ""
@@ -134,6 +147,7 @@ func InsToString(ins RobotInstruction) string {
 }
 
 func InsToString2(ins RobotInstruction) string {
+	// IS THIS IT?!
 	b, _ := json.Marshal(ins)
 	return string(b)
 }
@@ -218,7 +232,7 @@ func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol w
 		fmt.Println("\t", r.Name)
 	}
 	fmt.Println()
-	itemset := MakePolicyItems()
+	itemset := wtype.MakePolicyItems()
 	fmt.Println("Full output")
 	for _, s := range itemset.OrderedList() {
 		if pol[s] == nil {
@@ -252,4 +266,120 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPol
 
 	//printPolicyForDebug(ins, rules, ppl)
 	return ppl
+}
+
+func HasParameter(s string, ins RobotInstruction) bool {
+	r := ins.GetParameter(s)
+	// check this doesn't happen otherwise
+	if r == nil {
+		return false
+	}
+
+	return true
+}
+
+type SetOfRobotInstructions struct {
+	RobotInstructions []RobotInstruction
+}
+
+func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
+	// first stage -- find the instructions
+
+	var objectMap map[string]*json.RawMessage
+
+	err := json.Unmarshal(b, &objectMap)
+
+	if err != nil {
+		return err
+	}
+
+	// second stage -- unpack into an array
+
+	var arrI []*json.RawMessage
+	mess := objectMap["RobotInstructions"]
+	err = json.Unmarshal(*mess, &arrI)
+
+	if err != nil {
+		return err
+	}
+
+	sori.RobotInstructions = make([]RobotInstruction, len(arrI))
+	mapForTypeCheck := make(map[string]interface{}, 10)
+	for i := 0; i < len(arrI); i++ {
+		mess := arrI[i]
+		err = json.Unmarshal(*mess, &mapForTypeCheck)
+
+		if err != nil {
+			return err
+		}
+
+		_, ok := mapForTypeCheck["Type"]
+
+		if !ok {
+			return fmt.Errorf("Malformed instruction")
+		}
+
+		tf64, ok := mapForTypeCheck["Type"].(float64)
+
+		if !ok {
+			return fmt.Errorf("Malformed instruction - Type field must be numeric, got %T", mapForTypeCheck["Type"])
+		}
+
+		//motherofallswitches ugh
+
+		t := int(tf64)
+
+		var ins RobotInstruction
+
+		switch t {
+		case RAP:
+			ins = NewRemoveAllPlatesInstruction()
+		case APT:
+			ins = NewAddPlateToInstruction("", "", nil)
+		case INI:
+			ins = NewInitializeInstruction()
+		case ASP:
+			ins = NewAspirateInstruction()
+		case DSP:
+			ins = NewDispenseInstruction()
+		case MIX:
+			ins = NewMixInstruction()
+		case SPS:
+			ins = NewSetPipetteSpeedInstruction()
+		case SDS:
+			ins = NewSetDriveSpeedInstruction()
+		case BLO:
+			ins = NewBlowoutInstruction()
+		case LOD:
+			ins = NewLoadTipsInstruction()
+		case MOV:
+			ins = NewMoveInstruction()
+		case PTZ:
+			ins = NewPTZInstruction()
+		case ULD:
+			ins = NewUnloadTipsInstruction()
+		case MSG:
+			ins = NewMessageInstruction(nil)
+		case WAI:
+			ins = NewWaitInstruction()
+		case FIN:
+			ins = NewFinalizeInstruction()
+		default:
+			return fmt.Errorf("Unknown instruction type: %d", t)
+		}
+
+		// finally unmarshal
+
+		err = json.Unmarshal(*mess, &ins)
+
+		if err != nil {
+			return err
+		}
+
+		// add to array
+
+		sori.RobotInstructions[i] = ins
+	}
+
+	return nil
 }

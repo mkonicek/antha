@@ -1,5 +1,6 @@
 package graph
 
+// An EliminateOpt are a set of options to Eliminate
 type EliminateOpt struct {
 	Graph          Graph
 	In             func(Node) bool // Should node be included
@@ -15,7 +16,7 @@ func eliminationOrder(graph Graph) (nodes []Node) {
 	if err == nil {
 		nodes = order
 	} else {
-		for i, inum := 0, graph.NumNodes(); i < inum; i += 1 {
+		for i, inum := 0, graph.NumNodes(); i < inum; i++ {
 			nodes = append(nodes, graph.Node(i))
 		}
 	}
@@ -25,9 +26,9 @@ func eliminationOrder(graph Graph) (nodes []Node) {
 
 func inNodes(graph Graph) map[Node][]Node {
 	ins := make(map[Node][]Node)
-	for i, inum := 0, graph.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, graph.NumNodes(); i < inum; i++ {
 		n := graph.Node(i)
-		for j, jnum := 0, graph.NumOuts(n); j < jnum; j += 1 {
+		for j, jnum := 0, graph.NumOuts(n); j < jnum; j++ {
 			out := graph.Out(n, j)
 			ins[out] = append(ins[out], n)
 		}
@@ -37,9 +38,9 @@ func inNodes(graph Graph) map[Node][]Node {
 
 func outNodes(graph Graph) map[Node][]Node {
 	outs := make(map[Node][]Node)
-	for i, inum := 0, graph.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, graph.NumNodes(); i < inum; i++ {
 		n := graph.Node(i)
-		for j, jnum := 0, graph.NumOuts(n); j < jnum; j += 1 {
+		for j, jnum := 0, graph.NumOuts(n); j < jnum; j++ {
 			out := graph.Out(n, j)
 			outs[n] = append(outs[n], out)
 		}
@@ -47,13 +48,13 @@ func outNodes(graph Graph) map[Node][]Node {
 	return outs
 }
 
-// Return graph resulting from node elimination. Node elimination removes node
-// n by adding edges (in(n), out(n)) for the product of incoming and outgoing
-// neighbors.
+// Eliminate returns the graph resulting from node elimination. Node
+// elimination removes node n by adding edges (in(n), out(n)) for the product
+// of incoming and outgoing neighbors.
 func Eliminate(opt EliminateOpt) Graph {
 	// Cache nodes to keep
 	kmap := make(map[Node]bool)
-	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, opt.Graph.NumNodes(); i < inum; i++ {
 		n := opt.Graph.Node(i)
 		kmap[n] = opt.In(n)
 	}
@@ -100,7 +101,7 @@ func Eliminate(opt EliminateOpt) Graph {
 		ret.Nodes = append(ret.Nodes, n)
 
 		seen := make(map[Node]bool)
-		for j, jnum := 0, opt.Graph.NumOuts(n); j < jnum; j += 1 {
+		for j, jnum := 0, opt.Graph.NumOuts(n); j < jnum; j++ {
 			dst := opt.Graph.Out(n, j)
 			if !kmap[dst] {
 				continue

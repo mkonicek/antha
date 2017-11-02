@@ -2,17 +2,10 @@
 package oligos
 
 import (
-	//"fmt"
-	//"strconv"
-	//	"strings"
-
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
-	//"github.com/tealeg/xlsx"
 )
 
 // simple reverse complement check to test testing methodology initially
@@ -94,7 +87,7 @@ func TestBasicMeltingTemp(t *testing.T) {
 		result := BasicMeltingTemp(oligo.sequence)
 		if result.ToString() != oligo.meltingtemp.ToString() {
 			t.Error(
-				"For", oligo.sequence, "/n",
+				"For", oligo.sequence, "\n",
 				"expected", oligo.meltingtemp.ToString(), "\n",
 				"got", result.ToString(), "\n",
 			)
@@ -108,14 +101,14 @@ func TestFWDOligoSeq(t *testing.T) {
 		oligoseq, err := FWDOligoSeq(oligo.sequence, oligo.maxGCcontent, oligo.minlength, oligo.maxlength, oligo.mintemp, oligo.maxtemp, oligo.seqstoavoid, oligo.overlapthreshold)
 		if oligoseq.Sequence() != oligo.outputoligoseq {
 			t.Error(
-				"For", oligo.sequence, "/n",
+				"For", oligo.sequence, "\n",
 				"expected", oligo.outputoligoseq, "\n",
 				"got", oligoseq.Sequence(), "\n",
 			)
 		}
 		if oligoseq.GCContent != oligo.calculatedGCcontent {
 			t.Error(
-				"For", oligo.sequence, "/n",
+				"For", oligo.sequence, "\n",
 				"expected", oligo.calculatedGCcontent, "\n",
 				"got", oligoseq.GCContent, "\n",
 			)
@@ -134,7 +127,7 @@ func TestOverlapCheck(t *testing.T) {
 
 		if percent != test.overlapPercent {
 			t.Error(
-				"For", test.primer1, " and ", test.primer2, "/n",
+				"For", test.primer1, " and ", test.primer2, "\n",
 				"expected", test.overlapPercent, "\n",
 				"got", percent, "\n",
 			)
@@ -142,7 +135,7 @@ func TestOverlapCheck(t *testing.T) {
 
 		if number != test.overlapNumber {
 			t.Error(
-				"For", test.primer1, " and ", test.primer2, "/n",
+				"For", test.primer1, " and ", test.primer2, "\n",
 				"expected", test.overlapNumber, "\n",
 				"got", number, "\n",
 			)
@@ -150,10 +143,88 @@ func TestOverlapCheck(t *testing.T) {
 
 		if seq != test.overlapSeq {
 			t.Error(
-				"For", test.primer1, " and ", test.primer2, "/n",
+				"For", test.primer1, " and ", test.primer2, "\n",
 				"expected", test.overlapSeq, "\n",
 				"got", seq, "\n",
 			)
 		}
+	}
+}
+
+type regionTest struct {
+	LargeSeq wtype.DNASequence
+	SmallSeq wtype.DNASequence
+	Start    int
+	End      int
+}
+
+var regionTests = []regionTest{
+
+	regionTest{
+		LargeSeq: wtype.DNASequence{
+			Nm:      "Test1",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		SmallSeq: wtype.DNASequence{
+			Seq:     "TAG",
+			Plasmid: false,
+		},
+		Start: 5,
+		End:   7,
+	},
+	regionTest{
+		LargeSeq: wtype.DNASequence{
+			Nm:      "Test2",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: true,
+		},
+		SmallSeq: wtype.DNASequence{
+			Seq:     "GTGTGATCGT",
+			Plasmid: false,
+		},
+		Start: 7,
+		End:   5,
+	},
+	regionTest{
+		LargeSeq: wtype.DNASequence{
+			Nm:      "Test3",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		SmallSeq: wtype.DNASequence{
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		Start: 1,
+		End:   11,
+	},
+	regionTest{
+		LargeSeq: wtype.DNASequence{
+			Nm:      "Test4",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		SmallSeq: wtype.DNASequence{
+			Seq:     "ATCGTAGTGT",
+			Plasmid: false,
+		},
+		Start: 1,
+		End:   10,
+	},
+}
+
+func TestDNARegion(t *testing.T) {
+	for _, test := range regionTests {
+		result := DNAregion(test.LargeSeq, test.Start, test.End)
+
+		if result.Seq != test.SmallSeq.Seq {
+			t.Error(
+				"For", test.LargeSeq.Nm, "\n",
+				"expected", test.SmallSeq.Seq, "\n",
+				"got", result.Seq, "\n",
+			)
+		}
+
 	}
 }

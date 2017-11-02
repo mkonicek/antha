@@ -7,7 +7,7 @@ import (
 	"github.com/antha-lang/antha/target"
 )
 
-// Return human description of instruction
+// Pretty returns a human description of instruction
 func (a *Auto) Pretty(inst target.Inst) string {
 	switch inst := inst.(type) {
 	case *target.Mix:
@@ -18,8 +18,8 @@ func (a *Auto) Pretty(inst target.Inst) string {
 		return prettyManual(inst)
 	case *target.Wait:
 		return "Wait"
-	case *target.CmpError:
-		return fmt.Sprintf("planning error: %s", inst.Error)
+	case *target.Prompt:
+		return prettyPrompt(inst)
 	default:
 		return fmt.Sprintf("unknown instruction %T", inst)
 	}
@@ -35,4 +35,8 @@ func prettyMix(inst *target.Mix) string {
 
 func prettyRun(inst *target.Run) string {
 	return fmt.Sprintf("[run] %s", inst.Label)
+}
+
+func prettyPrompt(ins *target.Prompt) string {
+	return fmt.Sprintf("[prm] %s", ins.Message)
 }

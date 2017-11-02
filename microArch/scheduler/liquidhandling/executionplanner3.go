@@ -23,11 +23,13 @@
 package liquidhandling
 
 import (
+	"context"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 // robot here should be a copy... this routine will be destructive of state
-func ExecutionPlanner3(request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
+func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
 	ch := request.InstructionChain
 
 	for {
@@ -35,16 +37,24 @@ func ExecutionPlanner3(request *LHRequest, robot *liquidhandling.LHProperties) (
 			break
 		}
 
-		// make a transfer block instruction out of the incoming instructions
-		// -- essentially each node of the topological graph is passed wholesale
-		// into the instruction generator to be teased apart as appropriate
+		if len(ch.Values) == 1 && ch.Values[0].Type == wtype.LHIPRM {
+			// if this is a solitary prompt instruction just generate the requisite message
+			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
+			request.InstructionSet.Add(prm)
+			robot.UpdateComponentIDs(ch.Values[0].PassThrough)
+		} else {
+			// otherwise...
+			// make a transfer block instruction out of the incoming instructions
+			// -- essentially each node of the topological graph is passed wholesale
+			// into the instruction generator to be teased apart as appropriate
 
-		tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
-		request.InstructionSet.Add(tfb)
+			tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
+			request.InstructionSet.Add(tfb)
+		}
 		ch = ch.Child
 	}
 
-	inx, err := request.InstructionSet.Generate(request.Policies, robot)
+	inx, err := request.InstructionSet.Generate(ctx, request.Policies, robot)
 
 	if err != nil {
 		return nil, err

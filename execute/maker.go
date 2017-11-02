@@ -14,7 +14,7 @@ type maker struct {
 	afterSample map[string][]string
 	// Map from from wtype world to ast world
 	byComp map[*wtype.LHComponent]*ast.UseComp
-	byId   map[string][]*ast.UseComp
+	byID   map[string][]*ast.UseComp
 }
 
 func newMaker() *maker {
@@ -22,7 +22,7 @@ func newMaker() *maker {
 		afterInst:   make(map[string][]string),
 		afterSample: make(map[string][]string),
 		byComp:      make(map[*wtype.LHComponent]*ast.UseComp),
-		byId:        make(map[string][]*ast.UseComp),
+		byID:        make(map[string][]*ast.UseComp),
 	}
 }
 
@@ -35,7 +35,7 @@ func (a *maker) makeComp(c *wtype.LHComponent) *ast.UseComp {
 		a.byComp[c] = u
 	}
 
-	a.byId[c.ID] = append(a.byId[c.ID], u)
+	a.byID[c.ID] = append(a.byID[c.ID], u)
 
 	return u
 }
@@ -45,15 +45,15 @@ func (a *maker) makeCommand(in *commandInst) ast.Node {
 		in.Command.From = append(in.Command.From, a.makeComp(arg))
 	}
 
-	out := a.makeComp(in.Comp)
+	out := a.makeComp(in.result)
 	out.From = append(out.From, in.Command)
 	return out
 }
 
-// Samples of the same component share the same id.
+// resolveReuses tracks samples of the same component sharing the same id.
 func (a *maker) resolveReuses() {
-	for _, uses := range a.byId {
-		// HACK: assume that samples are used in sequentially; remove when
+	for _, uses := range a.byID {
+		// HACK: assume that samples are used sequentially; remove when
 		// dependencies are tracked individually
 
 		// Make sure we don't introduce any loops
@@ -77,19 +77,19 @@ func (a *maker) resolveReuses() {
 
 // Manifest dependencies across opaque blocks
 func (a *maker) resolveUpdates(m map[string][]string) {
-	for oldId, newIds := range m {
+	for oldID, newIDs := range m {
 		// Uses by id are sequential from resolveReuses, so it is sufficient to
 		// match first use to last def
-		for _, newId := range newIds {
-			if len(a.byId[newId]) == 0 {
+		for _, newID := range newIDs {
+			if len(a.byID[newID]) == 0 {
 				continue
 			}
-			if len(a.byId[oldId]) == 0 {
+			if len(a.byID[oldID]) == 0 {
 				continue
 			}
 
-			new := a.byId[newId][0]
-			old := a.byId[oldId][len(a.byId[oldId])-1]
+			new := a.byID[newID][0]
+			old := a.byID[oldID][len(a.byID[oldID])-1]
 			new.From = append(new.From, old)
 		}
 	}
@@ -110,8 +110,8 @@ func (a *maker) removeMultiEdges() {
 	}
 }
 
-func (a *maker) UpdateAfterInst(oldId, newId string) {
-	a.afterInst[oldId] = append(a.afterInst[oldId], newId)
+func (a *maker) UpdateAfterInst(oldID, newID string) {
+	a.afterInst[oldID] = append(a.afterInst[oldID], newID)
 }
 
 // Normalize commands into well-formed AST
@@ -122,12 +122,11 @@ func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
 	}
 
 	for comp := range a.byComp {
-		// Cannot use comp.ParentId because it is new.ParentID = old.ParentID
-		// rather than new.ParentID = old.ID . Use DaughterComponent instead.
-
 		// Contains all descendents rather then direct ones
 		for _, kid := range strings.Split(comp.DaughterID, "_") {
-			a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
+			if comp.ID != kid {
+				a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
+			}
 		}
 	}
 

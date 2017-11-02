@@ -64,30 +64,13 @@ type RebaseEntry struct {
 	References       []string "attr, <6>"
 }
 */
-type TypeIIs struct {
+type typeIIs struct {
 	wtype.RestrictionEnzyme
 	Name                              string
 	Isoschizomers                     []string
 	Topstrand3primedistancefromend    int
 	Bottomstrand5primedistancefromend int
 }
-
-// This will be the general type
-/*
-type LogicalRestrictionEnzyme struct {
-	// other fields required but for now the main things are...
-	RecognitionSequence               string
-	EndLength                         int
-	Name                              string
-	Prototype                         string
-	Topstrand3primedistancefromend    int
-	Bottomstrand5primedistancefromend int
-	MethylationSite                   string   //"attr, <4>"
-	CommercialSource                  []string //string "attr, <5>"
-	References                        []int
-	Class                             string
-}
-*/
 
 func RecognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, EndLength int, Topstrand3primedistancefromend int, Bottomstrand5primedistancefromend int, Class string) {
 

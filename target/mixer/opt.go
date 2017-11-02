@@ -9,7 +9,9 @@ var (
 	defaultMaxPlates            = 4.5
 	defaultMaxWells             = 278.0
 	defaultResidualVolumeWeight = 1.0
-	DefaultOpt                  = Opt{
+
+	// DefaultOpt is the default Mixer Opt
+	DefaultOpt = Opt{
 		MaxPlates:            &defaultMaxPlates,
 		MaxWells:             &defaultMaxWells,
 		ResidualVolumeWeight: &defaultResidualVolumeWeight,
@@ -17,9 +19,12 @@ var (
 		OutputPlateType:      []string{"pcrplate_skirted_riser20"},
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
+		PlanningVersion:      "ep2",
+		LegacyVolume:         true,
 	}
 )
 
+// Opt are options for a Mixer
 type Opt struct {
 	MaxPlates            *float64
 	MaxWells             *float64
@@ -36,6 +41,9 @@ type Opt struct {
 	// Direct specification of Output plates
 	OutputPlates []*wtype.LHPlate
 
+	// Specify file name in the instruction stream of any driver generated file
+	DriverOutputFileName string
+
 	// Driver specific options. Semantics are not stable. Will need to be
 	// revised when multi device execution is supported.
 	DriverSpecificInputPreferences    []string
@@ -43,9 +51,12 @@ type Opt struct {
 	DriverSpecificTipPreferences      []string // Driver specific position names (e.g., position_1 or A2)
 	DriverSpecificTipWastePreferences []string
 	DriverSpecificWashPreferences     []string
-	ModelEvaporation                  bool
-	OutputSort                        bool
-	PrintInstructions                 bool
+
+	ModelEvaporation     bool
+	OutputSort           bool
+	PrintInstructions    bool
+	UseDriverTipTracking bool
+	LegacyVolume         bool // don't track volumes for intermediates
 }
 
 // Merge two configs together and return the result. Values in the argument
@@ -54,6 +65,7 @@ func (a Opt) Merge(x *Opt) Opt {
 	if x == nil {
 		return a
 	}
+
 	obj, err := meta.ShallowMerge(a, *x)
 	if err != nil {
 		panic(err)

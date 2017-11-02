@@ -336,9 +336,20 @@ func pairdigestedfragments(digestedtopstrand []string, digestedbottomstrand []st
 	return pairs
 }
 
+// DigestionPairs digests a doublestranded pair of DNASequence with a TypeIIs restriction enzyme into an array of DigestedFragments
 func DigestionPairs(Doublestrandedpair []wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (digestionproducts []Digestedfragment) {
 	topstrands, topstickyends5, topstickyends3 := TypeIIsdigest(Doublestrandedpair[0], typeIIsenzyme)
+
+	if len(topstrands) == 0 {
+		panic(fmt.Sprintf("No top strand digestion  of %+v with %+v from simulation.", Doublestrandedpair[0], typeIIsenzyme))
+	}
+
 	bottomstrands, bottomstickyends5, bottomstickyends3 := TypeIIsdigest(Doublestrandedpair[1], typeIIsenzyme)
+
+	if len(bottomstrands) == 0 {
+		panic(fmt.Sprintf("No bottom strand digestion of %+v with %+v from simulation.", Doublestrandedpair[0], typeIIsenzyme))
+	}
+
 	if len(topstrands) == len(bottomstrands) {
 		if len(topstrands) == 2 {
 			digestionproducts = pairdigestedfragments(topstrands, bottomstrands, topstickyends5, topstickyends3, bottomstickyends5, bottomstickyends3)

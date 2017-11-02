@@ -83,6 +83,7 @@ func MakePolicyItems() AParamSet {
 	alhpis["EXTRA_ASP_VOLUME"] = AParam{Name: "EXTRA_ASP_VOLUME", Type: typemap["Volume"], Desc: "additional volume to take up when aspirating"}
 	alhpis["EXTRA_DISP_VOLUME"] = AParam{Name: "EXTRA_DISP_VOLUME", Type: typemap["Volume"], Desc: "additional volume to dispense"}
 	alhpis["JUSTBLOWOUT"] = AParam{Name: "JUSTBLOWOUT", Type: typemap["bool"], Desc: "shortcut to get single transfer"}
+	alhpis["OFFSETZADJUST"] = AParam{Name: "OFFSETZADJUST", Type: typemap["float64"], Desc: "Added to z offset"}
 	alhpis["POST_MIX"] = AParam{Name: "POST_MIX", Type: typemap["int"], Desc: "number of mix cycles to do after dispense"}
 	alhpis["POST_MIX_RATE"] = AParam{Name: "POST_MIX_RATE", Type: typemap["float64"], Desc: "pipetting rate when post mixing"}
 	alhpis["POST_MIX_VOLUME"] = AParam{Name: "POST_MIX_VOLUME", Type: typemap["float64"], Desc: "volume to post mix (ul)"}
@@ -95,6 +96,7 @@ func MakePolicyItems() AParamSet {
 	alhpis["PRE_MIX_X"] = AParam{Name: "PRE_MIX_X", Type: typemap["float64"], Desc: "x offset from centre of well (mm) when pre-mixing"}
 	alhpis["PRE_MIX_Y"] = AParam{Name: "PRE_MIX_Y", Type: typemap["float64"], Desc: "y offset from centre of well (mm) when pre-mixing"}
 	alhpis["PRE_MIX_Z"] = AParam{Name: "PRE_MIX_Z", Type: typemap["float64"], Desc: "z offset from centre of well (mm) when pre-mixing"}
+	alhpis["RESET_OVERRIDE"] = AParam{Name: "RESET_OVERRIDE", Type: typemap["bool"], Desc: "Do not generate reset commands"}
 	alhpis["TIP_REUSE_LIMIT"] = AParam{Name: "TIP_REUSE_LIMIT", Type: typemap["int"], Desc: "number of times tips can be reused for asp/dsp cycles"}
 	alhpis["TOUCHOFF"] = AParam{Name: "TOUCHOFF", Type: typemap["bool"], Desc: "whether to move to TOUCHOFFSET after dispense"}
 	alhpis["TOUCHOFFSET"] = AParam{Name: "TOUCHOFFSET", Type: typemap["float64"], Desc: "mm above wb to touch off at"}
@@ -107,7 +109,17 @@ func MakePolicyItems() AParamSet {
 	alhpis["DONT_BE_DIRTY"] = AParam{Name: "DONT_BE_DIRTY", Type: typemap["bool"], Desc: "Don't switch this off"}
 	alhpis["NO_AIR_DISPENSE"] = AParam{Name: "NO_AIR_DISPENSE", Type: typemap["bool"], Desc: "Prevent dispensing anywhere other than under liquid?"}
 	alhpis["CAN_MSA"] = AParam{Name: "CAN_MSA", Type: typemap["bool"], Desc: "Permissible to aspirate from multiple sources? -- currently non functional"}
+	alhpis["DESCRIPTION"] = AParam{Name: "DESCRIPTION", Type: typemap["string"], Desc: "Summary of LHPolicy to present to the user"}
 	return alhpis
+}
+
+func GetLHPolicyOptions() AParamSet {
+	ps := make(AParamSet, 5)
+	tm := maketypemap()
+
+	ps["USE_DRIVER_TIP_TRACKING"] = AParam{Name: "USE_DRIVER_TIP_TRACKING", Type: tm["bool"], Desc: "If driver has the option to use its own tip tracking, do so"}
+
+	return ps
 }
 
 // a typed parameter, with description
@@ -143,7 +155,7 @@ func maketypemap() map[string]reflect.Type {
 
 type AParamSet map[string]AParam
 
-func (alhpis AParamSet) TypeList() string {
+func (alhpis AParamSet) OrderedList() []string {
 	ks := make([]string, 0, len(alhpis))
 
 	for k, _ := range alhpis {
@@ -151,6 +163,12 @@ func (alhpis AParamSet) TypeList() string {
 	}
 
 	sort.Strings(ks)
+
+	return ks
+}
+
+func (alhpis AParamSet) TypeList() string {
+	ks := alhpis.OrderedList()
 
 	s := ""
 

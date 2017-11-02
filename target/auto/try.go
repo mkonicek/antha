@@ -11,23 +11,28 @@ import (
 	"github.com/antha-lang/antha/target/handler"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"
+	"github.com/antha-lang/antha/target/shakerincubator"
 	"google.golang.org/grpc"
 )
 
-// Common state amount amount tryers
+// Common state for tryers
 type tryer struct {
 	Auto      *Auto
 	MaybeArgs []interface{}
 	HumanOpt  human.Opt
 }
 
-func (a *tryer) Driver(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
+// AddDriver queries a driver and adds the corresponding device to the target
+// based on the query response
+func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	c := driver.NewDriverClient(conn)
 	reply, err := c.DriverType(ctx, &driver.TypeRequest{})
 	if err != nil {
 		return err
 	}
+
 	switch reply.Type {
+
 	case "antha.runner.v1.Runner":
 		r := runner.NewRunnerClient(conn)
 		reply, err := r.SupportedRunTypes(ctx, &runner.SupportedRunTypesRequest{})
@@ -37,25 +42,34 @@ func (a *tryer) Driver(ctx context.Context, conn *grpc.ClientConn, arg interface
 		for _, typ := range reply.Types {
 			a.Auto.runners[typ] = append(a.Auto.runners[typ], r)
 		}
+
 	case "antha.shakerincubator.v1.ShakerIncubator":
-		h := &handler.Handler{
-			Labels: []ast.NameValue{
+		s := &shakerincubator.ShakerIncubator{}
+		a.HumanOpt.CanIncubate = false
+		a.Auto.handler[s] = conn
+		a.Auto.Target.AddDevice(s)
+		return nil
+
+	default:
+		h := handler.New(
+			[]ast.NameValue{
 				ast.NameValue{
 					Name:  "antha.driver.v1.TypeReply.type",
-					Value: "antha.shakerincubator.v1.ShakerIncubator",
+					Value: reply.Type,
 				},
 			},
-		}
+		)
 		a.HumanOpt.CanHandle = false
 		a.Auto.handler[h] = conn
-		return a.Auto.Target.AddDevice(h)
-	default:
-		return noMatch
+		a.Auto.Target.AddDevice(h)
+		return nil
 	}
+
 	return nil
 }
 
-func (a *tryer) Mixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
+// AddMixer queries a mixer driver and adds the corresponding device to the target
+func (a *tryer) AddMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	c := lh.NewExtendedLiquidhandlingDriverClient(conn)
 
 	var candidates []interface{}
@@ -67,7 +81,8 @@ func (a *tryer) Mixer(ctx context.Context, conn *grpc.ClientConn, arg interface{
 	if err != nil {
 		return err
 	}
-	return a.Auto.Target.AddDevice(d)
+	a.Auto.Target.AddDevice(d)
+	return nil
 }
 
 func getMixerOpt(maybeArgs []interface{}) (ret mixer.Opt) {
@@ -81,7 +96,7 @@ func getMixerOpt(maybeArgs []interface{}) (ret mixer.Opt) {
 
 func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	var tries []func(context.Context, *grpc.ClientConn, interface{}) error
-	tries = append(tries, a.Driver, a.Mixer)
+	tries = append(tries, a.AddDriver, a.AddMixer)
 
 	for _, t := range tries {
 		if err := t(ctx, conn, arg); err == nil {
@@ -89,5 +104,5 @@ func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{})
 		}
 	}
 
-	return noMatch
+	return errNoMatch
 }

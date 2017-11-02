@@ -48,7 +48,7 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 
 //
 //
-//	at this point (i.e. in a TransferBlock) the instructions have been grouped into sets
+//	at this point (i.e. in a TransferBlock) the instructions have potentially been grouped into sets
 //	with simultaneously servicable destinations - row or column-wise depending on the head
 //	orientation chosen
 //
@@ -59,7 +59,7 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 //	etc.
 //
 
-func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int) (insOut []*TransferInstruction, err error) {
+func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 
 	for i := 0; i < inssIn.MaxLen(); i++ {
@@ -86,7 +86,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		// the alignment here just says component i comes from fromWells[i]
 		// it says nothing about which channel should be used
-		fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent)
+		fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent, legacyVolume)
 
 		if err != nil {
 			return nil, err
@@ -109,6 +109,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			ptwx := make([]int, len(cmps))        //	  "    to    "   x
 			ptwy := make([]int, len(cmps))        //	  "     "    "   y
 
+			// ci indexes inssIn
 			for ci := 0; ci < len(cmps); ci++ {
 				if len(fromPlateIDs[mt]) <= ci || fromPlateIDs[mt][ci] == "" {
 					continue
@@ -130,7 +131,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 				// destination plate position
 
-				ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID()]
+				ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID]
 
 				if !ok {
 					return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")
@@ -213,6 +214,11 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 				}
 
 				wellTo.Add(cmpFrom)
+
+				// make sure the wellTo gets the right ID (ultimately)
+
+				cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Result.ID)
+				wellTo.WContents.ID = inssIn[ci].Result.ID
 
 				//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 			}

@@ -6,45 +6,51 @@ import (
 	"context"
 )
 
-// Basic signature of injectable functions
+// RunFunc is the signature of injectable functions
 type RunFunc func(context.Context, Value) (Value, error)
 
-// An injectable function
+// A Runner is an injectable function
 type Runner interface {
-	Run(context.Context, Value) (Value, error) // Run the function and return results
+	// Run the function and return results
+	Run(context.Context, Value) (Value, error)
 }
 
-// Untyped injectable function
+// A FuncRunner is an untyped injectable function
 type FuncRunner struct {
 	RunFunc
 }
 
+// Run implements a Runner
 func (a *FuncRunner) Run(ctx context.Context, value Value) (Value, error) {
 	return a.RunFunc(ctx, value)
 }
 
+// A TypedRunner is a typed injectable function
 type TypedRunner interface {
 	Runner
 	Input() interface{}
 	Output() interface{}
 }
 
-// Typed injectable function. Check if input parameter is assignable to In and
-// output parameter is assignable to Out.
+// A CheckedRunner is a typed injectable function. It checks if input parameter
+// is assignable to In and output parameter is assignable to Out.
 type CheckedRunner struct {
 	RunFunc
 	In  interface{}
 	Out interface{}
 }
 
+// Input returns an example of an input to this Runner
 func (a *CheckedRunner) Input() interface{} {
 	return a.In
 }
 
+// Output returns an example of an output of this Runner
 func (a *CheckedRunner) Output() interface{} {
 	return a.Out
 }
 
+// Run implements a Runner
 func (a *CheckedRunner) Run(ctx context.Context, value Value) (Value, error) {
 	inT := a.In
 	if err := AssignableTo(value, inT); err != nil {

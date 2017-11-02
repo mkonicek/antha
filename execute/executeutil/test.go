@@ -1,32 +1,30 @@
 package executeutil
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-	"testing"
-	"time"
 
 	"github.com/antha-lang/antha/execute"
-	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflowtest"
 )
 
-// A test input
+// A TestInput is a workflow, its iputs and expected output
 type TestInput struct {
 	BundlePath   string
 	ParamsPath   string
 	Params       *execute.RawParams
 	WorkflowPath string
 	Workflow     *workflow.Desc
+	Expected     *workflowtest.TestOpt
 	Dir          string
 }
 
+// Paths returns the filepaths that this TestInput was created from
 func (a TestInput) Paths() (rs []string) {
 	if len(a.BundlePath) != 0 {
 		rs = append(rs, a.BundlePath)
@@ -40,24 +38,24 @@ func (a TestInput) Paths() (rs []string) {
 	return
 }
 
-type TestInputs []*TestInput
+type byPath []*TestInput
 
-func (a TestInputs) Len() int {
+func (a byPath) Len() int {
 	return len(a)
 }
 
-func (a TestInputs) Less(i, j int) bool {
+func (a byPath) Less(i, j int) bool {
 	if a[i].WorkflowPath == a[j].WorkflowPath {
 		return a[i].ParamsPath < a[j].ParamsPath
 	}
 	return a[i].WorkflowPath < a[j].WorkflowPath
 }
 
-func (a TestInputs) Swap(i, j int) {
+func (a byPath) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-// Find any test inputs under basePath.
+// FindTestInputs finds any test inputs under basePath.
 func FindTestInputs(basePath string) ([]*TestInput, error) {
 	wfiles := make(map[string][]string)
 	pfiles := make(map[string][]string)
@@ -165,16 +163,16 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 		var wdata, pdata, bdata []byte
 		var err error
 		if bdata, err = open(input.BundlePath); err != nil {
-			return nil, fmt.Errorf("error reading %q", input.BundlePath, err)
+			return nil, fmt.Errorf("error reading %q: %s", input.BundlePath, err)
 		}
 		if wdata, err = open(input.WorkflowPath); err != nil {
-			return nil, fmt.Errorf("error reading %q", input.WorkflowPath, err)
+			return nil, fmt.Errorf("error reading %q: %s", input.WorkflowPath, err)
 		}
 		if pdata, err = open(input.ParamsPath); err != nil {
-			return nil, fmt.Errorf("error reading %q", input.ParamsPath, err)
+			return nil, fmt.Errorf("error reading %q: %s", input.ParamsPath, err)
 		}
 
-		wdesc, params, err := Unmarshal(UnmarshalOpt{
+		bundle, err := Unmarshal(UnmarshalOpt{
 			BundleData:   bdata,
 			ParamsData:   pdata,
 			WorkflowData: wdata,
@@ -182,68 +180,12 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error parsing %q: %s", strings.Join(input.Paths(), ","), err)
 		}
-		input.Params = params
-		input.Workflow = wdesc
+		input.Params = &(bundle.RawParams)
+		input.Workflow = &(bundle.Desc)
+		input.Expected = &(bundle.TestOpt)
 	}
 
-	sort.Sort(TestInputs(inputs))
+	sort.Sort(byPath(inputs))
 
 	return inputs, nil
-}
-
-// Test inputs
-func TestElements(t *testing.T, ctx context.Context, inputs []*TestInput) {
-	tgt := target.New()
-	tgt.AddDevice(human.New(human.Opt{CanMix: true, CanIncubate: true}))
-
-	odir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, input := range inputs {
-		errs := make(chan error)
-		go func() {
-			// HACK(ddn): Sink chdir inside goroutine to "improve" chances that
-			// golang scheduler puts this goroutine on the os thread
-			// corresponding to the chdir call.
-			//
-			// Until elements are refactored to not know their working
-			// directory we can't "go test parallel" these tests
-			if len(input.Dir) != 0 {
-				if err := os.Chdir(input.Dir); err != nil {
-					errs <- err
-					return
-				}
-			}
-			_, err := execute.Run(ctx, execute.Opt{
-				Workflow: input.Workflow,
-				Params:   input.Params,
-				Target:   tgt,
-			})
-			errs <- err
-		}()
-
-		select {
-		case err = <-errs:
-		case <-time.After(180 * time.Second):
-			err = fmt.Errorf("timeout after %ds", 180)
-		}
-
-		if err == nil {
-			continue
-		} else if _, ok := err.(*execute.Error); ok {
-			continue
-		} else {
-			if len(input.BundlePath) != 0 {
-				t.Errorf("error running bundle %q: %s", input.BundlePath, err)
-			} else {
-				t.Errorf("error running workflow %q with parameters %q: %s", input.WorkflowPath, input.ParamsPath, err)
-			}
-		}
-	}
-
-	if err := os.Chdir(odir); err != nil {
-		t.Fatal(err)
-	}
 }

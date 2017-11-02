@@ -23,13 +23,14 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
@@ -74,17 +75,16 @@ func (is InputSorter) Less(i, j int) bool {
 // INPUT: 	"input_platetype", "inputs"
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
-func input_plate_setup(request *LHRequest) (*LHRequest, error) {
+func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
 	input_platetypes := (*request).Input_platetypes
 	if input_platetypes == nil || len(input_platetypes) == 0 {
 		// XXX this is dangerous... until input_plate_linear is replaced we will hit big problems here
 		// this configuration needs to happen outside but for now...
-		list := factory.GetPlateList()
-		input_platetypes = make([]*wtype.LHPlate, len(list))
-		for i, platetype := range list {
-			input_platetypes[i] = factory.GetPlateByType(platetype)
+		input_platetypes, err := inventory.XXXNewPlates(ctx)
+		if err != nil {
+			return nil, err
 		}
 		(*request).Input_platetypes = input_platetypes
 		//debug
@@ -182,7 +182,11 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 				curr_plate = plates_in_play[platetype.Type]
 
 				if curr_plate == nil {
-					plates_in_play[platetype.Type] = factory.GetPlateByType(platetype.Type)
+					p, err := inventory.NewPlate(ctx, platetype.Type)
+					if err != nil {
+						return nil, err
+					}
+					plates_in_play[platetype.Type] = p
 					curr_plate = plates_in_play[platetype.Type]
 					platename := fmt.Sprintf("Input_plate_%d", curplaten)
 					curr_plate.PlateName = platename
@@ -218,6 +222,7 @@ func input_plate_setup(request *LHRequest) (*LHRequest, error) {
 				} else {
 					newcomponent = component.Dup()
 					newcomponent.Vol = curr_well.MaxVol
+					newcomponent.Vunit = curr_well.Vunit
 					newcomponent.Loc = location
 					volume.Subtract(curr_well.WorkingVolume())
 				}

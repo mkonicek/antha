@@ -2,21 +2,12 @@ package graph
 
 import "errors"
 
-// Merge n and src into dst, modifying dst. Assumes src != dst.
-func mergeInto(n Node, src, dst map[Node]bool) {
-	dst[n] = true
-	for k := range src {
-		dst[k] = true
-	}
-}
-
-//
-
 var (
-	reachesSeen = errors.New("reaches already seen")
+	errReachesSeen = errors.New("reaches already seen")
 )
 
-// Compute reachability over graph. A reaches B if there is a path from A to B.
+// Reaches computes reachability over graph. A reaches B if there is a path
+// from A to B.
 func Reaches(g Graph) Graph {
 	reaches := make(map[Node]map[Node]bool)
 
@@ -42,7 +33,7 @@ func Reaches(g Graph) Graph {
 				_, seen := reaches[n]
 				if seen {
 					sameAs[n] = true
-					return reachesSeen
+					return errReachesSeen
 				}
 				return nil
 			},

@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for reading file formats, in particular focused toward dna sequence parsing
 package parser
 
 import (

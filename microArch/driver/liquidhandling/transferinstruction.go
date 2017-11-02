@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sort"
@@ -32,7 +33,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory"
 )
 
 func firstInArray(a []*wtype.LHPlate) *wtype.LHPlate {
@@ -226,11 +227,22 @@ func (ins *TransferInstruction) CheckMultiPolicies() bool {
 	return true
 }
 
-func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParameter) [][]int {
+func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, error) {
+	var plates []*wtype.LHPlate
+	for _, typ := range types {
+		p, err := inventory.NewPlate(ctx, typ)
+		if err != nil {
+			return nil, err
+		}
+		plates = append(plates, p)
+	}
+	return plates, nil
+}
+
+func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, channel *wtype.LHChannelParameter) [][]int {
 	// if the channel is not multi just return nil
 
 	if channel.Multi == 1 {
-		//fmt.Println("CHANNEL IS NOT MULTI > 1")
 		return nil
 	}
 
@@ -265,7 +277,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		return nil
 	}
 
-	pa, err := factory.PlateTypeArray(ins.FPlateType)
+	pa, err := plateTypeArray(ctx, ins.FPlateType)
 
 	if err != nil {
 		panic(err)
@@ -285,7 +297,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(channel *wtype.LHChannelParam
 		return nil
 	}
 
-	pa, err = factory.PlateTypeArray(ins.TPlateType)
+	pa, err = plateTypeArray(ctx, ins.TPlateType)
 
 	if err != nil {
 		panic(err)
@@ -696,7 +708,7 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 //			SCB([A,B,A,C],[d1,d1,d2,d2])
 //
 
-func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	//  set the channel  choices first by cleaning out initial empties
 
 	ins.ChooseChannels(prms)
@@ -708,7 +720,7 @@ func (ins *TransferInstruction) Generate(policy *wtype.LHPolicyRuleSet, prms *LH
 	// if we can multi we do this first
 
 	if pol["CAN_MULTI"].(bool) {
-		parallelsets := ins.GetParallelSetsFor(prms.HeadsLoaded[0].Params)
+		parallelsets := ins.GetParallelSetsFor(ctx, prms.HeadsLoaded[0].Params)
 
 		mci := NewMultiChannelBlockInstruction()
 		//mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here

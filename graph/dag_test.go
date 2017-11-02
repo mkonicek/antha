@@ -96,7 +96,7 @@ func TestHarderTransitiveReduction(t *testing.T) {
 	}
 
 	findNoOuts := func(g Graph, m map[Node]bool) {
-		for i, num := 0, g.NumNodes(); i < num; i += 1 {
+		for i, num := 0, g.NumNodes(); i < num; i++ {
 			n := g.Node(i)
 			if g.NumOuts(n) == 0 {
 				m[n] = true

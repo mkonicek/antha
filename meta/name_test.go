@@ -2,7 +2,8 @@ package meta
 
 import "testing"
 
-type TestS struct{}
+type myStruct struct{}
+type myString string
 
 func TestFullyQualifiedType(t *testing.T) {
 	type Case struct {
@@ -17,7 +18,8 @@ func TestFullyQualifiedType(t *testing.T) {
 		Case{Obj: make([]string, 0), Expected: "[]string"},
 		Case{Obj: make(chan string), Expected: "chan string"},
 		Case{Obj: TestFullyQualifiedType, Expected: "func(*testing.T)"},
-		Case{Obj: TestS{}, Expected: "github.com/antha-lang/antha/meta.TestS"},
+		Case{Obj: myStruct{}, Expected: "github.com/antha-lang/antha/meta.myStruct"},
+		Case{Obj: myString(""), Expected: "github.com/antha-lang/antha/meta.myString"},
 		Case{Obj: func(error) {}, Expected: "func(error)"},
 	}
 

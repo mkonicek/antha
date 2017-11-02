@@ -23,6 +23,7 @@
 package wtype
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -72,9 +73,15 @@ func (plate LHPlate) OutputLayout() {
 			wc.Y = y
 			fmt.Print(wc.FormatA1(), " ")
 			//for _, c := range well.WContents {
-			fmt.Print(well.WContents.CName, " ")
+			//	fmt.Print(well.WContents.CN, " ")
+			if well.WContents.IsInstance() {
+				fmt.Print(well.WContents.CNID(), " ")
+			} else {
+				fmt.Print(well.WContents.CName, " ")
+			}
 			//}
 			fmt.Printf(" %-6.2f%s", well.Currvol(), well.Vunit)
+			fmt.Println()
 			fmt.Println()
 		}
 	}
@@ -214,7 +221,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 }
 
 // this gets ONE component... possibly from several wells
-func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
@@ -234,15 +241,15 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 			continue
 		}
 
-		if w.Contents().CName == cmp.CName {
-			if exact && w.Contents().ID != cmp.ID {
-				continue
-			}
-
+		//if w.Contents().CName == cmp.CName {
+		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 
-			if v.LessThan(volWant) {
-				continue
+			// check volume unless this is an instance and we are tolerating this
+			if !cmp.IsInstance() || !legacyVolume {
+				if v.LessThan(volWant) {
+					continue
+				}
 			}
 
 			volGot.Add(volWant)
@@ -259,7 +266,7 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, exact bool, mpv wunit.V
 	}
 
 	if volGot.LessThan(cmp.Volume()) {
-		return lhp.GetComponent(cmp, exact, mpv)
+		return lhp.GetComponent(cmp, mpv)
 	}
 	//fmt.Println("FOUND: ", cmp.CName, " AT: ", ret[0].FormatA1(), " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
@@ -308,7 +315,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 
 // convenience method
 
-func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
 	it := NewOneTimeColumnWiseIterator(lhp)
@@ -319,16 +326,7 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume)
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
-		/*
-			if !w.Empty() {
-				logger.Debug(fmt.Sprint("WANT: ", cmp.CName, " :: ", wc.FormatA1(), " ", w.Contents().CName, " ", w.CurrVolume().ToString()))
-			}
-		*/
-		if w.Contents().CName == cmp.CName {
-			if exact && w.Contents().ID != cmp.ID {
-				continue
-			}
-
+		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 			if v.LessThan(mpv) {
 				continue
@@ -461,6 +459,15 @@ func (lhp *LHPlate) WellsX() int {
 
 func (lhp *LHPlate) WellsY() int {
 	return lhp.WlsY
+}
+
+func (lhp *LHPlate) Empty() bool {
+	for _, w := range lhp.Wellcoords {
+		if !w.Empty() {
+			return false
+		}
+	}
+	return true
 }
 
 func (lhp *LHPlate) NextEmptyWell(it PlateIterator) WellCoords {
@@ -637,9 +644,9 @@ func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *LHComponent {
 		return nil
 	}
 
-	err := w.Remove(vol)
+	cmp := w.Remove(vol)
 
-	return err
+	return cmp
 }
 
 func (p *LHPlate) DeclareTemporary() {
@@ -674,26 +681,23 @@ func (p *LHPlate) IsAutoallocated() bool {
 	return true
 }
 
-func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wells []string, liquids []*LHComponent, Volumes []wunit.Volume) error {
+// ExportPlateCSV a exports an LHPlate and its contents as a csv file.
+// The caller is required to set the well locations and volumes explicitely with this function.
+func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wells []string, liquids []*LHComponent, volumes []wunit.Volume) (file File, err error) {
 
-	csvfile, err := os.Create(outputpilename)
-	if err != nil {
-		return err
+	if len(wells) != len(liquids) || len(liquids) != len(volumes) {
+		err = fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
-
-	defer csvfile.Close()
 
 	records := make([][]string, 0)
 
-	//record := make([]string, 0)
-
-	headerrecord := []string{plate.Type, platename, "", "", "", "", ""}
+	headerrecord := []string{plate.Type, plateName, "", "", "", "", ""}
 
 	records = append(records, headerrecord)
 
 	for i, well := range wells {
 
-		volfloat := Volumes[i].RawValue()
+		volfloat := volumes[i].RawValue()
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 
@@ -702,26 +706,19 @@ func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wel
 			liquids[i].Cunit = "mg/l"
 		}
 
-		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, Volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
+		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
 		records = append(records, record)
 	}
 
-	csvwriter := csv.NewWriter(csvfile)
-
-	for _, record := range records {
-
-		err = csvwriter.Write(record)
-
-		if err != nil {
-			return err
-		}
-	}
-	csvwriter.Flush()
-
-	return err
+	return exportCSV(records, outputFileName)
 }
 
-func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
+// AutoExportPlateCSV exports an LHPlate and its contents as a csv file.
+// This is not 100% safe to use in elements since, currently,
+// at the time of running an element, the scheduler  will not have allocated positions
+// for the components so, for example, accurate well information cannot currently be obtained with this function.
+// If allocating wells manually use the ExportPlateCSV function and explicitely set the sample locations and volumes.
+func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err error) {
 
 	var platename string = plate.PlateName
 	var wells = make([]string, 0)
@@ -745,15 +742,7 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 		}
 	}
 
-	csvfile, err := os.Create(outputfilename)
-	if err != nil {
-		return err
-	}
-	defer csvfile.Close()
-
 	records := make([][]string, 0)
-
-	//record := make([]string, 0)
 
 	headerrecord := []string{plate.Type, platename, "LiquidType ", "Vol", "Vol Unit", "Conc", "Conc Unit"}
 
@@ -766,29 +755,47 @@ func AutoExportPlateCSV(outputfilename string, plate *LHPlate) error {
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 		concstr := strconv.FormatFloat(concfloat, 'G', -1, 64)
-		/*
-			fmt.Println("len(wells)", len(wells))
-			fmt.Println("len(liquids)", len(liquids))
-			fmt.Println("len(Volumes)", len(Volumes))
-		*/
 
 		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), concstr, concs[i].Unit().PrefixedSymbol()}
 		records = append(records, record)
 	}
 
-	csvwriter := csv.NewWriter(csvfile)
+	return exportCSV(records, outputFileName)
+}
 
-	for _, record := range records {
+// Export a 2D array of string data as a csv file
+func exportCSV(records [][]string, filename string) (File, error) {
+	var anthafile File
+	var buf bytes.Buffer
 
-		err = csvwriter.Write(record)
+	/// use the buffer to create a csv writer
+	w := csv.NewWriter(&buf)
 
-		if err != nil {
-			return err
-		}
+	// write all records to the buffer
+	w.WriteAll(records) // calls Flush internally
+
+	if err := w.Error(); err != nil {
+		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
 	}
-	csvwriter.Flush()
 
-	return err
+	//This code shows how to create an antha File from this buffer which can be downloaded through the UI:
+
+	anthafile.Name = filename
+
+	anthafile.WriteAll(buf.Bytes())
+
+	///// to write this to a file on the command line this is what we'd do (or something similar)
+
+	// also create a file on os
+	file, _ := os.Create(filename)
+	defer file.Close()
+
+	// this time we'll use the file to create the writer instead of a buffer (anything which fulfils the writer interface can be used here ... checkout golang io.Writer and io.Reader)
+	fw := csv.NewWriter(file)
+
+	// same as before ...
+	fw.WriteAll(records)
+	return anthafile, nil
 }
 
 func (p *LHPlate) SetConstrained(platform string, positions []string) {
@@ -796,16 +803,26 @@ func (p *LHPlate) SetConstrained(platform string, positions []string) {
 }
 
 func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
-	var pos []string
-
 	par, ok := p.Welltype.Extra[platform]
-
-	if ok {
-		pos = par.([]string)
-		return pos, true
+	if !ok {
+		return nil, false
 	}
 
-	return pos, false
+	switch par := par.(type) {
+
+	case []string:
+		return par, true
+
+	case []interface{}:
+		var pos []string
+		for _, v := range par {
+			pos = append(pos, v.(string))
+		}
+		return pos, true
+
+	default:
+		panic(fmt.Sprintf("unknown type %T", par))
+	}
 
 }
 
@@ -892,6 +909,147 @@ func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 
 		if !w.Empty() {
 			ret = append(ret, w)
+		}
+	}
+
+	return ret
+}
+
+func (p *LHPlate) IsSpecial() bool {
+	if p == nil || p.Welltype.Extra == nil {
+		return false
+	}
+
+	s, ok := p.Welltype.Extra["IMSPECIAL"]
+
+	if !ok || !s.(bool) {
+		return false
+	}
+
+	return true
+}
+
+func (p *LHPlate) DeclareSpecial() {
+	if p != nil && p.Welltype.Extra != nil {
+		p.Welltype.Extra["IMSPECIAL"] = true
+	}
+}
+
+// @implement SBSLabware
+
+/*
+type SBSLabware interface {
+	NumRows() int
+	NumCols() int
+	PlateHeight() float64
+}
+*/
+
+func (p *LHPlate) NumRows() int {
+	return p.WellsY()
+}
+
+func (p *LHPlate) NumCols() int {
+	return p.WellsX()
+}
+
+func (p *LHPlate) PlateHeight() float64 {
+	return p.Height
+}
+
+func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
+	for _, w := range p.Wellcoords {
+		if w.UpdateContentID(before, after) {
+			return true
+		}
+	}
+	return false
+}
+
+// SetData implements Annotatable
+func (p *LHPlate) SetData(key string, data []byte) error {
+	if err := p.checkExtra(fmt.Sprintf("cannot add data %s", key)); err != nil {
+		return err
+	}
+
+	// nb -- in future disallow already set keys as well?
+	if err := p.CheckExtraKey(key); err != nil {
+		return fmt.Errorf("invalid key %s: %s", key, err)
+	}
+
+	p.Welltype.Extra[key] = data
+
+	return nil
+
+}
+
+// ClearData removes data with the given name
+func (p *LHPlate) ClearData(k string) error {
+	err := p.checkExtra(fmt.Sprintf("cannot clear data %s", k))
+
+	if err != nil {
+		return err
+	}
+
+	delete(p.Welltype.Extra, k)
+
+	return nil
+}
+
+func (p *LHPlate) checkExtra(s string) error {
+	if p == nil {
+		return fmt.Errorf("nil plate: %s", s)
+	}
+
+	if p.Welltype == nil {
+		return fmt.Errorf("corrupt plate - missing well type: %s", s)
+	}
+
+	if p.Welltype.Extra == nil {
+		return fmt.Errorf("corrupt well type - %s", s)
+	}
+
+	return nil
+}
+
+func (p LHPlate) GetData(key string) ([]byte, error) {
+	if err := p.checkExtra(fmt.Sprintf("cannot get key %s", key)); err != nil {
+		return nil, err
+	}
+
+	if err := p.CheckExtraKey(key); err != nil {
+		return nil, fmt.Errorf("invalid key %s: %s", key, err)
+	}
+
+	bs, ok := p.Welltype.Extra[key].([]byte)
+	if !ok {
+		return nil, fmt.Errorf("key %s not found", key)
+	}
+
+	return bs, nil
+}
+
+// CheckExtraKey checks if the key is a reserved name
+func (p LHPlate) CheckExtraKey(k string) error {
+	reserved := []string{"IMSPECIAL", "Pipetmax"}
+
+	if wutil.StrInStrArray(k, reserved) {
+		return fmt.Errorf("%s is a system key used by plates", k)
+	}
+
+	if p.Welltype == nil {
+		return fmt.Errorf("No valid well")
+	}
+
+	return p.Welltype.CheckExtraKey(k)
+}
+
+// AllContents returns all the components on the plate
+func (p *LHPlate) AllContents() []*LHComponent {
+	ret := make([]*LHComponent, 0, len(p.Wellcoords))
+	for _, c := range p.Cols {
+		for _, w := range c {
+			ret = append(ret, w.WContents)
 		}
 	}
 

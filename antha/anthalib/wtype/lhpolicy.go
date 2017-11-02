@@ -286,7 +286,7 @@ func (lh *LHVariableCondition) UnmarshalJSON(data []byte) error {
 			_, cat := mp["Category"]
 			_, num := mp["Upper"]
 			if cat {
-				lhcc := LHCategoryCondition{Category: mp["Categor"].(string)}
+				lhcc := LHCategoryCondition{Category: mp["Category"].(string)}
 				lh.Condition = lhcc
 			} else if num {
 				lhnc := LHNumericCondition{Upper: mp["Upper"].(float64), Lower: mp["Lower"].(float64)}
@@ -336,6 +336,29 @@ func (lhvc LHVariableCondition) IsEqualTo(other LHVariableCondition) bool {
 type LHPolicyRuleSet struct {
 	Policies map[string]LHPolicy
 	Rules    map[string]LHPolicyRule
+	Options  map[string]interface{}
+}
+
+func (lhpr *LHPolicyRuleSet) SetOption(optname string, value interface{}) error {
+	var err error
+	opts := GetLHPolicyOptions()
+
+	// opt is of type aParam, which defines what
+	// the parameter means and what type it has
+	opt, ok := opts[optname]
+
+	if !ok {
+		err = fmt.Errorf("No such LHPolicy option %s", optname)
+	} else {
+		if reflect.TypeOf(value) != opt.Type {
+			err = fmt.Errorf("LHPolicy option %s needs value of type %s not %T", optname, opt.Type.Name(), value)
+		} else {
+			lhpr.Options[optname] = value
+		}
+	}
+
+	return err
+
 }
 
 func (lhpr *LHPolicyRuleSet) IsEqualTo(lhp2 *LHPolicyRuleSet) bool {
@@ -370,6 +393,7 @@ func NewLHPolicyRuleSet() *LHPolicyRuleSet {
 	var lhpr LHPolicyRuleSet
 	lhpr.Policies = make(map[string]LHPolicy)
 	lhpr.Rules = make(map[string]LHPolicyRule)
+	lhpr.Options = make(map[string]interface{})
 	return &lhpr
 }
 

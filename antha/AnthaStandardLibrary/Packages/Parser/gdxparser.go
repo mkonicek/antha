@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -74,36 +75,42 @@ func Parse(filename string) (parts_list []string, err error) {
 	nconstructs := 0
 	for _, c := range gdx.DesignConstruct {
 		parts_list[nconstructs] = "Construct: " + strconv.Itoa(nconstructs) + " n parts: " + strconv.Itoa(len(c.DNAElements)+len(c.AAElements))
-		nconstructs += 1
+		nconstructs++
 	}
 
 	return parts_list, err
 }
 
-func ParsetoAssemblyParameters(filename string) ([]enzymes.Assemblyparameters, error) {
-	if str, err := ioutil.ReadFile(filename); err != nil {
+func ParseToAssemblyParameters(filename string) ([]enzymes.Assemblyparameters, error) {
+	str, err := ioutil.ReadFile(filename)
+	if err != nil {
 		return nil, err
-	} else {
-		return gdxToAssemblyParameters(str)
 	}
+	return gdxToAssemblyParameters(str)
 }
 
-// Parses a typeIIs assembly design file in gdx format. An example file is provided: "Assembly_Input_Controls.gdx"
-// The output will be []enzymes.AssemblyParameters which can be used in the enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.
-// The design file is expected to follow a format as shown in the provided example files
-// An error will be returned if no data is found within the .gdx design file or if the file is not in the expected format.
+// ParsesGDX parses a typeIIs assembly design file in gdx format. An example
+// file is provided: "Assembly_Input_Controls.gdx" The output will be
+// []enzymes.AssemblyParameters which can be used in the
+// enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.  The
+// design file is expected to follow a format as shown in the provided example
+// files An error will be returned if no data is found within the .gdx design
+// file or if the file is not in the expected format.
 func ParseGDX(file wtype.File) ([]enzymes.Assemblyparameters, error) {
-	if data, err := file.ReadAll(); err != nil {
+	data, err := file.ReadAll()
+	if err != nil {
 		return nil, err
-	} else {
-		return gdxToAssemblyParameters(data)
 	}
+	return gdxToAssemblyParameters(data)
 }
 
-// Parses the contents of a typeIIs assembly design file in gdx format. An example file is provided: "Assembly_Input_Controls.gdx"
-// The output will be []enzymes.AssemblyParameters which can be used in the enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.
-// The design file is expected to follow a format as shown in the provided example files
-// An error will be returned if no data is found within the .gdx design file or if the file is not in the expected format.
+// ParseGDXBinary parses the contents of a typeIIs assembly design file in gdx
+// format. An example file is provided: "Assembly_Input_Controls.gdx" The
+// output will be []enzymes.AssemblyParameters which can be used in the
+// enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.  The
+// design file is expected to follow a format as shown in the provided example
+// files An error will be returned if no data is found within the .gdx design
+// file or if the file is not in the expected format.
 func ParseGDXBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("no data found")
@@ -151,32 +158,4 @@ func gdxToAssemblyParameters(data []byte) ([]enzymes.Assemblyparameters, error) 
 		construct_list = append(construct_list, newconstruct)
 	}
 	return construct_list, nil
-}
-
-//This is a function to parse file type .gdx to a DNA sequence of type []wtype.DNASequence
-func GDXtoDNASequence(sequenceFile wtype.File) (parts_list []wtype.DNASequence, err error) {
-	data, err := sequenceFile.ReadAll()
-	var gdx Project
-	err = xml.Unmarshal(data, &gdx)
-	if err != nil {
-		return parts_list, err
-	}
-
-	parts_list = make([]wtype.DNASequence, 0)
-
-	for _, a := range gdx.DesignConstruct {
-		for _, b := range a.DNAElements {
-			var newseq wtype.DNASequence
-			for i := 0; i < len(a.DNAElements); i++ {
-				newseq.Nm = b.Label
-				newseq.Seq = b.Sequence
-				if a.Plasmid == "true" {
-					newseq.Plasmid = true
-				}
-				parts_list = append(parts_list, newseq)
-			}
-		}
-	}
-
-	return parts_list, err
 }

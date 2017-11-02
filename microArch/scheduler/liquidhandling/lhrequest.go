@@ -25,6 +25,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -32,43 +33,42 @@ import (
 
 // structure for defining a request to the liquid handler
 type LHRequest struct {
-	ID                       string
-	BlockID                  wtype.BlockID
-	BlockName                string
-	LHInstructions           map[string]*wtype.LHInstruction
-	Input_solutions          map[string][]*wtype.LHComponent
-	Plates                   map[string]*wtype.LHPlate
-	Tips                     []*wtype.LHTipbox
-	InstructionSet           *liquidhandling.RobotInstructionSet
-	Instructions             []liquidhandling.TerminalRobotInstruction
-	InstructionText          string
-	Input_assignments        map[string][]string
-	Output_assignments       map[string][]string
-	Input_plates             map[string]*wtype.LHPlate
-	Output_plates            map[string]*wtype.LHPlate
-	Input_platetypes         []*wtype.LHPlate
-	Input_plate_order        []string
-	Input_setup_weights      map[string]float64
-	Output_platetypes        []*wtype.LHPlate
-	Output_plate_order       []string
-	Plate_lookup             map[string]string
-	Stockconcs               map[string]float64
-	Policies                 *wtype.LHPolicyRuleSet
-	Input_order              []string
-	Output_order             []string
-	Order_instructions_added []string
-	OutputIteratorFactory    func(*wtype.LHPlate) wtype.PlateIterator `json:"-"`
-	InstructionChain         *IChain
-	Input_vols_supplied      map[string]wunit.Volume
-	Input_vols_required      map[string]wunit.Volume
-	Input_vols_wanting       map[string]wunit.Volume
-	TimeEstimate             float64
-	CarryVolume              wunit.Volume
-	InstructionSets          [][]*wtype.LHInstruction
-	Evaps                    []wtype.VolumeCorrection
-	Options                  LHOptions
-	NUserPlates              int
-	Output_sort              bool
+	ID                    string
+	BlockID               wtype.BlockID
+	BlockName             string
+	LHInstructions        map[string]*wtype.LHInstruction
+	Input_solutions       map[string][]*wtype.LHComponent
+	Plates                map[string]*wtype.LHPlate
+	Tips                  []*wtype.LHTipbox
+	InstructionSet        *liquidhandling.RobotInstructionSet
+	Instructions          []liquidhandling.TerminalRobotInstruction
+	InstructionText       string
+	Input_assignments     map[string][]string
+	Output_assignments    map[string][]string
+	Input_plates          map[string]*wtype.LHPlate
+	Output_plates         map[string]*wtype.LHPlate
+	Input_platetypes      []*wtype.LHPlate
+	Input_plate_order     []string
+	Input_setup_weights   map[string]float64
+	Output_platetypes     []*wtype.LHPlate
+	Output_plate_order    []string
+	Plate_lookup          map[string]string
+	Stockconcs            map[string]wunit.Concentration
+	Policies              *wtype.LHPolicyRuleSet
+	Input_order           []string
+	Output_order          []string
+	OutputIteratorFactory func(*wtype.LHPlate) wtype.PlateIterator `json:"-"`
+	InstructionChain      *IChain
+	Input_vols_supplied   map[string]wunit.Volume
+	Input_vols_required   map[string]wunit.Volume
+	Input_vols_wanting    map[string]wunit.Volume
+	TimeEstimate          float64
+	CarryVolume           wunit.Volume
+	InstructionSets       [][]*wtype.LHInstruction
+	Evaps                 []wtype.VolumeCorrection
+	Options               LHOptions
+	NUserPlates           int
+	Output_sort           bool
 }
 
 func (req *LHRequest) ConfigureYourself() error {
@@ -164,13 +164,12 @@ func NewLHRequest() *LHRequest {
 	lhr.Output_plate_order = make([]string, 0, 1)
 	lhr.Input_plate_order = make([]string, 0, 1)
 	lhr.Plate_lookup = make(map[string]string)
-	lhr.Stockconcs = make(map[string]float64)
+	lhr.Stockconcs = make(map[string]wunit.Concentration)
 	lhr.Input_order = make([]string, 0)
 	lhr.Output_order = make([]string, 0)
 	lhr.OutputIteratorFactory = wtype.NewOneTimeColumnWiseIterator
 	lhr.Output_assignments = make(map[string][]string)
 	lhr.Input_assignments = make(map[string][]string)
-	lhr.Order_instructions_added = make([]string, 0, 1)
 	lhr.InstructionSet = liquidhandling.NewRobotInstructionSet(nil)
 	lhr.InstructionText = ""
 	lhr.Input_vols_required = make(map[string]wunit.Volume)
@@ -187,7 +186,6 @@ func NewLHRequest() *LHRequest {
 
 func (lhr *LHRequest) Add_instruction(ins *wtype.LHInstruction) {
 	lhr.LHInstructions[ins.ID] = ins
-	lhr.Order_instructions_added = append(lhr.Order_instructions_added, ins.ID)
 }
 
 func (lhr *LHRequest) NewComponentsAdded() bool {
@@ -208,6 +206,11 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 	p.MarkNonEmptyWellsUserAllocated()
 
 	lhr.Input_plates[p.ID] = p
+}
+
+func (lhr *LHRequest) UseLegacyVolume() bool {
+	// magically create extra volumes for intermediates?
+	return lhr.Options.LegacyVolume
 }
 
 type LHPolicyManager struct {

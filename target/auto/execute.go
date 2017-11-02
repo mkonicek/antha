@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Run an instruction based on current target
+// Execute runs an instruction based on current target
 func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 	switch inst := inst.(type) {
 	case *target.Mix:
@@ -22,11 +22,23 @@ func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 		return nil
 	case *target.Wait:
 		return nil
-	case *target.CmpError:
+	case *target.Order:
+		return nil
+	case *target.PlatePrep:
+		return nil
+	case *target.SetupMixer:
+		return nil
+	case *target.AwaitData:
+		return a.executeWaitData(ctx, inst)
+	case *target.Prompt:
 		return nil
 	default:
 		return fmt.Errorf("unknown instruction %T", inst)
 	}
+}
+
+func (a *Auto) executeWaitData(ctx context.Context, inst *target.AwaitData) error {
+	return fmt.Errorf("not yet implemented")
 }
 
 func (a *Auto) executeRun(ctx context.Context, inst *target.Run) error {

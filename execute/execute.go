@@ -4,16 +4,11 @@ package execute
 
 import (
 	"context"
-	"errors"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
-)
-
-var (
-	cannotConfigure = errors.New("cannot configure liquid handler")
 )
 
 // Result of executing a workflow.
@@ -23,6 +18,7 @@ type Result struct {
 	Insts    []target.Inst
 }
 
+// An Opt are options for Run.
 type Opt struct {
 	// Target machine configuration
 	Target *target.Target
@@ -30,26 +26,26 @@ type Opt struct {
 	Workflow *workflow.Desc
 	// Deprecated for separate assignment of values to workflow. Raw parameters.
 	Params *RawParams
-	// Job Id.
-	Id string
+	// Job ID.
+	ID string
 	// Deprecated for separate assignment of values to workflow. If true, read
 	// content for each wtype.File from file of the same name in the current
 	// directory.
 	TransitionalReadLocalFiles bool
 }
 
-// Simple entrypoint for one-shot execution of workflows.
+// Run is a simple entrypoint for one-shot execution of workflows.
 func Run(parent context.Context, opt Opt) (*Result, error) {
+	ctx := target.WithTarget(withID(parent, opt.ID), opt.Target)
+
 	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := setParams(parent, w, opt.Params, opt.TransitionalReadLocalFiles); err != nil {
+	if _, err := setParams(ctx, w, opt.Params, opt.TransitionalReadLocalFiles); err != nil {
 		return nil, err
 	}
-
-	ctx := target.WithTarget(withId(parent, opt.Id), opt.Target)
 
 	r := &resolver{}
 

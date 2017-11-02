@@ -4,14 +4,16 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/inventory"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/microArch/sampletracker"
 	planner "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
@@ -21,6 +23,7 @@ var (
 	_ target.Device = &Mixer{}
 )
 
+// A Mixer is a device plugin for mixer devices
 type Mixer struct {
 	driver     driver.ExtendedLiquidhandlingDriver
 	properties *driver.LHProperties // Prototype to create fresh properties
@@ -31,17 +34,22 @@ func (a *Mixer) String() string {
 	return "Mixer"
 }
 
+// CanCompile implements a Device
 func (a *Mixer) CanCompile(req ast.Request) bool {
 	// TODO: Add specific volume constraints
 	can := ast.Request{
-		MixVol: req.MixVol,
+		Selector: []ast.NameValue{
+			target.DriverSelectorV1Mixer,
+			target.DriverSelectorV1Prompter,
+		},
 	}
-	if !req.Matches(can) {
-		return false
+	if a.properties.CanPrompt() {
+		can.Selector = append(can.Selector, target.DriverSelectorV1Prompter)
 	}
 	return can.Contains(req)
 }
 
+// MoveCost implements a Device
 func (a *Mixer) MoveCost(from target.Device) int {
 	if from == a {
 		return 0
@@ -49,6 +57,7 @@ func (a *Mixer) MoveCost(from target.Device) int {
 	return human.HumanByXCost + 1
 }
 
+// FileType returns the file type for generated files
 func (a *Mixer) FileType() (ftype string) {
 	if m := a.properties.Mnfr; len(m) != 0 {
 		ftype = fmt.Sprintf("application/%s", strings.ToLower(m))
@@ -62,19 +71,25 @@ type lhreq struct {
 	*planner.Liquidhandler // ... and its associated planner
 }
 
-func (a *Mixer) makeLhreq() (*lhreq, error) {
+func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	// MIS -- this might be a hole. We probably need to invoke the sample tracker here
 	addPlate := func(req *planner.LHRequest, ip *wtype.LHPlate) error {
 		if _, seen := req.Input_plates[ip.ID]; seen {
 			return fmt.Errorf("plate %q already added", ip.ID)
-		} else {
-			//req.Input_plates[ip.ID] = ip
-			req.AddUserPlate(ip)
-			return nil
 		}
+		//req.Input_plates[ip.ID] = ip
+		req.AddUserPlate(ip)
+		return nil
 	}
 
 	req := planner.NewLHRequest()
+
+	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
+
+	if err := req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
+		return nil, err
+	}
+
 	prop := a.properties.Dup()
 	prop.Driver = a.properties.Driver
 	plan := planner.Init(prop)
@@ -95,26 +110,39 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 
 	if p := a.opt.InputPlateType; len(p) != 0 {
 		for _, v := range p {
-			req.Input_platetypes = append(req.Input_platetypes, factory.GetPlateByType(v))
+			p, err := inventory.NewPlate(ctx, v)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Input_platetypes = append(req.Input_platetypes, p)
 		}
 	}
 
 	if p := a.opt.OutputPlateType; len(p) != 0 {
 		for _, v := range p {
-			req.Output_platetypes = append(req.Output_platetypes, factory.GetPlateByType(v))
+			p, err := inventory.NewPlate(ctx, v)
+			if err != nil {
+				return nil, err
+			}
+			req.Output_platetypes = append(req.Output_platetypes, p)
 		}
 	}
 
 	if p := a.opt.TipType; len(p) != 0 {
 		for _, v := range p {
-			req.Tips = append(req.Tips, factory.GetTipByType(v))
+			t, err := inventory.NewTipbox(ctx, v)
+			if err != nil {
+				return nil, err
+			}
+			req.Tips = append(req.Tips, t)
 		}
 	}
 
 	if p := a.opt.InputPlateData; len(p) != 0 {
 		for idx, bs := range p {
 			buf := bytes.NewBuffer(bs)
-			r, err := ParsePlateCSV(buf)
+			r, err := ParsePlateCSV(ctx, buf)
 			if err != nil {
 				return nil, fmt.Errorf("cannot parse data at idx %d: %s", idx, err)
 			}
@@ -137,6 +165,19 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 		}
 	}
 
+	// add plates requested via protocol
+
+	st := sampletracker.GetSampleTracker()
+
+	parr := st.GetInputPlates()
+
+	for _, p := range parr {
+		if err := addPlate(req, p); err != nil {
+			return nil, err
+		}
+
+	}
+
 	// try to do better multichannel execution planning?
 
 	req.Options.ExecutionPlannerVersion = a.opt.PlanningVersion
@@ -153,6 +194,10 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 
 	req.Options.OutputSort = a.opt.OutputSort
 
+	// legacy volume use
+
+	req.Options.LegacyVolume = a.opt.LegacyVolume
+
 	err := req.ConfigureYourself()
 	if err != nil {
 		return nil, err
@@ -165,7 +210,8 @@ func (a *Mixer) makeLhreq() (*lhreq, error) {
 	}, nil
 }
 
-func (a *Mixer) Compile(nodes []ast.Node) ([]target.Inst, error) {
+// Compile implements a Device
+func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 	var mixes []*wtype.LHInstruction
 	for _, node := range nodes {
 		if c, ok := node.(*ast.Command); !ok {
@@ -176,11 +222,13 @@ func (a *Mixer) Compile(nodes []ast.Node) ([]target.Inst, error) {
 			mixes = append(mixes, m)
 		}
 	}
-	if inst, err := a.makeMix(mixes); err != nil {
+
+	mix, err := a.makeMix(ctx, mixes)
+	if err != nil {
 		return nil, err
-	} else {
-		return []target.Inst{inst}, nil
 	}
+
+	return target.SequentialOrder(mix), nil
 }
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {
@@ -214,7 +262,7 @@ func (a *Mixer) saveFile(name string) ([]byte, error) {
 	}
 }
 
-func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
+func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*target.Mix, error) {
 	hasPlate := func(plates []*wtype.LHPlate, typ, id string) bool {
 		for _, p := range plates {
 			if p.Type == typ && (id == "" || p.ID == id) {
@@ -224,7 +272,7 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 		return false
 	}
 
-	getId := func(mixes []*wtype.LHInstruction) (r wtype.BlockID) {
+	getID := func(mixes []*wtype.LHInstruction) (r wtype.BlockID) {
 		m := make(map[wtype.BlockID]bool)
 		for _, mix := range mixes {
 			m[mix.BlockID] = true
@@ -236,7 +284,7 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 		return
 	}
 
-	r, err := a.makeLhreq()
+	r, err := a.makeLhreq(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -251,38 +299,37 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 		}
 	}
 
-	r.LHRequest.BlockID = getId(mixes)
+	r.LHRequest.BlockID = getID(mixes)
 
 	for _, mix := range mixes {
-		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID()) {
-			p := factory.GetPlateByType(mix.Platetype)
-			p.ID = mix.PlateID()
+		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID) {
+			p, err := inventory.NewPlate(ctx, mix.Platetype)
+			if err != nil {
+				return nil, err
+			}
+			p.ID = mix.PlateID
 			r.LHRequest.Output_platetypes = append(r.LHRequest.Output_platetypes, p)
 		}
 		r.LHRequest.Add_instruction(mix)
 	}
 
-	err = r.Liquidhandler.MakeSolutions(r.LHRequest)
-	// MIS XXX XXX XXX unfortunately we need to make sure this stays up to date
-	// would be better to remove this and just use the ones the liquid handler
-	// holds
+	err = r.Liquidhandler.MakeSolutions(ctx, r.LHRequest)
+	// TODO: MIS unfortunately we need to make sure this stays up to date would
+	// be better to remove this and just use the ones the liquid handler holds
 	r.LHProperties = r.Liquidhandler.Properties
 
 	if err != nil {
-		// depending on what went wrong we might error out or return
-		// an error instruction
-
-		if wtype.LHErrorIsInternal(err) {
-			return nil, err
-		} else {
-			return &target.CmpError{Error: err, Dev: a}, nil
-		}
+		return nil, err
 	}
 
-	// TODO: Desired filename not exposed in current driver interface, so pick
-	// a name. So far, at least Gilson software cares what the filename is, so
-	// use .sqlite for compatibility
-	name := strings.Replace(fmt.Sprintf("%s.sqlite", time.Now().Format(time.RFC3339)), ":", "_", -1)
+	name := a.opt.DriverOutputFileName
+	if len(name) == 0 {
+		// TODO: Desired filename not exposed in current driver interface, so pick
+		// a name. So far, at least Gilson software cares what the filename is, so
+		// use .sqlite for compatibility
+		name = strings.Replace(fmt.Sprintf("%s.sqlite", time.Now().Format(time.RFC3339)), ":", "_", -1)
+	}
+
 	tarball, err := a.saveFile(name)
 	if err != nil {
 		return nil, err
@@ -301,6 +348,7 @@ func (a *Mixer) makeMix(mixes []*wtype.LHInstruction) (target.Inst, error) {
 	}, nil
 }
 
+// New creates a new Mixer
 func New(opt Opt, d driver.ExtendedLiquidhandlingDriver) (*Mixer, error) {
 	p, status := d.GetCapabilities()
 	if !status.OK {
@@ -313,16 +361,23 @@ func New(opt Opt, d driver.ExtendedLiquidhandlingDriver) (*Mixer, error) {
 		}
 	}
 
-	update(&p.Input_preferences, opt.DriverSpecificInputPreferences)
-	update(&p.Output_preferences, opt.DriverSpecificOutputPreferences)
+	if len(opt.DriverSpecificInputPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificInputPreferences) {
+		update(&p.Input_preferences, opt.DriverSpecificInputPreferences)
+	}
+	if len(opt.DriverSpecificOutputPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificOutputPreferences) {
+		update(&p.Output_preferences, opt.DriverSpecificOutputPreferences)
+	}
 
 	if len(opt.DriverSpecificTipPreferences) != 0 && p.CheckTipPrefCompatibility(opt.DriverSpecificTipPreferences) {
 		update(&p.Tip_preferences, opt.DriverSpecificTipPreferences)
 	}
 
-	update(&p.Tipwaste_preferences, opt.DriverSpecificTipWastePreferences)
-	update(&p.Wash_preferences, opt.DriverSpecificWashPreferences)
-
+	if len(opt.DriverSpecificTipWastePreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificTipWastePreferences) {
+		update(&p.Tipwaste_preferences, opt.DriverSpecificTipWastePreferences)
+	}
+	if len(opt.DriverSpecificWashPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificWashPreferences) {
+		update(&p.Wash_preferences, opt.DriverSpecificWashPreferences)
+	}
 	p.Driver = d
 	return &Mixer{driver: d, properties: &p, opt: opt}, nil
 }

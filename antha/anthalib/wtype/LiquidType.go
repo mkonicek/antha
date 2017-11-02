@@ -27,6 +27,7 @@ func (l LiquidType) String() PolicyName {
 const (
 	LTNIL LiquidType = iota
 	LTWater
+	LTDefault
 	LTGlycerol
 	LTEthanol
 	LTDetergent
@@ -54,6 +55,8 @@ const (
 	LTCSrc
 	LTNSrc
 	LTMegaMix
+	LTSolvent
+	LTSmartMix
 )
 
 func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
@@ -123,10 +126,15 @@ func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 		return LTNSrc, nil
 	case "MegaMix":
 		return LTMegaMix, nil
+	case "solvent":
+		return LTSolvent, nil
+	case "SmartMix":
+		return LTSmartMix, nil
+	case "default":
+		return LTDefault, nil
 	default:
-		return LTWater, fmt.Errorf("no liquid policy found for " + s.String() + " so using default water policy")
+		return LTDefault, fmt.Errorf("no liquid policy found for " + s.String() + " so using default policy")
 	}
-	return LTWater, fmt.Errorf("no liquid policy found for " + s.String() + " so using default water policy")
 }
 
 func LiquidTypeName(lt LiquidType) PolicyName {
@@ -192,6 +200,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "nitrogen_source"
 	case LTMegaMix:
 		return "MegaMix"
+	case LTSmartMix:
+		return "SmartMix"
 	default:
 		return "nil"
 	}

@@ -20,8 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Defines a platform independent mechanism for storing files generated when using antha.
-// A folder  ./antha is produced in the home directory.
 package anthapath
 
 import (
@@ -30,7 +28,7 @@ import (
 	"path/filepath"
 )
 
-// Standard path to place antha resources
+// Path returns the standard path to place antha resources
 func Path() string {
 	u, err := user.Current()
 	if err != nil {
@@ -39,16 +37,11 @@ func Path() string {
 	return filepath.Join(u.HomeDir, ".antha")
 }
 
-func Anthafileexists(filename string) bool {
-	fullpath := filepath.Join(Path(), filename)
-	if Exists(fullpath) {
-		return true
-	}
-	return false
-}
-
+// Exists returns if the file exists
 func Exists(filename string) bool {
-	if _, err := os.Stat(filename); err != nil {
+	p := filepath.Join(Path(), filename)
+
+	if _, err := os.Stat(p); err != nil {
 		if os.IsNotExist(err) {
 			return false
 		}

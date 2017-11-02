@@ -29,14 +29,15 @@ package printer
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/ast"
-	"github.com/antha-lang/antha/antha/token"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 	"unicode"
+
+	"github.com/antha-lang/antha/antha/ast"
+	"github.com/antha-lang/antha/antha/token"
 )
 
 const (
@@ -65,6 +66,7 @@ const (
 	noExtraLinebreak                   // disables extra line break after /*-style comment
 )
 
+// nolint: structcheck
 type commentInfo struct {
 	cindex         int               // current comment index
 	comment        *ast.CommentGroup // = printer.comments[cindex]; or nil
@@ -957,7 +959,7 @@ func (p *printer) print(args ...interface{}) {
 			p.lastTok = token.STRING
 
 		default:
-			fmt.Fprintf(os.Stderr, "print: unsupported argument %v (%T)\n", arg, arg)
+			fmt.Fprintf(os.Stderr, "print: unsupported argument %v (%T)\n", arg, arg) // nolint
 			panic("antha/printer type")
 		}
 		// data != ""
@@ -1027,8 +1029,6 @@ func getDoc(n ast.Node) *ast.CommentGroup {
 	case *ast.FuncDecl:
 		return n.Doc
 	case *ast.File:
-		return n.Doc
-	case *ast.AnthaDecl:
 		return n.Doc
 	}
 	return nil
@@ -1196,9 +1196,16 @@ func (p *trimmer) Write(data []byte) (n int, err error) {
 				p.resetSpace()
 				p.space = append(p.space, b)
 			case '\n', '\f':
-				_, err = p.output.Write(data[m:n])
+				_, e1 := p.output.Write(data[m:n])
 				p.resetSpace()
-				_, err = p.output.Write(aNewline)
+				_, e2 := p.output.Write(aNewline)
+				if e1 != nil && err == nil {
+					err = e1
+				}
+				if e2 != nil && err == nil {
+					err = e2
+				}
+
 			case tabwriter.Escape:
 				_, err = p.output.Write(data[m:n])
 				p.state = inEscape
@@ -1228,6 +1235,7 @@ func (p *trimmer) Write(data []byte) (n int, err error) {
 // A Mode value is a set of flags (or 0). They control printing.
 type Mode uint
 
+// Configuration modes
 const (
 	RawFormat Mode = 1 << iota // do not use a tabwriter; if set, UseSpaces is ignored
 	TabIndent                  // use tabs for indentation independent of UseSpaces

@@ -33,11 +33,12 @@ package scanner
 import (
 	"bytes"
 	"fmt"
-	"github.com/antha-lang/antha/antha/token"
 	"path/filepath"
 	"strconv"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/antha-lang/antha/antha/token"
 )
 
 // An ErrorHandler may be provided to Scanner.Init. If a syntax error is
@@ -50,7 +51,6 @@ type ErrorHandler func(pos token.Position, msg string)
 // A Scanner holds the scanner's internal state while processing
 // a given text.  It can be allocated as part of another data
 // structure but must be initialized via Init before use.
-//
 type Scanner struct {
 	// immutable state
 	file *token.File  // source file handle
@@ -107,11 +107,12 @@ func (s *Scanner) next() {
 	}
 }
 
-// A mode value is a set of flags (or 0).
+// A Mode value is a set of flags (or 0).
 // They control scanner behavior.
 //
 type Mode uint
 
+// Scanning modes
 const (
 	ScanComments    Mode = 1 << iota // return comments as COMMENT tokens
 	dontInsertSemis                  // do not automatically insert semicolons - for testing only

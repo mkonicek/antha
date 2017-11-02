@@ -1,4 +1,5 @@
-//
+// Package auto provides methods for creating a simulation target based on
+// auto discovery of device plugins (drivers)
 package auto
 
 import (
@@ -12,19 +13,22 @@ import (
 )
 
 var (
-	noMatch = errors.New("no match")
+	errNoMatch = errors.New("no match")
 )
 
+// An Endpoint is a network address of a device plugin (driver)
 type Endpoint struct {
-	Uri string
+	URI string
 	Arg interface{}
 }
 
+// An Opt are options for connecting to a set of device plugins (drivers)
 type Opt struct {
 	Endpoints []Endpoint
 	MaybeArgs []interface{}
 }
 
+// An Auto contains the state of autodiscovery of device plugins
 type Auto struct {
 	Target  *target.Target
 	Conns   []*grpc.ClientConn
@@ -32,6 +36,8 @@ type Auto struct {
 	handler map[target.Device]*grpc.ClientConn
 }
 
+// Close releases any resources like network connections associated
+// with autodiscovery state.
 func (a *Auto) Close() error {
 	var err error
 	for _, conn := range a.Conns {
@@ -43,11 +49,9 @@ func (a *Auto) Close() error {
 	return err
 }
 
-// Make target by inspecting a set of network services
-func New(opt Opt) (*Auto, error) {
-	var err error
-
-	ret := &Auto{
+// New makes target by inspecting a set of network services
+func New(opt Opt) (ret *Auto, err error) {
+	ret = &Auto{
 		Target:  target.New(),
 		runners: make(map[string][]runner.RunnerClient),
 		handler: make(map[target.Device]*grpc.ClientConn),
@@ -57,7 +61,7 @@ func New(opt Opt) (*Auto, error) {
 		if err == nil {
 			return
 		}
-		ret.Close()
+		err = ret.Close()
 	}()
 
 	tryer := &tryer{
@@ -69,19 +73,18 @@ func New(opt Opt) (*Auto, error) {
 	ctx := context.Background()
 	for _, ep := range opt.Endpoints {
 		var conn *grpc.ClientConn
-		conn, err = grpc.Dial(ep.Uri, grpc.WithInsecure())
+		conn, err = grpc.Dial(ep.URI, grpc.WithInsecure())
 		if err != nil {
-			return nil, err
+			return
 		}
 		ret.Conns = append(ret.Conns, conn)
 
 		if err = tryer.Try(ctx, conn, ep.Arg); err != nil {
-			return nil, err
+			return
 		}
 	}
 
-	if err = ret.Target.AddDevice(human.New(tryer.HumanOpt)); err != nil {
-		return nil, err
-	}
-	return ret, nil
+	ret.Target.AddDevice(human.New(tryer.HumanOpt))
+
+	return
 }

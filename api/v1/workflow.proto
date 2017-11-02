@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/any.proto";
 import "github.com/antha-lang/antha/api/v1/inventory.proto";
 
 package org.antha_lang.antha.v1;
@@ -27,18 +26,7 @@ message ProcessAddress {
   string port = 2;
 }
 
-message WorkflowParameters {
-  // Process to element parameters
-  map<string,ElementParameters> element_parameters = 1;
-  MixerOpt config = 2;
-}
-
-message ElementParameters {
-  // Address to value
-  map<string,google.protobuf.Any> parameters = 1;
-}
-
-message MixerOpt {
+message MixerConfig {
   repeated InventoryItem input_plates = 1;
   repeated InventoryItem output_plates = 2;
   repeated string input_plate_types = 3;
@@ -47,14 +35,17 @@ message MixerOpt {
   int32 max_plates = 6;
   int32 max_wells = 7;
   double residual_volume_weight = 8;
-  int32 planning_version = 9;
+  //int32 planning_version = 9;
   bool model_evaporation = 10;
+  bool output_sort = 11;
 
   // Driver specific options. Semantics are not stable. Will need to be
   // revised when multi device execution is supported.
-  repeated string driver_specific_input_preferences = 11;
-  repeated string driver_specific_output_preferences = 12;
-  repeated string driver_specific_tip_preferences = 13;
-  repeated string driver_specific_tip_waste_preferences = 14;
-  repeated string driver_specific_wash_preferences = 15;
+  repeated string driver_specific_input_preferences = 12;
+  repeated string driver_specific_output_preferences = 13;
+  repeated string driver_specific_tip_preferences = 14;
+  repeated string driver_specific_tip_waste_preferences = 15;
+  repeated string driver_specific_wash_preferences = 16;
+  string planning_version = 17;
+  bool use_driver_tip_tracking = 18;
 }

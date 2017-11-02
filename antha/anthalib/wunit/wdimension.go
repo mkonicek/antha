@@ -155,6 +155,22 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 
 }
 
+// DivideVolumes divides the SI Value of vol1 by vol2 to return a factor.
+// An error is returned if the volume is infinity or not a number.
+func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
+	if vol1.Unit().BaseSIUnit() != vol2.Unit().BaseSIUnit() {
+		return -1, fmt.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.ToString(), vol2.ToString())
+	}
+	factor = vol1.SIValue() / vol2.SIValue()
+
+	if math.IsInf(factor, 0) {
+		err = fmt.Errorf(fmt.Sprintln("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString()))
+		return
+	}
+
+	return factor, nil
+}
+
 func CopyConcentration(v Concentration) Concentration {
 	ret := NewConcentration(v.RawValue(), v.Unit().PrefixedSymbol())
 	return ret
@@ -174,6 +190,21 @@ func DivideConcentration(v Concentration, factor float64) (newconc Concentration
 	newconc = NewConcentration(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
 	return
 
+}
+
+// DivideConcentrations divides the SI Value of conc1 by conc2 to return a factor.
+// An error is returned if the concentration unit is not dividable or the number generated is infinity.
+func DivideConcentrations(conc1, conc2 Concentration) (factor float64, err error) {
+	if conc1.Unit().BaseSIUnit() != conc2.Unit().BaseSIUnit() {
+		return -1, fmt.Errorf("cannot divide concentrations: units of %s and %s unequal.", conc1.ToString(), conc2.ToString())
+	}
+	factor = conc1.SIValue() / conc2.SIValue()
+
+	if math.IsInf(factor, 0) {
+		err = fmt.Errorf(fmt.Sprintln("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString()))
+		return
+	}
+	return factor, nil
 }
 
 // AddConcentrations adds a variable number of concentrations from an original concentration.
@@ -196,7 +227,6 @@ func AddConcentrations(concs ...Concentration) (newconc Concentration, err error
 		} else {
 			tempconc = NewConcentration(tempconc.SIValue()+conc.SIValue(), tempconc.Unit().BaseSISymbol())
 			newconc = tempconc
-			fmt.Println("in here", tempconc)
 		}
 	}
 	return

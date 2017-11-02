@@ -255,7 +255,7 @@ var volumearithmetictests = []VolumeArithmetic{
 
 func TestSubstractVolumes(t *testing.T) {
 	for _, testunit := range volumearithmetictests {
-		r := SubtractVolumes(testunit.VolumeA, []Volume{testunit.VolumeB})
+		r := SubtractVolumes(testunit.VolumeA, testunit.VolumeB)
 		rt, _ := wutil.Roundto(r.SIValue(), 4)
 		tt, _ := wutil.Roundto(testunit.Difference.SIValue(), 4)
 		if rt != tt {

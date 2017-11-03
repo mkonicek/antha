@@ -121,20 +121,21 @@ func AddVolumes(vols ...Volume) (newvolume Volume) {
 
 }
 
+<<<<<<< HEAD
 // SubtractVolumes substracts a variable number of volumes from an original volume.
+=======
+// subtract volumes
+>>>>>>> Feature/simplify-subtract-volumes
 func SubtractVolumes(OriginalVol Volume, subtractvols ...Volume) (newvolume Volume) {
 
-	tempvol := (CopyVolume(OriginalVol))
-	for _, vol := range subtractvols {
-		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
-			newvolume = NewVolume(tempvol.RawValue()-vol.RawValue(), tempvol.Unit().PrefixedSymbol())
-			tempvol = (CopyVolume(newvolume))
-		} else {
-			newvolume = NewVolume(tempvol.SIValue()-vol.SIValue(), tempvol.Unit().BaseSISymbol())
-			tempvol = (CopyVolume(newvolume))
-		}
+	newvolume = (CopyVolume(OriginalVol))
+	volToSubtract := AddVolumes(subtractvols)
+	newvolume.Subtract(volToSubtract)
 
+	if math.IsInf(newvolume.RawValue(), 0) {
+		panic(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols))
 	}
+
 	return
 
 }
@@ -233,9 +234,11 @@ func AddConcentrations(concs ...Concentration) (newconc Concentration, err error
 
 }
 
+
 // SubtractConcentrations substracts a variable number of concentrations from an original concentration.
 // An error is returned if the concentration units are incompatible.
-func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concentration) (newConcentration Concentration, err error) {
+func SubtractConcentrations(OriginalConc Concentration, subtractConcs ...Concentration) (newConcentration Concentration) {
+
 
 	newConcentration = (CopyConcentration(originalConc))
 

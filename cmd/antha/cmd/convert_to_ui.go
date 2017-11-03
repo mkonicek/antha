@@ -19,6 +19,7 @@ var convertToUICmd = &cobra.Command{
 
 type uiParameters map[string]map[string]json.RawMessage
 
+// NB: inconsistent naming is required
 type uiBundle struct {
 	Processes   map[string]uiProcess  `json:"Processes"`
 	Connections []workflow.Connection `json:"connections"`
@@ -29,8 +30,8 @@ type uiBundle struct {
 }
 
 type uiProcess struct {
-	Component string     `json:"component"`
-	Metadata  uiMetadata `json:"metadata"`
+	Component string      `json:"component"`
+	Metadata  *uiMetadata `json:"metadata"`
 }
 
 type uiMetadata struct {
@@ -121,6 +122,11 @@ func convertProcessesToUI(in map[string]workflow.Process) (map[string]uiProcess,
 		}
 		ret[name] = uiProcess{
 			Component: v.Component,
+			// Must be non-zero
+			Metadata: &uiMetadata{
+				X: 1,
+				Y: 1,
+			},
 		}
 		rename[k] = name
 	}
@@ -174,7 +180,8 @@ func convertToUI(cmd *cobra.Command, args []string) error {
 		Parameters:  convertParametersToUI(bundle.Parameters, rename),
 		Config:      convertConfigToUI(bundle.Config),
 		Version:     "1.2.0",
-		Properties:  &uiProperties{},
+		// Empty properties is required
+		Properties: &uiProperties{},
 	}
 
 	f, err := os.Create(viper.GetString("output"))

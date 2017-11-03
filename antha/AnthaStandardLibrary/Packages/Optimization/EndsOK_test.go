@@ -56,7 +56,7 @@ func TestEndsOK_4(t *testing.T) {
 	}
 }
 
-func TestEndsOK_4(t *testing.T) {
+func TestEndsOK_5(t *testing.T) {
 	ends := make([][]string, 4)
 
 	ends[0] = []string{"AA"}
@@ -67,4 +67,11 @@ func TestEndsOK_4(t *testing.T) {
 	if endsOK(ends, make(map[string]bool), true) {
 		t.Errorf("NoTransitions is not working")
 	}
+
+	ends[3] = []string{"GG"}
+
+	if !endsOK(ends, make(map[string]bool), true) {
+		t.Errorf("NoTransitions is working too much!")
+	}
+
 }

@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/solutions"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -97,13 +98,30 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 // HandleComponentWithConcentration returns both LHComponent and Concentration from a component name with concentration in a DOE design.
 // If no valid concentration is found or an invalid component name is specifed an error is returned.
 func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.LHComponent, concentration wunit.Concentration, err error) {
+
 	concentration, err = HandleConcFactor(header, value)
 
 	if err != nil {
 		return
 	}
 
-	component, err = HandleLHComponentFactor(ctx, header, value)
+	componentName := solutions.NormaliseName(header)
+
+	component, err = inventory.NewComponent(ctx, componentName)
+
+	if err == nil {
+		// continue
+	} else if err == inventory.ErrUnknownType {
+		component, err = inventory.NewComponent(ctx, inventory.WaterType)
+		if err != nil {
+			return
+		}
+		component.CName = componentName
+	} else {
+		return
+	}
+
+	component.SetConcentration(concentration)
 
 	return
 }
@@ -171,6 +189,12 @@ func HandleLHComponentFactor(ctx context.Context, header string, value interface
 		component, err = inventory.NewComponent(ctx, inventory.WaterType)
 		component.CName = str
 		return component, err
+	}
+
+	concentration, concErr := HandleConcFactor(header, value)
+
+	if concErr == nil {
+		component.SetConcentration(concentration)
 	}
 
 	return nil, err

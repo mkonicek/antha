@@ -403,13 +403,24 @@ func Transition(a, b string) bool {
 		return false
 	}
 
+	sc := 0
+
 	for i := 0; i < len(a); i++ {
-		if baseTransition(a[i]) == b[i] {
-			return true
+		if a[i] != b[i] {
+			if baseTransition(a[i]) == b[i] {
+				sc += 1
+			} else {
+				return false
+			}
 		}
 	}
 
-	return false
+	if sc <= 1 {
+		return true
+	} else {
+		return false
+	}
+
 }
 
 func baseTransition(b byte) byte {

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 	"time"
+	"unicode"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -115,13 +116,14 @@ func (ps2d PointSet2D) MinDistTo(i int) int {
 }
 
 type Constraints struct {
-	MaxSplits    int
-	MinLen       int
-	MaxLen       int
-	MinDistToMut int
-	Query        string
-	EndsToAvoid  []string
-	EndLen       int
+	MaxSplits     int
+	MinLen        int
+	MaxLen        int
+	MinDistToMut  int
+	Query         string
+	EndsToAvoid   []string
+	EndLen        int
+	NoTransitions bool
 }
 
 type AssemblyProblem struct {
@@ -329,12 +331,12 @@ func getSplitz(mem PointSet1D, query string, endLen int, endsToAvoid []string) [
 	return allSplitz
 }
 
-func goodEnds(mem PointSet1D, query string, endLen int, endsToAvoid []string) bool {
+func goodEnds(mem PointSet1D, query string, endLen int, endsToAvoid []string, noTransitions bool) bool {
 	// make all splits for each
 
 	allSplitz := getSplitz(mem, query, endLen, endsToAvoid)
 
-	return endsOK(allSplitz, make(map[string]bool))
+	return endsOK(allSplitz, make(map[string]bool), noTransitions)
 }
 
 func isIn(s string, endsToAvoid []string) bool {
@@ -367,23 +369,69 @@ func dupMap(min map[string]bool) map[string]bool {
 	return m
 }
 
-func endsOK(sa [][]string, m map[string]bool) bool {
+func endsOK(sa [][]string, m map[string]bool, noTransitions bool) bool {
 	if len(sa) == 0 {
 		return true
 	}
 
 	for _, a := range sa[0] {
-		if m[a] {
+		if m[a] || (noTransitions && findTransition(a, m)) {
 			continue
 		}
 		m2 := dupMap(m)
 		m2[a] = true
-		if endsOK(sa[1:], m2) {
+		if endsOK(sa[1:], m2, noTransitions) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func findTransition(s string, m map[string]bool) bool {
+	for k, _ := range m {
+		if Transition(k, s) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func Transition(a, b string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := 0; i < len(a); i++ {
+		if baseTransition(a[i]) == b[i] {
+			return true
+		}
+	}
+
+	return false
+}
+
+func baseTransition(b byte) byte {
+	transitions := map[byte]byte{
+		'A': 'G',
+		'G': 'A',
+		'C': 'T',
+		'T': 'C',
+	}
+	if unicode.IsLower(rune(b)) {
+		t, ok := transitions[byte(unicode.ToUpper(rune(b)))]
+
+		if !ok {
+			return t
+		} else {
+			return byte(unicode.ToLower(rune(t)))
+		}
+	} else {
+		t, _ := transitions[b]
+
+		return t
+	}
 }
 
 func dist(a, b int) int {
@@ -427,7 +475,7 @@ func valid(m PointSet1D, p AssemblyProblem, cnstr Constraints) bool {
 	// check the ends
 
 	// func goodEnds(mem PointSet1D, query string, endLen int, endsToAvoid []string) bool {
-	if !goodEnds(m, cnstr.Query, cnstr.EndLen, cnstr.EndsToAvoid) {
+	if !goodEnds(m, cnstr.Query, cnstr.EndLen, cnstr.EndsToAvoid, cnstr.NoTransitions) {
 		return false
 	}
 

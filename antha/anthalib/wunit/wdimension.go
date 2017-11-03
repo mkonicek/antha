@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -102,7 +103,7 @@ func CopyVolume(v Volume) Volume {
 	return ret
 }
 
-// Add volumes
+// AddVolumes adds a set of volumes.
 func AddVolumes(vols ...Volume) (newvolume Volume) {
 
 	var tempvol Volume
@@ -120,25 +121,22 @@ func AddVolumes(vols ...Volume) (newvolume Volume) {
 
 }
 
-// subtract volumes
-func SubtractVolumes(OriginalVol Volume, subtractvols []Volume) (newvolume Volume) {
+// SubtractVolumes substracts a variable number of volumes from an original volume.
+func SubtractVolumes(OriginalVol Volume, subtractvols ...Volume) (newvolume Volume) {
 
-	tempvol := (CopyVolume(OriginalVol))
-	for _, vol := range subtractvols {
-		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
-			newvolume = NewVolume(tempvol.RawValue()-vol.RawValue(), tempvol.Unit().PrefixedSymbol())
-			tempvol = (CopyVolume(newvolume))
-		} else {
-			newvolume = NewVolume(tempvol.SIValue()-vol.SIValue(), tempvol.Unit().BaseSISymbol())
-			tempvol = (CopyVolume(newvolume))
-		}
+	newvolume = (CopyVolume(OriginalVol))
+	volToSubtract := AddVolumes(subtractvols...)
+	newvolume.Subtract(volToSubtract)
 
+	if math.IsInf(newvolume.RawValue(), 0) {
+		panic(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols))
 	}
+
 	return
 
 }
 
-// multiply volume
+// MultiplyVolume multiplies a volume by a factor.
 func MultiplyVolume(v Volume, factor float64) (newvolume Volume) {
 
 	newvolume = NewVolume(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
@@ -146,7 +144,7 @@ func MultiplyVolume(v Volume, factor float64) (newvolume Volume) {
 
 }
 
-// divide volume
+// DivideVolume divides a volume by a factor.
 func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 
 	newvolume = NewVolume(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
@@ -154,12 +152,28 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 
 }
 
+// DivideVolumes divides the SI Value of vol1 by vol2 to return a factor.
+// An error is returned if the volume is infinity or not a number.
+func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
+	if vol1.Unit().BaseSIUnit() != vol2.Unit().BaseSIUnit() {
+		return -1, fmt.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.ToString(), vol2.ToString())
+	}
+	factor = vol1.SIValue() / vol2.SIValue()
+
+	if math.IsInf(factor, 0) {
+		err = fmt.Errorf(fmt.Sprintln("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString()))
+		return
+	}
+
+	return factor, nil
+}
+
 func CopyConcentration(v Concentration) Concentration {
 	ret := NewConcentration(v.RawValue(), v.Unit().PrefixedSymbol())
 	return ret
 }
 
-// multiply concentration
+// MultiplyConcentration multiplies a concentration by a factor.
 func MultiplyConcentration(v Concentration, factor float64) (newconc Concentration) {
 
 	newconc = NewConcentration(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
@@ -167,7 +181,7 @@ func MultiplyConcentration(v Concentration, factor float64) (newconc Concentrati
 
 }
 
-// divide concentration
+// DivideConcentration divides a concentration by a factor.
 func DivideConcentration(v Concentration, factor float64) (newconc Concentration) {
 
 	newconc = NewConcentration(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
@@ -175,7 +189,23 @@ func DivideConcentration(v Concentration, factor float64) (newconc Concentration
 
 }
 
-// add concentrations
+// DivideConcentrations divides the SI Value of conc1 by conc2 to return a factor.
+// An error is returned if the concentration unit is not dividable or the number generated is infinity.
+func DivideConcentrations(conc1, conc2 Concentration) (factor float64, err error) {
+	if conc1.Unit().BaseSIUnit() != conc2.Unit().BaseSIUnit() {
+		return -1, fmt.Errorf("cannot divide concentrations: units of %s and %s unequal.", conc1.ToString(), conc2.ToString())
+	}
+	factor = conc1.SIValue() / conc2.SIValue()
+
+	if math.IsInf(factor, 0) {
+		err = fmt.Errorf(fmt.Sprintln("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString()))
+		return
+	}
+	return factor, nil
+}
+
+// AddConcentrations adds a variable number of concentrations from an original concentration.
+// An error is returned if the concentration units are incompatible.
 func AddConcentrations(concs ...Concentration) (newconc Concentration, err error) {
 
 	if len(concs) == 0 {
@@ -194,29 +224,30 @@ func AddConcentrations(concs ...Concentration) (newconc Concentration, err error
 		} else {
 			tempconc = NewConcentration(tempconc.SIValue()+conc.SIValue(), tempconc.Unit().BaseSISymbol())
 			newconc = tempconc
-			fmt.Println("in here", tempconc)
 		}
 	}
 	return
 
 }
 
-// subtract concentrations
-func SubtractConcentrations(OriginalConc Concentration, subtractConcs []Concentration) (newConcentration Concentration) {
+// SubtractConcentrations substracts a variable number of concentrations from an original concentration.
+// An error is returned if the concentration units are incompatible.
+func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concentration) (newConcentration Concentration) {
 
-	tempConc := (CopyConcentration(OriginalConc))
-	for _, conc := range subtractConcs {
-		if tempConc.Unit().PrefixedSymbol() == conc.Unit().PrefixedSymbol() {
-			newConcentration = NewConcentration(tempConc.RawValue()-conc.RawValue(), tempConc.Unit().PrefixedSymbol())
-			tempConc = (CopyConcentration(newConcentration))
-		} else {
-			newConcentration = NewConcentration(tempConc.SIValue()-conc.SIValue(), tempConc.Unit().BaseSISymbol())
-			tempConc = (CopyConcentration(newConcentration))
-		}
+	newConcentration = (CopyConcentration(originalConc))
 
+	concToSubtract, err := AddConcentrations(subtractConcs...)
+	if err != nil {
+		return
 	}
-	return
+	newConcentration.Subtract(concToSubtract)
 
+	if math.IsInf(newConcentration.RawValue(), 0) {
+		err = fmt.Errorf(fmt.Sprintln("Infinity value found subtracting concentrations. Original: ", originalConc, ". Vols to subtract:", subtractConcs))
+		return
+	}
+
+	return
 }
 
 func (v Volume) Dup() Volume {
@@ -513,6 +544,20 @@ var UnitMap = map[string]map[string]Unit{
 		"mM":   Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
 		"M":    Unit{Base: "M", Prefix: "", Multiplier: 1.0},
 	},
+}
+
+// ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
+func ValidConcentrationUnit(unit string) error {
+	_, ok := UnitMap["Concentration"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Concentration"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		return fmt.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved)
+	}
+	return nil
 }
 
 // make a new concentration in SI units... either M/l or kg/l

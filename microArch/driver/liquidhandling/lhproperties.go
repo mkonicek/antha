@@ -1254,14 +1254,10 @@ func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.LHComponent)
 }
 
 func (p *LHProperties) UpdateComponentID(from string, to *wtype.LHComponent) bool {
-	fmt.Println("UPDATE ID OF ", from, " TO ", to.ID)
 	for _, p := range p.Plates {
-		fmt.Println("\t\tTRYING: ", p.PlateName, " ", p.Type)
 		if p.FindAndUpdateID(from, to) {
-			fmt.Println("\tDONE")
 			return true
 		}
 	}
-	fmt.Println("\tNOT DONE")
 	return false
 }

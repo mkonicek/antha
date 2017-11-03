@@ -31,12 +31,6 @@ func (ti TransferBlockInstruction) InstructionType() int {
 // depending on the robot type and configuration
 
 func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
-
-	fmt.Println("GENERATING TRANSFER BLOCK")
-	for _, ins := range ti.Inss {
-		fmt.Println(ins.Components, " ", ins.PlateName, " ", ins.Welladdress, ins.IsMixInPlace())
-	}
-
 	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()
 	inss := make([]RobotInstruction, 0, 1)

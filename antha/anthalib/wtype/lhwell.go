@@ -736,8 +736,6 @@ func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 			w.WContents = after
 		*/
 
-		fmt.Println("LOC BEFORE: ", w.WContents.Loc)
-
 		w.WContents.AddParentComponent(w.WContents)
 		w.WContents.ID = after.ID
 		w.WContents.CName = after.CName

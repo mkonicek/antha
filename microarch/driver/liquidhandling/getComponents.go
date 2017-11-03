@@ -95,13 +95,10 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
-	fmt.Println("WANT WANT WANT: ", cmps)
-
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
 		p, ok := lhp.Plates[ipref]
 
 		if ok {
-			fmt.Println("TRYING ", p.PlateName, " ", p.Type)
 			it := getPlateIterator(p, ori, multi)
 
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
@@ -169,8 +166,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
 
-	fmt.Println("GOT SOURCES: ", srcs)
-
 	currCmps := opt.Cmps.Dup()
 	done := false
 
@@ -209,8 +204,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		}
 
 		// update sources
-
-		fmt.Println("MATCH HERE: ", bestMatch)
 
 		updateSources(bestSrc, bestMatch, opt.Carryvol, lhp.MinPossibleVolume())
 		updateDests(currCmps, bestMatch)

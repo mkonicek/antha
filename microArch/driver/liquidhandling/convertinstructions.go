@@ -59,12 +59,6 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 //
 
 func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
-
-	fmt.Println("CONVERTING ", len(inssIn), " INSTRUCTIONS")
-	fmt.Println("ROBOT STATE NOW")
-	robot.OutputLayout()
-	fmt.Println("OFF YOU GO")
-
 	insOut = make([]*TransferInstruction, 0, 1)
 
 	for i := 0; i < inssIn.MaxLen(); i++ {
@@ -73,7 +67,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		for _, c := range cmps {
 			if c != nil {
-				fmt.Println("CONVERT: ", c)
 				if c.CName == "" {
 					panic("COMPONENTS MUST HAVE NAMES")
 				}
@@ -113,8 +106,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			return nil, err
 		}
 
-		fmt.Println("GET")
-
 		count := func(is []wunit.Volume) int {
 			r := 0
 			for _, i := range is {
@@ -125,8 +116,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 			return r
 		}
-
-		fmt.Println("PARALLEL TRANSFERS: ", parallelTransfers.Transfers)
 
 		count = count
 		for _, t := range parallelTransfers.Transfers {
@@ -170,7 +159,6 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 	// ci counts up cmps
 
-	fmt.Println("COUNT UP", len(cmps))
 	for ci := 0; ci < len(cmps); ci++ {
 		if len(fromPlateIDs) <= ci || fromPlateIDs[ci] == "" {
 			continue

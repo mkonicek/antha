@@ -452,6 +452,22 @@ func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
 	return v
 }
 
+func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LHTip) []*wtype.LHChannelParameter {
+	ret := make([]*wtype.LHChannelParameter, len(channels))
+
+	for i := 0; i < len(channels); i++ {
+		if channels[i] != nil {
+			if tips[i] != nil {
+				ret[i] = channels[i].MergeWithTip(tips[i])
+			} else {
+				ret[i] = channels[i].Dup()
+			}
+		}
+	}
+
+	return ret
+}
+
 func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 
@@ -465,7 +481,6 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	//channels, _, tiptypes, err := ChooseChannels(ins.GetVolumes(), prms)
 	channels, _, tiptypes, err := ChooseChannels(ins.Volume[0], prms)
 	if err != nil {
-		fmt.Println("THREE")
 		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
 	}
 
@@ -497,7 +512,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 
 		// split the transfer up
 		// volumes no longer equal
-		tvs, err := TransferVolumesMulti(VolumeSet(ins.Volume[t]), newchannels)
+		tvs, err := TransferVolumesMulti(VolumeSet(ins.Volume[t]), mergeTipsAndChannels(newchannels, newtips))
 
 		if err != nil {
 			return ret, err

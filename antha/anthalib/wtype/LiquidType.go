@@ -43,14 +43,17 @@ const (
 	LTVISCOUS
 	LTPAINT
 	LTDISPENSEABOVE
+	LTDISPENSEABOVEMULTI
 	LTPEG
 	LTProtoplasts
 	LTCulutureReuse
 	LTDNAMIX
+	LTDNAMIXMULTI
 	LTPLATEOUT
 	LTCOLONY
 	LTCOLONYMIX
 	LTDNACELLSMIX
+	LTDNACELLSMIXMULTI
 	LTMultiWater
 	LTCSrc
 	LTNSrc
@@ -103,12 +106,16 @@ func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 		return LTPAINT, nil
 	case "DispenseAboveLiquid":
 		return LTDISPENSEABOVE, nil
+	case "DispenseAboveLiquidMulti":
+		return LTDISPENSEABOVEMULTI, nil
 	case "PEG":
 		return LTPEG, nil
 	case "Protoplasts":
 		return LTProtoplasts, nil
 	case "dna_mix":
 		return LTDNAMIX, nil
+	case "dna_mix_multi":
+		return LTDNAMIXMULTI, nil
 	case "plateout":
 		return LTPLATEOUT, nil
 	case "colony":
@@ -117,6 +124,8 @@ func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 		return LTCOLONYMIX, nil
 	case "dna_cells_mix":
 		return LTDNACELLSMIX, nil
+	case "dna_cells_mix_multi":
+		return LTDNACELLSMIXMULTI, nil
 	case "multiwater":
 		return LTMultiWater, nil
 	case "carbon_source":

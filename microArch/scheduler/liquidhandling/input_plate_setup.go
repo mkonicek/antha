@@ -129,6 +129,20 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	var well_count_assignments map[string]map[*wtype.LHPlate]int
 
 	if len(input_volumes) != 0 {
+
+		// check safety
+
+		err := inputVolumesSafe(input_volumes)
+
+		if err != nil {
+			return request, err
+		}
+		err = weightsConstraintsSafe(weights_constraints)
+
+		if err != nil {
+			return request, err
+		}
+
 		well_count_assignments = choose_plate_assignments(input_volumes, input_platetypes, weights_constraints)
 
 	}
@@ -265,4 +279,30 @@ func isInstance(s string) bool {
 	} else {
 		return false
 	}
+}
+
+func inputVolumesSafe(vols map[string]wunit.Volume) error {
+	maxReasonableVolume := wunit.NewVolume(999999.0, "ul")
+	for k, v := range vols {
+		if v.GreaterThan(maxReasonableVolume) {
+			return fmt.Errorf("Error, volume for component %s is above max reasonable (%s > %s)", k, v, maxReasonableVolume)
+		}
+	}
+
+	return nil
+}
+
+func weightsConstraintsSafe(weight_constraint map[string]float64) error {
+	if weight_constraint["MAX_N_PLATES"]-1.0 <= 0.0 {
+		return fmt.Errorf("Cannot auto-assign inputs with MAX_N_PLATES set to < 1.0 (currently set to %f)", weight_constraint["MAX_N_PLATES"])
+	}
+
+	if weight_constraint["MAX_N_WELLS"] < 1.0 {
+		return fmt.Errorf("Cannot auto-assign inputs with MAX_N_WELLS sets to < 1.0 (currently set to %f", weight_constraint["MAX_N_WELLS"])
+	}
+
+	if weight_constraint["RESIDUAL_VOLUME_WEIGHT"] <= 0.0 {
+		return fmt.Errorf("Cannot auto-assign inputs with RESIDUAL_VOLUME_WEIGHT <= 0.0 (currently set to %f", weight_constraint["RESIDUAL_VOLUME_WEIGHT"])
+	}
+	return nil
 }

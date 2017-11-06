@@ -207,7 +207,7 @@ func getOutputMap(res map[string]*wtype.LHPlate, opts ComparisonMode) outputMap 
 						instM[ci.HashKey()] = 0
 					}
 
-					instM[ci.HashKey()] += 1
+					instM[ci.HashKey()]++
 
 					ci.InstNo = fmt.Sprintf("instance_%d", instNo)
 

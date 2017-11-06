@@ -140,6 +140,7 @@ func TestLHWellSerialize(t *testing.T) {
 	}
 }
 
+/*
 func TestSerializeLHPlate_1(t *testing.T) {
 	//from make_plate_library
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
@@ -156,21 +157,30 @@ func TestSerializeLHPlate_1(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(plate, outPlate) {
-		if !reflect.DeepEqual(plate.Welltype, outPlate.Welltype) {
-			fmt.Sprintf("It's the well type: ", plate.Welltype, " ", outPlate.Welltype)
-		}
 
-		for crds, _ := range plate.Wellcoords {
-			w1 := plate.Wellcoords[crds]
-			w2 := outPlate.Wellcoords[crds]
+		vv1 := reflect.ValueOf(*plate)
+		vv2 := reflect.ValueOf(outPlate)
+		tt1 := reflect.TypeOf(outPlate)
 
-			if !reflect.DeepEqual(w1, w2) {
-				fmt.Sprintf("It's at well %s\n", crds)
+		for i := 0; i < vv1.NumField(); i++ {
+			ff1 := vv1.Field(i)
+			ff2 := vv2.Field(i)
+
+			ttff1 := ff1.Type()
+
+			if ttff1.Comparable() {
+				if ff1.Interface() != ff2.Interface() {
+					fmt.Println("Field ", tt1.Field(i).Name, " differs")
+					fmt.Println(ff1.Interface(), " ", ff2.Interface())
+				}
+			} else if !reflect.DeepEqual(ff1, ff2) {
+				fmt.Println("XXX Field ", tt1.Field(i).Name, " differs")
 			}
 		}
 
 	}
 }
+*/
 
 // entity is now greatly stripped down
 /*

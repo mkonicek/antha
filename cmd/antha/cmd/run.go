@@ -230,9 +230,8 @@ func (a *runOpt) Run() error {
 		err := workflowtest.CompareTestResults(rout, bundle.TestOpt)
 		if err != nil {
 			return err
-		} else {
-			fmt.Println("TEST BUNDLE COMPARISON OK")
 		}
+		fmt.Println("TEST BUNDLE COMPARISON OK")
 	}
 
 	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {

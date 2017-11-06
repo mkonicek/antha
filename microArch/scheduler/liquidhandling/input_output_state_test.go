@@ -2,14 +2,14 @@ package liquidhandling
 
 import (
 	"context"
-	"reflect"
-	"testing"
-
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"reflect"
+	"testing"
 )
 
 type initFinalCmp struct {
@@ -127,6 +127,8 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 		Destination: pl2,
 	}
 
+	rq.AddUserPlate(pl2)
+
 	ins := mixer.GenericMix(mo)
 
 	rq.LHInstructions[ins.ID] = ins
@@ -137,8 +139,6 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 	}
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.AddUserPlate(pl2)
 
 	rq.ConfigureYourself()
 
@@ -330,6 +330,8 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 
 	ins := mixer.GenericMix(mo)
 
+	fmt.Println("INS ID: ", ins.ID)
+
 	rq.LHInstructions[ins.ID] = ins
 
 	pl, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
@@ -338,6 +340,7 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	}
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+	rq.Output_platetypes = append(rq.Output_platetypes, pl.Dup())
 
 	rq.ConfigureYourself()
 

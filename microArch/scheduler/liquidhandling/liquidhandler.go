@@ -77,7 +77,8 @@ func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
 	lh := Liquidhandler{}
 	lh.SetupAgent = BasicSetupAgent
 	lh.LayoutAgent = ImprovedLayoutAgent
-	lh.ExecutionPlanner = ImprovedExecutionPlanner
+	//lh.ExecutionPlanner = ImprovedExecutionPlanner
+	lh.ExecutionPlanner = ExecutionPlanner3
 	lh.Properties = properties
 	lh.FinalProperties = properties
 	lh.plateIDMap = make(map[string]string)
@@ -189,6 +190,13 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		if (*request).Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
 		}
+		_, ok := ins.(liquidhandling.TerminalRobotInstruction)
+
+		if !ok {
+			fmt.Printf("ERROR: Got instruction ", liquidhandling.InsToString(ins), "which is wrong type")
+			continue
+		}
+
 		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(this.Properties.Driver)
 
 		if err != nil {
@@ -310,6 +318,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 			vol := wunit.NewVolume(rv, unroundedvol.Unit().PrefixedSymbol())
 			well := plate.Wellcoords[crd]
 			well2 := plate2.Wellcoords[crd]
+
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
 				well2.WContents.SetVolume(vol)
@@ -478,7 +487,71 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 // paused, which should be tricky but possible.
 //
 
+func checkSanityIns(request *LHRequest) {
+	// check instructions for basic sanity
+
+	good := true
+	for _, ins := range request.LHInstructions {
+		if ins.Type == wtype.LHIMIX {
+			v := wunit.NewVolume(0.0, "ul")
+
+			for _, c := range ins.Components {
+				// need to be a bit careful but...
+
+				v.Add(c.Volume())
+			}
+
+			if !v.EqualTo(ins.Result.Volume()) {
+				fmt.Println("OH DEAR DEAR DEAR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Result.CName, " COMP: ", v, " PROD: ", ins.Result.Volume())
+				good = false
+			}
+
+		}
+	}
+
+	if !good {
+		panic("URGH - volume issues here")
+	}
+
+}
+
+func anotherSanityCheck(request *LHRequest) {
+	p := map[*wtype.LHComponent]*wtype.LHInstruction{}
+
+	for _, ins := range request.LHInstructions {
+		// we must not share pointers
+
+		for _, c := range ins.Components {
+			ins2, ok := p[c]
+			if ok {
+				panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, c.ID, c.CName))
+			}
+
+			p[c] = ins
+		}
+
+		ins2, ok := p[ins.Result]
+
+		if ok {
+			panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, ins.Result.ID, ins.Result.CName))
+		}
+
+		p[ins.Result] = ins
+	}
+}
+
+func forceSanity(request *LHRequest) {
+	for _, ins := range request.LHInstructions {
+		for i := 0; i < len(ins.Components); i++ {
+			ins.Components[i] = ins.Components[i].Dup()
+		}
+
+		ins.Result = ins.Result.Dup()
+	}
+}
+
 func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
+	//	checkSanityIns(request)
 	// figure out the output order
 
 	err := set_output_order(request)
@@ -488,6 +561,16 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	if request.Options.PrintInstructions {
+		for _, insID := range request.Output_order {
+			ins := request.LHInstructions[insID]
+			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductID)
+
+			if ins.IsMixInPlace() {
+				fmt.Print(" INPLACE")
+			}
+
+			fmt.Println()
+		}
 		request.InstructionChain.Print()
 	}
 
@@ -496,6 +579,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if len(request.Output_order) == 0 {
 		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
 	}
+
 	// convert requests to volumes and determine required stock concentrations
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
 
@@ -504,8 +588,27 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	request.LHInstructions = instructions
-
 	request.Stockconcs = stockconcs
+
+	// set up the mapping of the outputs
+	// tried moving here to see if we can use results in fixVolumes
+	request, err = this.Layout(ctx, request)
+
+	if err != nil {
+		return err
+	}
+	forceSanity(request)
+	anotherSanityCheck(request)
+
+	if request.Options.FixVolumes {
+		// see if volumes can be corrected
+		request, err = FixVolumes(request)
+
+		if err != nil {
+			return err
+		}
+	}
+	checkSanityIns(request)
 
 	// looks at components, determines what inputs are required
 	request, err = this.GetInputs(request)
@@ -516,13 +619,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// define the input plates
 	// should be merged with the above
 	request, err = input_plate_setup(ctx, request)
-
-	if err != nil {
-		return err
-	}
-
-	// set up the mapping of the outputs
-	request, err = this.Layout(ctx, request)
 
 	if err != nil {
 		return err

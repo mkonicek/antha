@@ -2,7 +2,6 @@ package liquidhandling
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -34,6 +33,6 @@ func TestInstructionMarshal(t *testing.T) {
 	got := insTypeArr(unmarshalled.RobotInstructions)
 
 	if !reflect.DeepEqual(expected, got) {
-		fmt.Errorf("Expected  %v got %v", expected, got)
+		t.Errorf("Expected  %v got %v", expected, got)
 	}
 }

@@ -63,7 +63,20 @@ func TestSavePlates(t *testing.T) {
 	w = pp.Wellcoords["A2"]
 	w2 := p.Wellcoords["A2"]
 	if w.WContents.CName != w2.WContents.CName || w.WContents.Vol != w2.WContents.Vol || w.WContents.Vunit != w2.WContents.Vunit {
-		t.Fatal(fmt.Sprintf("Error: Resored plate should have  component %v at A2, instead got %v", w2.WContents, w.WContents))
+		t.Fatal(fmt.Sprintf("Error: Restored plate should have  component %v at A2, instead got %v", w2.WContents, w.WContents))
 	}
 
+}
+
+func TestGetFirstDefined(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		sa := make([]string, 100)
+		sa[i] = "big"
+
+		d := getFirstDefined(sa)
+
+		if d != i {
+			t.Errorf("getFirstDefined returned %d, should have returned %d", d, i)
+		}
+	}
 }

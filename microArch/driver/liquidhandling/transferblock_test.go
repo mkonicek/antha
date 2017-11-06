@@ -191,9 +191,8 @@ func TestMultichannelFailDest(t *testing.T) {
 	testNegative(ctx, ris, pol, rbt, t)
 }
 func TestMultiChannelFailSrc(t *testing.T) {
-	// this actually works now
+	// this actually works
 	t.Skip()
-
 	ctx := testinventory.NewContext(context.Background())
 
 	// sources not aligned
@@ -229,8 +228,9 @@ func TestMultiChannelFailComponent(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ris) < 1 {
-		t.Errorf("No Transfers made")
+	if len(ris) < 2 {
+		t.Errorf("Not enough Transfers made")
+		return
 	}
 
 	ris[0].(*TransferInstruction).What[3] = "lemonade"
@@ -285,7 +285,52 @@ func TestMultichannelPositive(t *testing.T) {
 	testPositive(ctx, ris, pol, rbt, t)
 }
 
+func TestIndependentMultichannelPositive(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	tb, dstp := getTransferBlock(ctx)
+
+	ins := make([]*wtype.LHInstruction, 0, len(tb.Inss)-1)
+
+	for i := 0; i < len(tb.Inss); i++ {
+		// make one hole
+		if i == 4 {
+			continue
+		}
+		ins = append(ins, tb.Inss[i])
+	}
+
+	tb.Inss = ins
+
+	rbt := getTestRobot(ctx, dstp)
+
+	// allow independent multichannel activity
+	rbt.HeadsLoaded[0].Params.Independent = true
+
+	pol, err := GetLHPolicyForTest()
+
+	// allow multi
+
+	pol.Policies["water"]["CAN_MULTI"] = true
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(ris) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
+	}
+
+	testPositive(ctx, ris, pol, rbt, t)
+}
+
 func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
+	if len(ris) < 1 {
+		t.Errorf("No instructions to test positive")
+		return
+	}
 	ins := ris[0]
 
 	ri2, err := ins.Generate(ctx, pol, rbt)
@@ -309,5 +354,4 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	if multi == 0 {
 		t.Errorf("Multichannel block not generated")
 	}
-
 }

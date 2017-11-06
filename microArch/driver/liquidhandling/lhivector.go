@@ -1,12 +1,19 @@
 package liquidhandling
 
-import "github.com/antha-lang/antha/antha/anthalib/wtype"
+import (
+	"fmt"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+)
 
 type LHIVector []*wtype.LHInstruction
 
 func (lhiv LHIVector) MaxLen() int {
 	l := 0
 	for _, i := range lhiv {
+		if i == nil {
+			continue
+		}
 		ll := len(i.Components)
 
 		if ll > l {
@@ -25,12 +32,24 @@ func (lhiv LHIVector) CompsAt(i int) []*wtype.LHComponent {
 			continue
 		}
 
-		if i >= len(ins.Components) {
+		if ins == nil || i >= len(ins.Components) {
 			continue
 		}
 
-		ret[ix] = ins.Components[i]
+		ret[ix] = ins.Components[i].Dup()
+		ret[ix].Loc = ins.PlateID + ":" + ins.Welladdress
 	}
 
 	return ret
+}
+
+func (lhiv LHIVector) Generations() string {
+	s := ""
+	for _, i := range lhiv {
+		if i == nil {
+			continue
+		}
+		s += fmt.Sprintf("%d,", i.Generation())
+	}
+	return s
 }

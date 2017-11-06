@@ -56,6 +56,26 @@ type LHComponent struct {
 	Destination        string
 }
 
+func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {
+	// request for a specific component
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			//  look for the ID of its parent (we don't allow sampling from samples yet)
+			return cmp.ParentID == cmp2.ID
+		} else {
+			// if this is just the whole component we check for *its* Id
+			return cmp.ID == cmp2.ID
+		}
+	} else {
+		// sufficient to be of same types
+		return cmp.IsSameKindAs(cmp2)
+	}
+}
+
+func (lhc LHComponent) GetID() string {
+	return lhc.ID
+}
+
 func (lhc *LHComponent) PlateLocation() PlateLocation {
 	return PlateLocationFromString(lhc.Loc)
 }
@@ -470,6 +490,7 @@ func (cmp *LHComponent) HasAnyParent() bool {
 	return false
 }
 
+// XXX XXX XXX --> This is no longer consistent... need to revise urgently
 func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 	if cmp.ParentID != "" {
 		cmp.ParentID += "_"
@@ -845,7 +866,7 @@ func (lhc *LHComponent) IsInstance() bool {
 	b, ok := temp.(bool)
 
 	if !ok {
-		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Curently set to %v", instanceMarker, b))
+		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Currently set to %v", instanceMarker, b))
 	}
 
 	return b
@@ -871,4 +892,36 @@ func (lhc *LHComponent) Kind() string {
 	return lhc.CName
 
 	// v1: distinct IDs for underlying liquid types
+}
+
+func (cmp LHComponent) IDOrName() string {
+	// as below but omits kind name to allow users to reset
+
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			return cmp.ParentID
+		} else {
+			return cmp.ID
+		}
+
+	} else {
+		return cmp.Kind()
+	}
+
+}
+
+func (cmp LHComponent) FullyQualifiedName() string {
+	// this should be equivalent to the checks done by LHWell.Contains()
+
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			return cmp.ParentID + ":" + cmp.Kind()
+		} else {
+			return cmp.ID + ":" + cmp.Kind()
+
+		}
+
+	} else {
+		return cmp.Kind()
+	}
 }

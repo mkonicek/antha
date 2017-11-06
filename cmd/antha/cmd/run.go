@@ -84,12 +84,14 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 	if viper.GetBool("withMulti") {
 		executionPlannerVersion = "ep3"
 	}
+	opt.PlanningVersion = executionPlannerVersion
 
 	opt.PrintInstructions = viper.GetBool("printInstructions")
-	opt.PlanningVersion = executionPlannerVersion
 
 	opt.UseDriverTipTracking = viper.GetBool("useDriverTipTracking")
 	opt.LegacyVolume = viper.GetBool("legacyVolumeTracking")
+
+	opt.FixVolumes = viper.GetBool("fixVolumes")
 
 	return opt, nil
 }
@@ -117,6 +119,7 @@ type runOpt struct {
 	WorkflowFile           string
 	MixInstructionFileName string
 	TestBundleFileName     string
+	RunTest                bool
 }
 
 func (a *runOpt) Run() error {
@@ -223,6 +226,14 @@ func (a *runOpt) Run() error {
 		}
 	}
 
+	if a.RunTest {
+		err := workflowtest.CompareTestResults(rout, bundle.TestOpt)
+		if err != nil {
+			return err
+		}
+		fmt.Println("TEST BUNDLE COMPARISON OK")
+	}
+
 	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {
 		return err
 	}
@@ -289,6 +300,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		WorkflowFile:           viper.GetString("workflow"),
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 		TestBundleFileName:     viper.GetString("makeTestBundle"),
+		RunTest:                viper.GetBool("RunTest"),
 	}
 
 	return opt.Run()
@@ -303,7 +315,7 @@ func init() {
 	flags.Bool("outputSort", false, "Sort execution by output - improves tip usage")
 	flags.Bool("printInstructions", false, "Output the raw instructions sent to the driver")
 	flags.Bool("useDriverTipTracking", false, "If the driver has tip tracking available, use it")
-	flags.Bool("withMulti", false, "Allow use of new multichannel planning")
+	flags.Bool("withMulti", false, "Allow use of new multichannel planning - deprecated")
 	flags.Float64("residualVolumeWeight", 0.0, "Residual volume weight")
 	flags.Int("maxPlates", 0, "Maximum number of plates")
 	flags.Int("maxWells", 0, "Maximum number of wells on a plate")
@@ -318,4 +330,5 @@ func init() {
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
 	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
 	flags.StringSlice("tipType", nil, "Names of permitted tip types")
+	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
 }

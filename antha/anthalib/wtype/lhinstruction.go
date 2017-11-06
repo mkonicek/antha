@@ -1,6 +1,7 @@
 package wtype
 
 import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"strings"
 )
 
@@ -51,6 +52,14 @@ type LHInstruction struct {
 	PassThrough      map[string]*LHComponent // 1:1 pass through, only applies to prompts
 }
 
+func (lhi *LHInstruction) GetPlateType() string {
+	if lhi.OutPlate != nil {
+		return lhi.OutPlate.Type
+	} else {
+		return lhi.Platetype
+	}
+}
+
 // privatised in favour of specific instruction constructors
 func newLHInstruction() *LHInstruction {
 	var lhi LHInstruction
@@ -71,6 +80,10 @@ func NewLHPromptInstruction() *LHInstruction {
 	lhi := newLHInstruction()
 	lhi.Type = LHIPRM
 	return lhi
+}
+
+func (inst *LHInstruction) InsType() string {
+	return InsType(inst.Type)
 }
 
 // GetID returns the ID of the instruction, useful for interfaces
@@ -177,4 +190,30 @@ func (ins *LHInstruction) ComponentsMoving() string {
 
 func (ins *LHInstruction) Wellcoords() WellCoords {
 	return MakeWellCoords(ins.Welladdress)
+}
+
+func (ins *LHInstruction) AdjustVolumesBy(r float64) {
+	// each subcomponent is assumed to scale linearly
+	for _, c := range ins.Components {
+		c.Vol *= r
+	}
+
+	ins.Result.Vol *= r
+}
+
+func (ins *LHInstruction) InputVolumeMap(addition wunit.Volume) map[string]wunit.Volume {
+	r := make(map[string]wunit.Volume, len(ins.Components))
+	for _, c := range ins.Components {
+		v, ok := r[c.FullyQualifiedName()]
+
+		if ok {
+			v.Add(c.Volume())
+			v.Add(addition)
+		} else {
+			r[c.FullyQualifiedName()] = c.Volume()
+			r[c.FullyQualifiedName()].Add(addition)
+		}
+	}
+
+	return r
 }

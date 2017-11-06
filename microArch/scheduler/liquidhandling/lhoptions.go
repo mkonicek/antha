@@ -6,6 +6,7 @@ type LHOptions struct {
 	ExecutionPlannerVersion string
 	PrintInstructions       bool
 	LegacyVolume            bool
+	FixVolumes              bool
 }
 
 func NewLHOptions() LHOptions {

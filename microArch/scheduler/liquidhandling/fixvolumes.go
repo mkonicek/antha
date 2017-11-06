@@ -29,7 +29,15 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 		wantVol, ok := wanted[ins.Result.FullyQualifiedName()]
 
 		if ok {
-			wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
+			_, reallyOK := plates[ins.PlateID]
+
+			if !reallyOK {
+				if ins.PlateID != "" {
+					panic("Cannot fix volume for plate ID without corresponding type")
+				}
+			} else {
+				wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
+			}
 			if wantVol.GreaterThan(ins.Result.Volume()) {
 				r := wantVol.RawValue() / ins.Result.Volume().ConvertTo(wantVol.Unit())
 				ins.AdjustVolumesBy(r)

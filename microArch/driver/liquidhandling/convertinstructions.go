@@ -255,6 +255,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		if cmpFrom == nil {
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
 		}
+
 		wellTo.Add(cmpFrom)
 
 		// make sure the cmp loc is set

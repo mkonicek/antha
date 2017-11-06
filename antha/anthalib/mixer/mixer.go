@@ -204,9 +204,8 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 				cmps = append(cmps, opt.Components...)
 				opt.Components = cmps
 				r.Components = wtype.CopyComponentArray(cmps)
-			} else {
-				w.WContents = r.Result
 			}
+			// empty wells stay empty
 			//r.Result.Loc = r.OutPlate.ID + ":" + opt.Address
 		}
 	}

@@ -187,7 +187,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 			w, ok := opt.Destination.Wellcoords[opt.Address]
 
 			if !ok {
-				panic(fmt.Sprintf("Cannot find well %s on plate %s name %s type %s", opt.Address, r.OutPlate.ID, r.OutPlate.Name, r.OutPlate.Type))
+				panic(fmt.Sprintf("Cannot find well %s on plate %s name %s type %s", opt.Address, r.OutPlate.ID, r.OutPlate.Name(), r.OutPlate.Type))
 			}
 
 			if !w.Empty() {

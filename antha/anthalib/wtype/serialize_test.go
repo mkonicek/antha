@@ -155,9 +155,20 @@ func TestSerializeLHPlate_1(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reflect.DeepEqual(plate, outPlate) {
-		fmt.Println(pretty.Compare(plate, outPlate))
-		t.Fatal("input plate and out plate dondiffer")
+	if !reflect.DeepEqual(plate, outPlate) {
+		if !reflect.DeepEqual(plate.Welltype, outPlate.Welltype) {
+			fmt.Sprintf("It's the well type: ", plate.Welltype, " ", outPlate.Welltype)
+		}
+
+		for crds, _ := range plate.Wellcoords {
+			w1 := plate.Wellcoords[crds]
+			w2 := outPlate.Wellcoords[crds]
+
+			if !reflect.DeepEqual(w1, w2) {
+				fmt.Sprintf("It's at well %s\n", crds)
+			}
+		}
+
 	}
 }
 

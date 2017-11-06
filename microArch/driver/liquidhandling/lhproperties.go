@@ -929,7 +929,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 		bx, err := inventory.NewTipbox(ctx, tipParams.TipType)
 
 		if err != nil {
-			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type ", tipParams.TipType, " found: %s", err))
+			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type %s found: %s", tipParams.TipType, err))
 		}
 
 		r := lhp.AddTipBox(bx)

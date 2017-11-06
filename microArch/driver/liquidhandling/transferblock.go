@@ -225,7 +225,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type exists for ID %s - requested was %s", i.PlateID, i.Platetype))
 			}
 
-			platedims[i.PlateID] = wtype.Rational{pt.WellsX(), pt.WellsY()}
+			platedims[i.PlateID] = wtype.Rational{N: pt.WellsX(), D: pt.WellsY()}
 		}
 
 		h[i.PlateID][wc.X][wc.Y] = append(h[i.PlateID][wc.X][wc.Y], i)

@@ -232,7 +232,7 @@ func AddConcentrations(concs ...Concentration) (newconc Concentration, err error
 
 // SubtractConcentrations substracts a variable number of concentrations from an original concentration.
 // An error is returned if the concentration units are incompatible.
-func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concentration) (newConcentration Concentration) {
+func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concentration) (newConcentration Concentration, err error) {
 
 	newConcentration = (CopyConcentration(originalConc))
 

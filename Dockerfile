@@ -1,4 +1,4 @@
-FROM golang:1.8
+FROM golang:1.9
 
 RUN apt-get update -qq && apt-get install -y libglpk-dev protobuf-compiler
 

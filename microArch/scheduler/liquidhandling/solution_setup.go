@@ -45,7 +45,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	instructions := request.LHInstructions
 
 	// index of components used to make up to a total volume, along with the required total
-	mtvols := make(map[string][]float64, 10)
+	mtvols := make(map[string][]wunit.Volume, 10)
 	// index of components with concentration targets, along with the target concentrations
 	mconcs := make(map[string][]wunit.Concentration, 10)
 	// keep a list of components which have fixed stock concentrations
@@ -53,7 +53,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	// maximum solubilities of each component
 	Smax := make(map[string]float64, 10)
 	// maximum total volume of any instruction containing each component
-	hshTVol := make(map[string]float64)
+	hshTVol := make(map[string]wunit.Volume)
 
 	// find the minimum and maximum required concentrations
 	// across all the instructions
@@ -69,8 +69,8 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 		arrCncs := make([]*wtype.LHComponent, 0, len(components))
 		arrTvol := make([]*wtype.LHComponent, 0, len(components))
-		cmpvol := 0.0
-		totalvol := 0.0
+		cmpvol := wunit.NewVolume(0.0, "ul")
+		totalvol := wunit.NewVolume(0.0, "ul")
 
 		for _, component := range components {
 
@@ -80,15 +80,15 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 			if conc != 0.0 && !skipSampleForConcentrationCalc {
 				arrCncs = append(arrCncs, component)
 			} else if tvol != 0.0 {
-				tv := component.Tvol
-				if totalvol == 0.0 || totalvol == tv {
-					totalvol = tv
+				tv := component.TotalVolume()
+				if totalvol.IsZero() || totalvol.EqualTo(tv) {
+					totalvol = tv // not needed
 				} else {
 					// error
 					return nil, nil, wtype.LHError(wtype.LH_ERR_CONC, fmt.Sprintf("Inconsistent total volumes %-6.4f and %-6.4f at component %s", totalvol, tv, component.CName))
 				}
 			} else {
-				cmpvol += component.Vol
+				cmpvol.Add(component.Volume())
 			}
 		}
 
@@ -125,7 +125,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 			mconcs[nm] = cncslc
 			_, ok = hshTVol[nm]
-			if !ok || hshTVol[nm] > totalvol {
+			if !ok || hshTVol[nm].GreaterThan(totalvol) {
 				hshTVol[nm] = totalvol
 			}
 		}
@@ -134,14 +134,14 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 		for _, cmp := range arrTvol {
 			nm := cmp.CName
-			tvol := cmp.Tvol
+			tvol := cmp.TotalVolume()
 
-			var tvslc []float64
+			var tvslc []wunit.Volume
 
 			tvslc, ok := mtvols[nm]
 
 			if !ok {
-				tvslc = make([]float64, 0, 10)
+				tvslc = make([]wunit.Volume, 0, 10)
 			}
 
 			tvslc = append(tvslc, tvol)
@@ -228,9 +228,8 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 		arrCncs := make([]*wtype.LHComponent, 0, len(components))
 		arrTvol := make([]*wtype.LHComponent, 0, len(components))
 		arrSvol := make([]*wtype.LHComponent, 0, len(components))
-		cmpvol := 0.0
-		totalvol := 0.0
-		totalvolunit := "ul"
+		cmpvol := wunit.NewVolume(0.0, "ul")
+		totalvol := wunit.NewVolume(0.0, "ul")
 
 		for _, component := range components {
 			// what sort of component is it?
@@ -239,9 +238,8 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 				arrCncs = append(arrCncs, component)
 			} else if component.Tvol != 0.0 {
 				arrTvol = append(arrTvol, component)
-				tv := component.Tvol
-				totalvolunit = component.Vunit
-				if totalvol == 0.0 || totalvol == tv {
+				tv := component.TotalVolume()
+				if totalvol.IsZero() || totalvol.EqualTo(tv) {
 					totalvol = tv
 				} else {
 					// error
@@ -249,7 +247,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 				}
 			} else {
 				// need to add in the volume taken up by any volume components
-				cmpvol += component.Vol
+				cmpvol.Add(component.Volume())
 				arrSvol = append(arrSvol, component)
 			}
 		}
@@ -261,10 +259,11 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 		for _, component := range arrCncs {
 			name := component.CName
 			cnc := component.Conc
-			vol := totalvol * cnc / stockconcs[name]
-			cmpvol += vol
-			component.Vol = vol
-			component.Vunit = totalvolunit
+			//vol := totalvol * cnc / stockconcs[name]
+			vol := wunit.MultiplyVolume(totalvol, cnc/stockconcs[name])
+			cmpvol.Add(vol)
+			component.Vol = vol.RawValue()
+			component.Vunit = totalvol.Unit().ToString()
 			component.StockConcentration = stockconcs[name]
 			arrFinalComponents = append(arrFinalComponents, component)
 		}
@@ -272,8 +271,9 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 		// next we get the final volume for total volume components
 
 		for _, component := range arrTvol {
-			vol := totalvol - cmpvol
-			component.Vol = vol
+			vol := wunit.SubtractVolumes(totalvol, cmpvol)
+			component.SetVolume(vol)
+			component.Tvol = 0.0 // reset Tvol
 			arrFinalComponents = append(arrFinalComponents, component)
 		}
 

@@ -402,6 +402,8 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				continue
 			}
 
+			fmt.Println("V COMPONENTS ", v.Components)
+
 			if v.Components[0].Loc == "" {
 				addr, ok := st.GetLocationOf(v.Components[0].ID)
 

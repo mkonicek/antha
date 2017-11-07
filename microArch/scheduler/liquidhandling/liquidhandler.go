@@ -494,18 +494,28 @@ func checkSanityIns(request *LHRequest) {
 	for _, ins := range request.LHInstructions {
 		if ins.Type == wtype.LHIMIX {
 			v := wunit.NewVolume(0.0, "ul")
-
+			tv := wunit.NewVolume(0.0, "ul")
 			for _, c := range ins.Components {
 				// need to be a bit careful but...
 
-				v.Add(c.Volume())
+				if c.Vol != 0.0 {
+					v.Add(c.Volume())
+				} else if c.Tvol != 0.0 {
+					if !tv.IsZero() && !tv.EqualTo(c.TotalVolume()) {
+						fmt.Println("ERROR: MULTIPLE DISTINCT TOTAL VOLUMES SPECIFIED FOR ", ins.ID, " ", ins.Result.CName, " COMPONENT ", c)
+						good = false
+					}
+
+					tv = c.TotalVolume()
+				}
 			}
 
-			if !v.EqualTo(ins.Result.Volume()) {
+			if tv.IsZero() && !v.EqualTo(ins.Result.Volume()) {
 				fmt.Println("OH DEAR DEAR DEAR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Result.CName, " COMP: ", v, " PROD: ", ins.Result.Volume())
 				good = false
+			} else if !tv.IsZero() && !tv.EqualTo(ins.Result.Volume()) {
+				fmt.Println("ERROR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Result.CName, " COMP: ", tv, " PROD: ", ins.Result.Volume())
 			}
-
 		}
 	}
 
@@ -551,7 +561,6 @@ func forceSanity(request *LHRequest) {
 }
 
 func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
-	//	checkSanityIns(request)
 	// figure out the output order
 
 	err := set_output_order(request)
@@ -580,8 +589,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
 	}
 
+	forceSanity(request)
 	// convert requests to volumes and determine required stock concentrations
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
+	checkSanityIns(request)
 
 	if err != nil {
 		return err

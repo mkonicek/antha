@@ -122,7 +122,7 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 	return ret
 }
 
-// SampleForTotalVolume takes a sample ofs this liquid to be used to make the
+// SampleForTotalVolume takes a sample of this liquid to be used to make the
 // solution up to a particular total volume edited to take into account the
 // volume of the other solution components
 func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
@@ -168,7 +168,8 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		r.Result = wtype.NewLHComponent()
 		mx := 0
 		for _, c := range opt.Components {
-			r.Result.MixPreserveTvol(c)
+			//r.Result.MixPreserveTvol(c)
+			r.Result.Mix(c)
 			if c.Generation() > mx {
 				mx = c.Generation()
 			}
@@ -196,7 +197,9 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 				w.WContents.Loc = r.OutPlate.ID + ":" + opt.Address
 				r.Result = w.WContents.Dup()
 				for _, c := range opt.Components {
-					r.Result.MixPreserveTvol(c)
+					//r.Result.MixPreserveTvol(c)
+					r.Result.Mix(c)
+
 				}
 				// we also need to make sure the instruction explicitly mentions the component
 				cmps := make([]*wtype.LHComponent, 0, len(opt.Components)+1)
@@ -227,10 +230,38 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		r.PlateName = opt.PlateName
 	}
 
+	// ensure results are given the correct final volumes
+	// ... by definition this is either the sum of the volumes
+	// or the total volume if specified
+
+	tVol := findTVolOrPanic(opt.Components)
+
+	if !tVol.IsZero() {
+		r.Result.SetVolume(tVol)
+	}
+
 	return r
 }
 
-// TODO: he functions below will be deleted soon as they do not generate liquid
+func findTVolOrPanic(components []*wtype.LHComponent) wunit.Volume {
+	tv := wunit.NewVolume(0.0, "ul")
+
+	for _, c := range components {
+		ctv := c.TotalVolume()
+
+		if !(tv.IsZero() || ctv.EqualTo(tv)) {
+			panic(fmt.Sprintf("Mix ERROR: Multiple contradictory total volumes specified %s %s", tv, ctv))
+		}
+
+		if tv.IsZero() {
+			tv = ctv
+		}
+	}
+
+	return tv
+}
+
+// TODO: The functions below will be deleted soon as they do not generate liquid
 // handling instructions
 
 // Mix the specified wtype.LHComponents together and leave the destination TBD

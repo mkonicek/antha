@@ -387,6 +387,10 @@ func (lhc *LHComponent) Volume() wunit.Volume {
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
+func (lhc *LHComponent) TotalVolume() wunit.Volume {
+	return wunit.NewVolume(lhc.Tvol, lhc.Vunit)
+}
+
 func (lhc *LHComponent) Remove(v wunit.Volume) wunit.Volume {
 	v2 := lhc.Volume()
 

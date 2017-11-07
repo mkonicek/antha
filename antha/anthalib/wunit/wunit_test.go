@@ -251,6 +251,33 @@ var volumearithmetictests = []VolumeArithmetic{
 		Product:    NewVolume(10000000, "ul"),
 		Quotient:   NewVolume(100000, "ul"),
 	},
+	{
+		VolumeA:    NewVolume(1000, "ul"),
+		VolumeB:    NewVolume(-10, "ul"),
+		Sum:        NewVolume(990, "ul"),
+		Difference: NewVolume(1010, "ul"),
+		Factor:     -10.0,
+		Product:    NewVolume(-10000, "ul"),
+		Quotient:   NewVolume(-100, "ul"),
+	},
+	{
+		VolumeA:    NewVolume(-1000, "ul"),
+		VolumeB:    NewVolume(10, "ul"),
+		Sum:        NewVolume(-990, "ul"),
+		Difference: NewVolume(-1010, "ul"),
+		Factor:     -10.0,
+		Product:    NewVolume(10000, "ul"),
+		Quotient:   NewVolume(100, "ul"),
+	},
+	{
+		VolumeA:    NewVolume(100, "ul"),
+		VolumeB:    NewVolume(-165, "ul"),
+		Sum:        NewVolume(-65, "ul"),
+		Difference: NewVolume(265, "ul"),
+		Factor:     10.0,
+		Product:    NewVolume(1000, "ul"),
+		Quotient:   NewVolume(10, "ul"),
+	},
 }
 
 func TestSubstractVolumes(t *testing.T) {

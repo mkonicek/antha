@@ -1055,3 +1055,16 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 
 	return rq
 }
+
+func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.LHPlate {
+	m := make(map[string]*wtype.LHPlate, len(req.Input_plates)+len(req.Output_plates))
+	addToMap(m, req.Input_plates)
+	addToMap(m, req.Output_plates)
+	return m
+}
+
+func addToMap(m, a map[string]*wtype.LHPlate) {
+	for k, v := range a {
+		m[k] = v
+	}
+}

@@ -11,7 +11,7 @@ func FixVolumes(request *LHRequest) (*LHRequest, error) {
 	wantedVolumes := make(map[string]wunit.Volume)
 	c := 0
 	for chainEnd := findChainEnd(request.InstructionChain); chainEnd != nil; chainEnd = chainEnd.Parent {
-		stageVolumes, err := findUpdateInstructionVolumes(chainEnd, wantedVolumes, request.Output_plates)
+		stageVolumes, err := findUpdateInstructionVolumes(chainEnd, wantedVolumes, request.MergedInputOutputPlates())
 
 		if err != nil {
 			return request, err

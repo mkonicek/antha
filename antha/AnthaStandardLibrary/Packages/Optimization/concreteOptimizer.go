@@ -352,7 +352,7 @@ func makeSplits(seq string, p, endLen int, endsToAvoid []string) []string {
 	r := make([]string, 0, endLen+1)
 	for i := 0; i < 1; i++ {
 		end := string(seq[p+i-1 : p+endLen-1])
-		if isIn(end, endsToAvoid) {
+		if isIn(end, endsToAvoid) || isIn(wtype.RevComp(end), endsToAvoid) {
 			continue
 		}
 		r = append(r, end)

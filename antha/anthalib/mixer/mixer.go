@@ -249,7 +249,7 @@ func findTVolOrPanic(components []*wtype.LHComponent) wunit.Volume {
 	for _, c := range components {
 		ctv := c.TotalVolume()
 
-		if !(tv.IsZero() || ctv.EqualTo(tv)) {
+		if !(tv.IsZero() || ctv.IsZero() || tv.EqualTo(ctv)) {
 			panic(fmt.Sprintf("Mix ERROR: Multiple contradictory total volumes specified %s %s", tv, ctv))
 		}
 

@@ -26,6 +26,7 @@ package solutions
 import (
 	"strings"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )

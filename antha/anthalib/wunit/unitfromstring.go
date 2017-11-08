@@ -27,6 +27,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func NormaliseUnit(unit string) (normalisedunit string) {
@@ -133,6 +135,9 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 			if concfields[0] == "" {
 				value = 0.0
 			} else {
+				if strings.Contains(componentname, wutil.MIXDELIMITER) {
+					return false, conc, componentname
+				}
 				panic(fmt.Sprint("error parsing componentname: ", componentname, ": ", err.Error()))
 				return false, conc, componentNameOnly
 			}

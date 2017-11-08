@@ -26,6 +26,7 @@ package solutions
 import (
 	"strings"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -57,7 +58,7 @@ func NormaliseName(name string) (normalised string) {
 // An LB solution with no concentration and components is returned as LB.
 // Warning: if a component name already contains a concentration it will be possible to return duplicate concentration values. e.g. 10X 10X LB or 10X LB 10X.
 // To avoid this, when first declaring a component name the NormaliseName function should be used first.
-func NormaliseComponentName(component *LHComponent) string {
+func NormaliseComponentName(component *wtype.LHComponent) string {
 
 	compList, _ := GetSubComponents(component)
 

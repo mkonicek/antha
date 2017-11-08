@@ -26,8 +26,8 @@ package solutions
 import (
 	"strings"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 // if the component name contains a concentration the concentration name will be normalised
@@ -35,7 +35,7 @@ import (
 // A concatanenated name such as 10g/L glucose + 10g/L yeast extract will be returned with no modifications
 func NormaliseName(name string) (normalised string) {
 
-	if strings.Contains(name, wtype.MIXDELIMITER) {
+	if strings.Contains(name, wutil.MIXDELIMITER) {
 		return name
 	}
 

@@ -32,7 +32,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -925,7 +924,7 @@ func mergeFactorLevels(run1 Run, run2 Run, factors []string, newLevel interface{
 }
 
 func mergeStrings(factorNames []string) (combinedFactor string) {
-	combinedFactor = strings.Join(factorNames, wtype.MIXDELIMITER)
+	combinedFactor = strings.Join(factorNames, wutil.MIXDELIMITER)
 	return
 }
 

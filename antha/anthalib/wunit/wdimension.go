@@ -164,8 +164,8 @@ func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
 		err = fmt.Errorf(fmt.Sprintln("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString()))
 		return
 	}
-	
-	if math.IsNan(factor) {
+
+	if math.IsNaN(factor) {
 		err = fmt.Errorf(fmt.Sprintln("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString()))
 		return
 	}
@@ -206,12 +206,12 @@ func DivideConcentrations(conc1, conc2 Concentration) (factor float64, err error
 		err = fmt.Errorf(fmt.Sprintln("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString()))
 		return
 	}
-	
-	if math.IsNan(factor) {
-		err = fmt.Errorf(fmt.Sprintln("NaN value found dividing concentrations %s and %s", vol1.ToString(), vol2.ToString()))
+
+	if math.IsNaN(factor) {
+		err = fmt.Errorf(fmt.Sprintln("NaN value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString()))
 		return
 	}
-	
+
 	return factor, nil
 }
 

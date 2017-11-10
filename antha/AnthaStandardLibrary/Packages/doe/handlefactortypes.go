@@ -130,22 +130,25 @@ func HandleComponentWithConcentration(ctx context.Context, header string, value 
 // If the value cannot be converted to a valid Volume an error is returned.
 func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Volume, err error) {
 
-	if rawVolString, found := value.(string); found {
+	var floatValue float64
+	var floatFound bool
 
-		vol, err := wunit.ParseVolume(rawVolString)
+	rawVolFloat, found := value.(float64)
 
-		if err == nil {
-			anthaVolume = vol
-		} else {
-			err = fmt.Errorf("No valid Volume found in %s", rawVolString)
-			return anthaVolume, err
+	if found {
+		floatValue = rawVolFloat
+		floatFound = true
+	} else {
+		rawvolstring, found := value.(string)
+		var floatParseErr error
+		if floatValue, floatParseErr = strconv.ParseFloat(rawvolstring, 64); found && floatParseErr == nil {
+			floatFound = true
 		}
-
-		// if float use vol unit from header component
-	} else if rawVolFloat, found := value.(float64); found {
+	}
+	if floatFound {
 
 		// handle floating point imprecision
-		rawVolFloat, err = wutil.Roundto(rawVolFloat, 6)
+		floatValue, err = wutil.Roundto(floatValue, 6)
 
 		if err != nil {
 			return anthaVolume, err
@@ -156,9 +159,21 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 
 			volUnit := vol.Unit().PrefixedSymbol()
 
-			anthaVolume = wunit.NewVolume(rawVolFloat, volUnit)
+			anthaVolume = wunit.NewVolume(floatValue, volUnit)
 		} else {
-			err = fmt.Errorf("No valid Volume found in component %s so can't assign a Volume unit to value", header)
+			anthaVolume = wunit.NewVolume(floatValue, "ul")
+			//err = fmt.Errorf("No valid Volume found in component %s so can't assign a Volume unit to value", header)
+			//return anthaVolume, err
+		}
+
+	} else if rawVolString, found := value.(string); found {
+
+		vol, err := wunit.ParseVolume(rawVolString)
+
+		if err == nil {
+			anthaVolume = vol
+		} else {
+			err = fmt.Errorf("No valid Volume found in %s", rawVolString)
 			return anthaVolume, err
 		}
 

@@ -203,7 +203,11 @@ func (ins *LHInstruction) AdjustVolumesBy(r float64) {
 
 func (ins *LHInstruction) InputVolumeMap(addition wunit.Volume) map[string]wunit.Volume {
 	r := make(map[string]wunit.Volume, len(ins.Components))
-	for _, c := range ins.Components {
+	for i, c := range ins.Components {
+		// don't request more of components that aren't moving
+		if i == 0 && ins.IsMixInPlace() {
+			continue
+		}
 		v, ok := r[c.FullyQualifiedName()]
 
 		if ok {

@@ -32,13 +32,6 @@ func TestFixVolumes(t *testing.T) {
 
 	req.LHInstructions[ins.ID] = ins
 
-	/*
-	   Parent *IChain
-	   Child  *IChain
-	   Values []*wtype.LHInstruction
-	   Depth  int
-	*/
-
 	ic := &IChain{
 		Parent: nil,
 		Child:  nil,
@@ -48,6 +41,7 @@ func TestFixVolumes(t *testing.T) {
 
 	req.InstructionChain = ic
 
+	//now take lots of samples
 	inss := make([]*wtype.LHInstruction, 0, 10)
 
 	for i := 0; i < 10; i++ {
@@ -123,21 +117,19 @@ func TestFixVolumes2(t *testing.T) {
 }
 
 func TestFixVolumes3(t *testing.T) {
-	t.Skip()
+	//	t.Skip()
 	req := NewLHRequest()
 
 	c1 := getComponentWithNameVolume("water", 50.0)
-	c2 := getComponentWithNameVolume("milk", 50.0)
-
 	c3 := c1.Dup()
-	c3.Mix(c2)
+
 	c3.DeclareInstance()
 
 	ins := wtype.NewLHMixInstruction()
-	ins.Components = []*wtype.LHComponent{c1, c2}
+	ins.Components = []*wtype.LHComponent{c1}
+
 	ins.Result = c3
 	ins.ProductID = ins.Result.ID
-
 	req.LHInstructions[ins.ID] = ins
 
 	ic := &IChain{
@@ -149,18 +141,39 @@ func TestFixVolumes3(t *testing.T) {
 
 	req.InstructionChain = ic
 
+	// mix-in-place
+
+	c2 := getComponentWithNameVolume("milk", 50.0)
+	ins = wtype.NewLHMixInstruction()
+	ins.Components = []*wtype.LHComponent{c3, c2}
+	c4 := c3.Dup()
+	c3.Mix(c2)
+	ins.Result = c4
+	ins.ProductID = ins.Result.ID
+	req.LHInstructions[ins.ID] = ins
+
+	ic = &IChain{
+		Parent: req.InstructionChain,
+		Child:  nil,
+		Values: []*wtype.LHInstruction{ins},
+		Depth:  1,
+	}
+
+	req.InstructionChain.Child = ic
+
+	//now take lots of samples
 	inss := make([]*wtype.LHInstruction, 0, 10)
 
 	for i := 0; i < 10; i++ {
 		ins = wtype.NewLHMixInstruction()
-		smp, err := c3.Sample(wunit.NewVolume(15.0, "ul"))
+		smp, err := c4.Sample(wunit.NewVolume(15.0, "ul"))
 		smp.SetSample(true)
 		smp.DeclareInstance()
-		smp.ParentID = c3.ID
+		smp.ParentID = c4.ID
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		c3.Vol = 100.0
+		c4.Vol = 100.0
 		ins.Components = []*wtype.LHComponent{smp}
 		res := getComponentWithNameVolume("water+milk", 15.0)
 		res.ParentID = ins.Components[0].ID
@@ -171,7 +184,7 @@ func TestFixVolumes3(t *testing.T) {
 		inss = append(inss, ins)
 	}
 
-	ic.Child = &IChain{Parent: ic, Child: nil, Values: inss, Depth: 1}
+	ic.Child = &IChain{Parent: ic, Child: nil, Values: inss, Depth: 2}
 
 	// try fixing the volumes
 

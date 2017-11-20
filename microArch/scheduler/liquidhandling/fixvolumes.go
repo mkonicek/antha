@@ -26,7 +26,9 @@ func FixVolumes(request *LHRequest) (*LHRequest, error) {
 func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.LHPlate) (map[string]wunit.Volume, error) {
 	newWanted := make(map[string]wunit.Volume)
 	for _, ins := range ch.Values {
-		wantVol, ok := wanted[ins.Result.FullyQualifiedName()]
+		//wantVol, ok := wanted[ins.Result.FullyQualifiedName()]
+
+		wantVol, ok := getWantVol(wanted, ins.Result.FullyQualifiedName())
 
 		if ok {
 			_, reallyOK := plates[ins.PlateID]
@@ -35,14 +37,16 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 				if ins.PlateID != "" {
 					panic("Cannot fix volume for plate ID without corresponding type")
 				}
-			} else {
+			} else if !wantInPlace(wanted, ins.Result.FullyQualifiedName()) {
 				wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
 			}
+
 			if wantVol.GreaterThan(ins.Result.Volume()) {
 				r := wantVol.RawValue() / ins.Result.Volume().ConvertTo(wantVol.Unit())
 				ins.AdjustVolumesBy(r)
 
-				delete(wanted, ins.Result.FullyQualifiedName())
+				//delete(wanted, ins.Result.FullyQualifiedName())
+				deleteWantOf(wanted, ins.Result.FullyQualifiedName())
 			}
 		}
 
@@ -52,6 +56,33 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 	newWanted = mapAdd(wanted, newWanted)
 
 	return newWanted, nil
+}
+
+func getWantVol(wanted map[string]wunit.Volume, key string) (wunit.Volume, bool) {
+	// look for in-place markers
+
+	v, ok := wanted[key+wtype.InPlaceMarker]
+
+	if !ok {
+		v, ok = wanted[key]
+	}
+
+	return v, ok
+}
+
+func deleteWantOf(wanted map[string]wunit.Volume, key string) {
+	_, ok := wanted[key+wtype.InPlaceMarker]
+
+	if ok {
+		delete(wanted, key+wtype.InPlaceMarker)
+	} else {
+		delete(wanted, key)
+	}
+}
+
+func wantInPlace(wanted map[string]wunit.Volume, key string) bool {
+	_, ok := wanted[key+wtype.InPlaceMarker]
+	return ok
 }
 
 func mapDup(m map[string]wunit.Volume) map[string]wunit.Volume {

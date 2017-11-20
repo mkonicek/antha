@@ -108,10 +108,13 @@ func TestFixVolumes2(t *testing.T) {
 
 	newWant, _ := findUpdateInstructionVolumes(ch, want, make(map[string]*wtype.LHPlate))
 
-	for _, v := range newWant {
-		if !v.EqualTo(wunit.NewVolume(75.5, "ul")) {
-			t.Errorf(fmt.Sprintf("Expected 75.5 ul got %s", v))
-		}
+	v := newWant["water"+wtype.InPlaceMarker]
+	if !v.EqualTo(wunit.NewVolume(75.0, "ul")) {
+		t.Errorf(fmt.Sprintf("Expected 75.0 ul got %s", v))
+	}
+	v = newWant["milk"]
+	if !v.EqualTo(wunit.NewVolume(75.5, "ul")) {
+		t.Errorf(fmt.Sprintf("Expected 75.5 ul got %s", v))
 	}
 
 }

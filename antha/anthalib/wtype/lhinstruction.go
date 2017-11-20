@@ -204,18 +204,22 @@ func (ins *LHInstruction) AdjustVolumesBy(r float64) {
 func (ins *LHInstruction) InputVolumeMap(addition wunit.Volume) map[string]wunit.Volume {
 	r := make(map[string]wunit.Volume, len(ins.Components))
 	for i, c := range ins.Components {
-		// don't request more of components that aren't moving
-		if i == 0 && ins.IsMixInPlace() {
-			continue
+		nom := c.FullyQualifiedName()
+		myAdd := addition.Dup()
+
+		if ins.IsMixInPlace() && i == 0 {
+			nom += InPlaceMarker
+			myAdd = wunit.ZeroVolume()
 		}
-		v, ok := r[c.FullyQualifiedName()]
+
+		v, ok := r[nom]
 
 		if ok {
 			v.Add(c.Volume())
-			v.Add(addition)
+			v.Add(myAdd)
 		} else {
-			r[c.FullyQualifiedName()] = c.Volume()
-			r[c.FullyQualifiedName()].Add(addition)
+			r[nom] = c.Volume()
+			r[nom].Add(myAdd)
 		}
 	}
 

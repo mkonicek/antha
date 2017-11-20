@@ -210,6 +210,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 		if len(i.Components) == 0 {
 			continue
 		}
+
 		wc := wtype.MakeWellCoords(i.Welladdress)
 
 		_, ok := h[i.PlateID]

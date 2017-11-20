@@ -525,6 +525,47 @@ func checkSanityIns(request *LHRequest) {
 
 }
 
+func checkInstructionOrdering(request *LHRequest) {
+	ch := request.InstructionChain
+
+	for {
+		if ch == nil {
+			break
+		}
+
+		onlyAllowOneInstructionType(ch)
+
+		ch = ch.Child
+	}
+}
+
+func onlyAllowOneInstructionType(c *IChain) {
+	m := make(map[string]bool)
+	inss := c.Values
+
+	for _, i := range inss {
+		m[i.InsType()] = true
+	}
+
+	if len(m) != 1 {
+		panic(fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", m, c.Depth))
+	}
+}
+
+func checkDestinationSanity(request *LHRequest) {
+	for _, ins := range request.LHInstructions {
+		// non-mix instructions are fine
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		if ins.PlateID == "" || ins.Platetype == "" || ins.Welladdress == "" {
+			fmt.Println("INS ", ins, " NOT WELL FORMED: HAS PlateID ", ins.PlateID != "", " HAS platetype ", ins.Platetype != "", " HAS WELLADDRESS ", ins.Welladdress != "")
+			panic(fmt.Errorf("After layout all mix instructions must have plate IDs, plate types and well addresses"))
+		}
+	}
+}
+
 func anotherSanityCheck(request *LHRequest) {
 	p := map[*wtype.LHComponent]*wtype.LHInstruction{}
 
@@ -589,6 +630,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
 	}
 
+	// assert that we must keep prompts separate from mixes
+
+	checkInstructionOrdering(request)
+
 	forceSanity(request)
 	// convert requests to volumes and determine required stock concentrations
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
@@ -611,12 +656,30 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	forceSanity(request)
 	anotherSanityCheck(request)
 
+	// assert: all instructions should now be assigned specific plate IDs, types and wells
+	checkDestinationSanity(request)
+
 	if request.Options.FixVolumes {
 		// see if volumes can be corrected
 		request, err = FixVolumes(request)
 
 		if err != nil {
 			return err
+		}
+		if request.Options.PrintInstructions {
+			fmt.Println("")
+			fmt.Println("POST VOLUME FIX")
+			fmt.Println("")
+			for _, insID := range request.Output_order {
+				ins := request.LHInstructions[insID]
+				fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductID)
+
+				if ins.IsMixInPlace() {
+					fmt.Print(" INPLACE")
+				}
+
+				fmt.Println()
+			}
 		}
 	}
 	checkSanityIns(request)

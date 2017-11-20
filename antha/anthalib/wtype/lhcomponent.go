@@ -33,6 +33,8 @@ import (
 	"github.com/antha-lang/antha/graph"
 )
 
+const InPlaceMarker = "-INPLACE"
+
 // structure describing a liquid component and its desired properties
 type LHComponent struct {
 	ID                 string

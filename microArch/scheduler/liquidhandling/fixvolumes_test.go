@@ -205,3 +205,63 @@ func TestFixVolumes3(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Result.Volume()))
 	}
 }
+
+func TestFixVolumes4(t *testing.T) {
+	req := NewLHRequest()
+
+	c1 := getComponentWithNameVolume("water", 50.0)
+	c3 := c1.Cp()
+
+	c3.DeclareInstance()
+
+	ins := wtype.NewLHMixInstruction()
+	ins.Components = []*wtype.LHComponent{c1}
+
+	ins.Result = c3
+	ins.ProductID = ins.Result.ID
+	req.LHInstructions[ins.ID] = ins
+
+	ic := &IChain{
+		Parent: nil,
+		Child:  nil,
+		Values: []*wtype.LHInstruction{ins},
+		Depth:  0,
+	}
+
+	req.InstructionChain = ic
+
+	ins = wtype.NewLHPromptInstruction()
+
+	c4 := c3.Cp()
+
+	ins.PassThrough[c3.ID] = c4
+
+	ic.Child = &IChain{
+		Parent: ic,
+		Child:  nil,
+		Values: []*wtype.LHInstruction{ins},
+		Depth:  1,
+	}
+
+	ins = wtype.NewLHMixInstruction()
+
+	c5 := c4.Cp()
+	c5.Vol = 200.0
+
+	ins.Components = []*wtype.LHComponent{c4}
+	ins.Result = c5
+	ins.ProductID = c5.ID
+
+	ic.Child.Child = &IChain{
+		Parent: ic.Child,
+		Child:  nil,
+		Values: []*wtype.LHInstruction{ins},
+		Depth:  2,
+	}
+
+	req, err := FixVolumes(req)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+}

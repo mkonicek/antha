@@ -161,12 +161,12 @@ func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
 	factor = vol1.SIValue() / vol2.SIValue()
 
 	if math.IsInf(factor, 0) {
-		err = fmt.Errorf(("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		err = fmt.Errorf("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
 		return
 	}
 
 	if math.IsNaN(factor) {
-		err = fmt.Errorf(("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		err = fmt.Errorf("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
 		return
 	}
 
@@ -203,12 +203,12 @@ func DivideConcentrations(conc1, conc2 Concentration) (factor float64, err error
 	factor = conc1.SIValue() / conc2.SIValue()
 
 	if math.IsInf(factor, 0) {
-		err = fmt.Errorf(("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
+		err = fmt.Errorf("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
 		return
 	}
 
 	if math.IsNaN(factor) {
-		err = fmt.Errorf(("NaN value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
+		err = fmt.Errorf("NaN value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
 		return
 	}
 

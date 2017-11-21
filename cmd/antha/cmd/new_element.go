@@ -342,5 +342,6 @@ func newElement(cmd *cobra.Command, args []string) error {
 
 func init() {
 	c := newElementCmd
+
 	newCmd.AddCommand(c)
 }

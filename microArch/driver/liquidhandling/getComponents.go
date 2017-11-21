@@ -99,12 +99,19 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 		p, ok := lhp.Plates[ipref]
 
 		if ok {
+			tipsPerWell := multi / p.WellsY()
+
+			if ori == wtype.LHHChannel {
+				tipsPerWell = multi / p.WellsX()
+			}
+
 			it := getPlateIterator(p, ori, multi)
 
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
-
 				// cmps needs duping here
-				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume) // dups components
+				//	mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume) // dups components
+
+				mycmps := p.GetInflatedVolumeFilteredContentVector(wv, cmps, minPossibleVolume, tipsPerWell) // complicated.. but does basically dup components
 				if mycmps.Empty() {
 					continue
 				}

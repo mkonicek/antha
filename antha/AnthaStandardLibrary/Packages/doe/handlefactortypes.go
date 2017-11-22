@@ -26,6 +26,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/solutions"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -132,11 +133,15 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 
 	var floatValue float64
 	var floatFound bool
+	var volUnit string
 
 	rawVolFloat, found := value.(float64)
 
 	if found {
 		floatValue = rawVolFloat
+		floatFound = true
+	} else if rawVolInt, intFound := value.(int); intFound {
+		floatValue = float64(rawVolInt)
 		floatFound = true
 	} else {
 		rawvolstring, found := value.(string)
@@ -153,18 +158,20 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 		if err != nil {
 			return anthaVolume, err
 		}
-		vol, err := wunit.ParseVolume(header)
 
-		if err == nil {
+		fields := strings.Fields(header)
 
-			volUnit := vol.Unit().PrefixedSymbol()
-
-			anthaVolume = wunit.NewVolume(floatValue, volUnit)
-		} else {
-			anthaVolume = wunit.NewVolume(floatValue, "ul")
-			//err = fmt.Errorf("No valid Volume found in component %s so can't assign a Volume unit to value", header)
-			//return anthaVolume, err
+		for _, field := range fields {
+			if _, validUnitFound := wunit.UnitMap["Volume"][strings.Trim(field, "()")]; validUnitFound {
+				volUnit = strings.Trim(field, "()")
+			}
 		}
+
+		if volUnit == "" {
+			volUnit = "ul"
+		}
+
+		anthaVolume = wunit.NewVolume(floatValue, volUnit)
 
 	} else if rawVolString, found := value.(string); found {
 
@@ -173,7 +180,7 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 		if err == nil {
 			anthaVolume = vol
 		} else {
-			err = fmt.Errorf("No valid Volume found in %s", rawVolString)
+			err = fmt.Errorf("No valid Volume found in %s: %s", rawVolString, err.Error())
 			return anthaVolume, err
 		}
 

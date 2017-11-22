@@ -990,27 +990,6 @@ func componentList(vec ComponentVector) map[string]bool {
 	return r
 }
 
-func InflateComponentVector(cv ComponentVector, newLen int) ComponentVector {
-	// this is a fairly simple hack... simply make (pointer-based) copies of
-	// the component into a new component vector
-
-	ret := make(ComponentVector, newLen*len(cv))
-
-	c := 0
-	for i := 0; i < len(cv); i++ {
-		for j := 0; j < newLen; j++ {
-			ret[c] = cv[i]
-			c += 1
-		}
-	}
-
-	return ret
-}
-
-func (p *LHPlate) GetInflatedVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume, tipsPerWell int) ComponentVector {
-	return InflateComponentVector(p.GetVolumeFilteredContentVector(wv, cmps, mpv), tipsPerWell)
-}
-
 func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume) ComponentVector {
 	cv := p.GetFilteredContentVector(wv, cmps)
 

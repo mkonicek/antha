@@ -72,7 +72,6 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 			//panic(err)
 			return inss, err
 		}
-
 		for _, tf := range tfr {
 			inss = append(inss, RobotInstruction(tf))
 		}

@@ -29,6 +29,7 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/asset \
 	  \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Inventory \
+	  | grep -v /antha/AnthaStandardLibrary/Packages/Optimization \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Labware \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Liquidclasses \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Parser \

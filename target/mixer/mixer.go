@@ -86,7 +86,9 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
 
-	req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking)
+	if err := req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
+		return nil, err
+	}
 
 	prop := a.properties.Dup()
 	prop.Driver = a.properties.Driver
@@ -196,6 +198,10 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	req.Options.LegacyVolume = a.opt.LegacyVolume
 
+	// volume fix
+
+	req.Options.FixVolumes = a.opt.FixVolumes
+
 	err := req.ConfigureYourself()
 	if err != nil {
 		return nil, err
@@ -300,12 +306,12 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 	r.LHRequest.BlockID = getID(mixes)
 
 	for _, mix := range mixes {
-		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID()) {
+		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID) {
 			p, err := inventory.NewPlate(ctx, mix.Platetype)
 			if err != nil {
 				return nil, err
 			}
-			p.ID = mix.PlateID()
+			p.ID = mix.PlateID
 			r.LHRequest.Output_platetypes = append(r.LHRequest.Output_platetypes, p)
 		}
 		r.LHRequest.Add_instruction(mix)

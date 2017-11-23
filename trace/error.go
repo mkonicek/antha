@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// An Error is an error that arises during trace execution
 type Error struct {
 	BaseError interface{}
 	Stack     []byte

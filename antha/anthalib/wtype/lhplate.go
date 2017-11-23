@@ -25,14 +25,14 @@ package wtype
 import (
 	"bytes"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/microArch/logger"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // structure describing a microplate
@@ -152,10 +152,13 @@ func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
 	return ret
 }
 
+// deprecated
+/*
 func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 
 	for _, c := range cmps {
 		if independent && c == nil {
+			// HERE HERE HERE -->  INDEPENDENT MULTI NEEDS THIS
 			err = fmt.Errorf("Cannot do non-contiguous asks")
 			return
 		}
@@ -186,16 +189,24 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 
 	best := 0.0
 	bestMatch := ComponentMatch{}
+	/// MIS --> debug multichannel leads me here
+	//          -- for some reason it's not picking up ONE of the transfers..
+	//	       clearly an annoying edge here somewhere
+	//		well G6 in the M$ protocol
 	for wv := it.Curr(); it.Valid(); wv = it.Next() {
 		// cmps needs duping here
 		mycmps := lhp.GetContentVector(wv)
 
+		fmt.Println("INVOKE")
 		match, errr := matchComponents(cmps.Dup(), mycmps, independent)
 
 		if errr != nil {
 			err = errr
 			return
 		}
+
+		// issue here: this only ever keeps one match
+		// matchComponents needs to return multiple matches
 
 		sc := scoreMatch(match, independent)
 
@@ -211,6 +222,12 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 		vols = append(vols, m.Vols)
 	}
 
+	fmt.Println("BEST AMTCH CHRHE: ")
+	fmt.Println(plateIDs)
+	fmt.Println(wellCoords)
+	fmt.Println(vols)
+	fmt.Println("---")
+
 	if best <= 0.0 {
 		err = fmt.Errorf("Not found")
 	} else {
@@ -219,6 +236,8 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 
 	return
 }
+
+*/
 
 // this gets ONE component... possibly from several wells
 func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
@@ -412,6 +431,7 @@ func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []st
 			panic("No negative wells allowed")
 		}
 		if v > len(wps)-1 {
+			fmt.Println("LEN WPS - 1", len(wps)-1, " V: ", v)
 			panic("No wells out of bounds allowed")
 		}
 		ret = append(ret, wps[v])
@@ -803,16 +823,26 @@ func (p *LHPlate) SetConstrained(platform string, positions []string) {
 }
 
 func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
-	var pos []string
-
 	par, ok := p.Welltype.Extra[platform]
-
-	if ok {
-		pos = par.([]string)
-		return pos, true
+	if !ok {
+		return nil, false
 	}
 
-	return pos, false
+	switch par := par.(type) {
+
+	case []string:
+		return par, true
+
+	case []interface{}:
+		var pos []string
+		for _, v := range par {
+			pos = append(pos, v.(string))
+		}
+		return pos, true
+
+	default:
+		panic(fmt.Sprintf("unknown type %T", par))
+	}
 
 }
 
@@ -947,6 +977,39 @@ func (p *LHPlate) PlateHeight() float64 {
 	return p.Height
 }
 
+func componentList(vec ComponentVector) map[string]bool {
+	r := make(map[string]bool, len(vec))
+	for _, c := range vec {
+		if c != nil {
+			if c.Vol > 0.0 {
+				r[c.IDOrName()] = true
+			}
+		}
+	}
+
+	return r
+}
+
+func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume) ComponentVector {
+	cv := p.GetFilteredContentVector(wv, cmps)
+
+	cv.DeleteAllBelowVolume(mpv)
+	return cv
+}
+
+func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector) ComponentVector {
+	wants := componentList(cmps)
+	cv := p.GetContentVector(wv)
+
+	fcv := make([]*LHComponent, len(cv))
+	for i := 0; i < len(cv); i++ {
+		if cv[i] != nil && wants[cv[i].IDOrName()] {
+			fcv[i] = cv[i]
+		}
+	}
+
+	return fcv
+}
 func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
 	for _, w := range p.Wellcoords {
 		if w.UpdateContentID(before, after) {
@@ -956,34 +1019,24 @@ func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
 	return false
 }
 
-// @implement Annotatable
-
-func (p *LHPlate) AddData(k string, d AnthaData) error {
-	err := p.checkExtra(fmt.Sprintf("cannot add data %s", k))
-
-	if err != nil {
+// SetData implements Annotatable
+func (p *LHPlate) SetData(key string, data []byte) error {
+	if err := p.checkExtra(fmt.Sprintf("cannot add data %s", key)); err != nil {
 		return err
 	}
 
 	// nb -- in future disallow already set keys as well?
-	err = p.CheckExtraKey(k)
-
-	if err != nil {
-		return fmt.Errorf("Invalid key for setting data: %s - %s", k, err.Error())
+	if err := p.CheckExtraKey(key); err != nil {
+		return fmt.Errorf("invalid key %s: %s", key, err)
 	}
 
-	marshalleD, err := json.Marshal(d)
-
-	if err != nil {
-		return err
-	}
-
-	p.Welltype.Extra[k] = marshalleD
+	p.Welltype.Extra[key] = data
 
 	return nil
 
 }
 
+// ClearData removes data with the given name
 func (p *LHPlate) ClearData(k string) error {
 	err := p.checkExtra(fmt.Sprintf("cannot clear data %s", k))
 
@@ -1012,37 +1065,24 @@ func (p *LHPlate) checkExtra(s string) error {
 	return nil
 }
 
-func (p LHPlate) GetData(k string) (d AnthaData, err error) {
-
-	err = (&p).checkExtra(fmt.Sprintf("Cannot get data %s", k))
-
-	if err != nil {
-		return d, err
+func (p LHPlate) GetData(key string) ([]byte, error) {
+	if err := p.checkExtra(fmt.Sprintf("cannot get key %s", key)); err != nil {
+		return nil, err
 	}
 
-	err = p.CheckExtraKey(k)
-
-	if err != nil {
-		return d, fmt.Errorf("Invalid key for getting data:%s - %s", k, err.Error())
+	if err := p.CheckExtraKey(key); err != nil {
+		return nil, fmt.Errorf("invalid key %s: %s", key, err)
 	}
 
-	marshalleD, ok := p.Welltype.Extra[k].([]byte)
-
+	bs, ok := p.Welltype.Extra[key].([]byte)
 	if !ok {
-		return d, fmt.Errorf("Data %s not found or not a string", k)
+		return nil, fmt.Errorf("key %s not found", key)
 	}
 
-	err = json.Unmarshal(marshalleD, &d)
-
-	if err != nil {
-		return d, err
-	}
-
-	return d, nil
+	return bs, nil
 }
 
-//
-
+// CheckExtraKey checks if the key is a reserved name
 func (p LHPlate) CheckExtraKey(k string) error {
 	reserved := []string{"IMSPECIAL", "Pipetmax"}
 
@@ -1055,4 +1095,16 @@ func (p LHPlate) CheckExtraKey(k string) error {
 	}
 
 	return p.Welltype.CheckExtraKey(k)
+}
+
+// AllContents returns all the components on the plate
+func (p *LHPlate) AllContents() []*LHComponent {
+	ret := make([]*LHComponent, 0, len(p.Wellcoords))
+	for _, c := range p.Cols {
+		for _, w := range c {
+			ret = append(ret, w.WContents)
+		}
+	}
+
+	return ret
 }

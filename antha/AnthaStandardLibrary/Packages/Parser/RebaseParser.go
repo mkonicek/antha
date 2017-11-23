@@ -52,17 +52,7 @@ V        Vivantis Technologies (8/14)
 X        EURx Ltd. (8/14)
 Y        SinaClon BioScience Co. (8/14)
 */
-/*
-type RebaseEntry struct {
-	Name                string //"attr, <1>"
-	Prototype           string //"attr, <2>"
-	RecognitionSequence string
-	//CutPosition         CutPosition //"attr, <3>"
-	MethylationSite  string   //"attr, <4>"
-	CommercialSource []string //string "attr, <5>"
-	References       []string "attr, <6>"
-}
-*/
+
 type TypeIIs struct {
 	wtype.RestrictionEnzyme
 	Name                              string
@@ -70,23 +60,6 @@ type TypeIIs struct {
 	Topstrand3primedistancefromend    int
 	Bottomstrand5primedistancefromend int
 }
-
-// This will be the general type
-/*
-type LogicalRestrictionEnzyme struct {
-	// other fields required but for now the main things are...
-	RecognitionSequence               string
-	EndLength                         int
-	Name                              string
-	Prototype                         string
-	Topstrand3primedistancefromend    int
-	Bottomstrand5primedistancefromend int
-	MethylationSite                   string   //"attr, <4>"
-	CommercialSource                  []string //string "attr, <5>"
-	References                        []int
-	Class                             string
-}
-*/
 
 func RecognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, EndLength int, Topstrand3primedistancefromend int, Bottomstrand5primedistancefromend int, Class string) {
 

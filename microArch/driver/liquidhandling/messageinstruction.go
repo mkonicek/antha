@@ -8,8 +8,9 @@ import (
 
 type MessageInstruction struct {
 	GenericRobotInstruction
-	Type    int
-	Message string
+	Type        int
+	Message     string
+	PassThrough map[string]*wtype.LHComponent
 }
 
 func NewMessageInstruction(lhi *wtype.LHInstruction) *MessageInstruction {
@@ -17,12 +18,16 @@ func NewMessageInstruction(lhi *wtype.LHInstruction) *MessageInstruction {
 	msi.Type = MSG
 	if lhi != nil {
 		msi.Message = lhi.Message
+		msi.PassThrough = lhi.PassThrough
 	}
 
 	return &msi
 }
 
 func (msi *MessageInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	// use side effect to keep IDs straight
+
+	prms.UpdateComponentIDs(msi.PassThrough)
 	return nil, nil
 }
 

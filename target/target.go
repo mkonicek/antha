@@ -10,9 +10,7 @@ import (
 )
 
 var (
-	errNoLh         = errors.New("no liquid handler found")
-	errNoTarget     = errors.New("no target configuration found")
-	errAlreadyAdded = errors.New("already added")
+	errNoTarget = errors.New("no target configuration found")
 )
 
 const (
@@ -38,6 +36,10 @@ var (
 	DriverSelectorV1Prompter = ast.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.prompter.v1.Prompter",
+	}
+	DriverSelectorV1DataSource = ast.NameValue{
+		Name:  DriverSelectorV1Name,
+		Value: "antha.datasource.v1.DataSource",
 	}
 )
 
@@ -89,7 +91,6 @@ func (a *Target) CanCompile(reqs ...ast.Request) (r []Device) {
 }
 
 // AddDevice adds a device to the target configuration
-func (a *Target) AddDevice(d Device) error {
+func (a *Target) AddDevice(d Device) {
 	a.devices = append(a.devices, d)
-	return nil
 }

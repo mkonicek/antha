@@ -46,9 +46,7 @@ func (a *instGraph) Out(n graph.Node, i int) graph.Node {
 func (a *instGraph) addInsts(insts []target.Inst) {
 	// Add dependencies
 	for _, in := range insts {
-		for _, v := range in.DependsOn() {
-			a.dependsOn[in] = append(a.dependsOn[in], v)
-		}
+		a.dependsOn[in] = append(a.dependsOn[in], in.DependsOn()...)
 	}
 
 	// Add nodes

@@ -72,7 +72,7 @@ func TestDefaultChooser(t *testing.T) {
 
 		if prm == nil {
 			if !mxr.IsZero() || !mnr.IsZero() || tpr != tiptype {
-				t.Fatal(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), " Got nil want: ", mnr.ToString(), " ", mnr.ToString, " ", tpr))
+				t.Fatal(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), " Got nil want: ", mnr.ToString(), " ", tpr))
 			}
 
 		} else if !prm.Maxvol.EqualTo(mxr) || !prm.Minvol.EqualTo(mnr) || tiptype != tpr {
@@ -105,7 +105,7 @@ func makeTestLH() *LHProperties {
 	for y := 0; y < 3; y++ {
 		for x := 0; x < 3; x++ {
 			posname := fmt.Sprintf("position_%d", i+1)
-			crds := wtype.Coordinates{xp, yp, zp}
+			crds := wtype.Coordinates{X: xp, Y: yp, Z: zp}
 			layout[posname] = crds
 			i += 1
 			xp += xi

@@ -102,7 +102,7 @@ func (it *IChain) Print() {
 			if it.Values[j].Type == wtype.LHIMIX {
 				fmt.Printf("MIX    %2d: %s ", j, it.Values[j].ID)
 				for i := 0; i < len(it.Values[j].Components); i++ {
-					fmt.Print(" ", it.Values[j].Components[i].CName, " (", it.Values[j].Components[i].ID, ") ")
+					fmt.Print(" ", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().ToString(), " ")
 				}
 				fmt.Print(":", it.Values[j].Result.ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Printf("-- ")

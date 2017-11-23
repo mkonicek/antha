@@ -28,7 +28,7 @@ func makeGilson() *LHProperties {
 		xp = x0
 		for x := 0; x < 3; x++ {
 			posname := fmt.Sprintf("position_%d", i+1)
-			crds := wtype.Coordinates{xp, yp, zp}
+			crds := wtype.Coordinates{X: xp, Y: yp, Z: zp}
 			layout[posname] = crds
 			i += 1
 			xp += xi

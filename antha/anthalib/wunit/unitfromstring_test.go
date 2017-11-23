@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -95,6 +96,61 @@ var componentWithConcstests = []unitFromStringTest{
 		Conc:              NewConcentration(0.0, "g/L"),
 		ComponentNameOnly: "E.coli SuperFolder GFP",
 	},
+}
+
+type volTest struct {
+	VolString    string
+	Volume       Volume
+	ErrorMessage string
+}
+
+var volTests = []volTest{
+	volTest{
+		VolString:    "10ul",
+		Volume:       NewVolume(10, "ul"),
+		ErrorMessage: "",
+	},
+	volTest{
+		VolString:    "10 ul",
+		Volume:       NewVolume(10, "ul"),
+		ErrorMessage: "",
+	},
+	volTest{
+		VolString:    "10",
+		Volume:       Volume{},
+		ErrorMessage: "no valid unit found for 10: valid units are: [L l ml nl ul]",
+	},
+}
+
+func TestParseVolume(t *testing.T) {
+
+	for _, test := range volTests {
+		vol, err := ParseVolume(test.VolString)
+		if !reflect.DeepEqual(vol, test.Volume) {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected:", test.Volume, "\n",
+				"Got:", vol, "\n",
+			)
+		}
+		if err != nil {
+			if err.Error() != test.ErrorMessage {
+				t.Error(
+					"for", fmt.Sprintf("%+v", test), "\n",
+					"Expected error:", test.ErrorMessage, "\n",
+					"Got:", err.Error(), "\n",
+				)
+			}
+		}
+
+		if err == nil && test.ErrorMessage != "" {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected error:", test.ErrorMessage, "\n",
+				"Got:", "nil", "\n",
+			)
+		}
+	}
 }
 
 func TestParseConcentration(t *testing.T) {

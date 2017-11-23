@@ -25,8 +25,10 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"reflect"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 const (
@@ -286,7 +288,7 @@ func (lh *LHVariableCondition) UnmarshalJSON(data []byte) error {
 			_, cat := mp["Category"]
 			_, num := mp["Upper"]
 			if cat {
-				lhcc := LHCategoryCondition{Category: mp["Categor"].(string)}
+				lhcc := LHCategoryCondition{Category: mp["Category"].(string)}
 				lh.Condition = lhcc
 			} else if num {
 				lhnc := LHNumericCondition{Upper: mp["Upper"].(float64), Lower: mp["Lower"].(float64)}
@@ -551,7 +553,7 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 		}
 
 		for _, f := range v.([]float64) {
-			if !lhnc.Match(f) && f > EPSILON_64() {
+			if !lhnc.Match(f) && f > wutil.EPSILON_64() {
 				return false
 			}
 		}
@@ -587,7 +589,7 @@ func numInStringArray(a []string) int {
 func numInFloatArray(a []float64) int {
 	c := 0
 	for _, f := range a {
-		if f > EPSILON_64() {
+		if f > wutil.EPSILON_64() {
 			c += 1
 		}
 	}

@@ -15,19 +15,22 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Common state amount amount tryers
+// Common state for tryers
 type tryer struct {
 	Auto      *Auto
 	MaybeArgs []interface{}
 	HumanOpt  human.Opt
 }
 
-func (a *tryer) Driver(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
+// AddDriver queries a driver and adds the corresponding device to the target
+// based on the query response
+func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	c := driver.NewDriverClient(conn)
 	reply, err := c.DriverType(ctx, &driver.TypeRequest{})
 	if err != nil {
 		return err
 	}
+
 	switch reply.Type {
 
 	case "antha.runner.v1.Runner":
@@ -44,7 +47,8 @@ func (a *tryer) Driver(ctx context.Context, conn *grpc.ClientConn, arg interface
 		s := &shakerincubator.ShakerIncubator{}
 		a.HumanOpt.CanIncubate = false
 		a.Auto.handler[s] = conn
-		return a.Auto.Target.AddDevice(s)
+		a.Auto.Target.AddDevice(s)
+		return nil
 
 	default:
 		h := handler.New(
@@ -57,13 +61,15 @@ func (a *tryer) Driver(ctx context.Context, conn *grpc.ClientConn, arg interface
 		)
 		a.HumanOpt.CanHandle = false
 		a.Auto.handler[h] = conn
-		return a.Auto.Target.AddDevice(h)
+		a.Auto.Target.AddDevice(h)
+		return nil
 	}
 
 	return nil
 }
 
-func (a *tryer) Mixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
+// AddMixer queries a mixer driver and adds the corresponding device to the target
+func (a *tryer) AddMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	c := lh.NewExtendedLiquidhandlingDriverClient(conn)
 
 	var candidates []interface{}
@@ -75,7 +81,8 @@ func (a *tryer) Mixer(ctx context.Context, conn *grpc.ClientConn, arg interface{
 	if err != nil {
 		return err
 	}
-	return a.Auto.Target.AddDevice(d)
+	a.Auto.Target.AddDevice(d)
+	return nil
 }
 
 func getMixerOpt(maybeArgs []interface{}) (ret mixer.Opt) {
@@ -89,7 +96,7 @@ func getMixerOpt(maybeArgs []interface{}) (ret mixer.Opt) {
 
 func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	var tries []func(context.Context, *grpc.ClientConn, interface{}) error
-	tries = append(tries, a.Driver, a.Mixer)
+	tries = append(tries, a.AddDriver, a.AddMixer)
 
 	for _, t := range tries {
 		if err := t(ctx, conn, arg); err == nil {

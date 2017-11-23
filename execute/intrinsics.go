@@ -2,20 +2,28 @@ package execute
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
+	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 )
 
+// a commandInst is a generic instinsic instruction
 type commandInst struct {
-	Args    []*wtype.LHComponent
-	Comp    *wtype.LHComponent
+	// Arguments to this command. Used to determine command dependencies.
+	Args []*wtype.LHComponent
+	// Component created by this command. Returned back to user code
+	result  *wtype.LHComponent
 	Command *ast.Command
 }
 
@@ -60,20 +68,23 @@ func newCompFromComp(ctx context.Context, in *wtype.LHComponent) *wtype.LHCompon
 
 // Incubate incubates a component
 func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtype.LHComponent {
+	// nolint: gosimple
+	innerInst := &ast.IncubateInst{
+		Time:           opt.Time,
+		Temp:           opt.Temp,
+		ShakeRate:      opt.ShakeRate,
+		ShakeRadius:    opt.ShakeRadius,
+		PreTemp:        opt.PreTemp,
+		PreTime:        opt.PreTime,
+		PreShakeRate:   opt.PreShakeRate,
+		PreShakeRadius: opt.PreShakeRadius,
+	}
+
 	inst := &commandInst{
-		Args: []*wtype.LHComponent{in},
-		Comp: newCompFromComp(ctx, in),
+		Args:   []*wtype.LHComponent{in},
+		result: newCompFromComp(ctx, in),
 		Command: &ast.Command{
-			Inst: &ast.IncubateInst{
-				Time:           opt.Time,
-				Temp:           opt.Temp,
-				ShakeRate:      opt.ShakeRate,
-				ShakeRadius:    opt.ShakeRadius,
-				PreTemp:        opt.PreTemp,
-				PreTime:        opt.PreTime,
-				PreShakeRate:   opt.PreShakeRate,
-				PreShakeRadius: opt.PreShakeRadius,
-			},
+			Inst: innerInst,
 		},
 	}
 
@@ -87,7 +98,7 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtyp
 	})
 
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.result
 }
 
 // prompt... works pretty much like Handle does
@@ -110,14 +121,14 @@ func MixerPrompt(ctx context.Context, in *wtype.LHComponent, message string) *wt
 		},
 	)
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.result
 }
 
 // Prompt prompts user with a message
 func Prompt(ctx context.Context, in *wtype.LHComponent, message string) *wtype.LHComponent {
 	inst := &commandInst{
-		Args: []*wtype.LHComponent{in},
-		Comp: newCompFromComp(ctx, in),
+		Args:   []*wtype.LHComponent{in},
+		result: newCompFromComp(ctx, in),
 		Command: &ast.Command{
 			Inst: &ast.PromptInst{
 				Message: message,
@@ -132,7 +143,7 @@ func Prompt(ctx context.Context, in *wtype.LHComponent, message string) *wtype.L
 	})
 
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.result
 }
 
 func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
@@ -144,8 +155,8 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
 
 	return &commandInst{
-		Args: []*wtype.LHComponent{opts.ComponentIn},
-		Comp: opts.Component,
+		Args:   []*wtype.LHComponent{opts.ComponentIn},
+		result: opts.Component,
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
@@ -173,8 +184,8 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 	}
 
 	return &commandInst{
-		Args: []*wtype.LHComponent{opt.Component},
-		Comp: comp,
+		Args:   []*wtype.LHComponent{opt.Component},
+		result: comp,
 		Command: &ast.Command{
 			Inst: &ast.HandleInst{
 				Group:    opt.Label,
@@ -198,7 +209,7 @@ type HandleOpt struct {
 func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 	inst := handle(ctx, opt)
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.result
 }
 
 // NewComponent returns a new component given a component type
@@ -225,7 +236,6 @@ func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
 func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	inst.BlockID = wtype.NewBlockID(getID(ctx))
 	inst.Result.BlockID = inst.BlockID
-
 	result := inst.Result
 	result.BlockID = inst.BlockID
 
@@ -233,6 +243,9 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	var reqs []ast.Request
 	// from the protocol POV components need to be passed by value
 	for i, c := range wtype.CopyComponentArray(inst.Components) {
+		if c.CName == "" {
+			panic("Nameless Component used in Mix - this is not permitted")
+		}
 		reqs = append(reqs, ast.Request{
 			Selector: []ast.NameValue{
 				target.DriverSelectorV1Mixer,
@@ -258,14 +271,14 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 			Requests: reqs,
 			Inst:     inst,
 		},
-		Comp: result,
+		result: result,
 	}
 }
 
 func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.LHComponent {
 	inst := mix(ctx, generic)
 	trace.Issue(ctx, inst)
-	return inst.Comp
+	return inst.result
 }
 
 // Mix mixes components
@@ -304,4 +317,96 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 		Address:    address,
 		PlateNum:   platenum,
 	}))
+}
+
+// AwaitData breaks execution pending return of requested data
+func AwaitData(
+	ctx context.Context,
+	object Annotatable,
+	meta *api.DeviceMetadata,
+	nextElement, replaceParam string,
+	nextInput, currentOutput inject.Value) {
+
+	if err := awaitData(ctx, object, meta, nextElement, replaceParam, nextInput, currentOutput); err != nil {
+		panic(err)
+	}
+}
+
+func clone(object inject.Value) (inject.Value, error) {
+	bs, err := json.Marshal(object)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(bs, &object); err != nil {
+		return nil, err
+	}
+
+	return object, nil
+}
+
+func awaitData(
+	ctx context.Context,
+	object Annotatable,
+	meta *api.DeviceMetadata,
+	nextElement, replaceParam string,
+	nextInput, currentOutput inject.Value) error {
+
+	switch t := object.(type) {
+	case *wtype.LHPlate:
+	default:
+		return fmt.Errorf("cannot wait for data on %v type, only LHPlate allowed", t)
+	}
+
+	nextInput, err := clone(nextInput)
+	if err != nil {
+		return err
+	}
+
+	currentOutput, err = clone(currentOutput)
+	if err != nil {
+		return err
+	}
+
+	// Get Data Request
+	req := ast.Request{
+		Selector: []ast.NameValue{
+			target.DriverSelectorV1DataSource,
+		},
+	}
+
+	// Update all components
+	plate := object.(*wtype.LHPlate)
+
+	allComp := plate.AllContents()
+
+	var updatedComp []*wtype.LHComponent
+	for _, c := range allComp {
+		updatedComp = append(updatedComp, newCompFromComp(ctx, c))
+	}
+
+	_ = updatedComp // currently unused
+
+	await := &ast.AwaitInst{
+		AwaitID:              plate.ID,
+		NextElement:          nextElement,
+		NextElementInput:     nextInput,
+		ReplaceParam:         replaceParam,
+		CurrentElementOutput: currentOutput,
+	}
+
+	if meta != nil {
+		await.Tags = meta.Tags
+	}
+
+	// Create Instruction
+	inst := &commandInst{
+		Args: allComp,
+		Command: &ast.Command{
+			Requests: []ast.Request{req},
+			Inst:     await,
+		},
+	}
+
+	trace.Issue(ctx, inst)
+	return nil
 }

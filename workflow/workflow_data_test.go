@@ -1,6 +1,6 @@
 package workflow
 
-var condCopyEqualsJson = `
+var condCopyEqualsJSON = `
 {
     "processes": {
         "Equals": { "component": "Equals" },

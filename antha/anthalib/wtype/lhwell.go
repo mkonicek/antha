@@ -423,14 +423,12 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 
 	if !ok {
 		return nil
-	} else {
-		x, err := wutil.UnmarshalFunc([]byte(f.(string)))
-		if err != nil {
-			logger.Fatal(fmt.Sprintf("Can't unmarshal function, error: %s", err.Error))
-		}
-		return x
 	}
-	return nil
+	x, err := wutil.UnmarshalFunc([]byte(f.(string)))
+	if err != nil {
+		panic(fmt.Sprintf("Can't unmarshal function, error: %s", err))
+	}
+	return x
 }
 
 func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
@@ -456,9 +454,8 @@ func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape 
 	var well LHWell
 
 	well.WContents = NewLHComponent()
-	well.WContents.DeclareInstance()
+	well.WContents.Loc = plateid + ":" + crds
 
-	//well.ID = "well-" + GetUUID()
 	well.ID = GetUUID()
 	well.Platetype = platetype
 	well.Plateid = plateid
@@ -718,35 +715,36 @@ func (w *LHWell) ClearUserAllocated() {
 
 func (w *LHWell) Contains(cmp *LHComponent) bool {
 	// obviously empty wells don't contain anything
-	if w.Empty() {
+	if w.Empty() || cmp == nil {
 		return false
 	}
-	// request for a specific component
-	if cmp.IsInstance() {
-		if cmp.IsSample() {
-			//  look for the ID of its parent (we don't allow sampling from samples yet)
-			return cmp.ParentID == w.WContents.ID
-		} else {
-			// if this is just the whole component we check for *its* Id
-			return cmp.ID == w.WContents.ID
-		}
-	} else {
-		// sufficient to be of same types
-		return cmp.IsSameKindAs(w.WContents)
-	}
+	// components are the keepers of this information
+	return cmp.Matches(w.WContents)
 }
 
 func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 	if w.WContents.ID == IDBefore {
-		previous := w.WContents
-		after.AddParentComponent(previous)
-		w.WContents = after
+		/*
+			previous := w.WContents
+			after.AddParentComponent(previous)
+			after.Loc = w.WContents.Loc
+
+			fmt.Println("UPDATE BEFORE: ", w.WContents.CName, " ", w.WContents.Vol, " ", after.CName, " ", after.Vol)
+
+			w.WContents = after
+		*/
+
+		w.WContents.AddParentComponent(w.WContents)
+		w.WContents.ID = after.ID
+		w.WContents.CName = after.CName
+
 		return true
 	}
 
 	return false
 }
 
+// CheckExtraKey checks if the key is a reserved name
 func (w LHWell) CheckExtraKey(s string) error {
 	reserved := []string{"protected", "afvfunc", "temporary", "autoallocated", "UserAllocated"}
 

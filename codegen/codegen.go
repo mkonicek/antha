@@ -59,7 +59,7 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 			if !ok {
 				return ""
 			}
-			return fmt.Sprintf("%s", h.Group)
+			return h.Group
 		},
 		func(x interface{}) string {
 			n, ok := x.(ast.Node)
@@ -68,7 +68,7 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 			}
 			drun := a.assignment[n]
 			if drun != nil {
-				return fmt.Sprintf("Run %p Device %p %s", drun, drun.Device, drun.Device)
+				return fmt.Sprintf("Run %p Device %v %s", drun, drun.Device, drun.Device)
 			}
 			return ""
 		},
@@ -449,7 +449,7 @@ func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, ru
 				// Add move
 				m := &ast.Move{
 					From:  cs,
-					ToLoc: fmt.Sprintf("%p", dev),
+					ToLoc: fmt.Sprintf("%v", dev),
 				}
 				moves[dev] = append(moves[dev], m)
 				a.assignment[m] = getRun(dev)

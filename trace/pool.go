@@ -11,7 +11,8 @@ type poolKey int
 
 const thePoolKey poolKey = 0
 
-var poolDoneError error = errors.New("trace: done error") // Dummy error to signal sucessful execution
+// Dummy error to signal sucessful execution
+var errPoolDone = errors.New("trace: done error")
 
 type poolCtx struct {
 	context.Context
@@ -35,7 +36,7 @@ func (a *poolCtx) Err() error {
 	if a.err == nil {
 		return a.Context.Err()
 	}
-	if a.err == poolDoneError {
+	if a.err == errPoolDone {
 		return nil
 	}
 	return a.err
@@ -64,9 +65,11 @@ func (a *poolCtx) remove(p *Promise) {
 	delete(a.blocked, p)
 }
 
+// DoneFunc is a function that returns a channel to listen to
+// to be notified when something is done
 type DoneFunc func() <-chan struct{}
 
-// Create a pool context. It is done when all Go()-created routines return
+// WithPool creates a pool context. It is done when all Go()-created routines return
 // normally or when any return an error.
 func WithPool(parent context.Context) (context.Context, context.CancelFunc, DoneFunc) {
 	tr := getTrace(parent)
@@ -124,14 +127,14 @@ func decrement(pctx *poolCtx, tr *trace, delta int, err error) {
 		cancel = err
 	}
 	if pctx.alive == 0 && cancel == nil {
-		cancel = poolDoneError
+		cancel = errPoolDone
 	}
 	if cancel != nil {
 		pctx.cancelWithLock(cancel)
 	}
 }
 
-// Create a new goroutine in the pool context
+// Go creates a new goroutine in the pool context
 func Go(parent context.Context, fn func(ctx context.Context) error) {
 	pctx := getPool(parent)
 	ctx := withScope(parent)
@@ -140,7 +143,7 @@ func Go(parent context.Context, fn func(ctx context.Context) error) {
 	pctx.lock.Lock()
 	defer pctx.lock.Unlock()
 
-	pctx.alive += 1
+	pctx.alive++
 
 	go func() {
 		var err error

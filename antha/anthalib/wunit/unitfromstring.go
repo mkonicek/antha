@@ -39,6 +39,32 @@ func NormaliseUnit(unit string) (normalisedunit string) {
 	return
 }
 
+// SplitValueAndUnit splits a joined value and unit in string format into seperate typed value and unit fields.
+// If the string input is not in the valid format of value followed by unit it will not be parsed correctly.
+// If a value on its own is given the unit will be returned blank, if the unit is given alone the value will be 0.0
+// valid: 10s, 10 s, 10.5s, 2.16e+04 s, 10, s
+// invalid: s 10 s10
+func SplitValueAndUnit(str string) (value float64, unit string) {
+
+	fields := strings.Fields(str)
+
+	if len(fields) == 2 {
+		if value, err := strconv.ParseFloat(fields[0], 64); err == nil {
+			return value, fields[1]
+		}
+		if value, err := strconv.Atoi(fields[0]); err == nil {
+			return float64(value), fields[1]
+		}
+	} else if len(fields) == 1 {
+		for i := 0; i < len(str); i++ {
+			if value, err := strconv.ParseFloat(str[:len(str)-i], 64); err == nil {
+				return value, str[len(str)-i:]
+			}
+		}
+	}
+	return value, str
+}
+
 // Utility function to parse concentration from a component name.
 // Not currently robust to situations where the component name (without the concentration) is more than one field (e.g. ammonium sulphate) or if the component name is a concatenation of component names (e.g. 1mM Glucose + 10mM Glycerol).
 func ParseConcentration(componentname string) (containsconc bool, conc Concentration, componentNameOnly string) {

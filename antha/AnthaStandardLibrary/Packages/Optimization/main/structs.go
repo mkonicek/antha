@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 type SeqSet []string
@@ -62,6 +59,7 @@ func Distinct(sa []string) []string {
 	return r
 }
 
+/*
 type MSA []*wtype.BioSequence
 
 func parseFasta(ba []byte) (MSA, err) {
@@ -85,3 +83,4 @@ func readMSA(fn string) (MSA, error) {
 
 	return MSA, nil
 }
+*/

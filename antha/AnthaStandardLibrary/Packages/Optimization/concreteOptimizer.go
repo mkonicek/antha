@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"reflect"
 	"sort"
-	"time"
 	"unicode"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -201,7 +200,7 @@ func optimizeAssembly(problem AssemblyProblem, constraints Constraints, paramete
 	// b) we minimize a cost function f which sums the products
 	//    of all y_is corresponding to x_is which are between
 	//    pairs of k_js
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
 
 	pop := NewPop(problem, constraints, parameters)
 

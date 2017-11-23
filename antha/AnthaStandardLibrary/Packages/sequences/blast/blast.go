@@ -330,10 +330,10 @@ func Summary(hit Hit) (summary string) {
 	return
 }
 */
+
 func MegaBlastP(query string) (hits []blast.Hit, err error) {
 
 	putparams = blast.PutParameters{Program: "blastp", Megablast: true, Database: "nr"}
-
 	o, err := SimpleBlast(query)
 	if err != nil {
 		return

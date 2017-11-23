@@ -133,6 +133,8 @@ func subHash(h1, h2 ComponentVolumeHash) ComponentVolumeHash {
 
 		if ok {
 			r[k].Subtract(v)
+		} else {
+			r[k] = wunit.NewVolume(-1.0, "ul")
 		}
 	}
 

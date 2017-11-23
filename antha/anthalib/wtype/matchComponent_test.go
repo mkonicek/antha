@@ -728,3 +728,7 @@ func TestAlignIndependent3(t *testing.T) {
 		t.Errorf("Expected %v got %v", expected, m)
 	}
 }
+
+func TestSkipComponents1(t *testing.T) {
+
+}

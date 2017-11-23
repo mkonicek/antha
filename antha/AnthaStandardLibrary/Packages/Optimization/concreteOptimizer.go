@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"reflect"
 	"sort"
-	"time"
+	//"time"
 	"unicode"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"

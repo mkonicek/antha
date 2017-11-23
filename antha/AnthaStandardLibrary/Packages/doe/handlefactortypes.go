@@ -234,3 +234,82 @@ func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) 
 
 	return inventory.NewPlate(ctx, str)
 }
+
+// HandleTemperatureFactor parses a factor name and value and returns an antha Temperature.
+// If the value cannot be converted to a valid Volume an error is returned.
+// A float or int value with no unit is assumed to be in C.
+func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.Temperature, err error) {
+
+	switch temp := value.(type) {
+	case int:
+		anthaTemp = wunit.NewTemperature(float64(temp), "C")
+		return
+	case float64:
+		anthaTemp = wunit.NewTemperature(temp, "C")
+		return
+	case string:
+		value, unit := wunit.SplitValueAndUnit(temp)
+
+		err = wunit.ValidMeasurementUnit("Temperature", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaTemp = wunit.NewTemperature(value, unit)
+
+		return
+	default:
+		return anthaTemp, fmt.Errorf("cannot convert %v of type %T to temperature!", value, temp)
+	}
+}
+
+func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, err error) {
+
+	switch time := value.(type) {
+	case int:
+		anthaTime = wunit.NewTime(float64(time), "s")
+		return
+	case float64:
+		anthaTime = wunit.NewTime(time, "s")
+		return
+	case string:
+		value, unit := wunit.SplitValueAndUnit(time)
+
+		err = wunit.ValidMeasurementUnit("Time", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaTime = wunit.NewTime(value, unit)
+		return
+	default:
+		return anthaTime, fmt.Errorf("cannot convert %v of type %T to time!", value, time)
+	}
+}
+
+func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, err error) {
+
+	switch rate := value.(type) {
+	case int:
+		anthaRate, err = wunit.NewRate(float64(rate), "/min")
+		return
+	case float64:
+		anthaRate, err = wunit.NewRate(rate, "/min")
+		return
+	case string:
+		value, unit := wunit.SplitValueAndUnit(rate)
+
+		err = wunit.ValidMeasurementUnit("Rate", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaRate, err = wunit.NewRate(value, unit)
+		return
+	default:
+		return anthaRate, fmt.Errorf("cannot convert %v of type %T to RPM!", value, rate)
+	}
+}

@@ -20,21 +20,22 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for facilitating DOE methodology in antha
 package doe
 
 import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/solutions"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 )
 
-// parses a factor name and value and returns an antha concentration.
+// HandleConcFactor parses a factor name and value and returns an antha concentration.
 // If the value cannot be converted to a valid concentration an error is returned.
 // If the header contains a valid concentration unit a number can be specified as the value.
 func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concentration, err error) {
@@ -46,6 +47,7 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 
 	if found {
 		floatValue = rawconcfloat
+		floatFound = true
 	} else {
 		rawconcstring, found := value.(string)
 		var floatParseErr error
@@ -87,58 +89,110 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 
 		// if float use conc unit from header component
 	} else {
-		err = fmt.Errorf("problem with type of ", value, " expected string or float")
+		err = fmt.Errorf("problem with type of %T expected string or float", value)
 		return anthaConc, err
 	}
 
 	return
 }
 
-// parses a factor name and value and returns an antha Volume.
+// HandleComponentWithConcentration returns both LHComponent and Concentration from a component name with concentration in a DOE design.
+// If no valid concentration is found or an invalid component name is specifed an error is returned.
+func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.LHComponent, concentration wunit.Concentration, err error) {
+
+	concentration, err = HandleConcFactor(header, value)
+
+	if err != nil {
+		return
+	}
+
+	componentName := solutions.NormaliseName(header)
+
+	component, err = inventory.NewComponent(ctx, componentName)
+
+	if err == nil {
+		// continue
+	} else if err == inventory.ErrUnknownType {
+		component, err = inventory.NewComponent(ctx, inventory.WaterType)
+		if err != nil {
+			return
+		}
+		component.CName = componentName
+	} else {
+		return
+	}
+
+	component.SetConcentration(concentration)
+
+	return
+}
+
+// HandleVolumeFactor parses a factor name and value and returns an antha Volume.
 // If the value cannot be converted to a valid Volume an error is returned.
 func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Volume, err error) {
 
-	if rawVolString, found := value.(string); found {
+	var floatValue float64
+	var floatFound bool
+	var volUnit string
+
+	rawVolFloat, found := value.(float64)
+
+	if found {
+		floatValue = rawVolFloat
+		floatFound = true
+	} else if rawVolInt, intFound := value.(int); intFound {
+		floatValue = float64(rawVolInt)
+		floatFound = true
+	} else {
+		rawvolstring, found := value.(string)
+		var floatParseErr error
+		if floatValue, floatParseErr = strconv.ParseFloat(rawvolstring, 64); found && floatParseErr == nil {
+			floatFound = true
+		}
+	}
+	if floatFound {
+
+		// handle floating point imprecision
+		floatValue, err = wutil.Roundto(floatValue, 6)
+
+		if err != nil {
+			return anthaVolume, err
+		}
+
+		fields := strings.Fields(header)
+
+		for _, field := range fields {
+			if _, validUnitFound := wunit.UnitMap["Volume"][strings.Trim(field, "()")]; validUnitFound {
+				volUnit = strings.Trim(field, "()")
+			}
+		}
+
+		if volUnit == "" {
+			volUnit = "ul"
+		}
+
+		anthaVolume = wunit.NewVolume(floatValue, volUnit)
+
+	} else if rawVolString, found := value.(string); found {
 
 		vol, err := wunit.ParseVolume(rawVolString)
 
 		if err == nil {
 			anthaVolume = vol
 		} else {
-			err = fmt.Errorf("No valid Volume found in ", rawVolString)
-			return anthaVolume, err
-		}
-
-		// if float use vol unit from header component
-	} else if rawVolFloat, found := value.(float64); found {
-
-		// handle floating point imprecision
-		rawVolFloat, err = wutil.Roundto(rawVolFloat, 6)
-
-		if err != nil {
-			return anthaVolume, err
-		}
-		vol, err := wunit.ParseVolume(header)
-
-		if err == nil {
-
-			volUnit := vol.Unit().PrefixedSymbol()
-
-			anthaVolume = wunit.NewVolume(rawVolFloat, volUnit)
-		} else {
-			err = fmt.Errorf("No valid Volume found in component %s so can't assign a Volume unit to value", header)
+			err = fmt.Errorf("No valid Volume found in %s: %s", rawVolString, err.Error())
 			return anthaVolume, err
 		}
 
 	} else {
-		err = fmt.Errorf("problem with type of ", value, " expected string or float")
+		err = fmt.Errorf("problem with type of %v expected string or float", value)
 		return anthaVolume, err
 	}
 
 	return
 }
 
-// HandleLHComponentFactory parses a factor name and value and returns an
+// HandleLHComponentFactor parses a factor name and value and returns an
 // LHComponent.
 //
 // If the value cannot be converted to a valid component an error is returned.
@@ -157,6 +211,12 @@ func HandleLHComponentFactor(ctx context.Context, header string, value interface
 		component, err = inventory.NewComponent(ctx, inventory.WaterType)
 		component.CName = str
 		return component, err
+	}
+
+	concentration, concErr := HandleConcFactor(header, value)
+
+	if concErr == nil {
+		component.SetConcentration(concentration)
 	}
 
 	return nil, err

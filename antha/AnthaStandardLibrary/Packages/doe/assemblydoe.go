@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for facilitating DOE methodology in antha
 package doe
 
 import (
@@ -31,7 +30,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func AssemblyparametersfromRuns(runs []Run, enzymename string) (assemblyparameters []enzymes.Assemblyparameters) {
+func AssemblyParametersFromRuns(runs []Run, enzymename string) (assemblyparameters []enzymes.Assemblyparameters) {
 
 	assemblyparameters = make([]enzymes.Assemblyparameters, 0)
 	parts := make([]wtype.DNASequence, 0)
@@ -42,7 +41,7 @@ func AssemblyparametersfromRuns(runs []Run, enzymename string) (assemblyparamete
 		parameters.Constructname = "run" + strconv.Itoa(j)
 		parameters.Enzymename = enzymename
 
-		for i, _ := range run.Setpoints {
+		for i := range run.Setpoints {
 
 			if strings.Contains(run.Factordescriptors[i], "Vector") {
 

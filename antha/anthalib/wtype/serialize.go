@@ -22,26 +22,52 @@
 
 package wtype
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
+
+func (lhp *LHPlate) MarshalJSON() ([]byte, error) {
+	slhp := lhp.ToSLHPLate()
+
+	return json.Marshal(slhp)
+}
+
+func (lhp *LHPlate) UnmarshalJSON(b []byte) error {
+	var slhp SLHPlate
+
+	err := json.Unmarshal(b, &slhp)
+
+	if err != nil {
+		return err
+	}
+
+	slhp.FillPlate(lhp)
+
+	return nil
+}
 
 // serializable, stripped-down version of the LHPlate
 type SLHPlate struct {
-	ID             string
-	Inst           string
-	Loc            string
-	Name           string
-	Type           string
-	Mnfr           string
-	WellsX         int
-	WellsY         int
-	Nwells         int
-	Height         float64
-	Hunit          string
-	Welltype       *LHWell
-	Wellcoords     map[string]*LHWell
-	Welldimensions *LHWellType
+	ID          string
+	Inst        string
+	Loc         string
+	Name        string
+	Type        string
+	Mnfr        string
+	WellsX      int
+	WellsY      int
+	Nwells      int
+	Height      float64
+	Hunit       string
+	Welltype    *LHWell
+	Wellcoords  map[string]*LHWell
+	WellXOffset float64 // distance (mm) between well centres in X direction
+	WellYOffset float64 // distance (mm) between well centres in Y direction
+	WellXStart  float64 // offset (mm) to first well in X direction
+	WellYStart  float64 // offset (mm) to first well in Y direction
+	WellZStart  float64 // offset (mm) to bottom of well in Z direction
+}
+
+func (p *LHPlate) ToSLHPLate() SLHPlate {
+	return SLHPlate{ID: p.ID, Inst: p.Inst, Loc: p.Loc, Name: p.PlateName, Type: p.Type, Mnfr: p.Mnfr, WellsX: p.WlsX, WellsY: p.WlsY, Nwells: p.Nwells, Height: p.Height, Hunit: p.Hunit, Welltype: p.Welltype, Wellcoords: p.Wellcoords, WellXOffset: p.WellXOffset, WellYOffset: p.WellYOffset, WellXStart: p.WellXStart, WellYStart: p.WellYStart, WellZStart: p.WellZStart}
 }
 
 func (slhp SLHPlate) FillPlate(plate *LHPlate) {
@@ -58,6 +84,38 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 	plate.Hunit = slhp.Hunit
 	plate.Welltype = slhp.Welltype
 	plate.Wellcoords = slhp.Wellcoords
+	plate.WellXOffset = slhp.WellXOffset
+	plate.WellYOffset = slhp.WellYOffset
+	plate.WellXStart = slhp.WellXStart
+	plate.WellYStart = slhp.WellYStart
+	plate.WellZStart = slhp.WellZStart
+	makeRows(plate)
+	makeCols(plate)
+	plate.HWells = make(map[string]*LHWell, len(plate.Wellcoords))
+	for _, w := range plate.Wellcoords {
+		plate.HWells[w.ID] = w
+	}
+}
+
+func makeRows(p *LHPlate) {
+	p.Rows = make([][]*LHWell, p.WlsY)
+	for i := 0; i < p.WlsY; i++ {
+		p.Rows[i] = make([]*LHWell, p.WlsX)
+		for j := 0; j < p.WlsX; j++ {
+			wc := WellCoords{X: j, Y: i}
+			p.Rows[i][j] = p.Wellcoords[wc.FormatA1()]
+		}
+	}
+}
+func makeCols(p *LHPlate) {
+	p.Cols = make([][]*LHWell, p.WlsX)
+	for i := 0; i < p.WlsX; i++ {
+		p.Cols[i] = make([]*LHWell, p.WlsY)
+		for j := 0; j < p.WlsY; j++ {
+			wc := WellCoords{X: i, Y: j}
+			p.Cols[i][j] = p.Wellcoords[wc.FormatA1()]
+		}
+	}
 }
 
 // this is for keeping track of the well type

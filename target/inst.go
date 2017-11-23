@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
@@ -182,8 +183,8 @@ type Prompt struct {
 // Wait is a virtual instruction to hang dependencies on. A better name might
 // been no-op.
 type Wait struct {
-	dependsMixin
 	noDeviceMixin
+	dependsMixin
 }
 
 // TimedWait is a wait for a period of time.
@@ -205,4 +206,16 @@ func SequentialOrder(insts ...Inst) []Inst {
 	}
 
 	return insts
+}
+
+// AwaitData is a raw data-getting request
+type AwaitData struct {
+	dependsMixin
+	Dev  Device
+	Inst *ast.AwaitInst
+}
+
+// Device implements an Inst
+func (d *AwaitData) Device() Device {
+	return d.Dev
 }

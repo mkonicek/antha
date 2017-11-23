@@ -26,10 +26,11 @@ import (
 	"fmt"
 
 	"github.com/Synthace/go-glpk/glpk"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
-func choose_stock_concentrations(minrequired map[string]float64, maxrequired map[string]float64, Smax map[string]float64, vmin float64, T map[string]float64) map[string]float64 {
+func choose_stock_concentrations(minrequired map[string]float64, maxrequired map[string]float64, Smax map[string]float64, vmin float64, T map[string]wunit.Volume) map[string]float64 {
 	// we want to find the minimum concentrations
 	// which fulfill the constraints
 
@@ -82,7 +83,7 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 	cur = 1
 
 	for _, name := range names {
-		lp.SetRowBnds(cur, glpk.UP, -999999.0, (-1.0*vmin*maxrequired[name])/(T[name]*minrequired[name]))
+		lp.SetRowBnds(cur, glpk.UP, -999999.0, (-1.0*vmin*maxrequired[name])/(T[name].SIValue()*minrequired[name]))
 		cur++
 	}
 

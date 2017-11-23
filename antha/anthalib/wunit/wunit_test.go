@@ -251,11 +251,38 @@ var volumearithmetictests = []VolumeArithmetic{
 		Product:    NewVolume(10000000, "ul"),
 		Quotient:   NewVolume(100000, "ul"),
 	},
+	{
+		VolumeA:    NewVolume(1000, "ul"),
+		VolumeB:    NewVolume(-10, "ul"),
+		Sum:        NewVolume(990, "ul"),
+		Difference: NewVolume(1010, "ul"),
+		Factor:     -10.0,
+		Product:    NewVolume(-10000, "ul"),
+		Quotient:   NewVolume(-100, "ul"),
+	},
+	{
+		VolumeA:    NewVolume(-1000, "ul"),
+		VolumeB:    NewVolume(10, "ul"),
+		Sum:        NewVolume(-990, "ul"),
+		Difference: NewVolume(-1010, "ul"),
+		Factor:     -10.0,
+		Product:    NewVolume(10000, "ul"),
+		Quotient:   NewVolume(100, "ul"),
+	},
+	{
+		VolumeA:    NewVolume(100, "ul"),
+		VolumeB:    NewVolume(-165, "ul"),
+		Sum:        NewVolume(-65, "ul"),
+		Difference: NewVolume(265, "ul"),
+		Factor:     10.0,
+		Product:    NewVolume(1000, "ul"),
+		Quotient:   NewVolume(10, "ul"),
+	},
 }
 
 func TestSubstractVolumes(t *testing.T) {
 	for _, testunit := range volumearithmetictests {
-		r := SubtractVolumes(testunit.VolumeA, []Volume{testunit.VolumeB})
+		r := SubtractVolumes(testunit.VolumeA, testunit.VolumeB)
 		rt, _ := wutil.Roundto(r.SIValue(), 4)
 		tt, _ := wutil.Roundto(testunit.Difference.SIValue(), 4)
 		if rt != tt {
@@ -271,7 +298,7 @@ func TestSubstractVolumes(t *testing.T) {
 
 func TestAddVolumes(t *testing.T) {
 	for _, testunit := range volumearithmetictests {
-		r := AddVolumes([]Volume{testunit.VolumeA, testunit.VolumeB})
+		r := AddVolumes(testunit.VolumeA, testunit.VolumeB)
 		if r.SIValue() != testunit.Sum.SIValue() {
 			t.Error(
 				"For", testunit.VolumeA, "+", testunit.VolumeB, "\n",
@@ -404,7 +431,7 @@ func TestAddConcentrations(t *testing.T) {
 		//var concs []Concentration
 		//concs = append(concs,testunit.ValueA)
 		//concs = append(concs,testunit.ValueB)
-		r, err := AddConcentrations([]Concentration{testunit.ValueA, testunit.ValueB})
+		r, err := AddConcentrations(testunit.ValueA, testunit.ValueB)
 		if err != nil {
 			t.Error(
 				"Add Concentration returns error ", err.Error(), "should return nil \n",
@@ -419,7 +446,7 @@ func TestAddConcentrations(t *testing.T) {
 		}
 	}
 
-	_, err := AddConcentrations([]Concentration{concarithmetictests[0].ValueA, concarithmetictests[4].ValueA})
+	_, err := AddConcentrations(concarithmetictests[0].ValueA, concarithmetictests[4].ValueA)
 	if err == nil {
 		t.Error(
 			"Expected Errorf but got nil. Adding of two different bases (g/l and M/l) should not be possible \n",

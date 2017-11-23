@@ -20,10 +20,7 @@ func unmarshal(ctx context.Context, obj interface{}, data []byte) error {
 			return u.unmarshalStruct(ctx, bs, obj)
 		},
 	}
-	if err := um.UnmarshalJSON(data, obj); err != nil {
-		return err
-	}
-	return nil
+	return um.Unmarshal(data, obj)
 }
 
 func TestString(t *testing.T) {

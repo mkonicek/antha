@@ -98,10 +98,7 @@ func jointwoparts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 		}
 	}
 	if len(assembledfragments) == 0 && len(plasmidproducts) == 0 {
-		errstr := fmt.Sprintln("fragments aren't compatible, check ends",
-			text.Print("upstream fragments:", upstreampart),
-			text.Print("downstream fragements:", downstreampart))
-
+		errstr := fmt.Sprintln("fragments aren't compatible, check ends.")
 		err = fmt.Errorf(errstr)
 	}
 	return assembledfragments, plasmidproducts, err
@@ -207,6 +204,8 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 	var errs []string
 
 	var allPartCombos [][]wtype.DNASequence = allPartOrders(partsInAnyOrder)
+
+	fmt.Println(text.Red("Number of Combinations to simulate:"), len(allPartCombos))
 
 	for _, partOrder := range allPartCombos {
 		partialassemblies, plasmids, err := JoinXNumberOfParts(vector, partOrder, enzyme)
@@ -433,9 +432,14 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		err = fmt.Errorf(s)
 		return s, successfulassemblies, sites, newDNASequences, err
 	}
+	var failedAssemblies []Digestedfragment
+	var plasmidProducts []wtype.DNASequence
 
-	failedAssemblies, plasmidProducts, err := FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
-
+	if len(assemblyparameters.Partsinorder) > 6 {
+		failedAssemblies, plasmidProducts, err = JoinXNumberOfParts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
+	} else {
+		failedAssemblies, plasmidProducts, err = FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
+	}
 	if err != nil {
 		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
 		s = err.Error()
@@ -460,7 +464,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	s = "hmmm I'm confused, this doesn't seem to make any sense"
 
 	if len(plasmidProducts) == 0 && len(failedAssemblies) == 0 {
-		err = fmt.Errorf("Nope! construct design %s won't work: %s", assemblyparameters.Constructname, err.Error())
+		err = fmt.Errorf("Nope! construct design %s not predicted to form any ligated parts", assemblyparameters.ToString())
 		s = err.Error()
 	}
 

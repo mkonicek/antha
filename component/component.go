@@ -4,12 +4,13 @@ import (
 	"errors"
 	"reflect"
 
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/meta"
 )
 
 var (
-	invalidComponent = errors.New("invalid component")
+	errInvalidComponent = errors.New("invalid component")
 )
 
 type alreadySeen struct {
@@ -20,7 +21,7 @@ func (a *alreadySeen) Error() string {
 	return "parameter " + a.Name + " already seen"
 }
 
-// Description of the parameters of a component.
+// ParamDesc is a description of the parameters of a component.
 type ParamDesc struct {
 	Name string // Name of parameter
 	Desc string // Description of parameter from doc string
@@ -28,18 +29,19 @@ type ParamDesc struct {
 	Type string // Full go type name
 }
 
-// Description of a component.
-type ComponentDesc struct {
+// Description is a description of a component.
+type Description struct {
 	Desc   string
 	Path   string
 	Params []ParamDesc
 }
 
-// An antha component / element.
+// Component is an antha component / element.
 type Component struct {
 	Name        string
+	Stage       api.ElementStage
 	Constructor func() interface{}
-	Desc        ComponentDesc
+	Description Description
 }
 
 // NewParams returns new objects instances for each input and output parameter.
@@ -88,9 +90,9 @@ func typeDescOf(obj interface{}) ([]typeDesc, error) {
 	// Generated elements always have type *XXXOutput or *XXXInput
 	t := reflect.TypeOf(obj).Elem()
 	if t.Kind() != reflect.Struct {
-		return nil, invalidComponent
+		return nil, errInvalidComponent
 	}
-	for i, l := 0, t.NumField(); i < l; i += 1 {
+	for i, l := 0, t.NumField(); i < l; i++ {
 		tdescs = append(tdescs, typeDesc{Name: t.Field(i).Name, Type: t.Field(i).Type})
 	}
 	return tdescs, nil
@@ -99,7 +101,7 @@ func typeDescOf(obj interface{}) ([]typeDesc, error) {
 func (a *Component) params() ([]typeDesc, error) {
 	r, ok := a.Constructor().(inject.TypedRunner)
 	if !ok {
-		return nil, invalidComponent
+		return nil, errInvalidComponent
 	}
 
 	inTypes, err := typeDescOf(r.Input())
@@ -138,8 +140,8 @@ func UpdateParamTypes(desc *Component) error {
 		}
 	}
 
-	for i, p := range desc.Desc.Params {
-		t := &desc.Desc.Params[i].Type
+	for i, p := range desc.Description.Params {
+		t := &desc.Description.Params[i].Type
 		if len(*t) == 0 {
 			*t = ts[p.Name]
 		}

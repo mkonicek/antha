@@ -154,7 +154,7 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 
 	// Reset whole Node subtrees at a time.
 	resetSubtree := func(root Node) {
-		VisitTree(VisitTreeOpt{
+		if err := VisitTree(VisitTreeOpt{
 			Tree: opt.Tree,
 			Root: root,
 			PreOrder: func(n, parent Node, err error) error {
@@ -165,7 +165,9 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 				}
 				return nil
 			},
-		})
+		}); err != nil {
+			panic(err)
+		}
 	}
 
 	sameBest := func(kid Node, b *node) bool {

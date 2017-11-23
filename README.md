@@ -6,7 +6,6 @@ Antha v0.5
 
 Contents:
 - Installation Instructions
-  - Docker
   - OSX (Native)
   - Linux (Native)
   - Windows (Native)
@@ -23,7 +22,6 @@ Antha is divided into the core language and tools in this repo and protocols
 and elements which are in
 [antha-lang/elements](https://github.com/antha-lang/elements). Instructions
 for using both are stored here.
-
 
 ### OSX (Native)
 
@@ -105,46 +103,13 @@ to automate the installation procedure on Windows.
 ``install.bat``. This will try to automatically apply the Windows installation
 procedure with the default options. Caveat emptor.
 
-### Docker
-
-Docker is a virtualization technology that allows you to easily download and run
-pre-build operating system images on your own machine. 
-
-  1. Install [docker](https://www.docker.com) by following the instructions for
-     your operating system.
-  2. Follow the docker instructions to start the docker server on your machine
-  3. Run the antha docker image
-```bash
-docker run -it antha/elements
-```
-  4. Inside the antha docker image, you can follow the instructions below
-     for making and running antha elements
-
-By default, when you run the antha image again, you will get a new machine
-instance and any changes you made in previously will not be available. If you want
-to persist changes you make to antha elements, you can mount directories on your
-host machine inside docker instances.
-
-For example,
-  1. Download the antha github repo on your (host) machine.
-```bash
-git clone https://github.com/antha-lang/elements
-```
-  2. Run the antha docker image and mount your host directory to a directory
-     inside the docker instance.
-```bash
-docker run -it -v `pwd`/antha:/go/src/github.com/antha-lang/elements antha/elements
-```
-Now, any changes you make to antha on your host machine will be available
-within the docker instance.
-
 ## Checking Your Installation
 
 After following the installation instructions for your machine. You can check
 if Antha is working properly by running a test protocol
 ```bash
 cd $HOME/go/src/github.com/antha-lang/elements/workflows/examples/Aliquot
-antharun --workflow workflow.json --parameters parameters.yml
+antha run --workflow workflow.json --parameters parameters.yml
 ```
 
 ## Making and Running Antha Elements
@@ -155,7 +120,7 @@ existing elements there. Afterwards, you can compile and use your elements
 with the following commands:
 ```bash
 make -C $HOME/go/src/github.com/antha-lang/elements
-antharun --workflow myworkflowdefinition.json --parameters myparameters.yml
+antha run --workflow myworkflowdefinition.json --parameters myparameters.yml
 ```
 
 ## Adding Custom Equipment Drivers
@@ -180,7 +145,7 @@ This list could be interpreted as a list of device functions that this version o
 Connecting the driver is as simple as running antharun with a flag --driver [driver_tcp_port]. It could look like this:
 
 ```
-antharun --workflow wf.json --parameters params.json --driver localhost:50051
+antha run --workflow wf.json --parameters params.json --driver localhost:50051
 ```
 
 More instructions can be found here:

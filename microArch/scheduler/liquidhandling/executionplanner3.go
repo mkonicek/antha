@@ -24,6 +24,8 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
@@ -37,11 +39,11 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			break
 		}
 
-		if len(ch.Values) == 1 && ch.Values[0].Type == wtype.LHIPRM {
-			// if this is a solitary prompt instruction just generate the requisite message
+		if ch.Values[0].Type == wtype.LHIPRM {
 			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
 			request.InstructionSet.Add(prm)
-			robot.UpdateComponentIDs(ch.Values[0].PassThrough)
+			//		robot.UpdateComponentIDs(ch.Values[0].PassThrough)
+			// thhis is now done in the generation process
 		} else {
 			// otherwise...
 			// make a transfer block instruction out of the incoming instructions
@@ -49,6 +51,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			// into the instruction generator to be teased apart as appropriate
 
 			tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
+
 			request.InstructionSet.Add(tfb)
 		}
 		ch = ch.Child
@@ -60,9 +63,16 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		return nil, err
 	}
 
-	instrx := make([]liquidhandling.TerminalRobotInstruction, len(inx))
+	instrx := make([]liquidhandling.TerminalRobotInstruction, 0, len(inx))
 	for i := 0; i < len(inx); i++ {
-		instrx[i] = inx[i].(liquidhandling.TerminalRobotInstruction)
+		_, ok := inx[i].(liquidhandling.TerminalRobotInstruction)
+
+		if !ok {
+			fmt.Println("ERROR: Instruction wrong type (", liquidhandling.InstructionTypeName(inx[i]), ")")
+			continue
+		}
+
+		instrx = append(instrx, inx[i].(liquidhandling.TerminalRobotInstruction))
 	}
 	request.Instructions = instrx
 

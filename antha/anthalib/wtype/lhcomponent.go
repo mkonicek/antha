@@ -33,6 +33,8 @@ import (
 	"github.com/antha-lang/antha/graph"
 )
 
+const InPlaceMarker = "-INPLACE"
+
 // structure describing a liquid component and its desired properties
 type LHComponent struct {
 	ID                 string
@@ -56,8 +58,39 @@ type LHComponent struct {
 	Destination        string
 }
 
+func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {
+	// request for a specific component
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			//  look for the ID of its parent (we don't allow sampling from samples yet)
+			return cmp.ParentID == cmp2.ID
+		} else {
+			// if this is just the whole component we check for *its* Id
+			return cmp.ID == cmp2.ID
+		}
+	} else {
+		// sufficient to be of same types
+		return cmp.IsSameKindAs(cmp2)
+	}
+}
+
+func (lhc LHComponent) GetID() string {
+	return lhc.ID
+}
+
 func (lhc *LHComponent) PlateLocation() PlateLocation {
 	return PlateLocationFromString(lhc.Loc)
+}
+
+// PlateID returns the id of a plate or the empty string
+func (lhc *LHComponent) PlateID() string {
+	loc := lhc.PlateLocation()
+
+	if !loc.IsZero() {
+		return loc.ID
+	}
+
+	return ""
 }
 
 func (lhc *LHComponent) CNID() string {
@@ -356,6 +389,10 @@ func (lhc *LHComponent) Volume() wunit.Volume {
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
+func (lhc *LHComponent) TotalVolume() wunit.Volume {
+	return wunit.NewVolume(lhc.Tvol, lhc.Vunit)
+}
+
 func (lhc *LHComponent) Remove(v wunit.Volume) wunit.Volume {
 	v2 := lhc.Volume()
 
@@ -405,6 +442,7 @@ func (lhc *LHComponent) Dup() *LHComponent {
 	c.Type = lhc.Type
 	c.Vol = lhc.Vol
 	c.Conc = lhc.Conc
+	c.Cunit = lhc.Cunit
 	c.Vunit = lhc.Vunit
 	c.Tvol = lhc.Tvol
 	c.Smax = lhc.Smax
@@ -458,6 +496,7 @@ func (cmp *LHComponent) HasAnyParent() bool {
 	return false
 }
 
+// XXX XXX XXX --> This is no longer consistent... need to revise urgently
 func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 	if cmp.ParentID != "" {
 		cmp.ParentID += "_"
@@ -833,7 +872,7 @@ func (lhc *LHComponent) IsInstance() bool {
 	b, ok := temp.(bool)
 
 	if !ok {
-		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Curently set to %v", instanceMarker, b))
+		panic(fmt.Sprintf("Improper instance marker setting - please do not use %s as a map key in Extra! Currently set to %v", instanceMarker, b))
 	}
 
 	return b
@@ -859,4 +898,36 @@ func (lhc *LHComponent) Kind() string {
 	return lhc.CName
 
 	// v1: distinct IDs for underlying liquid types
+}
+
+func (cmp LHComponent) IDOrName() string {
+	// as below but omits kind name to allow users to reset
+
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			return cmp.ParentID
+		} else {
+			return cmp.ID
+		}
+
+	} else {
+		return cmp.Kind()
+	}
+
+}
+
+func (cmp LHComponent) FullyQualifiedName() string {
+	// this should be equivalent to the checks done by LHWell.Contains()
+
+	if cmp.IsInstance() {
+		if cmp.IsSample() {
+			return cmp.ParentID + ":" + cmp.Kind()
+		} else {
+			return cmp.ID + ":" + cmp.Kind()
+
+		}
+
+	} else {
+		return cmp.Kind()
+	}
 }

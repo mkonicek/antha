@@ -105,10 +105,7 @@ func HeaderandDataMap(sheet *xlsx.Sheet, headera1format string, dataminmaxcellco
 	if err != nil {
 		return headerdatamap, err
 	}
-	headerstring, err := header.String()
-	if err != nil {
-		return headerdatamap, err
-	}
+	headerstring := header.String()
 
 	cellcoords, err := ConvertMinMaxtoArray(dataminmaxcellcoords)
 	if err != nil {

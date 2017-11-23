@@ -21,14 +21,16 @@ func TestUseCompChainThroughSample(t *testing.T) {
 	ctx = withID(ctx, "")
 
 	vol := wunit.NewVolume(1, "ul")
+	cmp := wtype.NewLHComponent()
+	cmp.CName = "thiscannotbeomitted"
 	a1 := mix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []*wtype.LHComponent{wtype.NewLHComponent()},
+		Components: []*wtype.LHComponent{cmp},
 	}))
 	a2 := mix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []*wtype.LHComponent{mixer.Sample(a1.Comp, vol)},
+		Components: []*wtype.LHComponent{mixer.Sample(a1.result, vol)},
 	}))
 	a3 := mix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []*wtype.LHComponent{mixer.Sample(a2.Comp, vol)},
+		Components: []*wtype.LHComponent{mixer.Sample(a2.result, vol)},
 	}))
 
 	var insts []interface{}

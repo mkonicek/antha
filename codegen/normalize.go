@@ -54,7 +54,7 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 }
 
 // What is the set of UseComps that reach each command
-func buildReachingUses(g *ast.Graph) map[ast.Node][]*ast.UseComp {
+func buildReachingUses(g graph.Graph) map[ast.Node][]*ast.UseComp {
 	// Simple fixpoint:
 	//   Value: set of use comps,
 	//   Merge: union

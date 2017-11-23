@@ -1,6 +1,6 @@
 package trace
 
-// Wrapper around instruction inputs and outputs
+// A Value is a wrapper around instruction inputs and outputs
 type Value interface {
 	Name() Name
 	Get() interface{}

@@ -10,31 +10,33 @@ import (
 )
 
 var (
-	noElements       = errors.New("no elements found")
-	noParameters     = errors.New("no parameters found")
-	bundleWithParams = errors.New("cannot use bundle with parameters and workflows")
+	errNoElements       = errors.New("no elements found")
+	errNoParameters     = errors.New("no parameters found")
+	errBundleWithParams = errors.New("cannot use bundle with parameters and workflows")
 )
 
 func unmarshal(data []byte, v interface{}) error {
 	return yaml.Unmarshal(data, v)
 }
 
+// UnmarshalOpt are options for Unmarshal
 type UnmarshalOpt struct {
 	BundleData   []byte
 	ParamsData   []byte
 	WorkflowData []byte
 }
 
+// A Bundle is a workflow with its inputs
 type Bundle struct {
 	workflow.Desc
 	execute.RawParams
 	workflowtest.TestOpt
 }
 
-// Parse parameters and workflow.
+// Unmarshal parses parameters and workflow.
 func Unmarshal(opt UnmarshalOpt) (*Bundle, error) {
 	if len(opt.BundleData) != 0 && (len(opt.ParamsData) != 0 || len(opt.WorkflowData) != 0) {
-		return nil, bundleWithParams
+		return nil, errBundleWithParams
 	}
 
 	var desc workflow.Desc
@@ -61,9 +63,9 @@ func Unmarshal(opt UnmarshalOpt) (*Bundle, error) {
 	}
 
 	if len(desc.Processes) == 0 {
-		return nil, noElements
+		return nil, errNoElements
 	} else if len(param.Parameters) == 0 {
-		return nil, noParameters
+		return nil, errNoParameters
 	}
 
 	bdl := Bundle{desc, param, expected}

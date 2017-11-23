@@ -83,6 +83,7 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols := make(map[string]wtype.LHPolicy)
 
 	// what policies do we need?
+	pols["SmartMix"] = SmartMixPolicy()
 	pols["water"] = MakeWaterPolicy()
 	pols["multiwater"] = MakeMultiWaterPolicy()
 	pols["culture"] = MakeCulturePolicy()
@@ -99,16 +100,19 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols["viscous"] = MakeViscousPolicy()
 	pols["Paint"] = MakePaintPolicy()
 
-	//      pols["lysate"] = MakeLysatePolicy()
+	// pols["lysate"] = MakeLysatePolicy()
 	pols["protein"] = MakeProteinPolicy()
 	pols["detergent"] = MakeDetergentPolicy()
 	pols["load"] = MakeLoadPolicy()
 	pols["loadwater"] = MakeLoadWaterPolicy()
 	pols["DispenseAboveLiquid"] = MakeDispenseAboveLiquidPolicy()
+	pols["DispenseAboveLiquidMulti"] = MakeDispenseAboveLiquidMultiPolicy()
 	pols["PEG"] = MakePEGPolicy()
 	pols["Protoplasts"] = MakeProtoplastPolicy()
 	pols["dna_mix"] = MakeDNAMixPolicy()
+	pols["dna_mix_multi"] = MakeDNAMixMultiPolicy()
 	pols["dna_cells_mix"] = MakeDNACELLSMixPolicy()
+	pols["dna_cells_mix_multi"] = MakeDNACELLSMixMultiPolicy()
 	pols["plateout"] = MakePlateOutPolicy()
 	pols["colony"] = MakeColonyPolicy()
 	pols["colonymix"] = MakeColonyMixPolicy()
@@ -430,6 +434,20 @@ func MakeDispenseAboveLiquidPolicy() wtype.LHPolicy {
 	policy["DESCRIPTION"] = "Dispense solution above the liquid to facilitate tip reuse but sacrifice pipetting accuracy at low volumes. No post Mix."
 	return policy
 }
+func MakeDispenseAboveLiquidMultiPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 8)
+	policy["DSPREFERENCE"] = 1 // 1 indicates dispense at top of well
+	policy["ASPSPEED"] = 3.0
+	policy["DSPSPEED"] = 3.0
+	//policy["ASP_WAIT"] = 1.0
+	//policy["DSP_WAIT"] = 1.0
+	policy["BLOWOUTVOLUME"] = 50.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["DESCRIPTION"] = "Dispense solution above the liquid to facilitate tip reuse but sacrifice pipetting accuracy at low volumes. No post Mix. Allows multi."
+	return policy
+}
 
 func MakeColonyPolicy() wtype.LHPolicy {
 	policy := make(wtype.LHPolicy, 12)
@@ -458,7 +476,6 @@ func MakeColonyMixPolicy() wtype.LHPolicy {
 func MakeWaterPolicy() wtype.LHPolicy {
 	waterpolicy := make(wtype.LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
-	waterpolicy["CAN_MULTI"] = false
 	waterpolicy["CAN_MSA"] = true
 	waterpolicy["CAN_SDD"] = true
 	waterpolicy["DSPZOFFSET"] = 1.0
@@ -567,7 +584,7 @@ func MakeDNAPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 12)
 	dnapolicy["ASPSPEED"] = 2.0
 	dnapolicy["DSPSPEED"] = 2.0
-	dnapolicy["CAN_MULTI"] = false
+	//dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -590,6 +607,17 @@ func MakeDNAMixPolicy() wtype.LHPolicy {
 	return dnapolicy
 }
 
+func MakeDNAMixMultiPolicy() wtype.LHPolicy {
+	dnapolicy := MakeDNAPolicy()
+	dnapolicy["POST_MIX_VOLUME"] = 10.0
+	dnapolicy["POST_MIX"] = 5
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 3.0
+	dnapolicy["CAN_MULTI"] = true
+	dnapolicy["DESCRIPTION"] = "Designed for dna samples but with 5 post mixes of 10ul. No tip-reuse is permitted, no blowout. Allows multichannel."
+	return dnapolicy
+}
+
 func MakeDNACELLSMixPolicy() wtype.LHPolicy {
 	dnapolicy := MakeDNAPolicy()
 	dnapolicy["POST_MIX_VOLUME"] = 20.0
@@ -597,6 +625,16 @@ func MakeDNACELLSMixPolicy() wtype.LHPolicy {
 	dnapolicy["POST_MIX_Z"] = 0.5
 	dnapolicy["POST_MIX_RATE"] = 1.0
 	dnapolicy["DESCRIPTION"] = "Designed for mixing dna with cells. 2 gentle post-mixes are performed. No tip-reuse is permitted, no blowout."
+	return dnapolicy
+}
+func MakeDNACELLSMixMultiPolicy() wtype.LHPolicy {
+	dnapolicy := MakeDNAPolicy()
+	dnapolicy["POST_MIX_VOLUME"] = 20.0
+	dnapolicy["POST_MIX"] = 2
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 1.0
+	dnapolicy["CAN_MULTI"] = true
+	dnapolicy["DESCRIPTION"] = "Designed for mixing dna with cells. 2 gentle post-mixes are performed. No tip-reuse is permitted, no blowout. Allows multi."
 	return dnapolicy
 }
 
@@ -673,7 +711,6 @@ func MakeLoadWaterPolicy() wtype.LHPolicy {
 func MakeNeedToMixPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 16)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 19.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
 	dnapolicy["PRE_MIX_VOLUME"] = 20.0
@@ -716,7 +753,6 @@ func PreMixPolicy() wtype.LHPolicy {
 func PostMixPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 20.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	//dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
@@ -732,6 +768,26 @@ func PostMixPolicy() wtype.LHPolicy {
 	dnapolicy["NO_AIR_DISPENSE"] = true
 	dnapolicy["DESCRIPTION"] = "3 post mixes of the sample being transferred.  No tip reuse permitted."
 	return dnapolicy
+}
+
+// 3 post mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well.
+// No tip reuse permitted.
+// Rules added to adjust post mix volume based on volume of the destination well.
+func SmartMixPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 12)
+	policy["POST_MIX"] = 3
+	policy["POST_MIX_RATE"] = 3.74
+	policy["ASPSPEED"] = 3.74
+	policy["DSPSPEED"] = 3.74
+	policy["CAN_MULTI"] = false
+	policy["CAN_MSA"] = false
+	policy["CAN_SDD"] = false
+	policy["DSPREFERENCE"] = 0
+	policy["DSPZOFFSET"] = 0.5
+	policy["TIP_REUSE_LIMIT"] = 0
+	policy["NO_AIR_DISPENSE"] = true
+	policy["DESCRIPTION"] = "3 post mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
+	return policy
 }
 
 func MegaMixPolicy() wtype.LHPolicy {
@@ -761,10 +817,9 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["ASPZOFFSET"] = 0.5
 	defaultpolicy["DSPREFERENCE"] = 0
 	defaultpolicy["DSPZOFFSET"] = 0.5
-	//defaultpolicy["CAN_MULTI"] = true
-	defaultpolicy["CAN_MULTI"] = false
 	defaultpolicy["CAN_MSA"] = false
 	defaultpolicy["CAN_SDD"] = true
+	defaultpolicy["CAN_MULTI"] = false
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
 	defaultpolicy["BLOWOUTVOLUME"] = 50.0
@@ -831,6 +886,20 @@ func MakeHVOffsetPolicy() wtype.LHPolicy {
 	return lvop
 }
 
+func AdjustPostMixVolume(mixToVol wunit.Volume) wtype.LHPolicy {
+	vol := mixToVol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+	policy := make(wtype.LHPolicy, 1)
+	policy["POST_MIX_VOLUME"] = vol
+	return policy
+}
+
+func AdjustPreMixVolume(mixToVol wunit.Volume) wtype.LHPolicy {
+	vol := mixToVol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+	policy := make(wtype.LHPolicy, 1)
+	policy["PRE_MIX_VOLUME"] = vol
+	return policy
+}
+
 // deprecated; see above
 func MakeHVFlowRatePolicy() wtype.LHPolicy {
 	policy := make(wtype.LHPolicy, 4)
@@ -855,6 +924,81 @@ func MakeNitrogenSourcePolicy() wtype.LHPolicy {
 	return nspolicy
 }
 
+// newConditionalRule makes a new LHPolicyRule with conditions to apply to an LHPolicy.
+//
+// An error is returned if an invalid Condition Class or SetPoint is specified.
+// The valid Setpoints can be found in wtype.MakeInstructionParameters()
+func newConditionalRule(ruleName string, conditions ...condition) (wtype.LHPolicyRule, error) {
+	var errs []string
+
+	rule := wtype.NewLHPolicyRule(ruleName)
+	for _, condition := range conditions {
+		err := condition.AddToRule(rule)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return rule, fmt.Errorf(strings.Join(errs, ".\n"))
+	}
+	return rule, nil
+}
+
+type condition interface {
+	AddToRule(wtype.LHPolicyRule) error
+}
+
+type categoricCondition struct {
+	Class    string
+	SetPoint string
+}
+
+func (c categoricCondition) AddToRule(rule wtype.LHPolicyRule) error {
+	return rule.AddCategoryConditionOn(c.Class, c.SetPoint)
+}
+
+type numericCondition struct {
+	Class string
+	Range conditionRange
+}
+
+type conditionRange struct {
+	Lower float64
+	Upper float64
+}
+
+func (c numericCondition) AddToRule(rule wtype.LHPolicyRule) error {
+	return rule.AddNumericConditionOn(c.Class, c.Range.Lower, c.Range.Upper)
+}
+
+// Conditions to apply to LHpolicyRules based on liquid policy used
+var (
+	OnSmartMix  = categoricCondition{"LIQUIDCLASS", "SmartMix"}
+	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
+	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
+	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
+)
+
+// Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
+var (
+	IntoLessThan20ul          = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{Lower: 0.0, Upper: 20.0}}
+	IntoBetween20ulAnd50ul    = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{20.0, 50.0}}
+	IntoBetween50ulAnd100ul   = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{50.0, 100.0}}
+	IntoBetween100ulAnd200ul  = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{100.0, 200.0}}
+	IntoBetween200ulAnd1000ul = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{200.0, 1000.0}}
+)
+
+// Conditions to apply to LHpolicyRules based on volume of liquid being transferred
+var (
+	LessThan20ul = numericCondition{Class: "VOLUME", Range: conditionRange{0.0, 20.0}}
+)
+
+// Conditions to apply to LHpolicyRules based on volume of liquid in source well from which a sample is taken
+var (
+	FromBetween100ulAnd200ul  = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{100.0, 200.0}}
+	FromBetween200ulAnd1000ul = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{200.0, 1000.0}}
+)
+
 func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	// make some policies
 
@@ -873,6 +1017,115 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 		}
 		lhpr.AddRule(rule, policy)
 	}
+
+	adjustPostMix, err := newConditionalRule("mixInto20ul", OnSmartMix, IntoBetween20ulAnd50ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	adjustVol20 := AdjustPostMixVolume(wunit.NewVolume(20, "ul"))
+	adjustVol50 := AdjustPostMixVolume(wunit.NewVolume(50, "ul"))
+	adjustVol100 := AdjustPostMixVolume(wunit.NewVolume(100, "ul"))
+	adjustVol200 := AdjustPostMixVolume(wunit.NewVolume(200, "ul"))
+
+	lhpr.AddRule(adjustPostMix, adjustVol20)
+
+	adjustPostMix50, err := newConditionalRule("mixInto50ul", OnSmartMix, IntoBetween50ulAnd100ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPostMix50, adjustVol50)
+
+	adjustPostMix100, err := newConditionalRule("mixInto100ul", OnSmartMix, IntoBetween100ulAnd200ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPostMix100, adjustVol100)
+
+	adjustPostMix200, err := newConditionalRule("mixInto200ul", OnSmartMix, IntoBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPostMix200, adjustVol200)
+
+	// adjust original PostMix and NeedToMix policy to only set post mix volume if low volume.
+	postmix20ul, err := newConditionalRule("PostMix20ul", OnPostMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(postmix20ul, adjustVol20)
+
+	needToMix20ul, err := newConditionalRule("NeedToMix20ul", OnNeedToMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(needToMix20ul, adjustVol20)
+
+	// now pre mix values for PreMix and NeedToMix
+	adjustPreMixVol20 := AdjustPreMixVolume(wunit.NewVolume(20, "ul"))
+	adjustPreMixVol100 := AdjustPreMixVolume(wunit.NewVolume(100, "ul"))
+	adjustPreMixVol200 := AdjustPreMixVolume(wunit.NewVolume(200, "ul"))
+
+	// PreMix
+	adjustPreMix, err := newConditionalRule("preMix20ul", OnPreMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPreMix, adjustPreMixVol20)
+
+	adjustPreMix100ul, err := newConditionalRule("PreMixFrom100ul", OnPreMix, FromBetween100ulAnd200ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPreMix100ul, adjustPreMixVol100)
+
+	adjustPreMix200ul, err := newConditionalRule("PreMixFrom200ul", OnPreMix, FromBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPreMix200ul, adjustPreMixVol200)
+
+	// NeedToMix
+	adjustNeedToMix, err := newConditionalRule("NeedToPreMix20ul", OnNeedToMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol20)
+
+	adjustNeedToMix100ul, err := newConditionalRule("NeedToPreMixFrom100ul", OnNeedToMix, FromBetween100ulAnd200ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustNeedToMix100ul, adjustPreMixVol100)
+
+	adjustNeedToMix200ul, err := newConditionalRule("NeedToPreMixFrom200ul", OnNeedToMix, FromBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustNeedToMix200ul, adjustPreMixVol200)
 
 	// hack to fix plate type problems
 	// this really should be removed asap

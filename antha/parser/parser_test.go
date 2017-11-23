@@ -29,7 +29,6 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -38,59 +37,6 @@ import (
 )
 
 var fset = token.NewFileSet()
-
-var validFiles = []string{ //TOODO need to fill up with antha files
-//	"parser.go",
-//	"parser_test.go",
-//	"error_test.go",
-//	"short_test.go",
-}
-
-func TestParse(t *testing.T) {
-	for _, filename := range validFiles {
-		_, err := ParseFile(fset, filename, nil, DeclarationErrors)
-		if err != nil {
-			t.Fatalf("ParseFile(%s): %v", filename, err)
-		}
-	}
-}
-
-func nameFilter(filename string) bool {
-	switch filename {
-	case "parser.go", "interface.go", "parser_test.go":
-		return true
-	case "parser.go.orig":
-		return true // permit but should be ignored by ParseDir
-	}
-	return false
-}
-
-func dirFilter(f os.FileInfo) bool { return nameFilter(f.Name()) }
-
-// TODO change to an antha repo that has files we can test
-//func TestParseDir(t *testing.T) {
-//	path := "."
-//	pkgs, err := ParseDir(fset, path, dirFilter, 0)
-//	if err != nil {
-//		t.Fatalf("ParseDir(%s): %v", path, err)
-//	}
-//	if n := len(pkgs); n != 1 {
-//		t.Errorf("got %d packages; want 1", n)
-//	}
-//	pkg := pkgs["parser"]
-//	if pkg == nil {
-//		t.Errorf(`package "parser" not found`)
-//		return
-//	}
-//	if n := len(pkg.Files); n != 3 {
-//		t.Errorf("got %d package files; want 3", n)
-//	}
-//	for filename := range pkg.Files {
-//		if !nameFilter(filename) {
-//			t.Errorf("unexpected package file: %s", filename)
-//		}
-//	}
-//}
 
 func TestParseExpr(t *testing.T) {
 	// just kicking the tires:
@@ -132,7 +78,7 @@ func TestParseExpr(t *testing.T) {
 
 	// ParseExpr must not crash
 	for _, src := range valids {
-		ParseExpr(src)
+		ParseExpr(src) // nolint: errcheck
 	}
 }
 

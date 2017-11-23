@@ -43,7 +43,7 @@ func TestStockConcs(*testing.T) {
 	minrequired := make(map[string]float64, len(names))
 	maxrequired := make(map[string]float64, len(names))
 	Smax := make(map[string]float64, len(names))
-	T := make(map[string]float64, len(names))
+	T := make(map[string]wunit.Volume, len(names))
 	vmin := 10.0
 
 	for _, name := range names {
@@ -54,7 +54,7 @@ func TestStockConcs(*testing.T) {
 		minrequired[name] = r * r2 * 20.0
 		maxrequired[name] = r * r2 * 30.0
 		Smax[name] = r * r2 * r3 * 70.0
-		T[name] = 100.0
+		T[name] = wunit.NewVolume(100.0, "ul")
 	}
 
 	choose_stock_concentrations(minrequired, maxrequired, Smax, vmin, T)
@@ -69,6 +69,26 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
 
 	for k := 0; k < 9; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.Sample(water, wunit.NewVolume(8.0, "ul"))
+		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
+		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
+
+		ins.AddComponent(ws)
+		ins.AddComponent(mmxs)
+		ins.AddComponent(ps)
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
+func configure_request_bigger(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
+
+	for k := 0; k < 99; k++ {
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(8.0, "ul"))
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))

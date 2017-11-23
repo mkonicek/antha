@@ -32,9 +32,10 @@ package compile
 
 import (
 	"bytes"
+	"unicode/utf8"
+
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/token"
-	"unicode/utf8"
 )
 
 // Formatting issues:
@@ -451,7 +452,7 @@ func (p *compiler) fieldList(fields *ast.FieldList, isStruct, isIncomplete bool)
 			if i > 0 {
 				p.linebreak(p.lineFor(f.Pos()), 1, ignore, p.linesFrom(line) > 0)
 			}
-			extraTabs := 0
+			var extraTabs int
 			p.setComment(f.Doc)
 			p.recordLine(&line)
 			if len(f.Names) > 0 {
@@ -902,8 +903,6 @@ func (p *compiler) expr1(expr ast.Expr, prec1, depth int) {
 	default:
 		panic("unreachable")
 	}
-
-	return
 }
 
 func (p *compiler) expr0(x ast.Expr, depth int) {
@@ -1253,8 +1252,6 @@ func (p *compiler) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 	default:
 		panic("unreachable")
 	}
-
-	return
 }
 
 // ----------------------------------------------------------------------------
@@ -1568,8 +1565,6 @@ func (p *compiler) decl(decl ast.Decl) {
 		p.genDecl(d)
 	case *ast.FuncDecl:
 		p.funcDecl(d)
-	case *ast.AnthaDecl:
-		p.anthaDecl(d)
 	default:
 		panic("unreachable")
 	}
@@ -1617,9 +1612,6 @@ func (p *compiler) declList(list []ast.Decl) {
 // output when compiled is always a package
 // so translate protocol etc into package
 func (p *compiler) file(src *ast.File) {
-	p.analyze(src)
-	p.transform(src)
-
 	p.setComment(src.Doc)
 
 	// Print package name
@@ -1629,6 +1621,4 @@ func (p *compiler) file(src *ast.File) {
 	// print (transformed) declarations
 	p.declList(src.Decls)
 	p.print(newline)
-
-	p.generate()
 }

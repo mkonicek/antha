@@ -1,13 +1,3 @@
-n# Compiled Object files, Static and Dynamic libs (Shared Objects)
-*.o
-*.a
-*.so
-
-# Folders
-_obj
-_test
-
-
 .DS_Store
 
 *.exe
@@ -15,16 +5,7 @@ _test
 *.prof
 
 *~
-/reports
-output.json
 
 .idea/
 
-antha/examples/**/*_plateformat.jpg
-antha/examples/**/*_plateformat.png
-antha/examples/**/*_test.xlsx
-antha/examples/**/*_gelouput.csv
-antha/examples/workflows/PlateHeightTest/PlateHeightTest*.csv
-antha/examples/workflows/MasterMix_number/mastermix.csv
-antha/examples/workflows/Plot_rawdata/newanthaplot.png
-antha/examples/workflows/EntrezLookup/nucleotide/accD.*
+.build/

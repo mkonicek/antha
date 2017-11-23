@@ -250,6 +250,10 @@ func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.
 	case string:
 		value, unit := wunit.SplitValueAndUnit(temp)
 
+		if unit == "" {
+			unit = "C"
+		}
+
 		err = wunit.ValidMeasurementUnit("Temperature", unit)
 
 		if err != nil {
@@ -279,6 +283,10 @@ func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, e
 	case string:
 		value, unit := wunit.SplitValueAndUnit(time)
 
+		if unit == "" {
+			unit = "s"
+		}
+
 		err = wunit.ValidMeasurementUnit("Time", unit)
 
 		if err != nil {
@@ -306,6 +314,10 @@ func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, er
 		return
 	case string:
 		value, unit := wunit.SplitValueAndUnit(rate)
+
+		if unit == "" {
+			unit = "/min"
+		}
 
 		err = wunit.ValidMeasurementUnit("Rate", unit)
 

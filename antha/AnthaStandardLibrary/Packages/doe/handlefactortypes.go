@@ -236,7 +236,7 @@ func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) 
 }
 
 // HandleTemperatureFactor parses a factor name and value and returns an antha Temperature.
-// If the value cannot be converted to a valid Volume an error is returned.
+// If the value cannot be converted to a valid Temperature an error is returned.
 // A float or int value with no unit is assumed to be in C.
 func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.Temperature, err error) {
 
@@ -264,6 +264,9 @@ func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.
 	}
 }
 
+// HandleTimeFactor parses a factor name and value and returns an antha Time.
+// If the value cannot be converted to a valid Time an error is returned.
+// A float or int value with no unit is assumed to be in s.
 func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, err error) {
 
 	switch time := value.(type) {
@@ -289,6 +292,9 @@ func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, e
 	}
 }
 
+// HandleRPMFactor parses a factor name and value and returns an antha Rate.
+// If the value cannot be converted to a valid Rate an error is returned.
+// A float or int value with no unit is assumed to be in /min.
 func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, err error) {
 
 	switch rate := value.(type) {

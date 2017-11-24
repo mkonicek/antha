@@ -387,3 +387,25 @@ func lookForUnitInHeader(header, measurementType string) (unit string, err error
 	}
 	return "", fmt.Errorf("no unit found in header %s", header)
 }
+
+// splitFactorFromUnit removes any field flanked by ( ). If multiple ( ) are found the last will be used.
+func splitFactorFromUnit(header string) (factor, unit string) {
+
+	fields := strings.Fields(header)
+
+	var nonUnits []string
+
+	for _, field := range fields {
+
+		if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
+			trimmed := strings.Trim(field, "()")
+
+			unit = trimmed
+
+		} else {
+			nonUnits = append(nonUnits, field)
+		}
+
+	}
+	return strings.Join(nonUnits, " "), unit
+}

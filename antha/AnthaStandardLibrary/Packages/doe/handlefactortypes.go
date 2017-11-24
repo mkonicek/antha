@@ -354,14 +354,14 @@ func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, er
 // If a measurment type is specified the unit will be checked for validity.
 func lookForUnitInHeader(header, measurementType string) (unit string, err error) {
 
-	var errs string
+	var errs []string
 
 	fields := strings.Fields(header)
 
 	for _, field := range fields {
 
 		if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
-			trimmer := strings.Trim(field, "()")
+			trimmed := strings.Trim(field, "()")
 
 			if measurementType != "" {
 				err = wunit.ValidMeasurementUnit(measurementType, unit)

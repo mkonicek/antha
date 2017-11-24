@@ -240,18 +240,24 @@ func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) 
 // A float or int value with no unit is assumed to be in C.
 func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.Temperature, err error) {
 
+	defaultUnit, err := lookForUnitInHeader(header, "Temperature")
+
+	if err != nil {
+		defaultUnit = "C"
+	}
+
 	switch temp := value.(type) {
 	case int:
-		anthaTemp = wunit.NewTemperature(float64(temp), "C")
+		anthaTemp = wunit.NewTemperature(float64(temp), defaultUnit)
 		return
 	case float64:
-		anthaTemp = wunit.NewTemperature(temp, "C")
+		anthaTemp = wunit.NewTemperature(temp, defaultUnit)
 		return
 	case string:
 		value, unit := wunit.SplitValueAndUnit(temp)
 
 		if unit == "" {
-			unit = "C"
+			unit = defaultUnit
 		}
 
 		err = wunit.ValidMeasurementUnit("Temperature", unit)
@@ -273,18 +279,24 @@ func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.
 // A float or int value with no unit is assumed to be in s.
 func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, err error) {
 
+	defaultUnit, err := lookForUnitInHeader(header, "Time")
+
+	if err != nil {
+		defaultUnit = "s"
+	}
+
 	switch time := value.(type) {
 	case int:
-		anthaTime = wunit.NewTime(float64(time), "s")
+		anthaTime = wunit.NewTime(float64(time), defaultUnit)
 		return
 	case float64:
-		anthaTime = wunit.NewTime(time, "s")
+		anthaTime = wunit.NewTime(time, defaultUnit)
 		return
 	case string:
 		value, unit := wunit.SplitValueAndUnit(time)
 
 		if unit == "" {
-			unit = "s"
+			unit = defaultUnit
 		}
 
 		err = wunit.ValidMeasurementUnit("Time", unit)
@@ -305,18 +317,24 @@ func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, e
 // A float or int value with no unit is assumed to be in /min.
 func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, err error) {
 
+	defaultUnit, err := lookForUnitInHeader(header, "RPM")
+
+	if err != nil {
+		defaultUnit = "/min"
+	}
+
 	switch rate := value.(type) {
 	case int:
-		anthaRate, err = wunit.NewRate(float64(rate), "/min")
+		anthaRate, err = wunit.NewRate(float64(rate), defaultUnit)
 		return
 	case float64:
-		anthaRate, err = wunit.NewRate(rate, "/min")
+		anthaRate, err = wunit.NewRate(rate, defaultUnit)
 		return
 	case string:
 		value, unit := wunit.SplitValueAndUnit(rate)
 
 		if unit == "" {
-			unit = "/min"
+			unit = defaultUnit
 		}
 
 		err = wunit.ValidMeasurementUnit("Rate", unit)
@@ -330,4 +348,42 @@ func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, er
 	default:
 		return anthaRate, fmt.Errorf("cannot convert %v of type %T to RPM!", value, rate)
 	}
+}
+
+// lookForUnitInHeader searches for a unit flanked by ( ).
+// If a measurment type is specified the unit will be checked for validity.
+func lookForUnitInHeader(header, measurementType string) (unit string, err error) {
+
+	var errs string
+
+	fields := strings.Fields(header)
+
+	for _, field := range fields {
+
+		if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
+			trimmer := strings.Trim(field, "()")
+
+			if measurementType != "" {
+				err = wunit.ValidMeasurementUnit(measurementType, unit)
+
+				if err == nil {
+					unit = trimmed
+					return
+				}
+			} else {
+				unit = trimmed
+			}
+			errs = append(errs, err.Error())
+		}
+
+	}
+
+	if len(errs) > 0 {
+		return "", fmt.Errorf(strings.Join(errs, ";"))
+	}
+
+	if measurementType != "" {
+		return "", fmt.Errorf("no unit found in header %s of type %s", header, measurementType)
+	}
+	return "", fmt.Errorf("no unit found in header %s", header)
 }

@@ -249,10 +249,10 @@ func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.
 	switch temp := value.(type) {
 	case int:
 		anthaTemp = wunit.NewTemperature(float64(temp), defaultUnit)
-		return
+		return anthaTemp, nil
 	case float64:
 		anthaTemp = wunit.NewTemperature(temp, defaultUnit)
-		return
+		return anthaTemp, nil
 	case string:
 		value, unit := wunit.SplitValueAndUnit(temp)
 
@@ -288,10 +288,10 @@ func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, e
 	switch time := value.(type) {
 	case int:
 		anthaTime = wunit.NewTime(float64(time), defaultUnit)
-		return
+		return anthaTime, nil
 	case float64:
 		anthaTime = wunit.NewTime(time, defaultUnit)
-		return
+		return anthaTime, nil
 	case string:
 		value, unit := wunit.SplitValueAndUnit(time)
 

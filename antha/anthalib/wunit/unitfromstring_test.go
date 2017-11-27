@@ -187,3 +187,69 @@ func TestParseConcentration(t *testing.T) {
 		}
 	}
 }
+
+type valueAndUnitTest struct {
+	value        float64
+	unit         string
+	valueandunit string
+}
+
+var volandUnitTests = []valueAndUnitTest{
+	valueAndUnitTest{
+		value:        10,
+		unit:         "s",
+		valueandunit: "10s",
+	},
+	valueAndUnitTest{
+		value:        10,
+		unit:         "s",
+		valueandunit: "10 s",
+	},
+	valueAndUnitTest{
+		value:        10,
+		unit:         "",
+		valueandunit: "10",
+	},
+
+	valueAndUnitTest{
+		value:        0,
+		unit:         "s",
+		valueandunit: "s",
+	},
+	valueAndUnitTest{
+		value:        10.9090,
+		unit:         "ms",
+		valueandunit: "10.9090ms",
+	},
+	valueAndUnitTest{
+		value:        2.16e+04,
+		unit:         "s",
+		valueandunit: "2.16e+04 s",
+	},
+
+	valueAndUnitTest{
+		value:        2.16e+04,
+		unit:         "/s",
+		valueandunit: "2.16e+04 /s",
+	},
+}
+
+func TestSplitValueAndUnit(t *testing.T) {
+	for _, test := range volandUnitTests {
+		val, unit := SplitValueAndUnit(test.valueandunit)
+		if val != test.value {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected:", test.value, "\n",
+				"Got:", val, "\n",
+			)
+		}
+		if unit != test.unit {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected:", test.unit, "\n",
+				"Got:", unit, "\n",
+			)
+		}
+	}
+}

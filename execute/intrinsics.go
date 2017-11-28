@@ -404,8 +404,8 @@ func awaitData(
 		Command: &ast.Command{
 			Requests: []ast.Request{req},
 			Inst:     await,
-			Result:   allComp[0],
 		},
+		result: allComp[0],
 	}
 
 	trace.Issue(ctx, inst)

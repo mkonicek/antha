@@ -404,6 +404,7 @@ func awaitData(
 		Command: &ast.Command{
 			Requests: []ast.Request{req},
 			Inst:     await,
+			Result:   allComp[0],
 		},
 	}
 

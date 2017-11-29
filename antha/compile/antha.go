@@ -222,7 +222,6 @@ func NewAntha(root *AnthaRoot) *Antha {
 	}
 
 	p.types = map[string]string{
-		"Amount":               "wunit.Amount",
 		"Angle":                "wunit.Angle",
 		"AngularVelocity":      "wunit.AngularVelocity",
 		"Area":                 "wunit.Area",
@@ -245,6 +244,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Length":               "wunit.Length",
 		"LiquidType":           "wtype.LiquidType",
 		"Mass":                 "wunit.Mass",
+		"Moles":                "wunit.Moles",
 		"PolicyName":           "wtype.PolicyName",
 		"Pressure":             "wunit.Pressure",
 		"Rate":                 "wunit.Rate",

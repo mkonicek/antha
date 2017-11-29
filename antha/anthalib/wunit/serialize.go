@@ -181,7 +181,7 @@ func (m *Moles) UnmarshalJSON(b []byte) error {
 	if value, unit, err := unmarshal(b); err != nil {
 		return err
 	} else if unit != "" {
-		*m = NewAmount(value, unit)
+		*m = NewMoles(value, unit)
 	} else {
 		cm := ConcreteMeasurement{0, nil}
 		*m = Moles{&cm}

@@ -222,7 +222,6 @@ func NewAntha(root *AnthaRoot) *Antha {
 	}
 
 	p.types = map[string]string{
-		"Amount":               "wunit.Amount",
 		"Angle":                "wunit.Angle",
 		"AngularVelocity":      "wunit.AngularVelocity",
 		"Area":                 "wunit.Area",

@@ -373,11 +373,11 @@ type Moles struct {
 }
 
 // generate a new Amount in moles
-func NewAmount(v float64, unit string) Moles {
-	details, ok := UnitMap["Amount"][unit]
+func NewMoles(v float64, unit string) Moles {
+	details, ok := UnitMap["Moles"][unit]
 	if !ok {
 		var approved []string
-		for u := range UnitMap["Amount"] {
+		for u := range UnitMap["Moles"] {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
@@ -388,7 +388,23 @@ func NewAmount(v float64, unit string) Moles {
 
 }
 
-// defines Amount to be a SubstanceQuantity
+// generate a new Amount in moles
+func NewAmount(v float64, unit string) Moles {
+	details, ok := UnitMap["Moles"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Moles"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved Amount unit %q, approved units are %s", unit, approved))
+	}
+
+	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
+
+}
+
+// defines Moles to be a SubstanceQuantity
 func (a *Moles) Quantity() Measurement {
 	return a
 }
@@ -535,7 +551,7 @@ var UnitMap = map[string]map[string]Unit{
 		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
 		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
 	},
-	"Amount": map[string]Unit{
+	"Moles": map[string]Unit{
 		"pMol": Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
 		"nMol": Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
 		"uMol": Unit{Base: "M", Prefix: "u", Multiplier: 1.0},

@@ -238,7 +238,7 @@ func (lhc *LHComponent) SetDNASequences(seqs []DNASequence, options ...bool) err
 		}
 	}
 	if len(errs)>0{
-		return fmt.Errorf("errors setting DNASequences to component: %s,fmt.Errorf(strings.Join(errs,";")))
+		return fmt.Errorf("errors setting DNASequences to component: %s",fmt.Errorf(strings.Join(errs,";")))
 	}
   	return nil
 }

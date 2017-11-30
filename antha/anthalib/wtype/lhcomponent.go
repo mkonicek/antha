@@ -232,7 +232,7 @@ func (lhc *LHComponent) SetDNASequences(seqs []DNASequence, options ...bool) err
 	var errs []string 
 	
 	for _, seq := range seqs {
-		err := lhc.AddDNASequence(seq, options)
+		err := lhc.AddDNASequence(seq, options...)
 		if err != nil {
 			errs = append(errs, err.Error())	
 		}
@@ -413,12 +413,13 @@ func (lhc *LHComponent) PolicyName() PolicyName {
 }
 // SetPolicyName adds the LiquidType associated with a PolicyName to the LHComponent.
 // If the PolicyName is invalid an error is returned.
-func (lhc *LHComponent) SetPolicyName(PolicyName) error {
-	liquidType, err = LiquidTypeFromString(PolicyName)
+func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
+	liquidType, err := LiquidTypeFromString(policy)
 	if err != nil {
 		return	err
 	}
 	lhc.Type = liquidType
+	return nil
 }
 
 // Volume returns the Volume of the LHComponent

@@ -521,18 +521,20 @@ func ScaledFitnessTest(f int, fs []int) bool {
 }
 
 func NewPop(problem AssemblyProblem, constraints Constraints, parameters Optimization.AssemblyOptimizerParameters) *Population {
-	sft := func(f int, fs []int) bool {
-		s := scale(f, fs)
+	/*
+		sft := func(f int, fs []int) bool {
+			s := scale(f, fs)
 
-		r := rand.Float64()
+			r := rand.Float64()
 
-		if r > s {
-			return true
+			if r > s {
+				return true
+			}
+
+			return false
 		}
-
-		return false
-	}
-	sft = sft
+		sft = sft
+	*/
 	popSize, _ := parameters.GetInt("pop_size")
 	members := make([]PointSet1D, 0, popSize)
 

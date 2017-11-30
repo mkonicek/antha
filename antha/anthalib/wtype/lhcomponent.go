@@ -196,7 +196,7 @@ const (
 	FORCE bool = true // Optional parameter to use in AddDNASequence method to override error check preventing addition of a duplicate sequence.
 )
 
-// Adds DNASequence to the LHComponent.
+// AddDNASequence adds DNASequence to the LHComponent.
 // If a Sequence already exists an error is returned and the sequence is not added
 // unless an additional boolean argument (FORCEADD or true) is specified to ignore duplicates.
 // A warning will be returned in either case if a duplicate sequence is already found.
@@ -224,7 +224,26 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 	return err
 }
 
-// Replaces an existing DNASequence to the LHComponent.
+// SetDNASequences adds a set of DNASequences to the LHComponent.
+// If a Sequence already exists an error is returned and the sequence is not added
+// unless an additional boolean argument (FORCEADD or true) is specified to ignore duplicates.
+// A warning will be returned in either case if a duplicate sequence is already found.
+func (lhc *LHComponent) SetDNASequences(seqs []DNASequence, options ...bool) error {
+	var errs []string 
+	
+	for _, seq := range seqs {
+		err := lhc.AddDNASequence(seq, options...)
+		if err != nil {
+			errs = append(errs, err.Error())	
+		}
+	}
+	if len(errs)>0{
+		return fmt.Errorf("errors setting DNASequences to component: %s",fmt.Errorf(strings.Join(errs,";")))
+	}
+  	return nil
+}
+
+// FindDNASequence searches for the presence of a DNASequence in the LHComponent.
 // Search is based upon both name of the sequence and sequence.
 // If multiple copies of the sequence exists and error is returned.
 // If a Sequence does not exist, the sequence is added and an error is returned.
@@ -249,7 +268,7 @@ func (lhc *LHComponent) FindDNASequence(seq DNASequence) (seqs []DNASequence, po
 	return
 }
 
-// Replaces an existing DNASequence to the LHComponent.
+// UpdateDNASequence replaces an existing DNASequence to the LHComponent.
 // Search is based upon both name of the sequence and sequence.
 // If multiple copies of the sequence exists and error is returned.
 // If a Sequence does not exist, the sequence is added and an error is returned.
@@ -304,7 +323,7 @@ func deleteSeq(seqList []DNASequence, position int) (newseqList []DNASequence, e
 
 }
 
-// Removes an existing DNASequence to the LHComponent.
+// RemoveDNASequence removes an existing DNASequence from the LHComponent.
 // Search is based upon both name of the sequence and sequence.
 // If multiple copies of the sequence exists and error is returned.
 // If a Sequence does not exist, the sequence is added and an error is returned.
@@ -333,7 +352,7 @@ func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 	return fmt.Errorf("Sequence %s did not previously exist in %s so could not be deleted.", seq.Name(), lhc.Name())
 }
 
-// Remove a DNA sequence from a specific position.
+// RemoveDNASequenceAtPosition removes a DNA sequence from a specific position.
 // Designed for cases where FindDNASequnce() method returns multiple instances of the dna sequence.
 func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 
@@ -353,17 +372,18 @@ func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 
 }
 
-// Remove all DNASequences from the component.
+// RemoveDNASequences removes all DNASequences from the component.
 func (lhc *LHComponent) RemoveDNASequences() error {
 	return lhc.setDNASequences([]DNASequence{})
 }
 
-// Returns DNA Sequences asociated with an LHComponent.
+// DNASequences returns DNA Sequences asociated with an LHComponent.
 // An error is also returned indicating whether a sequence was found.
 func (lhc *LHComponent) DNASequences() ([]DNASequence, error) {
 	return lhc.getDNASequences()
 }
 
+// SetVolume adds a volume to the component 
 func (lhc *LHComponent) SetVolume(v wunit.Volume) {
 	lhc.Vol = v.RawValue()
 	lhc.Vunit = v.Unit().PrefixedSymbol()
@@ -377,19 +397,43 @@ func (lhc *LHComponent) HasDaughter(s string) bool {
 	return strings.Contains(lhc.DaughterID, s)
 }
 
+// Name returns the component name as a string
 func (lhc *LHComponent) Name() string {
 	return lhc.CName
 }
 
+// TypeName returns the PolicyName of the LHComponent's LiquidType as a string
 func (lhc *LHComponent) TypeName() string {
 	return LiquidTypeName(lhc.Type).String()
 }
 
+// PolicyName returns the PolicyName of the LHComponent's LiquidType 
+func (lhc *LHComponent) PolicyName() PolicyName {
+	return PolicyName(LiquidTypeName(lhc.Type).String())
+}
+// SetPolicyName adds the LiquidType associated with a PolicyName to the LHComponent.
+// If the PolicyName is invalid an error is returned.
+func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
+	liquidType, err := LiquidTypeFromString(policy)
+	if err != nil {
+		return	err
+	}
+	lhc.Type = liquidType
+	return nil
+}
+
+// Volume returns the Volume of the LHComponent
 func (lhc *LHComponent) Volume() wunit.Volume {
+	if lhc.Vunit == "" && lhc.Vol == 0.0 {
+		return wunit.NewVolume(0.0,"ul")
+	}
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
 func (lhc *LHComponent) TotalVolume() wunit.Volume {
+	if lhc.Vunit == "" && lhc.Tvol == 0.0 {
+		return wunit.NewVolume(0.0,"ul")
+	}
 	return wunit.NewVolume(lhc.Tvol, lhc.Vunit)
 }
 
@@ -598,12 +642,15 @@ func (lhc *LHComponent) GetCunit() string {
 	return lhc.Cunit
 }
 
-// new
+// Concentration returns the Concentration of the LHComponent
 func (lhc *LHComponent) Concentration() (conc wunit.Concentration) {
-	conc = wunit.NewConcentration(lhc.Conc, lhc.Cunit)
-	return conc
+	if lhc.Conc == 0.0 && lhc.Cunit == "" {
+		return wunit.NewConcentration(0.0,"g/L")	
+	}
+	return  wunit.NewConcentration(lhc.Conc, lhc.Cunit)
 }
 
+// HasConcentration checks whether a Concentration is set for the LHComponent
 func (lhc *LHComponent) HasConcentration() bool {
 	if lhc.Conc != 0.0 && lhc.Cunit != "" {
 		return true
@@ -611,7 +658,7 @@ func (lhc *LHComponent) HasConcentration() bool {
 	return false
 }
 
-// Sets concentration to an LHComponent; assumes conc is valid; overwrites existing concentration
+// SetConcentration sets a concentration to an LHComponent; assumes conc is valid; overwrites existing concentration
 func (lhc *LHComponent) SetConcentration(conc wunit.Concentration) {
 	lhc.Conc = conc.RawValue()
 	lhc.Cunit = conc.Unit().PrefixedSymbol()

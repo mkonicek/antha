@@ -405,7 +405,7 @@ func awaitData(
 			Requests: []ast.Request{req},
 			Inst:     await,
 		},
-		result: allComp[0],
+		result: updatedComp[0],
 	}
 
 	trace.Issue(ctx, inst)

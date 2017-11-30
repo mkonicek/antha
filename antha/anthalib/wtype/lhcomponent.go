@@ -385,11 +385,29 @@ func (lhc *LHComponent) TypeName() string {
 	return LiquidTypeName(lhc.Type).String()
 }
 
+func (lhc *LHComponent) PolicyName() PolicyName {
+	return PolicyName(LiquidTypeName(lhc.Type).String())
+}
+
+func (lhc *LHComponent) SetPolicyName(PolicyName) error {
+	liquidType, err = LiquidTypeFromString(PolicyName)
+	if err != nil {
+		return	err
+	}
+	lhc.Type = liquidType
+}
+
 func (lhc *LHComponent) Volume() wunit.Volume {
+	if lhc.Vunit == "" && lhc.Vol == 0.0 {
+		return wunit.NewVolume(0.0,"ul")
+	}
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
 func (lhc *LHComponent) TotalVolume() wunit.Volume {
+	if lhc.Vunit == "" && lhc.Tvol == 0.0 {
+		return wunit.NewVolume(0.0,"ul")
+	}
 	return wunit.NewVolume(lhc.Tvol, lhc.Vunit)
 }
 
@@ -600,8 +618,10 @@ func (lhc *LHComponent) GetCunit() string {
 
 // new
 func (lhc *LHComponent) Concentration() (conc wunit.Concentration) {
-	conc = wunit.NewConcentration(lhc.Conc, lhc.Cunit)
-	return conc
+	if lhc.Conc == 0.0 && lhc.Cunit == "" {
+		return wunit.NewConcentration(0.0,"g/L")	
+	}
+	return  wunit.NewConcentration(lhc.Conc, lhc.Cunit)
 }
 
 func (lhc *LHComponent) HasConcentration() bool {

@@ -399,10 +399,8 @@ func ReplaceCodoninORF(sequence wtype.DNASequence, startandendoforf StartEndPair
 			return sequence, codontochange, option, fmt.Errorf("position %d specified is out of range of orf start and finish specified %+v for %s", position, startandendoforf, sequence.Nm)
 
 		}
-		fmt.Println(1)
 		seqslice := sequence.Seq[startandendoforf[0]-1 : startandendoforf[1]]
 		orf, orftrue := FindORF(seqslice)
-		fmt.Println(2, orf)
 		if orftrue /*&& len(orf.DNASeq) == len(seqslice)*/ {
 			codontochange, pair, err := Codonfromposition(seqslice, (position - startandendoforf[0]))
 			if err != nil {

@@ -234,3 +234,178 @@ func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) 
 
 	return inventory.NewPlate(ctx, str)
 }
+
+// HandleTemperatureFactor parses a factor name and value and returns an antha Temperature.
+// If the value cannot be converted to a valid Temperature an error is returned.
+// A float or int value with no unit is assumed to be in C.
+func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.Temperature, err error) {
+
+	defaultUnit, err := lookForUnitInHeader(header, "Temperature")
+
+	if err != nil {
+		defaultUnit = "C"
+	}
+
+	switch temp := value.(type) {
+	case int:
+		anthaTemp = wunit.NewTemperature(float64(temp), defaultUnit)
+		return anthaTemp, nil
+	case float64:
+		anthaTemp = wunit.NewTemperature(temp, defaultUnit)
+		return anthaTemp, nil
+	case string:
+		value, unit := wunit.SplitValueAndUnit(temp)
+
+		if unit == "" {
+			unit = defaultUnit
+		}
+
+		err = wunit.ValidMeasurementUnit("Temperature", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaTemp = wunit.NewTemperature(value, unit)
+
+		return
+	default:
+		return anthaTemp, fmt.Errorf("cannot convert %v of type %T to temperature!", value, temp)
+	}
+}
+
+// HandleTimeFactor parses a factor name and value and returns an antha Time.
+// If the value cannot be converted to a valid Time an error is returned.
+// A float or int value with no unit is assumed to be in s.
+func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, err error) {
+
+	defaultUnit, err := lookForUnitInHeader(header, "Time")
+
+	if err != nil {
+		defaultUnit = "s"
+	}
+
+	switch time := value.(type) {
+	case int:
+		anthaTime = wunit.NewTime(float64(time), defaultUnit)
+		return anthaTime, nil
+	case float64:
+		anthaTime = wunit.NewTime(time, defaultUnit)
+		return anthaTime, nil
+	case string:
+		value, unit := wunit.SplitValueAndUnit(time)
+
+		if unit == "" {
+			unit = defaultUnit
+		}
+
+		err = wunit.ValidMeasurementUnit("Time", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaTime = wunit.NewTime(value, unit)
+		return
+	default:
+		return anthaTime, fmt.Errorf("cannot convert %v of type %T to time!", value, time)
+	}
+}
+
+// HandleRPMFactor parses a factor name and value and returns an antha Rate.
+// If the value cannot be converted to a valid Rate an error is returned.
+// A float or int value with no unit is assumed to be in /min.
+func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, err error) {
+
+	defaultUnit, err := lookForUnitInHeader(header, "RPM")
+
+	if err != nil {
+		defaultUnit = "/min"
+	}
+
+	switch rate := value.(type) {
+	case int:
+		anthaRate, err = wunit.NewRate(float64(rate), defaultUnit)
+		return
+	case float64:
+		anthaRate, err = wunit.NewRate(rate, defaultUnit)
+		return
+	case string:
+		value, unit := wunit.SplitValueAndUnit(rate)
+
+		if unit == "" {
+			unit = defaultUnit
+		}
+
+		err = wunit.ValidMeasurementUnit("Rate", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaRate, err = wunit.NewRate(value, unit)
+		return
+	default:
+		return anthaRate, fmt.Errorf("cannot convert %v of type %T to RPM!", value, rate)
+	}
+}
+
+// lookForUnitInHeader searches for a unit flanked by ( ).
+// If a measurment type is specified the unit will be checked for validity.
+func lookForUnitInHeader(header, measurementType string) (unit string, err error) {
+
+	var errs []string
+
+	fields := strings.Fields(header)
+
+	for _, field := range fields {
+
+		if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
+			trimmed := strings.Trim(field, "()")
+
+			if measurementType != "" {
+				err = wunit.ValidMeasurementUnit(measurementType, unit)
+
+				if err == nil {
+					unit = trimmed
+					return
+				}
+			} else {
+				unit = trimmed
+			}
+			errs = append(errs, err.Error())
+		}
+
+	}
+
+	if len(errs) > 0 {
+		return "", fmt.Errorf(strings.Join(errs, ";"))
+	}
+
+	if measurementType != "" {
+		return "", fmt.Errorf("no unit found in header %s of type %s", header, measurementType)
+	}
+	return "", fmt.Errorf("no unit found in header %s", header)
+}
+
+// splitFactorFromUnit removes any field flanked by ( ). If multiple ( ) are found the last will be used.
+func splitFactorFromUnit(header string) (factor, unit string) {
+
+	fields := strings.Fields(header)
+
+	var nonUnits []string
+
+	for _, field := range fields {
+
+		if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
+			trimmed := strings.Trim(field, "()")
+
+			unit = trimmed
+
+		} else {
+			nonUnits = append(nonUnits, field)
+		}
+
+	}
+	return strings.Join(nonUnits, " "), unit
+}

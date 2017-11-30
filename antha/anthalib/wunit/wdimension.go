@@ -277,14 +277,17 @@ type Temperature struct {
 
 // make a temperature
 func NewTemperature(v float64, unit string) Temperature {
-	if unit != "˚C" && // RING ABOVE, LATIN CAPITAL LETTER C
-		unit != "C" && // LATIN CAPITAL LETTER C
-		unit != "℃" && // DEGREE CELSIUS
-		unit != "°C" { // DEGREE, LATIN CAPITAL LETTER C
-		panic("Can't make temperatures which aren't in degrees C")
+	details, ok := UnitMap["Temperature"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Temperature"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved temperature unit %q, approved units are %s", unit, approved))
 	}
-	t := Temperature{NewMeasurement(v, "", "℃")}
-	return t
+
+	return Temperature{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
 }
 
 // time
@@ -292,33 +295,20 @@ type Time struct {
 	*ConcreteMeasurement
 }
 
-// make a time unit
+// NewTime creates a time unit.
 func NewTime(v float64, unit string) (t Time) {
 
-	approvedunits := []string{"days", "h", "min", "s", "ms"}
-
-	var approved bool
-	for i := range approvedunits {
-
-		if unit == approvedunits[i] {
-			approved = true
-			break
+	details, ok := UnitMap["Time"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Time"] {
+			approved = append(approved, u)
 		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved time unit %q, approved units are %s", unit, approved))
 	}
 
-	if !approved {
-		panic("Can't make Time with non approved unit of " + unit + ". Approved units are: " + strings.Join(approvedunits, ", "))
-	}
-	if unit == "s" {
-		t = Time{NewMeasurement(v, "", unit)}
-	} else if unit == "ms" {
-		t = Time{NewMeasurement(v/1000, "", "s")}
-	} else if unit == "min" {
-		t = Time{NewMeasurement(v*60, "", "s")}
-	} else if unit == "h" {
-		t = Time{NewMeasurement(v*3600, "", "s")}
-	}
-	return t
+	return Time{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
 }
 
 func (t Time) Seconds() float64 {
@@ -383,11 +373,11 @@ type Moles struct {
 }
 
 // generate a new Amount in moles
-func NewAmount(v float64, unit string) Moles {
-	details, ok := UnitMap["Amount"][unit]
+func NewMoles(v float64, unit string) Moles {
+	details, ok := UnitMap["Moles"][unit]
 	if !ok {
 		var approved []string
-		for u := range UnitMap["Amount"] {
+		for u := range UnitMap["Moles"] {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
@@ -398,7 +388,23 @@ func NewAmount(v float64, unit string) Moles {
 
 }
 
-// defines Amount to be a SubstanceQuantity
+// generate a new Amount in moles
+func NewAmount(v float64, unit string) Moles {
+	details, ok := UnitMap["Moles"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Moles"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved Amount unit %q, approved units are %s", unit, approved))
+	}
+
+	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
+
+}
+
+// defines Moles to be a SubstanceQuantity
 func (a *Moles) Quantity() Measurement {
 	return a
 }
@@ -485,12 +491,14 @@ type Concentration struct {
 	//MolecularWeight *float64
 }
 
+// Unit is the form which units are stored in the UnitMap. This structure is not used beyond this.
 type Unit struct {
 	Base       string
 	Prefix     string
 	Multiplier float64
 }
 
+// UnitMap lists approved units to create new measurements.
 var UnitMap = map[string]map[string]Unit{
 	"Concentration": map[string]Unit{
 		"mg/ml":   Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
@@ -543,7 +551,7 @@ var UnitMap = map[string]map[string]Unit{
 		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
 		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
 	},
-	"Amount": map[string]Unit{
+	"Moles": map[string]Unit{
 		"pMol": Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
 		"nMol": Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
 		"uMol": Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
@@ -562,6 +570,51 @@ var UnitMap = map[string]map[string]Unit{
 		"l":  Unit{Base: "l", Prefix: "", Multiplier: 1.0},
 		"L":  Unit{Base: "l", Prefix: "", Multiplier: 1.0},
 	},
+	"Rate": map[string]Unit{
+		"/s":   Unit{Base: "/s", Prefix: "", Multiplier: 1.0},
+		"/min": Unit{Base: "/s", Prefix: "", Multiplier: 60.0},
+		"/h":   Unit{Base: "/s", Prefix: "", Multiplier: 3600.0},
+	},
+	"Time": map[string]Unit{
+		"ms":   Unit{Base: "s", Prefix: "m", Multiplier: 1.0},
+		"s":    Unit{Base: "s", Prefix: "", Multiplier: 1.0},
+		"min":  Unit{Base: "s", Prefix: "", Multiplier: 60.0},
+		"h":    Unit{Base: "s", Prefix: "", Multiplier: 3600.0},
+		"days": Unit{Base: "s", Prefix: "", Multiplier: 86400.0},
+	},
+	"Temperature": map[string]Unit{
+		"C":  Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // RING ABOVE, LATIN CAPITAL LETTER C
+		"˚C": Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // LATIN CAPITAL LETTER C
+		"℃":  Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE CELSIUS
+		"°C": Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE, LATIN CAPITAL LETTER C
+	},
+}
+
+// ValidMeasurementUnit checks the validity of a measurement type and unit within that measurement type.
+// An error is returned if an invalid measurement type or unit is specified.
+func ValidMeasurementUnit(measureMentType, unit string) error {
+	validUnits, measurementFound := UnitMap[measureMentType]
+	if !measurementFound {
+		var validMeasurementTypes []string
+		for key := range UnitMap {
+			validMeasurementTypes = append(validMeasurementTypes, key)
+		}
+		sort.Strings(validMeasurementTypes)
+		return fmt.Errorf("No measurement type %s listed in UnitMap found these: %v", measureMentType, validMeasurementTypes)
+	}
+
+	_, unitFound := validUnits[unit]
+
+	if !unitFound {
+		var approved []string
+		for u := range validUnits {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		return fmt.Errorf("No unit %s found for %s in UnitMap found these: %v", unit, measureMentType, approved)
+	}
+
+	return nil
 }
 
 // ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
@@ -578,7 +631,7 @@ func ValidConcentrationUnit(unit string) error {
 	return nil
 }
 
-// make a new concentration in SI units... either M/l or kg/l
+// NewConcentration makes a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) Concentration {
 	details, ok := UnitMap["Concentration"][unit]
 	if !ok {
@@ -690,23 +743,17 @@ type Rate struct {
 }
 
 func NewRate(v float64, unit string) (r Rate, err error) {
-	if unit != `/min` && unit != `/s` {
-		err = fmt.Errorf("Can't make flow rate which aren't in /min or per /s ")
-		return
+	details, ok := UnitMap["Rate"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Rate"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		return r, fmt.Errorf("unapproved rate unit %q, approved units are %s", unit, approved)
 	}
 
-	approvedtimeunits := []string{"/min", "/s"}
-
-	if unit[1:] == "min" {
-		r := Rate{NewMeasurement(v*60, "", `/s`)}
-		return r, nil
-	} else if unit[1:] == "s" {
-		r := Rate{NewMeasurement(v, "", `/s`)}
-		return r, nil
-	}
-
-	err = fmt.Errorf(unit, " Not approved time unit. Approved units of time are: ", approvedtimeunits)
-	return r, err
+	return Rate{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}, nil
 }
 
 type Voltage struct {

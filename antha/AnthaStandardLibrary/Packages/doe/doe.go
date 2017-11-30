@@ -498,6 +498,8 @@ func (run Run) GetResponseValue(responsedescriptor string) (responsevalue interf
 	return
 }
 
+// GetFactorValue searches for a factor descriptor in the list of factors in a Run.
+// Exact matches will be searched first, followed by matches once any unit is removed (e.g. TotalVolume (ul) to TotalVolume)
 func (run Run) GetFactorValue(factordescriptor string) (factorvalue interface{}, err error) {
 
 	var tempresponsevalue interface{}
@@ -509,6 +511,9 @@ func (run Run) GetFactorValue(factordescriptor string) (factorvalue interface{},
 	errs = append(errs, errstr)
 	for i, descriptor := range run.Factordescriptors {
 		if strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(factordescriptor)) {
+			factorvalue = run.Setpoints[i]
+			return factorvalue, nil
+		} else if factor, _ := splitFactorFromUnit(factordescriptor); strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(factor)) {
 			factorvalue = run.Setpoints[i]
 			return factorvalue, nil
 		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(descriptor)), strings.TrimSpace(strings.ToUpper(factordescriptor))) {

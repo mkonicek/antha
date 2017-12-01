@@ -494,6 +494,8 @@ func MakeMultiWaterPolicy() wtype.LHPolicy {
 func MakeCulturePolicy() wtype.LHPolicy {
 	culturepolicy := make(wtype.LHPolicy, 10)
 	culturepolicy.Set("PRE_MIX", 2)
+	culturepolicy.Set("PRE_MIX_VOLUME", 19.0)
+	culturepolicy.Set("PRE_MIX_RATE", 3.74)
 	culturepolicy.Set("ASPSPEED", 2.0)
 	culturepolicy.Set("DSPSPEED", 2.0)
 	culturepolicy.Set("CAN_MULTI", false)
@@ -527,6 +529,8 @@ func MakePlateOutPolicy() wtype.LHPolicy {
 func MakeCultureReusePolicy() wtype.LHPolicy {
 	culturepolicy := make(wtype.LHPolicy, 10)
 	culturepolicy.Set("PRE_MIX", 2)
+	culturepolicy.Set("PRE_MIX_VOLUME", 19.0)
+	culturepolicy.Set("PRE_MIX_RATE", 3.74)
 	culturepolicy.Set("ASPSPEED", 2.0)
 	culturepolicy.Set("DSPSPEED", 2.0)
 	culturepolicy.Set("CAN_MULTI", false)

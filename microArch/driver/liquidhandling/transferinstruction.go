@@ -63,7 +63,6 @@ type TransferInstruction struct {
 	TPlateWY   []int
 	FVolume    []wunit.Volume
 	TVolume    []wunit.Volume
-	Policies   wtype.LHPolicyRuleSet
 }
 
 func (ti *TransferInstruction) ToString() string {
@@ -622,7 +621,6 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 //
 
 func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-
 	//  set the channel  choices first by cleaning out initial empties
 
 	ins.ChooseChannels(prms)
@@ -632,7 +630,6 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	ret := make([]RobotInstruction, 0)
 
 	// if we can multi we do this first
-
 	if pol["CAN_MULTI"].(bool) {
 		parallelsets := ins.GetParallelSetsFor(ctx, prms.HeadsLoaded[0].Params)
 

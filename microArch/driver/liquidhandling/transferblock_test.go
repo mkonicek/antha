@@ -55,7 +55,7 @@ func getTransferBlock(ctx context.Context) (TransferBlockInstruction, *wtype.LHP
 	return tb, dstp
 }
 
-func getTestRobot(ctx context.Context, dstp *wtype.LHPlate) *LHProperties {
+func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *LHProperties {
 	rbt, err := makeTestGilson(ctx)
 	if err != nil {
 		panic(err)
@@ -65,7 +65,7 @@ func getTestRobot(ctx context.Context, dstp *wtype.LHPlate) *LHProperties {
 
 	// src
 
-	p, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
+	p, err := inventory.NewPlate(ctx, platetype)
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +74,7 @@ func getTestRobot(ctx context.Context, dstp *wtype.LHPlate) *LHProperties {
 	if err != nil {
 		panic(err)
 	}
-	c.Vol = 1600
+	c.Vol = 10000
 	c.Vunit = "ul"
 	p.AddComponent(c, true)
 
@@ -82,7 +82,7 @@ func getTestRobot(ctx context.Context, dstp *wtype.LHPlate) *LHProperties {
 	if err != nil {
 		panic(err)
 	}
-	c.Vol = 1600
+	c.Vol = 10000
 	c.Vunit = "ul"
 
 	p.AddComponent(c, true)
@@ -101,7 +101,7 @@ func TestMultichannelFailPolicy(t *testing.T) {
 
 	// policy disallows
 	tb, dstp := getTransferBlock(ctx)
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
@@ -118,7 +118,7 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 
 	tb.Inss[0].Welladdress = "B1"
 
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -148,7 +148,7 @@ func TestMultichannelSucceedPair(t *testing.T) {
 	tb.Inss[6].Welladdress = "G4"
 	tb.Inss[7].Welladdress = "H4"
 
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -169,7 +169,7 @@ func TestMultichannelFailDest(t *testing.T) {
 		}
 	*/
 
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -197,7 +197,7 @@ func TestMultiChannelFailSrc(t *testing.T) {
 
 	// sources not aligned
 	tb, dstp := getTransferBlock(ctx)
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 
 	// fix the plate
 
@@ -220,7 +220,7 @@ func TestMultiChannelFailComponent(t *testing.T) {
 
 	// components not same liquid type
 	tb, dstp := getTransferBlock(ctx)
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -265,7 +265,7 @@ func TestMultichannelPositive(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	tb, dstp := getTransferBlock(ctx)
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 
 	// allow multi
@@ -302,7 +302,7 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 
 	tb.Inss = ins
 
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 
 	// allow independent multichannel activity
 	rbt.HeadsLoaded[0].Params.Independent = true
@@ -321,6 +321,58 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 
 	if len(ris) != 2 {
 		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
+	}
+
+	testPositive(ctx, ris, pol, rbt, t)
+}
+
+func TestTroughMultichannelPositive(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	tb, dstp := getTransferBlock(ctx)
+
+	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
+
+	pol, err := GetLHPolicyForTest()
+
+	// allow multi
+
+	pol.Policies["water"]["CAN_MULTI"] = true
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(ris) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
+	}
+
+	testPositive(ctx, ris, pol, rbt, t)
+}
+
+func TestBigWellMultichannelPositive(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	tb, dstp := getTransferBlock(ctx)
+
+	rbt := getTestRobot(ctx, dstp, "DSW24_riser40")
+
+	pol, err := GetLHPolicyForTest()
+
+	// allow multi
+
+	pol.Policies["water"]["CAN_MULTI"] = true
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(ris) != 8 {
+		t.Errorf("Error: Expected 8 transfers got %d", len(ris))
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)

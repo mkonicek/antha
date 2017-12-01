@@ -254,9 +254,6 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			} else {
 				ret = append(ret, r...)
 			}
-
-			// -- wtype.FLEX (this may never actually be used since AFAIK only one machine
-			//    can do this and I think it's been EOL'd
 		}
 	}
 

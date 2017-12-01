@@ -187,13 +187,11 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 				continue
 			}
 
-			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, true)
+			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, false)
 
 			if err != nil && err.Error() != wtype.NotFoundError {
 				return rep, err
 			}
-
-			fmt.Println("GOT MATCH ", match)
 
 			if match.Sc > bestMatch.Sc {
 				bestMatch = match

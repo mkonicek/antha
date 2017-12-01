@@ -81,9 +81,11 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 			wpt = 1
 		}
 
-		if multi > lhp.WellsY() {
-			multi = lhp.WellsY()
-		}
+		/*
+			if multi > lhp.WellsY() {
+				multi = lhp.WellsY()
+			}
+		*/
 
 		return wtype.NewTickingColVectorIterator(lhp, multi, tpw, wpt)
 	} else {

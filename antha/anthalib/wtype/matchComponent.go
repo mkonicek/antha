@@ -44,8 +44,7 @@ type mt struct {
 func printMat(mat [][]mt) {
 	fmt.Println("*****")
 	for i, v := range mat {
-		for j, x := range v {
-			x = x
+		for j, _ := range v {
 			fmt.Printf("(%d,%d):%-5.1f:%-1d:%-5.1f ", i, j, mat[i][j].Sc, mat[i][j].Bk, mat[i][j].Vl)
 		}
 
@@ -121,13 +120,21 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 
 			mx := 0.0
 			bk := 0
-			if i > 0 && j > 0 {
+			if i > 0 && j > 0 && mat[i-1][j-1].Sc > mx {
 				mx = mat[i-1][j-1].Sc
 				bk = 2
-
-				// TODO --> Tecans allow tip spacing changes, need to know limits
-				//          of this and provide parameters to see how far this can go
 			}
+
+			/*
+				// get several things from the same place
+				// if this is a trough it's fine to do parallel
+				// otherwise the code in transferblock forces single channeling
+				if i > 0 && mat[i-1][j].Sc > mx {
+					mx = mat[i-1][j].Sc
+					bk = 1
+				}
+			*/
+
 			mat[i][j].Sc += mx
 			mat[i][j].Bk = bk
 
@@ -180,7 +187,6 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 
 		bk := mat[i][j].Bk
 
-		// bk==1 || bk==3 not currently supported but left here for future use
 		if bk == 0 {
 			break
 		} else if bk == 1 {

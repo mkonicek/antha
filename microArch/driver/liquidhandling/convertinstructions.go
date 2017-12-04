@@ -89,6 +89,7 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		// the alignment here just says component i comes from fromWells[i]
 		// it says nothing about which channel should be used
+		// although it does specify contiguity of channels
 		//fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent, legacyVolume)
 
 		/*

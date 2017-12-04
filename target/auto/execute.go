@@ -32,6 +32,8 @@ func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 		return a.executeWaitData(ctx, inst)
 	case *target.Prompt:
 		return nil
+	case *target.TimedWait:
+		return nil
 	default:
 		return fmt.Errorf("unknown instruction %T", inst)
 	}

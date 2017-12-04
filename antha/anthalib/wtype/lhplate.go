@@ -1000,7 +1000,6 @@ func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps Component
 func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector) ComponentVector {
 	wants := componentList(cmps)
 	cv := p.GetContentVector(wv)
-
 	fcv := make([]*LHComponent, len(cv))
 	for i := 0; i < len(cv); i++ {
 		if cv[i] != nil && wants[cv[i].IDOrName()] {

@@ -25,7 +25,7 @@ func TestParallelSetGeneration(t *testing.T) {
 
 	tb.Inss = ins
 
-	rbt := getTestRobot(ctx, dstp)
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 
 	// allow independent multichannel activity
 	rbt.HeadsLoaded[0].Params.Independent = true

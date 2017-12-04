@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 )
 
 type ComponentVolumeHash map[string]wunit.Volume
@@ -175,6 +176,9 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			break
 		}
 
+		fmt.Println(text.Yellow(fmt.Sprintf("HERE: srcs %v and currCmps %v. ", srcs, currCmps)))
+
+
 		if !sourceVolumesOK(srcs, currCmps) {
 			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes")
 		}
@@ -194,6 +198,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			}
 
 			if match.Sc > bestMatch.Sc {
+				fmt.Println(text.Cyan(fmt.Sprintf("match.Sc %v > bestMatch.Sc %V", match.Sc, bestMatch.Sc)))
 				bestMatch = match
 				bestSrc = src
 			}

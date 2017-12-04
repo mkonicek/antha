@@ -81,11 +81,10 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 			wpt = 1
 		}
 
-		/*
-			if multi > lhp.WellsY() {
-				multi = lhp.WellsY()
-			}
-		*/
+		// fix for 6 row plates etc.
+		if multi > lhp.WellsY() && tpw == 1 {
+			multi = lhp.WellsY()
+		}
 
 		return wtype.NewTickingColVectorIterator(lhp, multi, tpw, wpt)
 	} else {
@@ -104,7 +103,6 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 			it := getPlateIterator(p, ori, multi)
 
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
-
 				// cmps needs duping here
 				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume) // dups components
 				if mycmps.Empty() {

@@ -445,7 +445,7 @@ func MakeDispenseAboveLiquidMultiPolicy() wtype.LHPolicy {
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = false
 	policy["CAN_MULTI"] = true
-	policy["DESCRIPTION"] = "Dispense solution above the liquid to facilitate tip reuse but sacrifice pipetting accuracy at low volumes. No post Mix. Allows multi channel pipetting."
+	policy["DESCRIPTION"] = "Dispense solution above the liquid to facilitate tip reuse but sacrifice pipetting accuracy at low volumes. No post Mix. Allows multi-channel pipetting."
 	return policy
 }
 
@@ -487,7 +487,7 @@ func MakeWaterPolicy() wtype.LHPolicy {
 func MakeMultiWaterPolicy() wtype.LHPolicy {
 	pol := MakeWaterPolicy()
 	pol["CAN_MULTI"] = true
-	pol["DESCRIPTION"] = "Default policy designed for pipetting water but permitting multichannel use. Includes a blowout step for added accuracy and no post-mixing."
+	pol["DESCRIPTION"] = "Default policy designed for pipetting water but permitting multi-channel use. Includes a blowout step for added accuracy and no post-mixing."
 	return pol
 }
 
@@ -618,7 +618,7 @@ func MakeDNAMixMultiPolicy() wtype.LHPolicy {
 	dnapolicy["POST_MIX_Z"] = 0.5
 	dnapolicy["POST_MIX_RATE"] = 3.0
 	dnapolicy["CAN_MULTI"] = true
-	dnapolicy["DESCRIPTION"] = "Designed for DNA samples but with 5 post-mixes of 10ul. No tip reuse is permitted, no blowout. Allows multi channel pipetting."
+	dnapolicy["DESCRIPTION"] = "Designed for DNA samples but with 5 post-mixes of 10ul. No tip reuse is permitted, no blowout. Allows multi-channel pipetting."
 	return dnapolicy
 }
 
@@ -638,7 +638,7 @@ func MakeDNACELLSMixMultiPolicy() wtype.LHPolicy {
 	dnapolicy["POST_MIX_Z"] = 0.5
 	dnapolicy["POST_MIX_RATE"] = 1.0
 	dnapolicy["CAN_MULTI"] = true
-	dnapolicy["DESCRIPTION"] = "Designed for mixing DNA with cells. 2 gentle post-mixes are performed. No tip reuse is permitted, no blowout. Allows multi channel pipetting."
+	dnapolicy["DESCRIPTION"] = "Designed for mixing DNA with cells. 2 gentle post-mixes are performed. No tip reuse is permitted, no blowout. Allows multi-channel pipetting."
 	return dnapolicy
 }
 

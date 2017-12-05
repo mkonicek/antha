@@ -857,6 +857,12 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	var requestinputs map[string][]*wtype.LHComponent
 	requestinputs = request.Input_solutions
 
+	fmt.Println("INPUTS")
+	for k, v := range requestinputs {
+		fmt.Println(k, " ", v)
+	}
+	fmt.Println("THEREYAGO")
+
 	if len(requestinputs) == 0 {
 		requestinputs = make(map[string][]*wtype.LHComponent, 5)
 	}
@@ -881,7 +887,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG
-		if false {
+		if true {
 			volc := vmap[k]
 			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
 		}

@@ -44,5 +44,5 @@ func prettyPrompt(ins *target.Prompt) string {
 }
 
 func prettyTimedWait(ins *target.TimedWait) string {
-	return fmt.Sprintf("[wai] %t", ins.Duration)
+	return fmt.Sprintf("[wai] %s", ins.Duration.String())
 }

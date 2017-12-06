@@ -344,13 +344,13 @@ type Assemblyparameters struct {
 	Partsinorder  []wtype.DNASequence `json:"parts_in_order"`
 }
 
-// returns a summary of the names of all components specified in the Assemblyparameters variable
+// ToString returns a summary of the names of all components specified in the Assemblyparameters variable
 func (assemblyparameters Assemblyparameters) ToString() string {
 	return fmt.Sprintf("Assembly: %s, Enzyme: %s, Vector: %s, Parts: %s", assemblyparameters.Constructname, assemblyparameters.Enzymename, assemblyparameters.Vector.Nm, strings.Join(names(assemblyparameters.Partsinorder), ";"))
 
 }
 
-// returns a summary of multiple Assemblyparameters separated by a line break for each
+// AssemblySummary returns a summary of multiple Assemblyparameters separated by a line break for each
 func AssemblySummary(params []Assemblyparameters) string {
 
 	var summaries []string
@@ -361,14 +361,7 @@ func AssemblySummary(params []Assemblyparameters) string {
 	return strings.Join(summaries, "\n")
 }
 
-/*type AA_DNA_Assemblyparameters struct {
-	Constructname string
-	Enzymename    string
-	Vector        wtype.DNASequence
-	Partsinorder  []wtype.BioSequence
-}*/
-
-// This will find the inserted region from a set of assembly parameters and the assembled sequence.
+// Insert will find the inserted DNA region as a linear DNA sequence from a set of assembly parameters and the assembled sequence.
 func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (insert wtype.DNASequence, err error) {
 
 	algorithmName := "SWAffine"
@@ -393,7 +386,13 @@ func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (i
 
 	replaced, err := sequences.ReplaceAll(result, vectorBit, wtype.DNASequence{Seq: ""})
 
+	replaced.Nm = assemblyParameters.Constructname + "_Insert"
+
 	replaced.Plasmid = false
+
+	if err != nil {
+		return replaced, fmt.Errorf("failure calculating insert fragment for %s after digestion: %s", assemblyParameters.Constructname, err.Error())
+	}
 
 	return replaced, err
 }

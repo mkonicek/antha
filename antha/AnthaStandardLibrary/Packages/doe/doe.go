@@ -254,10 +254,8 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 			}
 
 			if equal, err := merged.EqualToMergeConcs(lowestMerged); equal && err == nil {
-				fmt.Println("same: ", merged, lowestMerged)
 				return level, nil
 			}
-			fmt.Println(merged, " not equal to ", lowestMerged, ": ", err.Error())
 		}
 		return minlevel, fmt.Errorf("cannot find lowest level of MergedLevel: lowest found %s in %s", fmt.Sprintln(lowestMerged), pairSummary(pair))
 

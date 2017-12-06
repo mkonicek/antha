@@ -483,11 +483,11 @@ func upper(seq wtype.DNASequence) string {
 	return strings.ToUpper(seq.Seq)
 }
 
-// Replace searches for a sequence within a sequence and replaces it with the replaceWith sequence. features are deleted.
-// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and attempt to maintion the original orientation.
-// In this case it may be necessary to rotate the sequence in order to convert to the correct linear sequence of interest.
+// ReplaceAll searches for a sequence within a sequence and replaces all instances with the replaceWith sequence. Features are deleted.
+// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
+// In this case it may be necessary to rotate the sequence if looking to generate a linear sequence of interest.
 func ReplaceAll(sequence, seqToReplace, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
-	searchResult := FindSeq(&sequence, &seqToReplace)
+	searchResult := FindAll(&sequence, &seqToReplace)
 
 	if len(seqToReplace.Seq) == 0 {
 		return sequence, fmt.Errorf("no sequence to replace specified of %s to replace in %s ", seqToReplace.Name(), sequence.Name())

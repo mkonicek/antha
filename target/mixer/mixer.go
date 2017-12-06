@@ -202,11 +202,6 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	req.Options.FixVolumes = a.opt.FixVolumes
 
-	err := req.ConfigureYourself()
-	if err != nil {
-		return nil, err
-	}
-
 	return &lhreq{
 		LHRequest:     req,
 		LHProperties:  prop,

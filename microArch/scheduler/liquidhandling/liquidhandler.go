@@ -136,6 +136,8 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
+	request.ConfigureYourself()
+
 	//f := func() {
 	err = this.Plan(ctx, request)
 	if err != nil {

@@ -185,11 +185,7 @@ func FindSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchRes
 		rotationSize := len(smallSequence.Seq) - 1
 		var tempSequence wtype.DNASequence
 		tempSequence.Nm = "test"
-		var tempseq string
-
-		tempseq += bigSequence.Seq[rotationSize:]
-		tempseq += bigSequence.Seq[:rotationSize]
-		tempSequence.Seq = tempseq
+		tempSequence.Seq = Rotate(upper(*bigSequence), rotationSize, false)
 
 		tempSeqsFound := findSeq(&tempSequence, smallSequence)
 

@@ -31,6 +31,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/align"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/plasmid"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -367,52 +368,34 @@ func AssemblySummary(params []Assemblyparameters) string {
 	Partsinorder  []wtype.BioSequence
 }*/
 
-// This will perform an assembly simulation excluding the vector and return the largest fragment calculated to assemble.
-func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence, err error) {
+// This will find the inserted region from a set of assembly parameters and the assembled sequence.
+func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (insert wtype.DNASequence, err error) {
 
-	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
+	algorithmName := "SWAffine"
 
-	enzyme, err := lookup.TypeIIsLookup(enzymename)
+	algorithm, found := align.Algorithms[algorithmName]
+
+	if !found {
+		return insert, fmt.Errorf("Algorithm %s not found in Algorithms list. ", algorithmName)
+	}
+
+	alignmentResult, err := align.DNA(assemblyParameters.Vector, result, algorithm)
 
 	if err != nil {
-		return insert, err
+		return insert, fmt.Errorf("Error aligning %s to %s: %s", assemblyParameters.Vector.Name(), result.Name(), err.Error())
 	}
 
-	// need to expand this to include other enzyme possibilities
-	if enzyme.Class != "TypeIIs" {
-		s := fmt.Sprint(enzymename, ": Incorrect Enzyme or no enzyme specified")
-		err = fmt.Errorf(s)
-		return insert, err
-	}
+	vectorBit := alignmentResult.LongestContinuousSequence()
 
-	first, rest, err := split(assemblyparameters.Partsinorder, 0)
+	index := strings.Index(result.Seq, vectorBit.Seq)
 
-	if err != nil {
-		return insert, err
-	}
+	result.Seq = sequences.Rotate(result.Seq, index, false)
 
-	partialassemblies, _, err := JoinXNumberOfParts(first, rest, enzyme)
+	replaced, err := sequences.ReplaceAll(result, vectorBit, wtype.DNASequence{Seq: ""})
 
-	var seqs []wtype.DNASequence
+	replaced.Plasmid = false
 
-	for i, failed := range partialassemblies {
-		seq, err := failed.ToDNASequence("fragment" + strconv.Itoa(i+1))
-		if err != nil {
-			return insert, err
-		}
-		seqs = append(seqs, seq)
-	}
-
-	insert = biggest(seqs)
-
-	insert.Nm = assemblyparameters.Constructname + "_Insert"
-
-	if err != nil {
-		err = fmt.Errorf("Failure Calculating Insert fragment after digestion: %s", err.Error())
-		return insert, err
-	}
-
-	return
+	return replaced, err
 }
 
 // Assemblysimulator simulate assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.

@@ -46,6 +46,7 @@ import (
 const (
 	runStepsIntrinsic   = "RunSteps"
 	awaitDataIntrinsic  = "AwaitData"
+	awaitParamName      = "await"
 	lineNumberConstName = "_lineNumber"
 	elementProto        = "element.proto"
 	elementPackage      = "element"
@@ -180,6 +181,9 @@ type Antha struct {
 	importReqs   []*importReq
 	importByName map[string]*importReq
 	importProtos []string
+
+	// Subset of importReqs of imports that correspond to Await calls
+	awaitReqs []*importReq
 }
 
 // NewAntha creates a new antha pass
@@ -350,6 +354,12 @@ func getImportInsertPos(decls []ast.Decl) token.Pos {
 		return token.NoPos
 	}
 	return lastNode.Pos()
+}
+
+func (p *Antha) addAwaitPackage(pkgPath string) *importReq {
+	req := p.addExternalPackage(pkgPath)
+	p.awaitReqs = append(p.awaitReqs, req)
+	return req
 }
 
 func (p *Antha) addExternalPackage(pkgPath string) *importReq {
@@ -551,6 +561,7 @@ func (p *Antha) Transform(fileSet *token.FileSet, src *ast.File) (err error) {
 	p.recordImports(src.Decls)
 	p.recordBlocks(src.Decls)
 	p.recordMessages(src.Decls)
+	// XXX recordAwaits
 	if err := p.validateMessages(p.messages); err != nil {
 		return err
 	}
@@ -806,6 +817,11 @@ type Output struct {
 	{{ end }}
 }
 
+type AnalysisInput struct {
+	Output *Output
+	AwaitOutput *{{if .AwaitModelPackage }}{{ .AwaitModelPackage }}.{{end}}Output
+}
+
 type RunStepsOutput struct {
 	Data struct {
 		{{ range .Data }}{{ .Name }} {{ .Value }}
@@ -835,11 +851,12 @@ type RunStepsOutput struct {
 	}
 
 	type TVars struct {
-		Imports       []Field
-		Inputs        []Field
-		Outputs       []Field
-		Data          []Field
-		MergedOutputs []Field
+		Imports           []Field
+		Inputs            []Field
+		Outputs           []Field
+		Data              []Field
+		MergedOutputs     []Field
+		AwaitModelPackage string
 	}
 
 	tv := TVars{}
@@ -851,6 +868,8 @@ type RunStepsOutput struct {
 	tv.Data = makeFields(token.DATA)
 	tv.MergedOutputs = append(tv.MergedOutputs, tv.Outputs...)
 	tv.MergedOutputs = append(tv.MergedOutputs, tv.Data...)
+
+	// XXX AwaitModelPackage; imports
 
 	seen := make(map[string]bool)
 	for _, req := range p.importReqs {
@@ -1147,8 +1166,7 @@ func (p *Antha) printFunctions(out io.Writer) error {
 	// NB: serialize in Run to enforce serialization barrier between element
 	// calls
 	var tmpl = `
-type Element struct {
-}
+type Element struct {}
 
 func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
 	bs, err := json.Marshal(request)
@@ -1164,15 +1182,19 @@ func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (re
 	response = &{{ .ModelPackage }}.Output{}
 	{{if .HasSetup}}_Setup(_ctx, in, response){{end}}
 	{{if .HasSteps}}_Steps(_ctx, in, response){{end}}
-	{{if .HasAnalysis}}_Analysis(_ctx, in, response){{end}}
-	{{if .HasValidation}}_Validation(_ctx, in, response){{end}}
+
+	{{if not .HasAwait}}
+	{{if .HasAnalysis}}_Analysis(_ctx, nil, response){{end}}
+	{{if .HasValidation}}_Validation(_ctx, nil, response){{end}}
+	{{end}}
+
 	return
 }
 
-func (Element) RunAnalysisValidation(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
-	response = &{{ .ModelPackage }}.Output{}
-	{{if .HasAnalysis}}_Analysis(_ctx, request, response){{end}}
-	{{if .HasValidation}}_Validation(_ctx, request, response){{end}}
+func (Element) RunAnalysisValidation(_ctx context.Context, request *{{ .ModelPackage }}.AnalysisInput) (response *{{ .ModelPackage }}.Output, err error) {
+	response = request.Output
+	{{if .HasAnalysis}}_Analysis(_ctx, request.AwaitOutput, response){{end}}
+	{{if .HasValidation}}_Validation(_ctx, nil, response){{end}}
 	return
 }
 
@@ -1184,7 +1206,7 @@ func _newAVRunner() interface{} {
 	elem := &Element{}
 	return &inject.CheckedRunner {
 		RunFunc: func(_ctx context.Context, value inject.Value) (inject.Value, error) {
-			request := &{{ .ModelPackage }}.Input{}
+			request := &{{ .ModelPackage }}.AnalysisInput{}
 			if err := inject.Assign(value, request); err != nil {
 				return nil, err
 			}
@@ -1194,10 +1216,11 @@ func _newAVRunner() interface{} {
 			}
 			return inject.MakeValue(resp), nil
 		},
-		In: &{{ .ModelPackage }}.Input{},
+		In: &{{ .ModelPackage }}.AnalysisInput{},
 		Out: &{{ .ModelPackage }}.Output{},
 	}
 }
+
 func _newRunner() interface{} {
 	elem := &Element{}
 	return &inject.CheckedRunner {
@@ -1294,6 +1317,7 @@ func init() {
 		HasValidation bool
 		HasSetup      bool
 		HasAnalysis   bool
+		HasAwait      bool
 	}
 
 	elementPath := normalizePath(p.elementPath)
@@ -1308,6 +1332,7 @@ func init() {
 		HasValidation: p.blocksUsed[token.VALIDATION],
 		HasSetup:      p.blocksUsed[token.SETUP],
 		HasAnalysis:   p.blocksUsed[token.ANALYSIS],
+		HasAwait:      len(p.awaitReqs) != 0,
 	}
 
 	for _, msg := range p.messages {
@@ -1380,24 +1405,43 @@ func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.A
 		Body: d.Body,
 	}
 
+	fields := []*ast.Field{
+		&ast.Field{
+			Names: identList("_ctx"),
+			Type:  mustParseExpr("context.Context"),
+		},
+	}
+
+	if d.Tok == token.ANALYSIS {
+		fields = append(fields,
+			&ast.Field{
+				Names: identList(awaitParamName),
+				// XXX fix pick package; this is before generate?
+				Type: mustParseExpr("*" + modelPackage + ".Output"),
+			},
+			&ast.Field{
+				Names: identList("_output"),
+				Type:  mustParseExpr("*" + modelPackage + ".Output"),
+			},
+		)
+	} else {
+		fields = append(fields,
+			&ast.Field{
+				Names: identList("_input"),
+				Type:  mustParseExpr("*" + modelPackage + ".Input"),
+			},
+			&ast.Field{
+				Names: identList("_output"),
+				Type:  mustParseExpr("*" + modelPackage + ".Output"),
+			},
+		)
+	}
+
 	f.Type = &ast.FuncType{
 		Func: d.Pos(),
 		Params: &ast.FieldList{
 			Opening: d.Pos(),
-			List: []*ast.Field{
-				&ast.Field{
-					Names: identList("_ctx"),
-					Type:  mustParseExpr("context.Context"),
-				},
-				&ast.Field{
-					Names: identList("_input"),
-					Type:  mustParseExpr("*" + modelPackage + ".Input"),
-				},
-				&ast.Field{
-					Names: identList("_output"),
-					Type:  mustParseExpr("*" + modelPackage + ".Output"),
-				},
-			},
+			List:    fields,
 		},
 	}
 
@@ -1666,27 +1710,41 @@ func parseAwaitData(call *ast.CallExpr) *awaitDataPrototype {
 func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
 	proto := parseAwaitData(call)
 	if proto == nil {
-		var p awaitDataPrototype
+		var t awaitDataPrototype
 		throwErrorf(call.Pos(),
 			"expecting %s(%s) found %s(%s)",
 			awaitDataIntrinsic,
-			strings.Join(typesToString(p.Annotatee, p.Metadata, p.NextElement, p.ReplacedParam, p.Params, p.Inputs), ","),
+			strings.Join(typesToString(
+				t.Annotatee,
+				t.Metadata,
+				t.NextElement,
+				t.ReplacedParam,
+				t.Params,
+				t.Inputs,
+			), ","),
 			awaitDataIntrinsic,
 			strings.Join(typesToString(call.Args...), ","),
 		)
 	}
 
 	nextElement := ""
-	nextElementArgs := &ast.CompositeLit{Type: mustParseExpr("model.Input"), Elts: []ast.Expr{}}
+	var nextElementInput ast.Expr = ast.NewIdent("nil")
 
 	// indirect over next element stuff
 	if proto.NextElement.Name != "nil" {
+		// XXX get unique await package
 		modelPkg := path.Join(p.root.outputPackageBase, proto.NextElement.Name, modelPackage)
-		modelReq := p.addExternalPackage(modelPkg)
+		modelReq := p.addAwaitPackage(modelPkg)
+
 		nextElement = proto.NextElement.Name
-		nextElementArgs = &ast.CompositeLit{
-			Type: mustParseExpr(modelReq.Name + ".Input"),
-			Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
+		nextElementInput = &ast.CallExpr{
+			Fun: mustParseExpr("inject.MakeValue"),
+			Args: []ast.Expr{
+				&ast.CompositeLit{
+					Type: mustParseExpr(modelReq.Name + ".Input"),
+					Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
+				},
+			},
 		}
 	}
 
@@ -1704,13 +1762,8 @@ func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
 			Kind:  token.STRING,
 			Value: strconv.Quote(proto.ReplacedParam.Name),
 		},
+		nextElementInput,
 		mustParseExpr("inject.MakeValue(_output)"),
-		&ast.CallExpr{
-			Fun: mustParseExpr("inject.MakeValue"),
-			Args: []ast.Expr{
-				nextElementArgs,
-			},
-		},
 	}
 }
 

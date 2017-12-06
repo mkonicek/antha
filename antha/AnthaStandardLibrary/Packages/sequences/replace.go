@@ -497,7 +497,7 @@ func ReplaceAll(sequence, seqToReplace, replaceWith wtype.DNASequence) (newSeq w
 	}
 
 	if len(searchResult.Positions) == 0 {
-		return wtype.DNASequence{}, fmt.Errorf("no sequences of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
+		return sequence, fmt.Errorf("no sequences of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
 	}
 
 	newSeq = sequence
@@ -543,8 +543,6 @@ func ReplaceAll(sequence, seqToReplace, replaceWith wtype.DNASequence) (newSeq w
 					newSeq = Rotate(newSeq, rotationSize, true)
 				}
 			}
-		} else {
-			// no replacement
 		}
 
 	}

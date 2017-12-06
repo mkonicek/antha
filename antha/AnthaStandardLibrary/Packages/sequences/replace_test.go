@@ -260,8 +260,8 @@ func TestReplace(t *testing.T) {
 
 func TestRotate(t *testing.T) {
 	for _, test := range rotateTests {
-		result := Rotate(test.seq, test.rotateBy, test.reverse)
-		if reflect.DeepEqual(&result, test.expectedResult) {
+		result := Rotate(wtype.DNASequence{Seq: test.seq}, test.rotateBy, test.reverse)
+		if result.Seq != test.expectedResult {
 			t.Error(
 				"For", test.seq, "\n",
 				"rotating by ", test.rotateBy, "\n",
@@ -272,9 +272,3 @@ func TestRotate(t *testing.T) {
 		}
 	}
 }
-
-/*
-func seqsEqual(seq1, seq2 wtype.DNASequence)bool{
-
-}
-*/

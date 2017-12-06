@@ -183,9 +183,7 @@ func FindAll(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchRes
 	// if a vector, attempt rotation of bigsequence vector index 1 position at a time.
 	if bigSequence.Plasmid {
 		rotationSize := len(smallSequence.Seq) - 1
-		var tempSequence wtype.DNASequence
-		tempSequence.Nm = "test"
-		tempSequence.Seq = Rotate(upper(*bigSequence), rotationSize, false)
+		tempSequence := Rotate(upper(*bigSequence), rotationSize, false)
 
 		tempSeqsFound := findSeq(&tempSequence, smallSequence)
 

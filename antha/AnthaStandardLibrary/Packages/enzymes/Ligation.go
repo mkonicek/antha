@@ -382,7 +382,7 @@ func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (i
 
 	index := strings.Index(result.Seq, vectorBit.Seq)
 
-	result.Seq = sequences.Rotate(result.Seq, index, false)
+	result = sequences.Rotate(result, index, false)
 
 	replaced, err := sequences.ReplaceAll(result, vectorBit, wtype.DNASequence{Seq: ""})
 

@@ -181,7 +181,7 @@ func FindSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchRes
 	newPairs = append(newPairs, originalPairs...)
 
 	// if a vector, attempt rotation of bigsequence vector index 1 position at a time.
-	if bigSequence.Plasmid && !smallSequence.Plasmid {
+	if bigSequence.Plasmid {
 		rotationSize := len(smallSequence.Seq) - 1
 		var tempSequence wtype.DNASequence
 		tempSequence.Nm = "test"

@@ -94,7 +94,7 @@ func (lhc *LHComponent) PlateID() string {
 }
 
 func (lhc *LHComponent) CNID() string {
-	return fmt.Sprintf("CNID:%s:%s", lhc.CName, lhc.ID)
+	return fmt.Sprintf("CNID:%s:%s", lhc.ID, lhc.CName)
 }
 
 func (lhc *LHComponent) Generation() int {
@@ -229,18 +229,18 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 // unless an additional boolean argument (FORCEADD or true) is specified to ignore duplicates.
 // A warning will be returned in either case if a duplicate sequence is already found.
 func (lhc *LHComponent) SetDNASequences(seqs []DNASequence, options ...bool) error {
-	var errs []string 
-	
+	var errs []string
+
 	for _, seq := range seqs {
 		err := lhc.AddDNASequence(seq, options...)
 		if err != nil {
-			errs = append(errs, err.Error())	
+			errs = append(errs, err.Error())
 		}
 	}
-	if len(errs)>0{
-		return fmt.Errorf("errors setting DNASequences to component: %s",fmt.Errorf(strings.Join(errs,";")))
+	if len(errs) > 0 {
+		return fmt.Errorf("errors setting DNASequences to component: %s", fmt.Errorf(strings.Join(errs, ";")))
 	}
-  	return nil
+	return nil
 }
 
 // FindDNASequence searches for the presence of a DNASequence in the LHComponent.
@@ -383,7 +383,7 @@ func (lhc *LHComponent) DNASequences() ([]DNASequence, error) {
 	return lhc.getDNASequences()
 }
 
-// SetVolume adds a volume to the component 
+// SetVolume adds a volume to the component
 func (lhc *LHComponent) SetVolume(v wunit.Volume) {
 	lhc.Vol = v.RawValue()
 	lhc.Vunit = v.Unit().PrefixedSymbol()
@@ -407,16 +407,17 @@ func (lhc *LHComponent) TypeName() string {
 	return LiquidTypeName(lhc.Type).String()
 }
 
-// PolicyName returns the PolicyName of the LHComponent's LiquidType 
+// PolicyName returns the PolicyName of the LHComponent's LiquidType
 func (lhc *LHComponent) PolicyName() PolicyName {
 	return PolicyName(LiquidTypeName(lhc.Type).String())
 }
+
 // SetPolicyName adds the LiquidType associated with a PolicyName to the LHComponent.
 // If the PolicyName is invalid an error is returned.
 func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
 	liquidType, err := LiquidTypeFromString(policy)
 	if err != nil {
-		return	err
+		return err
 	}
 	lhc.Type = liquidType
 	return nil
@@ -425,14 +426,14 @@ func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
 // Volume returns the Volume of the LHComponent
 func (lhc *LHComponent) Volume() wunit.Volume {
 	if lhc.Vunit == "" && lhc.Vol == 0.0 {
-		return wunit.NewVolume(0.0,"ul")
+		return wunit.NewVolume(0.0, "ul")
 	}
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
 func (lhc *LHComponent) TotalVolume() wunit.Volume {
 	if lhc.Vunit == "" && lhc.Tvol == 0.0 {
-		return wunit.NewVolume(0.0,"ul")
+		return wunit.NewVolume(0.0, "ul")
 	}
 	return wunit.NewVolume(lhc.Tvol, lhc.Vunit)
 }
@@ -645,9 +646,9 @@ func (lhc *LHComponent) GetCunit() string {
 // Concentration returns the Concentration of the LHComponent
 func (lhc *LHComponent) Concentration() (conc wunit.Concentration) {
 	if lhc.Conc == 0.0 && lhc.Cunit == "" {
-		return wunit.NewConcentration(0.0,"g/L")	
+		return wunit.NewConcentration(0.0, "g/L")
 	}
-	return  wunit.NewConcentration(lhc.Conc, lhc.Cunit)
+	return wunit.NewConcentration(lhc.Conc, lhc.Cunit)
 }
 
 // HasConcentration checks whether a Concentration is set for the LHComponent

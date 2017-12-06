@@ -119,7 +119,7 @@ func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, sele
 	}
 	for _, oriseq := range oriseqs {
 		if len(sequence.Sequence()) >= len(oriseq.Sequence()) {
-			if len(sequences.FindSeq(&sequence, &oriseq).Positions) > 0 {
+			if len(sequences.FindAll(&sequence, &oriseq).Positions) > 0 {
 				oris = append(oris, oriseq.Name())
 			}
 		}
@@ -133,7 +133,7 @@ func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, sele
 
 	for _, markerseq := range markerseqs {
 		if len(sequence.Sequence()) >= len(markerseq.Sequence()) {
-			if len(sequences.FindSeq(&sequence, &markerseq).Positions) > 0 {
+			if len(sequences.FindAll(&sequence, &markerseq).Positions) > 0 {
 				selectionmarkers = append(selectionmarkers, markerseq.Name())
 			}
 		}

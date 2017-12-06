@@ -31,6 +31,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/align"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/plasmid"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -343,13 +344,13 @@ type Assemblyparameters struct {
 	Partsinorder  []wtype.DNASequence `json:"parts_in_order"`
 }
 
-// returns a summary of the names of all components specified in the Assemblyparameters variable
+// ToString returns a summary of the names of all components specified in the Assemblyparameters variable
 func (assemblyparameters Assemblyparameters) ToString() string {
 	return fmt.Sprintf("Assembly: %s, Enzyme: %s, Vector: %s, Parts: %s", assemblyparameters.Constructname, assemblyparameters.Enzymename, assemblyparameters.Vector.Nm, strings.Join(names(assemblyparameters.Partsinorder), ";"))
 
 }
 
-// returns a summary of multiple Assemblyparameters separated by a line break for each
+// AssemblySummary returns a summary of multiple Assemblyparameters separated by a line break for each
 func AssemblySummary(params []Assemblyparameters) string {
 
 	var summaries []string
@@ -360,59 +361,40 @@ func AssemblySummary(params []Assemblyparameters) string {
 	return strings.Join(summaries, "\n")
 }
 
-/*type AA_DNA_Assemblyparameters struct {
-	Constructname string
-	Enzymename    string
-	Vector        wtype.DNASequence
-	Partsinorder  []wtype.BioSequence
-}*/
+// Insert will find the inserted DNA region as a linear DNA sequence from a set of assembly parameters and the assembled sequence.
+func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (insert wtype.DNASequence, err error) {
 
-// This will perform an assembly simulation excluding the vector and return the largest fragment calculated to assemble.
-func (assemblyparameters Assemblyparameters) Insert() (insert wtype.DNASequence, err error) {
+	algorithmName := "SWAffine"
 
-	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
+	algorithm, found := align.Algorithms[algorithmName]
 
-	enzyme, err := lookup.TypeIIsLookup(enzymename)
+	if !found {
+		return insert, fmt.Errorf("Algorithm %s not found in Algorithms list. ", algorithmName)
+	}
+
+	alignmentResult, err := align.DNA(assemblyParameters.Vector, result, algorithm)
 
 	if err != nil {
-		return insert, err
+		return insert, fmt.Errorf("Error aligning %s to %s: %s", assemblyParameters.Vector.Name(), result.Name(), err.Error())
 	}
 
-	// need to expand this to include other enzyme possibilities
-	if enzyme.Class != "TypeIIs" {
-		s := fmt.Sprint(enzymename, ": Incorrect Enzyme or no enzyme specified")
-		err = fmt.Errorf(s)
-		return insert, err
-	}
+	vectorBit := alignmentResult.LongestContinuousSequence()
 
-	first, rest, err := split(assemblyparameters.Partsinorder, 0)
+	index := strings.Index(result.Seq, vectorBit.Seq)
+
+	result = sequences.Rotate(result, index, false)
+
+	replaced, err := sequences.ReplaceAll(result, vectorBit, wtype.DNASequence{Seq: ""})
+
+	replaced.Nm = assemblyParameters.Constructname + "_Insert"
+
+	replaced.Plasmid = false
 
 	if err != nil {
-		return insert, err
+		return replaced, fmt.Errorf("failure calculating insert fragment for %s after digestion: %s", assemblyParameters.Constructname, err.Error())
 	}
 
-	partialassemblies, _, err := JoinXNumberOfParts(first, rest, enzyme)
-
-	var seqs []wtype.DNASequence
-
-	for i, failed := range partialassemblies {
-		seq, err := failed.ToDNASequence("fragment" + strconv.Itoa(i+1))
-		if err != nil {
-			return insert, err
-		}
-		seqs = append(seqs, seq)
-	}
-
-	insert = biggest(seqs)
-
-	insert.Nm = assemblyparameters.Constructname + "_Insert"
-
-	if err != nil {
-		err = fmt.Errorf("Failure Calculating Insert fragment after digestion: %s", err.Error())
-		return insert, err
-	}
-
-	return
+	return replaced, err
 }
 
 // Assemblysimulator simulate assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.

@@ -191,7 +191,7 @@ func MakeAnnotatedSeq(name string, seq string, circular bool, features []wtype.F
 
 	for _, feature := range features {
 		featureDNASequence := feature.DNASequence()
-		featurePositionsFound := FindSeq(&annotated, &featureDNASequence)
+		featurePositionsFound := FindAll(&annotated, &featureDNASequence)
 
 		if len(featurePositionsFound.Positions) > 0 {
 			for _, positionPair := range featurePositionsFound.Positions {

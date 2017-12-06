@@ -101,7 +101,7 @@ func VolumeForTargetMass(targetmass Mass, startingconc Concentration) (v Volume,
 	return
 }
 
-// returns the volume required to convert a starting concentration to a target concentration of volume total volume
+// VolumeForTargetConcentration returns the volume required to convert a starting concentration to a target concentration of volume total volume
 // returns an error if the concentration units are incompatible (M/l and g/L) or if the target concentration is higher than the stock concentration
 // if either concentration is zero a volume of 0ul will be returned with an error
 func VolumeForTargetConcentration(targetConc Concentration, startingConc Concentration, totalVol Volume) (v Volume, err error) {

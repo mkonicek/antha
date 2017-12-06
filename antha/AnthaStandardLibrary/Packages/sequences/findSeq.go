@@ -163,8 +163,8 @@ func (pair PositionPair) CodeFriendly(ignoredirection ...bool) (start, end int) 
 	return pair.StartPosition - 1, pair.EndPosition - 1
 }
 
-// FindSeq searches for a DNA sequence within a larger DNA sequence and returns all matches on both coding and complimentary strands.
-func FindSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchResult) {
+// FindAll searches for a DNA sequence within a larger DNA sequence and returns all matches on both coding and complimentary strands.
+func FindAll(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchResult) {
 	if len(smallSequence.Sequence()) > len(bigSequence.Sequence()) {
 		seqsFound = SearchResult{
 			Template: bigSequence,
@@ -181,15 +181,9 @@ func FindSeq(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchRes
 	newPairs = append(newPairs, originalPairs...)
 
 	// if a vector, attempt rotation of bigsequence vector index 1 position at a time.
-	if bigSequence.Plasmid && !smallSequence.Plasmid {
+	if bigSequence.Plasmid {
 		rotationSize := len(smallSequence.Seq) - 1
-		var tempSequence wtype.DNASequence
-		tempSequence.Nm = "test"
-		var tempseq string
-
-		tempseq += bigSequence.Seq[rotationSize:]
-		tempseq += bigSequence.Seq[:rotationSize]
-		tempSequence.Seq = tempseq
+		tempSequence := Rotate(upper(*bigSequence), rotationSize, false)
 
 		tempSeqsFound := findSeq(&tempSequence, smallSequence)
 
@@ -332,7 +326,7 @@ func FindSeqsinSeqs(bigseq string, smallseqs []string) (seqsfound []search.Thing
 // If more than one matching feature is found an error will be returned.
 func FindPositionInSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
 
-	seqsfound := FindSeq(&largeSequence, &smallSequence)
+	seqsfound := FindAll(&largeSequence, &smallSequence)
 
 	if len(seqsfound.Positions) != 1 {
 		errstr := fmt.Sprint(strconv.Itoa(len(seqsfound.Positions)), " sequences of ", smallSequence.Nm, " ", smallSequence.Seq, " found in ", largeSequence.Nm, " ", largeSequence.Seq)
@@ -346,7 +340,7 @@ func FindPositionInSequence(largeSequence wtype.DNASequence, smallSequence wtype
 // FindDirectionalPositionInSequence returns the directional Positions of the feature.
 // If more than one matching feature is found an error will be returned.
 func FindDirectionalPositionInSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
-	seqsfound := FindSeq(&largeSequence, &smallSequence)
+	seqsfound := FindAll(&largeSequence, &smallSequence)
 
 	if len(seqsfound.Positions) != 1 {
 		errstr := fmt.Sprint(strconv.Itoa(len(seqsfound.Positions)), " sequences of ", smallSequence.Nm, " ", smallSequence.Seq, " found in ", largeSequence.Nm, " ", largeSequence.Seq)

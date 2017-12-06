@@ -479,3 +479,91 @@ func Codonfromposition(sequence string, dnaposition int) (codontoreturn string, 
 	}
 	return codontoreturn, position, fmt.Errorf("No replacement codon found at position %d in sequence %s length %d", dnaposition, sequence, len(sequence))
 }
+func upper(seq wtype.DNASequence) wtype.DNASequence {
+	newSeq := seq
+	newSeq.Seq = strings.ToUpper(seq.Seq)
+	return newSeq
+}
+
+// ReplaceAll searches for a sequence within a sequence and replaces all instances with the replaceWith sequence. Features will be deleted if part of the feature is replaced.
+// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
+// In this case it may be necessary to rotate the sequence if looking to generate a linear sequence of interest.
+func ReplaceAll(sequence, seqToReplace, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
+	searchResult := FindAll(&sequence, &seqToReplace)
+
+	if len(seqToReplace.Seq) == 0 {
+		return sequence, fmt.Errorf("no sequence to replace specified of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
+
+	}
+
+	if len(searchResult.Positions) == 0 {
+		return sequence, fmt.Errorf("no sequences of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
+	}
+
+	newSeq = sequence
+
+	originalFeatures := sequence.Features
+
+	for _, position := range returnAllOrientationsOnly(searchResult) {
+
+		start, end := position.Coordinates(wtype.CODEFRIENDLY)
+
+		var replaceSeqString string = upper(seqToReplace).Seq
+
+		// if reverse
+		if position.Reverse {
+			replaceSeqString = wtype.RevComp(upper(seqToReplace).Seq)
+		}
+
+		// if it does not strand the end of the plasmid
+		if !sequence.Plasmid {
+
+			if replaceSeqString != "" {
+
+				newSeq.Seq = strings.Replace(upper(newSeq).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
+
+			}
+			// if it does strand the end of the plasmid
+		} else if sequence.Plasmid {
+
+			if replaceSeqString != "" {
+
+				if end > start {
+
+					if replaceSeqString != "" {
+
+						newSeq.Seq = strings.Replace(upper(newSeq).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
+
+					}
+				} else {
+					rotationSize := len(replaceSeqString) - 1
+
+					replacedSeq := strings.Replace(Rotate(upper(newSeq), rotationSize, false).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
+					newSeq.Seq = replacedSeq
+					newSeq = Rotate(newSeq, rotationSize, true)
+				}
+			}
+		}
+
+	}
+
+	SetFeatures(&newSeq, originalFeatures)
+
+	return
+}
+
+func returnAllOrientationsOnly(searchResult SearchResult) (positions []PositionPair) {
+
+	for _, position := range searchResult.Positions {
+		if len(positions) == 2 {
+			return positions
+		} else if len(positions) == 1 {
+			if positions[0].Reverse != position.Reverse {
+				positions = append(positions, position)
+			}
+		} else {
+			positions = append(positions, position)
+		}
+	}
+	return
+}

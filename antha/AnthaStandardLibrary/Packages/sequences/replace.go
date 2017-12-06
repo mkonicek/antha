@@ -479,3 +479,103 @@ func Codonfromposition(sequence string, dnaposition int) (codontoreturn string, 
 	}
 	return codontoreturn, position, fmt.Errorf("No replacement codon found at position %d in sequence %s length %d", dnaposition, sequence, len(sequence))
 }
+func upper(seq wtype.DNASequence) string {
+	return strings.ToUpper(seq.Seq)
+}
+
+// Replace searches for a sequence within a sequence and replaces it with the replaceWith sequence. features are deleted.
+// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and attempt to maintion the original orientation.
+// In this case it may be necessary to rotate the sequence in order to convert to the correct linear sequence of interest.
+func ReplaceAll(sequence, seqToReplace, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
+	searchResult := FindSeq(&sequence, &seqToReplace)
+
+	if len(seqToReplace.Seq) == 0 {
+		return sequence, fmt.Errorf("no sequence to replace specified of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
+
+	}
+
+	if len(searchResult.Positions) == 0 {
+		return wtype.DNASequence{}, fmt.Errorf("no sequences of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
+	}
+
+	newSeq = sequence
+
+	for _, position := range returnAllOrientationsOnly(searchResult) {
+
+		start, end := position.Coordinates(wtype.CODEFRIENDLY)
+
+		var replaceSeqString string = upper(seqToReplace)
+
+		// if reverse
+		if position.Reverse {
+			replaceSeqString = wtype.RevComp(upper(seqToReplace))
+		}
+
+		// if it does not strand the end of the plasmid
+		if !sequence.Plasmid {
+
+			if replaceSeqString != "" {
+
+				newSeq.Seq = strings.Replace(upper(newSeq), replaceSeqString, upper(replaceWith), -1)
+
+			}
+			// if it does strand the end of the plasmid
+		} else if sequence.Plasmid {
+
+			if replaceSeqString != "" {
+
+				if end > start {
+
+					if replaceSeqString != "" {
+
+						newSeq.Seq = strings.Replace(upper(newSeq), replaceSeqString, upper(replaceWith), -1)
+
+					}
+				} else {
+					rotationSize := len(replaceSeqString) - 1
+
+					replacedSeq := strings.Replace(Rotate(upper(newSeq), rotationSize, false), replaceSeqString, upper(replaceWith), -1)
+
+					newSeq.Seq = Rotate(replacedSeq, rotationSize, true)
+				}
+			}
+		} else {
+			// no replacement
+		}
+
+	}
+
+	return
+}
+
+func returnAllOrientationsOnly(searchResult SearchResult) (positions []PositionPair) {
+
+	for _, position := range searchResult.Positions {
+		if len(positions) == 2 {
+			return positions
+		} else if len(positions) == 1 {
+			if positions[0].Reverse != position.Reverse {
+				positions = append(positions, position)
+			}
+		} else {
+			positions = append(positions, position)
+		}
+	}
+	return
+}
+
+// Rotate will rotate the sequence by the number of characters specified by rotateBy.
+// If reverse is true the sequence will be rotated in the reverse direction.
+func Rotate(seq string, rotateBy int, reverse bool) (rotatedSeq string) {
+
+	var tempSeq = seq
+
+	if !reverse {
+		rotatedSeq += tempSeq[rotateBy:]
+		rotatedSeq += tempSeq[:rotateBy]
+	} else {
+		rotatedSeq += tempSeq[len(tempSeq)-rotateBy:]
+		rotatedSeq += tempSeq[:len(tempSeq)-rotateBy]
+	}
+	return rotatedSeq
+}

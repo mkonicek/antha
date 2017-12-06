@@ -203,6 +203,10 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			return rep, fmt.Errorf("Components %s %s\n", currCmps.String(), wtype.NotFoundError)
 		}
 
+		// adjust finally to ensure we don't leave too little
+
+		bestMatch = makeMatchSafe(currCmps, bestMatch, lhp.MinPossibleVolume())
+
 		// update sources
 
 		updateSources(bestSrc, bestMatch, opt.Carryvol, lhp.MinPossibleVolume())
@@ -228,13 +232,33 @@ func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPo
 	return src
 }
 
+func makeMatchSafe(dst wtype.ComponentVector, match wtype.Match, mpv wunit.Volume) wtype.Match {
+	for i := 0; i < len(match.M); i++ {
+		if match.M[i] != -1 {
+			checkVol := dst[i].Vol
+
+			checkVol -= match.Vols[i].ConvertToString(dst[i].Vunit)
+
+			if checkVol > 0.0 && checkVol < mpv.ConvertToString(dst[i].Vunit) {
+				mpv.Subtract(wunit.NewVolume(checkVol, dst[i].Vunit))
+				match.Vols[i].Subtract(mpv)
+
+				if match.Vols[i].LessThanFloat(0.0) {
+					panic(fmt.Sprintf("Serious volume issue -- try a manual plate layout with some additional volume for %s", dst[i].CName))
+				}
+			}
+		}
+	}
+
+	return match
+}
+
 func updateDests(dst wtype.ComponentVector, match wtype.Match) wtype.ComponentVector {
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			dst[i].Vol -= match.Vols[i].ConvertToString(dst[i].Vunit)
 			if dst[i].Vol < 0.0 {
 				dst[i].Vol = 0.0
-
 			}
 		}
 	}

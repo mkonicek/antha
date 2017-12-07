@@ -56,10 +56,10 @@ func fragmentsToDNASequences(fragments []Digestedfragment) (sequences []wtype.DN
 
 // fragmentsFormPlasmid checks if the two fragments can join both ends to forma plasmid
 func fragmentsFormPlasmid(upfragment, downfragment Digestedfragment) bool {
-	if sequences.RevComp(upfragment.BottomStickyend_5prime) == downfragment.TopStickyend_5prime && sequences.RevComp(downfragment.BottomStickyend_5prime) == upfragment.TopStickyend_5prime {
+	if strings.EqualFold(sequences.RevComp(upfragment.BottomStickyend_5prime), downfragment.TopStickyend_5prime) && strings.EqualFold(sequences.RevComp(downfragment.BottomStickyend_5prime), upfragment.TopStickyend_5prime) {
 		return true
 	}
-	if upfragment.BottomStickyend_5prime == sequences.RevComp(downfragment.BottomStickyend_5prime) && downfragment.TopStickyend_5prime == sequences.RevComp(upfragment.TopStickyend_5prime) {
+	if strings.EqualFold(upfragment.BottomStickyend_5prime, sequences.RevComp(downfragment.BottomStickyend_5prime)) && strings.EqualFold(downfragment.TopStickyend_5prime, sequences.RevComp(upfragment.TopStickyend_5prime)) {
 		return true
 	}
 	return false
@@ -82,14 +82,14 @@ func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 				plasmidproducts = append(plasmidproducts, fullyassembledfragment)
 				sequencestojoin = make([]string, 0)
 			}
-			if sequences.RevComp(upfragment.BottomStickyend_5prime) == downfragment.TopStickyend_5prime {
+			if strings.EqualFold(sequences.RevComp(upfragment.BottomStickyend_5prime), downfragment.TopStickyend_5prime) {
 				sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Topstrand)
 				dnastring := strings.Join(sequencestojoin, "")
 				assembledfragment := Digestedfragment{dnastring, "", upfragment.TopStickyend_5prime, downfragment.TopStickyend_3prime, downfragment.BottomStickyend_5prime, upfragment.BottomStickyend_3prime}
 				assembledfragments = append(assembledfragments, assembledfragment)
 				sequencestojoin = make([]string, 0)
 			}
-			if upfragment.BottomStickyend_5prime == sequences.RevComp(downfragment.BottomStickyend_5prime) {
+			if strings.EqualFold(upfragment.BottomStickyend_5prime, sequences.RevComp(downfragment.BottomStickyend_5prime)) {
 				sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Bottomstrand)
 				dnastring := strings.Join(sequencestojoin, "")
 				assembledfragment := Digestedfragment{dnastring, "", upfragment.TopStickyend_5prime, downfragment.BottomStickyend_3prime, downfragment.TopStickyend_5prime, upfragment.BottomStickyend_3prime}

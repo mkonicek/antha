@@ -251,7 +251,7 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 						// if no duplicate oris and markers, likely to be a good assembly and not vector double assembly.
 						if len(search.RemoveDuplicates(oris)) == len(oris) && len(search.RemoveDuplicates(markers)) == len(markers) {
 							plasmidproducts = search.RemoveDuplicateSequences(plasmidproducts)
-							return
+							return assembledfragments, plasmidproducts, nil
 						}
 					}
 				}

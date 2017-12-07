@@ -75,8 +75,15 @@ func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 
 	for _, upfragment := range upstreampart {
 		for _, downfragment := range downstreampart {
-			if fragmentsFormPlasmid(upfragment, downfragment) {
+			if strings.EqualFold(sequences.RevComp(upfragment.BottomStickyend_5prime), downfragment.TopStickyend_5prime) && strings.EqualFold(sequences.RevComp(downfragment.BottomStickyend_5prime), upfragment.TopStickyend_5prime) {
 				sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Topstrand)
+				dnastring := strings.Join(sequencestojoin, "")
+				fullyassembledfragment := wtype.DNASequence{Nm: "simulatedassemblysequence", Seq: dnastring, Plasmid: true}
+				plasmidproducts = append(plasmidproducts, fullyassembledfragment)
+				sequencestojoin = make([]string, 0)
+			}
+			if strings.EqualFold(upfragment.BottomStickyend_5prime, sequences.RevComp(downfragment.BottomStickyend_5prime)) && strings.EqualFold(downfragment.TopStickyend_5prime, sequences.RevComp(upfragment.TopStickyend_5prime)) {
+				sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Bottomstrand)
 				dnastring := strings.Join(sequencestojoin, "")
 				fullyassembledfragment := wtype.DNASequence{Nm: "simulatedassemblysequence", Seq: dnastring, Plasmid: true}
 				plasmidproducts = append(plasmidproducts, fullyassembledfragment)

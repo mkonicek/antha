@@ -262,12 +262,12 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 
 // JoinXNumberOfParts simulates assembly of a Vector and a list of parts in order using a specified TypeIIs restriction enzyme.
 // Returns an array of partially assembled fragments and fully assembled plasmid products and any error in attempting to assemble the parts.
-func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, insert wtype.DNASequence, err error) {
+func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, inserts []wtype.DNASequence, err error) {
 
 	var newerr error
 	if vector.Seq == "" {
 		err = fmt.Errorf("No Vector sequence found for vector %s", vector.Nm)
-		return assembledfragments, plasmidproducts, insert, err
+		return assembledfragments, plasmidproducts, inserts, err
 	}
 	// there are two cases: either the vector comes in same way parts do
 	// i.e. SAPI--->xxxx<---IPAS
@@ -279,17 +279,17 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	rotatedvector, err := rotateVector(vector, enzyme)
 
 	if err != nil {
-		return assembledfragments, plasmidproducts, insert, err
+		return assembledfragments, plasmidproducts, inserts, err
 	}
 
 	if len(partsinorder) == 0 {
-		return nil, nil, insert, fmt.Errorf("No parts found")
+		return nil, nil, inserts, fmt.Errorf("No parts found")
 	}
 	if len(partsinorder[0].Seq) == 0 {
 		name := partsinorder[0].Nm
 		errorstring := name + " has no sequence"
 		err = fmt.Errorf(errorstring)
-		return assembledfragments, plasmidproducts, insert, err
+		return assembledfragments, plasmidproducts, inserts, err
 	}
 	doublestrandedpart := MakedoublestrandedDNA(partsinorder[0])
 	// initialise assembledFragements with first digested part
@@ -300,7 +300,7 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 			name := partsinorder[i].Nm
 			errorstring := name + " has no sequence"
 			err = fmt.Errorf(errorstring)
-			return assembledfragments, plasmidproducts, insert, err
+			return assembledfragments, plasmidproducts, inserts, err
 		}
 
 		doublestrandedpart = MakedoublestrandedDNA(partsinorder[i])
@@ -340,17 +340,25 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 
 		plasmidproduct.Nm = vector.Nm + "_" + strings.Join(partnames, "_")
 	}
-
+	var errs []string
 	for _, vectorFragment := range digestedvector {
 		for _, insertFragment := range insertFragments {
 			if fragmentsFormPlasmid(vectorFragment, insertFragment) {
-				insert, err = insertFragment.ToDNASequence("InsertSequence")
-				break
+				insert, err := insertFragment.ToDNASequence("InsertSequence")
+				if err == nil {
+					inserts = append(inserts, insert)
+				} else {
+					errs = append(errs, err.Error())
+				}
 			}
 		}
 	}
 
-	return assembledfragments, plasmidproducts, insert, err
+	if len(errs) > 0 && len(inserts) == 0 {
+		return assembledfragments, plasmidproducts, inserts, fmt.Errorf("no valid inserts expected to form: %s", strings.Join(errs, ";"))
+	}
+
+	return assembledfragments, plasmidproducts, inserts, nil
 }
 
 /*func JoinAnnotatedparts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence) {
@@ -418,11 +426,37 @@ func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (i
 		return insert, fmt.Errorf("failure calculating insert: %s", err.Error())
 	}
 
-	_, _, insert, err = JoinXNumberOfParts(assemblyParameters.Vector, assemblyParameters.Partsinorder, enzyme)
+	_, _, inserts, err := JoinXNumberOfParts(assemblyParameters.Vector, assemblyParameters.Partsinorder, enzyme)
 	if err != nil {
 		return insert, fmt.Errorf("failure calculating insert: %s", err.Error())
 	}
-	return insert, nil
+
+	var validInserts []wtype.DNASequence
+
+	for i := range inserts {
+		if len(sequences.FindAll(&result, &inserts[i]).Positions) == 1 {
+			validInserts = append(validInserts, inserts[0])
+		}
+	}
+	if len(validInserts) == 0 {
+		return insert, fmt.Errorf("no insert sequences found which are present in assembled sequence %s. Found these: %v", result.Name(), inserts)
+	}
+
+	if len(validInserts) == 1 {
+		return validInserts[0], nil
+	}
+
+	if len(validInserts) > 1 {
+		var longestSequence wtype.DNASequence
+		for _, valid := range validInserts {
+			if len(valid.Seq) > len(longestSequence.Seq) {
+				valid = longestSequence
+			}
+		}
+		return longestSequence, nil
+	}
+
+	return insert, fmt.Errorf("no insert sequences found which are present in assembled sequence %s. ", result.Name())
 }
 
 // Assemblysimulator simulate assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.

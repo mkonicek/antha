@@ -500,6 +500,12 @@ func checkSanityIns(request *LHRequest) {
 			for _, c := range ins.Components {
 				// need to be a bit careful but...
 
+				if c.Vol < 0.0 {
+					fmt.Println("NEGATIVE VOLUME!!!! ", c.CName, " ", c.Vol)
+					good = false
+					continue
+				}
+
 				if c.Vol != 0.0 {
 					v.Add(c.Volume())
 				} else if c.Tvol != 0.0 {
@@ -638,6 +644,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	forceSanity(request)
 	// convert requests to volumes and determine required stock concentrations
+	checkSanityIns(request)
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
 	checkSanityIns(request)
 

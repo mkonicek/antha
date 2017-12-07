@@ -250,7 +250,8 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 					if len(oris) > 0 && len(markers) > 0 {
 						// if no duplicate oris and markers, likely to be a good assembly and not vector double assembly.
 						if len(search.RemoveDuplicates(oris)) == len(oris) && len(search.RemoveDuplicates(markers)) == len(markers) {
-							break
+							plasmidproducts = search.RemoveDuplicateSequences(plasmidproducts)
+							return
 						}
 					}
 				}
@@ -368,26 +369,6 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	return assembledfragments, plasmidproducts, inserts, nil
 }
 
-/*func JoinAnnotatedparts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence) {
-
-	doublestrandedvector := MakedoublestrandedDNA(vector)
-	digestedvector := DigestionPairs(doublestrandedvector, enzyme)
-
-	doublestrandedpart := MakedoublestrandedDNA(partsinorder[0])
-	digestedpart := DigestionPairs(doublestrandedpart, enzyme)
-	assembledfragments, plasmidproducts = Jointwoparts(digestedvector, digestedpart)
-	//// fmt.Println("vector + part1 product = ", assembledfragments, plasmidproducts)
-	for i := 1; i < len(partsinorder); i++ {
-		doublestrandedpart = MakedoublestrandedDNA(partsinorder[i])
-		digestedpart := DigestionPairs(doublestrandedpart, enzyme)
-		//for _, newfragments := range assembledfragments {
-		assembledfragments, plasmidproducts = Jointwoparts(assembledfragments, digestedpart)
-		//}
-	}
-	return assembledfragments, plasmidproducts
-}
-*/
-
 func names(seqs []wtype.DNASequence) []string {
 	var nms []string
 	for i := range seqs {
@@ -454,13 +435,7 @@ func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (i
 	}
 
 	if len(validInserts) > 1 {
-		var longestSequence wtype.DNASequence
-		for _, valid := range validInserts {
-			if len(valid.Seq) > len(longestSequence.Seq) {
-				valid = longestSequence
-			}
-		}
-		return longestSequence, nil
+		return biggest(validInserts), nil
 	}
 
 	return insert, fmt.Errorf("no insert sequences found which are present in assembled sequence %s. ", result.Name())

@@ -236,7 +236,7 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 		// if too many combinations, return as soon as a valid plasmid is found to save memory.
 		if len(allPartCombos) > 24 {
 
-			if len(partialassemblies) > 0 {
+			if len(plasmidproducts) > 0 {
 				for _, plasmidProduct := range plasmidproducts {
 					_, oris, markers, _ := plasmid.ValidPlasmid(plasmidProduct)
 

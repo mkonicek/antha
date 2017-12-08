@@ -32,7 +32,6 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/plasmid"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -225,8 +224,6 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 	var errs []string
 
 	var allPartCombos [][]wtype.DNASequence = allPartOrders(partsInAnyOrder)
-
-	fmt.Println(text.Red("Number of Combinations to simulate:"), len(allPartCombos))
 
 	for _, partOrder := range allPartCombos {
 		partialassemblies, plasmids, _, err := JoinXNumberOfParts(vector, partOrder, enzyme)

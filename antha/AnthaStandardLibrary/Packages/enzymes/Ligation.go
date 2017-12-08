@@ -31,8 +31,8 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/align"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/plasmid"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -54,49 +54,41 @@ func fragmentsToDNASequences(fragments []Digestedfragment) (sequences []wtype.DN
 	return
 }
 
-// fragmentsFormPlasmid checks if the two fragments can join both ends to forma plasmid
-func fragmentsFormPlasmid(upfragment, downfragment Digestedfragment) bool {
-	if strings.EqualFold(sequences.RevComp(upfragment.BottomStickyend_5prime), downfragment.TopStickyend_5prime) && strings.EqualFold(sequences.RevComp(downfragment.BottomStickyend_5prime), upfragment.TopStickyend_5prime) {
-		return true
-	}
-	if strings.EqualFold(upfragment.BottomStickyend_5prime, sequences.RevComp(downfragment.BottomStickyend_5prime)) && strings.EqualFold(downfragment.TopStickyend_5prime, sequences.RevComp(upfragment.TopStickyend_5prime)) {
-		return true
-	}
-	return false
-}
-
 // add code to check for duplicate sticky end parts to prevent simulation of assembly of all backbones
 // func uniqueEnds (upFragment, downFragment Digestedfragment, endsUsedSoFar []string) bool {}
 // or even better to check for presence of correct antibiotic resistance
 
-func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfragment) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
+func jointwoparts(upstreampart []Digestedfragment, downstreampart []Digestedfragment) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
 
-	var sequencestojoin []string
+	sequencestojoin := make([]string, 0)
+
+	assembledfragments = make([]Digestedfragment, 0)
+	plasmidproducts = make([]wtype.DNASequence, 0)
 
 	for _, upfragment := range upstreampart {
 		for _, downfragment := range downstreampart {
-			if strings.EqualFold(sequences.RevComp(upfragment.BottomStickyend_5prime), downfragment.TopStickyend_5prime) && strings.EqualFold(sequences.RevComp(downfragment.BottomStickyend_5prime), upfragment.TopStickyend_5prime) {
+			if sequences.RevComp(upfragment.BottomStickyend_5prime) == downfragment.TopStickyend_5prime && sequences.RevComp(downfragment.BottomStickyend_5prime) == upfragment.TopStickyend_5prime {
 				sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Topstrand)
 				dnastring := strings.Join(sequencestojoin, "")
 				fullyassembledfragment := wtype.DNASequence{Nm: "simulatedassemblysequence", Seq: dnastring, Plasmid: true}
 				plasmidproducts = append(plasmidproducts, fullyassembledfragment)
 				sequencestojoin = make([]string, 0)
 			}
-			if strings.EqualFold(upfragment.BottomStickyend_5prime, sequences.RevComp(downfragment.BottomStickyend_5prime)) && strings.EqualFold(downfragment.TopStickyend_5prime, sequences.RevComp(upfragment.TopStickyend_5prime)) {
+			if upfragment.BottomStickyend_5prime == sequences.RevComp(downfragment.BottomStickyend_5prime) && downfragment.TopStickyend_5prime == sequences.RevComp(upfragment.TopStickyend_5prime) {
 				sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Bottomstrand)
 				dnastring := strings.Join(sequencestojoin, "")
 				fullyassembledfragment := wtype.DNASequence{Nm: "simulatedassemblysequence", Seq: dnastring, Plasmid: true}
 				plasmidproducts = append(plasmidproducts, fullyassembledfragment)
 				sequencestojoin = make([]string, 0)
 			}
-			if strings.EqualFold(sequences.RevComp(upfragment.BottomStickyend_5prime), downfragment.TopStickyend_5prime) {
+			if /*upfragment.BottomStickyend_5prime == RevComp(downfragment.TopStickyend_5prime) ||*/ sequences.RevComp(upfragment.BottomStickyend_5prime) == downfragment.TopStickyend_5prime {
 				sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Topstrand)
 				dnastring := strings.Join(sequencestojoin, "")
 				assembledfragment := Digestedfragment{dnastring, "", upfragment.TopStickyend_5prime, downfragment.TopStickyend_3prime, downfragment.BottomStickyend_5prime, upfragment.BottomStickyend_3prime}
 				assembledfragments = append(assembledfragments, assembledfragment)
 				sequencestojoin = make([]string, 0)
 			}
-			if strings.EqualFold(upfragment.BottomStickyend_5prime, sequences.RevComp(downfragment.BottomStickyend_5prime)) {
+			if upfragment.BottomStickyend_5prime == sequences.RevComp(downfragment.BottomStickyend_5prime) {
 				sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Bottomstrand)
 				dnastring := strings.Join(sequencestojoin, "")
 				assembledfragment := Digestedfragment{dnastring, "", upfragment.TopStickyend_5prime, downfragment.BottomStickyend_3prime, downfragment.TopStickyend_5prime, upfragment.BottomStickyend_3prime}
@@ -120,50 +112,37 @@ func Jointwopartsfromsequence(vector wtype.DNASequence, part1 wtype.DNASequence,
 	doublestrandedvector := MakedoublestrandedDNA(vector)
 	digestedvector := DigestionPairs(doublestrandedvector, enzyme)
 
-	assembledfragments, plasmidproducts, _ = joinTwoParts(digestedvector, digestedpart1)
+	assembledfragments, plasmidproducts, _ = jointwoparts(digestedvector, digestedpart1)
 
 	return assembledfragments, plasmidproducts
 }
 
-func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASequence, error) {
-	rotatedVector := vector.Dup()
+func rotate_vector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASequence, error) {
+	ret := vector.Dup()
 
 	// the purpose of this is to ensure the RE sites go ---> xxxx <---
 
+	// we just ensure the first one is first in the sequence... if there's more than one
+	// it's not our problem
 	if len(vector.Seq) == 0 {
-		return rotatedVector, fmt.Errorf("No Sequence found for %s so cannot rotate", vector.Nm)
+		return ret, fmt.Errorf("No Sequence found for %s so cannot rotate", vector.Nm)
 	}
 
-	restrictionSites := sequences.FindAll(&rotatedVector, &wtype.DNASequence{Nm: enzyme.Name, Seq: enzyme.RecognitionSequence})
+	ix := strings.Index(strings.ToUpper(ret.Seq), strings.ToUpper(enzyme.RecognitionSequence))
 
-	if len(restrictionSites.Positions) > 2 {
-		err := fmt.Errorf("must have 2 restriction sites to rotate vector. %d %s sites found in vector %s - cannot rotate", len(restrictionSites.Positions), enzyme.Name, vector.Nm)
-		return rotatedVector, err
+	if ix == -1 {
+		err := fmt.Errorf("No restriction sites for %s found in vector %s - cannot rotate", enzyme.Name, vector.Nm)
+		return ret, err
 	}
 
-	var fwdSites []sequences.PositionPair
-	var revSites []sequences.PositionPair
+	newseq := ""
 
-	for i := range restrictionSites.Positions {
-		if !restrictionSites.Positions[i].Reverse {
-			fwdSites = append(fwdSites, restrictionSites.Positions[i])
-		} else {
-			revSites = append(revSites, restrictionSites.Positions[i])
-		}
-	}
-	if len(revSites) > 1 {
-		return rotatedVector, fmt.Errorf("%d reverse sites for %s found in vector %s", len(revSites), enzyme.Name, vector.Name())
-	}
+	newseq += ret.Seq[ix:]
+	newseq += ret.Seq[:ix]
 
-	if len(fwdSites) > 1 {
-		return rotatedVector, fmt.Errorf("%d forward sites for %s found in vector %s", len(fwdSites), enzyme.Name, vector.Name())
-	}
+	ret.Seq = newseq
 
-	fwdStart, _ := fwdSites[0].Coordinates(wtype.CODEFRIENDLY, wtype.IGNOREDIRECTION)
-
-	rotatedVector = sequences.Rotate(rotatedVector, fwdStart, false)
-
-	return rotatedVector, nil
+	return ret, nil
 }
 
 func allPartOrders(parts []wtype.DNASequence) (allCombos [][]wtype.DNASequence) {
@@ -226,10 +205,8 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 
 	var allPartCombos [][]wtype.DNASequence = allPartOrders(partsInAnyOrder)
 
-	fmt.Println(text.Red("Number of Combinations to simulate:"), len(allPartCombos))
-
 	for _, partOrder := range allPartCombos {
-		partialassemblies, plasmids, _, err := JoinXNumberOfParts(vector, partOrder, enzyme)
+		partialassemblies, plasmids, err := JoinXNumberOfParts(vector, partOrder, enzyme)
 		if err != nil {
 			errs = append(errs, err.Error())
 		}
@@ -238,24 +215,6 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 		}
 		for j := range plasmids {
 			plasmidproducts = append(plasmidproducts, plasmids[j])
-		}
-
-		// if too many combinations, return as soon as a valid plasmid is found to save memory.
-		if len(allPartCombos) > 24 {
-
-			if len(plasmidproducts) > 0 {
-				for _, plasmidProduct := range plasmidproducts {
-					_, oris, markers, _ := plasmid.ValidPlasmid(plasmidProduct)
-
-					if len(oris) > 0 && len(markers) > 0 {
-						// if no duplicate oris and markers, likely to be a good assembly and not vector double assembly.
-						if len(search.RemoveDuplicates(oris)) == len(oris) && len(search.RemoveDuplicates(markers)) == len(markers) {
-							plasmidproducts = search.RemoveDuplicateSequences(plasmidproducts)
-							return assembledfragments, plasmidproducts, nil
-						}
-					}
-				}
-			}
 		}
 	}
 
@@ -270,12 +229,11 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 
 // JoinXNumberOfParts simulates assembly of a Vector and a list of parts in order using a specified TypeIIs restriction enzyme.
 // Returns an array of partially assembled fragments and fully assembled plasmid products and any error in attempting to assemble the parts.
-func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, inserts []wtype.DNASequence, err error) {
+func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
 
-	var newerr error
 	if vector.Seq == "" {
 		err = fmt.Errorf("No Vector sequence found for vector %s", vector.Nm)
-		return assembledfragments, plasmidproducts, inserts, err
+		return assembledfragments, plasmidproducts, err
 	}
 	// there are two cases: either the vector comes in same way parts do
 	// i.e. SAPI--->xxxx<---IPAS
@@ -284,58 +242,53 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	// we have either to rotate the vector or tolerate this
 	// probably best to rotate first
 
-	rotatedvector, err := rotateVector(vector, enzyme)
+	rotatedvector, err := rotate_vector(vector, enzyme)
 
 	if err != nil {
-		return assembledfragments, plasmidproducts, inserts, err
+		return assembledfragments, plasmidproducts, err
 	}
 
+	doublestrandedvector := MakedoublestrandedDNA(rotatedvector)
+	digestedvector := DigestionPairs(doublestrandedvector, enzyme)
+
 	if len(partsinorder) == 0 {
-		return nil, nil, inserts, fmt.Errorf("No parts found")
+		return nil, nil, fmt.Errorf("No parts found")
 	}
 	if len(partsinorder[0].Seq) == 0 {
 		name := partsinorder[0].Nm
 		errorstring := name + " has no sequence"
 		err = fmt.Errorf(errorstring)
-		return assembledfragments, plasmidproducts, inserts, err
+		return assembledfragments, plasmidproducts, err
 	}
 	doublestrandedpart := MakedoublestrandedDNA(partsinorder[0])
-	// initialise assembledFragements with first digested part
-	assembledfragments = DigestionPairs(doublestrandedpart, enzyme)
+	digestedpart := DigestionPairs(doublestrandedpart, enzyme)
+
+	var newerr error
+	assembledfragments, plasmidproducts, newerr = jointwoparts(digestedvector, digestedpart)
+	if newerr != nil {
+		message := fmt.Sprint(vector.Nm, " and ", partsinorder[0].Nm, ": ", newerr.Error())
+		err = fmt.Errorf(message)
+		return
+	}
 
 	for i := 1; i < len(partsinorder); i++ {
 		if len(partsinorder[i].Seq) == 0 {
 			name := partsinorder[i].Nm
 			errorstring := name + " has no sequence"
 			err = fmt.Errorf(errorstring)
-			return assembledfragments, plasmidproducts, inserts, err
+			return assembledfragments, plasmidproducts, err
 		}
 
 		doublestrandedpart = MakedoublestrandedDNA(partsinorder[i])
 		digestedpart := DigestionPairs(doublestrandedpart, enzyme)
 
-		assembledfragments, plasmidproducts, newerr = joinTwoParts(assembledfragments, digestedpart)
+		assembledfragments, plasmidproducts, newerr = jointwoparts(assembledfragments, digestedpart)
 
 		if newerr != nil {
 			message := fmt.Sprint(partsinorder[i-1].Nm, " and ", partsinorder[i].Nm, ": ", newerr.Error())
 			err = fmt.Errorf(message)
 			return
 		}
-	}
-
-	// this is the insert
-	insertFragments := assembledfragments
-
-	// now join fragment to vector
-	doublestrandedvector := MakedoublestrandedDNA(rotatedvector)
-
-	digestedvector := DigestionPairs(doublestrandedvector, enzyme)
-
-	assembledfragments, plasmidproducts, newerr = joinTwoParts(digestedvector, insertFragments)
-	if newerr != nil {
-		message := fmt.Sprint(vector.Nm, " and ", partsinorder[0].Nm, ": ", newerr.Error())
-		err = fmt.Errorf(message)
-		return
 	}
 
 	partnames := make([]string, 0)
@@ -348,26 +301,29 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 
 		plasmidproduct.Nm = vector.Nm + "_" + strings.Join(partnames, "_")
 	}
-	var errs []string
-	for _, vectorFragment := range digestedvector {
-		for _, insertFragment := range insertFragments {
-			if fragmentsFormPlasmid(vectorFragment, insertFragment) {
-				insert, err := insertFragment.ToDNASequence("InsertSequence")
-				if err == nil {
-					inserts = append(inserts, insert)
-				} else {
-					errs = append(errs, err.Error())
-				}
-			}
-		}
-	}
 
-	if len(errs) > 0 && len(inserts) == 0 {
-		return assembledfragments, plasmidproducts, inserts, fmt.Errorf("no valid inserts expected to form: %s", strings.Join(errs, ";"))
-	}
-
-	return assembledfragments, plasmidproducts, inserts, nil
+	return assembledfragments, plasmidproducts, err
 }
+
+/*func JoinAnnotatedparts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence) {
+
+	doublestrandedvector := MakedoublestrandedDNA(vector)
+	digestedvector := DigestionPairs(doublestrandedvector, enzyme)
+
+	doublestrandedpart := MakedoublestrandedDNA(partsinorder[0])
+	digestedpart := DigestionPairs(doublestrandedpart, enzyme)
+	assembledfragments, plasmidproducts = Jointwoparts(digestedvector, digestedpart)
+	//// fmt.Println("vector + part1 product = ", assembledfragments, plasmidproducts)
+	for i := 1; i < len(partsinorder); i++ {
+		doublestrandedpart = MakedoublestrandedDNA(partsinorder[i])
+		digestedpart := DigestionPairs(doublestrandedpart, enzyme)
+		//for _, newfragments := range assembledfragments {
+		assembledfragments, plasmidproducts = Jointwoparts(assembledfragments, digestedpart)
+		//}
+	}
+	return assembledfragments, plasmidproducts
+}
+*/
 
 func names(seqs []wtype.DNASequence) []string {
 	var nms []string
@@ -405,40 +361,37 @@ func AssemblySummary(params []Assemblyparameters) string {
 // Insert will find the inserted DNA region as a linear DNA sequence from a set of assembly parameters and the assembled sequence.
 func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (insert wtype.DNASequence, err error) {
 
-	// fetch enzyme properties
-	enzymename := strings.ToUpper(assemblyParameters.Enzymename)
+	algorithmName := "SWAffine"
 
-	enzyme, err := lookup.TypeIIsLookup(enzymename)
+	algorithm, found := align.Algorithms[algorithmName]
+
+	if !found {
+		return insert, fmt.Errorf("Algorithm %s not found in Algorithms list. ", algorithmName)
+	}
+
+	alignmentResult, err := align.DNA(assemblyParameters.Vector, result, algorithm)
 
 	if err != nil {
-		return insert, fmt.Errorf("failure calculating insert: %s", err.Error())
+		return insert, fmt.Errorf("Error aligning %s to %s: %s", assemblyParameters.Vector.Name(), result.Name(), err.Error())
 	}
 
-	_, _, inserts, err := JoinXNumberOfParts(assemblyParameters.Vector, assemblyParameters.Partsinorder, enzyme)
+	vectorBit := alignmentResult.LongestContinuousSequence()
+
+	index := strings.Index(result.Seq, vectorBit.Seq)
+
+	result = sequences.Rotate(result, index, false)
+
+	replaced, err := sequences.ReplaceAll(result, vectorBit, wtype.DNASequence{Seq: ""})
+
+	replaced.Nm = assemblyParameters.Constructname + "_Insert"
+
+	replaced.Plasmid = false
+
 	if err != nil {
-		return insert, fmt.Errorf("failure calculating insert: %s", err.Error())
+		return replaced, fmt.Errorf("failure calculating insert fragment for %s after digestion: %s", assemblyParameters.Constructname, err.Error())
 	}
 
-	var validInserts []wtype.DNASequence
-
-	for i := range inserts {
-		if len(sequences.FindAll(&result, &inserts[i]).Positions) == 1 {
-			validInserts = append(validInserts, inserts[0])
-		}
-	}
-	if len(validInserts) == 0 {
-		return insert, fmt.Errorf("no insert sequences found which are present in assembled sequence %s. Found these: %v", result.Name(), inserts)
-	}
-
-	if len(validInserts) == 1 {
-		return validInserts[0], nil
-	}
-
-	if len(validInserts) > 1 {
-		return biggest(validInserts), nil
-	}
-
-	return insert, fmt.Errorf("no insert sequences found which are present in assembled sequence %s. ", result.Name())
+	return replaced, err
 }
 
 // Assemblysimulator simulate assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.
@@ -462,7 +415,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	var plasmidProducts []wtype.DNASequence
 
 	if len(assemblyparameters.Partsinorder) > 6 {
-		failedAssemblies, plasmidProducts, _, err = JoinXNumberOfParts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
+		failedAssemblies, plasmidProducts, err = JoinXNumberOfParts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 	} else {
 		failedAssemblies, plasmidProducts, err = FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 	}

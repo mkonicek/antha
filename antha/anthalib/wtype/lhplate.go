@@ -1107,3 +1107,15 @@ func (p *LHPlate) AllContents() []*LHComponent {
 
 	return ret
 }
+
+func (p *LHPlate) ColVol() wunit.Volume {
+	if p == nil {
+		return wunit.ZeroVolume()
+	}
+
+	v := p.Welltype.MaxVolume()
+
+	v.MultiplyBy(float64(p.WlsY))
+
+	return v
+}

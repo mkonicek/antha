@@ -31,6 +31,9 @@ func (ti TransferBlockInstruction) InstructionType() int {
 // depending on the robot type and configuration
 
 func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
+	var tfr []*TransferInstruction
+	var err error
+
 	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()
 	inss := make([]RobotInstruction, 0, 1)
@@ -66,7 +69,11 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
-		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false)
+
+		// we need to be better at assessing when MC will happen
+		// this occurs on the level below so not too bad
+
+		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
 
 		if err != nil {
 			//panic(err)
@@ -91,7 +98,8 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		insset := []*wtype.LHInstruction{ins}
 
-		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false)
+		// ConvertInstructions may now change which robot we use
+		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
 
 		if err != nil {
 			panic(err)

@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -58,11 +59,103 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 //	etc.
 //
 
-func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
+func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) (insOut []*TransferInstruction, robotOut *LHProperties, err error) {
+	// again again again we dup the robot
+
+	if multi != 1 {
+		rbt := robot.DupKeepIDs()
+
+		tfrs, err := convertInstructions(inssIn, rbt, carryvol, channelprms, multi, legacyVolume)
+
+		if err != nil {
+			return []*TransferInstruction{}, robot, err
+		}
+
+		// check if we actually generate any multichannel stuff here
+
+		mcHere, err := hasMCB(ctx, tfrs, rbt, policy)
+
+		if err != nil {
+			return []*TransferInstruction{}, robot, err
+		}
+
+		// if there's no multichannel here require only single channeling
+		// this is to make behaviour in regard of sources, atomic mixes
+		// correct
+		if !mcHere {
+			multi = 1
+		}
+	}
+
+	tfrs, err := convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
+
+	if err != nil {
+		return []*TransferInstruction{}, robot, err
+	}
+
+	return tfrs, robot, nil
+}
+
+func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
+	hasMulti := false
+
+	for _, tfr := range tfrs {
+		instrx, err := tfr.Generate(ctx, policy, rbt)
+
+		if err != nil {
+			return false, err
+		}
+
+		for _, ins := range instrx {
+			if ins.InstructionType() == MCB {
+				hasMulti = true
+				break
+			}
+		}
+
+		if hasMulti {
+			break
+		}
+	}
+
+	return hasMulti, nil
+}
+
+func dupCmpAr(ins *wtype.LHInstruction) []*wtype.LHComponent {
+	in := ins.Components
+	r := make([]*wtype.LHComponent, len(in))
+
+	for i := 0; i < len(in); i++ {
+		r[i] = in[i].Dup()
+		r[i].Loc = ins.PlateID + ":" + ins.Welladdress
+	}
+
+	return r
+}
+
+func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 
-	for i := 0; i < inssIn.MaxLen(); i++ {
-		cmps := inssIn.CompsAt(i)
+	// TODO --> iterator?
+	horiz := false
+
+	var l int
+
+	if multi == 1 {
+		horiz = true
+		l = len(inssIn)
+	} else {
+		horiz = false // not needed but just in case
+		l = inssIn.MaxLen()
+	}
+
+	for i := 0; i < l; i++ {
+		var cmps []*wtype.LHComponent
+		if horiz {
+			cmps = dupCmpAr(inssIn[i])
+		} else {
+			cmps = inssIn.CompsAt(i)
+		}
 		lenToMake := 0
 
 		for _, c := range cmps {
@@ -122,7 +215,6 @@ func ConvertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			count = count
 		*/
 		for _, t := range parallelTransfers.Transfers {
-			// TODO prevent multiple separate transfers coming out of this
 			transfers, err := makeTransfers(t, cmps, robot, inssIn, carryvol)
 
 			if err != nil {
@@ -184,6 +276,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID]
 
 		if !ok {
+			panic("SUCK")
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")
 		}
 

@@ -11,7 +11,7 @@ func TestParallelSetGeneration(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	// lazy way to get pre-prepared instructions
-	tb, dstp := getTransferBlock(ctx) // defined in transferblock_test
+	tb, dstp := getTransferBlock2Component(ctx) // defined in transferblock_test
 
 	ins := make([]*wtype.LHInstruction, 0, len(tb.Inss)-1)
 

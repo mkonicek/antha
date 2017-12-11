@@ -21,14 +21,23 @@
 // 2 Royal College St, London NW1 0NH UK
 package search
 
-// Check the wells that have already been used in this plate to be sure not to pipette on top of a previous solution. This is predominantly used for when two aliquot elements are used in serial to make sure the second set of aliquots are not pipette onto the first set.
-func NextFreeWell(allWellPositions []string, wellsUsed []string) (well string, err error) {
+import (
+	"fmt"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+)
+
+// NextFreeWell checks for the next well which is empty in a plate.
+// The user can also specify wells to avoid and whether to search through the well positions by row. The default is by column.
+func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, byRow bool) (well string, err error) {
+
+	allWellPositions := plate.AllWellPositions(byRow)
 
 	for _, well := range allWellPositions {
 		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.
-		if !InSlice(well, wellsUsed) {
+		if plate.WellMap()[well].Empty() && !InSlice(well, avoidWells) {
 			return well, nil
 		}
 	}
-	return
+	return "", fmt.Errorf("no empty wells on plate %s", plate.Name)
 }

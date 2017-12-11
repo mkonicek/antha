@@ -523,6 +523,18 @@ func checkSanityIns(request *LHRequest) {
 				good = false
 			} else if !tv.IsZero() && !tv.EqualTo(ins.Result.Volume()) {
 				fmt.Println("ERROR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Result.CName, " COMP: ", tv, " PROD: ", ins.Result.Volume())
+				good = false
+			} else if ins.PlateID != "" {
+				// compare result volume to the well volume
+
+				plat := request.GetPlate(ins.PlateID)
+
+				if plat == nil {
+					// possibly an issue
+				} else if plat.Welltype.MaxVolume().LessThan(ins.Result.Volume()) {
+					fmt.Println("ERROR: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Result.CName, " WANT: ", ins.Result.Volume(), " MAX FOR PLATE: ", plat.Welltype.MaxVolume())
+					good = false
+				}
 			}
 		}
 	}

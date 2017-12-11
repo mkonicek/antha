@@ -227,3 +227,17 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 
 	return ret
 }
+
+func (request *LHRequest) GetPlate(id string) *wtype.LHPlate {
+	p, ok := request.Input_plates[id]
+
+	if !ok {
+		p, ok = request.Output_plates[id]
+
+		if !ok {
+			return nil
+		}
+	}
+
+	return p
+}

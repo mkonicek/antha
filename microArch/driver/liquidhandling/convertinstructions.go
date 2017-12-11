@@ -145,16 +145,25 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		horiz = true
 		l = len(inssIn)
 	} else {
-		horiz = false // not needed but just in case
+		horiz = false
 		l = inssIn.MaxLen()
 	}
 
 	for i := 0; i < l; i++ {
+		var inssToUse LHIVector
 		var cmps []*wtype.LHComponent
 		if horiz {
+			if inssIn[i] == nil {
+				continue
+			}
 			cmps = dupCmpAr(inssIn[i])
+			inssToUse = make(LHIVector, len(cmps))
+			for j := 0; j < len(cmps); j++ {
+				inssToUse[j] = inssIn[i]
+			}
 		} else {
 			cmps = inssIn.CompsAt(i)
+			inssToUse = inssIn
 		}
 		lenToMake := 0
 
@@ -180,42 +189,14 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			independent = channelprms.Independent
 		}
 
-		// the alignment here just says component i comes from fromWells[i]
-		// it says nothing about which channel should be used
-		// although it does specify contiguity of channels
-		//fromPlateIDs, fromWells, vols, err := robot.GetComponents(cmps, carryvol, orientation, multi, independent, legacyVolume)
-
-		/*
-			Cmps         wtype.ComponentVector
-			Carryvol     wunit.Volume
-			Ori          int
-			Multi        int
-			Independent  bool
-			LegacyVolume bool
-		*/
-
 		parallelTransfers, err := robot.GetComponents(GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: orientation, Multi: multi, Independent: independent, LegacyVolume: legacyVolume})
 
 		if err != nil {
 			return nil, err
 		}
 
-		/*
-			count := func(is []wunit.Volume) int {
-				r := 0
-				for _, i := range is {
-					if !i.IsZero() {
-						r += 1
-					}
-				}
-
-				return r
-			}
-
-			count = count
-		*/
 		for _, t := range parallelTransfers.Transfers {
-			transfers, err := makeTransfers(t, cmps, robot, inssIn, carryvol)
+			transfers, err := makeTransfers(t, cmps, robot, inssToUse, carryvol)
 
 			if err != nil {
 				return nil, err
@@ -276,7 +257,6 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		ppt, ok := robot.PlateIDLookup[inssIn[ci].PlateID]
 
 		if !ok {
-			panic("SUCK")
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")
 		}
 

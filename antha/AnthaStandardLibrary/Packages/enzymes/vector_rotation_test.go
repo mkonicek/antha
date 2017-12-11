@@ -14,7 +14,7 @@ func TestNoRotationNeeded(t *testing.T) {
 
 	s := wtype.DNASequence{Nm: "nevermind", Seq: seq}
 
-	rs, err := rotate_vector(s, enzyme)
+	rs, err := rotateVector(s, enzyme)
 
 	if err != nil {
 		t.Fatal(err)
@@ -31,7 +31,7 @@ func TestSomeRotationNeeded(t *testing.T) {
 
 	s := wtype.DNASequence{Nm: "nevermind", Seq: seq}
 
-	rs, err := rotate_vector(s, enzyme)
+	rs, err := rotateVector(s, enzyme)
 
 	if err != nil {
 		t.Fatal(err)

@@ -797,7 +797,14 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 
 	//	for _, instruction := range instructions {
 	for _, insID := range request.Output_order {
+		// ignore non-mixes
+
 		instruction := instructions[insID]
+
+		if instruction.InsType() != "MIX" {
+			continue
+		}
+
 		components := instruction.Components
 
 		for ix, component := range components {

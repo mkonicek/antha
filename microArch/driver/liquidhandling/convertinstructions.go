@@ -156,7 +156,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			if inssIn[i] == nil {
 				continue
 			}
-			cmps = dupCmpAr(inssIn[i])
+			cmps = inssIn[i].ComponentsMoving()
 			inssToUse = make(LHIVector, len(cmps))
 			for j := 0; j < len(cmps); j++ {
 				inssToUse[j] = inssIn[i]

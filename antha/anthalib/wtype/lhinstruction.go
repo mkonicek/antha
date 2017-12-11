@@ -176,16 +176,29 @@ func (ins *LHInstruction) ParentString() string {
 
 }
 
-func (ins *LHInstruction) ComponentsMoving() string {
-	sa := make([]string, 0, 1)
+func (ins *LHInstruction) NamesOfComponentsMoving() string {
+	ar := ins.ComponentsMoving()
+
+	sa := make([]string, 0)
+
+	for _, c := range ar {
+		sa = append(sa, c.CName)
+	}
+
+	return strings.Join(sa, "+")
+}
+
+func (ins *LHInstruction) ComponentsMoving() []*LHComponent {
+	ca := make([]*LHComponent, 0)
 	for i, v := range ins.Components {
 		// ignore component 1 if this is a mix-in-place
-		if i == 0 && !v.IsSample() {
+		if i == 0 && ins.IsMixInPlace() {
 			continue
 		}
-		sa = append(sa, v.CName)
+		ca = append(ca, v.Dup())
 	}
-	return strings.Join(sa, "+")
+
+	return ca
 }
 
 func (ins *LHInstruction) Wellcoords() WellCoords {

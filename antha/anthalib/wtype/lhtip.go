@@ -70,6 +70,12 @@ func (tip *LHTip) Dup() *LHTip {
 	return t
 }
 
+func (tip *LHTip) DupKeepID() *LHTip {
+	t := tip.Dup()
+	t.ID = tip.ID
+	return t
+}
+
 func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string) *LHTip {
 	var lht LHTip
 	//	lht.ID = "tip-" + GetUUID()

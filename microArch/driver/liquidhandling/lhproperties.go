@@ -210,8 +210,15 @@ func ValidateLHProperties(props *LHProperties) (bool, string) {
 }
 
 // copy constructor
-
 func (lhp *LHProperties) Dup() *LHProperties {
+	return lhp.dup(false)
+}
+
+func (lhp *LHProperties) DupKeepIDs() *LHProperties {
+	return lhp.dup(true)
+}
+
+func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	lo := make(map[string]wtype.Coordinates, len(lhp.Layout))
 	for k, v := range lhp.Layout {
 		lo[k] = v
@@ -219,26 +226,28 @@ func (lhp *LHProperties) Dup() *LHProperties {
 	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
 
 	for _, a := range lhp.Adaptors {
-		r.Adaptors = append(r.Adaptors, a.Dup())
+		ad := a.Dup()
+		if keepIDs {
+			ad.ID = a.ID
+		}
+		r.Adaptors = append(r.Adaptors, ad)
 	}
 
 	for _, h := range lhp.Heads {
-		r.Heads = append(r.Heads, h.Dup())
+		hd := h.Dup()
+		if keepIDs {
+			hd.ID = h.ID
+		}
+		r.Heads = append(r.Heads, hd)
 	}
 
 	for _, hl := range lhp.HeadsLoaded {
-		r.HeadsLoaded = append(r.HeadsLoaded, hl.Dup())
+		hld := hl.Dup()
+		if keepIDs {
+			hld.ID = hl.ID
+		}
+		r.HeadsLoaded = append(r.HeadsLoaded, hld)
 	}
-
-	/*
-		for name, pl := range lhp.PosLookup {
-			r.PosLookup[name] = pl
-		}
-
-		for name, pl := range lhp.PlateIDLookup {
-			r.PlateIDLookup[name] = pl
-		}
-	*/
 
 	// plate lookup can contain anything
 
@@ -248,13 +257,24 @@ func (lhp *LHProperties) Dup() *LHProperties {
 		var pos string
 		switch pt.(type) {
 		case *wtype.LHTipwaste:
-			tmp := pt.(*wtype.LHTipwaste).Dup()
+			var tmp *wtype.LHTipwaste
+			if keepIDs {
+				tmp = pt.(*wtype.LHTipwaste).Dup()
+				tmp.ID = pt.(*wtype.LHTipwaste).ID
+			} else {
+				tmp = pt.(*wtype.LHTipwaste).Dup()
+			}
 			pt2 = tmp
 			newid = tmp.ID
 			pos = lhp.PlateIDLookup[name]
 			r.Tipwastes[pos] = tmp
 		case *wtype.LHPlate:
-			tmp := pt.(*wtype.LHPlate).Dup()
+			var tmp *wtype.LHPlate
+			if keepIDs {
+				tmp = pt.(*wtype.LHPlate).DupKeepIDs()
+			} else {
+				tmp = pt.(*wtype.LHPlate).Dup()
+			}
 			pt2 = tmp
 			newid = tmp.ID
 			pos = lhp.PlateIDLookup[name]
@@ -268,9 +288,13 @@ func (lhp *LHProperties) Dup() *LHProperties {
 			} else {
 				r.Plates[pos] = tmp
 			}
-
 		case *wtype.LHTipbox:
-			tmp := pt.(*wtype.LHTipbox).Dup()
+			var tmp *wtype.LHTipbox
+			if keepIDs {
+				tmp = pt.(*wtype.LHTipbox).DupKeepIDs()
+			} else {
+				tmp = pt.(*wtype.LHTipbox).Dup()
+			}
 			pt2 = tmp
 			newid = tmp.ID
 			pos = lhp.PlateIDLookup[name]
@@ -287,18 +311,33 @@ func (lhp *LHProperties) Dup() *LHProperties {
 
 	for name, head := range lhp.Heads {
 		r.Heads[name] = head.Dup()
+		if keepIDs {
+			r.Heads[name].ID = head.ID
+		}
 	}
 
 	for i, hl := range lhp.HeadsLoaded {
 		r.HeadsLoaded[i] = hl.Dup()
+		if keepIDs {
+			r.HeadsLoaded[i].ID = hl.ID
+		}
 	}
 
 	for i, ad := range lhp.Adaptors {
 		r.Adaptors[i] = ad.Dup()
+
+		if keepIDs {
+			r.Adaptors[i].ID = ad.ID
+		}
 	}
 
 	for _, tip := range lhp.Tips {
-		r.Tips = append(r.Tips, tip.Dup())
+		newtip := tip.Dup()
+		if keepIDs {
+			newtip.ID = tip.ID
+		}
+
+		r.Tips = append(r.Tips, newtip)
 	}
 
 	for _, pref := range lhp.Tip_preferences {
@@ -415,14 +454,6 @@ func (lhp *LHProperties) AddTipBox(tipbox *wtype.LHTipbox) error {
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, "Trying to add tip box")
 }
 func (lhp *LHProperties) AddTipBoxTo(pos string, tipbox *wtype.LHTipbox) bool {
-	/*
-		fmt.Println("Adding tip box of type, ", tipbox.Type, " To position ", pos)
-		if lhp.PosLookup[pos] != "" {
-			logger.Fatal("CAN'T ADD TIPBOX TO FULL POSITION")
-			panic("CAN'T ADD TIPBOX TO FULL POSITION")
-		}
-	*/
-
 	if lhp.PosLookup[pos] != "" {
 		logger.Debug(fmt.Sprintf("Tried to add tipbox to full position: %s", pos))
 		return false
@@ -538,9 +569,6 @@ func (lhp *LHProperties) RemovePlateAtPosition(pos string) {
 func (lhp *LHProperties) addWaste(waste *wtype.LHPlate) bool {
 	for _, pref := range lhp.Waste_preferences {
 		if lhp.PosLookup[pref] != "" {
-
-			//fmt.Println(pref, " ", lhp.PlateLookup[lhp.PosLookup[pref]])
-
 			continue
 		}
 
@@ -567,7 +595,6 @@ func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.LHPlate) bool {
 func (lhp *LHProperties) AddWash(wash *wtype.LHPlate) bool {
 	for _, pref := range lhp.Wash_preferences {
 		if lhp.PosLookup[pref] != "" {
-			//fmt.Println(pref, " ", lhp.PlateLookup[lhp.PosLookup[pref]])
 			continue
 		}
 

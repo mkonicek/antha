@@ -157,9 +157,27 @@ func sumSources(cmpV []wtype.ComponentVector) ComponentVolumeHash {
 	return ret
 }
 
+func cmpVecsEqual(v1, v2 wtype.ComponentVector) bool {
+	if len(v1) != len(v2) {
+		return false
+	}
+
+	for i := 0; i < len(v1); i++ {
+		if !cmpsEqual(v1[i], v2[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
+	return c1.ID == c2.ID && c1.Vol == c2.Vol
+}
+
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
 	rep := newReply()
-	// build list of possible sources -- this is simply a ComponentVector of all the possible sources
+	// build list of possible sources -- this is a list of ComponentVectors
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
 
@@ -167,11 +185,18 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	// optimization options apply here as parameters for the next level down
 
 	currCmps := opt.Cmps.Dup()
+	var lastCmps wtype.ComponentVector
+
 	done := false
 
 	for {
 		done = areWeDoneYet(currCmps)
 		if done {
+			break
+		}
+
+		if cmpVecsEqual(lastCmps, currCmps) {
+			//return GetComponentsReply{}, fmt.Errorf("No sources for %v", currCmps)
 			break
 		}
 
@@ -210,8 +235,8 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		// update sources
 
 		updateSources(bestSrc, bestMatch, opt.Carryvol, lhp.MinPossibleVolume())
+		lastCmps = currCmps.Dup()
 		updateDests(currCmps, bestMatch)
-
 		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))
 	}
 

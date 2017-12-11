@@ -2,15 +2,14 @@ package liquidhandling
 
 import (
 	"context"
-	"testing"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"testing"
 )
 
-func getTransferBlock(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
+func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
 	inss := make([]*wtype.LHInstruction, 8)
 	dstp, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
 	if err != nil {
@@ -55,6 +54,64 @@ func getTransferBlock(ctx context.Context) (TransferBlockInstruction, *wtype.LHP
 	return tb, dstp
 }
 
+func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
+	inss := make([]*wtype.LHInstruction, 8)
+	dstp, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < 8; i++ {
+		c, err := inventory.NewComponent(ctx, inventory.WaterType)
+		if err != nil {
+			panic(err)
+		}
+
+		c.Vol = 100.0
+		c.Vunit = "ul"
+		c.SetSample(true)
+		ins := wtype.NewLHMixInstruction()
+		ins.Components = append(ins.Components, c)
+
+		c2, err := inventory.NewComponent(ctx, "tartrazine")
+		if err != nil {
+			panic(err)
+		}
+
+		c2.Vol = 24.0
+		c2.Vunit = "ul"
+		c2.SetSample(true)
+
+		ins.Components = append(ins.Components, c2)
+
+		c3, err := inventory.NewComponent(ctx, "ethanol")
+		if err != nil {
+			panic(err)
+		}
+
+		c3.Vol = 12.0
+		c3.Vunit = "ul"
+		c3.SetSample(true)
+
+		ins.Components = append(ins.Components, c3)
+
+		c4 := c.Dup()
+		c4.Mix(c2)
+		c4.Mix(c3)
+
+		ins.Result = c4
+
+		ins.Platetype = "pcrplate_skirted_riser40"
+		ins.Welladdress = wutil.NumToAlpha(i+1) + "1"
+		ins.SetPlateID(dstp.ID)
+		inss[i] = ins
+	}
+
+	tb := NewTransferBlockInstruction(inss)
+
+	return tb, dstp
+}
+
 func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *LHProperties {
 	rbt, err := makeTestGilson(ctx)
 	if err != nil {
@@ -74,7 +131,12 @@ func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *L
 	if err != nil {
 		panic(err)
 	}
-	c.Vol = 10000
+
+	// add a columnsw'th
+
+	v := p.ColVol().ConvertToString("ul")
+
+	c.Vol = v
 	c.Vunit = "ul"
 	p.AddComponent(c, true)
 
@@ -82,7 +144,16 @@ func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *L
 	if err != nil {
 		panic(err)
 	}
-	c.Vol = 10000
+	c.Vol = v
+	c.Vunit = "ul"
+
+	p.AddComponent(c, true)
+
+	c, err = inventory.NewComponent(ctx, "ethanol")
+	if err != nil {
+		panic(err)
+	}
+	c.Vol = v
 	c.Vunit = "ul"
 
 	p.AddComponent(c, true)
@@ -100,7 +171,7 @@ func TestMultichannelFailPolicy(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	// policy disallows
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -114,7 +185,7 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	// can do 7
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 
 	tb.Inss[0].Welladdress = "B1"
 
@@ -134,7 +205,7 @@ func TestMultichannelSucceedPair(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	// can do 7
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 
 	tb.Inss[0].Welladdress = "A1"
 	tb.Inss[1].Welladdress = "B1"
@@ -161,7 +232,7 @@ func TestMultichannelSucceedPair(t *testing.T) {
 
 func TestMultichannelFailDest(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 
 	/*
 		for i := 0; i < len(tb.Inss); i++ {
@@ -196,7 +267,7 @@ func TestMultiChannelFailSrc(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	// sources not aligned
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 
 	// fix the plate
@@ -219,7 +290,7 @@ func TestMultiChannelFailComponent(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	// components not same liquid type
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 	pol.Policies["water"]["CAN_MULTI"] = true
@@ -264,7 +335,7 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 func TestMultichannelPositive(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
 
@@ -288,7 +359,7 @@ func TestMultichannelPositive(t *testing.T) {
 func TestIndependentMultichannelPositive(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 
 	ins := make([]*wtype.LHInstruction, 0, len(tb.Inss)-1)
 
@@ -329,7 +400,7 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 func TestTroughMultichannelPositive(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 
 	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
 
@@ -355,7 +426,7 @@ func TestTroughMultichannelPositive(t *testing.T) {
 func TestBigWellMultichannelPositive(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
-	tb, dstp := getTransferBlock(ctx)
+	tb, dstp := getTransferBlock2Component(ctx)
 
 	rbt := getTestRobot(ctx, dstp, "DSW24_riser40")
 
@@ -371,11 +442,68 @@ func TestBigWellMultichannelPositive(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ris) != 8 {
-		t.Errorf("Error: Expected 8 transfers got %d", len(ris))
+	if len(ris) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)
+}
+
+func TestInsByInsMixPositiveMultichannel(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	tb, dstp := getTransferBlock3Component(ctx)
+
+	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
+
+	pol, err := GetLHPolicyForTest()
+
+	// allow multi
+
+	pol.Policies["water"]["CAN_MULTI"] = true
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	// component-by-component multichanneling should be supported IFF
+	// we can do all the solutions in the subset
+	if len(ris) != 3 {
+		t.Errorf("Error: Expected 3 transfers got %d", len(ris))
+	}
+
+	testPositive(ctx, ris, pol, rbt, t)
+}
+
+func TestInsByInsMixNegativeMultichannel(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	tb, dstp := getTransferBlock3Component(ctx)
+
+	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
+
+	pol, err := GetLHPolicyForTest()
+
+	// allow multi
+
+	pol.Policies["water"]["CAN_MULTI"] = false
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	// atomic mixes now come through all split up... in future this should revert to the
+	// older case of 8 x 3 transfers either by merging or something else
+
+	if len(ris) != 24 {
+		t.Errorf("Error: Expected 24 transfers got %d", len(ris))
+	}
+
+	testNegative(ctx, ris, pol, rbt, t)
 }
 
 func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {

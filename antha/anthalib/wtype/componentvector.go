@@ -31,7 +31,7 @@ func (cv ComponentVector) Dup() ComponentVector {
 		}
 		ret[i] = v.Dup()
 	}
-	return cv
+	return ret
 }
 
 func (cv ComponentVector) GetNames() []string {

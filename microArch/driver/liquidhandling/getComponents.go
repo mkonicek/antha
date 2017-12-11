@@ -177,6 +177,7 @@ func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
 
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
 	rep := newReply()
+
 	// build list of possible sources -- this is a list of ComponentVectors
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
@@ -196,7 +197,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		}
 
 		if cmpVecsEqual(lastCmps, currCmps) {
-			//return GetComponentsReply{}, fmt.Errorf("No sources for %v", currCmps)
 			break
 		}
 

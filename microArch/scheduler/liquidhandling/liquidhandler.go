@@ -533,7 +533,7 @@ func checkSanityIns(request *LHRequest) {
 					// possibly an issue
 				} else if plat.Welltype.MaxVolume().LessThan(ins.Result.Volume()) {
 					fmt.Println("ERROR: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Result.CName, " WANT: ", ins.Result.Volume(), " MAX FOR PLATE: ", plat.Welltype.MaxVolume())
-					good = false
+					//		good = false
 				}
 			}
 		}

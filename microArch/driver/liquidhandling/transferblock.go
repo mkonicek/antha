@@ -70,15 +70,18 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
 
-		// we need to be better at assessing when MC will happen
-		// this occurs on the level below so not too bad
-
+		// in fact we do not return a different robot now... but we might
 		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
 
 		if err != nil {
 			//panic(err)
 			return inss, err
 		}
+
+		// we merge instructions which are compatible
+
+		tfr = mergeTransfers(tfr)
+
 		for _, tf := range tfr {
 			inss = append(inss, RobotInstruction(tf))
 		}
@@ -439,4 +442,71 @@ func choose_parallel_sets(sets []SetOfIDSets, params []*wtype.LHChannelParameter
 
 func (ti TransferBlockInstruction) GetParameter(p string) interface{} {
 	return nil
+}
+
+func mergeTransfers(tfrs []*TransferInstruction) []*TransferInstruction {
+	ret := make([]*TransferInstruction, 0, len(tfrs))
+
+	// we strictly retain ordering here
+
+	currTfr := tfrs[0]
+
+	for i := 1; i < len(tfrs); i++ {
+		if merged := tryMergeTransfer(currTfr, tfrs[i]); merged == nil {
+			ret = append(ret, currTfr)
+			currTfr = tfrs[i]
+		} else {
+			currTfr = merged
+		}
+	}
+
+	ret = append(ret, currTfr)
+
+	return ret
+}
+
+func tryMergeTransfer(ins1, ins2 *TransferInstruction) *TransferInstruction {
+	// merge any transfers which have sources in common
+
+	if commonSources(ins1, ins2) {
+		// appends everything from ins2 to ins1
+		return ins1.MergeWith(ins2)
+	}
+
+	return nil
+}
+
+func commonSources(ins1, ins2 *TransferInstruction) bool {
+	a2Map := func(a []string) map[string]bool {
+		m := make(map[string]bool)
+		for _, v := range a {
+			if v == "" {
+				continue
+			}
+			m[v] = true
+		}
+
+		return m
+	}
+
+	// we just compare component names
+
+	m := a2Map(ins1.Components)
+
+	if len(m) > 1 {
+		return false
+	}
+
+	for _, n := range ins2.Components {
+		if n == "" {
+			continue
+		}
+		_, ok := m[n]
+
+		if !ok {
+			return false
+		}
+	}
+
+	return true
 }

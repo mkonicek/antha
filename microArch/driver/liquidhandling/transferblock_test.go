@@ -3,9 +3,11 @@ package liquidhandling
 import (
 	"context"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"reflect"
 	"testing"
 )
 
@@ -310,28 +312,6 @@ func TestMultiChannelFailComponent(t *testing.T) {
 	testNegative(ctx, ris, pol, rbt, t)
 }
 
-func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
-
-	if len(ris) == 0 {
-		t.Errorf("Error: No transfers generated")
-	}
-
-	for _, ins := range ris {
-		ri2, err := ins.Generate(ctx, pol, rbt)
-
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		for _, ri := range ri2 {
-			if ri.InstructionType() != SCB {
-				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter("LIQUIDCLASS"), ri.GetParameter("WELLFROM"), ri.GetParameter("WELLTO"))
-			}
-		}
-
-	}
-}
-
 func TestMultichannelPositive(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
@@ -506,6 +486,58 @@ func TestInsByInsMixNegativeMultichannel(t *testing.T) {
 	testNegative(ctx, ris, pol, rbt, t)
 }
 
+func getMeATransfer(ctype string) *TransferInstruction {
+	wh := []string{"a"}
+	pltfrom := []string{"pos1"}
+	pltto := []string{"pos2"}
+	wellfrom := []string{"A1"}
+	wellto := []string{"B1"}
+	fplatetype := []string{"pcrplate_skirted"}
+	tplatetype := []string{"anotherplate_type"}
+	volume := []wunit.Volume{wunit.NewVolume(10.0, "ul")}
+	fvolume := []wunit.Volume{wunit.ZeroVolume()}
+	tvolume := []wunit.Volume{wunit.ZeroVolume()}
+	fpwx := []int{12}
+	fpwy := []int{8}
+	tpwx := []int{12}
+	tpwy := []int{8}
+	cmps := []string{ctype}
+
+	return NewTransferInstruction(wh, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype, volume, fvolume, tvolume, fpwx, fpwy, tpwx, tpwy, cmps)
+}
+
+func TestTransferMerge(t *testing.T) {
+	ins1 := getMeATransfer("milk")
+
+	if !reflect.DeepEqual(ins1, ins1) {
+		t.Errorf("DeepEqual not reflexive!")
+	}
+
+	toMerge := []*TransferInstruction{ins1, ins1}
+
+	ins3 := ins1.Dup()
+	ins3 = ins3.MergeWith(ins1)
+
+	ins4 := mergeTransfers(toMerge)[0]
+
+	if !reflect.DeepEqual(ins3, ins4) {
+		t.Errorf("Must merge transfers with same components")
+	}
+
+	// negative case
+
+	ins2 := getMeATransfer("bile")
+
+	toMerge = []*TransferInstruction{ins1, ins2}
+
+	merged := mergeTransfers(toMerge)
+
+	if len(merged) == 1 {
+		t.Errorf("Must not merge transfers with different components")
+	}
+
+}
+
 func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
 	if len(ris) < 1 {
 		t.Errorf("No instructions to test positive")
@@ -533,5 +565,27 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 
 	if multi == 0 {
 		t.Errorf("Multichannel block not generated")
+	}
+}
+
+func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
+
+	if len(ris) == 0 {
+		t.Errorf("Error: No transfers generated")
+	}
+
+	for _, ins := range ris {
+		ri2, err := ins.Generate(ctx, pol, rbt)
+
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		for _, ri := range ri2 {
+			if ri.InstructionType() != SCB {
+				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter("LIQUIDCLASS"), ri.GetParameter("WELLFROM"), ri.GetParameter("WELLTO"))
+			}
+		}
+
 	}
 }

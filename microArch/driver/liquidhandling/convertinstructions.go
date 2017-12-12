@@ -232,6 +232,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 	pfwy := make([]int, len(cmps))        //	  "     "    "   y
 	ptwx := make([]int, len(cmps))        //	  "    to    "   x
 	ptwy := make([]int, len(cmps))        //	  "     "    "   y
+	cnames := make([]string, len(cmps))   //        component names
 
 	// ci counts up cmps
 
@@ -322,6 +323,8 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		ptwx[ci] = dstPlate.WellsX()
 		ptwy[ci] = dstPlate.WellsY()
 
+		cnames[ci] = wellFrom.WContents.CName
+
 		cmpFrom := wellFrom.Remove(va[ci])
 		// silently remove the carry
 		wellFrom.Remove(carryvol)
@@ -345,7 +348,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 	//}
 
-	tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
+	tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames)
 	insOut = append(insOut, tfr)
 
 	return insOut, nil

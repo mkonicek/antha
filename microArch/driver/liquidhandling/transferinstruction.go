@@ -63,6 +63,7 @@ type TransferInstruction struct {
 	TPlateWY   []int
 	FVolume    []wunit.Volume
 	TVolume    []wunit.Volume
+	Components []string
 }
 
 func (ti *TransferInstruction) ToString() string {
@@ -79,7 +80,7 @@ func (ti *TransferInstruction) ParamSet(n int) TransferParams {
 	return TransferParams{ti.What[n], ti.PltFrom[n], ti.PltTo[n], ti.WellFrom[n], ti.WellTo[n], ti.Volume[n], ti.FPlateType[n], ti.TPlateType[n], ti.FVolume[n], ti.TVolume[n], nil, ""}
 }
 
-func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int) *TransferInstruction {
+func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string) *TransferInstruction {
 	var v TransferInstruction
 	v.Type = TFR
 	v.What = what
@@ -96,6 +97,7 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	v.FPlateWY = FPlateWY
 	v.TPlateWX = TPlateWX
 	v.TPlateWY = TPlateWY
+	v.Components = Components
 	v.GenericRobotInstruction.Ins = RobotInstruction(&v)
 	return &v
 }
@@ -104,21 +106,73 @@ func (ins *TransferInstruction) InstructionType() int {
 	return ins.Type
 }
 
-func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) {
-	ins.What = append(ins.What, ins2.What...)
-	ins.PltFrom = append(ins.PltFrom, ins2.PltFrom...)
-	ins.PltTo = append(ins.PltTo, ins2.PltTo...)
-	ins.WellFrom = append(ins.WellFrom, ins2.WellFrom...)
-	ins.WellTo = append(ins.WellTo, ins2.WellTo...)
-	ins.Volume = append(ins.Volume, ins2.Volume...)
-	ins.FPlateType = append(ins.FPlateType, ins2.FPlateType...)
-	ins.TPlateType = append(ins.TPlateType, ins2.TPlateType...)
-	ins.FPlateWX = append(ins.FPlateWX, ins2.FPlateWX...)
-	ins.FPlateWY = append(ins.FPlateWY, ins2.FPlateWY...)
-	ins.TPlateWX = append(ins.TPlateWX, ins2.TPlateWX...)
-	ins.TPlateWY = append(ins.TPlateWY, ins2.TPlateWY...)
-	ins.FVolume = append(ins.FVolume, ins2.FVolume...)
-	ins.TVolume = append(ins.TVolume, ins2.TVolume...)
+//what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string
+func (ins *TransferInstruction) Dup() *TransferInstruction {
+	w := dupStringArray(ins.What)
+	pf := dupStringArray(ins.PltFrom)
+	pt := dupStringArray(ins.PltTo)
+	wf := dupStringArray(ins.WellFrom)
+	wt := dupStringArray(ins.WellTo)
+	fpt := dupStringArray(ins.FPlateType)
+	tpt := dupStringArray(ins.TPlateType)
+	vol := dupVolArray(ins.Volume)
+	fv := dupVolArray(ins.FVolume)
+	tv := dupVolArray(ins.TVolume)
+	fpwx := dupIntArray(ins.FPlateWX)
+	fpwy := dupIntArray(ins.FPlateWY)
+	tpwx := dupIntArray(ins.TPlateWX)
+	tpwy := dupIntArray(ins.TPlateWY)
+	cmps := dupStringArray(ins.Components)
+
+	return NewTransferInstruction(w, pf, pt, wf, wt, fpt, tpt, vol, fv, tv, fpwx, fpwy, tpwx, tpwy, cmps)
+}
+
+func dupStringArray(in []string) []string {
+	out := make([]string, len(in))
+
+	for i := 0; i < len(in); i++ {
+		out[i] = in[i]
+	}
+	return out
+}
+func dupIntArray(in []int) []int {
+	out := make([]int, len(in))
+
+	for i := 0; i < len(in); i++ {
+		out[i] = in[i]
+	}
+	return out
+}
+
+func dupVolArray(in []wunit.Volume) []wunit.Volume {
+	out := make([]wunit.Volume, len(in))
+
+	for i := 0; i < len(in); i++ {
+		out[i] = in[i].Dup()
+	}
+
+	return out
+}
+
+func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) *TransferInstruction {
+	ret := ins.Dup()
+	ret.What = append(ret.What, ins2.What...)
+	ret.PltFrom = append(ret.PltFrom, ins2.PltFrom...)
+	ret.PltTo = append(ret.PltTo, ins2.PltTo...)
+	ret.WellFrom = append(ret.WellFrom, ins2.WellFrom...)
+	ret.WellTo = append(ret.WellTo, ins2.WellTo...)
+	ret.Volume = append(ret.Volume, ins2.Volume...)
+	ret.FPlateType = append(ret.FPlateType, ins2.FPlateType...)
+	ret.TPlateType = append(ret.TPlateType, ins2.TPlateType...)
+	ret.FPlateWX = append(ret.FPlateWX, ins2.FPlateWX...)
+	ret.FPlateWY = append(ret.FPlateWY, ins2.FPlateWY...)
+	ret.TPlateWX = append(ret.TPlateWX, ins2.TPlateWX...)
+	ret.TPlateWY = append(ret.TPlateWY, ins2.TPlateWY...)
+	ret.FVolume = append(ret.FVolume, ins2.FVolume...)
+	ret.TVolume = append(ret.TVolume, ins2.TVolume...)
+	ret.Components = append(ret.Components, ins2.Components...)
+
+	return ret
 }
 
 func (ins *TransferInstruction) GetParameter(name string) interface{} {
@@ -157,6 +211,8 @@ func (ins *TransferInstruction) GetParameter(name string) interface{} {
 		return ins.InstructionType()
 	case "PLATFORM":
 		return ins.Platform
+	case "COMPONENT":
+		return ins.Components
 	}
 	return nil
 }
@@ -538,6 +594,7 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	tpwy := make([]int, len(ins.What))
 	fv := make([]wunit.Volume, len(ins.What))
 	tv := make([]wunit.Volume, len(ins.What))
+	cmp := make([]string, len(ins.What))
 
 	ix := -1
 	for i := 0; i < len(ins.What); i++ {
@@ -563,6 +620,7 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 			tpwy[ix] = ins.TPlateWY[i]
 			fv[ix] = ins.FVolume[i]
 			tv[ix] = ins.TVolume[i]
+			cmp[ix] = ins.Components[i]
 		}
 	}
 
@@ -580,6 +638,7 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	ins.TPlateWY = tpwy
 	ins.FVolume = fv
 	ins.TVolume = tv
+	ins.Components = cmp
 }
 
 func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {

@@ -2,7 +2,6 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -329,8 +328,6 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	}
 
 	ins := mixer.GenericMix(mo)
-
-	fmt.Println("INS ID: ", ins.ID)
 
 	rq.LHInstructions[ins.ID] = ins
 

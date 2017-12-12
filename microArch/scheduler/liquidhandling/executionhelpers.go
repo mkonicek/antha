@@ -630,6 +630,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	ptwy := make([]int, 0, lenToMake)        // dimensions of plate pipetting to (Y)
 	vt := make([]wunit.Volume, 0, lenToMake) // volume in well to
 	ptf := make([]string, 0, lenToMake)      // plate types
+	cnames := make([]string, 0, lenToMake)   // actual Component names
 
 	for i, v := range cmps {
 		for xx, _ := range tfrs[i].PlateIDs { //fromPlateIDs[i] {
@@ -689,6 +690,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vf = append(vf, wlf.CurrVolume())
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
+			cnames = append(cnames, wlf.WContents.CName)
 			wlf.Remove(vrm)
 
 			pf = append(pf, robot.PlateIDLookup[tfrs[i].PlateIDs[xx]])
@@ -720,7 +722,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	}
 
 	// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int
-	ti := driver.NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
+	ti := driver.NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames)
 
 	return ti, nil
 }

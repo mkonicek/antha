@@ -529,9 +529,9 @@ func Makeoverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer 
 // Assembly standards
 var availableStandards = map[string]AssemblyStandard{
 	"Custom":      customStandard,
-	"MoClo":       customStandard,
-	"MoClo_Raven": customStandard,
-	"Antibody":    customStandard,
+	"MoClo":       mocloStandard,
+	"MoClo_Raven": mocloRavenStandard,
+	"Antibody":    antibodyStandard,
 }
 
 func allStandards() (standards []string) {

@@ -122,7 +122,7 @@ func VolumeForTargetConcentration(targetConc Concentration, startingConc Concent
 	v = MultiplyVolume(totalVol, factor)
 
 	if v.GreaterThan(totalVol) {
-		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration", startingConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
+		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration ", startingConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
 	}
 
 	return

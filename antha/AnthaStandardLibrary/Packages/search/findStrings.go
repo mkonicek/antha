@@ -29,19 +29,27 @@ func equalFold(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
+// type Option is an option which can be used as an argument to search functions.
+// Particularly InStrings
 type Option string
 
+// IgnoreCase is an option which can be added to the InStrings function
+// to search ignoring case.
 const IgnoreCase Option = "IgnoreCase"
 
-func InStrings(list []string, target string, options ...Option) bool {
-
-	var ignore bool
+func ignoreCase(options ...Option) bool {
 	for _, option := range options {
 		if strings.EqualFold(string(IgnoreCase), string(option)) {
-			ignore = true
-			break
+			return true
 		}
 	}
+	return false
+}
+
+// InStrings searchs for a target string in a slice of strings and returns a boolean.
+func InStrings(list []string, target string, options ...Option) bool {
+
+	ignore := ignoreCase(options...)
 
 	for _, entry := range list {
 		if ignore {

@@ -34,6 +34,8 @@ func BinarySearch(nums []int, site int) bool {
 	}
 	return false
 }
+
+// InInts searchs for an int in a slice of ints
 func InInts(nums []int, site int) bool {
 	for _, num := range nums {
 		if num == site {

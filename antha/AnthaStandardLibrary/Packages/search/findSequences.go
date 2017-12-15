@@ -29,22 +29,33 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-// Returns the positions of any matching instances of a sequence in a slice of sequences.
+func trimmedEqual(a, b string) bool {
+	return strings.TrimSpace(a) == strings.TrimSpace(b)
+}
+
+// InSequences searches the positions of any matching instances of a sequence in a slice of sequences.
 // If checkSeqs is set to false, only the name will be checked;
 // if checkSeqs is set to true, matching sequences with different names will also be checked.
-func Sequences(seqs []wtype.DNASequence, seq wtype.DNASequence, checkSeqs bool) (bool, []int) {
+// If IgnoreCase is added as an option the case will be ignored.
+func InSequences(seqs []wtype.DNASequence, seq wtype.DNASequence, checkSeqs bool, options ...Option) (bool, []int) {
 
 	var positionsFound []int
 
+	caseInsensitive := ignoreCase(options...)
+
 	for i := range seqs {
 		if !checkSeqs {
-			if seqs[i].Name() == seq.Name() {
+			if caseInsensitive && equalFold(seqs[i].Name(), seq.Name()) {
+				positionsFound = append(positionsFound, i)
+			} else if trimmedEqual(seqs[i].Name(), seq.Name()) {
 				positionsFound = append(positionsFound, i)
 			}
 		} else {
-			if seqs[i].Name() == seq.Name() {
+			if caseInsensitive && equalFold(seqs[i].Name(), seq.Name()) {
 				positionsFound = append(positionsFound, i)
-			} else if strings.ToUpper(seqs[i].Sequence()) == strings.ToUpper(seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
+			} else if trimmedEqual(seqs[i].Name(), seq.Name()) {
+				positionsFound = append(positionsFound, i)
+			} else if equalFold(seqs[i].Sequence(), seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
 				positionsFound = append(positionsFound, i)
 			}
 		}

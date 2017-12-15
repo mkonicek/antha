@@ -463,8 +463,9 @@ func (rna *RNASequence) Sequence() string {
 	return rna.Seq
 }
 
-func (rna *RNASequence) SetSequence(seq string) {
+func (rna *RNASequence) SetSequence(seq string) error {
 	rna.Seq = upper(seq)
+	return validRNA(seq)
 }
 
 func (rna *RNASequence) Name() string {
@@ -519,8 +520,9 @@ func (prot *ProteinSequence) Sequence() string {
 	return prot.Seq
 }
 
-func (prot *ProteinSequence) SetSequence(seq string) {
+func (prot *ProteinSequence) SetSequence(seq string) error {
 	prot.Seq = upper(seq)
+	return validAA(seq)
 }
 
 func (prot *ProteinSequence) Name() string {

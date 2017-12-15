@@ -29,8 +29,8 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -177,7 +177,7 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 
 		if sites == 0 {
 			partwithends = AddCustomEnds(parts[i], enzyme, desiredstickyend5prime, desiredstickyend3prime)
-		} else if sites == 2 && InSlice(desiredstickyend5prime, sticky5s) && InSlice(desiredstickyend3prime, sticky3s) {
+		} else if sites == 2 && search.InStrings(sticky5s, desiredstickyend5prime) && search.InStrings(sticky3s, desiredstickyend3prime) {
 			partwithends = parts[i]
 		} else {
 			panic(fmt.Sprint("cutting part ", parts[i], " with", enzyme, " results in ", sites, "cut sites with 5 prime fragment overhangs: ", sticky5s, " and 3 prime fragment overhangs: ", sticky3s, ". Wanted: 5prime: ", desiredstickyend5prime, " 3prime: ", desiredstickyend3prime))
@@ -186,7 +186,7 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 
 		partswithends = append(partswithends, partwithends)
 
-		desiredstickyend5prime = Suffix(parts[i].Seq, enzyme.RestrictionEnzyme.EndLength)
+		desiredstickyend5prime = sequences.Suffix(parts[i].Seq, enzyme.RestrictionEnzyme.EndLength)
 
 	}
 
@@ -462,7 +462,7 @@ func Makeallspaceroptions(spacerlength int) (finalarray []string) {
 		newarray = append(newarray, nucleotides)
 	}
 
-	finalarray = AllCombinations(newarray)
+	finalarray = sequences.AllCombinations(newarray)
 
 	return finalarray
 }
@@ -477,10 +477,10 @@ func ChooseSpacer(spacerlength int, seq string, seqstoavoid []string) (spacer st
 		spacer = possibilities[0]
 	} else {
 		for _, possibility := range possibilities {
-			if len(Findallthings(strings.Join([]string{seq, possibility}, ""), seqstoavoid)) == 0 &&
-				len(Findallthings(strings.Join([]string{possibility, seq}, ""), seqstoavoid)) == 0 &&
-				len(Findallthings(RevComp(strings.Join([]string{possibility, seq}, "")), seqstoavoid)) == 0 &&
-				len(Findallthings(RevComp(strings.Join([]string{seq, possibility}, "")), seqstoavoid)) == 0 {
+			if len(search.Findallthings(strings.Join([]string{seq, possibility}, ""), seqstoavoid)) == 0 &&
+				len(search.Findallthings(strings.Join([]string{possibility, seq}, ""), seqstoavoid)) == 0 &&
+				len(search.Findallthings(sequences.RevComp(strings.Join([]string{possibility, seq}, "")), seqstoavoid)) == 0 &&
+				len(search.Findallthings(sequences.RevComp(strings.Join([]string{seq, possibility}, "")), seqstoavoid)) == 0 {
 				spacer = possibility
 			}
 		}
@@ -520,7 +520,7 @@ func Makeoverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer 
 		/*if enzyme.Topstrand3primedistancefromend < 0 && len(spacer) == enzyme.Bottomstrand5primedistancefromend {
 			seqwithoverhang = strings.Join([]string{stickyendseq, spacer, enzyme.RestrictionEnzyme.RecognitionSequence}, "")
 		}*/
-		seqwithoverhang = strings.Join([]string{stickyendseq, spacer, RevComp(enzyme.RestrictionEnzyme.RecognitionSequence)}, "")
+		seqwithoverhang = strings.Join([]string{stickyendseq, spacer, sequences.RevComp(enzyme.RestrictionEnzyme.RecognitionSequence)}, "")
 	}
 	return seqwithoverhang
 

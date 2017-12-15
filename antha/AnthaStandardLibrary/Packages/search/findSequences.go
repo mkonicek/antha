@@ -32,7 +32,7 @@ import (
 // Returns the positions of any matching instances of a sequence in a slice of sequences.
 // If checkSeqs is set to false, only the name will be checked;
 // if checkSeqs is set to true, matching sequences with different names will also be checked.
-func ContainsSeq(seqs []wtype.DNASequence, seq wtype.DNASequence, checkSeqs bool) (bool, []int) {
+func Sequences(seqs []wtype.DNASequence, seq wtype.DNASequence, checkSeqs bool) (bool, []int) {
 
 	var positionsFound []int
 

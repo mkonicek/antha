@@ -756,7 +756,7 @@ func AddAdditionalHeaders(run Run, additionalheader string, additionalsubheader 
 func AddAdditionalHeaderandValue(run Run, additionalheader string, additionalsubheader string, additionalvalue interface{}) (newrun Run) {
 
 	// only add column if no column with header exists
-	if search.InSlice(additionalsubheader, run.AdditionalSubheaders) == false {
+	if search.InStrings(run.AdditionalSubheaders, additionalsubheader) == false {
 
 		midrun := AddAdditionalHeaders(run, additionalheader, additionalsubheader)
 		// fmt.Println("midrun: ", midrun)

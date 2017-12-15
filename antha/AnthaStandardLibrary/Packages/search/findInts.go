@@ -22,10 +22,7 @@
 
 package search
 
-import (
-	"fmt"
-	"sort"
-)
+import "sort"
 
 func BinarySearch(nums []int, site int) bool {
 	target := site
@@ -34,11 +31,10 @@ func BinarySearch(nums []int, site int) bool {
 		func(i int) bool { return nums[i] >= target })
 	if i < len(nums) && nums[i] == target {
 		return true
-		fmt.Printf("found \"%s\" at files[%d]\n", nums[i], i)
 	}
 	return false
 }
-func Contains(nums []int, site int) bool {
+func InInts(nums []int, site int) bool {
 	for _, num := range nums {
 		if num == site {
 			return true

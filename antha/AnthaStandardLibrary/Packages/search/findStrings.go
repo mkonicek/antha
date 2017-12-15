@@ -20,84 +20,48 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
+// Utility package providing functions useful for searches
 package search
 
-import (
-	"strconv"
-	"strings"
-)
+import "strings"
 
-type Thingfound struct {
-	Thing     string
-	Positions []int
-	Reverse   bool
+func equalFold(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
-func (thing Thingfound) ToString() (descriptions string) {
-	things := make([]string, 0)
-	var reverse string
-	for i := range thing.Positions {
-		if thing.Reverse {
-			reverse = " in reverse direction"
+type Option string
+
+const IgnoreCase Option = "IgnoreCase"
+
+func InStrings(list []string, target string, options ...Option) bool {
+
+	var ignore bool
+	for _, option := range options {
+		if strings.EqualFold(string(IgnoreCase), string(option)) {
+			ignore = true
+			break
+		}
+	}
+
+	for _, entry := range list {
+		if ignore {
+			if equalFold(entry, target) {
+				return true
+			}
 		} else {
-			reverse = " in forward direction"
+			if strings.TrimSpace(entry) == strings.TrimSpace(target) {
+				return true
+			}
 		}
-		things = append(things, thing.Thing, " found at position ", strconv.Itoa(thing.Positions[i]), reverse, "; ")
 	}
-	descriptions = strings.Join(things, "")
-	return
+	return false
 }
 
-// not perfect yet! issue with byte conversion of certain characters!
-// This returns positions in user format (i.e. the first position of the sequence will be 1 not 0)
-func Findall(bigthing string, smallthing string) (positions []int) {
-
-	positions = make([]int, 0)
-	count := strings.Count(bigthing, smallthing)
-
-	if smallthing == "" {
-		return
-	}
-	if count != 0 {
-
-		pos := (strings.Index(bigthing, smallthing))
-		restofbigthing := bigthing[(pos + 1):]
-
-		for i := 0; i < count; i++ {
-			positions = append(positions, (pos + 1))
-			pos = pos + (strings.Index(restofbigthing, smallthing) + 1)
-			restofbigthing = bigthing[(pos + 1):]
+func Position(slice []string, value string) int {
+	for p, v := range slice {
+		if v == value {
+			return p
 		}
 	}
-	return positions
-}
-
-func Findallthings(bigthing string, smallthings []string) (thingsfound []Thingfound) {
-	var thingfound Thingfound
-	thingsfound = make([]Thingfound, 0)
-
-	for _, thing := range smallthings {
-		if strings.Contains(bigthing, thing) {
-			thingfound.Thing = thing
-			thingfound.Positions = Findall(bigthing, thing)
-			thingsfound = append(thingsfound, thingfound)
-		}
-	}
-	return thingsfound
-}
-
-func Containsallthings(bigthing string, smallthings []string) (trueornot bool) {
-	i := 0
-	for _, thing := range smallthings {
-
-		//	if strings.Contains(strings.ToUpper(bigthing), strings.ToUpper(thing)) {
-		if strings.Contains(bigthing, thing) {
-			i = i + 1
-		}
-	}
-	if i == len(smallthings) {
-		trueornot = true
-	}
-
-	return trueornot
+	return -1
 }

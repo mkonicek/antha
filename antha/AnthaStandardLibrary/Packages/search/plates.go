@@ -35,7 +35,7 @@ func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, byRow bool) (well s
 
 	for _, well := range allWellPositions {
 		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.
-		if plate.WellMap()[well].Empty() && !InSlice(well, avoidWells) {
+		if plate.WellMap()[well].Empty() && !InStrings(avoidWells, well) {
 			return well, nil
 		}
 	}

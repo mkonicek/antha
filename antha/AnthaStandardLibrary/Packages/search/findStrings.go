@@ -33,11 +33,12 @@ func equalFold(a, b string) bool {
 // Particularly InStrings
 type Option string
 
-// IgnoreCase is an option which can be added to the InStrings function
-// to search ignoring case.
+// IgnoreCase is an option which can be added to the InStrings and InSequences
+// functions to search ignoring case.
+//
 const IgnoreCase Option = "IgnoreCase"
 
-func ignoreCase(options ...Option) bool {
+func containsIgnoreCase(options ...Option) bool {
 	for _, option := range options {
 		if strings.EqualFold(string(IgnoreCase), string(option)) {
 			return true
@@ -49,7 +50,7 @@ func ignoreCase(options ...Option) bool {
 // InStrings searchs for a target string in a slice of strings and returns a boolean.
 func InStrings(list []string, target string, options ...Option) bool {
 
-	ignore := ignoreCase(options...)
+	ignore := containsIgnoreCase(options...)
 
 	for _, entry := range list {
 		if ignore {

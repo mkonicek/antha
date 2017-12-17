@@ -41,7 +41,7 @@ func InSequences(seqs []wtype.DNASequence, seq wtype.DNASequence, checkSeqs bool
 
 	var positionsFound []int
 
-	caseInsensitive := ignoreCase(options...)
+	caseInsensitive := containsIgnoreCase(options...)
 
 	for i := range seqs {
 		if !checkSeqs {

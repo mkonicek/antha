@@ -59,6 +59,51 @@ func RevtranslatetoN(aa wtype.ProteinSequence) (NNN wtype.DNASequence) {
 
 }
 
+type AminoAcid string
+
+type Codon string
+
+type CodonUsageTable interface {
+	ChooseCodon(aminoAcid AminoAcid) (Codon, error)
+}
+
+type SimpleUsageTable struct {
+	Table map[string][]string
+}
+
+func (table SimpleUsageTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
+	codons, found := table.Table[string(aa)]
+
+	if !found {
+		return "", fmt.Errorf("%s not found in codon usage table", string(aa))
+	}
+
+	if len(codons) == 0 {
+		return "", fmt.Errorf("0 codons found in codon usage table for %s", string(aa))
+	}
+
+	return Codon(codons[0]), nil
+}
+
+var UseAnyCodon = SimpleUsageTable{Table: RevCodonTable}
+
+func RevTranslate(aaSeq wtype.ProteinSequence, codonUsageTable CodonUsageTable) (dnaSeq wtype.DNASequence, err error) {
+
+	dnaSeq.SetName(aaSeq.Name())
+
+	for _, aminoAcid := range aaSeq.Sequence() {
+
+		nextCodon, err := codonUsageTable.ChooseCodon(AminoAcid(aminoAcid))
+
+		if err != nil {
+			return dnaSeq, err
+		}
+
+		dnaSeq.Append(string(nextCodon))
+	}
+	return dnaSeq, nil
+}
+
 func RevTranslatetoNstring(aa string) (NNN string) {
 	n_array := make([]string, 0)
 	n := "nnn"

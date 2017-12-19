@@ -23,8 +23,8 @@
 package wtype
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"strings"
 
@@ -40,13 +40,19 @@ import (
 // enzymes need careful handling as they can be quite delicate
 type Enzyme struct {
 	Properties map[string]wunit.Measurement
+	Nm         string
 }
 
+func (enzyme Enzyme) Name() string {
+	return enzyme.Nm
+}
+
+// RestrictionEnzyme is an enzyme which cleaves DNA
 type RestrictionEnzyme struct {
-	// other fields required but for now the main things are...
+	Enzyme
+	// sequence
 	RecognitionSequence               string
 	EndLength                         int
-	Name                              string
 	Prototype                         string
 	Topstrand3primedistancefromend    int
 	Bottomstrand5primedistancefromend int
@@ -54,27 +60,21 @@ type RestrictionEnzyme struct {
 	CommercialSource                  []string //string "attr, <5>"
 	References                        []int
 	Class                             string
+	Isoschizomers                     []string
 }
 
 type TypeIIs struct {
 	RestrictionEnzyme
-	Name                              string
-	Isoschizomers                     []string
-	Topstrand3primedistancefromend    int
-	Bottomstrand5primedistancefromend int
 }
 
 func ToTypeIIs(typeIIenzyme RestrictionEnzyme) (typeIIsenz TypeIIs, err error) {
 	if typeIIenzyme.Class == "TypeII" {
 		err = fmt.Errorf("You can't do this, enzyme is not a type IIs")
+		return
 	}
 	if typeIIenzyme.Class == "TypeIIs" {
 
-		var isoschizomers = make([]string, 0)
-		/*for _, lookup := range ...
-		add code to lookup isoschizers from rebase
-		*/
-		typeIIsenz = TypeIIs{typeIIenzyme, typeIIenzyme.Name, isoschizomers, typeIIenzyme.Topstrand3primedistancefromend, typeIIenzyme.Bottomstrand5primedistancefromend}
+		typeIIsenz = TypeIIs{RestrictionEnzyme: typeIIenzyme}
 
 	}
 	return

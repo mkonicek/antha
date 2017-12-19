@@ -60,7 +60,7 @@ func EnzymeLookup(name string) (enzyme wtype.RestrictionEnzyme, err error) {
 		seqtype := "DNA"
 		class := "not specified"*/
 
-		if strings.ToUpper(record.Name) == strings.ToUpper(name) {
+		if strings.EqualFold(strings.TrimSpace(record.Name()), strings.TrimSpace(name)) {
 			enzyme = record
 			return enzyme, nil
 		}
@@ -93,7 +93,7 @@ func FindEnzymesofClass(class string) (enzymelist []wtype.RestrictionEnzyme) {
 
 func FindEnzymeNamesofClass(class string) (enzymelist []string) {
 	for _, enzyme := range FindEnzymesofClass(class) {
-		enzymelist = append(enzymelist, enzyme.Name)
+		enzymelist = append(enzymelist, enzyme.Nm)
 	}
 	return
 }

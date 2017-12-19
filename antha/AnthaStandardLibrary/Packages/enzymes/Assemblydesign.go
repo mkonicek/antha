@@ -407,7 +407,7 @@ func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandar
 // Utility function to check whether a part already has typeIIs ends added
 func CheckForExistingTypeIISEnds(part wtype.DNASequence, enzyme wtype.TypeIIs) (numberofsitesfound int, stickyends5 []string, stickyends3 []string) {
 
-	enz, err := lookup.EnzymeLookup(enzyme.Name)
+	enz, err := lookup.EnzymeLookup(enzyme.Name())
 	if err != nil {
 		panic(err.Error())
 	}
@@ -556,7 +556,7 @@ var mocloStandard = AssemblyStandard{
 	Name: "MoClo",
 	Levels: map[string]AssemblyLevel{
 		"Level0": AssemblyLevel{
-			Enzyme: BsaIenz,
+			Enzyme: BsaI,
 			PartOverhangs: map[string]StandardOverhangs{
 				"Pro":         StandardOverhangs{"GGAG", "TACT"},
 				"5U":          StandardOverhangs{"TACT", "CCAT"},
@@ -579,7 +579,7 @@ var mocloStandard = AssemblyStandard{
 			EntryVectorEnds: StandardOverhangs{"TAAT", "GTCG"},
 		},
 		"Level1": AssemblyLevel{
-			Enzyme:          BpiIenz,
+			Enzyme:          BpiI,
 			PartOverhangs:   map[string]StandardOverhangs{},
 			EntryVectorEnds: StandardOverhangs{"", ""},
 		},
@@ -590,7 +590,7 @@ var mocloRavenStandard = AssemblyStandard{
 	Name: "MoClo_Raven",
 	Levels: map[string]AssemblyLevel{
 		"Level0": AssemblyLevel{
-			Enzyme: BsaIenz,
+			Enzyme: BsaI,
 			PartOverhangs: map[string]StandardOverhangs{
 				"Pro":         StandardOverhangs{"GAGG", "TACT"},
 				"5U":          StandardOverhangs{"TACT", "CCAT"},
@@ -613,7 +613,7 @@ var mocloRavenStandard = AssemblyStandard{
 			EntryVectorEnds: StandardOverhangs{"AAGC", "CCTC"},
 		},
 		"Level1": AssemblyLevel{
-			Enzyme:          BpiIenz,
+			Enzyme:          BpiI,
 			PartOverhangs:   map[string]StandardOverhangs{},
 			EntryVectorEnds: StandardOverhangs{"", ""},
 		},
@@ -624,7 +624,7 @@ var customStandard = AssemblyStandard{
 	Name: "Custom",
 	Levels: map[string]AssemblyLevel{
 		"Level0": AssemblyLevel{
-			Enzyme: BsaIenz,
+			Enzyme: BsaI,
 			PartOverhangs: map[string]StandardOverhangs{
 				"L1Uadaptor":                  StandardOverhangs{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
 				"L1Uadaptor + Pro":            StandardOverhangs{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
@@ -664,7 +664,7 @@ var customStandard = AssemblyStandard{
 			EntryVectorEnds: StandardOverhangs{"TAAT", "GTCG"},
 		},
 		"Level1": AssemblyLevel{
-			Enzyme: SapIenz,
+			Enzyme: SapI,
 			PartOverhangs: map[string]StandardOverhangs{
 				"Device1": StandardOverhangs{"GAA", "ACC"},
 				"Device2": StandardOverhangs{"ACC", "CTG"},
@@ -679,7 +679,7 @@ var antibodyStandard = AssemblyStandard{
 	Name: "Antibody",
 	Levels: map[string]AssemblyLevel{
 		"Heavy": AssemblyLevel{
-			Enzyme: SapIenz,
+			Enzyme: SapI,
 			PartOverhangs: map[string]StandardOverhangs{
 				"Part1": StandardOverhangs{"GCG", "TCG"},
 				"Part2": StandardOverhangs{"TGG", "CTG"},
@@ -688,7 +688,7 @@ var antibodyStandard = AssemblyStandard{
 			EntryVectorEnds: StandardOverhangs{"GCG", "AAG"},
 		},
 		"Light": AssemblyLevel{
-			Enzyme: SapIenz,
+			Enzyme: SapI,
 			PartOverhangs: map[string]StandardOverhangs{
 				"Part1": StandardOverhangs{"GCG", "TCG"},
 				"Part2": StandardOverhangs{"TGG", "CTG"},

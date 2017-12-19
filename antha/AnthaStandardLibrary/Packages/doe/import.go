@@ -476,7 +476,7 @@ func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int)
 
 	for i := 0; i < sheet.MaxCol; i++ {
 		header := sheet.Cell(0, i).String()
-		if search.BinarySearch(responsefactors, i) == false && strings.ToUpper(header) != "PATTERN" {
+		if search.InInts(responsefactors, i) == false && strings.ToUpper(header) != "PATTERN" {
 			factorcolumns = append(factorcolumns, i)
 		}
 	}

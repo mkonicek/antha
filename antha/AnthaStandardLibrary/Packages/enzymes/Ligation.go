@@ -133,7 +133,7 @@ func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASequ
 		return rotatedVector, fmt.Errorf("No Sequence found for %s so cannot rotate", vector.Nm)
 	}
 
-	restrictionSites := sequences.FindAll(&rotatedVector, &wtype.DNASequence{Nm: enzyme.Name, Seq: enzyme.RecognitionSequence})
+	restrictionSites := sequences.FindAll(&rotatedVector, &wtype.DNASequence{Nm: enzyme.Name(), Seq: enzyme.RecognitionSequence})
 
 	if len(restrictionSites.Positions) > 2 {
 		err := fmt.Errorf("must have 2 restriction sites to rotate vector. %d %s sites found in vector %s - cannot rotate", len(restrictionSites.Positions), enzyme.Name, vector.Nm)
@@ -439,7 +439,7 @@ func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (i
 }
 
 // Assemblysimulator simulate assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.
-func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, successfulassemblies int, sites []Restrictionsites, newDNASequences []wtype.DNASequence, err error) {
+func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, successfulassemblies int, sites []RestrictionSites, newDNASequences []wtype.DNASequence, err error) {
 
 	// fetch enzyme properties
 	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
@@ -475,7 +475,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 
 	// returns sites found in first plasmid in array! should be changed later!
 	if len(plasmidProducts) > 1 {
-		sites = make([]Restrictionsites, 0)
+		sites = make([]RestrictionSites, 0)
 		for i := 0; i < len(plasmidProducts); i++ {
 			sitesperplasmid := Restrictionsitefinder(plasmidProducts[i], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
 			for _, site := range sitesperplasmid {
@@ -608,7 +608,7 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 			errors[construct.Constructname] = err.Error()
 
 			if strings.Contains(err.Error(), "Failure Joining fragments after digestion") {
-				sitesperpart := make([]Restrictionsites, 0)
+				sitesperpart := make([]RestrictionSites, 0)
 				constructsitesstring := make([]string, 0)
 				constructsitesstring = append(constructsitesstring, output)
 				sitestring := ""

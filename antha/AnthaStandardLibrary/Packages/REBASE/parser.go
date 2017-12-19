@@ -66,10 +66,6 @@ type RebaseEntry struct {
 */
 type typeIIs struct {
 	wtype.RestrictionEnzyme
-	Name                              string
-	Isoschizomers                     []string
-	Topstrand3primedistancefromend    int
-	Bottomstrand5primedistancefromend int
 }
 
 func RecognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, EndLength int, Topstrand3primedistancefromend int, Bottomstrand5primedistancefromend int, Class string) {
@@ -124,7 +120,7 @@ func Build_rebase(name string, prototype string, recognitionseq string, methylat
 
 	var record wtype.RestrictionEnzyme
 
-	record.Name = name
+	record.Nm = name
 	record.Prototype = prototype
 
 	record.RecognitionSequence,

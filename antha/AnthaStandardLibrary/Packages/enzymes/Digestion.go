@@ -60,7 +60,7 @@ func MakedoublestrandedDNA(sequence wtype.DNASequence) (Doublestrandedpair []wty
 }
 
 // Key struct holding information on restriction sites found in a dna sequence
-type Restrictionsites struct {
+type RestrictionSites struct {
 	Enzyme              wtype.RestrictionEnzyme
 	Recognitionsequence string
 	Sitefound           bool
@@ -70,7 +70,7 @@ type Restrictionsites struct {
 }
 
 // method called on the Restriction sites object to return an array of "FWD", "REV or "ALL" site positions found
-func (sites *Restrictionsites) Positions(fwdRevorNil string) (positions []int) {
+func (sites *RestrictionSites) Positions(fwdRevorNil string) (positions []int) {
 	if strings.ToUpper(fwdRevorNil) == strings.ToUpper("FWD") {
 		positions = sites.Forwardpositions
 	} else if strings.ToUpper(fwdRevorNil) == strings.ToUpper("REV") {
@@ -89,7 +89,7 @@ func (sites *Restrictionsites) Positions(fwdRevorNil string) (positions []int) {
 }
 
 // Returns a report of restriction sites found as a string
-func SitepositionString(sitesperpart Restrictionsites) (sitepositions string) {
+func SitepositionString(sitesperpart RestrictionSites) (sitepositions string) {
 	Num := make([]string, 0)
 
 	for _, site := range sitesperpart.Forwardpositions {
@@ -105,14 +105,14 @@ func SitepositionString(sitesperpart Restrictionsites) (sitepositions string) {
 }
 
 // func for returning list of all site positions; preferable to use the positions method instead.
-func Sitepositions(sitesperpart Restrictionsites) (sitepositions []int) {
+func Sitepositions(sitesperpart RestrictionSites) (sitepositions []int) {
 	Num := make([]int, 0)
 
 	for _, site := range sitesperpart.Forwardpositions {
 		Num = append(Num, site)
 	}
 	for _, site := range sitesperpart.Reversepositions {
-		if BinarySearch(Num, site) == false {
+		if BinarySearchInts(Num, site) == false {
 			Num = append(Num, site)
 			break
 		}
@@ -124,12 +124,12 @@ func Sitepositions(sitesperpart Restrictionsites) (sitepositions []int) {
 }
 
 // key function to find restriction sites in a sequence and return the information as an array of Resriction sites
-func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.RestrictionEnzyme) (sites []Restrictionsites) {
+func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.RestrictionEnzyme) (sites []RestrictionSites) {
 
-	sites = make([]Restrictionsites, 0)
+	sites = make([]RestrictionSites, 0)
 
 	for _, enzyme := range enzymelist {
-		var enzymesite Restrictionsites
+		var enzymesite RestrictionSites
 		//var siteafterwobble Restrictionsites
 		enzymesite.Enzyme = enzyme
 		enzymesite.Recognitionsequence = strings.ToUpper(enzyme.RecognitionSequence)
@@ -368,11 +368,7 @@ func Digest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (F
 	}
 	if typeIIenzyme.Class == "TypeIIs" {
 
-		var isoschizomers = make([]string, 0)
-		/*for _, lookup := range ...
-		add code to lookup isoschizers from rebase
-		*/
-		var typeIIsenz = wtype.TypeIIs{typeIIenzyme, typeIIenzyme.Name, isoschizomers, typeIIenzyme.Topstrand3primedistancefromend, typeIIenzyme.Bottomstrand5primedistancefromend}
+		var typeIIsenz = wtype.TypeIIs{typeIIenzyme}
 
 		Finalfragments, Stickyends_5prime, Stickyends_3prime = TypeIIsdigest(sequence, typeIIsenz)
 	}

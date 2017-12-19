@@ -31,7 +31,7 @@ var colourComponentMap = map[color.Color]string{
 }
 
 var neonComponentMap = map[color.Color]string{
-	color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}:       "black",
+	Black: "black",
 	color.RGBA{R: uint8(149), G: uint8(156), B: uint8(161), A: uint8(255)}: "grey",
 	color.RGBA{R: uint8(117), G: uint8(51), B: uint8(127), A: uint8(255)}:  "purple",
 	color.RGBA{R: uint8(25), G: uint8(60), B: uint8(152), A: uint8(255)}:   "darkblue",
@@ -41,9 +41,9 @@ var neonComponentMap = map[color.Color]string{
 	color.RGBA{R: uint8(255), G: uint8(118), B: uint8(0), A: uint8(255)}:   "orange",
 	color.RGBA{R: uint8(255), G: uint8(39), B: uint8(51), A: uint8(255)}:   "red",
 	color.RGBA{R: uint8(235), G: uint8(41), B: uint8(123), A: uint8(255)}:  "pink",
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
-	color.RGBA{R: uint8(0), G: uint8(174), B: uint8(239), A: uint8(255)}:   "Cyan",
-	color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)}:   "Magenta",
+	White: "white",
+	color.RGBA{R: uint8(0), G: uint8(174), B: uint8(239), A: uint8(255)}: "Cyan",
+	color.RGBA{R: uint8(236), G: uint8(0), B: uint8(140), A: uint8(255)}: "Magenta",
 }
 
 // AllResampleFilters are the resample filters from disintegration package
@@ -117,9 +117,9 @@ var proteinPaintboxMap = map[color.Color]string{
 
 	// lacZ expresser (e.g. pUC19) grown on S gal
 	//color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "E.coli pUC19 on sgal",
-	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}: "black",
+	Black: "black",
 	// plus white as a blank (or comment out to use EiraCFP)
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
+	White: "white",
 }
 
 var uvProteinPaintboxMap = map[color.Color]string{
@@ -170,7 +170,7 @@ var uvProteinPaintboxMap = map[color.Color]string{
 	// conventional E.coli colour
 	color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "E.coli",
 	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}:       "E.coli pUC19 on sgal",
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
+	White: "white",
 }
 
 var proteinPaintboxSubsetMap = map[color.Color]string{
@@ -229,7 +229,7 @@ var proteinPaintboxSubsetMap = map[color.Color]string{
 
 	// lacZ expresser (e.g. pUC19) grown on S gal
 	//color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "E.coli pUC19 on sgal",
-	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}: "black",
+	Black: "black",
 
 	// plus white as a blank (or comment out to use EiraCFP)
 	//color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
@@ -279,9 +279,9 @@ var colourLibrary = map[string]color.Color{
 	"yellow":      color.RGBA{R: uint8(245), G: uint8(205), B: uint8(47), A: uint8(255)},
 	"green":       color.RGBA{R: uint8(75), G: uint8(151), B: uint8(74), A: uint8(255)},
 	"red":         color.RGBA{R: uint8(196), G: uint8(40), B: uint8(27), A: uint8(255)},
-	"black":       color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)},
-	"transparent": color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)},
-	"white":       color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
+	"black":       Black,
+	"transparent": Transparent,
+	"white":       White,
 
 	//UV Protein PaintBox under UV light
 	"UVCupidPink":            color.RGBA{R: uint8(159), G: uint8(25), B: uint8(103), A: uint8(255)},
@@ -320,11 +320,11 @@ var colourLibrary = map[string]color.Color{
 	"UVVixenPurple":          color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)},
 
 	//Generic colors under UV light
-	"UVblack":    color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)},
+	"UVblack":    Black,
 	"UVgreen":    color.RGBA{R: uint8(0), G: uint8(177), B: uint8(94), A: uint8(255)},
 	"UVyellow":   color.RGBA{R: uint8(244), G: uint8(231), B: uint8(0), A: uint8(255)},
 	"UVorange":   color.RGBA{R: uint8(255), G: uint8(118), B: uint8(0), A: uint8(255)},
-	"UVwhite":    color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)},
+	"UVwhite":    White,
 	"UVgrey":     color.RGBA{R: uint8(149), G: uint8(156), B: uint8(161), A: uint8(255)},
 	"UVpurple":   color.RGBA{R: uint8(117), G: uint8(51), B: uint8(127), A: uint8(255)},
 	"UVdarkblue": color.RGBA{R: uint8(25), G: uint8(60), B: uint8(152), A: uint8(255)},

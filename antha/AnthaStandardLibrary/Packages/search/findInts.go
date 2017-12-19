@@ -24,23 +24,35 @@ package search
 
 import "sort"
 
-func BinarySearch(nums []int, site int) bool {
-	target := site
-	sort.Ints(nums)
-	i := sort.Search(len(nums),
-		func(i int) bool { return nums[i] >= target })
-	if i < len(nums) && nums[i] == target {
+// BinarySearchInts searchs for an int in a slice of ints using a binary search algorithm.
+func BinarySearchInts(list []int, target int) bool {
+	sort.Ints(list)
+	i := sort.Search(len(list),
+		func(i int) bool { return list[i] >= target })
+	if i < len(list) && list[i] == target {
 		return true
 	}
 	return false
 }
 
 // InInts searchs for an int in a slice of ints
-func InInts(nums []int, site int) bool {
-	for _, num := range nums {
-		if num == site {
+func InInts(list []int, target int) bool {
+	for _, num := range list {
+		if num == target {
 			return true
 		}
 	}
 	return false
+}
+
+// PositionsInInts searchs for a target int in a slice of ints and returns all positions found.
+func PositionsInInts(list []int, target int) []int {
+
+	var positions []int
+	for position, num := range list {
+		if num == target {
+			positions = append(positions, position)
+		}
+	}
+	return positions
 }

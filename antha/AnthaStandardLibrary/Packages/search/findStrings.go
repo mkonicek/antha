@@ -48,6 +48,7 @@ func containsIgnoreCase(options ...Option) bool {
 }
 
 // InStrings searchs for a target string in a slice of strings and returns a boolean.
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
 func InStrings(list []string, target string, options ...Option) bool {
 
 	ignore := containsIgnoreCase(options...)
@@ -66,11 +67,23 @@ func InStrings(list []string, target string, options ...Option) bool {
 	return false
 }
 
-func Position(slice []string, value string) int {
-	for p, v := range slice {
-		if v == value {
-			return p
+// PositionsInStrings searchs for a target string in a slice of strings and returns all positions found.
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+func PositionsInStrings(list []string, target string, options ...Option) []int {
+
+	ignore := containsIgnoreCase(options...)
+
+	var positions []int
+	for i, entry := range list {
+		if ignore {
+			if equalFold(entry, target) {
+				positions = append(positions, i)
+			}
+		} else {
+			if strings.TrimSpace(entry) == strings.TrimSpace(target) {
+				positions = append(positions, i)
+			}
 		}
 	}
-	return -1
+	return positions
 }

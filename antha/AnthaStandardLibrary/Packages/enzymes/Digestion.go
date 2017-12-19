@@ -29,8 +29,8 @@ import (
 	"strconv"
 	"strings"
 
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -46,7 +46,7 @@ type DoublestrandedDNA struct {
 
 func MakedoublestrandedDNA(sequence wtype.DNASequence) (Doublestrandedpair []wtype.DNASequence) {
 	fwdsequence := strings.TrimSpace(strings.ToUpper(sequence.Seq))
-	revcomp := RevComp(fwdsequence)
+	revcomp := sequences.RevComp(fwdsequence)
 	reversesequence := strings.TrimSpace(strings.ToUpper(revcomp))
 
 	var Fwdsequence = wtype.DNASequence{Nm: "Fwdsequence", Seq: fwdsequence}
@@ -112,7 +112,7 @@ func Sitepositions(sitesperpart Restrictionsites) (sitepositions []int) {
 		Num = append(Num, site)
 	}
 	for _, site := range sitesperpart.Reversepositions {
-		if BinarySearch(Num, site) == false {
+		if !search.InInts(Num, site) {
 			Num = append(Num, site)
 			break
 		}
@@ -135,18 +135,18 @@ func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.Restri
 		enzymesite.Recognitionsequence = strings.ToUpper(enzyme.RecognitionSequence)
 		sequence.Seq = strings.ToUpper(sequence.Seq)
 
-		wobbleproofrecognitionoptions := Wobble(enzymesite.Recognitionsequence)
+		wobbleproofrecognitionoptions := sequences.Wobble(enzymesite.Recognitionsequence)
 
 		for _, wobbleoption := range wobbleproofrecognitionoptions {
 
-			options := Findall(sequence.Seq, wobbleoption)
+			options := search.Findall(sequence.Seq, wobbleoption)
 			for _, option := range options {
 				if option != 0 {
 					enzymesite.Forwardpositions = append(enzymesite.Forwardpositions, option)
 				}
 			}
-			if enzyme.RecognitionSequence != strings.ToUpper(RevComp(wobbleoption)) {
-				revoptions := Findall(sequence.Seq, RevComp(wobbleoption))
+			if enzyme.RecognitionSequence != strings.ToUpper(sequences.RevComp(wobbleoption)) {
+				revoptions := search.Findall(sequence.Seq, sequences.RevComp(wobbleoption))
 				for _, option := range revoptions {
 					if option != 0 {
 						enzymesite.Reversepositions = append(enzymesite.Reversepositions, option)
@@ -355,7 +355,7 @@ func DigestionPairs(Doublestrandedpair []wtype.DNASequence, typeIIsenzyme wtype.
 			digestionproducts = pairdigestedfragments(topstrands, bottomstrands, topstickyends5, topstickyends3, bottomstickyends5, bottomstickyends3)
 		}
 		if len(topstrands) == 3 {
-			digestionproducts = pairdigestedfragments(topstrands, Revarrayorder(bottomstrands), topstickyends5, topstickyends3, Revarrayorder(bottomstickyends5), Revarrayorder(bottomstickyends3))
+			digestionproducts = pairdigestedfragments(topstrands, sequences.Revarrayorder(bottomstrands), topstickyends5, topstickyends3, sequences.Revarrayorder(bottomstickyends5), sequences.Revarrayorder(bottomstickyends3))
 		}
 	}
 	return digestionproducts
@@ -409,7 +409,7 @@ func SearchandCutFWD(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 
 	originalfwdsequence := strings.ToUpper(strings.Join(topstranddigestproducts, ""))
 	recogseq := strings.ToUpper(typeIIenzyme.RecognitionSequence)
-	sites := Findall(originalfwdsequence, recogseq)
+	sites := search.Findall(originalfwdsequence, recogseq)
 	// step 2. Search for recognition site on top strand, if it's there then we start processing according to the enzyme cutting properties
 	if len(sites) == 0 {
 		Finalfragments = topstranddigestproducts
@@ -423,8 +423,8 @@ func SearchandCutFWD(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 		for _, fragment := range topstranddigestproducts {
 			cuttopstrand := strings.Split(fragment, recogseq)
 			// reversed
-			recognitionsiteup := Prefix(recogseq, (-1 * typeIIenzyme.Bottomstrand5primedistancefromend))
-			recognitionsitedown := Suffix(recogseq, (-1 * typeIIenzyme.Topstrand3primedistancefromend))
+			recognitionsiteup := sequences.Prefix(recogseq, (-1 * typeIIenzyme.Bottomstrand5primedistancefromend))
+			recognitionsitedown := sequences.Suffix(recogseq, (-1 * typeIIenzyme.Topstrand3primedistancefromend))
 			firstfrag := strings.Join([]string{cuttopstrand[0], recognitionsiteup}, "")
 			finaldigestproducts = append(finaldigestproducts, firstfrag)
 
@@ -479,7 +479,7 @@ func SearchandCutFWD(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 // utility function
 func SearchandCutRev(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproducts []string, topstrandstickyends_5prime []string, topstrandstickyends_3prime []string) (Finalfragments []string, Stickyends_5prime []string, Stickyends_3prime []string) {
 	Finalfragments = make([]string, 0)
-	reverseenzymeseq := RevComp(strings.ToUpper(typeIIenzyme.RecognitionSequence))
+	reverseenzymeseq := sequences.RevComp(strings.ToUpper(typeIIenzyme.RecognitionSequence))
 
 	if reverseenzymeseq == strings.ToUpper(typeIIenzyme.RecognitionSequence) {
 		Finalfragments = topstranddigestproducts
@@ -487,7 +487,7 @@ func SearchandCutRev(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 		Stickyends_3prime = topstrandstickyends_3prime
 	} else {
 		originalfwdsequence := strings.Join(topstranddigestproducts, "")
-		sites := Findall(originalfwdsequence, reverseenzymeseq)
+		sites := search.Findall(originalfwdsequence, reverseenzymeseq)
 		// step 2. Search for recognition site on top strand, if it's there then we start processing according to the enzyme cutting properties
 		if len(sites) == 0 {
 			Finalfragments = topstranddigestproducts
@@ -498,8 +498,8 @@ func SearchandCutRev(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 			for _, fragment := range topstranddigestproducts {
 				cuttopstrand := strings.Split(fragment, reverseenzymeseq)
 				// reversed
-				recognitionsiteup := Prefix(reverseenzymeseq, (-1 * typeIIenzyme.Bottomstrand5primedistancefromend))
-				recognitionsitedown := Suffix(reverseenzymeseq, (-1 * typeIIenzyme.Topstrand3primedistancefromend))
+				recognitionsiteup := sequences.Prefix(reverseenzymeseq, (-1 * typeIIenzyme.Bottomstrand5primedistancefromend))
+				recognitionsitedown := sequences.Suffix(reverseenzymeseq, (-1 * typeIIenzyme.Topstrand3primedistancefromend))
 				firstfrag := strings.Join([]string{cuttopstrand[0], recognitionsiteup}, "")
 				finaldigestproducts = append(finaldigestproducts, firstfrag)
 				for i := 1; i < len(cuttopstrand); i++ {
@@ -606,7 +606,7 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 
 	originalfwdsequence := strings.TrimSpace(strings.ToUpper(sequence.Seq))
 	//originalreversesequence := strings.TrimSpace(strings.ToUpper(RevComp(sequence.Seq)))
-	sites := Findall(originalfwdsequence, strings.ToUpper(typeIIenzyme.RecognitionSequence))
+	sites := search.Findall(originalfwdsequence, strings.ToUpper(typeIIenzyme.RecognitionSequence))
 
 	// step 2. Search for recognition site on top strand, if it's there then we start processing according to the enzyme cutting properties
 	topstranddigestproducts := make([]string, 0)
@@ -616,8 +616,8 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 	if len(sites) != 0 {
 
 		cuttopstrand := strings.Split(originalfwdsequence, strings.ToUpper(typeIIenzyme.RecognitionSequence))
-		recognitionsitedown := Suffix(typeIIenzyme.RecognitionSequence, (-1 * typeIIenzyme.Topstrand3primedistancefromend))
-		recognitionsiteup := Prefix(typeIIenzyme.RecognitionSequence, (-1 * typeIIenzyme.Bottomstrand5primedistancefromend))
+		recognitionsitedown := sequences.Suffix(typeIIenzyme.RecognitionSequence, (-1 * typeIIenzyme.Topstrand3primedistancefromend))
+		recognitionsiteup := sequences.Prefix(typeIIenzyme.RecognitionSequence, (-1 * typeIIenzyme.Bottomstrand5primedistancefromend))
 
 		//repairedfrag := ""
 		//repairedfrags := make([]string,0)
@@ -671,7 +671,7 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 			frag2topStickyend5prime = "blunt"
 			topstrandstickyends_5prime = append(topstrandstickyends_5prime, frag2topStickyend5prime)
 
-			frag2topStickyend3prime = Suffix(recognitionsiteup, typeIIenzyme.EndLength)
+			frag2topStickyend3prime = sequences.Suffix(recognitionsiteup, typeIIenzyme.EndLength)
 			topstrandstickyends_3prime = append(topstrandstickyends_3prime, frag2topStickyend3prime)
 
 			for i := 1; i < len(cuttopstrand); i++ {
@@ -712,9 +712,9 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 		}
 		topstrandstickyends_5prime = ifplasmidsticky5prime
 		//hack to fix wrong sticky end assignment in certain cases
-		reverseenzymeseq := RevComp(typeIIenzyme.RecognitionSequence)
+		reverseenzymeseq := sequences.RevComp(typeIIenzyme.RecognitionSequence)
 		if strings.Index(originalfwdsequence, strings.ToUpper(typeIIenzyme.RecognitionSequence)) > strings.Index(originalfwdsequence, reverseenzymeseq) {
-			topstrandstickyends_5prime = Revarrayorder(topstrandstickyends_5prime)
+			topstrandstickyends_5prime = sequences.Revarrayorder(topstrandstickyends_5prime)
 		}
 		//3'
 		ifplasmidsticky3prime := make([]string, 0)
@@ -786,7 +786,7 @@ func TypeIIsdigest(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (Fin
 	}
 	Finalfragments = make([]string, 0)
 
-	reverseenzymeseq := RevComp(strings.ToUpper(typeIIsenzyme.RestrictionEnzyme.RecognitionSequence))
+	reverseenzymeseq := sequences.RevComp(strings.ToUpper(typeIIsenzyme.RestrictionEnzyme.RecognitionSequence))
 
 	for _, digestedfragment := range topstranddigestproducts {
 		if strings.Contains(digestedfragment, reverseenzymeseq) == false {
@@ -862,7 +862,7 @@ func TypeIIsdigest(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (Fin
 
 		//hack to fix wrong sticky end assignment in certain cases
 		if strings.Index(originalfwdsequence, strings.ToUpper(typeIIsenzyme.RestrictionEnzyme.RecognitionSequence)) > strings.Index(originalfwdsequence, reverseenzymeseq) {
-			topstrandstickyends_5prime = Revarrayorder(topstrandstickyends_5prime)
+			topstrandstickyends_5prime = sequences.Revarrayorder(topstrandstickyends_5prime)
 		}
 		//3'
 		ifplasmidsticky3prime := make([]string, 0)

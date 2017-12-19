@@ -132,6 +132,8 @@ type seqSearchTest struct {
 	ignoreCase     Option
 }
 
+
+
 var seqTests = []seqSearchTest{
 	seqSearchTest{
 		slice: []wtype.DNASequence{

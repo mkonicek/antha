@@ -27,6 +27,7 @@ import (
 	"strings"
 )
 
+// Named is an interface for any typed value which has a method to return the Name as a string.
 type Named interface {
 	Name() string
 }

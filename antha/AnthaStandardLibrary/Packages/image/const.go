@@ -10,8 +10,11 @@ import (
 )
 
 var (
-	White       = color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}
-	Black       = color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}
+	// White is a color.RGBA representation of the colour white
+	White = color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}
+	// Black is a color.RGBA representation of the colour black
+	Black = color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}
+	// Transparent is a color.RGBA representation of a nil colour.
 	Transparent = color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(0)}
 )
 

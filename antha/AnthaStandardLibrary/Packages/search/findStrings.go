@@ -20,84 +20,70 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
+// Utility package providing functions useful for searches
 package search
 
-import (
-	"strconv"
-	"strings"
-)
+import "strings"
 
-type Thingfound struct {
-	Thing     string
-	Positions []int
-	Reverse   bool
+func equalFold(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
-func (thing Thingfound) ToString() (descriptions string) {
-	things := make([]string, 0)
-	var reverse string
-	for i := range thing.Positions {
-		if thing.Reverse {
-			reverse = " in reverse direction"
-		} else {
-			reverse = " in forward direction"
+// type Option is an option which can be used as an argument to search functions.
+// Particularly InStrings
+type Option string
+
+// IgnoreCase is an option which can be added to the InStrings and InSequences
+// functions to search ignoring case.
+//
+const IgnoreCase Option = "IgnoreCase"
+
+func containsIgnoreCase(options ...Option) bool {
+	for _, option := range options {
+		if strings.EqualFold(string(IgnoreCase), string(option)) {
+			return true
 		}
-		things = append(things, thing.Thing, " found at position ", strconv.Itoa(thing.Positions[i]), reverse, "; ")
 	}
-	descriptions = strings.Join(things, "")
-	return
+	return false
 }
 
-// not perfect yet! issue with byte conversion of certain characters!
-// This returns positions in user format (i.e. the first position of the sequence will be 1 not 0)
-func Findall(bigthing string, smallthing string) (positions []int) {
+// InStrings searchs for a target string in a slice of strings and returns a boolean.
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+func InStrings(list []string, target string, options ...Option) bool {
 
-	positions = make([]int, 0)
-	count := strings.Count(bigthing, smallthing)
+	ignore := containsIgnoreCase(options...)
 
-	if smallthing == "" {
-		return
+	for _, entry := range list {
+		if ignore {
+			if equalFold(entry, target) {
+				return true
+			}
+		} else {
+			if strings.TrimSpace(entry) == strings.TrimSpace(target) {
+				return true
+			}
+		}
 	}
-	if count != 0 {
+	return false
+}
 
-		pos := (strings.Index(bigthing, smallthing))
-		restofbigthing := bigthing[(pos + 1):]
+// PositionsInStrings searchs for a target string in a slice of strings and returns all positions found.
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+func PositionsInStrings(list []string, target string, options ...Option) []int {
 
-		for i := 0; i < count; i++ {
-			positions = append(positions, (pos + 1))
-			pos = pos + (strings.Index(restofbigthing, smallthing) + 1)
-			restofbigthing = bigthing[(pos + 1):]
+	ignore := containsIgnoreCase(options...)
+
+	var positions []int
+	for i, entry := range list {
+		if ignore {
+			if equalFold(entry, target) {
+				positions = append(positions, i)
+			}
+		} else {
+			if strings.TrimSpace(entry) == strings.TrimSpace(target) {
+				positions = append(positions, i)
+			}
 		}
 	}
 	return positions
-}
-
-func Findallthings(bigthing string, smallthings []string) (thingsfound []Thingfound) {
-	var thingfound Thingfound
-	thingsfound = make([]Thingfound, 0)
-
-	for _, thing := range smallthings {
-		if strings.Contains(bigthing, thing) {
-			thingfound.Thing = thing
-			thingfound.Positions = Findall(bigthing, thing)
-			thingsfound = append(thingsfound, thingfound)
-		}
-	}
-	return thingsfound
-}
-
-func Containsallthings(bigthing string, smallthings []string) (trueornot bool) {
-	i := 0
-	for _, thing := range smallthings {
-
-		//	if strings.Contains(strings.ToUpper(bigthing), strings.ToUpper(thing)) {
-		if strings.Contains(bigthing, thing) {
-			i = i + 1
-		}
-	}
-	if i == len(smallthings) {
-		trueornot = true
-	}
-
-	return trueornot
 }

@@ -31,24 +31,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func InSlice(slice string, list []string) bool {
-	for _, b := range list {
-		if b == slice {
-			return true
-		}
-	}
-	return false
-}
-
-func Position(slice []string, value string) int {
-	for p, v := range slice {
-		if v == value {
-			return p
-		}
-	}
-	return -1
-}
-
 func RemoveDuplicates(elements []string) []string {
 	// Use map to record duplicates as we find them.
 	encountered := map[string]bool{}

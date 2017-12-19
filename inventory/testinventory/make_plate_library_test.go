@@ -169,7 +169,7 @@ func TestSetConstraints(t *testing.T) {
 				continue
 			}
 
-			if search.InSlice(testplate.Type, exceptions[device.GetName()]) {
+			if search.InStrings(exceptions[device.GetName()], testplate.Type) {
 				continue
 			}
 
@@ -224,7 +224,7 @@ func TestGetConstraints(t *testing.T) {
 				continue
 			}
 
-			if search.InSlice(testplate.Type, exceptions[device.GetName()]) {
+			if search.InStrings(exceptions[device.GetName()], testplate.Type) {
 				continue
 			}
 

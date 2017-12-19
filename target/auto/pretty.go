@@ -20,6 +20,8 @@ func (a *Auto) Pretty(inst target.Inst) string {
 		return "Wait"
 	case *target.Prompt:
 		return prettyPrompt(inst)
+	case *target.TimedWait:
+		return prettyTimedWait(inst)
 	default:
 		return fmt.Sprintf("unknown instruction %T", inst)
 	}
@@ -39,4 +41,8 @@ func prettyRun(inst *target.Run) string {
 
 func prettyPrompt(ins *target.Prompt) string {
 	return fmt.Sprintf("[prm] %s", ins.Message)
+}
+
+func prettyTimedWait(ins *target.TimedWait) string {
+	return fmt.Sprintf("[wai] %s", ins.Duration.String())
 }

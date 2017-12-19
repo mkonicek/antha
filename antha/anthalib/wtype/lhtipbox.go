@@ -70,6 +70,28 @@ func NewLHTipbox(nrows, ncols int, height float64, manufacturer, boxtype string,
 	return initialize_tips(&tipbox, tiptype)
 }
 
+func (tb LHTipbox) GetID() string {
+	return tb.ID
+}
+
+func (tb LHTipbox) Output() string {
+	s := ""
+	for j := 0; j < tb.NumRows(); j++ {
+		for i := 0; i < tb.NumCols(); i++ {
+			if tb.Tips[i][j] == nil {
+				s += "."
+			} else if tb.Tips[i][j].Dirty {
+				s += "*"
+			} else {
+				s += "o"
+			}
+		}
+		s += "\n"
+	}
+
+	return s
+}
+
 func (tb LHTipbox) String() string {
 	return fmt.Sprintf(
 		`LHTipbox {
@@ -109,9 +131,19 @@ TipZStart : %f,
 	)
 }
 
-//lazy sunuva
 func (tb *LHTipbox) Dup() *LHTipbox {
+	return tb.dup(false)
+}
+func (tb *LHTipbox) DupKeepIDs() *LHTipbox {
+	return tb.dup(true)
+}
+
+func (tb *LHTipbox) dup(keepIDs bool) *LHTipbox {
 	tb2 := NewLHTipbox(tb.Nrows, tb.Ncols, tb.Height, tb.Mnfr, tb.Type, tb.Tiptype, tb.AsWell, tb.TipXOffset, tb.TipYOffset, tb.TipXStart, tb.TipYStart, tb.TipZStart)
+
+	if keepIDs {
+		tb2.ID = tb.ID
+	}
 
 	for i := 0; i < len(tb.Tips); i++ {
 		for j := 0; j < len(tb.Tips[i]); j++ {
@@ -119,7 +151,11 @@ func (tb *LHTipbox) Dup() *LHTipbox {
 			if t == nil {
 				tb2.Tips[i][j] = nil
 			} else {
-				tb2.Tips[i][j] = t.Dup()
+				if keepIDs {
+					tb2.Tips[i][j] = t.DupKeepID()
+				} else {
+					tb2.Tips[i][j] = t.Dup()
+				}
 			}
 		}
 	}
@@ -145,9 +181,224 @@ func (tb *LHTipbox) N_clean_tips() int {
 	return c
 }
 
-// actually useful functions
-// TODO implement Mirror
+func trim(ba []bool) []bool {
+	r := make([]bool, 0, len(ba))
+	s := -1
+	e := -1
 
+	for i := 0; i < len(ba); i++ {
+		if ba[i] {
+			if s == -1 {
+				s = i
+			}
+
+			e = i
+		}
+	}
+
+	for i := s; i <= e; i++ {
+		r = append(r, ba[i])
+	}
+
+	return r
+}
+
+func trimToMask(wells []string, mask []bool) []string {
+	if len(mask) >= len(wells) {
+		return wells
+	}
+	ret := make([]string, len(mask))
+	s := false
+	x := 0
+	for i := 0; i < len(wells); i++ {
+		if wells[i] != "" && !s {
+			s = true
+		}
+
+		if s {
+			ret[x] = wells[i]
+			x += 1
+		}
+
+		if x == len(mask) {
+			break
+		}
+	}
+
+	return ret
+}
+
+/*
+
+	GetTipsMasked:
+		mask 	- an array stating pattern of tips required... must be at most a column or row long
+		       	  which depends on ori
+		ori  	- int specifying which orientation of LHVChannel / LHHChannel
+		canTrim - bool specifying whether to remove leading and trailing "false" values
+
+
+	Behaviour:
+		search tip box for clean tips which fit the stated pattern, row-by-row or column-by-column
+		depending on which orientation is set
+
+		if canTrim is true then it is assumed that the head / box alignment can change
+*/
+
+// find tips that fit the pattern and return in the same format
+func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string, error) {
+	possiblyTrimmedMask := mask
+
+	if canTrim {
+		possiblyTrimmedMask = trim(mask)
+	} else {
+		err := checkLen(mask, ori, tb)
+		if err != nil {
+			return []string{}, err
+		}
+	}
+
+	if ori == LHVChannel {
+		for i := 0; i < tb.NumCols(); i++ {
+			r := tb.searchCleanTips(i, possiblyTrimmedMask, ori)
+			if r != nil && len(r) != 0 {
+				tb.Remove(r)
+				return trimToMask(r, possiblyTrimmedMask), nil
+			}
+		}
+	} else if ori == LHHChannel {
+		for i := 0; i < tb.NumRows(); i++ {
+			r := tb.searchCleanTips(i, possiblyTrimmedMask, ori)
+			if r != nil && len(r) != 0 {
+				tb.Remove(r)
+				return trimToMask(r, possiblyTrimmedMask), nil
+			}
+		}
+	}
+
+	// not found or unknown orientation
+	return []string{}, fmt.Errorf("Not found or unknown orientation")
+}
+
+func checkLen(mask []bool, ori int, tb *LHTipbox) error {
+	if ori == LHHChannel {
+		if len(mask) != tb.NumCols() {
+			return fmt.Errorf("Error: CanTrim=false only applies if mask length is identical to tipbox block size")
+		}
+	} else if ori == LHVChannel {
+		if len(mask) != tb.NumRows() {
+			return fmt.Errorf("Error: CanTrim=false only applies if mask length is identical to tipbox block size")
+		}
+	}
+
+	return nil
+}
+
+func (tb *LHTipbox) Remove(sa []string) bool {
+	ar := WCArrayFromStrings(sa)
+
+	for _, wc := range ar {
+		if wc.X < 0 {
+			continue
+		}
+		if wc.X >= len(tb.Tips) || wc.Y >= len(tb.Tips[wc.X]) || tb.Tips[wc.X][wc.Y] == nil {
+			return false
+		}
+
+		tb.Tips[wc.X][wc.Y] = nil
+	}
+
+	return true
+}
+
+func inflateMask(mask []bool, offset, size int) []bool {
+	r := make([]bool, size)
+
+	for i := 0; i < len(mask); i++ {
+		r[i+offset] = mask[i]
+	}
+
+	return r
+}
+
+func maskToWellCoords(mask []bool, offset, ori int) []string {
+	wc := make([]WellCoords, len(mask))
+
+	for i := 0; i < len(mask); i++ {
+		wc[i] = WellCoords{X: -1, Y: -1}
+
+		curWC := WellCoords{X: -1, Y: -1}
+
+		if ori == LHVChannel {
+			curWC = WellCoords{X: offset, Y: i}
+		} else if ori == LHHChannel {
+			curWC = WellCoords{X: i, Y: offset}
+		}
+
+		if mask[i] {
+			wc[i] = curWC
+		}
+	}
+
+	r := make([]string, len(wc))
+
+	for i := 0; i < len(wc); i++ {
+		if wc[i].X != -1 {
+			r[i] = wc[i].FormatA1()
+		}
+	}
+
+	return r
+}
+
+func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori int) []string {
+	r := make([]string, 0, 1)
+
+	if ori == LHVChannel {
+		df := tb.NumRows() - len(mask) + 1
+		for i := 0; i < df; i++ {
+			m := inflateMask(mask, i, tb.NumRows())
+			if tb.hasCleanTips(offset, m, ori) {
+				return maskToWellCoords(m, offset, ori)
+			}
+		}
+	} else if ori == LHHChannel {
+		df := tb.NumCols() - len(mask) + 1
+		for i := 0; i < df; i++ {
+			m := inflateMask(mask, i, tb.NumCols())
+			if tb.hasCleanTips(offset, m, ori) {
+				return maskToWellCoords(m, offset, ori)
+			}
+		}
+
+	}
+
+	return r
+}
+
+// fails iff for true mask[i] there is no corresponding clean tip
+func (tb *LHTipbox) hasCleanTips(offset int, mask []bool, ori int) bool {
+	if ori == LHVChannel {
+		for i := 0; i < len(mask); i++ {
+			if mask[i] && (tb.Tips[offset][i] == nil || tb.Tips[offset][i].Dirty) {
+				return false
+			}
+		}
+
+		return true
+	} else if ori == LHHChannel {
+		for i := 0; i < len(mask); i++ {
+			if mask[i] && (tb.Tips[i][offset] == nil || !tb.Tips[i][offset].Dirty) {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return false
+}
+
+// deprecated shortly
 func (tb *LHTipbox) GetTips(mirror bool, multi, orient int) []string {
 	// this removes the tips as well
 	var ret []string = nil
@@ -247,14 +498,6 @@ func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	tipbox.NTips = tipbox.Nrows * tipbox.Ncols
 	return tipbox
 }
-
-/*
-type SBSLabware interface {
-	NumRows() int
-	NumCols() int
-	PlateHeight() float64
-}
-*/
 
 // @implement SBSLabware
 

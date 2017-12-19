@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -97,6 +98,61 @@ var componentWithConcstests = []unitFromStringTest{
 	},
 }
 
+type volTest struct {
+	VolString    string
+	Volume       Volume
+	ErrorMessage string
+}
+
+var volTests = []volTest{
+	volTest{
+		VolString:    "10ul",
+		Volume:       NewVolume(10, "ul"),
+		ErrorMessage: "",
+	},
+	volTest{
+		VolString:    "10 ul",
+		Volume:       NewVolume(10, "ul"),
+		ErrorMessage: "",
+	},
+	volTest{
+		VolString:    "10",
+		Volume:       Volume{},
+		ErrorMessage: "no valid unit found for 10: valid units are: [L l ml nl ul]",
+	},
+}
+
+func TestParseVolume(t *testing.T) {
+
+	for _, test := range volTests {
+		vol, err := ParseVolume(test.VolString)
+		if !reflect.DeepEqual(vol, test.Volume) {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected:", test.Volume, "\n",
+				"Got:", vol, "\n",
+			)
+		}
+		if err != nil {
+			if err.Error() != test.ErrorMessage {
+				t.Error(
+					"for", fmt.Sprintf("%+v", test), "\n",
+					"Expected error:", test.ErrorMessage, "\n",
+					"Got:", err.Error(), "\n",
+				)
+			}
+		}
+
+		if err == nil && test.ErrorMessage != "" {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected error:", test.ErrorMessage, "\n",
+				"Got:", "nil", "\n",
+			)
+		}
+	}
+}
+
 func TestParseConcentration(t *testing.T) {
 
 	for _, test := range componentWithConcstests {
@@ -127,6 +183,72 @@ func TestParseConcentration(t *testing.T) {
 				"for", fmt.Sprintf("%+v", test), "\n",
 				"Expected:", test.ComponentNameOnly, "\n",
 				"Got:", c, "\n",
+			)
+		}
+	}
+}
+
+type valueAndUnitTest struct {
+	value        float64
+	unit         string
+	valueandunit string
+}
+
+var volandUnitTests = []valueAndUnitTest{
+	valueAndUnitTest{
+		value:        10,
+		unit:         "s",
+		valueandunit: "10s",
+	},
+	valueAndUnitTest{
+		value:        10,
+		unit:         "s",
+		valueandunit: "10 s",
+	},
+	valueAndUnitTest{
+		value:        10,
+		unit:         "",
+		valueandunit: "10",
+	},
+
+	valueAndUnitTest{
+		value:        0,
+		unit:         "s",
+		valueandunit: "s",
+	},
+	valueAndUnitTest{
+		value:        10.9090,
+		unit:         "ms",
+		valueandunit: "10.9090ms",
+	},
+	valueAndUnitTest{
+		value:        2.16e+04,
+		unit:         "s",
+		valueandunit: "2.16e+04 s",
+	},
+
+	valueAndUnitTest{
+		value:        2.16e+04,
+		unit:         "/s",
+		valueandunit: "2.16e+04 /s",
+	},
+}
+
+func TestSplitValueAndUnit(t *testing.T) {
+	for _, test := range volandUnitTests {
+		val, unit := SplitValueAndUnit(test.valueandunit)
+		if val != test.value {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected:", test.value, "\n",
+				"Got:", val, "\n",
+			)
+		}
+		if unit != test.unit {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected:", test.unit, "\n",
+				"Got:", unit, "\n",
 			)
 		}
 	}

@@ -166,21 +166,21 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
 	trough12 := wtype.NewLHWell("DWST12", "", "", "ul", 15000, 5000, stshp, wtype.LHWBV, 8.2, 72, 41.3, 4.7, "mm")
 	plate = wtype.NewLHPlate("DWST12", "Unknown", 1, 12, 44.1, "mm", trough12, 9, 9, 0, 30.0, valueformaxheadtonotintoDSWplatewithp20tips)
-	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
+	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
 	// deep well strip trough 8
 	stshp8 := wtype.NewShape("box", "mm", 115.0, 8.2, 41.3)
 	trough8 := wtype.NewLHWell("DWST8", "", "", "ul", 24000, 1000, stshp8, wtype.LHWBV, 115, 8.2, 41.3, 4.7, "mm")
 	plate = wtype.NewLHPlate("DWST8", "Unknown", 8, 1, 44.1, "mm", trough8, 9, 9, 49.5, 0.0, 0.0)
-	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
+	plate.DeclareSpecial() // Do this for racks, other very unusual plate types... except troughs?!
 	plates = append(plates, plate)
 
 	// deep well reservoir
 	rshp := wtype.NewShape("box", "mm", 115.0, 72.0, 41.3)
 	singlewelltrough := wtype.NewLHWell("DWR1", "", "", "ul", 300000, 20000, rshp, wtype.LHWBV, 115, 72, 41.3, 4.7, "mm")
 	plate = wtype.NewLHPlate("DWR1", "Unknown", 1, 1, 44.1, "mm", singlewelltrough, 9, 9, 49.5, 0.0, 0.0)
-	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
+	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types... inc this?!
 	plates = append(plates, plate)
 
 	// 250ml box reservoir

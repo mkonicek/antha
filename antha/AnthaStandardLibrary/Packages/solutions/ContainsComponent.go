@@ -25,7 +25,6 @@ package solutions
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -75,11 +74,11 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 							return false, -1, err
 						}
 
-						if reflect.DeepEqual(compsubcomponents, componentSubcomponents) {
+						err = EqualLists(compsubcomponents, componentSubcomponents)
+						if err == nil {
 							return true, i, nil
 						} else {
-							errs = append(errs, fmt.Sprintf("Subcomponents lists not equal for %s and %s: Respective lists: %+v and %+v", comp.CName, component.CName, compsubcomponents, componentSubcomponents))
-
+							errs = append(errs, fmt.Sprintf("Subcomponents lists not equal for %s and %s: %s", comp.CName, component.CName, err.Error()))
 						}
 					} else {
 						return true, i, nil
@@ -99,12 +98,11 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 					if err != nil {
 						return false, -1, err
 					}
-
-					if reflect.DeepEqual(compsubcomponents, componentSubcomponents) {
+					err = EqualLists(compsubcomponents, componentSubcomponents)
+					if err == nil {
 						return true, i, nil
 					} else {
-						errs = append(errs, fmt.Sprintf("Subcomponents lists not equal for %s and %s: Respective lists: %+v and %+v", comp.CName, component.CName, compsubcomponents, componentSubcomponents))
-
+						errs = append(errs, fmt.Sprintf("Subcomponents lists not equal for %s and %s: %s", comp.CName, component.CName, err.Error()))
 					}
 				} else {
 					return true, i, nil
@@ -116,6 +114,24 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 	}
 
 	return false, -1, fmt.Errorf("component %s not found in list: %s. : Errors for each: %s", componentSummary(component), componentNames(components), strings.Join(errs, "\n"))
+}
+
+// EqualLists compares two ComponentLists and returns an error if the lists are not identical.
+func EqualLists(list1, list2 ComponentList) error {
+	var notEqual []string
+	for key, value1 := range list1.Components {
+		if value2, found := list2.Components[key]; found {
+			if fmt.Sprintf("%.2e", value1.SIValue()) != fmt.Sprintf("%.2e", value2.SIValue()) {
+				notEqual = append(notEqual, key+" "+fmt.Sprint(value1)+" in list 1 and "+fmt.Sprint(value2)+" in list 2.")
+			}
+		} else {
+			notEqual = append(notEqual, key+" not found in list2. ")
+		}
+	}
+	if len(notEqual) > 0 {
+		return fmt.Errorf(strings.Join(notEqual, ". \n"))
+	}
+	return nil
 }
 
 func componentSummary(component *wtype.LHComponent) string {

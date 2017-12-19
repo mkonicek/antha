@@ -523,7 +523,7 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 
 // CheckNonSpecificBinding checks for number of EXACT matches of a primerSeq in a fullSeq.
 func CheckNonSpecificBinding(fullSeq, primerSeq wtype.DNASequence) (count int) {
-	seqsfound := sequences.FindSeq(&fullSeq, &primerSeq)
+	seqsfound := sequences.FindAll(&fullSeq, &primerSeq)
 	count = len(seqsfound.Positions)
 	return
 }

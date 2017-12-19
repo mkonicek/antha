@@ -1,6 +1,7 @@
 package wtype
 
 import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"strings"
 )
 
@@ -51,6 +52,14 @@ type LHInstruction struct {
 	PassThrough      map[string]*LHComponent // 1:1 pass through, only applies to prompts
 }
 
+func (lhi *LHInstruction) GetPlateType() string {
+	if lhi.OutPlate != nil {
+		return lhi.OutPlate.Type
+	} else {
+		return lhi.Platetype
+	}
+}
+
 // privatised in favour of specific instruction constructors
 func newLHInstruction() *LHInstruction {
 	var lhi LHInstruction
@@ -71,6 +80,10 @@ func NewLHPromptInstruction() *LHInstruction {
 	lhi := newLHInstruction()
 	lhi.Type = LHIPRM
 	return lhi
+}
+
+func (inst *LHInstruction) InsType() string {
+	return InsType(inst.Type)
 }
 
 // GetID returns the ID of the instruction, useful for interfaces
@@ -163,18 +176,65 @@ func (ins *LHInstruction) ParentString() string {
 
 }
 
-func (ins *LHInstruction) ComponentsMoving() string {
-	sa := make([]string, 0, 1)
+func (ins *LHInstruction) NamesOfComponentsMoving() string {
+	ar := ins.ComponentsMoving()
+
+	sa := make([]string, 0)
+
+	for _, c := range ar {
+		sa = append(sa, c.CName)
+	}
+
+	return strings.Join(sa, "+")
+}
+
+func (ins *LHInstruction) ComponentsMoving() []*LHComponent {
+	ca := make([]*LHComponent, 0)
 	for i, v := range ins.Components {
 		// ignore component 1 if this is a mix-in-place
-		if i == 0 && !v.IsSample() {
+		if i == 0 && ins.IsMixInPlace() {
 			continue
 		}
-		sa = append(sa, v.CName)
+		ca = append(ca, v.Dup())
 	}
-	return strings.Join(sa, "+")
+
+	return ca
 }
 
 func (ins *LHInstruction) Wellcoords() WellCoords {
 	return MakeWellCoords(ins.Welladdress)
+}
+
+func (ins *LHInstruction) AdjustVolumesBy(r float64) {
+	// each subcomponent is assumed to scale linearly
+	for _, c := range ins.Components {
+		c.Vol *= r
+	}
+
+	ins.Result.Vol *= r
+}
+
+func (ins *LHInstruction) InputVolumeMap(addition wunit.Volume) map[string]wunit.Volume {
+	r := make(map[string]wunit.Volume, len(ins.Components))
+	for i, c := range ins.Components {
+		nom := c.FullyQualifiedName()
+		myAdd := addition.Dup()
+
+		if ins.IsMixInPlace() && i == 0 {
+			nom += InPlaceMarker
+			myAdd = wunit.ZeroVolume()
+		}
+
+		v, ok := r[nom]
+
+		if ok {
+			v.Add(c.Volume())
+			v.Add(myAdd)
+		} else {
+			r[nom] = c.Volume()
+			r[nom].Add(myAdd)
+		}
+	}
+
+	return r
 }

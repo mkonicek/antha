@@ -330,7 +330,6 @@ func findMinimumAdditional3PrimeAddition(desiredstickyend3prime string, part wty
 	// This code will look for subparts of a standard overhang to add the minimum number of additional nucleotides with a partial match e.g. AATG contains ATG only so we just add A
 	for i := 0; i < len(desiredstickyend3prime)+1; i++ {
 		truncated := desiredstickyend3prime[:i]
-		fmt.Println("Part: ", part.Name(), "Desired 3 prime:", desiredstickyend3prime, "Truncated: ", truncated)
 		if strings.HasSuffix(upper(part.Seq), upper(truncated)) {
 			present = truncated
 		}
@@ -342,7 +341,6 @@ func findMinimumAdditional3PrimeAddition(desiredstickyend3prime string, part wty
 	} else {
 		bittoadd = desiredstickyend3prime
 	}
-	fmt.Println("Part: ", part.Name(), "Desired 3 prime:", desiredstickyend3prime, "Final: ", bittoadd)
 	return
 }
 
@@ -353,7 +351,6 @@ func findMinimumAdditional5PrimeAddition(desiredstickyend5prime string, part wty
 
 	for i := len(desiredstickyend5prime) - 1; i >= 0; i-- {
 		truncated := desiredstickyend5prime[i:]
-		fmt.Println("Part: ", part.Name(), "Desired 5 prime:", desiredstickyend5prime, "Truncated: ", truncated)
 		if strings.HasPrefix(upper(part.Seq), upper(truncated)) {
 			present = truncated
 		}
@@ -361,21 +358,15 @@ func findMinimumAdditional5PrimeAddition(desiredstickyend5prime string, part wty
 	if len(present) == len(desiredstickyend5prime) {
 		bittoadd = ""
 	} else if len(present) > 0 {
-		fmt.Println(desiredstickyend5prime, present)
 		bittoadd = desiredstickyend5prime[:len(present)+1]
 	} else {
 		bittoadd = desiredstickyend5prime
 	}
-	fmt.Println("Part: ", part.Name(), "Desired 5 prime:", desiredstickyend5prime, "Final: ", bittoadd)
 	return
 }
 
 // Adds ends to the part sequence based upon enzyme chosen and the desired overhangs after digestion
 func AddCustomEnds(part wtype.DNASequence, enzyme wtype.TypeIIs, desiredstickyend5prime string, desiredstickyend3prime string) (Partwithends wtype.DNASequence) {
-
-	fmt.Println("Old part: ", Partwithends)
-
-	///
 
 	bittoadd := findMinimumAdditional5PrimeAddition(desiredstickyend5prime, part)
 
@@ -390,7 +381,6 @@ func AddCustomEnds(part wtype.DNASequence, enzyme wtype.TypeIIs, desiredstickyen
 	Partwithends.Nm = part.Nm
 	Partwithends.Plasmid = part.Plasmid
 	Partwithends.Seq = partwithends
-	fmt.Println("New part: ", Partwithends)
 	return Partwithends
 }
 

@@ -234,7 +234,7 @@ func CutatSite(startingdnaseq wtype.DNASequence, typeIIenzyme wtype.RestrictionE
 }
 */
 
-// object carrying info on a fragment following digestion
+// Digestedfragment object carrying info on a fragment following digestion
 type Digestedfragment struct {
 	Topstrand              string
 	Bottomstrand           string
@@ -244,7 +244,7 @@ type Digestedfragment struct {
 	BottomStickyend_3prime string
 }
 
-// Assumes phosphorylation since result of digestion.
+// ToDNASequence assumes phosphorylation since result of digestion.
 // todo:  Check and fix the construction of the digested fragment...
 // This may be produced incorrectly so the error capture steps have been commented out to ensure the Insert function returns the expected result!
 func (fragment Digestedfragment) ToDNASequence(name string) (seq wtype.DNASequence, err error) {

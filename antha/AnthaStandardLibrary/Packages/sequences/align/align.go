@@ -155,7 +155,7 @@ func (r Result) Positions() (result sequences.SearchResult) {
 		panic(err)
 	}
 	querySeq := r.LongestContinuousSequence()
-	return sequences.FindSeq(templateSeq, &querySeq)
+	return sequences.FindAll(templateSeq, &querySeq)
 }
 
 // Alignment stores the string result of an alignment of a query sequence against a template

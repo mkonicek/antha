@@ -606,11 +606,14 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	wh := make([]string, 0, lenToMake)       // component types
 	va := make([]wunit.Volume, 0, lenToMake) // volumes
 
-	fromPlateIDs, fromWellss, volss, err := robot.GetComponents(cmps, carryvol, wtype.LHVChannel, 1, true, legacyVolume)
+	//fromPlateIDs, fromWellss, volss, err := robot.GetComponents(driver.GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: wtype.LHVChannel, Multi: 1, Independent: true, LegacyVolume: legacyVolume})
+	getComponentsReply, err := robot.GetComponents(driver.GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: wtype.LHVChannel, Multi: 1, Independent: true, LegacyVolume: legacyVolume})
 
 	if err != nil {
 		return nil, err
 	}
+
+	tfrs := getComponentsReply.Transfers
 
 	pf := make([]string, 0, lenToMake)
 	wf := make([]string, 0, lenToMake)
@@ -627,20 +630,21 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	ptwy := make([]int, 0, lenToMake)        // dimensions of plate pipetting to (Y)
 	vt := make([]wunit.Volume, 0, lenToMake) // volume in well to
 	ptf := make([]string, 0, lenToMake)      // plate types
+	cnames := make([]string, 0, lenToMake)   // actual Component names
 
 	for i, v := range cmps {
-		for xx, _ := range fromPlateIDs[i] {
+		for xx, _ := range tfrs[i].PlateIDs { //fromPlateIDs[i] {
 			// get dem big ole plates out
 			// TODO -- pass them in instead of all this nonsense
 
 			var flhp, tlhp *wtype.LHPlate
 
-			flhif := robot.PlateLookup[fromPlateIDs[i][xx]]
+			flhif := robot.PlateLookup[tfrs[i].PlateIDs[xx]] //[fromPlateIDs[i][xx]]
 
 			if flhif != nil {
 				flhp = flhif.(*wtype.LHPlate)
 			} else {
-				s := fmt.Sprint("NO SRC PLATE FOUND : ", i, " ", xx, " ", fromPlateIDs[i][xx])
+				s := fmt.Sprint("NO SRC PLATE FOUND : ", i, " ", xx, " ", tfrs[i].PlateIDs[xx]) //fromPlateIDs[i][xx])
 				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
 
 				return nil, err
@@ -664,7 +668,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			}
 
 			//v2 := wunit.NewVolume(v.Vol, v.Vunit)
-			v2 := volss[i][xx]
+			v2 := tfrs[i].Vols[xx] // volss[i][xx]
 			vt = append(vt, wlt.CurrVolume())
 			wh = append(wh, v.TypeName())
 			va = append(va, v2)
@@ -674,27 +678,29 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			ptwy = append(ptwy, tlhp.WellsY())
 			ptt = append(ptt, tlhp.Type)
 
-			wlf, ok := flhp.WellAtString(fromWellss[i][xx])
+			wlf, ok := flhp.WellAtString(tfrs[i].WellCoords[xx]) //fromWellss[i][xx])
 
 			if !ok {
 				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
-				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWellss[i][xx], " not found on source plate ", fromPlateIDs[i][xx]))
+				//err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWellss[i][xx], " not found on source plate ", fromPlateIDs[i][xx]))
+				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", tfrs[i].WellCoords[xx], " not found on source plate ", tfrs[i].PlateIDs[xx]))
 				return nil, err
 			}
 
 			vf = append(vf, wlf.CurrVolume())
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
+			cnames = append(cnames, wlf.WContents.CName)
 			wlf.Remove(vrm)
 
-			pf = append(pf, robot.PlateIDLookup[fromPlateIDs[i][xx]])
-			wf = append(wf, fromWellss[i][xx])
+			pf = append(pf, robot.PlateIDLookup[tfrs[i].PlateIDs[xx]])
+			wf = append(wf, tfrs[i].WellCoords[xx])
 			pfwx = append(pfwx, flhp.WellsX())
 			pfwy = append(pfwy, flhp.WellsY())
 			ptf = append(ptf, flhp.Type)
 
 			if v.Loc == "" {
-				v.Loc = fromPlateIDs[i][xx] + ":" + fromWellss[i][xx]
+				v.Loc = tfrs[i].PlateIDs[xx] + ":" + tfrs[i].WellCoords[xx]
 			}
 			// add component to destination
 
@@ -716,7 +722,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	}
 
 	// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int
-	ti := driver.NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy)
+	ti := driver.NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames)
 
 	return ti, nil
 }

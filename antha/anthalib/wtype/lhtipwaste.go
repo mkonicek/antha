@@ -81,7 +81,16 @@ func (lht *LHTipwaste) Empty() {
 	lht.Contents = 0
 }
 
-func (lht *LHTipwaste) Dispose(n int) bool {
+func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) bool {
+	// this just checks numbers for now
+	n := 0
+
+	for _, c := range channels {
+		if c != nil {
+			n += 1
+		}
+	}
+
 	if lht.Capacity-lht.Contents < n {
 		return false
 	}

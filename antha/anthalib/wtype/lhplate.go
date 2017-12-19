@@ -152,10 +152,13 @@ func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
 	return ret
 }
 
+// deprecated
+/*
 func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
 
 	for _, c := range cmps {
 		if independent && c == nil {
+			// HERE HERE HERE -->  INDEPENDENT MULTI NEEDS THIS
 			err = fmt.Errorf("Cannot do non-contiguous asks")
 			return
 		}
@@ -186,16 +189,24 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 
 	best := 0.0
 	bestMatch := ComponentMatch{}
+	/// MIS --> debug multichannel leads me here
+	//          -- for some reason it's not picking up ONE of the transfers..
+	//	       clearly an annoying edge here somewhere
+	//		well G6 in the M$ protocol
 	for wv := it.Curr(); it.Valid(); wv = it.Next() {
 		// cmps needs duping here
 		mycmps := lhp.GetContentVector(wv)
 
+		fmt.Println("INVOKE")
 		match, errr := matchComponents(cmps.Dup(), mycmps, independent)
 
 		if errr != nil {
 			err = errr
 			return
 		}
+
+		// issue here: this only ever keeps one match
+		// matchComponents needs to return multiple matches
 
 		sc := scoreMatch(match, independent)
 
@@ -211,6 +222,12 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 		vols = append(vols, m.Vols)
 	}
 
+	fmt.Println("BEST AMTCH CHRHE: ")
+	fmt.Println(plateIDs)
+	fmt.Println(wellCoords)
+	fmt.Println(vols)
+	fmt.Println("---")
+
 	if best <= 0.0 {
 		err = fmt.Errorf("Not found")
 	} else {
@@ -219,6 +236,8 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 
 	return
 }
+
+*/
 
 // this gets ONE component... possibly from several wells
 func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
@@ -412,6 +431,7 @@ func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []st
 			panic("No negative wells allowed")
 		}
 		if v > len(wps)-1 {
+			fmt.Println("LEN WPS - 1", len(wps)-1, " V: ", v)
 			panic("No wells out of bounds allowed")
 		}
 		ret = append(ret, wps[v])
@@ -957,6 +977,38 @@ func (p *LHPlate) PlateHeight() float64 {
 	return p.Height
 }
 
+func componentList(vec ComponentVector) map[string]bool {
+	r := make(map[string]bool, len(vec))
+	for _, c := range vec {
+		if c != nil {
+			if c.Vol > 0.0 {
+				r[c.IDOrName()] = true
+			}
+		}
+	}
+
+	return r
+}
+
+func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume) ComponentVector {
+	cv := p.GetFilteredContentVector(wv, cmps)
+
+	cv.DeleteAllBelowVolume(mpv)
+	return cv
+}
+
+func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector) ComponentVector {
+	wants := componentList(cmps)
+	cv := p.GetContentVector(wv)
+	fcv := make([]*LHComponent, len(cv))
+	for i := 0; i < len(cv); i++ {
+		if cv[i] != nil && wants[cv[i].IDOrName()] {
+			fcv[i] = cv[i]
+		}
+	}
+
+	return fcv
+}
 func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
 	for _, w := range p.Wellcoords {
 		if w.UpdateContentID(before, after) {
@@ -1054,4 +1106,16 @@ func (p *LHPlate) AllContents() []*LHComponent {
 	}
 
 	return ret
+}
+
+func (p *LHPlate) ColVol() wunit.Volume {
+	if p == nil {
+		return wunit.ZeroVolume()
+	}
+
+	v := p.Welltype.MaxVolume()
+
+	v.MultiplyBy(float64(p.WlsY))
+
+	return v
 }

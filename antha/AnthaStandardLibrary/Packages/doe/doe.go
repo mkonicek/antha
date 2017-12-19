@@ -32,7 +32,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -255,10 +254,8 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 			}
 
 			if equal, err := merged.EqualToMergeConcs(lowestMerged); equal && err == nil {
-				fmt.Println("same: ", merged, lowestMerged)
 				return level, nil
 			}
-			fmt.Println(merged, " not equal to ", lowestMerged, ": ", err.Error())
 		}
 		return minlevel, fmt.Errorf("cannot find lowest level of MergedLevel: lowest found %s in %s", fmt.Sprintln(lowestMerged), pairSummary(pair))
 
@@ -499,6 +496,8 @@ func (run Run) GetResponseValue(responsedescriptor string) (responsevalue interf
 	return
 }
 
+// GetFactorValue searches for a factor descriptor in the list of factors in a Run.
+// Exact matches will be searched first, followed by matches once any unit is removed (e.g. TotalVolume (ul) to TotalVolume)
 func (run Run) GetFactorValue(factordescriptor string) (factorvalue interface{}, err error) {
 
 	var tempresponsevalue interface{}
@@ -510,6 +509,9 @@ func (run Run) GetFactorValue(factordescriptor string) (factorvalue interface{},
 	errs = append(errs, errstr)
 	for i, descriptor := range run.Factordescriptors {
 		if strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(factordescriptor)) {
+			factorvalue = run.Setpoints[i]
+			return factorvalue, nil
+		} else if factor, _ := splitFactorFromUnit(factordescriptor); strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(factor)) {
 			factorvalue = run.Setpoints[i]
 			return factorvalue, nil
 		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(descriptor)), strings.TrimSpace(strings.ToUpper(factordescriptor))) {
@@ -925,7 +927,7 @@ func mergeFactorLevels(run1 Run, run2 Run, factors []string, newLevel interface{
 }
 
 func mergeStrings(factorNames []string) (combinedFactor string) {
-	combinedFactor = strings.Join(factorNames, wtype.MIXDELIMITER)
+	combinedFactor = strings.Join(factorNames, wutil.MIXDELIMITER)
 	return
 }
 

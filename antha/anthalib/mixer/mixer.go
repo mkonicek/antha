@@ -24,6 +24,7 @@
 package mixer
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -53,8 +54,6 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	//ret.Cunit = l.Cunit
 	ret.SetSample(true)
 
-	//logger.Track(fmt.Sprintf("SAMPLE V %s %s %s", l.ID, ret.ID, v.ToString()))
-
 	return ret
 }
 
@@ -76,7 +75,6 @@ func MultiSample(l []*wtype.LHComponent, v []wunit.Volume) []*wtype.LHComponent 
 		ret.Extra = j.GetExtra()
 		ret.Smax = j.GetSmax()
 		ret.Visc = j.GetVisc()
-		//	logger.Track(fmt.Sprintf("SAMPLE V %s %s %s", j.ID, ret.ID, vi.ToString()))
 		ret.SetSample(true)
 		reta = append(reta, ret)
 	}
@@ -100,7 +98,6 @@ func SampleForConcentration(l *wtype.LHComponent, c wunit.Concentration) *wtype.
 	ret.Smax = l.GetSmax()
 	ret.Visc = l.GetVisc()
 	ret.SetSample(true)
-	//logger.Track(fmt.Sprintf("SAMPLE C %s %s %s", l.ID, ret.ID, c.ToString()))
 	return ret
 }
 
@@ -121,12 +118,11 @@ func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHCo
 	ret.Extra = s.GetExtra()
 	ret.Smax = s.GetSmax()
 	ret.Visc = s.GetVisc()
-	//logger.Track(fmt.Sprintf("SAMPLE M %s %s %s %s", s.ID, ret.ID, m.ToString(), d.ToString()))
 	ret.SetSample(true)
 	return ret
 }
 
-// SampleForTotalVolume takes a sample ofs this liquid to be used to make the
+// SampleForTotalVolume takes a sample of this liquid to be used to make the
 // solution up to a particular total volume edited to take into account the
 // volume of the other solution components
 func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
@@ -142,7 +138,6 @@ func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHCompone
 	ret.Extra = l.GetExtra()
 	ret.Smax = l.GetSmax()
 	ret.Visc = l.GetVisc()
-	//logger.Track(fmt.Sprintf("SAMPLE T %s %s %s", l.ID, ret.ID, v.ToString()))
 	ret.SetSample(true)
 	return ret
 }
@@ -173,7 +168,8 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		r.Result = wtype.NewLHComponent()
 		mx := 0
 		for _, c := range opt.Components {
-			r.Result.MixPreserveTvol(c)
+			//r.Result.MixPreserveTvol(c)
+			r.Result.Mix(c)
 			if c.Generation() > mx {
 				mx = c.Generation()
 			}
@@ -186,6 +182,35 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		r.Platetype = opt.Destination.Type
 		r.SetPlateID(opt.Destination.ID)
 		r.OutPlate = opt.Destination
+
+		// if we know the well as well we should ensure that non-empty wells are respected
+		if opt.Address != "" {
+			w, ok := opt.Destination.Wellcoords[opt.Address]
+
+			if !ok {
+				panic(fmt.Sprintf("Cannot find well %s on plate %s name %s type %s", opt.Address, r.OutPlate.ID, r.OutPlate.Name(), r.OutPlate.Type))
+			}
+
+			if !w.Empty() {
+				// the instruction version has to remain unchanged
+				// the returned version in the protocol has to be mixed
+				w.WContents.Loc = r.OutPlate.ID + ":" + opt.Address
+				r.Result = w.WContents.Dup()
+				for _, c := range opt.Components {
+					//r.Result.MixPreserveTvol(c)
+					r.Result.Mix(c)
+
+				}
+				// we also need to make sure the instruction explicitly mentions the component
+				cmps := make([]*wtype.LHComponent, 0, len(opt.Components)+1)
+				cmps = append(cmps, w.WContents.Dup())
+				cmps = append(cmps, opt.Components...)
+				opt.Components = cmps
+				r.Components = wtype.CopyComponentArray(cmps)
+			}
+			// empty wells stay empty
+			//r.Result.Loc = r.OutPlate.ID + ":" + opt.Address
+		}
 	}
 
 	if opt.PlateType != "" {
@@ -205,19 +230,38 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		r.PlateName = opt.PlateName
 	}
 
-	// oh yus oh yus oh yus
+	// ensure results are given the correct final volumes
+	// ... by definition this is either the sum of the volumes
+	// or the total volume if specified
 
-	s := ""
-	for _, v := range r.Components {
-		s += v.CName + "-" + v.ID + " "
+	tVol := findTVolOrPanic(opt.Components)
+
+	if !tVol.IsZero() {
+		r.Result.SetVolume(tVol)
 	}
-
-	//fmt.Println("GENERATION: ", r.Result.Generation(), "MIXING : ", s, " RESULT: ", r.Result.CName+"-"+r.Result.ID)
 
 	return r
 }
 
-// TODO: he functions below will be deleted soon as they do not generate liquid
+func findTVolOrPanic(components []*wtype.LHComponent) wunit.Volume {
+	tv := wunit.NewVolume(0.0, "ul")
+
+	for _, c := range components {
+		ctv := c.TotalVolume()
+
+		if !(tv.IsZero() || ctv.IsZero() || tv.EqualTo(ctv)) {
+			panic(fmt.Sprintf("Mix ERROR: Multiple contradictory total volumes specified %s %s", tv, ctv))
+		}
+
+		if tv.IsZero() {
+			tv = ctv
+		}
+	}
+
+	return tv
+}
+
+// TODO: The functions below will be deleted soon as they do not generate liquid
 // handling instructions
 
 // Mix the specified wtype.LHComponents together and leave the destination TBD

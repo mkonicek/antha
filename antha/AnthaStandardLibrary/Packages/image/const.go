@@ -114,9 +114,9 @@ var proteinPaintboxMap = map[color.Color]string{
 
 	// lacZ expresser (e.g. pUC19) grown on S gal
 	//color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "E.coli pUC19 on sgal",
-	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}: "veryblack",
+	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}: "black",
 	// plus white as a blank (or comment out to use EiraCFP)
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
+	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
 }
 
 var uvProteinPaintboxMap = map[color.Color]string{
@@ -167,7 +167,7 @@ var uvProteinPaintboxMap = map[color.Color]string{
 	// conventional E.coli colour
 	color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "E.coli",
 	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}:       "E.coli pUC19 on sgal",
-	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
+	color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
 }
 
 var proteinPaintboxSubsetMap = map[color.Color]string{
@@ -226,10 +226,10 @@ var proteinPaintboxSubsetMap = map[color.Color]string{
 
 	// lacZ expresser (e.g. pUC19) grown on S gal
 	//color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}: "E.coli pUC19 on sgal",
-	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}: "veryblack",
+	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}: "black",
 
 	// plus white as a blank (or comment out to use EiraCFP)
-	//color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "verywhite",
+	//color.RGBA{R: uint8(242), G: uint8(243), B: uint8(242), A: uint8(255)}: "white",
 }
 
 // colourLibrary is a ollection of colours
@@ -261,7 +261,6 @@ var colourLibrary = map[string]color.Color{
 	"GuajilloRFP":    color.RGBA{R: uint8(241), G: uint8(84), B: uint8(152), A: uint8(255)},
 	"PaprikaRFP":     color.RGBA{R: uint8(247), G: uint8(132), B: uint8(179), A: uint8(255)},
 	"TannenGFP":      color.RGBA{R: uint8(243), G: uint8(138), B: uint8(112), A: uint8(255)},
-	"veryblack":      color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)},
 	"VixenPurple":    color.RGBA{R: uint8(120), G: uint8(76), B: uint8(190), A: uint8(255)},
 	"SeraphinaPink":  color.RGBA{R: uint8(206), G: uint8(89), B: uint8(142), A: uint8(255)},
 	"RudolphRFP":     color.RGBA{R: uint8(215), G: uint8(72), B: uint8(76), A: uint8(255)},
@@ -390,12 +389,12 @@ var librarySets = map[string][]string{
 		"PaprikaRFP",
 		"IvyGFP",
 		"HollyGFP",
-		"verywhite",
+		"white",
 		"DreidelTeal",
 		"LeorOrange",
 		"DasherGFP",
 		"BlazeYFP",
-		"veryblack",
+		"black",
 		"SeraphinaPink",
 		"green",
 		"VixenPurple",

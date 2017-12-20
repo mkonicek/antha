@@ -163,6 +163,12 @@ func (pair PositionPair) CodeFriendly(ignoredirection ...bool) (start, end int) 
 	return pair.StartPosition - 1, pair.EndPosition - 1
 }
 
+func upper(seq wtype.DNASequence) wtype.DNASequence {
+	newSeq := seq
+	newSeq.Seq = strings.ToUpper(seq.Seq)
+	return newSeq
+}
+
 // FindAll searches for a DNA sequence within a larger DNA sequence and returns all matches on both coding and complimentary strands.
 func FindAll(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchResult) {
 	if len(smallSequence.Sequence()) > len(bigSequence.Sequence()) {

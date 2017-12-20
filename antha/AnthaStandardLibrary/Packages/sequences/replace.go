@@ -97,7 +97,7 @@ func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []str
 
 // iterates through each position of a restriction site and replaces with the complementary base and then removes these from the main sequence
 // if that fails the algorithm will attempt to find the complements of two adjacent positions. The algorithm needs improvement
-func RemoveSiteOnestrand(sequence wtype.DNASequence, enzymeseq string, otherseqstoavoid []string) (newseq wtype.DNASequence, err error) {
+func removeSiteOnestrand(sequence wtype.DNASequence, enzymeseq string, otherseqstoavoid []string) (newseq wtype.DNASequence, err error) {
 
 	allthingstoavoid := make([]string, len(otherseqstoavoid))
 	allthingstoavoid = otherseqstoavoid
@@ -162,7 +162,7 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 			}
 		}
 
-		tempseq, err = RemoveSiteOnestrand(sequence, thingtoreplace, allthingstoavoid)
+		tempseq, err = removeSiteOnestrand(sequence, thingtoreplace, allthingstoavoid)
 		if err != nil {
 			return tempseq, err
 		}
@@ -176,7 +176,7 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 
 	if len(seqsfound) == 2 {
 
-		tempseq, err := RemoveSiteOnestrand(sequence, thingtoreplace, allthingstoavoid)
+		tempseq, err := removeSiteOnestrand(sequence, thingtoreplace, allthingstoavoid)
 
 		for _, instance := range seqsfound {
 			if instance.Reverse == true {
@@ -184,7 +184,7 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 			}
 		}
 
-		tempseq, err = RemoveSiteOnestrand(tempseq, thingtoreplace, allthingstoavoid)
+		tempseq, err = removeSiteOnestrand(tempseq, thingtoreplace, allthingstoavoid)
 		if err != nil {
 			return newseq, err
 		}
@@ -202,99 +202,6 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 	return
 }
 
-// this replaces all instances but this is not what we want
-func ReplaceString(sequence string, seq string, otherseqstoavoid []string) (newseq string, err error) {
-
-	allthingstoavoid := make([]string, len(otherseqstoavoid))
-	allthingstoavoid = otherseqstoavoid
-	allthingstoavoid = append(otherseqstoavoid, seq)
-
-	for i, _ := range seq {
-
-		replacementnucleotide := Comp(string(seq[i]))
-		replacement := strings.Replace(seq, string(seq[i]), replacementnucleotide, 1)
-		newseq = strings.Replace(sequence, seq, replacement, -1)
-		checksitesfoundagain := search.Findallthings(newseq, allthingstoavoid)
-		if len(checksitesfoundagain) == 0 {
-			return
-		}
-	}
-
-	for i, _ := range seq {
-
-		replacementnucleotide := Comp(seq[i : i+1])
-		replacement := strings.Replace(seq, seq[i:i+1], replacementnucleotide, 1)
-		newseq = strings.Replace(sequence, seq, replacement, -1)
-		checksitesfoundagain := search.Findallthings(newseq, allthingstoavoid)
-		if len(checksitesfoundagain) == 0 {
-			return
-		}
-		if i+2 == len(seq) {
-			specificseqs := text.Print("Specific Sequences", allthingstoavoid)
-			err = fmt.Errorf("Not possible to remove site from sequence without avoiding the sequences to avoid using this algorithm; check specific sequences and adapt algorithm: ", specificseqs)
-			break
-		}
-	}
-	return
-}
-
-/*
-// working on this
-func RemoveSiteFromORF(orf ORF, enzyme wtype.LogicalRestrictionEnzyme, otherseqstoavoid []string) (newseq wtype.DNASequence, err error) {
-
-	allthingstoavoid := make([]string, len(otherseqstoavoid))
-	allthingstoavoid = otherseqstoavoid
-	allthingstoavoid = append(otherseqstoavoid, enzyme.RecognitionSequence)
-
-	sitesfound := search.Findallthings(orf.DNASeq, allthingstoavoid)
-
-	if len(sitesfound) == 0 {
-		err = fmt.Errorf("no sites found in this Orf!", orf, enzyme, otherseqstoavoid)
-		return
-	}
-
-	allpositions := search.Findall(orf.DNASeq, enzyme.RecognitionSequence)
-
-	if len(allpositions) != 0 {
-		for _, position := range allpositions {
-			if orf.Direction != "Reverse" {
-
-				_, _ = Codonfromposition(orf.DNASeq, position)
-
-			}
-		}
-	}
-	return
-}
-*/
-/*
-func RemoveSiteFromSeq(annotated AnnotatedSeq, enzyme wtype.LogicalRestrictionEnzyme, otherseqstoavoid []string) (newseq AnnotatedSeq, err error) {
-
-	allthingstoavoid := make([]string, len(otherseqstoavoid))
-	allthingstoavoid = otherseqstoavoid
-	allthingstoavoid = append(otherseqstoavoid, enzyme.RecognitionSequence)
-
-	sitesfound := search.Findallthings(orf.DNASeq, allthingstoavoid)
-
-	if len(sitesfound) == 0 {
-		err = fmt.Errorf("no sites found in this Orf!", orf, enzyme, otherseqstoavoid)
-		return
-	}
-
-	allpositions := search.Findall(orf.DNASeq, enzyme.RecognitionSequence)
-
-	if len(allpositions) != 0 {
-		for _, position := range allpositions {
-			if orf.Direction != "Reverse" {
-
-				_ = Codonfromposition(orf.DNASeq, position)
-
-			}
-		}
-	}
-	return
-}
-*/
 func RemoveSitesOutsideofFeatures(dnaseq wtype.DNASequence, site string, algorithm ReplacementAlgorithm, featurelisttoavoid []wtype.Feature) (newseq wtype.DNASequence, err error) {
 
 	newseq = dnaseq
@@ -479,11 +386,6 @@ func Codonfromposition(sequence string, dnaposition int) (codontoreturn string, 
 	}
 	return codontoreturn, position, fmt.Errorf("No replacement codon found at position %d in sequence %s length %d", dnaposition, sequence, len(sequence))
 }
-func upper(seq wtype.DNASequence) wtype.DNASequence {
-	newSeq := seq
-	newSeq.Seq = strings.ToUpper(seq.Seq)
-	return newSeq
-}
 
 // ReplaceAll searches for a sequence within a sequence and replaces all instances with the replaceWith sequence. Features will be deleted if part of the feature is replaced.
 // Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
@@ -545,6 +447,61 @@ func ReplaceAll(sequence, seqToReplace, replaceWith wtype.DNASequence) (newSeq w
 			}
 		}
 
+	}
+
+	SetFeatures(&newSeq, originalFeatures)
+
+	return
+}
+
+// Replace takes a PositionPair and replaces the sequence between the pair with the replaeWith sequence.
+// Features will be deleted if part of the feature is replaced.
+// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
+// In this case it may be necessary to rotate the sequence if looking to generate a linear sequence of interest.
+func Replace(sequence wtype.DNASequence, position PositionPair, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
+
+	newSeq = sequence
+
+	originalFeatures := sequence.Features
+
+	start, end := position.Coordinates(wtype.CODEFRIENDLY)
+
+	// check position pair is valid for this sequence
+	if start > end && !sequence.Plasmid && !position.Reverse {
+		return newSeq, fmt.Errorf("invalid position %+v to replace in sequence. Start position must be lower than end position unless position is reverse or sequence is a plasmid. Sequence %s: Plasmid = %v", position, sequence.Name(), sequence.Plasmid)
+	}
+
+	// convert sequence to replace into  string
+	var replaceSeqString string = upper(replaceWith).Seq
+
+	// if reverse, convert to reverse complement
+	if position.Reverse {
+		replaceSeqString = wtype.RevComp(upper(replaceWith).Seq)
+	}
+
+	// if it does not strand the end of the plasmid
+	if !sequence.Plasmid {
+
+		fmt.Println(len(newSeq.Seq), start, end)
+		newSeq.Seq = newSeq.Seq[:start] + replaceSeqString + newSeq.Seq[end+1:]
+		// if it does strand the end of the plasmid
+	} else if sequence.Plasmid {
+
+		if end > start {
+
+			if !position.Reverse {
+
+				newSeq.Seq = newSeq.Seq[:start] + replaceSeqString + newSeq.Seq[end+1:]
+
+			}
+		} else {
+
+			if position.Reverse {
+				newSeq.Seq = newSeq.Seq[:end] + replaceSeqString + newSeq.Seq[start+1:]
+			} else {
+				newSeq.Seq = replaceSeqString + newSeq.Seq[end+1:start]
+			}
+		}
 	}
 
 	SetFeatures(&newSeq, originalFeatures)

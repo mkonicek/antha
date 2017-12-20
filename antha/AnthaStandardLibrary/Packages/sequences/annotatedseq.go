@@ -207,33 +207,3 @@ func MakeAnnotatedSeq(name string, seq string, circular bool, features []wtype.F
 	annotated.Features = newFeatures
 	return
 }
-
-// RevTranslatetoNstring converts a string amino acid sequence to a sequence of NNN codons.
-func RevTranslatetoNstring(aaSeq string) (NNN string) {
-	
-	var codonSeq wtype.DNASequence
-	
-	for _, aa := range aaSeq {
-		aminoAcid, err := SetAminoAcid(string(aa))
-		
-		if err != nil {
-			panic(err)
-		}
-		
-		codon, err := ConvertToN.ChooseCodon(aminoAcid)
-		
-		if err != nil {
-			panic(err)
-		}
-	
-		err = codonSeq.Append(string(codon))
-		
-		if err != nil {
-			panic(err)
-		}
-	
-	}
-	
-	return codonSeq.Sequence()
-
-}

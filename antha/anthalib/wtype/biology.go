@@ -303,18 +303,24 @@ func valid(seq, validOptions string) error {
 	return nil
 }
 
+// ValidDNA checks a sequence given as a string for validity as a DNASequence.
+// Any IUPAC nucleotide is considered valid, not just ACTG.
 func ValidDNA(seq string) error {
 	validNucleotides := "ACTGNXBHVDMKSWRYU"
 
 	return valid(seq, validNucleotides)
 }
 
+// ValidRNA checks a sequence given as a string for validity as an RNASequence.
+// ACGU are valid entries.
 func ValidRNA(seq string) error {
 	validRNA := "ACGU"
 
 	return valid(seq, validRNA)
 }
 
+// ValidAA checks a sequence given as a string for validity as a ProteinSequence.
+// All standard single letter AminoAcids are valid as well as * indicating stop.
 func ValidAA(seq string) error {
 
 	var aminoAcids []string

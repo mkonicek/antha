@@ -30,8 +30,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-
-
 // Codontable describes the mapping between a Codon and the amino acid which it encodes.
 var Codontable = map[string]string{
 
@@ -124,36 +122,6 @@ func dNAtoAASeq(s []string) string {
 	}
 	rstring := strings.Join(r, "")
 	return rstring
-}
-
-// RevTranslatetoNstring converts a string amino acid sequence to a sequence of NNN codons.
-func RevTranslatetoNstring(aaSeq string) (NNN string) {
-
-	var codonSeq wtype.DNASequence
-
-	for _, aa := range aaSeq {
-		aminoAcid, err := SetAminoAcid(string(aa))
-
-		if err != nil {
-			panic(err)
-		}
-
-		codon, err := ConvertToN.ChooseCodon(aminoAcid)
-
-		if err != nil {
-			panic(err)
-		}
-
-		err = codonSeq.Append(string(codon))
-
-		if err != nil {
-			panic(err)
-		}
-
-	}
-
-	return codonSeq.Sequence()
-
 }
 
 // type ORF is an open reading frame

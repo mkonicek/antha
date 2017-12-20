@@ -183,7 +183,7 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 	} else {
 		unique = removeDuplicateInterface(elements)
 		if len(unique) == 0 {
-			return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, length of output differs to input: %s and %s: Array type: %s", len(unique), len(elements), t)
+			return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, length of output differs to input: %d and %d: Array type: %s", len(unique), len(elements), t)
 		}
 
 		return unique, nil

@@ -373,7 +373,7 @@ func AAPosition(dnaposition int) (aaposition int) {
 
 func CodonOptions(codon string) (replacementoptions []string) {
 
-	aa := DNAtoAASeq([]string{codon})
+	aa := dNAtoAASeq([]string{codon})
 
 	replacementoptions = RevCodonTable[aa]
 	return

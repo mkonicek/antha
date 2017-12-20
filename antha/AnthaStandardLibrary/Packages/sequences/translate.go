@@ -30,47 +30,57 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func RevtranslatetoN(aa wtype.ProteinSequence) (NNN wtype.DNASequence) {
-	n_array := make([]string, 0)
-	n := "nnn"
-
-	aalen := len(aa.Seq)
-	if strings.HasSuffix(aa.Seq, "**") {
-		aalen = aalen - 2
-	} else if strings.HasSuffix(aa.Seq, "*") {
-		aalen = aalen - 1
-	}
-
-	for i := 0; i < aalen; i++ {
-		n_array = append(n_array, n)
-	}
-
-	if strings.HasSuffix(aa.Seq, "**") {
-		n_array = append(n_array, "******")
-	} else if strings.HasSuffix(aa.Seq, "*") {
-		n_array = append(n_array, "***")
-	}
-	nnn := strings.Join(n_array, "")
-
-	NNN.Nm = aa.Nm
-	NNN.Seq = nnn
-	NNN.Plasmid = false
-	return NNN
-
-}
-
+// type AminoAcid is a single letter format amino acid in string form.
+// It can be validated as a valid AminoAcid using the SetAminoAcid function.
 type AminoAcid string
 
+// SetAminoAcid creates an AminoAcid from a string input and returns an error
+// if the string is not a valid amino acid.
+func SetAminoAcid(aa string) (AminoAcid, error) {
+
+	if len(aa) != 1 {
+		return "", fmt.Errorf("amino acid %s not valid. Please use single letter code.")
+	}
+
+	if err := wtype.ValidAA(aa); err != nil {
+		return "", fmt.Errorf("amino acid %s not valid: %s", aa, err.Error())
+	}
+	return AminoAcid(strings.ToUpper(strings.TrimSpace(aa))), nil
+}
+
+// type Codon is a triplet of valid nucleotides which encodes an amino acid or stop codon.
+// It can be validated using the SetCodon function.
 type Codon string
 
+// SetCodon creates a Codon from a string input and returns an error
+// if the string is not a valid codon.
+func SetCodon(dna string) (Codon, error) {
+
+	if len(dna) != 3 {
+		return "", fmt.Errorf("codon %s not valid. must be three nucleotides.")
+	}
+
+	if err := wtype.ValidDNA(dna); err != nil {
+		return "", fmt.Errorf("codon %s not valid: %s", dna, err.Error())
+	}
+	return Codon(strings.ToUpper(strings.TrimSpace(dna))), nil
+}
+
+// A CodonUsageTable is an interface for any type which can convert an amino acid into a codon and error.
 type CodonUsageTable interface {
+	// ChooseCodon converts an amino acid into a codon.
+	// A nil error is returned if this is done successfully.
 	ChooseCodon(aminoAcid AminoAcid) (Codon, error)
 }
 
+// type SimpleUsageTable chooses the next codon as the first codon option from the Table field.
 type SimpleUsageTable struct {
+	// Table is a mapping between the amino acid and all codon options for that amino acid.
 	Table map[string][]string
 }
 
+// ChooseCodon converts an amino acid into a codon.
+// An error is returned if no value for the amino acid is found.
 func (table SimpleUsageTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
 	codons, found := table.Table[string(aa)]
 
@@ -85,15 +95,189 @@ func (table SimpleUsageTable) ChooseCodon(aa AminoAcid) (codon Codon, err error)
 	return Codon(codons[0]), nil
 }
 
-var UseAnyCodon = SimpleUsageTable{Table: RevCodonTable}
+// type NTable converts each amino acid to NNN.
+// This may be useful when a sequence is left to a DNA synthesis provider to codon optimise.
+type NTable struct {
+}
 
+// ChooseCodon converts an amino acid into a codon.
+// All amino acids will be converted to NNN; all stop codons to ***
+func (table NTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
+	if aa == "*" {
+		return Codon("***"), nil
+	}
+
+	return Codon("NNN"), nil
+}
+
+// type FrequencyTable chooses the next codon based on the frequency of the codon
+// for that amino acid in the specified organism.
+// for example:
+// in Ecoli, F is encoded by TTT and TTC.
+// The relative frequency of each is:
+// TTT 0.58
+// TTC 0.42
+// The ChooseCodon method run on F would therefore return TTT 58% of the time and TTC 42%.
+//
+type FrequencyTable wtype.CodonTable
+
+// ChooseCodon converts an amino acid into a codon.
+// A nil error is returned if this is done successfully.
+func (table FrequencyTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
+
+	codonTable := wtype.CodonTable(table)
+
+	codonSeq := codonTable.ChooseWeighted(string(aa))
+
+	if codonSeq == "" {
+		return "", fmt.Errorf("codon not found in table for %v. Please set up Frequency Table first.", aa)
+	}
+
+	return Codon(codonSeq), nil
+}
+
+// Some example CodonUsageTables.
+var (
+
+	// Convert all amino acids to NNN; all stop codons to ***
+	ConvertToN NTable = NTable{}
+
+	// Return the first Codon value in the RevCodonTable for any amino acid.
+	UseAnyCodon = SimpleUsageTable{Table: RevCodonTable}
+
+	// EcoliTable is an example of a frequency table for E.Coli.
+	// A codon for a specific amino acid will be returned with the probability set by the CodonSet
+	//
+	EColiTable = FrequencyTable{
+		TaxID: "E.Coli",
+		CodonByAA: map[string]wtype.CodonSet{
+			"F": wtype.CodonSet{
+				"TTT": 0.58,
+				"TTC": 0.42,
+			},
+			"L": wtype.CodonSet{
+				"TTA": 0.14,
+				"TTG": 0.13,
+				"CTT": 0.12,
+				"CTC": 0.1,
+				"CTA": 0.04,
+				"CTG": 0.47,
+			},
+			"Y": wtype.CodonSet{
+				"TAT": 0.59,
+				"TAC": 0.41,
+			},
+			"*": wtype.CodonSet{
+				"TAA": 0.61,
+				"TAG": 0.09,
+				"TGA": 0.3,
+			},
+			"H": wtype.CodonSet{
+				"CAT": 0.57,
+				"CAC": 0.43,
+			},
+			"Q": wtype.CodonSet{
+				"CAA": 0.34,
+				"CAG": 0.66,
+			},
+			"I": wtype.CodonSet{
+				"ATT": 0.49,
+				"ATC": 0.39,
+				"ATA": 0.11,
+			},
+			"M": wtype.CodonSet{
+				"ATG": 1.0,
+			},
+			"N": wtype.CodonSet{
+				"AAT": 0.49,
+				"AAC": 0.51,
+			},
+			"K": wtype.CodonSet{
+				"AAA": 0.74,
+				"AAG": 0.26,
+			},
+			"V": wtype.CodonSet{
+				"GTT": 0.28,
+				"GTC": 0.2,
+				"GTA": 0.17,
+				"GTG": 0.35,
+			},
+			"D": wtype.CodonSet{
+				"GAT": 0.63,
+				"GAC": 0.37,
+			},
+			"E": wtype.CodonSet{
+				"GAA": 0.68,
+				"GAG": 0.32,
+			},
+			"S": wtype.CodonSet{
+				"TCT": 0.17,
+				"TCC": 0.15,
+				"TCA": 0.14,
+				"TCG": 0.14,
+				"AGT": 0.16,
+				"AGC": 0.25,
+			},
+			"C": wtype.CodonSet{
+				"TGT": 0.46,
+				"TGC": 0.54,
+			},
+			"W": wtype.CodonSet{
+				"TGG": 1,
+			},
+			"P": wtype.CodonSet{
+				"CCT": 0.18,
+				"CCC": 0.13,
+				"CCA": 0.2,
+				"CCG": 0.49,
+			},
+			"R": wtype.CodonSet{
+				"CGT": 0.36,
+				"CGC": 0.36,
+				"CGA": 0.07,
+				"CGG": 0.11,
+				"AGA": 0.07,
+				"AGG": 0.04,
+			},
+			"T": wtype.CodonSet{
+				"ACT": 0.19,
+				"ACC": 0.4,
+				"ACA": 0.17,
+				"ACG": 0.25,
+			},
+			"A": wtype.CodonSet{
+				"GCT": 0.18,
+				"GCC": 0.26,
+				"GCA": 0.23,
+				"GCG": 0.33,
+			},
+			"G": wtype.CodonSet{
+				"GGT": 0.35,
+				"GGC": 0.37,
+				"GGA": 0.13,
+				"GGG": 0.15,
+			},
+		},
+		AAByCodon: Codontable,
+	}
+)
+
+// RevTranslate converts an amino acid sequence into a dna sequence according the codon usage table specified.
+// A CodonUsageTable is an interface for any type which has a ChooseCodon method.
+// Examples of these are SimpleUsageTable, FrequencyTable and NTable
 func RevTranslate(aaSeq wtype.ProteinSequence, codonUsageTable CodonUsageTable) (dnaSeq wtype.DNASequence, err error) {
 
 	dnaSeq.SetName(aaSeq.Name())
 
 	for _, aminoAcid := range aaSeq.Sequence() {
 
-		nextCodon, err := codonUsageTable.ChooseCodon(AminoAcid(aminoAcid))
+		aa, err := SetAminoAcid(string(aminoAcid))
+
+		if err != nil {
+			return dnaSeq, err
+		}
+
+		nextCodon, err := codonUsageTable.ChooseCodon(aa)
 
 		if err != nil {
 			return dnaSeq, err
@@ -104,39 +288,7 @@ func RevTranslate(aaSeq wtype.ProteinSequence, codonUsageTable CodonUsageTable) 
 	return dnaSeq, nil
 }
 
-func RevTranslatetoNstring(aa string) (NNN string) {
-	n_array := make([]string, 0)
-	n := "nnn"
-
-	aalen := len(aa)
-	if strings.HasSuffix(aa, "**") {
-		aalen = aalen - 2
-	} else if strings.HasSuffix(aa, "*") {
-		aalen = aalen - 1
-	}
-
-	for i := 0; i < aalen; i++ {
-		n_array = append(n_array, n)
-	}
-
-	if strings.HasSuffix(aa, "**") {
-		n_array = append(n_array, "******")
-	} else if strings.HasSuffix(aa, "*") {
-		n_array = append(n_array, "***")
-	}
-	nnn := strings.Join(n_array, "")
-
-	//if (len(nnn)) == (3 * (len(aa.Seq))) {
-
-	NNN = nnn
-
-	//}
-	return NNN
-
-}
-
-// Translate dna sequence into amino acid sequence; need to update to deal with wobble
-
+// RevCodonTable describes the mapping between an amino acid in single letter format and the codons which encode it.
 var RevCodonTable = map[string][]string{
 
 	"N": []string{"AAC", "AAT"},
@@ -162,6 +314,7 @@ var RevCodonTable = map[string][]string{
 	"P": []string{"CCC", "CCT", "CCA", "CCG"},
 }
 
+// Codontable describes the mapping between a Codon and the amino acid which it encodes.
 var Codontable = map[string]string{
 
 	"AAC": "N",
@@ -245,7 +398,7 @@ var Codontable = map[string]string{
 	"CGG": "R",
 }
 
-func DNAtoAASeq(s []string) string {
+func dNAtoAASeq(s []string) string {
 	r := make([]string, 0)
 
 	for _, c := range s {
@@ -255,7 +408,7 @@ func DNAtoAASeq(s []string) string {
 	return rstring
 }
 
-// open reading frame
+// type ORF is an open reading frame
 type ORF struct {
 	StartPosition int
 	EndPosition   int
@@ -278,7 +431,7 @@ var (
 	startcodons = []string{"ATG", "CTG", "GTG"}
 )
 
-// Estimate molecular weight of protein product
+// Molecularweight estimates molecular weight of a protein product.
 func Molecularweight(orf ORF) (kDa float64) {
 	aaarray := strings.Split(orf.ProtSeq, "")
 	array := make([]float64, len(aaarray))
@@ -404,7 +557,7 @@ func FindORF(seq string) (orf ORF, orftrue bool) { // finds an orf in the forwar
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -413,7 +566,7 @@ func FindORF(seq string) (orf ORF, orftrue bool) { // finds an orf in the forwar
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -422,7 +575,7 @@ func FindORF(seq string) (orf ORF, orftrue bool) { // finds an orf in the forwar
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -477,7 +630,7 @@ func FindBiggestORF(seq string) (finalorf ORF, orftrue bool) { // finds an orf i
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -486,7 +639,7 @@ func FindBiggestORF(seq string) (finalorf ORF, orftrue bool) { // finds an orf i
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -495,7 +648,7 @@ func FindBiggestORF(seq string) (finalorf ORF, orftrue bool) { // finds an orf i
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}

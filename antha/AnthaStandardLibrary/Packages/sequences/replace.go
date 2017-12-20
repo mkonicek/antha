@@ -33,11 +33,127 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
-/*
-func Siteinorfs(Features features, site string) bool {
+// Replace takes a PositionPair and replaces the sequence between the pair with the replaeWith sequence.
+// Features will be deleted if part of the feature is replaced.
+// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
+// In this case it may be necessary to rotate the sequence if looking to generate a linear sequence of interest.
+func Replace(sequence wtype.DNASequence, position PositionPair, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
 
+	newSeq = sequence
+
+	originalFeatures := sequence.Features
+
+	start, end := position.Coordinates(wtype.CODEFRIENDLY)
+
+	// check position pair is valid for this sequence
+	if start > end && !sequence.Plasmid && !position.Reverse {
+		return newSeq, fmt.Errorf("invalid position %+v to replace in sequence. Start position must be lower than end position unless position is reverse or sequence is a plasmid. Sequence %s: Plasmid = %v", position, sequence.Name(), sequence.Plasmid)
+	}
+
+	// convert sequence to replace into  string
+	var replaceSeqString string = upper(replaceWith).Seq
+
+	// if reverse, convert to reverse complement
+	if position.Reverse {
+		replaceSeqString = wtype.RevComp(upper(replaceWith).Seq)
+	}
+
+	// if it does not strand the end of the plasmid
+	if !sequence.Plasmid {
+
+		fmt.Println(len(newSeq.Seq), start, end)
+		newSeq.Seq = newSeq.Seq[:start] + replaceSeqString + newSeq.Seq[end+1:]
+		// if it does strand the end of the plasmid
+	} else if sequence.Plasmid {
+
+		if end > start {
+
+			if !position.Reverse {
+
+				newSeq.Seq = newSeq.Seq[:start] + replaceSeqString + newSeq.Seq[end+1:]
+
+			}
+		} else {
+
+			if position.Reverse {
+				newSeq.Seq = newSeq.Seq[:end] + replaceSeqString + newSeq.Seq[start+1:]
+			} else {
+				newSeq.Seq = replaceSeqString + newSeq.Seq[end+1:start]
+			}
+		}
+	}
+
+	SetFeatures(&newSeq, originalFeatures)
+
+	return
 }
-*/
+
+// ReplaceAll searches for a sequence within a sequence and replaces all instances with the replaceWith sequence. Features will be deleted if part of the feature is replaced.
+// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
+// In this case it may be necessary to rotate the sequence if looking to generate a linear sequence of interest.
+func ReplaceAll(sequence, seqToReplace, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
+	searchResult := FindAll(&sequence, &seqToReplace)
+
+	if len(seqToReplace.Seq) == 0 {
+		return sequence, fmt.Errorf("no sequence to replace specified of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
+
+	}
+
+	if len(searchResult.Positions) == 0 {
+		return sequence, fmt.Errorf("no sequences of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
+	}
+
+	newSeq = sequence
+
+	originalFeatures := sequence.Features
+
+	for _, position := range returnAllOrientationsOnly(searchResult) {
+
+		start, end := position.Coordinates(wtype.CODEFRIENDLY)
+
+		var replaceSeqString string = upper(seqToReplace).Seq
+
+		// if reverse
+		if position.Reverse {
+			replaceSeqString = wtype.RevComp(upper(seqToReplace).Seq)
+		}
+
+		// if it does not strand the end of the plasmid
+		if !sequence.Plasmid {
+
+			if replaceSeqString != "" {
+
+				newSeq.Seq = strings.Replace(upper(newSeq).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
+
+			}
+			// if it does strand the end of the plasmid
+		} else if sequence.Plasmid {
+
+			if replaceSeqString != "" {
+
+				if end > start {
+
+					if replaceSeqString != "" {
+
+						newSeq.Seq = strings.Replace(upper(newSeq).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
+
+					}
+				} else {
+					rotationSize := len(replaceSeqString) - 1
+
+					replacedSeq := strings.Replace(Rotate(upper(newSeq), rotationSize, false).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
+					newSeq.Seq = replacedSeq
+					newSeq = Rotate(newSeq, rotationSize, true)
+				}
+			}
+		}
+
+	}
+
+	SetFeatures(&newSeq, originalFeatures)
+
+	return
+}
 
 var Algorithmlookuptable = map[string]ReplacementAlgorithm{
 	"ReplacebyComplement": ReplaceBycomplement,
@@ -227,12 +343,6 @@ func RemoveSitesOutsideofFeatures(dnaseq wtype.DNASequence, site string, algorit
 	return
 }
 
-func ReplacefrombetweenPositions(seq string, start int, end int, original string, replacement string) (newseq string) {
-
-	newseq = strings.Replace(seq[start-1:end-1], original, replacement, -1)
-	return
-}
-
 func ReplaceAvoidingPositionPairs(seq string, positionpairs []StartEndPair, original string, replacement string) (newseq string) {
 
 	temp := "£££££££££££"
@@ -283,15 +393,6 @@ func CodonOptions(codon string) (replacementoptions []string) {
 	aa := DNAtoAASeq([]string{codon})
 
 	replacementoptions = RevCodonTable[aa]
-	return
-}
-
-func SwapCodon(codon string, position int) (replacement string) {
-
-	replacementarray := CodonOptions(codon)
-
-	replacement = replacementarray[position]
-
 	return
 }
 
@@ -385,128 +486,6 @@ func Codonfromposition(sequence string, dnaposition int) (codontoreturn string, 
 		}
 	}
 	return codontoreturn, position, fmt.Errorf("No replacement codon found at position %d in sequence %s length %d", dnaposition, sequence, len(sequence))
-}
-
-// ReplaceAll searches for a sequence within a sequence and replaces all instances with the replaceWith sequence. Features will be deleted if part of the feature is replaced.
-// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
-// In this case it may be necessary to rotate the sequence if looking to generate a linear sequence of interest.
-func ReplaceAll(sequence, seqToReplace, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
-	searchResult := FindAll(&sequence, &seqToReplace)
-
-	if len(seqToReplace.Seq) == 0 {
-		return sequence, fmt.Errorf("no sequence to replace specified of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
-
-	}
-
-	if len(searchResult.Positions) == 0 {
-		return sequence, fmt.Errorf("no sequences of %s to replace in %s ", seqToReplace.Name(), sequence.Name())
-	}
-
-	newSeq = sequence
-
-	originalFeatures := sequence.Features
-
-	for _, position := range returnAllOrientationsOnly(searchResult) {
-
-		start, end := position.Coordinates(wtype.CODEFRIENDLY)
-
-		var replaceSeqString string = upper(seqToReplace).Seq
-
-		// if reverse
-		if position.Reverse {
-			replaceSeqString = wtype.RevComp(upper(seqToReplace).Seq)
-		}
-
-		// if it does not strand the end of the plasmid
-		if !sequence.Plasmid {
-
-			if replaceSeqString != "" {
-
-				newSeq.Seq = strings.Replace(upper(newSeq).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
-
-			}
-			// if it does strand the end of the plasmid
-		} else if sequence.Plasmid {
-
-			if replaceSeqString != "" {
-
-				if end > start {
-
-					if replaceSeqString != "" {
-
-						newSeq.Seq = strings.Replace(upper(newSeq).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
-
-					}
-				} else {
-					rotationSize := len(replaceSeqString) - 1
-
-					replacedSeq := strings.Replace(Rotate(upper(newSeq), rotationSize, false).Seq, replaceSeqString, upper(replaceWith).Seq, -1)
-					newSeq.Seq = replacedSeq
-					newSeq = Rotate(newSeq, rotationSize, true)
-				}
-			}
-		}
-
-	}
-
-	SetFeatures(&newSeq, originalFeatures)
-
-	return
-}
-
-// Replace takes a PositionPair and replaces the sequence between the pair with the replaeWith sequence.
-// Features will be deleted if part of the feature is replaced.
-// Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
-// In this case it may be necessary to rotate the sequence if looking to generate a linear sequence of interest.
-func Replace(sequence wtype.DNASequence, position PositionPair, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
-
-	newSeq = sequence
-
-	originalFeatures := sequence.Features
-
-	start, end := position.Coordinates(wtype.CODEFRIENDLY)
-
-	// check position pair is valid for this sequence
-	if start > end && !sequence.Plasmid && !position.Reverse {
-		return newSeq, fmt.Errorf("invalid position %+v to replace in sequence. Start position must be lower than end position unless position is reverse or sequence is a plasmid. Sequence %s: Plasmid = %v", position, sequence.Name(), sequence.Plasmid)
-	}
-
-	// convert sequence to replace into  string
-	var replaceSeqString string = upper(replaceWith).Seq
-
-	// if reverse, convert to reverse complement
-	if position.Reverse {
-		replaceSeqString = wtype.RevComp(upper(replaceWith).Seq)
-	}
-
-	// if it does not strand the end of the plasmid
-	if !sequence.Plasmid {
-
-		fmt.Println(len(newSeq.Seq), start, end)
-		newSeq.Seq = newSeq.Seq[:start] + replaceSeqString + newSeq.Seq[end+1:]
-		// if it does strand the end of the plasmid
-	} else if sequence.Plasmid {
-
-		if end > start {
-
-			if !position.Reverse {
-
-				newSeq.Seq = newSeq.Seq[:start] + replaceSeqString + newSeq.Seq[end+1:]
-
-			}
-		} else {
-
-			if position.Reverse {
-				newSeq.Seq = newSeq.Seq[:end] + replaceSeqString + newSeq.Seq[start+1:]
-			} else {
-				newSeq.Seq = replaceSeqString + newSeq.Seq[end+1:start]
-			}
-		}
-	}
-
-	SetFeatures(&newSeq, originalFeatures)
-
-	return
 }
 
 func returnAllOrientationsOnly(searchResult SearchResult) (positions []PositionPair) {

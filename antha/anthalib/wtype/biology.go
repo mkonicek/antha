@@ -323,6 +323,9 @@ func ValidAA(seq string) error {
 		aminoAcids = append(aminoAcids, key)
 	}
 
+	// add stop
+	aminoAcids = append(aminoAcids, "*")
+
 	validAminoAcids := strings.Join(aminoAcids, "")
 
 	return valid(seq, validAminoAcids)

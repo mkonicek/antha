@@ -62,16 +62,16 @@ func (r Result) CodeFriendlyPositions() []int {
 }
 
 // ToString returns a string description of the Result.
-func (thing Result) ToString() (descriptions string) {
+func (r Result) ToString() (descriptions string) {
 	things := make([]string, 0)
 	var reverse string
-	for i := range thing.Positions {
-		if thing.Reverse {
+	for i := range r.Positions {
+		if r.Reverse {
 			reverse = " in reverse direction"
 		} else {
 			reverse = " in forward direction"
 		}
-		things = append(things, thing.Thing, " found at position ", strconv.Itoa(thing.Positions[i]), reverse, "; ")
+		things = append(things, r.Thing, " found at position ", strconv.Itoa(r.Positions[i]), reverse, "; ")
 	}
 	descriptions = strings.Join(things, "")
 	return

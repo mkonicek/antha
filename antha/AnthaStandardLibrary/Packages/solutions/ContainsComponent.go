@@ -30,6 +30,10 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
+func equalFold(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
+}
+
 // Looks for components matching name, concentration and all sub components (including their concentrations).
 // A position of -1 is returned if no match found.
 // If the component does not contain a concentration, the name will be matched only
@@ -56,7 +60,7 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 		//normalisedCompName = NormaliseName(comp.CName)
 		//_,_, normalisedCompName = wunit.ParseConcentration(comp.CName)
 
-		if comp.CName == component.CName {
+		if equalFold(comp.CName, component.CName) {
 
 			if component.HasConcentration() && comp.HasConcentration() {
 

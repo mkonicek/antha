@@ -1,4 +1,4 @@
-// antha/AnthaStandardLibrary/Packages/enzymes/plates.go: Part of the Antha language
+// antha/AnthaStandardLibrary/Packages/enzymes/Find.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -28,22 +28,28 @@
 package search
 
 import (
-	"fmt"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"strings"
 )
 
-// NextFreeWell checks for the next well which is empty in a plate.
-// The user can also specify wells to avoid and whether to search through the well positions by row. The default is by column.
-func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, byRow bool) (well string, err error) {
+// Named is an interface for any typed value which has a method to return the Name as a string.
+type Named interface {
+	Name() string
+}
 
-	allWellPositions := plate.AllWellPositions(byRow)
+// EqualName evaluates whether two arguments with a Name() method have equal names.
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+func EqualName(entry, target Named, options ...Option) bool {
 
-	for _, well := range allWellPositions {
-		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.
-		if plate.WellMap()[well].Empty() && !InStrings(avoidWells, well) {
-			return well, nil
+	ignore := containsIgnoreCase(options...)
+
+	if ignore {
+		if equalFold(entry.Name(), target.Name()) {
+			return true
+		}
+	} else {
+		if strings.TrimSpace(entry.Name()) == strings.TrimSpace(target.Name()) {
+			return true
 		}
 	}
-	return "", fmt.Errorf("no empty wells on plate %s", plate.Name())
+	return false
 }

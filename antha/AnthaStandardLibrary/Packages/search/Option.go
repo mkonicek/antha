@@ -1,4 +1,4 @@
-// antha/AnthaStandardLibrary/Packages/enzymes/plates.go: Part of the Antha language
+// antha/AnthaStandardLibrary/Packages/enzymes/Find.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -28,22 +28,41 @@
 package search
 
 import (
-	"fmt"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"strings"
 )
 
-// NextFreeWell checks for the next well which is empty in a plate.
-// The user can also specify wells to avoid and whether to search through the well positions by row. The default is by column.
-func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, byRow bool) (well string, err error) {
+// Option is an option which can be used as an argument to search functions.
+// Particularly InStrings, InSequences, RemoveDuplicateStrings, RemoveDuplicateSequences.
+type Option string
 
-	allWellPositions := plate.AllWellPositions(byRow)
+// Options available for use in Seqrch functions.
+const (
 
-	for _, well := range allWellPositions {
-		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.
-		if plate.WellMap()[well].Empty() && !InStrings(avoidWells, well) {
-			return well, nil
+	// IgnoreCase is an option which can be added to the InStrings and InSequences
+	// functions to search ignoring case.
+	//
+	IgnoreCase Option = "IgnoreCase"
+
+	// MatchName is an option which can be added to the InSequences
+	// functions to specify that the name must also be matched.
+	// By default sequence searches only check sequence equality.
+	//
+	MatchName Option = "MatchName"
+)
+
+func containsOption(options []Option, target Option) bool {
+	for _, option := range options {
+		if strings.EqualFold(string(target), string(option)) {
+			return true
 		}
 	}
-	return "", fmt.Errorf("no empty wells on plate %s", plate.Name())
+	return false
+}
+
+func containsIgnoreCase(options ...Option) bool {
+	return containsOption(options, IgnoreCase)
+}
+
+func containsMatchName(options ...Option) bool {
+	return containsOption(options, MatchName)
 }

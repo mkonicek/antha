@@ -40,7 +40,7 @@ func NormaliseName(name string) (normalised string) {
 		return name
 	}
 
-	containsConc, conc, nameonly := wunit.ParseConcentration(name)
+	containsConc, conc, nameonly := wunit.ParseConcentration(strings.TrimSpace(name))
 
 	if containsConc {
 		if conc.RawValue() > 0 {

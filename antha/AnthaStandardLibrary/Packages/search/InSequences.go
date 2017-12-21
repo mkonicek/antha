@@ -20,7 +20,10 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Utility package providing functions useful for searches
+// Package search is a utility package providing functions useful for:
+// Searching for a target entry in a slice;
+// Removing duplicate values from a slice;
+// Comparing the Name of two entries of any tyoe with a Name() method returning a string.
 package search
 
 import (
@@ -34,14 +37,16 @@ func trimmedEqual(a, b string) bool {
 }
 
 // InSequences searches the positions of any matching instances of a sequence in a slice of sequences.
-// If checkNames is set to false, only the sequence will be checked;
-// if checkNames is set to true, only name must match.
+// By default, only the sequence will be checked;
+// if MatchName is included as an option, only name must match.
 // If IgnoreCase is added as an option the case will be ignored.
-func InSequences(seqs []wtype.DNASequence, seq wtype.DNASequence, checkNames bool, options ...Option) (bool, []int) {
+func InSequences(seqs []wtype.DNASequence, seq wtype.DNASequence, options ...Option) (bool, []int) {
 
 	var positionsFound []int
 
 	caseInsensitive := containsIgnoreCase(options...)
+
+	checkNames := containsMatchName(options...)
 
 	for i := range seqs {
 		if !checkNames {

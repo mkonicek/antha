@@ -23,70 +23,7 @@
 // Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
-import (
-	"strings"
-)
-
-func Rev(s string) string {
-	r := ""
-
-	for i := len(s) - 1; i >= 0; i-- {
-		r += string(s[i])
-	}
-
-	return r
-}
-func Comp(s string) string {
-	r := ""
-
-	m := map[string]string{
-		"A": "T",
-		"T": "A",
-		"U": "A",
-		"C": "G",
-		"G": "C",
-		"Y": "R",
-		"R": "Y",
-		"W": "W",
-		"S": "S",
-		"K": "M",
-		"M": "K",
-		"D": "H",
-		"V": "B",
-		"H": "D",
-		"B": "V",
-		"N": "N",
-		"X": "X",
-	}
-
-	for _, c := range s {
-		r += m[string(c)]
-	}
-
-	return r
-}
-
-// Reverse Complement
-func RevComp(s string) string {
-	s = strings.ToUpper(s)
-	return Comp(Rev(s))
-}
-
-func AllCombinations(arr [][]string) []string {
-	if len(arr) == 1 {
-		return arr[0]
-	}
-
-	results := make([]string, 0)
-	allRem := AllCombinations(arr[1:len(arr)])
-	for i := 0; i < len(allRem); i++ {
-		for j := 0; j < len(arr[0]); j++ {
-			x := arr[0][j] + allRem[i]
-			results = append(results, x)
-		}
-	}
-	return results
-}
+import "github.com/antha-lang/antha/antha/anthalib/wtype"
 
 func Prefix(seq string, lengthofprefix int) (prefix string) {
 	end := lengthofprefix
@@ -104,4 +41,8 @@ func Suffix(seq string, lengthofsuffix int) (suffix string) {
 	}
 	suffix = seq[start:]
 	return suffix
+}
+
+func RevComp(seq string) string {
+	return wtype.RevComp(seq)
 }

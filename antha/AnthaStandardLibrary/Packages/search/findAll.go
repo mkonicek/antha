@@ -23,7 +23,8 @@
 // Package search is a utility package providing functions useful for:
 // Searching for a target entry in a slice;
 // Removing duplicate values from a slice;
-// Comparing the Name of two entries of any tyoe with a Name() method returning a string.
+// Comparing the Name of two entries of any type with a Name() method returning a string.
+// FindAll instances of a target string within a template string.
 package search
 
 import (
@@ -31,13 +32,37 @@ import (
 	"strings"
 )
 
-type Thingfound struct {
+// Result is the positions found of a Thing in a query string.
+// Reverse is given as an option to specify if the Result corresponds to a reverse of the original query,
+// or reverse compliment in the case of a DNA sequence.
+// For searching in BioSequences the sequences.SearchResult type is preferred.
+// The sequences.FindAll and sequences.Replace functions are the recommended mechanisms to use with
+// the sequences.SearchResult type.
+// Positions are recorded in Human friendly form, i.e. the position of A in ABC is 1 and not 0.
+type Result struct {
 	Thing     string
 	Positions []int
 	Reverse   bool
 }
 
-func (thing Thingfound) ToString() (descriptions string) {
+// HumanFriendlyPositions returns all positions in human friendly format where the first position is 1.
+// i.e. the position of A in ABC is 1 and not 0.
+func (r Result) HumanFriendlyPositions() []int {
+	return r.Positions
+}
+
+// CodeFriendlyPositions returns all positions in code friendly format where the first position is 0.
+// i.e. the position of A in ABC is 0 and not 1.
+func (r Result) CodeFriendlyPositions() []int {
+	var codeFriendlyPositions []int
+	for _, position := range r.Positions {
+		codeFriendlyPositions = append(codeFriendlyPositions, position-1)
+	}
+	return codeFriendlyPositions
+}
+
+// ToString returns a string description of the Result.
+func (thing Result) ToString() (descriptions string) {
 	things := make([]string, 0)
 	var reverse string
 	for i := range thing.Positions {
@@ -52,56 +77,88 @@ func (thing Thingfound) ToString() (descriptions string) {
 	return
 }
 
-// not perfect yet! issue with byte conversion of certain characters!
-// This returns positions in user format (i.e. the first position of the sequence will be 1 not 0)
-func Findall(bigthing string, smallthing string) (positions []int) {
+func upper(s string) string {
+	return strings.ToUpper(s)
+}
+
+// FindAll searches for all instances of a target string in a template string.
+// Not perfect yet! issue with byte conversion of certain characters!
+// This returns positions in "HumanFriendly" format (i.e. the first position of the sequence will be 1 not 0)
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+//
+func FindAll(template string, target string, options ...Option) (positions []int) {
+
+	if containsIgnoreCase(options...) {
+		template = upper(template)
+		target = upper(target)
+	}
 
 	positions = make([]int, 0)
-	count := strings.Count(bigthing, smallthing)
+	count := strings.Count(template, target)
 
-	if smallthing == "" {
+	if target == "" {
 		return
 	}
 	if count != 0 {
 
-		pos := (strings.Index(bigthing, smallthing))
-		restofbigthing := bigthing[(pos + 1):]
+		pos := (strings.Index(template, target))
+		restofbigthing := template[(pos + 1):]
 
 		for i := 0; i < count; i++ {
 			positions = append(positions, (pos + 1))
-			pos = pos + (strings.Index(restofbigthing, smallthing) + 1)
-			restofbigthing = bigthing[(pos + 1):]
+			pos = pos + (strings.Index(restofbigthing, target) + 1)
+			restofbigthing = template[(pos + 1):]
 		}
 	}
 	return positions
 }
 
-func Findallthings(bigthing string, smallthings []string) (thingsfound []Thingfound) {
-	var thingfound Thingfound
-	thingsfound = make([]Thingfound, 0)
+// FindAllStrings searches for all instances of a slice of target strings in a template string.
+// Not perfect yet! issue with byte conversion of certain characters!
+// This returns positions in "HumanFriendly" format (i.e. the first position of the sequence will be 1 not 0)
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+//
+func FindAllStrings(template string, targets []string, options ...Option) (thingsfound []Result) {
 
-	for _, thing := range smallthings {
-		if strings.Contains(bigthing, thing) {
-			thingfound.Thing = thing
-			thingfound.Positions = Findall(bigthing, thing)
+	var thingfound Result
+	thingsfound = make([]Result, 0)
+
+	for _, target := range targets {
+
+		if containsIgnoreCase(options...) {
+			template = upper(template)
+			target = upper(target)
+		}
+
+		if strings.Contains(template, target) {
+			thingfound.Thing = target
+			thingfound.Positions = FindAll(template, target)
 			thingsfound = append(thingsfound, thingfound)
 		}
 	}
 	return thingsfound
 }
 
-func Containsallthings(bigthing string, smallthings []string) (trueornot bool) {
-	i := 0
-	for _, thing := range smallthings {
+// ContainsAllStrings searches for all instances of a slice of target strings in a template string.
+// Not perfect yet! issue with byte conversion of certain characters!
+// If all items are present, true is returned.
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+//
+func ContainsAllStrings(template string, targets []string, options ...Option) (trueornot bool) {
+	var i int
+	for _, thing := range targets {
 
-		//	if strings.Contains(strings.ToUpper(bigthing), strings.ToUpper(thing)) {
-		if strings.Contains(bigthing, thing) {
-			i = i + 1
+		if containsIgnoreCase(options...) {
+			if strings.Contains(strings.ToUpper(template), strings.ToUpper(thing)) {
+				i++
+			}
+		} else if strings.Contains(template, thing) {
+			i++
 		}
 	}
-	if i == len(smallthings) {
-		trueornot = true
+	if i == len(targets) {
+		return true
 	}
 
-	return trueornot
+	return false
 }

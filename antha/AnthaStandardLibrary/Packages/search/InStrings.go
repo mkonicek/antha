@@ -23,7 +23,8 @@
 // Package search is a utility package providing functions useful for:
 // Searching for a target entry in a slice;
 // Removing duplicate values from a slice;
-// Comparing the Name of two entries of any tyoe with a Name() method returning a string.
+// Comparing the Name of two entries of any type with a Name() method returning a string.
+// FindAll instances of a target string within a template string.
 package search
 
 import "strings"

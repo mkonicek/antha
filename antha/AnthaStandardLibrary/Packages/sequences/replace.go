@@ -195,7 +195,7 @@ func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []str
 			replacementnucleotide := wtype.Comp(thingtoreplace[i : i+1])
 			replacement := strings.Replace(thingtoreplace, thingtoreplace[i:i+1], replacementnucleotide, 1)
 			newseq := strings.Replace(sequence, thingtoreplace, replacement, -1)
-			checksitesfoundagain := search.Findallthings(newseq, allthingstoavoid)
+			checksitesfoundagain := search.FindAllStrings(newseq, allthingstoavoid)
 			if len(checksitesfoundagain) == 0 {
 				// fmt.Println("all things removed, second try")
 				return replacement, err
@@ -237,7 +237,7 @@ func removeSiteOnestrand(sequence wtype.DNASequence, enzymeseq string, otherseqs
 		replacementnucleotide := wtype.Comp(enzymeseq[i : i+1])
 		replacement := strings.Replace(enzymeseq, enzymeseq[i:i+1], replacementnucleotide, 1)
 		newseq.Seq = strings.Replace(sequence.Seq, enzymeseq, replacement, -1)
-		checksitesfoundagain := search.Findallthings(newseq.Seq, allthingstoavoid)
+		checksitesfoundagain := search.FindAllStrings(newseq.Seq, allthingstoavoid)
 		if len(checksitesfoundagain) == 0 {
 			// fmt.Println("all things removed, second try")
 			return
@@ -421,7 +421,7 @@ func ReplaceCodoninORF(sequence wtype.DNASequence, startandendoforf StartEndPair
 				tempseq := ReplacePosition(seqslice, pair, option)
 				temporf, _ := FindORF(tempseq)
 
-				sitesfound := search.Findallthings(tempseq, seqstoavoid)
+				sitesfound := search.FindAllStrings(tempseq, seqstoavoid)
 
 				if temporf.ProtSeq == orf.ProtSeq && len(sitesfound) == 0 {
 					newseq := sequence

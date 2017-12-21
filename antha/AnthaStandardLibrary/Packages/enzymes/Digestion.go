@@ -139,14 +139,14 @@ func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.Restri
 
 		for _, wobbleoption := range wobbleproofrecognitionoptions {
 
-			options := search.Findall(sequence.Seq, wobbleoption)
+			options := search.FindAll(sequence.Seq, wobbleoption)
 			for _, option := range options {
 				if option != 0 {
 					enzymesite.Forwardpositions = append(enzymesite.Forwardpositions, option)
 				}
 			}
 			if enzyme.RecognitionSequence != strings.ToUpper(sequences.RevComp(wobbleoption)) {
-				revoptions := search.Findall(sequence.Seq, sequences.RevComp(wobbleoption))
+				revoptions := search.FindAll(sequence.Seq, sequences.RevComp(wobbleoption))
 				for _, option := range revoptions {
 					if option != 0 {
 						enzymesite.Reversepositions = append(enzymesite.Reversepositions, option)
@@ -409,7 +409,7 @@ func SearchandCutFWD(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 
 	originalfwdsequence := strings.ToUpper(strings.Join(topstranddigestproducts, ""))
 	recogseq := strings.ToUpper(typeIIenzyme.RecognitionSequence)
-	sites := search.Findall(originalfwdsequence, recogseq)
+	sites := search.FindAll(originalfwdsequence, recogseq)
 	// step 2. Search for recognition site on top strand, if it's there then we start processing according to the enzyme cutting properties
 	if len(sites) == 0 {
 		Finalfragments = topstranddigestproducts
@@ -487,7 +487,7 @@ func SearchandCutRev(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 		Stickyends_3prime = topstrandstickyends_3prime
 	} else {
 		originalfwdsequence := strings.Join(topstranddigestproducts, "")
-		sites := search.Findall(originalfwdsequence, reverseenzymeseq)
+		sites := search.FindAll(originalfwdsequence, reverseenzymeseq)
 		// step 2. Search for recognition site on top strand, if it's there then we start processing according to the enzyme cutting properties
 		if len(sites) == 0 {
 			Finalfragments = topstranddigestproducts
@@ -606,7 +606,7 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 
 	originalfwdsequence := strings.TrimSpace(strings.ToUpper(sequence.Seq))
 	//originalreversesequence := strings.TrimSpace(strings.ToUpper(RevComp(sequence.Seq)))
-	sites := search.Findall(originalfwdsequence, strings.ToUpper(typeIIenzyme.RecognitionSequence))
+	sites := search.FindAll(originalfwdsequence, strings.ToUpper(typeIIenzyme.RecognitionSequence))
 
 	// step 2. Search for recognition site on top strand, if it's there then we start processing according to the enzyme cutting properties
 	topstranddigestproducts := make([]string, 0)

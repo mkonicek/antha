@@ -111,23 +111,23 @@ func (c *apiClient) WriteStream(ctx context.Context, name string) (io.WriteClose
 	reader, writer := io.Pipe()
 
 	go func() {
-		defer reader.Close()
+		defer reader.Close() // nolint
 
 		req, err := http.NewRequest("PUT", signedURL, reader)
 		if err != nil {
-			reader.CloseWithError(err)
+			reader.CloseWithError(err) // nolint
 			return
 		}
 
 		resp, err := c.c.Do(req)
 		if err != nil {
-			reader.CloseWithError(err)
+			reader.CloseWithError(err) // nolint
 			return
 		}
-		defer resp.Body.Close()
+		defer resp.Body.Close() // nolint
 
 		if resp.StatusCode != http.StatusOK {
-			reader.CloseWithError(fmt.Errorf("error code %d", resp.StatusCode))
+			reader.CloseWithError(fmt.Errorf("error code %d", resp.StatusCode)) // nolint
 			return
 		}
 	}()

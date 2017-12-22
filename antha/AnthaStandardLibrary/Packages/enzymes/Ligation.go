@@ -488,7 +488,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		failedAssemblies, plasmidProducts, err = FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 	}
 	if err != nil {
-		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
+		err = fmt.Errorf("Failure Joining fragments after digestion:\n %s", err.Error())
 		s = err.Error()
 		return s, successfulassemblies, sites, plasmidProducts, err
 	}

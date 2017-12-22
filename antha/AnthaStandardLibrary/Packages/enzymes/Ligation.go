@@ -227,10 +227,18 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 
 	var allPartCombos [][]wtype.DNASequence = allPartOrders(partsInAnyOrder)
 
-	for _, partOrder := range allPartCombos {
+	for i, partOrder := range allPartCombos {
 		partialassemblies, plasmids, _, err := JoinXNumberOfParts(vector, partOrder, enzyme)
+
 		if err != nil {
-			errs = append(errs, err.Error())
+			var errorMessage string
+			if i == 0 {
+				errorMessage = "Error with initial part order: " + err.Error()
+			} else {
+				errorMessage = "Error with reshuffled part order: " + err.Error()
+			}
+
+			errs = append(errs, errorMessage)
 		}
 		for i := range partialassemblies {
 			assembledfragments = append(assembledfragments, partialassemblies[i])
@@ -480,7 +488,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		failedAssemblies, plasmidProducts, err = FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 	}
 	if err != nil {
-		err = fmt.Errorf("Failure Joining fragments after digestion: %s", err.Error())
+		err = fmt.Errorf("Failure Joining fragments after digestion:\n %s", err.Error())
 		s = err.Error()
 		return s, successfulassemblies, sites, plasmidProducts, err
 	}

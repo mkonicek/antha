@@ -368,7 +368,7 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	for _, plasmid := range plasmidproducts {
 		for _, insert := range inserts {
 			if len(sequences.FindAll(&plasmid, &insert).Positions) > 0 {
-				if len(sequences.FindAll(&plasmid, &wtype.DNASequence{Nm: enzyme.Name, Seq: enzyme.RecognitionSequence}).Positions) == 0 {
+				if len(sequences.FindAll(&plasmid, &wtype.DNASequence{Nm: enzyme.Name(), Seq: enzyme.RecognitionSequence}).Positions) == 0 {
 					validPlasmids = append(validPlasmids, plasmid)
 					break
 				}

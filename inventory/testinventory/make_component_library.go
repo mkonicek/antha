@@ -239,7 +239,6 @@ func makeComponents() []*wtype.LHComponent {
 	add("VirginiaViolet", wtype.LTPostMix, 1.0, defaultConc)
 	add("HollyGFP", wtype.LTPostMix, 1.0, defaultConc)
 	add("PaprikaRFP", wtype.LTPostMix, 1.0, defaultConc)
-	add("veryblack", wtype.LTPostMix, 1.0, defaultConc)
 	add("DreidelTeal", wtype.LTPostMix, 1.0, defaultConc)
 
 	return components

@@ -47,7 +47,6 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/pcr \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/platereader \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/pubchem \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/search \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/sequences \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/solutions \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/spreadsheet \

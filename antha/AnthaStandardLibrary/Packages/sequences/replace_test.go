@@ -31,10 +31,18 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-type replaceTest struct {
+type replaceAllTest struct {
 	LargeSeq       *wtype.DNASequence
 	ReplaceSeq     *wtype.DNASequence
 	ReplaceWithSeq *wtype.DNASequence
+	ExpectedResult *wtype.DNASequence
+	ErrMessage     string
+}
+
+type replaceTest struct {
+	LargeSeq       *wtype.DNASequence
+	ReplaceWithSeq *wtype.DNASequence
+	Position       PositionPair
 	ExpectedResult *wtype.DNASequence
 	ErrMessage     string
 }
@@ -67,9 +75,9 @@ var rotateTests = []rotateTest{
 	},
 }
 
-var replaceTests = []replaceTest{
+var replaceTests = []replaceAllTest{
 
-	replaceTest{
+	replaceAllTest{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test1",
 			Seq:     "ATCGTAGTGTG",
@@ -92,7 +100,7 @@ var replaceTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	replaceAllTest{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test2", // reverse complement
 			Seq:     "ATCGTAGTGTG",
@@ -115,7 +123,7 @@ var replaceTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	replaceAllTest{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test3", // reverse complement two replace regions
 			Seq:     "ATCGTAGTGTGTAC",
@@ -138,7 +146,7 @@ var replaceTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	replaceAllTest{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test4", // plasmid
 			Seq:     "ATCGTAGTGTGTAC",
@@ -161,7 +169,7 @@ var replaceTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	replaceAllTest{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test5", // plasmid overlapping end of plasmid
 			Seq:     "ATCGTAGTGTGTAC",
@@ -184,7 +192,7 @@ var replaceTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	replaceAllTest{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test6", // replace with nothing
 			Seq:     "ATCGTAGTGTGTAC",
@@ -207,7 +215,7 @@ var replaceTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	replaceAllTest{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test7", // replace with nothing
 			Seq:     "ATCGTAGTGTGTAC",
@@ -232,7 +240,171 @@ var replaceTests = []replaceTest{
 	},
 }
 
-func TestReplace(t *testing.T) {
+var replacePositionTests = []replaceTest{
+	replaceTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "Test1",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		ReplaceWithSeq: &wtype.DNASequence{
+			Nm:      "nothing",
+			Seq:     "",
+			Plasmid: false,
+		},
+		Position: PositionPair{
+			StartPosition: 1,
+			EndPosition:   3,
+			Reverse:       false,
+		},
+		ExpectedResult: &wtype.DNASequence{
+			Nm:      "Test1",
+			Seq:     "GTAGTGTG",
+			Plasmid: false,
+		},
+		ErrMessage: "",
+	},
+	replaceTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "Test2",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		ReplaceWithSeq: &wtype.DNASequence{
+			Nm:      "TTT",
+			Seq:     "TTT",
+			Plasmid: false,
+		},
+		Position: PositionPair{
+			StartPosition: 1,
+			EndPosition:   3,
+			Reverse:       false,
+		},
+		ExpectedResult: &wtype.DNASequence{
+			Nm:      "Test2",
+			Seq:     "TTTGTAGTGTG",
+			Plasmid: false,
+		},
+		ErrMessage: "",
+	},
+	replaceTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "Test3",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		ReplaceWithSeq: &wtype.DNASequence{
+			Nm:      "TTT",
+			Seq:     "TTTTTT",
+			Plasmid: false,
+		},
+		Position: PositionPair{
+			StartPosition: 1,
+			EndPosition:   3,
+			Reverse:       false,
+		},
+		ExpectedResult: &wtype.DNASequence{
+			Nm:      "Test3",
+			Seq:     "TTTTTTGTAGTGTG",
+			Plasmid: false,
+		},
+		ErrMessage: "",
+	},
+	replaceTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "Test4",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		ReplaceWithSeq: &wtype.DNASequence{
+			Nm:      "TTT",
+			Seq:     "TTTTTT",
+			Plasmid: false,
+		},
+		Position: PositionPair{
+			StartPosition: 1,
+			EndPosition:   3,
+			Reverse:       true,
+		},
+		ExpectedResult: &wtype.DNASequence{
+			Nm:      "Test4",
+			Seq:     "AAAAAAGTAGTGTG",
+			Plasmid: false,
+		},
+		ErrMessage: "",
+	},
+	replaceTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "Test5",
+			Seq:     "ACCGTAGTGTG",
+			Plasmid: true,
+		},
+		ReplaceWithSeq: &wtype.DNASequence{
+			Nm:      "nothing",
+			Seq:     "",
+			Plasmid: false,
+		},
+		Position: PositionPair{
+			StartPosition: 4,
+			EndPosition:   1,
+			Reverse:       false,
+		},
+		ExpectedResult: &wtype.DNASequence{
+			Nm:      "Test5",
+			Seq:     "CC",
+			Plasmid: true,
+		},
+		ErrMessage: "",
+	},
+	replaceTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "Test6",
+			Seq:     "ACCGTAGTGTG",
+			Plasmid: true,
+		},
+		ReplaceWithSeq: &wtype.DNASequence{
+			Nm:      "TTT",
+			Seq:     "TTT",
+			Plasmid: false,
+		},
+		Position: PositionPair{
+			StartPosition: 3,
+			EndPosition:   1,
+			Reverse:       true,
+		},
+		ExpectedResult: &wtype.DNASequence{
+			Nm:      "Test6",
+			Seq:     "AAAGTAGTGTG",
+			Plasmid: true,
+		},
+		ErrMessage: "",
+	},
+	replaceTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "Test7",
+			Seq:     "ACCGTAGTGTG",
+			Plasmid: false,
+		},
+		ReplaceWithSeq: &wtype.DNASequence{
+			Nm:      "TTT",
+			Seq:     "TTT",
+			Plasmid: false,
+		},
+		Position: PositionPair{
+			StartPosition: 3,
+			EndPosition:   1,
+			Reverse:       false,
+		},
+		ExpectedResult: &wtype.DNASequence{
+			Nm:      "Test7",
+			Seq:     "ACCGTAGTGTG",
+			Plasmid: false,
+		},
+		ErrMessage: "invalid position {StartPosition:3 EndPosition:1 Reverse:false} to replace in sequence. Start position must be lower than end position unless position is reverse or sequence is a plasmid. Sequence Test7: Plasmid = false",
+	},
+}
+
+func TestReplaceAll(t *testing.T) {
 	for _, test := range replaceTests {
 		result, err := ReplaceAll(*test.LargeSeq, *test.ReplaceSeq, *test.ReplaceWithSeq)
 		if !reflect.DeepEqual(&result, test.ExpectedResult) {
@@ -250,6 +422,30 @@ func TestReplace(t *testing.T) {
 					"For", test.LargeSeq.Nm, "\n",
 					"replacing ", test.ReplaceSeq.Seq, "\n",
 					"with ", test.ReplaceWithSeq.Seq, "\n",
+					"got error ", test.ErrMessage, "\n",
+					"got", err.Error(), "\n",
+				)
+			}
+		}
+	}
+}
+
+func TestReplace(t *testing.T) {
+	for _, test := range replacePositionTests {
+		result, err := Replace(*test.LargeSeq, test.Position, *test.ReplaceWithSeq)
+		if !reflect.DeepEqual(&result, test.ExpectedResult) {
+			t.Error(
+				"For", test.LargeSeq.Nm, test.LargeSeq.Seq, "\n",
+				"replace position", test.Position, "\n",
+				"with ", test.ReplaceWithSeq.Seq, "\n",
+				"expected ", fmt.Sprintf("%+v", test.ExpectedResult.Seq), "\n",
+				"got", fmt.Sprintf("%+v", result.Seq), "\n",
+			)
+		}
+		if err != nil {
+			if err.Error() != test.ErrMessage {
+				t.Error(
+					"For", test, "\n",
 					"got error ", test.ErrMessage, "\n",
 					"got", err.Error(), "\n",
 				)

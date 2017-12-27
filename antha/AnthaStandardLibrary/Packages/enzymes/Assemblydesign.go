@@ -452,6 +452,22 @@ func Addoverhang(seq string, bittoadd string, end string) (seqwithoverhang strin
 	return seqwithoverhang
 }
 
+func allCombinations(arr [][]string) []string {
+	if len(arr) == 1 {
+		return arr[0]
+	}
+
+	results := make([]string, 0)
+	allRem := allCombinations(arr[1:len(arr)])
+	for i := 0; i < len(allRem); i++ {
+		for j := 0; j < len(arr[0]); j++ {
+			x := arr[0][j] + allRem[i]
+			results = append(results, x)
+		}
+	}
+	return results
+}
+
 // Returns an array of all sequence possibilities for a spacer based upon length
 func Makeallspaceroptions(spacerlength int) (finalarray []string) {
 	// only works for spacer length 1 or 2
@@ -462,7 +478,7 @@ func Makeallspaceroptions(spacerlength int) (finalarray []string) {
 		newarray = append(newarray, nucleotides)
 	}
 
-	finalarray = sequences.AllCombinations(newarray)
+	finalarray = allCombinations(newarray)
 
 	return finalarray
 }
@@ -477,10 +493,10 @@ func ChooseSpacer(spacerlength int, seq string, seqstoavoid []string) (spacer st
 		spacer = possibilities[0]
 	} else {
 		for _, possibility := range possibilities {
-			if len(search.Findallthings(strings.Join([]string{seq, possibility}, ""), seqstoavoid)) == 0 &&
-				len(search.Findallthings(strings.Join([]string{possibility, seq}, ""), seqstoavoid)) == 0 &&
-				len(search.Findallthings(sequences.RevComp(strings.Join([]string{possibility, seq}, "")), seqstoavoid)) == 0 &&
-				len(search.Findallthings(sequences.RevComp(strings.Join([]string{seq, possibility}, "")), seqstoavoid)) == 0 {
+			if len(search.FindAllStrings(strings.Join([]string{seq, possibility}, ""), seqstoavoid)) == 0 &&
+				len(search.FindAllStrings(strings.Join([]string{possibility, seq}, ""), seqstoavoid)) == 0 &&
+				len(search.FindAllStrings(sequences.RevComp(strings.Join([]string{possibility, seq}, "")), seqstoavoid)) == 0 &&
+				len(search.FindAllStrings(sequences.RevComp(strings.Join([]string{seq, possibility}, "")), seqstoavoid)) == 0 {
 				spacer = possibility
 			}
 		}
@@ -529,9 +545,9 @@ func Makeoverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer 
 // Assembly standards
 var availableStandards = map[string]AssemblyStandard{
 	"Custom":      customStandard,
-	"MoClo":       customStandard,
-	"MoClo_Raven": customStandard,
-	"Antibody":    customStandard,
+	"MoClo":       mocloStandard,
+	"MoClo_Raven": mocloRavenStandard,
+	"Antibody":    antibodyStandard,
 }
 
 func allStandards() (standards []string) {

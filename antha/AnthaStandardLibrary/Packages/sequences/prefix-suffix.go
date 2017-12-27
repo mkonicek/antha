@@ -1,4 +1,4 @@
-// antha/AnthaStandardLibrary/Packages/enzymes/Find.go: Part of the Antha language
+// antha/AnthaStandardLibrary/Packages/enzymes/Utility.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -20,32 +20,29 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Utility package providing functions useful for searches
-package search
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
+package sequences
 
-import (
-	"strings"
-)
+import "github.com/antha-lang/antha/antha/anthalib/wtype"
 
-// Named is an interface for any typed value which has a method to return the Name as a string.
-type Named interface {
-	Name() string
+func Prefix(seq string, lengthofprefix int) (prefix string) {
+	end := lengthofprefix
+	if end > len(seq) {
+		end = len(seq)
+	}
+	prefix = seq[:end]
+	return prefix
 }
 
-// EqualName evaluates whether two arguments with a Name() method have equal names.
-// If the IgnoreCase option is specified the strings will be compared ignoring case.
-func EqualName(entry, target Named, options ...Option) bool {
-
-	ignore := containsIgnoreCase(options...)
-
-	if ignore {
-		if equalFold(entry.Name(), target.Name()) {
-			return true
-		}
-	} else {
-		if strings.TrimSpace(entry.Name()) == strings.TrimSpace(target.Name()) {
-			return true
-		}
+func Suffix(seq string, lengthofsuffix int) (suffix string) {
+	start := len(seq) - lengthofsuffix
+	if start < 0 {
+		start = 0
 	}
-	return false
+	suffix = seq[start:]
+	return suffix
+}
+
+func RevComp(seq string) string {
+	return wtype.RevComp(seq)
 }

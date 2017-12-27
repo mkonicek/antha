@@ -20,6 +20,11 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
+// Package search is a utility package providing functions useful for:
+// Searching for a target entry in a slice;
+// Removing duplicate values from a slice;
+// Comparing the Name of two entries of any type with a Name() method returning a string.
+// FindAll instances of a target string within a template string.
 package search
 
 import (
@@ -128,11 +133,9 @@ type seqSearchTest struct {
 	slice          []wtype.DNASequence
 	value          wtype.DNASequence
 	expectedResult bool
-	checkNames     bool
+	checkNames     Option
 	ignoreCase     Option
 }
-
-
 
 var seqTests = []seqSearchTest{
 	seqSearchTest{
@@ -149,7 +152,7 @@ var seqTests = []seqSearchTest{
 		},
 		value:          wtype.DNASequence{Nm: "bob", Seq: "AACCACACTT"},
 		expectedResult: false,
-		checkNames:     true,
+		checkNames:     MatchName,
 		ignoreCase:     "",
 	},
 }

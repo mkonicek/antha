@@ -20,31 +20,17 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Utility package providing functions useful for searches
+// Package search is a utility package providing functions useful for:
+// Searching for a target entry in a slice;
+// Removing duplicate values from a slice;
+// Comparing the Name of two entries of any type with a Name() method returning a string.
+// FindAll instances of a target string within a template string.
 package search
 
 import "strings"
 
 func equalFold(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
-}
-
-// type Option is an option which can be used as an argument to search functions.
-// Particularly InStrings
-type Option string
-
-// IgnoreCase is an option which can be added to the InStrings and InSequences
-// functions to search ignoring case.
-//
-const IgnoreCase Option = "IgnoreCase"
-
-func containsIgnoreCase(options ...Option) bool {
-	for _, option := range options {
-		if strings.EqualFold(string(IgnoreCase), string(option)) {
-			return true
-		}
-	}
-	return false
 }
 
 // InStrings searchs for a target string in a slice of strings and returns a boolean.

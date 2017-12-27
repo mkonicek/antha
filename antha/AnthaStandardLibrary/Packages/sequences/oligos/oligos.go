@@ -87,7 +87,26 @@ func OverlapCheck(seq1 string, seq2 string) (maxpercentOverlapofsmallest float64
 	return
 }
 
-// calculates the basic melting temperature of a DNA sequence
+/*
+BasicMeltingTemp calculates the expected melting temperature of a DNASequence.
+
+The two standard approximation calculations are used.
+For sequences less than 14 nucleotides the formula is
+Tm= (wA+xT) * 2 + (yG+zC) * 4
+
+where w,x,y,z are the number of the bases A,T,G,C in the sequence, respectively
+(from Marmur,J., and Doty,P. (1962) J Mol Biol 5:109-118 [PubMed]).
+
+For sequences longer than 13 nucleotides, the equation used is
+Tm= 64.9 +41*(yG+zC-16.4)/(wA+xT+yG+zC)
+
+See Wallace,R.B., Shaffer,J., Murphy,R.F., Bonner,J., Hirose,T., and Itakura,K. (1979) Nucleic Acids Res 6:3543-3557 (Abstract)
+and Sambrook,J., and Russell,D.W. (2001) Molecular Cloning: A Laboratory Manual. Cold Spring Harbor Laboratory Press; Cold Spring Harbor, NY. (CHSL Press)
+
+ASSUMPTIONS:
+Both equations assume that the annealing occurs under the standard conditions of 50 nM primer, 50 mM Na+, and pH 7.0.
+
+*/
 func BasicMeltingTemp(primersequence wtype.DNASequence) (meltingtemp wunit.Temperature) {
 
 	primerseq := primersequence.Sequence()
@@ -102,15 +121,11 @@ func BasicMeltingTemp(primersequence wtype.DNASequence) (meltingtemp wunit.Tempe
 	var mt float64
 
 	if len(primerseq) < 14 {
-		//err = fmt.Errorf("cannot use this algorithm for sequences less than 13 nucleotides")
 
 		mt = float64((a+t)*2 + (g+c)*4)
 
 	} else {
 		mt = 64.9 + 41.0*(float64(g+c)-16.4)/float64(a+t+c+g)
-
-		//fmt.Println(mt)
-
 	}
 
 	meltingtemp = wunit.NewTemperature(mt, "℃")

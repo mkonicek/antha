@@ -502,6 +502,7 @@ func Suffix(seq string, lengthofsuffix int) (suffix string) {
 	suffix = seq[(len(seq) - lengthofsuffix):]
 	return suffix
 }
+
 func Rev(s string) string {
 	r := ""
 

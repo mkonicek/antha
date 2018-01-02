@@ -52,11 +52,11 @@ func TestLargeFiles(t *testing.T) {
 	inR, inW := io.Pipe()
 
 	go func() {
-		defer inW.Close()
+		defer inW.Close() // nolint
 		var buf [1024]byte
 		for i := 0; i < kilobytes; i++ {
 			if _, err := inW.Write(buf[:]); err != nil {
-				inW.CloseWithError(err)
+				inW.CloseWithError(err) // nolint
 				return
 			}
 		}

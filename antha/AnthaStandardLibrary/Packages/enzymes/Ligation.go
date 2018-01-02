@@ -126,7 +126,7 @@ func Jointwopartsfromsequence(vector wtype.DNASequence, part1 wtype.DNASequence,
 	return assembledfragments, plasmidproducts
 }
 
-func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASequence, error) {
+func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecondSite ...bool) (wtype.DNASequence, error) {
 	rotatedVector := vector.Dup()
 
 	// the purpose of this is to ensure the RE sites go ---> xxxx <---
@@ -160,10 +160,22 @@ func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs) (wtype.DNASequ
 		return rotatedVector, fmt.Errorf("%d forward sites for %s found in vector %s", len(fwdSites), enzyme.Name, vector.Name())
 	}
 
-	fwdStart, _ := fwdSites[0].Coordinates(wtype.CODEFRIENDLY, wtype.IGNOREDIRECTION)
+	fwdStart, revStart := fwdSites[0].Coordinates(wtype.CODEFRIENDLY, wtype.IGNOREDIRECTION)
 
-	rotatedVector = sequences.Rotate(rotatedVector, fwdStart, false)
+	contains := func(bools []bool, trueorfalse bool) bool {
+		for i := range bools {
+			if bools[i] == trueorfalse {
+				return true
+			}
+		}
+		return false
+	}
 
+	if contains(rotateToSecondSite, true) {
+		rotatedVector = sequences.Rotate(rotatedVector, revStart, false)
+	} else {
+		rotatedVector = sequences.Rotate(rotatedVector, fwdStart, false)
+	}
 	return rotatedVector, nil
 }
 
@@ -306,9 +318,8 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 		err = fmt.Errorf(errorstring)
 		return assembledfragments, plasmidproducts, inserts, err
 	}
-	doublestrandedpart := MakedoublestrandedDNA(partsinorder[0])
+	assembledfragments = TypeIIsDigestToFragments(partsinorder[0], enzyme)
 	// initialise assembledFragements with first digested part
-	assembledfragments = DigestionPairs(doublestrandedpart, enzyme)
 
 	for i := 1; i < len(partsinorder); i++ {
 		if len(partsinorder[i].Seq) == 0 {
@@ -318,8 +329,7 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 			return assembledfragments, plasmidproducts, inserts, err
 		}
 
-		doublestrandedpart = MakedoublestrandedDNA(partsinorder[i])
-		digestedpart := DigestionPairs(doublestrandedpart, enzyme)
+		digestedpart := TypeIIsDigestToFragments(partsinorder[i], enzyme)
 
 		assembledfragments, plasmidproducts, newerr = joinTwoParts(assembledfragments, digestedpart)
 
@@ -334,9 +344,8 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	insertFragments := assembledfragments
 
 	// now join fragment to vector
-	doublestrandedvector := MakedoublestrandedDNA(rotatedvector)
 
-	digestedvector := DigestionPairs(doublestrandedvector, enzyme)
+	digestedvector := TypeIIsDigestToFragments(rotatedvector, enzyme)
 
 	assembledfragments, plasmidproducts, newerr = joinTwoParts(digestedvector, insertFragments)
 	if newerr != nil {
@@ -384,7 +393,7 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 		}
 	}
 	if len(validPlasmids) == 0 {
-		return assembledfragments, plasmidproducts, inserts, fmt.Errorf("inserts not found in predicted assembled sequence for assembly. Something's gone wrong here.")
+		return assembledfragments, plasmidproducts, inserts, fmt.Errorf("inserts not found in predicted assembled sequence for assembly. Something's gone wrong here. Inserts: %+v", inserts)
 	}
 
 	return assembledfragments, validPlasmids, inserts, nil

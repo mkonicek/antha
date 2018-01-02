@@ -167,73 +167,6 @@ func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.Restri
 	return sites
 }
 
-/*
-func CutatSite(startingdnaseq wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (Digestproducts []wtype.DNASequence) {
-	// not tested and not finished
-
-	Digestproducts = make([]wtype.DNASequence, 0)
-	originalfwdsequence := strings.ToUpper(startingdnaseq.Seq)
-
-	recogseq := strings.ToUpper(typeIIenzyme.RecognitionSequence)
-	sites := Restrictionsitefinder(startingdnaseq, []wtype.RestrictionEnzyme{typeIIenzyme})
-
-	if len(sites) == 0 {
-		Digestproducts = append(Digestproducts, startingdnaseq)
-	} else {
-		for _, site := range sites {
-
-			fragments := make([]string, 0)
-			fragment := ""
-			for i, position := range site.forwardpositions {
-				if i == 0 {
-					fragment = originalfwdsequence[0:position]
-				} else {
-					fragment = originalfwdsequence[site.forwardpositions[i-1]:site.forwardpositions[i]]
-					fragments = append(fragments, fragment)
-				}
-			}
-			for i, fragment := range fragments {
-				//not tested
-				cutup := ""
-				cutdown := ""
-				if typeIIenzyme.Class == "TypeII" {
-					if i != 0 {
-						cutup = Prefix(fragment, (-1 * typeIIenzyme.Bottomstrand5primedistancefromend))
-					}
-					if i != len(fragments) {
-						cutdown = Prefix(fragment, (len(recogseq)))
-						cutdown = Suffix(cutdown, (-1 * typeIIenzyme.Topstrand3primedistancefromend))
-					}
-					fragment = cutup + fragment + cutdown
-				} else if typeIIenzyme.Class == "TypeIIs" {
-					if i != 0 {
-						fragment = Suffix(fragment, len(fragment)-(len(recogseq)+typeIIenzyme.Topstrand3primedistancefromend)) //cutdown = suffix(cutdown,(-1 * typeIIenzyme.Topstrand3primedistancefromend))
-					}
-					if i != len(fragments) {
-						cutdown = Prefix(fragment, (len(recogseq) + typeIIenzyme.Topstrand3primedistancefromend))
-					}
-					fragment = fragment + cutdown
-
-				}
-
-			}
-
-
-			var digestproduct wtype.DNASequence
-			for i, frag := range fragments {
-				digestproduct.Nm = startingdnaseq.Nm + "fragment" + strconv.Itoa(i)
-				digestproduct.Seq = frag
-
-				//digestproduct.Overhang5prime = Overhang{5, 2}
-				//digestproduct.Overhang3prime = Overhang{3, -1}
-				Digestproducts = append(Digestproducts, digestproduct)
-			}
-		}
-	}
-	return
-}
-*/
-
 // Digestedfragment object carrying info on a fragment following digestion
 type Digestedfragment struct {
 	Topstrand              string
@@ -242,6 +175,36 @@ type Digestedfragment struct {
 	TopStickyend_3prime    string
 	BottomStickyend_5prime string
 	BottomStickyend_3prime string
+}
+
+func (fragment Digestedfragment) Ends() string {
+
+	dnaSeq, err := fragment.ToDNASequence("fragment")
+
+	if err != nil {
+		panic(err)
+	}
+
+	return fmt.Sprintf(`5' end: %s; 3' end: %s`, dnaSeq.Overhang5prime.ToString(), dnaSeq.Overhang3prime.ToString())
+}
+
+func fragmentEnds(fragments []Digestedfragment) string {
+	var summaries []string
+	for i, fragment := range fragments {
+		summaries = append(summaries, fmt.Sprintf("fragment %d: %s", i, fragment.Ends()))
+	}
+	return strings.Join(summaries, "\n")
+}
+
+func toDigestedFragment(seq wtype.DNASequence) (fragment Digestedfragment) {
+	return Digestedfragment{
+		Topstrand:              seq.Sequence(),
+		Bottomstrand:           wtype.RevComp(seq.Sequence()),
+		TopStickyend_5prime:    seq.Overhang5prime.OverHangAt5PrimeEnd(),
+		TopStickyend_3prime:    seq.Overhang3prime.OverHangAt5PrimeEnd(),
+		BottomStickyend_5prime: seq.Overhang3prime.OverHangAt3PrimeEnd(),
+		BottomStickyend_3prime: seq.Overhang5prime.OverHangAt3PrimeEnd(),
+	}
 }
 
 // ToDNASequence assumes phosphorylation since result of digestion.
@@ -337,6 +300,7 @@ func pairdigestedfragments(digestedtopstrand []string, digestedbottomstrand []st
 }
 
 // DigestionPairs digests a doublestranded pair of DNASequence with a TypeIIs restriction enzyme into an array of DigestedFragments
+// todo: deprecate
 func DigestionPairs(Doublestrandedpair []wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (digestionproducts []Digestedfragment) {
 	topstrands, topstickyends5, topstickyends3 := TypeIIsdigest(Doublestrandedpair[0], typeIIsenzyme)
 
@@ -350,18 +314,18 @@ func DigestionPairs(Doublestrandedpair []wtype.DNASequence, typeIIsenzyme wtype.
 		panic(fmt.Sprintf("No bottom strand digestion of %+v with %+v from simulation.", Doublestrandedpair[0], typeIIsenzyme))
 	}
 
+	digestionproducts = pairdigestedfragments(topstrands, sequences.RevArrayOrder(bottomstrands), topstickyends5, topstickyends3, sequences.RevArrayOrder(bottomstickyends5), sequences.RevArrayOrder(bottomstickyends3))
+
 	if len(topstrands) == len(bottomstrands) {
 		if len(topstrands) == 2 {
 			digestionproducts = pairdigestedfragments(topstrands, bottomstrands, topstickyends5, topstickyends3, bottomstickyends5, bottomstickyends3)
-		}
-		if len(topstrands) == 3 {
-			digestionproducts = pairdigestedfragments(topstrands, sequences.Revarrayorder(bottomstrands), topstickyends5, topstickyends3, sequences.Revarrayorder(bottomstickyends5), sequences.Revarrayorder(bottomstickyends3))
 		}
 	}
 	return digestionproducts
 }
 
 // func to digest a dna sequence with a chosen restriction enzyme; returns string arrays of fragments and 5' and 3' sticky ends
+// todo: refactor
 func Digest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (Finalfragments []string, Stickyends_5prime []string, Stickyends_3prime []string) {
 	if typeIIenzyme.Class == "TypeII" {
 		Finalfragments, Stickyends_5prime, Stickyends_3prime = TypeIIDigest(sequence, typeIIenzyme)
@@ -387,89 +351,6 @@ func RestrictionMapper(seq wtype.DNASequence, enzyme wtype.RestrictionEnzyme) (f
 	fragslice.Sort()
 
 	return fraglengths
-}
-
-// utility function
-func SearchandCut(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproducts []string, topstrandstickyends_5prime []string, topstrandstickyends_3prime []string) (Finalfragments []string, Stickyends_5prime []string, Stickyends_3prime []string) {
-	finalfragments, topstrandstickyends_5primeFW, topstrandstickyends_3primeFW :=
-		SearchandCutFWD(typeIIenzyme, topstranddigestproducts, topstrandstickyends_5prime, topstrandstickyends_3prime)
-
-	Finalfragments, Stickyends_5prime, Stickyends_3prime = SearchandCutRev(typeIIenzyme, finalfragments, topstrandstickyends_5primeFW, topstrandstickyends_3primeFW)
-	return
-}
-
-// utility function
-func SearchandCutFWD(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproducts []string, topstrandstickyends_5prime []string, topstrandstickyends_3prime []string) (Finalfragments []string, Stickyends_5prime []string, Stickyends_3prime []string) {
-
-	Finalfragments = make([]string, 0)
-
-	originalfwdsequence := strings.ToUpper(strings.Join(topstranddigestproducts, ""))
-	recogseq := strings.ToUpper(typeIIenzyme.RecognitionSequence)
-	sites := search.FindAll(originalfwdsequence, recogseq)
-	// step 2. Search for recognition site on top strand, if it's there then we start processing according to the enzyme cutting properties
-	if len(sites) == 0 {
-		Finalfragments = topstranddigestproducts
-		Stickyends_5prime = topstrandstickyends_5prime
-		Stickyends_3prime = topstrandstickyends_3prime
-	} else {
-		finaldigestproducts := make([]string, 0)
-		finaltopstrandstickyends_5prime := make([]string, 0)
-		finaltopstrandstickyends_5prime = append(finaltopstrandstickyends_5prime, "blunt")
-		finaltopstrandstickyends_3prime := make([]string, 0)
-		for _, fragment := range topstranddigestproducts {
-			cuttopstrand := strings.Split(fragment, recogseq)
-			// reversed
-			recognitionsiteup := sequences.Prefix(recogseq, (-1 * typeIIenzyme.Bottomstrand5primedistancefromend))
-			recognitionsitedown := sequences.Suffix(recogseq, (-1 * typeIIenzyme.Topstrand3primedistancefromend))
-			firstfrag := strings.Join([]string{cuttopstrand[0], recognitionsiteup}, "")
-			finaldigestproducts = append(finaldigestproducts, firstfrag)
-
-			for i := 1; i < len(cuttopstrand); i++ {
-				joineddownstream := strings.Join([]string{recognitionsitedown, cuttopstrand[i]}, "")
-				if i != len(cuttopstrand)-1 {
-					joineddownstream = strings.Join([]string{joineddownstream, recognitionsiteup}, "")
-				}
-				finaldigestproducts = append(finaldigestproducts, joineddownstream)
-			}
-			frag2topStickyend5prime := ""
-			frag2topStickyend3prime := ""
-			// cut with 5prime overhang
-			if len(recognitionsitedown) > len(recognitionsiteup) {
-
-				for i := 1; i < len(cuttopstrand); i++ {
-					frag2topStickyend5prime = recognitionsitedown[:typeIIenzyme.EndLength]
-					finaltopstrandstickyends_5prime = append(finaltopstrandstickyends_5prime, frag2topStickyend5prime)
-					frag2topStickyend3prime = ""
-					finaltopstrandstickyends_3prime = append(finaltopstrandstickyends_3prime, frag2topStickyend3prime)
-
-				}
-
-			}
-			// blunt cut
-			if len(recognitionsitedown) == len(recognitionsiteup) {
-				for i := 1; i < len(cuttopstrand); i++ {
-					frag2topStickyend5prime = "blunt"
-					finaltopstrandstickyends_5prime = append(finaltopstrandstickyends_5prime, frag2topStickyend5prime)
-					frag2topStickyend3prime = "blunt"
-					finaltopstrandstickyends_3prime = append(finaltopstrandstickyends_3prime, frag2topStickyend3prime)
-				}
-			}
-			// cut with 3prime overhang
-			if len(recognitionsitedown) < len(recognitionsiteup) {
-				for i := 1; i < len(cuttopstrand); i++ {
-					frag2topStickyend5prime = ""
-					finaltopstrandstickyends_5prime = append(finaltopstrandstickyends_5prime, frag2topStickyend5prime)
-					frag2topStickyend3prime = recognitionsiteup[typeIIenzyme.EndLength:]
-					finaltopstrandstickyends_3prime = append(finaltopstrandstickyends_3prime, frag2topStickyend3prime)
-				}
-			}
-		}
-		finaltopstrandstickyends_3prime = append(finaltopstrandstickyends_3prime, "blunt")
-		Finalfragments = finaldigestproducts
-		Stickyends_5prime = finaltopstrandstickyends_5prime
-		Stickyends_3prime = finaltopstrandstickyends_3prime
-	}
-	return
 }
 
 // utility function
@@ -593,6 +474,7 @@ func lineartoPlasmidEnds(endsiflinearstart []string) (endsifplasmidstart []strin
 }
 
 // Digests a sequence using a restriction enzyme and returns 3 string arrays: fragments after digestion, 5prime sticky ends, 3prime sticky ends
+// todo: refactor
 func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (Finalfragments []string, Stickyends_5prime []string, Stickyends_3prime []string) {
 	// step 1. get sequence in string format from DNASequence, make sure all spaces are removed and all upper case
 
@@ -710,7 +592,7 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 		//hack to fix wrong sticky end assignment in certain cases
 		reverseenzymeseq := sequences.RevComp(typeIIenzyme.RecognitionSequence)
 		if strings.Index(originalfwdsequence, strings.ToUpper(typeIIenzyme.RecognitionSequence)) > strings.Index(originalfwdsequence, reverseenzymeseq) {
-			topstrandstickyends_5prime = sequences.Revarrayorder(topstrandstickyends_5prime)
+			topstrandstickyends_5prime = sequences.RevArrayOrder(topstrandstickyends_5prime)
 		}
 		//3'
 		ifplasmidsticky3prime := make([]string, 0)
@@ -726,155 +608,312 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 	return Finalfragments, Stickyends_5prime, Stickyends_3prime
 }
 
-// A function is called by the first word (note the capital letter!); it takes in the input variables in the first parenthesis and returns the contents of the second parenthesis
-// Digests a sequence using a type IIS restriction enzyme and returns 3 string arrays: fragments after digestion, 5prime sticky ends, 3prime sticky ends
-// currently this doesn't work well for plasmids which are cut on reverse strand or cut twice
-func TypeIIsdigest(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (Finalfragments []string, Stickyends_5prime []string, Stickyends_3prime []string) {
-	if typeIIsenzyme.Class != "TypeIIs" {
-		return Finalfragments, Stickyends_5prime, Stickyends_3prime
-	}
-	// step 1. get sequence in string format from DNASequence, make sure all spaces are removed and all upper case
-	originalfwdsequence := strings.TrimSpace(strings.ToUpper(sequence.Seq))
+// TypeIIsdigest returns slices of fragments, 5 prime overhangs and 3 prime underhangs generated from cutting with a typeIIs enzyme which leaves a 5 prime overhang.
+func TypeIIsdigest(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (finalFragments []string, fivePrimeOverhangs []string, threePrimeUnderhangs []string) {
 
-	// step 2. Search for recognition site on top strand, if it's there then we start processing according to the enzyme cutting properties
-	topstranddigestproducts := make([]string, 0)
-	topstrandstickyends_5prime := make([]string, 0)
-	topstrandstickyends_3prime := make([]string, 0)
-	if strings.Contains(originalfwdsequence, strings.ToUpper(typeIIsenzyme.RestrictionEnzyme.RecognitionSequence)) == false {
-		topstranddigestproducts = append(topstranddigestproducts, originalfwdsequence)
-		topstrandstickyends_5prime = append(topstrandstickyends_5prime, "blunt")
+	restrictionSites := sequences.FindAll(&sequence, &wtype.DNASequence{Nm: typeIIsenzyme.Name(), Seq: typeIIsenzyme.RecognitionSequence})
+
+	seqs, err := makeFragments(typeIIsenzyme, restrictionSites.Positions, sequence)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	for _, seq := range seqs {
+		finalFragments = append(finalFragments, seq.Sequence())
+		fivePrimeOverhangs = append(fivePrimeOverhangs, seq.Overhang5prime.OverHangAt5PrimeEnd())
+		threePrimeUnderhangs = append(threePrimeUnderhangs, seq.Overhang3prime.UnderHangAt3PrimeEnd())
+	}
+
+	return
+}
+
+// TypeIIsDigestToFragments returns slices of fragments generated from cutting with a typeIIs enzyme which leaves a 5 prime overhang.
+func TypeIIsDigestToFragments(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (finalFragments []Digestedfragment) {
+
+	restrictionSites := sequences.FindAll(&sequence, &wtype.DNASequence{Nm: typeIIsenzyme.Name(), Seq: typeIIsenzyme.RecognitionSequence})
+
+	seqs, err := makeFragments(typeIIsenzyme, restrictionSites.Positions, sequence)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	for _, seq := range seqs {
+		finalFragments = append(finalFragments, toDigestedFragment(seq))
+	}
+	return
+}
+
+// calculates teh specific cut position based on an enzyme type and specified position pair.
+// NB: since the sequence is not specified and typeIIs enzymes cut remotely to the recognition site,
+//  it's possible to calculate a cut position beyond the range of the sequence.
+// The logic to prevent this is in the companion functions SequenceBetweenPositions and MakeOverhangs.
+func correctTypeIIsCutPosition(enzyme wtype.TypeIIs, recognitionSitePosition sequences.PositionPair) (fragmentStart int) {
+
+	_, endOfRestrictionSite := recognitionSitePosition.Coordinates(wtype.CODEFRIENDLY)
+
+	if !recognitionSitePosition.Reverse {
+		fragmentStart = endOfRestrictionSite + 1 + enzyme.Topstrand3primedistancefromend
 	} else {
-		// step 3. split the sequence (into an array of daughter seqs) after the recognition site! Note! this is a preliminary step, we'll fix the sequence to reflect reality in subsequent steps
-		cuttopstrand := strings.SplitAfter(originalfwdsequence, strings.ToUpper(typeIIsenzyme.RestrictionEnzyme.RecognitionSequence))
-		// step 4. If this results in only 2 fragments (i.e. only one site in upper strand) it means we can continue. We can add the ability to handle multiple sites later!
-		// add boolean for direction of cut (i.e. need to use different strategy for 3' or 5')
-		if len(cuttopstrand) == 2 {
-			// step 5. name the two fragments
-			frag1 := cuttopstrand[0]
-			frag2 := cuttopstrand[1]
-			// step 6. find the length of the downstream fragment
-			sz := len(frag2)
-			// step 7. remove extra base pairs from downstream fragment according to typeIIs enzyme properties (i.e. N bp downstream (or 3') of recognition site e.g. in the case of SapI it cuts 1bp 3' to the recognittion site on the top strand
-			Cuttop2 := frag2[sz-(sz-typeIIsenzyme.Topstrand3primedistancefromend):]
-			// step 8. then add these extra base pairs to the 3' end of upstream fragment; first we find the base pairs
-			bittoaddtopriorsequence := frag2[:sz-(sz-typeIIsenzyme.Topstrand3primedistancefromend)]
-			// step 9. Now we join back together
-			firstsequenceparts := make([]string, 0)
-			firstsequenceparts = append(firstsequenceparts, frag1)
-			firstsequenceparts = append(firstsequenceparts, bittoaddtopriorsequence)
-			joinedfirstpart := strings.Join(firstsequenceparts, "")
-			// for use in sticky end caclulation later (added here to be before if statements
-			frag2topStickyend5prime := Cuttop2[:sz-(sz-(typeIIsenzyme.Bottomstrand5primedistancefromend-typeIIsenzyme.Topstrand3primedistancefromend))]
-			// step 10. Now we bundle them back up again into an array to access later
-			topstranddigestproducts = append(topstranddigestproducts, joinedfirstpart)
-			topstranddigestproducts = append(topstranddigestproducts, Cuttop2)
-			// now for sticky ends
-			// add nothing as sticky end for fragment 1
-			topstrandstickyends_5prime = append(topstrandstickyends_5prime, "blunt")
-			if len(frag2topStickyend5prime) == 0 {
-				topstrandstickyends_5prime = append(topstrandstickyends_5prime, "blunt")
-			}
-			if len(frag2topStickyend5prime) > 0 {
-				topstrandstickyends_5prime = append(topstrandstickyends_5prime, frag2topStickyend5prime)
-			}
-			//no 3' sticky ends in this case...
-		}
+		fragmentStart = endOfRestrictionSite - enzyme.Topstrand3primedistancefromend - enzyme.EndLength //+ 1
 	}
-	Finalfragments = make([]string, 0)
 
-	reverseenzymeseq := sequences.RevComp(strings.ToUpper(typeIIsenzyme.RestrictionEnzyme.RecognitionSequence))
+	return
+}
 
-	for _, digestedfragment := range topstranddigestproducts {
-		if strings.Contains(digestedfragment, reverseenzymeseq) == false {
-			Finalfragments = append(Finalfragments, digestedfragment)
-			topstrandstickyends_3prime = append(topstrandstickyends_3prime, "")
+var nulPosition sequences.PositionPair
+
+// makeFragment generates a fragment from a sequence cut at two specified positions with a specified enzyme.
+// if either position is nul then the other end will be blunt
+// if both positions are the same the sequence will be cut once at that position and if the sequence is a plasmid a single fragement is returned joining the end sequence to the beginning.
+func makeFragment(enzyme wtype.TypeIIs, upstreamCutPosition, downstreamCutPosition sequences.PositionPair, originalSequence wtype.DNASequence) (fragment wtype.DNASequence, err error) {
+
+	if upstreamCutPosition == nulPosition {
+		fragment.Append(originalSequence.Sequence()[:correctTypeIIsCutPosition(enzyme, downstreamCutPosition)])
+
+		fragment.Overhang3prime, _, err = makeOverhangs(enzyme, downstreamCutPosition, originalSequence)
+
+		if err != nil {
+			return fragment, err
+		}
+
+		fragment.Overhang5prime, err = wtype.MakeOverHang(fragment, 5, wtype.NEITHER, 0, true)
+		if err != nil {
+			return fragment, err
+		}
+
+		return
+	} else if downstreamCutPosition == nulPosition {
+		fragment.Append(originalSequence.Sequence()[correctTypeIIsCutPosition(enzyme, upstreamCutPosition):])
+
+		_, fragment.Overhang5prime, err = makeOverhangs(enzyme, upstreamCutPosition, originalSequence)
+
+		if err != nil {
+			return fragment, err
+		}
+
+		fragment.Overhang3prime, err = wtype.MakeOverHang(fragment, 3, wtype.NEITHER, 0, true)
+		if err != nil {
+			return fragment, err
+		}
+		return
+	}
+
+	fragment.Seq, err = seqBetweenPositions(originalSequence, correctTypeIIsCutPosition(enzyme, upstreamCutPosition), correctTypeIIsCutPosition(enzyme, downstreamCutPosition))
+	if err != nil {
+		return fragment, err
+	}
+	fragment.Overhang3prime, _, err = makeOverhangs(enzyme, downstreamCutPosition, originalSequence)
+
+	if err != nil {
+		return fragment, err
+	}
+	_, fragment.Overhang5prime, err = makeOverhangs(enzyme, upstreamCutPosition, originalSequence)
+
+	if err != nil {
+		return fragment, err
+	}
+	return
+
+}
+
+// makeOverhangs makes the overhangs for a fragment cut at a specified posioitn with a specified sequence.
+func makeOverhangs(enzyme wtype.TypeIIs, recognitionSitePosition sequences.PositionPair, sequence wtype.DNASequence) (upStreamThreePrime, downstreamFivePrime wtype.Overhang, err error) {
+
+	junkSequence := sequence.Dup()
+
+	junkSequence.Plasmid = false
+
+	_, endOfRestrictionSite := recognitionSitePosition.Coordinates(wtype.CODEFRIENDLY)
+
+	if !recognitionSitePosition.Reverse {
+		fragmentStart := endOfRestrictionSite + 1 + enzyme.Topstrand3primedistancefromend
+		if fragmentStart > len(sequence.Sequence()) {
+			fragmentStart = fragmentStart - len(sequence.Sequence())
+		}
+
+		fragmentEnd := fragmentStart + enzyme.EndLength
+
+		if fragmentEnd > len(sequence.Sequence()) {
+			fragmentEnd = fragmentEnd - len(sequence.Sequence())
+		}
+
+		overhangSeq, err := seqBetweenPositions(sequence, fragmentStart, fragmentEnd)
+
+		if err != nil {
+			return upStreamThreePrime, downstreamFivePrime, err
+		}
+		downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.TOP, enzyme.EndLength, true)
+		if err != nil {
+			return upStreamThreePrime, downstreamFivePrime, err
+		}
+		upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.BOTTOM, enzyme.EndLength, true)
+		if err != nil {
+			return upStreamThreePrime, downstreamFivePrime, err
+		}
+		downstreamFivePrime.Sequence = overhangSeq
+		upStreamThreePrime.Sequence = wtype.RevComp(overhangSeq)
+		return upStreamThreePrime, downstreamFivePrime, nil
+
+	} else {
+
+		fragmentStart := endOfRestrictionSite - enzyme.Topstrand3primedistancefromend - enzyme.EndLength //+ 1
+
+		if fragmentStart > len(sequence.Sequence()) {
+			fragmentStart = fragmentStart - len(sequence.Sequence())
+		}
+
+		fragmentEnd := fragmentStart + enzyme.EndLength
+
+		if fragmentEnd > len(sequence.Sequence()) {
+			fragmentEnd = fragmentEnd - len(sequence.Sequence())
+		}
+
+		overhangSeq, err := seqBetweenPositions(sequence, fragmentStart, fragmentEnd)
+		if err != nil {
+			return upStreamThreePrime, downstreamFivePrime, err
+		}
+		downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.TOP, enzyme.EndLength, true)
+		if err != nil {
+			return upStreamThreePrime, downstreamFivePrime, err
+		}
+		upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.BOTTOM, enzyme.EndLength, true)
+		if err != nil {
+			return upStreamThreePrime, downstreamFivePrime, err
+		}
+		downstreamFivePrime.Sequence = overhangSeq
+		upStreamThreePrime.Sequence = wtype.RevComp(overhangSeq)
+
+		return upStreamThreePrime, downstreamFivePrime, nil
+	}
+
+	return
+}
+
+// code friendly positions and forward orientation only
+func seqBetweenPositions(sequence wtype.DNASequence, start, end int) (string, error) {
+
+	if end > len(sequence.Sequence()) {
+		// if sequence is a plasmid, wrap around automatically
+		if sequence.Plasmid {
+			end = end - len(sequence.Sequence())
 		} else {
-			cuttopstrandat3prime := strings.Split(digestedfragment, reverseenzymeseq)
-			if len(cuttopstrandat3prime) < 3 || len(cuttopstrandat3prime) > 0 {
-				// step 5. name the two fragments
-				frag1 := cuttopstrandat3prime[0]
-				frag2 := cuttopstrandat3prime[1]
-				// step 6. find the length of the upstream fragment
-				new_sz := len(frag1)
-				// step 7. remove extra base pairs 3 from upstream fragment according to typeIIs enzyme properties (i.e. N bp upstream (or 5') of reverserecognition site e.g. in the case of SapI it cuts 4bp 5' to the recognittion site on the top strand (since reverse comp)
-				//s = s[:sz-1]
-				Cuttop3 := frag1[:new_sz-(typeIIsenzyme.Bottomstrand5primedistancefromend)]
-				// step 8. then add these extra base pairs to the 3' end of upstream fragment; first we find the base pairs
-				bittoaddtopostsequence := frag1[new_sz-(typeIIsenzyme.Bottomstrand5primedistancefromend):]
-				// step 9. Now we join back together
-				step2sequenceparts := make([]string, 0)
-				step2sequenceparts = append(step2sequenceparts, bittoaddtopostsequence)
-				step2sequenceparts = append(step2sequenceparts, reverseenzymeseq)
-				step2sequenceparts = append(step2sequenceparts, frag2)
-				joinedsecondpart := strings.Join(step2sequenceparts, "")
-				//bitlength := len(bittoaddtopostsequence)
-				frag2topStickyend5prime := bittoaddtopostsequence[:(typeIIsenzyme.Bottomstrand5primedistancefromend - typeIIsenzyme.Topstrand3primedistancefromend)]
+			return sequence.Sequence(), fmt.Errorf("sequence end position out of range: start %d; end %d, sequence %s", start, end, sequence.Sequence())
+		}
+	}
 
-				// step 10. Now we bundle them back up again into an array to access later
-				Finalfragments = append(Finalfragments, Cuttop3)
-				Finalfragments = append(Finalfragments, joinedsecondpart)
-				topstrandstickyends_5prime = append(topstrandstickyends_5prime, frag2topStickyend5prime)
-				topstrandstickyends_3prime = append(topstrandstickyends_3prime, "")
+	if start > len(sequence.Sequence()) {
+		// if sequence is a plasmid, wrap around automatically
+		if sequence.Plasmid {
+			start = start - len(sequence.Sequence())
+		} else {
+			return sequence.Sequence(), fmt.Errorf("sequence start position out of range: start %d; end %d, sequence %s", start, end, sequence.Sequence())
+		}
+	}
 
-				topstrandstickyends_3prime = append(topstrandstickyends_3prime, "")
-				// step 12. we then return this!
+	if start >= end {
+
+		return sequence.Sequence()[start:] + sequence.Sequence()[:end], nil
+	}
+
+	if start < 0 {
+		//panic("no")
+		if sequence.Plasmid {
+			return sequence.Sequence()[len(sequence.Sequence())+start:] + sequence.Sequence()[:end], nil
+		}
+		// if this happens it's probably a non-cutter
+		return sequence.Sequence()[:end], fmt.Errorf("sequence start position %d negative and not plasmid for sequence %s", start, sequence.Name())
+	}
+
+	return sequence.Sequence()[start:end], nil
+}
+
+// makeFragments will correct the position assignment of a search on a plasmid sequence.
+// A search on a plasmid sequence may need to find matches which overlap the end of a plasmid.
+// findSeq will therefore first concatenates the plasmid sequence with a duplicate and then perform a search.
+// correctPositions will correct the position assignment of any matches which are found that overlap the end of a plasmid sequence.
+func makeFragments(enzyme wtype.TypeIIs, positionPairs []sequences.PositionPair, originalSequence wtype.DNASequence) (fragments []wtype.DNASequence, err error) {
+
+	sortedPairs := sequences.ByPositionPairStartPosition(positionPairs)
+
+	sort.Sort(sortedPairs)
+
+	if len(sortedPairs) == 0 {
+		return []wtype.DNASequence{originalSequence}, fmt.Errorf("no positions specified to cut sequence for %s.", originalSequence.Name())
+	}
+
+	last := len(sortedPairs) - 1
+
+	for i := range sortedPairs {
+		// first fragment
+		var fragment wtype.DNASequence
+
+		var upstreamCutPosition, downstreamCutPosition sequences.PositionPair
+
+		if i == 0 {
+
+			// if plasmid add last part of sequence after final cut position to fragment
+			if originalSequence.Plasmid {
+
+				upstreamCutPosition = sortedPairs[last]
+
+			} else {
+
+				upstreamCutPosition = nulPosition
+
 			}
+
+		} else {
+
+			upstreamCutPosition = sortedPairs[i-1]
+
 		}
+
+		downstreamCutPosition = sortedPairs[i]
+
+		fragment, err = makeFragment(enzyme, upstreamCutPosition, downstreamCutPosition, originalSequence)
+		if err != nil {
+			return fragments, err
+		}
+		fragments = append(fragments, fragment)
+
+		// an extra fragment needs to be added if in last position and plasmid
+		if i == last && !originalSequence.Plasmid {
+
+			nextUpStreamCutPosition := downstreamCutPosition
+
+			fragment, err = makeFragment(enzyme, nextUpStreamCutPosition, nulPosition, originalSequence)
+			if err != nil {
+				return fragments, err
+			}
+			fragments = append(fragments, fragment)
+		}
+
 	}
 
-	if len(Finalfragments) == 1 && sequence.Plasmid == true {
-		// TODO
-		// need to really return an uncut plasmid, maybe an error?
-		//	// fmt.Println("uncut plasmid returned with no sticky ends!")
+	// if plasmid sequence move first fragment to back
+	if originalSequence.Plasmid && len(fragments) > 2 {
+		var newFragments []wtype.DNASequence
+		newFragments = append(newFragments, fragments[1:]...)
+		newFragments = append(newFragments, fragments[0])
 
-	}
-	if len(Finalfragments) > 1 && sequence.Plasmid == true {
-
-		// make linear plasmid part
-		plasmidcutproducts := make([]string, 0)
-		plasmidcutproducts = append(plasmidcutproducts, Finalfragments[len(Finalfragments)-1])
-		plasmidcutproducts = append(plasmidcutproducts, Finalfragments[0])
-		linearpartfromplasmid := strings.Join(plasmidcutproducts, "")
-
-		// fix order of final fragments
-		ifplasmidfinalfragments := make([]string, 0)
-		ifplasmidfinalfragments = append(ifplasmidfinalfragments, linearpartfromplasmid)
-		for i := 1; i < (len(Finalfragments) - 1); i++ {
-			ifplasmidfinalfragments = append(ifplasmidfinalfragments, Finalfragments[i])
+		for i := range newFragments {
+			newFragments[i].Nm = "fragment" + strconv.Itoa(i+1)
 		}
 
-		Finalfragments = ifplasmidfinalfragments
-
-		// now change order of sticky ends
-		//5'
-		ifplasmidsticky5prime := make([]string, 0)
-
-		ifplasmidsticky5prime = append(ifplasmidsticky5prime, topstrandstickyends_5prime[len(topstrandstickyends_5prime)-1])
-
-		for i := 1; i < (len(Finalfragments)); i++ {
-			ifplasmidsticky5prime = append(ifplasmidsticky5prime, topstrandstickyends_5prime[i])
+		if len(newFragments) != len(fragments) {
+			panic("Ahhhh")
 		}
-		topstrandstickyends_5prime = ifplasmidsticky5prime
 
-		//hack to fix wrong sticky end assignment in certain cases
-		if strings.Index(originalfwdsequence, strings.ToUpper(typeIIsenzyme.RestrictionEnzyme.RecognitionSequence)) > strings.Index(originalfwdsequence, reverseenzymeseq) {
-			topstrandstickyends_5prime = sequences.Revarrayorder(topstrandstickyends_5prime)
-		}
-		//3'
-		ifplasmidsticky3prime := make([]string, 0)
-		ifplasmidsticky3prime = append(ifplasmidsticky3prime, topstrandstickyends_3prime[0])
-		for i := 1; i < (len(Finalfragments)); i++ {
-			ifplasmidsticky3prime = append(ifplasmidsticky3prime, topstrandstickyends_3prime[i])
-		}
-		topstrandstickyends_3prime = ifplasmidsticky3prime
+		return newFragments, nil
 	}
 
-	Stickyends_5prime = topstrandstickyends_5prime
+	for i := range fragments {
+		fragments[i].Nm = "fragment" + strconv.Itoa(i+1)
+	}
 
-	// deal with this later
-	Stickyends_3prime = topstrandstickyends_3prime
-
-	return Finalfragments, Stickyends_5prime, Stickyends_3prime
+	return
 }
 
 // Simulates digestion of all dna sequences in the Assemblyparameters object using the enzyme in the object.

@@ -179,7 +179,7 @@ func MakeSingleStrandedDNASequence(name string, seqstring string) (seq DNASequen
 	return
 }
 
-func MakeOverhang(sequence DNASequence, end int, toporbottom int, length int, phosphorylated bool) (overhang Overhang, err error) {
+func MakeOverHang(sequence DNASequence, end int, toporbottom int, length int, phosphorylated bool) (overhang Overhang, err error) {
 
 	if sequence.Singlestranded {
 		err = fmt.Errorf("Can't have overhang on single stranded dna")
@@ -209,7 +209,7 @@ func MakeOverhang(sequence DNASequence, end int, toporbottom int, length int, ph
 		return
 	}
 	if toporbottom != 0 && length == 0 {
-		err = fmt.Errorf("If length of overhang is not 0, toporbottom must be 0")
+		err = fmt.Errorf("If length of overhang is 0, toporbottom must be 0")
 		return
 	}
 	if toporbottom > 2 {
@@ -275,24 +275,92 @@ type Overhang struct {
 	Phosphorylation bool   `json:"phosphorylation"`
 }
 
-func (oh Overhang) OverHangAt5PrimeEnd() (sequence string) {
+func (oh Overhang) ToString() string {
 	if oh.End == 5 {
 		if oh.Type == OVERHANG {
-			return oh.Sequence
+			return `5' overhang: ` + oh.Sequence
+		}
+		if oh.Type == BLUNT || oh.Type == FALSE {
+			return `5' Blunt`
+		}
+		if oh.Type == UNDERHANG {
+			return `5' underhang: ` + oh.Sequence
+		}
+
+	}
+
+	if oh.End == 3 {
+		if oh.Type == OVERHANG {
+			return `3' overhang: ` + oh.Sequence
+		}
+		if oh.Type == BLUNT || oh.Type == FALSE {
+			return `3' Blunt`
+		}
+		if oh.Type == UNDERHANG {
+			return `3' underhang: ` + oh.Sequence
 		}
 
 	}
 	return ""
 }
 
-func (oh Overhang) OverHangAt3PrimeEnd() (sequence string) {
-	if oh.End == 3 {
+func (oh Overhang) OverHangAt5PrimeEnd() (sequence string) {
+	if oh.End == 5 {
 		if oh.Type == OVERHANG {
 			return oh.Sequence
+		} else if oh.Type == BLUNT {
+			return "blunt"
 		}
 
 	}
 	return ""
+}
+
+func (oh Overhang) TypeName() string {
+	if oh.Type == OVERHANG {
+		return "Overhang"
+	} else if oh.Type == UNDERHANG {
+		return "Underhang"
+	} else if oh.Type == BLUNT {
+		return "blunt"
+	}
+	return "no overhang"
+}
+
+func (oh Overhang) OverHangAt3PrimeEnd() (sequence string) {
+	if oh.End == 3 {
+		if oh.Type == OVERHANG {
+			return oh.Sequence
+		} else if oh.Type == BLUNT {
+			return "blunt"
+		}
+
+	}
+	return oh.Sequence
+}
+
+func (oh Overhang) UnderHangAt3PrimeEnd() (sequence string) {
+	if oh.End == 3 {
+		if oh.Type == UNDERHANG {
+			return oh.Sequence
+		} else if oh.Type == BLUNT {
+			return "blunt"
+		}
+
+	}
+	return oh.Sequence
+}
+
+func (oh Overhang) UnderHangAt5PrimeEnd() (sequence string) {
+	if oh.End == 5 {
+		if oh.Type == UNDERHANG {
+			return oh.Sequence
+		} else if oh.Type == BLUNT {
+			return "blunt"
+		}
+
+	}
+	return oh.Sequence
 }
 
 func (dna *DNASequence) Sequence() string {

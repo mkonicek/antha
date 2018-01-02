@@ -113,19 +113,6 @@ func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 	return assembledfragments, plasmidproducts, err
 }
 
-// key function for returning arrays of partially assembled fragments and fully assembled fragments from performing typeIIS assembly on a vector and a part
-func Jointwopartsfromsequence(vector wtype.DNASequence, part1 wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence) {
-	doublestrandedpart1 := MakedoublestrandedDNA(part1)
-	digestedpart1 := DigestionPairs(doublestrandedpart1, enzyme)
-
-	doublestrandedvector := MakedoublestrandedDNA(vector)
-	digestedvector := DigestionPairs(doublestrandedvector, enzyme)
-
-	assembledfragments, plasmidproducts, _ = joinTwoParts(digestedvector, digestedpart1)
-
-	return assembledfragments, plasmidproducts
-}
-
 func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecondSite ...bool) (wtype.DNASequence, error) {
 	rotatedVector := vector.Dup()
 

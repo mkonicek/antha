@@ -35,30 +35,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-//should expand to be more general, i.e. 3prime overhangs
-type DoublestrandedDNA struct {
-	Fwdsequence           wtype.DNASequence
-	Reversesequence       wtype.DNASequence
-	TopStickyend5prime    string
-	Bottomstickyend5prime string
-	Phosphorylated        bool
-}
-
-func MakedoublestrandedDNA(sequence wtype.DNASequence) (Doublestrandedpair []wtype.DNASequence) {
-	fwdsequence := strings.TrimSpace(strings.ToUpper(sequence.Seq))
-	revcomp := sequences.RevComp(fwdsequence)
-	reversesequence := strings.TrimSpace(strings.ToUpper(revcomp))
-
-	var Fwdsequence = wtype.DNASequence{Nm: "Fwdsequence", Seq: fwdsequence}
-	var Reversesequence = wtype.DNASequence{Nm: "Reversecomplement", Seq: reversesequence}
-	if sequence.Plasmid == true {
-		Fwdsequence.Plasmid = true
-		Reversesequence.Plasmid = true
-	}
-	Doublestrandedpair = []wtype.DNASequence{Fwdsequence, Reversesequence}
-	return Doublestrandedpair
-}
-
 // Key struct holding information on restriction sites found in a dna sequence
 type RestrictionSites struct {
 	Enzyme              wtype.RestrictionEnzyme
@@ -101,25 +77,6 @@ func SitepositionString(sitesperpart RestrictionSites) (sitepositions string) {
 
 	sort.Strings(Num)
 	sitepositions = strings.Join(Num, ", ")
-	return
-}
-
-// func for returning list of all site positions; preferable to use the positions method instead.
-func Sitepositions(sitesperpart RestrictionSites) (sitepositions []int) {
-	Num := make([]int, 0)
-
-	for _, site := range sitesperpart.Forwardpositions {
-		Num = append(Num, site)
-	}
-	for _, site := range sitesperpart.Reversepositions {
-		if !search.InInts(Num, site) {
-			Num = append(Num, site)
-			break
-		}
-	}
-
-	sitepositions = Num
-	sort.Ints(Num)
 	return
 }
 
@@ -278,52 +235,6 @@ func (fragment Digestedfragment) ToDNASequence(name string) (seq wtype.DNASequen
 	return
 }
 
-// utility function
-func pairdigestedfragments(digestedtopstrand []string, digestedbottomstrand []string, topstickyend5prime []string, topstickyend3prime []string, bottomstickyend5prime []string, bottomstickyend3prime []string) (pairs []Digestedfragment) {
-
-	pairs = make([]Digestedfragment, 0)
-
-	var pair Digestedfragment
-
-	if len(digestedtopstrand) == len(digestedbottomstrand) { //}|| len(topstickyend5prime) || len(topstickyend3prime) {
-		for i := 0; i < len(digestedtopstrand); i++ {
-			pair.Topstrand = digestedtopstrand[i]
-			pair.Bottomstrand = digestedbottomstrand[i]
-			pair.TopStickyend_5prime = topstickyend5prime[i]
-			pair.TopStickyend_3prime = topstickyend3prime[i]
-			pair.BottomStickyend_5prime = bottomstickyend5prime[i]
-			pair.BottomStickyend_3prime = bottomstickyend3prime[i]
-			pairs = append(pairs, pair)
-		}
-	}
-	return pairs
-}
-
-// DigestionPairs digests a doublestranded pair of DNASequence with a TypeIIs restriction enzyme into an array of DigestedFragments
-// todo: deprecate
-func DigestionPairs(Doublestrandedpair []wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (digestionproducts []Digestedfragment) {
-	topstrands, topstickyends5, topstickyends3 := TypeIIsdigest(Doublestrandedpair[0], typeIIsenzyme)
-
-	if len(topstrands) == 0 {
-		panic(fmt.Sprintf("No top strand digestion  of %+v with %+v from simulation.", Doublestrandedpair[0], typeIIsenzyme))
-	}
-
-	bottomstrands, bottomstickyends5, bottomstickyends3 := TypeIIsdigest(Doublestrandedpair[1], typeIIsenzyme)
-
-	if len(bottomstrands) == 0 {
-		panic(fmt.Sprintf("No bottom strand digestion of %+v with %+v from simulation.", Doublestrandedpair[0], typeIIsenzyme))
-	}
-
-	digestionproducts = pairdigestedfragments(topstrands, sequences.RevArrayOrder(bottomstrands), topstickyends5, topstickyends3, sequences.RevArrayOrder(bottomstickyends5), sequences.RevArrayOrder(bottomstickyends3))
-
-	if len(topstrands) == len(bottomstrands) {
-		if len(topstrands) == 2 {
-			digestionproducts = pairdigestedfragments(topstrands, bottomstrands, topstickyends5, topstickyends3, bottomstickyends5, bottomstickyends3)
-		}
-	}
-	return digestionproducts
-}
-
 // func to digest a dna sequence with a chosen restriction enzyme; returns string arrays of fragments and 5' and 3' sticky ends
 // todo: refactor
 func Digest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (Finalfragments []string, Stickyends_5prime []string, Stickyends_3prime []string) {
@@ -453,21 +364,6 @@ func lineartoPlasmid(fragmentsiflinearstart []string) (fragmentsifplasmidstart [
 	fragmentsifplasmidstart = append(fragmentsifplasmidstart, linearpartfromplasmid)
 	for i := 1; i < (len(fragmentsiflinearstart) - 1); i++ {
 		fragmentsifplasmidstart = append(fragmentsifplasmidstart, fragmentsiflinearstart[i])
-	}
-
-	return
-}
-
-// utility function to correct number and order of sticky ends if digested sequence was a plasmid; (e.g. cutting once in plasmid dna creates one fragment; cutting once in linear dna creates 2 fragments.
-func lineartoPlasmidEnds(endsiflinearstart []string) (endsifplasmidstart []string) {
-
-	endsifplasmidstart = make([]string, 0)
-
-	endsifplasmidstart = append(endsifplasmidstart, endsiflinearstart[len(endsiflinearstart)-1])
-
-	for i := 1; i < (len(endsiflinearstart)); i++ {
-		endsifplasmidstart = append(endsifplasmidstart, endsiflinearstart[i])
-
 	}
 
 	return
@@ -914,24 +810,6 @@ func makeFragments(enzyme wtype.TypeIIs, positionPairs []sequences.PositionPair,
 	}
 
 	return
-}
-
-// Simulates digestion of all dna sequences in the Assemblyparameters object using the enzyme in the object.
-func Digestionsimulator(assemblyparameters Assemblyparameters) (digestedfragementarray [][]Digestedfragment) {
-	// fetch enzyme properties from map (this is basically a look up table for those who don't know)
-	digestedfragementarray = make([][]Digestedfragment, 0)
-	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
-	enzyme := TypeIIsEnzymeproperties[enzymename]
-	//assemble (note that sapIenz is found in package enzymes)
-	doublestrandedvector := MakedoublestrandedDNA(assemblyparameters.Vector)
-	digestedvector := DigestionPairs(doublestrandedvector, enzyme)
-	digestedfragementarray = append(digestedfragementarray, digestedvector)
-	for _, part := range assemblyparameters.Partsinorder {
-		doublestrandedpart := MakedoublestrandedDNA(part)
-		digestedpart := DigestionPairs(doublestrandedpart, enzyme)
-		digestedfragementarray = append(digestedfragementarray, digestedpart)
-	}
-	return digestedfragementarray
 }
 
 // returns a report as a string of all ends expected from digesting a vector sequence and an array of parts. Intended to aid the user in trouble shooting unsuccessful assemblies

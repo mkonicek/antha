@@ -38,7 +38,7 @@ import (
 // Key struct holding information on restriction sites found in a dna sequence
 type RestrictionSites struct {
 	Enzyme              wtype.RestrictionEnzyme
-	Recognitionsequence string
+	RecognitionSequence string
 	Sitefound           bool
 	Numberofsites       int
 	Forwardpositions    []int
@@ -89,10 +89,10 @@ func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.Restri
 		var enzymesite RestrictionSites
 		//var siteafterwobble Restrictionsites
 		enzymesite.Enzyme = enzyme
-		enzymesite.Recognitionsequence = strings.ToUpper(enzyme.RecognitionSequence)
+		enzymesite.RecognitionSequence = strings.ToUpper(enzyme.RecognitionSequence)
 		sequence.Seq = strings.ToUpper(sequence.Seq)
 
-		wobbleproofrecognitionoptions := sequences.Wobble(enzymesite.Recognitionsequence)
+		wobbleproofrecognitionoptions := sequences.Wobble(enzymesite.RecognitionSequence)
 
 		for _, wobbleoption := range wobbleproofrecognitionoptions {
 
@@ -269,7 +269,7 @@ func Digest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (F
 	}
 	if typeIIenzyme.Class == "TypeIIs" {
 
-		var typeIIsenz = wtype.TypeIIs{typeIIenzyme}
+		var typeIIsenz = wtype.TypeIIs{RestrictionEnzyme: typeIIenzyme}
 
 		Finalfragments, Stickyends_5prime, Stickyends_3prime = TypeIIsdigest(sequence, typeIIsenz)
 	}
@@ -649,68 +649,44 @@ func makeOverhangs(enzyme wtype.TypeIIs, recognitionSitePosition sequences.Posit
 
 	_, endOfRestrictionSite := recognitionSitePosition.Coordinates(wtype.CODEFRIENDLY)
 
-	if !recognitionSitePosition.Reverse {
-		fragmentStart := endOfRestrictionSite + 1 + enzyme.Topstrand3primedistancefromend
-		if fragmentStart > len(sequence.Sequence()) {
-			fragmentStart = fragmentStart - len(sequence.Sequence())
-		}
+	var fragmentStart, fragmentEnd int
 
-		fragmentEnd := fragmentStart + enzyme.EndLength
+	if recognitionSitePosition.Reverse {
 
-		if fragmentEnd > len(sequence.Sequence()) {
-			fragmentEnd = fragmentEnd - len(sequence.Sequence())
-		}
-
-		overhangSeq, err := seqBetweenPositions(sequence, fragmentStart, fragmentEnd)
-
-		if err != nil {
-			return upStreamThreePrime, downstreamFivePrime, err
-		}
-		downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.TOP, enzyme.EndLength, true)
-		if err != nil {
-			return upStreamThreePrime, downstreamFivePrime, err
-		}
-		upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.BOTTOM, enzyme.EndLength, true)
-		if err != nil {
-			return upStreamThreePrime, downstreamFivePrime, err
-		}
-		downstreamFivePrime.Sequence = overhangSeq
-		upStreamThreePrime.Sequence = wtype.RevComp(overhangSeq)
-		return upStreamThreePrime, downstreamFivePrime, nil
+		fragmentStart = endOfRestrictionSite - enzyme.Topstrand3primedistancefromend - enzyme.EndLength //+ 1
 
 	} else {
 
-		fragmentStart := endOfRestrictionSite - enzyme.Topstrand3primedistancefromend - enzyme.EndLength //+ 1
+		fragmentStart = endOfRestrictionSite + 1 + enzyme.Topstrand3primedistancefromend
 
-		if fragmentStart > len(sequence.Sequence()) {
-			fragmentStart = fragmentStart - len(sequence.Sequence())
-		}
-
-		fragmentEnd := fragmentStart + enzyme.EndLength
-
-		if fragmentEnd > len(sequence.Sequence()) {
-			fragmentEnd = fragmentEnd - len(sequence.Sequence())
-		}
-
-		overhangSeq, err := seqBetweenPositions(sequence, fragmentStart, fragmentEnd)
-		if err != nil {
-			return upStreamThreePrime, downstreamFivePrime, err
-		}
-		downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.TOP, enzyme.EndLength, true)
-		if err != nil {
-			return upStreamThreePrime, downstreamFivePrime, err
-		}
-		upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.BOTTOM, enzyme.EndLength, true)
-		if err != nil {
-			return upStreamThreePrime, downstreamFivePrime, err
-		}
-		downstreamFivePrime.Sequence = overhangSeq
-		upStreamThreePrime.Sequence = wtype.RevComp(overhangSeq)
-
-		return upStreamThreePrime, downstreamFivePrime, nil
 	}
 
-	return
+	if fragmentStart > len(sequence.Sequence()) {
+		fragmentStart = fragmentStart - len(sequence.Sequence())
+	}
+
+	fragmentEnd = fragmentStart + enzyme.EndLength
+
+	if fragmentEnd > len(sequence.Sequence()) {
+		fragmentEnd = fragmentEnd - len(sequence.Sequence())
+	}
+
+	overhangSeq, err := seqBetweenPositions(sequence, fragmentStart, fragmentEnd)
+	if err != nil {
+		return upStreamThreePrime, downstreamFivePrime, err
+	}
+	downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.TOP, enzyme.EndLength, true)
+	if err != nil {
+		return upStreamThreePrime, downstreamFivePrime, err
+	}
+	upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.BOTTOM, enzyme.EndLength, true)
+	if err != nil {
+		return upStreamThreePrime, downstreamFivePrime, err
+	}
+	downstreamFivePrime.Sequence = overhangSeq
+	upStreamThreePrime.Sequence = wtype.RevComp(overhangSeq)
+
+	return upStreamThreePrime, downstreamFivePrime, nil
 }
 
 // code friendly positions and forward orientation only

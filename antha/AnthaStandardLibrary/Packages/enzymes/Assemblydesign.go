@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for working with enzymes; in particular restriction enzymes
+// Package enzymes for working with enzymes; in particular restriction enzymes
 package enzymes
 
 import (
@@ -103,6 +103,9 @@ func CheckEndCompatibility(fragments []wtype.DNASequence)err error{
 }
 */
 
+// VectorEnds returns the 5' and 3' sticky ends found from cutting a vector DNASequence with TypeIIs enzyme.
+// If the vector is cut more than once the first two sticky ends will be returned.
+// If the vector is not cut "" and "" will be returned.
 func VectorEnds(vector wtype.DNASequence, enzyme wtype.TypeIIs) (desiredstickyend5prime string, vector3primestickyend string) {
 	// find sticky ends from cutting vector with enzyme
 
@@ -129,7 +132,10 @@ func VectorEnds(vector wtype.DNASequence, enzyme wtype.TypeIIs) (desiredstickyen
 	return
 }
 
-// Key general function to design parts for assembly based on type IIs enzyme, parts in order, fixed vector sequence (containing sites for the corresponding enzyme).
+// MakeScarfreeCustomTypeIIsassemblyParts adds typeIIs assembly ends to a set of parts.
+// The ends will be added in order to enable correct assembly of the parts in the order specified leaving no scar sequence between parts.
+// The ends will be added based on a specified typeIIs enzyme and vector which contains sites for that typeIIs enzyme.
+// If the parts already contain typeIIs sites for the specified enzyme the ends will be checked for compatibility.
 func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wtype.DNASequence, enzyme wtype.TypeIIs) (partswithends []wtype.DNASequence) {
 
 	partswithends = make([]wtype.DNASequence, 0)
@@ -193,7 +199,7 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 	return partswithends
 }
 
-// This func adds an upstream (5') adaptor for making a level 0 part compatible for Level 1 hierarchical assembly, specifying the desired level 1 class the level0 part should be made into.
+// AddL1UAdaptor adds an upstream (5') adaptor for making a level 0 part compatible for Level 1 hierarchical assembly, specifying the desired level 1 class the level0 part should be made into.
 // TypeIIs recognition site + spacer + correct overhang in correct orientation will be added according to the correct enzyme at a specified level according to a specified
 // assembly standard.
 // If reverseOrientation is set to true the adaptor will be added such that the level 1 part will bind in the reverse orientation.
@@ -215,15 +221,15 @@ func AddL1UAdaptor(part wtype.DNASequence, assemblyStandard AssemblyStandard, le
 		bitToAdd = wtype.RevComp(bitToAdd3)
 	}
 
-	bitToAdd5prime := Makeoverhang(enzyme, "5prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-	partWithEnds := Addoverhang(part.Seq, bitToAdd5prime, "5prime")
+	bitToAdd5prime := MakeOverhang(enzyme, "5prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	partWithEnds := AddOverhang(part.Seq, bitToAdd5prime, "5prime")
 
 	newpart = part.Dup()
 	newpart.Seq = partWithEnds
 	return
 }
 
-// This func adds a downstream (3') adaptor for making a level 0 part compatible for Level 1 hierarchical assembly, specifying the desired level 1 class the level0 part should be made into.
+// AddL1DAdaptor adds a downstream (3') adaptor for making a level 0 part compatible for Level 1 hierarchical assembly, specifying the desired level 1 class the level0 part should be made into.
 // TypeIIs recognition site + spacer + correct overhang in correct orientation will be added according to the correct enzyme at a specified level according to a specified
 // assembly standard.
 // If reverseOrientation is set to true the adaptor will be added such that the level 1 part will bind in the reverse orientation.
@@ -244,15 +250,15 @@ func AddL1DAdaptor(part wtype.DNASequence, assemblyStandard AssemblyStandard, le
 		bitToAdd = wtype.RevComp(bitToAdd5)
 	}
 
-	bitToAdd3prime := Makeoverhang(enzyme, "3prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-	partWithEnds := Addoverhang(part.Seq, bitToAdd3prime, "3prime")
+	bitToAdd3prime := MakeOverhang(enzyme, "3prime", bitToAdd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	partWithEnds := AddOverhang(part.Seq, bitToAdd3prime, "3prime")
 
 	newpart = part.Dup()
 	newpart.Seq = partWithEnds
 	return
 }
 
-// look up enzyme according to assembly standard and level.
+// lookUpEnzyme looks up enzyme according to assembly standard and level.
 // Errors will be returned if an entry is missing
 func lookUpEnzyme(assemblyStandard AssemblyStandard, level string) (enzyme wtype.TypeIIs, err error) {
 
@@ -267,7 +273,7 @@ func lookUpEnzyme(assemblyStandard AssemblyStandard, level string) (enzyme wtype
 	return enzyme, nil
 }
 
-// look up overhangs according to assembly standard, level and part class.
+// lookUpOverhangs looks up overhangs according to assembly standard, level and part class.
 // Errors will be returned if an entry is missing or overhangs are found to be empty
 func lookUpOverhangs(assemblyStandard AssemblyStandard, level string, class string) (upstream string, downstream string, err error) {
 
@@ -282,7 +288,8 @@ func lookUpOverhangs(assemblyStandard AssemblyStandard, level string, class stri
 	return ends.Upstream, ends.Downstream, err
 }
 
-// Adds sticky ends to dna part according to the class identifier (e.g. PRO, 5U, CDS)
+// AddStandardStickyEndsfromClass adds sticky ends to a DNA part according to the class identifier (e.g. PRO, 5U, CDS).
+// An error will be returned if any invalid class or level is requested.
 func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblyStandard AssemblyStandard, level string, class string) (partWithEnds wtype.DNASequence, err error) {
 
 	enzyme, err := lookUpEnzyme(assemblyStandard, level)
@@ -300,17 +307,17 @@ func AddStandardStickyEndsfromClass(part wtype.DNASequence, assemblyStandard Ass
 	// with this commented out the full overhang is added
 	//bittoadd = findMinimumAdditional5PrimeAddition(bittoadd, part)
 
-	bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	bittoadd5prime := MakeOverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
 
-	partwith5primeend := Addoverhang(part.Seq, bittoadd5prime, "5prime")
+	partwith5primeend := AddOverhang(part.Seq, bittoadd5prime, "5prime")
 
 	// This code will find the minimal additional overhang to add
 	// with this commented out the full overhang is added
 	//bittoadd3 = findMinimumAdditional3PrimeAddition(bittoadd3, part)
 
-	bittoadd3prime := Makeoverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	bittoadd3prime := MakeOverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
 
-	partwithends := Addoverhang(partwith5primeend, bittoadd3prime, "3prime")
+	partwithends := AddOverhang(partwith5primeend, bittoadd3prime, "3prime")
 
 	partWithEnds.Nm = part.Nm
 	partWithEnds.Plasmid = part.Plasmid
@@ -365,18 +372,18 @@ func findMinimumAdditional5PrimeAddition(desiredstickyend5prime string, part wty
 	return
 }
 
-// Adds ends to the part sequence based upon enzyme chosen and the desired overhangs after digestion
+// AddCustomEnds adds specified ends to the part sequence based upon enzyme chosen and the desired overhangs after digestion
 func AddCustomEnds(part wtype.DNASequence, enzyme wtype.TypeIIs, desiredstickyend5prime string, desiredstickyend3prime string) (Partwithends wtype.DNASequence) {
 
 	bittoadd := findMinimumAdditional5PrimeAddition(desiredstickyend5prime, part)
 
-	bittoadd5prime := Makeoverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-	partwith5primeend := Addoverhang(part.Seq, bittoadd5prime, "5prime")
+	bittoadd5prime := MakeOverhang(enzyme, "5prime", bittoadd, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	partwith5primeend := AddOverhang(part.Seq, bittoadd5prime, "5prime")
 
 	bittoadd3 := findMinimumAdditional3PrimeAddition(desiredstickyend3prime, part)
 
-	bittoadd3prime := Makeoverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
-	partwithends := Addoverhang(partwith5primeend, bittoadd3prime, "3prime")
+	bittoadd3prime := MakeOverhang(enzyme, "3prime", bittoadd3, ChooseSpacer(enzyme.Topstrand3primedistancefromend, "", []string{}))
+	partwithends := AddOverhang(partwith5primeend, bittoadd3prime, "3prime")
 
 	Partwithends.Nm = part.Nm
 	Partwithends.Plasmid = part.Plasmid
@@ -384,7 +391,7 @@ func AddCustomEnds(part wtype.DNASequence, enzyme wtype.TypeIIs, desiredstickyen
 	return Partwithends
 }
 
-// Add compatible ends to an array of parts based on the rules of a typeIIS assembly standard
+// MakeStandardTypeIIsassemblyParts adds compatible ends to a set of parts based on the rules of a typeIIS assembly standard.
 func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandard AssemblyStandard, level string, partClasses []string) (partswithends []wtype.DNASequence, err error) {
 
 	if len(partClasses) == len(parts) {
@@ -404,7 +411,7 @@ func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandar
 	return partswithends, err
 }
 
-// Utility function to check whether a part already has typeIIs ends added
+// CheckForExistingTypeIISEnds checks for whether a part already has typeIIs ends added.
 func CheckForExistingTypeIISEnds(part wtype.DNASequence, enzyme wtype.TypeIIs) (numberofsitesfound int, stickyends5 []string, stickyends3 []string) {
 
 	enz, err := lookup.EnzymeLookup(enzyme.Name())
@@ -440,8 +447,8 @@ func AddStandardVectorEnds (vector wtype.DNASequence, standard, level string) (v
 	}
 */
 
-// Lowest level function to add an overhang to a sequence as a string
-func Addoverhang(seq string, bittoadd string, end string) (seqwithoverhang string) {
+// AddOverhang is the lowest level function to add an overhang to a sequence as a string
+func AddOverhang(seq string, bittoadd string, end string) (seqwithoverhang string) {
 
 	if end == "5prime" {
 		seqwithoverhang = strings.Join([]string{bittoadd, seq}, "")
@@ -468,8 +475,8 @@ func allCombinations(arr [][]string) []string {
 	return results
 }
 
-// Returns an array of all sequence possibilities for a spacer based upon length
-func Makeallspaceroptions(spacerlength int) (finalarray []string) {
+// MakeAllSpacerOptions returns an array of all sequence possibilities for a spacer based upon length.
+func MakeAllSpacerOptions(spacerlength int) (finalarray []string) {
 	// only works for spacer length 1 or 2
 
 	// new better code, but untested! test and replace code below
@@ -483,11 +490,11 @@ func Makeallspaceroptions(spacerlength int) (finalarray []string) {
 	return finalarray
 }
 
-// Picks first valid spacer which avoids all sequences to avoid
+// ChooseSpacer picks the first valid spacer which avoids all sequences to avoid.
 func ChooseSpacer(spacerlength int, seq string, seqstoavoid []string) (spacer string) {
 	// very simple case to start with
 
-	possibilities := Makeallspaceroptions(spacerlength)
+	possibilities := MakeAllSpacerOptions(spacerlength)
 
 	if len(seqstoavoid) == 0 {
 		spacer = possibilities[0]
@@ -506,20 +513,8 @@ func ChooseSpacer(spacerlength int, seq string, seqstoavoid []string) (spacer st
 
 var nucleotides = []string{"A", "T", "C", "G"}
 
-// for a dna sequence as a string as input; the function will return an array of 4 sequences appended with either A, T, C or G
-func Addnucleotide(s string) (splus1array []string) {
-
-	splus1 := s
-	splus1array = make([]string, 0)
-	for _, nucleotide := range nucleotides {
-		splus1 = strings.Join([]string{s, nucleotide}, "")
-		splus1array = append(splus1array, splus1)
-	}
-	return splus1array
-}
-
-// Function to add an overhang based upon the enzyme chosen, the choice of end ("5Prime" or "3Prime")
-func Makeoverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer string) (seqwithoverhang string) {
+// MakeOverhang adds an overhang based upon the enzyme chosen, the choice of end ("5Prime" or "3Prime"), the desired sticky end and the desired spacer.
+func MakeOverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer string) (seqwithoverhang string) {
 	if end == "5prime" {
 		if enzyme.Topstrand3primedistancefromend < 0 {
 			panic("Unlikely to work with this enzyme in making a 5'prime spacer")
@@ -551,14 +546,15 @@ var availableStandards = map[string]AssemblyStandard{
 }
 
 func allStandards() (standards []string) {
-	for k, _ := range availableStandards {
+	for k := range availableStandards {
 		standards = append(standards, k)
 	}
 	sort.Strings(standards)
 	return
 }
 
-// Lookup TypeIIs assembly standard by name
+// LookupAssemblyStandard looks up a TypeIIS Assembly Standard by name.
+// An error will be returned if no Assembly standard is found for the requested name.
 func LookupAssemblyStandard(name string) (standard AssemblyStandard, err error) {
 	var found bool
 	standard, found = availableStandards[name]
@@ -715,11 +711,18 @@ var antibodyStandard = AssemblyStandard{
 	},
 }
 
+// AssemblyStandard is an assembly standard for modular assembly of DNA parts using TypeIIs enzyme assembly.
+// The AssemblyStandard may consist of a number of assembly levels which may use a different enzyme, set of standard overhangs or both.
 type AssemblyStandard struct {
-	Name   string
+	// Name of the Assembly Standard.
+	Name string
+	// The AssemblyStandard may consist of a number of assembly levels which may use a different enzyme, set of standard overhangs or both.
+	// The name of the level is used as the key to calling an AssemblyLevel object.
 	Levels map[string]AssemblyLevel
 }
 
+// Enzyme returns the typeIIs enzyme for a specified named AssemblyLevel.
+// An error is returned if an invalid level is requested for the AssemblyStandard.
 func (l AssemblyStandard) Enzyme(level string) (enz wtype.TypeIIs, err error) {
 
 	assemblyLevel, err := l.GetLevel(level)
@@ -730,18 +733,21 @@ func (l AssemblyStandard) Enzyme(level string) (enz wtype.TypeIIs, err error) {
 	return
 }
 
+// LevelNames returns the names of all valid Assembly Levels for an AssemblyStandard.
 func (l AssemblyStandard) LevelNames() []string {
 
-	var ls []string
-	for lev, _ := range l.Levels {
-		ls = append(ls, lev)
+	var levels []string
+	for level := range l.Levels {
+		levels = append(levels, level)
 	}
 
-	sort.Strings(ls)
+	sort.Strings(levels)
 
-	return ls
+	return levels
 }
 
+// GetLevel returns an AssemblyLevel for a specified named AssemblyLevel.
+// An error is returned if an invalid level is requested for the AssemblyStandard.
 func (l AssemblyStandard) GetLevel(level string) (assemblyLevel AssemblyLevel, err error) {
 
 	assemblyLevel, found := l.Levels[level]
@@ -751,20 +757,29 @@ func (l AssemblyStandard) GetLevel(level string) (assemblyLevel AssemblyLevel, e
 	return
 }
 
+// AssemblyLevel is a specified TypeIIs standard for assembly of a series of labelled parts.
 type AssemblyLevel struct {
-	Enzyme          wtype.TypeIIs
-	PartOverhangs   map[string]StandardOverhangs
+	//Enzyme used for assembly
+	Enzyme wtype.TypeIIs
+	// map of part labels to standard overhangs.
+	PartOverhangs map[string]StandardOverhangs
+	// Expected overhangs in the entry vector.
 	EntryVectorEnds StandardOverhangs // Vector 5prime can also be found in Endstable position 0
 }
 
+// StandardOverhangs represents the upstream and downstream overhangs expected for a part or vector in a
+// level of an Assembly Standard.
 type StandardOverhangs struct {
-	Upstream   string
+	// Overhang expected to be left at the upstream end of a part after typeIIs digestion.
+	Upstream string
+	// Overhang expected to be left at the downstream end of a part after typeIIs digestion.
 	Downstream string
 }
 
+// AnnotationOptions returns all valid part labels for a specified AssemblyLevel.
 func (l AssemblyLevel) AnnotationOptions() []string {
 	var ls []string
-	for class, _ := range l.PartOverhangs {
+	for class := range l.PartOverhangs {
 		ls = append(ls, class)
 	}
 
@@ -772,14 +787,17 @@ func (l AssemblyLevel) AnnotationOptions() []string {
 	return ls
 }
 
+// GetEnzyme returns the typeIIs enzyme for the AssemblyLevel.
 func (l AssemblyLevel) GetEnzyme() wtype.TypeIIs {
 	return l.Enzyme
 }
 
+// GetVectorEnds returns the expected vector overhangs for the AssemblyLevel.
 func (l AssemblyLevel) GetVectorEnds() StandardOverhangs {
 	return l.EntryVectorEnds
 }
 
+// GetPartOverhangs returns the expected part overhangs for the specified part class.
 func (l AssemblyLevel) GetPartOverhangs(class string) (overhangs StandardOverhangs, err error) {
 
 	overhangs, found := l.PartOverhangs[class]

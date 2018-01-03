@@ -37,8 +37,6 @@ type LiquidhandlingDriver interface {
 	UnloadTips(channels []int, head, multi int, platetype, position, well []string) driver.CommandStatus
 	SetPipetteSpeed(head, channel int, rate float64) driver.CommandStatus
 	SetDriveSpeed(drive string, rate float64) driver.CommandStatus
-	Stop() driver.CommandStatus
-	Go() driver.CommandStatus
 	Initialize() driver.CommandStatus
 	Finalize() driver.CommandStatus
 	Wait(time float64) driver.CommandStatus
@@ -48,17 +46,18 @@ type LiquidhandlingDriver interface {
 	RemoveAllPlates() driver.CommandStatus
 	RemovePlateAt(position string) driver.CommandStatus
 	Message(level int, title, text string, showcancel bool) driver.CommandStatus
+	GetCapabilities() (LHProperties, driver.CommandStatus)
+	UpdateMetaData(props *LHProperties) driver.CommandStatus
+	GetOutputFile() (string, driver.CommandStatus)
 }
 
 type ExtendedLiquidhandlingDriver interface {
 	LiquidhandlingDriver
 	SetPositionState(position string, state driver.PositionState) driver.CommandStatus
-	GetCapabilities() (LHProperties, driver.CommandStatus)
 	GetCurrentPosition(head int) (string, driver.CommandStatus)
 	GetPositionState(position string) (string, driver.CommandStatus)
 	GetHeadState(head int) (string, driver.CommandStatus)
 	GetStatus() (driver.Status, driver.CommandStatus)
-	UpdateMetaData(props *LHProperties) driver.CommandStatus
 	UnloadHead(param int) driver.CommandStatus
 	LoadHead(param int) driver.CommandStatus
 	LightsOn() driver.CommandStatus
@@ -68,5 +67,7 @@ type ExtendedLiquidhandlingDriver interface {
 	// refactored into other interfaces?
 	Open() driver.CommandStatus
 	Close() driver.CommandStatus
-	GetOutputFile() (string, driver.CommandStatus)
+}
+
+type HighLevelLiquidHandlingDriver interface {
 }

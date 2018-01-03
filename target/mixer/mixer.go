@@ -25,7 +25,7 @@ var (
 
 // A Mixer is a device plugin for mixer devices
 type Mixer struct {
-	driver     driver.ExtendedLiquidhandlingDriver
+	driver     driver.LiquidhandlingDriver
 	properties *driver.LHProperties // Prototype to create fresh properties
 	opt        Opt
 }

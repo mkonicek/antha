@@ -205,8 +205,8 @@ type digesttest struct {
 	sequence          wtype.DNASequence
 	enzyme            wtype.RestrictionEnzyme
 	Finalfragments    []string
-	Stickyends_5prime []string
-	Stickyends_3prime []string
+	fivePrimeOverhangs []string
+	threePrimeUnderhangs []string
 }
 
 var digesttests = []digesttest{
@@ -214,44 +214,44 @@ var digesttests = []digesttest{
 		sequence:          pSEVA651,
 		enzyme:            SapI.RestrictionEnzyme,
 		Finalfragments:    []string{strings.ToUpper("GGTAGAAGAGCttaattaaagcggataacaatttcacacaggaggccgcctaggccgcggccgcgcgaattcgagctcggtacccggggatcctctagagtcgacctgcaggcatgcaagcttgcggccgcgtcgtgactgggaaaaccctggcgactagtcttggactcctgttgatagatccagtaatgacctcagaactccatctggatttgttcagaacgctcggttgccgccgggcgttttttattggtgagaatccaggggtccccaataattacgatttaaatttgacataagcctgttcggttcgtaaactgtaatgcaagtagcgtatgcgctcacgcaactggtccagaaccttgaccgaacgcagcggtggtaacggcgcagtggcggttttcatggcttgttatgactgtttttttgtacagcctatgcctcgggcatccaagcagcaagcgcgttacgccgtgggtcgatgtttgatgttatggagcagcaacgatgttacgcagcagcaacgatgttacgcagcagggcagtcgccctaaaacaaagttaggtggctcaagtatgggcatcattcgcacatgtaggctcggccctgaccaagtcaaatccatgcgggctgctcttgatcttttcggtcgtgagttcggagacgtagccacctactcccaacatcagccggactccgattacctcgggaacttgctccgtagtaagacattcatcgcgcttgctgccttcgaccaagaagcggttgttggcgctctcgcggcttacgttctgcccaagtttgagcagccgcgtagtgagatctatatctatgatctcgcagtctccggagagcaccggaggcagggcattgccaccgcgctcatcaatctcctcaagcatgaggccaacgcgcttggtgcttatgtgatctacgtgcaagcagattacggtgacgatcccgcagtggctctctatacaaagttgggcatacgggaagaagtgatgcactttgatatcgacccaagtaccgccacctaacaattcgttcaagccgagatcggcttcccggccgcggagttgttcggtaaattggacaacggtccgcgcgttgtccttttccgctgcataaccctgcttcggggtcattatagcgattttttcggtatatccatcctttttcgcacgatatacaggattttgccaaagggttcgtgtagactttccttggtgtatccaacggcgtcagccgggcaggataggtgaagtaggcccacccgcgagcgggtgttccttcttcactgtcccttattcgcacctggcggtgctcaacgggaatcctgctctgcgaggctggccgtaggccggcctcagcctgccgccttgggccgggtgatgtcgtacttgcccgccgcgaactcggttaccgtccagcccagcgcgaccagctccggcaacgcctcgcgcacccgctggcggcgcttgcgcatggtcgaaccactggcctctgacggccagacatagccgcacaaggtatctatggaagccttgccggttttgccggggtcgatccagccacacagccgctggtgcagcaggcgggcggtttcgctgtccagcgcccgcacctcgtccatgctgatgcgcacatgctggccgccacccatgacggcctgcgcgatcaaggggttcagggccacgtacaggcgcccgtccgcctcgtcgctggcgtactccgacagcagccgaaacccctgccgcttgcggccattctgggcgatgatggataccttccaaaggcgctcgatgcagtcctgtatgtgcttgagcgccccaccactatcgacctctgccccgatttcctttgccagcgcccgatagctacctttgaccacatggcattcagcggtgacggcctcccacttgggttccaggaacagccggagctgccgtccgccttcggtcttgggttccgggccaagcactaggccattaggcccagccatggccaccagcccttgcaggatgcgcagatcatcagcgcccagcggctccgggccgctgaactcgatccgcttgccgtcgccgtagtcatacgtcacgtccagcttgctgcgcttgcgctcgccccgcttgagggcacggaacaggccgggggccagacagtgcgccgggtcgtgccggacgtggctgaggctgtgcttgttcttaggcttcaccacggggcacccccttgctcttgcgctgcctctccagcacggcgggcttgagcaccccgccgtcatgccgcctgaaccaccgatcagcgaacggtgcgccatagttggccttgctcacaccgaagcggacgaagaaccggcgctggtcgtcgtccacaccccattcctcggcctcggcgctggtcatgctcgacaggtaggactgccagcggatgttatcgaccagtaccgagctgccccggctggcctgctgctggtcgcctgcgcccatcatggccgcgcccttgctggcatggtgcaggaacacgatagagcacccggtatcggcggcgatggcctccatgcgaccgatgacctgggccatggggccgctggcgttttcttcctcgatgtggaaccggcgcagcgtgtccagcaccatcaggcggcggccctcggcggcgcgcttgaggccgtcgaaccactccggggccatgatgttgggcaggctgccgatcagcggctggatcagcaggccgtcagccacggcttgccgttcctcggcgctgaggtgcgccccaagggcgtgcaggcggtgatgaatggcggtgggcgggtcttcggcgggcaggtagatcaccgggccggtgggcagttcgcccacctccagcagatccggcccgcctgcaatctgtgcggccagttgcagggccagcatggatttaccggcaccaccgggcgacaccagcgccccgaccgtaccggccaccatgttgggcaaaacgtagtccagcggtggcggcgctgctgcgaacgcctccagaatattgataggcttatgggtagccattgattgcctcctttgcaggcagttggtggttaggcgctggcggggtcactacccccgccctgcgccgctctgagttcttccaggcactcgcgcagcgcctcgtattcgtcgtcggtcagccagaacttgcgctgacgcatccctttggccttcatgcgctcggcatatcgcgcttggcgtacagcgtcagggctggccagcaggtcgccggtctgcttgtccttttggtctttcatatcagtcaccgagaaacttgccggggccgaaaggcttgtcttcgcggaacaaggacaaggtgcagccgtcaaggttaaggctggccatatcagcgactgaaaagcggccagcctcggccttgtttgacgtataaccaaagccaccgggcaaccaatagcccttgtcacttttgatcaggtagaccgaccctgaagcgcttttttcgtattccataaaacccccttctgtgcgtgagtactcatagtataacaggcgtgagtaccaacgcaagcactacatgctgaaatctggcccgcccctgtccatgcctcgctggcggggtgccggtgcccgtgccagctcggcccgcgcaagctggacgctgggcagacccatgaccttgctgacggtgcgctcgatgtaatccgcttcgtggccgggcttgcgctctgccagcgctgggctggcctcggccatggccttgccgatttcctcggcactgcggccccggctggccagcttctgcgcggcgataaagtcgcacttgctgaggtcatcaccgaagcgcttgaccagcccggccatctcgctgcggtactcgtccagcgccgtgcgccggtggcggctaagctgccgctcgggcagttcgaggctggccagcctgcgggccttctcctgctgccgctgggcctgctcgatctgctggccagcctgctgcaccagcgccgggccagcggtggcggtcttgcccttggattcacgcagcagcacccacggctgataaccggcgcgggtggtgtgcttgtccttgcggttggtgaagcccgccaagcggccatagtggcggctgtcggcgctggccgggtcggcgtcgtactcgctggccagcgtccgggcaatctgcccccgaagttcaccgcctgcggcgtcggccaccttgacccatgcctgatagttcttcgggctggtttccactaccagggcaggctcccggccctcggctttcatgtcatccaggtcaaactcgctgaggtcgtccaccagcaccagaccatgccgctcctgctcggcgggcctgatatacacgtcattgccctgggcattcatccgcttgagccatggcgtgttctggagcacttcggcggctgaccattcccggttcatcatctggccggtggtggcgtccctgacgccgatatcgaagcgctcacagcccatggccttgagctgtcggcctatggcctgcaaagtcctgtcgttcttcatcgggccaccaagcgattcccacacattatacgagccggaagcataaagtgtaaagcctagatccgaaggatgagccgggctgaatgatcgaccgagacaggccctgcggggctgcacacgcgcccccacccttcgggtagggggaaaggccgctaaagcggctaaaagcgctccagcgtatttctgcggggtttggtgtggggtttagcgggctttgcccgcctttccccctgccgcgcagcggtggggcggtgtgtagcctagcgcagcgaatagaccagctatccggcctctggccgggcatattgggcaagggcagcagcgccccacaagggcgctgataaccgcgcctagtggattattcttagataatcatggatggatttttccaacaccccgccagcccccgcccctgctgggtttgcaggtttgggggcgtgacagttattgcaggggttcgtgacagttattgcaggggggcgtgacagttattgcaggggttcgtgacagttagggcgcgcccagctgtctagggcggcggatttgtcctactcaggagagcgttcaccgacaaacaacagataaaacgaaaggcccagtctttcgactgagcctttcgttttatttgatgcctGCTCTTCT"), strings.ToUpper("ATGatatatatatata")},
-		Stickyends_5prime: []string{"GGT", "ATG"},
-		Stickyends_3prime: []string{"CAT", "ACC"},
+		fivePrimeOverhangs: []string{"GGT", "ATG"},
+		threePrimeUnderhangs: []string{"CAT", "ACC"},
 	},
 	// BsaI is a non cutter
 	digesttest{
 		sequence:          pSEVA651,
 		enzyme:            BsaI.RestrictionEnzyme,
 		Finalfragments:    []string{strings.ToUpper("ttaattaaagcggataacaatttcacacaggaggccgcctaggccgcggccgcgcgaattcgagctcggtacccggggatcctctagagtcgacctgcaggcatgcaagcttgcggccgcgtcgtgactgggaaaaccctggcgactagtcttggactcctgttgatagatccagtaatgacctcagaactccatctggatttgttcagaacgctcggttgccgccgggcgttttttattggtgagaatccaggggtccccaataattacgatttaaatttgacataagcctgttcggttcgtaaactgtaatgcaagtagcgtatgcgctcacgcaactggtccagaaccttgaccgaacgcagcggtggtaacggcgcagtggcggttttcatggcttgttatgactgtttttttgtacagcctatgcctcgggcatccaagcagcaagcgcgttacgccgtgggtcgatgtttgatgttatggagcagcaacgatgttacgcagcagcaacgatgttacgcagcagggcagtcgccctaaaacaaagttaggtggctcaagtatgggcatcattcgcacatgtaggctcggccctgaccaagtcaaatccatgcgggctgctcttgatcttttcggtcgtgagttcggagacgtagccacctactcccaacatcagccggactccgattacctcgggaacttgctccgtagtaagacattcatcgcgcttgctgccttcgaccaagaagcggttgttggcgctctcgcggcttacgttctgcccaagtttgagcagccgcgtagtgagatctatatctatgatctcgcagtctccggagagcaccggaggcagggcattgccaccgcgctcatcaatctcctcaagcatgaggccaacgcgcttggtgcttatgtgatctacgtgcaagcagattacggtgacgatcccgcagtggctctctatacaaagttgggcatacgggaagaagtgatgcactttgatatcgacccaagtaccgccacctaacaattcgttcaagccgagatcggcttcccggccgcggagttgttcggtaaattggacaacggtccgcgcgttgtccttttccgctgcataaccctgcttcggggtcattatagcgattttttcggtatatccatcctttttcgcacgatatacaggattttgccaaagggttcgtgtagactttccttggtgtatccaacggcgtcagccgggcaggataggtgaagtaggcccacccgcgagcgggtgttccttcttcactgtcccttattcgcacctggcggtgctcaacgggaatcctgctctgcgaggctggccgtaggccggcctcagcctgccgccttgggccgggtgatgtcgtacttgcccgccgcgaactcggttaccgtccagcccagcgcgaccagctccggcaacgcctcgcgcacccgctggcggcgcttgcgcatggtcgaaccactggcctctgacggccagacatagccgcacaaggtatctatggaagccttgccggttttgccggggtcgatccagccacacagccgctggtgcagcaggcgggcggtttcgctgtccagcgcccgcacctcgtccatgctgatgcgcacatgctggccgccacccatgacggcctgcgcgatcaaggggttcagggccacgtacaggcgcccgtccgcctcgtcgctggcgtactccgacagcagccgaaacccctgccgcttgcggccattctgggcgatgatggataccttccaaaggcgctcgatgcagtcctgtatgtgcttgagcgccccaccactatcgacctctgccccgatttcctttgccagcgcccgatagctacctttgaccacatggcattcagcggtgacggcctcccacttgggttccaggaacagccggagctgccgtccgccttcggtcttgggttccgggccaagcactaggccattaggcccagccatggccaccagcccttgcaggatgcgcagatcatcagcgcccagcggctccgggccgctgaactcgatccgcttgccgtcgccgtagtcatacgtcacgtccagcttgctgcgcttgcgctcgccccgcttgagggcacggaacaggccgggggccagacagtgcgccgggtcgtgccggacgtggctgaggctgtgcttgttcttaggcttcaccacggggcacccccttgctcttgcgctgcctctccagcacggcgggcttgagcaccccgccgtcatgccgcctgaaccaccgatcagcgaacggtgcgccatagttggccttgctcacaccgaagcggacgaagaaccggcgctggtcgtcgtccacaccccattcctcggcctcggcgctggtcatgctcgacaggtaggactgccagcggatgttatcgaccagtaccgagctgccccggctggcctgctgctggtcgcctgcgcccatcatggccgcgcccttgctggcatggtgcaggaacacgatagagcacccggtatcggcggcgatggcctccatgcgaccgatgacctgggccatggggccgctggcgttttcttcctcgatgtggaaccggcgcagcgtgtccagcaccatcaggcggcggccctcggcggcgcgcttgaggccgtcgaaccactccggggccatgatgttgggcaggctgccgatcagcggctggatcagcaggccgtcagccacggcttgccgttcctcggcgctgaggtgcgccccaagggcgtgcaggcggtgatgaatggcggtgggcgggtcttcggcgggcaggtagatcaccgggccggtgggcagttcgcccacctccagcagatccggcccgcctgcaatctgtgcggccagttgcagggccagcatggatttaccggcaccaccgggcgacaccagcgccccgaccgtaccggccaccatgttgggcaaaacgtagtccagcggtggcggcgctgctgcgaacgcctccagaatattgataggcttatgggtagccattgattgcctcctttgcaggcagttggtggttaggcgctggcggggtcactacccccgccctgcgccgctctgagttcttccaggcactcgcgcagcgcctcgtattcgtcgtcggtcagccagaacttgcgctgacgcatccctttggccttcatgcgctcggcatatcgcgcttggcgtacagcgtcagggctggccagcaggtcgccggtctgcttgtccttttggtctttcatatcagtcaccgagaaacttgccggggccgaaaggcttgtcttcgcggaacaaggacaaggtgcagccgtcaaggttaaggctggccatatcagcgactgaaaagcggccagcctcggccttgtttgacgtataaccaaagccaccgggcaaccaatagcccttgtcacttttgatcaggtagaccgaccctgaagcgcttttttcgtattccataaaacccccttctgtgcgtgagtactcatagtataacaggcgtgagtaccaacgcaagcactacatgctgaaatctggcccgcccctgtccatgcctcgctggcggggtgccggtgcccgtgccagctcggcccgcgcaagctggacgctgggcagacccatgaccttgctgacggtgcgctcgatgtaatccgcttcgtggccgggcttgcgctctgccagcgctgggctggcctcggccatggccttgccgatttcctcggcactgcggccccggctggccagcttctgcgcggcgataaagtcgcacttgctgaggtcatcaccgaagcgcttgaccagcccggccatctcgctgcggtactcgtccagcgccgtgcgccggtggcggctaagctgccgctcgggcagttcgaggctggccagcctgcgggccttctcctgctgccgctgggcctgctcgatctgctggccagcctgctgcaccagcgccgggccagcggtggcggtcttgcccttggattcacgcagcagcacccacggctgataaccggcgcgggtggtgtgcttgtccttgcggttggtgaagcccgccaagcggccatagtggcggctgtcggcgctggccgggtcggcgtcgtactcgctggccagcgtccgggcaatctgcccccgaagttcaccgcctgcggcgtcggccaccttgacccatgcctgatagttcttcgggctggtttccactaccagggcaggctcccggccctcggctttcatgtcatccaggtcaaactcgctgaggtcgtccaccagcaccagaccatgccgctcctgctcggcgggcctgatatacacgtcattgccctgggcattcatccgcttgagccatggcgtgttctggagcacttcggcggctgaccattcccggttcatcatctggccggtggtggcgtccctgacgccgatatcgaagcgctcacagcccatggccttgagctgtcggcctatggcctgcaaagtcctgtcgttcttcatcgggccaccaagcgattcccacacattatacgagccggaagcataaagtgtaaagcctagatccgaaggatgagccgggctgaatgatcgaccgagacaggccctgcggggctgcacacgcgcccccacccttcgggtagggggaaaggccgctaaagcggctaaaagcgctccagcgtatttctgcggggtttggtgtggggtttagcgggctttgcccgcctttccccctgccgcgcagcggtggggcggtgtgtagcctagcgcagcgaatagaccagctatccggcctctggccgggcatattgggcaagggcagcagcgccccacaagggcgctgataaccgcgcctagtggattattcttagataatcatggatggatttttccaacaccccgccagcccccgcccctgctgggtttgcaggtttgggggcgtgacagttattgcaggggttcgtgacagttattgcaggggggcgtgacagttattgcaggggttcgtgacagttagggcgcgcccagctgtctagggcggcggatttgtcctactcaggagagcgttcaccgacaaacaacagataaaacgaaaggcccagtctttcgactgagcctttcgttttatttgatgcctGCTCTTCTATGatatatatatataGGTAGAAGAGC")},
-		Stickyends_5prime: []string{""},
-		Stickyends_3prime: []string{""},
+		fivePrimeOverhangs: []string{""},
+		threePrimeUnderhangs: []string{""},
 	},
 	digesttest{
 		sequence:          wtype.DNASequence{Nm:"Forward SapI test",Seq:"GCTCTTCTGGTAAA"},
 		enzyme:            SapI.RestrictionEnzyme,
 		Finalfragments:    []string{"GCTCTTCT", "GGTAAA"},
-		Stickyends_5prime: []string{"blunt","GGT"},
-		Stickyends_3prime: []string{"ACC","blunt"},
+		fivePrimeOverhangs: []string{"blunt","GGT"},
+		threePrimeUnderhangs: []string{"ACC","blunt"},
 	},
 	digesttest{
 		sequence:          wtype.DNASequence{Nm:"Forward SapI test plasmid",Seq:"AAAAAATGGTAAAGCTCTTCCCCCCCC", Plasmid: true},
 		enzyme:            SapI.RestrictionEnzyme,
 		Finalfragments:    []string{"CCCCCCAAAAAATGGTAAAGCTCTTCC"},
-		Stickyends_5prime: []string{"CCC"},
-		Stickyends_3prime: []string{"GGG"},
+		fivePrimeOverhangs: []string{"CCC"},
+		threePrimeUnderhangs: []string{"GGG"},
 	},
 	digesttest{
 		sequence:          wtype.DNASequence{Nm:"Reverse SapI test",Seq:"AAAGGTAGAAGAGC"},
 		enzyme:            SapI.RestrictionEnzyme,
 		Finalfragments:    []string{"AAA","GGTAGAAGAGC"},
-		Stickyends_5prime: []string{"blunt","GGT"},
-		Stickyends_3prime: []string{"ACC","blunt"},
+		fivePrimeOverhangs: []string{"blunt","GGT"},
+		threePrimeUnderhangs: []string{"ACC","blunt"},
 	},
 	digesttest{
 		sequence:          wtype.DNASequence{Nm:"2 Forward and Reverse SapI test",Seq:"GCTCTTCTGGTGCTCTTCTGGTGGTAGAAGAGC"},
 		enzyme:            SapI.RestrictionEnzyme,
 		Finalfragments:    []string{"GCTCTTCT","GGTGCTCTTCT", "GGT","GGTAGAAGAGC"},
-		Stickyends_5prime: []string{"blunt","GGT","GGT","GGT"},
-		Stickyends_3prime: []string{"ACC","ACC","ACC","blunt"},
+		fivePrimeOverhangs: []string{"blunt","GGT","GGT","GGT"},
+		threePrimeUnderhangs: []string{"ACC","ACC","ACC","blunt"},
 	},
 }
 
@@ -279,18 +279,18 @@ func TestDigest(t *testing.T) {
 				}
 			}
 		}
-		if len(fivePrimeStickyEnds) != len(test.Stickyends_5prime){
+		if len(fivePrimeStickyEnds) != len(test.fivePrimeOverhangs){
 			t.Error(
 				"For", test.sequence.Name(), "\n",
 				"and", test.enzyme.Name(), "\n",
-				"expected 5 prime sticky ends:", test.Stickyends_5prime, "\n",
+				"expected 5 prime sticky ends:", test.fivePrimeOverhangs, "\n",
 				"got", fivePrimeStickyEnds, "\n",
 			)
 					
 		}else {
 			var fail bool
 			for i := 0; i < len(fivePrimeStickyEnds); i++ {
-				if fivePrimeStickyEnds[i] != test.Stickyends_5prime[i] {
+				if fivePrimeStickyEnds[i] != test.fivePrimeOverhangs[i] {
 						fail = true
 						break
 				}
@@ -299,16 +299,16 @@ func TestDigest(t *testing.T) {
 				t.Error(
 						"For", test.sequence.Name(), "\n",
 						"and", test.enzyme.Name(), "\n",
-						"expected 5 prime sticky end", test.Stickyends_5prime, "\n",
+						"expected 5 prime sticky end", test.fivePrimeOverhangs, "\n",
 						"got", fivePrimeStickyEnds, "\n",
 					)
 			}
 		}
-		if len(threePrimeStickeyEnds) != len(test.Stickyends_3prime){
+		if len(threePrimeStickeyEnds) != len(test.threePrimeUnderhangs){
 			t.Error(
 				"For", test.sequence.Name(), "\n",
 				"and", test.enzyme.Name(), "\n",
-				"expected 3 prime sticky ends:", test.Stickyends_3prime, "\n",
+				"expected 3 prime sticky ends:", test.threePrimeUnderhangs, "\n",
 				"got", threePrimeStickeyEnds, "\n",
 			)
 					
@@ -316,7 +316,7 @@ func TestDigest(t *testing.T) {
 			var fail bool
 			
 			for i := 0; i < len(threePrimeStickeyEnds); i++ {
-				if threePrimeStickeyEnds[i] != test.Stickyends_3prime[i] {
+				if threePrimeStickeyEnds[i] != test.threePrimeUnderhangs[i] {
 					fail = true
 					break
 				}
@@ -325,7 +325,7 @@ func TestDigest(t *testing.T) {
 				t.Error(
 					"For", test.sequence.Name(), "\n",
 					"and", test.enzyme.Name(), "\n",
-					"expected 3 prime sticky ends:", test.Stickyends_3prime, "\n",
+					"expected 3 prime sticky ends:", test.threePrimeUnderhangs, "\n",
 					"got", threePrimeStickeyEnds, "\n",
 				)
 			}

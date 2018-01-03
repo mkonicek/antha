@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for working with enzymes; in particular restriction enzymes
 package enzymes
 
 import "github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -39,8 +38,6 @@ var sapI = wtype.RestrictionEnzyme{
 	Isoschizomers:                     []string{"BspQI", "LguI", "PciSI", "VpaK32I"},
 }
 
-var SapI = wtype.TypeIIs{RestrictionEnzyme: sapI}
-
 var bsaI = wtype.RestrictionEnzyme{
 	Enzyme: wtype.Enzyme{
 		Nm: "BsaI",
@@ -55,8 +52,6 @@ var bsaI = wtype.RestrictionEnzyme{
 	Class:                             "TypeIIs",
 	Isoschizomers:                     []string{""},
 }
-
-var BsaI = wtype.TypeIIs{RestrictionEnzyme: bsaI}
 
 var bpiI = wtype.RestrictionEnzyme{
 	Enzyme: wtype.Enzyme{
@@ -74,8 +69,17 @@ var bpiI = wtype.RestrictionEnzyme{
 	Isoschizomers:                     []string{"BbvII", "BbsI", "BpuAI", "BSTV2I"},
 }
 
-var BpiI = wtype.TypeIIs{RestrictionEnzyme: bpiI}
+// Example TypeIIs enzymes.
+var (
+	// SapI is a TypeIIs enzyme.
+	SapI = wtype.TypeIIs{RestrictionEnzyme: sapI}
+	// BsaI is a TypeIIs enzyme
+	BsaI = wtype.TypeIIs{RestrictionEnzyme: bsaI}
+	// BpiI is a TypeIIs enzyme
+	BpiI = wtype.TypeIIs{RestrictionEnzyme: bpiI}
+)
 
+// TypeIIsEnzymeproperties carries a map of example TypeIIs enzymes.
 var TypeIIsEnzymeproperties = map[string]wtype.TypeIIs{
 	"SAPI": SapI,
 	"BSAI": BsaI,

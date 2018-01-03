@@ -78,7 +78,7 @@ func TestAssembly(t *testing.T) {
 		}
 
 		bps := 0
-		expected_len := 0
+		expectedLength := 0
 		for _, part := range parts {
 			bps += len(part.Seq)
 			tp := sisplitfwd(part.Seq)
@@ -87,14 +87,14 @@ func TestAssembly(t *testing.T) {
 			if tp == "" {
 				tp = sisplitfwd(part.Seq)
 				tp2 = revcmp(sisplitfwd(revcmp(part.Seq)))
-				expected_len += len(tp) + len(tp2) - 3
+				expectedLength += len(tp) + len(tp2) - 3
 			} else {
-				expected_len += len(tp) - 3
+				expectedLength += len(tp) - 3
 			}
 		}
 
-		if len(seqs[0].Seq) != expected_len {
-			t.Fatal(fmt.Sprintf("Data %d error: length %d is not equal to expected %d", idx, len(seqs[0].Seq), expected_len))
+		if len(seqs[0].Seq) != expectedLength {
+			t.Fatal(fmt.Sprintf("Data %d error: length %d is not equal to expected %d", idx, len(seqs[0].Seq), expectedLength))
 		}
 	}
 }
@@ -103,9 +103,9 @@ func sisplitfwd(s string) string {
 	sa := strings.SplitAfter(s, "GCTCTTC")
 	if len(sa) != 2 {
 		return ""
-	} else {
-		return sa[1][1:]
 	}
+
+	return sa[1][1:]
 }
 
 func cmp(s string) string {

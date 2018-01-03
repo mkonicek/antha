@@ -39,7 +39,7 @@ var sapI = wtype.RestrictionEnzyme{
 	Isoschizomers:                     []string{"BspQI", "LguI", "PciSI", "VpaK32I"},
 }
 
-var SapI = wtype.TypeIIs{sapI}
+var SapI = wtype.TypeIIs{RestrictionEnzyme: sapI}
 
 var bsaI = wtype.RestrictionEnzyme{
 	Enzyme: wtype.Enzyme{
@@ -56,7 +56,7 @@ var bsaI = wtype.RestrictionEnzyme{
 	Isoschizomers:                     []string{""},
 }
 
-var BsaI = wtype.TypeIIs{bsaI}
+var BsaI = wtype.TypeIIs{RestrictionEnzyme: bsaI}
 
 var bpiI = wtype.RestrictionEnzyme{
 	Enzyme: wtype.Enzyme{
@@ -74,7 +74,7 @@ var bpiI = wtype.RestrictionEnzyme{
 	Isoschizomers:                     []string{"BbvII", "BbsI", "BpuAI", "BSTV2I"},
 }
 
-var BpiI = wtype.TypeIIs{bpiI}
+var BpiI = wtype.TypeIIs{RestrictionEnzyme: bpiI}
 
 var TypeIIsEnzymeproperties = map[string]wtype.TypeIIs{
 	"SAPI": SapI,

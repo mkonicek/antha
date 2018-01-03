@@ -147,7 +147,7 @@ func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecond
 	restrictionSites := sequences.FindAll(&rotatedVector, &wtype.DNASequence{Nm: enzyme.Name(), Seq: enzyme.RecognitionSequence})
 
 	if len(restrictionSites.Positions) > 2 {
-		err := fmt.Errorf("must have 2 restriction sites to rotate vector. %d %s sites found in vector %s - cannot rotate", len(restrictionSites.Positions), enzyme.Name, vector.Nm)
+		err := fmt.Errorf("must have 2 restriction sites to rotate vector. %d %s sites found in vector %s - cannot rotate", len(restrictionSites.Positions), enzyme.Name(), vector.Name())
 		return rotatedVector, err
 	}
 
@@ -162,11 +162,11 @@ func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecond
 		}
 	}
 	if len(revSites) > 1 {
-		return rotatedVector, fmt.Errorf("%d reverse sites for %s found in vector %s", len(revSites), enzyme.Name, vector.Name())
+		return rotatedVector, fmt.Errorf("%d reverse sites for %s found in vector %s", len(revSites), enzyme.Name(), vector.Name())
 	}
 
 	if len(fwdSites) > 1 {
-		return rotatedVector, fmt.Errorf("%d forward sites for %s found in vector %s", len(fwdSites), enzyme.Name, vector.Name())
+		return rotatedVector, fmt.Errorf("%d forward sites for %s found in vector %s", len(fwdSites), enzyme.Name(), vector.Name())
 	}
 
 	fwdStart, revStart := fwdSites[0].Coordinates(wtype.CODEFRIENDLY, wtype.IGNOREDIRECTION)
@@ -556,7 +556,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		if err != nil {
 			errormessage = err.Error()
 		}
-		merr := fmt.Errorf("Yay! this should work but there seems to be %d possible plasmids which could form: %+v", len(plasmidProducts), errormessage, plasmidProducts)
+		merr := fmt.Errorf("Yay! this should work but there seems to be %d possible plasmids which could form for %s: %s", len(plasmidProducts), assemblyparameters.ToString(), errormessage)
 		s = merr.Error()
 	}
 

@@ -96,7 +96,7 @@ func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.
 
 	sperkblower, found := polymeraseproperties["SperKb_lower"]
 	if !found {
-		return wunit.Time{}, fmt.Errorf("no property, SperKb_lower found for", polymerase.CName)
+		return wunit.Time{}, fmt.Errorf("no property, SperKb_lower found for %s", polymerase.Name())
 	}
 
 	return wunit.NewTime(float64(len(targetSequence.Sequence()))/sperkblower, "s"), nil

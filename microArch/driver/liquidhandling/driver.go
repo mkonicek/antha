@@ -29,6 +29,18 @@ import (
 // driver interface
 
 type LiquidhandlingDriver interface {
+	AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus
+	RemoveAllPlates() driver.CommandStatus
+	RemovePlateAt(position string) driver.CommandStatus
+	Initialize() driver.CommandStatus
+	Finalize() driver.CommandStatus
+	Message(level int, title, text string, showcancel bool) driver.CommandStatus // Should not be in this interface
+	GetOutputFile() (string, driver.CommandStatus)
+	GetCapabilities() (LHProperties, driver.CommandStatus)
+}
+
+type LowLevelLiquidhandlingDriver interface {
+	LiquidhandlingDriver
 	Move(deckposition []string, wellcoords []string, reference []int, offsetX, offsetY, offsetZ []float64, plate_type []string, head int) driver.CommandStatus
 	MoveRaw(head int, x, y, z float64) driver.CommandStatus
 	Aspirate(volume []float64, overstroke []bool, head int, multi int, platetype []string, what []string, llf []bool) driver.CommandStatus
@@ -37,20 +49,13 @@ type LiquidhandlingDriver interface {
 	UnloadTips(channels []int, head, multi int, platetype, position, well []string) driver.CommandStatus
 	SetPipetteSpeed(head, channel int, rate float64) driver.CommandStatus
 	SetDriveSpeed(drive string, rate float64) driver.CommandStatus
-	Initialize() driver.CommandStatus
-	Finalize() driver.CommandStatus
 	Wait(time float64) driver.CommandStatus
 	Mix(head int, volume []float64, platetype []string, cycles []int, multi int, what []string, blowout []bool) driver.CommandStatus
 	ResetPistons(head, channel int) driver.CommandStatus
-	AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus
-	RemoveAllPlates() driver.CommandStatus
-	RemovePlateAt(position string) driver.CommandStatus
-	Message(level int, title, text string, showcancel bool) driver.CommandStatus
-	GetCapabilities() (LHProperties, driver.CommandStatus)
 	UpdateMetaData(props *LHProperties) driver.CommandStatus
-	GetOutputFile() (string, driver.CommandStatus)
 }
 
+// should be named UnimplementedLiquidHandlingDriver
 type ExtendedLiquidhandlingDriver interface {
 	LiquidhandlingDriver
 	SetPositionState(position string, state driver.PositionState) driver.CommandStatus
@@ -64,10 +69,11 @@ type ExtendedLiquidhandlingDriver interface {
 	LightsOff() driver.CommandStatus
 	LoadAdaptor(param int) driver.CommandStatus
 	UnloadAdaptor(param int) driver.CommandStatus
-	// refactored into other interfaces?
 	Open() driver.CommandStatus
 	Close() driver.CommandStatus
 }
 
-type HighLevelLiquidHandlingDriver interface {
+type HighLevelLiquidhandlingDriver interface {
+	LiquidhandlingDriver
+	// your methods here
 }

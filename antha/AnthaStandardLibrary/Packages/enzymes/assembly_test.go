@@ -83,10 +83,9 @@ func TestAssembly(t *testing.T) {
 			bps += len(part.Seq)
 			tp := sisplitfwd(part.Seq)
 			tp = revcmp(sisplitfwd(revcmp(tp)))
-			tp2 := ""
 			if tp == "" {
 				tp = sisplitfwd(part.Seq)
-				tp2 = revcmp(sisplitfwd(revcmp(part.Seq)))
+				tp2 := revcmp(sisplitfwd(revcmp(part.Seq)))
 				expectedLength += len(tp) + len(tp2) - 3
 			} else {
 				expectedLength += len(tp) - 3

@@ -47,11 +47,7 @@ var comet1part = wtype.DNASequence{
 	Seq:     strings.ToUpper("gctcttctatgacggcattgacggaaggcgcaaaattgttcgaaaaagaaatcccatacatcaccgaactggaaggcgatgttgaaggtatgaagttcatcattaagggtgagggcaccggcgatgcaactacgggcaccattaaagcgaagtatatctgcaccaccggtgacgttccggtgccgtggagcacgctggtcaccaccctgacctatggcgcgcagtgtttcgcgaagtacggtccggaactgaaggacttctataagagctgtatgcctgagggctatgttcaggagcgtaccattacctttgagggtgatggtgtctttaagacgcgtgctgaggtgacctttgagaatggttccgtgtacaatcgcgtgaaactgaatggtcaaggttttaagaaagatggtcacgtgctgggcaaaaacctggagtttaactttactccgcattgcctgtgcatttggggcgaccaagcgaaccacggtctgaaaagcgcgttcaagattatgcacgagattacgggtagcaaagaggacttcatcgtggccgaccacacgcagatgaacaccccgatcggtggcggtccggtccatgtcccggagtaccaccacttgaccgtttggacctctttcggtaaagacccggatgatgacgaaacggatcatctgaatattgttgaggttatcaaagccgtcgacctggaaacttaccgttaatgataatgaggtagaagagc"),
 	Plasmid: false,
 }
-var cometfwdsapI = wtype.DNASequence{
-	Nm:      "test comet fwd sapI",
-	Seq:     strings.ToUpper("tatgacggcattgacggaaggcgcaaaattgttcgaaaaagaaatcccatacatcaccgaactggaaggcgatgttgaaggtatgaagttcatcattaagggtgagggcaccggcgatgcaactacgggcaccattaaagcgaagtatatctgcaccaccggtgacgttccggtgccgtggagcacgctggtcaccaccctgacctatggcgcgcagtgtttcgcgaagtacggtccggaactgaaggacttctataagagctgtatgcctgagggctatgttcaggagcgtaccattacctttgagggtgatggtgtctttaagacgcgtgctgaggtgacctttgagaatggttccgtgtacaatcgcgtgaaactgaatggtcaaggttttaagaaagatggtcacgtgctgggcaaaaacctggagtttaactttactccgcattgcctgtgcatttggggcgaccaagcgaaccacggtctgaaaagcgcgttcaagattatgcacgagattacgggtagcaaagaggacttcatcgtggccgaccacacgcagatgaacaccccgatcggtggcggtccggtccatgtcccggagtaccaccacttgaccgtttggacctctttcggtaaagacccggatgatgacgaaacggatcatctgaatattgttgaggttatcaaagccgtcgacctggaaacttaccgttaatgataatgaggtagaagagc"),
-	Plasmid: false,
-}
+
 var comet2part1 = wtype.DNASequence{
 	Nm:      "test comet 2.1 part",
 	Seq:     strings.ToUpper("gctcttctatgacggcattgacggaaggcgcaaaattgttcgaaaaagaaatcccatacatcaccgaactggaaggcgatgttgaaggtatgaagttcatcattaagggtgagggcaccggcgatgcaactacgggcaccattaaagcgaagtatatctgcaccaccggtgacgttccggtgccgtggagcacgctggtcaccaccctgacctatggcgcgcagtgtttcgcgaagtacggtccggaactggaagagc"),
@@ -149,50 +145,50 @@ func TestRestrictionsitefinder(t *testing.T) {
 	for _, test := range restrictionsitetests {
 		sitesFound := Restrictionsitefinder(test.sequence, test.enzymelist)
 		for i := 0; i < len(sitesFound); i++ {
-			if sitesFound[i].Numberofsites != test.sitesfound[i].Numberofsites {
+			if sitesFound[i].NumberOfSites != test.sitesfound[i].NumberOfSites {
 				t.Error(
 					"For", test.sequence.Name(), "\n",
 					"and", test.enzymelist[i].Name(), "\n",
-					"expected", test.sitesfound[i].Numberofsites, "sites \n",
-					"got", sitesFound[i].Numberofsites, "sites \n",
+					"expected", test.sitesfound[i].NumberOfSites, "sites \n",
+					"got", sitesFound[i].NumberOfSites, "sites \n",
 				)
 			}
-			if len(sitesFound[i].Forwardpositions) != len(test.sitesfound[i].Forwardpositions){
+			if len(sitesFound[i].ForwardPositions) != len(test.sitesfound[i].ForwardPositions){
 					t.Error(
 						"For", test.sequence.Name(), "\n",
 						"and", test.enzymelist[i].Name(), "\n",
-						"expected", test.sitesfound[i].Forwardpositions, "\n",
-						"got", sitesFound[i].Forwardpositions, "\n",
+						"expected", test.sitesfound[i].ForwardPositions, "\n",
+						"got", sitesFound[i].ForwardPositions, "\n",
 					)
 					
 			}else{
-				for j := range sitesFound[i].Forwardpositions {
-					if sitesFound[i].Forwardpositions[j] != test.sitesfound[i].Forwardpositions[j] {
+				for j := range sitesFound[i].ForwardPositions {
+					if sitesFound[i].ForwardPositions[j] != test.sitesfound[i].ForwardPositions[j] {
 						t.Error(
 							"For", test.sequence.Name(), "\n",
 							"and", test.enzymelist[i].Name(), "\n",
-							"expected forward positions ", test.sitesfound[i].Forwardpositions, "\n",
-							"got", sitesFound[i].Forwardpositions, "\n",
+							"expected forward positions ", test.sitesfound[i].ForwardPositions, "\n",
+							"got", sitesFound[i].ForwardPositions, "\n",
 						)
 					}
 				}
 			}
-			if len(sitesFound[i].Reversepositions) != len(test.sitesfound[i].Reversepositions){
+			if len(sitesFound[i].ReversePositions) != len(test.sitesfound[i].ReversePositions){
 					t.Error(
 						"For", test.sequence.Name(), "\n",
 						"and", test.enzymelist[i].Name(), "\n",
-						"expected reverse positions ", test.sitesfound[i].Reversepositions, "\n",
-						"got", sitesFound[i].Reversepositions, "\n",
+						"expected reverse positions ", test.sitesfound[i].ReversePositions, "\n",
+						"got", sitesFound[i].ReversePositions, "\n",
 					)
 					
 			}else {
-				for j := range sitesFound[i].Reversepositions {
-					if sitesFound[i].Reversepositions[j] != test.sitesfound[i].Reversepositions[j] {
+				for j := range sitesFound[i].ReversePositions {
+					if sitesFound[i].ReversePositions[j] != test.sitesfound[i].ReversePositions[j] {
 						t.Error(
 							"For", test.sequence.Name(), "\n",
 							"and", test.enzymelist[i].Name(), "\n",
-							"expected", test.sitesfound[i].Reversepositions, "\n",
-							"got", sitesFound[i].Reversepositions, "\n",
+							"expected", test.sitesfound[i].ReversePositions, "\n",
+							"got", sitesFound[i].ReversePositions, "\n",
 						)
 					}
 				}
@@ -366,7 +362,7 @@ type assemblytest struct {
 }
 
 func bbsI() wtype.TypeIIs{
-	enzyme, _ := lookup.TypeIIsLookup("bbsI")
+	enzyme, _ := lookup.TypeIIs("bbsI")
 	return enzyme
 }
 

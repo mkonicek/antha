@@ -116,17 +116,11 @@ func VectorEnds(vector wtype.DNASequence, enzyme wtype.TypeIIs) (desiredstickyen
 
 	for i := 0; i < len(stickyends5)-1; i++ {
 
-		currentlargestfragment := ""
+		if stickyends5[i] != "" && len(fragments[i]) > 0 {
 
-		if stickyends5[i] != "" && len(fragments[i]) > len(currentlargestfragment) {
-
-			currentlargestfragment = fragments[i]
-			// RevComp() // fill in later
 			vector3primestickyend = stickyends5[i]
 			desiredstickyend5prime = stickyends5[i+1]
-			/*{
-				break
-			}*/
+
 		}
 	}
 	return
@@ -155,17 +149,11 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 
 	for i := 0; i < len(stickyends5)-1; i++ {
 
-		currentlargestfragment := ""
+		if stickyends5[i] != "" && len(fragments[i]) > 0 {
 
-		if stickyends5[i] != "" && len(fragments[i]) > len(currentlargestfragment) {
-
-			currentlargestfragment = fragments[i]
-			// RevComp() // fill in later
 			vector3primestickyend = stickyends5[i]
 			desiredstickyend5prime = stickyends5[i+1]
-			/*{
-				break
-			}*/
+
 		}
 	} // fill in later
 
@@ -414,14 +402,14 @@ func MakeStandardTypeIIsassemblyParts(parts []wtype.DNASequence, assemblystandar
 // CheckForExistingTypeIISEnds checks for whether a part already has typeIIs ends added.
 func CheckForExistingTypeIISEnds(part wtype.DNASequence, enzyme wtype.TypeIIs) (numberofsitesfound int, stickyends5 []string, stickyends3 []string) {
 
-	enz, err := lookup.EnzymeLookup(enzyme.Name())
+	enz, err := lookup.RestrictionEnzyme(enzyme.Name())
 	if err != nil {
 		panic(err.Error())
 	}
 
 	sites := Restrictionsitefinder(part, []wtype.RestrictionEnzyme{enz})
 
-	numberofsitesfound = sites[0].Numberofsites
+	numberofsitesfound = sites[0].NumberOfSites
 	_, stickyends5, stickyends3 = TypeIIsdigest(part, enzyme)
 
 	return

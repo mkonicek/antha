@@ -197,7 +197,7 @@ func FastaAndSeqReports(assemblyparameters enzymes.Assemblyparameters) (fastafil
 
 	// should change this to rebase lookup; what happens if this fails?
 	//enzyme := TypeIIsEnzymeproperties[enzymename]
-	enzyme, err := lookup.TypeIIsLookup(enzymename)
+	enzyme, err := lookup.TypeIIs(enzymename)
 	if err != nil {
 		return fastafiles, summaryfiles, err
 	}
@@ -236,7 +236,7 @@ func FastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameter
 		enzymename := strings.ToUpper(assemblyparameters.Enzymename)
 
 		// should change this to rebase lookup; what happens if this fails?
-		enzyme, err := lookup.TypeIIsLookup(enzymename)
+		enzyme, err := lookup.TypeIIs(enzymename)
 		if err != nil {
 			return anthafile, "", err
 		}

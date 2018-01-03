@@ -9,7 +9,7 @@ import (
 )
 
 func TestNoRotationNeeded(t *testing.T) {
-	enzyme, _ := lookup.TypeIIsLookup("SAPI")
+	enzyme, _ := lookup.TypeIIs("SAPI")
 	seq := "GCTCTTCxxxxx"
 	rseq := "GCTCTTCxxxxx"
 
@@ -26,7 +26,7 @@ func TestNoRotationNeeded(t *testing.T) {
 	}
 }
 func TestSomeRotationNeeded(t *testing.T) {
-	enzyme, _ := lookup.TypeIIsLookup("SAPI")
+	enzyme, _ := lookup.TypeIIs("SAPI")
 	seq := "xxxxxGCTCTTCn"
 	rseq := "GCTCTTCnxxxxx"
 

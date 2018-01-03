@@ -34,33 +34,67 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
+const (
+	blunt string = "blunt"
+)
+
 // RestrictionSites holds information on restriction sites found in a DNA sequence
 // for a specified RestrictionEnzyme.
 // todo: refactor
 type RestrictionSites struct {
 	Enzyme              wtype.RestrictionEnzyme
 	RecognitionSequence string
-	Sitefound           bool
-	Numberofsites       int
-	Forwardpositions    []int
-	Reversepositions    []int
+	SiteFound           bool
+	NumberOfSites       int
+	ForwardPositions    []int
+	ReversePositions    []int
 }
+
+/*
+func (sites RestrictionSites) SiteFound() bool {
+	if len(sites.Positions) > 0 {
+		return true
+	}
+	return false
+}
+
+func (sites RestrictionSites) SiteFound() bool {
+	if len(sites.Positions) > 0 {
+		return true
+	}
+	return false
+}
+
+func (sites RestrictionSites) SiteFound() bool {
+	if len(sites.Positions) > 0 {
+		return true
+	}
+	return false
+}
+
+func (sites RestrictionSites) SiteFound() bool {
+	if len(sites.Positions) > 0 {
+		return true
+	}
+	return false
+}
+*/
 
 // Positions returns a set of restriction site positions.
 // Valid arguments which may be specified are "FWD", "REV or "ALL" to return the correct type of positions.
 // todo: refactor
 func (sites *RestrictionSites) Positions(fwdRevorNil string) (positions []int) {
 	if strings.ToUpper(fwdRevorNil) == strings.ToUpper("FWD") {
-		positions = sites.Forwardpositions
+		positions = sites.ForwardPositions
 	} else if strings.ToUpper(fwdRevorNil) == strings.ToUpper("REV") {
-		positions = sites.Reversepositions
+		positions = sites.ReversePositions
 	} else if strings.ToUpper(fwdRevorNil) == strings.ToUpper("") ||
 		strings.ToUpper(fwdRevorNil) == strings.ToUpper("ALL") {
 		positions = make([]int, 0)
-		for _, pos := range sites.Forwardpositions {
+		for _, pos := range sites.ForwardPositions {
 			positions = append(positions, pos)
 		}
-		for _, pos := range sites.Reversepositions {
+		for _, pos := range sites.ReversePositions {
 			positions = append(positions, pos)
 		}
 	}
@@ -72,10 +106,10 @@ func (sites *RestrictionSites) Positions(fwdRevorNil string) (positions []int) {
 func SitepositionString(sitesperpart RestrictionSites) (sitepositions string) {
 	Num := make([]string, 0)
 
-	for _, site := range sitesperpart.Forwardpositions {
+	for _, site := range sitesperpart.ForwardPositions {
 		Num = append(Num, strconv.Itoa(site))
 	}
-	for _, site := range sitesperpart.Reversepositions {
+	for _, site := range sitesperpart.ReversePositions {
 		Num = append(Num, strconv.Itoa(site))
 	}
 
@@ -103,21 +137,21 @@ func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.Restri
 			options := search.FindAll(sequence.Seq, wobbleoption)
 			for _, option := range options {
 				if option != 0 {
-					enzymesite.Forwardpositions = append(enzymesite.Forwardpositions, option)
+					enzymesite.ForwardPositions = append(enzymesite.ForwardPositions, option)
 				}
 			}
 			if enzyme.RecognitionSequence != strings.ToUpper(sequences.RevComp(wobbleoption)) {
 				revoptions := search.FindAll(sequence.Seq, sequences.RevComp(wobbleoption))
 				for _, option := range revoptions {
 					if option != 0 {
-						enzymesite.Reversepositions = append(enzymesite.Reversepositions, option)
+						enzymesite.ReversePositions = append(enzymesite.ReversePositions, option)
 					}
 				}
 
 			}
-			enzymesite.Numberofsites = len(enzymesite.Forwardpositions) + len(enzymesite.Reversepositions)
-			if enzymesite.Numberofsites > 0 {
-				enzymesite.Sitefound = true
+			enzymesite.NumberOfSites = len(enzymesite.ForwardPositions) + len(enzymesite.ReversePositions)
+			if enzymesite.NumberOfSites > 0 {
+				enzymesite.SiteFound = true
 			}
 
 		}
@@ -173,14 +207,6 @@ func (fragment Digestedfragment) Ends() string {
 	}
 
 	return fmt.Sprintf(`5' end: %s; 3' end: %s`, dnaSeq.Overhang5prime.ToString(), dnaSeq.Overhang3prime.ToString())
-}
-
-func fragmentEnds(fragments []Digestedfragment) string {
-	var summaries []string
-	for i, fragment := range fragments {
-		summaries = append(summaries, fmt.Sprintf("fragment %d: %s", i, fragment.Ends()))
-	}
-	return strings.Join(summaries, "\n")
 }
 
 func toDigestedFragment(seq wtype.DNASequence) (fragment Digestedfragment) {
@@ -337,7 +363,7 @@ func searchandCutRev(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 						if i != len(cuttopstrand)-1 {
 							frag2topStickyend3prime = ""
 						} else {
-							frag2topStickyend3prime = "blunt"
+							frag2topStickyend3prime = blunt
 						}
 						finaltopstrandstickyends3prime = append(finaltopstrandstickyends3prime, frag2topStickyend3prime)
 					}
@@ -345,9 +371,9 @@ func searchandCutRev(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 				// blunt cut
 				if len(recognitionsitedown) == len(recognitionsiteup) {
 					for i := 1; i < len(cuttopstrand); i++ {
-						frag2topStickyend5prime = "blunt"
+						frag2topStickyend5prime = blunt
 						finaltopstrandstickyends5prime = append(finaltopstrandstickyends5prime, frag2topStickyend5prime)
-						frag2topStickyend3prime = "blunt"
+						frag2topStickyend3prime = blunt
 						finaltopstrandstickyends3prime = append(finaltopstrandstickyends3prime, frag2topStickyend3prime)
 					}
 				}
@@ -360,7 +386,7 @@ func searchandCutRev(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 						if i != len(cuttopstrand)-1 {
 							frag2topStickyend3prime = recognitionsiteup[typeIIenzyme.EndLength:]
 						} else {
-							frag2topStickyend3prime = "blunt"
+							frag2topStickyend3prime = blunt
 						}
 						finaltopstrandstickyends3prime = append(finaltopstrandstickyends3prime, frag2topStickyend3prime)
 					}
@@ -444,7 +470,7 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 		frag2topStickyend3prime := ""
 		// cut with 5prime overhang
 		if len(recognitionsitedown) > len(recognitionsiteup) {
-			frag2topStickyend5prime = "blunt"
+			frag2topStickyend5prime = blunt
 			topStrandStickyEnds5prime = append(topStrandStickyEnds5prime, frag2topStickyend5prime)
 			frag2topStickyend3prime := ""
 			topStrandStickyEnds3Prime = append(topStrandStickyEnds3Prime, frag2topStickyend3prime)
@@ -454,7 +480,7 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 				if i != len(cuttopstrand)-1 {
 					frag2topStickyend3prime = ""
 				} else {
-					frag2topStickyend3prime = "blunt"
+					frag2topStickyend3prime = blunt
 				}
 				topStrandStickyEnds3Prime = append(topStrandStickyEnds3Prime, frag2topStickyend3prime)
 
@@ -464,15 +490,15 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 		// blunt cut
 		if len(recognitionsitedown) == len(recognitionsiteup) {
 			for i := 0; i < len(cuttopstrand); i++ {
-				frag2topStickyend5prime = "blunt"
+				frag2topStickyend5prime = blunt
 				topStrandStickyEnds5prime = append(topStrandStickyEnds5prime, frag2topStickyend5prime)
-				frag2topStickyend3prime = "blunt"
+				frag2topStickyend3prime = blunt
 				topStrandStickyEnds3Prime = append(topStrandStickyEnds3Prime, frag2topStickyend3prime)
 			}
 		}
 		// cut with 3prime overhang
 		if len(recognitionsitedown) < len(recognitionsiteup) {
-			frag2topStickyend5prime = "blunt"
+			frag2topStickyend5prime = blunt
 			topStrandStickyEnds5prime = append(topStrandStickyEnds5prime, frag2topStickyend5prime)
 
 			frag2topStickyend3prime = sequences.Suffix(recognitionsiteup, typeIIenzyme.EndLength)
@@ -484,7 +510,7 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 				if i != len(cuttopstrand)-1 {
 					frag2topStickyend3prime = recognitionsiteup[typeIIenzyme.EndLength:]
 				} else {
-					frag2topStickyend3prime = "blunt"
+					frag2topStickyend3prime = blunt
 				}
 				topStrandStickyEnds3Prime = append(topStrandStickyEnds3Prime, frag2topStickyend3prime)
 
@@ -492,8 +518,8 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 		}
 	} else {
 		topstranddigestproducts = []string{originalfwdsequence}
-		topStrandStickyEnds5prime = []string{"blunt"}
-		topStrandStickyEnds3Prime = []string{"blunt"}
+		topStrandStickyEnds5prime = []string{blunt}
+		topStrandStickyEnds3Prime = []string{blunt}
 	}
 
 	finalFragments, topStrandStickyEnds5prime, topStrandStickyEnds3Prime = searchandCutRev(typeIIenzyme, topstranddigestproducts, topStrandStickyEnds5prime, topStrandStickyEnds3Prime)

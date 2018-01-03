@@ -34,24 +34,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func fragmentsToDNASequences(fragments []Digestedfragment) (sequences []wtype.DNASequence, err error) {
-
-	var errs []string
-
-	for i, fragment := range fragments {
-		seq, err := fragment.ToDNASequence("fragment" + strconv.Itoa(i))
-		sequences = append(sequences, seq)
-		if err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
-
-	if len(errs) > 0 {
-		err = fmt.Errorf(strings.Join(errs, ";"))
-	}
-	return
-}
-
 // fragmentsFormPlasmid checks if the two fragments can join both ends to forma plasmid
 func fragmentsFormPlasmid(upfragment, downfragment Digestedfragment) bool {
 	if strings.EqualFold(sequences.RevComp(upfragment.FivePrimeBottomStrandStickyend), downfragment.FivePrimeTopStrandStickyend) && strings.EqualFold(sequences.RevComp(downfragment.FivePrimeBottomStrandStickyend), upfragment.FivePrimeTopStrandStickyend) {
@@ -446,7 +428,7 @@ func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (i
 	// fetch enzyme properties
 	enzymename := strings.ToUpper(assemblyParameters.Enzymename)
 
-	enzyme, err := lookup.TypeIIsLookup(enzymename)
+	enzyme, err := lookup.TypeIIs(enzymename)
 
 	if err != nil {
 		return insert, fmt.Errorf("failure calculating insert: %s", err.Error())
@@ -485,7 +467,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	// fetch enzyme properties
 	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
 
-	enzyme, err := lookup.TypeIIsLookup(enzymename)
+	enzyme, err := lookup.TypeIIs(enzymename)
 
 	if err != nil {
 		return s, successfulassemblies, sites, newDNASequences, err
@@ -649,36 +631,34 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 			errors[construct.Constructname] = err.Error()
 
 			if strings.Contains(err.Error(), "Failure Joining fragments after digestion") {
-				sitesperpart := make([]RestrictionSites, 0)
 				constructsitesstring := make([]string, 0)
 				constructsitesstring = append(constructsitesstring, output)
-				sitestring := ""
-				enzyme, err := lookup.EnzymeLookup(construct.Enzymename)
+				enzyme, err := lookup.RestrictionEnzyme(construct.Enzymename)
 				if err != nil {
 
 					originalerror := errors[construct.Constructname]
 
 					errors[construct.Constructname] = originalerror + " and " + err.Error()
 				}
-				sitesperpart = Restrictionsitefinder(construct.Vector, []wtype.RestrictionEnzyme{enzyme})
+				sitesperpart := Restrictionsitefinder(construct.Vector, []wtype.RestrictionEnzyme{enzyme})
 
-				if sitesperpart[0].Numberofsites != 2 {
+				if sitesperpart[0].NumberOfSites != 2 {
 					// need to loop through sitesperpart
 
 					sitepositions := SitepositionString(sitesperpart[0])
-					sitestring = "For " + construct.Vector.Nm + ": " + strconv.Itoa(sitesperpart[0].Numberofsites) + " sites found at positions: " + sitepositions
+					sitestring := "For " + construct.Vector.Nm + ": " + strconv.Itoa(sitesperpart[0].NumberOfSites) + " sites found at positions: " + sitepositions
 					constructsitesstring = append(constructsitesstring, sitestring)
 				}
 
 				for _, part := range construct.Partsinorder {
 					sitesperpart = Restrictionsitefinder(part, []wtype.RestrictionEnzyme{enzyme})
-					if sitesperpart[0].Numberofsites != 2 {
+					if sitesperpart[0].NumberOfSites != 2 {
 						sitepositions := SitepositionString(sitesperpart[0])
 						positions := ""
-						if sitesperpart[0].Numberofsites != 0 {
+						if sitesperpart[0].NumberOfSites != 0 {
 							positions = fmt.Sprint("at positions:", sitepositions)
 						}
-						sitestring = fmt.Sprint("For ", part.Nm, ": ", strconv.Itoa(sitesperpart[0].Numberofsites), " sites were found ", positions)
+						sitestring := fmt.Sprint("For ", part.Nm, ": ", strconv.Itoa(sitesperpart[0].NumberOfSites), " sites were found ", positions)
 						constructsitesstring = append(constructsitesstring, sitestring)
 					}
 

@@ -353,8 +353,8 @@ func searchandCutRev(typeIIenzyme wtype.RestrictionEnzyme, topstranddigestproduc
 					}
 					finaldigestproducts = append(finaldigestproducts, joineddownstream)
 				}
-				frag2topStickyend5prime := ""
-				frag2topStickyend3prime := ""
+				var frag2topStickyend5prime string
+				var frag2topStickyend3prime string
 				// cut with 5prime overhang
 				if len(recognitionsitedown) > len(recognitionsiteup) {
 					for i := 1; i < len(cuttopstrand); i++ {
@@ -466,8 +466,8 @@ func TypeIIDigest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzy
 
 		}
 
-		frag2topStickyend5prime := ""
-		frag2topStickyend3prime := ""
+		var frag2topStickyend5prime string
+		var frag2topStickyend3prime string
 		// cut with 5prime overhang
 		if len(recognitionsitedown) > len(recognitionsiteup) {
 			frag2topStickyend5prime = blunt
@@ -831,7 +831,7 @@ func makeFragments(enzyme wtype.TypeIIs, positionPairs []sequences.PositionPair,
 		}
 
 		if len(newFragments) != len(fragments) {
-			panic("Ahhhh")
+			panic("something's gone wrong: new fragments are different length to original")
 		}
 
 		return newFragments, nil
@@ -850,19 +850,16 @@ func EndReport(restrictionenzyme wtype.TypeIIs, vectordata wtype.DNASequence, pa
 	_, stickyends5, stickyends3 := TypeIIsdigest(vectordata, restrictionenzyme)
 
 	allends := make([]string, 0)
-	ends := ""
 
-	ends = text.Print(vectordata.Nm+" 5 Prime end: ", stickyends5)
-	allends = append(allends, ends)
-	ends = text.Print(vectordata.Nm+" 3 Prime end: ", stickyends3)
-	allends = append(allends, ends)
+	vector5PrimeEnd := text.Print(vectordata.Nm+" 5 Prime end: ", stickyends5)
+	vector3PrimeEnd := text.Print(vectordata.Nm+" 3 Prime end: ", stickyends3)
+	allends = append(allends, vector5PrimeEnd, vector3PrimeEnd)
 
 	for _, part := range parts {
 		_, stickyends5, stickyends3 = TypeIIsdigest(part, restrictionenzyme)
-		ends = text.Print(part.Nm+" 5 Prime end: ", stickyends5)
-		allends = append(allends, ends)
-		ends = text.Print(part.Nm+" 3 Prime end: ", stickyends3)
-		allends = append(allends, ends)
+		part5PrimeEnd := text.Print(part.Nm+" 5 Prime end: ", stickyends5)
+		part3PrimeEnd := text.Print(part.Nm+" 3 Prime end: ", stickyends3)
+		allends = append(allends, part5PrimeEnd, part3PrimeEnd)
 	}
 	endreport = strings.Join(allends, " ")
 	return

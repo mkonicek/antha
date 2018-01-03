@@ -85,11 +85,9 @@ var (
 // CalculateExtensionTime returns the calculated extension time to amplify a targetSequence with a specified polymerase.
 // An error will be returned if the required properties cannot be found for the polymerase.
 // Currently the standard valid polymerase options are Taq and Q5Polymerase.
-func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.DNASequence) (wunit.Time, error) {
+func CalculateExtensionTime(polymeraseName string, targetSequence wtype.DNASequence) (wunit.Time, error) {
 
-	polymerasename := polymerase.Name()
-
-	polymeraseproperties, polymerasefound := dnaPolymeraseProperties[polymerasename]
+	polymeraseproperties, polymerasefound := dnaPolymeraseProperties[polymeraseName]
 
 	if !polymerasefound {
 
@@ -98,7 +96,7 @@ func CalculateExtensionTime(polymerase *wtype.LHComponent, targetSequence wtype.
 
 	sperkblower, found := polymeraseproperties["SperKb_lower"]
 	if !found {
-		return wunit.Time{}, fmt.Errorf("no property, SperKb_lower found for %s", polymerase.Name())
+		return wunit.Time{}, fmt.Errorf("no property, SperKb_lower found for %s", polymeraseName)
 	}
 
 	return wunit.NewTime(float64(len(targetSequence.Sequence()))/sperkblower, "s"), nil

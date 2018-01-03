@@ -493,14 +493,14 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	}
 
 	if len(plasmidProducts) == 1 {
-		sites = Restrictionsitefinder(plasmidProducts[0], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
+		sites = RestrictionSiteFinder(plasmidProducts[0], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
 	}
 
 	// returns sites found in first plasmid in array! should be changed later!
 	if len(plasmidProducts) > 1 {
 		sites = make([]RestrictionSites, 0)
 		for i := 0; i < len(plasmidProducts); i++ {
-			sitesperplasmid := Restrictionsitefinder(plasmidProducts[i], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
+			sitesperplasmid := RestrictionSiteFinder(plasmidProducts[i], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
 			for _, site := range sitesperplasmid {
 				sites = append(sites, site)
 			}
@@ -640,25 +640,25 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 
 					errors[construct.Constructname] = originalerror + " and " + err.Error()
 				}
-				sitesperpart := Restrictionsitefinder(construct.Vector, []wtype.RestrictionEnzyme{enzyme})
+				sitesperpart := RestrictionSiteFinder(construct.Vector, []wtype.RestrictionEnzyme{enzyme})
 
-				if sitesperpart[0].NumberOfSites != 2 {
+				if sitesperpart[0].NumberOfSites() != 2 {
 					// need to loop through sitesperpart
 
 					sitepositions := SitepositionString(sitesperpart[0])
-					sitestring := "For " + construct.Vector.Nm + ": " + strconv.Itoa(sitesperpart[0].NumberOfSites) + " sites found at positions: " + sitepositions
+					sitestring := "For " + construct.Vector.Nm + ": " + strconv.Itoa(sitesperpart[0].NumberOfSites()) + " sites found at positions: " + sitepositions
 					constructsitesstring = append(constructsitesstring, sitestring)
 				}
 
 				for _, part := range construct.Partsinorder {
-					sitesperpart = Restrictionsitefinder(part, []wtype.RestrictionEnzyme{enzyme})
-					if sitesperpart[0].NumberOfSites != 2 {
+					sitesperpart = RestrictionSiteFinder(part, []wtype.RestrictionEnzyme{enzyme})
+					if sitesperpart[0].NumberOfSites() != 2 {
 						sitepositions := SitepositionString(sitesperpart[0])
 						positions := ""
-						if sitesperpart[0].NumberOfSites != 0 {
+						if sitesperpart[0].NumberOfSites() != 0 {
 							positions = fmt.Sprint("at positions:", sitepositions)
 						}
-						sitestring := fmt.Sprint("For ", part.Nm, ": ", strconv.Itoa(sitesperpart[0].NumberOfSites), " sites were found ", positions)
+						sitestring := fmt.Sprint("For ", part.Nm, ": ", strconv.Itoa(sitesperpart[0].NumberOfSites()), " sites were found ", positions)
 						constructsitesstring = append(constructsitesstring, sitestring)
 					}
 

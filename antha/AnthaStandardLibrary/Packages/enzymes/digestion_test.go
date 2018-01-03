@@ -71,19 +71,15 @@ var restrictionsitetests = []restrictionsitetest{
 	sitesfound:	[]RestrictionSites{
 			{
 				SapI.RestrictionEnzyme,
-				"GCTCTTC",
-				true,
-				2,
-				[]int{5154},
-				[]int{5182},
+				[]sequences.PositionPair{
+					sequences.PositionPair{StartPosition:5154,EndPosition: 5160,Reverse: false},
+					sequences.PositionPair{StartPosition:5188, EndPosition:5182,Reverse:true},
+				},
 			},
 			{
 				BsaI.RestrictionEnzyme,
-				"GGTCTC",
-				false,
-				0,
-				[]int{},
-				[]int{},
+				[]sequences.PositionPair{	
+				},
 			},
 		},
 	},
@@ -92,11 +88,9 @@ var restrictionsitetests = []restrictionsitetest{
 		sitesfound: []RestrictionSites{
 			{
 				SapI.RestrictionEnzyme,
-				"GCTCTTC",
-				true,
-				1,
-				[]int{1},
-				[]int{},
+				[]sequences.PositionPair{
+					sequences.PositionPair{StartPosition:1,EndPosition: 7,Reverse: false},
+				},
 			},
 		},
 	},
@@ -105,11 +99,9 @@ var restrictionsitetests = []restrictionsitetest{
 		sitesfound: []RestrictionSites{
 			{
 				SapI.RestrictionEnzyme,
-				"GCTCTTC",
-				true,
-				1,
-				[]int{},
-				[]int{5},
+				[]sequences.PositionPair{
+					sequences.PositionPair{StartPosition: 11,EndPosition:5,Reverse: true},
+				},
 			},
 		},
 	},
@@ -118,11 +110,10 @@ var restrictionsitetests = []restrictionsitetest{
 		sitesfound: []RestrictionSites{
 			{
 				SapI.RestrictionEnzyme,
-				"GCTCTTC",
-				true,
-				2,
-				[]int{1},
-				[]int{16},
+				[]sequences.PositionPair{
+					sequences.PositionPair{StartPosition:1, EndPosition:7,Reverse: false},
+					sequences.PositionPair{StartPosition:22,EndPosition:16, Reverse: true},
+				},
 			},
 		},
 	},
@@ -131,11 +122,11 @@ var restrictionsitetests = []restrictionsitetest{
 		sitesfound: []RestrictionSites{
 			{
 				SapI.RestrictionEnzyme,
-				"GCTCTTC",
-				true,
-				3,
-				[]int{1,12},
-				[]int{27},
+				[]sequences.PositionPair{
+					sequences.PositionPair{StartPosition:1, EndPosition:7, Reverse: false},
+					sequences.PositionPair{StartPosition:12, EndPosition:18, Reverse: false},
+					sequences.PositionPair{StartPosition:33, EndPosition:27,Reverse: true},
+				},
 			},
 		},
 	},
@@ -143,9 +134,9 @@ var restrictionsitetests = []restrictionsitetest{
 
 func TestRestrictionsitefinder(t *testing.T) {
 	for _, test := range restrictionsitetests {
-		sitesFound := Restrictionsitefinder(test.sequence, test.enzymelist)
+		sitesFound := RestrictionSiteFinder(test.sequence, test.enzymelist)
 		for i := 0; i < len(sitesFound); i++ {
-			if sitesFound[i].NumberOfSites != test.sitesfound[i].NumberOfSites {
+			if sitesFound[i].NumberOfSites() != test.sitesfound[i].NumberOfSites() {
 				t.Error(
 					"For", test.sequence.Name(), "\n",
 					"and", test.enzymelist[i].Name(), "\n",
@@ -153,7 +144,7 @@ func TestRestrictionsitefinder(t *testing.T) {
 					"got", sitesFound[i].NumberOfSites, "sites \n",
 				)
 			}
-			if len(sitesFound[i].ForwardPositions) != len(test.sitesfound[i].ForwardPositions){
+			if len(sitesFound[i].ForwardPositions()) != len(test.sitesfound[i].ForwardPositions()){
 					t.Error(
 						"For", test.sequence.Name(), "\n",
 						"and", test.enzymelist[i].Name(), "\n",
@@ -162,33 +153,33 @@ func TestRestrictionsitefinder(t *testing.T) {
 					)
 					
 			}else{
-				for j := range sitesFound[i].ForwardPositions {
-					if sitesFound[i].ForwardPositions[j] != test.sitesfound[i].ForwardPositions[j] {
+				for j := range sitesFound[i].ForwardPositions() {
+					if sitesFound[i].ForwardPositions()[j] != test.sitesfound[i].ForwardPositions()[j] {
 						t.Error(
 							"For", test.sequence.Name(), "\n",
 							"and", test.enzymelist[i].Name(), "\n",
-							"expected forward positions ", test.sitesfound[i].ForwardPositions, "\n",
-							"got", sitesFound[i].ForwardPositions, "\n",
+							"expected forward positions ", test.sitesfound[i].ForwardPositions(), "\n",
+							"got", sitesFound[i].ForwardPositions(), "\n",
 						)
 					}
 				}
 			}
-			if len(sitesFound[i].ReversePositions) != len(test.sitesfound[i].ReversePositions){
+			if len(sitesFound[i].ReversePositions()) != len(test.sitesfound[i].ReversePositions()){
 					t.Error(
 						"For", test.sequence.Name(), "\n",
 						"and", test.enzymelist[i].Name(), "\n",
-						"expected reverse positions ", test.sitesfound[i].ReversePositions, "\n",
-						"got", sitesFound[i].ReversePositions, "\n",
+						"expected reverse positions ", test.sitesfound[i].ReversePositions(), "\n",
+						"got", sitesFound[i].ReversePositions(), "\n",
 					)
 					
 			}else {
-				for j := range sitesFound[i].ReversePositions {
-					if sitesFound[i].ReversePositions[j] != test.sitesfound[i].ReversePositions[j] {
+				for j := range sitesFound[i].ReversePositions() {
+					if sitesFound[i].ReversePositions()[j] != test.sitesfound[i].ReversePositions()[j] {
 						t.Error(
 							"For", test.sequence.Name(), "\n",
 							"and", test.enzymelist[i].Name(), "\n",
-							"expected", test.sitesfound[i].ReversePositions, "\n",
-							"got", sitesFound[i].ReversePositions, "\n",
+							"expected", test.sitesfound[i].ReversePositions(), "\n",
+							"got", sitesFound[i].ReversePositions(), "\n",
 						)
 					}
 				}

@@ -42,15 +42,16 @@ const (
 // for a specified RestrictionEnzyme.
 // todo: refactor
 type RestrictionSites struct {
-	Enzyme              wtype.RestrictionEnzyme
-	RecognitionSequence string
-	SiteFound           bool
-	NumberOfSites       int
-	ForwardPositions    []int
-	ReversePositions    []int
+	Enzyme    wtype.RestrictionEnzyme
+	Positions []sequences.PositionPair
 }
 
-/*
+// RecognitionSequence returns the recognition sequence of the enzyme as a string.
+func (sites RestrictionSites) RecognitionSequence() string {
+	return sites.Enzyme.RecognitionSequence
+}
+
+// SiteFound evaluates whether at least one site has been found.
 func (sites RestrictionSites) SiteFound() bool {
 	if len(sites.Positions) > 0 {
 		return true
@@ -58,47 +59,42 @@ func (sites RestrictionSites) SiteFound() bool {
 	return false
 }
 
-func (sites RestrictionSites) SiteFound() bool {
-	if len(sites.Positions) > 0 {
-		return true
-	}
-	return false
+// NumberOfSites returns the number of restriction sites found.
+func (sites RestrictionSites) NumberOfSites() int {
+	return len(sites.Positions)
 }
 
-func (sites RestrictionSites) SiteFound() bool {
-	if len(sites.Positions) > 0 {
-		return true
-	}
-	return false
-}
-
-func (sites RestrictionSites) SiteFound() bool {
-	if len(sites.Positions) > 0 {
-		return true
-	}
-	return false
-}
-*/
-
-// Positions returns a set of restriction site positions.
-// Valid arguments which may be specified are "FWD", "REV or "ALL" to return the correct type of positions.
-// todo: refactor
-func (sites *RestrictionSites) Positions(fwdRevorNil string) (positions []int) {
-	if strings.ToUpper(fwdRevorNil) == strings.ToUpper("FWD") {
-		positions = sites.ForwardPositions
-	} else if strings.ToUpper(fwdRevorNil) == strings.ToUpper("REV") {
-		positions = sites.ReversePositions
-	} else if strings.ToUpper(fwdRevorNil) == strings.ToUpper("") ||
-		strings.ToUpper(fwdRevorNil) == strings.ToUpper("ALL") {
-		positions = make([]int, 0)
-		for _, pos := range sites.ForwardPositions {
-			positions = append(positions, pos)
-		}
-		for _, pos := range sites.ReversePositions {
-			positions = append(positions, pos)
+// ForwardPositions returns the recognition site positions
+func (sites RestrictionSites) ForwardPositions() []int {
+	var forwardPositions []int
+	for _, position := range sites.Positions {
+		if !position.Reverse {
+			forwardPositions = append(forwardPositions, position.StartPosition)
 		}
 	}
-	return
+	return forwardPositions
+}
+
+// ReversePositions returns the recognition site positions
+func (sites RestrictionSites) ReversePositions() []int {
+	var reversePositions []int
+	for _, position := range sites.Positions {
+		if position.Reverse {
+			start, _ := position.Coordinates(wtype.IGNOREDIRECTION)
+			reversePositions = append(reversePositions, start)
+		}
+	}
+	return reversePositions
+}
+
+// AllPositions returns all forward and reverse restriction site positions.
+func (sites *RestrictionSites) AllPositions() []int {
+	var allPositions []int
+	for _, position := range sites.Positions {
+		start, _ := position.Coordinates(wtype.IGNOREDIRECTION)
+		allPositions = append(allPositions, start)
+	}
+	return allPositions
 }
 
 // SitepositionString returns a report of restriction sites found as a string
@@ -106,10 +102,10 @@ func (sites *RestrictionSites) Positions(fwdRevorNil string) (positions []int) {
 func SitepositionString(sitesperpart RestrictionSites) (sitepositions string) {
 	Num := make([]string, 0)
 
-	for _, site := range sitesperpart.ForwardPositions {
+	for _, site := range sitesperpart.ForwardPositions() {
 		Num = append(Num, strconv.Itoa(site))
 	}
-	for _, site := range sitesperpart.ReversePositions {
+	for _, site := range sitesperpart.ReversePositions() {
 		Num = append(Num, strconv.Itoa(site))
 	}
 
@@ -118,40 +114,24 @@ func SitepositionString(sitesperpart RestrictionSites) (sitepositions string) {
 	return
 }
 
-// Restrictionsitefinder finds restriction sites of specified restriction enzymes in a sequence and return the information as a set of ResrictionSites.
-func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.RestrictionEnzyme) (sites []RestrictionSites) {
+// RestrictionSiteFinder finds restriction sites of specified restriction enzymes in a sequence and return the information as a set of ResrictionSites.
+func RestrictionSiteFinder(sequence wtype.DNASequence, enzymelist []wtype.RestrictionEnzyme) (sites []RestrictionSites) {
 
 	sites = make([]RestrictionSites, 0)
 
 	for _, enzyme := range enzymelist {
 		var enzymesite RestrictionSites
-		//var siteafterwobble Restrictionsites
 		enzymesite.Enzyme = enzyme
-		enzymesite.RecognitionSequence = strings.ToUpper(enzyme.RecognitionSequence)
+		recognitionSite := strings.ToUpper(enzyme.RecognitionSequence)
 		sequence.Seq = strings.ToUpper(sequence.Seq)
 
-		wobbleproofrecognitionoptions := sequences.Wobble(enzymesite.RecognitionSequence)
+		wobbleproofrecognitionoptions := sequences.Wobble(recognitionSite)
 
 		for _, wobbleoption := range wobbleproofrecognitionoptions {
 
-			options := search.FindAll(sequence.Seq, wobbleoption)
-			for _, option := range options {
-				if option != 0 {
-					enzymesite.ForwardPositions = append(enzymesite.ForwardPositions, option)
-				}
-			}
-			if enzyme.RecognitionSequence != strings.ToUpper(sequences.RevComp(wobbleoption)) {
-				revoptions := search.FindAll(sequence.Seq, sequences.RevComp(wobbleoption))
-				for _, option := range revoptions {
-					if option != 0 {
-						enzymesite.ReversePositions = append(enzymesite.ReversePositions, option)
-					}
-				}
-
-			}
-			enzymesite.NumberOfSites = len(enzymesite.ForwardPositions) + len(enzymesite.ReversePositions)
-			if enzymesite.NumberOfSites > 0 {
-				enzymesite.SiteFound = true
+			options := sequences.FindAll(&sequence, &wtype.DNASequence{Nm: wobbleoption, Seq: wobbleoption})
+			for _, option := range options.Positions {
+				enzymesite.Positions = append(enzymesite.Positions, option)
 			}
 
 		}
@@ -164,8 +144,10 @@ func Restrictionsitefinder(sequence wtype.DNASequence, enzymelist []wtype.Restri
 
 // Digestedfragment object carrying info on a fragment following digestion
 type Digestedfragment struct {
+
 	// Sequence of top strand
 	Topstrand string
+
 	// Sequence of bottom strand
 	Bottomstrand string
 

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package antha.platereader.v1;
+
+service PlateReader {
+  rpc PRRunProtocolByName (ProtocolRunRequest) returns (BoolReply) {}
+}
+
+message BoolReply {
+  bool result = 1;
+}
+
+message ProtocolRunRequest {
+  string ProtocolName = 1;
+  string PlateID = 2;
+}

@@ -247,37 +247,58 @@ func Phosphorylate(dnaseq DNASequence) (phosphorylateddna DNASequence, err error
 	return
 }
 
+// OverHangType represents the type of an overhang.
+// Valid options are
+// 	FALSE     OverHangType = 0
+//	BLUNT     OverHangType = 1
+//	OVERHANG  OverHangType = 2
+//	UNDERHANG OverHangType = -1
 type OverHangType int
 
+// Valid overhang types
 const (
-	FALSE     OverHangType = 0
-	BLUNT     OverHangType = 1
-	OVERHANG  OverHangType = 2
+	// no overhang
+	FALSE OverHangType = 0
+	// A blunt overhang
+	BLUNT OverHangType = 1
+	// An overhang (5' sequence overhangs complementary strand)
+	OVERHANG OverHangType = 2
+	// an underhang (5' sequence underhangs complementary strand)
 	UNDERHANG OverHangType = -1
 )
 
+// Options for Strand choice
 const (
 	NEITHER = 0
-	TOP     = 1
-	BOTTOM  = 2
+	// Top strand, or coding strand
+	TOP = 1
+	// Bottom strand, or complimentary strand.
+	BOTTOM = 2
 )
 
+// Overhang represents an end of a DNASequence.
 type Overhang struct {
-	//Strand          int // i.e. 1 or 2 (top or bottom
-	End             int          `json:"end"`  // i.e. 5 or 3 or 0
-	Type            OverHangType `json:"type"` //as contants above
-	Seq             string       `json:"sequence"`
-	Phosphorylation bool         `json:"phosphorylation"`
+	// Valid options are 5 (5 Prime end), 3 (3 prime end) or 0 (nul)
+	End int `json:"end"`
+	// Valid options are FALSE, BLUNT, OVERHANG, UNDERHANG
+	Type OverHangType `json:"type"`
+	// Overhang sequence
+	Seq string `json:"sequence"`
+	// Whether the overhang is phosphorylated.
+	Phosphorylation bool `json:"phosphorylation"`
 }
 
+// Sequence returns the sequence of the overhang.
 func (oh Overhang) Sequence() string {
 	return oh.Seq
 }
 
+// Length returns the length of the overhang.
 func (oh Overhang) Length() int {
 	return len(oh.Sequence())
 }
 
+// ToString returns a string summary of the overhang.
 func (oh Overhang) ToString() string {
 	if oh.End == 5 {
 		if oh.Type == OVERHANG {
@@ -307,6 +328,7 @@ func (oh Overhang) ToString() string {
 	return ""
 }
 
+// TypeName returns the name of the overhang type as a string.
 func (oh Overhang) TypeName() string {
 	if oh.Type == OVERHANG {
 		return "Overhang"
@@ -318,51 +340,24 @@ func (oh Overhang) TypeName() string {
 	return "no overhang"
 }
 
-func (oh Overhang) OverHangAt5PrimeEnd() (sequence string) {
-	if oh.End == 5 {
-		if oh.Type == OVERHANG {
-			return oh.Sequence()
-		} else if oh.Type == BLUNT {
-			return "blunt"
-		}
-
+// Overhang returns the sequence if the overhang is of type OVERHANG.
+func (oh Overhang) OverHang() (sequence string) {
+	if oh.Type == OVERHANG {
+		return oh.Sequence()
+	} else if oh.Type == BLUNT {
+		return "blunt"
 	}
 	return ""
 }
 
-func (oh Overhang) OverHangAt3PrimeEnd() (sequence string) {
-	if oh.End == 3 {
-		if oh.Type == OVERHANG {
-			return oh.Sequence()
-		} else if oh.Type == BLUNT {
-			return "blunt"
-		}
-
+// Overhang returns any sequence if the underhang is of type UNDERHANG.
+func (oh Overhang) UnderHang() (sequence string) {
+	if oh.Type == UNDERHANG {
+		return oh.Sequence()
+	} else if oh.Type == BLUNT {
+		return "blunt"
 	}
-	return ""
-}
 
-func (oh Overhang) UnderHangAt3PrimeEnd() (sequence string) {
-	if oh.End == 3 {
-		if oh.Type == UNDERHANG {
-			return oh.Sequence()
-		} else if oh.Type == BLUNT {
-			return "blunt"
-		}
-
-	}
-	return ""
-}
-
-func (oh Overhang) UnderHangAt5PrimeEnd() (sequence string) {
-	if oh.End == 5 {
-		if oh.Type == UNDERHANG {
-			return oh.Sequence()
-		} else if oh.Type == BLUNT {
-			return "blunt"
-		}
-
-	}
 	return ""
 }
 

@@ -185,7 +185,7 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 						setpoint = cell.Bool()
 					} else if err == nil || celltype == 1 {
 						setpoint, _ = cell.Float()
-						if search.InSlice(descriptor, intfactors) {
+						if search.InStrings(intfactors, descriptor) {
 							setpoint, err = cell.Int()
 							if err != nil {
 								return runs, err
@@ -306,9 +306,9 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 
 				var factororresponse string
 
-				if search.Contains(factorcolumns, j) {
+				if search.InInts(factorcolumns, j) {
 					factororresponse = "Factor"
-				} else if search.Contains(responsecolumns, j) {
+				} else if search.InInts(responsecolumns, j) {
 					factororresponse = "Response"
 				}
 
@@ -330,7 +330,7 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 						setpoint = cell.Bool()
 					} else if err == nil || celltype == 1 {
 						setpoint, _ = cell.Float()
-						if search.InSlice(descriptor, intfactors) {
+						if search.InStrings(intfactors, descriptor) {
 							setpoint, err = cell.Int()
 							if err != nil {
 								return runs, err
@@ -476,7 +476,7 @@ func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int)
 
 	for i := 0; i < sheet.MaxCol; i++ {
 		header := sheet.Cell(0, i).String()
-		if search.BinarySearch(responsefactors, i) == false && strings.ToUpper(header) != "PATTERN" {
+		if search.InInts(responsefactors, i) == false && strings.ToUpper(header) != "PATTERN" {
 			factorcolumns = append(factorcolumns, i)
 		}
 	}
@@ -614,7 +614,7 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 						setpoint = cell.Bool()
 					} else if err == nil || celltype == 1 {
 						setpoint, _ = cell.Float()
-						if search.InSlice(descriptor, intfactors) {
+						if search.InStrings(intfactors, descriptor) {
 							setpoint, err = cell.Int()
 							if err != nil {
 								return runs, err
@@ -736,9 +736,9 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 
 				var factororresponse string
 
-				if search.Contains(factorcolumns, j) {
+				if search.InInts(factorcolumns, j) {
 					factororresponse = "Factor"
-				} else if search.Contains(responsecolumns, j) {
+				} else if search.InInts(responsecolumns, j) {
 					factororresponse = "Response"
 				}
 
@@ -760,7 +760,7 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 						setpoint = cell.Bool()
 					} else if err == nil || celltype == 1 {
 						setpoint, _ = cell.Float()
-						if search.InSlice(descriptor, intfactors) {
+						if search.InStrings(intfactors, descriptor) {
 							setpoint, err = cell.Int()
 							if err != nil {
 								return runs, err

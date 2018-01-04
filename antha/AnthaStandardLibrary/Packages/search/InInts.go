@@ -1,4 +1,4 @@
-// antha/AnthaStandardLibrary/Packages/enzymes/plates.go: Part of the Antha language
+// antha/AnthaStandardLibrary/Packages/enzymes/Find.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -27,23 +27,37 @@
 // FindAll instances of a target string within a template string.
 package search
 
-import (
-	"fmt"
+import "sort"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-)
+// BinarySearchInts searchs for an int in a slice of ints using a binary search algorithm.
+func BinarySearchInts(list []int, target int) bool {
+	sort.Ints(list)
+	i := sort.Search(len(list),
+		func(i int) bool { return list[i] >= target })
+	if i < len(list) && list[i] == target {
+		return true
+	}
+	return false
+}
 
-// NextFreeWell checks for the next well which is empty in a plate.
-// The user can also specify wells to avoid and whether to search through the well positions by row. The default is by column.
-func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, byRow bool) (well string, err error) {
-
-	allWellPositions := plate.AllWellPositions(byRow)
-
-	for _, well := range allWellPositions {
-		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.
-		if plate.WellMap()[well].Empty() && !InStrings(avoidWells, well) {
-			return well, nil
+// InInts searchs for an int in a slice of ints
+func InInts(list []int, target int) bool {
+	for _, num := range list {
+		if num == target {
+			return true
 		}
 	}
-	return "", fmt.Errorf("no empty wells on plate %s", plate.Name())
+	return false
+}
+
+// PositionsInInts searchs for a target int in a slice of ints and returns all positions found.
+func PositionsInInts(list []int, target int) []int {
+
+	var positions []int
+	for position, num := range list {
+		if num == target {
+			positions = append(positions, position)
+		}
+	}
+	return positions
 }

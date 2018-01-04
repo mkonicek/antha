@@ -299,7 +299,7 @@ func CountPartsinRegistryContaining(keystrings []string) (numberofparts int) {
 	records = append(records, seq)
 	for _, record := range FastaParse(fastaFh) {
 
-		if search.Containsallthings(record.Desc, keystrings) {
+		if search.ContainsAllStrings(record.Desc, keystrings) {
 			numberofparts = numberofparts + 1
 		}
 
@@ -333,14 +333,14 @@ func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool)
 
 	for _, record := range FastaParse(fastaFh) {
 
-		if exacttypecodeonly && ok && search.Containsallthings(record.Desc, keystrings) && record.Seq_data != "" && strings.Contains(record.Part_name, bba_code) {
+		if exacttypecodeonly && ok && search.ContainsAllStrings(record.Desc, keystrings) && record.Seq_data != "" && strings.Contains(record.Part_name, bba_code) {
 
 			listofpartIDs = append(listofpartIDs, record.Part_name)
 			idtodescriptionmap[record.Part_name] = record.Desc
-		} else if !exacttypecodeonly && search.Containsallthings(record.Desc, keystrings) && strings.Contains(strings.ToUpper(record.Part_type), strings.ToUpper(partype)) && record.Seq_data != "" {
+		} else if !exacttypecodeonly && search.ContainsAllStrings(record.Desc, keystrings) && strings.Contains(strings.ToUpper(record.Part_type), strings.ToUpper(partype)) && record.Seq_data != "" {
 			listofpartIDs = append(listofpartIDs, record.Part_name)
 			idtodescriptionmap[record.Part_name] = record.Desc
-		} else if !exacttypecodeonly && search.Containsallthings(record.Desc, keystrings) && record.Seq_data != "" {
+		} else if !exacttypecodeonly && search.ContainsAllStrings(record.Desc, keystrings) && record.Seq_data != "" {
 			listofpartIDs = append(listofpartIDs, record.Part_name)
 			idtodescriptionmap[record.Part_name] = record.Desc
 		}

@@ -20,7 +20,11 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Utility package providing functions useful for searches
+// Package search is a utility package providing functions useful for:
+// Searching for a target entry in a slice;
+// Removing duplicate values from a slice;
+// Comparing the Name of two entries of any type with a Name() method returning a string.
+// FindAll instances of a target string within a template string.
 package search
 
 import (
@@ -31,35 +35,29 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func InSlice(slice string, list []string) bool {
-	for _, b := range list {
-		if b == slice {
-			return true
-		}
-	}
-	return false
-}
-
-func Position(slice []string, value string) int {
-	for p, v := range slice {
-		if v == value {
-			return p
-		}
-	}
-	return -1
-}
-
-func RemoveDuplicates(elements []string) []string {
+// RemoveDuplicateStrings removes all duplicate values in a slice of strings.
+// If IgnoreCase is included as an option, case insensitive comparison will be used.
+// Any leading or traling space is always removed before comparing elements.
+func RemoveDuplicateStrings(elements []string, options ...Option) []string {
 	// Use map to record duplicates as we find them.
 	encountered := map[string]bool{}
 	result := []string{}
 
 	for v := range elements {
-		if encountered[elements[v]] == true {
+
+		var key string
+
+		if containsIgnoreCase(options...) {
+			key = strings.ToUpper(strings.TrimSpace(elements[v]))
+		} else {
+			key = strings.TrimSpace(elements[v])
+		}
+
+		if encountered[key] == true {
 			// Do not add duplicate.
 		} else {
 			// Record this element as an encountered element.
-			encountered[elements[v]] = true
+			encountered[key] = true
 			// Append to result slice.
 			result = append(result, elements[v])
 		}
@@ -68,6 +66,7 @@ func RemoveDuplicates(elements []string) []string {
 	return result
 }
 
+// RemoveDuplicateInts removes all duplicate values in a slice of ints.
 func RemoveDuplicateInts(elements []int) []int {
 	// Use map to record duplicates as we find them.
 	encountered := map[int]bool{}
@@ -87,6 +86,8 @@ func RemoveDuplicateInts(elements []int) []int {
 	return result
 }
 
+// RemoveDuplicateFloats removes all duplicate values encountered in a slice of floats.
+// No precision is specified to floats must be exact matches in order to be considered duplicates.
 func RemoveDuplicateFloats(elements []float64) []float64 {
 	// Use map to record duplicates as we find them.
 	encountered := map[float64]bool{}
@@ -98,6 +99,43 @@ func RemoveDuplicateFloats(elements []float64) []float64 {
 		} else {
 			// Record this element as an encountered element.
 			encountered[elements[v]] = true
+			// Append to result slice.
+			result = append(result, elements[v])
+		}
+	}
+	// Return the new slice.
+	return result
+}
+
+// RemoveDuplicateSequences checks for exact sequence matches only and by default will ignore the name.
+// If MatchName option is added, only sequences with duplicate names will be removed.
+// If IgnoreCase is included as an option, case insensitive name comparison will be used.
+// Sequence comparison will always be case insensitive
+// Any leading or traling space is always removed before comparing elements.
+func RemoveDuplicateSequences(elements []wtype.DNASequence, options ...Option) []wtype.DNASequence {
+	// Use map to record duplicates as we find them.
+	encountered := map[string]bool{}
+	result := []wtype.DNASequence{}
+
+	for v := range elements {
+
+		var key string
+
+		if containsMatchName(options...) {
+			if containsIgnoreCase(options...) {
+				key = strings.ToUpper(strings.TrimSpace(elements[v].Name()))
+			} else {
+				key = strings.TrimSpace(elements[v].Name())
+			}
+		} else {
+			key = strings.ToUpper(strings.TrimSpace(elements[v].Sequence()))
+		}
+
+		if encountered[key] == true {
+			// Do not add duplicate.
+		} else {
+			// Record this element as an encountered element.
+			encountered[key] = true
 			// Append to result slice.
 			result = append(result, elements[v])
 		}
@@ -123,6 +161,8 @@ func removeDuplicateInterface(elements []interface{}) []interface{} {
 	return elements
 }
 
+// CheckArrayType reflects the type name as a string of all elements in a slice of interface values.
+// If all values in the slice are not of the same type an error is returned.
 func CheckArrayType(elements []interface{}) (typeName string, err error) {
 	var foundthistype string
 	var foundthesetypes []string
@@ -142,7 +182,7 @@ func CheckArrayType(elements []interface{}) (typeName string, err error) {
 	return
 }
 
-// Removes duplicate values of an input slice of interface values and returns
+// RemoveDuplicateValues removes duplicate values of an input slice of interface values and returns
 // all unique entries in slice, preserving the order of the original slice
 // an error will be returned if length of elements is 0
 func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
@@ -190,7 +230,7 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 		for _, element := range elements {
 			values = append(values, element.(string))
 		}
-		values = RemoveDuplicates(values)
+		values = RemoveDuplicateStrings(values)
 
 		for j := range values {
 			var u interface{}
@@ -198,94 +238,13 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 			unique = append(unique, u)
 		}
 		return unique, nil
-	} else {
-		unique = removeDuplicateInterface(elements)
-		if len(unique) == 0 {
-			return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, length of output differs to input: %s and %s: Array type: %s", len(unique), len(elements), t)
-		}
+	}
 
-		return unique, nil
+	unique = removeDuplicateInterface(elements)
+	if len(unique) == 0 {
+		return unique, fmt.Errorf("[]interface{} conversion has gone wrong!, length of output differs to input: %d and %d: Array type: %s", len(unique), len(elements), t)
 	}
 
 	// Return the new slice.
 	return unique, nil
 }
-
-func RemoveDuplicatesKeysfromMap(elements map[interface{}]interface{}) map[interface{}]interface{} {
-	// Use map to record duplicates as we find them.
-	encountered := map[interface{}]bool{}
-	result := make(map[interface{}]interface{}, 0)
-
-	for key, v := range elements {
-
-		if encountered[key] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[key] = true
-			// Append to result slice.
-			result[key] = v
-		}
-	}
-	// Return the new slice.
-	return result
-}
-
-func RemoveDuplicatesValuesfromMap(elements map[interface{}]interface{}) map[interface{}]interface{} {
-	// Use map to record duplicates as we find them.
-	encountered := map[interface{}]bool{}
-	result := make(map[interface{}]interface{}, 0)
-
-	for key, v := range elements {
-
-		if encountered[v] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[v] = true
-			// Append to result slice.
-			result[key] = v
-		}
-	}
-	// Return the new slice.
-	return result
-}
-
-// based on exact sequence matches only; ignores name
-func RemoveDuplicateSequences(elements []wtype.DNASequence) []wtype.DNASequence {
-	// Use map to record duplicates as we find them.
-	encountered := map[string]bool{}
-	result := []wtype.DNASequence{}
-
-	for v := range elements {
-		if encountered[strings.ToUpper(elements[v].Seq)] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[strings.ToUpper(elements[v].Seq)] = true
-			// Append to result slice.
-			result = append(result, elements[v])
-		}
-	}
-	// Return the new slice.
-	return result
-}
-
-/*func RemoveDuplicateFeatures(elements []wtype.Feature) []wtype.Feature {
-	// Use map to record duplicates as we find them.
-	encountered := map[wtype.Feature]bool{}
-	result := []wtype.Feature{}
-
-	for v := range elements {
-		if encountered[elements[v]] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[(elements[v])] = true
-			// Append to result slice.
-			result = append(result, elements[v])
-		}
-	}
-	// Return the new slice.
-	return result
-}*/

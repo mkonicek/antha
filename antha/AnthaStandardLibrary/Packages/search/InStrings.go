@@ -1,4 +1,4 @@
-// antha/AnthaStandardLibrary/Packages/enzymes/plates.go: Part of the Antha language
+// antha/AnthaStandardLibrary/Packages/enzymes/Find.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -27,23 +27,49 @@
 // FindAll instances of a target string within a template string.
 package search
 
-import (
-	"fmt"
+import "strings"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-)
+func equalFold(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
+}
 
-// NextFreeWell checks for the next well which is empty in a plate.
-// The user can also specify wells to avoid and whether to search through the well positions by row. The default is by column.
-func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, byRow bool) (well string, err error) {
+// InStrings searchs for a target string in a slice of strings and returns a boolean.
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+func InStrings(list []string, target string, options ...Option) bool {
 
-	allWellPositions := plate.AllWellPositions(byRow)
+	ignore := containsIgnoreCase(options...)
 
-	for _, well := range allWellPositions {
-		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.
-		if plate.WellMap()[well].Empty() && !InStrings(avoidWells, well) {
-			return well, nil
+	for _, entry := range list {
+		if ignore {
+			if equalFold(entry, target) {
+				return true
+			}
+		} else {
+			if strings.TrimSpace(entry) == strings.TrimSpace(target) {
+				return true
+			}
 		}
 	}
-	return "", fmt.Errorf("no empty wells on plate %s", plate.Name())
+	return false
+}
+
+// PositionsInStrings searchs for a target string in a slice of strings and returns all positions found.
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+func PositionsInStrings(list []string, target string, options ...Option) []int {
+
+	ignore := containsIgnoreCase(options...)
+
+	var positions []int
+	for i, entry := range list {
+		if ignore {
+			if equalFold(entry, target) {
+				positions = append(positions, i)
+			}
+		} else {
+			if strings.TrimSpace(entry) == strings.TrimSpace(target) {
+				positions = append(positions, i)
+			}
+		}
+	}
+	return positions
 }

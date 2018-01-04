@@ -1,4 +1,4 @@
-// antha/AnthaStandardLibrary/Packages/enzymes/Find.go: Part of the Antha language
+// antha/AnthaStandardLibrary/Packages/enzymes/Utility.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -20,29 +20,29 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package search
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
+package sequences
 
-import (
-	"fmt"
-	"sort"
-)
+import "github.com/antha-lang/antha/antha/anthalib/wtype"
 
-func BinarySearch(nums []int, site int) bool {
-	target := site
-	sort.Ints(nums)
-	i := sort.Search(len(nums),
-		func(i int) bool { return nums[i] >= target })
-	if i < len(nums) && nums[i] == target {
-		return true
-		fmt.Printf("found \"%s\" at files[%d]\n", nums[i], i)
+func Prefix(seq string, lengthofprefix int) (prefix string) {
+	end := lengthofprefix
+	if end > len(seq) {
+		end = len(seq)
 	}
-	return false
+	prefix = seq[:end]
+	return prefix
 }
-func Contains(nums []int, site int) bool {
-	for _, num := range nums {
-		if num == site {
-			return true
-		}
+
+func Suffix(seq string, lengthofsuffix int) (suffix string) {
+	start := len(seq) - lengthofsuffix
+	if start < 0 {
+		start = 0
 	}
-	return false
+	suffix = seq[start:]
+	return suffix
+}
+
+func RevComp(seq string) string {
+	return wtype.RevComp(seq)
 }

@@ -140,16 +140,16 @@ func TestRestrictionsitefinder(t *testing.T) {
 				t.Error(
 					"For", test.sequence.Name(), "\n",
 					"and", test.enzymelist[i].Name(), "\n",
-					"expected", test.sitesfound[i].NumberOfSites, "sites \n",
-					"got", sitesFound[i].NumberOfSites, "sites \n",
+					"expected", test.sitesfound[i].NumberOfSites(), "sites \n",
+					"got", sitesFound[i].NumberOfSites(), "sites \n",
 				)
 			}
 			if len(sitesFound[i].ForwardPositions()) != len(test.sitesfound[i].ForwardPositions()){
 					t.Error(
 						"For", test.sequence.Name(), "\n",
 						"and", test.enzymelist[i].Name(), "\n",
-						"expected", test.sitesfound[i].ForwardPositions, "\n",
-						"got", sitesFound[i].ForwardPositions, "\n",
+						"expected", test.sitesfound[i].ForwardPositions(), "\n",
+						"got", sitesFound[i].ForwardPositions(), "\n",
 					)
 					
 			}else{

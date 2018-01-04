@@ -218,11 +218,11 @@ func MakeOverHang(sequence DNASequence, end int, toporbottom int, length int, ph
 	}
 	if toporbottom == 1 {
 		overhang.Type = 2
-		overhang.Sequence = Prefix(sequence.Seq, length)
+		overhang.Seq = Prefix(sequence.Seq, length)
 	}
 	if toporbottom == 2 {
 		overhang.Type = -1
-		overhang.Sequence = Suffix(RevComp(sequence.Seq), length)
+		overhang.Seq = Suffix(RevComp(sequence.Seq), length)
 	}
 	overhang.Phosphorylation = phosphorylated
 	return
@@ -247,11 +247,13 @@ func Phosphorylate(dnaseq DNASequence) (phosphorylateddna DNASequence, err error
 	return
 }
 
+type OverHangType int
+
 const (
-	FALSE     = 0
-	BLUNT     = 1
-	OVERHANG  = 2
-	UNDERHANG = -1
+	FALSE     OverHangType = 0
+	BLUNT     OverHangType = 1
+	OVERHANG  OverHangType = 2
+	UNDERHANG OverHangType = -1
 )
 
 const (
@@ -260,56 +262,45 @@ const (
 	BOTTOM  = 2
 )
 
-/*const (
-	5PRIME = 5
-	3PRIME = 3
-	NA = 0
-)*/
-
 type Overhang struct {
 	//Strand          int // i.e. 1 or 2 (top or bottom
-	End             int    `json:"end"`  // i.e. 5 or 3 or 0
-	Type            int    `json:"type"` //as contants above
-	Length          int    `json:"length"`
-	Sequence        string `json:"sequence"`
-	Phosphorylation bool   `json:"phosphorylation"`
+	End             int          `json:"end"`  // i.e. 5 or 3 or 0
+	Type            OverHangType `json:"type"` //as contants above
+	Seq             string       `json:"sequence"`
+	Phosphorylation bool         `json:"phosphorylation"`
+}
+
+func (oh Overhang) Sequence() string {
+	return oh.Seq
+}
+
+func (oh Overhang) Length() int {
+	return len(oh.Sequence())
 }
 
 func (oh Overhang) ToString() string {
 	if oh.End == 5 {
 		if oh.Type == OVERHANG {
-			return `5' overhang: ` + oh.Sequence
+			return `5' overhang: ` + oh.Sequence()
 		}
 		if oh.Type == BLUNT || oh.Type == FALSE {
 			return `5' Blunt`
 		}
 		if oh.Type == UNDERHANG {
-			return `5' underhang: ` + oh.Sequence
+			return `5' underhang: ` + oh.Sequence()
 		}
 
 	}
 
 	if oh.End == 3 {
 		if oh.Type == OVERHANG {
-			return `3' overhang: ` + oh.Sequence
+			return `3' overhang: ` + oh.Sequence()
 		}
 		if oh.Type == BLUNT || oh.Type == FALSE {
 			return `3' Blunt`
 		}
 		if oh.Type == UNDERHANG {
-			return `3' underhang: ` + oh.Sequence
-		}
-
-	}
-	return ""
-}
-
-func (oh Overhang) OverHangAt5PrimeEnd() (sequence string) {
-	if oh.End == 5 {
-		if oh.Type == OVERHANG {
-			return oh.Sequence
-		} else if oh.Type == BLUNT {
-			return "blunt"
+			return `3' underhang: ` + oh.Sequence()
 		}
 
 	}
@@ -327,40 +318,52 @@ func (oh Overhang) TypeName() string {
 	return "no overhang"
 }
 
-func (oh Overhang) OverHangAt3PrimeEnd() (sequence string) {
-	if oh.End == 3 {
+func (oh Overhang) OverHangAt5PrimeEnd() (sequence string) {
+	if oh.End == 5 {
 		if oh.Type == OVERHANG {
-			return oh.Sequence
+			return oh.Sequence()
 		} else if oh.Type == BLUNT {
 			return "blunt"
 		}
 
 	}
-	return oh.Sequence
+	return ""
+}
+
+func (oh Overhang) OverHangAt3PrimeEnd() (sequence string) {
+	if oh.End == 3 {
+		if oh.Type == OVERHANG {
+			return oh.Sequence()
+		} else if oh.Type == BLUNT {
+			return "blunt"
+		}
+
+	}
+	return ""
 }
 
 func (oh Overhang) UnderHangAt3PrimeEnd() (sequence string) {
 	if oh.End == 3 {
 		if oh.Type == UNDERHANG {
-			return oh.Sequence
+			return oh.Sequence()
 		} else if oh.Type == BLUNT {
 			return "blunt"
 		}
 
 	}
-	return oh.Sequence
+	return ""
 }
 
 func (oh Overhang) UnderHangAt5PrimeEnd() (sequence string) {
 	if oh.End == 5 {
 		if oh.Type == UNDERHANG {
-			return oh.Sequence
+			return oh.Sequence()
 		} else if oh.Type == BLUNT {
 			return "blunt"
 		}
 
 	}
-	return oh.Sequence
+	return ""
 }
 
 func (dna *DNASequence) Sequence() string {
@@ -557,7 +560,7 @@ func makeABunchaRandomSeqs(n_seq_sets, seqs_per_set, min_len, len_var int) [][]D
 	for i := 0; i < n_seq_sets; i++ {
 		seqs[i] = make([]DNASequence, seqs_per_set)
 		for j := 0; j < seqs_per_set; j++ {
-			seqs[i][j] = DNASequence{fmt.Sprintf("SEQ%04d", i*seqs_per_set+j+1), random_dna_seq(rand.Intn(len_var) + min_len), false, false, Overhang{0, 0, 0, "", false}, Overhang{0, 0, 0, "", false}, "", features}
+			seqs[i][j] = DNASequence{fmt.Sprintf("SEQ%04d", i*seqs_per_set+j+1), random_dna_seq(rand.Intn(len_var) + min_len), false, false, Overhang{0, 0, "", false}, Overhang{0, 0, "", false}, "", features}
 		}
 	}
 	return seqs

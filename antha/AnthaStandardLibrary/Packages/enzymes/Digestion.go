@@ -196,9 +196,9 @@ func toDigestedFragment(seq wtype.DNASequence) (fragment Digestedfragment) {
 		Topstrand:                       seq.Sequence(),
 		Bottomstrand:                    wtype.RevComp(seq.Sequence()),
 		FivePrimeTopStrandStickyend:     seq.Overhang5prime.OverHangAt5PrimeEnd(),
-		ThreePrimeTopStrandStickyend:    seq.Overhang3prime.OverHangAt5PrimeEnd(),
-		FivePrimeBottomStrandStickyend:  seq.Overhang3prime.OverHangAt3PrimeEnd(),
-		ThreePrimeBottomStrandStickyEnd: seq.Overhang5prime.OverHangAt3PrimeEnd(),
+		ThreePrimeTopStrandStickyend:    seq.Overhang3prime.OverHangAt3PrimeEnd(),
+		FivePrimeBottomStrandStickyend:  seq.Overhang3prime.UnderHangAt3PrimeEnd(),
+		ThreePrimeBottomStrandStickyEnd: seq.Overhang5prime.UnderHangAt5PrimeEnd(),
 	}
 }
 
@@ -210,7 +210,7 @@ func (fragment Digestedfragment) ToDNASequence(name string) (seq wtype.DNASequen
 	seq = wtype.MakeLinearDNASequence(name, fragment.Topstrand)
 
 	var overhangstr string
-	var overhangtype int
+	var overhangtype wtype.OverHangType
 
 	/* //
 	if len(fragment.BottomStickyend_5prime) > 0 && len(fragment.TopStickyend_5prime) > 0 {
@@ -239,8 +239,7 @@ func (fragment Digestedfragment) ToDNASequence(name string) (seq wtype.DNASequen
 	var overhang5 = wtype.Overhang{
 		End:             5,
 		Type:            overhangtype,
-		Length:          len(overhangstr),
-		Sequence:        overhangstr,
+		Seq:             overhangstr,
 		Phosphorylation: true,
 	}
 
@@ -263,8 +262,7 @@ func (fragment Digestedfragment) ToDNASequence(name string) (seq wtype.DNASequen
 	var overhang3 = wtype.Overhang{
 		End:             3,
 		Type:            overhangtype,
-		Length:          len(overhangstr),
-		Sequence:        overhangstr,
+		Seq:             overhangstr,
 		Phosphorylation: true,
 	}
 
@@ -695,8 +693,8 @@ func makeOverhangs(enzyme wtype.TypeIIs, recognitionSitePosition sequences.Posit
 	if err != nil {
 		return upStreamThreePrime, downstreamFivePrime, err
 	}
-	downstreamFivePrime.Sequence = overhangSeq
-	upStreamThreePrime.Sequence = wtype.RevComp(overhangSeq)
+	downstreamFivePrime.Seq = overhangSeq
+	upStreamThreePrime.Seq = wtype.RevComp(overhangSeq)
 
 	return upStreamThreePrime, downstreamFivePrime, nil
 }

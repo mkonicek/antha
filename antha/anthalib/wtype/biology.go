@@ -134,7 +134,7 @@ func (seq DNASequence) Dup() DNASequence {
 
 func MakeDNASequence(name string, seqstring string, properties []string) (seq DNASequence, err error) {
 	seq.Nm = name
-	seq.Seq = upper(seqstring)
+	seq.Seq = seqstring
 	for _, property := range properties {
 		property = strings.ToUpper(property)
 
@@ -150,13 +150,6 @@ func MakeDNASequence(name string, seqstring string, properties []string) (seq DN
 			seq.Singlestranded = true
 			break
 		}
-		/*
-		   // deal with overhangs separately
-		   if strings.Contains(property,"5'") {
-		   	seq.Overhang5prime.End = 5
-		   	seq.Overhang5prime.Type =
-		   }
-		*/
 	}
 	return
 }
@@ -635,7 +628,6 @@ func Suffix(seq string, lengthofsuffix int) (suffix string) {
 	suffix = seq[(len(seq) - lengthofsuffix):]
 	return suffix
 }
-
 func Rev(s string) string {
 	r := ""
 

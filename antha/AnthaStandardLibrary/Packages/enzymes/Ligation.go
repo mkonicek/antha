@@ -35,7 +35,7 @@ import (
 )
 
 // fragmentsFormPlasmid checks if the two fragments can join both ends to forma plasmid
-func fragmentsFormPlasmid(upfragment, downfragment Digestedfragment) bool {
+func fragmentsFormPlasmid(upfragment, downfragment DigestedFragment) bool {
 	if strings.EqualFold(sequences.RevComp(upfragment.FivePrimeBottomStrandStickyend), downfragment.FivePrimeTopStrandStickyend) && strings.EqualFold(sequences.RevComp(downfragment.FivePrimeBottomStrandStickyend), upfragment.FivePrimeTopStrandStickyend) {
 		return true
 	}
@@ -49,7 +49,7 @@ func fragmentsFormPlasmid(upfragment, downfragment Digestedfragment) bool {
 // func uniqueEnds (upFragment, downFragment Digestedfragment, endsUsedSoFar []string) bool {}
 // or even better to check for presence of correct antibiotic resistance
 
-func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfragment) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
+func joinTwoParts(upstreampart []DigestedFragment, downstreampart []DigestedFragment) (assembledfragments []DigestedFragment, plasmidproducts []wtype.DNASequence, err error) {
 
 	var sequencestojoin []string
 
@@ -57,7 +57,7 @@ func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 		for _, downfragment := range downstreampart {
 			if fragmentsFormPlasmid(upfragment, downfragment) {
 				if strings.EqualFold(sequences.RevComp(upfragment.FivePrimeBottomStrandStickyend), downfragment.FivePrimeTopStrandStickyend) && strings.EqualFold(sequences.RevComp(downfragment.FivePrimeBottomStrandStickyend), upfragment.FivePrimeTopStrandStickyend) {
-					sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Topstrand)
+					sequencestojoin = append(sequencestojoin, upfragment.TopStrand, downfragment.TopStrand)
 					dnastring := strings.Join(sequencestojoin, "")
 					fullyassembledfragment := wtype.DNASequence{
 						Nm:      "simulatedassemblysequence",
@@ -67,7 +67,7 @@ func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 					plasmidproducts = append(plasmidproducts, fullyassembledfragment)
 					sequencestojoin = make([]string, 0)
 				} else if strings.EqualFold(upfragment.FivePrimeBottomStrandStickyend, sequences.RevComp(downfragment.FivePrimeBottomStrandStickyend)) && strings.EqualFold(downfragment.FivePrimeTopStrandStickyend, sequences.RevComp(upfragment.FivePrimeTopStrandStickyend)) {
-					sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Bottomstrand)
+					sequencestojoin = append(sequencestojoin, upfragment.TopStrand, downfragment.BottomStrand)
 					dnastring := strings.Join(sequencestojoin, "")
 					fullyassembledfragment := wtype.DNASequence{
 						Nm:      "simulatedassemblysequence",
@@ -79,11 +79,11 @@ func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 				}
 			} else {
 				if strings.EqualFold(sequences.RevComp(upfragment.FivePrimeBottomStrandStickyend), downfragment.FivePrimeTopStrandStickyend) {
-					sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Topstrand)
+					sequencestojoin = append(sequencestojoin, upfragment.TopStrand, downfragment.TopStrand)
 					dnastring := strings.Join(sequencestojoin, "")
-					assembledfragment := Digestedfragment{
-						Topstrand:                       dnastring,
-						Bottomstrand:                    "",
+					assembledfragment := DigestedFragment{
+						TopStrand:                       dnastring,
+						BottomStrand:                    "",
 						FivePrimeTopStrandStickyend:     upfragment.FivePrimeTopStrandStickyend,
 						ThreePrimeTopStrandStickyend:    downfragment.ThreePrimeTopStrandStickyend,
 						FivePrimeBottomStrandStickyend:  downfragment.FivePrimeBottomStrandStickyend,
@@ -92,11 +92,11 @@ func joinTwoParts(upstreampart []Digestedfragment, downstreampart []Digestedfrag
 					assembledfragments = append(assembledfragments, assembledfragment)
 					sequencestojoin = make([]string, 0)
 				} else if strings.EqualFold(upfragment.FivePrimeBottomStrandStickyend, sequences.RevComp(downfragment.FivePrimeBottomStrandStickyend)) {
-					sequencestojoin = append(sequencestojoin, upfragment.Topstrand, downfragment.Bottomstrand)
+					sequencestojoin = append(sequencestojoin, upfragment.TopStrand, downfragment.BottomStrand)
 					dnastring := strings.Join(sequencestojoin, "")
-					assembledfragment := Digestedfragment{
-						Topstrand:                       dnastring,
-						Bottomstrand:                    "",
+					assembledfragment := DigestedFragment{
+						TopStrand:                       dnastring,
+						BottomStrand:                    "",
 						FivePrimeTopStrandStickyend:     upfragment.FivePrimeTopStrandStickyend,
 						ThreePrimeTopStrandStickyend:    downfragment.ThreePrimeBottomStrandStickyEnd,
 						FivePrimeBottomStrandStickyend:  downfragment.FivePrimeTopStrandStickyend,
@@ -223,7 +223,7 @@ func permutations(arr []int) [][]int {
 }
 
 // FindAllAssemblyProducts will return all assembly products from a set of assembly part sequences. Unlike, JoinXnumberofparts the order of the parts is not important.
-func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, err error) {
+func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []DigestedFragment, plasmidproducts []wtype.DNASequence, err error) {
 
 	var errs []string
 
@@ -279,7 +279,7 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 
 // JoinXNumberOfParts simulates assembly of a Vector and a list of parts in order using a specified TypeIIs restriction enzyme.
 // Returns an array of partially assembled fragments and fully assembled plasmid products and any error in attempting to assemble the parts.
-func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []Digestedfragment, plasmidproducts []wtype.DNASequence, inserts []wtype.DNASequence, err error) {
+func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []DigestedFragment, plasmidproducts []wtype.DNASequence, inserts []wtype.DNASequence, err error) {
 
 	var newerr error
 	if vector.Seq == "" {
@@ -478,7 +478,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		err = fmt.Errorf(s)
 		return s, successfulassemblies, sites, newDNASequences, err
 	}
-	var failedAssemblies []Digestedfragment
+	var failedAssemblies []DigestedFragment
 	var plasmidProducts []wtype.DNASequence
 
 	if len(assemblyparameters.Partsinorder) > 6 {

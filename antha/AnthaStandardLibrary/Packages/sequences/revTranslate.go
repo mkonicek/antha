@@ -63,13 +63,13 @@ func RevTranslate(aaSeq wtype.ProteinSequence, codonUsageTable CodonUsageTable) 
 
 	dnaSeq.SetName(aaSeq.Name())
 
+	if err = wtype.ValidAA(aaSeq.Sequence()); err != nil {
+		return
+	}
+
 	for _, aminoAcid := range aaSeq.Sequence() {
 
-		aa, err := SetAminoAcid(string(aminoAcid))
-
-		if err != nil {
-			return dnaSeq, err
-		}
+		aa, _ := SetAminoAcid(string(aminoAcid))
 
 		nextCodon, err := codonUsageTable.ChooseCodon(aa)
 
@@ -118,14 +118,15 @@ func SetCodon(dna string) (Codon, error) {
 	return Codon(strings.ToUpper(strings.TrimSpace(dna))), nil
 }
 
-// A CodonUsageTable is an interface for any type which can convert an amino acid into a codon and error.
+// CodonUsageTable is an interface for any type which can convert an amino acid into a codon and error.
 type CodonUsageTable interface {
 	// ChooseCodon converts an amino acid into a codon.
 	// A nil error is returned if this is done successfully.
 	ChooseCodon(aminoAcid AminoAcid) (Codon, error)
 }
 
-// type SimpleUsageTable chooses the next codon as the first codon option from the Table field.
+// SimpleUsageTable contains a reverse translation table mapping of amino acid to all codon options.
+// The first codon option for a specified Amino Acid is always chosen.
 type SimpleUsageTable struct {
 	// Table is a mapping between the amino acid and all codon options for that amino acid.
 	Table map[string][]string
@@ -192,7 +193,7 @@ func (table FrequencyTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
 var (
 
 	// Convert all amino acids to NNN; all stop codons to ***
-	ConvertToN NTable = NTable{}
+	ConvertToNNN NTable = NTable{}
 
 	// Return the first Codon value in the RevCodonTable for any amino acid.
 	UseAnyCodon = SimpleUsageTable{Table: RevCodonTable}
@@ -326,7 +327,7 @@ func RevTranslatetoNstring(aaSeq string) (NNN string) {
 			panic(err)
 		}
 
-		codon, err := ConvertToN.ChooseCodon(aminoAcid)
+		codon, err := ConvertToNNN.ChooseCodon(aminoAcid)
 
 		if err != nil {
 			panic(err)

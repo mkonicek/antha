@@ -134,7 +134,7 @@ func (seq DNASequence) Dup() DNASequence {
 
 func MakeDNASequence(name string, seqstring string, properties []string) (seq DNASequence, err error) {
 	seq.Nm = name
-	seq.Seq = upper(seqstring)
+	seq.Seq = seqstring
 	for _, property := range properties {
 		property = strings.ToUpper(property)
 
@@ -150,31 +150,24 @@ func MakeDNASequence(name string, seqstring string, properties []string) (seq DN
 			seq.Singlestranded = true
 			break
 		}
-		/*
-		   // deal with overhangs separately
-		   if strings.Contains(property,"5'") {
-		   	seq.Overhang5prime.End = 5
-		   	seq.Overhang5prime.Type =
-		   }
-		*/
 	}
 	return
 }
 func MakeLinearDNASequence(name string, seqstring string) (seq DNASequence) {
 	seq.Nm = name
-	seq.Seq = upper(seqstring)
+	seq.Seq = seqstring
 
 	return
 }
 func MakePlasmidDNASequence(name string, seqstring string) (seq DNASequence) {
 	seq.Nm = name
-	seq.Seq = upper(seqstring)
+	seq.Seq = seqstring
 	seq.Plasmid = true
 	return
 }
 func MakeSingleStrandedDNASequence(name string, seqstring string) (seq DNASequence) {
 	seq.Nm = name
-	seq.Seq = upper(seqstring)
+	seq.Seq = seqstring
 	seq.Singlestranded = true
 	return
 }
@@ -366,11 +359,10 @@ func (dna *DNASequence) RevComp() string {
 }
 
 // SetSequence checks the validity of sequence given as an argument and if all characters are present in ValidNucleotides
-// after conversion to upper case the upper case sequence will be added with no error returned.
 // If invalid characters are found an error returned listing all invalid characters and their positions in human friendly form. i.e. the first position is 1 and not 0.
 func (dna *DNASequence) SetSequence(seq string) error {
 
-	dna.Seq = upper(seq)
+	dna.Seq = seq
 
 	return ValidDNA(seq)
 }
@@ -384,7 +376,7 @@ func (dna *DNASequence) Append(s string) error {
 		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
 	}
 
-	dna.Seq = dna.Seq + upper(s)
+	dna.Seq = dna.Seq + s
 
 	return nil
 }
@@ -398,7 +390,7 @@ func (dna *DNASequence) Prepend(s string) error {
 		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
 	}
 
-	dna.Seq = upper(s) + dna.Seq
+	dna.Seq = s + dna.Seq
 
 	return nil
 }
@@ -492,7 +484,7 @@ func (rna *RNASequence) Append(s string) error {
 		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
 	}
 
-	rna.Seq = rna.Seq + upper(s)
+	rna.Seq = rna.Seq + s
 	return nil
 }
 
@@ -504,7 +496,7 @@ func (rna *RNASequence) Prepend(s string) error {
 		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
 	}
 
-	rna.Seq = upper(s) + rna.Seq
+	rna.Seq = s + rna.Seq
 	return nil
 }
 
@@ -549,7 +541,7 @@ func (prot *ProteinSequence) Append(s string) error {
 		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
 	}
 
-	prot.Seq = prot.Seq + upper(s)
+	prot.Seq = prot.Seq + s
 	return nil
 }
 
@@ -561,7 +553,7 @@ func (prot *ProteinSequence) Prepend(s string) error {
 		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
 	}
 
-	prot.Seq = upper(s) + prot.Seq
+	prot.Seq = s + prot.Seq
 	return nil
 }
 

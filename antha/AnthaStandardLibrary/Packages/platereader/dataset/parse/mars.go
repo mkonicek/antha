@@ -265,7 +265,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 						}
 						if len(wavelengths) == 0 {
 							wavelengths = append(wavelengths, wavelength)
-						} else if search.Contains(wavelengths, wavelength) == false {
+						} else if search.InInts(wavelengths, wavelength) == false {
 							wavelengths = append(wavelengths, wavelength)
 						}
 					}

@@ -63,7 +63,7 @@ func (data MarsData) AvailableReadings(wellname string) (readingDescriptions []s
 		readingDescriptions = append(readingDescriptions, description)
 	}
 
-	readingDescriptions = search.RemoveDuplicates(readingDescriptions)
+	readingDescriptions = search.RemoveDuplicateStrings(readingDescriptions)
 
 	return
 }

@@ -221,7 +221,7 @@ func FindDirectionalORF(seq string, reverse bool) (orf ORF, orftrue bool) {
 		orf.Direction = "Forward"
 	}
 	if reverse == true {
-		revseq := RevComp(seq)
+		revseq := wtype.RevComp(seq)
 		orf, orftrue = FindORF(revseq)
 		orf.Direction = "Reverse"
 		//tempend := orf.EndPosition
@@ -488,7 +488,7 @@ func FindallNonOverlappingORFS(seq string) []ORF {
 func DoublestrandedORFS(seq string) (features features) {
 	forwardorfs := Findorfsinstrand(seq)
 	// fmt.Println("features.Top: ", features.TopstrandORFS)
-	revseq := RevComp(strings.ToUpper(seq))
+	revseq := wtype.RevComp(strings.ToUpper(seq))
 	reverseorfs := Findorfsinstrand(revseq)
 	// fmt.Println("features.Bottom: ", reverseorfs)
 	revORFpositionsreassigned := make([]ORF, 0)
@@ -505,7 +505,7 @@ func DoublestrandedORFS(seq string) (features features) {
 
 func DoublestrandedNonOverlappingORFS(seq string) (features features) {
 	features.TopstrandORFS = FindNonOverlappingORFsinstrand(seq)
-	revseq := RevComp(strings.ToUpper(seq))
+	revseq := wtype.RevComp(strings.ToUpper(seq))
 	reverseorfs := FindNonOverlappingORFsinstrand(revseq)
 	revORFpositionsreassigned := make([]ORF, 0)
 	for _, orf := range reverseorfs {

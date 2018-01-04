@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -87,8 +88,14 @@ func (plate LHPlate) OutputLayout() {
 	}
 }
 
+// Name returns the name of the plate.
 func (lhp LHPlate) Name() string {
 	return lhp.PlateName
+}
+
+// Set name sets the name of the plate.
+func (lhp *LHPlate) SetName(name string) {
+	lhp.PlateName = strings.TrimSpace(name)
 }
 
 func (lhp LHPlate) String() string {

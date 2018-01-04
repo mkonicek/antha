@@ -51,7 +51,9 @@ func InSequences(seqs []wtype.DNASequence, seq wtype.DNASequence, options ...Opt
 
 	for i := range seqs {
 		if !checkNames {
-			if equalFold(seqs[i].Sequence(), seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
+			if caseInsensitive && equalFold(seqs[i].Sequence(), seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
+				positionsFound = append(positionsFound, i)
+			} else if trimmedEqual(seqs[i].Sequence(), seq.Sequence()) {
 				positionsFound = append(positionsFound, i)
 			}
 		} else {

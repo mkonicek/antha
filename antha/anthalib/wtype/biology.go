@@ -132,6 +132,139 @@ func (seq DNASequence) Dup() DNASequence {
 	return ret
 }
 
+// AddOverhang adds an overhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddOverhang(end int, sequence string) (err error) {
+
+	var overHang Overhang
+
+	if end == 5 {
+
+		overHang, err = MakeOverHang(sequence, 5, TOP, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set5PrimeEnd(overHang)
+
+		return err
+
+	} else if end == 3 {
+
+		overHang, err = MakeOverHang(sequence, 3, TOP, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set3PrimeEnd(overHang)
+
+		return err
+	}
+	return fmt.Errorf("cannot add overhang to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// AddUnderhang adds an underhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddUnderhang(end int, sequence string) (err error) {
+
+	var overHang Overhang
+
+	if end == 5 {
+
+		overHang, err = MakeOverHang(sequence, 5, BOTTOM, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set5PrimeEnd(overHang)
+
+		return err
+	} else if end == 3 {
+
+		seq.Overhang3prime, err = MakeOverHang(sequence, 3, BOTTOM, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set3PrimeEnd(overHang)
+
+		return err
+	}
+	return fmt.Errorf("cannot add overhang to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// AddBluntOverhang adds a blunt overhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddBluntEnd(end int) (err error) {
+
+	if end == 5 {
+
+		seq.Overhang5prime, err = MakeOverHang("", 5, NEITHER, true)
+
+		return err
+	} else if end == 3 {
+
+		seq.Overhang3prime, err = MakeOverHang("", 3, NEITHER, true)
+
+		return nil
+	}
+	return fmt.Errorf("cannot add blunt end to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// Set5PrimeEnd adds a 5 prime overhang to a sequence.
+// Validation is performed on the compatibility of the overhang with the sequence.
+func (seq *DNASequence) Set5PrimeEnd(overhang Overhang) (err error) {
+	if seq.Singlestranded {
+		err = fmt.Errorf("Can't have overhang on single stranded dna")
+		return
+	}
+	if seq.Plasmid {
+		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
+		return
+	}
+
+	if overhang.Type == OVERHANG {
+
+		expectedOverhang := Prefix(seq.Seq, len(overhang.Sequence()))
+
+		if !strings.EqualFold(expectedOverhang, overhang.Sequence()) {
+			return fmt.Errorf("specified overhang %s to add to 5' end of sequence %s is not equal to sequence prefix %s", overhang.Sequence(), seq.Name(), expectedOverhang)
+		}
+	}
+
+	seq.Overhang5prime = overhang
+	return nil
+}
+
+// Set3PrimeEnd adds a 3 prime overhang to a sequence.
+// Validation is performed on the compatibility of the overhang with the sequence.
+func (seq *DNASequence) Set3PrimeEnd(overhang Overhang) (err error) {
+	if seq.Singlestranded {
+		err = fmt.Errorf("Can't have overhang on single stranded dna")
+		return
+	}
+	if seq.Plasmid {
+		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
+		return
+	}
+
+	if overhang.Type == OVERHANG {
+
+		expectedOverhang := Prefix(RevComp(seq.Seq), len(overhang.Sequence()))
+
+		if !strings.EqualFold(expectedOverhang, overhang.Sequence()) {
+			return fmt.Errorf("specified underhang %s to add to 3' end of sequence %s is not equal to sequence suffix %s", overhang.Sequence(), seq.Name(), expectedOverhang)
+		}
+	}
+
+	seq.Overhang3prime = overhang
+	return nil
+}
+
 func MakeDNASequence(name string, seqstring string, properties []string) (seq DNASequence, err error) {
 	seq.Nm = name
 	seq.Seq = seqstring
@@ -179,16 +312,11 @@ func MakeSingleStrandedDNASequence(name string, seqstring string) (seq DNASequen
 	return
 }
 
-func MakeOverHang(sequence DNASequence, end int, toporbottom int, length int, phosphorylated bool) (overhang Overhang, err error) {
+// MakeOverHang is used to create an overhang.
+func MakeOverHang(overhangSequence string, end int, toporbottom int, phosphorylated bool) (overhang Overhang, err error) {
 
-	if sequence.Singlestranded {
-		err = fmt.Errorf("Can't have overhang on single stranded dna")
-		return
-	}
-	if sequence.Plasmid {
-		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
-		return
-	}
+	length := len(overhangSequence)
+
 	if end == 0 {
 		err = fmt.Errorf("if end = 0, all fields are returned empty")
 		return
@@ -200,30 +328,39 @@ func MakeOverHang(sequence DNASequence, end int, toporbottom int, length int, ph
 		err = fmt.Errorf("invalid entry for end: 5PRIME = 5, 3PRIME = 3, NA = 0")
 		return
 	}
-	if toporbottom == 0 && length == 0 {
-		overhang.Type = 1
+	if toporbottom == NEITHER && length == 0 {
+		overhang.Type = BLUNT
 		return
 	}
-	if toporbottom == 0 && length != 0 {
+	if toporbottom == NEITHER && length != 0 {
 		err = fmt.Errorf("If length of overhang is not 0, toporbottom must be 0")
 		return
 	}
-	if toporbottom != 0 && length == 0 {
+	if toporbottom != NEITHER && length == 0 {
 		err = fmt.Errorf("If length of overhang is 0, toporbottom must be 0")
 		return
 	}
 	if toporbottom > 2 {
-		err = fmt.Errorf("invalid entry for toporbottom: NEITHER = 0, TOP    = 1, BOTTOM = 2")
+		err = fmt.Errorf("invalid entry for toporbottom: NEITHER = 0, TOP = 1, BOTTOM = 2")
 		return
 	}
-	if toporbottom == 1 {
-		overhang.Type = 2
-		overhang.Seq = Prefix(sequence.Seq, length)
+	if end == 5 {
+		if toporbottom == TOP {
+			overhang.Type = OVERHANG
+		}
+		if toporbottom == BOTTOM {
+			overhang.Type = UNDERHANG
+		}
+	} else if end == 3 {
+		if toporbottom == TOP {
+			overhang.Type = OVERHANG
+		}
+		if toporbottom == BOTTOM {
+			overhang.Type = UNDERHANG
+		}
 	}
-	if toporbottom == 2 {
-		overhang.Type = -1
-		overhang.Seq = Suffix(RevComp(sequence.Seq), length)
-	}
+
+	overhang.Seq = overhangSequence
 	overhang.Phosphorylation = phosphorylated
 	return
 }

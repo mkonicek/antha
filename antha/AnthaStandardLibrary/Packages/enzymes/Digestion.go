@@ -434,48 +434,75 @@ func makeFragment(enzyme wtype.RestrictionEnzyme, upstreamCutPosition, downstrea
 	if upstreamCutPosition == nulPosition {
 		fragment.Append(originalSequence.Sequence()[:correctTypeIIsCutPosition(enzyme, downstreamCutPosition)])
 
-		fragment.Overhang3prime, _, err = makeOverhangs(enzyme, downstreamCutPosition, originalSequence)
+		threePrimeEnd, _, err := makeOverhangs(enzyme, downstreamCutPosition, originalSequence)
 
 		if err != nil {
 			return fragment, err
 		}
 
-		fragment.Overhang5prime, err = wtype.MakeOverHang(fragment, 5, wtype.NEITHER, 0, true)
+		err = fragment.Set3PrimeEnd(threePrimeEnd)
+
 		if err != nil {
 			return fragment, err
 		}
 
-		return
+		err = fragment.AddBluntEnd(5)
+
+		if err != nil {
+			return fragment, err
+		}
+
+		return fragment, nil
 	} else if downstreamCutPosition == nulPosition {
 		fragment.Append(originalSequence.Sequence()[correctTypeIIsCutPosition(enzyme, upstreamCutPosition):])
 
-		_, fragment.Overhang5prime, err = makeOverhangs(enzyme, upstreamCutPosition, originalSequence)
+		_, fivePrimeEnd, err := makeOverhangs(enzyme, upstreamCutPosition, originalSequence)
 
 		if err != nil {
 			return fragment, err
 		}
 
-		fragment.Overhang3prime, err = wtype.MakeOverHang(fragment, 3, wtype.NEITHER, 0, true)
+		err = fragment.Set5PrimeEnd(fivePrimeEnd)
+
 		if err != nil {
 			return fragment, err
 		}
-		return
+
+		err = fragment.AddBluntEnd(3)
+		if err != nil {
+			return fragment, err
+		}
+		return fragment, nil
 	}
 
 	fragment.Seq, err = seqBetweenPositions(originalSequence, correctTypeIIsCutPosition(enzyme, upstreamCutPosition), correctTypeIIsCutPosition(enzyme, downstreamCutPosition))
 	if err != nil {
 		return fragment, err
 	}
-	fragment.Overhang3prime, _, err = makeOverhangs(enzyme, downstreamCutPosition, originalSequence)
+	threePrimeEnd, _, err := makeOverhangs(enzyme, downstreamCutPosition, originalSequence)
 
 	if err != nil {
 		return fragment, err
 	}
-	_, fragment.Overhang5prime, err = makeOverhangs(enzyme, upstreamCutPosition, originalSequence)
+
+	err = fragment.Set3PrimeEnd(threePrimeEnd)
 
 	if err != nil {
 		return fragment, err
 	}
+
+	_, fivePrimeEnd, err := makeOverhangs(enzyme, upstreamCutPosition, originalSequence)
+
+	if err != nil {
+		return fragment, err
+	}
+
+	err = fragment.Set5PrimeEnd(fivePrimeEnd)
+
+	if err != nil {
+		return fragment, err
+	}
+
 	return
 
 }
@@ -499,10 +526,6 @@ func bottomCut(enzyme wtype.RestrictionEnzyme, recognitionSitePosition sequences
 // makeOverhangs makes the overhangs for a fragment cut at a specified position with a specified sequence.
 func makeOverhangs(enzyme wtype.RestrictionEnzyme, recognitionSitePosition sequences.PositionPair, sequence wtype.DNASequence) (upStreamThreePrime, downstreamFivePrime wtype.Overhang, err error) {
 
-	junkSequence := sequence.Dup()
-
-	junkSequence.Plasmid = false
-
 	var fragmentStart, fragmentEnd int
 
 	fragmentStart = correctTypeIIsCutPosition(enzyme, recognitionSitePosition)
@@ -525,16 +548,14 @@ func makeOverhangs(enzyme wtype.RestrictionEnzyme, recognitionSitePosition seque
 		if err != nil {
 			return upStreamThreePrime, downstreamFivePrime, err
 		}
-		downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.TOP, enzyme.EndLength, true)
+		downstreamFivePrime, err = wtype.MakeOverHang(overhangSeq, 5, wtype.TOP, true)
 		if err != nil {
 			return upStreamThreePrime, downstreamFivePrime, err
 		}
-		upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.BOTTOM, enzyme.EndLength, true)
+		upStreamThreePrime, err = wtype.MakeOverHang(wtype.RevComp(overhangSeq), 3, wtype.BOTTOM, true)
 		if err != nil {
 			return upStreamThreePrime, downstreamFivePrime, err
 		}
-		downstreamFivePrime.Seq = overhangSeq
-		upStreamThreePrime.Seq = wtype.RevComp(overhangSeq)
 
 	default:
 
@@ -542,11 +563,11 @@ func makeOverhangs(enzyme wtype.RestrictionEnzyme, recognitionSitePosition seque
 
 		if fragmentEnd == fragmentStart {
 
-			downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.NEITHER, 0, true)
+			downstreamFivePrime, err = wtype.MakeOverHang("", 5, wtype.NEITHER, true)
 			if err != nil {
 				return upStreamThreePrime, downstreamFivePrime, err
 			}
-			upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.NEITHER, 0, true)
+			upStreamThreePrime, err = wtype.MakeOverHang("", 3, wtype.NEITHER, true)
 			if err != nil {
 				return upStreamThreePrime, downstreamFivePrime, err
 			}
@@ -557,31 +578,28 @@ func makeOverhangs(enzyme wtype.RestrictionEnzyme, recognitionSitePosition seque
 			if err != nil {
 				return upStreamThreePrime, downstreamFivePrime, err
 			}
-			downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.TOP, enzyme.EndLength, true)
+			downstreamFivePrime, err = wtype.MakeOverHang(overhangSeq, 5, wtype.TOP, true)
 			if err != nil {
 				return upStreamThreePrime, downstreamFivePrime, err
 			}
-			upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.BOTTOM, enzyme.EndLength, true)
+			upStreamThreePrime, err = wtype.MakeOverHang(wtype.RevComp(overhangSeq), 3, wtype.BOTTOM, true)
 			if err != nil {
 				return upStreamThreePrime, downstreamFivePrime, err
 			}
-			downstreamFivePrime.Seq = overhangSeq
-			upStreamThreePrime.Seq = wtype.RevComp(overhangSeq)
+
 		} else if fragmentEnd < fragmentStart {
 			overhangSeq, err := seqBetweenPositions(sequence, fragmentEnd, fragmentStart)
 			if err != nil {
 				return upStreamThreePrime, downstreamFivePrime, err
 			}
-			downstreamFivePrime, err = wtype.MakeOverHang(junkSequence, 5, wtype.BOTTOM, enzyme.EndLength, true)
+			downstreamFivePrime, err = wtype.MakeOverHang(wtype.RevComp(overhangSeq), 5, wtype.BOTTOM, true)
 			if err != nil {
 				return upStreamThreePrime, downstreamFivePrime, err
 			}
-			upStreamThreePrime, err = wtype.MakeOverHang(junkSequence, 3, wtype.TOP, enzyme.EndLength, true)
+			upStreamThreePrime, err = wtype.MakeOverHang(overhangSeq, 3, wtype.TOP, true)
 			if err != nil {
 				return upStreamThreePrime, downstreamFivePrime, err
 			}
-			downstreamFivePrime.Seq = wtype.RevComp(overhangSeq)
-			upStreamThreePrime.Seq = overhangSeq
 		}
 
 	}

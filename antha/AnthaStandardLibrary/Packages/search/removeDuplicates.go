@@ -128,7 +128,11 @@ func RemoveDuplicateSequences(elements []wtype.DNASequence, options ...Option) [
 				key = strings.TrimSpace(elements[v].Name())
 			}
 		} else {
-			key = strings.ToUpper(strings.TrimSpace(elements[v].Sequence()))
+			if containsIgnoreCase(options...) {
+				key = strings.ToUpper(strings.TrimSpace(elements[v].Sequence()))
+			} else {
+				key = strings.TrimSpace(elements[v].Sequence())
+			}
 		}
 
 		if encountered[key] == true {

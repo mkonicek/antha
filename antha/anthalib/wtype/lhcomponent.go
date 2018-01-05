@@ -402,6 +402,11 @@ func (lhc *LHComponent) Name() string {
 	return lhc.CName
 }
 
+// SetName adds the specified component name to the component.
+func (lhc *LHComponent) SetName(name string) {
+	lhc.CName = trimString(name)
+}
+
 // TypeName returns the PolicyName of the LHComponent's LiquidType as a string
 func (lhc *LHComponent) TypeName() string {
 	return LiquidTypeName(lhc.Type).String()

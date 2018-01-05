@@ -245,6 +245,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Length":               "wunit.Length",
 		"LiquidType":           "wtype.LiquidType",
 		"Mass":                 "wunit.Mass",
+		"Moles":                "wunit.Moles",
 		"PolicyName":           "wtype.PolicyName",
 		"Pressure":             "wunit.Pressure",
 		"Rate":                 "wunit.Rate",

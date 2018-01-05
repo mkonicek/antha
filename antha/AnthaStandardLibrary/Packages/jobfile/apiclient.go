@@ -1,4 +1,4 @@
-package jfile
+package jobfile
 
 import (
 	"bytes"

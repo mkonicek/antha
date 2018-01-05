@@ -432,7 +432,11 @@ var nulPosition sequences.PositionPair
 func makeFragment(enzyme wtype.RestrictionEnzyme, upstreamCutPosition, downstreamCutPosition sequences.PositionPair, originalSequence wtype.DNASequence) (fragment wtype.DNASequence, err error) {
 
 	if upstreamCutPosition == nulPosition {
-		fragment.Append(originalSequence.Sequence()[:correctTypeIIsCutPosition(enzyme, downstreamCutPosition)])
+		err = fragment.Append(originalSequence.Sequence()[:correctTypeIIsCutPosition(enzyme, downstreamCutPosition)])
+
+		if err != nil {
+			return fragment, err
+		}
 
 		threePrimeEnd, _, err := makeOverhangs(enzyme, downstreamCutPosition, originalSequence)
 
@@ -454,7 +458,11 @@ func makeFragment(enzyme wtype.RestrictionEnzyme, upstreamCutPosition, downstrea
 
 		return fragment, nil
 	} else if downstreamCutPosition == nulPosition {
-		fragment.Append(originalSequence.Sequence()[correctTypeIIsCutPosition(enzyme, upstreamCutPosition):])
+		err = fragment.Append(originalSequence.Sequence()[correctTypeIIsCutPosition(enzyme, upstreamCutPosition):])
+
+		if err != nil {
+			return fragment, err
+		}
 
 		_, fivePrimeEnd, err := makeOverhangs(enzyme, upstreamCutPosition, originalSequence)
 

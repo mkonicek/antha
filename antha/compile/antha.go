@@ -236,6 +236,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"FlowRate":             "wunit.FlowRate",
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",
+		"JobID":                "jobfile.JobID",
 		"IncubateOpt":          "execute.IncubateOpt",
 		"LHComponent":          "wtype.LHComponent",
 		"LHPlate":              "wtype.LHPlate",

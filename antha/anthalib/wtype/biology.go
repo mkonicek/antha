@@ -99,8 +99,8 @@ type Plasmid struct {
 type BioSequence interface {
 	Name() string
 	Sequence() string
-	Append(string)
-	Prepend(string)
+	Append(string) error
+	Prepend(string) error
 	Blast() ([]Hit, error)
 	MolecularWeight() float64
 }
@@ -283,25 +283,18 @@ func MakeDNASequence(name string, seqstring string, properties []string) (seq DN
 			seq.Singlestranded = true
 			break
 		}
-		/*
-		   // deal with overhangs separately
-		   if strings.Contains(property,"5'") {
-		   	seq.Overhang5prime.End = 5
-		   	seq.Overhang5prime.Type =
-		   }
-		*/
 	}
 	return
 }
 func MakeLinearDNASequence(name string, seqstring string) (seq DNASequence) {
 	seq.Nm = name
-	seq.Seq = strings.ToUpper(seqstring)
+	seq.Seq = seqstring
 
 	return
 }
 func MakePlasmidDNASequence(name string, seqstring string) (seq DNASequence) {
 	seq.Nm = name
-	seq.Seq = strings.ToUpper(seqstring)
+	seq.Seq = seqstring
 	seq.Plasmid = true
 	return
 }
@@ -498,24 +491,112 @@ func (oh Overhang) UnderHang() (sequence string) {
 	return ""
 }
 
+func valid(seq, validOptions string) error {
+	var errs []string
+
+	for i, character := range seq {
+		if !strings.Contains(validOptions, strings.ToUpper(string(character))) {
+			errs = append(errs, fmt.Sprint(string(character), " found at position ", i+1, "; "))
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("Invalid characters found %v", errs)
+	}
+	return nil
+}
+
+func validDNA(seq string) error {
+	validNucleotides := "ACTGNXBHVDMKSWRYU"
+
+	return valid(seq, validNucleotides)
+}
+
+func validRNA(seq string) error {
+	validRNA := "ACGU"
+
+	return valid(seq, validRNA)
+}
+
+func validAA(seq string) error {
+
+	var aminoAcids []string
+
+	for key := range aa_mw {
+		aminoAcids = append(aminoAcids, key)
+	}
+
+	validAminoAcids := strings.Join(aminoAcids, "")
+
+	return valid(seq, validAminoAcids)
+}
+
+func upper(s string) string {
+	return trimString(strings.ToUpper(s))
+}
+
+func trimString(str string) string {
+	return strings.TrimSpace(str)
+}
+
+// Sequence returns the sequence of the DNA Sequence
 func (dna *DNASequence) Sequence() string {
 	return dna.Seq
 }
+
+// Name returns the name of the DNASequence
 func (dna *DNASequence) Name() string {
 	return dna.Nm
 }
 
-func (dna *DNASequence) ReName(newname string) {
-	dna.Nm = newname
+// SetName sets the names of the dna sequence
+func (dna *DNASequence) SetName(name string) {
+	dna.Nm = trimString(name)
 }
 
-func (dna *DNASequence) Append(s string) {
+// RevComp returns the reverse complement of the DNASequence.
+func (dna *DNASequence) RevComp() string {
+	return RevComp(dna.Seq)
+}
+
+// SetSequence checks the validity of sequence given as an argument and if all characters are present in ValidNucleotides
+// If invalid characters are found an error returned listing all invalid characters and their positions in human friendly form. i.e. the first position is 1 and not 0.
+func (dna *DNASequence) SetSequence(seq string) error {
+
+	dna.Seq = seq
+
+	return validDNA(seq)
+}
+
+// Append appends the existing dna sequence with the upper case of the string added
+func (dna *DNASequence) Append(s string) error {
+
+	err := validDNA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
+	}
+
 	dna.Seq = dna.Seq + s
+
+	return nil
 }
 
-func (dna *DNASequence) Prepend(s string) {
+// Preprend adds the requested sequence to the beginning of the existing sequence.
+func (dna *DNASequence) Prepend(s string) error {
+
+	err := validDNA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
+	}
+
 	dna.Seq = s + dna.Seq
+
+	return nil
 }
+
+// Blast performs a blast search on the sequence and returns any hits found.
+// An error is returned if a problem interacting with the blast server occurs.
 func (seq *DNASequence) Blast() (hits []Hit, err error) {
 	hits, err = blast.MegaBlastN(seq.Seq)
 	return
@@ -534,6 +615,8 @@ var nucleotidegpermol = map[string]float64{
 	"dNTP": 487.0,
 }
 
+// MolecularWeight calculates the molecular weight of the specified DNA sequence.
+// For accuracy it is important to specify if the DNA is single stranded or doublestranded along with phosphorylation.
 func (seq *DNASequence) MolecularWeight() float64 {
 	//Calculate Molecular weight of DNA
 
@@ -581,17 +664,42 @@ func (rna *RNASequence) Sequence() string {
 	return rna.Seq
 }
 
+func (rna *RNASequence) SetSequence(seq string) error {
+	rna.Seq = upper(seq)
+	return validRNA(seq)
+}
+
 func (rna *RNASequence) Name() string {
 	return rna.Nm
 }
 
-func (rna *RNASequence) Append(s string) {
-	rna.Seq = rna.Seq + s
+func (rna *RNASequence) SetName(name string) {
+	rna.Nm = trimString(name)
 }
 
-func (rna *RNASequence) Prepend(s string) {
-	rna.Seq = s + rna.Seq
+func (rna *RNASequence) Append(s string) error {
+	err := validRNA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
+	}
+
+	rna.Seq = rna.Seq + s
+	return nil
 }
+
+func (rna *RNASequence) Prepend(s string) error {
+
+	err := validRNA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
+	}
+
+	rna.Seq = s + rna.Seq
+	return nil
+}
+
 func (seq *RNASequence) Blast() (hits []Hit, err error) {
 	hits, err = blast.MegaBlastN(seq.Seq)
 	return
@@ -613,16 +721,40 @@ func (prot *ProteinSequence) Sequence() string {
 	return prot.Seq
 }
 
+func (prot *ProteinSequence) SetSequence(seq string) error {
+	prot.Seq = upper(seq)
+	return validAA(seq)
+}
+
 func (prot *ProteinSequence) Name() string {
 	return prot.Nm
 }
 
-func (prot *ProteinSequence) Append(s string) {
-	prot.Seq = prot.Seq + s
+func (prot *ProteinSequence) SetName(name string) {
+	prot.Nm = trimString(name)
 }
 
-func (prot *ProteinSequence) Prepend(s string) {
+func (prot *ProteinSequence) Append(s string) error {
+	err := validAA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
+	}
+
+	prot.Seq = prot.Seq + s
+	return nil
+}
+
+func (prot *ProteinSequence) Prepend(s string) error {
+
+	err := validAA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
+	}
+
 	prot.Seq = s + prot.Seq
+	return nil
 }
 
 func (seq *ProteinSequence) Blast() (hits []Hit, err error) {
@@ -705,7 +837,6 @@ func Suffix(seq string, lengthofsuffix int) (suffix string) {
 	suffix = seq[(len(seq) - lengthofsuffix):]
 	return suffix
 }
-
 func Rev(s string) string {
 	r := ""
 

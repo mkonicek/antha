@@ -511,6 +511,42 @@ type Protein struct {
 	Seq ProteinSequence
 }
 
+// AminoAcid is a single letter format amino acid in string form.
+// It can be validated as a valid AminoAcid using the SetAminoAcid function.
+type AminoAcid string
+
+// SetAminoAcid creates an AminoAcid from a string input and returns an error
+// if the string is not a valid amino acid.
+func SetAminoAcid(aa string) (AminoAcid, error) {
+
+	if len(aa) != 1 {
+		return "", fmt.Errorf("amino acid %s not valid. Please use single letter code.")
+	}
+
+	if err := ValidAA(aa); err != nil {
+		return "", fmt.Errorf("amino acid %s not valid: %s", aa, err.Error())
+	}
+	return AminoAcid(strings.ToUpper(strings.TrimSpace(aa))), nil
+}
+
+// Codon is a triplet of valid nucleotides which encodes an amino acid or stop codon.
+// It can be validated using the SetCodon function.
+type Codon string
+
+// SetCodon creates a Codon from a string input and returns an error
+// if the string is not a valid codon.
+func SetCodon(dna string) (Codon, error) {
+
+	if len(dna) != 3 {
+		return "", fmt.Errorf("codon %s not valid. must be three nucleotides.")
+	}
+
+	if err := ValidDNA(dna); err != nil {
+		return "", fmt.Errorf("codon %s not valid: %s", dna, err.Error())
+	}
+	return Codon(strings.ToUpper(strings.TrimSpace(dna))), nil
+}
+
 // ProteinSequence object is a type of Biosequence
 type ProteinSequence struct {
 	Nm  string

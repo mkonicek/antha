@@ -25,7 +25,6 @@ package sequences
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -69,7 +68,7 @@ func RevTranslate(aaSeq wtype.ProteinSequence, codonUsageTable CodonUsageTable) 
 
 	for _, aminoAcid := range aaSeq.Sequence() {
 
-		aa, _ := SetAminoAcid(string(aminoAcid))
+		aa, _ := wtype.SetAminoAcid(string(aminoAcid))
 
 		nextCodon, err := codonUsageTable.ChooseCodon(aa)
 
@@ -82,47 +81,11 @@ func RevTranslate(aaSeq wtype.ProteinSequence, codonUsageTable CodonUsageTable) 
 	return dnaSeq, nil
 }
 
-// type AminoAcid is a single letter format amino acid in string form.
-// It can be validated as a valid AminoAcid using the SetAminoAcid function.
-type AminoAcid string
-
-// SetAminoAcid creates an AminoAcid from a string input and returns an error
-// if the string is not a valid amino acid.
-func SetAminoAcid(aa string) (AminoAcid, error) {
-
-	if len(aa) != 1 {
-		return "", fmt.Errorf("amino acid %s not valid. Please use single letter code.")
-	}
-
-	if err := wtype.ValidAA(aa); err != nil {
-		return "", fmt.Errorf("amino acid %s not valid: %s", aa, err.Error())
-	}
-	return AminoAcid(strings.ToUpper(strings.TrimSpace(aa))), nil
-}
-
-// type Codon is a triplet of valid nucleotides which encodes an amino acid or stop codon.
-// It can be validated using the SetCodon function.
-type Codon string
-
-// SetCodon creates a Codon from a string input and returns an error
-// if the string is not a valid codon.
-func SetCodon(dna string) (Codon, error) {
-
-	if len(dna) != 3 {
-		return "", fmt.Errorf("codon %s not valid. must be three nucleotides.")
-	}
-
-	if err := wtype.ValidDNA(dna); err != nil {
-		return "", fmt.Errorf("codon %s not valid: %s", dna, err.Error())
-	}
-	return Codon(strings.ToUpper(strings.TrimSpace(dna))), nil
-}
-
 // CodonUsageTable is an interface for any type which can convert an amino acid into a codon and error.
 type CodonUsageTable interface {
 	// ChooseCodon converts an amino acid into a codon.
 	// A nil error is returned if this is done successfully.
-	ChooseCodon(aminoAcid AminoAcid) (Codon, error)
+	ChooseCodon(aminoAcid wtype.AminoAcid) (wtype.Codon, error)
 }
 
 // SimpleUsageTable contains a reverse translation table mapping of amino acid to all codon options.
@@ -134,7 +97,7 @@ type SimpleUsageTable struct {
 
 // ChooseCodon converts an amino acid into a codon.
 // An error is returned if no value for the amino acid is found.
-func (table SimpleUsageTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
+func (table SimpleUsageTable) ChooseCodon(aa wtype.AminoAcid) (codon wtype.Codon, err error) {
 	codons, found := table.Table[string(aa)]
 
 	if !found {
@@ -145,7 +108,7 @@ func (table SimpleUsageTable) ChooseCodon(aa AminoAcid) (codon Codon, err error)
 		return "", fmt.Errorf("0 codons found in codon usage table for %s", string(aa))
 	}
 
-	return Codon(codons[0]), nil
+	return wtype.Codon(codons[0]), nil
 }
 
 // type NTable converts each amino acid to NNN.
@@ -155,12 +118,12 @@ type NTable struct {
 
 // ChooseCodon converts an amino acid into a codon.
 // All amino acids will be converted to NNN; all stop codons to ***
-func (table NTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
+func (table NTable) ChooseCodon(aa wtype.AminoAcid) (codon wtype.Codon, err error) {
 	if aa == "*" {
-		return Codon("***"), nil
+		return wtype.Codon("***"), nil
 	}
 
-	return Codon("NNN"), nil
+	return wtype.Codon("NNN"), nil
 }
 
 // type FrequencyTable chooses the next codon based on the frequency of the codon
@@ -176,7 +139,7 @@ type FrequencyTable wtype.CodonTable
 
 // ChooseCodon converts an amino acid into a codon.
 // A nil error is returned if this is done successfully.
-func (table FrequencyTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
+func (table FrequencyTable) ChooseCodon(aa wtype.AminoAcid) (codon wtype.Codon, err error) {
 
 	codonTable := wtype.CodonTable(table)
 
@@ -186,7 +149,7 @@ func (table FrequencyTable) ChooseCodon(aa AminoAcid) (codon Codon, err error) {
 		return "", fmt.Errorf("codon not found in table for %v. Please set up Frequency Table first.", aa)
 	}
 
-	return Codon(codonSeq), nil
+	return wtype.Codon(codonSeq), nil
 }
 
 // Some example CodonUsageTables.
@@ -321,7 +284,7 @@ func RevTranslatetoNstring(aaSeq string) (NNN string) {
 	var codonSeq wtype.DNASequence
 
 	for _, aa := range aaSeq {
-		aminoAcid, err := SetAminoAcid(string(aa))
+		aminoAcid, err := wtype.SetAminoAcid(string(aa))
 
 		if err != nil {
 			panic(err)

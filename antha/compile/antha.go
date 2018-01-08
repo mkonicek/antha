@@ -274,7 +274,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/jobfile",
-		UseExpr: "jobfile.JobID",
+		UseExpr: "jobfile.DefaultClient",
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",

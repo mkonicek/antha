@@ -1,6 +1,6 @@
-// Package jfile provides for basic operations for manipulating files
+// Package jobfile provides for basic operations for manipulating files
 // associated with a job
-package jfile
+package jobfile
 
 import (
 	"context"
@@ -12,6 +12,10 @@ import (
 
 	webdav "github.com/studio-b12/gowebdav"
 )
+
+// JobID is the ID of a job run through Antha.
+// This can be used to obtain the outputs of that Job.
+type JobID string
 
 var (
 	errDoesNotExist = errors.New("file does not exist")
@@ -90,9 +94,9 @@ type File struct {
 
 // ListFiles returns files for a job. If jobID is empty, list files for the
 // current job.
-func (c *Client) ListFiles(ctx context.Context, jobID string) ([]*File, error) {
+func (c *Client) ListFiles(ctx context.Context, jobID JobID) ([]*File, error) {
 	if len(jobID) == 0 {
-		jobID = c.jobID
+		jobID = JobID(c.jobID)
 	}
 
 	dir := fmt.Sprintf("/job/%s", jobID)
@@ -125,9 +129,9 @@ func (c *Client) NewWriter(ctx context.Context, name string) io.WriteCloser {
 
 // NewReader returns a reader of a filename in the given job. If
 // the job id is missing, read a file in the current job.
-func (c *Client) NewReader(ctx context.Context, jobID, name string) io.ReadCloser {
+func (c *Client) NewReader(ctx context.Context, jobID JobID, name string) io.ReadCloser {
 	if len(jobID) == 0 {
-		jobID = c.jobID
+		jobID = JobID(c.jobID)
 	}
 
 	p := fmt.Sprintf("/job/%s/%s", jobID, name)

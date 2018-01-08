@@ -236,6 +236,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"FlowRate":             "wunit.FlowRate",
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",
+		"JobID":                "jobfile.JobID",
 		"IncubateOpt":          "execute.IncubateOpt",
 		"LHComponent":          "wtype.LHComponent",
 		"LHPlate":              "wtype.LHPlate",
@@ -270,6 +271,10 @@ func NewAntha(root *AnthaRoot) *Antha {
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
 		UseExpr: "wtype.FALSE",
+	})
+	p.addImportReq(&importReq{
+		Path:    "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/jobfile",
+		UseExpr: "jobfile.JobID",
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",

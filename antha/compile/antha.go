@@ -272,6 +272,10 @@ func NewAntha(root *AnthaRoot) *Antha {
 		UseExpr: "wtype.FALSE",
 	})
 	p.addImportReq(&importReq{
+		Path:    "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/jobfile",
+		UseExpr: "jobfile.JobID",
+	})
+	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",
 		UseExpr: "wunit.Make_units",
 	})

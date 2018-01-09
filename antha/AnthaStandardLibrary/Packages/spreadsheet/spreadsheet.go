@@ -86,34 +86,39 @@ type Sheet struct {
 */
 func Sheet(file *xlsx.File, sheetnum int) (sheet *xlsx.Sheet, err error) {
 
-	if sheetnum >= len(file.Sheets) {
+	if sheetnum < 1 {
+		return nil, fmt.Errorf("sheet %d is invalid. The first sheet should be 1, not 0.", sheetnum)
+	}
+
+	if sheetnum > len(file.Sheets) {
 		var sheets []int
 		for key := range file.Sheets {
-			sheets = append(sheets, key)
+			sheets = append(sheets, key+1)
 		}
 		return nil, fmt.Errorf("sheet %d not found in xlsx file. Found these: %v", sheetnum, sheets)
 	}
 
-	return file.Sheets[sheetnum], nil
+	return file.Sheets[sheetnum-1], nil
 }
 
 // GetDataFromRowCol returns the cell contents at the specified row and column number in an xlsx sheet.
 // An error is returned if the column aor row number specified is beyond the range available in the sheet.
 // Counting starts from zero. i.e. the cell at the first row  and first column would be called by
-// cell, err := GetDataFromRowCol(sheet, 0,0)
+// cell, err := GetDataFromRowCol(sheet, 1,1)
 func GetDataFromRowCol(sheet *xlsx.Sheet, col int, row int) (cell *xlsx.Cell, err error) {
-	if col >= len(sheet.Rows) {
+	if col >= len(sheet.Rows) || col < 0 {
 		var cols []int
 		for key := range sheet.Rows {
-			cols = append(cols, key)
+			cols = append(cols, key+1)
 		}
 		return nil, fmt.Errorf("column %d not found in xlsx sheet. Found these: %v", col, cols)
 	}
+
 	column := sheet.Rows[col]
-	if row >= len(column.Cells) {
+	if row >= len(column.Cells) || row < 0 {
 		var rows []int
 		for key := range column.Cells {
-			rows = append(rows, key)
+			rows = append(rows, key+1)
 		}
 		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", row, rows)
 	}
@@ -155,6 +160,10 @@ func GetDataFromCells(sheet *xlsx.Sheet, cellcoords []string) (cells []*xlsx.Cel
 // Column returns all cells for a column. The index of the column should be used.
 func Column(sheet *xlsx.Sheet, column int) (cells []*xlsx.Cell, err error) {
 
+	if column < 1 {
+		return nil, fmt.Errorf("sheet column %d is invalid. The first column should be 1, not 0.", column)
+	}
+
 	colabcformat := wutil.NumToAlpha(column)
 
 	cellcoords, err := ConvertMinMaxtoArray([]string{(string(colabcformat) + strconv.Itoa(1)), (string(colabcformat) + strconv.Itoa(sheet.MaxRow))})
@@ -169,15 +178,19 @@ func Column(sheet *xlsx.Sheet, column int) (cells []*xlsx.Cell, err error) {
 // Row returns all cells for a row. The index of the row should be used.
 func Row(sheet *xlsx.Sheet, row int) (cells []*xlsx.Cell, err error) {
 
-	if row >= len(sheet.Rows) {
+	if row < 1 {
+		return nil, fmt.Errorf("sheet row %d is invalid. The first row should be 1, not 0.", row)
+	}
+
+	if row > len(sheet.Rows) {
 		var rows []int
 		for key := range sheet.Rows {
-			rows = append(rows, key)
+			rows = append(rows, key+1)
 		}
 		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", row, rows)
 	}
 
-	cellsInrow := sheet.Rows[row]
+	cellsInrow := sheet.Rows[row-1]
 
 	maxColLetter := wutil.NumToAlpha(len(cellsInrow.Cells))
 
@@ -185,6 +198,7 @@ func Row(sheet *xlsx.Sheet, row int) (cells []*xlsx.Cell, err error) {
 	if err != nil {
 		return cells, err
 	}
+
 	cells, err = GetDataFromCells(sheet, cellcoords)
 
 	return cells, err
@@ -215,7 +229,7 @@ func ToHeaderDataMap(sheet *xlsx.Sheet, useHeaderRow int) (headerdatamap map[str
 	for column, headerCell := range headerRow.Cells {
 		if _, found := columnNumberToHeader[column]; !found {
 			columnNumberToHeader[column] = headerCell.String()
-			if _, found := headerdatamap[headerCell.String()]; found {
+			if _, found := headerdatamap[headerCell.String()]; !found {
 				headerdatamap[headerCell.String()] = []*xlsx.Cell{}
 			} else {
 				return nil, fmt.Errorf(`duplicate header found "%s"`, headerCell.String())
@@ -249,7 +263,6 @@ func A1FormatToRowColumn(a1 string) (row, column int, err error) {
 		row := wutil.AlphaToNum(rowcoord) - 1
 		return row, column, err
 	}
-
 	column, err = strconv.Atoi(a1[2:])
 	column = column - 1
 	if err == nil {
@@ -302,7 +315,7 @@ func ConvertMinMaxtoArray(minmax []string) (array []string, err error) {
 		// fill by row
 		array = make([]string, 0)
 		for i := minrow; i < maxrow+1; i++ {
-			colstring := strconv.Itoa(mincol)
+			colstring := strconv.Itoa(mincol + 1)
 			rowstring := wutil.NumToAlpha(i + 1)
 
 			array = append(array, rowstring+colstring)

@@ -55,7 +55,7 @@ func ParseMarsXLSXBinary(xlsxContents []byte, sheet int) (dataoutput dataset.Mar
 }
 
 func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput dataset.MarsData, headerrowcount int, err error) {
-	xlsx, err := spreadsheet.OpenBinary(xlsxBinary)
+	xlsx, err := spreadsheet.OpenXLSXBinary(xlsxBinary)
 
 	if err != nil {
 		return
@@ -83,7 +83,7 @@ func parseHeadLines(xlsxBinary []byte, sheet int) (dataoutput dataset.MarsData, 
 		return
 	}
 
-	cells, err := spreadsheet.Getdatafromcells(sheet1, cellnames)
+	cells, err := spreadsheet.GetDataFromCells(sheet1, cellnames)
 	if err != nil {
 		return
 	}
@@ -167,7 +167,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 	var wavelength int
 	var timestring string
 	var timestamp time.Duration
-	xlsx, err := spreadsheet.OpenBinary(xlsxBinary)
+	xlsx, err := spreadsheet.OpenXLSXBinary(xlsxBinary)
 
 	if err != nil {
 		return
@@ -201,7 +201,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 	if wellrowstart-headerrow > 0 {
 		for i := 0; i < wellrowstart-headerrow; i++ {
 
-			rowabove := spreadsheet.Getdatafromrowcol(sheet1, wellrowstart-(i+1), 2).String()
+			rowabove := spreadsheet.GetDataFromRowCol(sheet1, wellrowstart-(i+1), 2).String()
 			if strings.Contains(rowabove, "Time") {
 				timerow = wellrowstart - (i + 1)
 			} else if strings.Contains(rowabove, "Wavelength") {
@@ -213,7 +213,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 	// check other row names in case the row labels are not in order (this can happen)
 	for i := wellrowstart; i < sheet1.MaxRow; i++ {
 
-		rowname := spreadsheet.Getdatafromrowcol(sheet1, i, 2).String()
+		rowname := spreadsheet.GetDataFromRowCol(sheet1, i, 2).String()
 
 		if strings.Contains(rowname, "Time") {
 			timerow = i
@@ -229,7 +229,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 
 	for m := 3; m < sheet1.MaxCol; m++ {
 
-		columnheader := spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
+		columnheader := spreadsheet.GetDataFromRowCol(sheet1, headerrow, m).String()
 
 		if strings.Contains(columnheader, "Temperature") {
 			tempcolumn = m
@@ -244,22 +244,22 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 
 		if j != timerow && j != wavelengthrow {
 
-			welldata.Name = spreadsheet.Getdatafromrowcol(sheet1, j, 2).String()
+			welldata.Name = spreadsheet.GetDataFromRowCol(sheet1, j, 2).String()
 
-			part1 := spreadsheet.Getdatafromrowcol(sheet1, (j), 0).String()
-			part2 := spreadsheet.Getdatafromrowcol(sheet1, j, 1).String()
+			part1 := spreadsheet.GetDataFromRowCol(sheet1, (j), 0).String()
+			part2 := spreadsheet.GetDataFromRowCol(sheet1, j, 1).String()
 
 			welldata.Well = part1 + part2
 
 			for k := 3; k < sheet1.MaxCol; k++ {
 				if k != tempcolumn && k != injectionvoumecolumn {
 
-					readingtype := spreadsheet.Getdatafromrowcol(sheet1, headerrow, k).String()
+					readingtype := spreadsheet.GetDataFromRowCol(sheet1, headerrow, k).String()
 
 					welldata.ReadingType = readingtype
 
 					if wavelengthrow != 0 {
-						wavelength, err := spreadsheet.Getdatafromrowcol(sheet1, wavelengthrow, k).Int()
+						wavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, k).Int()
 						if err != nil {
 							return welldatamap, err
 						}
@@ -275,7 +275,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 			for m := 3; m < sheet1.MaxCol; m++ {
 
 				if wavelengthrow != 0 {
-					wavelength, err := spreadsheet.Getdatafromrowcol(sheet1, wavelengthrow, m).Int()
+					wavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, m).Int()
 					if err != nil {
 						return welldatamap, err
 					}
@@ -283,10 +283,10 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 						break
 					} else {
 						if timerow != 0 {
-							timelabel := spreadsheet.Getdatafromrowcol(sheet1, timerow, 2).String()
+							timelabel := spreadsheet.GetDataFromRowCol(sheet1, timerow, 2).String()
 
 							if strings.Contains(timelabel, "[s]") {
-								time := spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String()
+								time := spreadsheet.GetDataFromRowCol(sheet1, timerow, m).String()
 
 								timeplusseconds := time + "s"
 								gotime, err := ParseTime(timeplusseconds)
@@ -296,7 +296,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 								}
 								times = append(times, gotime)
 							} else {
-								time := spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String()
+								time := spreadsheet.GetDataFromRowCol(sheet1, timerow, m).String()
 								gotime, err := ParseTime(time)
 								if err != nil {
 									return welldatamap, err
@@ -317,27 +317,27 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 			for m := 3; m < maxcol; m++ {
 
 				//check header
-				header := spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
+				header := spreadsheet.GetDataFromRowCol(sheet1, headerrow, m).String()
 				// the measurement itself (if not a special column - e.g. volume injection or temp)
 				if strings.Contains(header, "Temperature") == false && strings.Contains(header, "Volume") == false {
-					measurement.Reading, err = spreadsheet.Getdatafromrowcol(sheet1, j, m).Float()
+					measurement.Reading, err = spreadsheet.GetDataFromRowCol(sheet1, j, m).Float()
 				}
 
 				// add logic to check column heading
 				// add similar for volume (injection)
 				if strings.Contains(header, "Temperature") {
-					measurement.Temp, err = spreadsheet.Getdatafromrowcol(sheet1, j, tempcolumn).Float()
+					measurement.Temp, err = spreadsheet.GetDataFromRowCol(sheet1, j, tempcolumn).Float()
 				} else if strings.Contains(header, "Volume") {
-					welldata.InjectionVolume, err = spreadsheet.Getdatafromrowcol(sheet1, j, injectionvoumecolumn).Float()
+					welldata.InjectionVolume, err = spreadsheet.GetDataFromRowCol(sheet1, j, injectionvoumecolumn).Float()
 					welldata.Injected = true
 				} else {
 
 					// add time row and wavelength row calculators
 					if timerow != 0 {
 						//gotime, err := ParseTime(spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String())
-						timelabel := spreadsheet.Getdatafromrowcol(sheet1, timerow, 2).String()
+						timelabel := spreadsheet.GetDataFromRowCol(sheet1, timerow, 2).String()
 
-						timecellcontents := spreadsheet.Getdatafromrowcol(sheet1, timerow, m).String()
+						timecellcontents := spreadsheet.GetDataFromRowCol(sheet1, timerow, m).String()
 
 						if strings.Contains(timelabel, "[s]") && timecellcontents != "" {
 							timestring = timecellcontents + "s"
@@ -359,7 +359,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 					// need to have some different options here for handling different types
 					// Ex Spectrum, Absorbance reading etc.. Abs spectrum, ex spectrum
 
-					welldata.ReadingType = spreadsheet.Getdatafromrowcol(sheet1, headerrow, m).String()
+					welldata.ReadingType = spreadsheet.GetDataFromRowCol(sheet1, headerrow, m).String()
 					parsedatatype := strings.Split(welldata.ReadingType, `(`)
 
 					parsedatatype = strings.Split(parsedatatype[1], `)`)
@@ -388,7 +388,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 							measurement.EWavelength = wavelength
 						} else if strings.Contains(welldata.ReadingType, "Em Spectrum") {
 							if wavelengthrow != 0 {
-								emWavelength, err := spreadsheet.Getdatafromrowcol(sheet1, wavelengthrow, m).Int()
+								emWavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, m).Int()
 								if err != nil {
 									return welldatamap, err
 								}
@@ -396,7 +396,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 							}
 						} else if strings.Contains(welldata.ReadingType, "Ex Spectrum") {
 							if wavelengthrow != 0 {
-								exWavelength, err := spreadsheet.Getdatafromrowcol(sheet1, wavelengthrow, m).Int()
+								exWavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, m).Int()
 								if err != nil {
 									return welldatamap, err
 								}
@@ -413,7 +413,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 								measurement.RWavelength = wavelength
 								measurement.EWavelength = wavelength
 							} else {
-								wavelength, err := spreadsheet.Getdatafromrowcol(sheet1, wavelengthrow, m).Int()
+								wavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, m).Int()
 								if err != nil {
 									return welldatamap, err
 								}
@@ -432,7 +432,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 								measurement.EWavelength = wavelength
 
 							} else {
-								wavelength, err := spreadsheet.Getdatafromrowcol(sheet1, wavelengthrow, m).Int()
+								wavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, m).Int()
 								if err != nil {
 									return welldatamap, err
 								}
@@ -574,7 +574,7 @@ func ParseTime(timestring string) (gotime time.Duration, err error) {
 }
 
 func headerContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool) {
-	headercell := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
+	headercell := spreadsheet.GetDataFromRowCol(sheet, cellrow, cellcolumn).String()
 
 	if strings.Contains(headercell, "(") && strings.Contains(headercell, ")") {
 		start := strings.Index(headercell, "(")
@@ -593,7 +593,7 @@ func headerContainsWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno
 }
 
 func headerWavelength(sheet *xlsx.Sheet, cellrow, cellcolumn int) (yesno bool, number int, err error) {
-	headercell := spreadsheet.Getdatafromrowcol(sheet, cellrow, cellcolumn).String()
+	headercell := spreadsheet.GetDataFromRowCol(sheet, cellrow, cellcolumn).String()
 
 	if strings.Contains(headercell, "(") && strings.Contains(headercell, ")") {
 		start := strings.Index(headercell, "(")

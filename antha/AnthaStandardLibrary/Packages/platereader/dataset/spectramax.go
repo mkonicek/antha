@@ -40,7 +40,7 @@ type customTime struct {
 
 //XMLExperiment is exported so requires a comment
 type SpectraMaxData struct {
-	Name       xml.Name           ` xml:"Experiment"`
+	Name       xml.Name           `xml:"Experiment"`
 	Experiment []XMLPlateSections `xml:"PlateSections"`
 }
 

@@ -70,7 +70,7 @@ func AddWelllocations(DXORJMP string, xlsxfile string, oldsheet int, runnumberto
 
 	var xlsxcell *xlsx.Cell
 
-	file, err := spreadsheet.OpenFile(xlsxfile)
+	file, err := spreadsheet.OpenXLSFromFileName(xlsxfile)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func AddWelllocations(DXORJMP string, xlsxfile string, oldsheet int, runnumberto
 }
 
 func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, err error) {
-	file, err := spreadsheet.OpenBinary(bytes)
+	file, err := spreadsheet.OpenXLSXBinary(bytes)
 	if err != nil {
 		return runs, err
 	}
@@ -275,7 +275,7 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 }
 
 func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumns []int, intfactors []string) (runs []Run, err error) {
-	file, err := spreadsheet.OpenBinary(bytes)
+	file, err := spreadsheet.OpenXLSXBinary(bytes)
 	if err != nil {
 		return runs, err
 	}
@@ -468,7 +468,7 @@ func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int)
 
 	factorcolumns = make([]int, 0)
 
-	file, err := spreadsheet.OpenFile(xlsx)
+	file, err := spreadsheet.OpenXLSFromFileName(xlsx)
 	if err != nil {
 		return factorcolumns
 	}
@@ -490,7 +490,7 @@ func findJMPFactorandResponseColumnsinEmptyDesignContents(bytes []byte) (factorc
 	factorcolumns = make([]int, 0)
 	responsecolumns = make([]int, 0)
 
-	file, err := spreadsheet.OpenBinary(bytes)
+	file, err := spreadsheet.OpenXLSXBinary(bytes)
 	if err != nil {
 		return
 	}
@@ -558,7 +558,7 @@ func RunsFromDesignPreResponses(designfile string, intfactors []string, dxorjmp 
 }
 
 func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err error) {
-	file, err := spreadsheet.OpenFile(filename)
+	file, err := spreadsheet.OpenXLSFromFileName(filename)
 	if err != nil {
 		return runs, err
 	}
@@ -705,7 +705,7 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 }
 
 func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, intfactors []string) (runs []Run, err error) {
-	file, err := spreadsheet.OpenFile(xlsx)
+	file, err := spreadsheet.OpenXLSFromFileName(xlsx)
 	if err != nil {
 		return runs, err
 	}
@@ -854,13 +854,11 @@ func findJMPFactorandResponseColumnsinEmptyDesign(xlsx string) (factorcolumns []
 	factorcolumns = make([]int, 0)
 	responsecolumns = make([]int, 0)
 
-	file, err := spreadsheet.OpenFile(xlsx)
+	file, err := spreadsheet.OpenXLSFromFileName(xlsx)
 	if err != nil {
 		return
 	}
 	sheet := spreadsheet.Sheet(file, 0)
-
-	//descriptors := make([]string, 0)
 
 	for j := 0; j < sheet.MaxCol; j++ {
 

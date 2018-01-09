@@ -34,7 +34,7 @@ var coordinatetests = []coordinatetest{
 
 func TestA1formattorowcolumn(t *testing.T) {
 	for _, test := range coordinatetests {
-		r, c, _ := A1formattorowcolumn(test.a1format)
+		r, c, _ := A1FormatToRowColumn(test.a1format)
 		if c != test.col {
 			t.Error(
 				"For", test.a1format, "\n",

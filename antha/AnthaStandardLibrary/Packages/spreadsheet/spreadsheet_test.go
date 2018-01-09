@@ -95,6 +95,7 @@ func TestOpenXLSXBinary(t *testing.T) {
 			t.Error(err.Error())
 			break
 		}
+
 		for rowIndex, values := range test.testRows {
 			rowValues, err := Row(sheet, rowIndex)
 			if err != nil {
@@ -138,7 +139,12 @@ func TestOpenXLSXBinary(t *testing.T) {
 		if err != nil {
 			t.Error(err.Error())
 		}
+
+		fmt.Println(SheetToCSV(sheet))
 		fmt.Println("dataMap: ", dataMap)
+		// Output:
+		// [[Well A String Header A Number Header] [A1 High 1] [A2 High 1.000000e+04] [A3 low 1] [D1 low 0.4]]
+		// dataMap:  map[A String Header:[High High low low] A Number Header:[1 1.000000e+04 1 0.4] Well:[A1 A2 A3 D1]]
 
 	}
 }

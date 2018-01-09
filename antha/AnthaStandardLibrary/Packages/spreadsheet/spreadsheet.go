@@ -86,30 +86,30 @@ type Sheet struct {
 */
 func Sheet(file *xlsx.File, sheetnum int) (sheet *xlsx.Sheet, err error) {
 
-	if sheetnum < 1 {
-		return nil, fmt.Errorf("sheet %d is invalid. The first sheet should be 1, not 0.", sheetnum)
+	if sheetnum < 0 {
+		return nil, fmt.Errorf("sheet %d is invalid. The first sheet should be 0, not 1.", sheetnum)
 	}
 
-	if sheetnum > len(file.Sheets) {
+	if sheetnum >= len(file.Sheets) {
 		var sheets []int
 		for key := range file.Sheets {
-			sheets = append(sheets, key+1)
+			sheets = append(sheets, key)
 		}
 		return nil, fmt.Errorf("sheet %d not found in xlsx file. Found these: %v", sheetnum, sheets)
 	}
 
-	return file.Sheets[sheetnum-1], nil
+	return file.Sheets[sheetnum], nil
 }
 
 // GetDataFromRowCol returns the cell contents at the specified row and column number in an xlsx sheet.
 // An error is returned if the column aor row number specified is beyond the range available in the sheet.
 // Counting starts from zero. i.e. the cell at the first row  and first column would be called by
-// cell, err := GetDataFromRowCol(sheet, 1,1)
+// cell, err := GetDataFromRowCol(sheet, 0,0)
 func GetDataFromRowCol(sheet *xlsx.Sheet, col int, row int) (cell *xlsx.Cell, err error) {
 	if col >= len(sheet.Rows) || col < 0 {
 		var cols []int
 		for key := range sheet.Rows {
-			cols = append(cols, key+1)
+			cols = append(cols, key)
 		}
 		return nil, fmt.Errorf("column %d not found in xlsx sheet. Found these: %v", col, cols)
 	}
@@ -118,7 +118,7 @@ func GetDataFromRowCol(sheet *xlsx.Sheet, col int, row int) (cell *xlsx.Cell, er
 	if row >= len(column.Cells) || row < 0 {
 		var rows []int
 		for key := range column.Cells {
-			rows = append(rows, key+1)
+			rows = append(rows, key)
 		}
 		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", row, rows)
 	}
@@ -135,7 +135,14 @@ func GetDataFromCell(sheet *xlsx.Sheet, cellPositionInA1Format string) (cell *xl
 	if err != nil {
 		return
 	}
-	return GetDataFromRowCol(sheet, col, row)
+
+	cell, err = GetDataFromRowCol(sheet, col, row)
+
+	if err != nil {
+		return cell, fmt.Errorf("error getting data for cell %s", cellPositionInA1Format)
+	}
+
+	return cell, nil
 }
 
 // GetDataFromCells returns the cell contents at the specified cell positions in an xlsx sheet.
@@ -160,11 +167,11 @@ func GetDataFromCells(sheet *xlsx.Sheet, cellcoords []string) (cells []*xlsx.Cel
 // Column returns all cells for a column. The index of the column should be used.
 func Column(sheet *xlsx.Sheet, column int) (cells []*xlsx.Cell, err error) {
 
-	if column < 1 {
-		return nil, fmt.Errorf("sheet column %d is invalid. The first column should be 1, not 0.", column)
+	if column < 0 {
+		return nil, fmt.Errorf("sheet column %d is invalid. The first column should be 0, not 1.", column)
 	}
 
-	colabcformat := wutil.NumToAlpha(column)
+	colabcformat := wutil.NumToAlpha(column + 1)
 
 	cellcoords, err := ConvertMinMaxtoArray([]string{(string(colabcformat) + strconv.Itoa(1)), (string(colabcformat) + strconv.Itoa(sheet.MaxRow))})
 	if err != nil {
@@ -176,21 +183,21 @@ func Column(sheet *xlsx.Sheet, column int) (cells []*xlsx.Cell, err error) {
 }
 
 // Row returns all cells for a row. The index of the row should be used.
-func Row(sheet *xlsx.Sheet, row int) (cells []*xlsx.Cell, err error) {
-
-	if row < 1 {
-		return nil, fmt.Errorf("sheet row %d is invalid. The first row should be 1, not 0.", row)
+func Row(sheet *xlsx.Sheet, rowNumber int) (cells []*xlsx.Cell, err error) {
+	if rowNumber < 0 {
+		return nil, fmt.Errorf("sheet row %d is invalid. The first row should be 0, not 1.", rowNumber)
 	}
 
-	if row > len(sheet.Rows) {
+	if rowNumber >= len(sheet.Rows) {
 		var rows []int
 		for key := range sheet.Rows {
-			rows = append(rows, key+1)
+			rows = append(rows, key)
 		}
-		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", row, rows)
+
+		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", rowNumber, rows)
 	}
 
-	cellsInrow := sheet.Rows[row-1]
+	cellsInrow := sheet.Rows[rowNumber]
 
 	maxColLetter := wutil.NumToAlpha(len(cellsInrow.Cells))
 

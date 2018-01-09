@@ -101,6 +101,18 @@ func Sheet(file *xlsx.File, sheetnum int) (sheet *xlsx.Sheet, err error) {
 	return file.Sheets[sheetnum], nil
 }
 
+// SheetToCSV returns a matrix of string values for the contents of each cell in the sheet.
+func SheetToCSV(sheet *xlsx.Sheet) (records [][]string) {
+	for _, row := range sheet.Rows {
+		var cellsForRow []string
+		for _, cell := range row.Cells {
+			cellsForRow = append(cellsForRow, cell.String())
+		}
+		records = append(records, cellsForRow)
+	}
+	return
+}
+
 // GetDataFromRowCol returns the cell contents at the specified row and column number in an xlsx sheet.
 // An error is returned if the column aor row number specified is beyond the range available in the sheet.
 // Counting starts from zero. i.e. the cell at the first row  and first column would be called by

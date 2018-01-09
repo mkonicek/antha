@@ -34,7 +34,7 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-// OpenXLSFromFileName will open an xlsx file from a filename.
+// OpenXLSXFromFileName will open an xlsx file from a filename.
 func OpenXLSXFromFileName(filename string) (file *xlsx.File, err error) {
 
 	bytes, err := ioutil.ReadFile(filename)
@@ -87,7 +87,7 @@ type Sheet struct {
 func Sheet(file *xlsx.File, sheetnum int) (sheet *xlsx.Sheet, err error) {
 
 	if sheetnum < 0 {
-		return nil, fmt.Errorf("sheet %d is invalid. The first sheet should be 0, not 1.", sheetnum)
+		return nil, fmt.Errorf("sheet %d is invalid. The first sheet should be 0, not 1", sheetnum)
 	}
 
 	if sheetnum >= len(file.Sheets) {
@@ -168,12 +168,12 @@ func GetDataFromCells(sheet *xlsx.Sheet, cellcoords []string) (cells []*xlsx.Cel
 func Column(sheet *xlsx.Sheet, column int) (cells []*xlsx.Cell, err error) {
 
 	if column < 0 {
-		return nil, fmt.Errorf("sheet column %d is invalid. The first column should be 0, not 1.", column)
+		return nil, fmt.Errorf("sheet column %d is invalid. The first column should be 0, not 1", column)
 	}
 
 	colabcformat := wutil.NumToAlpha(column + 1)
 
-	cellcoords, err := ConvertMinMaxtoArray([]string{(string(colabcformat) + strconv.Itoa(1)), (string(colabcformat) + strconv.Itoa(sheet.MaxRow))})
+	cellcoords, err := ConvertMinMaxtoArray([]string{(colabcformat + strconv.Itoa(1)), (colabcformat + strconv.Itoa(sheet.MaxRow))})
 	if err != nil {
 		return cells, err
 	}
@@ -185,7 +185,7 @@ func Column(sheet *xlsx.Sheet, column int) (cells []*xlsx.Cell, err error) {
 // Row returns all cells for a row. The index of the row should be used.
 func Row(sheet *xlsx.Sheet, rowNumber int) (cells []*xlsx.Cell, err error) {
 	if rowNumber < 0 {
-		return nil, fmt.Errorf("sheet row %d is invalid. The first row should be 0, not 1.", rowNumber)
+		return nil, fmt.Errorf("sheet row %d is invalid. The first row should be 0, not 1", rowNumber)
 	}
 
 	if rowNumber >= len(sheet.Rows) {
@@ -201,7 +201,7 @@ func Row(sheet *xlsx.Sheet, rowNumber int) (cells []*xlsx.Cell, err error) {
 
 	maxColLetter := wutil.NumToAlpha(len(cellsInrow.Cells))
 
-	cellcoords, err := ConvertMinMaxtoArray([]string{(string("A") + strconv.Itoa(1)), (string(maxColLetter) + strconv.Itoa(1))})
+	cellcoords, err := ConvertMinMaxtoArray([]string{("A" + strconv.Itoa(1)), (maxColLetter + strconv.Itoa(1))})
 	if err != nil {
 		return cells, err
 	}

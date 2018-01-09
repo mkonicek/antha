@@ -35,7 +35,7 @@ import (
 )
 
 // OpenXLSFromFileName will open an xlsx file from a filename.
-func OpenXLSFromFileName(filename string) (file *xlsx.File, err error) {
+func OpenXLSXFromFileName(filename string) (file *xlsx.File, err error) {
 
 	bytes, err := ioutil.ReadFile(filename)
 

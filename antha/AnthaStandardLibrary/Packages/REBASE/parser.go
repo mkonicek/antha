@@ -25,6 +25,7 @@ package rebase
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -32,14 +33,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
-
-type typeIIs struct {
-	wtype.RestrictionEnzyme
-	Name                              string
-	Isoschizomers                     []string
-	Topstrand3primedistancefromend    int
-	Bottomstrand5primedistancefromend int
-}
 
 func recognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, EndLength int, Topstrand3primedistancefromend int, Bottomstrand5primedistancefromend int, Class string) {
 
@@ -56,12 +49,18 @@ func recognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, E
 
 		split = strings.Split(split[1], "/")
 
-		lengthint, _ := strconv.Atoi(split[0])
+		lengthint, err := strconv.Atoi(split[0])
+		if err != nil {
+			panic(fmt.Sprintf("error splitting recognition sequence %s into Topstrand3primedistancefromend when parsing rebase file. Tried to turn %s into number but got error: %s", RecognitionSeq, split[0], err.Error()))
+		}
 		Topstrand3primedistancefromend = lengthint
 
 		split = strings.Split(split[1], ")")
 
-		lengthint, _ = strconv.Atoi(split[0])
+		lengthint, err = strconv.Atoi(split[0])
+		if err != nil {
+			panic(fmt.Sprintf("error splitting recognition sequence %s into Bottomstrand5primedistancefromend when parsing rebase file. Tried to turn %s into number but got error: %s", RecognitionSeq, split[0], err.Error()))
+		}
 		Bottomstrand5primedistancefromend = lengthint
 
 		EndLength = int(math.Abs(float64(Bottomstrand5primedistancefromend - Topstrand3primedistancefromend)))

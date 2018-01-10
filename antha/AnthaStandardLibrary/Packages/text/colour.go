@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// package text formats strings for printing in a terminal using ansi codes
+// Package text formats strings for printing in a terminal using ansi codes
 package text
 
 import (
@@ -29,7 +29,7 @@ import (
 	"github.com/mgutz/ansi"
 )
 
-// Prints a description highlighted in red followed by the value in unformatted text
+// Print returns a string description highlighted in red followed by the value in unformatted text
 func Print(description string, value interface{}) (fmtd string) {
 	fmtd = fmt.Sprintln(ansi.Color(description, "red"), value)
 	return

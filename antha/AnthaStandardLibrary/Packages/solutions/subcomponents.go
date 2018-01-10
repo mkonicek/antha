@@ -140,7 +140,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 		nonZeroVols = append(nonZeroVols, sample.Volume())
 	}
 
-	topUpVolume := wunit.SubtractVolumes(forTotalVol, nonZeroVols)
+	topUpVolume := wunit.SubtractVolumes(forTotalVol, nonZeroVols...)
 
 	var volsSoFar []wunit.Volume
 
@@ -225,12 +225,15 @@ type ComponentList struct {
 
 // add a single entry to a component list
 func (c ComponentList) Add(component *wtype.LHComponent, conc wunit.Concentration) (newlist ComponentList) {
+
+	componentName := NormaliseName(component.Name())
+
 	complist := make(map[string]wunit.Concentration)
 	for k, v := range c.Components {
 		complist[k] = v
 	}
-	if _, found := complist[component.CName]; !found {
-		complist[component.CName] = conc
+	if _, found := complist[componentName]; !found {
+		complist[componentName] = conc
 	}
 
 	newlist.Components = complist
@@ -240,7 +243,10 @@ func (c ComponentList) Add(component *wtype.LHComponent, conc wunit.Concentratio
 // Get a single concentration set point for a named component present in a component list.
 // An error will be returned if the component is not present.
 func (c ComponentList) Get(component *wtype.LHComponent) (conc wunit.Concentration, err error) {
-	conc, found := c.Components[component.CName]
+
+	componentName := NormaliseName(component.Name())
+
+	conc, found := c.Components[componentName]
 
 	if found {
 		return conc, nil
@@ -253,6 +259,9 @@ func (c ComponentList) Get(component *wtype.LHComponent) (conc wunit.Concentrati
 // Get a single concentration set point using just the name of a component present in a component list.
 // An error will be returned if the component is not present.
 func (c ComponentList) GetByName(component string) (conc wunit.Concentration, err error) {
+
+	component = NormaliseName(component)
+
 	conc, found := c.Components[component]
 
 	if found {
@@ -268,7 +277,17 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 func (c ComponentList) List(verbose bool) string {
 	var s []string
 
-	for k, v := range c.Components {
+	var sortedKeys []string
+
+	for key, _ := range c.Components {
+		sortedKeys = append(sortedKeys, key)
+	}
+
+	sort.Strings(sortedKeys)
+
+	for _, k := range sortedKeys {
+
+		v := c.Components[k]
 
 		var message string
 		if verbose {

@@ -111,6 +111,14 @@ func (cs concentrationSet) Less(i, j int) bool {
 		return iSIValue < jSIValue
 	}
 
+	if iSIValue == 0.0 {
+		return iSIValue < jSIValue
+	}
+
+	if jSIValue == 0.0 {
+		return iSIValue < jSIValue
+	}
+
 	return false
 }
 

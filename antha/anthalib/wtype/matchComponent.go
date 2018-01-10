@@ -3,6 +3,7 @@ package wtype
 import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"reflect"
 )
 
 // TODO --> deal with, e.g., 384 well plates
@@ -18,6 +19,22 @@ type Match struct {
 	Sc   float64        // total score for this match
 }
 
+func (m Match) Equals(m2 Match) bool {
+	eqV := func(va, v2 []wunit.Volume) bool {
+		if len(va) != len(v2) {
+			return false
+		}
+		for i := 0; i < len(va); i++ {
+			if !va[i].EqualTo(v2[i]) {
+				return false
+			}
+		}
+		return true
+	}
+
+	return reflect.DeepEqual(m.IDs, m2.IDs) && reflect.DeepEqual(m.WCs, m2.WCs) && reflect.DeepEqual(m.M, m2.M) && eqV(m.Vols, m2.Vols) && m.Sc == m2.Sc
+}
+
 type mt struct {
 	Sc float64
 	Vl float64
@@ -26,9 +43,9 @@ type mt struct {
 
 func printMat(mat [][]mt) {
 	fmt.Println("*****")
-	for _, v := range mat {
-		for _, x := range v {
-			fmt.Printf("%-5.1f:%-1d ", x.Sc, x.Bk)
+	for i, v := range mat {
+		for j, _ := range v {
+			fmt.Printf("(%d,%d):%-5.1f:%-1d:%-5.1f ", i, j, mat[i][j].Sc, mat[i][j].Bk, mat[i][j].Vl)
 		}
 
 		fmt.Println()
@@ -36,15 +53,17 @@ func printMat(mat [][]mt) {
 	fmt.Println("-----")
 }
 
-func align(want, got ComponentVector, independent bool) Match {
-	// ensure things are ok
-
+func align(want, got ComponentVector, independent, debug bool) Match {
 	for i, v := range want {
 		if v == nil {
 			want[i] = NewLHComponent()
 		}
 
-		g := want[i]
+		if i >= len(got) {
+			continue
+		}
+
+		g := got[i]
 
 		if g == nil {
 			got[i] = NewLHComponent()
@@ -58,6 +77,9 @@ func align(want, got ComponentVector, independent bool) Match {
 	mxj := -1
 
 	for i := 0; i < len(want); i++ {
+		if want[i] == nil {
+			continue
+		}
 		mat[i] = make([]mt, len(got))
 
 		// if we must be contiguous then we skip all cells aligned
@@ -65,16 +87,20 @@ func align(want, got ComponentVector, independent bool) Match {
 
 		for j := 0; j < len(got); j++ {
 			// only allow gaps if independent is set
-			if (got[j].CName == "" || want[i].CName != got[j].CName) && !independent {
+			if got[j] == nil {
+				continue
+			}
+			// CName might not always match
+			//if (got[j].CName == "" || want[i].CName != got[j].CName) && !independent {
+			if (got[j].CName == "" || !want[i].Matches(got[j])) && !independent {
 				continue
 			}
 
-			if want[i].CName != got[j].CName {
-				// we set this to no volume
+			//if want[i].CName != got[j].CName {
+			if !want[i].Matches(got[j]) {
 				mat[i][j].Vl = 0.0
 				mat[i][j].Sc = 0.0
 			} else {
-
 				v1 := want[i].Volume().Dup()
 				v2 := got[j].Volume().Dup()
 
@@ -87,31 +113,28 @@ func align(want, got ComponentVector, independent bool) Match {
 				}
 
 				if !want[i].Volume().IsZero() {
-					mat[i][j].Sc = v2.ConvertToString("ul")
+					//	mat[i][j].Sc = v2.ConvertToString("ul")
+					mat[i][j].Sc = mat[i][j].Vl
 				}
 			}
 
 			mx := 0.0
 			bk := 0
-			if i > 0 && j > 0 {
+			if i > 0 && j > 0 && mat[i-1][j-1].Sc > mx {
 				mx = mat[i-1][j-1].Sc
 				bk = 2
-
-				/*
-					if independent {
-						if want[i-1] == nil || want[i-1].CName == "" || want[i-1].Vol == 0.0 {
-							if mat[i-1][j].Sc > mx {
-								mx = mat[i-1][j].Sc
-								bk = 1
-							}
-						}
-						if mat[i][j-1].Sc > mx {
-							mx = mat[i][j-1].Sc
-							bk = 3
-						}
-					}
-				*/
 			}
+
+			/*
+				// get several things from the same place
+				// if this is a trough it's fine to do parallel
+				// otherwise the code in transferblock forces single channeling
+				if i > 0 && mat[i-1][j].Sc > mx {
+					mx = mat[i-1][j].Sc
+					bk = 1
+				}
+			*/
+
 			mat[i][j].Sc += mx
 			mat[i][j].Bk = bk
 
@@ -131,6 +154,7 @@ func align(want, got ComponentVector, independent bool) Match {
 
 	for i := 0; i < len(want); i++ {
 		Ms[i] = -1
+		Vols[i] = wunit.ZeroVolume()
 	}
 
 	m := Match{IDs: IDs, WCs: WCs, Vols: Vols, M: Ms, Sc: mxmx}
@@ -143,7 +167,6 @@ func align(want, got ComponentVector, independent bool) Match {
 
 	gIDs := got.GetPlateIds()
 	gWCs := got.GetWellCoords()
-	//gVs := got.GetVols()
 
 	// get the best
 
@@ -151,13 +174,16 @@ func align(want, got ComponentVector, independent bool) Match {
 	j := mxj
 
 	for {
-		if want[i].Vol == 0 && mat[i][j].Bk == 0 {
+		if want[i].Vol == 0 && mat[i][j].Bk == 0 || mat[i][j].Vl == 0 && !independent {
 			break
 		}
-		IDs[i] = gIDs[j]
-		WCs[i] = gWCs[j]
+
+		if mat[i][j].Vl != 0 {
+			IDs[i] = gIDs[j]
+			WCs[i] = gWCs[j]
+			Ms[i] = j
+		}
 		Vols[i] = wunit.NewVolume(mat[i][j].Vl, "ul")
-		Ms[i] = j
 
 		bk := mat[i][j].Bk
 
@@ -173,44 +199,26 @@ func align(want, got ComponentVector, independent bool) Match {
 		}
 	}
 
+	if debug {
+		printMat(mat)
+	}
+
 	return m
 }
 
-func matchComponents(want, got ComponentVector, independent bool) (ComponentMatch, error) {
-	// not sure of the algorithm here:
-	// we want to match as many as possible in one go
-	// then clean up the others
+const NotFoundError = "Not found"
 
-	m := ComponentMatch{Matches: make([]Match, 0, 1)}
+// matchComponents takes one bite each time... the best it can find
+// needs to be run repeatedly to pick everything up
+// TODO: needs to supply more options
+func MatchComponents(want, got ComponentVector, independent, debug bool) (Match, error) {
+	match := align(want, got, independent, debug)
 
-	for {
-		match := align(want, got, independent)
-		if match.Sc <= 0.0 {
-			break
-		}
-		m.Matches = append(m.Matches, match)
-
-		// deplete
-		c := 0
-		for i := 0; i < len(match.WCs); i++ {
-			if match.WCs[i] != "" {
-				if got[match.M[i]].Vol >= want[i].Vol {
-					got[match.M[i]].Vol -= want[i].Vol
-					want[i].Vol = 0.0
-				} else {
-					got[match.M[i]].Vol -= want[i].Vol
-					want[i].Vol -= match.Vols[i].ConvertToString(want[i].Vunit)
-				}
-				c += 1
-			}
-		}
-
-		if c == len(match.WCs) || c == 0 {
-			break
-		}
+	if match.Sc <= 0.0 {
+		return Match{}, fmt.Errorf(NotFoundError)
 	}
 
-	return m, nil
+	return match, nil
 }
 
 func scoreMatch(m ComponentMatch, independent bool) float64 {

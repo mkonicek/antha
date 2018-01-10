@@ -85,7 +85,12 @@ type LHChannelParameter struct {
 	Head        int
 }
 
+func (lhcprm *LHChannelParameter) Equals(prm2 *LHChannelParameter) bool {
+	return lhcprm.ID == prm2.ID
+}
+
 // can you move this much? If oneshot is true it's strictly Minvol <= v <= Maxvol
+// otherwise it's just Minvol <= v
 func (lhcp LHChannelParameter) CanMove(v wunit.Volume, oneshot bool) bool {
 	if v.LessThan(lhcp.Minvol) || (v.GreaterThan(lhcp.Maxvol) && oneshot) {
 		return false

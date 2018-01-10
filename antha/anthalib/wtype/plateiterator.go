@@ -254,6 +254,10 @@ func (tcvi *TickingColVectorIterator) Curr() []WellCoords {
 	offsets := make([]int, tcvi.Multi)
 	save := tcvi.Ticker.Dup()
 	for i := 0; i < tcvi.Multi; i++ {
+		v := tcvi.Ticker.Val
+		if v >= tcvi.Plate.Nwells {
+			return []WellCoords{}
+		}
 		offsets[i] = tcvi.Ticker.Val
 		tcvi.Ticker.Tick()
 	}
@@ -274,7 +278,12 @@ func (tcvi *TickingColVectorIterator) Valid() bool {
 	}
 
 	wcs := tcvi.Curr()
+
+	if len(wcs) == 0 {
+		return false
+	}
 	col := -1
+
 	//fmt.Println(A1ArrayFromWellCoords(wcs))
 	for _, wc := range wcs {
 		if wc.X < 0 || wc.Y < 0 {

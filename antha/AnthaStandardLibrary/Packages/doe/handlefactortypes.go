@@ -26,7 +26,9 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/solutions"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -97,13 +99,30 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 // HandleComponentWithConcentration returns both LHComponent and Concentration from a component name with concentration in a DOE design.
 // If no valid concentration is found or an invalid component name is specifed an error is returned.
 func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.LHComponent, concentration wunit.Concentration, err error) {
+
 	concentration, err = HandleConcFactor(header, value)
 
 	if err != nil {
 		return
 	}
 
-	component, err = HandleLHComponentFactor(ctx, header, value)
+	componentName := solutions.NormaliseName(header)
+
+	component, err = inventory.NewComponent(ctx, componentName)
+
+	if err == nil {
+		// continue
+	} else if err == inventory.ErrUnknownType {
+		component, err = inventory.NewComponent(ctx, inventory.WaterType)
+		if err != nil {
+			return
+		}
+		component.CName = componentName
+	} else {
+		return
+	}
+
+	component.SetConcentration(concentration)
 
 	return
 }
@@ -112,35 +131,56 @@ func HandleComponentWithConcentration(ctx context.Context, header string, value 
 // If the value cannot be converted to a valid Volume an error is returned.
 func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Volume, err error) {
 
-	if rawVolString, found := value.(string); found {
+	var floatValue float64
+	var floatFound bool
+	var volUnit string
+
+	rawVolFloat, found := value.(float64)
+
+	if found {
+		floatValue = rawVolFloat
+		floatFound = true
+	} else if rawVolInt, intFound := value.(int); intFound {
+		floatValue = float64(rawVolInt)
+		floatFound = true
+	} else {
+		rawvolstring, found := value.(string)
+		var floatParseErr error
+		if floatValue, floatParseErr = strconv.ParseFloat(rawvolstring, 64); found && floatParseErr == nil {
+			floatFound = true
+		}
+	}
+	if floatFound {
+
+		// handle floating point imprecision
+		floatValue, err = wutil.Roundto(floatValue, 6)
+
+		if err != nil {
+			return anthaVolume, err
+		}
+
+		fields := strings.Fields(header)
+
+		for _, field := range fields {
+			if _, validUnitFound := wunit.UnitMap["Volume"][strings.Trim(field, "()")]; validUnitFound {
+				volUnit = strings.Trim(field, "()")
+			}
+		}
+
+		if volUnit == "" {
+			volUnit = "ul"
+		}
+
+		anthaVolume = wunit.NewVolume(floatValue, volUnit)
+
+	} else if rawVolString, found := value.(string); found {
 
 		vol, err := wunit.ParseVolume(rawVolString)
 
 		if err == nil {
 			anthaVolume = vol
 		} else {
-			err = fmt.Errorf("No valid Volume found in %s", rawVolString)
-			return anthaVolume, err
-		}
-
-		// if float use vol unit from header component
-	} else if rawVolFloat, found := value.(float64); found {
-
-		// handle floating point imprecision
-		rawVolFloat, err = wutil.Roundto(rawVolFloat, 6)
-
-		if err != nil {
-			return anthaVolume, err
-		}
-		vol, err := wunit.ParseVolume(header)
-
-		if err == nil {
-
-			volUnit := vol.Unit().PrefixedSymbol()
-
-			anthaVolume = wunit.NewVolume(rawVolFloat, volUnit)
-		} else {
-			err = fmt.Errorf("No valid Volume found in component %s so can't assign a Volume unit to value", header)
+			err = fmt.Errorf("No valid Volume found in %s: %s", rawVolString, err.Error())
 			return anthaVolume, err
 		}
 
@@ -173,6 +213,12 @@ func HandleLHComponentFactor(ctx context.Context, header string, value interface
 		return component, err
 	}
 
+	concentration, concErr := HandleConcFactor(header, value)
+
+	if concErr == nil {
+		component.SetConcentration(concentration)
+	}
+
 	return nil, err
 }
 
@@ -187,4 +233,179 @@ func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) 
 	}
 
 	return inventory.NewPlate(ctx, str)
+}
+
+// HandleTemperatureFactor parses a factor name and value and returns an antha Temperature.
+// If the value cannot be converted to a valid Temperature an error is returned.
+// A float or int value with no unit is assumed to be in C.
+func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.Temperature, err error) {
+
+	defaultUnit, err := lookForUnitInHeader(header, "Temperature")
+
+	if err != nil {
+		defaultUnit = "C"
+	}
+
+	switch temp := value.(type) {
+	case int:
+		anthaTemp = wunit.NewTemperature(float64(temp), defaultUnit)
+		return anthaTemp, nil
+	case float64:
+		anthaTemp = wunit.NewTemperature(temp, defaultUnit)
+		return anthaTemp, nil
+	case string:
+		value, unit := wunit.SplitValueAndUnit(temp)
+
+		if unit == "" {
+			unit = defaultUnit
+		}
+
+		err = wunit.ValidMeasurementUnit("Temperature", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaTemp = wunit.NewTemperature(value, unit)
+
+		return
+	default:
+		return anthaTemp, fmt.Errorf("cannot convert %v of type %T to temperature!", value, temp)
+	}
+}
+
+// HandleTimeFactor parses a factor name and value and returns an antha Time.
+// If the value cannot be converted to a valid Time an error is returned.
+// A float or int value with no unit is assumed to be in s.
+func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, err error) {
+
+	defaultUnit, err := lookForUnitInHeader(header, "Time")
+
+	if err != nil {
+		defaultUnit = "s"
+	}
+
+	switch time := value.(type) {
+	case int:
+		anthaTime = wunit.NewTime(float64(time), defaultUnit)
+		return anthaTime, nil
+	case float64:
+		anthaTime = wunit.NewTime(time, defaultUnit)
+		return anthaTime, nil
+	case string:
+		value, unit := wunit.SplitValueAndUnit(time)
+
+		if unit == "" {
+			unit = defaultUnit
+		}
+
+		err = wunit.ValidMeasurementUnit("Time", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaTime = wunit.NewTime(value, unit)
+		return
+	default:
+		return anthaTime, fmt.Errorf("cannot convert %v of type %T to time!", value, time)
+	}
+}
+
+// HandleRPMFactor parses a factor name and value and returns an antha Rate.
+// If the value cannot be converted to a valid Rate an error is returned.
+// A float or int value with no unit is assumed to be in /min.
+func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, err error) {
+
+	defaultUnit, err := lookForUnitInHeader(header, "RPM")
+
+	if err != nil {
+		defaultUnit = "/min"
+	}
+
+	switch rate := value.(type) {
+	case int:
+		anthaRate, err = wunit.NewRate(float64(rate), defaultUnit)
+		return
+	case float64:
+		anthaRate, err = wunit.NewRate(rate, defaultUnit)
+		return
+	case string:
+		value, unit := wunit.SplitValueAndUnit(rate)
+
+		if unit == "" {
+			unit = defaultUnit
+		}
+
+		err = wunit.ValidMeasurementUnit("Rate", unit)
+
+		if err != nil {
+			return
+		}
+
+		anthaRate, err = wunit.NewRate(value, unit)
+		return
+	default:
+		return anthaRate, fmt.Errorf("cannot convert %v of type %T to RPM!", value, rate)
+	}
+}
+
+// lookForUnitInHeader searches for a unit flanked by ( ).
+// If a measurment type is specified the unit will be checked for validity.
+func lookForUnitInHeader(header, measurementType string) (unit string, err error) {
+
+	var errs []string
+
+	fields := strings.Fields(header)
+
+	for _, field := range fields {
+
+		if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
+			trimmed := strings.Trim(field, "()")
+
+			if measurementType != "" {
+				err = wunit.ValidMeasurementUnit(measurementType, unit)
+
+				if err == nil {
+					unit = trimmed
+					return
+				}
+			} else {
+				unit = trimmed
+			}
+			errs = append(errs, err.Error())
+		}
+
+	}
+
+	if len(errs) > 0 {
+		return "", fmt.Errorf(strings.Join(errs, ";"))
+	}
+
+	if measurementType != "" {
+		return "", fmt.Errorf("no unit found in header %s of type %s", header, measurementType)
+	}
+	return "", fmt.Errorf("no unit found in header %s", header)
+}
+
+// splitFactorFromUnit removes any field flanked by ( ). If multiple ( ) are found the last will be used.
+func splitFactorFromUnit(header string) (factor, unit string) {
+
+	fields := strings.Fields(header)
+
+	var nonUnits []string
+
+	for _, field := range fields {
+
+		if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
+			trimmed := strings.Trim(field, "()")
+
+			unit = trimmed
+
+		} else {
+			nonUnits = append(nonUnits, field)
+		}
+
+	}
+	return strings.Join(nonUnits, " "), unit
 }

@@ -218,7 +218,7 @@ func TestAlign(t *testing.T) {
 
 		longestMatch := alignment.LongestContinuousSequence()
 
-		positions := sequences.FindSeq(&test.Seq1, &longestMatch)
+		positions := sequences.FindAll(&test.Seq1, &longestMatch)
 
 		if test.AlignmentStartPos > 0 && test.AlignmentEndPos > 0 {
 			if test.AlignmentStartPos != positions.Positions[0].Start() || test.AlignmentEndPos != positions.Positions[0].End() {

@@ -20,17 +20,17 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package wtype
+package wutil
 
 import (
 	"math"
 )
 
-// the standard delimiter to be used when concatenating mixed components into a new component name
+// MIXDELIMITER is the standard delimiter to be used when concatenating mixed components into a new component name
 const MIXDELIMITER = "+"
 
 //constasafunc
-
+// EPSILON_64 returns the machine epsilon.
 func EPSILON_64() float64 {
 	return math.Nextafter(1, 2) - 1
 }

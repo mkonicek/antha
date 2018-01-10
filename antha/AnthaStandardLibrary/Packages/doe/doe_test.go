@@ -2,15 +2,12 @@
 package doe
 
 import (
-	//"fmt"
-	//"strconv"
-	//	"strings"
-
+	"fmt"
+	"reflect"
 	"runtime/debug"
 	"testing"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
-	//"github.com/tealeg/xlsx"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 // simple reverse complement check to test testing methodology initially
@@ -97,6 +94,88 @@ func TestAllCombinations(t *testing.T) {
 					)
 				}
 			}
+		}
+	}
+}
+
+type volFactorTest struct {
+	Header       string
+	Value        interface{}
+	Vol          wunit.Volume
+	ErrorMessage string
+}
+
+var volTests = []volFactorTest{
+	volFactorTest{
+		Header:       "Total Volume (ml)",
+		Value:        interface{}(10),
+		Vol:          wunit.NewVolume(10, "ml"),
+		ErrorMessage: "",
+	},
+	volFactorTest{
+		Header:       "Total Volume",
+		Value:        interface{}("10L"),
+		Vol:          wunit.NewVolume(10, "L"),
+		ErrorMessage: "",
+	},
+	volFactorTest{
+		Header:       "Total Volume (ul)",
+		Value:        interface{}(10.0),
+		Vol:          wunit.NewVolume(10, "ul"),
+		ErrorMessage: "",
+	},
+	volFactorTest{
+		Header:       "Total Volume (ul)",
+		Value:        interface{}("10"),
+		Vol:          wunit.NewVolume(10, "ul"),
+		ErrorMessage: "",
+	},
+	volFactorTest{
+		Header:       "Total Volume",
+		Value:        interface{}("10"),
+		Vol:          wunit.NewVolume(10, "ul"),
+		ErrorMessage: "",
+	},
+	volFactorTest{
+		Header:       "Total Volume",
+		Value:        interface{}("10ml"),
+		Vol:          wunit.NewVolume(10, "ml"),
+		ErrorMessage: "",
+	},
+	volFactorTest{
+		Header:       "Total Volume",
+		Value:        interface{}("10 ml"),
+		Vol:          wunit.NewVolume(10, "ml"),
+		ErrorMessage: "",
+	},
+}
+
+func TestHandleVolumeFactor(t *testing.T) {
+	for _, test := range volTests {
+		vol, err := HandleVolumeFactor(test.Header, test.Value)
+		if !reflect.DeepEqual(vol, test.Vol) {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected:", test.Vol, "\n",
+				"Got:", vol, "\n",
+			)
+		}
+		if err != nil {
+			if err.Error() != test.ErrorMessage {
+				t.Error(
+					"for", fmt.Sprintf("%+v", test), "\n",
+					"Expected error:", test.ErrorMessage, "\n",
+					"Got:", err.Error(), "\n",
+				)
+			}
+		}
+
+		if err == nil && test.ErrorMessage != "" {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected error:", test.ErrorMessage, "\n",
+				"Got:", "nil", "\n",
+			)
 		}
 	}
 }

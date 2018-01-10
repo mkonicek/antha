@@ -43,7 +43,7 @@ func TestStockConcs(*testing.T) {
 	minrequired := make(map[string]float64, len(names))
 	maxrequired := make(map[string]float64, len(names))
 	Smax := make(map[string]float64, len(names))
-	T := make(map[string]float64, len(names))
+	T := make(map[string]wunit.Volume, len(names))
 	vmin := 10.0
 
 	for _, name := range names {
@@ -54,7 +54,7 @@ func TestStockConcs(*testing.T) {
 		minrequired[name] = r * r2 * 20.0
 		maxrequired[name] = r * r2 * 30.0
 		Smax[name] = r * r2 * r3 * 70.0
-		T[name] = 100.0
+		T[name] = wunit.NewVolume(100.0, "ul")
 	}
 
 	choose_stock_concentrations(minrequired, maxrequired, Smax, vmin, T)

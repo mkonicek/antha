@@ -63,7 +63,7 @@ func (data MarsData) AvailableReadings(wellname string) (readingDescriptions []s
 		readingDescriptions = append(readingDescriptions, description)
 	}
 
-	readingDescriptions = search.RemoveDuplicates(readingDescriptions)
+	readingDescriptions = search.RemoveDuplicateStrings(readingDescriptions)
 
 	return
 }
@@ -329,7 +329,16 @@ func (data MarsData) BlankCorrect(wellnames []string, blanknames []string, wavel
 
 	for _, wellname := range wellnames {
 
-		for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
+		wellData, found := data.Dataforeachwell[wellname]
+
+		if !found {
+			return 0.0, fmt.Errorf("no welldata %s to blank correct!", wellname)
+		}
+
+		if len(wellData.Data.Readings[0]) == 0 {
+			return 0.0, fmt.Errorf("no readings found for well %s to blank correct!", wellname)
+		}
+		for _, measurement := range wellData.Data.Readings[0] {
 
 			if measurement.RWavelength == wavelength {
 				readings = append(readings, measurement.Reading)

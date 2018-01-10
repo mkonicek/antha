@@ -2,6 +2,9 @@ SHELL=/bin/bash
 ASL=antha/AnthaStandardLibrary/Packages
 PKG=$(shell go list .)
 
+# Check if we support verbose
+XARGS_HAS_VERBOSE=$(shell if echo | xargs --verbose 2>/dev/null; then echo -n '--verbose'; fi)
+
 all:
 
 build:
@@ -26,6 +29,7 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/asset \
 	  \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Inventory \
+	  | grep -v /antha/AnthaStandardLibrary/Packages/Optimization \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Labware \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Liquidclasses \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Parser \
@@ -43,7 +47,6 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/pcr \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/platereader \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/pubchem \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/search \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/sequences \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/solutions \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/spreadsheet \
@@ -56,12 +59,12 @@ lint: test
 	  | grep -v /wutil \
 	  | sed -e 's|^$(PKG)|.|' \
 	  | tee .build/linted-dirs \
-	  | xargs -n 1 -P 2 --verbose gometalinter \
+	  | xargs -n 1 -P 2 $(XARGS_HAS_VERBOSE) -- gometalinter \
 	    --concurrency=2 \
 	    --enable-gc \
 	    --enable=staticcheck \
 	    --disable=gocyclo --disable=vetshadow --disable=aligncheck \
-	    --disable=gotype \
+	    --disable=gotype --disable=maligned \
 	    --deadline=5m
 
 docker-build: .build/antha-build-image .build/antha-build-withdeps-image

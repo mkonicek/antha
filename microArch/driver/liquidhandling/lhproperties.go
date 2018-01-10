@@ -210,8 +210,15 @@ func ValidateLHProperties(props *LHProperties) (bool, string) {
 }
 
 // copy constructor
-
 func (lhp *LHProperties) Dup() *LHProperties {
+	return lhp.dup(false)
+}
+
+func (lhp *LHProperties) DupKeepIDs() *LHProperties {
+	return lhp.dup(true)
+}
+
+func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	lo := make(map[string]wtype.Coordinates, len(lhp.Layout))
 	for k, v := range lhp.Layout {
 		lo[k] = v
@@ -219,26 +226,28 @@ func (lhp *LHProperties) Dup() *LHProperties {
 	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
 
 	for _, a := range lhp.Adaptors {
-		r.Adaptors = append(r.Adaptors, a.Dup())
+		ad := a.Dup()
+		if keepIDs {
+			ad.ID = a.ID
+		}
+		r.Adaptors = append(r.Adaptors, ad)
 	}
 
 	for _, h := range lhp.Heads {
-		r.Heads = append(r.Heads, h.Dup())
+		hd := h.Dup()
+		if keepIDs {
+			hd.ID = h.ID
+		}
+		r.Heads = append(r.Heads, hd)
 	}
 
 	for _, hl := range lhp.HeadsLoaded {
-		r.HeadsLoaded = append(r.HeadsLoaded, hl.Dup())
+		hld := hl.Dup()
+		if keepIDs {
+			hld.ID = hl.ID
+		}
+		r.HeadsLoaded = append(r.HeadsLoaded, hld)
 	}
-
-	/*
-		for name, pl := range lhp.PosLookup {
-			r.PosLookup[name] = pl
-		}
-
-		for name, pl := range lhp.PlateIDLookup {
-			r.PlateIDLookup[name] = pl
-		}
-	*/
 
 	// plate lookup can contain anything
 
@@ -248,13 +257,24 @@ func (lhp *LHProperties) Dup() *LHProperties {
 		var pos string
 		switch pt.(type) {
 		case *wtype.LHTipwaste:
-			tmp := pt.(*wtype.LHTipwaste).Dup()
+			var tmp *wtype.LHTipwaste
+			if keepIDs {
+				tmp = pt.(*wtype.LHTipwaste).Dup()
+				tmp.ID = pt.(*wtype.LHTipwaste).ID
+			} else {
+				tmp = pt.(*wtype.LHTipwaste).Dup()
+			}
 			pt2 = tmp
 			newid = tmp.ID
 			pos = lhp.PlateIDLookup[name]
 			r.Tipwastes[pos] = tmp
 		case *wtype.LHPlate:
-			tmp := pt.(*wtype.LHPlate).Dup()
+			var tmp *wtype.LHPlate
+			if keepIDs {
+				tmp = pt.(*wtype.LHPlate).DupKeepIDs()
+			} else {
+				tmp = pt.(*wtype.LHPlate).Dup()
+			}
 			pt2 = tmp
 			newid = tmp.ID
 			pos = lhp.PlateIDLookup[name]
@@ -268,9 +288,13 @@ func (lhp *LHProperties) Dup() *LHProperties {
 			} else {
 				r.Plates[pos] = tmp
 			}
-
 		case *wtype.LHTipbox:
-			tmp := pt.(*wtype.LHTipbox).Dup()
+			var tmp *wtype.LHTipbox
+			if keepIDs {
+				tmp = pt.(*wtype.LHTipbox).DupKeepIDs()
+			} else {
+				tmp = pt.(*wtype.LHTipbox).Dup()
+			}
 			pt2 = tmp
 			newid = tmp.ID
 			pos = lhp.PlateIDLookup[name]
@@ -287,18 +311,33 @@ func (lhp *LHProperties) Dup() *LHProperties {
 
 	for name, head := range lhp.Heads {
 		r.Heads[name] = head.Dup()
+		if keepIDs {
+			r.Heads[name].ID = head.ID
+		}
 	}
 
 	for i, hl := range lhp.HeadsLoaded {
 		r.HeadsLoaded[i] = hl.Dup()
+		if keepIDs {
+			r.HeadsLoaded[i].ID = hl.ID
+		}
 	}
 
 	for i, ad := range lhp.Adaptors {
 		r.Adaptors[i] = ad.Dup()
+
+		if keepIDs {
+			r.Adaptors[i].ID = ad.ID
+		}
 	}
 
 	for _, tip := range lhp.Tips {
-		r.Tips = append(r.Tips, tip.Dup())
+		newtip := tip.Dup()
+		if keepIDs {
+			newtip.ID = tip.ID
+		}
+
+		r.Tips = append(r.Tips, newtip)
 	}
 
 	for _, pref := range lhp.Tip_preferences {
@@ -415,14 +454,6 @@ func (lhp *LHProperties) AddTipBox(tipbox *wtype.LHTipbox) error {
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, "Trying to add tip box")
 }
 func (lhp *LHProperties) AddTipBoxTo(pos string, tipbox *wtype.LHTipbox) bool {
-	/*
-		fmt.Println("Adding tip box of type, ", tipbox.Type, " To position ", pos)
-		if lhp.PosLookup[pos] != "" {
-			logger.Fatal("CAN'T ADD TIPBOX TO FULL POSITION")
-			panic("CAN'T ADD TIPBOX TO FULL POSITION")
-		}
-	*/
-
 	if lhp.PosLookup[pos] != "" {
 		logger.Debug(fmt.Sprintf("Tried to add tipbox to full position: %s", pos))
 		return false
@@ -538,9 +569,6 @@ func (lhp *LHProperties) RemovePlateAtPosition(pos string) {
 func (lhp *LHProperties) addWaste(waste *wtype.LHPlate) bool {
 	for _, pref := range lhp.Waste_preferences {
 		if lhp.PosLookup[pref] != "" {
-
-			//fmt.Println(pref, " ", lhp.PlateLookup[lhp.PosLookup[pref]])
-
 			continue
 		}
 
@@ -567,7 +595,6 @@ func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.LHPlate) bool {
 func (lhp *LHProperties) AddWash(wash *wtype.LHPlate) bool {
 	for _, pref := range lhp.Wash_preferences {
 		if lhp.PosLookup[pref] != "" {
-			//fmt.Println(pref, " ", lhp.PlateLookup[lhp.PosLookup[pref]])
 			continue
 		}
 
@@ -590,34 +617,6 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	lhp.PosLookup[pos] = wash.ID
 	lhp.PlateIDLookup[wash.ID] = pos
 	return true
-}
-
-// returns go: [transfer1][c1c2c3c4...], [transfer2][c1c2c3c4...]
-func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
-	plateIDs = make([][]string, len(cmps))
-	wellCoords = make([][]string, len(cmps))
-	vols = make([][]wunit.Volume, len(cmps))
-
-	// might just do this this way
-	if multi > 1 {
-		//for _, ipref := range lhp.Input_preferences {
-		for _, ipref := range lhp.OrderedMergedPlatePrefs() {
-			p, ok := lhp.Plates[ipref]
-
-			if ok {
-				// find components multi can return anywhere between 1x Multi and Multi x 1
-				// transfers as sets
-				plateIDs, wellCoords, vols, err = p.FindComponentsMulti(cmps, ori, multi, independent)
-				if err != nil {
-					continue
-				}
-
-				return
-			}
-		}
-	}
-	// if we really can't get anywhere, try this badger
-	return lhp.GetComponentsSingle(cmps, carryvol, legacyVolume)
 }
 
 func GetLocTox(cmp *wtype.LHComponent) ([]string, error) {
@@ -857,44 +856,93 @@ func (lhp *LHProperties) legacyGetComponentsSingle(cmps []*wtype.LHComponent, ca
 	return plateIDs, wellCoords, vols, nil
 }
 
-func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype string, channel *wtype.LHChannelParameter, mirror bool, multi int, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
-	positions = make([]string, multi)
-	boxtypes = make([]string, multi)
+func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
 
-	// hack -- count tips left
-	n_tips_left := 0
-	for _, pos := range lhp.Tip_preferences {
-		bx, ok := lhp.Tipboxes[pos]
+	// these are merged into subsets with tip and channel types in common here
+	// each subset has a mask which is the same size as the number of channels available
+	subsets, err2 := makeChannelSubsets(tiptype, channel)
 
-		if !ok || bx.Tiptype.Type != tiptype {
-			continue
-		}
-
-		n_tips_left += bx.N_clean_tips()
+	if err2 != nil {
+		return [][]string{}, [][]string{}, [][]string{}, err2
 	}
 
-	//	logger.Debug(fmt.Sprintf("There are %d clean tips of type %s left", n_tips_left, tiptype))
+	for _, set := range subsets {
+		sw, sp, sb, err := lhp.getCleanTipSubset(ctx, set, usetiptracking)
+
+		if err != nil {
+			return [][]string{}, [][]string{}, [][]string{}, err
+		}
+
+		wells = append(wells, sw)
+		positions = append(positions, sp)
+		boxtypes = append(boxtypes, sb)
+	}
+
+	return wells, positions, boxtypes, nil
+}
+
+func countMultiB(ar []bool) int {
+	r := 0
+	for _, v := range ar {
+		if v {
+			r += 1
+		}
+	}
+
+	return r
+}
+
+func copyToRightLength(sa []string, m int) []string {
+	r := make([]string, m)
+
+	for i := 0; i < len(sa); i++ {
+		r[i] = sa[i]
+	}
+
+	return r
+}
+
+// this function only returns true if we can get all tips at once
+// TODO -- support not getting in a single operation
+func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
+	positions = make([]string, len(tipParams.Mask))
+	boxtypes = make([]string, len(tipParams.Mask))
 
 	foundit := false
+	multi := countMultiB(tipParams.Mask)
 
 	for _, pos := range lhp.Tip_preferences {
-		//	for i := len(lhp.Tip_preferences) - 1; i >= 0; i-- {
-		//		pos := lhp.Tip_preferences[i]
 		bx, ok := lhp.Tipboxes[pos]
-		if !ok || bx.Tiptype.Type != tiptype {
+		if !ok || bx.Tiptype.Type != tipParams.TipType {
 			continue
 		}
-		wells = bx.GetTips(mirror, multi, channel.Orientation)
-		if wells != nil && len(wells) == multi {
+		wells, err = bx.GetTipsMasked(tipParams.Mask, tipParams.Channel.Orientation, true)
+
+		/*
+			if err != nil && !bx.Empty() {
+				return wells, positions, boxtypes, err
+			}
+		*/
+
+		// update wells
+
+		if len(wells) != len(positions) {
+			wells = copyToRightLength(wells, len(positions))
+		}
+
+		// TODO -- support partial collections
+		if wells != nil && countMulti(wells) == multi {
 			foundit = true
-			for i := 0; i < multi; i++ {
-				positions[i] = pos
-				boxtypes[i] = bx.Boxname
+			for i := 0; i < len(wells); i++ {
+				if tipParams.Mask[i] {
+					positions[i] = pos
+					boxtypes[i] = bx.Boxname
+				}
 			}
 			break
 		} else if usetiptracking && lhp.HasTipTracking() {
 			bx.Refresh()
-			return lhp.GetCleanTips(ctx, tiptype, channel, mirror, multi, usetiptracking)
+			return lhp.getCleanTipSubset(ctx, tipParams, usetiptracking)
 		}
 	}
 
@@ -905,10 +953,10 @@ func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype string, chann
 
 	if !foundit {
 		// try adding a new tip box
-		bx, err := inventory.NewTipbox(ctx, tiptype)
+		bx, err := inventory.NewTipbox(ctx, tipParams.TipType)
 
 		if err != nil {
-			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type ", tiptype, " found: %s", err))
+			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type %s found: %s", tipParams.TipType, err))
 		}
 
 		r := lhp.AddTipBox(bx)
@@ -918,28 +966,34 @@ func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype string, chann
 			return nil, nil, nil, err
 		}
 
-		return lhp.GetCleanTips(ctx, tiptype, channel, mirror, multi, usetiptracking)
+		return lhp.getCleanTipSubset(ctx, tipParams, usetiptracking)
 		//		return nil, nil, nil
 	}
 
 	return
 }
 
-func (lhp *LHProperties) DropDirtyTips(channel *wtype.LHChannelParameter, multi int) (wells, positions, boxtypes []string) {
+func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (wells, positions, boxtypes []string) {
+	multi := len(channels)
+
 	wells = make([]string, multi)
 	positions = make([]string, multi)
 	boxtypes = make([]string, multi)
 
 	foundit := false
 
+	wellNames := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
+
 	for pos, bx := range lhp.Tipwastes {
-		yes := bx.Dispose(multi)
+		yes := bx.Dispose(channels)
 		if yes {
 			foundit = true
 			for i := 0; i < multi; i++ {
-				wells[i] = "A1"
-				positions[i] = pos
-				boxtypes[i] = bx.Type
+				if channels[i] != nil {
+					wells[i] = wellNames[i]
+					positions[i] = pos
+					boxtypes[i] = bx.Type
+				}
 			}
 
 			break

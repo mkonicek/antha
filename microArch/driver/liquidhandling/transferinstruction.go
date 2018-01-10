@@ -25,7 +25,6 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -64,7 +63,7 @@ type TransferInstruction struct {
 	TPlateWY   []int
 	FVolume    []wunit.Volume
 	TVolume    []wunit.Volume
-	Policies   wtype.LHPolicyRuleSet
+	Components []string
 }
 
 func (ti *TransferInstruction) ToString() string {
@@ -81,7 +80,7 @@ func (ti *TransferInstruction) ParamSet(n int) TransferParams {
 	return TransferParams{ti.What[n], ti.PltFrom[n], ti.PltTo[n], ti.WellFrom[n], ti.WellTo[n], ti.Volume[n], ti.FPlateType[n], ti.TPlateType[n], ti.FVolume[n], ti.TVolume[n], nil, ""}
 }
 
-func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int) *TransferInstruction {
+func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string) *TransferInstruction {
 	var v TransferInstruction
 	v.Type = TFR
 	v.What = what
@@ -98,6 +97,7 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	v.FPlateWY = FPlateWY
 	v.TPlateWX = TPlateWX
 	v.TPlateWY = TPlateWY
+	v.Components = Components
 	v.GenericRobotInstruction.Ins = RobotInstruction(&v)
 	return &v
 }
@@ -106,21 +106,73 @@ func (ins *TransferInstruction) InstructionType() int {
 	return ins.Type
 }
 
-func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) {
-	ins.What = append(ins.What, ins2.What...)
-	ins.PltFrom = append(ins.PltFrom, ins2.PltFrom...)
-	ins.PltTo = append(ins.PltTo, ins2.PltTo...)
-	ins.WellFrom = append(ins.WellFrom, ins2.WellFrom...)
-	ins.WellTo = append(ins.WellTo, ins2.WellTo...)
-	ins.Volume = append(ins.Volume, ins2.Volume...)
-	ins.FPlateType = append(ins.FPlateType, ins2.FPlateType...)
-	ins.TPlateType = append(ins.TPlateType, ins2.TPlateType...)
-	ins.FPlateWX = append(ins.FPlateWX, ins2.FPlateWX...)
-	ins.FPlateWY = append(ins.FPlateWY, ins2.FPlateWY...)
-	ins.TPlateWX = append(ins.TPlateWX, ins2.TPlateWX...)
-	ins.TPlateWY = append(ins.TPlateWY, ins2.TPlateWY...)
-	ins.FVolume = append(ins.FVolume, ins2.FVolume...)
-	ins.TVolume = append(ins.TVolume, ins2.TVolume...)
+//what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string
+func (ins *TransferInstruction) Dup() *TransferInstruction {
+	w := dupStringArray(ins.What)
+	pf := dupStringArray(ins.PltFrom)
+	pt := dupStringArray(ins.PltTo)
+	wf := dupStringArray(ins.WellFrom)
+	wt := dupStringArray(ins.WellTo)
+	fpt := dupStringArray(ins.FPlateType)
+	tpt := dupStringArray(ins.TPlateType)
+	vol := dupVolArray(ins.Volume)
+	fv := dupVolArray(ins.FVolume)
+	tv := dupVolArray(ins.TVolume)
+	fpwx := dupIntArray(ins.FPlateWX)
+	fpwy := dupIntArray(ins.FPlateWY)
+	tpwx := dupIntArray(ins.TPlateWX)
+	tpwy := dupIntArray(ins.TPlateWY)
+	cmps := dupStringArray(ins.Components)
+
+	return NewTransferInstruction(w, pf, pt, wf, wt, fpt, tpt, vol, fv, tv, fpwx, fpwy, tpwx, tpwy, cmps)
+}
+
+func dupStringArray(in []string) []string {
+	out := make([]string, len(in))
+
+	for i := 0; i < len(in); i++ {
+		out[i] = in[i]
+	}
+	return out
+}
+func dupIntArray(in []int) []int {
+	out := make([]int, len(in))
+
+	for i := 0; i < len(in); i++ {
+		out[i] = in[i]
+	}
+	return out
+}
+
+func dupVolArray(in []wunit.Volume) []wunit.Volume {
+	out := make([]wunit.Volume, len(in))
+
+	for i := 0; i < len(in); i++ {
+		out[i] = in[i].Dup()
+	}
+
+	return out
+}
+
+func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) *TransferInstruction {
+	ret := ins.Dup()
+	ret.What = append(ret.What, ins2.What...)
+	ret.PltFrom = append(ret.PltFrom, ins2.PltFrom...)
+	ret.PltTo = append(ret.PltTo, ins2.PltTo...)
+	ret.WellFrom = append(ret.WellFrom, ins2.WellFrom...)
+	ret.WellTo = append(ret.WellTo, ins2.WellTo...)
+	ret.Volume = append(ret.Volume, ins2.Volume...)
+	ret.FPlateType = append(ret.FPlateType, ins2.FPlateType...)
+	ret.TPlateType = append(ret.TPlateType, ins2.TPlateType...)
+	ret.FPlateWX = append(ret.FPlateWX, ins2.FPlateWX...)
+	ret.FPlateWY = append(ret.FPlateWY, ins2.FPlateWY...)
+	ret.TPlateWX = append(ret.TPlateWX, ins2.TPlateWX...)
+	ret.TPlateWY = append(ret.TPlateWY, ins2.TPlateWY...)
+	ret.FVolume = append(ret.FVolume, ins2.FVolume...)
+	ret.TVolume = append(ret.TVolume, ins2.TVolume...)
+	ret.Components = append(ret.Components, ins2.Components...)
+
+	return ret
 }
 
 func (ins *TransferInstruction) GetParameter(name string) interface{} {
@@ -159,56 +211,35 @@ func (ins *TransferInstruction) GetParameter(name string) interface{} {
 		return ins.InstructionType()
 	case "PLATFORM":
 		return ins.Platform
+	case "COMPONENT":
+		return ins.Components
 	}
 	return nil
 }
 
-func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
-	ret := make([]wunit.Volume, 0)
+func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
+	// the minimum volume in the set... ensuring that we what we leave is
+	// either 0 or minLeave or greater
 
-	vol := Vol.ConvertTo(Min.Unit())
-	min := Min.RawValue()
-	max := Max.RawValue()
+	ret := vs[0].Dup()
 
-	//	if vol < min {
-	if Vol.LessThanRounded(Min, 1) {
-		err := wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Liquid Handler cannot service volume requested: %f - minimum volume is %f", vol, min))
-		return ret, err
-	}
-
-	//if vol <= max {
-	if !Vol.GreaterThanRounded(Max, 1) {
-		ret = append(ret, Vol)
-		return ret, nil
-	}
-
-	// vol is > max, need to know by how much
-	// if vol/max = n then we do n+1 equal transfers of vol / (n+1)
-	// this should never be outside the range
-
-	n, _ := math.Modf(vol / max)
-
-	n += 1
-
-	// should make sure of no rounding errors here... we want to
-	// make sure these are within the resolution of the channel
-
-	for i := 0; i < int(n); i++ {
-		ret = append(ret, wunit.NewVolume(vol/n, Vol.Unit().PrefixedSymbol()))
-	}
-
-	return ret, nil
-}
-
-func (vs VolumeSet) MaxMultiTransferVolume() wunit.Volume {
-	// the minimum volume in the set
-
-	ret := vs.Vols[0]
-
-	for _, v := range vs.Vols {
+	for _, v := range vs {
 		if v.LessThan(ret) && !v.IsZero() {
-			ret = v
+			ret = v.Dup()
 		}
+	}
+
+	vs2 := vs.Dup().Sub(ret)
+
+	if !vs2.NonZeros().Min().IsZero() && vs2.NonZeros().Min().LessThan(minLeave) {
+		//slightly inefficient but we refuse to leave less than minleave
+		ret.Subtract(minLeave)
+	}
+
+	// fail if ret is now < 0
+
+	if ret.LessThan(wunit.ZeroVolume()) {
+		ret = wunit.ZeroVolume()
 	}
 
 	return ret
@@ -228,13 +259,16 @@ func (ins *TransferInstruction) CheckMultiPolicies() bool {
 }
 
 func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, error) {
-	var plates []*wtype.LHPlate
-	for _, typ := range types {
+	plates := make([]*wtype.LHPlate, len(types))
+	for i, typ := range types {
+		if typ == "" {
+			continue
+		}
 		p, err := inventory.NewPlate(ctx, typ)
 		if err != nil {
 			return nil, err
 		}
-		plates = append(plates, p)
+		plates[i] = p
 	}
 	return plates, nil
 }
@@ -327,23 +361,12 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, channel 
 
 	// looks OK
 
-	/*
-		ra := make([]int, 0, len(ins.What))
-
-		m := 0
-
-		for i := 0; i < len(ins.What); i++ {
-			if ins.What[i] != "" {
-				m += 1
-			}
-		}
-
-		for i := 0; i < m; i++ {
-			ra = append(ra, i)
-		}
-	*/
-
 	ra := make([]int, channel.Multi)
+
+	// init
+	for i := 0; i < channel.Multi; i++ {
+		ra[i] = -1
+	}
 
 	// some issues here in that ins.What might not
 	// be the right size:
@@ -554,61 +577,6 @@ func IsIn(i int, a []int) bool {
 	return false
 }
 
-// helper thing
-
-type VolumeSet struct {
-	Vols []wunit.Volume
-}
-
-func NewVolumeSet(n int) VolumeSet {
-	var vs VolumeSet
-	vs.Vols = make([]wunit.Volume, n)
-	for i := 0; i < n; i++ {
-		vs.Vols[i] = (wunit.NewVolume(0.0, "ul"))
-	}
-	return vs
-}
-
-func (vs VolumeSet) Add(v wunit.Volume) {
-	for i := 0; i < len(vs.Vols); i++ {
-		vs.Vols[i].Add(v)
-	}
-}
-
-func (vs VolumeSet) Sub(v wunit.Volume) []wunit.Volume {
-	ret := make([]wunit.Volume, len(vs.Vols))
-	for i := 0; i < len(vs.Vols); i++ {
-		vs.Vols[i].Subtract(v)
-		ret[i] = wunit.CopyVolume(v)
-	}
-	return ret
-}
-
-func (vs VolumeSet) SetEqualTo(v wunit.Volume) {
-	for i := 0; i < len(vs.Vols); i++ {
-		vs.Vols[i] = wunit.CopyVolume(v)
-	}
-}
-
-func (vs VolumeSet) GetACopy() []wunit.Volume {
-	r := make([]wunit.Volume, len(vs.Vols))
-	for i := 0; i < len(vs.Vols); i++ {
-		r[i] = wunit.CopyVolume(vs.Vols[i])
-	}
-	return r
-}
-
-func countSetSize(set []int) int {
-	c := 0
-	for _, v := range set {
-		if v != -1 {
-			c += 1
-		}
-	}
-
-	return c
-}
-
 func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	// trims out leading blanks for now... will eventually call
 	// CanAddress on prms
@@ -626,6 +594,7 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	tpwy := make([]int, len(ins.What))
 	fv := make([]wunit.Volume, len(ins.What))
 	tv := make([]wunit.Volume, len(ins.What))
+	cmp := make([]string, len(ins.What))
 
 	ix := -1
 	for i := 0; i < len(ins.What); i++ {
@@ -651,6 +620,7 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 			tpwy[ix] = ins.TPlateWY[i]
 			fv[ix] = ins.FVolume[i]
 			tv[ix] = ins.TVolume[i]
+			cmp[ix] = ins.Components[i]
 		}
 	}
 
@@ -668,45 +638,8 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	ins.TPlateWY = tpwy
 	ins.FVolume = fv
 	ins.TVolume = tv
+	ins.Components = cmp
 }
-
-//	This section divides transfers into multi and single channel blocks (MCB,SCB respectively)
-//      with the constraint that it must respect user requests for atomicity
-//
-//	The constraint comes from the fact that an instruction can be a request to mix several
-//	components atomically - i.e. once the first component has been moved the rest must follow
-//	immediately. This is compatible with multichannel operation in some cases but not others
-//
-//	if multichannel is not allowed for any of the components then it will at this point revert
-//	to single-channel operation as follows:
-//	(in the below assume all volumes are identical)
-//
-//	input: 	LHIVector([A], [B], [C])
-//	output:
-//		without multichannel:
-//			SCB([A,B,C], [d1, d2, d3])
-//		with multichannel   :
-//			MCB([A,B,C], [d1, d2, d3])
-//
-//	For reference, vectors including atomic mixes look like this
-//
-//	LHIVector([A,B,C], [A], [A])
-//
-//	output:
-//		without multichannel:
-//			SCB([A,B,C,A,A],[d1,d1,d1,d2,d3])
-//
-//		with multichannel:
-//			MCB([A,A,A],[d1,d2,d3]), SCB([B,C],[d1,d1])
-//
-//	The following is always mapped to single-channel operation
-//
-//		LHIVector([A,B], [A,C])
-//
-//	output:
-//		either case:
-//			SCB([A,B,A,C],[d1,d1,d2,d2])
-//
 
 func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	//  set the channel  choices first by cleaning out initial empties
@@ -718,7 +651,6 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	ret := make([]RobotInstruction, 0)
 
 	// if we can multi we do this first
-
 	if pol["CAN_MULTI"].(bool) {
 		parallelsets := ins.GetParallelSetsFor(ctx, prms.HeadsLoaded[0].Params)
 
@@ -727,7 +659,8 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here
 		for _, set := range parallelsets {
 			// assemble the info
-			mci.Multi = countSetSize(set)
+			//mci.Multi = countSetSize(set)
+			mci.Multi = len(set)
 			vols := NewVolumeSet(len(set))
 			fvols := NewVolumeSet(len(set))
 			tvols := NewVolumeSet(len(set))
@@ -743,9 +676,9 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 				if s == -1 {
 					continue
 				}
-				vols.Vols[i] = wunit.CopyVolume(ins.Volume[s])
-				fvols.Vols[i] = wunit.CopyVolume(ins.FVolume[s])
-				tvols.Vols[i] = wunit.CopyVolume(ins.TVolume[s])
+				vols[i] = wunit.CopyVolume(ins.Volume[s])
+				fvols[i] = wunit.CopyVolume(ins.FVolume[s])
+				tvols[i] = wunit.CopyVolume(ins.TVolume[s])
 				What[i] = ins.What[s]
 				PltFrom[i] = ins.PltFrom[s]
 				PltTo[i] = ins.PltTo[s]
@@ -756,15 +689,15 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 			}
 			// get the max transfer volume
 
-			maxvol := vols.MaxMultiTransferVolume()
+			maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume())
 
 			// now set the vols for the transfer and remove this from the instruction's volume
 
-			for i, _ := range vols.Vols {
+			for i, _ := range vols {
 				if set[i] == -1 {
 					continue
 				}
-				vols.Vols[i] = wunit.CopyVolume(maxvol)
+				vols[i] = wunit.CopyVolume(maxvol)
 				ins.Volume[set[i]].Subtract(maxvol)
 
 				// set the from and to volumes for the relevant part of the instruction
@@ -782,9 +715,9 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 			tp := NewMultiTransferParams(mci.Multi)
 			tp.What = What
-			tp.Volume = vols.Vols
-			tp.FVolume = fvols.Vols
-			tp.TVolume = tvols.Vols
+			tp.Volume = vols
+			tp.FVolume = fvols
+			tp.TVolume = tvols
 			tp.PltFrom = PltFrom
 			tp.PltTo = PltTo
 			tp.WellFrom = WellFrom
@@ -808,6 +741,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		if ins.Volume[i].LessThanFloat(0.001) {
 			continue
 		}
+
 		if i != 0 && (ins.What[i] != ins.What[i-1]) {
 			if len(sci.Volume) > 0 {
 				ret = append(ret, sci)

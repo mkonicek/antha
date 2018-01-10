@@ -128,7 +128,7 @@ var regionTests = []regionTest{
 
 func TestFindSeq(t *testing.T) {
 	for _, test := range regionTests {
-		result := FindSeq(test.LargeSeq, test.SmallSeq)
+		result := FindAll(test.LargeSeq, test.SmallSeq)
 		if !equalPositionPairSets(result.Positions, test.Positions) {
 			t.Error(
 				"For", test.LargeSeq.Nm, "\n",

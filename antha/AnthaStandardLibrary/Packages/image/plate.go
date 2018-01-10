@@ -137,7 +137,7 @@ func MakeSmallPaletteFromImage(img goimage.Image, plate *wtype.LHPlate, rotate b
 // ToPlateLayout takes an image, plate type, and palette and returns a map
 // of well position to colors. Creates a map of pixel to plate position from
 // processing a given image with a chosen colour palette.  It's recommended to
-// use at least 384 well plate if autorotate == true, rotate is overridden
+// use at least 384 well plate. If autorotate == true, rotate is overridden
 func ToPlateLayout(img goimage.Image, plate *wtype.LHPlate, palette *color.Palette, rotate bool, autoRotate bool) (map[string]color.Color, *goimage.NRGBA) {
 	var plateImage *goimage.NRGBA
 	if autoRotate {

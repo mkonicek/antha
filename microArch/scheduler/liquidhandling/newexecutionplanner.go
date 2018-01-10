@@ -74,7 +74,7 @@ func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *li
 		var cmp string // partition key
 
 		if request.LHInstructions[insID].Type == wtype.LHIMIX {
-			cmp = request.LHInstructions[insID].ComponentsMoving()
+			cmp = request.LHInstructions[insID].NamesOfComponentsMoving()
 		} else if request.LHInstructions[insID].Type == wtype.LHIPRM {
 			cmp = request.LHInstructions[insID].Message
 		}
@@ -151,7 +151,7 @@ func canaggregate(agg []int, cmp string, outorder []string, cmps map[string]*wty
 	if cmps[outorder[agg[0]]].Type == wtype.LHIPRM {
 		return cmps[outorder[agg[0]]].Message == cmp
 	} else {
-		return cmps[outorder[agg[0]]].ComponentsMoving() == cmp
+		return cmps[outorder[agg[0]]].NamesOfComponentsMoving() == cmp
 	}
 }
 

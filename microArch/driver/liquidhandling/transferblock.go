@@ -31,6 +31,9 @@ func (ti TransferBlockInstruction) InstructionType() int {
 // depending on the robot type and configuration
 
 func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
+	var tfr []*TransferInstruction
+	var err error
+
 	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()
 	inss := make([]RobotInstruction, 0, 1)
@@ -51,49 +54,63 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	}
 
 	for _, set := range parallel_sets {
-
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
 
 		for i, id := range set {
+			// parallel sets are arranged in accordance with destination layout
+			// hence can include gaps
+			if id == "" {
+				continue
+			}
 			seen[id] = true
 			insset[i] = insm[id]
 		}
 
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
-		tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false)
+
+		// in fact we do not return a different robot now... but we might
+		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
+
 		if err != nil {
-			panic(err)
+			//panic(err)
+			return inss, err
 		}
+
+		// we merge instructions which are compatible
+
+		tfr = mergeTransfers(tfr)
+
 		for _, tf := range tfr {
 			inss = append(inss, RobotInstruction(tf))
 		}
 	}
 
 	// stuff that can't be done in parallel
-	insset := make([]*wtype.LHInstruction, 0, 1)
-	c := 0
 	for _, ins := range ti.Inss {
 		if seen[ins.ID] {
 			continue
 		}
-		c += 1
-		insset = append(insset, ins)
-	}
 
-	// now make transfer and append
-	// prm here will be nil unless len(insset)==0
-	// we must either tolerate this or do something else
+		//insset = append(insset, ins)
 
-	tfr, err := ConvertInstructions(insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false)
+		// now make transfer and append
+		// prm here will be nil unless len(insset)==0
+		// we must either tolerate this or do something else
 
-	if err != nil {
-		panic(err)
-	}
+		insset := []*wtype.LHInstruction{ins}
 
-	for _, tf := range tfr {
-		inss = append(inss, RobotInstruction(tf))
+		// ConvertInstructions may now change which robot we use
+		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
+
+		if err != nil {
+			panic(err)
+		}
+
+		for _, tf := range tfr {
+			inss = append(inss, RobotInstruction(tf))
+		}
 	}
 
 	//inss = append(inss, tfr...)
@@ -181,6 +198,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 	if len(ins) == 0 {
 		return nil, fmt.Errorf("No instructions")
 	}
+
 	// sort instructions to keep components together
 
 	//sort.Sort(InsByComponent(ins))
@@ -199,6 +217,11 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 	prm := head.GetParams()
 
 	for _, i := range ins {
+		// ignore empty instructions
+		if len(i.Components) == 0 {
+			continue
+		}
+
 		wc := wtype.MakeWellCoords(i.Welladdress)
 
 		_, ok := h[i.PlateID]
@@ -211,10 +234,10 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			pt, err := inventory.NewPlate(ctx, i.Platetype)
 
 			if err != nil {
-				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type %s found: %s", i.Platetype, err))
+				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type exists for ID %s - requested was %s", i.PlateID, i.Platetype))
 			}
 
-			platedims[i.PlateID] = wtype.Rational{pt.WellsX(), pt.WellsY()}
+			platedims[i.PlateID] = wtype.Rational{N: pt.WellsX(), D: pt.WellsY()}
 		}
 
 		h[i.PlateID][wc.X][wc.Y] = append(h[i.PlateID][wc.X][wc.Y], i)
@@ -236,14 +259,12 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			}
 		case wtype.LHVChannel:
 			r := get_cols(pdm, prm.Multi, dims.D, !prm.Independent, false)
+
 			if len(ret) == 0 {
 				ret = r
 			} else {
 				ret = append(ret, r...)
 			}
-
-			// -- wtype.FLEX (this may never actually be used since AFAIK only one machine
-			//    can do this and I think it's been EOL'd
 		}
 	}
 
@@ -321,14 +342,23 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 	ret := make(SetOfIDSets, 0, 1)
 	col := 0
 
+	countUsed := func(sa []string) int {
+		c := 0
+		for _, v := range sa {
+			if v != "" {
+				c += 1
+			}
+		}
+		return c
+	}
+
 	for {
 		if col >= len(pdm) {
 			break
 		}
 
 		colset := get_col(pdm, col, multi, wells, contiguous, full)
-
-		if len(colset) != 0 {
+		if countUsed(colset) != 0 {
 			ret = append(ret, colset)
 		} else {
 			col += 1
@@ -354,27 +384,38 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 	}
 
 	for s := 0; s < len(pdm[col])-2; s++ {
-		ret = make(IDSet, 0, multi)
+		ret = make(IDSet, multi)
 		newcol := make([][]*wtype.LHInstruction, len(pdm[col]))
-
+		used := 0 // number of instructions returned
+		offset := 0
 		for c := s; c < len(pdm[col]); c++ {
 			if len(pdm[col][c]) >= tipsperwell {
 				for x := 0; x < tipsperwell; x++ {
 					id := pdm[col][c][x].ID
-					ret = append(ret, id)
+					//ret = append(ret, id)
+					ret[offset] = id
+					offset += 1
+					used += 1
 				}
 				newcol[c] = pdm[col][c][tipsperwell:]
 			} else if contiguous {
 				break
+			} else {
+				offset += tipsperwell
+			}
+
+			if offset == multi {
+				break
 			}
 		}
 
-		if len(ret) != multi && full {
+		if used != multi && full {
 			return make(IDSet, 0, 1)
-		} else if len(ret) == 0 {
+		} else if used == 0 {
 			continue
 		} else {
 			pdm[col] = newcol
+
 			return ret
 		}
 	}
@@ -401,4 +442,71 @@ func choose_parallel_sets(sets []SetOfIDSets, params []*wtype.LHChannelParameter
 
 func (ti TransferBlockInstruction) GetParameter(p string) interface{} {
 	return nil
+}
+
+func mergeTransfers(tfrs []*TransferInstruction) []*TransferInstruction {
+	ret := make([]*TransferInstruction, 0, len(tfrs))
+
+	// we strictly retain ordering here
+
+	currTfr := tfrs[0]
+
+	for i := 1; i < len(tfrs); i++ {
+		if merged := tryMergeTransfer(currTfr, tfrs[i]); merged == nil {
+			ret = append(ret, currTfr)
+			currTfr = tfrs[i]
+		} else {
+			currTfr = merged
+		}
+	}
+
+	ret = append(ret, currTfr)
+
+	return ret
+}
+
+func tryMergeTransfer(ins1, ins2 *TransferInstruction) *TransferInstruction {
+	// merge any transfers which have sources in common
+
+	if commonSources(ins1, ins2) {
+		// appends everything from ins2 to ins1
+		return ins1.MergeWith(ins2)
+	}
+
+	return nil
+}
+
+func commonSources(ins1, ins2 *TransferInstruction) bool {
+	a2Map := func(a []string) map[string]bool {
+		m := make(map[string]bool)
+		for _, v := range a {
+			if v == "" {
+				continue
+			}
+			m[v] = true
+		}
+
+		return m
+	}
+
+	// we just compare component names
+
+	m := a2Map(ins1.Components)
+
+	if len(m) > 1 {
+		return false
+	}
+
+	for _, n := range ins2.Components {
+		if n == "" {
+			continue
+		}
+		_, ok := m[n]
+
+		if !ok {
+			return false
+		}
+	}
+
+	return true
 }

@@ -29,8 +29,8 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -177,7 +177,7 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 
 		if sites == 0 {
 			partwithends = AddCustomEnds(parts[i], enzyme, desiredstickyend5prime, desiredstickyend3prime)
-		} else if sites == 2 && InSlice(desiredstickyend5prime, sticky5s) && InSlice(desiredstickyend3prime, sticky3s) {
+		} else if sites == 2 && search.InStrings(sticky5s, desiredstickyend5prime) && search.InStrings(sticky3s, desiredstickyend3prime) {
 			partwithends = parts[i]
 		} else {
 			panic(fmt.Sprint("cutting part ", parts[i], " with", enzyme, " results in ", sites, "cut sites with 5 prime fragment overhangs: ", sticky5s, " and 3 prime fragment overhangs: ", sticky3s, ". Wanted: 5prime: ", desiredstickyend5prime, " 3prime: ", desiredstickyend3prime))
@@ -186,7 +186,7 @@ func MakeScarfreeCustomTypeIIsassemblyParts(parts []wtype.DNASequence, vector wt
 
 		partswithends = append(partswithends, partwithends)
 
-		desiredstickyend5prime = Suffix(parts[i].Seq, enzyme.RestrictionEnzyme.EndLength)
+		desiredstickyend5prime = sequences.Suffix(parts[i].Seq, enzyme.RestrictionEnzyme.EndLength)
 
 	}
 
@@ -330,7 +330,6 @@ func findMinimumAdditional3PrimeAddition(desiredstickyend3prime string, part wty
 	// This code will look for subparts of a standard overhang to add the minimum number of additional nucleotides with a partial match e.g. AATG contains ATG only so we just add A
 	for i := 0; i < len(desiredstickyend3prime)+1; i++ {
 		truncated := desiredstickyend3prime[:i]
-		fmt.Println("Part: ", part.Name(), "Desired 3 prime:", desiredstickyend3prime, "Truncated: ", truncated)
 		if strings.HasSuffix(upper(part.Seq), upper(truncated)) {
 			present = truncated
 		}
@@ -342,7 +341,6 @@ func findMinimumAdditional3PrimeAddition(desiredstickyend3prime string, part wty
 	} else {
 		bittoadd = desiredstickyend3prime
 	}
-	fmt.Println("Part: ", part.Name(), "Desired 3 prime:", desiredstickyend3prime, "Final: ", bittoadd)
 	return
 }
 
@@ -353,7 +351,6 @@ func findMinimumAdditional5PrimeAddition(desiredstickyend5prime string, part wty
 
 	for i := len(desiredstickyend5prime) - 1; i >= 0; i-- {
 		truncated := desiredstickyend5prime[i:]
-		fmt.Println("Part: ", part.Name(), "Desired 5 prime:", desiredstickyend5prime, "Truncated: ", truncated)
 		if strings.HasPrefix(upper(part.Seq), upper(truncated)) {
 			present = truncated
 		}
@@ -361,21 +358,15 @@ func findMinimumAdditional5PrimeAddition(desiredstickyend5prime string, part wty
 	if len(present) == len(desiredstickyend5prime) {
 		bittoadd = ""
 	} else if len(present) > 0 {
-		fmt.Println(desiredstickyend5prime, present)
 		bittoadd = desiredstickyend5prime[:len(present)+1]
 	} else {
 		bittoadd = desiredstickyend5prime
 	}
-	fmt.Println("Part: ", part.Name(), "Desired 5 prime:", desiredstickyend5prime, "Final: ", bittoadd)
 	return
 }
 
 // Adds ends to the part sequence based upon enzyme chosen and the desired overhangs after digestion
 func AddCustomEnds(part wtype.DNASequence, enzyme wtype.TypeIIs, desiredstickyend5prime string, desiredstickyend3prime string) (Partwithends wtype.DNASequence) {
-
-	fmt.Println("Old part: ", Partwithends)
-
-	///
 
 	bittoadd := findMinimumAdditional5PrimeAddition(desiredstickyend5prime, part)
 
@@ -390,7 +381,6 @@ func AddCustomEnds(part wtype.DNASequence, enzyme wtype.TypeIIs, desiredstickyen
 	Partwithends.Nm = part.Nm
 	Partwithends.Plasmid = part.Plasmid
 	Partwithends.Seq = partwithends
-	fmt.Println("New part: ", Partwithends)
 	return Partwithends
 }
 
@@ -462,6 +452,22 @@ func Addoverhang(seq string, bittoadd string, end string) (seqwithoverhang strin
 	return seqwithoverhang
 }
 
+func allCombinations(arr [][]string) []string {
+	if len(arr) == 1 {
+		return arr[0]
+	}
+
+	results := make([]string, 0)
+	allRem := allCombinations(arr[1:len(arr)])
+	for i := 0; i < len(allRem); i++ {
+		for j := 0; j < len(arr[0]); j++ {
+			x := arr[0][j] + allRem[i]
+			results = append(results, x)
+		}
+	}
+	return results
+}
+
 // Returns an array of all sequence possibilities for a spacer based upon length
 func Makeallspaceroptions(spacerlength int) (finalarray []string) {
 	// only works for spacer length 1 or 2
@@ -472,7 +478,7 @@ func Makeallspaceroptions(spacerlength int) (finalarray []string) {
 		newarray = append(newarray, nucleotides)
 	}
 
-	finalarray = AllCombinations(newarray)
+	finalarray = allCombinations(newarray)
 
 	return finalarray
 }
@@ -487,10 +493,10 @@ func ChooseSpacer(spacerlength int, seq string, seqstoavoid []string) (spacer st
 		spacer = possibilities[0]
 	} else {
 		for _, possibility := range possibilities {
-			if len(Findallthings(strings.Join([]string{seq, possibility}, ""), seqstoavoid)) == 0 &&
-				len(Findallthings(strings.Join([]string{possibility, seq}, ""), seqstoavoid)) == 0 &&
-				len(Findallthings(RevComp(strings.Join([]string{possibility, seq}, "")), seqstoavoid)) == 0 &&
-				len(Findallthings(RevComp(strings.Join([]string{seq, possibility}, "")), seqstoavoid)) == 0 {
+			if len(search.FindAllStrings(strings.Join([]string{seq, possibility}, ""), seqstoavoid)) == 0 &&
+				len(search.FindAllStrings(strings.Join([]string{possibility, seq}, ""), seqstoavoid)) == 0 &&
+				len(search.FindAllStrings(sequences.RevComp(strings.Join([]string{possibility, seq}, "")), seqstoavoid)) == 0 &&
+				len(search.FindAllStrings(sequences.RevComp(strings.Join([]string{seq, possibility}, "")), seqstoavoid)) == 0 {
 				spacer = possibility
 			}
 		}
@@ -530,7 +536,7 @@ func Makeoverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer 
 		/*if enzyme.Topstrand3primedistancefromend < 0 && len(spacer) == enzyme.Bottomstrand5primedistancefromend {
 			seqwithoverhang = strings.Join([]string{stickyendseq, spacer, enzyme.RestrictionEnzyme.RecognitionSequence}, "")
 		}*/
-		seqwithoverhang = strings.Join([]string{stickyendseq, spacer, RevComp(enzyme.RestrictionEnzyme.RecognitionSequence)}, "")
+		seqwithoverhang = strings.Join([]string{stickyendseq, spacer, sequences.RevComp(enzyme.RestrictionEnzyme.RecognitionSequence)}, "")
 	}
 	return seqwithoverhang
 
@@ -539,9 +545,9 @@ func Makeoverhang(enzyme wtype.TypeIIs, end string, stickyendseq string, spacer 
 // Assembly standards
 var availableStandards = map[string]AssemblyStandard{
 	"Custom":      customStandard,
-	"MoClo":       customStandard,
-	"MoClo_Raven": customStandard,
-	"Antibody":    customStandard,
+	"MoClo":       mocloStandard,
+	"MoClo_Raven": mocloRavenStandard,
+	"Antibody":    antibodyStandard,
 }
 
 func allStandards() (standards []string) {

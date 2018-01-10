@@ -27,6 +27,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func NormaliseUnit(unit string) (normalisedunit string) {
@@ -35,6 +37,32 @@ func NormaliseUnit(unit string) (normalisedunit string) {
 
 	normalisedunit = cm.Unit().PrefixedSymbol()
 	return
+}
+
+// SplitValueAndUnit splits a joined value and unit in string format into seperate typed value and unit fields.
+// If the string input is not in the valid format of value followed by unit it will not be parsed correctly.
+// If a value on its own is given the unit will be returned blank, if the unit is given alone the value will be 0.0
+// valid: 10s, 10 s, 10.5s, 2.16e+04 s, 10, s
+// invalid: s 10 s10
+func SplitValueAndUnit(str string) (value float64, unit string) {
+
+	fields := strings.Fields(str)
+
+	if len(fields) == 2 {
+		if value, err := strconv.ParseFloat(fields[0], 64); err == nil {
+			return value, fields[1]
+		}
+		if value, err := strconv.Atoi(fields[0]); err == nil {
+			return float64(value), fields[1]
+		}
+	} else if len(fields) == 1 {
+		for i := 0; i < len(str); i++ {
+			if value, err := strconv.ParseFloat(str[:len(str)-i], 64); err == nil {
+				return value, str[len(str)-i:]
+			}
+		}
+	}
+	return value, str
 }
 
 // Utility function to parse concentration from a component name.
@@ -133,6 +161,9 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 			if concfields[0] == "" {
 				value = 0.0
 			} else {
+				if strings.Contains(componentname, wutil.MIXDELIMITER) {
+					return false, conc, componentname
+				}
 				panic(fmt.Sprint("error parsing componentname: ", componentname, ": ", err.Error()))
 				return false, conc, componentNameOnly
 			}
@@ -145,38 +176,40 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 	return containsconc, conc, componentNameOnly
 }
 
-// currently only parses ul; handles cases where the volume is split with a space
+// ParseVolume parses a volume and valid unit (nl, ul, ml, l) in string format; handles cases where the volume is split with a space.
 func ParseVolume(volstring string) (volume Volume, err error) {
 	var volandunit []string
-	/*
-		approvedunits := wunit.UnitMap["Volume"]
 
-		fields := strings.Fields(volstring)
-		var unitmatchlength int
-		var longestmatchedunit string
-		var valueandunit string
+	approvedunits := UnitMap["Volume"]
 
-		for key, _ := range approvedunits {
-			for _,field := range fields {
-			if strings.Contains(field,key){
-				if len(key) > unitmatchlength {
-					longestmatchedunit = key
-					unitmatchlength = len(key)
-					valueandunit = field
-					}
-				}
-			}
-		}
-	*/
+	var sortedKeys []string
 
-	//for _, unit := range approvedunits {
-	if strings.Count(volstring, " ") == 1 {
-		volandunit = strings.Split(volstring, " ")
-	} else if strings.Count(volstring, "ul") == 1 && strings.HasSuffix(volstring, "ul") {
-		volandunit = []string{strings.Trim(volstring, "ul"), "ul"}
+	for k, _ := range approvedunits {
+		sortedKeys = append(sortedKeys, k)
 	}
 
-	//}
+	sort.Strings(sortedKeys)
+
+	var longestmatchedunit string
+
+	for _, approvedUnit := range sortedKeys {
+		if strings.HasSuffix(volstring, approvedUnit) {
+			volandunit = []string{strings.TrimSpace(strings.Trim(volstring, approvedUnit)), approvedUnit}
+			if len(volandunit[1]) > len(longestmatchedunit) {
+				longestmatchedunit = volandunit[1]
+			}
+		}
+	}
+
+	if len(longestmatchedunit) == 0 {
+		err = fmt.Errorf("no valid unit found for %s: valid units are: %v", volstring, sortedKeys)
+		return
+	}
+
+	if len(volandunit) == 0 {
+		err = fmt.Errorf("error parsing volume for %s", volstring)
+		return
+	}
 
 	vol, err := strconv.ParseFloat(strings.TrimSpace(volandunit[0]), 64)
 
@@ -184,7 +217,7 @@ func ParseVolume(volstring string) (volume Volume, err error) {
 		return
 	}
 
-	volume = NewVolume(vol, strings.TrimSpace(volandunit[1]))
+	volume = NewVolume(vol, longestmatchedunit)
 	return
 }
 

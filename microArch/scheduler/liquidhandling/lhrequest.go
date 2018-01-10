@@ -88,8 +88,10 @@ func (req *LHRequest) ConfigureYourself() error {
 	uniques := make(map[wtype.PlateLocation]*wtype.LHComponent, len(req.LHInstructions))
 
 	for _, ins := range req.LHInstructions {
-		// If provenance info is brought in here this becomes unsafe
-		if ins.IsMixInPlace() && !ins.HasAnyParent() {
+		if ins.InsType() != "MIX" {
+			continue
+		}
+		if ins.IsMixInPlace() {
 			if !ins.Components[0].PlateLocation().IsZero() {
 				uniques[ins.Components[0].PlateLocation()] = ins.Components[0]
 			} else {
@@ -109,8 +111,6 @@ func (req *LHRequest) ConfigureYourself() error {
 			cmp, ok := uniques[w.PlateLocation()]
 
 			if ok {
-				// unique components (where instances matter) are
-				// identified using CNID()
 				ar := inputs[cmp.CNID()]
 				ar = append(ar, cmp)
 				inputs[cmp.CNID()] = ar
@@ -226,4 +226,18 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 	ret.MergeWith(protocolpolicies)
 
 	return ret
+}
+
+func (request *LHRequest) GetPlate(id string) *wtype.LHPlate {
+	p, ok := request.Input_plates[id]
+
+	if !ok {
+		p, ok = request.Output_plates[id]
+
+		if !ok {
+			return nil
+		}
+	}
+
+	return p
 }

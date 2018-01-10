@@ -236,6 +236,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"FlowRate":             "wunit.FlowRate",
 		"Force":                "wunit.Force",
 		"HandleOpt":            "execute.HandleOpt",
+		"JobID":                "jobfile.JobID",
 		"IncubateOpt":          "execute.IncubateOpt",
 		"LHComponent":          "wtype.LHComponent",
 		"LHPlate":              "wtype.LHPlate",
@@ -245,6 +246,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Length":               "wunit.Length",
 		"LiquidType":           "wtype.LiquidType",
 		"Mass":                 "wunit.Mass",
+		"Moles":                "wunit.Moles",
 		"PolicyName":           "wtype.PolicyName",
 		"Pressure":             "wunit.Pressure",
 		"Rate":                 "wunit.Rate",
@@ -269,6 +271,10 @@ func NewAntha(root *AnthaRoot) *Antha {
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
 		UseExpr: "wtype.FALSE",
+	})
+	p.addImportReq(&importReq{
+		Path:    "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/jobfile",
+		UseExpr: "jobfile.DefaultClient",
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",
@@ -1670,13 +1676,18 @@ func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
 		)
 	}
 
-	modelPkg := path.Join(p.root.outputPackageBase, proto.NextElement.Name, modelPackage)
-	modelReq := p.addExternalPackage(modelPkg)
+	nextElement := ""
+	nextElementArgs := &ast.CompositeLit{Type: mustParseExpr("model.Input"), Elts: []ast.Expr{}}
 
-	nextElement := proto.NextElement.Name
-
-	if proto.NextElement.Name == "nil" {
-		nextElement = ""
+	// indirect over next element stuff
+	if proto.NextElement.Name != "nil" {
+		modelPkg := path.Join(p.root.outputPackageBase, proto.NextElement.Name, modelPackage)
+		modelReq := p.addExternalPackage(modelPkg)
+		nextElement = proto.NextElement.Name
+		nextElementArgs = &ast.CompositeLit{
+			Type: mustParseExpr(modelReq.Name + ".Input"),
+			Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
+		}
 	}
 
 	call.Fun = mustParseExpr("execute." + awaitDataIntrinsic)
@@ -1697,10 +1708,7 @@ func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
 		&ast.CallExpr{
 			Fun: mustParseExpr("inject.MakeValue"),
 			Args: []ast.Expr{
-				&ast.CompositeLit{
-					Type: mustParseExpr(modelReq.Name + ".Input"),
-					Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
-				},
+				nextElementArgs,
 			},
 		},
 	}

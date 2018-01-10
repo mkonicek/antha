@@ -48,7 +48,6 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/pubchem \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/sequences \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/solutions \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/text \
 	  | grep -v /antha/anthalib/material \
 	  | grep -v /antha/inventory/testinventory \
 	  | grep -v /microArch \

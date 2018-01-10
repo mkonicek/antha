@@ -20,10 +20,12 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// package text formats strings for printing in a terminal using ansi codes
 package text
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // PrettyPrint will return an indented string of an object.
 /* e.g.
@@ -42,6 +44,9 @@ import "encoding/json"
 ]
 */
 func PrettyPrint(data interface{}) string {
-	bytes, _ := json.MarshalIndent(data, "", "\t")
+	bytes, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling data for pretty print: %s", err.Error()))
+	}
 	return string(bytes)
 }

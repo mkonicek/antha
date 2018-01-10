@@ -28,8 +28,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/REBASE"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/asset"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/rebase"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 

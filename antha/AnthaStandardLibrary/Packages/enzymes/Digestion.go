@@ -906,16 +906,16 @@ func EndReport(restrictionenzyme wtype.TypeIIs, vectordata wtype.DNASequence, pa
 	allends := make([]string, 0)
 	ends := ""
 
-	ends = text.Print(vectordata.Nm+" 5 Prime end: ", stickyends5)
+	ends = text.Sprint(vectordata.Nm+" 5 Prime end: ", stickyends5)
 	allends = append(allends, ends)
-	ends = text.Print(vectordata.Nm+" 3 Prime end: ", stickyends3)
+	ends = text.Sprint(vectordata.Nm+" 3 Prime end: ", stickyends3)
 	allends = append(allends, ends)
 
 	for _, part := range parts {
 		_, stickyends5, stickyends3 = TypeIIsdigest(part, restrictionenzyme)
-		ends = text.Print(part.Nm+" 5 Prime end: ", stickyends5)
+		ends = text.Sprint(part.Nm+" 5 Prime end: ", stickyends5)
 		allends = append(allends, ends)
-		ends = text.Print(part.Nm+" 3 Prime end: ", stickyends3)
+		ends = text.Sprint(part.Nm+" 3 Prime end: ", stickyends3)
 		allends = append(allends, ends)
 	}
 	endreport = strings.Join(allends, " ")

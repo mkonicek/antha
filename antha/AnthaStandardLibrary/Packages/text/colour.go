@@ -29,9 +29,14 @@ import (
 	"github.com/mgutz/ansi"
 )
 
-// Print returns a string description highlighted in red followed by the value in unformatted text
-func Print(description string, value interface{}) (fmtd string) {
-	fmtd = fmt.Sprintln(ansi.Color(description, "red"), value)
+// Print prints to standard out a string description highlighted in red followed by a values in unformatted text
+func Print(description string, values ...interface{}) {
+	fmt.Println(ansi.Color(description, "red"), values)
+}
+
+// Sprint returns a string description highlighted in red followed by the values in unformatted text
+func Sprint(description string, values ...interface{}) (fmtd string) {
+	fmtd = fmt.Sprintln(ansi.Color(description, "red"), values)
 	return
 }
 

@@ -20,11 +20,12 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with the restriction enzyme database
+// Package rebase for parsing the rebase restriction enzyme database
 package rebase
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -33,42 +34,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-/*
-REBASE codes for commercial sources of enzymes
-
-B        Life Technologies (6/15)
-C        Minotech Biotechnology (8/14)
-E        Agilent Technologies (8/13)
-I        SibEnzyme Ltd. (6/15)
-J        Nippon Gene Co., Ltd. (5/15)
-K        Takara Bio Inc. (6/15)
-M        Roche Applied Science (6/15)
-N        New England Biolabs (6/15)
-O        Toyobo Biochemicals (8/14)
-Q        Molecular Biology Resources - CHIMERx (6/15)
-R        Promega Corporation (6/15)
-S        Sigma Chemical Corporation (6/15)
-U        Bangalore Genei (11/14)
-V        Vivantis Technologies (8/14)
-X        EURx Ltd. (8/14)
-Y        SinaClon BioScience Co. (8/14)
-*/
-/*
-type RebaseEntry struct {
-	Name                string //"attr, <1>"
-	Prototype           string //"attr, <2>"
-	RecognitionSequence string
-	//CutPosition         CutPosition //"attr, <3>"
-	MethylationSite  string   //"attr, <4>"
-	CommercialSource []string //string "attr, <5>"
-	References       []string "attr, <6>"
-}
-*/
-type typeIIs struct {
-	wtype.RestrictionEnzyme
-}
-
-func RecognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, EndLength int, Topstrand3primedistancefromend int, Bottomstrand5primedistancefromend int, Class string) {
+func recognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, EndLength int, Topstrand3primedistancefromend int, Bottomstrand5primedistancefromend int, Class string) {
 
 	// add cases where no "^" is present and two ( / ) are present
 
@@ -83,12 +49,18 @@ func RecognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, E
 
 		split = strings.Split(split[1], "/")
 
-		lengthint, _ := strconv.Atoi(split[0])
+		lengthint, err := strconv.Atoi(split[0])
+		if err != nil {
+			panic(fmt.Sprintf("error splitting recognition sequence %s into Topstrand3primedistancefromend when parsing rebase file. Tried to turn %s into number but got error: %s", RecognitionSeq, split[0], err.Error()))
+		}
 		Topstrand3primedistancefromend = lengthint
 
 		split = strings.Split(split[1], ")")
 
-		lengthint, _ = strconv.Atoi(split[0])
+		lengthint, err = strconv.Atoi(split[0])
+		if err != nil {
+			panic(fmt.Sprintf("error splitting recognition sequence %s into Bottomstrand5primedistancefromend when parsing rebase file. Tried to turn %s into number but got error: %s", RecognitionSeq, split[0], err.Error()))
+		}
 		Bottomstrand5primedistancefromend = lengthint
 
 		EndLength = int(math.Abs(float64(Bottomstrand5primedistancefromend - Topstrand3primedistancefromend)))
@@ -116,7 +88,7 @@ func RecognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, E
 	return
 }
 
-func Build_rebase(name string, prototype string, recognitionseq string, methylationsite string, commercialsource string, refs string) (Record wtype.RestrictionEnzyme) {
+func buildRebase(name string, prototype string, recognitionseq string, methylationsite string, commercialsource string, refs string) (Record wtype.RestrictionEnzyme) {
 
 	var record wtype.RestrictionEnzyme
 
@@ -127,7 +99,7 @@ func Build_rebase(name string, prototype string, recognitionseq string, methylat
 		record.EndLength,
 		record.Topstrand3primedistancefromend,
 		record.Bottomstrand5primedistancefromend,
-		record.Class = RecognitionSeqHandler(recognitionseq)
+		record.Class = recognitionSeqHandler(recognitionseq)
 
 	record.MethylationSite = methylationsite
 	record.CommercialSource = strings.Split(strings.TrimSpace(commercialsource), "")
@@ -148,18 +120,55 @@ func Build_rebase(name string, prototype string, recognitionseq string, methylat
 	return Record
 }
 
-func RebaseParse(rebaseRh io.Reader) []wtype.RestrictionEnzyme {
+// Parse a database of restriction enzyme data in the structure of a rebase database
+// into a set of RestrictionEnzymes.
+// Data must be structured in the following format:
+/*
+<1><name>
+<2><prototype>
+<3><recognition sequence>
+<4><methylation site>
+<5><commercial source>
+<6><reference>
+
+
+REBASE codes for commercial sources of enzymes
+
+                B        Life Technologies (5/16)
+                C        Minotech Biotechnology (5/16)
+                E        Agilent Technologies (3/16)
+                I        SibEnzyme Ltd. (5/16)
+                J        Nippon Gene Co., Ltd. (5/16)
+                K        Takara Bio Inc. (5/16)
+                M        Roche Applied Science (5/16)
+                N        New England Biolabs (5/16)
+                O        Toyobo Biochemicals (8/14)
+                Q        Molecular Biology Resources - CHIMERx (5/16)
+                R        Promega Corporation (3/16)
+                S        Sigma Chemical Corporation (5/16)
+                V        Vivantis Technologies (8/14)
+                X        EURx Ltd. (3/16)
+                Y        SinaClon BioScience Co. (5/16)
+
+e.g.
+
+<1>AaaI
+<2>XmaIII
+<3>C^GGCCG
+<4>
+<5>
+<6>1680
+*/
+func Parse(rebaseRh io.Reader) []wtype.RestrictionEnzyme {
 	var outputs []wtype.RestrictionEnzyme
 
 	scanner := bufio.NewScanner(rebaseRh)
-	// scanner.Split(bufio.ScanLines)
 	name := ""
 	prototype := ""
 	recognitionseq := ""
 	methylationsite := ""
 	commercialsource := ""
 	refs := ""
-	//var data bytes.Buffer
 
 	// Loop over the letters in inputString
 	for scanner.Scan() {
@@ -168,13 +177,10 @@ func RebaseParse(rebaseRh io.Reader) []wtype.RestrictionEnzyme {
 			continue
 		}
 
-		// line := scanner.Text()
-
 		if line[0] == '<' && line[1] == '1' {
 			if name != "" {
-				outputs = append(outputs, Build_rebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs))
+				outputs = append(outputs, buildRebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs))
 
-				name = ""
 				recognitionseq = ""
 				methylationsite = ""
 				prototype = ""
@@ -199,7 +205,7 @@ func RebaseParse(rebaseRh io.Reader) []wtype.RestrictionEnzyme {
 		}
 	}
 
-	outputs = append(outputs, Build_rebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs))
+	outputs = append(outputs, buildRebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs))
 
 	return outputs
 }

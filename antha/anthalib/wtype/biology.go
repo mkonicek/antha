@@ -505,25 +505,34 @@ func valid(seq, validOptions string) error {
 	return nil
 }
 
-func validDNA(seq string) error {
+// ValidDNA checks a sequence given as a string for validity as a DNASequence.
+// Any IUPAC nucleotide is considered valid, not just ACTG.
+func ValidDNA(seq string) error {
 	validNucleotides := "ACTGNXBHVDMKSWRYU"
 
 	return valid(seq, validNucleotides)
 }
 
-func validRNA(seq string) error {
+// ValidRNA checks a sequence given as a string for validity as an RNASequence.
+// ACGU are valid entries.
+func ValidRNA(seq string) error {
 	validRNA := "ACGU"
 
 	return valid(seq, validRNA)
 }
 
-func validAA(seq string) error {
+// ValidAA checks a sequence given as a string for validity as a ProteinSequence.
+// All standard single letter AminoAcids are valid as well as * indicating stop.
+func ValidAA(seq string) error {
 
 	var aminoAcids []string
 
 	for key := range aa_mw {
 		aminoAcids = append(aminoAcids, key)
 	}
+
+	// add stop
+	aminoAcids = append(aminoAcids, "*")
 
 	validAminoAcids := strings.Join(aminoAcids, "")
 
@@ -564,13 +573,13 @@ func (dna *DNASequence) SetSequence(seq string) error {
 
 	dna.Seq = seq
 
-	return validDNA(seq)
+	return ValidDNA(seq)
 }
 
 // Append appends the existing dna sequence with the upper case of the string added
 func (dna *DNASequence) Append(s string) error {
 
-	err := validDNA(s)
+	err := ValidDNA(s)
 
 	if err != nil {
 		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
@@ -584,7 +593,7 @@ func (dna *DNASequence) Append(s string) error {
 // Preprend adds the requested sequence to the beginning of the existing sequence.
 func (dna *DNASequence) Prepend(s string) error {
 
-	err := validDNA(s)
+	err := ValidDNA(s)
 
 	if err != nil {
 		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
@@ -666,7 +675,7 @@ func (rna *RNASequence) Sequence() string {
 
 func (rna *RNASequence) SetSequence(seq string) error {
 	rna.Seq = upper(seq)
-	return validRNA(seq)
+	return ValidRNA(seq)
 }
 
 func (rna *RNASequence) Name() string {
@@ -678,7 +687,7 @@ func (rna *RNASequence) SetName(name string) {
 }
 
 func (rna *RNASequence) Append(s string) error {
-	err := validRNA(s)
+	err := ValidRNA(s)
 
 	if err != nil {
 		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
@@ -690,7 +699,7 @@ func (rna *RNASequence) Append(s string) error {
 
 func (rna *RNASequence) Prepend(s string) error {
 
-	err := validRNA(s)
+	err := ValidRNA(s)
 
 	if err != nil {
 		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
@@ -711,6 +720,42 @@ type Protein struct {
 	Seq ProteinSequence
 }
 
+// AminoAcid is a single letter format amino acid in string form.
+// It can be validated as a valid AminoAcid using the SetAminoAcid function.
+type AminoAcid string
+
+// SetAminoAcid creates an AminoAcid from a string input and returns an error
+// if the string is not a valid amino acid.
+func SetAminoAcid(aa string) (AminoAcid, error) {
+
+	if len(aa) != 1 {
+		return "", fmt.Errorf("amino acid %s not valid. Please use single letter code.")
+	}
+
+	if err := ValidAA(aa); err != nil {
+		return "", fmt.Errorf("amino acid %s not valid: %s", aa, err.Error())
+	}
+	return AminoAcid(strings.ToUpper(strings.TrimSpace(aa))), nil
+}
+
+// Codon is a triplet of valid nucleotides which encodes an amino acid or stop codon.
+// It can be validated using the SetCodon function.
+type Codon string
+
+// SetCodon creates a Codon from a string input and returns an error
+// if the string is not a valid codon.
+func SetCodon(dna string) (Codon, error) {
+
+	if len(dna) != 3 {
+		return "", fmt.Errorf("codon %s not valid. must be three nucleotides.")
+	}
+
+	if err := ValidDNA(dna); err != nil {
+		return "", fmt.Errorf("codon %s not valid: %s", dna, err.Error())
+	}
+	return Codon(strings.ToUpper(strings.TrimSpace(dna))), nil
+}
+
 // ProteinSequence object is a type of Biosequence
 type ProteinSequence struct {
 	Nm  string
@@ -723,7 +768,7 @@ func (prot *ProteinSequence) Sequence() string {
 
 func (prot *ProteinSequence) SetSequence(seq string) error {
 	prot.Seq = upper(seq)
-	return validAA(seq)
+	return ValidAA(seq)
 }
 
 func (prot *ProteinSequence) Name() string {
@@ -735,7 +780,7 @@ func (prot *ProteinSequence) SetName(name string) {
 }
 
 func (prot *ProteinSequence) Append(s string) error {
-	err := validAA(s)
+	err := ValidAA(s)
 
 	if err != nil {
 		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
@@ -747,7 +792,7 @@ func (prot *ProteinSequence) Append(s string) error {
 
 func (prot *ProteinSequence) Prepend(s string) error {
 
-	err := validAA(s)
+	err := ValidAA(s)
 
 	if err != nil {
 		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())

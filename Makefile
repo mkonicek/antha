@@ -33,7 +33,6 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Labware \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Liquidclasses \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Parser \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/REBASE \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/UnitOperations \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/setpoints \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/buffers \
@@ -48,8 +47,6 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/pubchem \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/sequences \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/solutions \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/spreadsheet \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/text \
 	  | grep -v /antha/anthalib/material \
 	  | grep -v /antha/inventory/testinventory \
 	  | grep -v /microArch \

@@ -761,7 +761,6 @@ func EndReport(restrictionenzyme wtype.TypeIIs, vector wtype.DNASequence, parts 
 	for _, part := range parts {
 		partFragments := Digest(part, restrictionenzyme.RestrictionEnzyme)
 		allends = append(allends, part.Name()+" cut with "+restrictionenzyme.Name()+"; Fragment  Ends :", fragmentEnds(partFragments))
-
 	}
 	endreport = strings.Join(allends, "\n")
 	return

@@ -28,8 +28,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/REBASE"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/asset"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/rebase"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -59,7 +59,11 @@ func RestrictionEnzyme(name string) (enzyme wtype.RestrictionEnzyme, err error) 
 
 	rebaseFh := bytes.NewReader(enzymes)
 
-	for _, record := range rebase.RebaseParse(rebaseFh) {
+	for _, record := range rebase.Parse(rebaseFh) {
+		/*plasmidstatus := "FALSE"
+		seqtype := "DNA"
+		class := "not specified"*/
+
 		if strings.EqualFold(strings.TrimSpace(record.Name()), strings.TrimSpace(name)) {
 			enzyme = record
 			return enzyme, nil
@@ -81,8 +85,7 @@ func FindEnzymesofClass(class string) (enzymelist []wtype.RestrictionEnzyme) {
 
 	rebaseFh := bytes.NewReader(enzymes)
 
-	for _, record := range rebase.RebaseParse(rebaseFh) {
-
+	for _, record := range rebase.Parse(rebaseFh) {
 		if strings.ToUpper(record.Class) == strings.ToUpper(class) {
 			//RecognitionSeqs = append(RecognitionSeqs, record)
 			enzymelist = append(enzymelist, record)

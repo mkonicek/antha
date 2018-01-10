@@ -30,93 +30,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func RevtranslatetoN(aa wtype.ProteinSequence) (NNN wtype.DNASequence) {
-	n_array := make([]string, 0)
-	n := "nnn"
-
-	aalen := len(aa.Seq)
-	if strings.HasSuffix(aa.Seq, "**") {
-		aalen = aalen - 2
-	} else if strings.HasSuffix(aa.Seq, "*") {
-		aalen = aalen - 1
-	}
-
-	for i := 0; i < aalen; i++ {
-		n_array = append(n_array, n)
-	}
-
-	if strings.HasSuffix(aa.Seq, "**") {
-		n_array = append(n_array, "******")
-	} else if strings.HasSuffix(aa.Seq, "*") {
-		n_array = append(n_array, "***")
-	}
-	nnn := strings.Join(n_array, "")
-
-	NNN.Nm = aa.Nm
-	NNN.Seq = nnn
-	NNN.Plasmid = false
-	return NNN
-
-}
-
-func RevTranslatetoNstring(aa string) (NNN string) {
-	n_array := make([]string, 0)
-	n := "nnn"
-
-	aalen := len(aa)
-	if strings.HasSuffix(aa, "**") {
-		aalen = aalen - 2
-	} else if strings.HasSuffix(aa, "*") {
-		aalen = aalen - 1
-	}
-
-	for i := 0; i < aalen; i++ {
-		n_array = append(n_array, n)
-	}
-
-	if strings.HasSuffix(aa, "**") {
-		n_array = append(n_array, "******")
-	} else if strings.HasSuffix(aa, "*") {
-		n_array = append(n_array, "***")
-	}
-	nnn := strings.Join(n_array, "")
-
-	//if (len(nnn)) == (3 * (len(aa.Seq))) {
-
-	NNN = nnn
-
-	//}
-	return NNN
-
-}
-
-// Translate dna sequence into amino acid sequence; need to update to deal with wobble
-
-var RevCodonTable = map[string][]string{
-
-	"N": []string{"AAC", "AAT"},
-	"K": []string{"AAA", "AAG"},
-	"T": []string{"ACC", "ACT", "ACA", "ACG"},
-	"I": []string{"ATC", "ATT", "ATA"},
-	"M": []string{"ATG"},
-	"R": []string{"AGA", "AGG", "CGC", "CGT", "CGA", "CGG"},
-	"Y": []string{"TAC", "TAT"},
-	"*": []string{"TAA", "TAG", "TGA"},
-	"S": []string{"AGC", "AGT", "TCC", "TCT", "TCA", "TCG"},
-	"F": []string{"TTC", "TTT"},
-	"L": []string{"TTA", "TTG", "CTC", "CTT", "CTA", "CTG"},
-	"C": []string{"TGC", "TGT"},
-	"W": []string{"TGG"},
-	"D": []string{"GAC", "GAT"},
-	"E": []string{"GAA", "GAG"},
-	"V": []string{"GTC", "GTT", "GTA", "GTG"},
-	"A": []string{"GCA", "GCC", "GCG", "GCT"},
-	"G": []string{"GGC", "GGT", "GGA", "GGG"},
-	"H": []string{"CAC", "CAT"},
-	"Q": []string{"CAA", "CAG"},
-	"P": []string{"CCC", "CCT", "CCA", "CCG"},
-}
-
+// Codontable describes the mapping between a Codon and the amino acid which it encodes.
 var Codontable = map[string]string{
 
 	"AAC": "N",
@@ -200,7 +114,7 @@ var Codontable = map[string]string{
 	"CGG": "R",
 }
 
-func DNAtoAASeq(s []string) string {
+func dNAtoAASeq(s []string) string {
 	r := make([]string, 0)
 
 	for _, c := range s {
@@ -210,7 +124,7 @@ func DNAtoAASeq(s []string) string {
 	return rstring
 }
 
-// open reading frame
+// type ORF is an open reading frame
 type ORF struct {
 	StartPosition int
 	EndPosition   int
@@ -233,7 +147,7 @@ var (
 	startcodons = []string{"ATG", "CTG", "GTG"}
 )
 
-// Estimate molecular weight of protein product
+// Molecularweight estimates molecular weight of a protein product.
 func Molecularweight(orf ORF) (kDa float64) {
 	aaarray := strings.Split(orf.ProtSeq, "")
 	array := make([]float64, len(aaarray))
@@ -359,7 +273,7 @@ func FindORF(seq string) (orf ORF, orftrue bool) { // finds an orf in the forwar
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -368,7 +282,7 @@ func FindORF(seq string) (orf ORF, orftrue bool) { // finds an orf in the forwar
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -377,7 +291,7 @@ func FindORF(seq string) (orf ORF, orftrue bool) { // finds an orf in the forwar
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -432,7 +346,7 @@ func FindBiggestORF(seq string) (finalorf ORF, orftrue bool) { // finds an orf i
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -441,7 +355,7 @@ func FindBiggestORF(seq string) (finalorf ORF, orftrue bool) { // finds an orf i
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}
@@ -450,7 +364,7 @@ func FindBiggestORF(seq string) (finalorf ORF, orftrue bool) { // finds an orf i
 					//	// fmt.Println("orfcodons", ORFcodons)
 					orf.StartPosition = tempstart
 					orf.DNASeq = strings.Join(ORFcodons, "")
-					orf.ProtSeq = DNAtoAASeq(ORFcodons)
+					orf.ProtSeq = dNAtoAASeq(ORFcodons)
 					orf.EndPosition = orf.StartPosition + len(orf.DNASeq) - 1
 					//// fmt.Println("translated=", translated)
 				}

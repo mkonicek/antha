@@ -201,7 +201,7 @@ func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []str
 				return replacement, err
 			}
 			if i+2 == len(thingtoreplace) {
-				specificseqs := text.Print("Specific Sequences", allthingstoavoid)
+				specificseqs := text.Sprint("Specific Sequences", allthingstoavoid)
 				err = fmt.Errorf("Not possible to remove site from sequence without avoiding the sequences to avoid using this algorithm; check specific sequences and adapt algorithm: %v", specificseqs)
 				break
 			}
@@ -243,7 +243,7 @@ func removeSiteOnestrand(sequence wtype.DNASequence, enzymeseq string, otherseqs
 			return
 		}
 		if i+2 == len(enzymeseq) {
-			specificseqs := text.Print("Specific Sequences", allthingstoavoid)
+			specificseqs := text.Sprint("Specific Sequences", allthingstoavoid)
 			err = fmt.Errorf("Not possible to remove site from sequence without avoiding the sequences to avoid using this algorithm; check specific sequences and adapt algorithm: %v", specificseqs)
 			break
 		}
@@ -390,7 +390,7 @@ func AAPosition(dnaposition int) (aaposition int) {
 
 func CodonOptions(codon string) (replacementoptions []string) {
 
-	aa := DNAtoAASeq([]string{codon})
+	aa := dNAtoAASeq([]string{codon})
 
 	replacementoptions = RevCodonTable[aa]
 	return

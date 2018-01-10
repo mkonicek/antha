@@ -666,7 +666,9 @@ func (lhc *LHComponent) HasConcentration() bool {
 }
 
 // MolecularWeight uses the exact component name to search the pubchem database for a molecular weight.
-// If no match is found or the database cannot be conected to for any reason an error will be returned.
+// If no match is found, DNA sequences associated with the LHComponent will be looked for to caclulate molecular weight.
+// If both pubchem search and dna sequence check fail for any reason an error will be returned.
+// Relies on connecting to the online pubchem database.
 func (lhc *LHComponent) MolecularWeight() (float64, error) {
 	molecule, err := pubchem.MakeMolecule(lhc.CName)
 	// if an error occurs see if there's a DNA sequence associated with the LHComponent.

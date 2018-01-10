@@ -33,7 +33,6 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Labware \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Liquidclasses \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Parser \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/REBASE \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/UnitOperations \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/setpoints \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/buffers \

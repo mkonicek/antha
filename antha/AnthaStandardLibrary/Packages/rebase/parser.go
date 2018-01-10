@@ -92,7 +92,7 @@ func buildRebase(name string, prototype string, recognitionseq string, methylati
 
 	var record wtype.RestrictionEnzyme
 
-	record.Name = name
+	record.Nm = name
 	record.Prototype = prototype
 
 	record.RecognitionSequence,

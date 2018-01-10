@@ -165,6 +165,27 @@ func upper(seq wtype.DNASequence) wtype.DNASequence {
 	return newSeq
 }
 
+// correctPositions will correct the position assignment of a search on a plasmid sequence.
+// A search on a plasmid sequence may need to fins matches which overlap the end of a plasmid.
+// findSeq will therefore first concatenates the plasmid sequence with a duplicate and then perform a search.
+// correctPositions will correct the position assignment of any matches which are found that overlap the end of a plasmid sequence.
+func correctPositions(positionPair PositionPair, originalSequence wtype.DNASequence) (start int, end int, skip bool) {
+	start, end = positionPair.Coordinates()
+
+	if start > len(originalSequence.Sequence()) {
+		if end > len(originalSequence.Sequence()) {
+			return start - len(originalSequence.Sequence()), end - len(originalSequence.Sequence()), true
+		}
+		if end <= len(originalSequence.Sequence()) {
+			return start - len(originalSequence.Sequence()), end, false
+		}
+		return -1, -1, true
+	} else if end > len(originalSequence.Sequence()) {
+		return start, end - len(originalSequence.Sequence()), false
+	}
+	return start, end, false
+}
+
 // FindAll searches for a DNA sequence within a larger DNA sequence and returns all matches on both coding and complimentary strands.
 func FindAll(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchResult) {
 	if len(smallSequence.Sequence()) > len(bigSequence.Sequence()) {
@@ -174,51 +195,37 @@ func FindAll(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchRes
 		}
 		return
 	}
-	seqsFound = findSeq(bigSequence, smallSequence)
-
-	originalPairs := seqsFound.Positions
 
 	var newPairs []PositionPair
 
-	newPairs = append(newPairs, originalPairs...)
-
-	// if a vector, attempt rotation of bigsequence vector index 1 position at a time.
+	// if a vector, attempt rotation of bigsequence vector.
 	if bigSequence.Plasmid {
-		rotationSize := len(smallSequence.Seq) - 1
-		tempSequence := Rotate(upper(*bigSequence), rotationSize, false)
+		//rotationSize := len(smallSequence.Seq)
+		var tempSequence wtype.DNASequence
+
+		tempSequence.Append(bigSequence.Sequence())
+		tempSequence.Append(bigSequence.Sequence())
 
 		tempSeqsFound := findSeq(&tempSequence, smallSequence)
 
-		for j, positionPair := range tempSeqsFound.Positions {
+		for _, positionPair := range tempSeqsFound.Positions {
 
-			var skip bool
+			newStart, newEnd, skip := correctPositions(positionPair, *bigSequence)
 
-			if (positionPair.EndPosition + rotationSize) > len(bigSequence.Seq) {
-				positionPair.EndPosition = positionPair.EndPosition + rotationSize - len(bigSequence.Seq)
-			} else {
-				positionPair.EndPosition = positionPair.EndPosition + rotationSize
-			}
-
-			if (positionPair.StartPosition + rotationSize) > len(bigSequence.Seq) {
-				// correct position offset
-				positionPair.StartPosition = positionPair.StartPosition + rotationSize - len(bigSequence.Seq)
-			} else {
-				positionPair.StartPosition = positionPair.StartPosition + rotationSize
-			}
-			tempSeqsFound.Positions[j] = positionPair
-			// check if any new positions found
-			for _, oldPosition := range newPairs {
-				// if already present set skip to true
-				if equalPositionPairs(positionPair, oldPosition) {
-					skip = true
-				}
-			}
 			// if no skip set add to pairs
 			if !skip {
-				newPairs = append(newPairs, positionPair)
+				newPairs = append(newPairs, PositionPair{
+					StartPosition: newStart,
+					EndPosition:   newEnd,
+					Reverse:       positionPair.Reverse,
+				})
 			}
 		}
 
+	} else {
+		seqsFound = findSeq(bigSequence, smallSequence)
+
+		newPairs = append(newPairs, seqsFound.Positions...)
 	}
 
 	seqsFound.Positions = newPairs
@@ -234,6 +241,10 @@ func equalPositionPairs(pair1, pair2 PositionPair) bool {
 }
 
 func equalPositionPairSets(positionSet1, positionSet2 []PositionPair) bool {
+	if len(positionSet1) != len(positionSet2) {
+		return false
+	}
+
 	for _, pos1 := range positionSet1 {
 		var found bool
 		for _, pos2 := range positionSet2 {

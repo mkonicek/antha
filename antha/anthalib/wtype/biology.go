@@ -40,13 +40,19 @@ import (
 // enzymes need careful handling as they can be quite delicate
 type Enzyme struct {
 	Properties map[string]wunit.Measurement
+	Nm         string
 }
 
+func (enzyme Enzyme) Name() string {
+	return enzyme.Nm
+}
+
+// RestrictionEnzyme is an enzyme which cleaves DNA
 type RestrictionEnzyme struct {
-	// other fields required but for now the main things are...
+	Enzyme
+	// sequence
 	RecognitionSequence               string
 	EndLength                         int
-	Name                              string
 	Prototype                         string
 	Topstrand3primedistancefromend    int
 	Bottomstrand5primedistancefromend int
@@ -54,27 +60,21 @@ type RestrictionEnzyme struct {
 	CommercialSource                  []string //string "attr, <5>"
 	References                        []int
 	Class                             string
+	Isoschizomers                     []string
 }
 
 type TypeIIs struct {
 	RestrictionEnzyme
-	Name                              string
-	Isoschizomers                     []string
-	Topstrand3primedistancefromend    int
-	Bottomstrand5primedistancefromend int
 }
 
 func ToTypeIIs(typeIIenzyme RestrictionEnzyme) (typeIIsenz TypeIIs, err error) {
 	if typeIIenzyme.Class == "TypeII" {
 		err = fmt.Errorf("You can't do this, enzyme is not a type IIs")
+		return
 	}
 	if typeIIenzyme.Class == "TypeIIs" {
 
-		var isoschizomers = make([]string, 0)
-		/*for _, lookup := range ...
-		add code to lookup isoschizers from rebase
-		*/
-		typeIIsenz = TypeIIs{typeIIenzyme, typeIIenzyme.Name, isoschizomers, typeIIenzyme.Topstrand3primedistancefromend, typeIIenzyme.Bottomstrand5primedistancefromend}
+		typeIIsenz = TypeIIs{RestrictionEnzyme: typeIIenzyme}
 
 	}
 	return
@@ -132,6 +132,139 @@ func (seq DNASequence) Dup() DNASequence {
 	return ret
 }
 
+// AddOverhang adds an overhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddOverhang(end int, sequence string) (err error) {
+
+	var overHang Overhang
+
+	if end == 5 {
+
+		overHang, err = MakeOverHang(sequence, 5, TOP, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set5PrimeEnd(overHang)
+
+		return err
+
+	} else if end == 3 {
+
+		overHang, err = MakeOverHang(sequence, 3, TOP, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set3PrimeEnd(overHang)
+
+		return err
+	}
+	return fmt.Errorf("cannot add overhang to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// AddUnderhang adds an underhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddUnderhang(end int, sequence string) (err error) {
+
+	var overHang Overhang
+
+	if end == 5 {
+
+		overHang, err = MakeOverHang(sequence, 5, BOTTOM, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set5PrimeEnd(overHang)
+
+		return err
+	} else if end == 3 {
+
+		seq.Overhang3prime, err = MakeOverHang(sequence, 3, BOTTOM, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set3PrimeEnd(overHang)
+
+		return err
+	}
+	return fmt.Errorf("cannot add overhang to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// AddBluntOverhang adds a blunt overhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddBluntEnd(end int) (err error) {
+
+	if end == 5 {
+
+		seq.Overhang5prime, err = MakeOverHang("", 5, NEITHER, true)
+
+		return err
+	} else if end == 3 {
+
+		seq.Overhang3prime, err = MakeOverHang("", 3, NEITHER, true)
+
+		return nil
+	}
+	return fmt.Errorf("cannot add blunt end to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// Set5PrimeEnd adds a 5 prime overhang to a sequence.
+// Validation is performed on the compatibility of the overhang with the sequence.
+func (seq *DNASequence) Set5PrimeEnd(overhang Overhang) (err error) {
+	if seq.Singlestranded {
+		err = fmt.Errorf("Can't have overhang on single stranded dna")
+		return
+	}
+	if seq.Plasmid {
+		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
+		return
+	}
+
+	if overhang.Type == OVERHANG {
+
+		expectedOverhang := Prefix(seq.Seq, len(overhang.Sequence()))
+
+		if !strings.EqualFold(expectedOverhang, overhang.Sequence()) {
+			return fmt.Errorf("specified overhang %s to add to 5' end of sequence %s is not equal to sequence prefix %s", overhang.Sequence(), seq.Name(), expectedOverhang)
+		}
+	}
+
+	seq.Overhang5prime = overhang
+	return nil
+}
+
+// Set3PrimeEnd adds a 3 prime overhang to a sequence.
+// Validation is performed on the compatibility of the overhang with the sequence.
+func (seq *DNASequence) Set3PrimeEnd(overhang Overhang) (err error) {
+	if seq.Singlestranded {
+		err = fmt.Errorf("Can't have overhang on single stranded dna")
+		return
+	}
+	if seq.Plasmid {
+		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
+		return
+	}
+
+	if overhang.Type == OVERHANG {
+
+		expectedOverhang := Prefix(RevComp(seq.Seq), len(overhang.Sequence()))
+
+		if !strings.EqualFold(expectedOverhang, overhang.Sequence()) {
+			return fmt.Errorf("specified underhang %s to add to 3' end of sequence %s is not equal to sequence suffix %s", overhang.Sequence(), seq.Name(), expectedOverhang)
+		}
+	}
+
+	seq.Overhang3prime = overhang
+	return nil
+}
+
 func MakeDNASequence(name string, seqstring string, properties []string) (seq DNASequence, err error) {
 	seq.Nm = name
 	seq.Seq = seqstring
@@ -172,16 +305,11 @@ func MakeSingleStrandedDNASequence(name string, seqstring string) (seq DNASequen
 	return
 }
 
-func MakeOverhang(sequence DNASequence, end int, toporbottom int, length int, phosphorylated bool) (overhang Overhang, err error) {
+// MakeOverHang is used to create an overhang.
+func MakeOverHang(overhangSequence string, end int, toporbottom int, phosphorylated bool) (overhang Overhang, err error) {
 
-	if sequence.Singlestranded {
-		err = fmt.Errorf("Can't have overhang on single stranded dna")
-		return
-	}
-	if sequence.Plasmid {
-		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
-		return
-	}
+	length := len(overhangSequence)
+
 	if end == 0 {
 		err = fmt.Errorf("if end = 0, all fields are returned empty")
 		return
@@ -193,30 +321,39 @@ func MakeOverhang(sequence DNASequence, end int, toporbottom int, length int, ph
 		err = fmt.Errorf("invalid entry for end: 5PRIME = 5, 3PRIME = 3, NA = 0")
 		return
 	}
-	if toporbottom == 0 && length == 0 {
-		overhang.Type = 1
+	if toporbottom == NEITHER && length == 0 {
+		overhang.Type = BLUNT
 		return
 	}
-	if toporbottom == 0 && length != 0 {
+	if toporbottom == NEITHER && length != 0 {
 		err = fmt.Errorf("If length of overhang is not 0, toporbottom must be 0")
 		return
 	}
-	if toporbottom != 0 && length == 0 {
-		err = fmt.Errorf("If length of overhang is not 0, toporbottom must be 0")
+	if toporbottom != NEITHER && length == 0 {
+		err = fmt.Errorf("If length of overhang is 0, toporbottom must be 0")
 		return
 	}
 	if toporbottom > 2 {
-		err = fmt.Errorf("invalid entry for toporbottom: NEITHER = 0, TOP    = 1, BOTTOM = 2")
+		err = fmt.Errorf("invalid entry for toporbottom: NEITHER = 0, TOP = 1, BOTTOM = 2")
 		return
 	}
-	if toporbottom == 1 {
-		overhang.Type = 2
-		overhang.Sequence = Prefix(sequence.Seq, length)
+	if end == 5 {
+		if toporbottom == TOP {
+			overhang.Type = OVERHANG
+		}
+		if toporbottom == BOTTOM {
+			overhang.Type = UNDERHANG
+		}
+	} else if end == 3 {
+		if toporbottom == TOP {
+			overhang.Type = OVERHANG
+		}
+		if toporbottom == BOTTOM {
+			overhang.Type = UNDERHANG
+		}
 	}
-	if toporbottom == 2 {
-		overhang.Type = -1
-		overhang.Sequence = Suffix(RevComp(sequence.Seq), length)
-	}
+
+	overhang.Seq = overhangSequence
 	overhang.Phosphorylation = phosphorylated
 	return
 }
@@ -240,45 +377,117 @@ func Phosphorylate(dnaseq DNASequence) (phosphorylateddna DNASequence, err error
 	return
 }
 
+// OverHangType represents the type of an overhang.
+// Valid options are
+// 	FALSE     OverHangType = 0
+//	BLUNT     OverHangType = 1
+//	OVERHANG  OverHangType = 2
+//	UNDERHANG OverHangType = -1
+type OverHangType int
+
+// Valid overhang types
 const (
-	FALSE     = 0
-	BLUNT     = 1
-	OVERHANG  = 2
-	UNDERHANG = -1
+	// no overhang
+	FALSE OverHangType = 0
+	// A blunt overhang
+	BLUNT OverHangType = 1
+	// An overhang (5' sequence overhangs complementary strand)
+	OVERHANG OverHangType = 2
+	// an underhang (5' sequence underhangs complementary strand)
+	UNDERHANG OverHangType = -1
 )
 
+// Options for Strand choice
 const (
 	NEITHER = 0
-	TOP     = 1
-	BOTTOM  = 2
+	// Top strand, or coding strand
+	TOP = 1
+	// Bottom strand, or complimentary strand.
+	BOTTOM = 2
 )
 
+// Overhang represents an end of a DNASequence.
 type Overhang struct {
-	//Strand          int // i.e. 1 or 2 (top or bottom
-	End             int    `json:"end"`  // i.e. 5 or 3 or 0
-	Type            int    `json:"type"` //as contants above
-	Length          int    `json:"length"`
-	Sequence        string `json:"sequence"`
-	Phosphorylation bool   `json:"phosphorylation"`
+	// Valid options are 5 (5 Prime end), 3 (3 prime end) or 0 (nul)
+	End int `json:"end"`
+	// Valid options are FALSE, BLUNT, OVERHANG, UNDERHANG
+	Type OverHangType `json:"type"`
+	// Overhang sequence
+	Seq string `json:"sequence"`
+	// Whether the overhang is phosphorylated.
+	Phosphorylation bool `json:"phosphorylation"`
 }
 
-func (oh Overhang) OverHangAt5PrimeEnd() (sequence string) {
+// Sequence returns the sequence of the overhang.
+func (oh Overhang) Sequence() string {
+	return oh.Seq
+}
+
+// Length returns the length of the overhang.
+func (oh Overhang) Length() int {
+	return len(oh.Sequence())
+}
+
+// ToString returns a string summary of the overhang.
+func (oh Overhang) ToString() string {
 	if oh.End == 5 {
 		if oh.Type == OVERHANG {
-			return oh.Sequence
+			return `5' overhang: ` + oh.Sequence()
+		}
+		if oh.Type == BLUNT || oh.Type == FALSE {
+			return `5' Blunt`
+		}
+		if oh.Type == UNDERHANG {
+			return `5' underhang: ` + oh.Sequence()
+		}
+
+	}
+
+	if oh.End == 3 {
+		if oh.Type == OVERHANG {
+			return `3' overhang: ` + oh.Sequence()
+		}
+		if oh.Type == BLUNT || oh.Type == FALSE {
+			return `3' Blunt`
+		}
+		if oh.Type == UNDERHANG {
+			return `3' underhang: ` + oh.Sequence()
 		}
 
 	}
 	return ""
 }
 
-func (oh Overhang) OverHangAt3PrimeEnd() (sequence string) {
-	if oh.End == 3 {
-		if oh.Type == OVERHANG {
-			return oh.Sequence
-		}
-
+// TypeName returns the name of the overhang type as a string.
+func (oh Overhang) TypeName() string {
+	if oh.Type == OVERHANG {
+		return "Overhang"
+	} else if oh.Type == UNDERHANG {
+		return "Underhang"
+	} else if oh.Type == BLUNT {
+		return "blunt"
 	}
+	return "no overhang"
+}
+
+// Overhang returns the sequence if the overhang is of type OVERHANG.
+func (oh Overhang) OverHang() (sequence string) {
+	if oh.Type == OVERHANG {
+		return oh.Sequence()
+	} else if oh.Type == BLUNT {
+		return "blunt"
+	}
+	return ""
+}
+
+// Overhang returns any sequence if the underhang is of type UNDERHANG.
+func (oh Overhang) UnderHang() (sequence string) {
+	if oh.Type == UNDERHANG {
+		return oh.Sequence()
+	} else if oh.Type == BLUNT {
+		return "blunt"
+	}
+
 	return ""
 }
 
@@ -660,7 +869,7 @@ func makeABunchaRandomSeqs(n_seq_sets, seqs_per_set, min_len, len_var int) [][]D
 	for i := 0; i < n_seq_sets; i++ {
 		seqs[i] = make([]DNASequence, seqs_per_set)
 		for j := 0; j < seqs_per_set; j++ {
-			seqs[i][j] = DNASequence{fmt.Sprintf("SEQ%04d", i*seqs_per_set+j+1), random_dna_seq(rand.Intn(len_var) + min_len), false, false, Overhang{0, 0, 0, "", false}, Overhang{0, 0, 0, "", false}, "", features}
+			seqs[i][j] = DNASequence{fmt.Sprintf("SEQ%04d", i*seqs_per_set+j+1), random_dna_seq(rand.Intn(len_var) + min_len), false, false, Overhang{0, 0, "", false}, Overhang{0, 0, "", false}, "", features}
 		}
 	}
 	return seqs

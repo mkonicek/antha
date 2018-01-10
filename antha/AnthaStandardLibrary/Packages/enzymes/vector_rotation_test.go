@@ -2,13 +2,14 @@ package enzymes
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"testing"
 )
 
 func TestNoRotationNeeded(t *testing.T) {
-	enzyme, _ := lookup.TypeIIsLookup("SAPI")
+	enzyme, _ := lookup.TypeIIs("SAPI")
 	seq := "GCTCTTCxxxxx"
 	rseq := "GCTCTTCxxxxx"
 
@@ -21,11 +22,11 @@ func TestNoRotationNeeded(t *testing.T) {
 	}
 
 	if rs.Seq != rseq {
-		t.Fatal(fmt.Sprintf("Error with vector rotation: got %s expected %s", s, rs))
+		t.Fatal(fmt.Sprintf("Error with vector rotation: got %s expected %s", s.Sequence(), rs.Sequence()))
 	}
 }
 func TestSomeRotationNeeded(t *testing.T) {
-	enzyme, _ := lookup.TypeIIsLookup("SAPI")
+	enzyme, _ := lookup.TypeIIs("SAPI")
 	seq := "xxxxxGCTCTTCn"
 	rseq := "GCTCTTCnxxxxx"
 

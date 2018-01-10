@@ -31,9 +31,10 @@ import (
 )
 
 type regionTest struct {
-	LargeSeq  *wtype.DNASequence
-	SmallSeq  *wtype.DNASequence
-	Positions []PositionPair
+	LargeSeq   *wtype.DNASequence
+	SmallSeq   *wtype.DNASequence
+	Positions  []PositionPair
+	errMessage string
 }
 
 var regionTests = []regionTest{
@@ -123,6 +124,102 @@ var regionTests = []regionTest{
 				Reverse:       true,
 			},
 		},
+		errMessage: "3 sequences of GAT GAT found in multipleHits ATCGATGTGTG",
+	},
+	regionTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "fullSeq",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: true,
+		},
+		SmallSeq: &wtype.DNASequence{
+			Nm:      "ATCGTAGTGTG",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: false,
+		},
+		Positions: []PositionPair{
+			PositionPair{
+				StartPosition: 1,
+				EndPosition:   11,
+				Reverse:       false,
+			},
+		},
+	},
+	regionTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "PresentAsRotatedSeq",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: true,
+		},
+		SmallSeq: &wtype.DNASequence{
+			Nm:      "TAGTGTGATCG",
+			Seq:     "TAGTGTGATCG",
+			Plasmid: false,
+		},
+		Positions: []PositionPair{
+			PositionPair{
+				StartPosition: 5,
+				EndPosition:   4,
+				Reverse:       false,
+			},
+		},
+	},
+	regionTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "PresentAsRotatedSeq2",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: true,
+		},
+		SmallSeq: &wtype.DNASequence{
+			Nm:      "TAGTGTGATC",
+			Seq:     "TAGTGTGATC",
+			Plasmid: false,
+		},
+		Positions: []PositionPair{
+			PositionPair{
+				StartPosition: 5,
+				EndPosition:   3,
+				Reverse:       false,
+			},
+		},
+	},
+	regionTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "PresentAsRotatedSeq3",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: true,
+		},
+		SmallSeq: &wtype.DNASequence{
+			Nm:      "TCGTAGTGTGA",
+			Seq:     "TCGTAGTGTGA",
+			Plasmid: false,
+		},
+		Positions: []PositionPair{
+			PositionPair{
+				StartPosition: 2,
+				EndPosition:   1,
+				Reverse:       false,
+			},
+		},
+	},
+	regionTest{
+		LargeSeq: &wtype.DNASequence{
+			Nm:      "PresentAsRotatedSeq4",
+			Seq:     "ATCGTAGTGTG",
+			Plasmid: true,
+		},
+		SmallSeq: &wtype.DNASequence{
+			Nm:      "GATCGTAGTGT",
+			Seq:     "GATCGTAGTGT",
+			Plasmid: false,
+		},
+		Positions: []PositionPair{
+			PositionPair{
+				StartPosition: 11,
+				EndPosition:   10,
+				Reverse:       false,
+			},
+		},
 	},
 }
 
@@ -159,6 +256,15 @@ func TestFindPositioninSequence(t *testing.T) {
 					"expected End:", testEnd, "\n",
 					"got", end, "\n",
 				)
+			}
+
+			if err != nil {
+				if test.errMessage != err.Error() {
+					t.Error(
+						"For", test.LargeSeq.Nm, "\n",
+						"got error", err.Error(), "\n",
+					)
+				}
 			}
 
 		}

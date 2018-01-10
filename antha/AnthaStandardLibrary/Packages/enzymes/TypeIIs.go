@@ -20,26 +20,68 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for working with enzymes; in particular restriction enzymes
 package enzymes
 
 import "github.com/antha-lang/antha/antha/anthalib/wtype"
 
-var sapI = wtype.RestrictionEnzyme{"GCTCTTC", 3, "SapI", "", 1, 4, "", []string{"N"}, []int{91, 1109, 1919, 1920}, "TypeIIs"}
-var isoschizomers = []string{"BspQI", "LguI", "PciSI", "VpaK32I"}
+var sapI = wtype.RestrictionEnzyme{
+	Enzyme: wtype.Enzyme{
+		Nm: "SapI",
+	},
+	RecognitionSequence:               "GCTCTTC",
+	EndLength:                         3,
+	Topstrand3primedistancefromend:    1,
+	Bottomstrand5primedistancefromend: 4,
+	CommercialSource:                  []string{"N"},
+	References:                        []int{91, 1109, 1919, 1920},
+	Class:                             "TypeIIs",
+	Isoschizomers:                     []string{"BspQI", "LguI", "PciSI", "VpaK32I"},
+}
 
-var SapIenz = wtype.TypeIIs{sapI, "SapI", isoschizomers, 1, 4}
+var bsaI = wtype.RestrictionEnzyme{
+	Enzyme: wtype.Enzyme{
+		Nm: "BsaI",
+	},
+	RecognitionSequence:               "GGTCTC",
+	EndLength:                         4,
+	Topstrand3primedistancefromend:    1,
+	Bottomstrand5primedistancefromend: 5,
+	MethylationSite:                   "?(5)",
+	CommercialSource:                  []string{"N"},
+	References:                        []int{814, 1109, 1912, 1995, 1996},
+	Class:                             "TypeIIs",
+	Isoschizomers:                     []string{""},
+}
 
-var bsaI = wtype.RestrictionEnzyme{"GGTCTC", 4, "BsaI", "Eco31I", 1, 5, "?(5)", []string{"N"}, []int{814, 1109, 1912, 1995, 1996}, "TypeIIs"}
+var bpiI = wtype.RestrictionEnzyme{
+	Enzyme: wtype.Enzyme{
+		Nm: "BpiI",
+	},
+	Prototype:                         "BbvII",
+	RecognitionSequence:               "GAAGAC",
+	EndLength:                         4,
+	Topstrand3primedistancefromend:    2,
+	Bottomstrand5primedistancefromend: 6,
+	MethylationSite:                   "",
+	CommercialSource:                  []string{"B"},
+	References:                        []int{718},
+	Class:                             "TypeIIs",
+	Isoschizomers:                     []string{"BbvII", "BbsI", "BpuAI", "BSTV2I"},
+}
 
-var BsaIenz = wtype.TypeIIs{bsaI, "BsaI", []string{"none"}, 1, 5}
+// Example TypeIIs enzymes.
+var (
+	// SapI is a TypeIIs enzyme.
+	SapI = wtype.TypeIIs{RestrictionEnzyme: sapI}
+	// BsaI is a TypeIIs enzyme
+	BsaI = wtype.TypeIIs{RestrictionEnzyme: bsaI}
+	// BpiI is a TypeIIs enzyme
+	BpiI = wtype.TypeIIs{RestrictionEnzyme: bpiI}
+)
 
-var bpiI = wtype.RestrictionEnzyme{"GAAGAC", 4, "BpiI", "BbvII", 2, 6, "", []string{"B"}, []int{718}, "TypeIIs"}
-
-var BpiIenz = wtype.TypeIIs{bpiI, "BpiI", []string{"BbvII", "BbsI", "BpuAI", "BSTV2I"}, 2, 6}
-
+// TypeIIsEnzymeproperties carries a map of example TypeIIs enzymes.
 var TypeIIsEnzymeproperties = map[string]wtype.TypeIIs{
-	"SAPI": SapIenz,
-	"BSAI": BsaIenz,
-	"BPII": BpiIenz,
+	"SAPI": SapI,
+	"BSAI": BsaI,
+	"BPII": BpiI,
 }

@@ -55,12 +55,21 @@ func RetrieveSeqFromFASTA(id string, fastaFile wtype.File) (seq wtype.DNASequenc
 	// then retrieve the particular record
 	for _, record := range fastaParse(allparts) {
 		if strings.Contains(record.Id, id) {
-			seq = wtype.DNASequence{record.Id, record.Seq, true, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
+			seq = wtype.DNASequence{
+				Nm:             record.Id,
+				Seq:            record.Seq,
+				Plasmid:        false,
+				Singlestranded: false,
+				Overhang5prime: wtype.Overhang{0, 0, "", false},
+				Overhang3prime: wtype.Overhang{0, 0, "", false},
+				Methylation:    "",
+				Features:       nofeatures,
+			}
 			return
 		}
 	}
 
-	seq = wtype.DNASequence{"", "", true, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures} // blank seq
+	seq = wtype.DNASequence{} // blank seq
 	if seq.Seq == "" {
 		err = errors.New("Record not found in file")
 		return
@@ -84,7 +93,16 @@ func FASTAtoLinearDNASeqs(fastaFile wtype.File) (seqs []wtype.DNASequence, err e
 
 	// then retrieve the particular record
 	for _, record := range fastaParse(allparts) {
-		seq = wtype.DNASequence{record.Id, record.Seq, false, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
+		seq = wtype.DNASequence{
+			Nm:             record.Id,
+			Seq:            record.Seq,
+			Plasmid:        false,
+			Singlestranded: false,
+			Overhang5prime: wtype.Overhang{0, 0, "", false},
+			Overhang3prime: wtype.Overhang{0, 0, "", false},
+			Methylation:    "",
+			Features:       nofeatures,
+		}
 		seqs = append(seqs, seq)
 	}
 	return
@@ -107,8 +125,16 @@ func FASTAtoPlasmidDNASeqs(file wtype.File) (seqs []wtype.DNASequence, err error
 
 	// then retrieve the particular record
 	for _, record := range fastaParse(allparts) {
-		seq = wtype.DNASequence{record.Id, record.Seq, true, false, wtype.Overhang{0, 0, 0, "", false}, wtype.Overhang{0, 0, 0, "", false}, "", nofeatures}
-
+		seq = wtype.DNASequence{
+			Nm:             record.Id,
+			Seq:            record.Seq,
+			Plasmid:        false,
+			Singlestranded: false,
+			Overhang5prime: wtype.Overhang{0, 0, "", false},
+			Overhang3prime: wtype.Overhang{0, 0, "", false},
+			Methylation:    "",
+			Features:       nofeatures,
+		}
 		seqs = append(seqs, seq)
 
 	}

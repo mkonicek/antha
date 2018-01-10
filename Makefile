@@ -40,7 +40,6 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/doe \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/download \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/eng \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/enzymes \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/export \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/igem \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/pcr \

@@ -22,7 +22,10 @@
 
 package text
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // PrettyPrint will return an indented string of an object.
 /* e.g.
@@ -41,6 +44,9 @@ import "encoding/json"
 ]
 */
 func PrettyPrint(data interface{}) string {
-	bytes, _ := json.MarshalIndent(data, "", "\t")
+	bytes, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling data for pretty print: %s", err.Error()))
+	}
 	return string(bytes)
 }

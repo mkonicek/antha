@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for exporting to files
+// Package export provides functions for exporting common file formats into the Antha File type.
 package export
 
 import (
@@ -43,11 +43,13 @@ import (
 )
 
 const (
+	// ANTHAPATH indicates a file should be exported into the $HOME/.antha directory.
 	ANTHAPATH bool = true
-	LOCAL     bool = false
+	// LOCAL indicates a file should be exported into the directory from which the program is run.
+	LOCAL bool = false
 )
 
-// function to export a standard report of sequence properties to a txt file
+// SequenceReport exports a standard report of sequence properties to a txt file.
 func SequenceReport(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 
 	var anthafile wtype.File
@@ -109,7 +111,7 @@ func SequenceReport(dir string, seq wtype.BioSequence) (wtype.File, string, erro
 	return anthafile, filename, err
 }
 
-// function to export a sequence to a txt file
+// Fasta exports a sequence to a txt file in Fasta format.
 func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 	var anthafile wtype.File
 	filename := filepath.Join(anthapath.Path(), fmt.Sprintf("%s_%s.fasta", dir, seq.Name()))
@@ -127,6 +129,10 @@ func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 
 	_, err = fmt.Fprintf(&buf, ">%s\n%s\n", seq.Name(), seq.Sequence())
 
+	if err != nil {
+		return anthafile, "", err
+	}
+
 	allbytes := streamToByte(&buf)
 
 	_, err = io.Copy(f, &buf)
@@ -141,8 +147,8 @@ func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 	return anthafile, filename, err
 }
 
-// function to export multiple sequences in fasta format into a specified file
-// specify whether to save locally or to the anthapath in a specified sub directory dir.
+// FastaSerial exports multiple sequences in fasta format into a specified txt file.
+// The makeinanthapath argument specifies whether a copy of the file should be saved locally or to the anthapath in a specified sub directory directory.
 func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wtype.File, string, error) {
 
 	var anthafile wtype.File
@@ -190,7 +196,7 @@ func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wt
 	return anthafile, filename, nil
 }
 
-// Simultaneously export multiple Fasta files and summary files for a series of assembly products
+// FastaAndSeqReports simultaneously exports multiple Fasta files and summary files for a TypeIIs assembly design.
 func FastaAndSeqReports(assemblyparameters enzymes.Assemblyparameters) (fastafiles []wtype.File, summaryfiles []wtype.File, err error) {
 
 	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
@@ -210,23 +216,27 @@ func FastaAndSeqReports(assemblyparameters enzymes.Assemblyparameters) (fastafil
 
 	for _, assemblyproduct := range plasmidproductsfromXprimaryseq {
 		filename := filepath.Join(anthapath.Path(), assemblyparameters.Constructname)
-		if summary, _, err := SequenceReport(filename, &assemblyproduct); err != nil {
-			return fastafiles, summaryfiles, err
-		} else {
-			summaryfiles = append(summaryfiles, summary)
+		summary, _, err := SequenceReport(filename, &assemblyproduct)
 
-		}
-		if fasta, _, err := Fasta(filename, &assemblyproduct); err != nil {
+		if err != nil {
 			return fastafiles, summaryfiles, err
-		} else {
-			fastafiles = append(fastafiles, fasta)
 		}
+		summaryfiles = append(summaryfiles, summary)
+
+		fasta, _, err := Fasta(filename, &assemblyproduct)
+
+		if err != nil {
+			return fastafiles, summaryfiles, err
+		}
+
+		fastafiles = append(fastafiles, fasta)
+
 	}
 
 	return fastafiles, summaryfiles, nil
 }
 
-// Simultaneously export a single Fasta file containing the assembled sequences for a series of assembly products
+// FastaSerialfromMultipleAssemblies simultaneously export a single Fasta file containing the assembled sequences for a series of TypeIIs assembly designs.
 func FastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameters []enzymes.Assemblyparameters) (wtype.File, string, error) {
 	var anthafile wtype.File
 	seqs := make([]wtype.DNASequence, 0)
@@ -255,8 +265,9 @@ func FastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameter
 	return FastaSerial(ANTHAPATH, dirname, seqs)
 }
 
-// export data in the format of an array of strings to a file
-func TextFile(filename string, data []string) (wtype.File, error) {
+// TextFile exports data in the format of a set of strings to a file.
+// Each entry in the set of strings represents a line.
+func TextFile(filename string, line []string) (wtype.File, error) {
 
 	var anthafile wtype.File
 
@@ -266,13 +277,13 @@ func TextFile(filename string, data []string) (wtype.File, error) {
 	}
 	defer f.Close()
 
-	for _, str := range data {
+	for _, str := range line {
 
 		if _, err := fmt.Fprintln(f, str); err != nil {
 			return anthafile, err
 		}
 	}
-	alldata := stringsToBytes(data)
+	alldata := stringsToBytes(line)
 	anthafile.Name = filename
 
 	anthafile.WriteAll(alldata)
@@ -280,7 +291,7 @@ func TextFile(filename string, data []string) (wtype.File, error) {
 	return anthafile, nil
 }
 
-// Export any data as a json object in  a file
+// JSON exports any data as a json object in  a file.
 func JSON(data interface{}, filename string) (anthafile wtype.File, err error) {
 	bytes, err := json.Marshal(data)
 
@@ -295,7 +306,7 @@ func JSON(data interface{}, filename string) (anthafile wtype.File, err error) {
 	return anthafile, nil
 }
 
-// Export a 2D array of string data as a csv file
+// CSV exports a matrix of string data as a csv file.
 func CSV(records [][]string, filename string) (wtype.File, error) {
 	var anthafile wtype.File
 	var buf bytes.Buffer
@@ -330,7 +341,7 @@ func CSV(records [][]string, filename string) (wtype.File, error) {
 	return anthafile, nil
 }
 
-// export bytes into a file
+// Binary export bytes into a file.
 func Binary(data []byte, filename string) (wtype.File, error) {
 	var anthafile wtype.File
 	anthafile.Name = filename
@@ -341,9 +352,9 @@ func Binary(data []byte, filename string) (wtype.File, error) {
 	return anthafile, nil
 }
 
-// export a stream into a file
-func Stream(stream io.Reader, filename string) (wtype.File, error) {
-	return Binary(streamToByte(stream), filename)
+// Reader export an io.Reader into a file.
+func Reader(reader io.Reader, filename string) (wtype.File, error) {
+	return Binary(streamToByte(reader), filename)
 }
 
 func stringsToBytes(data []string) []byte {

@@ -52,9 +52,11 @@ const (
 // SequenceReport exports a standard report of sequence properties to a txt file.
 func SequenceReport(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 
+	var errs []string
+
 	var anthafile wtype.File
 	filename := filepath.Join(anthapath.Path(), fmt.Sprintf("%s_%s.txt", dir, seq.Name()))
-	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filename), 0644); err != nil {
 		return anthafile, "", err
 	}
 
@@ -64,49 +66,74 @@ func SequenceReport(dir string, seq wtype.BioSequence) (wtype.File, string, erro
 	}
 	defer f.Close()
 
-	var buf bytes.Buffer
-
 	// GC content
 	GC := sequences.GCcontent(seq.Sequence())
 
 	// Find all orfs:
 	orfs := sequences.DoublestrandedORFS(seq.Sequence())
 
-	fmt.Fprintln(&buf, ">", dir[2:]+"_"+seq.Name())
-	fmt.Fprintln(&buf, seq.Sequence())
+	var lines []string
 
-	fmt.Fprintln(&buf, "Sequence length:", len(seq.Sequence()))
-	fmt.Fprintln(&buf, "Molecular weight:", wutil.RoundInt(sequences.MassDNA(seq.Sequence(), false, true)), "g/mol")
-	fmt.Fprintln(&buf, "GC Content:", wutil.RoundInt((GC * 100)), "%")
+	lines = append(lines,
+		fmt.Sprintln(">", dir[2:]+"_"+seq.Name()),
+		fmt.Sprintln(seq.Sequence()),
+		fmt.Sprintln("Sequence length:", len(seq.Sequence())),
+		fmt.Sprintln("Molecular weight:", wutil.RoundInt(sequences.MassDNA(seq.Sequence(), false, true)), "g/mol"),
+		fmt.Sprintln("GC Content:", wutil.RoundInt((GC*100)), "%"),
+		fmt.Sprintln((len(orfs.TopstrandORFS)+len(orfs.BottomstrandORFS)), "Potential Open reading frames found:"),
+	)
 
-	fmt.Fprintln(&buf, (len(orfs.TopstrandORFS) + len(orfs.BottomstrandORFS)), "Potential Open reading frames found:")
 	for _, strandorf := range orfs.TopstrandORFS {
-		fmt.Fprintln(&buf, "Topstrand")
-		fmt.Fprintln(&buf, "Position:", strandorf.StartPosition, "..", strandorf.EndPosition)
 
-		fmt.Fprintln(&buf, " DNA Sequence:", strandorf.DNASeq)
+		lines = append(lines,
+			fmt.Sprintln("Topstrand"),
+			fmt.Sprintln("Position:", strandorf.StartPosition, "..", strandorf.EndPosition),
+			fmt.Sprintln(" DNA Sequence:", strandorf.DNASeq),
+			fmt.Sprintln("Translated Amino Acid Sequence:", strandorf.ProtSeq),
+			fmt.Sprintln("Length of Amino acid sequence:", len(strandorf.ProtSeq)-1),
+			fmt.Sprintln("molecular weight:", sequences.Molecularweight(strandorf), "kDA"),
+		)
 
-		fmt.Fprintln(&buf, "Translated Amino Acid Sequence:", strandorf.ProtSeq)
-		fmt.Fprintln(&buf, "Length of Amino acid sequence:", len(strandorf.ProtSeq)-1)
-		fmt.Fprintln(&buf, "molecular weight:", sequences.Molecularweight(strandorf), "kDA")
 	}
 	for _, strandorf := range orfs.BottomstrandORFS {
-		fmt.Fprintln(&buf, "Bottom strand")
-		fmt.Fprintln(&buf, "Position:", strandorf.StartPosition, "..", strandorf.EndPosition)
 
-		fmt.Fprintln(&buf, " DNA Sequence:", strandorf.DNASeq)
+		lines = append(lines,
+			fmt.Sprintln("Bottom strand"),
+			fmt.Sprintln("Position:", strandorf.StartPosition, "..", strandorf.EndPosition),
+			fmt.Sprintln(" DNA Sequence:", strandorf.DNASeq),
+			fmt.Sprintln("Translated Amino Acid Sequence:", strandorf.ProtSeq),
+			fmt.Sprintln("Length of Amino acid sequence:", len(strandorf.ProtSeq)-1),
+			fmt.Sprintln("molecular weight:", sequences.Molecularweight(strandorf), "kDA"),
+		)
 
-		fmt.Fprintln(&buf, "Translated Amino Acid Sequence:", strandorf.ProtSeq)
-		fmt.Fprintln(&buf, "Length of Amino acid sequence:", len(strandorf.ProtSeq)-1)
-		fmt.Fprintln(&buf, "molecular weight:", sequences.Molecularweight(strandorf), "kDA")
+	}
+
+	var buf bytes.Buffer
+
+	_, err = fmt.Fprintf(&buf, strings.Join(lines, ""))
+	if err != nil {
+		return anthafile, "", err
 	}
 
 	_, err = io.Copy(f, &buf)
+	if err != nil {
+		return anthafile, "", err
+	}
 
-	allbytes := streamToByte(f)
+	allbytes, err := streamToByte(f)
+	if err != nil {
+		return anthafile, "", err
+	}
 
 	anthafile.Name = filename
-	anthafile.WriteAll(allbytes)
+	err = anthafile.WriteAll(allbytes)
+	if err != nil {
+		return anthafile, "", err
+	}
+
+	if len(errs) > 0 {
+		err = fmt.Errorf(strings.Join(errs, "\n"))
+	}
 
 	return anthafile, filename, err
 }
@@ -115,7 +142,7 @@ func SequenceReport(dir string, seq wtype.BioSequence) (wtype.File, string, erro
 func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 	var anthafile wtype.File
 	filename := filepath.Join(anthapath.Path(), fmt.Sprintf("%s_%s.fasta", dir, seq.Name()))
-	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filename), 0644); err != nil {
 		return anthafile, "", err
 	}
 
@@ -133,7 +160,10 @@ func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 		return anthafile, "", err
 	}
 
-	allbytes := streamToByte(&buf)
+	allbytes, err := streamToByte(&buf)
+	if err != nil {
+		return anthafile, "", err
+	}
 
 	_, err = io.Copy(f, &buf)
 
@@ -142,7 +172,7 @@ func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 	}
 
 	anthafile.Name = filename
-	anthafile.WriteAll(allbytes)
+	err = anthafile.WriteAll(allbytes)
 
 	return anthafile, filename, err
 }
@@ -158,7 +188,7 @@ func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wt
 	} else {
 		filename = filepath.Join(fmt.Sprintf("%s.fasta", dir))
 	}
-	if err := os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filename), 0644); err != nil {
 		return anthafile, "", err
 	}
 
@@ -172,12 +202,16 @@ func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wt
 	var buf bytes.Buffer
 
 	for _, seq := range seqs {
-		if _, err := fmt.Fprintf(&buf, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
+		_, err = fmt.Fprintf(&buf, ">%s\n%s\n", seq.Name(), seq.Sequence())
+		if err != nil {
 			return anthafile, "", err
 		}
 	}
 
-	allbytes := streamToByte(&buf)
+	allbytes, err := streamToByte(&buf)
+	if err != nil {
+		return anthafile, "", err
+	}
 
 	_, err = io.Copy(f, &buf)
 
@@ -191,9 +225,9 @@ func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wt
 	}
 
 	anthafile.Name = filename
-	anthafile.WriteAll(allbytes)
+	err = anthafile.WriteAll(allbytes)
 
-	return anthafile, filename, nil
+	return anthafile, filename, err
 }
 
 // FastaAndSeqReports simultaneously exports multiple Fasta files and summary files for a TypeIIs assembly design.
@@ -256,9 +290,7 @@ func FastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameter
 			return anthafile, "", err
 		}
 
-		for _, assemblyproduct := range plasmidproductsfromXprimaryseq {
-			seqs = append(seqs, assemblyproduct)
-		}
+		seqs = append(seqs, plasmidproductsfromXprimaryseq...)
 
 	}
 
@@ -279,16 +311,16 @@ func TextFile(filename string, line []string) (wtype.File, error) {
 
 	for _, str := range line {
 
-		if _, err := fmt.Fprintln(f, str); err != nil {
+		if _, err = fmt.Fprintln(f, str); err != nil {
 			return anthafile, err
 		}
 	}
 	alldata := stringsToBytes(line)
 	anthafile.Name = filename
 
-	anthafile.WriteAll(alldata)
+	err = anthafile.WriteAll(alldata)
 
-	return anthafile, nil
+	return anthafile, err
 }
 
 // JSON exports any data as a json object in  a file.
@@ -299,11 +331,15 @@ func JSON(data interface{}, filename string) (anthafile wtype.File, err error) {
 		return anthafile, err
 	}
 
-	ioutil.WriteFile(filename, bytes, 0644)
+	err = ioutil.WriteFile(filename, bytes, 0644)
+
+	if err != nil {
+		return anthafile, err
+	}
 
 	anthafile.Name = filename
-	anthafile.WriteAll(bytes)
-	return anthafile, nil
+	err = anthafile.WriteAll(bytes)
+	return anthafile, err
 }
 
 // CSV exports a matrix of string data as a csv file.
@@ -315,9 +351,13 @@ func CSV(records [][]string, filename string) (wtype.File, error) {
 	w := csv.NewWriter(&buf)
 
 	// write all records to the buffer
-	w.WriteAll(records) // calls Flush internally
+	err := w.WriteAll(records) // calls Flush internally
 
-	if err := w.Error(); err != nil {
+	if err != nil {
+		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
+	}
+
+	if err = w.Error(); err != nil {
 		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
 	}
 
@@ -325,36 +365,49 @@ func CSV(records [][]string, filename string) (wtype.File, error) {
 
 	anthafile.Name = filename
 
-	anthafile.WriteAll(buf.Bytes())
+	err = anthafile.WriteAll(buf.Bytes())
+
+	if err != nil {
+		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
+	}
 
 	///// to write this to a file on the command line this is what we'd do (or something similar)
 
 	// also create a file on os
-	file, _ := os.Create(filename)
+	file, err := os.Create(filename)
+
+	if err != nil {
+		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
+	}
+
 	defer file.Close()
 
 	// this time we'll use the file to create the writer instead of a buffer (anything which fulfils the writer interface can be used here ... checkout golang io.Writer and io.Reader)
 	fw := csv.NewWriter(file)
 
 	// same as before ...
-	fw.WriteAll(records)
-	return anthafile, nil
+	err = fw.WriteAll(records)
+	return anthafile, err
 }
 
 // Binary export bytes into a file.
 func Binary(data []byte, filename string) (wtype.File, error) {
 	var anthafile wtype.File
-	anthafile.Name = filename
-	anthafile.WriteAll(data)
 	if len(data) == 0 {
 		return anthafile, fmt.Errorf("No data to export into file")
 	}
-	return anthafile, nil
+	anthafile.Name = filename
+	err := anthafile.WriteAll(data)
+	return anthafile, err
 }
 
 // Reader export an io.Reader into a file.
 func Reader(reader io.Reader, filename string) (wtype.File, error) {
-	return Binary(streamToByte(reader), filename)
+	bytes, err := streamToByte(reader)
+	if err != nil {
+		return wtype.File{}, err
+	}
+	return Binary(bytes, filename)
 }
 
 func stringsToBytes(data []string) []byte {
@@ -369,8 +422,8 @@ func stringsToBytes(data []string) []byte {
 	return alldata
 }
 
-func streamToByte(stream io.Reader) []byte {
+func streamToByte(stream io.Reader) ([]byte, error) {
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(stream)
-	return buf.Bytes()
+	_, err := buf.ReadFrom(stream)
+	return buf.Bytes(), err
 }

@@ -50,7 +50,7 @@ const (
 	LOCAL bool = false
 )
 
-func close(c io.Closer) {
+func closeReader(c io.Closer) {
 	err := c.Close()
 	if err != nil {
 		log.Fatal(err)
@@ -72,7 +72,7 @@ func SequenceReport(dir string, seq wtype.BioSequence) (wtype.File, string, erro
 	if err != nil {
 		return anthafile, "", err
 	}
-	defer close(f)
+	defer closeReader(f)
 
 	// GC content
 	GC := sequences.GCcontent(seq.Sequence())
@@ -158,7 +158,7 @@ func Fasta(dir string, seq wtype.BioSequence) (wtype.File, string, error) {
 	if err != nil {
 		return anthafile, "", err
 	}
-	defer close(f)
+	defer closeReader(f)
 
 	var buf bytes.Buffer
 
@@ -205,7 +205,7 @@ func FastaSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wt
 		return anthafile, "", err
 	}
 
-	defer close(f)
+	defer closeReader(f)
 
 	var buf bytes.Buffer
 
@@ -315,7 +315,7 @@ func TextFile(filename string, line []string) (wtype.File, error) {
 	if err != nil {
 		return anthafile, err
 	}
-	defer close(f)
+	defer closeReader(f)
 
 	for _, str := range line {
 
@@ -388,7 +388,7 @@ func CSV(records [][]string, filename string) (wtype.File, error) {
 		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
 	}
 
-	defer close(file)
+	defer closeReader(file)
 
 	// this time we'll use the file to create the writer instead of a buffer (anything which fulfils the writer interface can be used here ... checkout golang io.Writer and io.Reader)
 	fw := csv.NewWriter(file)

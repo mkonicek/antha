@@ -43,7 +43,7 @@ var (
 	}
 	DriverSelectorV1WriteOnlyPlateReader = ast.NameValue{
 		Name:  DriverSelectorV1Name,
-		Value: "antha.platereader.v1.WriteOnlyPlateReader",
+		Value: "antha.platereader.v1.PlateReader",
 	}
 )
 

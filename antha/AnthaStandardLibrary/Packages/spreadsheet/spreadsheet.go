@@ -213,7 +213,7 @@ func Row(sheet *xlsx.Sheet, rowNumber int) (cells []*xlsx.Cell, err error) {
 
 	maxColLetter := wutil.NumToAlpha(len(cellsInrow.Cells))
 
-	cellcoords, err := ConvertMinMaxtoArray([]string{("A" + strconv.Itoa(1)), (maxColLetter + strconv.Itoa(1))})
+	cellcoords, err := ConvertMinMaxtoArray([]string{("A" + strconv.Itoa(rowNumber+1)), (maxColLetter + strconv.Itoa(rowNumber+1))})
 	if err != nil {
 		return cells, err
 	}

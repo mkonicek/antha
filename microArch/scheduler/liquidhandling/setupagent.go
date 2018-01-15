@@ -37,6 +37,7 @@ import (
 
 // default setup agent
 func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
+	fmt.Println("NUMBER OF INPUT PLATES: ", len(request.Input_plate_order))
 	// this is quite tricky and requires extensive interaction with the liquid handling
 	// parameters
 
@@ -206,7 +207,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		setup[position] = p
 		plate_lookup[p.ID] = position
 		params.AddPlate(position, p)
-		//logger.Info(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
+		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}
 
 	// add the waste

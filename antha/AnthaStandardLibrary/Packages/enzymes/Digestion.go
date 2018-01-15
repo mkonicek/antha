@@ -34,7 +34,6 @@ import (
 
 const (
 	typeIIs string = "TypeIIs"
-	typeII  string = "TypeII"
 )
 
 // RestrictionSites holds information on restriction sites found in a DNA sequence

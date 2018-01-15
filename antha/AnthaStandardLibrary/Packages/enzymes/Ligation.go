@@ -134,7 +134,7 @@ func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecond
 	}
 
 	if len(restrictionSites.Positions) == 0 {
-		return vector, fmt.Errorf("%d sites for %s found in vector %s. Cannot assemble if vector has no restriction sites.", len(restrictionSites.Positions), enzyme.Name(), vector.Name())
+		return vector, fmt.Errorf("%d sites for %s found in vector %s. Cannot assemble if vector has no restriction sites", len(restrictionSites.Positions), enzyme.Name(), vector.Name())
 	}
 
 	var fwdSites []sequences.PositionPair

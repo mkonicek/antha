@@ -178,9 +178,13 @@ func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
 	rep := newReply()
 
+	fmt.Println("GETTING ", opt)
+
 	// build list of possible sources -- this is a list of ComponentVectors
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
+
+	fmt.Println("SRCS: ", srcs)
 
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
@@ -244,6 +248,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 }
 
 func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPossibleVolume wunit.Volume) wtype.ComponentVector {
+	fmt.Println("UPDATING ", match)
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			volSub := wunit.CopyVolume(match.Vols[i])

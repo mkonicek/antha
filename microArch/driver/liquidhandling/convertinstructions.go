@@ -325,6 +325,8 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		cnames[ci] = wellFrom.WContents.CName
 
+		fmt.Println("WE ARE GETTING ", wellFrom.WContents.CName, " FROM ", wellFrom.Crds, " THER IS ", wellFrom.Currvol())
+
 		cmpFrom := wellFrom.Remove(va[ci])
 		// silently remove the carry
 		wellFrom.Remove(carryvol)

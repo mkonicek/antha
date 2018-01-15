@@ -117,6 +117,7 @@ func joinTwoParts(upstreampart []DigestedFragment, downstreampart []DigestedFrag
 }
 
 func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecondSite ...bool) (wtype.DNASequence, error) {
+
 	rotatedVector := vector.Dup()
 
 	// the purpose of this is to ensure the RE sites go ---> xxxx <---
@@ -130,6 +131,10 @@ func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecond
 	if len(restrictionSites.Positions) > 2 {
 		err := fmt.Errorf("must have 2 restriction sites to rotate vector. %d %s sites found in vector %s - cannot rotate", len(restrictionSites.Positions), enzyme.Name(), vector.Name())
 		return rotatedVector, err
+	}
+
+	if len(restrictionSites.Positions) == 0 {
+		return vector, fmt.Errorf("%d sites for %s found in vector %s. Cannot assemble if vector has no restriction sites.", len(fwdSites), enzyme.Name(), vector.Name())
 	}
 
 	var fwdSites []sequences.PositionPair

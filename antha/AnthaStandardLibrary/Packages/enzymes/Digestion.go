@@ -302,19 +302,24 @@ func (fragment DigestedFragment) ToDNASequence(name string) (seq wtype.DNASequen
 }
 
 // Digest will simulate digestion of a DNA sequence with a chosen restriction enzyme; returns string arrays of fragments and 5' and 3' sticky ends
-func Digest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (finalFragments []DigestedFragment) {
+func Digest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (finalFragments []DigestedFragment, err error) {
 	if typeIIenzyme.Class == "TypeII" {
 		var err error
 		finalFragments, err = TypeIIDigestToFragments(sequence, typeIIenzyme)
 		if err != nil {
-			panic(err)
+			return finalFragments, err
 		}
 	}
 	if typeIIenzyme.Class == typeIIs {
 
 		var typeIIsenz = wtype.TypeIIs{RestrictionEnzyme: typeIIenzyme}
 
-		finalFragments = TypeIIsDigestToFragments(sequence, typeIIsenz)
+		var err error
+
+		finalFragments, err = TypeIIsDigestToFragments(sequence, typeIIsenz)
+		if err != nil {
+			return finalFragments, err
+		}
 	}
 	return
 }
@@ -322,7 +327,10 @@ func Digest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (f
 // RestrictionMapper returns a set of fragment sizes expected by digesting a DNA sequence with a restriction enzyme.
 func RestrictionMapper(seq wtype.DNASequence, enzyme wtype.RestrictionEnzyme) (fraglengths []int) {
 	enzlist := []wtype.RestrictionEnzyme{enzyme}
-	frags := Digest(seq, enzlist[0]) // doesn't handle non cutters well - returns 1 seq string, blunt, blunt therefore inaccurate representation
+	frags, err := Digest(seq, enzlist[0]) // doesn't handle non cutters well - returns 1 seq string, blunt, blunt therefore inaccurate representation
+	if err != nil {
+		panic(err.Error())
+	}
 	fraglengths = make([]int, 0)
 	for _, frag := range frags {
 		fraglengths = append(fraglengths, len(frag.TopStrand))
@@ -334,16 +342,9 @@ func RestrictionMapper(seq wtype.DNASequence, enzyme wtype.RestrictionEnzyme) (f
 }
 
 // TypeIIDigestToFragments digests a DNA sequence using a restriction enzyme and returns a set of DigestFragments.
-func TypeIIDigestToFragments(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (finalFragments []DigestedFragment, err error) {
+func TypeIIDigestToFragments(sequence wtype.DNASequence, typeIIenzymes ...wtype.RestrictionEnzyme) (finalFragments []DigestedFragment, err error) {
 
-	if typeIIenzyme.Class != typeII {
-		err = fmt.Errorf("This is not the function you are looking for! Wrong enzyme class for this function")
-		return
-	}
-
-	restrictionSites := RestrictionSiteFinder(sequence, []wtype.RestrictionEnzyme{typeIIenzyme})
-
-	seqs, err := makeFragments(typeIIenzyme, restrictionSites[0].Positions, sequence)
+	seqs, err := makeMultiFragments(sequence, typeIIenzymes...)
 
 	if err != nil {
 		return
@@ -376,14 +377,21 @@ func TypeIIsdigest(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (fin
 }
 
 // TypeIIsDigestToFragments returns slices of fragments generated from cutting with a typeIIs enzyme which leaves a 5 prime overhang.
-func TypeIIsDigestToFragments(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (finalFragments []DigestedFragment) {
+func TypeIIsDigestToFragments(sequence wtype.DNASequence, typeIIsenzymes ...wtype.TypeIIs) (finalFragments []DigestedFragment, err error) {
 
-	restrictionSites := RestrictionSiteFinder(sequence, []wtype.RestrictionEnzyme{typeIIsenzyme.RestrictionEnzyme})
+	var enzymes []wtype.RestrictionEnzyme
 
-	seqs, err := makeFragments(typeIIsenzyme.RestrictionEnzyme, restrictionSites[0].Positions, sequence)
+	for _, typeIIs := range typeIIsenzymes {
+		enzymes = append(enzymes, typeIIs.RestrictionEnzyme)
+	}
+
+	seqs, err := makeMultiFragments(sequence, enzymes...)
 
 	if err != nil {
-		fmt.Println(err.Error())
+		for _, seq := range seqs {
+			finalFragments = append(finalFragments, toDigestedFragment(seq))
+		}
+		return
 	}
 
 	for _, seq := range seqs {
@@ -740,6 +748,50 @@ func makeFragments(enzyme wtype.RestrictionEnzyme, positionPairs []sequences.Pos
 	return
 }
 
+func makeMultiFragments(originalSequence wtype.DNASequence, enzymes ...wtype.RestrictionEnzyme) (fragments []wtype.DNASequence, err error) {
+	restrictionSites := RestrictionSiteFinder(originalSequence, enzymes)
+
+	var someEnzymeSitesFound bool
+	// return original sequence if no positions found
+	for _, enzySitesFound := range restrictionSites {
+		if len(enzySitesFound.Positions) > 0 {
+			someEnzymeSitesFound = true
+			break
+		}
+	}
+
+	if !someEnzymeSitesFound {
+		var names []string
+		for _, enz := range enzymes {
+			names = append(names, enz.Name())
+		}
+		return []wtype.DNASequence{originalSequence}, fmt.Errorf("no enzyme positions for %v found in sequence %s", names, originalSequence.Name())
+	}
+
+	var errs []string
+
+	for i, enzymeSites := range restrictionSites {
+		if i == 0 {
+			fragments, err = makeFragments(enzymeSites.Enzyme, restrictionSites[0].Positions, originalSequence)
+
+			if err != nil {
+				errs = append(errs, err.Error())
+			}
+		} else {
+			var tempSeqs []wtype.DNASequence
+			for _, seq := range fragments {
+				seqs, err := makeFragments(enzymeSites.Enzyme, enzymeSites.Positions, seq)
+				if err != nil {
+					errs = append(errs, err.Error())
+				}
+				tempSeqs = append(tempSeqs, seqs...)
+			}
+			fragments = tempSeqs
+		}
+	}
+	return
+}
+
 func fragmentEnds(fragments []DigestedFragment) string {
 	var summaries []string
 	for i, fragment := range fragments {
@@ -754,12 +806,21 @@ func EndReport(restrictionenzyme wtype.TypeIIs, vector wtype.DNASequence, parts 
 
 	allends := make([]string, 0)
 
-	vectorFragments := Digest(vector, restrictionenzyme.RestrictionEnzyme)
+	vectorFragments, err := Digest(vector, restrictionenzyme.RestrictionEnzyme)
+
+	if err != nil {
+		panic(err.Error())
+	}
 
 	allends = append(allends, vector.Name()+" cut with "+restrictionenzyme.Name()+";  Fragment Ends :", fragmentEnds(vectorFragments))
 
 	for _, part := range parts {
-		partFragments := Digest(part, restrictionenzyme.RestrictionEnzyme)
+		partFragments, err := Digest(part, restrictionenzyme.RestrictionEnzyme)
+
+		if err != nil {
+			panic(err.Error())
+		}
+
 		allends = append(allends, part.Name()+" cut with "+restrictionenzyme.Name()+"; Fragment  Ends :", fragmentEnds(partFragments))
 	}
 	endreport = strings.Join(allends, "\n")

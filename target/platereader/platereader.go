@@ -9,6 +9,7 @@ import (
 	"github.com/antha-lang/antha/target/handler"
 )
 
+// PlateReader defines the interface to a plate reader device
 type PlateReader struct {
 	handler.GenericHandler
 }

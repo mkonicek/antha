@@ -128,11 +128,6 @@ func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecond
 
 	restrictionSites := sequences.FindAll(&rotatedVector, &wtype.DNASequence{Nm: enzyme.Name(), Seq: enzyme.RecognitionSequence})
 
-	if len(restrictionSites.Positions) > 2 {
-		err := fmt.Errorf("must have 2 restriction sites to rotate vector. %d %s sites found in vector %s - cannot rotate", len(restrictionSites.Positions), enzyme.Name(), vector.Name())
-		return rotatedVector, err
-	}
-
 	if len(restrictionSites.Positions) == 0 {
 		return vector, fmt.Errorf("%d sites for %s found in vector %s. Cannot assemble if vector has no restriction sites", len(restrictionSites.Positions), enzyme.Name(), vector.Name())
 	}
@@ -302,7 +297,19 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	rotatedvector, err := rotateVector(vector, enzymes[0])
 
 	if err != nil {
-		return assembledfragments, plasmidproducts, inserts, err
+		var errs []string
+		errs = append(errs, err.Error())
+		for _, enzyme := range enzymes {
+			rotatedvector, err = rotateVector(vector, enzyme)
+			if err == nil {
+				break
+			} else {
+				errs = append(errs, err.Error())
+			}
+		}
+		if err != nil {
+			return assembledfragments, plasmidproducts, inserts, fmt.Errorf(strings.Join(errs, "\n"))
+		}
 	}
 
 	if len(partsinorder) == 0 {

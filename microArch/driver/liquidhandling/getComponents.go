@@ -182,6 +182,8 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
 
+	fmt.Println("TRYING FOR ", opt.Cmps)
+
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
 

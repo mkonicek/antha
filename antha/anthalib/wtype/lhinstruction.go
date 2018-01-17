@@ -1,6 +1,7 @@
 package wtype
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"strings"
 )
@@ -50,6 +51,10 @@ type LHInstruction struct {
 	OutPlate         *LHPlate
 	Message          string
 	PassThrough      map[string]*LHComponent // 1:1 pass through, only applies to prompts
+}
+
+func (ins LHInstruction) String() string {
+	return fmt.Sprint(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductID)
 }
 
 func (lhi *LHInstruction) GetPlateType() string {

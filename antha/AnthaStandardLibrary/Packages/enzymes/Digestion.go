@@ -301,26 +301,8 @@ func (fragment DigestedFragment) ToDNASequence(name string) (seq wtype.DNASequen
 }
 
 // Digest will simulate digestion of a DNA sequence with a chosen restriction enzyme; returns string arrays of fragments and 5' and 3' sticky ends
-func Digest(sequence wtype.DNASequence, typeIIenzyme wtype.RestrictionEnzyme) (finalFragments []DigestedFragment, err error) {
-	if typeIIenzyme.Class == "TypeII" {
-		var err error
-		finalFragments, err = TypeIIDigestToFragments(sequence, typeIIenzyme)
-		if err != nil {
-			return finalFragments, err
-		}
-	}
-	if typeIIenzyme.Class == typeIIs {
-
-		var typeIIsenz = wtype.TypeIIs{RestrictionEnzyme: typeIIenzyme}
-
-		var err error
-
-		finalFragments, err = TypeIIsDigestToFragments(sequence, typeIIsenz)
-		if err != nil {
-			return finalFragments, err
-		}
-	}
-	return
+func Digest(sequence wtype.DNASequence, typeIIenzymes ...wtype.RestrictionEnzyme) (finalFragments []DigestedFragment, err error) {
+	return typeIIDigestToFragments(sequence, typeIIenzymes...)
 }
 
 // RestrictionMapper returns a set of fragment sizes expected by digesting a DNA sequence with a restriction enzyme.
@@ -341,13 +323,10 @@ func RestrictionMapper(seq wtype.DNASequence, enzyme wtype.RestrictionEnzyme) (f
 }
 
 // TypeIIDigestToFragments digests a DNA sequence using a restriction enzyme and returns a set of DigestFragments.
-func TypeIIDigestToFragments(sequence wtype.DNASequence, typeIIenzymes ...wtype.RestrictionEnzyme) (finalFragments []DigestedFragment, err error) {
+func typeIIDigestToFragments(sequence wtype.DNASequence, typeIIenzymes ...wtype.RestrictionEnzyme) (finalFragments []DigestedFragment, err error) {
 
 	seqs, err := makeMultiFragments(sequence, typeIIenzymes...)
 
-	if err != nil {
-		return
-	}
 	for _, seq := range seqs {
 		finalFragments = append(finalFragments, toDigestedFragment(seq))
 	}
@@ -376,7 +355,7 @@ func TypeIIsdigest(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (fin
 }
 
 // TypeIIsDigestToFragments returns slices of fragments generated from cutting with a typeIIs enzyme which leaves a 5 prime overhang.
-func TypeIIsDigestToFragments(sequence wtype.DNASequence, typeIIsenzymes ...wtype.TypeIIs) (finalFragments []DigestedFragment, err error) {
+func typeIIsDigestToFragments(sequence wtype.DNASequence, typeIIsenzymes ...wtype.TypeIIs) (finalFragments []DigestedFragment, err error) {
 
 	var enzymes []wtype.RestrictionEnzyme
 
@@ -385,13 +364,6 @@ func TypeIIsDigestToFragments(sequence wtype.DNASequence, typeIIsenzymes ...wtyp
 	}
 
 	seqs, err := makeMultiFragments(sequence, enzymes...)
-
-	if err != nil {
-		for _, seq := range seqs {
-			finalFragments = append(finalFragments, toDigestedFragment(seq))
-		}
-		return
-	}
 
 	for _, seq := range seqs {
 		finalFragments = append(finalFragments, toDigestedFragment(seq))
@@ -704,10 +676,11 @@ func makeFragments(enzyme wtype.RestrictionEnzyme, positionPairs []sequences.Pos
 		downstreamCutPosition = sortedPairs[i]
 
 		fragment, err = makeFragment(enzyme, upstreamCutPosition, downstreamCutPosition, originalSequence)
+
+		fragments = append(fragments, fragment)
 		if err != nil {
 			return fragments, err
 		}
-		fragments = append(fragments, fragment)
 
 		// an extra fragment needs to be added if in last position and plasmid
 		if i == last && !originalSequence.Plasmid {
@@ -777,6 +750,9 @@ func makeMultiFragments(originalSequence wtype.DNASequence, enzymes ...wtype.Res
 				errs = append(errs, err.Error())
 			}
 		} else {
+			if len(fragments) == 0 {
+				fragments = []wtype.DNASequence{originalSequence}
+			}
 			var tempSeqs []wtype.DNASequence
 			for _, seq := range fragments {
 				seqs, err := makeFragments(enzymeSites.Enzyme, enzymeSites.Positions, seq)
@@ -785,9 +761,12 @@ func makeMultiFragments(originalSequence wtype.DNASequence, enzymes ...wtype.Res
 				}
 				tempSeqs = append(tempSeqs, seqs...)
 			}
+
 			fragments = tempSeqs
+
 		}
 	}
+
 	return
 }
 

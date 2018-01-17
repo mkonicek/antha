@@ -323,7 +323,7 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	}
 
 	var errs []string
-	assembledfragments, err = TypeIIsDigestToFragments(partsinorder[0], enzymes...)
+	assembledfragments, err = typeIIsDigestToFragments(partsinorder[0], enzymes...)
 	if err != nil {
 		errs = append(errs, err.Error())
 	}
@@ -337,7 +337,7 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 			return assembledfragments, plasmidproducts, inserts, err
 		}
 
-		digestedpart, err := TypeIIsDigestToFragments(partsinorder[i], enzymes...)
+		digestedpart, err := typeIIsDigestToFragments(partsinorder[i], enzymes...)
 		if err != nil {
 			errs = append(errs, err.Error())
 		}
@@ -356,7 +356,7 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 
 	// now join fragment to vector
 
-	digestedvector, err := TypeIIsDigestToFragments(rotatedvector, enzymes...)
+	digestedvector, err := typeIIsDigestToFragments(rotatedvector, enzymes...)
 
 	if err != nil {
 		errs = append(errs, err.Error())

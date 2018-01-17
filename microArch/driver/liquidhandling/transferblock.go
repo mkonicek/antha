@@ -31,6 +31,11 @@ func (ti TransferBlockInstruction) InstructionType() int {
 // depending on the robot type and configuration
 
 func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
+
+	fmt.Println("TRANSFER BLOCK GENERATE")
+	fmt.Println("Instructions")
+	fmt.Println(LHIVector(ti.Inss))
+	fmt.Println()
 	var tfr []*TransferInstruction
 	var err error
 

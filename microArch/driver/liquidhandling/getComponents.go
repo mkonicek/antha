@@ -177,14 +177,9 @@ func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
 
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
 	rep := newReply()
-
-	fmt.Println("GETTING ", opt)
-
 	// build list of possible sources -- this is a list of ComponentVectors
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
-
-	fmt.Println("SRCS: ", srcs)
 
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
@@ -222,6 +217,11 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 				return rep, err
 			}
 
+			// final sanity check to account for how troughs look in this world
+			if !feasible(match, src, opt.Carryvol) {
+				continue
+			}
+
 			if match.Sc > bestMatch.Sc {
 				bestMatch = match
 				bestSrc = src
@@ -247,13 +247,58 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	return rep, nil
 }
 
+func feasible(match wtype.Match, src wtype.ComponentVector, carry wunit.Volume) bool {
+	// sum available volumes asked for and those available
+
+	want := make(map[string]wunit.Volume)
+
+	for i := 0; i < len(match.IDs); i++ {
+		if _, ok := want[match.IDs[i]+":"+match.WCs[i]]; !ok {
+			want[match.IDs[i]+":"+match.WCs[i]] = wunit.NewVolume(0.0, "ul")
+		}
+		want[match.IDs[i]+":"+match.WCs[i]].Add(match.Vols[i])
+		want[match.IDs[i]+":"+match.WCs[i]].Add(carry)
+	}
+
+	got := make(map[string]wunit.Volume)
+
+	for i := 0; i < len(src); i++ {
+		// if a component appears more than once in a location it's a fake duplicate
+		got[src[i].Loc] = src[i].Volume()
+	}
+
+	compare := func(a, b map[string]wunit.Volume) bool {
+		// true iff all volumes in a are <= their equivalents in b (undef == 0)
+		for k, v1 := range a {
+			v2, ok := b[k]
+			if !ok {
+				return false
+			}
+
+			if v2.LessThan(v1) {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return compare(want, got)
+}
+
 func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPossibleVolume wunit.Volume) wtype.ComponentVector {
-	fmt.Println("UPDATING ", match)
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			volSub := wunit.CopyVolume(match.Vols[i])
 			volSub.Add(carryVol)
-			src[match.M[i]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit)
+			for j := 0; j < len(match.M); j++ {
+				// single well troughs are represented separately here
+				// to keep volumes correct we must
+				// carry over updates to all the other wells
+				if match.IDs[i] == match.IDs[j] && match.WCs[i] == match.WCs[j] {
+					src[match.M[j]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit)
+				}
+			}
 		}
 	}
 

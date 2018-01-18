@@ -27,18 +27,6 @@ import (
 	"fmt"
 )
 
-/*
-type
-
-func Splitunit(unit string)(numerators[]string, denominators[]string)
-
-var conversiontable = map[string]map[string]float64{
-	"density":map[string]float64{
-		"g/L":
-	}
-}
-*/
-
 func MasstoVolume(m Mass, d Density) (v Volume) {
 
 	mass := m.SIValue()
@@ -107,7 +95,7 @@ func VolumeForTargetMass(targetmass Mass, startingconc Concentration) (v Volume,
 func VolumeForTargetConcentration(targetConc Concentration, startingConc Concentration, totalVol Volume) (v Volume, err error) {
 
 	if startingConc.RawValue() == 0.0 || targetConc.RawValue() == 0.0 || totalVol.RawValue() == 0.0 {
-		return NewVolume(0.0, "ul"), fmt.Errorf("Zero value found when converting concentrations to new volume so new volume so set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString())
+		return NewVolume(0.0, "ul"), fmt.Errorf("Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString())
 	}
 
 	factor, err := DivideConcentrations(targetConc, startingConc)

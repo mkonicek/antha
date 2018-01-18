@@ -37,7 +37,6 @@ import (
 
 // default setup agent
 func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
-	fmt.Println("NUMBER OF INPUT PLATES: ", len(request.Input_plate_order))
 	// this is quite tricky and requires extensive interaction with the liquid handling
 	// parameters
 

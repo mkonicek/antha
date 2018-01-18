@@ -196,6 +196,9 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		}
 
 		for _, t := range parallelTransfers.Transfers {
+			if len(t.PlateIDs) == 0 {
+				continue
+			}
 			transfers, err := makeTransfers(t, cmps, robot, inssToUse, carryvol)
 
 			if err != nil {

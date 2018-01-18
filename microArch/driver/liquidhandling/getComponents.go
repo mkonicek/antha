@@ -109,12 +109,39 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 					continue
 				}
 
+				// mycmps has incorrect volumes, try correcting them here
+
+				correct_volumes(mycmps)
+
 				ret = append(ret, mycmps)
 			}
 		}
 	}
 
 	return ret
+}
+
+func correct_volumes(cmps wtype.ComponentVector) {
+	nW := make(map[string]int)
+	for _, c := range cmps {
+		if c == nil {
+			continue
+		}
+
+		_, ok := nW[c.Loc]
+		if !ok {
+			nW[c.Loc] = 0
+		}
+		nW[c.Loc] += 1
+	}
+
+	for _, c := range cmps {
+		if c == nil {
+			continue
+		}
+
+		c.Vol /= float64(nW[c.Loc])
+	}
 }
 
 func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) bool {
@@ -195,12 +222,14 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			break
 		}
 
-		if cmpVecsEqual(lastCmps, currCmps) {
-			break
-		}
-
 		if !sourceVolumesOK(srcs, currCmps) {
 			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes")
+		}
+
+		if cmpVecsEqual(lastCmps, currCmps) {
+			// if we are here we should be able to service the request but not
+			// as-is...
+			break
 		}
 
 		bestMatch := wtype.Match{Sc: -1.0}
@@ -215,11 +244,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 
 			if err != nil && err.Error() != wtype.NotFoundError {
 				return rep, err
-			}
-
-			// final sanity check to account for how troughs look in this world
-			if !feasible(match, src, opt.Carryvol) {
-				continue
 			}
 
 			if match.Sc > bestMatch.Sc {
@@ -247,12 +271,16 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	return rep, nil
 }
 
+// this double-checks if we are using duplicated trough wells
 func feasible(match wtype.Match, src wtype.ComponentVector, carry wunit.Volume) bool {
 	// sum available volumes asked for and those available
 
 	want := make(map[string]wunit.Volume)
 
 	for i := 0; i < len(match.IDs); i++ {
+		if match.M[i] == -1 {
+			continue
+		}
 		if _, ok := want[match.IDs[i]+":"+match.WCs[i]]; !ok {
 			want[match.IDs[i]+":"+match.WCs[i]] = wunit.NewVolume(0.0, "ul")
 		}
@@ -291,14 +319,7 @@ func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPo
 		if match.M[i] != -1 {
 			volSub := wunit.CopyVolume(match.Vols[i])
 			volSub.Add(carryVol)
-			for j := 0; j < len(match.M); j++ {
-				// single well troughs are represented separately here
-				// to keep volumes correct we must
-				// carry over updates to all the other wells
-				if match.IDs[i] == match.IDs[j] && match.WCs[i] == match.WCs[j] {
-					src[match.M[j]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit)
-				}
-			}
+			src[match.M[i]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit)
 		}
 	}
 

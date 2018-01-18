@@ -128,9 +128,8 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	for _, component := range component_order {
 		for _, plate := range plate_types {
 			// set up objective coefficient, column name and lower bound
-			//rv := plate.Welltype.ResidualVolume()
-			//coef := rv.ConvertTo(wunit.ParsePrefixedUnit("ul"))*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
-			coef := 1.0
+			rv := plate.Welltype.ResidualVolume()
+			coef := rv.ConvertTo(wunit.ParsePrefixedUnit("ul"))*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
 			lp.SetObjCoef(cur, coef)
 			lp.SetColName(cur, component+"_"+plate.Type)
 			lp.SetColBnds(cur, glpk.LO, 0.0, 0.0)

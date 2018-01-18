@@ -586,7 +586,7 @@ func (cmp *LHComponent) MixPreserveTvol(cmp2 *LHComponent) {
 
 // add cmp2 to cmp
 func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
-	//wasEmpty := cmp.IsZero()
+	wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
 	// determine type of final
 	cmp.Type = mergeTypes(cmp, cmp2)
@@ -616,6 +616,10 @@ func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	// result should not be a sample
 
 	cmp.SetSample(false)
+
+	if wasEmpty {
+		cmp.SetConcentration(cmp2.Concentration())
+	}
 }
 
 // @implement Liquid

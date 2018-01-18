@@ -89,6 +89,8 @@ type Volume struct {
 
 // make a volume
 func NewVolume(v float64, unit string) (o Volume) {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
 	if len(strings.TrimSpace(unit)) == 0 {
 		return ZeroVolume()
 	}
@@ -297,6 +299,7 @@ type Time struct {
 
 // NewTime creates a time unit.
 func NewTime(v float64, unit string) (t Time) {
+	unit = strings.Replace(unit, "µ", "u", -1)
 
 	details, ok := UnitMap["Time"][unit]
 	if !ok {
@@ -339,6 +342,7 @@ type Mass struct {
 // make a mass unit
 
 func NewMass(v float64, unit string) (o Mass) {
+	unit = strings.Replace(unit, "µ", "u", -1)
 
 	approvedunits := UnitMap["Mass"]
 
@@ -374,6 +378,8 @@ type Moles struct {
 
 // generate a new Amount in moles
 func NewMoles(v float64, unit string) Moles {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
 	details, ok := UnitMap["Moles"][unit]
 	if !ok {
 		var approved []string
@@ -390,6 +396,8 @@ func NewMoles(v float64, unit string) Moles {
 
 // generate a new Amount in moles
 func NewAmount(v float64, unit string) Moles {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
 	details, ok := UnitMap["Moles"][unit]
 	if !ok {
 		var approved []string
@@ -596,6 +604,8 @@ var UnitMap = map[string]map[string]Unit{
 // ValidMeasurementUnit checks the validity of a measurement type and unit within that measurement type.
 // An error is returned if an invalid measurement type or unit is specified.
 func ValidMeasurementUnit(measureMentType, unit string) error {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
 	validUnits, measurementFound := UnitMap[measureMentType]
 	if !measurementFound {
 		var validMeasurementTypes []string
@@ -622,6 +632,7 @@ func ValidMeasurementUnit(measureMentType, unit string) error {
 
 // ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
 func ValidConcentrationUnit(unit string) error {
+	unit = strings.Replace(unit, "µ", "u", -1)
 	_, ok := UnitMap["Concentration"][unit]
 	if !ok {
 		var approved []string
@@ -636,6 +647,8 @@ func ValidConcentrationUnit(unit string) error {
 
 // NewConcentration makes a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) Concentration {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
 	details, ok := UnitMap["Concentration"][unit]
 	if !ok {
 		var approved []string

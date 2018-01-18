@@ -36,9 +36,9 @@ func TestMarshalPlateCSV(t *testing.T) {
 			Expected: []byte(
 				`
 pcrplate_with_cooler,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
-A1,water,water,50,ul,0,
-A4,tea,water,50,ul,0,
-A5,milk,water,100,ul,0,
+A1,water,water,50,ul,0,g/l
+A4,tea,water,50,ul,10,mM/l
+A5,milk,water,100,ul,10,g/l
 `),
 			Plate: makeTestPlate(ctx, &wtype.LHPlate{
 				PlateName: "Input_plate_1",
@@ -50,6 +50,8 @@ A5,milk,water,100,ul,0,
 							Type:  wtype.LTWater,
 							Vol:   50.0,
 							Vunit: "ul",
+							Conc:  0,
+							Cunit: "g/l",
 						},
 					},
 					"A4": &wtype.LHWell{
@@ -58,6 +60,8 @@ A5,milk,water,100,ul,0,
 							Type:  wtype.LTWater,
 							Vol:   50.0,
 							Vunit: "ul",
+							Conc:  10,
+							Cunit: "mM/l",
 						},
 					},
 					"A5": &wtype.LHWell{
@@ -66,6 +70,8 @@ A5,milk,water,100,ul,0,
 							Type:  wtype.LTWater,
 							Vol:   100.0,
 							Vunit: "ul",
+							Conc:  10,
+							Cunit: "g/l",
 						},
 					},
 				},
@@ -75,8 +81,8 @@ A5,milk,water,100,ul,0,
 			Expected: []byte(
 				`
 pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
-A1,water,water,140.5,ul,0,
-C1,neb5compcells,culture,20.5,ul,0,
+A1,water,water,140.5,ul,0,g/l
+C1,neb5compcells,culture,20.5,ul,0,g/l
 `),
 			Plate: makeTestPlate(ctx, &wtype.LHPlate{
 				PlateName: "Input_plate_1",
@@ -88,6 +94,8 @@ C1,neb5compcells,culture,20.5,ul,0,
 							Type:  wtype.LTWater,
 							Vol:   140.5,
 							Vunit: "ul",
+							Conc:  0,
+							Cunit: "g/l",
 						},
 					},
 					"C1": &wtype.LHWell{
@@ -96,6 +104,8 @@ C1,neb5compcells,culture,20.5,ul,0,
 							Type:  wtype.LTCulture,
 							Vol:   20.5,
 							Vunit: "ul",
+							Conc:  0,
+							Cunit: "g/l",
 						},
 					},
 				},

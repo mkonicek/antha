@@ -118,6 +118,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	fmt.Println("Autoallocate: Max_n_wells: ", max_n_wells)
 	lp.SetRowBnds(cur, glpk.UP, -99999.0, max_n_wells)
 	cur += 1
+	fmt.Println("Autoallocate: Residual volume weight: ", weight_constraint["RESIDUAL_VOLUME_WEIGHT"])
 
 	// set up the matrix columns
 
@@ -159,7 +160,6 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 					vol.Subtract(&rvol)
 					vc = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
 					//debug
-					fmt.Println("\t\tCMP: ", component_order[i], " TYPE: ", plate_types[j].Type, " row : ", ind, " col ", col+1, " vc: ", vc)
 				}
 				row[col+1] = vc
 				col += 1
@@ -184,7 +184,6 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		for j := 0; j < len(plate_types); j++ {
 			// the coefficient here is 1/the number of this well type per plate
 			r := 1.0 / float64(plate_types[j].Nwells)
-			fmt.Println("COEF FOR ", plate_types[j].Type, " IS ", r)
 			row[col] = r
 			col += 1
 		}
@@ -224,7 +223,6 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 			nwells := lp.MipColVal(cur)
 			if nwells > 0 {
 				cmap[plate_types[j]] = int(nwells)
-				fmt.Println("Auto assignment - component ", component_order[i], " TO PLATE ", plate_types[j].Type, " IS ", int(nwells))
 				nAss += int(nwells)
 			}
 			cur += 1

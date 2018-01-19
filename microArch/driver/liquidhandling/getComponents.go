@@ -144,13 +144,28 @@ func correct_volumes(cmps wtype.ComponentVector) {
 	}
 }
 
+func cullZeroes(m map[string]wunit.Volume) map[string]wunit.Volume {
+	r := make(map[string]wunit.Volume, len(m))
+
+	for k, v := range m {
+		if v.IsZero() {
+			continue
+		}
+
+		r[k] = v
+	}
+
+	return r
+}
+
 func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) (bool, string) {
 	collSrcs := sumSources(srcs)
 	collDsts := dests.ToSumHash()
+	collDsts = cullZeroes(collDsts)
 
 	result := subHash(collSrcs, collDsts)
 
-	if len(collSrcs) != len(collDsts) {
+	if len(collSrcs) < len(collDsts) {
 		return false, collateDifference(collDsts, collSrcs, result)
 	}
 

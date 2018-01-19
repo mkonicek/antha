@@ -116,14 +116,14 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plates = append(plates, plate)
 
 	// Nunc™2.0mL DeepWell™ Plates 95040452
-	nunc96deepwellshp := wtype.NewShape("cylinder", "mm", 8.5, 8.5, 41.5)
+	nunc96deepwellshp := wtype.NewShape("box", "mm", 8.5, 8.5, 41.5)
 	nunc96deepwell := wtype.NewLHWell("Nunc96DeepWell", "", "", "ul", 2000, 420, nunc96deepwellshp, wtype.LHWBU, 8.2, 8.2, 41.3, 2.5, "mm")
-	plate = wtype.NewLHPlate("Nunc96DeepWell", "Unknown", 8, 12, 43.6, "mm", nunc96deepwell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
+	plate = wtype.NewLHPlate("Nunc96DeepWell", "Unknown", 8, 12, 43.6, "mm", nunc96deepwell, 9, 9, -1.0, 0.0, 5.5)
 	plates = append(plates, plate)
 
 	// IDT/ABgene 1.2 ml storage plate AB0564
 	idtshp := wtype.NewShape("cylinder", "mm", 7, 7, 39.35)
-	idtroundwell96 := wtype.NewLHWell("IDT96", "", "", "ul", 1200, 100, idtshp, wtype.LHWBU, 7, 7, 39.35, 3, "mm")
+	idtroundwell96 := wtype.NewLHWell("IDT96", "", "", "ul", 1200, 100, idtshp, wtype.LHWBV, 7, 7, 39.35, 3, "mm")
 	plate = wtype.NewLHPlate("IDT96", "Unknown", 8, 12, 42.5, "mm", idtroundwell96, 9, 9, 0, 0, 3)
 	plates = append(plates, plate)
 

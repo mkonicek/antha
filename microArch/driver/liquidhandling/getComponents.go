@@ -182,7 +182,6 @@ func collateDifference(a, b, c map[string]wunit.Volume) string {
 		}
 	}
 
-	fmt.Println("RETURNING ", s)
 	return s
 }
 
@@ -286,7 +285,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		}
 
 		if bestMatch.Sc == -1 {
-			return rep, fmt.Errorf("Components %s %s\n", currCmps.String(), wtype.NotFoundError)
+			return rep, fmt.Errorf("Components %s %s -- try increasing source volumes, if this does not work or is not possible please report to the authors\n", currCmps.String(), wtype.NotFoundError)
 		}
 
 		// adjust finally to ensure we don't leave too little

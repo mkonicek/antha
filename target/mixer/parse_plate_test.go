@@ -115,6 +115,7 @@ pcrplate_with_cooler,
 A1,water,water,50.0,ul,0,g/l,
 A4,tea,water,50.0,ul,10.0,mM/l,
 A5,milk,water,100.0,ul,10.0,g/l,
+A6,,,0,ul,0,g/l,
 `),
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",

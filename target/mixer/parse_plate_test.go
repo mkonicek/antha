@@ -22,6 +22,37 @@ func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.LHComponent {
 	return r
 }
 
+func getComponentsFromPlate(plate *wtype.LHPlate) []*wtype.LHComponent {
+
+	var components []*wtype.LHComponent
+	allWellPositions := plate.AllWellPositions(false)
+
+	for _, wellcontents := range allWellPositions {
+
+		if !plate.WellMap()[wellcontents].Empty() {
+
+			component := plate.WellMap()[wellcontents].WContents
+			components = append(components, component)
+
+		}
+	}
+	return components
+}
+
+func allComponentsHaveWellLocation(plate *wtype.LHPlate) error {
+	components := getComponentsFromPlate(plate)
+	var errs []string
+	for _, component := range components {
+		if len(component.WellLocation()) == 0 {
+			errs = append(errs, fmt.Errorf("no well location for %s after returning components from plate", component.Name()).Error())
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf(strings.Join(errs, "\n"))
+	}
+	return nil
+}
+
 func samePlate(a, b *wtype.LHPlate) error {
 	if a.Type != b.Type {
 		return fmt.Errorf("different types %q != %q", a.Type, b.Type)
@@ -34,10 +65,12 @@ func samePlate(a, b *wtype.LHPlate) error {
 	}
 
 	for addr, compA := range compsA {
+
 		compB, ok := compsB[addr]
 		if !ok {
 			return fmt.Errorf("missing component in well %q", addr)
 		}
+
 		volA, volB := compA.Vol, compB.Vol
 		if volA != volB {
 			return fmt.Errorf("different volume in well %q: %f != %f", addr, volA, volB)
@@ -199,6 +232,10 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 		}
 		if tc.NoWarnings && len(p.Warnings) != 0 {
 			t.Errorf("found warnings: %s", p.Warnings)
+		}
+
+		if err := allComponentsHaveWellLocation(p.Plate); err != nil {
+			t.Error(err.Error())
 		}
 	}
 }

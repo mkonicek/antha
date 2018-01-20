@@ -3231,15 +3231,28 @@ func channelArrayToOldStyle(channels []*wtype.LHChannelParameter) (*wtype.LHChan
 	return ch, multi
 }
 
+func collate(s []string) string {
+	m := make(map[string]int, len(s))
+	for _, v := range s {
+		m[v] += 1
+	}
+
+	r := ""
+
+	for k, v := range m {
+		r += fmt.Sprintf("%d %s, ", v, k)
+	}
+
+	return r
+}
+
 //func DropTips(tiptype string, params *LHProperties, channel *wtype.LHChannelParameter, multi int) (RobotInstruction, error) {
 func DropTips(tiptypes []string, params *LHProperties, channels []*wtype.LHChannelParameter) (RobotInstruction, error) {
 	tipwells, tipwastepositions, tipwastetypes := params.DropDirtyTips(channels)
 
 	if tipwells == nil {
-		//logger.Fatal("Could not dispose tip. No usable tipwell found")
-		//panic("NO ROOM AT THE INN FOR THESE LITTLE TIPS")
 		ins := NewUnloadTipsMoveInstruction()
-		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("DROP: type: ", tiptypes))
+		err := wtype.LHError(wtype.LH_ERR_TIP_WASTE, collate(tiptypes))
 		return ins, err
 	}
 

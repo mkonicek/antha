@@ -518,14 +518,14 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	}
 
 	if len(plasmidProducts) == 1 {
-		sites = RestrictionSiteFinder(plasmidProducts[0], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
+		sites = RestrictionSiteFinder(plasmidProducts[0], bsaI, sapI, enzyme.RestrictionEnzyme)
 	}
 
 	// returns sites found in first plasmid in array! should be changed later!
 	if len(plasmidProducts) > 1 {
 		sites = make([]RestrictionSites, 0)
 		for i := 0; i < len(plasmidProducts); i++ {
-			sitesperplasmid := RestrictionSiteFinder(plasmidProducts[i], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
+			sitesperplasmid := RestrictionSiteFinder(plasmidProducts[i], bsaI, sapI, enzyme.RestrictionEnzyme)
 			for _, site := range sitesperplasmid {
 				sites = append(sites, site)
 			}
@@ -665,7 +665,7 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 
 					errors[construct.Constructname] = originalerror + " and " + err.Error()
 				}
-				sitesperpart := RestrictionSiteFinder(construct.Vector, []wtype.RestrictionEnzyme{enzyme})
+				sitesperpart := RestrictionSiteFinder(construct.Vector, enzyme)
 
 				if sitesperpart[0].NumberOfSites() != 2 {
 					// need to loop through sitesperpart
@@ -676,7 +676,7 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 				}
 
 				for _, part := range construct.Partsinorder {
-					sitesperpart = RestrictionSiteFinder(part, []wtype.RestrictionEnzyme{enzyme})
+					sitesperpart = RestrictionSiteFinder(part, enzyme)
 					if sitesperpart[0].NumberOfSites() != 2 {
 						sitepositions := SitepositionString(sitesperpart[0])
 						positions := ""

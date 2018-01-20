@@ -407,7 +407,7 @@ func CheckForExistingTypeIISEnds(part wtype.DNASequence, enzyme wtype.TypeIIs) (
 		panic(err.Error())
 	}
 
-	sites := RestrictionSiteFinder(part, []wtype.RestrictionEnzyme{enz})
+	sites := RestrictionSiteFinder(part, enz)
 
 	numberofsitesfound = sites[0].NumberOfSites()
 	_, stickyends5, stickyends3 = TypeIIsdigest(part, enzyme)

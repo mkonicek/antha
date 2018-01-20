@@ -142,7 +142,7 @@ func removePalindromic(positions []sequences.PositionPair) []sequences.PositionP
 }
 
 // RestrictionSiteFinder finds restriction sites of specified restriction enzymes in a sequence and return the information as a set of ResrictionSites.
-func RestrictionSiteFinder(sequence wtype.DNASequence, enzymelist []wtype.RestrictionEnzyme) (sites []RestrictionSites) {
+func RestrictionSiteFinder(sequence wtype.DNASequence, enzymelist ...wtype.RestrictionEnzyme) (sites []RestrictionSites) {
 
 	sites = make([]RestrictionSites, 0)
 
@@ -337,7 +337,7 @@ func typeIIDigestToFragments(sequence wtype.DNASequence, typeIIenzymes ...wtype.
 // TypeIIsdigest returns slices of fragments, 5 prime overhangs and 3 prime underhangs generated from cutting with a typeIIs enzyme which leaves a 5 prime overhang.
 func TypeIIsdigest(sequence wtype.DNASequence, typeIIsenzyme wtype.TypeIIs) (finalFragments []string, fivePrimeOverhangs []string, threePrimeUnderhangs []string) {
 
-	restrictionSites := RestrictionSiteFinder(sequence, []wtype.RestrictionEnzyme{typeIIsenzyme.RestrictionEnzyme})
+	restrictionSites := RestrictionSiteFinder(sequence, typeIIsenzyme.RestrictionEnzyme)
 
 	seqs, err := makeFragments(typeIIsenzyme.RestrictionEnzyme, restrictionSites[0].Positions, sequence)
 
@@ -429,11 +429,7 @@ func makeFragment(enzyme wtype.RestrictionEnzyme, upstreamCutPosition, downstrea
 			return fragment, err
 		}
 
-		err = fragment.AddBluntEnd(5)
-
-		if err != nil {
-			return fragment, err
-		}
+		fragment.Overhang5prime = originalSequence.Overhang5prime
 
 		return fragment, nil
 	} else if downstreamCutPosition == nulPosition {
@@ -455,10 +451,8 @@ func makeFragment(enzyme wtype.RestrictionEnzyme, upstreamCutPosition, downstrea
 			return fragment, err
 		}
 
-		err = fragment.AddBluntEnd(3)
-		if err != nil {
-			return fragment, err
-		}
+		fragment.Overhang3prime = originalSequence.Overhang3prime
+
 		return fragment, nil
 	}
 
@@ -721,7 +715,12 @@ func makeFragments(enzyme wtype.RestrictionEnzyme, positionPairs []sequences.Pos
 }
 
 func makeMultiFragments(originalSequence wtype.DNASequence, enzymes ...wtype.RestrictionEnzyme) (fragments []wtype.DNASequence, err error) {
-	restrictionSites := RestrictionSiteFinder(originalSequence, enzymes)
+
+	if len(enzymes) == 0 {
+		return []wtype.DNASequence{}, fmt.Errorf("No enzymes specified to make fragments")
+	}
+
+	restrictionSites := RestrictionSiteFinder(originalSequence, enzymes...)
 
 	var someEnzymeSitesFound bool
 	// return original sequence if no positions found
@@ -742,32 +741,35 @@ func makeMultiFragments(originalSequence wtype.DNASequence, enzymes ...wtype.Res
 
 	var errs []string
 
-	for i, enzymeSites := range restrictionSites {
-		if i == 0 {
-			fragments, err = makeFragments(enzymeSites.Enzyme, restrictionSites[0].Positions, originalSequence)
+	restrictionSitesForFirstEnzyme := restrictionSites[0]
 
+	fragments, err = makeFragments(enzymes[0], restrictionSitesForFirstEnzyme.Positions, originalSequence)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
+	if len(fragments) == 0 {
+		fragments = []wtype.DNASequence{originalSequence}
+	}
+	for i := 1; i < len(enzymes); i++ {
+
+		latestFragments := fragments
+		fragments = []wtype.DNASequence{}
+
+		for _, fragment := range latestFragments {
+			restrictionSites := RestrictionSiteFinder(fragment, enzymes[i])
+			newFragments, err := makeFragments(enzymes[i], restrictionSites[0].Positions, fragment)
 			if err != nil {
 				errs = append(errs, err.Error())
 			}
-		} else {
-			if len(fragments) == 0 {
-				fragments = []wtype.DNASequence{originalSequence}
-			}
-			var tempSeqs []wtype.DNASequence
-			for _, seq := range fragments {
-				seqs, err := makeFragments(enzymeSites.Enzyme, enzymeSites.Positions, seq)
-				if err != nil {
-					errs = append(errs, err.Error())
-				}
-				tempSeqs = append(tempSeqs, seqs...)
-			}
-
-			fragments = tempSeqs
-
+			fragments = append(fragments, newFragments...)
 		}
 	}
 
-	return
+	if len(fragments) == 0 && len(fragments) > 0 {
+		return []wtype.DNASequence{originalSequence}, fmt.Errorf("digestion errors: %s", strings.Join(errs, "\n"))
+	}
+	return fragments, nil
 }
 
 func fragmentEnds(fragments []DigestedFragment) string {

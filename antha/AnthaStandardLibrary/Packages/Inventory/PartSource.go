@@ -80,19 +80,21 @@ func (fs FileSet) GetSequences() (partslist []wtype.DNASequence, err error) {
 	for _, file := range fs {
 
 		filename := file.Name
-		if filepath.Ext(filename) == ".fasta" {
+		if strings.EqualFold(filepath.Ext(filename), ".fasta") || strings.EqualFold(filepath.Ext(filename), ".fa") {
 			sequences, err := fasta.FastaToDNASequences(file)
 			if err != nil {
 				errs = append(errs, err.Error())
 			}
 			partslist = append(partslist, sequences...)
-		} else if filepath.Ext(filename) == ".gb" {
+		} else if strings.EqualFold(filepath.Ext(filename), ".gb") || strings.EqualFold(filepath.Ext(filename), ".gbk") {
 			seq, err := genbank.GenbankToAnnotatedSeq(file)
 			if err != nil {
 				errs = append(errs, err.Error())
 			}
 			partslist = append(partslist, seq)
 
+		} else {
+			errs = append(errs, fmt.Sprintf("cannot return DNA Sequences from file %s. Only Fasta (.fasta) and Genbank (.gb) files are valid", filename))
 		}
 	}
 

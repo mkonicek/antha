@@ -222,24 +222,9 @@ func Moles(conc wunit.Concentration, mw float64, vol wunit.Volume) (moles float6
 	return moles
 }
 
-func Revarrayorder(array []string) (newarray []string) {
-	//for _, slice := range array {
-	newarray = make([]string, 0)
-	r := ""
+func RevArrayOrder(array []string) (reversedOrder []string) {
 	for i := len(array) - 1; i >= 0; i-- {
-		r = string(array[i])
-		newarray = append(newarray, r)
-		//newarray += array()
+		reversedOrder = append(reversedOrder, array[i])
 	}
-	return newarray
-}
-
-// utility function to check if item is in list. move elsewhere?
-func isInList(item string, list []string) bool {
-	for _, v := range list {
-		if v == item {
-			return true
-		}
-	}
-	return false
+	return reversedOrder
 }

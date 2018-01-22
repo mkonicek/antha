@@ -206,7 +206,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		setup[position] = p
 		plate_lookup[p.ID] = position
 		params.AddPlate(position, p)
-		//logger.Info(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
+		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}
 
 	// add the waste

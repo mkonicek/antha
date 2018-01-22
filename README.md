@@ -31,10 +31,8 @@ First step is to install or upgrade to go 1.7. Follow the instructions at the
 Update the GOPATH:
 
 ```bash
-cat<<EOF>>$HOME/.bash_profile
-export GOPATH=$HOME/go
-export PATH=\$PATH:$HOME/go/bin
-EOF
+export GOPATH=$HOME/go >> $HOME/.bash_profile
+export PATH=$PATH:$HOME/go/bin >> $HOME/.bash_profile
 source ~/.bash_profile
 ```
 
@@ -47,10 +45,15 @@ xcode-select --install
 
 # Install some external dependencies
 brew update
-brew install pkg-config homebrew/science/glpk sqlite3 opencv
+brew install mercurial pkg-config homebrew/science/glpk sqlite3 opencv
 
 # Install antha
-go get github.com/antha-lang/elements/cmd/...
+mkdir -p $GOPATH/src/github.com/antha-lang
+cd $GOPATH/src/github.com/antha-lang
+git clone https://github.com/antha-lang/elements
+cd elements
+git submodule update --init
+make
 ```
 
 ### Linux (Native)
@@ -108,8 +111,8 @@ procedure with the default options. Caveat emptor.
 After following the installation instructions for your machine. You can check
 if Antha is working properly by running a test protocol
 ```bash
-cd $HOME/go/src/github.com/antha-lang/elements/workflows/examples/Aliquot
-antha run --workflow workflow.json --parameters parameters.yml
+cd $HOME/go/src/github.com/antha-lang/elements/an/AnthaAcademy/Lesson1_Commands/Lesson1G_SampleForTotalVolume
+antha run --bundle Lesson1_SampleForTotalVolume.bundle.json
 ```
 
 ## Making and Running Antha Elements
@@ -118,10 +121,22 @@ The easiest way to start developing your own antha elements is to place them
 in the ``$HOME/go/src/github.com/antha-lang/elements/an`` directory and follow the structure of the
 existing elements there. Afterwards, you can compile and use your elements
 with the following commands:
+Compile: 
 ```bash
 make -C $HOME/go/src/github.com/antha-lang/elements
-antha run --workflow myworkflowdefinition.json --parameters myparameters.yml
 ```
+Run:
+```bash
+antha run --bundle workflow-and-parameters.json
+```
+
+You can also make elements stored elsewhere by adding `AN_DIRS=<your-directory-here>` 
+e.g...
+```bash
+make -C $HOME/go/src/github.com/antha-lang/elements AN_DIRS=$HOME/Documents
+```
+
+See https://github.com/antha-lang/elements for instructions on how to set up an alias to compile the Antha elements.
 
 ## Adding Custom Equipment Drivers
 

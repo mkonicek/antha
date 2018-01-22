@@ -6,10 +6,11 @@ import (
 )
 
 type concConversionTest struct {
-	StockConc    Concentration
-	TargetConc   Concentration
-	TotalVolume  Volume
-	VolumeNeeded Volume
+	StockConc          Concentration
+	TargetConc         Concentration
+	TotalVolume        Volume
+	VolumeNeeded       Volume
+	ExpectedErrMessage string
 }
 
 type massConversionTest struct {
@@ -59,7 +60,7 @@ var tests1 = []concConversionTest{
 	concConversionTest{StockConc: x100, TargetConc: x2, TotalVolume: ul100, VolumeNeeded: NewVolume(2.0, "ul")},
 	concConversionTest{StockConc: mMPerL1, TargetConc: uMPerL10, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
 	concConversionTest{StockConc: mPerL01, TargetConc: mMPerL1, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
-	concConversionTest{StockConc: mPerL01, TargetConc: uMPer0, TotalVolume: ul100, VolumeNeeded: l0},
+	concConversionTest{StockConc: mPerL01, TargetConc: uMPer0, TotalVolume: ul100, VolumeNeeded: l0, ExpectedErrMessage: "Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: 0.1 M/l; final concentration: 0 uM/l; volume set point: 100 ul"},
 }
 
 var tests2 = []massConversionTest{
@@ -83,10 +84,12 @@ func TestVolumeForTargetConcentration(t *testing.T) {
 		vol, err := VolumeForTargetConcentration(test.TargetConc, test.StockConc, test.TotalVolume)
 
 		if err != nil {
-			t.Error(
-				"for", test, "\n",
-				"got error:", err.Error(), "\n",
-			)
+			if err.Error() != test.ExpectedErrMessage {
+				t.Error(
+					"for", test, "\n",
+					"got error:", err.Error(), "\n",
+				)
+			}
 		}
 
 		if !vol.EqualTo(test.VolumeNeeded) {

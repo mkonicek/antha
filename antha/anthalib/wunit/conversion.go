@@ -27,18 +27,6 @@ import (
 	"fmt"
 )
 
-/*
-type
-
-func Splitunit(unit string)(numerators[]string, denominators[]string)
-
-var conversiontable = map[string]map[string]float64{
-	"density":map[string]float64{
-		"g/L":
-	}
-}
-*/
-
 func MasstoVolume(m Mass, d Density) (v Volume) {
 
 	mass := m.SIValue()
@@ -106,23 +94,20 @@ func VolumeForTargetMass(targetmass Mass, startingconc Concentration) (v Volume,
 // if either concentration is zero a volume of 0ul will be returned with an error
 func VolumeForTargetConcentration(targetConc Concentration, startingConc Concentration, totalVol Volume) (v Volume, err error) {
 
-	var factor float64
+	if startingConc.RawValue() == 0.0 || targetConc.RawValue() == 0.0 || totalVol.RawValue() == 0.0 {
+		return NewVolume(0.0, "ul"), fmt.Errorf("Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString())
+	}
 
-	if startingConc.Unit().BaseSIUnit() == targetConc.Unit().BaseSIUnit() {
-		factor = targetConc.SIValue() / startingConc.SIValue()
-	} else if startingConc.RawValue() == 0.0 || targetConc.RawValue() == 0.0 || totalVol.RawValue() == 0.0 {
-		v = NewVolume(0.0, "ul")
+	factor, err := DivideConcentrations(targetConc, startingConc)
 
-		return v, fmt.Errorf("Zero value found when converting concentrations to new volume so new volume so set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString())
-
-	} else {
-		err = fmt.Errorf(fmt.Sprint("incompatible units of target: ", targetConc.ToString(), " and starting concentration: ", startingConc.ToString(), ". ", "Pre-convert both to the same unit (i.e. Mol or gram)."))
+	if err != nil {
+		return NewVolume(0.0, "ul"), fmt.Errorf("Error converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s. Error: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString(), err.Error())
 	}
 
 	v = MultiplyVolume(totalVol, factor)
 
 	if v.GreaterThan(totalVol) {
-		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration", startingConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
+		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration ", startingConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
 	}
 
 	return

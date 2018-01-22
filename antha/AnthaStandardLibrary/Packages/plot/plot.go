@@ -209,7 +209,7 @@ func FromSpreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray [][
 
 			xys := make(plotter.XYs, len(Ydatarangearray))
 
-			xrow, xcol, err := spreadsheet.A1formattorowcolumn(Xdatapoint)
+			xrow, xcol, err := spreadsheet.A1FormatToRowColumn(Xdatapoint)
 			if err != nil {
 				panic(err)
 			}
@@ -219,7 +219,7 @@ func FromSpreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray [][
 
 			yfloats := make([]float64, 0)
 			for _, Ydatarange := range Ydatarangearray {
-				yrow, ycol, err := spreadsheet.A1formattorowcolumn(Ydatarange[Xdatarangeindex])
+				yrow, ycol, err := spreadsheet.A1FormatToRowColumn(Ydatarange[Xdatarangeindex])
 				if err != nil {
 					panic(err)
 				}

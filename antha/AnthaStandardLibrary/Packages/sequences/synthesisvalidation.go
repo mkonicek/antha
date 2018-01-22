@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -47,7 +48,7 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 	}
 
 	// check if vector is appropriate
-	if isInList(vector, vectorR) == false {
+	if search.InStrings(vectorR, vector) == false {
 		vectorstatus = fmt.Sprint("Warning: Non-standard vector used for", manufacturer,
 			"synthesis. Please see manufacturer instructions for the standard vector or the use of custom vectors")
 	} else {

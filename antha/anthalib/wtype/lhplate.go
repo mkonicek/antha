@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -87,8 +88,14 @@ func (plate LHPlate) OutputLayout() {
 	}
 }
 
+// Name returns the name of the plate.
 func (lhp LHPlate) Name() string {
 	return lhp.PlateName
+}
+
+// Set name sets the name of the plate.
+func (lhp *LHPlate) SetName(name string) {
+	lhp.PlateName = strings.TrimSpace(name)
 }
 
 func (lhp LHPlate) String() string {
@@ -747,6 +754,8 @@ func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err e
 	var concs = make([]wunit.Concentration, 0)
 	allpositions := plate.AllWellPositions(false)
 
+	var nilComponent *LHComponent
+
 	for _, position := range allpositions {
 		well := plate.WellMap()[position]
 
@@ -757,8 +766,13 @@ func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err e
 			if well.Contents().Cunit != "" {
 				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, well.Contents().Cunit))
 			} else {
-				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, "ng/ul"))
+				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, "mg/l"))
 			}
+		} else {
+			wells = append(wells, position)
+			liquids = append(liquids, nilComponent)
+			volumes = append(volumes, wunit.NewVolume(0.0, "ul"))
+			concs = append(concs, wunit.NewConcentration(0.0, "g/l"))
 		}
 	}
 
@@ -776,7 +790,14 @@ func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err e
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 		concstr := strconv.FormatFloat(concfloat, 'G', -1, 64)
 
-		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), concstr, concs[i].Unit().PrefixedSymbol()}
+		var componentName string
+		var liquidType string
+		if liquids[i] != nil {
+			componentName = liquids[i].Name()
+			liquidType = liquids[i].TypeName()
+		}
+
+		record := []string{well, componentName, liquidType, volstr, volumes[i].Unit().PrefixedSymbol(), concstr, concs[i].Unit().PrefixedSymbol()}
 		records = append(records, record)
 	}
 
@@ -999,8 +1020,10 @@ func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps Component
 
 func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector) ComponentVector {
 	wants := componentList(cmps)
+
 	cv := p.GetContentVector(wv)
 	fcv := make([]*LHComponent, len(cv))
+
 	for i := 0; i < len(cv); i++ {
 		if cv[i] != nil && wants[cv[i].IDOrName()] {
 			fcv[i] = cv[i]

@@ -363,7 +363,7 @@ var digesttests = []digesttest{
 
 func TestDigest(t *testing.T) {
 	for _, test := range digesttests {
-		fragments, err := Digest(test.sequence, test.enzymes...)
+		fragments, err := DigestToFragments(test.sequence, test.enzymes...)
 		if err != nil {
 			if err.Error() != test.expectedErr {
 				t.Error(err.Error())

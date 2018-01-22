@@ -305,10 +305,9 @@ func Digest(sequence wtype.DNASequence, typeIIenzymes ...wtype.RestrictionEnzyme
 	return typeIIDigestToFragments(sequence, typeIIenzymes...)
 }
 
-// RestrictionMapper returns a set of fragment sizes expected by digesting a DNA sequence with a restriction enzyme.
-func RestrictionMapper(seq wtype.DNASequence, enzyme wtype.RestrictionEnzyme) (fraglengths []int) {
-	enzlist := []wtype.RestrictionEnzyme{enzyme}
-	frags, err := Digest(seq, enzlist[0]) // doesn't handle non cutters well - returns 1 seq string, blunt, blunt therefore inaccurate representation
+// RestrictionMapper returns a set of fragment sizes expected by digesting a DNA sequence with a series of restriction enzymes.
+func RestrictionMapper(seq wtype.DNASequence, enzymes ...wtype.RestrictionEnzyme) (fraglengths []int) {
+	frags, err := Digest(seq, enzymes...) // doesn't handle non cutters well - returns 1 seq string, blunt, blunt therefore inaccurate representation
 	if err != nil {
 		panic(err.Error())
 	}

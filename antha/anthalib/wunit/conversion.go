@@ -57,57 +57,63 @@ func VolumetoMass(v Volume, d Density) (m Mass) {
 	return m
 }
 
-func VolumeForTargetMass(targetmass Mass, startingconc Concentration) (v Volume, err error) {
+func VolumeForTargetMass(targetmass Mass, stockConc Concentration) (v Volume, err error) {
 
-	if targetmass.RawValue() == 0.0 || startingconc.RawValue() == 0.0 {
+	if stockConc.RawValue() == 0.0 {
 		v = NewVolume(0.0, "ul")
-
-		return v, fmt.Errorf("Zero value found when converting concentration and mass to new volume so new volume set to zero: target mass: %s; starting concentration: %s", targetmass.ToString(), startingconc.ToString())
-
+		return v, fmt.Errorf("Zero value found when converting concentration and mass to new volume so new volume set to zero: target mass: %s; starting concentration: %s", targetmass.ToString(), stockConc.ToString())
 	}
 
-	if startingconc.Unit().PrefixedSymbol() == "ng/ul" && targetmass.Unit().PrefixedSymbol() == "ng" {
-		v = NewVolume(float64((targetmass.RawValue() / startingconc.RawValue())), "ul")
-		fmt.Println("starting conc SI ", startingconc.SIValue(), " and target mass SI: ", targetmass.SIValue())
+	if targetmass.RawValue() == 0.0 {
+		return NewVolume(0.0, "ul"), nil
+	}
 
-	} else if startingconc.Unit().PrefixedSymbol() == "mg/l" && targetmass.Unit().PrefixedSymbol() == "ng" {
-		v = NewVolume(float64((targetmass.RawValue() / startingconc.RawValue())), "ul")
-		fmt.Println("starting conc SI ", startingconc.SIValue(), " and target mass SI: ", targetmass.SIValue())
+	if stockConc.Unit().PrefixedSymbol() == "ng/ul" && targetmass.Unit().PrefixedSymbol() == "ng" {
+		v = NewVolume(float64((targetmass.RawValue() / stockConc.RawValue())), "ul")
+		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
 
-	} else if startingconc.Unit().BaseSIUnit() == "kg/l" && targetmass.Unit().BaseSIUnit() == "kg" {
-		v = NewVolume(float64((targetmass.SIValue()/startingconc.SIValue())*1000000), "ul")
-		fmt.Println("starting conc SI ", startingconc.SIValue(), " and target mass SI: ", targetmass.SIValue())
+	} else if stockConc.Unit().PrefixedSymbol() == "mg/l" && targetmass.Unit().PrefixedSymbol() == "ng" {
+		v = NewVolume(float64((targetmass.RawValue() / stockConc.RawValue())), "ul")
+		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
 
-	} else if startingconc.Unit().BaseSIUnit() == "g/l" && targetmass.Unit().BaseSIUnit() == "g" {
-		v = NewVolume(float64((targetmass.SIValue()/startingconc.SIValue())*1000000), "ul")
-		fmt.Println("starting conc SI ", startingconc.SIValue(), " and target mass SI: ", targetmass.SIValue())
+	} else if stockConc.Unit().BaseSIUnit() == "kg/l" && targetmass.Unit().BaseSIUnit() == "kg" {
+		v = NewVolume(float64((targetmass.SIValue()/stockConc.SIValue())*1000000), "ul")
+		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
+
+	} else if stockConc.Unit().BaseSIUnit() == "g/l" && targetmass.Unit().BaseSIUnit() == "g" {
+		v = NewVolume(float64((targetmass.SIValue()/stockConc.SIValue())*1000000), "ul")
+		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
 	} else {
-		fmt.Println("Base units ", startingconc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit(), " not compatible with this function")
-		err = fmt.Errorf("Convert ", targetmass.ToString(), " to g and ", startingconc.ToString(), " to g/l")
+		fmt.Println("Base units ", stockConc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit(), " not compatible with this function")
+		err = fmt.Errorf("Convert ", targetmass.ToString(), " to g and ", stockConc.ToString(), " to g/l")
 	}
 
 	return
 }
 
-// VolumeForTargetConcentration returns the volume required to convert a starting concentration to a target concentration of volume total volume
+// VolumeForTargetConcentration returns the volume required to convert a starting stock concentration to a target concentration of volume total volume
 // returns an error if the concentration units are incompatible (M/l and g/L) or if the target concentration is higher than the stock concentration
 // if either concentration is zero a volume of 0ul will be returned with an error
-func VolumeForTargetConcentration(targetConc Concentration, startingConc Concentration, totalVol Volume) (v Volume, err error) {
+func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentration, totalVol Volume) (v Volume, err error) {
 
-	if startingConc.RawValue() == 0.0 || targetConc.RawValue() == 0.0 || totalVol.RawValue() == 0.0 {
-		return NewVolume(0.0, "ul"), fmt.Errorf("Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString())
+	if stockConc.RawValue() == 0.0 {
+		return NewVolume(0.0, "ul"), fmt.Errorf("Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", stockConc.ToString(), targetConc.ToString(), totalVol.ToString())
 	}
 
-	factor, err := DivideConcentrations(targetConc, startingConc)
+	if targetConc.RawValue() == 0.0 || totalVol.RawValue() == 0.0 {
+		return NewVolume(0.0, "ul"), nil
+	}
+
+	factor, err := DivideConcentrations(targetConc, stockConc)
 
 	if err != nil {
-		return NewVolume(0.0, "ul"), fmt.Errorf("Error converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s. Error: %s", startingConc.ToString(), targetConc.ToString(), totalVol.ToString(), err.Error())
+		return NewVolume(0.0, "ul"), fmt.Errorf("Error converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s. Error: %s", stockConc.ToString(), targetConc.ToString(), totalVol.ToString(), err.Error())
 	}
 
 	v = MultiplyVolume(totalVol, factor)
 
 	if v.GreaterThan(totalVol) {
-		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration ", startingConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
+		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration ", stockConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
 	}
 
 	return

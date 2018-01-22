@@ -126,7 +126,7 @@ func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentrat
 }
 
 // MassForTargetConcentration multiplies a concentration (in g/l) by a volume (in l) to return the mass (in g).
-// if a concentration is not in a form convertable to g/l the nan error is returned.
+// if a concentration is not in a form convertable to g/l an error is returned.
 func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Mass, err error) {
 
 	litre := NewVolume(1.0, "l")

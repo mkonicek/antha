@@ -20,13 +20,14 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Core Antha package for dealing with units in Antha
+// Package wunit is a core Antha package for dealing with units in Antha
 package wunit
 
 import (
 	"fmt"
 )
 
+// MasstoVolume divides a mass (in kg) by a density (in kg/m^3) and returns the volume (in L).
 func MasstoVolume(m Mass, d Density) (v Volume) {
 
 	mass := m.SIValue()
@@ -45,8 +46,8 @@ func MasstoVolume(m Mass, d Density) (v Volume) {
 	return v
 }
 
+// VolumetoMass multiplies a volume (in L) by a density (in kg/m^3) and returns the mass (in kg).
 func VolumetoMass(v Volume, d Density) (m Mass) {
-	//mass := m.SIValue()
 	density := d.SIValue()
 
 	volume := v.SIValue() / 1000 // convert m^3 to l
@@ -57,6 +58,10 @@ func VolumetoMass(v Volume, d Density) (m Mass) {
 	return m
 }
 
+// VolumeForTargetMass returns the volume required to convert a starting stock concentration to a solution containing a target mass.
+// returns an error if the concentration units are not in g/l.
+// If the stock concentration is zero a volume of 0ul will be returned with an error.
+// if the target mass is zero a volume of 0ul will be returned with no error.
 func VolumeForTargetMass(targetmass Mass, stockConc Concentration) (v Volume, err error) {
 
 	if stockConc.RawValue() == 0.0 {
@@ -93,7 +98,8 @@ func VolumeForTargetMass(targetmass Mass, stockConc Concentration) (v Volume, er
 
 // VolumeForTargetConcentration returns the volume required to convert a starting stock concentration to a target concentration of volume total volume
 // returns an error if the concentration units are incompatible (M/l and g/L) or if the target concentration is higher than the stock concentration
-// if either concentration is zero a volume of 0ul will be returned with an error
+// If the stock concentration is zero a volume of 0ul will be returned with an error.
+// if the target concetnration or total volume are set to zero a volume of 0ul will be returned with no error.
 func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentration, totalVol Volume) (v Volume, err error) {
 
 	if stockConc.RawValue() == 0.0 {
@@ -119,6 +125,8 @@ func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentrat
 	return
 }
 
+// MassForTargetConcentration multiplies a concentration (in g/l) by a volume (in l) to return the mass (in g).
+// if a concentration is not in a form convertable to g/l the nan error is returned.
 func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Mass, err error) {
 
 	litre := NewVolume(1.0, "l")
@@ -141,7 +149,7 @@ func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Ma
 		multiplier = 1
 		unit = "mg"
 	} else {
-		err = fmt.Errorf("Convert conc ", targetconc, " to g/l first")
+		err = fmt.Errorf("target conc %s must in g/l to convert to a mass", targetconc.ToString())
 	}
 
 	m = NewMass(float64((targetconc.RawValue()*multiplier)*(totalvol.SIValue()/litre.SIValue())), unit)

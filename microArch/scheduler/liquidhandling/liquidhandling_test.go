@@ -25,7 +25,6 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"reflect"
 	"strings"
 	"testing"
@@ -33,11 +32,13 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func TestStockConcs(*testing.T) {
+	rand := wutil.GetRandom()
 	names := []string{"tea", "milk", "sugar"}
 
 	minrequired := make(map[string]float64, len(names))

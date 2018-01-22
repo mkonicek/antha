@@ -109,6 +109,10 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 					continue
 				}
 
+				// mycmps has incorrect volumes, try correcting them here
+
+				correct_volumes(mycmps)
+
 				ret = append(ret, mycmps)
 			}
 		}
@@ -117,13 +121,83 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 	return ret
 }
 
-func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) bool {
+func correct_volumes(cmps wtype.ComponentVector) {
+	nW := make(map[string]int)
+	for _, c := range cmps {
+		if c == nil {
+			continue
+		}
+
+		_, ok := nW[c.Loc]
+		if !ok {
+			nW[c.Loc] = 0
+		}
+		nW[c.Loc] += 1
+	}
+
+	for _, c := range cmps {
+		if c == nil {
+			continue
+		}
+
+		c.Vol /= float64(nW[c.Loc])
+	}
+}
+
+func cullZeroes(m map[string]wunit.Volume) map[string]wunit.Volume {
+	r := make(map[string]wunit.Volume, len(m))
+
+	for k, v := range m {
+		if v.IsZero() {
+			continue
+		}
+
+		r[k] = v
+	}
+
+	return r
+}
+
+func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) (bool, string) {
 	collSrcs := sumSources(srcs)
 	collDsts := dests.ToSumHash()
+	collDsts = cullZeroes(collDsts)
 
 	result := subHash(collSrcs, collDsts)
 
-	return result.AllVolsPosOrZero()
+	if len(collSrcs) < len(collDsts) {
+		return false, collateDifference(collDsts, collSrcs, result)
+	}
+
+	r := result.AllVolsPosOrZero()
+
+	if r {
+		return r, ""
+	} else {
+		return r, collateDifference(collDsts, collSrcs, result)
+	}
+}
+
+func collateDifference(a, b, c map[string]wunit.Volume) string {
+	s := ""
+
+	for k, _ := range a {
+		_, ok := b[k]
+
+		if !ok {
+			s += fmt.Sprintf("%s; ", k)
+			continue
+		}
+
+		v := c[k]
+
+		if v.LessThanFloat(0.0) {
+			v.M(-1.0)
+			s += fmt.Sprintf("%s - missing %s; ", k, v.ToString())
+		}
+	}
+
+	return s
 }
 
 func subHash(h1, h2 ComponentVolumeHash) ComponentVolumeHash {
@@ -177,7 +251,6 @@ func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
 
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
 	rep := newReply()
-
 	// build list of possible sources -- this is a list of ComponentVectors
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
@@ -196,12 +269,14 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			break
 		}
 
-		if cmpVecsEqual(lastCmps, currCmps) {
-			break
+		if ok, s := sourceVolumesOK(srcs, currCmps); !ok {
+			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes for components %s", s)
 		}
 
-		if !sourceVolumesOK(srcs, currCmps) {
-			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes")
+		if cmpVecsEqual(lastCmps, currCmps) {
+			// if we are here we should be able to service the request but not
+			// as-is...
+			break
 		}
 
 		bestMatch := wtype.Match{Sc: -1.0}
@@ -225,7 +300,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		}
 
 		if bestMatch.Sc == -1 {
-			return rep, fmt.Errorf("Components %s %s\n", currCmps.String(), wtype.NotFoundError)
+			return rep, fmt.Errorf("Components %s %s -- try increasing source volumes, if this does not work or is not possible please report to the authors\n", currCmps.String(), wtype.NotFoundError)
 		}
 
 		// adjust finally to ensure we don't leave too little
@@ -241,6 +316,49 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	}
 
 	return rep, nil
+}
+
+// this double-checks if we are using duplicated trough wells
+func feasible(match wtype.Match, src wtype.ComponentVector, carry wunit.Volume) bool {
+	// sum available volumes asked for and those available
+
+	want := make(map[string]wunit.Volume)
+
+	for i := 0; i < len(match.IDs); i++ {
+		if match.M[i] == -1 {
+			continue
+		}
+		if _, ok := want[match.IDs[i]+":"+match.WCs[i]]; !ok {
+			want[match.IDs[i]+":"+match.WCs[i]] = wunit.NewVolume(0.0, "ul")
+		}
+		want[match.IDs[i]+":"+match.WCs[i]].Add(match.Vols[i])
+		want[match.IDs[i]+":"+match.WCs[i]].Add(carry)
+	}
+
+	got := make(map[string]wunit.Volume)
+
+	for i := 0; i < len(src); i++ {
+		// if a component appears more than once in a location it's a fake duplicate
+		got[src[i].Loc] = src[i].Volume()
+	}
+
+	compare := func(a, b map[string]wunit.Volume) bool {
+		// true iff all volumes in a are <= their equivalents in b (undef == 0)
+		for k, v1 := range a {
+			v2, ok := b[k]
+			if !ok {
+				return false
+			}
+
+			if v2.LessThan(v1) {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return compare(want, got)
 }
 
 func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPossibleVolume wunit.Volume) wtype.ComponentVector {

@@ -2,11 +2,21 @@ package liquidhandling
 
 import (
 	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"strings"
 )
 
 type LHIVector []*wtype.LHInstruction
+
+func (lhiv LHIVector) String() string {
+	ss := []string{}
+
+	for _, v := range lhiv {
+		ss = append(ss, v.String())
+	}
+
+	return strings.Join(ss, "\n")
+}
 
 func (lhiv LHIVector) MaxLen() int {
 	l := 0

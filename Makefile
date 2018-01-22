@@ -28,7 +28,6 @@ lint: test
 	  | grep -v /driver \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/asset \
 	  \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/Inventory \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Optimization \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Labware \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/Liquidclasses \
@@ -40,7 +39,6 @@ lint: test
 	  | grep -v /antha/AnthaStandardLibrary/Packages/doe \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/download \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/eng \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/export \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/igem \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/pcr \
 	  | grep -v /antha/AnthaStandardLibrary/Packages/platereader \

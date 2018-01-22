@@ -82,6 +82,11 @@ func (lhc *LHComponent) PlateLocation() PlateLocation {
 	return PlateLocationFromString(lhc.Loc)
 }
 
+// WellLocation returns the well location in A1 format.
+func (lhc *LHComponent) WellLocation() string {
+	return lhc.PlateLocation().Coords.FormatA1()
+}
+
 // PlateID returns the id of a plate or the empty string
 func (lhc *LHComponent) PlateID() string {
 	loc := lhc.PlateLocation()
@@ -586,7 +591,7 @@ func (cmp *LHComponent) MixPreserveTvol(cmp2 *LHComponent) {
 
 // add cmp2 to cmp
 func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
-	//wasEmpty := cmp.IsZero()
+	wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
 	// determine type of final
 	cmp.Type = mergeTypes(cmp, cmp2)
@@ -616,6 +621,10 @@ func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	// result should not be a sample
 
 	cmp.SetSample(false)
+
+	if wasEmpty {
+		cmp.SetConcentration(cmp2.Concentration())
+	}
 }
 
 // @implement Liquid

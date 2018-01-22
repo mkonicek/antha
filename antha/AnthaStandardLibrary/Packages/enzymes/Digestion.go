@@ -766,7 +766,7 @@ func makeMultiFragments(originalSequence wtype.DNASequence, enzymes ...wtype.Res
 		}
 	}
 
-	if len(fragments) == 0 && len(fragments) > 0 {
+	if len(fragments) == 0 && len(errs) > 0 {
 		return []wtype.DNASequence{originalSequence}, fmt.Errorf("digestion errors: %s", strings.Join(errs, "\n"))
 	}
 	return fragments, nil

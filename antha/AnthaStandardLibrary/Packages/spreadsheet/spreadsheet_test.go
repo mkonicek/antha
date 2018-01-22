@@ -48,9 +48,11 @@ var tests = []spreadSheetTest{
 		testSheet: 0,
 		testRows: map[int][]interface{}{
 			0: []interface{}{"Well", "A String Header", "A Number Header"},
+			1: []interface{}{"A1", "High", 1},
 		},
 		testColumns: map[int][]interface{}{
 			0: []interface{}{"Well", "A1", "A2", "A3", "D1"},
+			1: []interface{}{"A String Header", "High", "High", "low", "low"},
 		},
 	},
 }

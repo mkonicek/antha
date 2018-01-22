@@ -78,6 +78,11 @@ func (cv ComponentVector) ToSumHash() map[string]wunit.Volume {
 		if c == nil {
 			continue
 		}
+
+		if c.CName == "" {
+			continue
+		}
+
 		v, ok := ret[c.FullyQualifiedName()]
 
 		if !ok {

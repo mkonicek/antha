@@ -48,11 +48,11 @@ func samePlate(a, b *wtype.LHPlate) error {
 		}
 		concA, concB := compA.Conc, compB.Conc
 		if concA != concB {
-			return fmt.Errorf("different concentration in well %q: %f != %f", addr, concA, concB)
+			return fmt.Errorf("different concentration in well %q: expected: %f; found: %f", addr, concA, concB)
 		}
 		cunitA, cunitB := compA.Cunit, compB.Cunit
 		if cunitA != cunitB && concA != 0.0 {
-			return fmt.Errorf("different concetration unit in well %q: %s != %s", addr, cunitA, cunitB)
+			return fmt.Errorf("different concetration unit in well %q: expected: %s; found: %s", addr, cunitA, cunitB)
 		}
 	}
 
@@ -75,9 +75,9 @@ func TestParsePlateWithValidation(t *testing.T) {
 	file := []byte(
 		`
 pcrplate_with_cooler,
-A1,water+soil,water,50.0,ul,
-A4,tea,water,50.0,ul,
-A5,milk,water,100.0,ul,
+A1,water+soil,water,50.0,ul,0,g/l,
+A4,tea,water,50.0,ul,0,g/l,
+A5,milk,water,100.0,ul,0,g/l,
 `)
 	r, err := ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
 
@@ -112,9 +112,10 @@ func TestParsePlate(t *testing.T) {
 			File: []byte(
 				`
 pcrplate_with_cooler,
-A1,water,water,50.0,ul,
-A4,tea,water,50.0,ul,
-A5,milk,water,100.0,ul,
+A1,water,water,50.0,ul,0,g/l,
+A4,tea,water,50.0,ul,10.0,mM/l,
+A5,milk,water,100.0,ul,10.0,g/l,
+A6,,,0,ul,0,g/l,
 `),
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
@@ -125,6 +126,8 @@ A5,milk,water,100.0,ul,
 							Type:  wtype.LTWater,
 							Vol:   50.0,
 							Vunit: "ul",
+							Conc:  0.0,
+							Cunit: "g/l",
 						},
 					},
 					"A4": &wtype.LHWell{
@@ -133,6 +136,8 @@ A5,milk,water,100.0,ul,
 							Type:  wtype.LTWater,
 							Vol:   50.0,
 							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "mM/l",
 						},
 					},
 					"A5": &wtype.LHWell{
@@ -141,6 +146,8 @@ A5,milk,water,100.0,ul,
 							Type:  wtype.LTWater,
 							Vol:   100.0,
 							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "g/l",
 						},
 					},
 				},
@@ -151,7 +158,7 @@ A5,milk,water,100.0,ul,
 				`
 pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
 A1,water,water,140.5,ul,0,mg/l
-C1,neb5compcells,culture,20.5,ul,0,mg/l
+C1,neb5compcells,culture,20.5,ul,0,ng/ul
 `),
 			NoWarnings: true,
 			Expected: &wtype.LHPlate{
@@ -163,6 +170,8 @@ C1,neb5compcells,culture,20.5,ul,0,mg/l
 							Type:  wtype.LTWater,
 							Vol:   140.5,
 							Vunit: "ul",
+							Conc:  0,
+							Cunit: "mg/l",
 						},
 					},
 					"C1": &wtype.LHWell{
@@ -171,6 +180,8 @@ C1,neb5compcells,culture,20.5,ul,0,mg/l
 							Type:  wtype.LTCulture,
 							Vol:   20.5,
 							Vunit: "ul",
+							Conc:  0,
+							Cunit: "mg/l",
 						},
 					},
 				},

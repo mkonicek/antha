@@ -55,6 +55,7 @@ func (a GenericHandler) serialize(obj interface{}) (string, error) {
 			return "", err
 		}
 	}
+
 	if err := enc.Encode(obj); err != nil {
 		return "", err
 	}

@@ -31,10 +31,8 @@ First step is to install or upgrade to go 1.7. Follow the instructions at the
 Update the GOPATH:
 
 ```bash
-cat<<EOF>>$HOME/.bash_profile
-export GOPATH=$HOME/go
-export PATH=\$PATH:$HOME/go/bin
-EOF
+export GOPATH=$HOME/go >> $HOME/.bash_profile
+export PATH=$PATH:$HOME/go/bin >> $HOME/.bash_profile
 source ~/.bash_profile
 ```
 

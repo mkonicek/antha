@@ -41,6 +41,10 @@ var (
 		Name:  DriverSelectorV1Name,
 		Value: "antha.datasource.v1.DataSource",
 	}
+	DriverSelectorV1WriteOnlyPlateReader = ast.NameValue{
+		Name:  DriverSelectorV1Name,
+		Value: "antha.platereader.v1.PlateReader",
+	}
 )
 
 type targetKey int

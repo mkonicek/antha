@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"image/gif"
 	"path/filepath"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -94,15 +95,15 @@ func Export(img image.Image, fileName string) (file wtype.File, err error) {
 	if filepath.Ext(fileName) == "" {
 		imageFormat = imaging.PNG
 		fileName = fileName + "." + "png"
-	} else if filepath.Ext(fileName) == ".png" {
+	} else if strings.EqualFold(filepath.Ext(fileName), ".png") {
 		imageFormat = imaging.PNG
-	} else if filepath.Ext(fileName) == ".jpg" || filepath.Ext(fileName) == ".jpeg" {
+	} else if strings.EqualFold(filepath.Ext(fileName), ".jpg") || strings.EqualFold(filepath.Ext(fileName), ".jpeg") {
 		imageFormat = imaging.JPEG
-	} else if filepath.Ext(fileName) == ".tif" || filepath.Ext(fileName) == ".tiff" {
+	} else if strings.EqualFold(filepath.Ext(fileName), ".tif") || strings.EqualFold(filepath.Ext(fileName), ".tiff") {
 		imageFormat = imaging.TIFF
-	} else if filepath.Ext(fileName) == ".gif" {
+	} else if strings.EqualFold(filepath.Ext(fileName), ".gif") {
 		imageFormat = imaging.GIF
-	} else if filepath.Ext(fileName) == ".BMP" {
+	} else if strings.EqualFold(filepath.Ext(fileName), ".BMP") {
 		imageFormat = imaging.BMP
 	} else {
 		return file, fmt.Errorf("unsupported image file format: %s", filepath.Ext(fileName))

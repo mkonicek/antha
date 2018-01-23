@@ -127,6 +127,27 @@ func (ins *TransferInstruction) Dup() *TransferInstruction {
 	return NewTransferInstruction(w, pf, pt, wf, wt, fpt, tpt, vol, fv, tv, fpwx, fpwy, tpwx, tpwy, cmps)
 }
 
+func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
+	hlld, ok := drv.(HighLevelLiquidhandlingDriver)
+
+	if !ok {
+		return fmt.Errorf("Driver type %T not compatible with TransferInstruction, need HighLevelLiquidhandlingDriver", drv)
+	}
+
+	volumes := make([]float64, len(ins.Volume))
+	for i, vol := range ins.Volume {
+		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+	}
+
+	reply := hlld.Transfer(ins.What, ins.PltFrom, ins.WellFrom, ins.PltTo, ins.WellTo, volumes)
+
+	if !reply.OK {
+		return fmt.Errorf(" %d : %s", reply.Errorcode, reply.Msg)
+	}
+
+	return nil
+}
+
 func dupStringArray(in []string) []string {
 	out := make([]string, len(in))
 

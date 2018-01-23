@@ -75,5 +75,5 @@ type ExtendedLiquidhandlingDriver interface {
 
 type HighLevelLiquidhandlingDriver interface {
 	LiquidhandlingDriver
-	// your methods here
+	Transfer(what, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus
 }

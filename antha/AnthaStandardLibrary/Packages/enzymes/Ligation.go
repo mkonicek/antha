@@ -486,8 +486,9 @@ func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (i
 	return insert, fmt.Errorf("no insert sequences found which are present in assembled sequence %s. ", result.Name())
 }
 
-// Assemblysimulator simulate assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.
-func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, successfulassemblies int, sites []RestrictionSites, newDNASequences []wtype.DNASequence, err error) {
+// AssemblySimulator simulates assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.
+// This function is limited to assembly with one enzyme so the FindAllAssemblyProducts function is recommended in place of this.
+func Assemblysimulator(assemblyparameters Assemblyparameters) (summary string, sites []RestrictionSites, newDNASequences []wtype.DNASequence, err error) {
 
 	// fetch enzyme properties
 	enzymename := strings.ToUpper(assemblyparameters.Enzymename)
@@ -495,13 +496,13 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	enzyme, err := lookup.TypeIIs(enzymename)
 
 	if err != nil {
-		return s, successfulassemblies, sites, newDNASequences, err
+		return summary, sites, newDNASequences, err
 	}
 
 	if enzyme.Class != "TypeIIs" {
-		s = fmt.Sprint(enzymename, ": Incorrect Enzyme or no enzyme specified")
-		err = fmt.Errorf(s)
-		return s, successfulassemblies, sites, newDNASequences, err
+		summary = fmt.Sprint(enzymename, ": Incorrect Enzyme or no enzyme specified")
+		err = fmt.Errorf(summary)
+		return summary, sites, newDNASequences, err
 	}
 	var failedAssemblies []DigestedFragment
 	var plasmidProducts []wtype.DNASequence
@@ -513,8 +514,8 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	}
 	if err != nil {
 		err = fmt.Errorf("Failure Joining fragments after digestion:\n %s", err.Error())
-		s = err.Error()
-		return s, successfulassemblies, sites, plasmidProducts, err
+		summary = err.Error()
+		return summary, sites, plasmidProducts, err
 	}
 
 	if len(plasmidProducts) == 1 {
@@ -532,11 +533,11 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		}
 	}
 
-	s = "hmmm I'm confused, this doesn't seem to make any sense"
+	summary = "hmmm I'm confused, this doesn't seem to make any sense"
 
 	if len(plasmidProducts) == 0 && len(failedAssemblies) == 0 {
 		err = fmt.Errorf("Nope! construct design %s not predicted to form any ligated parts", assemblyparameters.ToString())
-		s = err.Error()
+		summary = err.Error()
 	}
 
 	// remove invalid plasmids
@@ -552,8 +553,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	plasmidProducts = validPlasmids
 
 	if len(plasmidProducts) == 1 {
-		s = "Yay! this should work"
-		successfulassemblies = successfulassemblies + 1
+		summary = "Yay! this should work"
 	}
 
 	if len(plasmidProducts) > 1 {
@@ -563,37 +563,37 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 			errormessage = err.Error()
 		}
 		merr := fmt.Errorf("Yay! this should work but there seems to be %d possible plasmids which could form for %s: %s", len(plasmidProducts), assemblyparameters.ToString(), errormessage)
-		s = merr.Error()
+		summary = merr.Error()
 	}
 
 	if len(plasmidProducts) == 0 && len(failedAssemblies) > 0 {
 
-		s = fmt.Sprint("Ooh, only partial assembly expected: ", assemblyparameters.Partsinorder[(len(assemblyparameters.Partsinorder)-1)].Nm, " and ", assemblyparameters.Vector.Nm, ": ", "Not compatible, check ends")
+		summary = fmt.Sprint("Ooh, only partial assembly expected: ", assemblyparameters.Partsinorder[(len(assemblyparameters.Partsinorder)-1)].Nm, " and ", assemblyparameters.Vector.Nm, ": ", "Not compatible, check ends")
 
-		err = fmt.Errorf(s)
+		err = fmt.Errorf(summary)
 
 		var seqs []wtype.DNASequence
 
 		for i, failed := range failedAssemblies {
 			seq, err := failed.ToDNASequence("fragment" + strconv.Itoa(i+1))
 			if err != nil {
-				return s, successfulassemblies, sites, plasmidProducts, err
+				return summary, sites, plasmidProducts, err
 			}
 			seqs = append(seqs, seq)
 		}
 
-		return s, successfulassemblies, sites, seqs, err
+		return summary, sites, seqs, err
 
 	}
 
-	if !strings.Contains(s, "Yay! this should work") {
-		err = fmt.Errorf(s)
+	if !strings.Contains(summary, "Yay! this should work") {
+		err = fmt.Errorf(summary)
 	}
 	for i := range plasmidProducts {
 		plasmidProducts[i].Nm = assemblyparameters.Constructname
 	}
 
-	return s, successfulassemblies, sites, plasmidProducts, err
+	return summary, sites, plasmidProducts, err
 }
 
 func biggest(entries []wtype.DNASequence) wtype.DNASequence {
@@ -643,7 +643,7 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 	errors = make(map[string]string) // construct to error
 
 	for _, construct := range parameters {
-		output, _, _, seq, err := Assemblysimulator(construct)
+		output, _, seq, err := Assemblysimulator(construct)
 		// add first sequence only
 		if len(seq) > 0 {
 			seqs = append(seqs, seq[0])

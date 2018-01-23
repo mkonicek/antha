@@ -34,7 +34,7 @@ import (
 )
 
 func TipChosenError(v wunit.Volume, prms *LHProperties) string {
-	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (current minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString())
+	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
 }
 
 type TransferParams struct {

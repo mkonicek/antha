@@ -1220,6 +1220,30 @@ func (p *LHProperties) MinPossibleVolume() wunit.Volume {
 	return minvol
 }
 
+func (p *LHProperties) MinCurrentVolume() wunit.Volume {
+	if len(p.HeadsLoaded) == 0 {
+		return wunit.ZeroVolume()
+	}
+
+	if len(p.Tips) == 0 {
+		return p.MinPossibleVolume()
+	}
+
+	minvol := p.HeadsLoaded[0].GetParams().Maxvol
+	for _, head := range p.HeadsLoaded {
+		for _, tip := range p.Tips {
+			lhcp := head.Params.MergeWithTip(tip)
+			v := lhcp.Minvol
+			if v.LessThan(minvol) {
+				minvol = v
+			}
+		}
+
+	}
+
+	return minvol
+}
+
 func (p *LHProperties) CanPossiblyDo(v wunit.Volume) bool {
 	return !p.MinPossibleVolume().LessThan(v)
 }

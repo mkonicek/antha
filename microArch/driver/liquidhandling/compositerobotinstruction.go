@@ -2273,7 +2273,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		} else if !ins.Prms.CanMove(vmixvol, true) {
 			// make this illegal for now
 
-			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip", vmixvol.ToString()))
+			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
 			/*
 				tipchg, err := ChangeTips("", vmixvol, prms, ins.Prms, ins.Multi, true)
 

@@ -169,8 +169,8 @@ var uvProteinPaintboxMap = map[color.Color]string{
 
 	// conventional E.coli colour
 	color.RGBA{R: uint8(196), G: uint8(183), B: uint8(137), A: uint8(255)}: "E.coli",
-	color.RGBA{R: uint8(1), G: uint8(1), B: uint8(1), A: uint8(255)}:       "E.coli pUC19 on sgal",
 	White: "white",
+	Black: "black",
 }
 
 var proteinPaintboxSubsetMap = map[color.Color]string{

@@ -264,7 +264,7 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 
 }
 
-func Assemblyfromcsv(designfile string, partsfile string) (assemblyparameters []enzymes.Assemblyparameters, err error) {
+func AssemblyFromCsv(designfile string, partsfile string) (assemblyparameters []enzymes.Assemblyparameters, err error) {
 
 	var designedconstructs [][]string
 

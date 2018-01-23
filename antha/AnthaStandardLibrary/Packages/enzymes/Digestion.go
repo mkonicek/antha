@@ -316,7 +316,7 @@ func DigestToFragments(sequence wtype.DNASequence, typeIIenzymes ...wtype.Restri
 func RestrictionMapper(seq wtype.DNASequence, enzymes ...wtype.RestrictionEnzyme) (fraglengths []int) {
 	frags, err := DigestToFragments(seq, enzymes...) // doesn't handle non cutters well - returns 1 seq string, blunt, blunt therefore inaccurate representation
 	if err != nil {
-		panic(err.Error())
+		return []int{len(seq.Sequence())}
 	}
 	fraglengths = make([]int, 0)
 	for _, frag := range frags {

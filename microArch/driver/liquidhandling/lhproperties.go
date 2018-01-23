@@ -79,35 +79,42 @@ type LHProperties struct {
 // utility print function
 
 func (p LHProperties) OutputLayout() {
-	fmt.Println("Layout for liquid handler ", p.ID, " type ", p.Mnfr, " ", p.Model)
+	fmt.Println(p.GetLayout())
+}
+
+func (p LHProperties) GetLayout() string {
+	s := ""
+	s += fmt.Sprintln("Layout for liquid handler ", p.ID, " type ", p.Mnfr, " ", p.Model)
 	n := p.OrderedPositionNames()
 
 	for _, pos := range n {
 		plateID, ok := p.PosLookup[pos]
 
-		fmt.Print("\tPosition ", pos, " ")
+		s += fmt.Sprint("\tPosition ", pos, " ")
 
 		if !ok {
-			fmt.Println(" Empty")
+			s += fmt.Sprintln(" Empty")
 		} else {
 			lw := p.PlateLookup[plateID]
 
 			switch lw.(type) {
 			case *wtype.LHPlate:
 				plt := lw.(*wtype.LHPlate)
-				fmt.Println("Plate ", plt.PlateName, " type ", plt.Mnfr, " ", plt.Type, " Contents:")
-				plt.OutputLayout()
+				s += fmt.Sprintln("Plate ", plt.PlateName, " type ", plt.Mnfr, " ", plt.Type, " Contents:")
+				s += plt.GetLayout()
 			case *wtype.LHTipbox:
 				tb := lw.(*wtype.LHTipbox)
-				fmt.Println("Tip box ", tb.Mnfr, " ", tb.Type, " ", tb.Boxname, " ", tb.N_clean_tips())
+				s += fmt.Sprintln("Tip box ", tb.Mnfr, " ", tb.Type, " ", tb.Boxname, " ", tb.N_clean_tips())
 			case *wtype.LHTipwaste:
 				tw := lw.(*wtype.LHTipwaste)
-				fmt.Println("Tip Waste ", tw.Mnfr, " ", tw.Type, " capacity ", tw.SpaceLeft())
+				s += fmt.Sprintln("Tip Waste ", tw.Mnfr, " ", tw.Type, " capacity ", tw.SpaceLeft())
 			default:
-				fmt.Println("Labware :", lw)
+				s += fmt.Sprintln("Labware :", lw)
 			}
 		}
 	}
+
+	return s
 }
 
 func (p LHProperties) CanPrompt() bool {
@@ -1311,4 +1318,22 @@ func (p *LHProperties) UpdateComponentID(from string, to *wtype.LHComponent) boo
 		}
 	}
 	return false
+}
+
+func (p *LHProperties) DeckSummary() string {
+	s := ""
+	for name, thing := range p.PlateLookup {
+		if thing == nil {
+			s += fmt.Sprintf("%s: %s ", name, "Empty")
+		} else {
+			n, ok := thing.(wtype.Named)
+
+			if ok {
+				s += fmt.Sprintf("%s: %s ", name, n.GetName())
+			} else {
+				s += fmt.Sprintf("%s: %s ", name, "Something")
+			}
+		}
+	}
+	return s
 }

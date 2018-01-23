@@ -1779,8 +1779,13 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		if mixvol < wtype.Globals.MIN_REASONABLE_VOLUME_UL {
 			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME set below minimum allowed: %f min %f", mixvol, wtype.Globals.MIN_REASONABLE_VOLUME_UL))
 		} else if !ins.Prms.CanMove(vmixvol, true) {
-			// this is an error in channel choice but the user has to deal... needs modificationst
-			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.ToString(), ins.Prms.VolumeLimitString()))
+			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
+			if override {
+				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
+			} else {
+				// this is an error in channel choice but the user has to deal... needs modificationst
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.ToString(), ins.Prms.VolumeLimitString()))
+			}
 		}
 
 		if ok {
@@ -2271,17 +2276,13 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		if mixvol < wtype.Globals.MIN_REASONABLE_VOLUME_UL {
 			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("POST_MIX_VOLUME set below minimum allowed: %f min %f", mixvol, wtype.Globals.MIN_REASONABLE_VOLUME_UL))
 		} else if !ins.Prms.CanMove(vmixvol, true) {
-			// make this illegal for now
+			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
 
-			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
-			/*
-				tipchg, err := ChangeTips("", vmixvol, prms, ins.Prms, ins.Multi, true)
-
-				if err != nil {
-					return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLUME: %s", err.Error()))
-				}
-				ret = append(ret, tipchg...)
-			*/
+			if override {
+				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
+			} else {
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
+			}
 		}
 
 		if ok {
@@ -3189,7 +3190,7 @@ func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, chann
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(ctx, tiptypes, channel, usetiptracking)
 
 	if tipwells == nil || terr != nil {
-		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("PICKUP: types: ", tiptypes))
+		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("PICKUP: types: %v On Deck: %v", tiptypes, params.GetLayout()))
 		return []RobotInstruction{NewLoadTipsMoveInstruction()}, err
 	}
 

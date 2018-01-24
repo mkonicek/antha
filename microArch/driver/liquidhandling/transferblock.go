@@ -357,13 +357,21 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 			break
 		}
 
-		// MIS TODO --> the last argument should be the modulo offset
-		colset := get_col(pdm, col, multi, wells, contiguous, full, 0)
-		if countUsed(colset) != 0 {
-			ret = append(ret, colset)
-		} else {
-			col += 1
+		wellsPerTip := 1
+
+		if wells > multi {
+			wellsPerTip = wells / multi
 		}
+		for modulo := 0; modulo < wellsPerTip; modulo++ {
+			colset := get_col(pdm, col, multi, wells, contiguous, full, modulo)
+			if countUsed(colset) != 0 {
+				ret = append(ret, colset)
+			} else {
+				break
+			}
+		}
+
+		col += 1
 
 	}
 
@@ -400,7 +408,7 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 		newcol := make([][]*wtype.LHInstruction, len(pdm[col]))
 		used := 0 // number of instructions returned
 		offset := 0
-		for c := s; c < len(pdm[col]); c += wellsPerTip {
+		for c := s + modulo; c < len(pdm[col]); c += wellsPerTip {
 			if len(pdm[col][c]) >= tipsperwell {
 				for x := 0; x < tipsperwell; x++ {
 					id := pdm[col][c][x].ID
@@ -413,7 +421,7 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 			} else if contiguous {
 				break
 			} else {
-				offset += tipsperwell
+				offset += 1
 			}
 
 			if used == multi {
@@ -426,7 +434,7 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 		} else if used == 0 {
 			continue
 		} else {
-			pdm[col] = newcol
+			//pdm[col] = newcol
 
 			return ret
 		}

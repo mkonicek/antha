@@ -775,6 +775,7 @@ func PostMixPolicy() wtype.LHPolicy {
 // 3 post mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well.
 // No tip reuse permitted.
 // Rules added to adjust post mix volume based on volume of the destination well.
+// volume now capped at max for tip type (MIX_VOLUME_OVERRIDE_TIP_MAX)
 func SmartMixPolicy() wtype.LHPolicy {
 	policy := make(wtype.LHPolicy, 12)
 	policy["POST_MIX"] = 3
@@ -789,6 +790,7 @@ func SmartMixPolicy() wtype.LHPolicy {
 	policy["TIP_REUSE_LIMIT"] = 0
 	policy["NO_AIR_DISPENSE"] = true
 	policy["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
+	policy["MIX_VOLUME_OVERRIDE_TIP_MAX"] = true
 	return policy
 }
 
@@ -812,6 +814,7 @@ func MegaMixPolicy() wtype.LHPolicy {
 
 func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy := make(wtype.LHPolicy, 27)
+	defaultpolicy["MIX_VOLUME_OVERRIDE_TIP_MAX"] = false
 	defaultpolicy["OFFSETZADJUST"] = 0.0
 	defaultpolicy["TOUCHOFF"] = false
 	defaultpolicy["TOUCHOFFSET"] = 0.5

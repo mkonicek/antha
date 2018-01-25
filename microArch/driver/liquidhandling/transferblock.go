@@ -366,8 +366,8 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 			colset := get_col(pdm, col, multi, wells, contiguous, full, modulo)
 			if countUsed(colset) != 0 {
 				ret = append(ret, colset)
-			} else {
-				break
+				//} else {
+				//	break
 			}
 		}
 
@@ -377,6 +377,26 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 
 	return ret
 }
+
+func colDup(in [][]*wtype.LHInstruction) [][]*wtype.LHInstruction {
+	dup := func(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
+		r := make([]*wtype.LHInstruction, len(inss))
+
+		for i := 0; i < len(inss); i++ {
+			r[i] = inss[i]
+		}
+
+		return r
+	}
+	out := make([][]*wtype.LHInstruction, len(in))
+
+	for i, v := range in {
+		out[i] = dup(v)
+	}
+
+	return out
+}
+
 func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full bool, modulo int) IDSet {
 	var ret IDSet
 	tipsperwell := 1
@@ -405,7 +425,8 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 
 	for s := 0; s < len(pdm[col])-2; s++ {
 		ret = make(IDSet, multi)
-		newcol := make([][]*wtype.LHInstruction, len(pdm[col]))
+		//newcol := make([][]*wtype.LHInstruction, len(pdm[col]))
+		newcol := colDup(pdm[col])
 		used := 0 // number of instructions returned
 		offset := 0
 		for c := s + modulo; c < len(pdm[col]); c += wellsPerTip {
@@ -434,7 +455,7 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 		} else if used == 0 {
 			continue
 		} else {
-			//pdm[col] = newcol
+			pdm[col] = newcol
 
 			return ret
 		}

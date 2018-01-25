@@ -236,9 +236,9 @@ func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
 		ret.Subtract(minLeave)
 	}
 
-	// fail if ret is now < 0
+	// fail if ret is now < 0 or < the min possible
 
-	if ret.LessThan(wunit.ZeroVolume()) {
+	if ret.LessThan(wunit.ZeroVolume()) || ret.LessThan(minLeave) {
 		ret = wunit.ZeroVolume()
 	}
 
@@ -691,6 +691,11 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 			maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume())
 
+			// if we can't do it, we can't do it
+			if maxvol.IsZero() {
+				continue
+			}
+
 			// now set the vols for the transfer and remove this from the instruction's volume
 
 			for i, _ := range vols {
@@ -728,7 +733,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 			mci.AddTransferParams(tp)
 		}
 
-		if len(parallelsets) > 0 {
+		if len(parallelsets) > 0 && len(mci.Volume) > 0 {
 			ret = append(ret, mci)
 		}
 	}

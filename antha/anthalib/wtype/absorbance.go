@@ -23,40 +23,76 @@
 package wtype
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+// CorrectionType is a label given to the nature of the correction of an absorbance reading.
+type CorrectionType string
+
+const (
+	// BlankCorrected refers to when an absorbance reading has been corrected
+	// by substracting the absorbance at equivalent conditions of a blank sample.
+	BlankCorrected CorrectionType = "Blank Corrected"
+
+	// PathLengthCorrected refers to when an absorbance reading has been normalised
+	// to a standard reference pathlength of 1cm.
+	// 1cm is the pathlength used to normalise absorbance readings to OD.
+	PathLengthCorrected CorrectionType = "Pathlength Corrected"
+
+	// ReferenceStandardCorrected refers to when an absorbance reading is corrected based
+	// on a reference sample. Placeholder: Not yet implemented.
+	ReferenceStandardCorrected CorrectionType = "Reference Standard Corrected"
+)
+
+// AbsorbanceCorrection stores the details of how an Absorbance reading has ben corrected.
+type AbsorbanceCorrection struct {
+	Type              CorrectionType
+	CorrectionReading *Absorbance
+}
+
+// Absorbance stores the key properties of an absorbance reading.
 type Absorbance struct {
-	WellLocation	WellCoords
-	Reading    	float64
-	Wavelength 	float64
-	Pathlength 	wunit.Length
-	Status     	[]string
-	Reader     	string
+	Reading     float64                `json:"Reading"`
+	Wavelength  wunit.Length           `json:"Wavelength"`
+	Pathlength  wunit.Length           `json:"Pathlength"`
+	Corrections []AbsorbanceCorrection `json:"Corrections"`
+	Reader      string                 `json:"Reader"`
+	ID          string                 `json:"ID"`
 }
 
 type Reading interface {
-	BlankCorrect(blank Absorbance)
-	PathlengthCorrect(pathlength wunit.Length)
+	BlankCorrect(blank Absorbance) error
+	PathLengthCorrect(pathlength wunit.Length)
 	NormaliseTo(target Absorbance)
 	CorrecttoRefStandard()
 }
 
-func (sample *Absorbance) BlankCorrect(blank Absorbance) {
-	if sample.Wavelength == blank.Wavelength &&
-		sample.Pathlength == blank.Pathlength &&
+// BlankCorrect subtracts the blank reading from the sample absorbance.
+// If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
+func (sample *Absorbance) BlankCorrect(blank *Absorbance) error {
+
+	if sample.Wavelength.EqualToRounded(blank.Wavelength, 9); sample.Pathlength.EqualToRounded(blank.Pathlength, 4) &&
 		sample.Reader == blank.Reader {
 		sample.Reading = sample.Reading - blank.Reading
 
-		sample.Status = append(sample.Status, "Blank Corrected")
+		sample.Corrections = append(sample.Corrections, AbsorbanceCorrection{Type: BlankCorrected, CorrectionReading: blank})
+		return nil
 	}
-	return
+	return fmt.Errorf("Cannot pathlength correct as Absorbance readings for sample (%+v) and blank (%+v) are incompatible due to either wavelength, pathlength or reader differences. ", sample, blank)
 }
 
-func (sample *Absorbance) PathlengthCorrect(pathlength wunit.Length) {
+// PathLengthCorrect normalises an absorbance reading
+// to a standard reference pathlength of 1cm.
+// 1cm is the pathlength used to normalise absorbance readings to OD.
+func (sample *Absorbance) PathLengthCorrect(pathlength wunit.Length) {
 
-	referencepathlength := wunit.NewLength(0.01, "m")
+	referencepathlength := wunit.NewLength(10, "mm")
 
-	sample.Reading = sample.Reading * referencepathlength.SIValue() / pathlength.SIValue()
+	sample.Reading = sample.Reading * referencepathlength.RawValue() / pathlength.RawValue()
+
+	sample.Corrections = append(sample.Corrections, AbsorbanceCorrection{Type: PathLengthCorrected, CorrectionReading: nil})
+
 	return
 }

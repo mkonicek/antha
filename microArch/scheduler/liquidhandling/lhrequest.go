@@ -71,6 +71,28 @@ type LHRequest struct {
 	Output_sort           bool
 }
 
+func (req *LHRequest) GetPlate(id string) (*wtype.LHPlate, bool) {
+	p, ok := req.Plates[id]
+
+	if ok {
+		return p, true
+	}
+
+	p, ok = req.Input_plates[id]
+
+	if ok {
+		return p, true
+	}
+
+	p, ok = req.Output_plates[id]
+
+	if ok {
+		return p, true
+	}
+
+	return nil, false
+}
+
 func (req *LHRequest) ConfigureYourself() error {
 	// ensures input solutions is populated
 	// once input plates are specified
@@ -228,6 +250,7 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 	return ret
 }
 
+/*
 func (request *LHRequest) GetPlate(id string) *wtype.LHPlate {
 	p, ok := request.Input_plates[id]
 
@@ -241,3 +264,4 @@ func (request *LHRequest) GetPlate(id string) *wtype.LHPlate {
 
 	return p
 }
+*/

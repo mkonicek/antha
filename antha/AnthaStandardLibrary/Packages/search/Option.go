@@ -35,7 +35,7 @@ import (
 // Particularly InStrings, InSequences, RemoveDuplicateStrings, RemoveDuplicateSequences.
 type Option string
 
-// Options available for use in Seqrch functions.
+// Options available for use in Search functions.
 const (
 
 	// IgnoreCase is an option which can be added to the InStrings and InSequences

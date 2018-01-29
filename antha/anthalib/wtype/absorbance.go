@@ -28,7 +28,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-// CorrectionType is a label given to the nature of the correction of an absorbance reading.
+// CorrectionType is a label given to describe the nature of the correction of an absorbance reading.
 type CorrectionType string
 
 const (

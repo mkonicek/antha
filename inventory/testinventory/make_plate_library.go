@@ -677,7 +677,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {
-	// greiner V96
+	// greiner V96 Microplate PS V-Bottom, Clear, Cat Num: 651161
 
 	bottomtype := wtype.LHWBV
 	xdim := 6.2
@@ -687,9 +687,9 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 
 	wellxoffset := 9.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset := 9.0 //centre of well to centre of neighbouring well in y direction
-	xstart := 0.0      // distance from top left side of plate to first well
+	xstart := -0.5     // distance from top left side of plate to first well
 	ystart := 0.0      // distance from top left side of plate to first well
-	zstart := 2.0      // offset of bottom of deck to bottom of well
+	zstart := 3.0      // offset of bottom of deck to bottom of well
 
 	rwshp := wtype.NewShape("cylinder", "mm", 6.2, 6.2, 10.0)
 	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
@@ -734,6 +734,6 @@ func makeHighResplateforPicking() *wtype.LHPlate {
 func makeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 	plate := makeGreinerVBottomPlate()
 	plate.Type = "GreinerSWVBottom_riser"
-	plate.WellZStart = 42.0
+	plate.WellZStart = 43.0
 	return plate
 }

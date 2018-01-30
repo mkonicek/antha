@@ -23,6 +23,7 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -429,6 +430,33 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 		panic(fmt.Sprintf("Can't unmarshal function, error: %s", err))
 	}
 	return x
+}
+
+//SetVolumeModel sets the function which models the volume of liquid (uL) in
+//the well given it's height (mm)
+func (lhw *LHWell) SetVolumeModel(m wutil.Func1Prm) {
+	if lhw == nil {
+		return
+	}
+	mb, _ := json.Marshal(m)
+	ms := string(mb)
+	lhw.Extra["volume_model"] = ms
+}
+
+//GetVolumeModel unmarshals and returns the volume model
+func (lhw *LHWell) GetVolumeModel() wutil.Func1Prm {
+	if lhw == nil {
+		return nil
+	}
+
+	if ms, ok := lhw.Extra["volume_model"]; ok {
+		if f, err := wutil.UnmarshalFunc([]byte(ms.(string))); err == nil {
+			return f
+		} else {
+			panic(fmt.Sprintf("Can't unmarshal function, error: %s", err))
+		}
+	}
+	return nil
 }
 
 func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {

@@ -459,6 +459,13 @@ func (lhw *LHWell) GetVolumeModel() wutil.Func1Prm {
 	return nil
 }
 
+//HasVolumeModel returns whether the well has a volume model for use with
+//liquid level following
+func (lhw *LHWell) HasVolumeModel() bool {
+	_, ret := lhw.Extra["volume_model"]
+	return ret
+}
+
 func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 	if lhw == nil {
 		return wunit.ZeroVolume(), fmt.Errorf("Nil well has no max volume")

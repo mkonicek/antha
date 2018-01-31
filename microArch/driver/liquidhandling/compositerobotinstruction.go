@@ -1906,7 +1906,10 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	aspins.Plt = ins.FPlateType
 
 	for i := 0; i < ins.Multi; i++ {
-		aspins.LLF = append(aspins.LLF, false)
+		//probably just fetching the same plate each time
+		plate := prms.Plates[ins.PltFrom[i]]
+		//do LLF is the well has a volumemodel
+		aspins.LLF = append(aspins.LLF, plate.Welltype.HasVolumeModel())
 	}
 
 	ret = append(ret, aspins)
@@ -2176,7 +2179,8 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		boins.What = ins.What
 
 		for i := 0; i < ins.Multi; i++ {
-			boins.LLF = append(boins.LLF, false)
+			plate := prms.Plates[ins.PltTo[i]]
+			boins.LLF = append(boins.LLF, plate.Welltype.HasVolumeModel())
 		}
 
 		ret = append(ret, boins)
@@ -2197,7 +2201,8 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dspins.What = ins.What
 
 		for i := 0; i < ins.Multi; i++ {
-			dspins.LLF = append(dspins.LLF, false)
+			plate := prms.Plates[ins.PltTo[i]]
+			dspins.LLF = append(dspins.LLF, plate.Welltype.HasVolumeModel())
 		}
 
 		ret = append(ret, dspins)
@@ -2949,6 +2954,7 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	blow.Plt = ins.TPlateType
 	blow.What = ins.What
 
+	//no LLF for ResetInstructions
 	for i := 0; i < len(ins.What); i++ {
 		blow.LLF = append(blow.LLF, false)
 	}

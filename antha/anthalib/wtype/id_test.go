@@ -1,7 +1,7 @@
 package wtype
 
 import (
-	"math/rand"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"testing"
 )
 
@@ -15,6 +15,7 @@ func makeWell() *LHWell {
 }
 
 func makeComponent() *LHComponent {
+	rand := wutil.GetRandom()
 	A := NewLHComponent()
 	A.Type = LTWater
 	A.Smax = 9999

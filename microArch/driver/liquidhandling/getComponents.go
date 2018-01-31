@@ -144,13 +144,60 @@ func correct_volumes(cmps wtype.ComponentVector) {
 	}
 }
 
-func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) bool {
+func cullZeroes(m map[string]wunit.Volume) map[string]wunit.Volume {
+	r := make(map[string]wunit.Volume, len(m))
+
+	for k, v := range m {
+		if v.IsZero() {
+			continue
+		}
+
+		r[k] = v
+	}
+
+	return r
+}
+
+func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) (bool, string) {
 	collSrcs := sumSources(srcs)
 	collDsts := dests.ToSumHash()
+	collDsts = cullZeroes(collDsts)
 
 	result := subHash(collSrcs, collDsts)
 
-	return result.AllVolsPosOrZero()
+	if len(collSrcs) < len(collDsts) {
+		return false, collateDifference(collDsts, collSrcs, result)
+	}
+
+	r := result.AllVolsPosOrZero()
+
+	if r {
+		return r, ""
+	} else {
+		return r, collateDifference(collDsts, collSrcs, result)
+	}
+}
+
+func collateDifference(a, b, c map[string]wunit.Volume) string {
+	s := ""
+
+	for k, _ := range a {
+		_, ok := b[k]
+
+		if !ok {
+			s += fmt.Sprintf("%s; ", k)
+			continue
+		}
+
+		v := c[k]
+
+		if v.LessThanFloat(0.0) {
+			v.M(-1.0)
+			s += fmt.Sprintf("%s - missing %s; ", k, v.ToString())
+		}
+	}
+
+	return s
 }
 
 func subHash(h1, h2 ComponentVolumeHash) ComponentVolumeHash {
@@ -171,10 +218,10 @@ func sumSources(cmpV []wtype.ComponentVector) ComponentVolumeHash {
 	for _, cV2 := range cmpV {
 		for _, c := range cV2 {
 			if c != nil && c.CName != "" {
-				v, ok := ret[c.CName]
+				v, ok := ret[c.FullyQualifiedName()]
 				if !ok {
 					v = wunit.NewVolume(0.0, "ul")
-					ret[c.CName] = v
+					ret[c.FullyQualifiedName()] = v
 				}
 				v.Add(c.Volume())
 			}
@@ -222,8 +269,8 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 			break
 		}
 
-		if !sourceVolumesOK(srcs, currCmps) {
-			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes")
+		if ok, s := sourceVolumesOK(srcs, currCmps); !ok {
+			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes for components %s", s)
 		}
 
 		if cmpVecsEqual(lastCmps, currCmps) {
@@ -253,7 +300,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		}
 
 		if bestMatch.Sc == -1 {
-			return rep, fmt.Errorf("Components %s %s\n", currCmps.String(), wtype.NotFoundError)
+			return rep, fmt.Errorf("Components %s %s -- try increasing source volumes, if this does not work or is not possible please report to the authors\n", currCmps.String(), wtype.NotFoundError)
 		}
 
 		// adjust finally to ensure we don't leave too little

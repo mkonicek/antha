@@ -25,12 +25,11 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
-	"strings"
-
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/blast"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"strings"
 )
 
 // the following are all physical things; we need a way to separate
@@ -857,10 +856,12 @@ func random_dna_seq(leng int) string {
 }
 
 func random_char(chars string) string {
+	rand := wutil.GetRandom()
 	return string(chars[rand.Intn(len(chars))])
 }
 
 func makeABunchaRandomSeqs(n_seq_sets, seqs_per_set, min_len, len_var int) [][]DNASequence {
+	rand := wutil.GetRandom()
 	var seqs [][]DNASequence
 	var features []Feature
 

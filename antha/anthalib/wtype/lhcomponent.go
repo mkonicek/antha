@@ -82,6 +82,11 @@ func (lhc *LHComponent) PlateLocation() PlateLocation {
 	return PlateLocationFromString(lhc.Loc)
 }
 
+// WellLocation returns the well location in A1 format.
+func (lhc *LHComponent) WellLocation() string {
+	return lhc.PlateLocation().Coords.FormatA1()
+}
+
 // PlateID returns the id of a plate or the empty string
 func (lhc *LHComponent) PlateID() string {
 	loc := lhc.PlateLocation()

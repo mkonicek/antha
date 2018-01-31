@@ -119,6 +119,11 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	nunc96deepwellshp := wtype.NewShape("box", "mm", 8.5, 8.5, 41.5)
 	nunc96deepwell := wtype.NewLHWell("Nunc96DeepWell", "", "", "ul", 2000, 420, nunc96deepwellshp, wtype.LHWBU, 8.2, 8.2, 41.3, 2.5, "mm")
 	plate = wtype.NewLHPlate("Nunc96DeepWell", "Unknown", 8, 12, 43.6, "mm", nunc96deepwell, 9, 9, -1.0, 0.0, 5.5)
+
+	// Thermo 96 well conical btm pp pit natural 0.45 ml well Cat Num: 249946. (TWIST DNA Plate)
+	twist96wellshp := wtype.NewShape("cylinder", "mm", 6.7, 6.7, 9.8)
+	twist96well := wtype.NewLHWell("TwistDNAPlate", "", "", "ul", 450, 10, twist96wellshp, wtype.LHWBV, 6.7, 6.7, 9.8, 4.6, "mm")
+	plate = wtype.NewLHPlate("TwistDNAPlate", "Unknown", 8, 12, 14.4, "mm", twist96well, 9.0, 9.0, 0.0, 0.0, -1.9)
 	plates = append(plates, plate)
 
 	// IDT/ABgene 1.2 ml storage plate AB0564
@@ -683,7 +688,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {
-	// greiner V96
+	// greiner V96 Microplate PS V-Bottom, Clear, Cat Num: 651161
 
 	bottomtype := wtype.LHWBV
 	xdim := 6.2
@@ -693,9 +698,9 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 
 	wellxoffset := 9.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset := 9.0 //centre of well to centre of neighbouring well in y direction
-	xstart := 0.0      // distance from top left side of plate to first well
+	xstart := -0.5     // distance from top left side of plate to first well
 	ystart := 0.0      // distance from top left side of plate to first well
-	zstart := 2.0      // offset of bottom of deck to bottom of well
+	zstart := 3.0      // offset of bottom of deck to bottom of well
 
 	rwshp := wtype.NewShape("cylinder", "mm", 6.2, 6.2, 10.0)
 	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
@@ -740,6 +745,6 @@ func makeHighResplateforPicking() *wtype.LHPlate {
 func makeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 	plate := makeGreinerVBottomPlate()
 	plate.Type = "GreinerSWVBottom_riser"
-	plate.WellZStart = 42.0
+	plate.WellZStart = 43.0
 	return plate
 }

@@ -85,6 +85,7 @@ func MakePolicyItems() AParamSet {
 	alhpis["JUSTBLOWOUT"] = AParam{Name: "JUSTBLOWOUT", Type: typemap["bool"], Desc: "shortcut to get single transfer"}
 	alhpis["OFFSETZADJUST"] = AParam{Name: "OFFSETZADJUST", Type: typemap["float64"], Desc: "Added to z offset"}
 	alhpis["POST_MIX"] = AParam{Name: "POST_MIX", Type: typemap["int"], Desc: "number of mix cycles to do after dispense"}
+	alhpis["MIX_VOLUME_OVERRIDE_TIP_MAX"] = AParam{Name: "MIX_VOLUME_OVERRIDE_TIP_MAX", Type: typemap["bool"], Desc: "Default to using the maximum volume for the current tip type if the specified post mix volume is too high"}
 	alhpis["POST_MIX_RATE"] = AParam{Name: "POST_MIX_RATE", Type: typemap["float64"], Desc: "pipetting rate when post mixing"}
 	alhpis["POST_MIX_VOLUME"] = AParam{Name: "POST_MIX_VOLUME", Type: typemap["float64"], Desc: "volume to post mix (ul)"}
 	alhpis["POST_MIX_X"] = AParam{Name: "POST_MIX_X", Type: typemap["float64"], Desc: "x offset from centre of well (mm) when post-mixing"}

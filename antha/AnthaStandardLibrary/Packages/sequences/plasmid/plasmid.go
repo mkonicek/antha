@@ -19,7 +19,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// package plasmid checks for common plasmid features in a test DNA sequence.
+// Package plasmid checks for common plasmid features in a test DNA sequence.
 package plasmid
 
 import (
@@ -141,9 +141,3 @@ func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, sele
 
 	return
 }
-
-/*
-func CompatibleParts(plasmids []wtype.DNASequence) (Compatible bool, err error) {
-
-}
-*/

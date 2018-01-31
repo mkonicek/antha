@@ -76,12 +76,20 @@ type Measurement interface {
 	ConvertToString(s string) float64
 	// add to this measurement
 	Add(m Measurement)
+	// add to this measurement - synonym for less typing
+	A(m Measurement)
 	// subtract from this measurement
 	Subtract(m Measurement)
+	// subtract - synonym for less typing
+	S(m Measurement)
 	// multiply measurement by a factor
 	MultiplyBy(factor float64)
+	// multiply by a factor - synonym for less typing
+	M(factor float64)
 	// divide measurement by a factor
 	DivideBy(factor float64)
+	// divide - synonym for less typing
+	D(factor float64)
 	// comparison operators
 	LessThan(m Measurement) bool
 	GreaterThan(m Measurement) bool
@@ -180,6 +188,10 @@ func (cm *ConcreteMeasurement) Add(m Measurement) {
 
 }
 
+func (cm *ConcreteMeasurement) A(m Measurement) {
+	cm.Add(m)
+}
+
 // subtract
 
 func (cm *ConcreteMeasurement) Subtract(m Measurement) {
@@ -191,6 +203,9 @@ func (cm *ConcreteMeasurement) Subtract(m Measurement) {
 
 	cm.SetValue(cm.RawValue() - m.ConvertTo(cm.Unit()))
 
+}
+func (cm *ConcreteMeasurement) S(m Measurement) {
+	cm.Subtract(m)
 }
 
 // multiply
@@ -205,6 +220,10 @@ func (cm *ConcreteMeasurement) MultiplyBy(factor float64) {
 
 }
 
+func (cm *ConcreteMeasurement) M(factor float64) {
+	cm.MultiplyBy(factor)
+}
+
 func (cm *ConcreteMeasurement) DivideBy(factor float64) {
 
 	if cm == nil {
@@ -215,6 +234,10 @@ func (cm *ConcreteMeasurement) DivideBy(factor float64) {
 
 	cm.SetValue(cm.RawValue() / float64(factor))
 
+}
+
+func (cm *ConcreteMeasurement) D(factor float64) {
+	cm.DivideBy(factor)
 }
 
 // define a zero

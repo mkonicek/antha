@@ -62,30 +62,36 @@ type LHPlate struct {
 }
 
 func (plate LHPlate) OutputLayout() {
+	fmt.Println(plate.GetLayout())
+}
+
+func (plate LHPlate) GetLayout() string {
+	s := ""
 	for x := 0; x < plate.WellsX(); x += 1 {
 		for y := 0; y < plate.WellsY(); y += 1 {
 			well := plate.Cols[x][y]
 			if well.Currvol() < 0.0001 {
 				continue
 			}
-			fmt.Print("\t\t")
+			s += fmt.Sprint("\t\t")
 			var wc WellCoords
 			wc.X = x
 			wc.Y = y
-			fmt.Print(wc.FormatA1(), " ")
+			s += fmt.Sprint(wc.FormatA1(), " ")
 			//for _, c := range well.WContents {
 			//	fmt.Print(well.WContents.CN, " ")
 			if well.WContents.IsInstance() {
-				fmt.Print(well.WContents.CNID(), " ")
+				s += fmt.Sprint(well.WContents.CNID(), " ")
 			} else {
-				fmt.Print(well.WContents.CName, " ")
+				s += fmt.Sprint(well.WContents.CName, " ")
 			}
 			//}
-			fmt.Printf(" %-6.2f%s", well.Currvol(), well.Vunit)
-			fmt.Println()
-			fmt.Println()
+			s += fmt.Sprintf(" %-6.2f%s", well.Currvol(), well.Vunit)
+			s += fmt.Sprintln()
+			s += fmt.Sprintln()
 		}
 	}
+	return s
 }
 
 // Name returns the name of the plate.

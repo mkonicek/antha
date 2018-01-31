@@ -19,7 +19,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// package plasmid checks for common plasmid features in a test DNA sequence.
 package plasmid
 
 const commonFeatures string = `>lpp_promoter[PRO]{lpp},30 bases, 1123 checksum.

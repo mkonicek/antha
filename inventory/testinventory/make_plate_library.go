@@ -115,6 +115,12 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate := wtype.NewLHPlate("DSW96", "Unknown", 8, 12, 44.1, "mm", deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates = append(plates, plate)
 
+	// Nunc™2.0mL DeepWell™ Plates 95040452
+	nunc96deepwellshp := wtype.NewShape("box", "mm", 8.5, 8.5, 41.5)
+	nunc96deepwell := wtype.NewLHWell("Nunc96DeepWell", "", "", "ul", 2000, 420, nunc96deepwellshp, wtype.LHWBU, 8.2, 8.2, 41.3, 2.5, "mm")
+	plate = wtype.NewLHPlate("Nunc96DeepWell", "Unknown", 8, 12, 43.6, "mm", nunc96deepwell, 9, 9, -1.0, 0.0, 6.5)
+	plates = append(plates, plate)
+
 	// Thermo 96 well conical btm pp pit natural 0.45 ml well Cat Num: 249946. (TWIST DNA Plate)
 	twist96wellshp := wtype.NewShape("cylinder", "mm", 6.7, 6.7, 9.8)
 	twist96well := wtype.NewLHWell("TwistDNAPlate", "", "", "ul", 450, 10, twist96wellshp, wtype.LHWBV, 6.7, 6.7, 9.8, 4.6, "mm")

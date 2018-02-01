@@ -1717,6 +1717,15 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	mixofz += ofzadj
 	final_asp_ref := SafeGetInt(pol, "ASPREFERENCE")
 
+	//LLF
+	use_llf, any_llf := get_use_llf(&pol, ins.Multi, ins.PltFrom, prms)
+	if any_llf {
+		//override reference
+		final_asp_ref = 2 //liquid level
+		//override ofz
+		ofz = -3.0 //-SafeGetF64(pol, "LLFBELOWSURFACE")
+	}
+
 	pspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
 
 	// do we need to enter slowly?
@@ -1906,10 +1915,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	aspins.Plt = ins.FPlateType
 
 	for i := 0; i < ins.Multi; i++ {
-		//probably just fetching the same plate each time
-		plate := prms.Plates[ins.PltFrom[i]]
-		//do LLF if the well has a volumemodel
-		aspins.LLF = append(aspins.LLF, plate.Welltype.HasLiquidLevelModel())
+		aspins.LLF = append(aspins.LLF, use_llf[i])
 	}
 
 	ret = append(ret, aspins)
@@ -2067,6 +2073,15 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	entryspeed := SafeGetF64(pol, "DSPENTRYSPEED")
 	defaultspeed := SafeGetF64(pol, "DEFAULTZSPEED")
 
+	//LLF
+	use_llf, any_llf := get_use_llf(&pol, ins.Multi, ins.PltTo, prms)
+	if any_llf {
+		//override reference
+		ref = 2 //liquid level
+		//override ofz
+		ofz = +3.0 //+SafeGetF64(pol, "LLFABOVESURFACE")
+	}
+
 	var gentlydoesit bool
 
 	if entryspeed != defaultspeed {
@@ -2179,8 +2194,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		boins.What = ins.What
 
 		for i := 0; i < ins.Multi; i++ {
-			plate := prms.Plates[ins.PltTo[i]]
-			boins.LLF = append(boins.LLF, plate.Welltype.HasLiquidLevelModel())
+			boins.LLF = append(boins.LLF, use_llf[i])
 		}
 
 		ret = append(ret, boins)
@@ -2201,8 +2215,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dspins.What = ins.What
 
 		for i := 0; i < ins.Multi; i++ {
-			plate := prms.Plates[ins.PltTo[i]]
-			dspins.LLF = append(dspins.LLF, plate.Welltype.HasLiquidLevelModel())
+			dspins.LLF = append(dspins.LLF, use_llf[i])
 		}
 
 		ret = append(ret, dspins)
@@ -3287,4 +3300,26 @@ func getMulti(w []string) int {
 	}
 
 	return c
+}
+
+func get_use_llf(policy *wtype.LHPolicy, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
+	use_llf := make([]bool, multi)
+	any_llf := false
+	enable_llf := true //SafeGetBool(pol, "LLFENABLE")
+
+	//save a few ms
+	if !enable_llf {
+		return use_llf, enable_llf
+	}
+
+	for i := 0; i < multi; i++ {
+		//probably just fetching the same plate each time
+		plate := prms.Plates[plates[i]]
+		//do LLF if the well has a volumemodel
+		use_llf[i] = enable_llf && plate.Welltype.HasLiquidLevelModel()
+
+		any_llf = any_llf || use_llf[i]
+	}
+
+	return use_llf, any_llf
 }

@@ -432,24 +432,24 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 	return x
 }
 
-//SetVolumeModel sets the function which models the volume of liquid (uL) in
+//SetLiquidLevelModel sets the function which models the volume of liquid (uL) in
 //the well given it's height (mm)
-func (lhw *LHWell) SetVolumeModel(m wutil.Func1Prm) {
+func (lhw *LHWell) SetLiquidLevelModel(m wutil.Func1Prm) {
 	if lhw == nil {
 		return
 	}
 	mb, _ := json.Marshal(m)
 	ms := string(mb)
-	lhw.Extra["volume_model"] = ms
+	lhw.Extra["ll_model"] = ms
 }
 
-//GetVolumeModel unmarshals and returns the volume model
-func (lhw *LHWell) GetVolumeModel() wutil.Func1Prm {
+//GetLiquidLevelModel unmarshals and returns the volume model
+func (lhw *LHWell) GetLiquidLevelModel() wutil.Func1Prm {
 	if lhw == nil {
 		return nil
 	}
 
-	if ms, ok := lhw.Extra["volume_model"]; ok {
+	if ms, ok := lhw.Extra["ll_model"]; ok {
 		if f, err := wutil.UnmarshalFunc([]byte(ms.(string))); err == nil {
 			return f
 		} else {
@@ -459,10 +459,10 @@ func (lhw *LHWell) GetVolumeModel() wutil.Func1Prm {
 	return nil
 }
 
-//HasVolumeModel returns whether the well has a volume model for use with
+//HasLiquidLevelModel returns whether the well has a model for use with
 //liquid level following
-func (lhw *LHWell) HasVolumeModel() bool {
-	_, ret := lhw.Extra["volume_model"]
+func (lhw *LHWell) HasLiquidLevelModel() bool {
+	_, ret := lhw.Extra["ll_model"]
 	return ret
 }
 

@@ -1908,8 +1908,8 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	for i := 0; i < ins.Multi; i++ {
 		//probably just fetching the same plate each time
 		plate := prms.Plates[ins.PltFrom[i]]
-		//do LLF is the well has a volumemodel
-		aspins.LLF = append(aspins.LLF, plate.Welltype.HasVolumeModel())
+		//do LLF if the well has a volumemodel
+		aspins.LLF = append(aspins.LLF, plate.Welltype.HasLiquidLevelModel())
 	}
 
 	ret = append(ret, aspins)
@@ -2180,7 +2180,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		for i := 0; i < ins.Multi; i++ {
 			plate := prms.Plates[ins.PltTo[i]]
-			boins.LLF = append(boins.LLF, plate.Welltype.HasVolumeModel())
+			boins.LLF = append(boins.LLF, plate.Welltype.HasLiquidLevelModel())
 		}
 
 		ret = append(ret, boins)
@@ -2202,7 +2202,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		for i := 0; i < ins.Multi; i++ {
 			plate := prms.Plates[ins.PltTo[i]]
-			dspins.LLF = append(dspins.LLF, plate.Welltype.HasVolumeModel())
+			dspins.LLF = append(dspins.LLF, plate.Welltype.HasLiquidLevelModel())
 		}
 
 		ret = append(ret, dspins)

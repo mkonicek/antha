@@ -7,6 +7,7 @@ type LHOptions struct {
 	PrintInstructions       bool
 	LegacyVolume            bool
 	FixVolumes              bool
+	UseLLF                  bool
 }
 
 func NewLHOptions() LHOptions {

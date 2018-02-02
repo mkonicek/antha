@@ -213,6 +213,10 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	pcrplatewell := wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 15, 1.4, "mm")
 	pcrplatewell.SetAfVFunc(afs)
 
+	//LiquidLevel model for LL Following: vol_f estimates volume given height
+	vol_f := wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
+	pcrplatewell.SetLiquidLevelModel(vol_f)
+
 	plate = wtype.NewLHPlate("pcrplate_with_cooler", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, coolerheight+0.5)
 	plates = append(plates, plate)
 

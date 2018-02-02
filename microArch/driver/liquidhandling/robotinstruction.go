@@ -138,6 +138,11 @@ func InsToString(ins RobotInstruction) string {
 			ss = concatintarray(p.([]int))
 		case int:
 			ss = fmt.Sprintf("%d", p.(int))
+		case []bool:
+			if len(p.([]bool)) == 0 {
+				continue
+			}
+			ss = concatboolarray(p.([]bool))
 		}
 
 		s += str + ": " + ss + " "
@@ -197,6 +202,20 @@ func concatintarray(a []int) string {
 
 	for i, s := range a {
 		r += fmt.Sprintf("%d", s)
+		if i < len(a)-1 {
+			r += ","
+		}
+	}
+
+	return r
+
+}
+
+func concatboolarray(a []bool) string {
+	r := ""
+
+	for i, s := range a {
+		r += fmt.Sprintf("%t", s)
 		if i < len(a)-1 {
 			r += ","
 		}

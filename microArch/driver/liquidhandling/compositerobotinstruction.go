@@ -1723,7 +1723,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		//override reference
 		final_asp_ref = 2 //liquid level
 		//override ofz
-		ofz = -3.0 //-SafeGetF64(pol, "LLFBELOWSURFACE")
+		ofz = -SafeGetF64(pol, "LLFBELOWSURFACE")
 	}
 
 	pspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
@@ -2079,7 +2079,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		//override reference
 		ref = 2 //liquid level
 		//override ofz
-		ofz = +3.0 //+SafeGetF64(pol, "LLFABOVESURFACE")
+		ofz = +SafeGetF64(pol, "LLFABOVESURFACE")
 	}
 
 	var gentlydoesit bool

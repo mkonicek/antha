@@ -111,6 +111,8 @@ func MakePolicyItems() AParamSet {
 	alhpis["NO_AIR_DISPENSE"] = AParam{Name: "NO_AIR_DISPENSE", Type: typemap["bool"], Desc: "Prevent dispensing anywhere other than under liquid?"}
 	alhpis["CAN_MSA"] = AParam{Name: "CAN_MSA", Type: typemap["bool"], Desc: "Permissible to aspirate from multiple sources? -- currently non functional"}
 	alhpis["DESCRIPTION"] = AParam{Name: "DESCRIPTION", Type: typemap["string"], Desc: "Summary of LHPolicy to present to the user"}
+	alhpis["LLFBELOWSURFACE"] = AParam{Name: "LLFBELOWSURFACE", Type: typemap["float64"], Desc: "Distance below surface for Liquid Level Following (LLF) when aspirating"}
+	alhpis["LLFABOVESURFACE"] = AParam{Name: "LLFABOVESURFACE", Type: typemap["float64"], Desc: "Distance below surface for Liquid Level Following (LLF) when dispensing"}
 	return alhpis
 }
 

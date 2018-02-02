@@ -122,7 +122,7 @@ func GetLHPolicyOptions() AParamSet {
 
 	ps["USE_DRIVER_TIP_TRACKING"] = AParam{Name: "USE_DRIVER_TIP_TRACKING", Type: tm["bool"], Desc: "If driver has the option to use its own tip tracking, do so"}
 
-	ps["USE_LLF"] = AParam{Name: "USE_LLF", Type: tm["bool"], Deck: "Use Liquid-level following if plate has a model for liquid height-volume relations and the driver can use it."}
+	ps["USE_LLF"] = AParam{Name: "USE_LLF", Type: tm["bool"], Desc: "Use Liquid-level following if plate has a model for liquid height-volume relations and the driver can use it."}
 
 	return ps
 }

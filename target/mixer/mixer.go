@@ -89,6 +89,9 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	if err := req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
 		return nil, err
 	}
+	if err := req.Policies.SetOption("USE_LLF", a.opt.UseLLF); err != nil {
+		return nil, err
+	}
 
 	prop := a.properties.Dup()
 	prop.Driver = a.properties.Driver
@@ -193,6 +196,10 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	// deal with output sorting
 
 	req.Options.OutputSort = a.opt.OutputSort
+
+	// LiquidLevelFollowing
+
+	req.Options.UseLLF = a.opt.UseLLF
 
 	// legacy volume use
 

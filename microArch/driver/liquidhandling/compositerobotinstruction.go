@@ -25,9 +25,11 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
 	"reflect"
@@ -1719,6 +1721,35 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	//LLF
 	use_llf, any_llf := get_use_llf(&pol, ins.Multi, ins.PltFrom, prms)
+	if any_llf {
+		below_surface := SafeGetF64(pol, "LLFBELOWSURFACE")
+		//Is the liquid height in each well higher than below_surface
+		for i := 0; i < ins.Multi; i++ {
+			plate := prms.Plates[ins.PltFrom[i]]
+			if plate.Welltype.HasLiquidLevelModel() {
+				ll_model, quad := plate.Welltype.GetLiquidLevelModel().(*wutil.Quadratic)
+				if !quad {
+					return ret, fmt.Errorf("Non-quadratic LL model is unsupported")
+				}
+				vol := ins.FVolume[i].ConvertToString("ul") - ins.Volume[i].ConvertToString("ul")
+				//C == 0 by definition for quad models
+				h := (-ll_model.B + math.Sqrt(ll_model.B*ll_model.B+4.*ll_model.A*vol)) / (2. * ll_model.A)
+
+				if h <= below_surface {
+					//we're going to hit the bottom if we LLF all the way
+					//TODO: we should generate two asp commands
+					//one with LLF until we reach close to the bottom
+					//and another without LLF so we don't smack into the bottom
+					//For Now: just diable LLF and continue as before
+					any_llf = false
+					for j := 0; j < ins.Multi; j++ {
+						use_llf[j] = false
+					}
+				}
+			}
+		}
+	}
+
 	if any_llf {
 		//override reference
 		final_asp_ref = 2 //liquid level

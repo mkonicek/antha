@@ -171,7 +171,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
 	roundwell96 := wtype.NewLHWell("SRWFB96", "", "", "ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
-	plate = wtype.NewLHPlate("SRWFB96", "Unknown", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, 1.0)
+	plate = wtype.NewLHPlate("SRWFB96", "Unknown", 8, 12, 15, "mm", roundwell96, 9, 9, 0.0, 0.0, 2.0)
 	plates = append(plates, plate)
 
 	// deep well strip trough 12

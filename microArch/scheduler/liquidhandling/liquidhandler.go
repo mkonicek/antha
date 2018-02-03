@@ -529,12 +529,12 @@ func checkSanityIns(request *LHRequest) {
 			} else if ins.PlateID != "" {
 				// compare result volume to the well volume
 
-				plat := request.GetPlate(ins.PlateID)
+				plat, ok := request.GetPlate(ins.PlateID)
 
-				if plat == nil {
+				if !ok {
 					// possibly an issue
 				} else if plat.Welltype.MaxVolume().LessThan(ins.Result.Volume()) {
-					fmt.Println("ERROR: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Result.CName, " WANT: ", ins.Result.Volume(), " MAX FOR PLATE: ", plat.Welltype.MaxVolume())
+					fmt.Println("WARNING: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Result.CName, " WANT: ", ins.Result.Volume(), " MAX FOR PLATE OF TYPE ", plat.Type, ": ", plat.Welltype.MaxVolume())
 					//good = false
 				}
 			}

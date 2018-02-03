@@ -218,10 +218,10 @@ func sumSources(cmpV []wtype.ComponentVector) ComponentVolumeHash {
 	for _, cV2 := range cmpV {
 		for _, c := range cV2 {
 			if c != nil && c.CName != "" {
-				v, ok := ret[c.CName]
+				v, ok := ret[c.FullyQualifiedName()]
 				if !ok {
 					v = wunit.NewVolume(0.0, "ul")
-					ret[c.CName] = v
+					ret[c.FullyQualifiedName()] = v
 				}
 				v.Add(c.Volume())
 			}

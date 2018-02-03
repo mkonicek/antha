@@ -1,10 +1,9 @@
 package platereader
 
 import (
-	"encoding/gob"
 	"fmt"
+
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/driver/antha_platereader_v1"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
 )
@@ -23,9 +22,6 @@ func NewWOPlateReader() *PlateReader {
 		},
 		GenFunc: ret.generate,
 	}
-
-	// required to use handle as things stand... probably worth revisiting
-	gob.Register(antha_platereader_v1.ProtocolRunRequest{})
 
 	return ret
 }

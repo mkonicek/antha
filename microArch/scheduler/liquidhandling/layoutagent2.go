@@ -416,8 +416,20 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			addr := v.Components[0].Loc
 			tx := strings.Split(addr, ":")
 
+			// do we know about the plate?
+
+			lookUp, ok := request.GetPlate(tx[0])
+
+			if !ok {
+				panic(fmt.Sprint("No information on plate ", tx[0], "  available for layout "))
+			}
+
 			request.LHInstructions[k].Welladdress = tx[1]
 			request.LHInstructions[k].SetPlateID(tx[0])
+			request.LHInstructions[k].Platetype = lookUp.Type
+			request.LHInstructions[k].OutPlate = lookUp
+
+			request.LHInstructions[k].Result.Loc = addr
 
 			// same as condition 1 except we get the plate id somewhere else
 			i := defined(tx[0], s)

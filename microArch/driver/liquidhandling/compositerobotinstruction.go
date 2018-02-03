@@ -25,16 +25,18 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
 	"reflect"
 )
 
 func TipChosenError(v wunit.Volume, prms *LHProperties) string {
-	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (current minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString())
+	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
 }
 
 type TransferParams struct {
@@ -1717,6 +1719,44 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	mixofz += ofzadj
 	final_asp_ref := SafeGetInt(pol, "ASPREFERENCE")
 
+	//LLF
+	use_llf, any_llf := get_use_llf(policy, ins.Multi, ins.PltFrom, prms)
+	if any_llf {
+		below_surface := SafeGetF64(pol, "LLFBELOWSURFACE")
+		//Is the liquid height in each well higher than below_surface
+		for i := 0; i < ins.Multi; i++ {
+			plate := prms.Plates[ins.PltFrom[i]]
+			if plate.Welltype.HasLiquidLevelModel() {
+				ll_model, quad := plate.Welltype.GetLiquidLevelModel().(*wutil.Quadratic)
+				if !quad {
+					return ret, fmt.Errorf("Non-quadratic LL model is unsupported")
+				}
+				vol := ins.FVolume[i].ConvertToString("ul") - ins.Volume[i].ConvertToString("ul")
+				//C == 0 by definition for quad models
+				h := (-ll_model.B + math.Sqrt(ll_model.B*ll_model.B+4.*ll_model.A*vol)) / (2. * ll_model.A)
+
+				if h <= below_surface {
+					//we're going to hit the bottom if we LLF all the way
+					//TODO: we should generate two asp commands
+					//one with LLF until we reach close to the bottom
+					//and another without LLF so we don't smack into the bottom
+					//For Now: just diable LLF and continue as before
+					any_llf = false
+					for j := 0; j < ins.Multi; j++ {
+						use_llf[j] = false
+					}
+				}
+			}
+		}
+	}
+
+	if any_llf {
+		//override reference
+		final_asp_ref = 2 //liquid level
+		//override ofz
+		ofz = -SafeGetF64(pol, "LLFBELOWSURFACE")
+	}
+
 	pspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
 
 	// do we need to enter slowly?
@@ -1779,8 +1819,13 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		if mixvol < wtype.Globals.MIN_REASONABLE_VOLUME_UL {
 			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME set below minimum allowed: %f min %f", mixvol, wtype.Globals.MIN_REASONABLE_VOLUME_UL))
 		} else if !ins.Prms.CanMove(vmixvol, true) {
-			// this is an error in channel choice but the user has to deal... needs modificationst
-			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.ToString(), ins.Prms.VolumeLimitString()))
+			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
+			if override {
+				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
+			} else {
+				// this is an error in channel choice but the user has to deal... needs modificationst
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.ToString(), ins.Prms.VolumeLimitString()))
+			}
 		}
 
 		if ok {
@@ -1901,7 +1946,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	aspins.Plt = ins.FPlateType
 
 	for i := 0; i < ins.Multi; i++ {
-		aspins.LLF = append(aspins.LLF, false)
+		aspins.LLF = append(aspins.LLF, use_llf[i])
 	}
 
 	ret = append(ret, aspins)
@@ -2059,6 +2104,15 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	entryspeed := SafeGetF64(pol, "DSPENTRYSPEED")
 	defaultspeed := SafeGetF64(pol, "DEFAULTZSPEED")
 
+	//LLF
+	use_llf, any_llf := get_use_llf(policy, ins.Multi, ins.PltTo, prms)
+	if any_llf {
+		//override reference
+		ref = 2 //liquid level
+		//override ofz
+		ofz = +SafeGetF64(pol, "LLFABOVESURFACE")
+	}
+
 	var gentlydoesit bool
 
 	if entryspeed != defaultspeed {
@@ -2171,7 +2225,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		boins.What = ins.What
 
 		for i := 0; i < ins.Multi; i++ {
-			boins.LLF = append(boins.LLF, false)
+			boins.LLF = append(boins.LLF, use_llf[i])
 		}
 
 		ret = append(ret, boins)
@@ -2192,7 +2246,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dspins.What = ins.What
 
 		for i := 0; i < ins.Multi; i++ {
-			dspins.LLF = append(dspins.LLF, false)
+			dspins.LLF = append(dspins.LLF, use_llf[i])
 		}
 
 		ret = append(ret, dspins)
@@ -2271,17 +2325,13 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		if mixvol < wtype.Globals.MIN_REASONABLE_VOLUME_UL {
 			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("POST_MIX_VOLUME set below minimum allowed: %f min %f", mixvol, wtype.Globals.MIN_REASONABLE_VOLUME_UL))
 		} else if !ins.Prms.CanMove(vmixvol, true) {
-			// make this illegal for now
+			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
 
-			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip", vmixvol.ToString()))
-			/*
-				tipchg, err := ChangeTips("", vmixvol, prms, ins.Prms, ins.Multi, true)
-
-				if err != nil {
-					return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLUME: %s", err.Error()))
-				}
-				ret = append(ret, tipchg...)
-			*/
+			if override {
+				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
+			} else {
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
+			}
 		}
 
 		if ok {
@@ -2948,6 +2998,7 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	blow.Plt = ins.TPlateType
 	blow.What = ins.What
 
+	//no LLF for ResetInstructions
 	for i := 0; i < len(ins.What); i++ {
 		blow.LLF = append(blow.LLF, false)
 	}
@@ -3189,7 +3240,7 @@ func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, chann
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(ctx, tiptypes, channel, usetiptracking)
 
 	if tipwells == nil || terr != nil {
-		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("PICKUP: types: ", tiptypes))
+		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("PICKUP: types: %v On Deck: %v", tiptypes, params.GetLayout()))
 		return []RobotInstruction{NewLoadTipsMoveInstruction()}, err
 	}
 
@@ -3280,4 +3331,26 @@ func getMulti(w []string) int {
 	}
 
 	return c
+}
+
+func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
+	use_llf := make([]bool, multi)
+	any_llf := false
+	enable_llf := SafeGetBool(policy.Options, "USE_LLF")
+
+	//save a few ms
+	if !enable_llf {
+		return use_llf, enable_llf
+	}
+
+	for i := 0; i < multi; i++ {
+		//probably just fetching the same plate each time
+		plate := prms.Plates[plates[i]]
+		//do LLF if the well has a volumemodel
+		use_llf[i] = enable_llf && plate.Welltype.HasLiquidLevelModel()
+
+		any_llf = any_llf || use_llf[i]
+	}
+
+	return use_llf, any_llf
 }

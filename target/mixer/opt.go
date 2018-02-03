@@ -57,6 +57,7 @@ type Opt struct {
 	OutputSort           bool
 	PrintInstructions    bool
 	UseDriverTipTracking bool
+	UseLLF               bool // allow the use of LLF
 	LegacyVolume         bool // don't track volumes for intermediates
 	FixVolumes           bool // aim to revise requested volumes to service requirements
 }

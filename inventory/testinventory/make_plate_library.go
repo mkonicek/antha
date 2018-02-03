@@ -115,6 +115,18 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate := wtype.NewLHPlate("DSW96", "Unknown", 8, 12, 44.1, "mm", deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates = append(plates, plate)
 
+	// Nunc™2.0mL DeepWell™ Plates 95040452
+	nunc96deepwellshp := wtype.NewShape("box", "mm", 8.5, 8.5, 41.5)
+	nunc96deepwell := wtype.NewLHWell("Nunc96DeepWell", "", "", "ul", 2000, 420, nunc96deepwellshp, wtype.LHWBU, 8.2, 8.2, 41.3, 2.5, "mm")
+	plate = wtype.NewLHPlate("Nunc96DeepWell", "Unknown", 8, 12, 43.6, "mm", nunc96deepwell, 9, 9, -1.0, 0.0, 6.5)
+	plates = append(plates, plate)
+
+	// Thermo 96 well conical btm pp pit natural 0.45 ml well Cat Num: 249946. (TWIST DNA Plate)
+	twist96wellshp := wtype.NewShape("cylinder", "mm", 6.7, 6.7, 9.8)
+	twist96well := wtype.NewLHWell("TwistDNAPlate", "", "", "ul", 450, 10, twist96wellshp, wtype.LHWBV, 6.7, 6.7, 9.8, 4.6, "mm")
+	plate = wtype.NewLHPlate("TwistDNAPlate", "Unknown", 8, 12, 14.4, "mm", twist96well, 9.0, 9.0, 0.0, 0.0, -1.9)
+	plates = append(plates, plate)
+
 	// IDT/ABgene 1.2 ml storage plate AB0564
 	idtshp := wtype.NewShape("cylinder", "mm", 7, 7, 39.35)
 	idtroundwell96 := wtype.NewLHWell("IDT96", "", "", "ul", 1200, 100, idtshp, wtype.LHWBU, 7, 7, 39.35, 3, "mm")
@@ -200,6 +212,10 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	pcrplatewell := wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 15, 1.4, "mm")
 	pcrplatewell.SetAfVFunc(afs)
+
+	//LiquidLevel model for LL Following: vol_f estimates volume given height
+	vol_f := wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
+	pcrplatewell.SetLiquidLevelModel(vol_f)
 
 	plate = wtype.NewLHPlate("pcrplate_with_cooler", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, coolerheight+0.5)
 	plates = append(plates, plate)
@@ -677,7 +693,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {
-	// greiner V96
+	// greiner V96 Microplate PS V-Bottom, Clear, Cat Num: 651161
 
 	bottomtype := wtype.LHWBV
 	xdim := 6.2
@@ -687,9 +703,9 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 
 	wellxoffset := 9.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset := 9.0 //centre of well to centre of neighbouring well in y direction
-	xstart := 0.0      // distance from top left side of plate to first well
+	xstart := -0.5     // distance from top left side of plate to first well
 	ystart := 0.0      // distance from top left side of plate to first well
-	zstart := 2.0      // offset of bottom of deck to bottom of well
+	zstart := 3.0      // offset of bottom of deck to bottom of well
 
 	rwshp := wtype.NewShape("cylinder", "mm", 6.2, 6.2, 10.0)
 	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
@@ -734,6 +750,6 @@ func makeHighResplateforPicking() *wtype.LHPlate {
 func makeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 	plate := makeGreinerVBottomPlate()
 	plate.Type = "GreinerSWVBottom_riser"
-	plate.WellZStart = 42.0
+	plate.WellZStart = 43.0
 	return plate
 }

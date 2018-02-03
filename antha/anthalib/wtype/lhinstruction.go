@@ -63,6 +63,8 @@ func (lhi *LHInstruction) GetPlateType() string {
 	} else {
 		return lhi.Platetype
 	}
+
+	return ""
 }
 
 // privatised in favour of specific instruction constructors

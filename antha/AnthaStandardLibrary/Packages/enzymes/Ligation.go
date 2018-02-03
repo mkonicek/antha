@@ -117,6 +117,7 @@ func joinTwoParts(upstreampart []DigestedFragment, downstreampart []DigestedFrag
 }
 
 func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecondSite ...bool) (wtype.DNASequence, error) {
+
 	rotatedVector := vector.Dup()
 
 	// the purpose of this is to ensure the RE sites go ---> xxxx <---
@@ -127,9 +128,8 @@ func rotateVector(vector wtype.DNASequence, enzyme wtype.TypeIIs, rotateToSecond
 
 	restrictionSites := sequences.FindAll(&rotatedVector, &wtype.DNASequence{Nm: enzyme.Name(), Seq: enzyme.RecognitionSequence})
 
-	if len(restrictionSites.Positions) > 2 {
-		err := fmt.Errorf("must have 2 restriction sites to rotate vector. %d %s sites found in vector %s - cannot rotate", len(restrictionSites.Positions), enzyme.Name(), vector.Name())
-		return rotatedVector, err
+	if len(restrictionSites.Positions) == 0 {
+		return vector, fmt.Errorf("%d sites for %s found in vector %s. Cannot assemble if vector has no restriction sites", len(restrictionSites.Positions), enzyme.Name(), vector.Name())
 	}
 
 	var fwdSites []sequences.PositionPair
@@ -223,14 +223,14 @@ func permutations(arr []int) [][]int {
 }
 
 // FindAllAssemblyProducts will return all assembly products from a set of assembly part sequences. Unlike, JoinXnumberofparts the order of the parts is not important.
-func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []DigestedFragment, plasmidproducts []wtype.DNASequence, err error) {
+func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.DNASequence, enzymes ...wtype.TypeIIs) (assembledfragments []DigestedFragment, plasmidproducts []wtype.DNASequence, err error) {
 
 	var errs []string
 
 	allPartCombos := allPartOrders(partsInAnyOrder)
 
 	for i, partOrder := range allPartCombos {
-		partialassemblies, plasmids, _, err := JoinXNumberOfParts(vector, partOrder, enzyme)
+		partialassemblies, plasmids, _, err := JoinXNumberOfParts(vector, partOrder, enzymes...)
 
 		if err != nil {
 			var errorMessage string
@@ -279,7 +279,7 @@ func FindAllAssemblyProducts(vector wtype.DNASequence, partsInAnyOrder []wtype.D
 
 // JoinXNumberOfParts simulates assembly of a Vector and a list of parts in order using a specified TypeIIs restriction enzyme.
 // Returns an array of partially assembled fragments and fully assembled plasmid products and any error in attempting to assemble the parts.
-func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzyme wtype.TypeIIs) (assembledfragments []DigestedFragment, plasmidproducts []wtype.DNASequence, inserts []wtype.DNASequence, err error) {
+func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequence, enzymes ...wtype.TypeIIs) (assembledfragments []DigestedFragment, plasmidproducts []wtype.DNASequence, inserts []wtype.DNASequence, err error) {
 
 	var newerr error
 	if vector.Seq == "" {
@@ -293,10 +293,23 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	// we have either to rotate the vector or tolerate this
 	// probably best to rotate first
 
-	rotatedvector, err := rotateVector(vector, enzyme)
+	// rotate based on first enzyme only
+	rotatedvector, err := rotateVector(vector, enzymes[0])
 
 	if err != nil {
-		return assembledfragments, plasmidproducts, inserts, err
+		var errs []string
+		errs = append(errs, err.Error())
+		for _, enzyme := range enzymes {
+			rotatedvector, err = rotateVector(vector, enzyme)
+			if err == nil {
+				break
+			} else {
+				errs = append(errs, err.Error())
+			}
+		}
+		if err != nil {
+			return assembledfragments, plasmidproducts, inserts, fmt.Errorf(strings.Join(errs, "\n"))
+		}
 	}
 
 	if len(partsinorder) == 0 {
@@ -308,7 +321,12 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 		err = fmt.Errorf(errorstring)
 		return assembledfragments, plasmidproducts, inserts, err
 	}
-	assembledfragments = TypeIIsDigestToFragments(partsinorder[0], enzyme)
+
+	var errs []string
+	assembledfragments, err = typeIIsDigestToFragments(partsinorder[0], enzymes...)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
 	// initialise assembledFragements with first digested part
 
 	for i := 1; i < len(partsinorder); i++ {
@@ -319,14 +337,17 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 			return assembledfragments, plasmidproducts, inserts, err
 		}
 
-		digestedpart := TypeIIsDigestToFragments(partsinorder[i], enzyme)
+		digestedpart, err := typeIIsDigestToFragments(partsinorder[i], enzymes...)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
 
 		assembledfragments, plasmidproducts, newerr = joinTwoParts(assembledfragments, digestedpart)
 
 		if newerr != nil {
 			message := fmt.Sprint(partsinorder[i-1].Nm, " and ", partsinorder[i].Nm, ": ", newerr.Error())
 			err = fmt.Errorf(message)
-			return
+			return assembledfragments, plasmidproducts, inserts, err
 		}
 	}
 
@@ -335,7 +356,11 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 
 	// now join fragment to vector
 
-	digestedvector := TypeIIsDigestToFragments(rotatedvector, enzyme)
+	digestedvector, err := typeIIsDigestToFragments(rotatedvector, enzymes...)
+
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
 
 	assembledfragments, plasmidproducts, newerr = joinTwoParts(digestedvector, insertFragments)
 	if newerr != nil {
@@ -354,7 +379,6 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 
 		plasmidproduct.Nm = vector.Nm + "_" + strings.Join(partnames, "_")
 	}
-	var errs []string
 	for _, vectorFragment := range digestedvector {
 		for _, insertFragment := range insertFragments {
 			if fragmentsFormPlasmid(vectorFragment, insertFragment) {
@@ -375,7 +399,8 @@ func JoinXNumberOfParts(vector wtype.DNASequence, partsinorder []wtype.DNASequen
 	for _, plasmid := range plasmidproducts {
 		for _, insert := range inserts {
 			if len(sequences.FindAll(&plasmid, &insert).Positions) > 0 {
-				if len(sequences.FindAll(&plasmid, &wtype.DNASequence{Nm: enzyme.Name(), Seq: enzyme.RecognitionSequence}).Positions) == 0 {
+				// assume first enzyme specified is main one to check to be missing from final product
+				if len(sequences.FindAll(&plasmid, &wtype.DNASequence{Nm: enzymes[0].Name(), Seq: enzymes[0].RecognitionSequence}).Positions) == 0 {
 					validPlasmids = append(validPlasmids, plasmid)
 					break
 				}
@@ -493,14 +518,14 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	}
 
 	if len(plasmidProducts) == 1 {
-		sites = RestrictionSiteFinder(plasmidProducts[0], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
+		sites = RestrictionSiteFinder(plasmidProducts[0], bsaI, sapI, enzyme.RestrictionEnzyme)
 	}
 
 	// returns sites found in first plasmid in array! should be changed later!
 	if len(plasmidProducts) > 1 {
 		sites = make([]RestrictionSites, 0)
 		for i := 0; i < len(plasmidProducts); i++ {
-			sitesperplasmid := RestrictionSiteFinder(plasmidProducts[i], []wtype.RestrictionEnzyme{bsaI, sapI, enzyme.RestrictionEnzyme})
+			sitesperplasmid := RestrictionSiteFinder(plasmidProducts[i], bsaI, sapI, enzyme.RestrictionEnzyme)
 			for _, site := range sitesperplasmid {
 				sites = append(sites, site)
 			}
@@ -640,7 +665,7 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 
 					errors[construct.Constructname] = originalerror + " and " + err.Error()
 				}
-				sitesperpart := RestrictionSiteFinder(construct.Vector, []wtype.RestrictionEnzyme{enzyme})
+				sitesperpart := RestrictionSiteFinder(construct.Vector, enzyme)
 
 				if sitesperpart[0].NumberOfSites() != 2 {
 					// need to loop through sitesperpart
@@ -651,7 +676,7 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 				}
 
 				for _, part := range construct.Partsinorder {
-					sitesperpart = RestrictionSiteFinder(part, []wtype.RestrictionEnzyme{enzyme})
+					sitesperpart = RestrictionSiteFinder(part, enzyme)
 					if sitesperpart[0].NumberOfSites() != 2 {
 						sitepositions := SitepositionString(sitesperpart[0])
 						positions := ""

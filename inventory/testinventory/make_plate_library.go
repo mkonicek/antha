@@ -188,13 +188,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types... except troughs?!
 	plates = append(plates, plate)
 
-	// deep well reservoir
-	rshp := wtype.NewShape("box", "mm", 115.0, 72.0, 41.3)
-	singlewelltrough := wtype.NewLHWell("DWR1", "", "", "ul", 300000, 20000, rshp, wtype.LHWBV, 115, 72, 41.3, 4.7, "mm")
-	plate = wtype.NewLHPlate("DWR1", "Unknown", 1, 1, 44.1, "mm", singlewelltrough, 9, 9, 49.5, 0.0, 0.0)
-	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types... inc this?!
-	plates = append(plates, plate)
-
 	// 250ml box reservoir
 	reservoirbox := wtype.NewShape("box", "mm", 121, 80, 40) // 39?
 	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 200000, 40000, reservoirbox, wtype.LHWBFLAT, 121, 80, 40, 3, "mm")
@@ -535,7 +528,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	/// placeholder for non plate container for testing
 
-	plate = wtype.NewLHPlate("1L_DuranBottle", "Unknown", 8, 12, 25.7, "mm", singlewelltrough, 9, 9, 0.0, 0.0, 15.5)
+	plate = wtype.NewLHPlate("1L_DuranBottle", "Unknown", 8, 12, 25.7, "mm", welltypereservoir, 9, 9, 0.0, 0.0, 15.5)
 	plates = append(plates, plate)
 
 	//forward position

@@ -241,5 +241,14 @@ func makeComponents() []*wtype.LHComponent {
 	add("PaprikaRFP", wtype.LTPostMix, 1.0, defaultConc)
 	add("DreidelTeal", wtype.LTPostMix, 1.0, defaultConc)
 
+	//qPCR components
+	add("RNase free water", wtype.LTMultiWater, 9999, defaultConc)
+	add("Quant-X buffer", wtype.LTMultiWater, 9999, defaultConc)
+	add("Lenti-X forward primer", wtype.LTDNA, 1.0, defaultConc)
+	add("Lenti-X reverse primer", wtype.LTDNA, 1.0, defaultConc)
+	add("Rox reference dye LMP", wtype.LTMultiWater, 9999, defaultConc)
+	add("Quant-X(TM) enzyme", wtype.LTGlycerol, 1.0, defaultConc)
+	add("RT enzyme mix", wtype.LTGlycerol, 1.0, defaultConc)
+
 	return components
 }

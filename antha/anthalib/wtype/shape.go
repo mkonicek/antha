@@ -51,6 +51,22 @@ func lengthInMM(length float64, units string) float64 {
 	return l.ConvertToString("mm")
 }
 
+//NewShape creates a new shape of the specified type, hopefully
+//to be deprecated when we start using constructive geometry
+//supported shape_types are "box", "cylinder", "sphere"
+func NewShape(shape_type, units string, xdim, ydim, zdim float64) Shape {
+	var ret Shape
+	switch shape_type {
+	case "box":
+		ret = NewBoxShape(xdim, ydim, 0., 0., zdim, units)
+	case "cylinder":
+		ret = NewCylinderShape(xdim, ydim, 0., 0., zdim, units)
+	case "sphere":
+		ret = NewSphereShape(xdim, ydim, zdim, units)
+	}
+	return ret
+}
+
 //###########################################################
 //						BoxShape
 //###########################################################
@@ -83,6 +99,10 @@ func NewBoxShape(top_x, top_y, base_x, base_y, height float64, units string) *Bo
 //Duplicate
 func (self *BoxShape) Dup() Shape {
 	return NewBoxShape(self.top_x, self.top_y, self.base_x, self.base_y, self.GetSize().Z, "mm")
+}
+
+func (self *BoxShape) GetName() string {
+	return "box"
 }
 
 //@implement LHObject
@@ -193,6 +213,10 @@ func (self *CylinderShape) Dup() Shape {
 	return NewCylinderShape(2*self.rx_t, 2*self.ry_t, 2*self.rx_b, 2*self.ry_b, self.GetSize().Z, "mm")
 }
 
+func (self *CylinderShape) GetName() string {
+	return "cylinder"
+}
+
 //@implement LHObject
 func (self *CylinderShape) GetPosition() Coordinates {
 	if self.parent != nil {
@@ -295,6 +319,10 @@ func NewSphereShape(size_x, size_y, size_z float64, units string) *SphereShape {
 //Duplicate
 func (self *SphereShape) Dup() Shape {
 	return NewSphereShape(self.GetSize().X, self.GetSize().Y, self.GetSize().Z, "mm")
+}
+
+func (self *SphereShape) GetName() string {
+	return "sphere"
 }
 
 //@implement LHObject

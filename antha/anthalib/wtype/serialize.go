@@ -96,7 +96,7 @@ func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 
 func (plate *LHPlate) Welldimensions() *LHWellType {
 	t := plate.Welltype
-	lhwt := LHWellType{t.MaxVol, t.Vunit, t.Rvol, t.WShape.ShapeName, t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, t.Dunit}
+	lhwt := LHWellType{t.MaxVol, t.Vunit, t.Rvol, NameOf(t.WShape), t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, t.Dunit}
 	return &lhwt
 }
 

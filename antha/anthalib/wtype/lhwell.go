@@ -89,24 +89,26 @@ type LHWell struct {
 	Inst      string
 	Crds      WellCoords
 	MaxVol    float64
+	Vunit     string
 	WContents *LHComponent
 	Rvol      float64
 	WShape    Shape
 	Bottom    WellBottomType
-	bounds    BBox
+	Bounds    BBox
 	Bottomh   float64
+	Dunit     string
 	Extra     map[string]interface{}
 	Plate     LHObject `gotopb:"-" json:"-"`
 }
 
 //@implement Named
 func (self *LHWell) GetName() string {
-	return self.Plate.GetName() + "_well@" + self.Crds
+	return NameOf(self.Plate) + "_well@" + self.Crds.FormatA1()
 }
 
 //@implement Typed
 func (self *LHWell) GetType() string {
-	return self.Plate.GetType() + "_well"
+	return TypeOf(self.Plate) + "_well"
 }
 
 //@implement Classy
@@ -142,7 +144,7 @@ func (self *LHWell) GetPointIntersections(point Coordinates) []LHObject {
 
 //@implement LHObject
 func (self *LHWell) SetOffset(c Coordinates) error {
-	self.bounds.SetPosition(c)
+	self.Bounds.SetPosition(c)
 	return nil
 }
 
@@ -354,16 +356,18 @@ func (w *LHWell) Empty() bool {
 // copy of instance
 func (lhw *LHWell) Dup() *LHWell {
 	ret := LHWell{
-		GetUUID(),                //ID        string
-		lhw.Inst,                 //Inst      string
-		lhw.Crds,                 //Crds      WellCoords
-		lhw.MaxVol,               //MaxVol    float64
-		lhw.WContents.Dup(),      //WContents *LHComponent
-		lhw.Rvol,                 //Rvol      float64
-		lhw.WShape.Dup(),         //WShape    *Shape
-		lhw.Bottom,               //Bottom    WellBottomType
-		lhw.Bounds,               //Bounds    BBox
-		lhw.Bottomh,              //Bottomh   float64
+		GetUUID(),  //ID        string
+		lhw.Inst,   //Inst      string
+		lhw.Crds,   //Crds      WellCoords
+		lhw.MaxVol, //MaxVol    float64
+		lhw.Vunit,
+		lhw.WContents.Dup(), //WContents *LHComponent
+		lhw.Rvol,            //Rvol      float64
+		lhw.WShape.Dup(),    //WShape    Shape
+		lhw.Bottom,          //Bottom    WellBottomType
+		lhw.Bounds,          //Bounds    BBox
+		lhw.Bottomh,         //Bottomh   float64
+		lhw.Dunit,
 		map[string]interface{}{}, //Extra     map[string]interface{}
 		lhw.Plate,                //Plate     LHObject `gotopb:"-" json:"-"`
 	}
@@ -377,7 +381,7 @@ func (lhw *LHWell) Dup() *LHWell {
 
 // copy of type
 func (lhw *LHWell) CDup() *LHWell {
-	cp := NewLHWell(lhw.Platetype, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.WShape.(LHObject).GetSize().X, lhw.WShape.(LHObject).GetSize().Y, lhw.WShape.(LHObject).GetSize().Z, lhw.Bottomh, lhw.Dunit)
+	cp := NewLHWell(lhw.Plate, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.WShape.(LHObject).GetSize().X, lhw.WShape.(LHObject).GetSize().Y, lhw.WShape.(LHObject).GetSize().Z, lhw.Bottomh, lhw.Dunit)
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
 	}
@@ -385,7 +389,7 @@ func (lhw *LHWell) CDup() *LHWell {
 	return cp
 }
 func (lhw *LHWell) DupKeepIDs() *LHWell {
-	cp := NewLHWell(lhw.Plate, lhw.Crds, "ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp := NewLHWell(lhw.Plate, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
 
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
@@ -410,7 +414,7 @@ func (lhw *LHWell) AreaForVolume() wunit.Area {
 	vf := lhw.GetAfVFunc()
 
 	if vf == nil {
-		ret, _ := lhw.CalculateMaxCrossSectionArea()
+		ret := lhw.CalculateMaxCrossSectionArea()
 		return ret
 	} else {
 		vol := lhw.WContents.Volume()
@@ -446,29 +450,12 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 	return nil
 }
 
-func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
-
-	if lhw.Bottom == FlatWellBottom { // flat
-		vol, err = lhw.Shape().Volume()
-	} /*else if lhw.Bottom == UWellBottom { // round
-		vol, err = lhw.Shape().Volume()
-		// + additional calculation
-	} else if lhw.Bottom == VWellBottom { // Pointed / v-shaped /pyramid
-		vol, err = lhw.Shape().Volume()
-		// + additional calculation
-	}
-	*/
-	return
-}
-
-// make a new well structure
 func (lhw *LHWell) CalculateMaxVolume() wunit.Volume {
-
 	return lhw.Shape().Volume()
 }
 
 // make a new well structure
-func NewLHWell(plate LHObject, crds WellCoords, vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+func NewLHWell(plate LHObject, crds WellCoords, vunit string, vol, rvol float64, shape Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
 	var well LHWell
 
 	well.Plate = plate

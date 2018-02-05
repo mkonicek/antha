@@ -38,7 +38,7 @@ type Location interface {
 	Location_Name() string
 	Positions() []Location
 	Container() Location
-	Shape() *Shape
+	Shape() Shape
 }
 
 type ConcreteLocation struct {
@@ -47,7 +47,7 @@ type ConcreteLocation struct {
 	Name string
 	Psns []*ConcreteLocation
 	Cntr *ConcreteLocation
-	Shap *Shape
+	Shap Shape
 }
 
 func (cl *ConcreteLocation) Location_ID() string {
@@ -66,11 +66,11 @@ func (cl *ConcreteLocation) Positions() []Location {
 func (cl *ConcreteLocation) Container() Location {
 	return cl.Cntr
 }
-func (cl *ConcreteLocation) Shape() *Shape {
+func (cl *ConcreteLocation) Shape() Shape {
 	return cl.Shap
 }
 
-func NewLocation(name string, nPositions int, shape *Shape) Location { //TODO only in particular cases should the inner locations be populated
+func NewLocation(name string, nPositions int, shape Shape) Location { //TODO only in particular cases should the inner locations be populated
 	positions := make([]*ConcreteLocation, nPositions)
 	l := ConcreteLocation{NewUUID(), "", "", positions, nil, shape}
 	l.Cntr = &l

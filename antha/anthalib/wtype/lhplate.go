@@ -496,6 +496,7 @@ func (self *LHPlate) GetPosition() Coordinates {
 		return self.parent.GetPosition().Add(self.Bounds.GetPosition())
 	}
 	return self.Bounds.GetPosition()
+
 }
 
 func (self *LHPlate) GetSize() Coordinates {

@@ -91,11 +91,12 @@ func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 		wunit.NewLength(lhwt.Zdim, lhwt.Dunit).ConvertToString("mm"),
 	})
 	w.Bottomh = wunit.NewLength(lhwt.Bottomh, lhwt.Dunit).ConvertToString("mm")
+	w.Dunit = lhwt.Dunit
 }
 
 func (plate *LHPlate) Welldimensions() *LHWellType {
 	t := plate.Welltype
-	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, t.WShape.ShapeName, t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
+	lhwt := LHWellType{t.MaxVol, t.Vunit, t.Rvol, t.WShape.ShapeName, t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, t.Dunit}
 	return &lhwt
 }
 

@@ -43,6 +43,46 @@ const (
 
 var WellBottomNames []string = []string{"flat", "U", "V"}
 
+type WellShape int
+
+const (
+	RoundWell WellShape = iota
+	SquareWell
+)
+
+var WellShapeNames []string = []string{"Round", "Square"}
+
+func MakeWellShape(ws WellShape, top_x, top_y, base_x, base_y, height, bottomh float64, units string, wb WellBottomType) Shape {
+	var body, bottom Shape
+	switch ws {
+	case RoundWell:
+		body = NewCylinderShape(top_x, top_y, base_x, base_y, height-bottomh, units)
+	case SquareWell:
+		body = NewBoxShape(top_x, top_y, base_x, base_y, height-bottomh, units)
+	}
+
+	if wb == FlatWellBottom {
+		return body
+	}
+
+	if wb == UWellBottom {
+		//this probably only makes sense for ws == RoundWell
+		bottom = NewHSphereShape(base_x, base_y, bottomh, units, Upwards)
+	} else if wb == VWellBottom {
+		switch ws {
+		case RoundWell:
+			bottom = NewConeShape(base_x, base_y, bottomh, units, Upwards)
+		case SquareWell:
+			bottom = NewSqPyrShape(base_x, base_y, bottomh, units, Upwards)
+		}
+	}
+
+	//stack on top of each other
+	body.(LHObject).SetOffset(Coordinates{0, 0, bottomh})
+
+	return NewCompositeShape([]Shape{body, bottom})
+}
+
 // structure representing a well on a microplate - description of a destination
 type LHWell struct {
 	ID        string
@@ -51,9 +91,9 @@ type LHWell struct {
 	MaxVol    float64
 	WContents *LHComponent
 	Rvol      float64
-	WShape    *Shape
+	WShape    Shape
 	Bottom    WellBottomType
-	Bounds    BBox
+	bounds    BBox
 	Bottomh   float64
 	Extra     map[string]interface{}
 	Plate     LHObject `gotopb:"-" json:"-"`
@@ -61,12 +101,12 @@ type LHWell struct {
 
 //@implement Named
 func (self *LHWell) GetName() string {
-	return fmt.Sprintf("%s@%s", self.Crds.FormatA1(), NameOf(self.Plate))
+	return self.Plate.GetName() + "_well@" + self.Crds
 }
 
 //@implement Typed
 func (self *LHWell) GetType() string {
-	return fmt.Sprintf("well_in_%s", TypeOf(self.Plate))
+	return self.Plate.GetType() + "_well"
 }
 
 //@implement Classy
@@ -76,7 +116,7 @@ func (self *LHWell) GetClass() string {
 
 //@implement LHObject
 func (self *LHWell) GetPosition() Coordinates {
-	return OriginOf(self).Add(self.Bounds.GetPosition())
+	return self.Plate.GetPosition().Add(self.Bounds.GetPosition())
 }
 
 //@implement LHObject
@@ -86,9 +126,7 @@ func (self *LHWell) GetSize() Coordinates {
 
 //@implement LHObject
 func (self *LHWell) GetBoxIntersections(box BBox) []LHObject {
-	//relative box
-	box.SetPosition(box.GetPosition().Subtract(OriginOf(self)))
-	if self.Bounds.IntersectsBox(box) {
+	if len(self.WShape.(LHObject).GetBoxIntersections(box)) > 0 {
 		return []LHObject{self}
 	}
 	return nil
@@ -96,35 +134,28 @@ func (self *LHWell) GetBoxIntersections(box BBox) []LHObject {
 
 //@implement LHObject
 func (self *LHWell) GetPointIntersections(point Coordinates) []LHObject {
-	//relative point
-	point = point.Subtract(OriginOf(self))
-	//At some point this should be called self.shape for a more accurate intersection test
-	//see branch shape-changes
-	if self.Bounds.IntersectsPoint(point) {
+	if len(self.WShape.(LHObject).GetPointIntersections(point)) > 0 {
 		return []LHObject{self}
 	}
 	return nil
 }
 
 //@implement LHObject
-func (self *LHWell) SetOffset(point Coordinates) error {
-	self.Bounds.SetPosition(point)
+func (self *LHWell) SetOffset(c Coordinates) error {
+	self.bounds.SetPosition(c)
 	return nil
 }
 
 //@implement LHObject
-func (self *LHWell) SetParent(p LHObject) error {
-	//Seems unlikely, but I suppose wells that you can take from one plate and insert
-	//into another could be feasible with some funky labware
-	if plate, ok := p.(*LHPlate); ok {
-		self.Plate = plate
+//Doesn't seem likely that this will be used anytime soon, but maybe moving
+//wells from one plate is possible with some funky labware?
+func (self *LHWell) SetParent(o LHObject) error {
+	if p, ok := o.(*LHPlate); ok {
+		self.Plate = p
 		return nil
 	}
-	if tb, ok := p.(*LHTipwaste); ok {
-		self.Plate = tb
-		return nil
-	}
-	return fmt.Errorf("Cannot set well parent to %s \"%s\", only plates allowed", ClassOf(p), NameOf(p))
+	return fmt.Errorf("Cannot set well \"%s\"'s parent to %s \"%s\" - only plates can parent wells",
+		self.GetName(), ClassOf(o), NameOf(o))
 }
 
 //@implement LHObject
@@ -163,9 +194,9 @@ Plate     : %v,
 		w.Rvol,
 		w.WShape,
 		WellBottomNames[w.Bottom],
-		w.GetSize().X,
-		w.GetSize().Y,
-		w.GetSize().Z,
+		w.WShape.(LHObject).GetSize().X,
+		w.WShape.(LHObject).GetSize().Y,
+		w.WShape.(LHObject).GetSize().Z,
 		w.Bottomh,
 		w.Extra,
 		w.Plate,
@@ -295,11 +326,7 @@ func (lhw *LHWell) Location_Name() string {
 	return NameOf(lhw.Plate)
 }
 
-func (lhw *LHWell) Shape() *Shape {
-	if lhw.WShape == nil {
-		// return the non-shape
-		return NewNilShape()
-	}
+func (lhw *LHWell) Shape() Shape {
 	return lhw.WShape
 }
 
@@ -350,7 +377,7 @@ func (lhw *LHWell) Dup() *LHWell {
 
 // copy of type
 func (lhw *LHWell) CDup() *LHWell {
-	cp := NewLHWell(lhw.Plate, lhw.Crds, "ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp := NewLHWell(lhw.Platetype, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.WShape.(LHObject).GetSize().X, lhw.WShape.(LHObject).GetSize().Y, lhw.WShape.(LHObject).GetSize().Z, lhw.Bottomh, lhw.Dunit)
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
 	}
@@ -372,11 +399,8 @@ func (lhw *LHWell) DupKeepIDs() *LHWell {
 	return cp
 }
 
-func (lhw *LHWell) CalculateMaxCrossSectionArea() (ca wunit.Area, err error) {
-
-	ca, err = lhw.Shape().MaxCrossSectionalArea()
-
-	return
+func (lhw *LHWell) CalculateMaxCrossSectionArea() wunit.Area {
+	return lhw.Shape().MaxCrossSectionalArea()
 }
 
 func (lhw *LHWell) AreaForVolume() wunit.Area {
@@ -438,6 +462,12 @@ func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 }
 
 // make a new well structure
+func (lhw *LHWell) CalculateMaxVolume() wunit.Volume {
+
+	return lhw.Shape().Volume()
+}
+
+// make a new well structure
 func NewLHWell(plate LHObject, crds WellCoords, vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
 	var well LHWell
 
@@ -456,6 +486,7 @@ func NewLHWell(plate LHObject, crds WellCoords, vunit string, vol, rvol float64,
 		wunit.NewLength(zdim, dunit).ConvertToString("mm"),
 	}}
 	well.Bottomh = wunit.NewLength(bottomh, dunit).ConvertToString("mm")
+	well.Dunit = dunit
 	well.Extra = make(map[string]interface{})
 	return &well
 }

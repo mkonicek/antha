@@ -242,7 +242,7 @@ func (self *LHTipbox) GetPointIntersections(point Coordinates) []LHObject {
 }
 
 func (self *LHTipbox) SetOffset(o Coordinates) error {
-	self.bounds.SetPosition(o)
+	self.Bounds.SetPosition(o)
 	return nil
 }
 

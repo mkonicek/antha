@@ -528,7 +528,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	/// placeholder for non plate container for testing
 
-	plate = wtype.NewLHPlate("1L_DuranBottle", "Unknown", 8, 12, 25.7, "mm", singlewelltrough, 9, 9, 0.0, 0.0, 15.5)
+	plate = wtype.NewLHPlate("1L_DuranBottle", "Unknown", 8, 12, 25.7, "mm", welltypereservoir, 9, 9, 0.0, 0.0, 15.5)
 	plates = append(plates, plate)
 
 	//forward position

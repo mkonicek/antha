@@ -578,6 +578,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.WellTo = ins.WellTo[t]
 			mci.FPlateType = ins.FPlateType[t]
 			mci.TPlateType = ins.TPlateType[t]
+			mci.TipType = newtiptypes
 			//mci.Multi = ins.Multi
 			mci.Multi = countMulti(ins.PltFrom[t])
 			prms := make([]*wtype.LHChannelParameter, ins.Multi)
@@ -738,6 +739,7 @@ type MultiChannelTransferInstruction struct {
 	TVolume    []wunit.Volume
 	Multi      int // potentially deprecated
 	Prms       []*wtype.LHChannelParameter
+	TipType    []string
 }
 
 func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
@@ -753,6 +755,7 @@ func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
 	tp.FVolume = wunit.CopyVolume(scti.FVolume[k])
 	tp.TVolume = wunit.CopyVolume(scti.TVolume[k])
 	tp.Channel = scti.Prms[k].Dup()
+	tp.TipType = scti.TipType[k]
 	return tp
 }
 func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
@@ -768,6 +771,7 @@ func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
 	v.TVolume = make([]wunit.Volume, 0)
 	v.FPlateType = make([]string, 0)
 	v.TPlateType = make([]string, 0)
+	v.TipType = make([]string, 0)
 	return &v
 }
 func (ins *MultiChannelTransferInstruction) InstructionType() int {
@@ -1143,7 +1147,7 @@ func (ins *AspirateInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *AspirateInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *AspirateInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1211,7 +1215,7 @@ func (ins *DispenseInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *DispenseInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *DispenseInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1275,7 +1279,7 @@ func (ins *BlowoutInstruction) Generate(ctx context.Context, policy *wtype.LHPol
 	return nil, nil
 }
 
-func (ins *BlowoutInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *BlowoutInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1324,7 +1328,7 @@ func (ins *PTZInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyR
 	return nil, nil
 }
 
-func (ins *PTZInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *PTZInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.ResetPistons(ins.Head, ins.Channel)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1397,7 +1401,7 @@ func (ins *MoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *MoveInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *MoveInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1482,7 +1486,7 @@ func (ins *MoveRawInstruction) Generate(ctx context.Context, policy *wtype.LHPol
 	return nil, nil
 }
 
-func (ins *MoveRawInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *MoveRawInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	logger.Fatal("Not yet implemented")
 	panic("Not yet implemented")
 }
@@ -1544,7 +1548,7 @@ func (ins *LoadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *LoadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *LoadTipsInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.LoadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1609,7 +1613,7 @@ func (ins *UnloadTipsInstruction) Generate(ctx context.Context, policy *wtype.LH
 	return nil, nil
 }
 
-func (ins *UnloadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *UnloadTipsInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.UnloadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2468,7 +2472,7 @@ func (ins *SetPipetteSpeedInstruction) Generate(ctx context.Context, policy *wty
 	return nil, nil
 }
 
-func (ins *SetPipetteSpeedInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *SetPipetteSpeedInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2510,7 +2514,7 @@ func (ins *SetDriveSpeedInstruction) Generate(ctx context.Context, policy *wtype
 	return nil, nil
 }
 
-func (ins *SetDriveSpeedInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *SetDriveSpeedInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.SetDriveSpeed(ins.Drive, ins.Speed)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2542,7 +2546,7 @@ func (ins *InitializeInstruction) Generate(ctx context.Context, policy *wtype.LH
 	return nil, nil
 }
 
-func (ins *InitializeInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *InitializeInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.Initialize()
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2574,7 +2578,7 @@ func (ins *FinalizeInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *FinalizeInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *FinalizeInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.Finalize()
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2613,7 +2617,7 @@ func (ins *WaitInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *WaitInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *WaitInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	ret := driver.Wait(ins.Time)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2662,7 +2666,7 @@ func (ins *LightsOnInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *LightsOnInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *LightsOnInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LightsOnInstruction")
 }
 
@@ -2705,7 +2709,7 @@ func (ins *LightsOffInstruction) Generate(ctx context.Context, policy *wtype.LHP
 	return nil, nil
 }
 
-func (ins *LightsOffInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *LightsOffInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LightsOffInstruction")
 }
 
@@ -2748,7 +2752,7 @@ func (ins *OpenInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *OpenInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *OpenInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: OpenInstruction")
 }
 
@@ -2791,7 +2795,7 @@ func (ins *CloseInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	return nil, nil
 }
 
-func (ins *CloseInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *CloseInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: CloseInstruction")
 }
 
@@ -2834,7 +2838,7 @@ func (ins *LoadAdaptorInstruction) Generate(ctx context.Context, policy *wtype.L
 	return nil, nil
 }
 
-func (ins *LoadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *LoadAdaptorInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LoadAdaptor")
 }
 
@@ -2877,7 +2881,7 @@ func (ins *UnloadAdaptorInstruction) Generate(ctx context.Context, policy *wtype
 	return nil, nil
 }
 
-func (ins *UnloadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *UnloadAdaptorInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: UnloadAdaptor")
 }
 
@@ -3194,7 +3198,7 @@ func (ins *MixInstruction) GetParameter(name string) interface{} {
 
 }
 
-func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (mi *MixInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
 	vols := make([]float64, len(mi.Volume))
 
 	for i := 0; i < len(mi.Volume); i++ {

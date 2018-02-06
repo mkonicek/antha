@@ -98,7 +98,21 @@ var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
 
-func InsToString(ins RobotInstruction) string {
+type printOption string
+
+const colouredTerminalOutput printOption = "colouredTerminalOutput"
+
+func ansiPrint(options ...printOption) bool {
+
+	for _, option := range options {
+		if option == colouredTerminalOutput {
+			return true
+		}
+	}
+	return false
+}
+
+func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 	s := ""
 
 	s = InstructionTypeName(ins) + " "
@@ -114,9 +128,9 @@ func InsToString(ins RobotInstruction) string {
 	} else {
 		changeColour = text.White
 	}
-
-	s = changeColour(s)
-
+	if ansiPrint(ansiPrintOptions...) {
+		s = changeColour(s)
+	}
 	for _, str := range RobotParameters {
 		p := ins.GetParameter(str)
 
@@ -160,16 +174,30 @@ func InsToString(ins RobotInstruction) string {
 			}
 			ss = concatboolarray(p.([]bool))
 		}
-		if str == "WHAT" {
-			s += str + ": " + text.Yellow(ss) + " "
-		} else if str == "MULTI" {
-			s += text.Blue(str+": ") + ss + " "
-		} else if str == "OFFSETZ" {
-			s += str + ": " + changeColour(ss) + " "
-		} else if str == "TOPLATETYPE" {
-			s += str + ": " + text.Cyan(ss) + " "
+		if ansiPrint(ansiPrintOptions...) {
+			if str == "WHAT" {
+				s += str + ": " + text.Yellow(ss) + " "
+			} else if str == "MULTI" {
+				s += text.Blue(str+": ") + ss + " "
+			} else if str == "OFFSETZ" {
+				s += str + ": " + changeColour(ss) + " "
+			} else if str == "TOPLATETYPE" {
+				s += str + ": " + text.Cyan(ss) + " "
+			} else {
+				s += str + ": " + ss + " "
+			}
 		} else {
-			s += str + ": " + ss + " "
+			if str == "WHAT" {
+				s += str + ": " + ss + " "
+			} else if str == "MULTI" {
+				s += str + ": " + ss + " "
+			} else if str == "OFFSETZ" {
+				s += str + ": " + ss + " "
+			} else if str == "TOPLATETYPE" {
+				s += str + ": " + ss + " "
+			} else {
+				s += str + ": " + ss + " "
+			}
 		}
 	}
 
@@ -238,7 +266,7 @@ func castInstructionToString(parameter interface{}) string {
 const Aspirate = "Aspirate"
 const Dispense = "Dispense"
 
-func SummariseTwoSteps(ins1, ins2 RobotInstruction) (Summary, error) {
+func MakeAspOrDspSummary(ins1, ins2 RobotInstruction) (Summary, error) {
 	step1summary, err := summarise(ins1)
 
 	if err != nil {

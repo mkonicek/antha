@@ -274,13 +274,13 @@ func TestMultiZOffset2(t *testing.T) {
 		for i, instruction := range request.Instructions {
 			if i > 0 {
 				if liquidhandling.InstructionTypeName(instruction) == "ASP" {
-					aspirateSummary, err := liquidhandling.SummariseTwoSteps(request.Instructions[i-1], instruction)
+					aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(request.Instructions[i-1], instruction)
 					if err != nil {
 						fmt.Println(err.Error())
 					}
 					aspirateInstructions = append(aspirateInstructions, aspirateSummary)
 				} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
-					dispenseSummary, err := liquidhandling.SummariseTwoSteps(request.Instructions[i-1], instruction)
+					dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(request.Instructions[i-1], instruction)
 					if err != nil {
 						fmt.Println(err.Error())
 					}
@@ -374,13 +374,13 @@ func TestMultiZOffset(t *testing.T) {
 	for i, instruction := range singleRq.Instructions {
 		if i > 0 {
 			if liquidhandling.InstructionTypeName(instruction) == "ASP" {
-				aspirateSummary, err := liquidhandling.SummariseTwoSteps(singleRq.Instructions[i-1], instruction)
+				aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(singleRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
 				singleAspirateInstructions = append(singleAspirateInstructions, aspirateSummary)
 			} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
-				dispenseSummary, err := liquidhandling.SummariseTwoSteps(singleRq.Instructions[i-1], instruction)
+				dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(singleRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
@@ -392,13 +392,13 @@ func TestMultiZOffset(t *testing.T) {
 	for i, instruction := range multiRq.Instructions {
 		if i > 0 {
 			if liquidhandling.InstructionTypeName(instruction) == "ASP" {
-				aspirateSummary, err := liquidhandling.SummariseTwoSteps(multiRq.Instructions[i-1], instruction)
+				aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(multiRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
 				multiAspirateInstructions = append(multiAspirateInstructions, aspirateSummary)
 			} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
-				dispenseSummary, err := liquidhandling.SummariseTwoSteps(multiRq.Instructions[i-1], instruction)
+				dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(multiRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
 				}

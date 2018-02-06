@@ -299,9 +299,9 @@ func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) 
 	}
 
 	if isAspirate(dspOrAspInstruction) {
-		return mergeSummaries(step1summary, step2summary, Aspirate), nil
+		return mergeSummaries(step1summary, step2summary, string(Aspirate)), nil
 	} else if isDispense(dspOrAspInstruction) {
-		return mergeSummaries(step1summary, step2summary, Dispense), nil
+		return mergeSummaries(step1summary, step2summary, string(Dispense)), nil
 	}
 
 	return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense found %s", InstructionTypeName(dspOrAspInstruction))

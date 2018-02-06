@@ -578,6 +578,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.WellTo = ins.WellTo[t]
 			mci.FPlateType = ins.FPlateType[t]
 			mci.TPlateType = ins.TPlateType[t]
+			mci.TipType = newtiptypes
 			//mci.Multi = ins.Multi
 			mci.Multi = countMulti(ins.PltFrom[t])
 			prms := make([]*wtype.LHChannelParameter, ins.Multi)
@@ -738,6 +739,7 @@ type MultiChannelTransferInstruction struct {
 	TVolume    []wunit.Volume
 	Multi      int // potentially deprecated
 	Prms       []*wtype.LHChannelParameter
+	TipType    []string
 }
 
 func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
@@ -753,6 +755,7 @@ func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
 	tp.FVolume = wunit.CopyVolume(scti.FVolume[k])
 	tp.TVolume = wunit.CopyVolume(scti.TVolume[k])
 	tp.Channel = scti.Prms[k].Dup()
+	tp.TipType = scti.TipType[k]
 	return tp
 }
 func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
@@ -768,6 +771,7 @@ func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
 	v.TVolume = make([]wunit.Volume, 0)
 	v.FPlateType = make([]string, 0)
 	v.TPlateType = make([]string, 0)
+	v.TipType = make([]string, 0)
 	return &v
 }
 func (ins *MultiChannelTransferInstruction) InstructionType() int {

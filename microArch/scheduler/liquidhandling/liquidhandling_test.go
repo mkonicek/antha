@@ -29,12 +29,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 func TestStockConcs(*testing.T) {
@@ -100,6 +102,296 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 		ins.AddComponent(ps)
 		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
+	}
+
+}
+
+func configureMultiChannelTestRequest(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(2000.0, "ul"))
+	/*	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
+		part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
+	*/
+	for k := 0; k < 9; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.Sample(water, wunit.NewVolume(50.0, "ul"))
+		/*		mmxs := mixer.Sample(mmx, wunit.NewVolume(40.0, "ul"))
+				ps := mixer.Sample(part, wunit.NewVolume(100.0, "ul"))
+		*/
+		ins.AddComponent(ws)
+		/*		ins.AddComponent(mmxs)
+				ins.AddComponent(ps)
+		*/
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
+func configureTransferRequestForZTest(liquid string, transferVol wunit.Volume, numberOfTransfers int) (rq *LHRequest, err error) {
+
+	// set up ctx
+	ctx := testinventory.NewContext(context.Background())
+
+	// make liquid handler
+	lh := GetLiquidHandlerForTest(ctx)
+
+	// make some tipboxes
+	var tipBoxes []*wtype.LHTipbox
+	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
+	if err != nil {
+		return rq, err
+	}
+	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
+	if err != nil {
+		return rq, err
+	}
+	tipBoxes = append(tipBoxes, tpHigh, tpLow)
+
+	//initialise request
+	rq = GetLHRequestForTest()
+
+	liq := GetComponentForTest(ctx, liquid, wunit.NewVolume(2000.0, "ul"))
+
+	for k := 0; k < numberOfTransfers; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.Sample(liq, transferVol)
+
+		ins.AddComponent(ws)
+
+		ins.AddProduct(GetComponentForTest(ctx, liquid, transferVol))
+		rq.Add_instruction(ins)
+	}
+
+	// add plates and tip boxes
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.Tips = tipBoxes
+
+	rq.ConfigureYourself()
+
+	if err := lh.Plan(ctx, rq); err != nil {
+		return rq, fmt.Errorf("Got an error planning with no inputs: %s", err.Error())
+	}
+	return rq, nil
+}
+
+func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(2000.0, "ul"))
+	/*	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
+		part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
+	*/
+	for k := 0; k < 1; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.Sample(water, wunit.NewVolume(50.0, "ul"))
+		/*		mmxs := mixer.Sample(mmx, wunit.NewVolume(40.0, "ul"))
+				ps := mixer.Sample(part, wunit.NewVolume(100.0, "ul"))
+		*/
+		ins.AddComponent(ws)
+		/*		ins.AddComponent(mmxs)
+				ins.AddComponent(ps)
+		*/
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
+type zOffsetTest struct {
+	liquidType              string
+	inPutPlateType          string
+	numberOfTransfers       int
+	volume                  wunit.Volume
+	expectedAspirateZOffset string
+	expectedDispenseZOffset string
+}
+
+var offsetTests []zOffsetTest = []zOffsetTest{
+	zOffsetTest{
+		liquidType:              "multiwater",
+		numberOfTransfers:       1,
+		volume:                  wunit.NewVolume(50, "ul"),
+		expectedAspirateZOffset: "1.2500",
+		expectedDispenseZOffset: "1.7500",
+	},
+	zOffsetTest{
+		liquidType:              "multiwater",
+		numberOfTransfers:       2,
+		volume:                  wunit.NewVolume(50, "ul"),
+		expectedAspirateZOffset: "1.2500,1.2500",
+		expectedDispenseZOffset: "1.7500,1.7500",
+	},
+	zOffsetTest{
+		liquidType:              "water",
+		numberOfTransfers:       1,
+		volume:                  wunit.NewVolume(50, "ul"),
+		expectedAspirateZOffset: "1.2500",
+		expectedDispenseZOffset: "1.7500",
+	},
+	zOffsetTest{
+		liquidType:              "water",
+		numberOfTransfers:       2,
+		volume:                  wunit.NewVolume(50, "ul"),
+		expectedAspirateZOffset: "1.2500",
+		expectedDispenseZOffset: "1.7500",
+	},
+}
+
+func TestMultiZOffset2(t *testing.T) {
+
+	for _, test := range offsetTests {
+		request, err := configureTransferRequestForZTest(test.liquidType, test.volume, test.numberOfTransfers)
+		if err != nil {
+			t.Error(err.Error())
+		}
+
+		var aspirateInstructions, dispenseInstructions []liquidhandling.Summary
+
+		for i, instruction := range request.Instructions {
+			if i > 0 {
+				if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+					aspirateSummary, err := liquidhandling.SummariseTwoSteps(request.Instructions[i-1], instruction)
+					if err != nil {
+						fmt.Println(err.Error())
+					}
+					aspirateInstructions = append(aspirateInstructions, aspirateSummary)
+				} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+					dispenseSummary, err := liquidhandling.SummariseTwoSteps(request.Instructions[i-1], instruction)
+					if err != nil {
+						fmt.Println(err.Error())
+					}
+					dispenseInstructions = append(dispenseInstructions, dispenseSummary)
+				}
+			}
+		}
+		for _, aspirationStep := range aspirateInstructions {
+			if !reflect.DeepEqual(aspirationStep.OffsetZ, test.expectedAspirateZOffset) {
+				t.Error("for test: ", text.PrettyPrint(aspirationStep), "\n",
+					"expected Z offset for aspirate:", test.expectedAspirateZOffset, "\n",
+					"got: ", aspirationStep.OffsetZ, "\n",
+				)
+			}
+		}
+
+		for _, dispenseStep := range dispenseInstructions {
+			if !reflect.DeepEqual(dispenseStep.OffsetZ, test.expectedDispenseZOffset) {
+				t.Error(" for test: ", text.PrettyPrint(dispenseStep), "\n",
+					"expected Z offset for dispense: ", test.expectedDispenseZOffset, "\n",
+					"got: ", dispenseStep.OffsetZ, "\n",
+				)
+			}
+		}
+
+	}
+}
+
+func TestMultiZOffset(t *testing.T) {
+
+	// set up ctx
+	ctx := testinventory.NewContext(context.Background())
+
+	// make liquid handler
+	lh := GetLiquidHandlerForTest(ctx)
+
+	// make some tipboxes
+	var tipBoxes []*wtype.LHTipbox
+	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tipBoxes = append(tipBoxes, tpHigh, tpLow)
+
+	// set up multi
+
+	//initialise multi request
+	multiRq := GetLHRequestForTest()
+
+	// set to Multi channel test request
+	configureMultiChannelTestRequest(ctx, multiRq)
+	// add plates and tip boxes
+	multiRq.Input_platetypes = append(multiRq.Input_platetypes, GetPlateForTest())
+	multiRq.Output_platetypes = append(multiRq.Output_platetypes, GetPlateForTest())
+
+	multiRq.Tips = tipBoxes
+
+	multiRq.ConfigureYourself()
+
+	if err := lh.Plan(ctx, multiRq); err != nil {
+		t.Fatalf("Got an error planning with no inputs: %s", err)
+	}
+
+	// set up single channel
+
+	//initialise single request
+	singleRq := GetLHRequestForTest()
+
+	// set to single channel test request
+	configureSingleChannelTestRequest(ctx, singleRq)
+	// add plates and tip boxes
+	singleRq.Input_platetypes = append(singleRq.Input_platetypes, GetPlateForTest())
+	singleRq.Output_platetypes = append(singleRq.Output_platetypes, GetPlateForTest())
+
+	singleRq.Tips = tipBoxes
+
+	singleRq.ConfigureYourself()
+
+	if err := lh.Plan(ctx, singleRq); err != nil {
+		t.Fatalf("Got an error planning with no inputs: %s", err)
+	}
+
+	var singleAspirateInstructions, singleDispenseInstructions, multiAspirateInstructions, multiDispenseInstructions []liquidhandling.Summary
+
+	for i, instruction := range singleRq.Instructions {
+		if i > 0 {
+			if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+				aspirateSummary, err := liquidhandling.SummariseTwoSteps(singleRq.Instructions[i-1], instruction)
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				singleAspirateInstructions = append(singleAspirateInstructions, aspirateSummary)
+			} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+				dispenseSummary, err := liquidhandling.SummariseTwoSteps(singleRq.Instructions[i-1], instruction)
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				singleDispenseInstructions = append(singleDispenseInstructions, dispenseSummary)
+			}
+		}
+	}
+
+	for i, instruction := range multiRq.Instructions {
+		if i > 0 {
+			if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+				aspirateSummary, err := liquidhandling.SummariseTwoSteps(multiRq.Instructions[i-1], instruction)
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				multiAspirateInstructions = append(multiAspirateInstructions, aspirateSummary)
+			} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+				dispenseSummary, err := liquidhandling.SummariseTwoSteps(multiRq.Instructions[i-1], instruction)
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				multiDispenseInstructions = append(multiDispenseInstructions, dispenseSummary)
+			}
+		}
+	}
+	for i, aspirationStep := range singleAspirateInstructions {
+		if !reflect.DeepEqual(aspirationStep.OffsetZ, multiAspirateInstructions[i].OffsetZ) {
+			t.Error(fmt.Sprintf("single Aspirate Z offset: %+v ", text.PrettyPrint(aspirationStep)), "\n",
+				fmt.Sprintf("multi Aspirate Z offset: %+v ", text.PrettyPrint(multiAspirateInstructions[i])), "\n")
+		}
+	}
+
+	for i, dispenseStep := range singleDispenseInstructions {
+		if !reflect.DeepEqual(dispenseStep.OffsetZ, multiDispenseInstructions[i].OffsetZ) {
+			t.Error("single Dispense Z offset: ", text.PrettyPrint(dispenseStep), "\n",
+				fmt.Sprintf("multi Dispense Z offset: %+v ", text.PrettyPrint(multiDispenseInstructions[i])), "\n")
+		}
 	}
 
 }

@@ -27,7 +27,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -99,7 +101,21 @@ var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLF
 func InsToString(ins RobotInstruction) string {
 	s := ""
 
-	s += Robotinstructionnames[ins.InstructionType()] + " "
+	s = InstructionTypeName(ins) + " "
+
+	var changeColour func(string) string
+
+	if strings.TrimSpace(s) == "ASP" {
+		changeColour = text.Green
+	} else if strings.TrimSpace(s) == "DSP" {
+		changeColour = text.Blue
+	} else if strings.TrimSpace(s) == "MOV" {
+		changeColour = text.Yellow
+	} else {
+		changeColour = text.White
+	}
+
+	s = changeColour(s)
 
 	for _, str := range RobotParameters {
 		p := ins.GetParameter(str)
@@ -144,11 +160,174 @@ func InsToString(ins RobotInstruction) string {
 			}
 			ss = concatboolarray(p.([]bool))
 		}
-
-		s += str + ": " + ss + " "
+		if str == "WHAT" {
+			s += str + ": " + text.Yellow(ss) + " "
+		} else if str == "MULTI" {
+			s += text.Blue(str+": ") + ss + " "
+		} else if str == "OFFSETZ" {
+			s += str + ": " + changeColour(ss) + " "
+		} else if str == "TOPLATETYPE" {
+			s += str + ": " + text.Cyan(ss) + " "
+		} else {
+			s += str + ": " + ss + " "
+		}
 	}
 
 	return s
+}
+
+func isAspirate(ins RobotInstruction) bool {
+
+	s := InstructionTypeName(ins)
+
+	if strings.TrimSpace(s) == "ASP" {
+		return true
+	}
+
+	return false
+}
+
+func isDispense(ins RobotInstruction) bool {
+
+	s := InstructionTypeName(ins)
+
+	if strings.TrimSpace(s) == "DSP" {
+		return true
+	}
+
+	return false
+}
+
+func isMove(ins RobotInstruction) bool {
+
+	s := InstructionTypeName(ins)
+
+	if strings.TrimSpace(s) == "MOV" {
+		return true
+	}
+
+	return false
+}
+
+type Summary struct {
+	Type         string // Asp or DSP
+	LiquidType   string
+	PlateType    string
+	Multi        string
+	OffsetZ      string
+	ToWellVolume string
+	Volume       string
+}
+
+func mergeSummaries(a, b Summary, aspOrDsp string) (c Summary) {
+	return Summary{
+		Type:         aspOrDsp,
+		LiquidType:   a.LiquidType + b.LiquidType,
+		PlateType:    a.PlateType + b.PlateType,
+		Multi:        a.Multi + b.Multi,
+		OffsetZ:      a.OffsetZ + b.OffsetZ,
+		ToWellVolume: a.ToWellVolume + b.ToWellVolume,
+		Volume:       a.Volume + b.Volume,
+	}
+}
+
+func castInstructionToString(parameter interface{}) string {
+	return ""
+}
+
+const Aspirate = "Aspirate"
+const Dispense = "Dispense"
+
+func SummariseTwoSteps(ins1, ins2 RobotInstruction) (Summary, error) {
+	step1summary, err := summarise(ins1)
+
+	if err != nil {
+		return Summary{}, err
+	}
+
+	step2summary, err := summarise(ins2)
+
+	if err != nil {
+		return Summary{}, err
+	}
+
+	if !isMove(ins1) {
+		return Summary{}, fmt.Errorf("first instruction is not a move instruction found %s", InstructionTypeName(ins1))
+	}
+
+	if isAspirate(ins2) {
+		return mergeSummaries(step1summary, step2summary, Aspirate), nil
+	} else if isDispense(ins2) {
+		return mergeSummaries(step1summary, step2summary, Dispense), nil
+	}
+
+	return Summary{}, fmt.Errorf("second instruction is not an aspirate or dispense found %s", InstructionTypeName(ins2))
+
+}
+
+func summarise(ins RobotInstruction) (Summary, error) {
+
+	var summaryOfMoveOperation Summary
+
+	for _, str := range RobotParameters {
+		p := ins.GetParameter(str)
+
+		if p == nil {
+			continue
+		}
+
+		ss := ""
+
+		switch p.(type) {
+		case []wunit.Volume:
+			if len(p.([]wunit.Volume)) == 0 {
+				continue
+			}
+			ss = concatvolarray(p.([]wunit.Volume))
+
+		case []string:
+			if len(p.([]string)) == 0 {
+				continue
+			}
+			ss = concatstringarray(p.([]string))
+		case string:
+			ss = p.(string)
+		case []float64:
+			if len(p.([]float64)) == 0 {
+				continue
+			}
+			ss = concatfloatarray(p.([]float64))
+		case float64:
+			ss = fmt.Sprintf("%-6.4f", p.(float64))
+		case []int:
+			if len(p.([]int)) == 0 {
+				continue
+			}
+			ss = concatintarray(p.([]int))
+		case int:
+			ss = fmt.Sprintf("%d", p.(int))
+		case []bool:
+			if len(p.([]bool)) == 0 {
+				continue
+			}
+			ss = concatboolarray(p.([]bool))
+		}
+		if str == "WHAT" {
+			summaryOfMoveOperation.LiquidType = ss
+		} else if str == "MULTI" {
+			summaryOfMoveOperation.Multi = ss
+		} else if str == "OFFSETZ" {
+			summaryOfMoveOperation.OffsetZ = ss
+		} else if str == "TOPLATETYPE" {
+			summaryOfMoveOperation.PlateType = ss
+		} else if str == "TOWELLVOLUME" {
+			summaryOfMoveOperation.ToWellVolume = ss
+		} else if str == "VOLUME" {
+			summaryOfMoveOperation.Volume = ss
+		}
+	}
+
+	return summaryOfMoveOperation, nil
 }
 
 func InsToString2(ins RobotInstruction) string {

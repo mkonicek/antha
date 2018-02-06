@@ -72,7 +72,6 @@ func NewZBox4f(pos_x, pos_y, Size_x, Size_y float64) *BBox {
 func (self BBox) GetPosition() Coordinates {
 	return self.Position
 }
-
 func (self BBox) ZMax() float64 {
 	return self.Position.Z + self.Size.Z
 }
@@ -83,10 +82,6 @@ func (self BBox) GetSize() Coordinates {
 
 func (self *BBox) SetPosition(c Coordinates) {
 	self.Position = c
-}
-
-func (self *BBox) SetRelativeTo(c Coordinates) {
-	self.Position = self.Position.Subtract(c)
 }
 
 func (self *BBox) SetSize(c Coordinates) {
@@ -121,20 +116,4 @@ func (self BBox) IntersectsPoint(rhs Coordinates) bool {
 	return (rhs.X >= self.Position.X && rhs.X < self.Position.X+self.Size.X &&
 		rhs.Y >= self.Position.Y && rhs.Y < self.Position.Y+self.Size.Y &&
 		rhs.Z >= self.Position.Z && rhs.Z < self.Position.Z+self.Size.Z)
-}
-
-//Merge get the bounding box of both bounding boxes
-func (self BBox) Merge(rhs BBox) BBox {
-	tl := Coordinates{
-		math.Min(self.Position.X, rhs.GetPosition().X),
-		math.Min(self.Position.Y, rhs.GetPosition().Y),
-		math.Min(self.Position.Z, rhs.GetPosition().Z),
-	}
-	br := Coordinates{
-		math.Max(self.Position.X+self.Size.X, rhs.GetPosition().X+rhs.GetPosition().X),
-		math.Max(self.Position.Y+self.Size.Y, rhs.GetPosition().Y+rhs.GetPosition().Y),
-		math.Max(self.Position.Z+self.Size.Z, rhs.GetPosition().Z+rhs.GetPosition().Z),
-	}
-
-	return BBox{tl, br.Subtract(tl)}
 }

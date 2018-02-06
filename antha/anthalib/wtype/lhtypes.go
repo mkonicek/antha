@@ -238,8 +238,8 @@ func (lhp *LHPosition) Positions() []Location {
 	return nil
 }
 
-func (lhp *LHPosition) Shape() Shape {
-	return NewBoxShape(0.08548, 0.12776, 0.0, 0.0, 0.0, "mm")
+func (lhp *LHPosition) Shape() *Shape {
+	return NewShape("box", "mm", 0.08548, 0.12776, 0.0)
 }
 
 // structure describing a solution: a combination of liquid components

@@ -37,7 +37,7 @@ type LHTip struct {
 	Dirty    bool
 	MaxVol   wunit.Volume
 	MinVol   wunit.Volume
-	Shape    Shape
+	Shape    *Shape
 	Bounds   BBox
 	parent   LHObject `gotopb:"-"`
 	contents *LHComponent
@@ -156,7 +156,7 @@ func (tip *LHTip) Dup() *LHTip {
 	return t
 }
 
-func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, shape Shape) *LHTip {
+func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, shape *Shape) *LHTip {
 	lht := LHTip{
 		GetUUID(),
 		ttype,
@@ -165,7 +165,11 @@ func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, shape S
 		wunit.NewVolume(maxvol, volunit),
 		wunit.NewVolume(minvol, volunit),
 		shape,
-		BBox{Coordinates{}, shape.(LHObject).GetSize()},
+		BBox{Coordinates{}, Coordinates{
+			shape.Height().ConvertToString("mm"), //not a mistake, Shape currently has height&width as
+			shape.Width().ConvertToString("mm"),  // XY coordinates and Depth as Z
+			shape.Depth().ConvertToString("mm"),
+		}},
 		nil,
 		NewLHComponent(),
 	}

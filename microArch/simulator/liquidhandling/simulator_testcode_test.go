@@ -146,7 +146,7 @@ type ShapeParams struct {
 	d          float64
 }
 
-func makeShape(p *ShapeParams) wtype.Shape {
+func makeShape(p *ShapeParams) *wtype.Shape {
 	return wtype.NewShape(p.name, p.lengthunit, p.h, p.w, p.d)
 }
 

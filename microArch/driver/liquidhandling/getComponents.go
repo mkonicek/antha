@@ -383,12 +383,9 @@ func makeMatchSafe(dst wtype.ComponentVector, match wtype.Match, mpv wunit.Volum
 			checkVol -= match.Vols[i].ConvertToString(dst[i].Vunit)
 
 			if checkVol > 0.0 && checkVol < mpv.ConvertToString(dst[i].Vunit) {
-				mpv.Subtract(wunit.NewVolume(checkVol, dst[i].Vunit))
-				match.Vols[i].Subtract(mpv)
-
-				if match.Vols[i].LessThanFloat(0.0) {
-					panic(fmt.Sprintf("Serious volume issue -- try a manual plate layout with some additional volume for %s", dst[i].CName))
-				}
+				//'got' volume is closer to 'want' volume than the tolerance of the machine
+				//set it equal to avoid numerical instability
+				match.Vols[i] = wunit.NewVolume(dst[i].Vol, dst[i].Vunit)
 			}
 		}
 	}

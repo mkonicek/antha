@@ -134,6 +134,9 @@ func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 		return fmt.Errorf("Driver type %T not compatible with TransferInstruction, need HighLevelLiquidhandlingDriver", drv)
 	}
 
+	// make sure we disable the RobotInstruction pointer
+	ins.GenericRobotInstruction = GenericRobotInstruction{}
+
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -663,6 +666,12 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 }
 
 func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	// if the liquid handler is of the high-level type we cut the tree here
+
+	if prms.LHType == HLLiquidHandler {
+		return []RobotInstruction{}, nil
+	}
+
 	//  set the channel  choices first by cleaning out initial empties
 
 	ins.ChooseChannels(prms)

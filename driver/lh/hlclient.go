@@ -90,3 +90,13 @@ func (d *HLLHDriver) asHighLevelLiquidhandlingDriver() liquidhandling.HighLevelL
 	ret = d
 	return ret
 }
+
+func (d *HLLHDriver) Transfer(what, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus {
+	req := pb.TransferRequest{
+		what, platefrom, wellfrom, plateto, wellto, volume,
+	}
+
+	ret, _ := d.C.Transfer(context.Background(), &req)
+
+	return (driver.CommandStatus)(DecodeCommandStatus(ret.Ret_1))
+}

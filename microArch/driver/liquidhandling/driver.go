@@ -42,7 +42,6 @@ type LiquidhandlingDriver interface {
 type LowLevelLiquidhandlingDriver interface {
 	LiquidhandlingDriver
 	Move(deckposition []string, wellcoords []string, reference []int, offsetX, offsetY, offsetZ []float64, plate_type []string, head int) driver.CommandStatus
-	MoveRaw(head int, x, y, z float64) driver.CommandStatus
 	Aspirate(volume []float64, overstroke []bool, head int, multi int, platetype []string, what []string, llf []bool) driver.CommandStatus
 	Dispense(volume []float64, blowout []bool, head int, multi int, platetype []string, what []string, llf []bool) driver.CommandStatus
 	LoadTips(channels []int, head, multi int, platetype, position, well []string) driver.CommandStatus
@@ -68,6 +67,7 @@ type ExtendedLiquidhandlingDriver interface {
 	LightsOn() driver.CommandStatus
 	LightsOff() driver.CommandStatus
 	LoadAdaptor(param int) driver.CommandStatus
+	MoveRaw(head int, x, y, z float64) driver.CommandStatus
 	UnloadAdaptor(param int) driver.CommandStatus
 	Open() driver.CommandStatus
 	Close() driver.CommandStatus

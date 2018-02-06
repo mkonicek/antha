@@ -355,7 +355,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 }
 
 // New creates a new Mixer
-func New(opt Opt, d driver.ExtendedLiquidhandlingDriver) (*Mixer, error) {
+func New(opt Opt, d driver.LiquidhandlingDriver) (*Mixer, error) {
 	p, status := d.GetCapabilities()
 	if !status.OK {
 		return nil, fmt.Errorf("cannot get capabilities: %s", status.Msg)

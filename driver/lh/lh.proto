@@ -10,7 +10,6 @@ rpc Initialize (InitializeRequest) returns (InitializeReply) {}
 rpc Message (MessageRequest) returns (MessageReply) {}
 rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (RemoveAllPlatesReply) {}
 rpc RemovePlateAt (RemovePlateAtRequest) returns (RemovePlateAtReply) {}
-
 }
 
 service LowLevelLiquidhandlingDriver{
@@ -32,6 +31,7 @@ rpc SetDriveSpeed (SetDriveSpeedRequest) returns (SetDriveSpeedReply) {}
 rpc SetPipetteSpeed (SetPipetteSpeedRequest) returns (SetPipetteSpeedReply) {}
 rpc UnloadTips (UnloadTipsRequest) returns (UnloadTipsReply) {}
 rpc UpdateMetaData (UpdateMetaDataRequest) returns (UpdateMetaDataReply) {}
+rpc Wait (WaitRequest) returns (WaitReply){}
 }
 
 service HighLevelLiquidhandlingDriver{
@@ -43,7 +43,7 @@ rpc Initialize (InitializeRequest) returns (InitializeReply) {}
 rpc Message (MessageRequest) returns (MessageReply) {}
 rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (RemoveAllPlatesReply) {}
 rpc RemovePlateAt (RemovePlateAtRequest) returns (RemovePlateAtReply) {}
-
+rpc Transfer(TransferRequest)returns (TransferReply){}
 }
 
 service ExtendedLiquidhandlingDriver {
@@ -691,3 +691,17 @@ message GenericUnitMessage {
 	double Arg_3 = 3;
 	string Arg_4 = 4;
 }
+
+message TransferRequest{
+	repeated string Arg_1 = 1;
+	repeated string Arg_2 = 2;
+	repeated string Arg_3 = 3;
+	repeated string	Arg_4 = 4;
+	repeated string Arg_5 = 5;
+	repeated double Arg_6 = 6;
+}
+
+message TransferReply{
+	CommandStatusMessage Ret_1 = 1;
+}
+

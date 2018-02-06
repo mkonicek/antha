@@ -995,37 +995,6 @@ var (
 	IntoBetween200ulAnd1000ul = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{200.0, 1000.0}}
 )
 
-func addZadjustMultiRule(lhpr *wtype.LHPolicyRuleSet) error {
-
-	MakeMultiOffsetPolicy := func() wtype.LHPolicy {
-		lvop := make(wtype.LHPolicy, 1)
-		lvop["OFFSETZADJUST"] = 1
-		return lvop
-	}
-
-	// set conditions
-	var conditions = []condition{
-		numericCondition{Class: "MULTI", Range: conditionRange{Lower: 2.0, Upper: 8.0}},
-		/*	categoricCondition{"PLATETYPE", "SRWFB96"},
-			categoricCondition{"PLATETYPE", "SRWFB96_riser18"},
-			categoricCondition{"PLATETYPE", "SRWFB96_riser20"},
-			categoricCondition{"PLATETYPE", "SRWFB96_riser40"},
-			categoricCondition{"PLATETYPE", "SRWFB96_bioshake"},
-			categoricCondition{"PLATETYPE", "SRWFB96_bioshake_96well_adaptor"},
-			categoricCondition{"PLATETYPE", "Nuncon12wellAgar_bioshake_standard_adaptor"},*/
-	}
-
-	// make rule
-	adjustZIfMulti, err := newConditionalRule("MoreThanOneChannel", conditions...)
-
-	if err != nil {
-		return err
-	}
-	// add rule
-	lhpr.AddRule(adjustZIfMulti, MakeMultiOffsetPolicy())
-	return nil
-}
-
 // Conditions to apply to LHpolicyRules based on volume of liquid being transferred
 var (
 	LessThan20ul = numericCondition{Class: "VOLUME", Range: conditionRange{0.0, 20.0}}

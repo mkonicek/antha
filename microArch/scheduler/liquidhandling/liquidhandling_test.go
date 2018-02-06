@@ -222,6 +222,27 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 		expectedDispenseZOffset: "1.7500,1.7500",
 	},
 	zOffsetTest{
+		liquidType:              "multiwater",
+		numberOfTransfers:       8,
+		volume:                  wunit.NewVolume(50, "ul"),
+		expectedAspirateZOffset: "1.2500,1.2500,1.2500,1.2500,1.2500,1.2500,1.2500,1.2500",
+		expectedDispenseZOffset: "1.7500,1.7500,1.7500,1.7500,1.7500,1.7500,1.7500,1.7500",
+	},
+	zOffsetTest{
+		liquidType:              "multiwater",
+		numberOfTransfers:       1,
+		volume:                  wunit.NewVolume(5, "ul"),
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "1.0000",
+	},
+	zOffsetTest{
+		liquidType:              "multiwater",
+		numberOfTransfers:       2,
+		volume:                  wunit.NewVolume(5, "ul"),
+		expectedAspirateZOffset: "0.5000,0.5000",
+		expectedDispenseZOffset: "1.0000,1.0000",
+	},
+	zOffsetTest{
 		liquidType:              "water",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
@@ -264,18 +285,20 @@ func TestMultiZOffset2(t *testing.T) {
 				}
 			}
 		}
-		for _, aspirationStep := range aspirateInstructions {
+		for i, aspirationStep := range aspirateInstructions {
 			if !reflect.DeepEqual(aspirationStep.OffsetZ, test.expectedAspirateZOffset) {
 				t.Error("for test: ", text.PrettyPrint(aspirationStep), "\n",
+					"aspiration step: ", i, "\n",
 					"expected Z offset for aspirate:", test.expectedAspirateZOffset, "\n",
 					"got: ", aspirationStep.OffsetZ, "\n",
 				)
 			}
 		}
 
-		for _, dispenseStep := range dispenseInstructions {
+		for i, dispenseStep := range dispenseInstructions {
 			if !reflect.DeepEqual(dispenseStep.OffsetZ, test.expectedDispenseZOffset) {
 				t.Error(" for test: ", text.PrettyPrint(dispenseStep), "\n",
+					"dispense step: ", i, "\n",
 					"expected Z offset for dispense: ", test.expectedDispenseZOffset, "\n",
 					"got: ", dispenseStep.OffsetZ, "\n",
 				)

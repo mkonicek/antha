@@ -269,7 +269,7 @@ func TestMultiZOffset2(t *testing.T) {
 			t.Error(err.Error())
 		}
 
-		var aspirateInstructions, dispenseInstructions []liquidhandling.Summary
+		var aspirateInstructions, dispenseInstructions []liquidhandling.StepSummary
 
 		for i, instruction := range request.Instructions {
 			if i > 0 {
@@ -369,7 +369,7 @@ func TestMultiZOffset(t *testing.T) {
 		t.Fatalf("Got an error planning with no inputs: %s", err)
 	}
 
-	var singleAspirateInstructions, singleDispenseInstructions, multiAspirateInstructions, multiDispenseInstructions []liquidhandling.Summary
+	var singleAspirateInstructions, singleDispenseInstructions, multiAspirateInstructions, multiDispenseInstructions []liquidhandling.StepSummary
 
 	for i, instruction := range singleRq.Instructions {
 		if i > 0 {

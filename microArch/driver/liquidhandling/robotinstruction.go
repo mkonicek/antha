@@ -98,8 +98,12 @@ var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
 
+// option to feed into InsToString function
 type printOption string
 
+// Option to feed into InsToString function
+// which prints key words of the instruction with coloured text.
+// Designed for easier reading.
 const colouredTerminalOutput printOption = "colouredTerminalOutput"
 
 func ansiPrint(options ...printOption) bool {
@@ -237,7 +241,10 @@ func isMove(ins RobotInstruction) bool {
 	return false
 }
 
-type Summary struct {
+// StepSummary summarises the instruction for
+// an Aspirate or Dispense instruction combined
+// with the related Move instruction.
+type StepSummary struct {
 	Type         string // Asp or DSP
 	LiquidType   string
 	PlateType    string
@@ -247,8 +254,8 @@ type Summary struct {
 	Volume       string
 }
 
-func mergeSummaries(a, b Summary, aspOrDsp string) (c Summary) {
-	return Summary{
+func mergeSummaries(a, b StepSummary, aspOrDsp string) (c StepSummary) {
+	return StepSummary{
 		Type:         aspOrDsp,
 		LiquidType:   a.LiquidType + b.LiquidType,
 		PlateType:    a.PlateType + b.PlateType,
@@ -263,39 +270,47 @@ func castInstructionToString(parameter interface{}) string {
 	return ""
 }
 
-const Aspirate = "Aspirate"
-const Dispense = "Dispense"
+type stepType string
 
-func MakeAspOrDspSummary(ins1, ins2 RobotInstruction) (Summary, error) {
-	step1summary, err := summarise(ins1)
+// Aspirate designates a step is an aspirate step
+const Aspirate stepType = "Aspirate"
+
+// Dispense designates a step is a dispense step
+const Dispense stepType = "Dispense"
+
+// MakeAspOrDspSummary returns a summary of the key parameters involved in a Dispense or Aspirate step.
+// It requires two consecutive instructions to do this, a Move instruction followed by a dispense of aspirate instruction.
+// An error is returned if this is not the case.
+func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) (StepSummary, error) {
+	step1summary, err := summarise(moveInstruction)
 
 	if err != nil {
-		return Summary{}, err
+		return StepSummary{}, err
 	}
 
-	step2summary, err := summarise(ins2)
+	step2summary, err := summarise(dspOrAspInstruction)
 
 	if err != nil {
-		return Summary{}, err
+		return StepSummary{}, err
 	}
 
-	if !isMove(ins1) {
-		return Summary{}, fmt.Errorf("first instruction is not a move instruction found %s", InstructionTypeName(ins1))
+	if !isMove(moveInstruction) {
+		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction found %s", InstructionTypeName(moveInstruction))
 	}
 
-	if isAspirate(ins2) {
+	if isAspirate(dspOrAspInstruction) {
 		return mergeSummaries(step1summary, step2summary, Aspirate), nil
-	} else if isDispense(ins2) {
+	} else if isDispense(dspOrAspInstruction) {
 		return mergeSummaries(step1summary, step2summary, Dispense), nil
 	}
 
-	return Summary{}, fmt.Errorf("second instruction is not an aspirate or dispense found %s", InstructionTypeName(ins2))
+	return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense found %s", InstructionTypeName(dspOrAspInstruction))
 
 }
 
-func summarise(ins RobotInstruction) (Summary, error) {
+func summarise(ins RobotInstruction) (StepSummary, error) {
 
-	var summaryOfMoveOperation Summary
+	var summaryOfMoveOperation StepSummary
 
 	for _, str := range RobotParameters {
 		p := ins.GetParameter(str)

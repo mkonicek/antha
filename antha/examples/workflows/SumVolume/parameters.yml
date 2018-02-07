@@ -1,9 +1,0 @@
-{
-    "Parameters": {
-        "SumVolume": {
-            "A": "5ml",
-            "B": "6ul",
-            "C": "25\u02daC"
-        }
-    }
-}

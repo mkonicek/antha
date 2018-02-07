@@ -24,9 +24,12 @@ package wunit
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/microArch/logger"
+	"math"
+	"sort"
 	"strings"
 	"time"
+
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // length
@@ -36,6 +39,10 @@ type Length struct {
 
 func EZLength(v float64) Length {
 	return NewLength(v, "m")
+}
+
+func ZeroLength() Length {
+	return EZLength(0.0)
 }
 
 // make a length
@@ -71,6 +78,10 @@ func NewArea(v float64, unit string) (a Area) {
 	return
 }
 
+func ZeroArea() Area {
+	return NewArea(0.0, "m^2")
+}
+
 // volume -- strictly speaking of course this is length^3
 type Volume struct {
 	*ConcreteMeasurement
@@ -78,18 +89,11 @@ type Volume struct {
 
 // make a volume
 func NewVolume(v float64, unit string) (o Volume) {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
 	if len(strings.TrimSpace(unit)) == 0 {
 		return ZeroVolume()
 	}
-
-	/*if len(strings.TrimSpace(unit)) == 0 {
-		panic("Can't make Volumes without unit")
-	}
-
-	if len(strings.TrimSpace(unit)) == 1 {
-		o = Volume{NewMeasurement(v, "", unit)}
-	}
-	*/
 
 	o = Volume{NewPMeasurement(v, unit)}
 
@@ -99,6 +103,164 @@ func NewVolume(v float64, unit string) (o Volume) {
 func CopyVolume(v Volume) Volume {
 	ret := NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
 	return ret
+}
+
+// AddVolumes adds a set of volumes.
+func AddVolumes(vols ...Volume) (newvolume Volume) {
+
+	var tempvol Volume
+	tempvol = NewVolume(0.0, "ul")
+	for _, vol := range vols {
+		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
+			tempvol = NewVolume(tempvol.RawValue()+vol.RawValue(), tempvol.Unit().PrefixedSymbol())
+			newvolume = tempvol
+		} else {
+			tempvol = NewVolume(tempvol.SIValue()+vol.SIValue(), tempvol.Unit().BaseSISymbol())
+			newvolume = tempvol
+		}
+	}
+	return
+
+}
+
+// SubtractVolumes substracts a variable number of volumes from an original volume.
+func SubtractVolumes(OriginalVol Volume, subtractvols ...Volume) (newvolume Volume) {
+
+	newvolume = (CopyVolume(OriginalVol))
+	volToSubtract := AddVolumes(subtractvols...)
+	newvolume.Subtract(volToSubtract)
+
+	if math.IsInf(newvolume.RawValue(), 0) {
+		panic(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols))
+	}
+
+	return
+
+}
+
+// MultiplyVolume multiplies a volume by a factor.
+func MultiplyVolume(v Volume, factor float64) (newvolume Volume) {
+
+	newvolume = NewVolume(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// DivideVolume divides a volume by a factor.
+func DivideVolume(v Volume, factor float64) (newvolume Volume) {
+
+	newvolume = NewVolume(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// DivideVolumes divides the SI Value of vol1 by vol2 to return a factor.
+// An error is returned if the volume is infinity or not a number.
+func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
+	if vol1.Unit().BaseSIUnit() != vol2.Unit().BaseSIUnit() {
+		return -1, fmt.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.ToString(), vol2.ToString())
+	}
+	factor = vol1.SIValue() / vol2.SIValue()
+
+	if math.IsInf(factor, 0) {
+		err = fmt.Errorf("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		return
+	}
+
+	if math.IsNaN(factor) {
+		err = fmt.Errorf("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		return
+	}
+
+	return factor, nil
+}
+
+func CopyConcentration(v Concentration) Concentration {
+	ret := NewConcentration(v.RawValue(), v.Unit().PrefixedSymbol())
+	return ret
+}
+
+// MultiplyConcentration multiplies a concentration by a factor.
+func MultiplyConcentration(v Concentration, factor float64) (newconc Concentration) {
+
+	newconc = NewConcentration(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// DivideConcentration divides a concentration by a factor.
+func DivideConcentration(v Concentration, factor float64) (newconc Concentration) {
+
+	newconc = NewConcentration(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
+	return
+
+}
+
+// DivideConcentrations divides the SI Value of conc1 by conc2 to return a factor.
+// An error is returned if the concentration unit is not dividable or the number generated is infinity.
+func DivideConcentrations(conc1, conc2 Concentration) (factor float64, err error) {
+	if conc1.Unit().BaseSIUnit() != conc2.Unit().BaseSIUnit() {
+		return -1, fmt.Errorf("cannot divide concentrations: units of %s and %s unequal.", conc1.ToString(), conc2.ToString())
+	}
+	factor = conc1.SIValue() / conc2.SIValue()
+
+	if math.IsInf(factor, 0) {
+		err = fmt.Errorf("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
+		return
+	}
+
+	if math.IsNaN(factor) {
+		err = fmt.Errorf("NaN value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
+		return
+	}
+
+	return factor, nil
+}
+
+// AddConcentrations adds a variable number of concentrations from an original concentration.
+// An error is returned if the concentration units are incompatible.
+func AddConcentrations(concs ...Concentration) (newconc Concentration, err error) {
+
+	if len(concs) == 0 {
+		err = fmt.Errorf("Array of concentrations empty, nil value returned")
+	}
+	var tempconc Concentration
+	unit := concs[0].Unit().PrefixedSymbol()
+	tempconc = NewConcentration(0.0, unit)
+
+	for _, conc := range concs {
+		if tempconc.Unit().PrefixedSymbol() == conc.Unit().PrefixedSymbol() {
+			tempconc = NewConcentration(tempconc.RawValue()+conc.RawValue(), tempconc.Unit().PrefixedSymbol())
+			newconc = tempconc
+		} else if tempconc.Unit().BaseSISymbol() != conc.Unit().BaseSISymbol() {
+			err = fmt.Errorf("Cannot add units with base %s to %s, please bring concs to same base. ", tempconc.Unit().BaseSISymbol(), conc.Unit().BaseSISymbol())
+		} else {
+			tempconc = NewConcentration(tempconc.SIValue()+conc.SIValue(), tempconc.Unit().BaseSISymbol())
+			newconc = tempconc
+		}
+	}
+	return
+
+}
+
+// SubtractConcentrations substracts a variable number of concentrations from an original concentration.
+// An error is returned if the concentration units are incompatible.
+func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concentration) (newConcentration Concentration, err error) {
+
+	newConcentration = (CopyConcentration(originalConc))
+
+	concToSubtract, err := AddConcentrations(subtractConcs...)
+	if err != nil {
+		return
+	}
+	newConcentration.Subtract(concToSubtract)
+
+	if math.IsInf(newConcentration.RawValue(), 0) {
+		err = fmt.Errorf(fmt.Sprintln("Infinity value found subtracting concentrations. Original: ", originalConc, ". Vols to subtract:", subtractConcs))
+		return
+	}
+
+	return
 }
 
 func (v Volume) Dup() Volume {
@@ -117,14 +279,17 @@ type Temperature struct {
 
 // make a temperature
 func NewTemperature(v float64, unit string) Temperature {
-	if unit != "˚C" && // RING ABOVE, LATIN CAPITAL LETTER C
-		unit != "C" && // LATIN CAPITAL LETTER C
-		unit != "℃" && // DEGREE CELSIUS
-		unit != "°C" { // DEGREE, LATIN CAPITAL LETTER C
-		panic("Can't make temperatures which aren't in degrees C")
+	details, ok := UnitMap["Temperature"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Temperature"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved temperature unit %q, approved units are %s", unit, approved))
 	}
-	t := Temperature{NewMeasurement(v, "", "℃")}
-	return t
+
+	return Temperature{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
 }
 
 // time
@@ -132,33 +297,21 @@ type Time struct {
 	*ConcreteMeasurement
 }
 
-// make a time unit
+// NewTime creates a time unit.
 func NewTime(v float64, unit string) (t Time) {
+	unit = strings.Replace(unit, "µ", "u", -1)
 
-	approvedunits := []string{"days", "h", "min", "s", "ms"}
-
-	var approved bool
-	for i := range approvedunits {
-
-		if unit == approvedunits[i] {
-			approved = true
-			break
+	details, ok := UnitMap["Time"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Time"] {
+			approved = append(approved, u)
 		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved time unit %q, approved units are %s", unit, approved))
 	}
 
-	if !approved {
-		panic("Can't make Time with non approved unit of " + unit + ". Approved units are: " + strings.Join(approvedunits, ", "))
-	}
-	if unit == "s" {
-		t = Time{NewMeasurement(v, "", unit)}
-	} else if unit == "ms" {
-		t = Time{NewMeasurement(v/1000, "", "s")}
-	} else if unit == "min" {
-		t = Time{NewMeasurement(v*60, "", "s")}
-	} else if unit == "h" {
-		t = Time{NewMeasurement(v*3600, "", "s")}
-	}
-	return t
+	return Time{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
 }
 
 func (t Time) Seconds() float64 {
@@ -189,18 +342,28 @@ type Mass struct {
 // make a mass unit
 
 func NewMass(v float64, unit string) (o Mass) {
-	if len(strings.TrimSpace(unit)) == 0 {
-		panic("Can't make masses without unit")
-	}
-	if len(strings.TrimSpace(unit)) == 1 {
-		o = Mass{NewMeasurement(v, "", unit)}
-	}
-	if len(strings.TrimSpace(unit)) > 1 {
+	unit = strings.Replace(unit, "µ", "u", -1)
 
-		o = Mass{NewPMeasurement(v, unit)}
+	approvedunits := UnitMap["Mass"]
+
+	var approved bool
+	for key, _ := range approvedunits {
+
+		if unit == key {
+			approved = true
+			break
+		}
 	}
 
-	return //Mass{NewPMeasurement(v, unit)}
+	if !approved {
+		panic("Can't make masses with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
+	}
+
+	unitdetails := approvedunits[unit]
+
+	o = Mass{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
+
+	return
 }
 
 // defines mass to be a SubstanceQuantity
@@ -214,16 +377,42 @@ type Moles struct {
 }
 
 // generate a new Amount in moles
-func NewAmount(v float64, unit string) Moles {
-	if unit != "M" {
-		panic("Can't make amounts which aren't in moles")
+func NewMoles(v float64, unit string) Moles {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
+	details, ok := UnitMap["Moles"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Moles"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved Amount unit %q, approved units are %s", unit, approved))
 	}
 
-	m := Moles{NewMeasurement(v, "", unit)}
-	return m
+	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
+
 }
 
-// defines Amount to be a SubstanceQuantity
+// generate a new Amount in moles
+func NewAmount(v float64, unit string) Moles {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
+	details, ok := UnitMap["Moles"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Moles"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved Amount unit %q, approved units are %s", unit, approved))
+	}
+
+	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
+
+}
+
+// defines Moles to be a SubstanceQuantity
 func (a *Moles) Quantity() Measurement {
 	return a
 }
@@ -310,27 +499,168 @@ type Concentration struct {
 	//MolecularWeight *float64
 }
 
-// make a new concentration in SI units... either M/l or kg/l
-func NewConcentration(v float64, unit string) (o Concentration) {
+// Unit is the form which units are stored in the UnitMap. This structure is not used beyond this.
+type Unit struct {
+	Base       string
+	Prefix     string
+	Multiplier float64
+}
 
-	if unit == "mg/ml" {
-		unit = "g/l"
-	} else if unit == "ng/ul" {
-		unit = "mg/l"
+// UnitMap lists approved units to create new measurements.
+var UnitMap = map[string]map[string]Unit{
+	"Concentration": map[string]Unit{
+		"mg/ml":   Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"g/L":     Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"kg/l":    Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
+		"kg/L":    Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
+		"g/l":     Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"mg/L":    Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"mg/l":    Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/L":    Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"ug/l":    Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"ng/L":    Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"ng/l":    Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"ug/ml":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/ul":   Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"ng/ul":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ng/ml":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"pg/ul":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"pg/ml":   Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"pg/l":    Unit{Base: "g/l", Prefix: "p", Multiplier: 1.0},
+		"Mol/L":   Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"Mol/l":   Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M":       Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"mM":      Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"uM":      Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"nM":      Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"mM/l":    Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mM/L":    Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"uM/l":    Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"uM/L":    Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"nM/l":    Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nM/L":    Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"pM/l":    Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/ul":   Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"pMol/ul": Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"pM/L":    Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"fM/l":    Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fM/ul":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"fMol/ul": Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"fM/L":    Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"M/l":     Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/L":     Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"mMol/L":  Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/l":  Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"X":       Unit{Base: "X", Prefix: "", Multiplier: 1.0},
+		"x":       Unit{Base: "X", Prefix: "", Multiplier: 1.0},
+		"U/l":     Unit{Base: "U/l", Prefix: "", Multiplier: 1.0},
+		"U/ml":    Unit{Base: "U/l", Prefix: "", Multiplier: 1000.0},
+	},
+	"Mass": map[string]Unit{
+		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
+		"ug": Unit{Base: "g", Prefix: "u", Multiplier: 1.0},
+		"mg": Unit{Base: "g", Prefix: "m", Multiplier: 1.0},
+		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
+		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
+	},
+	"Moles": map[string]Unit{
+		"pMol": Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
+		"nMol": Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
+		"uMol": Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
+		"mMol": Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
+		"Mol":  Unit{Base: "M", Prefix: "", Multiplier: 1.0},
+		"pM":   Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
+		"nM":   Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
+		"uM":   Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
+		"mM":   Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
+		"M":    Unit{Base: "M", Prefix: "", Multiplier: 1.0},
+	},
+	"Volume": map[string]Unit{
+		"nl": Unit{Base: "l", Prefix: "n", Multiplier: 1.0},
+		"ul": Unit{Base: "l", Prefix: "u", Multiplier: 1.0},
+		"ml": Unit{Base: "l", Prefix: "m", Multiplier: 1.0},
+		"l":  Unit{Base: "l", Prefix: "", Multiplier: 1.0},
+		"L":  Unit{Base: "l", Prefix: "", Multiplier: 1.0},
+	},
+	"Rate": map[string]Unit{
+		"/s":   Unit{Base: "/s", Prefix: "", Multiplier: 1.0},
+		"/min": Unit{Base: "/s", Prefix: "", Multiplier: 60.0},
+		"/h":   Unit{Base: "/s", Prefix: "", Multiplier: 3600.0},
+	},
+	"Time": map[string]Unit{
+		"ms":   Unit{Base: "s", Prefix: "m", Multiplier: 1.0},
+		"s":    Unit{Base: "s", Prefix: "", Multiplier: 1.0},
+		"min":  Unit{Base: "s", Prefix: "", Multiplier: 60.0},
+		"h":    Unit{Base: "s", Prefix: "", Multiplier: 3600.0},
+		"days": Unit{Base: "s", Prefix: "", Multiplier: 86400.0},
+	},
+	"Temperature": map[string]Unit{
+		"C":  Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // RING ABOVE, LATIN CAPITAL LETTER C
+		"˚C": Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // LATIN CAPITAL LETTER C
+		"℃":  Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE CELSIUS
+		"°C": Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE, LATIN CAPITAL LETTER C
+	},
+}
+
+// ValidMeasurementUnit checks the validity of a measurement type and unit within that measurement type.
+// An error is returned if an invalid measurement type or unit is specified.
+func ValidMeasurementUnit(measureMentType, unit string) error {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
+	validUnits, measurementFound := UnitMap[measureMentType]
+	if !measurementFound {
+		var validMeasurementTypes []string
+		for key := range UnitMap {
+			validMeasurementTypes = append(validMeasurementTypes, key)
+		}
+		sort.Strings(validMeasurementTypes)
+		return fmt.Errorf("No measurement type %s listed in UnitMap found these: %v", measureMentType, validMeasurementTypes)
 	}
 
-	if len(strings.TrimSpace(unit)) == 0 {
-		panic("Can't make concentration without unit")
-	}
-	if len(strings.TrimSpace(unit)) == 3 {
-		o = Concentration{NewMeasurement(v, "", unit)}
-	}
-	if len(strings.TrimSpace(unit)) > 3 {
+	_, unitFound := validUnits[unit]
 
-		o = Concentration{NewPMeasurement(v, unit)}
+	if !unitFound {
+		var approved []string
+		for u := range validUnits {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		return fmt.Errorf("No unit %s found for %s in UnitMap found these: %v", unit, measureMentType, approved)
 	}
 
-	return //Mass{NewPMeasurement(v, unit)}
+	return nil
+}
+
+// ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
+func ValidConcentrationUnit(unit string) error {
+	unit = strings.Replace(unit, "µ", "u", -1)
+	_, ok := UnitMap["Concentration"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Concentration"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		return fmt.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved)
+	}
+	return nil
+}
+
+// NewConcentration makes a new concentration in SI units... either M/l or kg/l
+func NewConcentration(v float64, unit string) Concentration {
+	unit = strings.Replace(unit, "µ", "u", -1)
+
+	details, ok := UnitMap["Concentration"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Concentration"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		panic(fmt.Sprintf("unapproved concentration unit %q, approved units are %s", unit, approved))
+	}
+
+	return Concentration{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
 }
 
 // mass or mole
@@ -338,22 +668,28 @@ type SubstanceQuantity interface {
 	Quantity() Measurement
 }
 
-func (conc *Concentration) GramPerL(molecularweight float64) (conc_g Concentration) {
-	if conc.Munit.BaseSISymbol() == "g/l" {
-		conc_g = *conc
+func (conc Concentration) GramPerL(molecularweight float64) (conc_g Concentration) {
+
+	if conc.Munit.BaseSISymbol() == "kg/l" {
+		conc_g = conc
 	}
+
 	if conc.Munit.BaseSISymbol() == "M/l" {
-		conc_g = NewConcentration((conc.SIValue() * molecularweight), "M/l")
+		conc_g = NewConcentration((conc.SIValue() * molecularweight), "g/l")
 	}
 	return conc_g
 }
 
-func (conc *Concentration) MolPerL(molecularweight float64) (conc_M Concentration) {
-	if conc.Munit.BaseSISymbol() == "g/l" {
-		conc_M = NewConcentration((conc.SIValue() / molecularweight), "g/l")
+func (conc Concentration) MolPerL(molecularweight float64) (conc_M Concentration) {
+
+	if conc.Munit.BaseSISymbol() == "kg/l" {
+		// convert from kg to g to work out g/mol
+		conversionFactor := 1000.0
+		conc_M = NewConcentration((conc.SIValue() * conversionFactor / molecularweight), "M/l")
 	}
+
 	if conc.Munit.BaseSISymbol() == "M/l" {
-		conc_M = *conc
+		conc_M = conc
 	}
 	return conc_M
 }
@@ -424,23 +760,17 @@ type Rate struct {
 }
 
 func NewRate(v float64, unit string) (r Rate, err error) {
-	if unit != `/min` && unit != `/s` {
-		err = fmt.Errorf("Can't make flow rate which aren't in /min or per /s ")
-		panic(err.Error())
+	details, ok := UnitMap["Rate"][unit]
+	if !ok {
+		var approved []string
+		for u := range UnitMap["Rate"] {
+			approved = append(approved, u)
+		}
+		sort.Strings(approved)
+		return r, fmt.Errorf("unapproved rate unit %q, approved units are %s", unit, approved)
 	}
 
-	approvedtimeunits := []string{"/min", "/s"}
-
-	if unit[1:] == "min" {
-		r := Rate{NewMeasurement(v*60, "", `/s`)}
-		return r, nil
-	} else if unit[1:] == "s" {
-		r := Rate{NewMeasurement(v, "", `/s`)}
-		return r, nil
-	}
-
-	err = fmt.Errorf(unit, " Not approved time unit. Approved units time are: ", approvedtimeunits)
-	return r, err
+	return Rate{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}, nil
 }
 
 type Voltage struct {

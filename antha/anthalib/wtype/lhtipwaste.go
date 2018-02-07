@@ -108,7 +108,16 @@ func (lht *LHTipwaste) Empty() {
 	lht.Contents = 0
 }
 
-func (lht *LHTipwaste) Dispose(n int) bool {
+func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) bool {
+	// this just checks numbers for now
+	n := 0
+
+	for _, c := range channels {
+		if c != nil {
+			n += 1
+		}
+	}
+
 	if lht.Capacity-lht.Contents < n {
 		return false
 	}
@@ -227,11 +236,3 @@ func (self *LHTipwaste) WellCoordsToCoords(wc WellCoords, r WellReference) (Coor
 		self.WellYStart + 0.5*self.AsWell.GetSize().Y,
 		z}), true
 }
-
-/*
-// once we complete the sweep we might need this
-func (tw *LHTipwaste) Height() float64 {
-	return tw.Bounds.GetSize().Z
-}
-
-*/

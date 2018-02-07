@@ -1,159 +1,167 @@
 package execute
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
+	"io/ioutil"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
-	"github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/meta"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/golang/protobuf/jsonpb"
 )
-
-type constructor func(string) (interface{}, error)
 
 var (
-	ptipbox         wtype.LHTipbox
-	pplate          wtype.LHPlate
-	pcomponent      wtype.LHComponent
-	unknownParam    = errors.New("unknown parameter")
-	cannotConstruct = errors.New("cannot construct parameter")
-	nilValue        reflect.Value
-	constructors    = map[reflect.Type]constructor{
-		reflect.TypeOf(ptipbox): func(x string) (interface{}, error) {
-			return constructOrError(factory.GetTipByType(x))
-		},
-		reflect.TypeOf(pplate): func(x string) (interface{}, error) {
-			return constructOrError(factory.GetPlateByType(x))
-		},
-		reflect.TypeOf(pcomponent): func(x string) (interface{}, error) {
-			return constructOrError(factory.GetComponentByType(x))
-		},
-	}
+	errUnknownParam = errors.New("unknown parameter")
 )
 
-func constructOrError(v interface{}) (interface{}, error) {
-	if v == nil {
-		return nil, cannotConstruct
-	}
-	return v, nil
-}
-
-// Structure of parameter data for unmarshalling
+// RawParams is the structure of parameter data for unmarshalling.
+//
+// Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
 type RawParams struct {
-	Parameters map[string]map[string]json.RawMessage
-	Config     *mixer.Opt
+	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
+	Config     *mixer.Opt                            `json:"config"`
 }
 
-// Structure of parameter data for marshalling
+// Params is the structure of parameter data for marshalling.
+//
+// Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
 type Params struct {
-	Parameters map[string]map[string]interface{}
-	Config     *mixer.Opt
+	Parameters map[string]map[string]interface{} `json:"parameters"`
+	Config     *mixer.Opt                        `json:"config"`
 }
 
-func findConstructor(typ reflect.Type) constructor {
-	// XXX: consider supporting convertible types too
-	return constructors[typ]
-}
-
-func unmarshalOne(value reflect.Value, data []byte) (reflect.Value, error) {
-	typ := value.Type()
-	newValue := reflect.New(typ).Interface()
-	origErr := json.Unmarshal(data, newValue)
-	if origErr != nil {
-		// Try to run constructor instead
-		var carg string
-		if construct := findConstructor(typ); construct == nil {
-			return nilValue, origErr
-		} else if err := json.Unmarshal(data, &carg); err != nil {
-			return nilValue, fmt.Errorf("%s: %s", err, origErr)
-		} else if v, err := construct(carg); err != nil {
-			return nilValue, fmt.Errorf("%s: %s", err, origErr)
-		} else {
-			newValue = v
-		}
+func tryString(data []byte) string {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		s = ""
 	}
-	return reflect.ValueOf(newValue).Elem(), nil
+	return s
 }
 
-func unmarshal(value reflect.Value, data []byte) (reflect.Value, error) {
-	typ := value.Type()
-	switch typ.Kind() {
-	case reflect.Slice:
-		raw := make([]json.RawMessage, 0)
-		if err := json.Unmarshal(data, &raw); err != nil {
-			return nilValue, err
-		}
-		s := reflect.MakeSlice(typ, 0, 0)
-		for idx, bs := range raw {
-			svalue := reflect.Zero(typ.Elem())
-			if idx < value.Len() {
-				svalue = reflect.ValueOf(value.Index(idx).Interface())
-			}
-			v, err := unmarshal(svalue, bs)
-			if err != nil {
-				return nilValue, err
-			}
-			s = reflect.Append(s, v)
-		}
-		return s, nil
-	case reflect.Map:
-		raw := make(map[string]json.RawMessage)
-		if err := json.Unmarshal(data, &raw); err != nil {
-			return nilValue, err
-		}
-		m := reflect.MakeMap(typ)
-		for k, bs := range raw {
-			kvalue := reflect.ValueOf(k)
-			mvalue := value.MapIndex(kvalue)
-			if mvalue == nilValue {
-				mvalue = reflect.Zero(typ.Elem())
-			} else {
-				mvalue = reflect.ValueOf(mvalue.Interface())
-			}
-			v, err := unmarshal(mvalue, bs)
-			if err != nil {
-				return nilValue, err
-			}
-			m.SetMapIndex(kvalue, v)
-		}
-		return m, nil
-	case reflect.Struct:
-		return unmarshalOne(value, data)
-	case reflect.Ptr:
-		etyp := typ.Elem()
-		if c := findConstructor(etyp); c == nil {
-			return unmarshal(reflect.Zero(etyp), data)
-		} else if v, err := unmarshalOne(reflect.Zero(etyp), data); err != nil {
-			return nilValue, err
-		} else {
-			return v.Addr(), nil
-		}
-	default:
-		return unmarshalOne(value, data)
-	}
+type unmarshaler struct {
+	ReadLocalFiles bool
 }
 
-func setParam(w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
-	prototype, ok := in[name]
-	if !ok {
-		return unknownParam
+func (a *unmarshaler) unmarshalLHTipbox(ctx context.Context, data []byte, obj *wtype.LHTipbox) error {
+	s := tryString(data)
+	if len(s) == 0 {
+		return json.Unmarshal(data, obj)
 	}
-
-	value, err := unmarshal(reflect.ValueOf(prototype), data)
+	t, err := inventory.NewTipbox(ctx, s)
 	if err != nil {
 		return err
 	}
-	return w.SetParam(workflow.Port{Process: process, Port: name}, value.Interface())
+	*obj = *t
+	return nil
 }
 
-func setParams(ctx context.Context, params *RawParams, w *workflow.Workflow) (*mixer.Opt, error) {
+func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wtype.LHPlate) error {
+	s := tryString(data)
+	if len(s) == 0 {
+		return json.Unmarshal(data, obj)
+	}
+	t, err := inventory.NewPlate(ctx, s)
+	if err != nil {
+		return err
+	}
+	*obj = *t
+	return nil
+}
+
+func (a *unmarshaler) unmarshalLHComponent(ctx context.Context, data []byte, obj *wtype.LHComponent) error {
+	s := tryString(data)
+	if len(s) == 0 {
+		return json.Unmarshal(data, obj)
+	}
+	t, err := inventory.NewComponent(ctx, s)
+	if err != nil {
+		return err
+	}
+	*obj = *t
+	return nil
+}
+
+func (a *unmarshaler) unmarshalFile(data []byte, obj *wtype.File) error {
+	var blob api.Blob
+	if err := jsonpb.Unmarshal(bytes.NewReader(data), &blob); err != nil {
+		return err
+	}
+
+	hf := blob.GetHostFile()
+	if a.ReadLocalFiles && hf != nil {
+		bs, err := ioutil.ReadFile(hf.Filename)
+		if err != nil {
+			return err
+		}
+		blob = api.Blob{
+			Name: blob.Name,
+			From: &api.Blob_Bytes{
+				Bytes: &api.FromBytes{
+					Bytes: bs,
+				},
+			},
+		}
+	}
+
+	var f wtype.File
+	if err := f.UnmarshalBlob(&blob); err != nil {
+		return err
+	}
+	*obj = f
+	return nil
+}
+
+func (a *unmarshaler) unmarshalStruct(ctx context.Context, data []byte, obj interface{}) error {
+	var err error
+	switch obj := obj.(type) {
+	case *wtype.LHTipbox:
+		err = a.unmarshalLHTipbox(ctx, data, obj)
+	case *wtype.LHPlate:
+		err = a.unmarshalLHPlate(ctx, data, obj)
+	case *wtype.LHComponent:
+		err = a.unmarshalLHComponent(ctx, data, obj)
+	case *wtype.File:
+		err = a.unmarshalFile(data, obj)
+	default:
+		err = json.Unmarshal(data, obj)
+	}
+
+	return err
+}
+
+func setParam(ctx context.Context, um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
+	value, ok := in[name]
+	if !ok {
+		return errUnknownParam
+	}
+
+	m := &meta.Unmarshaler{
+		Struct: func(data []byte, obj interface{}) error {
+			return um.unmarshalStruct(ctx, data, obj)
+		},
+	}
+	if err := m.Unmarshal(data, &value); err != nil {
+		return err
+	}
+
+	return w.SetParam(workflow.Port{Process: process, Port: name}, value)
+}
+
+func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams, readLocalFiles bool) (*mixer.Opt, error) {
 	if params == nil {
 		return nil, nil
+	}
+
+	um := &unmarshaler{
+		ReadLocalFiles: readLocalFiles,
 	}
 
 	for process, params := range params.Parameters {
@@ -161,7 +169,10 @@ func setParams(ctx context.Context, params *RawParams, w *workflow.Workflow) (*m
 		if err != nil {
 			return nil, fmt.Errorf("cannot get component for process %q: %s", process, err)
 		}
-		runner, err := inject.Find(ctx, inject.NameQuery{Repo: c})
+		runner, err := inject.Find(ctx, inject.NameQuery{
+			Repo:  c,
+			Stage: api.ElementStage_STEPS,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("unknown component %q: %s", c, err)
 		}
@@ -171,11 +182,12 @@ func setParams(ctx context.Context, params *RawParams, w *workflow.Workflow) (*m
 		}
 		in := inject.MakeValue(cr.Input())
 		for name, value := range params {
-			if err := setParam(w, process, name, value, in); err != nil {
+			if err := setParam(ctx, um, w, process, name, value, in); err != nil {
 				return nil, fmt.Errorf("cannot assign parameter %q of process %q to %s: %s",
 					name, process, string(value), err)
 			}
 		}
 	}
+
 	return params.Config, nil
 }

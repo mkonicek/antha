@@ -119,6 +119,12 @@ func TestWellCoords(t *testing.T) {
 	if wc.X != 0 || wc.Y != 702 {
 		t.Fatal(fmt.Sprint("Well Coords 1AAA expected {0,702} got ", wc))
 	}
+
+	wc = MakeWellCoords("X1Y1")
+
+	if wc.X != 0 || wc.Y != 0 {
+		t.Fatal(fmt.Sprint("Well coords X1Y1 expected {0,0} got ", wc))
+	}
 }
 
 func TestWellCoordsComparison(t *testing.T) {
@@ -229,8 +235,8 @@ func TestLHComponentSampleStuff(t *testing.T) {
 }
 
 type testpair struct {
-	ltstring string
-	ltint    int
+	ltstring PolicyName
+	ltint    LiquidType
 	err      error
 }
 
@@ -241,7 +247,7 @@ func TestLiquidTypeFromString(t *testing.T) {
 	for _, lt := range lts {
 
 		ltnum, err := LiquidTypeFromString(lt.ltstring)
-		if int(ltnum) != lt.ltint {
+		if ltnum != lt.ltint {
 			t.Error("running LiquidTypeFromString on ", lt.ltstring, "expected", lt.ltint, "got", ltnum)
 		}
 		if err != nil {
@@ -347,5 +353,74 @@ func TestWCSorting(t *testing.T) {
 
 	if v[0].FormatA1() != "A9" {
 		t.Fatal("Col-first sort incorrect: expected A9 first, got ", v[0].FormatA1())
+	}
+}
+
+func TestLHCPCanMove(t *testing.T) {
+	v1 := wunit.NewVolume(0.5, "ul")
+	v2 := wunit.NewVolume(200, "ul")
+
+	lhcp := LHChannelParameter{Minvol: v1, Maxvol: v2}
+
+	v := wunit.ZeroVolume()
+
+	if lhcp.CanMove(v, false) || lhcp.CanMove(v, true) {
+		t.Fatal("Channel claims to be able to move zero volume... while technically true this is nonsense")
+	}
+
+	v = wunit.NewVolume(10.0, "ul")
+
+	if !lhcp.CanMove(v, false) || !lhcp.CanMove(v, true) {
+		t.Fatal("Channel claims not to be able to move a volume of 10 ul while it blatantly can")
+	}
+
+	v = wunit.NewVolume(250, "ul")
+
+	if !lhcp.CanMove(v, false) {
+		t.Fatal("Channel claims not to be able to move excessive volume in more than one go... it can")
+	}
+
+	if lhcp.CanMove(v, true) {
+		t.Fatal("Channel claims to be able to move excessive volume in one shot... it cannot")
+	}
+}
+
+func TestPlateLocation(t *testing.T) {
+	plstring := "PLATEX:A1"
+	pl1 := PlateLocationFromString(plstring)
+
+	if !(pl1.ToString() == plstring) {
+		t.Fatal("PlateLocation.ToString() must recreate input string if canonically formatted")
+	}
+
+	if !pl1.Equals(pl1) {
+		t.Fatal("Identity rule for equality violated")
+	}
+
+	pl2 := PlateLocationFromString(pl1.ToString())
+
+	if !pl2.Equals(pl1) {
+		t.Fatal("PlateLocation output format incorrect")
+	}
+
+	pl2 = PlateLocationFromString(plstring)
+
+	if !pl2.Equals(pl1) {
+		t.Fatal("PlateLocation creation from string inconsistent")
+	}
+
+	plstring2 := "PLATEY:A1"
+	pl3 := PlateLocationFromString(plstring2)
+
+	if pl3.Equals(pl2) {
+		t.Fatal("PlateLocations on different plates reported equal")
+	}
+
+	plstring3 := "PLATEX:A2"
+
+	pl3 = PlateLocationFromString(plstring3)
+
+	if pl3.Equals(pl2) {
+		t.Fatal("PlateLocations in different wells reported equal")
 	}
 }

@@ -24,6 +24,8 @@
 package liquidhandling
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -31,38 +33,64 @@ import (
 
 // structure for defining a request to the liquid handler
 type LHRequest struct {
-	ID                       string
-	BlockID                  wtype.BlockID
-	BlockName                string
-	LHInstructions           map[string]*wtype.LHInstruction
-	Input_solutions          map[string][]*wtype.LHComponent
-	Plates                   map[string]*wtype.LHPlate
-	Tips                     []*wtype.LHTipbox
-	InstructionSet           *liquidhandling.RobotInstructionSet
-	Instructions             []liquidhandling.TerminalRobotInstruction
-	Input_assignments        map[string][]string
-	Output_assignments       map[string][]string
-	Input_plates             map[string]*wtype.LHPlate
-	Output_plates            map[string]*wtype.LHPlate
-	Input_platetypes         []*wtype.LHPlate
-	Input_plate_order        []string
-	Input_setup_weights      map[string]float64
-	Output_platetypes        []*wtype.LHPlate
-	Output_plate_order       []string
-	Plate_lookup             map[string]string
-	Stockconcs               map[string]float64
-	Policies                 *liquidhandling.LHPolicyRuleSet
-	Input_order              []string
-	Output_order             []string
-	Order_instructions_added []string
-	OutputIteratorFactory    func(*wtype.LHPlate) wtype.PlateIterator `json:"-"`
-	InstructionChain         *IChain
-	Input_vols_supplied      map[string]wunit.Volume
-	Input_vols_required      map[string]wunit.Volume
-	Input_vols_wanting       map[string]wunit.Volume
-	TimeEstimate             float64
-	CarryVolume              wunit.Volume
-	Evaps                    []wtype.VolumeCorrection
+	ID                    string
+	BlockID               wtype.BlockID
+	BlockName             string
+	LHInstructions        map[string]*wtype.LHInstruction
+	Input_solutions       map[string][]*wtype.LHComponent
+	Plates                map[string]*wtype.LHPlate
+	Tips                  []*wtype.LHTipbox
+	InstructionSet        *liquidhandling.RobotInstructionSet
+	Instructions          []liquidhandling.TerminalRobotInstruction
+	InstructionText       string
+	Input_assignments     map[string][]string
+	Output_assignments    map[string][]string
+	Input_plates          map[string]*wtype.LHPlate
+	Output_plates         map[string]*wtype.LHPlate
+	Input_platetypes      []*wtype.LHPlate
+	Input_plate_order     []string
+	Input_setup_weights   map[string]float64
+	Output_platetypes     []*wtype.LHPlate
+	Output_plate_order    []string
+	Plate_lookup          map[string]string
+	Stockconcs            map[string]wunit.Concentration
+	Policies              *wtype.LHPolicyRuleSet
+	Input_order           []string
+	Output_order          []string
+	OutputIteratorFactory func(*wtype.LHPlate) wtype.PlateIterator `json:"-"`
+	InstructionChain      *IChain
+	Input_vols_supplied   map[string]wunit.Volume
+	Input_vols_required   map[string]wunit.Volume
+	Input_vols_wanting    map[string]wunit.Volume
+	TimeEstimate          float64
+	CarryVolume           wunit.Volume
+	InstructionSets       [][]*wtype.LHInstruction
+	Evaps                 []wtype.VolumeCorrection
+	Options               LHOptions
+	NUserPlates           int
+	Output_sort           bool
+}
+
+func (req *LHRequest) GetPlate(id string) (*wtype.LHPlate, bool) {
+	p, ok := req.Plates[id]
+
+	if ok {
+		return p, true
+	}
+
+	p, ok = req.Input_plates[id]
+
+	if ok {
+		return p, true
+	}
+
+	p, ok = req.Output_plates[id]
+
+	if ok {
+		return p, true
+	}
+
+	return nil, false
 }
 
 func (req *LHRequest) ConfigureYourself() error {
@@ -75,19 +103,50 @@ func (req *LHRequest) ConfigureYourself() error {
 		inputs = make(map[string][]*wtype.LHComponent)
 	}
 
+	// we need to make an exception of components which are used literally
+	// i.e. anything used in a mix-in-place; these don't add to the general
+	// store of anonymous components to be sampled from
+
+	uniques := make(map[wtype.PlateLocation]*wtype.LHComponent, len(req.LHInstructions))
+
+	for _, ins := range req.LHInstructions {
+		if ins.InsType() != "MIX" {
+			continue
+		}
+		if ins.IsMixInPlace() {
+			if !ins.Components[0].PlateLocation().IsZero() {
+				uniques[ins.Components[0].PlateLocation()] = ins.Components[0]
+			} else {
+				// this will be autoallocated
+			}
+		}
+	}
+
 	for _, v := range req.Input_plates {
 		for _, w := range v.Wellcoords {
 			if w.Empty() {
 				continue
 			}
-			c := w.Contents().Dup()
-			// issue here -- not accounting for working volume of well
-			vvvvvv := c.Volume()
-			vvvvvv.Subtract(w.ResidualVolume())
-			c.SetVolume(vvvvvv)
-			ar := inputs[c.CName]
-			ar = append(ar, c)
-			inputs[c.CName] = ar
+
+			// special case for components treated literally
+
+			cmp, ok := uniques[w.PlateLocation()]
+
+			if ok {
+				ar := inputs[cmp.CNID()]
+				ar = append(ar, cmp)
+				inputs[cmp.CNID()] = ar
+			} else {
+				// bulk components (where instances don't matter) are
+				// identified using just CName
+				c := w.Contents().Dup()
+				vvvvvv := c.Volume()
+				vvvvvv.Subtract(w.ResidualVolume())
+				c.SetVolume(vvvvvv)
+				ar := inputs[c.CName]
+				ar = append(ar, c)
+				inputs[c.CName] = ar
+			}
 		}
 	}
 
@@ -127,14 +186,14 @@ func NewLHRequest() *LHRequest {
 	lhr.Output_plate_order = make([]string, 0, 1)
 	lhr.Input_plate_order = make([]string, 0, 1)
 	lhr.Plate_lookup = make(map[string]string)
-	lhr.Stockconcs = make(map[string]float64)
+	lhr.Stockconcs = make(map[string]wunit.Concentration)
 	lhr.Input_order = make([]string, 0)
 	lhr.Output_order = make([]string, 0)
 	lhr.OutputIteratorFactory = wtype.NewOneTimeColumnWiseIterator
 	lhr.Output_assignments = make(map[string][]string)
 	lhr.Input_assignments = make(map[string][]string)
-	lhr.Order_instructions_added = make([]string, 0, 1)
 	lhr.InstructionSet = liquidhandling.NewRobotInstructionSet(nil)
+	lhr.InstructionText = ""
 	lhr.Input_vols_required = make(map[string]wunit.Volume)
 	lhr.Input_vols_supplied = make(map[string]wunit.Volume)
 	lhr.Input_vols_wanting = make(map[string]wunit.Volume)
@@ -143,12 +202,12 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_setup_weights["MAX_N_WELLS"] = 96
 	lhr.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = 1.0
 	lhr.Policies, _ = liquidhandling.GetLHPolicyForTest()
+	lhr.Options = NewLHOptions()
 	return &lhr
 }
 
 func (lhr *LHRequest) Add_instruction(ins *wtype.LHInstruction) {
 	lhr.LHInstructions[ins.ID] = ins
-	lhr.Order_instructions_added = append(lhr.Order_instructions_added, ins.ID)
 }
 
 func (lhr *LHRequest) NewComponentsAdded() bool {
@@ -159,17 +218,30 @@ func (lhr *LHRequest) NewComponentsAdded() bool {
 }
 
 func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
+	// impose sanity
+
+	if p.PlateName == "" {
+		p.PlateName = fmt.Sprintf("User_plate_%d", lhr.NUserPlates+1)
+		lhr.NUserPlates += 1
+	}
+
 	p.MarkNonEmptyWellsUserAllocated()
+
 	lhr.Input_plates[p.ID] = p
 }
 
-type LHPolicyManager struct {
-	SystemPolicies *liquidhandling.LHPolicyRuleSet
-	UserPolicies   *liquidhandling.LHPolicyRuleSet
+func (lhr *LHRequest) UseLegacyVolume() bool {
+	// magically create extra volumes for intermediates?
+	return lhr.Options.LegacyVolume
 }
 
-func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *liquidhandling.LHPolicyRuleSet) *liquidhandling.LHPolicyRuleSet {
-	ret := liquidhandling.CloneLHPolicyRuleSet(mgr.SystemPolicies)
+type LHPolicyManager struct {
+	SystemPolicies *wtype.LHPolicyRuleSet
+	UserPolicies   *wtype.LHPolicyRuleSet
+}
+
+func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSet) *wtype.LHPolicyRuleSet {
+	ret := wtype.CloneLHPolicyRuleSet(mgr.SystemPolicies)
 
 	// things coming in take precedence over things already there
 	ret.MergeWith(mgr.UserPolicies)
@@ -177,3 +249,19 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *liquidhandling.LHPol
 
 	return ret
 }
+
+/*
+func (request *LHRequest) GetPlate(id string) *wtype.LHPlate {
+	p, ok := request.Input_plates[id]
+
+	if !ok {
+		p, ok = request.Output_plates[id]
+
+		if !ok {
+			return nil
+		}
+	}
+
+	return p
+}
+*/

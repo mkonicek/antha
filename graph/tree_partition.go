@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	missingColors = errors.New("missing color")
+	errMissingColors = errors.New("missing color")
 )
 
+// PartitionTreeOpt is a set of options for PartitionTree
 type PartitionTreeOpt struct {
 	Tree       Graph
 	Root       Node
@@ -18,21 +19,23 @@ type PartitionTreeOpt struct {
 	exact      bool
 }
 
+// A TreePartition is a partition of the nodes of a tree
 type TreePartition struct {
 	Parts  map[Node]int
 	Weight int
 }
 
-// Given a tree and a set of colors that each node may take, select a color for
-// each node that minimizes the weight of the tree.
+// PartitionTree partitions a tree. Given a tree and a set of colors that each
+// node may take, select a color for each node that minimizes the weight of the
+// tree.
 func PartitionTree(opt PartitionTreeOpt) (*TreePartition, error) {
 	// Cache colors
 	colors := make(map[Node][]int)
-	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i++ {
 		n := opt.Tree.Node(i)
 		cs := opt.Colors(n)
 		if len(cs) == 0 {
-			return nil, missingColors
+			return nil, errMissingColors
 		}
 		colors[n] = cs
 	}
@@ -43,9 +46,8 @@ func PartitionTree(opt PartitionTreeOpt) (*TreePartition, error) {
 
 	if opt.exact {
 		return algo.runExact(opt), nil
-	} else {
-		return algo.runSP(opt), nil
 	}
+	return algo.runSP(opt), nil
 }
 
 type partitionTree struct {
@@ -133,7 +135,7 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 	visit := func(n *node) {
 		c := a.colors[n.Node][n.Index]
 		d := dist[n]
-		for i, inum := 0, opt.Tree.NumOuts(n.Node); i < inum; i += 1 {
+		for i, inum := 0, opt.Tree.NumOuts(n.Node); i < inum; i++ {
 			kid := opt.Tree.Out(n.Node, i)
 			if _, seen := ret.Parts[kid]; seen {
 				continue
@@ -152,7 +154,7 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 
 	// Reset whole Node subtrees at a time.
 	resetSubtree := func(root Node) {
-		VisitTree(VisitTreeOpt{
+		if err := VisitTree(VisitTreeOpt{
 			Tree: opt.Tree,
 			Root: root,
 			PreOrder: func(n, parent Node, err error) error {
@@ -163,7 +165,9 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 				}
 				return nil
 			},
-		})
+		}); err != nil {
+			panic(err)
+		}
 	}
 
 	sameBest := func(kid Node, b *node) bool {
@@ -195,7 +199,7 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 				}
 			}
 			// Kick off other subtrees
-			for i, inum := 0, opt.Tree.NumOuts(n.Node); i < inum; i += 1 {
+			for i, inum := 0, opt.Tree.NumOuts(n.Node); i < inum; i++ {
 				kid := opt.Tree.Out(n.Node, i)
 				if _, seen := ret.Parts[kid]; seen {
 					continue
@@ -209,7 +213,7 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 		}
 	}
 
-	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i += 1 {
+	for i, inum := 0, opt.Tree.NumNodes(); i < inum; i++ {
 		n := opt.Tree.Node(i)
 		for idx := range a.colors[n] {
 			nodes[n] = append(nodes[n], &node{Node: n, Index: idx})
@@ -341,7 +345,7 @@ func (a *partitionTree) runExact(opt PartitionTreeOpt) *TreePartition {
 		if snode.Node == nil {
 			// Color node: preorder
 			onode := snode.Parent.Node
-			for i, inum := 0, opt.Tree.NumOuts(onode); i < inum; i += 1 {
+			for i, inum := 0, opt.Tree.NumOuts(onode); i < inum; i++ {
 				kid := opt.Tree.Out(onode, i)
 				tnode := &node{
 					Parent: snode,

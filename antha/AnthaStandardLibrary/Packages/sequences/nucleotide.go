@@ -20,100 +20,51 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with and manipulating dna sequences in extension to methods available in wtype
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
 import (
-	"fmt"
-
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"strings"
 
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/entrez"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 // Check for illegal nucleotides
-func Illegalnucleotides(fwdsequence wtype.DNASequence) (pass bool, illegalfound []Thingfound, wobblefound []Thingfound) {
-	illegal := "§1234567890-=qweryiop[]sdfhjkl;'zxvbm,./!@£$%^&*()_+" // update to include wobble nucleotides etc
-	wobble := "NXBHVDMKSWRY"
-	//seq := strings.ToUpper(fwdsequence.Seq)
+func Illegalnucleotides(fwdsequence wtype.DNASequence) (pass bool, illegalfound []search.Result, wobblefound []search.Result) {
+	illegal := "§1234567890-=qeiop[]fjl;'z,./!@£$%^&*()_+?" // removed all instances of non IUPAC nucleotides
+	wobble := "NXBHVDMKSWRYU"                               //IUPAC nucleotides
+
 	if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(illegal))) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(illegal)) == true {
-		fmt.Println(pass)
+
 		pass = false
-		// fmt.Println("Contains illegal characters")
 		illegalarray := strings.Split(illegal, "")
-		//	// fmt.Println("iiiiiilllllllllegal array!!!", illegalarray)
-		illegalfound = Findallthings((strings.ToUpper(fwdsequence.Seq)), illegalarray)
-		//fmt.Println(len(illegalfound))
+		illegalfound = search.FindAllStrings((strings.ToLower(fwdsequence.Seq)), illegalarray)
 
-	}
+	} else if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), wobble) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(wobble)) == true {
 
-	if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(wobble))) == true {
 		pass = false
-		// fmt.Println("Contains wobble nucleotides")
 		wobblearray := strings.Split(wobble, "")
-		//// fmt.Println("wobble array!!!", wobblearray)
-		wobblefound = Findallthings((strings.ToUpper(fwdsequence.Seq)), wobblearray)
-		//fmt.Println(len(wobblefound))
+		wobblefound = search.FindAllStrings((strings.ToUpper(fwdsequence.Seq)), wobblearray)
 
 	} else {
+
 		pass = true
-		// fmt.Println("illegal characters pass")
+
 	}
-	//wtype.Makeseq(Foldername, &sequence)
 
 	return pass, illegalfound, wobblefound
 }
 
-/*
-func Rev(s string) string {
-	r := ""
-
-	for i := len(s) - 1; i >= 0; i-- {
-		r += string(s[i])
-	}
-
-	return r
-}
-func Comp(s string) string {
-	r := ""
-
-	m := map[string]string{
-		"A": "T",
-		"T": "A",
-		"U": "A",
-		"C": "G",
-		"G": "C",
-		"Y": "R",
-		"R": "Y",
-		"W": "W",
-		"S": "S",
-		"K": "M",
-		"M": "K",
-		"D": "H",
-		"V": "B",
-		"H": "D",
-		"B": "V",
-		"N": "N",
-		"X": "X",
-	}
-
-	for _, c := range s {
-		r += m[string(c)]
-	}
-
-	return r
-}
-
-// Reverse Complement
-func RevComp(s string) string {
-	return Comp(Rev(s))
-}
-*/
+// WobbleMap represents a mapping of each IUPAC nucleotide
+// to all valid alternative IUPAC nucleotides for that nucleotide.
+// This may be useful for protein engineering applications where mutations may wish to be introduced.
+//
+// For example N can be substituted for any primary nucleotide (A, C, T or G).
+// R may be substituted for any purine base (A, G).
+// gaps are represented by - or .
+//
 var WobbleMap = map[string][]string{
 	"A": []string{"A"},
 	"T": []string{"T"},
@@ -141,19 +92,43 @@ var WobbleMap = map[string][]string{
 	".": []string{"-", "."},
 }
 
+// Wobble returns an array of sequence options, as strings.
+// Options are caclulated based on cross referencing each nucleotide with
+// the WobbleMap to find each alternative option, if any, for that nucleotide.
+// For example:
+// ACT would return one sequence: ACT
+// RCT would return ACT and GCT
+// NCT would return ACT, GCT, TCT, CCT
+// RYT would return ACT, GCT, ATT and GTT
+//
 func Wobble(seq string) (alloptions []string) {
 
 	arrayofarray := make([][]string, 0)
 	for _, character := range seq {
 
-		optionsforcharacterx := WobbleMap[string(character)]
+		optionsforcharacterx := WobbleMap[strings.TrimSpace(strings.ToUpper(string(character)))]
 		arrayofarray = append(arrayofarray, optionsforcharacterx)
-		//// fmt.Println("arrayofarray", arrayofarray)
 	}
 
-	alloptions = AllCombinations(arrayofarray)
+	alloptions = allCombinations(arrayofarray)
 
 	return
+}
+
+func allCombinations(arr [][]string) []string {
+	if len(arr) == 1 {
+		return arr[0]
+	}
+
+	results := make([]string, 0)
+	allRem := allCombinations(arr[1:len(arr)])
+	for i := 0; i < len(allRem); i++ {
+		for j := 0; j < len(arr[0]); j++ {
+			x := arr[0][j] + allRem[i]
+			results = append(results, x)
+		}
+	}
+	return results
 }
 
 var Nucleotidegpermol = map[string]float64{
@@ -229,7 +204,8 @@ func MolesDNA(mass wunit.Mass, mw float64) (moles float64) {
 
 // calculate molar concentration of DNA sample
 func GtoMolarConc(conc wunit.Concentration, mw float64) (molesperL float64) {
-	concSI := conc.SIValue()
+	// convert SI kg/l into g/l
+	concSI := conc.SIValue() * 1000
 	molesperL = concSI / mw
 	return molesperL
 }
@@ -246,24 +222,9 @@ func Moles(conc wunit.Concentration, mw float64, vol wunit.Volume) (moles float6
 	return moles
 }
 
-func Revarrayorder(array []string) (newarray []string) {
-	//for _, slice := range array {
-	newarray = make([]string, 0)
-	r := ""
+func RevArrayOrder(array []string) (reversedOrder []string) {
 	for i := len(array) - 1; i >= 0; i-- {
-		r = string(array[i])
-		newarray = append(newarray, r)
-		//newarray += array()
+		reversedOrder = append(reversedOrder, array[i])
 	}
-	return newarray
-}
-
-// utility function to check if item is in list. move elsewhere?
-func isInList(item string, list []string) bool {
-	for _, v := range list {
-		if v == item {
-			return true
-		}
-	}
-	return false
+	return reversedOrder
 }

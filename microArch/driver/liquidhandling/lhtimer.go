@@ -21,6 +21,28 @@ func (t *LHTimer) TimeFor(r RobotInstruction) time.Duration {
 	var d time.Duration
 	if r.InstructionType() > 0 && r.InstructionType() < len(t.Times) {
 		d = t.Times[r.InstructionType()]
+		max := func(a []int) int {
+			m := a[0]
+			for i := 1; i < len(a); i++ {
+				if m < a[i] {
+					m = a[i]
+				}
+			}
+
+			return m
+		}
+		if r.InstructionType() == 34 { // MIX
+			// get cycles
+
+			prm := r.GetParameter("CYCLES")
+
+			cyc, ok := prm.([]int)
+
+			if ok {
+				d = time.Duration(int64(max(cyc)) * int64(d))
+			}
+		}
+
 	} else {
 	}
 	return d

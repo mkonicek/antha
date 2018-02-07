@@ -2,16 +2,37 @@ package wtype
 
 import "strings"
 
-type platelocation struct {
+type PlateLocation struct {
 	ID     string
 	Coords WellCoords
 }
 
-func (pc platelocation) ToString() string {
+func ZeroPlateLocation() PlateLocation {
+	return PlateLocation{"", ZeroWellCoords()}
+}
+
+func (pc PlateLocation) IsZero() bool {
+	return pc.Equals(ZeroPlateLocation())
+}
+
+func (pc PlateLocation) ToString() string {
 	return pc.ID + ":" + pc.Coords.FormatA1()
 }
 
-func PlateLocationFromString(s string) platelocation {
+func PlateLocationFromString(s string) PlateLocation {
+	pl := ZeroPlateLocation()
 	tx := strings.Split(s, ":")
-	return platelocation{tx[0], MakeWellCoords(tx[1])}
+
+	if len(tx) != 2 {
+		return pl
+	}
+
+	return PlateLocation{tx[0], MakeWellCoords(tx[1])}
+}
+
+func (pc PlateLocation) Equals(opc PlateLocation) bool {
+	if !(pc.ID == opc.ID && pc.Coords.FormatA1() == opc.Coords.FormatA1()) {
+		return false
+	}
+	return true
 }

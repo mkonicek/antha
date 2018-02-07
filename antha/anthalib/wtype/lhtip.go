@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import (
@@ -175,6 +174,12 @@ func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, shape *
 	}
 
 	return &lht
+}
+
+func (tip *LHTip) DupKeepID() *LHTip {
+	t := tip.Dup()
+	t.ID = tip.ID
+	return t
 }
 
 func CopyTip(tt LHTip) *LHTip {

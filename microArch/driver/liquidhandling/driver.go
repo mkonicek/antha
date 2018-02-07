@@ -103,6 +103,7 @@ type LiquidhandlingDriver interface {
 	//RemoveAllPlates remove every object in the machine
 	RemoveAllPlates() driver.CommandStatus
 	RemovePlateAt(position string) driver.CommandStatus
+	Message(level int, title, text string, showcancel bool) driver.CommandStatus
 }
 
 type ExtendedLiquidhandlingDriver interface {
@@ -123,6 +124,5 @@ type ExtendedLiquidhandlingDriver interface {
 	// refactored into other interfaces?
 	Open() driver.CommandStatus
 	Close() driver.CommandStatus
-	Message(level int, title, text string, showcancel bool) driver.CommandStatus
 	GetOutputFile() (string, driver.CommandStatus)
 }

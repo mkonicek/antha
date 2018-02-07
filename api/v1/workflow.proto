@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+import "github.com/antha-lang/antha/api/v1/inventory.proto";
+
+package org.antha_lang.antha.v1;
+
+message Workflow {
+  string id = 1;
+  string label = 2;
+  string description = 3;
+  map<string,Element> processes = 4;
+  repeated Connection connections = 5;
+}
+
+message Element {
+  string id = 1;
+}
+
+message Connection {
+  ProcessAddress source = 1;
+  ProcessAddress target = 2;
+}
+
+message ProcessAddress {
+  string process = 1;
+  string port = 2;
+}
+
+message MixerConfig {
+  repeated InventoryItem input_plates = 1;
+  repeated InventoryItem output_plates = 2;
+  repeated string input_plate_types = 3;
+  repeated string output_plate_types = 4;
+  repeated string tip_types = 5;
+  int32 max_plates = 6;
+  int32 max_wells = 7;
+  double residual_volume_weight = 8;
+  //int32 planning_version = 9;
+  bool model_evaporation = 10;
+  bool output_sort = 11;
+
+  // Driver specific options. Semantics are not stable. Will need to be
+  // revised when multi device execution is supported.
+  repeated string driver_specific_input_preferences = 12;
+  repeated string driver_specific_output_preferences = 13;
+  repeated string driver_specific_tip_preferences = 14;
+  repeated string driver_specific_tip_waste_preferences = 15;
+  repeated string driver_specific_wash_preferences = 16;
+  string planning_version = 17;
+  bool use_driver_tip_tracking = 18;
+}

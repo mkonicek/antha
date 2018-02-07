@@ -20,19 +20,35 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for working with enzymes; in particular restriction enzymes
 package enzymes
 
 import (
+	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+type invalidProperty struct{}
+
+var anInvalidProperty = &invalidProperty{}
+
+func (ip *invalidProperty) Error() string {
+	var props []string
+	for key := range dnaPolymeraseProperties {
+		props = append(props, key)
+	}
+	sort.Strings(props)
+	return "Valid options are: " + strings.Join(props, ",")
+}
+
 var (
 	//
 
-	DNApolymeraseProperties = map[string]map[string]float64{
-		"Q5": map[string]float64{
+	dnaPolymeraseProperties = map[string]map[string]float64{
+		"Q5Polymerase": map[string]float64{
 			"activity_U/ml_assayconds": 50.0,
 			"SecperKb_upper":           30,
 			"SperKb_lower":             20,
@@ -53,7 +69,7 @@ var (
 			"workingconc":         0.0005,
 		},
 	}
-
+	// DNApolymerasetemps contains example cycling properties for two common DNA polymerase enzymes
 	DNApolymerasetemps = map[string]map[string]wunit.Temperature{
 		"Q5Polymerase": map[string]wunit.Temperature{
 			"extensiontemp": wunit.NewTemperature(72, "C"),
@@ -66,62 +82,22 @@ var (
 	}
 )
 
-/*
-type assayconds struct {
-	Buffer buffermixture
-	Temp   wunit.Temperature
-}*/
+// CalculateExtensionTime returns the calculated extension time to amplify a targetSequence with a specified polymerase.
+// An error will be returned if the required properties cannot be found for the polymerase.
+// Currently the standard valid polymerase options are Taq and Q5Polymerase.
+func CalculateExtensionTime(polymeraseName string, targetSequence wtype.DNASequence) (wunit.Time, error) {
 
-/*
-type struct {
-	processmodel[]
-	processfactors[]
-	processfactorcoefficients[]
-	Ffactor
-	pvalue
-}
-type buffermixture struct{
-	25 mM TAPS-HCl
-	(pH 9.3 @ 25°C),
-	50 mM KCl,
-	2 mM MgCl2,
-	1 mM β-mercaptoethanol,
-	200 μM dNTPs including [3H]-dTTP and
-	400 μg/ml activated Calf Thymus DNA.
+	polymeraseproperties, polymerasefound := dnaPolymeraseProperties[polymeraseName]
+
+	if !polymerasefound {
+
+		return wunit.Time{}, anInvalidProperty
 	}
-*/
 
-type Polymerase struct {
-	*wtype.LHComponent
-	Uperml              float64
-	Rate_sperBP         float64
-	Fidelity_errorrate  float64 // could dictate how many colonies are checked in validation!
-	Extensiontemp       wunit.Temperature
-	Hotstart            bool
-	StockConcentration  wunit.Concentration // this is normally in U?
-	TargetConcentration wunit.Concentration
-	heatinactivation    bool
+	sperkblower, found := polymeraseproperties["SperKb_lower"]
+	if !found {
+		return wunit.Time{}, fmt.Errorf("no property, SperKb_lower found for %s", polymeraseName)
+	}
 
-	// this is also a glycerol solution rather than a watersolution!
-} /*
-func makePolymerasestatsLibrary() map[string]*Polymerase {
-
-	cmap := make(map[string]*Polymerase)
-
-	poly := NewPolymerase()
-	A.CName = "water"
-	A.Type = "water"
-	A.Smax = 9999
-	cmap[A.CName] = A
+	return wunit.NewTime(float64(len(targetSequence.Sequence()))/sperkblower, "s"), nil
 }
-
-func NewPolymerase() *Polymerase {
-	var poly Polymerase
-	poly.Rate_sperBP = &poly.Fidelity_errorrate // could dictate how many colonies are checked in validation!
-	poly.Extensiontemp
-	poly.Hotstart
-	poly.StockConcentration // this is normally in U?
-	poly.TargetConcentration
-	return &poly
-}
-*/

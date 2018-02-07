@@ -28,13 +28,7 @@ import (
 	"strconv"
 	"strings"
 
-	//"os"
-	//"path/filepath"
-
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -42,7 +36,6 @@ import (
 
 type Primer struct {
 	wtype.DNASequence
-	//Sequence    string
 	Length      int
 	GCContent   float64
 	Reverse     bool
@@ -88,14 +81,32 @@ func OverlapCheck(seq1 string, seq2 string) (maxpercentOverlapofsmallest float64
 
 		maxnumberofbpOverlap = biggestsofar
 		overlappingseq = overlapsofar
-		// fmt.Println("refseq:", refseq, "testseq:", testseq)
 
 		maxpercentOverlapofsmallest = float64(maxnumberofbpOverlap) / float64(len(testseq))
 	}
 	return
 }
 
-// calculates the basic melting temperature of a DNA sequence
+/*
+BasicMeltingTemp calculates the expected melting temperature of a DNASequence.
+
+The two standard approximation calculations are used.
+For sequences less than 14 nucleotides the formula is
+Tm= (wA+xT) * 2 + (yG+zC) * 4
+
+where w,x,y,z are the number of the bases A,T,G,C in the sequence, respectively
+(from Marmur,J., and Doty,P. (1962) J Mol Biol 5:109-118 [PubMed]).
+
+For sequences longer than 13 nucleotides, the equation used is
+Tm= 64.9 +41*(yG+zC-16.4)/(wA+xT+yG+zC)
+
+See Wallace,R.B., Shaffer,J., Murphy,R.F., Bonner,J., Hirose,T., and Itakura,K. (1979) Nucleic Acids Res 6:3543-3557 (Abstract)
+and Sambrook,J., and Russell,D.W. (2001) Molecular Cloning: A Laboratory Manual. Cold Spring Harbor Laboratory Press; Cold Spring Harbor, NY. (CHSL Press)
+
+ASSUMPTIONS:
+Both equations assume that the annealing occurs under the standard conditions of 50 nM primer, 50 mM Na+, and pH 7.0.
+
+*/
 func BasicMeltingTemp(primersequence wtype.DNASequence) (meltingtemp wunit.Temperature) {
 
 	primerseq := primersequence.Sequence()
@@ -110,30 +121,43 @@ func BasicMeltingTemp(primersequence wtype.DNASequence) (meltingtemp wunit.Tempe
 	var mt float64
 
 	if len(primerseq) < 14 {
-		//err = fmt.Errorf("cannot use this algorithm for sequences less than 13 nucleotides")
 
 		mt = float64((a+t)*2 + (g+c)*4)
 
 	} else {
 		mt = 64.9 + 41.0*(float64(g+c)-16.4)/float64(a+t+c+g)
-
-		//fmt.Println(mt)
-
 	}
 
 	meltingtemp = wunit.NewTemperature(mt, "℃")
 	return
 }
 
-//define region in DNA sequence
+// define region in DNA sequence
+// this is directionless and does not check for reverse complement
+// assumes positions stated are in user format (i.e. first position is 1 and not 0)
 func DNAregion(sequence wtype.DNASequence, startposition int, endposition int) (region wtype.DNASequence) {
 
 	dnaseq := sequence.Sequence()
 
-	//define region in sequence to create primer. NB: Sequence position will start from 0 not 1.
+	//define region in sequence to create primer.
+	if endposition > startposition {
+		// fix properly!!!
+		if startposition == 0 {
+			startposition = 1
+		}
 
-	region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:endposition])
-
+		if endposition > len(dnaseq) {
+			message := fmt.Sprint("endposition ", endposition, " exceeds length of sequence ", sequence.Name(), " Length: ", len(dnaseq))
+			panic(message)
+			//endposition = len(dnaseq) - 1
+		}
+		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:endposition])
+	} else if endposition < startposition && sequence.Plasmid {
+		region = wtype.MakeLinearDNASequence("region"+strconv.Itoa(startposition)+":"+strconv.Itoa(endposition), dnaseq[startposition-1:]+dnaseq[:endposition])
+	} else if endposition < startposition && !sequence.Plasmid {
+		message := fmt.Sprint("DNA Region start position cannot be larger than end position for linear dna fragments. startposition: ", startposition, "endposition", endposition, "Sequence:", sequence)
+		panic(message)
+	}
 	return
 
 }
@@ -146,10 +170,11 @@ func DNAregion(sequence wtype.DNASequence, startposition int, endposition int) (
 // overlapthresholdwithseqstoavoid allows maximum permissable partial overlap to be specified by the user, if set to -1 any overlap is tolerated
 func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (oligoseq Primer, err error) {
 
-	//var start int
-	//var end int
+	if maxlength > len(seq.Sequence()) {
+		return oligoseq, fmt.Errorf("Sequence %s %s too small to design primer for or max length of primer %d too long", seq.Nm, seq.Seq, maxlength)
+	}
 
-	region := seq.Sequence()
+	region := strings.ToUpper(seq.Sequence())
 
 	for start := 0; start < maxlength; start++ {
 
@@ -165,11 +190,7 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 
 			meltingtemp := BasicMeltingTemp(ssoligo)
 
-			//fmt.Println(ssoligo.Seq, temppercentage, meltingtemp.ToString())
-
 			bindingsites := CheckNonSpecificBinding(seq, ssoligo)
-
-			// fmt.Println("binding sites:", bindingsites)
 
 			if len(seqstoavoid) > 0 && overlapthresholdwithseqstoavoid > 0 {
 				for _, seq := range seqstoavoid {
@@ -181,8 +202,7 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				}
 			}
 
-			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && search.InSlice(tempoligoseq, seqstoavoid) == false && overlapthresholdfail == false {
-				// fmt.Println("found good primer!", tempoligoseq, temppercentage)
+			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && search.InStrings(seqstoavoid, tempoligoseq) == false && overlapthresholdfail == false {
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -203,20 +223,60 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 	return
 }
 
-func FindPositioninSequence(largeSequence wtype.DNASequence, smallSequence wtype.DNASequence) (start int, end int, err error) {
-	//positions, err := search.Findall(largeSequence.Sequence(), smallSequence.Sequence())
+func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (oligoseq Primer, err error) {
 
-	seqsfound := sequences.FindSeqsinSeqs(largeSequence.Sequence(), []string{smallSequence.Sequence()})
+	//var start int
+	//var end int
 
-	/*if err != nil {
-		return
-	} else */if len(seqsfound) != 1 {
-		err = fmt.Errorf(strconv.Itoa(len(seqsfound)), " seqs found of ", smallSequence.Nm, " in ", largeSequence.Nm)
-		return
+	// get the reverse complement of the region
+
+	if maxlength > len(seq.Sequence()) {
+		return oligoseq, fmt.Errorf("Sequence %s %s too small to design primer for or max length of primer %d too long", seq.Nm, seq.Seq, maxlength)
 	}
-	// fmt.Println("seqs found", seqsfound)
-	start = seqsfound[0].Positions[0]
-	end = seqsfound[0].Positions[1]
+
+	region := seq.Sequence()
+	revregion := sequences.RevComp(region)
+
+	for start := 0; start < maxlength; start++ {
+
+		for end := minlength + start; end <= start+maxlength; end++ {
+
+			var overlapthresholdfail bool
+
+			tempoligoseq := revregion[start:end]
+
+			ssoligo := wtype.MakeSingleStrandedDNASequence("oligo", tempoligoseq)
+
+			temppercentage := sequences.GCcontent(tempoligoseq)
+
+			meltingtemp := BasicMeltingTemp(ssoligo)
+
+			bindingsites := CheckNonSpecificBinding(seq, ssoligo)
+
+			if len(seqstoavoid) > 0 && overlapthresholdwithseqstoavoid > 0 {
+				for _, seq := range seqstoavoid {
+					_, overlap, _ := OverlapCheck(tempoligoseq, seq)
+
+					if overlap > overlapthresholdwithseqstoavoid {
+						overlapthresholdfail = true
+					}
+				}
+			}
+
+			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && search.InStrings(seqstoavoid, tempoligoseq) == false && overlapthresholdfail == false {
+				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
+				oligoseq.GCContent = temppercentage
+				oligoseq.Length = len(tempoligoseq)
+				oligoseq.MeltingTemp = meltingtemp
+				err = nil
+				return
+
+			} else {
+				err = fmt.Errorf("No primers found matching criteria: "+" last bindingsites = "+strconv.Itoa(bindingsites)+" last gc percentage= ", temppercentage, "last melting temp:", meltingtemp.ToString())
+			}
+		}
+	}
+
 	return
 }
 
@@ -286,6 +346,45 @@ func DesignFWDPRimerstoCoverRegion(seq wtype.DNASequence, regionstart, regionend
 	}
 	return
 }
+
+/*
+func DesignPrimerstoFlankRegion(seq wtype.DNASequence, regionstart, regionend int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers [2]Primer) {
+
+	primers = make([]Primer, 2)
+
+	avoidthese := make([]string, 0)
+
+	if len(seqstoavoid) != 0 {
+		for _, seq := range seqstoavoid {
+			avoidthese = append(avoidthese, seq)
+		}
+	}
+
+	if regionstart-100 > 0 {
+		regionstart = regionstart - 100
+	} else {
+		regionstart = 0
+	}
+
+	for i := regionstart; i < regionend; i = i + sequenceinterval {
+
+		region := DNAregion(seq, i, len(seq.Sequence()))
+
+		primer, err := FWDOligoSeq(region, maxGCcontent, minlength, maxlength, minmeltingtemp, maxmeltingtemp, avoidthese, overlapthresholdwithseqstoavoid)
+
+		if err != nil {
+			panic(err.Error() + " for " + region.Nm)
+		}
+
+		primer.Nm = "primer_" + seq.Nm + "_" + strconv.Itoa(i) + ":" + strconv.Itoa(i-1+sequenceinterval)
+
+		primers = append(primers, primer)
+
+		avoidthese = append(avoidthese, primer.Sequence())
+	}
+	return
+}
+*/
 
 func DesignFWDPRimerstoCoverSequence(seq wtype.DNASequence, targetseq string, sequenceinterval int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers []Primer) {
 
@@ -357,9 +456,12 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 		}
 	}
 
-	feature := seq.GetFeatureByName(targetfeaturename)
-	if feature == nil {
-		panicstatement := fmt.Sprintln("feature: ", targetfeaturename, " not found amongst ", seq.FeatureNames())
+	features := seq.GetFeatureByName(targetfeaturename)
+	if len(features) == 0 {
+		panicstatement := fmt.Sprintf("feature: %s not found amongst features: %+v", targetfeaturename, seq.Features)
+		panic(panicstatement)
+	} else if len(features) > 1 {
+		panicstatement := fmt.Sprintf("feature: %s found %d times amongst features: %+v", targetfeaturename, len(features), seq.Features)
 		panic(panicstatement)
 	}
 
@@ -372,7 +474,7 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 		}
 	*/
 
-	targetseq := feature.DNASeq
+	targetseq := features[0].DNASeq
 
 	seqsfound := sequences.FindSeqsinSeqs(seq.Sequence(), []string{targetseq})
 
@@ -434,10 +536,10 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 	return
 }
 
-func CheckNonSpecificBinding(fullseq, primerseq wtype.DNASequence) (count int) {
-	seqsfound := sequences.FindSeqsinSeqs(fullseq.Sequence(), []string{primerseq.Sequence()})
-
-	count = len(seqsfound)
+// CheckNonSpecificBinding checks for number of EXACT matches of a primerSeq in a fullSeq.
+func CheckNonSpecificBinding(fullSeq, primerSeq wtype.DNASequence) (count int) {
+	seqsfound := sequences.FindAll(&fullSeq, &primerSeq)
+	count = len(seqsfound.Positions)
 	return
 }
 

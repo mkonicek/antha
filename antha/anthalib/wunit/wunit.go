@@ -24,6 +24,8 @@ package wunit
 
 import (
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"math"
 )
 
 // structure defining a base unit
@@ -74,12 +76,20 @@ type Measurement interface {
 	ConvertToString(s string) float64
 	// add to this measurement
 	Add(m Measurement)
+	// add to this measurement - synonym for less typing
+	A(m Measurement)
 	// subtract from this measurement
 	Subtract(m Measurement)
+	// subtract - synonym for less typing
+	S(m Measurement)
 	// multiply measurement by a factor
 	MultiplyBy(factor float64)
+	// multiply by a factor - synonym for less typing
+	M(factor float64)
 	// divide measurement by a factor
 	DivideBy(factor float64)
+	// divide - synonym for less typing
+	D(factor float64)
 	// comparison operators
 	LessThan(m Measurement) bool
 	GreaterThan(m Measurement) bool
@@ -178,6 +188,10 @@ func (cm *ConcreteMeasurement) Add(m Measurement) {
 
 }
 
+func (cm *ConcreteMeasurement) A(m Measurement) {
+	cm.Add(m)
+}
+
 // subtract
 
 func (cm *ConcreteMeasurement) Subtract(m Measurement) {
@@ -189,6 +203,9 @@ func (cm *ConcreteMeasurement) Subtract(m Measurement) {
 
 	cm.SetValue(cm.RawValue() - m.ConvertTo(cm.Unit()))
 
+}
+func (cm *ConcreteMeasurement) S(m Measurement) {
+	cm.Subtract(m)
 }
 
 // multiply
@@ -203,6 +220,10 @@ func (cm *ConcreteMeasurement) MultiplyBy(factor float64) {
 
 }
 
+func (cm *ConcreteMeasurement) M(factor float64) {
+	cm.MultiplyBy(factor)
+}
+
 func (cm *ConcreteMeasurement) DivideBy(factor float64) {
 
 	if cm == nil {
@@ -213,6 +234,10 @@ func (cm *ConcreteMeasurement) DivideBy(factor float64) {
 
 	cm.SetValue(cm.RawValue() / float64(factor))
 
+}
+
+func (cm *ConcreteMeasurement) D(factor float64) {
+	cm.DivideBy(factor)
 }
 
 // define a zero
@@ -230,6 +255,53 @@ func (cm *ConcreteMeasurement) IsZero() bool {
 		return true
 	}
 	return false
+}
+
+// less sensitive comparison operators
+
+func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {
+	// nil means less than everything
+	if cm == nil {
+		return true
+	}
+	// returns true if this is less than m
+	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
+	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
+
+	if v > v2 {
+		return true
+	}
+
+	return false
+
+}
+
+func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
+	if cm == nil {
+		return false
+	}
+	// returns true if this is greater than m
+	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
+	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
+	if v < v2 {
+		return true
+	}
+	return false
+
+}
+
+func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
+	// this is not equal to anything
+
+	if cm == nil {
+		return false
+	}
+
+	// returns true if this is equal to m
+	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
+	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
+
+	return v == v2
 }
 
 // comparison operators
@@ -285,6 +357,7 @@ func (cm *ConcreteMeasurement) GreaterThanFloat(f float64) bool {
 	return false
 }
 
+// XXX This should be made more literal and rounded behaviour explicitly called for by user
 func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	// this is not equal to anything
 
@@ -293,9 +366,14 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	}
 	// returns true if this is equal to m
 	v := m.ConvertTo(cm.Unit())
-	if v == cm.RawValue() {
+
+	dif := math.Abs(v - cm.RawValue())
+
+	epsilon := math.Nextafter(1, 2) - 1
+	if dif < (epsilon * 10000) {
 		return true
 	}
+
 	return false
 }
 
@@ -312,15 +390,7 @@ func (cm *ConcreteMeasurement) EqualToFloat(f float64) bool {
 
 //Human readable string
 func (cm *ConcreteMeasurement) ToString() string {
-	v := fmt.Sprintf("%.3f", cm.RawValue())
-	//prettyfy by removing trailing zeros after the point
-	for v[len(v)-1] == '0' {
-		v = v[:len(v)-1]
-	}
-	if v[len(v)-1] == '.' {
-		v = v[:len(v)-1]
-	}
-	return fmt.Sprintf("%s%s", v, cm.Unit().PrefixedSymbol())
+	return fmt.Sprintf("%.3g %s", cm.RawValue(), cm.Unit().PrefixedSymbol())
 }
 
 /**********/

@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 1 Royal College St, London NW1 0NH UK
 
-// Core Antha package dealing with the antha type system
 package wtype
 
 import (
@@ -28,11 +27,12 @@ import (
 )
 
 type Absorbance struct {
-	Reading    float64
-	Wavelength float64
-	Pathlength wunit.Length
-	Status     []string
-	Reader     string
+	WellLocation	WellCoords
+	Reading    	float64
+	Wavelength 	float64
+	Pathlength 	wunit.Length
+	Status     	[]string
+	Reader     	string
 }
 
 type Reading interface {

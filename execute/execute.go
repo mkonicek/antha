@@ -3,21 +3,13 @@
 package execute
 
 import (
-	"encoding/json"
-	"errors"
+	"context"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
-	"golang.org/x/net/context"
 )
-
-var (
-	cannotConfigure = errors.New("cannot configure liquid handler")
-)
-
-// TODO(ddn): extend result when protocols can block
 
 // Result of executing a workflow.
 type Result struct {
@@ -26,36 +18,34 @@ type Result struct {
 	Insts    []target.Inst
 }
 
+// An Opt are options for Run.
 type Opt struct {
-	WorkflowData []byte         // JSON data describing workflow
-	Workflow     *workflow.Desc // Or workflow directly
-	ParamData    []byte         // JSON data describing parameters
-	Params       *RawParams     // Or parameters directly
-	Target       *target.Target // Target machine configuration
-	Id           string         // Job Id
+	// Target machine configuration
+	Target *target.Target
+	// Deprecated for separate assignment of values to workflow. Raw workflow.
+	Workflow *workflow.Desc
+	// Deprecated for separate assignment of values to workflow. Raw parameters.
+	Params *RawParams
+	// Job ID.
+	ID string
+	// Deprecated for separate assignment of values to workflow. If true, read
+	// content for each wtype.File from file of the same name in the current
+	// directory.
+	TransitionalReadLocalFiles bool
 }
 
-// Simple entrypoint for one-shot execution of workflows.
+// Run is a simple entrypoint for one-shot execution of workflows.
 func Run(parent context.Context, opt Opt) (*Result, error) {
-	w, err := workflow.New(workflow.Opt{FromBytes: opt.WorkflowData, FromDesc: opt.Workflow})
+	ctx := target.WithTarget(withID(parent, opt.ID), opt.Target)
+
+	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
 	if err != nil {
 		return nil, err
 	}
 
-	var params *RawParams
-	if opt.Params != nil {
-		params = opt.Params
-	} else if opt.ParamData != nil {
-		if err := json.Unmarshal(opt.ParamData, &params); err != nil {
-			return nil, err
-		}
-	}
-
-	if _, err := setParams(parent, params, w); err != nil {
+	if _, err := setParams(ctx, w, opt.Params, opt.TransitionalReadLocalFiles); err != nil {
 		return nil, err
 	}
-
-	ctx := target.WithTarget(WithId(parent, opt.Id), opt.Target)
 
 	r := &resolver{}
 

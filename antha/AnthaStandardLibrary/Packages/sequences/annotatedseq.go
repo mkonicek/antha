@@ -20,18 +20,67 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with and manipulating dna sequences in extension to methods available in wtype
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
 import (
-	//"fmt"
-	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
+// AddFeature adds a feature to a DNASequence
+// The positions will be added automatically; if more than one matching sequence is found, multiple features will be added.
+func AddFeature(annotated *wtype.DNASequence, newFeature wtype.Feature) {
+
+	featureSeq := newFeature.DNASequence()
+
+	positions := findSeq(annotated, &featureSeq)
+
+	var features []wtype.Feature
+	for _, feature := range annotated.Features {
+		features = append(features, feature)
+	}
+	for _, featPosition := range positions.Positions {
+		newFeature.StartPosition, newFeature.EndPosition = featPosition.Coordinates()
+		features = append(features, newFeature)
+	}
+	annotated.Features = features
+}
+
+// RemoveFeatures clears all existing feature annotations from a sequence.
+func RemoveFeatures(dnaSeq *wtype.DNASequence) {
+	var noFeatures []wtype.Feature
+	dnaSeq.Features = noFeatures
+}
+
+// SetFeatures replaces any existing feature annotations of the DNASequence with the
+// features specified.
+func SetFeatures(dnaSeq *wtype.DNASequence, features []wtype.Feature) {
+
+	RemoveFeatures(dnaSeq)
+
+	for _, feature := range features {
+		AddFeature(dnaSeq, feature)
+	}
+
+	dnaSeq.Features = features
+	return
+}
+
+// AddFeatures adds features to the existing features of the DNASequence.
+func AddFeatures(dnaSeq *wtype.DNASequence, features []wtype.Feature) {
+
+	for _, feature := range features {
+		AddFeature(dnaSeq, feature)
+	}
+
+	dnaSeq.Features = features
+}
+
+// ORFs2Features converts a set of ORFs into a set of features
 func ORFs2Features(orfs []ORF) (features []wtype.Feature) {
 
 	features = make([]wtype.Feature, 0)
@@ -48,39 +97,113 @@ func ORFs2Features(orfs []ORF) (features []wtype.Feature) {
 	return
 }
 
-func MakeFeature(name string, seq string, sequencetype string, class string, reverse string) (feature wtype.Feature) {
+// MakeFeature constructs an annotated feature to be added to a sequence.
+// The feature will be defined by it's class and it's position in the sequence once added to a sequence using AddFeature.
+// A protein sequence can be specified if appropriate.
+// valid class fields are:
+/*
+	ORF = "ORF"
+	CDS = "CDS"
+	GENE = "gene"
+	MISC_FEATURE = "misc_feature"
+	PROMOTER = "promoter"
+	TRNA = "tRNA"
+	RRNA = "rRNA"
+	NCRNA = "ncRNA"
+	REGULATORY = "regulatory"
+	REPEAT_REGION = "repeat_region"
+*/
+// valid sequence types entries are:
+// "aa" = amino acid/ protein sequence
+// "dna" = DNA sequence
+// "rna = "RNA sequence
+// Use the AddFeature function to add the feature to a DNASequence such that the positions are added correctly.
+func MakeFeature(name string, seq string, start int, end int, sequencetype string, class string, reverse string) (feature wtype.Feature) {
 
 	feature.Name = name
 	feature.DNASeq = strings.ToUpper(seq)
-
-	//features := make([]Feature,0)
-	//feature := Feature
-	//// fmt.Println("len seq =", len(seq))
 	feature.Class = class
-	if sequencetype == "aa" {
-		feature.DNASeq = RevTranslatetoNstring(seq)
-		feature.Protseq = seq
-		feature.StartPosition = 1
-		feature.EndPosition = len(feature.DNASeq)
-		// fmt.Println("len seq =", len(feature.DNASeq))
-	} else {
-		feature.DNASeq = seq
-		feature.StartPosition = 1
-		feature.EndPosition = len(seq)
-		// fmt.Println("len seq =", len(seq))
-	}
-
-	if reverse == "Reverse" {
+	if strings.ToLower(reverse) == "reverse" {
 		feature.Reverse = true
 	}
-	if feature.Class == "orf" {
+
+	if strings.ToLower(sequencetype) == "aa" {
+		feature.DNASeq = RevTranslatetoNstring(seq)
+		feature.Protseq = seq
+		feature.StartPosition = start
+		feature.EndPosition = end
+	} else {
+		if strings.ToLower(sequencetype) == "rna" {
+			seq = rnaToDNA(seq)
+		}
+
+		if feature.Reverse == false {
+			feature.DNASeq = seq
+		}
+		if feature.Reverse == true {
+			seq = wtype.RevComp(seq)
+			feature.DNASeq = seq
+		}
+		feature.StartPosition = start
+		feature.EndPosition = end
+
+		if feature.Class == "gene" || feature.Class == "CDS" {
+			orf, orftrue := FindORF(seq)
+			if orftrue == true {
+				feature.Protseq = orf.ProtSeq
+
+			}
+		}
+	}
+
+	if feature.Class == "ORF" || feature.Class == "orf" {
 		orf, orftrue := FindORF(seq)
 		if orftrue == true {
-			// fmt.Println("orftrue!)")
 			feature.Protseq = orf.ProtSeq
-			feature.StartPosition = orf.StartPosition
-			feature.EndPosition = orf.EndPosition
 		}
 	}
 	return feature
+}
+
+func rnaToDNA(rnaSeq string) (dnaSeq string) {
+
+	var newSeq []string
+
+	for _, letter := range rnaSeq {
+		if strings.ToUpper(string(letter)) == "U" {
+			letter = rune('T')
+		}
+		newSeq = append(newSeq, string(letter))
+	}
+
+	dnaSeq = strings.Join(newSeq, "")
+
+	return
+}
+
+// MakeAnnotatedSeq makes a DNA sequence adding the specified features with their correct positions in the sequence specified in human friendly format.
+func MakeAnnotatedSeq(name string, seq string, circular bool, features []wtype.Feature) (annotated wtype.DNASequence, err error) {
+	annotated.Nm = name
+	annotated.Seq = seq
+	annotated.Plasmid = circular
+
+	var newFeatures []wtype.Feature
+
+	for _, feature := range features {
+		featureDNASequence := feature.DNASequence()
+		featurePositionsFound := FindAll(&annotated, &featureDNASequence)
+
+		if len(featurePositionsFound.Positions) > 0 {
+			for _, positionPair := range featurePositionsFound.Positions {
+				feature.StartPosition, feature.EndPosition = positionPair.HumanFriendly()
+				feature.Reverse = positionPair.Reverse
+				newFeatures = append(newFeatures, feature)
+			}
+		} else if len(featurePositionsFound.Positions) == 0 {
+			err = fmt.Errorf("%s sequence %s not found in sequence %s ", feature.Name, feature.DNASeq, seq)
+		}
+
+	}
+	annotated.Features = newFeatures
+	return
 }

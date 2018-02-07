@@ -20,64 +20,103 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for plotting data
+// Package plot provides methods for plotting data. This package uses the gonum
+// plot library Plot type.  Produce a plot using the Plot function and then
+// export into an antha filetype using the Export function
 package plot
 
 import (
+	"bytes"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
-	"github.com/gonum/plot"
-	"github.com/gonum/plot/plotter"
-	"github.com/gonum/plot/plotutil"
-	"github.com/gonum/plot/vg"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/tealeg/xlsx"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg"
 )
 
-var (
-	alphabet string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-)
+// Export creates a wtype.file from the plot data. Heights and lengths can be parsed from strings i.e. 10cm.
+// If no valid height or length is specified default values of 10cm will be used but an error will also be returned.
+// If the desired filename specified does not contain a file extension, a png file will be used as the default file format.
+func Export(plt *plot.Plot, heightstr string, lengthstr string, filename string) (file wtype.File, err error) {
 
-func Export(plt *plot.Plot, filename string) {
-	length, _ := vg.ParseLength("10cm")
+	var errtoreturn error
 
-	plt.Save(length, length, filename)
+	length, err := vg.ParseLength(lengthstr)
+	if err != nil {
+		length = 10 * vg.Centimeter
+		errtoreturn = err
+	}
+	height, err := vg.ParseLength(heightstr)
+	if err != nil {
+		height = 10 * vg.Centimeter
+		if errtoreturn != nil {
+			errtoreturn = fmt.Errorf(errtoreturn.Error(), " + ", err.Error())
+		}
+	}
+
+	var plotFormat string
+
+	if len(filepath.Ext(filename)) == 0 {
+		plotFormat = "png"
+		filename = strings.Join([]string{filename, plotFormat}, ".")
+	} else {
+		plotFormat = strings.TrimLeft(filepath.Ext(filename), ".")
+	}
+
+	w, err := plt.WriterTo(length, height, plotFormat)
+	if err != nil {
+		if errtoreturn != nil {
+			errtoreturn = fmt.Errorf(errtoreturn.Error(), " + ", err.Error())
+		}
+		return file, errtoreturn
+	}
+
+	var out bytes.Buffer
+	_, err = w.WriteTo(&out)
+	if err != nil {
+		return
+	}
+
+	file.Name = filename
+	err = file.WriteAll(out.Bytes())
+	return
 }
 
-func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot) {
+// Plot creates a plot from float data. Multiple sets of y values may be
+// specified for a set of x values.  The length of any yvalue dataset must be
+// equal to the length of xvalues or the function will stop and return an
+// error.
+func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error) {
 	// now plot the graph
 
 	// the data points
 	pts := make([]plotter.XYer, 0) //len(Xdatarange))
 
-	for ptsindex := 0; ptsindex < len(Xvalues); ptsindex++ {
+	// each specific set for each datapoint
+	for _, ydataset := range Yvaluearray {
 
-		// each specific set for each datapoint
-
-		for Xdatarangeindex, xfloat := range Xvalues {
-
-			xys := make(plotter.XYs, len(Yvaluearray))
-
-			yfloats := make([]float64, 0)
-			for _, yvalues := range Yvaluearray {
-				yfloat := yvalues[Xdatarangeindex]
-				yfloats = append(yfloats, yfloat)
-			}
-
-			for j := range xys {
-				xys[j].X = xfloat
-				xys[j].Y = yfloats[j]
-
-			}
-			//fmt.Println(xys)
-			pts = append(pts, xys) //
+		if len(ydataset) != len(Xvalues) {
+			return nil, fmt.Errorf("cannot plot x by y: x length %d is not the same as y length %d",
+				len(Xvalues), len(ydataset))
 		}
 
+		xys := make(plotter.XYs, len(ydataset))
+		for j := range xys {
+			xys[j].X = Xvalues[j]
+			xys[j].Y = ydataset[j]
+		}
+		pts = append(pts, xys)
 	}
-	plt, err := plot.New()
+	plt, err = plot.New()
 
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	// Create two lines connecting points and error bars. For
@@ -105,19 +144,32 @@ func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot) {
 
 	*/
 
-	fmt.Println(len(pts))
-
 	ptsinterface := make([]interface{}, 0)
 
-	for _, pt := range pts {
+	for i, pt := range pts {
+		ptsinterface = append(ptsinterface, fmt.Sprint("run_", i))
 		ptsinterface = append(ptsinterface, pt)
 	}
 
-	plotutil.AddScatters(plt, ptsinterface...) //AddScattersXYer(plt, pts)
+	err = plotutil.AddScatters(plt, ptsinterface...) //AddScattersXYer(plt, pts)
+	if err != nil {
+		return
+	}
+
+	plt.Legend.Top = true
+	plt.Legend.Left = true
+
 	return
 }
 
-func PlotfromMinMaxpairs(sheet *xlsx.Sheet, Xminmax []string, Yminmaxarray [][]string, Exportedfilename string) {
+// AddAxisTitles adds axis titles to the plot
+func AddAxisTitles(plt *plot.Plot, xtitle string, ytitle string) {
+	plt.X.Label.Text = xtitle
+	plt.Y.Label.Text = ytitle
+}
+
+// FromMinMaxPairs creates a plot from a spreadsheet.
+func FromMinMaxPairs(sheet *xlsx.Sheet, Xminmax []string, Yminmaxarray [][]string, Exportedfilename string) {
 	Xdatarange, err := spreadsheet.ConvertMinMaxtoArray(Xminmax)
 	if err != nil {
 		fmt.Println(Xminmax, Xdatarange)
@@ -132,17 +184,17 @@ func PlotfromMinMaxpairs(sheet *xlsx.Sheet, Xminmax []string, Yminmaxarray [][]s
 			panic(err)
 		}
 		if len(Xdatarange) != len(Ydatarange) {
-			panicmessage := fmt.Errorf("for index", i, "of array", "len(Xdatarange) != len(Ydatarange)")
-			panic(panicmessage.Error())
+			panicmessage := fmt.Sprint("for index", i, "of array", "len(Xdatarange) != len(Ydatarange)")
+			panic(panicmessage)
 		}
 		Ydatarangearray = append(Ydatarangearray, Ydatarange)
 		fmt.Println(Ydatarange)
 	}
-	Plotfromspreadsheet(sheet, Xdatarange, Ydatarangearray, Exportedfilename)
+	FromSpreadsheet(sheet, Xdatarange, Ydatarangearray, Exportedfilename)
 }
 
-// Xdatarange would consist of an array of
-func Plotfromspreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray [][]string, Exportedfilename string) {
+// FromSpreadsheet creates a plot from a spreadsheet.
+func FromSpreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray [][]string, Exportedfilename string) {
 
 	// now plot the graph
 
@@ -157,85 +209,43 @@ func Plotfromspreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray
 
 			xys := make(plotter.XYs, len(Ydatarangearray))
 
-			// fmt.Println("going here3")
-			// fmt.Println("Xdatapoint= ", Xdatapoint)
-
-			xrow, xcol, err := spreadsheet.A1formattorowcolumn(Xdatapoint)
+			xrow, xcol, err := spreadsheet.A1FormatToRowColumn(Xdatapoint)
 			if err != nil {
 				panic(err)
 			}
-			// fmt.Println("row, col line 155:", xrow, xcol)
 			xpoint := sheet.Rows[xcol].Cells[xrow]
-			// fmt.Println("datapoint", Xdatarangeindex, Xdatapoint, "xpoint = ", xpoint)
 
 			// get each y point and work out average
 
-			//yvalues := make([]xlsx.Cell, 0)
 			yfloats := make([]float64, 0)
 			for _, Ydatarange := range Ydatarangearray {
-				yrow, ycol, err := spreadsheet.A1formattorowcolumn(Ydatarange[Xdatarangeindex])
+				yrow, ycol, err := spreadsheet.A1FormatToRowColumn(Ydatarange[Xdatarangeindex])
 				if err != nil {
 					panic(err)
 				}
-				// fmt.Println("row, col line 148:", yrow, ycol)
-				//ypoint := sheet.Cell(yrow, ycol)
 				ypoint := sheet.Rows[ycol].Cells[yrow]
-				//yvalues = append(yvalues, ypoint)
 				yfloat, err := ypoint.Float()
 				if err != nil {
 					panic(err)
 				}
 				yfloats = append(yfloats, yfloat)
-				// fmt.Println("datapoint", Xdatarangeindex, ydatarangearrayindex, Ydatarange[ydatarangearrayindex], "Ycol", ycol, "yrow", yrow, "ypoint = ", ypoint)
-
-				//n, m := 5, 10
-				//pts := make([]plotter.XYer, len(Xdatarange))
-				//for i := range pts {
-
-				//pts[i] =
 
 			}
 
-			/*ymean, err := stats.Mean(yfloats)
-			if err != nil {
-				panic(err)
-			}*/
 			xfloat, err := xpoint.Float()
 			if err != nil {
 				panic(err)
 			}
 
-			//type XYs []struct{ X, Y float64 }
-			//pts[ptsindex] = &MyXYs{xfloat, ymean}
-
-			if err != nil {
-				panic(err)
-			}
-
-			// fmt.Println("datapoint", Xdatarangeindex, Xdatapoint, "xpoint = ", xpoint)
-			if err != nil {
-				panic(err)
-			}
-			// fmt.Println("going here2")
-			//center := float64(i)
 			for j := range xys {
 				// fmt.Println("going here")
 				fmt.Println(ptsindex)
-				//x, _ := pts[l].XY(j)
 				xys[j].X = xfloat
-				// fmt.Println("xfloat", j, xfloat)
 				xys[j].Y = yfloats[j]
-				// fmt.Println("yfloats[j]", j, yfloats[j])
-				// fmt.Println("xysssssssssx", Xdatarangeindex, j, xys)
 			}
-			fmt.Println(xys)
 			pts = append(pts, xys) //
-			//pts[Xdatarangeindex] = xys
-			// fmt.Println("hello:", pts[Xdatarangeindex])
-			// fmt.Println("hello again", pts)
 		}
 
-		// fmt.Println("len(pts)", len(pts))
 	}
 	plt, err := plot.New()
 
@@ -264,7 +274,6 @@ func Plotfromspreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray
 	//plotutil.AddErrorBars(plt, mean95, medMinMax)
 
 	// Add the points that are summarized by the error points.
-	fmt.Println(len(pts))
 
 	ptsinterface := make([]interface{}, 0)
 
@@ -272,10 +281,13 @@ func Plotfromspreadsheet(sheet *xlsx.Sheet, Xdatarange []string, Ydatarangearray
 		ptsinterface = append(ptsinterface, pt)
 	}
 
-	plotutil.AddScatters(plt, ptsinterface...) //pts[0], pts[1], pts[2], pts[3], pts[4])
+	if err := plotutil.AddScatters(plt, ptsinterface...); err != nil {
+		panic(err)
+	}
 
-	length, _ := vg.ParseLength("10cm")
+	length, _ := vg.ParseLength("10cm") // nolint
 
-	plt.Save(length, length, Exportedfilename)
-
+	if err := plt.Save(length, length, Exportedfilename); err != nil {
+		panic(err)
+	}
 }

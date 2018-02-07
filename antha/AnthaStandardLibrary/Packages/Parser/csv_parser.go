@@ -20,17 +20,19 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for reading file formats, in particular focused toward dna sequence parsing
 package parser
 
 import (
 	"encoding/csv"
 	"fmt"
+	"os"
+	"strings"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"os"
-	"strings"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 func ReadDesign(filename string) [][]string {
@@ -53,8 +55,7 @@ func ReadDesign(filename string) [][]string {
 	rawCSVdata, err := reader.ReadAll()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	// sanity check, display to standard output
@@ -74,6 +75,111 @@ func ReadDesign(filename string) [][]string {
 	}
 
 	return constructs
+}
+
+func trim(s string) string {
+	return strings.TrimSpace(s)
+}
+
+func readPartConcentrations(fileName string) (partNamesInOrder []string, concMap map[string]wunit.Concentration, err error) {
+
+	concMap = make(map[string]wunit.Concentration)
+
+	csvfile, err := os.Open(fileName)
+
+	if err != nil {
+		return
+	}
+
+	defer csvfile.Close()
+
+	reader := csv.NewReader(csvfile)
+
+	reader.FieldsPerRecord = -1 // see the Reader struct information below
+
+	rawCSVdata, err := reader.ReadAll()
+
+	if err != nil {
+		return
+	}
+	var header []string
+
+	var errs []string
+
+	var nameColumn = -1
+	var concColumn = -1
+
+	for i, row := range rawCSVdata {
+
+		// first row is a header
+		if i == 0 {
+			header = row
+
+			for k, cell := range header {
+
+				if strings.Contains(strings.ToLower(trim(cell)), "name") {
+					nameColumn = k
+				} else if strings.Contains(strings.ToLower(trim(cell)), "concentration") {
+					concColumn = k
+				}
+			}
+
+			if nameColumn < 0 {
+				err := fmt.Errorf(`No column header found containing part "Name". Please add this as the first column. Found %v`, header)
+				return partNamesInOrder, concMap, err
+			}
+
+			if concColumn < 0 {
+				errs = append(errs, fmt.Sprintf(`No column header found containing part "Concentration". Please add this. Found %v`, header))
+			}
+
+		} else if !rowEmpty(row) {
+
+			var partName string
+			var partConc wunit.Concentration
+
+			if nameColumn < len(row)-1 {
+				partName = row[nameColumn]
+			}
+
+			partNamesInOrder = append(partNamesInOrder, partName)
+
+			if strings.TrimSpace(partName) == "" {
+				break
+			}
+
+			if concColumn < len(row) && concColumn >= 0 {
+
+				partConc, err = doe.HandleConcFactor(header[concColumn], interface{}(row[concColumn]))
+				if err != nil {
+					errs = append(errs, err.Error())
+				}
+			} else {
+				errs = append(errs, fmt.Sprintf("no concentration given for %s: concColumn %d, cells with date in row %d", partName, concColumn, len(row)))
+			}
+
+			if _, found := concMap[partName]; found {
+				err = fmt.Errorf("duplicate part specified in parts list %s ", partName)
+				errs = append(errs, err.Error())
+			} else {
+				concMap[partName] = partConc
+			}
+		}
+	}
+	if len(errs) > 0 {
+		err = fmt.Errorf("Errors encountered parsing part concentrations: %s", strings.Join(errs, "; "))
+	}
+	return
+
+}
+
+func rowEmpty(row []string) bool {
+	for _, cell := range row {
+		if len(strings.TrimSpace(cell)) > 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func ReadParts(filename string) map[string]wtype.DNASequence {
@@ -98,8 +204,7 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 	rawCSVdata, err := reader.ReadAll()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	// sanity check, display to standard output
@@ -128,9 +233,6 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 					if strings.ToUpper(each[2]) == "1" {
 						part.Plasmid = true
 					}
-					/*	if each[2] == 1 {
-						part.Plasmid = true
-					}*/
 					if strings.ToUpper(each[2]) == "PLASMID" {
 						part.Plasmid = true
 					}
@@ -149,10 +251,8 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 					if strings.ToUpper(each[2]) == "0" {
 						part.Plasmid = false
 					}
-					/*	if each[2] == 0 {
-						part.Plasmid = false
-					}*/
 				}
+
 				parts = append(parts, part)
 				m[part.Nm] = part
 			}

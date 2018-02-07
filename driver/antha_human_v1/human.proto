@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package antha.human.v1;
+
+service Human {
+  rpc Human (HumanRequest) returns (HumanResponse) {}
+}
+
+message HumanRequest {
+  bytes data = 1;
+}
+
+message HumanResponse {
+  bytes data = 1;
+}

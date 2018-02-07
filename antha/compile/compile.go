@@ -1,5 +1,5 @@
-// antha/compile/compile.go: Part of the Antha language
-// Copyright (C) 2014 The Antha authors. All rights reserved.
+// compile.go: Part of the Antha language
+// Copyright (C) 2017 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,9 +20,12 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// package compile declares the functions required to translate an
-// Antha AST into a go source file
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
+// Package compile declares the functions required to translate an Antha AST
+// into a go source file
 package compile
 
 import (
@@ -65,6 +68,7 @@ const (
 	noExtraLinebreak                   // disables extra line break after /*-style comment
 )
 
+// nolint: structcheck
 type commentInfo struct {
 	cindex         int               // current comment index
 	comment        *ast.CommentGroup // = compiler.comments[cindex]; or nil
@@ -110,9 +114,6 @@ type compiler struct {
 	// Cache of most recently computed line position.
 	cachedPos  token.Pos
 	cachedLine int // line corresponding to cachedPos
-
-	// State needed to parse Antha nodes
-	antha
 }
 
 func (p *compiler) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node]int) {
@@ -123,7 +124,6 @@ func (p *compiler) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node
 	p.wsbuf = make([]whiteSpace, 0, 16) // whitespace sequences are short
 	p.nodeSizes = nodeSizes
 	p.cachedPos = -1
-	p.anthaInit()
 }
 
 func (p *compiler) internalError(msg ...interface{}) {
@@ -968,10 +968,10 @@ func (p *compiler) print(args ...interface{}) {
 			p.lastTok = token.STRING
 
 		default:
+			// nolint
 			fmt.Fprintf(os.Stderr, "print: unsupported argument %v (%T)\n", arg, arg)
 			panic("antha/compiler type")
 		}
-		// data != ""
 
 		next := p.pos // estimated/accurate position of next item
 		wroteNewline, droppedFF := p.flush(next, p.lastTok)
@@ -1207,9 +1207,15 @@ func (p *trimmer) Write(data []byte) (n int, err error) {
 				p.resetSpace()
 				p.space = append(p.space, b)
 			case '\n', '\f':
-				_, err = p.output.Write(data[m:n])
+				_, e1 := p.output.Write(data[m:n])
 				p.resetSpace()
-				_, err = p.output.Write(aNewline)
+				_, e2 := p.output.Write(aNewline)
+				if e1 != nil && err == nil {
+					err = e1
+				}
+				if e2 != nil && err == nil {
+					err = e2
+				}
 			case tabwriter.Escape:
 				_, err = p.output.Write(data[m:n])
 				p.state = inEscape
@@ -1239,6 +1245,7 @@ func (p *trimmer) Write(data []byte) (n int, err error) {
 // A Mode value is a set of flags (or 0). They control printing.
 type Mode uint
 
+// Valid modes
 const (
 	RawFormat Mode = 1 << iota // do not use a tabwriter; if set, UseSpaces is ignored
 	TabIndent                  // use tabs for indentation independent of UseSpaces
@@ -1248,10 +1255,9 @@ const (
 
 // A Config node controls the output of Fprint.
 type Config struct {
-	Mode     Mode   // default: 0
-	Tabwidth int    // default: 8
-	Indent   int    // default: 0 (all code is indented at least by this much)
-	Package  string // if non-nil, override package name
+	Mode     Mode // default: 0
+	Tabwidth int  // default: 8
+	Indent   int  // default: 0 (all code is indented at least by this much)
 }
 
 // fprint implements Fprint and takes a nodesSizes map for setting up the compiler state.

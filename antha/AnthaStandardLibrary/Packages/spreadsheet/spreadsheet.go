@@ -20,47 +20,153 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with spreadsheets
+// Package spreadsheet for interacting with spreadsheets
 package spreadsheet
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/tealeg/xlsx"
 )
 
-func OpenFile(filename string) (file *xlsx.File, err error) {
-	file, err = xlsx.OpenFile(filename)
-	return
-}
+// OpenXLSXFromFileName will open an xlsx file from a filename.
+func OpenXLSXFromFileName(filename string) (file *xlsx.File, err error) {
 
-func Sheet(file *xlsx.File, sheetnum int) (sheet *xlsx.Sheet) {
-	sheet = file.Sheets[sheetnum]
-	return
-}
+	bytes, err := ioutil.ReadFile(filename)
 
-func Getdatafromrowcol(sheet *xlsx.Sheet, col int, row int) (cell *xlsx.Cell) {
-	cell = sheet.Rows[col].Cells[row]
-	return
-}
-
-func GetdatafromCell(sheet *xlsx.Sheet, a1 string) (cell *xlsx.Cell, err error) {
-	row, col, err := A1formattorowcolumn(a1)
 	if err != nil {
 		return
 	}
-	cell = sheet.Rows[col].Cells[row]
+
+	file, err = xlsx.OpenBinary(bytes)
+
 	return
 }
 
-func Getdatafromcells(sheet *xlsx.Sheet, cellcoords []string) (cells []*xlsx.Cell, err error) {
+// OpenXLSX opens an xlsx file and returns the xlsx.File data structure.
+func OpenXLSX(xlsx wtype.File) (file *xlsx.File, err error) {
+	fileContents, err := xlsx.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	return OpenXLSXBinary(fileContents)
+}
+
+// OpenXLSXBinary parses the contents of an xlsx file into the xlsx.File data structure.
+func OpenXLSXBinary(bytes []byte) (file *xlsx.File, err error) {
+
+	file, err = xlsx.OpenBinary(bytes)
+
+	return
+}
+
+// Sheet returns the xlsx.Sheet in the xlsx file according to the sheet number.
+// An error is returned if an invalid sheet number is specified.
+// The sheet object looks like this:
+/*
+type Sheet struct {
+	Name        string
+	File        *File
+	Rows        []*Row
+	Cols        []*Col
+	MaxRow      int
+	MaxCol      int
+	Hidden      bool
+	Selected    bool
+	SheetViews  []SheetView
+	SheetFormat SheetFormat
+	AutoFilter  *AutoFilter
+}
+*/
+func Sheet(file *xlsx.File, sheetnum int) (sheet *xlsx.Sheet, err error) {
+
+	if sheetnum < 0 {
+		return nil, fmt.Errorf("sheet %d is invalid. The first sheet should be 0, not 1", sheetnum)
+	}
+
+	if sheetnum >= len(file.Sheets) {
+		var sheets []int
+		for key := range file.Sheets {
+			sheets = append(sheets, key)
+		}
+		return nil, fmt.Errorf("sheet %d not found in xlsx file. Found these: %v", sheetnum, sheets)
+	}
+
+	return file.Sheets[sheetnum], nil
+}
+
+// SheetToCSV returns a matrix of string values for the contents of each cell in the sheet.
+func SheetToCSV(sheet *xlsx.Sheet) (records [][]string) {
+	for _, row := range sheet.Rows {
+		var cellsForRow []string
+		for _, cell := range row.Cells {
+			cellsForRow = append(cellsForRow, cell.String())
+		}
+		records = append(records, cellsForRow)
+	}
+	return
+}
+
+// GetDataFromRowCol returns the cell contents at the specified row and column number in an xlsx sheet.
+// An error is returned if the column aor row number specified is beyond the range available in the sheet.
+// Counting starts from zero. i.e. the cell at the first row  and first column would be called by
+// cell, err := GetDataFromRowCol(sheet, 0,0)
+func GetDataFromRowCol(sheet *xlsx.Sheet, col int, row int) (cell *xlsx.Cell, err error) {
+	if col >= len(sheet.Rows) || col < 0 {
+		var cols []int
+		for key := range sheet.Rows {
+			cols = append(cols, key)
+		}
+		return nil, fmt.Errorf("column %d not found in xlsx sheet. Found these: %v", col, cols)
+	}
+
+	column := sheet.Rows[col]
+	if row >= len(column.Cells) || row < 0 {
+		var rows []int
+		for key := range column.Cells {
+			rows = append(rows, key)
+		}
+		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", row, rows)
+	}
+	return column.Cells[row], nil
+}
+
+// GetDataFromCell returns the cell contents at the specified cell position in an xlsx sheet.
+// The cellPositionInA1Formatshould be specified according to standard xslx nomenclature.
+// i.e. a letter corresponding to column followed by a number corresponding to row (starting from 1).
+// i.e. the first cell would be A1.
+// An error is returned if no value at the requested well position is found.
+func GetDataFromCell(sheet *xlsx.Sheet, cellPositionInA1Format string) (cell *xlsx.Cell, err error) {
+	row, col, err := A1FormatToRowColumn(cellPositionInA1Format)
+	if err != nil {
+		return
+	}
+
+	cell, err = GetDataFromRowCol(sheet, col, row)
+
+	if err != nil {
+		return cell, fmt.Errorf("error getting data for cell %s", cellPositionInA1Format)
+	}
+
+	return cell, nil
+}
+
+// GetDataFromCells returns the cell contents at the specified cell positions in an xlsx sheet.
+// The cellcoords be specified according to standard xslx nomenclature.
+// i.e. a letter corresponding to column followed by a number corresponding to row (starting from 1).
+// i.e. the first cell would be A1.
+// An error is returned if no value at the requested well position is found.
+func GetDataFromCells(sheet *xlsx.Sheet, cellcoords []string) (cells []*xlsx.Cell, err error) {
 
 	cells = make([]*xlsx.Cell, 0)
 	for _, a1 := range cellcoords {
-		cell, err := GetdatafromCell(sheet, a1)
+		cell, err := GetDataFromCell(sheet, a1)
 		if err != nil {
 			return cells, err
 		}
@@ -70,48 +176,103 @@ func Getdatafromcells(sheet *xlsx.Sheet, cellcoords []string) (cells []*xlsx.Cel
 	return cells, err
 }
 
-func GetdatafromColumn(sheet *xlsx.Sheet, colabcformat rune) (cells []*xlsx.Cell, err error) {
+// Column returns all cells for a column. The index of the column should be used.
+func Column(sheet *xlsx.Sheet, column int) (cells []*xlsx.Cell, err error) {
 
-	cellcoords, err := ConvertMinMaxtoArray([]string{(string(colabcformat) + strconv.Itoa(1)), (string(colabcformat) + strconv.Itoa(sheet.MaxRow))})
+	if column < 0 {
+		return nil, fmt.Errorf("sheet column %d is invalid. The first column should be 0, not 1", column)
+	}
+
+	colabcformat := wutil.NumToAlpha(column + 1)
+
+	cellcoords, err := ConvertMinMaxtoArray([]string{(colabcformat + strconv.Itoa(1)), (colabcformat + strconv.Itoa(sheet.MaxRow))})
 	if err != nil {
 		return cells, err
 	}
-	cells, err = Getdatafromcells(sheet, cellcoords)
+	cells, err = GetDataFromCells(sheet, cellcoords)
 
 	return cells, err
 }
 
-func HeaderandDataMap(sheet *xlsx.Sheet, headera1format string, dataminmaxcellcoords []string) (headerdatamap map[string][]*xlsx.Cell, err error) {
+// Row returns all cells for a row. The index of the row should be used.
+func Row(sheet *xlsx.Sheet, rowNumber int) (cells []*xlsx.Cell, err error) {
+	if rowNumber < 0 {
+		return nil, fmt.Errorf("sheet row %d is invalid. The first row should be 0, not 1", rowNumber)
+	}
+
+	if rowNumber >= len(sheet.Rows) {
+		var rows []int
+		for key := range sheet.Rows {
+			rows = append(rows, key)
+		}
+
+		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", rowNumber, rows)
+	}
+
+	cellsInrow := sheet.Rows[rowNumber]
+
+	maxColLetter := wutil.NumToAlpha(len(cellsInrow.Cells))
+
+	cellcoords, err := ConvertMinMaxtoArray([]string{("A" + strconv.Itoa(rowNumber+1)), (maxColLetter + strconv.Itoa(rowNumber+1))})
+	if err != nil {
+		return cells, err
+	}
+
+	cells, err = GetDataFromCells(sheet, cellcoords)
+
+	return cells, err
+}
+
+// ToHeaderDataMap returns a map of all column headers with corresponding cells.
+// useHeaderRow corresponds to the row to use for the headers.
+// If this is the first row, it should be set to 0.
+func ToHeaderDataMap(sheet *xlsx.Sheet, useHeaderRow int) (headerdatamap map[string][]*xlsx.Cell, err error) {
 
 	headerdatamap = make(map[string][]*xlsx.Cell)
 
-	header, err := GetdatafromCell(sheet, headera1format)
-	if err != nil {
-		return headerdatamap, err
-	}
-	headerstring := header.String()
+	var columnNumberToHeader = make(map[int]string)
 
-	cellcoords, err := ConvertMinMaxtoArray(dataminmaxcellcoords)
-	if err != nil {
-		return headerdatamap, err
+	rows := sheet.Rows
+
+	if useHeaderRow >= len(rows) {
+		return nil, fmt.Errorf("specified header row %d is not available in specified sheet", useHeaderRow)
 	}
-	cells, err := Getdatafromcells(sheet, cellcoords)
-	if err != nil {
-		return headerdatamap, err
+
+	// get values of first non empty row
+	headerRow := rows[useHeaderRow]
+
+	if len(headerRow.Cells) == 0 {
+		return nil, fmt.Errorf("specified header row %d contains no values in any cells", useHeaderRow)
 	}
-	headerdatamap[headerstring] = cells
+
+	for column, headerCell := range headerRow.Cells {
+		if _, found := columnNumberToHeader[column]; !found {
+			columnNumberToHeader[column] = headerCell.String()
+			if _, found := headerdatamap[headerCell.String()]; !found {
+				headerdatamap[headerCell.String()] = []*xlsx.Cell{}
+			} else {
+				return nil, fmt.Errorf(`duplicate header found "%s"`, headerCell.String())
+			}
+		} else {
+			return nil, fmt.Errorf(`duplicate header found "%d"`, column)
+		}
+	}
+
+	for i, row := range rows {
+		if i != useHeaderRow {
+			for columnNumber, cell := range row.Cells {
+				header := columnNumberToHeader[columnNumber]
+				headerdatamap[header] = append(headerdatamap[header], cell)
+			}
+		}
+	}
 
 	return
 }
 
-func RowIntToCharacter(row int) (character string) {
-	character = wutil.NumToAlpha(row + 1)
-	return
-}
-
-// Parses an a1 style excel cell coordinate into ints for row and column for use by plotinum library
+// A1FormatToRowColumn parses an A1 style excel cell coordinate into ints for row and column for use by plotinum library
 // note that 1 is subtracted from the column number in accordance with the go convention of counting from 0
-func A1formattorowcolumn(a1 string) (row, column int, err error) {
+func A1FormatToRowColumn(a1 string) (row, column int, err error) {
 	a1 = strings.ToUpper(a1)
 
 	column, err = strconv.Atoi(a1[1:])
@@ -121,7 +282,6 @@ func A1formattorowcolumn(a1 string) (row, column int, err error) {
 		row := wutil.AlphaToNum(rowcoord) - 1
 		return row, column, err
 	}
-
 	column, err = strconv.Atoi(a1[2:])
 	column = column - 1
 	if err == nil {
@@ -144,20 +304,19 @@ func A1formattorowcolumn(a1 string) (row, column int, err error) {
 
 }
 
-// from a pair of cell coordinates an aray of all entrires between the pair will be returned (e.g. a1:a12 or a1:e1)
+// ConvertMinMaxtoArray converts a pair of cell positions an array of all entries between the pair will be returned (e.g. a1:a12 or a1:e1)
 func ConvertMinMaxtoArray(minmax []string) (array []string, err error) {
 	if len(minmax) != 2 {
 		err = fmt.Errorf("can only make array from a pair of values")
 		return
 	}
 
-	minrow, mincol, err := A1formattorowcolumn(minmax[0])
+	minrow, mincol, err := A1FormatToRowColumn(minmax[0])
 	if err != nil {
 		return
 	}
-	maxrow, maxcol, err := A1formattorowcolumn(minmax[1])
+	maxrow, maxcol, err := A1FormatToRowColumn(minmax[1])
 	if err != nil {
-		// fmt.Println("minmax[1]", minmax[1], "maxrow=", maxrow, "maxcol", maxcol)
 		return
 	}
 
@@ -175,7 +334,7 @@ func ConvertMinMaxtoArray(minmax []string) (array []string, err error) {
 		// fill by row
 		array = make([]string, 0)
 		for i := minrow; i < maxrow+1; i++ {
-			colstring := strconv.Itoa(mincol)
+			colstring := strconv.Itoa(mincol + 1)
 			rowstring := wutil.NumToAlpha(i + 1)
 
 			array = append(array, rowstring+colstring)

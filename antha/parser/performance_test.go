@@ -33,8 +33,6 @@ import (
 	"github.com/antha-lang/antha/antha/token"
 )
 
-var src = readFile("parser.go")
-
 func readFile(filename string) []byte {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -44,6 +42,7 @@ func readFile(filename string) []byte {
 }
 
 func BenchmarkParse(b *testing.B) {
+	src := readFile("parser.go")
 	b.Skip("external files")
 	b.SetBytes(int64(len(src)))
 	for i := 0; i < b.N; i++ {

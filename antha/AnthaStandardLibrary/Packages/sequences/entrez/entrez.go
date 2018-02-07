@@ -23,18 +23,14 @@
 package entrez
 
 import (
-	//"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
-	parser "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/genbank"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	biogo "github.com/biogo/ncbi/entrez"
 )
@@ -45,59 +41,42 @@ var (
 	retries = 5
 )
 
-// This queries the selected database saving the record to file
+func appendError(err error, err2 error) (newErr error) {
+
+	if err == nil && err2 == nil {
+		return nil
+	} else if err == nil {
+		return err2
+	} else if err2 == nil {
+		return err
+	}
+	return fmt.Errorf("Errors: " + err.Error() + ": " + err2.Error())
+}
+
+// This queries the selected database saving the record to bytes
 // Database options are nucleotide, Protein, Gene. For full list see http://www.ncbi.nlm.nih.gov/books/NBK25497/table/chapter2.T._entrez_unique_identifiers_ui/?report=objectonly
 // Return type includes but must match the database type. See http://www.ncbi.nlm.nih.gov/books/NBK25499/table/chapter4.T._valid_values_of__retmode_and/?report=objectonly
-// Query can be any string but it is recommended to use GI number if one specific record is requred.
-func RetrieveRecords(query string, database string, Max int, ReturnType string, out string) (filename string, contentsinbytes []byte, err error) {
+// Query can be any string but it is recommended to use GI number if one specific record is required.
+func RetrieveRecords(query string, database string, Max int, ReturnType string) (contentsinbytes []byte, err error) {
 	// query database
-
-	//tempdir, err := ioutil.TempDir(anthapath.Path(), "entrez")
-	//filename = filepath.Join(tempdir, out)
-
-	filename = out // filepath.Join(anthapath.Path(), out)
 
 	h := biogo.History{}
 	s, err := biogo.DoSearch(database, query, nil, &h, tool, email)
 	if err != nil {
-		return filename, []byte{}, err
-	}
-
-	fmt.Fprintf(os.Stdout, "%d records found for your query.\n", s.Count)
-
-	var of *os.File
-	if out == "" {
-		of = os.Stdout
-	} else {
-		/*if err := os.Mkdir(filepath.Dir(out), 0777); err != nil {
-			return err
-		}*/
-
-		dir, _ := filepath.Split(filename)
-
-		if dir != "" {
-			err = os.MkdirAll(dir, 0777)
-		}
-		of, err = os.Create(filename)
-		if err != nil {
-			return filename, []byte{}, err
-		}
-		defer of.Close()
+		return []byte{}, appendError(fmt.Errorf("Error in biogo.DoSearch: "), err)
 	}
 
 	var (
-		buf   = &bytes.Buffer{}
-		p     = &biogo.Parameters{RetMax: Max, RetType: ReturnType, RetMode: "text"}
-		bn, n int64
+		buf = &bytes.Buffer{}
+		p   = &biogo.Parameters{RetMax: Max, RetType: ReturnType, RetMode: "text"}
+		bn  int64
 	)
 
 	for p.RetStart = 0; p.RetStart < s.Count; p.RetStart += p.RetMax {
-		fmt.Fprintf(os.Stdout, "Attempting to retrieve %d record(s).\n", p.RetMax)
 		var t int
 		for t = 0; t < retries; t++ {
-			buf.Reset()
-			s := time.Duration(1) * time.Second // limit queries to < 3 per second
-			time.Sleep(s)
+			sleep := time.Duration(1) * time.Second // limit queries to < 3 per second
+			time.Sleep(sleep)
 
 			var (
 				r   io.ReadCloser
@@ -108,81 +87,57 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string, 
 				if r != nil {
 					r.Close()
 				}
-				fmt.Fprintf(os.Stdout, "Failed to retrieve on attempt %d... error: %v retrying.\n", t, err)
 				continue
 			}
+
 			_bn, err = io.Copy(buf, r)
 			bn += _bn
 			r.Close()
 			if err == nil {
 				break
 			}
-			fmt.Fprintf(os.Stdout, "Failed to buffer on attempt %d... error: %v retrying.\n", t, err)
 		}
 		if err != nil {
-			return filename, []byte{}, err
+			return []byte{}, appendError(fmt.Errorf("Error in fetching record %s", query), err)
 		}
-
-		fmt.Fprintf(os.Stdout, "Retrieved records with %d retries... writing out.\n", t)
-		_n, err := io.Copy(of, buf)
-		n += _n
-		if err != nil {
-			return filename, []byte{}, err
-		}
-
 	}
-	if bn != n {
-		fmt.Fprintf(os.Stdout, "Writethrough mismatch: %d != %d\n", bn, n)
+
+	contentsinbytes, err = ioutil.ReadAll(buf)
+
+	if err != nil {
+		return contentsinbytes, fmt.Errorf("Error reading record: %s", err.Error())
 	}
-	/*
-		fileInfo, _ := of.Stat()
-		var size int64 = fileInfo.Size()
-		contentsinbytes := make([]byte, size)
 
-		// read file into bytes
-		buffer := bufio.NewReader(of)
-		_, err = buffer.Read(contentsinbytes)
-	*/
-	of.Close()
-	contentsinbytes, err = ioutil.ReadAll(of)
-
-	return filename, contentsinbytes, nil
+	if len(contentsinbytes) == 0 {
+		return contentsinbytes, fmt.Errorf("no data returned from looking up query %s in %s", query, database)
+	}
+	return contentsinbytes, nil
 }
 
 // This retrieves sequence of any type from any NCBI sequence database
-func RetrieveSequence(id string, database string, filename string) (seq wtype.DNASequence, filepathandname string, err error) {
+func RetrieveSequence(id string, database string) (seq wtype.DNASequence, err error) {
 
-	filepathandname, _, err = RetrieveRecords(id, database, 1, "gb", filename)
+	contents, err := RetrieveRecords(id, database, 1, "gb")
 
 	if err != nil {
-		fmt.Println("RetrieveRecordsfail for", id)
-		fmt.Println(err.Error())
-		return wtype.DNASequence{}, filepathandname, err
+		return wtype.DNASequence{}, err
 	}
 
-	contents, err := ioutil.ReadFile(filepathandname)
-	//contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), filename))
-
-	fmt.Println("ID:", id, "Contents:", string(contents))
-	//file := filepath.Join(anthapath.Path(), filename)
-	seq, err = parser.GenbanktoAnnotatedSeq(filepathandname)
+	seq, err = genbank.GenbankContentsToAnnotatedSeq(contents)
 	if err != nil {
-		fmt.Println("File:", filepathandname, "Error:", err.Error())
-		return wtype.DNASequence{}, filepathandname, err
+		return wtype.DNASequence{}, err
 	}
 	seq.Seq = strings.ToUpper(seq.Seq)
 
-	return seq, filepathandname, err
+	return seq, err
 }
 
 // This will retrieve vector using fasta or db
-func RetrieveVector(id string, filename string) (seq wtype.DNASequence, filepathandname string, err error) {
+func RetrieveVector(id string) (seq wtype.DNASequence, err error) {
 	/*//first check if vector sequence is in fasta file
 	if seq, err := parser.RetrieveSeqFromFASTA(id, filepath.Join(anthapath.Path(), "vectors.txt")); err != nil {
 		// if not in refactor, check db*/
-	seq, filepathandname, err = RetrieveSequence(id, "nucleotide", filename)
+	seq, err = RetrieveSequence(id, "nucleotide")
 	return
-	/*} else {
-		return seq, nil
-	}*/
+
 }

@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "github.com/antha-lang/antha/api/v1/coord.proto";
+import "github.com/antha-lang/antha/api/v1/polynomial.proto";
+import "github.com/antha-lang/antha/api/v1/measurement.proto";
+
+package org.antha_lang.antha.v1;
+
+message InventoryItem {
+  // Inventory id
+  string id = 1;
+
+  // Metadata
+  map<string,google.protobuf.Any> metadata = 2;
+  // Time this inventory item was created at
+  google.protobuf.Timestamp created_at = 3;
+  // History of this inventory item
+  repeated InventoryItem from_items = 4;
+
+  oneof item {
+    Tipbox tipbox = 5;
+    Tipwaste tipwaste = 6;
+    Plate plate = 7;
+    DeckPosition deck_position = 8;
+    Component component = 9;
+    PlateType plate_type = 10;
+    None none = 11;
+  }
+}
+
+message None {
+}
+
+// Pipette tips in a box
+message Tipbox {
+  // Tipbox type
+  string type = 1;
+}
+
+// Disposal for used pipette tips
+message Tipwaste {
+  // Tipwaste type
+  string type = 1;
+}
+
+// Synthetic inventory item to represent position on deck
+message DeckPosition {
+  // Position
+  string position = 1;
+}
+
+// Plate
+message Plate {
+  // Plate type
+  string type = 1;
+  repeated Well wells = 2;
+}
+
+// Well in plate
+message Well {
+  OrdinalCoord position = 1;
+  InventoryItem component = 2;
+}
+
+// Physical component, typically a liquid
+message Component {
+  // Component type
+  string type = 1;
+  // Name
+  string name = 2;
+  // Volume
+  Measurement volume = 3;
+  // Viscosity
+  Measurement viscosity = 4;
+  // Mass
+  Measurement mass = 5;
+  // Amount (moles)
+  Measurement amount = 6;
+  // If non-atomic component, this is what we are comprised of
+  repeated Component components = 7;
+}
+
+// PlateType describes the properties of a class of plates
+message PlateType {
+  // Dimensions of bounding box of plate
+  PhysicalCoord dim = 1;
+  // Dimensions of a bounding box of well including well bottom
+  PhysicalCoord well_dim = 2;
+  // Number of wells
+  OrdinalCoord num_wells = 3;
+  // Maximum volume of a well
+  Measurement max_volume = 4;
+  // Shape of well in x-y plane
+  string well_shape = 5;
+  // Function relating volume of well (uL) to x-y area (mm^2)
+  Polynomial volume_ul_to_area_mm2 = 6;
+  // Function relating volume of well (ul) to its z height (mm)
+  Polynomial volume_ul_to_height_mm = 7;
+  // Residual volume of a well
+  Measurement residual_volume = 8;
+  // Distance between well centers in (x,y) dimension
+  PhysicalCoord well_offset = 9;
+  // Distance from origin of plate to bottom, center of first well (including
+  // well bottom)
+  PhysicalCoord well_origin = 10;
+  // Manufacturer
+  string mnfr = 11;
+  // Height of well bottom. Deprecated in favor of VolumeUlToAreaMm2 and
+  // VolumeUlToHeightMm.
+  Measurement well_bottom_height = 1000;
+  // Shape of well bottom. Deprecated in favor of VolumeUlToAreaMm2 and
+  // VolumeUlToHeightMm.
+  string well_bottom_shape = 1001;
+}

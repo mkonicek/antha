@@ -1,21 +1,33 @@
 package execute
 
 import (
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	"context"
 )
 
-type idKey int
+type contextKey int
 
-const theIdKey idKey = 0
+const theContextKey contextKey = 0
 
-func getId(ctx context.Context) string {
-	v, ok := ctx.Value(theIdKey).(string)
+type withExecute struct {
+	ID    string
+	Maker *maker
+}
+
+func getMaker(ctx context.Context) *maker {
+	return ctx.Value(theContextKey).(*withExecute).Maker
+}
+
+func getID(ctx context.Context) string {
+	v, ok := ctx.Value(theContextKey).(*withExecute)
 	if !ok {
 		return ""
 	}
-	return v
+	return v.ID
 }
 
-func WithId(parent context.Context, id string) context.Context {
-	return context.WithValue(parent, theIdKey, id)
+func withID(parent context.Context, id string) context.Context {
+	return context.WithValue(parent, theContextKey, &withExecute{
+		ID:    id,
+		Maker: newMaker(),
+	})
 }

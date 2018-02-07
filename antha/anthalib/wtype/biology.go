@@ -23,14 +23,12 @@
 package wtype
 
 import (
-	"fmt"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"encoding/json"
+	"fmt"
+	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/blast"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	. "github.com/biogo/ncbi/blast"
-	"math/rand"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"strings"
 )
 
@@ -41,13 +39,19 @@ import (
 // enzymes need careful handling as they can be quite delicate
 type Enzyme struct {
 	Properties map[string]wunit.Measurement
+	Nm         string
 }
 
+func (enzyme Enzyme) Name() string {
+	return enzyme.Nm
+}
+
+// RestrictionEnzyme is an enzyme which cleaves DNA
 type RestrictionEnzyme struct {
-	// other fields required but for now the main things are...
+	Enzyme
+	// sequence
 	RecognitionSequence               string
 	EndLength                         int
-	Name                              string
 	Prototype                         string
 	Topstrand3primedistancefromend    int
 	Bottomstrand5primedistancefromend int
@@ -55,27 +59,21 @@ type RestrictionEnzyme struct {
 	CommercialSource                  []string //string "attr, <5>"
 	References                        []int
 	Class                             string
+	Isoschizomers                     []string
 }
 
 type TypeIIs struct {
 	RestrictionEnzyme
-	Name                              string
-	Isoschizomers                     []string
-	Topstrand3primedistancefromend    int
-	Bottomstrand5primedistancefromend int
 }
 
 func ToTypeIIs(typeIIenzyme RestrictionEnzyme) (typeIIsenz TypeIIs, err error) {
 	if typeIIenzyme.Class == "TypeII" {
 		err = fmt.Errorf("You can't do this, enzyme is not a type IIs")
+		return
 	}
 	if typeIIenzyme.Class == "TypeIIs" {
 
-		var isoschizomers = make([]string, 0)
-		/*for _, lookup := range ...
-		add code to lookup isoschizers from rebase
-		*/
-		typeIIsenz = TypeIIs{typeIIenzyme, typeIIenzyme.Name, isoschizomers, typeIIenzyme.Topstrand3primedistancefromend, typeIIenzyme.Bottomstrand5primedistancefromend}
+		typeIIsenz = TypeIIs{RestrictionEnzyme: typeIIenzyme}
 
 	}
 	return
@@ -100,8 +98,8 @@ type Plasmid struct {
 type BioSequence interface {
 	Name() string
 	Sequence() string
-	Append(string)
-	Prepend(string)
+	Append(string) error
+	Prepend(string) error
 	Blast() ([]Hit, error)
 	MolecularWeight() float64
 }
@@ -114,7 +112,7 @@ type DNA struct {
 
 // DNAsequence is a type of Biosequence
 type DNASequence struct {
-	Nm             string    `json:"jm"`
+	Nm             string    `json:"nm"`
 	Seq            string    `json:"seq"`
 	Plasmid        bool      `json:"plasmid"`
 	Singlestranded bool      `json:"single_stranded"`
@@ -131,6 +129,139 @@ func (seq DNASequence) Dup() DNASequence {
 	json.Unmarshal(d, &ret)
 
 	return ret
+}
+
+// AddOverhang adds an overhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddOverhang(end int, sequence string) (err error) {
+
+	var overHang Overhang
+
+	if end == 5 {
+
+		overHang, err = MakeOverHang(sequence, 5, TOP, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set5PrimeEnd(overHang)
+
+		return err
+
+	} else if end == 3 {
+
+		overHang, err = MakeOverHang(sequence, 3, TOP, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set3PrimeEnd(overHang)
+
+		return err
+	}
+	return fmt.Errorf("cannot add overhang to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// AddUnderhang adds an underhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddUnderhang(end int, sequence string) (err error) {
+
+	var overHang Overhang
+
+	if end == 5 {
+
+		overHang, err = MakeOverHang(sequence, 5, BOTTOM, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set5PrimeEnd(overHang)
+
+		return err
+	} else if end == 3 {
+
+		seq.Overhang3prime, err = MakeOverHang(sequence, 3, BOTTOM, true)
+
+		if err != nil {
+			return
+		}
+
+		err = seq.Set3PrimeEnd(overHang)
+
+		return err
+	}
+	return fmt.Errorf("cannot add overhang to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// AddBluntOverhang adds a blunt overhang to a specified end.
+// Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
+func (seq *DNASequence) AddBluntEnd(end int) (err error) {
+
+	if end == 5 {
+
+		seq.Overhang5prime, err = MakeOverHang("", 5, NEITHER, true)
+
+		return err
+	} else if end == 3 {
+
+		seq.Overhang3prime, err = MakeOverHang("", 3, NEITHER, true)
+
+		return nil
+	}
+	return fmt.Errorf("cannot add blunt end to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
+}
+
+// Set5PrimeEnd adds a 5 prime overhang to a sequence.
+// Validation is performed on the compatibility of the overhang with the sequence.
+func (seq *DNASequence) Set5PrimeEnd(overhang Overhang) (err error) {
+	if seq.Singlestranded {
+		err = fmt.Errorf("Can't have overhang on single stranded dna")
+		return
+	}
+	if seq.Plasmid {
+		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
+		return
+	}
+
+	if overhang.Type == OVERHANG {
+
+		expectedOverhang := Prefix(seq.Seq, len(overhang.Sequence()))
+
+		if !strings.EqualFold(expectedOverhang, overhang.Sequence()) {
+			return fmt.Errorf("specified overhang %s to add to 5' end of sequence %s is not equal to sequence prefix %s", overhang.Sequence(), seq.Name(), expectedOverhang)
+		}
+	}
+
+	seq.Overhang5prime = overhang
+	return nil
+}
+
+// Set3PrimeEnd adds a 3 prime overhang to a sequence.
+// Validation is performed on the compatibility of the overhang with the sequence.
+func (seq *DNASequence) Set3PrimeEnd(overhang Overhang) (err error) {
+	if seq.Singlestranded {
+		err = fmt.Errorf("Can't have overhang on single stranded dna")
+		return
+	}
+	if seq.Plasmid {
+		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
+		return
+	}
+
+	if overhang.Type == OVERHANG {
+
+		expectedOverhang := Prefix(RevComp(seq.Seq), len(overhang.Sequence()))
+
+		if !strings.EqualFold(expectedOverhang, overhang.Sequence()) {
+			return fmt.Errorf("specified underhang %s to add to 3' end of sequence %s is not equal to sequence suffix %s", overhang.Sequence(), seq.Name(), expectedOverhang)
+		}
+	}
+
+	seq.Overhang3prime = overhang
+	return nil
 }
 
 func MakeDNASequence(name string, seqstring string, properties []string) (seq DNASequence, err error) {
@@ -151,25 +282,18 @@ func MakeDNASequence(name string, seqstring string, properties []string) (seq DN
 			seq.Singlestranded = true
 			break
 		}
-		/*
-		   // deal with overhangs separately
-		   if strings.Contains(property,"5'") {
-		   	seq.Overhang5prime.End = 5
-		   	seq.Overhang5prime.Type =
-		   }
-		*/
 	}
 	return
 }
 func MakeLinearDNASequence(name string, seqstring string) (seq DNASequence) {
 	seq.Nm = name
-	seq.Seq = strings.ToUpper(seqstring)
+	seq.Seq = seqstring
 
 	return
 }
 func MakePlasmidDNASequence(name string, seqstring string) (seq DNASequence) {
 	seq.Nm = name
-	seq.Seq = strings.ToUpper(seqstring)
+	seq.Seq = seqstring
 	seq.Plasmid = true
 	return
 }
@@ -180,16 +304,11 @@ func MakeSingleStrandedDNASequence(name string, seqstring string) (seq DNASequen
 	return
 }
 
-func MakeOverhang(sequence DNASequence, end int, toporbottom int, length int, phosphorylated bool) (overhang Overhang, err error) {
+// MakeOverHang is used to create an overhang.
+func MakeOverHang(overhangSequence string, end int, toporbottom int, phosphorylated bool) (overhang Overhang, err error) {
 
-	if sequence.Singlestranded {
-		err = fmt.Errorf("Can't have overhang on single stranded dna")
-		return
-	}
-	if sequence.Plasmid {
-		err = fmt.Errorf("Can't have overhang on Plasmid(circular) dna")
-		return
-	}
+	length := len(overhangSequence)
+
 	if end == 0 {
 		err = fmt.Errorf("if end = 0, all fields are returned empty")
 		return
@@ -201,30 +320,39 @@ func MakeOverhang(sequence DNASequence, end int, toporbottom int, length int, ph
 		err = fmt.Errorf("invalid entry for end: 5PRIME = 5, 3PRIME = 3, NA = 0")
 		return
 	}
-	if toporbottom == 0 && length == 0 {
-		overhang.Type = 1
+	if toporbottom == NEITHER && length == 0 {
+		overhang.Type = BLUNT
 		return
 	}
-	if toporbottom == 0 && length != 0 {
+	if toporbottom == NEITHER && length != 0 {
 		err = fmt.Errorf("If length of overhang is not 0, toporbottom must be 0")
 		return
 	}
-	if toporbottom != 0 && length == 0 {
-		err = fmt.Errorf("If length of overhang is not 0, toporbottom must be 0")
+	if toporbottom != NEITHER && length == 0 {
+		err = fmt.Errorf("If length of overhang is 0, toporbottom must be 0")
 		return
 	}
 	if toporbottom > 2 {
-		err = fmt.Errorf("invalid entry for toporbottom: NEITHER = 0, TOP    = 1, BOTTOM = 2")
+		err = fmt.Errorf("invalid entry for toporbottom: NEITHER = 0, TOP = 1, BOTTOM = 2")
 		return
 	}
-	if toporbottom == 1 {
-		overhang.Type = 2
-		overhang.Sequence = Prefix(sequence.Seq, length)
+	if end == 5 {
+		if toporbottom == TOP {
+			overhang.Type = OVERHANG
+		}
+		if toporbottom == BOTTOM {
+			overhang.Type = UNDERHANG
+		}
+	} else if end == 3 {
+		if toporbottom == TOP {
+			overhang.Type = OVERHANG
+		}
+		if toporbottom == BOTTOM {
+			overhang.Type = UNDERHANG
+		}
 	}
-	if toporbottom == 2 {
-		overhang.Type = -1
-		overhang.Sequence = Suffix(RevComp(sequence.Seq), length)
-	}
+
+	overhang.Seq = overhangSequence
 	overhang.Phosphorylation = phosphorylated
 	return
 }
@@ -248,52 +376,235 @@ func Phosphorylate(dnaseq DNASequence) (phosphorylateddna DNASequence, err error
 	return
 }
 
+// OverHangType represents the type of an overhang.
+// Valid options are
+// 	FALSE     OverHangType = 0
+//	BLUNT     OverHangType = 1
+//	OVERHANG  OverHangType = 2
+//	UNDERHANG OverHangType = -1
+type OverHangType int
+
+// Valid overhang types
 const (
-	FALSE     = 0
-	BLUNT     = 1
-	OVERHANG  = 2
-	UNDERHANG = -1
+	// no overhang
+	FALSE OverHangType = 0
+	// A blunt overhang
+	BLUNT OverHangType = 1
+	// An overhang (5' sequence overhangs complementary strand)
+	OVERHANG OverHangType = 2
+	// an underhang (5' sequence underhangs complementary strand)
+	UNDERHANG OverHangType = -1
 )
 
+// Options for Strand choice
 const (
 	NEITHER = 0
-	TOP     = 1
-	BOTTOM  = 2
+	// Top strand, or coding strand
+	TOP = 1
+	// Bottom strand, or complimentary strand.
+	BOTTOM = 2
 )
 
-/*const (
-	5PRIME = 5
-	3PRIME = 3
-	NA = 0
-)*/
-
+// Overhang represents an end of a DNASequence.
 type Overhang struct {
-	//Strand          int // i.e. 1 or 2 (top or bottom
-	End             int    `json:"end"`  // i.e. 5 or 3 or 0
-	Type            int    `json:"type"` //as contants above
-	Length          int    `json:"length"`
-	Sequence        string `json:"sequence"`
-	Phosphorylation bool   `json:"phosphorylation"`
+	// Valid options are 5 (5 Prime end), 3 (3 prime end) or 0 (nul)
+	End int `json:"end"`
+	// Valid options are FALSE, BLUNT, OVERHANG, UNDERHANG
+	Type OverHangType `json:"type"`
+	// Overhang sequence
+	Seq string `json:"sequence"`
+	// Whether the overhang is phosphorylated.
+	Phosphorylation bool `json:"phosphorylation"`
 }
 
+// Sequence returns the sequence of the overhang.
+func (oh Overhang) Sequence() string {
+	return oh.Seq
+}
+
+// Length returns the length of the overhang.
+func (oh Overhang) Length() int {
+	return len(oh.Sequence())
+}
+
+// ToString returns a string summary of the overhang.
+func (oh Overhang) ToString() string {
+	if oh.End == 5 {
+		if oh.Type == OVERHANG {
+			return `5' overhang: ` + oh.Sequence()
+		}
+		if oh.Type == BLUNT || oh.Type == FALSE {
+			return `5' Blunt`
+		}
+		if oh.Type == UNDERHANG {
+			return `5' underhang: ` + oh.Sequence()
+		}
+
+	}
+
+	if oh.End == 3 {
+		if oh.Type == OVERHANG {
+			return `3' overhang: ` + oh.Sequence()
+		}
+		if oh.Type == BLUNT || oh.Type == FALSE {
+			return `3' Blunt`
+		}
+		if oh.Type == UNDERHANG {
+			return `3' underhang: ` + oh.Sequence()
+		}
+
+	}
+	return ""
+}
+
+// TypeName returns the name of the overhang type as a string.
+func (oh Overhang) TypeName() string {
+	if oh.Type == OVERHANG {
+		return "Overhang"
+	} else if oh.Type == UNDERHANG {
+		return "Underhang"
+	} else if oh.Type == BLUNT {
+		return "blunt"
+	}
+	return "no overhang"
+}
+
+// Overhang returns the sequence if the overhang is of type OVERHANG.
+func (oh Overhang) OverHang() (sequence string) {
+	if oh.Type == OVERHANG {
+		return oh.Sequence()
+	} else if oh.Type == BLUNT {
+		return "blunt"
+	}
+	return ""
+}
+
+// Overhang returns any sequence if the underhang is of type UNDERHANG.
+func (oh Overhang) UnderHang() (sequence string) {
+	if oh.Type == UNDERHANG {
+		return oh.Sequence()
+	} else if oh.Type == BLUNT {
+		return "blunt"
+	}
+
+	return ""
+}
+
+func valid(seq, validOptions string) error {
+	var errs []string
+
+	for i, character := range seq {
+		if !strings.Contains(validOptions, strings.ToUpper(string(character))) {
+			errs = append(errs, fmt.Sprint(string(character), " found at position ", i+1, "; "))
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("Invalid characters found %v", errs)
+	}
+	return nil
+}
+
+// ValidDNA checks a sequence given as a string for validity as a DNASequence.
+// Any IUPAC nucleotide is considered valid, not just ACTG.
+func ValidDNA(seq string) error {
+	validNucleotides := "ACTGNXBHVDMKSWRYU"
+
+	return valid(seq, validNucleotides)
+}
+
+// ValidRNA checks a sequence given as a string for validity as an RNASequence.
+// ACGU are valid entries.
+func ValidRNA(seq string) error {
+	validRNA := "ACGU"
+
+	return valid(seq, validRNA)
+}
+
+// ValidAA checks a sequence given as a string for validity as a ProteinSequence.
+// All standard single letter AminoAcids are valid as well as * indicating stop.
+func ValidAA(seq string) error {
+
+	var aminoAcids []string
+
+	for key := range aa_mw {
+		aminoAcids = append(aminoAcids, key)
+	}
+
+	// add stop
+	aminoAcids = append(aminoAcids, "*")
+
+	validAminoAcids := strings.Join(aminoAcids, "")
+
+	return valid(seq, validAminoAcids)
+}
+
+func upper(s string) string {
+	return trimString(strings.ToUpper(s))
+}
+
+func trimString(str string) string {
+	return strings.TrimSpace(str)
+}
+
+// Sequence returns the sequence of the DNA Sequence
 func (dna *DNASequence) Sequence() string {
 	return dna.Seq
 }
+
+// Name returns the name of the DNASequence
 func (dna *DNASequence) Name() string {
 	return dna.Nm
 }
 
-func (dna *DNASequence) ReName(newname string) {
-	dna.Nm = newname
+// SetName sets the names of the dna sequence
+func (dna *DNASequence) SetName(name string) {
+	dna.Nm = trimString(name)
 }
 
-func (dna *DNASequence) Append(s string) {
+// RevComp returns the reverse complement of the DNASequence.
+func (dna *DNASequence) RevComp() string {
+	return RevComp(dna.Seq)
+}
+
+// SetSequence checks the validity of sequence given as an argument and if all characters are present in ValidNucleotides
+// If invalid characters are found an error returned listing all invalid characters and their positions in human friendly form. i.e. the first position is 1 and not 0.
+func (dna *DNASequence) SetSequence(seq string) error {
+
+	dna.Seq = seq
+
+	return ValidDNA(seq)
+}
+
+// Append appends the existing dna sequence with the upper case of the string added
+func (dna *DNASequence) Append(s string) error {
+
+	err := ValidDNA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
+	}
+
 	dna.Seq = dna.Seq + s
+
+	return nil
 }
 
-func (dna *DNASequence) Prepend(s string) {
+// Preprend adds the requested sequence to the beginning of the existing sequence.
+func (dna *DNASequence) Prepend(s string) error {
+
+	err := ValidDNA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
+	}
+
 	dna.Seq = s + dna.Seq
+
+	return nil
 }
+
+// Blast performs a blast search on the sequence and returns any hits found.
+// An error is returned if a problem interacting with the blast server occurs.
 func (seq *DNASequence) Blast() (hits []Hit, err error) {
 	hits, err = blast.MegaBlastN(seq.Seq)
 	return
@@ -312,6 +623,8 @@ var nucleotidegpermol = map[string]float64{
 	"dNTP": 487.0,
 }
 
+// MolecularWeight calculates the molecular weight of the specified DNA sequence.
+// For accuracy it is important to specify if the DNA is single stranded or doublestranded along with phosphorylation.
 func (seq *DNASequence) MolecularWeight() float64 {
 	//Calculate Molecular weight of DNA
 
@@ -321,10 +634,12 @@ func (seq *DNASequence) MolecularWeight() float64 {
 	phosphate3prime := seq.Overhang3prime.Phosphorylation
 	singlestranded := seq.Singlestranded
 
-	numberofAs := strings.Count(fwdsequence, "A")
-	numberofTs := strings.Count(fwdsequence, "T")
-	numberofCs := strings.Count(fwdsequence, "C")
-	numberofGs := strings.Count(fwdsequence, "G")
+	upperCase := func(s string) string { return strings.ToUpper(s) }
+
+	numberofAs := strings.Count(upperCase(fwdsequence), "A")
+	numberofTs := strings.Count(upperCase(fwdsequence), "T")
+	numberofCs := strings.Count(upperCase(fwdsequence), "C")
+	numberofGs := strings.Count(upperCase(fwdsequence), "G")
 	massofAs := (float64(numberofAs) * nucleotidegpermol["A"])
 	massofTs := (float64(numberofTs) * nucleotidegpermol["T"])
 	massofCs := (float64(numberofCs) * nucleotidegpermol["C"])
@@ -357,17 +672,42 @@ func (rna *RNASequence) Sequence() string {
 	return rna.Seq
 }
 
+func (rna *RNASequence) SetSequence(seq string) error {
+	rna.Seq = upper(seq)
+	return ValidRNA(seq)
+}
+
 func (rna *RNASequence) Name() string {
 	return rna.Nm
 }
 
-func (rna *RNASequence) Append(s string) {
-	rna.Seq = rna.Seq + s
+func (rna *RNASequence) SetName(name string) {
+	rna.Nm = trimString(name)
 }
 
-func (rna *RNASequence) Prepend(s string) {
-	rna.Seq = s + rna.Seq
+func (rna *RNASequence) Append(s string) error {
+	err := ValidRNA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
+	}
+
+	rna.Seq = rna.Seq + s
+	return nil
 }
+
+func (rna *RNASequence) Prepend(s string) error {
+
+	err := ValidRNA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
+	}
+
+	rna.Seq = s + rna.Seq
+	return nil
+}
+
 func (seq *RNASequence) Blast() (hits []Hit, err error) {
 	hits, err = blast.MegaBlastN(seq.Seq)
 	return
@@ -377,6 +717,42 @@ func (seq *RNASequence) Blast() (hits []Hit, err error) {
 // has a ProteinSequence
 type Protein struct {
 	Seq ProteinSequence
+}
+
+// AminoAcid is a single letter format amino acid in string form.
+// It can be validated as a valid AminoAcid using the SetAminoAcid function.
+type AminoAcid string
+
+// SetAminoAcid creates an AminoAcid from a string input and returns an error
+// if the string is not a valid amino acid.
+func SetAminoAcid(aa string) (AminoAcid, error) {
+
+	if len(aa) != 1 {
+		return "", fmt.Errorf("amino acid %s not valid. Please use single letter code.")
+	}
+
+	if err := ValidAA(aa); err != nil {
+		return "", fmt.Errorf("amino acid %s not valid: %s", aa, err.Error())
+	}
+	return AminoAcid(strings.ToUpper(strings.TrimSpace(aa))), nil
+}
+
+// Codon is a triplet of valid nucleotides which encodes an amino acid or stop codon.
+// It can be validated using the SetCodon function.
+type Codon string
+
+// SetCodon creates a Codon from a string input and returns an error
+// if the string is not a valid codon.
+func SetCodon(dna string) (Codon, error) {
+
+	if len(dna) != 3 {
+		return "", fmt.Errorf("codon %s not valid. must be three nucleotides.")
+	}
+
+	if err := ValidDNA(dna); err != nil {
+		return "", fmt.Errorf("codon %s not valid: %s", dna, err.Error())
+	}
+	return Codon(strings.ToUpper(strings.TrimSpace(dna))), nil
 }
 
 // ProteinSequence object is a type of Biosequence
@@ -389,16 +765,40 @@ func (prot *ProteinSequence) Sequence() string {
 	return prot.Seq
 }
 
+func (prot *ProteinSequence) SetSequence(seq string) error {
+	prot.Seq = upper(seq)
+	return ValidAA(seq)
+}
+
 func (prot *ProteinSequence) Name() string {
 	return prot.Nm
 }
 
-func (prot *ProteinSequence) Append(s string) {
-	prot.Seq = prot.Seq + s
+func (prot *ProteinSequence) SetName(name string) {
+	prot.Nm = trimString(name)
 }
 
-func (prot *ProteinSequence) Prepend(s string) {
+func (prot *ProteinSequence) Append(s string) error {
+	err := ValidAA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
+	}
+
+	prot.Seq = prot.Seq + s
+	return nil
+}
+
+func (prot *ProteinSequence) Prepend(s string) error {
+
+	err := ValidAA(s)
+
+	if err != nil {
+		return fmt.Errorf("invalid characters requested for Prepend: %s", err.Error())
+	}
+
 	prot.Seq = s + prot.Seq
+	return nil
 }
 
 func (seq *ProteinSequence) Blast() (hits []Hit, err error) {
@@ -456,10 +856,12 @@ func random_dna_seq(leng int) string {
 }
 
 func random_char(chars string) string {
+	rand := wutil.GetRandom()
 	return string(chars[rand.Intn(len(chars))])
 }
 
 func makeABunchaRandomSeqs(n_seq_sets, seqs_per_set, min_len, len_var int) [][]DNASequence {
+	rand := wutil.GetRandom()
 	var seqs [][]DNASequence
 	var features []Feature
 
@@ -468,7 +870,7 @@ func makeABunchaRandomSeqs(n_seq_sets, seqs_per_set, min_len, len_var int) [][]D
 	for i := 0; i < n_seq_sets; i++ {
 		seqs[i] = make([]DNASequence, seqs_per_set)
 		for j := 0; j < seqs_per_set; j++ {
-			seqs[i][j] = DNASequence{fmt.Sprintf("SEQ%04d", i*seqs_per_set+j+1), random_dna_seq(rand.Intn(len_var) + min_len), false, false, Overhang{0, 0, 0, "", false}, Overhang{0, 0, 0, "", false}, "", features}
+			seqs[i][j] = DNASequence{fmt.Sprintf("SEQ%04d", i*seqs_per_set+j+1), random_dna_seq(rand.Intn(len_var) + min_len), false, false, Overhang{0, 0, "", false}, Overhang{0, 0, "", false}, "", features}
 		}
 	}
 	return seqs
@@ -524,4 +926,16 @@ func Comp(s string) string {
 func RevComp(s string) string {
 	s = strings.ToUpper(s)
 	return Comp(Rev(s))
+}
+
+type DNASeqSet []*DNASequence
+
+func (dss DNASeqSet) AsBioSequences() []BioSequence {
+	r := make([]BioSequence, len(dss))
+
+	for i := 0; i < len(dss); i++ {
+		r[i] = BioSequence(dss[i])
+	}
+
+	return r
 }

@@ -1,7 +1,7 @@
 package trace
 
 import (
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	"context"
 	"sync"
 )
 
@@ -29,7 +29,7 @@ func getScope(ctx context.Context) *Scope {
 	return s
 }
 
-// A name
+// A Name is an identifier
 type Name struct {
 	scope *Scope
 	idx   int
@@ -44,25 +44,25 @@ type Scope struct {
 	count  int
 }
 
-// Create a child name scope
+// MakeScope creates a child name scope
 func (a *Scope) MakeScope() *Scope {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	s := &Scope{parent: a, pidx: a.count}
-	a.count += 1
+	a.count++
 	return s
 }
 
-// Make a name in this scope
+// MakeName makes a name in this scope
 func (a *Scope) MakeName(desc string) Name {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	n := Name{scope: a, idx: a.count, desc: desc}
-	a.count += 1
+	a.count++
 	return n
 }
 
-// Create a value that has no relation to any existing values.
+// MakeValue creates a value that has no relation to any existing values.
 func MakeValue(ctx context.Context, desc string, v interface{}) Value {
 	return &basicValue{
 		name: getScope(ctx).MakeName(desc),
@@ -70,8 +70,8 @@ func MakeValue(ctx context.Context, desc string, v interface{}) Value {
 	}
 }
 
-// Create a value that is a function of some existing values. This information
-// is used to track value dependencies across instructions.
+// MakeValueFrom creates a value that is a function of some existing values.
+// This information is used to track value dependencies across instructions.
 func MakeValueFrom(ctx context.Context, desc string, v interface{}, from ...Value) Value {
 	return &fromValue{
 		name: getScope(ctx).MakeName(desc),

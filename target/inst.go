@@ -1,107 +1,112 @@
 package target
 
 import (
+	"time"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 )
 
-var (
-	_ RunInst = &Mix{}
-)
-
+// An Inst is a instruction
 type Inst interface {
+	// Device that this instruction was generated for
 	Device() Device
+	// DependsOn returns instructions that this instruction depends on
 	DependsOn() []Inst
+	// SetDependsOn updates DependsOn
 	SetDependsOn([]Inst)
+}
+
+// An Initializer is an instruction with initialization instructions
+type Initializer interface {
+	GetInitializers() []Inst
+}
+
+// A Finalizer is an instruction with finalization instructions
+type Finalizer interface {
+	GetFinalizers() []Inst
+}
+
+// A TimeEstimator is an instruction that can estimate its own execution time
+type TimeEstimator interface {
+	// GetTimeEstimate returns a time estimate for this instruction in seconds
 	GetTimeEstimate() float64
 }
 
-type Files struct {
-	Type    string // Pseudo MIME-type describing contents of tarball
-	Tarball []byte // Tar'ed and gzip'ed files
-}
-
-type RunInst interface {
-	Inst
-	Data() Files // Blob of data that is runnable
-}
-
-type CmpError struct {
-	Dev     Device
+type dependsMixin struct {
 	Depends []Inst
-	Error   error
 }
 
-func (a *CmpError) Device() Device {
-	return a.Dev
-}
-
-func (a *CmpError) DependsOn() []Inst {
+// DependsOn implements an Inst
+func (a *dependsMixin) DependsOn() []Inst {
 	return a.Depends
 }
 
-func (a *CmpError) SetDependsOn(x []Inst) {
+// SetDependsOn implements an Inst
+func (a *dependsMixin) SetDependsOn(x []Inst) {
 	a.Depends = x
 }
 
-func (a *CmpError) GetTimeEstimate() float64 {
-	return 0.0
+type noDeviceMixin struct{}
+
+// Device implements an Inst
+func (a noDeviceMixin) Device() Device {
+	return nil
 }
 
-type Incubate struct {
-	Dev     Device
-	Depends []Inst
-	Files   Files
-	Time    float64
+// An Order is a task to order physical components
+type Order struct {
+	Manual
+	Mixes []*Mix
 }
 
-func (a *Incubate) Data() Files {
-	return a.Files
+// A PlatePrep is a task to setup plates
+type PlatePrep struct {
+	Manual
+	Mixes []*Mix
 }
 
-func (a *Incubate) Device() Device {
-	return a.Dev
+// A SetupMixer is a task to setup a mixer
+type SetupMixer struct {
+	Manual
+	Mixes []*Mix
 }
 
-func (a *Incubate) DependsOn() []Inst {
-	return a.Depends
+// A SetupIncubator is a task to setup an incubator
+type SetupIncubator struct {
+	Manual
+	// Corresponding mix
+	Mix              *Mix
+	IncubationPlates []*wtype.LHPlate
 }
 
-func (a *Incubate) SetDependsOn(x []Inst) {
-	a.Depends = x
-}
+var (
+	_ TimeEstimator = (*Mix)(nil)
+	_ Initializer   = (*Mix)(nil)
+)
 
-func (a *Incubate) GetTimeEstimate() float64 {
-	return a.Time
-}
-
-// TODO: merge with microArch/report?
+// A Mix is a task that runs a mixer
 type Mix struct {
+	dependsMixin
+
 	Dev             Device
-	Depends         []Inst
 	Request         *lh.LHRequest
 	Properties      *liquidhandling.LHProperties
 	FinalProperties *liquidhandling.LHProperties
 	Final           map[string]string // Map from ids in Properties to FinalProperties
 	Files           Files
+	Initializers    []Inst
 }
 
-func (a *Mix) Data() Files {
-	return a.Files
-}
-
+// Device implements an Inst
 func (a *Mix) Device() Device {
 	return a.Dev
 }
 
-func (a *Mix) DependsOn() []Inst {
-	return a.Depends
-}
-
-func (a *Mix) SetDependsOn(x []Inst) {
-	a.Depends = x
-}
-
+// GetTimeEstimate implements a TimeEstimator
 func (a *Mix) GetTimeEstimate() float64 {
 	est := 0.0
 
@@ -112,47 +117,105 @@ func (a *Mix) GetTimeEstimate() float64 {
 	return est
 }
 
+// GetInitializers implements an Initializer
+func (a *Mix) GetInitializers() []Inst {
+	return a.Initializers
+}
+
+// A Manual is human-aided interaction
 type Manual struct {
+	dependsMixin
+
 	Dev     Device
 	Label   string
 	Details string
-	Depends []Inst
-	Time    float64
 }
 
-func (a *Manual) DependsOn() []Inst {
-	return a.Depends
-}
-
+// Device implements an Inst
 func (a *Manual) Device() Device {
 	return a.Dev
 }
 
-func (a *Manual) SetDependsOn(x []Inst) {
-	a.Depends = x
+var (
+	_ Finalizer   = (*Run)(nil)
+	_ Initializer = (*Run)(nil)
+)
+
+// Run calls on device
+type Run struct {
+	dependsMixin
+
+	Dev     Device
+	Label   string
+	Details string
+	Calls   []driver.Call
+	// Additional instructions to add to beginning of instruction stream.
+	// Instructions are assumed to depend in FIFO order.
+	Initializers []Inst
+	// Additional instructions to add to end of instruction stream.
+	// Instructions are assumed to depend in LIFO order.
+	Finalizers []Inst
 }
 
-func (a *Manual) GetTimeEstimate() float64 {
-	return a.Time
+// Device implements an Inst
+func (a *Run) Device() Device {
+	return a.Dev
 }
 
-// Virtual instruction to hang dependencies on
+// GetInitializers implements an Initializer instruction
+func (a *Run) GetInitializers() []Inst {
+	return a.Initializers
+}
+
+// GetFinalizers implements a Finalizer instruction
+func (a *Run) GetFinalizers() []Inst {
+	return a.Finalizers
+}
+
+// Prompt is manual prompt instruction
+type Prompt struct {
+	dependsMixin
+	noDeviceMixin
+
+	Message string
+}
+
+// Wait is a virtual instruction to hang dependencies on. A better name might
+// been no-op.
 type Wait struct {
-	Depends []Inst
+	noDeviceMixin
+	dependsMixin
 }
 
-func (a *Wait) Device() Device {
-	return nil
+// TimedWait is a wait for a period of time.
+type TimedWait struct {
+	dependsMixin
+	noDeviceMixin
+
+	Duration time.Duration
 }
 
-func (a *Wait) DependsOn() []Inst {
-	return a.Depends
+// SequentialOrder takes a set of instructions with out any dependencies and
+// modifies them to follow sequential order
+func SequentialOrder(insts ...Inst) []Inst {
+	for idx, inst := range insts {
+		if idx == 0 {
+			continue
+		}
+		inst.SetDependsOn([]Inst{insts[idx-1]})
+	}
+
+	return insts
 }
 
-func (a *Wait) SetDependsOn(x []Inst) {
-	a.Depends = x
+// AwaitData is a raw data-getting request
+type AwaitData struct {
+	dependsMixin
+	Dev  Device
+	Inst *ast.AwaitInst
 }
 
-func (a *Wait) GetTimeEstimate() float64 {
-	return 0.0
+// Device implements an Inst
+func (d *AwaitData) Device() Device {
+	return d.Dev
 }

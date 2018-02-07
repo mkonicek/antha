@@ -7,6 +7,92 @@ import (
 	"strings"
 )
 
+func A1ArrayFromWells(wells []*LHWell) []string {
+	return A1ArrayFromWellCoords(WCArrayFromWells(wells))
+}
+
+func WCArrayFromWells(wells []*LHWell) []WellCoords {
+	ret := make([]WellCoords, 0, len(wells))
+
+	for _, w := range wells {
+		if w == nil {
+			continue
+		}
+
+		ret = append(ret, MakeWellCoords(w.Crds))
+	}
+
+	return ret
+}
+
+func WCArrayFromStrings(arr []string) []WellCoords {
+	ret := make([]WellCoords, len(arr))
+
+	for i, s := range arr {
+		ret[i] = MakeWellCoords(s)
+	}
+
+	return ret
+}
+
+func A1ArrayFromWellCoords(arr []WellCoords) []string {
+	ret := make([]string, len(arr))
+	for i, v := range arr {
+		ret[i] = v.FormatA1()
+	}
+	return ret
+}
+
+// make an array of these from an array of strings
+
+func MakeWellCoordsArray(sa []string) []WellCoords {
+	r := make([]WellCoords, len(sa))
+
+	for i := 0; i < len(sa); i++ {
+		r[i] = MakeWellCoords(sa[i])
+	}
+
+	return r
+}
+
+func WCArrayCols(wcA []WellCoords) []int {
+	return squashedIntFromWCA(wcA, 0)
+}
+
+func WCArrayRows(wcA []WellCoords) []int {
+	return squashedIntFromWCA(wcA, 1)
+}
+
+func containsInt(i int, ia []int) bool {
+	for _, ii := range ia {
+		if i == ii {
+			return true
+		}
+	}
+	return false
+}
+
+func squashedIntFromWCA(wcA []WellCoords, which int) []int {
+	ret := make([]int, 0, len(wcA))
+	for _, wc := range wcA {
+		v := wc.X
+		if which == 1 {
+			v = wc.Y
+		}
+
+		// ignore nils
+
+		if v == -1 {
+			continue
+		}
+
+		if !containsInt(v, ret) {
+			ret = append(ret, v)
+		}
+	}
+	return ret
+}
+
 // convenience comparison operator
 
 func CompareStringWellCoordsCol(sw1, sw2 string) int {
@@ -23,17 +109,17 @@ func CompareWellCoordsCol(w1, w2 WellCoords) int {
 		return -1
 	} else if dx > 0 {
 		return 1
-	} else {
-		if dy < 0 {
-			return -1
-		} else if dy > 0 {
-			return 1
-		} else {
-			return 0
-		}
 	}
-	return 0
+
+	if dy < 0 {
+		return -1
+	} else if dy > 0 {
+		return 1
+	} else {
+		return 0
+	}
 }
+
 func CompareStringWellCoordsRow(sw1, sw2 string) int {
 	w1 := MakeWellCoords(sw1)
 	w2 := MakeWellCoords(sw2)
@@ -48,16 +134,14 @@ func CompareWellCoordsRow(w1, w2 WellCoords) int {
 		return -1
 	} else if dy > 0 {
 		return 1
-	} else {
-		if dx < 0 {
-			return -1
-		} else if dx > 0 {
-			return 1
-		} else {
-			return 0
-		}
 	}
-	return 0
+	if dx < 0 {
+		return -1
+	} else if dx > 0 {
+		return 1
+	} else {
+		return 0
+	}
 }
 
 // convenience structure for handling well coordinates
@@ -114,30 +198,35 @@ func MakeWellCoords(wc string) WellCoords {
 
 // make well coordinates in the "A1" convention
 func MakeWellCoordsA1(a1 string) WellCoords {
-	if !MatchString("[A-Z]{1,}[0-9]{1,2}", a1) {
+	re := regexp.MustCompile(`^([A-Z]{1,})([0-9]{1,2})$`)
+	matches := re.FindStringSubmatch(a1)
+
+	if matches == nil {
 		return WellCoords{-1, -1}
 	}
-	re, _ := regexp.Compile("[A-Z]{1,}")
-	ix := re.FindIndex([]byte(a1))
-	endC := ix[1]
+	/*
+		re, _ := regexp.Compile("[A-Z]{1,}")
+		ix := re.FindIndex([]byte(a1))
+		endC := ix[1]
+	*/
 
-	X := wutil.ParseInt(a1[endC:len(a1)]) - 1
-	Y := wutil.AlphaToNum(string(a1[0:endC])) - 1
+	X := wutil.ParseInt(matches[2]) - 1
+	Y := wutil.AlphaToNum(matches[1]) - 1
+
 	return WellCoords{X, Y}
 }
 
 // make well coordinates in the "1A" convention
 func MakeWellCoords1A(a1 string) WellCoords {
+	re := regexp.MustCompile(`^([0-9]{1,2})([A-Z]{1,})$`)
+	matches := re.FindStringSubmatch(a1)
 
-	if !MatchString("[0-9]{1,2}[A-Z]{1,}", a1) {
+	if matches == nil {
 		return WellCoords{-1, -1}
 	}
-	re, _ := regexp.Compile("[A-Z]{1,}")
-	ix := re.FindIndex([]byte(a1))
-	startC := ix[0]
 
-	Y := wutil.AlphaToNum(string(a1[startC:len(a1)])) - 1
-	X := wutil.ParseInt(a1[0:startC]) - 1
+	Y := wutil.AlphaToNum(matches[2]) - 1
+	X := wutil.ParseInt(matches[1]) - 1
 	return WellCoords{X, Y}
 }
 

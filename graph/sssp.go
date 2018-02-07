@@ -4,13 +4,14 @@ import (
 	"container/heap"
 )
 
+// ShortestPathOpt is a set of options to ShortestPath
 type ShortestPathOpt struct {
 	Graph   Graph
 	Sources []Node
 	Weight  func(x, y Node) int
 }
 
-// Dijkstra's algorithm
+// ShortestPath implements Dijkstra's algorithm
 func ShortestPath(opt ShortestPathOpt) map[Node]int {
 	dist := make(map[Node]int)
 	item := make(map[Node]*nodeItem)
@@ -41,7 +42,7 @@ func ShortestPath(opt ShortestPathOpt) map[Node]int {
 		delete(item, n)
 		dn := dist[n]
 
-		for i, inum := 0, opt.Graph.NumOuts(n); i < inum; i += 1 {
+		for i, inum := 0, opt.Graph.NumOuts(n); i < inum; i++ {
 			out := opt.Graph.Out(n, i)
 			w := dn + opt.Weight(n, out)
 			if dout, seen := dist[out]; !seen || w < dout {

@@ -1,34 +1,29 @@
 package liquidhandling
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 func TestIChain(t *testing.T) {
-	fmt.Println("TEST 1")
 	chain := NewIChain(nil)
 
 	s := []string{"A", "B", "C", "D", "E", "F"}
 
 	for _, k := range s {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 
 		cmp := wtype.NewLHComponent()
 
 		cmp.ID = k
 
 		ins.AddComponent(cmp)
+		ins.Result = wtype.NewLHComponent()
 		chain.Add(ins)
 	}
-
-	chain.Print()
-
 }
 func TestIChain2(t *testing.T) {
-	fmt.Println("TEST 2")
 	chain := NewIChain(nil)
 
 	s := []string{"A", "B", "C", "D", "E", "F"}
@@ -52,21 +47,18 @@ func TestIChain2(t *testing.T) {
 	}
 
 	for i, k := range cmps {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 		ins.AddComponent(k)
 		if i != len(s)-1 {
 			ins.AddProduct(cmps[i+1])
+		} else {
+			ins.Result = wtype.NewLHComponent()
 		}
-		fmt.Println("DOING NODE ", k.ID, " WITH PARENT: ", k.ParentID, " AND PRODUCT ", ins.ProductID)
 		chain.Add(ins)
 	}
-
-	chain.Print()
-
 }
 
 func TestIChain3(t *testing.T) {
-	fmt.Println("TEST 2")
 	chain := NewIChain(nil)
 
 	s := []string{"A", "B", "C", "D", "E", "F"}
@@ -99,14 +91,13 @@ func TestIChain3(t *testing.T) {
 	cmps = append(cmps, cmp)
 
 	for i, k := range cmps {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 		ins.AddComponent(k)
 		if i != len(s)-1 && cmp.ID != "Z" && cmp.ID != "Y" {
 			ins.AddProduct(cmps[i+1])
+		} else {
+			ins.AddProduct(wtype.NewLHComponent())
 		}
 		chain.Add(ins)
 	}
-
-	chain.Print()
-
 }

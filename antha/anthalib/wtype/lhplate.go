@@ -20,19 +20,21 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
 	"math"
-	"os"
-	"strconv"
-	"time"
 )
 
 // structure describing a microplate
@@ -60,10 +62,53 @@ type LHPlate struct {
 	parent      LHObject           `gotopb:"-"`
 }
 
+func (plate LHPlate) OutputLayout() {
+	fmt.Println(plate.GetLayout())
+}
+
+func (plate LHPlate) GetLayout() string {
+	s := ""
+	for x := 0; x < plate.WellsX(); x += 1 {
+		for y := 0; y < plate.WellsY(); y += 1 {
+			well := plate.Cols[x][y]
+			if well.Currvol() < 0.0001 {
+				continue
+			}
+			s += fmt.Sprint("\t\t")
+			var wc WellCoords
+			wc.X = x
+			wc.Y = y
+			s += fmt.Sprint(wc.FormatA1(), " ")
+			//for _, c := range well.WContents {
+			//	fmt.Print(well.WContents.CN, " ")
+			if well.WContents.IsInstance() {
+				s += fmt.Sprint(well.WContents.CNID(), " ")
+			} else {
+				s += fmt.Sprint(well.WContents.CName, " ")
+			}
+			//}
+			s += fmt.Sprintf(" %-6.2f%s", well.Currvol(), well.Vunit)
+			s += fmt.Sprintln()
+			s += fmt.Sprintln()
+		}
+	}
+	return s
+}
+
+// Name returns the name of the plate.
+func (lhp LHPlate) Name() string {
+	return lhp.PlateName
+}
+
+// Set name sets the name of the plate.
+func (lhp *LHPlate) SetName(name string) {
+	lhp.PlateName = strings.TrimSpace(name)
+}
+
 func (lhp LHPlate) String() string {
 	return fmt.Sprintf(
 		`LHPlate {
-	ID          : %s,
+	ID          : %s, 
 	Inst        : %s,
 	Loc         : %s,
 	PlateName   : %s,
@@ -75,7 +120,7 @@ func (lhp LHPlate) String() string {
 	HWells      : %p,
 	Rows        : %p,
 	Cols        : %p,
-	Welltype    : %p,
+	Welltype    : %s,
 	Wellcoords  : %p,
 	WellXOffset : %f,
 	WellYOffset : %f,
@@ -96,7 +141,7 @@ func (lhp LHPlate) String() string {
 		lhp.HWells,
 		lhp.Rows,
 		lhp.Cols,
-		lhp.Welltype,
+		lhp.Welltype.String(),
 		lhp.Wellcoords,
 		lhp.WellXOffset,
 		lhp.WellYOffset,
@@ -109,33 +154,212 @@ func (lhp LHPlate) String() string {
 	)
 }
 
-// convenience method
+func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
+	ret := make([]*LHComponent, len(wv))
 
-func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+	for i, wc := range wv {
+		ret[i] = lhp.Wellcoords[wc.FormatA1()].WContents.Dup()
+		wv := lhp.Wellcoords[wc.FormatA1()].WorkingVolume()
+		ret[i].Vol = wv.ConvertToString(ret[i].Vunit)
+	}
+
+	return ret
+}
+
+// deprecated
+/*
+func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
+
+	for _, c := range cmps {
+		if independent && c == nil {
+			// HERE HERE HERE -->  INDEPENDENT MULTI NEEDS THIS
+			err = fmt.Errorf("Cannot do non-contiguous asks")
+			return
+		}
+	}
+
+	err = fmt.Errorf("Not found")
+
+	var it VectorPlateIterator
+
+	if ori == LHVChannel {
+		//it = NewColVectorIterator(lhp, multi)
+
+		tpw := multi / lhp.WellsY()
+		wpt := lhp.WellsY() / multi
+
+		if tpw == 0 {
+			tpw = 1
+		}
+
+		if wpt == 0 {
+			wpt = 1
+		}
+
+		it = NewTickingColVectorIterator(lhp, multi, tpw, wpt)
+	} else {
+		it = NewRowVectorIterator(lhp, multi)
+	}
+
+	best := 0.0
+	bestMatch := ComponentMatch{}
+	/// MIS --> debug multichannel leads me here
+	//          -- for some reason it's not picking up ONE of the transfers..
+	//	       clearly an annoying edge here somewhere
+	//		well G6 in the M$ protocol
+	for wv := it.Curr(); it.Valid(); wv = it.Next() {
+		// cmps needs duping here
+		mycmps := lhp.GetContentVector(wv)
+
+		fmt.Println("INVOKE")
+		match, errr := matchComponents(cmps.Dup(), mycmps, independent)
+
+		if errr != nil {
+			err = errr
+			return
+		}
+
+		// issue here: this only ever keeps one match
+		// matchComponents needs to return multiple matches
+
+		sc := scoreMatch(match, independent)
+
+		if sc > best {
+			bestMatch = match
+			best = sc
+		}
+	}
+
+	for _, m := range bestMatch.Matches {
+		plateIDs = append(plateIDs, m.IDs)
+		wellCoords = append(wellCoords, m.WCs)
+		vols = append(vols, m.Vols)
+	}
+
+	fmt.Println("BEST AMTCH CHRHE: ")
+	fmt.Println(plateIDs)
+	fmt.Println(wellCoords)
+	fmt.Println(vols)
+	fmt.Println("---")
+
+	if best <= 0.0 {
+		err = fmt.Errorf("Not found")
+	} else {
+		err = nil
+	}
+
+	return
+}
+
+*/
+
+// this gets ONE component... possibly from several wells
+func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
+	// we first try to find a single well that satisfies us
+	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
 	it := NewOneTimeColumnWiseIterator(lhp)
 
-	var volGot wunit.Volume
-	volGot = wunit.NewVolume(0.0, "ul")
+	volGot := wunit.NewVolume(0.0, "ul")
 	volWant := cmp.Volume().Dup()
 
-	x := 0
+	// find any well with at least as much as we need
+	// if exists, return, if not then fall through
 
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
-		/*
-			if !w.Empty() {
-				logger.Debug(fmt.Sprint("WANT: ", cmp.CName, " :: ", wc.FormatA1(), " ", w.Contents().CName, " ", w.CurrVolume().ToString()))
-			}
-		*/
-		if w.Contents().CName == cmp.CName {
-			if exact && w.Contents().ID != cmp.ID {
-				continue
-			}
-			x += 1
+		if w.Empty() {
+			continue
+		}
 
+		//if w.Contents().CName == cmp.CName {
+		if w.Contains(cmp) {
+			v := w.WorkingVolume()
+
+			// check volume unless this is an instance and we are tolerating this
+			if !cmp.IsInstance() || !legacyVolume {
+				if v.LessThan(volWant) {
+					continue
+				}
+			}
+
+			volGot.Add(volWant)
+			ret = append(ret, wc)
+			vols = append(vols, volGot)
+
+			volWant.Subtract(volGot)
+
+			if volGot.GreaterThan(cmp.Volume()) || volGot.EqualTo(cmp.Volume()) {
+				break
+			}
+		}
+
+	}
+
+	if volGot.LessThan(cmp.Volume()) {
+		return lhp.GetComponent(cmp, mpv)
+	}
+	//fmt.Println("FOUND: ", cmp.CName, " AT: ", ret[0].FormatA1(), " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
+
+	return ret, vols, true
+}
+
+// convenience method
+
+func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoords, err error) {
+	ret := make([]WellCoords, 0, 1)
+
+	v := wunit.NewVolume(cmp.Vol, cmp.Vunit)
+	wv := wunit.NewVolume(lhp.Welltype.MaxVol, lhp.Welltype.Vunit)
+
+	if v.GreaterThan(wv) && !overflow {
+		return ret, fmt.Errorf("Too much to put in a single well of this type")
+	}
+
+	it := NewOneTimeColumnWiseIterator(lhp)
+
+	vt := wunit.ZeroVolume()
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		wl := lhp.Wellcoords[wc.FormatA1()]
+
+		if !wl.Empty() {
+			continue
+		}
+
+		c, e := cmp.Sample(wv)
+
+		if e != nil {
+			return ret, e
+		}
+
+		ret = append(ret, wc)
+		wl.Add(c)
+		vt.Add(c.Volume())
+		if vt.EqualTo(v) {
+			return ret, nil
+		}
+	}
+
+	return ret, fmt.Errorf("Not enough empty wells")
+}
+
+// convenience method
+
+func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+	ret := make([]WellCoords, 0, 1)
+	vols := make([]wunit.Volume, 0, 1)
+	it := NewOneTimeColumnWiseIterator(lhp)
+
+	volGot := wunit.NewVolume(0.0, "ul")
+	volWant := cmp.Volume().Dup()
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		w := lhp.Wellcoords[wc.FormatA1()]
+
+		if w.Contains(cmp) {
 			v := w.WorkingVolume()
 			if v.LessThan(mpv) {
 				continue
@@ -159,7 +383,7 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, exact bool, mpv wunit.Volume)
 
 	//fmt.Println("FOUND: ", cmp.CName, " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
-	if !(volGot.GreaterThan(cmp.Volume()) || volGot.EqualTo(cmp.Volume())) {
+	if volGot.LessThan(cmp.Volume()) {
 		return ret, vols, false
 	}
 
@@ -173,18 +397,77 @@ func (lhp *LHPlate) WellMap() map[string]*LHWell {
 	return lhp.Wellcoords
 }
 
-func (lhp *LHPlate) AllWellPositions() (wellpositionarray []string) {
+const (
+	BYROW    = true
+	BYCOLUMN = false
+)
+
+func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
 
 	wellpositionarray = make([]string, 0)
 
-	// range through well coordinates
-	for j := 0; j < lhp.WlsX; j++ {
-		for i := 0; i < lhp.WlsY; i++ {
-			wellposition := wutil.NumToAlpha(i+1) + strconv.Itoa(j+1)
-			wellpositionarray = append(wellpositionarray, wellposition)
+	if byrow {
+
+		// range through well coordinates
+		for j := 0; j < lhp.WlsY; j++ {
+			for i := 0; i < lhp.WlsX; i++ {
+				wellposition := wutil.NumToAlpha(j+1) + strconv.Itoa(i+1)
+				wellpositionarray = append(wellpositionarray, wellposition)
+			}
 		}
+
+	} else {
+
+		// range through well coordinates
+		for j := 0; j < lhp.WlsX; j++ {
+			for i := 0; i < lhp.WlsY; i++ {
+				wellposition := wutil.NumToAlpha(i+1) + strconv.Itoa(j+1)
+				wellpositionarray = append(wellpositionarray, wellposition)
+			}
+		}
+
 	}
 	return
+}
+
+func (lhp *LHPlate) GetWellCoordsFromOrdering(ordinals []int, byrow bool) []WellCoords {
+	wc := lhp.GetA1WellCoordsFromOrdering(ordinals, byrow)
+	return WCArrayFromStrings(wc)
+}
+
+func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []string {
+	wps := lhp.AllWellPositions(byrow)
+
+	ret := make([]string, 0, len(wps))
+
+	for _, v := range ordinals {
+		if v < 0 {
+			panic("No negative wells allowed")
+		}
+		if v > len(wps)-1 {
+			fmt.Println("LEN WPS - 1", len(wps)-1, " V: ", v)
+			panic("No wells out of bounds allowed")
+		}
+		ret = append(ret, wps[v])
+	}
+
+	return ret
+}
+func (lhp *LHPlate) GetOrderingFromWellCoords(wc []WellCoords, byrow bool) []int {
+	wa1 := A1ArrayFromWellCoords(wc)
+	return lhp.GetOrderingFromA1WellCoords(wa1, byrow)
+}
+
+func (lhp *LHPlate) GetOrderingFromA1WellCoords(wa1 []string, byrow bool) []int {
+	wps := lhp.AllWellPositions(byrow)
+
+	ret := make([]int, len(wa1))
+
+	for i, v := range wa1 {
+		ret[i] = FirstIndexInStrArray(v, wps)
+	}
+
+	return ret
 }
 
 // @implement named
@@ -225,6 +508,15 @@ func (lhp *LHPlate) WellsX() int {
 
 func (lhp *LHPlate) WellsY() int {
 	return lhp.WlsY
+}
+
+func (lhp *LHPlate) Empty() bool {
+	for _, w := range lhp.Wellcoords {
+		if !w.Empty() {
+			return false
+		}
+	}
+	return true
 }
 
 func (lhp *LHPlate) NextEmptyWell(it PlateIterator) WellCoords {
@@ -391,9 +683,9 @@ func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *LHComponent {
 		return nil
 	}
 
-	c, _ := w.Remove(vol)
+	cmp, _ := w.Remove(vol)
 
-	return c
+	return cmp
 }
 
 func (p *LHPlate) DeclareTemporary() {
@@ -428,62 +720,162 @@ func (p *LHPlate) IsAutoallocated() bool {
 	return true
 }
 
-func ExportPlateCSV(outputpilename string, plate *LHPlate, platename string, wells []string, liquids []*LHComponent, Volumes []wunit.Volume) error {
+// ExportPlateCSV a exports an LHPlate and its contents as a csv file.
+// The caller is required to set the well locations and volumes explicitely with this function.
+func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wells []string, liquids []*LHComponent, volumes []wunit.Volume) (file File, err error) {
 
-	csvfile, err := os.Create(outputpilename)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return err
+	if len(wells) != len(liquids) || len(liquids) != len(volumes) {
+		err = fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
-	defer csvfile.Close()
 
 	records := make([][]string, 0)
 
-	//record := make([]string, 0)
-
-	headerrecord := []string{plate.Type, platename, "", "", ""}
+	headerrecord := []string{plate.Type, plateName, "", "", "", "", ""}
 
 	records = append(records, headerrecord)
 
 	for i, well := range wells {
 
-		volfloat := Volumes[i].RawValue()
+		volfloat := volumes[i].RawValue()
 
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 
-		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, Volumes[i].Unit().PrefixedSymbol()}
+		// if no conc unit and conc is zero use a default concentration unit
+		if liquids[i].Conc == 0 && liquids[i].Cunit == "" {
+			liquids[i].Cunit = "mg/l"
+		}
+
+		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
 		records = append(records, record)
 	}
 
-	csvwriter := csv.NewWriter(csvfile)
+	return exportCSV(records, outputFileName)
+}
 
-	for _, record := range records {
+// AutoExportPlateCSV exports an LHPlate and its contents as a csv file.
+// This is not 100% safe to use in elements since, currently,
+// at the time of running an element, the scheduler  will not have allocated positions
+// for the components so, for example, accurate well information cannot currently be obtained with this function.
+// If allocating wells manually use the ExportPlateCSV function and explicitely set the sample locations and volumes.
+func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err error) {
 
-		err = csvwriter.Write(record)
+	var platename string = plate.PlateName
+	var wells = make([]string, 0)
+	var liquids = make([]*LHComponent, 0)
+	var volumes = make([]wunit.Volume, 0)
+	var concs = make([]wunit.Concentration, 0)
+	allpositions := plate.AllWellPositions(false)
 
-		if err != nil {
-			return err
+	var nilComponent *LHComponent
+
+	for _, position := range allpositions {
+		well := plate.WellMap()[position]
+
+		if !well.Empty() {
+			wells = append(wells, position)
+			liquids = append(liquids, well.Contents())
+			volumes = append(volumes, well.CurrentVolume())
+			if well.Contents().Cunit != "" {
+				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, well.Contents().Cunit))
+			} else {
+				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, "mg/l"))
+			}
+		} else {
+			wells = append(wells, position)
+			liquids = append(liquids, nilComponent)
+			volumes = append(volumes, wunit.NewVolume(0.0, "ul"))
+			concs = append(concs, wunit.NewConcentration(0.0, "g/l"))
 		}
 	}
-	csvwriter.Flush()
 
-	return err
+	records := make([][]string, 0)
+
+	headerrecord := []string{plate.Type, platename, "LiquidType ", "Vol", "Vol Unit", "Conc", "Conc Unit"}
+
+	records = append(records, headerrecord)
+
+	for i, well := range wells {
+
+		volfloat := volumes[i].RawValue()
+		concfloat := concs[i].RawValue()
+
+		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
+		concstr := strconv.FormatFloat(concfloat, 'G', -1, 64)
+
+		var componentName string
+		var liquidType string
+		if liquids[i] != nil {
+			componentName = liquids[i].Name()
+			liquidType = liquids[i].TypeName()
+		}
+
+		record := []string{well, componentName, liquidType, volstr, volumes[i].Unit().PrefixedSymbol(), concstr, concs[i].Unit().PrefixedSymbol()}
+		records = append(records, record)
+	}
+
+	return exportCSV(records, outputFileName)
 }
+
+// Export a 2D array of string data as a csv file
+func exportCSV(records [][]string, filename string) (File, error) {
+	var anthafile File
+	var buf bytes.Buffer
+
+	/// use the buffer to create a csv writer
+	w := csv.NewWriter(&buf)
+
+	// write all records to the buffer
+	w.WriteAll(records) // calls Flush internally
+
+	if err := w.Error(); err != nil {
+		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
+	}
+
+	//This code shows how to create an antha File from this buffer which can be downloaded through the UI:
+
+	anthafile.Name = filename
+
+	anthafile.WriteAll(buf.Bytes())
+
+	///// to write this to a file on the command line this is what we'd do (or something similar)
+
+	// also create a file on os
+	file, _ := os.Create(filename)
+	defer file.Close()
+
+	// this time we'll use the file to create the writer instead of a buffer (anything which fulfils the writer interface can be used here ... checkout golang io.Writer and io.Reader)
+	fw := csv.NewWriter(file)
+
+	// same as before ...
+	fw.WriteAll(records)
+	return anthafile, nil
+}
+
 func (p *LHPlate) SetConstrained(platform string, positions []string) {
 	p.Welltype.Extra[platform] = positions
 }
 
 func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
-	var pos []string
-
 	par, ok := p.Welltype.Extra[platform]
-
-	if ok {
-		pos = par.([]string)
-		return pos, true
+	if !ok {
+		return nil, false
 	}
 
-	return pos, false
+	switch par := par.(type) {
+
+	case []string:
+		return par, true
+
+	case []interface{}:
+		var pos []string
+		for _, v := range par {
+			pos = append(pos, v.(string))
+		}
+		return pos, true
+
+	default:
+		panic(fmt.Sprintf("unknown type %T", par))
+	}
 
 }
 
@@ -669,6 +1061,8 @@ func (p *LHPlate) IsUserAllocated() bool {
 	return false
 }
 
+// semantics are: put stuff from p2 into p unless
+// the well in p is declared as user allocated
 func (p *LHPlate) MergeWith(p2 *LHPlate) {
 	// do nothing if these are not same type
 
@@ -702,4 +1096,207 @@ func (p *LHPlate) MarkNonEmptyWellsUserAllocated() {
 			w.SetUserAllocated()
 		}
 	}
+}
+
+func (p *LHPlate) AllNonEmptyWells() []*LHWell {
+	ret := make([]*LHWell, 0, p.Nwells)
+
+	it := NewOneTimeColumnWiseIterator(p)
+
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		w := p.Wellcoords[wc.FormatA1()]
+
+		if !w.Empty() {
+			ret = append(ret, w)
+		}
+	}
+
+	return ret
+}
+
+func (p *LHPlate) IsSpecial() bool {
+	if p == nil || p.Welltype.Extra == nil {
+		return false
+	}
+
+	s, ok := p.Welltype.Extra["IMSPECIAL"]
+
+	if !ok || !s.(bool) {
+		return false
+	}
+
+	return true
+}
+
+func (p *LHPlate) DeclareSpecial() {
+	if p != nil && p.Welltype.Extra != nil {
+		p.Welltype.Extra["IMSPECIAL"] = true
+	}
+}
+
+// @implement SBSLabware
+
+/*
+type SBSLabware interface {
+	NumRows() int
+	NumCols() int
+	PlateHeight() float64
+}
+*/
+
+func (p *LHPlate) NumRows() int {
+	return p.WellsY()
+}
+
+func (p *LHPlate) NumCols() int {
+	return p.WellsX()
+}
+
+func (p *LHPlate) PlateHeight() float64 {
+	return p.Height
+}
+
+func componentList(vec ComponentVector) map[string]bool {
+	r := make(map[string]bool, len(vec))
+	for _, c := range vec {
+		if c != nil {
+			if c.Vol > 0.0 {
+				r[c.IDOrName()] = true
+			}
+		}
+	}
+
+	return r
+}
+
+func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume) ComponentVector {
+	cv := p.GetFilteredContentVector(wv, cmps)
+
+	cv.DeleteAllBelowVolume(mpv)
+	return cv
+}
+
+func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector) ComponentVector {
+	wants := componentList(cmps)
+
+	cv := p.GetContentVector(wv)
+	fcv := make([]*LHComponent, len(cv))
+
+	for i := 0; i < len(cv); i++ {
+		if cv[i] != nil && wants[cv[i].IDOrName()] {
+			fcv[i] = cv[i]
+		}
+	}
+
+	return fcv
+}
+func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
+	for _, w := range p.Wellcoords {
+		if w.UpdateContentID(before, after) {
+			return true
+		}
+	}
+	return false
+}
+
+// SetData implements Annotatable
+func (p *LHPlate) SetData(key string, data []byte) error {
+	if err := p.checkExtra(fmt.Sprintf("cannot add data %s", key)); err != nil {
+		return err
+	}
+
+	// nb -- in future disallow already set keys as well?
+	if err := p.CheckExtraKey(key); err != nil {
+		return fmt.Errorf("invalid key %s: %s", key, err)
+	}
+
+	p.Welltype.Extra[key] = data
+
+	return nil
+
+}
+
+// ClearData removes data with the given name
+func (p *LHPlate) ClearData(k string) error {
+	err := p.checkExtra(fmt.Sprintf("cannot clear data %s", k))
+
+	if err != nil {
+		return err
+	}
+
+	delete(p.Welltype.Extra, k)
+
+	return nil
+}
+
+func (p *LHPlate) checkExtra(s string) error {
+	if p == nil {
+		return fmt.Errorf("nil plate: %s", s)
+	}
+
+	if p.Welltype == nil {
+		return fmt.Errorf("corrupt plate - missing well type: %s", s)
+	}
+
+	if p.Welltype.Extra == nil {
+		return fmt.Errorf("corrupt well type - %s", s)
+	}
+
+	return nil
+}
+
+func (p LHPlate) GetData(key string) ([]byte, error) {
+	if err := p.checkExtra(fmt.Sprintf("cannot get key %s", key)); err != nil {
+		return nil, err
+	}
+
+	if err := p.CheckExtraKey(key); err != nil {
+		return nil, fmt.Errorf("invalid key %s: %s", key, err)
+	}
+
+	bs, ok := p.Welltype.Extra[key].([]byte)
+	if !ok {
+		return nil, fmt.Errorf("key %s not found", key)
+	}
+
+	return bs, nil
+}
+
+// CheckExtraKey checks if the key is a reserved name
+func (p LHPlate) CheckExtraKey(k string) error {
+	reserved := []string{"IMSPECIAL", "Pipetmax"}
+
+	if wutil.StrInStrArray(k, reserved) {
+		return fmt.Errorf("%s is a system key used by plates", k)
+	}
+
+	if p.Welltype == nil {
+		return fmt.Errorf("No valid well")
+	}
+
+	return p.Welltype.CheckExtraKey(k)
+}
+
+// AllContents returns all the components on the plate
+func (p *LHPlate) AllContents() []*LHComponent {
+	ret := make([]*LHComponent, 0, len(p.Wellcoords))
+	for _, c := range p.Cols {
+		for _, w := range c {
+			ret = append(ret, w.WContents)
+		}
+	}
+
+	return ret
+}
+
+func (p *LHPlate) ColVol() wunit.Volume {
+	if p == nil {
+		return wunit.ZeroVolume()
+	}
+
+	v := p.Welltype.MaxVolume()
+
+	v.MultiplyBy(float64(p.WlsY))
+
+	return v
 }

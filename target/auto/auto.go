@@ -1,79 +1,90 @@
+// Package auto provides methods for creating a simulation target based on
+// auto discovery of device plugins (drivers)
 package auto
 
 import (
+	"context"
 	"errors"
 
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
-	"github.com/antha-lang/antha/bvendor/google.golang.org/grpc"
-	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
-	lhclient "github.com/antha-lang/antha/driver/lh"
-	"github.com/antha-lang/antha/driver/pb/lh"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/target/mixer"
+	"github.com/antha-lang/antha/target/human"
+	"google.golang.org/grpc"
 )
 
 var (
-	noMatch = errors.New("no match")
+	errNoMatch = errors.New("no match")
 )
 
-var (
-	tryers []tryer = []tryer{
-		tryRunner,
-		tryMixer,
-	}
-)
+// An Endpoint is a network address of a device plugin (driver)
+type Endpoint struct {
+	URI string
+	Arg interface{}
+}
 
-type tryer func(*grpc.ClientConn, []interface{}) (target.Device, error)
-
+// An Opt are options for connecting to a set of device plugins (drivers)
 type Opt struct {
-	Uri  string
-	Opts []interface{}
+	Endpoints []Endpoint
+	MaybeArgs []interface{}
 }
 
-func tryRunner(conn *grpc.ClientConn, opts []interface{}) (target.Device, error) {
-	c := runner.NewRunnerClient(conn)
-	reply, err := c.DriverType(context.Background(), &driver.TypeRequest{})
-	if err != nil {
-		return nil, err
-	}
-	if reply.Type != "antha.runner.v1.Runner" {
-		return nil, noMatch
-	}
-
-	return target.NewRunner(c), nil
+// An Auto contains the state of autodiscovery of device plugins
+type Auto struct {
+	Target  *target.Target
+	Conns   []*grpc.ClientConn
+	runners map[string][]runner.RunnerClient
+	handler map[target.Device]*grpc.ClientConn
 }
 
-func getMixerOpt(opt []interface{}) (ret mixer.Opt) {
-	for _, v := range opt {
-		if o, ok := v.(mixer.Opt); ok {
-			return o
+// Close releases any resources like network connections associated
+// with autodiscovery state.
+func (a *Auto) Close() error {
+	var err error
+	for _, conn := range a.Conns {
+		e := conn.Close()
+		if err == nil {
+			err = e
 		}
 	}
-	return
+	return err
 }
 
-func tryMixer(conn *grpc.ClientConn, opts []interface{}) (target.Device, error) {
-	c := lh.NewExtendedLiquidhandlingDriverClient(conn)
-	return mixer.New(getMixerOpt(opts), &lhclient.Driver{C: c})
-}
-
-func New(opt Opt) (target.Device, error) {
-	conn, err := grpc.Dial(opt.Uri, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
+// New makes target by inspecting a set of network services
+func New(opt Opt) (ret *Auto, err error) {
+	ret = &Auto{
+		Target:  target.New(),
+		runners: make(map[string][]runner.RunnerClient),
+		handler: make(map[target.Device]*grpc.ClientConn),
 	}
+
 	defer func() {
-		if err != nil {
-			conn.Close()
+		if err == nil {
+			return
 		}
+		err = ret.Close()
 	}()
 
-	var d target.Device
-	for _, t := range tryers {
-		if d, err = t(conn, opt.Opts); err == nil {
-			return d, nil
+	tryer := &tryer{
+		Auto:      ret,
+		MaybeArgs: opt.MaybeArgs,
+		HumanOpt:  human.Opt{CanMix: true, CanIncubate: true, CanHandle: true},
+	}
+
+	ctx := context.Background()
+	for _, ep := range opt.Endpoints {
+		var conn *grpc.ClientConn
+		conn, err = grpc.Dial(ep.URI, grpc.WithInsecure())
+		if err != nil {
+			return
+		}
+		ret.Conns = append(ret.Conns, conn)
+
+		if err = tryer.Try(ctx, conn, ep.Arg); err != nil {
+			return
 		}
 	}
-	return nil, noMatch
+
+	ret.Target.AddDevice(human.New(tryer.HumanOpt))
+
+	return
 }

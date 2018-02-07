@@ -4,12 +4,12 @@
 package workflow
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
+	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/trace"
 )
@@ -17,37 +17,39 @@ import (
 // TODO: deterministic node name/order
 
 var (
-	cyclicWorkflow  = errors.New("cyclic workflow")
-	unknownPort     = errors.New("unknown port")
-	unknownProcess  = errors.New("unknown process")
-	alreadyAssigned = errors.New("already assigned")
-	alreadyRemoved  = errors.New("already removed")
+	errCyclicWorkflow  = errors.New("cyclic workflow")
+	errUnknownPort     = errors.New("unknown port")
+	errUnknownProcess  = errors.New("unknown process")
+	errAlreadyAssigned = errors.New("already assigned")
+	errAlreadyRemoved  = errors.New("already removed")
 )
 
-// Unique identifier for an input or output parameter
+// A Port is a unique identifier for an input or output parameter
 type Port struct {
-	Process string
-	Port    string
+	Process string `json:"process"`
+	Port    string `json:"port"`
 }
 
+// String returns a string representation of a port
 func (a Port) String() string {
 	return fmt.Sprintf("%s.%s", a.Process, a.Port)
 }
 
+// A Process is an instance of a component / element execution
 type Process struct {
-	Component string
+	Component string `json:"component"`
 }
 
+// A Connection connects the output of one Process to the input of another
 type Connection struct {
-	Src Port
-	Tgt Port
+	Src Port `json:"source"`
+	Tgt Port `json:"target"`
 }
 
-// Description of a workflow. Structure inherited from and is a subset of
-// noflow library
+// Desc is the description of a workflow.
 type Desc struct {
-	Processes   map[string]Process
-	Connections []Connection
+	Processes   map[string]Process `json:"processes"`
+	Connections []Connection       `json:"connections"`
 }
 
 type endpoint struct {
@@ -72,7 +74,7 @@ func (a *node) removeIn(port string) (int, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	if !a.Ins[port] {
-		return 0, alreadyRemoved
+		return 0, errAlreadyRemoved
 	}
 	delete(a.Ins, port)
 	return len(a.Ins), nil
@@ -82,34 +84,34 @@ func (a *node) setParam(port string, value interface{}) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	if _, seen := a.Params[port]; seen {
-		return alreadyAssigned
+		return errAlreadyAssigned
 	}
 	a.Params[port] = value
 	return nil
 }
 
-// State to execute a workflow
+// Workflow is the state to execute a workflow
 type Workflow struct {
-	roots   []*node
 	nodes   map[string]*node
 	Outputs map[Port]interface{} // Values generated that were not connected to another process
 }
 
+// FuncName gets the function to be called for the given process name
 func (a *Workflow) FuncName(process string) (string, error) {
-	if n, ok := a.nodes[process]; !ok {
-		return "", unknownProcess
-	} else {
-		return n.FuncName, nil
+	n, ok := a.nodes[process]
+	if !ok {
+		return "", errUnknownProcess
 	}
+	return n.FuncName, nil
 }
 
-// Set initial parameter values before executing
+// SetParam sets initial parameter values before executing
 func (a *Workflow) SetParam(port Port, value interface{}) error {
 	n := a.nodes[port.Process]
 	if n == nil {
-		return unknownPort
+		return errUnknownPort
 	} else if n.Ins[port.Port] {
-		return alreadyAssigned
+		return errAlreadyAssigned
 	} else {
 		return n.setParam(port.Port, value)
 	}
@@ -142,10 +144,16 @@ func updateOutParams(n *node, out inject.Value, unmatched map[Port]interface{}) 
 }
 
 func (a *Workflow) run(ctx context.Context, n *node) ([]*node, error) {
-	out, err := inject.Call(ctx, inject.NameQuery{Repo: n.FuncName}, n.Params)
+	query := inject.NameQuery{
+		Repo:  n.FuncName,
+		Stage: api.ElementStage_STEPS,
+	}
+	out, err := inject.Call(ctx, query, n.Params)
+
 	if err != nil {
 		return nil, err
 	}
+
 	if err := updateOutParams(n, out, a.Outputs); err != nil {
 		return nil, err
 	}
@@ -172,7 +180,7 @@ func makeRoots(nodes map[string]*node) ([]*node, error) {
 		}
 	}
 	if len(roots) == 0 && len(nodes) > 0 {
-		return nil, cyclicWorkflow
+		return nil, errCyclicWorkflow
 	}
 	return roots, nil
 }
@@ -192,15 +200,15 @@ func (a *Workflow) Run(parent context.Context) error {
 			var newRoots []*node
 			// TODO: Parallelize this loop
 			for _, n := range roots {
-				if rs, err := a.run(ctx, n); err != nil {
+				rs, err := a.run(ctx, n)
+				if err != nil {
 					return fmt.Errorf("cannot run process %q: %s", n.Process, err)
-				} else {
-					newRoots = append(newRoots, rs...)
 				}
+				newRoots = append(newRoots, rs...)
 			}
 
 			if len(newRoots) == 0 && len(a.nodes) > 0 {
-				return cyclicWorkflow
+				return errCyclicWorkflow
 			}
 			roots = newRoots
 		}
@@ -211,7 +219,7 @@ func (a *Workflow) Run(parent context.Context) error {
 	return ctx.Err()
 }
 
-// Add a process to a workflow that executes funcName
+// AddNode adds a process to a workflow that executes funcName
 func (a *Workflow) AddNode(process, funcName string) error {
 	if a.nodes[process] != nil {
 		return fmt.Errorf("process %q already defined", process)
@@ -227,34 +235,33 @@ func (a *Workflow) AddNode(process, funcName string) error {
 	return nil
 }
 
-// Connect an output of one process to an input of another
+// AddEdge connects an output of one process to an input of another
 func (a *Workflow) AddEdge(src, tgt Port) error {
 	snode := a.nodes[src.Process]
 	if snode == nil {
-		return fmt.Errorf("unknown process %q", src)
+		return fmt.Errorf("unknown source port %q", src)
 	}
 	tnode := a.nodes[tgt.Process]
 	if tnode == nil {
-		return fmt.Errorf("unknown process %q", src)
+		return fmt.Errorf("unknown target port %q", tgt)
 	}
 
 	sport := src.Port
 	tport := tgt.Port
 	if _, seen := tnode.Ins[tport]; seen {
-		return fmt.Errorf("port %q of process %q already assigned", endpoint{Port: tport, Node: tnode})
+		return fmt.Errorf("port %q of process %q already assigned", endpoint{Port: tport, Node: tnode}, tgt.Process)
 	}
 	tnode.Ins[tport] = true
 	snode.Outs[sport] = append(snode.Outs[sport], endpoint{Port: tport, Node: tnode})
 	return nil
 }
 
-// Options for creating a new Workflow
+// Opt are options for creating a new Workflow
 type Opt struct {
-	FromBytes []byte
-	FromDesc  *Desc
+	FromDesc *Desc
 }
 
-// Create a new Workflow
+// New creates a new Workflow
 func New(opt Opt) (*Workflow, error) {
 	w := &Workflow{
 		nodes:   make(map[string]*node),
@@ -264,10 +271,6 @@ func New(opt Opt) (*Workflow, error) {
 	var desc *Desc
 	if opt.FromDesc != nil {
 		desc = opt.FromDesc
-	} else if opt.FromBytes != nil {
-		if err := json.Unmarshal(opt.FromBytes, &desc); err != nil {
-			return nil, err
-		}
 	} else {
 		desc = &Desc{}
 	}

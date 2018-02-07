@@ -16,8 +16,6 @@ func GetTimerFor(model, mnfr string) *LHTimer {
 		//fmt.Println("None found")
 		return makeNullTimer()
 	}
-
-	return nil
 }
 
 func makeTimers() map[string]*LHTimer {

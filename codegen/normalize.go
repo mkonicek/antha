@@ -10,7 +10,7 @@ import (
 // Build rooted graph
 func makeRoot(nodes []ast.Node) (ast.Node, error) {
 	someNode := func(g graph.Graph, m map[graph.Node]bool) graph.Node {
-		for i, inum := 0, g.NumNodes(); i < inum; i += 1 {
+		for i, inum := 0, g.NumNodes(); i < inum; i++ {
 			n := g.Node(i)
 			if !m[n] {
 				return n
@@ -31,7 +31,7 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 			Root:  root,
 			Visitor: func(n graph.Node) error {
 				if seen[n] {
-					return graph.NextNode
+					return graph.ErrNextNode
 				}
 				return nil
 			},
@@ -43,7 +43,7 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 
 	// If some nodes are not reachable from roots, there must be a cycle
 	if len(seen) != g.NumNodes() {
-		return nil, fmt.Errorf("cycle containing %q", someNode(g, seen))
+		return nil, fmt.Errorf("cycle containing %T", someNode(g, seen))
 	}
 
 	ret := &ast.Bundle{}
@@ -54,7 +54,7 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 }
 
 // What is the set of UseComps that reach each command
-func buildReachingUses(g *ast.Graph) map[ast.Node][]*ast.UseComp {
+func buildReachingUses(g graph.Graph) map[ast.Node][]*ast.UseComp {
 	// Simple fixpoint:
 	//   Value: set of use comps,
 	//   Merge: union
@@ -66,7 +66,7 @@ func buildReachingUses(g *ast.Graph) map[ast.Node][]*ast.UseComp {
 
 	merge := func(n ast.Node) []*ast.UseComp {
 		var vs []*ast.UseComp
-		for i, inum := 0, g.NumOuts(n); i < inum; i += 1 {
+		for i, inum := 0, g.NumOuts(n); i < inum; i++ {
 			pred := g.Out(n, i).(ast.Node)
 			switch pred := pred.(type) {
 			case *ast.Command:
@@ -106,19 +106,39 @@ func buildReachingUses(g *ast.Graph) map[ast.Node][]*ast.UseComp {
 	return values
 }
 
+// Eliminate nodes while preserving dependency relation
+func simplifyWithDeps(g graph.Graph, in func(n graph.Node) bool) (graph.Graph, error) {
+	rg := graph.Reaches(graph.Simplify(graph.SimplifyOpt{
+		Graph:            g,
+		RemoveSelfLoops:  true,
+		RemoveMultiEdges: true,
+	}))
+
+	rg = graph.Simplify(graph.SimplifyOpt{
+		Graph: rg,
+		RemoveNodes: func(n graph.Node) bool {
+			return !in(n)
+		},
+	})
+
+	return graph.TransitiveReduction(rg)
+}
+
 // Build IR
 func build(root ast.Node) (*ir, error) {
 	g := ast.ToGraph(ast.ToGraphOpt{
 		Roots: []ast.Node{root},
 	})
 
-	ct := graph.Eliminate(graph.EliminateOpt{
-		Graph: g,
-		In: func(n graph.Node) bool {
-			c, ok := n.(*ast.Command)
-			return (ok && c.Output == nil) || n == root
-		},
+	// Remove UseComps primarily. They may be locally cyclic.
+	ct, err := simplifyWithDeps(g, func(n graph.Node) bool {
+		c, ok := n.(*ast.Command)
+		return (ok && c.Output == nil) || n == root
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: Add back some validity checks like the same UseComp cannot be used
 	// multiple times

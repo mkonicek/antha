@@ -33,6 +33,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/ghodss/yaml"
 )
@@ -70,45 +71,54 @@ var AvailablePolicyfiles []PolicyFile = []PolicyFile{
 	MakePolicyFile("newdesign2factorsonly.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 2000),
 	MakePolicyFile("190516OnePolicy.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 3000),
 	MakePolicyFile("AssemblycategoricScreen.xlsx", "JMP", &[]int{1, 2, 3, 4, 5}, 4000),
+	MakePolicyFile("090816dispenseerrordiagnosis.xlsx", "JMP", &[]int{2}, 5000),
+	MakePolicyFile("090816combineddesign.xlsx", "JMP", &[]int{1}, 6000),
 }
 
 // change to range through several files
-//var DOEliquidhandlingFile = "170516CCFDesign_noTouchoff_noBlowout.xlsx" // "2700516AssemblyCCF.xlsx" //"newdesign2factorsonly.xlsx" // "170516CCFDesign_noTouchoff_noBlowout.xlsx" // "170516CFF.xlsx" //"newdesign2factorsonly.xlsx" "170516CCFDesign_noTouchoff_noBlowout.xlsx" // //"newdesign2factorsonly.xlsx" //"8run4cpFactorial.xlsx" //"FullFactorial.xlsx" // "ScreenLHPolicyDOE2.xlsx"
+//var DOEliquidhandlingFile = "170516CCFDesign_noTouchoff_noBlowout.xlsx" // "2700516AssemblyCCF.xlsx" //"newdesign2factorsonly.xlsx" // "170516CCFDesign_noTouchoff_noBlowout.xlsx" // "170516CFF.xlsx" //"newdesign2factorsonly.xlsx" "170516CCFDesign_noTouchoff_noBlowout.xlsx" // //"newdesign2factorsonly.xlsx" //"8run4cpFactorial.xlsx" //"FullFactorial.xlsx" // "Screenwtype.LHPolicyDOE2.xlsx"
 //var DXORJMP = "DX"                                                      //"JMP"
 var BASEPolicy = "default" //"dna"
-
-func MakePolicies() map[string]LHPolicy {
-	pols := make(map[string]LHPolicy)
+func MakePolicies() map[string]wtype.LHPolicy {
+	pols := make(map[string]wtype.LHPolicy)
 
 	// what policies do we need?
+	pols["SmartMix"] = SmartMixPolicy()
 	pols["water"] = MakeWaterPolicy()
+	pols["multiwater"] = MakeMultiWaterPolicy()
 	pols["culture"] = MakeCulturePolicy()
 	pols["culturereuse"] = MakeCultureReusePolicy()
 	pols["glycerol"] = MakeGlycerolPolicy()
 	pols["solvent"] = MakeSolventPolicy()
 	pols["default"] = MakeDefaultPolicy()
-	pols["foamy"] = MakeFoamyPolicy()
 	pols["dna"] = MakeDNAPolicy()
 	pols["DoNotMix"] = MakeDefaultPolicy()
 	pols["NeedToMix"] = MakeNeedToMixPolicy()
 	pols["PreMix"] = PreMixPolicy()
 	pols["PostMix"] = PostMixPolicy()
+	pols["MegaMix"] = MegaMixPolicy()
 	pols["viscous"] = MakeViscousPolicy()
 	pols["Paint"] = MakePaintPolicy()
 
-	//      pols["lysate"] = MakeLysatePolicy()
+	// pols["lysate"] = MakeLysatePolicy()
 	pols["protein"] = MakeProteinPolicy()
 	pols["detergent"] = MakeDetergentPolicy()
 	pols["load"] = MakeLoadPolicy()
-	pols["loadlow"] = MakeLoadPolicy()
 	pols["loadwater"] = MakeLoadWaterPolicy()
 	pols["DispenseAboveLiquid"] = MakeDispenseAboveLiquidPolicy()
+	pols["DispenseAboveLiquidMulti"] = MakeDispenseAboveLiquidMultiPolicy()
 	pols["PEG"] = MakePEGPolicy()
 	pols["Protoplasts"] = MakeProtoplastPolicy()
 	pols["dna_mix"] = MakeDNAMixPolicy()
+	pols["dna_mix_multi"] = MakeDNAMixMultiPolicy()
+	pols["dna_cells_mix"] = MakeDNACELLSMixPolicy()
+	pols["dna_cells_mix_multi"] = MakeDNACELLSMixMultiPolicy()
 	pols["plateout"] = MakePlateOutPolicy()
 	pols["colony"] = MakeColonyPolicy()
+	pols["colonymix"] = MakeColonyMixPolicy()
 	//      pols["lysate"] = MakeLysatePolicy()
+	pols["carbon_source"] = MakeCarbonSourcePolicy()
+	pols["nitrogen_source"] = MakeNitrogenSourcePolicy()
 
 	/*policies, names := PolicyMaker(Allpairs, "DOE_run", false)
 	for i, policy := range policies {
@@ -151,7 +161,7 @@ func PolicyFilefromName(filename string) (pol PolicyFile, found bool) {
 	return
 }
 
-func PolicyMakerfromFilename(filename string) (policies []LHPolicy, names []string, runs []Run, err error) {
+func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names []string, runs []Run, err error) {
 
 	doeliquidhandlingFile, found := PolicyFilefromName(filename)
 	if found == false {
@@ -163,9 +173,9 @@ func PolicyMakerfromFilename(filename string) (policies []LHPolicy, names []stri
 	return
 }
 
-func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename string, prepend string) (policies []LHPolicy, names []string, runs []Run, err error) {
+func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename string, prepend string) (policies []wtype.LHPolicy, names []string, runs []Run, err error) {
 
-	policyitemmap := MakePolicyItems()
+	policyitemmap := wtype.MakePolicyItems()
 	intfactors := make([]string, 0)
 
 	for key, val := range policyitemmap {
@@ -177,8 +187,14 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 
 	}
 	if DXORJMP == "DX" {
+		contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), dxdesignfilename))
 
-		runs, err = RunsFromDXDesign(filepath.Join(anthapath.Path(), dxdesignfilename), intfactors)
+		if err != nil {
+			return policies, names, runs, err
+		}
+
+		runs, err = RunsFromDXDesignContents(contents, intfactors)
+
 		if err != nil {
 			return policies, names, runs, err
 		}
@@ -188,7 +204,13 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 		factorcolumns := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
 		responsecolumns := []int{14, 15, 16, 17}
 
-		runs, err = RunsFromJMPDesign(filepath.Join(anthapath.Path(), dxdesignfilename), factorcolumns, responsecolumns, intfactors)
+		contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), dxdesignfilename))
+
+		if err != nil {
+			return policies, names, runs, err
+		}
+
+		runs, err = RunsFromJMPDesignContents(contents, factorcolumns, responsecolumns, intfactors)
 		if err != nil {
 			return policies, names, runs, err
 		}
@@ -199,7 +221,7 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 	return policies, names, runs, err
 }
 
-func PolicyMaker(basepolicy string, factors []DOEPair, nameprepend string, concatfactorlevelsinname bool) (policies []LHPolicy, names []string) {
+func PolicyMaker(basepolicy string, factors []DOEPair, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string) {
 
 	runs := AllCombinations(factors)
 
@@ -208,15 +230,15 @@ func PolicyMaker(basepolicy string, factors []DOEPair, nameprepend string, conca
 	return
 }
 
-func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, concatfactorlevelsinname bool) (policies []LHPolicy, names []string) {
+func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string) {
 
-	policyitemmap := MakePolicyItems()
+	policyitemmap := wtype.MakePolicyItems()
 
 	names = make([]string, 0)
-	policies = make([]LHPolicy, 0)
+	policies = make([]wtype.LHPolicy, 0)
 
 	policy := MakeDefaultPolicy()
-	policy["CAN_MULTI"] = false
+	policy.Set("CAN_MULTI", false)
 
 	/*base, _ := GetPolicyByName(basepolicy)
 
@@ -267,8 +289,8 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 	return
 }
 
-//func MakeLysatePolicy() LHPolicy {
-//        lysatepolicy := make(LHPolicy, 6)
+//func MakeLysatePolicy() wtype.LHPolicy {
+//        lysatepolicy := make(wtype.LHPolicy, 6)
 //        lysatepolicy["ASPSPEED"] = 1.0
 //        lysatepolicy["DSPSPEED"] = 1.0
 //        lysatepolicy["ASP_WAIT"] = 2.0
@@ -278,8 +300,8 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 //        lysatepolicy["CAN_MSA"]= false
 //        return lysatepolicy
 //}
-//func MakeProteinPolicy() LHPolicy {
-//        proteinpolicy := make(LHPolicy, 4)
+//func MakeProteinPolicy() wtype.LHPolicy {
+//        proteinpolicy := make(wtype.LHPolicy, 4)
 //        proteinpolicy["DSPREFERENCE"] = 2
 //        proteinpolicy["CAN_MULTI"] = true
 //        proteinpolicy["PRE_MIX"] = 3
@@ -287,10 +309,10 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 //        return proteinpolicy
 //}
 
-func GetPolicyByName(policyname string) (lhpolicy LHPolicy, policypresent bool) {
+func GetPolicyByName(policyname wtype.PolicyName) (lhpolicy wtype.LHPolicy, policypresent bool) {
 	policymap := MakePolicies()
 
-	lhpolicy, policypresent = policymap[policyname]
+	lhpolicy, policypresent = policymap[policyname.String()]
 	return
 }
 
@@ -345,202 +367,226 @@ TOUCHOFFSET,                         ,float64,          ,mm above wb to touch of
 
 */
 
-func MakePEGPolicy() LHPolicy {
-	policy := make(LHPolicy, 9)
-	policy["ASP_SPEED"] = 1.5
-	policy["DSP_SPEED"] = 1.5
+func MakePEGPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 10)
+	policy["ASPSPEED"] = 1.5
+	policy["DSPSPEED"] = 1.5
 	policy["ASP_WAIT"] = 2.0
 	policy["DSP_WAIT"] = 2.0
-	policy["ASPZOFFSET"] = 2.5
-	policy["DSPZOFFSET"] = 2.5
+	policy["ASPZOFFSET"] = 1.0
+	policy["DSPZOFFSET"] = 1.0
 	policy["POST_MIX"] = 3
-	policy["POST_MIX_Z"] = 3.5
+	policy["POST_MIX_Z"] = 1.0
 	policy["BLOWOUTVOLUME"] = 50.0
+	policy["POST_MIX_VOLUME"] = 190.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	policy["TOUCHOFF"] = true
-	policy["CAN_MULTI"] = false
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["RESET_OVERRIDE"] = true
+	policy["DESCRIPTION"] = "Customised for handling Poly Ethylene Glycol solutions. Similar to mixing required for viscous solutions. 3 post-mixes."
 	return policy
 }
 
-func MakeProtoplastPolicy() LHPolicy {
-	policy := make(LHPolicy, 7)
-	policy["ASP_SPEED"] = 0.15
-	policy["DSP_SPEED"] = 0.15
-	policy["ASPZOFFSET"] = 1.5
-	policy["DSPZOFFSET"] = 1.5
-	//policy["BLOWOUTVOLUME"] = 0.0
-	//policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	//policy["TOUCHOFF"] = true
+func MakeProtoplastPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 8)
+	policy["ASPSPEED"] = 0.5
+	policy["DSPSPEED"] = 0.5
+	policy["ASPZOFFSET"] = 1.0
+	policy["DSPZOFFSET"] = 1.0
+	policy["BLOWOUTVOLUME"] = 100.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
 	policy["TIP_REUSE_LIMIT"] = 5
-	policy["CAN_MULTI"] = false
+	policy["CAN_MULTI"] = true
+	policy["DESCRIPTION"] = "Customised for handling protoplast solutions. Pipettes very gently. No post-mix."
 	return policy
 }
 
-func MakePaintPolicy() LHPolicy {
-
-	policy := make(LHPolicy, 13)
+func MakePaintPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 14)
 	policy["DSPREFERENCE"] = 0
 	policy["DSPZOFFSET"] = 0.5
-	policy["ASP_SPEED"] = 1.5
-	policy["DSP_SPEED"] = 1.5
+	policy["ASPSPEED"] = 1.5
+	policy["DSPSPEED"] = 1.5
 	policy["ASP_WAIT"] = 1.0
 	policy["DSP_WAIT"] = 1.0
-	policy["PRE_MIX"] = 3
+	//policy["PRE_MIX"] = 3
 	policy["POST_MIX"] = 3
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = true
-	policy["CAN_MULTI"] = false
-
+	policy["CAN_MULTI"] = true
+	policy["DESCRIPTION"] = "Customised for handling paint solutions. Similar to mixing required for viscous solutions. 3 post-mixes."
 	return policy
 }
 
-func MakeDispenseAboveLiquidPolicy() LHPolicy {
-
-	policy := make(LHPolicy, 7)
+func MakeDispenseAboveLiquidPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 8)
 	policy["DSPREFERENCE"] = 1 // 1 indicates dispense at top of well
-	policy["ASP_SPEED"] = 3.0
-	policy["DSP_SPEED"] = 3.0
+	policy["ASPSPEED"] = 3.0
+	policy["DSPSPEED"] = 3.0
 	//policy["ASP_WAIT"] = 1.0
 	//policy["DSP_WAIT"] = 1.0
 	policy["BLOWOUTVOLUME"] = 50.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
 	policy["TOUCHOFF"] = false
 	policy["CAN_MULTI"] = false
-
+	policy["DESCRIPTION"] = "Dispense solution above the liquid to facilitate tip reuse but sacrifice pipetting accuracy at low volumes. No post-mix. No multi channel"
+	return policy
+}
+func MakeDispenseAboveLiquidMultiPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 8)
+	policy["DSPREFERENCE"] = 1 // 1 indicates dispense at top of well
+	policy["ASPSPEED"] = 3.0
+	policy["DSPSPEED"] = 3.0
+	//policy["ASP_WAIT"] = 1.0
+	//policy["DSP_WAIT"] = 1.0
+	policy["BLOWOUTVOLUME"] = 50.0
+	policy["BLOWOUTVOLUMEUNIT"] = "ul"
+	policy["TOUCHOFF"] = false
+	policy["CAN_MULTI"] = true
+	policy["DESCRIPTION"] = "Dispense solution above the liquid to facilitate tip reuse but sacrifice pipetting accuracy at low volumes. No post Mix. Allows multi-channel pipetting."
 	return policy
 }
 
-func MakeColonyPolicy() LHPolicy {
-
-	policy := make(LHPolicy, 10)
+func MakeColonyPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 12)
 	policy["DSPREFERENCE"] = 0
 	policy["DSPZOFFSET"] = 0.0
-	policy["ASP_SPEED"] = 3.0
-	policy["DSP_SPEED"] = 3.0
+	policy["ASPSPEED"] = 3.0
+	policy["DSPSPEED"] = 3.0
 	policy["ASP_WAIT"] = 1.0
-	policy["POST_MIX"] = 3
+	policy["POST_MIX"] = 1
 	policy["BLOWOUTVOLUME"] = 0.0
 	policy["BLOWOUTVOLUMEUNIT"] = "ul"
-	policy["TOUCHOFF"] = true
+	policy["TOUCHOFF"] = false
 	policy["CAN_MULTI"] = false
-
+	policy["RESET_OVERRIDE"] = true
+	policy["DESCRIPTION"] = "Designed for colony picking. 1 post-mix and no blowout (to avoid potential cross contamination), no multichannel."
 	return policy
 }
 
-func MakeWaterPolicy() LHPolicy {
-	waterpolicy := make(LHPolicy, 6)
+func MakeColonyMixPolicy() wtype.LHPolicy {
+	policy := MakeColonyPolicy()
+	policy["POST_MIX"] = 3
+	policy["DESCRIPTION"] = "Designed for colony picking but with added post-mixes. 3 post-mix and no blowout (to avoid potential cross contamination), no multichannel."
+	return policy
+}
+
+func MakeWaterPolicy() wtype.LHPolicy {
+	waterpolicy := make(wtype.LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
-	//waterpolicy["CAN_MULTI"] = true
-	waterpolicy["CAN_MULTI"] = false
 	waterpolicy["CAN_MSA"] = true
 	waterpolicy["CAN_SDD"] = true
+	waterpolicy["CAN_MULTI"] = false
 	waterpolicy["DSPZOFFSET"] = 1.0
 	waterpolicy["BLOWOUTVOLUME"] = 50.0
+	waterpolicy["DESCRIPTION"] = "Default policy designed for pipetting water. Includes a blowout step for added accuracy and no post-mixing, no multi channel."
 	return waterpolicy
 }
-func MakeFoamyPolicy() LHPolicy {
-	foamypolicy := make(LHPolicy, 5)
-	foamypolicy["DSPREFERENCE"] = 0
-	foamypolicy["TOUCHOFF"] = true
-	foamypolicy["CAN_MULTI"] = false
-	foamypolicy["CAN_MSA"] = false
-	foamypolicy["CAN_SDD"] = true
-	return foamypolicy
-}
-func MakeCulturePolicy() LHPolicy {
-	culturepolicy := make(LHPolicy, 10)
-	culturepolicy["PRE_MIX"] = 2
-	culturepolicy["ASPSPEED"] = 2.0
-	culturepolicy["DSPSPEED"] = 2.0
-	culturepolicy["CAN_MULTI"] = false
-	culturepolicy["CAN_MSA"] = false
-	culturepolicy["CAN_SDD"] = false
-	culturepolicy["DSPREFERENCE"] = 0
-	culturepolicy["DSPZOFFSET"] = 0.5
-	culturepolicy["TIP_REUSE_LIMIT"] = 0
-	culturepolicy["NO_AIR_DISPENSE"] = true
-	culturepolicy["BLOWOUTVOLUME"] = 0.0
-	culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
-	culturepolicy["TOUCHOFF"] = false
 
+func MakeMultiWaterPolicy() wtype.LHPolicy {
+	pol := MakeWaterPolicy()
+	pol["CAN_MULTI"] = true
+	pol["DESCRIPTION"] = "Default policy designed for pipetting water but permitting multi-channel use. Includes a blowout step for added accuracy and no post-mixing."
+	return pol
+}
+
+func MakeCulturePolicy() wtype.LHPolicy {
+	culturepolicy := make(wtype.LHPolicy, 10)
+	culturepolicy.Set("PRE_MIX", 2)
+	culturepolicy.Set("PRE_MIX_VOLUME", 19.0)
+	culturepolicy.Set("PRE_MIX_RATE", 3.74)
+	culturepolicy.Set("ASPSPEED", 2.0)
+	culturepolicy.Set("DSPSPEED", 2.0)
+	culturepolicy.Set("CAN_MULTI", true)
+	culturepolicy.Set("CAN_MSA", false)
+	culturepolicy.Set("CAN_SDD", false)
+	culturepolicy.Set("DSPREFERENCE", 0)
+	culturepolicy.Set("DSPZOFFSET", 0.5)
+	culturepolicy.Set("TIP_REUSE_LIMIT", 0)
+	culturepolicy.Set("NO_AIR_DISPENSE", true)
+	culturepolicy.Set("BLOWOUTVOLUME", 0.0)
+	culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul")
+	culturepolicy.Set("TOUCHOFF", false)
+	culturepolicy.Set("DESCRIPTION", "Designed for cell cultures. Tips will not be reused to minimise any risk of cross contamination and 2 pre-mixes will be performed prior to aspirating.")
 	return culturepolicy
 }
 
-func MakePlateOutPolicy() LHPolicy {
-	culturepolicy := make(LHPolicy, 17)
-	culturepolicy["PRE_MIX"] = 2
-	culturepolicy["PRE_MIX_VOLUME"] = 50
-	culturepolicy["PRE_MIX_Z"] = 2.0
-	culturepolicy["PRE_MIX_RATE"] = 4.0
-	culturepolicy["ASPSPEED"] = 4.0
-	culturepolicy["ASPZOFFSET"] = 2.0
-	culturepolicy["DSPSPEED"] = 4.0
-	culturepolicy["CAN_MULTI"] = false
-	culturepolicy["CAN_MSA"] = false
-	culturepolicy["CAN_SDD"] = false
-	culturepolicy["DSPREFERENCE"] = 0
-	culturepolicy["DSPZOFFSET"] = 0.5
-	culturepolicy["TIP_REUSE_LIMIT"] = 0
+func MakePlateOutPolicy() wtype.LHPolicy {
+	culturepolicy := make(wtype.LHPolicy, 17)
+	culturepolicy["CAN_MULTI"] = true
+	culturepolicy["ASP_WAIT"] = 1.0
+	culturepolicy["DSP_WAIT"] = 1.0
+	culturepolicy["DSPZOFFSET"] = 0.0
+	culturepolicy["TIP_REUSE_LIMIT"] = 7
 	culturepolicy["NO_AIR_DISPENSE"] = true
-	culturepolicy["BLOWOUTVOLUME"] = 0.0
-	culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	culturepolicy["TOUCHOFF"] = false
-
+	culturepolicy["RESET_OVERRIDE"] = true
+	culturepolicy["DESCRIPTION"] = "Designed for plating out cultures onto agar plates. Dispense will be performed at the well bottom and no blowout will be performed (to minimise risk of cross contamination)"
 	return culturepolicy
 }
 
-func MakeCultureReusePolicy() LHPolicy {
-	culturepolicy := make(LHPolicy, 10)
-	culturepolicy["PRE_MIX"] = 2
-	culturepolicy["ASPSPEED"] = 2.0
-	culturepolicy["DSPSPEED"] = 2.0
-	//culturepolicy["CAN_MULTI"] = true
-	culturepolicy["CAN_MULTI"] = false
-	culturepolicy["CAN_MSA"] = true
-	culturepolicy["CAN_SDD"] = true
-	culturepolicy["DSPREFERENCE"] = 0
-	culturepolicy["DSPZOFFSET"] = 0.5
-	culturepolicy["NO_AIR_DISPENSE"] = true
-	culturepolicy["BLOWOUTVOLUME"] = 0.0
-	culturepolicy["BLOWOUTVOLUMEUNIT"] = "ul"
-	culturepolicy["TOUCHOFF"] = false
-
+func MakeCultureReusePolicy() wtype.LHPolicy {
+	culturepolicy := make(wtype.LHPolicy, 10)
+	culturepolicy.Set("PRE_MIX", 2)
+	culturepolicy.Set("PRE_MIX_VOLUME", 19.0)
+	culturepolicy.Set("PRE_MIX_RATE", 3.74)
+	culturepolicy.Set("ASPSPEED", 2.0)
+	culturepolicy.Set("DSPSPEED", 2.0)
+	culturepolicy.Set("CAN_MULTI", true)
+	culturepolicy.Set("CAN_MSA", true)
+	culturepolicy.Set("CAN_SDD", true)
+	culturepolicy.Set("DSPREFERENCE", 0)
+	culturepolicy.Set("DSPZOFFSET", 0.5)
+	culturepolicy.Set("NO_AIR_DISPENSE", true)
+	culturepolicy.Set("BLOWOUTVOLUME", 0.0)
+	culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul")
+	culturepolicy.Set("TOUCHOFF", false)
+	culturepolicy.Set("DESCRIPTION", "Designed for cell cultures but permitting tip reuse when handling the same culture. 2 pre-mixes will be performed prior to aspirating.")
 	return culturepolicy
 }
 
-func MakeGlycerolPolicy() LHPolicy {
-	glycerolpolicy := make(LHPolicy, 6)
-	glycerolpolicy["ASP_SPEED"] = 1.5
-	glycerolpolicy["DSP_SPEED"] = 1.5
+func MakeGlycerolPolicy() wtype.LHPolicy {
+	glycerolpolicy := make(wtype.LHPolicy, 9)
+	glycerolpolicy["ASPSPEED"] = 1.5
+	glycerolpolicy["DSPSPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["TIP_REUSE_LIMIT"] = 0
-	glycerolpolicy["CAN_MULTI"] = false
+	glycerolpolicy["CAN_MULTI"] = true
+	glycerolpolicy["POST_MIX"] = 3
+	glycerolpolicy["POST_MIX_VOLUME"] = 20.0
+	glycerolpolicy["POST_MIX_RATE"] = 3.74 // Should this be the same rate as the asp and dsp speeds?
+	glycerolpolicy["DESCRIPTION"] = "Designed for viscous samples, in particular enzymes stored in glycerol. 3 gentle post-mixes of 20ul will be performed. Tips will not be reused in order to increase accuracy."
 	return glycerolpolicy
 }
 
-func MakeViscousPolicy() LHPolicy {
-	glycerolpolicy := make(LHPolicy, 4)
-	glycerolpolicy["ASP_SPEED"] = 1.5
-	glycerolpolicy["DSP_SPEED"] = 1.5
+func MakeViscousPolicy() wtype.LHPolicy {
+	glycerolpolicy := make(wtype.LHPolicy, 7)
+	glycerolpolicy["ASPSPEED"] = 1.5
+	glycerolpolicy["DSPSPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
-	//glycerolpolicy["TIP_REUSE_LIMIT"] = 0
+	glycerolpolicy["CAN_MULTI"] = true
+	glycerolpolicy["POST_MIX"] = 3
+	glycerolpolicy["POST_MIX_RATE"] = 1.5
+	glycerolpolicy["DESCRIPTION"] = "Designed for viscous samples. 3 post-mixes of the volume of the sample being transferred will be performed. No tip reuse limit."
 	return glycerolpolicy
 }
-func MakeSolventPolicy() LHPolicy {
-	solventpolicy := make(LHPolicy, 5)
-	solventpolicy["PRE_MIX"] = 3
-	solventpolicy["DSPREFERENCE"] = 0
-	solventpolicy["DSPZOFFSET"] = 0.5
-	solventpolicy["NO_AIR_DISPENSE"] = true
-	solventpolicy["CAN_MULTI"] = false
+func MakeSolventPolicy() wtype.LHPolicy {
+	solventpolicy := make(wtype.LHPolicy, 5)
+	solventpolicy.Set("PRE_MIX", 3)
+	solventpolicy.Set("DSPREFERENCE", 0)
+	solventpolicy.Set("DSPZOFFSET", 0.5)
+	solventpolicy.Set("NO_AIR_DISPENSE", true)
+	solventpolicy.Set("CAN_MULTI", true)
+	solventpolicy.Set("DESCRIPTION", "Designed for handling solvents. No post-mixes are performed")
 	return solventpolicy
 }
 
-func MakeDNAPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 10)
+func MakeDNAPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 12)
 	dnapolicy["ASPSPEED"] = 2.0
 	dnapolicy["DSPSPEED"] = 2.0
 	dnapolicy["CAN_MULTI"] = false
@@ -550,227 +596,320 @@ func MakeDNAPolicy() LHPolicy {
 	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
 	dnapolicy["NO_AIR_DISPENSE"] = true
+	dnapolicy["RESET_OVERRIDE"] = true
+	dnapolicy["TOUCHOFF"] = false
+	dnapolicy["DESCRIPTION"] = "Designed for DNA samples. No tip reuse is permitted, no blowout and no post-mixing."
 	return dnapolicy
 }
 
-func MakeDNAMixPolicy() LHPolicy {
+func MakeDNAMixPolicy() wtype.LHPolicy {
 	dnapolicy := MakeDNAPolicy()
 	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX"] = 5
 	dnapolicy["POST_MIX_Z"] = 0.5
 	dnapolicy["POST_MIX_RATE"] = 3.0
+	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["DESCRIPTION"] = "Designed for DNA samples but with 5 post-mixes of 10ul. No tip reuse is permitted, no blowout, no multichannel."
 	return dnapolicy
 }
 
-func MakeDetergentPolicy() LHPolicy {
-	detergentpolicy := make(LHPolicy, 9)
+func MakeDNAMixMultiPolicy() wtype.LHPolicy {
+	dnapolicy := MakeDNAPolicy()
+	dnapolicy["POST_MIX_VOLUME"] = 10.0
+	dnapolicy["POST_MIX"] = 5
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 3.0
+	dnapolicy["CAN_MULTI"] = true
+	dnapolicy["DESCRIPTION"] = "Designed for DNA samples but with 5 post-mixes of 10ul. No tip reuse is permitted, no blowout. Allows multi-channel pipetting."
+	return dnapolicy
+}
+
+func MakeDNACELLSMixPolicy() wtype.LHPolicy {
+	dnapolicy := MakeDNAPolicy()
+	dnapolicy["POST_MIX_VOLUME"] = 20.0
+	dnapolicy["POST_MIX"] = 2
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 1.0
+	dnapolicy["DESCRIPTION"] = "Designed for mixing DNA with cells. 2 gentle post-mixes are performed. No tip reuse is permitted, no blowout."
+	return dnapolicy
+}
+func MakeDNACELLSMixMultiPolicy() wtype.LHPolicy {
+	dnapolicy := MakeDNAPolicy()
+	dnapolicy["POST_MIX_VOLUME"] = 20.0
+	dnapolicy["POST_MIX"] = 2
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 1.0
+	dnapolicy["CAN_MULTI"] = true
+	dnapolicy["DESCRIPTION"] = "Designed for mixing DNA with cells. 2 gentle post-mixes are performed. No tip reuse is permitted, no blowout. Allows multi-channel pipetting."
+	return dnapolicy
+}
+
+func MakeDetergentPolicy() wtype.LHPolicy {
+	detergentpolicy := make(wtype.LHPolicy, 9)
 	//        detergentpolicy["POST_MIX"] = 3
 	detergentpolicy["ASPSPEED"] = 1.0
 	detergentpolicy["DSPSPEED"] = 1.0
-	detergentpolicy["CAN_MULTI"] = false
 	detergentpolicy["CAN_MSA"] = false
 	detergentpolicy["CAN_SDD"] = false
 	detergentpolicy["DSPREFERENCE"] = 0
 	detergentpolicy["DSPZOFFSET"] = 0.5
 	detergentpolicy["TIP_REUSE_LIMIT"] = 8
 	detergentpolicy["NO_AIR_DISPENSE"] = true
+	detergentpolicy["DESCRIPTION"] = "Designed for solutions containing detergents. Gentle aspiration and dispense and a tip reuse limit of 8 to reduce problem of foam build up inside the tips."
 	return detergentpolicy
 }
-func MakeProteinPolicy() LHPolicy {
-	proteinpolicy := make(LHPolicy, 10)
+func MakeProteinPolicy() wtype.LHPolicy {
+	proteinpolicy := make(wtype.LHPolicy, 12)
 	proteinpolicy["POST_MIX"] = 5
 	proteinpolicy["POST_MIX_VOLUME"] = 50.0
 	proteinpolicy["ASPSPEED"] = 2.0
 	proteinpolicy["DSPSPEED"] = 2.0
-	proteinpolicy["CAN_MULTI"] = false
 	proteinpolicy["CAN_MSA"] = false
 	proteinpolicy["CAN_SDD"] = false
 	proteinpolicy["DSPREFERENCE"] = 0
 	proteinpolicy["DSPZOFFSET"] = 0.5
 	proteinpolicy["TIP_REUSE_LIMIT"] = 0
 	proteinpolicy["NO_AIR_DISPENSE"] = true
+	proteinpolicy["DESCRIPTION"] = "Designed for protein solutions. Slightly gentler aspiration and dispense and a tip reuse limit of 0 to prevent risk of cross contamination. 5 post-mixes of 50ul will be performed."
 	return proteinpolicy
 }
-func MakeLoadPolicy() LHPolicy {
+func MakeLoadPolicy() wtype.LHPolicy {
 
-	loadpolicy := make(LHPolicy)
+	loadpolicy := make(wtype.LHPolicy, 14)
 	loadpolicy["ASPSPEED"] = 1.0
 	loadpolicy["DSPSPEED"] = 0.1
-	loadpolicy["CAN_MULTI"] = false
 	loadpolicy["CAN_MSA"] = false
 	loadpolicy["CAN_SDD"] = false
 	loadpolicy["TOUCHOFF"] = false
 	loadpolicy["TIP_REUSE_LIMIT"] = 0
 	loadpolicy["NO_AIR_DISPENSE"] = true
 	loadpolicy["TOUCHOFF"] = false
+	loadpolicy["BLOWOUTREFERENCE"] = 1
+	loadpolicy["BLOWOUTOFFSET"] = 0.0
+	loadpolicy["BLOWOUTVOLUME"] = 0.0
+	loadpolicy["BLOWOUTVOLUMEUNIT"] = "ul"
+	loadpolicy["DESCRIPTION"] = "Designed for loading a sample onto an agarose gel. Very slow dispense rate, no tip reuse and no blowout."
 	return loadpolicy
 }
 
-func MakeLoadWaterPolicy() LHPolicy {
-
-	loadpolicy := make(LHPolicy)
+func MakeLoadWaterPolicy() wtype.LHPolicy {
+	loadpolicy := make(wtype.LHPolicy)
 	loadpolicy["ASPSPEED"] = 1.0
 	loadpolicy["DSPSPEED"] = 0.1
-	loadpolicy["CAN_MULTI"] = false
 	loadpolicy["CAN_MSA"] = false
-	loadpolicy["CAN_SDD"] = false
+	//loadpolicy["CAN_SDD"] = false
 	loadpolicy["TOUCHOFF"] = false
 	loadpolicy["NO_AIR_DISPENSE"] = true
 	loadpolicy["TOUCHOFF"] = false
 	loadpolicy["TIP_REUSE_LIMIT"] = 100
+	loadpolicy["BLOWOUTREFERENCE"] = 1
+	loadpolicy["BLOWOUTOFFSET"] = 0.0
+	loadpolicy["BLOWOUTVOLUME"] = 0.0
+	loadpolicy["BLOWOUTVOLUMEUNIT"] = "ul"
+	loadpolicy["DESCRIPTION"] = "Designed for loading water into agarose gel wells so permits tip reuse. Very slow dispense rate and no blowout."
 	return loadpolicy
 }
 
-func MakeLoadlowPolicy() LHPolicy {
-
-	loadpolicy := make(LHPolicy)
-	loadpolicy["ASPSPEED"] = 1.0
-	loadpolicy["DSPSPEED"] = 1.0
-	loadpolicy["CAN_MULTI"] = false
-	loadpolicy["CAN_MSA"] = false
-	loadpolicy["CAN_SDD"] = false
-	loadpolicy["TOUCHOFF"] = false
-	loadpolicy["TIP_REUSE_LIMIT"] = 0
-	loadpolicy["DSPZOFFSET"] = 0.5
-	loadpolicy["NO_AIR_DISPENSE"] = true
-	loadpolicy["TOUCHOFF"] = false
-	return loadpolicy
-}
-
-func MakeNeedToMixPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 15)
+func MakeNeedToMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 16)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
-	dnapolicy["PRE_MIX_VOLUME"] = 10
+	dnapolicy["PRE_MIX_VOLUME"] = 20.0
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
 	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
 	dnapolicy["NO_AIR_DISPENSE"] = true
+	dnapolicy["DESCRIPTION"] = "3 pre-mixes and 3 post-mixes of the sample being transferred.  No tip reuse permitted."
 	return dnapolicy
 }
 
-func PreMixPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 12)
+func PreMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 12)
 	//dnapolicy["POST_MIX"] = 3
-	//dnapolicy["POST_MIX_VOLUME"] = 10.0
+	//dnapolicy[""POST_MIX_VOLUME"] = 10.0
 	//dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
-	dnapolicy["PRE_MIX_VOLUME"] = 10.0
+	dnapolicy["PRE_MIX_VOLUME"] = 19.0
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
 	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
 	dnapolicy["NO_AIR_DISPENSE"] = true
+	dnapolicy["DESCRIPTION"] = "3 pre-mixes of the sample being transferred.  No tip reuse permitted."
 	return dnapolicy
 
 }
 
-func PostMixPolicy() LHPolicy {
-	dnapolicy := make(LHPolicy, 12)
+func PostMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_VOLUME"] = 10.0
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	//dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = false
+	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
 	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
 	dnapolicy["NO_AIR_DISPENSE"] = true
+	dnapolicy["DESCRIPTION"] = "3 post-mixes of the sample being transferred.  No tip reuse permitted."
+	return dnapolicy
+}
+
+// 3 post mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well.
+// No tip reuse permitted.
+// Rules added to adjust post mix volume based on volume of the destination well.
+// volume now capped at max for tip type (MIX_VOLUME_OVERRIDE_TIP_MAX)
+func SmartMixPolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 12)
+	policy["POST_MIX"] = 3
+	policy["POST_MIX_RATE"] = 3.74
+	policy["ASPSPEED"] = 3.74
+	policy["DSPSPEED"] = 3.74
+	policy["CAN_MULTI"] = true
+	policy["CAN_MSA"] = false
+	policy["CAN_SDD"] = false
+	policy["DSPREFERENCE"] = 0
+	policy["DSPZOFFSET"] = 0.5
+	policy["TIP_REUSE_LIMIT"] = 0
+	policy["NO_AIR_DISPENSE"] = true
+	policy["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
+	policy["MIX_VOLUME_OVERRIDE_TIP_MAX"] = true
+	return policy
+}
+
+func MegaMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 12)
+	dnapolicy["POST_MIX"] = 10
+	dnapolicy["POST_MIX_RATE"] = 3.74
+	dnapolicy["ASPSPEED"] = 3.74
+	dnapolicy["DSPSPEED"] = 3.74
+	dnapolicy["CAN_MULTI"] = true
+	dnapolicy["CAN_MSA"] = false
+	dnapolicy["CAN_SDD"] = false
+	dnapolicy["DSPREFERENCE"] = 0
+	dnapolicy["DSPZOFFSET"] = 0.5
+	dnapolicy["TIP_REUSE_LIMIT"] = 0
+	dnapolicy["NO_AIR_DISPENSE"] = true
+	dnapolicy["DESCRIPTION"] = "10 post-mixes of the sample being transferred. No tip reuse permitted."
 	return dnapolicy
 
 }
 
-func MakeDefaultPolicy() LHPolicy {
-	defaultpolicy := make(LHPolicy, 27)
-	// don't set this here -- use defaultpipette speed or there will be inconsistencies
-	// defaultpolicy["ASP_SPEED"] = 3.0
-	// defaultpolicy["DSP_SPEED"] = 3.0
+func MakeDefaultPolicy() wtype.LHPolicy {
+	defaultpolicy := make(wtype.LHPolicy, 29)
+	defaultpolicy["MIX_VOLUME_OVERRIDE_TIP_MAX"] = false
+	defaultpolicy["OFFSETZADJUST"] = 0.0
 	defaultpolicy["TOUCHOFF"] = false
 	defaultpolicy["TOUCHOFFSET"] = 0.5
 	defaultpolicy["ASPREFERENCE"] = 0
 	defaultpolicy["ASPZOFFSET"] = 0.5
 	defaultpolicy["DSPREFERENCE"] = 0
 	defaultpolicy["DSPZOFFSET"] = 0.5
-	defaultpolicy["CAN_MULTI"] = false
 	defaultpolicy["CAN_MSA"] = false
 	defaultpolicy["CAN_SDD"] = true
+	defaultpolicy["CAN_MULTI"] = true
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
-	defaultpolicy["BLOWOUTOFFSET"] = -5.0
 	defaultpolicy["BLOWOUTVOLUME"] = 50.0
+	defaultpolicy["BLOWOUTOFFSET"] = 0.0 //-5.0
 	defaultpolicy["BLOWOUTVOLUMEUNIT"] = "ul"
 	defaultpolicy["PTZREFERENCE"] = 1
 	defaultpolicy["PTZOFFSET"] = -0.5
-	defaultpolicy["NO_AIR_DISPENSE"] = true
+	defaultpolicy["NO_AIR_DISPENSE"] = true // SERIOUSLY??
 	defaultpolicy["DEFAULTPIPETTESPEED"] = 3.0
 	defaultpolicy["MANUALPTZ"] = false
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
-	// added to diagnose bubble cause
-	defaultpolicy["ASPZOFFSET"] = 0.5
-	defaultpolicy["DSPZOFFSET"] = 0.5
 	defaultpolicy["POST_MIX_Z"] = 0.5
 	defaultpolicy["PRE_MIX_Z"] = 0.5
-	//defaultpolicy["ASP_WAIT"] = 1.0
-	//defaultpolicy["DSP_WAIT"] = 1.0
-	defaultpolicy["PRE_MIX_VOLUME"] = 10.0
-	defaultpolicy["POST_MIX_VOLUME"] = 10.0
+	defaultpolicy["LLFABOVESURFACE"] = 3.0 //distance above liquid level for dispensing with LiqudLevelFollowing
+	defaultpolicy["LLFBELOWSURFACE"] = 3.0 //distance below liquid level for aspirating with LLF
+	defaultpolicy["DESCRIPTION"] = "Default mix Policy. Blowout performed, no touch off, no mixing, tip reuse permitted for the same solution."
 
 	return defaultpolicy
 }
 
-func MakeJBPolicy() LHPolicy {
-	jbp := make(LHPolicy, 1)
-	jbp["JUSTBLOWOUT"] = true
-	//jbp["TOUCHOFF"] = true
+func MakeJBPolicy() wtype.LHPolicy {
+	jbp := make(wtype.LHPolicy, 1)
+	jbp.Set("JUSTBLOWOUT", true)
+	jbp.Set("TOUCHOFF", true)
 	return jbp
 }
 
-func MakeTOPolicy() LHPolicy {
-	top := make(LHPolicy, 1)
-	top["TOUCHOFF"] = true
+func MakeTOPolicy() wtype.LHPolicy {
+	top := make(wtype.LHPolicy, 1)
+	top.Set("TOUCHOFF", true)
 	return top
 }
 
-func MakeLVExtraPolicy() LHPolicy {
-	lvep := make(LHPolicy, 2)
-	lvep["EXTRA_ASP_VOLUME"] = wunit.NewVolume(0.5, "ul")
-	lvep["EXTRA_DISP_VOLUME"] = wunit.NewVolume(0.5, "ul")
+func MakeLVExtraPolicy() wtype.LHPolicy {
+	lvep := make(wtype.LHPolicy, 2)
+	lvep.Set("EXTRA_ASP_VOLUME", wunit.NewVolume(0.5, "ul"))
+	lvep.Set("EXTRA_DISP_VOLUME", wunit.NewVolume(0.5, "ul"))
 	return lvep
 }
 
-func MakeHVOffsetPolicy() LHPolicy {
-	lvop := make(LHPolicy, 6)
-	lvop["ASPZOFFSET"] = 1.00
-	lvop["DSPZOFFSET"] = 1.00
-	lvop["POST_MIX_Z"] = 1.00
-	lvop["PRE_MIX_Z"] = 1.00
-	lvop["DSPREFERENCE"] = 0
-	lvop["ASPREFERENCE"] = 0
+func MakeLVDNAMixPolicy() wtype.LHPolicy {
+	dnapolicy := make(wtype.LHPolicy, 4)
+	dnapolicy["RESET_OVERRIDE"] = true
+	dnapolicy["POST_MIX_VOLUME"] = 5.0
+	dnapolicy["POST_MIX"] = 1
+	dnapolicy["POST_MIX_Z"] = 0.5
+	dnapolicy["POST_MIX_RATE"] = 3.0
+	dnapolicy["TOUCHOFF"] = false
+	return dnapolicy
+}
+
+func TurnOffBlowoutPolicy() wtype.LHPolicy {
+	loadpolicy := make(wtype.LHPolicy, 1)
+	loadpolicy["RESET_OVERRIDE"] = true
+	return loadpolicy
+}
+
+func MakeHVOffsetPolicy() wtype.LHPolicy {
+	lvop := make(wtype.LHPolicy, 6)
+	lvop["OFFSETZADJUST"] = 0.75
+	lvop["POST_MIX_RATE"] = 37
+	lvop["PRE_MIX_RATE"] = 37
+	lvop["ASPSPEED"] = 37
+	lvop["DSPSPEED"] = 37
 	return lvop
 }
 
-func MakeHVFlowRatePolicy() LHPolicy {
-	policy := make(LHPolicy, 4)
+func AdjustPostMixVolume(mixToVol wunit.Volume) wtype.LHPolicy {
+	vol := mixToVol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+	policy := make(wtype.LHPolicy, 1)
+	policy["POST_MIX_VOLUME"] = vol
+	return policy
+}
+
+func AdjustPreMixVolume(mixToVol wunit.Volume) wtype.LHPolicy {
+	vol := mixToVol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+	policy := make(wtype.LHPolicy, 1)
+	policy["PRE_MIX_VOLUME"] = vol
+	return policy
+}
+
+// deprecated; see above
+func MakeHVFlowRatePolicy() wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 4)
 	policy["POST_MIX_RATE"] = 37
 	policy["PRE_MIX_RATE"] = 37
 	policy["ASPSPEED"] = 37
@@ -778,18 +917,106 @@ func MakeHVFlowRatePolicy() LHPolicy {
 	return policy
 }
 
-func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
+func MakeCarbonSourcePolicy() wtype.LHPolicy {
+	cspolicy := make(wtype.LHPolicy, 1)
+	cspolicy["DSPREFERENCE"] = 1
+	cspolicy["DESCRIPTION"] = "Custom policy for carbon source which dispenses above destination solution."
+	return cspolicy
+}
 
+func MakeNitrogenSourcePolicy() wtype.LHPolicy {
+	nspolicy := make(wtype.LHPolicy, 1)
+	nspolicy["DSPREFERENCE"] = 1
+	nspolicy["DESCRIPTION"] = "Custom policy for nitrogen source which dispenses above destination solution."
+	return nspolicy
+}
+
+// newConditionalRule makes a new LHPolicyRule with conditions to apply to an LHPolicy.
+//
+// An error is returned if an invalid Condition Class or SetPoint is specified.
+// The valid Setpoints can be found in wtype.MakeInstructionParameters()
+func newConditionalRule(ruleName string, conditions ...condition) (wtype.LHPolicyRule, error) {
+	var errs []string
+
+	rule := wtype.NewLHPolicyRule(ruleName)
+	for _, condition := range conditions {
+		err := condition.AddToRule(rule)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return rule, fmt.Errorf(strings.Join(errs, ".\n"))
+	}
+	return rule, nil
+}
+
+type condition interface {
+	AddToRule(wtype.LHPolicyRule) error
+}
+
+type categoricCondition struct {
+	Class    string
+	SetPoint string
+}
+
+func (c categoricCondition) AddToRule(rule wtype.LHPolicyRule) error {
+	return rule.AddCategoryConditionOn(c.Class, c.SetPoint)
+}
+
+type numericCondition struct {
+	Class string
+	Range conditionRange
+}
+
+type conditionRange struct {
+	Lower float64
+	Upper float64
+}
+
+func (c numericCondition) AddToRule(rule wtype.LHPolicyRule) error {
+	return rule.AddNumericConditionOn(c.Class, c.Range.Lower, c.Range.Upper)
+}
+
+// Conditions to apply to LHpolicyRules based on liquid policy used
+var (
+	OnSmartMix  = categoricCondition{"LIQUIDCLASS", "SmartMix"}
+	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
+	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
+	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
+)
+
+// Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
+var (
+	IntoLessThan20ul          = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{Lower: 0.0, Upper: 20.0}}
+	IntoBetween20ulAnd50ul    = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{20.0, 50.0}}
+	IntoBetween50ulAnd100ul   = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{50.0, 100.0}}
+	IntoBetween100ulAnd200ul  = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{100.0, 200.0}}
+	IntoBetween200ulAnd1000ul = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{200.0, 1000.0}}
+)
+
+// Conditions to apply to LHpolicyRules based on volume of liquid being transferred
+var (
+	LessThan20ul = numericCondition{Class: "VOLUME", Range: conditionRange{0.0, 20.0}}
+)
+
+// Conditions to apply to LHpolicyRules based on volume of liquid in source well from which a sample is taken
+var (
+	FromBetween100ulAnd200ul  = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{100.0, 200.0}}
+	FromBetween200ulAnd1000ul = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{200.0, 1000.0}}
+)
+
+func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	// make some policies
 
 	policies := MakePolicies()
 
 	// now make rules
 
-	lhpr := NewLHPolicyRuleSet()
+	lhpr := wtype.NewLHPolicyRuleSet()
 
 	for name, policy := range policies {
-		rule := NewLHPolicyRule(name)
+		rule := wtype.NewLHPolicyRule(name)
 		err := rule.AddCategoryConditionOn("LIQUIDCLASS", name)
 
 		if err != nil {
@@ -798,73 +1025,172 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 		lhpr.AddRule(rule, policy)
 	}
 
-	// add a specific case for transfers of water to dry wells
-	// nb for this to really work I think we still need to make sure well volumes
-	// are being properly kept in sync
-
-	/* hide this for now as a suspect for causing bubbles
-	rule := NewLHPolicyRule("BlowOutToEmptyWells")
-	err := rule.AddNumericConditionOn("WELLTOVOLUME", 0.0, 1.0)
+	adjustPostMix, err := newConditionalRule("mixInto20ul", OnSmartMix, IntoBetween20ulAnd50ul)
 
 	if err != nil {
-		return nil, err
+		return lhpr, err
 	}
 
-	err = rule.AddCategoryConditionOn("LIQUIDCLASS", "water")
+	adjustVol20 := AdjustPostMixVolume(wunit.NewVolume(20, "ul"))
+	adjustVol50 := AdjustPostMixVolume(wunit.NewVolume(50, "ul"))
+	adjustVol100 := AdjustPostMixVolume(wunit.NewVolume(100, "ul"))
+	adjustVol200 := AdjustPostMixVolume(wunit.NewVolume(200, "ul"))
+
+	lhpr.AddRule(adjustPostMix, adjustVol20)
+
+	adjustPostMix50, err := newConditionalRule("mixInto50ul", OnSmartMix, IntoBetween50ulAnd100ul)
+
 	if err != nil {
-		return nil, err
+		return lhpr, err
 	}
-	pol := MakeJBPolicy()
-	lhpr.AddRule(rule, pol)
-	*/
 
-	// a further refinement: for low volumes we need to add extra volume
-	// for aspirate and dispense
+	lhpr.AddRule(adjustPostMix50, adjustVol50)
 
-	/*
-		rule = NewLHPolicyRule("ExtraVolumeForLV")
-		rule.AddNumericConditionOn("VOLUME", 0.0, 20.0)
-		pol = MakeLVExtraPolicy()
-		lhpr.AddRule(rule, pol)
-	*/
+	adjustPostMix100, err := newConditionalRule("mixInto100ul", OnSmartMix, IntoBetween100ulAnd200ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPostMix100, adjustVol100)
+
+	adjustPostMix200, err := newConditionalRule("mixInto200ul", OnSmartMix, IntoBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPostMix200, adjustVol200)
+
+	// adjust original PostMix and NeedToMix policy to only set post mix volume if low volume.
+	postmix20ul, err := newConditionalRule("PostMix20ul", OnPostMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(postmix20ul, adjustVol20)
+
+	needToMix20ul, err := newConditionalRule("NeedToMix20ul", OnNeedToMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(needToMix20ul, adjustVol20)
+
+	// now pre mix values for PreMix and NeedToMix
+	adjustPreMixVol20 := AdjustPreMixVolume(wunit.NewVolume(20, "ul"))
+	adjustPreMixVol100 := AdjustPreMixVolume(wunit.NewVolume(100, "ul"))
+	adjustPreMixVol200 := AdjustPreMixVolume(wunit.NewVolume(200, "ul"))
+
+	// PreMix
+	adjustPreMix, err := newConditionalRule("preMix20ul", OnPreMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPreMix, adjustPreMixVol20)
+
+	adjustPreMix100ul, err := newConditionalRule("PreMixFrom100ul", OnPreMix, FromBetween100ulAnd200ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPreMix100ul, adjustPreMixVol100)
+
+	adjustPreMix200ul, err := newConditionalRule("PreMixFrom200ul", OnPreMix, FromBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustPreMix200ul, adjustPreMixVol200)
+
+	// NeedToMix
+	adjustNeedToMix, err := newConditionalRule("NeedToPreMix20ul", OnNeedToMix, LessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol20)
+
+	adjustNeedToMix100ul, err := newConditionalRule("NeedToPreMixFrom100ul", OnNeedToMix, FromBetween100ulAnd200ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustNeedToMix100ul, adjustPreMixVol100)
+
+	adjustNeedToMix200ul, err := newConditionalRule("NeedToPreMixFrom200ul", OnNeedToMix, FromBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustNeedToMix200ul, adjustPreMixVol200)
 
 	// hack to fix plate type problems
-	rule := NewLHPolicyRule("HVOffsetFix")
-	rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-	//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
+	// this really should be removed asap
+	rule := wtype.NewLHPolicyRule("HVOffsetFix")
+	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+
+	rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
+	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+	// don't get overridden
+	rule.Priority = 100
 	pol := MakeHVOffsetPolicy()
 	lhpr.AddRule(rule, pol)
 
-	// hack to fix plate type problems
-	rule = NewLHPolicyRule("HVFlowRate")
-	rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-	//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
-	pol = MakeHVFlowRatePolicy()
-	lhpr.AddRule(rule, pol)
-
-	/*rule = NewLHPolicyRule("LVOffsetFix2")
-	rule.AddNumericConditionOn("VOLUME", 0.0, 20.0)
-	rule.AddCategoryConditionOn("TOPLATETYPE", "pcrplate_skirted_riser")
-	pol = MakeLVOffsetPolicy()
-
-	lhpr.AddRule(rule, pol)
-
+	// merged the below and the above
+	/*
+		rule = wtype.NewLHPolicyRule("HVFlowRate")
+		rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+		//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
+		pol = MakeHVFlowRatePolicy()
+		lhpr.AddRule(rule, pol)
 	*/
 
-	// remove blowout from gilson
-	/* reinstate blowout for gilson
-	rule = NewLHPolicyRule("NoBlowoutForGilson")
-	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
-	policy := make(LHPolicy, 6)
-	policy["RESET_OVERRIDE"] = true
-	lhpr.AddRule(rule, policy)
-	*/
+	rule = wtype.NewLHPolicyRule("DNALV")
+	rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
+	rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
+	pol = MakeLVDNAMixPolicy()
+	lhpr.AddRule(rule, pol)
+
+	//fix for removing blowout in DNA only if EGEL 48 plate type is used
+	rule = wtype.NewLHPolicyRule("EPAGE48Load")
+	rule.AddCategoryConditionOn("TOPLATETYPE", "EPAGE48")
+	pol = TurnOffBlowoutPolicy()
+	lhpr.AddRule(rule, pol)
+
+	//fix for removing blowout in DNA only if EGEL 48 plate type is used
+	rule = wtype.NewLHPolicyRule("EGEL48Load")
+	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL48")
+	pol = TurnOffBlowoutPolicy()
+	lhpr.AddRule(rule, pol)
+
+	//fix for removing blowout in DNA only if EGEL 96_1 plate type is used
+	rule = wtype.NewLHPolicyRule("EGEL961Load")
+	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_1")
+	pol = TurnOffBlowoutPolicy()
+	lhpr.AddRule(rule, pol)
+
+	//fix for removing blowout in DNA only if EGEL 96_2 plate type is used
+	rule = wtype.NewLHPolicyRule("EGEL962Load")
+	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_2")
+	pol = TurnOffBlowoutPolicy()
+
+	lhpr.AddRule(rule, pol)
 
 	return lhpr, nil
 
 }
 
-func LoadLHPoliciesFromFile() (*LHPolicyRuleSet, error) {
+func LoadLHPoliciesFromFile() (*wtype.LHPolicyRuleSet, error) {
 	lhPoliciesFileName := os.Getenv("ANTHA_LHPOLICIES_FILE")
 	if lhPoliciesFileName == "" {
 		return nil, fmt.Errorf("Env variable ANTHA_LHPOLICIES_FILE not set")
@@ -873,9 +1199,9 @@ func LoadLHPoliciesFromFile() (*LHPolicyRuleSet, error) {
 	if err != nil {
 		return nil, err
 	}
-	lhprs := NewLHPolicyRuleSet()
-	lhprs.Policies = make(map[string]LHPolicy)
-	lhprs.Rules = make(map[string]LHPolicyRule)
+	lhprs := wtype.NewLHPolicyRuleSet()
+	lhprs.Policies = make(map[string]wtype.LHPolicy)
+	lhprs.Rules = make(map[string]wtype.LHPolicyRule)
 	//	err = readYAML(contents, lhprs)
 	err = readJSON(contents, lhprs)
 	if err != nil {
@@ -884,14 +1210,14 @@ func LoadLHPoliciesFromFile() (*LHPolicyRuleSet, error) {
 	return lhprs, nil
 }
 
-func readYAML(fileContents []byte, ruleSet *LHPolicyRuleSet) error {
+func readYAML(fileContents []byte, ruleSet *wtype.LHPolicyRuleSet) error {
 	if err := yaml.Unmarshal(fileContents, ruleSet); err != nil {
 		return err
 	}
 	return nil
 }
 
-func readJSON(fileContents []byte, ruleSet *LHPolicyRuleSet) error {
+func readJSON(fileContents []byte, ruleSet *wtype.LHPolicyRuleSet) error {
 	if err := json.Unmarshal(fileContents, ruleSet); err != nil {
 		return err
 	}

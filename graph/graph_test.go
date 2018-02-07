@@ -9,7 +9,7 @@ func sameElements(a, b []string) error {
 	makeM := func(xs []string) map[string]int {
 		m := make(map[string]int)
 		for _, x := range xs {
-			m[x] += 1
+			m[x]++
 		}
 		return m
 	}
@@ -79,9 +79,7 @@ func TestNodeSet(t *testing.T) {
 	ns["c"] = true
 
 	var r []Node
-	for _, n := range ns.Values() {
-		r = append(r, n)
-	}
+	r = append(r, ns.Values()...)
 	if err := sameElements(toString(r), []string{"a", "b", "c"}); err != nil {
 		t.Error(err)
 	}

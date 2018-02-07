@@ -1,14 +1,15 @@
 package parser
 
 import (
-	"testing"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"fmt"
+	"testing"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 )
 
 func TestStringToAssemblyParameters(t *testing.T) {
 	type test struct {
-		count int
+		count   int
 		content string
 	}
 	//Check out the things that get tested in this method, for more specific situations, implement new methods
@@ -399,7 +400,7 @@ func TestStringToAssemblyParameters(t *testing.T) {
 	<notes>Enzyme: SapI</notes>
 	</DesignConstruct>
 </Project>
-`},test{ 80, `<?xml version="1.0" encoding="UTF-8"?>
+`}, test{80, `<?xml version="1.0" encoding="UTF-8"?>
 <Project label="80_run_test_file2">
   <DesignConstruct label="4_part_construct_1" color="0x000000" circular="false">
     <DNAElement label="vector_1" color="0xC03232" reverseComplement="false">
@@ -6964,7 +6965,7 @@ func TestStringToAssemblyParameters(t *testing.T) {
 </Project>
 `}}
 	for _, in := range ins {
-		if out, err := stringToAssemblyParameters([]byte(in.content)); err != nil {
+		if out, err := gdxToAssemblyParameters([]byte(in.content)); err != nil {
 			t.Fatal(err)
 		} else if len(out) != in.count {
 			t.Fatalf("Expecting %d constructs, found %d", in.count, len(out))
@@ -6986,6 +6987,5 @@ func TestStringToAssemblyParameters(t *testing.T) {
 			//	fmt.Printf("%+v\n", out)
 		}
 	}
-
 
 }

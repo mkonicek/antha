@@ -1,8 +1,0 @@
-{
-    "connections": [],
-    "processes": {
-        "RemoveRestrictionSites": {
-            "component": "RemoveRestrictionSites"
-        }
-    }
-}

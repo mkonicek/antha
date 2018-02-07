@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+import "github.com/antha-lang/antha/api/v1/coord.proto";
+import "github.com/antha-lang/antha/api/v1/inventory.proto";
+import "github.com/antha-lang/antha/api/v1/message.proto";
+import "github.com/antha-lang/antha/api/v1/state.proto";
+
+package org.antha_lang.antha.v1;
+
+message Task {
+  string id = 1;
+  // Short description
+  string label = 2;
+  // Long description
+  string details = 3;
+  // If device task, the device id
+  string device_id = 4;
+  // Time estimate in seconds, 0 if no estimate available
+  float time_estimate = 5;
+  // Task ids that must happen before this task
+  repeated string happens_before = 6;
+  // Status of a task
+  Status status = 7;
+  // Tags
+  repeated string tags = 8;
+
+  oneof task {
+    OrderTask order_task = 9;
+    DeckLayoutTask deck_layout_task = 10;
+    PlatePrepTask plate_prep_task = 11;
+    DocumentTask document_task = 12;
+    MixerTask mixer_task = 13;
+    ManualRunTask manual_run_task = 14;
+    IncubateTask incubate_task = 15;
+    DataUploadTask data_upload_task = 16;
+  }
+}
+
+// Order inventory items
+message OrderTask {
+  // Inventory items to order
+  repeated string inventory_ids = 1;
+}
+
+// Show deck layout for mixer
+message DeckLayoutTask {
+  // Mixer task to show deck layout of
+  string mixer_task_id = 1;
+  // If present, restrict layout to given deck positions, e.g.,
+  repeated OrdinalCoord some_positions = 2;
+}
+
+// Prepare plates
+message PlatePrepTask {
+  // Plates to prepare
+  repeated PlatePrep plate_preps = 1;
+}
+
+// Prepare a plate
+message PlatePrep {
+  // Plate to prepare
+  string plate_id = 1;
+  // If present, restrict prep to given well addresses, e.g., A1, BB2
+  repeated OrdinalCoord some_wells = 2;
+}
+
+// Show documentation
+message DocumentTask {
+  // Unformated text to show
+  string text_body = 1;
+}
+
+// Run mixer
+message MixerTask {
+  // Setup: input state of device
+  repeated MixerState before = 1;
+  // Result: output state of device
+  repeated MixerState after = 2;
+  // Low level device calls representing this task
+  repeated GrpcCall calls = 3;
+}
+
+message MixerState {
+  repeated InventoryItem items = 1;
+  repeated Placement placements = 2;
+}
+
+message Placement {
+  string parent = 1;
+  string child = 2;
+  // Symbolic location of child in coordinate system of parent
+  OrdinalCoord coord = 3;
+}
+
+// Manually initiated task
+message ManualRunTask {
+}
+
+// Run incubator
+message IncubateTask {
+}
+
+// Upload data
+message DataUploadTask {
+}

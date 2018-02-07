@@ -5,10 +5,9 @@
 package trace
 
 import (
+	"context"
 	"runtime/debug"
 	"sync"
-
-	"github.com/antha-lang/antha/bvendor/golang.org/x/net/context"
 )
 
 type instrKey int
@@ -19,7 +18,7 @@ func withTrace(parent context.Context) context.Context {
 	return context.WithValue(parent, theInstrKey, &trace{})
 }
 
-// Create a new trace and pool context.
+// NewContext creates a new trace and pool context.
 //
 // The general template for clients is:
 //
@@ -79,7 +78,7 @@ func Read(ctx context.Context, p *Promise) (Value, error) {
 	return p.value(), err
 }
 
-// Read all promises concurrently
+// ReadAll reads all promises concurrently
 func ReadAll(parent context.Context, ps ...*Promise) ([]Value, error) {
 	var mapLock sync.Mutex
 	vs := make(map[int]Value)
@@ -110,7 +109,7 @@ func ReadAll(parent context.Context, ps ...*Promise) ([]Value, error) {
 	}
 
 	var ret []Value
-	for i := 0; i < len(ps); i += 1 {
+	for i := 0; i < len(ps); i++ {
 		ret = append(ret, vs[i])
 	}
 	return ret, nil
@@ -148,10 +147,11 @@ func Issue(ctx context.Context, inst interface{}) *Promise {
 	return p
 }
 
-// Force code generation and execution for current set of issued commands
-func Flush(ctx context.Context) {
+// Flush forces code generation and execution for current set of issued commands
+func Flush(ctx context.Context) error {
 	p := Issue(ctx, nil)
-	Read(ctx, p)
+	_, err := Read(ctx, p)
+	return err
 }
 
 type trace struct {

@@ -77,3 +77,42 @@ func TestTransitiveReduction(t *testing.T) {
 		t.Errorf("expected %d found %d", 0, l)
 	}
 }
+
+func TestHarderTransitiveReduction(t *testing.T) {
+	g := MakeTestGraph(map[string][]string{
+		"v0": []string{},
+		"v1": []string{"v0"},
+		"v2": []string{"v1", "v0"},
+		"v3": []string{"v2", "v1", "v0"},
+		"v4": []string{"v3", "v2", "v1", "v0"},
+		"v5": []string{"v3", "v2", "v1", "v4"},
+		"v6": []string{"v3", "v0", "v1", "v2", "v4"},
+		"v7": []string{"v5", "v3", "v2", "v1", "v4"},
+	})
+
+	tr, err := TransitiveReduction(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	findNoOuts := func(g Graph, m map[Node]bool) {
+		for i, num := 0, g.NumNodes(); i < num; i++ {
+			n := g.Node(i)
+			if g.NumOuts(n) == 0 {
+				m[n] = true
+			}
+		}
+	}
+
+	noOuts := make(map[Node]bool)
+	noIns := make(map[Node]bool)
+
+	findNoOuts(tr, noOuts)
+	findNoOuts(Reverse(tr), noIns)
+
+	for k := range noOuts {
+		if noIns[k] {
+			t.Errorf("disconnected node %s", k)
+		}
+	}
+}

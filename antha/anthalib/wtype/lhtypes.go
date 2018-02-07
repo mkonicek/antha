@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// defines types for dealing with liquid handling requests
 package wtype
 
 import (
@@ -84,6 +83,24 @@ type LHChannelParameter struct {
 	Independent bool
 	Orientation int
 	Head        int
+}
+
+func (lhcprm *LHChannelParameter) Equals(prm2 *LHChannelParameter) bool {
+	return lhcprm.ID == prm2.ID
+}
+
+// can you move this much? If oneshot is true it's strictly Minvol <= v <= Maxvol
+// otherwise it's just Minvol <= v
+func (lhcp LHChannelParameter) CanMove(v wunit.Volume, oneshot bool) bool {
+	if v.LessThan(lhcp.Minvol) || (v.GreaterThan(lhcp.Maxvol) && oneshot) {
+		return false
+	}
+
+	return true
+}
+
+func (lhcp LHChannelParameter) VolumeLimitString() string {
+	return fmt.Sprintf("Min: %s Max: %s", lhcp.Minvol.ToString(), lhcp.Maxvol.ToString())
 }
 
 func (lhcp LHChannelParameter) String() string {
@@ -166,11 +183,11 @@ func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, m
 
 func (lhcp *LHChannelParameter) MergeWithTip(tip *LHTip) *LHChannelParameter {
 	lhcp2 := *lhcp
-	if tip.MinVol.GreaterThan(lhcp2.Minvol) {
+	if tip.MinVol.GreaterThanRounded(lhcp2.Minvol, 1) {
 		lhcp2.Minvol = wunit.CopyVolume(tip.MinVol)
 	}
 
-	if tip.MaxVol.LessThan(lhcp2.Maxvol) {
+	if tip.MaxVol.LessThanRounded(lhcp2.Maxvol, 1) {
 		lhcp2.Maxvol = wunit.CopyVolume(tip.MaxVol)
 	}
 
@@ -296,7 +313,7 @@ func (sol LHSolution) String() string {
 	for _, c := range sol.Components {
 		one = one + fmt.Sprintf("[%s], ", c.CName)
 	}
-	two := fmt.Sprintf("%s, %s, %s, %g, %s, %g, %d, %d",
+	two := fmt.Sprintf("%s, %s, %s, %g, %s, %g, %g, %d, %d",
 		sol.ContainerType,
 		sol.Welladdress,
 		sol.Platetype,

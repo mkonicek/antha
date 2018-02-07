@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "github.com/antha-lang/antha/driver/antha_driver_v1/driver.proto";
-
 package antha.shakerincubator.v1;
 
 service ShakerIncubator {
@@ -15,8 +13,6 @@ service ShakerIncubator {
   rpc ShakeStop (Blank) returns (BoolReply) {}
   rpc TemperatureSet (TemperatureSettings) returns (BoolReply) {}
   rpc TemperatureReset (Blank) returns (BoolReply) {}
-
-  rpc DriverType(antha.driver.v1.TypeRequest) returns (antha.driver.v1.TypeReply);
 }
 
 message BoolReply {

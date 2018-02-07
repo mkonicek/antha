@@ -1,6 +1,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"math"
@@ -25,13 +26,15 @@ func (sc DefaultChannelScoreFunc) ScoreCombinedChannel(vol wunit.Volume, head *w
 	// higher is better
 	// 0 == don't bother
 
+	/// NOT USING ADAPTOR??? XXX XXX XXX
+
 	// first we merge the parameters together and see if we can do this at all
 
 	lhcp := head.Params.MergeWithTip(tip)
 
 	// we should always make sure we do not send a volume which is too low
 
-	if lhcp.Minvol.GreaterThan(vol) {
+	if lhcp.Minvol.GreaterThanRounded(vol, 1) {
 		return 0
 	}
 
@@ -90,7 +93,7 @@ func (sc DefaultChannelScoreFunc) ScoreChannel(vol wunit.Volume, lhcp *wtype.LHC
 	return score
 }
 
-func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParameter, string) {
+func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParameter, *wtype.LHTip) {
 	var headchosen *wtype.LHHead = nil
 	var tipchosen *wtype.LHTip = nil
 	var bestscore ChannelScore = ChannelScore(0.0)
@@ -115,11 +118,34 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	}
 
 	if headchosen == nil {
-		return nil, ""
+		return nil, nil
 	}
 
 	// shouldn't we also return the adaptor?
 	// and probably the whole head rather than just its channel parameters
 
-	return headchosen.GetParams(), tipchosen.Type
+	return headchosen.GetParams(), tipchosen
+}
+
+func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []*wtype.LHTip, []string, error) {
+	prmA := make([]*wtype.LHChannelParameter, len(vols))
+	tipA := make([]*wtype.LHTip, len(vols))
+	tipTypeA := make([]string, len(vols))
+
+	// we choose individually
+
+	for i := 0; i < len(vols); i++ {
+		if vols[i].IsZero() {
+			continue
+		}
+		prm, tip := ChooseChannel(vols[i], prms)
+		if tip == nil {
+			return prmA, tipA, tipTypeA, fmt.Errorf(TipChosenError(vols[i], prms))
+		}
+		prmA[i] = prm
+		tipA[i] = tip.Dup()
+		tipTypeA[i] = tip.Type
+	}
+
+	return prmA, tipA, tipTypeA, nil
 }

@@ -30,10 +30,12 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/tealeg/xlsx"
 )
 
-var delimiter = ","
+const delimiter = ","
 
 type outputer func(s string)
 
@@ -45,16 +47,46 @@ func generateCSVFromXLSXsheet(excelFileName string, sheetIndex int, outputf outp
 	sheetLen := len(xlFile.Sheets)
 	switch {
 	case sheetLen == 0:
-		return errors.New("This XLSX file contains no sheets.")
+		return errors.New("this XLSX file contains no sheets")
 	case sheetIndex >= sheetLen:
-		return fmt.Errorf("No sheet %d available, please select a sheet between 0 and %d\n", sheetIndex, sheetLen-1)
+		return fmt.Errorf("no sheet %d available, please select a sheet between 0 and %d", sheetIndex, sheetLen-1)
 	}
 	sheet := xlFile.Sheets[sheetIndex]
 	for _, row := range sheet.Rows {
 		var vals []string
 		if row != nil {
 			for _, cell := range row.Cells {
-				vals = append(vals, fmt.Sprintf("%q", cell.String()))
+				cellstr := cell.String()
+				vals = append(vals, fmt.Sprintf("%q", cellstr))
+			}
+			outputf(strings.Join(vals, delimiter) + "\n")
+		}
+	}
+	return nil
+}
+
+func generateCSVFromXLSXsheetBinary(excelFileContents []byte, sheetIndex int, outputf outputer) error {
+	xlFile, error := xlsx.OpenBinary(excelFileContents)
+	if error != nil {
+		return error
+	}
+	sheetLen := len(xlFile.Sheets)
+	switch {
+	case sheetLen == 0:
+		return errors.New("this XLSX file contains no sheets")
+	case sheetIndex >= sheetLen:
+		return fmt.Errorf("no sheet %d available, please select a sheet between 0 and %d", sheetIndex, sheetLen-1)
+	}
+	sheet := xlFile.Sheets[sheetIndex]
+	for _, row := range sheet.Rows {
+		var vals []string
+		if row != nil {
+			for _, cell := range row.Cells {
+
+				cellstr := cell.String()
+				cellstr = strings.TrimSpace(cellstr)
+
+				vals = append(vals, fmt.Sprintf("%q", cellstr))
 			}
 			outputf(strings.Join(vals, delimiter) + "\n")
 		}
@@ -70,19 +102,20 @@ func generateCSVFromspecificXLSXsheet(excelFileName string, sheetname string, ou
 	sheetLen := len(xlFile.Sheets)
 	switch {
 	case sheetLen == 0:
-		return errors.New("This XLSX file contains no sheets.")
+		return errors.New("this XLSX file contains no sheets")
+	case sheetLen > 0:
 		for _, sheet := range xlFile.Sheets {
 			for _, row := range sheet.Rows {
 				var vals []string
 				if row != nil {
 					for _, cell := range row.Cells {
-						vals = append(vals, fmt.Sprintf("%q", cell.String()))
+						cellstr := cell.String()
+						vals = append(vals, fmt.Sprintf("%q", cellstr))
 					}
 					outputf(strings.Join(vals, delimiter) + "\n")
 				}
 			}
 		}
-
 	}
 	return nil
 }
@@ -109,4 +142,68 @@ func ParseExcel(filename string) ([]enzymes.Assemblyparameters, error) {
 	} else {
 		return Assemblyfromcsv(dl.Name(), pl.Name()), nil
 	}
+}
+
+func xlsxparserBinary(data []byte, sheetIndex int, outputprefix string) (f *os.File, err error) {
+	f, err = ioutil.TempFile("", outputprefix)
+	if err != nil {
+		return
+	}
+	printer := func(s string) {
+		_, _ = f.WriteString(s)
+	}
+	err = generateCSVFromXLSXsheetBinary(data, sheetIndex, printer)
+	return
+}
+
+// ParseExcelBinary parses the contents of a typeIIs assembly design file in
+// xlsx format. An example file is provided: "Assembly_Input_Controls.xlsx" The
+// output will be []enzymes.AssemblyParameters which can be used in the
+// enzymes.Assemblysimulator() and enzymes.Digestionsimulator() functions.  The
+// design file is expected to follow a format as shown in the provided example
+// files An error will be returned if no data is found within the .xlsx design
+// file or if the file is not in the expected format.
+func ParseExcelBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
+	if pl, err := xlsxparserBinary(data, 0, "partslist"); err != nil {
+		return nil, err
+	} else if dl, err := xlsxparserBinary(data, 1, "designlist"); err != nil {
+		return nil, err
+	} else {
+		return Assemblyfromcsv(dl.Name(), pl.Name()), nil
+	}
+}
+
+// MakePartsFromXLSXPartsList parses the parts in an xlsx format design file
+// into a list of LHComponents.  The concentration will be set if a
+// concentration column is present in the parts list.  If no concentrations are
+// found the parts list will be created with no concentrations and an error
+// returned.
+func MakePartsFromXLSXPartsList(data []byte) (parts []*wtype.LHComponent, concMap map[string]wunit.Concentration, err error) {
+	pl, err := xlsxparserBinary(data, 0, "partslist")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	partSeqs := ReadParts(pl.Name())
+
+	partNamesInOrder, concMap, err := readPartConcentrations(pl.Name())
+
+	if err != nil {
+		// don't return if the first error is no concentration column found
+		if !strings.Contains(err.Error(), `Errors encountered parsing part concentrations: No column header found containing part "Concentration"`) {
+			return
+		}
+	}
+
+	for _, partName := range partNamesInOrder {
+		newComponent := wtype.NewLHComponent()
+		newComponent.CName = partName
+		if concMap[partName].RawValue() != 0 {
+			newComponent.SetConcentration(concMap[partName])
+		}
+		newComponent.AddDNASequence(partSeqs[partName])
+		parts = append(parts, newComponent)
+	}
+
+	return
 }

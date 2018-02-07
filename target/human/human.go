@@ -1,43 +1,75 @@
 package human
 
 import (
-	"reflect"
+	"context"
+	"fmt"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/target/handler"
 )
 
 const (
-	HumanByHumanCost = 50  // Cost of manually moving from another human device
-	HumanByXCost     = 100 // Cost of manually moving from any non-human device
+	// HumanByHumanCost is the cost of manually moving from another human device
+	HumanByHumanCost = 50
+	// HumanByXCost is the cost of manually moving from any non-human device
+	HumanByXCost = 100
 )
 
 var (
 	_ target.Device = &Human{}
 )
 
+// A Human is a device that can do anything
 type Human struct {
-	opt Opt
+	opt  Opt
+	impl *handler.GenericHandler
 }
 
-func (a *Human) CanCompile(req ast.Request) bool {
-	canMove := true
-	mov := len(req.Move) > 0
-	mix := req.MixVol != nil
-	inc := req.Temp != nil || req.Time != nil
+// An Opt is a set of options to configure a human device
+type Opt struct {
+	CanMix      bool
+	CanIncubate bool
 
-	switch {
-	case !canMove && mov:
-		return false
-	case !a.opt.CanMix && mix:
-		return false
-	case !a.opt.CanIncubate && inc:
-		return false
+	// CanHandle is deprecated
+	CanHandle bool
+}
+
+// New returns a new human device
+func New(opt Opt) *Human {
+	h := &Human{opt: opt}
+	h.impl = &handler.GenericHandler{
+		GenFunc: h.generate,
 	}
-	return true
+
+	return h
 }
 
+// CanCompile implements device CanCompile
+func (a *Human) CanCompile(req ast.Request) bool {
+	can := ast.Request{
+		Selector: []ast.NameValue{
+			target.DriverSelectorV1Human,
+		},
+	}
+
+	if a.opt.CanIncubate {
+		can.Selector = append(can.Selector, target.DriverSelectorV1ShakerIncubator)
+	}
+
+	if a.opt.CanMix {
+		can.Selector = append(can.Selector, target.DriverSelectorV1Mixer)
+	}
+
+	if a.opt.CanHandle {
+		can.Selector = append(can.Selector, req.Selector...)
+	}
+
+	return can.Contains(req)
+}
+
+// MoveCost implements target.device MoveCost
 func (a *Human) MoveCost(from target.Device) int {
 	if _, ok := from.(*Human); ok {
 		return HumanByHumanCost
@@ -45,95 +77,57 @@ func (a *Human) MoveCost(from target.Device) int {
 	return HumanByXCost
 }
 
-func (a *Human) String() string {
-	return "Human"
+// Compile implements target.device Compile
+func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+	return a.impl.Compile(ctx, nodes)
 }
 
-// Return key for node for grouping
-func getKey(n ast.Node) (r interface{}) {
-	// Group by value for HandleInst and Incubate and type otherwise
-	if c, ok := n.(*ast.Command); !ok {
-		r = reflect.TypeOf(n)
-	} else if h, ok := c.Inst.(*ast.HandleInst); ok {
-		r = h.Group
-	} else if i, ok := c.Inst.(*ast.IncubateInst); ok {
-		r = i.Temp.ToString() + " " + i.Time.ToString()
-	} else {
-		r = reflect.TypeOf(c.Inst)
-	}
-	return
-}
+func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 
-func (a *Human) Compile(nodes []ast.Node) ([]target.Inst, error) {
-	addDep := func(in, dep target.Inst) {
-		in.SetDependsOn(append(in.DependsOn(), dep))
-	}
-
-	g := ast.Deps(nodes)
-
-	entry := &target.Wait{}
-	exit := &target.Wait{}
 	var insts []target.Inst
-	inst := make(map[ast.Node]target.Inst)
 
-	insts = append(insts, entry)
+	switch cmd := cmd.(type) {
 
-	// Maximally coalesce repeated commands according to when they are first
-	// available to be executed (graph.Reverse)
-	dag := graph.Schedule(graph.Reverse(g))
-	for len(dag.Roots) > 0 {
-		var next []graph.Node
-		// Gather
-		same := make(map[interface{}][]graph.Node)
-		for _, r := range dag.Roots {
-			n := r.(ast.Node)
-			key := getKey(n)
-			same[key] = append(same[key], n)
-			next = append(next, dag.Visit(r)...)
-		}
-		// Apply
-		for _, nodes := range same {
-			var ins []*target.Manual
-			for _, n := range nodes {
-				in, err := a.makeInst(n.(ast.Node))
-				if err != nil {
-					return nil, err
-				}
-				ins = append(ins, in)
-			}
-			in := a.coalesce(ins)
-			insts = append(insts, in)
+	case *wtype.LHInstruction:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "mix",
+			Details: prettyMixDetails(cmd),
+		})
 
-			for _, n := range nodes {
-				inst[n.(ast.Node)] = in
-			}
-		}
+	case *ast.IncubateInst:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "incubate",
+			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
+		})
 
-		dag.Roots = next
-	}
+	case *ast.HandleInst:
+		insts = append(insts, &target.Manual{
+			Dev:   a,
+			Label: cmd.Group,
+		})
 
-	insts = append(insts, exit)
+	case *ast.PromptInst:
+		insts = append(insts, &target.Prompt{
+			Message: cmd.Message,
+		})
 
-	for i, inum := 0, g.NumNodes(); i < inum; i += 1 {
-		n := g.Node(i).(ast.Node)
-		in := inst[n]
-		for j, jnum := 0, g.NumOuts(n); j < jnum; j += 1 {
-			kid := g.Out(n, j).(ast.Node)
-			kidIn := inst[kid]
-			addDep(in, kidIn)
-		}
-		addDep(in, entry)
-		addDep(exit, in)
+	case *ast.AwaitInst:
+		insts = append(insts, &target.Prompt{
+			Message: fmt.Sprintf("Now get some data for %s %s", cmd.Tags, cmd.AwaitID),
+		})
+
+	default:
+		return nil, fmt.Errorf("unknown inst %T", cmd)
 	}
 
 	return insts, nil
 }
 
-type Opt struct {
-	CanMix      bool
-	CanIncubate bool
-}
-
-func New(opt Opt) *Human {
-	return &Human{opt}
+func prettyMixDetails(inst *wtype.LHInstruction) string {
+	if len(inst.PlateName) != 0 || len(inst.Welladdress) != 0 {
+		return fmt.Sprintf("mix %q[%q]", inst.PlateName, inst.Welladdress)
+	}
+	return "mix"
 }

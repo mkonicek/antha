@@ -1,51 +1,11 @@
-# Compiled Object files, Static and Dynamic libs (Shared Objects)
-*.o
-*.a
-*.so
-
-# Folders
-_obj
-_test
-
-# Architecture specific extensions/prefixes
-*.[568vq]
-[568vq].out
-
-*.cgo1.go
-*.cgo2.c
-_cgo_defun.c
-_cgo_gotypes.go
-_cgo_export.*
-
-_testmain.go
+.DS_Store
 
 *.exe
 *.test
 *.prof
 
-antha/bradford.go
-
-antha/antha
-
-bradford/bradford.go
-
-example/example_run/example_run
-
-cmd/antha/antha
-
-example/example.go
-
-reference/reference_run/reference_run
-
-cmd/anthadoc/anthadoc
-
-examples/promoter/promoter.go
-
-cmd/anthafmt/anthafmt
-
 *~
-/reports
-
-reference/reference_run/main
 
 .idea/
+
+.build/

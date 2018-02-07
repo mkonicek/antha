@@ -23,8 +23,8 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
-	"math/rand"
 	"reflect"
 	"strings"
 	"testing"
@@ -32,6 +32,9 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func GetPlateForTest() *wtype.LHPlate {
@@ -48,12 +51,13 @@ func GetPlateForTest() *wtype.LHPlate {
 }
 
 func TestStockConcs(*testing.T) {
+	rand := wutil.GetRandom()
 	names := []string{"tea", "milk", "sugar"}
 
 	minrequired := make(map[string]float64, len(names))
 	maxrequired := make(map[string]float64, len(names))
 	Smax := make(map[string]float64, len(names))
-	T := make(map[string]float64, len(names))
+	T := make(map[string]wunit.Volume, len(names))
 	vmin := 10.0
 
 	for _, name := range names {
@@ -64,23 +68,22 @@ func TestStockConcs(*testing.T) {
 		minrequired[name] = r * r2 * 20.0
 		maxrequired[name] = r * r2 * 30.0
 		Smax[name] = r * r2 * r3 * 70.0
-		T[name] = 100.0
+		T[name] = wunit.NewVolume(100.0, "ul")
 	}
 
-	cncs := choose_stock_concentrations(minrequired, maxrequired, Smax, vmin, T)
-	cncs = cncs
+	choose_stock_concentrations(minrequired, maxrequired, Smax, vmin, T)
 	/*for k, v := range cncs {
 		logger.Debug(fmt.Sprintln(k, " ", minrequired[k], " ", maxrequired[k], " ", T[k], " ", v))
 	}*/
 }
 
-func configure_request_simple(rq *LHRequest) {
-	water := GetComponentForTest("water", wunit.NewVolume(100.0, "ul"))
-	mmx := GetComponentForTest("mastermix_sapI", wunit.NewVolume(100.0, "ul"))
-	part := GetComponentForTest("dna", wunit.NewVolume(50.0, "ul"))
+func configure_request_simple(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
 
 	for k := 0; k < 9; k++ {
-		ins := wtype.NewLHInstruction()
+		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(8.0, "ul"))
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
@@ -88,21 +91,95 @@ func configure_request_simple(rq *LHRequest) {
 		ins.AddComponent(ws)
 		ins.AddComponent(mmxs)
 		ins.AddComponent(ps)
-		ins.AddProduct(GetComponentForTest("water", wunit.NewVolume(17.0, "ul")))
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
+	}
+
+}
+
+func configure_request_bigger(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
+
+	for k := 0; k < 99; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.Sample(water, wunit.NewVolume(8.0, "ul"))
+		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
+		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
+
+		ins.AddComponent(ws)
+		ins.AddComponent(mmxs)
+		ins.AddComponent(ps)
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
+func TestTipOverridePositive(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	var tpz []*wtype.LHTipbox
+	tp, err := inventory.NewTipbox(ctx, "Gilson20")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tpz = append(tpz, tp)
+
+	rq.Tips = tpz
+
+	rq.ConfigureYourself()
+
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatalf("Got an error planning with no inputs: %s", err)
+	}
+
+}
+func TestTipOverrideNegative(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	var tpz []*wtype.LHTipbox
+	tp, err := inventory.NewTipbox(ctx, "Gilson200")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tpz = append(tpz, tp)
+
+	rq.Tips = tpz
+
+	rq.ConfigureYourself()
+
+	err = lh.Plan(ctx, rq)
+
+	if e, f := "No tip chosen: Volume 8 ul is too low to be accurately moved by the liquid handler (configured minimum 10 ul, tip minimum 10 ul). Low volume tips may not be available and / or the robot may need to be configured differently", err.Error(); e != f {
+		t.Fatalf("expecting error %q found %q", e, f)
 	}
 }
 
 func TestPlateReuse(t *testing.T) {
-	lh := GetLiquidHandlerForTest()
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
-	configure_request_simple(rq)
+	configure_request_simple(ctx, rq)
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
 	rq.ConfigureYourself()
 
-	err := lh.Plan(rq)
+	err := lh.Plan(ctx, rq)
 
 	if err != nil {
 		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
@@ -110,7 +187,7 @@ func TestPlateReuse(t *testing.T) {
 
 	// reset the request
 	rq = GetLHRequestForTest()
-	configure_request_simple(rq)
+	configure_request_simple(ctx, rq)
 
 	for _, plateid := range lh.Properties.PosLookup {
 		if plateid == "" {
@@ -135,8 +212,8 @@ func TestPlateReuse(t *testing.T) {
 
 	rq.ConfigureYourself()
 
-	lh = GetLiquidHandlerForTest()
-	err = lh.Plan(rq)
+	lh = GetLiquidHandlerForTest(ctx)
+	err = lh.Plan(ctx, rq)
 
 	if err != nil {
 		t.Fatal(fmt.Sprint("Got error resimulating: ", err))
@@ -152,7 +229,7 @@ func TestPlateReuse(t *testing.T) {
 
 	// reset the request again
 	rq = GetLHRequestForTest()
-	configure_request_simple(rq)
+	configure_request_simple(ctx, rq)
 
 	for _, plateid := range lh.Properties.PosLookup {
 		if plateid == "" {
@@ -181,8 +258,8 @@ func TestPlateReuse(t *testing.T) {
 
 	rq.ConfigureYourself()
 
-	lh = GetLiquidHandlerForTest()
-	err = lh.Plan(rq)
+	lh = GetLiquidHandlerForTest(ctx)
+	err = lh.Plan(ctx, rq)
 
 	if err != nil {
 		t.Fatal(fmt.Sprint("Got error resimulating: ", err))
@@ -192,19 +269,20 @@ func TestPlateReuse(t *testing.T) {
 	if len(rq.Input_assignments) != 3 {
 		t.Fatal(fmt.Sprintf("Error resimulating, should have added 3 components, instead added %d", len(rq.Input_assignments)))
 	}
-
 }
 
 func TestBeforeVsAfter(t *testing.T) {
-	lh := GetLiquidHandlerForTest()
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
-	configure_request_simple(rq)
+	configure_request_simple(ctx, rq)
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
 	rq.ConfigureYourself()
 
-	err := lh.Plan(rq)
+	err := lh.Plan(ctx, rq)
 
 	if err != nil {
 		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
@@ -240,43 +318,68 @@ func TestBeforeVsAfter(t *testing.T) {
 			if pp1.Type != pp2.Type {
 				t.Fatal(fmt.Sprintf("Plates at %s not same type: %s %s", pos, pp1.Type, pp2.Type))
 			}
-			/*
-				it := wtype.NewOneTimeColumnWiseIterator(pp1)
+			it := wtype.NewOneTimeColumnWiseIterator(pp1)
 
-				for {
-					if !it.Valid() {
-						break
-					}
-					wc := it.Curr()
-					w1 := pp1.Wellcoords[wc.FormatA1()]
-					w2 := pp2.Wellcoords[wc.FormatA1()]
-
-					if w1.Empty() && w2.Empty() {
-						it.Next()
-						continue
-					}
-					fmt.Println(wc.FormatA1())
-					fmt.Println(w1.WContents.CName, " ", w1.WContents.Vol)
-					fmt.Println(w2.WContents.CName, " ", w2.WContents.Vol)
-					it.Next()
+			for {
+				if !it.Valid() {
+					break
 				}
-			*/
+				wc := it.Curr()
+				w1 := pp1.Wellcoords[wc.FormatA1()]
+				w2 := pp2.Wellcoords[wc.FormatA1()]
+
+				if w1.Empty() && w2.Empty() {
+					it.Next()
+					continue
+				}
+				/*
+					fmt.Println(pp1.PlateName, " ", pp1.Type)
+					fmt.Println(pp2.PlateName, " ", pp2.Type)
+					fmt.Println(wc.FormatA1())
+					fmt.Println(w1.ID, " ", w1.WContents.ID, " ", w1.WContents.CName, " ", w1.WContents.Vol)
+					fmt.Println(w2.ID, " ", w2.WContents.ID, " ", w2.WContents.CName, " ", w2.WContents.Vol)
+				*/
+
+				if w1.WContents.ID == w2.WContents.ID {
+					t.Fatal(fmt.Sprintf("IDs before and after must differ"))
+				}
+				it.Next()
+			}
 		case *wtype.LHTipbox:
 			tb1 := p1.(*wtype.LHTipbox)
 			tb2 := p2.(*wtype.LHTipbox)
 
 			if tb1.Type != tb2.Type {
-				t.Fatal(fmt.Sprintf("Tipbox at position %s changed type: %s %s", tb1.Type, tb2.Type))
+				t.Fatal(fmt.Sprintf("Tipbox at changed type: %s %s", tb1.Type, tb2.Type))
 			}
 		case *wtype.LHTipwaste:
 			tw1 := p1.(*wtype.LHTipwaste)
 			tw2 := p2.(*wtype.LHTipwaste)
 
 			if tw1.Type != tw2.Type {
-				t.Fatal(fmt.Sprintf("Tipwaste at position %s changed type: %s %s", tw1.Type, tw2.Type))
+				t.Fatal(fmt.Sprintf("Tipwaste changed type: %s %s", tw1.Type, tw2.Type))
 			}
 		}
 
+	}
+
+}
+
+func TestEP3(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got planning error: ", err))
 	}
 
 }

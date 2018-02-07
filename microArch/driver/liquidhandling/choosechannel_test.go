@@ -1,12 +1,13 @@
 package liquidhandling
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	. "github.com/antha-lang/antha/microArch/factory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func getVols() []wunit.Volume {
@@ -58,7 +59,12 @@ func TestDefaultChooser(t *testing.T) {
 	types := getTypes1()
 
 	for i, vol := range vols {
-		prm, tiptype := ChooseChannel(vol, lhp)
+		prm, tip := ChooseChannel(vol, lhp)
+		tiptype := ""
+
+		if tip != nil {
+			tiptype = tip.Type
+		}
 
 		mxr := maxvols[i]
 		mnr := minvols[i]
@@ -66,7 +72,7 @@ func TestDefaultChooser(t *testing.T) {
 
 		if prm == nil {
 			if !mxr.IsZero() || !mnr.IsZero() || tpr != tiptype {
-				t.Fatal(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), " Got nil want: ", mnr.ToString(), " ", mnr.ToString, " ", tpr))
+				t.Fatal(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), " Got nil want: ", mnr.ToString(), " ", tpr))
 			}
 
 		} else if !prm.Maxvol.EqualTo(mxr) || !prm.Minvol.EqualTo(mnr) || tiptype != tpr {
@@ -99,7 +105,7 @@ func makeTestLH() *LHProperties {
 	for y := 0; y < 3; y++ {
 		for x := 0; x < 3; x++ {
 			posname := fmt.Sprintf("position_%d", i+1)
-			crds := wtype.Coordinates{xp, yp, zp}
+			crds := wtype.Coordinates{X: xp, Y: yp, Z: zp}
 			layout[posname] = crds
 			i += 1
 			xp += xi
@@ -155,13 +161,13 @@ func makeTestLH() *LHProperties {
 
 	return lhp
 }
+
 func SetUpTipsFor(lhp *LHProperties) *LHProperties {
-	tips := GetTipList()
+	ctx := testinventory.NewContext(context.Background())
 
 	seen := make(map[string]bool)
 
-	for _, tt := range tips {
-		tb := GetTipByType(tt)
+	for _, tb := range testinventory.GetTipboxes(ctx) {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
 			tip := tb.Tips[0][0]
 			str := tip.Mnfr + tip.Type + tip.MinVol.ToString() + tip.MaxVol.ToString()

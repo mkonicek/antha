@@ -20,17 +20,11 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// Package for interacting with and manipulating dna sequences in extension to methods available in wtype
+// Package sequences is for interacting with and manipulating biological sequences; in extension to methods available in wtype
 package sequences
 
 import (
-	//"fmt"
-	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
-	//"strconv"
-	//"strings"
 	"testing"
-
-	//"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 type genbanktest struct {
@@ -60,7 +54,7 @@ var genbanktests = []genbanktest{
 
 func TestMakeFeature(t *testing.T) {
 	for _, test := range genbanktests {
-		result := MakeFeature(test.featurename, test.seq, test.sequencetype, test.class, test.reverse)
+		result := MakeFeature(test.featurename, test.seq, test.startposition, test.endposition, test.sequencetype, test.class, test.reverse)
 
 		if result.StartPosition != test.startposition {
 			t.Error(

@@ -1,4 +1,7 @@
-FROM golang:1.6-wheezy
-RUN apt-get update && apt-get install -y libglpk-dev libsqlite3-dev libopencv-dev
-ADD . /go/src/github.com/antha-lang/antha
-RUN go install github.com/antha-lang/antha/cmd/...
+FROM golang:1.9
+
+RUN apt-get update -qq && apt-get install -y libglpk-dev protobuf-compiler
+
+RUN go get gopkg.in/alecthomas/gometalinter.v1 \
+  && ln -s `which gometalinter.v1` $GOPATH/bin/gometalinter \
+  && gometalinter --install

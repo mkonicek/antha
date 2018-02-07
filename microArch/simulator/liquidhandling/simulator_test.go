@@ -238,14 +238,14 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 0.001},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 0 speed to 0.001ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 1 speed to 0.001ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 2 speed to 0.001ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 3 speed to 0.001ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 4 speed to 0.001ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 5 speed to 0.001ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 6 speed to 0.001ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 7 speed to 0.001ml/min outside allowable range [0.1ml/min:10ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 0 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 1 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 2 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 3 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 4 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 5 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 6 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 7 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -258,14 +258,14 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 15.},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 0 speed to 15ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 1 speed to 15ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 2 speed to 15ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 3 speed to 15ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 4 speed to 15ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 5 speed to 15ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 6 speed to 15ml/min outside allowable range [0.1ml/min:10ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 7 speed to 15ml/min outside allowable range [0.1ml/min:10ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 0 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 1 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 2 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 3 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 4 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 5 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 6 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channel 7 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -1594,7 +1594,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 100ul of water to head 0 channels 0,1 - missing tip on channel 1",
+				"(err) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1 - missing tip on channel 1",
 			},
 			nil, //assertions
 		},
@@ -1628,7 +1628,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Aspirate: While aspirating 20ul of water to head 0 channel 0 - minimum tip volume is 50ul",
+				"(warn) Aspirate: While aspirating 20 ul of water to head 0 channel 0 - minimum tip volume is 50 ul",
 			},
 			nil, //assertions
 		},
@@ -1757,7 +1757,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 175ul of water to head 0 channel 0 - channel 0 contains 875ul, command exceeds maximum volume 1000ul",
+				"(err) Aspirate: While aspirating 175 ul of water to head 0 channel 0 - channel 0 contains 875 ul, command exceeds maximum volume 1000 ul",
 			},
 			nil, //assertions
 		},
@@ -1791,7 +1791,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating {50,60,70,80,90,100,110,120}ul of water to head 0 channels 0,1,2,3,4,5,6,7 - channels cannot aspirate different volumes in non-independent head",
+				"(err) Aspirate: While aspirating {50,60,70,80,90,100,110,120} ul of water to head 0 channels 0,1,2,3,4,5,6,7 - channels cannot aspirate different volumes in non-independent head",
 			},
 			nil, //assertions
 		},
@@ -1825,7 +1825,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 100ul of water to head 0 channel 0 - tip on channel 0 not in a well",
+				"(err) Aspirate: While aspirating 100 ul of water to head 0 channel 0 - tip on channel 0 not in a well",
 			},
 			nil, //assertions
 		},
@@ -1859,7 +1859,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 535.121ul of water to head 0 channel 0 - well A1@plate1 only contains 195ul working volume",
+				"(err) Aspirate: While aspirating 535 ul of water to head 0 channel 0 - well A1@plate1 only contains 195ul working volume",
 			},
 			nil, //assertions
 		},
@@ -1893,7 +1893,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Aspirate: While aspirating 102.1ul of ethanol to head 0 channel 0 - well A1@plate1 contains water, not ethanol",
+				"(warn) Aspirate: While aspirating 102 ul of ethanol to head 0 channel 0 - well A1@plate1 contains water, not ethanol",
 			},
 			nil, //assertions
 		},
@@ -1927,7 +1927,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 98.6ul of water to head 0 channel 0 - channel 1 will inadvertantly aspirate water from well B1@plate1 as head is not independent",
+				"(err) Aspirate: While aspirating 98.6 ul of water to head 0 channel 0 - channel 1 will inadvertantly aspirate water from well B1@plate1 as head is not independent",
 			},
 			nil, //assertions
 		},
@@ -2137,7 +2137,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50ul from head 0 channel 0 - no tip loaded on channel 0",
+				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - no tip loaded on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2170,7 +2170,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: While dispensing 150ul from head 0 channel 0 - tip on channel 0 contains only 100ul, but blowout flag is false",
+				"(warn) Dispense: While dispensing 150 ul from head 0 channel 0 - tip on channel 0 contains only 100 ul, but blowout flag is false",
 			},
 			nil, //assertionsi
 		},
@@ -2203,7 +2203,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 500ul from head 0 channel 0 - well A1@plate1 under channel 0 contains 0ul, command would exceed maximum volume 200ul",
+				"(err) Dispense: While dispensing 500 ul from head 0 channel 0 - well A1@plate1 under channel 0 contains 0 ul, command would exceed maximum volume 200 ul",
 			},
 			nil, //assertionsi
 		},
@@ -2236,7 +2236,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50ul from head 0 channel 0 - no well within 5mm below tip on channel 0",
+				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - no well within 5mm below tip on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2269,7 +2269,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: While dispensing 50ul from head 0 channel 0 - dispensing to tipwaste",
+				"(warn) Dispense: While dispensing 50 ul from head 0 channel 0 - dispensing to tipwaste",
 			},
 			nil, //assertionsi
 		},
@@ -2302,7 +2302,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50ul from head 0 channel 0 - must also dispense 50ul from channels 1,2,3,4,5,6,7 as head is not independent",
+				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - must also dispense 50 ul from channels 1,2,3,4,5,6,7 as head is not independent",
 			},
 			nil, //assertions
 		},
@@ -2335,7 +2335,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing {50,60,50,50,50,50,50,50}ul from head 0 channels 0,1,2,3,4,5,6,7 - channels cannot dispense different volumes in non-independent head",
+				"(err) Dispense: While dispensing {50,60,50,50,50,50,50,50} ul from head 0 channels 0,1,2,3,4,5,6,7 - channels cannot dispense different volumes in non-independent head",
 			},
 			nil, //assertions
 		},
@@ -2473,8 +2473,8 @@ func Test_Mix(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Mix: While mixing {50,60,50,50,50,50,50,50}ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\" - cannot manipulate different volumes with non-independent head",
-				"(err) Mix: While mixing {50,60,50,50,50,50,50,50}ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\" - cannot vary number of mix cycles with non-independent head",
+				"(err) Mix: While mixing {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\" - cannot manipulate different volumes with non-independent head",
+				"(err) Mix: While mixing {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\" - cannot vary number of mix cycles with non-independent head",
 			},
 			nil, //assertions
 		},
@@ -2508,7 +2508,7 @@ func Test_Mix(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Mix: While mixing 50ul 5 times in well A1 of plate \"plate1\" - plate \"plate1\" is of type \"plate\", not \"notaplate\"",
+				"(warn) Mix: While mixing 50 ul 5 times in well A1 of plate \"plate1\" - plate \"plate1\" is of type \"plate\", not \"notaplate\"",
 			},
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),

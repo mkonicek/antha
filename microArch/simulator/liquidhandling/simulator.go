@@ -83,9 +83,9 @@ func summariseVolumes(vols []float64) string {
 	s_vols := make([]string, len(vols))
 	for i, v := range vols {
 		s_vols[i] = wunit.NewVolume(v, "ul").String()
-		s_vols[i] = s_vols[i][:len(s_vols[i])-2]
+		s_vols[i] = s_vols[i][:len(s_vols[i])-3]
 	}
-	return fmt.Sprintf("{%s}ul", strings.Join(s_vols, ","))
+	return fmt.Sprintf("{%s} ul", strings.Join(s_vols, ","))
 }
 
 func summariseStrings(s []string) string {

@@ -1757,7 +1757,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 175 ul of water to head 0 channel 0 - channel 0 contains 875 ul, command exceeds maximum volume 1000 ul",
+				"(err) Aspirate: While aspirating 175 ul of water to head 0 channel 0 - channel 0 contains 875 ul, command exceeds maximum volume 1e+03 ul",
 			},
 			nil, //assertions
 		},
@@ -1859,7 +1859,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 535 ul of water to head 0 channel 0 - well A1@plate1 only contains 195ul working volume",
+				"(err) Aspirate: While aspirating 535 ul of water to head 0 channel 0 - well A1@plate1 only contains 195 ul working volume",
 			},
 			nil, //assertions
 		},
@@ -2236,7 +2236,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - no well within 5mm below tip on channel 0",
+				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - no well within 5 mm below tip on channel 0",
 			},
 			nil, //assertionsi
 		},

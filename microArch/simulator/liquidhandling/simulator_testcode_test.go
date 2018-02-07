@@ -164,8 +164,7 @@ type LHWellParams struct {
 }
 
 func makeLHWell(p *LHWellParams) *wtype.LHWell {
-	return wtype.NewLHWell(nil,
-		p.crds,
+	w := wtype.NewLHWell(
 		p.vunit,
 		p.vol,
 		p.rvol,
@@ -176,6 +175,8 @@ func makeLHWell(p *LHWellParams) *wtype.LHWell {
 		p.zdim,
 		p.bottomh,
 		p.dunit)
+	w.Crds = p.crds
+	return w
 }
 
 type LHPlateParams struct {

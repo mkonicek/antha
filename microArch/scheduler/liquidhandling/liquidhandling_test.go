@@ -44,7 +44,7 @@ func GetPlateForTest() *wtype.LHPlate {
 
 	// pcr plate skirted (on riser)
 	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
-	welltype := wtype.NewLHWell(nil, wtype.ZeroWellCoords(), "ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
+	welltype := wtype.NewLHWell("ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
 
 	plate := wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates{127.76, 85.48, 25.7}, welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
 	return plate

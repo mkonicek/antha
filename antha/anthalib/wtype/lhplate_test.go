@@ -12,35 +12,35 @@ import (
 
 func makeplatefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell(nil, ZeroWellCoords(), "ul", 200, 10, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("ul", 200, 10, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates{127.76, 85.48, 43.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
 func make384platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell(nil, ZeroWellCoords(), "ul", 50, 5, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("ul", 50, 5, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("DSW384", "none", 16, 24, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
 func make1536platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell(nil, ZeroWellCoords(), "ul", 15, 1, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("ul", 15, 1, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("DSW1536", "none", 32, 48, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
 func make24platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell(nil, ZeroWellCoords(), "ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("DSW24", "none", 4, 6, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
 func make6platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell(nil, ZeroWellCoords(), "ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("6wellplate", "none", 2, 3, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }

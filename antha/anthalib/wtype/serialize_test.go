@@ -137,7 +137,7 @@ func TestLHWellSerialize(t *testing.T) {
 func TestSerializeLHPlate_1(t *testing.T) {
 	//from make_plate_library
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell(nil, ZeroWellCoords(), "ul", 2000, 25, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("ul", 2000, 25, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	plate := NewLHPlate("DSW96", "Unknown", 8, 12, Coordinates{127.76, 85.48, 44.1}, welltype, 9, 9, 0.0, 0.0, 0.0)
 
 	enc, err := json.Marshal(plate)

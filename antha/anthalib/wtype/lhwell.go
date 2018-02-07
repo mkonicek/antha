@@ -392,7 +392,9 @@ func (lhw *LHWell) Dup() *LHWell {
 		return nil
 	}
 
-	ret := NewLHWell(lhw.Plate, lhw.Crds, "ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	ret := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	ret.Plate = lhw.Plate
+	ret.Crds = lhw.Crds
 
 	for k, v := range lhw.Extra {
 		ret.Extra[k] = v
@@ -406,7 +408,9 @@ func (lhw *LHWell) CDup() *LHWell {
 	if lhw == nil {
 		return nil
 	}
-	cp := NewLHWell(lhw.Plate, lhw.Crds, "ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp.Plate = lhw.Plate
+	cp.Crds = lhw.Crds
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
 	}
@@ -418,7 +422,9 @@ func (lhw *LHWell) DupKeepIDs() *LHWell {
 	if lhw == nil {
 		return nil
 	}
-	cp := NewLHWell(lhw.Plate, lhw.Crds, "ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp.Plate = lhw.Plate
+	cp.Crds = lhw.Crds
 
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
@@ -548,13 +554,14 @@ func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 }
 
 // make a new well structure
-func NewLHWell(plate LHObject, crds WellCoords, vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
 	var well LHWell
 
-	well.Plate = plate
+	well.Plate = nil
+	crds := ZeroWellCoords()
 	well.WContents = NewLHComponent()
 	//this field is even more daft now we usually don't know the plate at initialization
-	well.WContents.Loc = NameOf(plate) + ":" + crds.FormatA1()
+	well.WContents.Loc = "nill:" + crds.FormatA1()
 
 	well.ID = GetUUID()
 	well.Crds = crds

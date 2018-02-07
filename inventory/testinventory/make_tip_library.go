@@ -28,14 +28,14 @@ import (
 func makeTipboxes() (tipboxes []*wtype.LHTipbox) {
 
 	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := wtype.NewLHWell(nil, wtype.ZeroWellCoords(), "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w := wtype.NewLHWell("ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 	tip := wtype.NewLHTip("cybio", "CyBio250", 10.0, 250.0, "ul", shp)
 	tb := wtype.NewLHTipbox(8, 12, wtype.Coordinates{127.76, 85.48, 60.13}, "CyBio", "CyBio250Tipbox", tip, w, 9.0, 9.0, 0.0, 0.0, 0.0)
 	tipboxes = append(tipboxes, tb)
 
-	w = wtype.NewLHWell(nil, wtype.ZeroWellCoords(), "ul", 50.0, 0.5, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell("ul", 50.0, 0.5, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 
@@ -44,14 +44,14 @@ func makeTipboxes() (tipboxes []*wtype.LHTipbox) {
 	tipboxes = append(tipboxes, tb)
 
 	// these details are incorrect and need fixing
-	w = wtype.NewLHWell(nil, wtype.ZeroWellCoords(), "ul", 1000.0, 50.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell("ul", 1000.0, 50.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 	tip = wtype.NewLHTip("cybio", "CyBio1000", 100.0, 1000.0, "ul", shp)
 	tb = wtype.NewLHTipbox(8, 12, wtype.Coordinates{127.76, 85.48, 60.13}, "CyBio", "CyBio1000Tipbox", tip, w, 9.0, 9.0, 0.0, 0.0, 0.0)
 	tipboxes = append(tipboxes, tb)
 
-	w = wtype.NewLHWell(nil, wtype.ZeroWellCoords(), "ul", 200.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell("ul", 200.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 	w.Extra["Tipeffectiveheight"] = 44.7
@@ -59,7 +59,7 @@ func makeTipboxes() (tipboxes []*wtype.LHTipbox) {
 	tb = wtype.NewLHTipbox(8, 12, wtype.Coordinates{127.76, 85.48, 60.13}, "Gilson", "DF200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
 	tipboxes = append(tipboxes, tb)
 
-	w = wtype.NewLHWell(nil, wtype.ZeroWellCoords(), "ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	w = wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	w.Extra["InnerL"] = 5.5
 	w.Extra["InnerW"] = 5.5
 	w.Extra["Tipeffectiveheight"] = 34.6
@@ -77,22 +77,22 @@ func makeTecanTipBoxes() []*wtype.LHTipbox {
 
 	ret := make([]*wtype.LHTipbox, 0, 4)
 
-	w := wtype.NewLHWell("Tecan1000Tipbox", "", "A1", "ul", 1000.0, 200.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	w := wtype.NewLHWell("ul", 1000.0, 200.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	tip := wtype.NewLHTip("Tecan", "Tecan1000", 200.0, 1000.0, "ul")
 	tb := wtype.NewLHTipbox(8, 12, 60.13, "Tecan", "DiTi 1000uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
 
-	w = wtype.NewLHWell("Tecan200Tipbox", "", "A1", "ul", 200.0, 15.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	w = wtype.NewLHWell("ul", 200.0, 15.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	tip = wtype.NewLHTip("Tecan", "Tecan200", 15.0, 200.0, "ul")
 	tb = wtype.NewLHTipbox(8, 12, 60.13, "Tecan", "DiTi 200uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
 
-	w = wtype.NewLHWell("Tecan50Tipbox", "", "A1", "ul", 50.0, 3.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	w = wtype.NewLHWell("ul", 50.0, 3.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	tip = wtype.NewLHTip("Tecan", "Tecan50", 3.0, 50.0, "ul")
 	tb = wtype.NewLHTipbox(8, 12, 60.13, "Tecan", "DiTi 50uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
 
-	w = wtype.NewLHWell("Tecan10Tipbox", "", "A1", "ul", 10.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	w = wtype.NewLHWell("ul", 10.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	tip = wtype.NewLHTip("Tecan", "Tecan10", 1.0, 10.0, "ul")
 	tb = wtype.NewLHTipbox(8, 12, 60.13, "Tecan", "DiTi 10uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)

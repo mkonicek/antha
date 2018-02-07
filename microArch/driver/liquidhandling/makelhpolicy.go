@@ -515,7 +515,7 @@ func MakeCulturePolicy() wtype.LHPolicy {
 
 func MakePlateOutPolicy() wtype.LHPolicy {
 	culturepolicy := make(wtype.LHPolicy, 17)
-	culturepolicy["CAN_MULTI"] = true
+	culturepolicy["CAN_MULTI"] = false
 	culturepolicy["ASP_WAIT"] = 1.0
 	culturepolicy["DSP_WAIT"] = 1.0
 	culturepolicy["DSPZOFFSET"] = 0.0
@@ -554,7 +554,6 @@ func MakeGlycerolPolicy() wtype.LHPolicy {
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["TIP_REUSE_LIMIT"] = 0
-	glycerolpolicy["CAN_MULTI"] = true
 	glycerolpolicy["POST_MIX"] = 3
 	glycerolpolicy["POST_MIX_VOLUME"] = 20.0
 	glycerolpolicy["POST_MIX_RATE"] = 3.74 // Should this be the same rate as the asp and dsp speeds?
@@ -568,7 +567,6 @@ func MakeViscousPolicy() wtype.LHPolicy {
 	glycerolpolicy["DSPSPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
-	glycerolpolicy["CAN_MULTI"] = true
 	glycerolpolicy["POST_MIX"] = 3
 	glycerolpolicy["POST_MIX_RATE"] = 1.5
 	glycerolpolicy["DESCRIPTION"] = "Designed for viscous samples. 3 post-mixes of the volume of the sample being transferred will be performed. No tip reuse limit."
@@ -580,7 +578,6 @@ func MakeSolventPolicy() wtype.LHPolicy {
 	solventpolicy.Set("DSPREFERENCE", 0)
 	solventpolicy.Set("DSPZOFFSET", 0.5)
 	solventpolicy.Set("NO_AIR_DISPENSE", true)
-	solventpolicy.Set("CAN_MULTI", true)
 	solventpolicy.Set("DESCRIPTION", "Designed for handling solvents. No post-mixes are performed")
 	return solventpolicy
 }
@@ -740,7 +737,6 @@ func PreMixPolicy() wtype.LHPolicy {
 	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -761,7 +757,6 @@ func PostMixPolicy() wtype.LHPolicy {
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -800,7 +795,6 @@ func MegaMixPolicy() wtype.LHPolicy {
 	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["ASPSPEED"] = 3.74
 	dnapolicy["DSPSPEED"] = 3.74
-	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
@@ -824,7 +818,7 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["DSPZOFFSET"] = 0.5
 	defaultpolicy["CAN_MSA"] = false
 	defaultpolicy["CAN_SDD"] = true
-	defaultpolicy["CAN_MULTI"] = true
+	defaultpolicy["CAN_MULTI"] = false
 	defaultpolicy["TIP_REUSE_LIMIT"] = 100
 	defaultpolicy["BLOWOUTREFERENCE"] = 1
 	defaultpolicy["BLOWOUTVOLUME"] = 50.0

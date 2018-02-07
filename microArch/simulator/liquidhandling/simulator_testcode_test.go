@@ -817,6 +817,9 @@ func preloadAdaptorTips(head int, tipbox_loc string, channels []int) *SetupFn {
 func getLHComponent(what string, vol_ul float64) *wtype.LHComponent {
 	c := wtype.NewLHComponent()
 	c.CName = what
+	//madness?
+	lt, _ := wtype.LiquidTypeFromString(wtype.PolicyName(what))
+	c.Type = lt
 	c.Vol = vol_ul
 	c.Vunit = "ul"
 

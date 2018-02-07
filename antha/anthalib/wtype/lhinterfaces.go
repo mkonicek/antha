@@ -37,6 +37,18 @@ func NameOf(o interface{}) string {
 	return "<unnamed>"
 }
 
+type Identifiable interface {
+	GetID() string
+}
+
+//IDOf
+func IDOf(o interface{}) string {
+	if idf, ok := o.(Identifiable); ok {
+		return idf.GetID()
+	}
+	return "<No-ID>"
+}
+
 type Typed interface {
 	GetType() string
 }
@@ -126,6 +138,10 @@ const (
 
 func (self WellReference) String() string {
 	return []string{"BottomReference", "TopReference", "LiquidReference"}[self]
+}
+
+func (self WellReference) AsInt() int {
+	return []int{0, 1, 2}[self]
 }
 
 var WellReferenceNames []string = []string{"bottom", "top", "liquid"}

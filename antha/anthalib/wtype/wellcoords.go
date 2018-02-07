@@ -19,7 +19,7 @@ func WCArrayFromWells(wells []*LHWell) []WellCoords {
 			continue
 		}
 
-		ret = append(ret, MakeWellCoords(w.Crds))
+		ret = append(ret, w.Crds)
 	}
 
 	return ret

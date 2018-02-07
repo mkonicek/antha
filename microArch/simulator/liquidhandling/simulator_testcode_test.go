@@ -27,7 +27,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/factory"
 	"github.com/antha-lang/antha/microArch/simulator"
 	lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 	"strings"
@@ -815,14 +814,21 @@ func preloadAdaptorTips(head int, tipbox_loc string, channels []int) *SetupFn {
 	return &ret
 }
 
+func getLHComponent(what string, vol_ul float64) *wtype.LHComponent {
+	c := wtype.NewLHComponent()
+	c.CName = what
+	c.Vol = vol_ul
+	c.Vunit = "ul"
+
+	return c
+}
+
 func preloadFilledTips(head int, tipbox_loc string, channels []int, what string, volume float64) *SetupFn {
 	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
 		adaptor := vlh.GetAdaptorState(head)
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
 		tip := tipbox.Tiptype.Dup()
-		c := factory.GetComponentByType(what)
-		c.Vol = volume
-		c.Vunit = "ul"
+		c := getLHComponent(what, volume)
 		tip.Add(c)
 
 		for _, ch := range channels {
@@ -846,10 +852,7 @@ func prefillWells(plate_loc string, wells_to_fill []string, liquid_name string, 
 		for _, well_name := range wells_to_fill {
 			wc := wtype.MakeWellCoords(well_name)
 			well := plate.GetChildByAddress(wc).(*wtype.LHWell)
-			comp := factory.GetComponentByType(liquid_name)
-			//feels dirty
-			comp.Vol = volume
-			comp.Vunit = "ul"
+			comp := getLHComponent(liquid_name, volume)
 			well.Add(comp)
 		}
 	}

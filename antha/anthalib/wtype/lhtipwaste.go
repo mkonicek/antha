@@ -118,12 +118,17 @@ func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) bool {
 		}
 	}
 
-	if lht.Capacity-lht.Contents < n {
+	return lht.DisposeNum(n)
+}
+
+func (lht *LHTipwaste) DisposeNum(num int) bool {
+	if lht.Capacity-lht.Contents < num {
 		return false
 	}
 
-	lht.Contents += n
+	lht.Contents += num
 	return true
+
 }
 
 //##############################################

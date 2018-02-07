@@ -1386,7 +1386,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 					self.AddErrorf("UnloadTips", "Cannot unload tip to overfull tipwaste \"%s\", contains %d tips",
 						target.GetName(), target.Contents)
 				} else {
-					target.Dispose(1)
+					target.DisposeNum(1)
 					adaptor.GetChannel(ch).UnloadTip()
 				}
 			default:

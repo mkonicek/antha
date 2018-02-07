@@ -987,7 +987,7 @@ func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.
 	mov.Well = ins.Well
 	mov.Plt = ins.FPlateType
 	for i := 0; i < len(ins.Well); i++ {
-		mov.Reference = append(mov.Reference, wtype.TopReference)
+		mov.Reference = append(mov.Reference, wtype.TopReference.AsInt())
 		mov.OffsetX = append(mov.OffsetX, 0.0)
 		mov.OffsetY = append(mov.OffsetY, 0.0)
 		mov.OffsetZ = append(mov.OffsetZ, 5.0)
@@ -1065,7 +1065,7 @@ func (ins *UnloadTipsMoveInstruction) Generate(ctx context.Context, policy *wtyp
 	mov.Well = ins.WellTo
 	mov.Plt = ins.TPlateType
 	for i := 0; i < len(mov.Pos); i++ {
-		mov.Reference = append(mov.Reference, wtype.TopReference)
+		mov.Reference = append(mov.Reference, wtype.TopReference.AsInt())
 		mov.OffsetX = append(mov.OffsetX, 0.0)
 		mov.OffsetY = append(mov.OffsetY, 0.0)
 		mov.OffsetZ = append(mov.OffsetZ, 0.0)

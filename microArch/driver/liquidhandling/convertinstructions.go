@@ -325,19 +325,19 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		cnames[ci] = wellFrom.WContents.CName
 
-		cmpFrom := wellFrom.Remove(va[ci])
-		// silently remove the carry
-		wellFrom.Remove(carryvol)
-
-		if cmpFrom == nil {
+		cmpFrom, err := wellFrom.Remove(va[ci])
+		if cmpFrom == nil || err != nil {
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
 		}
+
+		// silently remove the carry
+		wellFrom.Remove(carryvol)
 
 		wellTo.Add(cmpFrom)
 
 		// make sure the cmp loc is set
 
-		wellTo.WContents.Loc = wellTo.Plateid + ":" + wellTo.Crds
+		wellTo.WContents.Loc = wtype.IDOf(wellTo.Plate) + ":" + wellTo.Crds.Format1A()
 
 		// make sure the wellTo gets the right ID (ultimately)
 		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Result.ID)

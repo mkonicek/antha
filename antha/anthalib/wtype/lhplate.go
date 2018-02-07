@@ -87,7 +87,7 @@ func (plate LHPlate) GetLayout() string {
 				s += fmt.Sprint(well.WContents.CName, " ")
 			}
 			//}
-			s += fmt.Sprintf(" %-6.2f%s", well.Currvol(), well.Vunit)
+			s += fmt.Sprintln(well.Contents().Volume())
 			s += fmt.Sprintln()
 			s += fmt.Sprintln()
 		}
@@ -312,7 +312,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 	ret := make([]WellCoords, 0, 1)
 
 	v := wunit.NewVolume(cmp.Vol, cmp.Vunit)
-	wv := wunit.NewVolume(lhp.Welltype.MaxVol, lhp.Welltype.Vunit)
+	wv := lhp.Welltype.MaxVolume()
 
 	if v.GreaterThan(wv) && !overflow {
 		return ret, fmt.Errorf("Too much to put in a single well of this type")
@@ -1132,28 +1132,6 @@ func (p *LHPlate) DeclareSpecial() {
 	if p != nil && p.Welltype.Extra != nil {
 		p.Welltype.Extra["IMSPECIAL"] = true
 	}
-}
-
-// @implement SBSLabware
-
-/*
-type SBSLabware interface {
-	NumRows() int
-	NumCols() int
-	PlateHeight() float64
-}
-*/
-
-func (p *LHPlate) NumRows() int {
-	return p.WellsY()
-}
-
-func (p *LHPlate) NumCols() int {
-	return p.WellsX()
-}
-
-func (p *LHPlate) PlateHeight() float64 {
-	return p.Height
 }
 
 func componentList(vec ComponentVector) map[string]bool {

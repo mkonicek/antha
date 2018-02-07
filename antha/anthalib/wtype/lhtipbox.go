@@ -83,8 +83,8 @@ func (tb LHTipbox) GetID() string {
 
 func (tb LHTipbox) Output() string {
 	s := ""
-	for j := 0; j < tb.NumRows(); j++ {
-		for i := 0; i < tb.NumCols(); i++ {
+	for j := 0; j < tb.NRows(); j++ {
+		for i := 0; i < tb.NCols(); i++ {
 			if tb.Tips[i][j] == nil {
 				s += "."
 			} else if tb.Tips[i][j].Dirty {
@@ -464,7 +464,7 @@ func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string,
 	}
 
 	if ori == LHVChannel {
-		for i := 0; i < tb.NumCols(); i++ {
+		for i := 0; i < tb.NCols(); i++ {
 			r := tb.searchCleanTips(i, possiblyTrimmedMask, ori)
 			if r != nil && len(r) != 0 {
 				tb.Remove(r)
@@ -472,7 +472,7 @@ func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string,
 			}
 		}
 	} else if ori == LHHChannel {
-		for i := 0; i < tb.NumRows(); i++ {
+		for i := 0; i < tb.NRows(); i++ {
 			r := tb.searchCleanTips(i, possiblyTrimmedMask, ori)
 			if r != nil && len(r) != 0 {
 				tb.Remove(r)
@@ -487,11 +487,11 @@ func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string,
 
 func checkLen(mask []bool, ori int, tb *LHTipbox) error {
 	if ori == LHHChannel {
-		if len(mask) != tb.NumCols() {
+		if len(mask) != tb.NCols() {
 			return fmt.Errorf("Error: CanTrim=false only applies if mask length is identical to tipbox block size")
 		}
 	} else if ori == LHVChannel {
-		if len(mask) != tb.NumRows() {
+		if len(mask) != tb.NRows() {
 			return fmt.Errorf("Error: CanTrim=false only applies if mask length is identical to tipbox block size")
 		}
 	}
@@ -556,17 +556,17 @@ func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori int) []string {
 	r := make([]string, 0, 1)
 
 	if ori == LHVChannel {
-		df := tb.NumRows() - len(mask) + 1
+		df := tb.NRows() - len(mask) + 1
 		for i := 0; i < df; i++ {
-			m := inflateMask(mask, i, tb.NumRows())
+			m := inflateMask(mask, i, tb.NRows())
 			if tb.hasCleanTips(offset, m, ori) {
 				return maskToWellCoords(m, offset, ori)
 			}
 		}
 	} else if ori == LHHChannel {
-		df := tb.NumCols() - len(mask) + 1
+		df := tb.NCols() - len(mask) + 1
 		for i := 0; i < df; i++ {
-			m := inflateMask(mask, i, tb.NumCols())
+			m := inflateMask(mask, i, tb.NCols())
 			if tb.hasCleanTips(offset, m, ori) {
 				return maskToWellCoords(m, offset, ori)
 			}

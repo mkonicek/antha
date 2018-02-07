@@ -306,8 +306,8 @@ func (w *LHWell) WorkingVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
-	v := wunit.NewVolume(w.Currvol(), w.Vunit)
-	v2 := wunit.NewVolume(w.Rvol, w.Vunit)
+	v := w.Contents().Volume()
+	v2 := w.ResidualVolume()
 	v.Subtract(v2)
 	return v
 }
@@ -316,7 +316,7 @@ func (w *LHWell) ResidualVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
-	v := wunit.NewVolume(w.Rvol, w.Vunit)
+	v := wunit.NewVolume(w.Rvol, "ul")
 	return v
 }
 
@@ -392,13 +392,13 @@ func (lhw *LHWell) Dup() *LHWell {
 		return nil
 	}
 
-	ret := NewLHWell(lhw.Plate, lhw.Crds, "ul", lhw.MaxVol, lhw.Rvol, lhw.WShape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, "mm")
+	ret := NewLHWell(lhw.Plate, lhw.Crds, "ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
 
 	for k, v := range lhw.Extra {
 		ret.Extra[k] = v
 	}
 
-	return &ret
+	return ret
 }
 
 // copy of type
@@ -553,13 +553,13 @@ func NewLHWell(plate LHObject, crds WellCoords, vunit string, vol, rvol float64,
 
 	well.Plate = plate
 	well.WContents = NewLHComponent()
-	well.WContents.Loc = plateid + ":" + crds
+	//this field is even more daft now we usually don't know the plate at initialization
+	well.WContents.Loc = NameOf(plate) + ":" + crds.FormatA1()
 
 	well.ID = GetUUID()
 	well.Crds = crds
 	well.MaxVol = wunit.NewVolume(vol, vunit).ConvertToString("ul")
 	well.Rvol = wunit.NewVolume(rvol, vunit).ConvertToString("ul")
-	well.Vunit = vunit
 	well.WShape = shape.Dup()
 	well.Bottom = bott
 	well.Bounds = BBox{Coordinates{}, Coordinates{

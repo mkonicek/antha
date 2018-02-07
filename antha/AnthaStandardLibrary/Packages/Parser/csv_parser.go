@@ -26,8 +26,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"strings"
 	"regexp"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
@@ -287,9 +287,9 @@ func AssemblyFromCsv(designfile string, partsfile string) (assemblyparameters []
 		} else {
 			v := replaceWhiteSpace(definedparts[c[2]].Nm, "")
 			if _, found := definedparts[v]; found {
-				errors = append(errors, fmt.Errorf("Part %s not found in parts list, but when spaces removed (%s) a match was found? Please remove spaces in part name.\n", c[2], v))
+				errors = append(errors, fmt.Errorf("Vector %s not found in parts list, but when spaces removed (%s) a match was found? Please remove spaces in vector name.\n", c[2], v))
 			} else {
-				errors = append(errors, fmt.Errorf("Part %s not found in parts list.\n", c[2]))
+				errors = append(errors, fmt.Errorf("Vector %s not found in parts list.\n", c[2]))
 			}
 		}
 
@@ -306,7 +306,7 @@ func AssemblyFromCsv(designfile string, partsfile string) (assemblyparameters []
 				} else {
 					errors = append(errors, fmt.Errorf("Part %s not found in parts list.\n", c[k]))
 				}
-			}	
+			}
 			if nextpart.Nm != "" {
 				partsinorder = append(partsinorder, nextpart)
 			}
@@ -319,10 +319,10 @@ func AssemblyFromCsv(designfile string, partsfile string) (assemblyparameters []
 	if len(errors) > 0 {
 		var errString []string
 		for _, e := range errors {
-		
-		errString = append(errString, e.Error())
+
+			errString = append(errString, e.Error())
 		}
-		
+
 		return assemblyparameters, fmt.Errorf(strings.Join(errString, "\n"))
 	}
 
@@ -337,5 +337,3 @@ func replaceWhiteSpace(old string, replace string) (new string) {
 	new = re_inside_whtsp.ReplaceAllString(old, replace)
 	return new
 }
-
-

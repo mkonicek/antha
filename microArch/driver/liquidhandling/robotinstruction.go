@@ -295,7 +295,7 @@ func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) 
 	}
 
 	if !isMove(moveInstruction) {
-		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction found %s", InstructionTypeName(moveInstruction))
+		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction: found %s", InstructionTypeName(moveInstruction))
 	}
 
 	if isAspirate(dspOrAspInstruction) {
@@ -304,7 +304,7 @@ func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) 
 		return mergeSummaries(step1summary, step2summary, string(Dispense)), nil
 	}
 
-	return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense found %s", InstructionTypeName(dspOrAspInstruction))
+	return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense: found %s", InstructionTypeName(dspOrAspInstruction))
 
 }
 

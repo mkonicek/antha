@@ -415,6 +415,8 @@ func (lhw *LHWell) CDup() *LHWell {
 	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
 	cp.Plate = lhw.Plate
 	cp.Crds = lhw.Crds
+	cp.WContents = lhw.Contents().Dup()
+
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
 	}

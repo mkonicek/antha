@@ -635,15 +635,11 @@ func (lhp *LHPlate) DupKeepIDs() *LHPlate {
 
 	for i, row := range lhp.Rows {
 		for j, well := range row {
-			d := well.Dup()
-			d.ID = well.ID
+			d := well.DupKeepIDs()
 			ret.Rows[i][j] = d
 			ret.Cols[j][i] = d
 			ret.Wellcoords[d.Crds.FormatA1()] = d
 			ret.HWells[d.ID] = d
-			d.WContents.ID = well.WContents.ID
-			d.WContents.Loc = ret.ID + ":" + d.Crds.FormatA1()
-			d.Plate = ret
 		}
 	}
 

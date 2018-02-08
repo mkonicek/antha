@@ -211,7 +211,7 @@ func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
 		}
 	}
 
-	for i := aln.Qend; i < len(q); i++ {
+	for i := aln.Qend + 1; i <= len(q); i++ {
 		r += "-"
 		s += string(q[i-1])
 	}

@@ -89,6 +89,10 @@ func (self *LHWell) GetSize() Coordinates {
 	return self.Bounds.GetSize()
 }
 
+func (self *LHWell) GetVolumeUnit() string {
+	return "ul"
+}
+
 //@implement LHObject
 func (self *LHWell) GetBoxIntersections(box BBox) []LHObject {
 	//relative box

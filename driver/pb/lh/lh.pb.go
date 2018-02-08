@@ -153,6 +153,11 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 
+import (
+	context "golang.org/x/net/context"
+	grpc "google.golang.org/grpc"
+)
+
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
@@ -4177,6 +4182,1200 @@ func init() {
 	proto.RegisterType((*BlockIDMessage)(nil), "ExtendedLiquidhandlingDriver.BlockIDMessage")
 	proto.RegisterType((*GenericUnitMessage)(nil), "ExtendedLiquidhandlingDriver.GenericUnitMessage")
 	proto.RegisterType((*SIPrefixMessage)(nil), "ExtendedLiquidhandlingDriver.SIPrefixMessage")
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// Client API for ExtendedLiquidhandlingDriver service
+
+type ExtendedLiquidhandlingDriverClient interface {
+	AddPlateTo(ctx context.Context, in *AddPlateToRequest, opts ...grpc.CallOption) (*AddPlateToReply, error)
+	Aspirate(ctx context.Context, in *AspirateRequest, opts ...grpc.CallOption) (*AspirateReply, error)
+	Close(ctx context.Context, in *CloseRequest, opts ...grpc.CallOption) (*CloseReply, error)
+	Dispense(ctx context.Context, in *DispenseRequest, opts ...grpc.CallOption) (*DispenseReply, error)
+	Finalize(ctx context.Context, in *FinalizeRequest, opts ...grpc.CallOption) (*FinalizeReply, error)
+	GetCapabilities(ctx context.Context, in *GetCapabilitiesRequest, opts ...grpc.CallOption) (*GetCapabilitiesReply, error)
+	GetCurrentPosition(ctx context.Context, in *GetCurrentPositionRequest, opts ...grpc.CallOption) (*GetCurrentPositionReply, error)
+	GetHeadState(ctx context.Context, in *GetHeadStateRequest, opts ...grpc.CallOption) (*GetHeadStateReply, error)
+	GetOutputFile(ctx context.Context, in *GetOutputFileRequest, opts ...grpc.CallOption) (*GetOutputFileReply, error)
+	GetPositionState(ctx context.Context, in *GetPositionStateRequest, opts ...grpc.CallOption) (*GetPositionStateReply, error)
+	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusReply, error)
+	Go(ctx context.Context, in *GoRequest, opts ...grpc.CallOption) (*GoReply, error)
+	Initialize(ctx context.Context, in *InitializeRequest, opts ...grpc.CallOption) (*InitializeReply, error)
+	LightsOff(ctx context.Context, in *LightsOffRequest, opts ...grpc.CallOption) (*LightsOffReply, error)
+	LightsOn(ctx context.Context, in *LightsOnRequest, opts ...grpc.CallOption) (*LightsOnReply, error)
+	LoadAdaptor(ctx context.Context, in *LoadAdaptorRequest, opts ...grpc.CallOption) (*LoadAdaptorReply, error)
+	LoadHead(ctx context.Context, in *LoadHeadRequest, opts ...grpc.CallOption) (*LoadHeadReply, error)
+	LoadTips(ctx context.Context, in *LoadTipsRequest, opts ...grpc.CallOption) (*LoadTipsReply, error)
+	Message(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*MessageReply, error)
+	Mix(ctx context.Context, in *MixRequest, opts ...grpc.CallOption) (*MixReply, error)
+	Move(ctx context.Context, in *MoveRequest, opts ...grpc.CallOption) (*MoveReply, error)
+	MoveRaw(ctx context.Context, in *MoveRawRequest, opts ...grpc.CallOption) (*MoveRawReply, error)
+	Open(ctx context.Context, in *OpenRequest, opts ...grpc.CallOption) (*OpenReply, error)
+	RemoveAllPlates(ctx context.Context, in *RemoveAllPlatesRequest, opts ...grpc.CallOption) (*RemoveAllPlatesReply, error)
+	RemovePlateAt(ctx context.Context, in *RemovePlateAtRequest, opts ...grpc.CallOption) (*RemovePlateAtReply, error)
+	ResetPistons(ctx context.Context, in *ResetPistonsRequest, opts ...grpc.CallOption) (*ResetPistonsReply, error)
+	SetDriveSpeed(ctx context.Context, in *SetDriveSpeedRequest, opts ...grpc.CallOption) (*SetDriveSpeedReply, error)
+	SetPipetteSpeed(ctx context.Context, in *SetPipetteSpeedRequest, opts ...grpc.CallOption) (*SetPipetteSpeedReply, error)
+	SetPositionState(ctx context.Context, in *SetPositionStateRequest, opts ...grpc.CallOption) (*SetPositionStateReply, error)
+	Stop(ctx context.Context, in *StopRequest, opts ...grpc.CallOption) (*StopReply, error)
+	UnloadAdaptor(ctx context.Context, in *UnloadAdaptorRequest, opts ...grpc.CallOption) (*UnloadAdaptorReply, error)
+	UnloadHead(ctx context.Context, in *UnloadHeadRequest, opts ...grpc.CallOption) (*UnloadHeadReply, error)
+	UnloadTips(ctx context.Context, in *UnloadTipsRequest, opts ...grpc.CallOption) (*UnloadTipsReply, error)
+	UpdateMetaData(ctx context.Context, in *UpdateMetaDataRequest, opts ...grpc.CallOption) (*UpdateMetaDataReply, error)
+	Wait(ctx context.Context, in *WaitRequest, opts ...grpc.CallOption) (*WaitReply, error)
+}
+
+type extendedLiquidhandlingDriverClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewExtendedLiquidhandlingDriverClient(cc *grpc.ClientConn) ExtendedLiquidhandlingDriverClient {
+	return &extendedLiquidhandlingDriverClient{cc}
+}
+
+func (c *extendedLiquidhandlingDriverClient) AddPlateTo(ctx context.Context, in *AddPlateToRequest, opts ...grpc.CallOption) (*AddPlateToReply, error) {
+	out := new(AddPlateToReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/AddPlateTo", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Aspirate(ctx context.Context, in *AspirateRequest, opts ...grpc.CallOption) (*AspirateReply, error) {
+	out := new(AspirateReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Aspirate", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Close(ctx context.Context, in *CloseRequest, opts ...grpc.CallOption) (*CloseReply, error) {
+	out := new(CloseReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Close", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Dispense(ctx context.Context, in *DispenseRequest, opts ...grpc.CallOption) (*DispenseReply, error) {
+	out := new(DispenseReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Dispense", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Finalize(ctx context.Context, in *FinalizeRequest, opts ...grpc.CallOption) (*FinalizeReply, error) {
+	out := new(FinalizeReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Finalize", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) GetCapabilities(ctx context.Context, in *GetCapabilitiesRequest, opts ...grpc.CallOption) (*GetCapabilitiesReply, error) {
+	out := new(GetCapabilitiesReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetCapabilities", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) GetCurrentPosition(ctx context.Context, in *GetCurrentPositionRequest, opts ...grpc.CallOption) (*GetCurrentPositionReply, error) {
+	out := new(GetCurrentPositionReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetCurrentPosition", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) GetHeadState(ctx context.Context, in *GetHeadStateRequest, opts ...grpc.CallOption) (*GetHeadStateReply, error) {
+	out := new(GetHeadStateReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetHeadState", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) GetOutputFile(ctx context.Context, in *GetOutputFileRequest, opts ...grpc.CallOption) (*GetOutputFileReply, error) {
+	out := new(GetOutputFileReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetOutputFile", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) GetPositionState(ctx context.Context, in *GetPositionStateRequest, opts ...grpc.CallOption) (*GetPositionStateReply, error) {
+	out := new(GetPositionStateReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetPositionState", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusReply, error) {
+	out := new(GetStatusReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetStatus", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Go(ctx context.Context, in *GoRequest, opts ...grpc.CallOption) (*GoReply, error) {
+	out := new(GoReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Go", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Initialize(ctx context.Context, in *InitializeRequest, opts ...grpc.CallOption) (*InitializeReply, error) {
+	out := new(InitializeReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Initialize", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) LightsOff(ctx context.Context, in *LightsOffRequest, opts ...grpc.CallOption) (*LightsOffReply, error) {
+	out := new(LightsOffReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LightsOff", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) LightsOn(ctx context.Context, in *LightsOnRequest, opts ...grpc.CallOption) (*LightsOnReply, error) {
+	out := new(LightsOnReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LightsOn", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) LoadAdaptor(ctx context.Context, in *LoadAdaptorRequest, opts ...grpc.CallOption) (*LoadAdaptorReply, error) {
+	out := new(LoadAdaptorReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LoadAdaptor", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) LoadHead(ctx context.Context, in *LoadHeadRequest, opts ...grpc.CallOption) (*LoadHeadReply, error) {
+	out := new(LoadHeadReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LoadHead", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) LoadTips(ctx context.Context, in *LoadTipsRequest, opts ...grpc.CallOption) (*LoadTipsReply, error) {
+	out := new(LoadTipsReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LoadTips", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Message(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*MessageReply, error) {
+	out := new(MessageReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Message", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Mix(ctx context.Context, in *MixRequest, opts ...grpc.CallOption) (*MixReply, error) {
+	out := new(MixReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Mix", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Move(ctx context.Context, in *MoveRequest, opts ...grpc.CallOption) (*MoveReply, error) {
+	out := new(MoveReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Move", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) MoveRaw(ctx context.Context, in *MoveRawRequest, opts ...grpc.CallOption) (*MoveRawReply, error) {
+	out := new(MoveRawReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/MoveRaw", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Open(ctx context.Context, in *OpenRequest, opts ...grpc.CallOption) (*OpenReply, error) {
+	out := new(OpenReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Open", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) RemoveAllPlates(ctx context.Context, in *RemoveAllPlatesRequest, opts ...grpc.CallOption) (*RemoveAllPlatesReply, error) {
+	out := new(RemoveAllPlatesReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/RemoveAllPlates", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) RemovePlateAt(ctx context.Context, in *RemovePlateAtRequest, opts ...grpc.CallOption) (*RemovePlateAtReply, error) {
+	out := new(RemovePlateAtReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/RemovePlateAt", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) ResetPistons(ctx context.Context, in *ResetPistonsRequest, opts ...grpc.CallOption) (*ResetPistonsReply, error) {
+	out := new(ResetPistonsReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/ResetPistons", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) SetDriveSpeed(ctx context.Context, in *SetDriveSpeedRequest, opts ...grpc.CallOption) (*SetDriveSpeedReply, error) {
+	out := new(SetDriveSpeedReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/SetDriveSpeed", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) SetPipetteSpeed(ctx context.Context, in *SetPipetteSpeedRequest, opts ...grpc.CallOption) (*SetPipetteSpeedReply, error) {
+	out := new(SetPipetteSpeedReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/SetPipetteSpeed", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) SetPositionState(ctx context.Context, in *SetPositionStateRequest, opts ...grpc.CallOption) (*SetPositionStateReply, error) {
+	out := new(SetPositionStateReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/SetPositionState", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Stop(ctx context.Context, in *StopRequest, opts ...grpc.CallOption) (*StopReply, error) {
+	out := new(StopReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Stop", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) UnloadAdaptor(ctx context.Context, in *UnloadAdaptorRequest, opts ...grpc.CallOption) (*UnloadAdaptorReply, error) {
+	out := new(UnloadAdaptorReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/UnloadAdaptor", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) UnloadHead(ctx context.Context, in *UnloadHeadRequest, opts ...grpc.CallOption) (*UnloadHeadReply, error) {
+	out := new(UnloadHeadReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/UnloadHead", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) UnloadTips(ctx context.Context, in *UnloadTipsRequest, opts ...grpc.CallOption) (*UnloadTipsReply, error) {
+	out := new(UnloadTipsReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/UnloadTips", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) UpdateMetaData(ctx context.Context, in *UpdateMetaDataRequest, opts ...grpc.CallOption) (*UpdateMetaDataReply, error) {
+	out := new(UpdateMetaDataReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/UpdateMetaData", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extendedLiquidhandlingDriverClient) Wait(ctx context.Context, in *WaitRequest, opts ...grpc.CallOption) (*WaitReply, error) {
+	out := new(WaitReply)
+	err := grpc.Invoke(ctx, "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Wait", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Server API for ExtendedLiquidhandlingDriver service
+
+type ExtendedLiquidhandlingDriverServer interface {
+	AddPlateTo(context.Context, *AddPlateToRequest) (*AddPlateToReply, error)
+	Aspirate(context.Context, *AspirateRequest) (*AspirateReply, error)
+	Close(context.Context, *CloseRequest) (*CloseReply, error)
+	Dispense(context.Context, *DispenseRequest) (*DispenseReply, error)
+	Finalize(context.Context, *FinalizeRequest) (*FinalizeReply, error)
+	GetCapabilities(context.Context, *GetCapabilitiesRequest) (*GetCapabilitiesReply, error)
+	GetCurrentPosition(context.Context, *GetCurrentPositionRequest) (*GetCurrentPositionReply, error)
+	GetHeadState(context.Context, *GetHeadStateRequest) (*GetHeadStateReply, error)
+	GetOutputFile(context.Context, *GetOutputFileRequest) (*GetOutputFileReply, error)
+	GetPositionState(context.Context, *GetPositionStateRequest) (*GetPositionStateReply, error)
+	GetStatus(context.Context, *GetStatusRequest) (*GetStatusReply, error)
+	Go(context.Context, *GoRequest) (*GoReply, error)
+	Initialize(context.Context, *InitializeRequest) (*InitializeReply, error)
+	LightsOff(context.Context, *LightsOffRequest) (*LightsOffReply, error)
+	LightsOn(context.Context, *LightsOnRequest) (*LightsOnReply, error)
+	LoadAdaptor(context.Context, *LoadAdaptorRequest) (*LoadAdaptorReply, error)
+	LoadHead(context.Context, *LoadHeadRequest) (*LoadHeadReply, error)
+	LoadTips(context.Context, *LoadTipsRequest) (*LoadTipsReply, error)
+	Message(context.Context, *MessageRequest) (*MessageReply, error)
+	Mix(context.Context, *MixRequest) (*MixReply, error)
+	Move(context.Context, *MoveRequest) (*MoveReply, error)
+	MoveRaw(context.Context, *MoveRawRequest) (*MoveRawReply, error)
+	Open(context.Context, *OpenRequest) (*OpenReply, error)
+	RemoveAllPlates(context.Context, *RemoveAllPlatesRequest) (*RemoveAllPlatesReply, error)
+	RemovePlateAt(context.Context, *RemovePlateAtRequest) (*RemovePlateAtReply, error)
+	ResetPistons(context.Context, *ResetPistonsRequest) (*ResetPistonsReply, error)
+	SetDriveSpeed(context.Context, *SetDriveSpeedRequest) (*SetDriveSpeedReply, error)
+	SetPipetteSpeed(context.Context, *SetPipetteSpeedRequest) (*SetPipetteSpeedReply, error)
+	SetPositionState(context.Context, *SetPositionStateRequest) (*SetPositionStateReply, error)
+	Stop(context.Context, *StopRequest) (*StopReply, error)
+	UnloadAdaptor(context.Context, *UnloadAdaptorRequest) (*UnloadAdaptorReply, error)
+	UnloadHead(context.Context, *UnloadHeadRequest) (*UnloadHeadReply, error)
+	UnloadTips(context.Context, *UnloadTipsRequest) (*UnloadTipsReply, error)
+	UpdateMetaData(context.Context, *UpdateMetaDataRequest) (*UpdateMetaDataReply, error)
+	Wait(context.Context, *WaitRequest) (*WaitReply, error)
+}
+
+func RegisterExtendedLiquidhandlingDriverServer(s *grpc.Server, srv ExtendedLiquidhandlingDriverServer) {
+	s.RegisterService(&_ExtendedLiquidhandlingDriver_serviceDesc, srv)
+}
+
+func _ExtendedLiquidhandlingDriver_AddPlateTo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddPlateToRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).AddPlateTo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/AddPlateTo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).AddPlateTo(ctx, req.(*AddPlateToRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Aspirate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AspirateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Aspirate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Aspirate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Aspirate(ctx, req.(*AspirateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Close_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CloseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Close(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Close",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Close(ctx, req.(*CloseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Dispense_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DispenseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Dispense(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Dispense",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Dispense(ctx, req.(*DispenseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Finalize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FinalizeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Finalize(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Finalize",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Finalize(ctx, req.(*FinalizeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_GetCapabilities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCapabilitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetCapabilities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetCapabilities",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetCapabilities(ctx, req.(*GetCapabilitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_GetCurrentPosition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCurrentPositionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetCurrentPosition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetCurrentPosition",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetCurrentPosition(ctx, req.(*GetCurrentPositionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_GetHeadState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetHeadStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetHeadState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetHeadState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetHeadState(ctx, req.(*GetHeadStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_GetOutputFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOutputFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetOutputFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetOutputFile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetOutputFile(ctx, req.(*GetOutputFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_GetPositionState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPositionStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetPositionState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetPositionState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetPositionState(ctx, req.(*GetPositionStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/GetStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).GetStatus(ctx, req.(*GetStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Go_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Go(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Go",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Go(ctx, req.(*GoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Initialize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InitializeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Initialize(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Initialize",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Initialize(ctx, req.(*InitializeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_LightsOff_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LightsOffRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).LightsOff(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LightsOff",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).LightsOff(ctx, req.(*LightsOffRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_LightsOn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LightsOnRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).LightsOn(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LightsOn",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).LightsOn(ctx, req.(*LightsOnRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_LoadAdaptor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoadAdaptorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).LoadAdaptor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LoadAdaptor",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).LoadAdaptor(ctx, req.(*LoadAdaptorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_LoadHead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoadHeadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).LoadHead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LoadHead",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).LoadHead(ctx, req.(*LoadHeadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_LoadTips_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoadTipsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).LoadTips(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/LoadTips",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).LoadTips(ctx, req.(*LoadTipsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Message_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MessageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Message(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Message",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Message(ctx, req.(*MessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Mix_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MixRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Mix(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Mix",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Mix(ctx, req.(*MixRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Move_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MoveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Move(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Move",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Move(ctx, req.(*MoveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_MoveRaw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MoveRawRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).MoveRaw(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/MoveRaw",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).MoveRaw(ctx, req.(*MoveRawRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Open_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OpenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Open(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Open",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Open(ctx, req.(*OpenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_RemoveAllPlates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveAllPlatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).RemoveAllPlates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/RemoveAllPlates",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).RemoveAllPlates(ctx, req.(*RemoveAllPlatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_RemovePlateAt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemovePlateAtRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).RemovePlateAt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/RemovePlateAt",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).RemovePlateAt(ctx, req.(*RemovePlateAtRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_ResetPistons_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResetPistonsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).ResetPistons(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/ResetPistons",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).ResetPistons(ctx, req.(*ResetPistonsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_SetDriveSpeed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetDriveSpeedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).SetDriveSpeed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/SetDriveSpeed",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).SetDriveSpeed(ctx, req.(*SetDriveSpeedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_SetPipetteSpeed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPipetteSpeedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).SetPipetteSpeed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/SetPipetteSpeed",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).SetPipetteSpeed(ctx, req.(*SetPipetteSpeedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_SetPositionState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPositionStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).SetPositionState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/SetPositionState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).SetPositionState(ctx, req.(*SetPositionStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Stop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Stop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Stop",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Stop(ctx, req.(*StopRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_UnloadAdaptor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnloadAdaptorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).UnloadAdaptor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/UnloadAdaptor",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).UnloadAdaptor(ctx, req.(*UnloadAdaptorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_UnloadHead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnloadHeadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).UnloadHead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/UnloadHead",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).UnloadHead(ctx, req.(*UnloadHeadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_UnloadTips_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnloadTipsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).UnloadTips(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/UnloadTips",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).UnloadTips(ctx, req.(*UnloadTipsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_UpdateMetaData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMetaDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).UpdateMetaData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/UpdateMetaData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).UpdateMetaData(ctx, req.(*UpdateMetaDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtendedLiquidhandlingDriver_Wait_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WaitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtendedLiquidhandlingDriverServer).Wait(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver/Wait",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtendedLiquidhandlingDriverServer).Wait(ctx, req.(*WaitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _ExtendedLiquidhandlingDriver_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "ExtendedLiquidhandlingDriver.ExtendedLiquidhandlingDriver",
+	HandlerType: (*ExtendedLiquidhandlingDriverServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddPlateTo",
+			Handler:    _ExtendedLiquidhandlingDriver_AddPlateTo_Handler,
+		},
+		{
+			MethodName: "Aspirate",
+			Handler:    _ExtendedLiquidhandlingDriver_Aspirate_Handler,
+		},
+		{
+			MethodName: "Close",
+			Handler:    _ExtendedLiquidhandlingDriver_Close_Handler,
+		},
+		{
+			MethodName: "Dispense",
+			Handler:    _ExtendedLiquidhandlingDriver_Dispense_Handler,
+		},
+		{
+			MethodName: "Finalize",
+			Handler:    _ExtendedLiquidhandlingDriver_Finalize_Handler,
+		},
+		{
+			MethodName: "GetCapabilities",
+			Handler:    _ExtendedLiquidhandlingDriver_GetCapabilities_Handler,
+		},
+		{
+			MethodName: "GetCurrentPosition",
+			Handler:    _ExtendedLiquidhandlingDriver_GetCurrentPosition_Handler,
+		},
+		{
+			MethodName: "GetHeadState",
+			Handler:    _ExtendedLiquidhandlingDriver_GetHeadState_Handler,
+		},
+		{
+			MethodName: "GetOutputFile",
+			Handler:    _ExtendedLiquidhandlingDriver_GetOutputFile_Handler,
+		},
+		{
+			MethodName: "GetPositionState",
+			Handler:    _ExtendedLiquidhandlingDriver_GetPositionState_Handler,
+		},
+		{
+			MethodName: "GetStatus",
+			Handler:    _ExtendedLiquidhandlingDriver_GetStatus_Handler,
+		},
+		{
+			MethodName: "Go",
+			Handler:    _ExtendedLiquidhandlingDriver_Go_Handler,
+		},
+		{
+			MethodName: "Initialize",
+			Handler:    _ExtendedLiquidhandlingDriver_Initialize_Handler,
+		},
+		{
+			MethodName: "LightsOff",
+			Handler:    _ExtendedLiquidhandlingDriver_LightsOff_Handler,
+		},
+		{
+			MethodName: "LightsOn",
+			Handler:    _ExtendedLiquidhandlingDriver_LightsOn_Handler,
+		},
+		{
+			MethodName: "LoadAdaptor",
+			Handler:    _ExtendedLiquidhandlingDriver_LoadAdaptor_Handler,
+		},
+		{
+			MethodName: "LoadHead",
+			Handler:    _ExtendedLiquidhandlingDriver_LoadHead_Handler,
+		},
+		{
+			MethodName: "LoadTips",
+			Handler:    _ExtendedLiquidhandlingDriver_LoadTips_Handler,
+		},
+		{
+			MethodName: "Message",
+			Handler:    _ExtendedLiquidhandlingDriver_Message_Handler,
+		},
+		{
+			MethodName: "Mix",
+			Handler:    _ExtendedLiquidhandlingDriver_Mix_Handler,
+		},
+		{
+			MethodName: "Move",
+			Handler:    _ExtendedLiquidhandlingDriver_Move_Handler,
+		},
+		{
+			MethodName: "MoveRaw",
+			Handler:    _ExtendedLiquidhandlingDriver_MoveRaw_Handler,
+		},
+		{
+			MethodName: "Open",
+			Handler:    _ExtendedLiquidhandlingDriver_Open_Handler,
+		},
+		{
+			MethodName: "RemoveAllPlates",
+			Handler:    _ExtendedLiquidhandlingDriver_RemoveAllPlates_Handler,
+		},
+		{
+			MethodName: "RemovePlateAt",
+			Handler:    _ExtendedLiquidhandlingDriver_RemovePlateAt_Handler,
+		},
+		{
+			MethodName: "ResetPistons",
+			Handler:    _ExtendedLiquidhandlingDriver_ResetPistons_Handler,
+		},
+		{
+			MethodName: "SetDriveSpeed",
+			Handler:    _ExtendedLiquidhandlingDriver_SetDriveSpeed_Handler,
+		},
+		{
+			MethodName: "SetPipetteSpeed",
+			Handler:    _ExtendedLiquidhandlingDriver_SetPipetteSpeed_Handler,
+		},
+		{
+			MethodName: "SetPositionState",
+			Handler:    _ExtendedLiquidhandlingDriver_SetPositionState_Handler,
+		},
+		{
+			MethodName: "Stop",
+			Handler:    _ExtendedLiquidhandlingDriver_Stop_Handler,
+		},
+		{
+			MethodName: "UnloadAdaptor",
+			Handler:    _ExtendedLiquidhandlingDriver_UnloadAdaptor_Handler,
+		},
+		{
+			MethodName: "UnloadHead",
+			Handler:    _ExtendedLiquidhandlingDriver_UnloadHead_Handler,
+		},
+		{
+			MethodName: "UnloadTips",
+			Handler:    _ExtendedLiquidhandlingDriver_UnloadTips_Handler,
+		},
+		{
+			MethodName: "UpdateMetaData",
+			Handler:    _ExtendedLiquidhandlingDriver_UpdateMetaData_Handler,
+		},
+		{
+			MethodName: "Wait",
+			Handler:    _ExtendedLiquidhandlingDriver_Wait_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "lh/lh.proto",
 }
 
 func init() { proto.RegisterFile("lh/lh.proto", fileDescriptor0) }

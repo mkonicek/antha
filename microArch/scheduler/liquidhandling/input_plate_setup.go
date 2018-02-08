@@ -222,7 +222,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 				} else {
 					newcomponent = component.Dup()
 					newcomponent.Vol = curr_well.MaxVol
-					newcomponent.Vunit = curr_well.Vunit
+					newcomponent.Vunit = curr_well.GetVolumeUnit()
 					newcomponent.Loc = location
 					volume.Subtract(curr_well.WorkingVolume())
 				}

@@ -78,23 +78,23 @@ func makeTecanTipBoxes() []*wtype.LHTipbox {
 	ret := make([]*wtype.LHTipbox, 0, 4)
 
 	w := wtype.NewLHWell("ul", 1000.0, 200.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
-	tip := wtype.NewLHTip("Tecan", "Tecan1000", 200.0, 1000.0, "ul")
-	tb := wtype.NewLHTipbox(8, 12, 60.13, "Tecan", "DiTi 1000uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
+	tip := wtype.NewLHTip("Tecan", "Tecan1000", 200.0, 1000.0, "ul", shp)
+	tb := wtype.NewLHTipbox(8, 12, wtype.Coordinates{127.76, 85.48, 60.13}, "Tecan", "DiTi 1000uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
 
 	w = wtype.NewLHWell("ul", 200.0, 15.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
-	tip = wtype.NewLHTip("Tecan", "Tecan200", 15.0, 200.0, "ul")
-	tb = wtype.NewLHTipbox(8, 12, 60.13, "Tecan", "DiTi 200uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
+	tip = wtype.NewLHTip("Tecan", "Tecan200", 15.0, 200.0, "ul", shp)
+	tb = wtype.NewLHTipbox(8, 12, wtype.Coordinates{127.76, 85.48, 60.13}, "Tecan", "DiTi 200uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
 
 	w = wtype.NewLHWell("ul", 50.0, 3.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
-	tip = wtype.NewLHTip("Tecan", "Tecan50", 3.0, 50.0, "ul")
-	tb = wtype.NewLHTipbox(8, 12, 60.13, "Tecan", "DiTi 50uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
+	tip = wtype.NewLHTip("Tecan", "Tecan50", 3.0, 50.0, "ul", shp)
+	tb = wtype.NewLHTipbox(8, 12, wtype.Coordinates{127.76, 85.48, 60.13}, "Tecan", "DiTi 50uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
 
 	w = wtype.NewLHWell("ul", 10.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
-	tip = wtype.NewLHTip("Tecan", "Tecan10", 1.0, 10.0, "ul")
-	tb = wtype.NewLHTipbox(8, 12, 60.13, "Tecan", "DiTi 10uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
+	tip = wtype.NewLHTip("Tecan", "Tecan10", 1.0, 10.0, "ul", shp)
+	tb = wtype.NewLHTipbox(8, 12, wtype.Coordinates{127.76, 85.48, 60.13}, "Tecan", "DiTi 10uL LiHa", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
 
 	return ret

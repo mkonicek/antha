@@ -12,36 +12,36 @@ import (
 
 func makeplatefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("ul", 200, 10, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("ul", 200, 10, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates{127.76, 85.48, 43.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
 func make384platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("ul", 50, 5, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("DSW384", "none", 16, 24, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 50, 5, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("DSW384", "none", 16, 24, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
 func make1536platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("ul", 15, 1, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("DSW1536", "none", 32, 48, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 15, 1, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("DSW1536", "none", 32, 48, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
 func make24platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("DSW24", "none", 4, 6, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 3000, 500, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("DSW24", "none", 4, 6, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
 func make6platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("6wellplate", "none", 2, 3, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 3000, 500, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("6wellplate", "none", 2, 3, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
@@ -273,13 +273,13 @@ func TestLHPlateSerialize(t *testing.T) {
 	c.CName = "Cthulhu"
 	c.Type = LTWater
 	c.Vol = 100.0
-	_, err := p.AddComponent(c, false)
 
+	_, err := p.AddComponent(c, false)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	b, err := json.Marshal(p)
 
+	b, err := json.Marshal(p)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -298,8 +298,12 @@ func TestLHPlateSerialize(t *testing.T) {
 		}
 	}
 
-	fMErr := func(s string) string {
-		return s + " not maintained after marshal/unmarshal"
+	fMErr := func(s string, want, got interface{}) string {
+		return fmt.Sprintf(
+			"%s not maintained after marshal/unmarshal: want: %v, got: %v",
+			s,
+			want,
+			got)
 	}
 
 	for i := 0; i < p2.WellsX(); i++ {
@@ -321,50 +325,46 @@ func TestLHPlateSerialize(t *testing.T) {
 	// check extraneous parameters
 
 	if p.ID != p2.ID {
-		t.Errorf(fMErr("ID"))
+		t.Errorf(fMErr("ID", p.ID, p2.ID))
 	}
 
 	if p.PlateName != p2.PlateName {
-		t.Errorf(fMErr("Plate name"))
+		t.Errorf(fMErr("Plate name", p.PlateName, p2.PlateName))
 	}
 
 	if p.Type != p2.Type {
-		t.Errorf(fMErr("Type"))
+		t.Errorf(fMErr("Type", p.Type, p2.Type))
 	}
 
 	if p.Mnfr != p2.Mnfr {
-		t.Errorf(fMErr("Manufacturer"))
+		t.Errorf(fMErr("Manufacturer", p.Mnfr, p2.Mnfr))
 	}
 
 	if p.Nwells != p2.Nwells {
-		t.Errorf(fMErr("NWells"))
+		t.Errorf(fMErr("NWells", p.Nwells, p2.Nwells))
 	}
 
-	if p.Height != p2.Height {
-		t.Errorf(fMErr("Height"))
-	}
-
-	if p.Hunit != p2.Hunit {
-		t.Errorf(fMErr("Hunit"))
+	if p.Height() != p2.Height() {
+		t.Errorf(fMErr("Height", p.Height(), p2.Height()))
 	}
 
 	if p.WellXOffset != p2.WellXOffset {
-		t.Errorf(fMErr("WellXOffset"))
+		t.Errorf(fMErr("WellXOffset", p.WellXOffset, p2.WellXOffset))
 	}
 
 	if p.WellYOffset != p2.WellYOffset {
-		t.Errorf(fMErr("WellYOffset"))
+		t.Errorf(fMErr("WellYOffset", p.WellYOffset, p2.WellYOffset))
 	}
 
 	if p.WellXStart != p2.WellXStart {
-		t.Errorf(fMErr("WellXStart"))
+		t.Errorf(fMErr("WellXStart", p.WellXStart, p2.WellXStart))
 	}
 	if p.WellYStart != p2.WellYStart {
-		t.Errorf(fMErr("WellYStart"))
+		t.Errorf(fMErr("WellYStart", p.WellYStart, p2.WellYStart))
 	}
 
 	if p.WellZStart != p2.WellZStart {
-		t.Errorf(fMErr("WellZStart"))
+		t.Errorf(fMErr("WellZStart", p.WellZStart, p.WellZStart))
 	}
 }
 

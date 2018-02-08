@@ -1,5 +1,6 @@
 package wtype
 
+/*
 import (
 	"testing"
 )
@@ -29,3 +30,4 @@ func TestLabwareImplementations(t *testing.T) {
 		t.Errorf("LHTipwaste does not implement labware")
 	}
 }
+*/

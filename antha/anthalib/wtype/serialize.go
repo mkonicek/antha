@@ -58,8 +58,7 @@ type SLHPlate struct {
 	WellsX      int
 	WellsY      int
 	Nwells      int
-	Height      float64
-	Hunit       string
+	Bounds      BBox
 	Welltype    *LHWell
 	Wellcoords  map[string]*LHWell
 	WellXOffset float64 // distance (mm) between well centres in X direction
@@ -80,8 +79,7 @@ func (p *LHPlate) ToSLHPLate() SLHPlate {
 		WellsX:      p.WlsX,
 		WellsY:      p.WlsY,
 		Nwells:      p.Nwells,
-		Height:      p.Height(),
-		Hunit:       "mm",
+		Bounds:      p.Bounds,
 		Welltype:    p.Welltype,
 		Wellcoords:  p.Wellcoords,
 		WellXOffset: p.WellXOffset,
@@ -102,6 +100,7 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 	plate.WlsX = slhp.WellsX
 	plate.WlsY = slhp.WellsY
 	plate.Nwells = slhp.Nwells
+	plate.Bounds = slhp.Bounds
 	//	plate.Width = slhp.Width
 	//	plate.Length = slhp.Length
 	//	plate.Height = slhp.Height

@@ -440,7 +440,3 @@ func getPlateList() []string {
 	}
 	return kz
 }
-
-func GetPlateForTest() *wtype.LHPlate {
-	return getPlateByType("pcrplate_skirted_riser")
-}

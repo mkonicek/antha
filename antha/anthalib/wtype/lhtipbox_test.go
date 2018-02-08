@@ -47,9 +47,9 @@ func TestMaskToWellCoords(t *testing.T) {
 func TestGetTipsMasked(t *testing.T) {
 	// func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string)
 	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("A1", "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul")
-	tb := NewLHTipbox(8, 12, 120.0, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+	w := NewLHWell("ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", shp)
+	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 	mask := []bool{true}
 
@@ -69,9 +69,9 @@ func TestGetTipsMasked(t *testing.T) {
 func TestGetTipsMasked2(t *testing.T) {
 	// func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string)
 	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("A1", "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul")
-	tb := NewLHTipbox(8, 12, 120.0, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+	w := NewLHWell("ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", shp)
+	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 	mask := make([]bool, 8)
 	mask[2] = true
@@ -90,9 +90,9 @@ func TestGetTipsMasked2(t *testing.T) {
 
 func TesthasCleanTips(t *testing.T) {
 	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("mytypeWell", "", "A1", "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul")
-	tb := NewLHTipbox(8, 12, 120.0, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+	w := NewLHWell("ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", shp)
+	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 	m := make([]bool, 8)
 

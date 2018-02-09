@@ -113,8 +113,15 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pl2.Cols[0][0].Add(cmp1)
-	pl2.Cols[0][1].Add(cmp2)
+	err = pl2.Cols[0][0].Add(cmp1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = pl2.Cols[0][1].Add(cmp2)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	s1 := mixer.Sample(cmp1, wunit.NewVolume(25.0, "ul"))
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
@@ -469,14 +476,14 @@ func compareInitFinalStates(t *testing.T, lh *Liquidhandler, expected map[string
 					ifc := findWells(w, w2, v)
 
 					if ifc.IsZero() {
-						t.Errorf("Extra components of type %s in before / after: %s %f %s %f", w2.WContents.CName, w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
+						t.Errorf("Extra components of type %s in before / after: \"%s\" %f \"%s\" %f", w2.WContents.CName, w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
 					}
 
 					// good, delete this now
 
 					expected[w2.WContents.CName] = del(ifc, v, false)
 				} else {
-					t.Errorf("Unexpected components in before / after: %s %f %s %f", w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
+					t.Errorf("Unexpected components in before / after: \"%s\" %f \"%s\" %f", w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
 
 				}
 			}

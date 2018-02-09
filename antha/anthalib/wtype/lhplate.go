@@ -597,45 +597,37 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 }
 
 func (lhp *LHPlate) Dup() *LHPlate {
-	// protect yourself fgs
-	if lhp == nil {
-		logger.Fatal(fmt.Sprintln("Can't dup nonexistent plate"))
-	}
-	ret := NewLHPlate(lhp.Type, lhp.Mnfr, lhp.WlsY, lhp.WlsX, lhp.GetSize(), lhp.Welltype, lhp.WellXOffset, lhp.WellYOffset, lhp.WellXStart, lhp.WellYStart, lhp.WellZStart)
-
-	ret.PlateName = lhp.PlateName
-
-	ret.HWells = make(map[string]*LHWell, len(ret.HWells))
-
-	for i, row := range lhp.Rows {
-		for j, well := range row {
-			d := well.Dup()
-			ret.Rows[i][j] = d
-			ret.Cols[j][i] = d
-			ret.Wellcoords[d.Crds.FormatA1()] = d
-			ret.HWells[d.ID] = d
-			d.WContents.Loc = ret.ID + ":" + d.Crds.FormatA1()
-			d.Plate = ret
-		}
-	}
-
-	return ret
+	return lhp.dup(false)
 }
+
 func (lhp *LHPlate) DupKeepIDs() *LHPlate {
+	return lhp.dup(true)
+}
+
+func (lhp *LHPlate) dup(keep_ids bool) *LHPlate {
 	// protect yourself fgs
 	if lhp == nil {
 		logger.Fatal(fmt.Sprintln("Can't dup nonexistent plate"))
 	}
 	ret := NewLHPlate(lhp.Type, lhp.Mnfr, lhp.WlsY, lhp.WlsX, lhp.GetSize(), lhp.Welltype, lhp.WellXOffset, lhp.WellYOffset, lhp.WellXStart, lhp.WellYStart, lhp.WellZStart)
-	ret.ID = lhp.ID
+	if keep_ids {
+		ret.ID = lhp.ID
+	}
 
 	ret.PlateName = lhp.PlateName
 
 	ret.HWells = make(map[string]*LHWell, len(ret.HWells))
 
+	var d *LHWell
 	for i, row := range lhp.Rows {
 		for j, well := range row {
-			d := well.DupKeepIDs()
+			if keep_ids {
+				d = well.DupKeepIDs()
+			} else {
+				d = well.Dup()
+				d.WContents.Loc = ret.ID + ":" + d.Crds.FormatA1()
+			}
+			d.Plate = ret
 			ret.Rows[i][j] = d
 			ret.Cols[j][i] = d
 			ret.Wellcoords[d.Crds.FormatA1()] = d

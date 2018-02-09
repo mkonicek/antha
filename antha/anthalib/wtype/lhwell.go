@@ -392,19 +392,7 @@ func (w *LHWell) Empty() bool {
 
 // copy of instance
 func (lhw *LHWell) Dup() *LHWell {
-	if lhw == nil {
-		return nil
-	}
-
-	ret := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
-	ret.Plate = lhw.Plate
-	ret.Crds = lhw.Crds
-
-	for k, v := range lhw.Extra {
-		ret.Extra[k] = v
-	}
-
-	return ret
+	return lhw.dup(false)
 }
 
 // copy of type
@@ -425,6 +413,10 @@ func (lhw *LHWell) CDup() *LHWell {
 }
 
 func (lhw *LHWell) DupKeepIDs() *LHWell {
+	return lhw.dup(true)
+}
+
+func (lhw *LHWell) dup(keep_ids bool) *LHWell {
 	if lhw == nil {
 		return nil
 	}
@@ -432,14 +424,16 @@ func (lhw *LHWell) DupKeepIDs() *LHWell {
 	cp.Plate = lhw.Plate
 	cp.Crds = lhw.Crds
 
-	for k, v := range lhw.Extra {
-		cp.Extra[k] = v
+	if keep_ids {
+		cp.ID = lhw.ID
 	}
 
 	// Dup here doesn't change ID
 	cp.WContents = lhw.Contents().Dup()
 
-	cp.ID = lhw.ID
+	for k, v := range lhw.Extra {
+		cp.Extra[k] = v
+	}
 
 	return cp
 }

@@ -66,7 +66,7 @@ func TestInterfaceImplementations(t *testing.T) {
 			//"LHObject",
 			//"LHParent",
 			//"Addressable",
-			"LHContainer",
+			//"LHContainer",
 		},
 		"LHDeck": []string{
 			"Named",

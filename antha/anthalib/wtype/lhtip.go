@@ -68,6 +68,10 @@ func (self *LHTip) GetName() string {
 	return fmt.Sprintf("%s_%s", self.Mnfr, self.Type)
 }
 
+func (self *LHTip) GetID() string {
+	return self.ID
+}
+
 //@implement Typed
 func (self *LHTip) GetType() string {
 	if self == nil {

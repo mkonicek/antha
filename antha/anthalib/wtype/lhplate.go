@@ -95,6 +95,10 @@ func (plate LHPlate) GetLayout() string {
 	return s
 }
 
+func (lhp *LHPlate) GetID() string {
+	return lhp.ID
+}
+
 // Name returns the name of the plate.
 func (lhp LHPlate) Name() string {
 	return lhp.PlateName

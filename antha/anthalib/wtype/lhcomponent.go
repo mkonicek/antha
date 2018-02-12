@@ -87,6 +87,14 @@ func (lhc *LHComponent) WellLocation() string {
 	return lhc.PlateLocation().Coords.FormatA1()
 }
 
+func (lhc *LHComponent) GetClass() string {
+	return "component"
+}
+
+func (lhc *LHComponent) GetName() string {
+	return fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
+}
+
 // PlateID returns the id of a plate or the empty string
 func (lhc *LHComponent) PlateID() string {
 	loc := lhc.PlateLocation()

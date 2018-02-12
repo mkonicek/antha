@@ -74,6 +74,10 @@ func (tw *LHTipwaste) GetName() string {
 	return tw.Name
 }
 
+func (tw *LHTipwaste) GetID() string {
+	return tw.ID
+}
+
 func (tw *LHTipwaste) GetType() string {
 	if tw == nil {
 		return "<nil>"

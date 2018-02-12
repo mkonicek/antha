@@ -69,6 +69,10 @@ func (self *LHWell) GetName() string {
 	return fmt.Sprintf("%s@%s", self.Crds.FormatA1(), NameOf(self.Plate))
 }
 
+func (self *LHWell) GetID() string {
+	return self.ID
+}
+
 //@implement Typed
 func (self *LHWell) GetType() string {
 	return fmt.Sprintf("well_in_%s", TypeOf(self.Plate))

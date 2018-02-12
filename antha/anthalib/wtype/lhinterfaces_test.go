@@ -1,33 +1,144 @@
 package wtype
 
-/*
 import (
 	"testing"
 )
 
-func TestLabwareImplementations(t *testing.T) {
-	p := LHPlate{}
+func getLHObjects() map[string]interface{} {
+	ret := map[string]interface{}{
+		"LHComponent": &LHComponent{},
+		"LHDeck":      &LHDeck{},
+		"LHPlate":     &LHPlate{},
+		"LHTip":       &LHTip{},
+		"LHTipbox":    &LHTipbox{},
+		"LHTipwaste":  &LHTipwaste{},
+		"LHWell":      &LHWell{},
+	}
+	return ret
+}
 
-	_, ok := interface{}(&p).(SBSLabware)
+func getAssertionMap() map[string]func(interface{}) bool {
+	ret := map[string]func(interface{}) bool{
+		"Named": func(obj interface{}) bool {
+			_, ok := obj.(Named)
+			return ok
+		},
+		"Identifiable": func(obj interface{}) bool {
+			_, ok := obj.(Identifiable)
+			return ok
+		},
+		"Typed": func(obj interface{}) bool {
+			_, ok := obj.(Typed)
+			return ok
+		},
+		"Classy": func(obj interface{}) bool {
+			_, ok := obj.(Classy)
+			return ok
+		},
+		"LHObject": func(obj interface{}) bool {
+			_, ok := obj.(LHObject)
+			return ok
+		},
+		"LHParent": func(obj interface{}) bool {
+			_, ok := obj.(LHParent)
+			return ok
+		},
+		"Addressable": func(obj interface{}) bool {
+			_, ok := obj.(Addressable)
+			return ok
+		},
+		"LHContainer": func(obj interface{}) bool {
+			_, ok := obj.(LHContainer)
+			return ok
+		},
+	}
+	return ret
+}
 
-	if !ok {
-		t.Errorf("LHPlate does not implement labware")
+func TestInterfaceImplementations(t *testing.T) {
+
+	tests := map[string][]string{
+		"LHComponent": []string{
+			"Named",
+			"Identifiable",
+			"Typed",
+			"Classy",
+			//"LHObject",
+			//"LHParent",
+			//"Addressable",
+			"LHContainer",
+		},
+		"LHDeck": []string{
+			"Named",
+			"Identifiable",
+			"Typed",
+			"Classy",
+			"LHObject",
+			"LHParent",
+			//"Addressable",
+			//"LHContainer",
+		},
+		"LHPlate": []string{
+			"Named",
+			"Identifiable",
+			"Typed",
+			"Classy",
+			"LHObject",
+			//"LHParent",
+			"Addressable",
+			//"LHContainer",
+		},
+		"LHTip": []string{
+			"Named",
+			"Identifiable",
+			"Typed",
+			"Classy",
+			"LHObject",
+			//"LHParent",
+			//"Addressable",
+			//"LHContainer",
+		},
+		"LHTipbox": []string{
+			"Named",
+			"Identifiable",
+			"Typed",
+			"Classy",
+			"LHObject",
+			//"LHParent",
+			"Addressable",
+			//"LHContainer",
+		},
+		"LHTipwaste": []string{
+			"Named",
+			"Identifiable",
+			"Typed",
+			"Classy",
+			"LHObject",
+			//"LHParent",
+			"Addressable",
+			//"LHContainer",
+		},
+		"LHWell": []string{
+			"Named",
+			"Identifiable",
+			"Typed",
+			"Classy",
+			"LHObject",
+			//"LHParent",
+			//"Addressable",
+			"LHContainer",
+		},
 	}
 
-	tb := LHTipbox{}
+	objects := getLHObjects()
+	asserts := getAssertionMap()
 
-	_, ok = interface{}(&tb).(SBSLabware)
-
-	if !ok {
-		t.Errorf("LHTipbox does not implement labware")
-	}
-
-	tw := LHTipwaste{}
-
-	_, ok = interface{}(&tw).(SBSLabware)
-
-	if !ok {
-		t.Errorf("LHTipwaste does not implement labware")
+	for type_name, interfaces := range tests {
+		obj := objects[type_name]
+		for _, interface_name := range interfaces {
+			if !asserts[interface_name](obj) {
+				t.Errorf("%s doesn't implement %s", type_name, interface_name)
+			}
+		}
 	}
 }
-*/

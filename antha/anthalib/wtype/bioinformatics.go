@@ -196,12 +196,12 @@ func (aln SimpleAlignment) Column(i int) string {
 	return r
 }
 
-// Trim aligned (subject) sequences to only those residues/nucleotides aligned
-// to those in the query. This removes inserts (wrt the query) from aligned
-// sequences. Gaps within the interior of the aligned sequence are already
-// represented by '-' characters, however gaps at the ends of the aligned
-// sequence must be added here as well. The resulting aligned sequences will 
-// have the same length as the query.
+// CentreToQuery trims aligned (subject) sequences to only those
+// residues/nucleotides aligned to those in the query. This removes inserts
+// (with respect to the query) from aligned sequences. Gaps within the interior
+// of the aligned sequence are already represented by '-' characters, however
+// gaps at the ends of the aligned sequence must be added here as well. The
+// resulting aligned sequences will have the same length as the query.
 func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
 
 	s := "" // query
@@ -229,4 +229,11 @@ func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
 
   // Return query, aligned.
 	return s, r
+}
+
+// Struct for holding information about nucleotide or amino acid mutations.
+type Mutation struct {
+  Residue int    // Residue number of the mutation within the nucleic acid or protein.
+  Before  string // Nucliotide or amino acid type before mutation.
+  After   string // Nucleotide or amino acid type after mutation.
 }

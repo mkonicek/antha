@@ -43,6 +43,53 @@ func Decodeinterface(msg *pb.AnyMessage) interface{} {
 	json.Unmarshal([]byte(msg.Arg_1), &v)
 	return v
 }
+func DecodeGenericPlate(plate interface{}) (wtype.LHObject, error) {
+	if p, ok := guessAddPlateToPlateType(plate); ok != nil {
+		return nil, fmt.Errorf("Error guessing plate type")
+	} else {
+		return p, nil
+	}
+}
+func guessAddPlateToPlateType(plate interface{}) (wtype.LHObject, error) {
+	if plate == nil {
+		return nil, nil
+	}
+	switch p := plate.(type) {
+	case string:
+		var temp map[string]interface{}
+		if err := json.Unmarshal([]byte(p), &temp); err != nil {
+			return nil, err
+		}
+		//analyse what we got here
+		//XXX It would be more futureproof here to include the output of
+		//Classy.GetClass in the JSON and switch on that in case these random
+		//attributes change
+		if _, ok := temp["Welltype"]; ok { //wtype.LHPlate
+			var ret wtype.LHPlate
+			if err := json.Unmarshal([]byte(p), &ret); !ok {
+				return nil, err
+			}
+			return &ret, nil
+		} else {
+			if _, ok := temp["AsWell"]; ok {
+				if _, ok := temp["TipXStart"]; ok { //wtype.LHTipbox
+					var ret wtype.LHTipbox
+					if err := json.Unmarshal([]byte(p), &ret); !ok {
+						return nil, err
+					}
+					return &ret, nil
+				} else if _, ok := temp["WellXStart"]; ok { //wtype.LHTipwaste
+					var ret wtype.LHTipwaste
+					if err := json.Unmarshal([]byte(p), &ret); !ok {
+						return nil, err
+					}
+					return &ret, nil
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("Could not find suitable type for plate.")
+}
 func EncodeArrayOfstring(arg []string) *pb.ArrayOfstring {
 	a := make([]string, len(arg))
 	for i, v := range arg {

@@ -295,7 +295,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		// source well volume
 
-		wellFrom, ok := srcPlate.Wellcoords[wf[ci]]
+		wellFrom, ok := srcPlate.WellAtString(wf[ci])
 
 		if !ok {
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")

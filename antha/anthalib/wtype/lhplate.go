@@ -495,15 +495,21 @@ func (self *LHPlate) GetClass() string {
 	return "plate"
 }
 
-func (lhp *LHPlate) WellAt(wc WellCoords) *LHWell {
-	return lhp.Wellcoords[wc.FormatA1()]
+func (lhp *LHPlate) WellAt(wc WellCoords) (*LHWell, bool) {
+	w, ok := lhp.Wellcoords[wc.FormatA1()]
+	return w, ok
 }
 
 func (lhp *LHPlate) WellAtString(s string) (*LHWell, bool) {
-	// improve later, start by assuming these are in FormatA1()
-	w, ok := lhp.Wellcoords[s]
 
-	return w, ok
+	//parse well coords, guessing the format
+	wc := MakeWellCoords(s)
+	if wc.IsZero() {
+		//couldn't parse format
+		return nil, false
+	}
+
+	return lhp.WellAt(wc)
 }
 
 func (lhp *LHPlate) WellsX() int {

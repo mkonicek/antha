@@ -203,9 +203,10 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		cmp.Conc = concentration.RawValue()
 		cmp.Cunit = concentration.Unit().PrefixedSymbol()
 
-		plate.WellAt(well).Add(cmp)
+		wa, _ := plate.WellAt(well)
+		wa.Add(cmp)
 		// this should be defined elsewhere
-		plate.WellAt(well).WContents.DeclareInstance()
+		wa.WContents.DeclareInstance()
 	}
 
 	return &ParsePlateResult{

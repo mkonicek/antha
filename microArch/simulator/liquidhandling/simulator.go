@@ -1122,6 +1122,9 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 			channels = append(channels, ch)
 		}
 
+		//best to order the channels sensibly
+		sort.Ints(channels)
+
 		if len(channels) == 0 {
 			self.AddWarning("LoadTips", "'channel' argument empty and no tips below adaptor, ignoring")
 			return ret
@@ -1275,6 +1278,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 				channels = append(channels, ch)
 			}
 		}
+		sort.Ints(channels)
 		if len(channels) == 0 {
 			self.AddWarning("UnloadTips", "'channel' argument empty and no tips are loaded, ignoring")
 		} else if self.settings.IsAutoChannelWarningEnabled() {

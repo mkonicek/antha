@@ -100,6 +100,10 @@ Linux. The basic steps are:
     - Install [glpk](http://sourceforge.net/projects/winglpk/) development library and make sure that
       mingw can find it.
 
+
+
+
+
 If this procedure sounds daunting, you can try using some scripts we developed
 to automate the installation procedure on Windows.
 [Download](scripts/windows/windows-install.zip), unzip them and run

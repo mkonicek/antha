@@ -64,6 +64,11 @@ func (self *deckSlot) GetAccepted() []string {
 	return self.accepts
 }
 
+func (self *deckSlot) IsBelow(point Coordinates) bool {
+	return (point.X >= self.position.X && point.X <= self.position.X+self.size.X &&
+		point.Y >= self.position.Y && point.Y <= self.position.Y+self.size.Y)
+}
+
 //Represents a robot deck
 type LHDeck struct {
 	name     string
@@ -162,6 +167,15 @@ func (self *LHDeck) GetSlotNames() []string {
 	return ret
 }
 
+func (self *LHDeck) GetSlotContaining(obj LHObject) string {
+	for n, sl := range self.slots {
+		if IDOf(sl.contents) == IDOf(obj) {
+			return n
+		}
+	}
+	return ""
+}
+
 func (self *LHDeck) SetChild(name string, child LHObject) error {
 	if ds, ok := self.slots[name]; !ok {
 		return fmt.Errorf("Cannot put %s \"%s\" at unknown slot \"%s\"", ClassOf(child), NameOf(child), name)
@@ -215,13 +229,29 @@ func (self *LHDeck) SetSlotAccepts(name string, class string) {
 	}
 }
 
+func (self *LHDeck) GetSlotNamesBelow(point Coordinates) []string {
+	ret := make([]string, 0)
+	for name, slot := range self.slots {
+		if slot.IsBelow(point) {
+			ret = append(ret, name)
+		}
+	}
+	return ret
+}
+
+//get all objects above and below the point
+func (self *LHDeck) GetVChildren(point Coordinates) []LHObject {
+	//get all children in the same vertical plane
+	box := NewBBox6f(point.X, point.Y, -math.MaxFloat64/2, 0, 0, math.MaxFloat64)
+	return self.GetBoxIntersections(*box)
+
+}
+
 //Return the nearest object below the point, nil if none.
 //The base of the object is used as reference, so e.g. a point within a well
 //will return the plate
 func (self *LHDeck) GetChildBelow(point Coordinates) LHObject {
-	//get all children in the same vertical plane
-	box := NewBBox6f(point.X, point.Y, -math.MaxFloat64/2, 0, 0, math.MaxFloat64)
-	candidates := self.GetBoxIntersections(*box)
+	candidates := self.GetVChildren(point)
 	//find the closest that's below
 	z_off_min := math.MaxFloat64
 	z_off_i := -1

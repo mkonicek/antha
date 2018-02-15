@@ -560,9 +560,10 @@ func (self *VirtualLiquidHandler) getAbsolutePosition(fname, deckposition, well 
 		return ret, false
 	}
 
-	if platetype != wtype.TypeOf(target) {
+	if (platetype != wtype.TypeOf(target)) &&
+		(platetype != fmt.Sprintf("%s_%s", wtype.TypeOf(target), wtype.IDOf(target))) {
 		self.AddWarningf(fname, "Object found at %s was type \"%s\" not type \"%s\" as expected",
-			deckposition, wtype.TypeOf(target), platetype)
+			deckposition, fmt.Sprintf("%s_%s", wtype.TypeOf(target), wtype.IDOf(target)), platetype)
 	}
 
 	addr, ok := target.(wtype.Addressable)
@@ -1134,11 +1135,10 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 
 		//check if multi is wrong
 		if multi != len(channels) {
-			self.AddWarningf("LoadTips", "'channel' argument inferred as %s, adjusting 'multi' from %d to %d",
+			self.AddErrorf("LoadTips", "'channel' argument inferred as %s, but 'multi' is %d",
 				summariseChannels(channels),
-				multi,
-				len(channels))
-			multi = len(channels)
+				multi)
+			return ret
 		}
 	}
 	if multi != len(channels) {
@@ -1149,18 +1149,45 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 
 	//Get the tip at each requested location
 	tips := make([]*wtype.LHTip, n_channels)
+	var tipbox *wtype.LHTipbox
 	for _, i := range channels {
+		//infer position if it's not given
+		if position[i] == "" {
+			pos := adaptor.GetChannel(i).GetAbsolutePosition()
+			for _, obj := range deck.GetVChildren(pos) {
+				if tb, ok := obj.(*wtype.LHTipbox); ok {
+					position[i] = deck.GetSlotContaining(tb)
+					self.AddWarningf("LoadTips",
+						"Position %d was blank, inferring \"%s\" from adaptor location",
+						i, position[i])
+					break
+				}
+			}
+		}
 		if o, ok := deck.GetChild(position[i]); !ok {
 			self.AddErrorf("LoadTips", "No known location \"%s\"", position[i])
 			return ret
 		} else if o == nil {
 			self.AddErrorf("LoadTips", "No tipbox found at position %s, empty deck position", position[i])
 			return ret
-		} else if tipbox, ok := o.(*wtype.LHTipbox); !ok {
+		} else if tipbox, ok = o.(*wtype.LHTipbox); !ok {
 			self.AddErrorf("LoadTips", "No tipbox found at position %s, instead found %s \"%s\"",
 				position[i], wtype.ClassOf(o), wtype.NameOf(o))
 			return ret
-		} else if !tipbox.AddressExists(wc[i]) {
+		}
+
+		if wc[i].IsZero() {
+			pos := adaptor.GetChannel(i).GetAbsolutePosition()
+			wc[i], _ = tipbox.CoordsToWellCoords(pos)
+			if !wc[i].IsZero() {
+				self.AddWarningf("LoadTips",
+					"Well coordinates for channel %d not specified, assuming %s from adaptor location",
+					i,
+					wc[i].FormatA1())
+			}
+		}
+
+		if !tipbox.AddressExists(wc[i]) {
 			self.AddErrorf("LoadTips", "Request for tip at %s in tipbox of size [%dx%d]",
 				wc[i].FormatA1(), tipbox.NCols(), tipbox.NRows())
 			return ret

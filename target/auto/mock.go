@@ -5,7 +5,6 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/platereader"
-	"errors"
 	"fmt"
 )
 

@@ -503,6 +503,10 @@ func (tb *LHTipbox) Remove(sa []string) bool {
 	ar := WCArrayFromStrings(sa)
 
 	for _, wc := range ar {
+		// need to support tip loading and removal from arrays with gaps
+		if wc.IsZero() {
+			continue
+		}
 		tip := tb.RemoveTip(wc)
 		if tip == nil {
 			return false

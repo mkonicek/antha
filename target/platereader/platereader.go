@@ -150,7 +150,10 @@ func (a* PlateReader) mergePRInsts(insts []wtype.PRInstruction, wellLocs map[str
 
 		call := driver.Call{
 			Method:"PRRunProtocolByName",
-			Args: &platereader.ProtocolRunRequest{protocolName, plateId},
+			Args: &platereader.ProtocolRunRequest{
+				ProtocolName: protocolName,
+				PlateID: plateId,
+			},
 			Reply: &platereader.BoolReply{},
 		}
 		calls = append(calls, call)

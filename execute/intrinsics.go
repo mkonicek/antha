@@ -207,25 +207,13 @@ type HandleOpt struct {
 
 // Handle performs a low level instruction on a component
 func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
-
-	fmt.Println("hit Handle [performs low level instruction on device]")
-	fmt.Println(opt)
-
 	inst := handle(ctx, opt)
-	fmt.Println("inst::", inst)
-
-
 	trace.Issue(ctx, inst)
 	return inst.result
 }
 
 
-
-
-
-//
 // Plate reader
-//
 type ReadAbsorbanceOpts struct {
 	Sample *wtype.LHComponent
 	WaveLength  int

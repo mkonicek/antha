@@ -348,7 +348,10 @@ func (a *ir) tryPlan(ctx context.Context) error {
 		a.output[d] = insts
 
 		// TODO: Optimise this. Currently aggressive.
-		a.setOutputs()
+		err = a.setOutputs()
+		if err != nil {
+			return err
+		}
 	}
 	return a.addImplicitInsts(runs)
 }

@@ -17,6 +17,10 @@ type PlateReader struct {
 }
 
 
+// Ensure satisfies Device interface
+var _ target.Device = &PlateReader{}
+
+
 // CanCompile implements a Device
 func (a *PlateReader) CanCompile(req ast.Request) bool {
 	can := ast.Request{}
@@ -24,12 +28,13 @@ func (a *PlateReader) CanCompile(req ast.Request) bool {
 	return can.Contains(req)
 }
 
-
+// MoveCost implements a Device
 func (a *PlateReader) MoveCost(from target.Device) int {
 	return 0
 }
 
 
+// Compile implements a Device
 func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 
 	// Find the LHComponentID for the samples to measure. We'll then search

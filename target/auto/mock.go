@@ -25,7 +25,6 @@ type MockDevice struct {
 	DeviceClass	string `json:"class"`
 	DeviceName  string `json:"name"`
 	Properties  map[string]string `json:"properties"`
-	FakeCalls  []FakeCall  `json:"fake_calls"`
 }
 
 
@@ -48,12 +47,11 @@ func UnmarshalMockTargetConfig(targetConfigFilePath string) (*MockTargetConfig, 
 }
 
 
+// Make a real Device from a MockDevice
 func (a *MockDevice) ToDevice() (target.Device, error) {
 	if a == nil {
-		return nil, errors.New("no device given")
+		return nil, fmt.Errorf("no device given")
 	}
-
-	// TODO: Better way of doing this?
 
 	// Very basic for now
 	switch a.DeviceClass {
@@ -61,5 +59,5 @@ func (a *MockDevice) ToDevice() (target.Device, error) {
 		return &platereader.PlateReader{}, nil
 	}
 
-	return nil, errors.New(fmt.Sprintf("unknown mock device class: '%s'", a.DeviceClass))
+	return nil, fmt.Errorf("unknown mock device class: '%s'", a.DeviceClass)
 }

@@ -203,10 +203,17 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		cmp.Conc = concentration.RawValue()
 		cmp.Cunit = concentration.Unit().PrefixedSymbol()
 
-		wa, _ := plate.WellAt(well)
-		wa.Add(cmp)
-		// this should be defined elsewhere
-		wa.WContents.DeclareInstance()
+		if wa, ok := plate.WellAt(well); ok {
+			err = wa.Add(cmp)
+			if err != nil {
+				return nil, err
+			}
+
+			// this should be defined elsewhere
+			wa.WContents.DeclareInstance()
+		} else {
+			return nil, fmt.Errorf("Unknown location \"%s\" in plate \"%s\"", well.FormatA1(), plate.Name())
+		}
 	}
 
 	return &ParsePlateResult{

@@ -33,6 +33,11 @@ type ir struct {
 	finalizers   []target.Inst               // Finalizers in reverse order
 }
 
+// Result is result of compiling a set of ast.Nodes
+type Result struct {
+	Insts []target.Inst
+}
+
 // Print out IR for debugging
 func (a *ir) Print(g graph.Graph, out io.Writer) error {
 	shortID := func(x string) string {
@@ -300,6 +305,9 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 	a.assignment = run
 }
 
+
+
+
 // Run plan through device-specific planners. Adjust assignment based on
 // planner capabilities and return output.
 func (a *ir) tryPlan(ctx context.Context) error {
@@ -345,14 +353,18 @@ func (a *ir) tryPlan(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		a.output[d] = insts
 
-		// TODO: Optimise this. Currently aggressive.
-		err = a.setOutputs()
-		if err != nil {
-			return err
+		result := &Result{
+			Insts: insts,
 		}
+		for _, n := range cmds[d] {
+			c := n.(*ast.Command)
+			c.Output = result
+		}
+
+		a.output[d] = insts
 	}
+
 	return a.addImplicitInsts(runs)
 }
 
@@ -590,20 +602,6 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 	return insts, nil
 }
 
-// Mark nodes as compiled
-func (a *ir) setOutputs() error {
-	for _, n := range a.Graph.Nodes {
-		if c, ok := n.(*ast.Command); !ok {
-			continue
-		} else if c.Output != nil {
-			continue
-		} else if run := a.assignment[c]; run != nil {
-			c.Output = a.output[run]
-		}
-	}
-	return nil
-}
-
 // Compile an expression program into a sequence of instructions for a target
 // configuration. This supports incremental compilation, so roots may refer to
 // nodes that have already been compiled, in which case, the result may refer
@@ -635,9 +633,6 @@ func Compile(ctx context.Context, t *target.Target, roots []ast.Node) ([]target.
 	insts, err := ir.genInsts()
 	if err != nil {
 		return nil, fmt.Errorf("error generating instructions: %s", err)
-	}
-	if err := ir.setOutputs(); err != nil {
-		return nil, fmt.Errorf("error setting outputs: %s", err)
 	}
 
 	// TODO: discard programs that create multiple setups until we get their

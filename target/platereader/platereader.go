@@ -9,6 +9,7 @@ import (
 	"github.com/antha-lang/antha/driver"
 	platereader "github.com/antha-lang/antha/driver/antha_platereader_v1"
 	"strings"
+	"github.com/antha-lang/antha/codegen"
 )
 
 
@@ -54,33 +55,26 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 		lhCmpIds[lhID] = true
 	}
 
-	// Parse the parentId to get the LHComponentId
-	getIDFromParent := func (parentId string) string {
-		if len(parentId) > 36 {
-			return parentId[:36]
-		}
-		return ""
-	}
-
 	// Look for the sample locations
 	lhPlateLocations := make(map[string]string) // {cmpId: PlateId}
 	lhWellLocations := make(map[string]string) // {cmpId: A1Coord}
 	for _, cmd := range ast.FindReachingCommands(nodes) {
-		insts := cmd.Output.([]target.Inst)
+		insts := cmd.Output.(*codegen.Result).Insts
 		for _, inst := range insts {
 			mix, ok := inst.(*target.Mix)
 			if !ok {
-				// TODO: Deal with other commands...
+				// TODO: Deal with other instructions
 				fmt.Printf("Expected *target.Mix, got: %T", inst)
 				continue
 			}
 			for _, plate := range mix.FinalProperties.Plates {
 				for _, well := range plate.Wellcoords {
-					lhCmpID := getIDFromParent(well.WContents.ParentID)
-					if len(lhCmpID) > 0 && lhCmpIds[lhCmpID] {
-						// Found a component that we are looking for
-						lhPlateLocations[lhCmpID] = plate.ID
-						lhWellLocations[lhCmpID] = well.Crds
+					for lhCmpID := range lhCmpIds {
+						if strings.Contains(well.WContents.ParentID, lhCmpID) {
+							// Found a component that we are looking for
+							lhPlateLocations[lhCmpID] = plate.ID
+							lhWellLocations[lhCmpID] = well.Crds
+						}
 					}
 				}
 			}

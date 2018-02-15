@@ -230,10 +230,3 @@ func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
   // Return query, aligned.
 	return s, r
 }
-
-// Struct for holding information about nucleotide or amino acid mutations.
-type Mutation struct {
-  Residue int    // Residue number of the mutation within the nucleic acid or protein.
-  Before  string // Nucliotide or amino acid type before mutation.
-  After   string // Nucleotide or amino acid type after mutation.
-}

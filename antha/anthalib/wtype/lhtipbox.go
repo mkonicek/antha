@@ -507,6 +507,10 @@ func (tb *LHTipbox) Remove(sa []string) bool {
 		if wc.IsZero() {
 			continue
 		}
+
+		if wc.X < 0 {
+			continue
+		}
 		tip := tb.RemoveTip(wc)
 		if tip == nil {
 			return false

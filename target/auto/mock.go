@@ -8,18 +8,13 @@ import (
 	"fmt"
 )
 
-
-type FakeCall struct {
-	Method string 	`json:"method"`
-	Response interface{}	`json:"response"`
-}
-
-
+// MockTargetConfig defines a mock-target
 type MockTargetConfig struct {
 	MockDevices []MockDevice  `json:"devices"`
 }
 
 
+// MockTargetConfig defines a mock-device
 type MockDevice struct {
 	DeviceClass	string `json:"class"`
 	DeviceName  string `json:"name"`
@@ -27,8 +22,7 @@ type MockDevice struct {
 }
 
 
-// Parse the --target file
-// To get a list of TargetConfig
+// UnmarshalMockTargetConfig parses the --target file to get a list of TargetConfig
 func UnmarshalMockTargetConfig(targetConfigFilePath string) (*MockTargetConfig, error) {
 
 	// There was no config

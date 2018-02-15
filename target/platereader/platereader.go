@@ -51,9 +51,9 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 			// TODO: Do we want to panic?
 			panic(fmt.Sprintf("expected PRInstruction. Got: %T", cmd.Inst))
 		}
-		lhId := inst.ComponentIn.GetID()
-		fmt.Println("LHID::", lhId)
-		lhCmpIds[lhId] = true
+		lhID := inst.ComponentIn.GetID()
+		fmt.Println("LHID::", lhID)
+		lhCmpIds[lhID] = true
 	}
 
 	// Breadth-first search to find location for all LhComponents
@@ -61,7 +61,7 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 	lhLocations := make(map[string]string)
 
 	// Parse the parentId to get the LHComponentId
-	getIdFromParent := func (parentId string) string {
+	getIDFromParent := func (parentId string) string {
 		if len(parentId) > 36 {
 			return parentId[:36]
 		}
@@ -83,9 +83,9 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 			}
 			for _, plate := range mix.FinalProperties.Plates {
 				for _, well := range plate.Wellcoords {
-					lhCmpId := getIdFromParent(well.WContents.ParentID)
-					if len(lhCmpId) > 0 && lhCmpIds[lhCmpId] {
-						lhLocations[lhCmpId] = fmt.Sprintf("%s:%s:%s", well.Crds, plate.ID, plate.Name())
+					lhCmpID := getIDFromParent(well.WContents.ParentID)
+					if len(lhCmpID) > 0 && lhCmpIds[lhCmpID] {
+						lhLocations[lhCmpID] = fmt.Sprintf("%s:%s:%s", well.Crds, plate.ID, plate.Name())
 					}
 				}
 			}
@@ -134,6 +134,10 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 		Calls: calls,
 	}
 
+	// For debug
+	for _, call := range calls {
+		fmt.Println("driver.Call", call)
+	}
 
 	// In language of S2
 	return []target.Inst{inst}, nil

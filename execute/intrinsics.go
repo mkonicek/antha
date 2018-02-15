@@ -213,7 +213,7 @@ func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 }
 
 
-// Plate reader
+// ReadAbsorbanceOpts defines plate-reader absorbance options
 type ReadAbsorbanceOpts struct {
 	Sample *wtype.LHComponent
 	WaveLength  int
@@ -246,6 +246,7 @@ func readAbsorbance(ctx context.Context, opts ReadAbsorbanceOpts) *commandInst {
 	}
 }
 
+// ReadAbsorbance reads absorbance of a component
 func ReadAbsorbance(ctx context.Context, opt ReadAbsorbanceOpts) *wtype.LHComponent {
 	inst := readAbsorbance(ctx, opt)
 	trace.Issue(ctx, inst)

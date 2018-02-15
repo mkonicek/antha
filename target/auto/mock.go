@@ -14,7 +14,7 @@ type MockTargetConfig struct {
 }
 
 
-// MockTargetConfig defines a mock-device
+// MockDevice defines a mock-device
 type MockDevice struct {
 	DeviceClass	string `json:"class"`
 	DeviceName  string `json:"name"`
@@ -40,7 +40,7 @@ func UnmarshalMockTargetConfig(targetConfigFilePath string) (*MockTargetConfig, 
 }
 
 
-// Make a real Device from a MockDevice
+// ToDevice makes a Device from a MockDevice
 func (a *MockDevice) ToDevice() (target.Device, error) {
 	if a == nil {
 		return nil, fmt.Errorf("no device given")

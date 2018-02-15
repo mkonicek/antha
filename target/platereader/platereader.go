@@ -87,7 +87,6 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 		}
 	}
 
-
 	prInsts := make([]wtype.PRInstruction, 0)
 	for _, node := range nodes {
 		cmd := node.(*ast.Command)

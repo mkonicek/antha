@@ -15,12 +15,7 @@ import (
 func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 	switch inst := inst.(type) {
 	case *target.Mix:
-
-		// TODO: DO NOT COMMIT!!!
-
-		fmt.Println("Execute mix...")
-		return nil
-		//return a.executeMix(ctx, inst)
+		return a.executeMix(ctx, inst)
 	case *target.Run:
 		return a.executeRun(ctx, inst)
 	case *target.Manual:
@@ -51,15 +46,10 @@ func (a *Auto) executeWaitData(ctx context.Context, inst *target.AwaitData) erro
 func (a *Auto) executeRun(ctx context.Context, inst *target.Run) error {
 	conn, ok := a.handler[inst.Dev]
 	if !ok {
-		//return fmt.Errorf("no grpc handler for device: '%s'", inst.Label)
+		return fmt.Errorf("no handler for %s", inst.Label)
 	}
 
 	for _, c := range inst.Calls {
-
-		fmt.Println("Calls:", ctx, c.Method, c.Args, c.Reply)
-		continue
-
-
 		if err := grpc.Invoke(ctx, c.Method, c.Args, c.Reply, conn); err != nil {
 			return err
 		}

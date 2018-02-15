@@ -1131,6 +1131,15 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		} else if self.settings.IsAutoChannelWarningEnabled() {
 			self.AddWarningf("LoadTips", "'channel' argument empty, assuming all channels above tips (%s)", summariseChannels(channels))
 		}
+
+		//check if multi is wrong
+		if multi != len(channels) {
+			self.AddWarningf("LoadTips", "'channel' argument inferred as %s, adjusting 'multi' from %d to %d",
+				summariseChannels(channels),
+				multi,
+				len(channels))
+			multi = len(channels)
+		}
 	}
 	if multi != len(channels) {
 		self.AddErrorf("LoadTips", "While loading %s to %s, multi should equal %d, not %d",

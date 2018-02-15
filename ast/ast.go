@@ -234,3 +234,44 @@ func Deps(roots []Node) graph.Graph {
 		},
 	})
 }
+
+
+// FindReaching finds reachable Commands given a slice of ast.Node
+func FindReachingCommands(nodes []Node) []Command {
+	g := ToGraph(ToGraphOpt{Roots: nodes, WhichDeps: DataDeps})
+
+	cmds := make([]Command, 0)
+	stack := make([]graph.Node, 0)
+
+	// Add immediate children to stack
+	for _, node := range nodes {
+		for i := 0; i < g.NumOuts(node); i ++ {
+			stack = append(stack, g.Out(node, i))
+		}
+	}
+
+	// Breath-first search on stack
+	seen := make(map[graph.Node]bool)
+	for len(stack) > 0 {
+		node := stack[0]
+		stack = stack[1:]
+
+		// Check if we've been here before
+		if seen[node] {
+			continue
+		}
+		seen[node] = true
+
+		cmd, ok := node.(*Command)
+		if ok {
+			// Found a command, stop here
+			cmds = append(cmds, *cmd)
+		} else {
+			// Keep looking
+			for i := 0; i < g.NumOuts(node); i ++ {
+				stack = append(stack, g.Out(node, i))
+			}
+		}
+	}
+	return cmds
+}

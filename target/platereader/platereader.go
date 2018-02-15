@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver"
 	platereader "github.com/antha-lang/antha/driver/antha_platereader_v1"
@@ -43,7 +42,6 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 	for _, node := range nodes {
 		cmd, ok := node.(*ast.Command)
 		if !ok {
-			// TODO: Do we want to panic?
 			panic(fmt.Sprintf("expected *ast.Command. Got: %T", node))
 		}
 		inst, ok := cmd.Inst.(*wtype.PRInstruction)
@@ -56,10 +54,6 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 		lhCmpIds[lhID] = true
 	}
 
-	// Breadth-first search to find location for all LhComponents
-	g := ast.ToGraph(ast.ToGraphOpt{Roots: nodes, WhichDeps: ast.DataDeps})
-	lhLocations := make(map[string]string)
-
 	// Parse the parentId to get the LHComponentId
 	getIDFromParent := func (parentId string) string {
 		if len(parentId) > 36 {
@@ -68,12 +62,10 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 		return ""
 	}
 
-	// Apply to each node we visit
-	apply := func(node graph.Node) {
-		cmd, ok := node.(*ast.Command)
-		if !ok {
-			return
-		}
+	// Look for the sample locations
+	found := make(map[string]bool)
+	lhLocations := make(map[string][]string) // {plateID : []A1Coord}
+	for _, cmd := range ast.FindReachingCommands(nodes) {
 		insts := cmd.Output.([]target.Inst)
 		for _, inst := range insts {
 			mix, ok := inst.(*target.Mix)
@@ -84,40 +76,19 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 			for _, plate := range mix.FinalProperties.Plates {
 				for _, well := range plate.Wellcoords {
 					lhCmpID := getIDFromParent(well.WContents.ParentID)
-					if len(lhCmpID) > 0 && lhCmpIds[lhCmpID] {
-						lhLocations[lhCmpID] = fmt.Sprintf("%s:%s:%s", well.Crds, plate.ID, plate.Name())
+					if len(lhCmpID) > 0 && lhCmpIds[lhCmpID] && !found[lhCmpID] {
+						// Found a component that we are looking for
+						lhLocations[plate.ID] = append(lhLocations[plate.ID], well.Crds)
+						found[lhCmpID] = true
 					}
 				}
 			}
 		}
 	}
 
-	// Traverse breadth-first
-	stack := make([]graph.Node, 0)
-	seen := make(map[graph.Node]bool)
-	for _, node := range nodes {
-		stack = append(stack, node)
-	}
-	for len(stack) > 0 {
-		if len(lhLocations) == len(lhCmpIds) {
-			// Found the locations of all samples, so stop.
-			break
-		}
-		node := stack[0]
-		stack = stack[1:]
-		if seen[node] {
-			continue
-		}
-		apply(node)  // visit the node
-		seen[node] = true
-		for i := 0; i < g.NumOuts(node); i ++ {
-			stack = append(stack, g.Out(node, i))
-		}
-	}
-
-
-	for k, v := range lhLocations {
-		fmt.Println("WELL_LOCATION:", k, v)
+	// Groupby plateID
+	for plateId, coords := range lhLocations {
+		fmt.Println("WELL_LOCATION:", plateId, coords)
 	}
 
 

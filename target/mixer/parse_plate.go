@@ -212,7 +212,7 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 			// this should be defined elsewhere
 			wa.WContents.DeclareInstance()
 		} else {
-			return nil, fmt.Errorf("Unknown location \"%s\" in plate \"%s\"", well.Format1A(), plate.Name())
+			return nil, fmt.Errorf("Unknown location \"%s\" in plate \"%s\"", well.FormatA1(), plate.Name())
 		}
 	}
 

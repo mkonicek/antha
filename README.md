@@ -78,8 +78,13 @@ export PATH=$PATH:/usr/local/go/bin
 # Install antha external dependencies
 sudo apt-get install -y libglpk-dev libopencv-dev libsqlite3-dev git
 
-# Now, we are ready to get antha
-go get github.com/antha-lang/elements/cmd/...
+# Install antha
+mkdir -p $GOPATH/src/github.com/antha-lang
+cd $GOPATH/src/github.com/antha-lang
+git clone https://github.com/antha-lang/elements
+cd elements
+git submodule update --init
+make
 
 # add the local go bin to the path
 export PATH=$PATH:$HOME/go/bin

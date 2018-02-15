@@ -115,6 +115,7 @@ type runOpt struct {
 	MixerOpt               mixer.Opt
 	Drivers                []string
 	BundleFile             string
+	TargetConfigFile	   string
 	ParametersFile         string
 	WorkflowFile           string
 	MixInstructionFileName string
@@ -123,9 +124,10 @@ type runOpt struct {
 }
 
 type runInput struct {
-	BundleFile     string
-	ParametersFile string
-	WorkflowFile   string
+	BundleFile       string
+	TargetConfigFile string
+	ParametersFile   string
+	WorkflowFile     string
 }
 
 func unmarshalRunInput(in *runInput) (*executeutil.Bundle, error) {
@@ -156,11 +158,15 @@ func unmarshalRunInput(in *runInput) (*executeutil.Bundle, error) {
 	})
 }
 
+
+
+
+
 func (a *runOpt) Run() error {
 	bundle, err := unmarshalRunInput(&runInput{
-		BundleFile:     a.BundleFile,
-		ParametersFile: a.ParametersFile,
-		WorkflowFile:   a.WorkflowFile,
+		BundleFile:       a.BundleFile,
+		ParametersFile:   a.ParametersFile,
+		WorkflowFile:     a.WorkflowFile,
 	})
 	if err != nil {
 		return err
@@ -176,11 +182,36 @@ func (a *runOpt) Run() error {
 	for _, uri := range a.Drivers {
 		opt.Endpoints = append(opt.Endpoints, auto.Endpoint{URI: uri})
 	}
+
+
+	// Either we get devices via:
+	//   (1) Auto detect gRPC devices on network interfaces
+	//   (2) Mock the device with file config
+
+	// (1) Devices via gRPC
 	t, err := auto.New(opt)
 	if err != nil {
 		return err
 	}
 
+	// (2) Devices from Config file
+	targetConfig, err := auto.UnmarshalMockTargetConfig(a.TargetConfigFile)
+	if err != nil {
+		return fmt.Errorf(
+			"cannot decode target-config file '%s' detail:%s",
+			a.TargetConfigFile, err)
+	}
+	for _, mockDevice := range targetConfig.MockDevices {
+		device, err := mockDevice.ToDevice()
+		if err != nil {
+			return fmt.Errorf("could not instatiate device from mock: %s", err)
+		}
+		t.Target.AddDevice(device)
+		fmt.Println(fmt.Sprintf("added mock device: '%s'", mockDevice.DeviceName))
+	}
+
+
+	// frontend is deprecated
 	fe, err := frontend.New()
 	if err != nil {
 		return err
@@ -312,10 +343,13 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		BundleFile:             viper.GetString("bundle"),
 		ParametersFile:         viper.GetString("parameters"),
 		WorkflowFile:           viper.GetString("workflow"),
+		TargetConfigFile:       viper.GetString("target"),
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 		TestBundleFileName:     viper.GetString("makeTestBundle"),
 		RunTest:                viper.GetBool("RunTest"),
 	}
+
+	//runOpt.Validate()
 
 	return opt.Run()
 }
@@ -338,6 +372,7 @@ func init() {
 	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
 	flags.String("parameters", "parameters.json", "Parameters to workflow")
 	flags.String("workflow", "workflow.json", "Workflow definition file")
+	flags.String("target", "", "Mock target definition file")
 	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
 	flags.StringSlice("inputPlateType", nil, "Default input plate types (in order of preference)")

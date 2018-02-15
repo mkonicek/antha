@@ -310,6 +310,10 @@ func (a *ir) tryPlan(ctx context.Context) error {
 		},
 	})
 
+	fmt.Println("Commands", a.Commands)
+	fmt.Println("graph", dg)
+
+
 	// TODO: When initial assignment is not feasible for a device (e.g.,
 	// capacity constraints), split up run until feasible or give up.
 
@@ -339,16 +343,17 @@ func (a *ir) tryPlan(ctx context.Context) error {
 		runs = append(runs, run)
 	}
 
-	output := make(map[*drun][]target.Inst)
+	a.output = make(map[*drun][]target.Inst)
 	for _, d := range runs {
 		insts, err := d.Device.Compile(ctx, cmds[d])
 		if err != nil {
 			return err
 		}
-		output[d] = insts
-	}
+		a.output[d] = insts
 
-	a.output = output
+		// TODO: Optimise this. Currently aggressive.
+		a.setOutputs()
+	}
 
 	return a.addImplicitInsts(runs)
 }
@@ -595,7 +600,7 @@ func (a *ir) setOutputs() error {
 		} else if c.Output != nil {
 			continue
 		} else if run := a.assignment[c]; run != nil {
-			c.Output = run
+			c.Output = a.output[run]
 		}
 	}
 	return nil

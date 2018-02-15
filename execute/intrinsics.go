@@ -207,7 +207,68 @@ type HandleOpt struct {
 
 // Handle performs a low level instruction on a component
 func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
+
+	fmt.Println("hit Handle [performs low level instruction on device]")
+	fmt.Println(opt)
+
 	inst := handle(ctx, opt)
+	fmt.Println("inst::", inst)
+
+
+	trace.Issue(ctx, inst)
+	return inst.result
+}
+
+
+
+
+
+//
+// Plate reader
+//
+type ReadAbsorbanceOpts struct {
+	Sample *wtype.LHComponent
+	WaveLength  int
+}
+func readAbsorbance(ctx context.Context, opts ReadAbsorbanceOpts) *commandInst {
+	inst := wtype.NewPRAbsorbanceInstruction()
+
+	inst.ComponentIn = opts.Sample
+
+	// Clone the component to represent the result of the AbsorbanceRead
+
+	comp := inst.ComponentIn.Dup()
+	comp.ID = wtype.GetUUID()
+	comp.BlockID = wtype.NewBlockID(getID(ctx))
+
+
+	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
+	inst.Wavelength = opts.WaveLength
+
+	return &commandInst{
+		Args:   []*wtype.LHComponent{opts.Sample},
+		result: inst.ComponentOut,
+		Command: &ast.Command{
+			Inst: inst,
+			Requests: []ast.Request{
+				ast.Request{
+					Selector: []ast.NameValue{
+						target.DriverSelectorV1WriteOnlyPlateReader,
+					},
+				},
+			},
+		},
+	}
+}
+
+func ReadAbsorbance(ctx context.Context, opt ReadAbsorbanceOpts) *wtype.LHComponent {
+
+	fmt.Println("hit ReadAbsorbance [performs low level instruction on device]")
+	fmt.Println(opt)
+
+	inst := readAbsorbance(ctx, opt)
+	fmt.Println("inst::", inst)
+
 	trace.Issue(ctx, inst)
 	return inst.result
 }
@@ -318,6 +379,69 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 		PlateNum:   platenum,
 	}))
 }
+
+
+
+
+
+
+//// Platereader-related intrinsics
+////func MeasureAbsorbance(ctx context.Context, sample *wtype.LHComponent) *commandInst {
+////	newinst
+////}
+//
+//
+//func measureAbsorbance(ctx context.Context, opt MeasureAbsorbanceOpt) *commandInst {
+//	comp := newCompFromComp(ctx, opt.Component)
+//
+//	var sels []ast.NameValue
+//
+//	if len(opt.Selector) == 0 {
+//		sels = append(sels, target.DriverSelectorV1Human)
+//	} else {
+//		for n, v := range opt.Selector {
+//			sels = append(sels, ast.NameValue{Name: n, Value: v})
+//		}
+//	}
+//
+//	return &commandInst{
+//		Args:   []*wtype.LHComponent{opt.Component},
+//		result: comp,
+//		Command: &ast.Command{
+//			Inst: &ast.HandleInst{
+//				Group:    opt.Label,
+//				Selector: opt.Selector,
+//				Calls:    opt.Calls,
+//			},
+//			Requests: []ast.Request{ast.Request{Selector: sels}},
+//		},
+//	}
+//}
+//
+//// A MeasureAbsorbanceOpt are options to pass to MeasureAbsorbance
+//type MeasureAbsorbanceOpt struct {
+//	Component *wtype.LHComponent
+//	Label     string
+//	Selector  map[string]string
+//	Calls     []driver.Call
+//}
+//
+//// Handle performs a low level instruction on a component
+//func MeasureAbsorbance(ctx context.Context, opt MeasureAbsorbanceOpt) *wtype.LHComponent {
+//	inst := measureAbsorbance(ctx, opt)
+//	trace.Issue(ctx, inst)
+//	return inst.result
+//}
+
+
+
+
+
+
+
+
+
+
 
 // AwaitData breaks execution pending return of requested data
 func AwaitData(

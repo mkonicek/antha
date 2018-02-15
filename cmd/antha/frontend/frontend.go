@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// DEPRECATED
 package frontend
 
 import (
@@ -66,7 +65,6 @@ func (a *middleware) Sensor(ts int64, source, msg string, extra ...interface{}) 
 func (a *middleware) Data(ts int64, data interface{}, extra ...interface{}) {}
 
 // New creates a new frontend
-// DEPRECATED
 func New() (*Frontend, error) {
 	mw := &middleware{out: os.Stdout}
 	logger.RegisterMiddleware(mw)

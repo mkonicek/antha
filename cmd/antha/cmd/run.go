@@ -349,8 +349,6 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		RunTest:                viper.GetBool("RunTest"),
 	}
 
-	//runOpt.Validate()
-
 	return opt.Run()
 }
 

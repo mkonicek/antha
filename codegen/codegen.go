@@ -310,10 +310,6 @@ func (a *ir) tryPlan(ctx context.Context) error {
 		},
 	})
 
-	fmt.Println("Commands", a.Commands)
-	fmt.Println("graph", dg)
-
-
 	// TODO: When initial assignment is not feasible for a device (e.g.,
 	// capacity constraints), split up run until feasible or give up.
 
@@ -354,7 +350,6 @@ func (a *ir) tryPlan(ctx context.Context) error {
 		// TODO: Optimise this. Currently aggressive.
 		a.setOutputs()
 	}
-
 	return a.addImplicitInsts(runs)
 }
 

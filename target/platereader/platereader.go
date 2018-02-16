@@ -10,6 +10,7 @@ import (
 	platereader "github.com/antha-lang/antha/driver/antha_platereader_v1"
 	"strings"
 	"github.com/antha-lang/antha/codegen"
+	"errors"
 )
 
 
@@ -96,9 +97,8 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 	return insts, nil
 }
 
-
 // PRInstructions with the same key can be executed on the same plate-read cycle
-func pRInstructionKey(inst wtype.PRInstruction) (string, error) {
+func prKey(inst *wtype.PRInstruction) (string, error) {
 	return fmt.Sprintf("%s", inst.Options), nil
 }
 
@@ -116,14 +116,14 @@ func (a* PlateReader) mergePRInsts(insts []wtype.PRInstruction, wellLocs map[str
 		plateLocUnique[plateID] = true
 	}
 	if len(plateLocUnique) > 1 {
-		panic("current only supports single plate.")
+		return []target.Inst{}, errors.New("current only supports single plate")
 	}
 
 	// Group instructions by PRInstruction
 	groupBy := make(map[string]wtype.PRInstruction)  // {key: instruction}
 	groupedWellLocs := make(map[string][]string)  // {key: []A1Coord}
 	for _, inst := range insts {
-		key, err := pRInstructionKey(inst)
+		key, err := prKey(&inst)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func (a* PlateReader) mergePRInsts(insts []wtype.PRInstruction, wellLocs map[str
 	}
 
 	// Emit the driver calls
-	calls := make([]driver.Call, 0)
+	var calls []driver.Call
 	for key, inst := range groupBy {
 		cmpID := inst.ComponentIn.GetID()
 
@@ -155,7 +155,7 @@ func (a* PlateReader) mergePRInsts(insts []wtype.PRInstruction, wellLocs map[str
 
 	inst := &target.Run{
 		Dev:   a,
-		Label: "plate-Reader",
+		Label: "use plate reader",
 		Calls: calls,
 	}
 	return []target.Inst{inst}, nil

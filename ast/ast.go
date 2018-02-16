@@ -235,17 +235,17 @@ func Deps(roots []Node) graph.Graph {
 	})
 }
 
-
-// FindReaching finds reachable Commands given a slice of ast.Node
+// FindReachingCommands returns the set of commands that have a path to the
+// given nodes without any intervening commands
 func FindReachingCommands(nodes []Node) []Command {
 	g := ToGraph(ToGraphOpt{Roots: nodes, WhichDeps: DataDeps})
 
-	cmds := make([]Command, 0)
-	stack := make([]graph.Node, 0)
+	var cmds []Command
+	var stack []graph.Node
 
 	// Add immediate children to stack
 	for _, node := range nodes {
-		for i := 0; i < g.NumOuts(node); i ++ {
+		for i := 0; i < g.NumOuts(node); i++ {
 			stack = append(stack, g.Out(node, i))
 		}
 	}
@@ -268,7 +268,7 @@ func FindReachingCommands(nodes []Node) []Command {
 			cmds = append(cmds, *cmd)
 		} else {
 			// Keep looking
-			for i := 0; i < g.NumOuts(node); i ++ {
+			for i := 0; i < g.NumOuts(node); i++ {
 				stack = append(stack, g.Out(node, i))
 			}
 		}

@@ -137,16 +137,16 @@ func (a* PlateReader) mergePRInsts(insts []wtype.PRInstruction, wellLocs map[str
 	for key, inst := range groupBy {
 		cmpID := inst.ComponentIn.GetID()
 
-		// TODO: Make better gRPC messages
 		wellString := strings.Join(groupedWellLocs[key], " ")
-		protocolName := fmt.Sprintf("wells=%s,options=%s", wellString, inst.Options)
 		plateID := plateLocs[cmpID]
 
 		call := driver.Call{
 			Method:"PRRunProtocolByName",
 			Args: &platereader.ProtocolRunRequest{
-				ProtocolName: protocolName,
-				PlateID:      plateID,
+				ProtocolName: "Custom",
+				PlateID: plateID,
+				PlateLayout: wellString,
+				ProtocolOptions: inst.Options,
 			},
 			Reply: &platereader.BoolReply{},
 		}

@@ -563,7 +563,7 @@ func (self *VirtualLiquidHandler) getAbsolutePosition(fname, deckposition, well 
 	if (platetype != wtype.TypeOf(target)) &&
 		(platetype != fmt.Sprintf("%s_%s", wtype.TypeOf(target), wtype.IDOf(target))) {
 		self.AddWarningf(fname, "Object found at %s was type \"%s\" not type \"%s\" as expected",
-			deckposition, fmt.Sprintf("%s_%s", wtype.TypeOf(target), wtype.IDOf(target)), platetype)
+			deckposition, wtype.TypeOf(target), platetype)
 	}
 
 	addr, ok := target.(wtype.Addressable)
@@ -1105,32 +1105,20 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	deck := self.state.GetDeck()
 
 	if len(channels) == 0 {
-		above_tip := map[int]bool{}
-		for ch := 0; ch < n_channels; ch++ {
-			pos := adaptor.GetChannel(ch).GetAbsolutePosition()
-			size := wtype.Coordinates{0., 0., 100.}
-			bb := wtype.NewBBox(pos.Subtract(size), size)
-
-			found := deck.GetBoxIntersections(*bb)
-			for _, obj := range found {
-				if _, ok := obj.(*wtype.LHTip); ok {
-					above_tip[ch] = true
-				}
+		for ch, pt := range platetype {
+			if pt != "" {
+				channels = append(channels, ch)
 			}
-		}
-
-		for ch := range above_tip {
-			channels = append(channels, ch)
 		}
 
 		//best to order the channels sensibly
 		sort.Ints(channels)
 
 		if len(channels) == 0 {
-			self.AddWarning("LoadTips", "'channel' argument empty and no tips below adaptor, ignoring")
+			self.AddWarning("LoadTips", "'channel' argument empty and no platetype specified ignoring")
 			return ret
 		} else if self.settings.IsAutoChannelWarningEnabled() {
-			self.AddWarningf("LoadTips", "'channel' argument empty, assuming all channels above tips (%s)", summariseChannels(channels))
+			self.AddWarningf("LoadTips", "'channel' argument empty, inferring from platetype (%s)", summariseChannels(channels))
 		}
 
 		//check if multi is wrong

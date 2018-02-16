@@ -213,13 +213,13 @@ func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 }
 
 
-// ReadAbsorbanceOpts defines plate-reader absorbance options
-type ReadAbsorbanceOpts struct {
-	Sample *wtype.LHComponent
-	WaveLength  int
+// PlateReadOpts defines plate-reader absorbance options
+type PlateReadOpts struct {
+	Sample  *wtype.LHComponent
+	Options string
 }
-func readAbsorbance(ctx context.Context, opts ReadAbsorbanceOpts) *commandInst {
-	inst := wtype.NewPRAbsorbanceInstruction()
+func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
+	inst := wtype.NewPRInstruction()
 	inst.ComponentIn = opts.Sample
 
 	// Clone the component to represent the result of the AbsorbanceRead
@@ -228,7 +228,7 @@ func readAbsorbance(ctx context.Context, opts ReadAbsorbanceOpts) *commandInst {
 	comp.BlockID = wtype.NewBlockID(getID(ctx))
 
 	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
-	inst.Wavelength = opts.WaveLength
+	inst.Options = opts.Options
 
 	return &commandInst{
 		Args:   []*wtype.LHComponent{opts.Sample},
@@ -246,9 +246,9 @@ func readAbsorbance(ctx context.Context, opts ReadAbsorbanceOpts) *commandInst {
 	}
 }
 
-// ReadAbsorbance reads absorbance of a component
-func ReadAbsorbance(ctx context.Context, opt ReadAbsorbanceOpts) *wtype.LHComponent {
-	inst := readAbsorbance(ctx, opt)
+// PlateRead reads absorbance of a component
+func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.LHComponent {
+	inst := readPlate(ctx, opt)
 	trace.Issue(ctx, inst)
 	return inst.result
 }

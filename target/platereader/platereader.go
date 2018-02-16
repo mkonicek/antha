@@ -99,7 +99,7 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 
 // PRInstructions with the same key can be executed on the same plate-read cycle
 func pRInstructionKey(inst wtype.PRInstruction) (string, error) {
-	return fmt.Sprintf("%d:%d", inst.Type, inst.Wavelength), nil
+	return fmt.Sprintf("%s", inst.Options), nil
 }
 
 // Merge PRInstructions
@@ -139,7 +139,7 @@ func (a* PlateReader) mergePRInsts(insts []wtype.PRInstruction, wellLocs map[str
 
 		// TODO: Make better gRPC messages
 		wellString := strings.Join(groupedWellLocs[key], " ")
-		protocolName := fmt.Sprintf("wells=%s,wavelength=%d", wellString, inst.Wavelength)
+		protocolName := fmt.Sprintf("wells=%s,options=%s", wellString, inst.Options)
 		plateID := plateLocs[cmpID]
 
 		call := driver.Call{

@@ -122,7 +122,7 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 		insts = append(insts, &target.Manual{
 			Dev:     a,
 			Label:   "plate-read",
-			Details: fmt.Sprintf("plate-read instruction. Wavelength:%d nm", cmd.Wavelength),
+			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
 		})
 
 	default:

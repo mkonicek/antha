@@ -193,7 +193,7 @@ func (a *runOpt) Run() error {
 	targetConfig, err := auto.UnmarshalMockTargetConfig(a.TargetConfigFile)
 	if err != nil {
 		return fmt.Errorf(
-			"cannot decode target-config file '%s' detail:%s",
+			"cannot decode target-config file %q: %s",
 			a.TargetConfigFile, err)
 	}
 
@@ -201,10 +201,10 @@ func (a *runOpt) Run() error {
 		for _, mockDevice := range targetConfig.MockDevices {
 			device, err := mockDevice.ToDevice()
 			if err != nil {
-				return fmt.Errorf("could not instatiate device from mock: %s", err)
+				return fmt.Errorf("could not instantiate device from mock: %s", err)
 			}
 			t.Target.AddDevice(device)
-			fmt.Println(fmt.Sprintf("added mock device: '%s'", mockDevice.DeviceName))
+			fmt.Println(fmt.Sprintf("added mock device %q", mockDevice.DeviceName))
 		}
 	}
 

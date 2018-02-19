@@ -236,7 +236,8 @@ func Deps(roots []Node) graph.Graph {
 }
 
 // FindReachingCommands returns the set of commands that have a path to the
-// given nodes without any intervening commands
+// given nodes without any intervening commands.
+// Works only for tree structures.
 func FindReachingCommands(nodes []Node) []Command {
 	g := ToGraph(ToGraphOpt{Roots: nodes, WhichDeps: DataDeps})
 

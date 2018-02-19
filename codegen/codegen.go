@@ -305,9 +305,6 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 	a.assignment = run
 }
 
-
-
-
 // Run plan through device-specific planners. Adjust assignment based on
 // planner capabilities and return output.
 func (a *ir) tryPlan(ctx context.Context) error {

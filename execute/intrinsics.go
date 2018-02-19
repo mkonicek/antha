@@ -212,21 +212,17 @@ func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 	return inst.result
 }
 
-
 // PlateReadOpts defines plate-reader absorbance options
 type PlateReadOpts struct {
 	Sample  *wtype.LHComponent
 	Options string
 }
+
 func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 	inst := wtype.NewPRInstruction()
 	inst.ComponentIn = opts.Sample
 
 	// Clone the component to represent the result of the AbsorbanceRead
-	comp := inst.ComponentIn.Dup()
-	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getID(ctx))
-
 	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
 	inst.Options = opts.Options
 

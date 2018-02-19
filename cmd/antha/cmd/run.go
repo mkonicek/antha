@@ -115,7 +115,7 @@ type runOpt struct {
 	MixerOpt               mixer.Opt
 	Drivers                []string
 	BundleFile             string
-	TargetConfigFile	   string
+	TargetConfigFile       string
 	ParametersFile         string
 	WorkflowFile           string
 	MixInstructionFileName string
@@ -158,15 +158,11 @@ func unmarshalRunInput(in *runInput) (*executeutil.Bundle, error) {
 	})
 }
 
-
-
-
-
 func (a *runOpt) Run() error {
 	bundle, err := unmarshalRunInput(&runInput{
-		BundleFile:       a.BundleFile,
-		ParametersFile:   a.ParametersFile,
-		WorkflowFile:     a.WorkflowFile,
+		BundleFile:     a.BundleFile,
+		ParametersFile: a.ParametersFile,
+		WorkflowFile:   a.WorkflowFile,
 	})
 	if err != nil {
 		return err
@@ -182,7 +178,6 @@ func (a *runOpt) Run() error {
 	for _, uri := range a.Drivers {
 		opt.Endpoints = append(opt.Endpoints, auto.Endpoint{URI: uri})
 	}
-
 
 	// Either we get devices via:
 	//   (1) Auto detect gRPC devices on network interfaces
@@ -209,7 +204,6 @@ func (a *runOpt) Run() error {
 		t.Target.AddDevice(device)
 		fmt.Println(fmt.Sprintf("added mock device: '%s'", mockDevice.DeviceName))
 	}
-
 
 	// frontend is deprecated
 	fe, err := frontend.New()

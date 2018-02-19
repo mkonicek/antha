@@ -1,26 +1,24 @@
 package auto
 
 import (
-	"io/ioutil"
-	"github.com/ghodss/yaml"
+	"fmt"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/platereader"
-	"fmt"
+	"github.com/ghodss/yaml"
+	"io/ioutil"
 )
 
 // MockTargetConfig defines a mock-target
 type MockTargetConfig struct {
-	MockDevices []MockDevice  `json:"devices"`
+	MockDevices []MockDevice `json:"devices"`
 }
-
 
 // MockDevice defines a mock-device
 type MockDevice struct {
-	DeviceClass	string `json:"class"`
-	DeviceName  string `json:"name"`
-	Properties  map[string]string `json:"properties"`
+	DeviceClass      string            `json:"device_class"`
+	DeviceName       string            `json:"device_name"`
+	DeviceProperties map[string]string `json:"device_properties"`
 }
-
 
 // UnmarshalMockTargetConfig parses the --target file to get a list of TargetConfig
 func UnmarshalMockTargetConfig(targetConfigFilePath string) (*MockTargetConfig, error) {
@@ -34,11 +32,10 @@ func UnmarshalMockTargetConfig(targetConfigFilePath string) (*MockTargetConfig, 
 	if err != nil {
 		return nil, err
 	}
-	v := new(MockTargetConfig)
-	err = yaml.Unmarshal(bTargetConfig, v)
-	return v, err
+	var v MockTargetConfig
+	err = yaml.Unmarshal(bTargetConfig, &v)
+	return &v, err
 }
-
 
 // ToDevice makes a Device from a MockDevice
 func (a *MockDevice) ToDevice() (target.Device, error) {
@@ -48,7 +45,7 @@ func (a *MockDevice) ToDevice() (target.Device, error) {
 
 	// Very basic for now
 	switch a.DeviceClass {
-	case "antha_platereader_v1":
+	case "antha.platereader.v1":
 		return &platereader.PlateReader{}, nil
 	}
 

@@ -20,6 +20,13 @@ type PlateReader struct {
 // Ensure satisfies Device interface
 var _ target.Device = (*PlateReader)(nil)
 
+// NewWOPlateReader returns a new Plate Reader
+// Used by antha-runner
+func NewWOPlateReader() *PlateReader {
+	ret := &PlateReader{}
+	return ret
+}
+
 // CanCompile implements a Device
 func (a *PlateReader) CanCompile(req ast.Request) bool {
 	can := ast.Request{}

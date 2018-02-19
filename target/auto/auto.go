@@ -1,5 +1,5 @@
 // Package auto provides methods for creating a simulation target based on
-// auto discovery of device plugins (drivers)
+// auto discovery of drivers via gRPC
 package auto
 
 import (
@@ -37,7 +37,7 @@ type Auto struct {
 }
 
 // Close releases any resources like network connections associated
-// with autodiscovery state.
+// with auto-discovery state.
 func (a *Auto) Close() error {
 	var err error
 	for _, conn := range a.Conns {
@@ -49,7 +49,8 @@ func (a *Auto) Close() error {
 	return err
 }
 
-// New makes target by inspecting a set of network services
+// New makes target by inspecting a set of gRPC network services for a list
+// of drivers.
 func New(opt Opt) (ret *Auto, err error) {
 	ret = &Auto{
 		Target:  target.New(),

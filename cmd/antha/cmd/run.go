@@ -198,15 +198,13 @@ func (a *runOpt) Run() error {
 	}
 
 	if targetConfig != nil {
-		if targetConfig.MockDevices != nil {
-			for _, mockDevice := range targetConfig.MockDevices {
-				device, err := mockDevice.ToDevice()
-				if err != nil {
-					return fmt.Errorf("could not instatiate device from mock: %s", err)
-				}
-				t.Target.AddDevice(device)
-				fmt.Println(fmt.Sprintf("added mock device: '%s'", mockDevice.DeviceName))
+		for _, mockDevice := range targetConfig.MockDevices {
+			device, err := mockDevice.ToDevice()
+			if err != nil {
+				return fmt.Errorf("could not instatiate device from mock: %s", err)
 			}
+			t.Target.AddDevice(device)
+			fmt.Println(fmt.Sprintf("added mock device: '%s'", mockDevice.DeviceName))
 		}
 	}
 

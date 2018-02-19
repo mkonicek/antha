@@ -34,13 +34,23 @@ func NewDriver(address string) *Driver {
 }
 
 func Encodeinterface(arg interface{}) *pb.AnyMessage {
-	s, _ := json.Marshal(arg)
+	s, err := json.Marshal(arg)
+
+	if err != nil {
+		panic(err)
+	}
+
 	ret := pb.AnyMessage{string(s)}
 	return &ret
 }
 func Decodeinterface(msg *pb.AnyMessage) interface{} {
 	var v interface{}
-	json.Unmarshal([]byte(msg.Arg_1), &v)
+	err := json.Unmarshal([]byte(msg.Arg_1), &v)
+
+	if err != nil {
+		panic(err)
+	}
+
 	return v
 }
 func DecodeGenericPlate(plate interface{}) (wtype.LHObject, error) {
@@ -1096,6 +1106,8 @@ func (d *Driver) Finalize() driver.CommandStatus {
 	ret, _ := d.C.Finalize(context.Background(), &req)
 	return (driver.CommandStatus)(DecodeCommandStatus(ret.Ret_1))
 }
+
+// TODO --> making this just json serialization would get rid of a HUGE amount of redundant code here
 func (d *Driver) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
 	req := pb.GetCapabilitiesRequest{}
 	ret, _ := d.C.GetCapabilities(context.Background(), &req)

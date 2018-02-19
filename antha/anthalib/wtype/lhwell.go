@@ -146,14 +146,10 @@ func (self *LHWell) GetParent() LHObject {
 }
 
 func (w LHWell) String() string {
-	plate := w.Plate.(*LHPlate)
 	return fmt.Sprintf(
 		`LHWELL{
 ID        : %s,
 Inst      : %s,
-Plateinst : %s,
-Plateid   : %s,
-Platetype : %s,
 Crds      : %s,
 MaxVol    : %g ul,
 WContents : %v,
@@ -163,13 +159,9 @@ Bottom    : %s,
 size      : [%v x %v x %v]mm,
 Bottomh   : %g,
 Extra     : %v,
-Plate     : %v,
 }`,
 		w.ID,
 		w.Inst,
-		plate.Inst,
-		plate.ID,
-		plate.GetType(),
 		w.Crds.FormatA1(),
 		w.MaxVol,
 		w.WContents,
@@ -181,7 +173,6 @@ Plate     : %v,
 		w.GetSize().Z,
 		w.Bottomh,
 		w.Extra,
-		w.Plate,
 	)
 }
 

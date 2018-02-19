@@ -91,6 +91,8 @@ type LHObject interface {
 	SetParent(LHObject) error
 	//GetParent
 	GetParent() LHObject
+	//GetID
+	GetID() string
 }
 
 //GetObjectRoot get the highest parent

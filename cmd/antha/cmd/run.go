@@ -196,13 +196,18 @@ func (a *runOpt) Run() error {
 			"cannot decode target-config file '%s' detail:%s",
 			a.TargetConfigFile, err)
 	}
-	for _, mockDevice := range targetConfig.MockDevices {
-		device, err := mockDevice.ToDevice()
-		if err != nil {
-			return fmt.Errorf("could not instatiate device from mock: %s", err)
+
+	if targetConfig != nil {
+		if targetConfig.MockDevices != nil {
+			for _, mockDevice := range targetConfig.MockDevices {
+				device, err := mockDevice.ToDevice()
+				if err != nil {
+					return fmt.Errorf("could not instatiate device from mock: %s", err)
+				}
+				t.Target.AddDevice(device)
+				fmt.Println(fmt.Sprintf("added mock device: '%s'", mockDevice.DeviceName))
+			}
 		}
-		t.Target.AddDevice(device)
-		fmt.Println(fmt.Sprintf("added mock device: '%s'", mockDevice.DeviceName))
 	}
 
 	// frontend is deprecated

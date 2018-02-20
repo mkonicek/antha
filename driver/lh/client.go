@@ -70,27 +70,29 @@ func guessAddPlateToPlateType(plate interface{}) (wtype.LHObject, error) {
 		if err := json.Unmarshal([]byte(p), &temp); err != nil {
 			return nil, err
 		}
+
 		//analyse what we got here
 		//XXX It would be more futureproof here to include the output of
 		//Classy.GetClass in the JSON and switch on that in case these random
 		//attributes change
 		if _, ok := temp["Welltype"]; ok { //wtype.LHPlate
 			var ret wtype.LHPlate
-			if err := json.Unmarshal([]byte(p), &ret); !ok {
+			if err := json.Unmarshal([]byte(p), &ret); err != nil {
 				return nil, err
 			}
+
 			return &ret, nil
 		} else {
 			if _, ok := temp["AsWell"]; ok {
 				if _, ok := temp["TipXStart"]; ok { //wtype.LHTipbox
 					var ret wtype.LHTipbox
-					if err := json.Unmarshal([]byte(p), &ret); !ok {
+					if err := json.Unmarshal([]byte(p), &ret); err != nil {
 						return nil, err
 					}
 					return &ret, nil
 				} else if _, ok := temp["WellXStart"]; ok { //wtype.LHTipwaste
 					var ret wtype.LHTipwaste
-					if err := json.Unmarshal([]byte(p), &ret); !ok {
+					if err := json.Unmarshal([]byte(p), &ret); err != nil {
 						return nil, err
 					}
 					return &ret, nil
@@ -930,6 +932,9 @@ func EncodeConcreteMeasurement(arg wunit.ConcreteMeasurement) *pb.ConcreteMeasur
 	return &ret
 }
 func DecodeConcreteMeasurement(arg *pb.ConcreteMeasurementMessage) wunit.ConcreteMeasurement {
+	if arg == nil {
+		return wunit.ConcreteMeasurement{}
+	}
 	ret := wunit.ConcreteMeasurement{Mvalue: (float64)(arg.Arg_1), Munit: (*wunit.GenericPrefixedUnit)(DecodePtrToGenericPrefixedUnit(arg.Arg_2))}
 	return ret
 }
@@ -1322,6 +1327,7 @@ func (d *Driver) UpdateMetaData(arg_1 *liquidhandling.LHProperties) driver.Comma
 	req := pb.UpdateMetaDataRequest{
 		EncodePtrToLHProperties(arg_1),
 	}
+
 	ret, _ := d.C.UpdateMetaData(context.Background(), &req)
 	return (driver.CommandStatus)(DecodeCommandStatus(ret.Ret_1))
 }

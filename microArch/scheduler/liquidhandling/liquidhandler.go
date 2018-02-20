@@ -267,6 +267,11 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 			d += timer.TimeFor(ins)
 		}
 	}
+	// very important - this must be called if the driver implements it
+	stat := this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
+	if stat.Errorcode == driver.ERR {
+		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
+	}
 
 	logger.Debug(fmt.Sprintf("Total time estimate: %s", d.String()))
 	request.TimeEstimate = d.Seconds()

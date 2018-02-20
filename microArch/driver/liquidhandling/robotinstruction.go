@@ -113,7 +113,7 @@ func ansiPrint(options ...printOption) bool {
 			return true
 		}
 	}
-	return false
+	return true //false
 }
 
 func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {

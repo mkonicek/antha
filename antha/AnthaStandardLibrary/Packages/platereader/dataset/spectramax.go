@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/montanaflynn/stats"
 )
@@ -322,12 +323,17 @@ func (s SpectraMaxData) ReadingsAsAverage(wellname string, emexortime int, field
 
 // readingtypekeyword is irrelevant for this data set but needed to conform to the current interface!
 // field value is the value which the data is to be filtered by,
-func (s SpectraMaxData) AbsorbanceReading(wellname string, wavelength int, readingtypekeyword string) (average float64, err error) {
-	return s.ReadingsAsAverage(wellname, 1, wavelength, readingtypekeyword)
+func (s SpectraMaxData) Absorbance(wellname string, wavelength int, options ...ReaderOption) (average wtype.Absorbance, err error) {
+	raw, err := s.ReadingsAsAverage(wellname, 1, wavelength, "")
+
+	return wtype.Absorbance{
+		Reading:    raw,
+		Wavelength: float64(wavelength),
+	}, err
 }
 
 // readingtypekeyword is irrelevant for this data set but needed to conform to the current interface!
-func (s SpectraMaxData) FindOptimalWavelength(wellname string, blankname string, readingtypekeyword string) (wavelength int, err error) {
+func (s SpectraMaxData) FindOptimalAbsorbanceWavelength(wellname string, blankname string) (wavelength int, err error) {
 
 	wellData, err := s.GetDataByWell(wellname)
 

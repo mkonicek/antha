@@ -344,5 +344,5 @@ func init() {
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
 	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
 	flags.StringSlice("tipType", nil, "Names of permitted tip types")
-	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
+	flags.Bool("skipFixVolumes", false, "Skip making all volumes sufficient for later uses")
 }

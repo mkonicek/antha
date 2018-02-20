@@ -23,16 +23,21 @@ type AbsorbanceData interface {
 
 type AbsorbanceTimeCourseData interface {
 	AbsorbanceData
-	TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error)
+	TimeCourseData
 }
 
 type FluorescenceData interface {
+	Fluorescence(wellname string, excitationWavelength, emissionWavelength int, options ...ReaderOption) (average float64, err error)
+}
+
+type TimeCourseData interface {
+	TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error)
 }
 
 // minimal interface to support existing fluoresence based antha elements which use plate reader data (AddGFPODPlateReaderResults)
 type FluorescenceTimeCourseData interface {
 	FluorescenceData
-	TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error)
+	TimeCourseData
 }
 
 //////////////////////////

@@ -200,7 +200,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	afb, _ := json.Marshal(areaf)
 	afs := string(afb)
 
-	pcrPlateMinVol := 0.0 //5.0
+	pcrPlateMinVol := 5.0
 	pcrPlateMaxVol := 200.0
 
 	// pcr plate with cooler
@@ -714,10 +714,12 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 }
 
 // Nunc U96 Microplate PolyStyrene Sterile U-Bottom, Clear, Cat Num: 262162
+// Source of dimensions: https://www.thermofisher.com/order/catalog/product/262162
 func makeNunc96UPlate() *wtype.LHPlate {
 
-	xstartOffset := 11.25
-	ystartOffset := 7.75
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 11.25
+	ystartOffsetCorrection := 7.75
 
 	plateName := "nunc_96_U_PS_Clear"
 	wellName := "Nunc96U"
@@ -742,12 +744,12 @@ func makeNunc96UPlate() *wtype.LHPlate {
 
 	volUnit := "ul"
 
-	wellxoffset := 9.0             // K: centre of well to centre of neighbouring well in x direction
-	wellyoffset := 9.0             // K?: centre of well to centre of neighbouring well in y direction
-	xstart := 10.75 - xstartOffset // H - (G1/2): distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
-	ystart := 7.75 - ystartOffset  // J - (G1/2):  distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
-	zstart := 3.0                  // F - L: offset of bottom of deck to bottom of well
-	overallHeight := 14.4          // F: height of plate
+	wellxoffset := 9.0                       // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 9.0                       // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 10.75 - xstartOffsetCorrection // H - (G1/2): distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	ystart := 7.75 - ystartOffsetCorrection  // J - (G1/2):  distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	zstart := 3.0                            // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 14.4                    // F: height of plate
 
 	nunc96UShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 

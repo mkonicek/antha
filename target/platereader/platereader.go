@@ -104,10 +104,10 @@ func prKey(inst *wtype.PRInstruction) (string, error) {
 }
 
 // Merge PRInstructions
-func (a *PlateReader) mergePRInsts(insts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]target.Inst, error) {
+func (a *PlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]target.Inst, error) {
 
 	// Simple case
-	if len(insts) == 0 {
+	if len(prInsts) == 0 {
 		return []target.Inst{}, nil
 	}
 
@@ -123,7 +123,7 @@ func (a *PlateReader) mergePRInsts(insts []*wtype.PRInstruction, wellLocs map[st
 	// Group instructions by PRInstruction
 	groupBy := make(map[string]*wtype.PRInstruction) // {key: instruction}
 	groupedWellLocs := make(map[string][]string)     // {key: []A1Coord}
-	for _, inst := range insts {
+	for _, inst := range prInsts {
 		key, err := prKey(inst)
 		if err != nil {
 			return nil, err
@@ -154,10 +154,14 @@ func (a *PlateReader) mergePRInsts(insts []*wtype.PRInstruction, wellLocs map[st
 		calls = append(calls, call)
 	}
 
-	inst := &target.Run{
+	var insts []target.Inst
+	insts = append(insts, &target.Prompt{
+		Message: "Load plate-reader",
+	})
+	insts = append(insts, &target.Run{
 		Dev:   a,
 		Label: "use plate reader",
 		Calls: calls,
-	}
-	return []target.Inst{inst}, nil
+	})
+	return target.SequentialOrder(insts...), nil
 }

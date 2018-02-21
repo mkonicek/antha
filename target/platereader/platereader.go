@@ -156,7 +156,7 @@ func (a *PlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[
 
 	var insts []target.Inst
 	insts = append(insts, &target.Prompt{
-		Message: "Load plate-reader",
+		Message: "Please put plate(s) into plate reader and click ok to start plate reader",
 	})
 	insts = append(insts, &target.Run{
 		Dev:   a,

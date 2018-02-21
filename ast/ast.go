@@ -237,10 +237,10 @@ func Deps(roots []Node) graph.Graph {
 
 // FindReachingCommands returns the set of commands that have a path to the
 // given nodes without any intervening commands.
-func FindReachingCommands(nodes []Node) []Command {
+func FindReachingCommands(nodes []Node) []*Command {
 	g := ToGraph(ToGraphOpt{Roots: nodes, WhichDeps: DataDeps})
 
-	var cmds []Command
+	var cmds []*Command
 	var queue []graph.Node
 
 	// Add immediate children to queue
@@ -265,7 +265,7 @@ func FindReachingCommands(nodes []Node) []Command {
 		cmd, ok := node.(*Command)
 		if ok {
 			// Found a command, stop here
-			cmds = append(cmds, *cmd)
+			cmds = append(cmds, cmd)
 		} else {
 			// Keep looking
 			for i := 0; i < g.NumOuts(node); i++ {

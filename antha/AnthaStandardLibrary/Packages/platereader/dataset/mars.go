@@ -107,6 +107,10 @@ func (data MarsData) AvailableReadings(wellname string) (readingDescriptions []s
 	return
 }
 
+// TimeCourse returns either a fluorescence timecourse or an Absorbance timecourse data series.
+// If Absorbance, the excitation and emmission wavelengths should both be set to the Absorbance wavelength.
+// scriptnumber allows the possibility to distinguish runs with the same excitation and emmission wavelengths but run as different scripts, e.g. if ran with different gains.
+// If scriptnumber is set to 0 this will not be used.
 func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength int, scriptnumber int) (xaxis []time.Duration, yaxis []float64, err error) {
 
 	xaxis = make([]time.Duration, 0)

@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/platereader"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -36,15 +37,15 @@ import (
 )
 
 const (
-	AbsorbanceSpectrumHeader = "(Abs Spectrum)"
-	EmissionSpectrumHeader   = "(Em Spectrum)"
-	ExcitationSpectrumHeader = "(Ex Spectrum)"
-	AbsorbanceHeader         = "(A-"
-	RawDataHeader            = "Raw Data"
+	absorbanceSpectrumHeader = "(Abs Spectrum)"
+	emissionSpectrumHeader   = "(Em Spectrum)"
+	excitationSpectrumHeader = "(Ex Spectrum)"
+	absorbanceHeader         = "(A-"
+	rawDataHeader            = "Raw Data"
 )
 
 func matchesAbsorbance(header string, wavelength int) bool {
-	if strings.Contains(header, RawDataHeader) {
+	if strings.Contains(header, rawDataHeader) {
 		fields := strings.Fields(header)
 
 		for _, field := range fields {
@@ -114,9 +115,7 @@ func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength 
 	var exfound bool
 	if _, found := data.Dataforeachwell[wellname]; !found {
 		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No data found for wellname ", wellname))
-	}
-
-	if len(data.Dataforeachwell[wellname].Data.Readings[0]) == 0 {
+	} else if len(data.Dataforeachwell[wellname].Data.Readings[0]) == 0 {
 		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No readings found for wellname ", wellname))
 	}
 	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
@@ -149,12 +148,13 @@ func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength 
 	return
 }
 
-func (data MarsData) AbsScanData(wellname string) (wavelengths []int, Readings []float64) {
+// AbsScanData returns all wavelengths and readings for a specified well.
+func (data MarsData) AbsScanData(well string) (wavelengths []int, Readings []float64) {
 	wavelengths = make([]int, 0)
 	Readings = make([]float64, 0)
-	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
+	for _, measurement := range data.Dataforeachwell[well].Data.Readings[0] {
 
-		if strings.Contains(data.Dataforeachwell[wellname].ReadingType, AbsorbanceSpectrumHeader) {
+		if strings.Contains(data.Dataforeachwell[well].ReadingType, absorbanceSpectrumHeader) {
 
 			wavelengths = append(wavelengths, measurement.RWavelength)
 			Readings = append(Readings, measurement.Reading)
@@ -165,12 +165,13 @@ func (data MarsData) AbsScanData(wellname string) (wavelengths []int, Readings [
 	return
 }
 
-func (data MarsData) EMScanData(wellname string, exWavelength int) (wavelengths []int, Readings []float64) {
+// EMScanData returns all emmission wavelengths and readings for a specified well and excitation wavelength.
+func (data MarsData) EMScanData(well string, exWavelength int) (wavelengths []int, Readings []float64) {
 	wavelengths = make([]int, 0)
 	Readings = make([]float64, 0)
-	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
+	for _, measurement := range data.Dataforeachwell[well].Data.Readings[0] {
 
-		if measurement.EWavelength == exWavelength && strings.Contains(data.Dataforeachwell[wellname].ReadingType, EmissionSpectrumHeader) {
+		if measurement.EWavelength == exWavelength && strings.Contains(data.Dataforeachwell[well].ReadingType, emissionSpectrumHeader) {
 
 			wavelengths = append(wavelengths, measurement.RWavelength)
 			Readings = append(Readings, measurement.Reading)
@@ -182,12 +183,13 @@ func (data MarsData) EMScanData(wellname string, exWavelength int) (wavelengths 
 	return
 }
 
-func (data MarsData) EXScanData(wellname string, emWavelength int) (wavelengths []int, Readings []float64) {
+// EMScanData returns all excitation wavelengths and readings for a specified well and emmission wavelength.
+func (data MarsData) EXScanData(well string, emWavelength int) (wavelengths []int, Readings []float64) {
 	wavelengths = make([]int, 0)
 	Readings = make([]float64, 0)
-	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
+	for _, measurement := range data.Dataforeachwell[well].Data.Readings[0] {
 
-		if measurement.RWavelength == emWavelength && strings.Contains(data.Dataforeachwell[wellname].ReadingType, ExcitationSpectrumHeader) {
+		if measurement.RWavelength == emWavelength && strings.Contains(data.Dataforeachwell[well].ReadingType, excitationSpectrumHeader) {
 
 			wavelengths = append(wavelengths, measurement.EWavelength)
 			Readings = append(Readings, measurement.Reading)
@@ -198,82 +200,30 @@ func (data MarsData) EXScanData(wellname string, emWavelength int) (wavelengths 
 	return
 }
 
+// WelltoDataMap returns a map of well location (in format A1) to plate reader data for that well.
 func (data MarsData) WelltoDataMap() map[string]WellData {
 	return data.Dataforeachwell
 }
 
-func (data MarsData) Readings(wellname string) []PRMeasurement {
-	return data.Dataforeachwell[wellname].Data.Readings[0]
+// Readings returns all measurements found for the sepcified well (wells should be specified in A1 format).
+func (data MarsData) Readings(well string) []PRMeasurement {
+	return data.Dataforeachwell[well].Data.Readings[0]
 }
 
-func (data MarsData) ReadingsThat(wellname string, emexortime int, fieldvalue interface{}) ([]PRMeasurement, error) {
-	newset := make([]PRMeasurement, 0)
-	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
-
-		if emexortime == 0 {
-			if str, ok := fieldvalue.(string); ok {
-
-				gotime, err := time.ParseDuration(str)
-				if err != nil {
-					return newset, err
-				}
-				if measurement.Timestamp == gotime {
-					newset = append(newset, measurement)
-				}
-			}
-		} else if emexortime == 1 && measurement.RWavelength == fieldvalue {
-			newset = append(newset, measurement)
-		} else if emexortime == 2 && measurement.EWavelength == fieldvalue {
-			newset = append(newset, measurement)
-		}
-	}
-
-	return newset, nil
-}
-
-func (data MarsData) ReadingsAsFloats(wellname string, emexortime int, fieldvalue interface{}) (readings []float64, readingtypes []string, err error) {
-	readings = make([]float64, 0)
-	readingtypes = make([]string, 0)
-	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
-
-		if emexortime == 0 {
-			if str, ok := fieldvalue.(string); ok {
-
-				gotime, err := time.ParseDuration(str)
-				if err != nil {
-					return readings, readingtypes, err
-				}
-				if measurement.Timestamp == gotime {
-					readings = append(readings, measurement.Reading)
-					readingtypes = append(readingtypes, data.Dataforeachwell[wellname].ReadingType)
-				}
-			}
-		} else if emexortime == 1 && measurement.RWavelength == fieldvalue {
-			readings = append(readings, measurement.Reading)
-			readingtypes = append(readingtypes, data.Dataforeachwell[wellname].ReadingType)
-		} else if emexortime == 2 && measurement.EWavelength == fieldvalue {
-			readings = append(readings, measurement.Reading)
-			readingtypes = append(readingtypes, data.Dataforeachwell[wellname].ReadingType)
-		}
-	}
-
-	return
-}
-
+// ReadingsAsAverage returnwwellnameamee data for the specified well matching ReadingType with appropriate fieldvalue.
 // field value is the value which the data is to be filtered by,
 // e.g. if filtering by time, this would be the time at which to return readings for;
-// if filtering by excitation wavelength, this would be the wavelength at which to return readings for
-// readingtypekeyword added in case mars used to process data in advance. Example keywords : Raw Data, Em Spectrum, Abs Spectrum, Blank Corrected, Average or "" to capture all.
-func (data MarsData) ReadingsAsAverage(wellname string, emexortime int, fieldvalue interface{}, readingtypekeyword string) (average float64, err error) {
+// if filtering by excitation wavelength, this would be the wavelength at which to return readings for.
+func (data MarsData) ReadingsAsAverage(well string, emexortime platereader.FilterOption, fieldvalue interface{}, readingtypekeyword string) (average float64, err error) {
 	readings := make([]float64, 0)
 	readingtypes := make([]string, 0)
 	readingsforaverage := make([]float64, 0)
-	if _, ok := data.Dataforeachwell[wellname]; !ok {
-		return 0.0, fmt.Errorf(fmt.Sprint("no data for well, ", wellname))
+	if _, ok := data.Dataforeachwell[well]; !ok {
+		return 0.0, fmt.Errorf(fmt.Sprint("no data for well, ", well))
 	}
-	for _, measurement := range data.Dataforeachwell[wellname].Data.Readings[0] {
+	for _, measurement := range data.Dataforeachwell[well].Data.Readings[0] {
 
-		if emexortime == 0 {
+		if emexortime == platereader.TIME {
 			if str, ok := fieldvalue.(string); ok {
 
 				gotime, err := time.ParseDuration(str)
@@ -282,15 +232,15 @@ func (data MarsData) ReadingsAsAverage(wellname string, emexortime int, fieldval
 				}
 				if measurement.Timestamp == gotime {
 					readings = append(readings, measurement.Reading)
-					readingtypes = append(readingtypes, data.Dataforeachwell[wellname].ReadingType)
+					readingtypes = append(readingtypes, data.Dataforeachwell[well].ReadingType)
 				}
 			}
-		} else if emexortime == 1 && measurement.RWavelength == fieldvalue {
+		} else if emexortime == platereader.EMWAVELENGTH && measurement.RWavelength == fieldvalue {
 			readings = append(readings, measurement.Reading)
-			readingtypes = append(readingtypes, data.Dataforeachwell[wellname].ReadingType)
-		} else if emexortime == 2 && measurement.EWavelength == fieldvalue {
+			readingtypes = append(readingtypes, data.Dataforeachwell[well].ReadingType)
+		} else if emexortime == platereader.EXWAVELENGTH && measurement.EWavelength == fieldvalue {
 			readings = append(readings, measurement.Reading)
-			readingtypes = append(readingtypes, data.Dataforeachwell[wellname].ReadingType)
+			readingtypes = append(readingtypes, data.Dataforeachwell[well].ReadingType)
 		}
 	}
 
@@ -305,11 +255,11 @@ func (data MarsData) ReadingsAsAverage(wellname string, emexortime int, fieldval
 	return
 }
 
-// AbsorbanceReading returns the average of all readings at a specified wavelength.
+// Absorbance returns the average of all readings at a specified wavelength.
 // First the exact absorbance reading is searched for, failing that a scan will be searched for.
-func (data MarsData) Absorbance(wellname string, wavelength int, options ...ReaderOption) (average wtype.Absorbance, err error) {
+func (data MarsData) Absorbance(well string, wavelength int, options ...interface{}) (average wtype.Absorbance, err error) {
 	var errs []string
-	result, err := data.ReadingsAsAverage(wellname, EMWAVELENGTH, wavelength, AbsorbanceHeader)
+	result, err := data.ReadingsAsAverage(well, platereader.EMWAVELENGTH, wavelength, absorbanceHeader)
 	if err == nil {
 		return wtype.Absorbance{
 			Reading:    result,
@@ -318,7 +268,7 @@ func (data MarsData) Absorbance(wellname string, wavelength int, options ...Read
 	} else {
 		errs = append(errs, err.Error())
 	}
-	result, err = data.ReadingsAsAverage(wellname, EMWAVELENGTH, wavelength, AbsorbanceSpectrumHeader)
+	result, err = data.ReadingsAsAverage(well, platereader.EMWAVELENGTH, wavelength, absorbanceSpectrumHeader)
 	if err == nil {
 		return wtype.Absorbance{
 			Reading:    result,
@@ -327,7 +277,7 @@ func (data MarsData) Absorbance(wellname string, wavelength int, options ...Read
 	} else {
 		errs = append(errs, err.Error())
 	}
-	result, err = data.ReadingsAsAverage(wellname, EMWAVELENGTH, wavelength, strings.Join([]string{"(", strconv.Itoa(wavelength), ")"}, ""))
+	result, err = data.ReadingsAsAverage(well, platereader.EMWAVELENGTH, wavelength, strings.Join([]string{"(", strconv.Itoa(wavelength), ")"}, ""))
 
 	if err == nil {
 		return wtype.Absorbance{
@@ -344,15 +294,16 @@ func (data MarsData) Absorbance(wellname string, wavelength int, options ...Read
 	}, fmt.Errorf(strings.Join(errs, "\n"))
 }
 
-func (data MarsData) FindOptimalAbsorbanceWavelength(wellname string, blankname string) (wavelength int, err error) {
+// FindOptimalAbsorbanceWavelength returns the wavelength for which the difference in signal between the sample and blank is greatest.
+func (data MarsData) FindOptimalAbsorbanceWavelength(well string, blankname string) (wavelength int, err error) {
 
-	if _, ok := data.Dataforeachwell[wellname]; !ok {
-		return 0, fmt.Errorf("no data found for well, %s", wellname)
+	if _, ok := data.Dataforeachwell[well]; !ok {
+		return 0, fmt.Errorf("no data found for well, %s", well)
 	}
 	biggestdifferenceindex := 0
 	biggestdifference := 0.0
 
-	wavelengths, readings := data.AbsScanData(wellname)
+	wavelengths, readings := data.AbsScanData(well)
 	blankwavelengths, blankreadings := data.AbsScanData(blankname)
 
 	for i, reading := range readings {
@@ -370,76 +321,7 @@ func (data MarsData) FindOptimalAbsorbanceWavelength(wellname string, blankname 
 	return
 }
 
-func (data MarsData) BlankCorrect(wellnames []string, blanknames []string, wavelength int, readingtypekeyword string) (blankcorrectedaverage float64, err error) {
-
-	readings := make([]float64, 0)
-	readingtypes := make([]string, 0)
-	readingsforaverage := make([]float64, 0)
-
-	for _, blankWell := range blanknames {
-
-		for _, blankMeasurement := range data.Dataforeachwell[blankWell].Data.Readings[0] {
-
-			if blankMeasurement.RWavelength == wavelength {
-				readings = append(readings, blankMeasurement.Reading)
-				readingtypes = append(readingtypes, data.Dataforeachwell[blankWell].ReadingType)
-
-			}
-
-			for i, readingtype := range readingtypes {
-				if strings.Contains(readingtype, readingtypekeyword) {
-					readingsforaverage = append(readingsforaverage, readings[i])
-				}
-			}
-		}
-	}
-
-	blankaverage, err := stats.Mean(readingsforaverage)
-
-	readings = make([]float64, 0)
-	readingtypes = make([]string, 0)
-	readingsforaverage = make([]float64, 0)
-
-	for _, wellname := range wellnames {
-
-		wellData, found := data.Dataforeachwell[wellname]
-
-		if !found {
-			return 0.0, fmt.Errorf("no welldata %s to blank correct!", wellname)
-		}
-
-		if len(wellData.Data.Readings[0]) == 0 {
-			return 0.0, fmt.Errorf("no readings found for well %s to blank correct!", wellname)
-		}
-		for _, measurement := range wellData.Data.Readings[0] {
-
-			if measurement.RWavelength == wavelength {
-				readings = append(readings, measurement.Reading)
-				readingtypes = append(readingtypes, data.Dataforeachwell[wellname].ReadingType)
-
-			}
-
-			for i, readingtype := range readingtypes {
-				if strings.Contains(readingtype, readingtypekeyword) {
-					readingsforaverage = append(readingsforaverage, readings[i])
-				}
-			}
-		}
-
-	}
-	average, err := stats.Mean(readingsforaverage)
-
-	blankcorrectedaverage = average - blankaverage
-
-	return
-}
-
-const (
-	TIME = iota
-	EMWAVELENGTH
-	EXWAVELENGTH
-)
-
+// MarsData represents the contents of a parsed platereader data file exported from Mars.
 type MarsData struct {
 	User            string
 	Path            string
@@ -454,6 +336,7 @@ type MarsData struct {
 	Dataforeachwell map[string]WellData
 }
 
+// WellData represents the details of a reading for a well.
 type WellData struct {
 	Well            string // in a1 format
 	Name            string
@@ -463,13 +346,15 @@ type WellData struct {
 	InjectionVolume float64
 }
 
-// from antha/microArch/driver/platereader
+// PROutput is a modified version of the platereeader data type from antha/microArch/driver/platereading.
 type PROutput struct {
 	Readings []PRMeasurementSet
 }
 
+// PRMeasurementSet is a set of Plate reader measurements
 type PRMeasurementSet []PRMeasurement
 
+// PRMeasurement contains the details of a plate reader measurement.
 type PRMeasurement struct {
 	EWavelength int           //	excitation wavelength
 	RWavelength int           //	emission wavelength

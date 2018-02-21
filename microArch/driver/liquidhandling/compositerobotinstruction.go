@@ -1147,7 +1147,11 @@ func (ins *AspirateInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *AspirateInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *AspirateInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1215,7 +1219,11 @@ func (ins *DispenseInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *DispenseInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *DispenseInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1279,7 +1287,11 @@ func (ins *BlowoutInstruction) Generate(ctx context.Context, policy *wtype.LHPol
 	return nil, nil
 }
 
-func (ins *BlowoutInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *BlowoutInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1328,7 +1340,11 @@ func (ins *PTZInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyR
 	return nil, nil
 }
 
-func (ins *PTZInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *PTZInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.ResetPistons(ins.Head, ins.Channel)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1401,7 +1417,11 @@ func (ins *MoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *MoveInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *MoveInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1486,7 +1506,13 @@ func (ins *MoveRawInstruction) Generate(ctx context.Context, policy *wtype.LHPol
 	return nil, nil
 }
 
-func (ins *MoveRawInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *MoveRawInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	logger.Fatal("Not yet implemented")
 	panic("Not yet implemented")
 }
@@ -1548,7 +1574,11 @@ func (ins *LoadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *LoadTipsInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *LoadTipsInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.LoadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1613,7 +1643,11 @@ func (ins *UnloadTipsInstruction) Generate(ctx context.Context, policy *wtype.LH
 	return nil, nil
 }
 
-func (ins *UnloadTipsInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *UnloadTipsInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.UnloadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2472,7 +2506,11 @@ func (ins *SetPipetteSpeedInstruction) Generate(ctx context.Context, policy *wty
 	return nil, nil
 }
 
-func (ins *SetPipetteSpeedInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *SetPipetteSpeedInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2514,7 +2552,11 @@ func (ins *SetDriveSpeedInstruction) Generate(ctx context.Context, policy *wtype
 	return nil, nil
 }
 
-func (ins *SetDriveSpeedInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *SetDriveSpeedInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.SetDriveSpeed(ins.Drive, ins.Speed)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2546,8 +2588,8 @@ func (ins *InitializeInstruction) Generate(ctx context.Context, policy *wtype.LH
 	return nil, nil
 }
 
-func (ins *InitializeInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
-	ret := driver.Initialize()
+func (ins *InitializeInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	ret := lhdriver.Initialize()
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
 	}
@@ -2578,8 +2620,8 @@ func (ins *FinalizeInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *FinalizeInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
-	ret := driver.Finalize()
+func (ins *FinalizeInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	ret := lhdriver.Finalize()
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
 	}
@@ -2617,7 +2659,11 @@ func (ins *WaitInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *WaitInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *WaitInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.Wait(ins.Time)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2666,7 +2712,13 @@ func (ins *LightsOnInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *LightsOnInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *LightsOnInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LightsOnInstruction")
 }
 
@@ -2709,7 +2761,13 @@ func (ins *LightsOffInstruction) Generate(ctx context.Context, policy *wtype.LHP
 	return nil, nil
 }
 
-func (ins *LightsOffInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *LightsOffInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LightsOffInstruction")
 }
 
@@ -2752,7 +2810,13 @@ func (ins *OpenInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *OpenInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *OpenInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: OpenInstruction")
 }
 
@@ -2795,7 +2859,13 @@ func (ins *CloseInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	return nil, nil
 }
 
-func (ins *CloseInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *CloseInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: CloseInstruction")
 }
 
@@ -2838,7 +2908,13 @@ func (ins *LoadAdaptorInstruction) Generate(ctx context.Context, policy *wtype.L
 	return nil, nil
 }
 
-func (ins *LoadAdaptorInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *LoadAdaptorInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LoadAdaptor")
 }
 
@@ -2881,7 +2957,13 @@ func (ins *UnloadAdaptorInstruction) Generate(ctx context.Context, policy *wtype
 	return nil, nil
 }
 
-func (ins *UnloadAdaptorInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (ins *UnloadAdaptorInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: UnloadAdaptor")
 }
 
@@ -3198,7 +3280,12 @@ func (ins *MixInstruction) GetParameter(name string) interface{} {
 
 }
 
-func (mi *MixInstruction) OutputTo(driver LowLevelLiquidhandlingDriver) error {
+func (mi *MixInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", mi)
+	}
 	vols := make([]float64, len(mi.Volume))
 
 	for i := 0; i < len(mi.Volume); i++ {

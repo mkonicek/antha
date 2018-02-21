@@ -200,10 +200,13 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	afb, _ := json.Marshal(areaf)
 	afs := string(afb)
 
+	pcrPlateMinVol := 0.0 //5.0
+	pcrPlateMaxVol := 200.0
+
 	// pcr plate with cooler
 	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
 
-	pcrplatewell := wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 15, 1.4, "mm")
+	pcrplatewell := wtype.NewLHWell("pcrplate", "", "", "ul", pcrPlateMaxVol, pcrPlateMinVol, cone, wtype.LHWBU, 5.5, 5.5, 15, 1.4, "mm")
 	pcrplatewell.SetAfVFunc(afs)
 
 	//LiquidLevel model for LL Following: vol_f estimates volume given height
@@ -682,6 +685,8 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate = makeGreinerFlatBottomBlackPlate()
 	plates = append(plates, plate)
 
+	plates = append(plates, makeNunc96UPlate())
+
 	return
 }
 
@@ -704,6 +709,51 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate := wtype.NewLHPlate("GreinerSWVBottom", "Greiner", 8, 12, 15, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// Nunc U96 Microplate PolyStyrene Sterile U-Bottom, Clear, Cat Num: 262162
+func makeNunc96UPlate() *wtype.LHPlate {
+
+	xstartOffset := 11.25
+	ystartOffset := 7.75
+
+	plateName := "nunc_96_U_PS_Clear"
+	wellName := "Nunc96U"
+	manufacturer := "Nunc"
+
+	numberOfRows := 8
+	numberOfColumns := 12
+
+	wellShape := "cylinder"
+	bottomtype := wtype.LHWBU
+
+	dimensionUnit := "mm"
+
+	xdim := 7.1  // G1: diameter at top of well
+	ydim := 7.1  // G1: diameter at top of well
+	zdim := 10.2 // L: depth of well from top to bottom
+
+	bottomh := 1.0 // ?
+
+	minVolume := 20.0
+	maxVolume := 250.0
+
+	volUnit := "ul"
+
+	wellxoffset := 9.0             // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 9.0             // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 10.75 - xstartOffset // H - (G1/2): distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	ystart := 7.75 - ystartOffset  // J - (G1/2):  distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	zstart := 3.0                  // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 14.4          // F: height of plate
+
+	nunc96UShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	welltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, nunc96UShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }

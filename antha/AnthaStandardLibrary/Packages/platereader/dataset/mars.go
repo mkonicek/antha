@@ -214,6 +214,16 @@ func (data MarsData) Readings(well string) []PRMeasurement {
 // field value is the value which the data is to be filtered by,
 // e.g. if filtering by time, this would be the time at which to return readings for;
 // if filtering by excitation wavelength, this would be the wavelength at which to return readings for.
+// readingtypekeyword corresponds to key words found in the header of a data column.
+// Examples:
+/*
+//const (
+	absorbanceSpectrumHeader = "(Abs Spectrum)"
+	emissionSpectrumHeader   = "(Em Spectrum)"
+	excitationSpectrumHeader = "(Ex Spectrum)"
+	absorbanceHeader         = "(A-"
+	rawDataHeader            = "Raw Data"
+) */
 func (data MarsData) ReadingsAsAverage(well string, emexortime platereader.FilterOption, fieldvalue interface{}, readingtypekeyword string) (average float64, err error) {
 	readings := make([]float64, 0)
 	readingtypes := make([]string, 0)

@@ -658,6 +658,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		//mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here
 		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here
 		for _, set := range parallelsets {
+			fmt.Println("PARALLEL SET: ", set)
 			// assemble the info
 			//mci.Multi = countSetSize(set)
 			mci.Multi = len(set)

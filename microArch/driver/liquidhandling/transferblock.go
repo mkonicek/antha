@@ -47,6 +47,8 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	// list of ids
 	parallel_sets, prm, err := get_parallel_sets_robot(ctx, ti.Inss, robot, policy)
 
+	fmt.Println("LEN PARALLEL SETS: ", len(parallel_sets))
+
 	// what if prm is nil?
 
 	if err != nil {
@@ -54,6 +56,8 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	}
 
 	for _, set := range parallel_sets {
+		fmt.Println("PARALLEL SET HIGH UP ")
+		fmt.Println("SET: ", set)
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
 
@@ -79,13 +83,34 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		}
 
 		// we merge instructions which are compatible
-
-		tfr = mergeTransfers(tfr)
+		//tfr = mergeTransfers(tfr)
 
 		for _, tf := range tfr {
 			inss = append(inss, RobotInstruction(tf))
 		}
 	}
+
+	toTransfers := func(inss []RobotInstruction) []*TransferInstruction {
+		r := make([]*TransferInstruction, len(inss))
+
+		for ix, ins := range inss {
+			r[ix] = ins.(*TransferInstruction)
+		}
+
+		return r
+	}
+
+	fromTransfers := func(inss []*TransferInstruction) []RobotInstruction {
+		r := make([]RobotInstruction, len(inss))
+
+		for i, ins := range inss {
+			r[i] = RobotInstruction(ins)
+		}
+
+		return r
+	}
+
+	inss = fromTransfers(mergeTransfers(toTransfers(inss)))
 
 	// stuff that can't be done in parallel
 	for _, ins := range ti.Inss {
@@ -101,7 +126,6 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		insset := []*wtype.LHInstruction{ins}
 
-		// ConvertInstructions may now change which robot we use
 		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
 
 		if err != nil {

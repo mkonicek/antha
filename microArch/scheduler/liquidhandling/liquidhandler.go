@@ -241,6 +241,12 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	timer := this.Properties.GetTimer()
 	var d time.Duration
 
+	// very important - this must be called if the driver implements it
+	stat := this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
+	if stat.Errorcode == driver.ERR {
+		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
+	}
+
 	for _, ins := range instructions {
 
 		if (*request).Options.PrintInstructions {
@@ -266,11 +272,6 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		if timer != nil {
 			d += timer.TimeFor(ins)
 		}
-	}
-	// very important - this must be called if the driver implements it
-	stat := this.Properties.Driver.(liquidhandling.ExtendedLiquidhandlingDriver).UpdateMetaData(this.Properties)
-	if stat.Errorcode == driver.ERR {
-		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
 	}
 
 	logger.Debug(fmt.Sprintf("Total time estimate: %s", d.String()))

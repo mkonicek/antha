@@ -53,11 +53,11 @@ var defaultDevices = map[string]device{
 		Synonyms:     []string{"riser18", "shallowriser18"},
 	},
 
-	"496rack": riser{
-		Name:         "496rack",
+	"with_496rack": riser{
+		Name:         "with_496rack",
 		Manufacturer: "Gilson",
 		Heightinmm:   pcrtuberack496HeightInmm,
-		Synonyms:     []string{"496rack"},
+		Synonyms:     []string{"with_496rack"},
 		PlateConstraints: plateConstraints{
 			OnlyThesePlates: []plateWithConstraint{
 				plateWithConstraint{
@@ -138,12 +138,12 @@ var defaultDevices = map[string]device{
 		},
 	},
 
-	"cooler": incubator{
+	"with_cooler": incubator{
 		Riser: riser{
-			Name:         "cooler",
+			Name:         "with_cooler",
 			Manufacturer: "Eppendorf",
 			Heightinmm:   coolerheight,
-			Synonyms:     []string{"cooler"},
+			Synonyms:     []string{"with_cooler"},
 			PlateConstraints: plateConstraints{
 				OnlyThesePlates: []plateWithConstraint{
 					plateWithConstraint{
@@ -171,12 +171,12 @@ var defaultDevices = map[string]device{
 		PositionConstraints: map[string][]string{},
 	},
 
-	"isofreeze_cooler": incubator{
+	"with_isofreeze_cooler": incubator{
 		Riser: riser{
-			Name:         "isofreeze_cooler",
+			Name:         "with_isofreeze_cooler",
 			Manufacturer: "Isofreeze",
 			Heightinmm:   isofreezecoolerheight,
-			Synonyms:     []string{"isofreeze_cooler"},
+			Synonyms:     []string{"with_isofreeze_cooler"},
 			PlateConstraints: plateConstraints{
 				OnlyThesePlates: []plateWithConstraint{
 					plateWithConstraint{

@@ -25,12 +25,12 @@ var tests = []platetest{
 }
 
 var testsofPlateWithRiser = []platetest{
-	platetest{TestPlateName: "pcrplate_cooler", ExpectedZStart: coolerheight + 0.636, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate_skirted_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate_semi_skirted_496rack", ExpectedZStart: pcrtuberack496HeightInmm + 1.0, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "strip_tubes_0.2ml_496rack", ExpectedZStart: pcrtuberack496HeightInmm - 2.5, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "pcrplate_with_cooler", ExpectedZStart: coolerheight + 0.636, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "pcrplate_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "pcrplate_skirted_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "pcrplate_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "pcrplate_semi_skirted_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm + 1.0, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "strip_tubes_0.2ml_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm - 2.5, ExpectedHeight: 15.5},
 }
 
 func TestAddRiser(t *testing.T) {

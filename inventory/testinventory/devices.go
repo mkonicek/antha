@@ -65,10 +65,6 @@ var defaultDevices = map[string]device{
 					SpecialOffset: -0.636,
 				},
 				plateWithConstraint{
-					Name:          "pcrplate_skirted",
-					SpecialOffset: 0.0,
-				},
-				plateWithConstraint{
 					Name:          "pcrplate_semi_skirted",
 					SpecialOffset: 0.0,
 				},

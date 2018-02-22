@@ -654,6 +654,10 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	if pol["CAN_MULTI"].(bool) {
 		parallelsets := ins.GetParallelSetsFor(ctx, prms.HeadsLoaded[0].Params)
 
+		fmt.Println("TOTAL IN THIS INSTRUCTION ", len(ins.What))
+
+		fmt.Println("HOW MANY ROMANS? ", len(parallelsets))
+
 		mci := NewMultiChannelBlockInstruction()
 		//mci.Multi = prms.HeadsLoaded[0].Params.Multi // TODO Remove Hard code here
 		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here

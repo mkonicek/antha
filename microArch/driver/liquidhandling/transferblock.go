@@ -110,7 +110,9 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		return r
 	}
 
+	fmt.Println("BEFORE MERGE: ", len(inss))
 	inss = fromTransfers(mergeTransfers(toTransfers(inss)))
+	fmt.Println("AFTER  MERGE: ", len(inss))
 
 	// stuff that can't be done in parallel
 	for _, ins := range ti.Inss {

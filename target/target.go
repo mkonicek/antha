@@ -65,7 +65,7 @@ func WithTarget(parent context.Context, t *Target) context.Context {
 	return context.WithValue(parent, theTargetKey, t)
 }
 
-// Target machine for execution.
+// Target for execution (collection of devices).
 type Target struct {
 	devices []Device
 }

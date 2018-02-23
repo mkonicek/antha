@@ -87,7 +87,7 @@ var defaultDevices = map[string]device{
 			OnlyThesePlates: []plateWithConstraint{
 				plateWithConstraint{
 					Name:          "TwistDNAPlate",
-					SpecialOffset: 0.5,
+					SpecialOffset: 0.75,
 				},
 				plateWithConstraint{
 					Name:          "GreinerSWVBottom",

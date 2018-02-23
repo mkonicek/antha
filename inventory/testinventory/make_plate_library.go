@@ -683,7 +683,7 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 
 	wellxoffset := 9.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset := 9.0 //centre of well to centre of neighbouring well in y direction
-	xstart := -0.5     // distance from top left side of plate to first well
+	xstart := 0.25     // distance from top left side of plate to first well
 	ystart := 0.0      // distance from top left side of plate to first well
 	zstart := 3.0      // offset of bottom of deck to bottom of well
 

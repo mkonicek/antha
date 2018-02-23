@@ -19,6 +19,8 @@ const (
 	valueformaxheadtonotintoDSWplatewithp20tips = 4.5
 	bioshake96welladaptorheight                 = 4.5
 	bioshakestandardadaptorheight               = 5.0
+	appliedbiosystemsmagbeadbaseheight          = 12.0 //height of just plate base, upon which most skirted plates can rest
+	appliedbiosystemsmagbeadtotalheight         = 17.0 //height of base and well, in which other plates can rest
 )
 
 const (
@@ -71,6 +73,25 @@ var defaultDevices = map[string]device{
 				plateWithConstraint{
 					Name:          "strip_tubes_0.2ml",
 					SpecialOffset: -2.5,
+				},
+			},
+		},
+	},
+
+	"with_ab_magbeadplate": riser{
+		Name:         "with_ab_magbeadplate",
+		Manufacturer: "Applied Biosystems",
+		Heightinmm:   appliedbiosystemsmagbeadbaseheight,
+		Synonyms:     []string{"with_ab_magbeadplate"},
+		PlateConstraints: plateConstraints{
+			OnlyThesePlates: []plateWithConstraint{
+				plateWithConstraint{
+					Name:          "TwistDNAPlate",
+					SpecialOffset: 0.5,
+				},
+				plateWithConstraint{
+					Name:          "GreinerSWVBottom",
+					SpecialOffset: 0.0,
 				},
 			},
 		},

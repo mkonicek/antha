@@ -47,28 +47,14 @@ func firstInArray(a []*wtype.LHPlate) *wtype.LHPlate {
 
 type TransferInstruction struct {
 	GenericRobotInstruction
-	Type       int
-	Platform   string
-	What       []string
-	PltFrom    []string
-	PltTo      []string
-	WellFrom   []string
-	WellTo     []string
-	Volume     []wunit.Volume
-	FPlateType []string
-	TPlateType []string
-	FPlateWX   []int
-	FPlateWY   []int
-	TPlateWX   []int
-	TPlateWY   []int
-	FVolume    []wunit.Volume
-	TVolume    []wunit.Volume
-	Components []string
+	Type      int
+	Platform  string
+	Transfers []MultiTransferParams
 }
 
 func (ti *TransferInstruction) ToString() string {
 	s := fmt.Sprintf("%s ", Robotinstructionnames[ti.Type])
-	for i := 0; i < len(ti.What); i++ {
+	for i := 0; i < len(ti.Transfers); i++ {
 		s += ti.ParamSet(i).ToString()
 		s += "\n"
 	}
@@ -76,30 +62,41 @@ func (ti *TransferInstruction) ToString() string {
 	return s
 }
 
-func (ti *TransferInstruction) ParamSet(n int) TransferParams {
-	return TransferParams{ti.What[n], ti.PltFrom[n], ti.PltTo[n], ti.WellFrom[n], ti.WellTo[n], ti.Volume[n], ti.FPlateType[n], ti.TPlateType[n], ti.FVolume[n], ti.TVolume[n], nil, ""}
+func (ti *TransferInstruction) ParamSet(n int) MultiTransferParams {
+	return ti.Transfers[n]
 }
 
 func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string) *TransferInstruction {
-	var v TransferInstruction
-	v.Type = TFR
-	v.What = what
-	v.PltFrom = pltfrom
-	v.PltTo = pltto
-	v.WellFrom = wellfrom
-	v.WellTo = wellto
-	v.Volume = volume
-	v.FPlateType = fplatetype
-	v.TPlateType = tplatetype
-	v.FVolume = fvolume
-	v.TVolume = tvolume
-	v.FPlateWX = FPlateWX
-	v.FPlateWY = FPlateWY
-	v.TPlateWX = TPlateWX
-	v.TPlateWY = TPlateWY
-	v.Components = Components
-	v.GenericRobotInstruction.Ins = RobotInstruction(&v)
-	return &v
+	var tfri TransferInstruction
+	tfri.Type = TFR
+	tfri.Transfers = make([]MultiTransferParams, 0, 1)
+
+	v := MultiTransferParams{
+		What:       what,
+		PltFrom:    pltfrom,
+		PltTo:      pltto,
+		WellFrom:   wellfrom,
+		WellTo:     wellto,
+		Volume:     volume,
+		FPlateType: fplatetype,
+		TPlateType: tplatetype,
+		FVolume:    fvolume,
+		TVolume:    tvolume,
+		FPlateWX:   FPlateWX,
+		FPlateWY:   FPlateWY,
+		TPlateWX:   TPlateWX,
+		TPlateWY:   TPlateWY,
+		Components: Components,
+	}
+
+	tfri.Add(v)
+
+	tfri.GenericRobotInstruction.Ins = RobotInstruction(&tfri)
+	return &tfri
+}
+
+func (tfri *TransferInstruction) Add(tp MultiTransferParams) {
+	tfri.Transfers = append(tfri.Transfers, tp)
 }
 
 func (ins *TransferInstruction) InstructionType() int {
@@ -108,50 +105,17 @@ func (ins *TransferInstruction) InstructionType() int {
 
 //what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string
 func (ins *TransferInstruction) Dup() *TransferInstruction {
-	w := dupStringArray(ins.What)
-	pf := dupStringArray(ins.PltFrom)
-	pt := dupStringArray(ins.PltTo)
-	wf := dupStringArray(ins.WellFrom)
-	wt := dupStringArray(ins.WellTo)
-	fpt := dupStringArray(ins.FPlateType)
-	tpt := dupStringArray(ins.TPlateType)
-	vol := dupVolArray(ins.Volume)
-	fv := dupVolArray(ins.FVolume)
-	tv := dupVolArray(ins.TVolume)
-	fpwx := dupIntArray(ins.FPlateWX)
-	fpwy := dupIntArray(ins.FPlateWY)
-	tpwx := dupIntArray(ins.TPlateWX)
-	tpwy := dupIntArray(ins.TPlateWY)
-	cmps := dupStringArray(ins.Components)
+	var tfri TransferInstruction
+	tfri.Type = TFR
+	tfri.Transfers = make([]MultiTransferParams, 0, 1)
+	tfri.Platform = ins.Platform
 
-	return NewTransferInstruction(w, pf, pt, wf, wt, fpt, tpt, vol, fv, tv, fpwx, fpwy, tpwx, tpwy, cmps)
-}
-
-func dupStringArray(in []string) []string {
-	out := make([]string, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i]
-	}
-	return out
-}
-func dupIntArray(in []int) []int {
-	out := make([]int, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i]
-	}
-	return out
-}
-
-func dupVolArray(in []wunit.Volume) []wunit.Volume {
-	out := make([]wunit.Volume, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i].Dup()
+	for i := 0; i < len(ins.Transfers); i++ {
+		tfri.Add(ins.Transfers[i].Dup())
 	}
 
-	return out
+	tfri.GenericRobotInstruction.Ins = RobotInstruction(&tfri)
+	return &tfri
 }
 
 func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) *TransferInstruction {
@@ -274,13 +238,15 @@ func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, erro
 }
 
 func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, channel *wtype.LHChannelParameter) [][]int {
+
+}
+
+func (ins *TransferInstruction) testParallelSet(ctx context.Context, channel *wtype.LHChannelParameter) [][]int {
 	// if the channel is not multi just return nil
 
 	if channel.Multi == 1 {
 		return nil
 	}
-
-	// fix for instructions not generated by transfer block
 
 	if len(ins.What) > channel.Multi {
 		return nil

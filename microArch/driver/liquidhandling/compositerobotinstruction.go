@@ -39,64 +39,6 @@ func TipChosenError(v wunit.Volume, prms *LHProperties) string {
 	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
 }
 
-type TransferParams struct {
-	What       string
-	PltFrom    string
-	PltTo      string
-	WellFrom   string
-	WellTo     string
-	Volume     wunit.Volume
-	FPlateType string
-	TPlateType string
-	FVolume    wunit.Volume
-	TVolume    wunit.Volume
-	Channel    *wtype.LHChannelParameter
-	TipType    string
-}
-
-func (tp TransferParams) ToString() string {
-	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType)
-}
-
-func (tp TransferParams) Zero() bool {
-	if tp.What == "" {
-		return true
-	}
-
-	return false
-}
-
-type MultiTransferParams struct {
-	What       []string
-	PltFrom    []string
-	PltTo      []string
-	WellFrom   []string
-	WellTo     []string
-	Volume     []wunit.Volume
-	FPlateType []string
-	TPlateType []string
-	FVolume    []wunit.Volume
-	TVolume    []wunit.Volume
-	Channel    *wtype.LHChannelParameter
-	TipTypes   []string
-}
-
-func NewMultiTransferParams(multi int) MultiTransferParams {
-	var v MultiTransferParams
-	v.What = make([]string, 0, multi)
-	v.PltFrom = make([]string, 0, multi)
-	v.PltTo = make([]string, 0, multi)
-	v.WellFrom = make([]string, 0, multi)
-	v.WellTo = make([]string, 0, multi)
-	v.Volume = make([]wunit.Volume, 0, multi)
-	v.FVolume = make([]wunit.Volume, 0, multi)
-	v.TVolume = make([]wunit.Volume, 0, multi)
-	v.FPlateType = make([]string, 0, multi)
-	v.TPlateType = make([]string, 0, multi)
-	v.TipTypes = make([]string, 0, multi)
-	return v
-}
-
 type SingleChannelBlockInstruction struct {
 	GenericRobotInstruction
 	Type       int
@@ -387,17 +329,17 @@ func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 }
 
 func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferParams) {
-	ins.What = append(ins.What, mct.What)
-	ins.PltFrom = append(ins.PltFrom, mct.PltFrom)
-	ins.PltTo = append(ins.PltTo, mct.PltTo)
-	ins.WellFrom = append(ins.WellFrom, mct.WellFrom)
-	ins.WellTo = append(ins.WellTo, mct.WellTo)
-	ins.Volume = append(ins.Volume, mct.Volume)
-	ins.FPlateType = append(ins.FPlateType, mct.FPlateType)
-	ins.TPlateType = append(ins.TPlateType, mct.TPlateType)
-	ins.FVolume = append(ins.FVolume, mct.FVolume)
-	ins.TVolume = append(ins.TVolume, mct.TVolume)
-	ins.Prms = mct.Channel
+	ins.What = append(ins.What, mct.What())
+	ins.PltFrom = append(ins.PltFrom, mct.PltFrom())
+	ins.PltTo = append(ins.PltTo, mct.PltTo())
+	ins.WellFrom = append(ins.WellFrom, mct.WellFrom())
+	ins.WellTo = append(ins.WellTo, mct.WellTo())
+	ins.Volume = append(ins.Volume, mct.Volume())
+	ins.FPlateType = append(ins.FPlateType, mct.FPlateType())
+	ins.TPlateType = append(ins.TPlateType, mct.TPlateType())
+	ins.FVolume = append(ins.FVolume, mct.FVolume())
+	ins.TVolume = append(ins.TVolume, mct.TVolume())
+	ins.Prms = mct.Channel()[0] // DANGER DANGER
 }
 
 func (ins *MultiChannelBlockInstruction) InstructionType() int {
@@ -2079,14 +2021,21 @@ func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
 	ins.TipType = tp.TipType
 }
 func (scti *BlowInstruction) Params() MultiTransferParams {
-	var tp MultiTransferParams
-	tp.What = scti.What
-	tp.PltTo = scti.PltTo
-	tp.WellTo = scti.WellTo
-	tp.Volume = scti.Volume
-	tp.TPlateType = scti.TPlateType
-	tp.TVolume = scti.TVolume
-	tp.Channel = scti.Prms
+	tp := NewMultiTransferParams(scti.Multi)
+	/*
+		tp.What = scti.What
+		tp.PltTo = scti.PltTo
+		tp.WellTo = scti.WellTo
+		tp.Volume = scti.Volume
+		tp.TPlateType = scti.TPlateType
+		tp.TVolume = scti.TVolume
+		tp.Channel = scti.Prms
+	*/
+
+	for i := 0; i < len(scti.What); i++ {
+		tp.Transfers = append(tp.Transfers, TransferParams{What: scti.What[i], PltTo: scti.PltTo[i], WellTo: scti.WellTo[i], Volume: scti.Volume[i], TPlateType: scti.TPlateType[i], TVolume: scti.TVolume[i], Channel: scti.Prms[i]})
+	}
+
 	return tp
 }
 

@@ -93,6 +93,10 @@ var defaultDevices = map[string]device{
 					Name:          "GreinerSWVBottom",
 					SpecialOffset: 0.25,
 				},
+				plateWithConstraint{
+					Name:          "Thermo_96_deepwell_1ml",
+					SpecialOffset: 3.30,
+				},
 			},
 		},
 	},

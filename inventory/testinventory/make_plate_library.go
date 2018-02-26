@@ -626,6 +626,8 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 		makeSemiSkirtedPCRPlate(),
 		makePCRPlate(),
 	)
+	plate = make96DeepWellLowVolumePlate()
+	plates = append(plates, plate)
 
 	return
 }
@@ -778,5 +780,53 @@ func makeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 	plate := makeGreinerVBottomPlate()
 	plate.Type = "GreinerSWVBottom_riser"
 	plate.WellZStart = 43.0
+	return plate
+}
+
+// Nunc™ 1.0 ml DeepWell™ Plates with Shared-Wall Technology Cat Num: 260251
+// Source of dimensions: https://www.thermofisher.com/order/catalog/product/260251
+func make96DeepWellLowVolumePlate() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 14.50
+	ystartOffsetCorrection := 11.50
+	zstartOffsetCorrection := 2.5
+
+	plateName := "Thermo_96_deepwell_1ml"
+	wellName := "Thermo_96_deepwell"
+	manufacturer := "Thermo Fisher"
+
+	numberOfRows := 8
+	numberOfColumns := 12
+
+	wellShape := "cylinder"
+	bottomtype := wtype.LHWBU
+
+	dimensionUnit := "mm"
+
+	xdim := 8.4  // G1: diameter at top of well
+	ydim := 8.4  // G1: diameter at top of well
+	zdim := 29.1 // L: depth of well from top to bottom
+
+	bottomh := 1.4 // N: bottom of well to resting plane
+
+	minVolume := 10.0
+	maxVolume := 1000.0
+
+	volUnit := "ul"
+
+	wellxoffset := 9.0                      // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 9.0                      // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 14.4 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 11.2 - ystartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 2.5 - zstartOffsetCorrection  // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 31.6                   // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
 	return plate
 }

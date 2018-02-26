@@ -91,7 +91,7 @@ var defaultDevices = map[string]device{
 				},
 				plateWithConstraint{
 					Name:          "GreinerSWVBottom",
-					SpecialOffset: 0.0,
+					SpecialOffset: 0.40,
 				},
 			},
 		},

@@ -757,7 +757,7 @@ func make96DeepWellLowVolumePlate() *wtype.LHPlate {
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
 	xstartOffsetCorrection := 14.50
 	ystartOffsetCorrection := 11.50
-	zstartOffsetCorrection := 3.15
+	zstartOffsetCorrection := 2.5
 
 	plateName := "Thermo_96_deepwell_1ml"
 	wellName := "Thermo_96_deepwell"

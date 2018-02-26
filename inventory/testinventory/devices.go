@@ -78,16 +78,20 @@ var defaultDevices = map[string]device{
 		},
 	},
 
-	"with_ab_magbeadplate": riser{
-		Name:         "with_ab_magbeadplate",
+	"with_AB_magnetic_ring_stand": riser{
+		Name:         "with_AB_magnetic_ring_stand",
 		Manufacturer: "Applied Biosystems",
 		Heightinmm:   appliedbiosystemsmagbeadbaseheight,
-		Synonyms:     []string{"with_ab_magbeadplate"},
+		Synonyms:     []string{"with_AB_magnetic_ring_stand"},
 		PlateConstraints: plateConstraints{
 			OnlyThesePlates: []plateWithConstraint{
 				plateWithConstraint{
 					Name:          "TwistDNAPlate",
 					SpecialOffset: 0.75,
+				},
+				plateWithConstraint{
+					Name:          "GreinerSWVBottom",
+					SpecialOffset: 0.25,
 				},
 			},
 		},

@@ -53,8 +53,6 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 
 			tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
 
-			fmt.Println("DEPTH ", depth, " LEN TFB: ", len(ch.Values))
-
 			request.InstructionSet.Add(tfb)
 		}
 		depth += 1

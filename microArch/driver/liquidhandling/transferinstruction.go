@@ -460,6 +460,7 @@ func (insIn *TransferInstruction) Generate(ctx context.Context, policy *wtype.LH
 
 		for _, set := range parallelsets {
 			vols := VolumeSet(ins.Transfers[set].Volume())
+
 			maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume())
 
 			// if we can't do it, we can't do it
@@ -477,12 +478,13 @@ func (insIn *TransferInstruction) Generate(ctx context.Context, policy *wtype.LH
 
 			for i, _ := range vols {
 				vols[i] = wunit.CopyVolume(maxvol)
-				ins.Transfers[set].RemoveVolume(maxvol)
-
-				// set the from and to volumes for the relevant part of the instruction
-				ins.Transfers[set].RemoveFVolume(maxvol)
-				ins.Transfers[set].AddTVolume(maxvol)
 			}
+
+			ins.Transfers[set].RemoveVolume(maxvol)
+
+			// set the from and to volumes for the relevant part of the instruction
+			ins.Transfers[set].RemoveFVolume(maxvol)
+			ins.Transfers[set].AddTVolume(maxvol)
 
 			mci.Multi = len(vols)
 			mci.AddTransferParams(tp)
@@ -503,6 +505,7 @@ func (insIn *TransferInstruction) Generate(ctx context.Context, policy *wtype.LH
 			if tp.Volume.LessThanFloat(0.001) {
 				continue
 			}
+
 			// TODO --> reorder instructions
 			if lastWhat != "" && tp.What != lastWhat {
 				if len(sci.Volume) > 0 {

@@ -45,7 +45,7 @@ xcode-select --install
 
 # Install some external dependencies
 brew update
-brew install mercurial pkg-config homebrew/science/glpk sqlite3 opencv
+brew install mercurial pkg-config glpk sqlite3 opencv
 
 # Install antha
 mkdir -p $GOPATH/src/github.com/antha-lang

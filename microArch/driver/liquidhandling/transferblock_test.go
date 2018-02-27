@@ -7,7 +7,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
-	"reflect"
 	"testing"
 )
 
@@ -254,11 +253,11 @@ func TestMultichannelFailDest(t *testing.T) {
 		t.Errorf("No Transfers made")
 	}
 
-	for x := 0; x < len(ris); x++ {
-		ris[x].(*TransferInstruction).WellTo[1] = "A1"
-		ris[x].(*TransferInstruction).WellTo[3] = "A1"
-		ris[x].(*TransferInstruction).WellTo[5] = "A1"
-		ris[x].(*TransferInstruction).WellTo[7] = "A1"
+	for x := 0; x < len(ris[0].(*TransferInstruction).Transfers); x++ {
+		ris[0].(*TransferInstruction).Transfers[x].Transfers[1].WellTo = "A1"
+		ris[0].(*TransferInstruction).Transfers[x].Transfers[3].WellTo = "A1"
+		ris[0].(*TransferInstruction).Transfers[x].Transfers[5].WellTo = "A1"
+		ris[0].(*TransferInstruction).Transfers[x].Transfers[7].WellTo = "A1"
 	}
 
 	testNegative(ctx, ris, pol, rbt, t)
@@ -301,13 +300,18 @@ func TestMultiChannelFailComponent(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ris) < 2 {
-		t.Errorf("Not enough Transfers made")
-		return
+	if len(ris) != 1 {
+		t.Errorf("Expected 1 transfer got ", len(ris))
 	}
 
-	ris[0].(*TransferInstruction).What[3] = "lemonade"
-	ris[1].(*TransferInstruction).What[3] = "lemonade"
+	tf := ris[0].(*TransferInstruction)
+
+	if len(tf.Transfers) != 2 {
+		t.Errorf("Error expected 2 transfers got %d", len(tf.Transfers))
+	}
+
+	ris[0].(*TransferInstruction).Transfers[0].Transfers[3].What = "lemonade"
+	ris[0].(*TransferInstruction).Transfers[1].Transfers[3].What = "lemonade"
 
 	testNegative(ctx, ris, pol, rbt, t)
 }
@@ -329,8 +333,14 @@ func TestMultichannelPositive(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ris) != 2 {
-		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
+	if len(ris) != 1 {
+		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
+	}
+
+	tf := ris[0].(*TransferInstruction)
+
+	if len(tf.Transfers) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(tf.Transfers))
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)
@@ -370,8 +380,14 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ris) != 2 {
-		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
+	if len(ris) != 1 {
+		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
+	}
+
+	tf := ris[0].(*TransferInstruction)
+
+	if len(tf.Transfers) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(tf.Transfers))
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)
@@ -396,8 +412,14 @@ func TestTroughMultichannelPositive(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ris) != 2 {
-		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
+	if len(ris) != 1 {
+		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
+	}
+
+	tf := ris[0].(*TransferInstruction)
+
+	if len(tf.Transfers) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(tf.Transfers))
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)
@@ -422,8 +444,14 @@ func TestBigWellMultichannelPositive(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ris) != 2 {
-		t.Errorf("Error: Expected 2 transfers got %d", len(ris))
+	if len(ris) != 1 {
+		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
+	}
+
+	tf := ris[0].(*TransferInstruction)
+
+	if len(tf.Transfers) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(tf.Transfers))
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)
@@ -450,8 +478,15 @@ func TestInsByInsMixPositiveMultichannel(t *testing.T) {
 
 	// component-by-component multichanneling should be supported IFF
 	// we can do all the solutions in the subset
-	if len(ris) != 3 {
-		t.Errorf("Error: Expected 3 transfers got %d", len(ris))
+
+	if len(ris) != 1 {
+		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
+	}
+
+	tf := ris[0].(*TransferInstruction)
+
+	if len(tf.Transfers) != 3 {
+		t.Errorf("Error: Expected 3 transfers got %d", len(tf.Transfers))
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)
@@ -479,8 +514,14 @@ func TestInsByInsMixNegativeMultichannel(t *testing.T) {
 	// atomic mixes now come through all split up... in future this should revert to the
 	// older case of 8 x 3 transfers either by merging or something else
 
-	if len(ris) != 24 {
-		t.Errorf("Error: Expected 24 transfers got %d", len(ris))
+	if len(ris) != 1 {
+		t.Errorf("Error: Expected 1 transfers got %d", len(ris))
+	}
+
+	tf := ris[0].(*TransferInstruction)
+
+	if len(tf.Transfers) != 24 {
+		t.Errorf("Error: Expected 24 transfers got %d", len(tf.Transfers))
 	}
 
 	testNegative(ctx, ris, pol, rbt, t)
@@ -506,19 +547,18 @@ func getMeATransfer(ctype string) *TransferInstruction {
 	return NewTransferInstruction(wh, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype, volume, fvolume, tvolume, fpwx, fpwy, tpwx, tpwy, cmps)
 }
 
+// TODO --> Create new version of the below
+/*
 func TestTransferMerge(t *testing.T) {
+	policy, _ := GetLHPolicyForTest()
 	ins1 := getMeATransfer("milk")
-
-	if !reflect.DeepEqual(ins1, ins1) {
-		t.Errorf("DeepEqual not reflexive!")
-	}
 
 	toMerge := []*TransferInstruction{ins1, ins1}
 
 	ins3 := ins1.Dup()
 	ins3 = ins3.MergeWith(ins1)
 
-	ins4 := mergeTransfers(toMerge)[0]
+	ins4 := mergeTransfers(toMerge, policy)[0]
 
 	if !reflect.DeepEqual(ins3, ins4) {
 		t.Errorf("Must merge transfers with same components")
@@ -530,13 +570,14 @@ func TestTransferMerge(t *testing.T) {
 
 	toMerge = []*TransferInstruction{ins1, ins2}
 
-	merged := mergeTransfers(toMerge)
+	merged := mergeTransfers(toMerge, policy)
 
 	if len(merged) == 1 {
 		t.Errorf("Must not merge transfers with different components")
 	}
 
 }
+*/
 
 func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
 	if len(ris) < 1 {

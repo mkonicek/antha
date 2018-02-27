@@ -184,8 +184,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 
 		tvs, err := TransferVolumes(ins.Volume[t], mergedchannel.Minvol, mergedchannel.Maxvol)
 
-		//fmt.Println("VOL ", ins.Volume[t].ToString(), " IN ", len(tvs), " GOES: ", mergedchannel.Minvol.ToString(), " MIN ", mergedchannel.Maxvol.ToString(), " MAX")
-
 		if err != nil {
 			return ret, err
 		}
@@ -210,18 +208,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 			}
 
 			if change_tips {
-				/*
-					fmt.Println("CHANGING TIPS HERE ")
-					fmt.Println("THIS: ", this_thing.CName, " THAT: ", last_thing.CName)
-					fmt.Println("channels equal? ", channel == newchannel)
-					fmt.Println("tips same? ", tiptype == newtiptype)
-					fmt.Println("tip reuse over? ", n_tip_uses > pol["TIP_REUSE_LIMIT"].(int))
-					fmt.Println(n_tip_uses, " ", pol["TIP_REUSE_LIMIT"].(int), " NOT CAST: ", pol["TIP_REUSE_LIMIT"])
-					fmt.Println("dirty? ", dirty)
-				*/
-				// maybe wrap this as a ChangeTips function call
-				// these need parameters
-
 				tipdrp, err := DropTips(tt, prms, chanA)
 				if err != nil {
 					return ret, err
@@ -271,11 +257,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 
 			if pol["DSPREFERENCE"].(int) == 0 && !ins.TVolume[t].IsZero() || premix && npre.(int) > 0 || postmix && npost.(int) > 0 {
 				dirty = true
-				/*
-					fmt.Println("DIRTY DIRTY DIRTY")
-					fmt.Println(pol["DSPREFERENCE"].(int) == 0, " ", ins.TVolume[t].ToString(), " ", "PRE: ", premix, " ", npre, " POST: ", postmix, " ", npost)
-					fmt.Println(ins.WellTo[t])
-				*/
 			}
 
 			ins.FVolume[t].Subtract(vol)
@@ -339,7 +320,6 @@ func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferPara
 	ins.TPlateType = append(ins.TPlateType, mct.TPlateType())
 	ins.FVolume = append(ins.FVolume, mct.FVolume())
 	ins.TVolume = append(ins.TVolume, mct.TVolume())
-	ins.Prms = mct.Channel()[0] // DANGER DANGER
 }
 
 func (ins *MultiChannelBlockInstruction) InstructionType() int {
@@ -434,6 +414,8 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	}
 	ret = append(ret, tipget...)
 	n_tip_uses := 0
+	var last_thing *wtype.LHComponent
+	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
 		tvols := NewVolumeSet(ins.Prms.Multi)
@@ -450,8 +432,6 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			return ret, err
 		}
 
-		var last_thing *wtype.LHComponent
-		var dirty bool
 		// load tips
 
 		// split the transfer up
@@ -535,9 +515,20 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.Prms = prms
 
 			ret = append(ret, mci)
+			// finally check if we are touching a bad liquid
+			// in future we will do this properly, for now we assume
+			// touching any liquid is bad
+
+			npre, premix := pol["PRE_MIX"]
+			npost, postmix := pol["POST_MIX"]
+
+			if pol["DSPREFERENCE"].(int) == 0 && !VolumeSet(ins.TVolume[t]).IsZero() || premix && npre.(int) > 0 || postmix && npost.(int) > 0 {
+				dirty = true
+			}
+
+			last_thing = this_thing
 
 			tiptypes = newtiptypes
-			//		tips = newtips
 			channels = newchannels
 			fvols.SubA(vols)
 			tvols.AddA(vols)
@@ -2033,7 +2024,7 @@ func (scti *BlowInstruction) Params() MultiTransferParams {
 	*/
 
 	for i := 0; i < len(scti.What); i++ {
-		tp.Transfers = append(tp.Transfers, TransferParams{What: scti.What[i], PltTo: scti.PltTo[i], WellTo: scti.WellTo[i], Volume: scti.Volume[i], TPlateType: scti.TPlateType[i], TVolume: scti.TVolume[i], Channel: scti.Prms[i]})
+		tp.Transfers = append(tp.Transfers, TransferParams{What: scti.What[i], PltTo: scti.PltTo[i], WellTo: scti.WellTo[i], Volume: scti.Volume[i], TPlateType: scti.TPlateType[i], TVolume: scti.TVolume[i], Channel: scti.Prms.Dup()})
 	}
 
 	return tp
@@ -2914,13 +2905,9 @@ func (ins *ResetInstruction) AddTransferParams(tp TransferParams) {
 }
 
 func (ins *ResetInstruction) AddMultiTransferParams(mtp MultiTransferParams) {
-	ins.What = mtp.What
-	ins.PltTo = mtp.PltTo
-	ins.WellTo = mtp.WellTo
-	ins.Volume = mtp.Volume
-	ins.TPlateType = mtp.TPlateType
-	ins.TVolume = mtp.TVolume
-	ins.Prms = mtp.Channel
+	for _, tp := range mtp.Transfers {
+		ins.AddTransferParams(tp)
+	}
 }
 
 func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {

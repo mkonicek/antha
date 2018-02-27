@@ -47,8 +47,6 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	// list of ids
 	parallel_sets, prm, err := get_parallel_sets_robot(ctx, ti.Inss, robot, policy)
 
-	fmt.Println("LEN PARALLEL SETS: ", len(parallel_sets))
-
 	// what if prm is nil?
 
 	if err != nil {
@@ -56,8 +54,6 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	}
 
 	for _, set := range parallel_sets {
-		fmt.Println("PARALLEL SET HIGH UP ")
-		fmt.Println("SET: ", set)
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
 
@@ -110,9 +106,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		return r
 	}
 
-	fmt.Println("BEFORE MERGE: ", len(inss))
-	inss = fromTransfers(mergeTransfers(toTransfers(inss)))
-	fmt.Println("AFTER  MERGE: ", len(inss))
+	inss = fromTransfers(mergeTransfers(toTransfers(inss), policy))
 
 	// stuff that can't be done in parallel
 	for _, ins := range ti.Inss {
@@ -511,69 +505,51 @@ func (ti TransferBlockInstruction) GetParameter(p string) interface{} {
 	return nil
 }
 
-func mergeTransfers(tfrs []*TransferInstruction) []*TransferInstruction {
+func mergeTransfers(tfrs []*TransferInstruction, policy *wtype.LHPolicyRuleSet) []*TransferInstruction {
 	ret := make([]*TransferInstruction, 0, len(tfrs))
 
-	// we strictly retain ordering here
+	for _, tf := range tfrs {
+		forMerge := findTransferForMerge(tf, ret, policy)
 
-	currTfr := tfrs[0]
-
-	for i := 1; i < len(tfrs); i++ {
-		if merged := tryMergeTransfer(currTfr, tfrs[i]); merged == nil {
-			ret = append(ret, currTfr)
-			currTfr = tfrs[i]
+		// true if ret is empty or nothing mergeable within
+		if forMerge == nil {
+			ret = append(ret, tf)
 		} else {
-			currTfr = merged
+			// forMerge is already in ret
+			forMerge.MergeWith(tf)
 		}
 	}
-
-	ret = append(ret, currTfr)
 
 	return ret
 }
 
-func tryMergeTransfer(ins1, ins2 *TransferInstruction) *TransferInstruction {
-	// merge any transfers which have sources in common
-
-	if commonSources(ins1, ins2) {
-		// appends everything from ins2 to ins1
-		return ins1.MergeWith(ins2)
+func findTransferForMerge(ins *TransferInstruction, arr []*TransferInstruction, policy *wtype.LHPolicyRuleSet) *TransferInstruction {
+	for _, ins2 := range arr {
+		if canMerge(ins, ins2, policy) {
+			return ins2
+		}
 	}
 
 	return nil
 }
 
-func commonSources(ins1, ins2 *TransferInstruction) bool {
-	a2Map := func(a []string) map[string]bool {
-		m := make(map[string]bool)
-		for _, v := range a {
-			if v == "" {
-				continue
-			}
-			m[v] = true
-		}
+func canMerge(ins, ins2 *TransferInstruction, policy *wtype.LHPolicyRuleSet) bool {
+	// merge only if the merge doesn't break either
 
-		return m
+	ins3 := ins.Dup()
+	ins3.MergeWith(ins2)
+
+	m1 := GetPolicyFor(policy, ins)["CAN_MULTI"].(bool)
+	m2 := GetPolicyFor(policy, ins2)["CAN_MULTI"].(bool)
+	m3 := GetPolicyFor(policy, ins3)["CAN_MULTI"].(bool)
+
+	if !xor(m1, m2) {
+		return !xor(m1, m3)
 	}
 
-	// we just compare component names
+	return false
+}
 
-	m := a2Map(ins1.Components)
-
-	if len(m) > 1 {
-		return false
-	}
-
-	for _, n := range ins2.Components {
-		if n == "" {
-			continue
-		}
-		_, ok := m[n]
-
-		if !ok {
-			return false
-		}
-	}
-
-	return true
+func xor(a, b bool) bool {
+	return (a && !b) || (!a && b)
 }

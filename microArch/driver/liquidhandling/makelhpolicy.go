@@ -1006,6 +1006,49 @@ var (
 	FromBetween200ulAnd1000ul = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{200.0, 1000.0}}
 )
 
+func AddUniversalRules(originalRuleSet *wtype.LHPolicyRuleSet, policies map[string]wtype.LHPolicy) (lhpr *wtype.LHPolicyRuleSet, err error) {
+
+	lhpr = originalRuleSet
+
+	for name, policy := range policies {
+		rule := wtype.NewLHPolicyRule(name)
+		err := rule.AddCategoryConditionOn("LIQUIDCLASS", name)
+
+		if err != nil {
+			return nil, err
+		}
+		lhpr.AddRule(rule, policy)
+	}
+
+	// hack to fix plate type problems
+	// this really should be removed asap
+	rule := wtype.NewLHPolicyRule("HVOffsetFix")
+	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+
+	rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
+	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+	// don't get overridden
+	rule.Priority = 100
+	pol := MakeHVOffsetPolicy()
+	lhpr.AddRule(rule, pol)
+
+	// merged the below and the above
+	/*
+		rule = wtype.NewLHPolicyRule("HVFlowRate")
+		rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+		//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
+		pol = MakeHVFlowRatePolicy()
+		lhpr.AddRule(rule, pol)
+	*/
+
+	rule = wtype.NewLHPolicyRule("DNALV")
+	rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
+	rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
+	pol = MakeLVDNAMixPolicy()
+	lhpr.AddRule(rule, pol)
+	return lhpr, nil
+}
+
 func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	// make some policies
 
@@ -1014,6 +1057,12 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	// now make rules
 
 	lhpr := wtype.NewLHPolicyRuleSet()
+
+	lhpr, err := AddUniversalRules(lhpr, policies)
+
+	if err != nil {
+		return nil, err
+	}
 
 	for name, policy := range policies {
 		rule := wtype.NewLHPolicyRule(name)
@@ -1134,37 +1183,10 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustNeedToMix200ul, adjustPreMixVol200)
 
-	// hack to fix plate type problems
-	// this really should be removed asap
-	rule := wtype.NewLHPolicyRule("HVOffsetFix")
-	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-
-	rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
-	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
-	// don't get overridden
-	rule.Priority = 100
-	pol := MakeHVOffsetPolicy()
-	lhpr.AddRule(rule, pol)
-
-	// merged the below and the above
-	/*
-		rule = wtype.NewLHPolicyRule("HVFlowRate")
-		rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-		//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
-		pol = MakeHVFlowRatePolicy()
-		lhpr.AddRule(rule, pol)
-	*/
-
-	rule = wtype.NewLHPolicyRule("DNALV")
-	rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
-	rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
-	pol = MakeLVDNAMixPolicy()
-	lhpr.AddRule(rule, pol)
-
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used
-	rule = wtype.NewLHPolicyRule("EPAGE48Load")
+	rule := wtype.NewLHPolicyRule("EPAGE48Load")
 	rule.AddCategoryConditionOn("TOPLATETYPE", "EPAGE48")
-	pol = TurnOffBlowoutPolicy()
+	pol := TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used

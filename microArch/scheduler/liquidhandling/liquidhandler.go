@@ -150,14 +150,14 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	err = this.Simulate(request)
+	/*err = this.Simulate(request)
 	if err != nil {
 		//since the simulator is... tender right now, let's take this with a pinch of salt
 		logger.Info("Ignoring simulation error")
 		//return err
 	} else {
 		logger.Info("Simulation completed successfully")
-	}
+	}*/
 
 	err = this.Execute(request)
 	if err != nil {

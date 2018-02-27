@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -242,6 +243,10 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		}
 
 		wh[ci] = cmps[ci].TypeName()
+		/*
+			if wh[ci] == wtype.InvalidPolicyName {
+
+			}*/
 
 		// source plate position
 

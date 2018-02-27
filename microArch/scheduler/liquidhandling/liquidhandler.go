@@ -627,6 +627,9 @@ func forceSanity(request *LHRequest) {
 func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// figure out the output order
 
+	// mergePolicies
+	//	requestPolicies := request.Policies
+
 	err := set_output_order(request)
 
 	if err != nil {

@@ -412,14 +412,20 @@ func (lhc *LHComponent) SetName(name string) {
 	lhc.CName = trimString(name)
 }
 
+const invalidPolicy = "invalidPolicyName"
+
 // TypeName returns the PolicyName of the LHComponent's LiquidType as a string
 func (lhc *LHComponent) TypeName() string {
-	return LiquidTypeName(lhc.Type).String()
+	typeName, err := LiquidTypeName(lhc.Type)
+	if err != nil {
+		return invalidPolicy
+	}
+	return string(typeName)
 }
 
 // PolicyName returns the PolicyName of the LHComponent's LiquidType
 func (lhc *LHComponent) PolicyName() PolicyName {
-	return PolicyName(LiquidTypeName(lhc.Type).String())
+	return PolicyName(lhc.TypeName())
 }
 
 // SetPolicyName adds the LiquidType associated with a PolicyName to the LHComponent.
@@ -684,7 +690,8 @@ func (lhc *LHComponent) GetVunit() string {
 }
 
 func (lhc *LHComponent) GetType() string {
-	return LiquidTypeName(lhc.Type).String()
+	typeName, _ := LiquidTypeName(lhc.Type)
+	return typeName.String()
 }
 
 func NewLHComponent() *LHComponent {

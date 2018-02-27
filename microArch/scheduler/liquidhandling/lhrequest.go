@@ -54,7 +54,7 @@ type LHRequest struct {
 	Output_plate_order    []string
 	Plate_lookup          map[string]string
 	Stockconcs            map[string]wunit.Concentration
-	Policies              *wtype.LHPolicyRuleSet
+	PolicyManager         *LHPolicyManager
 	Input_order           []string
 	Output_order          []string
 	OutputIteratorFactory func(*wtype.LHPlate) wtype.PlateIterator `json:"-"`
@@ -201,9 +201,27 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_setup_weights["MAX_N_PLATES"] = 2
 	lhr.Input_setup_weights["MAX_N_WELLS"] = 96
 	lhr.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = 1.0
-	lhr.Policies, _ = liquidhandling.GetLHPolicyForTest()
 	lhr.Options = NewLHOptions()
+
+	systemPolicies, _ := liquidhandling.GetLHPolicyForTest()
+
+	lhr.SetPolicies(systemPolicies)
 	return &lhr
+}
+
+func (lhr *LHRequest) Policies() *wtype.LHPolicyRuleSet {
+	return lhr.PolicyManager.Policies()
+}
+
+func (lhr *LHRequest) SetPolicies(systemPolicies *wtype.LHPolicyRuleSet) {
+
+	if systemPolicies == nil {
+		panic("damn")
+	}
+
+	lhr.PolicyManager = &LHPolicyManager{
+		SystemPolicies: systemPolicies,
+	}
 }
 
 func (lhr *LHRequest) Add_instruction(ins *wtype.LHInstruction) {
@@ -235,18 +253,26 @@ func (lhr *LHRequest) UseLegacyVolume() bool {
 	return lhr.Options.LegacyVolume
 }
 
+func (lhr *LHRequest) GetPolicyManager() *LHPolicyManager {
+	return lhr.PolicyManager
+}
+
 type LHPolicyManager struct {
 	SystemPolicies *wtype.LHPolicyRuleSet
 	UserPolicies   *wtype.LHPolicyRuleSet
 }
 
-func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSet) *wtype.LHPolicyRuleSet {
+func (mgr *LHPolicyManager) Policies() *wtype.LHPolicyRuleSet {
 	ret := wtype.CloneLHPolicyRuleSet(mgr.SystemPolicies)
 
 	// things coming in take precedence over things already there
 	ret.MergeWith(mgr.UserPolicies)
-	ret.MergeWith(protocolpolicies)
+	return ret
+}
 
+func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSet) *wtype.LHPolicyRuleSet {
+	ret := mgr.Policies()
+	ret.MergeWith(protocolpolicies)
 	return ret
 }
 

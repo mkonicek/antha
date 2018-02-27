@@ -86,7 +86,8 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
 
-	if err := req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
+	if err := req.Policiess
+	.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
 		return nil, err
 	}
 	if err := req.Policies.SetOption("USE_LLF", a.opt.UseLLF); err != nil {

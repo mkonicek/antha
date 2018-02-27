@@ -3629,7 +3629,7 @@ type LHComponentMessage struct {
 	Arg_5  string                      `protobuf:"bytes,5,opt,name=Arg_5,json=Arg5" json:"Arg_5,omitempty"`
 	Arg_6  int64                       `protobuf:"varint,6,opt,name=Arg_6,json=Arg6" json:"Arg_6,omitempty"`
 	Arg_7  string                      `protobuf:"bytes,7,opt,name=Arg_7,json=Arg7" json:"Arg_7,omitempty"`
-	Arg_8  int64                       `protobuf:"varint,8,opt,name=Arg_8,json=Arg8" json:"Arg_8,omitempty"`
+	Arg_8  string                      `protobuf:"bytes,8,opt,name=Arg_8,json=Arg8" json:"Arg_8,omitempty"`
 	Arg_9  float64                     `protobuf:"fixed64,9,opt,name=Arg_9,json=Arg9" json:"Arg_9,omitempty"`
 	Arg_10 float64                     `protobuf:"fixed64,10,opt,name=Arg_10,json=Arg10" json:"Arg_10,omitempty"`
 	Arg_11 string                      `protobuf:"bytes,11,opt,name=Arg_11,json=Arg11" json:"Arg_11,omitempty"`
@@ -3695,11 +3695,11 @@ func (m *LHComponentMessage) GetArg_7() string {
 	return ""
 }
 
-func (m *LHComponentMessage) GetArg_8() int64 {
+func (m *LHComponentMessage) GetArg_8() string {
 	if m != nil {
 		return m.Arg_8
 	}
-	return 0
+	return ""
 }
 
 func (m *LHComponentMessage) GetArg_9() float64 {

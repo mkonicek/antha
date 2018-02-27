@@ -212,6 +212,43 @@ func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 	return inst.result
 }
 
+// PlateReadOpts defines plate-reader absorbance options
+type PlateReadOpts struct {
+	Sample  *wtype.LHComponent
+	Options string
+}
+
+func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
+	inst := wtype.NewPRInstruction()
+	inst.ComponentIn = opts.Sample
+
+	// Clone the component to represent the result of the AbsorbanceRead
+	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
+	inst.Options = opts.Options
+
+	return &commandInst{
+		Args:   []*wtype.LHComponent{opts.Sample},
+		result: inst.ComponentOut,
+		Command: &ast.Command{
+			Inst: inst,
+			Requests: []ast.Request{
+				ast.Request{
+					Selector: []ast.NameValue{
+						target.DriverSelectorV1WriteOnlyPlateReader,
+					},
+				},
+			},
+		},
+	}
+}
+
+// PlateRead reads absorbance of a component
+func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.LHComponent {
+	inst := readPlate(ctx, opt)
+	trace.Issue(ctx, inst)
+	return inst.result
+}
+
 // NewComponent returns a new component given a component type
 func NewComponent(ctx context.Context, typ string) *wtype.LHComponent {
 	c, err := inventory.NewComponent(ctx, typ)

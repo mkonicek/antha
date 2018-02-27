@@ -25,7 +25,7 @@ for using both are stored here.
 
 ### OSX (Native)
 
-First step is to install or upgrade to go 1.7. Follow the instructions at the
+First step is to install or upgrade to go 1.10. Follow the instructions at the
 [Golang](http://golang.org/doc/install) site. 
 
 Update the GOPATH:

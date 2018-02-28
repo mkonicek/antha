@@ -662,7 +662,7 @@ func makePCRPlate() *wtype.LHPlate {
 	return wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
-// pcr plate semi-skirted with 496rack
+// pcr plate semi-skirted
 func makeSemiSkirtedPCRPlate() *wtype.LHPlate {
 	return wtype.NewLHPlate("pcrplate_semi_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 1.0)
 }
@@ -772,8 +772,7 @@ func makeFluidX700ulTube() *wtype.LHWell {
 	return welltype
 }
 
-// Nunc U96 Microplate PolyStyrene Sterile U-Bottom, Clear, Cat Num: 262162
-// Source of dimensions: https://www.thermofisher.com/order/catalog/product/262162
+// http://fluidx.eu/0.7ml%2c-96-well-format-2d-barcoded-jacket-tube-with-external-thread.html
 func makeFluidX700ulPlate() *wtype.LHPlate {
 
 	// no literature values for these

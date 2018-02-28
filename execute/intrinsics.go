@@ -18,12 +18,12 @@ import (
 	"github.com/antha-lang/antha/trace"
 )
 
-// a commandInst is a generic instinsic instruction
+// a commandInst is a generic intrinsic instruction
 type commandInst struct {
 	// Arguments to this command. Used to determine command dependencies.
 	Args []*wtype.LHComponent
-	// Component created by this command. Returned back to user code
-	result  *wtype.LHComponent
+	// Components created by this command. Returned back to user code
+	result  []*wtype.LHComponent
 	Command *ast.Command
 }
 
@@ -82,7 +82,7 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtyp
 
 	inst := &commandInst{
 		Args:   []*wtype.LHComponent{in},
-		result: newCompFromComp(ctx, in),
+		result: []*wtype.LHComponent{newCompFromComp(ctx, in)},
 		Command: &ast.Command{
 			Inst: innerInst,
 		},
@@ -98,7 +98,7 @@ func Incubate(ctx context.Context, in *wtype.LHComponent, opt IncubateOpt) *wtyp
 	})
 
 	trace.Issue(ctx, inst)
-	return inst.result
+	return inst.result[0]
 }
 
 // prompt... works pretty much like Handle does
@@ -121,14 +121,14 @@ func MixerPrompt(ctx context.Context, in *wtype.LHComponent, message string) *wt
 		},
 	)
 	trace.Issue(ctx, inst)
-	return inst.result
+	return inst.result[0]
 }
 
 // Prompt prompts user with a message
 func Prompt(ctx context.Context, in *wtype.LHComponent, message string) *wtype.LHComponent {
 	inst := &commandInst{
 		Args:   []*wtype.LHComponent{in},
-		result: newCompFromComp(ctx, in),
+		result: []*wtype.LHComponent{newCompFromComp(ctx, in)},
 		Command: &ast.Command{
 			Inst: &ast.PromptInst{
 				Message: message,
@@ -143,7 +143,7 @@ func Prompt(ctx context.Context, in *wtype.LHComponent, message string) *wtype.L
 	})
 
 	trace.Issue(ctx, inst)
-	return inst.result
+	return inst.result[0]
 }
 
 func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
@@ -156,7 +156,7 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 
 	return &commandInst{
 		Args:   []*wtype.LHComponent{opts.ComponentIn},
-		result: opts.Component,
+		result: []*wtype.LHComponent{opts.Component},
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
@@ -185,12 +185,11 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 
 	return &commandInst{
 		Args:   []*wtype.LHComponent{opt.Component},
-		result: comp,
+		result: []*wtype.LHComponent{comp},
 		Command: &ast.Command{
 			Inst: &ast.HandleInst{
-				Group:    opt.Label,
-				Selector: opt.Selector,
-				Calls:    opt.Calls,
+
+				Calls: opt.Calls,
 			},
 			Requests: []ast.Request{ast.Request{Selector: sels}},
 		},
@@ -209,7 +208,7 @@ type HandleOpt struct {
 func Handle(ctx context.Context, opt HandleOpt) *wtype.LHComponent {
 	inst := handle(ctx, opt)
 	trace.Issue(ctx, inst)
-	return inst.result
+	return inst.result[0]
 }
 
 // PlateReadOpts defines plate-reader absorbance options
@@ -228,7 +227,7 @@ func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 
 	return &commandInst{
 		Args:   []*wtype.LHComponent{opts.Sample},
-		result: inst.ComponentOut,
+		result: []*wtype.LHComponent{inst.ComponentOut},
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
@@ -246,7 +245,7 @@ func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.LHComponent {
 	inst := readPlate(ctx, opt)
 	trace.Issue(ctx, inst)
-	return inst.result
+	return inst.result[0]
 }
 
 // NewComponent returns a new component given a component type
@@ -267,9 +266,6 @@ func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
 	return p
 }
 
-// TODO -- LOC etc. will be passed through OK but what about
-//         the actual plate info?
-//        - two choices here: 1) we upgrade the sample tracker; 2) we pass the plate in somehow
 func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	inst.BlockID = wtype.NewBlockID(getID(ctx))
 	inst.Result.BlockID = inst.BlockID
@@ -308,14 +304,14 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 			Requests: reqs,
 			Inst:     inst,
 		},
-		result: result,
+		result: []*wtype.LHComponent{result},
 	}
 }
 
 func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.LHComponent {
 	inst := mix(ctx, generic)
 	trace.Issue(ctx, inst)
-	return inst.result
+	return inst.result[0]
 }
 
 // Mix mixes components
@@ -354,6 +350,38 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 		Address:    address,
 		PlateNum:   platenum,
 	}))
+}
+
+// SplitSample is essentially an inverse mix: takes one component and a volume and returns two
+
+func SplitSample(ctx context.Context, component *wtype.LHComponent, volume wunit.Volume) (removed, remaining *wtype.LHComponent) {
+	// at this point we cannot guarantee that volumes are accurate
+	// so it's a case of best-efforts
+
+	inst := splitSample(ctx, component, volume)
+
+	trace.Issue(ctx, inst)
+
+	return result[0], result[1]
+}
+
+func splitSample(ctx context.Context, component *wtype.LHComponent, volume wunit.Volume) *commandInst {
+	split := wtype.NewLHSplitInstruction()
+
+	// Create Instruction
+	inst := &commandInst{
+		Args: allComp,
+		Command: &ast.Command{
+			Requests: []ast.Request{ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1Mixer,
+				}},
+			},
+			Inst: split,
+		},
+		result: updatedComp,
+	}
+
 }
 
 // AwaitData breaks execution pending return of requested data
@@ -442,7 +470,7 @@ func awaitData(
 			Requests: []ast.Request{req},
 			Inst:     await,
 		},
-		result: updatedComp[0],
+		result: updatedComp,
 	}
 
 	trace.Issue(ctx, inst)

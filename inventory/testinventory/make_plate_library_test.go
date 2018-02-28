@@ -17,15 +17,15 @@ type platetest struct {
 
 var tests = []platetest{
 	platetest{TestPlateName: "reservoir", ExpectedZStart: 0.0, ExpectedHeight: 40.0},
-	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate", ExpectedZStart: 0.636, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "pcrplate", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
 	platetest{TestPlateName: "Nuncon12well", ExpectedZStart: 4.0, ExpectedHeight: 19.0},
 	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9.0, ExpectedHeight: 19.0},
 }
 
 var testsofPlateWithRiser = []platetest{
-	platetest{TestPlateName: "pcrplate_with_cooler", ExpectedZStart: coolerheight + 0.636, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "pcrplate_with_cooler", ExpectedZStart: coolerheight + MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "pcrplate_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "pcrplate_skirted_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "pcrplate_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5},

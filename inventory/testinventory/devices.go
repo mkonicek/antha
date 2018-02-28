@@ -21,6 +21,7 @@ const (
 	bioshakestandardadaptorheight               = 5.0
 	appliedbiosystemsmagbeadbaseheight          = 12.0 //height of just plate base, upon which most skirted plates can rest
 	appliedbiosystemsmagbeadtotalheight         = 17.0 //height of base and well, in which other plates can rest
+	fluidXhighProfileRackHeight                 = 2.5 - MinimumZHeightPermissableForLVPipetMax
 )
 
 const (
@@ -39,6 +40,26 @@ var defaultDevices = map[string]device{
 		Manufacturer: "Cybio",
 		Heightinmm:   riserheightinmm,
 		Synonyms:     []string{"riser40", "riser"},
+		PlateConstraints: plateConstraints{
+			NotThesePlates: []plateWithConstraint{
+				plateWithConstraint{
+					Name:          "FluidX700ulTubes",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "pcrplate",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "pcrplate_semi_skirted",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "strip_tubes_0.2ml",
+					SpecialOffset: 0.0,
+				},
+			},
+		},
 	},
 
 	"riser20": riser{
@@ -46,6 +67,26 @@ var defaultDevices = map[string]device{
 		Manufacturer: "Gilson",
 		Heightinmm:   shallowriserheightinmm,
 		Synonyms:     []string{"riser20", "shallowriser"},
+		PlateConstraints: plateConstraints{
+			NotThesePlates: []plateWithConstraint{
+				plateWithConstraint{
+					Name:          "FluidX700ulTubes",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "pcrplate",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "pcrplate_semi_skirted",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "strip_tubes_0.2ml",
+					SpecialOffset: 0.0,
+				},
+			},
+		},
 	},
 
 	"riser18": riser{
@@ -53,6 +94,26 @@ var defaultDevices = map[string]device{
 		Manufacturer: "Gilson",
 		Heightinmm:   shallowriser18heightinmm,
 		Synonyms:     []string{"riser18", "shallowriser18"},
+		PlateConstraints: plateConstraints{
+			NotThesePlates: []plateWithConstraint{
+				plateWithConstraint{
+					Name:          "FluidX700ulTubes",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "pcrplate",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "pcrplate_semi_skirted",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "strip_tubes_0.2ml",
+					SpecialOffset: 0.0,
+				},
+			},
+		},
 	},
 
 	"with_496rack": riser{
@@ -64,7 +125,7 @@ var defaultDevices = map[string]device{
 			OnlyThesePlates: []plateWithConstraint{
 				plateWithConstraint{
 					Name:          "pcrplate",
-					SpecialOffset: -0.636,
+					SpecialOffset: -MinimumZHeightPermissableForLVPipetMax,
 				},
 				plateWithConstraint{
 					Name:          "pcrplate_semi_skirted",
@@ -101,12 +162,47 @@ var defaultDevices = map[string]device{
 		},
 	},
 
+	"with_FluidX_high_profile_rack": riser{
+		Name:         "with_FluidX_high_profile_rack",
+		Manufacturer: "FluidX",
+		Heightinmm:   fluidXhighProfileRackHeight,
+		Synonyms:     []string{"with_FluidX_high_profile_rack"},
+		PlateConstraints: plateConstraints{
+			OnlyThesePlates: []plateWithConstraint{
+				plateWithConstraint{
+					Name:          "FluidX700ulTubes",
+					SpecialOffset: 0.0,
+				},
+			},
+		},
+	},
+
 	"bioshake": incubator{
 		Riser: riser{
 			Name:         "bioshake",
 			Manufacturer: "QInstruments",
 			Heightinmm:   incubatorheightinmm,
 			Synonyms:     []string{"bioshake"},
+			PlateConstraints: plateConstraints{
+				NotThesePlates: []plateWithConstraint{
+					plateWithConstraint{
+						Name:          "FluidX700ulTubes",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate_semi_skirted",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "strip_tubes_0.2ml",
+						SpecialOffset: 0.0,
+					},
+				},
+			},
 		},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{
@@ -202,7 +298,7 @@ var defaultDevices = map[string]device{
 				OnlyThesePlates: []plateWithConstraint{
 					plateWithConstraint{
 						Name:          "pcrplate",
-						SpecialOffset: -0.636,
+						SpecialOffset: -MinimumZHeightPermissableForLVPipetMax,
 					},
 					plateWithConstraint{
 						Name:          "pcrplate_skirted",
@@ -244,7 +340,7 @@ func doNotAddThisRiserToThisPlate(plate *wtype.LHPlate, riser device) bool {
 	}
 
 	if len(platedeviceConstraints.NotThesePlates) > 0 {
-		for _, plateWithConstraints := range platedeviceConstraints.OnlyThesePlates {
+		for _, plateWithConstraints := range platedeviceConstraints.NotThesePlates {
 			if plate.Type == plateWithConstraints.Name {
 				return true
 			}
@@ -285,13 +381,25 @@ type device interface {
 // Constraints map device type to allowed positions for a device
 type constraints map[string][]string
 
+// plateConstraints specifies constraints around which plates are compatible with
+// a riser.
 type plateConstraints struct {
+	// OnlyThesePlates lists a subset of plates for which the riser is only compatible with.
+	// If this list is not empty only those plates will be valid options with the riser.
 	OnlyThesePlates []plateWithConstraint
-	NotThesePlates  []plateWithConstraint
+	// NotThesePlates lists a subset of plates for which the riser is not compatible with.
+	// This will only be evaluated if the OnlyThesePlates field is empty.
+	// If the NotThesePlates list is not empty these plates will not be added with the riser.
+	NotThesePlates []plateWithConstraint
 }
 
 type plateWithConstraint struct {
-	Name          string
+	// Name of the plate which has a riser constraint
+	Name string
+	// Any plate specific offset, in mm, which should be added to the riser height.
+	// For example, if the riser is a tube rack and the specified plate
+	// has very narrow tubes which sit low in the riser then a special offset can be added here to adjust for this.
+	// In the example case a negative number would be used to reduce the effectie riser height.
 	SpecialOffset float64
 }
 

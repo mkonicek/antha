@@ -29,6 +29,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
+const MinimumZHeightPermissableForLVPipetMax = 0.636
+
 //var commonwelltypes
 
 var platespecificoffset = map[string]float64{
@@ -625,6 +627,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 		makeStripTube(),
 		makeSemiSkirtedPCRPlate(),
 		makePCRPlate(),
+		makeFluidX700ulPlate(),
 	)
 	plate = make96DeepWellLowVolumePlate()
 	plates = append(plates, plate)
@@ -656,7 +659,7 @@ func makePCRPlateWell() *wtype.LHWell {
 }
 
 func makePCRPlate() *wtype.LHPlate {
-	return wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 0.636)
+	return wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
 // pcr plate semi-skirted with 496rack
@@ -671,7 +674,7 @@ func makeStripTube() *wtype.LHPlate {
 
 // pcr plate skirted
 func makeSkirtedPCRPlate() *wtype.LHPlate {
-	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 0.636)
+	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {
@@ -738,6 +741,63 @@ func makeNunc96UPlate() *wtype.LHPlate {
 	nunc96UShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 
 	welltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, nunc96UShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// http://fluidx.eu/0.7ml%2c-96-well-format-2d-barcoded-jacket-tube-with-external-thread.html
+func makeFluidX700ulTube() *wtype.LHWell {
+
+	wellName := "FluidX700ul"
+	wellShape := "cylinder"
+	bottomtype := wtype.LHWBV
+	dimensionUnit := "mm"
+	xdim := 6.35 // G1: diameter at top of well
+	ydim := 6.35 // G1: diameter at top of well
+	zdim := 26.1 // L: depth of well from top to bottom
+
+	bottomh := 1.0 // ?
+
+	minVolume := 10.0
+	maxVolume := 525.0
+
+	volUnit := "ul"
+
+	fluidXTubeShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	welltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, fluidXTubeShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	return welltype
+}
+
+// Nunc U96 Microplate PolyStyrene Sterile U-Bottom, Clear, Cat Num: 262162
+// Source of dimensions: https://www.thermofisher.com/order/catalog/product/262162
+func makeFluidX700ulPlate() *wtype.LHPlate {
+
+	// no literature values for these
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 11.25
+	ystartOffsetCorrection := 7.75
+
+	plateName := "FluidX700ulTubes"
+
+	manufacturer := "FluidX"
+
+	welltype := makeFluidX700ulTube()
+
+	numberOfRows := 8
+	numberOfColumns := 12
+
+	dimensionUnit := "mm"
+	wellxoffset := 9.0                               // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 9.0                               // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 10.75 - xstartOffsetCorrection         // H - (G1/2): distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	ystart := 7.75 - ystartOffsetCorrection          // J - (G1/2):  distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	zstart := MinimumZHeightPermissableForLVPipetMax // F - L: offset of bottom of deck to bottom of well;
+	overallHeight := welltype.Zdim + zstart          // F: height of plate
 
 	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 

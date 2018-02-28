@@ -19,7 +19,7 @@ type testInventory struct {
 func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.LHComponent, error) {
 	c, ok := i.componentByName[name]
 	if !ok {
-		return nil, fmt.Errorf("%s: invalid solution: %s", inventory.ErrUnknownType.Error(), name)
+		return nil, fmt.Errorf("%s: invalid solution: %s", inventory.ErrUnknownType, name)
 	}
 	return c.Dup(), nil
 }
@@ -27,7 +27,7 @@ func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.L
 func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
 	p, ok := i.plateByType[typ]
 	if !ok {
-		return nil, fmt.Errorf("%s: invalid plate: %s", inventory.ErrUnknownType.Error(), typ)
+		return nil, fmt.Errorf("%s: invalid plate: %s", inventory.ErrUnknownType, typ)
 	}
 	return p.Dup(), nil
 }

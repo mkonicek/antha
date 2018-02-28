@@ -792,8 +792,8 @@ func make96DeepWellLowVolumePlate() *wtype.LHPlate {
 	ystartOffsetCorrection := 11.50
 	zstartOffsetCorrection := 2.5
 
-	plateName := "Thermo_96_deepwell_1ml"
-	wellName := "Thermo_96_deepwell"
+	plateName := "Nunc_96_deepwell_1ml"
+	wellName := "Nunc_96_deepwell"
 	manufacturer := "Thermo Fisher"
 
 	numberOfRows := 8

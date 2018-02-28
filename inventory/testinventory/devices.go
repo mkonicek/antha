@@ -94,7 +94,7 @@ var defaultDevices = map[string]device{
 					SpecialOffset: 0.25,
 				},
 				plateWithConstraint{
-					Name:          "Thermo_96_deepwell_1ml",
+					Name:          "Nunc_96_deepwell_1ml",
 					SpecialOffset: 3.30,
 				},
 			},

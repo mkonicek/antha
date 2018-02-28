@@ -80,14 +80,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	// I think this might need moving too
 	input_platetypes := (*request).Input_platetypes
 	if input_platetypes == nil || len(input_platetypes) == 0 {
-		// XXX this is dangerous... until input_plate_linear is replaced we will hit big problems here
-		// this configuration needs to happen outside but for now...
-		input_platetypes, err := inventory.XXXNewPlates(ctx)
-		if err != nil {
-			return nil, err
-		}
-		(*request).Input_platetypes = input_platetypes
-		//debug
+		return nil, fmt.Errorf("no input plates set, please add at least one input plate option")
 	}
 
 	// we assume that input_plates is set if any locs are set

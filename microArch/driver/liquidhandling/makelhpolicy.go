@@ -83,7 +83,11 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	pols := make(map[string]wtype.LHPolicy)
 
 	// what policies do we need?
-	pols["MagneticBeads"] = MagneticBeadPolicy()
+	pols["Resuspension"] = MakeResuspensionPolicy()
+	pols["AdjustPostMixXNegOffset"] = AdjustPostMixXNegOffset()
+	pols["AdjustPostMixYNegOffset"] = AdjustPostMixYNegOffset()
+	pols["AdjustPostMixXPosOffset"] = AdjustPostMixXPosOffset()
+	pols["AdjustPostMixYPosOffset"] = AdjustPostMixYPosOffset()
 	pols["SmartMix"] = SmartMixPolicy()
 	pols["water"] = MakeWaterPolicy()
 	pols["multiwater"] = MakeMultiWaterPolicy()
@@ -813,6 +817,14 @@ func SmartMixPolicy() wtype.LHPolicy {
 	return policy
 }
 
+func MakeResuspensionPolicy() wtype.LHPolicy {
+	policy := SmartMixPolicy()
+	policy["POST_MIX_Z"] = 1.5
+	policy["PRE_MIX_Z"] = 1.5
+	policy["POST_MIX_RATE"] = 7.48
+	return policy
+}
+
 func MegaMixPolicy() wtype.LHPolicy {
 	dnapolicy := make(wtype.LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 10
@@ -950,27 +962,27 @@ func MakeNitrogenSourcePolicy() wtype.LHPolicy {
 	return nspolicy
 }
 
-func AdjustPostMixXOffset(offset float64) wtype.LHPolicy {
-	policy := make(wtype.LHPolicy, 1)
-	policy["POST_MIX_X"] = offset
+func AdjustPostMixXNegOffset() wtype.LHPolicy {
+	policy := MakeResuspensionPolicy()
+	policy["POST_MIX_X"] = -2
 	return policy
 }
 
-func AdjustPostMixYOffset(offset float64) wtype.LHPolicy {
-	policy := make(wtype.LHPolicy, 1)
-	policy["POST_MIX_Y"] = offset
+func AdjustPostMixYNegOffset() wtype.LHPolicy {
+	policy := MakeResuspensionPolicy()
+	policy["POST_MIX_Y"] = -2
 	return policy
 }
 
-func AdjustPreMixXOffset(offset float64) wtype.LHPolicy {
-	policy := make(wtype.LHPolicy, 1)
-	policy["PRE_MIX_X"] = offset
+func AdjustPostMixXPosOffset() wtype.LHPolicy {
+	policy := MakeResuspensionPolicy()
+	policy["POST_MIX_X"] = 2
 	return policy
 }
 
-func AdjustPreMixYOffset(offset float64) wtype.LHPolicy {
-	policy := make(wtype.LHPolicy, 1)
-	policy["PRE_MIX_Y"] = offset
+func AdjustPostMixYPosOffset() wtype.LHPolicy {
+	policy := MakeResuspensionPolicy()
+	policy["POST_MIX_Y"] = 2
 	return policy
 }
 
@@ -1023,11 +1035,10 @@ func (c numericCondition) AddToRule(rule wtype.LHPolicyRule) error {
 
 // Conditions to apply to LHpolicyRules based on liquid policy used
 var (
-	OnMagneticBeadMix = categoricCondition{"LIQUIDCLASS", "MagneticBeadMix"}
-	OnSmartMix        = categoricCondition{"LIQUIDCLASS", "SmartMix"}
-	OnPostMix         = categoricCondition{"LIQUIDCLASS", "PostMix"}
-	OnPreMix          = categoricCondition{"LIQUIDCLASS", "PreMix"}
-	OnNeedToMix       = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
+	OnSmartMix  = categoricCondition{"LIQUIDCLASS", "SmartMix"}
+	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
+	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
+	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
 )
 
 // Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
@@ -1177,19 +1188,6 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	}
 
 	lhpr.AddRule(adjustNeedToMix200ul, adjustPreMixVol200)
-
-	//adjust X and Y Post-Mix offsets for MagneticBeadPolicy
-	adjustPostMixXOffset, err := newConditionalRule("adjustPostMixXOffset", OnMagneticBeadMix)
-
-	if err != nil {
-		return lhpr, err
-	}
-
-	adjustedXOffset := AdjustPostMixXOffset(2)
-	adjustedYOffset := AdjustPostMixYOffset(2)
-
-	lhpr.AddRule(adjustPostMixXOffset, adjustedXOffset)
-	lhpr.AddRule(adjustPostMixXOffset, adjustedYOffset)
 
 	//add rules to adjust pre and postmix volume for MagneticBeadPolicy
 	//needToPreMix20ul

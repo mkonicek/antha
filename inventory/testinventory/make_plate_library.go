@@ -841,7 +841,7 @@ func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
 	xstartOffsetCorrection := 13.0
 	ystartOffsetCorrection := 10.0
-	zstartOffsetCorrection := 2.5
+	zstartOffsetCorrection := 2.25
 
 	plateName := "AppliedBiosystems_384_MicroAmp_Optical"
 	wellName := "AppliedBiosystems_384_MicroAmp_Optical_Well"

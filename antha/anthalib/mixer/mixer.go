@@ -60,8 +60,6 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 func SplitSample(l *wtype.LHComponent, v wunit.Volume) (moving, remaining *wtype.LHComponent) {
 	remaining = l.Dup()
 
-	fmt.Println("REMAINING LOC: ", remaining.Loc)
-
 	moving = Sample(remaining, v)
 
 	remaining.Vol -= v.ConvertToString(remaining.Vunit)
@@ -179,13 +177,12 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 		r.AddResult(opt.Result)
 	} else {
 		cmpR := wtype.NewLHComponent()
+		r.AddResult(cmpR)
 
 		if !r.Components[0].IsSample() {
-			// mix-in-place
-			cmpR = r.Components[0].Dup()
+			r.Results[0].Loc = r.Components[0].Loc
 		}
 
-		r.AddResult(cmpR)
 		mx := 0
 		for _, c := range opt.Components {
 			//r.Result.MixPreserveTvol(c)

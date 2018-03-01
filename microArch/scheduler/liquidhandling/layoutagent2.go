@@ -247,7 +247,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		}
 
 		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
-		lk2[v.Result.ID] = v.ID
+		lk2[v.Results[0].ID] = v.ID
 	}
 
 	for _, id := range order {
@@ -265,7 +265,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		}
 
 		// now we put the actual result in
-		lkp[v.ID] = append(lkp[v.ID], v.Result)
+		lkp[v.ID] = append(lkp[v.ID], v.Results[0])
 	}
 
 	sampletracker := sampletracker.GetSampleTracker()
@@ -428,8 +428,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			request.LHInstructions[k].SetPlateID(tx[0])
 			request.LHInstructions[k].Platetype = lookUp.Type
 			request.LHInstructions[k].OutPlate = lookUp
-
-			request.LHInstructions[k].Result.Loc = addr
+			request.LHInstructions[k].Results[0].Loc = addr
 
 			// same as condition 1 except we get the plate id somewhere else
 			i := defined(tx[0], s)
@@ -446,7 +445,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 						if s[i].Output[i2] {
 							s[i].Assigned[i2] = v.ID
 						} else {
-							s[i].Assigned[i2] = v.ProductID
+							s[i].Assigned[i2] = v.ProductIDs()[0]
 						}
 					*/
 					s[i].Assigned[i2] = v.ID

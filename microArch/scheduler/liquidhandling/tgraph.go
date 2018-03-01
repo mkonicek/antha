@@ -54,7 +54,7 @@ func resultCmpMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 	res := make(map[string]*wtype.LHInstruction, len(inss))
 	for _, ins := range inss {
 		if ins.Type == wtype.LHIMIX {
-			res[ins.Result.ID] = ins
+			res[ins.Results[0].ID] = ins
 		} else if ins.Type == wtype.LHIPRM {
 			// we use passthrough instead
 			for _, cmp := range ins.PassThrough {

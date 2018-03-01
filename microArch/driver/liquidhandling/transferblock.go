@@ -168,7 +168,7 @@ type InsByComponent []*wtype.LHInstruction
 func (ibc InsByComponent) Len() int      { return len(ibc) }
 func (ibc InsByComponent) Swap(i, j int) { ibc[i], ibc[j] = ibc[j], ibc[i] }
 func (ibc InsByComponent) Less(i, j int) bool {
-	return strings.Compare(ibc[i].Result.CName, ibc[j].Result.CName) < 0
+	return strings.Compare(ibc[i].Results[0].CName, ibc[j].Results[0].CName) < 0
 }
 
 type InsByRow []*wtype.LHInstruction

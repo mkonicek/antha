@@ -3,6 +3,7 @@ package liquidhandling
 import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"strings"
 )
 
 type IChain struct {
@@ -104,7 +105,7 @@ func (it *IChain) Print() {
 				for i := 0; i < len(it.Values[j].Components); i++ {
 					fmt.Print(" ", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().ToString(), " ")
 				}
-				fmt.Print(":", it.Values[j].Result.ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
+				fmt.Print(":", it.Values[j].Results[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Printf("-- ")
 			} else if it.Values[j].Type == wtype.LHIPRM {
 				fmt.Print("PROMPT ", it.Values[j].Message, "-- ")
@@ -137,7 +138,7 @@ func (it *IChain) ProductIDs() string {
 	s := ""
 
 	for _, ins := range it.Values {
-		s += ins.ProductID + "   "
+		s += strings.Join(ins.ProductIDs(), " ") + "   "
 	}
 	return s
 }

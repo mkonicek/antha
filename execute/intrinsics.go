@@ -268,9 +268,9 @@ func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
 
 func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	inst.BlockID = wtype.NewBlockID(getID(ctx))
-	inst.Result.BlockID = inst.BlockID
-	result := inst.Result
-	result.BlockID = inst.BlockID
+	inst.Results[0].BlockID = inst.BlockID
+	result := inst.Results[0]
+	//result.BlockID = inst.BlockID // DELETEME
 
 	mx := 0
 	var reqs []ast.Request
@@ -296,7 +296,6 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	inst.SetGeneration(mx)
 	result.SetGeneration(mx + 1)
 	result.DeclareInstance()
-	inst.ProductID = result.ID
 
 	return &commandInst{
 		Args: inst.Components,
@@ -353,6 +352,8 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 }
 
 // SplitSample is essentially an inverse mix: takes one component and a volume and returns two
+// the question is then over what happens subsequently.. unlike mix this does not have a
+// destination as it's intrinsically a source operation
 
 func SplitSample(ctx context.Context, component *wtype.LHComponent, volume wunit.Volume) (removed, remaining *wtype.LHComponent) {
 	// at this point we cannot guarantee that volumes are accurate
@@ -362,15 +363,24 @@ func SplitSample(ctx context.Context, component *wtype.LHComponent, volume wunit
 
 	trace.Issue(ctx, inst)
 
-	return result[0], result[1]
+	// protocol world must not be able to modify the copies seen here
+	return inst.result[0].Dup(), inst.result[1].Dup()
 }
 
 func splitSample(ctx context.Context, component *wtype.LHComponent, volume wunit.Volume) *commandInst {
 	split := wtype.NewLHSplitInstruction()
 
+	// this will count as a mix-in-place effectively
+	split.Components = append(split.Components, component.Dup())
+
+	cmpMoving, cmpStaying := mixer.SplitSample(component, volume)
+
+	split.Results = append(split.Results, cmpMoving)
+	split.Results = append(split.Results, cmpStaying)
+
 	// Create Instruction
 	inst := &commandInst{
-		Args: allComp,
+		Args: []*wtype.LHComponent{component},
 		Command: &ast.Command{
 			Requests: []ast.Request{ast.Request{
 				Selector: []ast.NameValue{
@@ -379,9 +389,10 @@ func splitSample(ctx context.Context, component *wtype.LHComponent, volume wunit
 			},
 			Inst: split,
 		},
-		result: updatedComp,
+		result: []*wtype.LHComponent{cmpMoving, cmpStaying},
 	}
 
+	return inst
 }
 
 // AwaitData breaks execution pending return of requested data

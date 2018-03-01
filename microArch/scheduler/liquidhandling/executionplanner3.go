@@ -32,7 +32,7 @@ import (
 
 func allSplits(inss []*wtype.LHInstruction) bool {
 	for _, ins := range inss {
-		if inss.Type != wtype.LHISPL {
+		if ins.Type != wtype.LHISPL {
 			return false
 		}
 	}
@@ -41,7 +41,7 @@ func allSplits(inss []*wtype.LHInstruction) bool {
 
 func hasSplit(inss []*wtype.LHInstruction) bool {
 	for _, ins := range inss {
-		if inss.Type == wtype.LHISPL {
+		if ins.Type == wtype.LHISPL {
 			return true
 		}
 	}
@@ -67,8 +67,10 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 				insTypes := func(inss []*wtype.LHInstruction) string {
 					s := ""
 					for _, ins := range inss {
-						s += wtype.InstructionString() + " "
+						s += ins.InsType() + " "
 					}
+
+					return s
 				}
 				return nil, fmt.Errorf("Internal error: Failure in instruction sorting - got types %s in layer starting with split", insTypes(ch.Values))
 			}

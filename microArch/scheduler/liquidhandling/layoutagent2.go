@@ -233,9 +233,8 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	for _, id := range order {
 		v := request.LHInstructions[id]
 		// pass ID through chain if not a mix
-		if v.Type != wtype.LHIMIX {
-			// the current contract on non-mix instructions is to pass in just one
-			// component as an input and one as an output
+		if v.Type == wtype.LHIPRM {
+			// the current contract on prompt instructions is to pass through a set of components
 			// on which basis we need only make sure the result has the same location
 			// as the input
 			// set pass throughs
@@ -244,6 +243,10 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 				v.PassThrough[v.Components[i].ID].Loc = v.Components[i].Loc
 			}
 			continue
+		} else if v.Type == wtype.LHISPL {
+			// similar to the above, just ensure the results both have the right location set
+			v.Results[0].Loc = v.Components[0].Loc
+			v.Results[1].Loc = v.Components[0].Loc
 		}
 
 		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
@@ -401,6 +404,8 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			if len(v.Components) == 0 {
 				continue
 			}
+
+			fmt.Println("MIX IN PLACE FOR ", v.Components[0].CName, " ID: ", v.Components[0].ID, " R: ", v.Results[0].CName, " ", v.Results[0].Loc)
 
 			if v.Components[0].Loc == "" {
 				addr, ok := st.GetLocationOf(v.Components[0].ID)

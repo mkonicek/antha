@@ -43,7 +43,7 @@ func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, 
 
 		c3 := c.Dup()
 		c3.Mix(c2)
-		ins.Result = c3
+		ins.AddResult(c3)
 
 		ins.Platetype = "pcrplate_skirted_riser40"
 		ins.Welladdress = wutil.NumToAlpha(i+1) + "1"
@@ -100,8 +100,7 @@ func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, 
 		c4 := c.Dup()
 		c4.Mix(c2)
 		c4.Mix(c3)
-
-		ins.Result = c4
+		ins.AddResult(c4)
 
 		ins.Platetype = "pcrplate_skirted_riser40"
 		ins.Welladdress = wutil.NumToAlpha(i+1) + "1"

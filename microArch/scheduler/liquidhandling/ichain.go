@@ -23,6 +23,15 @@ func NewIChain(parent *IChain) *IChain {
 	return &it
 }
 
+// depth from here
+func (it *IChain) Height() int {
+	if it == nil {
+		return 0
+	}
+
+	return it.Child.Height() + 1
+}
+
 func (it *IChain) PruneOut(Remove map[string]bool) *IChain {
 	if it == nil || len(Remove) == 0 || len(it.Values) == 0 {
 		return it
@@ -109,6 +118,12 @@ func (it *IChain) Print() {
 				fmt.Printf("-- ")
 			} else if it.Values[j].Type == wtype.LHIPRM {
 				fmt.Print("PROMPT ", it.Values[j].Message, "-- ")
+			} else if it.Values[j].Type == wtype.LHISPL {
+				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)
+				fmt.Print(" ", it.Values[j].Components[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress, " ")
+				fmt.Print(" MOVE:", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().ToString())
+				fmt.Print(" STAY:", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().ToString())
+				fmt.Printf("-- ")
 			} else {
 				fmt.Print("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
 			}

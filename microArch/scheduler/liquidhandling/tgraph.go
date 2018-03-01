@@ -60,6 +60,10 @@ func resultCmpMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 			for _, cmp := range ins.PassThrough {
 				res[cmp.ID] = ins
 			}
+		} else if ins.Type == wtype.LHISPL {
+			// two results here
+			res[ins.Results[0].ID] = ins
+			res[ins.Results[1].ID] = ins
 		}
 	}
 

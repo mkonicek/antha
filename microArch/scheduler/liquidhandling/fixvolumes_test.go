@@ -76,8 +76,8 @@ func TestFixVolumes(t *testing.T) {
 
 	mix1 := req.InstructionChain.Values[0]
 
-	if mix1.Result.Vol != 155.0 {
-		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Result.Volume()))
+	if mix1.Results[0].Vol != 155.0 {
+		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Results[0].Volume()))
 	}
 }
 
@@ -195,8 +195,8 @@ func TestFixVolumes3(t *testing.T) {
 
 	mix1 := req.InstructionChain.Values[0]
 
-	if mix1.Result.Vol != 155.0 {
-		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Result.Volume()))
+	if mix1.Results[0].Vol != 155.0 {
+		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Results[0].Volume()))
 	}
 }
 

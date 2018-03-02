@@ -94,9 +94,32 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	v := MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype, volume, fvolume, tvolume, FPlateWX, FPlateWY, TPlateWX, TPlateWY, Components)
 
 	tfri.Add(v)
-
 	tfri.GenericRobotInstruction.Ins = RobotInstruction(&tfri)
 	return &tfri
+}
+
+func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
+	hlld, ok := drv.(HighLevelLiquidhandlingDriver)
+
+	if !ok {
+		return fmt.Errorf("Driver type %T not compatible with TransferInstruction, need HighLevelLiquidhandlingDriver", drv)
+	}
+
+	// make sure we disable the RobotInstruction pointer
+	ins.GenericRobotInstruction = GenericRobotInstruction{}
+
+	volumes := make([]float64, len(SetOfMultiTransferParams(ins.Transfers).Volume()))
+	for i, vol := range SetOfMultiTransferParams(ins.Transfers).Volume() {
+		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+	}
+
+	reply := hlld.Transfer(SetOfMultiTransferParams(ins.Transfers).What(), SetOfMultiTransferParams(ins.Transfers).PltFrom(), SetOfMultiTransferParams(ins.Transfers).WellFrom(), SetOfMultiTransferParams(ins.Transfers).PltTo(), SetOfMultiTransferParams(ins.Transfers).WellTo(), volumes)
+
+	if !reply.OK {
+		return fmt.Errorf(" %d : %s", reply.Errorcode, reply.Msg)
+	}
+
+	return nil
 }
 
 func (tfri *TransferInstruction) Add(tp MultiTransferParams) {
@@ -434,10 +457,16 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	}
 }
 
-func (insIn *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	// work on a copy
-	ins := insIn.Dup()
-	ins.ChooseChannels(prms) // removes initial zeroes
+func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+	// if the liquid handler is of the high-level type we cut the tree here
+
+	if prms.LHType == HLLiquidHandler {
+		return []RobotInstruction{}, nil
+	}
+
+	//  set the channel  choices first by cleaning out initial empties
+
+	ins.ChooseChannels(prms)
 
 	pol := GetPolicyFor(policy, ins)
 

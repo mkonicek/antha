@@ -69,9 +69,9 @@ func passThroughMap(ins *wtype.LHInstruction, wanted, updated map[string]wunit.V
 func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.LHPlate) (map[string]wunit.Volume, error) {
 	newWanted := make(map[string]wunit.Volume)
 	for _, ins := range ch.Values {
-		//wantVol, ok := wanted[ins.Result.FullyQualifiedName()]
+		//wantVol, ok := wanted[ins.Results[0].FullyQualifiedName()]
 
-		wantVol, ok := getWantVol(wanted, ins.Result.FullyQualifiedName())
+		wantVol, ok := getWantVol(wanted, ins.Results[0].FullyQualifiedName())
 
 		if ok {
 			_, reallyOK := plates[ins.PlateID]
@@ -80,16 +80,16 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 				if ins.PlateID != "" {
 					panic("Cannot fix volume for plate ID without corresponding type")
 				}
-			} else if !wantInPlace(wanted, ins.Result.FullyQualifiedName()) {
+			} else if !wantInPlace(wanted, ins.Results[0].FullyQualifiedName()) {
 				wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
 			}
 
-			if wantVol.GreaterThan(ins.Result.Volume()) {
-				r := wantVol.RawValue() / ins.Result.Volume().ConvertTo(wantVol.Unit())
+			if wantVol.GreaterThan(ins.Results[0].Volume()) {
+				r := wantVol.RawValue() / ins.Results[0].Volume().ConvertTo(wantVol.Unit())
 				ins.AdjustVolumesBy(r)
 
-				//delete(wanted, ins.Result.FullyQualifiedName())
-				deleteWantOf(wanted, ins.Result.FullyQualifiedName())
+				//delete(wanted, ins.Results[0].FullyQualifiedName())
+				deleteWantOf(wanted, ins.Results[0].FullyQualifiedName())
 			}
 		}
 

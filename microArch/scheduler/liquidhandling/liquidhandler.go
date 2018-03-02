@@ -512,7 +512,7 @@ func checkSanityIns(request *LHRequest) {
 					v.Add(c.Volume())
 				} else if c.Tvol != 0.0 {
 					if !tv.IsZero() && !tv.EqualTo(c.TotalVolume()) {
-						fmt.Println("ERROR: MULTIPLE DISTINCT TOTAL VOLUMES SPECIFIED FOR ", ins.ID, " ", ins.Result.CName, " COMPONENT ", c)
+						fmt.Println("ERROR: MULTIPLE DISTINCT TOTAL VOLUMES SPECIFIED FOR ", ins.ID, " ", ins.Results[0].CName, " COMPONENT ", c)
 						good = false
 					}
 
@@ -520,11 +520,11 @@ func checkSanityIns(request *LHRequest) {
 				}
 			}
 
-			if tv.IsZero() && !v.EqualTo(ins.Result.Volume()) {
-				fmt.Println("OH DEAR DEAR DEAR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Result.CName, " COMP: ", v, " PROD: ", ins.Result.Volume())
+			if tv.IsZero() && !v.EqualTo(ins.Results[0].Volume()) {
+				fmt.Println("OH DEAR DEAR DEAR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Results[0].CName, " COMP: ", v, " PROD: ", ins.Results[0].Volume())
 				good = false
-			} else if !tv.IsZero() && !tv.EqualTo(ins.Result.Volume()) {
-				fmt.Println("ERROR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Result.CName, " COMP: ", tv, " PROD: ", ins.Result.Volume())
+			} else if !tv.IsZero() && !tv.EqualTo(ins.Results[0].Volume()) {
+				fmt.Println("ERROR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Results[0].CName, " COMP: ", tv, " PROD: ", ins.Results[0].Volume())
 				good = false
 			} else if ins.PlateID != "" {
 				// compare result volume to the well volume
@@ -533,8 +533,8 @@ func checkSanityIns(request *LHRequest) {
 
 				if !ok {
 					// possibly an issue
-				} else if plat.Welltype.MaxVolume().LessThan(ins.Result.Volume()) {
-					fmt.Println("WARNING: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Result.CName, " WANT: ", ins.Result.Volume(), " MAX FOR PLATE OF TYPE ", plat.Type, ": ", plat.Welltype.MaxVolume())
+				} else if plat.Welltype.MaxVolume().LessThan(ins.Results[0].Volume()) {
+					fmt.Println("WARNING: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Results[0].CName, " WANT: ", ins.Results[0].Volume(), " MAX FOR PLATE OF TYPE ", plat.Type, ": ", plat.Welltype.MaxVolume())
 					//good = false
 				}
 			}
@@ -603,13 +603,13 @@ func anotherSanityCheck(request *LHRequest) {
 			p[c] = ins
 		}
 
-		ins2, ok := p[ins.Result]
+		ins2, ok := p[ins.Results[0]]
 
 		if ok {
-			panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, ins.Result.ID, ins.Result.CName))
+			panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, ins.Results[0].ID, ins.Results[0].CName))
 		}
 
-		p[ins.Result] = ins
+		p[ins.Results[0]] = ins
 	}
 }
 
@@ -619,7 +619,7 @@ func forceSanity(request *LHRequest) {
 			ins.Components[i] = ins.Components[i].Dup()
 		}
 
-		ins.Result = ins.Result.Dup()
+		ins.Results[0] = ins.Results[0].Dup()
 	}
 }
 
@@ -635,7 +635,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if request.Options.PrintInstructions {
 		for _, insID := range request.Output_order {
 			ins := request.LHInstructions[insID]
-			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductID)
+			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
 
 			if ins.IsMixInPlace() {
 				fmt.Print(" INPLACE")
@@ -695,7 +695,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 			fmt.Println("")
 			for _, insID := range request.Output_order {
 				ins := request.LHInstructions[insID]
-				fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductID)
+				fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
 
 				if ins.IsMixInPlace() {
 					fmt.Print(" INPLACE")
@@ -1067,7 +1067,7 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 			continue
 		}
 
-		tx := strings.Split(inst.Result.Loc, ":")
+		tx := strings.Split(inst.Results[0].Loc, ":")
 		newid, ok := lh.plateIDMap[tx[0]]
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", tx[0]))
@@ -1091,13 +1091,13 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 		oldInst := assignment[well]
 		if oldInst == nil {
 			assignment[well] = inst
-		} else if prev, cur := oldInst.Result.Generation(), inst.Result.Generation(); prev < cur {
+		} else if prev, cur := oldInst.Results[0].Generation(), inst.Results[0].Generation(); prev < cur {
 			assignment[well] = inst
 		}
 	}
 
 	for well, inst := range assignment {
-		well.WContents.CName = inst.Result.CName
+		well.WContents.CName = inst.Results[0].CName
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
 )
@@ -8,9 +9,10 @@ import (
 func MakeTGraph(inss []*wtype.LHInstruction) tGraph {
 	edges := make(map[*wtype.LHInstruction][]*wtype.LHInstruction, len(inss))
 	rcm := resultCmpMap(inss)
+	ccm := cmpInsMap(inss)
 
 	for _, ins := range inss {
-		edges[ins] = getEdges(ins, rcm)
+		edges[ins] = getEdges(ins, rcm, ccm)
 	}
 
 	return tGraph{Nodes: inss, Edges: edges}
@@ -50,38 +52,81 @@ func (tg *tGraph) Add(n *wtype.LHInstruction, edges []*wtype.LHInstruction) {
 
 // for mixes this is 1:1
 // but prompts may be aggregated first
+// splits are more complex
 func resultCmpMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 	res := make(map[string]*wtype.LHInstruction, len(inss))
 	for _, ins := range inss {
 		if ins.Type == wtype.LHIMIX {
-			res[ins.Result.ID] = ins
+			res[ins.Results[0].ID] = ins
 		} else if ins.Type == wtype.LHIPRM {
 			// we use passthrough instead
 			for _, cmp := range ins.PassThrough {
 				res[cmp.ID] = ins
 			}
+		} else if ins.Type == wtype.LHISPL {
+			// Splits need to go after the use of result 0
+			// and before the use of result 1
+			res[ins.Results[1].ID] = ins
 		}
 	}
 
 	return res
 }
 
+func cmpInsMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
+	res := make(map[string]*wtype.LHInstruction, len(inss))
+	for _, ins := range inss {
+		if ins.Type == wtype.LHIMIX {
+			for _, c := range ins.Components {
+				res[c.ID] = ins
+			}
+		} else if ins.Type == wtype.LHIPRM {
+			// we use passthrough instead
+			for ID, _ := range ins.PassThrough {
+				res[ID] = ins
+			}
+		}
+	}
+
+	return res
+
+}
+
 // inss maps result (i.e. component) IDs to instructions
-func getEdges(n *wtype.LHInstruction, inss map[string]*wtype.LHInstruction) []*wtype.LHInstruction {
+func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInstruction) []*wtype.LHInstruction {
 	ret := make([]*wtype.LHInstruction, 0, 1)
+
+	// don't make cycles containing split instructions
+
+	if n.Type == wtype.LHISPL {
+		// cmpMap answers the question "which instruction *uses* this?"
+		cmp := n.Results[0]
+
+		var lhi *wtype.LHInstruction
+		var ok bool
+
+		lhi, ok = cmpMap[cmp.ID]
+
+		if ok {
+			ret = append(ret, lhi)
+		} else {
+			panic(fmt.Sprintf("Split called without use of component. Moving components must be moved using Mix. Component name %s ID %s", cmp.CName, cmp.ID))
+		}
+		return ret
+	}
 
 	// we make this backwards since it's easier to say where something's coming from than where
 	// it's going to
 
 	for _, cmp := range n.Components {
-		// inss answers the question "which instruction made this?"
+		// resultMap answers the question "which instruction *makes* this?"
 		// for samples we need to ask for the parent component
 		var lhi *wtype.LHInstruction
 		var ok bool
 		if cmp.IsSample() {
-			lhi, ok = inss[cmp.ParentID]
+			lhi, ok = resultMap[cmp.ParentID]
 		} else {
-			lhi, ok = inss[cmp.ID]
+			lhi, ok = resultMap[cmp.ID]
 		}
 		if ok {
 			ret = append(ret, lhi)

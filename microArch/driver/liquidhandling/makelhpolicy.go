@@ -819,9 +819,9 @@ func SmartMixPolicy() wtype.LHPolicy {
 
 func MakeResuspensionPolicy() wtype.LHPolicy {
 	policy := SmartMixPolicy()
-	policy["POST_MIX_Z"] = 1.5
-	policy["PRE_MIX_Z"] = 1.5
-	policy["POST_MIX_RATE"] = 7.48
+	policy["POST_MIX_RATE"] = 7.0
+	policy["POST_MIX"] = 1
+	policy["POST_MIX_Y"] = 5.0
 	return policy
 }
 
@@ -938,6 +938,12 @@ func AdjustPreMixVolume(mixToVol wunit.Volume) wtype.LHPolicy {
 	return policy
 }
 
+func AdjustXOffset(offset float64) wtype.LHPolicy {
+	policy := make(wtype.LHPolicy, 1)
+	policy["POST_MIX_X"] = offset
+	return policy
+}
+
 // deprecated; see above
 func MakeHVFlowRatePolicy() wtype.LHPolicy {
 	policy := make(wtype.LHPolicy, 4)
@@ -1035,10 +1041,11 @@ func (c numericCondition) AddToRule(rule wtype.LHPolicyRule) error {
 
 // Conditions to apply to LHpolicyRules based on liquid policy used
 var (
-	OnSmartMix  = categoricCondition{"LIQUIDCLASS", "SmartMix"}
-	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
-	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
-	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
+	OnResuspension = categoricCondition{"POST_MIX_X", "Resuspension"}
+	OnSmartMix     = categoricCondition{"LIQUIDCLASS", "SmartMix"}
+	OnPostMix      = categoricCondition{"LIQUIDCLASS", "PostMix"}
+	OnPreMix       = categoricCondition{"LIQUIDCLASS", "PreMix"}
+	OnNeedToMix    = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
 )
 
 // Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
@@ -1079,6 +1086,16 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 		}
 		lhpr.AddRule(rule, policy)
 	}
+
+	adjustXOffset, err := newConditionalRule("offsetXaxis", OnResuspension)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	adjustX := AdjustXOffset(2.0)
+
+	lhpr.AddRule(adjustXOffset, adjustX)
 
 	adjustPostMix, err := newConditionalRule("mixInto20ul", OnSmartMix, IntoBetween20ulAnd50ul)
 

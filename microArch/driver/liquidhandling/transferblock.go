@@ -543,13 +543,9 @@ func canMerge(ins, ins2 *TransferInstruction, policy *wtype.LHPolicyRuleSet) boo
 	m2 := GetPolicyFor(policy, ins2)["CAN_MULTI"].(bool)
 	m3 := GetPolicyFor(policy, ins3)["CAN_MULTI"].(bool)
 
-	if !xor(m1, m2) {
-		return !xor(m1, m3)
+	if m1 == m2 {
+		return m1 == m3
 	}
 
 	return false
-}
-
-func xor(a, b bool) bool {
-	return (a && !b) || (!a && b)
 }

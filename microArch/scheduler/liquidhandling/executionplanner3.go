@@ -33,7 +33,6 @@ import (
 // robot here should be a copy... this routine will be destructive of state
 func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
 	ch := request.InstructionChain
-	depth := 0
 
 	for {
 		if ch == nil {
@@ -55,7 +54,6 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 
 			request.InstructionSet.Add(tfb)
 		}
-		depth += 1
 		ch = ch.Child
 	}
 

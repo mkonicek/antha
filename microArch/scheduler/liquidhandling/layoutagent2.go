@@ -405,8 +405,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				continue
 			}
 
-			fmt.Println("MIX IN PLACE FOR ", v.Components[0].CName, " ID: ", v.Components[0].ID, " R: ", v.Results[0].CName, " ", v.Results[0].Loc)
-
 			if v.Components[0].Loc == "" {
 				addr, ok := st.GetLocationOf(v.Components[0].ID)
 

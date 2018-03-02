@@ -2,6 +2,7 @@ package testinventory
 
 import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 // heights in mm
@@ -14,10 +15,12 @@ const (
 	shallowriser18heightinmm                    = 18.75 - offset
 	coolerheight                                = 16.0
 	isofreezecoolerheight                       = 10.0
-	pcrtuberack496                              = 28.0
+	pcrtuberack496HeightInmm                    = 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips = 4.5
 	bioshake96welladaptorheight                 = 4.5
 	bioshakestandardadaptorheight               = 5.0
+	appliedbiosystemsmagbeadbaseheight          = 12.0 //height of just plate base, upon which most skirted plates can rest
+	appliedbiosystemsmagbeadtotalheight         = 17.0 //height of base and well, in which other plates can rest
 )
 
 const (
@@ -52,6 +55,52 @@ var defaultDevices = map[string]device{
 		Synonyms:     []string{"riser18", "shallowriser18"},
 	},
 
+	"with_496rack": riser{
+		Name:         "with_496rack",
+		Manufacturer: "Gilson",
+		Heightinmm:   pcrtuberack496HeightInmm,
+		Synonyms:     []string{"with_496rack"},
+		PlateConstraints: plateConstraints{
+			OnlyThesePlates: []plateWithConstraint{
+				plateWithConstraint{
+					Name:          "pcrplate",
+					SpecialOffset: -0.636,
+				},
+				plateWithConstraint{
+					Name:          "pcrplate_semi_skirted",
+					SpecialOffset: 0.0,
+				},
+				plateWithConstraint{
+					Name:          "strip_tubes_0.2ml",
+					SpecialOffset: -2.5,
+				},
+			},
+		},
+	},
+
+	"with_AB_magnetic_ring_stand": riser{
+		Name:         "with_AB_magnetic_ring_stand",
+		Manufacturer: "Applied Biosystems",
+		Heightinmm:   appliedbiosystemsmagbeadbaseheight,
+		Synonyms:     []string{"with_AB_magnetic_ring_stand"},
+		PlateConstraints: plateConstraints{
+			OnlyThesePlates: []plateWithConstraint{
+				plateWithConstraint{
+					Name:          "TwistDNAPlate",
+					SpecialOffset: 0.75,
+				},
+				plateWithConstraint{
+					Name:          "GreinerSWVBottom",
+					SpecialOffset: 0.25,
+				},
+				plateWithConstraint{
+					Name:          "Nunc_96_deepwell_1ml",
+					SpecialOffset: 3.30,
+				},
+			},
+		},
+	},
+
 	"bioshake": incubator{
 		Riser: riser{
 			Name:         "bioshake",
@@ -71,6 +120,26 @@ var defaultDevices = map[string]device{
 			Manufacturer: "QInstruments",
 			Heightinmm:   incubatorheightinmm + bioshake96welladaptorheight,
 			Synonyms:     []string{"bioshake_96well_adaptor"},
+			PlateConstraints: plateConstraints{
+				OnlyThesePlates: []plateWithConstraint{
+					plateWithConstraint{
+						Name:          "pcrplate",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate_skirted",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate_semi_skirted",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "strip_tubes_0.2ml",
+						SpecialOffset: 0.0,
+					},
+				},
+			},
 		},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{
@@ -89,6 +158,119 @@ var defaultDevices = map[string]device{
 			"Pipetmax": []string{"position_1"},
 		},
 	},
+
+	"with_cooler": incubator{
+		Riser: riser{
+			Name:         "with_cooler",
+			Manufacturer: "Eppendorf",
+			Heightinmm:   coolerheight,
+			Synonyms:     []string{"with_cooler"},
+			PlateConstraints: plateConstraints{
+				OnlyThesePlates: []plateWithConstraint{
+					plateWithConstraint{
+						Name:          "pcrplate",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate_skirted",
+						SpecialOffset: 3.4,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate_semi_skirted",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "strip_tubes_0.2ml",
+						SpecialOffset: 0.0,
+					},
+				},
+			},
+		},
+		Properties: map[string]float64{
+			"Height": 0.0,
+		},
+		PositionConstraints: map[string][]string{},
+	},
+
+	"with_isofreeze_cooler": incubator{
+		Riser: riser{
+			Name:         "with_isofreeze_cooler",
+			Manufacturer: "Isofreeze",
+			Heightinmm:   isofreezecoolerheight,
+			Synonyms:     []string{"with_isofreeze_cooler"},
+			PlateConstraints: plateConstraints{
+				OnlyThesePlates: []plateWithConstraint{
+					plateWithConstraint{
+						Name:          "pcrplate",
+						SpecialOffset: -0.636,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate_skirted",
+						SpecialOffset: 3.4 - 0.036,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate_semi_skirted",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "strip_tubes_0.2ml",
+						SpecialOffset: 0.0,
+					},
+				},
+			},
+		},
+		Properties: map[string]float64{
+			"Height": 0.0,
+		},
+		PositionConstraints: map[string][]string{},
+	},
+}
+
+func doNotAddThisRiserToThisPlate(plate *wtype.LHPlate, riser device) bool {
+
+	if plate == nil {
+		return true
+	}
+
+	platedeviceConstraints := riser.GetPlateConstraints()
+
+	if len(platedeviceConstraints.OnlyThesePlates) > 0 {
+		for _, plateWithConstraints := range platedeviceConstraints.OnlyThesePlates {
+			if plate.Type == plateWithConstraints.Name {
+				return false
+			}
+		}
+		return true
+	}
+
+	if len(platedeviceConstraints.NotThesePlates) > 0 {
+		for _, plateWithConstraints := range platedeviceConstraints.OnlyThesePlates {
+			if plate.Type == plateWithConstraints.Name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func plateRiserSpecificOffset(plate *wtype.LHPlate, riser device) float64 {
+
+	if plate == nil {
+		return 0.0
+	}
+
+	platedeviceConstraints := riser.GetPlateConstraints()
+
+	if len(platedeviceConstraints.OnlyThesePlates) > 0 {
+		for _, plateWithConstraints := range platedeviceConstraints.OnlyThesePlates {
+			if plate.Type == plateWithConstraints.Name {
+				return plateWithConstraints.SpecialOffset
+			}
+		}
+		return 0.0
+	}
+
+	return 0.0
 }
 
 type device interface {
@@ -97,17 +279,29 @@ type device interface {
 	GetHeightInmm() float64
 	GetRiser() riser
 	GetName() string
+	GetPlateConstraints() plateConstraints
 }
 
 // Constraints map device type to allowed positions for a device
 type constraints map[string][]string
 
+type plateConstraints struct {
+	OnlyThesePlates []plateWithConstraint
+	NotThesePlates  []plateWithConstraint
+}
+
+type plateWithConstraint struct {
+	Name          string
+	SpecialOffset float64
+}
+
 // A riser is an SBS format object upon which a plate can be placed.
 type riser struct {
-	Name         string
-	Manufacturer string
-	Heightinmm   float64
-	Synonyms     []string
+	Name             string
+	Manufacturer     string
+	Heightinmm       float64
+	Synonyms         []string
+	PlateConstraints plateConstraints
 }
 
 func (r riser) GetRiser() riser {
@@ -116,6 +310,10 @@ func (r riser) GetRiser() riser {
 
 func (r riser) GetConstraints() constraints {
 	return nil
+}
+
+func (r riser) GetPlateConstraints() plateConstraints {
+	return r.PlateConstraints
 }
 
 func (r riser) GetSynonyms() []string {
@@ -144,6 +342,10 @@ func (i incubator) GetRiser() riser {
 
 func (i incubator) GetConstraints() constraints {
 	return i.PositionConstraints
+}
+
+func (i incubator) GetPlateConstraints() plateConstraints {
+	return i.Riser.PlateConstraints
 }
 
 func (i incubator) GetSynonyms() []string {

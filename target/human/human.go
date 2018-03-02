@@ -118,6 +118,13 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 			Message: fmt.Sprintf("Now get some data for %s %s", cmd.Tags, cmd.AwaitID),
 		})
 
+	case *wtype.PRInstruction:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "plate-read",
+			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
+		})
+
 	default:
 		return nil, fmt.Errorf("unknown inst %T", cmd)
 	}

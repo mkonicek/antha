@@ -160,6 +160,9 @@ func (lhcp LHChannelParameter) MarshalJSON() ([]byte, error) {
 }
 
 func (lhcp *LHChannelParameter) Dup() *LHChannelParameter {
+	if lhcp == nil {
+		return nil
+	}
 	r := NewLHChannelParameter(lhcp.Name, lhcp.Platform, lhcp.Minvol, lhcp.Maxvol, lhcp.Minspd, lhcp.Maxspd, lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
 
 	return r

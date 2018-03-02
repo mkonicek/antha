@@ -354,7 +354,6 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 // SplitSample is essentially an inverse mix: takes one component and a volume and returns two
 // the question is then over what happens subsequently.. unlike mix this does not have a
 // destination as it's intrinsically a source operation
-
 func SplitSample(ctx context.Context, component *wtype.LHComponent, volume wunit.Volume) (removed, remaining *wtype.LHComponent) {
 	// at this point we cannot guarantee that volumes are accurate
 	// so it's a case of best-efforts

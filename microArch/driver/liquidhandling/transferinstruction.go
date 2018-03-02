@@ -238,7 +238,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, channel 
 	r := make([]int, 0, len(ins.Transfers))
 
 	for i := 0; i < len(ins.Transfers); i++ {
-		if ins.testParallelSet(ctx, channel, i) {
+		if ins.validateParallelSet(ctx, channel, i) {
 			r = append(r, i)
 		}
 	}
@@ -246,7 +246,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, channel 
 	return r
 }
 
-func (ins *TransferInstruction) testParallelSet(ctx context.Context, channel *wtype.LHChannelParameter, which int) bool {
+func (ins *TransferInstruction) validateParallelSet(ctx context.Context, channel *wtype.LHChannelParameter, which int) bool {
 
 	if len(ins.Transfers[which].What()) > channel.Multi {
 		return false

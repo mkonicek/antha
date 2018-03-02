@@ -11,8 +11,6 @@ import (
 
 type Driver struct {
 	C pb.ExtendedLiquidhandlingDriverClient
-	// ignore the below: it's just there to ensure we use all imports
-	d liquidhandling.ExtendedLiquidhandlingDriver
 }
 
 func NewDriver(address string) *Driver {

@@ -35,6 +35,7 @@ import (
 	"github.com/antha-lang/antha/inventory"
 )
 
+// HandleStringFactor converts the value of a factor with an interface value to a string.
 func HandleStringFactor(header string, value interface{}) (string, error) {
 	str, found := value.(string)
 	if !found {

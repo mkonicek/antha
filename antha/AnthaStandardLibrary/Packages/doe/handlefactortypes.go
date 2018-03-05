@@ -122,7 +122,6 @@ func HandleComponentWithConcentration(ctx context.Context, header string, value 
 	if err == nil {
 		// continue
 	} else if strings.Contains(err.Error(), inventory.ErrUnknownType.Error()) {
-		fmt.Println("help", componentName)
 		component, err = inventory.NewComponent(ctx, inventory.WaterType)
 		if err != nil {
 			return

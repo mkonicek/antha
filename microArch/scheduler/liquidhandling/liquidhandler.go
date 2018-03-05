@@ -660,11 +660,12 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// convert requests to volumes and determine required stock concentrations
 	checkSanityIns(request)
 	instructions, stockconcs, err := solution_setup(request, this.Properties)
-	checkSanityIns(request)
 
 	if err != nil {
 		return err
 	}
+
+	checkSanityIns(request)
 
 	request.LHInstructions = instructions
 	request.Stockconcs = stockconcs

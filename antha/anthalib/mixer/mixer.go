@@ -191,6 +191,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 				mx = c.Generation()
 			}
 		}
+
 		r.Results[0].SetGeneration(mx)
 	}
 
@@ -212,7 +213,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 				// the instruction version has to remain unchanged
 				// the returned version in the protocol has to be mixed
 				w.WContents.Loc = r.OutPlate.ID + ":" + opt.Address
-				r.AddResult(w.WContents.Dup())
+				r.Results[0] = w.WContents.Dup()
 				for _, c := range opt.Components {
 					//r.Result.MixPreserveTvol(c)
 					r.Results[0].Mix(c)

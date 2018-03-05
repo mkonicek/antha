@@ -45,6 +45,10 @@ var (
 		Name:  DriverSelectorV1Name,
 		Value: "antha.platereader.v1.PlateReader",
 	}
+	DriverSelectorV1QPCRDevice = ast.NameValue{
+		Name: DriverSelectorV1Name,
+		Value: "antha.quantstudio.v1.QuantStudioService",
+	}
 )
 
 type targetKey int

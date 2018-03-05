@@ -2,6 +2,7 @@ package wtype
 
 import (
 	"fmt"
+	"golang.org/x/net/bpf"
 )
 
 
@@ -12,6 +13,8 @@ type QPCRInstruction struct {
 	ComponentIn        *LHComponent
 	ComponentOut   	   *LHComponent
 	Definition         string
+	Barcode 		   string
+	Command            string
 }
 
 func (ins QPCRInstruction) String() string {
@@ -19,7 +22,7 @@ func (ins QPCRInstruction) String() string {
 }
 
 
-// NewPRInstruction creates a new PRInstruction
+// NewQPCRInstruction creates a new QPCRInstruction
 func NewQPCRInstruction() *QPCRInstruction {
 	var inst QPCRInstruction
 	inst.ID = GetUUID()

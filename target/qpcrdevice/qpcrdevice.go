@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/driver"
 	quantstudio "github.com/antha-lang/antha/driver/antha_quantstudio_v1"
+	framework "github.com/antha-lang/antha/driver/antha_framework_v1"
 	"github.com/antha-lang/antha/target"
 	"strings"
 )
@@ -49,68 +51,53 @@ func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.In
 		qpcrInsts = append(qpcrInsts, cmd.Inst.(*wtype.QPCRInstruction))
 	}
 
-	// Merge PR instructions
-	insts, err := a.mergePRInsts(prInsts, lhWellLocations, lhPlateLocations)
-	if err != nil {
-		return nil, err
-	}
-	return insts, nil
-}
-
-// Merge PRInstructions
-func (a *PlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]target.Inst, error) {
-
-	// Simple case
-	if len(prInsts) == 0 {
-		return []target.Inst{}, nil
-	}
-
-	// Check for only 1 plate (for now)
-	plateLocUnique := make(map[string]bool)
-	for _, plateID := range plateLocs {
-		plateLocUnique[plateID] = true
-	}
-	if len(plateLocUnique) > 1 {
-		return []target.Inst{}, errors.New("current only supports single plate")
-	}
-
-	// Group instructions by PRInstruction
-	groupBy := make(map[string]*wtype.PRInstruction) // {key: instruction}
-	groupedWellLocs := make(map[string][]string)     // {key: []A1Coord}
-	for _, inst := range prInsts {
-		key, err := prKey(inst)
-		if err != nil {
-			return nil, err
-		}
-		cmpID := inst.ComponentIn.GetID()
-		groupBy[key] = inst
-		groupedWellLocs[key] = append(groupedWellLocs[key], wellLocs[cmpID])
-	}
-
-	// Emit the driver calls
 	var calls []driver.Call
-	for key, inst := range groupBy {
-		cmpID := inst.ComponentIn.GetID()
+	for _, inst := range qpcrInsts {
+		instID := inst.ComponentIn.GetID()
 
-		wellString := strings.Join(groupedWellLocs[key], " ")
-		plateID := plateLocs[cmpID]
+		message := &quantstudio.TemplatedRequest{
+			SessionInstrument: &quantstudio.SessionInstrument{
+				Session: &quantstudio.Session{
+					Id: "",
+				},
+				Instrument: &quantstudio.Instrument{
+					Id: "",
+				},
+			},
+			TemplateFile: &quantstudio.ExperimentFile{
+				Url: inst.Definition,
+			},
+			Barcode: &quantstudio.Barcode{
+				Barcode: inst.Barcode,
+			},
+			OutputPath: "",
+		}
+
+		messageBytes, _ := proto.Marshal(message)
 
 		call := driver.Call{
-			Method: "PRRunProtocolByName",
-			Args: &platereader.ProtocolRunRequest{
-				ProtocolName:    "Custom",
-				PlateID:         plateID,
-				PlateLayout:     wellString,
-				ProtocolOptions: inst.Options,
+			Method: "RunFramework",
+			Args: &framework.CommandRequest{
+				Description: &framework.CommandDescription{
+					CommandName: inst.Command,
+					DeviceId:    "QPCRDevice",
+					CommandId:   instID,
+				},
+				Data: &framework.CommandData{
+					Data: messageBytes,
+				},
+				Metadata: &framework.CommandMetadata{
+					JobId: "",
+				},
 			},
-			Reply: &platereader.BoolReply{},
+			Reply: &framework.CommandResponse{},
 		}
 		calls = append(calls, call)
 	}
 
 	var insts []target.Inst
 	insts = append(insts, &target.Prompt{
-		Message: "Please put plate(s) into plate reader and click ok to start plate reader",
+		Message: "Please put plate into QPCR device and click ok to start experiment",
 	})
 	insts = append(insts, &target.Run{
 		Dev:   a,
@@ -118,4 +105,5 @@ func (a *PlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[
 		Calls: calls,
 	})
 	return target.SequentialOrder(insts...), nil
+
 }

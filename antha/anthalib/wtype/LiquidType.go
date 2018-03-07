@@ -185,6 +185,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "PostMix"
 	case LTPAINT:
 		return "Paint"
+	case LTDISPENSEABOVEMULTI:
+		return "DispenseAboveLiquidMulti"
 	case LTDISPENSEABOVE:
 		return "DispenseAboveLiquid"
 	case LTProtoplasts:
@@ -193,6 +195,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "PEG"
 	case LTDNAMIX:
 		return "dna_mix"
+	case LTDNAMIXMULTI:
+		return "dna_mix_multi"
 	case LTPLATEOUT:
 		return "plateout"
 	case LTCOLONY:

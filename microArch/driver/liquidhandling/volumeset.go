@@ -89,6 +89,10 @@ func (vs VolumeSet) NonZeros() VolumeSet {
 	return vols
 }
 
+func (vs VolumeSet) IsZero() bool {
+	return len(vs.NonZeros()) == 0
+}
+
 func (vs VolumeSet) Min() wunit.Volume {
 	if len(vs) == 0 {
 		return wunit.ZeroVolume()

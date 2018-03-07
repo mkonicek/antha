@@ -152,7 +152,7 @@ func (bg ByGenerationOpt) Less(i, j int) bool {
 	if bg[i].Generation() == bg[j].Generation() {
 
 		// compare the names of the resultant components
-		c := strings.Compare(bg[i].Result.CName, bg[j].Result.CName)
+		c := strings.Compare(bg[i].Results[0].CName, bg[j].Results[0].CName)
 
 		if c != 0 {
 			return c < 0
@@ -214,7 +214,7 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	}
 
 	// compare the names of the resultant components
-	c = strings.Compare(bg[i].Result.CName, bg[j].Result.CName)
+	c = strings.Compare(bg[i].Results[0].CName, bg[j].Results[0].CName)
 
 	if c != 0 {
 		return c < 0
@@ -440,11 +440,11 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 		for _, ar := range iar {
 			ins := wtype.NewLHPromptInstruction()
 			ins.Message = msg
-			ins.Result = wtype.NewLHComponent()
+			ins.AddResult(wtype.NewLHComponent())
 			for _, ins2 := range ar {
 				for _, cmp := range ins2.Components {
 					ins.Components = append(ins.Components, cmp)
-					ins.PassThrough[cmp.ID] = ins2.Result
+					ins.PassThrough[cmp.ID] = ins2.Results[0]
 				}
 			}
 			insOut = append(insOut, graph.Node(ins))
@@ -713,7 +713,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			wlt.Add(vd)
 
 			// TODO -- danger here, is result definitely set?
-			wlt.WContents.ID = insIn.Result.ID
+			wlt.WContents.ID = insIn.Results[0].ID
 			wlf.WContents.AddDaughterComponent(wlt.WContents)
 
 			//fmt.Println("HERE GOES: ", i, wh[i], vf[i].ToString(), vt[i].ToString(), va[i].ToString(), pt[i], wt[i], pf[i], wf[i], pfwx[i], pfwy[i], ptwx[i], ptwy[i])

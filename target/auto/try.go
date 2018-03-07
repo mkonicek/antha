@@ -2,7 +2,6 @@ package auto
 
 import (
 	"context"
-
 	"github.com/antha-lang/antha/ast"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
@@ -70,17 +69,68 @@ func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interf
 
 // AddMixer queries a mixer driver and adds the corresponding device to the target
 func (a *tryer) AddMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
+	err := a.addHighLevelMixer(ctx, conn, arg)
+
+	if err == nil {
+		return nil
+	}
+
+	err = a.addLowLevelMixer(ctx, conn, arg)
+
+	if err == nil {
+		return nil
+	}
+
+	err = a.addHighLevelMixer(ctx, conn, arg)
+
+	return err
+}
+
+func (a *tryer) addHighLevelMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
+	c := lh.NewHighLevelLiquidhandlingDriverClient(conn)
+
+	var candidates []interface{}
+	candidates = append(candidates, arg)
+	candidates = append(candidates, a.MaybeArgs...)
+
+	d, err := mixer.New(getMixerOpt(candidates), &lhclient.HLLHDriver{C: c})
+	if err != nil {
+		return err
+	}
+
+	a.HumanOpt.CanMix = false
+	a.Auto.Target.AddDevice(d)
+	return nil
+}
+func (a *tryer) addLowLevelMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
+	c := lh.NewLowLevelLiquidhandlingDriverClient(conn)
+
+	var candidates []interface{}
+	candidates = append(candidates, arg)
+	candidates = append(candidates, a.MaybeArgs...)
+
+	d, err := mixer.New(getMixerOpt(candidates), &lhclient.LLLHDriver{C: c})
+	if err != nil {
+		return err
+	}
+
+	a.HumanOpt.CanMix = false
+	a.Auto.Target.AddDevice(d)
+	return nil
+}
+func (a *tryer) addExtendedMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	c := lh.NewExtendedLiquidhandlingDriverClient(conn)
 
 	var candidates []interface{}
 	candidates = append(candidates, arg)
 	candidates = append(candidates, a.MaybeArgs...)
 
-	a.HumanOpt.CanMix = false
 	d, err := mixer.New(getMixerOpt(candidates), &lhclient.Driver{C: c})
 	if err != nil {
 		return err
 	}
+
+	a.HumanOpt.CanMix = false
 	a.Auto.Target.AddDevice(d)
 	return nil
 }

@@ -66,9 +66,9 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 		f := i
 		opt.ResidualVolumeWeight = &f
 	}
-	opt.InputPlateType = GetStringSlice("inputPlateType")
-	opt.OutputPlateType = GetStringSlice("outputPlateType")
-	opt.TipType = GetStringSlice("tipType")
+	opt.InputPlateTypes = GetStringSlice("inputPlateTypes")
+	opt.OutputPlateTypes = GetStringSlice("outputPlateTypes")
+	opt.TipTypes = GetStringSlice("tipTypes")
 
 	for _, fn := range GetStringSlice("inputPlates") {
 		p, err := mixer.ParseInputPlateFile(ctx, fn)
@@ -370,9 +370,9 @@ func init() {
 	flags.String("target", "", "Mock target definition file")
 	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
-	flags.StringSlice("inputPlateType", nil, "Default input plate types (in order of preference)")
+	flags.StringSlice("inputPlateTypes", nil, "Default input plate types (in order of preference)")
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
-	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
-	flags.StringSlice("tipType", nil, "Names of permitted tip types")
+	flags.StringSlice("outputPlateTypes", nil, "Default output plate types (in order of preference)")
+	flags.StringSlice("tipTypes", nil, "Names of permitted tip types")
 	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
 }

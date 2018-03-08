@@ -111,7 +111,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	// TODO -- error check here to prevent nil values
 
-	if p := a.opt.InputPlateType; len(p) != 0 {
+	if p := a.opt.InputPlateTypes; len(p) != 0 {
 		for _, v := range p {
 			p, err := inventory.NewPlate(ctx, v)
 			if err != nil {
@@ -122,7 +122,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 		}
 	}
 
-	if p := a.opt.OutputPlateType; len(p) != 0 {
+	if p := a.opt.OutputPlateTypes; len(p) != 0 {
 		for _, v := range p {
 			p, err := inventory.NewPlate(ctx, v)
 			if err != nil {
@@ -132,7 +132,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 		}
 	}
 
-	if p := a.opt.TipType; len(p) != 0 {
+	if p := a.opt.TipTypes; len(p) != 0 {
 		for _, v := range p {
 			t, err := inventory.NewTipbox(ctx, v)
 			if err != nil {

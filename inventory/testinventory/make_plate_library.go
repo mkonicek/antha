@@ -626,8 +626,9 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 		makeSemiSkirtedPCRPlate(),
 		makePCRPlate(),
 	)
-	plate = make96DeepWellLowVolumePlate()
-	plates = append(plates, plate)
+
+	plates = append(plates, make96DeepWellLowVolumePlate())
+	plates = append(plates, makeLabcyte384PPStdV())
 
 	return
 }

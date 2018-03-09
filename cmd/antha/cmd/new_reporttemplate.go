@@ -230,7 +230,7 @@ go build ./...
 
 
 {{.TripleQuote}}bash
-antharun --driver localhost:50051 --inputPlateType pcrplate_skirted
+antharun --driver localhost:50051 --inputPlateTypes pcrplate_skirted
 {{.TripleQuote}}
 
 6. Rename output file

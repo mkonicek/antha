@@ -830,3 +830,52 @@ func make96DeepWellLowVolumePlate() *wtype.LHPlate {
 
 	return plate
 }
+
+// make plate Labcyte384PPStdV
+// Lot number 04090140
+// Part number P-05525
+func makeLabcyte384PPStdV() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 14.50
+	ystartOffsetCorrection := 11.50
+	zstartOffsetCorrection := 2.5
+
+	plateName := "Labcyte_384PP_StdV"
+	wellName := "Labcyte_384PP_StdV"
+	manufacturer := "Labcyte"
+
+	numberOfRows := 16
+	numberOfColumns := 24
+
+	wellShape := "squre cylinder"
+	bottomtype := wtype.LHWBFLAT
+
+	dimensionUnit := "mm"
+
+	xdim := 3.3   // G1: diameter at top of well
+	ydim := 3.3   // G1: diameter at top of well
+	zdim := 11.99 // L: depth of well from top to bottom
+
+	bottomh := 0.0 // N: Used to model different well bottom to body shape. This is the height of the bottom part.
+
+	minVolume := 15.0
+	maxVolume := 65.0 // well capacity is therefore 50.0
+
+	volUnit := "ul"
+
+	wellxoffset := 4.5                       // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5                       // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 12.13 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 11.2 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 2.5 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 14.4                    // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}

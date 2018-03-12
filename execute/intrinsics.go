@@ -248,6 +248,7 @@ func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.LHComponent {
 	return inst.result[0]
 }
 
+// QPCROptions are the options for a QPCR request.
 type QPCROptions struct {
 	Sample     *wtype.LHComponent
 	Definition string
@@ -278,12 +279,14 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 	}
 }
 
+// RunQPCRExperiment starts a new QPCR experiment, using an experiment input file.
 func RunQPCRExperiment(ctx context.Context, opt QPCROptions) *wtype.LHComponent {
 	inst := runQPCR(ctx, opt, "RunExperiment")
 	trace.Issue(ctx, inst)
 	return inst.result[0]
 }
 
+// RunQPCRExperiment starts a new QPCR experiment, using a template input file.
 func RunQPCRFromTemplate(ctx context.Context, opt QPCROptions) *wtype.LHComponent {
 	inst := runQPCR(ctx, opt, "RunExperimentFromTemplate")
 	trace.Issue(ctx, inst)

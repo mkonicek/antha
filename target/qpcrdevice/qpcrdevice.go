@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-// PlateReader defines the state of a plate-reader device
+// QPCRDevice defines the state of a qpcr device device
 type QPCRDevice struct {
 }
 

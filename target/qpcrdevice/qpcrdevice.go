@@ -2,17 +2,13 @@ package qpcrdevice
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	aast "github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/driver"
-	quantstudio "github.com/antha-lang/antha/driver/antha_quantstudio_v1"
 	framework "github.com/antha-lang/antha/driver/antha_framework_v1"
+	quantstudio "github.com/antha-lang/antha/driver/antha_quantstudio_v1"
 	"github.com/antha-lang/antha/target"
-	"strings"
+	"github.com/golang/protobuf/proto"
 )
 
 // PlateReader defines the state of a plate-reader device
@@ -44,11 +40,10 @@ func (a *QPCRDevice) MoveCost(from target.Device) int {
 // Compile implements a Device
 func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 
-
-	var qpcrInsts []*wtype.QPCRInstruction
+	var qpcrInsts []*aast.QPCRInstruction
 	for _, node := range nodes {
 		cmd := node.(*ast.Command)
-		qpcrInsts = append(qpcrInsts, cmd.Inst.(*wtype.QPCRInstruction))
+		qpcrInsts = append(qpcrInsts, cmd.Inst.(*aast.QPCRInstruction))
 	}
 
 	var calls []driver.Call
@@ -73,7 +68,10 @@ func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.In
 			OutputPath: "",
 		}
 
-		messageBytes, _ := proto.Marshal(message)
+		messageBytes, err := proto.Marshal(message)
+		if err != nil {
+			return nil, err
+		}
 
 		call := driver.Call{
 			Method: "RunFramework",

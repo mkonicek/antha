@@ -219,6 +219,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Prompt":        "execute.Prompt",
 		"ReadEM":        "execute.ReadEM",
 		"SetInputPlate": "execute.SetInputPlate",
+		"SplitSample":   "execute.SplitSample",
 	}
 
 	p.types = map[string]string{

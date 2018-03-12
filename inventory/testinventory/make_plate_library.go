@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -875,6 +876,8 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 
 	newWelltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	fmt.Println(newWelltype)
 
 	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 

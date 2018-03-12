@@ -32,7 +32,6 @@ import (
 )
 
 func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.LHPlate, weight_constraint map[string]float64) map[string]map[*wtype.LHPlate]int {
-
 	//
 	//	optimization is set up as follows:
 	//

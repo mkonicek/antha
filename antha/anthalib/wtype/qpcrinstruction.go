@@ -2,7 +2,6 @@ package wtype
 
 import (
 	"fmt"
-	"golang.org/x/net/bpf"
 )
 
 

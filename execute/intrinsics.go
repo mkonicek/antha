@@ -260,6 +260,7 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 	inst.ComponentIn = opts.Sample
 	inst.Definition = opts.Definition
 	inst.Barcode = opts.Barcode
+	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
 
 	return &commandInst{
 		Args:   []*wtype.LHComponent{opts.Sample},

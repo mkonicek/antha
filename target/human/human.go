@@ -125,6 +125,13 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
 		})
 
+	case *wtype.QPCRInstruction:
+		insts = append(insts, &target.Manual{
+			Dev: a,
+			Label: "QPCR",
+			Details: fmt.Sprintf("QPCR request, definition %s, barcode %s", cmd.Definition, cmd.Barcode),
+		})
+
 	default:
 		return nil, fmt.Errorf("unknown inst %T", cmd)
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	aast "github.com/antha-lang/antha/antha/ast"
 	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
@@ -256,7 +255,7 @@ type QPCROptions struct {
 }
 
 func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst {
-	inst := aast.NewQPCRInstruction()
+	inst := ast.NewQPCRInstruction()
 	inst.Command = command
 	inst.ComponentIn = opts.Sample
 	inst.Definition = opts.Definition

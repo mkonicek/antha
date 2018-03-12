@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	aast "github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
@@ -125,7 +124,7 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
 		})
 
-	case *aast.QPCRInstruction:
+	case *ast.QPCRInstruction:
 		insts = append(insts, &target.Manual{
 			Dev:     a,
 			Label:   "QPCR",

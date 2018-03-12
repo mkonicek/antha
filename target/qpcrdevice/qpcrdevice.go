@@ -2,7 +2,6 @@ package qpcrdevice
 
 import (
 	"context"
-	aast "github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
 	framework "github.com/antha-lang/antha/driver/antha_framework_v1"
@@ -40,10 +39,10 @@ func (a *QPCRDevice) MoveCost(from target.Device) int {
 // Compile implements a Device
 func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 
-	var qpcrInsts []*aast.QPCRInstruction
+	var qpcrInsts []*ast.QPCRInstruction
 	for _, node := range nodes {
 		cmd := node.(*ast.Command)
-		qpcrInsts = append(qpcrInsts, cmd.Inst.(*aast.QPCRInstruction))
+		qpcrInsts = append(qpcrInsts, cmd.Inst.(*ast.QPCRInstruction))
 	}
 
 	var calls []driver.Call

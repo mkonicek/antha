@@ -286,7 +286,7 @@ func RunQPCRExperiment(ctx context.Context, opt QPCROptions) *wtype.LHComponent 
 	return inst.result[0]
 }
 
-// RunQPCRExperiment starts a new QPCR experiment, using a template input file.
+// RunQPCRFromTemplate starts a new QPCR experiment, using a template input file.
 func RunQPCRFromTemplate(ctx context.Context, opt QPCROptions) *wtype.LHComponent {
 	inst := runQPCR(ctx, opt, "RunExperimentFromTemplate")
 	trace.Issue(ctx, inst)

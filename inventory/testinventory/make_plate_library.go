@@ -835,6 +835,8 @@ func make96DeepWellLowVolumePlate() *wtype.LHPlate {
 // make plate Labcyte384PPStdV
 // Lot number 04090140
 // Part number P-05525
+// Specs retrieved from
+// https://www.labcyte.com/media/pdf/SPC-Qualified-Microplate-384PP.pdf
 func makeLabcyte384PPStdV() *wtype.LHPlate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
@@ -849,7 +851,7 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 	numberOfRows := 16
 	numberOfColumns := 24
 
-	wellShape := "squre cylinder"
+	wellShape := "square cylinder"
 	bottomtype := wtype.LHWBFLAT
 
 	dimensionUnit := "mm"

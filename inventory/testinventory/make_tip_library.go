@@ -64,12 +64,14 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 
 	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
 
+	//Non-filter tips
+
 	w := wtype.NewLHWell("Gilson200Tipbox", "", "A1", "ul", 200.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 	w.Extra["Tipeffectiveheight"] = 44.7
 	tip := wtype.NewLHTip("gilson", "Gilson200", 10.0, 200.0, "ul")
-	tb := wtype.NewLHTipbox(8, 12, 60.13, "Gilson", "DF200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
+	tb := wtype.NewLHTipbox(8, 12, 60.13, "Gilson", "D200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
 	ret = append(ret, tb)
 
 	w = wtype.NewLHWell("Gilson20Tipbox", "", "A1", "ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
@@ -78,6 +80,24 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 	w.Extra["Tipeffectiveheight"] = 34.6
 	tip = wtype.NewLHTip("gilson", "Gilson20", 0.5, 20.0, "ul")
 	tb = wtype.NewLHTipbox(8, 12, 60.13, "Gilson", "DL10 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
+	ret = append(ret, tb)
+
+	//Filter tips
+
+	w = wtype.NewLHWell("DF200 Tip Rack (PIPETMAX 8x200)", "", "A1", "ul", 200.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w.Extra["InnerL"] = 5.6
+	w.Extra["InnerW"] = 5.6
+	w.Extra["Tipeffectiveheight"] = 44.7
+	tip = wtype.NewLHTip("gilson", "DF200", 10.0, 200.0, "ul")
+	tb = wtype.NewLHTipbox(8, 12, 60.13, "Gilson", "DF200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
+	ret = append(ret, tb)
+
+	w = wtype.NewLHWell("DFL10 Tip Rack (PIPETMAX 8x20)", "", "A1", "ul", 10.0, 0.5, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	w.Extra["InnerL"] = 5.5
+	w.Extra["InnerW"] = 5.5
+	w.Extra["Tipeffectiveheight"] = 33.9
+	tip = wtype.NewLHTip("gilson", "DF10", 0.5, 10.0, "ul")
+	tb = wtype.NewLHTipbox(8, 12, 60.13, "Gilson", "DFL10 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
 
 	return ret

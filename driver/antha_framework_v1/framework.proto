@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package antha.framework.v1;
+
+message CommandDescription {
+  string command_name = 1;
+  string device_id = 2;
+  string command_id = 3;
+}
+
+message CommandData { bytes data = 1; }
+
+message CommandMetadata { string job_id = 1; }
+
+message CommandRequest {
+  CommandDescription description = 1;
+  CommandData data = 2;
+  CommandMetadata metadata = 3;
+}
+
+message CommandResponse {
+  CommandRequest request = 1;
+  CommandData response = 2;
+}
+
+message BatchedCommandRequest { repeated CommandRequest request = 1; }
+
+message BatchedCommandResponse { repeated CommandResponse response = 1; }

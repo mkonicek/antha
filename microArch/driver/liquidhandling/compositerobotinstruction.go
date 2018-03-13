@@ -503,16 +503,16 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.TipType = newtiptypes
 			//mci.Multi = ins.Multi
 			mci.Multi = countMulti(ins.PltFrom[t])
-			prms := make([]*wtype.LHChannelParameter, ins.Multi)
+			channelprms := make([]*wtype.LHChannelParameter, newchannels[0].Multi)
 			//mci.Prms = newchannel.MergeWithTip(newtip)
 
 			for i := 0; i < len(newchannels); i++ {
 				if newchannels[i] != nil {
-					prms[i] = newchannels[i].MergeWithTip(newtips[i])
+					channelprms[i] = newchannels[i].MergeWithTip(newtips[i])
 				}
 			}
 
-			mci.Prms = prms
+			mci.Prms = channelprms
 
 			ret = append(ret, mci)
 			// finally check if we are touching a bad liquid

@@ -870,7 +870,7 @@ func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 	wellyoffset := 4.5                        // K?: centre of well to centre of neighbouring well in y direction
 	xstart := 10.925 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
 	ystart := 7.415 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
-	zstart := 0.61 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
+	zstart := 0.65 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
 	overallHeight := 9.7                      // F: height of plate
 
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)

@@ -26,12 +26,13 @@ import "github.com/antha-lang/antha/antha/anthalib/wunit"
 
 //TODO add extra properties, i.e. filter
 type LHTip struct {
-	ID     string
-	Type   string
-	Mnfr   string
-	Dirty  bool
-	MaxVol wunit.Volume
-	MinVol wunit.Volume
+	ID       string
+	Type     string
+	Mnfr     string
+	Dirty    bool
+	MaxVol   wunit.Volume
+	MinVol   wunit.Volume
+	Filtered bool
 }
 
 /*
@@ -65,7 +66,7 @@ func (tip *LHTip) IsNil() bool {
 }
 
 func (tip *LHTip) Dup() *LHTip {
-	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol())
+	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered)
 	t.Dirty = tip.Dirty
 	return t
 }
@@ -76,7 +77,7 @@ func (tip *LHTip) DupKeepID() *LHTip {
 	return t
 }
 
-func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string) *LHTip {
+func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, filtered bool) *LHTip {
 	var lht LHTip
 	//	lht.ID = "tip-" + GetUUID()
 	lht.ID = GetUUID()
@@ -84,6 +85,7 @@ func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string) *LHTip 
 	lht.Type = ttype
 	lht.MaxVol = wunit.NewVolume(maxvol, volunit)
 	lht.MinVol = wunit.NewVolume(minvol, volunit)
+	lht.Filtered = filtered
 	return &lht
 }
 

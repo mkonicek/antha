@@ -92,6 +92,14 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 	tb = wtype.NewLHTipbox(8, 12, 60.13, "Gilson", "DF200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
 	ret = append(ret, tb)
 
+	w = wtype.NewLHWell("DF30 Tip Rack (PIPETMAX 8x20)", "", "A1", "ul", 30.0, 2.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w.Extra["InnerL"] = 5.6
+	w.Extra["InnerW"] = 5.6
+	w.Extra["Tipeffectiveheight"] = 39.3
+	tip = wtype.NewLHTip("gilson", "GilsonFilter30", 2.0, 30.0, "ul")
+	tb = wtype.NewLHTipbox(8, 12, 60.13, "Gilson", "DF30 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
+	ret = append(ret, tb)
+
 	w = wtype.NewLHWell("DFL10 Tip Rack (PIPETMAX 8x20)", "", "A1", "ul", 10.0, 0.5, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	w.Extra["InnerL"] = 5.5
 	w.Extra["InnerW"] = 5.5

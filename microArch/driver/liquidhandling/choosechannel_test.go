@@ -170,7 +170,7 @@ func SetUpTipsFor(lhp *LHProperties) *LHProperties {
 	for _, tb := range testinventory.GetTipboxes(ctx) {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
 			//ignore filter tips
-			if tb.Type == "DF200 Tip Rack (PIPETMAX 8x200)" || tb.Type == "DFL10 Tip Rack (PIPETMAX 8x20)" {
+			if tb.Type == "DF200 Tip Rack (PIPETMAX 8x200)" || tb.Type == "DFL10 Tip Rack (PIPETMAX 8x20)" || tb.Type == "DF30 Tip Rack (PIPETMAX 8x20)" {
 				continue
 			}
 			tip := tb.Tips[0][0]

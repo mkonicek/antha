@@ -15,8 +15,8 @@ var (
 		MaxPlates:            &defaultMaxPlates,
 		MaxWells:             &defaultMaxWells,
 		ResidualVolumeWeight: &defaultResidualVolumeWeight,
-		InputPlateType:       []string{},
-		OutputPlateType:      []string{},
+		InputPlateTypes:       []string{},
+		OutputPlateTypes:      []string{},
 		InputPlates:          []*wtype.LHPlate{},
 		OutputPlates:         []*wtype.LHPlate{},
 		PlanningVersion:      "ep2",
@@ -30,9 +30,9 @@ type Opt struct {
 	MaxPlates            *float64
 	MaxWells             *float64
 	ResidualVolumeWeight *float64
-	InputPlateType       []string
-	OutputPlateType      []string
-	TipType              []string
+	InputPlateTypes      []string
+	OutputPlateTypes     []string
+	TipTypes             []string
 	PlanningVersion      string
 
 	// Two methods of populating Opt.InputPlates

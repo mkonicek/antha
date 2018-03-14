@@ -27,10 +27,10 @@ func TestUseCompChainThroughSample(t *testing.T) {
 		Components: []*wtype.LHComponent{cmp},
 	}))
 	a2 := mix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []*wtype.LHComponent{mixer.Sample(a1.result, vol)},
+		Components: []*wtype.LHComponent{mixer.Sample(a1.result[0], vol)},
 	}))
 	a3 := mix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []*wtype.LHComponent{mixer.Sample(a2.result, vol)},
+		Components: []*wtype.LHComponent{mixer.Sample(a2.result[0], vol)},
 	}))
 
 	var insts []interface{}

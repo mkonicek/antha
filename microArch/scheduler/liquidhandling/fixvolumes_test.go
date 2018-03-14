@@ -27,8 +27,7 @@ func TestFixVolumes(t *testing.T) {
 
 	ins := wtype.NewLHMixInstruction()
 	ins.Components = []*wtype.LHComponent{c1, c2}
-	ins.Result = c3
-	ins.ProductID = ins.Result.ID
+	ins.AddResult(c3)
 
 	req.LHInstructions[ins.ID] = ins
 
@@ -57,9 +56,8 @@ func TestFixVolumes(t *testing.T) {
 		ins.Components = []*wtype.LHComponent{smp}
 		res := getComponentWithNameVolume("water+milk", 15.0)
 		res.ParentID = ins.Components[0].ID
-		ins.Result = res
-		ins.Result.DeclareInstance()
-		ins.ProductID = ins.Result.ID
+		res.DeclareInstance()
+		ins.AddResult(res)
 		req.LHInstructions[ins.ID] = ins
 		inss = append(inss, ins)
 	}
@@ -78,8 +76,8 @@ func TestFixVolumes(t *testing.T) {
 
 	mix1 := req.InstructionChain.Values[0]
 
-	if mix1.Result.Vol != 155.0 {
-		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Result.Volume()))
+	if mix1.Results[0].Vol != 155.0 {
+		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Results[0].Volume()))
 	}
 }
 
@@ -95,8 +93,7 @@ func TestFixVolumes2(t *testing.T) {
 
 	ins := wtype.NewLHMixInstruction()
 	ins.Components = []*wtype.LHComponent{c1, c2}
-	ins.Result = c3
-	ins.ProductID = ins.Result.ID
+	ins.AddResult(c3)
 
 	inss := []*wtype.LHInstruction{ins}
 
@@ -131,8 +128,7 @@ func TestFixVolumes3(t *testing.T) {
 	ins := wtype.NewLHMixInstruction()
 	ins.Components = []*wtype.LHComponent{c1}
 
-	ins.Result = c3
-	ins.ProductID = ins.Result.ID
+	ins.AddResult(c3)
 	req.LHInstructions[ins.ID] = ins
 
 	ic := &IChain{
@@ -151,8 +147,7 @@ func TestFixVolumes3(t *testing.T) {
 	ins.Components = []*wtype.LHComponent{c3, c2}
 	c4 := c3.Dup()
 	c3.Mix(c2)
-	ins.Result = c4
-	ins.ProductID = ins.Result.ID
+	ins.AddResult(c4)
 	req.LHInstructions[ins.ID] = ins
 
 	ic = &IChain{
@@ -180,9 +175,8 @@ func TestFixVolumes3(t *testing.T) {
 		ins.Components = []*wtype.LHComponent{smp}
 		res := getComponentWithNameVolume("water+milk", 15.0)
 		res.ParentID = ins.Components[0].ID
-		ins.Result = res
-		ins.Result.DeclareInstance()
-		ins.ProductID = ins.Result.ID
+		res.DeclareInstance()
+		ins.AddResult(res)
 		req.LHInstructions[ins.ID] = ins
 		inss = append(inss, ins)
 	}
@@ -201,8 +195,8 @@ func TestFixVolumes3(t *testing.T) {
 
 	mix1 := req.InstructionChain.Values[0]
 
-	if mix1.Result.Vol != 155.0 {
-		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Result.Volume()))
+	if mix1.Results[0].Vol != 155.0 {
+		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Results[0].Volume()))
 	}
 }
 
@@ -217,8 +211,7 @@ func TestFixVolumes4(t *testing.T) {
 	ins := wtype.NewLHMixInstruction()
 	ins.Components = []*wtype.LHComponent{c1}
 
-	ins.Result = c3
-	ins.ProductID = ins.Result.ID
+	ins.AddResult(c3)
 	req.LHInstructions[ins.ID] = ins
 
 	ic := &IChain{
@@ -249,8 +242,7 @@ func TestFixVolumes4(t *testing.T) {
 	c5.Vol = 200.0
 
 	ins.Components = []*wtype.LHComponent{c4}
-	ins.Result = c5
-	ins.ProductID = c5.ID
+	ins.AddResult(c5)
 
 	ic.Child.Child = &IChain{
 		Parent: ic.Child,

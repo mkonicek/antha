@@ -54,7 +54,7 @@ func containsRiser(plate *wtype.LHPlate) bool {
 }
 
 func addRiser(plate *wtype.LHPlate, riser device) (plates []*wtype.LHPlate) {
-	if containsRiser(plate) {
+	if containsRiser(plate) || doNotAddThisRiserToThisPlate(plate, riser) {
 		return
 	}
 
@@ -66,6 +66,9 @@ func addRiser(plate *wtype.LHPlate, riser device) (plates []*wtype.LHPlate) {
 		if offset, found := platespecificoffset[plate.Type]; found {
 			riserheight = riserheight - offset
 		}
+
+		riserheight = riserheight + plateRiserSpecificOffset(plate, riser)
+
 		newplate.WellZStart = plate.WellZStart + riserheight
 		newname := plate.Type + "_" + risername
 		newplate.Type = newname
@@ -193,55 +196,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	welltypereservoir := wtype.NewLHWell("Reservoir", "", "", "ul", 200000, 40000, reservoirbox, wtype.LHWBFLAT, 121, 80, 40, 3, "mm")
 	plate = wtype.NewLHPlate("reservoir", "unknown", 1, 1, 40, "mm", welltypereservoir, 1, 1, 49.5, 31.0, 0.0)
 	plates = append(plates, plate)
-
-	// well area function
-	// -- determined empirically since inverse cubic was giving us some numerical issues
-	areaf := wutil.Quartic{A: -3.3317851312e-09, B: 0.00000225834467, C: -0.0006305492472, D: 0.1328156706978, E: 0}
-	afb, _ := json.Marshal(areaf)
-	afs := string(afb)
-
-	// pcr plate with cooler
-	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
-
-	pcrplatewell := wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 15, 1.4, "mm")
-	pcrplatewell.SetAfVFunc(afs)
-
-	//LiquidLevel model for LL Following: vol_f estimates volume given height
-	vol_f := wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
-	pcrplatewell.SetLiquidLevelModel(vol_f)
-
-	plate = wtype.NewLHPlate("pcrplate_with_cooler", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, coolerheight+0.5)
-	plates = append(plates, plate)
-
-	// pcr plate with isofreeze_cooler
-	plate = wtype.NewLHPlate("pcrplate_with_isofreeze_cooler", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, isofreezecoolerheight)
-	plates = append(plates, plate)
-
-	// pcr plate skirted with isofreeze_cooler (to be used only with transformations (into 10-20ul) as plate not fully secured in the cooler)
-	plate = wtype.NewLHPlate("pcrplate_skirted_with_isofreeze_cooler", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, isofreezecoolerheight+2.0)
-	plates = append(plates, plate)
-
-	// pcr plate with 496rack
-
-	plate = wtype.NewLHPlate("pcrplate_with_496rack", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, pcrtuberack496)
-	plates = append(plates, plate)
-
-	// pcr plate semi-skirted with 496rack
-
-	plate = wtype.NewLHPlate("pcrplate_semi_skirted_with_496rack", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, pcrtuberack496+1.0)
-	plates = append(plates, plate)
-
-	// 0.2ml strip tubes with 496rack
-
-	plate = wtype.NewLHPlate("strip_tubes_0.2ml_with_496rack", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, pcrtuberack496-2.5)
-	plates = append(plates, plate)
-
-	// pcr plate skirted
-	plate = wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", pcrplatewell, 9, 9, 0.0, 0.0, 0.636)
-	plates = append(plates, plate)
-
-	pcrplatewellinc := wtype.NewLHWell("pcrplate", "", "", "ul", 200, 5, cone, wtype.LHWBU, 5.5, 5.5, 1.55, 1.4, "mm")
-	pcrplatewellinc.SetAfVFunc(afs)
 
 	// falcon 6 well plate with Agar flat bottom with 4ml per well
 
@@ -440,7 +394,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate = wtype.NewLHPlate("Agarplateforpicking384", "Unknown", 16, 24, 14, "mm", welltype384, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
-	// Onewell SBS format Agarplate with colonies on shallowriser (50ml agar) low res
+	// Onewell SBS format Agarplate with colonies on shallowriser (30ml agar) low res
 
 	bottomtype = wtype.LHWBFLAT
 	xdim = 4.0
@@ -448,15 +402,11 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	zdim = 14.0
 	bottomh = 1.0
 
-	wellxoffset = 4.5                     // centre of well to centre of neighbouring well in x direction
-	wellyoffset = 4.5                     //centre of well to centre of neighbouring well in y direction
-	xstart = -2.5                         // distance from top left side of plate to first well
-	ystart = -2.5                         // distance from top left side of plate to first well
-	zstart = shallowriserheightinmm + 5.5 // offset of bottom of deck to bottom of well
-
-	// Onewell SBS format Agarplate with colonies on riser (30ml agar) low res
-
-	zstart = 1 // offset of bottom of deck to bottom of well
+	wellxoffset = 4.5 // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 4.5 //centre of well to centre of neighbouring well in y direction
+	xstart = -2.5     // distance from top left side of plate to first well
+	ystart = -2.5     // distance from top left side of plate to first well
+	zstart = 1        // offset of bottom of deck to bottom of well
 
 	plate = wtype.NewLHPlate("30mlAgarplateforpicking384", "Unknown", 16, 24, 14, "mm", welltype384, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
@@ -499,7 +449,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// greiner one well with 50ml of agar in
 
-	pcrplatewellforpicking := wtype.NewLHWell("pcrplate", "", "", "ul", 5, 1, cone, wtype.LHWBU, xdim, ydim, zdim, bottomh, "mm")
+	pcrplatewellforpicking := wtype.NewLHWell("pcrplate", "", "", "ul", 5, 1, wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15), wtype.LHWBU, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("Agarplateforpicking96", "Unknown", 8, 12, 14, "mm", pcrplatewellforpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
@@ -530,13 +480,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	plate = wtype.NewLHPlate("1L_DuranBottle", "Unknown", 8, 12, 25.7, "mm", welltypereservoir, 9, 9, 0.0, 0.0, 15.5)
 	plates = append(plates, plate)
-
-	//forward position
-
-	//	ep48g := wtype.NewShape("trap", "mm", 2, 4, 2)
-	//	welltype = wtype.NewLHWell("EPAGE48", "", "", "ul", 15, 0, ep48g, 0, 2, 4, 2, 48, "mm")
-	//	plate = wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 26, 50, "mm", welltype, 4.5, 34, 0.0, 0.0, 2.0)
-	//	plates[plate.Type] = plate
 
 	////// E gel dimensions
 	xdim = 2
@@ -669,20 +612,67 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate = makeGreinerVBottomPlate()
 	plates = append(plates, plate)
 
-	//plate = makeGreinerVBottomPlateWithRiser()
-	//plates = append(plates, plate)
-
-	//plate = plate.Dup()
-	//plate.Type += "40"
-	//plates = append(plates, plate)
-
 	plate = makeHighResplateforPicking()
 	plates = append(plates, plate)
 
 	plate = makeGreinerFlatBottomBlackPlate()
 	plates = append(plates, plate)
 
+	plates = append(plates, makeNunc96UPlate())
+
+	plates = append(plates,
+		makeSkirtedPCRPlate(),
+		makeStripTube(),
+		makeSemiSkirtedPCRPlate(),
+		makePCRPlate(),
+	)
+
+	plates = append(plates, make96DeepWellLowVolumePlate())
+	plates = append(plates, makeLabcyte384PPStdV())
+
 	return
+}
+
+func makePCRPlateWell() *wtype.LHWell {
+	// well area function
+	// -- determined empirically since inverse cubic was giving us some numerical issues
+	areaf := wutil.Quartic{A: -3.3317851312e-09, B: 0.00000225834467, C: -0.0006305492472, D: 0.1328156706978, E: 0}
+	afb, _ := json.Marshal(areaf)
+	afs := string(afb)
+
+	pcrPlateMinVol := 5.0
+	pcrPlateMaxVol := 200.0
+
+	// pcr plate with cooler
+	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15)
+
+	pcrplatewell := wtype.NewLHWell("pcrplate", "", "", "ul", pcrPlateMaxVol, pcrPlateMinVol, cone, wtype.LHWBU, 5.5, 5.5, 15, 1.4, "mm")
+	pcrplatewell.SetAfVFunc(afs)
+
+	//LiquidLevel model for LL Following: vol_f estimates volume given height
+	vol_f := wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
+	pcrplatewell.SetLiquidLevelModel(vol_f)
+
+	return pcrplatewell
+}
+
+func makePCRPlate() *wtype.LHPlate {
+	return wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 0.636)
+}
+
+// pcr plate semi-skirted with 496rack
+func makeSemiSkirtedPCRPlate() *wtype.LHPlate {
+	return wtype.NewLHPlate("pcrplate_semi_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 1.0)
+}
+
+// 0.2ml strip tubes
+func makeStripTube() *wtype.LHPlate {
+	return wtype.NewLHPlate("strip_tubes_0.2ml", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 0.0)
+}
+
+// pcr plate skirted
+func makeSkirtedPCRPlate() *wtype.LHPlate {
+	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 0.636)
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {
@@ -696,7 +686,7 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 
 	wellxoffset := 9.0 // centre of well to centre of neighbouring well in x direction
 	wellyoffset := 9.0 //centre of well to centre of neighbouring well in y direction
-	xstart := -0.5     // distance from top left side of plate to first well
+	xstart := 0.25     // distance from top left side of plate to first well
 	ystart := 0.0      // distance from top left side of plate to first well
 	zstart := 3.0      // offset of bottom of deck to bottom of well
 
@@ -704,6 +694,53 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 	welltype := wtype.NewLHWell("GreinerSWVBottom", "", "", "ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate := wtype.NewLHPlate("GreinerSWVBottom", "Greiner", 8, 12, 15, "mm", welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// Nunc U96 Microplate PolyStyrene Sterile U-Bottom, Clear, Cat Num: 262162
+// Source of dimensions: https://www.thermofisher.com/order/catalog/product/262162
+func makeNunc96UPlate() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 11.25
+	ystartOffsetCorrection := 7.75
+
+	plateName := "nunc_96_U_PS_Clear"
+	wellName := "Nunc96U"
+	manufacturer := "Nunc"
+
+	numberOfRows := 8
+	numberOfColumns := 12
+
+	wellShape := "cylinder"
+	bottomtype := wtype.LHWBU
+
+	dimensionUnit := "mm"
+
+	xdim := 7.1  // G1: diameter at top of well
+	ydim := 7.1  // G1: diameter at top of well
+	zdim := 10.2 // L: depth of well from top to bottom
+
+	bottomh := 1.0 // ?
+
+	minVolume := 20.0
+	maxVolume := 250.0
+
+	volUnit := "ul"
+
+	wellxoffset := 9.0                       // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 9.0                       // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 10.75 - xstartOffsetCorrection // H - (G1/2): distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	ystart := 7.75 - ystartOffsetCorrection  // J - (G1/2):  distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	zstart := 3.0                            // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 14.4                    // F: height of plate
+
+	nunc96UShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	welltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, nunc96UShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -744,5 +781,104 @@ func makeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
 	plate := makeGreinerVBottomPlate()
 	plate.Type = "GreinerSWVBottom_riser"
 	plate.WellZStart = 43.0
+	return plate
+}
+
+// Nunc™ 1.0 ml DeepWell™ Plates with Shared-Wall Technology Cat Num: 260251
+// Source of dimensions: https://www.thermofisher.com/order/catalog/product/260251
+func make96DeepWellLowVolumePlate() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 14.50
+	ystartOffsetCorrection := 11.50
+	zstartOffsetCorrection := 2.5
+
+	plateName := "Nunc_96_deepwell_1ml"
+	wellName := "Nunc_96_deepwell"
+	manufacturer := "Thermo Fisher"
+
+	numberOfRows := 8
+	numberOfColumns := 12
+
+	wellShape := "cylinder"
+	bottomtype := wtype.LHWBU
+
+	dimensionUnit := "mm"
+
+	xdim := 8.4  // G1: diameter at top of well
+	ydim := 8.4  // G1: diameter at top of well
+	zdim := 29.1 // L: depth of well from top to bottom
+
+	bottomh := 1.4 // N: bottom of well to resting plane
+
+	minVolume := 10.0
+	maxVolume := 1000.0
+
+	volUnit := "ul"
+
+	wellxoffset := 9.0                      // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 9.0                      // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 14.4 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 11.2 - ystartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 2.5 - zstartOffsetCorrection  // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 31.6                   // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// make plate Labcyte384PPStdV
+// Lot number 04090140
+// Part number P-05525
+// Specs retrieved from
+// https://www.labcyte.com/media/pdf/SPC-Qualified-Microplate-384PP.pdf
+func makeLabcyte384PPStdV() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 14.50
+	ystartOffsetCorrection := 11.50
+	zstartOffsetCorrection := 2.5
+
+	plateName := "Labcyte_384PP_StdV"
+	wellName := "Labcyte_384PP_StdV"
+	manufacturer := "Labcyte"
+
+	numberOfRows := 16
+	numberOfColumns := 24
+
+	wellShape := "square cylinder"
+	bottomtype := wtype.LHWBFLAT
+
+	dimensionUnit := "mm"
+
+	xdim := 3.3   // G1: diameter at top of well
+	ydim := 3.3   // G1: diameter at top of well
+	zdim := 11.99 // L: depth of well from top to bottom
+
+	bottomh := 0.0 // N: Used to model different well bottom to body shape. This is the height of the bottom part.
+
+	minVolume := 15.0
+	maxVolume := 65.0 // well capacity is therefore 50.0
+
+	volUnit := "ul"
+
+	wellxoffset := 4.5                       // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5                       // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 12.13 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 11.2 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 2.5 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 14.4                    // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
 	return plate
 }

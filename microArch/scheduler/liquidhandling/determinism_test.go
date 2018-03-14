@@ -28,7 +28,7 @@ func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
 		ins.AddComponent(mmxs)
 		ins.AddComponent(ps)
 		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(43.0, "ul")))
-		ins.Result.CName = fmt.Sprintf("DANGER_MIX_%d", k)
+		ins.Results[0].CName = fmt.Sprintf("DANGER_MIX_%d", k)
 		ins.SetGeneration(k + 1)
 		rq.Add_instruction(ins)
 	}

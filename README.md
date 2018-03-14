@@ -25,7 +25,7 @@ for using both are stored here.
 
 ### OSX (Native)
 
-First step is to install or upgrade to go 1.7. Follow the instructions at the
+First step is to install or upgrade to the latest version of Go. Follow the instructions at the
 [Golang](http://golang.org/doc/install) site. 
 
 Update the GOPATH:
@@ -45,7 +45,7 @@ xcode-select --install
 
 # Install some external dependencies
 brew update
-brew install mercurial pkg-config homebrew/science/glpk sqlite3 opencv
+brew install mercurial pkg-config glpk sqlite3 opencv
 
 # Install antha
 mkdir -p $GOPATH/src/github.com/antha-lang

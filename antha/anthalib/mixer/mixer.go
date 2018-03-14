@@ -50,11 +50,22 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	if l.Conc > 0 && len(l.Cunit) > 0 {
 		ret.SetConcentration(wunit.NewConcentration(l.Conc, l.Cunit))
 	}
-	//ret.Conc = l.Conc
-	//ret.Cunit = l.Cunit
+
 	ret.SetSample(true)
 
 	return ret
+}
+
+// SplitSample is a two-return version of sample
+func SplitSample(l *wtype.LHComponent, v wunit.Volume) (moving, remaining *wtype.LHComponent) {
+	remaining = l.Dup()
+
+	moving = Sample(remaining, v)
+
+	remaining.Vol -= v.ConvertToString(remaining.Vunit)
+	remaining.ID = wtype.GetUUID()
+
+	return
 }
 
 // MultiSample takes an array of samples and array of corresponding volumes and
@@ -163,18 +174,25 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	r.Components = opt.Components
 
 	if opt.Result != nil {
-		r.Result = opt.Result
+		r.AddResult(opt.Result)
 	} else {
-		r.Result = wtype.NewLHComponent()
+		cmpR := wtype.NewLHComponent()
+		r.AddResult(cmpR)
+
+		if !r.Components[0].IsSample() {
+			r.Results[0].Loc = r.Components[0].Loc
+		}
+
 		mx := 0
 		for _, c := range opt.Components {
 			//r.Result.MixPreserveTvol(c)
-			r.Result.Mix(c)
+			r.Results[0].Mix(c)
 			if c.Generation() > mx {
 				mx = c.Generation()
 			}
 		}
-		r.Result.SetGeneration(mx)
+
+		r.Results[0].SetGeneration(mx)
 	}
 
 	if opt.Destination != nil {
@@ -195,10 +213,10 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 				// the instruction version has to remain unchanged
 				// the returned version in the protocol has to be mixed
 				w.WContents.Loc = r.OutPlate.ID + ":" + opt.Address
-				r.Result = w.WContents.Dup()
+				r.Results[0] = w.WContents.Dup()
 				for _, c := range opt.Components {
 					//r.Result.MixPreserveTvol(c)
-					r.Result.Mix(c)
+					r.Results[0].Mix(c)
 
 				}
 				// we also need to make sure the instruction explicitly mentions the component
@@ -237,7 +255,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	tVol := findTVolOrPanic(opt.Components)
 
 	if !tVol.IsZero() {
-		r.Result.SetVolume(tVol)
+		r.Results[0].SetVolume(tVol)
 	}
 
 	return r
@@ -269,7 +287,7 @@ func Mix(components ...*wtype.LHComponent) *wtype.LHComponent {
 	r := GenericMix(MixOptions{
 		Components: components,
 	})
-	return r.Result
+	return r.Results[0]
 }
 
 // MixInto the specified wtype.LHComponents together into a specific plate
@@ -280,7 +298,7 @@ func MixInto(destination *wtype.LHPlate, address string, components ...*wtype.LH
 		Address:     address,
 	})
 
-	return r.Result
+	return r.Results[0]
 }
 
 // MixTo the specified wtype.LHComponents together into a plate of a particular type
@@ -291,5 +309,5 @@ func MixTo(platetype string, address string, platenum int, components ...*wtype.
 		Address:    address,
 		PlateNum:   platenum,
 	})
-	return r.Result
+	return r.Results[0]
 }

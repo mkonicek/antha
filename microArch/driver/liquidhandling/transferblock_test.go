@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -10,6 +11,76 @@ import (
 	"testing"
 )
 
+func getComponent(ctx context.Context, name string, volume float64) (*wtype.LHComponent, error) {
+	c, err := inventory.NewComponent(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	c.Vol = volume
+	c.Vunit = "ul"
+	c.SetSample(true)
+	return c, nil
+}
+
+func getMixInstructions(ctx context.Context, numInstructions int, componentNames []string, componentVolumes []float64) ([]*wtype.LHInstruction, error) {
+	numComponents := len(componentNames)
+	if len(componentVolumes) != numComponents {
+		return nil, fmt.Errorf("componentNames and componentVolumes should be the same length")
+	}
+
+	ret := make([]*wtype.LHInstruction, 0, numComponents)
+
+	for i := 0; i < numInstructions; i++ {
+
+		components := make([]*wtype.LHComponent, 0, numComponents)
+		for j := 0; j < numComponents; j++ {
+			c, err := getComponent(ctx, componentNames[j], componentVolumes[j])
+			if err != nil {
+				return nil, err
+			}
+			components = append(components, c)
+		}
+
+		ins := wtype.NewLHMixInstruction()
+		ins.Components = append(ins.Components, components...)
+
+		result := components[0].Dup()
+		for j, c := range components {
+			if j == 0 {
+				continue
+			}
+			result.Mix(c)
+		}
+		ins.AddResult(result)
+
+		ret = append(ret, ins)
+	}
+
+	return ret, nil
+}
+
+func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlateType string) (TransferBlockInstruction, *wtype.LHPlate) {
+	if destPlateType == "" {
+		destPlateType = "pcrplate_skirted_riser40"
+	}
+
+	dstp, err := inventory.NewPlate(ctx, destPlateType)
+	if err != nil {
+		panic(err)
+	}
+
+	for i, ins := range inss {
+		ins.SetPlateID(dstp.ID)
+		ins.Platetype = destPlateType
+		ins.Welladdress = fmt.Sprintf("%s%d", wutil.NumToAlpha(i%8+1), i/8+1)
+	}
+
+	tb := NewTransferBlockInstruction(inss)
+
+	return tb, dstp
+}
+
+/*
 func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
 	inss := make([]*wtype.LHInstruction, 8)
 	dstp, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
@@ -18,26 +89,18 @@ func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, 
 	}
 
 	for i := 0; i < 8; i++ {
-		c, err := inventory.NewComponent(ctx, inventory.WaterType)
+		ins := wtype.NewLHMixInstruction()
+
+		c, err := getComponent(ctx, inventory.WaterType, 100.0)
 		if err != nil {
 			panic(err)
 		}
-
-		c.Vol = 100.0
-		c.Vunit = "ul"
-		c.SetSample(true)
-		ins := wtype.NewLHMixInstruction()
 		ins.Components = append(ins.Components, c)
 
-		c2, err := inventory.NewComponent(ctx, "tartrazine")
+		c2, err := getComponent(ctx, "tartrazine", 24.0)
 		if err != nil {
 			panic(err)
 		}
-
-		c2.Vol = 24.0
-		c2.Vunit = "ul"
-		c2.SetSample(true)
-
 		ins.Components = append(ins.Components, c2)
 
 		c3 := c.Dup()
@@ -54,7 +117,26 @@ func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, 
 
 	return tb, dstp
 }
+*/
+func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
+	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine"}, []float64{100.0, 64.0})
+	if err != nil {
+		panic(err)
+	}
 
+	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
+}
+
+func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
+	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine", "ethanol"}, []float64{100.0, 64.0, 12.0})
+	if err != nil {
+		panic(err)
+	}
+
+	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
+}
+
+/*
 func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
 	inss := make([]*wtype.LHInstruction, 8)
 	dstp, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
@@ -111,6 +193,7 @@ func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, 
 
 	return tb, dstp
 }
+*/
 
 func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *LHProperties {
 	rbt, err := makeTestGilson(ctx)

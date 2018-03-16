@@ -80,44 +80,6 @@ func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlat
 	return tb, dstp
 }
 
-/*
-func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
-	inss := make([]*wtype.LHInstruction, 8)
-	dstp, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
-	if err != nil {
-		panic(err)
-	}
-
-	for i := 0; i < 8; i++ {
-		ins := wtype.NewLHMixInstruction()
-
-		c, err := getComponent(ctx, inventory.WaterType, 100.0)
-		if err != nil {
-			panic(err)
-		}
-		ins.Components = append(ins.Components, c)
-
-		c2, err := getComponent(ctx, "tartrazine", 24.0)
-		if err != nil {
-			panic(err)
-		}
-		ins.Components = append(ins.Components, c2)
-
-		c3 := c.Dup()
-		c3.Mix(c2)
-		ins.AddResult(c3)
-
-		ins.Platetype = "pcrplate_skirted_riser40"
-		ins.Welladdress = wutil.NumToAlpha(i+1) + "1"
-		ins.SetPlateID(dstp.ID)
-		inss[i] = ins
-	}
-
-	tb := NewTransferBlockInstruction(inss)
-
-	return tb, dstp
-}
-*/
 func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine"}, []float64{100.0, 64.0})
 	if err != nil {
@@ -135,65 +97,6 @@ func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, 
 
 	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 }
-
-/*
-func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
-	inss := make([]*wtype.LHInstruction, 8)
-	dstp, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
-	if err != nil {
-		panic(err)
-	}
-
-	for i := 0; i < 8; i++ {
-		c, err := inventory.NewComponent(ctx, inventory.WaterType)
-		if err != nil {
-			panic(err)
-		}
-
-		c.Vol = 100.0
-		c.Vunit = "ul"
-		c.SetSample(true)
-		ins := wtype.NewLHMixInstruction()
-		ins.Components = append(ins.Components, c)
-
-		c2, err := inventory.NewComponent(ctx, "tartrazine")
-		if err != nil {
-			panic(err)
-		}
-
-		c2.Vol = 24.0
-		c2.Vunit = "ul"
-		c2.SetSample(true)
-
-		ins.Components = append(ins.Components, c2)
-
-		c3, err := inventory.NewComponent(ctx, "ethanol")
-		if err != nil {
-			panic(err)
-		}
-
-		c3.Vol = 12.0
-		c3.Vunit = "ul"
-		c3.SetSample(true)
-
-		ins.Components = append(ins.Components, c3)
-
-		c4 := c.Dup()
-		c4.Mix(c2)
-		c4.Mix(c3)
-		ins.AddResult(c4)
-
-		ins.Platetype = "pcrplate_skirted_riser40"
-		ins.Welladdress = wutil.NumToAlpha(i+1) + "1"
-		ins.SetPlateID(dstp.ID)
-		inss[i] = ins
-	}
-
-	tb := NewTransferBlockInstruction(inss)
-
-	return tb, dstp
-}
-*/
 
 func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *LHProperties {
 	rbt, err := makeTestGilson(ctx)
@@ -661,10 +564,10 @@ func TestTransferMerge(t *testing.T) {
 }
 */
 
-func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
+func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) []RobotInstruction {
 	if len(ris) < 1 {
 		t.Errorf("No instructions to test positive")
-		return
+		return []RobotInstruction{}
 	}
 	ins := ris[0]
 
@@ -689,6 +592,8 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	if multi == 0 {
 		t.Errorf("Multichannel block not generated")
 	}
+
+	return ri2
 }
 
 func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
@@ -710,5 +615,56 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 			}
 		}
 
+	}
+}
+
+func TestMultiChannelTipReuseGood(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
+
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	pol, err := GetLHPolicyForTest()
+
+	// allow multi
+	pol.Policies["water"]["CAN_MULTI"] = true
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(ris) != 1 {
+		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
+	}
+
+	tf := ris[0].(*TransferInstruction)
+
+	if len(tf.Transfers) != 2 {
+		t.Errorf("Error: Expected 2 transfers got %d", len(tf.Transfers))
+	}
+
+	testPositive(ctx, ris, pol, rbt, t)
+
+	//get the low level instructions
+	fmt.Println("Generate...")
+	instructionSet := &RobotInstructionSet{}
+	instructionSet.Add(ris[0])
+	ris2, err := instructionSet.Generate(ctx, pol, rbt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Printf("%d instructions:\n", len(ris2))
+	for i, ins := range ris2 {
+		fmt.Println(i)
+
+		fmt.Println(InsToString(ins))
 	}
 }

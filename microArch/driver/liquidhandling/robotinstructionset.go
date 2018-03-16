@@ -47,6 +47,7 @@ func (ri *RobotInstructionSet) Add(ins RobotInstruction) {
 }
 
 func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) ([]RobotInstruction, error) {
+	fmt.Println("RIS.Generate()")
 	ret := make([]RobotInstruction, 0, 1)
 
 	if ri.parent != nil {
@@ -59,8 +60,11 @@ func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolic
 		// if the parent doesn't generate anything then it is our return - bottom out here
 		// assuming it's a Terminal
 		if arr == nil || len(arr) == 0 {
+			fmt.Println("  got a TRI")
 			_, ok := ri.parent.(TerminalRobotInstruction)
 			if ok {
+				fmt.Println("    yes, really")
+				fmt.Println(InsToString(ri.parent))
 				ret = append(ret, ri.parent)
 				return ret, nil
 			}

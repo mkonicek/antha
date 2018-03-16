@@ -126,26 +126,6 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	}
 	*/
 
-	//Temporary support low volume filter tips (hjk)
-	//Create Filtered<X> for each policy with pre or post mix larger than 10ul
-	//as currently this causes planning errors when using 10ul tips
-	for name, p := range pols {
-		policy := wtype.DupLHPolicy(p)
-		if volume, ok := policy["PRE_MIX_VOLUME"].(float64); ok {
-			if volume > 10.0 {
-				policy["PRE_MIX_VOLUME"] = 10.0
-			}
-		}
-		if volume, ok := policy["POST_MIX_VOLUME"].(float64); ok {
-			if volume > 10.0 {
-				policy["POST_MIX_VOLUME"] = 10.0
-			}
-		}
-		if !policy.IsEqualTo(p) {
-			pols[fmt.Sprintf("Filtered%s", name)] = policy
-		}
-	}
-
 	// TODO: Remove this hack
 	for _, DOEliquidhandlingFile := range AvailablePolicyfiles {
 		if _, err := os.Stat(filepath.Join(anthapath.Path(), DOEliquidhandlingFile.Filename)); err == nil {

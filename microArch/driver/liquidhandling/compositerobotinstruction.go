@@ -26,6 +26,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -2305,7 +2306,8 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		} else if !ins.Prms.CanMove(vmixvol, true) {
 			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
 
-			if override {
+			//Filter tips always cause overriding of mix_volume
+			if override || strings.Contains(strings.ToLower(ins.TipType), "filter") {
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {
 				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))

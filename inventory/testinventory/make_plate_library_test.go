@@ -31,6 +31,7 @@ var testsofPlateWithRiser = []platetest{
 	platetest{TestPlateName: "pcrplate_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "pcrplate_semi_skirted_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm + 1.0, ExpectedHeight: 15.5},
 	platetest{TestPlateName: "strip_tubes_0.2ml_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm - 2.5, ExpectedHeight: 15.5},
+	platetest{TestPlateName: "FluidX700ulTubes_with_FluidX_high_profile_rack", ExpectedZStart: 2, ExpectedHeight: 26.736},
 }
 
 func TestAddRiser(t *testing.T) {
@@ -314,6 +315,15 @@ func TestPlateZs(t *testing.T) {
 				"for", test.TestPlateName, "\n",
 				"expected height: ", test.ExpectedZStart, "\n",
 				"got height :", testplate.WellZStart, "\n",
+			)
+		}
+
+		// check that the height is as expected using default inventory
+		if testplate.Height != test.ExpectedHeight {
+			t.Error(
+				"for", test.TestPlateName, "\n",
+				"Expected plate height:", test.ExpectedHeight, "\n",
+				"got:", testplate.Height, "\n",
 			)
 		}
 	}

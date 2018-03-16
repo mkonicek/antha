@@ -474,7 +474,6 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	// if we can multi we do this first
 	if pol["CAN_MULTI"].(bool) {
-		fmt.Println("ADDING AN MCI")
 		parallelsets := ins.GetParallelSetsFor(ctx, prms.HeadsLoaded[0].Params)
 
 		mci := NewMultiChannelBlockInstruction()

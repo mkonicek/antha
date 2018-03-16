@@ -169,6 +169,10 @@ func SetUpTipsFor(lhp *LHProperties) *LHProperties {
 
 	for _, tb := range testinventory.GetTipboxes(ctx) {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
+			//ignore filter tips
+			if tb.Tiptype.Filtered {
+				continue
+			}
 			tip := tb.Tips[0][0]
 			str := tip.Mnfr + tip.Type + tip.MinVol.ToString() + tip.MaxVol.ToString()
 			if seen[str] {

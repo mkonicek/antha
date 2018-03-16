@@ -176,14 +176,14 @@ func DecodeArrayOfPtrToLHAdaptor(arg *pb.ArrayOfPtrToLHAdaptorMessage) []*wtype.
 	return ret
 }
 func EncodeLHTip(arg wtype.LHTip) *pb.LHTipMessage {
-	ret := pb.LHTipMessage{(string)(arg.ID), (string)(arg.Type), (string)(arg.Mnfr), (bool)(arg.Dirty), EncodeVolume(arg.MaxVol), EncodeVolume(arg.MinVol)}
+	ret := pb.LHTipMessage{(string)(arg.ID), (string)(arg.Type), (string)(arg.Mnfr), (bool)(arg.Dirty), EncodeVolume(arg.MaxVol), EncodeVolume(arg.MinVol), (bool)(arg.Filtered)}
 	return &ret
 }
 func DecodeLHTip(arg *pb.LHTipMessage) wtype.LHTip {
 	if arg == nil {
 		return wtype.LHTip{}
 	}
-	ret := wtype.LHTip{(string)(arg.Arg_1), (string)(arg.Arg_2), (string)(arg.Arg_3), (bool)(arg.Arg_4), (wunit.Volume)(DecodeVolume(arg.Arg_5)), (wunit.Volume)(DecodeVolume(arg.Arg_6))}
+	ret := wtype.LHTip{(string)(arg.Arg_1), (string)(arg.Arg_2), (string)(arg.Arg_3), (bool)(arg.Arg_4), (wunit.Volume)(DecodeVolume(arg.Arg_5)), (wunit.Volume)(DecodeVolume(arg.Arg_6)), (bool)(arg.Arg_7)}
 	return ret
 }
 func EncodeLHPlate(arg wtype.LHPlate) *pb.LHPlateMessage {

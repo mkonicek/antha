@@ -626,8 +626,9 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 		makeSemiSkirtedPCRPlate(),
 		makePCRPlate(),
 	)
-	plate = make96DeepWellLowVolumePlate()
-	plates = append(plates, plate)
+
+	plates = append(plates, make96DeepWellLowVolumePlate())
+	plates = append(plates, makeLabcyte384PPStdV())
 
 	plate = make384wellplateAppliedBiosystems()
 	plates = append(plates, plate)
@@ -834,6 +835,7 @@ func make96DeepWellLowVolumePlate() *wtype.LHPlate {
 	return plate
 }
 
+<<<<<<< HEAD
 // Applied Biosystems, MicroAmp Optical 384-well Reaction Plate; Cat Num: 4309849
 // Source of dimensions: https://www.thermofisher.com/order/catalog/product/4309849
 func make384wellplateAppliedBiosystems() *wtype.LHPlate {
@@ -846,10 +848,28 @@ func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 	plateName := "AppliedBiosystems_384_MicroAmp_Optical"
 	wellName := "AppliedBiosystems_384_MicroAmp_Optical_Well"
 	manufacturer := "Applied Biosystems"
+=======
+// make plate Labcyte384PPStdV
+// Lot number 04090140
+// Part number P-05525
+// Specs retrieved from
+// https://www.labcyte.com/media/pdf/SPC-Qualified-Microplate-384PP.pdf
+func makeLabcyte384PPStdV() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 14.50
+	ystartOffsetCorrection := 11.50
+	zstartOffsetCorrection := 2.5
+
+	plateName := "Labcyte_384PP_StdV"
+	wellName := "Labcyte_384PP_StdV"
+	manufacturer := "Labcyte"
+>>>>>>> origin/master
 
 	numberOfRows := 16
 	numberOfColumns := 24
 
+<<<<<<< HEAD
 	wellShape := "cylinder"
 	bottomtype := wtype.LHWBV
 
@@ -872,6 +892,30 @@ func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 	ystart := 7.415 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
 	zstart := 0.65 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
 	overallHeight := 9.7                      // F: height of plate
+=======
+	wellShape := "square cylinder"
+	bottomtype := wtype.LHWBFLAT
+
+	dimensionUnit := "mm"
+
+	xdim := 3.3   // G1: diameter at top of well
+	ydim := 3.3   // G1: diameter at top of well
+	zdim := 11.99 // L: depth of well from top to bottom
+
+	bottomh := 0.0 // N: Used to model different well bottom to body shape. This is the height of the bottom part.
+
+	minVolume := 15.0
+	maxVolume := 65.0 // well capacity is therefore 50.0
+
+	volUnit := "ul"
+
+	wellxoffset := 4.5                       // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5                       // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 12.13 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 11.2 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 2.5 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 14.4                    // F: height of plate
+>>>>>>> origin/master
 
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 

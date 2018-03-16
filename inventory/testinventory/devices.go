@@ -21,7 +21,7 @@ const (
 	bioshakestandardadaptorheight               = 5.0
 	appliedbiosystemsmagbeadbaseheight          = 12.0 //height of just plate base, upon which most skirted plates can rest
 	appliedbiosystemsmagbeadtotalheight         = 17.0 //height of base and well, in which other plates can rest
-	fluidXhighProfileRackHeight                 = 2.5 - MinimumZHeightPermissableForLVPipetMax
+	fluidXhighProfileRackHeight                 = 2.0 - MinimumZHeightPermissableForLVPipetMax
 )
 
 const (
@@ -248,6 +248,26 @@ var defaultDevices = map[string]device{
 			Manufacturer: "QInstruments",
 			Heightinmm:   incubatorheightinmm + bioshakestandardadaptorheight,
 			Synonyms:     []string{"bioshake_standard_adaptor"},
+			PlateConstraints: plateConstraints{
+				NotThesePlates: []plateWithConstraint{
+					plateWithConstraint{
+						Name:          "FluidX700ulTubes",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "pcrplate_semi_skirted",
+						SpecialOffset: 0.0,
+					},
+					plateWithConstraint{
+						Name:          "strip_tubes_0.2ml",
+						SpecialOffset: 0.0,
+					},
+				},
+			},
 		},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{

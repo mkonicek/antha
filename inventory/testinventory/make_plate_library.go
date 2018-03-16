@@ -763,7 +763,7 @@ func makeFluidX700ulTube() *wtype.LHWell {
 
 	bottomh := 1.0 // ?
 
-	minVolume := 10.0
+	minVolume := 25.0
 	maxVolume := 525.0
 
 	volUnit := "ul"

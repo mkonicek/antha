@@ -618,13 +618,7 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	}
 }
 
-func TestMultiChannelTipReuseGood(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-
-	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
-	if err != nil {
-		panic(err)
-	}
+func checkTipUsage(t *testing.T, ctx context.Context, inss []*wtype.LHInstruction, expectedTips int) {
 
 	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 
@@ -634,37 +628,77 @@ func TestMultiChannelTipReuseGood(t *testing.T) {
 	// allow multi
 	pol.Policies["water"]["CAN_MULTI"] = true
 
-	ris, err := tb.Generate(ctx, pol, rbt)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(ris) != 1 {
-		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
-	}
-
-	tf := ris[0].(*TransferInstruction)
-
-	if len(tf.Transfers) != 2 {
-		t.Errorf("Error: Expected 2 transfers got %d", len(tf.Transfers))
-	}
-
-	testPositive(ctx, ris, pol, rbt, t)
-
-	//get the low level instructions
-	fmt.Println("Generate...")
-	instructionSet := &RobotInstructionSet{}
-	instructionSet.Add(ris[0])
+	//generate the low level instructions
+	instructionSet := NewRobotInstructionSet(tb)
 	ris2, err := instructionSet.Generate(ctx, pol, rbt)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	fmt.Printf("%d instructions:\n", len(ris2))
-	for i, ins := range ris2 {
-		fmt.Println(i)
-
-		fmt.Println(InsToString(ins))
+	if e, g := expectedTips, countTipsUsed(t, ris2); e != g {
+		t.Errorf("Used %d tips, should have used %d", g, e)
 	}
+}
+
+func countTipsUsed(t *testing.T, instructions []RobotInstruction) int {
+	var loaded, unloaded int
+
+	for _, instruction := range instructions {
+		switch ins := instruction.(type) {
+		case *LoadTipsInstruction:
+			loaded += ins.Multi
+		case *UnloadTipsInstruction:
+			unloaded += ins.Multi
+		}
+	}
+
+	if loaded != unloaded {
+		t.Errorf("Loaded %d and Unloaded %d tips in instructions", loaded, unloaded)
+	}
+
+	return loaded
+}
+
+//TestMultiChannelTipReuseGood Move water to two columns of wells - shouldn't need to change tips in between
+func TestMultiChannelTipReuseGood(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	checkTipUsage(t, ctx, inss, 8)
+
+}
+
+//TestMultiChannelTipReuseBad Move water and ethanol to two separate columns of wells - should change tips in between
+func TestMultiChannelTipReuseBad(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	ins2, err := getMixInstructions(ctx, 8, []string{"ethanol"}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	inss = append(inss, ins2...)
+
+	checkTipUsage(t, ctx, inss, 16)
+}
+
+//TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
+func TestMultiChannelTipReuseUgly(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "ethanol"}, []float64{50.0, 50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	checkTipUsage(t, ctx, inss, 16)
 }

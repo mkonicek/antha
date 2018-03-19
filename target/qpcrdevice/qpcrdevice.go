@@ -10,7 +10,6 @@ import (
 	quantstudio "github.com/antha-lang/antha/driver/antha_quantstudio_v1"
 	"github.com/antha-lang/antha/target"
 	"github.com/golang/protobuf/proto"
-	"golang.org/x/net/html/atom"
 	"os"
 )
 

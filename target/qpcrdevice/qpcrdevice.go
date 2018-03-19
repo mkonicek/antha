@@ -131,7 +131,7 @@ func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.In
 
 	var insts []target.Inst
 	insts = append(insts, &target.Prompt{
-		Message: "Please ensures that the experiment file " + experimentFile + " is configured, then put the plate into qPCR device. Check that the driver software is running. Once ready, accept to start the qPCR analysis.",
+		Message: "Ensure that the experiment file " + experimentFile + " is configured, then put the plate into qPCR device. Check that the driver software is running. Once ready, accept to start the qPCR analysis.",
 	})
 	insts = append(insts, &target.Run{
 		Dev:   a,

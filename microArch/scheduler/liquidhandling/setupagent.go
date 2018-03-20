@@ -206,41 +206,46 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for input ", p.Name(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
 			return request, err
 		}
-		//fmt.Println("PLAATE: ", position)
 		setup[position] = p
 		plate_lookup[p.ID] = position
 		params.AddPlate(position, p)
 		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}
 
-	// add the waste
-	s := params.TipWastesMounted()
+	// add the waste if required...
+	if params.GetTipType() == liquidhandling.DisposableTips || params.GetTipType() == liquidhandling.MixedDisposableAndFixedTips {
+		s := params.TipWastesMounted()
 
-	if s == 0 {
-		var waste *wtype.LHTipwaste
-		var err error
-		// this should be added to the automagic config setup... however it will require adding to the
-		// representation of the liquid handler
-		switch params.Model {
-		case "Pipetmax":
-			waste, err = inventory.NewTipwaste(ctx, "Gilsontipwaste")
-		case "GeneTheatre":
-			fallthrough
-		case "Felix":
-			waste, err = inventory.NewTipwaste(ctx, "CyBiotipwaste")
-		case "Human":
-			waste, err = inventory.NewTipwaste(ctx, "Manualtipwaste")
-		case "Evo":
-			waste, err = inventory.NewTipwaste(ctx, "Tecantipwaste")
-		default:
-			return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
-		}
+		if s == 0 {
+			var waste *wtype.LHTipwaste
+			var err error
+			// this should be added to the automagic config setup... however it will require adding to the
+			// representation of the liquid handler
+			switch params.Model {
+			case "Pipetmax":
+				waste, err = inventory.NewTipwaste(ctx, "Gilsontipwaste")
+			case "GeneTheatre":
+				fallthrough
+			case "Felix":
+				waste, err = inventory.NewTipwaste(ctx, "CyBiotipwaste")
+			case "Human":
+				waste, err = inventory.NewTipwaste(ctx, "Manualtipwaste")
+			case "Evo":
+				waste, err = inventory.NewTipwaste(ctx, "Tecantipwaste")
+			default:
+				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
+			}
 
-		if err != nil {
-			return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("No tip waste defined for model %s: %s", params.Model, err))
+			err = params.AddTipWaste(waste)
+
+			if err != nil {
+				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("Error for liquid handler of model %s: %s", params.Model, err))
+			}
 		}
-		params.AddTipWaste(waste)
 	}
+
+	// TODO -- similar logic here to add / check for wash station if tips are fixed or mixed
+
 	//request.Setup = setup
 	request.Plate_lookup = plate_lookup
 	return request, nil

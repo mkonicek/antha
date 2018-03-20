@@ -537,6 +537,7 @@ func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) e
 	if lhp.PosLookup[pos] != "" {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", pos))
 	}
+
 	lhp.Tipwastes[pos] = tipwaste
 	lhp.PlateLookup[tipwaste.ID] = tipwaste
 	lhp.PosLookup[pos] = tipwaste.ID

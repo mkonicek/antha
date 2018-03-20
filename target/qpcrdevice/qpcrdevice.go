@@ -21,7 +21,6 @@ type QPCRDevice struct {
 var _ target.Device = (*QPCRDevice)(nil)
 
 // NewQPCRDevice returns a new QPCR Machine
-// Used by antha-runner
 func NewQPCRDevice() *QPCRDevice {
 	ret := &QPCRDevice{}
 	return ret
@@ -43,12 +42,8 @@ func (a *QPCRDevice) MoveCost(from target.Device) int {
 func singleCallForInstruction(inst *ast.QPCRInstruction) (driver.Call, error) {
 	message := &quantstudio.TemplatedRequest{
 		SessionInstrument: &quantstudio.SessionInstrument{
-			Session: &quantstudio.Session{
-				Id: "",
-			},
-			Instrument: &quantstudio.Instrument{
-				Id: "",
-			},
+			Session:    &quantstudio.Session{},
+			Instrument: &quantstudio.Instrument{},
 		},
 		TemplateFile: &quantstudio.ExperimentFile{
 			Url: inst.Definition,
@@ -56,7 +51,6 @@ func singleCallForInstruction(inst *ast.QPCRInstruction) (driver.Call, error) {
 		Barcode: &quantstudio.Barcode{
 			Barcode: inst.Barcode,
 		},
-		OutputPath: "",
 	}
 
 	messageBytes, err := proto.Marshal(message)
@@ -64,12 +58,12 @@ func singleCallForInstruction(inst *ast.QPCRInstruction) (driver.Call, error) {
 		return driver.Call{}, err
 	}
 
-	jobId := inst.TagAs
-	if jobId == "" {
-		jobId = os.Getenv("METADATA_JOB_ID")
+	jobID := inst.TagAs
+	if len(jobID) == 0 {
+		jobID = os.Getenv("METADATA_JOB_ID")
 	}
 
-	instID := ""
+	var instID string
 	if len(inst.ComponentIn) > 0 {
 		instID = inst.ComponentIn[0].ID
 	}
@@ -86,7 +80,7 @@ func singleCallForInstruction(inst *ast.QPCRInstruction) (driver.Call, error) {
 				Data: messageBytes,
 			},
 			Metadata: &framework.CommandMetadata{
-				JobId: jobId,
+				JobId: jobID,
 			},
 		},
 		Reply: &framework.CommandResponse{},
@@ -95,7 +89,75 @@ func singleCallForInstruction(inst *ast.QPCRInstruction) (driver.Call, error) {
 	return call, nil
 }
 
-// Compile implements a Device
+// qpcrCall is a utility structure, combining a call with some information about it.
+type qpcrCall struct {
+	Calls          []driver.Call
+	ExperimentFile string
+	Barcode        string
+}
+
+// callsForInstructions generates a number of device calls based on supplied qPCR instructions.
+// At present we assert that there is a single experiment request, with a single barcode.
+func callsForInstructions(qpcrInsts []*ast.QPCRInstruction) ([]qpcrCall, error) {
+	var calls []qpcrCall
+	var experimentFile string
+	var barcode string
+
+	for _, inst := range qpcrInsts {
+		// Note that we only accept the first value at present. (i.e. a single qPCR run within a workflow.)
+
+		if inst.Definition == "" {
+			return nil, errors.New("blank experiment file for qPCR")
+		}
+
+		if len(experimentFile) > 0 {
+			if experimentFile != inst.Definition {
+				return nil, fmt.Errorf("unexpected multiple experiment files %s, %s", experimentFile, inst.Definition)
+			}
+
+			if barcode != inst.Barcode {
+				return nil, fmt.Errorf("unexpected multiple barcodes %s, %s", barcode, inst.Barcode)
+			}
+		} else {
+			experimentFile = inst.Definition
+			barcode = inst.Barcode
+		}
+
+		call, err := singleCallForInstruction(inst)
+		if err != nil {
+			return nil, err
+		}
+
+		// Only creating a single instruction at present.
+		if len(calls) == 0 {
+			calls = append(calls, qpcrCall{[]driver.Call{call}, experimentFile, barcode})
+		}
+	}
+
+	return calls, nil
+}
+
+// interpolatePrompts inserts a prompt before each qPCR run.
+func interpolatePrompts(calls []qpcrCall, device *QPCRDevice) []target.Inst {
+
+	// Interpolate a prompt before each qPCR call.
+	var insts []target.Inst
+	for _, call := range calls {
+
+		insts = append(insts, &target.Prompt{
+			Message: "Ensure that the experiment file " + call.ExperimentFile + " is configured, then put the plate (" + call.Barcode + ") into qPCR device. Check that the driver software is running. Once ready, accept to start the qPCR analysis.",
+		})
+		insts = append(insts, &target.Run{
+			Dev:   device,
+			Label: "Perform qPCR Analysis",
+			Calls: call.Calls,
+		})
+	}
+
+	return insts
+}
+
+// Compile implements a qPCR device.
 func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 
 	var qpcrInsts []*ast.QPCRInstruction
@@ -104,39 +166,13 @@ func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.In
 		qpcrInsts = append(qpcrInsts, cmd.Inst.(*ast.QPCRInstruction))
 	}
 
-	var calls []driver.Call
-	experimentFile := ""
+	calls, err := callsForInstructions(qpcrInsts)
 
-	for _, inst := range qpcrInsts {
-		// Note that we only accept the first value at present. (i.e. a single qPCR run within a workflow.)
-
-		if inst.Definition == "" {
-			return nil, errors.New("Blank experiment file for qPCR.")
-		}
-
-		if len(experimentFile) > 0 {
-			if experimentFile != inst.Definition {
-				return nil, fmt.Errorf("Unexpected multiple experiment files %s, %s", experimentFile, inst.Definition)
-			}
-		} else {
-			experimentFile = inst.Definition
-		}
-
-		call, err := singleCallForInstruction(inst)
-		if err != nil {
-			return nil, err
-		}
-		calls = append(calls, call)
+	if err != nil {
+		return nil, err
 	}
 
-	var insts []target.Inst
-	insts = append(insts, &target.Prompt{
-		Message: "Ensure that the experiment file " + experimentFile + " is configured, then put the plate into qPCR device. Check that the driver software is running. Once ready, accept to start the qPCR analysis.",
-	})
-	insts = append(insts, &target.Run{
-		Dev:   a,
-		Label: "Perform qPCR Analysis",
-		Calls: calls,
-	})
-	return target.SequentialOrder(insts...), nil
+	// Interpolate a prompt before each qPCR call.
+	promptedInstructions := interpolatePrompts(calls, a)
+	return target.SequentialOrder(promptedInstructions...), nil
 }

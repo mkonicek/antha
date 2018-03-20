@@ -250,22 +250,28 @@ func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.LHComponent {
 
 // QPCROptions are the options for a QPCR request.
 type QPCROptions struct {
-	Sample     *wtype.LHComponent
+	Reagents   []*wtype.LHComponent
 	Definition string
 	Barcode    string
+	TagAs      string
 }
 
 func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst {
 	inst := ast.NewQPCRInstruction()
 	inst.Command = command
-	inst.ComponentIn = opts.Sample
+	inst.ComponentIn = opts.Reagents
 	inst.Definition = opts.Definition
 	inst.Barcode = opts.Barcode
-	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
+	inst.TagAs = opts.TagAs
+	inst.ComponentOut = []*wtype.LHComponent{}
+
+	for _, r := range inst.ComponentIn {
+		inst.ComponentOut = append(inst.ComponentOut, newCompFromComp(ctx, r))
+	}
 
 	return &commandInst{
-		Args:   []*wtype.LHComponent{opts.Sample},
-		result: []*wtype.LHComponent{inst.ComponentOut},
+		Args:   opts.Reagents,
+		result: inst.ComponentOut,
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
@@ -280,17 +286,17 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 }
 
 // RunQPCRExperiment starts a new QPCR experiment, using an experiment input file.
-func RunQPCRExperiment(ctx context.Context, opt QPCROptions) *wtype.LHComponent {
+func RunQPCRExperiment(ctx context.Context, opt QPCROptions) []*wtype.LHComponent {
 	inst := runQPCR(ctx, opt, "RunExperiment")
 	trace.Issue(ctx, inst)
-	return inst.result[0]
+	return inst.result
 }
 
 // RunQPCRFromTemplate starts a new QPCR experiment, using a template input file.
-func RunQPCRFromTemplate(ctx context.Context, opt QPCROptions) *wtype.LHComponent {
+func RunQPCRFromTemplate(ctx context.Context, opt QPCROptions) []*wtype.LHComponent {
 	inst := runQPCR(ctx, opt, "RunExperimentFromTemplate")
 	trace.Issue(ctx, inst)
-	return inst.result[0]
+	return inst.result
 }
 
 // NewComponent returns a new component given a component type

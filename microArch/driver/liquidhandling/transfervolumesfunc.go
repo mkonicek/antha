@@ -10,9 +10,9 @@ import (
 func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 	ret := make([]wunit.Volume, 0)
 
-	vol := Vol.ConvertTo(Min.Unit())
-	min := Min.RawValue()
-	max := Max.RawValue()
+	vol := Vol.RawValue()
+	min := Min.ConvertTo(Vol.Unit())
+	max := Max.ConvertTo(Vol.Unit())
 
 	//	if vol < min {
 	if Vol.LessThanRounded(Min, 1) {

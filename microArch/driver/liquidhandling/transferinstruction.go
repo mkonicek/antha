@@ -459,8 +459,14 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 
 func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// if the liquid handler is of the high-level type we cut the tree here
+	// after ensuring that the transfers are within limitations of the liquid handler
 
-	if prms.LHType == HLLiquidHandler {
+	if prms.GetLHType() == HLLiquidHandler {
+		err := ins.ReviseTransferVolumes(prms)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
 		return []RobotInstruction{}, nil
 	}
 
@@ -550,6 +556,62 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	}
 	if len(sci.Volume) > 0 {
 		ret = append(ret, sci)
+	}
+
+	return ret, nil
+}
+
+func (ins *TransferInstruction) ReviseTransferVolumes(prms *LHProperties) error {
+	newTransfers := make([]MultiTransferParams, len(ins.Transfers))
+
+	for _, mtp := range ins.Transfers {
+		//newMtp := make(MultiTransferParams, len(mtp))
+		newMtp := NewMultiTransferParams(mtp.Multi)
+		for _, tp := range mtp.Transfers {
+			if tp.What == "" {
+				continue
+			}
+			newTPs, err := safeTransfers(tp, prms)
+			if err != nil {
+				return err
+			}
+			newMtp.Transfers = append(newMtp.Transfers, newTPs...)
+		}
+
+		newTransfers = append(newTransfers, newMtp)
+	}
+
+	ins.Transfers = newTransfers
+
+	return nil
+}
+
+func safeTransfers(tp TransferParams, prms *LHProperties) ([]TransferParams, error) {
+
+	if tp.What == "" {
+		return []TransferParams{tp}, nil
+	}
+
+	tvs, err := TransferVolumes(tp.Volume, prms.HeadsLoaded[0].Params.Minvol, prms.HeadsLoaded[0].Params.Maxvol)
+
+	ret := []TransferParams{}
+
+	if err != nil {
+		return ret, err
+	}
+
+	fwv := tp.FVolume.Dup()
+	twv := tp.TVolume.Dup()
+
+	for _, v := range tvs {
+		ntp := tp.Dup()
+		ntp.Volume = v
+		ntp.FVolume = fwv.Dup()
+		ntp.TVolume = twv.Dup()
+		fwv.Subtract(v)
+		twv.Add(v)
+
+		ret = append(ret, ntp)
 	}
 
 	return ret, nil

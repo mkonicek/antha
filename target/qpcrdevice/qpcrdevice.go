@@ -138,7 +138,7 @@ func callsForInstructions(qpcrInsts []*ast.QPCRInstruction) ([]qpcrCall, error) 
 }
 
 // interpolatePrompts inserts a prompt before each qPCR run.
-func interpolatePrompts(calls []qpcrCall, device *QPCRDevice) []target.Inst {
+func interpolatePrompts(calls []qpcrCall, device target.Device) []target.Inst {
 
 	// Interpolate a prompt before each qPCR call.
 	var insts []target.Inst

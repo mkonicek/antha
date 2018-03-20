@@ -660,6 +660,27 @@ func assertNumTipsUsed(t *testing.T, instructions []RobotInstruction, expectedTi
 
 }
 
+func assertNumLoadUnloadInstructions(t *testing.T, instructions []RobotInstruction, expected int) {
+	var loads, unloads int
+
+	for _, instruction := range instructions {
+		switch instruction.(type) {
+		case *LoadTipsInstruction:
+			loads += 1
+		case *UnloadTipsInstruction:
+			unloads += 1
+		}
+	}
+
+	if e, g := expected, loads; e != g {
+		t.Errorf("Generated %d load tips instructions, expected %d", g, e)
+	}
+
+	if e, g := expected, unloads; e != g {
+		t.Errorf("Generated %d unload tips instructions, expected %d", g, e)
+	}
+}
+
 //TestMultiChannelTipReuseGood Move water to two columns of wells - shouldn't need to change tips in between
 func TestMultiChannelTipReuseGood(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
@@ -673,6 +694,7 @@ func TestMultiChannelTipReuseGood(t *testing.T) {
 
 	assertNumTipsUsed(t, ris, 8)
 
+	assertNumLoadUnloadInstructions(t, ris, 1)
 }
 
 //TestMultiChannelTipReuseBad Move water and ethanol to two separate columns of wells - should change tips in between
@@ -694,6 +716,8 @@ func TestMultiChannelTipReuseBad(t *testing.T) {
 	ris := generateRobotInstructions(t, ctx, inss)
 
 	assertNumTipsUsed(t, ris, 16)
+
+	assertNumLoadUnloadInstructions(t, ris, 2)
 }
 
 //TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
@@ -708,4 +732,6 @@ func TestMultiChannelTipReuseUgly(t *testing.T) {
 	ris := generateRobotInstructions(t, ctx, inss)
 
 	assertNumTipsUsed(t, ris, 16)
+
+	assertNumLoadUnloadInstructions(t, ris, 2)
 }

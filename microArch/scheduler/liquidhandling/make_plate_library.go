@@ -429,18 +429,6 @@ func getPlateByType(typ string) *wtype.LHPlate {
 	return p.Dup()
 }
 
-func getPlateList() []string {
-	plates := makePlateLibrary()
-
-	kz := make([]string, len(plates))
-	x := 0
-	for name, _ := range plates {
-		kz[x] = name
-		x += 1
-	}
-	return kz
-}
-
 func GetPlateForTest() *wtype.LHPlate {
 	return getPlateByType("pcrplate_skirted_riser")
 }

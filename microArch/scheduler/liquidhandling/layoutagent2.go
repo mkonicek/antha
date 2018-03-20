@@ -141,22 +141,6 @@ func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []Plat
 	return pc
 }
 
-func find_insID(plateID, wellcoords string, rq *LHRequest) string {
-	r := ""
-	for _, ins := range rq.LHInstructions {
-		// ignore non-mix instructions
-		if ins.Type != wtype.LHIMIX {
-			continue
-		}
-		if ins.PlateID == plateID && ins.Welladdress == wellcoords {
-			r = ins.ID
-			break
-		}
-	}
-
-	return r
-}
-
 func getNameForID(pc []PlateChoice, id string) string {
 	for _, p := range pc {
 		if p.ID == id {
@@ -457,10 +441,12 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				}
 			}
 
-		} else {
-			// bare mix
-			// this is handled later
 		}
+
+		//else {
+		// bare mix
+		// this is handled later
+		//}
 	}
 
 	// make sure the plate choices all have defined types
@@ -512,7 +498,6 @@ func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, or
 
 			if ass == -1 {
 				// make a new plate
-				ass = len(pc)
 				pc = append(pc, PlateChoice{Platetype: chooseAPlate(request, v), Assigned: []string{v.ID}, ID: wtype.GetUUID(), Wells: []string{""}, Name: "Output_plate_" + v.ID[0:6], Output: []bool{true}})
 				continue
 			}
@@ -633,27 +618,6 @@ func assignmentWithType(pt string, pc []PlateChoice) int {
 func chooseAPlate(request *LHRequest, ins *wtype.LHInstruction) string {
 	// for now we ignore ins and just choose the First Output Platetype
 	return request.Output_platetypes[0].Type
-}
-func stringinarray(s string, array []string) int {
-	r := -1
-
-	for i, k := range array {
-		if k == s {
-			r = i
-			break
-		}
-	}
-
-	return r
-}
-
-func plateidarray(arr []*wtype.LHPlate) []string {
-	ret := make([]string, 0, 3)
-
-	for _, v := range arr {
-		ret = append(ret, v.ID)
-	}
-	return ret
 }
 
 // we have potentially added extra theoretical plates above

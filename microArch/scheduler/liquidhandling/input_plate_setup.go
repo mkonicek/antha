@@ -79,7 +79,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
 	input_platetypes := (*request).Input_platetypes
-	if input_platetypes == nil || len(input_platetypes) == 0 {
+	if len(input_platetypes) == 0 {
 		// XXX this is dangerous... until input_plate_linear is replaced we will hit big problems here
 		// this configuration needs to happen outside but for now...
 		input_platetypes, err := inventory.XXXNewPlates(ctx)
@@ -104,9 +104,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	inputs := (*request).Input_solutions
 
 	input_order := make([]string, len((*request).Input_order))
-	for i, v := range (*request).Input_order {
-		input_order[i] = v
-	}
+	copy(input_order, (*request).Input_order)
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in

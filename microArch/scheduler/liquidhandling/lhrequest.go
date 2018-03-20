@@ -116,9 +116,10 @@ func (req *LHRequest) ConfigureYourself() error {
 		if ins.IsMixInPlace() {
 			if !ins.Components[0].PlateLocation().IsZero() {
 				uniques[ins.Components[0].PlateLocation()] = ins.Components[0]
-			} else {
-				// this will be autoallocated
 			}
+			//else {
+			// this will be autoallocated
+			//}
 		}
 	}
 

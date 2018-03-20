@@ -85,7 +85,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 					totalvol = tv // not needed
 				} else {
 					// error
-					return nil, nil, wtype.LHError(wtype.LH_ERR_CONC, fmt.Sprintf("Inconsistent total volumes %-6.4f and %-6.4f at component %s", totalvol, tv, component.CName))
+					return nil, nil, wtype.LHError(wtype.LH_ERR_CONC, fmt.Sprintf("Inconsistent total volumes %-6.4f and %-6.4f at component %s", totalvol.SIValue(), tv.SIValue(), component.CName))
 				}
 			} else {
 				cmpvol.Add(component.Volume())
@@ -166,7 +166,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	}
 
 	if len(mconcs) > 0 {
-		fmt.Println(text.Green(fmt.Sprint("mconcs: %+v", mconcs)))
+		fmt.Println(text.Green(fmt.Sprintf("mconcs: %+v", mconcs)))
 	}
 
 	for cmp, arr := range mconcs {
@@ -243,7 +243,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 					totalvol = tv
 				} else {
 					// error
-					return nil, nil, wtype.LHError(wtype.LH_ERR_CONC, fmt.Sprintf("Inconsistent total volumes %-6.4f and %-6.4f at component %s", totalvol, tv, component.CName))
+					return nil, nil, wtype.LHError(wtype.LH_ERR_CONC, fmt.Sprintf("Inconsistent total volumes %-6.4f and %-6.4f at component %s", totalvol.SIValue(), tv.SIValue(), component.CName))
 				}
 			} else {
 				// need to add in the volume taken up by any volume components
@@ -291,7 +291,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	}
 
 	if len(fixconcs) > 0 {
-		fmt.Println(text.Red(fmt.Sprint("fixconcs: %+v", fixconcs)))
+		fmt.Println(text.Red(fmt.Sprintf("fixconcs: %+v", fixconcs)))
 	}
 
 	stockConcs, err := convertFloatsToConc(stockconcs, minUnit)
@@ -301,27 +301,6 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	}
 
 	return newInstructions, stockConcs, nil
-}
-
-func isMixSimulation(comp *wtype.LHComponent) bool {
-
-	sim, found := comp.Extra["Simulation"]
-
-	if !found {
-		return false
-	}
-
-	whoAmI, ok := sim.(bool)
-
-	if !ok {
-		return false
-	}
-
-	return whoAmI
-}
-
-func setSimulation(comp *wtype.LHComponent) {
-	comp.Extra["Simulation"] = true
 }
 
 // converts all to SI Values, all entries must have the same SI base unit or an error will be returned.

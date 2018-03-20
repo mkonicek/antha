@@ -1,8 +1,9 @@
 package liquidhandling
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 func TestTGraph(t *testing.T) {
@@ -40,7 +41,7 @@ func TestTGraph(t *testing.T) {
 	}
 
 	if tgraph.NumNodes() != 10 {
-		t.Errorf("NumNodes should report 10, instead reports %d", tgraph.NumNodes)
+		t.Errorf("NumNodes should report 10, instead reports %d", tgraph.NumNodes())
 	}
 
 	// edge check... we should have 9->8->7->6->5

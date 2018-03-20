@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/Synthace/go-glpk/glpk"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -208,9 +209,11 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	iocp := glpk.NewIocp()
 	iocp.SetPresolve(true)
-	//debug
 	iocp.SetMsgLev(0)
-	lp.Intopt(iocp)
+	err := lp.Intopt(iocp)
+	if err != nil {
+		panic(err)
+	}
 
 	assignments := make(map[string]map[*wtype.LHPlate]int, len(component_volumes))
 

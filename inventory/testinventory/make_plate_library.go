@@ -498,7 +498,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	zstart = riserheightinmm + 4.5 // offset of bottom of deck to bottom of well
 
 	//E-PAGE 48 (reverse) position
-	ep48g := wtype.NewShape("trap", "mm", xdim, ydim, zdim)
+	ep48g := wtype.NewShape("trapezoid", "mm", xdim, ydim, zdim)
 	//can't reach all wells; change to 24 wells per row? yes!
 	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 20, 0, ep48g, wtype.LHWBFLAT, xdim, ydim, zdim, bottomh, "mm")
 	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 24, 48.5, "mm", egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
@@ -912,7 +912,7 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 	numberOfRows := 16
 	numberOfColumns := 24
 
-	wellShape := "square cylinder"
+	wellShape := "box"
 	bottomtype := wtype.LHWBFLAT
 
 	dimensionUnit := "mm"

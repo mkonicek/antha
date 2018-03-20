@@ -40,16 +40,3 @@ func MinMinVol(channels []*wtype.LHChannelParameter) wunit.Volume {
 
 	return mmv
 }
-
-func allEqual(nums ...int) bool {
-	if len(nums) <= 1 {
-		return true
-	}
-
-	for k := 1; k < len(nums); k++ {
-		if nums[k-1] != nums[k] {
-			return false
-		}
-	}
-	return true
-}

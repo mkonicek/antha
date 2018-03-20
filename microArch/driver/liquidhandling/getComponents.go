@@ -4,6 +4,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -261,7 +262,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	currCmps := opt.Cmps.Dup()
 	var lastCmps wtype.ComponentVector
 
-	done := false
+	var done bool
 
 	for {
 		done = areWeDoneYet(currCmps)
@@ -316,49 +317,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	}
 
 	return rep, nil
-}
-
-// this double-checks if we are using duplicated trough wells
-func feasible(match wtype.Match, src wtype.ComponentVector, carry wunit.Volume) bool {
-	// sum available volumes asked for and those available
-
-	want := make(map[string]wunit.Volume)
-
-	for i := 0; i < len(match.IDs); i++ {
-		if match.M[i] == -1 {
-			continue
-		}
-		if _, ok := want[match.IDs[i]+":"+match.WCs[i]]; !ok {
-			want[match.IDs[i]+":"+match.WCs[i]] = wunit.NewVolume(0.0, "ul")
-		}
-		want[match.IDs[i]+":"+match.WCs[i]].Add(match.Vols[i])
-		want[match.IDs[i]+":"+match.WCs[i]].Add(carry)
-	}
-
-	got := make(map[string]wunit.Volume)
-
-	for i := 0; i < len(src); i++ {
-		// if a component appears more than once in a location it's a fake duplicate
-		got[src[i].Loc] = src[i].Volume()
-	}
-
-	compare := func(a, b map[string]wunit.Volume) bool {
-		// true iff all volumes in a are <= their equivalents in b (undef == 0)
-		for k, v1 := range a {
-			v2, ok := b[k]
-			if !ok {
-				return false
-			}
-
-			if v2.LessThan(v1) {
-				return false
-			}
-		}
-
-		return true
-	}
-
-	return compare(want, got)
 }
 
 func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPossibleVolume wunit.Volume) wtype.ComponentVector {

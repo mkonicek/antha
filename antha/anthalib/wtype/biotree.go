@@ -100,9 +100,13 @@ func parse_out_taxid(tok string) string {
 	taxid := ""
 
 	stx := strings.Split(tok, ",")
+	re, err := regexp.Compile("ncbi")
+	if err != nil {
+		panic(err)
+	}
 
 	for _, tk2 := range stx {
-		mt, _ := regexp.MatchString("ncbi", tk2)
+		mt := re.MatchString(tk2)
 		if mt {
 			tx2 := strings.Split(tk2, ":")
 			taxid = tx2[1]

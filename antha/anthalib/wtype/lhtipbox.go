@@ -260,7 +260,7 @@ func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string,
 	if ori == LHVChannel {
 		for i := 0; i < tb.NumCols(); i++ {
 			r := tb.searchCleanTips(i, possiblyTrimmedMask, ori)
-			if r != nil && len(r) != 0 {
+			if len(r) != 0 {
 				tb.Remove(r)
 				return trimToMask(r, possiblyTrimmedMask), nil
 			}
@@ -268,7 +268,7 @@ func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string,
 	} else if ori == LHHChannel {
 		for i := 0; i < tb.NumRows(); i++ {
 			r := tb.searchCleanTips(i, possiblyTrimmedMask, ori)
-			if r != nil && len(r) != 0 {
+			if len(r) != 0 {
 				tb.Remove(r)
 				return trimToMask(r, possiblyTrimmedMask), nil
 			}

@@ -38,7 +38,6 @@ import (
 // Note, if used to delete sections from a plasmid, the sequence returned will be in plasmid form and it will be attempted to maintion the original orientation.
 // In this case it may be necessary to rotate the sequence if looking to generate a linear sequence of interest.
 func Replace(sequence wtype.DNASequence, position PositionPair, replaceWith wtype.DNASequence) (newSeq wtype.DNASequence, err error) {
-
 	newSeq = sequence
 
 	originalFeatures := sequence.Features

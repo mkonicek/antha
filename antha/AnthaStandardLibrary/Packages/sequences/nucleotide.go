@@ -36,22 +36,16 @@ func Illegalnucleotides(fwdsequence wtype.DNASequence) (pass bool, illegalfound 
 	illegal := "§1234567890-=qeiop[]fjl;'z,./!@£$%^&*()_+?" // removed all instances of non IUPAC nucleotides
 	wobble := "NXBHVDMKSWRYU"                               //IUPAC nucleotides
 
-	if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(illegal))) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(illegal)) == true {
-
+	if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(illegal))) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(illegal)) {
 		pass = false
 		illegalarray := strings.Split(illegal, "")
 		illegalfound = search.FindAllStrings((strings.ToLower(fwdsequence.Seq)), illegalarray)
-
-	} else if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), wobble) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(wobble)) == true {
-
+	} else if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), wobble) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(wobble)) {
 		pass = false
 		wobblearray := strings.Split(wobble, "")
 		wobblefound = search.FindAllStrings((strings.ToUpper(fwdsequence.Seq)), wobblearray)
-
 	} else {
-
 		pass = true
-
 	}
 
 	return pass, illegalfound, wobblefound
@@ -186,10 +180,10 @@ func MassDNA(fwdsequence string, phosphate5prime bool, doublestranded bool) (mw 
 	massofCs := (float64(numberofCs) * Nucleotidegpermol["C"])
 	massofGs := (float64(numberofGs) * Nucleotidegpermol["G"])
 	mw = (massofAs + massofTs + massofCs + massofGs)
-	if phosphate5prime == true {
+	if phosphate5prime {
 		mw = mw + 79.0 // extra for phosphate left at 5' end following digestion, not relevant for primer extension
 	}
-	if doublestranded == true {
+	if doublestranded {
 		mw = 2 * mw
 	}
 	return mw

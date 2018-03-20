@@ -54,7 +54,7 @@ func (plhp *LHPolicy) Set(item string, value interface{}) error {
 		err = fmt.Errorf("No such LHPolicy item %s", item)
 	} else {
 		if reflect.TypeOf(value) != alhpi.Type {
-			err = fmt.Errorf("LHPolicy item %s needs value of type %t not %t", item, alhpi.Type, reflect.TypeOf(value))
+			err = fmt.Errorf("LHPolicy item %s needs value of type %v not %v", item, alhpi.Type, reflect.TypeOf(value))
 		} else {
 			(*plhp)[item] = value
 		}

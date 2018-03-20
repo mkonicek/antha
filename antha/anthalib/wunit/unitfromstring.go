@@ -165,7 +165,6 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 					return false, conc, componentname
 				}
 				panic(fmt.Sprint("error parsing componentname: ", componentname, ": ", err.Error()))
-				return false, conc, componentNameOnly
 			}
 		}
 	}

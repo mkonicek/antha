@@ -239,6 +239,9 @@ func TestSerialMix(t *testing.T) {
 		}
 
 		mixed, err := mixComponentLists(intermediateSample, test.sample3)
+		if err != nil {
+			t.Error(err)
+		}
 
 		err = EqualLists(mixed, test.mixedList)
 

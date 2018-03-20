@@ -28,16 +28,13 @@ type densityConversionTest struct {
 
 var (
 	// Some Concentrations
-	nilConc Concentration
-	uMPer0  = NewConcentration(0, "uM")
+	uMPer0 = NewConcentration(0, "uM")
 
 	x2   = NewConcentration(2, "X")
-	x10  = NewConcentration(10, "X")
 	x100 = NewConcentration(100, "X")
 
 	kgPerL01 = NewConcentration(0.1, "kg/L")
 	gPerL1   = NewConcentration(1, "g/L")
-	gPerL10  = NewConcentration(10, "g/L")
 	gPerL100 = NewConcentration(100, "g/L")
 
 	mPerL01  = NewConcentration(0.1, "M/L")
@@ -45,13 +42,9 @@ var (
 	uMPerL10 = NewConcentration(10, "uM")
 
 	// Some volumes
-	nilVol Volume
-	l0     = NewVolume(0, "l")
-	l01    = NewVolume(0.1, "l")
-	ul1    = NewVolume(1, "ul")
-	ul10   = NewVolume(10, "ul")
-	ul100  = NewVolume(100, "ul")
-	ml1    = NewVolume(1, "ml")
+	l0    = NewVolume(0, "l")
+	ul1   = NewVolume(1, "ul")
+	ul100 = NewVolume(100, "ul")
 )
 
 var tests1 = []concConversionTest{

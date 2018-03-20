@@ -67,8 +67,8 @@ func (ct CodonTable) ChooseWeighted(aa string) string {
 }
 
 var (
-	TAXLINE = regexp.MustCompile("^taxid\\s+(\\d+)")
-	CODLINE = regexp.MustCompile("^([ACTG]{3,3})\\s+([A-Z*])\\s+(\\d+)\\s+([0-9.]+)")
+	TAXLINE = regexp.MustCompile(`^taxid\s+(\d+)`)
+	CODLINE = regexp.MustCompile(`^([ACTG]{3,3})\s+([A-Z*])\s+(\d+)\s+([0-9.]+)`)
 )
 
 // these are tables devised by wholesale analysis of CDS sets

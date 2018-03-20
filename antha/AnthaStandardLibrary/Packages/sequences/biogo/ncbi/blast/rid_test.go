@@ -1150,7 +1150,7 @@ QBlastInfoEnd
 		case <-time.After(t.wait + time.Second):
 			c.Fatalf("Waited too long on test %d.", t.wait)
 		}
-		d := time.Now().Sub(to)
+		d := time.Since(to)
 		c.Check(int(d.Seconds()), check.Equals, int(t.wait.Seconds()), check.Commentf("Test: %d", i))
 	}
 }

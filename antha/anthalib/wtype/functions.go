@@ -1,8 +1,9 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func CopyComponentArray(arin []*LHComponent) []*LHComponent {
@@ -201,8 +202,6 @@ func TipsPerWell(prm LHChannelParameter, p LHPlate) (int, int) {
 			panic("Unsupported H head format (must be 12)")
 		}
 		nwells = p.WellsX()
-	} else {
-		// empty
 	}
 
 	// how many  tips fit into one well

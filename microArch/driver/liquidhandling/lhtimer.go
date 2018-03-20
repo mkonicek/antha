@@ -43,7 +43,6 @@ func (t *LHTimer) TimeFor(r RobotInstruction) time.Duration {
 			}
 		}
 
-	} else {
 	}
 	return d
 }

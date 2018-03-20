@@ -223,6 +223,32 @@ var regionTests = []regionTest{
 	},
 }
 
+func equalPositionPairs(pair1, pair2 PositionPair) bool {
+	if pair1.StartPosition == pair2.StartPosition && pair1.EndPosition == pair2.EndPosition && pair1.Reverse == pair2.Reverse {
+		return true
+	}
+	return false
+}
+
+func equalPositionPairSets(positionSet1, positionSet2 []PositionPair) bool {
+	if len(positionSet1) != len(positionSet2) {
+		return false
+	}
+
+	for _, pos1 := range positionSet1 {
+		var found bool
+		for _, pos2 := range positionSet2 {
+			if equalPositionPairs(pos1, pos2) {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
 func TestFindSeq(t *testing.T) {
 	for _, test := range regionTests {
 		result := FindAll(test.LargeSeq, test.SmallSeq)

@@ -31,8 +31,5 @@ func PlateLocationFromString(s string) PlateLocation {
 }
 
 func (pc PlateLocation) Equals(opc PlateLocation) bool {
-	if !(pc.ID == opc.ID && pc.Coords.FormatA1() == opc.Coords.FormatA1()) {
-		return false
-	}
-	return true
+	return (pc.ID == opc.ID && pc.Coords.FormatA1() == opc.Coords.FormatA1())
 }

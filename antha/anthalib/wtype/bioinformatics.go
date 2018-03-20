@@ -113,7 +113,7 @@ func Makeseq(dir string, seq BioSequence) string {
 
 	fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence())
 
-	f.Close()
+	f.Close() //nolint
 
 	return filename
 }

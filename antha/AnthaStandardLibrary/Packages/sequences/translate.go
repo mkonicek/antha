@@ -143,10 +143,6 @@ http://www.basic.northwestern.edu/biotools/proteincalc.html
 
 */
 
-var (
-	startcodons = []string{"ATG", "CTG", "GTG"}
-)
-
 // Molecularweight estimates molecular weight of a protein product.
 func Molecularweight(orf ORF) (kDa float64) {
 	aaarray := strings.Split(orf.ProtSeq, "")

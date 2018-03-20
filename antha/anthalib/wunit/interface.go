@@ -24,7 +24,6 @@ package wunit
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -37,13 +36,12 @@ var unitMap map[string]GenericUnit
 // deserialize JSON prefix library
 func GetPrefixLib(fn string) (*(map[string]SIPrefix), error) {
 	f, err := ioutil.ReadFile(fn)
-
 	if err != nil {
 		return nil, err
 	}
 
 	prefices := make(map[string]SIPrefix, 20)
-	json.Unmarshal(f, &prefices)
+	err = json.Unmarshal(f, &prefices)
 	return &prefices, err
 }
 
@@ -93,12 +91,12 @@ func ParsePrefixedUnit(unit string) *GenericPrefixedUnit {
 	parser.SIPrefixedUnit.Init([]byte(unit))
 
 	if err := parser.Parse(unit); err != nil {
-		e := errors.New(fmt.Sprintf("cannot parse %s: %s", unit, err.Error()))
+		e := fmt.Errorf("cannot parse %s: %s", unit, err.Error())
 		panic(e)
 	}
 
 	prefix := ""
-	un := ""
+	var un string
 
 	if len(parser.TreeTop.Children) == 1 {
 		un = parser.TreeTop.Children[0].Value.(string)

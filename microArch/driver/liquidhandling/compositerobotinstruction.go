@@ -27,13 +27,14 @@ import (
 	"fmt"
 	"math"
 
+	"reflect"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
-	"reflect"
 )
 
 func TipChosenError(v wunit.Volume, prms *LHProperties) string {
@@ -167,9 +168,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	n_tip_uses := 0
 
 	var last_thing *wtype.LHComponent
-
-	last_thing = nil
-
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
@@ -190,8 +188,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 		}
 		for _, vol := range tvs {
 			// determine whether to change tips
-			change_tips := false
-			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
+			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || channel != newchannel
 			change_tips = change_tips || newtiptype != tiptype
 
@@ -446,8 +443,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		for _, vols := range tvs {
 			// determine whether to change tips
 			// INMC: DO THIS PER CHANNEL
-			change_tips := false
-			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
+			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || !reflect.DeepEqual(channels, newchannels)
 			change_tips = change_tips || !reflect.DeepEqual(tiptypes, newtiptypes)
 
@@ -483,8 +479,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 
 				ret = append(ret, tipget...)
 				//		tips = newtips
-				tiptypes = newtiptypes
-				channels = newchannels
+
 				n_tip_uses = 0
 				last_thing = nil
 				dirty = false
@@ -3301,21 +3296,6 @@ func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, chann
 	}
 
 	return inss, nil
-}
-
-func channelArrayToOldStyle(channels []*wtype.LHChannelParameter) (*wtype.LHChannelParameter, int) {
-	var ch *wtype.LHChannelParameter
-	multi := 0
-
-	for _, c := range channels {
-		if c != nil {
-			multi += 1
-			if ch == nil {
-				ch = c
-			}
-		}
-	}
-	return ch, multi
 }
 
 func collate(s []string) string {

@@ -155,11 +155,7 @@ func ZeroWellCoords() WellCoords {
 	return WellCoords{-1, -1}
 }
 func (wc WellCoords) IsZero() bool {
-	if wc.Equals(ZeroWellCoords()) {
-		return true
-	}
-
-	return false
+	return wc.Equals(ZeroWellCoords())
 }
 
 func MatchString(s1, s2 string) bool {

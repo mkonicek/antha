@@ -104,21 +104,6 @@ func (a *Graph) Node(i int) graph.Node {
 	return a.Nodes[i]
 }
 
-// matching returns a subset of nodes that match the predicate
-func matching(pred func(Node) bool, nodes ...Node) (r []Node) {
-	for _, n := range nodes {
-		if !pred(n) {
-			continue
-		}
-		r = append(r, n)
-	}
-	return
-}
-
-func notNil(n Node) bool {
-	return n != nil
-}
-
 func setOut(n Node, i, deps int, x Node) {
 	switch n := n.(type) {
 	case *UseComp:

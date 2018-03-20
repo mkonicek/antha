@@ -45,15 +45,6 @@ func parseRunWellPair(pair string, nameappendage string) (runnumber int, well st
 	return
 }
 
-func allEmpty(array []interface{}) bool {
-	for _, entry := range array {
-		if len(fmt.Sprint(entry)) != 0 {
-			return false
-		}
-	}
-	return true
-}
-
 func rowEmpty(sheet *xlsx.Sheet, rownumber int) bool {
 	for i := 0; i < sheet.MaxCol; i++ {
 		cell := sheet.Cell(rownumber, i)
@@ -267,12 +258,6 @@ func RunsFromDXDesignContents(bytes []byte, intfactors []string) (runs []Run, er
 			run.AdditionalValues = otherresponsevalues
 
 			runs = append(runs, run)
-			factordescriptors = make([]string, 0)
-			responsedescriptors = make([]string, 0)
-
-			// assuming this is necessary too
-			otherheaders = make([]string, 0)
-			othersubheaders = make([]string, 0)
 		}
 	}
 
@@ -412,12 +397,6 @@ func RunsFromJMPDesignContents(bytes []byte, factorcolumns []int, responsecolumn
 			run.AdditionalSubheaders = othersubheaders
 			run.AdditionalValues = otherresponsevalues
 			runs = append(runs, run)
-			factordescriptors = make([]string, 0)
-			responsedescriptors = make([]string, 0)
-
-			// assuming this is necessary too
-			otherheaders = make([]string, 0)
-			othersubheaders = make([]string, 0)
 		}
 	}
 
@@ -469,30 +448,6 @@ func RunsFromDesignPreResponsesContents(designfileContents []byte, intfactors []
 	}
 	return
 
-}
-
-func findFactorColumns(xlsx string, responsefactors []int) (factorcolumns []int) {
-
-	factorcolumns = make([]int, 0)
-
-	file, err := spreadsheet.OpenXLSXFromFileName(xlsx)
-	if err != nil {
-		return factorcolumns
-	}
-	sheet, err := spreadsheet.Sheet(file, 0)
-
-	if err != nil {
-		panic(err)
-	}
-
-	for i := 0; i < sheet.MaxCol; i++ {
-		header := sheet.Cell(0, i).String()
-		if search.InInts(responsefactors, i) == false && strings.ToUpper(header) != "PATTERN" {
-			factorcolumns = append(factorcolumns, i)
-		}
-	}
-
-	return
 }
 
 // add func to auto check for Response and factor status based on empty entries implying Response column
@@ -707,12 +662,6 @@ func RunsFromDXDesign(filename string, intfactors []string) (runs []Run, err err
 			run.AdditionalValues = otherresponsevalues
 
 			runs = append(runs, run)
-			factordescriptors = make([]string, 0)
-			responsedescriptors = make([]string, 0)
-
-			// assuming this is necessary too
-			otherheaders = make([]string, 0)
-			othersubheaders = make([]string, 0)
 		}
 	}
 
@@ -853,12 +802,6 @@ func RunsFromJMPDesign(xlsx string, factorcolumns []int, responsecolumns []int, 
 			run.AdditionalValues = otherresponsevalues
 
 			runs = append(runs, run)
-			factordescriptors = make([]string, 0)
-			responsedescriptors = make([]string, 0)
-
-			// assuming this is necessary too
-			otherheaders = make([]string, 0)
-			othersubheaders = make([]string, 0)
 		}
 	}
 

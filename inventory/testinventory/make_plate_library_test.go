@@ -60,7 +60,7 @@ func TestAddRiser(t *testing.T) {
 				t.Errorf("expected %s but found %s", e, f)
 			}
 
-			offset, _ := platespecificoffset[test.TestPlateName]
+			offset := platespecificoffset[test.TestPlateName]
 
 			// check that the height is as expected using default inventory
 			if testPlate.Height != test.ExpectedHeight {
@@ -233,8 +233,6 @@ func TestSetConstraints(t *testing.T) {
 						"Constraints expected :", device.GetConstraints()[platform], "\n",
 						"Constraints got :", testplate.Welltype.Extra[platform], "\n",
 					)
-				} else if positions[0] != expectedpositions[0] {
-
 				}
 			}
 		}

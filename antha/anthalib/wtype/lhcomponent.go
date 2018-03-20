@@ -162,11 +162,8 @@ func (lhc *LHComponent) getDNASequences() (seqs []DNASequence, err error) {
 // Add a sequence list to a component.
 // Any existing component list will be overwritten.
 // Users should use addDNASequence and UpdateDNASequence methods
-func (lhc *LHComponent) setDNASequences(seqList []DNASequence) error {
-
+func (lhc *LHComponent) setDNASequences(seqList []DNASequence) {
 	lhc.Extra[SEQSKEY] = seqList
-
-	return nil
 }
 
 // Returns the positions of any matching instances of a sequence in a slice of sequences.
@@ -208,7 +205,7 @@ const (
 func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 	var err error
 	// skip error checking: if no sequence list is present one will be created later anyway
-	seqList, _ := lhc.getDNASequences()
+	seqList, _ := lhc.getDNASequences() // nolint
 
 	if _, positions, err := lhc.FindDNASequence(seq); err == nil {
 
@@ -218,9 +215,10 @@ func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 		} else if !options[0] {
 			err = fmt.Errorf("LHComponent %s already contains sequence %s at positions %+v in sequences %+v. To add the sequence anywayadd FORCE as an argument when using AddDNASequence: i.e. AddDNASequence(sequence, wtype.FORCE)", lhc.Name(), seq.Name(), positions, seqList)
 			return err
-		} else if options[0] {
-			err = fmt.Errorf("Warning: LHComponent %s already contains sequence %s at positions %+v in sequences %+v but was added.", lhc.Name(), seq.Name(), positions, seqList)
 		}
+		// else if options[0] {
+		// 	err = fmt.Errorf("Warning: LHComponent %s already contains sequence %s at positions %+v in sequences %+v but was added.", lhc.Name(), seq.Name(), positions, seqList)
+		// }
 	}
 
 	seqList = append(seqList, seq)
@@ -291,8 +289,7 @@ func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 		}
 		if len(positions) == 1 {
 			seqList[positions[0]] = seq
-			err = lhc.setDNASequences(seqList)
-			return err
+			lhc.setDNASequences(seqList)
 		}
 	}
 
@@ -349,8 +346,7 @@ func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 			if err != nil {
 				return err
 			}
-			err = lhc.setDNASequences(seqList)
-			return err
+			lhc.setDNASequences(seqList)
 		}
 	}
 
@@ -371,15 +367,16 @@ func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 	if err != nil {
 		return err
 	}
-	err = lhc.setDNASequences(seqList)
 
-	return err
+	lhc.setDNASequences(seqList)
+	return nil
 
 }
 
 // RemoveDNASequences removes all DNASequences from the component.
 func (lhc *LHComponent) RemoveDNASequences() error {
-	return lhc.setDNASequences([]DNASequence{})
+	lhc.setDNASequences([]DNASequence{})
+	return nil
 }
 
 // DNASequences returns DNA Sequences asociated with an LHComponent.
@@ -544,11 +541,7 @@ func (cmp *LHComponent) IsSample() bool {
 }
 
 func (cmp *LHComponent) HasAnyParent() bool {
-	if cmp.ParentID != "" {
-		return true
-	}
-
-	return false
+	return cmp.ParentID != ""
 }
 
 // XXX XXX XXX --> This is no longer consistent... need to revise urgently

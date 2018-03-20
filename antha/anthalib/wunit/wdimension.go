@@ -107,9 +107,7 @@ func CopyVolume(v Volume) Volume {
 
 // AddVolumes adds a set of volumes.
 func AddVolumes(vols ...Volume) (newvolume Volume) {
-
-	var tempvol Volume
-	tempvol = NewVolume(0.0, "ul")
+	tempvol := NewVolume(0.0, "ul")
 	for _, vol := range vols {
 		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
 			tempvol = NewVolume(tempvol.RawValue()+vol.RawValue(), tempvol.Unit().PrefixedSymbol())

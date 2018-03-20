@@ -3,6 +3,7 @@ package align
 
 import (
 	"fmt"
+	"strings"
 
 	"testing"
 
@@ -187,6 +188,23 @@ var (
 			},*/
 	}
 )
+
+// the biogo implementation of alignment requires the N nucleotides to be replaced with -
+func replaceN(seq wtype.DNASequence) wtype.DNASequence {
+
+	var newSeq []string
+
+	for _, letter := range seq.Seq {
+		if strings.ToUpper(string(letter)) == "N" {
+			letter = rune('-')
+		}
+		newSeq = append(newSeq, string(letter))
+	}
+
+	seq.Seq = strings.Join(newSeq, "")
+
+	return seq
+}
 
 // Align two dna sequences based on a specified scoring matrix
 func TestAlign(t *testing.T) {

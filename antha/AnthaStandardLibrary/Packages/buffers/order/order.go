@@ -84,9 +84,9 @@ type StorageConditions struct {
 }
 
 // String returns a summary of any storage restrictions.
-func (s StorageConditions) String() string {
-	return fmt.Sprintf("%+v", s)
-}
+// func (s StorageConditions) String() string {
+// 	return fmt.Sprintf("%+v", s)
+// }
 
 // GetOrderDetails returns order Details for a component.
 func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) {

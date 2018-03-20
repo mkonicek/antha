@@ -190,7 +190,7 @@ func locusLine(line string) (name string, seqlength int, seqtype string, circula
 		}
 		return
 	} else {
-		err = fmt.Errorf("invalid genbank line: ", line)
+		err = fmt.Errorf("invalid genbank line: %s", line)
 	}
 
 	return
@@ -224,7 +224,7 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 		}
 		var warning error
 		if strings.Contains(s, `join`) {
-			warning = fmt.Errorf("double position of feature!!", s, "adding as one feature only for now")
+			warning = fmt.Errorf("double position of feature!! %s adding as one feature only for now", s)
 			s = strings.Replace(s, "Join(", "", -1)
 			s = strings.Replace(s, ")", "", -1)
 			joinhandler := strings.Split(s, `,`)

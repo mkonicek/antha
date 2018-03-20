@@ -24,28 +24,10 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
-
-func readableComponentArray(arr []*wtype.LHComponent) string {
-	ret := ""
-
-	for i, v := range arr {
-		if v != nil {
-			ret += fmt.Sprintf("%s:%-6.2f%s", v.CName, v.Vol, v.Vunit)
-		} else {
-			ret += "_nil_"
-		}
-		if i < len(arr)-1 {
-
-			ret += ", "
-		}
-	}
-
-	return ret
-}
 
 //
 //	at this point (i.e. in a TransferBlock) the instructions have potentially been grouped into sets
@@ -121,23 +103,11 @@ func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties,
 	return hasMulti, nil
 }
 
-func dupCmpAr(ins *wtype.LHInstruction) []*wtype.LHComponent {
-	in := ins.Components
-	r := make([]*wtype.LHComponent, len(in))
-
-	for i := 0; i < len(in); i++ {
-		r[i] = in[i].Dup()
-		r[i].Loc = ins.PlateID + ":" + ins.Welladdress
-	}
-
-	return r
-}
-
 func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 
 	// TODO --> iterator?
-	horiz := false
+	var horiz bool
 
 	var l int
 

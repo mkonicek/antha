@@ -214,6 +214,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 
 	if len(errs) > 0 {
 		err = fmt.Errorf(strings.Join(errs, "; "))
+		return newComponentList, nil, err
 	}
 	return newComponentList, mixSteps, nil
 }
@@ -250,10 +251,9 @@ func (c ComponentList) Get(component *wtype.LHComponent) (conc wunit.Concentrati
 
 	if found {
 		return conc, nil
-	} else {
-		return conc, &notFound{Name: component.CName, All: c.AllComponents()}
 	}
-	return
+
+	return conc, &notFound{Name: component.CName, All: c.AllComponents()}
 }
 
 // Get a single concentration set point using just the name of a component present in a component list.
@@ -266,10 +266,9 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 
 	if found {
 		return conc, nil
-	} else {
-		return conc, &notFound{Name: component, All: c.AllComponents()}
 	}
-	return
+
+	return conc, &notFound{Name: component, All: c.AllComponents()}
 }
 
 // List all Components and concentration set points presnet in a component list.
@@ -439,19 +438,6 @@ func GetSubComponents(component *wtype.LHComponent) (componentMap ComponentList,
 	}
 
 	return components, nil
-}
-
-// utility function to allow the object properties to be retained when serialised
-func serialise(compList ComponentList) ([]byte, error) {
-
-	return json.Marshal(compList)
-}
-
-// utility function to allow the object properties to be retained when serialised
-func deserialise(data []byte) (compList ComponentList, err error) {
-	compList = ComponentList{}
-	err = json.Unmarshal(data, &compList)
-	return
 }
 
 // Return a component list from a component.

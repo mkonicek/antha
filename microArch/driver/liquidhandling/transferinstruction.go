@@ -229,11 +229,7 @@ func (ins *TransferInstruction) CheckMultiPolicies(which int) bool {
 
 	nwhat := wutil.NUniqueStringsInArray(ins.Transfers[which].What(), true)
 
-	if nwhat != 1 {
-		return false
-	}
-
-	return true
+	return nwhat == 1
 }
 
 func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, error) {

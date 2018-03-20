@@ -40,15 +40,12 @@ import (
 var (
 	email     = "no-reply@antha-lang.com"
 	tool      = "blast-biogo-antha"
-	params    blast.Parameters
 	putparams = blast.PutParameters{Program: "blastn", Megablast: true, Database: "nr"}
 	getparams blast.GetParameters
-	page      = ""
 	//query     = "X14032.1"
 	//query     = "MSFSNYKVIAMPVLVANFVLGAATAWANENYPAKSAGYNQGDWVASFNFSKVYVGEELGDLNVGGGALPNADVSIGNDTTLTFDIAYFVSSNIAVDFFVGVPARAKFQGEKSISSLGRVSEVDYGPAILSLQYHYDSFERLYPYVGVGVGRVLFFDKTDGALSSFDIKDKWAPAFQVGLRYDLGNSWMLNSDVRYIPFKTDVTGTLGPVPVSTKIEVDPFILSLGASYVF"
 	//query   = "atgagtttttctaattataaagtaatcgcgatgccggtgttggttgctaattttgttttgggggcggccactgcatgggcgaatgaaaattatccggcgaaatctgctggctataatcagggtgactgggtcgctagcttcaatttttctaaggtctatgtgggtgaggagcttggcgatctaaatgttggagggggggctttgccaaatgctgatgtaagtattggtaatgatacaacacttacgtttgatatcgcctattttgttagctcaaatatagcggtggatttttttgttggggtgccagctagggctaaatttcaaggtgagaaatcaatctcctcgctgggaagagtcagtgaagttgattacggccctgcaattctttcgcttcaatatcattacgatagctttgagcgactttatccatatgttggggttggtgttggtcgggtgctattttttgataaaaccgacggtgctttgagttcgtttgatattaaggataaatgggcgcctgcttttcaggttggccttagatatgaccttggtaactcatggatgctaaattcagatgtgcgttatattcctttcaaaacggacgtcacaggtactcttggcccggttcctgtttctactaaaattgaggttgatcctttcattctcagtcttggtgcgtcatatgttttctaa"
 	retries = 5
-	retry   = retries
 )
 
 func RerunRIDstring(rid string) (o *blast.Output, err error) {
@@ -244,51 +241,18 @@ func FindBestHit(hits []blast.Hit) (besthit blast.Hit, identity float64, coverag
 }
 
 func AllExactMatches(hits []blast.Hit) (exactmatches []blast.Hit, summary string, err error) {
-	summaryarray := make([]string, 0)
 	exactmatches = make([]blast.Hit, 0)
 
 	if len(hits) != 0 {
-
-		summaryarray = append(summaryarray, fmt.Sprintln(ansi.Color("Hits:", "green"), len(hits)))
-
 		for i, hit := range hits {
 
 			for j := range hit.Hsps {
-
-				seqlength := hits[i].Len
-
 				hspidentityfloat := float64(*hits[i].Hsps[j].HspIdentity)
 				querylengthfloat := float64(len(hits[i].Hsps[j].QuerySeq))
-				subjectseqfloat := float64(len(hits[i].Hsps[j].SubjectSeq))
 
 				identityfloat := (hspidentityfloat / querylengthfloat) * 100
-				coveragefloat := (querylengthfloat / subjectseqfloat) * 100
-				identity := strconv.FormatFloat(identityfloat, 'G', -1, 64) + "%"
-				coverage := strconv.FormatFloat(coveragefloat, 'G', -1, 64) + "%"
 
 				if identityfloat == 100 {
-					hitsum := fmt.Sprintln(ansi.Color("Hit:", "blue"), i+1,
-						//	Printfield(hits[0].Id),
-						text.Sprint("HspIdentity: ", strconv.Itoa(*hits[i].Hsps[j].HspIdentity)),
-						text.Sprint("queryLen: ", len(hits[i].Hsps[j].QuerySeq)),
-						text.Sprint("queryFrom: ", hits[i].Hsps[j].QueryFrom),
-						text.Sprint("queryTo: ", hits[i].Hsps[j].QueryTo),
-						text.Sprint("subjectLen: ", len(hits[i].Hsps[j].SubjectSeq)),
-						text.Sprint("HitFrom: ", hits[i].Hsps[j].HitFrom),
-						text.Sprint("HitTo: ", hits[i].Hsps[j].HitTo),
-						text.Sprint("alignLen: ", *hits[i].Hsps[j].AlignLen),
-						text.Sprint("Identity: ", identity),
-						text.Sprint("coverage: ", coverage),
-						ansi.Color("Sequence length:", "red"), seqlength,
-						ansi.Color("high scoring pairs for top match:", "red"), len(hits[0].Hsps),
-						ansi.Color("Id:", "red"), hits[i].Id,
-						ansi.Color("Definition:", "red"), hits[i].Def,
-						ansi.Color("Accession:", "red"), hits[i].Accession,
-						ansi.Color("Bitscore", "red"), hits[i].Hsps[j].BitScore,
-						ansi.Color("Score", "red"), hits[i].Hsps[j].Score,
-						ansi.Color("EValue", "red"), hits[i].Hsps[j].EValue)
-
-					summaryarray = append(summaryarray, hitsum)
 					exactmatches = append(exactmatches, hit)
 				}
 			}
@@ -301,35 +265,6 @@ func AllExactMatches(hits []blast.Hit) (exactmatches []blast.Hit, summary string
 	}
 	return
 }
-
-/*
-func Summary(hit Hit) (summary string) {
-	seqlength := hits[i].Len
-
-	identity := strconv.Itoa((*hits[i].Hsps[j].HspIdentity/len(hits[i].Hsps[j].QuerySeq))*100) + "%"
-	coverage := strconv.Itoa(len(hits[i].Hsps[j].QuerySeq)/len(hits[i].Hsps[j].SubjectSeq)*100) + "%"
-
-	summary = fmt.Sprintln(text.Print("HspIdentity: ", strconv.Itoa(*hits[i].Hsps[j].HspIdentity)),
-		text.Print("queryLen: ", len(hits[i].Hsps[j].QuerySeq)),
-		text.Print("subjectLen: ", len(hits[i].Hsps[j].SubjectSeq)),
-		text.Print("alignLen: ", *hits[i].Hsps[j].AlignLen),
-		text.Print("Identity: ", identity),
-		text.Print("coverage: ", coverage),
-		//Print("HspIdentity", *hits[0].Hsps[0].HspIdentity),
-		ansi.Color("Sequence length:", "red"), seqlength,
-		ansi.Color("high scoring pairs for top match:", "red"), len(hits[0].Hsps),
-		ansi.Color("Id:", "red"), hits[i].Id,
-		ansi.Color("Definition:", "red"), hits[i].Def,
-		ansi.Color("Accession:", "red"), hits[i].Accession,
-		//ansi.Color("Identity: ", "red"), identity, "%",
-		//ansi.Color("Coverage: ", "red"), coverage, "%",
-		ansi.Color("Bitscore", "red"), hits[i].Hsps[j].BitScore,
-		ansi.Color("Score", "red"), hits[i].Hsps[j].Score,
-		ansi.Color("EValue", "red"), hits[i].Hsps[j].EValue)
-
-	return
-}
-*/
 
 func MegaBlastP(query string) (hits []blast.Hit, err error) {
 
@@ -371,28 +306,26 @@ func SimpleBlast(query string) (o *blast.Output, err error) {
 		fmt.Println(s.Status)
 
 		fmt.Println("hits?", s.HaveHits)
-		if s.HaveHits == true {
+		if s.HaveHits {
 			o, err = r.GetOutput(&getparams, tool, email)
 			return
-		} else if strings.Contains(s.Status, "WAITING") == true {
+		} else if strings.Contains(s.Status, "WAITING") {
 			for {
-				if strings.Contains(s.Status, "WAITING") == true {
+				if strings.Contains(s.Status, "WAITING") {
 					fmt.Println("waiting 1 min to rerun RID:", r.String())
 					time.Sleep(1 * time.Minute)
 					s, err = r.SearchInfo(tool, email)
+					if err != nil {
+						return
+					}
+
 					o, err = RerunRID(r)
 
 				} else {
 					return
 				}
 			}
-
-			if err == nil {
-				break
-			}
-
 		}
-
 	}
 
 	return

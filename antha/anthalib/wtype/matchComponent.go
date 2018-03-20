@@ -2,8 +2,9 @@ package wtype
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"reflect"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 // TODO --> deal with, e.g., 384 well plates
@@ -219,18 +220,4 @@ func MatchComponents(want, got ComponentVector, independent, debug bool) (Match,
 	}
 
 	return match, nil
-}
-
-func scoreMatch(m ComponentMatch, independent bool) float64 {
-	s := 0.0
-
-	for _, mtch := range m.Matches {
-		for i := 0; i < len(mtch.Vols); i++ {
-			s += mtch.Vols[i].RawValue()
-		}
-	}
-
-	s /= float64(len(m.Matches))
-
-	return s
 }

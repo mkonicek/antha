@@ -618,7 +618,7 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	}
 }
 
-func checkTipUsage(t *testing.T, ctx context.Context, inss []*wtype.LHInstruction, expectedTips int) {
+func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.LHInstruction) []RobotInstruction {
 
 	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 
@@ -635,12 +635,10 @@ func checkTipUsage(t *testing.T, ctx context.Context, inss []*wtype.LHInstructio
 		t.Fatal(err)
 	}
 
-	if e, g := expectedTips, countTipsUsed(t, ris2); e != g {
-		t.Errorf("Used %d tips, should have used %d", g, e)
-	}
+	return ris2
 }
 
-func countTipsUsed(t *testing.T, instructions []RobotInstruction) int {
+func assertNumTipsUsed(t *testing.T, instructions []RobotInstruction, expectedTips int) {
 	var loaded, unloaded int
 
 	for _, instruction := range instructions {
@@ -656,7 +654,10 @@ func countTipsUsed(t *testing.T, instructions []RobotInstruction) int {
 		t.Errorf("Loaded %d and Unloaded %d tips in instructions", loaded, unloaded)
 	}
 
-	return loaded
+	if e, g := expectedTips, loaded; e != g {
+		t.Errorf("Used %d tips, should have used %d", g, e)
+	}
+
 }
 
 //TestMultiChannelTipReuseGood Move water to two columns of wells - shouldn't need to change tips in between
@@ -668,7 +669,9 @@ func TestMultiChannelTipReuseGood(t *testing.T) {
 		panic(err)
 	}
 
-	checkTipUsage(t, ctx, inss, 8)
+	ris := generateRobotInstructions(t, ctx, inss)
+
+	assertNumTipsUsed(t, ris, 8)
 
 }
 
@@ -688,7 +691,9 @@ func TestMultiChannelTipReuseBad(t *testing.T) {
 
 	inss = append(inss, ins2...)
 
-	checkTipUsage(t, ctx, inss, 16)
+	ris := generateRobotInstructions(t, ctx, inss)
+
+	assertNumTipsUsed(t, ris, 16)
 }
 
 //TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
@@ -700,5 +705,7 @@ func TestMultiChannelTipReuseUgly(t *testing.T) {
 		panic(err)
 	}
 
-	checkTipUsage(t, ctx, inss, 16)
+	ris := generateRobotInstructions(t, ctx, inss)
+
+	assertNumTipsUsed(t, ris, 16)
 }

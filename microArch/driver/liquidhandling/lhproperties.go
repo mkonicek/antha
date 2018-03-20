@@ -435,6 +435,20 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	return &lhp
 }
 
+// GetLHType returns the declared type of liquid handler for driver selection purposes
+// e.g. High-Level (HLLiquidHandler) or Low-Level (LLLiquidHandler)
+// see lhtype.go in this directory
+func (lhp *LHProperties) GetLHType() string {
+	return lhp.LHType
+}
+
+// GetTipType returns the tip requirements of the liquid handler
+// options are None, Disposable, Fixed, Mixed
+// see lhtype.go in this directory
+func (lhp *LHProperties) GetTipType() string {
+	return lhp.TipType
+}
+
 func (lhp *LHProperties) TipsLeftOfType(tiptype string) int {
 	n := 0
 

@@ -215,7 +215,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 	// add the waste if required...
 
-	if params.TipType == liquidhandling.DisposableTips || params.TipType == liquidhandling.MixedDisposableAndFixedTips {
+	if params.GetTipType() == liquidhandling.DisposableTips || params.GetTipType() == liquidhandling.MixedDisposableAndFixedTips {
 		s := params.TipWastesMounted()
 
 		if s == 0 {

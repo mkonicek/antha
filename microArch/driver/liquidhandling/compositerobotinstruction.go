@@ -30,6 +30,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
 	"reflect"
@@ -37,64 +38,6 @@ import (
 
 func TipChosenError(v wunit.Volume, prms *LHProperties) string {
 	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
-}
-
-type TransferParams struct {
-	What       string
-	PltFrom    string
-	PltTo      string
-	WellFrom   string
-	WellTo     string
-	Volume     wunit.Volume
-	FPlateType string
-	TPlateType string
-	FVolume    wunit.Volume
-	TVolume    wunit.Volume
-	Channel    *wtype.LHChannelParameter
-	TipType    string
-}
-
-func (tp TransferParams) ToString() string {
-	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType)
-}
-
-func (tp TransferParams) Zero() bool {
-	if tp.What == "" {
-		return true
-	}
-
-	return false
-}
-
-type MultiTransferParams struct {
-	What       []string
-	PltFrom    []string
-	PltTo      []string
-	WellFrom   []string
-	WellTo     []string
-	Volume     []wunit.Volume
-	FPlateType []string
-	TPlateType []string
-	FVolume    []wunit.Volume
-	TVolume    []wunit.Volume
-	Channel    *wtype.LHChannelParameter
-	TipTypes   []string
-}
-
-func NewMultiTransferParams(multi int) MultiTransferParams {
-	var v MultiTransferParams
-	v.What = make([]string, 0, multi)
-	v.PltFrom = make([]string, 0, multi)
-	v.PltTo = make([]string, 0, multi)
-	v.WellFrom = make([]string, 0, multi)
-	v.WellTo = make([]string, 0, multi)
-	v.Volume = make([]wunit.Volume, 0, multi)
-	v.FVolume = make([]wunit.Volume, 0, multi)
-	v.TVolume = make([]wunit.Volume, 0, multi)
-	v.FPlateType = make([]string, 0, multi)
-	v.TPlateType = make([]string, 0, multi)
-	v.TipTypes = make([]string, 0, multi)
-	return v
 }
 
 type SingleChannelBlockInstruction struct {
@@ -242,8 +185,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 
 		tvs, err := TransferVolumes(ins.Volume[t], mergedchannel.Minvol, mergedchannel.Maxvol)
 
-		//fmt.Println("VOL ", ins.Volume[t].ToString(), " IN ", len(tvs), " GOES: ", mergedchannel.Minvol.ToString(), " MIN ", mergedchannel.Maxvol.ToString(), " MAX")
-
 		if err != nil {
 			return ret, err
 		}
@@ -268,18 +209,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 			}
 
 			if change_tips {
-				/*
-					fmt.Println("CHANGING TIPS HERE ")
-					fmt.Println("THIS: ", this_thing.CName, " THAT: ", last_thing.CName)
-					fmt.Println("channels equal? ", channel == newchannel)
-					fmt.Println("tips same? ", tiptype == newtiptype)
-					fmt.Println("tip reuse over? ", n_tip_uses > pol["TIP_REUSE_LIMIT"].(int))
-					fmt.Println(n_tip_uses, " ", pol["TIP_REUSE_LIMIT"].(int), " NOT CAST: ", pol["TIP_REUSE_LIMIT"])
-					fmt.Println("dirty? ", dirty)
-				*/
-				// maybe wrap this as a ChangeTips function call
-				// these need parameters
-
 				tipdrp, err := DropTips(tt, prms, chanA)
 				if err != nil {
 					return ret, err
@@ -329,11 +258,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 
 			if pol["DSPREFERENCE"].(int) == 0 && !ins.TVolume[t].IsZero() || premix && npre.(int) > 0 || postmix && npost.(int) > 0 {
 				dirty = true
-				/*
-					fmt.Println("DIRTY DIRTY DIRTY")
-					fmt.Println(pol["DSPREFERENCE"].(int) == 0, " ", ins.TVolume[t].ToString(), " ", "PRE: ", premix, " ", npre, " POST: ", postmix, " ", npost)
-					fmt.Println(ins.WellTo[t])
-				*/
 			}
 
 			ins.FVolume[t].Subtract(vol)
@@ -387,17 +311,16 @@ func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 }
 
 func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferParams) {
-	ins.What = append(ins.What, mct.What)
-	ins.PltFrom = append(ins.PltFrom, mct.PltFrom)
-	ins.PltTo = append(ins.PltTo, mct.PltTo)
-	ins.WellFrom = append(ins.WellFrom, mct.WellFrom)
-	ins.WellTo = append(ins.WellTo, mct.WellTo)
-	ins.Volume = append(ins.Volume, mct.Volume)
-	ins.FPlateType = append(ins.FPlateType, mct.FPlateType)
-	ins.TPlateType = append(ins.TPlateType, mct.TPlateType)
-	ins.FVolume = append(ins.FVolume, mct.FVolume)
-	ins.TVolume = append(ins.TVolume, mct.TVolume)
-	ins.Prms = mct.Channel
+	ins.What = append(ins.What, mct.What())
+	ins.PltFrom = append(ins.PltFrom, mct.PltFrom())
+	ins.PltTo = append(ins.PltTo, mct.PltTo())
+	ins.WellFrom = append(ins.WellFrom, mct.WellFrom())
+	ins.WellTo = append(ins.WellTo, mct.WellTo())
+	ins.Volume = append(ins.Volume, mct.Volume())
+	ins.FPlateType = append(ins.FPlateType, mct.FPlateType())
+	ins.TPlateType = append(ins.TPlateType, mct.TPlateType())
+	ins.FVolume = append(ins.FVolume, mct.FVolume())
+	ins.TVolume = append(ins.TVolume, mct.TVolume())
 }
 
 func (ins *MultiChannelBlockInstruction) InstructionType() int {
@@ -492,6 +415,8 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	}
 	ret = append(ret, tipget...)
 	n_tip_uses := 0
+	var last_thing *wtype.LHComponent
+	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
 		tvols := NewVolumeSet(ins.Prms.Multi)
@@ -508,8 +433,6 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			return ret, err
 		}
 
-		var last_thing *wtype.LHComponent
-		var dirty bool
 		// load tips
 
 		// split the transfer up
@@ -581,21 +504,32 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.TipType = newtiptypes
 			//mci.Multi = ins.Multi
 			mci.Multi = countMulti(ins.PltFrom[t])
-			prms := make([]*wtype.LHChannelParameter, ins.Multi)
+			channelprms := make([]*wtype.LHChannelParameter, newchannels[0].Multi)
 			//mci.Prms = newchannel.MergeWithTip(newtip)
 
 			for i := 0; i < len(newchannels); i++ {
 				if newchannels[i] != nil {
-					prms[i] = newchannels[i].MergeWithTip(newtips[i])
+					channelprms[i] = newchannels[i].MergeWithTip(newtips[i])
 				}
 			}
 
-			mci.Prms = prms
+			mci.Prms = channelprms
 
 			ret = append(ret, mci)
+			// finally check if we are touching a bad liquid
+			// in future we will do this properly, for now we assume
+			// touching any liquid is bad
+
+			npre, premix := pol["PRE_MIX"]
+			npost, postmix := pol["POST_MIX"]
+
+			if pol["DSPREFERENCE"].(int) == 0 && !VolumeSet(ins.TVolume[t]).IsZero() || premix && npre.(int) > 0 || postmix && npost.(int) > 0 {
+				dirty = true
+			}
+
+			last_thing = this_thing
 
 			tiptypes = newtiptypes
-			//		tips = newtips
 			channels = newchannels
 			fvols.SubA(vols)
 			tvols.AddA(vols)
@@ -1147,7 +1081,11 @@ func (ins *AspirateInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *AspirateInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *AspirateInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1215,7 +1153,11 @@ func (ins *DispenseInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *DispenseInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *DispenseInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1279,7 +1221,11 @@ func (ins *BlowoutInstruction) Generate(ctx context.Context, policy *wtype.LHPol
 	return nil, nil
 }
 
-func (ins *BlowoutInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *BlowoutInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
 		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
@@ -1328,7 +1274,11 @@ func (ins *PTZInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyR
 	return nil, nil
 }
 
-func (ins *PTZInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *PTZInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.ResetPistons(ins.Head, ins.Channel)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1401,7 +1351,11 @@ func (ins *MoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *MoveInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *MoveInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1486,7 +1440,13 @@ func (ins *MoveRawInstruction) Generate(ctx context.Context, policy *wtype.LHPol
 	return nil, nil
 }
 
-func (ins *MoveRawInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *MoveRawInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	logger.Fatal("Not yet implemented")
 	panic("Not yet implemented")
 }
@@ -1548,7 +1508,11 @@ func (ins *LoadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *LoadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *LoadTipsInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.LoadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -1613,7 +1577,11 @@ func (ins *UnloadTipsInstruction) Generate(ctx context.Context, policy *wtype.LH
 	return nil, nil
 }
 
-func (ins *UnloadTipsInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *UnloadTipsInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.UnloadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2079,14 +2047,21 @@ func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
 	ins.TipType = tp.TipType
 }
 func (scti *BlowInstruction) Params() MultiTransferParams {
-	var tp MultiTransferParams
-	tp.What = scti.What
-	tp.PltTo = scti.PltTo
-	tp.WellTo = scti.WellTo
-	tp.Volume = scti.Volume
-	tp.TPlateType = scti.TPlateType
-	tp.TVolume = scti.TVolume
-	tp.Channel = scti.Prms
+	tp := NewMultiTransferParams(scti.Multi)
+	/*
+		tp.What = scti.What
+		tp.PltTo = scti.PltTo
+		tp.WellTo = scti.WellTo
+		tp.Volume = scti.Volume
+		tp.TPlateType = scti.TPlateType
+		tp.TVolume = scti.TVolume
+		tp.Channel = scti.Prms
+	*/
+
+	for i := 0; i < len(scti.What); i++ {
+		tp.Transfers = append(tp.Transfers, TransferParams{What: scti.What[i], PltTo: scti.PltTo[i], WellTo: scti.WellTo[i], Volume: scti.Volume[i], TPlateType: scti.TPlateType[i], TVolume: scti.TVolume[i], Channel: scti.Prms.Dup()})
+	}
+
 	return tp
 }
 
@@ -2331,7 +2306,15 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		} else if !ins.Prms.CanMove(vmixvol, true) {
 			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
 
-			if override {
+			//does the tip have a filter?
+			inv := inventory.GetInventory(ctx)
+			tb, err := inv.NewTipbox(ctx, ins.TipType)
+			if err != nil {
+				return ret, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("While getting tip %v", err))
+			}
+
+			//filter tips always override max volume
+			if override || tb.Tiptype.Filtered {
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {
 				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
@@ -2472,7 +2455,11 @@ func (ins *SetPipetteSpeedInstruction) Generate(ctx context.Context, policy *wty
 	return nil, nil
 }
 
-func (ins *SetPipetteSpeedInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *SetPipetteSpeedInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2514,7 +2501,11 @@ func (ins *SetDriveSpeedInstruction) Generate(ctx context.Context, policy *wtype
 	return nil, nil
 }
 
-func (ins *SetDriveSpeedInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *SetDriveSpeedInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.SetDriveSpeed(ins.Drive, ins.Speed)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2546,8 +2537,8 @@ func (ins *InitializeInstruction) Generate(ctx context.Context, policy *wtype.LH
 	return nil, nil
 }
 
-func (ins *InitializeInstruction) OutputTo(driver LiquidhandlingDriver) error {
-	ret := driver.Initialize()
+func (ins *InitializeInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	ret := lhdriver.Initialize()
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
 	}
@@ -2578,8 +2569,8 @@ func (ins *FinalizeInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *FinalizeInstruction) OutputTo(driver LiquidhandlingDriver) error {
-	ret := driver.Finalize()
+func (ins *FinalizeInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	ret := lhdriver.Finalize()
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
 	}
@@ -2617,7 +2608,11 @@ func (ins *WaitInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *WaitInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *WaitInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	}
 	ret := driver.Wait(ins.Time)
 	if !ret.OK {
 		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
@@ -2666,7 +2661,13 @@ func (ins *LightsOnInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	return nil, nil
 }
 
-func (ins *LightsOnInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *LightsOnInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LightsOnInstruction")
 }
 
@@ -2709,7 +2710,13 @@ func (ins *LightsOffInstruction) Generate(ctx context.Context, policy *wtype.LHP
 	return nil, nil
 }
 
-func (ins *LightsOffInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *LightsOffInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LightsOffInstruction")
 }
 
@@ -2752,7 +2759,13 @@ func (ins *OpenInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	return nil, nil
 }
 
-func (ins *OpenInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *OpenInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: OpenInstruction")
 }
 
@@ -2795,7 +2808,13 @@ func (ins *CloseInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	return nil, nil
 }
 
-func (ins *CloseInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *CloseInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: CloseInstruction")
 }
 
@@ -2838,7 +2857,13 @@ func (ins *LoadAdaptorInstruction) Generate(ctx context.Context, policy *wtype.L
 	return nil, nil
 }
 
-func (ins *LoadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *LoadAdaptorInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: LoadAdaptor")
 }
 
@@ -2881,7 +2906,13 @@ func (ins *UnloadAdaptorInstruction) Generate(ctx context.Context, policy *wtype
 	return nil, nil
 }
 
-func (ins *UnloadAdaptorInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ins *UnloadAdaptorInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	/*
+		driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+		if !ok {
+			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+		}
+	*/
 	return fmt.Errorf(" %d : %s", anthadriver.NIM, "Not yet implemented: UnloadAdaptor")
 }
 
@@ -2965,13 +2996,9 @@ func (ins *ResetInstruction) AddTransferParams(tp TransferParams) {
 }
 
 func (ins *ResetInstruction) AddMultiTransferParams(mtp MultiTransferParams) {
-	ins.What = mtp.What
-	ins.PltTo = mtp.PltTo
-	ins.WellTo = mtp.WellTo
-	ins.Volume = mtp.Volume
-	ins.TPlateType = mtp.TPlateType
-	ins.TVolume = mtp.TVolume
-	ins.Prms = mtp.Channel
+	for _, tp := range mtp.Transfers {
+		ins.AddTransferParams(tp)
+	}
 }
 
 func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -3198,7 +3225,12 @@ func (ins *MixInstruction) GetParameter(name string) interface{} {
 
 }
 
-func (mi *MixInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (mi *MixInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
+	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
+
+	if !ok {
+		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", mi)
+	}
 	vols := make([]float64, len(mi.Volume))
 
 	for i := 0; i < len(mi.Volume); i++ {

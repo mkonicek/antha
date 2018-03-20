@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"strings"
 )
 
 type IChain struct {
@@ -21,6 +22,15 @@ func NewIChain(parent *IChain) *IChain {
 		it.Depth = parent.Depth + 1
 	}
 	return &it
+}
+
+// depth from here
+func (it *IChain) Height() int {
+	if it == nil {
+		return 0
+	}
+
+	return it.Child.Height() + 1
 }
 
 func (it *IChain) PruneOut(Remove map[string]bool) *IChain {
@@ -103,12 +113,21 @@ func (it *IChain) Print() {
 			if it.Values[j].Type == wtype.LHIMIX {
 				fmt.Printf("MIX    %2d: %s ", j, it.Values[j].ID)
 				for i := 0; i < len(it.Values[j].Components); i++ {
-					fmt.Print(" ", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().ToString(), " ")
+					fmt.Print(" ", it.Values[j].Components[i].ID, ":", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().ToString(), " ")
 				}
-				fmt.Print(":", it.Values[j].Result.ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
+				fmt.Print(":", it.Values[j].Results[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Printf("-- ")
 			} else if it.Values[j].Type == wtype.LHIPRM {
 				fmt.Print("PROMPT ", it.Values[j].Message, "-- ")
+				for in, out := range it.Values[j].PassThrough {
+					fmt.Print(in, ":::", out.ID, " --")
+				}
+			} else if it.Values[j].Type == wtype.LHISPL {
+				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)
+				fmt.Print(" ", it.Values[j].Components[0].ID, ":", it.Values[j].Components[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress, " ")
+				fmt.Print(" MOVE:", it.Values[j].Results[0].ID, ":", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().ToString())
+				fmt.Print(" STAY:", it.Values[j].Results[1].ID, ":", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().ToString())
+				fmt.Printf("-- ")
 			} else {
 				fmt.Print("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
 			}
@@ -138,7 +157,7 @@ func (it *IChain) ProductIDs() string {
 	s := ""
 
 	for _, ins := range it.Values {
-		s += ins.ProductID + "   "
+		s += strings.Join(ins.ProductIDs(), " ") + "   "
 	}
 	return s
 }

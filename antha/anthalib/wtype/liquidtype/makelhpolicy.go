@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package liquidhandling
+package liquidtype
 
 import (
 	"encoding/json"
@@ -28,6 +28,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -79,6 +80,7 @@ var AvailablePolicyfiles []PolicyFile = []PolicyFile{
 //var DOEliquidhandlingFile = "170516CCFDesign_noTouchoff_noBlowout.xlsx" // "2700516AssemblyCCF.xlsx" //"newdesign2factorsonly.xlsx" // "170516CCFDesign_noTouchoff_noBlowout.xlsx" // "170516CFF.xlsx" //"newdesign2factorsonly.xlsx" "170516CCFDesign_noTouchoff_noBlowout.xlsx" // //"newdesign2factorsonly.xlsx" //"8run4cpFactorial.xlsx" //"FullFactorial.xlsx" // "Screenwtype.LHPolicyDOE2.xlsx"
 //var DXORJMP = "DX"                                                      //"JMP"
 var BASEPolicy = "default" //"dna"
+
 func MakePolicies() map[string]wtype.LHPolicy {
 	pols := make(map[string]wtype.LHPolicy)
 
@@ -309,21 +311,25 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 //        return proteinpolicy
 //}
 
-func GetPolicyByName(policyname wtype.PolicyName) (lhpolicy wtype.LHPolicy, policypresent bool) {
-	policymap := MakePolicies()
+var DefaultPolicies map[string]wtype.LHPolicy = MakePolicies()
 
-	lhpolicy, policypresent = policymap[policyname.String()]
-	return
+func GetPolicyByName(policyname wtype.PolicyName) (lhpolicy wtype.LHPolicy, err error) {
+	lhpolicy, policypresent := DefaultPolicies[policyname.String()]
+
+	if !policypresent {
+		validPolicies := availablePolicies()
+		return wtype.LHPolicy{}, fmt.Errorf("policy %s not found in Default list. Valid options: %s", policyname, strings.Join(validPolicies, "\n"))
+	}
+	return lhpolicy, nil
 }
 
-func AvailablePolicies() (policies []string) {
+func availablePolicies() (policies []string) {
 
-	policies = make([]string, 0)
-	policymap := MakePolicies()
-
-	for key, _ := range policymap {
+	for key := range DefaultPolicies {
 		policies = append(policies, key)
 	}
+
+	sort.Strings(policies)
 	return
 }
 
@@ -1245,3 +1251,35 @@ func readJSON(fileContents []byte, ruleSet *wtype.LHPolicyRuleSet) error {
 	}
 	return nil
 }
+
+/*
+	LTNIL = LiquidType("nil")
+	LTWater = LiquidType("water")
+	LTDefault = LiquidType("default")
+	LTCulture = LiquidType("culture")
+	LTProtoplasts = LiquidType("protoplasts")
+	LTDNA = LiquidType("dna")
+	LTDNAMIX = LiquidType("dna_mix")
+	LTProtein = LiquidType("protein")
+	LTMultiWater = LiquidType("multiwater")
+	LTLoad = LiquidType("load")
+	LTVISCOUS = LiquidType("viscous")
+	LTPEG = LiquidType("peg")
+	LTPAINT = LiquidType("paint")
+	LTNeedToMix = LiquidType("NeedToMix")
+	LTPostMix = LiquidType("PostMix")
+	LTload = LiquidType("load")
+	LTGlycerol = LiquidType("glycerol")
+	LTPLATEOUT = LiquidType("plateout")
+	LTDetergent = LiquidType("detergent")
+	LTCOLONY = LiquidType("colony")
+	LTNSrc = LiquidType("nitrogen_source")
+	InvalidPolicyName = LiquidType("InvalidPolicyName")
+	LTSmartMix = LiquidType("SmartMix")
+	LTPreMix = LiquidType("PreMix")
+	LTDISPENSEABOVE = LiquidType("DispenseAboveLiquid")
+	LTMegaMix = LiquidType("MegaMix")
+	LTDoNotMix = LiquidType("DoNotMix")
+	LTDNACELLSMIX = LiquidType("dna_cells_mix")
+	LTloadwater = LiquidType("loadwater")
+*/

@@ -27,6 +27,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
@@ -203,7 +204,7 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = 1.0
 	lhr.Options = NewLHOptions()
 
-	systemPolicies, _ := liquidhandling.GetLHPolicyForTest()
+	systemPolicies, _ := liquidtype.GetLHPolicyForTest()
 
 	lhr.SetPolicies(systemPolicies)
 	return &lhr
@@ -266,6 +267,9 @@ func (mgr *LHPolicyManager) Policies() *wtype.LHPolicyRuleSet {
 	ret := wtype.CloneLHPolicyRuleSet(mgr.SystemPolicies)
 
 	// things coming in take precedence over things already there
+	if mgr.UserPolicies == nil {
+		return ret
+	}
 	ret.MergeWith(mgr.UserPolicies)
 	return ret
 }

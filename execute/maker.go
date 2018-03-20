@@ -45,7 +45,7 @@ func (a *maker) makeCommand(in *commandInst) ast.Node {
 		in.Command.From = append(in.Command.From, a.makeComp(arg))
 	}
 
-	out := a.makeComp(in.result)
+	out := a.makeComp(in.result[0]) // MIS --> may need updating
 	out.From = append(out.From, in.Command)
 	return out
 }

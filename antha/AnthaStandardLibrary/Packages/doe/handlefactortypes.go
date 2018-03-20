@@ -35,6 +35,15 @@ import (
 	"github.com/antha-lang/antha/inventory"
 )
 
+// HandleStringFactor converts the value of a factor with an interface value to a string.
+func HandleStringFactor(header string, value interface{}) (string, error) {
+	str, found := value.(string)
+	if !found {
+		return "", fmt.Errorf("value %T is not a string", value)
+	}
+	return str, nil
+}
+
 // HandleConcFactor parses a factor name and value and returns an antha concentration.
 // If the value cannot be converted to a valid concentration an error is returned.
 // If the header contains a valid concentration unit a number can be specified as the value.
@@ -112,7 +121,7 @@ func HandleComponentWithConcentration(ctx context.Context, header string, value 
 
 	if err == nil {
 		// continue
-	} else if err == inventory.ErrUnknownType {
+	} else if strings.Contains(err.Error(), inventory.ErrUnknownType.Error()) {
 		component, err = inventory.NewComponent(ctx, inventory.WaterType)
 		if err != nil {
 			return
@@ -207,7 +216,7 @@ func HandleLHComponentFactor(ctx context.Context, header string, value interface
 		return component, nil
 	}
 
-	if err == inventory.ErrUnknownType {
+	if strings.Contains(err.Error(), inventory.ErrUnknownType.Error()) {
 		component, err = inventory.NewComponent(ctx, inventory.WaterType)
 		component.CName = str
 		return component, err

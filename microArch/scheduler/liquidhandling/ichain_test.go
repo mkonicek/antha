@@ -19,7 +19,7 @@ func TestIChain(t *testing.T) {
 		cmp.ID = k
 
 		ins.AddComponent(cmp)
-		ins.Result = wtype.NewLHComponent()
+		ins.AddResult(wtype.NewLHComponent())
 		chain.Add(ins)
 	}
 }
@@ -52,7 +52,7 @@ func TestIChain2(t *testing.T) {
 		if i != len(s)-1 {
 			ins.AddProduct(cmps[i+1])
 		} else {
-			ins.Result = wtype.NewLHComponent()
+			ins.AddResult(wtype.NewLHComponent())
 		}
 		chain.Add(ins)
 	}

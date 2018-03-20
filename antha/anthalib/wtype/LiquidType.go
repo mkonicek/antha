@@ -18,7 +18,7 @@ func PolicyNameFromString(s string) PolicyName {
 	return PolicyName(s)
 }
 
-type LiquidType string
+type LiquidType string // liqType
 
 func (l LiquidType) String() (PolicyName, error) {
 	return LiquidTypeName(l)
@@ -26,35 +26,77 @@ func (l LiquidType) String() (PolicyName, error) {
 
 type liqType struct {
 	Nm     string
-	Policy LHPolicy
-	Rules  map[string]LHPolicyRule // map using LHPolicyRule.Name as key, not a slice in order to be consistent with LHPolicyRuleSet
+	Policy *LHPolicy
+	Rules  *map[string]LHPolicyRule // map using LHPolicyRule.Name as key, not a slice in order to be consistent with LHPolicyRuleSet
 }
 
-const DefaultLHPolicy = LTDefault
+var DefaultLHPolicy = LTDefault
 
-const (
-	LTNIL             LiquidType = "nil"
-	LTWater           LiquidType = "water"
-	LTDefault         LiquidType = "default"
-	LTCulture         LiquidType = "culture"
-	LTProtoplasts     LiquidType = "protoplasts"
-	LTDNA             LiquidType = "dna"
-	LTDNAMIX          LiquidType = "dna_mix"
-	LTProtein         LiquidType = "protein"
-	LTMultiWater      LiquidType = "multiwater"
-	LTLoad            LiquidType = "load"
-	LTVISCOUS         LiquidType = "viscous"
-	LTPEG             LiquidType = "peg"
-	LTPAINT           LiquidType = "paint"
-	LTNeedToMix       LiquidType = "NeedToMix"
-	LTPostMix         LiquidType = "PostMix"
-	LTload            LiquidType = "load"
-	LTGlycerol        LiquidType = "glycerol"
-	LTPLATEOUT        LiquidType = "plateout"
-	LTDetergent       LiquidType = "detergent"
-	LTCOLONY          LiquidType = "colony"
-	LTNSrc            LiquidType = "nitrogen_source"
-	InvalidPolicyName LiquidType = "InvalidPolicyName"
+var (
+	/*
+		LTNIL             = LiquidType{Nm: "nil"}
+		LTWater           = LiquidType{Nm: "water"}
+		LTDefault         = LiquidType{Nm: "default"}
+		LTCulture         = LiquidType{Nm: "culture"}
+		LTProtoplasts     = LiquidType{Nm: "protoplasts"}
+		LTDNA             = LiquidType{Nm: "dna"}
+		LTDNAMIX          = LiquidType{Nm: "dna_mix"}
+		LTProtein         = LiquidType{Nm: "protein"}
+		LTMultiWater      = LiquidType{Nm: "multiwater"}
+		LTLoad            = LiquidType{Nm: "load"}
+		LTVISCOUS         = LiquidType{Nm: "viscous"}
+		LTPEG             = LiquidType{Nm: "peg"}
+		LTPAINT           = LiquidType{Nm: "paint"}
+		LTNeedToMix       = LiquidType{Nm: "NeedToMix"}
+		LTPostMix         = LiquidType{Nm: "PostMix"}
+		LTload            = LiquidType{Nm: "load"}
+		LTGlycerol        = LiquidType{Nm: "glycerol"}
+		LTPLATEOUT        = LiquidType{Nm: "plateout"}
+		LTDetergent       = LiquidType{Nm: "detergent"}
+		LTCOLONY          = LiquidType{Nm: "colony"}
+		LTNSrc            = LiquidType{Nm: "nitrogen_source"}
+		InvalidPolicyName = LiquidType{Nm: "InvalidPolicyName"}
+		LTSmartMix        = LiquidType{Nm: "SmartMix"}
+		LTPreMix          = LiquidType{Nm: "PreMix"}
+		LTDISPENSEABOVE   = LiquidType{Nm: "DispenseAboveLiquid"}
+		LTMegaMix         = LiquidType{Nm: "MegaMix"}
+		LTDoNotMix        = LiquidType{Nm: "DoNotMix"}
+		LTDNACELLSMIX     = LiquidType{Nm: "dna_cells_mix"}
+		LTloadwater       = LiquidType{Nm: "loadwater"}
+	*/
+	//
+	LTNIL             = LiquidType("nil")
+	LTWater           = LiquidType("water")
+	LTDefault         = LiquidType("default")
+	LTCulture         = LiquidType("culture")
+	LTProtoplasts     = LiquidType("protoplasts")
+	LTDNA             = LiquidType("dna")
+	LTDNAMIX          = LiquidType("dna_mix")
+	LTProtein         = LiquidType("protein")
+	LTMultiWater      = LiquidType("multiwater")
+	LTLoad            = LiquidType("load")
+	LTVISCOUS         = LiquidType("viscous")
+	LTPEG             = LiquidType("peg")
+	LTPAINT           = LiquidType("paint")
+	LTNeedToMix       = LiquidType("NeedToMix")
+	LTPostMix         = LiquidType("PostMix")
+	LTload            = LiquidType("load")
+	LTGlycerol        = LiquidType("glycerol")
+	LTPLATEOUT        = LiquidType("plateout")
+	LTDetergent       = LiquidType("detergent")
+	LTCOLONY          = LiquidType("colony")
+	LTNSrc            = LiquidType("nitrogen_source")
+	InvalidPolicyName = LiquidType("InvalidPolicyName")
+	LTSmartMix        = LiquidType("SmartMix")
+	LTPreMix          = LiquidType("PreMix")
+	LTDISPENSEABOVE   = LiquidType("DispenseAboveLiquid")
+	LTMegaMix         = LiquidType("MegaMix")
+	LTDoNotMix        = LiquidType("DoNotMix")
+	LTDNACELLSMIX     = LiquidType("dna_cells_mix")
+	LTloadwater       = LiquidType("loadwater")
+
+	//
+
 	/*LTGlycerol
 	LTEthanol
 	LTDetergent
@@ -62,14 +104,14 @@ const (
 	LTProtein
 	LTDNA
 	LTload
-	LTDoNotMix
-	LTloadwater
+
+
 	LTNeedToMix
-	LTPreMix
+
 	LTPostMix
 	LTVISCOUS
 	LTPAINT
-	LTDISPENSEABOVE
+
 	LTDISPENSEABOVEMULTI
 	LTPEG
 	LTProtoplasts
@@ -84,9 +126,9 @@ const (
 	LTMultiWater
 	LTCSrc
 	LTNSrc
-	LTMegaMix
+
 	LTSolvent
-	LTSmartMix*/
+	*/
 )
 
 func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
@@ -182,74 +224,75 @@ func LiquidTypeName(lt LiquidType) (PolicyName, error) {
 
 	return PolicyName(lt), nil
 	/*
-		match, str := liquidtype.StringFromLiquidTypeNumber(int(lt))
+				match, str := liquidtype.StringFromLiquidTypeNumber(int(lt))
 
-		if match {
-			panic("invalid policy int")
-			return PolicyName(str), nil
-		}
+				if match {
+					panic("invalid policy int")
+					return PolicyName(str), nil
+				}
 
-		switch lt {
-		case LTWater:
-			return "water", nil
-		case LTGlycerol:
-			return "glycerol", nil
-		case LTEthanol:
-			return "ethanol", nil
-		case LTDetergent:
-			return "detergent", nil
-		case LTCulture:
-			return "culture", nil
-		case LTCulutureReuse:
-			return "culturereuse", nil
-		case LTProtein:
-			return "protein", nil
-		case LTDNA:
-			return "dna", nil
-		case LTload:
-			return "load", nil
-		case LTDoNotMix:
-			return "DoNotMix", nil
-		case LTloadwater:
-			return "loadwater", nil
-		case LTNeedToMix:
-			return "NeedToMix", nil
-		case LTPreMix:
-			return "PreMix", nil
-		case LTPostMix:
-			return "PostMix", nil
-		case LTPAINT:
-			return "Paint", nil
-		case LTDISPENSEABOVE:
-			return "DispenseAboveLiquid", nil
-		case LTProtoplasts:
-			return "Protoplasts", nil
-		case LTPEG:
-			return "PEG", nil
-		case LTDNAMIX:
-			return "dna_mix", nil
-		case LTPLATEOUT:
-			return "plateout", nil
-		case LTCOLONY:
-			return "colony", nil
-		case LTCOLONYMIX:
-			return "colonymix", nil
-		case LTDNACELLSMIX:
-			return "dna_cells_mix", nil
-		case LTMultiWater:
-			return "multiwater", nil
-		case LTCSrc:
-			return "carbon_source", nil
-		case LTNSrc:
-			return "nitrogen_source", nil
-		case LTMegaMix:
-			return "MegaMix", nil
-		case LTSmartMix:
-			return "SmartMix", nil
-		default:
-			panic("invalid policy int")
-			return "nil", fmt.Errorf("no policy %v", lt)
-		}
+		<<<<<<< HEAD
+				switch lt {
+				case LTWater:
+					return "water", nil
+				case LTGlycerol:
+					return "glycerol", nil
+				case LTEthanol:
+					return "ethanol", nil
+				case LTDetergent:
+					return "detergent", nil
+				case LTCulture:
+					return "culture", nil
+				case LTCulutureReuse:
+					return "culturereuse", nil
+				case LTProtein:
+					return "protein", nil
+				case LTDNA:
+					return "dna", nil
+				case LTload:
+					return "load", nil
+				case LTDoNotMix:
+					return "DoNotMix", nil
+				case LTloadwater:
+					return "loadwater", nil
+				case LTNeedToMix:
+					return "NeedToMix", nil
+				case LTPreMix:
+					return "PreMix", nil
+				case LTPostMix:
+					return "PostMix", nil
+				case LTPAINT:
+					return "Paint", nil
+				case LTDISPENSEABOVE:
+					return "DispenseAboveLiquid", nil
+				case LTProtoplasts:
+					return "Protoplasts", nil
+				case LTPEG:
+					return "PEG", nil
+				case LTDNAMIX:
+					return "dna_mix", nil
+				case LTPLATEOUT:
+					return "plateout", nil
+				case LTCOLONY:
+					return "colony", nil
+				case LTCOLONYMIX:
+					return "colonymix", nil
+				case LTDNACELLSMIX:
+					return "dna_cells_mix", nil
+				case LTMultiWater:
+					return "multiwater", nil
+				case LTCSrc:
+					return "carbon_source", nil
+				case LTNSrc:
+					return "nitrogen_source", nil
+				case LTMegaMix:
+					return "MegaMix", nil
+				case LTSmartMix:
+					return "SmartMix", nil
+				default:
+					panic("invalid policy int")
+					return "nil", fmt.Errorf("no policy %v", lt)
+				}
 	*/
 }
 

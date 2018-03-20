@@ -51,9 +51,9 @@ type uiMixerConfig struct {
 	MaxPlates                         float64  `json:"maxPlates,omitempty"`
 	MaxWells                          float64  `json:"maxWells,omitempty"`
 	ResidualVolumeWeight              float64  `json:"residualVolumeWeight,omitempty"`
-	InputPlateType                    []string `json:"inputPlateTypes"`
-	OutputPlateType                   []string `json:"outputPlateTypes"`
-	TipType                           []string `json:"tipTypes"`
+	InputPlateTypes                   []string `json:"inputPlateTypes"`
+	OutputPlateTypes                  []string `json:"outputPlateTypes"`
+	TipTypes                          []string `json:"tipTypes"`
 	PlanningVersion                   string   `json:"planningVersion"`
 	DriverSpecificInputPreferences    []string `json:"driverSpecificInputPreferences"`
 	DriverSpecificOutputPreferences   []string `json:"driverSpecificOutputPreferences"`
@@ -90,9 +90,9 @@ func convertConfigToUI(in *mixer.Opt) *uiMixerConfig {
 		MaxPlates:                         getFloat(in.MaxPlates),
 		MaxWells:                          getFloat(in.MaxWells),
 		ResidualVolumeWeight:              getFloat(in.ResidualVolumeWeight),
-		InputPlateType:                    getSlice(in.InputPlateType),
-		OutputPlateType:                   getSlice(in.OutputPlateType),
-		TipType:                           getSlice(in.TipType),
+		InputPlateTypes:                   getSlice(in.InputPlateTypes),
+		OutputPlateTypes:                  getSlice(in.OutputPlateTypes),
+		TipTypes:                          getSlice(in.TipTypes),
 		PlanningVersion:                   in.PlanningVersion,
 		DriverSpecificInputPreferences:    getSlice(in.DriverSpecificInputPreferences),
 		DriverSpecificOutputPreferences:   getSlice(in.DriverSpecificOutputPreferences),

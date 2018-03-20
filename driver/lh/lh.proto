@@ -525,6 +525,7 @@ message LHTipMessage {
 	bool Arg_4 = 4;
 	VolumeMessage Arg_5 = 5;
 	VolumeMessage Arg_6 = 6;
+    bool Arg_7 = 7;
 }
 message LHPlateMessage {
 	string Arg_1 = 1;

@@ -13,9 +13,10 @@ const (
 	LHIMIX
 	LHIWAI
 	LHIPRM
+	LHISPL
 )
 
-var InsNames = []string{"END", "MIX", "WAIT", "PROMPT"}
+var InsNames = []string{"END", "MIX", "WAIT", "PROMPT", "SPLIT"}
 
 func InsType(i int) string {
 
@@ -31,7 +32,6 @@ func InsType(i int) string {
 //  high-level instruction to a liquid handler
 type LHInstruction struct {
 	ID               string
-	ProductID        string
 	BlockID          BlockID
 	SName            string
 	Order            int
@@ -45,7 +45,7 @@ type LHInstruction struct {
 	Conc             float64
 	Tvol             float64
 	Majorlayoutgroup int
-	Result           *LHComponent
+	Results          []*LHComponent
 	gen              int
 	PlateName        string
 	OutPlate         *LHPlate
@@ -54,7 +54,17 @@ type LHInstruction struct {
 }
 
 func (ins LHInstruction) String() string {
-	return fmt.Sprint(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductID)
+	return fmt.Sprint(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
+}
+
+func (lhi *LHInstruction) ProductIDs() []string {
+	r := make([]string, 0, len(lhi.Results))
+
+	for _, p := range lhi.Results {
+		r = append(r, p.ID)
+	}
+
+	return r
 }
 
 func (lhi *LHInstruction) GetPlateType() string {
@@ -63,6 +73,8 @@ func (lhi *LHInstruction) GetPlateType() string {
 	} else {
 		return lhi.Platetype
 	}
+
+	return ""
 }
 
 // privatised in favour of specific instruction constructors
@@ -87,6 +99,12 @@ func NewLHPromptInstruction() *LHInstruction {
 	return lhi
 }
 
+func NewLHSplitInstruction() *LHInstruction {
+	lhi := newLHInstruction()
+	lhi.Type = LHISPL
+	return lhi
+}
+
 func (inst *LHInstruction) InsType() string {
 	return InsType(inst.Type)
 }
@@ -96,9 +114,12 @@ func (inst *LHInstruction) GetID() string {
 	return inst.ID
 }
 
+func (ins *LHInstruction) AddResult(cmp *LHComponent) {
+	ins.AddProduct(cmp)
+}
+
 func (inst *LHInstruction) AddProduct(cmp *LHComponent) {
-	inst.Result = cmp
-	inst.ProductID = cmp.ID
+	inst.Results = append(inst.Results, cmp)
 }
 
 func (inst *LHInstruction) AddComponent(cmp *LHComponent) {
@@ -215,8 +236,9 @@ func (ins *LHInstruction) AdjustVolumesBy(r float64) {
 	for _, c := range ins.Components {
 		c.Vol *= r
 	}
-
-	ins.Result.Vol *= r
+	for _, rslt := range ins.Results {
+		rslt.Vol *= r
+	}
 }
 
 func (ins *LHInstruction) InputVolumeMap(addition wunit.Volume) map[string]wunit.Volume {

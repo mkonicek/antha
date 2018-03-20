@@ -813,7 +813,7 @@ func MegaMixPolicy() wtype.LHPolicy {
 }
 
 func MakeDefaultPolicy() wtype.LHPolicy {
-	defaultpolicy := make(wtype.LHPolicy, 27)
+	defaultpolicy := make(wtype.LHPolicy, 29)
 	defaultpolicy["MIX_VOLUME_OVERRIDE_TIP_MAX"] = false
 	defaultpolicy["OFFSETZADJUST"] = 0.0
 	defaultpolicy["TOUCHOFF"] = false
@@ -839,6 +839,8 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 	defaultpolicy["DONT_BE_DIRTY"] = true
 	defaultpolicy["POST_MIX_Z"] = 0.5
 	defaultpolicy["PRE_MIX_Z"] = 0.5
+	defaultpolicy["LLFABOVESURFACE"] = 3.0 //distance above liquid level for dispensing with LiqudLevelFollowing
+	defaultpolicy["LLFBELOWSURFACE"] = 3.0 //distance below liquid level for aspirating with LLF
 	defaultpolicy["DESCRIPTION"] = "Default mix Policy. Blowout performed, no touch off, no mixing, tip reuse permitted for the same solution."
 
 	return defaultpolicy

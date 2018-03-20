@@ -297,6 +297,10 @@ func (tb *LHTipbox) Remove(sa []string) bool {
 	ar := WCArrayFromStrings(sa)
 
 	for _, wc := range ar {
+		if wc.IsZero() {
+			continue
+		}
+
 		if wc.X < 0 {
 			continue
 		}

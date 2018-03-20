@@ -3,7 +3,6 @@ package human
 import (
 	"context"
 	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
@@ -116,6 +115,20 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 	case *ast.AwaitInst:
 		insts = append(insts, &target.Prompt{
 			Message: fmt.Sprintf("Now get some data for %s %s", cmd.Tags, cmd.AwaitID),
+		})
+
+	case *wtype.PRInstruction:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "plate-read",
+			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
+		})
+
+	case *ast.QPCRInstruction:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "QPCR",
+			Details: fmt.Sprintf("QPCR request, definition %s, barcode %s", cmd.Definition, cmd.Barcode),
 		})
 
 	default:

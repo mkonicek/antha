@@ -35,6 +35,11 @@ type HandleInst struct {
 	Calls    []driver.Call
 }
 
+// GetID returns a custom key for generic grouping
+func (h *HandleInst) GetID() string {
+	return h.Group
+}
+
 // A PromptInst is a high-level command to prompt a human
 type PromptInst struct {
 	Message string

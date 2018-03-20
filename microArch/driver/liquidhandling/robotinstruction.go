@@ -86,13 +86,14 @@ const (
 	MBL            // MOV BLO	    ""       ""
 	RAP            // RemoveAllPlates
 	APT            // AddPlateTo
+	SPB            // SplitBlock
 )
 
 func InstructionTypeName(ins RobotInstruction) string {
 	return Robotinstructionnames[ins.InstructionType()]
 }
 
-var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT"}
+var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT", "SPB"}
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
 
@@ -138,6 +139,11 @@ func InsToString(ins RobotInstruction) string {
 			ss = concatintarray(p.([]int))
 		case int:
 			ss = fmt.Sprintf("%d", p.(int))
+		case []bool:
+			if len(p.([]bool)) == 0 {
+				continue
+			}
+			ss = concatboolarray(p.([]bool))
 		}
 
 		s += str + ": " + ss + " "
@@ -197,6 +203,20 @@ func concatintarray(a []int) string {
 
 	for i, s := range a {
 		r += fmt.Sprintf("%d", s)
+		if i < len(a)-1 {
+			r += ","
+		}
+	}
+
+	return r
+
+}
+
+func concatboolarray(a []bool) string {
+	r := ""
+
+	for i, s := range a {
+		r += fmt.Sprintf("%t", s)
 		if i < len(a)-1 {
 			r += ","
 		}

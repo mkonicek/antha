@@ -1188,6 +1188,10 @@ func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
 			}
 			return 'A' <= pos[0] && pos[0] <= 'D' && '0' <= pos[1] && pos[1] <= '9'
 		}
+	} else if lhp.Mnfr == "Labcyte" {
+		checkFn = func(pos string) bool {
+			return false
+		}
 	}
 
 	if checkFn == nil {

@@ -461,7 +461,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	// if the liquid handler is of the high-level type we cut the tree here
 	// after ensuring that the transfers are within limitations of the liquid handler
 
-	if prms.LHType == HLLiquidHandler {
+	if prms.GetLHType() == HLLiquidHandler {
 		err := ins.ReviseTransferVolumes(prms)
 
 		if err != nil {

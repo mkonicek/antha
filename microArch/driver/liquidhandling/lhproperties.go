@@ -1042,7 +1042,7 @@ func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (we
 func (lhp *LHProperties) GetMaterialType() material.MaterialType {
 	return lhp.MaterialType
 }
-func (lhp *LHProperties) GetTimer() *LHTimer {
+func (lhp *LHProperties) GetTimer() LHTimer {
 	return GetTimerFor(lhp.Mnfr, lhp.Model)
 }
 

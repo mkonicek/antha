@@ -203,7 +203,7 @@ func (w *LHWell) Add(c *LHComponent) {
 	if cv.GreaterThan(mv) {
 		// could make this fatal but we don't track state well enough
 		// for that to be worthwhile
-		logger.Debug("WARNING: OVERFULL WELL AT ", w.Crds)
+		logger.Debug(fmt.Sprintf("WARNING: OVERFULL WELL AT %s CurrVol %s MaxVol %s", w.Crds, cv.ToString(), mv.ToString()))
 	}
 
 	w.Contents().Mix(c)

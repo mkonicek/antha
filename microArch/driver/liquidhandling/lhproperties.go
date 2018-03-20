@@ -389,6 +389,15 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 
 // constructor for the above
 func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype string, layout map[string]wtype.Coordinates) *LHProperties {
+	// assert validity of lh and tip types
+
+	if !IsValidLiquidHandlerType(lhtype) {
+		panic(fmt.Sprintf("Invalid liquid handling type requested: %s", lhtype))
+	}
+	if !IsValidTipType(tiptype) {
+		panic(fmt.Sprintf("Invalid tip usage type requested: %s", tiptype))
+	}
+
 	var lhp LHProperties
 
 	lhp.ID = wtype.GetUUID()

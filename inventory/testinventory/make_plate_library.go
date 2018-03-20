@@ -972,8 +972,8 @@ func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 
 	bottomh := 0.61 // N: bottom of well to resting plane
 
-	minVolume := 0.5
-	maxVolume := 55.0
+	minVolume := 4
+	maxVolume := 40.0
 
 	volUnit := "ul"
 

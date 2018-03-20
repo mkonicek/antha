@@ -44,7 +44,7 @@ type mt struct {
 func printMat(mat [][]mt) {
 	fmt.Println("*****")
 	for i, v := range mat {
-		for j, _ := range v {
+		for j := range v {
 			fmt.Printf("(%d,%d):%-5.1f:%-1d:%-5.1f ", i, j, mat[i][j].Sc, mat[i][j].Bk, mat[i][j].Vl)
 		}
 

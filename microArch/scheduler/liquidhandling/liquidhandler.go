@@ -240,7 +240,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 			lastWell = ins.GetParameter("WELLTO").([]string)
 		} else if ins.InstructionType() == liquidhandling.ASP {
-			for i, _ := range lastPlate {
+			for i := range lastPlate {
 				if i >= len(lastWell) {
 					break
 				}
@@ -340,7 +340,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
 
 	pidm := make(map[string]string, len(this.Properties.Plates))
-	for pos, _ := range this.Properties.Plates {
+	for pos := range this.Properties.Plates {
 		p1, ok1 := this.Properties.Plates[pos]
 		p2, ok2 := this.FinalProperties.Plates[pos]
 

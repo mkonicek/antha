@@ -368,7 +368,7 @@ func (lhpr *LHPolicyRuleSet) IsEqualTo(lhp2 *LHPolicyRuleSet) bool {
 		return false
 	}
 
-	for name, _ := range lhpr.Rules {
+	for name := range lhpr.Rules {
 		p1, ok1 := lhpr.Policies[name]
 		p2, ok2 := lhp2.Policies[name]
 
@@ -406,7 +406,7 @@ func (lhpr *LHPolicyRuleSet) AddRule(rule LHPolicyRule, consequent LHPolicy) {
 
 func CloneLHPolicyRuleSet(parent *LHPolicyRuleSet) *LHPolicyRuleSet {
 	child := NewLHPolicyRuleSet()
-	for k, _ := range parent.Rules {
+	for k := range parent.Rules {
 		child.Policies[k] = parent.Policies[k]
 		child.Rules[k] = parent.Rules[k]
 	}

@@ -73,7 +73,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 
 	var sortedKeys []string
 
-	for k, _ := range approvedunits {
+	for k := range approvedunits {
 		sortedKeys = append(sortedKeys, k)
 	}
 
@@ -184,7 +184,7 @@ func ParseVolume(volstring string) (volume Volume, err error) {
 
 	var sortedKeys []string
 
-	for k, _ := range approvedunits {
+	for k := range approvedunits {
 		sortedKeys = append(sortedKeys, k)
 	}
 

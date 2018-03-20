@@ -177,7 +177,7 @@ func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []str
 		allthingstoavoid = append(otherseqstoavoid, thingtoreplace)
 		allthingstoavoid = search.RemoveDuplicateStrings(allthingstoavoid)
 
-		for i, _ := range thingtoreplace {
+		for i := range thingtoreplace {
 
 			replacementnucleotide := wtype.Comp(string(thingtoreplace[i]))
 			replacement := strings.Replace(thingtoreplace, string(thingtoreplace[i]), replacementnucleotide, 1)
@@ -190,7 +190,7 @@ func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []str
 
 		}
 
-		for i, _ := range thingtoreplace {
+		for i := range thingtoreplace {
 
 			replacementnucleotide := wtype.Comp(thingtoreplace[i : i+1])
 			replacement := strings.Replace(thingtoreplace, thingtoreplace[i:i+1], replacementnucleotide, 1)

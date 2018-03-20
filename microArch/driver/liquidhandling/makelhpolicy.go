@@ -321,7 +321,7 @@ func AvailablePolicies() (policies []string) {
 	policies = make([]string, 0)
 	policymap := MakePolicies()
 
-	for key, _ := range policymap {
+	for key := range policymap {
 		policies = append(policies, key)
 	}
 	return

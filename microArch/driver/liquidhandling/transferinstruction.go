@@ -511,7 +511,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 			// now set the vols for the transfer and remove this from the instruction's volume
 
-			for i, _ := range vols {
+			for i := range vols {
 				vols[i] = wunit.CopyVolume(maxvol)
 			}
 

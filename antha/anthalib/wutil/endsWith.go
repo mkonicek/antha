@@ -30,7 +30,7 @@ func EndsWith(s, sfx string) bool {
 	l := len(s)
 	ls := len(sfx)
 
-	for i, _ := range sfx {
+	for i := range sfx {
 		if s[l-ls+i] != sfx[i] {
 			return false
 		}

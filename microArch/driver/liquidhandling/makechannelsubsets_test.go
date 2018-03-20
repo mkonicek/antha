@@ -41,7 +41,7 @@ func TestMakeChannelSubsetOneSubset(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	expected := []TipSubset{TipSubset{Mask: []bool{true, true, true, true, false, true, true, false}, Channel: prm, TipType: "tip"}}
+	expected := []TipSubset{{Mask: []bool{true, true, true, true, false, true, true, false}, Channel: prm, TipType: "tip"}}
 
 	compareOutput(t, ss, expected)
 }
@@ -58,7 +58,7 @@ func TestMakeChannelSubsetTwoSubsets(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	expected := []TipSubset{TipSubset{Mask: []bool{true, true, false, true, false, true, true, false}, Channel: prm, TipType: "tip"}, TipSubset{Mask: []bool{false, false, true, false, false, false, false, false}, Channel: prm, TipType: "tip2"}}
+	expected := []TipSubset{{Mask: []bool{true, true, false, true, false, true, true, false}, Channel: prm, TipType: "tip"}, {Mask: []bool{false, false, true, false, false, false, false, false}, Channel: prm, TipType: "tip2"}}
 
 	compareOutput(t, ss, expected)
 }
@@ -76,7 +76,7 @@ func TestMakeChannelSubsetTwoSubsetsParams(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	expected := []TipSubset{TipSubset{Mask: []bool{true, true, false, true, false, true, true, false}, Channel: prm, TipType: "tip"}, TipSubset{Mask: []bool{false, false, true, false, false, false, false, false}, Channel: prm2, TipType: "tip"}}
+	expected := []TipSubset{{Mask: []bool{true, true, false, true, false, true, true, false}, Channel: prm, TipType: "tip"}, {Mask: []bool{false, false, true, false, false, false, false, false}, Channel: prm2, TipType: "tip"}}
 
 	compareOutput(t, ss, expected)
 }

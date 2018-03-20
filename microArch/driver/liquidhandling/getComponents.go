@@ -181,7 +181,7 @@ func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) 
 func collateDifference(a, b, c map[string]wunit.Volume) string {
 	s := ""
 
-	for k, _ := range a {
+	for k := range a {
 		_, ok := b[k]
 
 		if !ok {

@@ -46,8 +46,8 @@ var (
 // add filter registry option
 var (
 	iGemRegistryCodes = map[string][]string{
-		"ORIGIN":    []string{"Origin", "ori"},
-		"SELECTION": []string{"resistance"},
+		"ORIGIN":    {"Origin", "ori"},
+		"SELECTION": {"resistance"},
 	}
 )
 

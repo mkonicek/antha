@@ -66,30 +66,30 @@ func Illegalnucleotides(fwdsequence wtype.DNASequence) (pass bool, illegalfound 
 // gaps are represented by - or .
 //
 var WobbleMap = map[string][]string{
-	"A": []string{"A"},
-	"T": []string{"T"},
-	"U": []string{"U"},
-	"C": []string{"C"},
-	"G": []string{"G"},
-	"a": []string{"A"},
-	"t": []string{"T"},
-	"u": []string{"U"},
-	"c": []string{"C"},
-	"g": []string{"G"},
-	"Y": []string{"C", "T"},
-	"R": []string{"A", "G"},
-	"W": []string{"A", "T"},
-	"S": []string{"G", "C"},
-	"K": []string{"G", "T"},
-	"M": []string{"A", "C"},
-	"D": []string{"A", "G", "T"},
-	"V": []string{"A", "C", "G"},
-	"H": []string{"A", "C", "T"},
-	"B": []string{"C", "G", "T"},
-	"N": []string{"A", "T", "C", "G"},
-	"X": []string{"A", "T", "C", "G"},
-	"-": []string{"-", "."},
-	".": []string{"-", "."},
+	"A": {"A"},
+	"T": {"T"},
+	"U": {"U"},
+	"C": {"C"},
+	"G": {"G"},
+	"a": {"A"},
+	"t": {"T"},
+	"u": {"U"},
+	"c": {"C"},
+	"g": {"G"},
+	"Y": {"C", "T"},
+	"R": {"A", "G"},
+	"W": {"A", "T"},
+	"S": {"G", "C"},
+	"K": {"G", "T"},
+	"M": {"A", "C"},
+	"D": {"A", "G", "T"},
+	"V": {"A", "C", "G"},
+	"H": {"A", "C", "T"},
+	"B": {"C", "G", "T"},
+	"N": {"A", "T", "C", "G"},
+	"X": {"A", "T", "C", "G"},
+	"-": {"-", "."},
+	".": {"-", "."},
 }
 
 // Wobble returns an array of sequence options, as strings.
@@ -121,7 +121,7 @@ func allCombinations(arr [][]string) []string {
 	}
 
 	results := make([]string, 0)
-	allRem := allCombinations(arr[1:len(arr)])
+	allRem := allCombinations(arr[1:])
 	for i := 0; i < len(allRem); i++ {
 		for j := 0; j < len(arr[0]); j++ {
 			x := arr[0][j] + allRem[i]

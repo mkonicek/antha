@@ -1386,15 +1386,15 @@ func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.A
 		Params: &ast.FieldList{
 			Opening: d.Pos(),
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: identList("_ctx"),
 					Type:  mustParseExpr("context.Context"),
 				},
-				&ast.Field{
+				{
 					Names: identList("_input"),
 					Type:  mustParseExpr("*" + modelPackage + ".Input"),
 				},
-				&ast.Field{
+				{
 					Names: identList("_output"),
 					Type:  mustParseExpr("*" + modelPackage + ".Output"),
 				},

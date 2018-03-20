@@ -82,7 +82,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		}
 
 		if len(input_plate_order) < len(input_plates) {
-			for id, _ := range input_plates {
+			for id := range input_plates {
 				if !isInStrArr(id, input_plate_order) {
 					input_plate_order = append(input_plate_order, id)
 				}

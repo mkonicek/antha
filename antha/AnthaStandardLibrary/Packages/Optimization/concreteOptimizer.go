@@ -389,7 +389,7 @@ func endsOK(sa [][]string, m map[string]bool, noTransitions bool) bool {
 }
 
 func findTransition(s string, m map[string]bool) bool {
-	for k, _ := range m {
+	for k := range m {
 		if Transition(k, s) {
 			return true
 		}

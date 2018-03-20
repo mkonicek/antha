@@ -15,7 +15,7 @@ type mixComponentlistTest struct {
 }
 
 var tests []mixComponentlistTest = []mixComponentlistTest{
-	mixComponentlistTest{
+	{
 		sample1: ComponentListSample{
 			ComponentList: ComponentList{
 				Components: map[string]wunit.Concentration{
@@ -41,7 +41,7 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 			},
 		},
 	},
-	mixComponentlistTest{
+	{
 		sample1: ComponentListSample{
 			ComponentList: ComponentList{
 				Components: map[string]wunit.Concentration{
@@ -66,7 +66,7 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 			},
 		},
 	},
-	mixComponentlistTest{
+	{
 		sample1: ComponentListSample{
 			ComponentList: ComponentList{
 				Components: map[string]wunit.Concentration{
@@ -91,7 +91,7 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 			},
 		},
 	},
-	mixComponentlistTest{
+	{
 		sample1: ComponentListSample{
 			ComponentList: ComponentList{
 				Components: map[string]wunit.Concentration{
@@ -127,7 +127,7 @@ type serialComponentlistTest struct {
 }
 
 var serialTests []serialComponentlistTest = []serialComponentlistTest{
-	serialComponentlistTest{
+	{
 		sample1: ComponentListSample{
 			ComponentList: ComponentList{
 				Components: map[string]wunit.Concentration{
@@ -160,7 +160,7 @@ var serialTests []serialComponentlistTest = []serialComponentlistTest{
 			},
 		},
 	},
-	serialComponentlistTest{
+	{
 		sample1: ComponentListSample{
 			ComponentList: ComponentList{
 				Components: map[string]wunit.Concentration{

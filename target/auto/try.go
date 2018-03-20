@@ -52,7 +52,7 @@ func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interf
 	default:
 		h := handler.New(
 			[]ast.NameValue{
-				ast.NameValue{
+				{
 					Name:  "antha.driver.v1.TypeReply.type",
 					Value: reply.Type,
 				},

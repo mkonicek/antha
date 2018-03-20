@@ -47,17 +47,17 @@ func (a *ShakerIncubator) carrierClose() driver.Call {
 
 func (a *ShakerIncubator) reset() []driver.Call {
 	return []driver.Call{
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/ShakeStop",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
 		},
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/TemperatureReset",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
 		},
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/CarrierOpen",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},

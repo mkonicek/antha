@@ -275,7 +275,7 @@ func TestBeforeVsAfter(t *testing.T) {
 		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
 	}
 
-	for pos, _ := range lh.Properties.PosLookup {
+	for pos := range lh.Properties.PosLookup {
 
 		id1, ok1 := lh.Properties.PosLookup[pos]
 		id2, ok2 := lh.FinalProperties.PosLookup[pos]

@@ -55,26 +55,26 @@ var (
 )
 
 var tests1 = []concConversionTest{
-	concConversionTest{StockConc: kgPerL01, TargetConc: gPerL1, TotalVolume: ul100, VolumeNeeded: ul1},
-	concConversionTest{StockConc: gPerL100, TargetConc: gPerL1, TotalVolume: ul100, VolumeNeeded: ul1},
-	concConversionTest{StockConc: x100, TargetConc: x2, TotalVolume: ul100, VolumeNeeded: NewVolume(2.0, "ul")},
-	concConversionTest{StockConc: mMPerL1, TargetConc: uMPerL10, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
-	concConversionTest{StockConc: mPerL01, TargetConc: mMPerL1, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
-	concConversionTest{StockConc: mPerL01, TargetConc: uMPer0, TotalVolume: ul100, VolumeNeeded: l0, ExpectedErrMessage: "Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: 0.1 M/l; final concentration: 0 uM/l; volume set point: 100 ul"},
+	{StockConc: kgPerL01, TargetConc: gPerL1, TotalVolume: ul100, VolumeNeeded: ul1},
+	{StockConc: gPerL100, TargetConc: gPerL1, TotalVolume: ul100, VolumeNeeded: ul1},
+	{StockConc: x100, TargetConc: x2, TotalVolume: ul100, VolumeNeeded: NewVolume(2.0, "ul")},
+	{StockConc: mMPerL1, TargetConc: uMPerL10, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
+	{StockConc: mPerL01, TargetConc: mMPerL1, TotalVolume: ul100, VolumeNeeded: NewVolume(1.0, "ul")},
+	{StockConc: mPerL01, TargetConc: uMPer0, TotalVolume: ul100, VolumeNeeded: l0, ExpectedErrMessage: "Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: 0.1 M/l; final concentration: 0 uM/l; volume set point: 100 ul"},
 }
 
 var tests2 = []massConversionTest{
-	massConversionTest{Conc: NewConcentration(1.0, "g/L"), Mass: NewMass(1000.0, "mg"), Vol: NewVolume(1.0, "l"), Error: false},
-	massConversionTest{Conc: NewConcentration(1.0, "kg/L"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1.0, "l"), Error: false},
-	massConversionTest{Conc: NewConcentration(0.1, "mg/L"), Mass: NewMass(0.1, "mg"), Vol: NewVolume(1.0, "l"), Error: false},
-	massConversionTest{Conc: NewConcentration(100, "ng/ul"), Mass: NewMass(100, "ng"), Vol: NewVolume(1.0, "ul"), Error: false},
-	massConversionTest{Conc: NewConcentration(0, "g/l"), Mass: NewMass(0, "g"), Vol: NewVolume(1.0, "l"), Error: true},
+	{Conc: NewConcentration(1.0, "g/L"), Mass: NewMass(1000.0, "mg"), Vol: NewVolume(1.0, "l"), Error: false},
+	{Conc: NewConcentration(1.0, "kg/L"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1.0, "l"), Error: false},
+	{Conc: NewConcentration(0.1, "mg/L"), Mass: NewMass(0.1, "mg"), Vol: NewVolume(1.0, "l"), Error: false},
+	{Conc: NewConcentration(100, "ng/ul"), Mass: NewMass(100, "ng"), Vol: NewVolume(1.0, "ul"), Error: false},
+	{Conc: NewConcentration(0, "g/l"), Mass: NewMass(0, "g"), Vol: NewVolume(1.0, "l"), Error: true},
 }
 
 var tests3 = []densityConversionTest{
-	densityConversionTest{Density: NewDensity(1.0, "kg/m^3"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1000, "l")},
-	densityConversionTest{Density: NewDensity(1000.0, "kg/m^3"), Mass: NewMass(1.0, "g"), Vol: NewVolume(1, "ml")},
-	densityConversionTest{Density: NewDensity(1000.0, "kg/m^3"), Mass: NewMass(0.0, "g"), Vol: NewVolume(0, "l")},
+	{Density: NewDensity(1.0, "kg/m^3"), Mass: NewMass(1.0, "kg"), Vol: NewVolume(1000, "l")},
+	{Density: NewDensity(1000.0, "kg/m^3"), Mass: NewMass(1.0, "g"), Vol: NewVolume(1, "ml")},
+	{Density: NewDensity(1000.0, "kg/m^3"), Mass: NewMass(0.0, "g"), Vol: NewVolume(0, "l")},
 }
 
 func TestVolumeForTargetConcentration(t *testing.T) {

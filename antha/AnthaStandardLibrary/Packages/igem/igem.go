@@ -123,7 +123,7 @@ var (
 
 func validIGEMTypeOptions() string {
 	var options []string
-	for key, _ := range IgemTypeCodes {
+	for key := range IgemTypeCodes {
 		options = append(options, key)
 	}
 	return strings.Join(options, "\n")
@@ -394,7 +394,7 @@ func LookUp(parts []string) (parsedxml Rsbpml) {
 			var parsedxml Rsbpml
 			partsleft = partsleft - len(partslice)
 			if partsleft < 14 {
-				partslice = parts[len(parts)-partsleft : len(parts)]
+				partslice = parts[len(parts)-partsleft:]
 				parsedxml = Partpropertiesmini(partslice)
 
 				for _, part := range parsedxml.Partlist[0].Parts {

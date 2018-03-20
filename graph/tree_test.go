@@ -6,7 +6,7 @@ import (
 
 func TestIsTree(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b"},
+		"root": {"a", "b"},
 	})
 	if err := IsTree(g, "root"); err != nil {
 		t.Fatal(err)
@@ -15,9 +15,9 @@ func TestIsTree(t *testing.T) {
 
 func TestIsNotTree(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b"},
-		"a":    []string{"c", "d"},
-		"b":    []string{"d"},
+		"root": {"a", "b"},
+		"a":    {"c", "d"},
+		"b":    {"d"},
 	})
 	if err := IsTree(g, "root"); err == nil {
 		t.Fatal("found tree but did not expect one")
@@ -26,8 +26,8 @@ func TestIsNotTree(t *testing.T) {
 
 func TestIsNotTreeWhenHasCycle(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b"},
-		"a":    []string{"c", "root"},
+		"root": {"a", "b"},
+		"a":    {"c", "root"},
 	})
 	if err := IsTree(g, "root"); err == nil {
 		t.Fatal("found tree but did not expect one")
@@ -36,9 +36,9 @@ func TestIsNotTreeWhenHasCycle(t *testing.T) {
 
 func TestTreeVisit(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b"},
-		"a":    []string{"c", "d"},
-		"b":    []string{"e"},
+		"root": {"a", "b"},
+		"a":    {"c", "d"},
+		"b":    {"e"},
 	})
 	v := map[string]int{
 		"c": 4,

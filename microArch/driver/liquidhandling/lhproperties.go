@@ -127,7 +127,7 @@ func (p LHProperties) OrderedPositionNames() []string {
 	// canonical ordering
 
 	s := make([]string, 0, len(p.Positions))
-	for n, _ := range p.Positions {
+	for n := range p.Positions {
 		s = append(s, n)
 	}
 
@@ -738,7 +738,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 
 				if ok {
 					foundIt = true
-					for ix, _ := range wcarr {
+					for ix := range wcarr {
 						wc := wcarr[ix].FormatA1()
 						vl := varr[ix].Dup()
 						plateIDs[i] = append(plateIDs[i], p.ID)
@@ -836,7 +836,7 @@ func (lhp *LHProperties) legacyGetComponentsSingle(cmps []*wtype.LHComponent, ca
 
 					if ok {
 						foundIt = true
-						for ix, _ := range wcarr {
+						for ix := range wcarr {
 							wc := wcarr[ix].FormatA1()
 							vl := varr[ix].Dup()
 							plateIDs[i] = append(plateIDs[i], p.ID)

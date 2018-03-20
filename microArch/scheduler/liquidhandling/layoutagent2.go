@@ -451,7 +451,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 	// make sure the plate choices all have defined types
 
-	for i, _ := range s {
+	for i := range s {
 		if s[i].Platetype == "" {
 			s[i].Platetype = request.Output_platetypes[0].Type
 		}
@@ -694,7 +694,7 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 			}
 		}
 
-		for i, _ := range c.Assigned {
+		for i := range c.Assigned {
 			sID := c.Assigned[i]
 			well := ""
 			if i < len(c.Wells) {

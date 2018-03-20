@@ -422,7 +422,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		tvols := NewVolumeSet(ins.Prms.Multi)
 		//		vols := NewVolumeSet(ins.Prms.Multi)
 		fvols := NewVolumeSet(ins.Prms.Multi)
-		for i, _ := range ins.Volume[t] {
+		for i := range ins.Volume[t] {
 			fvols[i] = wunit.CopyVolume(ins.FVolume[t][i])
 			tvols[i] = wunit.CopyVolume(ins.TVolume[t][i])
 		}
@@ -1907,7 +1907,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ev, iwantmore := pol["EXTRA_ASP_VOLUME"]
 	if iwantmore {
 		extra_vol := ev.(wunit.Volume)
-		for i, _ := range aspins.Volume {
+		for i := range aspins.Volume {
 			aspins.Volume[i].Add(extra_vol)
 		}
 	}
@@ -2216,7 +2216,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		extra_vol := SafeGetVolume(pol, "EXTRA_DISP_VOLUME")
 		if extra_vol.GreaterThan(wunit.ZeroVolume()) {
-			for i, _ := range dspins.Volume {
+			for i := range dspins.Volume {
 				dspins.Volume[i].Add(extra_vol)
 			}
 		}

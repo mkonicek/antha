@@ -145,11 +145,11 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
 
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -198,11 +198,11 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
 
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -255,11 +255,11 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
 
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -345,10 +345,10 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -387,10 +387,10 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
 
 	compareInitFinalStates(t, lh, expected)
 }

@@ -13,7 +13,7 @@ type CodonSet map[string]float64
 func (cs CodonSet) Codons() []string {
 	s := make([]string, 0, len(cs))
 
-	for k, _ := range cs {
+	for k := range cs {
 		s = append(s, k)
 	}
 

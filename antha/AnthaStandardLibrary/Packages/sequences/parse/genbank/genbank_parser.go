@@ -290,7 +290,7 @@ func featureline2(line string) (description string, found bool) {
 	for i, field := range fields {
 		if strings.Contains(field, `"`) {
 			tempfields := make([]string, i)
-			tempfield := strings.Join(fields[i:len(fields)], " ")
+			tempfield := strings.Join(fields[i:], " ")
 			tempfields = append(tempfields, tempfield)
 			fields = tempfields
 			break
@@ -415,7 +415,7 @@ func handleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 
 	for i := 0; i < len(lines); i++ {
 		if lines[i][0:8] == "FEATURES" {
-			lines = lines[i+1 : len(lines)]
+			lines = lines[i+1:]
 			break
 		}
 	}
@@ -441,7 +441,7 @@ func handleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 			}
 
 			features = append(features, feature)
-			lines = lines[end:len(lines)]
+			lines = lines[end:]
 			if start > end {
 				return features, fmt.Errorf("Start position cannot be greater than end position in feature")
 			}

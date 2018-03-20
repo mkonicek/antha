@@ -489,7 +489,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	cnames := make([]string, 0, lenToMake)   // actual Component names
 
 	for i, v := range cmps {
-		for xx, _ := range tfrs[i].PlateIDs { //fromPlateIDs[i] {
+		for xx := range tfrs[i].PlateIDs { //fromPlateIDs[i] {
 			// get dem big ole plates out
 			// TODO -- pass them in instead of all this nonsense
 

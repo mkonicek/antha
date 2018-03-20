@@ -279,7 +279,7 @@ func (c ComponentList) List(verbose bool) string {
 
 	var sortedKeys []string
 
-	for key, _ := range c.Components {
+	for key := range c.Components {
 		sortedKeys = append(sortedKeys, key)
 	}
 
@@ -311,7 +311,7 @@ func (c ComponentList) List(verbose bool) string {
 func (c ComponentList) AllComponents() []string {
 	var s []string
 
-	for k, _ := range c.Components {
+	for k := range c.Components {
 		s = append(s, k)
 	}
 

@@ -147,7 +147,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	ind := wutil.Series(0, num_cols)
 
-	for c, _ := range component_order {
+	for c := range component_order {
 		row := make([]float64, num_cols+1)
 		col := 0
 		for i := 0; i < len(component_order); i++ {

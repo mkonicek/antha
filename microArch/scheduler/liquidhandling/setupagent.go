@@ -124,7 +124,6 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 				if !isInStrArr(pa, output_plate_order) && notInInputs {
 					output_plate_order = append(output_plate_order, pa)
 				}
-			} else {
 			}
 		}
 
@@ -214,7 +213,6 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 	}
 
 	// add the waste if required...
-
 	if params.GetTipType() == liquidhandling.DisposableTips || params.GetTipType() == liquidhandling.MixedDisposableAndFixedTips {
 		s := params.TipWastesMounted()
 
@@ -223,18 +221,19 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			var err error
 			// this should be added to the automagic config setup... however it will require adding to the
 			// representation of the liquid handler
-			if params.Model == "Pipetmax" {
+			switch params.Model {
+			case "Pipetmax":
 				waste, err = inventory.NewTipwaste(ctx, "Gilsontipwaste")
-			} else if params.Model == "GeneTheatre" || params.Model == "Felix" {
+			case "GeneTheatre":
+				fallthrough
+			case "Felix":
 				waste, err = inventory.NewTipwaste(ctx, "CyBiotipwaste")
-			} else if params.Model == "Human" {
+			case "Human":
 				waste, err = inventory.NewTipwaste(ctx, "Manualtipwaste")
-			} else if params.Model == "Evo" {
+			case "Evo":
 				waste, err = inventory.NewTipwaste(ctx, "Tecantipwaste")
-			}
-
-			if err != nil {
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("No tip waste defined for model %s: %s", params.Model, err))
+			default:
+				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
 			}
 
 			err = params.AddTipWaste(waste)

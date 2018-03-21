@@ -204,7 +204,18 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		if err != nil {
 			return wtype.LHError(wtype.LH_ERR_DRIV, err.Error())
 		}
-		str := liquidhandling.InsToString2(ins) + "\n"
+
+		// The graph view depends on the string generated in this step
+		str := ""
+		if ins.InstructionType() == liquidhandling.TFR {
+			mocks := liquidhandling.MockAspDsp(ins)
+			for _, ii := range mocks {
+				str += liquidhandling.InsToString2(ii) + "\n"
+			}
+		} else {
+			str = liquidhandling.InsToString2(ins) + "\n"
+		}
+
 		request.InstructionText += str
 
 		//fmt.Println(liquidhandling.InsToString(ins))

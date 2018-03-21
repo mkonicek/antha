@@ -498,7 +498,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	zstart = riserheightinmm + 4.5 // offset of bottom of deck to bottom of well
 
 	//E-PAGE 48 (reverse) position
-	ep48g := wtype.NewShape("trap", "mm", xdim, ydim, zdim)
+	ep48g := wtype.NewShape("trapezoid", "mm", xdim, ydim, zdim)
 	//can't reach all wells; change to 24 wells per row? yes!
 	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 20, 0, ep48g, wtype.LHWBFLAT, xdim, ydim, zdim, bottomh, "mm")
 	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 24, 48.5, "mm", egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
@@ -634,6 +634,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	plates = append(plates, make96DeepWellLowVolumePlate())
 	plates = append(plates, makeLabcyte384PPStdV())
+	plates = append(plates, make384wellplateAppliedBiosystems())
 
 	return
 }
@@ -912,7 +913,7 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 	numberOfRows := 16
 	numberOfColumns := 24
 
-	wellShape := "square cylinder"
+	wellShape := "box"
 	bottomtype := wtype.LHWBFLAT
 
 	dimensionUnit := "mm"
@@ -934,6 +935,54 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 	ystart := 11.2 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
 	zstart := 2.5 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
 	overallHeight := 14.4                    // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// Applied Biosystems, MicroAmp Optical 384-well Reaction Plate; Cat Num: 4309849
+// Source of dimensions: https://www.thermofisher.com/order/catalog/product/4309849
+func make384wellplateAppliedBiosystems() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 13.0
+	ystartOffsetCorrection := 10.0
+	zstartOffsetCorrection := 2.25
+
+	plateName := "AppliedBiosystems_384_MicroAmp_Optical"
+	wellName := "AppliedBiosystems_384_MicroAmp_Optical_Well"
+	manufacturer := "Applied Biosystems"
+
+	numberOfRows := 16
+	numberOfColumns := 24
+
+	wellShape := "cylinder"
+	bottomtype := wtype.LHWBV
+
+	dimensionUnit := "mm"
+
+	xdim := 3.17 // G1: diameter at top of well
+	ydim := 3.17 // G1: diameter at top of well
+	zdim := 9.09 // L: depth of well from top to bottom
+
+	bottomh := 0.61 // N: bottom of well to resting plane
+
+	minVolume := 4.0
+	maxVolume := 40.0
+
+	volUnit := "ul"
+
+	wellxoffset := 4.5                        // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5                        // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 10.925 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 7.415 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 0.65 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 9.7                      // F: height of plate
 
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 

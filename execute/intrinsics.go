@@ -250,7 +250,7 @@ func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.LHComponent {
 
 // QPCROptions are the options for a QPCR request.
 type QPCROptions struct {
-	Reagents   []*wtype.LHComponent
+	Reactions  []*wtype.LHComponent
 	Definition string
 	Barcode    string
 	TagAs      string
@@ -259,7 +259,7 @@ type QPCROptions struct {
 func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst {
 	inst := ast.NewQPCRInstruction()
 	inst.Command = command
-	inst.ComponentIn = opts.Reagents
+	inst.ComponentIn = opts.Reactions
 	inst.Definition = opts.Definition
 	inst.Barcode = opts.Barcode
 	inst.TagAs = opts.TagAs
@@ -270,7 +270,7 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 	}
 
 	return &commandInst{
-		Args:   opts.Reagents,
+		Args:   opts.Reactions,
 		result: inst.ComponentOut,
 		Command: &ast.Command{
 			Inst: inst,

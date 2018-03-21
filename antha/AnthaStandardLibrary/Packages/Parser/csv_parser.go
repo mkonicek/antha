@@ -26,6 +26,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
@@ -263,7 +264,7 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 
 }
 
-func Assemblyfromcsv(designfile string, partsfile string) (assemblyparameters []enzymes.Assemblyparameters) {
+func AssemblyFromCsv(designfile string, partsfile string) (assemblyparameters []enzymes.Assemblyparameters, err error) {
 
 	var designedconstructs [][]string
 
@@ -275,16 +276,37 @@ func Assemblyfromcsv(designfile string, partsfile string) (assemblyparameters []
 
 	assemblyparameters = make([]enzymes.Assemblyparameters, 0)
 
+	var errors []error
+
 	for _, c := range designedconstructs {
 		var newassemblyparameters enzymes.Assemblyparameters
 		newassemblyparameters.Constructname = c[0]
 		newassemblyparameters.Enzymename = c[1]
-		newassemblyparameters.Vector = definedparts[c[2]]
+		if vec, found := definedparts[c[2]]; found {
+			newassemblyparameters.Vector = vec
+		} else {
+			v := replaceWhiteSpace(definedparts[c[2]].Nm, "")
+			if _, found := definedparts[v]; found {
+				errors = append(errors, fmt.Errorf("Vector %s not found in parts list, but when spaces removed (%s) a match was found? Please remove spaces in vector name.\n", c[2], v))
+			} else {
+				errors = append(errors, fmt.Errorf("Vector %s not found in parts list.\n", c[2]))
+			}
+		}
+
 		var nextpart wtype.DNASequence
 
 		partsinorder := make([]wtype.DNASequence, 0)
 		for k := 3; k < len(c); k++ {
-			nextpart = definedparts[c[k]]
+			if pt, ok := definedparts[c[k]]; ok {
+				nextpart = pt
+			} else {
+				p := replaceWhiteSpace(c[k], "")
+				if _, ok := definedparts[p]; ok {
+					errors = append(errors, fmt.Errorf("Part %s not found in parts list, but when spaces removed (%s) a match was found? Please remove spaces in part name.\n", c[k], p))
+				} else {
+					errors = append(errors, fmt.Errorf("Part %s not found in parts list.\n", c[k]))
+				}
+			}
 			if nextpart.Nm != "" {
 				partsinorder = append(partsinorder, nextpart)
 			}
@@ -292,8 +314,26 @@ func Assemblyfromcsv(designfile string, partsfile string) (assemblyparameters []
 		newassemblyparameters.Partsinorder = partsinorder
 
 		assemblyparameters = append(assemblyparameters, newassemblyparameters)
-
 	}
 
-	return assemblyparameters
+	if len(errors) > 0 {
+		var errString []string
+		for _, e := range errors {
+
+			errString = append(errString, e.Error())
+		}
+
+		return assemblyparameters, fmt.Errorf(strings.Join(errString, "\n"))
+	}
+
+	return assemblyparameters, nil
+}
+
+// replaceWhiteSpace uses the regexp package to generate a regexp struct containing common regular expressions for white space and uses a built-in regexp function
+// ReplaceAllString to replace any instances of white space within an input string (old) with a specified replacement string (replace)
+// The modified string is outputted.
+func replaceWhiteSpace(old string, replace string) (new string) {
+	re_inside_whtsp := regexp.MustCompile(`[\s\p{Zs}]{1,}`)
+	new = re_inside_whtsp.ReplaceAllString(old, replace)
+	return new
 }

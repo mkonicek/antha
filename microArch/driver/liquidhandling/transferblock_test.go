@@ -618,15 +618,20 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	}
 }
 
-func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.LHInstruction) []RobotInstruction {
+func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) []RobotInstruction {
 
 	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := GetLHPolicyForTest()
-
-	// allow multi
-	pol.Policies["water"]["CAN_MULTI"] = true
+	var err error
+	if pol == nil {
+		pol, err = GetLHPolicyForTest()
+		if err != nil {
+			t.Fatal(err)
+		}
+		// allow multi
+		pol.Policies["water"]["CAN_MULTI"] = true
+	}
 
 	//generate the low level instructions
 	instructionSet := NewRobotInstructionSet(tb)
@@ -690,11 +695,35 @@ func TestMultiChannelTipReuseGood(t *testing.T) {
 		panic(err)
 	}
 
-	ris := generateRobotInstructions(t, ctx, inss)
+	ris := generateRobotInstructions(t, ctx, inss, nil)
 
 	assertNumTipsUsed(t, ris, 8)
 
 	assertNumLoadUnloadInstructions(t, ris, 1)
+}
+
+//TestMultiChannelTipReuseDisabled identical to good, except disable tip reuse
+func TestMultiChannelTipReuseDisabled(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// allow multi
+	pol.Policies["water"]["CAN_MULTI"] = true
+	pol.Policies["water"]["TIP_REUSE_LIMIT"] = 0
+
+	ris := generateRobotInstructions(t, ctx, inss, pol)
+
+	assertNumTipsUsed(t, ris, 16)
+
+	assertNumLoadUnloadInstructions(t, ris, 2)
 }
 
 //TestMultiChannelTipReuseBad Move water and ethanol to two separate columns of wells - should change tips in between
@@ -713,7 +742,7 @@ func TestMultiChannelTipReuseBad(t *testing.T) {
 
 	inss = append(inss, ins2...)
 
-	ris := generateRobotInstructions(t, ctx, inss)
+	ris := generateRobotInstructions(t, ctx, inss, nil)
 
 	assertNumTipsUsed(t, ris, 16)
 
@@ -729,7 +758,7 @@ func TestMultiChannelTipReuseUgly(t *testing.T) {
 		panic(err)
 	}
 
-	ris := generateRobotInstructions(t, ctx, inss)
+	ris := generateRobotInstructions(t, ctx, inss, nil)
 
 	assertNumTipsUsed(t, ris, 16)
 

@@ -562,7 +562,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 }
 
 func (ins *TransferInstruction) ReviseTransferVolumes(prms *LHProperties) error {
-	newTransfers := make([]MultiTransferParams, len(ins.Transfers))
+	newTransfers := make([]MultiTransferParams, 0, len(ins.Transfers))
 
 	for _, mtp := range ins.Transfers {
 		//newMtp := make(MultiTransferParams, len(mtp))
@@ -577,6 +577,8 @@ func (ins *TransferInstruction) ReviseTransferVolumes(prms *LHProperties) error 
 			}
 			newMtp.Transfers = append(newMtp.Transfers, newTPs...)
 		}
+
+		newMtp.Multi = len(newMtp.Transfers)
 
 		newTransfers = append(newTransfers, newMtp)
 	}

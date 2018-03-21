@@ -1042,7 +1042,7 @@ func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (we
 func (lhp *LHProperties) GetMaterialType() material.MaterialType {
 	return lhp.MaterialType
 }
-func (lhp *LHProperties) GetTimer() *LHTimer {
+func (lhp *LHProperties) GetTimer() LHTimer {
 	return GetTimerFor(lhp.Mnfr, lhp.Model)
 }
 
@@ -1187,6 +1187,10 @@ func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
 				return false
 			}
 			return 'A' <= pos[0] && pos[0] <= 'D' && '0' <= pos[1] && pos[1] <= '9'
+		}
+	} else if lhp.Mnfr == "Labcyte" {
+		checkFn = func(pos string) bool {
+			return false
 		}
 	}
 

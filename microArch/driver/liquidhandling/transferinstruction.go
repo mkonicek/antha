@@ -666,6 +666,7 @@ func mockLowLevels(tp TransferParams) []TerminalRobotInstruction {
 	asp.Multi = 1
 	asp.Volume = append(asp.Volume, tp.Volume)
 	asp.Platform = "Echo"
+	asp.What = append(asp.What, tp.What)
 
 	movd := NewMoveInstruction()
 	movd.Plt = append(movd.Plt, tp.PltTo)
@@ -678,6 +679,7 @@ func mockLowLevels(tp TransferParams) []TerminalRobotInstruction {
 	dsp.Multi = 1
 	dsp.Volume = append(dsp.Volume, tp.Volume)
 	dsp.Platform = "Echo"
+	dsp.What = append(dsp.What, tp.What)
 
 	return []TerminalRobotInstruction{mova, asp, movd, dsp}
 }

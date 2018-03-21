@@ -585,6 +585,7 @@ func (scti *SingleChannelTransferInstruction) Params() TransferParams {
 func NewSingleChannelTransferInstruction() *SingleChannelTransferInstruction {
 	var v SingleChannelTransferInstruction
 	v.Type = SCT
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *SingleChannelTransferInstruction) InstructionType() int {
@@ -706,6 +707,7 @@ func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
 	v.FPlateType = make([]string, 0)
 	v.TPlateType = make([]string, 0)
 	v.TipType = make([]string, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *MultiChannelTransferInstruction) InstructionType() int {
@@ -791,6 +793,7 @@ func NewStateChangeInstruction(oldstate, newstate *wtype.LHChannelParameter) *St
 	v.Type = CCC
 	v.OldState = oldstate
 	v.NewState = newstate
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *StateChangeInstruction) InstructionType() int {
@@ -833,6 +836,7 @@ func NewChangeAdaptorInstruction(head int, droppos, getpos, oldad, newad, platfo
 	v.OldAdaptorType = oldad
 	v.NewAdaptorType = newad
 	v.Platform = platform
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *ChangeAdaptorInstruction) InstructionType() int {
@@ -888,6 +892,7 @@ func NewLoadTipsMoveInstruction() *LoadTipsMoveInstruction {
 	v.Well = make([]string, 0)
 	v.FPosition = make([]string, 0)
 	v.FPlateType = make([]string, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *LoadTipsMoveInstruction) InstructionType() int {
@@ -966,6 +971,7 @@ func NewUnloadTipsMoveInstruction() *UnloadTipsMoveInstruction {
 	v.PltTo = make([]string, 0)
 	v.WellTo = make([]string, 0)
 	v.TPlateType = make([]string, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *UnloadTipsMoveInstruction) InstructionType() int {
@@ -1047,6 +1053,7 @@ func NewAspirateInstruction() *AspirateInstruction {
 	v.Plt = make([]string, 0)
 	v.What = make([]string, 0)
 	v.LLF = make([]bool, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *AspirateInstruction) InstructionType() int {
@@ -1119,6 +1126,7 @@ func NewDispenseInstruction() *DispenseInstruction {
 	v.Plt = make([]string, 0)
 	v.What = make([]string, 0)
 	v.LLF = make([]bool, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *DispenseInstruction) InstructionType() int {
@@ -1189,6 +1197,7 @@ func NewBlowoutInstruction() *BlowoutInstruction {
 	var v BlowoutInstruction
 	v.Type = BLO
 	v.Volume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *BlowoutInstruction) InstructionType() int {
@@ -1252,6 +1261,7 @@ type PTZInstruction struct {
 func NewPTZInstruction() *PTZInstruction {
 	var v PTZInstruction
 	v.Type = PTZ
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *PTZInstruction) InstructionType() int {
@@ -1313,6 +1323,7 @@ func NewMoveInstruction() *MoveInstruction {
 	v.OffsetX = make([]float64, 0)
 	v.OffsetY = make([]float64, 0)
 	v.OffsetZ = make([]float64, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *MoveInstruction) InstructionType() int {
@@ -1395,6 +1406,7 @@ func NewMoveRawInstruction() *MoveRawInstruction {
 	v.Volume = make([]wunit.Volume, 0)
 	v.FVolume = make([]wunit.Volume, 0)
 	v.TVolume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *MoveRawInstruction) InstructionType() int {
@@ -1472,6 +1484,7 @@ func NewLoadTipsInstruction() *LoadTipsInstruction {
 	v.HolderType = make([]string, 0)
 	v.Pos = make([]string, 0)
 	v.Well = make([]string, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *LoadTipsInstruction) InstructionType() int {
@@ -1543,6 +1556,7 @@ func NewUnloadTipsInstruction() *UnloadTipsInstruction {
 	v.Channels = make([]int, 0)
 	v.Pos = make([]string, 0)
 	v.Well = make([]string, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *UnloadTipsInstruction) InstructionType() int {
@@ -2431,6 +2445,7 @@ type SetPipetteSpeedInstruction struct {
 func NewSetPipetteSpeedInstruction() *SetPipetteSpeedInstruction {
 	var v SetPipetteSpeedInstruction
 	v.Type = SPS
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *SetPipetteSpeedInstruction) InstructionType() int {
@@ -2479,6 +2494,7 @@ type SetDriveSpeedInstruction struct {
 func NewSetDriveSpeedInstruction() *SetDriveSpeedInstruction {
 	var v SetDriveSpeedInstruction
 	v.Type = SDS
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *SetDriveSpeedInstruction) InstructionType() int {
@@ -2523,6 +2539,7 @@ type InitializeInstruction struct {
 func NewInitializeInstruction() *InitializeInstruction {
 	var v InitializeInstruction
 	v.Type = INI
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *InitializeInstruction) InstructionType() int {
@@ -2555,6 +2572,7 @@ type FinalizeInstruction struct {
 func NewFinalizeInstruction() *FinalizeInstruction {
 	var v FinalizeInstruction
 	v.Type = FIN
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *FinalizeInstruction) InstructionType() int {
@@ -2588,6 +2606,7 @@ type WaitInstruction struct {
 func NewWaitInstruction() *WaitInstruction {
 	var v WaitInstruction
 	v.Type = WAI
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *WaitInstruction) InstructionType() int {
@@ -2647,6 +2666,7 @@ func NewLightsOnInstruction() *LightsOnInstruction {
 	v.WellFrom = make([]string, 0)
 	v.WellTo = make([]string, 0)
 	v.Volume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *LightsOnInstruction) InstructionType() int {
@@ -2696,6 +2716,7 @@ func NewLightsOffInstruction() *LightsOffInstruction {
 	v.WellFrom = make([]string, 0)
 	v.WellTo = make([]string, 0)
 	v.Volume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *LightsOffInstruction) InstructionType() int {
@@ -2745,6 +2766,7 @@ func NewOpenInstruction() *OpenInstruction {
 	v.WellFrom = make([]string, 0)
 	v.WellTo = make([]string, 0)
 	v.Volume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *OpenInstruction) InstructionType() int {
@@ -2794,6 +2816,7 @@ func NewCloseInstruction() *CloseInstruction {
 	v.WellFrom = make([]string, 0)
 	v.WellTo = make([]string, 0)
 	v.Volume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *CloseInstruction) InstructionType() int {
@@ -2843,6 +2866,7 @@ func NewLoadAdaptorInstruction() *LoadAdaptorInstruction {
 	v.WellFrom = make([]string, 0)
 	v.WellTo = make([]string, 0)
 	v.Volume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *LoadAdaptorInstruction) InstructionType() int {
@@ -2892,6 +2916,7 @@ func NewUnloadAdaptorInstruction() *UnloadAdaptorInstruction {
 	v.WellFrom = make([]string, 0)
 	v.WellTo = make([]string, 0)
 	v.Volume = make([]wunit.Volume, 0)
+	v.GenericRobotInstruction.Ins = &v
 	return &v
 }
 func (ins *UnloadAdaptorInstruction) InstructionType() int {
@@ -3097,6 +3122,7 @@ func NewMoveMixInstruction() *MoveMixInstruction {
 	mi.OffsetX = make([]float64, 0)
 	mi.OffsetY = make([]float64, 0)
 	mi.OffsetZ = make([]float64, 0)
+	mi.GenericRobotInstruction.Ins = &mi
 	return &mi
 }
 
@@ -3195,6 +3221,7 @@ func NewMixInstruction() *MixInstruction {
 	mi.Cycles = make([]int, 0)
 	mi.What = make([]string, 0)
 	mi.Blowout = make([]bool, 0)
+	mi.GenericRobotInstruction.Ins = &mi
 	return &mi
 }
 

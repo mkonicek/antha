@@ -275,6 +275,38 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				v.Add(insvols[i])
 				// double add of carry volume here?
 				v.Add(rq.CarryVolume)
+
+			}
+		} else if ins.InstructionType() == liquidhandling.TFR {
+			tfr := ins.(*liquidhandling.TransferInstruction)
+			for _, mtf := range tfr.Transfers {
+				for _, tf := range mtf.Transfers {
+					lpos, lw := tf.PltFrom, tf.WellFrom
+
+					lp := this.Properties.PosLookup[lpos]
+					ppp := this.Properties.PlateLookup[lp].(*wtype.LHPlate)
+					lwl := ppp.Wellcoords[lw]
+
+					if !lwl.IsAutoallocated() {
+						continue
+					}
+
+					_, ok := vols[lp]
+
+					if !ok {
+						vols[lp] = make(map[string]wunit.Volume)
+					}
+
+					v, ok := vols[lp][lw]
+
+					if !ok {
+						v = wunit.NewVolume(0.0, "ul")
+						vols[lp][lw] = v
+					}
+					//v.Add(ins.Volume[i])
+
+					v.Add(tf.Volume)
+				}
 			}
 		}
 	}

@@ -723,9 +723,8 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 		for _, w := range c.Wells {
 			if w != "" {
 				wc := wtype.MakeWellCoords(w)
-				//plat.Cols[wc.X][wc.Y].Currvol += 100.0
 				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(wunit.NewVolume(100.0, "ul"))
+				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
 				plat.Cols[wc.X][wc.Y].Add(dummycmp)
 			}
 		}

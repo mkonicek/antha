@@ -1064,6 +1064,8 @@ func (ins *AspirateInstruction) GetParameter(name string) interface{} {
 	switch name {
 	case "VOLUME":
 		return ins.Volume
+	case "LIQUIDCLASS":
+		return ins.What
 	case "HEAD":
 		return ins.Head
 	case "MULTI":
@@ -1137,6 +1139,8 @@ func (ins *DispenseInstruction) GetParameter(name string) interface{} {
 	switch name {
 	case "VOLUME":
 		return ins.Volume
+	case "LIQUIDCLASS":
+		return ins.What
 	case "HEAD":
 		return ins.Head
 	case "MULTI":

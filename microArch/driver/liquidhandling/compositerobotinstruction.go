@@ -516,6 +516,8 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.Prms = channelprms
 
 			ret = append(ret, mci)
+			n_tip_uses++
+
 			// finally check if we are touching a bad liquid
 			// in future we will do this properly, for now we assume
 			// touching any liquid is bad

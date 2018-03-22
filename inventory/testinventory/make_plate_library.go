@@ -23,10 +23,9 @@ package testinventory
 
 import (
 	"encoding/json"
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"strings"
 )
 
 // The height below which an error will be generated

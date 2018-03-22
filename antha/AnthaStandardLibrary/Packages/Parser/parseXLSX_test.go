@@ -24,12 +24,15 @@ package parser
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	//"github.com/antha-lang/antha/antha/anthalib/wunit"
+
 	"testing"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 type parseXLSXTest struct {
@@ -387,5 +390,71 @@ func TestParseExcel(t *testing.T) {
 				)
 			}
 		}
+	}
+}
+
+type parsePCRDesignXLSXTest struct {
+	designFileName     string
+	expectedErrMessage string
+}
+
+var pcrTests = []parsePCRDesignXLSXTest{
+	parsePCRDesignXLSXTest{
+		designFileName:     "PCRSetUpWorklist.xlsx",
+		expectedErrMessage: "",
+	},
+	parsePCRDesignXLSXTest{
+		designFileName:     "PCRSetUpWorklist_noTemplateSet.xlsx",
+		expectedErrMessage: "no template specified for PCRReaction24\nno primer 1 specified for PCRReaction24\nno primer 2 specified for PCRReaction24\nPlease specify all parts for reaction PCRReaction24 in Sheet1.",
+	},
+	parsePCRDesignXLSXTest{
+		designFileName:     "PCRSetUpWorklist_missingSequences.xlsx",
+		expectedErrMessage: "",
+	},
+}
+
+func fileNameToAnthaFile(name string) (wtype.File, error) {
+	bytes, err := ioutil.ReadFile(name)
+	if err != nil {
+		return wtype.File{}, err
+	}
+	return export.Binary(bytes, name)
+}
+
+func TestParsePCRExcel(t *testing.T) {
+
+	for _, test := range pcrTests {
+
+		testFile, err := fileNameToAnthaFile(test.designFileName)
+
+		if err != nil {
+			t.Error(err.Error())
+			break
+		}
+
+		_, err = ParsePCRExcel(testFile)
+
+		if err != nil {
+			if test.expectedErrMessage != "" {
+				if strings.TrimSpace(err.Error()) != strings.TrimSpace(test.expectedErrMessage) {
+					fmt.Printf("len error 1 %d len error 2 %d", len(strings.TrimSpace(err.Error())), len(strings.TrimSpace(test.expectedErrMessage)))
+					t.Error(
+						"Got error: ", err.Error(), "\n",
+						"Expected: ", test.expectedErrMessage, "\n",
+					)
+				}
+			} else if test.expectedErrMessage == "" {
+				t.Error(
+					"Got error: ", err.Error(), "\n",
+					"Expected: ", "nil", "\n",
+				)
+			}
+		} else if test.expectedErrMessage != "" {
+			t.Error(
+				"Got error: ", "nil", "\n",
+				"Expected: ", test.expectedErrMessage, "\n",
+			)
+		}
+
 	}
 }

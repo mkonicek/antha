@@ -1,40 +1,44 @@
 package liquidhandling
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // urrgh -- this needs to get packaged in with the driver
 
-func GetTimerFor(model, mnfr string) *LHTimer {
+func GetTimerFor(model, mnfr string) LHTimer {
 	timers := makeTimers()
 
-	//fmt.Println("Getting timer for ", model, mnfr)
+	fmt.Println("Getting timer for ", model+mnfr)
 
 	_, ok := timers[model+mnfr]
 	if ok {
 		return timers[model+mnfr]
 	} else {
-		//fmt.Println("None found")
+		fmt.Println("None found")
 		return makeNullTimer()
 	}
 }
 
-func makeTimers() map[string]*LHTimer {
-	timers := make(map[string]*LHTimer, 2)
-
+func makeTimers() map[string]LHTimer {
+	timers := make(map[string]LHTimer, 2)
 	timers["GilsonPipetmax"] = makeGilsonPipetmaxTimer()
 	timers["CyBioFelix"] = makeCyBioFelixTimer()
 	timers["CyBioGeneTheatre"] = makeCyBioGeneTheatreTimer()
+	timers["LabcyteEcho550"] = makeLabcyteEchoTimer("550")
+	timers["LabcyteEcho520"] = makeLabcyteEchoTimer("520")
 	return timers
 }
 
-func makeNullTimer() *LHTimer {
+func makeNullTimer() LHTimer {
 	// always returns zero
 	t := NewTimer()
 
 	return t
 }
 
-func makeGilsonPipetmaxTimer() *LHTimer {
+func makeGilsonPipetmaxTimer() LHTimer {
 	t := NewTimer()
 	t.Times[7], _ = time.ParseDuration("8s")  // LDT
 	t.Times[8], _ = time.ParseDuration("6s")  // UDT
@@ -55,7 +59,7 @@ func makeGilsonPipetmaxTimer() *LHTimer {
 	return t
 }
 
-func makeCyBioFelixTimer() *LHTimer {
+func makeCyBioFelixTimer() LHTimer {
 	t := NewTimer()
 	t.Times[7], _ = time.ParseDuration("8s")  // LDT
 	t.Times[8], _ = time.ParseDuration("6s")  // UDT
@@ -76,7 +80,7 @@ func makeCyBioFelixTimer() *LHTimer {
 	return t
 }
 
-func makeCyBioGeneTheatreTimer() *LHTimer {
+func makeCyBioGeneTheatreTimer() LHTimer {
 	t := NewTimer()
 	t.Times[7], _ = time.ParseDuration("8s")  // LDT
 	t.Times[8], _ = time.ParseDuration("6s")  // UDT
@@ -95,4 +99,14 @@ func makeCyBioGeneTheatreTimer() *LHTimer {
 	t.Times[32], _ = time.ParseDuration("13s")  // MIX
 
 	return t
+}
+
+func makeLabcyteEchoTimer(model string) LHTimer {
+	flowRate := 5000.0 // nL / s make model dependent
+	moveRate := 0.1    // s/well ditto... also find out what this actually is
+	scanRate := 0.1    // s/well  ditto
+
+	timer := highLeveltimer{name: fmt.Sprintf("LabcyteEcho%s", model), model: model, flowRate: flowRate, moveRate: moveRate, scanRate: scanRate}
+
+	return timer
 }

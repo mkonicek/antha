@@ -485,19 +485,28 @@ type LHCategoryCondition struct {
 func (lhcc LHCategoryCondition) Match(v interface{}) bool {
 	//fmt.Println(fmt.Sprintln("CATEGORY MATCH ON ", lhcc.Category, " ", v))
 
-	switch v.(type) {
+	switch s := v.(type) {
 	case string:
-		s := v.(string)
 		if s == lhcc.Category {
 			return true
 		}
 	case []string:
 		// true iff at least one in array and all members of the array are the same category
-		if len(v.([]string)) == 0 || numInStringArray(v.([]string)) == 0 {
+		if len(s) == 0 || numInStringArray(s) == 0 {
 			return false
 		}
-		for _, s := range v.([]string) {
-			if !lhcc.Match(s) && s != "" {
+		for _, str := range s {
+			if !lhcc.Match(str) && str != "" {
+				return false
+			}
+		}
+		return true
+	case [][]string:
+		if len(s) == 0 {
+			return false
+		}
+		for _, slice := range s {
+			if !lhcc.Match(slice) {
 				return false
 			}
 		}

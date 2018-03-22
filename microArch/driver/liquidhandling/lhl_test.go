@@ -35,7 +35,7 @@ func makeGilson() *LHProperties {
 		}
 		yp += yi
 	}
-	lhp := NewLHProperties(9, "Pipetmax", "Gilson", "discrete", "disposable", layout)
+	lhp := NewLHProperties(9, "Pipetmax", "Gilson", LLLiquidHandler, DisposableTips, layout)
 	// get tips permissible from the factory
 	SetUpTipsFor(lhp)
 

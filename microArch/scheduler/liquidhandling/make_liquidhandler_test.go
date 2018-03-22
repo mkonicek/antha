@@ -46,7 +46,7 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 		}
 		yp += yi
 	}
-	lhp := liquidhandling.NewLHProperties(9, "Pipetmax", "Gilson", "discrete", "disposable", layout)
+	lhp := liquidhandling.NewLHProperties(9, "Pipetmax", "Gilson", liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 	// get tips permissible from the factory
 	setUpTipsFor(ctx, lhp)
 

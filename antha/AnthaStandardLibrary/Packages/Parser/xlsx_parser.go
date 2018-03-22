@@ -114,7 +114,8 @@ func ParseExcel(filename string) ([]enzymes.Assemblyparameters, error) {
 	} else if dl, err := Xlsxparser(filename, 1, "designlist"); err != nil {
 		return nil, err
 	} else {
-		return Assemblyfromcsv(dl.Name(), pl.Name()), nil
+		ap, err := AssemblyFromCsv(dl.Name(), pl.Name())
+		return ap, err
 	}
 }
 
@@ -143,7 +144,8 @@ func ParseExcelBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 	} else if dl, err := xlsxparserBinary(data, 1, "designlist"); err != nil {
 		return nil, err
 	} else {
-		return Assemblyfromcsv(dl.Name(), pl.Name()), nil
+		ap, err := AssemblyFromCsv(dl.Name(), pl.Name())
+		return ap, err
 	}
 }
 

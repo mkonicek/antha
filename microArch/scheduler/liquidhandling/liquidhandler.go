@@ -206,7 +206,18 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		if err != nil {
 			return wtype.LHError(wtype.LH_ERR_DRIV, err.Error())
 		}
-		str := liquidhandling.InsToString2(ins) + "\n"
+
+		// The graph view depends on the string generated in this step
+		str := ""
+		if ins.InstructionType() == liquidhandling.TFR {
+			mocks := liquidhandling.MockAspDsp(ins)
+			for _, ii := range mocks {
+				str += liquidhandling.InsToString2(ii) + "\n"
+			}
+		} else {
+			str = liquidhandling.InsToString2(ins) + "\n"
+		}
+
 		request.InstructionText += str
 
 		//fmt.Println(liquidhandling.InsToString(ins))
@@ -277,6 +288,38 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				v.Add(insvols[i])
 				// double add of carry volume here?
 				v.Add(rq.CarryVolume)
+
+			}
+		} else if ins.InstructionType() == liquidhandling.TFR {
+			tfr := ins.(*liquidhandling.TransferInstruction)
+			for _, mtf := range tfr.Transfers {
+				for _, tf := range mtf.Transfers {
+					lpos, lw := tf.PltFrom, tf.WellFrom
+
+					lp := this.Properties.PosLookup[lpos]
+					ppp := this.Properties.PlateLookup[lp].(*wtype.LHPlate)
+					lwl := ppp.Wellcoords[lw]
+
+					if !lwl.IsAutoallocated() {
+						continue
+					}
+
+					_, ok := vols[lp]
+
+					if !ok {
+						vols[lp] = make(map[string]wunit.Volume)
+					}
+
+					v, ok := vols[lp][lw]
+
+					if !ok {
+						v = wunit.NewVolume(0.0, "ul")
+						vols[lp][lw] = v
+					}
+					//v.Add(ins.Volume[i])
+
+					v.Add(tf.Volume)
+				}
 			}
 		}
 	}

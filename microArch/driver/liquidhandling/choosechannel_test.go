@@ -112,7 +112,7 @@ func makeTestLH() *LHProperties {
 		}
 		yp += yi
 	}
-	lhp := NewLHProperties(9, "Pipetmax", "Gilson", "discrete", "disposable", layout)
+	lhp := NewLHProperties(9, "Pipetmax", "Gilson", LLLiquidHandler, DisposableTips, layout)
 	// get tips permissible from the factory
 	SetUpTipsFor(lhp)
 
@@ -169,6 +169,10 @@ func SetUpTipsFor(lhp *LHProperties) *LHProperties {
 
 	for _, tb := range testinventory.GetTipboxes(ctx) {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
+			//ignore filter tips
+			if tb.Tiptype.Filtered {
+				continue
+			}
 			tip := tb.Tips[0][0]
 			str := tip.Mnfr + tip.Type + tip.MinVol.ToString() + tip.MaxVol.ToString()
 			if seen[str] {

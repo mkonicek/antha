@@ -30,6 +30,10 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
+// The height below which an error will be generated
+// when attempting to perform transfers with low volume head and tips (0.5 - 20ul) on the Gilson PipetMax.
+const MinimumZHeightPermissableForLVPipetMax = 0.636
+
 //var commonwelltypes
 
 var platespecificoffset = map[string]float64{
@@ -495,7 +499,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	zstart = riserheightinmm + 4.5 // offset of bottom of deck to bottom of well
 
 	//E-PAGE 48 (reverse) position
-	ep48g := wtype.NewShape("trap", "mm", xdim, ydim, zdim)
+	ep48g := wtype.NewShape("trapezoid", "mm", xdim, ydim, zdim)
 	//can't reach all wells; change to 24 wells per row? yes!
 	egelwell := wtype.NewLHWell("EPAGE48", "", "", "ul", 20, 0, ep48g, wtype.LHWBFLAT, xdim, ydim, zdim, bottomh, "mm")
 	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 24, 48.5, "mm", egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
@@ -626,10 +630,12 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 		makeStripTube(),
 		makeSemiSkirtedPCRPlate(),
 		makePCRPlate(),
+		makeFluidX700ulPlate(),
 	)
 
 	plates = append(plates, make96DeepWellLowVolumePlate())
 	plates = append(plates, makeLabcyte384PPStdV())
+	plates = append(plates, make384wellplateAppliedBiosystems())
 
 	return
 }
@@ -658,10 +664,10 @@ func makePCRPlateWell() *wtype.LHWell {
 }
 
 func makePCRPlate() *wtype.LHPlate {
-	return wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 0.636)
+	return wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
-// pcr plate semi-skirted with 496rack
+// pcr plate semi-skirted
 func makeSemiSkirtedPCRPlate() *wtype.LHPlate {
 	return wtype.NewLHPlate("pcrplate_semi_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 1.0)
 }
@@ -673,7 +679,7 @@ func makeStripTube() *wtype.LHPlate {
 
 // pcr plate skirted
 func makeSkirtedPCRPlate() *wtype.LHPlate {
-	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, 0.636)
+	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {
@@ -740,6 +746,62 @@ func makeNunc96UPlate() *wtype.LHPlate {
 	nunc96UShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 
 	welltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, nunc96UShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// http://fluidx.eu/0.7ml%2c-96-well-format-2d-barcoded-jacket-tube-with-external-thread.html
+func makeFluidX700ulTube() *wtype.LHWell {
+
+	wellName := "FluidX700ul"
+	wellShape := "cylinder"
+	bottomtype := wtype.LHWBV
+	dimensionUnit := "mm"
+	xdim := 6.35 // G1: diameter at top of well
+	ydim := 6.35 // G1: diameter at top of well
+	zdim := 26.1 // L: depth of well from top to bottom
+
+	bottomh := 1.0 // ?
+
+	minVolume := 20.0
+	maxVolume := 525.0
+
+	volUnit := "ul"
+
+	fluidXTubeShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	welltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, fluidXTubeShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	return welltype
+}
+
+// http://fluidx.eu/0.7ml%2c-96-well-format-2d-barcoded-jacket-tube-with-external-thread.html
+func makeFluidX700ulPlate() *wtype.LHPlate {
+
+	// no literature values for these
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 11.25
+	ystartOffsetCorrection := 7.75
+
+	plateName := "FluidX700ulTubes"
+
+	manufacturer := "FluidX"
+
+	welltype := makeFluidX700ulTube()
+
+	numberOfRows := 8
+	numberOfColumns := 12
+
+	dimensionUnit := "mm"
+	wellxoffset := 9.0                               // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 9.0                               // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 10.75 - xstartOffsetCorrection         // H - (G1/2): distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	ystart := 7.75 - ystartOffsetCorrection          // J - (G1/2):  distance from top left side of plate to first well (looks like this value does not reflect reality and has an offest applied)
+	zstart := MinimumZHeightPermissableForLVPipetMax // F - L: offset of bottom of deck to bottom of well;
+	overallHeight := welltype.Zdim + zstart          // F: height of plate
 
 	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
@@ -836,6 +898,8 @@ func make96DeepWellLowVolumePlate() *wtype.LHPlate {
 // make plate Labcyte384PPStdV
 // Lot number 04090140
 // Part number P-05525
+// Specs retrieved from
+// https://www.labcyte.com/media/pdf/SPC-Qualified-Microplate-384PP.pdf
 func makeLabcyte384PPStdV() *wtype.LHPlate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
@@ -850,7 +914,7 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 	numberOfRows := 16
 	numberOfColumns := 24
 
-	wellShape := "squre cylinder"
+	wellShape := "box"
 	bottomtype := wtype.LHWBFLAT
 
 	dimensionUnit := "mm"
@@ -878,6 +942,54 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 	newWelltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
 	fmt.Println(newWelltype)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// Applied Biosystems, MicroAmp Optical 384-well Reaction Plate; Cat Num: 4309849
+// Source of dimensions: https://www.thermofisher.com/order/catalog/product/4309849
+func make384wellplateAppliedBiosystems() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 13.0
+	ystartOffsetCorrection := 10.0
+	zstartOffsetCorrection := 2.25
+
+	plateName := "AppliedBiosystems_384_MicroAmp_Optical"
+	wellName := "AppliedBiosystems_384_MicroAmp_Optical_Well"
+	manufacturer := "Applied Biosystems"
+
+	numberOfRows := 16
+	numberOfColumns := 24
+
+	wellShape := "cylinder"
+	bottomtype := wtype.LHWBV
+
+	dimensionUnit := "mm"
+
+	xdim := 3.17 // G1: diameter at top of well
+	ydim := 3.17 // G1: diameter at top of well
+	zdim := 9.09 // L: depth of well from top to bottom
+
+	bottomh := 0.61 // N: bottom of well to resting plane
+
+	minVolume := 4.0
+	maxVolume := 40.0
+
+	volUnit := "ul"
+
+	wellxoffset := 4.5                        // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5                        // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 10.925 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 7.415 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 0.65 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 9.7                      // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(wellName, "", "", volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
 	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, overallHeight, dimensionUnit, newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 

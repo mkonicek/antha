@@ -57,9 +57,13 @@ func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolic
 		}
 
 		// if the parent doesn't generate anything then it is our return - bottom out here
+		// assuming it's a Terminal
 		if arr == nil || len(arr) == 0 {
-			ret = append(ret, ri.parent)
-			return ret, nil
+			_, ok := ri.parent.(TerminalRobotInstruction)
+			if ok {
+				ret = append(ret, ri.parent)
+				return ret, nil
+			}
 		} else {
 			for _, ins := range arr {
 				ri.Add(ins)

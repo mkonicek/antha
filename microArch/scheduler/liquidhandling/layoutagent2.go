@@ -233,9 +233,8 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	for _, id := range order {
 		v := request.LHInstructions[id]
 		// pass ID through chain if not a mix
-		if v.Type != wtype.LHIMIX {
-			// the current contract on non-mix instructions is to pass in just one
-			// component as an input and one as an output
+		if v.Type == wtype.LHIPRM {
+			// the current contract on prompt instructions is to pass through a set of components
 			// on which basis we need only make sure the result has the same location
 			// as the input
 			// set pass throughs
@@ -244,10 +243,14 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 				v.PassThrough[v.Components[i].ID].Loc = v.Components[i].Loc
 			}
 			continue
+		} else if v.Type == wtype.LHISPL {
+			// similar to the above, just ensure the results both have the right location set
+			v.Results[0].Loc = v.Components[0].Loc
+			v.Results[1].Loc = v.Components[0].Loc
 		}
 
 		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
-		lk2[v.Result.ID] = v.ID
+		lk2[v.Results[0].ID] = v.ID
 	}
 
 	for _, id := range order {
@@ -265,7 +268,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		}
 
 		// now we put the actual result in
-		lkp[v.ID] = append(lkp[v.ID], v.Result)
+		lkp[v.ID] = append(lkp[v.ID], v.Results[0])
 	}
 
 	sampletracker := sampletracker.GetSampleTracker()
@@ -428,8 +431,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			request.LHInstructions[k].SetPlateID(tx[0])
 			request.LHInstructions[k].Platetype = lookUp.Type
 			request.LHInstructions[k].OutPlate = lookUp
-
-			request.LHInstructions[k].Result.Loc = addr
+			request.LHInstructions[k].Results[0].Loc = addr
 
 			// same as condition 1 except we get the plate id somewhere else
 			i := defined(tx[0], s)
@@ -446,7 +448,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 						if s[i].Output[i2] {
 							s[i].Assigned[i2] = v.ID
 						} else {
-							s[i].Assigned[i2] = v.ProductID
+							s[i].Assigned[i2] = v.ProductIDs()[0]
 						}
 					*/
 					s[i].Assigned[i2] = v.ID
@@ -721,9 +723,8 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 		for _, w := range c.Wells {
 			if w != "" {
 				wc := wtype.MakeWellCoords(w)
-				//plat.Cols[wc.X][wc.Y].Currvol += 100.0
 				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(wunit.NewVolume(100.0, "ul"))
+				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
 				plat.Cols[wc.X][wc.Y].Add(dummycmp)
 			}
 		}

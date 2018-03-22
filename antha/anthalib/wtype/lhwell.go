@@ -250,19 +250,13 @@ func (w *LHWell) Add(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	//wasEmpty := w.Empty()
 	mv := wunit.NewVolume(w.MaxVol, "ul")
-	cv := wunit.NewVolume(c.Vol, "ul")
+	cv := c.Volume()
 	wv := w.CurrentVolume()
 	cv.Add(wv)
 
 	w.Contents().Mix(c)
 
-	//if wasEmpty {
-	// get rid of junk ID
-	//	logger.Track(fmt.Sprintf("MIX REPLACED WELL CONTENTS ID WAS %s NOW %s", w.WContents.ID, c.ID))
-	//w.WContents.ID = c.ID
-	//}
 	if cv.GreaterThan(mv) {
 		// could make this fatal but we don't track state well enough
 		// for that to be worthwhile

@@ -115,12 +115,14 @@ type LHPropertiesParams struct {
 
 func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
+	fmt.Printf("p.Name = %s\n", p.Name)
+
 	layout := make(map[string]wtype.Coordinates)
 	for _, lp := range p.Layouts {
 		layout[lp.Name] = wtype.Coordinates{lp.Xpos, lp.Ypos, lp.Zpos}
 	}
 
-	lhp := liquidhandling.NewLHProperties(len(layout), p.Name, p.Mfg, "discrete", "disposable", layout)
+	lhp := liquidhandling.NewLHProperties(len(layout), p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 
 	lhp.Heads = make([]*wtype.LHHead, 0)
 	for _, hp := range p.Heads {
@@ -210,12 +212,13 @@ func makeLHPlate(p *LHPlateParams, name string) *wtype.LHPlate {
 }
 
 type LHTipParams struct {
-	mfr     string
-	ttype   string
-	minvol  float64
-	maxvol  float64
-	volunit string
-	shape   ShapeParams
+	mfr      string
+	ttype    string
+	minvol   float64
+	maxvol   float64
+	volunit  string
+	filtered bool
+	shape    ShapeParams
 }
 
 func makeLHTip(p *LHTipParams) *wtype.LHTip {
@@ -224,6 +227,7 @@ func makeLHTip(p *LHTipParams) *wtype.LHTip {
 		p.minvol,
 		p.maxvol,
 		p.volunit,
+		p.filtered,
 		makeShape(&p.shape))
 }
 
@@ -406,6 +410,7 @@ func default_lhtipbox(name string) *wtype.LHTipbox {
 			50,              //minvol      float64
 			1000,            //maxvol      float64
 			"ul",            //volunit     string
+			false,           //filtered    bool
 			ShapeParams{ // shape           ShapeParams struct {
 				"test_shape", // name            string
 				"mm",         // lengthunit      string
@@ -456,6 +461,7 @@ func small_lhtipbox(name string) *wtype.LHTipbox {
 			0,               //minvol      float64
 			200,             //maxvol      float64
 			"ul",            //volunit     string
+			false,           //filtered    bool
 			ShapeParams{ // shape           ShapeParams struct {
 				"test_shape", // name            string
 				"mm",         // lengthunit      string

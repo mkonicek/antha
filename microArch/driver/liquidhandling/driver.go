@@ -29,6 +29,23 @@ import (
 // driver interface
 
 type LiquidhandlingDriver interface {
+	//AddPlateTo add an LHObject to a particular position in the liquid handler
+	//position: the name of the position defined in LHProperties struct
+	//plate: the LHObject to add
+	//name: the name of the plate, should match wtype.NameOf(plate)
+	AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus
+	//RemoveAllPlates remove every object in the machine
+	RemoveAllPlates() driver.CommandStatus
+	RemovePlateAt(position string) driver.CommandStatus
+	Initialize() driver.CommandStatus
+	Finalize() driver.CommandStatus
+	Message(level int, title, text string, showcancel bool) driver.CommandStatus
+	GetOutputFile() (string, driver.CommandStatus)
+	GetCapabilities() (LHProperties, driver.CommandStatus)
+}
+
+type LowLevelLiquidhandlingDriver interface {
+	LiquidhandlingDriver
 	//Move move the head to the given position
 	//slices deckposition, wellcoords, reference, offsetX,Y,Z and plate_type should be
 	//equal in length to the number of channels on the adaptor. Some elements can be nil or "" to signal
@@ -40,8 +57,6 @@ type LiquidhandlingDriver interface {
 	//offsetX,Y,Z: a relative offset from this position in mm
 	//head: identifies which head should be moved in a multi-head system
 	Move(deckposition []string, wellcoords []string, reference []int, offsetX, offsetY, offsetZ []float64, plate_type []string, head int) driver.CommandStatus
-	//MoveRaw move head to the exact location
-	MoveRaw(head int, x, y, z float64) driver.CommandStatus
 	//Aspirate suck up liquid into the loaded tips
 	//volume, overstroke, platetype, what and llf must be equal in length to the number of channels in the adaptor
 	//volume: amount to aspirate in ul
@@ -87,42 +102,34 @@ type LiquidhandlingDriver interface {
 	//SetDriveSpeed set the speed with which the robot head moves
 	//units unknown...
 	SetDriveSpeed(drive string, rate float64) driver.CommandStatus
-	Stop() driver.CommandStatus
-	Go() driver.CommandStatus
-	Initialize() driver.CommandStatus
-	Finalize() driver.CommandStatus
 	Wait(time float64) driver.CommandStatus
 	//Mix pipette up and down
 	Mix(head int, volume []float64, platetype []string, cycles []int, multi int, what []string, blowout []bool) driver.CommandStatus
 	ResetPistons(head, channel int) driver.CommandStatus
-	//AddPlateTo add an LHObject to a particular position in the liquid handler
-	//position: the name of the position defined in LHProperties struct
-	//plate: the LHObject to add
-	//name: the name of the plate, should match wtype.NameOf(plate)
-	AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus
-	//RemoveAllPlates remove every object in the machine
-	RemoveAllPlates() driver.CommandStatus
-	RemovePlateAt(position string) driver.CommandStatus
-	Message(level int, title, text string, showcancel bool) driver.CommandStatus
+	UpdateMetaData(props *LHProperties) driver.CommandStatus
 }
 
+// should be named UnimplementedLiquidHandlingDriver
 type ExtendedLiquidhandlingDriver interface {
 	LiquidhandlingDriver
 	SetPositionState(position string, state driver.PositionState) driver.CommandStatus
-	GetCapabilities() (LHProperties, driver.CommandStatus)
 	GetCurrentPosition(head int) (string, driver.CommandStatus)
 	GetPositionState(position string) (string, driver.CommandStatus)
 	GetHeadState(head int) (string, driver.CommandStatus)
 	GetStatus() (driver.Status, driver.CommandStatus)
-	UpdateMetaData(props *LHProperties) driver.CommandStatus
 	UnloadHead(param int) driver.CommandStatus
 	LoadHead(param int) driver.CommandStatus
 	LightsOn() driver.CommandStatus
 	LightsOff() driver.CommandStatus
 	LoadAdaptor(param int) driver.CommandStatus
+	//MoveRaw move head to the exact location
+	MoveRaw(head int, x, y, z float64) driver.CommandStatus
 	UnloadAdaptor(param int) driver.CommandStatus
-	// refactored into other interfaces?
 	Open() driver.CommandStatus
 	Close() driver.CommandStatus
-	GetOutputFile() (string, driver.CommandStatus)
+}
+
+type HighLevelLiquidhandlingDriver interface {
+	LiquidhandlingDriver
+	Transfer(what, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus
 }

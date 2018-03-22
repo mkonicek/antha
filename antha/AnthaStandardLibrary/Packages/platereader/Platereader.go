@@ -20,10 +20,11 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-//Package containing functions for manipulating absorbance readings
+//Package platereader contains functions for manipulating absorbance readings and platereader data.
 package platereader
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -45,14 +46,11 @@ func Blankcorrect(blank wtype.Absorbance, sample wtype.Absorbance) (blankcorrect
 		sample.Reader == blank.Reader {
 		blankcorrected.Reading = sample.Reading - blank.Reading
 
-		//currentstatus = make([]string,0)
+		blankcorrected.Status = append(blankcorrected.Status, sample.Status...)
 
-		for _, status := range sample.Status {
-			blankcorrected.Status = append(blankcorrected.Status, status)
-		}
 		blankcorrected.Status = append(blankcorrected.Status, "Blank Corrected")
 	} else {
-		err = fmt.Errorf("Cannot pathlength correct as Absorbance readings ", sample, " and ", blank, " are incompatible due to either wavelength, pathlength or reader differences. ")
+		err = fmt.Errorf("Cannot pathlength correct as Absorbance readings %+v and %+v are incompatible due to either wavelength, pathlength or reader differences", sample, blank)
 	}
 	return
 }
@@ -84,7 +82,7 @@ func EstimatePathLength(plate *wtype.LHPlate, volume wunit.Volume) (pathlength w
 			fmt.Println(volume.Unit().PrefixedSymbol(), wellvol.Unit().PrefixedSymbol(), wellarea.Unit().PrefixedSymbol(), wellarea.ToString())
 		}
 	} else {
-		err = fmt.Errorf("Can't yet estimate pathlength for this welltype shape unit ", plate.Welltype.Shape().LengthUnit, "or non flat bottom type")
+		err = errors.New(fmt.Sprint("Can't yet estimate pathlength for this welltype shape unit ", plate.Welltype.Shape().LengthUnit, "or non flat bottom type"))
 	}
 
 	return

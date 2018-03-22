@@ -40,6 +40,7 @@ type LHTip struct {
 	Bounds   BBox
 	parent   LHObject `gotopb:"-"`
 	contents *LHComponent
+	Filtered bool
 }
 
 /*
@@ -153,13 +154,19 @@ func (tip *LHTip) IsNil() bool {
 }
 
 func (tip *LHTip) Dup() *LHTip {
-	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Shape.Dup())
+	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup())
 	t.Dirty = tip.Dirty
 	t.contents = tip.Contents().Dup()
 	return t
 }
 
-func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, shape *Shape) *LHTip {
+func (tip *LHTip) DupKeepID() *LHTip {
+	t := tip.Dup()
+	t.ID = tip.ID
+	return t
+}
+
+func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, filtered bool, shape *Shape) *LHTip {
 	lht := LHTip{
 		GetUUID(),
 		ttype,
@@ -175,15 +182,10 @@ func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, shape *
 		}},
 		nil,
 		NewLHComponent(),
+		filtered,
 	}
 
 	return &lht
-}
-
-func (tip *LHTip) DupKeepID() *LHTip {
-	t := tip.Dup()
-	t.ID = tip.ID
-	return t
 }
 
 func CopyTip(tt LHTip) *LHTip {

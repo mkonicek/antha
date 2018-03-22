@@ -1,40 +1,86 @@
 syntax="proto3";
-package ExtendedLiquidhandlingDriver;
-service ExtendedLiquidhandlingDriver {
+package lh;
+
+service LiquidhandlingDriver{
 rpc AddPlateTo (AddPlateToRequest) returns (AddPlateToReply) {}
-rpc Aspirate (AspirateRequest) returns (AspirateReply) {}
-rpc Close (CloseRequest) returns (CloseReply) {}
-rpc Dispense (DispenseRequest) returns (DispenseReply) {}
 rpc Finalize (FinalizeRequest) returns (FinalizeReply) {}
 rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesReply) {}
+rpc GetOutputFile(GetOutputFileRequest) returns (GetOutputFileReply) {}
+rpc Initialize (InitializeRequest) returns (InitializeReply) {}
+rpc Message (MessageRequest) returns (MessageReply) {}
+rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (RemoveAllPlatesReply) {}
+rpc RemovePlateAt (RemovePlateAtRequest) returns (RemovePlateAtReply) {}
+}
+
+service LowLevelLiquidhandlingDriver{
+rpc AddPlateTo (AddPlateToRequest) returns (AddPlateToReply) {}
+rpc Finalize (FinalizeRequest) returns (FinalizeReply) {}
+rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesReply) {}
+rpc GetOutputFile(GetOutputFileRequest) returns (GetOutputFileReply) {}
+rpc Initialize (InitializeRequest) returns (InitializeReply) {}
+rpc Message (MessageRequest) returns (MessageReply) {}
+rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (RemoveAllPlatesReply) {}
+rpc RemovePlateAt (RemovePlateAtRequest) returns (RemovePlateAtReply) {}
+rpc Aspirate (AspirateRequest) returns (AspirateReply) {}
+rpc Dispense (DispenseRequest) returns (DispenseReply) {}
+rpc LoadTips (LoadTipsRequest) returns (LoadTipsReply) {}
+rpc Mix (MixRequest) returns (MixReply) {}
+rpc Move (MoveRequest) returns (MoveReply) {}
+rpc ResetPistons (ResetPistonsRequest) returns (ResetPistonsReply) {}
+rpc SetDriveSpeed (SetDriveSpeedRequest) returns (SetDriveSpeedReply) {}
+rpc SetPipetteSpeed (SetPipetteSpeedRequest) returns (SetPipetteSpeedReply) {}
+rpc UnloadTips (UnloadTipsRequest) returns (UnloadTipsReply) {}
+rpc UpdateMetaData (UpdateMetaDataRequest) returns (UpdateMetaDataReply) {}
+rpc Wait (WaitRequest) returns (WaitReply){}
+}
+
+service HighLevelLiquidhandlingDriver{
+rpc AddPlateTo (AddPlateToRequest) returns (AddPlateToReply) {}
+rpc Finalize (FinalizeRequest) returns (FinalizeReply) {}
+rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesReply) {}
+rpc GetOutputFile(GetOutputFileRequest) returns (GetOutputFileReply) {}
+rpc Initialize (InitializeRequest) returns (InitializeReply) {}
+rpc Message (MessageRequest) returns (MessageReply) {}
+rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (RemoveAllPlatesReply) {}
+rpc RemovePlateAt (RemovePlateAtRequest) returns (RemovePlateAtReply) {}
+rpc Transfer(TransferRequest)returns (TransferReply){}
+}
+
+service ExtendedLiquidhandlingDriver {
+rpc AddPlateTo (AddPlateToRequest) returns (AddPlateToReply) {}
+rpc Finalize (FinalizeRequest) returns (FinalizeReply) {}
+rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesReply) {}
+rpc GetOutputFile(GetOutputFileRequest) returns (GetOutputFileReply) {}
+rpc Initialize (InitializeRequest) returns (InitializeReply) {}
+rpc Message (MessageRequest) returns (MessageReply) {}
+rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (RemoveAllPlatesReply) {}
+rpc RemovePlateAt (RemovePlateAtRequest) returns (RemovePlateAtReply) {}
+rpc Aspirate (AspirateRequest) returns (AspirateReply) {}
+rpc Dispense (DispenseRequest) returns (DispenseReply) {}
+rpc LoadTips (LoadTipsRequest) returns (LoadTipsReply) {}
+rpc Mix (MixRequest) returns (MixReply) {}
+rpc Move (MoveRequest) returns (MoveReply) {}
+rpc ResetPistons (ResetPistonsRequest) returns (ResetPistonsReply) {}
+rpc SetDriveSpeed (SetDriveSpeedRequest) returns (SetDriveSpeedReply) {}
+rpc SetPipetteSpeed (SetPipetteSpeedRequest) returns (SetPipetteSpeedReply) {}
+rpc UnloadTips (UnloadTipsRequest) returns (UnloadTipsReply) {}
+rpc UpdateMetaData (UpdateMetaDataRequest) returns (UpdateMetaDataReply) {}
+rpc Close (CloseRequest) returns (CloseReply) {}
 rpc GetCurrentPosition (GetCurrentPositionRequest) returns (GetCurrentPositionReply) {}
 rpc GetHeadState (GetHeadStateRequest) returns (GetHeadStateReply) {}
-rpc GetOutputFile (GetOutputFileRequest) returns (GetOutputFileReply) {}
 rpc GetPositionState (GetPositionStateRequest) returns (GetPositionStateReply) {}
 rpc GetStatus (GetStatusRequest) returns (GetStatusReply) {}
 rpc Go (GoRequest) returns (GoReply) {}
-rpc Initialize (InitializeRequest) returns (InitializeReply) {}
 rpc LightsOff (LightsOffRequest) returns (LightsOffReply) {}
 rpc LightsOn (LightsOnRequest) returns (LightsOnReply) {}
 rpc LoadAdaptor (LoadAdaptorRequest) returns (LoadAdaptorReply) {}
 rpc LoadHead (LoadHeadRequest) returns (LoadHeadReply) {}
-rpc LoadTips (LoadTipsRequest) returns (LoadTipsReply) {}
-rpc Message (MessageRequest) returns (MessageReply) {}
-rpc Mix (MixRequest) returns (MixReply) {}
-rpc Move (MoveRequest) returns (MoveReply) {}
 rpc MoveRaw (MoveRawRequest) returns (MoveRawReply) {}
 rpc Open (OpenRequest) returns (OpenReply) {}
-rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (RemoveAllPlatesReply) {}
-rpc RemovePlateAt (RemovePlateAtRequest) returns (RemovePlateAtReply) {}
-rpc ResetPistons (ResetPistonsRequest) returns (ResetPistonsReply) {}
-rpc SetDriveSpeed (SetDriveSpeedRequest) returns (SetDriveSpeedReply) {}
-rpc SetPipetteSpeed (SetPipetteSpeedRequest) returns (SetPipetteSpeedReply) {}
 rpc SetPositionState (SetPositionStateRequest) returns (SetPositionStateReply) {}
 rpc Stop (StopRequest) returns (StopReply) {}
 rpc UnloadAdaptor (UnloadAdaptorRequest) returns (UnloadAdaptorReply) {}
 rpc UnloadHead (UnloadHeadRequest) returns (UnloadHeadReply) {}
-rpc UnloadTips (UnloadTipsRequest) returns (UnloadTipsReply) {}
-rpc UpdateMetaData (UpdateMetaDataRequest) returns (UpdateMetaDataReply) {}
 rpc Wait (WaitRequest) returns (WaitReply) {}
 }
 message MapMessage {
@@ -436,16 +482,6 @@ message LHAdaptorMessage {
 	PtrToLHChannelParameterMessage Arg_4 = 4;
 	ArrayOfPtrToLHTipMessage Arg_5 = 5;
 }
-message LHTipMessage {
-	string Arg_1 = 1;
-	string Arg_2 = 2;
-	string Arg_3 = 3;
-	bool Arg_4 = 4;
-	VolumeMessage Arg_5 = 5;
-	VolumeMessage Arg_6 = 6;
-    PtrToShapeMessage Arg_7 = 7;
-    BBoxMessage Arg_8 = 8;
-}
 message MapstringCoordinatesMessageMessageFieldEntry{
 string key = 1;
 CoordinatesMessage value = 2;
@@ -544,6 +580,17 @@ message FlowRateMessage {
 }
 message ArrayOfArrayOfPtrToLHTipMessage{
 	repeated ArrayOfPtrToLHTipMessage arg_1=1;
+}
+message LHTipMessage {
+	string Arg_1 = 1;
+	string Arg_2 = 2;
+	string Arg_3 = 3;
+	bool Arg_4 = 4;
+	VolumeMessage Arg_5 = 5;
+	VolumeMessage Arg_6 = 6;
+    bool Arg_7 = 7;
+    PtrToShapeMessage Arg_8 = 8;
+    BBoxMessage Arg_9 = 9;
 }
 message LHDeviceMessage {
 	string Arg_1 = 1;
@@ -651,3 +698,17 @@ message SIPrefixMessage {
 	string Arg_1 = 1;
 	double Arg_2 = 2;
 }
+
+message TransferRequest{
+	repeated string Arg_1 = 1;
+	repeated string Arg_2 = 2;
+	repeated string Arg_3 = 3;
+	repeated string	Arg_4 = 4;
+	repeated string Arg_5 = 5;
+	repeated double Arg_6 = 6;
+}
+
+message TransferReply{
+	CommandStatusMessage Ret_1 = 1;
+}
+

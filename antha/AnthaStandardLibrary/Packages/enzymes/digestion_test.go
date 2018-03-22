@@ -24,12 +24,13 @@ package enzymes
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"strings"
-	"testing"
 )
 
 const (
@@ -835,7 +836,7 @@ func TestMakeFragment(t *testing.T) {
 		fragment, err := makeFragment(test.enzyme, test.upstream, test.downstream, test.sequence)
 		if fragment.Sequence() != test.fragment.Sequence() {
 			t.Error(
-				"For", fmt.Sprintf("%s", test.sequence.Name()), "\n",
+				"For", test.sequence.Name(), "\n",
 				"expected fragment", test.fragment.Sequence(), "\n",
 				"got", fragment.Sequence(), "\n",
 				"All positions found: ", allPositionsFound[0].Positions, "\n",
@@ -844,7 +845,7 @@ func TestMakeFragment(t *testing.T) {
 
 		if err != nil {
 			t.Error(
-				"For", fmt.Sprintf("%s", test.sequence.Name()), "\n",
+				"For", test.sequence.Name(), "\n",
 				"got error: ", err.Error(), "\n",
 				"All positions found: ", allPositionsFound, "\n",
 			)

@@ -50,10 +50,7 @@ func (sites RestrictionSites) RecognitionSequence() string {
 
 // SiteFound evaluates whether at least one site has been found.
 func (sites RestrictionSites) SiteFound() bool {
-	if len(sites.Positions) > 0 {
-		return true
-	}
-	return false
+	return len(sites.Positions) > 0
 }
 
 // NumberOfSites returns the number of restriction sites found.
@@ -154,12 +151,8 @@ func RestrictionSiteFinder(sequence wtype.DNASequence, enzymelist ...wtype.Restr
 		wobbleproofrecognitionoptions := sequences.Wobble(recognitionSite)
 
 		for _, wobbleoption := range wobbleproofrecognitionoptions {
-
 			options := sequences.FindAll(&sequence, &wtype.DNASequence{Nm: wobbleoption, Seq: wobbleoption})
-			for _, option := range options.Positions {
-				enzymesite.Positions = append(enzymesite.Positions, option)
-			}
-
+			enzymesite.Positions = append(enzymesite.Positions, options.Positions...)
 		}
 
 		enzymesite.Positions = removePalindromic(enzymesite.Positions)

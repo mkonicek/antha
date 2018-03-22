@@ -90,7 +90,7 @@ func EvaporationVolume(temp wunit.Temperature, liquidtype string, relativehumidi
 
 	evaporatedliquid := (Gh * (time / 3600)) // in kg
 
-	density, _ := liquidclasses.Liquidclass[liquidtype]["ro"]
+	density := liquidclasses.Liquidclass[liquidtype]["ro"]
 
 	evaporatedliquid = (evaporatedliquid * density) / 1000     // converted to litres
 	vol := wunit.NewVolume((evaporatedliquid * 1000000), "ul") // convert to ul

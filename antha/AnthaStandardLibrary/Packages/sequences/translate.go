@@ -212,11 +212,11 @@ func FindStarts(seq string) (atgs int) {
 
 func FindDirectionalORF(seq string, reverse bool) (orf ORF, orftrue bool) {
 
-	if reverse == false {
+	if !reverse {
 		orf, orftrue = FindORF(seq)
 		orf.Direction = "Forward"
 	}
-	if reverse == true {
+	if reverse {
 		revseq := wtype.RevComp(seq)
 		orf, orftrue = FindORF(revseq)
 		orf.Direction = "Reverse"
@@ -230,7 +230,7 @@ func FindDirectionalORF(seq string, reverse bool) (orf ORF, orftrue bool) {
 
 func Translate(dna wtype.DNASequence) (aa wtype.ProteinSequence, err error) {
 	orf, orftrue := FindORF(dna.Seq)
-	if orftrue == false {
+	if !orftrue {
 		err = fmt.Errorf("Cannot translate this! no open reading frame detected")
 		return
 	} else {
@@ -241,7 +241,6 @@ func Translate(dna wtype.DNASequence) (aa wtype.ProteinSequence, err error) {
 }
 
 func FindORF(seq string) (orf ORF, orftrue bool) { // finds an orf in the forward direction only
-
 	orftrue = false
 	seq = strings.ToUpper(seq)
 
@@ -394,7 +393,7 @@ func Findorfsinstrand(seq string) (orfs []ORF) {
 
 	orfs = make([]ORF, 0)
 	neworf, orftrue := FindORF(seq)
-	if orftrue == false {
+	if !orftrue {
 		return
 	}
 	if len(neworf.ProtSeq) > 20 {
@@ -406,7 +405,7 @@ func Findorfsinstrand(seq string) (orfs []ORF) {
 	for {
 
 		neworf, orftrue := FindORF(newseq)
-		if orftrue == false {
+		if !orftrue {
 			return
 		}
 		newseq = newseq[(neworf.StartPosition):]
@@ -419,15 +418,13 @@ func Findorfsinstrand(seq string) (orfs []ORF) {
 		}
 		i++
 	}
-
-	return orfs
 }
 
 func FindNonOverlappingORFsinstrand(seq string) (orfs []ORF) {
 
 	orfs = make([]ORF, 0)
 	neworf, orftrue := FindORF(seq)
-	if orftrue == false {
+	if !orftrue {
 		return
 	}
 	if len(neworf.ProtSeq) > 20 {
@@ -439,7 +436,7 @@ func FindNonOverlappingORFsinstrand(seq string) (orfs []ORF) {
 	i := 0
 	for {
 		neworf, orftrue := FindORF(newseq)
-		if orftrue == false {
+		if !orftrue {
 			break
 		}
 		newseq = newseq[(neworf.EndPosition):]
@@ -514,16 +511,8 @@ func DoublestrandedNonOverlappingORFS(seq string) (features features) {
 	return features
 }
 
-func MergeORFs(feats features) (orfs []ORF) {
-	orfs = make([]ORF, 0)
-	for _, top := range feats.TopstrandORFS {
-		orfs = append(orfs, top)
-	}
-	// fmt.Println("TopStrandORFS: ", orfs)
-	for _, bottom := range feats.BottomstrandORFS {
-		orfs = append(orfs, bottom)
-	}
-	return
+func MergeORFs(feats features) []ORF {
+	return append(feats.TopstrandORFS, feats.BottomstrandORFS...)
 }
 
 // should make this an interface

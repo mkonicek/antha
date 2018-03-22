@@ -4,18 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/driver"
 	platereader "github.com/antha-lang/antha/driver/antha_platereader_v1"
 	"github.com/antha-lang/antha/target"
-	"strings"
 )
 
 // PlateReader defines the state of a plate-reader device
-type PlateReader struct {
-}
+type PlateReader struct{}
 
 // Ensure satisfies Device interface
 var _ target.Device = (*PlateReader)(nil)
@@ -100,7 +100,7 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 
 // PRInstructions with the same key can be executed on the same plate-read cycle
 func prKey(inst *wtype.PRInstruction) (string, error) {
-	return fmt.Sprintf("%s", inst.Options), nil
+	return inst.Options, nil
 }
 
 // Merge PRInstructions

@@ -20,7 +20,7 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 
 	_, inmap := SynthesisStandards[manufacturer]
 
-	if inmap == false {
+	if !inmap {
 		keys := make([]string, 0)
 		for key := range SynthesisStandards {
 			keys = append(keys, key)
@@ -48,7 +48,7 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 	}
 
 	// check if vector is appropriate
-	if search.InStrings(vectorR, vector) == false {
+	if !search.InStrings(vectorR, vector) {
 		vectorstatus = fmt.Sprint("Warning: Non-standard vector used for", manufacturer,
 			"synthesis. Please see manufacturer instructions for the standard vector or the use of custom vectors")
 	} else {
@@ -67,7 +67,7 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 			status = status + ". " + fmt.Sprint("Warning:", part.Nm, "is long and may be difficult to sythesise")
 			bad = true
 		} else if strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("A", a)) || strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("T", a)) ||
-			strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("C", a)) || strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("A", a)) == true {
+			strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("C", a)) || strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("A", a)) {
 			status = status + ". " + fmt.Sprint("Warning:", part.Nm, "is highly repetetive and unsuitable for synthesis")
 			bad = true
 		} else if GCC > 0.65 || GCC < 0.40 {
@@ -92,7 +92,7 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 
 	status = vectorstatus + status
 
-	if bad == true {
+	if bad {
 		ok = false
 	}
 

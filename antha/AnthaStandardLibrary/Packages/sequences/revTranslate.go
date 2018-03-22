@@ -76,7 +76,10 @@ func RevTranslate(aaSeq wtype.ProteinSequence, codonUsageTable CodonUsageTable) 
 			return dnaSeq, err
 		}
 
-		dnaSeq.Append(string(nextCodon))
+		err = dnaSeq.Append(string(nextCodon))
+		if err != nil {
+			return dnaSeq, err
+		}
 	}
 	return dnaSeq, nil
 }

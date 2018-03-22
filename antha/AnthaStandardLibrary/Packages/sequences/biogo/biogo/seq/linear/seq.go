@@ -135,7 +135,7 @@ func (s *Seq) String() string { return alphabet.Letters(s.Seq).String() }
 // omission of the sequence name.
 func (s *Seq) Format(fs fmt.State, c rune) {
 	if s == nil {
-		fmt.Fprint(fs, "<nil>")
+		fmt.Fprint(fs, "<nil>") // nolint
 		return
 	}
 	var (

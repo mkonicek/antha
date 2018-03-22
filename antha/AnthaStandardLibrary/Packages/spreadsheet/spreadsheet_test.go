@@ -35,7 +35,6 @@ var coordinatetests = []coordinatetest{
 }
 
 type spreadSheetTest struct {
-	contents    []byte
 	fileName    string
 	testSheet   int
 	testRows    map[int][]interface{}

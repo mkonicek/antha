@@ -2,23 +2,24 @@ package lh
 
 import (
 	"encoding/json"
+	"log"
+
 	"github.com/antha-lang/antha/antha/anthalib/material"
 	wtype "github.com/antha-lang/antha/antha/anthalib/wtype"
 	wunit "github.com/antha-lang/antha/antha/anthalib/wunit"
 	pb "github.com/antha-lang/antha/driver/pb/lh"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"log"
 )
 
 func Encodeinterface(arg interface{}) *pb.AnyMessage {
-	s, _ := json.Marshal(arg)
+	s, _ := json.Marshal(arg) // nolint
 	ret := pb.AnyMessage{string(s)}
 	return &ret
 }
 func Decodeinterface(msg *pb.AnyMessage) interface{} {
 	var v interface{}
-	json.Unmarshal([]byte(msg.Arg_1), &v)
+	json.Unmarshal([]byte(msg.Arg_1), &v) // nolint
 	return v
 }
 func EncodeCommandStatus(arg driver.CommandStatus) *pb.CommandStatusMessage {

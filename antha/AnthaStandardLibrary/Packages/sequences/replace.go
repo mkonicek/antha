@@ -166,14 +166,12 @@ func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []str
 	seqsfound := FindSeqsinSeqs(sequence, []string{thingtoreplace})
 	if len(seqsfound) == 1 {
 		for _, instance := range seqsfound {
-			if instance.Reverse == true {
+			if instance.Reverse {
 				thingtoreplace = wtype.RevComp(thingtoreplace)
 			}
 		}
 
-		allthingstoavoid := make([]string, len(otherseqstoavoid))
-		allthingstoavoid = otherseqstoavoid
-		allthingstoavoid = append(otherseqstoavoid, thingtoreplace)
+		allthingstoavoid := append(otherseqstoavoid, thingtoreplace)
 		allthingstoavoid = search.RemoveDuplicateStrings(allthingstoavoid)
 
 		for i := range thingtoreplace {
@@ -213,11 +211,11 @@ func ReplaceBycomplement(sequence, thingtoreplace string, otherseqstoavoid []str
 // iterates through each position of a restriction site and replaces with the complementary base and then removes these from the main sequence
 // if that fails the algorithm will attempt to find the complements of two adjacent positions. The algorithm needs improvement
 func removeSiteOnestrand(sequence wtype.DNASequence, enzymeseq string, otherseqstoavoid []string) (newseq wtype.DNASequence, err error) {
+	// XXX: Should probably add enzymeseq to allthingstoavoid as well, but to keep it
+	// functionally equivalent to what it was don't do this at this time.
 
-	allthingstoavoid := make([]string, len(otherseqstoavoid))
-	allthingstoavoid = otherseqstoavoid
-	allthingstoavoid = append(otherseqstoavoid, enzymeseq)
-	allthingstoavoid = append(otherseqstoavoid, wtype.RevComp(enzymeseq))
+	//allthingstoavoid := append(otherseqstoavoid, enzymeseq)
+	allthingstoavoid := append(otherseqstoavoid, wtype.RevComp(enzymeseq))
 
 	for i := range enzymeseq {
 
@@ -256,8 +254,7 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 
 	var tempseq wtype.DNASequence
 
-	allthingstoavoid := make([]string, len(otherseqstoavoid))
-	allthingstoavoid = otherseqstoavoid
+	allthingstoavoid := otherseqstoavoid
 	allthingstoavoid = append(allthingstoavoid, enzyme.RecognitionSequence)
 	allthingstoavoid = append(allthingstoavoid, wtype.RevComp(enzyme.RecognitionSequence))
 
@@ -272,7 +269,7 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 	if len(seqsfound) == 1 {
 
 		for _, instance := range seqsfound {
-			if instance.Reverse == true {
+			if instance.Reverse {
 				thingtoreplace = wtype.RevComp(enzyme.RecognitionSequence)
 			}
 		}
@@ -292,9 +289,12 @@ func RemoveSite(sequence wtype.DNASequence, enzyme wtype.RestrictionEnzyme, othe
 	if len(seqsfound) == 2 {
 
 		tempseq, err := removeSiteOnestrand(sequence, thingtoreplace, allthingstoavoid)
+		if err != nil {
+			return newseq, err
+		}
 
 		for _, instance := range seqsfound {
-			if instance.Reverse == true {
+			if instance.Reverse {
 				thingtoreplace = wtype.RevComp(enzyme.RecognitionSequence)
 			}
 		}

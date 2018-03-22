@@ -30,6 +30,7 @@ lint: test
 		--enable=megacheck \
 		--enable=gofmt \
 		--enable-gc \
+		--deadline=5m \
 		-e 'driver/(pb/)?lh.*unkeyed' \
 		-e '\.pb\.go' \
 		./...

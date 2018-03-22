@@ -29,13 +29,12 @@ func (h ComponentVolumeHash) Dup() ComponentVolumeHash {
 }
 
 type GetComponentsOptions struct {
-	Cmps            wtype.ComponentVector
-	Carryvol        wunit.Volume
-	Ori             int
-	Multi           int
-	Independent     bool
-	LegacyVolume    bool
-	IgnoreInstances bool // treat everything as virtual?
+	Cmps         wtype.ComponentVector
+	Carryvol     wunit.Volume
+	Ori          int
+	Multi        int
+	Independent  bool
+	LegacyVolume bool
 }
 
 type ParallelTransfer struct {
@@ -94,7 +93,7 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
@@ -105,7 +104,7 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
 				// cmps needs duping here
-				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume, ignoreInstances) // dups components
+				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume) // dups components
 				if mycmps.Empty() {
 					continue
 				}
@@ -254,7 +253,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	rep := newReply()
 	// build list of possible sources -- this is a list of ComponentVectors
 
-	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)
+	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume())
 
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
@@ -271,13 +270,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		}
 
 		if ok, s := sourceVolumesOK(srcs, currCmps); !ok {
-
-			if opt.IgnoreInstances {
-				return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes for components %s", s)
-			} else {
-				opt.IgnoreInstances = true
-				return lhp.GetComponents(opt)
-			}
+			return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes for components %s", s)
 		}
 
 		if cmpVecsEqual(lastCmps, currCmps) {

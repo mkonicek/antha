@@ -789,7 +789,7 @@ func SmartMixPolicy() wtype.LHPolicy {
 	policy["DSPZOFFSET"] = 0.5
 	policy["TIP_REUSE_LIMIT"] = 0
 	policy["NO_AIR_DISPENSE"] = true
-	policy["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
+	policy["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well. MultiChannel by default. No tip reuse permitted."
 	policy["MIX_VOLUME_OVERRIDE_TIP_MAX"] = true
 	return policy
 }
@@ -981,6 +981,7 @@ func (c numericCondition) AddToRule(rule wtype.LHPolicyRule) error {
 // Conditions to apply to LHpolicyRules based on liquid policy used
 var (
 	OnSmartMix  = categoricCondition{"LIQUIDCLASS", "SmartMix"}
+	OnMegaMix   = categoricCondition{"LIQUIDCLASS", "MegaMix"}
 	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
 	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
 	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
@@ -1070,6 +1071,38 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	}
 
 	lhpr.AddRule(postmix20ul, adjustVol20)
+
+	adjustMegaPostMix, err := newConditionalRule("megaMixInto20ul", OnMegaMix, IntoBetween20ulAnd50ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustMegaPostMix, adjustVol20)
+
+	adjustMegaPostMix50, err := newConditionalRule("megaMixInto50ul", OnMegaMix, IntoBetween50ulAnd100ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustMegaPostMix50, adjustVol50)
+
+	adjustMegaPostMix100, err := newConditionalRule("megaMixInto100ul", OnMegaMix, IntoBetween100ulAnd200ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustMegaPostMix100, adjustVol100)
+
+	adjustMegaPostMix200, err := newConditionalRule("megaMixInto200ul", OnMegaMix, IntoBetween200ulAnd1000ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(adjustMegaPostMix200, adjustVol200)
 
 	needToMix20ul, err := newConditionalRule("NeedToMix20ul", OnNeedToMix, LessThan20ul)
 

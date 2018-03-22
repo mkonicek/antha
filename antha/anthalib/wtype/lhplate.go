@@ -1035,7 +1035,8 @@ func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector
 
 		identifier := cv[i].IDOrName()
 
-		if ignoreInstances {
+		// ignoreInstances can only work for initial inputs
+		if ignoreInstances && cv[i].Generation() == 0 {
 			identifier = cv[i].CName
 		}
 

@@ -256,8 +256,6 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)
 
-	fmt.Println("SOURCES FOR ", opt.Cmps, " ", srcs)
-
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
 
@@ -274,7 +272,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 
 		if ok, s := sourceVolumesOK(srcs, currCmps); !ok {
 
-			if !opt.IgnoreInstances {
+			if opt.IgnoreInstances {
 				return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes for components %s", s)
 			} else {
 				opt.IgnoreInstances = true

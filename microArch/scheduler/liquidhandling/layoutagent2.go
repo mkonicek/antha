@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -746,7 +745,7 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 					return wtype.LHError(wtype.LH_ERR_DIRE, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
 				}
 				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(wunit.NewVolume(100.0, "ul"))
+				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
 				plat.Cols[wc.X][wc.Y].Add(dummycmp)
 				request.LHInstructions[sID].Welladdress = wc.FormatA1()
 				assignment = c.ID + ":" + wc.FormatA1()

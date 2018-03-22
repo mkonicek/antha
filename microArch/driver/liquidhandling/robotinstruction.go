@@ -228,7 +228,7 @@ func concatboolarray(a []bool) string {
 
 // empty struct to hang methods on
 type GenericRobotInstruction struct {
-	Ins RobotInstruction
+	Ins RobotInstruction `json:"-"`
 }
 
 func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {

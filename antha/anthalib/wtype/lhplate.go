@@ -1145,21 +1145,30 @@ func componentList(vec ComponentVector) map[string]bool {
 	return r
 }
 
-func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume) ComponentVector {
-	cv := p.GetFilteredContentVector(wv, cmps)
+func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume, ignoreInstances bool) ComponentVector {
+	cv := p.GetFilteredContentVector(wv, cmps, ignoreInstances)
 
 	cv.DeleteAllBelowVolume(mpv)
 	return cv
 }
 
-func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector) ComponentVector {
+func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector, ignoreInstances bool) ComponentVector {
 	wants := componentList(cmps)
 
 	cv := p.GetContentVector(wv)
+
 	fcv := make([]*LHComponent, len(cv))
 
 	for i := 0; i < len(cv); i++ {
-		if cv[i] != nil && wants[cv[i].IDOrName()] {
+
+		identifier := cv[i].IDOrName()
+
+		// ignoreInstances can only work for initial inputs
+		if ignoreInstances && cv[i].Generation() == 0 {
+			identifier = cv[i].CName
+		}
+
+		if cv[i] != nil && wants[identifier] {
 			fcv[i] = cv[i]
 		}
 	}

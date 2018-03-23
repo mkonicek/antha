@@ -248,7 +248,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 			err = params.AddTipWaste(waste)
 			if err != nil {
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error adding tip waste: %s", err))
+				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error adding tip waste for model %s: %s", params.Model, err))
 			}
 		}
 	}

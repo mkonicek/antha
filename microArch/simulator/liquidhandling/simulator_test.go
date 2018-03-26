@@ -2713,7 +2713,7 @@ func Test_Workflow(t *testing.T) {
 		for y := 0; y < 8; y++ {
 			wc.Y = y
 			well := input_plate.GetChildByAddress(wc).(*wtype.LHWell)
-			err := well.Add(comp[x].Dup())
+			err := well.AddComponent(comp[x].Dup())
 			if err != nil {
 				t.Fatal(err)
 			}

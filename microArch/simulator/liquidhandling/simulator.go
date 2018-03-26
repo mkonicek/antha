@@ -920,8 +920,8 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 			self.AddWarningf("Aspirate", "While %s - minimum tip volume is %s",
 				describe(), tip.MinVol)
 			//will get an error here, but ignore it since we're already raising a warning
-			tip.Add(c)
-		} else if err := tip.Add(c); err != nil {
+			tip.AddComponent(c)
+		} else if err := tip.AddComponent(c); err != nil {
 			self.AddErrorf("Aspirate", "While %s - unexpected tip error \"%s\"", describe(), err.Error())
 		}
 	}
@@ -1037,7 +1037,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 				describe(), wells[i].GetName(), i, wells[i].CurrentVolume(), wells[i].MaxVolume())
 		} else if c, err := tip.Remove(v); err != nil {
 			self.AddErrorf("Dispense", "Unexpected tip error \"%s\"", err.Error())
-		} else if err := wells[i].Add(c); err != nil {
+		} else if err := wells[i].AddComponent(c); err != nil {
 			self.AddErrorf("Dispense", "Unexpected well error \"%s\"", err.Error())
 		}
 	}
@@ -1602,7 +1602,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 				self.AddErrorf("Mix", "Unexpected well error - %s", err.Error())
 				continue
 			}
-			err = tip.Add(com)
+			err = tip.AddComponent(com)
 			if err != nil {
 				self.AddErrorf("Mix", "Unexpected well error - %s", err.Error())
 				continue
@@ -1612,7 +1612,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 				self.AddErrorf("Mix", "Unexpected tip error - %s", err.Error())
 				continue
 			}
-			err = wells[ch].Add(com)
+			err = wells[ch].AddComponent(com)
 			if err != nil {
 				self.AddErrorf("Mix", "Unexpected well error - %s", err.Error())
 				continue

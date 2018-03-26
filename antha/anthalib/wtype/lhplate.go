@@ -338,7 +338,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 			return ret, err
 		}
 
-		err = wl.Add(c)
+		err = wl.AddComponent(c)
 		if err != nil {
 			//this shouldn't happen because the well was empty
 			//but we should check for linting

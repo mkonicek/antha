@@ -204,7 +204,7 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		cmp.Cunit = concentration.Unit().PrefixedSymbol()
 
 		if wa, ok := plate.WellAt(well); ok {
-			err = wa.Add(cmp)
+			err = wa.AddComponent(cmp)
 			if err != nil {
 				return nil, err
 			}

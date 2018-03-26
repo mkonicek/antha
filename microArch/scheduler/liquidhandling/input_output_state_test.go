@@ -52,8 +52,8 @@ func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pl2.Cols[0][0].Add(cmp1)
-	pl2.Cols[0][1].Add(cmp2)
+	pl2.Cols[0][0].AddComponent(cmp1)
+	pl2.Cols[0][1].AddComponent(cmp2)
 
 	mo := mixer.MixOptions{
 		Components: []*wtype.LHComponent{cmp1, cmp2},
@@ -113,12 +113,12 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = pl2.Cols[0][0].Add(cmp1)
+	err = pl2.Cols[0][0].AddComponent(cmp1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = pl2.Cols[0][1].Add(cmp2)
+	err = pl2.Cols[0][1].AddComponent(cmp2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,12 +194,12 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = pl2.Cols[0][0].Add(cmp1)
+	err = pl2.Cols[0][0].AddComponent(cmp1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = pl2.Cols[0][1].Add(cmp2)
+	err = pl2.Cols[0][1].AddComponent(cmp2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,12 +258,12 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = pl2.Cols[0][0].Add(cmp1)
+	err = pl2.Cols[0][0].AddComponent(cmp1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = pl2.Cols[0][1].Add(cmp2)
+	err = pl2.Cols[0][1].AddComponent(cmp2)
 	if err != nil {
 		t.Fatal(err)
 	}

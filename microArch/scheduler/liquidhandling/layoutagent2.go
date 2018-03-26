@@ -733,7 +733,7 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 
 				dummycmp := wtype.NewLHComponent()
 				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
-				err := plat.Cols[wc.X][wc.Y].Add(dummycmp)
+				err := plat.Cols[wc.X][wc.Y].AddComponent(dummycmp)
 				if err != nil {
 					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Layout Agent : %s", err.Error()))
 				}
@@ -758,7 +758,7 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 				}
 				dummycmp := wtype.NewLHComponent()
 				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
-				err := plat.Cols[wc.X][wc.Y].Add(dummycmp)
+				err := plat.Cols[wc.X][wc.Y].AddComponent(dummycmp)
 				if err != nil {
 					return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
 				}

@@ -260,7 +260,7 @@ func (w *LHWell) MaxVolume() wunit.Volume {
 	return wunit.NewVolume(w.MaxVol, "ul")
 }
 
-func (w *LHWell) Add(c *LHComponent) error {
+func (w *LHWell) AddComponent(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}

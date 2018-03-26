@@ -218,7 +218,7 @@ func (self *LHTip) WorkingVolume() wunit.Volume {
 }
 
 //@implement LHContainer
-func (self *LHTip) Add(v *LHComponent) error {
+func (self *LHTip) AddComponent(v *LHComponent) error {
 	fv := self.CurrentVolume()
 	fv.Add(v.Volume())
 

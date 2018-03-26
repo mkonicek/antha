@@ -336,7 +336,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_VOL, "Planning inconsistency: error removing carry volume")
 		}
 
-		err = wellTo.Add(cmpFrom)
+		err = wellTo.AddComponent(cmpFrom)
 		if err != nil {
 			return insOut, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Planning inconsistency : %s", err.Error()))
 		}

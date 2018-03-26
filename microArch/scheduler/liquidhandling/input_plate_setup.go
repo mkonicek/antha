@@ -229,7 +229,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 				st.SetLocationOf(component.ID, location)
 
-				err := curr_well.Add(newcomponent)
+				err := curr_well.AddComponent(newcomponent)
 				if err != nil {
 					return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Input plate setup : %s", err.Error()))
 				}

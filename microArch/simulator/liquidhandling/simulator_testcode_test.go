@@ -839,7 +839,7 @@ func preloadFilledTips(head int, tipbox_loc string, channels []int, what string,
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
 		tip := tipbox.Tiptype.Dup()
 		c := getLHComponent(what, volume)
-		tip.Add(c)
+		tip.AddComponent(c)
 
 		for _, ch := range channels {
 			adaptor.GetChannel(ch).LoadTip(tip.Dup())
@@ -863,7 +863,7 @@ func prefillWells(plate_loc string, wells_to_fill []string, liquid_name string, 
 			wc := wtype.MakeWellCoords(well_name)
 			well := plate.GetChildByAddress(wc).(*wtype.LHWell)
 			comp := getLHComponent(liquid_name, volume)
-			err := well.Add(comp)
+			err := well.AddComponent(comp)
 			if err != nil {
 				panic(err)
 			}

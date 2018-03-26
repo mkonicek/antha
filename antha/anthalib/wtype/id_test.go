@@ -31,7 +31,7 @@ func makeComponent() *LHComponent {
 func TestEmptyWellMix(t *testing.T) {
 	c := makeComponent()
 	w := makeWell()
-	err := w.Add(c)
+	err := w.AddComponent(c)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,7 @@ func TestFullWellMix(t *testing.T) {
 	w := makeWell()
 	idb4 := w.WContents.ID
 
-	err := w.Add(c)
+	err := w.AddComponent(c)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestFullWellMix(t *testing.T) {
 	}
 	d := makeComponent()
 
-	err = w.Add(d)
+	err = w.AddComponent(d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,14 +85,14 @@ func TestFullWellMix(t *testing.T) {
 
 	e := makeComponent()
 
-	err = w.Add(e)
+	err = w.AddComponent(e)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	f := makeComponent()
 
-	err = w.Add(f)
+	err = w.AddComponent(f)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,12 +101,12 @@ func TestFullWellMix(t *testing.T) {
 
 	g := makeComponent()
 
-	err = w2.Add(w.WContents)
+	err = w2.AddComponent(w.WContents)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = w2.Add(g)
+	err = w2.AddComponent(g)
 	if err != nil {
 		t.Fatal(err)
 	}

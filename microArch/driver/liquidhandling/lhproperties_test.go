@@ -24,7 +24,7 @@ func TestSavePlates(t *testing.T) {
 	c.CName = "mushroom soup"
 	c.Vol = v
 	c.Vunit = "ul"
-	err = p.Wellcoords["A1"].Add(c)
+	err = p.Wellcoords["A1"].AddComponent(c)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -173,7 +173,7 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 	// can do 7
 	tb, dstp := getTransferBlock2Component(ctx)
 
-	tb.Inss[0].Welladdress = "B1"
+	tb.Inss[0].Welladdress = "B2"
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()

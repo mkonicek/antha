@@ -296,6 +296,11 @@ func TestLHPlateSerialize(t *testing.T) {
 		if !reflect.DeepEqual(w.WContents, w2.WContents) {
 			t.Errorf("%v =/= %v", w.WContents, w2.WContents)
 		}
+
+		if w2.Plate != p2 {
+			t.Errorf("Wells not retaining plate references post serialization")
+		}
+
 	}
 
 	fMErr := func(s string, want, got interface{}) string {

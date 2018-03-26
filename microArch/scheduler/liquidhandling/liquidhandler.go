@@ -425,9 +425,22 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
-				well2.WContents.SetVolume(vol)
-				well.WContents.SetVolume(well.ResidualVolume())
-				well.WContents.ID = wtype.GetUUID()
+
+				well2Contents := well2.Contents().Dup()
+				well2Contents.SetVolume(vol)
+				err := well2.SetContents(well2Contents)
+				if err != nil {
+					return err
+				}
+
+				wellContents := well.Contents().Dup()
+				wellContents.SetVolume(well.ResidualVolume())
+				wellContents.ID = wtype.GetUUID()
+				err = well.SetContents(wellContents)
+				if err != nil {
+					return err
+				}
+
 				well.DeclareNotTemporary()
 				well2.DeclareNotTemporary()
 			}

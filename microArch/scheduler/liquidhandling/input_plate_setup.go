@@ -79,15 +79,8 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
 	input_platetypes := (*request).Input_platetypes
-	if len(input_platetypes) == 0 {
-		// XXX this is dangerous... until input_plate_linear is replaced we will hit big problems here
-		// this configuration needs to happen outside but for now...
-		input_platetypes, err := inventory.XXXNewPlates(ctx)
-		if err != nil {
-			return nil, err
-		}
-		(*request).Input_platetypes = input_platetypes
-		//debug
+	if input_platetypes == nil || len(input_platetypes) == 0 {
+		return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
 	}
 
 	// we assume that input_plates is set if any locs are set

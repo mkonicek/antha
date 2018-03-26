@@ -710,7 +710,10 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vd.Vol = v2.ConvertToString(vd.Vunit)
 			vd.ID = wlf.WContents.ID
 			vd.ParentID = wlf.WContents.ParentID
-			wlt.Add(vd)
+			err := wlt.Add(vd)
+			if err != nil {
+				return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler couldn't add volume to well : %s", err.Error()))
+			}
 
 			// TODO -- danger here, is result definitely set?
 			wlt.WContents.ID = insIn.Results[0].ID

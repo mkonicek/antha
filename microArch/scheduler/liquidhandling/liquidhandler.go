@@ -488,12 +488,21 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 								w.Clear()
 								c2 := w2.WContents.Dup()
 								w2.Clear()
-								w.Add(c2)
-								w2.Add(c)
+								err := w.Add(c2)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
+								err = w2.Add(c)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
 							} else {
 								// replace
 								w2.Clear()
-								w2.Add(w.WContents)
+								err := w2.Add(w.WContents)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
 								w.Clear()
 							}
 						}

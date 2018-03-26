@@ -333,14 +333,19 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 			continue
 		}
 
-		c, e := cmp.Sample(wv)
+		c, err := cmp.Sample(wv)
+		if err != nil {
+			return ret, err
+		}
 
-		if e != nil {
-			return ret, e
+		err = wl.Add(c)
+		if err != nil {
+			//this shouldn't happen because the well was empty
+			//but we should check for linting
+			return ret, err
 		}
 
 		ret = append(ret, wc)
-		wl.Add(c)
 		vt.Add(c.Volume())
 		if vt.EqualTo(v) {
 			return ret, nil

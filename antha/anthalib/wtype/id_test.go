@@ -31,7 +31,10 @@ func makeComponent() *LHComponent {
 func TestEmptyWellMix(t *testing.T) {
 	c := makeComponent()
 	w := makeWell()
-	w.Add(c)
+	err := w.Add(c)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if w.WContents.ID == c.ID {
 		t.Fatal("Well contents should have different ID to input component")
@@ -49,12 +52,22 @@ func TestFullWellMix(t *testing.T) {
 	c := makeComponent()
 	w := makeWell()
 	idb4 := w.WContents.ID
-	w.Add(c)
+
+	err := w.Add(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if w.WContents.HasParent(w.WContents.ID) {
 		t.Fatal("Components should not have themselves as parents! It's just too metaphysical")
 	}
 	d := makeComponent()
-	w.Add(d)
+
+	err = w.Add(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if w.WContents.ID == c.ID || w.WContents.ID == d.ID || w.WContents.ID == idb4 {
 		t.Fatal("Well contents should have new ID after mix")
 	}
@@ -72,18 +85,31 @@ func TestFullWellMix(t *testing.T) {
 
 	e := makeComponent()
 
-	w.Add(e)
+	err = w.Add(e)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	f := makeComponent()
 
-	w.Add(f)
+	err = w.Add(f)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	w2 := makeWell()
 
 	g := makeComponent()
 
-	w2.Add(w.WContents)
-	w2.Add(g)
+	err = w2.Add(w.WContents)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = w2.Add(g)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if !w2.WContents.HasParent(c.ID) || !w2.WContents.HasParent(d.ID) || !w2.WContents.HasParent(e.ID) || !w2.WContents.HasParent(f.ID) || !w2.WContents.HasParent(w.WContents.ID) {
 		t.Fatal("Well contents should have all parents set...2")

@@ -863,7 +863,10 @@ func prefillWells(plate_loc string, wells_to_fill []string, liquid_name string, 
 			wc := wtype.MakeWellCoords(well_name)
 			well := plate.GetChildByAddress(wc).(*wtype.LHWell)
 			comp := getLHComponent(liquid_name, volume)
-			well.Add(comp)
+			err := well.Add(comp)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 	return &ret

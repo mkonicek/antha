@@ -177,7 +177,11 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 	pol.Policies["water"]["CAN_MULTI"] = true
+
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
 		t.Error(err)

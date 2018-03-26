@@ -250,19 +250,17 @@ func (w *LHWell) Add(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	mv := wunit.NewVolume(w.MaxVol, "ul")
-	cv := c.Volume()
-	wv := w.CurrentVolume()
-	cv.Add(wv)
+	max_vol := wunit.NewVolume(w.MaxVol, "ul")
+	vol := c.Volume()
+	cur_vol := w.CurrentVolume()
+	vol.Add(cur_vol)
+
+	if vol.GreaterThan(max_vol) {
+		return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), cur_vol, max_vol)
+	}
 
 	w.Contents().Mix(c)
 
-	if cv.GreaterThan(mv) {
-		// could make this fatal but we don't track state well enough
-		// for that to be worthwhile
-		//logger.Debug("WARNING: OVERFULL WELL AT ", w.Crds.FormatA1())
-		return fmt.Errorf("Overfull well \"%s\", contains %s but maximum volume is only %s", w.GetName(), cv, mv)
-	}
 	return nil
 }
 

@@ -188,5 +188,5 @@ type LHContainer interface {
 	//Add to the container
 	AddComponent(*LHComponent) error
 	//Remove from the container
-	Remove(wunit.Volume) (*LHComponent, error)
+	RemoveVolume(wunit.Volume) (*LHComponent, error)
 }

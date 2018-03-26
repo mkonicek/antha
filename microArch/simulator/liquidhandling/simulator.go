@@ -914,7 +914,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 		} else if fv.GreaterThan(tip.MaxVol) {
 			self.AddErrorf("Aspirate", "While %s - channel %d contains %s, command exceeds maximum volume %s",
 				describe(), i, tip.CurrentVolume(), tip.MaxVol)
-		} else if c, err := wells[i].Remove(v); err != nil {
+		} else if c, err := wells[i].RemoveVolume(v); err != nil {
 			self.AddErrorf("Aspirate", "While %s - unexpected well error \"%s\"", describe(), err.Error())
 		} else if fv.LessThan(tip.MinVol) {
 			self.AddWarningf("Aspirate", "While %s - minimum tip volume is %s",
@@ -1035,7 +1035,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 		} else if fv.Add(wells[i].CurrentVolume()); fv.GreaterThan(wells[i].MaxVolume()) {
 			self.AddErrorf("Dispense", "While %s - well %s under channel %d contains %s, command would exceed maximum volume %s",
 				describe(), wells[i].GetName(), i, wells[i].CurrentVolume(), wells[i].MaxVolume())
-		} else if c, err := tip.Remove(v); err != nil {
+		} else if c, err := tip.RemoveVolume(v); err != nil {
 			self.AddErrorf("Dispense", "Unexpected tip error \"%s\"", err.Error())
 		} else if err := wells[i].AddComponent(c); err != nil {
 			self.AddErrorf("Dispense", "Unexpected well error \"%s\"", err.Error())
@@ -1597,7 +1597,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 		//this is pretty pointless unless the tip already contained something
 		//it also makes sure the tip.Contents().Name() is set properly
 		for c := 0; c < cycles[ch]; c++ {
-			com, err := wells[ch].Remove(v)
+			com, err := wells[ch].RemoveVolume(v)
 			if err != nil {
 				self.AddErrorf("Mix", "Unexpected well error - %s", err.Error())
 				continue
@@ -1607,7 +1607,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 				self.AddErrorf("Mix", "Unexpected well error - %s", err.Error())
 				continue
 			}
-			com, err = tip.Remove(v)
+			com, err = tip.RemoveVolume(v)
 			if err != nil {
 				self.AddErrorf("Mix", "Unexpected tip error - %s", err.Error())
 				continue

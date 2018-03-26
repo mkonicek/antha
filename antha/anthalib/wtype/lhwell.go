@@ -278,7 +278,7 @@ func (w *LHWell) AddComponent(c *LHComponent) error {
 	return nil
 }
 
-func (w *LHWell) Remove(v wunit.Volume) (*LHComponent, error) {
+func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	if w == nil {
 		return nil, nil
 	}
@@ -760,7 +760,7 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 
 	vol := eng.EvaporationVolume(env.Temperature, "water", env.Humidity, time.Seconds(), env.MeanAirFlowVelocity, well.AreaForVolume(), env.Pressure)
 
-	r, _ := well.Remove(vol)
+	r, _ := well.RemoveVolume(vol)
 
 	if r == nil {
 		well.WContents.Vol = 0.0

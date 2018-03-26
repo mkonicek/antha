@@ -686,7 +686,7 @@ func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *LHComponent {
 		return nil
 	}
 
-	cmp, _ := w.Remove(vol)
+	cmp, _ := w.RemoveVolume(vol)
 
 	return cmp
 }

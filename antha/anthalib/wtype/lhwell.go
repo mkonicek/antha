@@ -225,6 +225,20 @@ func (w *LHWell) Contents() *LHComponent {
 	return w.WContents
 }
 
+func (w *LHWell) SetContents(newContents *LHComponent) error {
+	if w == nil {
+		return nil
+	}
+	maxVol := w.MaxVolume()
+	if newContents.Volume().GreaterThan(maxVol) {
+		return LHError(LH_ERR_VOL,
+			fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
+	}
+
+	w.WContents = newContents
+	return nil
+}
+
 func (w *LHWell) Currvol() float64 {
 	if w == nil {
 		return 0.0

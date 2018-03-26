@@ -237,7 +237,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 	// ci counts up cmps
 
 	for ci := 0; ci < len(cmps); ci++ {
-		if len(fromPlateIDs) <= ci || fromPlateIDs[ci] == "" {
+		if len(fromPlateIDs) <= ci || fromPlateIDs[ci] == "" || fromPlateIDs[ci] == "<No-ID>" {
 			continue
 		}
 

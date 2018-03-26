@@ -117,6 +117,7 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 	plate.HWells = make(map[string]*LHWell, len(plate.Wellcoords))
 	for _, w := range plate.Wellcoords {
 		plate.HWells[w.ID] = w
+		w.Plate = plate
 	}
 }
 

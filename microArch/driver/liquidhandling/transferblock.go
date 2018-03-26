@@ -125,7 +125,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
 
 		if err != nil {
-			panic(err)
+			return inss, err
 		}
 
 		for _, tf := range tfr {

@@ -92,6 +92,9 @@ func (lhc *LHComponent) GetClass() string {
 }
 
 func (lhc *LHComponent) GetName() string {
+	if lhc == nil {
+		return "nil"
+	}
 	return fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
 }
 

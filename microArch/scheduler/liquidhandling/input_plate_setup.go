@@ -229,7 +229,10 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 				st.SetLocationOf(component.ID, location)
 
-				curr_well.Add(newcomponent)
+				err := curr_well.AddComponent(newcomponent)
+				if err != nil {
+					return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Input plate setup : %s", err.Error()))
+				}
 				curr_well.DeclareAutoallocated()
 				input_plates[curr_plate.ID] = curr_plate
 			}

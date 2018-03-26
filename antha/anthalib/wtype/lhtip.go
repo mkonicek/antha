@@ -218,7 +218,7 @@ func (self *LHTip) WorkingVolume() wunit.Volume {
 }
 
 //@implement LHContainer
-func (self *LHTip) Add(v *LHComponent) error {
+func (self *LHTip) AddComponent(v *LHComponent) error {
 	fv := self.CurrentVolume()
 	fv.Add(v.Volume())
 
@@ -234,7 +234,7 @@ func (self *LHTip) Add(v *LHComponent) error {
 }
 
 //@implement LHContainer
-func (self *LHTip) Remove(v wunit.Volume) (*LHComponent, error) {
+func (self *LHTip) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	if v.GreaterThan(self.WorkingVolume()) {
 		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(), self.WorkingVolume())
 	}

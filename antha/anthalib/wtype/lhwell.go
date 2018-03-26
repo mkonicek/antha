@@ -225,6 +225,20 @@ func (w *LHWell) Contents() *LHComponent {
 	return w.WContents
 }
 
+func (w *LHWell) SetContents(newContents *LHComponent) error {
+	if w == nil {
+		return nil
+	}
+	maxVol := w.MaxVolume()
+	if newContents.Volume().GreaterThan(maxVol) {
+		return LHError(LH_ERR_VOL,
+			fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
+	}
+
+	w.WContents = newContents
+	return nil
+}
+
 func (w *LHWell) Currvol() float64 {
 	if w == nil {
 		return 0.0
@@ -246,27 +260,25 @@ func (w *LHWell) MaxVolume() wunit.Volume {
 	return wunit.NewVolume(w.MaxVol, "ul")
 }
 
-func (w *LHWell) Add(c *LHComponent) error {
+func (w *LHWell) AddComponent(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	mv := wunit.NewVolume(w.MaxVol, "ul")
-	cv := c.Volume()
-	wv := w.CurrentVolume()
-	cv.Add(wv)
+	max_vol := wunit.NewVolume(w.MaxVol, "ul")
+	vol := c.Volume()
+	cur_vol := w.CurrentVolume()
+	vol.Add(cur_vol)
+
+	if vol.GreaterThan(max_vol) {
+		return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), cur_vol, max_vol)
+	}
 
 	w.Contents().Mix(c)
 
-	if cv.GreaterThan(mv) {
-		// could make this fatal but we don't track state well enough
-		// for that to be worthwhile
-		//logger.Debug("WARNING: OVERFULL WELL AT ", w.Crds.FormatA1())
-		return fmt.Errorf("Overfull well \"%s\", contains %s but maximum volume is only %s", w.GetName(), cv, mv)
-	}
 	return nil
 }
 
-func (w *LHWell) Remove(v wunit.Volume) (*LHComponent, error) {
+func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	if w == nil {
 		return nil, nil
 	}
@@ -748,7 +760,7 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 
 	vol := eng.EvaporationVolume(env.Temperature, "water", env.Humidity, time.Seconds(), env.MeanAirFlowVelocity, well.AreaForVolume(), env.Pressure)
 
-	r, _ := well.Remove(vol)
+	r, _ := well.RemoveVolume(vol)
 
 	if r == nil {
 		well.WContents.Vol = 0.0

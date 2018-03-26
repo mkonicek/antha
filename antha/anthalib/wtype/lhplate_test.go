@@ -205,14 +205,20 @@ func TestMergeWith(t *testing.T) {
 	c.CName = "Water1"
 	c.Vol = 50.0
 	c.Vunit = "ul"
-	p1.Wellcoords["A1"].Add(c)
+	err := p1.Wellcoords["A1"].AddComponent(c)
+	if err != nil {
+		t.Fatal(err)
+	}
 	p1.Wellcoords["A1"].SetUserAllocated()
 
 	c = NewLHComponent()
 	c.CName = "Butter"
 	c.Vol = 80.0
 	c.Vunit = "ul"
-	p2.Wellcoords["A2"].Add(c)
+	err = p2.Wellcoords["A2"].AddComponent(c)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	p1.MergeWith(p2)
 

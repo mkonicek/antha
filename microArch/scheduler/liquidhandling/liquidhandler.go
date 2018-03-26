@@ -425,9 +425,22 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
-				well2.WContents.SetVolume(vol)
-				well.WContents.SetVolume(well.ResidualVolume())
-				well.WContents.ID = wtype.GetUUID()
+
+				well2Contents := well2.Contents().Dup()
+				well2Contents.SetVolume(vol)
+				err := well2.SetContents(well2Contents)
+				if err != nil {
+					return err
+				}
+
+				wellContents := well.Contents().Dup()
+				wellContents.SetVolume(well.ResidualVolume())
+				wellContents.ID = wtype.GetUUID()
+				err = well.SetContents(wellContents)
+				if err != nil {
+					return err
+				}
+
 				well.DeclareNotTemporary()
 				well2.DeclareNotTemporary()
 			}
@@ -488,12 +501,21 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 								w.Clear()
 								c2 := w2.WContents.Dup()
 								w2.Clear()
-								w.Add(c2)
-								w2.Add(c)
+								err := w.AddComponent(c2)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
+								err = w2.AddComponent(c)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
 							} else {
 								// replace
 								w2.Clear()
-								w2.Add(w.WContents)
+								err := w2.AddComponent(w.Contents())
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
 								w.Clear()
 							}
 						}

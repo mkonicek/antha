@@ -96,7 +96,7 @@ func TestInterfaceImplementations(t *testing.T) {
 			"LHObject",
 			//"LHParent",
 			//"Addressable",
-			//"LHContainer",
+			"LHContainer",
 		},
 		"LHTipbox": []string{
 			"Named",

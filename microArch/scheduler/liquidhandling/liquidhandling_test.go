@@ -247,7 +247,7 @@ func TestPlateReuse(t *testing.T) {
 		}
 		for _, v := range plate.Wellcoords {
 			if !v.Empty() {
-				v.Remove(wunit.NewVolume(5.0, "ul"))
+				v.RemoveVolume(wunit.NewVolume(5.0, "ul"))
 			}
 		}
 

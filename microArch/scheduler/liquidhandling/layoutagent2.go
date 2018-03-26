@@ -513,7 +513,7 @@ func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, or
 				// make a new plate
 				ass = len(pc)
 				if len(request.Output_platetypes) == 0 {
-					return nil, fmt.Errorf("output plate type cannot be chosen. \n If not specifying output plate type in a Mix Command, at least one output plate type must be specified in config > outputPlateTypes.")
+					return nil, fmt.Errorf("no output plate types specified. \n If not specifying output plate type in a Mix Command, at least one output plate type must be specified in config > outputPlateTypes.")
 				}
 				pc = append(pc, PlateChoice{Platetype: chooseAPlate(request, v), Assigned: []string{v.ID}, ID: wtype.GetUUID(), Wells: []string{""}, Name: "Output_plate_" + v.ID[0:6], Output: []bool{true}})
 				continue

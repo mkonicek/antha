@@ -638,7 +638,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// test of real plate dimensions
 
-	realSkirtedPCR = makeSkirtedPCRPlate()
+	plates = append(plates, makeSkirtedPCRPlateOffset())
 
 	return
 }
@@ -683,6 +683,11 @@ func makeStripTube() *wtype.LHPlate {
 // pcr plate skirted
 func makeSkirtedPCRPlate() *wtype.LHPlate {
 	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
+}
+
+// pcr plate skirted
+func makeSkirtedPCRPlateOffset() *wtype.LHPlate {
+	return wtype.NewLHPlate("pcrplate_skirted_offset", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 14.38, 11.24, MinimumZHeightPermissableForLVPipetMax)
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {

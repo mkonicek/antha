@@ -9,3 +9,9 @@
 .idea/
 
 .build/
+*.xlsx
+*.csv
+*.fasta
+*.dot
+*.xml
+*.sqlite

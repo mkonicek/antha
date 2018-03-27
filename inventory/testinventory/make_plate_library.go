@@ -636,6 +636,10 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plates = append(plates, makeLabcyte384PPStdV())
 	plates = append(plates, make384wellplateAppliedBiosystems())
 
+	// test of real plate dimensions
+
+	realSkirtedPCR = makeSkirtedPCRPlate()
+
 	return
 }
 

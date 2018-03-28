@@ -128,6 +128,7 @@ func (a *Mix) GetTipEstimates() []wtype.TipEstimate {
 	ret := []wtype.TipEstimate{}
 
 	if a.Request != nil {
+		ret = make([]wtype.TipEstimate, len(a.Request.TipsUsed))
 		copy(ret, a.Request.TipsUsed)
 	}
 

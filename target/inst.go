@@ -36,6 +36,12 @@ type TimeEstimator interface {
 	GetTimeEstimate() float64
 }
 
+// A TipEstimator is an instruction that uses tips and provides information on how many
+type TipEstimator interface {
+	// GetTipEstimates returns an estimate of how many tips this instruction will use
+	GetTipEstimates() []wtype.TipEstimate
+}
+
 type dependsMixin struct {
 	Depends []Inst
 }
@@ -115,6 +121,18 @@ func (a *Mix) GetTimeEstimate() float64 {
 	}
 
 	return est
+}
+
+// GetTipEstimates implements a TipEstimator
+func (a *Mix) GetTipEstimates() []wtype.TipEstimate {
+	ret := []wtype.TipEstimate{}
+
+	if a.Request != nil {
+		ret = make([]wtype.TipEstimate, len(a.Request.TipsUsed))
+		copy(ret, a.Request.TipsUsed)
+	}
+
+	return ret
 }
 
 // GetInitializers implements an Initializer

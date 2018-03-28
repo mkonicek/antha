@@ -784,7 +784,15 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	// sorts out tip boxes etc.
+	// counts tips used in this run -- reads instructions generated above so must happen
+	// after execution planning
+	request, err = this.countTipsUsed(request)
+
+	if err != nil {
+		return err
+	}
+
+	// Ensures tip boxes and wastes are correct for initial and final robot states
 	this.Refresh_tipboxes_tipwastes(request)
 
 	// revise the volumes - this makes sure the volumes requested are correct

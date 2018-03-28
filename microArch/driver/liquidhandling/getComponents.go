@@ -347,7 +347,7 @@ func makeMatchSafe(dst wtype.ComponentVector, match wtype.Match, mpv wunit.Volum
 
 			checkVol -= match.Vols[i].ConvertToString(dst[i].Vunit)
 
-			if checkVol > 0.0 && checkVol < mpv.ConvertToString(dst[i].Vunit) {
+			if checkVol > 0.0001 && checkVol < mpv.ConvertToString(dst[i].Vunit) {
 				mpv.Subtract(wunit.NewVolume(checkVol, dst[i].Vunit))
 				match.Vols[i].Subtract(mpv)
 
@@ -365,7 +365,7 @@ func updateDests(dst wtype.ComponentVector, match wtype.Match) wtype.ComponentVe
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			dst[i].Vol -= match.Vols[i].ConvertToString(dst[i].Vunit)
-			if dst[i].Vol < 0.0 {
+			if dst[i].Vol < 0.0001 {
 				dst[i].Vol = 0.0
 			}
 		}

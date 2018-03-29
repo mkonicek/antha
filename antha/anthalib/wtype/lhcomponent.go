@@ -87,10 +87,12 @@ func (lhc *LHComponent) WellLocation() string {
 	return lhc.PlateLocation().Coords.FormatA1()
 }
 
+//GetClass return the class of the object
 func (lhc *LHComponent) GetClass() string {
 	return "component"
 }
 
+//GetName the component's name
 func (lhc *LHComponent) GetName() string {
 	if lhc == nil {
 		return "nil"

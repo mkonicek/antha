@@ -69,7 +69,7 @@ func (self *deckSlot) IsBelow(point Coordinates) bool {
 		point.Y >= self.position.Y && point.Y <= self.position.Y+self.size.Y)
 }
 
-//Represents a robot deck
+//LHDeck Represents a robot deck
 type LHDeck struct {
 	name     string
 	mfg      string
@@ -78,6 +78,7 @@ type LHDeck struct {
 	slots    map[string]*deckSlot
 }
 
+//NewLHDeck make a new deck
 func NewLHDeck(name, mfg, decktype string) *LHDeck {
 	r := LHDeck{name, mfg, decktype, GetUUID(), make(map[string]*deckSlot)}
 	return &r

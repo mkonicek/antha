@@ -59,7 +59,6 @@ func EstimatePathLength(plate *wtype.LHPlate, volume wunit.Volume) (pathlength w
 
 	if plate.Welltype.Bottom == 0 /* i.e. flat */ && plate.Welltype.Shape().LengthUnit == "mm" {
 		wellarea, err := plate.Welltype.CalculateMaxCrossSectionArea()
-
 		if err != nil {
 
 			return pathlength, err

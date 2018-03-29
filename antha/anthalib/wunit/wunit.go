@@ -388,7 +388,6 @@ func (cm *ConcreteMeasurement) EqualToFloat(f float64) bool {
 	return false
 }
 
-//Human readable string
 func (cm *ConcreteMeasurement) ToString() string {
 	return fmt.Sprintf("%.3g %s", cm.RawValue(), cm.Unit().PrefixedSymbol())
 }

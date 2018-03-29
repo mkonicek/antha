@@ -23,9 +23,9 @@
 package wtype
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-    "math"
-    "fmt"
+	"math"
 )
 
 type Coordinates struct {
@@ -34,12 +34,12 @@ type Coordinates struct {
 	Z float64
 }
 
-//implement Stringer
+//String implements Stringer
 func (self Coordinates) String() string {
-    return fmt.Sprintf("%vx%vx%vmm", self.X, self.Y, self.Z)
+	return fmt.Sprintf("%vx%vx%vmm", self.X, self.Y, self.Z)
 }
 
-// Value for dimension
+//Dim Value for dimension
 func (a Coordinates) Dim(x int) float64 {
 	switch x {
 	case 0:
@@ -53,55 +53,55 @@ func (a Coordinates) Dim(x int) float64 {
 	}
 }
 
-//Addition returns a new wtype.Coordinates
+//Add Addition returns a new wtype.Coordinates
 func (self Coordinates) Add(rhs Coordinates) Coordinates {
-    return Coordinates{self.X + rhs.X, 
-                        self.Y + rhs.Y,
-                        self.Z + rhs.Z}
+	return Coordinates{self.X + rhs.X,
+		self.Y + rhs.Y,
+		self.Z + rhs.Z}
 }
 
 //Subtract returns a new wtype.Coordinates
 func (self Coordinates) Subtract(rhs Coordinates) Coordinates {
-    return Coordinates{self.X - rhs.X, 
-                        self.Y - rhs.Y,
-                        self.Z - rhs.Z}
+	return Coordinates{self.X - rhs.X,
+		self.Y - rhs.Y,
+		self.Z - rhs.Z}
 }
 
 //Multiply returns a new wtype.Coordinates
 func (self Coordinates) Multiply(v float64) Coordinates {
-    return Coordinates{self.X * v,
-                        self.Y * v,
-                        self.Z * v}
+	return Coordinates{self.X * v,
+		self.Y * v,
+		self.Z * v}
 }
 
 //Divide returns a new wtype.Coordinates
 func (self Coordinates) Divide(v float64) Coordinates {
-    return Coordinates{self.X / v,
-                        self.Y / v,
-                        self.Z / v}
+	return Coordinates{self.X / v,
+		self.Y / v,
+		self.Z / v}
 }
 
 //Dot product
 func (self Coordinates) Dot(rhs Coordinates) float64 {
-    return self.X * rhs.X + self.Y + rhs.Y + self.Z + rhs.Z
+	return self.X*rhs.X + self.Y + rhs.Y + self.Z + rhs.Z
 }
 
 //Abs L2-Norm
 func (self Coordinates) Abs() float64 {
-    return math.Sqrt(self.X * self.X + self.Y*self.Y + self.Z*self.Z)
+	return math.Sqrt(self.X*self.X + self.Y*self.Y + self.Z*self.Z)
 }
 
 //AbsXY L2-Norm in XY only
 func (self Coordinates) AbsXY() float64 {
-    return math.Sqrt(self.X * self.X + self.Y*self.Y)
+	return math.Sqrt(self.X*self.X + self.Y*self.Y)
 }
 
-//Unit return a Unit vector
+//Unit return a Unit vector in the same direction as the coordinates
 func (self Coordinates) Unit() Coordinates {
-    return self.Divide(self.Abs())
+	return self.Divide(self.Abs())
 }
 
-// interface to 3D geometry
+//Geometry interface for 3D geometry
 type Geometry interface {
 	Height() wunit.Length
 	Width() wunit.Length

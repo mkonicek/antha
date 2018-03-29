@@ -27,8 +27,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-//TODO add extra properties, i.e. filter
-//     remove BBox once shape implements LHObject
+//  TODO remove BBox once shape implements LHObject
 type LHTip struct {
 	ID       string
 	Type     string
@@ -42,19 +41,6 @@ type LHTip struct {
 	contents *LHComponent
 	Filtered bool
 }
-
-/*
-	ID          string
-	Name        string
-	Minvol      wunit.Volume
-	Maxvol      wunit.Volume
-	Minspd      wunit.FlowRate
-	Maxspd      wunit.FlowRate
-	Multi       int
-	Independent bool
-	Orientation int
-	Head        int
-*/
 
 //@implement Named
 func (self *LHTip) GetName() string {

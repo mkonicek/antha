@@ -24,7 +24,10 @@ func TestSavePlates(t *testing.T) {
 	c.CName = "mushroom soup"
 	c.Vol = v
 	c.Vunit = "ul"
-	p.Wellcoords["A1"].Add(c)
+	err = p.Wellcoords["A1"].AddComponent(c)
+	if err != nil {
+		t.Fatal(err)
+	}
 	p.Wellcoords["A1"].SetUserAllocated()
 	lhp.AddPlate(pos, p)
 	pl := lhp.SaveUserPlates()

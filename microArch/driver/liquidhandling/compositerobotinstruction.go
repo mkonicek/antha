@@ -924,7 +924,7 @@ func (ins *LoadTipsMoveInstruction) GetParameter(name string) interface{} {
 func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
-	// move
+	// move to just above the tip
 
 	mov := NewMoveInstruction()
 	mov.Head = ins.Head
@@ -932,10 +932,10 @@ func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.
 	mov.Well = ins.Well
 	mov.Plt = ins.FPlateType
 	for i := 0; i < len(ins.Well); i++ {
-		mov.Reference = append(mov.Reference, 0)
+		mov.Reference = append(mov.Reference, wtype.TopReference.AsInt())
 		mov.OffsetX = append(mov.OffsetX, 0.0)
 		mov.OffsetY = append(mov.OffsetY, 0.0)
-		mov.OffsetZ = append(mov.OffsetZ, 0.0)
+		mov.OffsetZ = append(mov.OffsetZ, 5.0)
 	}
 	mov.Platform = ins.Platform
 	ret[0] = mov
@@ -1011,7 +1011,7 @@ func (ins *UnloadTipsMoveInstruction) Generate(ctx context.Context, policy *wtyp
 	mov.Well = ins.WellTo
 	mov.Plt = ins.TPlateType
 	for i := 0; i < len(mov.Pos); i++ {
-		mov.Reference = append(mov.Reference, 0)
+		mov.Reference = append(mov.Reference, wtype.TopReference.AsInt())
 		mov.OffsetX = append(mov.OffsetX, 0.0)
 		mov.OffsetY = append(mov.OffsetY, 0.0)
 		mov.OffsetZ = append(mov.OffsetZ, 0.0)
@@ -3300,7 +3300,6 @@ func getFirstDefined(sa []string) int {
 			break
 		}
 	}
-
 	return x
 }
 

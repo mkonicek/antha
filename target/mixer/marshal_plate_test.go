@@ -18,7 +18,14 @@ func makeTestPlate(ctx context.Context, in *wtype.LHPlate) *wtype.LHPlate {
 
 	out.PlateName = in.PlateName
 	for coord, well := range in.Wellcoords {
-		out.WellAt(wtype.MakeWellCoordsA1(coord)).Add(well.WContents)
+		if w, ok := out.WellAt(wtype.MakeWellCoordsA1(coord)); ok {
+			err := w.AddComponent(well.WContents)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			panic("Couldn't find well")
+		}
 	}
 	return out
 }

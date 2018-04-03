@@ -224,7 +224,7 @@ func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts
 	var well, position, platename, platetype, volume string
 
 	if opts&CompareWells != 0 {
-		well = wellIn.Crds
+		well = wellIn.Crds.FormatA1()
 	}
 
 	if opts&ComparePositions != 0 {
@@ -232,7 +232,7 @@ func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts
 	}
 
 	if opts&ComparePlateTypes != 0 {
-		platetype = wellIn.Platetype
+		platetype = wtype.TypeOf(wellIn.Plate)
 	}
 
 	if opts&CompareVolumes != 0 {

@@ -230,6 +230,8 @@ func (w *LHWell) SetContents(newContents *LHComponent) error {
 		return nil
 	}
 	maxVol := w.MaxVolume()
+	//we can exceed max volume by the residual amount, otherwise you can't take 200ul from a 200ul well
+	maxVol.Add(w.ResidualVolume())
 	if newContents.Volume().GreaterThan(maxVol) {
 		return LHError(LH_ERR_VOL,
 			fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
@@ -264,7 +266,9 @@ func (w *LHWell) AddComponent(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	max_vol := wunit.NewVolume(w.MaxVol, "ul")
+	//volume can be at most maxVol plus the residualVolume
+	max_vol := w.MaxVolume()
+	max_vol.Add(w.ResidualVolume())
 	vol := c.Volume()
 	cur_vol := w.CurrentVolume()
 	vol.Add(cur_vol)

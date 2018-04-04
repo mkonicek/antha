@@ -598,7 +598,16 @@ func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
 func checkSanityIns(request *LHRequest) {
 	// check instructions for basic sanity
 
-	good := true
+	var errors []string
+
+	printError := func(add bool, format string, args ...interface{}) {
+		str := fmt.Sprintf("internal error: "+format, args...)
+		if add {
+			errors = append(errors, str)
+		}
+		fmt.Println(str)
+	}
+
 	for _, ins := range request.LHInstructions {
 		if ins.Type == wtype.LHIMIX {
 			v := wunit.NewVolume(0.0, "ul")
@@ -607,8 +616,7 @@ func checkSanityIns(request *LHRequest) {
 				// need to be a bit careful but...
 
 				if c.Vol < 0.0 {
-					fmt.Println("NEGATIVE VOLUME!!!! ", c.CName, " ", c.Vol)
-					good = false
+					printError(true, "negative volume for component %s volume %s", c.CName, c.Vol)
 					continue
 				}
 
@@ -616,8 +624,8 @@ func checkSanityIns(request *LHRequest) {
 					v.Add(c.Volume())
 				} else if c.Tvol != 0.0 {
 					if !tv.IsZero() && !tv.EqualTo(c.TotalVolume()) {
-						fmt.Println("ERROR: MULTIPLE DISTINCT TOTAL VOLUMES SPECIFIED FOR ", ins.ID, " ", ins.Results[0].CName, " COMPONENT ", c)
-						good = false
+						printError(true, "multiple distinct total volumes specified for instruction %s %s component %s",
+							ins.ID, ins.Results[0].CName, c)
 					}
 
 					tv = c.TotalVolume()
@@ -625,11 +633,11 @@ func checkSanityIns(request *LHRequest) {
 			}
 
 			if tv.IsZero() && !v.EqualTo(ins.Results[0].Volume()) {
-				fmt.Println("OH DEAR DEAR DEAR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Results[0].CName, " COMP: ", v, " PROD: ", ins.Results[0].Volume())
-				good = false
+				printError(true, "sum of requested volumes does not match resulting volume for instruction %s %s sum %s != result volume %s",
+					ins.ID, ins.Results[0].CName, v, ins.Results[0].Volume())
 			} else if !tv.IsZero() && !tv.EqualTo(ins.Results[0].Volume()) {
-				fmt.Println("ERROR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Results[0].CName, " COMP: ", tv, " PROD: ", ins.Results[0].Volume())
-				good = false
+				printError(true, "total volume does not match resulting volume for instruction %s %s total volume %s != result volume %s",
+					ins.ID, ins.Results[0].CName, tv, ins.Results[0].Volume())
 			} else if ins.PlateID != "" {
 				// compare result volume to the well volume
 
@@ -638,15 +646,15 @@ func checkSanityIns(request *LHRequest) {
 				if !ok {
 					// possibly an issue
 				} else if plat.Welltype.MaxVolume().LessThan(ins.Results[0].Volume()) {
-					fmt.Println("WARNING: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Results[0].CName, " WANT: ", ins.Results[0].Volume(), " MAX FOR PLATE OF TYPE ", plat.Type, ": ", plat.Welltype.MaxVolume())
-					//good = false
+					printError(false, "volume exceeds well max of plate for instruction %s %s volume %s > well max %s",
+						plat.Type, ins.ID, ins.Results[0].CName, ins.Results[0].Volume(), plat.Welltype.MaxVolume())
 				}
 			}
 		}
 	}
 
-	if !good {
-		panic("URGH - volume issues here")
+	if len(errors) != 0 {
+		panic(strings.Join(errors, "\n"))
 	}
 
 }

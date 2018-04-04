@@ -727,15 +727,9 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 				if !ok {
 					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("well (%s) specified is out of range of available wells for plate type %s", w, plat.Type))
 				}
-
-				//Sometimes wells are multiply assigned - avoid overfull errors
-				if well.Empty() {
-					dummycmp := wtype.NewLHComponent()
-					dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
-					err := well.AddComponent(dummycmp)
-					if err != nil {
-						return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
-					}
+				err := markWellUsed(well)
+				if err != nil {
+					return err
 				}
 			}
 		}
@@ -753,17 +747,12 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 				wc := plat.NextEmptyWell(it)
 				well, ok := plat.WellAt(wc)
 				if !ok {
-					// something very bad has happened
-					return wtype.LHError(wtype.LH_ERR_DIRE, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
+					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("too many assignments made to output plate \"%s\"", c.Platetype))
 				}
 
-				if well.Empty() {
-					dummycmp := wtype.NewLHComponent()
-					dummycmp.SetVolume(well.MaxVolume())
-					err := well.AddComponent(dummycmp)
-					if err != nil {
-						return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
-					}
+				err := markWellUsed(well)
+				if err != nil {
+					return err
 				}
 
 				request.LHInstructions[sID].Welladdress = wc.FormatA1()
@@ -778,5 +767,19 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 	}
 
 	request.Output_assignments = opa
+	return nil
+}
+
+//markWellUsed add a dummy component to the well so that it's marked as having been used
+func markWellUsed(well *wtype.LHWell) error {
+	//avoid adding a dummy component if one's already been added
+	if well.Empty() {
+		dummycmp := wtype.NewLHComponent()
+		dummycmp.SetVolume(well.MaxVolume())
+		err := well.AddComponent(dummycmp)
+		if err != nil {
+			return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
+		}
+	}
 	return nil
 }

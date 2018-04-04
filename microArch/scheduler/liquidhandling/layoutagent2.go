@@ -719,7 +719,6 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 
 		//put a dummy component in the assigned wells to mark them as used
 
-		fmt.Printf("c.Wells = %v\n", c.Wells)
 		for _, w := range c.Wells {
 			if w != "" {
 				wc := wtype.MakeWellCoords(w)

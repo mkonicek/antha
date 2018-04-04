@@ -53,7 +53,7 @@ type LHWell struct {
 	ID        string
 	Inst      string
 	Crds      WellCoords
-	MaxVol    float64
+	MaxVol    float64 //Maximum working volume of the well
 	WContents *LHComponent
 	Rvol      float64
 	WShape    *Shape
@@ -229,7 +229,7 @@ func (w *LHWell) SetContents(newContents *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	maxVol := w.MaxVolume()
+	maxVol := w.MaxTotalVolume()
 	if newContents.Volume().GreaterThan(maxVol) {
 		return LHError(LH_ERR_VOL,
 			fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
@@ -253,6 +253,7 @@ func (w *LHWell) CurrVolume() wunit.Volume {
 	return w.Contents().Volume()
 }
 
+//MaxVolume get the maximum working volume of the well
 func (w *LHWell) MaxVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
@@ -260,17 +261,25 @@ func (w *LHWell) MaxVolume() wunit.Volume {
 	return wunit.NewVolume(w.MaxVol, "ul")
 }
 
+//MaxTotalVolume get the total maximum volume in the well, i.e. working volume + residual
+func (w *LHWell) MaxTotalVolume() wunit.Volume {
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
+	return wunit.NewVolume(w.MaxVol+w.Rvol, "ul")
+}
+
 func (w *LHWell) AddComponent(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	max_vol := wunit.NewVolume(w.MaxVol, "ul")
+	maxVol := w.MaxTotalVolume()
 	vol := c.Volume()
-	cur_vol := w.CurrentVolume()
-	vol.Add(cur_vol)
+	curVol := w.CurrentVolume()
+	vol.Add(curVol)
 
-	if vol.GreaterThan(max_vol) {
-		return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), cur_vol, max_vol)
+	if vol.GreaterThan(maxVol) {
+		return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), curVol, maxVol)
 	}
 
 	w.Contents().Mix(c)

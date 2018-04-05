@@ -53,9 +53,9 @@ type LHWell struct {
 	ID        string
 	Inst      string
 	Crds      WellCoords
-	MaxVol    float64 //Maximum working volume of the well
+	MaxVol    float64 //Maximum total capacity of the well
 	WContents *LHComponent
-	Rvol      float64
+	Rvol      float64 //Residual volume which can't be removed from the well
 	WShape    *Shape
 	Bottom    WellBottomType
 	Bounds    BBox
@@ -206,20 +206,13 @@ func (w *LHWell) UnProtect() {
 }
 
 func (w *LHWell) Contents() *LHComponent {
-	// be careful
 	if w == nil {
 		logger.Debug("CONTENTS OF NIL WELL REQUESTED")
-		// XXX XXX XXX see below ... returning nil here makes a lot more sense
-		return NewLHComponent()
+		return nil
 	}
-	// this makes no sense - we should maintain the
-	// contract that the contents of a well are fixed,
-	// not make a new content
-	// XXX XXX XXX
-	// --> mark this for imminent cleanup
-	//     best replacement: set well contents then return that
+
 	if w.WContents == nil {
-		return NewLHComponent()
+		w.WContents = NewLHComponent()
 	}
 
 	return w.WContents
@@ -229,7 +222,7 @@ func (w *LHWell) SetContents(newContents *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	maxVol := w.MaxTotalVolume()
+	maxVol := w.MaxVolume()
 	if newContents.Volume().GreaterThan(maxVol) {
 		return LHError(LH_ERR_VOL,
 			fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
@@ -239,18 +232,33 @@ func (w *LHWell) SetContents(newContents *LHComponent) error {
 	return nil
 }
 
-func (w *LHWell) Currvol() float64 {
-	if w == nil {
-		return 0.0
-	}
-	return w.Contents().Vol
-}
-
-func (w *LHWell) CurrVolume() wunit.Volume {
+//CurrentVolume return the volume of the component currently in the well
+func (w *LHWell) CurrentVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
 	return w.Contents().Volume()
+}
+
+//CurrentWorkingVolume return the available working volume in the well - i.e. current volume minus residual volume
+func (w *LHWell) CurrentWorkingVolume() wunit.Volume {
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
+	v := w.CurrentVolume()
+	v.Subtract(w.ResidualVolume())
+	if v.LessThan(wunit.ZeroVolume()) {
+		return wunit.ZeroVolume()
+	}
+	return v
+}
+
+func (w *LHWell) ResidualVolume() wunit.Volume {
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
+	v := wunit.NewVolume(w.Rvol, "ul")
+	return v
 }
 
 //MaxVolume get the maximum working volume of the well
@@ -261,24 +269,30 @@ func (w *LHWell) MaxVolume() wunit.Volume {
 	return wunit.NewVolume(w.MaxVol, "ul")
 }
 
-//MaxTotalVolume get the total maximum volume in the well, i.e. working volume + residual
-func (w *LHWell) MaxTotalVolume() wunit.Volume {
+//MaxWorkingVolume get the total maximum working volume in the well, i.e. the max volume minus residual volume
+func (w *LHWell) MaxWorkingVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
-	return wunit.NewVolume(w.MaxVol+w.Rvol, "ul")
+	ret := w.MaxVolume()
+	ret.Subtract(w.ResidualVolume())
+	if ret.LessThan(wunit.ZeroVolume()) {
+		return wunit.ZeroVolume()
+	}
+	return ret
 }
 
+//AddComponent add some liquid to the well
 func (w *LHWell) AddComponent(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	maxVol := w.MaxTotalVolume()
-	vol := c.Volume()
+	maxVol := w.MaxVolume()
 	curVol := w.CurrentVolume()
-	vol.Add(curVol)
+	finalVol := c.Volume()
+	finalVol.Add(curVol)
 
-	if vol.GreaterThan(maxVol) {
+	if finalVol.GreaterThan(maxVol) {
 		return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), curVol, maxVol)
 	}
 
@@ -287,19 +301,15 @@ func (w *LHWell) AddComponent(c *LHComponent) error {
 	return nil
 }
 
+//RemoveVolume remove some liquid from the well
 func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	if w == nil {
 		return nil, nil
 	}
 
 	// if the volume is too high we complain
-	if v.GreaterThan(w.CurrentVolume()) {
-		//pid := "nil"
-		//if p, ok := w.Plate.(*LHPlate); ok {
-		//	pid = p.ID
-		//}
-		//logger.Debug("You ask too much: ", w.Crds.FormatA1(), " ", v.ToString(), " I only have: ", w.CurrentVolume().ToString(), " PLATEID: ", pid)
-		return nil, fmt.Errorf("Requested %s from well \"%s\" which only contains %s", v, w.GetName(), w.CurrentVolume())
+	if v.GreaterThan(w.CurrentWorkingVolume()) {
+		return nil, fmt.Errorf("requested %s from well \"%s\" which only contains %s", v, w.GetName(), w.CurrentVolume())
 	}
 
 	ret := w.Contents().Dup()
@@ -314,31 +324,6 @@ func (w *LHWell) PlateLocation() PlateLocation {
 		return ZeroPlateLocation()
 	}
 	return w.WContents.PlateLocation()
-}
-
-func (w *LHWell) WorkingVolume() wunit.Volume {
-	if w == nil {
-		return wunit.ZeroVolume()
-	}
-	v := w.Contents().Volume()
-	v2 := w.ResidualVolume()
-	v.Subtract(v2)
-	return v
-}
-
-func (w *LHWell) ResidualVolume() wunit.Volume {
-	if w == nil {
-		return wunit.ZeroVolume()
-	}
-	v := wunit.NewVolume(w.Rvol, "ul")
-	return v
-}
-
-func (w *LHWell) CurrentVolume() wunit.Volume {
-	if w == nil {
-		return wunit.ZeroVolume()
-	}
-	return w.Contents().Volume()
 }
 
 //@implement Location
@@ -387,17 +372,16 @@ func (w *LHWell) Clear() {
 	w.WContents.Loc = w.Plate.(*LHPlate).ID + ":" + w.Crds.FormatA1()
 }
 
-func (w *LHWell) Empty() bool {
+//IsEmpty returns true if the well contains nothing, though this does not mean that the working volume is greater than zero
+func (w *LHWell) IsEmpty() bool {
 	// nil wells are empty
 	if w == nil {
 		return true
 	}
 
-	if w.Currvol() <= 0.000001 {
-		return true
-	} else {
-		return false
-	}
+	tolerance := wunit.NewVolume(0.000001, "ul")
+
+	return w.CurrentVolume().LessThan(tolerance)
 }
 
 // copy of instance
@@ -618,7 +602,7 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 
 		new_well = plate.Wellcoords[crds]
 
-		if new_well.Empty() {
+		if new_well.IsEmpty() {
 			break
 		}
 		/*
@@ -655,10 +639,10 @@ func get_vol_left(well *LHWell) float64 {
 	carry_vol := 10.0 // microlitres
 	//	total_carry_vol := float64(len(cnts)) * carry_vol
 	total_carry_vol := carry_vol // yeah right
-	Currvol := well.Currvol
-	rvol := well.Rvol
-	vol := well.MaxVol
-	return vol - (Currvol() + total_carry_vol + rvol)
+	Currvol := well.CurrentVolume().ConvertToString("ul")
+	rvol := well.ResidualVolume().ConvertToString("ul")
+	vol := well.MaxVolume().ConvertToString("ul")
+	return vol - (Currvol + total_carry_vol + rvol)
 }
 
 func (well *LHWell) DeclareTemporary() {
@@ -759,7 +743,7 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 		return ret
 	}
 
-	if well.Empty() {
+	if well.IsEmpty() {
 		return ret
 	}
 
@@ -841,7 +825,7 @@ func (w *LHWell) ClearUserAllocated() {
 
 func (w *LHWell) Contains(cmp *LHComponent) bool {
 	// obviously empty wells don't contain anything
-	if w.Empty() || cmp == nil {
+	if w.IsEmpty() || cmp == nil {
 		return false
 	}
 	// components are the keepers of this information

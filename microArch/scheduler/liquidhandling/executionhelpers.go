@@ -83,10 +83,10 @@ func get_assignment(assignments []string, plates *map[string]*wtype.LHPlate, vol
 		wellidlkp := plate.Wellcoords
 		well := wellidlkp[crds]
 
-		currvol := well.CurrVolume()
+		currvol := well.CurrentVolume()
 		currvol.Subtract(well.ResidualVolume())
 		if currvol.GreaterThan(vol) || currvol.EqualTo(vol) {
-			prevol = well.CurrVolume()
+			prevol = well.CurrentVolume()
 			well.RemoveVolume(vol)
 			plate.HWells[well.ID] = well
 			(*plates)[asstx[0]] = plate
@@ -669,7 +669,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 			//v2 := wunit.NewVolume(v.Vol, v.Vunit)
 			v2 := tfrs[i].Vols[xx] // volss[i][xx]
-			vt = append(vt, wlt.CurrVolume())
+			vt = append(vt, wlt.CurrentVolume())
 			wh = append(wh, v.TypeName())
 			va = append(va, v2)
 			pt = append(pt, robot.PlateIDLookup[insIn.PlateID])
@@ -687,7 +687,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 				return nil, err
 			}
 
-			vf = append(vf, wlf.CurrVolume())
+			vf = append(vf, wlf.CurrentVolume())
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
 			cnames = append(cnames, wlf.WContents.CName)

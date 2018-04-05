@@ -908,9 +908,9 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 
 		if wells[i] == nil {
 			no_well = append(no_well, i)
-		} else if wells[i].WorkingVolume().LessThan(v) {
+		} else if wells[i].CurrentWorkingVolume().LessThan(v) {
 			self.AddErrorf("Aspirate", "While %s - well %s only contains %s working volume",
-				describe(), wells[i].GetName(), wells[i].WorkingVolume())
+				describe(), wells[i].GetName(), wells[i].CurrentWorkingVolume())
 		} else if fv.GreaterThan(tip.MaxVol) {
 			self.AddErrorf("Aspirate", "While %s - channel %d contains %s, command exceeds maximum volume %s",
 				describe(), i, tip.CurrentVolume(), tip.MaxVol)
@@ -1022,12 +1022,12 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 			no_tip = append(no_tip, i)
 			continue
 		}
-		if v.GreaterThan(tip.WorkingVolume()) {
-			v = tip.WorkingVolume()
+		if v.GreaterThan(tip.CurrentWorkingVolume()) {
+			v = tip.CurrentWorkingVolume()
 			if !blowout[i] {
 				//a bit strange
 				self.AddWarningf("Dispense", "While %s - tip on channel %d contains only %s, but blowout flag is false",
-					describe(), i, tip.WorkingVolume())
+					describe(), i, tip.CurrentWorkingVolume())
 			}
 		}
 		if wells[i] == nil {
@@ -1563,9 +1563,9 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 			if wells[i].Contents().GetType() != what[i] {
 				self.AddWarningf("Mix", "While %s - well contains %s not %s", describe(), wells[i].Contents().GetType(), what[i])
 			}
-			if wells[i].CurrVolume().LessThan(v) {
-				self.AddWarningf("Mix", "While %s - well only contains %s", describe(), wells[i].CurrVolume())
-				v = wells[i].CurrVolume()
+			if wells[i].CurrentVolume().LessThan(v) {
+				self.AddWarningf("Mix", "While %s - well only contains %s", describe(), wells[i].CurrentVolume())
+				v = wells[i].CurrentVolume()
 			}
 			if wtype.TypeOf(wells[i].Plate) != platetype[i] {
 				self.AddWarningf("Mix", "While %s - plate \"%s\" is of type \"%s\", not \"%s\"",

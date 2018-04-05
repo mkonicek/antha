@@ -488,7 +488,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				for _, w := range wa {
 					// copy the outputs to the correct side
 					// and remove the outputs from the initial state
-					if !w.Empty() {
+					if !w.IsEmpty() {
 						w2, ok := p2.Wellcoords[w.Crds.FormatA1()]
 						if ok {
 							// there's no strict separation between outputs and

@@ -301,7 +301,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")
 		}
 
-		vf[ci] = wellFrom.CurrVolume()
+		vf[ci] = wellFrom.CurrentVolume()
 
 		// dest well volume
 
@@ -311,7 +311,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error to the authors")
 		}
 
-		vt[ci] = wellTo.CurrVolume()
+		vt[ci] = wellTo.CurrentVolume()
 
 		// source plate dimensions
 

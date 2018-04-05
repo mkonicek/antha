@@ -246,7 +246,7 @@ func TestPlateReuse(t *testing.T) {
 			continue
 		}
 		for _, v := range plate.Wellcoords {
-			if !v.Empty() {
+			if !v.IsEmpty() {
 				v.RemoveVolume(wunit.NewVolume(5.0, "ul"))
 			}
 		}
@@ -328,7 +328,7 @@ func TestBeforeVsAfter(t *testing.T) {
 				w1 := pp1.Wellcoords[wc.FormatA1()]
 				w2 := pp2.Wellcoords[wc.FormatA1()]
 
-				if w1.Empty() && w2.Empty() {
+				if w1.IsEmpty() && w2.IsEmpty() {
 					it.Next()
 					continue
 				}

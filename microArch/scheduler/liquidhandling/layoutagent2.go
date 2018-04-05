@@ -118,7 +118,7 @@ func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []Plat
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := p.Wellcoords[wc.FormatA1()]
 
-		if w.Empty() {
+		if w.IsEmpty() {
 			continue
 		}
 

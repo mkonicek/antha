@@ -29,7 +29,7 @@ func getComponentsFromPlate(plate *wtype.LHPlate) []*wtype.LHComponent {
 
 	for _, wellcontents := range allWellPositions {
 
-		if !plate.WellMap()[wellcontents].Empty() {
+		if !plate.WellMap()[wellcontents].IsEmpty() {
 
 			component := plate.WellMap()[wellcontents].WContents
 			components = append(components, component)

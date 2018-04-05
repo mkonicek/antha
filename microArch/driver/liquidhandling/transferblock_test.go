@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -10,44 +11,68 @@ import (
 	"testing"
 )
 
-func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
-	inss := make([]*wtype.LHInstruction, 8)
-	dstp, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
+func getComponent(ctx context.Context, name string, volume float64) (*wtype.LHComponent, error) {
+	c, err := inventory.NewComponent(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	c.Vol = volume
+	c.Vunit = "ul"
+	c.SetSample(true)
+	return c, nil
+}
+
+func getMixInstructions(ctx context.Context, numInstructions int, componentNames []string, componentVolumes []float64) ([]*wtype.LHInstruction, error) {
+	numComponents := len(componentNames)
+	if len(componentVolumes) != numComponents {
+		return nil, fmt.Errorf("componentNames and componentVolumes should be the same length")
+	}
+
+	ret := make([]*wtype.LHInstruction, 0, numComponents)
+
+	for i := 0; i < numInstructions; i++ {
+
+		components := make([]*wtype.LHComponent, 0, numComponents)
+		for j := 0; j < numComponents; j++ {
+			c, err := getComponent(ctx, componentNames[j], componentVolumes[j])
+			if err != nil {
+				return nil, err
+			}
+			components = append(components, c)
+		}
+
+		ins := wtype.NewLHMixInstruction()
+		ins.Components = append(ins.Components, components...)
+
+		result := components[0].Dup()
+		for j, c := range components {
+			if j == 0 {
+				continue
+			}
+			result.Mix(c)
+		}
+		ins.AddResult(result)
+
+		ret = append(ret, ins)
+	}
+
+	return ret, nil
+}
+
+func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlateType string) (TransferBlockInstruction, *wtype.LHPlate) {
+	if destPlateType == "" {
+		destPlateType = "pcrplate_skirted_riser40"
+	}
+
+	dstp, err := inventory.NewPlate(ctx, destPlateType)
 	if err != nil {
 		panic(err)
 	}
 
-	for i := 0; i < 8; i++ {
-		c, err := inventory.NewComponent(ctx, inventory.WaterType)
-		if err != nil {
-			panic(err)
-		}
-
-		c.Vol = 100.0
-		c.Vunit = "ul"
-		c.SetSample(true)
-		ins := wtype.NewLHMixInstruction()
-		ins.Components = append(ins.Components, c)
-
-		c2, err := inventory.NewComponent(ctx, "tartrazine")
-		if err != nil {
-			panic(err)
-		}
-
-		c2.Vol = 24.0
-		c2.Vunit = "ul"
-		c2.SetSample(true)
-
-		ins.Components = append(ins.Components, c2)
-
-		c3 := c.Dup()
-		c3.Mix(c2)
-		ins.AddResult(c3)
-
-		ins.Platetype = "pcrplate_skirted_riser40"
-		ins.Welladdress = wutil.NumToAlpha(i+1) + "1"
+	for i, ins := range inss {
 		ins.SetPlateID(dstp.ID)
-		inss[i] = ins
+		ins.Platetype = destPlateType
+		ins.Welladdress = fmt.Sprintf("%s%d", wutil.NumToAlpha(i%8+1), i/8+1)
 	}
 
 	tb := NewTransferBlockInstruction(inss)
@@ -55,61 +80,22 @@ func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, 
 	return tb, dstp
 }
 
-func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
-	inss := make([]*wtype.LHInstruction, 8)
-	dstp, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser40")
+func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
+	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine"}, []float64{100.0, 64.0})
 	if err != nil {
 		panic(err)
 	}
 
-	for i := 0; i < 8; i++ {
-		c, err := inventory.NewComponent(ctx, inventory.WaterType)
-		if err != nil {
-			panic(err)
-		}
+	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
+}
 
-		c.Vol = 100.0
-		c.Vunit = "ul"
-		c.SetSample(true)
-		ins := wtype.NewLHMixInstruction()
-		ins.Components = append(ins.Components, c)
-
-		c2, err := inventory.NewComponent(ctx, "tartrazine")
-		if err != nil {
-			panic(err)
-		}
-
-		c2.Vol = 24.0
-		c2.Vunit = "ul"
-		c2.SetSample(true)
-
-		ins.Components = append(ins.Components, c2)
-
-		c3, err := inventory.NewComponent(ctx, "ethanol")
-		if err != nil {
-			panic(err)
-		}
-
-		c3.Vol = 12.0
-		c3.Vunit = "ul"
-		c3.SetSample(true)
-
-		ins.Components = append(ins.Components, c3)
-
-		c4 := c.Dup()
-		c4.Mix(c2)
-		c4.Mix(c3)
-		ins.AddResult(c4)
-
-		ins.Platetype = "pcrplate_skirted_riser40"
-		ins.Welladdress = wutil.NumToAlpha(i+1) + "1"
-		ins.SetPlateID(dstp.ID)
-		inss[i] = ins
+func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
+	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine", "ethanol"}, []float64{100.0, 64.0, 12.0})
+	if err != nil {
+		panic(err)
 	}
 
-	tb := NewTransferBlockInstruction(inss)
-
-	return tb, dstp
+	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 }
 
 func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *LHProperties {
@@ -187,11 +173,15 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 	// can do 7
 	tb, dstp := getTransferBlock2Component(ctx)
 
-	tb.Inss[0].Welladdress = "B1"
+	tb.Inss[0].Welladdress = "B2"
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 	pol.Policies["water"]["CAN_MULTI"] = true
+
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
 		t.Error(err)
@@ -578,10 +568,10 @@ func TestTransferMerge(t *testing.T) {
 }
 */
 
-func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
+func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) []RobotInstruction {
 	if len(ris) < 1 {
 		t.Errorf("No instructions to test positive")
-		return
+		return []RobotInstruction{}
 	}
 	ins := ris[0]
 
@@ -606,6 +596,8 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	if multi == 0 {
 		t.Errorf("Multichannel block not generated")
 	}
+
+	return ri2
 }
 
 func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPolicyRuleSet, rbt *LHProperties, t *testing.T) {
@@ -628,4 +620,151 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 		}
 
 	}
+}
+
+func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) []RobotInstruction {
+
+	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
+
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	var err error
+	if pol == nil {
+		pol, err = GetLHPolicyForTest()
+		if err != nil {
+			t.Fatal(err)
+		}
+		// allow multi
+		pol.Policies["water"]["CAN_MULTI"] = true
+	}
+
+	//generate the low level instructions
+	instructionSet := NewRobotInstructionSet(tb)
+	ris2, err := instructionSet.Generate(ctx, pol, rbt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return ris2
+}
+
+func assertNumTipsUsed(t *testing.T, instructions []RobotInstruction, expectedTips int) {
+	var loaded, unloaded int
+
+	for _, instruction := range instructions {
+		switch ins := instruction.(type) {
+		case *LoadTipsInstruction:
+			loaded += ins.Multi
+		case *UnloadTipsInstruction:
+			unloaded += ins.Multi
+		}
+	}
+
+	if loaded != unloaded {
+		t.Errorf("Loaded %d and Unloaded %d tips in instructions", loaded, unloaded)
+	}
+
+	if e, g := expectedTips, loaded; e != g {
+		t.Errorf("Used %d tips, should have used %d", g, e)
+	}
+
+}
+
+func assertNumLoadUnloadInstructions(t *testing.T, instructions []RobotInstruction, expected int) {
+	var loads, unloads int
+
+	for _, instruction := range instructions {
+		switch instruction.(type) {
+		case *LoadTipsInstruction:
+			loads += 1
+		case *UnloadTipsInstruction:
+			unloads += 1
+		}
+	}
+
+	if e, g := expected, loads; e != g {
+		t.Errorf("Generated %d load tips instructions, expected %d", g, e)
+	}
+
+	if e, g := expected, unloads; e != g {
+		t.Errorf("Generated %d unload tips instructions, expected %d", g, e)
+	}
+}
+
+//TestMultiChannelTipReuseGood Move water to two columns of wells - shouldn't need to change tips in between
+func TestMultiChannelTipReuseGood(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	ris := generateRobotInstructions(t, ctx, inss, nil)
+
+	assertNumTipsUsed(t, ris, 8)
+
+	assertNumLoadUnloadInstructions(t, ris, 1)
+}
+
+//TestMultiChannelTipReuseDisabled identical to good, except disable tip reuse
+func TestMultiChannelTipReuseDisabled(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// allow multi
+	pol.Policies["water"]["CAN_MULTI"] = true
+	pol.Policies["water"]["TIP_REUSE_LIMIT"] = 0
+
+	ris := generateRobotInstructions(t, ctx, inss, pol)
+
+	assertNumTipsUsed(t, ris, 16)
+
+	assertNumLoadUnloadInstructions(t, ris, 2)
+}
+
+//TestMultiChannelTipReuseBad Move water and ethanol to two separate columns of wells - should change tips in between
+func TestMultiChannelTipReuseBad(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	ins2, err := getMixInstructions(ctx, 8, []string{"ethanol"}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	inss = append(inss, ins2...)
+
+	ris := generateRobotInstructions(t, ctx, inss, nil)
+
+	assertNumTipsUsed(t, ris, 16)
+
+	assertNumLoadUnloadInstructions(t, ris, 2)
+}
+
+//TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
+func TestMultiChannelTipReuseUgly(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "ethanol"}, []float64{50.0, 50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	ris := generateRobotInstructions(t, ctx, inss, nil)
+
+	assertNumTipsUsed(t, ris, 16)
+
+	assertNumLoadUnloadInstructions(t, ris, 2)
 }

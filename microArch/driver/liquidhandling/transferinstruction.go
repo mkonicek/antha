@@ -461,7 +461,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	// if the liquid handler is of the high-level type we cut the tree here
 	// after ensuring that the transfers are within limitations of the liquid handler
 
-	if prms.LHType == HLLiquidHandler {
+	if prms.GetLHType() == HLLiquidHandler {
 		err := ins.ReviseTransferVolumes(prms)
 
 		if err != nil {
@@ -562,7 +562,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 }
 
 func (ins *TransferInstruction) ReviseTransferVolumes(prms *LHProperties) error {
-	newTransfers := make([]MultiTransferParams, len(ins.Transfers))
+	newTransfers := make([]MultiTransferParams, 0, len(ins.Transfers))
 
 	for _, mtp := range ins.Transfers {
 		//newMtp := make(MultiTransferParams, len(mtp))
@@ -577,6 +577,8 @@ func (ins *TransferInstruction) ReviseTransferVolumes(prms *LHProperties) error 
 			}
 			newMtp.Transfers = append(newMtp.Transfers, newTPs...)
 		}
+
+		newMtp.Multi = len(newMtp.Transfers)
 
 		newTransfers = append(newTransfers, newMtp)
 	}
@@ -615,4 +617,81 @@ func safeTransfers(tp TransferParams, prms *LHProperties) ([]TransferParams, err
 	}
 
 	return ret, nil
+}
+
+func MockAspDsp(ins RobotInstruction) []TerminalRobotInstruction {
+	ret := make([]TerminalRobotInstruction, 0, 1)
+
+	tfr, ok := ins.(*TransferInstruction)
+
+	if !ok {
+		return ret
+	}
+
+	ret = append(ret, mockLoad())
+
+	for _, mtp := range tfr.Transfers {
+		for _, tp := range mtp.Transfers {
+			mox := mockLowLevels(tp)
+			ret = append(ret, mox...)
+		}
+	}
+
+	ret = append(ret, mockUnload())
+
+	return ret
+}
+
+func mockLoad() *LoadTipsInstruction {
+	ins := NewLoadTipsInstruction()
+	ins.Pos = append(ins.Pos, "position_n")
+	ins.Well = append(ins.Well, "A1")
+	ins.Channels = append(ins.Channels, 0)
+	ins.TipType = append(ins.TipType, "none")
+	ins.HolderType = append(ins.HolderType, "none")
+	ins.Multi = 1
+	ins.Platform = "Echo"
+	return ins
+}
+
+func mockLowLevels(tp TransferParams) []TerminalRobotInstruction {
+	mova := NewMoveInstruction()
+	mova.Plt = append(mova.Plt, tp.PltFrom)
+	mova.Well = append(mova.Well, tp.WellFrom)
+	mova.Reference = append(mova.Reference, 0)
+	mova.WVolume = append(mova.WVolume, tp.FVolume)
+	mova.Platform = "Echo"
+
+	asp := NewAspirateInstruction()
+	asp.Multi = 1
+	asp.Volume = append(asp.Volume, tp.Volume)
+	asp.Platform = "Echo"
+	asp.What = append(asp.What, tp.What)
+
+	movd := NewMoveInstruction()
+	movd.Plt = append(movd.Plt, tp.PltTo)
+	movd.Well = append(movd.Well, tp.WellTo)
+	movd.Reference = append(movd.Reference, 0)
+	movd.WVolume = append(movd.WVolume, tp.TVolume)
+	movd.Platform = "Echo"
+
+	dsp := NewDispenseInstruction()
+	dsp.Multi = 1
+	dsp.Volume = append(dsp.Volume, tp.Volume)
+	dsp.Platform = "Echo"
+	dsp.What = append(dsp.What, tp.What)
+
+	return []TerminalRobotInstruction{mova, asp, movd, dsp}
+}
+
+func mockUnload() *UnloadTipsInstruction {
+	ins := NewUnloadTipsInstruction()
+	ins.Pos = append(ins.Pos, "position_n")
+	ins.Well = append(ins.Well, "A1")
+	ins.Channels = append(ins.Channels, 0)
+	ins.TipType = append(ins.TipType, "none")
+	ins.HolderType = append(ins.HolderType, "none")
+	ins.Multi = 1
+	ins.Platform = "Echo"
+	return ins
 }

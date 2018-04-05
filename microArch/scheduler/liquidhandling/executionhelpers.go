@@ -87,7 +87,7 @@ func get_assignment(assignments []string, plates *map[string]*wtype.LHPlate, vol
 		currvol.Subtract(well.ResidualVolume())
 		if currvol.GreaterThan(vol) || currvol.EqualTo(vol) {
 			prevol = well.CurrVolume()
-			well.Remove(vol)
+			well.RemoveVolume(vol)
 			plate.HWells[well.ID] = well
 			(*plates)[asstx[0]] = plate
 			ok = true
@@ -691,7 +691,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
 			cnames = append(cnames, wlf.WContents.CName)
-			wlf.Remove(vrm)
+			wlf.RemoveVolume(vrm)
 
 			pf = append(pf, robot.PlateIDLookup[tfrs[i].PlateIDs[xx]])
 			wf = append(wf, tfrs[i].WellCoords[xx])
@@ -710,7 +710,10 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vd.Vol = v2.ConvertToString(vd.Vunit)
 			vd.ID = wlf.WContents.ID
 			vd.ParentID = wlf.WContents.ParentID
-			wlt.Add(vd)
+			err := wlt.AddComponent(vd)
+			if err != nil {
+				return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler couldn't add volume to well : %s", err.Error()))
+			}
 
 			// TODO -- danger here, is result definitely set?
 			wlt.WContents.ID = insIn.Results[0].ID

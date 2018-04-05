@@ -389,6 +389,15 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 
 // constructor for the above
 func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype string, layout map[string]wtype.Coordinates) *LHProperties {
+	// assert validity of lh and tip types
+
+	if !IsValidLiquidHandlerType(lhtype) {
+		panic(fmt.Sprintf("Invalid liquid handling type requested: %s", lhtype))
+	}
+	if !IsValidTipType(tiptype) {
+		panic(fmt.Sprintf("Invalid tip usage type requested: %s", tiptype))
+	}
+
 	var lhp LHProperties
 
 	lhp.ID = wtype.GetUUID()
@@ -433,6 +442,20 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	lhp.MaterialType = material.DEVICE
 
 	return &lhp
+}
+
+// GetLHType returns the declared type of liquid handler for driver selection purposes
+// e.g. High-Level (HLLiquidHandler) or Low-Level (LLLiquidHandler)
+// see lhtype.go in this directory
+func (lhp *LHProperties) GetLHType() string {
+	return lhp.LHType
+}
+
+// GetTipType returns the tip requirements of the liquid handler
+// options are None, Disposable, Fixed, Mixed
+// see lhtype.go in this directory
+func (lhp *LHProperties) GetTipType() string {
+	return lhp.TipType
 }
 
 func (lhp *LHProperties) TipsLeftOfType(tiptype string) int {
@@ -537,6 +560,7 @@ func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) e
 	if lhp.PosLookup[pos] != "" {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", pos))
 	}
+
 	lhp.Tipwastes[pos] = tipwaste
 	lhp.PlateLookup[tipwaste.ID] = tipwaste
 	lhp.PosLookup[pos] = tipwaste.ID
@@ -1018,7 +1042,7 @@ func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (we
 func (lhp *LHProperties) GetMaterialType() material.MaterialType {
 	return lhp.MaterialType
 }
-func (lhp *LHProperties) GetTimer() *LHTimer {
+func (lhp *LHProperties) GetTimer() LHTimer {
 	return GetTimerFor(lhp.Mnfr, lhp.Model)
 }
 
@@ -1163,6 +1187,10 @@ func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
 				return false
 			}
 			return 'A' <= pos[0] && pos[0] <= 'D' && '0' <= pos[1] && pos[1] <= '9'
+		}
+	} else if lhp.Mnfr == "Labcyte" {
+		checkFn = func(pos string) bool {
+			return false
 		}
 	}
 

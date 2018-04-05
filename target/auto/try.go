@@ -6,7 +6,7 @@ import (
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 	lhclient "github.com/antha-lang/antha/driver/lh"
-	"github.com/antha-lang/antha/driver/pb/lh"
+	lh "github.com/antha-lang/antha/driver/pb/lh"
 	"github.com/antha-lang/antha/target/handler"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"

@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -57,7 +56,7 @@ func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquid
 
 		k += 1
 		if err != nil {
-			break
+			return request, err
 		}
 		ch = ch.Child
 	}
@@ -212,7 +211,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	// give them names
 
 	for _, v := range request.Output_plates {
-		if v.Name() == "" {
+		if wtype.NameOf(v) == "" {
 			v.PlateName = getNameForID(plate_choices, v.ID)
 		}
 	}
@@ -723,10 +722,21 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 		for _, w := range c.Wells {
 			if w != "" {
 				wc := wtype.MakeWellCoords(w)
-				//plat.Cols[wc.X][wc.Y].Currvol += 100.0
+
+				if wc.X >= len(plat.Cols) {
+					return fmt.Errorf("well (%s) specified is out of range of available wells for plate type %s", w, plat.Type)
+				}
+
+				if wc.Y >= len(plat.Cols[wc.X]) {
+					return fmt.Errorf("well (%s) specified is out of range of available wells for plate type %s", w, plat.Type)
+				}
+
 				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(wunit.NewVolume(100.0, "ul"))
-				plat.Cols[wc.X][wc.Y].Add(dummycmp)
+				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
+				err := plat.Cols[wc.X][wc.Y].AddComponent(dummycmp)
+				if err != nil {
+					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Layout Agent : %s", err.Error()))
+				}
 			}
 		}
 
@@ -744,11 +754,14 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 				if wc.IsZero() {
 					// something very bad has happened
 					//	logger.Fatal("DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
-					return wtype.LHError(wtype.LH_ERR_DIRE, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
+					return wtype.LHError(wtype.LH_ERR_VOL, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
 				}
 				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(wunit.NewVolume(100.0, "ul"))
-				plat.Cols[wc.X][wc.Y].Add(dummycmp)
+				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
+				err := plat.Cols[wc.X][wc.Y].AddComponent(dummycmp)
+				if err != nil {
+					return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
+				}
 				request.LHInstructions[sID].Welladdress = wc.FormatA1()
 				assignment = c.ID + ":" + wc.FormatA1()
 				c.Wells[i] = wc.FormatA1()

@@ -27,7 +27,6 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
@@ -70,6 +69,7 @@ type LHRequest struct {
 	Options               LHOptions
 	NUserPlates           int
 	Output_sort           bool
+	TipsUsed              []wtype.TipEstimate
 }
 
 func (req *LHRequest) GetPlate(id string) (*wtype.LHPlate, bool) {
@@ -203,9 +203,8 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_setup_weights["MAX_N_WELLS"] = 96
 	lhr.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = 1.0
 	lhr.Options = NewLHOptions()
-
-	systemPolicies, _ := liquidtype.GetLHPolicyForTest()
-
+	lhr.TipsUsed = make([]wtype.TipEstimate, 0)
+	systemPolicies, _ := wtype.GetLHPolicyForTest()
 	lhr.SetPolicies(systemPolicies)
 	return &lhr
 }

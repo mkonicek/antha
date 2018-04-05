@@ -576,10 +576,15 @@ var UnitMap = map[string]map[string]Unit{
 		"M":    Unit{Base: "M", Prefix: "", Multiplier: 1.0},
 	},
 	"Volume": map[string]Unit{
+		"pl": Unit{Base: "l", Prefix: "n", Multiplier: 1.0},
 		"nl": Unit{Base: "l", Prefix: "n", Multiplier: 1.0},
 		"ul": Unit{Base: "l", Prefix: "u", Multiplier: 1.0},
 		"ml": Unit{Base: "l", Prefix: "m", Multiplier: 1.0},
 		"l":  Unit{Base: "l", Prefix: "", Multiplier: 1.0},
+		"pL": Unit{Base: "l", Prefix: "n", Multiplier: 1.0},
+		"nL": Unit{Base: "l", Prefix: "n", Multiplier: 1.0},
+		"uL": Unit{Base: "l", Prefix: "u", Multiplier: 1.0},
+		"mL": Unit{Base: "l", Prefix: "m", Multiplier: 1.0},
 		"L":  Unit{Base: "l", Prefix: "", Multiplier: 1.0},
 	},
 	"Rate": map[string]Unit{

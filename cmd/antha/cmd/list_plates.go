@@ -29,7 +29,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/ghodss/yaml"
@@ -86,7 +85,7 @@ func listPlates(cmd *cobra.Command, args []string) error {
 			WellsX:        p.WellsX(),
 			WellsY:        p.WellsY(),
 			WellShape:     p.Welltype.Shape().ShapeName,
-			WellBottom:    wtype.BottomType(p.Welltype),
+			WellBottom:    p.Welltype.Bottom.String(),
 			MaxWellVolume: p.Welltype.MaxVolume(),
 		})
 	}

@@ -96,3 +96,109 @@ func TestPPPolicy(t *testing.T) {
 	}
 
 }
+
+func getWaterInstructions() []RobotInstruction {
+	var ret []RobotInstruction
+	waters := []string{"water", "water", "water", "water", "water", "water", "water", "water"}
+
+	{
+		ins := NewSingleChannelBlockInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewMultiChannelBlockInstruction()
+		for i := 0; i < 8; i++ {
+			ins.What = append(ins.What, waters)
+		}
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewSingleChannelTransferInstruction()
+		ins.What = "water"
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewMultiChannelTransferInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewAspirateInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewDispenseInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewBlowInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewMoveRawInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewSuckInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewBlowInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewResetInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	{
+		ins := NewMixInstruction()
+		ins.What = waters
+		ret = append(ret, ins)
+	}
+
+	return ret
+}
+
+//TestRobotInstructionCheckLiquidClass tests that the Check method successfully
+//matches liquid classes for all instructions
+func TestRobotInstructionCheckLiquidClass(t *testing.T) {
+	pft, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	waterRule, ok := pft.Rules["water"]
+	if !ok {
+		t.Fatal("Couldn't get water rule")
+	}
+
+	waterInstructions := getWaterInstructions()
+
+	for _, ins := range waterInstructions {
+
+		if !ins.Check(waterRule) {
+			t.Errorf("Instruction \"%s\" didn't match water rule, LIQUIDCLASS=%s",
+				InstructionTypeName(ins),
+				ins.GetParameter("LIQUIDCLASS"))
+		}
+	}
+}

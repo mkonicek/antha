@@ -80,14 +80,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	// I think this might need moving too
 	input_platetypes := (*request).Input_platetypes
 	if input_platetypes == nil || len(input_platetypes) == 0 {
-		// XXX this is dangerous... until input_plate_linear is replaced we will hit big problems here
-		// this configuration needs to happen outside but for now...
-		input_platetypes, err := inventory.XXXNewPlates(ctx)
-		if err != nil {
-			return nil, err
-		}
-		(*request).Input_platetypes = input_platetypes
-		//debug
+		return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
 	}
 
 	// we assume that input_plates is set if any locs are set
@@ -209,7 +202,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 				// now put it there
 
-				location := curr_plate.ID + ":" + curr_well.Crds
+				location := curr_plate.ID + ":" + curr_well.Crds.FormatA1()
 				ass = append(ass, location)
 
 				var newcomponent *wtype.LHComponent
@@ -222,14 +215,17 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 				} else {
 					newcomponent = component.Dup()
 					newcomponent.Vol = curr_well.MaxVol
-					newcomponent.Vunit = curr_well.Vunit
+					newcomponent.Vunit = curr_well.GetVolumeUnit()
 					newcomponent.Loc = location
 					volume.Subtract(curr_well.WorkingVolume())
 				}
 
 				st.SetLocationOf(component.ID, location)
 
-				curr_well.Add(newcomponent)
+				err := curr_well.AddComponent(newcomponent)
+				if err != nil {
+					return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Input plate setup : %s", err.Error()))
+				}
 				curr_well.DeclareAutoallocated()
 				input_plates[curr_plate.ID] = curr_plate
 			}

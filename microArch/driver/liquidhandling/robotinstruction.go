@@ -85,6 +85,7 @@ const (
 	MVM            // MOV MIX           ""       ""
 	MBL            // MOV BLO	    ""       ""
 	RAP            // RemoveAllPlates
+	RPA            // Remove Plate At
 	APT            // AddPlateTo
 	SPB            // SplitBlock
 )
@@ -93,7 +94,7 @@ func InstructionTypeName(ins RobotInstruction) string {
 	return Robotinstructionnames[ins.InstructionType()]
 }
 
-var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT", "SPB"}
+var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "RPA", "APT", "SPB"}
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
 
@@ -228,7 +229,7 @@ func concatboolarray(a []bool) string {
 
 // empty struct to hang methods on
 type GenericRobotInstruction struct {
-	Ins RobotInstruction
+	Ins RobotInstruction `json:"-"`
 }
 
 func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {

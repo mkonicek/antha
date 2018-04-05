@@ -23,7 +23,7 @@ func MarshalPlateCSV(plate *wtype.LHPlate) ([]byte, error) {
 	for _, well := range plate.AllNonEmptyWells() {
 		comp := well.WContents
 		records = append(records, []string{
-			well.Crds,
+			well.Crds.FormatA1(),
 			comp.CName,
 			comp.TypeName(),
 			strconv.FormatFloat(comp.Vol, 'g', -1, 64),

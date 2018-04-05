@@ -211,7 +211,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	// give them names
 
 	for _, v := range request.Output_plates {
-		if v.Name() == "" {
+		if wtype.NameOf(v) == "" {
 			v.PlateName = getNameForID(plate_choices, v.ID)
 		}
 	}
@@ -736,7 +736,10 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 
 				dummycmp := wtype.NewLHComponent()
 				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
-				plat.Cols[wc.X][wc.Y].Add(dummycmp)
+				err := plat.Cols[wc.X][wc.Y].AddComponent(dummycmp)
+				if err != nil {
+					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Layout Agent : %s", err.Error()))
+				}
 			}
 		}
 
@@ -754,11 +757,14 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 				if wc.IsZero() {
 					// something very bad has happened
 					//	logger.Fatal("DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
-					return wtype.LHError(wtype.LH_ERR_DIRE, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
+					return wtype.LHError(wtype.LH_ERR_VOL, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
 				}
 				dummycmp := wtype.NewLHComponent()
 				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
-				plat.Cols[wc.X][wc.Y].Add(dummycmp)
+				err := plat.Cols[wc.X][wc.Y].AddComponent(dummycmp)
+				if err != nil {
+					return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
+				}
 				request.LHInstructions[sID].Welladdress = wc.FormatA1()
 				assignment = c.ID + ":" + wc.FormatA1()
 				c.Wells[i] = wc.FormatA1()

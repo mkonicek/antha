@@ -22,7 +22,10 @@
 
 package wtype
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+)
 
 func (lhp *LHPlate) MarshalJSON() ([]byte, error) {
 	slhp := lhp.ToSLHPLate()
@@ -55,8 +58,7 @@ type SLHPlate struct {
 	WellsX      int
 	WellsY      int
 	Nwells      int
-	Height      float64
-	Hunit       string
+	Bounds      BBox
 	Welltype    *LHWell
 	Wellcoords  map[string]*LHWell
 	WellXOffset float64 // distance (mm) between well centres in X direction
@@ -67,7 +69,25 @@ type SLHPlate struct {
 }
 
 func (p *LHPlate) ToSLHPLate() SLHPlate {
-	return SLHPlate{ID: p.ID, Inst: p.Inst, Loc: p.Loc, Name: p.PlateName, Type: p.Type, Mnfr: p.Mnfr, WellsX: p.WlsX, WellsY: p.WlsY, Nwells: p.Nwells, Height: p.Height, Hunit: p.Hunit, Welltype: p.Welltype, Wellcoords: p.Wellcoords, WellXOffset: p.WellXOffset, WellYOffset: p.WellYOffset, WellXStart: p.WellXStart, WellYStart: p.WellYStart, WellZStart: p.WellZStart}
+	return SLHPlate{
+		ID:          p.ID,
+		Inst:        p.Inst,
+		Loc:         p.Loc,
+		Name:        p.PlateName,
+		Type:        p.Type,
+		Mnfr:        p.Mnfr,
+		WellsX:      p.WlsX,
+		WellsY:      p.WlsY,
+		Nwells:      p.Nwells,
+		Bounds:      p.Bounds,
+		Welltype:    p.Welltype,
+		Wellcoords:  p.Wellcoords,
+		WellXOffset: p.WellXOffset,
+		WellYOffset: p.WellYOffset,
+		WellXStart:  p.WellXStart,
+		WellYStart:  p.WellYStart,
+		WellZStart:  p.WellZStart,
+	}
 }
 
 func (slhp SLHPlate) FillPlate(plate *LHPlate) {
@@ -80,8 +100,11 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 	plate.WlsX = slhp.WellsX
 	plate.WlsY = slhp.WellsY
 	plate.Nwells = slhp.Nwells
-	plate.Height = slhp.Height
-	plate.Hunit = slhp.Hunit
+	plate.Bounds = slhp.Bounds
+	//	plate.Width = slhp.Width
+	//	plate.Length = slhp.Length
+	//	plate.Height = slhp.Height
+	//  plate.Hunit = slhp.Hunit
 	plate.Welltype = slhp.Welltype
 	plate.Wellcoords = slhp.Wellcoords
 	plate.WellXOffset = slhp.WellXOffset
@@ -94,6 +117,7 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 	plate.HWells = make(map[string]*LHWell, len(plate.Wellcoords))
 	for _, w := range plate.Wellcoords {
 		plate.HWells[w.ID] = w
+		w.Plate = plate
 	}
 }
 
@@ -125,7 +149,7 @@ type LHWellType struct {
 	Vunit     string
 	Rvol      float64
 	ShapeName string
-	Bottom    int
+	Bottom    WellBottomType
 	Xdim      float64
 	Ydim      float64
 	Zdim      float64
@@ -134,38 +158,34 @@ type LHWellType struct {
 }
 
 func (w *LHWell) AddDimensions(lhwt *LHWellType) {
-	w.MaxVol = lhwt.Vol
-	w.Vunit = lhwt.Vunit
-	w.Rvol = lhwt.Rvol
+	w.MaxVol = wunit.NewVolume(lhwt.Vol, lhwt.Vunit).ConvertToString("ul")
+	w.Rvol = wunit.NewVolume(lhwt.Rvol, lhwt.Vunit).ConvertToString("ul")
 	w.WShape = NewShape(lhwt.ShapeName, lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
 	w.Bottom = lhwt.Bottom
-	w.Xdim = lhwt.Xdim
-	w.Ydim = lhwt.Ydim
-	w.Zdim = lhwt.Zdim
-	w.Bottomh = lhwt.Bottomh
-	w.Dunit = lhwt.Dunit
+	w.Bounds.SetSize(Coordinates{
+		wunit.NewLength(lhwt.Xdim, lhwt.Dunit).ConvertToString("mm"),
+		wunit.NewLength(lhwt.Ydim, lhwt.Dunit).ConvertToString("mm"),
+		wunit.NewLength(lhwt.Zdim, lhwt.Dunit).ConvertToString("mm"),
+	})
+	w.Bottomh = wunit.NewLength(lhwt.Bottomh, lhwt.Dunit).ConvertToString("mm")
 }
 
 func (plate *LHPlate) Welldimensions() *LHWellType {
 	t := plate.Welltype
-	lhwt := LHWellType{t.MaxVol, t.Vunit, t.Rvol, t.WShape.ShapeName, t.Bottom, t.Xdim, t.Ydim, t.Zdim, t.Bottomh, t.Dunit}
+	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, t.WShape.ShapeName, t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
 	return &lhwt
 }
 
 type SLHWell struct {
-	ID        string
-	Inst      string
-	Plateinst string
-	Plateid   string
-	Coords    string
-	Contents  *LHComponent
+	ID       string
+	Inst     string
+	Coords   WellCoords
+	Contents *LHComponent
 }
 
 func (slw SLHWell) FillWell(lw *LHWell) {
 	lw.ID = slw.ID
 	lw.Inst = slw.Inst
-	lw.Plateinst = slw.Plateinst
-	lw.Plateid = slw.Plateid
 	lw.Crds = slw.Coords
 	lw.WContents = slw.Contents
 }

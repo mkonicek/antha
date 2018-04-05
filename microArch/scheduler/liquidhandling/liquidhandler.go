@@ -36,6 +36,7 @@ import (
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
+	simulator_lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 )
 
 // the liquid handler structure defines the interface to a particular liquid handling
@@ -144,8 +145,21 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	err = this.Execute(request)
+	err = this.AddSetupInstructions(request)
+	if err != nil {
+		return err
+	}
 
+	/*err = this.Simulate(request)
+	if err != nil {
+		//since the simulator is... tender right now, let's take this with a pinch of salt
+		logger.Info("Ignoring simulation error")
+		//return err
+	} else {
+		logger.Info("Simulation completed successfully")
+	}*/
+
+	err = this.Execute(request)
 	if err != nil {
 		return err
 	}
@@ -162,23 +176,63 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	return nil
 }
 
-// run the request via the driver
-func (this *Liquidhandler) Execute(request *LHRequest) error {
-
-	if (*request).Instructions == nil {
+//AddSetupInstructions add instructions to the instruction stream to setup
+//the plate layout of the machine
+func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
+	if request.Instructions == nil {
 		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
 	}
-	// add setup instructions to the request instruction stream
 
-	this.add_setup_instructions(request)
-
-	// set up the robot with extra calls not included in instructions
-
-	err := this.do_setup(request)
-
-	if err != nil {
-		return err
+	setup_insts := this.get_setup_instructions(request)
+	if request.Instructions[0].InstructionType() == liquidhandling.INI {
+		request.Instructions = append(request.Instructions[:1], append(setup_insts, request.Instructions[1:]...)...)
+	} else {
+		request.Instructions = append(setup_insts, request.Instructions...)
 	}
+	return nil
+}
+
+// run the request via the simulator
+func (this *Liquidhandler) Simulate(request *LHRequest) error {
+
+	instructions := (*request).Instructions
+	if instructions == nil {
+		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
+	}
+
+	// set up the simulator with default settings
+	vlh := simulator_lh.NewVirtualLiquidHandler(this.Properties, nil)
+	for _, err := range vlh.GetErrors() {
+		err.WriteToLog()
+	}
+
+	//check we didn't hit a catastrophic error
+	if vlh.HasError() {
+		return vlh.GetWorstError()
+	}
+
+	fmt.Printf("Simulating %d instructions...\n", len(instructions))
+	for _, ins := range instructions {
+		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh)
+		if vlh.HasError() {
+			break
+		}
+	}
+
+	for _, err := range vlh.GetErrors() {
+		err.WriteToLog()
+	}
+
+	//return the worst error if it's actually an error
+	if vlh.HasError() {
+		return vlh.GetWorstError()
+	}
+	return nil
+}
+
+// run the request via the driver
+func (this *Liquidhandler) Execute(request *LHRequest) error {
+	//robot setup now included in instructions
 
 	instructions := (*request).Instructions
 
@@ -186,6 +240,11 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 	timer := this.Properties.GetTimer()
 	var d time.Duration
+
+	err := this.update_metadata(request)
+	if err != nil {
+		return err
+	}
 
 	for _, ins := range instructions {
 
@@ -366,9 +425,22 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
-				well2.WContents.SetVolume(vol)
-				well.WContents.SetVolume(well.ResidualVolume())
-				well.WContents.ID = wtype.GetUUID()
+
+				well2Contents := well2.Contents().Dup()
+				well2Contents.SetVolume(vol)
+				err := well2.SetContents(well2Contents)
+				if err != nil {
+					return err
+				}
+
+				wellContents := well.Contents().Dup()
+				wellContents.SetVolume(well.ResidualVolume())
+				wellContents.ID = wtype.GetUUID()
+				err = well.SetContents(wellContents)
+				if err != nil {
+					return err
+				}
+
 				well.DeclareNotTemporary()
 				well2.DeclareNotTemporary()
 			}
@@ -417,7 +489,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 					// copy the outputs to the correct side
 					// and remove the outputs from the initial state
 					if !w.Empty() {
-						w2, ok := p2.Wellcoords[w.Crds]
+						w2, ok := p2.Wellcoords[w.Crds.FormatA1()]
 						if ok {
 							// there's no strict separation between outputs and
 							// inputs here
@@ -429,12 +501,21 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 								w.Clear()
 								c2 := w2.WContents.Dup()
 								w2.Clear()
-								w.Add(c2)
-								w2.Add(c)
+								err := w.AddComponent(c2)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
+								err = w2.AddComponent(c)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
 							} else {
 								// replace
 								w2.Clear()
-								w2.Add(w.WContents)
+								err := w2.AddComponent(w.Contents())
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
 								w.Clear()
 							}
 						}
@@ -455,9 +536,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) add_setup_instructions(rq *LHRequest) {
-	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, len(rq.Instructions)+10)
+func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandling.TerminalRobotInstruction {
+	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, 1+len(this.Properties.PosLookup))
 
+	//first instruction is always to remove all plates
 	instructions = append(instructions, liquidhandling.NewRemoveAllPlatesInstruction())
 
 	for position, plateid := range this.Properties.PosLookup {
@@ -471,31 +553,10 @@ func (this *Liquidhandler) add_setup_instructions(rq *LHRequest) {
 
 		instructions = append(instructions, ins)
 	}
-	instructions = append(instructions, rq.Instructions...)
-	rq.Instructions = instructions
+	return instructions
 }
 
-func (this *Liquidhandler) do_setup(rq *LHRequest) error {
-	/*
-		stat := this.Properties.Driver.RemoveAllPlates()
-
-		if stat.Errorcode == driver.ERR {
-			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-		}
-
-		for position, plateid := range this.Properties.PosLookup {
-			if plateid == "" {
-				continue
-			}
-			plate := this.Properties.PlateLookup[plateid]
-			name := plate.(wtype.Named).GetName()
-
-			stat = this.Properties.Driver.AddPlateTo(position, plate, name)
-			if stat.Errorcode == driver.ERR {
-				return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-			}
-		}
-	*/
+func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
 
 	if _, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
 		stat := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver).UpdateMetaData(this.Properties)
@@ -537,7 +598,16 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 func checkSanityIns(request *LHRequest) {
 	// check instructions for basic sanity
 
-	good := true
+	var errors []string
+
+	printError := func(add bool, format string, args ...interface{}) {
+		str := fmt.Sprintf("internal error: "+format, args...)
+		if add {
+			errors = append(errors, str)
+		}
+		fmt.Println(str)
+	}
+
 	for _, ins := range request.LHInstructions {
 		if ins.Type == wtype.LHIMIX {
 			v := wunit.NewVolume(0.0, "ul")
@@ -546,8 +616,7 @@ func checkSanityIns(request *LHRequest) {
 				// need to be a bit careful but...
 
 				if c.Vol < 0.0 {
-					fmt.Println("NEGATIVE VOLUME!!!! ", c.CName, " ", c.Vol)
-					good = false
+					printError(true, "negative volume for component %s volume %s", c.CName, c.Vol)
 					continue
 				}
 
@@ -555,8 +624,8 @@ func checkSanityIns(request *LHRequest) {
 					v.Add(c.Volume())
 				} else if c.Tvol != 0.0 {
 					if !tv.IsZero() && !tv.EqualTo(c.TotalVolume()) {
-						fmt.Println("ERROR: MULTIPLE DISTINCT TOTAL VOLUMES SPECIFIED FOR ", ins.ID, " ", ins.Results[0].CName, " COMPONENT ", c)
-						good = false
+						printError(true, "multiple distinct total volumes specified for instruction %s %s component %s",
+							ins.ID, ins.Results[0].CName, c)
 					}
 
 					tv = c.TotalVolume()
@@ -564,11 +633,11 @@ func checkSanityIns(request *LHRequest) {
 			}
 
 			if tv.IsZero() && !v.EqualTo(ins.Results[0].Volume()) {
-				fmt.Println("OH DEAR DEAR DEAR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Results[0].CName, " COMP: ", v, " PROD: ", ins.Results[0].Volume())
-				good = false
+				printError(true, "sum of requested volumes does not match resulting volume for instruction %s %s sum %s != result volume %s",
+					ins.ID, ins.Results[0].CName, v, ins.Results[0].Volume())
 			} else if !tv.IsZero() && !tv.EqualTo(ins.Results[0].Volume()) {
-				fmt.Println("ERROR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Results[0].CName, " COMP: ", tv, " PROD: ", ins.Results[0].Volume())
-				good = false
+				printError(true, "total volume does not match resulting volume for instruction %s %s total volume %s != result volume %s",
+					ins.ID, ins.Results[0].CName, tv, ins.Results[0].Volume())
 			} else if ins.PlateID != "" {
 				// compare result volume to the well volume
 
@@ -577,15 +646,15 @@ func checkSanityIns(request *LHRequest) {
 				if !ok {
 					// possibly an issue
 				} else if plat.Welltype.MaxVolume().LessThan(ins.Results[0].Volume()) {
-					fmt.Println("WARNING: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Results[0].CName, " WANT: ", ins.Results[0].Volume(), " MAX FOR PLATE OF TYPE ", plat.Type, ": ", plat.Welltype.MaxVolume())
-					//good = false
+					printError(false, "volume exceeds well max of plate for instruction %s %s volume %s > well max %s",
+						plat.Type, ins.ID, ins.Results[0].CName, ins.Results[0].Volume(), plat.Welltype.MaxVolume())
 				}
 			}
 		}
 	}
 
-	if !good {
-		panic("URGH - volume issues here")
+	if len(errors) != 0 {
+		panic(strings.Join(errors, "\n"))
 	}
 
 }
@@ -782,7 +851,15 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	// sorts out tip boxes etc.
+	// counts tips used in this run -- reads instructions generated above so must happen
+	// after execution planning
+	request, err = this.countTipsUsed(request)
+
+	if err != nil {
+		return err
+	}
+
+	// Ensures tip boxes and wastes are correct for initial and final robot states
 	this.Refresh_tipboxes_tipwastes(request)
 
 	// revise the volumes - this makes sure the volumes requested are correct

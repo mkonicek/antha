@@ -138,7 +138,7 @@ func (lhc *LHComponent) SetGeneration(i int) {
 }
 
 func (lhc *LHComponent) IsZero() bool {
-	if lhc == nil || lhc.Type == LTNIL || lhc.CName == "" || lhc.Vol < 0.0000001 {
+	if lhc == nil || lhc.Type == nil || lhc.CName == "" || lhc.Vol < 0.0000001 {
 		return true
 	}
 	return false

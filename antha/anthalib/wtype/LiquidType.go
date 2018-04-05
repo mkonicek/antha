@@ -2,10 +2,12 @@ package wtype
 
 import (
 	//"fmt"
+	"fmt"
+	"reflect"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	//"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 type PolicyName string
@@ -18,7 +20,7 @@ func PolicyNameFromString(s string) PolicyName {
 	return PolicyName(s)
 }
 
-type LiquidType string // liqType
+type LiquidType LHPolicy // string // liqType
 
 func (l LiquidType) String() (PolicyName, error) {
 	return LiquidTypeName(l)
@@ -65,75 +67,109 @@ var (
 		LTloadwater       = LiquidType{Nm: "loadwater"}
 	*/
 	//
-	LTNIL             = LiquidType("nil")
-	LTWater           = LiquidType("water")
-	LTDefault         = LiquidType("default")
-	LTCulture         = LiquidType("culture")
-	LTProtoplasts     = LiquidType("protoplasts")
-	LTDNA             = LiquidType("dna")
-	LTDNAMIX          = LiquidType("dna_mix")
-	LTProtein         = LiquidType("protein")
-	LTMultiWater      = LiquidType("multiwater")
-	LTLoad            = LiquidType("load")
-	LTVISCOUS         = LiquidType("viscous")
-	LTPEG             = LiquidType("peg")
-	LTPAINT           = LiquidType("paint")
-	LTNeedToMix       = LiquidType("NeedToMix")
-	LTPostMix         = LiquidType("PostMix")
-	LTload            = LiquidType("load")
-	LTGlycerol        = LiquidType("glycerol")
-	LTPLATEOUT        = LiquidType("plateout")
-	LTDetergent       = LiquidType("detergent")
-	LTCOLONY          = LiquidType("colony")
-	LTNSrc            = LiquidType("nitrogen_source")
-	InvalidPolicyName = LiquidType("InvalidPolicyName")
-	LTSmartMix        = LiquidType("SmartMix")
-	LTPreMix          = LiquidType("PreMix")
-	LTDISPENSEABOVE   = LiquidType("DispenseAboveLiquid")
-	LTMegaMix         = LiquidType("MegaMix")
-	LTDoNotMix        = LiquidType("DoNotMix")
-	LTDNACELLSMIX     = LiquidType("dna_cells_mix")
-	LTloadwater       = LiquidType("loadwater")
+	InvalidPolicyName = LiquidType{}
+	LTNIL             = LiquidType{}
+	LTDefault         = LiquidType(MakeDefaultPolicy())
+	LTSmartMix        = LiquidType(SmartMixPolicy())
+	LTWater           = LiquidType(MakeWaterPolicy())
+	LTMultiWater      = LiquidType(MakeMultiWaterPolicy())
+	LTCulture         = LiquidType(MakeCulturePolicy())
+	LTCultureReuse    = LiquidType(MakeCultureReusePolicy())
+	LTGlycerol        = LiquidType(MakeGlycerolPolicy())
+	LTSolvent         = LiquidType(MakeSolventPolicy())
+	LtDefault         = LiquidType(MakeDefaultPolicy())
+	LTDNA             = LiquidType(MakeDNAPolicy())
+	LTDoNotMix        = LiquidType(MakeDefaultPolicy())
+	LTNeedToMix       = LiquidType(MakeNeedToMixPolicy())
+	LTPreMix          = LiquidType(PreMixPolicy())
+	LTPostMix         = LiquidType(PostMixPolicy())
+	LTMegaMix         = LiquidType(MegaMixPolicy())
+	LTVISCOUS         = LiquidType(MakeViscousPolicy())
+	LTPAINT           = LiquidType(MakePaintPolicy())
 
-	//
+	// pols["lysate"] = MakeLysatePolicy()
+	LTProtein            = LiquidType(MakeProteinPolicy())
+	LTDetergent          = LiquidType(MakeDetergentPolicy())
+	LTload               = LiquidType(MakeLoadPolicy())
+	LTloadwater          = LiquidType(MakeLoadWaterPolicy())
+	LTDISPENSEABOVE      = LiquidType(MakeDispenseAboveLiquidPolicy())
+	LTDISPENSEABOVEMULTI = LiquidType(MakeDispenseAboveLiquidMultiPolicy())
+	LTPEG                = LiquidType(MakePEGPolicy())
+	LTProtoplasts        = LiquidType(MakeProtoplastPolicy())
+	LTDNAMIX             = LiquidType(MakeDNAMixPolicy())
+	LTDNAMIXMULTI        = LiquidType(MakeDNAMixMultiPolicy())
+	LTDNACELLSMIX        = LiquidType(MakeDNACELLSMixPolicy())
+	LTDNACELLSMIXMULTI   = LiquidType(MakeDNACELLSMixMultiPolicy())
+	LTPLATEOUT           = LiquidType(MakePlateOutPolicy())
+	LTCOLONY             = LiquidType(MakeColonyPolicy())
+	LTCOLONYMIX          = LiquidType(MakeColonyMixPolicy())
+	//      pols["lysate"] = MakeLysatePolicy()
+	LTCSrc = LiquidType(MakeCarbonSourcePolicy())
+	LTNSrc = LiquidType(MakeNitrogenSourcePolicy())
 
-	/*LTGlycerol
-	LTEthanol
-	LTDetergent
-	LTCulture
-	LTProtein
-	LTDNA
-	LTload
+/*
+	LTNIL = nil
+	LTLoad, _            = GetPolicyByName("load")
+	LTVISCOUS, _         = GetPolicyByName("viscous")
+	LTPEG, _             = GetPolicyByName("peg")
+	LTPAINT, _           = GetPolicyByName("paint")
+	LTNeedToMix, _       = GetPolicyByName("NeedToMix")
+	LTPostMix, _         = GetPolicyByName("PostMix")
+	LTload, _            = GetPolicyByName("load")
+	LTGlycerol, _        = GetPolicyByName("glycerol")
+	LTPLATEOUT, _        = GetPolicyByName("plateout")
+	LTDetergent, _       = GetPolicyByName("detergent")
+	LTCOLONY, _          = GetPolicyByName("colony")
+	LTNSrc, _            = GetPolicyByName("nitrogen_source")
+	InvalidPolicyName, _ = GetPolicyByName("InvalidPolicyName")
+	LTSmartMix, _        = GetPolicyByName("SmartMix")
+	LTPreMix, _          = GetPolicyByName("PreMix")
+	LTDISPENSEABOVE, _   = GetPolicyByName("DispenseAboveLiquid")
+	LTMegaMix, _         = GetPolicyByName("MegaMix")
+	LTDoNotMix, _        = GetPolicyByName("DoNotMix")
+	LTDNACELLSMIX, _     = GetPolicyByName("dna_cells_mix")
+	LTloadwater, _       = GetPolicyByName("loadwater")
+*/
+//
+
+/*LTGlycerol
+LTEthanol
+LTDetergent
+LTCulture
+LTProtein
+LTDNA
+LTload
 
 
-	LTNeedToMix
+LTNeedToMix
 
-	LTPostMix
-	LTVISCOUS
-	LTPAINT
+LTPostMix
+LTVISCOUS
+LTPAINT
 
-	LTDISPENSEABOVEMULTI
-	LTPEG
-	LTProtoplasts
-	LTCulutureReuse
-	LTDNAMIX
-	LTDNAMIXMULTI
-	LTPLATEOUT
-	LTCOLONY
-	LTCOLONYMIX
-	LTDNACELLSMIX
-	LTDNACELLSMIXMULTI
-	LTMultiWater
-	LTCSrc
-	LTNSrc
+LTDISPENSEABOVEMULTI
+LTPEG
+LTProtoplasts
+LTCulutureReuse
+LTDNAMIX
+LTDNAMIXMULTI
+LTPLATEOUT
+LTCOLONY
+LTCOLONYMIX
+LTDNACELLSMIX
+LTDNACELLSMIXMULTI
+LTMultiWater
+LTCSrc
+LTNSrc
 
-	LTSolvent
-	*/
+LTSolvent
+*/
 )
 
 func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
+	lt, err := GetPolicyByName(s)
 
-	return LiquidType(s), nil
+	return LiquidType(lt), err
 	/*
 		match, number := liquidtype.LiquidTypeFromPolicyDOE(s.String())
 
@@ -222,7 +258,19 @@ func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 
 func LiquidTypeName(lt LiquidType) (PolicyName, error) {
 
-	return PolicyName(lt), nil
+	name, ok := lt[PolicyNameField]
+
+	if !ok {
+		return "", fmt.Errorf("Policy has no name")
+	}
+
+	str, ok := name.(string)
+
+	if !ok {
+		return PolicyName(fmt.Sprint(name)), fmt.Errorf("policy name %v is not string", name)
+	}
+
+	return PolicyName(str), nil
 	/*
 				match, str := liquidtype.StringFromLiquidTypeNumber(int(lt))
 
@@ -314,20 +362,20 @@ func mergeTypes(c1, c2 *LHComponent) LiquidType {
 
 	// nil type is overridden
 
-	if c1.Type == LTNIL {
+	if reflect.DeepEqual(c1.Type, LiquidType(LTNIL)) {
 		return c2.Type
-	} else if c2.Type == LTNIL {
+	} else if reflect.DeepEqual(c2.Type, LTNIL) {
 		return c1.Type
 	}
 
-	if c1.Type == LTCulture || c2.Type == LTCulture {
-		return LTCulture
-	} else if c1.Type == LTProtoplasts || c2.Type == LTProtoplasts {
-		return LTProtoplasts
-	} else if c1.Type == LTDNA || c2.Type == LTDNA || c1.Type == LTDNAMIX || c2.Type == LTDNAMIX {
-		return LTDNA
-	} else if c1.Type == LTProtein || c2.Type == LTProtein {
-		return LTProtein
+	if reflect.DeepEqual(c1.Type, LTCulture) || reflect.DeepEqual(c2.Type, LTCulture) {
+		return LiquidType(LTCulture)
+	} else if reflect.DeepEqual(c1.Type, LTProtoplasts) || reflect.DeepEqual(c2.Type, LTProtoplasts) {
+		return LiquidType(LTProtoplasts)
+	} else if reflect.DeepEqual(c1.Type, LTDNA) || reflect.DeepEqual(c2.Type, LTDNA) || reflect.DeepEqual(c1.Type, LTDNAMIX) || reflect.DeepEqual(c2.Type, LTDNAMIX) {
+		return LiquidType(LTDNA)
+	} else if reflect.DeepEqual(c1.Type, LTProtein) || reflect.DeepEqual(c2.Type, LTProtein) {
+		return LiquidType(LTProtein)
 	}
 	v1 := wunit.NewVolume(c1.Vol, c1.Vunit)
 	v2 := wunit.NewVolume(c2.Vol, c2.Vunit)

@@ -27,7 +27,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/ghodss/yaml"
 	"github.com/mgutz/ansi"
 	"github.com/spf13/cobra"
@@ -69,7 +69,7 @@ func listPolicies(cmd *cobra.Command, args []string) error {
 	}
 
 	var ps simplePolicies
-	for name, p := range liquidtype.DefaultPolicies {
+	for name, p := range wtype.DefaultPolicies {
 
 		ps = append(ps, simplePolicy{
 			Name:       name,

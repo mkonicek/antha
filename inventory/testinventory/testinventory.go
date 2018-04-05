@@ -133,10 +133,10 @@ func GetComponents(ctx context.Context) []*wtype.LHComponent {
 	for _, c := range inv.componentByName {
 		cs = append(cs, c)
 	}
-
-	sort.Slice(cs, func(i, j int) bool {
-		return cs[i].Type < cs[j].Type
-	})
-
+	/*
+		sort.Slice(cs, func(i, j int) bool {
+			return cs[i].Type < cs[j].Type
+		})
+	*/
 	return cs
 }

@@ -773,7 +773,7 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 //markWellUsed add a dummy component to the well so that it's marked as having been used
 func markWellUsed(well *wtype.LHWell) error {
 	//avoid adding a dummy component if one's already been added
-	if well.Empty() {
+	if well.IsEmpty() {
 		dummycmp := wtype.NewLHComponent()
 		dummycmp.SetVolume(well.MaxVolume())
 		err := well.AddComponent(dummycmp)

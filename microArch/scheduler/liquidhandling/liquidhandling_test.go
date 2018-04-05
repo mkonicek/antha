@@ -37,6 +37,19 @@ import (
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
+func GetPlateForTest() *wtype.LHPlate {
+
+	offset := 0.25
+	riserheightinmm := 40.0 - offset
+
+	// pcr plate skirted (on riser)
+	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
+	welltype := wtype.NewLHWell("ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
+
+	plate := wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates{127.76, 85.48, 25.7}, welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
+	return plate
+}
+
 func TestStockConcs(*testing.T) {
 	rand := wutil.GetRandom()
 	names := []string{"tea", "milk", "sugar"}
@@ -187,7 +200,7 @@ func TestPlateReuse(t *testing.T) {
 			continue
 		}
 
-		if strings.Contains(plate.Name(), "Output_plate") {
+		if strings.Contains(plate.GetName(), "Output_plate") {
 			// leave it out
 			continue
 		}
@@ -228,13 +241,13 @@ func TestPlateReuse(t *testing.T) {
 		if !ok {
 			continue
 		}
-		if strings.Contains(plate.Name(), "Output_plate") {
+		if strings.Contains(plate.GetName(), "Output_plate") {
 			// leave it out
 			continue
 		}
 		for _, v := range plate.Wellcoords {
 			if !v.Empty() {
-				v.Remove(wunit.NewVolume(5.0, "ul"))
+				v.RemoveVolume(wunit.NewVolume(5.0, "ul"))
 			}
 		}
 

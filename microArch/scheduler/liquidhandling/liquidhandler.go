@@ -1035,7 +1035,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG
-		if true {
+		if false {
 			volc := vmap[k]
 			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
 		}

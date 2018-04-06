@@ -343,8 +343,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 				insvols := ins.GetParameter("VOLUME").([]wunit.Volume)
 				v.Add(insvols[i])
-				// double add of carry volume here?
-				v.Add(rq.CarryVolume)
+				//Don't add carry volume here as we could overfill the well
+				//v.Add(rq.CarryVolume)
 
 			}
 		} else if ins.InstructionType() == liquidhandling.TFR {
@@ -430,6 +430,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				well2Contents.SetVolume(vol)
 				err := well2.SetContents(well2Contents)
 				if err != nil {
+					fmt.Printf("Tried to add %f ul, including %f ul residual and %f ul carry\n", vol.ConvertToString("ul"), well.ResidualVolume().ConvertToString("ul"), rq.CarryVolume.ConvertToString("ul"))
+					fmt.Println("A")
 					return err
 				}
 
@@ -438,6 +440,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				wellContents.ID = wtype.GetUUID()
 				err = well.SetContents(wellContents)
 				if err != nil {
+					fmt.Println("B")
 					return err
 				}
 
@@ -1032,7 +1035,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG
-		if false {
+		if true {
 			volc := vmap[k]
 			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
 		}

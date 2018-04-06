@@ -309,7 +309,7 @@ func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 
 	// if the volume is too high we complain
 	if v.GreaterThan(w.CurrentWorkingVolume()) {
-		return nil, fmt.Errorf("requested %s from well \"%s\" which only contains %s", v, w.GetName(), w.CurrentVolume())
+		return nil, fmt.Errorf("requested %s from well \"%s\" which only contains %s working volume", v, w.GetName(), w.CurrentWorkingVolume())
 	}
 
 	ret := w.Contents().Dup()

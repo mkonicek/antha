@@ -333,7 +333,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		// silently remove the carry
 		_, err = wellFrom.RemoveVolume(carryvol)
 		if err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_VOL, "Planning inconsistency: error removing carry volume")
+			//Ignore the error - the carry is coming from the residual volume
 		}
 
 		err = wellTo.AddComponent(cmpFrom)

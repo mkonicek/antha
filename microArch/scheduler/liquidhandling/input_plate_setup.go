@@ -158,12 +158,11 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		//logger.Debug(fmt.Sprintln("Well assignments: ", well_assignments))
 
 		var curr_well *wtype.LHWell
-		ass := make([]string, 0, 3)
+		var assignments []string
 
 		// best hack so far: add an extra well of everything
 		// in case we run out
 		for platetype, nwells := range well_assignments {
-
 			WellTot := nwells + 1
 
 			// unless it's an instance
@@ -203,7 +202,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 				// now put it there
 
 				location := curr_plate.ID + ":" + curr_well.Crds.FormatA1()
-				ass = append(ass, location)
+				assignments = append(assignments, location)
 
 				var newcomponent *wtype.LHComponent
 
@@ -214,10 +213,14 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 					curr_well.SetUserAllocated()
 				} else {
 					newcomponent = component.Dup()
-					newcomponent.Vol = curr_well.MaxVol
-					newcomponent.Vunit = curr_well.GetVolumeUnit()
+					newcomponent.Vol = curr_well.MaxVolume().RawValue()
+					newcomponent.Vunit = curr_well.MaxVolume().Unit().PrefixedSymbol()
 					newcomponent.Loc = location
-					volume.Subtract(curr_well.CurrentWorkingVolume())
+
+					//usefulVolume is the most we can get from the well assuming one transfer
+					usefulVolume := curr_well.CurrentWorkingVolume()
+					usefulVolume.Subtract(request.CarryVolume)
+					volume.Subtract(usefulVolume)
 				}
 
 				st.SetLocationOf(component.ID, location)
@@ -231,7 +234,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 			}
 		}
 
-		input_assignments[cname] = ass
+		input_assignments[cname] = assignments
 	}
 
 	// add any remaining assignments

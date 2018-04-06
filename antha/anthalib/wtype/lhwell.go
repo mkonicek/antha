@@ -231,8 +231,9 @@ func (w *LHWell) SetContents(newContents *LHComponent) error {
 	}
 	maxVol := w.MaxTotalVolume()
 	if newContents.Volume().GreaterThan(maxVol) {
-		return LHError(LH_ERR_VOL,
-			fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
+		//HJK: Disabling overflow errors until CarryVolume issues are resolved
+		//return LHError(LH_ERR_VOL,
+		//	fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
 	}
 
 	w.WContents = newContents
@@ -279,7 +280,8 @@ func (w *LHWell) AddComponent(c *LHComponent) error {
 	vol.Add(curVol)
 
 	if vol.GreaterThan(maxVol) {
-		return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), curVol, maxVol)
+		//HJK: Disabled overflow errors while CarryVolume issues are resolved
+		//return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), curVol, maxVol)
 	}
 
 	w.Contents().Mix(c)

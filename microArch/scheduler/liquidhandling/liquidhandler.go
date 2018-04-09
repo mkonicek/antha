@@ -343,9 +343,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 				insvols := ins.GetParameter("VOLUME").([]wunit.Volume)
 				v.Add(insvols[i])
-				//Don't add carry volume here as we could overfill the well
-				//v.Add(rq.CarryVolume)
-
+				v.Add(rq.CarryVolume)
 			}
 		} else if ins.InstructionType() == liquidhandling.TFR {
 			tfr := ins.(*liquidhandling.TransferInstruction)

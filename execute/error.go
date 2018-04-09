@@ -33,7 +33,7 @@ func Errorf(ctx context.Context, format string, args ...interface{}) {
 }
 
 // unwrapError unpacks the result of Errorf
-func unwrapError(obj interface{}) (error, bool) {
+func unwrapError(obj interface{}) (error, bool) { // nolint
 	err, ok := obj.(error)
 	if !ok {
 		return nil, false

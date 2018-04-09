@@ -79,9 +79,6 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
 	input_platetypes := (*request).Input_platetypes
-	if input_platetypes == nil || len(input_platetypes) == 0 {
-		return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
-	}
 
 	// we assume that input_plates is set if any locs are set
 	input_plates := (*request).Input_plates
@@ -122,8 +119,11 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	var well_count_assignments map[string]map[*wtype.LHPlate]int
 
 	if len(input_volumes) != 0 {
+		// If any input solutions need to be set up then we now check if there any input plate types set.
+		if input_platetypes == nil || len(input_platetypes) == 0 {
+			return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
+		}
 		well_count_assignments = choose_plate_assignments(input_volumes, input_platetypes, weights_constraints)
-
 	}
 
 	input_assignments := make(map[string][]string, len(well_count_assignments))

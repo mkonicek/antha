@@ -321,6 +321,25 @@ func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	return ret, nil
 }
 
+//IsVolumeValid tests whether the volume in the well is within the allowable range
+func (w *LHWell) IsVolumeValid() bool {
+	if w == nil {
+		return true
+	}
+	vol := w.CurrentVolume()
+
+	return vol.LessThan(w.MaxVolume()) && vol.GreaterThan(wunit.ZeroVolume())
+}
+
+//ValidateVolume validates that the volume in the well is within allowable range
+func (w *LHWell) ValidateVolume() error {
+	if w.IsVolumeValid() {
+		return nil
+	}
+
+	return LHError(LH_ERR_VOL, fmt.Sprintf("well %s contains invalid volume %s, maximum volume is %s", w.GetName(), w.CurrentVolume(), w.MaxVolume()))
+}
+
 func (w *LHWell) PlateLocation() PlateLocation {
 	if w == nil {
 		return ZeroPlateLocation()

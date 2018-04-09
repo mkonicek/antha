@@ -255,6 +255,12 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	rep := newReply()
 	// build list of possible sources -- this is a list of ComponentVectors
 
+	for _, cmp := range opt.Cmps {
+		if cmp == nil {
+			continue
+		}
+	}
+
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)
 
 	// keep taking chunks until either we get everything or run out

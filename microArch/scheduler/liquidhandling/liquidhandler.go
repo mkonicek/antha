@@ -673,13 +673,18 @@ func checkInstructionOrdering(request *LHRequest) {
 	}
 }
 
-func onlyAllowOneInstructionType(c *IChain) {
+func countInstructionTypes(inss []*wtype.LHInstruction) map[string]bool {
 	m := make(map[string]bool)
-	inss := c.Values
 
 	for _, i := range inss {
 		m[i.InsType()] = true
 	}
+
+	return m
+}
+
+func onlyAllowOneInstructionType(c *IChain) {
+	m := countInstructionTypes(c.Values)
 
 	if len(m) != 1 {
 		panic(fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", m, c.Depth))
@@ -764,8 +769,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
 	}
 
-	// assert that we must keep prompts separate from mixes
-
+	// assert that we must keep prompts and splits separate from mixes
 	checkInstructionOrdering(request)
 
 	forceSanity(request)

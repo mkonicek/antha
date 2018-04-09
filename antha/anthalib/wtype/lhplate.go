@@ -414,7 +414,8 @@ func (lhp *LHPlate) ValidateVolumes() error {
 	if len(errCoords) == 1 {
 		return lastErr
 	} else if len(errCoords) > 1 {
-		return LHError(LH_ERR_VOL, fmt.Sprintf("invalid volumes found in %d wells in plate %s at well coordinates %v", len(errCoords), lhp.GetName(), errCoords))
+		return LHError(LH_ERR_VOL, fmt.Sprintf("invalid volumes found in %d wells in plate %s at well coordinates %s",
+			len(errCoords), lhp.GetName(), strings.Join(errCoords, ", ")))
 	}
 
 	return nil

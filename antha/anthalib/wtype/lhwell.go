@@ -328,7 +328,7 @@ func (w *LHWell) IsVolumeValid() bool {
 	}
 	vol := w.CurrentVolume()
 
-	return vol.LessThan(w.MaxVolume()) && vol.GreaterThan(wunit.ZeroVolume())
+	return vol.LessThan(w.MaxVolume()) && !vol.LessThan(wunit.ZeroVolume())
 }
 
 //ValidateVolume validates that the volume in the well is within allowable range

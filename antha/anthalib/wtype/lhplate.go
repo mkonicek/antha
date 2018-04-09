@@ -399,6 +399,28 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoor
 	return ret, vols, true
 }
 
+func (lhp *LHPlate) ValidateVolumes() error {
+	var lastErr error
+	var errCoords []string
+
+	for coords, well := range lhp.Wellcoords {
+		err := well.ValidateVolume()
+		if err != nil {
+			lastErr = err
+			errCoords = append(errCoords, coords)
+		}
+	}
+
+	if len(errCoords) == 1 {
+		return lastErr
+	} else if len(errCoords) > 1 {
+		return LHError(LH_ERR_VOL, fmt.Sprintf("invalid volumes found in %d wells in plate %s at well coordinates %v", len(errCoords), lhp.GetName(), errCoords))
+	}
+
+	return nil
+
+}
+
 func (lhp *LHPlate) Wells() [][]*LHWell {
 	return lhp.Rows
 }

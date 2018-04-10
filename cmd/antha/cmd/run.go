@@ -47,9 +47,10 @@ import (
 )
 
 var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "Run an antha workflow",
-	RunE:  runWorkflow,
+	Use:           "run",
+	Short:         "Run an antha workflow",
+	RunE:          runWorkflow,
+	SilenceErrors: true,
 }
 
 func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
@@ -105,7 +106,7 @@ func makeContext() (context.Context, error) {
 			return nil, fmt.Errorf("component %q has unexpected type %T", desc.Name, obj)
 		}
 		if err := inject.Add(ctx, inject.Name{Repo: desc.Name, Stage: desc.Stage}, runner); err != nil {
-			return nil, fmt.Errorf("error adding protocol %q: %s", desc.Name, err)
+			return nil, fmt.Errorf("adding protocol %q: %s", desc.Name, err)
 		}
 	}
 	return testinventory.NewContext(ctx), nil
@@ -343,7 +344,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		TargetConfigFile:       viper.GetString("target"),
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 		TestBundleFileName:     viper.GetString("makeTestBundle"),
-		RunTest:                viper.GetBool("RunTest"),
+		RunTest:                viper.GetBool("runTest"),
 	}
 
 	return opt.Run()
@@ -374,5 +375,6 @@ func init() {
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
 	flags.StringSlice("outputPlateTypes", nil, "Default output plate types (in order of preference)")
 	flags.StringSlice("tipTypes", nil, "Names of permitted tip types")
+	flags.Bool("runTest", false, "run tests")
 	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
 }

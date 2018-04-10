@@ -603,8 +603,12 @@ var UnitMap = map[string]map[string]Unit{
 // ValidMeasurementUnit checks the validity of a measurement type and unit within that measurement type.
 // An error is returned if an invalid measurement type or unit is specified.
 func ValidMeasurementUnit(measureMentType, unit string) error {
+	// replace µ with u
 	unit = strings.Replace(unit, "µ", "u", -1)
-
+	if measureMentType == "Concentration" {
+		// replace L with l
+		unit = strings.Replace(unit, "L", "l", -1)
+	}
 	validUnits, measurementFound := UnitMap[measureMentType]
 	if !measurementFound {
 		var validMeasurementTypes []string
@@ -649,7 +653,10 @@ func ValidConcentrationUnit(unit string) error {
 
 // NewConcentration makes a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) Concentration {
+	// replace µ with u
 	unit = strings.Replace(unit, "µ", "u", -1)
+	// replace L with l
+	unit = strings.Replace(unit, "L", "l", -1)
 
 	details, ok := UnitMap["Concentration"][unit]
 	if !ok {

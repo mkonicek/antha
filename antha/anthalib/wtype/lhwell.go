@@ -229,7 +229,7 @@ func (w *LHWell) SetContents(newContents *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	maxVol := w.MaxTotalVolume()
+	maxVol := w.MaxVolume()
 	if newContents.Volume().GreaterThan(maxVol) {
 		//HJK: Disabling overflow errors until CarryVolume issues are resolved
 		//return LHError(LH_ERR_VOL,
@@ -262,19 +262,11 @@ func (w *LHWell) MaxVolume() wunit.Volume {
 	return wunit.NewVolume(w.MaxVol, "ul")
 }
 
-//MaxTotalVolume get the total maximum volume in the well, i.e. working volume + residual
-func (w *LHWell) MaxTotalVolume() wunit.Volume {
-	if w == nil {
-		return wunit.ZeroVolume()
-	}
-	return wunit.NewVolume(w.MaxVol+w.Rvol, "ul")
-}
-
 func (w *LHWell) AddComponent(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}
-	maxVol := w.MaxTotalVolume()
+	maxVol := w.MaxVolume()
 	vol := c.Volume()
 	curVol := w.CurrentVolume()
 	vol.Add(curVol)

@@ -97,6 +97,26 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 
 }
 
+func configure_request_total_volume(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
+
+	for k := 0; k < 9; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.SampleForTotalVolume(water, wunit.NewVolume(17.0, "ul"))
+		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
+		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
+
+		ins.AddComponent(ws)
+		ins.AddComponent(mmxs)
+		ins.AddComponent(ps)
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
 func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
 	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
@@ -112,6 +132,26 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 		ins.AddComponent(mmxs)
 		ins.AddComponent(ps)
 		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
+func configure_request_overfilled(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
+
+	for k := 0; k < 9; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.Sample(water, wunit.NewVolume(160.0, "ul"))
+		mmxs := mixer.Sample(mmx, wunit.NewVolume(160.0, "ul"))
+		ps := mixer.Sample(part, wunit.NewVolume(20.0, "ul"))
+
+		ins.AddComponent(ws)
+		ins.AddComponent(mmxs)
+		ins.AddComponent(ps)
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(340.0, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -382,4 +422,118 @@ func TestEP3(t *testing.T) {
 		t.Fatal(fmt.Sprint("Got planning error: ", err))
 	}
 
+}
+
+func TestEP3TotalVolume(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_total_volume(ctx, rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got planning error: ", err))
+	}
+
+}
+
+func TestEP3Overfilled(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_overfilled(ctx, rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err == nil {
+		t.Fatal("Overfull wells did not cause planning error")
+	}
+}
+
+func TestEP3Negative(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+
+	//make one volume of one instruction negative
+	for _, ins := range rq.LHInstructions {
+		cmp := ins.Components[0]
+		cmp.Vol = -1.0
+		break
+	}
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err == nil {
+		t.Fatal("Negative volume did not cause a planning error")
+	}
+}
+
+func TestEP3WrongResult(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+
+	//make one of the results wrong
+	for _, ins := range rq.LHInstructions {
+		ins.Results[0].Vol = 299792458.0
+		break
+	}
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err == nil {
+		t.Fatal("Negative volume did not cause a planning error")
+	}
+}
+
+func TestEP3WrongTotalVolume(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_total_volume(ctx, rq)
+
+	//set an invalid total volume for one of the instructions
+	for _, ins := range rq.LHInstructions {
+		for _, cmp := range ins.Components {
+			if cmp.Tvol > 0.0 {
+				cmp.Tvol = 5.0
+			}
+		}
+		break
+	}
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err == nil {
+		t.Fatal("Negative volume did not cause a planning error")
+	}
 }

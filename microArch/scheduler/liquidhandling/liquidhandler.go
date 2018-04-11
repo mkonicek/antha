@@ -428,8 +428,6 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				well2Contents.SetVolume(vol)
 				err := well2.SetContents(well2Contents)
 				if err != nil {
-					fmt.Printf("Tried to add %f ul, including %f ul residual and %f ul carry\n", vol.ConvertToString("ul"), well.ResidualVolume().ConvertToString("ul"), rq.CarryVolume.ConvertToString("ul"))
-					fmt.Println("A")
 					return err
 				}
 
@@ -596,18 +594,8 @@ func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
 // paused, which should be tricky but possible.
 //
 
-func checkSanityIns(request *LHRequest) {
+func checkSanityIns(request *LHRequest) error {
 	// check instructions for basic sanity
-
-	var errors []string
-
-	printError := func(add bool, format string, args ...interface{}) {
-		str := fmt.Sprintf("internal error: "+format, args...)
-		if add {
-			errors = append(errors, str)
-		}
-		fmt.Println(str)
-	}
 
 	for _, ins := range request.LHInstructions {
 		if ins.Type == wtype.LHIMIX {
@@ -617,16 +605,15 @@ func checkSanityIns(request *LHRequest) {
 				// need to be a bit careful but...
 
 				if c.Vol < 0.0 {
-					printError(true, "negative volume for component %s volume %s", c.CName, c.Vol)
-					continue
+					return wtype.LHErrorf(wtype.LH_ERR_VOL, "negative volume for component %s in instruction:\n%s", c.CName, ins.Summarize(1))
 				}
 
 				if c.Vol != 0.0 {
 					v.Add(c.Volume())
 				} else if c.Tvol != 0.0 {
 					if !tv.IsZero() && !tv.EqualTo(c.TotalVolume()) {
-						printError(true, "multiple distinct total volumes specified for instruction %s %s component %s",
-							ins.ID, ins.Results[0].CName, c)
+						return wtype.LHErrorf(wtype.LH_ERR_VOL, "multiple distinct total volumes specified in instruction:\n%s",
+							ins.Summarize(1))
 					}
 
 					tv = c.TotalVolume()
@@ -634,11 +621,11 @@ func checkSanityIns(request *LHRequest) {
 			}
 
 			if tv.IsZero() && !v.EqualTo(ins.Results[0].Volume()) {
-				printError(true, "sum of requested volumes does not match resulting volume for instruction %s %s sum %s != result volume %s",
-					ins.ID, ins.Results[0].CName, v, ins.Results[0].Volume())
+				return wtype.LHErrorf(wtype.LH_ERR_VOL, "sum of requested volumes does not match resulting volume for instruction:\n%s",
+					ins.Summarize(1))
 			} else if !tv.IsZero() && !tv.EqualTo(ins.Results[0].Volume()) {
-				printError(true, "total volume does not match resulting volume for instruction %s %s total volume %s != result volume %s",
-					ins.ID, ins.Results[0].CName, tv, ins.Results[0].Volume())
+				return wtype.LHErrorf(wtype.LH_ERR_VOL, "total volume (%v) does not match resulting volume (%v) for instruction:\n%s",
+					tv, ins.Results[0].Volume(), ins.Summarize(1))
 			} else if ins.PlateID != "" {
 				// compare result volume to the well volume
 
@@ -647,17 +634,14 @@ func checkSanityIns(request *LHRequest) {
 				if !ok {
 					// possibly an issue
 				} else if plat.Welltype.MaxVolume().LessThan(ins.Results[0].Volume()) {
-					printError(false, "volume exceeds well max of plate for instruction %s %s volume %s > well max %s",
-						plat.Type, ins.ID, ins.Results[0].CName, ins.Results[0].Volume(), plat.Welltype.MaxVolume())
+					return wtype.LHErrorf(wtype.LH_ERR_VOL, "final volume exceeds the well maximum (%s) for instruction:\n%s",
+						plat.Welltype.MaxVolume(), ins.Summarize(1))
 				}
 			}
 		}
 	}
 
-	if len(errors) != 0 {
-		panic(strings.Join(errors, "\n"))
-	}
-
+	return nil
 }
 
 func checkInstructionOrdering(request *LHRequest) {
@@ -771,14 +755,21 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	forceSanity(request)
 	// convert requests to volumes and determine required stock concentrations
-	checkSanityIns(request)
-	instructions, stockconcs, err := solution_setup(request, this.Properties)
 
+	err = checkSanityIns(request)
 	if err != nil {
 		return err
 	}
 
-	checkSanityIns(request)
+	instructions, stockconcs, err := solution_setup(request, this.Properties)
+	if err != nil {
+		return err
+	}
+
+	err = checkSanityIns(request)
+	if err != nil {
+		return err
+	}
 
 	request.LHInstructions = instructions
 	request.Stockconcs = stockconcs
@@ -819,7 +810,11 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 			}
 		}
 	}
-	checkSanityIns(request)
+
+	err = checkSanityIns(request)
+	if err != nil {
+		return err
+	}
 
 	// looks at components, determines what inputs are required
 	request, err = this.GetInputs(request)

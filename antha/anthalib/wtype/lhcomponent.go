@@ -100,6 +100,23 @@ func (lhc *LHComponent) GetName() string {
 	return fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
 }
 
+//Summarize describe the component in a user friendly manner
+func (lhc *LHComponent) Summarize() string {
+	if lhc == nil {
+		return "nil"
+	}
+
+	if lhc.Vol != 0.0 {
+		return fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
+	} else if lhc.Tvol != 0.0 {
+		return fmt.Sprintf("%s to %v", lhc.CName, lhc.TotalVolume())
+	} else if lhc.Conc != 0.0 {
+		return fmt.Sprintf("%s to %v", lhc.CName, lhc.Concentration())
+	}
+
+	return lhc.CName
+}
+
 // PlateID returns the id of a plate or the empty string
 func (lhc *LHComponent) PlateID() string {
 	loc := lhc.PlateLocation()

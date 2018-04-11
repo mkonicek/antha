@@ -24,6 +24,7 @@
 package solutions
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -58,12 +59,25 @@ func NormaliseName(name string) (normalised string) {
 // An LB solution with no concentration and components is returned as LB.
 // Warning: if a component name already contains a concentration it will be possible to return duplicate concentration values. e.g. 10X 10X LB or 10X LB 10X.
 // To avoid this, when first declaring a component name the NormaliseName function should be used first.
-func NormaliseComponentName(component *wtype.LHComponent) string {
+func NormaliseComponentName(component *wtype.LHComponent) error {
 
 	compList, _ := GetSubComponents(component)
 
 	if component.HasConcentration() {
-		return component.Concentration().ToString() + " " + component.Name() + " " + compList.List(false)
+		component.SetName(component.Concentration().ToString() + " " + component.Name() + " " + compList.List(false))
+		if len(component.Name()) >= 100 {
+			component.SetName(component.Name()[:99])
+			return fmt.Errorf("component name %s truncated to first 100 characters", component.Name())
+		}
+		return nil
 	}
-	return component.Name() + compList.List(false)
+
+	component.SetName(component.Name() + compList.List(false))
+
+	if len(component.Name()) >= 100 {
+		component.SetName(component.Name()[:99])
+		return fmt.Errorf("component name %s truncated to first 100 characters", component.Name())
+	}
+
+	return nil
 }

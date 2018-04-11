@@ -415,11 +415,12 @@ func TestTroughMultichannelPositive(t *testing.T) {
 }
 
 func TestBigWellMultichannelPositive(t *testing.T) {
+	t.Skip() // pending revisions
 	ctx := testinventory.NewContext(context.Background())
 
 	tb, dstp := getTransferBlock2Component(ctx)
 
-	rbt := getTestRobot(ctx, dstp, "DSW24_riser40")
+	rbt := getTestRobot(ctx, dstp, "falcon6wellAgar_riser40")
 
 	pol, err := GetLHPolicyForTest()
 

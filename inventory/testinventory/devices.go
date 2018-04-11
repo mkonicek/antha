@@ -21,7 +21,7 @@ const (
 	bioshakestandardadaptorheight               = 5.0
 	appliedbiosystemsmagbeadbaseheight          = 12.0 //height of just plate base, upon which most skirted plates can rest
 	appliedbiosystemsmagbeadtotalheight         = 17.0 //height of base and well, in which other plates can rest
-	fluidXhighProfileRackHeight                 = 2.0 - MinimumZHeightPermissableForLVPipetMax
+	fluidXhighProfileRackHeight                 = MinimumZHeightPermissableForLVPipetMax
 )
 
 const (

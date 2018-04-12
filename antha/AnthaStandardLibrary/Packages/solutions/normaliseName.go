@@ -62,6 +62,29 @@ func removeConcUnitFromName(name string) string {
 	return name
 }
 
+func ReturnNormalisedComponentName(component *wtype.LHComponent) (string, error) {
+	originalcompList, _ := GetSubComponents(component)
+
+	compList := originalcompList.removeConcsFromSubComponentNames()
+
+	if component.HasConcentration() && len(compList.Components) == 0 {
+		name := component.Concentration().ToString() + " " + component.Name() + " " + compList.List(false)
+		if len(component.Name()) >= 100 {
+			name = name[:99]
+			return name, fmt.Errorf("component name %s truncated to first 100 characters", component.Name())
+		}
+		return name, nil
+	}
+
+	name := compList.List(false, true)
+
+	if len(component.Name()) >= 100 {
+		name = name[:99]
+		return name, fmt.Errorf("component name %s truncated to first 100 characters", component.Name())
+	}
+	return name, nil
+}
+
 // NormaliseComponentName will return the concentration of the component followed by the unmodified component name followed by the full list of sub components with concentrations.
 // e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10X LB---10g/L Yeast Extract---5g/L Tryptone.
 // An LB solution with no concentration and components is returned as LB.
@@ -69,25 +92,9 @@ func removeConcUnitFromName(name string) string {
 // To avoid this, when first declaring a component name the NormaliseName function should be used first.
 func NormaliseComponentName(component *wtype.LHComponent) error {
 
-	originalcompList, _ := GetSubComponents(component)
+	newName, err := ReturnNormalisedComponentName(component)
 
-	compList := originalcompList.removeConcsFromSubComponentNames()
+	component.SetName(newName)
 
-	if component.HasConcentration() && len(compList.Components) == 0 {
-		component.SetName(component.Concentration().ToString() + " " + component.Name() + " " + compList.List(false))
-		if len(component.Name()) >= 100 {
-			component.SetName(component.Name()[:99])
-			return fmt.Errorf("component name %s truncated to first 100 characters", component.Name())
-		}
-		return nil
-	}
-
-	component.SetName(compList.List(false, true))
-
-	if len(component.Name()) >= 100 {
-		component.SetName(component.Name()[:99])
-		return fmt.Errorf("component name %s truncated to first 100 characters", component.Name())
-	}
-
-	return nil
+	return err
 }

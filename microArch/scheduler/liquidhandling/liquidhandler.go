@@ -105,6 +105,10 @@ func ValidateRequest(request *LHRequest) error {
 	// no component can have all three of Conc, Vol and TVol set to 0:
 
 	for _, ins := range request.LHInstructions {
+		// the check below makes sense only for mixes
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
 		for i, cmp := range ins.Components {
 			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
 				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)
@@ -719,13 +723,18 @@ func checkInstructionOrdering(request *LHRequest) {
 	}
 }
 
-func onlyAllowOneInstructionType(c *IChain) {
+func countInstructionTypes(inss []*wtype.LHInstruction) map[string]bool {
 	m := make(map[string]bool)
-	inss := c.Values
 
 	for _, i := range inss {
 		m[i.InsType()] = true
 	}
+
+	return m
+}
+
+func onlyAllowOneInstructionType(c *IChain) {
+	m := countInstructionTypes(c.Values)
 
 	if len(m) != 1 {
 		panic(fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", m, c.Depth))
@@ -810,8 +819,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
 	}
 
-	// assert that we must keep prompts separate from mixes
-
+	// assert that we must keep prompts and splits separate from mixes
 	checkInstructionOrdering(request)
 
 	forceSanity(request)

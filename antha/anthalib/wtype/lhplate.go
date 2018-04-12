@@ -1188,7 +1188,6 @@ func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector
 	fcv := make([]*LHComponent, len(cv))
 
 	for i := 0; i < len(cv); i++ {
-
 		identifier := cv[i].IDOrName()
 
 		// ignoreInstances can only work for initial inputs

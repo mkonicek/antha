@@ -274,6 +274,10 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 		addToIChain(ic, n, tg)
 	}
 
+	// finally we need to ensure that splits and mixes are kept separate by fissioning nodes
+
+	ic.SplitMixedNodes()
+
 	sortOutputs(ic, sort)
 
 	return ic

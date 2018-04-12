@@ -325,9 +325,6 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		cnames[ci] = wellFrom.WContents.CName
 
-		if wellFrom.GetName() == "A1@Input_plate_1" {
-			fmt.Printf("A1@Input_plate_1: RemoveVolume(%v), has %v working volume\n", va[ci], wellFrom.CurrentWorkingVolume())
-		}
 		cmpFrom, err := wellFrom.RemoveVolume(va[ci])
 		if err != nil {
 			return insOut, wtype.LHErrorf(wtype.LH_ERR_DIRE, "Planning inconsistency: %s - please report this error to the authors", err.Error())

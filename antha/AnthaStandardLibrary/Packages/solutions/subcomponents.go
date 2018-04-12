@@ -31,8 +31,11 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pubchem"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 // ComponentListSample is a sample of a Component list at a specified volume
@@ -272,9 +275,33 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 	return
 }
 
+func (c ComponentList) removeConcsFromSubComponentNames() (nc ComponentList) {
+	newComponentList := make(map[string]wunit.Concentration)
+	for compName, conc := range c.Components {
+		newCompName := removeConcUnitFromName(compName)
+		newComponentList[newCompName] = conc
+	}
+
+	nc.Components = newComponentList
+	return
+}
+
 // List all Components and concentration set points presnet in a component list.
 // if verbose is set to true the field annotations for each component and concentration will be included for each component.
-func (c ComponentList) List(verbose bool) string {
+// option1 is verbose, option2 is use mixdelimiter
+func (c ComponentList) List(options ...bool) string {
+	var verbose bool
+	var mixDelimiter bool
+	if len(options) > 0 {
+		if options[0] {
+			verbose = true
+		}
+	}
+	if len(options) > 1 {
+		if options[1] {
+			mixDelimiter = true
+		}
+	}
 	var s []string
 
 	var sortedKeys []string
@@ -301,6 +328,8 @@ func (c ComponentList) List(verbose bool) string {
 	var list string
 	if verbose {
 		list = strings.Join(s, ";")
+	} else if mixDelimiter {
+		list = strings.Join(s, wutil.MIXDELIMITER)
 	} else {
 		list = strings.Join(s, "---")
 	}
@@ -496,11 +525,15 @@ func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHCompo
 func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.LHComponent) error {
 	var warnings []string
 
+	originalName := productOfMixes.Name()
+
 	subComponents, _, err := SimulateMix(mixes...)
 
 	if err != nil {
 		warnings = append(warnings, err.Error())
 	}
+
+	subComponents = subComponents.removeConcsFromSubComponentNames()
 
 	productOfMixes, err = AddSubComponents(productOfMixes, subComponents)
 
@@ -517,5 +550,7 @@ func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.L
 	if len(warnings) > 0 {
 		return fmt.Errorf(strings.Join(warnings, "/n"))
 	}
+
+	text.Print(originalName+":\n", text.PrettyPrint(subComponents))
 	return nil
 }

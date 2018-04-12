@@ -54,6 +54,14 @@ func NormaliseName(name string) (normalised string) {
 	}
 }
 
+func removeConcUnitFromName(name string) string {
+
+	for n := 0; n < 9; n++ {
+		_, _, name = wunit.ParseConcentration(strings.TrimSpace(name))
+	}
+	return name
+}
+
 // NormaliseComponentName will return the concentration of the component followed by the unmodified component name followed by the full list of sub components with concentrations.
 // e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10X LB---10g/L Yeast Extract---5g/L Tryptone.
 // An LB solution with no concentration and components is returned as LB.
@@ -61,9 +69,11 @@ func NormaliseName(name string) (normalised string) {
 // To avoid this, when first declaring a component name the NormaliseName function should be used first.
 func NormaliseComponentName(component *wtype.LHComponent) error {
 
-	compList, _ := GetSubComponents(component)
+	originalcompList, _ := GetSubComponents(component)
 
-	if component.HasConcentration() {
+	compList := originalcompList.removeConcsFromSubComponentNames()
+
+	if component.HasConcentration() && len(compList.Components) == 0 {
 		component.SetName(component.Concentration().ToString() + " " + component.Name() + " " + compList.List(false))
 		if len(component.Name()) >= 100 {
 			component.SetName(component.Name()[:99])
@@ -72,7 +82,7 @@ func NormaliseComponentName(component *wtype.LHComponent) error {
 		return nil
 	}
 
-	component.SetName(component.Name() + compList.List(false))
+	component.SetName(compList.List(false, true))
 
 	if len(component.Name()) >= 100 {
 		component.SetName(component.Name()[:99])

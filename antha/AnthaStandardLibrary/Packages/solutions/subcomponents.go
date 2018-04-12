@@ -489,3 +489,31 @@ func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHCompo
 
 	return comp, nil
 }
+
+// UpdateComponentDetails corrects the sub component list and name of a component with the details of all samples which made up that component.
+func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.LHComponent) error {
+	var warnings []string
+
+	subComponents, _, err := SimulateMix(mixes...)
+
+	if err != nil {
+		warnings = append(warnings, err.Error())
+	}
+
+	productOfMixes, err = AddSubComponents(productOfMixes, subComponents)
+
+	if err != nil {
+		warnings = append(warnings, err.Error())
+	}
+
+	err = NormaliseComponentName(productOfMixes)
+
+	if err != nil {
+		warnings = append(warnings, err.Error())
+	}
+
+	if len(warnings) > 0 {
+		return fmt.Errorf(strings.Join(warnings, "/n"))
+	}
+	return nil
+}

@@ -594,53 +594,114 @@ func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
 // paused, which should be tricky but possible.
 //
 
-func checkSanityIns(request *LHRequest) error {
-	// check instructions for basic sanity
-
+//assertVolumesNonNegative tests that the volumes within the LHRequest are zero or positive
+func assertVolumesNonNegative(request *LHRequest) error {
 	for _, ins := range request.LHInstructions {
-		if ins.Type == wtype.LHIMIX {
-			v := wunit.NewVolume(0.0, "ul")
-			tv := wunit.NewVolume(0.0, "ul")
-			for _, c := range ins.Components {
-				// need to be a bit careful but...
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
 
-				if c.Vol < 0.0 {
-					return wtype.LHErrorf(wtype.LH_ERR_VOL, "negative volume for component %s in instruction:\n%s", c.CName, ins.Summarize(1))
-				}
-
-				if c.Vol != 0.0 {
-					v.Add(c.Volume())
-				} else if c.Tvol != 0.0 {
-					if !tv.IsZero() && !tv.EqualTo(c.TotalVolume()) {
-						return wtype.LHErrorf(wtype.LH_ERR_VOL, "multiple distinct total volumes specified in instruction:\n%s",
-							ins.Summarize(1))
-					}
-
-					tv = c.TotalVolume()
-				}
-			}
-
-			if tv.IsZero() && !v.EqualTo(ins.Results[0].Volume()) {
-				return wtype.LHErrorf(wtype.LH_ERR_VOL, "sum of requested volumes does not match resulting volume for instruction:\n%s",
-					ins.Summarize(1))
-			} else if !tv.IsZero() && !tv.EqualTo(ins.Results[0].Volume()) {
-				return wtype.LHErrorf(wtype.LH_ERR_VOL, "total volume (%v) does not match resulting volume (%v) for instruction:\n%s",
-					tv, ins.Results[0].Volume(), ins.Summarize(1))
-			} else if ins.PlateID != "" {
-				// compare result volume to the well volume
-
-				plat, ok := request.GetPlate(ins.PlateID)
-
-				if !ok {
-					// possibly an issue
-				} else if plat.Welltype.MaxVolume().LessThan(ins.Results[0].Volume()) {
-					return wtype.LHErrorf(wtype.LH_ERR_VOL, "final volume exceeds the well maximum (%s) for instruction:\n%s",
-						plat.Welltype.MaxVolume(), ins.Summarize(1))
-				}
+		for _, cmp := range ins.Components {
+			if cmp.Volume().LessThan(wunit.ZeroVolume()) {
+				return wtype.LHErrorf(wtype.LH_ERR_VOL, "negative volume for component \"%s\" in instruction:\n%s", cmp.CName, ins.Summarize(1))
 			}
 		}
 	}
+	return nil
+}
 
+//assertTotalVolumesMatch checks that component total volumes are all the same in mix instructions
+func assertTotalVolumesMatch(request *LHRequest) error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		totalVolume := wunit.ZeroVolume()
+
+		for _, cmp := range ins.Components {
+			if tV := cmp.TotalVolume(); !tV.IsZero() {
+				if !totalVolume.IsZero() && !tV.EqualTo(totalVolume) {
+					return wtype.LHErrorf(wtype.LH_ERR_VOL, "multiple distinct total volumes specified in instruction:\n%s", ins.Summarize(1))
+				}
+				totalVolume = tV
+			}
+		}
+	}
+	return nil
+}
+
+//assertMixResultsCorrect checks that volumes of the mix result matches either the sum of the input, or the total volume if specified
+func assertMixResultsCorrect(request *LHRequest) error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		totalVolume := wunit.ZeroVolume()
+		volumeSum := wunit.ZeroVolume()
+
+		for _, cmp := range ins.Components {
+			if tV := cmp.TotalVolume(); !tV.IsZero() {
+				totalVolume = tV
+			} else if v := cmp.Volume(); !v.IsZero() {
+				volumeSum.Add(v)
+			}
+		}
+
+		if len(ins.Results) != 1 {
+			return wtype.LHErrorf(wtype.LH_ERR_DIRE, "mix instruction has %d results specified, expecting one at instruction:\n%s",
+				len(ins.Results), ins.Summarize(1))
+		}
+
+		resultVolume := ins.Results[0].Volume()
+
+		if !totalVolume.IsZero() && !totalVolume.EqualTo(resultVolume) {
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "total volume (%v) does not match resulting volume (%v) for instruction:\n%s",
+				totalVolume, resultVolume, ins.Summarize(1))
+		} else if totalVolume.IsZero() && !volumeSum.EqualTo(resultVolume) {
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "sum of requested volumes (%v) does not match result volume (%v) for instruction:\n%s",
+				volumeSum, resultVolume, ins.Summarize(1))
+		}
+	}
+	return nil
+}
+
+//assertWellsNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
+//assumes assertMixResultsCorrect returns nil
+func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		resultVolume := ins.Results[0].Volume()
+
+		var plate *wtype.LHPlate
+		if ins.OutPlate != nil {
+			plate = ins.OutPlate
+		} else if ins.PlateID != "" {
+			if p, ok := request.GetPlate(ins.PlateID); !ok {
+				continue
+			} else {
+				plate = p
+			}
+		} else if ins.Platetype != "" {
+			if p, err := inventory.NewPlate(ctx, ins.Platetype); err != nil {
+				continue
+			} else {
+				plate = p
+			}
+		} else {
+			//couldn't find an appropriate plate
+			continue
+		}
+
+		if maxVol := plate.Welltype.MaxVolume(); maxVol.LessThan(resultVolume) {
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "volume of resulting mix (%v) exceeds the well maximum (%v) for instruction:\n%s",
+				resultVolume, maxVol, ins.Summarize(1))
+		}
+	}
 	return nil
 }
 
@@ -756,8 +817,16 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	forceSanity(request)
 	// convert requests to volumes and determine required stock concentrations
 
-	err = checkSanityIns(request)
-	if err != nil {
+	if err := assertVolumesNonNegative(request); err != nil {
+		return err
+	}
+	if err := assertTotalVolumesMatch(request); err != nil {
+		return err
+	}
+	if err := assertMixResultsCorrect(request); err != nil {
+		return err
+	}
+	if err := assertWellNotOverfilled(ctx, request); err != nil {
 		return err
 	}
 
@@ -766,8 +835,16 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	err = checkSanityIns(request)
-	if err != nil {
+	if err := assertVolumesNonNegative(request); err != nil {
+		return err
+	}
+	if err := assertTotalVolumesMatch(request); err != nil {
+		return err
+	}
+	if err := assertMixResultsCorrect(request); err != nil {
+		return err
+	}
+	if err := assertWellNotOverfilled(ctx, request); err != nil {
 		return err
 	}
 
@@ -811,8 +888,16 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		}
 	}
 
-	err = checkSanityIns(request)
-	if err != nil {
+	if err := assertVolumesNonNegative(request); err != nil {
+		return err
+	}
+	if err := assertTotalVolumesMatch(request); err != nil {
+		return err
+	}
+	if err := assertMixResultsCorrect(request); err != nil {
+		return err
+	}
+	if err := assertWellNotOverfilled(ctx, request); err != nil {
 		return err
 	}
 

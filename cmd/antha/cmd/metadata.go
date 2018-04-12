@@ -1,5 +1,5 @@
-// main.go: Part of the Antha language
-// Copyright (C) 2015 The Antha authors. All rights reserved.
+// metadata.go: Part of the Antha language
+// Copyright (C) 2018 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,18 +20,16 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package main
+package cmd
 
-import (
-	"fmt"
-	"os"
+import "github.com/spf13/cobra"
 
-	"github.com/antha-lang/antha/cmd/antha/cmd"
-)
+var metadataCmd = &cobra.Command{
+	Use:   "metadata",
+	Short: "Manage antha metadata files",
+}
 
-func main() {
-	if err := cmd.Execute(nil); err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err) // nolint
-		os.Exit(1)
-	}
+func init() {
+	c := metadataCmd
+	RootCmd.AddCommand(c)
 }

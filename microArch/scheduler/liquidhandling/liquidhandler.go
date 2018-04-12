@@ -702,6 +702,11 @@ func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
 		}
 
 		if maxVol := plate.Welltype.MaxVolume(); maxVol.LessThan(resultVolume) {
+			//ignore if this is just numerical precision (#campainforintegervolume)
+			maxVol.Subtract(resultVolume)
+			if maxVol.IsZero() {
+				continue
+			}
 			return wtype.LHErrorf(wtype.LH_ERR_VOL, "volume of resulting mix (%v) exceeds the well maximum (%v) for instruction:\n%s",
 				resultVolume, maxVol, ins.Summarize(1))
 		}

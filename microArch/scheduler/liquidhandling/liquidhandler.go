@@ -105,6 +105,10 @@ func ValidateRequest(request *LHRequest) error {
 	// no component can have all three of Conc, Vol and TVol set to 0:
 
 	for _, ins := range request.LHInstructions {
+		// the check below makes sense only for mixes
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
 		for i, cmp := range ins.Components {
 			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
 				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)

@@ -490,7 +490,9 @@ func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHCompo
 	return comp, nil
 }
 
-// UpdateComponentDetails corrects the sub component list and name of a component with the details of all samples which made up that component.
+// UpdateComponentDetails corrects the sub component list and name of a component with the details
+// of all sample mixes which are specified to be the source of that component.
+// This must currently be updated manually using this function.
 func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.LHComponent) error {
 	var warnings []string
 

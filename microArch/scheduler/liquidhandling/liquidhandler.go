@@ -667,7 +667,7 @@ func assertMixResultsCorrect(request *LHRequest) error {
 	return nil
 }
 
-//assertWellsNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
+//assertWellNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
 //assumes assertMixResultsCorrect returns nil
 func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
 	for _, ins := range request.LHInstructions {
@@ -842,9 +842,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 	if err := assertMixResultsCorrect(request); err != nil {
-		return err
-	}
-	if err := assertWellNotOverfilled(ctx, request); err != nil {
 		return err
 	}
 

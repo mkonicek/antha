@@ -191,7 +191,7 @@ func getOutputMap(res map[string]*wtype.LHPlate, opts ComparisonMode) outputMap 
 	for pos, plate := range res {
 		for _, col := range plate.Cols {
 			for _, w := range col {
-				if !w.Empty() {
+				if !w.IsEmpty() {
 					arr := outputMap[w.WContents.CName]
 
 					if arr == nil {
@@ -236,7 +236,7 @@ func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts
 	}
 
 	if opts&CompareVolumes != 0 {
-		volume = wellIn.CurrVolume().ToString()
+		volume = wellIn.CurrentVolume().ToString()
 	}
 
 	if opts&ComparePlateNames != 0 {

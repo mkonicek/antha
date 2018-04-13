@@ -71,7 +71,7 @@ func (plate LHPlate) GetLayout() string {
 	for x := 0; x < plate.WellsX(); x += 1 {
 		for y := 0; y < plate.WellsY(); y += 1 {
 			well := plate.Cols[x][y]
-			if well.Currvol() < 0.0001 {
+			if well.IsEmpty() {
 				continue
 			}
 			s += fmt.Sprint("\t\t")
@@ -163,7 +163,7 @@ func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
 
 	for i, wc := range wv {
 		ret[i] = lhp.Wellcoords[wc.FormatA1()].WContents.Dup()
-		wv := lhp.Wellcoords[wc.FormatA1()].WorkingVolume()
+		wv := lhp.Wellcoords[wc.FormatA1()].CurrentWorkingVolume()
 		ret[i].Vol = wv.ConvertToString(ret[i].Vunit)
 	}
 
@@ -274,13 +274,13 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legac
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
-		if w.Empty() {
+		if w.IsEmpty() {
 			continue
 		}
 
 		//if w.Contents().CName == cmp.CName {
 		if w.Contains(cmp) {
-			v := w.WorkingVolume()
+			v := w.CurrentWorkingVolume()
 
 			// check volume unless this is an instance and we are tolerating this
 			if !cmp.IsInstance() || !legacyVolume {
@@ -329,7 +329,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		wl := lhp.Wellcoords[wc.FormatA1()]
 
-		if !wl.Empty() {
+		if !wl.IsEmpty() {
 			continue
 		}
 
@@ -369,7 +369,7 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoor
 		w := lhp.Wellcoords[wc.FormatA1()]
 
 		if w.Contains(cmp) {
-			v := w.WorkingVolume()
+			v := w.CurrentWorkingVolume()
 			if v.LessThan(mpv) {
 				continue
 			}
@@ -397,6 +397,29 @@ func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoor
 	}
 
 	return ret, vols, true
+}
+
+func (lhp *LHPlate) ValidateVolumes() error {
+	var lastErr error
+	var errCoords []string
+
+	for coords, well := range lhp.Wellcoords {
+		err := well.ValidateVolume()
+		if err != nil {
+			lastErr = err
+			errCoords = append(errCoords, coords)
+		}
+	}
+
+	if len(errCoords) == 1 {
+		return lastErr
+	} else if len(errCoords) > 1 {
+		return LHError(LH_ERR_VOL, fmt.Sprintf("invalid volumes found in %d wells in plate %s at well coordinates %s",
+			len(errCoords), lhp.GetName(), strings.Join(errCoords, ", ")))
+	}
+
+	return nil
+
 }
 
 func (lhp *LHPlate) Wells() [][]*LHWell {
@@ -525,9 +548,9 @@ func (lhp *LHPlate) WellsY() int {
 	return lhp.WlsY
 }
 
-func (lhp *LHPlate) Empty() bool {
+func (lhp *LHPlate) IsEmpty() bool {
 	for _, w := range lhp.Wellcoords {
-		if !w.Empty() {
+		if !w.IsEmpty() {
 			return false
 		}
 	}
@@ -542,7 +565,7 @@ func (lhp *LHPlate) NextEmptyWell(it PlateIterator) WellCoords {
 			break
 		}
 
-		if lhp.Cols[wc.X][wc.Y].Empty() {
+		if lhp.Cols[wc.X][wc.Y].IsEmpty() {
 			return wc
 		}
 	}
@@ -774,7 +797,7 @@ func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err e
 	for _, position := range allpositions {
 		well := plate.WellMap()[position]
 
-		if !well.Empty() {
+		if !well.IsEmpty() {
 			wells = append(wells, position)
 			liquids = append(liquids, well.Contents())
 			volumes = append(volumes, well.CurrentVolume())
@@ -948,7 +971,7 @@ func (p *LHPlate) Evaporate(time time.Duration, env Environment) []VolumeCorrect
 		return ret
 	}
 	for _, w := range p.Wellcoords {
-		if !w.Empty() {
+		if !w.IsEmpty() {
 			vc := w.Evaporate(time, env)
 			if vc.Type != "" {
 				ret = append(ret, vc)
@@ -1095,7 +1118,7 @@ func (p *LHPlate) MergeWith(p2 *LHPlate) {
 
 func (p *LHPlate) MarkNonEmptyWellsUserAllocated() {
 	for _, w := range p.Wellcoords {
-		if !w.Empty() {
+		if !w.IsEmpty() {
 			w.SetUserAllocated()
 		}
 	}
@@ -1109,7 +1132,7 @@ func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := p.Wellcoords[wc.FormatA1()]
 
-		if !w.Empty() {
+		if !w.IsEmpty() {
 			ret = append(ret, w)
 		}
 	}

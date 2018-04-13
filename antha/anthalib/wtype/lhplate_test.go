@@ -431,3 +431,63 @@ func TestGetAllComponents(t *testing.T) {
 		t.Errorf("Expected %d components got %d", p.WellsX()*p.WellsY(), len(cmps))
 	}
 }
+
+func TestLHPlateValidateVolumesOK(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if err := p.ValidateVolumes(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	//doing it this way because accessor methods will prevent this at some point
+	c.Vol = 500.0
+	w := p.Rows[0][0]
+	w.WContents = c
+
+	if err := p.ValidateVolumes(); err == nil {
+		t.Error("Got no error when one well overfilled")
+	}
+}
+
+func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	//doing it this way because accessor methods will prevent this at some point
+	c.Vol = 500.0
+	for i := 0; i < 4; i++ {
+		w := p.Rows[i][i]
+		w.WContents = c
+	}
+
+	if err := p.ValidateVolumes(); err == nil {
+		t.Error("Got no error when several wells overfilled")
+	}
+}

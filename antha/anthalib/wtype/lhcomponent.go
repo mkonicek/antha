@@ -114,7 +114,10 @@ func (lhc *LHComponent) Summarize() string {
 		return fmt.Sprintf("%s to %v", lhc.CName, lhc.Concentration())
 	}
 
-	return lhc.CName
+	if lhc.CName != "" {
+		return fmt.Sprintf("unknown amount of %s", lhc.CName)
+	}
+	return "unknown volume of unknown component"
 }
 
 // PlateID returns the id of a plate or the empty string

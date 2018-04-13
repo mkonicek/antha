@@ -296,6 +296,7 @@ func (w *LHWell) AddComponent(c *LHComponent) error {
 	if finalVol.GreaterThan(maxVol) {
 		//HJK: Disabled overflow errors while CarryVolume issues are resolved
 		//return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), curVol, maxVol)
+		logger.Warning(fmt.Sprintf("Adding %s to well \"%s\", even though well already contains %s and maximum volume is %s", c.Summarize(), w.GetName(), curVol, maxVol))
 	}
 
 	w.Contents().Mix(c)
@@ -313,6 +314,8 @@ func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	if v.GreaterThan(w.CurrentWorkingVolume()) {
 		//HJK: Disabled underflow errors while CarryVolume issues are resolved
 		//return nil, fmt.Errorf("requested %s from well \"%s\" which only contains %s working volume", v, w.GetName(), w.CurrentWorkingVolume())
+		logger.Warning(fmt.Sprintf("requested %s from well \"%s\" which only contains %s working volume and %s total volume",
+			v, w.GetName(), w.CurrentWorkingVolume(), w.CurrentVolume()))
 	}
 
 	ret := w.Contents().Dup()

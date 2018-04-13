@@ -239,3 +239,20 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 		}
 	}
 }
+
+func TestParsePlateOverfilled(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	file := []byte(
+		`
+pcrplate_with_cooler,
+A1,water,water,50.0,ul,0,g/l,
+A4,tea,water,50.0,ul,0,g/l,
+A5,milk,water,500.0,ul,0,g/l,
+`)
+	_, err := ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
+
+	if err == nil {
+		t.Error("Overfull well A5 failed to generate error")
+	}
+}

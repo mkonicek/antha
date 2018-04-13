@@ -440,7 +440,6 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				wellContents.ID = wtype.GetUUID()
 				err = well.SetContents(wellContents)
 				if err != nil {
-					fmt.Println("B")
 					return err
 				}
 

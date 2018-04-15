@@ -65,7 +65,7 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 func testSetup(rbt *liquidhandling.LHProperties, expected map[string]float64, t *testing.T) {
 	for _, p := range rbt.Plates {
 		for _, w := range p.Wellcoords {
-			if !w.Empty() {
+			if !w.IsEmpty() {
 				v, ok := expected[w.WContents.CName]
 
 				if !ok {

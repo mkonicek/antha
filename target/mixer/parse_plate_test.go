@@ -35,7 +35,7 @@ func getComponentsFromPlate(plate *wtype.LHPlate) []*wtype.LHComponent {
 
 	for _, wellcontents := range allWellPositions {
 
-		if !plate.WellMap()[wellcontents].Empty() {
+		if !plate.WellMap()[wellcontents].IsEmpty() {
 
 			component := plate.WellMap()[wellcontents].WContents
 			components = append(components, component)
@@ -243,6 +243,23 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 		if err := allComponentsHaveWellLocation(p.Plate); err != nil {
 			t.Error(err.Error())
 		}
+	}
+}
+
+func TestParsePlateOverfilled(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	file := []byte(
+		`
+pcrplate_with_cooler,
+A1,water,water,50.0,ul,0,g/l,
+A4,tea,water,50.0,ul,0,g/l,
+A5,milk,water,500.0,ul,0,g/l,
+`)
+	_, err := ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
+
+	if err == nil {
+		t.Error("Overfull well A5 failed to generate error")
 	}
 }
 

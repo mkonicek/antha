@@ -214,7 +214,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 				panic(fmt.Sprintf("Cannot find well %s on plate %s name %s type %s", opt.Address, r.OutPlate.ID, r.OutPlate.Name(), r.OutPlate.Type))
 			}
 
-			if !w.Empty() {
+			if !w.IsEmpty() {
 				// the instruction version has to remain unchanged
 				// the returned version in the protocol has to be mixed
 				w.WContents.Loc = r.OutPlate.ID + ":" + opt.Address

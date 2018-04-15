@@ -184,7 +184,7 @@ type LHContainer interface {
 	CurrentVolume() wunit.Volume
 	ResidualVolume() wunit.Volume
 	//WorkingVolume = CurrentVolume - ResidualVolume
-	WorkingVolume() wunit.Volume
+	CurrentWorkingVolume() wunit.Volume
 	//Add to the container
 	AddComponent(*LHComponent) error
 	//Remove from the container

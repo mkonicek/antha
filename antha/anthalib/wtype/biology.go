@@ -728,11 +728,11 @@ type AminoAcid string
 func SetAminoAcid(aa string) (AminoAcid, error) {
 
 	if len(aa) != 1 {
-		return "", fmt.Errorf("amino acid %s not valid. Please use single letter code.")
+		return "", fmt.Errorf("amino acid \"%s\" not valid. Please use single letter code.", aa)
 	}
 
 	if err := ValidAA(aa); err != nil {
-		return "", fmt.Errorf("amino acid %s not valid: %s", aa, err.Error())
+		return "", fmt.Errorf("amino acid \"%s\" not valid: %s", aa, err.Error())
 	}
 	return AminoAcid(strings.ToUpper(strings.TrimSpace(aa))), nil
 }
@@ -746,11 +746,11 @@ type Codon string
 func SetCodon(dna string) (Codon, error) {
 
 	if len(dna) != 3 {
-		return "", fmt.Errorf("codon %s not valid. must be three nucleotides.")
+		return "", fmt.Errorf("codon \"%s\" not valid. must be three nucleotides.", dna)
 	}
 
 	if err := ValidDNA(dna); err != nil {
-		return "", fmt.Errorf("codon %s not valid: %s", dna, err.Error())
+		return "", fmt.Errorf("codon \"%s\" not valid: %s", dna, err.Error())
 	}
 	return Codon(strings.ToUpper(strings.TrimSpace(dna))), nil
 }

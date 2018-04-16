@@ -373,7 +373,7 @@ func TestGenbanktoAnnotatedSeq(t *testing.T) {
 						"For", test.testname, "\n",
 						"feature:", name, "\n",
 						"expected positions:", test.featurePositionMap[name], "\n",
-						"got more positions: ", len(features), "\n",
+						"got more positions: ", len(features),
 					)
 				}
 				for _, feature := range features {

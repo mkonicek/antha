@@ -517,11 +517,13 @@ func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHCompo
 	return comp, nil
 }
 
-// UpdateComponentDetails corrects the sub component list and nromalises the name of a component with the details
+// UpdateComponentDetails corrects the sub component list and normalises the name of a component with the details
 // of all sample mixes which are specified to be the source of that component.
 // This must currently be updated manually using this function.
 func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.LHComponent) error {
 	var warnings []string
+
+	originalName := productOfMixes.Name()
 
 	subComponents, _, err := SimulateMix(mixes...)
 

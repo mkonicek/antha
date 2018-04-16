@@ -118,7 +118,7 @@ func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []Plat
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := p.Wellcoords[wc.FormatA1()]
 
-		if w.Empty() {
+		if w.IsEmpty() {
 			continue
 		}
 
@@ -512,6 +512,9 @@ func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, or
 			if ass == -1 {
 				// make a new plate
 				ass = len(pc)
+				if len(request.Output_platetypes) == 0 {
+					return nil, fmt.Errorf("no output plate types specified. \n If not specifying output plate type in a Mix Command, at least one output plate type must be specified in config > outputPlateTypes.")
+				}
 				pc = append(pc, PlateChoice{Platetype: chooseAPlate(request, v), Assigned: []string{v.ID}, ID: wtype.GetUUID(), Wells: []string{""}, Name: "Output_plate_" + v.ID[0:6], Output: []bool{true}})
 				continue
 			}
@@ -717,25 +720,19 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 
 		it := request.OutputIteratorFactory(plat)
 
-		//seed in the existing assignments
+		//put a dummy component in the assigned wells to mark them as used
 
 		for _, w := range c.Wells {
 			if w != "" {
 				wc := wtype.MakeWellCoords(w)
 
-				if wc.X >= len(plat.Cols) {
-					return fmt.Errorf("well (%s) specified is out of range of available wells for plate type %s", w, plat.Type)
+				well, ok := plat.WellAt(wc)
+				if !ok {
+					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("well (%s) specified is out of range of available wells for plate type %s", w, plat.Type))
 				}
-
-				if wc.Y >= len(plat.Cols[wc.X]) {
-					return fmt.Errorf("well (%s) specified is out of range of available wells for plate type %s", w, plat.Type)
-				}
-
-				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
-				err := plat.Cols[wc.X][wc.Y].AddComponent(dummycmp)
+				err := markWellUsed(well)
 				if err != nil {
-					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Layout Agent : %s", err.Error()))
+					return err
 				}
 			}
 		}
@@ -751,17 +748,16 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 
 			if well == "" {
 				wc := plat.NextEmptyWell(it)
-				if wc.IsZero() {
-					// something very bad has happened
-					//	logger.Fatal("DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
-					return wtype.LHError(wtype.LH_ERR_VOL, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
+				well, ok := plat.WellAt(wc)
+				if !ok {
+					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("too many assignments made to output plate \"%s\"", c.Platetype))
 				}
-				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(plat.Cols[wc.X][wc.Y].MaxVolume())
-				err := plat.Cols[wc.X][wc.Y].AddComponent(dummycmp)
+
+				err := markWellUsed(well)
 				if err != nil {
-					return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
+					return err
 				}
+
 				request.LHInstructions[sID].Welladdress = wc.FormatA1()
 				assignment = c.ID + ":" + wc.FormatA1()
 				c.Wells[i] = wc.FormatA1()
@@ -774,5 +770,19 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 	}
 
 	request.Output_assignments = opa
+	return nil
+}
+
+//markWellUsed add a dummy component to the well so that it's marked as having been used
+func markWellUsed(well *wtype.LHWell) error {
+	//avoid adding a dummy component if one's already been added
+	if well.IsEmpty() {
+		dummycmp := wtype.NewLHComponent()
+		dummycmp.SetVolume(well.MaxVolume())
+		err := well.AddComponent(dummycmp)
+		if err != nil {
+			return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
+		}
+	}
 	return nil
 }

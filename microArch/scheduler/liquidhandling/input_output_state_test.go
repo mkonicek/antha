@@ -477,8 +477,8 @@ func compareInitFinalStates(t *testing.T, lh *Liquidhandler, expected map[string
 				w := p.Wellcoords[crd]
 				w2 := p2.Wellcoords[crd]
 
-				e1 := w.Empty()
-				e2 := w2.Empty()
+				e1 := w.IsEmpty()
+				e2 := w2.IsEmpty()
 
 				if e1 && e2 {
 					continue

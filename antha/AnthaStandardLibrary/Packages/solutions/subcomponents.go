@@ -523,8 +523,6 @@ func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHCompo
 func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.LHComponent) error {
 	var warnings []string
 
-	originalName := productOfMixes.Name()
-
 	subComponents, _, err := SimulateMix(mixes...)
 
 	if err != nil {

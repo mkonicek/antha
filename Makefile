@@ -33,6 +33,7 @@ lint: test
 		--deadline=5m \
 		-e 'driver/(pb/)?lh.*unkeyed' \
 		-e '\.pb\.go' \
+		-e 'usr/local/Cellar/go/*' \
 		./...
 
 docker-build: .build/antha-build-image .build/antha-build-withdeps-image

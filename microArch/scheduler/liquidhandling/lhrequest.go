@@ -252,18 +252,22 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 	return ret
 }
 
-/*
-func (request *LHRequest) GetPlate(id string) *wtype.LHPlate {
-	p, ok := request.Input_plates[id]
-
-	if !ok {
-		p, ok = request.Output_plates[id]
-
-		if !ok {
-			return nil
+func (request *LHRequest) HasPlateNamed(name string) bool {
+	checkForPlateNamed := func(query string, subject map[string]*wtype.LHPlate) bool {
+		for _, plate := range subject {
+			if plate.PlateName == query {
+				return true
+			}
 		}
+		return false
 	}
 
-	return p
+	if checkForPlateNamed(name, request.Input_plates) {
+		return true
+	}
+	if checkForPlateNamed(name, request.Output_plates) {
+		return true
+	}
+
+	return false
 }
-*/

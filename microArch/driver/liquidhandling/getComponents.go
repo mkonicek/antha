@@ -103,7 +103,6 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 
 		if ok {
 			it := getPlateIterator(p, ori, multi)
-
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
 				// cmps needs duping here
 				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume, ignoreInstances) // dups components

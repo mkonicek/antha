@@ -207,13 +207,13 @@ func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
 	s := "" // query
 	r := "" // aligned
 
-  // Add any gaps to the start of the aligned sequence.
+	// Add any gaps to the start of the aligned sequence.
 	for i := 1; i < aln.Qstart; i++ {
 		r += "-"
 		s += string(q[i-1])
 	}
 
-  // Remove any inserts from the aligned sequence.
+	// Remove any inserts from the aligned sequence.
 	for i := 0; i < len(aln.Qseq); i++ {
 		if aln.Qseq[i] != '-' {
 			r += string(aln.Sseq[i])
@@ -221,12 +221,12 @@ func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
 		}
 	}
 
-  // Add any gaps to the end of the aligned sequence.
+	// Add any gaps to the end of the aligned sequence.
 	for i := aln.Qend + 1; i <= len(q); i++ {
 		r += "-"
 		s += string(q[i-1])
 	}
 
-  // Return query, aligned.
+	// Return query, aligned.
 	return s, r
 }

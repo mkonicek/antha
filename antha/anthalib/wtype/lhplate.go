@@ -59,7 +59,7 @@ type LHPlate struct {
 	WellYStart  float64            // offset (mm) to first well in Y direction
 	WellZStart  float64            // offset (mm) to bottom of well in Z direction
 	Bounds      BBox               // (relative) position of the plate (mm), set by parent
-	parent      LHObject           `gotopb:"-" json:"-"`
+	parent      LHObject
 }
 
 func (plate LHPlate) OutputLayout() {

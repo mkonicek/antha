@@ -642,7 +642,7 @@ func makePCRPlateWell() *wtype.LHWell {
 
 func makePlateCoords(height float64) wtype.Coordinates {
 	//standard X/Y size for 96 well plates
-	return wtype.Coordinates{127.76, 85.48, height}
+	return wtype.Coordinates{X: 127.76, Y: 85.48, Z: height}
 }
 
 func makePCRPlate() *wtype.LHPlate {

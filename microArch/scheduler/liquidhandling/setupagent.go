@@ -135,6 +135,27 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 	}
 
+	// sanity check
+
+	nPos := len(output_plate_order) + len(input_plate_order)
+	needsTips := false
+
+	if params.GetTipType() == liquidhandling.DisposableTips || params.GetTipType() == liquidhandling.MixedDisposableAndFixedTips {
+		// at least two positions are needed
+		nPos += 2
+		needsTips = true
+	}
+
+	if nPos > len(params.Positions) {
+		errStr := fmt.Sprintf("Protocol requires %d input plates, %d output plates", len(input_plate_order), len(output_plate_order))
+		if needsTips {
+			errStr += fmt.Sprintf(" and at least 2 spaces for tip waste and boxes")
+		}
+
+		errStr += fmt.Sprintf(": %d positions total, %d available on platform %s %s", nPos, len(params.Positions), params.Mnfr, params.Model)
+		return nil, wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, errStr)
+	}
+
 	// tips
 	tips := request.Tips
 

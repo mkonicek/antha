@@ -84,8 +84,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 				if totalvol.IsZero() || totalvol.EqualTo(tv) {
 					totalvol = tv // not needed
 				} else {
-					// error
-					return nil, nil, wtype.LHError(wtype.LH_ERR_CONC, fmt.Sprintf("Inconsistent total volumes %-6.4f and %-6.4f at component %s", totalvol.SIValue(), tv.SIValue(), component.CName))
+					return nil, nil, wtype.LHErrorf(wtype.LH_ERR_CONC, "Inconsistent total volumes %s and %s at component %s", totalvol, tv, component.CName)
 				}
 			} else {
 				cmpvol.Add(component.Volume())
@@ -242,8 +241,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 				if totalvol.IsZero() || totalvol.EqualTo(tv) {
 					totalvol = tv
 				} else {
-					// error
-					return nil, nil, wtype.LHError(wtype.LH_ERR_CONC, fmt.Sprintf("Inconsistent total volumes %-6.4f and %-6.4f at component %s", totalvol.SIValue(), tv.SIValue(), component.CName))
+					return nil, nil, wtype.LHErrorf(wtype.LH_ERR_CONC, "Inconsistent total volumes %s and %s at component %s", totalvol, tv, component.CName)
 				}
 			} else {
 				// need to add in the volume taken up by any volume components

@@ -84,9 +84,36 @@ type StorageConditions struct {
 }
 
 // String returns a summary of any storage restrictions.
-// func (s StorageConditions) String() string {
-// 	return fmt.Sprintf("%+v", s)
-// }
+func (s StorageConditions) String() string {
+	var sensitive []string
+	var notSensitive []string
+
+	names := map[string]bool{
+		"light":       s.LightSensitive,
+		"moisture":    s.MoistureSensistive,
+		"oxygen":      s.OxygenSensistive,
+		"freeze/thaw": s.FreezeThawSensitive,
+	}
+
+	for name, s := range names {
+		if s {
+			sensitive = append(sensitive, name)
+		} else {
+			notSensitive = append(notSensitive, name)
+		}
+	}
+
+	sensitivities := ""
+	if len(sensitive) > 0 {
+		sensitivities = fmt.Sprintf(", sensitive to %s", strings.Join(sensitive, ", "))
+	}
+	insensitivities := ""
+	if len(notSensitive) > 0 {
+		insensitivities = fmt.Sprintf(", not sensitive to %s", strings.Join(notSensitive, ", "))
+	}
+
+	return fmt.Sprintf("Temperature Range: [%v - %v]%s%s.", s.MinTemp, s.MaxTemp, sensitivities, insensitivities)
+}
 
 // GetOrderDetails returns order Details for a component.
 func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) {

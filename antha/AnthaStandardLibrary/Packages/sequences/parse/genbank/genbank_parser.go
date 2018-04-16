@@ -26,6 +26,7 @@ package genbank
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -166,7 +167,7 @@ func locusLine(line string) (name string, seqlength int, seqtype string, circula
 	fields = newarray
 	if len(fields) > 1 {
 		if len(fields) < 5 {
-			err = fmt.Errorf("The locusline does not contain enough elements or is not formatted correctly. Please check file.")
+			err = errors.New("the locusline does not contain enough elements or is not formatted correctly. Please check file.")
 			return
 		}
 		name = fields[0]
@@ -190,7 +191,7 @@ func locusLine(line string) (name string, seqlength int, seqtype string, circula
 		}
 		return
 	} else {
-		err = fmt.Errorf("invalid genbank line: %s", line)
+		err = fmt.Errorf("invalid genbank locus line: \"%s\"", line)
 	}
 
 	return
@@ -223,8 +224,8 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 			s = s[1:]
 		}
 		var warning error
-		if strings.Contains(s, "join") {
-			warning = fmt.Errorf("double position of feature!! %s adding as one feature only for now", s)
+		if strings.Contains(s, `join`) {
+			warning = fmt.Errorf("feature \"%s\" contains join location, adding as one feature only for now", s)
 			s = strings.Replace(s, "Join(", "", -1)
 			s = strings.Replace(s, ")", "", -1)
 			joinhandler := strings.Split(s, `,`)

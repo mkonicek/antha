@@ -115,7 +115,7 @@ func TestTGraphSplit(t *testing.T) {
 	}
 
 	if tgraph.NumNodes() != 3 {
-		t.Errorf("NumNodes should report 3, instead reports %d", tgraph.NumNodes)
+		t.Errorf("NumNodes should report 3, instead reports %d", tgraph.NumNodes())
 	}
 
 	// edge check... we should have 3->2->1

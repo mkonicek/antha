@@ -301,7 +301,7 @@ func test_worst(t *testing.T, errors []*simulator.SimulationError, worst simulat
 	}
 
 	if s != worst {
-		t.Error("Expected maximum severity %v, actual maximum severity %v", worst, s)
+		t.Errorf("Expected maximum severity %v, actual maximum severity %v", worst, s)
 	}
 }
 

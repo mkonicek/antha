@@ -428,7 +428,3 @@ func getPlateByType(typ string) *wtype.LHPlate {
 	p := plates[typ]
 	return p.Dup()
 }
-
-func GetPlateForTest() *wtype.LHPlate {
-	return getPlateByType("pcrplate_skirted_riser")
-}

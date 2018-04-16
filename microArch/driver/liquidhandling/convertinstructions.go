@@ -308,7 +308,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		err = wellTo.AddComponent(cmpFrom)
 		if err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Planning inconsistency : %s", err.Error()))
+			return insOut, wtype.LHErrorf(wtype.LH_ERR_VOL, "Planning inconsistency : %s", err.Error())
 		}
 
 		// make sure the cmp loc is set

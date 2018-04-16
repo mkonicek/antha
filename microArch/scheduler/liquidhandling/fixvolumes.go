@@ -6,24 +6,41 @@ import (
 	"strings"
 )
 
+// FixVolumes adjusts volumes of components in instructions in order to ensure
+// sufficient quantities for all known uses. It aims to account for both residual
+// well volumes and carry volumes, although the latter is intrinsically inaccurate
+// since at this stage we do not know how transfers will be done and therefore how
+// much carry volume will be lost
+// In order to do this it needs to account for the various
+// conventions in component naming to distinguish virtual from non-virtual components
+// and additionally needs to ensure it treats stationary components differently since
+// these do not need adjusting for carry volume or residual
 func FixVolumes(request *LHRequest) (*LHRequest, error) {
 	// we go up through the chain
 	// first find the end
 	wantedVolumes := make(map[string]wunit.Volume)
-	c := 0
 	for chainEnd := findChainEnd(request.InstructionChain); chainEnd != nil; chainEnd = chainEnd.Parent {
-		if len(chainEnd.Values) > 0 && chainEnd.Values[0].Type == wtype.LHIMIX {
+		if len(chainEnd.Values) == 0 {
+			panic("Internal Error: Empty instruction chain node")
+		}
+
+		switch chainEnd.Values[0].Type {
+		case wtype.LHIMIX:
 			stageVolumes, err := findUpdateInstructionVolumes(chainEnd, wantedVolumes, request.MergedInputOutputPlates())
 
 			if err != nil {
 				return request, err
 			}
 			wantedVolumes = stageVolumes
-		} else if chainEnd.Values[0].Type == wtype.LHIPRM {
+		case wtype.LHISPL:
+			// split
+			wantedVolumes = updateIDsAfterSplit(chainEnd.Values, wantedVolumes)
+		case wtype.LHIPRM:
 			// update the wanted volumes to the correct names
 			wantedVolumes = passThrough(chainEnd.Values, wantedVolumes)
+		default:
+			panic("Internal Error: Unknown Instruction type")
 		}
-		c += 1
 	}
 
 	return request, nil
@@ -64,6 +81,54 @@ func passThroughMap(ins *wtype.LHInstruction, wanted, updated map[string]wunit.V
 	}
 
 	return updated
+}
+
+// iterate through the values in this level of the chain and ensure that IDs are updated after sampling
+func updateIDsAfterSplit(values []*wtype.LHInstruction, wanted map[string]wunit.Volume) map[string]wunit.Volume {
+	ret := make(map[string]wunit.Volume, len(wanted))
+	for i := len(values) - 1; i >= 0; i-- {
+		v := values[i]
+		if v.Type == wtype.LHISPL {
+			updateIDAfterSplit(v, wanted, ret)
+		} else {
+			panic("Internal error: Split instructions must not be grouped with other instruction types")
+		}
+	}
+
+	// ensure ret contains anything else not split
+
+	for i, v := range wanted {
+		ret[i] = v
+	}
+
+	return ret
+}
+
+// update IDs in this case
+func updateIDAfterSplit(ins *wtype.LHInstruction, in, out map[string]wunit.Volume) {
+	// splits convert their first argument into their second result
+	IDin := ins.Components[0].ID
+	cmpOut := ins.Results[1]
+	IDout := cmpOut.ID
+
+	vol, ok := getWantVol(in, cmpOut.FullyQualifiedName())
+
+	if ok {
+		newName := strings.Replace(cmpOut.FullyQualifiedName(), IDout, IDin, -1)
+		if wantInPlace(in, cmpOut.FullyQualifiedName()) {
+			newName = newName + wtype.InPlaceMarker
+		}
+		// either update existing want or make a new one
+		_, ok := in[newName]
+
+		if ok {
+			in[newName].Add(vol)
+		} else {
+			out[newName] = vol
+		}
+		deleteWantOf(in, cmpOut.FullyQualifiedName())
+	}
+
 }
 
 func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.LHPlate) (map[string]wunit.Volume, error) {

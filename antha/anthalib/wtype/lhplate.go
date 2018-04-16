@@ -1152,7 +1152,6 @@ func componentList(vec ComponentVector) map[string]bool {
 
 func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume, ignoreInstances bool) ComponentVector {
 	cv := p.GetFilteredContentVector(wv, cmps, ignoreInstances)
-
 	cv.DeleteAllBelowVolume(mpv)
 	return cv
 }

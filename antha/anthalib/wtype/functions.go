@@ -1,11 +1,5 @@
 package wtype
 
-import (
-	"reflect"
-
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
-)
-
 func CopyComponentArray(arin []*LHComponent) []*LHComponent {
 	r := make([]*LHComponent, len(arin))
 
@@ -14,35 +8,6 @@ func CopyComponentArray(arin []*LHComponent) []*LHComponent {
 	}
 
 	return r
-}
-
-// are tips going to align to wells?
-func TipsWellsAligned(prm LHChannelParameter, plt LHPlate, wellsfrom []string) bool {
-	// heads which can do independent multichanneling are dealt with separately
-
-	if prm.Independent {
-		return disContiguousTipsWellsAligned(prm, plt, wellsfrom)
-	} else {
-		return contiguousTipsWellsAligned(prm, plt, wellsfrom)
-	}
-}
-
-func disContiguousTipsWellsAligned(prm LHChannelParameter, plt LHPlate, wellsfrom []string) bool {
-	// inflate wellsfrom to full multichannel size
-	fullWellsFrom, ok := expandWellsFrom(prm.Orientation, plt, wellsfrom)
-
-	// not in right orientation, not in single column etc. etc
-	if !ok {
-		return false
-	}
-
-	// get the wells pointed at by the channels
-
-	channelWells := ChannelWells(prm, plt, fullWellsFrom)
-
-	// now does this work?
-
-	return reflect.DeepEqual(channelWells, fullWellsFrom)
 }
 
 func isInArr(s string, sa []string) bool {
@@ -106,17 +71,6 @@ func expandWellsFrom(orientation int, plt LHPlate, wellsfrom []string) ([]string
 	}
 
 	return ret, true
-}
-
-func contiguousTipsWellsAligned(prm LHChannelParameter, plt LHPlate, wellsfrom []string) bool {
-	// 1) find well coords for channels given parameters
-	// 2) compare to wells requested
-
-	channelwells := ChannelWells(prm, plt, wellsfrom)
-
-	// only works if all are filled
-
-	return wutil.StringArrayEqual(channelwells, wellsfrom)
 }
 
 func ChannelsUsed(wf []string) []bool {
@@ -239,4 +193,10 @@ func FirstIndexInStrArray(s string, a []string) int {
 	}
 
 	return -1
+}
+
+// physicalTipCheck(9.0, plt, wellsfrom)
+
+func physicalTipCheck(coneSpacing float64, ori int, plt LHPlate, wellsFrom []string) bool {
+	return false
 }

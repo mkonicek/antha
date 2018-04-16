@@ -1,9 +1,8 @@
 package liquidhandling
 
 import (
-	"testing"
-
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"testing"
 )
 
 func testInstructions1() []RobotInstruction {

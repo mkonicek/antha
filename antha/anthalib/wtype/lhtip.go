@@ -199,7 +199,7 @@ func (self *LHTip) ResidualVolume() wunit.Volume {
 }
 
 //@implement LHContainer
-func (self *LHTip) WorkingVolume() wunit.Volume {
+func (self *LHTip) CurrentWorkingVolume() wunit.Volume {
 	return self.contents.Volume()
 }
 
@@ -221,8 +221,8 @@ func (self *LHTip) AddComponent(v *LHComponent) error {
 
 //@implement LHContainer
 func (self *LHTip) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
-	if v.GreaterThan(self.WorkingVolume()) {
-		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(), self.WorkingVolume())
+	if v.GreaterThan(self.CurrentWorkingVolume()) {
+		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(), self.CurrentWorkingVolume())
 	}
 	ret := self.contents.Dup()
 	ret.Vol = v.ConvertToString("ul")

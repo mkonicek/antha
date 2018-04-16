@@ -301,7 +301,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")
 		}
 
-		vf[ci] = wellFrom.CurrVolume()
+		vf[ci] = wellFrom.CurrentVolume()
 
 		// dest well volume
 
@@ -311,7 +311,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error to the authors")
 		}
 
-		vt[ci] = wellTo.CurrVolume()
+		vt[ci] = wellTo.CurrentVolume()
 
 		// source plate dimensions
 
@@ -326,14 +326,14 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		cnames[ci] = wellFrom.WContents.CName
 
 		cmpFrom, err := wellFrom.RemoveVolume(va[ci])
-		if cmpFrom == nil || err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
+		if err != nil {
+			return insOut, wtype.LHErrorf(wtype.LH_ERR_DIRE, "Planning inconsistency: %s - please report this error to the authors", err.Error())
 		}
 
 		// silently remove the carry
 		_, err = wellFrom.RemoveVolume(carryvol)
 		if err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_VOL, "Planning inconsistency: error removing carry volume")
+			//Ignore the error - the carry is coming from the residual volume
 		}
 
 		err = wellTo.AddComponent(cmpFrom)

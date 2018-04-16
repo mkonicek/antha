@@ -290,7 +290,7 @@ func TestMultiChannelFailComponent(t *testing.T) {
 	}
 
 	if len(ris) != 1 {
-		t.Errorf("Expected 1 transfer got ", len(ris))
+		t.Errorf("Expected 1 transfer got %d", len(ris))
 	}
 
 	tf := ris[0].(*TransferInstruction)

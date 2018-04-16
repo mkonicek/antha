@@ -31,10 +31,16 @@ func TestUniquePlateName(t *testing.T) {
 			rq.Output_plates = dat.OutputPlates
 
 			for v := 0; v < 100; v++ {
-				nom := getSafePlateName(rq, 1)
+				nom := getSafeInputPlateName(rq, 1)
 
 				if rq.HasPlateNamed(nom) {
 					t.Errorf("Plate named %s returned by getSafePlateName - already defined by request", nom)
+				}
+
+				rq.AddUserPlate(&wtype.LHPlate{PlateName: nom})
+
+				if !rq.HasPlateNamed(nom) {
+					t.Errorf("Plate named %s not recognised by request after addition", nom)
 				}
 			}
 		}

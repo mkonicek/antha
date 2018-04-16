@@ -31,8 +31,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pubchem"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -519,13 +517,11 @@ func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHCompo
 	return comp, nil
 }
 
-// UpdateComponentDetails corrects the sub component list and name of a component with the details
+// UpdateComponentDetails corrects the sub component list and nromalises the name of a component with the details
 // of all sample mixes which are specified to be the source of that component.
 // This must currently be updated manually using this function.
 func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.LHComponent) error {
 	var warnings []string
-
-	originalName := productOfMixes.Name()
 
 	subComponents, _, err := SimulateMix(mixes...)
 
@@ -551,6 +547,5 @@ func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.L
 		return fmt.Errorf(strings.Join(warnings, "/n"))
 	}
 
-	text.Print(originalName+":\n", text.PrettyPrint(subComponents))
 	return nil
 }

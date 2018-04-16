@@ -24,7 +24,6 @@
 package solutions
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -69,19 +68,11 @@ func ReturnNormalisedComponentName(component *wtype.LHComponent) (string, error)
 
 	if component.HasConcentration() && len(compList.Components) == 0 {
 		name := component.Concentration().ToString() + " " + component.Name() + " " + compList.List(false)
-		if len(component.Name()) >= 100 {
-			name = name[:99]
-			return name, fmt.Errorf("component name %s truncated to first 100 characters", component.Name())
-		}
 		return name, nil
 	}
 
 	name := compList.List(false, true)
 
-	if len(component.Name()) >= 100 {
-		name = name[:99]
-		return name, fmt.Errorf("component name %s truncated to first 100 characters", component.Name())
-	}
 	return name, nil
 }
 

@@ -290,7 +290,7 @@ func TestMultiChannelFailComponent(t *testing.T) {
 	}
 
 	if len(ris) != 1 {
-		t.Errorf("Expected 1 transfer got ", len(ris))
+		t.Errorf("Expected 1 transfer got %d", len(ris))
 	}
 
 	tf := ris[0].(*TransferInstruction)
@@ -415,11 +415,12 @@ func TestTroughMultichannelPositive(t *testing.T) {
 }
 
 func TestBigWellMultichannelPositive(t *testing.T) {
+	t.Skip() // pending revisions
 	ctx := testinventory.NewContext(context.Background())
 
 	tb, dstp := getTransferBlock2Component(ctx)
 
-	rbt := getTestRobot(ctx, dstp, "DSW24_riser40")
+	rbt := getTestRobot(ctx, dstp, "falcon6wellAgar_riser40")
 
 	pol, err := GetLHPolicyForTest()
 
@@ -767,4 +768,36 @@ func TestMultiChannelTipReuseUgly(t *testing.T) {
 	assertNumTipsUsed(t, ris, 16)
 
 	assertNumLoadUnloadInstructions(t, ris, 2)
+}
+
+//TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
+func BenchmarkMultiChannelTipReuseUgly(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ctx := testinventory.NewContext(context.Background())
+
+		inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "ethanol"}, []float64{50.0, 50.0})
+		if err != nil {
+			panic(err)
+		}
+
+		generateRobotInstructions2(ctx, inss, nil)
+	}
+}
+
+func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) []RobotInstruction {
+
+	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
+
+	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if pol == nil {
+		pol, _ = GetLHPolicyForTest()
+		// allow multi
+		pol.Policies["water"]["CAN_MULTI"] = true
+	}
+
+	//generate the low level instructions
+	instructionSet := NewRobotInstructionSet(tb)
+	ris2, _ := instructionSet.Generate(ctx, pol, rbt)
+
+	return ris2
 }

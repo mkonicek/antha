@@ -21,7 +21,8 @@ func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.L
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid solution: %s", inventory.ErrUnknownType, name)
 	}
-	return c.Dup(), nil
+	// Cp is required here to ensure component IDs are unique
+	return c.Cp(), nil
 }
 
 func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {

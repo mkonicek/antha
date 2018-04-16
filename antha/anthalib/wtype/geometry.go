@@ -107,3 +107,15 @@ type Geometry interface {
 	Width() wunit.Length
 	Depth() wunit.Length
 }
+
+type PointSet []Coordinates
+
+func (ps PointSet) CentreTo(c Coordinates) PointSet {
+	ret := make(PointSet, len(ps))
+
+	for i, p := range ps {
+		ret[i] = p.Subtract(c)
+	}
+
+	return ret
+}

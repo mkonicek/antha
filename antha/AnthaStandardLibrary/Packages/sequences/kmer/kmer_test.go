@@ -22,17 +22,17 @@ func Test1(t *testing.T) {
 	sr := hdb.SearchWith(&s3)
 
 	if sr[0].Name != "There" {
-		t.Errorf("Expected first hit to be sequence 'There', instead got '", sr[0].Name, "'")
+		t.Errorf("Expected first hit to be sequence \"There\", instead got \"%s\"", sr[0].Name)
 	}
 	sr = hdb.SearchWith(ss[0])
 
 	if sr[0].Name != "Hi" {
-		t.Errorf("Expected first hit to be sequence 'Hi', instead got '", sr[0].Name, "'")
+		t.Errorf("Expected first hit to be sequence \"Hi\", instead got \"%s\"", sr[0].Name)
 	}
 
 	sr = hdb.SearchWith(ss[1])
 
 	if sr[0].Name != "There" {
-		t.Errorf("Expected first hit to be sequence 'There', instead got '", sr[0].Name, "'")
+		t.Errorf("Expected first hit to be sequence \"There\", instead got \"%s\"", sr[0].Name)
 	}
 }

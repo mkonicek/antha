@@ -63,16 +63,16 @@ func TestAddRiser(t *testing.T) {
 			offset := platespecificoffset[test.TestPlateName]
 
 			// check that the height is as expected using default inventory
-			if testPlate.Height != test.ExpectedHeight {
+			if testPlate.Height() != test.ExpectedHeight {
 				t.Error(
 					"for", test.TestPlateName, "\n",
 					"Expected plate height:", test.ExpectedHeight, "\n",
-					"got:", testPlate.Height, "\n",
+					"got:", testPlate.Height(), "\n",
 				)
 			}
 
 			// check that the height is as expected with riser added
-			if f, e := newPlate.Height, test.ExpectedHeight; e != f {
+			if f, e := newPlate.Height(), test.ExpectedHeight; e != f {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
@@ -317,11 +317,11 @@ func TestPlateZs(t *testing.T) {
 		}
 
 		// check that the height is as expected using default inventory
-		if testplate.Height != test.ExpectedHeight {
+		if testplate.Height() != test.ExpectedHeight {
 			t.Error(
 				"for", test.TestPlateName, "\n",
 				"Expected plate height:", test.ExpectedHeight, "\n",
-				"got:", testplate.Height, "\n",
+				"got:", testplate.Height(), "\n",
 			)
 		}
 	}

@@ -118,7 +118,7 @@ var volTests = []volTest{
 	{
 		VolString:    "10",
 		Volume:       Volume{},
-		ErrorMessage: "no valid unit found for 10: valid units are: [L l ml nl ul]",
+		ErrorMessage: "no valid unit found for 10: valid units are: [L l mL ml nL nl pL pl uL ul]",
 	},
 }
 

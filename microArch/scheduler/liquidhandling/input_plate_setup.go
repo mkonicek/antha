@@ -79,9 +79,6 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
 	input_platetypes := (*request).Input_platetypes
-	if len(input_platetypes) == 0 {
-		return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
-	}
 
 	// we assume that input_plates is set if any locs are set
 	input_plates := (*request).Input_plates
@@ -120,8 +117,11 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	var well_count_assignments map[string]map[*wtype.LHPlate]int
 
 	if len(input_volumes) != 0 {
+		// If any input solutions need to be set up then we now check if there any input plate types set.
+		if len(input_platetypes) == 0 {
+			return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
+		}
 		well_count_assignments = choose_plate_assignments(input_volumes, input_platetypes, weights_constraints)
-
 	}
 
 	input_assignments := make(map[string][]string, len(well_count_assignments))
@@ -156,12 +156,11 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		//logger.Debug(fmt.Sprintln("Well assignments: ", well_assignments))
 
 		var curr_well *wtype.LHWell
-		ass := make([]string, 0, 3)
+		var assignments []string
 
 		// best hack so far: add an extra well of everything
 		// in case we run out
 		for platetype, nwells := range well_assignments {
-
 			WellTot := nwells + 1
 
 			// unless it's an instance
@@ -200,8 +199,8 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 				// now put it there
 
-				location := curr_plate.ID + ":" + curr_well.Crds
-				ass = append(ass, location)
+				location := curr_plate.ID + ":" + curr_well.Crds.FormatA1()
+				assignments = append(assignments, location)
 
 				var newcomponent *wtype.LHComponent
 
@@ -212,21 +211,28 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 					curr_well.SetUserAllocated()
 				} else {
 					newcomponent = component.Dup()
-					newcomponent.Vol = curr_well.MaxVol
-					newcomponent.Vunit = curr_well.Vunit
+					newcomponent.Vol = curr_well.MaxVolume().RawValue()
+					newcomponent.Vunit = curr_well.MaxVolume().Unit().PrefixedSymbol()
 					newcomponent.Loc = location
-					volume.Subtract(curr_well.WorkingVolume())
+
+					//usefulVolume is the most we can get from the well assuming one transfer
+					usefulVolume := curr_well.CurrentWorkingVolume()
+					usefulVolume.Subtract(request.CarryVolume)
+					volume.Subtract(usefulVolume)
 				}
 
 				st.SetLocationOf(component.ID, location)
 
-				curr_well.Add(newcomponent)
+				err := curr_well.AddComponent(newcomponent)
+				if err != nil {
+					return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Input plate setup : %s", err.Error()))
+				}
 				curr_well.DeclareAutoallocated()
 				input_plates[curr_plate.ID] = curr_plate
 			}
 		}
 
-		input_assignments[cname] = ass
+		input_assignments[cname] = assignments
 	}
 
 	// add any remaining assignments

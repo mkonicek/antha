@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 // SampleAll takes all of this liquid
@@ -64,6 +65,10 @@ func SplitSample(l *wtype.LHComponent, v wunit.Volume) (moving, remaining *wtype
 
 	remaining.Vol -= v.ConvertToString(remaining.Vunit)
 	remaining.ID = wtype.GetUUID()
+
+	sampletracker := sampletracker.GetSampleTracker()
+
+	sampletracker.UpdateIDOf(l.ID, remaining.ID)
 
 	return
 }
@@ -209,7 +214,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 				panic(fmt.Sprintf("Cannot find well %s on plate %s name %s type %s", opt.Address, r.OutPlate.ID, r.OutPlate.Name(), r.OutPlate.Type))
 			}
 
-			if !w.Empty() {
+			if !w.IsEmpty() {
 				// the instruction version has to remain unchanged
 				// the returned version in the protocol has to be mixed
 				w.WContents.Loc = r.OutPlate.ID + ":" + opt.Address

@@ -56,6 +56,10 @@ func (sh *Shape) Dup() *Shape {
 	return &(Shape{sh.ShapeName, sh.LengthUnit, sh.H, sh.W, sh.D})
 }
 
+func (sh *Shape) String() string {
+	return fmt.Sprintf("Generic Shape [%fx%fx%f]", sh.H, sh.W, sh.D)
+}
+
 func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 
 	shapename := strings.ToLower(sh.ShapeName)

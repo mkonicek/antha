@@ -98,12 +98,8 @@ func TestLHWellSerialize(t *testing.T) {
 	lhwell := LHWell{
 		"15cf94b7-ae06-443d-bc9a-9aadc30790fd",
 		"",
-		"",
-		"",
-		"Gilson20Tipbox",
-		"A1",
+		MakeWellCoords("A1"),
 		20,
-		"ul",
 		NewLHComponent(),
 		1.0,
 		&Shape{
@@ -113,12 +109,9 @@ func TestLHWellSerialize(t *testing.T) {
 			7.3,
 			51.2,
 		},
-		0,
-		7.3,
-		7.3,
+		FlatWellBottom,
+		BBox{Coordinates{}, Coordinates{7.3, 7.3, 51.2}},
 		46,
-		0,
-		"mm",
 		wellExtra,
 		nil,
 	}

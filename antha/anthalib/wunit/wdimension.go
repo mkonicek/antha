@@ -507,17 +507,12 @@ type Unit struct {
 // UnitMap lists approved units to create new measurements.
 var UnitMap = map[string]map[string]Unit{
 	"Concentration": {
-		"mg/ml":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"g/L":     {Base: "g/l", Prefix: "", Multiplier: 1.0},
 		"kg/l":    {Base: "g/l", Prefix: "k", Multiplier: 1.0},
-		"kg/L":    {Base: "g/l", Prefix: "k", Multiplier: 1.0},
 		"g/l":     {Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"mg/L":    {Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"mg/l":    {Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ug/L":    {Base: "g/l", Prefix: "u", Multiplier: 1.0},
 		"ug/l":    {Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"ng/L":    {Base: "g/l", Prefix: "n", Multiplier: 1.0},
 		"ng/l":    {Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"mg/ml":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
 		"ug/ml":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
 		"ug/ul":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
 		"ng/ul":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
@@ -525,34 +520,63 @@ var UnitMap = map[string]map[string]Unit{
 		"pg/ul":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
 		"pg/ml":   {Base: "g/l", Prefix: "n", Multiplier: 1.0},
 		"pg/l":    {Base: "g/l", Prefix: "p", Multiplier: 1.0},
-		"Mol/L":   {Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"Mol/l":   {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"kg/L":    {Base: "g/l", Prefix: "k", Multiplier: 1.0},
+		"g/L":     {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"mg/L":    {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/L":    {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"ng/L":    {Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"pg/L":    {Base: "g/l", Prefix: "p", Multiplier: 1.0},
+		"mg/mL":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"ug/mL":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/uL":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"ng/uL":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ng/mL":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"pg/uL":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"pg/mL":   {Base: "g/l", Prefix: "n", Multiplier: 1.0},
 		"M":       {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/l":     {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"Mol/l":   {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/L":     {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"Mol/L":   {Base: "M/l", Prefix: "", Multiplier: 1.0},
 		"mM":      {Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"uM":      {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"nM":      {Base: "M/l", Prefix: "n", Multiplier: 1.0},
 		"mM/l":    {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/l":  {Base: "M/l", Prefix: "m", Multiplier: 1.0},
 		"mM/L":    {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/L":  {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"uM":      {Base: "M/l", Prefix: "u", Multiplier: 1.0},
 		"uM/l":    {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"uMol/l":  {Base: "M/l", Prefix: "u", Multiplier: 1.0},
 		"uM/L":    {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"uMol/L":  {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"nM":      {Base: "M/l", Prefix: "n", Multiplier: 1.0},
 		"nM/l":    {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nMol/l":  {Base: "M/l", Prefix: "n", Multiplier: 1.0},
 		"nM/L":    {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nMol/L":  {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"pM":      {Base: "M/l", Prefix: "p", Multiplier: 1.0},
 		"pM/l":    {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pMol/l":  {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/L":    {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pMol/L":  {Base: "M/l", Prefix: "p", Multiplier: 1.0},
 		"pM/ul":   {Base: "M/l", Prefix: "u", Multiplier: 1.0},
 		"pMol/ul": {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"pM/L":    {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/uL":   {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"pMol/uL": {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"fM":      {Base: "M/l", Prefix: "f", Multiplier: 1.0},
 		"fM/l":    {Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fMol/l":  {Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fM/L":    {Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fMol/L":  {Base: "M/l", Prefix: "f", Multiplier: 1.0},
 		"fM/ul":   {Base: "M/l", Prefix: "n", Multiplier: 1.0},
 		"fMol/ul": {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"fM/L":    {Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"M/l":     {Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"M/L":     {Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"mMol/L":  {Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mMol/l":  {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"fM/uL":   {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"fMol/uL": {Base: "M/l", Prefix: "n", Multiplier: 1.0},
 		"X":       {Base: "X", Prefix: "", Multiplier: 1.0},
 		"x":       {Base: "X", Prefix: "", Multiplier: 1.0},
 		"U/l":     {Base: "U/l", Prefix: "", Multiplier: 1.0},
+		"U/L":     {Base: "U/l", Prefix: "", Multiplier: 1.0},
 		"U/ml":    {Base: "U/l", Prefix: "", Multiplier: 1000.0},
+		"U/mL":    {Base: "U/l", Prefix: "", Multiplier: 1000.0},
 	},
 	"Mass": {
 		"ng": {Base: "g", Prefix: "n", Multiplier: 1.0},
@@ -574,10 +598,15 @@ var UnitMap = map[string]map[string]Unit{
 		"M":    {Base: "M", Prefix: "", Multiplier: 1.0},
 	},
 	"Volume": {
+		"pl": {Base: "l", Prefix: "p", Multiplier: 1.0},
 		"nl": {Base: "l", Prefix: "n", Multiplier: 1.0},
 		"ul": {Base: "l", Prefix: "u", Multiplier: 1.0},
 		"ml": {Base: "l", Prefix: "m", Multiplier: 1.0},
 		"l":  {Base: "l", Prefix: "", Multiplier: 1.0},
+		"pL": {Base: "l", Prefix: "p", Multiplier: 1.0},
+		"nL": {Base: "l", Prefix: "n", Multiplier: 1.0},
+		"uL": {Base: "l", Prefix: "u", Multiplier: 1.0},
+		"mL": {Base: "l", Prefix: "m", Multiplier: 1.0},
 		"L":  {Base: "l", Prefix: "", Multiplier: 1.0},
 	},
 	"Rate": {
@@ -603,8 +632,12 @@ var UnitMap = map[string]map[string]Unit{
 // ValidMeasurementUnit checks the validity of a measurement type and unit within that measurement type.
 // An error is returned if an invalid measurement type or unit is specified.
 func ValidMeasurementUnit(measureMentType, unit string) error {
+	// replace µ with u
 	unit = strings.Replace(unit, "µ", "u", -1)
-
+	if measureMentType == "Concentration" {
+		// replace L with l
+		unit = strings.Replace(unit, "L", "l", -1)
+	}
 	validUnits, measurementFound := UnitMap[measureMentType]
 	if !measurementFound {
 		var validMeasurementTypes []string
@@ -631,7 +664,10 @@ func ValidMeasurementUnit(measureMentType, unit string) error {
 
 // ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
 func ValidConcentrationUnit(unit string) error {
+	// replace µ with u
 	unit = strings.Replace(unit, "µ", "u", -1)
+	// replace L with l
+	unit = strings.Replace(unit, "L", "l", -1)
 	_, ok := UnitMap["Concentration"][unit]
 	if !ok {
 		var approved []string
@@ -646,7 +682,10 @@ func ValidConcentrationUnit(unit string) error {
 
 // NewConcentration makes a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) Concentration {
+	// replace µ with u
 	unit = strings.Replace(unit, "µ", "u", -1)
+	// replace L with l
+	unit = strings.Replace(unit, "L", "l", -1)
 
 	details, ok := UnitMap["Concentration"][unit]
 	if !ok {

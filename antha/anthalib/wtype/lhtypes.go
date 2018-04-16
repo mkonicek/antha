@@ -376,14 +376,12 @@ func (lhh *LHHead) GetParams() *LHChannelParameter {
 }
 
 // adaptor
-// TODO -- should be an array of loaded tips
 type LHAdaptor struct {
-	Name          string
-	ID            string
-	Manufacturer  string
-	Params        *LHChannelParameter
-	Ntipsloaded   int
-	Tiptypeloaded *LHTip
+	Name         string
+	ID           string
+	Manufacturer string
+	Params       *LHChannelParameter
+	Tips         []*LHTip
 }
 
 func NewLHAdaptor(name, mf string, params *LHChannelParameter) *LHAdaptor {
@@ -391,44 +389,77 @@ func NewLHAdaptor(name, mf string, params *LHChannelParameter) *LHAdaptor {
 	lha.Name = name
 	lha.Manufacturer = mf
 	lha.Params = params
+	lha.Tips = make([]*LHTip, params.Multi)
 	return &lha
 }
 
 func (lha *LHAdaptor) Dup() *LHAdaptor {
 	ad := NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.Dup())
-	ad.Ntipsloaded = lha.Ntipsloaded
-	if !ad.Tiptypeloaded.IsNil() {
-		ad.Tiptypeloaded = lha.Tiptypeloaded.Dup()
+
+	for i, tip := range lha.Tips {
+		if tip != nil {
+			ad.AddTip(i, tip.Dup())
+		}
 	}
 
 	return ad
 }
 
-func (lha *LHAdaptor) LoadTips(n int, tiptype *LHTip) bool {
-	if lha.Ntipsloaded > 0 {
-		return false
+//The number of tips currently loaded
+func (lha *LHAdaptor) NTipsLoaded() int {
+	r := 0
+	for i := range lha.Tips {
+		if lha.Tips[i] != nil {
+			r += 1
+		}
 	}
-
-	lha.Ntipsloaded = n
-	lha.Tiptypeloaded = tiptype
-	return true
+	return r
 }
 
-func (lha *LHAdaptor) UnloadTips() bool {
-	if lha.Ntipsloaded == 0 {
-		return false
+//Is there a tip loaded on channel_number
+func (lha *LHAdaptor) IsTipLoaded(channel_number int) bool {
+	return lha.Tips[channel_number] != nil
+}
+
+//Return the tip at channel_number, nil otherwise
+func (lha *LHAdaptor) GetTip(channel_number int) *LHTip {
+	return lha.Tips[channel_number]
+}
+
+//Load a tip to the specified channel
+func (lha *LHAdaptor) AddTip(channel_number int, tip *LHTip) {
+	lha.Tips[channel_number] = tip
+}
+
+//Remove a tip from the specified channel and return it
+func (lha *LHAdaptor) RemoveTip(channel_number int) *LHTip {
+	tip := lha.Tips[channel_number]
+	lha.Tips[channel_number] = nil
+	return tip
+}
+
+//Remove every tip from the adaptor
+func (lha *LHAdaptor) RemoveTips() []*LHTip {
+	ret := make([]*LHTip, 0, lha.NTipsLoaded())
+	for i := range lha.Tips {
+		if lha.Tips[i] != nil {
+			ret = append(ret, lha.Tips[i])
+			lha.Tips[i] = nil
+		}
 	}
-
-	lha.Ntipsloaded = 0
-	lha.Tiptypeloaded = nil
-
-	return true
+	return ret
 }
 
 func (lha *LHAdaptor) GetParams() *LHChannelParameter {
-	if lha.Ntipsloaded == 0 {
+	if lha.NTipsLoaded() == 0 {
 		return lha.Params
 	} else {
-		return lha.Params.MergeWithTip(lha.Tiptypeloaded)
+		params := *lha.Params
+		for _, tip := range lha.Tips {
+			if tip != nil {
+				params = *params.MergeWithTip(tip)
+			}
+		}
+		return &params
 	}
 }

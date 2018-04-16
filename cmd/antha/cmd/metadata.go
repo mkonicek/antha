@@ -1,5 +1,5 @@
-// /anthalib/wtype/named.go: Part of the Antha language
-// Copyright (C) 2015 The Antha authors. All rights reserved.
+// metadata.go: Part of the Antha language
+// Copyright (C) 2018 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,8 +20,16 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package wtype
+package cmd
 
-type Named interface {
-	GetName() string
+import "github.com/spf13/cobra"
+
+var metadataCmd = &cobra.Command{
+	Use:   "metadata",
+	Short: "Manage antha metadata files",
+}
+
+func init() {
+	c := metadataCmd
+	RootCmd.AddCommand(c)
 }

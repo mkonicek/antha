@@ -176,7 +176,7 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 	// can do 7
 	tb, dstp := getTransferBlock2Component(ctx)
 
-	tb.Inss[0].Welladdress = "B1"
+	tb.Inss[0].Welladdress = "B2"
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
@@ -184,6 +184,7 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 		t.Error(err)
 	}
 	pol.Policies["water"]["CAN_MULTI"] = true
+
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
 		t.Error(err)

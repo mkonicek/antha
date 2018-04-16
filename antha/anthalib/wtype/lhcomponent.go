@@ -87,6 +87,39 @@ func (lhc *LHComponent) WellLocation() string {
 	return lhc.PlateLocation().Coords.FormatA1()
 }
 
+//GetClass return the class of the object
+func (lhc *LHComponent) GetClass() string {
+	return "component"
+}
+
+//GetName the component's name
+func (lhc *LHComponent) GetName() string {
+	if lhc == nil {
+		return "nil"
+	}
+	return fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
+}
+
+//Summarize describe the component in a user friendly manner
+func (lhc *LHComponent) Summarize() string {
+	if lhc == nil {
+		return "nil"
+	}
+
+	if lhc.Vol != 0.0 {
+		return fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
+	} else if lhc.Tvol != 0.0 {
+		return fmt.Sprintf("%s to %v", lhc.CName, lhc.TotalVolume())
+	} else if lhc.Conc != 0.0 {
+		return fmt.Sprintf("%s to %v", lhc.CName, lhc.Concentration())
+	}
+
+	if lhc.CName != "" {
+		return fmt.Sprintf("unknown amount of %s", lhc.CName)
+	}
+	return "unknown volume of unknown component"
+}
+
 // PlateID returns the id of a plate or the empty string
 func (lhc *LHComponent) PlateID() string {
 	loc := lhc.PlateLocation()
@@ -488,27 +521,29 @@ func (lhc *LHComponent) Cp() *LHComponent {
 
 func (lhc *LHComponent) Dup() *LHComponent {
 	c := NewLHComponent()
-	c.ID = lhc.ID
-	c.Order = lhc.Order
-	c.CName = lhc.CName
-	c.Type = lhc.Type
-	c.Vol = lhc.Vol
-	c.Conc = lhc.Conc
-	c.Cunit = lhc.Cunit
-	c.Vunit = lhc.Vunit
-	c.Tvol = lhc.Tvol
-	c.Smax = lhc.Smax
-	c.Visc = lhc.Visc
-	c.StockConcentration = lhc.StockConcentration
-	c.Extra = make(map[string]interface{}, len(lhc.Extra))
-	for k, v := range lhc.Extra {
-		c.Extra[k] = v
-	}
+	if lhc != nil {
+		c.ID = lhc.ID
+		c.Order = lhc.Order
+		c.CName = lhc.CName
+		c.Type = lhc.Type
+		c.Vol = lhc.Vol
+		c.Conc = lhc.Conc
+		c.Cunit = lhc.Cunit
+		c.Vunit = lhc.Vunit
+		c.Tvol = lhc.Tvol
+		c.Smax = lhc.Smax
+		c.Visc = lhc.Visc
+		c.StockConcentration = lhc.StockConcentration
+		c.Extra = make(map[string]interface{}, len(lhc.Extra))
+		for k, v := range lhc.Extra {
+			c.Extra[k] = v
+		}
 
-	c.Loc = lhc.Loc
-	c.Destination = lhc.Destination
-	c.ParentID = lhc.ParentID
-	c.DaughterID = lhc.DaughterID
+		c.Loc = lhc.Loc
+		c.Destination = lhc.Destination
+		c.ParentID = lhc.ParentID
+		c.DaughterID = lhc.DaughterID
+	}
 	return c
 }
 

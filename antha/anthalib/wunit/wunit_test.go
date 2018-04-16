@@ -475,6 +475,25 @@ func TestNewConcentration(t *testing.T) {
 
 }
 
+func TestFlowRateComparison(t *testing.T) {
+	a := NewFlowRate(1., "ml/min")
+	b := NewFlowRate(2., "ml/min")
+
+	if !b.GreaterThan(a) {
+		t.Errorf("Got b > a (%s > %s) wrong", b, a)
+	}
+	if a.GreaterThan(b) {
+		t.Errorf("Got a > b (%s > %s) wrong", a, b)
+	}
+
+	if b.LessThan(a) {
+		t.Errorf("Got b < a (%s < %s) wrong", b, a)
+	}
+	if !a.LessThan(b) {
+		t.Errorf("Got a < b (%s < %s) wrong", a, b)
+	}
+}
+
 func TestRoundedComparisons(t *testing.T) {
 	v1 := NewVolume(0.5, "ul")
 	v2 := NewVolume(0.4999999, "ul")

@@ -64,7 +64,7 @@ func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.I
 					if strings.Contains(well.WContents.ParentID, lhCmpID) {
 						// Found a component that we are looking for
 						lhPlateLocations[lhCmpID] = plate.ID
-						lhWellLocations[lhCmpID] = well.Crds
+						lhWellLocations[lhCmpID] = well.Crds.FormatA1()
 					}
 				}
 			}

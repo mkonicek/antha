@@ -727,7 +727,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 			// component we seek
 
 			p, ok := localplates[ipref]
-			if ok && !p.Empty() {
+			if ok && !p.IsEmpty() {
 				// whaddya got?
 				// nb this won't work if we need to split a volume across several plates
 				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume(), legacyVolume)
@@ -822,7 +822,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 		wells, err = bx.GetTipsMasked(tipParams.Mask, tipParams.Channel.Orientation, true)
 
 		/*
-			if err != nil && !bx.Empty() {
+			if err != nil && !bx.IsEmpty() {
 				return wells, positions, boxtypes, err
 			}
 		*/

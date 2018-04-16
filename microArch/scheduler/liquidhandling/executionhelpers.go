@@ -165,6 +165,10 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 		addToIChain(ic, n, tg)
 	}
 
+	// finally we need to ensure that splits and mixes are kept separate by fissioning nodes
+
+	ic.SplitMixedNodes()
+
 	sortOutputs(ic, sort)
 
 	return ic
@@ -525,7 +529,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 			//v2 := wunit.NewVolume(v.Vol, v.Vunit)
 			v2 := tfrs[i].Vols[xx] // volss[i][xx]
-			vt = append(vt, wlt.CurrVolume())
+			vt = append(vt, wlt.CurrentVolume())
 			wh = append(wh, v.TypeName())
 			va = append(va, v2)
 			pt = append(pt, robot.PlateIDLookup[insIn.PlateID])
@@ -543,11 +547,11 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 				return nil, err
 			}
 
-			vf = append(vf, wlf.CurrVolume())
+			vf = append(vf, wlf.CurrentVolume())
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
 			cnames = append(cnames, wlf.WContents.CName)
-			wlf.Remove(vrm)
+			wlf.RemoveVolume(vrm)
 
 			pf = append(pf, robot.PlateIDLookup[tfrs[i].PlateIDs[xx]])
 			wf = append(wf, tfrs[i].WellCoords[xx])
@@ -566,7 +570,10 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vd.Vol = v2.ConvertToString(vd.Vunit)
 			vd.ID = wlf.WContents.ID
 			vd.ParentID = wlf.WContents.ParentID
-			wlt.Add(vd)
+			err := wlt.AddComponent(vd)
+			if err != nil {
+				return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler couldn't add volume to well : %s", err.Error()))
+			}
 
 			// TODO -- danger here, is result definitely set?
 			wlt.WContents.ID = insIn.Results[0].ID

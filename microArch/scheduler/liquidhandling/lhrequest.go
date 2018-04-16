@@ -126,7 +126,7 @@ func (req *LHRequest) ConfigureYourself() error {
 
 	for _, v := range req.Input_plates {
 		for _, w := range v.Wellcoords {
-			if w.Empty() {
+			if w.IsEmpty() {
 				continue
 			}
 

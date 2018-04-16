@@ -36,6 +36,7 @@ import (
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
+	simulator_lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 )
 
 // the liquid handler structure defines the interface to a particular liquid handling
@@ -104,6 +105,10 @@ func ValidateRequest(request *LHRequest) error {
 	// no component can have all three of Conc, Vol and TVol set to 0:
 
 	for _, ins := range request.LHInstructions {
+		// the check below makes sense only for mixes
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
 		for i, cmp := range ins.Components {
 			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
 				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)
@@ -146,8 +151,21 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	err = this.Execute(request)
+	err = this.AddSetupInstructions(request)
+	if err != nil {
+		return err
+	}
 
+	/*err = this.Simulate(request)
+	if err != nil {
+		//since the simulator is... tender right now, let's take this with a pinch of salt
+		logger.Info("Ignoring simulation error")
+		//return err
+	} else {
+		logger.Info("Simulation completed successfully")
+	}*/
+
+	err = this.Execute(request)
 	if err != nil {
 		return err
 	}
@@ -164,23 +182,63 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	return nil
 }
 
-// run the request via the driver
-func (this *Liquidhandler) Execute(request *LHRequest) error {
-
-	if (*request).Instructions == nil {
+//AddSetupInstructions add instructions to the instruction stream to setup
+//the plate layout of the machine
+func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
+	if request.Instructions == nil {
 		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
 	}
-	// add setup instructions to the request instruction stream
 
-	this.add_setup_instructions(request)
-
-	// set up the robot with extra calls not included in instructions
-
-	err := this.do_setup(request)
-
-	if err != nil {
-		return err
+	setup_insts := this.get_setup_instructions(request)
+	if request.Instructions[0].InstructionType() == liquidhandling.INI {
+		request.Instructions = append(request.Instructions[:1], append(setup_insts, request.Instructions[1:]...)...)
+	} else {
+		request.Instructions = append(setup_insts, request.Instructions...)
 	}
+	return nil
+}
+
+// run the request via the simulator
+func (this *Liquidhandler) Simulate(request *LHRequest) error {
+
+	instructions := (*request).Instructions
+	if instructions == nil {
+		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
+	}
+
+	// set up the simulator with default settings
+	vlh := simulator_lh.NewVirtualLiquidHandler(this.Properties, nil)
+	for _, err := range vlh.GetErrors() {
+		err.WriteToLog()
+	}
+
+	//check we didn't hit a catastrophic error
+	if vlh.HasError() {
+		return vlh.GetWorstError()
+	}
+
+	fmt.Printf("Simulating %d instructions...\n", len(instructions))
+	for _, ins := range instructions {
+		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh)
+		if vlh.HasError() {
+			break
+		}
+	}
+
+	for _, err := range vlh.GetErrors() {
+		err.WriteToLog()
+	}
+
+	//return the worst error if it's actually an error
+	if vlh.HasError() {
+		return vlh.GetWorstError()
+	}
+	return nil
+}
+
+// run the request via the driver
+func (this *Liquidhandler) Execute(request *LHRequest) error {
+	//robot setup now included in instructions
 
 	instructions := (*request).Instructions
 
@@ -188,6 +246,11 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 	timer := this.Properties.GetTimer()
 	var d time.Duration
+
+	err := this.update_metadata(request)
+	if err != nil {
+		return err
+	}
 
 	for _, ins := range instructions {
 
@@ -286,9 +349,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 				insvols := ins.GetParameter("VOLUME").([]wunit.Volume)
 				v.Add(insvols[i])
-				// double add of carry volume here?
 				v.Add(rq.CarryVolume)
-
 			}
 		} else if ins.InstructionType() == liquidhandling.TFR {
 			tfr := ins.(*liquidhandling.TransferInstruction)
@@ -368,9 +429,22 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
-				well2.WContents.SetVolume(vol)
-				well.WContents.SetVolume(well.ResidualVolume())
-				well.WContents.ID = wtype.GetUUID()
+
+				well2Contents := well2.Contents().Dup()
+				well2Contents.SetVolume(vol)
+				err := well2.SetContents(well2Contents)
+				if err != nil {
+					return err
+				}
+
+				wellContents := well.Contents().Dup()
+				wellContents.SetVolume(well.ResidualVolume())
+				wellContents.ID = wtype.GetUUID()
+				err = well.SetContents(wellContents)
+				if err != nil {
+					return err
+				}
+
 				well.DeclareNotTemporary()
 				well2.DeclareNotTemporary()
 			}
@@ -418,8 +492,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				for _, w := range wa {
 					// copy the outputs to the correct side
 					// and remove the outputs from the initial state
-					if !w.Empty() {
-						w2, ok := p2.Wellcoords[w.Crds]
+					if !w.IsEmpty() {
+						w2, ok := p2.Wellcoords[w.Crds.FormatA1()]
 						if ok {
 							// there's no strict separation between outputs and
 							// inputs here
@@ -431,12 +505,21 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 								w.Clear()
 								c2 := w2.WContents.Dup()
 								w2.Clear()
-								w.Add(c2)
-								w2.Add(c)
+								err := w.AddComponent(c2)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
+								err = w2.AddComponent(c)
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
 							} else {
 								// replace
 								w2.Clear()
-								w2.Add(w.WContents)
+								err := w2.AddComponent(w.Contents())
+								if err != nil {
+									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
+								}
 								w.Clear()
 							}
 						}
@@ -457,9 +540,10 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) add_setup_instructions(rq *LHRequest) {
-	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, len(rq.Instructions)+10)
+func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandling.TerminalRobotInstruction {
+	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, 1+len(this.Properties.PosLookup))
 
+	//first instruction is always to remove all plates
 	instructions = append(instructions, liquidhandling.NewRemoveAllPlatesInstruction())
 
 	for position, plateid := range this.Properties.PosLookup {
@@ -473,31 +557,10 @@ func (this *Liquidhandler) add_setup_instructions(rq *LHRequest) {
 
 		instructions = append(instructions, ins)
 	}
-	instructions = append(instructions, rq.Instructions...)
-	rq.Instructions = instructions
+	return instructions
 }
 
-func (this *Liquidhandler) do_setup(rq *LHRequest) error {
-	/*
-		stat := this.Properties.Driver.RemoveAllPlates()
-
-		if stat.Errorcode == driver.ERR {
-			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-		}
-
-		for position, plateid := range this.Properties.PosLookup {
-			if plateid == "" {
-				continue
-			}
-			plate := this.Properties.PlateLookup[plateid]
-			name := plate.(wtype.Named).GetName()
-
-			stat = this.Properties.Driver.AddPlateTo(position, plate, name)
-			if stat.Errorcode == driver.ERR {
-				return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-			}
-		}
-	*/
+func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
 
 	if _, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
 		stat := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver).UpdateMetaData(this.Properties)
@@ -536,60 +599,120 @@ func (this *Liquidhandler) do_setup(rq *LHRequest) error {
 // paused, which should be tricky but possible.
 //
 
-func checkSanityIns(request *LHRequest) {
-	// check instructions for basic sanity
-
-	good := true
+//assertVolumesNonNegative tests that the volumes within the LHRequest are zero or positive
+func assertVolumesNonNegative(request *LHRequest) error {
 	for _, ins := range request.LHInstructions {
-		if ins.Type == wtype.LHIMIX {
-			v := wunit.NewVolume(0.0, "ul")
-			tv := wunit.NewVolume(0.0, "ul")
-			for _, c := range ins.Components {
-				// need to be a bit careful but...
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
 
-				if c.Vol < 0.0 {
-					fmt.Println("NEGATIVE VOLUME!!!! ", c.CName, " ", c.Vol)
-					good = false
-					continue
-				}
-
-				if c.Vol != 0.0 {
-					v.Add(c.Volume())
-				} else if c.Tvol != 0.0 {
-					if !tv.IsZero() && !tv.EqualTo(c.TotalVolume()) {
-						fmt.Println("ERROR: MULTIPLE DISTINCT TOTAL VOLUMES SPECIFIED FOR ", ins.ID, " ", ins.Results[0].CName, " COMPONENT ", c)
-						good = false
-					}
-
-					tv = c.TotalVolume()
-				}
-			}
-
-			if tv.IsZero() && !v.EqualTo(ins.Results[0].Volume()) {
-				fmt.Println("OH DEAR DEAR DEAR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Results[0].CName, " COMP: ", v, " PROD: ", ins.Results[0].Volume())
-				good = false
-			} else if !tv.IsZero() && !tv.EqualTo(ins.Results[0].Volume()) {
-				fmt.Println("ERROR: VOLUME INCONSISTENCY FOR ", ins.ID, " ", ins.Results[0].CName, " COMP: ", tv, " PROD: ", ins.Results[0].Volume())
-				good = false
-			} else if ins.PlateID != "" {
-				// compare result volume to the well volume
-
-				plat, ok := request.GetPlate(ins.PlateID)
-
-				if !ok {
-					// possibly an issue
-				} else if plat.Welltype.MaxVolume().LessThan(ins.Results[0].Volume()) {
-					fmt.Println("WARNING: EXCESS VOLUME REQUIRED FOR ", ins.ID, " ", ins.Results[0].CName, " WANT: ", ins.Results[0].Volume(), " MAX FOR PLATE OF TYPE ", plat.Type, ": ", plat.Welltype.MaxVolume())
-					//good = false
-				}
+		for _, cmp := range ins.Components {
+			if cmp.Volume().LessThan(wunit.ZeroVolume()) {
+				return wtype.LHErrorf(wtype.LH_ERR_VOL, "negative volume for component \"%s\" in instruction:\n%s", cmp.CName, ins.Summarize(1))
 			}
 		}
 	}
+	return nil
+}
 
-	if !good {
-		panic("URGH - volume issues here")
+//assertTotalVolumesMatch checks that component total volumes are all the same in mix instructions
+func assertTotalVolumesMatch(request *LHRequest) error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		totalVolume := wunit.ZeroVolume()
+
+		for _, cmp := range ins.Components {
+			if tV := cmp.TotalVolume(); !tV.IsZero() {
+				if !totalVolume.IsZero() && !tV.EqualTo(totalVolume) {
+					return wtype.LHErrorf(wtype.LH_ERR_VOL, "multiple distinct total volumes specified in instruction:\n%s", ins.Summarize(1))
+				}
+				totalVolume = tV
+			}
+		}
 	}
+	return nil
+}
 
+//assertMixResultsCorrect checks that volumes of the mix result matches either the sum of the input, or the total volume if specified
+func assertMixResultsCorrect(request *LHRequest) error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		totalVolume := wunit.ZeroVolume()
+		volumeSum := wunit.ZeroVolume()
+
+		for _, cmp := range ins.Components {
+			if tV := cmp.TotalVolume(); !tV.IsZero() {
+				totalVolume = tV
+			} else if v := cmp.Volume(); !v.IsZero() {
+				volumeSum.Add(v)
+			}
+		}
+
+		if len(ins.Results) != 1 {
+			return wtype.LHErrorf(wtype.LH_ERR_DIRE, "mix instruction has %d results specified, expecting one at instruction:\n%s",
+				len(ins.Results), ins.Summarize(1))
+		}
+
+		resultVolume := ins.Results[0].Volume()
+
+		if !totalVolume.IsZero() && !totalVolume.EqualTo(resultVolume) {
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "total volume (%v) does not match resulting volume (%v) for instruction:\n%s",
+				totalVolume, resultVolume, ins.Summarize(1))
+		} else if totalVolume.IsZero() && !volumeSum.EqualTo(resultVolume) {
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "sum of requested volumes (%v) does not match result volume (%v) for instruction:\n%s",
+				volumeSum, resultVolume, ins.Summarize(1))
+		}
+	}
+	return nil
+}
+
+//assertWellNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
+//assumes assertMixResultsCorrect returns nil
+func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		resultVolume := ins.Results[0].Volume()
+
+		var plate *wtype.LHPlate
+		if ins.OutPlate != nil {
+			plate = ins.OutPlate
+		} else if ins.PlateID != "" {
+			if p, ok := request.GetPlate(ins.PlateID); !ok {
+				continue
+			} else {
+				plate = p
+			}
+		} else if ins.Platetype != "" {
+			if p, err := inventory.NewPlate(ctx, ins.Platetype); err != nil {
+				continue
+			} else {
+				plate = p
+			}
+		} else {
+			//couldn't find an appropriate plate
+			continue
+		}
+
+		if maxVol := plate.Welltype.MaxVolume(); maxVol.LessThan(resultVolume) {
+			//ignore if this is just numerical precision (#campainforintegervolume)
+			delta := wunit.SubtractVolumes(resultVolume, maxVol)
+			if delta.IsZero() {
+				continue
+			}
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "volume of resulting mix (%v) exceeds the well maximum (%v) for instruction:\n%s",
+				resultVolume, maxVol, ins.Summarize(1))
+		}
+	}
+	return nil
 }
 
 func checkInstructionOrdering(request *LHRequest) {
@@ -606,13 +729,18 @@ func checkInstructionOrdering(request *LHRequest) {
 	}
 }
 
-func onlyAllowOneInstructionType(c *IChain) {
+func countInstructionTypes(inss []*wtype.LHInstruction) map[string]bool {
 	m := make(map[string]bool)
-	inss := c.Values
 
 	for _, i := range inss {
 		m[i.InsType()] = true
 	}
+
+	return m
+}
+
+func onlyAllowOneInstructionType(c *IChain) {
+	m := countInstructionTypes(c.Values)
 
 	if len(m) != 1 {
 		panic(fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", m, c.Depth))
@@ -697,20 +825,39 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
 	}
 
-	// assert that we must keep prompts separate from mixes
-
+	// assert that we must keep prompts and splits separate from mixes
 	checkInstructionOrdering(request)
 
 	forceSanity(request)
 	// convert requests to volumes and determine required stock concentrations
-	checkSanityIns(request)
-	instructions, stockconcs, err := solution_setup(request, this.Properties)
 
+	if err := assertVolumesNonNegative(request); err != nil {
+		return err
+	}
+	if err := assertTotalVolumesMatch(request); err != nil {
+		return err
+	}
+	if err := assertMixResultsCorrect(request); err != nil {
+		return err
+	}
+	if err := assertWellNotOverfilled(ctx, request); err != nil {
+		return err
+	}
+
+	instructions, stockconcs, err := solution_setup(request, this.Properties)
 	if err != nil {
 		return err
 	}
 
-	checkSanityIns(request)
+	if err := assertVolumesNonNegative(request); err != nil {
+		return err
+	}
+	if err := assertTotalVolumesMatch(request); err != nil {
+		return err
+	}
+	if err := assertMixResultsCorrect(request); err != nil {
+		return err
+	}
 
 	request.LHInstructions = instructions
 	request.Stockconcs = stockconcs
@@ -751,7 +898,19 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 			}
 		}
 	}
-	checkSanityIns(request)
+
+	if err := assertVolumesNonNegative(request); err != nil {
+		return err
+	}
+	if err := assertTotalVolumesMatch(request); err != nil {
+		return err
+	}
+	if err := assertMixResultsCorrect(request); err != nil {
+		return err
+	}
+	if err := assertWellNotOverfilled(ctx, request); err != nil {
+		return err
+	}
 
 	// looks at components, determines what inputs are required
 	request, err = this.GetInputs(request)

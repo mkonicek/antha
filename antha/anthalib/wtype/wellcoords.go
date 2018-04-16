@@ -1,11 +1,10 @@
 package wtype
 
 import (
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func A1ArrayFromWells(wells []*LHWell) []string {
@@ -20,7 +19,7 @@ func WCArrayFromWells(wells []*LHWell) []WellCoords {
 			continue
 		}
 
-		ret = append(ret, MakeWellCoords(w.Crds))
+		ret = append(ret, w.Crds)
 	}
 
 	return ret
@@ -319,3 +318,14 @@ func (wca WellCoordArrayCol) Less(i, j int) bool { return wca[i].RowLessThan(wca
 func (wca WellCoordArrayRow) Len() int           { return len(wca) }
 func (wca WellCoordArrayRow) Swap(i, j int)      { t := wca[i]; wca[i] = wca[j]; wca[j] = t }
 func (wca WellCoordArrayRow) Less(i, j int) bool { return wca[i].ColLessThan(wca[j]) }
+
+//HumanizeWellCoords convenience function to make displaying a slice of WellCoords more human readable
+func HumanizeWellCoords(coords []WellCoords) string {
+	s := []string{}
+	for i := range coords {
+		if !coords[i].IsZero() {
+			s = append(s, coords[i].FormatA1())
+		}
+	}
+	return strings.Join(s, ",")
+}

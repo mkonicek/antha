@@ -207,7 +207,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 	// ci counts up cmps
 
 	for ci := 0; ci < len(cmps); ci++ {
-		if len(fromPlateIDs) <= ci || fromPlateIDs[ci] == "" {
+		if len(fromPlateIDs) <= ci || fromPlateIDs[ci] == "" || fromPlateIDs[ci] == "<No-ID>" {
 			continue
 		}
 
@@ -265,13 +265,13 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		// source well volume
 
-		wellFrom, ok := srcPlate.Wellcoords[wf[ci]]
+		wellFrom, ok := srcPlate.WellAtString(wf[ci])
 
 		if !ok {
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")
 		}
 
-		vf[ci] = wellFrom.CurrVolume()
+		vf[ci] = wellFrom.CurrentVolume()
 
 		// dest well volume
 
@@ -281,7 +281,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error to the authors")
 		}
 
-		vt[ci] = wellTo.CurrVolume()
+		vt[ci] = wellTo.CurrentVolume()
 
 		// source plate dimensions
 
@@ -295,19 +295,25 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 		cnames[ci] = wellFrom.WContents.CName
 
-		cmpFrom := wellFrom.Remove(va[ci])
-		// silently remove the carry
-		wellFrom.Remove(carryvol)
-
-		if cmpFrom == nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
+		cmpFrom, err := wellFrom.RemoveVolume(va[ci])
+		if err != nil {
+			return insOut, wtype.LHErrorf(wtype.LH_ERR_DIRE, "Planning inconsistency: %s - please report this error to the authors", err.Error())
 		}
 
-		wellTo.Add(cmpFrom)
+		// silently remove the carry
+		_, err = wellFrom.RemoveVolume(carryvol)
+		if err != nil {
+			//Ignore the error - the carry is coming from the residual volume
+		}
+
+		err = wellTo.AddComponent(cmpFrom)
+		if err != nil {
+			return insOut, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Planning inconsistency : %s", err.Error()))
+		}
 
 		// make sure the cmp loc is set
 
-		wellTo.WContents.Loc = wellTo.Plateid + ":" + wellTo.Crds
+		wellTo.WContents.Loc = wtype.IDOf(wellTo.Plate) + ":" + wellTo.Crds.FormatA1()
 
 		// make sure the wellTo gets the right ID (ultimately)
 		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Results[0].ID)

@@ -1152,6 +1152,7 @@ type Element struct {
 }
 
 func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
+	_ctx = execute.WithElementName(_ctx, {{ .ElementName }})
 	bs, err := json.Marshal(request)
 	if err != nil {
 		return nil, err

@@ -181,7 +181,6 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 					}
 					plates_in_play[platetype.Type] = p
 					curr_plate = plates_in_play[platetype.Type]
-					//platename := fmt.Sprintf("Input_plate_%d", curplaten)
 					platename := getSafeInputPlateName(request, curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1

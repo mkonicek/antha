@@ -301,10 +301,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		}
 
 		// silently remove the carry
-		_, err = wellFrom.RemoveVolume(carryvol)
-		if err != nil {
-			//Ignore the error - the carry is coming from the residual volume
-		}
+		wellFrom.RemoveVolume(carryvol) //nolint
 
 		err = wellTo.AddComponent(cmpFrom)
 		if err != nil {

@@ -551,7 +551,9 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
 			cnames = append(cnames, wlf.WContents.CName)
-			wlf.RemoveVolume(vrm)
+			if _, err := wlf.RemoveVolume(vrm); err != nil {
+				return nil, err
+			}
 
 			pf = append(pf, robot.PlateIDLookup[tfrs[i].PlateIDs[xx]])
 			wf = append(wf, tfrs[i].WellCoords[xx])

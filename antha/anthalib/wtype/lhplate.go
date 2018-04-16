@@ -618,7 +618,7 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 			arr[i][j].Plate = &lhp
 			arr[i][j].Crds = crds
 			arr[i][j].WContents.Loc = lhp.ID + ":" + crds.FormatA1()
-			arr[i][j].SetOffset(Coordinates{
+			arr[i][j].SetOffset(Coordinates{ //nolint
 				wellXStart + float64(j)*wellXOffset,
 				wellYStart + float64(i)*wellYOffset,
 				wellZStart,

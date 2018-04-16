@@ -291,6 +291,7 @@ func makeLHTipWaste(p *LHTipwasteParams, name string) *wtype.LHTipwaste {
  * ######################################## utils
  */
 
+/* -- remove for linting
 //test that the worst reported error severity is the worst
 func test_worst(t *testing.T, errors []*simulator.SimulationError, worst simulator.ErrorSeverity) {
 	s := simulator.SeverityNone
@@ -303,7 +304,7 @@ func test_worst(t *testing.T, errors []*simulator.SimulationError, worst simulat
 	if s != worst {
 		t.Errorf("Expected maximum severity %v, actual maximum severity %v", worst, s)
 	}
-}
+}*/
 
 //return subset of a not in b
 func get_not_in(a, b []string) []string {
@@ -651,10 +652,12 @@ func independent_lhproperties() *liquidhandling.LHProperties {
 	return makeLHProperties(&valid_props)
 }
 
+/* -- remove for linting
 func default_vlh() *lh.VirtualLiquidHandler {
 	vlh := lh.NewVirtualLiquidHandler(default_lhproperties(), nil)
 	return vlh
 }
+*/
 
 /*
  * ######################################## InstructionParams
@@ -848,6 +851,7 @@ func preloadFilledTips(head int, tipbox_loc string, channels []int, what string,
 	return &ret
 }
 
+/* -- remove for linting
 func fillTipwaste(tipwaste_loc string, count int) *SetupFn {
 	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
 		tipwaste := vlh.GetObjectAt(tipwaste_loc).(*wtype.LHTipwaste)
@@ -855,6 +859,7 @@ func fillTipwaste(tipwaste_loc string, count int) *SetupFn {
 	}
 	return &ret
 }
+*/
 
 func prefillWells(plate_loc string, wells_to_fill []string, liquid_name string, volume float64) *SetupFn {
 	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {

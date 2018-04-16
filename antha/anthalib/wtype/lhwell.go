@@ -226,7 +226,8 @@ func (w *LHWell) SetContents(newContents *LHComponent) error {
 	if newContents.Volume().GreaterThan(maxVol) {
 		//HJK: Disabling overflow errors until CarryVolume issues are resolved
 		//return LHError(LH_ERR_VOL,
-		//	fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
+		//	fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol)s
+		logger.Warning(fmt.Sprintf("setting %s as contents of well %s even though maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
 	}
 
 	w.WContents = newContents

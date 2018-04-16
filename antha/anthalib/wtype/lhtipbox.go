@@ -706,12 +706,12 @@ func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	for i := 0; i < nc; i++ {
 		for j := 0; j < nr; j++ {
 			tipbox.Tips[i][j] = tiptype.Dup()
-			tipbox.Tips[i][j].SetOffset(Coordinates{
-				tipbox.TipXStart + float64(i)*tipbox.TipXOffset + x_off,
-				tipbox.TipYStart + float64(j)*tipbox.TipYOffset + y_off,
-				tipbox.TipZStart,
+			tipbox.Tips[i][j].SetOffset(Coordinates{ //nolint
+				X: tipbox.TipXStart + float64(i)*tipbox.TipXOffset + x_off,
+				Y: tipbox.TipYStart + float64(j)*tipbox.TipYOffset + y_off,
+				Z: tipbox.TipZStart,
 			})
-			tipbox.Tips[i][j].SetParent(tipbox)
+			tipbox.Tips[i][j].SetParent(tipbox) //nolint
 		}
 	}
 	tipbox.NTips = tipbox.Nrows * tipbox.Ncols

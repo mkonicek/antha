@@ -171,9 +171,7 @@ func fElemsEqual(sl []float64, elems []int) bool {
 func extend_ints(l int, sl []int) []int {
 	if len(sl) < l {
 		r := make([]int, l)
-		for i, v := range sl {
-			r[i] = v
-		}
+		copy(r, sl)
 		return r
 	}
 	return sl
@@ -182,9 +180,7 @@ func extend_ints(l int, sl []int) []int {
 func extend_floats(l int, sl []float64) []float64 {
 	if len(sl) < l {
 		r := make([]float64, l)
-		for i, v := range sl {
-			r[i] = v
-		}
+		copy(r, sl)
 		return r
 	}
 	return sl
@@ -193,9 +189,7 @@ func extend_floats(l int, sl []float64) []float64 {
 func extend_strings(l int, sl []string) []string {
 	if len(sl) < l {
 		r := make([]string, l)
-		for i, v := range sl {
-			r[i] = v
-		}
+		copy(r, sl)
 		return r
 	}
 	return sl
@@ -204,9 +198,7 @@ func extend_strings(l int, sl []string) []string {
 func extend_bools(l int, sl []bool) []bool {
 	if len(sl) < l {
 		r := make([]bool, l)
-		for i, v := range sl {
-			r[i] = v
-		}
+		copy(r, sl)
 		return r
 	}
 	return sl
@@ -285,7 +277,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 		spacing := wtype.Coordinates{X: 0, Y: 0, Z: 0}
 		if p.Orientation == wtype.LHVChannel {
 			spacing.Y = 9.
-		} else if p.Orientation == wtype.LHVChannel {
+		} else if p.Orientation == wtype.LHHChannel {
 			spacing.X = 9.
 		}
 		vlh.state.AddAdaptor(NewAdaptorState(p.Independent, p.Multi, spacing, p))
@@ -902,7 +894,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 			self.AddWarningf("Aspirate", "While %s - minimum tip volume is %s",
 				describe(), tip.MinVol)
 			//will get an error here, but ignore it since we're already raising a warning
-			tip.AddComponent(c)
+			tip.AddComponent(c) //nolint
 		} else if err := tip.AddComponent(c); err != nil {
 			self.AddErrorf("Aspirate", "While %s - unexpected tip error \"%s\"", describe(), err.Error())
 		}
@@ -1254,7 +1246,9 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	for _, ch := range channels {
 		tips[ch].GetParent().(*wtype.LHTipbox).RemoveTip(wc[ch])
 		adaptor.GetChannel(ch).LoadTip(tips[ch])
-		tips[ch].SetParent(nil)
+		if err := tips[ch].SetParent((*wtype.LHTipbox)(nil)); err != nil {
+			self.AddError("LoadTips", err.Error())
+		}
 	}
 
 	return ret
@@ -1402,7 +1396,6 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 			default:
 				self.AddErrorf("UnloadTips", "Cannot unload tips to %s \"%s\" at location %s",
 					wtype.ClassOf(target), wtype.NameOf(target), position[ch])
-				break
 			}
 		}
 		if self.HasError() {
@@ -1646,7 +1639,9 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 func (self *VirtualLiquidHandler) RemoveAllPlates() driver.CommandStatus {
 	deck := self.state.GetDeck()
 	for _, name := range deck.GetSlotNames() {
-		deck.Clear(name)
+		if err := deck.Clear(name); err != nil {
+			self.AddError("RemoveAllPlates", err.Error())
+		}
 	}
 	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "REMOVEALLPLATES ACK"}
 }

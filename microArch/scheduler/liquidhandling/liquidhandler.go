@@ -219,7 +219,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	fmt.Printf("Simulating %d instructions...\n", len(instructions))
 	for _, ins := range instructions {
-		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh)
+		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh) //nolint
 		if vlh.HasError() {
 			break
 		}

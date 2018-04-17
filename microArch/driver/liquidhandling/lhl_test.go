@@ -111,7 +111,7 @@ func makeTestGilson(ctx context.Context) (*LHProperties, error) {
 
 func getTestBlowout(robot *LHProperties) RobotInstruction {
 	v := wunit.NewVolume(10.0, "ul")
-	ch, _ := ChooseChannel(v, robot)
+	ch, _, _ := ChooseChannel(v, robot)
 	bi := NewBlowInstruction()
 	bi.Multi = 1
 	bi.What = append(bi.What, "soup")

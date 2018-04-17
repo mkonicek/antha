@@ -258,7 +258,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		_, ok := ins.(liquidhandling.TerminalRobotInstruction)
 
 		if !ok {
-			fmt.Printf("ERROR: Got instruction ", liquidhandling.InsToString(ins), "which is wrong type")
+			fmt.Printf("ERROR: Got instruction \"%s\" which is wrong type", liquidhandling.InsToString(ins))
 			continue
 		}
 

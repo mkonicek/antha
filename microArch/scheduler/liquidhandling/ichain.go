@@ -207,10 +207,13 @@ func (it *IChain) splitMixedNode() {
 		}
 	}
 
+	// it == Mix level
 	it.Values = mixValues
+	// ch == Split level
 	ch := NewIChain(it)
 	ch.Values = splitValues
 	ch.Child = it.Child
+	ch.Child.Parent = ch
 	it.Child = ch
 }
 

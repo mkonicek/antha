@@ -276,12 +276,8 @@ func (mtp MultiTransferParams) ParamSet(n int) TransferParams {
 }
 
 func (mtp MultiTransferParams) ToString() string {
+
 	s := ""
-
-	if mtp.ParamSet == nil {
-		return s
-	}
-
 	for i := 0; i < mtp.Multi; i++ {
 		s += mtp.ParamSet(i).ToString() + " "
 	}

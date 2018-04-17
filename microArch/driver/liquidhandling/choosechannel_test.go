@@ -87,8 +87,8 @@ func TestDefaultChooser(t *testing.T) {
 				fmt.Println("V: ", vol.ToString(), " Mn: ", prm.Minvol.ToString(), " Mx: ", prm.Maxvol.ToString(), " TIP: ", tiptype)
 			}
 		*/
-	}
 
+	}
 }
 
 func TestSmallVolumeError(t *testing.T) {

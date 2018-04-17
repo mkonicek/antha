@@ -24,8 +24,6 @@
 package liquidhandling
 
 import (
-	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -223,7 +221,7 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 	// impose sanity
 
 	if p.PlateName == "" {
-		p.PlateName = fmt.Sprintf("User_plate_%d", lhr.NUserPlates+1)
+		p.PlateName = getSafePlateName(lhr, "user_plate", "_", lhr.NUserPlates+1)
 		lhr.NUserPlates += 1
 	}
 
@@ -252,18 +250,23 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 	return ret
 }
 
-/*
-func (request *LHRequest) GetPlate(id string) *wtype.LHPlate {
-	p, ok := request.Input_plates[id]
-
-	if !ok {
-		p, ok = request.Output_plates[id]
-
-		if !ok {
-			return nil
+// HasPlateNamed checks if the request already contains a plate with the specified name
+func (request *LHRequest) HasPlateNamed(name string) bool {
+	checkForPlateNamed := func(query string, subject map[string]*wtype.LHPlate) bool {
+		for _, plate := range subject {
+			if plate.PlateName == query {
+				return true
+			}
 		}
+		return false
 	}
 
-	return p
+	if checkForPlateNamed(name, request.Input_plates) {
+		return true
+	}
+	if checkForPlateNamed(name, request.Output_plates) {
+		return true
+	}
+
+	return false
 }
-*/

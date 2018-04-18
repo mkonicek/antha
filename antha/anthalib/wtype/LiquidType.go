@@ -205,6 +205,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "colonymix"
 	case LTDNACELLSMIX:
 		return "dna_cells_mix"
+	case LTDNACELLSMIXMULTI:
+		return "dna_cells_mix_multi"
 	case LTMultiWater:
 		return "multiwater"
 	case LTCSrc:

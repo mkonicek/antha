@@ -328,7 +328,7 @@ func TestBeforeVsAfter(t *testing.T) {
 		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
 	}
 
-	for pos, _ := range lh.Properties.PosLookup {
+	for pos := range lh.Properties.PosLookup {
 
 		id1, ok1 := lh.Properties.PosLookup[pos]
 		id2, ok2 := lh.FinalProperties.PosLookup[pos]
@@ -536,4 +536,33 @@ func TestEP3WrongTotalVolume(t *testing.T) {
 	if err == nil {
 		t.Fatal("Negative volume did not cause a planning error")
 	}
+}
+
+func TestDistinctPlateNames(t *testing.T) {
+	rq := NewLHRequest()
+	for i := 0; i < 100; i++ {
+		p := &wtype.LHPlate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
+		rq.Input_plate_order = append(rq.Input_plate_order, p.ID)
+		rq.Input_plates[p.ID] = p
+	}
+	for i := 100; i < 200; i++ {
+		p := &wtype.LHPlate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
+		rq.Output_plate_order = append(rq.Output_plate_order, p.ID)
+		rq.Output_plates[p.ID] = p
+	}
+
+	rq = fixDuplicatePlateNames(rq)
+
+	found := make(map[string]int)
+
+	for _, p := range rq.AllPlates() {
+		_, ok := found[p.PlateName]
+
+		if !ok {
+			found[p.PlateName] = 1
+		} else {
+			t.Errorf("fixDuplicatePlateNames failed to prevent duplicates: found at least two of %s", p.PlateName)
+		}
+	}
+
 }

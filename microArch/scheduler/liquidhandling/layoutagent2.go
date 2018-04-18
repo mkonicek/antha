@@ -35,6 +35,8 @@ import (
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
+//ImprovedLayoutAgent assigns destinations to mix instructions
+//don't ask about how bad the original one (upon which the 'improvements' here were made) was...
 func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
 	// do this multiply based on the order in the chain
 
@@ -384,16 +386,23 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				// check if this well is used... if so, we need another plate
 
 				if v.Welladdress != "" && wutil.StrInStrArray(v.Welladdress, s[i].Wells) {
-					id := wtype.NewUUID()
-					request.LHInstructions[k].SetPlateID(id)
-					s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: v.PlateID, Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
 
-				} else {
+					// see if we can find a plate
 
-					s[i].Assigned = append(s[i].Assigned, v.ID)
-					s[i].Wells = append(s[i].Wells, v.Welladdress)
-					s[i].Output = append(s[i].Output, true)
+					i = findPlateWithWellFree(s, v.Platetype, v.Welladdress, v.PlateName)
+
+					if i == -1 {
+						// a '-1' means we didn't find one
+						id := wtype.NewUUID()
+						request.LHInstructions[k].SetPlateID(id)
+						s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: v.PlateID, Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
+						i = len(s) - 1
+					}
 				}
+
+				s[i].Assigned = append(s[i].Assigned, v.ID)
+				s[i].Wells = append(s[i].Wells, v.Welladdress)
+				s[i].Output = append(s[i].Output, true)
 			}
 		} else if v.IsMixInPlace() {
 			// the first component sets the destination
@@ -464,7 +473,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 	// make sure the plate choices all have defined types
 
-	for i, _ := range s {
+	for i := range s {
 		if s[i].Platetype == "" {
 			s[i].Platetype = request.Output_platetypes[0].Type
 		}
@@ -737,7 +746,7 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 			}
 		}
 
-		for i, _ := range c.Assigned {
+		for i := range c.Assigned {
 			sID := c.Assigned[i]
 			well := ""
 			if i < len(c.Wells) {
@@ -785,4 +794,30 @@ func markWellUsed(well *wtype.LHWell) error {
 		}
 	}
 	return nil
+}
+
+//findPlateWithWellFree(s, v.Platetype, v.Welladdress, v.PlateName)
+
+//findPlateWithWellFree looks in our array of plate choices to see if there already exists a plate of this type with this well free
+// optionally we can specify a name
+func findPlateWithWellFree(plateChoices []PlateChoice, plateType, wellAddress, plateName string) int {
+	// -1 indicates not found
+	ret := -1
+
+	for i := 0; i < len(plateChoices); i++ {
+		pc := plateChoices[i]
+		nm := pc.Name
+
+		// ensure that if name is empty it does not act as a constraint
+		if plateName == "" {
+			nm = ""
+		}
+
+		if pc.Platetype == plateType && nm == plateName && !wutil.StrInStrArray(wellAddress, pc.Wells) {
+			ret = i
+			break
+		}
+	}
+
+	return ret
 }

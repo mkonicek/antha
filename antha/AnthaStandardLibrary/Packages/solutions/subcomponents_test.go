@@ -286,18 +286,8 @@ func TestUpdateComponentDetails(t *testing.T) {
 		return c
 	}
 
-	//x1 := wunit.NewConcentration(1, "X")
 	gPerL0 := wunit.NewConcentration(0.0, "g/L")
 	gPerL1 := wunit.NewConcentration(1, "g/L")
-	/*
-		x10 := wunit.NewConcentration(10, "X")
-		x100 := wunit.NewConcentration(100, "X")
-
-		gPerL01 := wunit.NewConcentration(0.1, "g/L")
-
-		gPerL10 := wunit.NewConcentration(10, "g/L")
-		gPerL100 := wunit.NewConcentration(100, "g/L")
-	*/
 
 	var nilComponentList ComponentList
 

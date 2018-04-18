@@ -125,11 +125,13 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 // this is to prevent potential duplication since if a component has a list of sub components the name
 // is considered to be an alias and the component list the true meaning of what the component is.
 // If any sample concentration of zero is found the component list will be made but an error returned.
-func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, err error) {
+func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, warning error) {
 
-	var errs []string
+	var warnings []string
 	var nonZeroVols []wunit.Volume
 	var forTotalVol wunit.Volume
+	var topUpNeeded bool
+	var topUpVolume wunit.Volume
 	// top up volume will only be used if a SampleForTotalVolume command is used
 	var bufferIndex int = -1
 
@@ -137,11 +139,21 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 		if sample.Volume().RawValue() == 0.0 && sample.Tvol > 0 {
 			forTotalVol = wunit.NewVolume(sample.Tvol, sample.Vunit)
 			bufferIndex = i
+			topUpNeeded = true
 		}
 		nonZeroVols = append(nonZeroVols, sample.Volume())
 	}
+	sumOfSampleVolumes := wunit.AddVolumes(nonZeroVols...)
 
-	topUpVolume := wunit.SubtractVolumes(forTotalVol, nonZeroVols...)
+	if !topUpNeeded {
+		forTotalVol = sumOfSampleVolumes
+	}
+
+	topUpVolume = wunit.SubtractVolumes(forTotalVol, sumOfSampleVolumes)
+
+	if topUpVolume.RawValue() < 0.0 {
+		return newComponentList, mixSteps, fmt.Errorf("SampleForTotalVolume requested (%s) is less than sum of sample volumes (%s)", forTotalVol, sumOfSampleVolumes)
+	}
 
 	var volsSoFar []wunit.Volume
 
@@ -156,13 +168,13 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 		}
 
 		if i == 0 {
-
+			var err error
 			newComponentList, err = GetSubComponents(sample)
 			if err != nil {
 				newComponentList.Components = make(map[string]wunit.Concentration)
 				if sample.Conc == 0 {
-					errs = append(errs, "zero concentration found for sample "+sample.CName)
-					newComponentList.Components[sample.Name()] = wunit.NewConcentration(0.0, "g/L")
+					warnings = append(warnings, "zero concentration found for sample "+sample.Name())
+					newComponentList.Components[sample.Name()] = wunit.NewConcentration(1.0, "v/v")
 				} else {
 					newComponentList.Components[sample.Name()] = sample.Concentration()
 				}
@@ -178,8 +190,8 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			if err != nil {
 				nextList.Components = make(map[string]wunit.Concentration)
 				if nextSample.Conc == 0 {
-					errs = append(errs, "zero concentration found for sample "+sample.CName)
-					nextList.Components[nextSample.Name()] = wunit.NewConcentration(0.0, "g/L")
+					warnings = append(warnings, "zero concentration found for sample "+nextSample.Name())
+					nextList.Components[nextSample.Name()] = wunit.NewConcentration(1.0, "v/v")
 				} else {
 					nextList.Components[nextSample.Name()] = nextSample.Concentration()
 				}
@@ -202,9 +214,8 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			}
 			nextMixStep := ComponentListSample{nextList, nexSampleVolToAdd}
 			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
-
 			if err != nil {
-				errs = append(errs, err.Error())
+				warnings = append(warnings, err.Error())
 			}
 
 			mixSteps = append(mixSteps, nextMixStep)
@@ -213,8 +224,9 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 
 	}
 
-	if len(errs) > 0 {
-		err = fmt.Errorf(strings.Join(errs, "; "))
+	if len(warnings) > 0 {
+		warning = wtype.NewWarningf(strings.Join(warnings, "; "))
+		return newComponentList, mixSteps, warning
 	}
 	return newComponentList, mixSteps, nil
 }
@@ -284,7 +296,7 @@ func (c ComponentList) removeConcsFromSubComponentNames() (nc ComponentList) {
 	return
 }
 
-// List all Components and concentration set points presnet in a component list.
+// List all Components and concentration set points present in a component list.
 // if verbose is set to true the field annotations for each component and concentration will be included for each component.
 // option1 is verbose, option2 is use mixdelimiter
 func (c ComponentList) List(options ...bool) string {
@@ -526,7 +538,12 @@ func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.L
 	subComponents, _, err := SimulateMix(mixes...)
 
 	if err != nil {
-		warnings = append(warnings, err.Error())
+		switch err.(type) {
+		case wtype.Warning:
+			warnings = append(warnings, err.Error())
+		default:
+			return err
+		}
 	}
 
 	subComponents = subComponents.removeConcsFromSubComponentNames()
@@ -544,7 +561,7 @@ func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.L
 	}
 
 	if len(warnings) > 0 {
-		return fmt.Errorf(strings.Join(warnings, "/n"))
+		return wtype.NewWarningf(strings.Join(warnings, "/n"))
 	}
 
 	return nil

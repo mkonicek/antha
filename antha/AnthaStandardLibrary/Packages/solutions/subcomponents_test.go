@@ -2,8 +2,12 @@
 package solutions
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
@@ -251,6 +255,222 @@ func TestSerialMix(t *testing.T) {
 				mixed,
 				"Error: ", "\n",
 				err.Error(),
+			)
+		}
+	}
+}
+
+func TestUpdateComponentDetails(t *testing.T) {
+
+	type mixTest struct {
+		name                         string
+		product                      *wtype.LHComponent
+		mixes                        []*wtype.LHComponent
+		expectedProductName          string
+		expectedProductComponentList ComponentList
+		expectedProductConc          wunit.Concentration
+		expectedError                error
+	}
+
+	var defaultConc wunit.Concentration
+
+	newTestComponent := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration, vol wunit.Volume, componentList ComponentList) *wtype.LHComponent {
+		c := wtype.NewLHComponent()
+		c.SetName(name)
+		c.Type = typ
+		c.Smax = smax
+		if conc != defaultConc {
+			c.SetConcentration(conc)
+		}
+		AddSubComponents(c, componentList)
+		return c
+	}
+
+	//x1 := wunit.NewConcentration(1, "X")
+	gPerL0 := wunit.NewConcentration(0.0, "g/L")
+	gPerL1 := wunit.NewConcentration(1, "g/L")
+	/*
+		x10 := wunit.NewConcentration(10, "X")
+		x100 := wunit.NewConcentration(100, "X")
+
+		gPerL01 := wunit.NewConcentration(0.1, "g/L")
+
+		gPerL10 := wunit.NewConcentration(10, "g/L")
+		gPerL100 := wunit.NewConcentration(100, "g/L")
+	*/
+
+	var nilComponentList ComponentList
+
+	someComponents := ComponentList{Components: map[string]wunit.Concentration{
+		"glycerol": wunit.NewConcentration(0.25, "g/l"),
+		"IPTG":     wunit.NewConcentration(0.25, "mM/l"),
+		"water":    wunit.NewConcentration(0.25, "v/v"),
+		"LB":       wunit.NewConcentration(0.25, "X"),
+	},
+	}
+
+	water := newTestComponent("water", wtype.LTWater, 9999, defaultConc, wunit.NewVolume(2000.0, "ul"), nilComponentList)
+
+	mmx := newTestComponent("mastermix_sapI", wtype.LTWater, 9999, defaultConc, wunit.NewVolume(2000.0, "ul"), nilComponentList)
+
+	part := newTestComponent("dna", wtype.LTWater, 9999, defaultConc, wunit.NewVolume(2000.0, "ul"), nilComponentList)
+
+	glycerol := newTestComponent("glycerol", wtype.LTWater, 9999, gPerL1, wunit.NewVolume(2000.0, "ul"), nilComponentList)
+	iptg := newTestComponent("IPTG", wtype.LTWater, 9999, wunit.NewConcentration(1, "mM"), wunit.NewVolume(2000.0, "ul"), nilComponentList)
+	lb := newTestComponent("LB", wtype.LTWater, 9999, wunit.NewConcentration(1, "X"), wunit.NewVolume(2000.0, "ul"), nilComponentList)
+	mediaMixture := newTestComponent("LB", wtype.LTWater, 9999, wunit.NewConcentration(1, "X"), wunit.NewVolume(2000.0, "ul"), someComponents)
+
+	ws := mixer.Sample(water, wunit.NewVolume(65.0, "ul"))
+	wsTotal := mixer.SampleForTotalVolume(water, wunit.NewVolume(100.0, "ul"))
+	mmxs := mixer.Sample(mmx, wunit.NewVolume(25.0, "ul"))
+	ps := mixer.Sample(part, wunit.NewVolume(10.0, "ul"))
+
+	var mixTests = []mixTest{
+		mixTest{
+			name:                "noConcsTest",
+			product:             water,
+			mixes:               []*wtype.LHComponent{ws, ps, mmxs},
+			expectedProductName: "0.1 v/v dna+0.25 v/v mastermix_sapI+0.65 v/v water",
+			expectedProductComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"dna":            wunit.NewConcentration(0.1, "v/v"),
+					"mastermix_sapI": wunit.NewConcentration(0.25, "v/v"),
+					"water":          wunit.NewConcentration(0.65, "v/v"),
+				},
+			},
+			expectedProductConc: gPerL0,
+			expectedError:       wtype.NewWarningf("zero concentration found for sample water; zero concentration found for sample dna; zero concentration found for sample mastermix_sapI"),
+		}, mixTest{
+			name:                "SampleForTotalVolumeTest",
+			product:             water,
+			mixes:               []*wtype.LHComponent{wsTotal, ps, mmxs},
+			expectedProductName: "0.1 v/v dna+0.25 v/v mastermix_sapI+0.65 v/v water",
+			expectedProductComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"dna":            wunit.NewConcentration(0.1, "v/v"),
+					"mastermix_sapI": wunit.NewConcentration(0.25, "v/v"),
+					"water":          wunit.NewConcentration(0.65, "v/v"),
+				},
+			},
+			expectedProductConc: gPerL0,
+			expectedError:       wtype.NewWarningf("zero concentration found for sample water; zero concentration found for sample dna; zero concentration found for sample mastermix_sapI"),
+		},
+		mixTest{
+			name:    "SampleWithConcsTest",
+			product: water,
+			mixes: []*wtype.LHComponent{
+				mixer.Sample(water, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(glycerol, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(iptg, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(lb, wunit.NewVolume(65.0, "ul")),
+			},
+			expectedProductName: "0.25 mM/l IPTG+0.25 X LB+0.25 g/l glycerol+0.25 v/v water",
+			expectedProductComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"glycerol": wunit.NewConcentration(0.25, "g/l"),
+					"IPTG":     wunit.NewConcentration(0.25, "mM/l"),
+					"water":    wunit.NewConcentration(0.25, "v/v"),
+					"LB":       wunit.NewConcentration(0.25, "X"),
+				},
+			},
+			expectedProductConc: gPerL0,
+			expectedError:       wtype.NewWarningf("zero concentration found for sample water"),
+		},
+		mixTest{
+			name:    "InvalidTotalVolumeTest",
+			product: water,
+			mixes: []*wtype.LHComponent{
+				mixer.SampleForTotalVolume(water, wunit.NewVolume(100.0, "ul")),
+				mixer.Sample(water, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(glycerol, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(iptg, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(lb, wunit.NewVolume(65.0, "ul")),
+			},
+			expectedProductName: "water",
+			expectedProductComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{},
+			},
+			expectedProductConc: gPerL0,
+			expectedError:       errors.New("SampleForTotalVolume requested (100 ul) is less than sum of sample volumes (260 ul)"),
+		},
+		mixTest{
+			name:    "SampleWithComponentListsTest",
+			product: water,
+			mixes: []*wtype.LHComponent{
+				mixer.Sample(water, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(glycerol, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(iptg, wunit.NewVolume(65.0, "ul")),
+				mixer.Sample(mediaMixture, wunit.NewVolume(65.0, "ul")),
+			},
+			expectedProductName: "0.312 mM/l IPTG+0.0625 X LB+0.312 g/l glycerol+0.312 v/v water",
+			expectedProductComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"glycerol": wunit.NewConcentration(0.312, "g/l"),
+					"IPTG":     wunit.NewConcentration(0.312, "mM/l"),
+					"water":    wunit.NewConcentration(0.312, "v/v"),
+					"LB":       wunit.NewConcentration(0.0625, "X"),
+				},
+			},
+			expectedProductConc: gPerL0,
+			expectedError:       wtype.NewWarningf("zero concentration found for sample water"),
+		},
+	}
+
+	for _, test := range mixTests {
+		duplicatedProduct := test.product.Dup()
+		err := UpdateComponentDetails(duplicatedProduct, test.mixes...)
+
+		if err != nil {
+			if err.Error() != test.expectedError.Error() {
+				t.Error(
+					"For :", test.name, "\n",
+					"expected error:", fmt.Sprintf("%v %T ", test.expectedError, test.expectedError), "\n",
+					"got error:", fmt.Sprintf("%v %T", err, err), "\n",
+				)
+			}
+		} else if test.expectedError != nil {
+			t.Error(
+				"For :", test.name, "\n",
+				"expected error:", test.expectedError.Error(), "\n",
+				"got no error:", "\n",
+			)
+		}
+
+		if duplicatedProduct.Name() != test.expectedProductName {
+			t.Error(
+				"For :", test.name, "\n",
+				"expected name:", test.expectedProductName, "\n",
+				"got:", duplicatedProduct.Name(), "\n",
+			)
+		}
+
+		testCompList, err := GetSubComponents(duplicatedProduct)
+
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		err = EqualLists(testCompList, test.expectedProductComponentList)
+
+		if err != nil {
+			t.Error(
+				"For: ", test.name, "\n",
+				"expected:", "\n",
+				test.expectedProductComponentList,
+				"got:", "\n",
+				testCompList,
+				"Error: ", "\n",
+				err.Error(),
+			)
+		}
+
+		if !duplicatedProduct.Concentration().EqualTo(test.expectedProductConc) {
+			t.Error(
+				"For: ", test.name, "\n",
+				"expected:", "\n",
+				test.expectedProductConc,
+				"got:", "\n",
+				duplicatedProduct.Concentration(),
 			)
 		}
 	}

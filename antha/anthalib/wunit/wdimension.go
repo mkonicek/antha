@@ -579,6 +579,8 @@ var UnitMap = map[string]map[string]Unit{
 		"U/L":     Unit{Base: "U/l", Prefix: "", Multiplier: 1.0},
 		"U/ml":    Unit{Base: "U/l", Prefix: "", Multiplier: 1000.0},
 		"U/mL":    Unit{Base: "U/l", Prefix: "", Multiplier: 1000.0},
+		"v/v":     Unit{Base: "v/v", Prefix: "", Multiplier: 1.0},
+		"w/v":     Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
 	},
 	"Mass": map[string]Unit{
 		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},

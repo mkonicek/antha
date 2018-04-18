@@ -120,9 +120,28 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 	return false, -1, fmt.Errorf("component %s not found in list: %s. : Errors for each: %s", componentSummary(component), componentNames(components), strings.Join(errs, "\n"))
 }
 
+func nonZeroComponents(compList ComponentList) int {
+	var nonZero int
+	for _, conc := range compList.Components {
+		if conc.RawValue() > 0 {
+			nonZero++
+		}
+	}
+	return nonZero
+}
+
 // EqualLists compares two ComponentLists and returns an error if the lists are not identical.
 func EqualLists(list1, list2 ComponentList) error {
 	var notEqual []string
+
+	if nonZeroComponents(list1) == 0 && nonZeroComponents(list2) == 0 {
+		return nil
+	}
+
+	if nonZeroComponents(list1) != nonZeroComponents(list2) {
+		return fmt.Errorf("componentlists unequal length: %d, %d", nonZeroComponents(list1), nonZeroComponents(list2))
+	}
+
 	for key, value1 := range list1.Components {
 		if value2, found := list2.Components[key]; found {
 			if fmt.Sprintf("%.2e", value1.SIValue()) != fmt.Sprintf("%.2e", value2.SIValue()) {

@@ -270,3 +270,34 @@ func (request *LHRequest) HasPlateNamed(name string) bool {
 
 	return false
 }
+
+// OrderedInputPlates returns the list of input plates in order
+func (request *LHRequest) OrderedInputPlates() []*wtype.LHPlate {
+	ret := make([]*wtype.LHPlate, 0, len(request.Input_plates))
+	for _, id := range request.Input_plate_order {
+		ret = append(ret, request.Input_plates[id])
+	}
+
+	return ret
+}
+
+// OrderedOutputPlates returns the list of input plates in order
+func (request *LHRequest) OrderedOutputPlates() []*wtype.LHPlate {
+	ret := make([]*wtype.LHPlate, 0, len(request.Output_plates))
+	for _, id := range request.Output_plate_order {
+		ret = append(ret, request.Output_plates[id])
+	}
+
+	return ret
+}
+
+// AllPlates returns a list of all known plates, in the order input plates, output plates
+// ordering will be as within the stated orders of each
+func (request *LHRequest) AllPlates() []*wtype.LHPlate {
+	r := make([]*wtype.LHPlate, 0, len(request.Input_plates)+len(request.Output_plates))
+
+	r = append(r, request.OrderedInputPlates()...)
+	r = append(r, request.OrderedOutputPlates()...)
+
+	return r
+}

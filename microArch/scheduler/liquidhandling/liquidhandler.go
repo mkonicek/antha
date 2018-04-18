@@ -312,7 +312,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 			lastWell = ins.GetParameter("WELLTO").([]string)
 		} else if ins.InstructionType() == liquidhandling.ASP {
-			for i, _ := range lastPlate {
+			for i := range lastPlate {
 				if i >= len(lastWell) {
 					break
 				}
@@ -455,7 +455,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
 
 	pidm := make(map[string]string, len(this.Properties.Plates))
-	for pos, _ := range this.Properties.Plates {
+	for pos := range this.Properties.Plates {
 		p1, ok1 := this.Properties.Plates[pos]
 		p2, ok2 := this.FinalProperties.Plates[pos]
 
@@ -930,6 +930,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	// final insurance that plate names will be safe
+
+	request = fixDuplicatePlateNames(request)
+
 	// remove dummy mix-in-place instructions
 
 	request = removeDummyInstructions(request)
@@ -1371,4 +1375,32 @@ func addToMap(m, a map[string]*wtype.LHPlate) {
 	for k, v := range a {
 		m[k] = v
 	}
+}
+
+func fixDuplicatePlateNames(rq *LHRequest) *LHRequest {
+	seen := make(map[string]int, 1)
+	fixNames := func(sa []string, pm map[string]*wtype.LHPlate) {
+		for _, id := range sa {
+			p, foundPlate := pm[id]
+
+			if !foundPlate {
+				panic(fmt.Sprintf("Inconsistency in plate order / map for plate ID %s ", id))
+			}
+
+			n, ok := seen[p.PlateName]
+
+			if ok {
+				newName := fmt.Sprintf("%s_%d", p.PlateName, n)
+				seen[p.PlateName] += 1
+				p.PlateName = newName
+			} else {
+				seen[p.PlateName] = 1
+			}
+		}
+	}
+
+	fixNames(rq.Input_plate_order, rq.Input_plates)
+	fixNames(rq.Output_plate_order, rq.Output_plates)
+
+	return rq
 }

@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"github.com/dustinkirkland/golang-petname"
 	"sort"
 	"strings"
 
@@ -180,7 +181,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 					}
 					plates_in_play[platetype.Type] = p
 					curr_plate = plates_in_play[platetype.Type]
-					platename := fmt.Sprintf("Input_plate_%d", curplaten)
+					platename := getSafeInputPlateName(request, curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1
 					curr_plate.DeclareTemporary()
@@ -264,4 +265,29 @@ func isInstance(s string) bool {
 	} else {
 		return false
 	}
+}
+
+// returns a unique plate name
+func getSafeInputPlateName(request *LHRequest, curplaten int) string {
+	return getSafePlateName(request, "auto_input_plate", "_", curplaten)
+}
+
+func getSafePlateName(request *LHRequest, prefix, sep string, curplaten int) string {
+	trialPlateName := randomPlateName(prefix, sep, curplaten)
+
+	for {
+		if request.HasPlateNamed(trialPlateName) {
+			trialPlateName = randomPlateName(prefix, sep, curplaten)
+
+		} else {
+			break
+		}
+	}
+
+	return trialPlateName
+}
+
+func randomPlateName(prefix, sep string, order int) string {
+	tox := []string{prefix, fmt.Sprintf("%d", order), petname.Generate(1, "")}
+	return strings.Join(tox, sep)
 }

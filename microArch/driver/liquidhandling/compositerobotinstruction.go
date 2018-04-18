@@ -36,10 +36,6 @@ import (
 	"reflect"
 )
 
-func TipChosenError(v wunit.Volume, prms *LHProperties) string {
-	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
-}
-
 type SingleChannelBlockInstruction struct {
 	GenericRobotInstruction
 	Type       int
@@ -140,15 +136,12 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 
 	ret := make([]RobotInstruction, 0)
 	// get tips
-	channel, tipp := ChooseChannel(ins.Volume[0], prms)
-
-	tiptype := ""
-
-	if tipp != nil {
-		tiptype = tipp.Type
-	} else {
-		return ret, fmt.Errorf(TipChosenError(ins.Volume[0], prms))
+	channel, tipp, err := ChooseChannel(ins.Volume[0], prms)
+	if err != nil {
+		return ret, err
 	}
+
+	tiptype := tipp.Type
 
 	ins.Prms = channel
 	pol := GetPolicyFor(policy, ins)
@@ -173,13 +166,12 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
-		newchannel, newtipp := ChooseChannel(ins.Volume[t], prms)
-		newtiptype := ""
-		if newtipp != nil {
-			newtiptype = newtipp.Type
-		} else {
-			return ret, fmt.Errorf(TipChosenError(ins.Volume[t], prms))
+		newchannel, newtipp, err := ChooseChannel(ins.Volume[t], prms)
+		if err != nil {
+			return ret, err
 		}
+
+		newtiptype := newtipp.Type
 		mergedchannel := newchannel.MergeWithTip(newtipp)
 		tipp = newtipp
 
@@ -406,7 +398,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	//channels, _, tiptypes, err := ChooseChannels(ins.GetVolumes(), prms)
 	channels, _, tiptypes, err := ChooseChannels(ins.Volume[0], prms)
 	if err != nil {
-		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
+		return ret, err
 	}
 
 	tipget, err := GetTips(ctx, tiptypes, prms, channels, usetiptracking)

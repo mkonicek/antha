@@ -1,11 +1,14 @@
 package liquidhandling
 
 import (
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"math"
 )
+
+func TipChosenError(v wunit.Volume, prms *LHProperties) error {
+	return wtype.LHErrorf(wtype.LH_ERR_VOL, "No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
+}
 
 // it would probably make more sense for this to be a method of the robot
 // in general the instruction generator might well be moved there wholesale
@@ -93,7 +96,14 @@ func (sc DefaultChannelScoreFunc) ScoreChannel(vol wunit.Volume, lhcp *wtype.LHC
 	return score
 }
 
-func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParameter, *wtype.LHTip) {
+func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParameter, *wtype.LHTip, error) {
+
+	if mpv := prms.MinPossibleVolume(); vol.LessThan(mpv) {
+		//accept values within rounding error
+		if delta := wunit.SubtractVolumes(mpv, vol); !delta.IsZero() {
+			return nil, nil, TipChosenError(vol, prms)
+		}
+	}
 	var headchosen *wtype.LHHead = nil
 	var tipchosen *wtype.LHTip = nil
 	var bestscore ChannelScore = ChannelScore(0.0)
@@ -118,13 +128,13 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	}
 
 	if headchosen == nil {
-		return nil, nil
+		return nil, nil, TipChosenError(vol, prms)
 	}
 
 	// shouldn't we also return the adaptor?
 	// and probably the whole head rather than just its channel parameters
 
-	return headchosen.GetParams(), tipchosen
+	return headchosen.GetParams(), tipchosen, nil
 }
 
 func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []*wtype.LHTip, []string, error) {
@@ -138,9 +148,9 @@ func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannel
 		if vols[i].IsZero() {
 			continue
 		}
-		prm, tip := ChooseChannel(vols[i], prms)
-		if tip == nil {
-			return prmA, tipA, tipTypeA, fmt.Errorf(TipChosenError(vols[i], prms))
+		prm, tip, err := ChooseChannel(vols[i], prms)
+		if err != nil {
+			return prmA, tipA, tipTypeA, err
 		}
 		prmA[i] = prm
 		tipA[i] = tip.Dup()

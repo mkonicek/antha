@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
@@ -59,13 +60,13 @@ func (lh Liquidhandler) countTipsUsed(rq *LHRequest) (*LHRequest, error) {
 	return rq, nil
 }
 
-func countWellMulti(sa []string) int {
-	r := 0
-	for _, s := range sa {
-		if s != "" {
-			r += 1
-		}
-	}
+//func countWellMulti(sa []string) int {
+//	r := 0
+//	for _, s := range sa {
+//		if s != "" {
+//			r += 1
+//		}
+//	}
 
-	return r
-}
+// 	return r
+// }

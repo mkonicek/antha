@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"github.com/elazarl/go-bindata-assetfs"
 	"io"
 	"io/ioutil"
 	"os"
@@ -258,11 +257,4 @@ func RestoreAssets(dir, name string) error {
 func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
-}
-
-func assetFS() *assetfs.AssetFS {
-	for k := range _bintree.Children {
-		return &assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo, Prefix: k}
-	}
-	panic("unreachable")
 }

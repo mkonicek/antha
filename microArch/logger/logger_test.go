@@ -166,7 +166,6 @@ func TestLogLogger(t *testing.T) {
 	}
 }
 
-func _TestStackExtra(t *testing.T) {
-	cleanMiddleware()
-	Fatal("FATAL TEST")
+func cleanMiddleware() {
+	middlewares = nil
 }

@@ -25,9 +25,10 @@ package eng
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Liquidclasses"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"math"
 )
 
 func Θ(liquid string, airvelocity wunit.Velocity) (float64, error) {
@@ -89,7 +90,7 @@ func EvaporationVolume(temp wunit.Temperature, liquidtype string, relativehumidi
 
 	evaporatedliquid := (Gh * (time / 3600)) // in kg
 
-	density, _ := liquidclasses.Liquidclass[liquidtype]["ro"]
+	density := liquidclasses.Liquidclass[liquidtype]["ro"]
 
 	evaporatedliquid = (evaporatedliquid * density) / 1000     // converted to litres
 	vol := wunit.NewVolume((evaporatedliquid * 1000000), "ul") // convert to ul

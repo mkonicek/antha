@@ -95,9 +95,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	inputs := (*request).Input_solutions
 
 	input_order := make([]string, len((*request).Input_order))
-	for i, v := range (*request).Input_order {
-		input_order[i] = v
-	}
+	copy(input_order, (*request).Input_order)
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in
@@ -121,7 +119,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	if len(input_volumes) != 0 {
 		// If any input solutions need to be set up then we now check if there any input plate types set.
-		if input_platetypes == nil || len(input_platetypes) == 0 {
+		if len(input_platetypes) == 0 {
 			return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
 		}
 		well_count_assignments = choose_plate_assignments(input_volumes, input_platetypes, weights_constraints)

@@ -136,12 +136,14 @@ func ValidateRequest(request *LHRequest) error {
 // solutions
 func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest) error {
 	err := ValidateRequest(request)
-
 	if err != nil {
 		return err
 	}
 
-	request.ConfigureYourself()
+	err = request.ConfigureYourself()
+	if err != nil {
+		return err
+	}
 
 	//f := func() {
 	err = this.Plan(ctx, request)
@@ -217,7 +219,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	fmt.Printf("Simulating %d instructions...\n", len(instructions))
 	for _, ins := range instructions {
-		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh)
+		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh) //nolint
 		if vlh.HasError() {
 			break
 		}
@@ -410,7 +412,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 	for plateID, wellmap := range vols {
 		plate, ok := this.FinalProperties.Plates[this.Properties.PlateIDLookup[plateID]]
-		plate2, _ := this.Properties.Plates[this.Properties.PlateIDLookup[plateID]]
+		plate2 := this.Properties.Plates[this.Properties.PlateIDLookup[plateID]]
 
 		if !ok {
 			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SUCH PLATE: ", plateID))
@@ -964,13 +966,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 	// ensure the after state is correct
 	this.fix_post_ids()
-	err = this.fix_post_names(request)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return this.fix_post_names(request)
 }
 
 // resolve question of where something is requested to go
@@ -1099,8 +1095,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		return request, err
 	}
 
-	var requestinputs map[string][]*wtype.LHComponent
-	requestinputs = request.Input_solutions
+	requestinputs := request.Input_solutions
 
 	if len(requestinputs) == 0 {
 		requestinputs = make(map[string][]*wtype.LHComponent, 5)
@@ -1183,10 +1178,10 @@ func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wty
 
 	// we should know how many plates we need
 	for k, plate := range plates {
-		if plate.Inst == "" {
-			//stockrequest := execution.GetContext().StockMgr.RequestStock(makePlateStockRequest(plate))
-			//plate.Inst = stockrequest["inst"].(string)
-		}
+		//if plate.Inst == "" {
+		//stockrequest := execution.GetContext().StockMgr.RequestStock(makePlateStockRequest(plate))
+		//plate.Inst = stockrequest["inst"].(string)
+		//}
 
 		plates[k] = plate
 	}
@@ -1248,7 +1243,10 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 
 		//TODO Deprecate
 		if strings.Contains(v.GetName(), "Input") {
-			wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+			_, err := wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+			if err != nil {
+				logger.Debug(fmt.Sprintf("export plate csv (deprecated): %s", err.Error()))
+			}
 		}
 
 		v.OutputLayout()

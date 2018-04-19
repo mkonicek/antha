@@ -43,14 +43,10 @@ func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequenc
 	switch fn := sequenceFile.Name; {
 	case filepath.Ext(fn) == ".gdx":
 		seqs, err = gdx.GDXToDNASequence(sequenceFile)
-		for _, seq := range seqs {
-			sequences = append(sequences, seq)
-		}
+		sequences = append(sequences, seqs...)
 	case filepath.Ext(fn) == ".fasta" || filepath.Ext(fn) == ".fa":
 		seqs, err = fasta.FastaToDNASequences(sequenceFile)
-		for _, seq := range seqs {
-			sequences = append(sequences, seq)
-		}
+		sequences = append(sequences, seqs...)
 	case filepath.Ext(fn) == ".gb" || filepath.Ext(fn) == ".gbk":
 		seq, err = genbank.GenbankToFeaturelessDNASequence(sequenceFile)
 		sequences = append(sequences, seq)

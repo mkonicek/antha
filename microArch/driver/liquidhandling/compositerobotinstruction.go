@@ -27,13 +27,14 @@ import (
 	"fmt"
 	"math"
 
+	"reflect"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
-	"reflect"
 )
 
 type SingleChannelBlockInstruction struct {
@@ -160,9 +161,6 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	n_tip_uses := 0
 
 	var last_thing *wtype.LHComponent
-
-	last_thing = nil
-
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
@@ -182,8 +180,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 		}
 		for _, vol := range tvs {
 			// determine whether to change tips
-			change_tips := false
-			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
+			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || channel != newchannel
 			change_tips = change_tips || newtiptype != tiptype
 
@@ -414,7 +411,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		tvols := NewVolumeSet(ins.Prms.Multi)
 		//		vols := NewVolumeSet(ins.Prms.Multi)
 		fvols := NewVolumeSet(ins.Prms.Multi)
-		for i, _ := range ins.Volume[t] {
+		for i := range ins.Volume[t] {
 			fvols[i] = wunit.CopyVolume(ins.FVolume[t][i])
 			tvols[i] = wunit.CopyVolume(ins.TVolume[t][i])
 		}
@@ -438,8 +435,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		for _, vols := range tvs {
 			// determine whether to change tips
 			// INMC: DO THIS PER CHANNEL
-			change_tips := false
-			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
+			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || !reflect.DeepEqual(channels, newchannels)
 			change_tips = change_tips || !reflect.DeepEqual(tiptypes, newtiptypes)
 
@@ -475,8 +471,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 
 				ret = append(ret, tipget...)
 				//		tips = newtips
-				tiptypes = newtiptypes
-				channels = newchannels
+
 				n_tip_uses = 0
 				last_thing = nil
 				dirty = false
@@ -1919,7 +1914,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ev, iwantmore := pol["EXTRA_ASP_VOLUME"]
 	if iwantmore {
 		extra_vol := ev.(wunit.Volume)
-		for i, _ := range aspins.Volume {
+		for i := range aspins.Volume {
 			aspins.Volume[i].Add(extra_vol)
 		}
 	}
@@ -2228,7 +2223,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		extra_vol := SafeGetVolume(pol, "EXTRA_DISP_VOLUME")
 		if extra_vol.GreaterThan(wunit.ZeroVolume()) {
-			for i, _ := range dspins.Volume {
+			for i := range dspins.Volume {
 				dspins.Volume[i].Add(extra_vol)
 			}
 		}
@@ -3325,21 +3320,6 @@ func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, chann
 	}
 
 	return inss, nil
-}
-
-func channelArrayToOldStyle(channels []*wtype.LHChannelParameter) (*wtype.LHChannelParameter, int) {
-	var ch *wtype.LHChannelParameter
-	multi := 0
-
-	for _, c := range channels {
-		if c != nil {
-			multi += 1
-			if ch == nil {
-				ch = c
-			}
-		}
-	}
-	return ch, multi
 }
 
 func collate(s []string) string {

@@ -311,7 +311,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 14.0      // distance from top left side of plate to first well
 	ystart = 5.0       // distance from top left side of plate to first well
-	zstart = 9         // offset of bottom of deck to bottom of well
 	zstart = 4.5       // offset of bottom of deck to bottom of well
 
 	plate = wtype.NewLHPlate("eppendorfrack424_1.5ml_lidholder", "Unknown", 4, 3, makePlateCoords(45), welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
@@ -361,12 +360,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) high res
 
-	bottomtype = wtype.FlatWellBottom
-	xdim = 2.0 // of well
-	ydim = 2.0
-	zdim = 7.0
-	bottomh = 0.5
-
 	wellxoffset = 2.25  // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 2.250 //centre of well to centre of neighbouring well in y direction
 	xstart = -2.5       // distance from top left side of plate to first well
@@ -380,12 +373,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) low res
 
-	bottomtype = wtype.FlatWellBottom
-	xdim = 4.0
-	ydim = 4.0
-	zdim = 14.0
-	bottomh = 1.0
-
 	wellxoffset = 4.5 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 4.5 //centre of well to centre of neighbouring well in y direction
 	xstart = -2.5     // distance from top left side of plate to first well
@@ -397,12 +384,6 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plates = append(plates, plate)
 
 	// Onewell SBS format Agarplate with colonies on shallowriser (30ml agar) low res
-
-	bottomtype = wtype.FlatWellBottom
-	xdim = 4.0
-	ydim = 4.0
-	zdim = 14.0
-	bottomh = 1.0
 
 	wellxoffset = 4.5 // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 4.5 //centre of well to centre of neighbouring well in y direction
@@ -436,7 +417,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) low res with 96 well map
 
-	bottomtype = wtype.FlatWellBottom
+	bottomtype = wtype.UWellBottom
 	xdim = 5.5
 	ydim = 5.5
 	zdim = 15
@@ -450,7 +431,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// greiner one well with 50ml of agar in
 
-	pcrplatewellforpicking := wtype.NewLHWell("ul", 5, 1, wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15), wtype.UWellBottom, xdim, ydim, zdim, bottomh, "mm")
+	pcrplatewellforpicking := wtype.NewLHWell("ul", 5, 1, wtype.NewShape("cylinder", "mm", 5.5, 5.5, 15), bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	plate = wtype.NewLHPlate("Agarplateforpicking96", "Unknown", 8, 12, makePlateCoords(14), pcrplatewellforpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
@@ -661,7 +642,7 @@ func makePCRPlateWell() *wtype.LHWell {
 
 func makePlateCoords(height float64) wtype.Coordinates {
 	//standard X/Y size for 96 well plates
-	return wtype.Coordinates{127.76, 85.48, height}
+	return wtype.Coordinates{X: 127.76, Y: 85.48, Z: height}
 }
 
 func makePCRPlate() *wtype.LHPlate {
@@ -835,13 +816,6 @@ func makeHighResplateforPicking() *wtype.LHPlate {
 	// greiner one well with 50ml of agar in
 	plate := wtype.NewLHPlate("Agarplateforpicking3150", "Unknown", 45, 70, makePlateCoords(7), welltype3150, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
-	return plate
-}
-
-func makeGreinerVBottomPlateWithRiser() *wtype.LHPlate {
-	plate := makeGreinerVBottomPlate()
-	plate.Type = "GreinerSWVBottom_riser"
-	plate.WellZStart = 43.0
 	return plate
 }
 

@@ -40,9 +40,7 @@ func AddFeature(annotated *wtype.DNASequence, newFeature wtype.Feature) {
 	positions := findSeq(annotated, &featureSeq)
 
 	var features []wtype.Feature
-	for _, feature := range annotated.Features {
-		features = append(features, feature)
-	}
+	features = append(features, annotated.Features...)
 	for _, featPosition := range positions.Positions {
 		newFeature.StartPosition, newFeature.EndPosition = featPosition.Coordinates()
 		features = append(features, newFeature)
@@ -67,7 +65,6 @@ func SetFeatures(dnaSeq *wtype.DNASequence, features []wtype.Feature) {
 	}
 
 	dnaSeq.Features = features
-	return
 }
 
 // AddFeatures adds features to the existing features of the DNASequence.
@@ -91,7 +88,16 @@ func ORFs2Features(orfs []ORF) (features []wtype.Feature) {
 		if strings.ToUpper(orf.Direction) == strings.ToUpper("REVERSE") {
 			reverse = true
 		}
-		feature := wtype.Feature{"orf" + strconv.Itoa(i), "orf", reverse, orf.StartPosition, orf.EndPosition, orf.DNASeq, orf.ProtSeq}
+
+		feature := wtype.Feature{
+			Name:          "orf" + strconv.Itoa(i),
+			Class:         "orf",
+			Reverse:       reverse,
+			StartPosition: orf.StartPosition,
+			EndPosition:   orf.EndPosition,
+			DNASeq:        orf.DNASeq,
+			Protseq:       orf.ProtSeq,
+		}
 		features = append(features, feature)
 	}
 	return
@@ -119,7 +125,6 @@ func ORFs2Features(orfs []ORF) (features []wtype.Feature) {
 // "rna = "RNA sequence
 // Use the AddFeature function to add the feature to a DNASequence such that the positions are added correctly.
 func MakeFeature(name string, seq string, start int, end int, sequencetype string, class string, reverse string) (feature wtype.Feature) {
-
 	feature.Name = name
 	feature.DNASeq = strings.ToUpper(seq)
 	feature.Class = class
@@ -137,10 +142,10 @@ func MakeFeature(name string, seq string, start int, end int, sequencetype strin
 			seq = rnaToDNA(seq)
 		}
 
-		if feature.Reverse == false {
+		if !feature.Reverse {
 			feature.DNASeq = seq
 		}
-		if feature.Reverse == true {
+		if feature.Reverse {
 			seq = wtype.RevComp(seq)
 			feature.DNASeq = seq
 		}
@@ -149,7 +154,7 @@ func MakeFeature(name string, seq string, start int, end int, sequencetype strin
 
 		if feature.Class == "gene" || feature.Class == "CDS" {
 			orf, orftrue := FindORF(seq)
-			if orftrue == true {
+			if orftrue {
 				feature.Protseq = orf.ProtSeq
 
 			}
@@ -158,7 +163,7 @@ func MakeFeature(name string, seq string, start int, end int, sequencetype strin
 
 	if feature.Class == "ORF" || feature.Class == "orf" {
 		orf, orftrue := FindORF(seq)
-		if orftrue == true {
+		if orftrue {
 			feature.Protseq = orf.ProtSeq
 		}
 	}

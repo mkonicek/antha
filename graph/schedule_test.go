@@ -6,14 +6,14 @@ import (
 
 func TestSchedule(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"a": []string{"b", "c"},
-		"d": []string{"c"},
-		"c": []string{"e"},
+		"a": {"b", "c"},
+		"d": {"c"},
+		"c": {"e"},
 	})
 	expected := [][]string{
-		[]string{"a", "d"},
-		[]string{"b", "c"},
-		[]string{"e"},
+		{"a", "d"},
+		{"b", "c"},
+		{"e"},
 	}
 	dag := Schedule(g)
 	for _, es := range expected {

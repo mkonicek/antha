@@ -27,10 +27,9 @@
 package ast
 
 import (
-	"github.com/antha-lang/antha/antha/token"
 	"sort"
-	"unicode"
-	"unicode/utf8"
+
+	"github.com/antha-lang/antha/antha/token"
 )
 
 // ----------------------------------------------------------------------------
@@ -106,7 +105,7 @@ func filterFieldList(fields *FieldList, filter Filter, export bool) (removedFiel
 	list := fields.List
 	j := 0
 	for _, f := range list {
-		keepField := false
+		var keepField bool
 		if len(f.Names) == 0 {
 			// anonymous field
 			name := fieldName(f.Type)
@@ -329,34 +328,6 @@ func nameOf(f *FuncDecl) string {
 	return f.Name.Name
 }
 
-// Utility function to check if a function declaration is
-// exported (upper case first letter)
-// For functions declared for a receiver
-// it is only exported if the receiver is also exported
-func isExported(f *FuncDecl) bool {
-	if r := f.Recv; r != nil && len(r.List) == 1 {
-		// looks like a correct receiver declaration
-		t := r.List[0].Type
-		// dereference pointer receiver types
-		if p, _ := t.(*StarExpr); p != nil {
-			t = p.X
-		}
-		// the receiver type must be a type name
-		if p, _ := t.(*Ident); p != nil {
-			receiver, _ := utf8.DecodeRuneInString(p.Name)
-			function, _ := utf8.DecodeRuneInString(f.Name.Name)
-			if unicode.IsUpper(receiver) && unicode.IsUpper(function) {
-				return true
-			}
-			return false // either the receiver or the function isn't exported
-		}
-		// otherwise assume a function instead
-	}
-	function, _ := utf8.DecodeRuneInString(f.Name.Name)
-
-	return unicode.IsUpper(function)
-}
-
 // separator is an empty //-style comment that is interspersed between
 // different comment groups when they are concatenated into a single group
 //
@@ -498,9 +469,7 @@ func MergePackageFiles(pkg *Package, mode MergeMode) *File {
 		antha = make([]Decl, nantha)
 		for _, filename := range filenames {
 			f := pkg.Files[filename]
-			for _, d := range f.Antha {
-				antha = append(antha, d)
-			}
+			antha = append(antha, f.Antha...)
 		}
 	}
 

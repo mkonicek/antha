@@ -82,7 +82,7 @@ func cmpInsMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 			}
 		} else if ins.Type == wtype.LHIPRM {
 			// we use passthrough instead
-			for ID, _ := range ins.PassThrough {
+			for ID := range ins.PassThrough {
 				res[ID] = ins
 			}
 		}

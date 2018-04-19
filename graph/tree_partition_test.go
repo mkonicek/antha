@@ -142,11 +142,11 @@ func testMinWeightTree(t *testing.T, exact bool) {
 	if r, err := checkPartition(PartitionTreeOpt{
 		exact: exact,
 		Tree: MakeTestGraph(map[string][]string{
-			"root": []string{},
+			"root": {},
 		}),
 		Root: "root",
 		Colors: makeTestColors(map[string][]int{
-			"root": []int{1},
+			"root": {1},
 		}),
 		EdgeWeight: func(a, b int) int {
 			return 1
@@ -160,15 +160,15 @@ func testMinWeightTree(t *testing.T, exact bool) {
 	if r, err := checkPartition(PartitionTreeOpt{
 		exact: exact,
 		Tree: MakeTestGraph(map[string][]string{
-			"root": []string{"a", "b"},
-			"a":    []string{"c"},
+			"root": {"a", "b"},
+			"a":    {"c"},
 		}),
 		Root: "root",
 		Colors: makeTestColors(map[string][]int{
-			"root": []int{1, 3},
-			"a":    []int{2, 3},
-			"b":    []int{1, 3},
-			"c":    []int{4},
+			"root": {1, 3},
+			"a":    {2, 3},
+			"b":    {1, 3},
+			"c":    {4},
 		}),
 		EdgeWeight: func(a, b int) int {
 			if a == b {
@@ -188,19 +188,19 @@ func testMinWeightTree(t *testing.T, exact bool) {
 	if r, err := checkPartition(PartitionTreeOpt{
 		exact: exact,
 		Tree: MakeTestGraph(map[string][]string{
-			"root": []string{"a", "b"},
-			"a":    []string{"c", "d"},
-			"b":    []string{"e", "f"},
+			"root": {"a", "b"},
+			"a":    {"c", "d"},
+			"b":    {"e", "f"},
 		}),
 		Root: "root",
 		Colors: makeTestColors(map[string][]int{
-			"root": []int{1, 2, 3},
-			"a":    []int{1, 2, 3},
-			"b":    []int{1, 2, 3},
-			"c":    []int{1, 2, 3},
-			"d":    []int{1, 2, 3},
-			"e":    []int{1, 2, 3},
-			"f":    []int{1, 2, 3},
+			"root": {1, 2, 3},
+			"a":    {1, 2, 3},
+			"b":    {1, 2, 3},
+			"c":    {1, 2, 3},
+			"d":    {1, 2, 3},
+			"e":    {1, 2, 3},
+			"f":    {1, 2, 3},
 		}),
 		EdgeWeight: func(a, b int) int {
 			return 100 - (a + b)

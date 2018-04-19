@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestassertWFContiguousNonEmpty(t *testing.T) {
+func TestAssertWFContiguousNonEmpty(t *testing.T) {
 	names := []string{"Empty", "OneContiguous", "TwoContiguous", "TwoDiscontiguous", "TrailingSpaces"}
 	things := [][]string{{"", ""}, {"", "", "", "X"}, {"", "", "", "A", "B"}, {"A", "", "B"}, {"A", "", ""}}
 	wants := []bool{false, true, true, false, true}
@@ -20,7 +20,7 @@ func TestassertWFContiguousNonEmpty(t *testing.T) {
 		testFunc := func(t *testing.T) {
 			got := assertWFContiguousNonEmpty(thing)
 			if got != want {
-				t.Errorf("Expected %v got %v ", want, got)
+				t.Errorf("assertWFContiguousNonEmpty(%v) : expected %v got %v ", thing, want, got)
 			}
 		}
 

@@ -25,17 +25,17 @@ package devices
 
 var (
 	Shaker = map[string]map[string]float64{
-		"HiGro incubator-shaker": map[string]float64{
+		"HiGro incubator-shaker": {
 			"dt": 0.008, //shaking amplitude diameter in m
 
 		},
-		"Thermomixer": map[string]float64{
+		"Thermomixer": {
 			"dt": 0.003, //shaking amplitude diameter in m
 		},
-		"Kuhner": map[string]float64{
+		"Kuhner": {
 			"dt": 0.025, //shaking amplitude diameter in m
 		},
-		"3000 T-elm": map[string]float64{
+		"3000 T-elm": {
 			"dt":                 0.002,  //shaking amplitude diameter in m
 			"maxrpm":             3000,   // maximum shaking speed in rpm
 			"minrpm":             200,    // maximum shaking speed in rpm
@@ -53,7 +53,7 @@ var (
 			"Depth":              0.099,
 			"Height":             0.0575,
 		},
-		"InhecoStaticOnDeck": map[string]float64{
+		"InhecoStaticOnDeck": {
 			"Height": 0.0575, // height in m
 
 		},

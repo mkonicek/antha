@@ -192,8 +192,13 @@ func (self *LHDeck) SetChild(name string, child LHObject) error {
 			ClassOf(child), NameOf(child), name, ClassOf(ds.contents), NameOf(ds.contents))
 	} else {
 		ds.contents = child
-		child.SetParent(self)
-		child.SetOffset(ds.position)
+		if err := child.SetParent(self); err != nil {
+			return err
+		}
+
+		if err := child.SetOffset(ds.position); err != nil {
+			return err
+		}
 	}
 	return nil
 }

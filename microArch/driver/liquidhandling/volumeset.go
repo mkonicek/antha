@@ -7,8 +7,7 @@ import (
 type VolumeSet []wunit.Volume
 
 func NewVolumeSet(n int) VolumeSet {
-	var vs VolumeSet
-	vs = make([]wunit.Volume, n)
+	vs := make(VolumeSet, n)
 	for i := 0; i < n; i++ {
 		vs[i] = (wunit.NewVolume(0.0, "ul"))
 	}
@@ -23,7 +22,6 @@ func (vs VolumeSet) Add(v wunit.Volume) {
 }
 
 // add two volume sets
-
 func (vs VolumeSet) AddA(vs2 VolumeSet) {
 	s := len(vs2)
 
@@ -106,15 +104,4 @@ func (vs VolumeSet) Min() wunit.Volume {
 	}
 
 	return v
-}
-
-func countSetSize(set []int) int {
-	c := 0
-	for _, v := range set {
-		if v != -1 {
-			c += 1
-		}
-	}
-
-	return c
 }

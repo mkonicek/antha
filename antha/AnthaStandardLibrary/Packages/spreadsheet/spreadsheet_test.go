@@ -35,7 +35,6 @@ var coordinatetests = []coordinatetest{
 }
 
 type spreadSheetTest struct {
-	contents    []byte
 	fileName    string
 	testSheet   int
 	testRows    map[int][]interface{}
@@ -43,16 +42,16 @@ type spreadSheetTest struct {
 }
 
 var tests = []spreadSheetTest{
-	spreadSheetTest{
+	{
 		fileName:  "xlsxParserTestFile.xlsx",
 		testSheet: 0,
 		testRows: map[int][]interface{}{
-			0: []interface{}{"Well", "A String Header", "A Number Header"},
-			1: []interface{}{"A1", "High", 1},
+			0: {"Well", "A String Header", "A Number Header"},
+			1: {"A1", "High", 1},
 		},
 		testColumns: map[int][]interface{}{
-			0: []interface{}{"Well", "A1", "A2", "A3", "D1"},
-			1: []interface{}{"A String Header", "High", "High", "low", "low"},
+			0: {"Well", "A1", "A2", "A3", "D1"},
+			1: {"A String Header", "High", "High", "low", "low"},
 		},
 	},
 }

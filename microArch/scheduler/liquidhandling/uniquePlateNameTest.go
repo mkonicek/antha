@@ -7,7 +7,7 @@ import (
 
 func TestUniquePlateName(t *testing.T) {
 	mswl := func(s string) map[string]*wtype.LHPlate {
-		return map[string]*wtype.LHPlate{s: &wtype.LHPlate{}}
+		return map[string]*wtype.LHPlate{s: {}}
 	}
 
 	type testData struct {

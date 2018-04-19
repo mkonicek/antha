@@ -84,9 +84,9 @@ func CalculateKlasquaremicrowell(Platetype string, liquid string, rpm float64, S
 	//// fmt.Println("shakerspeedrequired= ", r)
 	//r, _ = stats.Round(Re, 3)
 	//// fmt.Println("Reynolds number = ", r)
-	if Re > 5E3 {
-		// fmt.Println("Turbulent flow")
-	}
+	// if Re > 5E3 {
+	// 	// fmt.Println("Turbulent flow")
+	// }
 
 	//r, _ = stats.Round(Fr, 3)
 	//// fmt.Println("Froude number = ", r)

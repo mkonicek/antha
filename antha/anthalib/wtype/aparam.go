@@ -163,7 +163,7 @@ type AParamSet map[string]AParam
 func (alhpis AParamSet) OrderedList() []string {
 	ks := make([]string, 0, len(alhpis))
 
-	for k, _ := range alhpis {
+	for k := range alhpis {
 		ks = append(ks, k)
 	}
 
@@ -188,7 +188,7 @@ func (alhpis AParamSet) TypeList() string {
 func (alhpis AParamSet) CodeForIt() string {
 	ks := make([]string, 0, len(alhpis))
 
-	for k, _ := range alhpis {
+	for k := range alhpis {
 		ks = append(ks, k)
 	}
 

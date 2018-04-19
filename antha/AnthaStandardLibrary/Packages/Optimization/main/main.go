@@ -3,11 +3,12 @@ package main
 import (
 	//"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"fmt"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Optimization"
 	"math/rand"
 	"reflect"
 	"sort"
 	"time"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Optimization"
 )
 
 func DefaultParameters() Optimization.AssemblyOptimizerParameters {
@@ -74,28 +75,6 @@ func (ps1D PointSet1D) Dup() PointSet1D {
 	}
 
 	return r
-}
-
-type PointSet3D []Point3D
-
-type Point3D struct {
-	X int
-	Y int
-	Z int
-}
-
-func (ps3d PointSet3D) Less(i, j int) bool {
-	return ps3d[i].X < ps3d[j].X
-}
-
-func (ps3d PointSet3D) Swap(i, j int) {
-	t := ps3d[i]
-	ps3d[i] = ps3d[j]
-	ps3d[j] = t
-}
-
-func (ps3d PointSet3D) Len() int {
-	return len(ps3d)
 }
 
 type PointSet2D []Point2D
@@ -351,7 +330,6 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 	const (
 		ADD = iota
 		DELETE
-		MOVE
 	)
 
 	for {
@@ -368,7 +346,6 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 			if ret != nil {
 				mem = ret
 				stop = true
-				break
 			}
 		case DELETE:
 			if len(mem) == 0 {
@@ -380,7 +357,6 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 			if ret != nil {
 				mem = ret
 				stop = true
-				break
 			}
 		default: // i.e. MOVE
 			if len(mem) == 0 {
@@ -391,7 +367,6 @@ func (p *Population) Mutate(mem PointSet1D, prm Optimization.AssemblyOptimizerPa
 			if ret != nil {
 				stop = true
 				mem = ret
-				break
 			}
 		}
 		if stop {

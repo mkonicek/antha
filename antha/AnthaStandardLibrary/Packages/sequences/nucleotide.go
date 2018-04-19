@@ -36,22 +36,16 @@ func Illegalnucleotides(fwdsequence wtype.DNASequence) (pass bool, illegalfound 
 	illegal := "§1234567890-=qeiop[]fjl;'z,./!@£$%^&*()_+?" // removed all instances of non IUPAC nucleotides
 	wobble := "NXBHVDMKSWRYU"                               //IUPAC nucleotides
 
-	if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(illegal))) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(illegal)) == true {
-
+	if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), (strings.ToUpper(illegal))) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(illegal)) {
 		pass = false
 		illegalarray := strings.Split(illegal, "")
 		illegalfound = search.FindAllStrings((strings.ToLower(fwdsequence.Seq)), illegalarray)
-
-	} else if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), wobble) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(wobble)) == true {
-
+	} else if strings.ContainsAny(strings.ToUpper(fwdsequence.Seq), wobble) || strings.ContainsAny(fwdsequence.Seq, strings.ToLower(wobble)) {
 		pass = false
 		wobblearray := strings.Split(wobble, "")
 		wobblefound = search.FindAllStrings((strings.ToUpper(fwdsequence.Seq)), wobblearray)
-
 	} else {
-
 		pass = true
-
 	}
 
 	return pass, illegalfound, wobblefound
@@ -66,30 +60,30 @@ func Illegalnucleotides(fwdsequence wtype.DNASequence) (pass bool, illegalfound 
 // gaps are represented by - or .
 //
 var WobbleMap = map[string][]string{
-	"A": []string{"A"},
-	"T": []string{"T"},
-	"U": []string{"U"},
-	"C": []string{"C"},
-	"G": []string{"G"},
-	"a": []string{"A"},
-	"t": []string{"T"},
-	"u": []string{"U"},
-	"c": []string{"C"},
-	"g": []string{"G"},
-	"Y": []string{"C", "T"},
-	"R": []string{"A", "G"},
-	"W": []string{"A", "T"},
-	"S": []string{"G", "C"},
-	"K": []string{"G", "T"},
-	"M": []string{"A", "C"},
-	"D": []string{"A", "G", "T"},
-	"V": []string{"A", "C", "G"},
-	"H": []string{"A", "C", "T"},
-	"B": []string{"C", "G", "T"},
-	"N": []string{"A", "T", "C", "G"},
-	"X": []string{"A", "T", "C", "G"},
-	"-": []string{"-", "."},
-	".": []string{"-", "."},
+	"A": {"A"},
+	"T": {"T"},
+	"U": {"U"},
+	"C": {"C"},
+	"G": {"G"},
+	"a": {"A"},
+	"t": {"T"},
+	"u": {"U"},
+	"c": {"C"},
+	"g": {"G"},
+	"Y": {"C", "T"},
+	"R": {"A", "G"},
+	"W": {"A", "T"},
+	"S": {"G", "C"},
+	"K": {"G", "T"},
+	"M": {"A", "C"},
+	"D": {"A", "G", "T"},
+	"V": {"A", "C", "G"},
+	"H": {"A", "C", "T"},
+	"B": {"C", "G", "T"},
+	"N": {"A", "T", "C", "G"},
+	"X": {"A", "T", "C", "G"},
+	"-": {"-", "."},
+	".": {"-", "."},
 }
 
 // Wobble returns an array of sequence options, as strings.
@@ -121,7 +115,7 @@ func allCombinations(arr [][]string) []string {
 	}
 
 	results := make([]string, 0)
-	allRem := allCombinations(arr[1:len(arr)])
+	allRem := allCombinations(arr[1:])
 	for i := 0; i < len(allRem); i++ {
 		for j := 0; j < len(arr[0]); j++ {
 			x := arr[0][j] + allRem[i]
@@ -186,10 +180,10 @@ func MassDNA(fwdsequence string, phosphate5prime bool, doublestranded bool) (mw 
 	massofCs := (float64(numberofCs) * Nucleotidegpermol["C"])
 	massofGs := (float64(numberofGs) * Nucleotidegpermol["G"])
 	mw = (massofAs + massofTs + massofCs + massofGs)
-	if phosphate5prime == true {
+	if phosphate5prime {
 		mw = mw + 79.0 // extra for phosphate left at 5' end following digestion, not relevant for primer extension
 	}
-	if doublestranded == true {
+	if doublestranded {
 		mw = 2 * mw
 	}
 	return mw

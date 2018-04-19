@@ -53,17 +53,45 @@ func NormaliseName(name string) (normalised string) {
 	}
 }
 
-// NormaliseComponentName will return the concentration of the component followed by the unmodified component name followed by the full list of sub components with concentrations.
-// e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10X LB---10g/L Yeast Extract---5g/L Tryptone.
-// An LB solution with no concentration and components is returned as LB.
-// Warning: if a component name already contains a concentration it will be possible to return duplicate concentration values. e.g. 10X 10X LB or 10X LB 10X.
-// To avoid this, when first declaring a component name the NormaliseName function should be used first.
-func NormaliseComponentName(component *wtype.LHComponent) string {
+func removeConcUnitFromName(name string) string {
 
-	compList, _ := GetSubComponents(component)
-
-	if component.HasConcentration() {
-		return component.Concentration().ToString() + " " + component.Name() + " " + compList.List(false)
+	for n := 0; n < 9; n++ {
+		_, _, name = wunit.ParseConcentration(strings.TrimSpace(name))
 	}
-	return component.Name() + compList.List(false)
+	newName := name
+	return newName
+}
+
+// ReturnNormalisedComponentName will return the component name in a normalised form.
+// If sub components exist the name will be changed to the list of sub components with concentrations.
+// e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
+// An LB solution with concentration 1 X and no components is returned as 1X LB.
+// An LB solution with no concentration and no components is returned as LB.
+func ReturnNormalisedComponentName(component *wtype.LHComponent) string {
+	originalcompList, _ := GetSubComponents(component)
+
+	compList := originalcompList.removeConcsFromSubComponentNames()
+
+	if component.HasConcentration() && len(compList.Components) == 0 {
+		name := component.Concentration().ToString() + " " + removeConcUnitFromName(component.Name()) + " " + compList.List(false)
+		return name
+	}
+
+	name := compList.List(false, true)
+
+	return name
+}
+
+// NormaliseComponentName will change the name of the component to the normalised form returned by ReturnNormalisedComponentName.
+// If sub components exist the name will be changed to the list of sub components with concentrations.
+// e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
+// An LB solution with concentration 1 X and no components is returned as 1X LB.
+// An LB solution with no concentration and no components is returned as LB.
+func NormaliseComponentName(component *wtype.LHComponent) error {
+
+	newName := ReturnNormalisedComponentName(component)
+
+	component.SetName(newName)
+
+	return nil
 }

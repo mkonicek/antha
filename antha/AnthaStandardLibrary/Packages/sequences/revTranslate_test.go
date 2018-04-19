@@ -49,7 +49,7 @@ func makeLSequence(size int) string {
 
 var revTranslateTests = []translateTest{
 
-	translateTest{
+	{
 		AminoAcids: &wtype.ProteinSequence{
 			Nm:  "Test1",
 			Seq: makeLSequence(10),

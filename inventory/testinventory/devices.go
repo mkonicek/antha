@@ -20,7 +20,6 @@ const (
 	bioshake96welladaptorheight                 = 4.5
 	bioshakestandardadaptorheight               = 5.0
 	appliedbiosystemsmagbeadbaseheight          = 12.0 //height of just plate base, upon which most skirted plates can rest
-	appliedbiosystemsmagbeadtotalheight         = 17.0 //height of base and well, in which other plates can rest
 	fluidXhighProfileRackHeight                 = 2.0 - MinimumZHeightPermissableForLVPipetMax
 )
 
@@ -30,7 +29,6 @@ const (
 
 var (
 	incubatorheightinmm = devices.Shaker["3000 T-elm"]["Height"]*1000 + incubatoroffset
-	inhecoincubatorinmm = devices.Shaker["InhecoStaticOnDeck"]["Height"] * 1000
 )
 
 // defaultDevices are default devices upon which an sbs format plate may be placed
@@ -42,19 +40,19 @@ var defaultDevices = map[string]device{
 		Synonyms:     []string{"riser40", "riser"},
 		PlateConstraints: plateConstraints{
 			NotThesePlates: []plateWithConstraint{
-				plateWithConstraint{
+				{
 					Name:          "FluidX700ulTubes",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "pcrplate",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "pcrplate_semi_skirted",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "strip_tubes_0.2ml",
 					SpecialOffset: 0.0,
 				},
@@ -69,19 +67,19 @@ var defaultDevices = map[string]device{
 		Synonyms:     []string{"riser20", "shallowriser"},
 		PlateConstraints: plateConstraints{
 			NotThesePlates: []plateWithConstraint{
-				plateWithConstraint{
+				{
 					Name:          "FluidX700ulTubes",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "pcrplate",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "pcrplate_semi_skirted",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "strip_tubes_0.2ml",
 					SpecialOffset: 0.0,
 				},
@@ -96,19 +94,19 @@ var defaultDevices = map[string]device{
 		Synonyms:     []string{"riser18", "shallowriser18"},
 		PlateConstraints: plateConstraints{
 			NotThesePlates: []plateWithConstraint{
-				plateWithConstraint{
+				{
 					Name:          "FluidX700ulTubes",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "pcrplate",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "pcrplate_semi_skirted",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "strip_tubes_0.2ml",
 					SpecialOffset: 0.0,
 				},
@@ -123,15 +121,15 @@ var defaultDevices = map[string]device{
 		Synonyms:     []string{"with_496rack"},
 		PlateConstraints: plateConstraints{
 			OnlyThesePlates: []plateWithConstraint{
-				plateWithConstraint{
+				{
 					Name:          "pcrplate",
 					SpecialOffset: -MinimumZHeightPermissableForLVPipetMax,
 				},
-				plateWithConstraint{
+				{
 					Name:          "pcrplate_semi_skirted",
 					SpecialOffset: 0.0,
 				},
-				plateWithConstraint{
+				{
 					Name:          "strip_tubes_0.2ml",
 					SpecialOffset: -2.5,
 				},
@@ -146,15 +144,15 @@ var defaultDevices = map[string]device{
 		Synonyms:     []string{"with_AB_magnetic_ring_stand"},
 		PlateConstraints: plateConstraints{
 			OnlyThesePlates: []plateWithConstraint{
-				plateWithConstraint{
+				{
 					Name:          "TwistDNAPlate",
 					SpecialOffset: 0.75,
 				},
-				plateWithConstraint{
+				{
 					Name:          "GreinerSWVBottom",
 					SpecialOffset: 0.25,
 				},
-				plateWithConstraint{
+				{
 					Name:          "Nunc_96_deepwell_1ml",
 					SpecialOffset: 3.30,
 				},
@@ -169,7 +167,7 @@ var defaultDevices = map[string]device{
 		Synonyms:     []string{"with_FluidX_high_profile_rack"},
 		PlateConstraints: plateConstraints{
 			OnlyThesePlates: []plateWithConstraint{
-				plateWithConstraint{
+				{
 					Name:          "FluidX700ulTubes",
 					SpecialOffset: 0.0,
 				},
@@ -185,19 +183,19 @@ var defaultDevices = map[string]device{
 			Synonyms:     []string{"bioshake"},
 			PlateConstraints: plateConstraints{
 				NotThesePlates: []plateWithConstraint{
-					plateWithConstraint{
+					{
 						Name:          "FluidX700ulTubes",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate_semi_skirted",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "strip_tubes_0.2ml",
 						SpecialOffset: 0.0,
 					},
@@ -206,7 +204,7 @@ var defaultDevices = map[string]device{
 		},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{
-			"Pipetmax": []string{"position_1"},
+			"Pipetmax": {"position_1"},
 		},
 	},
 
@@ -218,19 +216,19 @@ var defaultDevices = map[string]device{
 			Synonyms:     []string{"bioshake_96well_adaptor"},
 			PlateConstraints: plateConstraints{
 				OnlyThesePlates: []plateWithConstraint{
-					plateWithConstraint{
+					{
 						Name:          "pcrplate",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate_skirted",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate_semi_skirted",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "strip_tubes_0.2ml",
 						SpecialOffset: 0.0,
 					},
@@ -239,7 +237,7 @@ var defaultDevices = map[string]device{
 		},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{
-			"Pipetmax": []string{"position_1"},
+			"Pipetmax": {"position_1"},
 		},
 	},
 
@@ -250,19 +248,19 @@ var defaultDevices = map[string]device{
 			Synonyms:     []string{"bioshake_standard_adaptor"},
 			PlateConstraints: plateConstraints{
 				NotThesePlates: []plateWithConstraint{
-					plateWithConstraint{
+					{
 						Name:          "FluidX700ulTubes",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate_semi_skirted",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "strip_tubes_0.2ml",
 						SpecialOffset: 0.0,
 					},
@@ -271,7 +269,7 @@ var defaultDevices = map[string]device{
 		},
 		Properties: devices.Shaker["3000 T-elm"],
 		PositionConstraints: map[string][]string{
-			"Pipetmax": []string{"position_1"},
+			"Pipetmax": {"position_1"},
 		},
 	},
 
@@ -283,19 +281,19 @@ var defaultDevices = map[string]device{
 			Synonyms:     []string{"with_cooler"},
 			PlateConstraints: plateConstraints{
 				OnlyThesePlates: []plateWithConstraint{
-					plateWithConstraint{
+					{
 						Name:          "pcrplate",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate_skirted",
 						SpecialOffset: 3.4,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate_semi_skirted",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "strip_tubes_0.2ml",
 						SpecialOffset: 0.0,
 					},
@@ -316,19 +314,19 @@ var defaultDevices = map[string]device{
 			Synonyms:     []string{"with_isofreeze_cooler"},
 			PlateConstraints: plateConstraints{
 				OnlyThesePlates: []plateWithConstraint{
-					plateWithConstraint{
+					{
 						Name:          "pcrplate",
 						SpecialOffset: -MinimumZHeightPermissableForLVPipetMax,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate_skirted",
 						SpecialOffset: 3.4 - 0.036,
 					},
-					plateWithConstraint{
+					{
 						Name:          "pcrplate_semi_skirted",
 						SpecialOffset: 0.0,
 					},
-					plateWithConstraint{
+					{
 						Name:          "strip_tubes_0.2ml",
 						SpecialOffset: 0.0,
 					},

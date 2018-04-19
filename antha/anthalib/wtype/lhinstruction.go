@@ -2,8 +2,9 @@ package wtype
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 // enum of instruction types
@@ -102,11 +103,9 @@ func (lhi *LHInstruction) ProductIDs() []string {
 func (lhi *LHInstruction) GetPlateType() string {
 	if lhi.OutPlate != nil {
 		return lhi.OutPlate.Type
-	} else {
-		return lhi.Platetype
 	}
 
-	return ""
+	return lhi.Platetype
 }
 
 // privatised in favour of specific instruction constructors

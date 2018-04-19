@@ -109,8 +109,8 @@ func TestMarshalSlice(t *testing.T) {
 		B int
 	}
 	x := []Elem{
-		Elem{A: "hello", B: 1},
-		Elem{A: "hello", B: 2},
+		{A: "hello", B: 1},
+		{A: "hello", B: 2},
 	}
 	golden := []byte(`[{"A":"hello","B":1},{"A":"hello","B":2}]`)
 

@@ -526,9 +526,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 		sites = make([]RestrictionSites, 0)
 		for i := 0; i < len(plasmidProducts); i++ {
 			sitesperplasmid := RestrictionSiteFinder(plasmidProducts[i], bsaI, sapI, enzyme.RestrictionEnzyme)
-			for _, site := range sitesperplasmid {
-				sites = append(sites, site)
-			}
+			sites = append(sites, sitesperplasmid...)
 		}
 	}
 
@@ -609,29 +607,6 @@ func biggest(entries []wtype.DNASequence) wtype.DNASequence {
 	}
 
 	return value
-}
-
-func split(entries []wtype.DNASequence, entryPositionInSlice int) (split wtype.DNASequence, rest []wtype.DNASequence, err error) {
-
-	if len(entries) == 0 {
-		return split, rest, fmt.Errorf("no sequences to split")
-	}
-
-	if entryPositionInSlice >= len(entries) {
-		return split, rest, fmt.Errorf("cannot take entry %d from slice of length %d", entryPositionInSlice, len(entries))
-	}
-
-	for i, entry := range entries {
-
-		if i == entryPositionInSlice {
-			split = entry
-		} else {
-			rest = append(rest, entry)
-		}
-
-	}
-
-	return split, rest, nil
 }
 
 // MultipleAssemblies will perform simulated assemblies on multiple constructs

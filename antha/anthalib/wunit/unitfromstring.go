@@ -73,7 +73,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 
 	var sortedKeys []string
 
-	for k, _ := range approvedunits {
+	for k := range approvedunits {
 		sortedKeys = append(sortedKeys, k)
 	}
 
@@ -165,7 +165,6 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 					return false, conc, componentname
 				}
 				panic(fmt.Sprint("error parsing componentname: ", componentname, ": ", err.Error()))
-				return false, conc, componentNameOnly
 			}
 		}
 	}
@@ -184,7 +183,7 @@ func ParseVolume(volstring string) (volume Volume, err error) {
 
 	var sortedKeys []string
 
-	for k, _ := range approvedunits {
+	for k := range approvedunits {
 		sortedKeys = append(sortedKeys, k)
 	}
 

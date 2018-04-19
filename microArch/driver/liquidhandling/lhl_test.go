@@ -21,7 +21,7 @@ func makeGilson() *LHProperties {
 	z0 := -82.035
 	xi := 149.86
 	yi := 95.25
-	xp := x0
+	xp := x0 // nolint
 	yp := y0
 	zp := z0
 	for y := 0; y < 3; y++ {

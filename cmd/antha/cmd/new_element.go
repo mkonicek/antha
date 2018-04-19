@@ -202,7 +202,7 @@ func writeAn(outputDir string, steps []string, element *component.Component) err
 func writeBundle(outputDir string, element *component.Component, params map[string]interface{}) error {
 	desc := workflow.Desc{
 		Processes: map[string]workflow.Process{
-			"Process1": workflow.Process{
+			"Process1": {
 				Component: element.Name,
 			},
 		},

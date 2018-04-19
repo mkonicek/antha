@@ -129,9 +129,5 @@ func NewNilShape() *Shape {
 }
 
 func (sh *Shape) IsZero() bool {
-	if sh.ShapeName == "" {
-		return false
-	}
-
-	return true
+	return len(sh.ShapeName) == 0
 }

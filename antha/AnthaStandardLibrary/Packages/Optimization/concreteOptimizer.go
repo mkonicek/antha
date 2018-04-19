@@ -389,7 +389,7 @@ func endsOK(sa [][]string, m map[string]bool, noTransitions bool) bool {
 }
 
 func findTransition(s string, m map[string]bool) bool {
-	for k, _ := range m {
+	for k := range m {
 		if Transition(k, s) {
 			return true
 		}
@@ -439,7 +439,7 @@ func baseTransition(b byte) byte {
 			return byte(unicode.ToLower(rune(t)))
 		}
 	} else {
-		t, _ := transitions[b]
+		t := transitions[b]
 
 		return t
 	}
@@ -532,7 +532,6 @@ func (p *Population) Mutate(mem PointSet1D, prm AssemblyOptimizerParameters, cns
 	const (
 		ADD = iota
 		DELETE
-		MOVE
 	)
 
 	for {
@@ -549,7 +548,6 @@ func (p *Population) Mutate(mem PointSet1D, prm AssemblyOptimizerParameters, cns
 			if ret != nil {
 				mem = ret
 				stop = true
-				break
 			}
 		case DELETE:
 			if len(mem) == 0 {
@@ -561,7 +559,6 @@ func (p *Population) Mutate(mem PointSet1D, prm AssemblyOptimizerParameters, cns
 			if ret != nil {
 				mem = ret
 				stop = true
-				break
 			}
 		default: // i.e. MOVE
 			if len(mem) == 0 {
@@ -572,7 +569,6 @@ func (p *Population) Mutate(mem PointSet1D, prm AssemblyOptimizerParameters, cns
 			if ret != nil {
 				stop = true
 				mem = ret
-				break
 			}
 		}
 		if stop {
@@ -706,18 +702,7 @@ func ScaledFitnessTest(f int, fs []int) bool {
 }
 
 func NewPop(problem AssemblyProblem, constraints Constraints, parameters AssemblyOptimizerParameters) *Population {
-	sft := func(f int, fs []int) bool {
-		s := scale(f, fs)
 
-		r := rand.Float64()
-
-		if r > s {
-			return true
-		}
-
-		return false
-	}
-	sft = sft
 	popSize, _ := parameters.GetInt("pop_size")
 	members := make([]PointSet1D, 0, popSize)
 

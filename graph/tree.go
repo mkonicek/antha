@@ -42,7 +42,7 @@ func VisitTree(opt VisitTreeOpt) error {
 		Post         bool
 	}
 
-	stack := []frame{frame{Node: opt.Root}}
+	stack := []frame{{Node: opt.Root}}
 
 	var lastError error
 	for l := len(stack); l > 0; l = len(stack) {

@@ -7,20 +7,20 @@ import (
 
 // heights in mm
 const (
-	offset                                      = 0.25
-	gilsonoffsetpcrplate                        = 2.0 // 2.136
-	gilsonoffsetgreiner                         = 2.0
-	riserheightinmm                             = 40.0 - offset
-	shallowriserheightinmm                      = 20.25 - offset
-	shallowriser18heightinmm                    = 18.75 - offset
-	coolerheight                                = 16.0
-	isofreezecoolerheight                       = 10.0
-	pcrtuberack496HeightInmm                    = 28.0
-	valueformaxheadtonotintoDSWplatewithp20tips = 4.5
-	bioshake96welladaptorheight                 = 4.5
-	bioshakestandardadaptorheight               = 5.0
-	appliedbiosystemsmagbeadbaseheight          = 12.0 //height of just plate base, upon which most skirted plates can rest
-	fluidXhighProfileRackHeight                 = 2.0 - MinimumZHeightPermissableForLVPipetMax
+	offset                   = 0.25
+	gilsonoffsetpcrplate     = 2.0 // 2.136
+	gilsonoffsetgreiner      = 2.0
+	riserheightinmm          = 40.0 - offset
+	shallowriserheightinmm   = 20.25 - offset
+	shallowriser18heightinmm = 18.75 - offset
+	coolerheight             = 16.0
+	isofreezecoolerheight    = 10.0
+	pcrtuberack496HeightInmm = 28.0
+	//valueformaxheadtonotintoDSWplatewithp20tips = 4.5
+	bioshake96welladaptorheight        = 4.5
+	bioshakestandardadaptorheight      = 5.0
+	appliedbiosystemsmagbeadbaseheight = 12.0 //height of just plate base, upon which most skirted plates can rest
+	fluidXhighProfileRackHeight        = 2.0 - MinimumZHeightPermissableForLVPipetMax
 )
 
 const (

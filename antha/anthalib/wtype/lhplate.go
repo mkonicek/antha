@@ -937,9 +937,7 @@ func (p *LHPlate) GetAllConstraints() map[string][]string {
 	for k, v := range p.Welltype.Extra {
 		if isConstraintKey(k) {
 			var pos []string
-			for _, s := range v.([]string) {
-				pos = append(pos, s)
-			}
+			pos = append(pos, v.([]string)...)
 			ret[unMakeConstraintKey(k)] = pos
 		}
 	}

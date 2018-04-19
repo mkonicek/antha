@@ -2,6 +2,7 @@ package testinventory
 
 import (
 	"context"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"strings"
 	"testing"
 
@@ -324,4 +325,47 @@ func TestPlateZs(t *testing.T) {
 			)
 		}
 	}
+}
+
+func addRiser(plate *wtype.LHPlate, riser device) (plates []*wtype.LHPlate) {
+	if containsRiser(plate) || doNotAddThisRiserToThisPlate(plate, riser) {
+		return
+	}
+
+	for _, risername := range riser.GetSynonyms() {
+		var dontaddrisertothisplate bool
+
+		newplate := plate.Dup()
+		riserheight := riser.GetHeightInmm()
+		if offset, found := platespecificoffset[plate.Type]; found {
+			riserheight = riserheight - offset
+		}
+
+		riserheight = riserheight + plateRiserSpecificOffset(plate, riser)
+
+		newplate.WellZStart = plate.WellZStart + riserheight
+		newname := plate.Type + "_" + risername
+		newplate.Type = newname
+		if riser.GetConstraints() != nil {
+			// duplicate well before adding constraint to prevent applying
+			// constraint to all common &Welltype on other plates
+
+			for device, allowedpositions := range riser.GetConstraints() {
+				newwell := newplate.Welltype.Dup()
+				newplate.Welltype = newwell
+				_, ok := newwell.Extra[device]
+				if !ok {
+					newplate.SetConstrained(device, allowedpositions)
+				} else {
+					dontaddrisertothisplate = true
+				}
+			}
+		}
+
+		if !dontaddrisertothisplate {
+			plates = append(plates, newplate)
+		}
+	}
+
+	return
 }

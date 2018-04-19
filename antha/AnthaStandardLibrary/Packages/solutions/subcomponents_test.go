@@ -319,7 +319,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 	ps := mixer.Sample(part, wunit.NewVolume(10.0, "ul"))
 
 	var mixTests = []mixTest{
-		mixTest{
+		{
 			name:                "noConcsTest",
 			product:             water,
 			mixes:               []*wtype.LHComponent{ws, ps, mmxs},
@@ -333,7 +333,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 			},
 			expectedProductConc: gPerL0,
 			expectedError:       wtype.NewWarningf("zero concentration found for sample water; zero concentration found for sample dna; zero concentration found for sample mastermix_sapI"),
-		}, mixTest{
+		}, {
 			name:                "SampleForTotalVolumeTest",
 			product:             water,
 			mixes:               []*wtype.LHComponent{wsTotal, ps, mmxs},
@@ -348,7 +348,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 			expectedProductConc: gPerL0,
 			expectedError:       wtype.NewWarningf("zero concentration found for sample water; zero concentration found for sample dna; zero concentration found for sample mastermix_sapI"),
 		},
-		mixTest{
+		{
 			name:    "SampleWithConcsTest",
 			product: water,
 			mixes: []*wtype.LHComponent{
@@ -369,7 +369,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 			expectedProductConc: gPerL0,
 			expectedError:       wtype.NewWarningf("zero concentration found for sample water"),
 		},
-		mixTest{
+		{
 			name:    "InvalidTotalVolumeTest",
 			product: water,
 			mixes: []*wtype.LHComponent{
@@ -386,7 +386,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 			expectedProductConc: gPerL0,
 			expectedError:       errors.New("SampleForTotalVolume requested (100 ul) is less than sum of sample volumes (260 ul)"),
 		},
-		mixTest{
+		{
 			name:    "SampleWithComponentListsTest",
 			product: water,
 			mixes: []*wtype.LHComponent{

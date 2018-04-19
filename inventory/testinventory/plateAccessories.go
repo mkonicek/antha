@@ -96,12 +96,3 @@ func addRiser(plate *wtype.LHPlate, riser device) (plates []*wtype.LHPlate) {
 
 	return
 }
-
-func addAllDevices(plates []*wtype.LHPlate) (ret []*wtype.LHPlate) {
-	for _, plate := range plates {
-		for _, dev := range defaultDevices {
-			ret = append(ret, addRiser(plate, dev)...)
-		}
-	}
-	return
-}

@@ -54,7 +54,7 @@ func main() {
 	s, err := json.MarshalIndent(platesForSerializing, "", " ")
 
 	if err != nil {
-		panic(fmt.Sprintf("serialize error ", err))
+		panic(fmt.Sprint("serialize error ", err))
 	}
 
 	fmt.Println(string(s))

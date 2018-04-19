@@ -29,6 +29,11 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
+var (
+	vunit = "ul"
+	lunit = "mm"
+)
+
 // The height below which an error will be generated
 // when attempting to perform transfers with low volume head and tips (0.5 - 20ul) on the Gilson PipetMax.
 const MinimumZHeightPermissableForLVPipetMax = 0.636

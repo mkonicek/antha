@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
-	"io/ioutil"
 	"sort"
 )
-
-var jsonFileName = "allPlates.json"
 
 type testInventory struct {
 	componentByName map[string]*wtype.LHComponent
@@ -152,15 +149,9 @@ func GetComponents(ctx context.Context) []*wtype.LHComponent {
 }
 
 func getPlatesFromSerial() ([]PlateForSerializing, error) {
-	plateBytes, err := ioutil.ReadFile(jsonFileName)
-
-	if err != nil {
-		return nil, err
-	}
-
 	var pltArr []PlateForSerializing
 
-	err = json.Unmarshal(plateBytes, &pltArr)
+	err := json.Unmarshal(plateBytes, &pltArr)
 
 	if err != nil {
 		return nil, err

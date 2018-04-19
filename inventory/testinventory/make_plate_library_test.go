@@ -16,22 +16,22 @@ type platetest struct {
 }
 
 var tests = []platetest{
-	platetest{TestPlateName: "reservoir", ExpectedZStart: 0.0, ExpectedHeight: 40.0},
-	platetest{TestPlateName: "pcrplate_skirted", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
-	platetest{TestPlateName: "Nuncon12well", ExpectedZStart: 4.0, ExpectedHeight: 19.0},
-	platetest{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9.0, ExpectedHeight: 19.0},
+	{TestPlateName: "reservoir", ExpectedZStart: 0.0, ExpectedHeight: 40.0},
+	{TestPlateName: "pcrplate_skirted", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
+	{TestPlateName: "pcrplate", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
+	{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
+	{TestPlateName: "Nuncon12well", ExpectedZStart: 4.0, ExpectedHeight: 19.0},
+	{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9.0, ExpectedHeight: 19.0},
 }
 
 var testsofPlateWithRiser = []platetest{
-	platetest{TestPlateName: "pcrplate_with_cooler", ExpectedZStart: coolerheight + MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate_skirted_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "pcrplate_semi_skirted_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm + 1.0, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "strip_tubes_0.2ml_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm - 2.5, ExpectedHeight: 15.5},
-	platetest{TestPlateName: "FluidX700ulTubes_with_FluidX_high_profile_rack", ExpectedZStart: 2, ExpectedHeight: 26.736},
+	{TestPlateName: "pcrplate_with_cooler", ExpectedZStart: coolerheight + MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
+	{TestPlateName: "pcrplate_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5},
+	{TestPlateName: "pcrplate_skirted_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5},
+	{TestPlateName: "pcrplate_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5},
+	{TestPlateName: "pcrplate_semi_skirted_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm + 1.0, ExpectedHeight: 15.5},
+	{TestPlateName: "strip_tubes_0.2ml_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm - 2.5, ExpectedHeight: 15.5},
+	{TestPlateName: "FluidX700ulTubes_with_FluidX_high_profile_rack", ExpectedZStart: 2, ExpectedHeight: 26.736},
 }
 
 func TestAddRiser(t *testing.T) {
@@ -120,15 +120,15 @@ type testdevice struct {
 }
 
 var testdevices = []testdevice{
-	testdevice{name: "bioshake", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 55.92},
+	{name: "bioshake", constraintdevice: "Pipetmax", constraintposition1: "position_1", height: 55.92},
 }
 
 type deviceExceptions map[string][]string // key is device name, exceptions are the plates which will give a result which differs from norm
 
 var exceptions deviceExceptions = map[string][]string{
-	"bioshake":                  []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
-	"bioshake_96well_adaptor":   []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
-	"bioshake_standard_adaptor": []string{"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
+	"bioshake":                  {"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
+	"bioshake_96well_adaptor":   {"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
+	"bioshake_standard_adaptor": {"EGEL96_1", "EGEL96_2", "EPAGE48", "EGEL48", "Nuncon12wellAgarD_incubator"},
 }
 
 func TestDeviceMethods(t *testing.T) {
@@ -208,17 +208,16 @@ func TestSetConstraints(t *testing.T) {
 			}
 
 			for _, testplate := range newPlates {
-				positionsinterface, found := testplate.Welltype.Extra[platform]
-				positions, ok := positionsinterface.([]string)
+				//positionsinterface, found := testplate.Welltype.Extra[platform]
+				positions, found := testplate.IsConstrainedOn(platform)
 
 				if doNotAddThisRiserToThisPlate(testplate, device) {
 					// skip this case
-				} else if !ok || !found || len(positions) == 0 {
+				} else if !found || len(positions) == 0 {
 					t.Error(
 						"for", device, "\n",
 						"testname", testplate.Type, "\n",
-						"Extra found", found, "\n",
-						"[]string?: ", ok, "\n",
+						"Constraints found?", found, "\n",
 						"Positions: ", positions, "\n",
 						"expected positions: ", expectedpositions, "\n",
 						"Constraints expected :", device.GetConstraints()[platform], "\n",
@@ -273,16 +272,16 @@ func TestGetConstraints(t *testing.T) {
 				continue
 			}
 
-			positionsinterface, found := testplate.Welltype.Extra[platform]
-			positions, ok := positionsinterface.([]string)
-			if !ok || !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
+			//positionsinterface, found := testplate.Welltype.Extra[platform]
+			//positions, ok := positionsinterface.([]string)
+
+			positions, found := testplate.IsConstrainedOn(platform)
+			if !found || positions == nil || len(positions) != len(expectedpositions) || positions[0] != expectedpositions[0] {
 				if doNotAddThisRiserToThisPlate(testplate, device) && len(device.GetConstraints()[platform]) > 0 {
 					t.Error(
 						"for", device, "\n",
 						"testname", testname, "\n",
-
-						"Extra found", found, "\n",
-						"[]string?: ", ok, "\n",
+						"Constraints found", found, "\n",
 						"Positions: ", positions, "\n",
 						"expected positions: ", expectedpositions, "\n",
 						"Constraints expected :", device.GetConstraints()[platform], "\n",

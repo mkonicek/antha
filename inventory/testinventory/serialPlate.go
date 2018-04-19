@@ -4,8 +4,13 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-type plateForSerializing struct {
-	PlateName    string
+var (
+	vunit = "ul"
+	lunit = "mm"
+)
+
+type PlateForSerializing struct {
+	PlateType    string
 	Manufacturer string
 	// shape "box", "mm", 8.2, 8.2, 41.3 	-- defines well shape
 	WellShape string
@@ -27,4 +32,29 @@ type plateForSerializing struct {
 	WellYStart  float64
 	WellZStart  float64
 	Special     bool
+	Constraints map[string][]string
+}
+
+func (pt PlateForSerializing) LHPlate() *wtype.LHPlate {
+	newWellShape := wtype.NewShape(pt.WellShape, lunit, pt.WellH, pt.WellW, pt.WellD)
+
+	newWelltype := wtype.NewLHWell(vunit, pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellH, pt.WellW, pt.WellD, pt.BottomH, lunit)
+
+	plate := wtype.NewLHPlate(pt.PlateType, pt.Manufacturer, pt.ColSize, pt.RowSize, makePlateCoords(pt.Height), newWelltype, pt.WellXOffset, pt.WellYOffset, pt.WellXStart, pt.WellYStart, pt.WellZStart)
+
+	if pt.Special {
+		plate.DeclareSpecial()
+	}
+
+	if len(pt.Constraints) != 0 {
+		for k, v := range pt.Constraints {
+			plate.SetConstrained(k, v)
+		}
+	}
+
+	return plate
+}
+func makePlateCoords(height float64) wtype.Coordinates {
+	//standard X/Y size for 96 well plates
+	return wtype.Coordinates{127.76, 85.48, height}
 }

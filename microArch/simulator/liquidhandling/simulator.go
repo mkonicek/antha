@@ -1092,7 +1092,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 			self.AddWarning("LoadTips", "'channel' argument empty and no platetype specified ignoring")
 			return ret
 		} else if self.settings.IsAutoChannelWarningEnabled() {
-			self.AddWarningf("LoadTips", "'channel' argument empty, inferring from platetype (%s)", summariseChannels(channels))
+			self.AddWarningf("LoadTips", "channels to load to were not specified in instruction, inferring %s from platetype", summariseChannels(channels))
 		}
 
 		//check if multi is wrong

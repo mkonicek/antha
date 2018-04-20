@@ -38,6 +38,10 @@ import (
 // whether to search through the well positions by row. The default is by column.
 func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, preferredWells []string, byRow bool) (well string, err error) {
 
+	if plate == nil {
+		return "", fmt.Errorf("no plate specified as argument to NextFreeWell function")
+	}
+
 	if len(preferredWells) > 0 {
 		for _, well := range preferredWells {
 			if err := checkWellValidity(plate, well); err != nil {

@@ -33,6 +33,7 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
@@ -117,6 +118,14 @@ func TestNextFreeWell(t *testing.T) {
 			expectedResult: "",
 			expectedError:  errors.New("no empty wells on plate Agar plate of type falcon6wellAgar"),
 		},
+		{
+			avoidWells:     []string{},
+			preferredWells: []string{},
+			plateType:      nil,
+			byRow:          false,
+			expectedResult: "",
+			expectedError:  errors.New("no plate specified as argument to NextFreeWell function"),
+		},
 	}
 
 	for _, test := range nextwellTests {
@@ -134,7 +143,7 @@ func TestNextFreeWell(t *testing.T) {
 			if test.expectedError != nil && err != nil {
 				if test.expectedError.Error() != err.Error() {
 					t.Error(
-						"For", test.plateType.Type, test.avoidWells, test.preferredWells, test.byRow, "\n",
+						"For", test.plateType, test.avoidWells, test.preferredWells, test.byRow, "\n",
 						"expected:", test.expectedError, "\n",
 						"got", err, "\n",
 					)

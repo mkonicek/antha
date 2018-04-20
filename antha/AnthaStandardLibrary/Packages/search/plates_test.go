@@ -52,17 +52,19 @@ func TestNextFreeWell(t *testing.T) {
 		expectedError  error
 	}
 
-	pcrPlate, err := inventory.NewPlate(defaultContext(), "pcrplate_skirted_riser18")
+	falconAgarPlate, err := inventory.NewPlate(defaultContext(), "falcon6wellAgar")
 
 	if err != nil {
 		t.Error(err.Error())
 	}
 
+	falconAgarPlate.SetName("Agar plate")
+
 	var nextwellTests = []nextWellTest{
 		{
 			avoidWells:     []string{},
 			preferredWells: []string{},
-			plateType:      pcrPlate,
+			plateType:      falconAgarPlate,
 			byRow:          false,
 			expectedResult: "A1",
 			expectedError:  nil,
@@ -70,7 +72,7 @@ func TestNextFreeWell(t *testing.T) {
 		{
 			avoidWells:     []string{"A1"},
 			preferredWells: []string{},
-			plateType:      pcrPlate,
+			plateType:      falconAgarPlate,
 			byRow:          false,
 			expectedResult: "B1",
 			expectedError:  nil,
@@ -78,23 +80,23 @@ func TestNextFreeWell(t *testing.T) {
 		{
 			avoidWells:     []string{"A1"},
 			preferredWells: []string{},
-			plateType:      pcrPlate,
+			plateType:      falconAgarPlate,
 			byRow:          true,
 			expectedResult: "A2",
 			expectedError:  nil,
 		},
 		{
 			avoidWells:     []string{"A1"},
-			preferredWells: []string{"A12"},
-			plateType:      pcrPlate,
+			preferredWells: []string{"A3"},
+			plateType:      falconAgarPlate,
 			byRow:          false,
-			expectedResult: "A12",
+			expectedResult: "A3",
 			expectedError:  nil,
 		},
 		{
 			avoidWells:     []string{"A1"},
 			preferredWells: []string{"A1"},
-			plateType:      pcrPlate,
+			plateType:      falconAgarPlate,
 			byRow:          false,
 			expectedResult: "B1",
 			expectedError:  nil,
@@ -102,10 +104,18 @@ func TestNextFreeWell(t *testing.T) {
 		{
 			avoidWells:     []string{"A1"},
 			preferredWells: []string{"A13"},
-			plateType:      pcrPlate,
+			plateType:      falconAgarPlate,
 			byRow:          false,
 			expectedResult: "",
-			expectedError:  errors.New("well (A13) specified is out of range of available wells for plate type pcrplate_skirted_riser18"),
+			expectedError:  errors.New("well (A13) specified is out of range of available wells for plate type falcon6wellAgar"),
+		},
+		{
+			avoidWells:     []string{"A1", "B1", "A2", "B2", "A3", "B3"},
+			preferredWells: []string{"A1"},
+			plateType:      falconAgarPlate,
+			byRow:          false,
+			expectedResult: "",
+			expectedError:  errors.New("no empty wells on plate Agar plate of type falcon6wellAgar"),
 		},
 	}
 

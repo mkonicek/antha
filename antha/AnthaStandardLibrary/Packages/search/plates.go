@@ -57,7 +57,7 @@ func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, preferredWells []st
 			return well, nil
 		}
 	}
-	return "", fmt.Errorf("no empty wells on plate %s", plate.Name())
+	return "", fmt.Errorf("no empty wells on plate %s of type %s", plate.Name(), plate.Type)
 }
 
 func checkWellValidity(plate *wtype.LHPlate, well string) error {

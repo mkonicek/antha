@@ -103,11 +103,11 @@ func (self *SimulationError) SetFunctionName(fname string) {
 func (self *SimulationError) WriteToLog() {
 	switch self.severity {
 	case SeverityInfo:
-		logger.Info(self.Error())
+		logger.Info(fmt.Sprintf("Simulator : %s", self.Error()))
 	case SeverityWarning:
-		logger.Warning(self.Error())
+		logger.Warning(fmt.Sprintf("Simulator : %s", self.Error()))
 	case SeverityError:
-		logger.Error(self.Error())
+		logger.Error(fmt.Sprintf("Simulator : %s", self.Error()))
 	}
 }
 

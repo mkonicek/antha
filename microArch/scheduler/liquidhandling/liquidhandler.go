@@ -156,14 +156,14 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	/*err = this.Simulate(request)
+	err = this.Simulate(request)
 	if err != nil {
 		//since the simulator is... tender right now, let's take this with a pinch of salt
 		logger.Info("Ignoring simulation error")
 		//return err
 	} else {
 		logger.Info("Simulation completed successfully")
-	}*/
+	}
 
 	err = this.Execute(request)
 	if err != nil {
@@ -207,7 +207,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	}
 
 	// set up the simulator with default settings
-	vlh := simulator_lh.NewVirtualLiquidHandler(this.Properties, nil)
+	vlh := simulator_lh.NewVirtualLiquidHandler(this.Properties.DupKeepIDs(), nil)
 	for _, err := range vlh.GetErrors() {
 		err.WriteToLog()
 	}

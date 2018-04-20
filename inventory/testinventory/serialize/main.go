@@ -37,6 +37,9 @@ func main() {
 			MinVol:       plate.Welltype.Rvol,
 			BottomType:   plate.Welltype.Bottom,
 			BottomH:      plate.Welltype.Bottomh,
+			WellX:        plate.Welltype.Bounds.Size.X,
+			WellY:        plate.Welltype.Bounds.Size.Y,
+			WellZ:        plate.Welltype.Bounds.Size.Z,
 			ColSize:      plate.WellsY(),
 			RowSize:      plate.WellsX(),
 			Height:       plate.Height(),
@@ -45,8 +48,7 @@ func main() {
 			WellXStart:   plate.WellXStart,
 			WellYStart:   plate.WellYStart,
 			WellZStart:   plate.WellZStart,
-			Special:      plate.IsSpecial(),
-			Constraints:  plate.GetAllConstraints(),
+			Extra:        plate.Welltype.Extra,
 		}
 		platesForSerializing = append(platesForSerializing, sPlate)
 	}

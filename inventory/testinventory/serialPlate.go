@@ -22,6 +22,9 @@ type PlateForSerializing struct {
 	MinVol     float64
 	BottomType wtype.WellBottomType
 	BottomH    float64
+	WellX      float64
+	WellY      float64
+	WellZ      float64
 	// "Nunc96DeepWell", "Unknown", 8, 12, makePlateCoords(43.6), nunc96deepwell, 9, 9, -1.0, 0.0, 6.5
 	ColSize     int
 	RowSize     int
@@ -31,26 +34,17 @@ type PlateForSerializing struct {
 	WellXStart  float64
 	WellYStart  float64
 	WellZStart  float64
-	Special     bool
-	Constraints map[string][]string
+	Extra       map[string]interface{}
 }
 
 func (pt PlateForSerializing) LHPlate() *wtype.LHPlate {
 	newWellShape := wtype.NewShape(pt.WellShape, lunit, pt.WellH, pt.WellW, pt.WellD)
 
-	newWelltype := wtype.NewLHWell(vunit, pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellH, pt.WellW, pt.WellD, pt.BottomH, lunit)
+	newWelltype := wtype.NewLHWell(vunit, pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, lunit)
 
 	plate := wtype.NewLHPlate(pt.PlateType, pt.Manufacturer, pt.ColSize, pt.RowSize, makePlateCoords(pt.Height), newWelltype, pt.WellXOffset, pt.WellYOffset, pt.WellXStart, pt.WellYStart, pt.WellZStart)
 
-	if pt.Special {
-		plate.DeclareSpecial()
-	}
-
-	if len(pt.Constraints) != 0 {
-		for k, v := range pt.Constraints {
-			plate.SetConstrained(k, v)
-		}
-	}
+	plate.Welltype.Extra = pt.Extra
 
 	return plate
 }

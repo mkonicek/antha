@@ -115,8 +115,6 @@ type LHPropertiesParams struct {
 
 func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
-	fmt.Printf("p.Name = %s\n", p.Name)
-
 	layout := make(map[string]wtype.Coordinates)
 	for _, lp := range p.Layouts {
 		layout[lp.Name] = wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos}

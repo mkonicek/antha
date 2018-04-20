@@ -535,9 +535,9 @@ func (self *VirtualLiquidHandler) getAbsolutePosition(fname, deckposition, well 
 	}
 
 	if (platetype != wtype.TypeOf(target)) &&
-		(platetype != fmt.Sprintf("%s_%s", wtype.TypeOf(target), wtype.IDOf(target))) {
-		self.AddWarningf(fname, "Object found at %s was type \"%s\" not type \"%s\" as expected",
-			deckposition, wtype.TypeOf(target), platetype)
+		(platetype != wtype.NameOf(target)) {
+		self.AddWarningf(fname, "Object found at %s was type \"%s\", named \"%s\", not \"%s\" as expected",
+			deckposition, wtype.TypeOf(target), wtype.NameOf(target), platetype)
 	}
 
 	addr, ok := target.(wtype.Addressable)

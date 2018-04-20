@@ -396,6 +396,47 @@ func wide_lhplate(name string) *wtype.LHPlate {
 	return makeLHPlate(params, name)
 }
 
+func lhplate_trough_props() *LHPlateParams {
+	params := LHPlateParams{
+		"trough",          // platetype       string
+		"test_trough_mfr", // mfr             string
+		1,                 // nrows           int
+		12,                // ncols           int
+		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7}, // size          float64
+		LHWellParams{ // welltype
+			wtype.ZeroWellCoords(), // crds            string
+			"ul",  // vunit           string
+			15000, // vol             float64
+			5000,  // rvol            float64
+			ShapeParams{ // shape           ShapeParams struct {
+				"test_shape", // name            string
+				"mm",         // lengthunit      string
+				8.2,          // h               float64
+				72.0,         // w               float64
+				41.3,         // d               float64
+			},
+			wtype.FlatWellBottom, // bott            int
+			8.2,                  // xdim            float64
+			72.0,                 // ydim            float64
+			41.3,                 // zdim            float64
+			4.7,                  // bottomh         float64
+			"mm",                 // dunit           string
+		},
+		9.,   // wellXOffset     float64
+		9.,   // wellYOffset     float64
+		0.,   // wellXStart      float64
+		30.0, // wellYStart      float64
+		4.5,  // wellZStart      float64
+	}
+
+	return &params
+}
+
+func lhplate_trough12(name string) *wtype.LHPlate {
+	params := lhplate_trough_props()
+	return makeLHPlate(params, name)
+}
+
 func default_lhtipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		8,  //nrows           int

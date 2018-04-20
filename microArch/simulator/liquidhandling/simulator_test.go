@@ -305,6 +305,19 @@ func testLayout() *SetupFn {
 	return &ret
 }
 
+func testTroughLayout() *SetupFn {
+	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+		vlh.Initialize()
+		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", lhplate_trough12("trough1"), "trough1")
+		vlh.AddPlateTo("input_2", default_lhplate("plate2"), "plate2")
+		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
+		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
+	}
+	return &ret
+}
+
 func Test_Move(t *testing.T) {
 
 	tests := []SimulatorTest{
@@ -444,6 +457,30 @@ func Test_Move(t *testing.T) {
 			nil, //errors
 			[]*AssertionFn{ //assertions
 				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 31.5, Z: 38.9}),
+			},
+		},
+		{
+			"OK_trough",
+			nil,
+			[]*SetupFn{
+				testTroughLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},                                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                    //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					//[]float64{-31.5, -22.5, -13.5, -4.5, 4.5, 13.5, 22.5, 31.5},                                      //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
+					[]string{"trough1", "trough1", "trough1", "trough1", "trough1", "trough1", "trough1", "trough1"}, //plate_type
+					0, //head
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 3., Z: 46.8}),
 			},
 		},
 		{

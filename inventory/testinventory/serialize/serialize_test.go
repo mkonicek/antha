@@ -101,7 +101,7 @@ func TestInventoryLHPlateSerialize(t *testing.T) {
 		}
 
 		if p.WellZStart != p2.WellZStart {
-			t.Errorf(fMErr("WellZStart", p.WellZStart, p.WellZStart))
+			t.Errorf(fMErr("WellZStart", p.WellZStart, p2.WellZStart))
 		}
 
 		if !p.Bounds.Equals(p2.Bounds) {

@@ -1,4 +1,4 @@
-package testinventory
+package main
 
 import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
@@ -20,7 +20,8 @@ const (
 	bioshake96welladaptorheight                 = 4.5
 	bioshakestandardadaptorheight               = 5.0
 	appliedbiosystemsmagbeadbaseheight          = 12.0 //height of just plate base, upon which most skirted plates can rest
-	fluidXhighProfileRackHeight                 = 2.0 - MinimumZHeightPermissableForLVPipetMax
+	//appliedbiosystemsmagbeadtotalheight         = 17.0 //height of base and well, in which other plates can rest
+	fluidXhighProfileRackHeight = 2.0 - MinimumZHeightPermissableForLVPipetMax
 )
 
 const (
@@ -29,6 +30,7 @@ const (
 
 var (
 	incubatorheightinmm = devices.Shaker["3000 T-elm"]["Height"]*1000 + incubatoroffset
+	//inhecoincubatorinmm = devices.Shaker["InhecoStaticOnDeck"]["Height"] * 1000
 )
 
 // defaultDevices are default devices upon which an sbs format plate may be placed

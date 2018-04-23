@@ -434,7 +434,19 @@ func lhplate_trough_props() *LHPlateParams {
 
 func lhplate_trough12(name string) *wtype.LHPlate {
 	params := lhplate_trough_props()
-	return makeLHPlate(params, name)
+	plate := makeLHPlate(params, name)
+	targets := []wtype.Coordinates{
+		{X: 0.0, Y: -31.5, Z: 0.0},
+		{X: 0.0, Y: -22.5, Z: 0.0},
+		{X: 0.0, Y: -13.5, Z: 0.0},
+		{X: 0.0, Y: -4.5, Z: 0.0},
+		{X: 0.0, Y: 4.5, Z: 0.0},
+		{X: 0.0, Y: 13.5, Z: 0.0},
+		{X: 0.0, Y: 22.5, Z: 0.0},
+		{X: 0.0, Y: 31.5, Z: 0.0},
+	}
+	plate.Welltype.SetWellTargets("Head0 Adaptor", targets)
+	return plate
 }
 
 func default_lhtipbox(name string) *wtype.LHTipbox {

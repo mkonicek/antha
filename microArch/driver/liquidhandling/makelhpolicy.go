@@ -118,6 +118,7 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	//      pols["lysate"] = MakeLysatePolicy()
 	pols["carbon_source"] = MakeCarbonSourcePolicy()
 	pols["nitrogen_source"] = MakeNitrogenSourcePolicy()
+	pols["XYOffsetTest"] = MakeXYOffsetTestPolicy()
 
 	/*policies, names := PolicyMaker(Allpairs, "DOE_run", false)
 	for i, policy := range policies {
@@ -470,6 +471,14 @@ func MakeColonyMixPolicy() wtype.LHPolicy {
 	policy := MakeColonyPolicy()
 	policy["POST_MIX"] = 3
 	policy["DESCRIPTION"] = "Designed for colony picking but with added post-mixes. 3 post-mix and no blowout (to avoid potential cross contamination), no multichannel."
+	return policy
+}
+
+func MakeXYOffsetTestPolicy() wtype.LHPolicy {
+	policy := MakeColonyPolicy()
+	policy["POST_MIX_X"] = 2.0
+	policy["POST_MIX_Y"] = 2.0
+	policy["DESCRIPTION"] = "Intended to test setting X,Y offsets for post mixing"
 	return policy
 }
 

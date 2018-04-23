@@ -738,6 +738,60 @@ func TestMultiChannelTipReuseDisabled(t *testing.T) {
 	assertNumLoadUnloadInstructions(t, ris, 2)
 }
 
+//TestSingleChannelTipReuse -- based same as above but with multichannel disabled
+//and allowing tip reuse
+func TestSingleChannelTipReuse(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// allow multi
+	pol.Policies["water"]["CAN_MULTI"] = false
+
+	ris := generateRobotInstructions(t, ctx, inss, pol)
+
+	assertNumTipsUsed(t, ris, 1)
+
+	assertNumLoadUnloadInstructions(t, ris, 1)
+}
+
+//TestSingleChannelTipReuse2 -- now we move two things
+func TestSingleChannelTipReuse2(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	ins2, err := getMixInstructions(ctx, 8, []string{"ethanol"}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	inss = append(inss, ins2...)
+
+	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// allow multi
+	pol.Policies["water"]["CAN_MULTI"] = false
+
+	ris := generateRobotInstructions(t, ctx, inss, pol)
+
+	assertNumTipsUsed(t, ris, 2)
+
+	assertNumLoadUnloadInstructions(t, ris, 2)
+}
+
 //TestMultiChannelTipReuseBad Move water and ethanol to two separate columns of wells - should change tips in between
 func TestMultiChannelTipReuseBad(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())

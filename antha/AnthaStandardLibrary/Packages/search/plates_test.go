@@ -69,7 +69,7 @@ func TestNextFreeWell(t *testing.T) {
 	}
 
 	// second test plate which we'll add a sample to.
-	falconAgarPlateWithSomethingIn.SetName("Agar plate")
+	falconAgarPlateWithSomethingIn.SetName("Agar plate with sample")
 
 	component, err := inventory.NewComponent(defaultContext(), "water")
 

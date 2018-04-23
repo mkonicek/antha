@@ -104,6 +104,10 @@ func TestInventoryLHPlateSerialize(t *testing.T) {
 			t.Errorf(fMErr("WellZStart", p.WellZStart, p.WellZStart))
 		}
 
+		if !p.Bounds.Equals(p2.Bounds) {
+			t.Errorf(fMErr("Bounds ", p.Bounds, p2.Bounds))
+		}
+
 		if !wellTypeEqual(p.Welltype, p2.Welltype) {
 			t.Errorf(fMErr("Weltype", p.Welltype, p2.Welltype))
 		}
@@ -118,7 +122,7 @@ func TestInventoryLHPlateSerialize(t *testing.T) {
 // if types are same but contents are different
 // we also do NOT compare Extra since it contains a mix of instance and type information (ugh)
 func wellTypeEqual(self, w2 *wtype.LHWell) bool {
-	return self.Crds == w2.Crds && self.MaxVol == w2.MaxVol && self.Rvol == w2.Rvol && self.WShape.Equals(w2.WShape) && self.Bounds.Equals(w2.Bounds) && self.Bottomh == w2.Bottomh
+	return self.Crds == w2.Crds && self.MaxVol == w2.MaxVol && self.Rvol == w2.Rvol && self.WShape.Equals(w2.WShape) && self.Bounds.Equals(w2.Bounds) && self.Bottomh == w2.Bottomh && self.Extra["ll_model"] == w2.Extra["ll_model"] && self.Extra["IMSPECIAL"] == w2.Extra["IMSPECIAL"]
 }
 
 // note order of arguments here... this will incorrectly fail if order is disregarded

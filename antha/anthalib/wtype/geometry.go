@@ -34,6 +34,10 @@ type Coordinates struct {
 	Z float64
 }
 
+func (c Coordinates) Equals(c2 Coordinates) bool {
+	return c.X == c2.X && c.Y == c2.Y && c.Z == c2.Z
+}
+
 //String implements Stringer
 func (self Coordinates) String() string {
 	return fmt.Sprintf("%vx%vx%vmm", self.X, self.Y, self.Z)

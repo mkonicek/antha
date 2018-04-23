@@ -62,6 +62,10 @@ type LHPlate struct {
 	parent      LHObject
 }
 
+var (
+	CONSTRAINTMARKER = "constraint-"
+)
+
 func (plate LHPlate) OutputLayout() {
 	fmt.Println(plate.GetLayout())
 }
@@ -878,12 +882,35 @@ func exportCSV(records [][]string, filename string) (File, error) {
 	return anthafile, err
 }
 
+func makeConstraintKeyFor(platform string) string {
+	if isConstraintKey(platform) {
+		return platform
+	}
+
+	return CONSTRAINTMARKER + platform
+}
+
+func unMakeConstraintKey(s string) string {
+	if !isConstraintKey(s) {
+		return s
+	}
+
+	return strings.Replace(s, CONSTRAINTMARKER, "", -1)
+}
+
+func isConstraintKey(s string) bool {
+	return strings.HasPrefix(s, CONSTRAINTMARKER)
+}
+
 func (p *LHPlate) SetConstrained(platform string, positions []string) {
-	p.Welltype.Extra[platform] = positions
+
+	cstrKey := makeConstraintKeyFor(platform)
+	p.Welltype.Extra[cstrKey] = positions
 }
 
 func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
-	par, ok := p.Welltype.Extra[platform]
+	cstrKey := makeConstraintKeyFor(platform)
+	par, ok := p.Welltype.Extra[cstrKey]
 	if !ok {
 		return nil, false
 	}
@@ -903,7 +930,19 @@ func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
 	default:
 		panic(fmt.Sprintf("unknown type %T", par))
 	}
+}
 
+func (p *LHPlate) GetAllConstraints() map[string][]string {
+	ret := make(map[string][]string)
+	for k, v := range p.Welltype.Extra {
+		if isConstraintKey(k) {
+			var pos []string
+			pos = append(pos, v.([]string)...)
+			ret[unMakeConstraintKey(k)] = pos
+		}
+	}
+
+	return ret
 }
 
 //##############################################

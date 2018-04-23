@@ -19,14 +19,13 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package testinventory
+package main
 
 import (
 	"encoding/json"
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"strings"
 )
 
 // The height below which an error will be generated

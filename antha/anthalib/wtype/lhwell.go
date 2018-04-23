@@ -889,3 +889,47 @@ func (w LHWell) CheckExtraKey(s string) error {
 
 	return nil
 }
+
+const wellTargetKey = "well_targets"
+
+func (w *LHWell) getTargetMap() map[string][]Coordinates {
+	m, ok := w.Extra[wellTargetKey]
+	if !ok {
+		ret := make(map[string][]Coordinates)
+		w.Extra[wellTargetKey] = ret
+		return ret
+	}
+	return m.(map[string][]Coordinates)
+}
+
+//SetWellTargets sets the targets for each channel when accessing the well using
+//adaptor. offsets is a list of coordinates which specify the offset in mm from
+//the well center for each channel.
+//len(offsets) specifies the maximum number of channels which can access the well
+//simultaneously using adaptor
+func (w *LHWell) SetWellTargets(adaptor string, offsets []Coordinates) {
+	wtMap := w.getTargetMap()
+	wtMap[adaptor] = offsets
+}
+
+//GetWellTargets return the well targets for the given adaptor
+//if the adaptor has no defined targets, simply returns the well center
+func (w *LHWell) GetWellTargets(adaptor string) []Coordinates {
+	wtMap := w.getTargetMap()
+	adaptorTargets, ok := wtMap[adaptor]
+	if !ok {
+		return []Coordinates{{}}
+	}
+	return adaptorTargets
+}
+
+//GetAdaptorsWithTargets gets the list of the names of adaptors which have
+//targets defined for the well
+func (w *LHWell) ListAdaptorsWithTargets() []string {
+	wtMap := w.getTargetMap()
+	ret := make([]string, 0, len(wtMap))
+	for adaptorName := range wtMap {
+		ret = append(ret, adaptorName)
+	}
+	return ret
+}

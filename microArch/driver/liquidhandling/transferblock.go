@@ -106,8 +106,6 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		return r
 	}
 
-	inss = fromTransfers(mergeTransfers(toTransfers(inss), policy))
-
 	// stuff that can't be done in parallel
 	for _, ins := range ti.Inss {
 		if seen[ins.ID] {
@@ -134,6 +132,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	}
 
 	//inss = append(inss, tfr...)
+	inss = fromTransfers(mergeTransfers(toTransfers(inss), policy))
 
 	return inss, nil
 }

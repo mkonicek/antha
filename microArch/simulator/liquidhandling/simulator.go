@@ -376,8 +376,9 @@ func (self *VirtualLiquidHandler) GetAdaptorState(head int) *AdaptorState {
 	return self.state.GetAdaptor(head)
 }
 
-func (self *VirtualLiquidHandler) GetObjectAt(slot string) (wtype.LHObject, bool) {
-	return self.state.GetDeck().GetChild(slot)
+func (self *VirtualLiquidHandler) GetObjectAt(slot string) wtype.LHObject {
+	child, _ := self.state.GetDeck().GetChild(slot)
+	return child
 }
 
 //testTipArgs check that load/unload tip arguments are valid insofar as they won't crash in RobotState
@@ -523,7 +524,7 @@ func (self *VirtualLiquidHandler) validateLHArgs(head, multi int, platetype, wha
 func (self *VirtualLiquidHandler) getAbsolutePosition(fname, deckposition, well string, ref wtype.WellReference, platetype string) (wtype.Coordinates, bool) {
 	ret := wtype.Coordinates{}
 
-	target, ok := self.GetObjectAt(deckposition)
+	target, ok := self.state.GetDeck().GetChild(deckposition)
 	if !ok {
 		self.AddErrorf(fname, "Unknown location \"%s\"", deckposition)
 		return ret, false

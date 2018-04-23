@@ -84,7 +84,6 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 				if totalvol.IsZero() || totalvol.EqualTo(tv) {
 					totalvol = tv // not needed
 				} else {
-					// error
 					return nil, nil, wtype.LHErrorf(wtype.LH_ERR_CONC, "Inconsistent total volumes %s and %s at component %s", totalvol, tv, component.CName)
 				}
 			} else {
@@ -242,7 +241,6 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 				if totalvol.IsZero() || totalvol.EqualTo(tv) {
 					totalvol = tv
 				} else {
-					// error
 					return nil, nil, wtype.LHErrorf(wtype.LH_ERR_CONC, "Inconsistent total volumes %s and %s at component %s", totalvol, tv, component.CName)
 				}
 			} else {
@@ -301,27 +299,6 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	}
 
 	return newInstructions, stockConcs, nil
-}
-
-func isMixSimulation(comp *wtype.LHComponent) bool {
-
-	sim, found := comp.Extra["Simulation"]
-
-	if !found {
-		return false
-	}
-
-	whoAmI, ok := sim.(bool)
-
-	if !ok {
-		return false
-	}
-
-	return whoAmI
-}
-
-func setSimulation(comp *wtype.LHComponent) {
-	comp.Extra["Simulation"] = true
 }
 
 // converts all to SI Values, all entries must have the same SI base unit or an error will be returned.

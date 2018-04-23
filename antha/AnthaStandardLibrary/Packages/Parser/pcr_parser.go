@@ -25,7 +25,13 @@ func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 		switch {
 		case filepath.Ext(designfile.Name) == ".xlsx":
 			csvfile1, err := xlsxparserBinary(data, 0, "Sheet2")
+			if err != nil {
+				return nil, err
+			}
 			csvfile2, err := xlsxparserBinary(data, 1, "Sheet2")
+			if err != nil {
+				return nil, err
+			}
 
 			pcrreaction, err = pcrReactionfromcsv(csvfile2.Name(), csvfile1.Name())
 			return pcrreaction, err
@@ -116,12 +122,11 @@ func readPCRDesign(filename string) [][]string {
 	var constructs [][]string
 
 	csvfile, err := os.Open(filename)
-
 	if err != nil {
 		panic(err)
 	}
 
-	defer csvfile.Close()
+	defer csvfile.Close() //nolint
 
 	reader := csv.NewReader(csvfile)
 

@@ -2,10 +2,11 @@ package liquidhandling
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"testing"
 )
 
 func getComponentWithNameVolume(name string, volume float64) *wtype.LHComponent {
@@ -252,7 +253,7 @@ func TestFixVolumes4(t *testing.T) {
 		Depth:  2,
 	}
 
-	req, err := FixVolumes(req)
+	_, err := FixVolumes(req)
 
 	if err != nil {
 		t.Errorf(err.Error())

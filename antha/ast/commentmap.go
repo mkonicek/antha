@@ -29,8 +29,9 @@ package ast
 import (
 	"bytes"
 	"fmt"
-	"github.com/antha-lang/antha/antha/token"
 	"sort"
+
+	"github.com/antha-lang/antha/antha/token"
 )
 
 type byPos []*CommentGroup
@@ -65,15 +66,6 @@ func (cmap CommentMap) addComment(n Node, c *CommentGroup) {
 	}
 	cmap[n] = list
 }
-
-type byInterval []Node
-
-func (a byInterval) Len() int { return len(a) }
-func (a byInterval) Less(i, j int) bool {
-	pi, pj := a[i].Pos(), a[j].Pos()
-	return pi < pj || pi == pj && a[i].End() > a[j].End()
-}
-func (a byInterval) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 // nodeList returns the list of nodes of the AST n in source order.
 //
@@ -347,7 +339,7 @@ func (cmap CommentMap) String() string {
 		} else {
 			s = fmt.Sprintf("%T", node)
 		}
-		fmt.Fprintf(&buf, "\t%p  %20s:  %s\n", node, s, summary(comment))
+		fmt.Fprintf(&buf, "\t%v  %20s:  %s\n", node, s, summary(comment))
 	}
 	fmt.Fprintln(&buf, "}")
 	return buf.String()

@@ -32,6 +32,12 @@ type BBox struct {
 	Size     Coordinates
 }
 
+//Equals defines an equivalence relation over bounding boxes
+//returns true iff position and size are both equal
+func (bb BBox) Equals(bb2 BBox) bool {
+	return bb.Position.Equals(bb2.Position) && bb.Size.Equals(bb2.Size)
+}
+
 func NewBBox(pos, Size Coordinates) *BBox {
 	if Size.X < 0. {
 		pos.X = pos.X + Size.X

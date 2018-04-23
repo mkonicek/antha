@@ -94,7 +94,7 @@ func TestLHWellSerialize(t *testing.T) {
 	//	Plate     : <nil>,
 	//}
 
-	wellExtra := make(map[string]interface{}, 0)
+	wellExtra := make(map[string]interface{})
 	lhwell := LHWell{
 		"15cf94b7-ae06-443d-bc9a-9aadc30790fd",
 		"",
@@ -127,7 +127,7 @@ func TestLHWellSerialize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if reflect.DeepEqual(lhwell, dest) != true {
+	if !reflect.DeepEqual(lhwell, dest) {
 		fmt.Println(pretty.Compare(lhwell, dest))
 		t.Fatal("Initial well and dest well differ")
 	}

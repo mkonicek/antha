@@ -55,7 +55,7 @@ func Visit(opt VisitOpt) (res *VisitResult, err error) {
 	dists := make(dists)
 
 	maxDist := 0
-	wl := []pair{pair{opt.Root, maxDist}}
+	wl := []pair{{opt.Root, maxDist}}
 	for l := len(wl); l > 0; l = len(wl) {
 		var p pair
 		if opt.BreadthFirst {

@@ -6,9 +6,9 @@ import (
 
 func TestQuotient(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b"},
-		"a":    []string{"c", "d"},
-		"e":    []string{},
+		"root": {"a", "b"},
+		"a":    {"c", "d"},
+		"e":    {},
 	})
 	cg := MakeQuotient(MakeQuotientOpt{
 		Graph: g,
@@ -23,9 +23,9 @@ func TestQuotient(t *testing.T) {
 
 func TestQuotienWithHasColor(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{".a", ".b"},
-		".a":   []string{"c", ".d"},
-		"e":    []string{},
+		"root": {".a", ".b"},
+		".a":   {"c", ".d"},
+		"e":    {},
 	})
 	cg := MakeQuotient(MakeQuotientOpt{
 		Graph: g,

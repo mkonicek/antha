@@ -141,7 +141,7 @@ func TestParsePlate(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	suite := []testCase{
-		testCase{
+		{
 			File: []byte(
 				`
 pcrplate_with_cooler,
@@ -153,7 +153,7 @@ A6,,,0,ul,0,g/l,
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
-					"A1": &wtype.LHWell{
+					"A1": {
 						WContents: &wtype.LHComponent{
 							CName: "water",
 							Type:  wtype.LTWater,
@@ -163,7 +163,7 @@ A6,,,0,ul,0,g/l,
 							Cunit: "g/l",
 						},
 					},
-					"A4": &wtype.LHWell{
+					"A4": {
 						WContents: &wtype.LHComponent{
 							CName: "tea",
 							Type:  wtype.LTWater,
@@ -173,7 +173,7 @@ A6,,,0,ul,0,g/l,
 							Cunit: "mM/l",
 						},
 					},
-					"A5": &wtype.LHWell{
+					"A5": {
 						WContents: &wtype.LHComponent{
 							CName: "milk",
 							Type:  wtype.LTWater,
@@ -186,7 +186,7 @@ A6,,,0,ul,0,g/l,
 				},
 			},
 		},
-		testCase{
+		{
 			File: []byte(
 				`
 pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
@@ -197,7 +197,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
-					"A1": &wtype.LHWell{
+					"A1": {
 						WContents: &wtype.LHComponent{
 							CName: "water",
 							Type:  wtype.LTWater,
@@ -207,7 +207,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 							Cunit: "mg/l",
 						},
 					},
-					"C1": &wtype.LHWell{
+					"C1": {
 						WContents: &wtype.LHComponent{
 							CName: "neb5compcells",
 							Type:  wtype.LTCulture,

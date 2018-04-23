@@ -39,8 +39,7 @@ func (a *SIPrefixedUnitGrammar) Parse(in string) error {
 	}
 
 	pos = a.matchPrefix(in, 0, true)
-	pos = a.matchUnit(in, pos, true)
-
+	a.matchUnit(in, pos, true)
 	a.AddUnitPlusPrefixNode()
 	return nil
 }

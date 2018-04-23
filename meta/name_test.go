@@ -12,15 +12,15 @@ func TestFullyQualifiedType(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{Obj: 0, Expected: "int"},
-		Case{Obj: 0.0, Expected: "float64"},
-		Case{Obj: make(map[int]string), Expected: "map[int]string"},
-		Case{Obj: make([]string, 0), Expected: "[]string"},
-		Case{Obj: make(chan string), Expected: "chan string"},
-		Case{Obj: TestFullyQualifiedType, Expected: "func(*testing.T)"},
-		Case{Obj: myStruct{}, Expected: "github.com/antha-lang/antha/meta.myStruct"},
-		Case{Obj: myString(""), Expected: "github.com/antha-lang/antha/meta.myString"},
-		Case{Obj: func(error) {}, Expected: "func(error)"},
+		{Obj: 0, Expected: "int"},
+		{Obj: 0.0, Expected: "float64"},
+		{Obj: make(map[int]string), Expected: "map[int]string"},
+		{Obj: make([]string, 0), Expected: "[]string"},
+		{Obj: make(chan string), Expected: "chan string"},
+		{Obj: TestFullyQualifiedType, Expected: "func(*testing.T)"},
+		{Obj: myStruct{}, Expected: "github.com/antha-lang/antha/meta.myStruct"},
+		{Obj: myString(""), Expected: "github.com/antha-lang/antha/meta.myString"},
+		{Obj: func(error) {}, Expected: "func(error)"},
 	}
 
 	for _, c := range cases {

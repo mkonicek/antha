@@ -11,8 +11,8 @@ type IntSet struct {
 func NewIntSet(s int) IntSet {
 	c := make([]int, 0, s)
 	ch := make(map[int]bool, s)
-	var m sync.Mutex
-	return IntSet{c, ch, m}
+
+	return IntSet{c, ch, sync.Mutex{}}
 }
 
 func (is *IntSet) Add(i int) {
@@ -36,15 +36,14 @@ func (is *IntSet) Remove(s int) {
 				c = append(c, v)
 			}
 		}
+
 		is.chash[s] = false
+		is.contents = c
 	}
 }
 
-func (is IntSet) AsSlice() []int {
+func (is *IntSet) AsSlice() []int {
 	s := make([]int, len(is.contents))
-
-	for i, v := range is.contents {
-		s[i] = v
-	}
+	copy(s, is.contents)
 	return s
 }

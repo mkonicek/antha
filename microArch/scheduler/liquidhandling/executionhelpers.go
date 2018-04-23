@@ -24,12 +24,13 @@ package liquidhandling
 
 import (
 	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/graph"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"sort"
-	"strings"
 )
 
 const (
@@ -37,86 +38,6 @@ const (
 	ROWWISE
 	RANDOM
 )
-
-func roundup(f float64) float64 {
-	return float64(int(f) + 1)
-}
-
-func get_aggregate_component(sol *wtype.LHSolution, name string) *wtype.LHComponent {
-	components := sol.Components
-
-	ret := wtype.NewLHComponent()
-
-	ret.CName = name
-
-	vol := 0.0
-	found := false
-
-	for _, component := range components {
-		nm := component.CName
-
-		if nm == name {
-			ret.Type = component.Type
-			vol += component.Vol
-			ret.Vunit = component.Vunit
-			ret.Order = component.Order
-			found = true
-		}
-	}
-	if !found {
-		return nil
-	}
-	ret.Vol = vol
-	return ret
-}
-
-func get_assignment(assignments []string, plates *map[string]*wtype.LHPlate, vol wunit.Volume) (string, wunit.Volume, bool) {
-	assignment := ""
-	ok := false
-	prevol := wunit.NewVolume(0.0, "ul")
-
-	for _, assignment = range assignments {
-		asstx := strings.Split(assignment, ":")
-		plate := (*plates)[asstx[0]]
-
-		crds := asstx[1] + ":" + asstx[2]
-		wellidlkp := plate.Wellcoords
-		well := wellidlkp[crds]
-
-		currvol := well.CurrentVolume()
-		currvol.Subtract(well.ResidualVolume())
-		if currvol.GreaterThan(vol) || currvol.EqualTo(vol) {
-			prevol = well.CurrentVolume()
-			well.RemoveVolume(vol)
-			plate.HWells[well.ID] = well
-			(*plates)[asstx[0]] = plate
-			ok = true
-			break
-		}
-	}
-
-	return assignment, prevol, ok
-}
-
-func copyplates(plts map[string]*wtype.LHPlate) map[string]*wtype.LHPlate {
-	ret := make(map[string]*wtype.LHPlate, len(plts))
-
-	for k, v := range plts {
-		ret[k] = v.Dup()
-	}
-
-	return ret
-}
-
-func insSliceFromMap(m map[string]*wtype.LHInstruction) []*wtype.LHInstruction {
-	ret := make([]*wtype.LHInstruction, 0, len(m))
-
-	for _, v := range m {
-		ret = append(ret, v)
-	}
-
-	return ret
-}
 
 type ByGeneration []*wtype.LHInstruction
 
@@ -230,36 +151,6 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	// finally go down columns (nb need to add option)
 
 	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
-}
-
-func aggregateAppropriateInstructions(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
-	agg := make([]map[string]*wtype.LHInstruction, len(wtype.InsNames))
-	for i := 0; i < len(wtype.InsNames); i++ {
-		agg[i] = make(map[string]*wtype.LHInstruction, 10)
-	}
-
-	for _, ins := range inss {
-		// just prompts
-		if ins.Type == wtype.LHIPRM {
-			cur := agg[ins.Type][ins.Message]
-			if cur == nil || cur.Generation() < ins.Generation() {
-				agg[ins.Type][ins.Message] = ins
-			}
-		}
-	}
-
-	// now filter
-	insout := make([]*wtype.LHInstruction, 0, len(inss))
-	for _, ins := range inss {
-		if ins.Type == wtype.LHIPRM {
-			if agg[ins.Type][ins.Message].ID != ins.ID {
-				continue
-			}
-		}
-		insout = append(insout, ins)
-	}
-
-	return insout
 }
 
 func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool) *IChain {
@@ -706,7 +597,9 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
 			cnames = append(cnames, wlf.WContents.CName)
-			wlf.RemoveVolume(vrm)
+			if _, err := wlf.RemoveVolume(vrm); err != nil {
+				return nil, err
+			}
 
 			pf = append(pf, robot.PlateIDLookup[tfrs[i].PlateIDs[xx]])
 			wf = append(wf, tfrs[i].WellCoords[xx])

@@ -3,8 +3,9 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"reflect"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 type ComparisonOpt struct {
@@ -225,10 +226,7 @@ func compareInstructions(index int, ins1, ins2 RobotInstruction, paramsToCompare
 
 func dupV(a []string) []string {
 	r := make([]string, 0, len(a))
-
-	for _, v := range a {
-		r = append(r, v)
-	}
+	r = append(r, a...)
 
 	return r
 }

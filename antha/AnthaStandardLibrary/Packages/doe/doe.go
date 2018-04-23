@@ -224,9 +224,7 @@ func (pair DOEPair) MinLevel() (minlevel interface{}, err error) {
 
 			}
 
-			var v interface{}
-
-			v = lowestconc.RawValue()
+			v := lowestconc.RawValue()
 
 			keyToLowest[key] = v
 		}
@@ -347,28 +345,16 @@ func Copy(run Run) (newrun Run) {
 	newrun.StdNumber = run.StdNumber
 
 	factordescriptors := make([]string, 0)
-
-	for _, value := range run.Factordescriptors {
-		factordescriptors = append(factordescriptors, value)
-	}
+	factordescriptors = append(factordescriptors, run.Factordescriptors...)
 
 	setpoints := make([]interface{}, 0)
-
-	for _, value := range run.Setpoints {
-		setpoints = append(setpoints, value)
-	}
+	setpoints = append(setpoints, run.Setpoints...)
 
 	responsedescriptors := make([]string, 0)
-
-	for _, value := range run.Responsedescriptors {
-		responsedescriptors = append(responsedescriptors, value)
-	}
+	responsedescriptors = append(responsedescriptors, run.Responsedescriptors...)
 
 	responsevalues := make([]interface{}, 0)
-
-	for _, value := range run.ResponseValues {
-		responsevalues = append(responsevalues, value)
-	}
+	responsevalues = append(responsevalues, run.ResponseValues...)
 
 	newrun.Factordescriptors = factordescriptors
 	newrun.Setpoints = setpoints
@@ -376,26 +362,17 @@ func Copy(run Run) (newrun Run) {
 	newrun.ResponseValues = responsevalues
 
 	additionalheaders := make([]string, 0)
-
-	for _, value := range run.AdditionalHeaders {
-		additionalheaders = append(additionalheaders, value)
-	}
+	additionalheaders = append(additionalheaders, run.AdditionalHeaders...)
 
 	newrun.AdditionalHeaders = additionalheaders
 
 	additionalsubheaders := make([]string, 0)
-
-	for _, value := range run.AdditionalSubheaders {
-		additionalsubheaders = append(additionalsubheaders, value)
-	}
+	additionalsubheaders = append(additionalsubheaders, run.AdditionalSubheaders...)
 
 	newrun.AdditionalSubheaders = additionalsubheaders
 
 	values := make([]interface{}, 0)
-
-	for _, value := range run.AdditionalValues {
-		values = append(values, value)
-	}
+	values = append(values, run.AdditionalValues...)
 
 	newrun.AdditionalValues = values
 
@@ -446,12 +423,8 @@ func (run Run) AllResponses() (headers []string, values []interface{}) {
 	headers = make([]string, 0)
 	values = make([]interface{}, 0)
 
-	for _, header := range run.Responsedescriptors {
-		headers = append(headers, header)
-	}
-	for _, value := range run.ResponseValues {
-		values = append(values, value)
-	}
+	headers = append(headers, run.Responsedescriptors...)
+	values = append(values, run.ResponseValues...)
 	return
 }
 
@@ -459,12 +432,8 @@ func (run Run) AllFactors() (headers []string, values []interface{}) {
 	headers = make([]string, 0)
 	values = make([]interface{}, 0)
 
-	for _, header := range run.Factordescriptors {
-		headers = append(headers, header)
-	}
-	for _, value := range run.Setpoints {
-		values = append(values, value)
-	}
+	headers = append(headers, run.Factordescriptors...)
+	values = append(values, run.Setpoints...)
 	return
 }
 
@@ -542,11 +511,8 @@ func AddNewResponseFieldandValue(run Run, responsedescriptor string, responseval
 
 	newrun = run
 
-	responsedescriptors := make([]string, len(run.Responsedescriptors))
-	responsevalues := make([]interface{}, len(run.ResponseValues))
-
-	responsedescriptors = run.Responsedescriptors
-	responsevalues = run.ResponseValues
+	responsedescriptors := run.Responsedescriptors
+	responsevalues := run.ResponseValues
 
 	responsedescriptors = append(responsedescriptors, responsedescriptor)
 	responsevalues = append(responsevalues, responsevalue)
@@ -635,7 +601,6 @@ func ReplaceResponseValue(run Run, responsedescriptor string, responsevalue inte
 }
 
 func DeleteAllResponses(run Run) (newrun Run) {
-
 	newrun = run
 
 	responsedescriptors := make([]string, 0)
@@ -648,14 +613,10 @@ func DeleteAllResponses(run Run) (newrun Run) {
 }
 
 func AddNewFactorFieldandValue(run Run, factordescriptor string, factorvalue interface{}) (newrun Run) {
-
 	newrun = run
 
-	factordescriptors := make([]string, len(run.Factordescriptors))
-	factorvalues := make([]interface{}, len(run.Setpoints))
-
-	factordescriptors = run.Factordescriptors
-	factorvalues = run.Setpoints
+	factordescriptors := run.Factordescriptors
+	factorvalues := run.Setpoints
 
 	factordescriptors = append(factordescriptors, factordescriptor)
 	factorvalues = append(factorvalues, factorvalue)
@@ -667,7 +628,6 @@ func AddNewFactorFieldandValue(run Run, factordescriptor string, factorvalue int
 }
 
 func DeleteFactorField(run Run, factorDescriptor string) (newrun Run) {
-
 	newrun = run
 
 	factorDescriptors := make([]string, 0)
@@ -691,10 +651,7 @@ func AddAdditionalValue(run Run, additionalsubheader string, additionalvalue int
 	newrun = run
 
 	values := make([]interface{}, 0)
-
-	for _, value := range run.AdditionalValues {
-		values = append(values, value)
-	}
+	values = append(values, run.AdditionalValues...)
 
 	for _, descriptor := range run.AdditionalSubheaders {
 		if strings.ToUpper(descriptor) == strings.ToUpper(additionalsubheader) {
@@ -727,37 +684,26 @@ func ReplaceAdditionalValue(run Run, additionalsubheader string, additionalvalue
 }
 
 func AddAdditionalHeaders(run Run, additionalheader string, additionalsubheader string) (newrun Run) {
-
 	newrun = run
 
 	headers := make([]string, 0)
-
-	for _, header := range run.AdditionalHeaders {
-		headers = append(headers, header)
-	}
-
+	headers = append(headers, run.AdditionalHeaders...)
 	headers = append(headers, additionalheader)
 
 	subheaders := make([]string, 0)
-
-	for _, subheader := range run.AdditionalSubheaders {
-		subheaders = append(subheaders, subheader)
-	}
-
+	subheaders = append(subheaders, run.AdditionalSubheaders...)
 	subheaders = append(subheaders, additionalsubheader)
 
 	newrun.AdditionalHeaders = headers
 	newrun.AdditionalSubheaders = subheaders
 
 	return
-
 }
 
 func AddAdditionalHeaderandValue(run Run, additionalheader string, additionalsubheader string, additionalvalue interface{}) (newrun Run) {
 
 	// only add column if no column with header exists
-	if search.InStrings(run.AdditionalSubheaders, additionalsubheader) == false {
-
+	if !search.InStrings(run.AdditionalSubheaders, additionalsubheader) {
 		midrun := AddAdditionalHeaders(run, additionalheader, additionalsubheader)
 		// fmt.Println("midrun: ", midrun)
 		newrun = AddAdditionalValue(midrun, additionalsubheader, additionalvalue)
@@ -794,18 +740,12 @@ func AddFixedFactors(runs []Run, fixedfactors []DOEPair) (runswithfixedfactors [
 	if len(runs) > 0 {
 		for _, run := range runs {
 			descriptors := make([]string, len(run.Factordescriptors))
+			copy(descriptors, run.Factordescriptors)
+
 			setpoints := make([]interface{}, len(run.Setpoints))
-
-			for i, descriptor := range run.Factordescriptors {
-				descriptors[i] = descriptor
-			}
-
-			for i, setpoint := range run.Setpoints {
-				setpoints[i] = setpoint
-			}
+			copy(setpoints, run.Setpoints)
 
 			for _, fixed := range fixedfactors {
-
 				descriptors = append(descriptors, fixed.Factor)
 				setpoints = append(setpoints, fixed.Levels[0])
 
@@ -849,15 +789,12 @@ func RunsFromFixedFactors(fixedfactors []DOEPair) (runswithfixedfactors []Run) {
 }
 
 func AllComboCount(pairs []DOEPair) (numberofuniquecombos int) {
-	// fmt.Println("In AllComboCount", "len(pairs)", len(pairs))
-	var movingcount int
-	movingcount = (pairs[0]).LevelCount()
-	// fmt.Println("levelcount", movingcount)
-	// fmt.Println("len(levels)", len(pairs[0].Levels))
+	movingcount := (pairs[0]).LevelCount()
+
 	for i := 1; i < len(pairs); i++ {
-		// fmt.Println("levelcount", movingcount)
 		movingcount = movingcount * (pairs[i]).LevelCount()
 	}
+
 	numberofuniquecombos = movingcount
 	return
 }

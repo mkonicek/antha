@@ -114,7 +114,7 @@ func (p *SIPrefixedUnit) AddNodeToCurrent(node *PNode) {
 
 func NewNode(name string, typ NodeType, cap uint8) *PNode {
 	var children []*PNode
-	children = nil
+
 	if cap != 0 {
 		children = make([]*PNode, 0, cap)
 	}

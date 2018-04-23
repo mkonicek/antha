@@ -119,7 +119,7 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
 	layout := make(map[string]wtype.Coordinates)
 	for _, lp := range p.Layouts {
-		layout[lp.Name] = wtype.Coordinates{lp.Xpos, lp.Ypos, lp.Zpos}
+		layout[lp.Name] = wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos}
 	}
 
 	lhp := liquidhandling.NewLHProperties(len(layout), p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
@@ -291,6 +291,7 @@ func makeLHTipWaste(p *LHTipwasteParams, name string) *wtype.LHTipwaste {
  * ######################################## utils
  */
 
+/* -- remove for linting
 //test that the worst reported error severity is the worst
 func test_worst(t *testing.T, errors []*simulator.SimulationError, worst simulator.ErrorSeverity) {
 	s := simulator.SeverityNone
@@ -303,7 +304,7 @@ func test_worst(t *testing.T, errors []*simulator.SimulationError, worst simulat
 	if s != worst {
 		t.Errorf("Expected maximum severity %v, actual maximum severity %v", worst, s)
 	}
-}
+}*/
 
 //return subset of a not in b
 func get_not_in(a, b []string) []string {
@@ -355,7 +356,7 @@ func default_lhplate_props() *LHPlateParams {
 		"test_plate_mfr", // mfr             string
 		8,                // nrows           int
 		12,               // ncols           int
-		wtype.Coordinates{127.76, 85.48, 25.7}, // size          float64
+		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7}, // size          float64
 		LHWellParams{ // welltype
 			wtype.ZeroWellCoords(), // crds            string
 			"ul", // vunit           string
@@ -401,9 +402,9 @@ func default_lhtipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		8,  //nrows           int
 		12, //ncols           int
-		wtype.Coordinates{127.76, 85.48, 60.13}, //size         float64
-		"test Tipbox mfg",                       //manufacturer    string
-		"tipbox",                                //boxtype         string
+		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13}, //size         float64
+		"test Tipbox mfg",                                //manufacturer    string
+		"tipbox",                                         //boxtype         string
 		LHTipParams{ //tiptype
 			"test_tip mfg",  //mfr         string
 			"test_tip type", //ttype       string
@@ -452,9 +453,9 @@ func small_lhtipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		8,  //nrows           int
 		12, //ncols           int
-		wtype.Coordinates{127.76, 85.48, 60.13}, //size         float64
-		"test Tipbox mfg",                       //manufacturer    string
-		"tipbox",                                //boxtype         string
+		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13}, //size         float64
+		"test Tipbox mfg",                                //manufacturer    string
+		"tipbox",                                         //boxtype         string
 		LHTipParams{ //tiptype
 			"test_tip mfg",  //mfr         string
 			"test_tip type", //ttype       string
@@ -501,10 +502,10 @@ func small_lhtipbox(name string) *wtype.LHTipbox {
 
 func default_lhtipwaste(name string) *wtype.LHTipwaste {
 	params := LHTipwasteParams{
-		700,                                    //capacity        int
-		"tipwaste",                             //typ             string
-		"testTipwaste mfr",                     //mfr             string
-		wtype.Coordinates{127.76, 85.48, 92.0}, //height          float64
+		700,                                             //capacity        int
+		"tipwaste",                                      //typ             string
+		"testTipwaste mfr",                              //mfr             string
+		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, //height          float64
 		LHWellParams{ // w               LHWellParams
 			wtype.ZeroWellCoords(), // crds            string
 			"ul",     // vunit           string
@@ -536,18 +537,18 @@ func default_lhproperties() *liquidhandling.LHProperties {
 		"Device Name",
 		"Device Manufacturer",
 		[]LayoutParams{
-			LayoutParams{"tipbox_1", 0.0, 0.0, 0.0},
-			LayoutParams{"tipbox_2", 200.0, 0.0, 0.0},
-			LayoutParams{"input_1", 400.0, 0.0, 0.0},
-			LayoutParams{"input_2", 0.0, 200.0, 0.0},
-			LayoutParams{"output_1", 200.0, 200.0, 0.0},
-			LayoutParams{"output_2", 400.0, 200.0, 0.0},
-			LayoutParams{"tipwaste", 0.0, 400.0, 0.0},
-			LayoutParams{"wash", 200.0, 400.0, 0.0},
-			LayoutParams{"waste", 400.0, 400.0, 0.0},
+			{"tipbox_1", 0.0, 0.0, 0.0},
+			{"tipbox_2", 200.0, 0.0, 0.0},
+			{"input_1", 400.0, 0.0, 0.0},
+			{"input_2", 0.0, 200.0, 0.0},
+			{"output_1", 200.0, 200.0, 0.0},
+			{"output_2", 400.0, 200.0, 0.0},
+			{"tipwaste", 0.0, 400.0, 0.0},
+			{"wash", 200.0, 400.0, 0.0},
+			{"waste", 400.0, 400.0, 0.0},
 		},
 		[]HeadParams{
-			HeadParams{
+			{
 				"Head0 Name",
 				"Head0 Manufacturer",
 				ChannelParams{
@@ -596,18 +597,18 @@ func independent_lhproperties() *liquidhandling.LHProperties {
 		"Device Name",
 		"Device Manufacturer",
 		[]LayoutParams{
-			LayoutParams{"tipbox_1", 0.0, 0.0, 0.0},
-			LayoutParams{"tipbox_2", 200.0, 0.0, 0.0},
-			LayoutParams{"input_1", 400.0, 0.0, 0.0},
-			LayoutParams{"input_2", 0.0, 200.0, 0.0},
-			LayoutParams{"output_1", 200.0, 200.0, 0.0},
-			LayoutParams{"output_2", 400.0, 200.0, 0.0},
-			LayoutParams{"tipwaste", 0.0, 400.0, 0.0},
-			LayoutParams{"wash", 200.0, 400.0, 0.0},
-			LayoutParams{"waste", 400.0, 400.0, 0.0},
+			{"tipbox_1", 0.0, 0.0, 0.0},
+			{"tipbox_2", 200.0, 0.0, 0.0},
+			{"input_1", 400.0, 0.0, 0.0},
+			{"input_2", 0.0, 200.0, 0.0},
+			{"output_1", 200.0, 200.0, 0.0},
+			{"output_2", 400.0, 200.0, 0.0},
+			{"tipwaste", 0.0, 400.0, 0.0},
+			{"wash", 200.0, 400.0, 0.0},
+			{"waste", 400.0, 400.0, 0.0},
 		},
 		[]HeadParams{
-			HeadParams{
+			{
 				"Head0 Name",
 				"Head0 Manufacturer",
 				ChannelParams{
@@ -651,10 +652,12 @@ func independent_lhproperties() *liquidhandling.LHProperties {
 	return makeLHProperties(&valid_props)
 }
 
+/* -- remove for linting
 func default_vlh() *lh.VirtualLiquidHandler {
 	vlh := lh.NewVirtualLiquidHandler(default_lhproperties(), nil)
 	return vlh
 }
+*/
 
 /*
  * ######################################## InstructionParams
@@ -848,6 +851,7 @@ func preloadFilledTips(head int, tipbox_loc string, channels []int, what string,
 	return &ret
 }
 
+/* -- remove for linting
 func fillTipwaste(tipwaste_loc string, count int) *SetupFn {
 	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
 		tipwaste := vlh.GetObjectAt(tipwaste_loc).(*wtype.LHTipwaste)
@@ -855,6 +859,7 @@ func fillTipwaste(tipwaste_loc string, count int) *SetupFn {
 	}
 	return &ret
 }
+*/
 
 func prefillWells(plate_loc string, wells_to_fill []string, liquid_name string, volume float64) *SetupFn {
 	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
@@ -896,7 +901,7 @@ func moveTo(row, col int, p moveToParams) *SetupFn {
 
 	for i := 0; i < p.Multi; i++ {
 		if col >= 0 && col < p.Cols && row+i >= 0 && row+i < p.Rows {
-			wc := wtype.WellCoords{col, row + i}
+			wc := wtype.WellCoords{X: col, Y: row + i}
 			s_dp[i] = p.Deckposition
 			s_wc[i] = wc.FormatA1()
 			s_rf[i] = p.Reference
@@ -934,7 +939,7 @@ func tipboxAssertion(tipbox_loc string, missing_tips []string) *AssertionFn {
 			errors := []string{}
 			for y := 0; y < tipbox.Nrows; y++ {
 				for x := 0; x < tipbox.Ncols; x++ {
-					wc := wtype.WellCoords{x, y}
+					wc := wtype.WellCoords{X: x, Y: y}
 					wcs := wc.FormatA1()
 					if hta, etm := tipbox.HasTipAt(wc), mmissing_tips[wcs]; !hta && !etm {
 						errors = append(errors, fmt.Sprintf("Unexpected tip missing at %s", wcs))

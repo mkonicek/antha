@@ -40,6 +40,10 @@ type Shape struct {
 	D          float64
 }
 
+func (sh *Shape) Equals(sh2 *Shape) bool {
+	return sh.ShapeName == sh2.ShapeName && sh.LengthUnit == sh2.LengthUnit && sh.H == sh2.H && sh.W == sh2.W && sh.D == sh2.D
+}
+
 // let shape implement geometry
 
 func (sh *Shape) Height() wunit.Length { // y?
@@ -129,9 +133,5 @@ func NewNilShape() *Shape {
 }
 
 func (sh *Shape) IsZero() bool {
-	if sh.ShapeName == "" {
-		return false
-	}
-
-	return true
+	return len(sh.ShapeName) == 0
 }

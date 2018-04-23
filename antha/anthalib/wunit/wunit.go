@@ -24,8 +24,9 @@ package wunit
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"math"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 // structure defining a base unit
@@ -268,12 +269,7 @@ func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {
 	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
 	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
 
-	if v > v2 {
-		return true
-	}
-
-	return false
-
+	return v > v2
 }
 
 func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
@@ -283,16 +279,12 @@ func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
 	// returns true if this is greater than m
 	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
 	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
-	if v < v2 {
-		return true
-	}
-	return false
+	return v < v2
 
 }
 
 func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
 	// this is not equal to anything
-
 	if cm == nil {
 		return false
 	}
@@ -314,11 +306,7 @@ func (cm *ConcreteMeasurement) LessThan(m Measurement) bool {
 	// returns true if this is less than m
 	v := m.ConvertTo(cm.Unit())
 
-	if v > cm.RawValue() {
-		return true
-	}
-
-	return false
+	return v > cm.RawValue()
 }
 
 func (cm *ConcreteMeasurement) LessThanFloat(f float64) bool {
@@ -327,11 +315,7 @@ func (cm *ConcreteMeasurement) LessThanFloat(f float64) bool {
 	}
 	// assumes the units work out
 
-	if cm.RawValue() < f {
-		return true
-	}
-
-	return false
+	return cm.RawValue() < f
 }
 
 func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
@@ -340,10 +324,7 @@ func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
 	}
 	// returns true if this is greater than m
 	v := m.ConvertTo(cm.Unit())
-	if v < cm.RawValue() {
-		return true
-	}
-	return false
+	return v < cm.RawValue()
 }
 
 func (cm *ConcreteMeasurement) GreaterThanFloat(f float64) bool {
@@ -370,22 +351,15 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	dif := math.Abs(v - cm.RawValue())
 
 	epsilon := math.Nextafter(1, 2) - 1
-	if dif < (epsilon * 10000) {
-		return true
-	}
-
-	return false
+	return dif < (epsilon * 10000)
 }
 
 func (cm *ConcreteMeasurement) EqualToFloat(f float64) bool {
 	if cm == nil {
 		return false
 	}
-	if f == cm.RawValue() {
-		return true
-	}
 
-	return false
+	return f == cm.RawValue()
 }
 
 func (cm *ConcreteMeasurement) ToString() string {

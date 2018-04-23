@@ -53,7 +53,7 @@ func RemoveDuplicateStrings(elements []string, options ...Option) []string {
 			key = strings.TrimSpace(elements[v])
 		}
 
-		if encountered[key] == true {
+		if encountered[key] {
 			// Do not add duplicate.
 		} else {
 			// Record this element as an encountered element.
@@ -73,7 +73,7 @@ func RemoveDuplicateInts(elements []int) []int {
 	result := []int{}
 
 	for v := range elements {
-		if encountered[elements[v]] == true {
+		if encountered[elements[v]] {
 			// Do not add duplicate.
 		} else {
 			// Record this element as an encountered element.
@@ -94,7 +94,7 @@ func RemoveDuplicateFloats(elements []float64) []float64 {
 	result := []float64{}
 
 	for v := range elements {
-		if encountered[elements[v]] == true {
+		if encountered[elements[v]] {
 			// Do not add duplicate.
 		} else {
 			// Record this element as an encountered element.
@@ -135,7 +135,7 @@ func RemoveDuplicateSequences(elements []wtype.DNASequence, options ...Option) [
 			}
 		}
 
-		if encountered[key] == true {
+		if encountered[key] {
 			// Do not add duplicate.
 		} else {
 			// Record this element as an encountered element.
@@ -169,9 +169,7 @@ func removeDuplicateInterface(elements []interface{}) []interface{} {
 // If all values in the slice are not of the same type an error is returned.
 func CheckArrayType(elements []interface{}) (typeName string, err error) {
 	var foundthistype string
-	var foundthesetypes []string
 	for i, element := range elements {
-
 		typeName = reflect.TypeOf(element).Name()
 
 		if typeName != foundthistype && i != 0 {
@@ -179,8 +177,6 @@ func CheckArrayType(elements []interface{}) (typeName string, err error) {
 		}
 
 		foundthistype = typeName
-		foundthesetypes = append(foundthesetypes, typeName)
-
 	}
 
 	return
@@ -212,8 +208,7 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 		intelements = RemoveDuplicateInts(intelements)
 
 		for j := range intelements {
-			var u interface{}
-			u = intelements[j]
+			u := intelements[j]
 			unique = append(unique, u)
 		}
 		return unique, nil
@@ -224,8 +219,7 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 		}
 		values = RemoveDuplicateFloats(values)
 		for j := range values {
-			var u interface{}
-			u = values[j]
+			u := values[j]
 			unique = append(unique, u)
 		}
 		return unique, nil
@@ -237,8 +231,7 @@ func RemoveDuplicateValues(elements []interface{}) ([]interface{}, error) {
 		values = RemoveDuplicateStrings(values)
 
 		for j := range values {
-			var u interface{}
-			u = values[j]
+			u := values[j]
 			unique = append(unique, u)
 		}
 		return unique, nil

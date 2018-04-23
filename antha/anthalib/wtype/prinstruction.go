@@ -4,20 +4,18 @@ import (
 	"fmt"
 )
 
-
 // PRInstruction is a high-level instruction to a plate reader to measure a
 // sample
 type PRInstruction struct {
-	ID                 string
-	ComponentIn        *LHComponent
-	ComponentOut   	   *LHComponent
-	Options            string
+	ID           string
+	ComponentIn  *LHComponent
+	ComponentOut *LHComponent
+	Options      string
 }
 
 func (ins PRInstruction) String() string {
 	return fmt.Sprint("PRInstruction")
 }
-
 
 // NewPRInstruction creates a new PRInstruction
 func NewPRInstruction() *PRInstruction {

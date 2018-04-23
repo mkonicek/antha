@@ -154,11 +154,7 @@ func ZeroWellCoords() WellCoords {
 	return WellCoords{-1, -1}
 }
 func (wc WellCoords) IsZero() bool {
-	if wc.Equals(ZeroWellCoords()) {
-		return true
-	}
-
-	return false
+	return wc.Equals(ZeroWellCoords())
 }
 
 func MatchString(s1, s2 string) bool {
@@ -232,7 +228,7 @@ func MakeWellCoords1A(a1 string) WellCoords {
 
 // make well coordinates in a manner compatble with "X1,Y1" etc.
 func MakeWellCoordsXYsep(x, y string) WellCoords {
-	r := WellCoords{wutil.ParseInt(y[1:len(y)]) - 1, wutil.ParseInt(x[1:len(x)]) - 1}
+	r := WellCoords{wutil.ParseInt(y[1:]) - 1, wutil.ParseInt(x[1:]) - 1}
 
 	if r.X < 0 || r.Y < 0 {
 		return WellCoords{-1, -1}

@@ -26,12 +26,13 @@ package blast
 import (
 	"errors"
 	"fmt"
-	"github.com/biogo/ncbi"
 	"io"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/biogo/ncbi"
 )
 
 var (
@@ -261,7 +262,7 @@ func Put(query string, p *PutParameters, tool, email string) (*Rid, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Close()
+	defer resp.Close() //nolint
 	err = rid.unmarshal(resp)
 	if err != nil {
 		return nil, err
@@ -284,7 +285,7 @@ func (r *Rid) SearchInfo(tool, email string) (*SearchInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Close()
+	defer resp.Close() //nolint
 	s := SearchInfo{Rid: r}
 	err = s.unmarshal(resp)
 	if err != nil {
@@ -359,7 +360,7 @@ func RequestInfo(target string, tool, email string) (*Info, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Close()
+	defer resp.Close() //nolint
 	err = i.unmarshal(resp)
 	if err != nil {
 		return nil, err

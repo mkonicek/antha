@@ -133,8 +133,8 @@ func TestWellCoordsComparison(t *testing.T) {
 	c := [][]int{{0, -1, -1}, {1, 0, 1}, {1, -1, 0}}
 	r := [][]int{{0, 1, -1}, {-1, 0, -1}, {1, 1, 0}}
 
-	for i, _ := range s {
-		for j, _ := range s {
+	for i := range s {
+		for j := range s {
 			cmpCol := CompareStringWellCoordsCol(s[i], s[j])
 			cmpRow := CompareStringWellCoordsRow(s[i], s[j])
 
@@ -240,7 +240,7 @@ type testpair struct {
 	err      error
 }
 
-var lts []testpair = []testpair{testpair{ltstring: "170516CCFDesign_noTouchoff_noBlowout2", ltint: 102}, testpair{ltstring: "190516OnePolicy0", ltint: 3000}, testpair{ltstring: "dna_mix", ltint: LTDNAMIX}, testpair{ltstring: "PreMix", ltint: LTPreMix} /*testpair{ltstring: "InvalidEntry", ltint: LTWater, err: fmt.Errorf("!")}*/}
+var lts []testpair = []testpair{{ltstring: "170516CCFDesign_noTouchoff_noBlowout2", ltint: 102}, {ltstring: "190516OnePolicy0", ltint: 3000}, {ltstring: "dna_mix", ltint: LTDNAMIX}, {ltstring: "PreMix", ltint: LTPreMix} /*testpair{ltstring: "InvalidEntry", ltint: LTWater, err: fmt.Errorf("!")}*/}
 
 func TestLiquidTypeFromString(t *testing.T) {
 

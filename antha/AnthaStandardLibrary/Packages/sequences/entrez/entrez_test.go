@@ -32,7 +32,7 @@ type entrezTest struct {
 
 var tests = []entrezTest{
 
-	entrezTest{
+	{
 		ID: "EF208560",
 	},
 }

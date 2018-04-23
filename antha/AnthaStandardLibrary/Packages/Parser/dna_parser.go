@@ -47,7 +47,7 @@ func SnapGenetoSimpleSeq(filename string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer contents.Close()
+	defer contents.Close() //nolint
 
 	scanner := bufio.NewScanner(contents)
 	for scanner.Scan() {
@@ -64,41 +64,7 @@ func SnapGenetoSimpleSeq(filename string) (string, error) {
 }
 
 func Handlesnapgenelines(lines []string) (dnaseq string) {
-	originallines := len(lines)
-	//startfound := false
-	seqlines := make([]string, 0)
-	// fmt.Println(originallines)
 	if len(lines) > 0 {
-		for i := 3; i < originallines; i++ {
-
-			// // fmt.Println("lines", lines[i])
-			/*	if len([]byte(lines[0])) > 0 {
-				if startfound == false {
-					if len([]byte(lines[i])) > 0 {
-						startfound = true
-					}
-				}*/
-			//if startfound {
-
-			// // fmt.Println("i+1", i, len(lines))
-			// fmt.Println(lines[i+1])
-			if len([]byte(lines[i])) > 0 {
-				//// fmt.Println("line:", lines[i])
-				ok, _, _ := noillegalshere(lines[i])
-
-				if ok != true {
-					templine := removeweirdthings(lines[i])
-					//	// fmt.Println("original line:", lines[i], "templine:", templine, string(badchars))
-					seqlines = append(seqlines, templine)
-					break
-				} else {
-					seqlines = append(seqlines, lines[i])
-				}
-			} else {
-				break
-			}
-		}
-
 		seq := strings.Join(lines, "")
 		seq = strings.Replace(seq, " ", "", -1)
 
@@ -117,34 +83,6 @@ func Handlesnapgenelines(lines []string) (dnaseq string) {
 	return
 }
 
-/*
-func somethingweirdatstart(seq string) (found bool, weirdthing string) {
-
-	var badposition int
-	var badpositions = make([]int, 0)
-	var badcharacter rune
-
-	for i, letter := range seq {
-		for _, valid := range alphabet {
-			if letter == valid {
-				badposition = i
-				badpositions = append(badpositions, badposition)
-				return
-			}
-		}
-	}
-
-	if len(badpositions) == 0 {
-		nothingfound = true
-	}
-	return
-}
-
-func somethingweirdatend(seq string) (found bool, weirdthing string) {
-
-	return
-}
-*/
 func removeweirdthings(seq string) (weirdthingfreeseq string) {
 
 	if len(seq) == 1 {
@@ -188,7 +126,7 @@ func noillegalshere(line string) (nothingfound bool, badpositions []int, badchar
 
 		_, foundinmap := alphabet[string(letter)]
 
-		if foundinmap == false {
+		if !foundinmap {
 
 			//if letter == valid {
 			badposition = i

@@ -59,17 +59,17 @@ func (s *S) TestDoInfo(c *check.C) {
 		// Others seem to come and go with frightening regularity.
 		// This is a reasonable sample, and not intended to be exhaustive.
 		dbListCore = map[string]struct{}{
-			"books":      struct{}{},
-			"genome":     struct{}{},
-			"homologene": struct{}{},
-			"nuccore":    struct{}{},
-			"nucest":     struct{}{},
-			"nucleotide": struct{}{},
-			"protein":    struct{}{},
-			"pubmed":     struct{}{},
-			"structure":  struct{}{},
-			"taxonomy":   struct{}{},
-			"unigene":    struct{}{},
+			"books":      {},
+			"genome":     {},
+			"homologene": {},
+			"nuccore":    {},
+			"nucest":     {},
+			"nucleotide": {},
+			"protein":    {},
+			"pubmed":     {},
+			"structure":  {},
+			"taxonomy":   {},
+			"unigene":    {},
 		}
 		dbListRetrieved = make(map[string]struct{})
 	)
@@ -174,7 +174,7 @@ func (s *S) TestDoSummary(c *check.C) {
 	expect := &Summary{
 		Database: "protein",
 		Documents: []Document{
-			Document{
+			{
 				Id: 15718680,
 				Items: []Item{
 					{Value: "NP_005537", Name: "Caption", Type: "String"},
@@ -191,7 +191,7 @@ func (s *S) TestDoSummary(c *check.C) {
 					{Value: "  ", Name: "Comment", Type: "String"},
 				},
 			},
-			Document{
+			{
 				Id: 157427902,
 				Items: []Item{
 					{Value: "NP_001098858", Name: "Caption", Type: "String"},
@@ -208,7 +208,7 @@ func (s *S) TestDoSummary(c *check.C) {
 					{Value: "  ", Name: "Comment", Type: "String"},
 				},
 			},
-			Document{
+			{
 				Id: 119703751,
 				Items: []Item{
 					{Value: "NP_034713", Name: "Caption", Type: "String"},
@@ -360,8 +360,8 @@ func (s *S) TestDoCitMatch(c *check.C) {
 	}{
 		{
 			map[string]CitQuery{
-				"Art1": CitQuery{"proc natl acad sci u s a", "1991", "88", "3248", "mann bj"},
-				"Art2": CitQuery{"science", "1987", "235", "182", "palmenberg ac"},
+				"Art1": {"proc natl acad sci u s a", "1991", "88", "3248", "mann bj"},
+				"Art2": {"science", "1987", "235", "182", "palmenberg ac"},
 			},
 			map[string]int{
 				"Art1": 2014248,

@@ -123,7 +123,7 @@ var (
 
 func validIGEMTypeOptions() string {
 	var options []string
-	for key, _ := range IgemTypeCodes {
+	for key := range IgemTypeCodes {
 		options = append(options, key)
 	}
 	return strings.Join(options, "\n")
@@ -149,9 +149,7 @@ func MakeXMLURL(partnames []string) (Urlstring string) {
 
 	parts := make([]string, 0)
 	parts = append(parts, "part")
-	for _, part := range partnames {
-		parts = append(parts, part)
-	}
+	parts = append(parts, partnames...)
 	partconcat := strings.Join(parts, ".")
 
 	level1 := "http://parts.igem.org"
@@ -173,6 +171,9 @@ func SlurpOutput(Urlstring string) (output []byte) {
 	}
 
 	output, err = ioutil.ReadAll(res.Body) // this is a slow step!
+	if err != nil {
+		panic(err)
+	}
 
 	return output
 }
@@ -181,7 +182,7 @@ func makeRegistryfile() ([]byte, error) {
 	file := filepath.Join(anthapath.Path(), registryFile)
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(file), 0777); err != nil {
+		if err := os.MkdirAll(filepath.Dir(file), 0700); err != nil {
 			return nil, err
 		}
 		// FYI: >34MB file
@@ -189,13 +190,13 @@ func makeRegistryfile() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer res.Body.Close()
+		defer res.Body.Close() //nolint
 
 		f, err := os.Create(file)
 		if err != nil {
 			return nil, err
 		}
-		defer f.Close()
+		defer f.Close() //nolint
 
 		var buf bytes.Buffer
 		if _, err := io.Copy(&buf, res.Body); err != nil {
@@ -268,7 +269,6 @@ func FastaParse(fastaFh io.Reader) []FastaPart {
 			// identifier and clear the string
 			if header != "" {
 				outputs = append(outputs, Build_fasta(header, seq))
-				header = ""
 				seq.Reset()
 			}
 
@@ -293,10 +293,6 @@ func CountPartsinRegistryContaining(keystrings []string) (numberofparts int) {
 	}
 
 	fastaFh := bytes.NewReader(allparts)
-
-	records := make([][]string, 0)
-	seq := make([]string, 0)
-	records = append(records, seq)
 	for _, record := range FastaParse(fastaFh) {
 
 		if search.ContainsAllStrings(record.Desc, keystrings) {
@@ -317,11 +313,6 @@ func FilterRegistry(partype string, keystrings []string, exacttypecodeonly bool)
 	}
 
 	fastaFh := bytes.NewReader(allparts)
-
-	records := make([][]string, 0)
-	seq := make([]string, 0)
-	records = append(records, seq)
-
 	listofpartIDs = make([]string, 0)
 
 	bba_code, ok := IgemTypeCodes[strings.ToUpper(partype)]
@@ -378,9 +369,7 @@ func LookUp(parts []string) (parsedxml Rsbpml) {
 		parsedxml = Partpropertiesmini(partslice)
 
 		newparsedxml := make([]Part, 0)
-		for _, part := range parsedxml.Partlist[0].Parts {
-			newparsedxml = append(newparsedxml, part)
-		}
+		newparsedxml = append(newparsedxml, parsedxml.Partlist[0].Parts...)
 
 		var parsedxml Rsbpml
 		partsleft := (len(parts) - len(partslice))
@@ -388,13 +377,11 @@ func LookUp(parts []string) (parsedxml Rsbpml) {
 		for i := 10; i < len(parts); i = i + 14 {
 			partslice = parts[i : i+14]
 			parsedxml = Partpropertiesmini(partslice)
-			for _, part := range parsedxml.Partlist[0].Parts {
-				newparsedxml = append(newparsedxml, part)
-			}
+			newparsedxml = append(newparsedxml, parsedxml.Partlist[0].Parts...)
 			var parsedxml Rsbpml
 			partsleft = partsleft - len(partslice)
 			if partsleft < 14 {
-				partslice = parts[len(parts)-partsleft : len(parts)]
+				partslice = parts[len(parts)-partsleft:]
 				parsedxml = Partpropertiesmini(partslice)
 
 				for _, part := range parsedxml.Partlist[0].Parts {

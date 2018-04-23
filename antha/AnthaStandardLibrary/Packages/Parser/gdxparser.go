@@ -61,7 +61,10 @@ type AAElement struct {
 
 func Parse(filename string) (parts_list []string, err error) {
 
-	str, _ := ioutil.ReadFile(filename)
+	str, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
 
 	var gdx Project
 
@@ -134,22 +137,22 @@ func gdxToAssemblyParameters(data []byte) ([]enzymes.Assemblyparameters, error) 
 	for _, a := range gdx.DesignConstruct {
 		var newconstruct enzymes.Assemblyparameters
 		newconstruct.Constructname = a.Label
-		if strings.Contains(a.Notes, "Enzyme:") == true {
+		if strings.Contains(a.Notes, "Enzyme:") {
 			newconstruct.Enzymename = strings.TrimSpace(strings.TrimPrefix(a.Notes, "Enzyme:")) // add trim function to trim after space
 		}
 		for _, b := range a.DNAElements {
 			var newseq wtype.DNASequence
-			if strings.Contains(strings.ToUpper(b.Notes), "VECTOR") == true {
+			if strings.Contains(strings.ToUpper(b.Notes), "VECTOR") {
 				newseq.Nm = b.Label
 				newseq.Seq = b.Sequence
-				if strings.Contains(strings.ToUpper(a.Notes), "PLASMID") == true || strings.Contains(strings.ToUpper(a.Notes), "CIRCULAR") == true {
+				if strings.Contains(strings.ToUpper(a.Notes), "PLASMID") || strings.Contains(strings.ToUpper(a.Notes), "CIRCULAR") {
 					newseq.Plasmid = true
 				}
 				newconstruct.Vector = newseq
 			} else {
 				newseq.Nm = b.Label
 				newseq.Seq = b.Sequence
-				if strings.Contains(a.Notes, "Plasmid") == true {
+				if strings.Contains(a.Notes, "Plasmid") {
 					newseq.Plasmid = true
 				}
 				newconstruct.Partsinorder = append(newconstruct.Partsinorder, newseq)

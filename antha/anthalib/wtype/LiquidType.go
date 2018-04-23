@@ -205,6 +205,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "colonymix"
 	case LTDNACELLSMIX:
 		return "dna_cells_mix"
+	case LTDNACELLSMIXMULTI:
+		return "dna_cells_mix_multi"
 	case LTMultiWater:
 		return "multiwater"
 	case LTCSrc:
@@ -304,7 +306,7 @@ func IndexOfStringArray(s string, a []string) int {
 // but unlikely to be useful
 func Normalize(tx []string) []string {
 	if tx[0] == "" && len(tx) > 1 {
-		return tx[1:len(tx)]
+		return tx[1:]
 	}
 	return tx
 }

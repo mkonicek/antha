@@ -31,7 +31,6 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/platereader"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 
 	"github.com/montanaflynn/stats"
 )
@@ -41,35 +40,7 @@ const (
 	emissionSpectrumHeader   = "(Em Spectrum)"
 	excitationSpectrumHeader = "(Ex Spectrum)"
 	absorbanceHeader         = "(A-"
-	rawDataHeader            = "Raw Data"
 )
-
-func matchesAbsorbance(header string, wavelength int) bool {
-	if strings.Contains(header, rawDataHeader) {
-		fields := strings.Fields(header)
-
-		for _, field := range fields {
-			if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
-				trimmed := strings.TrimPrefix(field, "(")
-				trimmed = strings.TrimPrefix(field, "A-")
-				trimmed = strings.TrimSuffix(field, ")")
-				integer, err := strconv.Atoi(trimmed)
-				if err == nil {
-					if integer == wavelength {
-						return true
-					}
-				}
-				float, err := strconv.ParseFloat(trimmed, 64)
-				if err == nil {
-					if wutil.RoundInt(float) == wavelength {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
-}
 
 func (data MarsData) AvailableReadings(wellname string) (readingDescriptions []string) {
 
@@ -146,7 +117,7 @@ func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength 
 		}
 
 	}
-	if emfound != true && exfound != true {
+	if !emfound && !exfound {
 		return xaxis, yaxis, fmt.Errorf(fmt.Sprint("No values found for emWavelength ", emWavelength, " and/or exWavelength ", exWavelength, ". ", "Available Values found: ", data.AvailableReadings(wellname)))
 	}
 	return
@@ -384,19 +355,4 @@ type PRMeasurement struct {
 	RBand       int
 	Script      int
 	Gain        int
-}
-
-func equivalentMeasurements(a, b PRMeasurement) bool {
-	if a.EWavelength == b.EWavelength {
-		if a.RWavelength == b.RWavelength {
-			if a.EBand == b.EBand {
-				if a.RBand == b.RBand {
-					if a.Gain == b.Gain {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
 }

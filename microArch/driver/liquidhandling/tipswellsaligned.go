@@ -127,7 +127,7 @@ func assertWFContiguousNonEmpty(sa []string) bool {
 		}
 	}
 
-	return true
+	return found
 }
 
 func contiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsfrom []string) bool {
@@ -239,7 +239,7 @@ func TipsPerWell(prm wtype.LHChannelParameter, p wtype.LHPlate) (int, int) {
 		}
 		nwells = p.WellsX()
 	} else {
-		// empty
+		panic("unknown orientation")
 	}
 
 	// how many  tips fit into one well

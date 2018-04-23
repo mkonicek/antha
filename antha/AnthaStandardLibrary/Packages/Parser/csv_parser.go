@@ -47,7 +47,7 @@ func ReadDesign(filename string) [][]string {
 		return constructs
 	}
 
-	defer csvfile.Close()
+	defer csvfile.Close() //nolint
 
 	reader := csv.NewReader(csvfile)
 
@@ -92,7 +92,7 @@ func readPartConcentrations(fileName string) (partNamesInOrder []string, concMap
 		return
 	}
 
-	defer csvfile.Close()
+	defer csvfile.Close() //nolint
 
 	reader := csv.NewReader(csvfile)
 
@@ -184,19 +184,15 @@ func rowEmpty(row []string) bool {
 }
 
 func ReadParts(filename string) map[string]wtype.DNASequence {
-
 	m := make(map[string]wtype.DNASequence)
 
-	var parts []wtype.DNASequence
-
 	csvfile, err := os.Open(filename)
-
 	if err != nil {
 		fmt.Println(err)
 		return m
 	}
 
-	defer csvfile.Close()
+	defer csvfile.Close() //nolint
 
 	reader := csv.NewReader(csvfile)
 
@@ -254,7 +250,6 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 					}
 				}
 
-				parts = append(parts, part)
 				m[part.Nm] = part
 			}
 		}
@@ -265,15 +260,8 @@ func ReadParts(filename string) map[string]wtype.DNASequence {
 }
 
 func AssemblyFromCsv(designfile string, partsfile string) (assemblyparameters []enzymes.Assemblyparameters, err error) {
-
-	var designedconstructs [][]string
-
-	designedconstructs = ReadDesign(designfile)
-
-	var definedparts map[string]wtype.DNASequence
-
-	definedparts = ReadParts(partsfile)
-
+	designedconstructs := ReadDesign(designfile)
+	definedparts := ReadParts(partsfile)
 	assemblyparameters = make([]enzymes.Assemblyparameters, 0)
 
 	var errors []error

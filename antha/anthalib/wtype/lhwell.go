@@ -226,7 +226,8 @@ func (w *LHWell) SetContents(newContents *LHComponent) error {
 	if newContents.Volume().GreaterThan(maxVol) {
 		//HJK: Disabling overflow errors until CarryVolume issues are resolved
 		//return LHError(LH_ERR_VOL,
-		//	fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
+		//	fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol)s
+		logger.Warning(fmt.Sprintf("setting %s as contents of well %s even though maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
 	}
 
 	w.WContents = newContents
@@ -880,7 +881,7 @@ func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 
 // CheckExtraKey checks if the key is a reserved name
 func (w LHWell) CheckExtraKey(s string) error {
-	reserved := []string{"protected", "afvfunc", "temporary", "autoallocated", "UserAllocated"}
+	reserved := []string{"protected", "afvfunc", "temporary", "autoallocated", "UserAllocated", "ll_model"}
 
 	if wutil.StrInStrArray(s, reserved) {
 		return fmt.Errorf("%s is a system key used by plates", s)

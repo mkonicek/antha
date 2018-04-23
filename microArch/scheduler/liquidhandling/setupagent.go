@@ -82,7 +82,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		}
 
 		if len(input_plate_order) < len(input_plates) {
-			for id, _ := range input_plates {
+			for id := range input_plates {
 				if !isInStrArr(id, input_plate_order) {
 					input_plate_order = append(input_plate_order, id)
 				}
@@ -204,8 +204,10 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		setup[position] = p
 		plate_lookup[p.ID] = position
 
-		params.AddPlate(position, p)
-		//logger.Info(fmt.Sprintf("Output plate of type %s in position %s", p.Type, position))
+		err := params.AddPlate(position, p)
+		if err != nil {
+			return request, err
+		}
 	}
 
 	for _, pid := range input_plate_order {
@@ -227,9 +229,13 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for input ", p.GetName(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
 			return request, err
 		}
+
 		setup[position] = p
 		plate_lookup[p.ID] = position
-		params.AddPlate(position, p)
+		err := params.AddPlate(position, p)
+		if err != nil {
+			return request, err
+		}
 		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}
 
@@ -257,10 +263,13 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
 			}
 
-			err = params.AddTipWaste(waste)
-
 			if err != nil {
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("Error for liquid handler of model %s: %s", params.Model, err))
+				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error for liquid handler of model %s: %s", params.Model, err))
+			}
+
+			err = params.AddTipWaste(waste)
+			if err != nil {
+				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error adding tip waste for model %s: %s", params.Model, err))
 			}
 		}
 	}

@@ -59,8 +59,12 @@ type LHPlate struct {
 	WellYStart  float64            // offset (mm) to first well in Y direction
 	WellZStart  float64            // offset (mm) to bottom of well in Z direction
 	Bounds      BBox               // (relative) position of the plate (mm), set by parent
-	parent      LHObject           `gotopb:"-" json:"-"`
+	parent      LHObject
 }
+
+var (
+	CONSTRAINTMARKER = "constraint-"
+)
 
 func (plate LHPlate) OutputLayout() {
 	fmt.Println(plate.GetLayout())
@@ -618,7 +622,7 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 			arr[i][j].Plate = &lhp
 			arr[i][j].Crds = crds
 			arr[i][j].WContents.Loc = lhp.ID + ":" + crds.FormatA1()
-			arr[i][j].SetOffset(Coordinates{
+			arr[i][j].SetOffset(Coordinates{ //nolint
 				wellXStart + float64(j)*wellXOffset,
 				wellYStart + float64(i)*wellYOffset,
 				wellZStart,
@@ -749,21 +753,16 @@ func (p *LHPlate) IsAutoallocated() bool {
 // ExportPlateCSV a exports an LHPlate and its contents as a csv file.
 // The caller is required to set the well locations and volumes explicitely with this function.
 func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wells []string, liquids []*LHComponent, volumes []wunit.Volume) (file File, err error) {
-
 	if len(wells) != len(liquids) || len(liquids) != len(volumes) {
-		err = fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
+		return File{}, fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
 
 	records := make([][]string, 0)
-
 	headerrecord := []string{plate.Type, plateName, "", "", "", "", ""}
-
 	records = append(records, headerrecord)
 
 	for i, well := range wells {
-
 		volfloat := volumes[i].RawValue()
-
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 
 		// if no conc unit and conc is zero use a default concentration unit
@@ -851,7 +850,10 @@ func exportCSV(records [][]string, filename string) (File, error) {
 	w := csv.NewWriter(&buf)
 
 	// write all records to the buffer
-	w.WriteAll(records) // calls Flush internally
+	err := w.WriteAll(records)
+	if err != nil {
+		return anthafile, err
+	}
 
 	if err := w.Error(); err != nil {
 		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
@@ -861,28 +863,54 @@ func exportCSV(records [][]string, filename string) (File, error) {
 
 	anthafile.Name = filename
 
-	anthafile.WriteAll(buf.Bytes())
+	err = anthafile.WriteAll(buf.Bytes())
+	if err != nil {
+		return anthafile, err
+	}
 
 	///// to write this to a file on the command line this is what we'd do (or something similar)
 
 	// also create a file on os
 	file, _ := os.Create(filename)
-	defer file.Close()
+	defer file.Close() // nolint
 
 	// this time we'll use the file to create the writer instead of a buffer (anything which fulfils the writer interface can be used here ... checkout golang io.Writer and io.Reader)
 	fw := csv.NewWriter(file)
 
 	// same as before ...
-	fw.WriteAll(records)
-	return anthafile, nil
+	err = fw.WriteAll(records)
+	return anthafile, err
+}
+
+func makeConstraintKeyFor(platform string) string {
+	if isConstraintKey(platform) {
+		return platform
+	}
+
+	return CONSTRAINTMARKER + platform
+}
+
+func unMakeConstraintKey(s string) string {
+	if !isConstraintKey(s) {
+		return s
+	}
+
+	return strings.Replace(s, CONSTRAINTMARKER, "", -1)
+}
+
+func isConstraintKey(s string) bool {
+	return strings.HasPrefix(s, CONSTRAINTMARKER)
 }
 
 func (p *LHPlate) SetConstrained(platform string, positions []string) {
-	p.Welltype.Extra[platform] = positions
+
+	cstrKey := makeConstraintKeyFor(platform)
+	p.Welltype.Extra[cstrKey] = positions
 }
 
 func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
-	par, ok := p.Welltype.Extra[platform]
+	cstrKey := makeConstraintKeyFor(platform)
+	par, ok := p.Welltype.Extra[cstrKey]
 	if !ok {
 		return nil, false
 	}
@@ -902,7 +930,19 @@ func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
 	default:
 		panic(fmt.Sprintf("unknown type %T", par))
 	}
+}
 
+func (p *LHPlate) GetAllConstraints() map[string][]string {
+	ret := make(map[string][]string)
+	for k, v := range p.Welltype.Extra {
+		if isConstraintKey(k) {
+			var pos []string
+			pos = append(pos, v.([]string)...)
+			ret[unMakeConstraintKey(k)] = pos
+		}
+	}
+
+	return ret
 }
 
 //##############################################

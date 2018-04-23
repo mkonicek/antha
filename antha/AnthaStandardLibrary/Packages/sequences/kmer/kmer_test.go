@@ -1,8 +1,9 @@
 package kmer
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 func Test1(t *testing.T) {

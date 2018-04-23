@@ -3,12 +3,12 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
-	"testing"
 )
 
 func getComponent(ctx context.Context, name string, volume float64) (*wtype.LHComponent, error) {
@@ -160,6 +160,9 @@ func TestMultichannelFailPolicy(t *testing.T) {
 	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
 		t.Error(err)
@@ -211,6 +214,9 @@ func TestMultichannelSucceedPair(t *testing.T) {
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
@@ -232,6 +238,9 @@ func TestMultichannelFailDest(t *testing.T) {
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
@@ -267,6 +276,9 @@ func TestMultiChannelFailSrc(t *testing.T) {
 	}
 
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
@@ -283,6 +295,9 @@ func TestMultiChannelFailComponent(t *testing.T) {
 	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 	pol.Policies["water"]["CAN_MULTI"] = true
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
@@ -311,9 +326,11 @@ func TestMultichannelPositive(t *testing.T) {
 	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// allow multi
-
 	pol.Policies["water"]["CAN_MULTI"] = true
 
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -358,9 +375,11 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 	rbt.HeadsLoaded[0].Params.Independent = true
 
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// allow multi
-
 	pol.Policies["water"]["CAN_MULTI"] = true
 
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -390,9 +409,11 @@ func TestTroughMultichannelPositive(t *testing.T) {
 	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
 
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// allow multi
-
 	pol.Policies["water"]["CAN_MULTI"] = true
 
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -423,9 +444,11 @@ func TestBigWellMultichannelPositive(t *testing.T) {
 	rbt := getTestRobot(ctx, dstp, "falcon6wellAgar_riser40")
 
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// allow multi
-
 	pol.Policies["water"]["CAN_MULTI"] = true
 
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -455,9 +478,11 @@ func TestInsByInsMixPositiveMultichannel(t *testing.T) {
 	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
 
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// allow multi
-
 	pol.Policies["water"]["CAN_MULTI"] = true
 
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -490,9 +515,11 @@ func TestInsByInsMixNegativeMultichannel(t *testing.T) {
 	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
 
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// allow multi
-
 	pol.Policies["water"]["CAN_MULTI"] = false
 
 	ris, err := tb.Generate(ctx, pol, rbt)
@@ -515,26 +542,6 @@ func TestInsByInsMixNegativeMultichannel(t *testing.T) {
 	}
 
 	testNegative(ctx, ris, pol, rbt, t)
-}
-
-func getMeATransfer(ctype string) *TransferInstruction {
-	wh := []string{"a"}
-	pltfrom := []string{"pos1"}
-	pltto := []string{"pos2"}
-	wellfrom := []string{"A1"}
-	wellto := []string{"B1"}
-	fplatetype := []string{"pcrplate_skirted"}
-	tplatetype := []string{"anotherplate_type"}
-	volume := []wunit.Volume{wunit.NewVolume(10.0, "ul")}
-	fvolume := []wunit.Volume{wunit.ZeroVolume()}
-	tvolume := []wunit.Volume{wunit.ZeroVolume()}
-	fpwx := []int{12}
-	fpwy := []int{8}
-	tpwx := []int{12}
-	tpwy := []int{8}
-	cmps := []string{ctype}
-
-	return NewTransferInstruction(wh, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype, volume, fvolume, tvolume, fpwx, fpwy, tpwx, tpwy, cmps)
 }
 
 // TODO --> Create new version of the below
@@ -727,6 +734,60 @@ func TestMultiChannelTipReuseDisabled(t *testing.T) {
 	ris := generateRobotInstructions(t, ctx, inss, pol)
 
 	assertNumTipsUsed(t, ris, 16)
+
+	assertNumLoadUnloadInstructions(t, ris, 2)
+}
+
+//TestSingleChannelTipReuse -- based same as above but with multichannel disabled
+//and allowing tip reuse
+func TestSingleChannelTipReuse(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// allow multi
+	pol.Policies["water"]["CAN_MULTI"] = false
+
+	ris := generateRobotInstructions(t, ctx, inss, pol)
+
+	assertNumTipsUsed(t, ris, 1)
+
+	assertNumLoadUnloadInstructions(t, ris, 1)
+}
+
+//TestSingleChannelTipReuse2 -- now we move two things
+func TestSingleChannelTipReuse2(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	ins2, err := getMixInstructions(ctx, 8, []string{"ethanol"}, []float64{50.0})
+	if err != nil {
+		panic(err)
+	}
+
+	inss = append(inss, ins2...)
+
+	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// allow multi
+	pol.Policies["water"]["CAN_MULTI"] = false
+
+	ris := generateRobotInstructions(t, ctx, inss, pol)
+
+	assertNumTipsUsed(t, ris, 2)
 
 	assertNumLoadUnloadInstructions(t, ris, 2)
 }

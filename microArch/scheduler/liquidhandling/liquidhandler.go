@@ -136,12 +136,14 @@ func ValidateRequest(request *LHRequest) error {
 // solutions
 func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest) error {
 	err := ValidateRequest(request)
-
 	if err != nil {
 		return err
 	}
 
-	request.ConfigureYourself()
+	err = request.ConfigureYourself()
+	if err != nil {
+		return err
+	}
 
 	//f := func() {
 	err = this.Plan(ctx, request)
@@ -217,7 +219,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	fmt.Printf("Simulating %d instructions...\n", len(instructions))
 	for _, ins := range instructions {
-		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh)
+		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh) //nolint
 		if vlh.HasError() {
 			break
 		}
@@ -312,7 +314,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 			lastWell = ins.GetParameter("WELLTO").([]string)
 		} else if ins.InstructionType() == liquidhandling.ASP {
-			for i, _ := range lastPlate {
+			for i := range lastPlate {
 				if i >= len(lastWell) {
 					break
 				}
@@ -410,7 +412,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 	for plateID, wellmap := range vols {
 		plate, ok := this.FinalProperties.Plates[this.Properties.PlateIDLookup[plateID]]
-		plate2, _ := this.Properties.Plates[this.Properties.PlateIDLookup[plateID]]
+		plate2 := this.Properties.Plates[this.Properties.PlateIDLookup[plateID]]
 
 		if !ok {
 			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SUCH PLATE: ", plateID))
@@ -455,7 +457,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
 
 	pidm := make(map[string]string, len(this.Properties.Plates))
-	for pos, _ := range this.Properties.Plates {
+	for pos := range this.Properties.Plates {
 		p1, ok1 := this.Properties.Plates[pos]
 		p2, ok2 := this.FinalProperties.Plates[pos]
 
@@ -930,6 +932,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	// final insurance that plate names will be safe
+
+	request = fixDuplicatePlateNames(request)
+
 	// remove dummy mix-in-place instructions
 
 	request = removeDummyInstructions(request)
@@ -960,13 +966,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 	// ensure the after state is correct
 	this.fix_post_ids()
-	err = this.fix_post_names(request)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return this.fix_post_names(request)
 }
 
 // resolve question of where something is requested to go
@@ -1095,8 +1095,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		return request, err
 	}
 
-	var requestinputs map[string][]*wtype.LHComponent
-	requestinputs = request.Input_solutions
+	requestinputs := request.Input_solutions
 
 	if len(requestinputs) == 0 {
 		requestinputs = make(map[string][]*wtype.LHComponent, 5)
@@ -1179,10 +1178,10 @@ func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wty
 
 	// we should know how many plates we need
 	for k, plate := range plates {
-		if plate.Inst == "" {
-			//stockrequest := execution.GetContext().StockMgr.RequestStock(makePlateStockRequest(plate))
-			//plate.Inst = stockrequest["inst"].(string)
-		}
+		//if plate.Inst == "" {
+		//stockrequest := execution.GetContext().StockMgr.RequestStock(makePlateStockRequest(plate))
+		//plate.Inst = stockrequest["inst"].(string)
+		//}
 
 		plates[k] = plate
 	}
@@ -1244,7 +1243,10 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 
 		//TODO Deprecate
 		if strings.Contains(v.GetName(), "Input") {
-			wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+			_, err := wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+			if err != nil {
+				logger.Debug(fmt.Sprintf("export plate csv (deprecated): %s", err.Error()))
+			}
 		}
 
 		v.OutputLayout()
@@ -1371,4 +1373,32 @@ func addToMap(m, a map[string]*wtype.LHPlate) {
 	for k, v := range a {
 		m[k] = v
 	}
+}
+
+func fixDuplicatePlateNames(rq *LHRequest) *LHRequest {
+	seen := make(map[string]int, 1)
+	fixNames := func(sa []string, pm map[string]*wtype.LHPlate) {
+		for _, id := range sa {
+			p, foundPlate := pm[id]
+
+			if !foundPlate {
+				panic(fmt.Sprintf("Inconsistency in plate order / map for plate ID %s ", id))
+			}
+
+			n, ok := seen[p.PlateName]
+
+			if ok {
+				newName := fmt.Sprintf("%s_%d", p.PlateName, n)
+				seen[p.PlateName] += 1
+				p.PlateName = newName
+			} else {
+				seen[p.PlateName] = 1
+			}
+		}
+	}
+
+	fixNames(rq.Input_plate_order, rq.Input_plates)
+	fixNames(rq.Output_plate_order, rq.Output_plates)
+
+	return rq
 }

@@ -1,4 +1,4 @@
-// /config/file/file.go: Part of the Antha language
+// Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -20,8 +20,41 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package file
+// solutions is a utility package for working with solutions of LHComponents
+package solutions
 
-const (
-	LOGFILENAME = "antha.log"
-)
+import "testing"
+
+type nameTest struct {
+	OriginalName    string
+	ExpectedNewName string
+}
+
+var nameTests = []nameTest{
+	{
+		OriginalName:    "1 X SolutionA",
+		ExpectedNewName: "SolutionA",
+	},
+	{
+		OriginalName:    "1 X 1 X 1 X SolutionA",
+		ExpectedNewName: "SolutionA",
+	},
+	{
+		OriginalName:    "1 X SolutionA+SolutionB",
+		ExpectedNewName: "SolutionA+SolutionB",
+	},
+}
+
+func TestRemoveConcUnitFromName(t *testing.T) {
+	for _, test := range nameTests {
+		newName := removeConcUnitFromName(test.OriginalName)
+
+		if newName != test.ExpectedNewName {
+			t.Error(
+				"for ", test.OriginalName, "\n",
+				"expected Conc free name: ", test.ExpectedNewName, "\n",
+				"got: ", newName, "\n",
+			)
+		}
+	}
+}

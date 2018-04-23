@@ -245,3 +245,12 @@ func (self *LHTipwaste) WellCoordsToCoords(wc WellCoords, r WellReference) (Coor
 		self.WellYStart + 0.5*self.AsWell.GetSize().Y,
 		z}), true
 }
+
+//GetTargetOffset get the offset for addressing a well with the named adaptor and channel
+func (self *LHTipwaste) GetTargetOffset(adaptorName string, channel int) Coordinates {
+	targets := self.AsWell.GetWellTargets(adaptorName)
+	if channel < 0 || channel >= len(targets) {
+		return Coordinates{}
+	}
+	return targets[channel]
+}

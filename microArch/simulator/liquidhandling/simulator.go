@@ -280,7 +280,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 		} else if p.Orientation == wtype.LHHChannel {
 			spacing.X = 9.
 		}
-		vlh.state.AddAdaptor(NewAdaptorState(p.Independent, p.Multi, spacing, p))
+		vlh.state.AddAdaptor(NewAdaptorState(head.Adaptor.Name, p.Independent, p.Multi, spacing, p))
 	}
 
 	//Make the deck
@@ -519,9 +519,9 @@ func (self *VirtualLiquidHandler) validateLHArgs(head, multi int, platetype, wha
 	return &ret, nil
 }
 
-//getAbsolutePosition get a position within the liquidhandler, adding any errors as neccessary
+//getTargetPosition get a position within the liquidhandler, adding any errors as neccessary
 //bool is false if the instruction shouldn't continue (e.g. missing deckposition e.t.c)
-func (self *VirtualLiquidHandler) getAbsolutePosition(fname, deckposition, well string, ref wtype.WellReference, platetype string) (wtype.Coordinates, bool) {
+func (self *VirtualLiquidHandler) getTargetPosition(fname, adaptorName string, channelIndex int, deckposition, platetype, well string, ref wtype.WellReference) (wtype.Coordinates, bool) {
 	ret := wtype.Coordinates{}
 
 	target, ok := self.state.GetDeck().GetChild(deckposition)
@@ -565,6 +565,12 @@ func (self *VirtualLiquidHandler) getAbsolutePosition(fname, deckposition, well 
 			wtype.TypeOf(target), deckposition, ref)
 		return ret, false
 	}
+
+	if targetted, ok := target.(wtype.Targetted); ok {
+		targetOffset := targetted.GetTargetOffset(adaptorName, channelIndex)
+		ret = ret.Add(targetOffset)
+	}
+
 	return ret, true
 }
 
@@ -577,7 +583,9 @@ func (self *VirtualLiquidHandler) getWellsBelow(height float64, adaptor *Adaptor
 		if ch := adaptor.GetChannel(i); ch.HasTip() {
 			tip_pos[i] = ch.GetAbsolutePosition().Subtract(wtype.Coordinates{X: 0., Y: 0., Z: ch.GetTip().GetSize().Z})
 
+			fmt.Printf("Simulator: deck.GetBoxIntersections(*wtype.NewBBox(%v, %v))\n", tip_pos[i].Subtract(size), size)
 			for _, o := range deck.GetBoxIntersections(*wtype.NewBBox(tip_pos[i].Subtract(size), size)) {
+				fmt.Printf("Simulator: got a %s\n", wtype.ClassOf(o))
 				if w, ok := o.(*wtype.LHWell); ok {
 					wells[i] = w
 					break
@@ -625,6 +633,9 @@ func getUnique(ss []string) []string {
 func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []string, reference []int,
 	offsetX, offsetY, offsetZ []float64, platetype []string,
 	head int) driver.CommandStatus {
+	fmt.Printf("Simulator: Move(%v, %v, %v, %v, %v, %v, %v, %v)\n", deckposition, wellcoords, reference,
+		offsetX, offsetY, offsetZ, platetype,
+		head)
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MOVE ACK"}
 
 	//get the adaptor
@@ -688,7 +699,7 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 			}
 			explicit[i] = false
 		} else {
-			c, ok := self.getAbsolutePosition("Move", deckposition[i], wellcoords[i], refs[i], platetype[i])
+			c, ok := self.getTargetPosition("Move", adaptor.GetName(), i, deckposition[i], platetype[i], wellcoords[i], refs[i])
 			if !ok {
 				return ret
 			}
@@ -821,7 +832,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	}
 
 	//get the position of tips
-	wells := self.getWellsBelow(0., arg.adaptor)
+	wells := self.getWellsBelow(0.0, arg.adaptor)
 
 	//check if any explicitly requested channels are missing tips
 	tip_missing := []int{}

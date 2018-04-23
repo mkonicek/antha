@@ -1602,6 +1602,52 @@ func Test_Aspirate(t *testing.T) {
 			},
 		},
 		{
+			"OK - 8 channel trough",
+			nil,
+			[]*SetupFn{
+				testTroughLayout(),
+				prefillWells("input_1", []string{"A1"}, "water", 5000.),
+				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},                                         //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                                                                    //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},         //plate_type
+					0, //head
+				},
+				&Aspirate{
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
+					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
+					0, //head       int
+					8, //multi      int
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"}, //platetype  []string
+					[]string{"water", "water", "water", "water", "water", "water", "water", "water"},         //what       []string
+					[]bool{false, false, false, false, false, false, false, false},                           //llf        []bool
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{
+					{0, "water", 100},
+					{1, "water", 100},
+					{2, "water", 100},
+					{3, "water", 100},
+					{4, "water", 100},
+					{5, "water", 100},
+					{6, "water", 100},
+					{7, "water", 100},
+				}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
 			"Fail - Aspirate with no tip",
 			nil,
 			[]*SetupFn{

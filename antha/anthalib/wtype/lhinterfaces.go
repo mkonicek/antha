@@ -178,6 +178,11 @@ type Addressable interface {
 	WellCoordsToCoords(WellCoords, WellReference) (Coordinates, bool)
 }
 
+type Targetted interface {
+	//GetTargetOffset Gets the well target location for the numbered channel of the named adaptor
+	GetTargetOffset(string, int) Coordinates
+}
+
 //LHContainer a tip or a well or something that holds liquids
 type LHContainer interface {
 	Contents() *LHComponent

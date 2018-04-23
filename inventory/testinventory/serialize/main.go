@@ -59,5 +59,9 @@ func main() {
 		panic(fmt.Sprint("serialize error ", err))
 	}
 
+	fmt.Println("package testinventory")
+	fmt.Println()
+	fmt.Println("var plateBytes = []byte(`")
 	fmt.Println(string(s))
+	fmt.Println("`)")
 }

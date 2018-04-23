@@ -1,0 +1,12 @@
+How to update plates now
+
+You can run the update_plate_library.sh script if you are on a system which has the bash shell
+This does the steps below except the git commit and push. 
+
+To run manually:
+
+1) edit make_plate_library.go - this still works as before
+2) go build in this directory
+3) ./serialize > ../platelibrary.go
+4) go test in this directory (check if any issues have arisen)
+5) commit changes and push 

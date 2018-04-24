@@ -60,6 +60,7 @@ const (
 	LTMegaMix
 	LTSolvent
 	LTSmartMix
+	LTXYOffsetTest
 )
 
 func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
@@ -139,6 +140,8 @@ func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 		return LTSolvent, nil
 	case "SmartMix":
 		return LTSmartMix, nil
+	case "XYOffsetTest":
+		return LTXYOffsetTest, nil
 	case "default":
 		return LTDefault, nil
 	default:
@@ -217,6 +220,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "MegaMix"
 	case LTSmartMix:
 		return "SmartMix"
+	case LTXYOffsetTest:
+		return "XYOffsetTest"
 	default:
 		return "nil"
 	}

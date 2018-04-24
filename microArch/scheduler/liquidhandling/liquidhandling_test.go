@@ -622,7 +622,7 @@ func TestAddWellTargets(t *testing.T) {
 		{X: 0.0, Y: 31.5, Z: 0.0},
 	}
 
-	if e, g := []wtype.Coordinates{{}}, plate.Welltype.GetWellTargets("DummyAdaptor"); !assertCoordsEq(e, g) {
+	if e, g := []wtype.Coordinates{}, plate.Welltype.GetWellTargets("DummyAdaptor"); !assertCoordsEq(e, g) {
 		t.Errorf("plate well targets incorrect, expected %v, got %v", e, g)
 	}
 

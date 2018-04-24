@@ -96,6 +96,48 @@ var componentWithConcstests = []unitFromStringTest{
 		Conc:              NewConcentration(0.0, "g/L"),
 		ComponentNameOnly: "E.coli SuperFolder GFP",
 	},
+	{
+		ComponentName:     "solutionX",
+		ContainsConc:      false,
+		Conc:              NewConcentration(0.0, "g/L"),
+		ComponentNameOnly: "solutionX",
+	},
+	{
+		ComponentName:     "1X solutionX",
+		ContainsConc:      true,
+		Conc:              NewConcentration(1.0, "X"),
+		ComponentNameOnly: "solutionX",
+	},
+	{
+		ComponentName:     "solutionX (X)",
+		ContainsConc:      true,
+		Conc:              NewConcentration(0.0, "X"),
+		ComponentNameOnly: "solutionX",
+	},
+	{
+		ComponentName:     "solutionX X",
+		ContainsConc:      true,
+		Conc:              NewConcentration(0.0, "X"),
+		ComponentNameOnly: "solutionX",
+	},
+	{
+		ComponentName:     "1mM rumm",
+		ContainsConc:      true,
+		Conc:              NewConcentration(1.0, "mM"),
+		ComponentNameOnly: "rumm",
+	},
+	{
+		ComponentName:     "rumm (mM)",
+		ContainsConc:      true,
+		Conc:              NewConcentration(0.0, "mM"),
+		ComponentNameOnly: "rumm",
+	},
+	{
+		ComponentName:     "X",
+		ContainsConc:      false,
+		Conc:              NewConcentration(0.0, "g/L"),
+		ComponentNameOnly: "X",
+	},
 }
 
 type volTest struct {

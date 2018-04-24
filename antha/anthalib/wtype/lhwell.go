@@ -899,7 +899,22 @@ func (w *LHWell) getTargetMap() map[string][]Coordinates {
 		w.Extra[wellTargetKey] = ret
 		return ret
 	}
-	return m.(map[string][]Coordinates)
+	ret, ok := m.(map[string][]Coordinates)
+	//gets broken by serialise/deserialise
+	if !ok {
+		ret := make(map[string][]Coordinates)
+		for name, coords := range m.(map[string]interface{}) {
+			ret[name] = make([]Coordinates, 0)
+			for _, crd := range coords.([]interface{}) {
+				c := crd.(map[string]interface{})
+				ret[name] = append(ret[name], Coordinates{X: c["X"].(float64),
+					Y: c["Y"].(float64),
+					Z: c["Z"].(float64)})
+			}
+		}
+		return ret
+	}
+	return ret
 }
 
 //SetWellTargets sets the targets for each channel when accessing the well using
@@ -918,7 +933,7 @@ func (w *LHWell) GetWellTargets(adaptor string) []Coordinates {
 	wtMap := w.getTargetMap()
 	adaptorTargets, ok := wtMap[adaptor]
 	if !ok {
-		return []Coordinates{{}}
+		return []Coordinates{}
 	}
 	return adaptorTargets
 }

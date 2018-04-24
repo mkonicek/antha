@@ -23,7 +23,10 @@
 // defines types for dealing with liquid handling requests
 package wtype
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 //BBox is a simple LHObject representing a bounding box,
 //useful for checking if there's stuff in the way
@@ -84,6 +87,10 @@ func (self BBox) ZMax() float64 {
 
 func (self BBox) GetSize() Coordinates {
 	return self.Size
+}
+
+func (self BBox) String() string {
+	return fmt.Sprintf("BBox[%v+%v]", self.Position, self.Size)
 }
 
 func (self *BBox) Dup() *BBox {

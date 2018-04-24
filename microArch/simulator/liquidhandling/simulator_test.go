@@ -433,7 +433,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 67.5, Z: 38.9}),
+				positionAssertion(0, wtype.Coordinates{X: 402.75, Y: 65.75, Z: 38.9}),
 			},
 		},
 		{
@@ -456,7 +456,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 31.5, Z: 38.9}),
+				positionAssertion(0, wtype.Coordinates{X: 402.75, Y: 29.75, Z: 38.9}),
 			},
 		},
 		{
@@ -472,15 +472,14 @@ func Test_Move(t *testing.T) {
 					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                    //reference
 					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
 					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
-					//[]float64{-31.5, -22.5, -13.5, -4.5, 4.5, 13.5, 22.5, 31.5},                                      //offsetY
 					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
-					[]string{"trough1", "trough1", "trough1", "trough1", "trough1", "trough1", "trough1", "trough1"}, //plate_type
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},         //plate_type
 					0, //head
 				},
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 3., Z: 46.8}),
+				positionAssertion(0, wtype.Coordinates{X: 404.1, Y: 34.5, Z: 46.8}),
 			},
 		},
 		{
@@ -1606,7 +1605,7 @@ func Test_Aspirate(t *testing.T) {
 			nil,
 			[]*SetupFn{
 				testTroughLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 5000.),
+				prefillWells("input_1", []string{"A1"}, "water", 10000.),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			[]TestRobotInstruction{
@@ -1646,6 +1645,40 @@ func Test_Aspirate(t *testing.T) {
 				}),
 				tipwasteAssertion("tipwaste", 0),
 			},
+		},
+		{
+			"Fail - take too much from trough",
+			nil,
+			[]*SetupFn{
+				testTroughLayout(),
+				prefillWells("input_1", []string{"A1"}, "water", 5500.),
+				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},                                         //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                                                                    //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},         //plate_type
+					0, //head
+				},
+				&Aspirate{
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
+					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
+					0, //head       int
+					8, //multi      int
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"}, //platetype  []string
+					[]string{"water", "water", "water", "water", "water", "water", "water", "water"},         //what       []string
+					[]bool{false, false, false, false, false, false, false, false},                           //llf        []bool
+				},
+			},
+			[]string{ //errors
+				"(err) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1,2,3,4,5,6,7 - well A1@trough1 only contains 500 ul working volume",
+			},
+			nil, //assertions
 		},
 		{
 			"Fail - Aspirate with no tip",

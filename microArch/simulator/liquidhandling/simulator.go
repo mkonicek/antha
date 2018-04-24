@@ -878,6 +878,30 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 		}
 	}
 
+	//check total volumes taken from each unique well
+	uniqueWells := make(map[string]*wtype.LHWell)
+	uniqueWellVolumes := make(map[string]float64)
+	for i := 0; i < len(wells); i++ {
+		if wells[i] == nil {
+			continue
+		}
+		if _, ok := uniqueWells[wells[i].ID]; !ok {
+			uniqueWells[wells[i].ID] = wells[i]
+			uniqueWellVolumes[wells[i].ID] = 0.0
+		}
+		uniqueWellVolumes[wells[i].ID] += volume[i]
+	}
+	for id, well := range uniqueWells {
+		v := wunit.NewVolume(uniqueWellVolumes[id], "ul")
+		if d := wunit.SubtractVolumes(v, well.CurrentWorkingVolume()); v.GreaterThan(well.CurrentWorkingVolume()) && !d.IsZero() {
+			self.AddErrorf("Aspirate", "While %s - well %s only contains %s working volume",
+				describe(), well.GetName(), well.CurrentWorkingVolume())
+		}
+	}
+	if self.HasError() {
+		return ret
+	}
+
 	//move liquid
 	no_well := []int{}
 	for _, i := range arg.channels {

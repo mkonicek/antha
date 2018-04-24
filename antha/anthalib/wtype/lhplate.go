@@ -963,7 +963,9 @@ func (self *LHPlate) GetSize() Coordinates {
 func (self *LHPlate) GetWellBounds() BBox {
 	return BBox{
 		self.Bounds.GetPosition().Add(Coordinates{self.WellXStart, self.WellYStart, self.WellZStart}),
-		Coordinates{self.WellXOffset * float64(self.NCols()), self.WellYOffset * float64(self.NRows()), self.Welltype.GetSize().Z},
+		Coordinates{self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
+			self.WellYOffset*float64(self.NRows()-1) + self.Welltype.GetSize().Y,
+			self.Welltype.GetSize().Z},
 	}
 }
 
@@ -1103,10 +1105,15 @@ func (self *LHPlate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordin
 		panic("Haven't implemented liquid level yet")
 	}
 
-	return self.GetPosition().Add(Coordinates{
-		self.WellXStart + (float64(wc.X)+0.5)*self.WellXOffset,
-		self.WellYStart + (float64(wc.Y)+0.5)*self.WellYOffset,
-		z}), true
+	child := self.GetChildByAddress(wc)
+	center := child.GetPosition().Add(child.GetSize().Multiply(0.5))
+
+	return /*self.GetPosition().Add(*/ Coordinates{
+		//self.WellXStart + (float64(wc.X)+0.5)*self.WellXOffset,
+		//self.WellYStart + (float64(wc.Y)+0.5)*self.WellYOffset,
+		center.X,
+		center.Y,
+		z}, true
 }
 
 func (p *LHPlate) ResetID(newID string) {

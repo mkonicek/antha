@@ -4,17 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory/testinventory"
-
-	"encoding/csv"
-	"io/ioutil"
-	"reflect"
-
-	"github.com/antha-lang/toolbox/csvutil"
 )
 
 func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.LHComponent {
@@ -146,6 +141,12 @@ func TestParsePlate(t *testing.T) {
 
 	ctx := testinventory.NewContext(context.Background())
 
+	// Read external file with carriage returns for that specific test.
+	fileCarriage, err := ioutil.ReadFile("test_carriage.csv")
+	if err != nil {
+		t.Errorf("Failed to read test_carriage.csv: %s ", err.Error())
+	}
+
 	suite := []testCase{
 		{
 			File: []byte(
@@ -226,6 +227,45 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 				},
 			},
 		},
+		{
+			// This is to test carriage returns.
+			File: fileCarriage,
+			Expected: &wtype.LHPlate{
+				Type: "pcrplate_with_cooler",
+				Wellcoords: map[string]*wtype.LHWell{
+					"A1": {
+						WContents: &wtype.LHComponent{
+							CName: "water",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  0.0,
+							Cunit: "g/l",
+						},
+					},
+					"A4": {
+						WContents: &wtype.LHComponent{
+							CName: "tea",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "mM/l",
+						},
+					},
+					"A5": {
+						WContents: &wtype.LHComponent{
+							CName: "milk",
+							Type:  wtype.LTWater,
+							Vol:   100.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "g/l",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range suite {
@@ -260,70 +300,5 @@ A5,milk,water,500.0,ul,0,g/l,
 
 	if err == nil {
 		t.Error("Overfull well A5 failed to generate error")
-	}
-}
-
-func TestNewTolerantReader(t *testing.T) {
-
-	// func main() {
-
-	fileNewline, err := ioutil.ReadFile("test_newline.csv")
-	if err != nil {
-		t.Errorf("Failed to read test_newline.csv: %s ", err.Error())
-	}
-	fileCarriage, err := ioutil.ReadFile("test_carriage.csv")
-	if err != nil {
-		t.Errorf("Failed to read test_carriage.csv: %s ", err.Error())
-	}
-
-	csvrNewline := csv.NewReader(bytes.NewBuffer(fileNewline))
-	csvrCarriage := csv.NewReader(bytes.NewBuffer(fileCarriage))
-	csvrNewlineTol := csvutil.NewTolerantReader(bytes.NewBuffer(fileNewline))
-	csvrCarriageTol := csvutil.NewTolerantReader(bytes.NewBuffer(fileCarriage))
-
-	recNewline, err := csvrNewline.ReadAll()
-	if err != nil {
-		t.Errorf("Failed to read csv.NewReader datastream read from test_newline.csv: %s ", err.Error())
-	}
-	recCarriage, err := csvrCarriage.ReadAll()
-	if err != nil {
-		t.Errorf("Failed to read csv.NewReader datastream read from test_carriage.csv: %s ", err.Error())
-	}
-	recNewlineTol, err := csvrNewlineTol.ReadAll()
-	if err != nil {
-		t.Errorf("Failed to read csvutil.NewTolerantReader datastream read from test_newline.csv: %s ", err.Error())
-	}
-	recCarriageTol, err := csvrCarriageTol.ReadAll()
-	if err != nil {
-		t.Errorf("Failed to read csvutil.NewTolerantReader datastream read from test_carriage.csv: %s ", err.Error())
-	}
-
-	// TESTS:
-	// Should be no difference for newline files.
-	if !reflect.DeepEqual(recNewline, recNewlineTol) {
-		t.Errorf("csv.NewReader and csvutil.NewTolerantReader are reading test_newline.csv differently. These shold be read the same.")
-		// fmt.Println(recNewline)
-		// fmt.Println(recNewlineTol)
-		// fmt.Println("")
-	}
-	// Carriage return files should be read differently.
-	if reflect.DeepEqual(recCarriage, recCarriageTol) {
-		t.Errorf("csv.NewReader and csvutil.NewTolerantReader are reading test_carriage.csv similarly. These should be different due to carriage returns.")
-		// fmt.Println(recCarriage)
-		// fmt.Println(recCarriageTol)
-		// fmt.Println("")
-	}
-	// Check that carriage and newline files are read the same by NewToleranceReader:
-	if !reflect.DeepEqual(recNewlineTol, recCarriageTol) {
-		t.Errorf("csvutil.NewTolerantReader is reading test_newline.csv different from test_carriage.csv. These should be the same.")
-		// fmt.Println(recNewlineTol)
-		// fmt.Println(recCarriageTol)
-		// fmt.Println("")
-	}
-	if !reflect.DeepEqual(recNewline, recCarriageTol) {
-		t.Errorf("csv.NewReader is reading test_newline.csv differently than csvutil.NewTolerantReader reads test_carriage.csv. These should be the same.")
-		// fmt.Println(recNewline)
-		// fmt.Println(recCarriageTol)
-		// fmt.Println("")
 	}
 }

@@ -181,6 +181,8 @@ type Addressable interface {
 type Targetted interface {
 	//GetTargetOffset Gets the well target location for the numbered channel of the named adaptor
 	GetTargetOffset(string, int) Coordinates
+	//GetTargets return all the defined targets for the named adaptor
+	GetTargets(string) []Coordinates
 }
 
 //LHContainer a tip or a well or something that holds liquids

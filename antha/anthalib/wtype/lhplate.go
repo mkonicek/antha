@@ -1360,3 +1360,8 @@ func (p *LHPlate) GetTargetOffset(adaptorName string, channel int) Coordinates {
 	}
 	return targets[channel]
 }
+
+//GetTargets return all the defined targets for the named adaptor
+func (p *LHPlate) GetTargets(adaptorName string) []Coordinates {
+	return p.Welltype.GetWellTargets(adaptorName)
+}

@@ -254,3 +254,8 @@ func (self *LHTipwaste) GetTargetOffset(adaptorName string, channel int) Coordin
 	}
 	return targets[channel]
 }
+
+//GetTargets return all the defined targets for the named adaptor
+func (self *LHTipwaste) GetTargets(adaptorName string) []Coordinates {
+	return self.AsWell.GetWellTargets(adaptorName)
+}

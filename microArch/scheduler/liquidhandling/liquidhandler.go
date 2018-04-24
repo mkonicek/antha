@@ -1399,6 +1399,10 @@ func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
 		channelPositions = append(channelPositions, wtype.Coordinates{Y: float64(i) * yOffset})
 	}
 
+	if plate.NRows() >= 8 || plate.IsSpecial() {
+		return
+	}
+
 	//ystart and count should come from some geometric calculation between channelPositions and well size
 	ystart, count := getWellTargetYStart(plate.NRows())
 
@@ -1446,7 +1450,7 @@ func getWellTargetYStart(wy int) (float64, int) {
 		return 0.0, 1
 	}
 
-	return 0.0, 1
+	return 0.0, 0
 }
 
 func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.LHPlate {

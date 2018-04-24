@@ -145,6 +145,11 @@ func (self *LHWell) GetParent() LHObject {
 	return self.Plate
 }
 
+//Duplicate copies an LHObject
+func (self *LHWell) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
+}
+
 func (w LHWell) String() string {
 	return fmt.Sprintf(
 		`LHWELL{
@@ -443,6 +448,7 @@ func (lhw *LHWell) dup(keep_ids bool) *LHWell {
 	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
 	cp.Plate = lhw.Plate
 	cp.Crds = lhw.Crds
+	cp.Bounds = lhw.Bounds
 
 	if keep_ids {
 		cp.ID = lhw.ID

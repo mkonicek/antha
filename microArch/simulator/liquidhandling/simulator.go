@@ -583,9 +583,7 @@ func (self *VirtualLiquidHandler) getWellsBelow(height float64, adaptor *Adaptor
 		if ch := adaptor.GetChannel(i); ch.HasTip() {
 			tip_pos[i] = ch.GetAbsolutePosition().Subtract(wtype.Coordinates{X: 0., Y: 0., Z: ch.GetTip().GetSize().Z})
 
-			fmt.Printf("Simulator: deck.GetBoxIntersections(*wtype.NewBBox(%v, %v))\n", tip_pos[i].Subtract(size), size)
 			for _, o := range deck.GetBoxIntersections(*wtype.NewBBox(tip_pos[i].Subtract(size), size)) {
-				fmt.Printf("Simulator: got a %s\n", wtype.ClassOf(o))
 				if w, ok := o.(*wtype.LHWell); ok {
 					wells[i] = w
 					break
@@ -633,9 +631,6 @@ func getUnique(ss []string) []string {
 func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []string, reference []int,
 	offsetX, offsetY, offsetZ []float64, platetype []string,
 	head int) driver.CommandStatus {
-	fmt.Printf("Simulator: Move(%v, %v, %v, %v, %v, %v, %v, %v)\n", deckposition, wellcoords, reference,
-		offsetX, offsetY, offsetZ, platetype,
-		head)
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MOVE ACK"}
 
 	//get the adaptor
@@ -1620,6 +1615,7 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "ADDPLATETO ACK"}
 
 	if obj, ok := plate.(wtype.LHObject); ok {
+		obj = obj.Duplicate(true)
 		if n, nok := obj.(wtype.Named); nok && n.GetName() != name {
 			self.AddWarningf("AddPlateTo", "Object name(=%s) doesn't match argument name(=%s)", n.GetName(), name)
 		}

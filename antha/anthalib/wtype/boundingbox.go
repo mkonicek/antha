@@ -86,6 +86,10 @@ func (self BBox) GetSize() Coordinates {
 	return self.Size
 }
 
+func (self *BBox) Dup() *BBox {
+	return &BBox{self.Position, self.Size}
+}
+
 func (self *BBox) SetPosition(c Coordinates) {
 	self.Position = c
 }

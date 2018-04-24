@@ -60,9 +60,20 @@ func (te LHTipwaste) String() string {
 }
 
 func (tw *LHTipwaste) Dup() *LHTipwaste {
-	tw2 := NewLHTipwaste(tw.Capacity, tw.Type, tw.Mnfr, tw.Bounds.GetSize(), tw.AsWell, tw.WellXStart, tw.WellYStart, tw.WellZStart)
+	return tw.dup(false)
+}
 
+func (tw *LHTipwaste) DupKeepIDs() *LHTipwaste {
+	return tw.dup(true)
+}
+
+func (tw *LHTipwaste) dup(keepIDs bool) *LHTipwaste {
+	tw2 := NewLHTipwaste(tw.Capacity, tw.Type, tw.Mnfr, tw.Bounds.GetSize(), tw.AsWell, tw.WellXStart, tw.WellYStart, tw.WellZStart)
 	tw2.Contents = tw.Contents
+	if keepIDs {
+		tw2.ID = tw.ID
+		tw2.Name = tw.Name
+	}
 
 	return tw2
 }
@@ -192,6 +203,11 @@ func (self *LHTipwaste) SetParent(p LHObject) error {
 
 func (self *LHTipwaste) GetParent() LHObject {
 	return self.parent
+}
+
+//Duplicate copies an LHObject
+func (self *LHTipwaste) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
 }
 
 //##############################################

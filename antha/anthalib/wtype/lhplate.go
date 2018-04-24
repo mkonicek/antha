@@ -669,7 +669,7 @@ func (lhp *LHPlate) dup(keep_ids bool) *LHPlate {
 				d = well.Dup()
 				d.WContents.Loc = ret.ID + ":" + d.Crds.FormatA1()
 			}
-			d.Plate = ret
+			d.SetParent(ret)
 			ret.Rows[i][j] = d
 			ret.Cols[j][i] = d
 			ret.Wellcoords[d.Crds.FormatA1()] = d
@@ -1033,6 +1033,11 @@ func (self *LHPlate) SetParent(p LHObject) error {
 
 func (self *LHPlate) GetParent() LHObject {
 	return self.parent
+}
+
+//Duplicate copies an LHObject
+func (self *LHPlate) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
 }
 
 //##############################################

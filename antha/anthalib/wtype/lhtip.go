@@ -122,6 +122,11 @@ func (self *LHTip) GetParent() LHObject {
 	return self.parent
 }
 
+//Duplicate copies an LHObject
+func (self *LHTip) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
+}
+
 func (tip *LHTip) GetParams() *LHChannelParameter {
 	// be safe
 	if tip.IsNil() {
@@ -140,15 +145,23 @@ func (tip *LHTip) IsNil() bool {
 }
 
 func (tip *LHTip) Dup() *LHTip {
-	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup())
-	t.Dirty = tip.Dirty
-	t.contents = tip.Contents().Dup()
-	return t
+	return tip.dup(false)
 }
 
 func (tip *LHTip) DupKeepID() *LHTip {
-	t := tip.Dup()
-	t.ID = tip.ID
+	return tip.dup(true)
+}
+
+func (tip *LHTip) dup(keepIDs bool) *LHTip {
+	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup())
+	t.Dirty = tip.Dirty
+	t.contents = tip.Contents().Dup()
+	t.Bounds = tip.Bounds
+
+	if keepIDs {
+		t.ID = tip.ID
+	}
+
 	return t
 }
 

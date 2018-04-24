@@ -93,6 +93,8 @@ type LHObject interface {
 	GetParent() LHObject
 	//GetID
 	GetID() string
+	//Dup duplicate the object, optionally keeping the IDs identical
+	Duplicate(bool) LHObject
 }
 
 //GetObjectRoot get the highest parent

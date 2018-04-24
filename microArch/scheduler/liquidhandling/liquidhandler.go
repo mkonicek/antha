@@ -207,7 +207,12 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	}
 
 	// set up the simulator with default settings
-	vlh := simulator_lh.NewVirtualLiquidHandler(this.Properties.DupKeepIDs(), nil)
+	props := this.Properties.DupKeepIDs()
+	wc := wtype.WellCoords{0, 1}
+	fmt.Printf("Simulator: (before) props.Tipboxes[\"position_2\"].HasTipAt(%s) = %t\n", wc.FormatA1(), props.Tipboxes["position_2"].HasTipAt(wc))
+	fmt.Printf("Simulator: (before) this.Properties.Tipboxes[\"position_2\"].HasTipAt(%s) = %t\n", wc.FormatA1(), this.Properties.Tipboxes["position_2"].HasTipAt(wc))
+
+	vlh := simulator_lh.NewVirtualLiquidHandler(props, nil)
 	for _, err := range vlh.GetErrors() {
 		err.WriteToLog()
 	}
@@ -228,6 +233,8 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	for _, err := range vlh.GetErrors() {
 		err.WriteToLog()
 	}
+	fmt.Printf("Simulator: (after) props.Tipboxes[\"position_2\"].HasTipAt(%s) = %t\n", wc.FormatA1(), props.Tipboxes["position_2"].HasTipAt(wc))
+	fmt.Printf("Simulator: (after) this.Properties.Tipboxes[\"position_2\"].HasTipAt(%s) = %t\n", wc.FormatA1(), this.Properties.Tipboxes["position_2"].HasTipAt(wc))
 
 	//return the worst error if it's actually an error
 	if vlh.HasError() {

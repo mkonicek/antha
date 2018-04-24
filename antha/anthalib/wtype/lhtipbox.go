@@ -151,9 +151,12 @@ func (tb *LHTipbox) DupKeepIDs() *LHTipbox {
 
 func (tb *LHTipbox) dup(keepIDs bool) *LHTipbox {
 	tb2 := NewLHTipbox(tb.Nrows, tb.Ncols, tb.Bounds.GetSize(), tb.Mnfr, tb.Type, tb.Tiptype, tb.AsWell, tb.TipXOffset, tb.TipYOffset, tb.TipXStart, tb.TipYStart, tb.TipZStart)
+	tb2.Bounds.Position = tb.Bounds.GetPosition()
 
 	if keepIDs {
 		tb2.ID = tb.ID
+		//boxname contains the ID
+		tb2.Boxname = tb.Boxname
 	}
 
 	for i := 0; i < len(tb.Tips); i++ {
@@ -167,6 +170,7 @@ func (tb *LHTipbox) dup(keepIDs bool) *LHTipbox {
 				} else {
 					tb2.Tips[i][j] = t.Dup()
 				}
+				tb2.Tips[i][j].SetParent(tb2)
 			}
 		}
 	}
@@ -334,6 +338,11 @@ func (self *LHTipbox) SetParent(p LHObject) error {
 
 func (self *LHTipbox) GetParent() LHObject {
 	return self.parent
+}
+
+//Duplicate copies an LHObject
+func (self *LHTipbox) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
 }
 
 //##############################################

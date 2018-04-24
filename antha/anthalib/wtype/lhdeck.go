@@ -69,6 +69,17 @@ func (self *deckSlot) IsBelow(point Coordinates) bool {
 		point.Y >= self.position.Y && point.Y <= self.position.Y+self.size.Y)
 }
 
+func (self *deckSlot) Duplicate(keepIDs bool) *deckSlot {
+	accepts := make([]string, len(self.accepts))
+	copy(accepts, self.accepts)
+	return &deckSlot{
+		contents: self.contents.Duplicate(keepIDs),
+		position: self.position,
+		size:     self.size,
+		accepts:  accepts,
+	}
+}
+
 //LHDeck Represents a robot deck
 type LHDeck struct {
 	name     string
@@ -150,6 +161,22 @@ func (self *LHDeck) SetParent(o LHObject) error {
 
 func (self *LHDeck) GetParent() LHObject {
 	return nil
+}
+
+func (self *LHDeck) Duplicate(keepIDs bool) LHObject {
+
+	slots := make(map[string]*deckSlot)
+	for name, sl := range self.slots {
+		slots[name] = sl.Duplicate(keepIDs)
+	}
+
+	uuid := self.id
+	if !keepIDs {
+		uuid = GetUUID()
+	}
+
+	r := &LHDeck{self.name, self.mfg, self.decktype, uuid, slots}
+	return r
 }
 
 //@implements LHParent

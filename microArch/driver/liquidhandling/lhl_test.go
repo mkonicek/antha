@@ -21,7 +21,7 @@ func makeGilson() *LHProperties {
 	z0 := -82.035
 	xi := 149.86
 	yi := 95.25
-	xp := x0
+	xp := x0 // nolint
 	yp := y0
 	zp := z0
 	for y := 0; y < 3; y++ {
@@ -111,7 +111,7 @@ func makeTestGilson(ctx context.Context) (*LHProperties, error) {
 
 func getTestBlowout(robot *LHProperties) RobotInstruction {
 	v := wunit.NewVolume(10.0, "ul")
-	ch, _ := ChooseChannel(v, robot)
+	ch, _, _ := ChooseChannel(v, robot)
 	bi := NewBlowInstruction()
 	bi.Multi = 1
 	bi.What = append(bi.What, "soup")

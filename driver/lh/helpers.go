@@ -25,8 +25,8 @@ func Encodeinterface(arg interface{}) *pb.AnyMessage {
 }
 func Decodeinterface(msg *pb.AnyMessage) interface{} {
 	var v interface{}
-	err := json.Unmarshal([]byte(msg.Arg_1), &v)
 
+	err := json.Unmarshal([]byte(msg.Arg_1), &v)
 	if err != nil {
 		panic(err)
 	}

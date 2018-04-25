@@ -32,27 +32,27 @@ import (
 // RevCodonTable describes the mapping between an amino acid in single letter format and the codons which encode it.
 var RevCodonTable = map[string][]string{
 
-	"N": []string{"AAC", "AAT"},
-	"K": []string{"AAA", "AAG"},
-	"T": []string{"ACC", "ACT", "ACA", "ACG"},
-	"I": []string{"ATC", "ATT", "ATA"},
-	"M": []string{"ATG"},
-	"R": []string{"AGA", "AGG", "CGC", "CGT", "CGA", "CGG"},
-	"Y": []string{"TAC", "TAT"},
-	"*": []string{"TAA", "TAG", "TGA"},
-	"S": []string{"AGC", "AGT", "TCC", "TCT", "TCA", "TCG"},
-	"F": []string{"TTC", "TTT"},
-	"L": []string{"TTA", "TTG", "CTC", "CTT", "CTA", "CTG"},
-	"C": []string{"TGC", "TGT"},
-	"W": []string{"TGG"},
-	"D": []string{"GAC", "GAT"},
-	"E": []string{"GAA", "GAG"},
-	"V": []string{"GTC", "GTT", "GTA", "GTG"},
-	"A": []string{"GCA", "GCC", "GCG", "GCT"},
-	"G": []string{"GGC", "GGT", "GGA", "GGG"},
-	"H": []string{"CAC", "CAT"},
-	"Q": []string{"CAA", "CAG"},
-	"P": []string{"CCC", "CCT", "CCA", "CCG"},
+	"N": {"AAC", "AAT"},
+	"K": {"AAA", "AAG"},
+	"T": {"ACC", "ACT", "ACA", "ACG"},
+	"I": {"ATC", "ATT", "ATA"},
+	"M": {"ATG"},
+	"R": {"AGA", "AGG", "CGC", "CGT", "CGA", "CGG"},
+	"Y": {"TAC", "TAT"},
+	"*": {"TAA", "TAG", "TGA"},
+	"S": {"AGC", "AGT", "TCC", "TCT", "TCA", "TCG"},
+	"F": {"TTC", "TTT"},
+	"L": {"TTA", "TTG", "CTC", "CTT", "CTA", "CTG"},
+	"C": {"TGC", "TGT"},
+	"W": {"TGG"},
+	"D": {"GAC", "GAT"},
+	"E": {"GAA", "GAG"},
+	"V": {"GTC", "GTT", "GTA", "GTG"},
+	"A": {"GCA", "GCC", "GCG", "GCT"},
+	"G": {"GGC", "GGT", "GGA", "GGG"},
+	"H": {"CAC", "CAT"},
+	"Q": {"CAA", "CAG"},
+	"P": {"CCC", "CCT", "CCA", "CCG"},
 }
 
 // RevTranslate converts an amino acid sequence into a dna sequence according the codon usage table specified.
@@ -76,7 +76,10 @@ func RevTranslate(aaSeq wtype.ProteinSequence, codonUsageTable CodonUsageTable) 
 			return dnaSeq, err
 		}
 
-		dnaSeq.Append(string(nextCodon))
+		err = dnaSeq.Append(string(nextCodon))
+		if err != nil {
+			return dnaSeq, err
+		}
 	}
 	return dnaSeq, nil
 }
@@ -167,11 +170,11 @@ var (
 	EColiTable = FrequencyTable{
 		TaxID: "E.Coli",
 		CodonByAA: map[string]wtype.CodonSet{
-			"F": wtype.CodonSet{
+			"F": {
 				"TTT": 0.58,
 				"TTC": 0.42,
 			},
-			"L": wtype.CodonSet{
+			"L": {
 				"TTA": 0.14,
 				"TTG": 0.13,
 				"CTT": 0.12,
@@ -179,54 +182,54 @@ var (
 				"CTA": 0.04,
 				"CTG": 0.47,
 			},
-			"Y": wtype.CodonSet{
+			"Y": {
 				"TAT": 0.59,
 				"TAC": 0.41,
 			},
-			"*": wtype.CodonSet{
+			"*": {
 				"TAA": 0.61,
 				"TAG": 0.09,
 				"TGA": 0.3,
 			},
-			"H": wtype.CodonSet{
+			"H": {
 				"CAT": 0.57,
 				"CAC": 0.43,
 			},
-			"Q": wtype.CodonSet{
+			"Q": {
 				"CAA": 0.34,
 				"CAG": 0.66,
 			},
-			"I": wtype.CodonSet{
+			"I": {
 				"ATT": 0.49,
 				"ATC": 0.39,
 				"ATA": 0.11,
 			},
-			"M": wtype.CodonSet{
+			"M": {
 				"ATG": 1.0,
 			},
-			"N": wtype.CodonSet{
+			"N": {
 				"AAT": 0.49,
 				"AAC": 0.51,
 			},
-			"K": wtype.CodonSet{
+			"K": {
 				"AAA": 0.74,
 				"AAG": 0.26,
 			},
-			"V": wtype.CodonSet{
+			"V": {
 				"GTT": 0.28,
 				"GTC": 0.2,
 				"GTA": 0.17,
 				"GTG": 0.35,
 			},
-			"D": wtype.CodonSet{
+			"D": {
 				"GAT": 0.63,
 				"GAC": 0.37,
 			},
-			"E": wtype.CodonSet{
+			"E": {
 				"GAA": 0.68,
 				"GAG": 0.32,
 			},
-			"S": wtype.CodonSet{
+			"S": {
 				"TCT": 0.17,
 				"TCC": 0.15,
 				"TCA": 0.14,
@@ -234,20 +237,20 @@ var (
 				"AGT": 0.16,
 				"AGC": 0.25,
 			},
-			"C": wtype.CodonSet{
+			"C": {
 				"TGT": 0.46,
 				"TGC": 0.54,
 			},
-			"W": wtype.CodonSet{
+			"W": {
 				"TGG": 1,
 			},
-			"P": wtype.CodonSet{
+			"P": {
 				"CCT": 0.18,
 				"CCC": 0.13,
 				"CCA": 0.2,
 				"CCG": 0.49,
 			},
-			"R": wtype.CodonSet{
+			"R": {
 				"CGT": 0.36,
 				"CGC": 0.36,
 				"CGA": 0.07,
@@ -255,19 +258,19 @@ var (
 				"AGA": 0.07,
 				"AGG": 0.04,
 			},
-			"T": wtype.CodonSet{
+			"T": {
 				"ACT": 0.19,
 				"ACC": 0.4,
 				"ACA": 0.17,
 				"ACG": 0.25,
 			},
-			"A": wtype.CodonSet{
+			"A": {
 				"GCT": 0.18,
 				"GCC": 0.26,
 				"GCA": 0.23,
 				"GCG": 0.33,
 			},
-			"G": wtype.CodonSet{
+			"G": {
 				"GGT": 0.35,
 				"GGC": 0.37,
 				"GGA": 0.13,

@@ -24,29 +24,10 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
-
-func readableComponentArray(arr []*wtype.LHComponent) string {
-	ret := ""
-
-	for i, v := range arr {
-		if v != nil {
-			ret += fmt.Sprintf("%s:%-6.2f%s", v.CName, v.Vol, v.Vunit)
-		} else {
-			ret += "_nil_"
-		}
-		if i < len(arr)-1 {
-
-			ret += ", "
-		}
-	}
-
-	return ret
-}
 
 //
 //	at this point (i.e. in a TransferBlock) the instructions have potentially been grouped into sets
@@ -122,23 +103,11 @@ func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties,
 	return hasMulti, nil
 }
 
-func dupCmpAr(ins *wtype.LHInstruction) []*wtype.LHComponent {
-	in := ins.Components
-	r := make([]*wtype.LHComponent, len(in))
-
-	for i := 0; i < len(in); i++ {
-		r[i] = in[i].Dup()
-		r[i].Loc = ins.PlateID + ":" + ins.Welladdress
-	}
-
-	return r
-}
-
 func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
 	insOut = make([]*TransferInstruction, 0, 1)
 
 	// TODO --> iterator?
-	horiz := false
+	var horiz bool
 
 	var l int
 
@@ -306,7 +275,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")
 		}
 
-		vf[ci] = wellFrom.CurrVolume()
+		vf[ci] = wellFrom.CurrentVolume()
 
 		// dest well volume
 
@@ -316,7 +285,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error to the authors")
 		}
 
-		vt[ci] = wellTo.CurrVolume()
+		vt[ci] = wellTo.CurrentVolume()
 
 		// source plate dimensions
 
@@ -331,19 +300,16 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		cnames[ci] = wellFrom.WContents.CName
 
 		cmpFrom, err := wellFrom.RemoveVolume(va[ci])
-		if cmpFrom == nil || err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
+		if err != nil {
+			return insOut, wtype.LHErrorf(wtype.LH_ERR_DIRE, "Planning inconsistency: %s - please report this error to the authors", err.Error())
 		}
 
 		// silently remove the carry
-		_, err = wellFrom.RemoveVolume(carryvol)
-		if err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_VOL, "Planning inconsistency: error removing carry volume")
-		}
+		wellFrom.RemoveVolume(carryvol) //nolint
 
 		err = wellTo.AddComponent(cmpFrom)
 		if err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Planning inconsistency : %s", err.Error()))
+			return insOut, wtype.LHErrorf(wtype.LH_ERR_VOL, "Planning inconsistency : %s", err.Error())
 		}
 
 		// make sure the cmp loc is set

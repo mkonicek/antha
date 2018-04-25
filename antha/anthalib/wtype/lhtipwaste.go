@@ -103,7 +103,7 @@ func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, w
 	lht.WellYStart = wellystart
 	lht.WellZStart = wellzstart
 
-	w.SetParent(&lht)
+	w.SetParent(&lht) //nolint
 
 	return &lht
 }

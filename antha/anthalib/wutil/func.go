@@ -25,14 +25,23 @@ func UnmarshalFunc(b []byte) (Func1Prm, error) {
 	if _, ok := m["Quadratic"]; ok {
 		var q Quadratic
 		err = json.Unmarshal(b, &q)
+		if err != nil {
+			return nil, err
+		}
 		return Func1Prm(&q), nil
 	} else if _, ok := m["Cubic"]; ok {
 		var c Cubic
 		err = json.Unmarshal(b, &c)
+		if err != nil {
+			return nil, err
+		}
 		return Func1Prm(&c), nil
 	} else if _, ok := m["Quartic"]; ok {
 		var q Quartic
 		err = json.Unmarshal(b, &q)
+		if err != nil {
+			return nil, err
+		}
 		return Func1Prm(&q), nil
 	}
 

@@ -24,8 +24,9 @@ package wutil
 
 import (
 	"fmt"
-	"github.com/montanaflynn/stats"
 	"math"
+
+	"github.com/montanaflynn/stats"
 )
 
 func RoundInt(v float64) int {
@@ -47,7 +48,7 @@ func RoundDown(v float64) (int, error) {
 }
 
 func RoundIgnoreNan(input float64, p int) float64 {
-	r, _ := Roundto(input, p)
+	r, _ := Roundto(input, p) // nolint
 	return r
 }
 

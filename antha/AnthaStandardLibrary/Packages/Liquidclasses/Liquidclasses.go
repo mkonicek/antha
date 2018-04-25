@@ -29,7 +29,7 @@ var (
 	// map of liquid classes
 
 	Liquidclass = map[string]map[string]float64{
-		"water": map[string]float64{
+		"water": {
 			"c":     25.0,
 			"d":     19.0,
 			"xs":    0.1,    //0.62198 * pws / (pa - pws), // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
@@ -39,7 +39,7 @@ var (
 			"sigma": 0.072,  //Surface tension in N/m from Wikipedia at 25 degrees
 			"Lm":    334000, //(J/kg) //latent heat of melting (J/kg, Btu/lb)
 		},
-		"ethanol": map[string]float64{ // dummy data
+		"ethanol": { // dummy data
 			"c":  100.0,
 			"d":  19.0,
 			"xs": 0.1, // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)

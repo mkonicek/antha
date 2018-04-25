@@ -84,7 +84,7 @@ func validatePlate(t *testing.T, plate *wtype.LHPlate) {
 		}
 		for w, count := range seen {
 			if count != 2 {
-				t.Errorf("%s: no matching well found (%d != %d) for %p %s:%s", what, count, 2, w, w.ID, w.Crds)
+				t.Errorf("%s: no matching well found (%d != %d) for %p %s:%s", what, count, 2, w, w.ID, w.Crds.FormatA1())
 			}
 		}
 	}
@@ -122,15 +122,10 @@ func validatePlate(t *testing.T, plate *wtype.LHPlate) {
 	}
 
 	for _, ws := range plate.Rows {
-		for _, w := range ws {
-			ws3 = append(ws3, w)
-		}
+		ws3 = append(ws3, ws...)
 	}
 	for _, ws := range plate.Cols {
-		for _, w := range ws {
-			ws4 = append(ws4, w)
-		}
-
+		ws4 = append(ws4, ws...)
 	}
 	assertWellsEqual("HWells != Rows", ws1, ws2)
 	assertWellsEqual("Rows != Cols", ws2, ws3)

@@ -25,11 +25,11 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/biogo/ncbi/blast"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/blast"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"strings"
 )
 
 // the following are all physical things; we need a way to separate
@@ -125,8 +125,14 @@ type DNASequence struct {
 func (seq DNASequence) Dup() DNASequence {
 	var ret DNASequence
 
-	d, _ := json.Marshal(seq)
-	json.Unmarshal(d, &ret)
+	d, err := json.Marshal(seq)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(d, &ret)
+	if err != nil {
+		panic(err)
+	}
 
 	return ret
 }
@@ -199,18 +205,14 @@ func (seq *DNASequence) AddUnderhang(end int, sequence string) (err error) {
 // AddBluntOverhang adds a blunt overhang to a specified end.
 // Valid options are either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end).
 func (seq *DNASequence) AddBluntEnd(end int) (err error) {
-
 	if end == 5 {
-
 		seq.Overhang5prime, err = MakeOverHang("", 5, NEITHER, true)
-
 		return err
 	} else if end == 3 {
-
 		seq.Overhang3prime, err = MakeOverHang("", 3, NEITHER, true)
-
-		return nil
+		return err
 	}
+
 	return fmt.Errorf("cannot add blunt end to end %d. Please choose either 5 (for 5 prime/upstream end) or 3 (for 3 prime/upstream end) ", end)
 }
 
@@ -358,7 +360,7 @@ func MakeOverHang(overhangSequence string, end int, toporbottom int, phosphoryla
 }
 
 func Phosphorylate(dnaseq DNASequence) (phosphorylateddna DNASequence, err error) {
-	if dnaseq.Plasmid == true {
+	if dnaseq.Plasmid {
 		err = fmt.Errorf("Can't phosphorylate circular dna")
 		phosphorylateddna = dnaseq
 		return
@@ -577,9 +579,7 @@ func (dna *DNASequence) SetSequence(seq string) error {
 
 // Append appends the existing dna sequence with the upper case of the string added
 func (dna *DNASequence) Append(s string) error {
-
 	err := ValidDNA(s)
-
 	if err != nil {
 		return fmt.Errorf("invalid characters requested for Append: %s", err.Error())
 	}
@@ -645,13 +645,13 @@ func (seq *DNASequence) MolecularWeight() float64 {
 	massofCs := (float64(numberofCs) * nucleotidegpermol["C"])
 	massofGs := (float64(numberofGs) * nucleotidegpermol["G"])
 	mw := (massofAs + massofTs + massofCs + massofGs)
-	if phosphate5prime == true {
+	if phosphate5prime {
 		mw = mw + 79.0 // extra for phosphate left at 5' end following digestion, not relevant for primer extension
 	}
-	if phosphate3prime == true {
+	if phosphate3prime {
 		mw = mw + 79.0 // extra for phosphate left at 3' end following digestion, not relevant for primer extension
 	}
-	if singlestranded != true {
+	if !singlestranded {
 		mw = 2 * mw
 	}
 	return mw
@@ -728,11 +728,11 @@ type AminoAcid string
 func SetAminoAcid(aa string) (AminoAcid, error) {
 
 	if len(aa) != 1 {
-		return "", fmt.Errorf("amino acid %s not valid. Please use single letter code.")
+		return "", fmt.Errorf("amino acid \"%s\" not valid. Please use single letter code.", aa)
 	}
 
 	if err := ValidAA(aa); err != nil {
-		return "", fmt.Errorf("amino acid %s not valid: %s", aa, err.Error())
+		return "", fmt.Errorf("amino acid \"%s\" not valid: %s", aa, err.Error())
 	}
 	return AminoAcid(strings.ToUpper(strings.TrimSpace(aa))), nil
 }
@@ -746,11 +746,11 @@ type Codon string
 func SetCodon(dna string) (Codon, error) {
 
 	if len(dna) != 3 {
-		return "", fmt.Errorf("codon %s not valid. must be three nucleotides.")
+		return "", fmt.Errorf("codon \"%s\" not valid. must be three nucleotides.", dna)
 	}
 
 	if err := ValidDNA(dna); err != nil {
-		return "", fmt.Errorf("codon %s not valid: %s", dna, err.Error())
+		return "", fmt.Errorf("codon \"%s\" not valid: %s", dna, err.Error())
 	}
 	return Codon(strings.ToUpper(strings.TrimSpace(dna))), nil
 }
@@ -847,34 +847,6 @@ var aa_mw = map[string]float64{
 	"V": 117.15,
 }
 
-func random_dna_seq(leng int) string {
-	s := ""
-	for i := 0; i < leng; i++ {
-		s += random_char("ACTG")
-	}
-	return s
-}
-
-func random_char(chars string) string {
-	rand := wutil.GetRandom()
-	return string(chars[rand.Intn(len(chars))])
-}
-
-func makeABunchaRandomSeqs(n_seq_sets, seqs_per_set, min_len, len_var int) [][]DNASequence {
-	rand := wutil.GetRandom()
-	var seqs [][]DNASequence
-	var features []Feature
-
-	seqs = make([][]DNASequence, n_seq_sets)
-
-	for i := 0; i < n_seq_sets; i++ {
-		seqs[i] = make([]DNASequence, seqs_per_set)
-		for j := 0; j < seqs_per_set; j++ {
-			seqs[i][j] = DNASequence{fmt.Sprintf("SEQ%04d", i*seqs_per_set+j+1), random_dna_seq(rand.Intn(len_var) + min_len), false, false, Overhang{0, 0, "", false}, Overhang{0, 0, "", false}, "", features}
-		}
-	}
-	return seqs
-}
 func Prefix(seq string, lengthofprefix int) (prefix string) {
 	prefix = seq[:lengthofprefix]
 	return prefix

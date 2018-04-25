@@ -2,8 +2,9 @@ package wtype
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 // enum of instruction types
@@ -57,6 +58,38 @@ func (ins LHInstruction) String() string {
 	return fmt.Sprint(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
 }
 
+//Summarize get a string summary of the instruction for end users
+func (ins *LHInstruction) Summarize(indent int) string {
+	indentStr := ""
+	for i := 0; i < indent; i++ {
+		indentStr += "  "
+	}
+
+	var lines []string
+	lines = append(lines, fmt.Sprintf("%s%s (ID:%s)", indentStr, ins.InsType(), ins.ID))
+
+	switch ins.Type {
+	case LHIMIX:
+		for _, cmp := range ins.Components {
+			lines = append(lines, fmt.Sprintf("%s  %s", indentStr, cmp.Summarize()))
+		}
+		if ins.Welladdress != "" && ins.OutPlate != nil {
+			lines = append(lines, fmt.Sprintf(indentStr+"to well %s in plate %s", ins.Welladdress, ins.OutPlate.Name()))
+		} else if ins.Platetype != "" {
+			lines = append(lines, fmt.Sprintf(indentStr+"to plate of type %s", ins.Platetype))
+		}
+
+		if len(ins.Results) > 0 {
+			lines = append(lines, fmt.Sprintf(indentStr+"Resulting volume: %v", ins.Results[0].Summarize()))
+		}
+
+	default:
+		return indentStr + ins.String()
+	}
+
+	return strings.Join(lines, "\n")
+}
+
 func (lhi *LHInstruction) ProductIDs() []string {
 	r := make([]string, 0, len(lhi.Results))
 
@@ -70,11 +103,9 @@ func (lhi *LHInstruction) ProductIDs() []string {
 func (lhi *LHInstruction) GetPlateType() string {
 	if lhi.OutPlate != nil {
 		return lhi.OutPlate.Type
-	} else {
-		return lhi.Platetype
 	}
 
-	return ""
+	return lhi.Platetype
 }
 
 // privatised in favour of specific instruction constructors

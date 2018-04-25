@@ -33,7 +33,6 @@ import (
 	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	//"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/ghodss/yaml"
 )
 
 //func MakeLysatePolicy() LHPolicy {
@@ -96,6 +95,7 @@ func MakePolicies() map[string]LHPolicy {
 	//      pols["lysate"] = MakeLysatePolicy()
 	pols["carbon_source"] = MakeCarbonSourcePolicy()
 	pols["nitrogen_source"] = MakeNitrogenSourcePolicy()
+	pols["XYOffsetTest"] = MakeXYOffsetTestPolicy()
 
 	return pols
 }
@@ -268,6 +268,14 @@ func MakeColonyMixPolicy() LHPolicy {
 	return policy
 }
 
+func MakeXYOffsetTestPolicy() LHPolicy {
+	policy := MakeColonyPolicy()
+	policy["POST_MIX_X"] = 2.0
+	policy["POST_MIX_Y"] = 2.0
+	policy["DESCRIPTION"] = "Intended to test setting X,Y offsets for post mixing"
+	return policy
+}
+
 func MakeWaterPolicy() LHPolicy {
 	waterpolicy := make(LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
@@ -287,24 +295,30 @@ func MakeMultiWaterPolicy() LHPolicy {
 	return pol
 }
 
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func MakeCulturePolicy() LHPolicy {
 	culturepolicy := make(LHPolicy, 10)
-	culturepolicy.Set("PRE_MIX", 2)
-	culturepolicy.Set("PRE_MIX_VOLUME", 19.0)
-	culturepolicy.Set("PRE_MIX_RATE", 3.74)
-	culturepolicy.Set("ASPSPEED", 2.0)
-	culturepolicy.Set("DSPSPEED", 2.0)
-	culturepolicy.Set("CAN_MULTI", true)
-	culturepolicy.Set("CAN_MSA", false)
-	culturepolicy.Set("CAN_SDD", false)
-	culturepolicy.Set("DSPREFERENCE", 0)
-	culturepolicy.Set("DSPZOFFSET", 0.5)
-	culturepolicy.Set("TIP_REUSE_LIMIT", 0)
-	culturepolicy.Set("NO_AIR_DISPENSE", true)
-	culturepolicy.Set("BLOWOUTVOLUME", 0.0)
-	culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul")
-	culturepolicy.Set("TOUCHOFF", false)
-	culturepolicy.Set("DESCRIPTION", "Designed for cell cultures. Tips will not be reused to minimise any risk of cross contamination and 2 pre-mixes will be performed prior to aspirating.")
+	checkErr(culturepolicy.Set("PRE_MIX", 2))
+	checkErr(culturepolicy.Set("PRE_MIX_VOLUME", 19.0))
+	checkErr(culturepolicy.Set("PRE_MIX_RATE", 3.74))
+	checkErr(culturepolicy.Set("ASPSPEED", 2.0))
+	checkErr(culturepolicy.Set("DSPSPEED", 2.0))
+	checkErr(culturepolicy.Set("CAN_MULTI", true))
+	checkErr(culturepolicy.Set("CAN_MSA", false))
+	checkErr(culturepolicy.Set("CAN_SDD", false))
+	checkErr(culturepolicy.Set("DSPREFERENCE", 0))
+	checkErr(culturepolicy.Set("DSPZOFFSET", 0.5))
+	checkErr(culturepolicy.Set("TIP_REUSE_LIMIT", 0))
+	checkErr(culturepolicy.Set("NO_AIR_DISPENSE", true))
+	checkErr(culturepolicy.Set("BLOWOUTVOLUME", 0.0))
+	checkErr(culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul"))
+	checkErr(culturepolicy.Set("TOUCHOFF", false))
+	checkErr(culturepolicy.Set("DESCRIPTION", "Designed for cell cultures. Tips will not be reused to minimise any risk of cross contamination and 2 pre-mixes will be performed prior to aspirating."))
 	return culturepolicy
 }
 
@@ -324,21 +338,21 @@ func MakePlateOutPolicy() LHPolicy {
 
 func MakeCultureReusePolicy() LHPolicy {
 	culturepolicy := make(LHPolicy, 10)
-	culturepolicy.Set("PRE_MIX", 2)
-	culturepolicy.Set("PRE_MIX_VOLUME", 19.0)
-	culturepolicy.Set("PRE_MIX_RATE", 3.74)
-	culturepolicy.Set("ASPSPEED", 2.0)
-	culturepolicy.Set("DSPSPEED", 2.0)
-	culturepolicy.Set("CAN_MULTI", true)
-	culturepolicy.Set("CAN_MSA", true)
-	culturepolicy.Set("CAN_SDD", true)
-	culturepolicy.Set("DSPREFERENCE", 0)
-	culturepolicy.Set("DSPZOFFSET", 0.5)
-	culturepolicy.Set("NO_AIR_DISPENSE", true)
-	culturepolicy.Set("BLOWOUTVOLUME", 0.0)
-	culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul")
-	culturepolicy.Set("TOUCHOFF", false)
-	culturepolicy.Set("DESCRIPTION", "Designed for cell cultures but permitting tip reuse when handling the same culture. 2 pre-mixes will be performed prior to aspirating.")
+	checkErr(culturepolicy.Set("PRE_MIX", 2))
+	checkErr(culturepolicy.Set("PRE_MIX_VOLUME", 19.0))
+	checkErr(culturepolicy.Set("PRE_MIX_RATE", 3.74))
+	checkErr(culturepolicy.Set("ASPSPEED", 2.0))
+	checkErr(culturepolicy.Set("DSPSPEED", 2.0))
+	checkErr(culturepolicy.Set("CAN_MULTI", true))
+	checkErr(culturepolicy.Set("CAN_MSA", true))
+	checkErr(culturepolicy.Set("CAN_SDD", true))
+	checkErr(culturepolicy.Set("DSPREFERENCE", 0))
+	checkErr(culturepolicy.Set("DSPZOFFSET", 0.5))
+	checkErr(culturepolicy.Set("NO_AIR_DISPENSE", true))
+	checkErr(culturepolicy.Set("BLOWOUTVOLUME", 0.0))
+	checkErr(culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul"))
+	checkErr(culturepolicy.Set("TOUCHOFF", false))
+	checkErr(culturepolicy.Set("DESCRIPTION", "Designed for cell cultures but permitting tip reuse when handling the same culture. 2 pre-mixes will be performed prior to aspirating."))
 	return culturepolicy
 }
 
@@ -369,14 +383,15 @@ func MakeViscousPolicy() LHPolicy {
 	glycerolpolicy["DESCRIPTION"] = "Designed for viscous samples. 3 post-mixes of the volume of the sample being transferred will be performed. No tip reuse limit."
 	return glycerolpolicy
 }
+
 func MakeSolventPolicy() LHPolicy {
 	solventpolicy := make(LHPolicy, 5)
-	solventpolicy.Set("PRE_MIX", 3)
-	solventpolicy.Set("DSPREFERENCE", 0)
-	solventpolicy.Set("DSPZOFFSET", 0.5)
-	solventpolicy.Set("NO_AIR_DISPENSE", true)
-	solventpolicy.Set("CAN_MULTI", true)
-	solventpolicy.Set("DESCRIPTION", "Designed for handling solvents. No post-mixes are performed")
+	checkErr(solventpolicy.Set("PRE_MIX", 3))
+	checkErr(solventpolicy.Set("DSPREFERENCE", 0))
+	checkErr(solventpolicy.Set("DSPZOFFSET", 0.5))
+	checkErr(solventpolicy.Set("NO_AIR_DISPENSE", true))
+	checkErr(solventpolicy.Set("CAN_MULTI", true))
+	checkErr(solventpolicy.Set("DESCRIPTION", "Designed for handling solvents. No post-mixes are performed"))
 	return solventpolicy
 }
 
@@ -643,21 +658,21 @@ func MakeDefaultPolicy() LHPolicy {
 
 func MakeJBPolicy() LHPolicy {
 	jbp := make(LHPolicy, 1)
-	jbp.Set("JUSTBLOWOUT", true)
-	jbp.Set("TOUCHOFF", true)
+	checkErr(jbp.Set("JUSTBLOWOUT", true))
+	checkErr(jbp.Set("TOUCHOFF", true))
 	return jbp
 }
 
 func MakeTOPolicy() LHPolicy {
 	top := make(LHPolicy, 1)
-	top.Set("TOUCHOFF", true)
+	checkErr(top.Set("TOUCHOFF", true))
 	return top
 }
 
 func MakeLVExtraPolicy() LHPolicy {
 	lvep := make(LHPolicy, 2)
-	lvep.Set("EXTRA_ASP_VOLUME", wunit.NewVolume(0.5, "ul"))
-	lvep.Set("EXTRA_DISP_VOLUME", wunit.NewVolume(0.5, "ul"))
+	checkErr(lvep.Set("EXTRA_ASP_VOLUME", wunit.NewVolume(0.5, "ul")))
+	checkErr(lvep.Set("EXTRA_DISP_VOLUME", wunit.NewVolume(0.5, "ul")))
 	return lvep
 }
 
@@ -978,27 +993,54 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustNeedToMix200ul, adjustPreMixVol200)
 
+	// hack to fix plate type problems
+	// this really should be removed asap
+	rule := NewLHPolicyRule("HVOffsetFix")
+	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+
+	checkErr(rule.AddCategoryConditionOn("TIPTYPE", "Gilson200"))
+	checkErr(rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax"))
+	// don't get overridden
+	rule.Priority = 100
+	pol := MakeHVOffsetPolicy()
+	lhpr.AddRule(rule, pol)
+
+	// merged the below and the above
+	/*
+		rule = NewLHPolicyRule("HVFlowRate")
+		rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+		//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
+		pol = MakeHVFlowRatePolicy()
+		lhpr.AddRule(rule, pol)
+	*/
+
+	rule = NewLHPolicyRule("DNALV")
+	checkErr(rule.AddNumericConditionOn("VOLUME", 0.0, 1.99))
+	checkErr(rule.AddCategoryConditionOn("LIQUIDCLASS", "dna"))
+	pol = MakeLVDNAMixPolicy()
+	lhpr.AddRule(rule, pol)
+
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used
-	rule := NewLHPolicyRule("EPAGE48Load")
-	rule.AddCategoryConditionOn("TOPLATETYPE", "EPAGE48")
-	pol := TurnOffBlowoutPolicy()
+	rule = NewLHPolicyRule("EPAGE48Load")
+	checkErr(rule.AddCategoryConditionOn("TOPLATETYPE", "EPAGE48"))
+	pol = TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used
 	rule = NewLHPolicyRule("EGEL48Load")
-	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL48")
+	checkErr(rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL48"))
 	pol = TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 96_1 plate type is used
 	rule = NewLHPolicyRule("EGEL961Load")
-	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_1")
+	checkErr(rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_1"))
 	pol = TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 96_2 plate type is used
 	rule = NewLHPolicyRule("EGEL962Load")
-	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_2")
+	checkErr(rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_2"))
 	pol = TurnOffBlowoutPolicy()
 
 	lhpr.AddRule(rule, pol)
@@ -1027,18 +1069,8 @@ func LoadLHPoliciesFromFile() (*LHPolicyRuleSet, error) {
 	return lhprs, nil
 }
 
-func readYAML(fileContents []byte, ruleSet *LHPolicyRuleSet) error {
-	if err := yaml.Unmarshal(fileContents, ruleSet); err != nil {
-		return err
-	}
-	return nil
-}
-
 func readJSON(fileContents []byte, ruleSet *LHPolicyRuleSet) error {
-	if err := json.Unmarshal(fileContents, ruleSet); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(fileContents, ruleSet)
 }
 
 /*

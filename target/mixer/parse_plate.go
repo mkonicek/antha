@@ -217,6 +217,10 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		}
 	}
 
+	if err = plate.ValidateVolumes(); err != nil {
+		return nil, err
+	}
+
 	return &ParsePlateResult{
 		Plate:    plate,
 		Warnings: warnings,

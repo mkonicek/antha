@@ -90,7 +90,7 @@ func TestMiddlewareCalls(t *testing.T) {
 	}
 	Sensor("")
 	if l := sensorCounter; l != 1 {
-		t.Error("expecting %d sensor calls, got %d", 1, l)
+		t.Errorf("expecting %d sensor calls, got %d", 1, l)
 	}
 }
 
@@ -155,7 +155,7 @@ func TestLogLogger(t *testing.T) {
 
 	Info("test")
 	if buf.Len() == 0 {
-		t.Errorf("default logger output empty. Expecting ", len("test"))
+		t.Errorf("default logger output empty. Expecting %d", len("test"))
 	}
 	cleanMiddleware() //MUST!
 	before := logCounter
@@ -166,7 +166,6 @@ func TestLogLogger(t *testing.T) {
 	}
 }
 
-func _TestStackExtra(t *testing.T) {
-	cleanMiddleware()
-	Fatal("FATAL TEST")
+func cleanMiddleware() {
+	middlewares = nil
 }

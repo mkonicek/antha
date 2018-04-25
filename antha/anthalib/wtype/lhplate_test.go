@@ -100,7 +100,7 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 		}
 		for w, count := range seen {
 			if count != 2 {
-				t.Errorf("%s: no matching well found (%d != %d) for %p %s:%s", what, count, 2, w, w.ID, w.Crds)
+				t.Errorf("%s: no matching well found (%d != %d) for %p %s:%s", what, count, 2, w, w.ID, w.Crds.FormatA1())
 			}
 		}
 	}
@@ -138,15 +138,10 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 	}
 
 	for _, ws := range plate.Rows {
-		for _, w := range ws {
-			ws3 = append(ws3, w)
-		}
+		ws3 = append(ws3, ws...)
 	}
 	for _, ws := range plate.Cols {
-		for _, w := range ws {
-			ws4 = append(ws4, w)
-		}
-
+		ws4 = append(ws4, ws...)
 	}
 	assertWellsEqual("HWells != Rows", ws1, ws2)
 	assertWellsEqual("Rows != Cols", ws2, ws3)
@@ -230,48 +225,6 @@ func TestMergeWith(t *testing.T) {
 		t.Fatal("Error: MergeWith should add non user-allocated components to  plate merged with")
 	}
 }
-
-func makeCV(name string, vol float64) ComponentVector {
-	c := NewLHComponent()
-	c.Type = LTWater
-	c.CName = name
-	c.Vol = vol
-	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
-	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
-
-	got := make([]*LHComponent, 8)
-
-	for i := 0; i < 8; i++ {
-		got[i] = c.Dup()
-		got[i].Loc = PIDs[i] + ":" + CIDs[i]
-	}
-
-	return got
-}
-
-func makecomponent(cname string, vol float64) *LHComponent {
-	c := NewLHComponent()
-	c.Type = LTWater
-	c.CName = cname
-	c.Vol = vol
-	c.Vunit = "ul"
-	return c
-}
-
-/*
-func TestFindCompMulti1(t *testing.T) {
-	p := makeplatefortest()
-	c := makecomponent("water", 1600.0)
-	p.AddComponent(c, true)
-	cv := makeCV("water", 50.0)
-
-	pids, _, _, _ := p.FindComponentsMulti(cv, LHVChannel, 8, false)
-
-	if len(pids) == 0 {
-		t.Errorf("Didn't find a simple column of water... should have")
-	}
-}
-*/
 
 func TestLHPlateSerialize(t *testing.T) {
 	p := makeplatefortest()
@@ -429,5 +382,65 @@ func TestGetAllComponents(t *testing.T) {
 
 	if len(cmps) != p.WellsX()*p.WellsY() {
 		t.Errorf("Expected %d components got %d", p.WellsX()*p.WellsY(), len(cmps))
+	}
+}
+
+func TestLHPlateValidateVolumesOK(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if err := p.ValidateVolumes(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	//doing it this way because accessor methods will prevent this at some point
+	c.Vol = 500.0
+	w := p.Rows[0][0]
+	w.WContents = c
+
+	if err := p.ValidateVolumes(); err == nil {
+		t.Error("Got no error when one well overfilled")
+	}
+}
+
+func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	//doing it this way because accessor methods will prevent this at some point
+	c.Vol = 500.0
+	for i := 0; i < 4; i++ {
+		w := p.Rows[i][i]
+		w.WContents = c
+	}
+
+	if err := p.ValidateVolumes(); err == nil {
+		t.Error("Got no error when several wells overfilled")
 	}
 }

@@ -5,7 +5,7 @@ import "testing"
 func TestSelector(t *testing.T) {
 	reqA := Request{
 		Selector: []NameValue{
-			NameValue{
+			{
 				Name:  "alpha",
 				Value: "alphavalue",
 			},
@@ -13,7 +13,7 @@ func TestSelector(t *testing.T) {
 	}
 	reqB := Request{
 		Selector: []NameValue{
-			NameValue{
+			{
 				Name:  "beta",
 				Value: "betavalue",
 			},

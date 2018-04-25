@@ -119,10 +119,6 @@ func getMiddlewareList() []LoggerMiddleware {
 	return middlewares
 }
 
-func cleanMiddleware() {
-	middlewares = nil
-}
-
 //LoggerMiddleware a means to react to specific log events
 type LoggerMiddleware interface {
 	Log(level LogLevel, ts int64, source, msg string, extra ...interface{})

@@ -39,7 +39,7 @@ type regionTest struct {
 
 var regionTests = []regionTest{
 
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test1",
 			Seq:     "ATCGTAGTGTG",
@@ -51,14 +51,14 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 5,
 				EndPosition:   7,
 				Reverse:       false,
 			},
 		},
 	},
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "wrapAroundFWD",
 			Seq:     "ATCGTAGTGTG",
@@ -70,14 +70,14 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 10,
 				EndPosition:   1,
 				Reverse:       false,
 			},
 		},
 	},
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "ReverseHit",
 			Seq:     "ATCGTAGTGTG",
@@ -89,14 +89,14 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 7,
 				EndPosition:   5,
 				Reverse:       true,
 			},
 		},
 	},
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "multipleHits",
 			Seq:     "ATCGATGTGTG",
@@ -108,17 +108,17 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 4,
 				EndPosition:   6,
 				Reverse:       false,
 			},
-			PositionPair{
+			{
 				StartPosition: 11,
 				EndPosition:   2,
 				Reverse:       false,
 			},
-			PositionPair{
+			{
 				StartPosition: 3,
 				EndPosition:   1,
 				Reverse:       true,
@@ -126,7 +126,7 @@ var regionTests = []regionTest{
 		},
 		errMessage: "3 sequences of GAT GAT found in multipleHits ATCGATGTGTG",
 	},
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "fullSeq",
 			Seq:     "ATCGTAGTGTG",
@@ -138,14 +138,14 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 1,
 				EndPosition:   11,
 				Reverse:       false,
 			},
 		},
 	},
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "PresentAsRotatedSeq",
 			Seq:     "ATCGTAGTGTG",
@@ -157,14 +157,14 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 5,
 				EndPosition:   4,
 				Reverse:       false,
 			},
 		},
 	},
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "PresentAsRotatedSeq2",
 			Seq:     "ATCGTAGTGTG",
@@ -176,14 +176,14 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 5,
 				EndPosition:   3,
 				Reverse:       false,
 			},
 		},
 	},
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "PresentAsRotatedSeq3",
 			Seq:     "ATCGTAGTGTG",
@@ -195,14 +195,14 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 2,
 				EndPosition:   1,
 				Reverse:       false,
 			},
 		},
 	},
-	regionTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "PresentAsRotatedSeq4",
 			Seq:     "ATCGTAGTGTG",
@@ -214,13 +214,39 @@ var regionTests = []regionTest{
 			Plasmid: false,
 		},
 		Positions: []PositionPair{
-			PositionPair{
+			{
 				StartPosition: 11,
 				EndPosition:   10,
 				Reverse:       false,
 			},
 		},
 	},
+}
+
+func equalPositionPairs(pair1, pair2 PositionPair) bool {
+	if pair1.StartPosition == pair2.StartPosition && pair1.EndPosition == pair2.EndPosition && pair1.Reverse == pair2.Reverse {
+		return true
+	}
+	return false
+}
+
+func equalPositionPairSets(positionSet1, positionSet2 []PositionPair) bool {
+	if len(positionSet1) != len(positionSet2) {
+		return false
+	}
+
+	for _, pos1 := range positionSet1 {
+		var found bool
+		for _, pos2 := range positionSet2 {
+			if equalPositionPairs(pos1, pos2) {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
 }
 
 func TestFindSeq(t *testing.T) {

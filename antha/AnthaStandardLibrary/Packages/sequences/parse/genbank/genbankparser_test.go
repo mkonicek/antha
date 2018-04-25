@@ -309,7 +309,7 @@ ORIGIN
 //`
 
 var tests []genbanktest = []genbanktest{
-	genbanktest{
+	{
 		/*filename:             "test.gb",
 		expectedfeaturenames: []string{"PluxI", "TetR", "LVA this is a test word", "RFP", "LVA", "TT BBa_B1002", "repA"},
 		featurePositionMap: map[string][2]int{
@@ -324,19 +324,19 @@ var tests []genbanktest = []genbanktest{
 		fileContents:         []byte(testfileContents),
 		expectedfeaturenames: []string{"Ampicillin (860 - 672)", "Ampicillin (860 - 672)", "AmpR_promoter", "CMV_immearly_promoter", "5_LTR", "CAG_enhancer", "CMV_fwd_primer", "psi_plus_pack", "gag", "ORF frame 1", "MSCV_primer", "hUbC_promoter", "ORF frame 3", "ORF frame 2"},
 		featurePositionMap: map[string][2]int{
-			"Ampicillin (860 - 672)": [2]int{200, 12},
-			"AmpR_promoter":          [2]int{270, 242},
-			"CMV_immearly_promoter":  [2]int{492, 1067},
-			"5_LTR":                  [2]int{556, 1249},
-			"CAG_enhancer":           [2]int{571, 858},
-			"CMV_fwd_primer":         [2]int{1024, 1044},
-			"psi_plus_pack":          [2]int{1319, 2127},
-			"gag":                    [2]int{1715, 2121},
-			"ORF frame 1":            [2]int{1855, 2334},
-			"MSCV_primer":            [2]int{2057, 2079},
-			"hUbC_promoter":          [2]int{2193, 3408},
-			"ORF frame 3":            [2]int{3462, 8498},
-			"ORF frame 2":            [2]int{6863, 4188},
+			"Ampicillin (860 - 672)": {200, 12},
+			"AmpR_promoter":          {270, 242},
+			"CMV_immearly_promoter":  {492, 1067},
+			"5_LTR":                  {556, 1249},
+			"CAG_enhancer":           {571, 858},
+			"CMV_fwd_primer":         {1024, 1044},
+			"psi_plus_pack":          {1319, 2127},
+			"gag":                    {1715, 2121},
+			"ORF frame 1":            {1855, 2334},
+			"MSCV_primer":            {2057, 2079},
+			"hUbC_promoter":          {2193, 3408},
+			"ORF frame 3":            {3462, 8498},
+			"ORF frame 2":            {6863, 4188},
 		},
 	},
 }
@@ -373,7 +373,7 @@ func TestGenbanktoAnnotatedSeq(t *testing.T) {
 						"For", test.testname, "\n",
 						"feature:", name, "\n",
 						"expected positions:", test.featurePositionMap[name], "\n",
-						"got more positions: ", len(features), "\n",
+						"got more positions: ", len(features),
 					)
 				}
 				for _, feature := range features {

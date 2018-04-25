@@ -60,8 +60,8 @@ func RetrieveSeqFromFASTA(id string, fastaFile wtype.File) (seq wtype.DNASequenc
 				Seq:            record.Seq,
 				Plasmid:        false,
 				Singlestranded: false,
-				Overhang5prime: wtype.Overhang{0, 0, "", false},
-				Overhang3prime: wtype.Overhang{0, 0, "", false},
+				Overhang5prime: wtype.Overhang{End: 0, Type: 0, Seq: "", Phosphorylation: false},
+				Overhang3prime: wtype.Overhang{End: 0, Type: 0, Seq: "", Phosphorylation: false},
 				Methylation:    "",
 				Features:       nofeatures,
 			}
@@ -98,8 +98,8 @@ func FASTAtoLinearDNASeqs(fastaFile wtype.File) (seqs []wtype.DNASequence, err e
 			Seq:            record.Seq,
 			Plasmid:        false,
 			Singlestranded: false,
-			Overhang5prime: wtype.Overhang{0, 0, "", false},
-			Overhang3prime: wtype.Overhang{0, 0, "", false},
+			Overhang5prime: wtype.Overhang{End: 0, Type: 0, Seq: "", Phosphorylation: false},
+			Overhang3prime: wtype.Overhang{End: 0, Type: 0, Seq: "", Phosphorylation: false},
 			Methylation:    "",
 			Features:       nofeatures,
 		}
@@ -130,8 +130,8 @@ func FASTAtoPlasmidDNASeqs(file wtype.File) (seqs []wtype.DNASequence, err error
 			Seq:            record.Seq,
 			Plasmid:        false,
 			Singlestranded: false,
-			Overhang5prime: wtype.Overhang{0, 0, "", false},
-			Overhang3prime: wtype.Overhang{0, 0, "", false},
+			Overhang5prime: wtype.Overhang{End: 0, Type: 0, Seq: "", Phosphorylation: false},
+			Overhang3prime: wtype.Overhang{End: 0, Type: 0, Seq: "", Phosphorylation: false},
 			Methylation:    "",
 			Features:       nofeatures,
 		}
@@ -218,7 +218,6 @@ func fastaParse(fastaFh []byte) []Fasta {
 				if header != "" {
 					// outputChannel <- build_fasta(header, seq.String())
 					outputs = append(outputs, build_fasta(header, seq))
-					header = ""
 					seq.Reset()
 				}
 
@@ -249,8 +248,7 @@ func Fastatocsv(inputfilename wtype.File, outputfileprefix string) (csvfile *os.
 	}
 
 	records := make([][]string, 0)
-	seq := make([]string, 0)
-	seq = []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
+	seq := []string{"#Name", "Sequence", "Plasmid?", "Seq Type", "Class"}
 	records = append(records, seq)
 	for _, record := range fastaParse(fastaFh) {
 		plasmidstatus := "FALSE"

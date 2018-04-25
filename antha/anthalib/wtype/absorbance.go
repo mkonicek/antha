@@ -50,7 +50,6 @@ func (sample *Absorbance) BlankCorrect(blank Absorbance) {
 
 		sample.Status = append(sample.Status, "Blank Corrected")
 	}
-	return
 }
 
 func (sample *Absorbance) PathlengthCorrect(pathlength wunit.Length) {
@@ -58,5 +57,4 @@ func (sample *Absorbance) PathlengthCorrect(pathlength wunit.Length) {
 	referencepathlength := wunit.NewLength(0.01, "m")
 
 	sample.Reading = sample.Reading * referencepathlength.SIValue() / pathlength.SIValue()
-	return
 }

@@ -107,9 +107,7 @@ func CopyVolume(v Volume) Volume {
 
 // AddVolumes adds a set of volumes.
 func AddVolumes(vols ...Volume) (newvolume Volume) {
-
-	var tempvol Volume
-	tempvol = NewVolume(0.0, "ul")
+	tempvol := NewVolume(0.0, "ul")
 	for _, vol := range vols {
 		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
 			tempvol = NewVolume(tempvol.RawValue()+vol.RawValue(), tempvol.Unit().PrefixedSymbol())
@@ -347,7 +345,7 @@ func NewMass(v float64, unit string) (o Mass) {
 	approvedunits := UnitMap["Mass"]
 
 	var approved bool
-	for key, _ := range approvedunits {
+	for key := range approvedunits {
 
 		if unit == key {
 			approved = true
@@ -508,105 +506,140 @@ type Unit struct {
 
 // UnitMap lists approved units to create new measurements.
 var UnitMap = map[string]map[string]Unit{
-	"Concentration": map[string]Unit{
-		"mg/ml":   Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"g/L":     Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"kg/l":    Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
-		"kg/L":    Unit{Base: "g/l", Prefix: "k", Multiplier: 1.0},
-		"g/l":     Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"mg/L":    Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"mg/l":    Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ug/L":    Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"ug/l":    Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"ng/L":    Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"ng/l":    Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"ug/ml":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ug/ul":   Unit{Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"ng/ul":   Unit{Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ng/ml":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"pg/ul":   Unit{Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"pg/ml":   Unit{Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"pg/l":    Unit{Base: "g/l", Prefix: "p", Multiplier: 1.0},
-		"Mol/L":   Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"Mol/l":   Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"M":       Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"mM":      Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"uM":      Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"nM":      Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"mM/l":    Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mM/L":    Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"uM/l":    Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"uM/L":    Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"nM/l":    Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"nM/L":    Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"pM/l":    Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"pM/ul":   Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"pMol/ul": Unit{Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"pM/L":    Unit{Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"fM/l":    Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"fM/ul":   Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"fMol/ul": Unit{Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"fM/L":    Unit{Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"M/l":     Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"M/L":     Unit{Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"mMol/L":  Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mMol/l":  Unit{Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"X":       Unit{Base: "X", Prefix: "", Multiplier: 1.0},
-		"x":       Unit{Base: "X", Prefix: "", Multiplier: 1.0},
-		"U/l":     Unit{Base: "U/l", Prefix: "", Multiplier: 1.0},
-		"U/ml":    Unit{Base: "U/l", Prefix: "", Multiplier: 1000.0},
+	"Concentration": {
+		"kg/l":    {Base: "g/l", Prefix: "k", Multiplier: 1.0},
+		"g/l":     {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"mg/l":    {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/l":    {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"ng/l":    {Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"mg/ml":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"ug/ml":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/ul":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"ng/ul":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ng/ml":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"pg/ul":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"pg/ml":   {Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"pg/l":    {Base: "g/l", Prefix: "p", Multiplier: 1.0},
+		"kg/L":    {Base: "g/l", Prefix: "k", Multiplier: 1.0},
+		"g/L":     {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"mg/L":    {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/L":    {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"ng/L":    {Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"pg/L":    {Base: "g/l", Prefix: "p", Multiplier: 1.0},
+		"mg/mL":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"ug/mL":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ug/uL":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
+		"ng/uL":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
+		"ng/mL":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"pg/uL":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
+		"pg/mL":   {Base: "g/l", Prefix: "n", Multiplier: 1.0},
+		"M":       {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/l":     {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"Mol/l":   {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"M/L":     {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"Mol/L":   {Base: "M/l", Prefix: "", Multiplier: 1.0},
+		"mM":      {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mM/l":    {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/l":  {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mM/L":    {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"mMol/L":  {Base: "M/l", Prefix: "m", Multiplier: 1.0},
+		"uM":      {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"uM/l":    {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"uMol/l":  {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"uM/L":    {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"uMol/L":  {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"nM":      {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nM/l":    {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nMol/l":  {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nM/L":    {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"nMol/L":  {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"pM":      {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/l":    {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pMol/l":  {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/L":    {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pMol/L":  {Base: "M/l", Prefix: "p", Multiplier: 1.0},
+		"pM/ul":   {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"pMol/ul": {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"pM/uL":   {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"pMol/uL": {Base: "M/l", Prefix: "u", Multiplier: 1.0},
+		"fM":      {Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fM/l":    {Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fMol/l":  {Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fM/L":    {Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fMol/L":  {Base: "M/l", Prefix: "f", Multiplier: 1.0},
+		"fM/ul":   {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"fMol/ul": {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"fM/uL":   {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"fMol/uL": {Base: "M/l", Prefix: "n", Multiplier: 1.0},
+		"X":       {Base: "X", Prefix: "", Multiplier: 1.0},
+		"x":       {Base: "X", Prefix: "", Multiplier: 1.0},
+		"U/l":     {Base: "U/l", Prefix: "", Multiplier: 1.0},
+		"U/L":     {Base: "U/l", Prefix: "", Multiplier: 1.0},
+		"U/ml":    {Base: "U/l", Prefix: "", Multiplier: 1000.0},
+		"U/mL":    {Base: "U/l", Prefix: "", Multiplier: 1000.0},
+		"v/v":     {Base: "v/v", Prefix: "", Multiplier: 1.0},
+		"w/v":     {Base: "g/l", Prefix: "k", Multiplier: 1.0},
 	},
-	"Mass": map[string]Unit{
-		"ng": Unit{Base: "g", Prefix: "n", Multiplier: 1.0},
-		"ug": Unit{Base: "g", Prefix: "u", Multiplier: 1.0},
-		"mg": Unit{Base: "g", Prefix: "m", Multiplier: 1.0},
-		"g":  Unit{Base: "g", Prefix: "", Multiplier: 1.0},
-		"kg": Unit{Base: "g", Prefix: "k", Multiplier: 1.0},
+	"Mass": {
+		"ng": {Base: "g", Prefix: "n", Multiplier: 1.0},
+		"ug": {Base: "g", Prefix: "u", Multiplier: 1.0},
+		"mg": {Base: "g", Prefix: "m", Multiplier: 1.0},
+		"g":  {Base: "g", Prefix: "", Multiplier: 1.0},
+		"kg": {Base: "g", Prefix: "k", Multiplier: 1.0},
 	},
-	"Moles": map[string]Unit{
-		"pMol": Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
-		"nMol": Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
-		"uMol": Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
-		"mMol": Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
-		"Mol":  Unit{Base: "M", Prefix: "", Multiplier: 1.0},
-		"pM":   Unit{Base: "M", Prefix: "p", Multiplier: 1.0},
-		"nM":   Unit{Base: "M", Prefix: "n", Multiplier: 1.0},
-		"uM":   Unit{Base: "M", Prefix: "u", Multiplier: 1.0},
-		"mM":   Unit{Base: "M", Prefix: "m", Multiplier: 1.0},
-		"M":    Unit{Base: "M", Prefix: "", Multiplier: 1.0},
+	"Moles": {
+		"pMol": {Base: "M", Prefix: "p", Multiplier: 1.0},
+		"nMol": {Base: "M", Prefix: "n", Multiplier: 1.0},
+		"uMol": {Base: "M", Prefix: "u", Multiplier: 1.0},
+		"mMol": {Base: "M", Prefix: "m", Multiplier: 1.0},
+		"Mol":  {Base: "M", Prefix: "", Multiplier: 1.0},
+		"pM":   {Base: "M", Prefix: "p", Multiplier: 1.0},
+		"nM":   {Base: "M", Prefix: "n", Multiplier: 1.0},
+		"uM":   {Base: "M", Prefix: "u", Multiplier: 1.0},
+		"mM":   {Base: "M", Prefix: "m", Multiplier: 1.0},
+		"M":    {Base: "M", Prefix: "", Multiplier: 1.0},
 	},
-	"Volume": map[string]Unit{
-		"nl": Unit{Base: "l", Prefix: "n", Multiplier: 1.0},
-		"ul": Unit{Base: "l", Prefix: "u", Multiplier: 1.0},
-		"ml": Unit{Base: "l", Prefix: "m", Multiplier: 1.0},
-		"l":  Unit{Base: "l", Prefix: "", Multiplier: 1.0},
-		"L":  Unit{Base: "l", Prefix: "", Multiplier: 1.0},
+	"Volume": {
+		"pl": {Base: "l", Prefix: "p", Multiplier: 1.0},
+		"nl": {Base: "l", Prefix: "n", Multiplier: 1.0},
+		"ul": {Base: "l", Prefix: "u", Multiplier: 1.0},
+		"ml": {Base: "l", Prefix: "m", Multiplier: 1.0},
+		"l":  {Base: "l", Prefix: "", Multiplier: 1.0},
+		"pL": {Base: "l", Prefix: "p", Multiplier: 1.0},
+		"nL": {Base: "l", Prefix: "n", Multiplier: 1.0},
+		"uL": {Base: "l", Prefix: "u", Multiplier: 1.0},
+		"mL": {Base: "l", Prefix: "m", Multiplier: 1.0},
+		"L":  {Base: "l", Prefix: "", Multiplier: 1.0},
 	},
-	"Rate": map[string]Unit{
-		"/s":   Unit{Base: "/s", Prefix: "", Multiplier: 1.0},
-		"/min": Unit{Base: "/s", Prefix: "", Multiplier: 60.0},
-		"/h":   Unit{Base: "/s", Prefix: "", Multiplier: 3600.0},
+	"Rate": {
+		"/s":   {Base: "/s", Prefix: "", Multiplier: 1.0},
+		"/min": {Base: "/s", Prefix: "", Multiplier: 60.0},
+		"/h":   {Base: "/s", Prefix: "", Multiplier: 3600.0},
 	},
-	"Time": map[string]Unit{
-		"ms":   Unit{Base: "s", Prefix: "m", Multiplier: 1.0},
-		"s":    Unit{Base: "s", Prefix: "", Multiplier: 1.0},
-		"min":  Unit{Base: "s", Prefix: "", Multiplier: 60.0},
-		"h":    Unit{Base: "s", Prefix: "", Multiplier: 3600.0},
-		"days": Unit{Base: "s", Prefix: "", Multiplier: 86400.0},
+	"Time": {
+		"ms":   {Base: "s", Prefix: "m", Multiplier: 1.0},
+		"s":    {Base: "s", Prefix: "", Multiplier: 1.0},
+		"min":  {Base: "s", Prefix: "", Multiplier: 60.0},
+		"h":    {Base: "s", Prefix: "", Multiplier: 3600.0},
+		"days": {Base: "s", Prefix: "", Multiplier: 86400.0},
 	},
-	"Temperature": map[string]Unit{
-		"C":  Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // RING ABOVE, LATIN CAPITAL LETTER C
-		"˚C": Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // LATIN CAPITAL LETTER C
-		"℃":  Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE CELSIUS
-		"°C": Unit{Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE, LATIN CAPITAL LETTER C
+	"Temperature": {
+		"C":  {Base: "℃", Prefix: "", Multiplier: 1.0}, // RING ABOVE, LATIN CAPITAL LETTER C
+		"˚C": {Base: "℃", Prefix: "", Multiplier: 1.0}, // LATIN CAPITAL LETTER C
+		"℃":  {Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE CELSIUS
+		"°C": {Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE, LATIN CAPITAL LETTER C
 	},
 }
 
 // ValidMeasurementUnit checks the validity of a measurement type and unit within that measurement type.
 // An error is returned if an invalid measurement type or unit is specified.
 func ValidMeasurementUnit(measureMentType, unit string) error {
+	// replace µ with u
 	unit = strings.Replace(unit, "µ", "u", -1)
-
+	if measureMentType == "Concentration" {
+		// replace L with l
+		unit = strings.Replace(unit, "L", "l", -1)
+	}
 	validUnits, measurementFound := UnitMap[measureMentType]
 	if !measurementFound {
 		var validMeasurementTypes []string
@@ -633,7 +666,10 @@ func ValidMeasurementUnit(measureMentType, unit string) error {
 
 // ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
 func ValidConcentrationUnit(unit string) error {
+	// replace µ with u
 	unit = strings.Replace(unit, "µ", "u", -1)
+	// replace L with l
+	unit = strings.Replace(unit, "L", "l", -1)
 	_, ok := UnitMap["Concentration"][unit]
 	if !ok {
 		var approved []string
@@ -648,7 +684,10 @@ func ValidConcentrationUnit(unit string) error {
 
 // NewConcentration makes a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) Concentration {
+	// replace µ with u
 	unit = strings.Replace(unit, "µ", "u", -1)
+	// replace L with l
+	unit = strings.Replace(unit, "L", "l", -1)
 
 	details, ok := UnitMap["Concentration"][unit]
 	if !ok {

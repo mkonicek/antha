@@ -1152,6 +1152,7 @@ type Element struct {
 }
 
 func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
+	_ctx = execute.WithElementName(_ctx, {{ .ElementName }})
 	bs, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
@@ -1386,15 +1387,15 @@ func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.A
 		Params: &ast.FieldList{
 			Opening: d.Pos(),
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: identList("_ctx"),
 					Type:  mustParseExpr("context.Context"),
 				},
-				&ast.Field{
+				{
 					Names: identList("_input"),
 					Type:  mustParseExpr("*" + modelPackage + ".Input"),
 				},
-				&ast.Field{
+				{
 					Names: identList("_output"),
 					Type:  mustParseExpr("*" + modelPackage + ".Output"),
 				},

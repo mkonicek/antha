@@ -229,11 +229,7 @@ func (ins *TransferInstruction) CheckMultiPolicies(which int) bool {
 
 	nwhat := wutil.NUniqueStringsInArray(ins.Transfers[which].What(), true)
 
-	if nwhat != 1 {
-		return false
-	}
-
-	return true
+	return nwhat == 1
 }
 
 func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, error) {
@@ -251,25 +247,28 @@ func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, erro
 	return plates, nil
 }
 
-func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, channel *wtype.LHChannelParameter) []int {
-	// if the channel is not multi just return nil
-
-	if channel.Multi == 1 {
-		return nil
-	}
-
+func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *LHProperties) []int {
 	r := make([]int, 0, len(ins.Transfers))
 
 	for i := 0; i < len(ins.Transfers); i++ {
-		if ins.validateParallelSet(ctx, channel, i) {
-			r = append(r, i)
+		// a parallel transfer is valid if any robot head can do it
+		// TODO --> support head/adaptor changes. Maybe.
+		for _, head := range robot.HeadsLoaded {
+			if ins.validateParallelSet(ctx, robot, head, i) {
+				r = append(r, i)
+			}
 		}
 	}
 
 	return r
 }
 
-func (ins *TransferInstruction) validateParallelSet(ctx context.Context, channel *wtype.LHChannelParameter, which int) bool {
+func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *LHProperties, head *wtype.LHHead, which int) bool {
+	channel := head.Adaptor.Params
+
+	if channel.Multi == 1 {
+		return false
+	}
 
 	if len(ins.Transfers[which].What()) > channel.Multi {
 		return false
@@ -305,7 +304,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, channel
 		panic("No from plates in instruction")
 	}
 
-	if !wtype.TipsWellsAligned(*channel, *plate, ins.Transfers[which].WellFrom()) {
+	if !TipsWellsAligned(robot, head, plate, ins.Transfers[which].WellFrom()) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
@@ -325,7 +324,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, channel
 
 	// for safety, check dest / tip alignment
 
-	if !wtype.TipsWellsAligned(*channel, *plate, ins.Transfers[which].WellTo()) {
+	if !TipsWellsAligned(robot, head, plate, ins.Transfers[which].WellTo()) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
@@ -470,7 +469,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		return []RobotInstruction{}, nil
 	}
 
-	//  set the channel  choices first by cleaning out initial empties
+	//  set the channel choices first by cleaning out initial empties
 
 	ins.ChooseChannels(prms)
 
@@ -480,7 +479,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	// if we can multi we do this first
 	if pol["CAN_MULTI"].(bool) {
-		parallelsets := ins.GetParallelSetsFor(ctx, prms.HeadsLoaded[0].Params)
+		parallelsets := ins.GetParallelSetsFor(ctx, prms)
 
 		mci := NewMultiChannelBlockInstruction()
 		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here
@@ -490,7 +489,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		//	- divide up transfer into multi and single transfers
 		//  	  in practice this means finding the maximum we can do
 		//	  then doing that as a transfer and generating single channel transfers
-		//	  to mop up the left
+		//	  to mop up the rest
 		//
 
 		for _, set := range parallelsets {
@@ -511,7 +510,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 			// now set the vols for the transfer and remove this from the instruction's volume
 
-			for i, _ := range vols {
+			for i := range vols {
 				vols[i] = wunit.CopyVolume(maxvol)
 			}
 

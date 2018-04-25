@@ -22,12 +22,6 @@ func setUpTipsFor(ctx context.Context, lhp *liquidhandling.LHProperties) *liquid
 	return lhp
 }
 
-func makeLiquidhandlerLibrary(ctx context.Context) map[string]*liquidhandling.LHProperties {
-	robots := make(map[string]*liquidhandling.LHProperties, 2)
-	robots["GilsonPipetmax"] = makeGilson(ctx)
-	return robots
-}
-
 func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	// gilson pipetmax
 
@@ -38,7 +32,7 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	z0 := -82.035
 	xi := 149.86
 	yi := 95.25
-	xp := x0
+	xp := x0 // nolint
 	yp := y0
 	zp := z0
 	for y := 0; y < 3; y++ {

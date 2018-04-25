@@ -123,7 +123,7 @@ func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {
 
 func TestVLH_AddPlateTo(t *testing.T) {
 	tests := []SimulatorTest{
-		SimulatorTest{
+		{
 			"OK", //name
 			nil,  //default params
 			nil,  //no setup
@@ -140,7 +140,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			nil, //no errors
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"non plate type", //name
 			nil,              //default params
 			nil,              //no setup
@@ -151,7 +151,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			[]string{"(err) AddPlateTo: Couldn't add object of type string to tipbox_1"},
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"location full", //name
 			nil,             //default params
 			nil,             //no setup
@@ -163,7 +163,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			[]string{"(err) AddPlateTo: Couldn't add tipbox \"p1\" to location \"tipbox_1\" which already contains tipbox \"p0\""},
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"tipbox on tipwaste location", //name
 			nil, //default params
 			nil, //no setup
@@ -174,7 +174,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			[]string{"(err) AddPlateTo: Slot \"tipwaste\" can't accept tipbox \"tipbox\", only tipwaste allowed"},
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"tipwaste on tipbox location", //name
 			nil, //default params
 			nil, //no setup
@@ -185,7 +185,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			[]string{"(err) AddPlateTo: Slot \"tipbox_1\" can't accept tipwaste \"tipwaste\", only tipbox allowed"},
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"unknown location", //name
 			nil,                //default params
 			nil,                //no setup
@@ -196,7 +196,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			[]string{"(err) AddPlateTo: Cannot put tipbox \"aTipbox\" at unknown slot \"ruritania\""},
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"too big", //name
 			nil,       //default params
 			nil,       //no setup
@@ -218,7 +218,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 
 func Test_SetPippetteSpeed(t *testing.T) {
 	tests := []SimulatorTest{
-		SimulatorTest{
+		{
 			"OK", //name
 			nil,  //default params
 			nil,  //no setup
@@ -229,7 +229,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 			nil, //no errors
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"too low", //name
 			nil,       //default params
 			nil,       //no setup
@@ -249,7 +249,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 			},
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"too high", //name
 			nil,        //default params
 			nil,        //no setup
@@ -269,7 +269,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 			},
 			nil, //no assertions
 		},
-		SimulatorTest{
+		{
 			"Independent", //name
 			nil,           //default params
 			nil,           //no setup
@@ -308,7 +308,7 @@ func testLayout() *SetupFn {
 func Test_Move(t *testing.T) {
 
 	tests := []SimulatorTest{
-		SimulatorTest{
+		{
 			"OK_1",
 			nil,
 			[]*SetupFn{
@@ -328,10 +328,10 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{204.5, 4.5, 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 204.5, Y: 4.5, Z: 62.2}),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK_2",
 			nil,
 			[]*SetupFn{
@@ -351,10 +351,10 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{111., 440., 93.}),
+				positionAssertion(0, wtype.Coordinates{X: 111., Y: 440., Z: 93.}),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK_2.5",
 			nil,
 			[]*SetupFn{
@@ -374,10 +374,10 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{111., 440., 93}),
+				positionAssertion(0, wtype.Coordinates{X: 111., Y: 440., Z: 93}),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK_3",
 			nil,
 			[]*SetupFn{
@@ -397,10 +397,10 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{4.5, -22.5, 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 4.5, Y: -22.5, Z: 62.2}),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK_4",
 			nil,
 			[]*SetupFn{
@@ -420,10 +420,10 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{404.5, 67.5, 38.9}),
+				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 67.5, Z: 38.9}),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK_5",
 			nil,
 			[]*SetupFn{
@@ -443,10 +443,10 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{404.5, 31.5, 38.9}),
+				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 31.5, Z: 38.9}),
 			},
 		},
-		SimulatorTest{
+		{
 			"unknown location",
 			nil,
 			[]*SetupFn{
@@ -487,7 +487,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"unknown head",
 			nil,
 			[]*SetupFn{
@@ -521,7 +521,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"invalid wellcoords",
 			nil,
 			[]*SetupFn{
@@ -555,7 +555,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Invalid reference",
 			nil,
 			[]*SetupFn{
@@ -589,7 +589,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Inconsistent references",
 			nil,
 			[]*SetupFn{
@@ -612,7 +612,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"offsets differ",
 			nil,
 			[]*SetupFn{
@@ -635,7 +635,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"layout mismatch",
 			nil,
 			[]*SetupFn{
@@ -693,7 +693,7 @@ func TestLoadTips(t *testing.T) {
 	}
 
 	tests := []SimulatorTest{
-		SimulatorTest{
+		{
 			"OK - single tip",
 			nil,
 			[]*SetupFn{
@@ -714,11 +714,11 @@ func TestLoadTips(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{"H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "", 0}}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - single tip (alt)",
 			nil,
 			[]*SetupFn{
@@ -739,11 +739,11 @@ func TestLoadTips(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{"A1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{tipDesc{7, "", 0}}),
+				adaptorAssertion(0, []tipDesc{{7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - single tip above space",
 			nil,
 			[]*SetupFn{
@@ -765,11 +765,11 @@ func TestLoadTips(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{"H12", "G12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "", 0}}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - single tip below space (alt)",
 			nil,
 			[]*SetupFn{
@@ -791,11 +791,11 @@ func TestLoadTips(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{"A1", "B1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{tipDesc{7, "", 0}}),
+				adaptorAssertion(0, []tipDesc{{7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 3 tips at once",
 			nil,
 			[]*SetupFn{
@@ -817,14 +817,14 @@ func TestLoadTips(t *testing.T) {
 				tipboxAssertion("tipbox_1", []string{"F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
 				adaptorAssertion(0, []tipDesc{
-					tipDesc{0, "", 0},
-					tipDesc{1, "", 0},
-					tipDesc{2, "", 0},
+					{0, "", 0},
+					{1, "", 0},
+					{2, "", 0},
 				}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 3 tips at once (alt)",
 			nil,
 			[]*SetupFn{
@@ -846,14 +846,14 @@ func TestLoadTips(t *testing.T) {
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1"}),
 				tipboxAssertion("tipbox_2", []string{}),
 				adaptorAssertion(0, []tipDesc{
-					tipDesc{5, "", 0},
-					tipDesc{6, "", 0},
-					tipDesc{7, "", 0},
+					{5, "", 0},
+					{6, "", 0},
+					{7, "", 0},
 				}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 3 tips (independent)",
 			independent_lhproperties(),
 			[]*SetupFn{
@@ -875,14 +875,14 @@ func TestLoadTips(t *testing.T) {
 				tipboxAssertion("tipbox_1", []string{"A1", "E1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
 				adaptorAssertion(0, []tipDesc{
-					tipDesc{0, "", 0},
-					tipDesc{4, "", 0},
-					tipDesc{7, "", 0},
+					{0, "", 0},
+					{4, "", 0},
+					{7, "", 0},
 				}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 8 tips at once",
 			nil,
 			[]*SetupFn{
@@ -904,19 +904,19 @@ func TestLoadTips(t *testing.T) {
 				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
 				adaptorAssertion(0, []tipDesc{
-					tipDesc{0, "", 0},
-					tipDesc{1, "", 0},
-					tipDesc{2, "", 0},
-					tipDesc{3, "", 0},
-					tipDesc{4, "", 0},
-					tipDesc{5, "", 0},
-					tipDesc{6, "", 0},
-					tipDesc{7, "", 0},
+					{0, "", 0},
+					{1, "", 0},
+					{2, "", 0},
+					{3, "", 0},
+					{4, "", 0},
+					{5, "", 0},
+					{6, "", 0},
+					{7, "", 0},
 				}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"unknown channel 8",
 			nil,
 			[]*SetupFn{
@@ -938,7 +938,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"unknown channel -1",
 			nil,
 			[]*SetupFn{
@@ -960,7 +960,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"duplicate channels",
 			nil,
 			[]*SetupFn{
@@ -982,7 +982,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"unknown head",
 			nil,
 			[]*SetupFn{
@@ -1004,7 +1004,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"unknown head -1",
 			nil,
 			[]*SetupFn{
@@ -1026,7 +1026,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"OK - argument expansion",
 			nil,
 			[]*SetupFn{
@@ -1047,11 +1047,11 @@ func TestLoadTips(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{"H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "", 0}}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"mismatching multi",
 			nil,
 			[]*SetupFn{
@@ -1073,7 +1073,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"tip missing",
 			nil,
 			[]*SetupFn{
@@ -1096,7 +1096,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"tip already loaded",
 			nil,
 			[]*SetupFn{
@@ -1119,7 +1119,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"extra tip in the way",
 			nil,
 			[]*SetupFn{
@@ -1141,7 +1141,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"not aligned to move",
 			nil,
 			[]*SetupFn{
@@ -1163,7 +1163,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"multiple not aligned to move",
 			nil,
 			[]*SetupFn{
@@ -1185,7 +1185,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"misalignment single",
 			nil,
 			[]*SetupFn{
@@ -1207,7 +1207,7 @@ func TestLoadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"misalignment multi",
 			nil,
 			[]*SetupFn{
@@ -1239,7 +1239,7 @@ func TestLoadTips(t *testing.T) {
 func Test_UnloadTips(t *testing.T) {
 
 	tests := []SimulatorTest{
-		SimulatorTest{
+		{
 			"OK - single tip",
 			nil,
 			[]*SetupFn{
@@ -1274,7 +1274,7 @@ func Test_UnloadTips(t *testing.T) {
 				tipwasteAssertion("tipwaste", 1),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 8 tips",
 			nil,
 			[]*SetupFn{
@@ -1309,7 +1309,7 @@ func Test_UnloadTips(t *testing.T) {
 				tipwasteAssertion("tipwaste", 8),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 8 tips back to a tipbox",
 			nil,
 			[]*SetupFn{
@@ -1345,7 +1345,7 @@ func Test_UnloadTips(t *testing.T) {
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - independent tips",
 			independent_lhproperties(),
 			[]*SetupFn{
@@ -1367,15 +1367,15 @@ func Test_UnloadTips(t *testing.T) {
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
 				adaptorAssertion(0, []tipDesc{
-					tipDesc{1, "", 0},
-					tipDesc{3, "", 0},
-					tipDesc{5, "", 0},
-					tipDesc{7, "", 0},
+					{1, "", 0},
+					{3, "", 0},
+					{5, "", 0},
+					{7, "", 0},
 				}),
 				tipwasteAssertion("tipwaste", 4),
 			},
 		},
-		SimulatorTest{
+		{
 			"can only unload all tips",
 			nil,
 			[]*SetupFn{
@@ -1407,7 +1407,7 @@ func Test_UnloadTips(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"can't unload to a plate",
 			nil,
 			[]*SetupFn{
@@ -1439,7 +1439,7 @@ func Test_UnloadTips(t *testing.T) {
 			},
 			nil,
 		},
-		SimulatorTest{
+		{
 			"wrong well",
 			nil,
 			[]*SetupFn{
@@ -1481,7 +1481,7 @@ func Test_UnloadTips(t *testing.T) {
 func Test_Aspirate(t *testing.T) {
 
 	tests := []SimulatorTest{
-		SimulatorTest{
+		{
 			"OK - single channel",
 			nil,
 			[]*SetupFn{
@@ -1514,11 +1514,11 @@ func Test_Aspirate(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "water", 100}}),
+				adaptorAssertion(0, []tipDesc{{0, "water", 100}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 8 channel",
 			nil,
 			[]*SetupFn{
@@ -1552,19 +1552,19 @@ func Test_Aspirate(t *testing.T) {
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
 				adaptorAssertion(0, []tipDesc{
-					tipDesc{0, "water", 100},
-					tipDesc{1, "water", 100},
-					tipDesc{2, "water", 100},
-					tipDesc{3, "water", 100},
-					tipDesc{4, "water", 100},
-					tipDesc{5, "water", 100},
-					tipDesc{6, "water", 100},
-					tipDesc{7, "water", 100},
+					{0, "water", 100},
+					{1, "water", 100},
+					{2, "water", 100},
+					{3, "water", 100},
+					{4, "water", 100},
+					{5, "water", 100},
+					{6, "water", 100},
+					{7, "water", 100},
 				}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"Fail - Aspirate with no tip",
 			nil,
 			[]*SetupFn{
@@ -1598,7 +1598,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - Underfull tip",
 			nil,
 			[]*SetupFn{
@@ -1632,7 +1632,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - Overfull tip",
 			nil,
 			[]*SetupFn{
@@ -1761,7 +1761,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - non-independent head can only aspirate equal volumes",
 			nil,
 			[]*SetupFn{
@@ -1795,7 +1795,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - tip not in well",
 			nil,
 			[]*SetupFn{
@@ -1829,7 +1829,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - Well doesn't contain enough",
 			nil,
 			[]*SetupFn{
@@ -1863,7 +1863,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - wrong liquid type",
 			nil,
 			[]*SetupFn{
@@ -1897,7 +1897,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - inadvertant aspiration",
 			nil,
 			[]*SetupFn{
@@ -1941,7 +1941,7 @@ func Test_Aspirate(t *testing.T) {
 func Test_Dispense(t *testing.T) {
 
 	tests := []SimulatorTest{
-		SimulatorTest{
+		{
 			"OK - single channel",
 			nil,
 			[]*SetupFn{
@@ -1973,12 +1973,12 @@ func Test_Dispense(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{wellDesc{"A1", "water", 50.}}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "water", 50.}}),
+				plateAssertion("input_1", []wellDesc{{"A1", "water", 50.}}),
+				adaptorAssertion(0, []tipDesc{{0, "water", 50.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - mixing",
 			nil,
 			[]*SetupFn{
@@ -2011,12 +2011,12 @@ func Test_Dispense(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{wellDesc{"A1", "green+water", 100.}}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "water", 50.}}),
+				plateAssertion("input_1", []wellDesc{{"A1", "green+water", 100.}}),
+				adaptorAssertion(0, []tipDesc{{0, "water", 50.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - single channel slightly above well",
 			nil,
 			[]*SetupFn{
@@ -2048,12 +2048,12 @@ func Test_Dispense(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{wellDesc{"A1", "water", 50.}}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "water", 50.}}),
+				plateAssertion("input_1", []wellDesc{{"A1", "water", 50.}}),
+				adaptorAssertion(0, []tipDesc{{0, "water", 50.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 8 channel",
 			nil,
 			[]*SetupFn{
@@ -2086,29 +2086,29 @@ func Test_Dispense(t *testing.T) {
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
 				adaptorAssertion(0, []tipDesc{
-					tipDesc{0, "water", 50.},
-					tipDesc{1, "water", 50.},
-					tipDesc{2, "water", 50.},
-					tipDesc{3, "water", 50.},
-					tipDesc{4, "water", 50.},
-					tipDesc{5, "water", 50.},
-					tipDesc{6, "water", 50.},
-					tipDesc{7, "water", 50.},
+					{0, "water", 50.},
+					{1, "water", 50.},
+					{2, "water", 50.},
+					{3, "water", 50.},
+					{4, "water", 50.},
+					{5, "water", 50.},
+					{6, "water", 50.},
+					{7, "water", 50.},
 				}),
 				plateAssertion("input_1", []wellDesc{
-					wellDesc{"A1", "water", 50.},
-					wellDesc{"B1", "water", 50.},
-					wellDesc{"C1", "water", 50.},
-					wellDesc{"D1", "water", 50.},
-					wellDesc{"E1", "water", 50.},
-					wellDesc{"F1", "water", 50.},
-					wellDesc{"G1", "water", 50.},
-					wellDesc{"H1", "water", 50.},
+					{"A1", "water", 50.},
+					{"B1", "water", 50.},
+					{"C1", "water", 50.},
+					{"D1", "water", 50.},
+					{"E1", "water", 50.},
+					{"F1", "water", 50.},
+					{"G1", "water", 50.},
+					{"H1", "water", 50.},
 				}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"Fail - no tips",
 			nil,
 			[]*SetupFn{
@@ -2141,7 +2141,7 @@ func Test_Dispense(t *testing.T) {
 			},
 			nil, //assertionsi
 		},
-		SimulatorTest{
+		{
 			"Fail - not enough in tip",
 			nil,
 			[]*SetupFn{
@@ -2174,7 +2174,7 @@ func Test_Dispense(t *testing.T) {
 			},
 			nil, //assertionsi
 		},
-		SimulatorTest{
+		{
 			"Fail - well over-full",
 			nil,
 			[]*SetupFn{
@@ -2207,7 +2207,7 @@ func Test_Dispense(t *testing.T) {
 			},
 			nil, //assertionsi
 		},
-		SimulatorTest{
+		{
 			"Fail - not in a well",
 			nil,
 			[]*SetupFn{
@@ -2240,7 +2240,7 @@ func Test_Dispense(t *testing.T) {
 			},
 			nil, //assertionsi
 		},
-		SimulatorTest{
+		{
 			"Fail - dispensing to tipwaste",
 			nil,
 			[]*SetupFn{
@@ -2273,7 +2273,7 @@ func Test_Dispense(t *testing.T) {
 			},
 			nil, //assertionsi
 		},
-		SimulatorTest{
+		{
 			"fail - independence",
 			nil,
 			[]*SetupFn{
@@ -2306,7 +2306,7 @@ func Test_Dispense(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - independence, different volumes",
 			nil,
 			[]*SetupFn{
@@ -2349,7 +2349,7 @@ func Test_Dispense(t *testing.T) {
 func Test_Mix(t *testing.T) {
 
 	tests := []SimulatorTest{
-		SimulatorTest{
+		{
 			"OK - single channel",
 			nil,
 			[]*SetupFn{
@@ -2382,12 +2382,12 @@ func Test_Mix(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{wellDesc{"A1", "water", 200.}}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "water", 0.}}),
+				plateAssertion("input_1", []wellDesc{{"A1", "water", 200.}}),
+				adaptorAssertion(0, []tipDesc{{0, "water", 0.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"OK - 8 channel",
 			nil,
 			[]*SetupFn{
@@ -2421,29 +2421,29 @@ func Test_Mix(t *testing.T) {
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
 				plateAssertion("input_1", []wellDesc{
-					wellDesc{"A1", "water", 200.},
-					wellDesc{"B1", "water", 200.},
-					wellDesc{"C1", "water", 200.},
-					wellDesc{"D1", "water", 200.},
-					wellDesc{"E1", "water", 200.},
-					wellDesc{"F1", "water", 200.},
-					wellDesc{"G1", "water", 200.},
-					wellDesc{"H1", "water", 200.},
+					{"A1", "water", 200.},
+					{"B1", "water", 200.},
+					{"C1", "water", 200.},
+					{"D1", "water", 200.},
+					{"E1", "water", 200.},
+					{"F1", "water", 200.},
+					{"G1", "water", 200.},
+					{"H1", "water", 200.},
 				}),
 				adaptorAssertion(0, []tipDesc{
-					tipDesc{0, "water", 0.},
-					tipDesc{1, "water", 0.},
-					tipDesc{2, "water", 0.},
-					tipDesc{3, "water", 0.},
-					tipDesc{4, "water", 0.},
-					tipDesc{5, "water", 0.},
-					tipDesc{6, "water", 0.},
-					tipDesc{7, "water", 0.},
+					{0, "water", 0.},
+					{1, "water", 0.},
+					{2, "water", 0.},
+					{3, "water", 0.},
+					{4, "water", 0.},
+					{5, "water", 0.},
+					{6, "water", 0.},
+					{7, "water", 0.},
 				}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		SimulatorTest{
+		{
 			"Fail - independece problems",
 			nil,
 			[]*SetupFn{
@@ -2478,7 +2478,7 @@ func Test_Mix(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		SimulatorTest{
+		{
 			"Fail - wrong platetype",
 			nil,
 			[]*SetupFn{
@@ -2513,8 +2513,8 @@ func Test_Mix(t *testing.T) {
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{wellDesc{"A1", "water", 200.}}),
-				adaptorAssertion(0, []tipDesc{tipDesc{0, "water", 0.}}),
+				plateAssertion("input_1", []wellDesc{{"A1", "water", 200.}}),
+				adaptorAssertion(0, []tipDesc{{0, "water", 0.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
@@ -2538,7 +2538,7 @@ func Test_Workflow(t *testing.T) {
 	get8tips := func(column int) []TestRobotInstruction {
 		wc := make([]string, 8)
 		for i := range wc {
-			c := wtype.WellCoords{column, i}
+			c := wtype.WellCoords{X: column, Y: i}
 			wc[i] = c.FormatA1()
 		}
 		return []TestRobotInstruction{
@@ -2877,144 +2877,144 @@ func Test_Workflow(t *testing.T) {
 				"A9", "B9", "C9", "D9", "E9", "F9", "G9", "H9",
 			}),
 			plateAssertion("input_1", []wellDesc{
-				wellDesc{"A1", "water", 50.},
-				wellDesc{"B1", "water", 50.},
-				wellDesc{"C1", "water", 50.},
-				wellDesc{"D1", "water", 50.},
-				wellDesc{"E1", "water", 50.},
-				wellDesc{"F1", "water", 50.},
-				wellDesc{"G1", "water", 50.},
-				wellDesc{"H1", "water", 50.},
-				wellDesc{"A2", "red", 170.},
-				wellDesc{"B2", "red", 170.},
-				wellDesc{"C2", "red", 170.},
-				wellDesc{"D2", "red", 170.},
-				wellDesc{"E2", "red", 170.},
-				wellDesc{"F2", "red", 170.},
-				wellDesc{"G2", "red", 170.},
-				wellDesc{"H2", "red", 170.},
-				wellDesc{"A3", "green", 5.},
-				wellDesc{"B3", "green", 32.86},
-				wellDesc{"C3", "green", 60.71},
-				wellDesc{"D3", "green", 88.57},
-				wellDesc{"E3", "green", 116.43},
-				wellDesc{"F3", "green", 144.29},
-				wellDesc{"G3", "green", 172.14},
-				wellDesc{"H3", "green", 200.},
-				wellDesc{"A4", "water", 200.},
-				wellDesc{"B4", "water", 172.14},
-				wellDesc{"C4", "water", 144.29},
-				wellDesc{"D4", "water", 116.43},
-				wellDesc{"E4", "water", 88.57},
-				wellDesc{"F4", "water", 60.71},
-				wellDesc{"G4", "water", 32.86},
-				wellDesc{"H4", "water", 5.},
-				wellDesc{"A5", "green", 135.},
-				wellDesc{"B5", "green+water", 135.},
-				wellDesc{"C5", "green+water", 135.},
-				wellDesc{"D5", "green+water", 135.},
-				wellDesc{"E5", "green+water", 135.},
-				wellDesc{"F5", "green+water", 135.},
-				wellDesc{"G5", "green+water", 135.},
-				wellDesc{"H5", "water", 135.},
+				{"A1", "water", 50.},
+				{"B1", "water", 50.},
+				{"C1", "water", 50.},
+				{"D1", "water", 50.},
+				{"E1", "water", 50.},
+				{"F1", "water", 50.},
+				{"G1", "water", 50.},
+				{"H1", "water", 50.},
+				{"A2", "red", 170.},
+				{"B2", "red", 170.},
+				{"C2", "red", 170.},
+				{"D2", "red", 170.},
+				{"E2", "red", 170.},
+				{"F2", "red", 170.},
+				{"G2", "red", 170.},
+				{"H2", "red", 170.},
+				{"A3", "green", 5.},
+				{"B3", "green", 32.86},
+				{"C3", "green", 60.71},
+				{"D3", "green", 88.57},
+				{"E3", "green", 116.43},
+				{"F3", "green", 144.29},
+				{"G3", "green", 172.14},
+				{"H3", "green", 200.},
+				{"A4", "water", 200.},
+				{"B4", "water", 172.14},
+				{"C4", "water", 144.29},
+				{"D4", "water", 116.43},
+				{"E4", "water", 88.57},
+				{"F4", "water", 60.71},
+				{"G4", "water", 32.86},
+				{"H4", "water", 5.},
+				{"A5", "green", 135.},
+				{"B5", "green+water", 135.},
+				{"C5", "green+water", 135.},
+				{"D5", "green+water", 135.},
+				{"E5", "green+water", 135.},
+				{"F5", "green+water", 135.},
+				{"G5", "green+water", 135.},
+				{"H5", "water", 135.},
 			}),
 			plateAssertion("output_1", []wellDesc{
-				wellDesc{"A1", "red+green+water", 20.},
-				wellDesc{"B1", "red+green+water", 20.},
-				wellDesc{"C1", "red+green+water", 20.},
-				wellDesc{"D1", "red+green+water", 20.},
-				wellDesc{"E1", "red+green+water", 20.},
-				wellDesc{"F1", "red+green+water", 20.},
-				wellDesc{"G1", "red+green+water", 20.},
-				wellDesc{"H1", "red+water", 20.},
-				wellDesc{"A2", "red+green+water", 20.},
-				wellDesc{"B2", "red+green+water", 20.},
-				wellDesc{"C2", "red+green+water", 20.},
-				wellDesc{"D2", "red+green+water", 20.},
-				wellDesc{"E2", "red+green+water", 20.},
-				wellDesc{"F2", "red+green+water", 20.},
-				wellDesc{"G2", "red+green+water", 20.},
-				wellDesc{"H2", "red+water", 20.},
-				wellDesc{"A3", "red+green+water", 20.},
-				wellDesc{"B3", "red+green+water", 20.},
-				wellDesc{"C3", "red+green+water", 20.},
-				wellDesc{"D3", "red+green+water", 20.},
-				wellDesc{"E3", "red+green+water", 20.},
-				wellDesc{"F3", "red+green+water", 20.},
-				wellDesc{"G3", "red+green+water", 20.},
-				wellDesc{"H3", "red+water", 20.},
-				wellDesc{"A4", "red+green+water", 20.},
-				wellDesc{"B4", "red+green+water", 20.},
-				wellDesc{"C4", "red+green+water", 20.},
-				wellDesc{"D4", "red+green+water", 20.},
-				wellDesc{"E4", "red+green+water", 20.},
-				wellDesc{"F4", "red+green+water", 20.},
-				wellDesc{"G4", "red+green+water", 20.},
-				wellDesc{"H4", "red+water", 20.},
-				wellDesc{"A5", "red+green+water", 20.},
-				wellDesc{"B5", "red+green+water", 20.},
-				wellDesc{"C5", "red+green+water", 20.},
-				wellDesc{"D5", "red+green+water", 20.},
-				wellDesc{"E5", "red+green+water", 20.},
-				wellDesc{"F5", "red+green+water", 20.},
-				wellDesc{"G5", "red+green+water", 20.},
-				wellDesc{"H5", "red+water", 20.},
-				wellDesc{"A6", "red+green+water", 20.},
-				wellDesc{"B6", "red+green+water", 20.},
-				wellDesc{"C6", "red+green+water", 20.},
-				wellDesc{"D6", "red+green+water", 20.},
-				wellDesc{"E6", "red+green+water", 20.},
-				wellDesc{"F6", "red+green+water", 20.},
-				wellDesc{"G6", "red+green+water", 20.},
-				wellDesc{"H6", "red+water", 20.},
-				wellDesc{"A7", "red+green+water", 20.},
-				wellDesc{"B7", "red+green+water", 20.},
-				wellDesc{"C7", "red+green+water", 20.},
-				wellDesc{"D7", "red+green+water", 20.},
-				wellDesc{"E7", "red+green+water", 20.},
-				wellDesc{"F7", "red+green+water", 20.},
-				wellDesc{"G7", "red+green+water", 20.},
-				wellDesc{"H7", "red+water", 20.},
-				wellDesc{"A8", "red+green+water", 20.},
-				wellDesc{"B8", "red+green+water", 20.},
-				wellDesc{"C8", "red+green+water", 20.},
-				wellDesc{"D8", "red+green+water", 20.},
-				wellDesc{"E8", "red+green+water", 20.},
-				wellDesc{"F8", "red+green+water", 20.},
-				wellDesc{"G8", "red+green+water", 20.},
-				wellDesc{"H8", "red+water", 20.},
-				wellDesc{"A9", "red+green+water", 20.},
-				wellDesc{"B9", "red+green+water", 20.},
-				wellDesc{"C9", "red+green+water", 20.},
-				wellDesc{"D9", "red+green+water", 20.},
-				wellDesc{"E9", "red+green+water", 20.},
-				wellDesc{"F9", "red+green+water", 20.},
-				wellDesc{"G9", "red+green+water", 20.},
-				wellDesc{"H9", "red+water", 20.},
-				wellDesc{"A10", "red+green+water", 20.},
-				wellDesc{"B10", "red+green+water", 20.},
-				wellDesc{"C10", "red+green+water", 20.},
-				wellDesc{"D10", "red+green+water", 20.},
-				wellDesc{"E10", "red+green+water", 20.},
-				wellDesc{"F10", "red+green+water", 20.},
-				wellDesc{"G10", "red+green+water", 20.},
-				wellDesc{"H10", "red+water", 20.},
-				wellDesc{"A11", "red+green+water", 20.},
-				wellDesc{"B11", "red+green+water", 20.},
-				wellDesc{"C11", "red+green+water", 20.},
-				wellDesc{"D11", "red+green+water", 20.},
-				wellDesc{"E11", "red+green+water", 20.},
-				wellDesc{"F11", "red+green+water", 20.},
-				wellDesc{"G11", "red+green+water", 20.},
-				wellDesc{"H11", "red+water", 20.},
-				wellDesc{"A12", "green+water", 20.},
-				wellDesc{"B12", "green+water", 20.},
-				wellDesc{"C12", "green+water", 20.},
-				wellDesc{"D12", "green+water", 20.},
-				wellDesc{"E12", "green+water", 20.},
-				wellDesc{"F12", "green+water", 20.},
-				wellDesc{"G12", "green+water", 20.},
-				wellDesc{"H12", "water", 20.},
+				{"A1", "red+green+water", 20.},
+				{"B1", "red+green+water", 20.},
+				{"C1", "red+green+water", 20.},
+				{"D1", "red+green+water", 20.},
+				{"E1", "red+green+water", 20.},
+				{"F1", "red+green+water", 20.},
+				{"G1", "red+green+water", 20.},
+				{"H1", "red+water", 20.},
+				{"A2", "red+green+water", 20.},
+				{"B2", "red+green+water", 20.},
+				{"C2", "red+green+water", 20.},
+				{"D2", "red+green+water", 20.},
+				{"E2", "red+green+water", 20.},
+				{"F2", "red+green+water", 20.},
+				{"G2", "red+green+water", 20.},
+				{"H2", "red+water", 20.},
+				{"A3", "red+green+water", 20.},
+				{"B3", "red+green+water", 20.},
+				{"C3", "red+green+water", 20.},
+				{"D3", "red+green+water", 20.},
+				{"E3", "red+green+water", 20.},
+				{"F3", "red+green+water", 20.},
+				{"G3", "red+green+water", 20.},
+				{"H3", "red+water", 20.},
+				{"A4", "red+green+water", 20.},
+				{"B4", "red+green+water", 20.},
+				{"C4", "red+green+water", 20.},
+				{"D4", "red+green+water", 20.},
+				{"E4", "red+green+water", 20.},
+				{"F4", "red+green+water", 20.},
+				{"G4", "red+green+water", 20.},
+				{"H4", "red+water", 20.},
+				{"A5", "red+green+water", 20.},
+				{"B5", "red+green+water", 20.},
+				{"C5", "red+green+water", 20.},
+				{"D5", "red+green+water", 20.},
+				{"E5", "red+green+water", 20.},
+				{"F5", "red+green+water", 20.},
+				{"G5", "red+green+water", 20.},
+				{"H5", "red+water", 20.},
+				{"A6", "red+green+water", 20.},
+				{"B6", "red+green+water", 20.},
+				{"C6", "red+green+water", 20.},
+				{"D6", "red+green+water", 20.},
+				{"E6", "red+green+water", 20.},
+				{"F6", "red+green+water", 20.},
+				{"G6", "red+green+water", 20.},
+				{"H6", "red+water", 20.},
+				{"A7", "red+green+water", 20.},
+				{"B7", "red+green+water", 20.},
+				{"C7", "red+green+water", 20.},
+				{"D7", "red+green+water", 20.},
+				{"E7", "red+green+water", 20.},
+				{"F7", "red+green+water", 20.},
+				{"G7", "red+green+water", 20.},
+				{"H7", "red+water", 20.},
+				{"A8", "red+green+water", 20.},
+				{"B8", "red+green+water", 20.},
+				{"C8", "red+green+water", 20.},
+				{"D8", "red+green+water", 20.},
+				{"E8", "red+green+water", 20.},
+				{"F8", "red+green+water", 20.},
+				{"G8", "red+green+water", 20.},
+				{"H8", "red+water", 20.},
+				{"A9", "red+green+water", 20.},
+				{"B9", "red+green+water", 20.},
+				{"C9", "red+green+water", 20.},
+				{"D9", "red+green+water", 20.},
+				{"E9", "red+green+water", 20.},
+				{"F9", "red+green+water", 20.},
+				{"G9", "red+green+water", 20.},
+				{"H9", "red+water", 20.},
+				{"A10", "red+green+water", 20.},
+				{"B10", "red+green+water", 20.},
+				{"C10", "red+green+water", 20.},
+				{"D10", "red+green+water", 20.},
+				{"E10", "red+green+water", 20.},
+				{"F10", "red+green+water", 20.},
+				{"G10", "red+green+water", 20.},
+				{"H10", "red+water", 20.},
+				{"A11", "red+green+water", 20.},
+				{"B11", "red+green+water", 20.},
+				{"C11", "red+green+water", 20.},
+				{"D11", "red+green+water", 20.},
+				{"E11", "red+green+water", 20.},
+				{"F11", "red+green+water", 20.},
+				{"G11", "red+green+water", 20.},
+				{"H11", "red+water", 20.},
+				{"A12", "green+water", 20.},
+				{"B12", "green+water", 20.},
+				{"C12", "green+water", 20.},
+				{"D12", "green+water", 20.},
+				{"E12", "green+water", 20.},
+				{"F12", "green+water", 20.},
+				{"G12", "green+water", 20.},
+				{"H12", "water", 20.},
 			}),
 			adaptorAssertion(0, []tipDesc{}),
 			tipwasteAssertion("tipwaste", 26),

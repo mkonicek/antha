@@ -160,7 +160,7 @@ type regionTest struct {
 
 var regionTests = []regionTest{
 
-	regionTest{
+	{
 		LargeSeq: wtype.DNASequence{
 			Nm:      "Test1",
 			Seq:     "ATCGTAGTGTG",
@@ -173,7 +173,7 @@ var regionTests = []regionTest{
 		Start: 5,
 		End:   7,
 	},
-	regionTest{
+	{
 		LargeSeq: wtype.DNASequence{
 			Nm:      "Test2",
 			Seq:     "ATCGTAGTGTG",
@@ -186,7 +186,7 @@ var regionTests = []regionTest{
 		Start: 7,
 		End:   5,
 	},
-	regionTest{
+	{
 		LargeSeq: wtype.DNASequence{
 			Nm:      "Test3",
 			Seq:     "ATCGTAGTGTG",
@@ -199,7 +199,7 @@ var regionTests = []regionTest{
 		Start: 1,
 		End:   11,
 	},
-	regionTest{
+	{
 		LargeSeq: wtype.DNASequence{
 			Nm:      "Test4",
 			Seq:     "ATCGTAGTGTG",

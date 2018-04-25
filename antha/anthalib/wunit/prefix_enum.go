@@ -27,24 +27,23 @@ type Prefix_Net int
 const (
 	//yzafpnum
 
-	y Prefix_Net = -24 + iota
-	z            = -24 + (iota * 3)
-	a            = -24 + (iota * 3)
-	f            = -24 + (iota * 3)
-	p            = -24 + (iota * 3)
-	n            = -24 + (iota * 3)
-	u            = -24 + (iota * 3)
-	m            = -24 + (iota * 3)
+	// y Prefix_Net = -24 + iota
+	// z            = -24 + (iota * 3)
+	// a            = -24 + (iota * 3)
+	// f            = -24 + (iota * 3)
+	// p            = -24 + (iota * 3)
+	// n            = -24 + (iota * 3)
+	// u            = -24 + (iota * 3)
+	// m            = -24 + (iota * 3)
 
-	//cdh
-
-	c = -2
-	d = -1
-	h = 1
+	// //cdh
+	// c = -2
+	// d = -1
+	// h = 1
 
 	//kMGTPEZY
 
-	k = -30 + (iota * 3)
+	_ = -30 + (iota * 3)
 	M = -30 + (iota * 3)
 	G = -30 + (iota * 3)
 	T = -30 + (iota * 3)

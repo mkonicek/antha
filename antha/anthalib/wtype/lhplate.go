@@ -669,7 +669,7 @@ func (lhp *LHPlate) dup(keep_ids bool) *LHPlate {
 				d = well.Dup()
 				d.WContents.Loc = ret.ID + ":" + d.Crds.FormatA1()
 			}
-			d.SetParent(ret)
+			d.SetParent(ret) //nolint - ret is certainly an lhplate
 			ret.Rows[i][j] = d
 			ret.Cols[j][i] = d
 			ret.Wellcoords[d.Crds.FormatA1()] = d

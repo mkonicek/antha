@@ -170,7 +170,7 @@ func (tb *LHTipbox) dup(keepIDs bool) *LHTipbox {
 				} else {
 					tb2.Tips[i][j] = t.Dup()
 				}
-				tb2.Tips[i][j].SetParent(tb2)
+				tb2.Tips[i][j].SetParent(tb2) //nolint - tb2 is certainly an lhtipbox
 			}
 		}
 	}

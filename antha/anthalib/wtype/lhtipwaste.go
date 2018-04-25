@@ -210,6 +210,14 @@ func (self *LHTipwaste) Duplicate(keepIDs bool) LHObject {
 	return self.dup(keepIDs)
 }
 
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHTipwaste) DimensionsString() string {
+	if self == nil {
+		return "nill tipwaste"
+	}
+	return fmt.Sprintf("Tipwaste \"%s\" at %v+%v\n\t%s", self.GetName(), self.GetPosition(), self.GetSize(), self.AsWell.DimensionsString())
+}
+
 //##############################################
 //@implement Addressable
 //##############################################

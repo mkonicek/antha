@@ -95,6 +95,9 @@ type LHObject interface {
 	GetID() string
 	//Dup duplicate the object, optionally keeping the IDs identical
 	Duplicate(bool) LHObject
+	//DimensionsString returns a string description of the position and size of the object and its children.
+	//useful for debugging
+	DimensionsString() string
 }
 
 //GetObjectRoot get the highest parent

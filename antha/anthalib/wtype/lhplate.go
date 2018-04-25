@@ -1042,6 +1042,22 @@ func (self *LHPlate) Duplicate(keepIDs bool) LHObject {
 	return self.dup(keepIDs)
 }
 
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHPlate) DimensionsString() string {
+	wb := self.GetWellBounds()
+	ret := make([]string, 0, 1+len(self.Wellcoords))
+	ret = append(ret, fmt.Sprintf("Plate %s at %v+%v, with %dx%d wells bounded by %v",
+		self.GetName(), self.GetPosition(), self.GetSize(), self.NCols(), self.NRows(), wb))
+
+	for _, wellrow := range self.Rows {
+		for _, well := range wellrow {
+			ret = append(ret, "\t"+well.DimensionsString())
+		}
+	}
+
+	return strings.Join(ret, "\n")
+}
+
 //##############################################
 //@implement Addressable
 //##############################################

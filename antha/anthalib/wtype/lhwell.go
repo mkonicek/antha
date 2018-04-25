@@ -150,6 +150,14 @@ func (self *LHWell) Duplicate(keepIDs bool) LHObject {
 	return self.dup(keepIDs)
 }
 
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHWell) DimensionsString() string {
+	if self == nil {
+		return "nil well"
+	}
+	return fmt.Sprintf("Well %s at %v+%v", self.GetName(), self.GetPosition(), self.GetSize())
+}
+
 func (w LHWell) String() string {
 	return fmt.Sprintf(
 		`LHWELL{

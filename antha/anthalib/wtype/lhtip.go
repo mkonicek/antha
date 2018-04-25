@@ -191,6 +191,14 @@ func CopyTip(tt LHTip) *LHTip {
 	return &tt
 }
 
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHTip) DimensionsString() string {
+	if self == nil {
+		return "no tip"
+	}
+	return fmt.Sprintf("Tip %s at %v+%v", self.GetName(), self.GetPosition(), self.GetSize())
+}
+
 //@implement LHContainer
 func (self *LHTip) Contents() *LHComponent {
 	//Only happens with dodgy tip initialization

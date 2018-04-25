@@ -26,6 +26,7 @@ package wtype
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 )
 
@@ -109,6 +110,27 @@ func (self *LHDeck) GetType() string {
 
 func (self *LHDeck) GetClass() string {
 	return "deck"
+}
+
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHDeck) DimensionsString() string {
+	ret := []string{fmt.Sprintf("Deck \"%s\" with %d slots:", self.GetName(), len(self.slots))}
+
+	slotNames := self.GetSlotNames()
+	sort.Strings(slotNames)
+
+	for _, slotName := range slotNames {
+		slot := self.slots[slotName]
+		ret = append(ret, fmt.Sprintf("\tslot \"%s\" at %v+%v", slotName, slot.position, slot.size))
+		if slot.contents == nil {
+			ret = append(ret, "\t\tempty")
+			continue
+		}
+		ds := slot.contents.DimensionsString()
+		ret = append(ret, "\t\t"+strings.Replace(ds, "\n", "\n\t\t", -1))
+	}
+
+	return strings.Join(ret, "\n")
 }
 
 func (self *LHDeck) GetManufacturer() string {

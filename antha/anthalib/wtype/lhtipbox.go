@@ -25,6 +25,7 @@ package wtype
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 /* tip box */
@@ -343,6 +344,22 @@ func (self *LHTipbox) GetParent() LHObject {
 //Duplicate copies an LHObject
 func (self *LHTipbox) Duplicate(keepIDs bool) LHObject {
 	return self.dup(keepIDs)
+}
+
+//DimensionsString returns a string description of the position and size of the object and its children.
+//useful for debugging
+func (self *LHTipbox) DimensionsString() string {
+	ret := make([]string, 0, 1+self.NRows()*self.NCols())
+	ret = append(ret, fmt.Sprintf("Tipbox \"%s\" at %v+%v, with %dx%d tips bounded by %v",
+		self.GetName(), self.GetPosition(), self.GetSize(), self.NCols(), self.NRows(), self.GetTipBounds()))
+
+	for _, tiprow := range self.Tips {
+		for _, tip := range tiprow {
+			ret = append(ret, "\t"+tip.DimensionsString())
+		}
+	}
+
+	return strings.Join(ret, "\n")
 }
 
 //##############################################

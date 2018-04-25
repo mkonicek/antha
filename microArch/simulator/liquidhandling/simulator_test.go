@@ -2253,7 +2253,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - no tip loaded on channel 0",
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : no tip loaded on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2286,7 +2286,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: While dispensing 150 ul from head 0 channel 0 - tip on channel 0 contains only 100 ul, but blowout flag is false",
+				"(warn) Dispense: 150 ul of water from head 0 channel 0 to A1@plate1 : tip on channel 0 contains only 100 ul, but blowout flag is false",
 			},
 			nil, //assertionsi
 		},
@@ -2319,7 +2319,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 500 ul from head 0 channel 0 - well A1@plate1 under channel 0 contains 0 ul, command would exceed maximum volume 200 ul",
+				"(warn) Dispense: 500 ul of water from head 0 channel 0 to A1@plate1 : overfilling well A1@plate1 which already contains 0 ul and has max volume 200 ul",
 			},
 			nil, //assertionsi
 		},
@@ -2352,7 +2352,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - no well within 5 mm below tip on channel 0",
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to nil : no well within 5 mm below tip on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2385,7 +2385,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: While dispensing 50 ul from head 0 channel 0 - dispensing to tipwaste",
+				"(warn) Dispense: 50 ul of water from head 0 channel 0 to A1@tipwaste : dispensing to tipwaste",
 			},
 			nil, //assertionsi
 		},
@@ -2418,7 +2418,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - must also dispense 50 ul from channels 1,2,3,4,5,6,7 as head is not independent",
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : must also dispense 50 ul from channels 1,2,3,4,5,6,7 as head is not independent",
 			},
 			nil, //assertions
 		},
@@ -2451,7 +2451,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing {50,60,50,50,50,50,50,50} ul from head 0 channels 0,1,2,3,4,5,6,7 - channels cannot dispense different volumes in non-independent head",
+				"(err) Dispense: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0,1,2,3,4,5,6,7 to {A1,B1,C1,D1,E1,F1,G1,H1}@plate1 : channels cannot dispense different volumes in non-independent head",
 			},
 			nil, //assertions
 		},

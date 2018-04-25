@@ -150,6 +150,44 @@ func summarisePlates(wells []*wtype.LHWell, elems []int) string {
 
 }
 
+//summarisePlateWells list wells for each plate preserving order
+func summarisePlateWells(wells []*wtype.LHWell, elems []int) string {
+	var lastWell *wtype.LHWell
+	currentChunk := make([]string, 0, len(elems))
+	var chunkedWells [][]string
+	var plateNames []string
+
+	for _, i := range elems {
+		well := wells[i]
+		if lastWell != nil && lastWell.GetParent() != well.GetParent() {
+			chunkedWells = append(chunkedWells, currentChunk)
+			currentChunk = make([]string, 0, len(elems))
+			plateNames = append(plateNames, wtype.NameOf(well.GetParent()))
+		}
+		lastWell = well
+		if well != nil {
+			currentChunk = append(currentChunk, well.Crds.FormatA1())
+		}
+	}
+	chunkedWells = append(chunkedWells, currentChunk)
+	plateNames = append(plateNames, wtype.NameOf(lastWell.GetParent()))
+
+	var ret []string
+	for i, name := range plateNames {
+		if len(chunkedWells[i]) > 1 {
+			ret = append(ret, fmt.Sprintf("{%s}@%s", strings.Join(chunkedWells[i], ","), name))
+		} else if len(chunkedWells[i]) == 1 {
+			ret = append(ret, fmt.Sprintf("%s@%s", chunkedWells[i][0], name))
+		}
+	}
+
+	if len(ret) == 0 {
+		return "nil"
+	}
+
+	return strings.Join(ret, ", ")
+}
+
 func iElemsEqual(sl []int, elems []int) bool {
 	for _, i := range elems {
 		if sl[i] != sl[elems[0]] {
@@ -582,12 +620,14 @@ func (self *VirtualLiquidHandler) getWellsBelow(height float64, adaptor *Adaptor
 	for i := 0; i < adaptor.GetChannelCount(); i++ {
 		if ch := adaptor.GetChannel(i); ch.HasTip() {
 			tip_pos[i] = ch.GetAbsolutePosition().Subtract(wtype.Coordinates{X: 0., Y: 0., Z: ch.GetTip().GetSize().Z})
+		} else {
+			tip_pos[i] = ch.GetAbsolutePosition()
+		}
 
-			for _, o := range deck.GetBoxIntersections(*wtype.NewBBox(tip_pos[i].Subtract(size), size)) {
-				if w, ok := o.(*wtype.LHWell); ok {
-					wells[i] = w
-					break
-				}
+		for _, o := range deck.GetBoxIntersections(*wtype.NewBBox(tip_pos[i].Subtract(size), size)) {
+			if w, ok := o.(*wtype.LHWell); ok {
+				wells[i] = w
+				break
 			}
 		}
 	}
@@ -961,12 +1001,43 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 		return ret
 	}
 
-	describe := func() string {
-		return fmt.Sprintf("dispensing %s from head %d %s", summariseVolumes(arg.volumes), head, summariseChannels(arg.channels))
-	}
-
 	//find the position of each tip
 	wells := self.getWellsBelow(self.settings.MaxDispenseHeight(), arg.adaptor)
+
+	whatS := make([]string, 0, len(what))
+	for _, i := range arg.channels {
+		whatS = append(whatS, what[i])
+	}
+
+	describe := func() string {
+		return fmt.Sprintf("%s of %s from head %d %s to %s", summariseVolumes(arg.volumes), summariseStrings(whatS), head, summariseChannels(arg.channels), summarisePlateWells(wells, arg.channels))
+	}
+
+	//check wells
+	noWell := []int{}
+	for _, i := range arg.channels {
+		if wells[i] == nil {
+			noWell = append(noWell, i)
+		}
+	}
+	if len(noWell) > 0 {
+		self.AddErrorf("Dispense", "%s : no well within %s below %s on %s",
+			describe(), wunit.NewLength(self.settings.MaxDispenseHeight(), "mm"), pTips(len(noWell)), summariseChannels(noWell))
+		return ret
+	}
+
+	//check tips
+	noTip := make([]int, 0, len(arg.channels))
+	for _, i := range arg.channels {
+		if !arg.adaptor.GetChannel(i).HasTip() {
+			noTip = append(noTip, i)
+		}
+	}
+	if len(noTip) > 0 {
+		self.AddErrorf("Dispense", "%s : no %s loaded on %s",
+			describe(), pTips(len(noTip)), summariseChannels(noTip))
+		return ret
+	}
 
 	//independence contraints
 	if !arg.adaptor.IsIndependent() {
@@ -988,11 +1059,11 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 			}
 		}
 		if different {
-			self.AddErrorf("Dispense", "While %s - channels cannot dispense different volumes in non-independent head", describe())
+			self.AddErrorf("Dispense", "%s : channels cannot dispense different volumes in non-independent head", describe())
 			return ret
 		} else if len(extra) > 0 {
 			self.AddErrorf("Dispense",
-				"While %s - must also dispense %s from %s as head is not independent",
+				"%s : must also dispense %s from %s as head is not independent",
 				describe(), summariseVolumes(arg.volumes), summariseChannels(extra))
 			return ret
 		}
@@ -1002,57 +1073,59 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 	for i := range arg.channels {
 		if tip := arg.adaptor.GetChannel(i).GetTip(); tip != nil {
 			if tip.Contents().GetType() != what[i] {
-				self.AddWarningf("Dispense", "While %s - channel %d contains %s, not %s",
+				self.AddWarningf("Dispense", "%s : channel %d contains %s, not %s",
 					describe(), i, tip.Contents().GetType(), what[i])
 			}
 		}
 	}
 
+	//check volumes -- currently only warnings due to poor volume tracking
+	currentVolumes := make([]float64, 0, len(arg.channels))
+	maxVolumes := make([]float64, 0, len(arg.channels))
+	overfullWells := make([]int, 0, len(arg.channels))
+	for _, i := range arg.channels {
+		cV := wells[i].CurrentVolume()
+		mV := wells[i].MaxVolume()
+		fV := wunit.AddVolumes(cV, wunit.NewVolume(volume[i], "ul"))
+		if delta := wunit.SubtractVolumes(fV, mV); fV.GreaterThan(mV) && !delta.IsZero() {
+			overfullWells = append(overfullWells, i)
+			currentVolumes = append(currentVolumes, cV.ConvertToString("ul"))
+			maxVolumes = append(maxVolumes, mV.ConvertToString("ul"))
+		}
+	}
+	if len(overfullWells) > 1 {
+		self.AddWarningf("Dispense", "%s : overfilling wells %s which already contain %s and have max volume %s",
+			describe(), summarisePlateWells(wells, overfullWells), summariseVolumes(currentVolumes), summariseVolumes(maxVolumes))
+	}
+	if len(overfullWells) == 1 {
+		self.AddWarningf("Dispense", "%s : overfilling well %s which already contains %s and has max volume %s",
+			describe(), summarisePlateWells(wells, overfullWells), summariseVolumes(currentVolumes), summariseVolumes(maxVolumes))
+	}
+
 	//dispense
-	no_well := []int{}
-	no_tip := []int{}
 	for _, i := range arg.channels {
 		v := wunit.NewVolume(volume[i], "ul")
 		tip := arg.adaptor.GetChannel(i).GetTip()
-		fv := wunit.NewVolume(volume[i], "ul")
 
 		if wells[i] != nil {
 			if _, tw := wells[i].Plate.(*wtype.LHTipwaste); tw {
-				self.AddWarningf("Dispense", "While %s - dispensing to tipwaste", describe())
+				self.AddWarningf("Dispense", "%s : dispensing to tipwaste", describe())
 			}
 		}
 
-		if tip == nil {
-			no_tip = append(no_tip, i)
-			continue
-		}
 		if v.GreaterThan(tip.CurrentWorkingVolume()) {
 			v = tip.CurrentWorkingVolume()
 			if !blowout[i] {
 				//a bit strange
-				self.AddWarningf("Dispense", "While %s - tip on channel %d contains only %s, but blowout flag is false",
+				self.AddWarningf("Dispense", "%s : tip on channel %d contains only %s, but blowout flag is false",
 					describe(), i, tip.CurrentWorkingVolume())
 			}
 		}
-		if wells[i] == nil {
-			no_well = append(no_well, i)
-		} else if fv.Add(wells[i].CurrentVolume()); fv.GreaterThan(wells[i].MaxVolume()) {
-			self.AddErrorf("Dispense", "While %s - well %s under channel %d contains %s, command would exceed maximum volume %s",
-				describe(), wells[i].GetName(), i, wells[i].CurrentVolume(), wells[i].MaxVolume())
-		} else if c, err := tip.RemoveVolume(v); err != nil {
-			self.AddErrorf("Dispense", "Unexpected tip error \"%s\"", err.Error())
+		if c, err := tip.RemoveVolume(v); err != nil {
+			self.AddErrorf("Dispense", "%s : unexpected tip error \"%s\"", describe(), err.Error())
 		} else if err := wells[i].AddComponent(c); err != nil {
-			self.AddErrorf("Dispense", "Unexpected well error \"%s\"", err.Error())
+			self.AddErrorf("Dispense", "%s : unexpected well error \"%s\"", describe(), err.Error())
 		}
-	}
-
-	if len(no_well) > 0 {
-		self.AddErrorf("Dispense", "While %s - no well within %s below %s on %s",
-			describe(), wunit.NewLength(self.settings.MaxDispenseHeight(), "mm"), pTips(len(no_well)), summariseChannels(no_well))
-	}
-	if len(no_tip) > 0 {
-		self.AddErrorf("Dispense", "While %s - no %s loaded on %s",
-			describe(), pTips(len(no_tip)), summariseChannels(no_tip))
 	}
 
 	return ret

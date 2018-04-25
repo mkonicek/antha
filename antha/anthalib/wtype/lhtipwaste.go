@@ -68,7 +68,13 @@ func (tw *LHTipwaste) DupKeepIDs() *LHTipwaste {
 }
 
 func (tw *LHTipwaste) dup(keepIDs bool) *LHTipwaste {
-	tw2 := NewLHTipwaste(tw.Capacity, tw.Type, tw.Mnfr, tw.Bounds.GetSize(), tw.AsWell, tw.WellXStart, tw.WellYStart, tw.WellZStart)
+	var aw *LHWell
+	if keepIDs {
+		aw = tw.AsWell.DupKeepIDs()
+	} else {
+		aw = tw.AsWell.Dup()
+	}
+	tw2 := NewLHTipwaste(tw.Capacity, tw.Type, tw.Mnfr, tw.Bounds.GetSize(), aw, tw.WellXStart, tw.WellYStart, tw.WellZStart)
 	tw2.Contents = tw.Contents
 	if keepIDs {
 		tw2.ID = tw.ID
@@ -115,6 +121,7 @@ func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, w
 	lht.WellZStart = wellzstart
 
 	w.SetParent(&lht) //nolint
+	w.Crds = WellCoords{0, 0}
 
 	return &lht
 }

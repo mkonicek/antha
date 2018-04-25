@@ -35,6 +35,7 @@ type SimulatorSettings struct {
 	enable_tipbox_check     bool      //detect tipboxes which are taller that the tips, and disable tipbox_collisions
 	warn_auto_channels      Frequency //Display warnings for load/unload tips
 	max_dispense_height     float64   //maximum height to dispense from in mm
+	autoRefillTipboxes      bool      //are tipboxes automatically refilled by driver tip-tracking
 }
 
 func DefaultSimulatorSettings() *SimulatorSettings {
@@ -43,6 +44,7 @@ func DefaultSimulatorSettings() *SimulatorSettings {
 		true,
 		WarnAlways,
 		5.,
+		false,
 	}
 	return &ss
 }
@@ -83,4 +85,12 @@ func (self *SimulatorSettings) MaxDispenseHeight() float64 {
 
 func (self *SimulatorSettings) SetMaxDispenseHeight(f float64) {
 	self.max_dispense_height = f
+}
+
+func (self *SimulatorSettings) IsTipboxesAutoRefilled() bool {
+	return self.autoRefillTipboxes
+}
+
+func (self *SimulatorSettings) SetTipboxesAutoRefilled(s bool) {
+	self.autoRefillTipboxes = s
 }

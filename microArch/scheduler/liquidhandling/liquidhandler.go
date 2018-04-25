@@ -209,7 +209,18 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	// set up the simulator with default settings
 	props := this.Properties.DupKeepIDs()
 
-	vlh := simulator_lh.NewVirtualLiquidHandler(props, nil)
+	settings := simulator_lh.DefaultSimulatorSettings()
+
+	tipTracking := false
+	if iTipTracking, ok := request.Policies.Options["USE_DRIVER_TIP_TRACKING"]; ok {
+		tipTracking, _ = iTipTracking.(bool)
+	}
+
+	if tipTracking && this.Properties.HasTipTracking() {
+		settings.SetTipboxesAutoRefilled(true)
+	}
+
+	vlh := simulator_lh.NewVirtualLiquidHandler(props, settings)
 	for _, err := range vlh.GetErrors() {
 		err.WriteToLog()
 	}

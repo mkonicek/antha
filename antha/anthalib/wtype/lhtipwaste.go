@@ -130,7 +130,7 @@ func (lht *LHTipwaste) Empty() {
 	lht.Contents = 0
 }
 
-func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) bool {
+func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) ([]WellCoords, bool) {
 	// this just checks numbers for now
 	n := 0
 
@@ -140,7 +140,14 @@ func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) bool {
 		}
 	}
 
-	return lht.DisposeNum(n)
+	//currently tipwastes only ever have one well
+	wcS := make([]WellCoords, 0, n)
+	wc := WellCoords{0, 0}
+	for i := 0; i < n; i++ {
+		wcS = append(wcS, wc)
+	}
+
+	return wcS, lht.DisposeNum(n)
 }
 
 func (lht *LHTipwaste) DisposeNum(num int) bool {

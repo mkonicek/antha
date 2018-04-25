@@ -885,15 +885,13 @@ func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (we
 
 	foundit := false
 
-	wellNames := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
-
 	for pos, bx := range lhp.Tipwastes {
-		yes := bx.Dispose(channels)
-		if yes {
+		wellCoords, ok := bx.Dispose(channels)
+		if ok {
 			foundit = true
 			for i := 0; i < multi; i++ {
 				if channels[i] != nil {
-					wells[i] = wellNames[i]
+					wells[i] = wellCoords[i].FormatA1()
 					positions[i] = pos
 					boxtypes[i] = bx.Type
 				}

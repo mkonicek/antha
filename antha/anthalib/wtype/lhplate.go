@@ -1112,24 +1112,19 @@ func (self *LHPlate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordin
 		return Coordinates{}, false
 	}
 
+	child := self.GetChildByAddress(wc)
+
 	var z float64
 	if r == BottomReference {
-		z = self.WellZStart
+		z = child.GetPosition().Z
 	} else if r == TopReference {
-		z = self.WellZStart + self.Welltype.GetSize().Z
+		z = child.GetPosition().Z + child.GetSize().Z
 	} else if r == LiquidReference {
 		panic("Haven't implemented liquid level yet")
 	}
-
-	child := self.GetChildByAddress(wc)
 	center := child.GetPosition().Add(child.GetSize().Multiply(0.5))
 
-	return /*self.GetPosition().Add(*/ Coordinates{
-		//self.WellXStart + (float64(wc.X)+0.5)*self.WellXOffset,
-		//self.WellYStart + (float64(wc.Y)+0.5)*self.WellYOffset,
-		center.X,
-		center.Y,
-		z}, true
+	return Coordinates{center.X, center.Y, z}, true
 }
 
 func (p *LHPlate) ResetID(newID string) {

@@ -67,6 +67,14 @@ func summariseChannels(channels []int) string {
 	return fmt.Sprintf("channels %s", strings.Join(sch, ","))
 }
 
+func summariseWellCoords(wellCoords []wtype.WellCoords) string {
+	ss := make([]string, 0, len(wellCoords))
+	for _, wc := range wellCoords {
+		ss = append(ss, wc.FormatA1())
+	}
+	return summariseStrings(ss)
+}
+
 func summariseVolumes(vols []float64) string {
 	equal := true
 	for _, v := range vols {
@@ -89,25 +97,12 @@ func summariseVolumes(vols []float64) string {
 }
 
 func summariseStrings(s []string) string {
-	m := map[string]bool{}
-	for _, v := range s {
-		if v != "" {
-			m[v] = true
-		}
+	if countUnique(s, true) == 1 {
+		return firstNonEmpty(s)
 	}
-	s2 := make([]string, 0, len(m))
-	for k := range m {
-		s2 = append(s2, k)
-	}
-
-	if len(s2) == 0 {
-		return "nil"
-	}
-	if len(s2) == 1 {
-		return s2[0]
-	}
-	return fmt.Sprintf("{%s}", strings.Join(s2, ","))
+	return "{" + strings.Join(s, ",") + "}"
 }
+
 func summariseCycles(cycles []int, elems []int) string {
 	if iElemsEqual(cycles, elems) {
 		if cycles[0] == 1 {
@@ -1133,8 +1128,9 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 
 //LoadTips - used
 func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
-	platetype, position, well []string) driver.CommandStatus {
+	platetypeS, positionS, well []string) driver.CommandStatus {
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "LOADTIPS ACK"}
+	deck := self.state.GetDeck()
 
 	//get the adaptor
 	adaptor, err := self.getAdaptorState(head)
@@ -1145,12 +1141,12 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	n_channels := adaptor.GetChannelCount()
 
 	//extend arg slices
-	platetype = extend_strings(n_channels, platetype)
-	position = extend_strings(n_channels, position)
+	platetypeS = extend_strings(n_channels, platetypeS)
+	positionS = extend_strings(n_channels, positionS)
 	well = extend_strings(n_channels, well)
 
 	//check that the command is valid
-	if !self.testTipArgs("LoadTips", channels, head, platetype, position, well) {
+	if !self.testTipArgs("LoadTips", channels, head, platetypeS, positionS, well) {
 		return ret
 	}
 
@@ -1160,29 +1156,54 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		wc[i] = wtype.MakeWellCoords(well[i])
 	}
 
-	//check that all channels are empty
-	if tc := adaptor.GetTipCount(); tc > 0 {
-		//get a slice of channels with tips on
-		loaded := make([]int, 0, tc)
-		for i := 0; i < adaptor.GetChannelCount(); i++ {
-			if adaptor.GetChannel(i).HasTip() {
-				loaded = append(loaded, i)
-			}
-		}
-		has := "has a"
-		if tc > 1 {
-			has = "have"
-		}
-		self.AddErrorf("LoadTips", "Cannot load tips to Head%d when %s already %s %s loaded",
-			head, summariseChannels(loaded), has, pTips(tc))
+	//get the individual position
+	if countUnique(positionS, true) != 1 {
+		self.AddErrorf("LoadTips", "invalid position slice \"%v\", only one position supported", positionS)
+		return ret
+	}
+	position := firstNonEmpty(positionS)
+
+	//get the actual tipbox
+	var tipbox *wtype.LHTipbox
+	if o, ok := deck.GetChild(position); !ok {
+		self.AddErrorf("LoadTips", "unknown location \"%s\"", position)
+		return ret
+	} else if o == nil {
+		self.AddErrorf("LoadTips", "can't load tips from empty position \"%s\"", position)
+		return ret
+	} else if tipbox, ok = o.(*wtype.LHTipbox); !ok {
+		self.AddErrorf("LoadTips", "can't load tips from %s \"%s\" found at position \"%s\"",
+			wtype.ClassOf(o), wtype.NameOf(o), position)
+		return ret
+	}
+	if tipbox == nil {
+		self.AddErrorf("LoadTips", "unexpected nil tipbox at position \"%s\"", position)
 		return ret
 	}
 
-	//get the deck
-	deck := self.state.GetDeck()
+	if self.settings.GetTipTrackingBehaviour() == TrilutionTipTracking {
+		//refil the tipbox if there aren't enough tips to service the instruction
+		if !tipbox.HasEnoughTips(multi) {
+			tipbox.Refill()
+		}
+		//HJK: we should also check that we're picking up tip in the way trilution is know to (e.g. splitting over rows etc)
+		//but this requires more information about the geometry of the head and so on
+
+	}
+
+	describe := func() string {
+		return fmt.Sprintf("from %s@%s at position \"%s\" to head %d %s", summariseWellCoords(wc), tipbox.GetName(), position, head, summariseChannels(channels))
+	}
+
+	//check that channels we want to load to are empty
+	if tipFound := checkTipPresence(false, adaptor, channels); len(tipFound) != 0 {
+		self.AddErrorf("LoadTips", "%s : %s already loaded to %s",
+			describe(), pTips(len(tipFound)), summariseChannels(tipFound))
+		return ret
+	}
 
 	if len(channels) == 0 {
-		for ch, pt := range platetype {
+		for ch, pt := range platetypeS {
 			if pt != "" {
 				channels = append(channels, ch)
 			}
@@ -1195,75 +1216,54 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 			self.AddWarning("LoadTips", "'channel' argument empty and no platetype specified ignoring")
 			return ret
 		} else if self.settings.IsAutoChannelWarningEnabled() {
-			self.AddWarningf("LoadTips", "channels to load to were not specified in instruction, inferring %s from platetype", summariseChannels(channels))
+			self.AddWarningf("LoadTips", "%s : channels weren't specified in instruction, inferring %s from platetype", describe(), summariseChannels(channels))
 		}
 
 		//check if multi is wrong
 		if multi != len(channels) {
-			self.AddErrorf("LoadTips", "'channel' argument inferred as %s, but 'multi' is %d",
+			self.AddErrorf("LoadTips", "%s : 'channel' argument inferred as %s, but 'multi' is %d",
+				describe(),
 				summariseChannels(channels),
 				multi)
 			return ret
 		}
 	}
 	if multi != len(channels) {
-		self.AddErrorf("LoadTips", "While loading %s to %s, multi should equal %d, not %d",
-			pTips(len(channels)), summariseChannels(channels), len(channels), multi)
+		self.AddErrorf("LoadTips", "%s : multi should equal %d, not %d",
+			describe(), len(channels), multi)
 		return ret
 	}
 
 	//Get the tip at each requested location
 	tips := make([]*wtype.LHTip, n_channels)
-	var tipbox *wtype.LHTipbox
+	var missingTips []wtype.WellCoords
 	for _, i := range channels {
-		//infer position if it's not given
-		if position[i] == "" {
-			pos := adaptor.GetChannel(i).GetAbsolutePosition()
-			for _, obj := range deck.GetVChildren(pos) {
-				if tb, ok := obj.(*wtype.LHTipbox); ok {
-					position[i] = deck.GetSlotContaining(tb)
-					self.AddWarningf("LoadTips",
-						"Position %d was blank, inferring \"%s\" from adaptor location",
-						i, position[i])
-					break
-				}
-			}
-		}
-		if o, ok := deck.GetChild(position[i]); !ok {
-			self.AddErrorf("LoadTips", "No known location \"%s\"", position[i])
-			return ret
-		} else if o == nil {
-			self.AddErrorf("LoadTips", "No tipbox found at position %s, empty deck position", position[i])
-			return ret
-		} else if tipbox, ok = o.(*wtype.LHTipbox); !ok {
-			self.AddErrorf("LoadTips", "No tipbox found at position %s, instead found %s \"%s\"",
-				position[i], wtype.ClassOf(o), wtype.NameOf(o))
-			return ret
-		}
 
 		if wc[i].IsZero() {
 			pos := adaptor.GetChannel(i).GetAbsolutePosition()
 			wc[i], _ = tipbox.CoordsToWellCoords(pos)
 			if !wc[i].IsZero() {
 				self.AddWarningf("LoadTips",
-					"Well coordinates for channel %d not specified, assuming %s from adaptor location",
-					i,
-					wc[i].FormatA1())
+					"%s : Well coordinates for channel %d not specified, assuming %s from adaptor location",
+					describe(), i, wc[i].FormatA1())
 			}
 		}
 
 		if !tipbox.AddressExists(wc[i]) {
-			self.AddErrorf("LoadTips", "Request for tip at %s in tipbox of size [%dx%d]",
-				wc[i].FormatA1(), tipbox.NCols(), tipbox.NRows())
+			self.AddErrorf("LoadTips", "%s : request for tip at %s in tipbox of size [%dx%d]",
+				describe(), wc[i].FormatA1(), tipbox.NCols(), tipbox.NRows())
 			return ret
 		} else {
 			tips[i] = tipbox.GetChildByAddress(wc[i]).(*wtype.LHTip)
 			if tips[i] == nil {
-				self.AddErrorf("LoadTips", "Cannot load to channel %d as no tip at %s in tipbox \"%s\"",
-					i, wc[i].FormatA1(), tipbox.GetName())
-				return ret
+				missingTips = append(missingTips, wc[i])
 			}
 		}
+	}
+	if len(missingTips) > 0 {
+		self.AddErrorf("LoadTips", "%s : no %s at %s",
+			describe(), pTips(len(missingTips)), summariseWellCoords(missingTips))
+		return ret
 	}
 
 	//check alignment

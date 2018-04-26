@@ -211,6 +211,21 @@ func (tb *LHTipbox) N_clean_tips() int {
 	return c
 }
 
+func (tb *LHTipbox) HasEnoughTips(requested int) bool {
+	c := 0
+	for _, tiprow := range tb.Tips {
+		for _, tip := range tiprow {
+			if tip != nil && !tip.Dirty {
+				c += 1
+				if c > requested {
+					return true
+				}
+			}
+		}
+	}
+	return c > requested
+}
+
 //##############################################
 //@implement LHObject
 //##############################################

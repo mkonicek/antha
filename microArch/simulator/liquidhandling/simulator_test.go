@@ -953,6 +953,58 @@ func TestLoadTips(t *testing.T) {
 			},
 		},
 		{
+			"OK - 2 groups of 4",
+			nil,
+			[]*SetupFn{
+				testLayout(),
+				moveTo(4, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3}, //channels
+					0,                 //head
+					4,                 //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "", "", "", ""},         //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "", "", "", ""}, //location
+					[]string{"E1", "F1", "G1", "H1", "", "", "", ""},                         //well
+				},
+				&Move{
+					[]string{"", "", "", "", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"", "", "", "", "A1", "B1", "C1", "D1"},                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                //offsetZ
+					[]string{"", "", "", "", "tipbox", "tipbox", "tipbox", "tipbox"},         //plate_type
+					0, //head
+				},
+				&LoadTips{
+					[]int{4, 5, 6, 7}, //channels
+					0,                 //head
+					4,                 //multi
+					[]string{"", "", "", "", "tipbox", "tipbox", "tipbox", "tipbox"},         //tipbox
+					[]string{"", "", "", "", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"", "", "", "", "A1", "B1", "C1", "D1"},                         //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{
+					{0, "", 0},
+					{1, "", 0},
+					{2, "", 0},
+					{3, "", 0},
+					{4, "", 0},
+					{5, "", 0},
+					{6, "", 0},
+					{7, "", 0},
+				}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
 			"unknown channel 8",
 			nil,
 			[]*SetupFn{
@@ -1105,7 +1157,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: While loading tip to channel 0, multi should equal 1, not 4",
+				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : multi should equal 1, not 4",
 			},
 			nil, //assertions
 		},
@@ -1128,7 +1180,30 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Cannot load to channel 0 as no tip at H12 in tipbox \"tipbox1\"",
+				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : no tip at H12",
+			},
+			nil, //assertions
+		},
+		{
+			"8 tips missing",
+			nil,
+			[]*SetupFn{
+				testLayout(),
+				removeTipboxTips("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
+				moveTo(0, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //well
+				},
+			},
+			[]string{ //errors
+				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7 : no tips at {A12,B12,C12,D12,E12,F12,G12,H12}",
 			},
 			nil, //assertions
 		},
@@ -1151,7 +1226,30 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Cannot load tips to Head0 when channel 0 already has a tip loaded",
+				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : tip already loaded to channel 0",
+			},
+			nil, //assertions
+		},
+		{
+			"tips already loaded",
+			nil,
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+				moveTo(0, 11, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //well
+				},
+			},
+			[]string{ //errors
+				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7 : tips already loaded to channels 0,1,2,3,4,5,6,7",
 			},
 			nil, //assertions
 		},

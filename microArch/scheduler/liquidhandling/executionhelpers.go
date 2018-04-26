@@ -153,7 +153,7 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 }
 
-func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool) *IChain {
+func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.LHComponent) *IChain {
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations
@@ -165,9 +165,13 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 		addToIChain(ic, n, tg)
 	}
 
-	// finally we need to ensure that splits and mixes are kept separate by fissioning nodes
+	// we need to ensure that splits and mixes are kept separate by fissioning nodes
 
 	ic.SplitMixedNodes()
+
+	// this routine ensures that instructions can be executed in parallel
+
+	ic = simplifyIChain(ic, inputs)
 
 	sortOutputs(ic, sort)
 
@@ -386,14 +390,12 @@ func set_output_order(rq *LHRequest) error {
 	tg = MakeTGraph(sortedAsIns)
 	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
-	fmt.Println(graph.Print(graph.PrintOpt{Graph: tg}))
-
 	if err != nil {
 		return err
 	}
 
 	// make into equivalence classes and sort according to defined order
-	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort)
+	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort, rq.Input_solutions)
 
 	// populate the request
 	rq.InstructionChain = it
@@ -411,41 +413,6 @@ func updateRequestWithNewInstructions(rq *LHRequest, sorted []*wtype.LHInstructi
 		}
 	}
 	return rq
-}
-
-func set_output_order_orig(rq *LHRequest) error {
-	// sort into equivalence classes by generation
-
-	sorted := insSliceFromMap(rq.LHInstructions)
-
-	sorted = aggregateAppropriateInstructions(sorted)
-
-	if rq.Options.OutputSort {
-		sort.Sort(ByGenerationOpt(sorted))
-	} else {
-		sort.Sort(ByGeneration(sorted))
-	}
-
-	it := NewIChain(nil)
-
-	// aggregation of instructions effectively happens here. This entire level is
-	// passed as a block to the instruction generator as a TransferBlock (TFB)
-	// to be picked apart sequentially into sets which can be serviced simultaneously
-	// etc.
-
-	for _, v := range sorted {
-		it.Add(v)
-	}
-
-	it.Print()
-
-	rq.Output_order = it.Flatten()
-
-	rq.InstructionChain = it
-
-	//rq.InstructionSets = make_instruction_sets(it)
-
-	return nil
 }
 
 type ByOrdinal [][]int

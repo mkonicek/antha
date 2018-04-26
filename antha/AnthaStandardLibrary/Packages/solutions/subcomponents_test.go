@@ -302,6 +302,22 @@ func TestUpdateComponentDetails(t *testing.T) {
 	},
 	}
 
+	someOtherComponents := ComponentList{Components: map[string]wunit.Concentration{
+		"glycerol":    wunit.NewConcentration(0.5, "g/l"),
+		"IPTG":        wunit.NewConcentration(0.5, "mM/l"),
+		"water":       wunit.NewConcentration(0.5, "v/v"),
+		"LB":          wunit.NewConcentration(0.25, "X"),
+		"Extra Thing": wunit.NewConcentration(1, "X"),
+	},
+	}
+
+	lbComponents := ComponentList{Components: map[string]wunit.Concentration{
+		"Yeast Extract":   wunit.NewConcentration(5, "g/l"),
+		"Tryptone":        wunit.NewConcentration(10, "g/l"),
+		"Sodium Chloride": wunit.NewConcentration(10, "g/l"),
+	},
+	}
+
 	water := newTestComponent("water", wtype.LTWater, 9999, defaultConc, wunit.NewVolume(2000.0, "ul"), nilComponentList)
 
 	mmx := newTestComponent("mastermix_sapI", wtype.LTWater, 9999, defaultConc, wunit.NewVolume(2000.0, "ul"), nilComponentList)
@@ -311,7 +327,9 @@ func TestUpdateComponentDetails(t *testing.T) {
 	glycerol := newTestComponent("glycerol", wtype.LTWater, 9999, gPerL1, wunit.NewVolume(2000.0, "ul"), nilComponentList)
 	iptg := newTestComponent("IPTG", wtype.LTWater, 9999, wunit.NewConcentration(1, "mM"), wunit.NewVolume(2000.0, "ul"), nilComponentList)
 	lb := newTestComponent("LB", wtype.LTWater, 9999, wunit.NewConcentration(1, "X"), wunit.NewVolume(2000.0, "ul"), nilComponentList)
+	lbWithSubComponents := newTestComponent("LB", wtype.LTWater, 9999, wunit.NewConcentration(1, "X"), wunit.NewVolume(2000.0, "ul"), lbComponents)
 	mediaMixture := newTestComponent("LB", wtype.LTWater, 9999, wunit.NewConcentration(1, "X"), wunit.NewVolume(2000.0, "ul"), someComponents)
+	anotherMediaMixture := newTestComponent("LB", wtype.LTWater, 9999, wunit.NewConcentration(1, "X"), wunit.NewVolume(2000.0, "ul"), someOtherComponents)
 
 	ws := mixer.Sample(water, wunit.NewVolume(65.0, "ul"))
 	wsTotal := mixer.SampleForTotalVolume(water, wunit.NewVolume(100.0, "ul"))
@@ -385,6 +403,50 @@ func TestUpdateComponentDetails(t *testing.T) {
 			},
 			expectedProductConc: gPerL0,
 			expectedError:       errors.New("SampleForTotalVolume requested (100 ul) is less than sum of sample volumes (260 ul)"),
+		},
+		{
+			name:    "renamedComponentTest",
+			product: water,
+			mixes: []*wtype.LHComponent{
+				mixer.Sample(lbWithSubComponents, wunit.NewVolume(400.0, "ul")),
+				mixer.Sample(glycerol, wunit.NewVolume(50, "ul")),
+				mixer.Sample(iptg, wunit.NewVolume(50, "ul")),
+			},
+			expectedProductName: "0.1 mM/l IPTG+8 g/l Sodium Chloride+8 g/l Tryptone+4 g/l Yeast Extract+0.1 g/l glycerol",
+			expectedProductComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"glycerol":        wunit.NewConcentration(0.1, "g/l"),
+					"IPTG":            wunit.NewConcentration(0.1, "mM/l"),
+					"Yeast Extract":   wunit.NewConcentration(4, "g/l"),
+					"Tryptone":        wunit.NewConcentration(8, "g/l"),
+					"Sodium Chloride": wunit.NewConcentration(8, "g/l"),
+				},
+			},
+			expectedProductConc: gPerL0,
+			expectedError:       nil,
+		},
+		{
+			name:    "SampleWithTwoComponentListsTest",
+			product: water,
+			mixes: []*wtype.LHComponent{
+				mixer.Sample(water, wunit.NewVolume(600.0, "ul")),
+				mixer.Sample(glycerol, wunit.NewVolume(100.0, "ul")),
+				mixer.Sample(iptg, wunit.NewVolume(100.0, "ul")),
+				mixer.Sample(mediaMixture, wunit.NewVolume(100.0, "ul")),
+				mixer.Sample(anotherMediaMixture, wunit.NewVolume(100.0, "ul")),
+			},
+			expectedProductName: "0.1 X Extra Thing+0.175 mM/l IPTG+0.05 X LB+0.175 g/l glycerol+0.675 v/v water",
+			expectedProductComponentList: ComponentList{
+				Components: map[string]wunit.Concentration{
+					"glycerol":    wunit.NewConcentration(0.175, "g/l"),
+					"IPTG":        wunit.NewConcentration(0.175, "mM/l"),
+					"water":       wunit.NewConcentration(0.675, "v/v"),
+					"LB":          wunit.NewConcentration(0.05, "X"),
+					"Extra Thing": wunit.NewConcentration(0.1, "X"),
+				},
+			},
+			expectedProductConc: gPerL0,
+			expectedError:       wtype.NewWarningf("zero concentration found for sample water"),
 		},
 		{
 			name:    "SampleWithComponentListsTest",

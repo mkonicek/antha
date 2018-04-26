@@ -217,8 +217,12 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	}
 
 	if tipTracking && this.Properties.HasTipTracking() {
-		settings.SetTipboxesAutoRefilled(true)
+		settings.SetTipTrackingBehaviour(simulator_lh.TrilutionTipTracking)
 	}
+
+	settings.EnablePipetteSpeedWarning(simulator_lh.WarnOnce)
+	settings.EnableAutoChannelWarning(simulator_lh.WarnOnce)
+	settings.EnableLiquidTypeWarning(simulator_lh.WarnNever)
 
 	vlh := simulator_lh.NewVirtualLiquidHandler(props, settings)
 	for _, err := range vlh.GetErrors() {

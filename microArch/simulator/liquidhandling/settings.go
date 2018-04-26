@@ -43,15 +43,19 @@ type SimulatorSettings struct {
 	warn_auto_channels      Frequency //Display warnings for load/unload tips
 	max_dispense_height     float64   //maximum height to dispense from in mm
 	tipTracking             TipTrackingBehaviour
+	warnPipetteSpeed        Frequency //Raise warnings for pipette speed out of range
+	warnLiquidType          Frequency //raise warnings when liquid types don't match
 }
 
 func DefaultSimulatorSettings() *SimulatorSettings {
 	ss := SimulatorSettings{
-		true,
-		true,
-		WarnAlways,
-		5.,
-		NoTipTracking,
+		enable_tipbox_collision: true,
+		enable_tipbox_check:     true,
+		warn_auto_channels:      WarnAlways,
+		max_dispense_height:     5.,
+		tipTracking:             NoTipTracking,
+		warnPipetteSpeed:        WarnAlways,
+		warnLiquidType:          WarnNever,
 	}
 	return &ss
 }
@@ -100,4 +104,34 @@ func (self *SimulatorSettings) GetTipTrackingBehaviour() TipTrackingBehaviour {
 
 func (self *SimulatorSettings) SetTipTrackingBehaviour(s TipTrackingBehaviour) {
 	self.tipTracking = s
+}
+
+func (self *SimulatorSettings) IsPipetteSpeedWarningEnabled() bool {
+	switch self.warnPipetteSpeed {
+	case WarnAlways:
+		return true
+	case WarnOnce:
+		self.warnPipetteSpeed = WarnNever
+		return true
+	}
+	return false
+}
+
+func (self *SimulatorSettings) EnablePipetteSpeedWarning(f Frequency) {
+	self.warnPipetteSpeed = f
+}
+
+func (self *SimulatorSettings) IsLiquidTypeWarningEnabled() bool {
+	switch self.warnLiquidType {
+	case WarnAlways:
+		return true
+	case WarnOnce:
+		self.warnLiquidType = WarnNever
+		return true
+	}
+	return false
+}
+
+func (self *SimulatorSettings) EnableLiquidTypeWarning(f Frequency) {
+	self.warnLiquidType = f
 }

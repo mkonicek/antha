@@ -96,6 +96,14 @@ func summariseVolumes(vols []float64) string {
 	return fmt.Sprintf("{%s} ul", strings.Join(s_vols, ","))
 }
 
+func summariseRates(rates []wunit.FlowRate) string {
+	asString := make([]string, 0, len(rates))
+	for _, r := range rates {
+		asString = append(asString, r.String())
+	}
+	return summariseStrings(asString)
+}
+
 func summariseStrings(s []string) string {
 	if countUnique(s, true) == 1 {
 		return firstNonEmpty(s)
@@ -907,7 +915,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 		if wells[i] == nil { //we'll catch this later
 			continue
 		}
-		if wells[i].Contents().GetType() != what[i] {
+		if wells[i].Contents().GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
 			self.AddWarningf("Aspirate", "While %s - well %s contains %s, not %s",
 				describe(), wells[i].GetName(), wells[i].Contents().GetType(), what[i])
 		}
@@ -1067,7 +1075,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 	//check liquid type
 	for i := range arg.channels {
 		if tip := arg.adaptor.GetChannel(i).GetTip(); tip != nil {
-			if tip.Contents().GetType() != what[i] {
+			if tip.Contents().GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
 				self.AddWarningf("Dispense", "%s : channel %d contains %s, not %s",
 					describe(), i, tip.Contents().GetType(), what[i])
 			}
@@ -1075,7 +1083,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 	}
 
 	//check volumes -- currently only warnings due to poor volume tracking
-	currentVolumes := make([]float64, 0, len(arg.channels))
+	finalVolumes := make([]float64, 0, len(arg.channels))
 	maxVolumes := make([]float64, 0, len(arg.channels))
 	overfullWells := make([]int, 0, len(arg.channels))
 	for _, i := range arg.channels {
@@ -1084,17 +1092,13 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 		fV := wunit.AddVolumes(cV, wunit.NewVolume(volume[i], "ul"))
 		if delta := wunit.SubtractVolumes(fV, mV); fV.GreaterThan(mV) && !delta.IsZero() {
 			overfullWells = append(overfullWells, i)
-			currentVolumes = append(currentVolumes, cV.ConvertToString("ul"))
+			finalVolumes = append(finalVolumes, fV.ConvertToString("ul"))
 			maxVolumes = append(maxVolumes, mV.ConvertToString("ul"))
 		}
 	}
-	if len(overfullWells) > 1 {
-		self.AddWarningf("Dispense", "%s : overfilling wells %s which already contain %s and have max volume %s",
-			describe(), summarisePlateWells(wells, overfullWells), summariseVolumes(currentVolumes), summariseVolumes(maxVolumes))
-	}
-	if len(overfullWells) == 1 {
-		self.AddWarningf("Dispense", "%s : overfilling well %s which already contains %s and has max volume %s",
-			describe(), summarisePlateWells(wells, overfullWells), summariseVolumes(currentVolumes), summariseVolumes(maxVolumes))
+	if len(overfullWells) > 0 {
+		self.AddWarningf("Dispense", "%s : overfilling %s %s to %s of %s max volume",
+			describe(), pWells(len(overfullWells)), summarisePlateWells(wells, overfullWells), summariseVolumes(finalVolumes), summariseVolumes(maxVolumes))
 	}
 
 	//dispense
@@ -1511,33 +1515,45 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 
 //SetPipetteSpeed - used
 func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float64) driver.CommandStatus {
+	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETPIPETTESPEED ACK"}
 
-	if adaptor, err := self.getAdaptorState(head); err != nil {
+	adaptor, err := self.getAdaptorState(head)
+	if err != nil {
 		self.AddError("SetPipetteSpeed", err.Error())
-	} else {
-		channels := make([]int, 0, adaptor.GetChannelCount())
-		if channel < 0 || !adaptor.IsIndependent() {
-			if channel >= 0 {
-				self.AddWarningf("SetPipetteSpeed", "Head %d is not independent, setting pipette speed for channel %d sets all other channels as well", head, channel)
-			}
-			for ch := 0; ch < adaptor.GetChannelCount(); ch++ {
-				channels = append(channels, ch)
-			}
-		} else {
-			channels = append(channels, channel)
-		}
+		return ret
+	}
 
-		for ch := range channels {
-			p := adaptor.GetParamsForChannel(ch)
-			t_rate := wunit.NewFlowRate(rate, "ml/min")
-			if t_rate.GreaterThan(p.Maxspd) || t_rate.LessThan(p.Minspd) {
-				self.AddWarningf("SetPipetteSpeed", "Setting Head %d channel %d speed to %s outside allowable range [%s:%s]",
-					head, ch, t_rate, p.Minspd, p.Maxspd)
-			}
+	channels := make([]int, 0, adaptor.GetChannelCount())
+	if channel < 0 || !adaptor.IsIndependent() {
+		if channel >= 0 {
+			self.AddWarningf("SetPipetteSpeed", "Head %d is not independent, setting pipette speed for channel %d sets all other channels as well", head, channel)
+		}
+		for ch := 0; ch < adaptor.GetChannelCount(); ch++ {
+			channels = append(channels, ch)
+		}
+	} else {
+		channels = append(channels, channel)
+	}
+
+	outOfRange := make([]int, 0, len(channels))
+	tRate := wunit.NewFlowRate(rate, "ml/min")
+	minRate := make([]wunit.FlowRate, 0, len(channels))
+	maxRate := make([]wunit.FlowRate, 0, len(channels))
+	for ch := range channels {
+		p := adaptor.GetParamsForChannel(ch)
+		if tRate.GreaterThan(p.Maxspd) || tRate.LessThan(p.Minspd) {
+			outOfRange = append(outOfRange, ch)
+			minRate = append(minRate, p.Minspd)
+			maxRate = append(maxRate, p.Maxspd)
 		}
 	}
 
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETPIPETTESPEED ACK"}
+	if len(outOfRange) > 0 && self.settings.IsPipetteSpeedWarningEnabled() {
+		self.AddWarningf("SetPipetteSpeed", "Setting Head %d %s speed to %s is outside allowable range [%s:%s]",
+			head, summariseChannels(outOfRange), tRate, summariseRates(minRate), summariseRates(maxRate))
+	}
+
+	return ret
 }
 
 //SetDriveSpeed - used
@@ -1638,7 +1654,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 		if wells[i] == nil {
 			no_well = append(no_well, i)
 		} else {
-			if wells[i].Contents().GetType() != what[i] {
+			if wells[i].Contents().GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
 				self.AddWarningf("Mix", "While %s - well contains %s not %s", describe(), wells[i].Contents().GetType(), what[i])
 			}
 			if wells[i].CurrentVolume().LessThan(v) {

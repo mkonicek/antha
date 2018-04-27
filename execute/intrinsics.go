@@ -317,11 +317,6 @@ func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
 	return p
 }
 
-/*
-func NewLHpolicy(ctx context.Context, policy wtype.LHPolicy) (*wtype.LHPolicy, error) {
-
-}*/
-
 // TODO -- LOC etc. will be passed through OK but what about
 //         the actual plate info?
 //        - two choices here: 1) we upgrade the sample tracker; 2) we pass the plate in somehow

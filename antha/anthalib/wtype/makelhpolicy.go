@@ -30,8 +30,8 @@ import (
 	"sort"
 	"strings"
 
-	//. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
-	//"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
@@ -56,47 +56,53 @@ import (
 //}
 
 func MakePolicies() map[string]LHPolicy {
+
 	pols := make(map[string]LHPolicy)
 
+	add := func(policy LHPolicy, name string) {
+		policy.SetName(name)
+		if _, found := pols[policy.Name()]; found {
+			panic(fmt.Sprintf("duplicate policy (%s) added to MakePolicies", policy.Name()))
+		}
+		pols[policy.Name()] = policy
+	}
+
 	// what policies do we need?
-	pols["SmartMix"] = SmartMixPolicy()
-	pols["water"] = MakeWaterPolicy()
-	pols["multiwater"] = MakeMultiWaterPolicy()
-	pols["culture"] = MakeCulturePolicy()
-	pols["culturereuse"] = MakeCultureReusePolicy()
-	pols["glycerol"] = MakeGlycerolPolicy()
-	pols["solvent"] = MakeSolventPolicy()
-	pols["default"] = MakeDefaultPolicy()
-	pols["dna"] = MakeDNAPolicy()
-	pols["DoNotMix"] = MakeDefaultPolicy()
-	pols["NeedToMix"] = MakeNeedToMixPolicy()
-	pols["PreMix"] = PreMixPolicy()
-	pols["PostMix"] = PostMixPolicy()
-	pols["MegaMix"] = MegaMixPolicy()
-	pols["viscous"] = MakeViscousPolicy()
-	pols["Paint"] = MakePaintPolicy()
-
-	// pols["lysate"] = MakeLysatePolicy()
-	pols["protein"] = MakeProteinPolicy()
-	pols["detergent"] = MakeDetergentPolicy()
-	pols["load"] = MakeLoadPolicy()
-	pols["loadwater"] = MakeLoadWaterPolicy()
-	pols["DispenseAboveLiquid"] = MakeDispenseAboveLiquidPolicy()
-	pols["DispenseAboveLiquidMulti"] = MakeDispenseAboveLiquidMultiPolicy()
-	pols["PEG"] = MakePEGPolicy()
-	pols["Protoplasts"] = MakeProtoplastPolicy()
-	pols["dna_mix"] = MakeDNAMixPolicy()
-	pols["dna_mix_multi"] = MakeDNAMixMultiPolicy()
-	pols["dna_cells_mix"] = MakeDNACELLSMixPolicy()
-	pols["dna_cells_mix_multi"] = MakeDNACELLSMixMultiPolicy()
-	pols["plateout"] = MakePlateOutPolicy()
-	pols["colony"] = MakeColonyPolicy()
-	pols["colonymix"] = MakeColonyMixPolicy()
-	//      pols["lysate"] = MakeLysatePolicy()
-	pols["carbon_source"] = MakeCarbonSourcePolicy()
-	pols["nitrogen_source"] = MakeNitrogenSourcePolicy()
-	pols["XYOffsetTest"] = MakeXYOffsetTestPolicy()
-
+	add(SmartMixPolicy(), "SmartMix")
+	add(MakeWaterPolicy(), "water")
+	add(MakeMultiWaterPolicy(), "multiwater")
+	add(MakeCulturePolicy(), "culture")
+	add(MakeCultureReusePolicy(), "culturereuse")
+	add(MakeGlycerolPolicy(), "glycerol")
+	add(MakeSolventPolicy(), "solvent")
+	add(MakeDefaultPolicy(), "default")
+	add(MakeDNAPolicy(), "dna")
+	add(MakeDefaultPolicy(), "DoNotMix")
+	add(MakeNeedToMixPolicy(), "NeedToMix")
+	add(PreMixPolicy(), "PreMix")
+	add(PostMixPolicy(), "PostMix")
+	add(MegaMixPolicy(), "MegaMix")
+	add(MakeViscousPolicy(), "viscous")
+	add(MakePaintPolicy(), "Paint")
+	add(MakeProteinPolicy(), "protein")
+	add(MakeDetergentPolicy(), "detergent")
+	add(MakeLoadPolicy(), "load")
+	add(MakeLoadWaterPolicy(), "loadwater")
+	add(MakeDispenseAboveLiquidPolicy(), "DispenseAboveLiquid")
+	add(MakeDispenseAboveLiquidMultiPolicy(), "DispenseAboveLiquidMulti")
+	add(MakePEGPolicy(), "PEG")
+	add(MakeProtoplastPolicy(), "Protoplasts")
+	add(MakeDNAMixPolicy(), "dna_mix")
+	add(MakeDNAMixMultiPolicy(), "dna_mix_multi")
+	add(MakeDNACELLSMixPolicy(), "dna_cells_mix")
+	add(MakeDNACELLSMixMultiPolicy(), "dna_cells_mix_multi")
+	add(MakePlateOutPolicy(), "plateout")
+	add(MakeColonyPolicy(), "colony")
+	add(MakeColonyMixPolicy(), "colonymix")
+	add(MakeCarbonSourcePolicy(), "carbon_source")
+	add(MakeNitrogenSourcePolicy(), "nitrogen_source")
+	add(MakeXYOffsetTestPolicy(), "XYOffsetTest")
+	fmt.Println(text.PrettyPrint(pols))
 	return pols
 }
 
@@ -108,6 +114,23 @@ func GetPolicyByName(policyname PolicyName) (lhpolicy LHPolicy, err error) {
 	if !policypresent {
 		validPolicies := availablePolicies()
 		return LHPolicy{}, fmt.Errorf("policy %s not found in Default list. Valid options: %s", policyname, strings.Join(validPolicies, "\n"))
+	}
+	return lhpolicy, nil
+}
+
+// GetPolicyByType will return the default LHPolicy corresponding to a LiquidType.
+// An error is returned if an invalid liquidType is specified.
+func GetPolicyByType(liquidType LiquidType) (lhpolicy LHPolicy, err error) {
+	typeName, err := liquidType.String()
+
+	if err != nil {
+		return
+	}
+	lhpolicy, policypresent := DefaultPolicies[string(typeName)]
+
+	if !policypresent {
+		validPolicies := availablePolicies()
+		return LHPolicy{}, fmt.Errorf("policy %s not found in Default list. Valid options: %s", liquidType, strings.Join(validPolicies, "\n"))
 	}
 	return lhpolicy, nil
 }
@@ -750,7 +773,7 @@ func newConditionalRule(ruleName string, conditions ...condition) (LHPolicyRule,
 
 	rule := NewLHPolicyRule(ruleName)
 	for _, condition := range conditions {
-		err := condition.AddToRule(rule)
+		err := condition.AddToRule(&rule)
 		if err != nil {
 			errs = append(errs, err.Error())
 		}
@@ -762,7 +785,7 @@ func newConditionalRule(ruleName string, conditions ...condition) (LHPolicyRule,
 }
 
 type condition interface {
-	AddToRule(LHPolicyRule) error
+	AddToRule(*LHPolicyRule) error
 }
 
 type categoricCondition struct {
@@ -770,7 +793,7 @@ type categoricCondition struct {
 	SetPoint string
 }
 
-func (c categoricCondition) AddToRule(rule LHPolicyRule) error {
+func (c categoricCondition) AddToRule(rule *LHPolicyRule) error {
 	return rule.AddCategoryConditionOn(c.Class, c.SetPoint)
 }
 
@@ -784,7 +807,7 @@ type conditionRange struct {
 	Upper float64
 }
 
-func (c numericCondition) AddToRule(rule LHPolicyRule) error {
+func (c numericCondition) AddToRule(rule *LHPolicyRule) error {
 	return rule.AddNumericConditionOn(c.Class, c.Range.Lower, c.Range.Upper)
 }
 
@@ -859,6 +882,7 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	return lhpr, nil
 }
 
+// GetLHPolicyForTest is used to set the default System Policies.
 func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	// make some policies
 
@@ -1072,35 +1096,3 @@ func LoadLHPoliciesFromFile() (*LHPolicyRuleSet, error) {
 func readJSON(fileContents []byte, ruleSet *LHPolicyRuleSet) error {
 	return json.Unmarshal(fileContents, ruleSet)
 }
-
-/*
-	LTNIL = LiquidType("nil")
-	LTWater = LiquidType("water")
-	LTDefault = LiquidType("default")
-	LTCulture = LiquidType("culture")
-	LTProtoplasts = LiquidType("protoplasts")
-	LTDNA = LiquidType("dna")
-	LTDNAMIX = LiquidType("dna_mix")
-	LTProtein = LiquidType("protein")
-	LTMultiWater = LiquidType("multiwater")
-	LTLoad = LiquidType("load")
-	LTVISCOUS = LiquidType("viscous")
-	LTPEG = LiquidType("peg")
-	LTPAINT = LiquidType("paint")
-	LTNeedToMix = LiquidType("NeedToMix")
-	LTPostMix = LiquidType("PostMix")
-	LTload = LiquidType("load")
-	LTGlycerol = LiquidType("glycerol")
-	LTPLATEOUT = LiquidType("plateout")
-	LTDetergent = LiquidType("detergent")
-	LTCOLONY = LiquidType("colony")
-	LTNSrc = LiquidType("nitrogen_source")
-	InvalidPolicyName = LiquidType("InvalidPolicyName")
-	LTSmartMix = LiquidType("SmartMix")
-	LTPreMix = LiquidType("PreMix")
-	LTDISPENSEABOVE = LiquidType("DispenseAboveLiquid")
-	LTMegaMix = LiquidType("MegaMix")
-	LTDoNotMix = LiquidType("DoNotMix")
-	LTDNACELLSMIX = LiquidType("dna_cells_mix")
-	LTloadwater = LiquidType("loadwater")
-*/

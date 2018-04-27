@@ -215,7 +215,7 @@ func (lhr *LHRequest) Policies() *wtype.LHPolicyRuleSet {
 func (lhr *LHRequest) SetPolicies(systemPolicies *wtype.LHPolicyRuleSet) {
 
 	if systemPolicies == nil {
-		panic("damn")
+		panic("no system policies specified as argument to SetPolicies")
 	}
 
 	lhr.PolicyManager = &LHPolicyManager{
@@ -223,6 +223,7 @@ func (lhr *LHRequest) SetPolicies(systemPolicies *wtype.LHPolicyRuleSet) {
 	}
 }
 
+// AddUserPolicies allows policies specified in elements to be added to the PolicyManager.
 func (lhr *LHRequest) AddUserPolicies(userPolicies *wtype.LHPolicyRuleSet) {
 
 	lhr.PolicyManager.UserPolicies = userPolicies

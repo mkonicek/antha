@@ -159,7 +159,7 @@ func TestMultichannelFailPolicy(t *testing.T) {
 	// policy disallows
 	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -179,7 +179,7 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 	tb.Inss[0].Welladdress = "B2"
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -213,7 +213,7 @@ func TestMultichannelSucceedPair(t *testing.T) {
 	tb.Inss[7].Welladdress = "H4"
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -237,7 +237,7 @@ func TestMultichannelFailDest(t *testing.T) {
 	*/
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -275,7 +275,7 @@ func TestMultiChannelFailSrc(t *testing.T) {
 		rbt.Plates["position_4"].Cols[i][0].Clear()
 	}
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -294,7 +294,7 @@ func TestMultiChannelFailComponent(t *testing.T) {
 	// components not same liquid type
 	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -325,7 +325,7 @@ func TestMultichannelPositive(t *testing.T) {
 
 	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -374,7 +374,7 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 	// allow independent multichannel activity
 	rbt.HeadsLoaded[0].Params.Independent = true
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -408,7 +408,7 @@ func TestTroughMultichannelPositive(t *testing.T) {
 
 	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -443,7 +443,7 @@ func TestBigWellMultichannelPositive(t *testing.T) {
 
 	rbt := getTestRobot(ctx, dstp, "falcon6wellAgar_riser40")
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -477,7 +477,7 @@ func TestInsByInsMixPositiveMultichannel(t *testing.T) {
 
 	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -514,7 +514,7 @@ func TestInsByInsMixNegativeMultichannel(t *testing.T) {
 
 	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}
@@ -547,7 +547,7 @@ func TestInsByInsMixNegativeMultichannel(t *testing.T) {
 // TODO --> Create new version of the below
 /*
 func TestTransferMerge(t *testing.T) {
-	policy, _ := GetLHPolicyForTest()
+	policy, _ := wtype.GetLHPolicyForTest()
 	ins1 := getMeATransfer("milk")
 
 	toMerge := []*TransferInstruction{ins1, ins1}
@@ -637,7 +637,7 @@ func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	var err error
 	if pol == nil {
-		pol, err = GetLHPolicyForTest()
+		pol, err = wtype.GetLHPolicyForTest()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -723,7 +723,7 @@ func TestMultiChannelTipReuseDisabled(t *testing.T) {
 		panic(err)
 	}
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -748,7 +748,7 @@ func TestSingleChannelTipReuse(t *testing.T) {
 		panic(err)
 	}
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -778,7 +778,7 @@ func TestSingleChannelTipReuse2(t *testing.T) {
 
 	inss = append(inss, ins2...)
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -851,7 +851,7 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 	if pol == nil {
-		pol, _ = GetLHPolicyForTest()
+		pol, _ = wtype.GetLHPolicyForTest()
 		// allow multi
 		pol.Policies["water"]["CAN_MULTI"] = true
 	}

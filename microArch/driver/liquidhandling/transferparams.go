@@ -8,16 +8,16 @@ import (
 )
 
 type TransferParams struct {
-	What       string
-	PltFrom    string
-	PltTo      string
+	What       string // liquid type
+	PltFrom    string // plate from ?
+	PltTo      string // plate to ?
 	WellFrom   string
 	WellTo     string
-	Volume     wunit.Volume
-	FPlateType string
-	TPlateType string
-	FVolume    wunit.Volume
-	TVolume    wunit.Volume
+	Volume     wunit.Volume // volume of sample being transferred
+	FPlateType string       // from plate type ?
+	TPlateType string       // to plate type ?
+	FVolume    wunit.Volume // from volume ?
+	TVolume    wunit.Volume // to volume ?
 	Channel    *wtype.LHChannelParameter
 	TipType    string
 	FPlateWX   int
@@ -25,10 +25,11 @@ type TransferParams struct {
 	TPlateWX   int
 	TPlateWY   int
 	Component  string
+	Policy     wtype.LHPolicy
 }
 
 func (tp TransferParams) ToString() string {
-	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s %d %d %d %d %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType, tp.FPlateWX, tp.FPlateWY, tp.TPlateWX, tp.TPlateWY, tp.Component)
+	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s %d %d %d %d %s %+v", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType, tp.FPlateWX, tp.FPlateWY, tp.TPlateWX, tp.TPlateWY, tp.Component, tp.Policy)
 }
 
 func (tp TransferParams) Zero() bool {
@@ -54,6 +55,7 @@ func (tp TransferParams) Dup() TransferParams {
 		TPlateWX:   tp.TPlateWX,
 		TPlateWY:   tp.TPlateWY,
 		Component:  tp.Component,
+		Policy:     tp.Policy,
 	}
 }
 
@@ -296,7 +298,7 @@ func (mtp MultiTransferParams) Dup() MultiTransferParams {
 	return ret
 }
 
-func MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string) MultiTransferParams {
+func MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy) MultiTransferParams {
 
 	mtp := NewMultiTransferParams(len(what))
 
@@ -317,6 +319,7 @@ func MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetyp
 			FPlateWY:   FPlateWY[i],
 			TPlateWY:   TPlateWY[i],
 			Component:  Components[i],
+			Policy:     policies[i],
 		})
 	}
 

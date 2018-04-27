@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -487,11 +488,41 @@ func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
 
 // }
 
-func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPolicy {
+var (
+	// ErrNoMatchingRules is returned when no matching LHPolicyRules are found when evaluating a rule set against a RobotInsturction.
+	ErrNoMatchingRules = errors.New("no matching rules found")
+	// ErrNoMatchingLiquidType is returned when no matching liquid policy is found.
+	ErrNoMatchingLiquidType = errors.New("no matching LiquidType")
+)
+
+func matchesLiquidClass(rule wtype.LHPolicyRule) (match bool) {
+	if len(rule.Conditions) > 0 {
+		for i := range rule.Conditions {
+			if rule.Conditions[i].TestVariable == "LIQUIDCLASS" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// GetDefaultPolicyq currently returns the default policy
+func GetDefaultPolicy(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPolicy, error) {
+	defaultPolicy := wtype.DupLHPolicy(lhpr.Policies["default"])
+	return defaultPolicy, nil
+}
+
+// GetPolicyFor will return a matching LHPolicy for a RobotInstruction.
+// If a common policy cannot be found for instances of the instruction then an error will be returned.
+func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPolicy, error) {
 	// find the set of matching rules
 	rules := make([]wtype.LHPolicyRule, 0, len(lhpr.Rules))
+	var lhpolicyFound bool
 	for _, rule := range lhpr.Rules {
 		if ins.Check(rule) {
+			if matchesLiquidClass(rule) {
+				lhpolicyFound = true
+			}
 			rules = append(rules, rule)
 		}
 	}
@@ -506,9 +537,15 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPol
 	for _, rule := range rules {
 		ppl.MergeWith(lhpr.Policies[rule.Name])
 	}
+	if len(rules) == 0 {
+		return ppl, ErrNoMatchingRules
+	}
 
+	if !lhpolicyFound {
+		return ppl, ErrNoMatchingLiquidType
+	}
 	//printPolicyForDebug(ins, rules, ppl)
-	return ppl
+	return ppl, nil
 }
 
 func HasParameter(s string, ins RobotInstruction) bool {

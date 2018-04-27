@@ -89,10 +89,12 @@ func (self BBox) GetSize() Coordinates {
 	return self.Size
 }
 
+//String gets a string representation of the box
 func (self BBox) String() string {
 	return fmt.Sprintf("BBox[%v+%v]", self.Position, self.Size)
 }
 
+//Dup duplicate the bounding box
 func (self *BBox) Dup() *BBox {
 	return &BBox{self.Position, self.Size}
 }

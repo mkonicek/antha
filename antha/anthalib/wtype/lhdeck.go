@@ -70,6 +70,7 @@ func (self *deckSlot) IsBelow(point Coordinates) bool {
 		point.Y >= self.position.Y && point.Y <= self.position.Y+self.size.Y)
 }
 
+//Duplicate copy the deckSlot and contained objects, optionally keeping IDs unchanged
 func (self *deckSlot) Duplicate(keepIDs bool) *deckSlot {
 	accepts := make([]string, len(self.accepts))
 	copy(accepts, self.accepts)
@@ -185,6 +186,7 @@ func (self *LHDeck) GetParent() LHObject {
 	return nil
 }
 
+//Duplicate copy the LHObject, optionally keeping IDs unchanged
 func (self *LHDeck) Duplicate(keepIDs bool) LHObject {
 
 	slots := make(map[string]*deckSlot)

@@ -144,10 +144,12 @@ func (tip *LHTip) IsNil() bool {
 	return false
 }
 
+//Dup copy the tip generating a new ID
 func (tip *LHTip) Dup() *LHTip {
 	return tip.dup(false)
 }
 
+//Dup copy the tip keeping the previous ID
 func (tip *LHTip) DupKeepID() *LHTip {
 	return tip.dup(true)
 }
@@ -240,6 +242,7 @@ func (self *LHTip) AddComponent(v *LHComponent) error {
 	return nil
 }
 
+//SetContents set the contents of the tip, returns an error if the tip is overfilled
 func (self *LHTip) SetContents(v *LHComponent) error {
 	if v.Volume().GreaterThan(self.MaxVol) {
 		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), v.Volume(), self.MaxVol)

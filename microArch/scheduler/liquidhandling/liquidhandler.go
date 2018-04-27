@@ -211,17 +211,21 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	settings := simulator_lh.DefaultSimulatorSettings()
 
+	//Enable simulation of trilution like behaviour
+	//in reality this happens anyway when using trilution, irrespective of whether tipTracking is requested
 	tipTracking := false
 	if iTipTracking, ok := request.Policies.Options["USE_DRIVER_TIP_TRACKING"]; ok {
 		tipTracking, _ = iTipTracking.(bool)
 	}
-
 	if tipTracking && this.Properties.HasTipTracking() {
 		settings.SetTipTrackingBehaviour(simulator_lh.TrilutionTipTracking)
 	}
 
+	//Make this warning less noisy since it's not really important
 	settings.EnablePipetteSpeedWarning(simulator_lh.WarnOnce)
+	//again, something we should fix, but not important to users to quieten
 	settings.EnableAutoChannelWarning(simulator_lh.WarnOnce)
+	//this is probably not even an error as liquid types are more about LHPolicies than what's actually in the well
 	settings.EnableLiquidTypeWarning(simulator_lh.WarnNever)
 
 	vlh := simulator_lh.NewVirtualLiquidHandler(props, settings)
@@ -1385,6 +1389,7 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 	return rq
 }
 
+//addWellTargets for all the adaptors and plates available
 func (lh *Liquidhandler) addWellTargets() error {
 	for _, adaptor := range lh.Properties.Adaptors {
 		for _, plate := range lh.Properties.Plates {
@@ -1444,8 +1449,7 @@ func addWellTargetsTipWaste(adaptor *wtype.LHAdaptor, waste *wtype.LHTipwaste) {
 	waste.AsWell.SetWellTargets(adaptor.Name, targets)
 }
 
-//getWellTargetYStart pmdriver mapping from number of y wells to number of tips
-//and y start
+//getWellTargetYStart pmdriver mapping from number of y wells to number of tips and y start
 func getWellTargetYStart(wy int) (float64, int) {
 	// this is pretty simple to start with
 	// OK but there are a few issues with special plate types

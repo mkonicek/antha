@@ -211,6 +211,8 @@ func (tb *LHTipbox) N_clean_tips() int {
 	return c
 }
 
+//HasEnoughTips returns true if the tipbox has at least requested tips
+//equivalent to tb.N_clean_tips() > requested
 func (tb *LHTipbox) HasEnoughTips(requested int) bool {
 	c := 0
 	for _, tiprow := range tb.Tips {

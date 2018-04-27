@@ -131,7 +131,7 @@ func summariseWells(wells []*wtype.LHWell, elems []int) string {
 	for _, i := range elems {
 		w = append(w, wells[i].Crds.FormatA1())
 	}
-	uw := getUnique(w)
+	uw := getUnique(w, true)
 
 	if len(uw) == 1 {
 		return fmt.Sprintf("well %s", uw[0])
@@ -144,7 +144,7 @@ func summarisePlates(wells []*wtype.LHWell, elems []int) string {
 	for _, i := range elems {
 		p = append(p, wtype.NameOf(wells[i].Plate))
 	}
-	up := getUnique(p)
+	up := getUnique(p, true)
 
 	if len(up) == 1 {
 		return fmt.Sprintf("plate \"%s\"", up[0])
@@ -648,26 +648,6 @@ func makeOffsets(Xs, Ys, Zs []float64) []wtype.Coordinates {
 	return ret
 }
 
-//return the unique elements of a string slice
-func getUnique(ss []string) []string {
-	r := []string{}
-	is_in := func(s string) bool {
-		for _, v := range r {
-			if v == s {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, s := range ss {
-		if !is_in(s) && s != "" {
-			r = append(r, s)
-		}
-	}
-	return r
-}
-
 // ------------------------------------------------------------------------ ExtendedLHDriver
 
 //Move command - used
@@ -797,7 +777,7 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 				wc[i] = wtype.MakeWellCoords(wellcoords[i])
 			}
 			self.AddErrorf("Move", "Non-independent head '%d' can't move adaptors to \"%s\" positions %s, layout mismatch",
-				head, strings.Join(getUnique(platetype), "\",\""), wtype.HumanizeWellCoords(wc))
+				head, strings.Join(getUnique(platetype, true), "\",\""), wtype.HumanizeWellCoords(wc))
 			return ret
 		}
 	}
@@ -967,8 +947,8 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 			self.AddWarningf("Aspirate", "While %s - minimum tip volume is %s",
 				describe(), tip.MinVol)
 			//will get an error here, but ignore it since we're already raising a warning
-			tip.AddComponent(c) //nolint
-		} else if err := tip.AddComponent(c); err != nil {
+			addComponent(tip, c) //nolint
+		} else if err := addComponent(tip, c); err != nil {
 			self.AddErrorf("Aspirate", "While %s - unexpected tip error \"%s\"", describe(), err.Error())
 		}
 	}
@@ -1122,7 +1102,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 		}
 		if c, err := tip.RemoveVolume(v); err != nil {
 			self.AddErrorf("Dispense", "%s : unexpected tip error \"%s\"", describe(), err.Error())
-		} else if err := wells[i].AddComponent(c); err != nil {
+		} else if err := addComponent(wells[i], c); err != nil {
 			self.AddErrorf("Dispense", "%s : unexpected well error \"%s\"", describe(), err.Error())
 		}
 	}
@@ -1695,7 +1675,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 				self.AddErrorf("Mix", "Unexpected well error - %s", err.Error())
 				continue
 			}
-			err = tip.AddComponent(com)
+			err = addComponent(tip, com)
 			if err != nil {
 				self.AddErrorf("Mix", "Unexpected well error - %s", err.Error())
 				continue
@@ -1705,7 +1685,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 				self.AddErrorf("Mix", "Unexpected tip error - %s", err.Error())
 				continue
 			}
-			err = wells[ch].AddComponent(com)
+			err = addComponent(wells[ch], com)
 			if err != nil {
 				self.AddErrorf("Mix", "Unexpected well error - %s", err.Error())
 				continue

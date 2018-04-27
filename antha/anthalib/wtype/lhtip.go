@@ -240,6 +240,18 @@ func (self *LHTip) AddComponent(v *LHComponent) error {
 	return nil
 }
 
+func (self *LHTip) SetContents(v *LHComponent) error {
+	if v.Volume().GreaterThan(self.MaxVol) {
+		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), v.Volume(), self.MaxVol)
+	}
+	if v.Volume().LessThan(self.MinVol) {
+		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), v.Volume(), self.MinVol)
+	}
+
+	self.contents = v
+	return nil
+}
+
 //@implement LHContainer
 func (self *LHTip) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	if v.GreaterThan(self.CurrentWorkingVolume()) {

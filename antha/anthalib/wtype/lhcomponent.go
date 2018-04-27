@@ -584,8 +584,8 @@ func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 	if cmp.ParentID != "" {
 		cmp.ParentID += "_"
 	}
-	//cmp.ParentID += cmp2.String() + "(" + cmp2.ParentID + ")"
-	cmp.ParentID += cmp2.ID + "(" + cmp2.ParentID + ")"
+	cmp.ParentID += cmp2.String() + "(" + cmp2.ParentID + ")"
+	//cmp.ParentID += cmp2.ID + "(" + cmp2.ParentID + ")"
 }
 
 func (cmp *LHComponent) AddDaughterComponent(cmp2 *LHComponent) {

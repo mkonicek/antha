@@ -22,6 +22,13 @@
 
 package liquidhandling
 
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"sort"
+	"strings"
+)
+
 //checkTipPresence checks that tips are present (or not) on the adaptor at the given
 //channels and returns a list of tips which are not (or are). If channels
 //empty, all channels are tested
@@ -41,6 +48,22 @@ func checkTipPresence(present bool, adaptor *AdaptorState, channels []int) []int
 		}
 	}
 
+	return ret
+}
+
+//getUnique strings optionally ignoring ""
+func getUnique(slice []string, ignoreEmpty bool) []string {
+	sMap := make(map[string]bool)
+	ret := make([]string, 0, len(slice))
+	for _, s := range slice {
+		if ignoreEmpty && s == "" {
+			continue
+		}
+		if _, ok := sMap[s]; !ok {
+			sMap[s] = true
+			ret = append(ret, s)
+		}
+	}
 	return ret
 }
 
@@ -64,4 +87,26 @@ func firstNonEmpty(slice []string) string {
 		}
 	}
 	return ""
+}
+
+//addComponent add a component to the container without storing component history
+//all we care about are the volume and Cname
+func addComponent(container wtype.LHContainer, rhs *wtype.LHComponent) error {
+
+	lhs := container.Contents()
+
+	ret := wtype.NewLHComponent()
+
+	var names []string
+	names = append(names, strings.Split(lhs.CName, "+")...)
+	names = append(names, strings.Split(rhs.CName, "+")...)
+	names = getUnique(names, true)
+	sort.Strings(names)
+	ret.CName = strings.Join(names, "+")
+
+	fV := wunit.AddVolumes(lhs.Volume(), rhs.Volume())
+	ret.Vol = fV.RawValue()
+	ret.Vunit = fV.Unit().PrefixedSymbol()
+
+	return container.SetContents(ret)
 }

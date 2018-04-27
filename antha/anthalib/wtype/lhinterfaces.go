@@ -199,6 +199,8 @@ type LHContainer interface {
 	CurrentWorkingVolume() wunit.Volume
 	//Add to the container
 	AddComponent(*LHComponent) error
+	//Set the contents of the container
+	SetContents(*LHComponent) error
 	//Remove from the container
 	RemoveVolume(wunit.Volume) (*LHComponent, error)
 }

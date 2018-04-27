@@ -56,6 +56,7 @@ type LHComponent struct {
 	Extra              map[string]interface{}
 	Loc                string // refactor to PlateLocation
 	Destination        string
+	Policy             LHPolicy // Policy is where a custom liquid policy is stored
 }
 
 func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {
@@ -158,7 +159,7 @@ func (lhc *LHComponent) SetGeneration(i int) {
 }
 
 func (lhc *LHComponent) IsZero() bool {
-	if lhc == nil || lhc.Type == nil || lhc.CName == "" || lhc.Vol < 0.0000001 {
+	if lhc == nil || lhc.Type == "" || lhc.CName == "" || lhc.Vol < 0.0000001 {
 		return true
 	}
 	return false

@@ -226,16 +226,19 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 		}
 
 		// raising runtime error when using concat == true
+		var name string
 		if concatfactorlevelsinname {
-			name := nameprepend
+			name = nameprepend
 			for key, value := range policy {
 				name = fmt.Sprint(name, "_", key, ":", value)
 
 			}
 
 		} else {
-			names = append(names, nameprepend+strconv.Itoa(run.RunNumber))
+			name = nameprepend + strconv.Itoa(run.RunNumber)
 		}
+		names = append(names, name)
+		policy.SetName(name)
 		policies = append(policies, policy)
 
 		//policy := GetPolicyByName(basepolicy)

@@ -223,6 +223,11 @@ func (lhr *LHRequest) SetPolicies(systemPolicies *wtype.LHPolicyRuleSet) {
 	}
 }
 
+func (lhr *LHRequest) AddUserPolicies(userPolicies *wtype.LHPolicyRuleSet) {
+
+	lhr.PolicyManager.UserPolicies = userPolicies
+}
+
 func (lhr *LHRequest) Add_instruction(ins *wtype.LHInstruction) {
 	lhr.LHInstructions[ins.ID] = ins
 }

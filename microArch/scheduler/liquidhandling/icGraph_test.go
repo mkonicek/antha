@@ -548,3 +548,12 @@ func TestMakeNewNodes(t *testing.T) {
 	}
 
 }
+
+func cullDeadNodes(in []*IChain) (out []*IChain) {
+	for _, v := range in {
+		if len(v.Values) != 0 {
+			out = append(out, v)
+		}
+	}
+	return out
+}

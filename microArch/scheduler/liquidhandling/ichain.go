@@ -706,15 +706,6 @@ func pruneSplits(justSplitNodes []*IChain, chains []map[string]string) []*IChain
 	return ret
 }
 
-func cullDeadNodes(in []*IChain) (out []*IChain) {
-	for _, v := range in {
-		if len(v.Values) != 0 {
-			out = append(out, v)
-		}
-	}
-	return out
-}
-
 // append nodes to chain
 // ic, newNodes must already be linked, any existing parent link from newNodes[0] is overwritten
 // any child link from ic[len(ic)-1] is also overwritten

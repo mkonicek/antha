@@ -30,8 +30,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
-
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
@@ -102,7 +100,6 @@ func MakePolicies() map[string]LHPolicy {
 	add(MakeCarbonSourcePolicy(), "carbon_source")
 	add(MakeNitrogenSourcePolicy(), "nitrogen_source")
 	add(MakeXYOffsetTestPolicy(), "XYOffsetTest")
-	fmt.Println(text.PrettyPrint(pols))
 	return pols
 }
 

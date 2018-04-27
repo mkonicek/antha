@@ -157,7 +157,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
-		pol, err = FindUserPolicy(policy, ins)
+		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
 			return ret, err
@@ -408,7 +408,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
-		pol, err = FindUserPolicy(policy, ins)
+		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
 			return []RobotInstruction{}, err
@@ -1717,7 +1717,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
-		pol, err = FindUserPolicy(policy, ins)
+		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
 			return []RobotInstruction{}, err
@@ -2118,7 +2118,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
-		pol, err = FindUserPolicy(policy, ins)
+		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
 			return []RobotInstruction{}, err
@@ -3070,7 +3070,7 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
-		pol, err = FindUserPolicy(policy, ins)
+		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
 			return []RobotInstruction{}, err

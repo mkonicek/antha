@@ -12,6 +12,8 @@ func StrInStrArray(s string, a []string) bool {
 	return false
 }
 
+// NUniqueStringsInArray counts the unique strings in an array
+// i.e. if 1, all strings in the array are the same.
 func NUniqueStringsInArray(a []string, excludeBlanks bool) int {
 	m := make(map[string]bool, len(a))
 

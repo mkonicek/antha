@@ -129,6 +129,6 @@ func TestLHWellSerialize(t *testing.T) {
 
 	if !reflect.DeepEqual(lhwell, dest) {
 		fmt.Println(pretty.Compare(lhwell, dest))
-		t.Fatal("Initial well and dest well differ")
+		t.Fatal(fmt.Sprintf("Initial well (%+v) and dest well (%+v) differ", lhwell.WContents, dest.WContents))
 	}
 }

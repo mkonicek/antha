@@ -26,9 +26,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
+	"github.com/go-test/deep"
 )
 
 func TestDeserializeLHSolution(t *testing.T) {
@@ -128,7 +129,32 @@ func TestLHWellSerialize(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(lhwell, dest) {
-		fmt.Println(pretty.Compare(lhwell, dest))
-		t.Fatal(fmt.Sprintf("Initial well (%+v) and dest well (%+v) differ", lhwell.WContents, dest.WContents))
+		t.Fatal(fmt.Sprintf("Initial well (%+v) and dest well (%+v) differ. Differences are: %s", lhwell.WContents, dest.WContents, strings.Join(deep.Equal(lhwell, dest), "\n")))
 	}
+}
+
+func equal(cmp1, cmp2 *LHComponent) error {
+	return nil
+	/*
+		ID                 string
+		BlockID            BlockID
+		DaughterID         string
+		ParentID           string
+		Inst               string
+		Order              int
+		CName              string
+		Type               LiquidType
+		Vol                float64
+		Conc               float64
+		Vunit              string
+		Cunit              string
+		Tvol               float64
+		Smax               float64 // maximum solubility
+		Visc               float64
+		StockConcentration float64
+		Extra              map[string]interface{}
+		Loc                string // refactor to PlateLocation
+		Destination        string
+		Policy             LHPolicy // Policy is where a custom liquid policy is stored
+	*/
 }

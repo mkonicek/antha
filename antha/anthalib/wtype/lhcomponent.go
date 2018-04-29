@@ -724,6 +724,7 @@ func NewLHComponent() *LHComponent {
 	//lhc.ID = "component-" + GetUUID()
 	lhc.ID = GetUUID()
 	lhc.Vunit = "ul"
+	lhc.Policy = make(map[string]interface{})
 	lhc.Extra = make(map[string]interface{})
 	return &lhc
 }

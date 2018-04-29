@@ -447,11 +447,7 @@ const invalidPolicy = "invalidPolicyName"
 
 // TypeName returns the PolicyName of the LHComponent's LiquidType as a string
 func (lhc *LHComponent) TypeName() string {
-	typeName, err := LiquidTypeName(lhc.Type)
-	if err != nil {
-		return invalidPolicy
-	}
-	return string(typeName)
+	return string(lhc.Type)
 }
 
 // PolicyName returns the PolicyName of the LHComponent's LiquidType

@@ -7,7 +7,7 @@ func (lh *Liquidhandler) Refresh_tipboxes_tipwastes(rq *LHRequest) {
 
 	lh.FinalProperties.RemoveTipBoxes()
 
-	for pos, _ := range lh.Properties.PosLookup {
+	for pos := range lh.Properties.PosLookup {
 		tb, ok := lh.Properties.Tipboxes[pos]
 
 		if ok {

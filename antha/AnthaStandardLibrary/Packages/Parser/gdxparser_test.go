@@ -13,7 +13,7 @@ func TestStringToAssemblyParameters(t *testing.T) {
 		content string
 	}
 	//Check out the things that get tested in this method, for more specific situations, implement new methods
-	ins := []test{test{24, `<?xml version="1.0" encoding="UTF-8"?>
+	ins := []test{{24, `<?xml version="1.0" encoding="UTF-8"?>
 <Project label="demo n stration">
 	<DesignConstruct label="4_part_construct_1" color="0x000000" circular="false">
 		<DNAElement label="vector_1" color="0xc03232" reverseComplement="false">
@@ -400,7 +400,7 @@ func TestStringToAssemblyParameters(t *testing.T) {
 	<notes>Enzyme: SapI</notes>
 	</DesignConstruct>
 </Project>
-`}, test{80, `<?xml version="1.0" encoding="UTF-8"?>
+`}, {80, `<?xml version="1.0" encoding="UTF-8"?>
 <Project label="80_run_test_file2">
   <DesignConstruct label="4_part_construct_1" color="0x000000" circular="false">
     <DNAElement label="vector_1" color="0xC03232" reverseComplement="false">

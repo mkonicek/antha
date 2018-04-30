@@ -90,7 +90,7 @@ func VolumeForTargetMass(targetmass Mass, stockConc Concentration) (v Volume, er
 		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
 	} else {
 		fmt.Println("Base units ", stockConc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit(), " not compatible with this function")
-		err = fmt.Errorf("Convert ", targetmass.ToString(), " to g and ", stockConc.ToString(), " to g/l")
+		err = fmt.Errorf("Convert %s to g and %s to g/l", targetmass.ToString(), stockConc.ToString())
 	}
 
 	return

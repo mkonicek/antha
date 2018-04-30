@@ -36,65 +36,107 @@ type unitFromStringTest struct {
 }
 
 var componentWithConcstests = []unitFromStringTest{
-	unitFromStringTest{
+	{
 		ComponentName:     "Glucose (M)",
 		ContainsConc:      true,
 		Conc:              NewConcentration(0.0, "M"),
 		ComponentNameOnly: "Glucose",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "Glucose (mM)",
 		ContainsConc:      true,
 		Conc:              NewConcentration(0.0, "mM"),
 		ComponentNameOnly: "Glucose",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "5g/L Glucose",
 		ContainsConc:      true,
 		Conc:              NewConcentration(5.0, "g/L"),
 		ComponentNameOnly: "Glucose",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "5 g/L Glucose",
 		ContainsConc:      true,
 		Conc:              NewConcentration(5.0, "g/L"),
 		ComponentNameOnly: "Glucose",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "Glucose 5g/L",
 		ContainsConc:      true,
 		Conc:              NewConcentration(5.0, "g/L"),
 		ComponentNameOnly: "Glucose",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "1mM/l C6",
 		ContainsConc:      true,
 		Conc:              NewConcentration(1.0, "mM/l"),
 		ComponentNameOnly: "C6",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "C6",
 		ContainsConc:      false,
 		Conc:              NewConcentration(0.0, "mM"),
 		ComponentNameOnly: "C6",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "1 mM Ammonium Sulphate",
 		ContainsConc:      true,
 		Conc:              NewConcentration(1.0, "mM"),
 		ComponentNameOnly: "Ammonium Sulphate",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "Ammonium Sulphate (mM)",
 		ContainsConc:      true,
 		Conc:              NewConcentration(0.0, "mM"),
 		ComponentNameOnly: "Ammonium Sulphate",
 	},
-	unitFromStringTest{
+	{
 		ComponentName:     "E.coli SuperFolder GFP (g/L)",
 		ContainsConc:      true,
 		Conc:              NewConcentration(0.0, "g/L"),
 		ComponentNameOnly: "E.coli SuperFolder GFP",
+	},
+	{
+		ComponentName:     "solutionX",
+		ContainsConc:      false,
+		Conc:              NewConcentration(0.0, "g/L"),
+		ComponentNameOnly: "solutionX",
+	},
+	{
+		ComponentName:     "1X solutionX",
+		ContainsConc:      true,
+		Conc:              NewConcentration(1.0, "X"),
+		ComponentNameOnly: "solutionX",
+	},
+	{
+		ComponentName:     "solutionX (X)",
+		ContainsConc:      true,
+		Conc:              NewConcentration(0.0, "X"),
+		ComponentNameOnly: "solutionX",
+	},
+	{
+		ComponentName:     "solutionX X",
+		ContainsConc:      true,
+		Conc:              NewConcentration(0.0, "X"),
+		ComponentNameOnly: "solutionX",
+	},
+	{
+		ComponentName:     "1mM rumm",
+		ContainsConc:      true,
+		Conc:              NewConcentration(1.0, "mM"),
+		ComponentNameOnly: "rumm",
+	},
+	{
+		ComponentName:     "rumm (mM)",
+		ContainsConc:      true,
+		Conc:              NewConcentration(0.0, "mM"),
+		ComponentNameOnly: "rumm",
+	},
+	{
+		ComponentName:     "X",
+		ContainsConc:      false,
+		Conc:              NewConcentration(0.0, "g/L"),
+		ComponentNameOnly: "X",
 	},
 }
 
@@ -105,20 +147,20 @@ type volTest struct {
 }
 
 var volTests = []volTest{
-	volTest{
+	{
 		VolString:    "10ul",
 		Volume:       NewVolume(10, "ul"),
 		ErrorMessage: "",
 	},
-	volTest{
+	{
 		VolString:    "10 ul",
 		Volume:       NewVolume(10, "ul"),
 		ErrorMessage: "",
 	},
-	volTest{
+	{
 		VolString:    "10",
 		Volume:       Volume{},
-		ErrorMessage: "no valid unit found for 10: valid units are: [L l ml nl ul]",
+		ErrorMessage: "no valid unit found for 10: valid units are: [L l mL ml nL nl pL pl uL ul]",
 	},
 }
 
@@ -195,39 +237,39 @@ type valueAndUnitTest struct {
 }
 
 var volandUnitTests = []valueAndUnitTest{
-	valueAndUnitTest{
+	{
 		value:        10,
 		unit:         "s",
 		valueandunit: "10s",
 	},
-	valueAndUnitTest{
+	{
 		value:        10,
 		unit:         "s",
 		valueandunit: "10 s",
 	},
-	valueAndUnitTest{
+	{
 		value:        10,
 		unit:         "",
 		valueandunit: "10",
 	},
 
-	valueAndUnitTest{
+	{
 		value:        0,
 		unit:         "s",
 		valueandunit: "s",
 	},
-	valueAndUnitTest{
+	{
 		value:        10.9090,
 		unit:         "ms",
 		valueandunit: "10.9090ms",
 	},
-	valueAndUnitTest{
+	{
 		value:        2.16e+04,
 		unit:         "s",
 		valueandunit: "2.16e+04 s",
 	},
 
-	valueAndUnitTest{
+	{
 		value:        2.16e+04,
 		unit:         "/s",
 		valueandunit: "2.16e+04 /s",

@@ -106,43 +106,43 @@ type volFactorTest struct {
 }
 
 var volTests = []volFactorTest{
-	volFactorTest{
+	{
 		Header:       "Total Volume (ml)",
 		Value:        interface{}(10),
 		Vol:          wunit.NewVolume(10, "ml"),
 		ErrorMessage: "",
 	},
-	volFactorTest{
+	{
 		Header:       "Total Volume",
 		Value:        interface{}("10L"),
 		Vol:          wunit.NewVolume(10, "L"),
 		ErrorMessage: "",
 	},
-	volFactorTest{
+	{
 		Header:       "Total Volume (ul)",
 		Value:        interface{}(10.0),
 		Vol:          wunit.NewVolume(10, "ul"),
 		ErrorMessage: "",
 	},
-	volFactorTest{
+	{
 		Header:       "Total Volume (ul)",
 		Value:        interface{}("10"),
 		Vol:          wunit.NewVolume(10, "ul"),
 		ErrorMessage: "",
 	},
-	volFactorTest{
+	{
 		Header:       "Total Volume",
 		Value:        interface{}("10"),
 		Vol:          wunit.NewVolume(10, "ul"),
 		ErrorMessage: "",
 	},
-	volFactorTest{
+	{
 		Header:       "Total Volume",
 		Value:        interface{}("10ml"),
 		Vol:          wunit.NewVolume(10, "ml"),
 		ErrorMessage: "",
 	},
-	volFactorTest{
+	{
 		Header:       "Total Volume",
 		Value:        interface{}("10 ml"),
 		Vol:          wunit.NewVolume(10, "ml"),

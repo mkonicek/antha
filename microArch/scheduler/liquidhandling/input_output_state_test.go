@@ -52,8 +52,8 @@ func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pl2.Cols[0][0].Add(cmp1)
-	pl2.Cols[0][1].Add(cmp2)
+	pl2.Cols[0][0].AddComponent(cmp1)
+	pl2.Cols[0][1].AddComponent(cmp2)
 
 	mo := mixer.MixOptions{
 		Components: []*wtype.LHComponent{cmp1, cmp2},
@@ -113,8 +113,15 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pl2.Cols[0][0].Add(cmp1)
-	pl2.Cols[0][1].Add(cmp2)
+	err = pl2.Cols[0][0].AddComponent(cmp1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = pl2.Cols[0][1].AddComponent(cmp2)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	s1 := mixer.Sample(cmp1, wunit.NewVolume(25.0, "ul"))
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
@@ -145,11 +152,11 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
 
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -187,8 +194,15 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pl2.Cols[0][0].Add(cmp1)
-	pl2.Cols[0][1].Add(cmp2)
+	err = pl2.Cols[0][0].AddComponent(cmp1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = pl2.Cols[0][1].AddComponent(cmp2)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rq.AddUserPlate(pl2)
 
@@ -198,11 +212,11 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
 
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -244,8 +258,15 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pl2.Cols[0][0].Add(cmp1)
-	pl2.Cols[0][1].Add(cmp2)
+	err = pl2.Cols[0][0].AddComponent(cmp1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = pl2.Cols[0][1].AddComponent(cmp2)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rq.AddUserPlate(pl2)
 
@@ -255,11 +276,11 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
 
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -345,10 +366,10 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -387,10 +408,10 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
-	expected["water"] = []initFinalCmp{initFinalCmp{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
 
-	expected["water+dna_part"] = []initFinalCmp{initFinalCmp{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
+	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -456,8 +477,8 @@ func compareInitFinalStates(t *testing.T, lh *Liquidhandler, expected map[string
 				w := p.Wellcoords[crd]
 				w2 := p2.Wellcoords[crd]
 
-				e1 := w.Empty()
-				e2 := w2.Empty()
+				e1 := w.IsEmpty()
+				e2 := w2.IsEmpty()
 
 				if e1 && e2 {
 					continue
@@ -469,14 +490,14 @@ func compareInitFinalStates(t *testing.T, lh *Liquidhandler, expected map[string
 					ifc := findWells(w, w2, v)
 
 					if ifc.IsZero() {
-						t.Errorf("Extra components of type %s in before / after: %s %f %s %f", w2.WContents.CName, w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
+						t.Errorf("Extra components of type %s in before / after: \"%s\" %f \"%s\" %f", w2.WContents.CName, w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
 					}
 
 					// good, delete this now
 
 					expected[w2.WContents.CName] = del(ifc, v, false)
 				} else {
-					t.Errorf("Unexpected components in before / after: %s %f %s %f", w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
+					t.Errorf("Unexpected components in before / after: \"%s\" %f \"%s\" %f", w.WContents.CName, w.WContents.Vol, w2.WContents.CName, w2.WContents.Vol)
 
 				}
 			}

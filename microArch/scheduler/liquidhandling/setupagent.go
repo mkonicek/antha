@@ -82,7 +82,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		}
 
 		if len(input_plate_order) < len(input_plates) {
-			for id, _ := range input_plates {
+			for id := range input_plates {
 				if !isInStrArr(id, input_plate_order) {
 					input_plate_order = append(input_plate_order, id)
 				}
@@ -135,6 +135,27 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 	}
 
+	// sanity check
+
+	nPos := len(output_plate_order) + len(input_plate_order)
+	needsTips := false
+
+	if params.GetTipType() == liquidhandling.DisposableTips || params.GetTipType() == liquidhandling.MixedDisposableAndFixedTips {
+		// at least two positions are needed
+		nPos += 2
+		needsTips = true
+	}
+
+	if nPos > len(params.Positions) {
+		errStr := fmt.Sprintf("Protocol requires %d input plates, %d output plates", len(input_plate_order), len(output_plate_order))
+		if needsTips {
+			errStr += fmt.Sprintf(" and at least 2 spaces for tip waste and boxes")
+		}
+
+		errStr += fmt.Sprintf(": %d positions total, %d available on platform %s %s", nPos, len(params.Positions), params.Mnfr, params.Model)
+		return nil, wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, errStr)
+	}
+
 	// tips
 	tips := request.Tips
 
@@ -176,15 +197,17 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 		if position == "" {
 			//RaiseError("No positions left for output")
-			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for output ", p.Name(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
+			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for output ", p.GetName(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
 			return request, err
 		}
 
 		setup[position] = p
 		plate_lookup[p.ID] = position
 
-		params.AddPlate(position, p)
-		//logger.Info(fmt.Sprintf("Output plate of type %s in position %s", p.Type, position))
+		err := params.AddPlate(position, p)
+		if err != nil {
+			return request, err
+		}
 	}
 
 	for _, pid := range input_plate_order {
@@ -203,12 +226,16 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 		if position == "" {
 			//RaiseError("No positions left for input")
-			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for input ", p.Name(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
+			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for input ", p.GetName(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
 			return request, err
 		}
+
 		setup[position] = p
 		plate_lookup[p.ID] = position
-		params.AddPlate(position, p)
+		err := params.AddPlate(position, p)
+		if err != nil {
+			return request, err
+		}
 		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}
 
@@ -236,10 +263,13 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
 			}
 
-			err = params.AddTipWaste(waste)
-
 			if err != nil {
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("Error for liquid handler of model %s: %s", params.Model, err))
+				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error for liquid handler of model %s: %s", params.Model, err))
+			}
+
+			err = params.AddTipWaste(waste)
+			if err != nil {
+				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error adding tip waste for model %s: %s", params.Model, err))
 			}
 		}
 	}

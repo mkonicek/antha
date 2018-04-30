@@ -30,53 +30,40 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
-func StoreMeasurement(m Measurement) {
-	// do something
-}
-
 func TestBasic(*testing.T) {
-	ExampleBasic()
-}
-func TestTwo(*testing.T) {
-	ExampleTwo()
+	ExampleGenericPrefixedUnit()
 }
 func TestFour(*testing.T) {
-	ExampleFour()
+	ExampleNewPressure()
 }
 func TestFive(*testing.T) {
-	ExampleFive()
+	ExamplePrefixMul()
 }
 
 func TestSIParsing(*testing.T) {
-	ExampleSeven()
+	ExampleParsePrefixedUnit()
 }
 
 func TestUnitConversion(*testing.T) {
-	ExampleEight()
+	ExampleConcreteMeasurement()
 }
 
-func TestJSON(*testing.T) {
-	ExampleNine()
-}
-
-func ExampleBasic() {
+func ExampleGenericPrefixedUnit() {
 	degreeC := GenericPrefixedUnit{GenericUnit{"DegreeC", "C", 1.0, "C"}, SIPrefix{"m", 1e-03}}
 	cm := ConcreteMeasurement{1.0, &degreeC}
 	TdegreeC := Temperature{&cm}
 	fmt.Println(TdegreeC.SIValue())
-	// Output:
-	// 0.001
-}
-func ExampleTwo() {
+
 	Joule := GenericPrefixedUnit{GenericUnit{"Joule", "J", 1.0, "J"}, SIPrefix{"k", 1e3}}
-	cm := ConcreteMeasurement{23.4, &Joule}
+	cm = ConcreteMeasurement{23.4, &Joule}
 	NJoule := Energy{&cm}
 	fmt.Println(NJoule.SIValue())
 	// Output:
+	// 0.001
 	// 23400
 }
 
-func ExampleFour() {
+func ExampleNewPressure() {
 	p := NewPressure(56.2, "Pa")
 	fmt.Println(p.RawValue())
 
@@ -89,7 +76,7 @@ func ExampleFour() {
 	// 34
 }
 
-func ExampleFive() {
+func ExamplePrefixMul() {
 
 	fmt.Println(PrefixMul("m", "m"))
 
@@ -97,18 +84,7 @@ func ExampleFive() {
 	// u
 }
 
-func ExampleSix() {
-	fmt.Println(k)
-	fmt.Println(G)
-	fmt.Println(p)
-	// Output:
-	// 3
-	// 9
-	// -12
-
-}
-
-func ExampleSeven() {
+func ExampleParsePrefixedUnit() {
 	pu := ParsePrefixedUnit("GHz")
 	fmt.Println(pu.Symbol())
 	fmt.Println(pu.BaseSIConversionFactor())
@@ -120,9 +96,26 @@ func ExampleSeven() {
 	// 1e+09
 	// uM
 	// 1e-06
+
+	pu = ParsePrefixedUnit("GHz")
+	//meas := ConcreteMeasurement{10, pu}
+
+	x := PrefixedUnit(pu)
+
+	b, err := json.Marshal(x)
+
+	fmt.Println(string(b))
+	fmt.Println(err)
+
+	var pu2 GenericPrefixedUnit
+
+	er2 := json.Unmarshal(b, &pu2)
+
+	fmt.Println("Unmarshalled: ", pu2)
+	fmt.Println(er2)
 }
 
-func ExampleEight() {
+func ExampleConcreteMeasurement() {
 	// testing the new conversion methods
 	pu := ParsePrefixedUnit("GHz")
 	pu2 := ParsePrefixedUnit("MHz")
@@ -146,28 +139,6 @@ func ExampleEight() {
 	// 10 l
 	// Name: litre Symbol: l Conversion: 1    BaseUnit: l
 	// l
-}
-
-func ExampleNine() {
-	// testing JSON functions
-
-	pu := ParsePrefixedUnit("GHz")
-	//meas := ConcreteMeasurement{10, pu}
-
-	x := PrefixedUnit(pu)
-
-	b, err := json.Marshal(x)
-
-	fmt.Println(string(b))
-	fmt.Println(err)
-
-	var pu2 GenericPrefixedUnit
-
-	er2 := json.Unmarshal(b, &pu2)
-
-	fmt.Println("Unmarshalled: ", pu2)
-	fmt.Println(er2)
-
 }
 
 // simple reverse complement check to test testing methodology initially
@@ -502,6 +473,25 @@ func TestNewConcentration(t *testing.T) {
 		}
 	}
 
+}
+
+func TestFlowRateComparison(t *testing.T) {
+	a := NewFlowRate(1., "ml/min")
+	b := NewFlowRate(2., "ml/min")
+
+	if !b.GreaterThan(a) {
+		t.Errorf("Got b > a (%s > %s) wrong", b, a)
+	}
+	if a.GreaterThan(b) {
+		t.Errorf("Got a > b (%s > %s) wrong", a, b)
+	}
+
+	if b.LessThan(a) {
+		t.Errorf("Got b < a (%s < %s) wrong", b, a)
+	}
+	if !a.LessThan(b) {
+		t.Errorf("Got a < b (%s < %s) wrong", a, b)
+	}
 }
 
 func TestRoundedComparisons(t *testing.T) {

@@ -12,32 +12,36 @@ import (
 
 func makeplatefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("DSW96", "", "", "ul", 200, 10, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("testplate", "none", 8, 12, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 200, 10, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates{127.76, 85.48, 43.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
+
 func make384platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("DSW384", "", "", "ul", 50, 5, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("testplate", "none", 16, 24, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 50, 5, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("DSW384", "none", 16, 24, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
+
 func make1536platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("DSW1536", "", "", "ul", 15, 1, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("testplate", "none", 32, 48, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 15, 1, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("DSW1536", "none", 32, 48, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
+
 func make24platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("DSW24", "", "", "ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("testplate", "none", 4, 6, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 3000, 500, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("DSW24", "none", 4, 6, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
+
 func make6platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("6wellplate", "", "", "ul", 3000, 500, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("testplate", "none", 2, 3, 44.1, "mm", welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	welltype := NewLHWell("ul", 3000, 500, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate("6wellplate", "none", 2, 3, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
 
@@ -96,7 +100,7 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 		}
 		for w, count := range seen {
 			if count != 2 {
-				t.Errorf("%s: no matching well found (%d != %d) for %p %s:%s", what, count, 2, w, w.ID, w.Crds)
+				t.Errorf("%s: no matching well found (%d != %d) for %p %s:%s", what, count, 2, w, w.ID, w.Crds.FormatA1())
 			}
 		}
 	}
@@ -109,8 +113,8 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 	for crds, w := range plate.Wellcoords {
 		ws2 = append(ws2, w)
 
-		if w.Crds != crds {
-			t.Fatal(fmt.Sprintf("ERROR: Well coords not consistent -- %s != %s", w.Crds, crds))
+		if w.Crds.FormatA1() != crds {
+			t.Fatal(fmt.Sprintf("ERROR: Well coords not consistent -- %s != %s", w.Crds.FormatA1(), crds))
 		}
 
 		if w.WContents.Loc == "" {
@@ -123,8 +127,8 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent -- %s != %s", ltx[0], plate.ID))
 		}
 
-		if ltx[0] != w.Plateid {
-			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent with well -- %s != %s", ltx[0], w.Plateid))
+		if ltx[0] != w.Plate.(*LHPlate).ID {
+			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent with well -- %s != %s", ltx[0], w.Plate.(*LHPlate).ID))
 		}
 
 		if ltx[1] != crds {
@@ -134,15 +138,10 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 	}
 
 	for _, ws := range plate.Rows {
-		for _, w := range ws {
-			ws3 = append(ws3, w)
-		}
+		ws3 = append(ws3, ws...)
 	}
 	for _, ws := range plate.Cols {
-		for _, w := range ws {
-			ws4 = append(ws4, w)
-		}
-
+		ws4 = append(ws4, ws...)
 	}
 	assertWellsEqual("HWells != Rows", ws1, ws2)
 	assertWellsEqual("Rows != Cols", ws2, ws3)
@@ -201,14 +200,20 @@ func TestMergeWith(t *testing.T) {
 	c.CName = "Water1"
 	c.Vol = 50.0
 	c.Vunit = "ul"
-	p1.Wellcoords["A1"].Add(c)
+	err := p1.Wellcoords["A1"].AddComponent(c)
+	if err != nil {
+		t.Fatal(err)
+	}
 	p1.Wellcoords["A1"].SetUserAllocated()
 
 	c = NewLHComponent()
 	c.CName = "Butter"
 	c.Vol = 80.0
 	c.Vunit = "ul"
-	p2.Wellcoords["A2"].Add(c)
+	err = p2.Wellcoords["A2"].AddComponent(c)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	p1.MergeWith(p2)
 
@@ -221,61 +226,19 @@ func TestMergeWith(t *testing.T) {
 	}
 }
 
-func makeCV(name string, vol float64) ComponentVector {
-	c := NewLHComponent()
-	c.Type = LTWater
-	c.CName = name
-	c.Vol = vol
-	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
-	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
-
-	got := make([]*LHComponent, 8)
-
-	for i := 0; i < 8; i++ {
-		got[i] = c.Dup()
-		got[i].Loc = PIDs[i] + ":" + CIDs[i]
-	}
-
-	return got
-}
-
-func makecomponent(cname string, vol float64) *LHComponent {
-	c := NewLHComponent()
-	c.Type = LTWater
-	c.CName = cname
-	c.Vol = vol
-	c.Vunit = "ul"
-	return c
-}
-
-/*
-func TestFindCompMulti1(t *testing.T) {
-	p := makeplatefortest()
-	c := makecomponent("water", 1600.0)
-	p.AddComponent(c, true)
-	cv := makeCV("water", 50.0)
-
-	pids, _, _, _ := p.FindComponentsMulti(cv, LHVChannel, 8, false)
-
-	if len(pids) == 0 {
-		t.Errorf("Didn't find a simple column of water... should have")
-	}
-}
-*/
-
 func TestLHPlateSerialize(t *testing.T) {
 	p := makeplatefortest()
 	c := NewLHComponent()
 	c.CName = "Cthulhu"
 	c.Type = LTWater
 	c.Vol = 100.0
-	_, err := p.AddComponent(c, false)
 
+	_, err := p.AddComponent(c, false)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	b, err := json.Marshal(p)
 
+	b, err := json.Marshal(p)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -292,10 +255,19 @@ func TestLHPlateSerialize(t *testing.T) {
 		if !reflect.DeepEqual(w.WContents, w2.WContents) {
 			t.Errorf("%v =/= %v", w.WContents, w2.WContents)
 		}
+
+		if w2.Plate != p2 {
+			t.Errorf("Wells not retaining plate references post serialization")
+		}
+
 	}
 
-	fMErr := func(s string) string {
-		return s + " not maintained after marshal/unmarshal"
+	fMErr := func(s string, want, got interface{}) string {
+		return fmt.Sprintf(
+			"%s not maintained after marshal/unmarshal: want: %v, got: %v",
+			s,
+			want,
+			got)
 	}
 
 	for i := 0; i < p2.WellsX(); i++ {
@@ -317,50 +289,46 @@ func TestLHPlateSerialize(t *testing.T) {
 	// check extraneous parameters
 
 	if p.ID != p2.ID {
-		t.Errorf(fMErr("ID"))
+		t.Errorf(fMErr("ID", p.ID, p2.ID))
 	}
 
 	if p.PlateName != p2.PlateName {
-		t.Errorf(fMErr("Plate name"))
+		t.Errorf(fMErr("Plate name", p.PlateName, p2.PlateName))
 	}
 
 	if p.Type != p2.Type {
-		t.Errorf(fMErr("Type"))
+		t.Errorf(fMErr("Type", p.Type, p2.Type))
 	}
 
 	if p.Mnfr != p2.Mnfr {
-		t.Errorf(fMErr("Manufacturer"))
+		t.Errorf(fMErr("Manufacturer", p.Mnfr, p2.Mnfr))
 	}
 
 	if p.Nwells != p2.Nwells {
-		t.Errorf(fMErr("NWells"))
+		t.Errorf(fMErr("NWells", p.Nwells, p2.Nwells))
 	}
 
-	if p.Height != p2.Height {
-		t.Errorf(fMErr("Height"))
-	}
-
-	if p.Hunit != p2.Hunit {
-		t.Errorf(fMErr("Hunit"))
+	if p.Height() != p2.Height() {
+		t.Errorf(fMErr("Height", p.Height(), p2.Height()))
 	}
 
 	if p.WellXOffset != p2.WellXOffset {
-		t.Errorf(fMErr("WellXOffset"))
+		t.Errorf(fMErr("WellXOffset", p.WellXOffset, p2.WellXOffset))
 	}
 
 	if p.WellYOffset != p2.WellYOffset {
-		t.Errorf(fMErr("WellYOffset"))
+		t.Errorf(fMErr("WellYOffset", p.WellYOffset, p2.WellYOffset))
 	}
 
 	if p.WellXStart != p2.WellXStart {
-		t.Errorf(fMErr("WellXStart"))
+		t.Errorf(fMErr("WellXStart", p.WellXStart, p2.WellXStart))
 	}
 	if p.WellYStart != p2.WellYStart {
-		t.Errorf(fMErr("WellYStart"))
+		t.Errorf(fMErr("WellYStart", p.WellYStart, p2.WellYStart))
 	}
 
 	if p.WellZStart != p2.WellZStart {
-		t.Errorf(fMErr("WellZStart"))
+		t.Errorf(fMErr("WellZStart", p.WellZStart, p.WellZStart))
 	}
 }
 
@@ -414,5 +382,65 @@ func TestGetAllComponents(t *testing.T) {
 
 	if len(cmps) != p.WellsX()*p.WellsY() {
 		t.Errorf("Expected %d components got %d", p.WellsX()*p.WellsY(), len(cmps))
+	}
+}
+
+func TestLHPlateValidateVolumesOK(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if err := p.ValidateVolumes(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	//doing it this way because accessor methods will prevent this at some point
+	c.Vol = 500.0
+	w := p.Rows[0][0]
+	w.WContents = c
+
+	if err := p.ValidateVolumes(); err == nil {
+		t.Error("Got no error when one well overfilled")
+	}
+}
+
+func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
+	p := makeplatefortest()
+	c := NewLHComponent()
+	c.CName = "Cthulhu"
+	c.Type = LTWater
+	c.Vol = 100.0
+
+	if _, err := p.AddComponent(c, false); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	//doing it this way because accessor methods will prevent this at some point
+	c.Vol = 500.0
+	for i := 0; i < 4; i++ {
+		w := p.Rows[i][i]
+		w.WContents = c
+	}
+
+	if err := p.ValidateVolumes(); err == nil {
+		t.Error("Got no error when several wells overfilled")
 	}
 }

@@ -21,10 +21,10 @@ func checkEqual(expected []string, actual []Node) error {
 
 func TestIsNotDag(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"a": []string{"b", "c"},
-		"b": []string{"d"},
-		"c": []string{"d"},
-		"d": []string{"a"},
+		"a": {"b", "c"},
+		"b": {"d"},
+		"c": {"d"},
+		"d": {"a"},
 	})
 	if err := IsDag(g); err == nil {
 		t.Fatalf("failed to detect cycle")
@@ -33,9 +33,9 @@ func TestIsNotDag(t *testing.T) {
 
 func TestTopoOrder(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"a": []string{"b", "c"},
-		"b": []string{"d"},
-		"c": []string{"d"},
+		"a": {"b", "c"},
+		"b": {"d"},
+		"c": {"d"},
 	})
 
 	if order, err := TopoSort(TopoSortOpt{
@@ -52,9 +52,9 @@ func TestTopoOrder(t *testing.T) {
 
 func TestTransitiveReduction(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"a": []string{"b", "c", "d"},
-		"b": []string{"c", "d"},
-		"c": []string{"d"},
+		"a": {"b", "c", "d"},
+		"b": {"c", "d"},
+		"c": {"d"},
 	})
 
 	if gr, err := TransitiveReduction(g); err != nil {
@@ -80,14 +80,14 @@ func TestTransitiveReduction(t *testing.T) {
 
 func TestHarderTransitiveReduction(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"v0": []string{},
-		"v1": []string{"v0"},
-		"v2": []string{"v1", "v0"},
-		"v3": []string{"v2", "v1", "v0"},
-		"v4": []string{"v3", "v2", "v1", "v0"},
-		"v5": []string{"v3", "v2", "v1", "v4"},
-		"v6": []string{"v3", "v0", "v1", "v2", "v4"},
-		"v7": []string{"v5", "v3", "v2", "v1", "v4"},
+		"v0": {},
+		"v1": {"v0"},
+		"v2": {"v1", "v0"},
+		"v3": {"v2", "v1", "v0"},
+		"v4": {"v3", "v2", "v1", "v0"},
+		"v5": {"v3", "v2", "v1", "v4"},
+		"v6": {"v3", "v0", "v1", "v2", "v4"},
+		"v7": {"v5", "v3", "v2", "v1", "v4"},
 	})
 
 	tr, err := TransitiveReduction(g)

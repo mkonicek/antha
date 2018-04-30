@@ -43,14 +43,6 @@ var (
 	}
 )
 
-// add filter registry option
-var (
-	iGemRegistryCodes = map[string][]string{
-		"ORIGIN":    []string{"Origin", "ori"},
-		"SELECTION": []string{"resistance"},
-	}
-)
-
 var (
 	plasmapperfile []byte = []byte(commonFeatures)
 )
@@ -93,7 +85,7 @@ func MakePlasmapperFeatures() (featuremap FeatureMap, err error) {
 // ValidPlasmid evaluates whether a test sequence is circular, contains any origins of replications and selection markers.
 // The features are evaluated for exact matches against a restricted list of common features defined as the variable commonfeatures.
 func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, selectionmarkers []string, err error) {
-	if sequence.Plasmid == true {
+	if sequence.Plasmid {
 		plasmid = true
 	}
 	featuremap, err := MakePlasmapperFeatures()
@@ -113,10 +105,7 @@ func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, sele
 	}
 
 	var oriseqs []wtype.DNASequence
-
-	for _, oriseq := range featuremap["ORIGIN"] {
-		oriseqs = append(oriseqs, oriseq)
-	}
+	oriseqs = append(oriseqs, featuremap["ORIGIN"]...)
 	for _, oriseq := range oriseqs {
 		if len(sequence.Sequence()) >= len(oriseq.Sequence()) {
 			if len(sequences.FindAll(&sequence, &oriseq).Positions) > 0 {
@@ -126,10 +115,7 @@ func ValidPlasmid(sequence wtype.DNASequence) (plasmid bool, oris []string, sele
 	}
 
 	var markerseqs []wtype.DNASequence
-
-	for _, markerseq := range featuremap["SELECTION"] {
-		markerseqs = append(markerseqs, markerseq)
-	}
+	markerseqs = append(markerseqs, featuremap["SELECTION"]...)
 
 	for _, markerseq := range markerseqs {
 		if len(sequence.Sequence()) >= len(markerseq.Sequence()) {

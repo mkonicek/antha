@@ -60,7 +60,7 @@ func TestWellFormed(t *testing.T) {
 	for idx := 0; idx < 4; idx++ {
 		m := &ast.Command{
 			Requests: []ast.Request{
-				ast.Request{
+				{
 					Selector: []ast.NameValue{
 						target.DriverSelectorV1Mixer,
 					},
@@ -78,7 +78,7 @@ func TestWellFormed(t *testing.T) {
 
 		i := &ast.Command{
 			Requests: []ast.Request{
-				ast.Request{
+				{
 					Selector: []ast.NameValue{
 						target.DriverSelectorV1ShakerIncubator,
 					},

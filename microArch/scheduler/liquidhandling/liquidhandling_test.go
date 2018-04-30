@@ -37,6 +37,19 @@ import (
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
+func GetPlateForTest() *wtype.LHPlate {
+
+	offset := 0.25
+	riserheightinmm := 40.0 - offset
+
+	// pcr plate skirted (on riser)
+	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
+	welltype := wtype.NewLHWell("ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
+
+	plate := wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7}, welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
+	return plate
+}
+
 func TestStockConcs(*testing.T) {
 	rand := wutil.GetRandom()
 	names := []string{"tea", "milk", "sugar"}
@@ -84,6 +97,26 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 
 }
 
+func configure_request_total_volume(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
+
+	for k := 0; k < 9; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.SampleForTotalVolume(water, wunit.NewVolume(17.0, "ul"))
+		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
+		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
+
+		ins.AddComponent(ws)
+		ins.AddComponent(mmxs)
+		ins.AddComponent(ps)
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
 func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
 	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
@@ -99,6 +132,26 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 		ins.AddComponent(mmxs)
 		ins.AddComponent(ps)
 		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		rq.Add_instruction(ins)
+	}
+
+}
+
+func configure_request_overfilled(ctx context.Context, rq *LHRequest) {
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
+
+	for k := 0; k < 9; k++ {
+		ins := wtype.NewLHMixInstruction()
+		ws := mixer.Sample(water, wunit.NewVolume(160.0, "ul"))
+		mmxs := mixer.Sample(mmx, wunit.NewVolume(160.0, "ul"))
+		ps := mixer.Sample(part, wunit.NewVolume(20.0, "ul"))
+
+		ins.AddComponent(ws)
+		ins.AddComponent(mmxs)
+		ins.AddComponent(ps)
+		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(340.0, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -150,7 +203,7 @@ func TestTipOverrideNegative(t *testing.T) {
 
 	err = lh.Plan(ctx, rq)
 
-	if e, f := "No tip chosen: Volume 8 ul is too low to be accurately moved by the liquid handler (configured minimum 10 ul, tip minimum 10 ul). Low volume tips may not be available and / or the robot may need to be configured differently", err.Error(); e != f {
+	if e, f := "7 (LH_ERR_VOL) : volume error : No tip chosen: Volume 8 ul is too low to be accurately moved by the liquid handler (configured minimum 10 ul, tip minimum 10 ul). Low volume tips may not be available and / or the robot may need to be configured differently", err.Error(); e != f {
 		t.Fatalf("expecting error %q found %q", e, f)
 	}
 }
@@ -187,7 +240,7 @@ func TestPlateReuse(t *testing.T) {
 			continue
 		}
 
-		if strings.Contains(plate.Name(), "Output_plate") {
+		if strings.Contains(plate.GetName(), "Output_plate") {
 			// leave it out
 			continue
 		}
@@ -228,13 +281,13 @@ func TestPlateReuse(t *testing.T) {
 		if !ok {
 			continue
 		}
-		if strings.Contains(plate.Name(), "Output_plate") {
+		if strings.Contains(plate.GetName(), "Output_plate") {
 			// leave it out
 			continue
 		}
 		for _, v := range plate.Wellcoords {
-			if !v.Empty() {
-				v.Remove(wunit.NewVolume(5.0, "ul"))
+			if !v.IsEmpty() {
+				v.RemoveVolume(wunit.NewVolume(5.0, "ul"))
 			}
 		}
 
@@ -275,7 +328,7 @@ func TestBeforeVsAfter(t *testing.T) {
 		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
 	}
 
-	for pos, _ := range lh.Properties.PosLookup {
+	for pos := range lh.Properties.PosLookup {
 
 		id1, ok1 := lh.Properties.PosLookup[pos]
 		id2, ok2 := lh.FinalProperties.PosLookup[pos]
@@ -315,7 +368,7 @@ func TestBeforeVsAfter(t *testing.T) {
 				w1 := pp1.Wellcoords[wc.FormatA1()]
 				w2 := pp2.Wellcoords[wc.FormatA1()]
 
-				if w1.Empty() && w2.Empty() {
+				if w1.IsEmpty() && w2.IsEmpty() {
 					it.Next()
 					continue
 				}
@@ -367,6 +420,149 @@ func TestEP3(t *testing.T) {
 
 	if err != nil {
 		t.Fatal(fmt.Sprint("Got planning error: ", err))
+	}
+
+}
+
+func TestEP3TotalVolume(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_total_volume(ctx, rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got planning error: ", err))
+	}
+
+}
+
+func TestEP3Overfilled(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_overfilled(ctx, rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err == nil {
+		t.Fatal("Overfull wells did not cause planning error")
+	}
+}
+
+func TestEP3Negative(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+
+	//make one volume of one instruction negative
+	for _, ins := range rq.LHInstructions {
+		cmp := ins.Components[0]
+		cmp.Vol = -1.0
+		break
+	}
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err == nil {
+		t.Fatal("Negative volume did not cause a planning error")
+	}
+}
+
+func TestEP3WrongResult(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+
+	//make one of the results wrong
+	for _, ins := range rq.LHInstructions {
+		ins.Results[0].Vol = 299792458.0
+		break
+	}
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err == nil {
+		t.Fatal("Negative volume did not cause a planning error")
+	}
+}
+
+func TestEP3WrongTotalVolume(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_total_volume(ctx, rq)
+
+	//set an invalid total volume for one of the instructions
+	for _, ins := range rq.LHInstructions {
+		for _, cmp := range ins.Components {
+			if cmp.Tvol > 0.0 {
+				cmp.Tvol = 5.0
+			}
+		}
+		break
+	}
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err == nil {
+		t.Fatal("Negative volume did not cause a planning error")
+	}
+}
+
+func TestDistinctPlateNames(t *testing.T) {
+	rq := NewLHRequest()
+	for i := 0; i < 100; i++ {
+		p := &wtype.LHPlate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
+		rq.Input_plate_order = append(rq.Input_plate_order, p.ID)
+		rq.Input_plates[p.ID] = p
+	}
+	for i := 100; i < 200; i++ {
+		p := &wtype.LHPlate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
+		rq.Output_plate_order = append(rq.Output_plate_order, p.ID)
+		rq.Output_plates[p.ID] = p
+	}
+
+	rq = fixDuplicatePlateNames(rq)
+
+	found := make(map[string]int)
+
+	for _, p := range rq.AllPlates() {
+		_, ok := found[p.PlateName]
+
+		if !ok {
+			found[p.PlateName] = 1
+		} else {
+			t.Errorf("fixDuplicatePlateNames failed to prevent duplicates: found at least two of %s", p.PlateName)
+		}
 	}
 
 }

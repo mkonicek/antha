@@ -2,16 +2,16 @@ package testinventory
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"sort"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
+	"sort"
 )
 
 type testInventory struct {
 	componentByName map[string]*wtype.LHComponent
-	plateByType     map[string]*wtype.LHPlate
+	plateByType     map[string]PlateForSerializing
 	tipboxByType    map[string]*wtype.LHTipbox
 	tipwasteByType  map[string]*wtype.LHTipwaste
 }
@@ -21,7 +21,8 @@ func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.L
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid solution: %s", inventory.ErrUnknownType, name)
 	}
-	return c.Dup(), nil
+	// Cp is required here to ensure component IDs are unique
+	return c.Cp(), nil
 }
 
 func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
@@ -29,7 +30,7 @@ func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.LHPlat
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid plate: %s", inventory.ErrUnknownType, typ)
 	}
-	return p.Dup(), nil
+	return p.LHPlate(), nil
 }
 func (i *testInventory) NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error) {
 	tb, ok := i.tipboxByType[typ]
@@ -56,7 +57,7 @@ func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.LHPlate, err
 func NewContext(ctx context.Context) context.Context {
 	inv := &testInventory{
 		componentByName: make(map[string]*wtype.LHComponent),
-		plateByType:     make(map[string]*wtype.LHPlate),
+		plateByType:     make(map[string]PlateForSerializing),
 		tipboxByType:    make(map[string]*wtype.LHTipbox),
 		tipwasteByType:  make(map[string]*wtype.LHTipwaste),
 	}
@@ -68,11 +69,17 @@ func NewContext(ctx context.Context) context.Context {
 		inv.componentByName[c.CName] = c
 	}
 
-	for _, p := range makePlates() {
-		if _, seen := inv.plateByType[p.Type]; seen {
-			panic(fmt.Sprintf("plate %s already added", p.Type))
+	serialPlateArr, err := getPlatesFromSerial()
+
+	if err != nil {
+		panic(err)
+	}
+
+	for _, p := range serialPlateArr {
+		if _, seen := inv.plateByType[p.PlateType]; seen {
+			panic(fmt.Sprintf("plate %s already added", p.PlateType))
 		}
-		inv.plateByType[p.Type] = p
+		inv.plateByType[p.PlateType] = p
 	}
 
 	for _, tb := range makeTipboxes() {
@@ -116,7 +123,7 @@ func GetPlates(ctx context.Context) []*wtype.LHPlate {
 	inv := inventory.GetInventory(ctx).(*testInventory)
 	var ps []*wtype.LHPlate
 	for _, p := range inv.plateByType {
-		ps = append(ps, p)
+		ps = append(ps, p.LHPlate())
 	}
 
 	sort.Slice(ps, func(i, j int) bool {
@@ -139,4 +146,16 @@ func GetComponents(ctx context.Context) []*wtype.LHComponent {
 	})
 
 	return cs
+}
+
+func getPlatesFromSerial() ([]PlateForSerializing, error) {
+	var pltArr []PlateForSerializing
+
+	err := json.Unmarshal(plateBytes, &pltArr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pltArr, nil
 }

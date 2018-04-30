@@ -1,11 +1,10 @@
 package wtype
 
 import (
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func A1ArrayFromWells(wells []*LHWell) []string {
@@ -20,7 +19,7 @@ func WCArrayFromWells(wells []*LHWell) []WellCoords {
 			continue
 		}
 
-		ret = append(ret, MakeWellCoords(w.Crds))
+		ret = append(ret, w.Crds)
 	}
 
 	return ret
@@ -155,11 +154,7 @@ func ZeroWellCoords() WellCoords {
 	return WellCoords{-1, -1}
 }
 func (wc WellCoords) IsZero() bool {
-	if wc.Equals(ZeroWellCoords()) {
-		return true
-	}
-
-	return false
+	return wc.Equals(ZeroWellCoords())
 }
 
 func MatchString(s1, s2 string) bool {
@@ -233,7 +228,7 @@ func MakeWellCoords1A(a1 string) WellCoords {
 
 // make well coordinates in a manner compatble with "X1,Y1" etc.
 func MakeWellCoordsXYsep(x, y string) WellCoords {
-	r := WellCoords{wutil.ParseInt(y[1:len(y)]) - 1, wutil.ParseInt(x[1:len(x)]) - 1}
+	r := WellCoords{wutil.ParseInt(y[1:]) - 1, wutil.ParseInt(x[1:]) - 1}
 
 	if r.X < 0 || r.Y < 0 {
 		return WellCoords{-1, -1}
@@ -323,3 +318,14 @@ func (wca WellCoordArrayCol) Less(i, j int) bool { return wca[i].RowLessThan(wca
 func (wca WellCoordArrayRow) Len() int           { return len(wca) }
 func (wca WellCoordArrayRow) Swap(i, j int)      { t := wca[i]; wca[i] = wca[j]; wca[j] = t }
 func (wca WellCoordArrayRow) Less(i, j int) bool { return wca[i].ColLessThan(wca[j]) }
+
+//HumanizeWellCoords convenience function to make displaying a slice of WellCoords more human readable
+func HumanizeWellCoords(coords []WellCoords) string {
+	s := []string{}
+	for i := range coords {
+		if !coords[i].IsZero() {
+			s = append(s, coords[i].FormatA1())
+		}
+	}
+	return strings.Join(s, ",")
+}

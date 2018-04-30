@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/Synthace/go-glpk/glpk"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -117,7 +118,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	//debug
 	fmt.Println("Autoallocate: Max_n_wells: ", max_n_wells)
 	lp.SetRowBnds(cur, glpk.UP, -99999.0, max_n_wells)
-	cur += 1
+	cur += 1 // nolint
 	fmt.Println("Autoallocate: Residual volume weight: ", weight_constraint["RESIDUAL_VOLUME_WEIGHT"])
 
 	// set up the matrix columns
@@ -146,7 +147,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	ind := wutil.Series(0, num_cols)
 
-	for c, _ := range component_order {
+	for c := range component_order {
 		row := make([]float64, num_cols+1)
 		col := 0
 		for i := 0; i < len(component_order); i++ {
@@ -208,9 +209,11 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	iocp := glpk.NewIocp()
 	iocp.SetPresolve(true)
-	//debug
 	iocp.SetMsgLev(0)
-	lp.Intopt(iocp)
+	err := lp.Intopt(iocp)
+	if err != nil {
+		panic(err)
+	}
 
 	assignments := make(map[string]map[*wtype.LHPlate]int, len(component_volumes))
 

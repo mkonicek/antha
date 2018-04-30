@@ -2,9 +2,10 @@ package liquidhandling
 
 import (
 	"context"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory/testinventory"
-	"testing"
 )
 
 func TestParallelSetGeneration(t *testing.T) {
@@ -31,6 +32,9 @@ func TestParallelSetGeneration(t *testing.T) {
 	rbt.HeadsLoaded[0].Params.Independent = true
 
 	pol, err := GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// allow multi
 

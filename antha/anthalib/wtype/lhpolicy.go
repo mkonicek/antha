@@ -54,7 +54,7 @@ func (plhp *LHPolicy) Set(item string, value interface{}) error {
 		err = fmt.Errorf("No such LHPolicy item %s", item)
 	} else {
 		if reflect.TypeOf(value) != alhpi.Type {
-			err = fmt.Errorf("LHPolicy item %s needs value of type %t not %t", item, alhpi.Type, reflect.TypeOf(value))
+			err = fmt.Errorf("LHPolicy item %s needs value of type %v not %v", item, alhpi.Type, reflect.TypeOf(value))
 		} else {
 			(*plhp)[item] = value
 		}
@@ -368,7 +368,7 @@ func (lhpr *LHPolicyRuleSet) IsEqualTo(lhp2 *LHPolicyRuleSet) bool {
 		return false
 	}
 
-	for name, _ := range lhpr.Rules {
+	for name := range lhpr.Rules {
 		p1, ok1 := lhpr.Policies[name]
 		p2, ok2 := lhp2.Policies[name]
 
@@ -406,7 +406,7 @@ func (lhpr *LHPolicyRuleSet) AddRule(rule LHPolicyRule, consequent LHPolicy) {
 
 func CloneLHPolicyRuleSet(parent *LHPolicyRuleSet) *LHPolicyRuleSet {
 	child := NewLHPolicyRuleSet()
-	for k, _ := range parent.Rules {
+	for k := range parent.Rules {
 		child.Policies[k] = parent.Policies[k]
 		child.Rules[k] = parent.Rules[k]
 	}

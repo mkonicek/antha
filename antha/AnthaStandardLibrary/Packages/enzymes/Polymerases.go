@@ -48,7 +48,7 @@ var (
 	//
 
 	dnaPolymeraseProperties = map[string]map[string]float64{
-		"Q5Polymerase": map[string]float64{
+		"Q5Polymerase": {
 			"activity_U/ml_assayconds": 50.0,
 			"SecperKb_upper":           30,
 			"SperKb_lower":             20,
@@ -59,7 +59,7 @@ var (
 			"extensiontemp":            72.0,
 			"meltingtemp":              98.0,
 		},
-		"Taq": map[string]float64{
+		"Taq": {
 			"activity_U":          1.0,
 			"SecperKb_upper":      90,
 			"SecperKb_lower":      60,
@@ -71,11 +71,11 @@ var (
 	}
 	// DNApolymerasetemps contains example cycling properties for two common DNA polymerase enzymes
 	DNApolymerasetemps = map[string]map[string]wunit.Temperature{
-		"Q5Polymerase": map[string]wunit.Temperature{
+		"Q5Polymerase": {
 			"extensiontemp": wunit.NewTemperature(72, "C"),
 			"meltingtemp":   wunit.NewTemperature(98, "C"),
 		},
-		"Taq": map[string]wunit.Temperature{
+		"Taq": {
 			"extensiontemp": wunit.NewTemperature(68, "C"),
 			"meltingtemp":   wunit.NewTemperature(95, "C"),
 		},

@@ -72,11 +72,11 @@ func TestRelativeToGoPath(t *testing.T) {
 	}
 
 	cases := []TestCase{
-		TestCase{GoPath: []string{"/xx"}, Name: "/xx/file", Expected: "file"},
-		TestCase{GoPath: []string{"/xx"}, Name: "file", Expected: "file"},
-		TestCase{GoPath: []string{"/noxx"}, Name: "/xx/file", Expected: "/xx/file"},
-		TestCase{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/file", Expected: "file"},
-		TestCase{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/deeper/file", Expected: "file"},
+		{GoPath: []string{"/xx"}, Name: "/xx/file", Expected: "file"},
+		{GoPath: []string{"/xx"}, Name: "file", Expected: "file"},
+		{GoPath: []string{"/noxx"}, Name: "/xx/file", Expected: "/xx/file"},
+		{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/file", Expected: "file"},
+		{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/deeper/file", Expected: "file"},
 	}
 
 	for idx, c := range cases {

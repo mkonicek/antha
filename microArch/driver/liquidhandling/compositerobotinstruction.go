@@ -27,18 +27,15 @@ import (
 	"fmt"
 	"math"
 
+	"reflect"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
-	"reflect"
 )
-
-func TipChosenError(v wunit.Volume, prms *LHProperties) string {
-	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
-}
 
 type SingleChannelBlockInstruction struct {
 	GenericRobotInstruction
@@ -140,15 +137,12 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 
 	ret := make([]RobotInstruction, 0)
 	// get tips
-	channel, tipp := ChooseChannel(ins.Volume[0], prms)
-
-	tiptype := ""
-
-	if tipp != nil {
-		tiptype = tipp.Type
-	} else {
-		return ret, fmt.Errorf(TipChosenError(ins.Volume[0], prms))
+	channel, tipp, err := ChooseChannel(ins.Volume[0], prms)
+	if err != nil {
+		return ret, err
 	}
+
+	tiptype := tipp.Type
 
 	ins.Prms = channel
 	pol := GetPolicyFor(policy, ins)
@@ -167,19 +161,15 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	n_tip_uses := 0
 
 	var last_thing *wtype.LHComponent
-
-	last_thing = nil
-
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
-		newchannel, newtipp := ChooseChannel(ins.Volume[t], prms)
-		newtiptype := ""
-		if newtipp != nil {
-			newtiptype = newtipp.Type
-		} else {
-			return ret, fmt.Errorf(TipChosenError(ins.Volume[t], prms))
+		newchannel, newtipp, err := ChooseChannel(ins.Volume[t], prms)
+		if err != nil {
+			return ret, err
 		}
+
+		newtiptype := newtipp.Type
 		mergedchannel := newchannel.MergeWithTip(newtipp)
 		tipp = newtipp
 
@@ -190,8 +180,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 		}
 		for _, vol := range tvs {
 			// determine whether to change tips
-			change_tips := false
-			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
+			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || channel != newchannel
 			change_tips = change_tips || newtiptype != tiptype
 
@@ -406,7 +395,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	//channels, _, tiptypes, err := ChooseChannels(ins.GetVolumes(), prms)
 	channels, _, tiptypes, err := ChooseChannels(ins.Volume[0], prms)
 	if err != nil {
-		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
+		return ret, err
 	}
 
 	tipget, err := GetTips(ctx, tiptypes, prms, channels, usetiptracking)
@@ -422,7 +411,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		tvols := NewVolumeSet(ins.Prms.Multi)
 		//		vols := NewVolumeSet(ins.Prms.Multi)
 		fvols := NewVolumeSet(ins.Prms.Multi)
-		for i, _ := range ins.Volume[t] {
+		for i := range ins.Volume[t] {
 			fvols[i] = wunit.CopyVolume(ins.FVolume[t][i])
 			tvols[i] = wunit.CopyVolume(ins.TVolume[t][i])
 		}
@@ -446,8 +435,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		for _, vols := range tvs {
 			// determine whether to change tips
 			// INMC: DO THIS PER CHANNEL
-			change_tips := false
-			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
+			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || !reflect.DeepEqual(channels, newchannels)
 			change_tips = change_tips || !reflect.DeepEqual(tiptypes, newtiptypes)
 
@@ -483,8 +471,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 
 				ret = append(ret, tipget...)
 				//		tips = newtips
-				tiptypes = newtiptypes
-				channels = newchannels
+
 				n_tip_uses = 0
 				last_thing = nil
 				dirty = false
@@ -924,7 +911,7 @@ func (ins *LoadTipsMoveInstruction) GetParameter(name string) interface{} {
 func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
-	// move
+	// move to just above the tip
 
 	mov := NewMoveInstruction()
 	mov.Head = ins.Head
@@ -932,10 +919,10 @@ func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.
 	mov.Well = ins.Well
 	mov.Plt = ins.FPlateType
 	for i := 0; i < len(ins.Well); i++ {
-		mov.Reference = append(mov.Reference, 0)
+		mov.Reference = append(mov.Reference, wtype.TopReference.AsInt())
 		mov.OffsetX = append(mov.OffsetX, 0.0)
 		mov.OffsetY = append(mov.OffsetY, 0.0)
-		mov.OffsetZ = append(mov.OffsetZ, 0.0)
+		mov.OffsetZ = append(mov.OffsetZ, 5.0)
 	}
 	mov.Platform = ins.Platform
 	ret[0] = mov
@@ -1011,7 +998,7 @@ func (ins *UnloadTipsMoveInstruction) Generate(ctx context.Context, policy *wtyp
 	mov.Well = ins.WellTo
 	mov.Plt = ins.TPlateType
 	for i := 0; i < len(mov.Pos); i++ {
-		mov.Reference = append(mov.Reference, 0)
+		mov.Reference = append(mov.Reference, wtype.TopReference.AsInt())
 		mov.OffsetX = append(mov.OffsetX, 0.0)
 		mov.OffsetY = append(mov.OffsetY, 0.0)
 		mov.OffsetZ = append(mov.OffsetZ, 0.0)
@@ -1927,7 +1914,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ev, iwantmore := pol["EXTRA_ASP_VOLUME"]
 	if iwantmore {
 		extra_vol := ev.(wunit.Volume)
-		for i, _ := range aspins.Volume {
+		for i := range aspins.Volume {
 			aspins.Volume[i].Add(extra_vol)
 		}
 	}
@@ -2236,7 +2223,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		extra_vol := SafeGetVolume(pol, "EXTRA_DISP_VOLUME")
 		if extra_vol.GreaterThan(wunit.ZeroVolume()) {
-			for i, _ := range dspins.Volume {
+			for i := range dspins.Volume {
 				dspins.Volume[i].Add(extra_vol)
 			}
 		}
@@ -3300,7 +3287,6 @@ func getFirstDefined(sa []string) int {
 			break
 		}
 	}
-
 	return x
 }
 
@@ -3334,21 +3320,6 @@ func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, chann
 	}
 
 	return inss, nil
-}
-
-func channelArrayToOldStyle(channels []*wtype.LHChannelParameter) (*wtype.LHChannelParameter, int) {
-	var ch *wtype.LHChannelParameter
-	multi := 0
-
-	for _, c := range channels {
-		if c != nil {
-			multi += 1
-			if ch == nil {
-				ch = c
-			}
-		}
-	}
-	return ch, multi
 }
 
 func collate(s []string) string {

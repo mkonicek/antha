@@ -1,14 +1,13 @@
 package liquidhandling
 
 import (
-	"testing"
-
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"testing"
 )
 
 func testInstructions1() []RobotInstruction {
 	insS := make([]RobotInstruction, 0, 1)
-	var ins RobotInstruction
+	var ins RobotInstruction // nolint
 	ins = NewMoveInstruction()
 	ins.(*MoveInstruction).OffsetZ = append(ins.(*MoveInstruction).OffsetZ, 0.5)
 	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 0)
@@ -51,7 +50,7 @@ func testInstructions1() []RobotInstruction {
 
 func testInstructions2() []RobotInstruction {
 	insS := make([]RobotInstruction, 0, 1)
-	var ins RobotInstruction
+	var ins RobotInstruction //nolint
 	ins = NewMoveInstruction()
 	ins.(*MoveInstruction).OffsetZ = append(ins.(*MoveInstruction).OffsetZ, 0.5)
 	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 0)

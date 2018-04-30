@@ -24,12 +24,13 @@ package liquidhandling
 
 import (
 	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/graph"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"sort"
-	"strings"
 )
 
 const (
@@ -37,86 +38,6 @@ const (
 	ROWWISE
 	RANDOM
 )
-
-func roundup(f float64) float64 {
-	return float64(int(f) + 1)
-}
-
-func get_aggregate_component(sol *wtype.LHSolution, name string) *wtype.LHComponent {
-	components := sol.Components
-
-	ret := wtype.NewLHComponent()
-
-	ret.CName = name
-
-	vol := 0.0
-	found := false
-
-	for _, component := range components {
-		nm := component.CName
-
-		if nm == name {
-			ret.Type = component.Type
-			vol += component.Vol
-			ret.Vunit = component.Vunit
-			ret.Order = component.Order
-			found = true
-		}
-	}
-	if !found {
-		return nil
-	}
-	ret.Vol = vol
-	return ret
-}
-
-func get_assignment(assignments []string, plates *map[string]*wtype.LHPlate, vol wunit.Volume) (string, wunit.Volume, bool) {
-	assignment := ""
-	ok := false
-	prevol := wunit.NewVolume(0.0, "ul")
-
-	for _, assignment = range assignments {
-		asstx := strings.Split(assignment, ":")
-		plate := (*plates)[asstx[0]]
-
-		crds := asstx[1] + ":" + asstx[2]
-		wellidlkp := plate.Wellcoords
-		well := wellidlkp[crds]
-
-		currvol := well.CurrVolume()
-		currvol.Subtract(well.ResidualVolume())
-		if currvol.GreaterThan(vol) || currvol.EqualTo(vol) {
-			prevol = well.CurrVolume()
-			well.Remove(vol)
-			plate.HWells[well.ID] = well
-			(*plates)[asstx[0]] = plate
-			ok = true
-			break
-		}
-	}
-
-	return assignment, prevol, ok
-}
-
-func copyplates(plts map[string]*wtype.LHPlate) map[string]*wtype.LHPlate {
-	ret := make(map[string]*wtype.LHPlate, len(plts))
-
-	for k, v := range plts {
-		ret[k] = v.Dup()
-	}
-
-	return ret
-}
-
-func insSliceFromMap(m map[string]*wtype.LHInstruction) []*wtype.LHInstruction {
-	ret := make([]*wtype.LHInstruction, 0, len(m))
-
-	for _, v := range m {
-		ret = append(ret, v)
-	}
-
-	return ret
-}
 
 type ByGeneration []*wtype.LHInstruction
 
@@ -232,36 +153,6 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 }
 
-func aggregateAppropriateInstructions(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
-	agg := make([]map[string]*wtype.LHInstruction, len(wtype.InsNames))
-	for i := 0; i < len(wtype.InsNames); i++ {
-		agg[i] = make(map[string]*wtype.LHInstruction, 10)
-	}
-
-	for _, ins := range inss {
-		// just prompts
-		if ins.Type == wtype.LHIPRM {
-			cur := agg[ins.Type][ins.Message]
-			if cur == nil || cur.Generation() < ins.Generation() {
-				agg[ins.Type][ins.Message] = ins
-			}
-		}
-	}
-
-	// now filter
-	insout := make([]*wtype.LHInstruction, 0, len(inss))
-	for _, ins := range inss {
-		if ins.Type == wtype.LHIPRM {
-			if agg[ins.Type][ins.Message].ID != ins.ID {
-				continue
-			}
-		}
-		insout = append(insout, ins)
-	}
-
-	return insout
-}
-
 func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool) *IChain {
 	ic := NewIChain(nil)
 
@@ -273,6 +164,10 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 	for _, n := range sortedNodes {
 		addToIChain(ic, n, tg)
 	}
+
+	// finally we need to ensure that splits and mixes are kept separate by fissioning nodes
+
+	ic.SplitMixedNodes()
 
 	sortOutputs(ic, sort)
 
@@ -507,41 +402,6 @@ func set_output_order(rq *LHRequest) error {
 	return nil
 }
 
-func set_output_order_orig(rq *LHRequest) error {
-	// sort into equivalence classes by generation
-
-	sorted := insSliceFromMap(rq.LHInstructions)
-
-	sorted = aggregateAppropriateInstructions(sorted)
-
-	if rq.Options.OutputSort {
-		sort.Sort(ByGenerationOpt(sorted))
-	} else {
-		sort.Sort(ByGeneration(sorted))
-	}
-
-	it := NewIChain(nil)
-
-	// aggregation of instructions effectively happens here. This entire level is
-	// passed as a block to the instruction generator as a TransferBlock (TFB)
-	// to be picked apart sequentially into sets which can be serviced simultaneously
-	// etc.
-
-	for _, v := range sorted {
-		it.Add(v)
-	}
-
-	it.Print()
-
-	rq.Output_order = it.Flatten()
-
-	rq.InstructionChain = it
-
-	//rq.InstructionSets = make_instruction_sets(it)
-
-	return nil
-}
-
 type ByOrdinal [][]int
 
 func (bo ByOrdinal) Len() int      { return len(bo) }
@@ -600,7 +460,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 	if insIn.IsMixInPlace() {
 		lenToMake = lenToMake - 1
-		cmps = cmps[1:len(cmps)]
+		cmps = cmps[1:]
 	}
 
 	wh := make([]string, 0, lenToMake)       // component types
@@ -633,7 +493,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	cnames := make([]string, 0, lenToMake)   // actual Component names
 
 	for i, v := range cmps {
-		for xx, _ := range tfrs[i].PlateIDs { //fromPlateIDs[i] {
+		for xx := range tfrs[i].PlateIDs { //fromPlateIDs[i] {
 			// get dem big ole plates out
 			// TODO -- pass them in instead of all this nonsense
 
@@ -669,7 +529,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 			//v2 := wunit.NewVolume(v.Vol, v.Vunit)
 			v2 := tfrs[i].Vols[xx] // volss[i][xx]
-			vt = append(vt, wlt.CurrVolume())
+			vt = append(vt, wlt.CurrentVolume())
 			wh = append(wh, v.TypeName())
 			va = append(va, v2)
 			pt = append(pt, robot.PlateIDLookup[insIn.PlateID])
@@ -687,11 +547,13 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 				return nil, err
 			}
 
-			vf = append(vf, wlf.CurrVolume())
+			vf = append(vf, wlf.CurrentVolume())
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
 			cnames = append(cnames, wlf.WContents.CName)
-			wlf.Remove(vrm)
+			if _, err := wlf.RemoveVolume(vrm); err != nil {
+				return nil, err
+			}
 
 			pf = append(pf, robot.PlateIDLookup[tfrs[i].PlateIDs[xx]])
 			wf = append(wf, tfrs[i].WellCoords[xx])
@@ -710,7 +572,10 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vd.Vol = v2.ConvertToString(vd.Vunit)
 			vd.ID = wlf.WContents.ID
 			vd.ParentID = wlf.WContents.ParentID
-			wlt.Add(vd)
+			err := wlt.AddComponent(vd)
+			if err != nil {
+				return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler couldn't add volume to well : %s", err.Error()))
+			}
 
 			// TODO -- danger here, is result definitely set?
 			wlt.WContents.ID = insIn.Results[0].ID

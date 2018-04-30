@@ -2,6 +2,7 @@ package lh
 
 import (
 	"fmt"
+
 	pb "github.com/antha-lang/antha/driver/pb/lh"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -11,8 +12,6 @@ import (
 
 type HLLHDriver struct {
 	C pb.HighLevelLiquidhandlingDriverClient
-	// ignore the below: it's just there to ensure we use all imports
-	d liquidhandling.HighLevelLiquidhandlingDriver
 }
 
 func NewHLLHDriver(address string) *HLLHDriver {
@@ -84,11 +83,6 @@ func (d *HLLHDriver) RemovePlateAt(arg_1 string) driver.CommandStatus {
 	}
 	ret, _ := d.C.RemovePlateAt(context.Background(), &req)
 	return (driver.CommandStatus)(DecodeCommandStatus(ret.Ret_1))
-}
-func (d *HLLHDriver) asHighLevelLiquidhandlingDriver() liquidhandling.HighLevelLiquidhandlingDriver {
-	var ret liquidhandling.HighLevelLiquidhandlingDriver
-	ret = d
-	return ret
 }
 
 func (d *HLLHDriver) Transfer(what, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus {

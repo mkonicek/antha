@@ -2,6 +2,7 @@ package lh
 
 import (
 	"fmt"
+
 	pb "github.com/antha-lang/antha/driver/pb/lh"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -300,9 +301,4 @@ func (d *Driver) Wait(arg_1 float64) driver.CommandStatus {
 	}
 	ret, _ := d.C.Wait(context.Background(), &req)
 	return (driver.CommandStatus)(DecodeCommandStatus(ret.Ret_1))
-}
-func (d *Driver) asExtendedLiquidhandlingDriver() liquidhandling.ExtendedLiquidhandlingDriver {
-	var ret liquidhandling.ExtendedLiquidhandlingDriver
-	ret = d
-	return ret
 }

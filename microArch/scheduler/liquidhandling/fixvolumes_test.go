@@ -2,9 +2,11 @@ package liquidhandling
 
 import (
 	"fmt"
+	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"testing"
 )
 
 func getComponentWithNameVolume(name string, volume float64) *wtype.LHComponent {
@@ -72,7 +74,7 @@ func TestFixVolumes(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	// check to see if the result of the first mix is now 150.0 ul
+	// check to see if the result of the first mix is now 155.0 ul
 
 	mix1 := req.InstructionChain.Values[0]
 
@@ -251,9 +253,87 @@ func TestFixVolumes4(t *testing.T) {
 		Depth:  2,
 	}
 
+	_, err := FixVolumes(req)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+}
+
+// test for splitsample fixing
+func TestFixVolumesSplitSample(t *testing.T) {
+	req := NewLHRequest()
+
+	c1 := getComponentWithNameVolume("water", 50.0)
+	c2 := getComponentWithNameVolume("milk", 50.0)
+
+	c3 := c1.Dup()
+	c3.Mix(c2)
+	c3.DeclareInstance()
+
+	ins := wtype.NewLHMixInstruction()
+	ins.Components = []*wtype.LHComponent{c1, c2}
+	ins.AddResult(c3)
+
+	req.LHInstructions[ins.ID] = ins
+
+	ic := &IChain{
+		Parent: nil,
+		Child:  nil,
+		Values: []*wtype.LHInstruction{ins},
+		Depth:  0,
+	}
+
+	req.InstructionChain = ic
+
+	//now take lots of split samples
+	mixInss := make([]*wtype.LHInstruction, 0, 10)
+	splInss := make([]*wtype.LHInstruction, 0, 10)
+
+	for i := 0; i < 10; i++ {
+		ins = wtype.NewLHMixInstruction()
+		//smp, err := c3.Sample(wunit.NewVolume(15.0, "ul"))
+		//smp.SetSample(true)
+		//smp.DeclareInstance()
+		//smp.ParentID = c3.ID
+
+		smp, newC3 := mixer.SplitSample(c3, wunit.NewVolume(15.0, "ul"))
+
+		ins.Components = []*wtype.LHComponent{smp}
+		res := getComponentWithNameVolume("water+milk", 15.0)
+		res.ParentID = ins.Components[0].ID
+		res.DeclareInstance()
+		ins.AddResult(res)
+		req.LHInstructions[ins.ID] = ins
+
+		// make the split instruction
+		splitIns := wtype.NewLHSplitInstruction()
+		splitIns.AddComponent(c3)
+		splitIns.AddProduct(smp)
+		splitIns.AddProduct(newC3)
+		c3.Vol = 100.0
+		c3 = newC3
+
+		mixInss = append(mixInss, ins)
+		splInss = append(splInss, splitIns)
+	}
+
+	ic.Child = &IChain{Parent: ic, Child: nil, Values: splInss, Depth: 1}
+	ic.Child.Child = &IChain{Parent: ic.Child, Child: nil, Values: mixInss, Depth: 2}
+
+	// try fixing the volumes
+
 	req, err := FixVolumes(req)
 
 	if err != nil {
 		t.Errorf(err.Error())
+	}
+
+	// check to see if the result of the first mix is now 155.0 ul
+
+	mix1 := req.InstructionChain.Values[0]
+
+	if mix1.Results[0].Vol != 155.0 {
+		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Results[0].Volume()))
 	}
 }

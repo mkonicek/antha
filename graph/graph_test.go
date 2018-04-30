@@ -55,8 +55,8 @@ func MakeTestGraph(m map[string][]string) *StringGraph {
 
 func TestReverse(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"a": []string{"b", "c"},
-		"d": []string{"c"},
+		"a": {"b", "c"},
+		"d": {"c"},
 	})
 	rg := Reverse(g)
 	if l := rg.NumNodes(); l != 4 {

@@ -85,7 +85,7 @@ func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) 
 		if !ok {
 			tiplocs[actualtiptype] = tiplocs[tiptype]
 		} else {
-			for k, _ := range tiplocs[tiptype] {
+			for k := range tiplocs[tiptype] {
 				ar[k] += 1
 			}
 			tiplocs[actualtiptype] = ar
@@ -97,7 +97,7 @@ func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) 
 	for actualtiptype, ntip := range h {
 		ar := tiplocs[actualtiptype]
 		ar2 := make([]string, 0, 1)
-		for k, _ := range ar {
+		for k := range ar {
 			ar2 = append(ar2, k)
 		}
 

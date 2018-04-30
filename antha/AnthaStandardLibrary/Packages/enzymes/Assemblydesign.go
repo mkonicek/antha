@@ -453,7 +453,7 @@ func allCombinations(arr [][]string) []string {
 	}
 
 	results := make([]string, 0)
-	allRem := allCombinations(arr[1:len(arr)])
+	allRem := allCombinations(arr[1:])
 	for i := 0; i < len(allRem); i++ {
 		for j := 0; j < len(arr[0]); j++ {
 			x := arr[0][j] + allRem[i]
@@ -555,30 +555,30 @@ func LookupAssemblyStandard(name string) (standard AssemblyStandard, err error) 
 var mocloStandard = AssemblyStandard{
 	Name: "MoClo",
 	Levels: map[string]AssemblyLevel{
-		"Level0": AssemblyLevel{
+		"Level0": {
 			Enzyme: BsaI,
 			PartOverhangs: map[string]StandardOverhangs{
-				"Pro":         StandardOverhangs{"GGAG", "TACT"},
-				"5U":          StandardOverhangs{"TACT", "CCAT"},
-				"5U(f)":       StandardOverhangs{"TACT", "CCAT"},
-				"Pro + 5U(f)": StandardOverhangs{"GGAG", "CCAT"},
-				"Pro + 5U":    StandardOverhangs{"GGAG", "AATG"},
-				"NT1":         StandardOverhangs{"CCAT", "AATG"},
-				"5U + NT1":    StandardOverhangs{"TACT", "AATG"},
-				"CDS1":        StandardOverhangs{"AATG", "GCTT"},
-				"CDS1 ns":     StandardOverhangs{"AATG", "TTCG"},
-				"NT2":         StandardOverhangs{"AATG", "AGGT"},
-				"SP":          StandardOverhangs{"AATG", "AGGT"},
-				"CDS2 ns":     StandardOverhangs{"AGGT", "TTCG"},
-				"CDS2":        StandardOverhangs{"AGGT", "GCTT"},
-				"CT":          StandardOverhangs{"TTCG", "GCTT"},
-				"3U":          StandardOverhangs{"GCTT", "GGTA"},
-				"Ter":         StandardOverhangs{"GGTA", "CGCT"},
-				"3U + Ter":    StandardOverhangs{"GCTT", "CGCT"},
+				"Pro":         {"GGAG", "TACT"},
+				"5U":          {"TACT", "CCAT"},
+				"5U(f)":       {"TACT", "CCAT"},
+				"Pro + 5U(f)": {"GGAG", "CCAT"},
+				"Pro + 5U":    {"GGAG", "AATG"},
+				"NT1":         {"CCAT", "AATG"},
+				"5U + NT1":    {"TACT", "AATG"},
+				"CDS1":        {"AATG", "GCTT"},
+				"CDS1 ns":     {"AATG", "TTCG"},
+				"NT2":         {"AATG", "AGGT"},
+				"SP":          {"AATG", "AGGT"},
+				"CDS2 ns":     {"AGGT", "TTCG"},
+				"CDS2":        {"AGGT", "GCTT"},
+				"CT":          {"TTCG", "GCTT"},
+				"3U":          {"GCTT", "GGTA"},
+				"Ter":         {"GGTA", "CGCT"},
+				"3U + Ter":    {"GCTT", "CGCT"},
 			},
 			EntryVectorEnds: StandardOverhangs{"TAAT", "GTCG"},
 		},
-		"Level1": AssemblyLevel{
+		"Level1": {
 			Enzyme:          BpiI,
 			PartOverhangs:   map[string]StandardOverhangs{},
 			EntryVectorEnds: StandardOverhangs{"", ""},
@@ -589,30 +589,30 @@ var mocloStandard = AssemblyStandard{
 var mocloRavenStandard = AssemblyStandard{
 	Name: "MoClo_Raven",
 	Levels: map[string]AssemblyLevel{
-		"Level0": AssemblyLevel{
+		"Level0": {
 			Enzyme: BsaI,
 			PartOverhangs: map[string]StandardOverhangs{
-				"Pro":         StandardOverhangs{"GAGG", "TACT"},
-				"5U":          StandardOverhangs{"TACT", "CCAT"},
-				"5U(f)":       StandardOverhangs{"TACT", "CCAT"},
-				"Pro + 5U(f)": StandardOverhangs{"GGAG", "CCAT"},
-				"Pro + 5U":    StandardOverhangs{"GGAG", "AATG"},
-				"NT1":         StandardOverhangs{"CCAT", "AATG"},
-				"5U + NT1":    StandardOverhangs{"TACT", "AATG"},
-				"CDS1":        StandardOverhangs{"AATG", "GCTT"},
-				"CDS1 ns":     StandardOverhangs{"AATG", "TTCG"},
-				"NT2":         StandardOverhangs{"AATG", "AGGT"},
-				"SP":          StandardOverhangs{"AATG", "AGGT"},
-				"CDS2 ns":     StandardOverhangs{"AGGT", "TTCG"},
-				"CDS2":        StandardOverhangs{"AGGT", "GCTT"},
-				"CT":          StandardOverhangs{"TTCG", "GCTT"},
-				"3U":          StandardOverhangs{"GCTT", "GGTA"},
-				"Ter":         StandardOverhangs{"GGTA", "CGCT"},
-				"3U + Ter":    StandardOverhangs{"GCTT", "GCTT"}, // both same ! look into this
+				"Pro":         {"GAGG", "TACT"},
+				"5U":          {"TACT", "CCAT"},
+				"5U(f)":       {"TACT", "CCAT"},
+				"Pro + 5U(f)": {"GGAG", "CCAT"},
+				"Pro + 5U":    {"GGAG", "AATG"},
+				"NT1":         {"CCAT", "AATG"},
+				"5U + NT1":    {"TACT", "AATG"},
+				"CDS1":        {"AATG", "GCTT"},
+				"CDS1 ns":     {"AATG", "TTCG"},
+				"NT2":         {"AATG", "AGGT"},
+				"SP":          {"AATG", "AGGT"},
+				"CDS2 ns":     {"AGGT", "TTCG"},
+				"CDS2":        {"AGGT", "GCTT"},
+				"CT":          {"TTCG", "GCTT"},
+				"3U":          {"GCTT", "GGTA"},
+				"Ter":         {"GGTA", "CGCT"},
+				"3U + Ter":    {"GCTT", "GCTT"}, // both same ! look into this
 			},
 			EntryVectorEnds: StandardOverhangs{"AAGC", "CCTC"},
 		},
-		"Level1": AssemblyLevel{
+		"Level1": {
 			Enzyme:          BpiI,
 			PartOverhangs:   map[string]StandardOverhangs{},
 			EntryVectorEnds: StandardOverhangs{"", ""},
@@ -623,52 +623,52 @@ var mocloRavenStandard = AssemblyStandard{
 var customStandard = AssemblyStandard{
 	Name: "Custom",
 	Levels: map[string]AssemblyLevel{
-		"Level0": AssemblyLevel{
+		"Level0": {
 			Enzyme: BsaI,
 			PartOverhangs: map[string]StandardOverhangs{
-				"L1Uadaptor":                  StandardOverhangs{"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
-				"L1Uadaptor + Pro":            StandardOverhangs{"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
-				"L1Uadaptor + Pro(MoClo)":     StandardOverhangs{"GTCG", "TACT"}, // original MoClo overhang of TACT
-				"L1Uadaptor + Pro + 5U":       StandardOverhangs{"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
-				"L1Uadaptor + Pro + 5U + NT1": StandardOverhangs{"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
-				"Pro":                               StandardOverhangs{"GGAG", "TTTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-				"5U":                                StandardOverhangs{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-				"5U(f)":                             StandardOverhangs{"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-				"Pro + 5U(f)":                       StandardOverhangs{"GGAG", "CCAT"},
-				"Pro + 5U":                          StandardOverhangs{"GGAG", "CCAT"},
-				"Pro + 5U + NT1":                    StandardOverhangs{"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"NT1":                               StandardOverhangs{"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"5U + NT1":                          StandardOverhangs{"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"5U(MoClo) + NT1":                   StandardOverhangs{"TACT", "TATG"}, //original MoClo overhang of TACT
-				"5U + NT1 + CDS1":                   StandardOverhangs{"TTTT", "GCTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
-				"5U + NT1 + CDS1 + 3U":              StandardOverhangs{"TTTT", "CCCC"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox and changed GGTA to CCCC to conform with Protein Paintbox
-				"CDS1":                              StandardOverhangs{"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"CDS1 + 3U":                         StandardOverhangs{"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs and changed GGTA to CCCC to conform with Protein Paintbox
-				"CDS1 + 3U(MoClo)":                  StandardOverhangs{"TATG", "GGTA"}, //original MoClo overhang of GGTA
-				"CDS1 ns":                           StandardOverhangs{"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"CDS1 + CT + 3U + Ter + L1Dadaptor": StandardOverhangs{"TATG", "TAAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"NT2":                        StandardOverhangs{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"SP":                         StandardOverhangs{"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"CDS2 ns":                    StandardOverhangs{"AGGT", "TTCG"},
-				"CDS2":                       StandardOverhangs{"AGGT", "GCTT"},
-				"CT":                         StandardOverhangs{"TTCG", "GCTT"},
-				"3U":                         StandardOverhangs{"GCTT", "CCCC"}, //changed GGTA to CCCC to conform with Protein Paintbox
-				"Ter":                        StandardOverhangs{"CCCC", "CGCT"},
-				"3U + Ter":                   StandardOverhangs{"GCTT", "CGCT"},
-				"3U + Ter + L1Dadaptor":      StandardOverhangs{"GCTT", "TAAT"},
-				"CT + 3U + Ter + L1Dadaptor": StandardOverhangs{"TTCG", "TAAT"},
-				"L1Dadaptor":                 StandardOverhangs{"CGCT", "TAAT"},
-				"Ter + L1Dadaptor":           StandardOverhangs{"CCCC", "TAAT"},
-				"Ter(MoClo) + L1Dadaptor":    StandardOverhangs{"GGTA", "TAAT"},
+				"L1Uadaptor":                  {"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro":            {"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro(MoClo)":     {"GTCG", "TACT"}, // original MoClo overhang of TACT
+				"L1Uadaptor + Pro + 5U":       {"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro + 5U + NT1": {"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
+				"Pro":                               {"GGAG", "TTTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+				"5U":                                {"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+				"5U(f)":                             {"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+				"Pro + 5U(f)":                       {"GGAG", "CCAT"},
+				"Pro + 5U":                          {"GGAG", "CCAT"},
+				"Pro + 5U + NT1":                    {"GGAG", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"NT1":                               {"CCAT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"5U + NT1":                          {"TTTT", "TATG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"5U(MoClo) + NT1":                   {"TACT", "TATG"}, //original MoClo overhang of TACT
+				"5U + NT1 + CDS1":                   {"TTTT", "GCTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
+				"5U + NT1 + CDS1 + 3U":              {"TTTT", "CCCC"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox and changed GGTA to CCCC to conform with Protein Paintbox
+				"CDS1":                              {"TATG", "GCTT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"CDS1 + 3U":                         {"TATG", "CCCC"}, //changed AATG to TATG to work with Kosuri paper RBSs and changed GGTA to CCCC to conform with Protein Paintbox
+				"CDS1 + 3U(MoClo)":                  {"TATG", "GGTA"}, //original MoClo overhang of GGTA
+				"CDS1 ns":                           {"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"CDS1 + CT + 3U + Ter + L1Dadaptor": {"TATG", "TAAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"NT2":                        {"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"SP":                         {"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"CDS2 ns":                    {"AGGT", "TTCG"},
+				"CDS2":                       {"AGGT", "GCTT"},
+				"CT":                         {"TTCG", "GCTT"},
+				"3U":                         {"GCTT", "CCCC"}, //changed GGTA to CCCC to conform with Protein Paintbox
+				"Ter":                        {"CCCC", "CGCT"},
+				"3U + Ter":                   {"GCTT", "CGCT"},
+				"3U + Ter + L1Dadaptor":      {"GCTT", "TAAT"},
+				"CT + 3U + Ter + L1Dadaptor": {"TTCG", "TAAT"},
+				"L1Dadaptor":                 {"CGCT", "TAAT"},
+				"Ter + L1Dadaptor":           {"CCCC", "TAAT"},
+				"Ter(MoClo) + L1Dadaptor":    {"GGTA", "TAAT"},
 			},
 			EntryVectorEnds: StandardOverhangs{"TAAT", "GTCG"},
 		},
-		"Level1": AssemblyLevel{
+		"Level1": {
 			Enzyme: SapI,
 			PartOverhangs: map[string]StandardOverhangs{
-				"Device1": StandardOverhangs{"GAA", "ACC"},
-				"Device2": StandardOverhangs{"ACC", "CTG"},
-				"Device3": StandardOverhangs{"CTG", "GGT"},
+				"Device1": {"GAA", "ACC"},
+				"Device2": {"ACC", "CTG"},
+				"Device3": {"CTG", "GGT"},
 			},
 			EntryVectorEnds: StandardOverhangs{"GGT", "GAA"},
 		},
@@ -678,21 +678,21 @@ var customStandard = AssemblyStandard{
 var antibodyStandard = AssemblyStandard{
 	Name: "Antibody",
 	Levels: map[string]AssemblyLevel{
-		"Heavy": AssemblyLevel{
+		"Heavy": {
 			Enzyme: SapI,
 			PartOverhangs: map[string]StandardOverhangs{
-				"Part1": StandardOverhangs{"GCG", "TCG"},
-				"Part2": StandardOverhangs{"TGG", "CTG"},
-				"Part3": StandardOverhangs{"CTG", "AAG"},
+				"Part1": {"GCG", "TCG"},
+				"Part2": {"TGG", "CTG"},
+				"Part3": {"CTG", "AAG"},
 			},
 			EntryVectorEnds: StandardOverhangs{"GCG", "AAG"},
 		},
-		"Light": AssemblyLevel{
+		"Light": {
 			Enzyme: SapI,
 			PartOverhangs: map[string]StandardOverhangs{
-				"Part1": StandardOverhangs{"GCG", "TCG"},
-				"Part2": StandardOverhangs{"TGG", "CTG"},
-				"Part3": StandardOverhangs{"CTG", "AAG"},
+				"Part1": {"GCG", "TCG"},
+				"Part2": {"TGG", "CTG"},
+				"Part3": {"CTG", "AAG"},
 			},
 			EntryVectorEnds: StandardOverhangs{"GCG", "AAG"},
 		},

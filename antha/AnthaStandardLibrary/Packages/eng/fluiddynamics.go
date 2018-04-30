@@ -24,7 +24,6 @@
 package eng
 
 import (
-	//	"fmt"
 	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -59,32 +58,17 @@ func KLa_squaremicrowell(D float64, dv float64, ai float64, RE float64, a float6
 	return ((3.94E-4) * (D / dv) * ai * (math.Pow(RE, 1.91)) * (math.Pow(math.E, (a * (math.Pow(froude, b))))))
 } // a little unclear whether exp is e to (afr^b) from paper but assumed this is the case
 
-/*
-
-func KLa_squaremicrowell(D float64, dv float64, ai float64, RE float64, a float64, froude float64, b float64) float64 {
-
-	part1 := ((3.94E-4) * (D / dv) * ai * (math.Pow(RE, 1.91)))
-
-	exponent := a * (math.Pow(froude, b))
-
-	part2a := float64(math.Pow(math.E, exponent))
-
-	part2 := float64(part2a)
-
-	klaresult := part1 * part2
-
-	return klaresult
-} // a little unclear whether exp is e to (afr^b) from paper but assumed this is the case
-*/
 func RE(ro float64, n float64, mu float64, dv float64) float64 { // Reynolds number
 
 	return (ro * n * dv * 2 / mu)
 }
 
-func Shakerspeed(TargetRE float64, ro float64, mu float64, dv float64) (rate wunit.Rate) /*float64*/ { // calulate shaker speed from target Reynolds number
+func Shakerspeed(TargetRE float64, ro float64, mu float64, dv float64) wunit.Rate /*float64*/ { // calulate shaker speed from target Reynolds number
 	rps := (TargetRE * mu / (ro * dv * 2))
-	rate, _ = wunit.NewRate(rps, "/s")
-	//rate = rpm
+	rate, err := wunit.NewRate(rps, "/s")
+	if err != nil {
+		panic(err)
+	}
 
 	return rate
 }
@@ -97,9 +81,11 @@ const G float64 = 9.81 //acceleration due to gravity in meters per second square
 
 //Micheletti 2006:
 
-func Ncrit_srw(sigma float64, dv float64, Vl float64, ro float64, dt float64) (rate wunit.Rate) {
+func Ncrit_srw(sigma float64, dv float64, Vl float64, ro float64, dt float64) wunit.Rate {
 	rps := math.Sqrt((sigma * dv) / (4 * math.Pi * Vl * ro * dt)) //unit = per S // established for srw with Vl = 200ul
-	rate, _ = wunit.NewRate(rps, "/s")
+	rate, err := wunit.NewRate(rps, "/s")
+	if err != nil {
+		panic(err)
+	}
 	return rate
-	//sigma = liquid surface tension N /m; dt = shaken diamter in m
 }

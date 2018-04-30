@@ -33,6 +33,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 // ComponentListSample is a sample of a Component list at a specified volume
@@ -124,11 +125,13 @@ func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 // this is to prevent potential duplication since if a component has a list of sub components the name
 // is considered to be an alias and the component list the true meaning of what the component is.
 // If any sample concentration of zero is found the component list will be made but an error returned.
-func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, err error) {
+func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, warning error) {
 
-	var errs []string
+	var warnings []string
 	var nonZeroVols []wunit.Volume
 	var forTotalVol wunit.Volume
+	var topUpNeeded bool
+	var topUpVolume wunit.Volume
 	// top up volume will only be used if a SampleForTotalVolume command is used
 	var bufferIndex int = -1
 
@@ -136,11 +139,21 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 		if sample.Volume().RawValue() == 0.0 && sample.Tvol > 0 {
 			forTotalVol = wunit.NewVolume(sample.Tvol, sample.Vunit)
 			bufferIndex = i
+			topUpNeeded = true
 		}
 		nonZeroVols = append(nonZeroVols, sample.Volume())
 	}
+	sumOfSampleVolumes := wunit.AddVolumes(nonZeroVols...)
 
-	topUpVolume := wunit.SubtractVolumes(forTotalVol, nonZeroVols...)
+	if !topUpNeeded {
+		forTotalVol = sumOfSampleVolumes
+	}
+
+	topUpVolume = wunit.SubtractVolumes(forTotalVol, sumOfSampleVolumes)
+
+	if topUpVolume.RawValue() < 0.0 {
+		return newComponentList, mixSteps, fmt.Errorf("SampleForTotalVolume requested (%s) is less than sum of sample volumes (%s)", forTotalVol, sumOfSampleVolumes)
+	}
 
 	var volsSoFar []wunit.Volume
 
@@ -155,13 +168,13 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 		}
 
 		if i == 0 {
-
+			var err error
 			newComponentList, err = GetSubComponents(sample)
 			if err != nil {
 				newComponentList.Components = make(map[string]wunit.Concentration)
 				if sample.Conc == 0 {
-					errs = append(errs, "zero concentration found for sample "+sample.CName)
-					newComponentList.Components[sample.Name()] = wunit.NewConcentration(0.0, "g/L")
+					warnings = append(warnings, "zero concentration found for sample "+sample.Name())
+					newComponentList.Components[sample.Name()] = wunit.NewConcentration(1.0, "v/v")
 				} else {
 					newComponentList.Components[sample.Name()] = sample.Concentration()
 				}
@@ -177,8 +190,8 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			if err != nil {
 				nextList.Components = make(map[string]wunit.Concentration)
 				if nextSample.Conc == 0 {
-					errs = append(errs, "zero concentration found for sample "+sample.CName)
-					nextList.Components[nextSample.Name()] = wunit.NewConcentration(0.0, "g/L")
+					warnings = append(warnings, "zero concentration found for sample "+nextSample.Name())
+					nextList.Components[nextSample.Name()] = wunit.NewConcentration(1.0, "v/v")
 				} else {
 					nextList.Components[nextSample.Name()] = nextSample.Concentration()
 				}
@@ -201,9 +214,8 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			}
 			nextMixStep := ComponentListSample{nextList, nexSampleVolToAdd}
 			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
-
 			if err != nil {
-				errs = append(errs, err.Error())
+				warnings = append(warnings, err.Error())
 			}
 
 			mixSteps = append(mixSteps, nextMixStep)
@@ -212,8 +224,9 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 
 	}
 
-	if len(errs) > 0 {
-		err = fmt.Errorf(strings.Join(errs, "; "))
+	if len(warnings) > 0 {
+		warning = wtype.NewWarningf(strings.Join(warnings, "; "))
+		return newComponentList, mixSteps, warning
 	}
 	return newComponentList, mixSteps, nil
 }
@@ -250,10 +263,9 @@ func (c ComponentList) Get(component *wtype.LHComponent) (conc wunit.Concentrati
 
 	if found {
 		return conc, nil
-	} else {
-		return conc, &notFound{Name: component.CName, All: c.AllComponents()}
 	}
-	return
+
+	return conc, &notFound{Name: component.CName, All: c.AllComponents()}
 }
 
 // Get a single concentration set point using just the name of a component present in a component list.
@@ -266,20 +278,43 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 
 	if found {
 		return conc, nil
-	} else {
-		return conc, &notFound{Name: component, All: c.AllComponents()}
 	}
+
+	return conc, &notFound{Name: component, All: c.AllComponents()}
+}
+
+func (c ComponentList) removeConcsFromSubComponentNames() (nc ComponentList) {
+	newComponentList := make(map[string]wunit.Concentration)
+	for compName, conc := range c.Components {
+		newCompName := removeConcUnitFromName(compName)
+		newComponentList[newCompName] = conc
+	}
+
+	nc.Components = newComponentList
 	return
 }
 
-// List all Components and concentration set points presnet in a component list.
+// List all Components and concentration set points present in a component list.
 // if verbose is set to true the field annotations for each component and concentration will be included for each component.
-func (c ComponentList) List(verbose bool) string {
+// option1 is verbose, option2 is use mixdelimiter
+func (c ComponentList) List(options ...bool) string {
+	var verbose bool
+	var mixDelimiter bool
+	if len(options) > 0 {
+		if options[0] {
+			verbose = true
+		}
+	}
+	if len(options) > 1 {
+		if options[1] {
+			mixDelimiter = true
+		}
+	}
 	var s []string
 
 	var sortedKeys []string
 
-	for key, _ := range c.Components {
+	for key := range c.Components {
 		sortedKeys = append(sortedKeys, key)
 	}
 
@@ -301,6 +336,8 @@ func (c ComponentList) List(verbose bool) string {
 	var list string
 	if verbose {
 		list = strings.Join(s, ";")
+	} else if mixDelimiter {
+		list = strings.Join(s, wutil.MIXDELIMITER)
 	} else {
 		list = strings.Join(s, "---")
 	}
@@ -311,7 +348,7 @@ func (c ComponentList) List(verbose bool) string {
 func (c ComponentList) AllComponents() []string {
 	var s []string
 
-	for k, _ := range c.Components {
+	for k := range c.Components {
 		s = append(s, k)
 	}
 
@@ -441,19 +478,6 @@ func GetSubComponents(component *wtype.LHComponent) (componentMap ComponentList,
 	return components, nil
 }
 
-// utility function to allow the object properties to be retained when serialised
-func serialise(compList ComponentList) ([]byte, error) {
-
-	return json.Marshal(compList)
-}
-
-// utility function to allow the object properties to be retained when serialised
-func deserialise(data []byte) (compList ComponentList, err error) {
-	compList = ComponentList{}
-	err = json.Unmarshal(data, &compList)
-	return
-}
-
 // Return a component list from a component.
 // Users should use getSubComponents function.
 func getHistory(comp *wtype.LHComponent) (compList ComponentList, err error) {
@@ -488,4 +512,42 @@ func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHCompo
 	comp.Extra["History"] = compList // serialisedList
 
 	return comp, nil
+}
+
+// UpdateComponentDetails corrects the sub component list and normalises the name of a component with the details
+// of all sample mixes which are specified to be the source of that component.
+// This must currently be updated manually using this function.
+func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.LHComponent) error {
+	var warnings []string
+
+	subComponents, _, err := SimulateMix(mixes...)
+
+	if err != nil {
+		switch err.(type) {
+		case wtype.Warning:
+			warnings = append(warnings, err.Error())
+		default:
+			return err
+		}
+	}
+
+	subComponents = subComponents.removeConcsFromSubComponentNames()
+
+	productOfMixes, err = AddSubComponents(productOfMixes, subComponents)
+
+	if err != nil {
+		warnings = append(warnings, err.Error())
+	}
+
+	err = NormaliseComponentName(productOfMixes)
+
+	if err != nil {
+		warnings = append(warnings, err.Error())
+	}
+
+	if len(warnings) > 0 {
+		return wtype.NewWarningf(strings.Join(warnings, "/n"))
+	}
+
+	return nil
 }

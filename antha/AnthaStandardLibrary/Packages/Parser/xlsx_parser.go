@@ -94,32 +94,6 @@ func generateCSVFromXLSXsheetBinary(excelFileContents []byte, sheetIndex int, ou
 	return nil
 }
 
-func generateCSVFromspecificXLSXsheet(excelFileName string, sheetname string, outputf outputer) error {
-	xlFile, error := xlsx.OpenFile(excelFileName)
-	if error != nil {
-		return error
-	}
-	sheetLen := len(xlFile.Sheets)
-	switch {
-	case sheetLen == 0:
-		return errors.New("this XLSX file contains no sheets")
-	case sheetLen > 0:
-		for _, sheet := range xlFile.Sheets {
-			for _, row := range sheet.Rows {
-				var vals []string
-				if row != nil {
-					for _, cell := range row.Cells {
-						cellstr := cell.String()
-						vals = append(vals, fmt.Sprintf("%q", cellstr))
-					}
-					outputf(strings.Join(vals, delimiter) + "\n")
-				}
-			}
-		}
-	}
-	return nil
-}
-
 func Xlsxparser(filename string, sheetIndex int, outputprefix string) (f *os.File, err error) {
 	f, err = ioutil.TempFile("", outputprefix)
 	if err != nil {
@@ -127,7 +101,7 @@ func Xlsxparser(filename string, sheetIndex int, outputprefix string) (f *os.Fil
 	}
 
 	printer := func(s string) {
-		_, _ = f.WriteString(s)
+		f.WriteString(s) // nolint
 	}
 
 	err = generateCSVFromXLSXsheet(filename, sheetIndex, printer)
@@ -203,7 +177,10 @@ func MakePartsFromXLSXPartsList(data []byte) (parts []*wtype.LHComponent, concMa
 		if concMap[partName].RawValue() != 0 {
 			newComponent.SetConcentration(concMap[partName])
 		}
-		newComponent.AddDNASequence(partSeqs[partName])
+		err := newComponent.AddDNASequence(partSeqs[partName])
+		if err != nil {
+			return nil, nil, err
+		}
 		parts = append(parts, newComponent)
 	}
 

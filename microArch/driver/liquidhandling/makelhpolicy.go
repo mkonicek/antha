@@ -35,7 +35,6 @@ import (
 	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/ghodss/yaml"
 )
 
 type PolicyFile struct {
@@ -119,6 +118,7 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	//      pols["lysate"] = MakeLysatePolicy()
 	pols["carbon_source"] = MakeCarbonSourcePolicy()
 	pols["nitrogen_source"] = MakeNitrogenSourcePolicy()
+	pols["XYOffsetTest"] = MakeXYOffsetTestPolicy()
 
 	/*policies, names := PolicyMaker(Allpairs, "DOE_run", false)
 	for i, policy := range policies {
@@ -142,8 +142,6 @@ func MakePolicies() map[string]wtype.LHPolicy {
 			if err != nil {
 				panic(err)
 			}
-		} else {
-			//	fmt.Println("no lhpolicy doe file found named: ", DOEliquidhandlingFile)
 		}
 	}
 	return pols
@@ -164,7 +162,7 @@ func PolicyFilefromName(filename string) (pol PolicyFile, found bool) {
 func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names []string, runs []Run, err error) {
 
 	doeliquidhandlingFile, found := PolicyFilefromName(filename)
-	if found == false {
+	if !found {
 		panic("policyfilename" + filename + "not found")
 	}
 	filenameparts := strings.Split(doeliquidhandlingFile.Filename, ".")
@@ -238,7 +236,10 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 	policies = make([]wtype.LHPolicy, 0)
 
 	policy := MakeDefaultPolicy()
-	policy.Set("CAN_MULTI", false)
+	err := policy.Set("CAN_MULTI", false)
+	if err != nil {
+		panic(err)
+	}
 
 	/*base, _ := GetPolicyByName(basepolicy)
 
@@ -321,7 +322,7 @@ func AvailablePolicies() (policies []string) {
 	policies = make([]string, 0)
 	policymap := MakePolicies()
 
-	for key, _ := range policymap {
+	for key := range policymap {
 		policies = append(policies, key)
 	}
 	return
@@ -473,6 +474,14 @@ func MakeColonyMixPolicy() wtype.LHPolicy {
 	return policy
 }
 
+func MakeXYOffsetTestPolicy() wtype.LHPolicy {
+	policy := MakeColonyPolicy()
+	policy["POST_MIX_X"] = 2.0
+	policy["POST_MIX_Y"] = 2.0
+	policy["DESCRIPTION"] = "Intended to test setting X,Y offsets for post mixing"
+	return policy
+}
+
 func MakeWaterPolicy() wtype.LHPolicy {
 	waterpolicy := make(wtype.LHPolicy, 6)
 	waterpolicy["DSPREFERENCE"] = 0
@@ -492,24 +501,30 @@ func MakeMultiWaterPolicy() wtype.LHPolicy {
 	return pol
 }
 
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func MakeCulturePolicy() wtype.LHPolicy {
 	culturepolicy := make(wtype.LHPolicy, 10)
-	culturepolicy.Set("PRE_MIX", 2)
-	culturepolicy.Set("PRE_MIX_VOLUME", 19.0)
-	culturepolicy.Set("PRE_MIX_RATE", 3.74)
-	culturepolicy.Set("ASPSPEED", 2.0)
-	culturepolicy.Set("DSPSPEED", 2.0)
-	culturepolicy.Set("CAN_MULTI", true)
-	culturepolicy.Set("CAN_MSA", false)
-	culturepolicy.Set("CAN_SDD", false)
-	culturepolicy.Set("DSPREFERENCE", 0)
-	culturepolicy.Set("DSPZOFFSET", 0.5)
-	culturepolicy.Set("TIP_REUSE_LIMIT", 0)
-	culturepolicy.Set("NO_AIR_DISPENSE", true)
-	culturepolicy.Set("BLOWOUTVOLUME", 0.0)
-	culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul")
-	culturepolicy.Set("TOUCHOFF", false)
-	culturepolicy.Set("DESCRIPTION", "Designed for cell cultures. Tips will not be reused to minimise any risk of cross contamination and 2 pre-mixes will be performed prior to aspirating.")
+	checkErr(culturepolicy.Set("PRE_MIX", 2))
+	checkErr(culturepolicy.Set("PRE_MIX_VOLUME", 19.0))
+	checkErr(culturepolicy.Set("PRE_MIX_RATE", 3.74))
+	checkErr(culturepolicy.Set("ASPSPEED", 2.0))
+	checkErr(culturepolicy.Set("DSPSPEED", 2.0))
+	checkErr(culturepolicy.Set("CAN_MULTI", true))
+	checkErr(culturepolicy.Set("CAN_MSA", false))
+	checkErr(culturepolicy.Set("CAN_SDD", false))
+	checkErr(culturepolicy.Set("DSPREFERENCE", 0))
+	checkErr(culturepolicy.Set("DSPZOFFSET", 0.5))
+	checkErr(culturepolicy.Set("TIP_REUSE_LIMIT", 0))
+	checkErr(culturepolicy.Set("NO_AIR_DISPENSE", true))
+	checkErr(culturepolicy.Set("BLOWOUTVOLUME", 0.0))
+	checkErr(culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul"))
+	checkErr(culturepolicy.Set("TOUCHOFF", false))
+	checkErr(culturepolicy.Set("DESCRIPTION", "Designed for cell cultures. Tips will not be reused to minimise any risk of cross contamination and 2 pre-mixes will be performed prior to aspirating."))
 	return culturepolicy
 }
 
@@ -529,21 +544,21 @@ func MakePlateOutPolicy() wtype.LHPolicy {
 
 func MakeCultureReusePolicy() wtype.LHPolicy {
 	culturepolicy := make(wtype.LHPolicy, 10)
-	culturepolicy.Set("PRE_MIX", 2)
-	culturepolicy.Set("PRE_MIX_VOLUME", 19.0)
-	culturepolicy.Set("PRE_MIX_RATE", 3.74)
-	culturepolicy.Set("ASPSPEED", 2.0)
-	culturepolicy.Set("DSPSPEED", 2.0)
-	culturepolicy.Set("CAN_MULTI", true)
-	culturepolicy.Set("CAN_MSA", true)
-	culturepolicy.Set("CAN_SDD", true)
-	culturepolicy.Set("DSPREFERENCE", 0)
-	culturepolicy.Set("DSPZOFFSET", 0.5)
-	culturepolicy.Set("NO_AIR_DISPENSE", true)
-	culturepolicy.Set("BLOWOUTVOLUME", 0.0)
-	culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul")
-	culturepolicy.Set("TOUCHOFF", false)
-	culturepolicy.Set("DESCRIPTION", "Designed for cell cultures but permitting tip reuse when handling the same culture. 2 pre-mixes will be performed prior to aspirating.")
+	checkErr(culturepolicy.Set("PRE_MIX", 2))
+	checkErr(culturepolicy.Set("PRE_MIX_VOLUME", 19.0))
+	checkErr(culturepolicy.Set("PRE_MIX_RATE", 3.74))
+	checkErr(culturepolicy.Set("ASPSPEED", 2.0))
+	checkErr(culturepolicy.Set("DSPSPEED", 2.0))
+	checkErr(culturepolicy.Set("CAN_MULTI", true))
+	checkErr(culturepolicy.Set("CAN_MSA", true))
+	checkErr(culturepolicy.Set("CAN_SDD", true))
+	checkErr(culturepolicy.Set("DSPREFERENCE", 0))
+	checkErr(culturepolicy.Set("DSPZOFFSET", 0.5))
+	checkErr(culturepolicy.Set("NO_AIR_DISPENSE", true))
+	checkErr(culturepolicy.Set("BLOWOUTVOLUME", 0.0))
+	checkErr(culturepolicy.Set("BLOWOUTVOLUMEUNIT", "ul"))
+	checkErr(culturepolicy.Set("TOUCHOFF", false))
+	checkErr(culturepolicy.Set("DESCRIPTION", "Designed for cell cultures but permitting tip reuse when handling the same culture. 2 pre-mixes will be performed prior to aspirating."))
 	return culturepolicy
 }
 
@@ -576,12 +591,12 @@ func MakeViscousPolicy() wtype.LHPolicy {
 }
 func MakeSolventPolicy() wtype.LHPolicy {
 	solventpolicy := make(wtype.LHPolicy, 5)
-	solventpolicy.Set("PRE_MIX", 3)
-	solventpolicy.Set("DSPREFERENCE", 0)
-	solventpolicy.Set("DSPZOFFSET", 0.5)
-	solventpolicy.Set("NO_AIR_DISPENSE", true)
-	solventpolicy.Set("CAN_MULTI", true)
-	solventpolicy.Set("DESCRIPTION", "Designed for handling solvents. No post-mixes are performed")
+	checkErr(solventpolicy.Set("PRE_MIX", 3))
+	checkErr(solventpolicy.Set("DSPREFERENCE", 0))
+	checkErr(solventpolicy.Set("DSPZOFFSET", 0.5))
+	checkErr(solventpolicy.Set("NO_AIR_DISPENSE", true))
+	checkErr(solventpolicy.Set("CAN_MULTI", true))
+	checkErr(solventpolicy.Set("DESCRIPTION", "Designed for handling solvents. No post-mixes are performed"))
 	return solventpolicy
 }
 
@@ -848,21 +863,21 @@ func MakeDefaultPolicy() wtype.LHPolicy {
 
 func MakeJBPolicy() wtype.LHPolicy {
 	jbp := make(wtype.LHPolicy, 1)
-	jbp.Set("JUSTBLOWOUT", true)
-	jbp.Set("TOUCHOFF", true)
+	checkErr(jbp.Set("JUSTBLOWOUT", true))
+	checkErr(jbp.Set("TOUCHOFF", true))
 	return jbp
 }
 
 func MakeTOPolicy() wtype.LHPolicy {
 	top := make(wtype.LHPolicy, 1)
-	top.Set("TOUCHOFF", true)
+	checkErr(top.Set("TOUCHOFF", true))
 	return top
 }
 
 func MakeLVExtraPolicy() wtype.LHPolicy {
 	lvep := make(wtype.LHPolicy, 2)
-	lvep.Set("EXTRA_ASP_VOLUME", wunit.NewVolume(0.5, "ul"))
-	lvep.Set("EXTRA_DISP_VOLUME", wunit.NewVolume(0.5, "ul"))
+	checkErr(lvep.Set("EXTRA_ASP_VOLUME", wunit.NewVolume(0.5, "ul")))
+	checkErr(lvep.Set("EXTRA_DISP_VOLUME", wunit.NewVolume(0.5, "ul")))
 	return lvep
 }
 
@@ -1139,8 +1154,8 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	rule := wtype.NewLHPolicyRule("HVOffsetFix")
 	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
 
-	rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
-	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+	checkErr(rule.AddCategoryConditionOn("TIPTYPE", "Gilson200"))
+	checkErr(rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax"))
 	// don't get overridden
 	rule.Priority = 100
 	pol := MakeHVOffsetPolicy()
@@ -1156,32 +1171,32 @@ func GetLHPolicyForTest() (*wtype.LHPolicyRuleSet, error) {
 	*/
 
 	rule = wtype.NewLHPolicyRule("DNALV")
-	rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
-	rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
+	checkErr(rule.AddNumericConditionOn("VOLUME", 0.0, 1.99))
+	checkErr(rule.AddCategoryConditionOn("LIQUIDCLASS", "dna"))
 	pol = MakeLVDNAMixPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used
 	rule = wtype.NewLHPolicyRule("EPAGE48Load")
-	rule.AddCategoryConditionOn("TOPLATETYPE", "EPAGE48")
+	checkErr(rule.AddCategoryConditionOn("TOPLATETYPE", "EPAGE48"))
 	pol = TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used
 	rule = wtype.NewLHPolicyRule("EGEL48Load")
-	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL48")
+	checkErr(rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL48"))
 	pol = TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 96_1 plate type is used
 	rule = wtype.NewLHPolicyRule("EGEL961Load")
-	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_1")
+	checkErr(rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_1"))
 	pol = TurnOffBlowoutPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 96_2 plate type is used
 	rule = wtype.NewLHPolicyRule("EGEL962Load")
-	rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_2")
+	checkErr(rule.AddCategoryConditionOn("TOPLATETYPE", "EGEL96_2"))
 	pol = TurnOffBlowoutPolicy()
 
 	lhpr.AddRule(rule, pol)
@@ -1210,16 +1225,6 @@ func LoadLHPoliciesFromFile() (*wtype.LHPolicyRuleSet, error) {
 	return lhprs, nil
 }
 
-func readYAML(fileContents []byte, ruleSet *wtype.LHPolicyRuleSet) error {
-	if err := yaml.Unmarshal(fileContents, ruleSet); err != nil {
-		return err
-	}
-	return nil
-}
-
 func readJSON(fileContents []byte, ruleSet *wtype.LHPolicyRuleSet) error {
-	if err := json.Unmarshal(fileContents, ruleSet); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(fileContents, ruleSet)
 }

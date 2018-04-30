@@ -132,10 +132,6 @@ const (
 	CitMatchUri = ncbi.Util(Base + "ecitmatch.cgi")
 )
 
-type unmarshaler interface {
-	Unmarshal(io.Reader) error
-}
-
 func get(ut ncbi.Util, v url.Values, tool, email string, d interface{}) error {
 	return ut.GetXML(v, tool, email, Limit, d)
 }
@@ -427,10 +423,13 @@ func DoCitMatch(query map[string]CitQuery, tool, email string) (map[string]int, 
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer r.Close() //nolint
 
 	res := make(map[string]int)
 	buf, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
 	for _, rec := range bytes.Split(buf, []byte{'\n'}) {
 		if len(rec) == 0 {
 			continue

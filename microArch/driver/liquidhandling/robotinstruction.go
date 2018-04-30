@@ -85,6 +85,7 @@ const (
 	MVM            // MOV MIX           ""       ""
 	MBL            // MOV BLO	    ""       ""
 	RAP            // RemoveAllPlates
+	RPA            // Remove Plate At
 	APT            // AddPlateTo
 	SPB            // SplitBlock
 )
@@ -93,7 +94,7 @@ func InstructionTypeName(ins RobotInstruction) string {
 	return Robotinstructionnames[ins.InstructionType()]
 }
 
-var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT", "SPB"}
+var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "RPA", "APT", "SPB"}
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
 
@@ -242,27 +243,27 @@ func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
 	return true
 }
 
-func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol wtype.LHPolicy) {
-	fmt.Println("*****")
-	fmt.Println("Policy for instruction ", InsToString(ins))
-	fmt.Println()
-	fmt.Println("Active Rules:")
-	fmt.Println("\t Default")
-	for _, r := range rules {
-		fmt.Println("\t", r.Name)
-	}
-	fmt.Println()
-	itemset := wtype.MakePolicyItems()
-	fmt.Println("Full output")
-	for _, s := range itemset.OrderedList() {
-		if pol[s] == nil {
-			continue
-		}
-		fmt.Println("\t", s, ": ", pol[s])
-	}
-	fmt.Println("_____")
+// func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol wtype.LHPolicy) {
+// 	fmt.Println("*****")
+// 	fmt.Println("Policy for instruction ", InsToString(ins))
+// 	fmt.Println()
+// 	fmt.Println("Active Rules:")
+// 	fmt.Println("\t Default")
+// 	for _, r := range rules {
+// 		fmt.Println("\t", r.Name)
+// 	}
+// 	fmt.Println()
+// 	itemset := wtype.MakePolicyItems()
+// 	fmt.Println("Full output")
+// 	for _, s := range itemset.OrderedList() {
+// 		if pol[s] == nil {
+// 			continue
+// 		}
+// 		fmt.Println("\t", s, ": ", pol[s])
+// 	}
+// 	fmt.Println("_____")
 
-}
+// }
 
 func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPolicy {
 	// find the set of matching rules
@@ -289,13 +290,7 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPol
 }
 
 func HasParameter(s string, ins RobotInstruction) bool {
-	r := ins.GetParameter(s)
-	// check this doesn't happen otherwise
-	if r == nil {
-		return false
-	}
-
-	return true
+	return ins.GetParameter(s) != nil
 }
 
 type SetOfRobotInstructions struct {

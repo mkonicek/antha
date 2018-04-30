@@ -103,7 +103,7 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 	}
 	err = xlsxfile.Save(outputfilename)
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Print(err.Error())
 	}
 	return
 }
@@ -175,8 +175,7 @@ func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File)
 	}
 
 	// add blank row
-
-	row = sheet.AddRow()
+	sheet.AddRow()
 
 	//add data 1 row per run
 	for _, run := range runs {
@@ -218,7 +217,7 @@ func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File)
 	}
 	err = xlsxfile.Save(outputfilename)
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Print(err.Error())
 	}
 	return
 }

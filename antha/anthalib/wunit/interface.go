@@ -24,7 +24,6 @@ package wunit
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -37,13 +36,12 @@ var unitMap map[string]GenericUnit
 // deserialize JSON prefix library
 func GetPrefixLib(fn string) (*(map[string]SIPrefix), error) {
 	f, err := ioutil.ReadFile(fn)
-
 	if err != nil {
 		return nil, err
 	}
 
 	prefices := make(map[string]SIPrefix, 20)
-	json.Unmarshal(f, &prefices)
+	err = json.Unmarshal(f, &prefices)
 	return &prefices, err
 }
 
@@ -93,12 +91,12 @@ func ParsePrefixedUnit(unit string) *GenericPrefixedUnit {
 	parser.SIPrefixedUnit.Init([]byte(unit))
 
 	if err := parser.Parse(unit); err != nil {
-		e := errors.New(fmt.Sprintf("cannot parse %s: %s", unit, err.Error()))
+		e := fmt.Errorf("cannot parse %s: %s", unit, err.Error())
 		panic(e)
 	}
 
 	prefix := ""
-	un := ""
+	var un string
 
 	if len(parser.TreeTop.Children) == 1 {
 		un = parser.TreeTop.Children[0].Value.(string)
@@ -121,11 +119,11 @@ func UnitBySymbol(sym string) GenericUnit {
 // generate an initial unit library
 func Make_units() map[string]GenericUnit {
 
-	units := []string{"M", "min", "l", "L", "g", "V", "J", "A", "N", "s", "radians", "degrees", "rads", "Hz", "rpm", "℃", "M/l", "g/l", "J/kg", "Pa", "kg/m^3", "/s", "/min", "per", `/`, "m/s", "m^2", "mm^2", "kg/l", "X", "U/l", "m"}
-	unitnames := []string{"mole", "minute", "litre", "litre", "Gramme", "Volt", "Joule", "Ampere", "Newton", "second", "radian", "degree", "radian", "Herz", "revolutions per minute", "Celsius", "Mol/litre", "g/litre", "Joule/kilogram", "Pascal", "kg per cubic meter", "per second", "per minute", "per", "per", "metres per second", "square metres", "square metres", "kilogram per litre", "times", "Units	 per L", "metres"}
+	units := []string{"M", "min", "l", "L", "g", "V", "J", "A", "N", "s", "radians", "degrees", "rads", "Hz", "rpm", "℃", "M/l", "g/l", "J/kg", "Pa", "kg/m^3", "/s", "/min", "per", `/`, "m/s", "m^2", "mm^2", "ml/min", "kg/l", "X", "U/l", "m", "v/v"}
+	unitnames := []string{"mole", "minute", "litre", "litre", "Gramme", "Volt", "Joule", "Ampere", "Newton", "second", "radian", "degree", "radian", "Herz", "revolutions per minute", "Celsius", "Mol/litre", "g/litre", "Joule/kilogram", "Pascal", "kg per cubic meter", "per second", "per minute", "per", "per", "metres per second", "square metres", "square metres", "millilitres/minute", "kilogram per litre", "times", "Units	 per L", "metres", "volume/volume"}
 	//unitdimensions:=[]string{"amount", "time", "length^3", "length^3", "mass", "mass*length/time^2*charge", "mass*length^2/time^2", "charge/time", "charge", "mass*length/time^2", "time", "angle", "angle", "angle", "time^-1", "angle/time", "temperature", "velocity}
 
-	unitbaseconvs := []float64{1, 0.1666666666666666667, 1, 1, 0.001, 1, 1, 1, 1, 1, 1, 0.01745329251994, 1, 1, 1, 1, 1, 0.001, 1, 1, 1, 1, 0.1666666666666666667, 1, 1, 1, 1, 0.000001, 1, 1, 1, 1}
+	unitbaseconvs := []float64{1, 0.1666666666666666667, 1, 1, 0.001, 1, 1, 1, 1, 1, 1, 0.01745329251994, 1, 1, 1, 1, 1, 0.001, 1, 1, 1, 1, 0.1666666666666666667, 1, 1, 1, 1, 0.000001, 1., 1, 1, 1, 1, 1}
 
 	unit_map := make(map[string]GenericUnit, len(units))
 

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/biogo/biogo/align"
@@ -546,40 +545,6 @@ func containsN(seq wtype.DNASequence) bool {
 	return false
 }
 
-// the biogo implementation of alignment requires the N nucleotides to be replaced with -
-func replaceN(seq wtype.DNASequence) wtype.DNASequence {
-
-	var newSeq []string
-
-	for _, letter := range seq.Seq {
-		if strings.ToUpper(string(letter)) == "N" {
-			letter = rune('-')
-		}
-		newSeq = append(newSeq, string(letter))
-	}
-
-	seq.Seq = strings.Join(newSeq, "")
-
-	return seq
-}
-
-// convert all instances of - back to N
-func replaceDash(seq wtype.DNASequence) wtype.DNASequence {
-
-	var newSeq []string
-
-	for _, letter := range seq.Seq {
-		if strings.ToUpper(string(letter)) == "-" {
-			letter = rune('N')
-		}
-		newSeq = append(newSeq, string(letter))
-	}
-
-	seq.Seq = strings.Join(newSeq, "")
-
-	return seq
-}
-
 // changes mismatched nucleotides to lower case
 func formatMisMatches(alignment Alignment) (formattedAlignment Alignment) {
 
@@ -633,34 +598,11 @@ func correctForRevComp(alignment Result) (formattedAlignment Result) {
 	return
 }
 
-func colourFormat(alignment string) (formatted string) {
-	var newstring []string
-	for _, letter := range alignment {
-		if strings.ToUpper(string(letter)) == "A" {
-			newstring = append(newstring, text.Red(string(letter)))
-		}
-		if strings.ToUpper(string(letter)) == "T" {
-			newstring = append(newstring, text.Yellow(string(letter)))
-		}
-		if strings.ToUpper(string(letter)) == "C" {
-			newstring = append(newstring, text.Blue(string(letter)))
-		}
-		if strings.ToUpper(string(letter)) == "G" {
-			newstring = append(newstring, text.Magenta(string(letter)))
-		}
-	}
-
-	return strings.Join(newstring, "")
-}
-
 // standard character representing an alignment gap
 const GAP rune = rune('-')
 
 func isGap(character rune) bool {
-	if character == GAP {
-		return true
-	}
-	return false
+	return character == GAP
 }
 
 func isMismatch(character1, character2 rune) bool {
@@ -669,8 +611,5 @@ func isMismatch(character1, character2 rune) bool {
 		return false
 	}
 
-	if strings.ToUpper(string(character1)) != strings.ToUpper(string(character2)) {
-		return true
-	}
-	return false
+	return strings.ToUpper(string(character1)) != strings.ToUpper(string(character2))
 }

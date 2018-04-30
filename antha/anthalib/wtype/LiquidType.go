@@ -60,6 +60,7 @@ const (
 	LTMegaMix
 	LTSolvent
 	LTSmartMix
+	LTXYOffsetTest
 )
 
 func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
@@ -139,6 +140,8 @@ func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
 		return LTSolvent, nil
 	case "SmartMix":
 		return LTSmartMix, nil
+	case "XYOffsetTest":
+		return LTXYOffsetTest, nil
 	case "default":
 		return LTDefault, nil
 	default:
@@ -205,6 +208,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "colonymix"
 	case LTDNACELLSMIX:
 		return "dna_cells_mix"
+	case LTDNACELLSMIXMULTI:
+		return "dna_cells_mix_multi"
 	case LTMultiWater:
 		return "multiwater"
 	case LTCSrc:
@@ -215,6 +220,8 @@ func LiquidTypeName(lt LiquidType) PolicyName {
 		return "MegaMix"
 	case LTSmartMix:
 		return "SmartMix"
+	case LTXYOffsetTest:
+		return "XYOffsetTest"
 	default:
 		return "nil"
 	}
@@ -304,7 +311,7 @@ func IndexOfStringArray(s string, a []string) int {
 // but unlikely to be useful
 func Normalize(tx []string) []string {
 	if tx[0] == "" && len(tx) > 1 {
-		return tx[1:len(tx)]
+		return tx[1:]
 	}
 	return tx
 }

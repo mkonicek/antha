@@ -81,7 +81,7 @@ type WavelengthSettings struct {
 // Wavelength is exported so requires a comment
 type Wavelength struct {
 	Index int     `xml:"WavelengthIndex,attr"`
-	Wells []Wells `xml: "Wells"`
+	Wells []Wells `xml:"Wells"`
 }
 
 // MoreSettings is exported so requires a comment
@@ -119,10 +119,7 @@ type WavelengthReading struct {
 }
 
 func (w Well) IsScanData() bool {
-	if len(w.WaveData) > 0 {
-		return true
-	}
-	return false
+	return len(w.WaveData) > 0
 }
 
 func readingAtWavelength(readings []WavelengthReading, wavelength int) (reading float64, err error) {
@@ -188,7 +185,10 @@ func (s SpectraMaxData) GetDataByWell(wellName string) (readings []WavelengthRea
 func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	const shortForm = timeFormat // yyyymmdd date format
 	var v string
-	d.DecodeElement(&v, &start)
+	err := d.DecodeElement(&v, &start)
+	if err != nil {
+		return err
+	}
 	parse, err := time.Parse(shortForm, v)
 	if err != nil {
 		return err
@@ -198,7 +198,11 @@ func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 }
 
 func (c *customTime) UnmarshalXMLAttr(attr xml.Attr) error {
-	parse, _ := time.Parse(timeFormat, attr.Value)
+	parse, err := time.Parse(timeFormat, attr.Value)
+	if err != nil {
+		return err
+	}
+
 	*c = customTime{parse}
 	return nil
 }
@@ -277,12 +281,7 @@ func (s SpectraMaxData) ReadingsAsAverage(wellname string, emexortime platereade
 
 	data = append(data, reading)
 
-	average, err = stats.Mean(data)
-	if err != nil {
-		return average, err
-	}
-
-	return average, err
+	return stats.Mean(data)
 }
 
 // Absorbance returns the absorbance reading of the specified well at the specified wavelength.

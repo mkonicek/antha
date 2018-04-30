@@ -13,7 +13,7 @@ import (
 func getVols() []wunit.Volume {
 	// a selection of volumes
 	vols := make([]wunit.Volume, 0, 1)
-	for _, v := range []float64{0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 30.0, 50.0, 100.0, 200.0} {
+	for _, v := range []float64{0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 30.0, 50.0, 100.0, 200.0} {
 		vol := wunit.NewVolume(v, "ul")
 		vols = append(vols, vol)
 	}
@@ -23,21 +23,19 @@ func getVols() []wunit.Volume {
 // answers to test
 
 func getMinvols1() []wunit.Volume {
-	v0 := wunit.NewVolume(0.0, "ul")
 	v1 := wunit.NewVolume(0.5, "ul")
 	v2 := wunit.NewVolume(10.0, "ul")
 
-	ret := []wunit.Volume{v0, v1, v1, v1, v1, v1, v1, v2, v2, v2, v2}
+	ret := []wunit.Volume{v1, v1, v1, v1, v1, v1, v2, v2, v2, v2}
 
 	return ret
 }
 
 func getMaxvols1() []wunit.Volume {
-	v0 := wunit.NewVolume(0.0, "ul")
 	v1 := wunit.NewVolume(20.0, "ul")
 	v2 := wunit.NewVolume(250.0, "ul")
 
-	ret := []wunit.Volume{v0, v1, v1, v1, v1, v1, v1, v2, v2, v2, v2}
+	ret := []wunit.Volume{v1, v1, v1, v1, v1, v1, v2, v2, v2, v2}
 
 	return ret
 }
@@ -46,7 +44,7 @@ func getMaxvols1() []wunit.Volume {
 
  */
 func getTypes1() []string {
-	ret := []string{"", "Gilson20", "Gilson20", "Gilson20", "Gilson20", "Gilson20", "Gilson20", "Gilson200", "Gilson200", "Gilson200", "Gilson200"}
+	ret := []string{"Gilson20", "Gilson20", "Gilson20", "Gilson20", "Gilson20", "Gilson20", "Gilson200", "Gilson200", "Gilson200", "Gilson200"}
 
 	return ret
 }
@@ -59,7 +57,11 @@ func TestDefaultChooser(t *testing.T) {
 	types := getTypes1()
 
 	for i, vol := range vols {
-		prm, tip := ChooseChannel(vol, lhp)
+		prm, tip, err := ChooseChannel(vol, lhp)
+		if err != nil {
+			t.Error(err)
+		}
+
 		tiptype := ""
 
 		if tip != nil {
@@ -85,8 +87,26 @@ func TestDefaultChooser(t *testing.T) {
 				fmt.Println("V: ", vol.ToString(), " Mn: ", prm.Minvol.ToString(), " Mx: ", prm.Maxvol.ToString(), " TIP: ", tiptype)
 			}
 		*/
-	}
 
+	}
+}
+
+func TestSmallVolumeError(t *testing.T) {
+	lhp := makeTestLH()
+
+	vol := wunit.NewVolume(0.47, "ul")
+
+	prm, tip, err := ChooseChannel(vol, lhp)
+
+	if prm != nil {
+		t.Error("channel was not nil for small volume")
+	}
+	if tip != nil {
+		t.Error("tip was not nil for small volume")
+	}
+	if err == nil {
+		t.Error("error not generated for small volume")
+	}
 }
 
 func makeTestLH() *LHProperties {

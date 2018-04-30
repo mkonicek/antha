@@ -135,7 +135,7 @@ func (s *Seq) String() string { return alphabet.Letters(s.Seq).String() }
 // omission of the sequence name.
 func (s *Seq) Format(fs fmt.State, c rune) {
 	if s == nil {
-		fmt.Fprint(fs, "<nil>")
+		fmt.Fprint(fs, "<nil>") // nolint
 		return
 	}
 	var (
@@ -196,7 +196,7 @@ func (s *Seq) Format(fs fmt.State, c rune) {
 		if e >= unicode.MaxASCII {
 			e = unicode.MaxASCII - 1
 		}
-		for _ = range buf {
+		for range buf {
 			fmt.Fprintf(fs, "%c", e)
 		}
 		if pOk && p < s.Len() {

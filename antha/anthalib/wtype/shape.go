@@ -40,6 +40,10 @@ type Shape struct {
 	D          float64
 }
 
+func (sh *Shape) Equals(sh2 *Shape) bool {
+	return sh.ShapeName == sh2.ShapeName && sh.LengthUnit == sh2.LengthUnit && sh.H == sh2.H && sh.W == sh2.W && sh.D == sh2.D
+}
+
 // let shape implement geometry
 
 func (sh *Shape) Height() wunit.Length { // y?
@@ -54,6 +58,10 @@ func (sh *Shape) Depth() wunit.Length { // Z?
 
 func (sh *Shape) Dup() *Shape {
 	return &(Shape{sh.ShapeName, sh.LengthUnit, sh.H, sh.W, sh.D})
+}
+
+func (sh *Shape) String() string {
+	return fmt.Sprintf("Generic Shape [%fx%fx%f]", sh.H, sh.W, sh.D)
 }
 
 func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
@@ -80,7 +88,7 @@ func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 	} else if boxlike {
 		area = wunit.NewArea(sh.H*sh.W, areaunit)
 	} else {
-		err = fmt.Errorf("No method to work out cross sectional area for shape %s yet Circular? %b", sh.ShapeName, circular)
+		err = fmt.Errorf("No method to work out cross sectional area for shape \"%s\" yet Circular? %t", sh.ShapeName, circular)
 	}
 	return
 }
@@ -125,9 +133,5 @@ func NewNilShape() *Shape {
 }
 
 func (sh *Shape) IsZero() bool {
-	if sh.ShapeName == "" {
-		return false
-	}
-
-	return true
+	return len(sh.ShapeName) == 0
 }

@@ -101,8 +101,7 @@ func TestTickingPlateIterator6(t *testing.T) {
 	it := NewTickingColVectorIterator(p, 1, 1, 1)
 	c := 0
 
-	for wv := it.Curr(); it.Valid(); wv = it.Next() {
-		wv = wv
+	for it.Curr(); it.Valid(); it.Next() {
 		c += 1
 	}
 
@@ -117,8 +116,7 @@ func TestTickingPlateIterator7(t *testing.T) {
 	it := NewTickingColVectorIterator(p, 2, 1, 1)
 	c := 0
 
-	for wv := it.Curr(); it.Valid(); wv = it.Next() {
-		wv = wv
+	for it.Curr(); it.Valid(); it.Next() {
 		c += 1
 	}
 

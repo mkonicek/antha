@@ -31,7 +31,7 @@ import (
 
 func main() {
 	if err := cmd.Execute(nil); err != nil {
-		fmt.Fprintln(os.Stderr, err) // nolint
+		fmt.Fprintln(os.Stderr, "error:", err) // nolint
 		os.Exit(1)
 	}
 }

@@ -72,7 +72,7 @@ func whereISthatplate(name string, robot *liquidhandling.LHProperties) string {
 
 func itshere(name string, plate *wtype.LHPlate) bool {
 	for _, w := range plate.Wellcoords {
-		if w.Empty() {
+		if w.IsEmpty() {
 			continue
 		}
 		if w.WContents.CName == name {

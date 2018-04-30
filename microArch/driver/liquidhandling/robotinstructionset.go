@@ -58,7 +58,7 @@ func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolic
 
 		// if the parent doesn't generate anything then it is our return - bottom out here
 		// assuming it's a Terminal
-		if arr == nil || len(arr) == 0 {
+		if len(arr) == 0 {
 			_, ok := ri.parent.(TerminalRobotInstruction)
 			if ok {
 				ret = append(ret, ri.parent)
@@ -119,7 +119,7 @@ func (ri *RobotInstructionSet) ToString(level int) string {
 	}
 	s += fmt.Sprintf("{\n")
 	for _, ins := range ri.instructions {
-		s += fmt.Sprintf("%s", ins.ToString(level+1))
+		s += ins.ToString(level + 1)
 	}
 	for i := 0; i < level; i++ {
 		s += fmt.Sprintf("\t")

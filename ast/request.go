@@ -30,11 +30,7 @@ func mapContains(a, b map[interface{}]int) bool {
 
 // Contains returns if request A is greater than or equal to request B
 func (reqA Request) Contains(reqB Request) bool {
-	if !mapContains(makeNameValueMap(reqA.Selector), makeNameValueMap(reqB.Selector)) {
-		return false
-	}
-
-	return true
+	return mapContains(makeNameValueMap(reqA.Selector), makeNameValueMap(reqB.Selector))
 }
 
 // Meet computes greatest lower bound of a set of requests

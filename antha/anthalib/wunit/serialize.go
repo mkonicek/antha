@@ -50,7 +50,6 @@ func unmarshal(b []byte) (value float64, unit string, err error) {
 		return
 	}
 	if _, err = fmt.Fscanf(strings.NewReader(*s), "%e%s", &value, &unit); err != nil && err == io.EOF {
-		err = nil
 		unit = ""
 		if _, err = fmt.Fscanf(strings.NewReader(*s), "%e", &value); err != nil {
 			return

@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -31,11 +32,7 @@ func (tp TransferParams) ToString() string {
 }
 
 func (tp TransferParams) Zero() bool {
-	if tp.What == "" {
-		return true
-	}
-
-	return false
+	return tp.What == ""
 }
 
 func (tp TransferParams) Dup() TransferParams {
@@ -277,11 +274,6 @@ func (mtp MultiTransferParams) ParamSet(n int) TransferParams {
 
 func (mtp MultiTransferParams) ToString() string {
 	s := ""
-
-	if mtp.ParamSet == nil {
-		return s
-	}
-
 	for i := 0; i < mtp.Multi; i++ {
 		s += mtp.ParamSet(i).ToString() + " "
 	}
@@ -302,33 +294,6 @@ func (mtp MultiTransferParams) Dup() MultiTransferParams {
 	ret.Transfers = tfrs
 
 	return ret
-}
-
-func dupStringArray(in []string) []string {
-	out := make([]string, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i]
-	}
-	return out
-}
-func dupIntArray(in []int) []int {
-	out := make([]int, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i]
-	}
-	return out
-}
-
-func dupVolArray(in []wunit.Volume) []wunit.Volume {
-	out := make([]wunit.Volume, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i].Dup()
-	}
-
-	return out
 }
 
 func MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string) MultiTransferParams {

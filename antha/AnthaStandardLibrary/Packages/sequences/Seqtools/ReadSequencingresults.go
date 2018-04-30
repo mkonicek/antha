@@ -25,7 +25,7 @@ package seqtools
 
 import (
 	"fmt"
-	//"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
+
 	"io"
 	"io/ioutil"
 	"os"
@@ -66,7 +66,7 @@ func ReadtoCsvfromcurrentdir(filenametocreate string) {
 		fmt.Println(n, err1)
 	}
 
-	file.Close()
+	file.Close() // nolint
 
 	//Search for files within current directory
 	dirname := "." + string(filepath.Separator)
@@ -76,7 +76,7 @@ func ReadtoCsvfromcurrentdir(filenametocreate string) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	defer d.Close()
+	defer d.Close() // nolint
 
 	files, err := d.Readdir(-1)
 	if err != nil {
@@ -99,7 +99,7 @@ func ReadtoCsvfromcurrentdir(filenametocreate string) {
 
 				}
 			}
-			if skip == false {
+			if !skip {
 				//Read file containing sequencing result
 				bs, err := ioutil.ReadFile(file.Name())
 				if err != nil {
@@ -134,7 +134,7 @@ func ReadtoCsvfromcurrentdir(filenametocreate string) {
 					panic(err)
 				}
 
-				defer f.Close()
+				defer f.Close() // nolint
 
 				if _, err = f.WriteString(fmt.Sprintf("\n %s, %v, %0.2f, %s", name1, len(Seq), Npercent(N, Seq), Seq)); err != nil {
 					panic(err)

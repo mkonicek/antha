@@ -43,7 +43,7 @@ func (st *SampleTracker) SetInputPlate(p *wtype.LHPlate) {
 	st.plates[p.ID] = p
 
 	for _, w := range p.HWells {
-		if !w.Empty() {
+		if !w.IsEmpty() {
 			st.setLocationOf(w.WContents.ID, w.WContents.Loc)
 			w.SetUserAllocated()
 		}

@@ -176,3 +176,50 @@ func (it *IChain) Flatten() []string {
 
 	return ret
 }
+
+func (it *IChain) SplitMixedNodes() {
+	if nodesMixedOK(it.Values) {
+		it.splitMixedNode()
+	}
+
+	// stop if we reach the end
+	if it.Child == nil {
+		return
+	}
+
+	// carry on
+	it.Child.SplitMixedNodes()
+}
+
+func (it *IChain) splitMixedNode() {
+	// put mixes first, then splits
+
+	mixValues := make([]*wtype.LHInstruction, 0, len(it.Values))
+	splitValues := make([]*wtype.LHInstruction, 0, len(it.Values))
+
+	for _, v := range it.Values {
+		if v.Type == wtype.LHIMIX {
+			mixValues = append(mixValues, v)
+		} else if v.Type == wtype.LHISPL {
+			splitValues = append(splitValues, v)
+		} else {
+			panic("Wrong instruction type passed through to instruction chain split")
+		}
+	}
+
+	// it == Mix level
+	it.Values = mixValues
+	// ch == Split level
+	ch := NewIChain(it)
+	ch.Values = splitValues
+	ch.Child = it.Child
+	ch.Child.Parent = ch
+	it.Child = ch
+}
+
+func nodesMixedOK(values []*wtype.LHInstruction) bool {
+	/// true iff we have exactly two types of node: split and mix
+	insTypes := countInstructionTypes(values)
+
+	return len(insTypes) == 2 && insTypes[wtype.InsNames[wtype.LHIMIX]] && insTypes[wtype.InsNames[wtype.LHISPL]]
+}

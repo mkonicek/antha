@@ -73,13 +73,17 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 
 	var sortedKeys []string
 
-	for k, _ := range approvedunits {
+	for k := range approvedunits {
 		sortedKeys = append(sortedKeys, k)
 	}
 
 	sort.Strings(sortedKeys)
 
 	fields := strings.Fields(componentname)
+
+	if len(fields) == 1 {
+		return false, conc, componentname
+	}
 	var unitmatchlength int
 	var longestmatchedunit string
 	var valueandunit string
@@ -109,7 +113,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 						//break
 					}
 					// support for cases where concentration unit is given but no value
-				} else if trimmed := strings.Trim(field, "()"); trimmed == key {
+				} else if trimmed := strings.Trim(field, "()"); trimmed == key || field == key {
 					if len(key) > unitmatchlength {
 						notConcFields = make([]string, 0)
 						longestmatchedunit = key
@@ -126,7 +130,21 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 				}
 				// if value and unit are one joined field
 				// change this to separate number and match rest of valueandunit
-			} else if trimmed := strings.Trim(field, "()"); strings.HasSuffix(field, key) || strings.HasSuffix(trimmed, key) {
+			} else if trimmed := strings.Trim(field, "()"); trimmed == key || field == key {
+				if len(key) > unitmatchlength {
+					notConcFields = make([]string, 0)
+					longestmatchedunit = key
+					unitmatchlength = len(key)
+					valueandunit = field
+					if i > 0 {
+						notConcFields = append(notConcFields, fields[:i]...)
+					}
+					if len(fields) > i+1 {
+						notConcFields = append(notConcFields, fields[i+1:]...)
+					}
+					//break
+				}
+			} else if trimmed := strings.Trim(field, "()"); looksLikeNumberAndUnit(field, key) || looksLikeNumberAndUnit(trimmed, key) {
 				if len(key) > unitmatchlength {
 					notConcFields = make([]string, 0)
 					longestmatchedunit = key
@@ -163,9 +181,10 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 			} else {
 				if strings.Contains(componentname, wutil.MIXDELIMITER) {
 					return false, conc, componentname
+				} else {
+					fmt.Println("warning parsing componentname: ", componentname, ": ", err.Error())
+					return false, conc, componentname
 				}
-				panic(fmt.Sprint("error parsing componentname: ", componentname, ": ", err.Error()))
-				return false, conc, componentNameOnly
 			}
 		}
 	}
@@ -174,6 +193,23 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 	containsconc = true
 
 	return containsconc, conc, componentNameOnly
+}
+func looksLikeNumberAndUnit(testString string, targetUnit string) bool {
+	if strings.HasSuffix(testString, targetUnit) {
+		trimmed := strings.Split(testString, targetUnit)
+		if len(trimmed) == 0 {
+			return false
+		}
+		_, err := strconv.ParseFloat(trimmed[0], 64)
+		if err == nil {
+			return true
+		}
+		_, err = strconv.Atoi(trimmed[0])
+		if err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 // ParseVolume parses a volume and valid unit (nl, ul, ml, l) in string format; handles cases where the volume is split with a space.
@@ -184,7 +220,7 @@ func ParseVolume(volstring string) (volume Volume, err error) {
 
 	var sortedKeys []string
 
-	for k, _ := range approvedunits {
+	for k := range approvedunits {
 		sortedKeys = append(sortedKeys, k)
 	}
 

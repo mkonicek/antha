@@ -160,7 +160,7 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
-				ast.Request{
+				{
 					Selector: []ast.NameValue{
 						target.DriverSelectorV1Prompter,
 					},
@@ -191,7 +191,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 
 				Calls: opt.Calls,
 			},
-			Requests: []ast.Request{ast.Request{Selector: sels}},
+			Requests: []ast.Request{{Selector: sels}},
 		},
 	}
 }
@@ -231,7 +231,7 @@ func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
-				ast.Request{
+				{
 					Selector: []ast.NameValue{
 						target.DriverSelectorV1WriteOnlyPlateReader,
 					},
@@ -275,7 +275,7 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
-				ast.Request{
+				{
 					Selector: []ast.NameValue{
 						target.DriverSelectorV1QPCRDevice,
 					},
@@ -432,7 +432,7 @@ func splitSample(ctx context.Context, component *wtype.LHComponent, volume wunit
 	inst := &commandInst{
 		Args: []*wtype.LHComponent{component},
 		Command: &ast.Command{
-			Requests: []ast.Request{ast.Request{
+			Requests: []ast.Request{{
 				Selector: []ast.NameValue{
 					target.DriverSelectorV1Mixer,
 				}},

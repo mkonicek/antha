@@ -24,8 +24,6 @@
 package liquidhandling
 
 import (
-	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -117,15 +115,16 @@ func (req *LHRequest) ConfigureYourself() error {
 		if ins.IsMixInPlace() {
 			if !ins.Components[0].PlateLocation().IsZero() {
 				uniques[ins.Components[0].PlateLocation()] = ins.Components[0]
-			} else {
-				// this will be autoallocated
 			}
+			//else {
+			// this will be autoallocated
+			//}
 		}
 	}
 
 	for _, v := range req.Input_plates {
 		for _, w := range v.Wellcoords {
-			if w.Empty() {
+			if w.IsEmpty() {
 				continue
 			}
 
@@ -223,7 +222,7 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 	// impose sanity
 
 	if p.PlateName == "" {
-		p.PlateName = fmt.Sprintf("User_plate_%d", lhr.NUserPlates+1)
+		p.PlateName = getSafePlateName(lhr, "user_plate", "_", lhr.NUserPlates+1)
 		lhr.NUserPlates += 1
 	}
 
@@ -252,18 +251,54 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 	return ret
 }
 
-/*
-func (request *LHRequest) GetPlate(id string) *wtype.LHPlate {
-	p, ok := request.Input_plates[id]
-
-	if !ok {
-		p, ok = request.Output_plates[id]
-
-		if !ok {
-			return nil
+// HasPlateNamed checks if the request already contains a plate with the specified name
+func (request *LHRequest) HasPlateNamed(name string) bool {
+	checkForPlateNamed := func(query string, subject map[string]*wtype.LHPlate) bool {
+		for _, plate := range subject {
+			if plate.PlateName == query {
+				return true
+			}
 		}
+		return false
 	}
 
-	return p
+	if checkForPlateNamed(name, request.Input_plates) {
+		return true
+	}
+	if checkForPlateNamed(name, request.Output_plates) {
+		return true
+	}
+
+	return false
 }
-*/
+
+// OrderedInputPlates returns the list of input plates in order
+func (request *LHRequest) OrderedInputPlates() []*wtype.LHPlate {
+	ret := make([]*wtype.LHPlate, 0, len(request.Input_plates))
+	for _, id := range request.Input_plate_order {
+		ret = append(ret, request.Input_plates[id])
+	}
+
+	return ret
+}
+
+// OrderedOutputPlates returns the list of input plates in order
+func (request *LHRequest) OrderedOutputPlates() []*wtype.LHPlate {
+	ret := make([]*wtype.LHPlate, 0, len(request.Output_plates))
+	for _, id := range request.Output_plate_order {
+		ret = append(ret, request.Output_plates[id])
+	}
+
+	return ret
+}
+
+// AllPlates returns a list of all known plates, in the order input plates, output plates
+// ordering will be as within the stated orders of each
+func (request *LHRequest) AllPlates() []*wtype.LHPlate {
+	r := make([]*wtype.LHPlate, 0, len(request.Input_plates)+len(request.Output_plates))
+
+	r = append(r, request.OrderedInputPlates()...)
+	r = append(r, request.OrderedOutputPlates()...)
+
+	return r
+}

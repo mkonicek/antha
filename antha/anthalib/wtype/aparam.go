@@ -67,8 +67,11 @@ func MakePolicyItems() AParamSet {
 	typemap = maketypemap()
 	alhpis := make(AParamSet, 30)
 	alhpis["ASPENTRYSPEED"] = AParam{Name: "ASPENTRYSPEED", Type: typemap["float64"], Desc: "allows slow moves into liquids"}
+	alhpis["ASPREFERENCE"] = AParam{Name: "ASPREFERENCE", Type: typemap["int"], Desc: "where to be when aspirating: 0 well bottom, 1 well top, 2 liquid level (if known)"}
 	alhpis["ASPSPEED"] = AParam{Name: "ASPSPEED", Type: typemap["float64"], Desc: "aspirate pipetting rate"}
-	alhpis["ASPZOFFSET"] = AParam{Name: "ASPZOFFSET", Type: typemap["float64"], Desc: "mm above well bottom when aspirating"}
+	alhpis["ASPXOFFSET"] = AParam{Name: "ASPXOFFSET", Type: typemap["float64"], Desc: "mm east of well target when aspirating"}
+	alhpis["ASPYOFFSET"] = AParam{Name: "ASPYOFFSET", Type: typemap["float64"], Desc: "mm south of well target  when aspirating"}
+	alhpis["ASPZOFFSET"] = AParam{Name: "ASPZOFFSET", Type: typemap["float64"], Desc: "mm above ASPREFERENCE when aspirating"}
 	alhpis["ASP_WAIT"] = AParam{Name: "ASP_WAIT", Type: typemap["float64"], Desc: "wait time in seconds post aspirate"}
 	alhpis["BLOWOUTOFFSET"] = AParam{Name: "BLOWOUTOFFSET", Type: typemap["float64"], Desc: "mm above BLOWOUTREFERENCE"}
 	alhpis["BLOWOUTREFERENCE"] = AParam{Name: "BLOWOUTREFERENCE", Type: typemap["int"], Desc: "where to be when blowing out: 0 well bottom"}
@@ -76,8 +79,10 @@ func MakePolicyItems() AParamSet {
 	alhpis["BLOWOUTVOLUMEUNIT"] = AParam{Name: "BLOWOUTVOLUMEUNIT", Type: typemap["string"], Desc: "volume unit for blowout volume"}
 	alhpis["CAN_MULTI"] = AParam{Name: "CAN_MULTI", Type: typemap["bool"], Desc: "is multichannel operation allowed?"}
 	alhpis["DSPENTRYSPEED"] = AParam{Name: "DSPENTRYSPEED", Type: typemap["float64"], Desc: "allows slow moves into liquids"}
-	alhpis["DSPREFERENCE"] = AParam{Name: "DSPREFERENCE", Type: typemap["int"], Desc: "where to be when dispensing: 0 well bottom"}
+	alhpis["DSPREFERENCE"] = AParam{Name: "DSPREFERENCE", Type: typemap["int"], Desc: "where to be when dispensing: 0 well bottom, 1 well top, 2 liquid level (if known)"}
 	alhpis["DSPSPEED"] = AParam{Name: "DSPSPEED", Type: typemap["float64"], Desc: "dispense pipetting rate"}
+	alhpis["DSPXOFFSET"] = AParam{Name: "DSPXOFFSET", Type: typemap["float64"], Desc: "mm east of well target when dispensing"}
+	alhpis["DSPYOFFSET"] = AParam{Name: "DSPYOFFSET", Type: typemap["float64"], Desc: "mm south of well target  when dispensing"}
 	alhpis["DSPZOFFSET"] = AParam{Name: "DSPZOFFSET", Type: typemap["float64"], Desc: "mm above DSPREFERENCE"}
 	alhpis["DSP_WAIT"] = AParam{Name: "DSP_WAIT", Type: typemap["float64"], Desc: "wait time in seconds post dispense"}
 	alhpis["EXTRA_ASP_VOLUME"] = AParam{Name: "EXTRA_ASP_VOLUME", Type: typemap["Volume"], Desc: "additional volume to take up when aspirating"}
@@ -163,7 +168,7 @@ type AParamSet map[string]AParam
 func (alhpis AParamSet) OrderedList() []string {
 	ks := make([]string, 0, len(alhpis))
 
-	for k, _ := range alhpis {
+	for k := range alhpis {
 		ks = append(ks, k)
 	}
 
@@ -188,7 +193,7 @@ func (alhpis AParamSet) TypeList() string {
 func (alhpis AParamSet) CodeForIt() string {
 	ks := make([]string, 0, len(alhpis))
 
-	for k, _ := range alhpis {
+	for k := range alhpis {
 		ks = append(ks, k)
 	}
 

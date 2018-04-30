@@ -875,6 +875,30 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// assert: all instructions should now be assigned specific plate IDs, types and wells
 	checkDestinationSanity(request)
 
+	if request.Options.FixVolumes {
+		// see if volumes can be corrected
+		request, err = FixVolumes(request)
+
+		if err != nil {
+			return err
+		}
+		if request.Options.PrintInstructions {
+			fmt.Println("")
+			fmt.Println("POST VOLUME FIX")
+			fmt.Println("")
+			for _, insID := range request.Output_order {
+				ins := request.LHInstructions[insID]
+				fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
+
+				if ins.IsMixInPlace() {
+					fmt.Print(" INPLACE")
+				}
+
+				fmt.Println()
+			}
+		}
+	}
+
 	if err := assertVolumesNonNegative(request); err != nil {
 		return err
 	}

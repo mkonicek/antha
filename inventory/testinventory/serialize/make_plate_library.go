@@ -669,7 +669,7 @@ func makeSkirtedPCRPlate() *wtype.LHPlate {
 
 // pcr plate skirted
 func makeSkirtedPCRPlateOffset() *wtype.LHPlate {
-	return wtype.NewLHPlate("pcrplate_skirted_offset", "Unknown", 8, 12, 15.5, "mm", makePCRPlateWell(), 9, 9, 14.38, 11.24, MinimumZHeightPermissableForLVPipetMax)
+	return wtype.NewLHPlate("pcrplate_skirted_offset", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(), 9, 9, 14.38, 11.24, MinimumZHeightPermissableForLVPipetMax)
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {

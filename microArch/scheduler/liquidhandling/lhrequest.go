@@ -165,7 +165,7 @@ func ValidateLHRequest(rq *LHRequest) (bool, string) {
 		return false, "No input plate types specified"
 	}
 
-	if rq.Policies == nil {
+	if rq.Policies() == nil {
 		return false, "No policies specified"
 	}
 

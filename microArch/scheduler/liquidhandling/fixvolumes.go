@@ -158,7 +158,7 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 			}
 		}
 
-		//newWanted = mapAdd(newWanted, ins.InputVolumeMap(wunit.NewVolume(0.5, "ul")))
+		newWanted = mapAdd(newWanted, ins.InputVolumeMap(wunit.NewVolume(0.5, "ul")))
 	}
 
 	newWanted = mapAdd(wanted, newWanted)

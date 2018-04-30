@@ -132,6 +132,8 @@ func updateIDAfterSplit(ins *wtype.LHInstruction, in, out map[string]wunit.Volum
 }
 
 func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.LHPlate) (map[string]wunit.Volume, error) {
+
+	carryVol := wunit.NewVolume(0.5, "ul")
 	newWanted := make(map[string]wunit.Volume)
 	for _, ins := range ch.Values {
 		//wantVol, ok := wanted[ins.Results[0].FullyQualifiedName()]
@@ -147,6 +149,7 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 				}
 			} else if !wantInPlace(wanted, ins.Results[0].FullyQualifiedName()) {
 				wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
+				wantVol.Subtract(carryVol)
 			}
 
 			if wantVol.GreaterThan(ins.Results[0].Volume()) {
@@ -158,7 +161,7 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 			}
 		}
 
-		newWanted = mapAdd(newWanted, ins.InputVolumeMap(wunit.NewVolume(0.5, "ul")))
+		newWanted = mapAdd(newWanted, ins.InputVolumeMap(carryVol))
 	}
 
 	newWanted = mapAdd(wanted, newWanted)

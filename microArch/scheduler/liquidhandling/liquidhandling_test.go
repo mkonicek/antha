@@ -26,6 +26,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -160,7 +161,7 @@ func configureMultiChannelTestRequest(ctx context.Context, rq *LHRequest) {
 
 }
 
-func configureTransferRequestForZTest(liquid string, transferVol wunit.Volume, numberOfTransfers int) (rq *LHRequest, err error) {
+func configureTransferRequestForZTest(policyName string, transferVol wunit.Volume, numberOfTransfers int) (rq *LHRequest, err error) {
 
 	// set up ctx
 	ctx := testinventory.NewContext(context.Background())
@@ -185,11 +186,11 @@ func configureTransferRequestForZTest(liquid string, transferVol wunit.Volume, n
 
 	liq := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
 
-	err = liq.SetPolicyName(wtype.PolicyName(liquid))
+	err = liq.SetPolicyName(wtype.PolicyName(policyName))
 	if err != nil {
 		return rq, err
 	}
-	liq.SetName(liquid)
+	liq.SetName(policyName)
 
 	for k := 0; k < numberOfTransfers; k++ {
 		ins := wtype.NewLHMixInstruction()
@@ -199,11 +200,11 @@ func configureTransferRequestForZTest(liquid string, transferVol wunit.Volume, n
 
 		expectedProduct := GetComponentForTest(ctx, "water", transferVol)
 
-		err = expectedProduct.SetPolicyName(wtype.PolicyName(liquid))
+		err = expectedProduct.SetPolicyName(wtype.PolicyName(policyName))
 		if err != nil {
 			return rq, err
 		}
-		expectedProduct.SetName(liquid)
+		expectedProduct.SetName(policyName)
 
 		ins.AddProduct(expectedProduct)
 
@@ -354,21 +355,21 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 		volume:                  wunit.NewVolume(50, "ul"),
 		expectedAspirateZOffset: "1.2500,1.2500",
 		expectedDispenseZOffset: "1.2500,1.2500",
-	},
-	zOffsetTest{
-		liquidType:              "SmartMix",
-		numberOfTransfers:       1,
-		volume:                  wunit.NewVolume(5, "ul"),
-		expectedAspirateZOffset: "0.5000",
-		expectedDispenseZOffset: "0.5000",
-	},
-	zOffsetTest{
-		liquidType:              "SmartMix",
-		numberOfTransfers:       2,
-		volume:                  wunit.NewVolume(5, "ul"),
-		expectedAspirateZOffset: "0.5000,0.5000",
-		expectedDispenseZOffset: "0.5000,0.5000",
-	},
+	}, /*
+		zOffsetTest{
+			liquidType:              "SmartMix",
+			numberOfTransfers:       1,
+			volume:                  wunit.NewVolume(5, "ul"),
+			expectedAspirateZOffset: "0.5000",
+			expectedDispenseZOffset: "0.5000",
+		},
+		zOffsetTest{
+			liquidType:              "SmartMix",
+			numberOfTransfers:       2,
+			volume:                  wunit.NewVolume(5, "ul"),
+			expectedAspirateZOffset: "0.5000,0.5000",
+			expectedDispenseZOffset: "0.5000,0.5000",
+		},*/
 	zOffsetTest{
 		liquidType:              "NeedToMix",
 		numberOfTransfers:       1,
@@ -382,21 +383,21 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 		volume:                  wunit.NewVolume(50, "ul"),
 		expectedAspirateZOffset: "1.2500,1.2500",
 		expectedDispenseZOffset: "1.2500,1.2500",
-	},
-	zOffsetTest{
-		liquidType:              "NeedToMix",
-		numberOfTransfers:       1,
-		volume:                  wunit.NewVolume(5, "ul"),
-		expectedAspirateZOffset: "0.5000",
-		expectedDispenseZOffset: "0.5000",
-	},
-	zOffsetTest{
-		liquidType:              "NeedToMix",
-		numberOfTransfers:       2,
-		volume:                  wunit.NewVolume(5, "ul"),
-		expectedAspirateZOffset: "0.5000,0.5000",
-		expectedDispenseZOffset: "0.5000,0.5000",
-	},
+	}, /*
+		zOffsetTest{
+			liquidType:              "NeedToMix",
+			numberOfTransfers:       1,
+			volume:                  wunit.NewVolume(5, "ul"),
+			expectedAspirateZOffset: "0.5000",
+			expectedDispenseZOffset: "0.5000",
+		},
+		zOffsetTest{
+			liquidType:              "NeedToMix",
+			numberOfTransfers:       2,
+			volume:                  wunit.NewVolume(5, "ul"),
+			expectedAspirateZOffset: "0.5000,0.5000",
+			expectedDispenseZOffset: "0.5000,0.5000",
+		},*/
 }
 
 func TestMultiZOffset2(t *testing.T) {
@@ -529,6 +530,25 @@ func makeSingleTestRequest() (singleRq *LHRequest, err error) {
 	return singleRq, nil
 }
 
+func getOffset(offsets string) (offset float64, err error) {
+	channels := strings.Split(offsets, ",")
+	var value float64
+	for i, channel := range channels {
+		if i == 0 {
+			value, err = strconv.ParseFloat(channel, 64)
+			if err != nil {
+				return 0.0, err
+			}
+		}
+		if i != 0 {
+			if channels[i] != channels[0] {
+				return value, fmt.Errorf("z offsets (%s) not all same", offsets)
+			}
+		}
+	}
+	return value, nil
+}
+
 func TestMultiZOffset(t *testing.T) {
 
 	multiRq, err := makeMultiTestRequest()
@@ -581,15 +601,33 @@ func TestMultiZOffset(t *testing.T) {
 		}
 	}
 	for i, aspirationStep := range singleAspirateInstructions {
-		if !reflect.DeepEqual(aspirationStep.OffsetZ, multiAspirateInstructions[i].OffsetZ) {
+		singleAspZ, err := getOffset(aspirationStep.OffsetZ)
+		if err != nil {
+			t.Error(err.Error())
+		}
+		multiAspZ, err := getOffset(multiAspirateInstructions[i].OffsetZ)
+		if err != nil {
+			t.Error(err.Error())
+		}
+		if singleAspZ != multiAspZ {
 			t.Error(fmt.Sprintf("single Aspirate Z offset: %+v ", text.PrettyPrint(aspirationStep)), "\n",
+				fmt.Sprintf("Not equal to \n"),
 				fmt.Sprintf("multi Aspirate Z offset: %+v ", text.PrettyPrint(multiAspirateInstructions[i])), "\n")
 		}
 	}
 
 	for i, dispenseStep := range singleDispenseInstructions {
-		if !reflect.DeepEqual(dispenseStep.OffsetZ, multiDispenseInstructions[i].OffsetZ) {
+		singleDspZ, err := getOffset(dispenseStep.OffsetZ)
+		if err != nil {
+			t.Error(err.Error())
+		}
+		multiDspZ, err := getOffset(multiDispenseInstructions[i].OffsetZ)
+		if err != nil {
+			t.Error(err.Error())
+		}
+		if singleDspZ != multiDspZ {
 			t.Error("single Dispense Z offset: ", text.PrettyPrint(dispenseStep), "\n",
+				fmt.Sprintf("Not equal to \n"),
 				fmt.Sprintf("multi Dispense Z offset: %+v ", text.PrettyPrint(multiDispenseInstructions[i])), "\n")
 		}
 	}

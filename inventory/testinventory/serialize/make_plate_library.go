@@ -180,6 +180,12 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate = wtype.NewLHPlate("SRWFB96", "Unknown", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 0.0, 0.0, 2.2)
 	plates = append(plates, plate)
 
+	// shallow round well flat bottom 96 with realler dimensions
+	rwshp = wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
+	roundwell96 = wtype.NewLHWell("ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
+	plate = wtype.NewLHPlate("SRWFB96_offset", "Unknown", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 14.38, 11.24, 3.7)
+	plates = append(plates, plate)
+
 	// deep well strip trough 12
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
 	trough12 := wtype.NewLHWell("ul", 15000, 5000, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
@@ -929,8 +935,8 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
-	xstartOffsetCorrection := 13.0
-	ystartOffsetCorrection := 10.0
+	//xstartOffsetCorrection := 13.0
+	//ystartOffsetCorrection := 10.0
 	zstartOffsetCorrection := 2.25
 
 	plateName := "AppliedBiosystems_384_MicroAmp_Optical"
@@ -955,12 +961,14 @@ func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 
 	volUnit := "ul"
 
-	wellxoffset := 4.5                        // K: centre of well to centre of neighbouring well in x direction
-	wellyoffset := 4.5                        // K?: centre of well to centre of neighbouring well in y direction
-	xstart := 10.925 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
-	ystart := 7.415 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
-	zstart := 0.65 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
-	overallHeight := 9.7                      // F: height of plate
+	wellxoffset := 4.5 // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5 // K?: centre of well to centre of neighbouring well in y direction
+	//	xstart := 10.925 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	//	ystart := 7.415 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in y-axis
+	xstart := 12.15
+	ystart := 9.00
+	zstart := 0.65 - zstartOffsetCorrection // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 9.7                    // F: height of plate
 
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 

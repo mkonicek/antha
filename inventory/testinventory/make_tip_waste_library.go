@@ -31,7 +31,7 @@ func makeTipwastes() (tipwastes []*wtype.LHTipwaste) {
 func makeGilsonTipWaste() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 123.0, 80.0, 92.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(6000, "Gilsontipwaste", "gilson", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
+	lht := wtype.NewLHTipwaste(6000, "Gilsontipwaste", "gilson", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, w, 63.88, 42.74, 0.0)
 	return lht
 }
 

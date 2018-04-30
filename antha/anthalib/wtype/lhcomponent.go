@@ -443,8 +443,6 @@ func (lhc *LHComponent) SetName(name string) {
 	lhc.CName = trimString(name)
 }
 
-const invalidPolicy = "invalidPolicyName"
-
 // TypeName returns the PolicyName of the LHComponent's LiquidType as a string
 func (lhc *LHComponent) TypeName() string {
 	return string(lhc.Type)

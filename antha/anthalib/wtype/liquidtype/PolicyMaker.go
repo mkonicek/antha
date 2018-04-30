@@ -225,7 +225,10 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 			name = nameprepend + strconv.Itoa(run.RunNumber)
 		}
 		names = append(names, name)
-		policy.SetName(name)
+		err = policy.SetName(name)
+		if err != nil {
+			return policies, names, err
+		}
 		policies = append(policies, policy)
 		if len(warnings) > 0 {
 			runWarnings = append(runWarnings, fmt.Sprint("Errors :\n", strings.Join(warnings, "\n \t - ")))

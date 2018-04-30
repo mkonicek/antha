@@ -25,13 +25,13 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/ghodss/yaml"
 	"github.com/mgutz/ansi"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"sort"
+	"strings"
 )
 
 var listPoliciesCmd = &cobra.Command{

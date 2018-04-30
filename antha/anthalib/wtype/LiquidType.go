@@ -165,7 +165,7 @@ func IndexOfStringArray(s string, a []string) int {
 // but unlikely to be useful
 func Normalize(tx []string) []string {
 	if tx[0] == "" && len(tx) > 1 {
-		return tx[1:len(tx)]
+		return tx[1:]
 	}
 	return tx
 }

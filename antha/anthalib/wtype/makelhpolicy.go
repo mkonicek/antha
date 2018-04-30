@@ -58,7 +58,7 @@ func MakePolicies() map[string]LHPolicy {
 	pols := make(map[string]LHPolicy)
 
 	add := func(policy LHPolicy, name string) {
-		policy.SetName(name)
+		checkErr(policy.SetName(name))
 		if _, found := pols[policy.Name()]; found {
 			panic(fmt.Sprintf("duplicate policy (%s) added to MakePolicies", policy.Name()))
 		}
@@ -857,16 +857,28 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	rule := NewLHPolicyRule("HVOffsetFix")
 	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
 
-	rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
-	rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+	err = rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
+	if err != nil {
+		return nil, err
+	}
+	err = rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+	if err != nil {
+		return nil, err
+	}
 	// don't get overridden
 	rule.Priority = 100
 	pol := MakeHVOffsetPolicy()
 	lhpr.AddRule(rule, pol)
 
 	rule = NewLHPolicyRule("DNALV")
-	rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
-	rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
+	err = rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
+	if err != nil {
+		return nil, err
+	}
+	err = rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
+	if err != nil {
+		return nil, err
+	}
 	pol = MakeLVDNAMixPolicy()
 	lhpr.AddRule(rule, pol)
 	return lhpr, nil

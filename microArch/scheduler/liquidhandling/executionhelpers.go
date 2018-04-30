@@ -153,7 +153,7 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 }
 
-func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool) *IChain {
+func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.LHComponent) *IChain {
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations
@@ -165,9 +165,13 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 		addToIChain(ic, n, tg)
 	}
 
-	// finally we need to ensure that splits and mixes are kept separate by fissioning nodes
+	// we need to ensure that splits and mixes are kept separate by fissioning nodes
 
 	ic.SplitMixedNodes()
+
+	// this routine ensures that instructions can be executed in parallel
+
+	ic = simplifyIChain(ic, inputs)
 
 	sortOutputs(ic, sort)
 
@@ -372,17 +376,15 @@ func set_output_order(rq *LHRequest) error {
 
 	sorted = aggregatePromptsWithSameMessage(sortedAsIns, tg)
 
-	// make sure the request contains the new instructions if aggregation has occurred here
-
+	// aggregate sorted again
 	sortedAsIns = make([]*wtype.LHInstruction, len(sorted))
 	for i, nIns := range sorted {
 		ins := nIns.(*wtype.LHInstruction)
 		sortedAsIns[i] = ins
-		_, ok := rq.LHInstructions[ins.ID]
-		if !ok {
-			rq.LHInstructions[ins.ID] = ins
-		}
 	}
+
+	// update request to be consistent with new instructions
+	rq = updateRequestWithNewInstructions(rq, sortedAsIns)
 
 	// sort again post aggregation
 	tg = MakeTGraph(sortedAsIns)
@@ -393,13 +395,24 @@ func set_output_order(rq *LHRequest) error {
 	}
 
 	// make into equivalence classes and sort according to defined order
-	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort)
+	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort, rq.Input_solutions)
 
 	// populate the request
 	rq.InstructionChain = it
 	rq.Output_order = it.Flatten()
 
 	return nil
+}
+
+func updateRequestWithNewInstructions(rq *LHRequest, sorted []*wtype.LHInstruction) *LHRequest {
+	// make sure the request contains the new instructions if aggregation has occurred here
+	for _, ins := range sorted {
+		_, ok := rq.LHInstructions[ins.ID]
+		if !ok {
+			rq.LHInstructions[ins.ID] = ins
+		}
+	}
+	return rq
 }
 
 type ByOrdinal [][]int

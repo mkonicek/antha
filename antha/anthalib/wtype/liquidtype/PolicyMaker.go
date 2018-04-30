@@ -78,9 +78,7 @@ var AvailablePolicyfiles []PolicyFile = []PolicyFile{
 var BASEPolicy = "default" //"dna"
 
 func MakePolicies() map[string]wtype.LHPolicy {
-	pols := make(map[string]wtype.LHPolicy)
-
-	pols = wtype.MakePolicies()
+	pols := wtype.MakePolicies()
 
 	// TODO: Remove this hack
 	for _, DOEliquidhandlingFile := range AvailablePolicyfiles {
@@ -114,8 +112,9 @@ func PolicyFilefromName(filename string) (pol PolicyFile, found bool) {
 func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names []string, runs []Run, err error) {
 
 	doeliquidhandlingFile, found := PolicyFilefromName(filename)
-	if found == false {
-		panic("policyfilename" + filename + "not found")
+	if !found {
+		err = fmt.Errorf("policyfilename" + filename + "not found")
+		return
 	}
 	filenameparts := strings.Split(doeliquidhandlingFile.Filename, ".")
 

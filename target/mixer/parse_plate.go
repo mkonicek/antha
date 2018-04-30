@@ -177,8 +177,7 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 
 		ctype, err := wtype.LiquidTypeFromString(wtype.PolicyName(ctypeField))
 		if err != nil {
-			defaultPolicy, _ := wtype.DefaultLHPolicy.String()
-			warnings = append(warnings, fmt.Sprintf("line %d: unknown component type %q, defaulting to %q: %s", lineNo, ctypeField, defaultPolicy, err))
+			warnings = append(warnings, fmt.Sprintf("line %d: component type %q not found in system types, using (%s); this may generate undesirable behaviour if this is not a custom type: %s", lineNo, ctypeField, ctype, err))
 		}
 
 		vol, vunit, err := parseUnit(get(rec, 3), get(rec, 4), "ul")

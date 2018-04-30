@@ -119,9 +119,8 @@ func ansiPrint(options ...printOption) bool {
 }
 
 func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
-	s := ""
 
-	s = InstructionTypeName(ins) + " "
+	s := InstructionTypeName(ins) + " "
 
 	var changeColour func(string) string
 
@@ -214,33 +213,21 @@ func isAspirate(ins RobotInstruction) bool {
 
 	s := InstructionTypeName(ins)
 
-	if strings.TrimSpace(s) == "ASP" {
-		return true
-	}
-
-	return false
+	return strings.TrimSpace(s) == "ASP"
 }
 
 func isDispense(ins RobotInstruction) bool {
 
 	s := InstructionTypeName(ins)
 
-	if strings.TrimSpace(s) == "DSP" {
-		return true
-	}
-
-	return false
+	return strings.TrimSpace(s) == "DSP"
 }
 
 func isMove(ins RobotInstruction) bool {
 
 	s := InstructionTypeName(ins)
 
-	if strings.TrimSpace(s) == "MOV" {
-		return true
-	}
-
-	return false
+	return strings.TrimSpace(s) == "MOV"
 }
 
 // StepSummary summarises the instruction for
@@ -266,10 +253,6 @@ func mergeSummaries(a, b StepSummary, aspOrDsp string) (c StepSummary) {
 		WellToVolume: a.WellToVolume + b.WellToVolume,
 		Volume:       a.Volume + b.Volume,
 	}
-}
-
-func castInstructionToString(parameter interface{}) string {
-	return ""
 }
 
 type stepType string

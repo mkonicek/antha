@@ -864,15 +864,6 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	pol := MakeHVOffsetPolicy()
 	lhpr.AddRule(rule, pol)
 
-	// merged the below and the above
-	/*
-		rule = NewLHPolicyRule("HVFlowRate")
-		rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-		//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
-		pol = MakeHVFlowRatePolicy()
-		lhpr.AddRule(rule, pol)
-	*/
-
 	rule = NewLHPolicyRule("DNALV")
 	rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
 	rule.AddCategoryConditionOn("LIQUIDCLASS", "dna")
@@ -1035,15 +1026,6 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	rule.Priority = 100
 	pol := MakeHVOffsetPolicy()
 	lhpr.AddRule(rule, pol)
-
-	// merged the below and the above
-	/*
-		rule = NewLHPolicyRule("HVFlowRate")
-		rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-		//rule.AddCategoryConditionOn("FROMPLATETYPE", "pcrplate_skirted_riser")
-		pol = MakeHVFlowRatePolicy()
-		lhpr.AddRule(rule, pol)
-	*/
 
 	rule = NewLHPolicyRule("DNALV")
 	checkErr(rule.AddNumericConditionOn("VOLUME", 0.0, 1.99))

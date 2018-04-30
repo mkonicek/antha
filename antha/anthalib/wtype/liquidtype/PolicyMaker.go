@@ -85,21 +85,15 @@ func MakePolicies() map[string]wtype.LHPolicy {
 	// TODO: Remove this hack
 	for _, DOEliquidhandlingFile := range AvailablePolicyfiles {
 		if _, err := os.Stat(filepath.Join(anthapath.Path(), DOEliquidhandlingFile.Filename)); err == nil {
-			//if antha.Anthafileexists(DOEliquidhandlingFile) {
-			//fmt.Println("found lhpolicy doe file", DOEliquidhandlingFile)
-
 			filenameparts := strings.Split(DOEliquidhandlingFile.Filename, ".")
 
 			policies, names, _, err := PolicyMakerfromDesign(BASEPolicy, DOEliquidhandlingFile.DXORJMP, DOEliquidhandlingFile.Filename, filenameparts[0])
-			//policies, names, _, err := PolicyMakerfromDesign(BASEPolicy, DXORJMP, DOEliquidhandlingFile, "DOE_run")
 			for i, policy := range policies {
 				pols[names[i]] = policy
 			}
 			if err != nil {
 				panic(err)
 			}
-		} else {
-			//	fmt.Println("no lhpolicy doe file found named: ", DOEliquidhandlingFile)
 		}
 	}
 	return pols
@@ -173,59 +167,53 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 	} else {
 		return policies, names, runs, fmt.Errorf("only JMP or DX allowed as valid inputs for DXORJMP variable")
 	}
-	policies, names = PolicyMakerfromRuns(basepolicy, runs, prepend, false)
+	policies, names, err = PolicyMakerfromRuns(basepolicy, runs, prepend, false)
 	return policies, names, runs, err
 }
 
-func PolicyMaker(basepolicy string, factors []DOEPair, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string) {
+func PolicyMaker(basepolicy string, factors []DOEPair, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
 
 	runs := AllCombinations(factors)
 
-	policies, names = PolicyMakerfromRuns(basepolicy, runs, nameprepend, concatfactorlevelsinname)
+	policies, names, err = PolicyMakerfromRuns(basepolicy, runs, nameprepend, concatfactorlevelsinname)
 
 	return
 }
 
-func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string) {
+func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
 
 	policyitemmap := wtype.MakePolicyItems()
 
-	names = make([]string, 0)
 	policies = make([]wtype.LHPolicy, 0)
+	var runWarnings []string
 
-	policy := wtype.MakeDefaultPolicy()
-	policy.Set("CAN_MULTI", false)
+	basePolicy, err := wtype.GetPolicyByType(wtype.LiquidType(basepolicy))
 
-	/*base, _ := GetPolicyByName(basepolicy)
-
-	for key, value := range base {
-		policy[key] = value
+	if err != nil {
+		return
 	}
-	*/
-	//fmt.Println("basepolicy:", basepolicy)
-	for _, run := range runs {
-		for j, desc := range run.Factordescriptors {
 
+	copyPolicy := func(policy wtype.LHPolicy) wtype.LHPolicy {
+		var newPolicy = make(map[string]interface{})
+		for key, value := range policy {
+			newPolicy[key] = value
+		}
+		return newPolicy
+	}
+
+	for i, run := range runs {
+		policy := make(wtype.LHPolicy)
+		policy = copyPolicy(basePolicy)
+		var warnings []string
+		for j, desc := range run.Factordescriptors {
 			_, ok := policyitemmap[desc]
 			if ok {
-
-				/*if val.Type.Name() == "int" {
-					aInt, found := run.Setpoints[j].(int)
-
-					var bInt int
-
-					bInt = int(aInt)
-					if found {
-						run.Setpoints[j] = interface{}(bInt)
-					}
-				}*/
 				policy[desc] = run.Setpoints[j]
-			} /* else {
-				panic("policyitem " + desc + " " + "not present! " + "These are present: " + policyitemmap.TypeList())
-			}*/
+			} else if i == 0 {
+				warnings = append(warnings, "Invalid PolicyCommand specified in design file: "+desc)
+			}
 		}
 
-		// raising runtime error when using concat == true
 		var name string
 		if concatfactorlevelsinname {
 			name = nameprepend
@@ -233,17 +221,20 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 				name = fmt.Sprint(name, "_", key, ":", value)
 
 			}
-
 		} else {
 			name = nameprepend + strconv.Itoa(run.RunNumber)
 		}
 		names = append(names, name)
 		policy.SetName(name)
 		policies = append(policies, policy)
-
-		//policy := GetPolicyByName(basepolicy)
-		policy = wtype.MakeDefaultPolicy()
+		if len(warnings) > 0 {
+			runWarnings = append(runWarnings, fmt.Sprint("Errors :\n", strings.Join(warnings, "\n \t - ")))
+		}
 	}
 
-	return
+	if len(runWarnings) > 0 {
+		return policies, names, wtype.NewWarning(strings.Join(runWarnings, "\n\n"))
+	}
+
+	return policies, names, nil
 }

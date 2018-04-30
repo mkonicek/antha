@@ -449,8 +449,7 @@ func TestMultiZOffset2(t *testing.T) {
 	}
 }
 
-func TestMultiZOffset(t *testing.T) {
-
+func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 	// set up ctx
 	ctx := testinventory.NewContext(context.Background())
 
@@ -461,18 +460,18 @@ func TestMultiZOffset(t *testing.T) {
 	var tipBoxes []*wtype.LHTipbox
 	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
 	if err != nil {
-		t.Fatal(err)
+		return
 	}
 	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
 	if err != nil {
-		t.Fatal(err)
+		return
 	}
 	tipBoxes = append(tipBoxes, tpHigh, tpLow)
 
 	// set up multi
 
 	//initialise multi request
-	multiRq := GetLHRequestForTest()
+	multiRq = GetLHRequestForTest()
 
 	// set to Multi channel test request
 	configureMultiChannelTestRequest(ctx, multiRq)
@@ -485,13 +484,34 @@ func TestMultiZOffset(t *testing.T) {
 	multiRq.ConfigureYourself()
 
 	if err := lh.Plan(ctx, multiRq); err != nil {
-		t.Fatalf("Got an error planning with no inputs: %s", err)
+		return multiRq, fmt.Errorf("Got an error planning with no inputs: %s", err)
 	}
+	return multiRq, nil
+}
+
+func makeSingleTestRequest() (singleRq *LHRequest, err error) {
+	// set up ctx
+	ctx := testinventory.NewContext(context.Background())
+
+	// make liquid handler
+	lh := GetLiquidHandlerForTest(ctx)
+
+	// make some tipboxes
+	var tipBoxes []*wtype.LHTipbox
+	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
+	if err != nil {
+		return
+	}
+	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
+	if err != nil {
+		return
+	}
+	tipBoxes = append(tipBoxes, tpHigh, tpLow)
 
 	// set up single channel
 
 	//initialise single request
-	singleRq := GetLHRequestForTest()
+	singleRq = GetLHRequestForTest()
 
 	// set to single channel test request
 	configureSingleChannelTestRequest(ctx, singleRq)
@@ -504,7 +524,23 @@ func TestMultiZOffset(t *testing.T) {
 	singleRq.ConfigureYourself()
 
 	if err := lh.Plan(ctx, singleRq); err != nil {
-		t.Fatalf("Got an error planning with no inputs: %s", err)
+		return singleRq, fmt.Errorf("Got an error planning with no inputs: %s", err)
+	}
+	return singleRq, nil
+}
+
+func TestMultiZOffset(t *testing.T) {
+
+	multiRq, err := makeMultiTestRequest()
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	singleRq, err := makeSingleTestRequest()
+
+	if err != nil {
+		t.Fatal(err.Error())
 	}
 
 	var singleAspirateInstructions, singleDispenseInstructions, multiAspirateInstructions, multiDispenseInstructions []liquidhandling.StepSummary

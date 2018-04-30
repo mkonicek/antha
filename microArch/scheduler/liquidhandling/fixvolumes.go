@@ -145,12 +145,13 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 				if ins.PlateID != "" {
 					panic("Cannot fix volume for plate ID without corresponding type")
 				}
-			} else if !wantInPlace(wanted, ins.Results[0].FullyQualifiedName()) {
-				wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
-			}
+			} //else if !wantInPlace(wanted, ins.Results[0].FullyQualifiedName()) {
+			//	wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
+			//}
 
-			if wantVol.GreaterThan(ins.Results[0].Volume()) {
-				r := wantVol.RawValue() / ins.Results[0].Volume().ConvertTo(wantVol.Unit())
+			if !wantVol.IsZero() { //.GreaterThan(ins.Results[0].Volume()) {
+				fv := ins.Results[0].Volume().ConvertTo(wantVol.Unit())
+				r := (wantVol.RawValue() + fv) / fv
 				ins.AdjustVolumesBy(r)
 
 				//delete(wanted, ins.Results[0].FullyQualifiedName())
@@ -158,7 +159,7 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 			}
 		}
 
-		newWanted = mapAdd(newWanted, ins.InputVolumeMap(wunit.NewVolume(0.5, "ul")))
+		//newWanted = mapAdd(newWanted, ins.InputVolumeMap(wunit.NewVolume(0.5, "ul")))
 	}
 
 	newWanted = mapAdd(wanted, newWanted)

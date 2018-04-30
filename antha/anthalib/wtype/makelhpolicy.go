@@ -819,21 +819,22 @@ var (
 // Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
 var (
 	IntoLessThan20ul          = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{Lower: 0.0, Upper: 20.0}}
-	IntoBetween20ulAnd50ul    = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{20.0, 50.0}}
-	IntoBetween50ulAnd100ul   = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{50.0, 100.0}}
-	IntoBetween100ulAnd200ul  = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{100.0, 200.0}}
-	IntoBetween200ulAnd1000ul = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{200.0, 1000.0}}
+	IntoBetween20ulAnd50ul    = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{20.1, 50.0}}
+	IntoBetween50ulAnd100ul   = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{50.1, 100.0}}
+	IntoBetween100ulAnd200ul  = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{100.1, 200.0}}
+	IntoBetween200ulAnd1000ul = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{200.1, 1000.0}}
 )
 
 // Conditions to apply to LHpolicyRules based on volume of liquid being transferred
 var (
-	LessThan20ul = numericCondition{Class: "VOLUME", Range: conditionRange{0.0, 20.0}}
+	LessThan20ul    = numericCondition{Class: "VOLUME", Range: conditionRange{0.0, 20.0}}
+	GreaterThan20ul = numericCondition{Class: "VOLUME", Range: conditionRange{20.1, 1000.0}}
 )
 
 // Conditions to apply to LHpolicyRules based on volume of liquid in source well from which a sample is taken
 var (
 	FromBetween100ulAnd200ul  = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{100.0, 200.0}}
-	FromBetween200ulAnd1000ul = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{200.0, 1000.0}}
+	FromBetween200ulAnd1000ul = numericCondition{Class: "WELLFROMVOLUME", Range: conditionRange{200.1, 1000.0}}
 )
 
 func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHPolicy) (lhpr *LHPolicyRuleSet, err error) {
@@ -905,6 +906,12 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 		lhpr.AddRule(rule, policy)
 	}
 
+	adjustPostMixLessThan20, err := newConditionalRule("mixIntoLessThan20ul", OnSmartMix, IntoLessThan20ul)
+
+	if err != nil {
+		return lhpr, err
+	}
+
 	adjustPostMix, err := newConditionalRule("mixInto20ul", OnSmartMix, IntoBetween20ulAnd50ul)
 
 	if err != nil {
@@ -916,9 +923,11 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	adjustVol100 := AdjustPostMixVolume(wunit.NewVolume(100, "ul"))
 	adjustVol200 := AdjustPostMixVolume(wunit.NewVolume(200, "ul"))
 
+	lhpr.AddRule(adjustPostMixLessThan20, adjustVol20)
+
 	lhpr.AddRule(adjustPostMix, adjustVol20)
 
-	adjustPostMix50, err := newConditionalRule("mixInto50ul", OnSmartMix, IntoBetween50ulAnd100ul)
+	adjustPostMix50, err := newConditionalRule("mixInto50ul", OnSmartMix, IntoBetween50ulAnd100ul, GreaterThan20ul)
 
 	if err != nil {
 		return lhpr, err
@@ -926,7 +935,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustPostMix50, adjustVol50)
 
-	adjustPostMix100, err := newConditionalRule("mixInto100ul", OnSmartMix, IntoBetween100ulAnd200ul)
+	adjustPostMix100, err := newConditionalRule("mixInto100ul", OnSmartMix, IntoBetween100ulAnd200ul, GreaterThan20ul)
 
 	if err != nil {
 		return lhpr, err
@@ -934,7 +943,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustPostMix100, adjustVol100)
 
-	adjustPostMix200, err := newConditionalRule("mixInto200ul", OnSmartMix, IntoBetween200ulAnd1000ul)
+	adjustPostMix200, err := newConditionalRule("mixInto200ul", OnSmartMix, IntoBetween200ulAnd1000ul, GreaterThan20ul)
 
 	if err != nil {
 		return lhpr, err
@@ -973,7 +982,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustPreMix, adjustPreMixVol20)
 
-	adjustPreMix100ul, err := newConditionalRule("PreMixFrom100ul", OnPreMix, FromBetween100ulAnd200ul)
+	adjustPreMix100ul, err := newConditionalRule("PreMixFrom100ul", OnPreMix, FromBetween100ulAnd200ul, GreaterThan20ul)
 
 	if err != nil {
 		return lhpr, err
@@ -981,7 +990,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustPreMix100ul, adjustPreMixVol100)
 
-	adjustPreMix200ul, err := newConditionalRule("PreMixFrom200ul", OnPreMix, FromBetween200ulAnd1000ul)
+	adjustPreMix200ul, err := newConditionalRule("PreMixFrom200ul", OnPreMix, FromBetween200ulAnd1000ul, GreaterThan20ul)
 
 	if err != nil {
 		return lhpr, err
@@ -998,7 +1007,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustNeedToMix, adjustPreMixVol20)
 
-	adjustNeedToMix100ul, err := newConditionalRule("NeedToPreMixFrom100ul", OnNeedToMix, FromBetween100ulAnd200ul)
+	adjustNeedToMix100ul, err := newConditionalRule("NeedToPreMixFrom100ul", OnNeedToMix, FromBetween100ulAnd200ul, GreaterThan20ul)
 
 	if err != nil {
 		return lhpr, err
@@ -1006,7 +1015,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustNeedToMix100ul, adjustPreMixVol100)
 
-	adjustNeedToMix200ul, err := newConditionalRule("NeedToPreMixFrom200ul", OnNeedToMix, FromBetween200ulAnd1000ul)
+	adjustNeedToMix200ul, err := newConditionalRule("NeedToPreMixFrom200ul", OnNeedToMix, FromBetween200ulAnd1000ul, GreaterThan20ul)
 
 	if err != nil {
 		return lhpr, err

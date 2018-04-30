@@ -281,18 +281,18 @@ func nodesMixedOK(values []*wtype.LHInstruction) bool {
 	return len(insTypes) == 2 && insTypes[wtype.InsNames[wtype.LHIMIX]] && insTypes[wtype.InsNames[wtype.LHISPL]]
 }
 
-func simplifyIChain(ic *IChain, inputs map[string][]*wtype.LHComponent) *IChain {
-	hasAnySplitNodes := func(ic *Ichain) bool {
-		if ic == nil {
-			return false
-		}
-
-		if ic.Values[0].Type == wtype.LHISPL {
-			return true
-		}
-
-		return hasAnySplitNodes(ic.Child)
+func hasAnySplitNodes(ic *IChain) bool {
+	if ic == nil {
+		return false
 	}
+
+	if ic.Values[0].Type == wtype.LHISPL {
+		return true
+	}
+
+	return hasAnySplitNodes(ic.Child)
+}
+func simplifyIChain(ic *IChain, inputs map[string][]*wtype.LHComponent) *IChain {
 
 	// quick get-out while I fix this
 	if !hasAnySplitNodes(ic) {

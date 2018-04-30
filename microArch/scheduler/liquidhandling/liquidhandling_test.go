@@ -75,9 +75,7 @@ func TestStockConcs(*testing.T) {
 	}
 
 	choose_stock_concentrations(minrequired, maxrequired, Smax, vmin, T)
-	/*for k, v := range cncs {
-		logger.Debug(fmt.Sprintln(k, " ", minrequired[k], " ", maxrequired[k], " ", T[k], " ", v))
-	}*/
+
 }
 
 func configure_request_simple(ctx context.Context, rq *LHRequest) {
@@ -142,19 +140,13 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 
 func configureMultiChannelTestRequest(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(2000.0, "ul"))
-	/*	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
-		part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
-	*/
+
 	for k := 0; k < 9; k++ {
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(50.0, "ul"))
-		/*		mmxs := mixer.Sample(mmx, wunit.NewVolume(40.0, "ul"))
-				ps := mixer.Sample(part, wunit.NewVolume(100.0, "ul"))
-		*/
+
 		ins.AddComponent(ws)
-		/*		ins.AddComponent(mmxs)
-				ins.AddComponent(ps)
-		*/
+
 		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
 		rq.Add_instruction(ins)
 	}
@@ -227,21 +219,81 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 
 func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(2000.0, "ul"))
-	/*	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
-		part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
-	*/
+
 	for k := 0; k < 1; k++ {
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(50.0, "ul"))
-		/*		mmxs := mixer.Sample(mmx, wunit.NewVolume(40.0, "ul"))
-				ps := mixer.Sample(part, wunit.NewVolume(100.0, "ul"))
-		*/
+
 		ins.AddComponent(ws)
-		/*		ins.AddComponent(mmxs)
-				ins.AddComponent(ps)
-		*/
+
 		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
 		rq.Add_instruction(ins)
+	}
+
+}
+
+func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wtype.LHComponent) (rq *LHRequest, err error) {
+
+	// set up ctx
+	ctx := testinventory.NewContext(context.Background())
+
+	// make liquid handler
+	lh := GetLiquidHandlerForTest(ctx)
+
+	// make some tipboxes
+	var tipBoxes []*wtype.LHTipbox
+	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
+	if err != nil {
+		return rq, err
+	}
+	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
+	if err != nil {
+		return rq, err
+	}
+	tipBoxes = append(tipBoxes, tpHigh, tpLow)
+
+	//initialise request
+	rq = GetLHRequestForTest()
+
+	for k := 0; k < len(samples); k++ {
+		ins := wtype.NewLHMixInstruction()
+
+		samples[k].SetPolicyName(wtype.PolicyName(policyName))
+
+		ins.AddComponent(samples[k])
+		ins.AddProduct(GetComponentForTest(ctx, "water", samples[k].Volume()))
+
+		rq.Add_instruction(ins)
+	}
+
+	// add plates and tip boxes
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.Tips = tipBoxes
+
+	rq.ConfigureYourself()
+
+	if err := lh.Plan(ctx, rq); err != nil {
+		return rq, fmt.Errorf("Got an error planning: %s", err.Error())
+	}
+	return rq, nil
+}
+
+func TestToWellVolume(t *testing.T) {
+	// set up ctx
+	ctx := testinventory.NewContext(context.Background())
+	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
+	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
+	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
+
+	ws := mixer.Sample(water, wunit.NewVolume(150.0, "ul"))
+	mmxs := mixer.Sample(mmx, wunit.NewVolume(49.0, "ul"))
+	ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
+	_, err := configureTransferRequestMutliSamplesTest("SmartMix", ws, mmxs, ps)
+
+	if err != nil {
+		t.Error(err.Error())
 	}
 
 }

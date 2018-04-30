@@ -99,7 +99,7 @@ func InstructionTypeName(ins RobotInstruction) string {
 
 var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "RPA", "APT", "SPB"}
 
-var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
+var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
 
 // option to feed into InsToString function
 type printOption string
@@ -110,7 +110,6 @@ type printOption string
 const colouredTerminalOutput printOption = "colouredTerminalOutput"
 
 func ansiPrint(options ...printOption) bool {
-
 	for _, option := range options {
 		if option == colouredTerminalOutput {
 			return true
@@ -253,7 +252,7 @@ type StepSummary struct {
 	PlateType    string
 	Multi        string
 	OffsetZ      string
-	ToWellVolume string
+	WellToVolume string
 	Volume       string
 }
 
@@ -264,7 +263,7 @@ func mergeSummaries(a, b StepSummary, aspOrDsp string) (c StepSummary) {
 		PlateType:    a.PlateType + b.PlateType,
 		Multi:        a.Multi + b.Multi,
 		OffsetZ:      a.OffsetZ + b.OffsetZ,
-		ToWellVolume: a.ToWellVolume + b.ToWellVolume,
+		WellToVolume: a.WellToVolume + b.WellToVolume,
 		Volume:       a.Volume + b.Volume,
 	}
 }
@@ -366,8 +365,8 @@ func summarise(ins RobotInstruction) (StepSummary, error) {
 			summaryOfMoveOperation.OffsetZ = ss
 		} else if str == "TOPLATETYPE" {
 			summaryOfMoveOperation.PlateType = ss
-		} else if str == "TOWELLVOLUME" {
-			summaryOfMoveOperation.ToWellVolume = ss
+		} else if str == WELLTOVOLUME {
+			summaryOfMoveOperation.WellToVolume = ss
 		} else if str == "VOLUME" {
 			summaryOfMoveOperation.Volume = ss
 		}
@@ -466,28 +465,29 @@ func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
 	return true
 }
 
-// func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol wtype.LHPolicy) {
-// 	fmt.Println("*****")
-// 	fmt.Println("Policy for instruction ", InsToString(ins))
-// 	fmt.Println()
-// 	fmt.Println("Active Rules:")
-// 	fmt.Println("\t Default")
-// 	for _, r := range rules {
-// 		fmt.Println("\t", r.Name)
-// 	}
-// 	fmt.Println()
-// 	itemset := wtype.MakePolicyItems()
-// 	fmt.Println("Full output")
-// 	for _, s := range itemset.OrderedList() {
-// 		if pol[s] == nil {
-// 			continue
-// 		}
-// 		fmt.Println("\t", s, ": ", pol[s])
-// 	}
-// 	fmt.Println("_____")
+/*
+func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol wtype.LHPolicy) {
+ 	fmt.Println("*****")
+ 	fmt.Println("Policy for instruction ", InsToString(ins))
+ 	fmt.Println()
+ 	fmt.Println("Active Rules:")
+ 	fmt.Println("\t Default")
+ 	for _, r := range rules {
+ 		fmt.Println("\t", r.Name)
+ 	}
+ 	fmt.Println()
+ 	itemset := wtype.MakePolicyItems()
+ 	fmt.Println("Full output")
+ 	for _, s := range itemset.OrderedList() {
+ 		if pol[s] == nil {
+ 			continue
+ 		}
+ 		fmt.Println("\t", s, ": ", pol[s])
+ 	}
+ 	fmt.Println("_____")
 
-// }
-
+}
+*/
 var (
 	// ErrNoMatchingRules is returned when no matching LHPolicyRules are found when evaluating a rule set against a RobotInsturction.
 	ErrNoMatchingRules = errors.New("no matching rules found")
@@ -519,6 +519,7 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPo
 	rules := make([]wtype.LHPolicyRule, 0, len(lhpr.Rules))
 	var lhpolicyFound bool
 	for _, rule := range lhpr.Rules {
+
 		if ins.Check(rule) {
 			if matchesLiquidClass(rule) {
 				lhpolicyFound = true

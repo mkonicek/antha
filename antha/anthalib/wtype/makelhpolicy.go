@@ -610,6 +610,7 @@ func SmartMixPolicy() LHPolicy {
 	policy := make(LHPolicy, 12)
 	policy["POST_MIX"] = 3
 	policy["POST_MIX_RATE"] = 3.74
+	policy["POST_MIX_VOLUME"] = 19.0
 	policy["ASPSPEED"] = 3.74
 	policy["DSPSPEED"] = 3.74
 	policy["CAN_MULTI"] = true
@@ -818,11 +819,11 @@ var (
 
 // Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
 var (
-	IntoLessThan20ul          = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{Lower: 0.0, Upper: 20.0}}
-	IntoBetween20ulAnd50ul    = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{20.1, 50.0}}
-	IntoBetween50ulAnd100ul   = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{50.1, 100.0}}
-	IntoBetween100ulAnd200ul  = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{100.1, 200.0}}
-	IntoBetween200ulAnd1000ul = numericCondition{Class: "TOWELLVOLUME", Range: conditionRange{200.1, 1000.0}}
+	IntoLessThan20ul          = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{Lower: 0.0, Upper: 20.0}}
+	IntoBetween20ulAnd50ul    = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{20.1, 50.0}}
+	IntoBetween50ulAnd100ul   = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{50.1, 100.0}}
+	IntoBetween100ulAnd200ul  = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{100.1, 200.0}}
+	IntoBetween200ulAnd1000ul = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{200.1, 1000.0}}
 )
 
 // Conditions to apply to LHpolicyRules based on volume of liquid being transferred

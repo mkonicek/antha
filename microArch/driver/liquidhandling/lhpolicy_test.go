@@ -237,11 +237,10 @@ func TestSmartMixPolicy(t *testing.T) {
 		What:    "SmartMix",
 		Volume:  wunit.NewVolume(25.0, "ul"),
 		TVolume: wunit.NewVolume(1000.0, "ul"),
-		FVolume: wunit.NewVolume(1000.0, "ul"),
 		Channel: getChannelForTest(),
 	}
 
-	ins1 := NewSuckInstruction()
+	ins1 := NewBlowInstruction()
 	ins1.AddTransferParams(tp)
 
 	p, err := GetPolicyFor(pft, ins1)
@@ -260,7 +259,7 @@ func TestSmartMixPolicy(t *testing.T) {
 	tp.Volume = wunit.NewVolume(25, "ul")
 	tp.TVolume = wunit.NewVolume(50, "ul")
 
-	ins2 := NewSuckInstruction()
+	ins2 := NewBlowInstruction()
 	ins2.AddTransferParams(tp)
 	p, err = GetPolicyFor(pft, ins2)
 

@@ -51,7 +51,6 @@ func MakeInstructionParameters() AParamSet {
 	params["TIME"] = AParam{Name: "TIME", Type: typemap["float64"]}
 	params["TIPTYPE"] = AParam{Name: "TIPTYPE", Type: typemap["string"]}
 	params["TOPLATETYPE"] = AParam{Name: "TOPLATETYPE", Type: typemap["string"]}
-	params["TOWELLVOLUME"] = AParam{Name: "TOWELLVOLUME", Type: typemap["float64"]}
 	params["VOLUME"] = AParam{Name: "VOLUME", Type: typemap["float64"]}
 	params["VOLUNT"] = AParam{Name: "VOLUNT", Type: typemap["float64"]}
 	params["WELL"] = AParam{Name: "WELL", Type: typemap["float64"]}

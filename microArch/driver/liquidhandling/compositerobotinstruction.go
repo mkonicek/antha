@@ -44,6 +44,10 @@ const (
 	WHICH = "WHICH"
 	// LIQUIDCLASS refers to the Component Type, This is currently used to look up the corresponding LHPolicy from an LHPolicyRuleSet
 	LIQUIDCLASS = "LIQUIDCLASS"
+
+	// WELLTOVOLUME refers to the volume of liquid already present in the well location for which
+	// a sample is due to be transferred to.
+	WELLTOVOLUME = "WELLTOVOLUME"
 )
 
 type SingleChannelBlockInstruction struct {
@@ -123,7 +127,7 @@ func (ins *SingleChannelBlockInstruction) GetParameter(name string) interface{} 
 		return ins.Prms.Platform
 	case "WELLTO":
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "TOPLATETYPE":
 		return ins.TPlateType
@@ -360,7 +364,7 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name string) interface{} {
 		return ins.Prms.Platform
 	case "WELLTO":
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "TOPLATETYPE":
 		return ins.TPlateType
@@ -636,7 +640,7 @@ func (ins *SingleChannelTransferInstruction) GetParameter(name string) interface
 		return ins.Prms.Platform
 	case "WELLTO":
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "TOPLATETYPE":
 		return ins.TPlateType
@@ -758,7 +762,7 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name string) interface{
 		return ins.Prms[0].Platform
 	case "WELLTO":
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "TOPLATETYPE":
 		return ins.TPlateType
@@ -1353,7 +1357,7 @@ func (ins *MoveInstruction) InstructionType() int {
 
 func (ins *MoveInstruction) GetParameter(name string) interface{} {
 	switch name {
-	case "TOWELLVOLUME":
+	case WELLTOVOLUME:
 		return ins.WVolume
 	case "HEAD":
 		return ins.Head
@@ -1448,7 +1452,7 @@ func (ins *MoveRawInstruction) GetParameter(name string) interface{} {
 		return ins.TPlateType
 	case "WELLFROMVOLUME":
 		return ins.FVolume
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "POSFROM":
 		return ins.PltFrom
@@ -2058,7 +2062,7 @@ func (ins *BlowInstruction) GetParameter(name string) interface{} {
 		return ins.Volume
 	case "TOPLATETYPE":
 		return ins.TPlateType
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "POSTO":
 		return ins.PltTo
@@ -3141,9 +3145,9 @@ type MoveMixInstruction struct {
 	Head      int
 	Plt       []string
 	Well      []string
-	Volume    []wunit.Volume
+	Volume    []wunit.Volume // volume of sample being transferred
 	PlateType []string
-	FVolume   []wunit.Volume
+	FVolume   []wunit.Volume // Total volume of sample in the well which the sample is being mixed into?
 	Cycles    []int
 	What      []string
 	Blowout   []bool

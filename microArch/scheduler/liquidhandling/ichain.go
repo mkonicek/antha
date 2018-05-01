@@ -367,7 +367,6 @@ func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[g
 
 	front := 0
 	for cur := ic; cur != nil; cur = cur.Child {
-		nnc := &IChain{Values: cur.Values}
 		if cur.Values[0].Type == wtype.LHIMIX {
 			// mix nodes have a different colour if they use any live component
 

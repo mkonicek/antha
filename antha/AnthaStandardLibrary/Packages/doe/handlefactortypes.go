@@ -86,8 +86,6 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 	default:
 		return anthaConc, fmt.Errorf("cannot convert %v of type %T to concentration!", value, conc)
 	}
-
-	return
 }
 
 // HandleComponentWithConcentration returns both LHComponent and Concentration from a component name with concentration in a DOE design.

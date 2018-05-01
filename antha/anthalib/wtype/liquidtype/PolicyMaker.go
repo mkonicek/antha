@@ -209,7 +209,7 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 			policyCommand, ok := policyitemmap[desc]
 			if ok {
 				if reflect.TypeOf(run.Setpoints[j]) != policyCommand.Type {
-					err = fmt.Errorf("error setting LHPolicy command %s in run %d needs value of type %s not %T", desc, i+1, policyCommand.Type.Name(), run.Setpoints[j])
+					err = fmt.Errorf("invalid value (%s) of type (%T) for LHPolicy command (%s) in run %d expecting value of type %s", run.Setpoints[j], run.Setpoints[j], desc, i+1, policyCommand.Type.Name())
 					return policies, names, err
 				}
 				policy[desc] = run.Setpoints[j]

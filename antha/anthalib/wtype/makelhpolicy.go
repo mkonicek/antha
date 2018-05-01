@@ -553,8 +553,8 @@ func MakeNeedToMixPolicy() LHPolicy {
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
-	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
+	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["NO_AIR_DISPENSE"] = true
 	dnapolicy["DESCRIPTION"] = "3 pre-mixes and 3 post-mixes of the sample being transferred.  No tip reuse permitted."
 	return dnapolicy
@@ -574,8 +574,8 @@ func PreMixPolicy() LHPolicy {
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
-	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
+	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["NO_AIR_DISPENSE"] = true
 	dnapolicy["DESCRIPTION"] = "3 pre-mixes of the sample being transferred.  No tip reuse permitted."
 	return dnapolicy
@@ -595,8 +595,8 @@ func PostMixPolicy() LHPolicy {
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
-	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
+	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["NO_AIR_DISPENSE"] = true
 	dnapolicy["DESCRIPTION"] = "3 post-mixes of the sample being transferred.  No tip reuse permitted."
 	return dnapolicy
@@ -617,8 +617,8 @@ func SmartMixPolicy() LHPolicy {
 	policy["CAN_MSA"] = false
 	policy["CAN_SDD"] = false
 	policy["DSPREFERENCE"] = 0
-	policy["DSPZOFFSET"] = 0.5
 	policy["TIP_REUSE_LIMIT"] = 0
+	policy["DSPZOFFSET"] = 0.5
 	policy["NO_AIR_DISPENSE"] = true
 	policy["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
 	policy["MIX_VOLUME_OVERRIDE_TIP_MAX"] = true
@@ -635,8 +635,8 @@ func MegaMixPolicy() LHPolicy {
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
 	dnapolicy["DSPREFERENCE"] = 0
-	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["TIP_REUSE_LIMIT"] = 0
+	dnapolicy["DSPZOFFSET"] = 0.5
 	dnapolicy["NO_AIR_DISPENSE"] = true
 	dnapolicy["DESCRIPTION"] = "10 post-mixes of the sample being transferred. No tip reuse permitted."
 	return dnapolicy
@@ -731,6 +731,19 @@ func AdjustPostMixVolume(mixToVol wunit.Volume) LHPolicy {
 	return policy
 }
 
+func TurnOffPostMix() LHPolicy {
+	policy := make(LHPolicy, 1)
+	policy["POST_MIX"] = 0
+	return policy
+}
+
+func TurnOffPostMixAndPermitTipReUse() LHPolicy {
+	policy := make(LHPolicy, 2)
+	policy["POST_MIX"] = 0
+	policy["TIP_REUSE_LIMIT"] = 100
+	return policy
+}
+
 func AdjustPreMixVolume(mixToVol wunit.Volume) LHPolicy {
 	vol := mixToVol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
 	policy := make(LHPolicy, 1)
@@ -819,7 +832,8 @@ var (
 
 // Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
 var (
-	IntoLessThan20ul          = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{Lower: 0.0, Upper: 20.0}}
+	IntoEmpty                 = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{Lower: 0.0, Upper: 0.009}}
+	IntoLessThan20ul          = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{Lower: 0.01, Upper: 20.0}}
 	IntoBetween20ulAnd50ul    = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{20.1, 50.0}}
 	IntoBetween50ulAnd100ul   = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{50.1, 100.0}}
 	IntoBetween100ulAnd200ul  = numericCondition{Class: "WELLTOVOLUME", Range: conditionRange{100.1, 200.0}}
@@ -881,8 +895,20 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	}
 	pol = MakeLVDNAMixPolicy()
 	lhpr.AddRule(rule, pol)
+
+	// don't mix if destination well is empty
+	turnOffPostMixIfEmpty, err := newConditionalRule("doNotMixIfEmpty", IntoEmpty)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(turnOffPostMixIfEmpty, TurnOffPostMix())
+
 	return lhpr, nil
 }
+
+//
 
 // GetLHPolicyForTest is used to set the default System Policies.
 func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
@@ -909,6 +935,42 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 		}
 		lhpr.AddRule(rule, policy)
 	}
+
+	// don't mix AND turn off tip reuse limit if destination well is empty and SmartMix
+	turnOffPostMixAndTipReuseIfEmpty, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptySmartMix", IntoEmpty, OnSmartMix)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmpty, TurnOffPostMixAndPermitTipReUse())
+
+	// don't mix AND turn off tip reuse limit if destination well is empty and PostMix
+	turnOffPostMixAndTipReuseIfEmptyPostMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyPostMix", IntoEmpty, OnSmartMix)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptyPostMix, TurnOffPostMixAndPermitTipReUse())
+
+	// don't mix AND turn off tip reuse limit if destination well is empty and MegaMix
+	turnOffPostMixAndTipReuseIfEmptyMegaMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyMegaMix", IntoEmpty, OnSmartMix)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptyMegaMix, TurnOffPostMixAndPermitTipReUse())
+
+	// don't mix AND turn off tip reuse limit if destination well is empty and NeedToMix
+	turnOffPostMixAndTipReuseIfEmptyNeedToMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyNeedToMix", IntoEmpty, OnSmartMix)
+
+	if err != nil {
+		return lhpr, err
+	}
+
+	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptyNeedToMix, TurnOffPostMixAndPermitTipReUse())
 
 	adjustPostMixLessThan20, err := newConditionalRule("mixIntoLessThan20ul", OnSmartMix, IntoLessThan20ul)
 

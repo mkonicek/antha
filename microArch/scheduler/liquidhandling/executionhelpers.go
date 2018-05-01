@@ -154,6 +154,7 @@ func (bg ByResultComponent) Less(i, j int) bool {
 }
 
 func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.LHComponent) *IChain {
+	fmt.Println("IN THE FIRE IN THE")
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations
@@ -171,7 +172,11 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 
 	// this routine ensures that instructions can be executed in parallel
 
+	fmt.Println("PRE: ", ic.Height())
+
 	ic = simplifyIChain(ic, inputs)
+
+	fmt.Println("POST: ", ic.Height())
 
 	sortOutputs(ic, sort)
 

@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
-	"sort"
 )
 
 type testInventory struct {
@@ -140,11 +141,11 @@ func GetComponents(ctx context.Context) []*wtype.LHComponent {
 	for _, c := range inv.componentByName {
 		cs = append(cs, c)
 	}
-	/*
-		sort.Slice(cs, func(i, j int) bool {
-			return cs[i].Type < cs[j].Type
-		})
-	*/
+
+	sort.Slice(cs, func(i, j int) bool {
+		return cs[i].Type < cs[j].Type
+	})
+
 	return cs
 }
 

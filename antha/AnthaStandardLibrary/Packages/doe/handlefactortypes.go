@@ -346,8 +346,8 @@ func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, er
 // The unit may be on it's own, preceded by a number or flanked by ( ).
 // e.g. (g/L) g/L or 10g/L will all return g/L
 // If a measurment type is specified the unit will be checked for validity.
-// units flanked by parentheses take priority.
-// if two units are specified in parenthesis, the first will be returned.
+// Units flanked by parentheses take priority.
+// If two units are specified in parenthesis, an error is returned.
 func lookForUnitInHeader(header, measurementType string) (unit string, err error) {
 
 	var errs []string

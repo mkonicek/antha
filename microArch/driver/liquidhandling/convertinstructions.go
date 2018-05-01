@@ -212,10 +212,6 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		}
 
 		wh[ci] = cmps[ci].TypeName()
-		/*
-			if wh[ci] == wtype.InvalidPolicyName {
-
-			}*/
 
 		// source plate position
 

@@ -281,14 +281,13 @@ func TestParent(t *testing.T) {
 	f.ID = "C"
 
 	c.AddParentComponent(d)
-	c.AddParentComponent(e)
-	c.AddParentComponent(f)
 
 	vrai := c.HasParent("A")
 
 	if !vrai {
 		t.Error("LHComponent.HasParent() must return true for values set with AddParentComponent")
 	}
+	c.AddParentComponent(e)
 
 	vrai = c.HasParent("B")
 
@@ -296,6 +295,7 @@ func TestParent(t *testing.T) {
 		t.Error("LHComponent.HasParent() must return true for values set with AddParentComponent")
 	}
 
+	c.AddParentComponent(f)
 	faux := c.HasParent("D")
 
 	if faux {

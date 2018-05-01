@@ -295,9 +295,11 @@ func hasAnySplitNodes(ic *IChain) bool {
 func simplifyIChain(ic *IChain, inputs map[string][]*wtype.LHComponent) *IChain {
 
 	// quick get-out while I fix this
-	if !hasAnySplitNodes(ic) {
-		return ic
-	}
+	/*
+		if !hasAnySplitNodes(ic) {
+			return ic
+		}
+	*/
 
 	// define a graph
 
@@ -345,11 +347,7 @@ func maxGen(inss []*wtype.LHInstruction, componentGen map[string]int) int {
 	return max
 }
 
-// update this: we might be in a situation where we use a live component which does not actually get split
-// in which case we break things up unnecessarily. The resolution to this is to define as 'live' any component
-// which gets split at some point in its life - have to check this works OK
 func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[graph.Node]interface{}, map[graph.Node]bool) {
-	fmt.Println("ICI")
 	ret := make(map[graph.Node]interface{})
 	hc := make(map[graph.Node]bool)
 
@@ -471,7 +469,6 @@ func updateGenMap(values []*wtype.LHInstruction, componentGen map[string]int) {
 			}
 
 			// add output
-			fmt.Println("HEARTLAND")
 			componentGen[v.Results[0].ID] = maxGen([]*wtype.LHInstruction{v}, componentGen) + 1
 		default:
 			panic(fmt.Sprintf("Unknown or irrelevant instruction of type %s passed to instruction sorting", v.InsType()))

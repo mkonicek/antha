@@ -154,7 +154,6 @@ func (bg ByResultComponent) Less(i, j int) bool {
 }
 
 func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.LHComponent) *IChain {
-	fmt.Println("IN THE FIRE IN THE")
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations

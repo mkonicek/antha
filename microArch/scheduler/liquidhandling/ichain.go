@@ -294,12 +294,9 @@ func hasAnySplitNodes(ic *IChain) bool {
 }
 func simplifyIChain(ic *IChain, inputs map[string][]*wtype.LHComponent) *IChain {
 
-	// quick get-out while I fix this
-	/*
-		if !hasAnySplitNodes(ic) {
-			return ic
-		}
-	*/
+	if !hasAnySplitNodes(ic) {
+		return ic
+	}
 
 	// define a graph
 

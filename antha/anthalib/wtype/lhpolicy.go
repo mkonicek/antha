@@ -439,6 +439,10 @@ func CloneLHPolicyRuleSet(parent *LHPolicyRuleSet) *LHPolicyRuleSet {
 		child.Policies[k] = parent.Policies[k]
 		child.Rules[k] = parent.Rules[k]
 	}
+	for k := range parent.Options {
+		child.Options[k] = parent.Options[k]
+	}
+
 	return child
 }
 
@@ -469,6 +473,12 @@ func (lhpr *LHPolicyRuleSet) MergeWith(policyToMerge *LHPolicyRuleSet) {
 		}
 		lhpr.Rules[key] = policyToMerge.Rules[key]
 		lhpr.Policies[key] = policyToMerge.Policies[key]
+		lhpr.Options[key] = policyToMerge.Options[key]
+	}
+
+	// this will override existing options if they are contradictory
+	for key := range policyToMerge.Options {
+		lhpr.Options[key] = policyToMerge.Options[key]
 	}
 
 }

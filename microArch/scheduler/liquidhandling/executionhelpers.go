@@ -171,11 +171,7 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 
 	// this routine ensures that instructions can be executed in parallel
 
-	fmt.Println("PRE: ", ic.Height())
-
 	ic = simplifyIChain(ic, inputs)
-
-	fmt.Println("POST: ", ic.Height())
 
 	sortOutputs(ic, sort)
 
@@ -392,6 +388,7 @@ func set_output_order(rq *LHRequest) error {
 
 	// sort again post aggregation
 	tg = MakeTGraph(sortedAsIns)
+
 	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
 	if err != nil {

@@ -348,6 +348,7 @@ func maxGen(inss []*wtype.LHInstruction, componentGen map[string]int) int {
 }
 
 func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[graph.Node]interface{}, map[graph.Node]bool) {
+	fmt.Println("GET NODE COLOUR MAP")
 	ret := make(map[graph.Node]interface{})
 	hc := make(map[graph.Node]bool)
 
@@ -368,8 +369,8 @@ func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[g
 	}
 
 	front := 0
-
 	for cur := ic; cur != nil; cur = cur.Child {
+		nnc := &IChain{Values: cur.Values}
 		if cur.Values[0].Type == wtype.LHIMIX {
 			// mix nodes have a different colour if they use any live component
 
@@ -808,10 +809,19 @@ func addNewNodesTo(ic *IChain, newNodes *IChain) *IChain {
 	cur.Child = newNodes
 	newNodes.Parent = cur
 
+	last := cur
+
 	for cur := newNodes; cur != nil; cur = cur.Child {
+
+		if cur.Parent == nil {
+			cur.Parent = last
+		}
+
 		if cur.Parent != nil {
 			cur.Depth = cur.Parent.Depth + 1
 		}
+
+		last = cur
 	}
 
 	return ic

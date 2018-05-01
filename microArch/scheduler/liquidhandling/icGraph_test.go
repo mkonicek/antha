@@ -557,3 +557,84 @@ func cullDeadNodes(in []*IChain) (out []*IChain) {
 	}
 	return out
 }
+
+// getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[graph.Node]interface{}, map[graph.Node]bool)
+// getAnInstruction(in, out []*wtype.LHComponent, whatType int) *wtype.LHInstruction {
+// getComponentsWithIDsParents(IDs, parents []string)
+// getIChain([][]*wtype.LHInstruction)
+
+// just a chain of single instructions, each using the output of the last
+func getMixChainWithIDsParents(IDs, parents []string) *IChain {
+	cmps := getComponentsWithIDsParents(IDs, parents)
+	inss := make([][]*wtype.LHInstruction, len(IDs)-1)
+	for i := 0; i < len(IDs)-1; i++ {
+		inss[i] = []*wtype.LHInstruction{getAnInstruction([]*wtype.LHComponent{cmps[i]}, []*wtype.LHComponent{cmps[i+1]}, wtype.LHIMIX)}
+	}
+
+	return getIChain(inss)
+}
+
+func getMixChainWithIDsParentsProducts(IDs, parents, products []string) *IChain {
+	cmps := getComponentsWithIDsParents(IDs, parents)
+	prds := getComponentsWithIDs(products)
+	inss := make([][]*wtype.LHInstruction, len(IDs))
+	for i := 0; i < len(IDs); i++ {
+		inss[i] = []*wtype.LHInstruction{getAnInstruction([]*wtype.LHComponent{cmps[i]}, []*wtype.LHComponent{prds[i]}, wtype.LHIMIX)}
+	}
+
+	return getIChain(inss)
+}
+
+func TestColourMapNoSplits(t *testing.T) {
+	mixChain := getMixChainWithIDsParents([]string{"A", "B", "C", "D", "E"}, []string{"", "", "", "", ""})
+
+	inputs := map[string][]*wtype.LHComponent{"A": getComponentsWithIDsParents([]string{"A"}, []string{""})}
+
+	colourMap, hasColour := getNodeColourMap(mixChain, inputs)
+
+	// all should have different colours
+
+	expected := []int{1, 2, 3, 4}
+
+	i := 0
+	for curr := mixChain; curr != nil; curr = curr.Child {
+
+		if !hasColour[curr] {
+			t.Errorf("Expected colour for node %d in chain", i)
+		}
+
+		if colourMap[curr] != expected[i] {
+			t.Errorf("Expected colour %d for node %d, got %d", expected[i], i, colourMap[curr])
+		}
+
+		i += 1
+	}
+
+}
+
+func TestColourMapNoSplits2(t *testing.T) {
+	mixChain := getMixChainWithIDsParentsProducts([]string{"A", "B", "C", "D", "E"}, []string{"U", "V", "W", "X", "Y"}, []string{"V", "W", "X", "Y", "Z"})
+
+	inputs := map[string][]*wtype.LHComponent{"U": getComponentsWithIDsParents([]string{"U"}, []string{""})}
+
+	colourMap, hasColour := getNodeColourMap(mixChain, inputs)
+
+	// all should have different colours
+
+	expected := []int{0, 1, 2, 3, 4}
+
+	i := 0
+	for curr := mixChain; curr != nil; curr = curr.Child {
+
+		if !hasColour[curr] {
+			t.Errorf("Expected colour for node %d in chain", i)
+		}
+
+		if colourMap[curr] != expected[i] {
+			t.Errorf("Expected colour %d for node %d, got %d", expected[i], i, colourMap[curr])
+		}
+
+		i += 1
+	}
+
+}

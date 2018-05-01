@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/go-test/deep"
 )
 
 // simple reverse complement check to test testing methodology initially
@@ -150,6 +151,101 @@ var volTests = []volFactorTest{
 	},
 }
 
+type concFactorTest struct {
+	Header       string
+	Value        interface{}
+	Conc         wunit.Concentration
+	ErrorMessage string
+}
+
+var concTests = []concFactorTest{
+	{
+		Header:       "Total Concentration (mg/ml)",
+		Value:        interface{}(10),
+		Conc:         wunit.NewConcentration(10, "mg/ml"),
+		ErrorMessage: "",
+	},
+	{
+		Header:       "Total Concentration",
+		Value:        interface{}("10g/L"),
+		Conc:         wunit.NewConcentration(10, "g/L"),
+		ErrorMessage: "",
+	},
+	{
+		Header:       "Total Concentration (X)",
+		Value:        interface{}(10.0),
+		Conc:         wunit.NewConcentration(10, "X"),
+		ErrorMessage: "",
+	},
+	{
+		Header:       "Glucose (g/L)",
+		Value:        interface{}("10"),
+		Conc:         wunit.NewConcentration(10, "g/L"),
+		ErrorMessage: "",
+	},
+	{
+		Header:       "1X Glucose (g/L)",
+		Value:        interface{}("10"),
+		Conc:         wunit.NewConcentration(10, "g/L"),
+		ErrorMessage: "",
+	},
+	{
+		Header:       "1X Glucose g/L",
+		Value:        interface{}("10"),
+		Conc:         wunit.Concentration{},
+		ErrorMessage: "more than one unit found in header 1X Glucose g/L: valid units found [X g/L]. Units flanked by parentheses are prioritised.",
+	},
+	{
+		Header:       "(1X) Glucose (g/L)",
+		Value:        interface{}("10"),
+		Conc:         wunit.Concentration{},
+		ErrorMessage: "more than one unit found in header (1X) Glucose (g/L): valid units found [X g/L] []. Units flanked by parentheses are prioritised.",
+	},
+	{
+		Header:       "Glucose g/L",
+		Value:        interface{}("10"),
+		Conc:         wunit.NewConcentration(10, "g/L"),
+		ErrorMessage: "",
+	},
+	{
+		Header:       "Glucose 100g/L",
+		Value:        interface{}("10"),
+		Conc:         wunit.NewConcentration(10, "g/L"),
+		ErrorMessage: "",
+	},
+}
+
+func TestHandleConcentrationFactor(t *testing.T) {
+	for _, test := range concTests {
+		conc, err := HandleConcFactor(test.Header, test.Value)
+		if !reflect.DeepEqual(conc, test.Conc) {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected:", test.Conc, "\n",
+				"Got:", conc, "\n",
+			)
+		}
+		if err != nil {
+			if err.Error() != test.ErrorMessage {
+				t.Error(
+					"for", fmt.Sprintf("%+v", test), "\n",
+					"Expected error:", test.ErrorMessage, "\n",
+					"Got:", err.Error(), "\n",
+					"diffs: ", deep.Equal(test.ErrorMessage, err.Error()), "\n",
+				)
+			}
+		}
+
+		if err == nil && test.ErrorMessage != "" {
+			t.Error(
+				"for", fmt.Sprintf("%+v", test), "\n",
+				"Expected error:", test.ErrorMessage, "\n",
+				"Got:", "nil", "\n",
+			)
+		}
+	}
+}
+
 func TestHandleVolumeFactor(t *testing.T) {
 	for _, test := range volTests {
 		vol, err := HandleVolumeFactor(test.Header, test.Value)
@@ -166,6 +262,7 @@ func TestHandleVolumeFactor(t *testing.T) {
 					"for", fmt.Sprintf("%+v", test), "\n",
 					"Expected error:", test.ErrorMessage, "\n",
 					"Got:", err.Error(), "\n",
+					"diffs: ", deep.Equal(test.ErrorMessage, err.Error()), "\n",
 				)
 			}
 		}

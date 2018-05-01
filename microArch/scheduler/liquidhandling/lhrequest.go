@@ -267,6 +267,23 @@ type LHPolicyManager struct {
 	UserPolicies   *wtype.LHPolicyRuleSet
 }
 
+// SetOption adds an option and value to both System and User policies in the PolicyManager.
+func (mgr *LHPolicyManager) SetOption(optname string, value interface{}) error {
+	if mgr.SystemPolicies != nil {
+		err := mgr.SystemPolicies.SetOption(optname, value)
+		if err != nil {
+			return err
+		}
+	}
+	if mgr.UserPolicies != nil {
+		err := mgr.UserPolicies.SetOption(optname, value)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (mgr *LHPolicyManager) Policies() *wtype.LHPolicyRuleSet {
 	ret := wtype.CloneLHPolicyRuleSet(mgr.SystemPolicies)
 

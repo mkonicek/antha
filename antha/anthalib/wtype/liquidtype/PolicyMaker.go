@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -205,8 +206,12 @@ func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, conc
 		policy = copyPolicy(basePolicy)
 		var warnings []string
 		for j, desc := range run.Factordescriptors {
-			_, ok := policyitemmap[desc]
+			policyCommand, ok := policyitemmap[desc]
 			if ok {
+				if reflect.TypeOf(run.Setpoints[j]) != policyCommand.Type {
+					err = fmt.Errorf("error setting LHPolicy command %s in run %d needs value of type %s not %T", desc, i+1, policyCommand.Type.Name(), run.Setpoints[j])
+					return policies, names, err
+				}
 				policy[desc] = run.Setpoints[j]
 			} else if i == 0 {
 				warnings = append(warnings, "Invalid PolicyCommand specified in design file: "+desc)

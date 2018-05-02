@@ -82,7 +82,15 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 	fields := strings.Fields(componentname)
 
 	if len(fields) == 1 {
-		return false, conc, componentname
+		trimmed := strings.Trim(componentname, "()")
+		value, unit := SplitValueAndUnit(trimmed)
+		if unit == componentname {
+			return false, conc, componentname
+		}
+		if err := ValidMeasurementUnit("Concentration", unit); err != nil {
+			return false, conc, componentname
+		}
+		return true, NewConcentration(value, unit), componentname
 	}
 	var unitmatchlength int
 	var longestmatchedunit string
@@ -256,61 +264,3 @@ func ParseVolume(volstring string) (volume Volume, err error) {
 	volume = NewVolume(vol, longestmatchedunit)
 	return
 }
-
-/*
-
-func parseVol(volstring string) (volume Volume, err error) {
-	approvedunits := wunit.UnitMap["Volume"]
-
-	fields := strings.Fields(volstring)
-	var unitmatchlength int
-	var longestmatchedunit string
-	var valueandunit string
-
-	for key, _ := range approvedunits {
-		for _,field := range fields {
-		if strings.Contains(field,key){
-			if len(key) > unitmatchlength {
-				longestmatchedunit = key
-				unitmatchlength = len(key)
-				valueandunit = field
-				}
-			}
-		}
-	}
-
-	for _, field := range fields {
-		if len(fields)== 2 && field !=  longestmatchedunit {
-			componentNameOnly = field
-		}
-	}
-
-	// if no match, return original component name
-	if unitmatchlength == 0 {
-		return false, conc, componentname
-	}
-
-	concfields := strings.Split(valueandunit,longestmatchedunit)
-
-	value, err := strconv.ParseFloat(concfields[0],64)
-	if err != nil{
-		concfields[0] = strings.Trim(concfields[0], "()")
-		value, err = strconv.ParseFloat(concfields[0], 64)
-		if err != nil {
-			if concfields[0] == ""{
-				value = 0.0
-			}else{
-			panic(fmt.Sprint("error parsing componentname: ", componentname,": ",err.Error()))
-			return false, conc, componentNameOnly
-			}
-		}
-	}
-
-
-
-
-	conc = wunit.NewConcentration(value,longestmatchedunit)
-	containsconc = true
-	return
-}
-*/

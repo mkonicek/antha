@@ -32,7 +32,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
-	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -110,11 +110,11 @@ func PolicyFilefromName(filename string) (pol PolicyFile, found bool) {
 	return
 }
 
-func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names []string, runs []Run, err error) {
+func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names []string, runs []doe.Run, err error) {
 
 	doeliquidhandlingFile, found := PolicyFilefromName(filename)
 	if !found {
-		err = fmt.Errorf("policyfilename" + filename + "not found")
+		err = fmt.Errorf("policyfilename " + filename + " not found")
 		return
 	}
 	filenameparts := strings.Split(doeliquidhandlingFile.Filename, ".")
@@ -123,7 +123,7 @@ func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names 
 	return
 }
 
-func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename string, prepend string) (policies []wtype.LHPolicy, names []string, runs []Run, err error) {
+func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename string, prepend string) (policies []wtype.LHPolicy, names []string, runs []doe.Run, err error) {
 
 	policyitemmap := wtype.MakePolicyItems()
 	intfactors := make([]string, 0)
@@ -143,7 +143,7 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 			return policies, names, runs, err
 		}
 
-		runs, err = RunsFromDXDesignContents(contents, intfactors)
+		runs, err = doe.RunsFromDXDesignContents(contents, intfactors)
 
 		if err != nil {
 			return policies, names, runs, err
@@ -160,7 +160,7 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 			return policies, names, runs, err
 		}
 
-		runs, err = RunsFromJMPDesignContents(contents, factorcolumns, responsecolumns, intfactors)
+		runs, err = doe.RunsFromJMPDesignContents(contents, factorcolumns, responsecolumns, intfactors)
 		if err != nil {
 			return policies, names, runs, err
 		}
@@ -171,16 +171,72 @@ func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename s
 	return policies, names, runs, err
 }
 
-func PolicyMaker(basepolicy string, factors []DOEPair, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
+func PolicyMaker(basepolicy string, factors []doe.DOEPair, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
 
-	runs := AllCombinations(factors)
+	runs := doe.AllCombinations(factors)
 
 	policies, names, err = PolicyMakerfromRuns(basepolicy, runs, nameprepend, concatfactorlevelsinname)
 
 	return
 }
 
-func PolicyMakerfromRuns(basepolicy string, runs []Run, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
+// PolicyMakerFromBytes creates a policy map from a design file in the format of a JMP design file.
+// Any valid parameter name and corresponding parameter type from aparam.go are valid entries.
+func PolicyMakerFromBytes(data []byte, basePolicy wtype.PolicyName) (policyMap map[string]wtype.LHPolicy, err error) {
+
+	var Warnings []string
+
+	DXORJMP := "JMP"
+	policyitemmap := wtype.MakePolicyItems()
+	var intfactors []string
+
+	for key, val := range policyitemmap {
+
+		if val.Type.Name() == "int" {
+			intfactors = append(intfactors, key)
+		}
+	}
+
+	runs, err := doe.RunsFromDesignPreResponsesContents(data, intfactors, DXORJMP)
+	if err != nil {
+		err = fmt.Errorf("error converting DOE design into runs: %s", err.Error())
+		return
+	}
+
+	policies, names, err := PolicyMakerfromRuns(string(basePolicy), runs, "custom", false)
+
+	if err != nil {
+		switch err.(type) {
+		case wtype.Warning:
+			Warnings = append(Warnings, err.Error())
+		default:
+			return
+		}
+	}
+
+	policyMap = make(map[string]wtype.LHPolicy)
+	for i, policy := range policies {
+		if policy.Name() == "" {
+			err = policy.SetName(names[i])
+			if err != nil {
+				return
+			}
+		}
+		if _, ok := policyMap[policy.Name()]; !ok {
+			policyMap[policy.Name()] = policy
+		} else {
+			err = fmt.Errorf("duplicate policy name (%s) found in cusom policy file", policy.Name())
+			return
+		}
+	}
+
+	if len(Warnings) > 0 {
+		return policyMap, wtype.NewWarningf(strings.Join(Warnings, "\n"))
+	}
+	return policyMap, nil
+}
+
+func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
 
 	policyitemmap := wtype.MakePolicyItems()
 

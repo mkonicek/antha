@@ -326,6 +326,15 @@ func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	return ret, nil
 }
 
+//RemoveCarry Remove the carry volume
+func (w *LHWell) RemoveCarry(v wunit.Volume) {
+	if w == nil {
+		return
+	}
+
+	w.Contents().Remove(v)
+}
+
 //IsVolumeValid tests whether the volume in the well is within the allowable range
 func (w *LHWell) IsVolumeValid() bool {
 	if w == nil {

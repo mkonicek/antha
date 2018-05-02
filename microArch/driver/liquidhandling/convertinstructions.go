@@ -24,7 +24,6 @@ package liquidhandling
 
 import (
 	"context"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -301,7 +300,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		}
 
 		// silently remove the carry
-		wellFrom.RemoveVolume(carryvol) //nolint
+		wellFrom.RemoveCarry(carryvol)
 
 		err = wellTo.AddComponent(cmpFrom)
 		if err != nil {

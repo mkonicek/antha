@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -86,10 +87,10 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
 
-	if err := req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
+	if err := req.PolicyManager.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
 		return nil, err
 	}
-	if err := req.Policies.SetOption("USE_LLF", a.opt.UseLLF); err != nil {
+	if err := req.PolicyManager.SetOption("USE_LLF", a.opt.UseLLF); err != nil {
 		return nil, err
 	}
 
@@ -268,6 +269,59 @@ func (a *Mixer) saveFile(name string) ([]byte, error) {
 	}
 }
 
+// any customised user policies are added to the LHRequest PolicyManager here
+// Any component type names with modified policies are iterated until unique i.e. SmartMix_modified_1
+func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) error {
+	systemPolicyRuleSet := lhreq.GetPolicyManager().Policies()
+
+	systemPolicies := systemPolicyRuleSet.Policies
+	var userPolicies = make(map[string]wtype.LHPolicy)
+	var allPolicies = make(map[string]wtype.LHPolicy)
+
+	for key, value := range systemPolicies {
+		allPolicies[key] = value
+	}
+
+	for _, mixInstruction := range mixes {
+		for _, component := range mixInstruction.Components {
+			if len(component.Policy) > 0 {
+				if matchingSystemPolicy, found := allPolicies[string(component.Type)]; found {
+					if !wtype.EquivalentPolicies(component.Policy, matchingSystemPolicy) {
+						num := 1
+						newPolicyName := makemodifiedTypeName(component.Type, num)
+						_, found := allPolicies[newPolicyName]
+						for found {
+							num++
+							newPolicyName = makemodifiedTypeName(component.Type, num)
+							_, found = allPolicies[newPolicyName]
+						}
+						allPolicies[newPolicyName] = component.Policy
+						userPolicies[newPolicyName] = component.Policy
+						component.Type = wtype.LiquidType(newPolicyName)
+					}
+				} else {
+					allPolicies[string(component.Type)] = component.Policy
+					userPolicies[string(component.Type)] = component.Policy
+				}
+			}
+		}
+	}
+	userPolicyRuleSet := wtype.NewLHPolicyRuleSet()
+	if len(userPolicies) > 0 {
+		userPolicyRuleSet, err := wtype.AddUniversalRules(userPolicyRuleSet, userPolicies)
+		if err != nil {
+			return err
+		}
+		lhreq.AddUserPolicies(userPolicyRuleSet)
+	}
+
+	return nil
+}
+
+func makemodifiedTypeName(componentType wtype.LiquidType, number int) string {
+	return string(componentType) + "_modified_" + strconv.Itoa(number)
+}
+
 func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*target.Mix, error) {
 	hasPlate := func(plates []*wtype.LHPlate, typ, id string) bool {
 		for _, p := range plates {
@@ -291,6 +345,14 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 	}
 
 	r, err := a.makeLhreq(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// any customised user policies are added to the LHRequest PolicyManager here
+	// Any component type names with modified policies are iterated until unique i.e. SmartMix_modified_1
+	err = addCustomPolicies(mixes, r.LHRequest)
+
 	if err != nil {
 		return nil, err
 	}

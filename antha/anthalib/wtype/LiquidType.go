@@ -1,13 +1,13 @@
 package wtype
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+// PolicyName represents the name of a liquid handling policy
+// used to look up the details of that policy.
 type PolicyName string
 
 func (l PolicyName) String() string {
@@ -18,213 +18,67 @@ func PolicyNameFromString(s string) PolicyName {
 	return PolicyName(s)
 }
 
-type LiquidType int
+// LiquidType represents the type of a Liquid
+type LiquidType string
 
-func (l LiquidType) String() PolicyName {
+func (l LiquidType) String() (PolicyName, error) {
 	return LiquidTypeName(l)
 }
 
+// DefaultLHPolicy which will be used if no policy is set.
+const DefaultLHPolicy = LTDefault
+
+// Valid default LiquidTypes
 const (
-	LTNIL LiquidType = iota
-	LTWater
-	LTDefault
-	LTGlycerol
-	LTEthanol
-	LTDetergent
-	LTCulture
-	LTProtein
-	LTDNA
-	LTload
-	LTDoNotMix
-	LTloadwater
-	LTNeedToMix
-	LTPreMix
-	LTPostMix
-	LTVISCOUS
-	LTPAINT
-	LTDISPENSEABOVE
-	LTDISPENSEABOVEMULTI
-	LTPEG
-	LTProtoplasts
-	LTCulutureReuse
-	LTDNAMIX
-	LTDNAMIXMULTI
-	LTPLATEOUT
-	LTCOLONY
-	LTCOLONYMIX
-	LTDNACELLSMIX
-	LTDNACELLSMIXMULTI
-	LTMultiWater
-	LTCSrc
-	LTNSrc
-	LTMegaMix
-	LTSolvent
-	LTSmartMix
-	LTXYOffsetTest
+	LTNIL                LiquidType = "nil"
+	LTWater              LiquidType = "water"
+	LTDefault            LiquidType = "default"
+	LTCulture            LiquidType = "culture"
+	LTProtoplasts        LiquidType = "protoplasts"
+	LTDNA                LiquidType = "dna"
+	LTDNAMIX             LiquidType = "dna_mix"
+	LTProtein            LiquidType = "protein"
+	LTMultiWater         LiquidType = "multiwater"
+	LTLoad               LiquidType = "load"
+	LTVISCOUS            LiquidType = "viscous"
+	LTPEG                LiquidType = "peg"
+	LTPAINT              LiquidType = "paint"
+	LTNeedToMix          LiquidType = "NeedToMix"
+	LTPostMix            LiquidType = "PostMix"
+	LTload               LiquidType = "load"
+	LTGlycerol           LiquidType = "glycerol"
+	LTPLATEOUT           LiquidType = "plateout"
+	LTDetergent          LiquidType = "detergent"
+	LTCOLONY             LiquidType = "colony"
+	LTNSrc               LiquidType = "nitrogen_source"
+	InvalidPolicyName    LiquidType = "InvalidPolicyName"
+	LTEthanol            LiquidType = "ethanol"
+	LTDoNotMix           LiquidType = "DoNotMix"
+	LTloadwater          LiquidType = "loadwater"
+	LTPreMix             LiquidType = "PreMix"
+	LTDISPENSEABOVE      LiquidType = "DispenseAboveLiquid"
+	LTDISPENSEABOVEMULTI LiquidType = "DispenseAboveLiquidMulti"
+	LTCulutureReuse      LiquidType = "culturereuse"
+	LTDNAMIXMULTI        LiquidType = "dna_mix_multi"
+	LTCOLONYMIX          LiquidType = "colonymix"
+	LTDNACELLSMIX        LiquidType = "dna_cells_mix"
+	LTDNACELLSMIXMULTI   LiquidType = "dna_cells_mix_multi"
+	LTCSrc               LiquidType = "carbon_source"
+	LTMegaMix            LiquidType = "MegaMix"
+	LTSolvent            LiquidType = "solvent"
+	LTSmartMix           LiquidType = "SmartMix"
 )
 
+// LiquidTypeFromString returns a LiquidType from a PolicyName
 func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
-
-	match, number := liquidtype.LiquidTypeFromPolicyDOE(s.String())
-
-	if match {
-		return LiquidType(number), nil
-	}
-
-	switch s {
-	case "water":
-		return LTWater, nil
-	case "":
-		return LTWater, fmt.Errorf("no liquid policy specified so using default water policy")
-	case "glycerol":
-		return LTGlycerol, nil
-	case "ethanol":
-		return LTEthanol, nil
-	case "detergent":
-		return LTDetergent, nil
-	case "culture":
-		return LTCulture, nil
-	case "culturereuse":
-		return LTCulutureReuse, nil
-	case "protein":
-		return LTProtein, nil
-	case "dna":
-		return LTDNA, nil
-	case "load":
-		return LTload, nil
-	case "DoNotMix":
-		return LTDoNotMix, nil
-	case "loadwater":
-		return LTloadwater, nil
-	case "NeedToMix":
-		return LTNeedToMix, nil
-	case "PreMix":
-		return LTPreMix, nil
-	case "PostMix":
-		return LTPostMix, nil
-	case "viscous":
-		return LTVISCOUS, nil
-	case "Paint":
-		return LTPAINT, nil
-	case "DispenseAboveLiquid":
-		return LTDISPENSEABOVE, nil
-	case "DispenseAboveLiquidMulti":
-		return LTDISPENSEABOVEMULTI, nil
-	case "PEG":
-		return LTPEG, nil
-	case "Protoplasts":
-		return LTProtoplasts, nil
-	case "dna_mix":
-		return LTDNAMIX, nil
-	case "dna_mix_multi":
-		return LTDNAMIXMULTI, nil
-	case "plateout":
-		return LTPLATEOUT, nil
-	case "colony":
-		return LTCOLONY, nil
-	case "colonymix":
-		return LTCOLONYMIX, nil
-	case "dna_cells_mix":
-		return LTDNACELLSMIX, nil
-	case "dna_cells_mix_multi":
-		return LTDNACELLSMIXMULTI, nil
-	case "multiwater":
-		return LTMultiWater, nil
-	case "carbon_source":
-		return LTCSrc, nil
-	case "nitrogen_source":
-		return LTNSrc, nil
-	case "MegaMix":
-		return LTMegaMix, nil
-	case "solvent":
-		return LTSolvent, nil
-	case "SmartMix":
-		return LTSmartMix, nil
-	case "XYOffsetTest":
-		return LTXYOffsetTest, nil
-	case "default":
-		return LTDefault, nil
-	default:
-		return LTDefault, fmt.Errorf("no liquid policy found for " + s.String() + " so using default policy")
-	}
+	_, err := GetPolicyByName(PolicyName(s))
+	return LiquidType(s), err
 }
 
-func LiquidTypeName(lt LiquidType) PolicyName {
-
-	match, str := liquidtype.StringFromLiquidTypeNumber(int(lt))
-
-	if match {
-		return PolicyName(str)
-	}
-
-	switch lt {
-	case LTWater:
-		return "water"
-	case LTGlycerol:
-		return "glycerol"
-	case LTEthanol:
-		return "ethanol"
-	case LTDetergent:
-		return "detergent"
-	case LTCulture:
-		return "culture"
-	case LTCulutureReuse:
-		return "culturereuse"
-	case LTProtein:
-		return "protein"
-	case LTDNA:
-		return "dna"
-	case LTload:
-		return "load"
-	case LTDoNotMix:
-		return "DoNotMix"
-	case LTloadwater:
-		return "loadwater"
-	case LTNeedToMix:
-		return "NeedToMix"
-	case LTPreMix:
-		return "PreMix"
-	case LTPostMix:
-		return "PostMix"
-	case LTPAINT:
-		return "Paint"
-	case LTDISPENSEABOVEMULTI:
-		return "DispenseAboveLiquidMulti"
-	case LTDISPENSEABOVE:
-		return "DispenseAboveLiquid"
-	case LTProtoplasts:
-		return "Protoplasts"
-	case LTPEG:
-		return "PEG"
-	case LTDNAMIX:
-		return "dna_mix"
-	case LTDNAMIXMULTI:
-		return "dna_mix_multi"
-	case LTPLATEOUT:
-		return "plateout"
-	case LTCOLONY:
-		return "colony"
-	case LTCOLONYMIX:
-		return "colonymix"
-	case LTDNACELLSMIX:
-		return "dna_cells_mix"
-	case LTDNACELLSMIXMULTI:
-		return "dna_cells_mix_multi"
-	case LTMultiWater:
-		return "multiwater"
-	case LTCSrc:
-		return "carbon_source"
-	case LTNSrc:
-		return "nitrogen_source"
-	case LTMegaMix:
-		return "MegaMix"
-	case LTSmartMix:
-		return "SmartMix"
-	case LTXYOffsetTest:
-		return "XYOffsetTest"
-	default:
-		return "nil"
-	}
+// LiquidTypeName returns a PolicyName from a LiquidType
+func LiquidTypeName(lt LiquidType) (PolicyName, error) {
+	_, err := GetPolicyByName(PolicyName(lt))
+	return PolicyName(lt), err
 }
 
 func mergeSolubilities(c1, c2 *LHComponent) float64 {

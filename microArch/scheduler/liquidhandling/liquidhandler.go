@@ -32,6 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -214,7 +215,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	//Enable simulation of trilution like behaviour
 	//in reality this happens anyway when using trilution, irrespective of whether tipTracking is requested
 	tipTracking := false
-	if iTipTracking, ok := request.Policies.Options["USE_DRIVER_TIP_TRACKING"]; ok {
+	if iTipTracking, ok := request.Policies().Options["USE_DRIVER_TIP_TRACKING"]; ok {
 		tipTracking, _ = iTipTracking.(bool)
 	}
 	if tipTracking && this.Properties.HasTipTracking() {
@@ -277,6 +278,8 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 		if (*request).Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
+			text.Print("End of Instruction")
+
 		}
 		_, ok := ins.(liquidhandling.TerminalRobotInstruction)
 

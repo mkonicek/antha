@@ -31,7 +31,7 @@ func TestParallelSetGeneration(t *testing.T) {
 	// allow independent multichannel activity
 	rbt.HeadsLoaded[0].Params.Independent = true
 
-	pol, err := GetLHPolicyForTest()
+	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
 	}

@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
 	"strings"
@@ -143,7 +144,7 @@ func (it *IChain) Print() {
 			}
 		}
 
-		fmt.Println()
+		fmt.Println("End of Instruction")
 	}
 	if it.Child != nil {
 		it.Child.Print()

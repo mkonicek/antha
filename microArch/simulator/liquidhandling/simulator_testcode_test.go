@@ -24,13 +24,14 @@ package liquidhandling_test
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
 	lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
-	"strings"
-	"testing"
 )
 
 //

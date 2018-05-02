@@ -37,6 +37,19 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
+// Valid parameter fields for robot instructions
+const (
+	// WHICH returns the Component IDs, i.e. representing the specific instance of an LHComponent
+	// not currently implemented.
+	WHICH = "WHICH"
+	// LIQUIDCLASS refers to the Component Type, This is currently used to look up the corresponding LHPolicy from an LHPolicyRuleSet
+	LIQUIDCLASS = "LIQUIDCLASS"
+
+	// WELLTOVOLUME refers to the volume of liquid already present in the well location for which
+	// a sample is due to be transferred to.
+	WELLTOVOLUME = "WELLTOVOLUME"
+)
+
 type SingleChannelBlockInstruction struct {
 	GenericRobotInstruction
 	Type       int
@@ -89,7 +102,7 @@ func (ins *SingleChannelBlockInstruction) InstructionType() int {
 
 func (ins *SingleChannelBlockInstruction) GetParameter(name string) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "VOLUME":
 		return ins.Volume
@@ -114,7 +127,7 @@ func (ins *SingleChannelBlockInstruction) GetParameter(name string) interface{} 
 		return ins.Prms.Platform
 	case "WELLTO":
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "TOPLATETYPE":
 		return ins.TPlateType
@@ -145,7 +158,15 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	tiptype := tipp.Type
 
 	ins.Prms = channel
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return ret, err
+		}
+	}
 
 	tt, chanA := tipArrays(channel.Multi)
 	tt[0] = tiptype
@@ -318,7 +339,7 @@ func (ins *MultiChannelBlockInstruction) InstructionType() int {
 
 func (ins *MultiChannelBlockInstruction) GetParameter(name string) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "VOLUME":
 		return ins.Volume
@@ -343,7 +364,7 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name string) interface{} {
 		return ins.Prms.Platform
 	case "WELLTO":
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "TOPLATETYPE":
 		return ins.TPlateType
@@ -382,10 +403,19 @@ func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LH
 	return ret
 }
 
+// By the point at which the MultiChannelBlockInstruction is used by the Generate method all transfers will share the same policy.
 func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
 	ret := make([]RobotInstruction, 0)
 	// get some tips
 
@@ -583,7 +613,7 @@ func (ins *SingleChannelTransferInstruction) InstructionType() int {
 
 func (ins *SingleChannelTransferInstruction) GetParameter(name string) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "VOLUME":
 		return ins.Volume
@@ -608,7 +638,7 @@ func (ins *SingleChannelTransferInstruction) GetParameter(name string) interface
 		return ins.Prms.Platform
 	case "WELLTO":
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "TOPLATETYPE":
 		return ins.TPlateType
@@ -705,7 +735,7 @@ func (ins *MultiChannelTransferInstruction) InstructionType() int {
 
 func (ins *MultiChannelTransferInstruction) GetParameter(name string) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "VOLUME":
 		return ins.Volume
@@ -730,7 +760,7 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name string) interface{
 		return ins.Prms[0].Platform
 	case "WELLTO":
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "TOPLATETYPE":
 		return ins.TPlateType
@@ -1053,7 +1083,7 @@ func (ins *AspirateInstruction) GetParameter(name string) interface{} {
 	switch name {
 	case "VOLUME":
 		return ins.Volume
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "HEAD":
 		return ins.Head
@@ -1128,7 +1158,7 @@ func (ins *DispenseInstruction) GetParameter(name string) interface{} {
 	switch name {
 	case "VOLUME":
 		return ins.Volume
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "HEAD":
 		return ins.Head
@@ -1325,7 +1355,7 @@ func (ins *MoveInstruction) InstructionType() int {
 
 func (ins *MoveInstruction) GetParameter(name string) interface{} {
 	switch name {
-	case "TOWELLVOLUME":
+	case WELLTOVOLUME:
 		return ins.WVolume
 	case "HEAD":
 		return ins.Head
@@ -1410,7 +1440,7 @@ func (ins *MoveRawInstruction) GetParameter(name string) interface{} {
 	switch name {
 	case "HEAD":
 		return ins.Head
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "VOLUME":
 		return ins.Volume
@@ -1420,7 +1450,7 @@ func (ins *MoveRawInstruction) GetParameter(name string) interface{} {
 		return ins.TPlateType
 	case "WELLFROMVOLUME":
 		return ins.FVolume
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "POSFROM":
 		return ins.PltFrom
@@ -1600,18 +1630,19 @@ func (ins *UnloadTipsInstruction) OutputTo(lhdriver LiquidhandlingDriver) error 
 
 type SuckInstruction struct {
 	GenericRobotInstruction
-	Type       int
-	Head       int
-	What       []string
-	PltFrom    []string
-	WellFrom   []string
-	Volume     []wunit.Volume
-	FPlateType []string
-	FVolume    []wunit.Volume
-	Prms       *wtype.LHChannelParameter
-	Multi      int
-	Overstroke bool
-	TipType    string
+	Type        int
+	Head        int
+	What        []string
+	ComponentID []string // ID, not currently used. Will be needed soon.
+	PltFrom     []string
+	WellFrom    []string
+	Volume      []wunit.Volume
+	FPlateType  []string
+	FVolume     []wunit.Volume
+	Prms        *wtype.LHChannelParameter
+	Multi       int
+	Overstroke  bool
+	TipType     string
 }
 
 func NewSuckInstruction() *SuckInstruction {
@@ -1646,7 +1677,7 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 	switch name {
 	case "HEAD":
 		return ins.Head
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "VOLUME":
 		return ins.Volume
@@ -1673,6 +1704,8 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 		return ins.InstructionType()
 	case "TIPTYPE":
 		return ins.TipType
+	case WHICH:
+		return ins.ComponentID
 	}
 	return nil
 }
@@ -1683,7 +1716,15 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	// this is where the policies come into effect
 
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
 
 	// offsets
 	ofx := SafeGetF64(pol, "ASPXOFFSET")
@@ -2013,13 +2054,13 @@ func (ins *BlowInstruction) GetParameter(name string) interface{} {
 	switch name {
 	case "HEAD":
 		return ins.Head
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "VOLUME":
 		return ins.Volume
 	case "TOPLATETYPE":
 		return ins.TPlateType
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
 	case "POSTO":
 		return ins.PltTo
@@ -2076,7 +2117,15 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ret := make([]RobotInstruction, 0)
 	// apply policies here
 
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
 	// first, are we breaking up the move?
 
 	ofx := SafeGetF64(pol, "DSPXOFFSET")
@@ -2972,7 +3021,7 @@ func (ins *ResetInstruction) InstructionType() int {
 
 func (ins *ResetInstruction) GetParameter(name string) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	case "VOLUME":
 		return ins.Volume
@@ -3020,7 +3069,15 @@ func (ins *ResetInstruction) AddMultiTransferParams(mtp MultiTransferParams) {
 }
 
 func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
 	ret := make([]RobotInstruction, 0)
 
 	mov := NewMoveInstruction()
@@ -3086,9 +3143,9 @@ type MoveMixInstruction struct {
 	Head      int
 	Plt       []string
 	Well      []string
-	Volume    []wunit.Volume
+	Volume    []wunit.Volume // volume of sample being transferred
 	PlateType []string
-	FVolume   []wunit.Volume
+	FVolume   []wunit.Volume // Total volume of sample in the well which the sample is being mixed into?
 	Cycles    []int
 	What      []string
 	Blowout   []bool
@@ -3238,7 +3295,7 @@ func (ins *MixInstruction) GetParameter(name string) interface{} {
 		return ins.Cycles
 	case "INSTRUCTIONTYPE":
 		return ins.InstructionType()
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
 	}
 	return nil

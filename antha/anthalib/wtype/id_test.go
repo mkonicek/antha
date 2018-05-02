@@ -76,7 +76,6 @@ func TestFullWellMix(t *testing.T) {
 		t.Fatal("Well contents should have last parent set")
 	}
 
-
 	if !d.HasDaughter(w.WContents.ID) {
 		t.Fatal("Component mixed into well should have well contents as daughter")
 	}

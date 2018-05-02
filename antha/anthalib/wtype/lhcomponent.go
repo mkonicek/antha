@@ -593,11 +593,6 @@ func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 	cmp.ParentID = cmp2.ID
 }
-*/
-
-func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
-	cmp.ParentID = cmp2.ID
-}
 
 func (cmp *LHComponent) AddDaughterComponent(cmp2 *LHComponent) {
 	if cmp.DaughterID != "" {

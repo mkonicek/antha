@@ -215,7 +215,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	//Enable simulation of trilution like behaviour
 	//in reality this happens anyway when using trilution, irrespective of whether tipTracking is requested
 	tipTracking := false
-	if iTipTracking, ok := request.Policies.Options["USE_DRIVER_TIP_TRACKING"]; ok {
+	if iTipTracking, ok := request.Policies().Options["USE_DRIVER_TIP_TRACKING"]; ok {
 		tipTracking, _ = iTipTracking.(bool)
 	}
 	if tipTracking && this.Properties.HasTipTracking() {

@@ -84,7 +84,6 @@ func TestFixVolumes(t *testing.T) {
 }
 
 func TestFixVolumes2(t *testing.T) {
-	// findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume) (map[string]wunit.Volume, error)
 
 	c1 := getComponentWithNameVolume("water", 50.0)
 	c2 := getComponentWithNameVolume("milk", 50.0)
@@ -105,7 +104,7 @@ func TestFixVolumes2(t *testing.T) {
 
 	want[c3.FullyQualifiedName()] = wunit.NewVolume(150.0, "ul")
 
-	newWant, _ := findUpdateInstructionVolumes(ch, want, make(map[string]*wtype.LHPlate))
+	newWant, _ := findUpdateInstructionVolumes(ch, want, make(map[string]*wtype.LHPlate), wunit.NewVolume(0.5, "ul"))
 
 	v := newWant["water"+wtype.InPlaceMarker]
 	if !v.EqualTo(wunit.NewVolume(75.0, "ul")) {

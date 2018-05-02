@@ -25,7 +25,6 @@ package liquidtype
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -78,28 +77,6 @@ var availablePolicyfiles []policyFile = []policyFile{
 
 // BASEPolicy is the policy to use as a starting point to produce custom LHPolicies
 var BASEPolicy = "default" //"dna"
-
-// deprecate this
-func makePolicies() map[string]wtype.LHPolicy {
-	pols := wtype.MakePolicies()
-
-	// TODO: Remove this hack
-	for _, DOEliquidhandlingFile := range availablePolicyfiles {
-		if _, err := os.Stat(filepath.Join(anthapath.Path(), DOEliquidhandlingFile.Filename)); err == nil {
-			filenameparts := strings.Split(DOEliquidhandlingFile.Filename, ".")
-
-			policies, names, _, err := PolicyMakerfromDesign(BASEPolicy, DOEliquidhandlingFile.DXORJMP, DOEliquidhandlingFile.Filename, filenameparts[0])
-			for i, policy := range policies {
-				pols[names[i]] = policy
-			}
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	return pols
-
-}
 
 // deprecate this
 func policyFilefromName(filename string) (pol policyFile, found bool) {

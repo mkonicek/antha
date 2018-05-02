@@ -580,10 +580,16 @@ func (cmp *LHComponent) HasAnyParent() bool {
 }
 
 // XXX XXX XXX --> This is no longer consistent... need to revise urgently
+/*
 func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 	if cmp == nil {
 		return
 	}
+	cmp.ParentID = cmp2.ID
+}
+*/
+
+func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 	cmp.ParentID = cmp2.ID
 }
 

@@ -138,6 +138,18 @@ var componentWithConcstests = []unitFromStringTest{
 		Conc:              NewConcentration(0.0, "g/L"),
 		ComponentNameOnly: "X",
 	},
+	{
+		ComponentName:     "1X",
+		ContainsConc:      true,
+		Conc:              NewConcentration(1, "X"),
+		ComponentNameOnly: "1X",
+	},
+	{
+		ComponentName:     "(1X)",
+		ContainsConc:      true,
+		Conc:              NewConcentration(1, "X"),
+		ComponentNameOnly: "(1X)",
+	},
 }
 
 type volTest struct {

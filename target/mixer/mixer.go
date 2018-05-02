@@ -86,6 +86,16 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	req := planner.NewLHRequest()
 
 	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
+	if len(a.opt.CustomPolicyData) > 0 {
+		lhpr := wtype.NewLHPolicyRuleSet()
+
+		lhpr, err := wtype.AddUniversalRules(lhpr, a.opt.CustomPolicyData)
+
+		if err != nil {
+			return nil, err
+		}
+		req.AddUserPolicies(lhpr)
+	}
 
 	if err := req.PolicyManager.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
 		return nil, err

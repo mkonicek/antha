@@ -26,11 +26,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/url"
-	"os"
-	"path"
-
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/cmd/antha/frontend"
 	"github.com/antha-lang/antha/cmd/antha/pretty"
 	"github.com/antha-lang/antha/cmd/antha/spawn"
@@ -44,6 +41,10 @@ import (
 	"github.com/antha-lang/antha/workflowtest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"io/ioutil"
+	"net/url"
+	"os"
+	"path"
 )
 
 var runCmd = &cobra.Command{
@@ -77,6 +78,19 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 			return opt, err
 		}
 		opt.InputPlates = append(opt.InputPlates, p)
+	}
+
+	policyFileName := viper.GetString("policyFile")
+
+	if policyFileName != "" {
+		data, err := ioutil.ReadFile(policyFileName)
+		if err != nil {
+			return opt, err
+		}
+		opt.CustomPolicyData, err = liquidtype.PolicyMakerFromBytes(data, wtype.PolicyName(liquidtype.BASEPolicy))
+		if err != nil {
+			return opt, err
+		}
 	}
 
 	opt.OutputSort = viper.GetBool("outputSort")
@@ -377,4 +391,5 @@ func init() {
 	flags.StringSlice("tipTypes", nil, "Names of permitted tip types")
 	flags.Bool("runTest", false, "run tests")
 	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
+	flags.String("policyFile", "", "Design file of custom liquid policies in format of .xlsx JMP file")
 }

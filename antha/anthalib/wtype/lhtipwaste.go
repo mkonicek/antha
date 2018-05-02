@@ -60,9 +60,26 @@ func (te LHTipwaste) String() string {
 }
 
 func (tw *LHTipwaste) Dup() *LHTipwaste {
-	tw2 := NewLHTipwaste(tw.Capacity, tw.Type, tw.Mnfr, tw.Bounds.GetSize(), tw.AsWell, tw.WellXStart, tw.WellYStart, tw.WellZStart)
+	return tw.dup(false)
+}
 
+func (tw *LHTipwaste) DupKeepIDs() *LHTipwaste {
+	return tw.dup(true)
+}
+
+func (tw *LHTipwaste) dup(keepIDs bool) *LHTipwaste {
+	var aw *LHWell
+	if keepIDs {
+		aw = tw.AsWell.DupKeepIDs()
+	} else {
+		aw = tw.AsWell.Dup()
+	}
+	tw2 := NewLHTipwaste(tw.Capacity, tw.Type, tw.Mnfr, tw.Bounds.GetSize(), aw, tw.WellXStart, tw.WellYStart, tw.WellZStart)
 	tw2.Contents = tw.Contents
+	if keepIDs {
+		tw2.ID = tw.ID
+		tw2.Name = tw.Name
+	}
 
 	return tw2
 }
@@ -104,6 +121,7 @@ func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, w
 	lht.WellZStart = wellzstart
 
 	w.SetParent(&lht) //nolint
+	w.Crds = WellCoords{0, 0}
 
 	return &lht
 }
@@ -112,7 +130,7 @@ func (lht *LHTipwaste) Empty() {
 	lht.Contents = 0
 }
 
-func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) bool {
+func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) ([]WellCoords, bool) {
 	// this just checks numbers for now
 	n := 0
 
@@ -122,7 +140,14 @@ func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) bool {
 		}
 	}
 
-	return lht.DisposeNum(n)
+	//currently tipwastes only ever have one well
+	wcS := make([]WellCoords, 0, n)
+	wc := WellCoords{0, 0}
+	for i := 0; i < n; i++ {
+		wcS = append(wcS, wc)
+	}
+
+	return wcS, lht.DisposeNum(n)
 }
 
 func (lht *LHTipwaste) DisposeNum(num int) bool {
@@ -194,6 +219,19 @@ func (self *LHTipwaste) GetParent() LHObject {
 	return self.parent
 }
 
+//Duplicate copies an LHObject
+func (self *LHTipwaste) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
+}
+
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHTipwaste) DimensionsString() string {
+	if self == nil {
+		return "nill tipwaste"
+	}
+	return fmt.Sprintf("Tipwaste \"%s\" at %v+%v\n\t%s", self.GetName(), self.GetPosition(), self.GetSize(), self.AsWell.DimensionsString())
+}
+
 //##############################################
 //@implement Addressable
 //##############################################
@@ -244,4 +282,18 @@ func (self *LHTipwaste) WellCoordsToCoords(wc WellCoords, r WellReference) (Coor
 		self.WellXStart + 0.5*self.AsWell.GetSize().X,
 		self.WellYStart + 0.5*self.AsWell.GetSize().Y,
 		z}), true
+}
+
+//GetTargetOffset get the offset for addressing a well with the named adaptor and channel
+func (self *LHTipwaste) GetTargetOffset(adaptorName string, channel int) Coordinates {
+	targets := self.AsWell.GetWellTargets(adaptorName)
+	if channel < 0 || channel >= len(targets) {
+		return Coordinates{}
+	}
+	return targets[channel]
+}
+
+//GetTargets return all the defined targets for the named adaptor
+func (self *LHTipwaste) GetTargets(adaptorName string) []Coordinates {
+	return self.AsWell.GetWellTargets(adaptorName)
 }

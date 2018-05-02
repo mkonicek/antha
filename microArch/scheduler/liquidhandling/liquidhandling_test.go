@@ -53,6 +53,20 @@ func GetPlateForTest() *wtype.LHPlate {
 	return plate
 }
 
+func GetTipwasteForTest() *wtype.LHTipwaste {
+	shp := wtype.NewShape("box", "mm", 123.0, 80.0, 92.0)
+	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
+	lht := wtype.NewLHTipwaste(6000, "Gilsontipwaste", "gilson", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
+	return lht
+}
+
+func GetTroughForTest() *wtype.LHPlate {
+	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
+	trough12 := wtype.NewLHWell("ul", 15000, 5000, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
+	plate := wtype.NewLHPlate("DWST12", "Unknown", 1, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
+	return plate
+}
+
 func TestStockConcs(*testing.T) {
 	rand := wutil.GetRandom()
 	names := []string{"tea", "milk", "sugar"}
@@ -1091,6 +1105,61 @@ func TestDistinctPlateNames(t *testing.T) {
 		} else {
 			t.Errorf("fixDuplicatePlateNames failed to prevent duplicates: found at least two of %s", p.PlateName)
 		}
+	}
+
+}
+
+func assertCoordsEq(lhs, rhs []wtype.Coordinates) bool {
+	if len(lhs) != len(rhs) {
+		return false
+	}
+
+	for i := 0; i < len(lhs); i++ {
+		if lhs[i].Subtract(rhs[i]).Abs() > 0.00001 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func TestAddWellTargets(t *testing.T) {
+
+	ctx := testinventory.NewContext(context.Background())
+	lh := GetLiquidHandlerForTest(ctx)
+
+	plate := GetPlateForTest()
+	lh.Properties.AddPlate("position_4", plate)
+
+	tipwaste := GetTipwasteForTest()
+	lh.Properties.AddTipWasteTo("position_1", tipwaste)
+
+	trough := GetTroughForTest()
+	lh.Properties.AddPlate("position_5", trough)
+
+	lh.addWellTargets()
+
+	expected := []wtype.Coordinates{
+		{X: 0.0, Y: -31.5, Z: 0.0},
+		{X: 0.0, Y: -22.5, Z: 0.0},
+		{X: 0.0, Y: -13.5, Z: 0.0},
+		{X: 0.0, Y: -4.5, Z: 0.0},
+		{X: 0.0, Y: 4.5, Z: 0.0},
+		{X: 0.0, Y: 13.5, Z: 0.0},
+		{X: 0.0, Y: 22.5, Z: 0.0},
+		{X: 0.0, Y: 31.5, Z: 0.0},
+	}
+
+	if e, g := []wtype.Coordinates{}, plate.Welltype.GetWellTargets("DummyAdaptor"); !assertCoordsEq(e, g) {
+		t.Errorf("plate well targets incorrect, expected %v, got %v", e, g)
+	}
+
+	if e, g := expected, tipwaste.AsWell.GetWellTargets("DummyAdaptor"); !assertCoordsEq(e, g) {
+		t.Errorf("plate well targets incorrect, expected %v, got %v", e, g)
+	}
+
+	if e, g := expected, trough.Welltype.GetWellTargets("DummyAdaptor"); !assertCoordsEq(e, g) {
+		t.Errorf("plate well targets incorrect, expected %v, got %v", e, g)
 	}
 
 }

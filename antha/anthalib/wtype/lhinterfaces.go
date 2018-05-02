@@ -93,6 +93,11 @@ type LHObject interface {
 	GetParent() LHObject
 	//GetID
 	GetID() string
+	//Dup duplicate the object, optionally keeping the IDs identical
+	Duplicate(bool) LHObject
+	//DimensionsString returns a string description of the position and size of the object and its children.
+	//useful for debugging
+	DimensionsString() string
 }
 
 //GetObjectRoot get the highest parent
@@ -178,6 +183,13 @@ type Addressable interface {
 	WellCoordsToCoords(WellCoords, WellReference) (Coordinates, bool)
 }
 
+type Targetted interface {
+	//GetTargetOffset Gets the well target location for the numbered channel of the named adaptor
+	GetTargetOffset(string, int) Coordinates
+	//GetTargets return all the defined targets for the named adaptor
+	GetTargets(string) []Coordinates
+}
+
 //LHContainer a tip or a well or something that holds liquids
 type LHContainer interface {
 	Contents() *LHComponent
@@ -187,6 +199,8 @@ type LHContainer interface {
 	CurrentWorkingVolume() wunit.Volume
 	//Add to the container
 	AddComponent(*LHComponent) error
+	//Set the contents of the container
+	SetContents(*LHComponent) error
 	//Remove from the container
 	RemoveVolume(wunit.Volume) (*LHComponent, error)
 }

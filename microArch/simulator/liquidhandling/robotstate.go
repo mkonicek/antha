@@ -125,6 +125,7 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 
 //AdaptorState Represent the physical state and layout of the adaptor
 type AdaptorState struct {
+	name        string
 	channels    []*ChannelState
 	position    wtype.Coordinates
 	independent bool
@@ -132,11 +133,13 @@ type AdaptorState struct {
 	robot       *RobotState
 }
 
-func NewAdaptorState(independent bool,
+func NewAdaptorState(name string,
+	independent bool,
 	channels int,
 	channel_offset wtype.Coordinates,
 	params *wtype.LHChannelParameter) *AdaptorState {
 	as := AdaptorState{
+		name,
 		make([]*ChannelState, 0, channels),
 		wtype.Coordinates{},
 		independent,
@@ -153,6 +156,11 @@ func NewAdaptorState(independent bool,
 
 //                            Accessors
 //                            ---------
+
+//GetName
+func (self *AdaptorState) GetName() string {
+	return self.name
+}
 
 //GetPosition
 func (self *AdaptorState) GetPosition() wtype.Coordinates {

@@ -669,7 +669,7 @@ func (lhp *LHPlate) dup(keep_ids bool) *LHPlate {
 				d = well.Dup()
 				d.WContents.Loc = ret.ID + ":" + d.Crds.FormatA1()
 			}
-			d.Plate = ret
+			d.SetParent(ret) //nolint - ret is certainly an lhplate
 			ret.Rows[i][j] = d
 			ret.Cols[j][i] = d
 			ret.Wellcoords[d.Crds.FormatA1()] = d
@@ -963,7 +963,9 @@ func (self *LHPlate) GetSize() Coordinates {
 func (self *LHPlate) GetWellBounds() BBox {
 	return BBox{
 		self.Bounds.GetPosition().Add(Coordinates{self.WellXStart, self.WellYStart, self.WellZStart}),
-		Coordinates{self.WellXOffset * float64(self.NCols()), self.WellYOffset * float64(self.NRows()), self.Welltype.GetSize().Z},
+		Coordinates{self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
+			self.WellYOffset*float64(self.NRows()-1) + self.Welltype.GetSize().Y,
+			self.Welltype.GetSize().Z},
 	}
 }
 
@@ -1035,6 +1037,27 @@ func (self *LHPlate) GetParent() LHObject {
 	return self.parent
 }
 
+//Duplicate copies an LHObject
+func (self *LHPlate) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
+}
+
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHPlate) DimensionsString() string {
+	wb := self.GetWellBounds()
+	ret := make([]string, 0, 1+len(self.Wellcoords))
+	ret = append(ret, fmt.Sprintf("Plate %s at %v+%v, with %dx%d wells bounded by %v",
+		self.GetName(), self.GetPosition(), self.GetSize(), self.NCols(), self.NRows(), wb))
+
+	for _, wellrow := range self.Rows {
+		for _, well := range wellrow {
+			ret = append(ret, "\t"+well.DimensionsString())
+		}
+	}
+
+	return strings.Join(ret, "\n")
+}
+
 //##############################################
 //@implement Addressable
 //##############################################
@@ -1089,19 +1112,19 @@ func (self *LHPlate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordin
 		return Coordinates{}, false
 	}
 
+	child := self.GetChildByAddress(wc)
+
 	var z float64
 	if r == BottomReference {
-		z = self.WellZStart
+		z = child.GetPosition().Z
 	} else if r == TopReference {
-		z = self.WellZStart + self.Welltype.GetSize().Z
+		z = child.GetPosition().Z + child.GetSize().Z
 	} else if r == LiquidReference {
 		panic("Haven't implemented liquid level yet")
 	}
+	center := child.GetPosition().Add(child.GetSize().Multiply(0.5))
 
-	return self.GetPosition().Add(Coordinates{
-		self.WellXStart + (float64(wc.X)+0.5)*self.WellXOffset,
-		self.WellYStart + (float64(wc.Y)+0.5)*self.WellYOffset,
-		z}), true
+	return Coordinates{center.X, center.Y, z}, true
 }
 
 func (p *LHPlate) ResetID(newID string) {
@@ -1350,4 +1373,18 @@ func (p *LHPlate) ColVol() wunit.Volume {
 	v.MultiplyBy(float64(p.WlsY))
 
 	return v
+}
+
+//GetTargetOffset get the offset for addressing a well with the named adaptor and channel
+func (p *LHPlate) GetTargetOffset(adaptorName string, channel int) Coordinates {
+	targets := p.Welltype.GetWellTargets(adaptorName)
+	if channel < 0 || channel >= len(targets) {
+		return Coordinates{}
+	}
+	return targets[channel]
+}
+
+//GetTargets return all the defined targets for the named adaptor
+func (p *LHPlate) GetTargets(adaptorName string) []Coordinates {
+	return p.Welltype.GetWellTargets(adaptorName)
 }

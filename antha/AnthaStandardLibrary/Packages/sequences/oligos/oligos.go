@@ -217,15 +217,15 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				case temppercentage >= maxGCcontent:
 					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primer with GC Content (%f) greater than the maximum GC Content specified (%f). Please try lowering this parameter, or selecting a less-GC rich region.", seq.Name(), temppercentage, maxGCcontent))
 				case minmeltingtemp.SIValue() > meltingtemp.SIValue():
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate FORWARD primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try increasing this paramerer.", seq.Name(), meltingtemp.SIValue(), minmeltingtemp.SIValue()))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try increasing this parameter.", seq.Name(), meltingtemp.SIValue(), minmeltingtemp.SIValue()))
 				case maxmeltingtemp.SIValue() < meltingtemp.SIValue():
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate FORWARD primers with melting temperature (%f) greater than the maximum melting temperature specified (%f). Please try lowering this paramerer.", seq.Name(), meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers with melting temperature (%f) greater than the maximum melting temperature specified (%f). Please try lowering this parameter.", seq.Name(), meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
 				case bindingsites > 1:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate FORWARD primers with more than one (%d) binding sites. Pleaser try selecting another region.", seq.Name(), bindingsites))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers with more than one (%d) binding sites. Pleaser try selecting another region.", seq.Name(), bindingsites))
 				case search.InStrings(seqstoavoid, tempoligoseq):
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate FORWARD primers that contain the specified sequences to avoid. Pleaser try removing these from the parameters.", seq.Name()))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers that contain the specified sequences to avoid. Pleaser try removing these from the parameters.", seq.Name()))
 				case overlapthresholdfail:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate FORWARD primers that violate the overlap threshold.", seq.Name()))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers that violate the overlap threshold.", seq.Name()))
 				}
 
 				err = fmt.Errorf(strings.Join(combinedErrors, "\n"))
@@ -296,15 +296,15 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				case temppercentage >= maxGCcontent:
 					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers with GC Content (%f) greater than the maximum GC Content specified (%f). Please try lowering this parameter, or selecting a less-GC rich region.", seq.Name(), temppercentage, maxGCcontent))
 				case minmeltingtemp.SIValue() > meltingtemp.SIValue():
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate REVERSE primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try increasing this paramerer.", seq.Name(), meltingtemp.SIValue(), minmeltingtemp.SIValue()))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try increasing this parameter.", seq.Name(), meltingtemp.SIValue(), minmeltingtemp.SIValue()))
 				case maxmeltingtemp.SIValue() < meltingtemp.SIValue():
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate REVERSE primers with melting temperature (%f) greater than the maximum melting temperature specified (%f). Please try lowering this paramerer.", seq.Name(), meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers with melting temperature (%f) greater than the maximum melting temperature specified (%f). Please try lowering this parameter.", seq.Name(), meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
 				case bindingsites > 1:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate REVERSE primers with more than one (%d) binding sites. Pleaser try selecting another region.", seq.Name(), bindingsites))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers with more than one (%d) binding sites. Pleaser try selecting another region.", seq.Name(), bindingsites))
 				case search.InStrings(seqstoavoid, tempoligoseq):
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate REVERSE primers that contain the specified sequences to avoid. Pleaser try removing these from the parameters.", seq.Name(), bindingsites))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers that contain the specified sequences to avoid. Pleaser try removing these from the parameters.", seq.Name()))
 				case overlapthresholdfail:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s, could only generate REVERSE primers that violate the overlap threshold.", seq.Name()))
+					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers that violate the overlap threshold.", seq.Name()))
 				}
 
 				err = fmt.Errorf(strings.Join(combinedErrors, "\n"))

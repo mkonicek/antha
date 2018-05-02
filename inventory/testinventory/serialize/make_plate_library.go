@@ -637,6 +637,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	// test of real plate dimensions
 
 	plates = append(plates, makeSkirtedPCRPlateOffset())
+	plates = append(plates, makeSecond384wellplateAppliedBiosystems())
 
 	return
 }
@@ -943,6 +944,43 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
+}
+
+//makeSecond384wellplateAppliedBiosystems HJK: Duplicate with conversions removed for testing
+// Applied Biosystems, MicroAmp Optical 384-well Reaction Plate; Cat Num: 4309849
+// Source of dimensions: https://www.thermofisher.com/order/catalog/product/4309849
+func makeSecond384wellplateAppliedBiosystems() *wtype.LHPlate {
+
+	plateName := "AppliedBiosystems_384_MicroAmp_Optical_offset"
+	manufacturer := "Applied Biosystems"
+
+	numRows := 16
+	numCols := 24
+
+	plateHeight := 9.7
+	plateSize := makePlateCoords(plateHeight)
+
+	wellShape := "cyllinder"
+	wellBottom := wtype.VWellBottom
+	wellRadius := 3.17
+	wellBottomH := 0.61
+	wellHeight := plateHeight - wellBottomH
+
+	wellSpacingX := 4.5
+	wellSpacingY := 4.5
+
+	minVolume := 4.0
+	maxVolume := 40.0
+
+	offsetA1X := 12.15
+	offsetA1Y := 9.0
+
+	newWellShape := wtype.NewShape(wellShape, "mm", wellRadius, wellRadius, wellHeight)
+	newWelltype := wtype.NewLHWell("ul", maxVolume, minVolume, newWellShape, wellBottom, wellRadius, wellRadius, wellHeight, wellBottomH, "mm")
+	plate := wtype.NewLHPlate(plateName, manufacturer, numRows, numCols, plateSize, newWelltype, wellSpacingX, wellSpacingY, offsetA1X, offsetA1Y, wellBottomH)
+
+	return plate
+
 }
 
 // Applied Biosystems, MicroAmp Optical 384-well Reaction Plate; Cat Num: 4309849

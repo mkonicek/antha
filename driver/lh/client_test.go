@@ -56,6 +56,7 @@ func makeplatefortest() *wtype.LHPlate {
 	swshp := wtype.NewShape("box", "mm", 8.2, 8.2, 41.3)
 	welltype := wtype.NewLHWell("ul", 200, 10, swshp, wtype.VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := wtype.NewLHPlate("DSW96", "none", 8, 12, wtype.Coordinates{127.76, 85.48, 43.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	p.Welltype.SetWellTargets("Magick", []wtype.Coordinates{{0.0, -10.0, 0.0}, {0.0, 10.0, 0.0}})
 	return p
 }
 
@@ -144,6 +145,10 @@ func validatePlate(t *testing.T, plate *wtype.LHPlate) {
 			comp[c.ID] = c
 		}
 	}
+
+	targets := []wtype.Coordinates{{0.0, -10.0, 0.0}, {0.0, 10.0, 0.0}}
+	assert.Equal(t, targets, plate.GetTargets("Magick"), "Well Targets")
+	assert.Equal(t, []wtype.Coordinates{}, plate.GetTargets("Muggles"), "Well Targets")
 }
 
 func assertTipsEqual(t *testing.T, a, b *wtype.LHTip, message string) {

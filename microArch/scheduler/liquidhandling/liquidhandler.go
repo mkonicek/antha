@@ -156,14 +156,14 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	/*err = this.Simulate(request)
+	err = this.Simulate(request)
 	if err != nil {
 		//since the simulator is... tender right now, let's take this with a pinch of salt
 		logger.Info("Ignoring simulation error")
 		//return err
 	} else {
 		logger.Info("Simulation completed successfully")
-	}*/
+	}
 
 	err = this.Execute(request)
 	if err != nil {
@@ -207,7 +207,28 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	}
 
 	// set up the simulator with default settings
-	vlh := simulator_lh.NewVirtualLiquidHandler(this.Properties, nil)
+	props := this.Properties.DupKeepIDs()
+
+	settings := simulator_lh.DefaultSimulatorSettings()
+
+	//Enable simulation of trilution like behaviour
+	//in reality this happens anyway when using trilution, irrespective of whether tipTracking is requested
+	tipTracking := false
+	if iTipTracking, ok := request.Policies.Options["USE_DRIVER_TIP_TRACKING"]; ok {
+		tipTracking, _ = iTipTracking.(bool)
+	}
+	if tipTracking && this.Properties.HasTipTracking() {
+		settings.SetTipTrackingBehaviour(simulator_lh.TrilutionTipTracking)
+	}
+
+	//Make this warning less noisy since it's not really important
+	settings.EnablePipetteSpeedWarning(simulator_lh.WarnOnce)
+	//again, something we should fix, but not important to users to quieten
+	settings.EnableAutoChannelWarning(simulator_lh.WarnOnce)
+	//this is probably not even an error as liquid types are more about LHPolicies than what's actually in the well
+	settings.EnableLiquidTypeWarning(simulator_lh.WarnNever)
+
+	vlh := simulator_lh.NewVirtualLiquidHandler(props, settings)
 	for _, err := range vlh.GetErrors() {
 		err.WriteToLog()
 	}
@@ -940,6 +961,12 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	request = removeDummyInstructions(request)
 
+	//set the well targets
+	err = this.addWellTargets()
+	if err != nil {
+		return err
+	}
+
 	// now make instructions
 	request, err = this.ExecutionPlan(ctx, request)
 
@@ -1360,6 +1387,91 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 	rq.InstructionChain.PruneOut(toRemove)
 
 	return rq
+}
+
+//addWellTargets for all the adaptors and plates available
+func (lh *Liquidhandler) addWellTargets() error {
+	for _, adaptor := range lh.Properties.Adaptors {
+		for _, plate := range lh.Properties.Plates {
+			addWellTargetsPlate(adaptor, plate)
+		}
+		for _, plate := range lh.Properties.Wastes {
+			addWellTargetsPlate(adaptor, plate)
+		}
+		for _, plate := range lh.Properties.Washes {
+			addWellTargetsPlate(adaptor, plate)
+		}
+		for _, tipWaste := range lh.Properties.Tipwastes {
+			addWellTargetsTipWaste(adaptor, tipWaste)
+		}
+	}
+	return nil
+}
+
+func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
+	if adaptor.Manufacturer != "Gilson" {
+		logger.Info("Not adding well target data for non-gilson adaptor")
+		return
+	}
+
+	//channelPositions should come from the adaptor
+	yOffset := 9.0
+	channelPositions := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	for i := 0; i < adaptor.Params.Multi; i++ {
+		channelPositions = append(channelPositions, wtype.Coordinates{Y: float64(i) * yOffset})
+	}
+
+	if plate.NRows() >= 8 || plate.IsSpecial() {
+		return
+	}
+
+	//ystart and count should come from some geometric calculation between channelPositions and well size
+	ystart, count := getWellTargetYStart(plate.NRows())
+
+	targets := make([]wtype.Coordinates, count)
+	copy(targets, channelPositions)
+	for i := 0; i < count; i++ {
+		targets[i].Y += ystart
+	}
+
+	plate.Welltype.SetWellTargets(adaptor.Name, targets)
+}
+
+func addWellTargetsTipWaste(adaptor *wtype.LHAdaptor, waste *wtype.LHTipwaste) {
+	// this may vary in future but for now we just need to add the following eight entries:
+	ystart := -31.5
+	yinc := 9.0
+	targets := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	for i := 0; i < adaptor.Params.Multi; i++ {
+		targets = append(targets, wtype.Coordinates{Y: ystart + float64(i)*yinc})
+	}
+
+	waste.AsWell.SetWellTargets(adaptor.Name, targets)
+}
+
+//getWellTargetYStart pmdriver mapping from number of y wells to number of tips and y start
+func getWellTargetYStart(wy int) (float64, int) {
+	// this is pretty simple to start with
+	// OK but there are a few issues with special plate types
+
+	switch wy {
+	case 1:
+		return -31.5, 8
+	case 2:
+		return -13.5, 4
+	case 3:
+		return -9.0, 3 // check
+	case 4:
+		return -4.5, 2
+	case 5:
+		return 0.0, 1
+	case 6:
+		return 0.0, 1
+	case 7:
+		return 0.0, 1
+	}
+
+	return 0.0, 0
 }
 
 func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.LHPlate {

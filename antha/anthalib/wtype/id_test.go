@@ -71,6 +71,7 @@ func TestFullWellMix(t *testing.T) {
 	if w.WContents.ID == c.ID || w.WContents.ID == d.ID || w.WContents.ID == idb4 {
 		t.Fatal("Well contents should have new ID after mix")
 	}
+
 	if !w.WContents.HasParent(d.ID) {
 		t.Fatal("Well contents should have last parent set")
 	}

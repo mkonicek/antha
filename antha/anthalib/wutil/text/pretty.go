@@ -1,4 +1,4 @@
-// /anthalib/driver/liquidhandling/makelhpolicy.go: Part of the Antha language
+// Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -20,23 +20,33 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package liquidtype
+package text
 
 import (
+	"encoding/json"
 	"fmt"
-	"testing"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-func TestLHPolicies(t *testing.T) {
-
-	for name := range MakePolicies() {
-		_, err := wtype.LiquidTypeFromString(wtype.PolicyName(name))
-
-		if err != nil {
-			t.Error(fmt.Sprintf("Error with liquid type: %s: %s", name, err.Error()))
-		}
+// PrettyPrint will return an indented string of an object.
+/* e.g.
+[	{
+		"Components": {
+			"Glucose (g/L)": "150 g/l"
+		},
+		"Volume": "351 ul"
+	},
+	{
+		"Components": {
+			"Magnesium Sulphate (mM)": "50 mM/l"
+		},
+		"Volume": "210 ul"
+	},
+]
+*/
+func PrettyPrint(data interface{}) string {
+	bytes, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling data for pretty print: %s", err.Error()))
 	}
-
+	return string(bytes)
 }

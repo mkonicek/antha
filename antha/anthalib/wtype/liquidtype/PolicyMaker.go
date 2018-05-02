@@ -25,7 +25,6 @@ package liquidtype
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -36,25 +35,27 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-type PolicyFile struct {
+// deprecate this
+type policyFile struct {
 	Filename                string
 	DXORJMP                 string
 	FactorColumns           *[]int
 	LiquidTypeStarterNumber int
 }
 
-func (polfile PolicyFile) Prepend() (prepend string) {
+func (polfile policyFile) Prepend() (prepend string) {
 	nameparts := strings.Split(polfile.Filename, ".")
 	prepend = nameparts[0]
 	return
 }
 
-func (polfile PolicyFile) StarterNumber() (starternumber int) {
+func (polfile policyFile) StarterNumber() (starternumber int) {
 	starternumber = polfile.LiquidTypeStarterNumber
 	return
 }
 
-func MakePolicyFile(filename string, dxorjmp string, factorcolumns *[]int, liquidtypestartnumber int) (policyfile PolicyFile) {
+// deprecate this
+func makePolicyFile(filename string, dxorjmp string, factorcolumns *[]int, liquidtypestartnumber int) (policyfile policyFile) {
 	policyfile.Filename = filename
 	policyfile.DXORJMP = dxorjmp
 	policyfile.FactorColumns = factorcolumns
@@ -62,45 +63,24 @@ func MakePolicyFile(filename string, dxorjmp string, factorcolumns *[]int, liqui
 	return
 }
 
+// deprecate this
 // policy files to put in ./antha
-var AvailablePolicyfiles []PolicyFile = []PolicyFile{
-	MakePolicyFile("170516CCFDesign_noTouchoff_noBlowout.xlsx", "DX", nil, 100),
-	MakePolicyFile("2700516AssemblyCCF.xlsx", "DX", nil, 1000),
-	MakePolicyFile("newdesign2factorsonly.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 2000),
-	MakePolicyFile("190516OnePolicy.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 3000),
-	MakePolicyFile("AssemblycategoricScreen.xlsx", "JMP", &[]int{1, 2, 3, 4, 5}, 4000),
-	MakePolicyFile("090816dispenseerrordiagnosis.xlsx", "JMP", &[]int{2}, 5000),
-	MakePolicyFile("090816combineddesign.xlsx", "JMP", &[]int{1}, 6000),
+var availablePolicyfiles []policyFile = []policyFile{
+	makePolicyFile("170516CCFDesign_noTouchoff_noBlowout.xlsx", "DX", nil, 100),
+	makePolicyFile("2700516AssemblyCCF.xlsx", "DX", nil, 1000),
+	makePolicyFile("newdesign2factorsonly.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 2000),
+	makePolicyFile("190516OnePolicy.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 3000),
+	makePolicyFile("AssemblycategoricScreen.xlsx", "JMP", &[]int{1, 2, 3, 4, 5}, 4000),
+	makePolicyFile("090816dispenseerrordiagnosis.xlsx", "JMP", &[]int{2}, 5000),
+	makePolicyFile("090816combineddesign.xlsx", "JMP", &[]int{1}, 6000),
 }
 
-// change to range through several files
-//var DOEliquidhandlingFile = "170516CCFDesign_noTouchoff_noBlowout.xlsx" // "2700516AssemblyCCF.xlsx" //"newdesign2factorsonly.xlsx" // "170516CCFDesign_noTouchoff_noBlowout.xlsx" // "170516CFF.xlsx" //"newdesign2factorsonly.xlsx" "170516CCFDesign_noTouchoff_noBlowout.xlsx" // //"newdesign2factorsonly.xlsx" //"8run4cpFactorial.xlsx" //"FullFactorial.xlsx" // "Screenwtype.LHPolicyDOE2.xlsx"
-//var DXORJMP = "DX"                                                      //"JMP"
+// BASEPolicy is the policy to use as a starting point to produce custom LHPolicies
 var BASEPolicy = "default" //"dna"
 
-func MakePolicies() map[string]wtype.LHPolicy {
-	pols := wtype.MakePolicies()
-
-	// TODO: Remove this hack
-	for _, DOEliquidhandlingFile := range AvailablePolicyfiles {
-		if _, err := os.Stat(filepath.Join(anthapath.Path(), DOEliquidhandlingFile.Filename)); err == nil {
-			filenameparts := strings.Split(DOEliquidhandlingFile.Filename, ".")
-
-			policies, names, _, err := PolicyMakerfromDesign(BASEPolicy, DOEliquidhandlingFile.DXORJMP, DOEliquidhandlingFile.Filename, filenameparts[0])
-			for i, policy := range policies {
-				pols[names[i]] = policy
-			}
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	return pols
-
-}
-
-func PolicyFilefromName(filename string) (pol PolicyFile, found bool) {
-	for _, policy := range AvailablePolicyfiles {
+// deprecate this
+func policyFilefromName(filename string) (pol policyFile, found bool) {
+	for _, policy := range availablePolicyfiles {
 		if policy.Filename == filename {
 			pol = policy
 			found = true
@@ -110,9 +90,10 @@ func PolicyFilefromName(filename string) (pol PolicyFile, found bool) {
 	return
 }
 
+// deprecate this
 func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names []string, runs []doe.Run, err error) {
 
-	doeliquidhandlingFile, found := PolicyFilefromName(filename)
+	doeliquidhandlingFile, found := policyFilefromName(filename)
 	if !found {
 		err = fmt.Errorf("policyfilename " + filename + " not found")
 		return
@@ -123,6 +104,7 @@ func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names 
 	return
 }
 
+// deprecate this
 func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename string, prepend string) (policies []wtype.LHPolicy, names []string, runs []doe.Run, err error) {
 
 	policyitemmap := wtype.MakePolicyItems()
@@ -236,6 +218,8 @@ func PolicyMakerFromBytes(data []byte, basePolicy wtype.PolicyName) (policyMap m
 	return policyMap, nil
 }
 
+// PolicyMakerfromRuns creates a policy map from a set of doe Runs in the format of a JMP design file.
+// Any valid parameter name and corresponding parameter type from aparam.go are valid entries.
 func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
 
 	policyitemmap := wtype.MakePolicyItems()
@@ -279,7 +263,6 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 			name = nameprepend
 			for key, value := range policy {
 				name = fmt.Sprint(name, "_", key, ":", value)
-
 			}
 		} else {
 			name = nameprepend + strconv.Itoa(run.RunNumber)

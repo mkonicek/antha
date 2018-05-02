@@ -90,6 +90,8 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 
 	lhp.Heads = append(lhp.Heads, hvhead)
 	lhp.Heads = append(lhp.Heads, lvhead)
+	lhp.Adaptors = append(lhp.Adaptors, hvadaptor)
+	lhp.Adaptors = append(lhp.Adaptors, lvadaptor)
 	lhp.HeadsLoaded = append(lhp.HeadsLoaded, hvhead)
 	lhp.HeadsLoaded = append(lhp.HeadsLoaded, lvhead)
 

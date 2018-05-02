@@ -122,6 +122,11 @@ func (self *LHTip) GetParent() LHObject {
 	return self.parent
 }
 
+//Duplicate copies an LHObject
+func (self *LHTip) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
+}
+
 func (tip *LHTip) GetParams() *LHChannelParameter {
 	// be safe
 	if tip.IsNil() {
@@ -139,16 +144,26 @@ func (tip *LHTip) IsNil() bool {
 	return false
 }
 
+//Dup copy the tip generating a new ID
 func (tip *LHTip) Dup() *LHTip {
+	return tip.dup(false)
+}
+
+//Dup copy the tip keeping the previous ID
+func (tip *LHTip) DupKeepID() *LHTip {
+	return tip.dup(true)
+}
+
+func (tip *LHTip) dup(keepIDs bool) *LHTip {
 	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup())
 	t.Dirty = tip.Dirty
 	t.contents = tip.Contents().Dup()
-	return t
-}
+	t.Bounds = tip.Bounds
 
-func (tip *LHTip) DupKeepID() *LHTip {
-	t := tip.Dup()
-	t.ID = tip.ID
+	if keepIDs {
+		t.ID = tip.ID
+	}
+
 	return t
 }
 
@@ -176,6 +191,14 @@ func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, filtere
 
 func CopyTip(tt LHTip) *LHTip {
 	return &tt
+}
+
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHTip) DimensionsString() string {
+	if self == nil {
+		return "no tip"
+	}
+	return fmt.Sprintf("Tip %s at %v+%v", self.GetName(), self.GetPosition(), self.GetSize())
 }
 
 //@implement LHContainer
@@ -216,6 +239,19 @@ func (self *LHTip) AddComponent(v *LHComponent) error {
 	if fv.LessThan(self.MinVol) {
 		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), fv, self.MinVol)
 	}
+	return nil
+}
+
+//SetContents set the contents of the tip, returns an error if the tip is overfilled
+func (self *LHTip) SetContents(v *LHComponent) error {
+	if v.Volume().GreaterThan(self.MaxVol) {
+		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), v.Volume(), self.MaxVol)
+	}
+	if v.Volume().LessThan(self.MinVol) {
+		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), v.Volume(), self.MinVol)
+	}
+
+	self.contents = v
 	return nil
 }
 

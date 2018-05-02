@@ -180,16 +180,31 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plate = wtype.NewLHPlate("SRWFB96", "Unknown", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 0.0, 0.0, 2.2)
 	plates = append(plates, plate)
 
-	// shallow round well flat bottom 96 with realler dimensions
-	rwshp = wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
-	roundwell96 = wtype.NewLHWell("ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
-	plate = wtype.NewLHPlate("SRWFB96_offset", "Unknown", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 14.38, 11.24, 3.7)
+	// shallow round well flat bottom 96 with dimensions directly from manufacturer
+	//Source: F073027_Microplate_Dimensions_Guide.pdf, F-bottom / chimney well, Greiner cat# 655 201, 655 207, 655 209
+	wellDiameter := 6.96
+	wellHeight := 10.9
+	plateHeight := 14.6
+	A1RowOffset := 11.24
+	A1ColOffset := 14.38
+	wellSpacing := 9.0
+	workingVolumeUl := []float64{25.0, 370.0}
+	bottomType := wtype.FlatWellBottom
+
+	rwshp = wtype.NewShape("cylinder", "mm", wellDiameter, wellDiameter, wellHeight)
+	roundwell96 = wtype.NewLHWell("ul", workingVolumeUl[1], workingVolumeUl[0], rwshp, bottomType, wellDiameter, wellDiameter, wellHeight, 0.0, "mm")
+	plate = wtype.NewLHPlate("SRWFB96_offset", "Greiner", 8, 12, makePlateCoords(plateHeight), roundwell96, wellSpacing, wellSpacing, A1ColOffset, A1RowOffset, plateHeight-wellHeight)
 	plates = append(plates, plate)
 
 	// deep well strip trough 12
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
 	trough12 := wtype.NewLHWell("ul", 15000, 5000, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
 	plate = wtype.NewLHPlate("DWST12", "Unknown", 1, 12, makePlateCoords(44.1), trough12, 9, 9, 0, 30.0, valueformaxheadtonotintoDSWplatewithp20tips)
+	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
+	plates = append(plates, plate)
+
+	// deep well strip trough 12: offset remix (HJK)
+	plate = wtype.NewLHPlate("DWST12_offset", "Unknown", 1, 12, makePlateCoords(44.1), trough12, 9, 9, 14.38, 30.0+11.24, valueformaxheadtonotintoDSWplatewithp20tips)
 	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 

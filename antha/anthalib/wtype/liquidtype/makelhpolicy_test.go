@@ -31,7 +31,7 @@ import (
 
 func TestLHPolicies(t *testing.T) {
 
-	for name := range MakePolicies() {
+	for name := range makePolicies() {
 		_, err := wtype.LiquidTypeFromString(wtype.PolicyName(name))
 
 		if err != nil {

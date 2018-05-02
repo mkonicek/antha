@@ -50,17 +50,19 @@ func (policy *LHPolicy) SetName(name string) error {
 	return policy.Set(PolicyNameField, name)
 }
 
+// NewLHPolicy generates an empty LHPolicy
 func NewLHPolicy() LHPolicy {
 	pol := make(LHPolicy)
 	return pol
 }
 
+// EquivalentPolicies checks for equality of two policies.
+// We're being conservative here.
+// It's possible that at the point at which low level instructions
+// are generated that two policies of different length will be
+// actioned in exactly the same way.
+// Since we cannot guarantee this at this point, we'll say they're not equivalent.
 func EquivalentPolicies(policy1, policy2 LHPolicy) bool {
-	// We're being conservative here.
-	// It's possible that at the point at which low level instructions
-	//  are generated that two policies of different length will be
-	// actioned in exactly the same way.
-	// Since we cannot guarantee this at this point, we'll say they're not equivalent.
 	if len(policy1) != len(policy2) {
 		return false
 	}

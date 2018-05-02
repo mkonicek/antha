@@ -403,9 +403,7 @@ func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LH
 	return ret
 }
 
-// This seems to assume all transfers share the same policy. Is this supposed to be the case at this point or is this a bug?
-// i.e. Have the compatibility checks already been made prior to this point or is this where it is supposed to be done?
-// if the latter then we should amend this behaviour.
+// By the point at which the MultiChannelBlockInstruction is used by the Generate method all transfers will share the same policy.
 func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 

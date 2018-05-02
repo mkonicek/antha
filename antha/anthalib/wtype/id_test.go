@@ -71,8 +71,9 @@ func TestFullWellMix(t *testing.T) {
 	if w.WContents.ID == c.ID || w.WContents.ID == d.ID || w.WContents.ID == idb4 {
 		t.Fatal("Well contents should have new ID after mix")
 	}
-	if !w.WContents.HasParent(c.ID) || !w.WContents.HasParent(d.ID) {
-		t.Fatal("Well contents should have all parents set")
+
+	if !w.WContents.HasParent(d.ID) {
+		t.Fatal("Well contents should have last parent set")
 	}
 
 	if !d.HasDaughter(w.WContents.ID) {
@@ -110,21 +111,4 @@ func TestFullWellMix(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	if !w2.WContents.HasParent(c.ID) || !w2.WContents.HasParent(d.ID) || !w2.WContents.HasParent(e.ID) || !w2.WContents.HasParent(f.ID) || !w2.WContents.HasParent(w.WContents.ID) {
-		t.Fatal("Well contents should have all parents set...2")
-	}
-
-	/*
-		gra := w2.WContents.ParentTree()
-		fmt.Println(w2.WContents.ParentID)
-		fmt.Println(gra.Nodes)
-		for n, a := range gra.Outs {
-			fmt.Println(n, ":::", a)
-		}
-
-		s := graph.Print(graph.PrintOpt{Graph: &gra})
-
-		fmt.Println(s)
-	*/
 }

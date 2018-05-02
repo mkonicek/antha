@@ -25,11 +25,14 @@ package liquidhandling
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 )
 
 type RobotInstruction interface {
@@ -96,12 +99,203 @@ func InstructionTypeName(ins RobotInstruction) string {
 
 var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "RPA", "APT", "SPB"}
 
-var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "TOWELLVOLUME", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
+var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
 
-func InsToString(ins RobotInstruction) string {
-	s := ""
+// option to feed into InsToString function
+type printOption string
 
-	s += Robotinstructionnames[ins.InstructionType()] + " "
+// Option to feed into InsToString function
+// which prints key words of the instruction with coloured text.
+// Designed for easier reading.
+const colouredTerminalOutput printOption = "colouredTerminalOutput"
+
+func ansiPrint(options ...printOption) bool {
+	for _, option := range options {
+		if option == colouredTerminalOutput {
+			return true
+		}
+	}
+	return false
+}
+
+func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
+
+	s := InstructionTypeName(ins) + " "
+
+	var changeColour func(string) string
+
+	if strings.TrimSpace(s) == "ASP" {
+		changeColour = text.Green
+	} else if strings.TrimSpace(s) == "DSP" {
+		changeColour = text.Blue
+	} else if strings.TrimSpace(s) == "MOV" {
+		changeColour = text.Yellow
+	} else {
+		changeColour = text.White
+	}
+	if ansiPrint(ansiPrintOptions...) {
+		s = changeColour(s)
+	}
+	for _, str := range RobotParameters {
+		p := ins.GetParameter(str)
+
+		if p == nil {
+			continue
+		}
+
+		ss := ""
+
+		switch p.(type) {
+		case []wunit.Volume:
+			if len(p.([]wunit.Volume)) == 0 {
+				continue
+			}
+			ss = concatvolarray(p.([]wunit.Volume))
+
+		case []string:
+			if len(p.([]string)) == 0 {
+				continue
+			}
+			ss = concatstringarray(p.([]string))
+		case string:
+			ss = p.(string)
+		case []float64:
+			if len(p.([]float64)) == 0 {
+				continue
+			}
+			ss = concatfloatarray(p.([]float64))
+		case float64:
+			ss = fmt.Sprintf("%-6.4f", p.(float64))
+		case []int:
+			if len(p.([]int)) == 0 {
+				continue
+			}
+			ss = concatintarray(p.([]int))
+		case int:
+			ss = fmt.Sprintf("%d", p.(int))
+		case []bool:
+			if len(p.([]bool)) == 0 {
+				continue
+			}
+			ss = concatboolarray(p.([]bool))
+		}
+		if ansiPrint(ansiPrintOptions...) {
+			if str == "WHAT" {
+				s += str + ": " + text.Yellow(ss) + " "
+			} else if str == "MULTI" {
+				s += text.Blue(str+": ") + ss + " "
+			} else if str == "OFFSETZ" {
+				s += str + ": " + changeColour(ss) + " "
+			} else if str == "TOPLATETYPE" {
+				s += str + ": " + text.Cyan(ss) + " "
+			} else {
+				s += str + ": " + ss + " "
+			}
+		} else {
+			if str == "WHAT" {
+				s += str + ": " + ss + " "
+			} else if str == "MULTI" {
+				s += str + ": " + ss + " "
+			} else if str == "OFFSETZ" {
+				s += str + ": " + ss + " "
+			} else if str == "TOPLATETYPE" {
+				s += str + ": " + ss + " "
+			} else {
+				s += str + ": " + ss + " "
+			}
+		}
+	}
+
+	return s
+}
+
+func isAspirate(ins RobotInstruction) bool {
+
+	s := InstructionTypeName(ins)
+
+	return strings.TrimSpace(s) == "ASP"
+}
+
+func isDispense(ins RobotInstruction) bool {
+
+	s := InstructionTypeName(ins)
+
+	return strings.TrimSpace(s) == "DSP"
+}
+
+func isMove(ins RobotInstruction) bool {
+
+	s := InstructionTypeName(ins)
+
+	return strings.TrimSpace(s) == "MOV"
+}
+
+// StepSummary summarises the instruction for
+// an Aspirate or Dispense instruction combined
+// with the related Move instruction.
+type StepSummary struct {
+	Type         string // Asp or DSP
+	LiquidType   string
+	PlateType    string
+	Multi        string
+	OffsetZ      string
+	WellToVolume string
+	Volume       string
+}
+
+func mergeSummaries(a, b StepSummary, aspOrDsp string) (c StepSummary) {
+	return StepSummary{
+		Type:         aspOrDsp,
+		LiquidType:   a.LiquidType + b.LiquidType,
+		PlateType:    a.PlateType + b.PlateType,
+		Multi:        a.Multi + b.Multi,
+		OffsetZ:      a.OffsetZ + b.OffsetZ,
+		WellToVolume: a.WellToVolume + b.WellToVolume,
+		Volume:       a.Volume + b.Volume,
+	}
+}
+
+type stepType string
+
+// Aspirate designates a step is an aspirate step
+const Aspirate stepType = "Aspirate"
+
+// Dispense designates a step is a dispense step
+const Dispense stepType = "Dispense"
+
+// MakeAspOrDspSummary returns a summary of the key parameters involved in a Dispense or Aspirate step.
+// It requires two consecutive instructions to do this, a Move instruction followed by a dispense of aspirate instruction.
+// An error is returned if this is not the case.
+func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) (StepSummary, error) {
+	step1summary, err := summarise(moveInstruction)
+
+	if err != nil {
+		return StepSummary{}, err
+	}
+
+	step2summary, err := summarise(dspOrAspInstruction)
+
+	if err != nil {
+		return StepSummary{}, err
+	}
+
+	if !isMove(moveInstruction) {
+		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction: found %s", InstructionTypeName(moveInstruction))
+	}
+
+	if isAspirate(dspOrAspInstruction) {
+		return mergeSummaries(step1summary, step2summary, string(Aspirate)), nil
+	} else if isDispense(dspOrAspInstruction) {
+		return mergeSummaries(step1summary, step2summary, string(Dispense)), nil
+	}
+
+	return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense: found %s", InstructionTypeName(dspOrAspInstruction))
+
+}
+
+func summarise(ins RobotInstruction) (StepSummary, error) {
+
+	var summaryOfMoveOperation StepSummary
 
 	for _, str := range RobotParameters {
 		p := ins.GetParameter(str)
@@ -146,11 +340,22 @@ func InsToString(ins RobotInstruction) string {
 			}
 			ss = concatboolarray(p.([]bool))
 		}
-
-		s += str + ": " + ss + " "
+		if str == "WHAT" {
+			summaryOfMoveOperation.LiquidType = ss
+		} else if str == "MULTI" {
+			summaryOfMoveOperation.Multi = ss
+		} else if str == "OFFSETZ" {
+			summaryOfMoveOperation.OffsetZ = ss
+		} else if str == "TOPLATETYPE" {
+			summaryOfMoveOperation.PlateType = ss
+		} else if str == WELLTOVOLUME {
+			summaryOfMoveOperation.WellToVolume = ss
+		} else if str == "VOLUME" {
+			summaryOfMoveOperation.Volume = ss
+		}
 	}
 
-	return s
+	return summaryOfMoveOperation, nil
 }
 
 func InsToString2(ins RobotInstruction) string {
@@ -243,33 +448,65 @@ func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
 	return true
 }
 
-// func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol wtype.LHPolicy) {
-// 	fmt.Println("*****")
-// 	fmt.Println("Policy for instruction ", InsToString(ins))
-// 	fmt.Println()
-// 	fmt.Println("Active Rules:")
-// 	fmt.Println("\t Default")
-// 	for _, r := range rules {
-// 		fmt.Println("\t", r.Name)
-// 	}
-// 	fmt.Println()
-// 	itemset := wtype.MakePolicyItems()
-// 	fmt.Println("Full output")
-// 	for _, s := range itemset.OrderedList() {
-// 		if pol[s] == nil {
-// 			continue
-// 		}
-// 		fmt.Println("\t", s, ": ", pol[s])
-// 	}
-// 	fmt.Println("_____")
+/*
+func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol wtype.LHPolicy) {
+ 	fmt.Println("*****")
+ 	fmt.Println("Policy for instruction ", InsToString(ins))
+ 	fmt.Println()
+ 	fmt.Println("Active Rules:")
+ 	fmt.Println("\t Default")
+ 	for _, r := range rules {
+ 		fmt.Println("\t", r.Name)
+ 	}
+ 	fmt.Println()
+ 	itemset := wtype.MakePolicyItems()
+ 	fmt.Println("Full output")
+ 	for _, s := range itemset.OrderedList() {
+ 		if pol[s] == nil {
+ 			continue
+ 		}
+ 		fmt.Println("\t", s, ": ", pol[s])
+ 	}
+ 	fmt.Println("_____")
 
-// }
+}
+*/
+var (
+	// ErrNoMatchingRules is returned when no matching LHPolicyRules are found when evaluating a rule set against a RobotInsturction.
+	ErrNoMatchingRules = errors.New("no matching rules found")
+	// ErrNoMatchingLiquidType is returned when no matching liquid policy is found.
+	ErrNoMatchingLiquidType = errors.New("no matching LiquidType")
+)
 
-func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPolicy {
+func matchesLiquidClass(rule wtype.LHPolicyRule) (match bool) {
+	if len(rule.Conditions) > 0 {
+		for i := range rule.Conditions {
+			if rule.Conditions[i].TestVariable == "LIQUIDCLASS" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// GetDefaultPolicyq currently returns the default policy
+func GetDefaultPolicy(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPolicy, error) {
+	defaultPolicy := wtype.DupLHPolicy(lhpr.Policies["default"])
+	return defaultPolicy, nil
+}
+
+// GetPolicyFor will return a matching LHPolicy for a RobotInstruction.
+// If a common policy cannot be found for instances of the instruction then an error will be returned.
+func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPolicy, error) {
 	// find the set of matching rules
 	rules := make([]wtype.LHPolicyRule, 0, len(lhpr.Rules))
+	var lhpolicyFound bool
 	for _, rule := range lhpr.Rules {
+
 		if ins.Check(rule) {
+			if matchesLiquidClass(rule) {
+				lhpolicyFound = true
+			}
 			rules = append(rules, rule)
 		}
 	}
@@ -284,9 +521,15 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) wtype.LHPol
 	for _, rule := range rules {
 		ppl.MergeWith(lhpr.Policies[rule.Name])
 	}
+	if len(rules) == 0 {
+		return ppl, ErrNoMatchingRules
+	}
 
+	if !lhpolicyFound {
+		return ppl, ErrNoMatchingLiquidType
+	}
 	//printPolicyForDebug(ins, rules, ppl)
-	return ppl
+	return ppl, nil
 }
 
 func HasParameter(s string, ins RobotInstruction) bool {

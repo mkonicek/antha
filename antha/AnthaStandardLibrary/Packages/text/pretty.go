@@ -23,8 +23,7 @@
 package text
 
 import (
-	"encoding/json"
-	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 )
 
 // PrettyPrint will return an indented string of an object.
@@ -43,10 +42,4 @@ import (
 	},
 ]
 */
-func PrettyPrint(data interface{}) string {
-	bytes, err := json.MarshalIndent(data, "", "\t")
-	if err != nil {
-		panic(fmt.Sprintf("error marshalling data for pretty print: %s", err.Error()))
-	}
-	return string(bytes)
-}
+var PrettyPrint = text.PrettyPrint

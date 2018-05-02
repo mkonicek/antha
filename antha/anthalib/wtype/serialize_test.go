@@ -26,9 +26,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
+	"github.com/go-test/deep"
 )
 
 func TestDeserializeLHSolution(t *testing.T) {
@@ -128,7 +129,6 @@ func TestLHWellSerialize(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(lhwell, dest) {
-		fmt.Println(pretty.Compare(lhwell, dest))
-		t.Fatal("Initial well and dest well differ")
+		t.Fatal(fmt.Sprintf("Initial well (%+v) and dest well (%+v) differ. Differences are: %s", lhwell.WContents, dest.WContents, strings.Join(deep.Equal(lhwell, dest), "\n")))
 	}
 }

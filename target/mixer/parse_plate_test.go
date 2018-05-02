@@ -229,7 +229,8 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 		},
 		{
 			// This is to test carriage returns.
-			File: fileCarriage,
+			File:       fileCarriage,
+			NoWarnings: true,
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
@@ -261,6 +262,40 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 							Vunit: "ul",
 							Conc:  10.0,
 							Cunit: "g/l",
+						},
+					},
+				},
+			},
+		},
+		{
+			File: []byte(
+				`
+pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
+A1,water,randomType,140.5,ul,0,mg/l
+C1,neb5compcells,culture,20.5,ul,0,ng/ul
+`),
+			NoWarnings: false,
+			Expected: &wtype.LHPlate{
+				Type: "pcrplate_skirted_riser40",
+				Wellcoords: map[string]*wtype.LHWell{
+					"A1": {
+						WContents: &wtype.LHComponent{
+							CName: "water",
+							Type:  wtype.LiquidType("randomType"),
+							Vol:   140.5,
+							Vunit: "ul",
+							Conc:  0,
+							Cunit: "mg/l",
+						},
+					},
+					"C1": {
+						WContents: &wtype.LHComponent{
+							CName: "neb5compcells",
+							Type:  wtype.LTCulture,
+							Vol:   20.5,
+							Vunit: "ul",
+							Conc:  0,
+							Cunit: "mg/l",
 						},
 					},
 				},

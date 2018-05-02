@@ -171,7 +171,9 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 
 	// this routine ensures that instructions can be executed in parallel
 
-	ic = simplifyIChain(ic, inputs)
+	if ic == nil {
+		ic = simplifyIChain(ic, inputs)
+	}
 
 	sortOutputs(ic, sort)
 
@@ -388,6 +390,7 @@ func set_output_order(rq *LHRequest) error {
 
 	// sort again post aggregation
 	tg = MakeTGraph(sortedAsIns)
+
 	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
 	if err != nil {
@@ -504,6 +507,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	vt := make([]wunit.Volume, 0, lenToMake) // volume in well to
 	ptf := make([]string, 0, lenToMake)      // plate types
 	cnames := make([]string, 0, lenToMake)   // actual Component names
+	policies := make([]wtype.LHPolicy, 0, lenToMake)
 
 	for i, v := range cmps {
 		for xx := range tfrs[i].PlateIDs { //fromPlateIDs[i] {
@@ -564,6 +568,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			vrm := v2.Dup()
 			vrm.Add(carryvol)
 			cnames = append(cnames, wlf.WContents.CName)
+			policies = append(policies, wlf.WContents.Policy)
 			if _, err := wlf.RemoveVolume(vrm); err != nil {
 				return nil, err
 			}
@@ -600,7 +605,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	}
 
 	// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int
-	ti := driver.NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames)
+	ti := driver.NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames, policies)
 
 	return ti, nil
 }

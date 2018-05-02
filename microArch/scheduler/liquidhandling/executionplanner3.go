@@ -90,7 +90,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		ch = ch.Child
 	}
 
-	inx, err := request.InstructionSet.Generate(ctx, request.Policies, robot)
+	inx, err := request.InstructionSet.Generate(ctx, request.Policies(), robot)
 
 	if err != nil {
 		return nil, err

@@ -2,9 +2,10 @@ package liquidhandling
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"testing"
 )
 
 func getChannelForTest() *wtype.LHChannelParameter {
@@ -12,7 +13,7 @@ func getChannelForTest() *wtype.LHChannelParameter {
 }
 
 func TestDNAPolicy(t *testing.T) {
-	pft, _ := GetLHPolicyForTest()
+	pft, _ := wtype.GetLHPolicyForTest()
 
 	tp := TransferParams{
 		What:    "dna",
@@ -23,7 +24,11 @@ func TestDNAPolicy(t *testing.T) {
 	ins1 := NewSuckInstruction()
 	ins1.AddTransferParams(tp)
 
-	p := GetPolicyFor(pft, ins1)
+	p, err := GetPolicyFor(pft, ins1)
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	m, ok := p["POST_MIX"]
 
@@ -35,7 +40,11 @@ func TestDNAPolicy(t *testing.T) {
 
 	ins2 := NewSuckInstruction()
 	ins2.AddTransferParams(tp)
-	p = GetPolicyFor(pft, ins2)
+	p, err = GetPolicyFor(pft, ins2)
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	m, ok = p["POST_MIX"]
 
@@ -45,7 +54,7 @@ func TestDNAPolicy(t *testing.T) {
 }
 
 func TestPEGPolicy(t *testing.T) {
-	pft, _ := GetLHPolicyForTest()
+	pft, _ := wtype.GetLHPolicyForTest()
 
 	tp := TransferParams{
 		What:    "PEG",
@@ -56,7 +65,11 @@ func TestPEGPolicy(t *testing.T) {
 	ins1 := NewSuckInstruction()
 	ins1.AddTransferParams(tp)
 
-	p := GetPolicyFor(pft, ins1)
+	p, err := GetPolicyFor(pft, ins1)
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	if p["ASPZOFFSET"].(float64) != 1.0 {
 		t.Fatal("ASPZOFFSET for PEG must be 1.0")
@@ -69,7 +82,11 @@ func TestPEGPolicy(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		q := GetPolicyFor(pft, ins1)
+		q, err := GetPolicyFor(pft, ins1)
+
+		if err != nil {
+			t.Error(err)
+		}
 
 		if q["ASPZOFFSET"] != p["ASPZOFFSET"] {
 			t.Fatal("Inconsistent Z offsets returned")
@@ -78,7 +95,7 @@ func TestPEGPolicy(t *testing.T) {
 }
 
 func TestPPPolicy(t *testing.T) {
-	pft, _ := GetLHPolicyForTest()
+	pft, _ := wtype.GetLHPolicyForTest()
 
 	tp := TransferParams{
 		What:    "Protoplasts",
@@ -89,7 +106,11 @@ func TestPPPolicy(t *testing.T) {
 	ins1 := NewBlowInstruction()
 	ins1.AddTransferParams(tp)
 
-	p := GetPolicyFor(pft, ins1)
+	p, err := GetPolicyFor(pft, ins1)
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	if p["TIP_REUSE_LIMIT"].(int) != 5 {
 		t.Fatal(fmt.Sprintf("Protoplast tip reuse limit is %d, not 5", p["TIP_REUSE_LIMIT"]))
@@ -181,7 +202,7 @@ func getWaterInstructions() []RobotInstruction {
 //TestRobotInstructionCheckLiquidClass tests that the Check method successfully
 //matches liquid classes for all instructions
 func TestRobotInstructionCheckLiquidClass(t *testing.T) {
-	pft, err := GetLHPolicyForTest()
+	pft, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,5 +221,56 @@ func TestRobotInstructionCheckLiquidClass(t *testing.T) {
 				InstructionTypeName(ins),
 				ins.GetParameter("LIQUIDCLASS"))
 		}
+	}
+}
+
+func TestSmartMixPolicy(t *testing.T) {
+	pft, err := wtype.GetLHPolicyForTest()
+
+	if err != nil {
+		t.Error(
+			err.Error(),
+		)
+	}
+
+	tp := TransferParams{
+		What:    "SmartMix",
+		Volume:  wunit.NewVolume(25.0, "ul"),
+		TVolume: wunit.NewVolume(1000.0, "ul"),
+		Channel: getChannelForTest(),
+	}
+
+	ins1 := NewBlowInstruction()
+	ins1.AddTransferParams(tp)
+
+	p, err := GetPolicyFor(pft, ins1)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	m, ok := p["POST_MIX_VOLUME"]
+
+	if !ok || m.(float64) != 200.0 {
+		t.Error("SmartMix must have post mix volume of 200 ul when pipetting into 1000ul \n",
+			"found ", m, " ul \n")
+	}
+
+	tp.Volume = wunit.NewVolume(25, "ul")
+	tp.TVolume = wunit.NewVolume(50, "ul")
+
+	ins2 := NewBlowInstruction()
+	ins2.AddTransferParams(tp)
+	p, err = GetPolicyFor(pft, ins2)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	m, ok = p["POST_MIX_VOLUME"]
+
+	if !ok || m.(float64) != 20.0 {
+		t.Error("SmartMix must have post mix volume of 20 ul when pipetting into 50ul \n",
+			"found ", m, " ul \n")
 	}
 }

@@ -36,12 +36,43 @@ const (
 	LHP_OR
 )
 
-// this structure defines parameters
+// LHPolicy defines parameters for a liquid handling policy.
+// Valid key and value pairs are found aparam.go
 type LHPolicy map[string]interface{}
 
+// Name returns the name of an LHPolicy as a string
+func (policy LHPolicy) Name() string {
+	return policy[PolicyNameField].(string)
+}
+
+// SetName sets the name of an LHPolicy.
+func (policy *LHPolicy) SetName(name string) error {
+	return policy.Set(PolicyNameField, name)
+}
+
+// NewLHPolicy generates an empty LHPolicy
 func NewLHPolicy() LHPolicy {
 	pol := make(LHPolicy)
 	return pol
+}
+
+// EquivalentPolicies checks for equality of two policies.
+// We're being conservative here.
+// It's possible that at the point at which low level instructions
+// are generated that two policies of different length will be
+// actioned in exactly the same way.
+// Since we cannot guarantee this at this point, we'll say they're not equivalent.
+func EquivalentPolicies(policy1, policy2 LHPolicy) bool {
+	if len(policy1) != len(policy2) {
+		return false
+	}
+
+	for key1, value := range policy1 {
+		if !reflect.DeepEqual(policy2[key1], value) {
+			return false
+		}
+	}
+	return true
 }
 
 func (plhp *LHPolicy) Set(item string, value interface{}) error {
@@ -410,6 +441,10 @@ func CloneLHPolicyRuleSet(parent *LHPolicyRuleSet) *LHPolicyRuleSet {
 		child.Policies[k] = parent.Policies[k]
 		child.Rules[k] = parent.Rules[k]
 	}
+	for k := range parent.Options {
+		child.Options[k] = parent.Options[k]
+	}
+
 	return child
 }
 
@@ -423,18 +458,31 @@ func (lhpr LHPolicyRuleSet) GetEquivalentRuleTo(rule LHPolicyRule) string {
 	return ""
 }
 
-func (lhpr *LHPolicyRuleSet) MergeWith(other *LHPolicyRuleSet) {
-	for k, rule := range other.Rules {
+// MergeWith merges the policyToMerge with the current LHPolicyRuleSet.
+// if equivalent rules are found in the policyToMerge these are given priority
+// over the existing rules.
+func (lhpr *LHPolicyRuleSet) MergeWith(policyToMerge *LHPolicyRuleSet) {
+
+	for key, rule := range policyToMerge.Rules {
 		name := lhpr.GetEquivalentRuleTo(rule)
 
 		if name != "" {
 			// merge the two policies
-			pol := other.Policies[k]
-			p2 := lhpr.Policies[k]
+			pol := policyToMerge.Policies[key]
+			p2 := lhpr.Policies[key]
 			p2.MergeWith(pol)
-			lhpr.Policies[k] = p2
+			lhpr.Policies[key] = p2
 		}
+		lhpr.Rules[key] = policyToMerge.Rules[key]
+		lhpr.Policies[key] = policyToMerge.Policies[key]
+		lhpr.Options[key] = policyToMerge.Options[key]
 	}
+
+	// this will override existing options if they are contradictory
+	for key := range policyToMerge.Options {
+		lhpr.Options[key] = policyToMerge.Options[key]
+	}
+
 }
 
 type SortableRules []LHPolicyRule

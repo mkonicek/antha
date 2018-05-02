@@ -892,11 +892,11 @@ func DecodeLHDevice(arg *pb.LHDeviceMessage) wtype.LHDevice {
 	return ret
 }
 func EncodeLHComponent(arg wtype.LHComponent) *pb.LHComponentMessage {
-	ret := pb.LHComponentMessage{(string)(arg.ID), EncodeBlockID(arg.BlockID), (string)(arg.DaughterID), (string)(arg.ParentID), (string)(arg.Inst), int64(arg.Order), (string)(arg.CName), int64(arg.Type), (float64)(arg.Vol), (float64)(arg.Conc), (string)(arg.Vunit), (string)(arg.Cunit), (float64)(arg.Tvol), (float64)(arg.Smax), (float64)(arg.Visc), (float64)(arg.StockConcentration), EncodeMapstringinterfaceMessage(arg.Extra), (string)(arg.Loc), (string)(arg.Destination)}
+	ret := pb.LHComponentMessage{(string)(arg.ID), EncodeBlockID(arg.BlockID), (string)(arg.DaughterID), (string)(arg.ParentID), (string)(arg.Inst), int64(arg.Order), (string)(arg.CName), string(arg.Type), (float64)(arg.Vol), (float64)(arg.Conc), (string)(arg.Vunit), (string)(arg.Cunit), (float64)(arg.Tvol), (float64)(arg.Smax), (float64)(arg.Visc), (float64)(arg.StockConcentration), EncodeMapstringinterfaceMessage(arg.Extra), (string)(arg.Loc), (string)(arg.Destination), EncodeMapstringinterfaceMessage(arg.Policy)}
 	return &ret
 }
 func DecodeLHComponent(arg *pb.LHComponentMessage) wtype.LHComponent {
-	ret := wtype.LHComponent{ID: (string)(arg.Arg_1), BlockID: (wtype.BlockID)(DecodeBlockID(arg.Arg_2)), DaughterID: (string)(arg.Arg_3), ParentID: (string)(arg.Arg_4), Inst: (string)(arg.Arg_5), Order: (int)(arg.Arg_6), CName: (string)(arg.Arg_7), Type: (wtype.LiquidType)(arg.Arg_8), Vol: (float64)(arg.Arg_9), Conc: (float64)(arg.Arg_10), Vunit: (string)(arg.Arg_11), Cunit: (string)(arg.Arg_12), Tvol: (float64)(arg.Arg_13), Smax: (float64)(arg.Arg_14), Visc: (float64)(arg.Arg_15), StockConcentration: (float64)(arg.Arg_16), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_17)), Loc: (string)(arg.Arg_18), Destination: (string)(arg.Arg_19)}
+	ret := wtype.LHComponent{ID: (string)(arg.Arg_1), BlockID: (wtype.BlockID)(DecodeBlockID(arg.Arg_2)), DaughterID: (string)(arg.Arg_3), ParentID: (string)(arg.Arg_4), Inst: (string)(arg.Arg_5), Order: (int)(arg.Arg_6), CName: (string)(arg.Arg_7), Type: (wtype.LiquidType)(arg.Arg_8), Vol: (float64)(arg.Arg_9), Conc: (float64)(arg.Arg_10), Vunit: (string)(arg.Arg_11), Cunit: (string)(arg.Arg_12), Tvol: (float64)(arg.Arg_13), Smax: (float64)(arg.Arg_14), Visc: (float64)(arg.Arg_15), StockConcentration: (float64)(arg.Arg_16), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_17)), Loc: (string)(arg.Arg_18), Destination: (string)(arg.Arg_19), Policy: DecodeMapstringinterfaceMessage(arg.Arg_20)}
 	return ret
 }
 func EncodeShape(arg wtype.Shape) *pb.ShapeMessage {

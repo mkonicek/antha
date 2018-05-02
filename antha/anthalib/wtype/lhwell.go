@@ -142,7 +142,23 @@ func (self *LHWell) SetParent(p LHObject) error {
 
 //@implement LHObject
 func (self *LHWell) GetParent() LHObject {
+	if self == nil {
+		return nil
+	}
 	return self.Plate
+}
+
+//Duplicate copies an LHObject
+func (self *LHWell) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
+}
+
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHWell) DimensionsString() string {
+	if self == nil {
+		return "nil well"
+	}
+	return fmt.Sprintf("Well %s at %v+%v", self.GetName(), self.GetPosition(), self.GetSize())
 }
 
 func (w LHWell) String() string {
@@ -326,6 +342,15 @@ func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	return ret, nil
 }
 
+//RemoveCarry Remove the carry volume
+func (w *LHWell) RemoveCarry(v wunit.Volume) {
+	if w == nil {
+		return
+	}
+
+	w.Contents().Remove(v)
+}
+
 //IsVolumeValid tests whether the volume in the well is within the allowable range
 func (w *LHWell) IsVolumeValid() bool {
 	if w == nil {
@@ -443,6 +468,7 @@ func (lhw *LHWell) dup(keep_ids bool) *LHWell {
 	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
 	cp.Plate = lhw.Plate
 	cp.Crds = lhw.Crds
+	cp.Bounds = lhw.Bounds
 
 	if keep_ids {
 		cp.ID = lhw.ID
@@ -888,4 +914,63 @@ func (w LHWell) CheckExtraKey(s string) error {
 	}
 
 	return nil
+}
+
+const wellTargetKey = "well_targets"
+
+func (w *LHWell) getTargetMap() map[string][]Coordinates {
+	m, ok := w.Extra[wellTargetKey]
+	if !ok {
+		ret := make(map[string][]Coordinates)
+		w.Extra[wellTargetKey] = ret
+		return ret
+	}
+	ret, ok := m.(map[string][]Coordinates)
+	//gets broken by serialise/deserialise
+	if !ok {
+		ret := make(map[string][]Coordinates)
+		for name, coords := range m.(map[string]interface{}) {
+			ret[name] = make([]Coordinates, 0)
+			for _, crd := range coords.([]interface{}) {
+				c := crd.(map[string]interface{})
+				ret[name] = append(ret[name], Coordinates{X: c["X"].(float64),
+					Y: c["Y"].(float64),
+					Z: c["Z"].(float64)})
+			}
+		}
+		return ret
+	}
+	return ret
+}
+
+//SetWellTargets sets the targets for each channel when accessing the well using
+//adaptor. offsets is a list of coordinates which specify the offset in mm from
+//the well center for each channel.
+//len(offsets) specifies the maximum number of channels which can access the well
+//simultaneously using adaptor
+func (w *LHWell) SetWellTargets(adaptor string, offsets []Coordinates) {
+	wtMap := w.getTargetMap()
+	wtMap[adaptor] = offsets
+}
+
+//GetWellTargets return the well targets for the given adaptor
+//if the adaptor has no defined targets, simply returns the well center
+func (w *LHWell) GetWellTargets(adaptor string) []Coordinates {
+	wtMap := w.getTargetMap()
+	adaptorTargets, ok := wtMap[adaptor]
+	if !ok {
+		return []Coordinates{}
+	}
+	return adaptorTargets
+}
+
+//GetAdaptorsWithTargets gets the list of the names of adaptors which have
+//targets defined for the well
+func (w *LHWell) ListAdaptorsWithTargets() []string {
+	wtMap := w.getTargetMap()
+	ret := make([]string, 0, len(wtMap))
+	for adaptorName := range wtMap {
+		ret = append(ret, adaptorName)
+	}
+	return ret
 }

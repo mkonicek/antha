@@ -60,6 +60,7 @@ type Opt struct {
 	UseLLF               bool // allow the use of LLF
 	LegacyVolume         bool // don't track volumes for intermediates
 	FixVolumes           bool // aim to revise requested volumes to service requirements
+	CustomPolicyData     map[string]wtype.LHPolicy
 }
 
 // Merge two configs together and return the result. Values in the argument

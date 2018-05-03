@@ -119,7 +119,7 @@ func getTestBlowout(robot *LHProperties) RobotInstruction {
 	bi.WellTo = append(bi.WellTo, "A1")
 	bi.Volume = append(bi.Volume, v)
 	bi.TPlateType = append(bi.TPlateType, "pcrplate_skirted_riser40")
-	bi.TVolume = append(bi.TVolume, wunit.ZeroVolume())
+	bi.TVolume = append(bi.TVolume, wunit.NewVolume(5.0, "ul"))
 	bi.Prms = ch
 	bi.Head = ch.Head
 	return bi
@@ -135,7 +135,7 @@ func TestBlowWithTipChange(t *testing.T) {
 	}
 
 	bi := getTestBlowout(robot)
-	pol, _ := GetLHPolicyForTest()
+	pol, _ := wtype.GetLHPolicyForTest()
 
 	rule := wtype.NewLHPolicyRule("TESTRULE1")
 	rule.AddCategoryConditionOn("LIQUIDCLASS", "soup")
@@ -173,7 +173,7 @@ func TestBlowNoTipChange(t *testing.T) {
 	}
 
 	bi := getTestBlowout(robot)
-	pol, _ := GetLHPolicyForTest()
+	pol, _ := wtype.GetLHPolicyForTest()
 
 	rule := wtype.NewLHPolicyRule("TESTRULE1")
 	rule.AddCategoryConditionOn("LIQUIDCLASS", "soup")

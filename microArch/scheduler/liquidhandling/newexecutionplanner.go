@@ -90,7 +90,7 @@ func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *li
 
 		if request.Options.ModelEvaporation {
 			// we should be able to model evaporation here
-			instrx, _ := ris.Generate(ctx, request.Policies, rbtcpy)
+			instrx, _ := ris.Generate(ctx, request.Policies(), rbtcpy)
 
 			if timer != nil {
 				var totaltime time.Duration
@@ -121,7 +121,7 @@ func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *li
 
 	// 4 -- make the low-level instructions
 
-	inx, err := request.InstructionSet.Generate(ctx, request.Policies, robot)
+	inx, err := request.InstructionSet.Generate(ctx, request.Policies(), robot)
 
 	if err != nil {
 		return nil, err

@@ -532,18 +532,22 @@ func findTransferForMerge(ins *TransferInstruction, arr []*TransferInstruction, 
 	return nil
 }
 
+func canMulti(policy wtype.LHPolicy) bool {
+	return policy["CAN_MULTI"].(bool)
+}
+
 func canMerge(ins, ins2 *TransferInstruction, policy *wtype.LHPolicyRuleSet) bool {
 	// merge only if the merge doesn't break either
 
 	ins3 := ins.Dup()
 	ins3.MergeWith(ins2)
 
-	m1 := GetPolicyFor(policy, ins)["CAN_MULTI"].(bool)
-	m2 := GetPolicyFor(policy, ins2)["CAN_MULTI"].(bool)
-	m3 := GetPolicyFor(policy, ins3)["CAN_MULTI"].(bool)
+	pol1, _ := GetPolicyFor(policy, ins)
+	pol2, _ := GetPolicyFor(policy, ins2)
+	pol3, _ := GetPolicyFor(policy, ins3)
 
-	if m1 == m2 {
-		return m1 == m3
+	if canMulti(pol1) == canMulti(pol2) {
+		return canMulti(pol1) == canMulti(pol3)
 	}
 
 	return false

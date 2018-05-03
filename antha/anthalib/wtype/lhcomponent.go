@@ -56,6 +56,7 @@ type LHComponent struct {
 	Extra              map[string]interface{}
 	Loc                string // refactor to PlateLocation
 	Destination        string
+	Policy             LHPolicy // Policy is where a custom liquid policy is stored
 }
 
 func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {
@@ -158,7 +159,7 @@ func (lhc *LHComponent) SetGeneration(i int) {
 }
 
 func (lhc *LHComponent) IsZero() bool {
-	if lhc == nil || lhc.Type == LTNIL || lhc.CName == "" || lhc.Vol < 0.0000001 {
+	if lhc == nil || lhc.Type == "" || lhc.CName == "" || lhc.Vol < 0.0000001 {
 		return true
 	}
 	return false
@@ -444,12 +445,12 @@ func (lhc *LHComponent) SetName(name string) {
 
 // TypeName returns the PolicyName of the LHComponent's LiquidType as a string
 func (lhc *LHComponent) TypeName() string {
-	return LiquidTypeName(lhc.Type).String()
+	return string(lhc.Type)
 }
 
 // PolicyName returns the PolicyName of the LHComponent's LiquidType
 func (lhc *LHComponent) PolicyName() PolicyName {
-	return PolicyName(LiquidTypeName(lhc.Type).String())
+	return PolicyName(lhc.TypeName())
 }
 
 // SetPolicyName adds the LiquidType associated with a PolicyName to the LHComponent.
@@ -580,12 +581,17 @@ func (cmp *LHComponent) HasAnyParent() bool {
 }
 
 // XXX XXX XXX --> This is no longer consistent... need to revise urgently
+/*
 func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
-	if cmp.ParentID != "" {
-		cmp.ParentID += "_"
+	if cmp == nil {
+		return
 	}
-	cmp.ParentID += cmp2.String() + "(" + cmp2.ParentID + ")"
-	//cmp.ParentID += cmp2.ID + "(" + cmp2.ParentID + ")"
+	cmp.ParentID = cmp2.ID
+}
+*/
+
+func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
+	cmp.ParentID = cmp2.ID
 }
 
 func (cmp *LHComponent) AddDaughterComponent(cmp2 *LHComponent) {
@@ -712,7 +718,8 @@ func (lhc *LHComponent) GetVunit() string {
 }
 
 func (lhc *LHComponent) GetType() string {
-	return LiquidTypeName(lhc.Type).String()
+	typeName, _ := LiquidTypeName(lhc.Type)
+	return typeName.String()
 }
 
 func NewLHComponent() *LHComponent {
@@ -720,6 +727,7 @@ func NewLHComponent() *LHComponent {
 	//lhc.ID = "component-" + GetUUID()
 	lhc.ID = GetUUID()
 	lhc.Vunit = "ul"
+	lhc.Policy = make(map[string]interface{})
 	lhc.Extra = make(map[string]interface{})
 	return &lhc
 }

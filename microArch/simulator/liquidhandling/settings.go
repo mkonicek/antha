@@ -30,19 +30,32 @@ const (
 	WarnAlways
 )
 
+type TipTrackingBehaviour int
+
+const (
+	NoTipTracking TipTrackingBehaviour = iota
+	TrilutionTipTracking
+)
+
 type SimulatorSettings struct {
 	enable_tipbox_collision bool      //Whether or not to complain if the head hits a tipbox
 	enable_tipbox_check     bool      //detect tipboxes which are taller that the tips, and disable tipbox_collisions
 	warn_auto_channels      Frequency //Display warnings for load/unload tips
 	max_dispense_height     float64   //maximum height to dispense from in mm
+	tipTracking             TipTrackingBehaviour
+	warnPipetteSpeed        Frequency //Raise warnings for pipette speed out of range
+	warnLiquidType          Frequency //raise warnings when liquid types don't match
 }
 
 func DefaultSimulatorSettings() *SimulatorSettings {
 	ss := SimulatorSettings{
-		true,
-		true,
-		WarnAlways,
-		5.,
+		enable_tipbox_collision: true,
+		enable_tipbox_check:     true,
+		warn_auto_channels:      WarnAlways,
+		max_dispense_height:     5.,
+		tipTracking:             NoTipTracking,
+		warnPipetteSpeed:        WarnAlways,
+		warnLiquidType:          WarnNever,
 	}
 	return &ss
 }
@@ -83,4 +96,42 @@ func (self *SimulatorSettings) MaxDispenseHeight() float64 {
 
 func (self *SimulatorSettings) SetMaxDispenseHeight(f float64) {
 	self.max_dispense_height = f
+}
+
+func (self *SimulatorSettings) GetTipTrackingBehaviour() TipTrackingBehaviour {
+	return self.tipTracking
+}
+
+func (self *SimulatorSettings) SetTipTrackingBehaviour(s TipTrackingBehaviour) {
+	self.tipTracking = s
+}
+
+func (self *SimulatorSettings) IsPipetteSpeedWarningEnabled() bool {
+	switch self.warnPipetteSpeed {
+	case WarnAlways:
+		return true
+	case WarnOnce:
+		self.warnPipetteSpeed = WarnNever
+		return true
+	}
+	return false
+}
+
+func (self *SimulatorSettings) EnablePipetteSpeedWarning(f Frequency) {
+	self.warnPipetteSpeed = f
+}
+
+func (self *SimulatorSettings) IsLiquidTypeWarningEnabled() bool {
+	switch self.warnLiquidType {
+	case WarnAlways:
+		return true
+	case WarnOnce:
+		self.warnLiquidType = WarnNever
+		return true
+	}
+	return false
+}
+
+func (self *SimulatorSettings) EnableLiquidTypeWarning(f Frequency) {
+	self.warnLiquidType = f
 }

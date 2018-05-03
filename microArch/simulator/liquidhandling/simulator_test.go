@@ -238,14 +238,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 0.001},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 0 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 1 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 2 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 3 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 4 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 5 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 6 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 7 speed to 0.001 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channels 0,1,2,3,4,5,6,7 speed to 0.001 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -258,14 +251,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 15.},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 0 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 1 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 2 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 3 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 4 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 5 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 6 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
-				"(warn) SetPipetteSpeed: Setting Head 0 channel 7 speed to 15 ml/min outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channels 0,1,2,3,4,5,6,7 speed to 15 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -298,6 +284,19 @@ func testLayout() *SetupFn {
 		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
 		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
 		vlh.AddPlateTo("input_1", default_lhplate("plate1"), "plate1")
+		vlh.AddPlateTo("input_2", default_lhplate("plate2"), "plate2")
+		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
+		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
+	}
+	return &ret
+}
+
+func testTroughLayout() *SetupFn {
+	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+		vlh.Initialize()
+		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", lhplate_trough12("trough1"), "trough1")
 		vlh.AddPlateTo("input_2", default_lhplate("plate2"), "plate2")
 		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
 		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
@@ -420,7 +419,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 67.5, Z: 38.9}),
+				positionAssertion(0, wtype.Coordinates{X: 402.75, Y: 65.75, Z: 38.9}),
 			},
 		},
 		{
@@ -443,7 +442,30 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 404.5, Y: 31.5, Z: 38.9}),
+				positionAssertion(0, wtype.Coordinates{X: 402.75, Y: 29.75, Z: 38.9}),
+			},
+		},
+		{
+			"OK_trough",
+			nil,
+			[]*SetupFn{
+				testTroughLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},                                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                    //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},         //plate_type
+					0, //head
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 404.1, Y: 34.5, Z: 46.8}),
 			},
 		},
 		{
@@ -476,14 +498,14 @@ func Test_Move(t *testing.T) {
 			},
 			[]string{ //errors
 				"(err) Move: Unknown location \"tipbox7\"",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\" not type \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\" not type \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\" not type \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\" not type \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\" not type \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\" not type \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\" not type \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\" not type \"tipwaste\" as expected",
+				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
 			},
 			nil, //assertions
 		},
@@ -917,6 +939,58 @@ func TestLoadTips(t *testing.T) {
 			},
 		},
 		{
+			"OK - 2 groups of 4",
+			nil,
+			[]*SetupFn{
+				testLayout(),
+				moveTo(4, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3}, //channels
+					0,                 //head
+					4,                 //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "", "", "", ""},         //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "", "", "", ""}, //location
+					[]string{"E1", "F1", "G1", "H1", "", "", "", ""},                         //well
+				},
+				&Move{
+					[]string{"", "", "", "", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"", "", "", "", "A1", "B1", "C1", "D1"},                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                //offsetZ
+					[]string{"", "", "", "", "tipbox", "tipbox", "tipbox", "tipbox"},         //plate_type
+					0, //head
+				},
+				&LoadTips{
+					[]int{4, 5, 6, 7}, //channels
+					0,                 //head
+					4,                 //multi
+					[]string{"", "", "", "", "tipbox", "tipbox", "tipbox", "tipbox"},         //tipbox
+					[]string{"", "", "", "", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"", "", "", "", "A1", "B1", "C1", "D1"},                         //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{
+					{0, "", 0},
+					{1, "", 0},
+					{2, "", 0},
+					{3, "", 0},
+					{4, "", 0},
+					{5, "", 0},
+					{6, "", 0},
+					{7, "", 0},
+				}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
 			"unknown channel 8",
 			nil,
 			[]*SetupFn{
@@ -1069,7 +1143,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: While loading tip to channel 0, multi should equal 1, not 4",
+				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : multi should equal 1, not 4",
 			},
 			nil, //assertions
 		},
@@ -1092,7 +1166,30 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Cannot load to channel 0 as no tip at H12 in tipbox \"tipbox1\"",
+				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : no tip at H12",
+			},
+			nil, //assertions
+		},
+		{
+			"8 tips missing",
+			nil,
+			[]*SetupFn{
+				testLayout(),
+				removeTipboxTips("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
+				moveTo(0, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //well
+				},
+			},
+			[]string{ //errors
+				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7 : no tips at {A12,B12,C12,D12,E12,F12,G12,H12}",
 			},
 			nil, //assertions
 		},
@@ -1115,7 +1212,30 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Cannot load tips to Head0 when channel 0 already has a tip loaded",
+				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : tip already loaded to channel 0",
+			},
+			nil, //assertions
+		},
+		{
+			"tips already loaded",
+			nil,
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+				moveTo(0, 11, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //well
+				},
+			},
+			[]string{ //errors
+				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7 : tips already loaded to channels 0,1,2,3,4,5,6,7",
 			},
 			nil, //assertions
 		},
@@ -1565,6 +1685,86 @@ func Test_Aspirate(t *testing.T) {
 			},
 		},
 		{
+			"OK - 8 channel trough",
+			nil,
+			[]*SetupFn{
+				testTroughLayout(),
+				prefillWells("input_1", []string{"A1"}, "water", 10000.),
+				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},                                         //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                                                                    //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},         //plate_type
+					0, //head
+				},
+				&Aspirate{
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
+					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
+					0, //head       int
+					8, //multi      int
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"}, //platetype  []string
+					[]string{"water", "water", "water", "water", "water", "water", "water", "water"},         //what       []string
+					[]bool{false, false, false, false, false, false, false, false},                           //llf        []bool
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{
+					{0, "water", 100},
+					{1, "water", 100},
+					{2, "water", 100},
+					{3, "water", 100},
+					{4, "water", 100},
+					{5, "water", 100},
+					{6, "water", 100},
+					{7, "water", 100},
+				}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"Fail - take too much from trough",
+			nil,
+			[]*SetupFn{
+				testTroughLayout(),
+				prefillWells("input_1", []string{"A1"}, "water", 5500.),
+				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},                                         //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                                                                    //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},         //plate_type
+					0, //head
+				},
+				&Aspirate{
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
+					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
+					0, //head       int
+					8, //multi      int
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"}, //platetype  []string
+					[]string{"water", "water", "water", "water", "water", "water", "water", "water"},         //what       []string
+					[]bool{false, false, false, false, false, false, false, false},                           //llf        []bool
+				},
+			},
+			[]string{ //errors
+				"(err) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1,2,3,4,5,6,7 - well A1@trough1 only contains 500 ul working volume",
+			},
+			nil, //assertions
+		},
+		{
 			"Fail - Aspirate with no tip",
 			nil,
 			[]*SetupFn{
@@ -1863,40 +2063,40 @@ func Test_Aspirate(t *testing.T) {
 			},
 			nil, //assertions
 		},
-		{
-			"Fail - wrong liquid type",
-			nil,
-			[]*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
-			},
-			[]TestRobotInstruction{
-				&Move{
-					[]string{"input_1", "", "", "", "", "", "", ""}, //deckposition
-					[]string{"A1", "", "", "", "", "", "", ""},      //wellcoords
-					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
-					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
-					[]string{"plate", "", "", "", "", "", "", ""},   //plate_type
-					0, //head
+		/*		{
+				"Fail - wrong liquid type",
+				nil,
+				[]*SetupFn{
+					testLayout(),
+					prefillWells("input_1", []string{"A1"}, "water", 200.),
+					preloadAdaptorTips(0, "tipbox_1", []int{0}),
 				},
-				&Aspirate{
-					[]float64{102.1, 0., 0., 0., 0., 0., 0., 0.},                   //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
-					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
-					[]string{"ethanol", "", "", "", "", "", "", ""},                //what       []string
-					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
+				[]TestRobotInstruction{
+					&Move{
+						[]string{"input_1", "", "", "", "", "", "", ""}, //deckposition
+						[]string{"A1", "", "", "", "", "", "", ""},      //wellcoords
+						[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+						[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
+						[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
+						[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
+						[]string{"plate", "", "", "", "", "", "", ""},   //plate_type
+						0, //head
+					},
+					&Aspirate{
+						[]float64{102.1, 0., 0., 0., 0., 0., 0., 0.},                   //volume     []float64
+						[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
+						0, //head       int
+						1, //multi      int
+						[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
+						[]string{"ethanol", "", "", "", "", "", "", ""},                //what       []string
+						[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
+					},
 				},
-			},
-			[]string{ //errors
-				"(warn) Aspirate: While aspirating 102 ul of ethanol to head 0 channel 0 - well A1@plate1 contains water, not ethanol",
-			},
-			nil, //assertions
-		},
+				[]string{ //errors
+					"(warn) Aspirate: While aspirating 102 ul of ethanol to head 0 channel 0 - well A1@plate1 contains water, not ethanol",
+				},
+				nil, //assertions
+			},*/
 		{
 			"Fail - inadvertant aspiration",
 			nil,
@@ -2137,7 +2337,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - no tip loaded on channel 0",
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : no tip loaded on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2170,7 +2370,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: While dispensing 150 ul from head 0 channel 0 - tip on channel 0 contains only 100 ul, but blowout flag is false",
+				"(warn) Dispense: 150 ul of water from head 0 channel 0 to A1@plate1 : tip on channel 0 contains only 100 ul, but blowout flag is false",
 			},
 			nil, //assertionsi
 		},
@@ -2203,7 +2403,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 500 ul from head 0 channel 0 - well A1@plate1 under channel 0 contains 0 ul, command would exceed maximum volume 200 ul",
+				"(warn) Dispense: 500 ul of water from head 0 channel 0 to A1@plate1 : overfilling well A1@plate1 to 500 ul of 200 ul max volume",
 			},
 			nil, //assertionsi
 		},
@@ -2236,7 +2436,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - no well within 5 mm below tip on channel 0",
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to nil : no well within 5 mm below tip on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2269,7 +2469,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: While dispensing 50 ul from head 0 channel 0 - dispensing to tipwaste",
+				"(warn) Dispense: 50 ul of water from head 0 channel 0 to A1@tipwaste : dispensing to tipwaste",
 			},
 			nil, //assertionsi
 		},
@@ -2302,7 +2502,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing 50 ul from head 0 channel 0 - must also dispense 50 ul from channels 1,2,3,4,5,6,7 as head is not independent",
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : must also dispense 50 ul from channels 1,2,3,4,5,6,7 as head is not independent",
 			},
 			nil, //assertions
 		},
@@ -2335,7 +2535,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: While dispensing {50,60,50,50,50,50,50,50} ul from head 0 channels 0,1,2,3,4,5,6,7 - channels cannot dispense different volumes in non-independent head",
+				"(err) Dispense: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0,1,2,3,4,5,6,7 to {A1,B1,C1,D1,E1,F1,G1,H1}@plate1 : channels cannot dispense different volumes in non-independent head",
 			},
 			nil, //assertions
 		},
@@ -2919,93 +3119,93 @@ func Test_Workflow(t *testing.T) {
 				{"H5", "water", 135.},
 			}),
 			plateAssertion("output_1", []wellDesc{
-				{"A1", "red+green+water", 20.},
-				{"B1", "red+green+water", 20.},
-				{"C1", "red+green+water", 20.},
-				{"D1", "red+green+water", 20.},
-				{"E1", "red+green+water", 20.},
-				{"F1", "red+green+water", 20.},
-				{"G1", "red+green+water", 20.},
+				{"A1", "green+red+water", 20.},
+				{"B1", "green+red+water", 20.},
+				{"C1", "green+red+water", 20.},
+				{"D1", "green+red+water", 20.},
+				{"E1", "green+red+water", 20.},
+				{"F1", "green+red+water", 20.},
+				{"G1", "green+red+water", 20.},
 				{"H1", "red+water", 20.},
-				{"A2", "red+green+water", 20.},
-				{"B2", "red+green+water", 20.},
-				{"C2", "red+green+water", 20.},
-				{"D2", "red+green+water", 20.},
-				{"E2", "red+green+water", 20.},
-				{"F2", "red+green+water", 20.},
-				{"G2", "red+green+water", 20.},
+				{"A2", "green+red+water", 20.},
+				{"B2", "green+red+water", 20.},
+				{"C2", "green+red+water", 20.},
+				{"D2", "green+red+water", 20.},
+				{"E2", "green+red+water", 20.},
+				{"F2", "green+red+water", 20.},
+				{"G2", "green+red+water", 20.},
 				{"H2", "red+water", 20.},
-				{"A3", "red+green+water", 20.},
-				{"B3", "red+green+water", 20.},
-				{"C3", "red+green+water", 20.},
-				{"D3", "red+green+water", 20.},
-				{"E3", "red+green+water", 20.},
-				{"F3", "red+green+water", 20.},
-				{"G3", "red+green+water", 20.},
+				{"A3", "green+red+water", 20.},
+				{"B3", "green+red+water", 20.},
+				{"C3", "green+red+water", 20.},
+				{"D3", "green+red+water", 20.},
+				{"E3", "green+red+water", 20.},
+				{"F3", "green+red+water", 20.},
+				{"G3", "green+red+water", 20.},
 				{"H3", "red+water", 20.},
-				{"A4", "red+green+water", 20.},
-				{"B4", "red+green+water", 20.},
-				{"C4", "red+green+water", 20.},
-				{"D4", "red+green+water", 20.},
-				{"E4", "red+green+water", 20.},
-				{"F4", "red+green+water", 20.},
-				{"G4", "red+green+water", 20.},
+				{"A4", "green+red+water", 20.},
+				{"B4", "green+red+water", 20.},
+				{"C4", "green+red+water", 20.},
+				{"D4", "green+red+water", 20.},
+				{"E4", "green+red+water", 20.},
+				{"F4", "green+red+water", 20.},
+				{"G4", "green+red+water", 20.},
 				{"H4", "red+water", 20.},
-				{"A5", "red+green+water", 20.},
-				{"B5", "red+green+water", 20.},
-				{"C5", "red+green+water", 20.},
-				{"D5", "red+green+water", 20.},
-				{"E5", "red+green+water", 20.},
-				{"F5", "red+green+water", 20.},
-				{"G5", "red+green+water", 20.},
+				{"A5", "green+red+water", 20.},
+				{"B5", "green+red+water", 20.},
+				{"C5", "green+red+water", 20.},
+				{"D5", "green+red+water", 20.},
+				{"E5", "green+red+water", 20.},
+				{"F5", "green+red+water", 20.},
+				{"G5", "green+red+water", 20.},
 				{"H5", "red+water", 20.},
-				{"A6", "red+green+water", 20.},
-				{"B6", "red+green+water", 20.},
-				{"C6", "red+green+water", 20.},
-				{"D6", "red+green+water", 20.},
-				{"E6", "red+green+water", 20.},
-				{"F6", "red+green+water", 20.},
-				{"G6", "red+green+water", 20.},
+				{"A6", "green+red+water", 20.},
+				{"B6", "green+red+water", 20.},
+				{"C6", "green+red+water", 20.},
+				{"D6", "green+red+water", 20.},
+				{"E6", "green+red+water", 20.},
+				{"F6", "green+red+water", 20.},
+				{"G6", "green+red+water", 20.},
 				{"H6", "red+water", 20.},
-				{"A7", "red+green+water", 20.},
-				{"B7", "red+green+water", 20.},
-				{"C7", "red+green+water", 20.},
-				{"D7", "red+green+water", 20.},
-				{"E7", "red+green+water", 20.},
-				{"F7", "red+green+water", 20.},
-				{"G7", "red+green+water", 20.},
+				{"A7", "green+red+water", 20.},
+				{"B7", "green+red+water", 20.},
+				{"C7", "green+red+water", 20.},
+				{"D7", "green+red+water", 20.},
+				{"E7", "green+red+water", 20.},
+				{"F7", "green+red+water", 20.},
+				{"G7", "green+red+water", 20.},
 				{"H7", "red+water", 20.},
-				{"A8", "red+green+water", 20.},
-				{"B8", "red+green+water", 20.},
-				{"C8", "red+green+water", 20.},
-				{"D8", "red+green+water", 20.},
-				{"E8", "red+green+water", 20.},
-				{"F8", "red+green+water", 20.},
-				{"G8", "red+green+water", 20.},
+				{"A8", "green+red+water", 20.},
+				{"B8", "green+red+water", 20.},
+				{"C8", "green+red+water", 20.},
+				{"D8", "green+red+water", 20.},
+				{"E8", "green+red+water", 20.},
+				{"F8", "green+red+water", 20.},
+				{"G8", "green+red+water", 20.},
 				{"H8", "red+water", 20.},
-				{"A9", "red+green+water", 20.},
-				{"B9", "red+green+water", 20.},
-				{"C9", "red+green+water", 20.},
-				{"D9", "red+green+water", 20.},
-				{"E9", "red+green+water", 20.},
-				{"F9", "red+green+water", 20.},
-				{"G9", "red+green+water", 20.},
+				{"A9", "green+red+water", 20.},
+				{"B9", "green+red+water", 20.},
+				{"C9", "green+red+water", 20.},
+				{"D9", "green+red+water", 20.},
+				{"E9", "green+red+water", 20.},
+				{"F9", "green+red+water", 20.},
+				{"G9", "green+red+water", 20.},
 				{"H9", "red+water", 20.},
-				{"A10", "red+green+water", 20.},
-				{"B10", "red+green+water", 20.},
-				{"C10", "red+green+water", 20.},
-				{"D10", "red+green+water", 20.},
-				{"E10", "red+green+water", 20.},
-				{"F10", "red+green+water", 20.},
-				{"G10", "red+green+water", 20.},
+				{"A10", "green+red+water", 20.},
+				{"B10", "green+red+water", 20.},
+				{"C10", "green+red+water", 20.},
+				{"D10", "green+red+water", 20.},
+				{"E10", "green+red+water", 20.},
+				{"F10", "green+red+water", 20.},
+				{"G10", "green+red+water", 20.},
 				{"H10", "red+water", 20.},
-				{"A11", "red+green+water", 20.},
-				{"B11", "red+green+water", 20.},
-				{"C11", "red+green+water", 20.},
-				{"D11", "red+green+water", 20.},
-				{"E11", "red+green+water", 20.},
-				{"F11", "red+green+water", 20.},
-				{"G11", "red+green+water", 20.},
+				{"A11", "green+red+water", 20.},
+				{"B11", "green+red+water", 20.},
+				{"C11", "green+red+water", 20.},
+				{"D11", "green+red+water", 20.},
+				{"E11", "green+red+water", 20.},
+				{"F11", "green+red+water", 20.},
+				{"G11", "green+red+water", 20.},
 				{"H11", "red+water", 20.},
 				{"A12", "green+water", 20.},
 				{"B12", "green+water", 20.},

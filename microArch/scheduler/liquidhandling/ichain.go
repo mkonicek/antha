@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
 	"strings"
@@ -143,7 +144,7 @@ func (it *IChain) Print() {
 			}
 		}
 
-		fmt.Println()
+		fmt.Println("End of Instruction")
 	}
 	if it.Child != nil {
 		it.Child.Print()
@@ -294,7 +295,6 @@ func hasAnySplitNodes(ic *IChain) bool {
 }
 func simplifyIChain(ic *IChain, inputs map[string][]*wtype.LHComponent) *IChain {
 
-	// quick get-out while I fix this
 	if !hasAnySplitNodes(ic) {
 		return ic
 	}
@@ -324,10 +324,29 @@ func simplifyIChain(ic *IChain, inputs map[string][]*wtype.LHComponent) *IChain 
 	return qGraphToIChain(qg, ic)
 }
 
-// update this: we might be in a situation where we use a live component which does not actually get split
-// in which case we break things up unnecessarily. The resolution to this is to define as 'live' any component
-// which gets split at some point in its life - have to check this works OK
+func maxGen(inss []*wtype.LHInstruction, componentGen map[string]int) int {
+	max := 0
+	for _, ins := range inss {
+		for _, c := range ins.Components {
+			g, ok := componentGen[c.ID]
+
+			if ok && g > max {
+				max = g
+			}
+
+			g, ok = componentGen[c.ParentID]
+
+			if ok && g > max {
+				max = g
+			}
+		}
+	}
+
+	return max
+}
+
 func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[graph.Node]interface{}, map[graph.Node]bool) {
+	fmt.Println("GET NODE COLOUR MAP")
 	ret := make(map[graph.Node]interface{})
 	hc := make(map[graph.Node]bool)
 
@@ -336,15 +355,18 @@ func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[g
 	// components count as 'live' until something is physically added to them
 	// i.e. they are mixed with something else wholesale
 	componentsLive := make(map[string]bool)
+	componentGen := make(map[string]int)
 
 	// seed live components with inputs
 
 	for _, a := range inputs {
 		for _, c := range a {
 			componentsLive[c.ID] = true
+			componentGen[c.ID] = 0
 		}
 	}
 
+	front := 0
 	for cur := ic; cur != nil; cur = cur.Child {
 		if cur.Values[0].Type == wtype.LHIMIX {
 			// mix nodes have a different colour if they use any live component
@@ -360,8 +382,14 @@ func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[g
 				return false
 			}
 
-			if useOfLiveComponent(cur.Values, componentsLive) {
+			g := maxGen(cur.Values, componentGen)
+
+			if useOfLiveComponent(cur.Values, componentsLive) || g > front {
 				colour += 1
+			}
+
+			if g > front {
+				front = g
 			}
 			hc[graph.Node(cur)] = true
 		} else if cur.Values[0].Type == wtype.LHIPRM {
@@ -374,6 +402,7 @@ func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[g
 
 		// delete used components, add products, update IDs
 		updateCmpMap(cur.Values, componentsLive)
+		updateGenMap(cur.Values, componentGen)
 		ret[graph.Node(cur)] = colour
 	}
 
@@ -407,6 +436,38 @@ func updateCmpMap(values []*wtype.LHInstruction, componentsLive map[string]bool)
 
 			// add output
 			componentsLive[v.Results[0].ID] = true
+		default:
+			panic(fmt.Sprintf("Unknown or irrelevant instruction of type %s passed to instruction sorting", v.InsType()))
+		}
+	}
+}
+func updateGenMap(values []*wtype.LHInstruction, componentGen map[string]int) {
+	updateMap := func(id1, id2 string, m map[string]int) {
+		i, ok := m[id1]
+
+		if ok {
+			delete(m, id1)
+			m[id2] = i
+		}
+
+	}
+
+	for _, v := range values {
+		switch v.Type {
+		case wtype.LHISPL:
+			updateMap(v.Components[0].ID, v.Results[1].ID, componentGen)
+		case wtype.LHIPRM:
+			for in, out := range v.PassThrough {
+				updateMap(in, out.ID, componentGen)
+			}
+		case wtype.LHIMIX:
+			// use inputs
+			for _, c := range v.Components {
+				delete(componentGen, c.ID)
+			}
+
+			// add output
+			componentGen[v.Results[0].ID] = maxGen([]*wtype.LHInstruction{v}, componentGen) + 1
 		default:
 			panic(fmt.Sprintf("Unknown or irrelevant instruction of type %s passed to instruction sorting", v.InsType()))
 		}
@@ -745,10 +806,19 @@ func addNewNodesTo(ic *IChain, newNodes *IChain) *IChain {
 	cur.Child = newNodes
 	newNodes.Parent = cur
 
+	last := cur
+
 	for cur := newNodes; cur != nil; cur = cur.Child {
+
+		if cur.Parent == nil {
+			cur.Parent = last
+		}
+
 		if cur.Parent != nil {
 			cur.Depth = cur.Parent.Depth + 1
 		}
+
+		last = cur
 	}
 
 	return ic

@@ -24,7 +24,6 @@ package liquidhandling
 
 import (
 	"context"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -203,7 +202,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 	ptwx := make([]int, len(cmps))        //	  "    to    "   x
 	ptwy := make([]int, len(cmps))        //	  "     "    "   y
 	cnames := make([]string, len(cmps))   //        component names
-
+	policies := make([]wtype.LHPolicy, len(cmps))
 	// ci counts up cmps
 
 	for ci := 0; ci < len(cmps); ci++ {
@@ -301,7 +300,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		}
 
 		// silently remove the carry
-		wellFrom.RemoveVolume(carryvol) //nolint
+		wellFrom.RemoveCarry(carryvol)
 
 		err = wellTo.AddComponent(cmpFrom)
 		if err != nil {
@@ -321,7 +320,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 
 	//}
 
-	tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames)
+	tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames, policies)
 	insOut = append(insOut, tfr)
 
 	return insOut, nil

@@ -8,6 +8,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+const PolicyNameField string = "PolicyName"
+
 func GetPolicyConsequents() AParamSet {
 	return MakePolicyItems()
 }
@@ -49,7 +51,6 @@ func MakeInstructionParameters() AParamSet {
 	params["TIME"] = AParam{Name: "TIME", Type: typemap["float64"]}
 	params["TIPTYPE"] = AParam{Name: "TIPTYPE", Type: typemap["string"]}
 	params["TOPLATETYPE"] = AParam{Name: "TOPLATETYPE", Type: typemap["string"]}
-	params["TOWELLVOLUME"] = AParam{Name: "TOWELLVOLUME", Type: typemap["float64"]}
 	params["VOLUME"] = AParam{Name: "VOLUME", Type: typemap["float64"]}
 	params["VOLUNT"] = AParam{Name: "VOLUNT", Type: typemap["float64"]}
 	params["WELL"] = AParam{Name: "WELL", Type: typemap["float64"]}
@@ -59,7 +60,6 @@ func MakeInstructionParameters() AParamSet {
 	params["WELLTOVOLUME"] = AParam{Name: "WELLTOVOLUME", Type: typemap["float64"]}
 	params["WELLVOLUME"] = AParam{Name: "WELLVOLUME", Type: typemap["float64"]}
 	params["WHAT"] = AParam{Name: "WHAT", Type: typemap["string"]}
-
 	return params
 }
 
@@ -118,6 +118,8 @@ func MakePolicyItems() AParamSet {
 	alhpis["DESCRIPTION"] = AParam{Name: "DESCRIPTION", Type: typemap["string"], Desc: "Summary of LHPolicy to present to the user"}
 	alhpis["LLFBELOWSURFACE"] = AParam{Name: "LLFBELOWSURFACE", Type: typemap["float64"], Desc: "Distance below surface for Liquid Level Following (LLF) when aspirating"}
 	alhpis["LLFABOVESURFACE"] = AParam{Name: "LLFABOVESURFACE", Type: typemap["float64"], Desc: "Distance below surface for Liquid Level Following (LLF) when dispensing"}
+	alhpis[PolicyNameField] = AParam{Name: PolicyNameField, Type: typemap["string"], Desc: "Name of the Liquid Policy"}
+
 	return alhpis
 }
 

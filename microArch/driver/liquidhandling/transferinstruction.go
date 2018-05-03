@@ -66,7 +66,7 @@ func (ti *TransferInstruction) ParamSet(n int) MultiTransferParams {
 	return ti.Transfers[n]
 }
 
-func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string) *TransferInstruction {
+func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy) *TransferInstruction {
 	var tfri TransferInstruction
 	tfri.Type = TFR
 	tfri.Transfers = make([]MultiTransferParams, 0, 1)
@@ -91,7 +91,7 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 		}
 	*/
 
-	v := MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype, volume, fvolume, tvolume, FPlateWX, FPlateWY, TPlateWX, TPlateWY, Components)
+	v := MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype, volume, fvolume, tvolume, FPlateWX, FPlateWY, TPlateWX, TPlateWY, Components, policies)
 
 	tfri.Add(v)
 	tfri.GenericRobotInstruction.Ins = RobotInstruction(&tfri)
@@ -223,9 +223,14 @@ func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
 	return ret
 }
 
+/*
+func (ins *TransferInstruction) getPoliciesForTransfer(which int, ruleSet wtype.LHPolicyRuleSet) []wtype.LHPolicy {
+}
+*/
 func (ins *TransferInstruction) CheckMultiPolicies(which int) bool {
 	// first iteration: ensure all the WHAT prms are the same
 	// later	  : actually check the policies per channel
+	// is it later yet?
 
 	nwhat := wutil.NUniqueStringsInArray(ins.Transfers[which].What(), true)
 
@@ -247,14 +252,15 @@ func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, erro
 	return plates, nil
 }
 
-func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *LHProperties) []int {
+// add policies as argument to GetParallelSetsFor to check multichannelability
+func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *LHProperties, policy wtype.LHPolicy) []int {
 	r := make([]int, 0, len(ins.Transfers))
 
 	for i := 0; i < len(ins.Transfers); i++ {
 		// a parallel transfer is valid if any robot head can do it
 		// TODO --> support head/adaptor changes. Maybe.
 		for _, head := range robot.HeadsLoaded {
-			if ins.validateParallelSet(ctx, robot, head, i) {
+			if ins.validateParallelSet(ctx, robot, head, i, policy) {
 				r = append(r, i)
 			}
 		}
@@ -263,7 +269,9 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *L
 	return r
 }
 
-func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *LHProperties, head *wtype.LHHead, which int) bool {
+// add policies as argument to GetParallelSetsFor to check multichannelability
+// which is the index relating to position in multitransferparams matrix
+func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *LHProperties, head *wtype.LHHead, which int, policy wtype.LHPolicy) bool {
 	channel := head.Adaptor.Params
 
 	if channel.Multi == 1 {
@@ -473,13 +481,23 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	ins.ChooseChannels(prms)
 
-	pol := GetPolicyFor(policy, ins)
+	// is this the part we need to change?
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
 
 	ret := make([]RobotInstruction, 0)
 
 	// if we can multi we do this first
 	if pol["CAN_MULTI"].(bool) {
-		parallelsets := ins.GetParallelSetsFor(ctx, prms)
+		// add policies as argument to GetParallelSetsFor to check multichannelability
+		parallelsets := ins.GetParallelSetsFor(ctx, prms, pol)
 
 		mci := NewMultiChannelBlockInstruction()
 		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here

@@ -82,7 +82,7 @@ var primerErrorTests = []testpair{
 		seqstoavoid:         []string{""},
 		overlapthreshold:    45,
 		calculatedGCcontent: 0.36,
-		expectedError:       fmt.Errorf("For sequence %s could only generate FORWARD primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try increasing this parameter.", "SGAP-004b-001-SacO1_partial", 28.000000, 50.000000),
+		expectedError:       fmt.Errorf("For sequence %s could only generate FORWARD primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try lowering this parameter.", "SGAP-004b-001-SacO1_partial", 28.000000, 50.000000),
 	},
 	{
 		sequence:            wtype.MakeSingleStrandedDNASequence("MultipleBindingSites", "ACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAATGGGATATATCAACGGTGGTATATCCAGTGATTTTTTTCTCCATATTCTTCCTTTTTCA."),

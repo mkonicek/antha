@@ -16,7 +16,7 @@ func (cv ComponentVector) String() string {
 
 func (cv ComponentVector) DeleteAllBelowVolume(vol wunit.Volume) {
 	for i := 0; i < len(cv); i++ {
-		if cv[i] != nil && cv[i].Volume().LessThan(vol) {
+		if v := cv[i].Volume(); v.LessThan(vol) && !wunit.SubtractVolumes(vol, v).IsZero() {
 			cv[i] = nil
 		}
 	}

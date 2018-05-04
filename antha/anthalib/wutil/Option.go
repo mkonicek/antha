@@ -25,16 +25,44 @@
 // Removing duplicate values from a slice;
 // Comparing the Name of two entries of any type with a Name() method returning a string.
 // FindAll instances of a target string within a template string.
-package search
+package wutil
 
 import (
-
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"strings"
 )
 
-// Named is an interface for any typed value which has a method to return the Name as a string.
-type Named = wutil.Named
+// Option is an option which can be used as an argument to search functions.
+// Particularly InStrings, InSequences, RemoveDuplicateStrings, RemoveDuplicateSequences.
+type Option string
 
-// EqualName evaluates whether two arguments with a Name() method have equal names.
-// If the IgnoreCase option is specified the strings will be compared ignoring case.
-var EqualName = wutil.EqualName
+// Options available for use in Seqrch functions.
+const (
+
+	// IgnoreCase is an option which can be added to the InStrings and InSequences
+	// functions to search ignoring case.
+	//
+	IgnoreCase Option = "IgnoreCase"
+
+	// MatchName is an option which can be added to the InSequences
+	// functions to specify that the name must also be matched.
+	// By default sequence searches only check sequence equality.
+	//
+	MatchName Option = "MatchName"
+)
+
+func containsOption(options []Option, target Option) bool {
+	for _, option := range options {
+		if strings.EqualFold(string(target), string(option)) {
+			return true
+		}
+	}
+	return false
+}
+
+func containsIgnoreCase(options ...Option) bool {
+	return containsOption(options, IgnoreCase)
+}
+
+func containsMatchName(options ...Option) bool {
+	return containsOption(options, MatchName)
+}

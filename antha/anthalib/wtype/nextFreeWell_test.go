@@ -25,14 +25,13 @@
 // Removing duplicate values from a slice;
 // Comparing the Name of two entries of any type with a Name() method returning a string.
 // FindAll instances of a target string within a template string.
-package search
+package wtype
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
@@ -47,7 +46,7 @@ func TestNextFreeWell(t *testing.T) {
 	type nextWellTest struct {
 		avoidWells     []string
 		preferredWells []string
-		plateType      *wtype.LHPlate
+		plateType      *LHPlate
 		byRow          bool
 		expectedResult string
 		expectedError  error

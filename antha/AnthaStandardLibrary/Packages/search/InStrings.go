@@ -27,7 +27,11 @@
 // FindAll instances of a target string within a template string.
 package search
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+)
 
 func equalFold(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
@@ -35,41 +39,8 @@ func equalFold(a, b string) bool {
 
 // InStrings searchs for a target string in a slice of strings and returns a boolean.
 // If the IgnoreCase option is specified the strings will be compared ignoring case.
-func InStrings(list []string, target string, options ...Option) bool {
-
-	ignore := containsIgnoreCase(options...)
-
-	for _, entry := range list {
-		if ignore {
-			if equalFold(entry, target) {
-				return true
-			}
-		} else {
-			if strings.TrimSpace(entry) == strings.TrimSpace(target) {
-				return true
-			}
-		}
-	}
-	return false
-}
+var InStrings = wutil.InStrings
 
 // PositionsInStrings searchs for a target string in a slice of strings and returns all positions found.
 // If the IgnoreCase option is specified the strings will be compared ignoring case.
-func PositionsInStrings(list []string, target string, options ...Option) []int {
-
-	ignore := containsIgnoreCase(options...)
-
-	var positions []int
-	for i, entry := range list {
-		if ignore {
-			if equalFold(entry, target) {
-				positions = append(positions, i)
-			}
-		} else {
-			if strings.TrimSpace(entry) == strings.TrimSpace(target) {
-				positions = append(positions, i)
-			}
-		}
-	}
-	return positions
-}
+var PositionsInStrings = wutil.PositionsInStrings

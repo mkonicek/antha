@@ -29,11 +29,13 @@ package search
 
 import (
 	"strings"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+
 )
 
 // Option is an option which can be used as an argument to search functions.
 // Particularly InStrings, InSequences, RemoveDuplicateStrings, RemoveDuplicateSequences.
-type Option string
+type Option = wutil.Option
 
 // Options available for use in Seqrch functions.
 const (
@@ -41,13 +43,13 @@ const (
 	// IgnoreCase is an option which can be added to the InStrings and InSequences
 	// functions to search ignoring case.
 	//
-	IgnoreCase Option = "IgnoreCase"
+	IgnoreCase = wutil.IgnoreCase
 
 	// MatchName is an option which can be added to the InSequences
 	// functions to specify that the name must also be matched.
 	// By default sequence searches only check sequence equality.
 	//
-	MatchName Option = "MatchName"
+	MatchName = wutil.IgnoreCase
 )
 
 func containsOption(options []Option, target Option) bool {

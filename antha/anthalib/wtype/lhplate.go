@@ -31,10 +31,11 @@ import (
 	"strings"
 	"time"
 
+	"math"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
-	"math"
 )
 
 // structure describing a microplate
@@ -60,6 +61,7 @@ type LHPlate struct {
 	WellZStart  float64            // offset (mm) to bottom of well in Z direction
 	Bounds      BBox               // (relative) position of the plate (mm), set by parent
 	parent      LHObject
+	Preferences MixPreferences
 }
 
 var (
@@ -1387,4 +1389,67 @@ func (p *LHPlate) GetTargetOffset(adaptorName string, channel int) Coordinates {
 //GetTargets return all the defined targets for the named adaptor
 func (p *LHPlate) GetTargets(adaptorName string) []Coordinates {
 	return p.Welltype.GetWellTargets(adaptorName)
+}
+
+// MixPreferences stores plate specific mix options.
+type MixPreferences struct {
+	// Specify any preferred wells to attempt to mix to first
+	PreferredWells []string
+	// Specify any wells to avoid
+	AvoidWells []string
+	// Specify whether to mix by row or by column
+	ByRow bool
+}
+
+// NextFreeWell checks for the next well which is empty in a plate.
+// The user can also specify wells to avoid, preffered wells and
+// whether to search through the well positions by row. The default is by column.
+func (plate *LHPlate) NextFreeWell() (well string, err error) {
+	well, err = NextFreeWell(plate, plate.Preferences.AvoidWells, plate.Preferences.PreferredWells, plate.Preferences.ByRow)
+	if err == nil {
+		plate.Preferences.AvoidWells = append(plate.Preferences.AvoidWells, well)
+	}
+	return
+}
+
+func (plate *LHPlate) AddMixPreferences(mixOptions MixPreferences) {
+	plate.Preferences = mixOptions
+}
+
+func (plate *LHPlate) PreferredWells() []string {
+	return plate.Preferences.PreferredWells
+}
+
+func (plate *LHPlate) UsedWells(includeWellsToAvoid bool) []string {
+
+	var usedWells []string
+
+	allWellPositions := plate.AllWellPositions(false)
+
+	for _, well := range allWellPositions {
+		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.
+		if !plate.WellMap()[well].IsEmpty() {
+			usedWells = append(usedWells, well)
+		} else if !wutil.InStrings(plate.Preferences.AvoidWells, well) && includeWellsToAvoid {
+			usedWells = append(usedWells, well)
+		}
+	}
+	return usedWells
+}
+
+func (plate *LHPlate) AvoidNextWell() error {
+	newtWell, err := plate.NextFreeWell()
+	if err != nil {
+		return err
+	}
+	plate.Preferences.AvoidWells = append(plate.Preferences.AvoidWells, newtWell)
+	return nil
+}
+
+// Copy updates the objects MixPreferences with that of the preferences specified as an argument.
+func (this *MixPreferences) Copy(preferences *MixPreferences) (err error) {
+	this.PreferredWells = preferences.PreferredWells
+	this.AvoidWells = preferences.AvoidWells
+	this.ByRow = preferences.ByRow
+	return nil
 }

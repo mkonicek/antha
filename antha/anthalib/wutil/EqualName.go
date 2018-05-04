@@ -25,16 +25,31 @@
 // Removing duplicate values from a slice;
 // Comparing the Name of two entries of any type with a Name() method returning a string.
 // FindAll instances of a target string within a template string.
-package search
+package wutil
 
 import (
-
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"strings"
 )
 
 // Named is an interface for any typed value which has a method to return the Name as a string.
-type Named = wutil.Named
+type Named interface {
+	Name() string
+}
 
 // EqualName evaluates whether two arguments with a Name() method have equal names.
 // If the IgnoreCase option is specified the strings will be compared ignoring case.
-var EqualName = wutil.EqualName
+func EqualName(entry, target Named, options ...Option) bool {
+
+	ignore := containsIgnoreCase(options...)
+
+	if ignore {
+		if equalFold(entry.Name(), target.Name()) {
+			return true
+		}
+	} else {
+		if strings.TrimSpace(entry.Name()) == strings.TrimSpace(target.Name()) {
+			return true
+		}
+	}
+	return false
+}

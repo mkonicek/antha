@@ -18,6 +18,7 @@ import (
 func FixVolumes(request *LHRequest) (*LHRequest, error) {
 	// we go up through the chain
 	// first find the end
+
 	wantedVolumes := make(map[string]wunit.Volume)
 	for chainEnd := findChainEnd(request.InstructionChain); chainEnd != nil; chainEnd = chainEnd.Parent {
 		if len(chainEnd.Values) == 0 {

@@ -1,6 +1,8 @@
 package plateCache
 
 import (
+	"context"
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache"
@@ -23,10 +25,12 @@ func (p *plateCache) NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipw
 }
 
 func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
+	fmt.Printf("plateCache: Getting Plate type \"%s\"\n", typ)
 	return inventory.NewPlate(ctx, typ)
 }
 
 func (p *plateCache) ReturnObject(ctx context.Context, obj interface{}) error {
+	fmt.Printf("plateCache: Returning %s type \"%s\"\n", wtype.ClassOf(obj), wtype.TypeOf(obj))
 	return nil
 }
 

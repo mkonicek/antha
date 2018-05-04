@@ -32,7 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/cache"
 )
 
 type TransferInstruction struct {
@@ -227,18 +227,14 @@ func (ins *TransferInstruction) CheckMultiPolicies(which int) bool {
 	return nwhat == 1
 }
 
-func firstPlate(ctx context.Context, types []string) (*wtype.LHPlate, error) {
+func firstNonEmpty(types []string) string {
 	for _, typ := range types {
 		if typ == "" {
 			continue
 		}
-		p, err := inventory.NewPlate(ctx, typ)
-		if err != nil {
-			return nil, err
-		}
-		return p, nil
+		return typ
 	}
-	return nil, nil
+	return ""
 }
 
 // add policies as argument to GetParallelSetsFor to check multichannelability
@@ -287,38 +283,41 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 		return false
 	}
 
-	// check source / tip alignment
-
-	plate, err := firstPlate(ctx, ins.Transfers[which].FPlateType())
+	fromPlateType := firstNonEmpty(ins.Transfers[which].FPlateType())
+	fromPlate, err := cache.NewPlate(ctx, fromPlateType)
 	if err != nil {
 		panic(err)
 	}
-	if plate == nil {
-		panic("No from to plates in instruction")
+	if fromPlate == nil {
+		panic("No from plates in instruction")
 	}
 
-	if !TipsWellsAligned(robot, head, plate, ins.Transfers[which].WellFrom()) {
+	// check source / tip alignment
+	if !TipsWellsAligned(robot, head, fromPlate, ins.Transfers[which].WellFrom()) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
 	}
 
-	plate, err = firstPlate(ctx, ins.Transfers[which].FPlateType())
+	err = cache.ReturnObject(ctx, fromPlate)
+
+	toPlateType := firstNonEmpty(ins.Transfers[which].FPlateType())
+	toPlate, err := cache.NewPlate(ctx, toPlateType)
 	if err != nil {
 		panic(err)
 	}
-
-	if plate == nil {
-		panic("No to from plates in instruction")
+	if toPlate == nil {
+		panic("No to plates in instruction")
 	}
 
 	// for safety, check dest / tip alignment
-
-	if !TipsWellsAligned(robot, head, plate, ins.Transfers[which].WellTo()) {
+	if !TipsWellsAligned(robot, head, toPlate, ins.Transfers[which].WellTo()) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
 	}
+
+	err = cache.ReturnObject(ctx, toPlate)
 
 	// check that we will not require different policies
 

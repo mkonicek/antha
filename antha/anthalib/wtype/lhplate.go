@@ -564,7 +564,7 @@ func (lhp *LHPlate) IsEmpty() bool {
 //Clean empty all the wells of the plate so that IsEmpty returns true
 func (lhp *LHPlate) Clean() {
 
-	for _, w := range lhp.WellCoords {
+	for _, w := range lhp.Wellcoords {
 		w.Clean()
 	}
 	lhp.Welltype.Clean()

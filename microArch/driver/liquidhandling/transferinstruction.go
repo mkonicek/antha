@@ -35,16 +35,6 @@ import (
 	"github.com/antha-lang/antha/inventory"
 )
 
-func firstInArray(a []*wtype.LHPlate) *wtype.LHPlate {
-	for _, v := range a {
-		if v != nil {
-			return v
-		}
-	}
-
-	return nil
-}
-
 type TransferInstruction struct {
 	GenericRobotInstruction
 	Type      int
@@ -237,9 +227,8 @@ func (ins *TransferInstruction) CheckMultiPolicies(which int) bool {
 	return nwhat == 1
 }
 
-func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, error) {
-	plates := make([]*wtype.LHPlate, len(types))
-	for i, typ := range types {
+func firstPlate(ctx context.Context, types []string) (*wtype.LHPlate, error) {
+	for _, typ := range types {
 		if typ == "" {
 			continue
 		}
@@ -247,9 +236,9 @@ func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, erro
 		if err != nil {
 			return nil, err
 		}
-		plates[i] = p
+		return p, nil
 	}
-	return plates, nil
+	return nil, nil
 }
 
 // add policies as argument to GetParallelSetsFor to check multichannelability
@@ -298,18 +287,14 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 		return false
 	}
 
-	pa, err := plateTypeArray(ctx, ins.Transfers[which].FPlateType())
+	// check source / tip alignment
 
+	plate, err := firstPlate(ctx, ins.Transfers[which].FPlateType())
 	if err != nil {
 		panic(err)
 	}
-
-	// check source / tip alignment
-
-	plate := firstInArray(pa)
-
 	if plate == nil {
-		panic("No from plates in instruction")
+		panic("No from to plates in instruction")
 	}
 
 	if !TipsWellsAligned(robot, head, plate, ins.Transfers[which].WellFrom()) {
@@ -318,16 +303,13 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 		return false
 	}
 
-	pa, err = plateTypeArray(ctx, ins.Transfers[which].TPlateType())
-
+	plate, err = firstPlate(ctx, ins.Transfers[which].FPlateType())
 	if err != nil {
 		panic(err)
 	}
 
-	plate = firstInArray(pa)
-
 	if plate == nil {
-		panic("No to plates in instruction")
+		panic("No to from plates in instruction")
 	}
 
 	// for safety, check dest / tip alignment

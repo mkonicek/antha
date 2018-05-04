@@ -740,7 +740,7 @@ func (cmp *LHComponent) Clean() {
 	cmp.Inst = ""
 	cmp.Order = 0
 	cmp.CName = ""
-	cmp.Type = LiquidType{}
+	cmp.Type = LiquidType("")
 	cmp.Vol = 0.0
 	cmp.Conc = 0.0
 	cmp.Vunit = "ul"

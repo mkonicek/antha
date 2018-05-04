@@ -14,8 +14,10 @@ func (cv ComponentVector) String() string {
 	return s
 }
 
+//DeleteAllBelowVolume set all components whose volume is below vol to nil
 func (cv ComponentVector) DeleteAllBelowVolume(vol wunit.Volume) {
 	for i := 0; i < len(cv); i++ {
+		//if the i^th component's volume is less than vol, and the difference is greater than floating point error
 		if v := cv[i].Volume(); v.LessThan(vol) && !wunit.SubtractVolumes(vol, v).IsZero() {
 			cv[i] = nil
 		}

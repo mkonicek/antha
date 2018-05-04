@@ -49,7 +49,7 @@ const (
 	// functions to specify that the name must also be matched.
 	// By default sequence searches only check sequence equality.
 	//
-	MatchName = wutil.IgnoreCase
+	MatchName = wutil.MatchName
 )
 
 func containsOption(options []Option, target Option) bool {

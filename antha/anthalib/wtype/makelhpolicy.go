@@ -828,6 +828,7 @@ var (
 	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
 	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
 	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
+	OnMegaMix   = categoricCondition{"LIQUIDCLASS", "MegaMix"}
 )
 
 // Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well

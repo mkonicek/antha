@@ -8,7 +8,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-const PolicyNameField string = "PolicyName"
+const PolicyNameField string = "POLICYNAME"
 
 func GetPolicyConsequents() AParamSet {
 	return MakePolicyItems()

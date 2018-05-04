@@ -15,6 +15,7 @@ type ctxKey string
 type Cache interface {
 	inventory.Inventory
 	ReturnObject(ctx context.Context, obj interface{}) error
+	IsFromCache(ctx context.Context, obj interface{}) bool
 }
 
 func fromContext(ctx context.Context) Cache {
@@ -54,4 +55,9 @@ func NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error) {
 // ReturnObject return an object to the cache to be cleaned
 func ReturnObject(ctx context.Context, obj interface{}) error {
 	return fromContext(ctx).ReturnObject(ctx, obj)
+}
+
+// IsFromCache returns true if the object is from the cache
+func IsFromCache(ctx context.Context, obj interface{}) bool {
+	return fromContext(ctx).IsFromCache(ctx, obj)
 }

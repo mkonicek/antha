@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"testing"
@@ -60,6 +61,23 @@ func TestPlateReuse(t *testing.T) {
 
 	if thirdPlate.ID == firstID {
 		t.Fatal("thirdPlate ID was the same as the second, even though the second hasn't been returned")
+	}
+
+	if !cache.IsFromCache(ctx, secondPlate) {
+		t.Error("secondPlate came from cache, but cache.IsFromPlate returned false")
+	}
+
+	if !cache.IsFromCache(ctx, thirdPlate) {
+		t.Error("thirdPlate came from cache, but cache.IsFromPlate returned false")
+	}
+
+	fourthPlate, err := inventory.NewPlate(ctx, plateType)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cache.IsFromCache(ctx, fourthPlate) {
+		t.Error("fourthPlate came from inventory, but cache.IsFromPlate returned true")
 	}
 
 }

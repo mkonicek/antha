@@ -149,7 +149,7 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 				}
 			} else if !wantInPlace(wanted, ins.Results[0].FullyQualifiedName()) {
 				wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
-				//wantVol.Subtract(carryVol)
+				wantVol.Subtract(carryVol)
 			}
 
 			if wantVol.GreaterThan(ins.Results[0].Volume()) {

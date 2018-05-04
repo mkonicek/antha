@@ -95,15 +95,24 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 	}
 }
 
+var gsfCalls = 0
+
 func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
+	fmt.Printf("GSF_calls = %d\n", gsfCalls)
+	gsfCalls += 1
+
 	ret := make([]wtype.ComponentVector, 0, 1)
 
+	fmt.Printf("len(lhp.OrderedMergedPlatePrefs()) = %d\n", len(lhp.OrderedMergedPlatePrefs()))
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
+		fmt.Printf("len(ipref) = %d\n", len(ipref))
 		p, ok := lhp.Plates[ipref]
 
 		if ok {
 			it := getPlateIterator(p, ori, multi)
+			fmt.Println("BEGIN LOOP")
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
+				fmt.Printf("  loop wv = %v\n", wv)
 				// cmps needs duping here
 				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume, ignoreInstances) // dups components
 				if mycmps.Empty() {
@@ -116,6 +125,7 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 
 				ret = append(ret, mycmps)
 			}
+			fmt.Println("END LOOP")
 		}
 	}
 

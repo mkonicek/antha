@@ -828,6 +828,7 @@ var (
 	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
 	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
 	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
+	OnMegaMix   = categoricCondition{"LIQUIDCLASS", "MegaMix"}
 )
 
 // Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
@@ -937,16 +938,16 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	}
 
 	// don't mix AND turn off tip reuse limit if destination well is empty and SmartMix
-	turnOffPostMixAndTipReuseIfEmpty, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptySmartMix", IntoEmpty, OnSmartMix)
+	turnOffPostMixAndTipReuseIfEmptySmartMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptySmartMix", IntoEmpty, OnSmartMix)
 
 	if err != nil {
 		return lhpr, err
 	}
 
-	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmpty, TurnOffPostMixAndPermitTipReUse())
+	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptySmartMix, TurnOffPostMixAndPermitTipReUse())
 
 	// don't mix AND turn off tip reuse limit if destination well is empty and PostMix
-	turnOffPostMixAndTipReuseIfEmptyPostMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyPostMix", IntoEmpty, OnSmartMix)
+	turnOffPostMixAndTipReuseIfEmptyPostMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyPostMix", IntoEmpty, OnPostMix)
 
 	if err != nil {
 		return lhpr, err
@@ -955,7 +956,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptyPostMix, TurnOffPostMixAndPermitTipReUse())
 
 	// don't mix AND turn off tip reuse limit if destination well is empty and MegaMix
-	turnOffPostMixAndTipReuseIfEmptyMegaMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyMegaMix", IntoEmpty, OnSmartMix)
+	turnOffPostMixAndTipReuseIfEmptyMegaMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyMegaMix", IntoEmpty, OnMegaMix)
 
 	if err != nil {
 		return lhpr, err
@@ -964,7 +965,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptyMegaMix, TurnOffPostMixAndPermitTipReUse())
 
 	// don't mix AND turn off tip reuse limit if destination well is empty and NeedToMix
-	turnOffPostMixAndTipReuseIfEmptyNeedToMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyNeedToMix", IntoEmpty, OnSmartMix)
+	turnOffPostMixAndTipReuseIfEmptyNeedToMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyNeedToMix", IntoEmpty, OnNeedToMix)
 
 	if err != nil {
 		return lhpr, err

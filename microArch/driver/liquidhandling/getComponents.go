@@ -13,7 +13,7 @@ type ComponentVolumeHash map[string]wunit.Volume
 
 func (h ComponentVolumeHash) AllVolsPosOrZero() bool {
 	for _, v := range h {
-		if v.LessThan(wunit.ZeroVolume()) {
+		if v.LessThan(wunit.ZeroVolume()) && !v.IsZero() {
 			return false
 		}
 	}

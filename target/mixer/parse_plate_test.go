@@ -157,6 +157,7 @@ A4,tea,water,50.0,ul,10.0,mM/l,
 A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),
+      NoWarnings: false,
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
@@ -230,7 +231,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 		{
 			// This is to test carriage returns.
 			File:       fileCarriage,
-			NoWarnings: true,
+			NoWarnings: false,
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{

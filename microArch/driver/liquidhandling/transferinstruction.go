@@ -302,7 +302,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 
 	//err = cache.ReturnObject(ctx, fromPlate)
 
-	toPlateType := firstNonEmpty(ins.Transfers[which].FPlateType())
+	toPlateType := firstNonEmpty(ins.Transfers[which].TPlateType())
 	toPlate, err := inventory.NewPlate(ctx, toPlateType)
 	if err != nil {
 		panic(err)

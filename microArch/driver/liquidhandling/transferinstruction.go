@@ -32,8 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	//"github.com/antha-lang/antha/inventory/cache"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/cache"
 )
 
 type TransferInstruction struct {
@@ -285,7 +284,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	fromPlateType := firstNonEmpty(ins.Transfers[which].FPlateType())
-	fromPlate, err := inventory.NewPlate(ctx, fromPlateType)
+	fromPlate, err := cache.NewPlate(ctx, fromPlateType)
 	if err != nil {
 		panic(err)
 	}
@@ -300,10 +299,10 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 		return false
 	}
 
-	//err = cache.ReturnObject(ctx, fromPlate)
+	err = cache.ReturnObject(ctx, fromPlate)
 
 	toPlateType := firstNonEmpty(ins.Transfers[which].TPlateType())
-	toPlate, err := inventory.NewPlate(ctx, toPlateType)
+	toPlate, err := cache.NewPlate(ctx, toPlateType)
 	if err != nil {
 		panic(err)
 	}
@@ -318,7 +317,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 		return false
 	}
 
-	//err = cache.ReturnObject(ctx, toPlate)
+	err = cache.ReturnObject(ctx, toPlate)
 
 	// check that we will not require different policies
 

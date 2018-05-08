@@ -466,7 +466,7 @@ func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
 
 // Volume returns the Volume of the LHComponent
 func (lhc *LHComponent) Volume() wunit.Volume {
-	if lhc.Vunit == "" && lhc.Vol == 0.0 {
+	if lhc == nil || (lhc.Vunit == "" && lhc.Vol == 0.0) {
 		return wunit.NewVolume(0.0, "ul")
 	}
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)

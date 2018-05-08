@@ -2,7 +2,6 @@ package mixer
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +12,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/toolbox/csvutil"
 )
 
 // ParsePlateResult is the result of parsing a plate
@@ -124,7 +124,7 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		return v, unit, err
 	}
 
-	csvr := csv.NewReader(inData)
+	csvr := csvutil.NewTolerantReader(inData)
 	csvr.FieldsPerRecord = -1
 
 	rec, err := csvr.Read()

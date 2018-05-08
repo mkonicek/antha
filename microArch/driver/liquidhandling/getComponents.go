@@ -96,10 +96,11 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 }
 
 var gsfCalls = 0
+var types = make(map[string]bool)
 
 func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
-	fmt.Printf("GSF_calls = %d\n", gsfCalls)
 	gsfCalls += 1
+	fmt.Printf("count GSF_calls = %d\n", gsfCalls)
 
 	ret := make([]wtype.ComponentVector, 0, 1)
 
@@ -107,6 +108,8 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
 		fmt.Printf("len(ipref) = %d\n", len(ipref))
 		p, ok := lhp.Plates[ipref]
+
+		types[wtype.TypeOf(p)] = true
 
 		if ok {
 			it := getPlateIterator(p, ori, multi)
@@ -128,6 +131,8 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 			fmt.Println("END LOOP")
 		}
 	}
+
+	fmt.Printf("count : %v\n", types)
 
 	return ret
 }

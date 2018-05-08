@@ -26,19 +26,19 @@ func (p *plateCache) NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipw
 }
 
 func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
+	/*
+		plateList, ok := p.platesByType[typ]
+		if !ok {
+			plateList = make([]*wtype.LHPlate, 0)
+			p.platesByType[typ] = plateList
+		}
 
-	plateList, ok := p.platesByType[typ]
-	if !ok {
-		plateList = make([]*wtype.LHPlate, 0)
-		p.platesByType[typ] = plateList
-	}
-
-	if len(plateList) > 0 {
-		plate := plateList[0]
-		p.platesByType[typ] = plateList[1:]
-		return plate, nil
-	}
-
+		if len(plateList) > 0 {
+			plate := plateList[0]
+			p.platesByType[typ] = plateList[1:]
+			return plate, nil
+		}
+	*/
 	plate, err := inventory.NewPlate(ctx, typ)
 	if err != nil {
 		return nil, err

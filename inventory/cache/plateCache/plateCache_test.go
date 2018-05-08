@@ -29,7 +29,7 @@ func TestPlateReuse(t *testing.T) {
 
 	c := wtype.NewLHComponent()
 	c.Vol = 10.0
-	well := firstPlate.GetChildByAddress(wtype.WellCoords{0, 0}).(*wtype.LHWell)
+	well := firstPlate.GetChildByAddress(wtype.WellCoords{X: 0, Y: 0}).(*wtype.LHWell)
 	err = well.SetContents(c)
 	if err != nil {
 		t.Fatal(err)

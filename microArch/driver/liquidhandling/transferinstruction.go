@@ -300,6 +300,9 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	err = cache.ReturnObject(ctx, fromPlate)
+	if err != nil {
+		panic(err)
+	}
 
 	toPlateType := firstNonEmpty(ins.Transfers[which].TPlateType())
 	toPlate, err := cache.NewPlate(ctx, toPlateType)
@@ -318,18 +321,13 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	err = cache.ReturnObject(ctx, toPlate)
+	if err != nil {
+		panic(err)
+	}
 
 	// check that we will not require different policies
 
-	if !ins.CheckMultiPolicies(which) {
-		// fall back to single-channel
-		// TODO -- find a subset we CAN do
-		return false
-	}
-
-	// looks OK
-
-	return true
+	return ins.CheckMultiPolicies(which)
 }
 
 func GetMultiSet(a []string, channelmulti int, fromplatemulti int, toplatemulti int) [][]int {

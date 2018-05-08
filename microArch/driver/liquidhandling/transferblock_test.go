@@ -8,8 +8,15 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
+
+func GetContextForTest() context.Context {
+	ctx := testinventory.NewContext(context.Background())
+	ctx = plateCache.NewContext(ctx)
+	return ctx
+}
 
 func getComponent(ctx context.Context, name string, volume float64) (*wtype.LHComponent, error) {
 	c, err := inventory.NewComponent(ctx, name)
@@ -154,7 +161,7 @@ func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *L
 }
 
 func TestMultichannelFailPolicy(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// policy disallows
 	tb, dstp := getTransferBlock2Component(ctx)
@@ -171,7 +178,7 @@ func TestMultichannelFailPolicy(t *testing.T) {
 	testNegative(ctx, ris, pol, rbt, t)
 }
 func TestMultichannelSucceedSubset(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// can do 7
 	tb, dstp := getTransferBlock2Component(ctx)
@@ -195,7 +202,7 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 }
 
 func TestMultichannelSucceedPair(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// can do 7
 	tb, dstp := getTransferBlock2Component(ctx)
@@ -227,7 +234,7 @@ func TestMultichannelSucceedPair(t *testing.T) {
 }
 
 func TestMultichannelFailDest(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	tb, dstp := getTransferBlock2Component(ctx)
 
 	/*
@@ -263,7 +270,7 @@ func TestMultichannelFailDest(t *testing.T) {
 func TestMultiChannelFailSrc(t *testing.T) {
 	// this actually works
 	t.Skip()
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// sources not aligned
 	tb, dstp := getTransferBlock2Component(ctx)
@@ -289,7 +296,7 @@ func TestMultiChannelFailSrc(t *testing.T) {
 }
 
 func TestMultiChannelFailComponent(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// components not same liquid type
 	tb, dstp := getTransferBlock2Component(ctx)
@@ -321,7 +328,7 @@ func TestMultiChannelFailComponent(t *testing.T) {
 }
 
 func TestMultichannelPositive(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
@@ -353,7 +360,7 @@ func TestMultichannelPositive(t *testing.T) {
 }
 
 func TestIndependentMultichannelPositive(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	tb, dstp := getTransferBlock2Component(ctx)
 
@@ -402,7 +409,7 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 }
 
 func TestTroughMultichannelPositive(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	tb, dstp := getTransferBlock2Component(ctx)
 
@@ -437,7 +444,7 @@ func TestTroughMultichannelPositive(t *testing.T) {
 
 func TestBigWellMultichannelPositive(t *testing.T) {
 	t.Skip() // pending revisions
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	tb, dstp := getTransferBlock2Component(ctx)
 
@@ -471,7 +478,7 @@ func TestBigWellMultichannelPositive(t *testing.T) {
 }
 
 func TestInsByInsMixPositiveMultichannel(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	tb, dstp := getTransferBlock3Component(ctx)
 
@@ -508,7 +515,7 @@ func TestInsByInsMixPositiveMultichannel(t *testing.T) {
 }
 
 func TestInsByInsMixNegativeMultichannel(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	tb, dstp := getTransferBlock3Component(ctx)
 
@@ -700,7 +707,7 @@ func assertNumLoadUnloadInstructions(t *testing.T, instructions []RobotInstructi
 
 //TestMultiChannelTipReuseGood Move water to two columns of wells - shouldn't need to change tips in between
 func TestMultiChannelTipReuseGood(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
 	if err != nil {
@@ -716,7 +723,7 @@ func TestMultiChannelTipReuseGood(t *testing.T) {
 
 //TestMultiChannelTipReuseDisabled identical to good, except disable tip reuse
 func TestMultiChannelTipReuseDisabled(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
 	if err != nil {
@@ -741,7 +748,7 @@ func TestMultiChannelTipReuseDisabled(t *testing.T) {
 //TestSingleChannelTipReuse -- based same as above but with multichannel disabled
 //and allowing tip reuse
 func TestSingleChannelTipReuse(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
 	if err != nil {
@@ -764,7 +771,7 @@ func TestSingleChannelTipReuse(t *testing.T) {
 
 //TestSingleChannelTipReuse2 -- now we move two things
 func TestSingleChannelTipReuse2(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
 	if err != nil {
@@ -794,7 +801,7 @@ func TestSingleChannelTipReuse2(t *testing.T) {
 
 //TestMultiChannelTipReuseBad Move water and ethanol to two separate columns of wells - should change tips in between
 func TestMultiChannelTipReuseBad(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType}, []float64{50.0})
 	if err != nil {
@@ -817,7 +824,7 @@ func TestMultiChannelTipReuseBad(t *testing.T) {
 
 //TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
 func TestMultiChannelTipReuseUgly(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "ethanol"}, []float64{50.0, 50.0})
 	if err != nil {
@@ -834,7 +841,7 @@ func TestMultiChannelTipReuseUgly(t *testing.T) {
 //TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
 func BenchmarkMultiChannelTipReuseUgly(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		ctx := testinventory.NewContext(context.Background())
+		ctx := GetContextForTest()
 
 		inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "ethanol"}, []float64{50.0, 50.0})
 		if err != nil {

@@ -438,12 +438,7 @@ const (
 	BYCOLUMN = false
 )
 
-var awpCalls = 0
-
 func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
-	fmt.Printf("lhp(%s).AllWellPositions(%t) WlsX x WlsY = %d x %x = %d. call %d\n", lhp.ID, byrow, lhp.WlsX, lhp.WlsY, lhp.WlsX*lhp.WlsY, awpCalls)
-	awpCalls += 1
-
 	wellpositionarray = make([]string, 0, lhp.WlsX*lhp.WlsY)
 
 	if byrow {

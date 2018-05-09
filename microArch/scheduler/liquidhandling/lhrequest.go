@@ -55,7 +55,7 @@ type LHRequest struct {
 	PolicyManager         *LHPolicyManager
 	Input_order           []string
 	Output_order          []string
-	OutputIteratorFactory func(*wtype.LHPlate) wtype.PlateIterator `json:"-"`
+	OutputIteratorFactory func(wtype.Addressable) wtype.PlateIterator `json:"-"`
 	InstructionChain      *IChain
 	Input_vols_supplied   map[string]wunit.Volume
 	Input_vols_required   map[string]wunit.Volume

@@ -21,8 +21,8 @@ type VectorPlateIterator interface {
 type BasicPlateIterator struct {
 	fst  WellCoords
 	cur  WellCoords
-	p    *LHPlate
-	rule func(WellCoords, *LHPlate) WellCoords
+	a    Addressable
+	rule func(WellCoords, Addressable) WellCoords
 }
 
 type MultiPlateIterator struct {
@@ -92,19 +92,11 @@ func (it *BasicPlateIterator) Curr() WellCoords {
 }
 
 func (it *BasicPlateIterator) Valid() bool {
-	if it.cur.X >= it.p.WellsX() || it.cur.X < 0 {
-		return false
-	}
-
-	if it.cur.Y >= it.p.WellsY() || it.cur.Y < 0 {
-		return false
-	}
-
-	return true
+	return it.a.AddressExists(it.cur)
 }
 
 func (it *BasicPlateIterator) Next() WellCoords {
-	it.cur = it.rule(it.cur, it.p)
+	it.cur = it.rule(it.cur, it.a)
 	return it.cur
 }
 func (it *BasicPlateIterator) SetStartTo(wc WellCoords) {
@@ -115,89 +107,89 @@ func (it *BasicPlateIterator) SetCurTo(wc WellCoords) {
 	it.cur = wc
 }
 
-func DownOneColumn(wc WellCoords, p *LHPlate) WellCoords {
+func DownOneColumn(wc WellCoords, a Addressable) WellCoords {
 	wc.Y += 1
 	return wc
 }
 
-func AlongOneRow(wc WellCoords, p *LHPlate) WellCoords {
+func AlongOneRow(wc WellCoords, a Addressable) WellCoords {
 	wc.X += 1
 	return wc
 }
 
-func NextInRowOnce(wc WellCoords, p *LHPlate) WellCoords {
+func NextInRowOnce(wc WellCoords, a Addressable) WellCoords {
 	wc.X += 1
-	if wc.X >= p.WellsX() {
+	if wc.X >= a.NCols() {
 		wc.X = 0
 		wc.Y += 1
 	}
 	return wc
 }
-func NextInRow(wc WellCoords, p *LHPlate) WellCoords {
+func NextInRow(wc WellCoords, a Addressable) WellCoords {
 	wc.X += 1
-	if wc.X >= p.WellsX() {
+	if wc.X >= a.NCols() {
 		wc.X = 0
 		wc.Y += 1
 	}
-	if wc.Y >= p.WellsY() {
+	if wc.Y >= a.NRows() {
 		wc.X = 0
 		wc.Y = 0
 	}
 	return wc
 }
 
-func NextInColumn(wc WellCoords, p *LHPlate) WellCoords {
+func NextInColumn(wc WellCoords, a Addressable) WellCoords {
 	wc.Y += 1
-	if wc.Y >= p.WellsY() {
+	if wc.Y >= a.NRows() {
 		wc.Y = 0
 		wc.X += 1
 	}
-	if wc.X >= p.WellsX() {
+	if wc.X >= a.NCols() {
 		wc.X = 0
 		wc.Y = 0
 	}
 	return wc
 }
-func NextInColumnOnce(wc WellCoords, p *LHPlate) WellCoords {
-	//fmt.Println(wc.FormatA1(), " ", "X: ", wc.X, " Y: ", wc.Y, "WX: ", p.WellsX(), " WY: ", p.WellsY())
+func NextInColumnOnce(wc WellCoords, a Addressable) WellCoords {
+	//fmt.Println(wc.FormatA1(), " ", "X: ", wc.X, " Y: ", wc.Y, "WX: ", a.NCols(), " WY: ", a.NRows())
 	wc.Y += 1
-	if wc.Y >= p.WellsY() {
+	if wc.Y >= a.NRows() {
 		wc.Y = 0
 		wc.X += 1
 	}
 	return wc
 }
 
-func NewColumnWiseIterator(p *LHPlate) PlateIterator {
+func NewColumnWiseIterator(a Addressable) PlateIterator {
 	var bi BasicPlateIterator
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
 	bi.rule = NextInColumn
-	bi.p = p
+	bi.a = a
 	return &bi
 }
-func NewOneTimeColumnWiseIterator(p *LHPlate) PlateIterator {
+func NewOneTimeColumnWiseIterator(a Addressable) PlateIterator {
 	var bi BasicPlateIterator
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
 	bi.rule = NextInColumnOnce
-	bi.p = p
+	bi.a = a
 	return &bi
 }
 
-func NewRowWiseIterator(p *LHPlate) PlateIterator {
+func NewRowWiseIterator(a Addressable) PlateIterator {
 	var bi BasicPlateIterator
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
 	bi.rule = NextInRow
-	bi.p = p
+	bi.a = a
 	return &bi
 }
-func NewOneTimeRowWiseIterator(p *LHPlate) PlateIterator {
+func NewOneTimeRowWiseIterator(a Addressable) PlateIterator {
 	var bi BasicPlateIterator
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
-	bi.p = p
+	bi.a = a
 	bi.rule = NextInRowOnce
 	return &bi
 }
@@ -319,22 +311,22 @@ func NewTickingColVectorIterator(p *LHPlate, multi, tpw, wpt int) VectorPlateIte
 	return &TickingColVectorIterator{Plate: p, Multi: multi, Ticker: ticker}
 }
 
-func NewColVectorIterator(p *LHPlate, multi int) VectorPlateIterator {
+func NewColVectorIterator(a Addressable, multi int) VectorPlateIterator {
 	var bi BasicPlateIterator
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
-	bi.p = p
+	bi.a = a
 	bi.rule = NextInColumnOnce
 	rule := NewMultiIteratorRule(multi)
 	mi := MultiPlateIterator{bi, multi, rule, LHVChannel}
 	return &mi
 }
 
-func NewRowVectorIterator(p *LHPlate, multi int) VectorPlateIterator {
+func NewRowVectorIterator(a Addressable, multi int) VectorPlateIterator {
 	var bi BasicPlateIterator
 	bi.fst = WellCoords{0, 0}
 	bi.cur = WellCoords{0, 0}
-	bi.p = p
+	bi.a = a
 	bi.rule = NextInRowOnce
 	rule := NewMultiIteratorRule(multi)
 	mi := MultiPlateIterator{bi, multi, rule, LHHChannel}

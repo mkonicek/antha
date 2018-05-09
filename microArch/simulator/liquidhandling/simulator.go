@@ -48,14 +48,6 @@ func pWells(N int) string {
 	return "wells"
 }
 
-func summariseWell2Channel(well []string, channels []int) string {
-	ret := make([]string, 0, len(channels))
-	for ch := range channels {
-		ret = append(ret, fmt.Sprintf("%s->channel%v", well[ch], ch))
-	}
-	return strings.Join(ret, ", ")
-}
-
 func summariseChannels(channels []int) string {
 	if len(channels) == 1 {
 		return fmt.Sprintf("channel %d", channels[0])
@@ -108,7 +100,7 @@ func summariseStrings(s []string) string {
 	if countUnique(s, true) == 1 {
 		return firstNonEmpty(s)
 	}
-	return "{" + strings.Join(s, ",") + "}"
+	return "{" + strings.Join(getUnique(s, true), ",") + "}"
 }
 
 func summariseCycles(cycles []int, elems []int) string {
@@ -1267,17 +1259,17 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		}
 		z_off[ch] = delta.Z
 		if delta.Z < 0. {
-			self.AddErrorf("LoadTips", "Request to load tip at location %s to channel %d at %s, channel is %.1f below tip", tip_p, ch, ch_p, -delta.Z)
+			self.AddErrorf("LoadTips", "%s : channel is %.1f below tip", describe(), -delta.Z)
 			return ret
 		}
 	}
 	if len(misaligned) == 1 {
-		self.AddErrorf("LoadTips", "Channel %s is misaligned with tip at %s by %smm",
-			misaligned[0], target[0], amount[0])
+		self.AddErrorf("LoadTips", "%s : channel %s is misaligned with tip at %s by %smm",
+			describe(), misaligned[0], target[0], amount[0])
 		return ret
 	} else if len(misaligned) > 1 {
-		self.AddErrorf("LoadTips", "Channels %s are misaligned with tips at %s by %s mm respectively",
-			strings.Join(misaligned, ","), strings.Join(target, ","), strings.Join(amount, ","))
+		self.AddErrorf("LoadTips", "%s : channels %s are misaligned with tips at %s by %s mm respectively",
+			describe(), strings.Join(misaligned, ","), strings.Join(target, ","), strings.Join(amount, ","))
 		return ret
 	}
 
@@ -1295,8 +1287,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 			}
 		}
 		if zo_max != zo_min {
-			self.AddErrorf("LoadTips", "Distance between channels and tips varies from %v to %v mm in non-independent head",
-				zo_min, zo_max)
+			self.AddErrorf("LoadTips", "%s : distance between channels and tips varies from %v to %v mm in non-independent head",
+				describe(), zo_min, zo_max)
 			return ret
 		}
 		for i := 0; i < adaptor.GetChannelCount(); i++ {
@@ -1324,8 +1316,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		}
 
 		if len(collisions) > 0 {
-			self.AddErrorf("LoadTips", "Cannot load %s, %v (Head%d not independent)",
-				summariseWell2Channel(well, channels), collisions, head)
+			self.AddErrorf("LoadTips", "%s : %v (head not independent)",
+				describe(), collisions)
 		}
 	}
 
@@ -1334,7 +1326,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		tips[ch].GetParent().(*wtype.LHTipbox).RemoveTip(wc[ch])
 		adaptor.GetChannel(ch).LoadTip(tips[ch])
 		if err := tips[ch].SetParent((*wtype.LHTipbox)(nil)); err != nil {
-			self.AddError("LoadTips", err.Error())
+			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
 		}
 	}
 

@@ -140,9 +140,9 @@ type seqSearchTest struct {
 var seqTests = []seqSearchTest{
 	{
 		slice: []wtype.DNASequence{
-			{Nm: "Bob", Seq: "AACCACACTT"},
+			{Nm: "Boby", Seq: "AACCACACTT"},
 		},
-		value:          wtype.DNASequence{Nm: "bob", Seq: "AACCACACTT"},
+		value:          wtype.DNASequence{Nm: "boby", Seq: "AACCACACTT"},
 		expectedResult: true,
 		ignoreCase:     IgnoreCase,
 	},

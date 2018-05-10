@@ -11,6 +11,15 @@ type AddressIterator interface {
 	Valid() bool
 }
 
+//AddressSliceIterator iterates through slices of addresses
+type AddressSliceIterator interface {
+	Next() []WellCoords
+	Curr() []WellCoords
+	Reset()
+	MoveTo(WellCoords)
+	Valid() bool
+}
+
 type VerticalDirection int
 
 const (
@@ -31,6 +40,31 @@ const (
 	RowWise MajorOrder = iota
 	ColumnWise
 )
+
+//GetAddressIterator which iterates through the addresses in addr in order order, moving in directions ver and hor
+//when all addresses are returned, resets to the first address if reset is true, otherwise Valid() returns false
+func GetAddressIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, reset bool) AddressIterator {
+	start := WellCoords{}
+	if ver == BottomToTop {
+		start.Y = addr.NRows() - 1
+	}
+	if hor == RightToLeft {
+		start.X = addr.NCols() - 1
+	}
+
+	it := simpleIterator{
+		curr:  start,
+		first: start,
+		reset: reset,
+		addr:  addr,
+	}
+	if order == RowWise {
+		it.update = getRowWiseUpdate(hor, ver, addr)
+	} else {
+		it.update = getColWiseUpdate(hor, ver, addr)
+	}
+	return &it
+}
 
 type UpdateFn func(WellCoords) WellCoords
 
@@ -121,29 +155,4 @@ func (self *simpleIterator) MoveTo(wc WellCoords) {
 
 func (self *simpleIterator) Reset() {
 	self.curr = self.first
-}
-
-//GetAddressIterator which iterates through the addresses in addr in order order, moving in directions ver and hor
-//when all addresses are returned, resets to the first address if reset is true, otherwise Valid() returns false
-func GetAddressIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, reset bool) AddressIterator {
-	start := WellCoords{}
-	if ver == BottomToTop {
-		start.Y = addr.NRows() - 1
-	}
-	if hor == RightToLeft {
-		start.X = addr.NCols() - 1
-	}
-
-	it := simpleIterator{
-		curr:  start,
-		first: start,
-		reset: reset,
-		addr:  addr,
-	}
-	if order == RowWise {
-		it.update = getRowWiseUpdate(hor, ver, addr)
-	} else {
-		it.update = getColWiseUpdate(hor, ver, addr)
-	}
-	return &it
 }

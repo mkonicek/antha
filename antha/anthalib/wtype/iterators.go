@@ -6,6 +6,8 @@ package wtype
 type AddressIterator interface {
 	Next() WellCoords
 	Curr() WellCoords
+	MoveTo(WellCoords)
+	Reset()
 	Valid() bool
 }
 
@@ -111,6 +113,14 @@ func (self *simpleIterator) Curr() WellCoords {
 //Valid addressable contain the current well coordinates
 func (self *simpleIterator) Valid() bool {
 	return self.addr.AddressExists(self.curr)
+}
+
+func (self *simpleIterator) MoveTo(wc WellCoords) {
+	self.curr = wc
+}
+
+func (self *simpleIterator) Reset() {
+	self.curr = self.first
 }
 
 //GetAddressIterator which iterates through the addresses in addr in order order, moving in directions ver and hor

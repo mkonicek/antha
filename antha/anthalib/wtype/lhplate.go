@@ -1402,7 +1402,7 @@ type MixPreferences struct {
 }
 
 // NextFreeWell checks for the next well which is empty in a plate.
-// The user can also specify wells to avoid, preferred wells and
+// By using the MixPreferences, the user can also specify wells to avoid, preferred wells and
 // whether to search through the well positions by row. The default is by column.
 func (plate *LHPlate) NextFreeWell() (well string, err error) {
 	well, err = NextFreeWell(plate, plate.Preferences.AvoidWells, plate.Preferences.PreferredWells, plate.Preferences.ByRow)

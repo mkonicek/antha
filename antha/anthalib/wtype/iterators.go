@@ -15,8 +15,8 @@ type AddressIterator interface {
 type AddressSliceIterator interface {
 	Next() []WellCoords
 	Curr() []WellCoords
-	Reset()
 	MoveTo(WellCoords)
+	Reset()
 	Valid() bool
 }
 
@@ -42,8 +42,34 @@ const (
 )
 
 //GetAddressIterator which iterates through the addresses in addr in order order, moving in directions ver and hor
-//when all addresses are returned, resets to the first address if reset is true, otherwise Valid() returns false
-func GetAddressIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, reset bool) AddressIterator {
+//when all addresses are returned, resets to the first address if repeat is true, otherwise Valid() returns false
+func NewAddressIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, repeat bool) AddressIterator {
+	return newSimpleIterator(addr, order, ver, hor, repeat)
+}
+
+//NewColumnIterator get an iterator which iterates through the columns of the addressible, optionally repeating
+func NewColumnIterator(addr Addressable, ver VerticalDirection, hor HorizontalDirection, repeat bool) AddressSliceIterator {
+	it := newSimpleIterator(addr, ColumnWise, ver, hor, repeat)
+	return newChunkedIterator(it, addr.NRows())
+}
+
+//NewRowIterator get an iterator which iterates through the columns of the addressible, optionally repeating
+func NewRowIterator(addr Addressable, ver VerticalDirection, hor HorizontalDirection, repeat bool) AddressSliceIterator {
+	it := newSimpleIterator(addr, RowWise, ver, hor, repeat)
+	return newChunkedIterator(it, addr.NCols())
+}
+
+type updateFn func(WellCoords) WellCoords
+
+type simpleIterator struct {
+	curr   WellCoords
+	first  WellCoords
+	update updateFn
+	reset  bool
+	addr   Addressable
+}
+
+func newSimpleIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, repeat bool) *simpleIterator {
 	start := WellCoords{}
 	if ver == BottomToTop {
 		start.Y = addr.NRows() - 1
@@ -55,7 +81,7 @@ func GetAddressIterator(addr Addressable, order MajorOrder, ver VerticalDirectio
 	it := simpleIterator{
 		curr:  start,
 		first: start,
-		reset: reset,
+		reset: repeat,
 		addr:  addr,
 	}
 	if order == RowWise {
@@ -64,16 +90,6 @@ func GetAddressIterator(addr Addressable, order MajorOrder, ver VerticalDirectio
 		it.update = getColWiseUpdate(hor, ver, addr)
 	}
 	return &it
-}
-
-type updateFn func(WellCoords) WellCoords
-
-type simpleIterator struct {
-	curr   WellCoords
-	first  WellCoords
-	update updateFn
-	reset  bool
-	addr   Addressable
 }
 
 func getRowWiseUpdate(hor HorizontalDirection, ver VerticalDirection, a Addressable) updateFn {
@@ -155,4 +171,53 @@ func (self *simpleIterator) MoveTo(wc WellCoords) {
 
 func (self *simpleIterator) Reset() {
 	self.curr = self.first
+}
+
+type chunkedIterator struct {
+	it       *simpleIterator
+	chunkLen int
+	curr     []WellCoords
+}
+
+func (self *chunkedIterator) Next() []WellCoords {
+	i := 0
+	for wc := self.it.Curr(); i < self.chunkLen; wc = self.it.Next() {
+		self.curr[i] = wc
+		i += 1
+	}
+	return self.curr
+}
+
+func (self *chunkedIterator) Curr() []WellCoords {
+	return self.curr
+}
+
+func (self *chunkedIterator) MoveTo(wc WellCoords) {
+	self.it.MoveTo(wc)
+}
+
+func (self *chunkedIterator) Reset() {
+	self.it.Reset()
+}
+
+func (self *chunkedIterator) Valid() bool {
+	for _, wc := range self.curr {
+		if !self.it.addr.AddressExists(wc) {
+			return false
+		}
+	}
+	return true
+}
+
+func newChunkedIterator(it *simpleIterator, chunkLen int) *chunkedIterator {
+	curr := make([]WellCoords, 0, chunkLen)
+	for wc := it.Curr(); len(curr) < chunkLen; wc = it.Next() {
+		curr = append(curr, wc)
+	}
+
+	return &chunkedIterator{
+		it:       it,
+		chunkLen: chunkLen,
+		curr:     curr,
+	}
 }

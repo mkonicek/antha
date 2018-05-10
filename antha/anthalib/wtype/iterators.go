@@ -8,6 +8,7 @@ type AddressIterator interface {
 	Curr() WellCoords
 	MoveTo(WellCoords)
 	Reset()
+	GetAddressable() Addressable
 	Valid() bool
 }
 
@@ -17,6 +18,7 @@ type AddressSliceIterator interface {
 	Curr() []WellCoords
 	MoveTo(WellCoords)
 	Reset()
+	GetAddressable() Addressable
 	Valid() bool
 }
 
@@ -57,6 +59,15 @@ func NewColumnIterator(addr Addressable, ver VerticalDirection, hor HorizontalDi
 func NewRowIterator(addr Addressable, ver VerticalDirection, hor HorizontalDirection, repeat bool) AddressSliceIterator {
 	it := newSimpleIterator(addr, RowWise, ver, hor, repeat)
 	return newChunkedIterator(it, addr.NCols())
+}
+
+//NewTickingIterator return an iterator which chunks the output of an iterator which repeats and skips the output of
+//an AddressIterator
+func NewTickingIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, repeat bool, chunkSize, wellsPerTick, ticksPerWell int) AddressSliceIterator {
+	it := newSimpleIterator(addr, order, ver, hor, repeat)
+	tick := newStepIterator(it, ticksPerWell, wellsPerTick, 0)
+	chunk := newChunkedIterator(tick, chunkSize)
+	return chunk
 }
 
 type updateFn func(WellCoords) WellCoords
@@ -169,12 +180,16 @@ func (self *simpleIterator) MoveTo(wc WellCoords) {
 	self.curr = wc
 }
 
+func (self *simpleIterator) GetAddressable() Addressable {
+	return self.addr
+}
+
 func (self *simpleIterator) Reset() {
 	self.curr = self.first
 }
 
 type chunkedIterator struct {
-	it       *simpleIterator
+	it       AddressIterator
 	chunkLen int
 	curr     []WellCoords
 }
@@ -200,16 +215,20 @@ func (self *chunkedIterator) Reset() {
 	self.it.Reset()
 }
 
+func (self *chunkedIterator) GetAddressable() Addressable {
+	return self.it.GetAddressable()
+}
+
 func (self *chunkedIterator) Valid() bool {
 	for _, wc := range self.curr {
-		if !self.it.addr.AddressExists(wc) {
+		if !self.it.GetAddressable().AddressExists(wc) {
 			return false
 		}
 	}
 	return true
 }
 
-func newChunkedIterator(it *simpleIterator, chunkLen int) *chunkedIterator {
+func newChunkedIterator(it AddressIterator, chunkLen int) *chunkedIterator {
 	curr := make([]WellCoords, 0, chunkLen)
 	for wc := it.Curr(); len(curr) < chunkLen; wc = it.Next() {
 		curr = append(curr, wc)
@@ -220,4 +239,52 @@ func newChunkedIterator(it *simpleIterator, chunkLen int) *chunkedIterator {
 		chunkLen: chunkLen,
 		curr:     curr,
 	}
+}
+
+type stepIterator struct {
+	it         AddressIterator
+	repeats    int
+	stepSize   int
+	currRepeat int
+}
+
+func newStepIterator(it AddressIterator, repeats, stepSize, currRepeat int) *stepIterator {
+	return &stepIterator{
+		it:         it,
+		repeats:    repeats,
+		stepSize:   stepSize,
+		currRepeat: currRepeat,
+	}
+}
+
+func (self *stepIterator) Next() WellCoords {
+	self.currRepeat += 1
+	if self.currRepeat < self.repeats {
+		return self.it.Curr()
+	}
+	self.currRepeat = 0
+	for step := 0; step < self.stepSize; step += 1 {
+		self.it.Next()
+	}
+	return self.it.Curr()
+}
+
+func (self *stepIterator) Curr() WellCoords {
+	return self.it.Curr()
+}
+
+func (self *stepIterator) MoveTo(wc WellCoords) {
+	self.it.MoveTo(wc)
+}
+
+func (self *stepIterator) Reset() {
+	self.it.Reset()
+}
+
+func (self *stepIterator) GetAddressable() Addressable {
+	return self.it.GetAddressable()
+}
+
+func (self *stepIterator) Valid() bool {
+	return self.it.Valid()
 }

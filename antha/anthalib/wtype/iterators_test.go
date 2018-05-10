@@ -289,3 +289,62 @@ func TestAddressSliceIterator(t *testing.T) {
 	}
 
 }
+
+func TestTickingIterator(t *testing.T) {
+	addr := &testAddressable{4, 4}
+
+	//A1, A2, A3, A4
+	//B1, B2, B3, B4
+	//C1, C2, C3, C4
+	//D1, D2, D3, D4
+
+	tests := []*addressSliceIteratorTest{
+		{
+			TestName:  "NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 1, 1, 1)",
+			It:        NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 1, 1, 1),
+			Expected:  "[A1],[B1],[C1],[D1],[A2],[B2],[C2],[D2],[A3],[B3],[C3],[D3],[A4],[B4],[C4],[D4]",
+			CallLimit: 32,
+		},
+		{
+			TestName:  "NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 1, 2, 1)",
+			It:        NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 1, 2, 1),
+			Expected:  "[A1],[C1],[A2],[C2],[A3],[C3],[A4],[C4]",
+			CallLimit: 32,
+		},
+		{
+			TestName:  "NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 1, 2, 2)",
+			It:        NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 1, 2, 2),
+			Expected:  "[A1],[A1],[C1],[C1],[A2],[A2],[C2],[C2],[A3],[A3],[C3],[C3],[A4],[A4],[C4],[C4]",
+			CallLimit: 32,
+		},
+		{
+			TestName:  "NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 2, 2, 1)",
+			It:        NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 2, 2, 1),
+			Expected:  "[A1,C1],[A2,C2],[A3,C3],[A4,C4]",
+			CallLimit: 32,
+		},
+		{
+			TestName:  "NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 2, 2, 2)",
+			It:        NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 2, 2, 2),
+			Expected:  "[A1,A1],[C1,C1],[A2,A2],[C2,C2],[A3,A3],[C3,C3],[A4,A4],[C4,C4]",
+			CallLimit: 32,
+		},
+		{
+			TestName:  "NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 4, 2, 2)",
+			It:        NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, false, 4, 2, 2),
+			Expected:  "[A1,A1,C1,C1],[A2,A2,C2,C2],[A3,A3,C3,C3],[A4,A4,C4,C4]",
+			CallLimit: 32,
+		},
+		{
+			TestName:  "NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, true, 1, 1, 1)",
+			It:        NewTickingIterator(addr, ColumnWise, TopToBottom, LeftToRight, true, 1, 1, 1),
+			Expected:  "[A1],[B1],[C1],[D1],[A2],[B2],[C2],[D2],[A3],[B3],[C3],[D3],[A4],[B4],[C4],[D4],[A1],[B1],[C1],[D1],[A2],[B2],[C2],[D2],[A3],[B3],[C3],[D3],[A4],[B4],[C4],[D4]",
+			CallLimit: 32,
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+
+}

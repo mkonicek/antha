@@ -66,17 +66,17 @@ func GetAddressIterator(addr Addressable, order MajorOrder, ver VerticalDirectio
 	return &it
 }
 
-type UpdateFn func(WellCoords) WellCoords
+type updateFn func(WellCoords) WellCoords
 
 type simpleIterator struct {
 	curr   WellCoords
 	first  WellCoords
-	update UpdateFn
+	update updateFn
 	reset  bool
 	addr   Addressable
 }
 
-func getRowWiseUpdate(hor HorizontalDirection, ver VerticalDirection, a Addressable) UpdateFn {
+func getRowWiseUpdate(hor HorizontalDirection, ver VerticalDirection, a Addressable) updateFn {
 	dx := int(hor)
 	dy := int(ver)
 	nCols := a.NCols()
@@ -103,7 +103,7 @@ func getRowWiseUpdate(hor HorizontalDirection, ver VerticalDirection, a Addressa
 	return ret
 }
 
-func getColWiseUpdate(hor HorizontalDirection, ver VerticalDirection, a Addressable) UpdateFn {
+func getColWiseUpdate(hor HorizontalDirection, ver VerticalDirection, a Addressable) updateFn {
 	dx := int(hor)
 	dy := int(ver)
 	nRows := a.NRows()

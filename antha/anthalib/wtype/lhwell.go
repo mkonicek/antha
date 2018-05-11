@@ -629,7 +629,7 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LHWell, bool) {
 	vol := component.Vol
 
-	it := NewOneTimeColumnWiseIterator(plate)
+	it := NewAddressIterator(plate, ColumnWise, TopToBottom, LeftToRight, false)
 
 	if curwell != nil {
 		// quick check to see if we have room
@@ -641,9 +641,7 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 		}
 
 		startcoords := curwell.Crds
-		it.SetStartTo(startcoords)
-		it.Rewind()
-		it.Next()
+		it.MoveTo(startcoords)
 	}
 
 	var new_well *LHWell

@@ -17,6 +17,7 @@ func makeplatefortest() *LHPlate {
 	return p
 }
 
+/* -- these aren't used, but might be useful again in the future?
 func make384platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
 	welltype := NewLHWell("ul", 50, 5, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
@@ -43,7 +44,7 @@ func make6platefortest() *LHPlate {
 	welltype := NewLHWell("ul", 3000, 500, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("6wellplate", "none", 2, 3, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
-}
+} */
 
 func TestPlateCreation(t *testing.T) {
 	p := makeplatefortest()

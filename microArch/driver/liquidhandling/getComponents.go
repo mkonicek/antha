@@ -68,7 +68,7 @@ func matchToParallelTransfer(m wtype.Match) ParallelTransfer {
 }
 
 // returns a vector iterator for a plate given the multichannel capabilites of the head (ori, multi)
-func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateIterator {
+func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.AddressSliceIterator {
 	if ori == wtype.LHVChannel {
 		//it = NewColVectorIterator(lhp, multi)
 
@@ -88,10 +88,15 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 			multi = lhp.WellsY()
 		}
 
-		return wtype.NewTickingColVectorIterator(lhp, multi, tpw, wpt)
+		if multi == 1 {
+			tpw = 1
+			wpt = 1
+		}
+
+		return wtype.NewTickingIterator(lhp, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false, multi, wpt, tpw)
 	} else {
 		// needs same treatment as above
-		return wtype.NewRowVectorIterator(lhp, multi)
+		return wtype.NewTickingIterator(lhp, wtype.RowWise, wtype.TopToBottom, wtype.LeftToRight, false, multi, 1, 1)
 	}
 }
 

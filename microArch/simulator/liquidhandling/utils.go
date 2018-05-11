@@ -110,3 +110,21 @@ func addComponent(container wtype.LHContainer, rhs *wtype.LHComponent) error {
 
 	return container.SetContents(ret)
 }
+
+func coordsMatch(tc [][]wtype.WellCoords, wc []wtype.WellCoords) bool {
+	if len(tc) != 1 {
+		return false
+	}
+
+	if len(tc[0]) != len(wc) {
+		return false
+	}
+
+	for i := 0; i < len(wc); i++ {
+		if !tc[0][i].Equals(wc[0]) {
+			return false
+		}
+	}
+
+	return true
+}

@@ -228,6 +228,10 @@ func (self *AdaptorState) SetOverridesLoadTipsCommand(v bool) {
 	self.tipBehaviour.OverrideLoadTipsCommand = v
 }
 
+func (self *AdaptorState) AutoRefillsTipboxes() bool {
+	return self.tipBehaviour.AutoRefillsTipboxes
+}
+
 func isVAligned(lhs wtype.WellCoords, rhs wtype.WellCoords) bool {
 	return lhs.X == rhs.X
 }
@@ -283,6 +287,13 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 		for i := len(ret)/2 - 1; i >= 0; i-- {
 			opp := len(ret) - 1 - i
 			ret[i], ret[opp] = ret[opp], ret[i]
+		}
+
+		for _, chunk := range ret {
+			for i := len(chunk)/2 - 1; i >= 0; i-- {
+				opp := len(chunk) - 1 - i
+				chunk[i], chunk[opp] = chunk[opp], chunk[i]
+			}
 		}
 	}
 

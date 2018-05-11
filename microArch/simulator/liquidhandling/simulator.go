@@ -1157,14 +1157,18 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		return ret
 	}
 
-	if self.settings.GetTipTrackingBehaviour() == TrilutionTipTracking {
-		//refil the tipbox if there aren't enough tips to service the instruction
-		if !tipbox.HasEnoughTips(multi) {
-			tipbox.Refill()
-		}
-		//HJK: we should also check that we're picking up tip in the way trilution is know to (e.g. splitting over rows etc)
-		//but this requires more information about the geometry of the head and so on
+	//refill the tipbox if there aren't enough tips to service the instruction
+	if adaptor.AutoRefillsTipboxes() && !tipbox.HasEnoughTips(multi) {
+		tipbox.Refill()
+	}
 
+	//if the adaptor might override what we tell it
+	if adaptor.OverridesLoadTipsCommand() {
+		//a list of tip locations that will be loaded
+		tipChunks := adaptor.GetTipCoordsToLoad(tipbox, multi)
+		if !coordsMatch(tipChunks, wc) {
+			return self.overrideLoadTips(channels, head, multi, platetype, position, tipChunks)
+		}
 	}
 
 	describe := func() string {
@@ -1328,6 +1332,33 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		if err := tips[ch].SetParent((*wtype.LHTipbox)(nil)); err != nil {
 			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
 		}
+	}
+
+	return ret
+}
+
+func (self *VirtualLiquidHandlet) overrideLoadTips(channels []int, head, multi int, platetype, position string, tipChunks [][]wtype.WellCoords) driver.CommandStatus {
+	panic("this isn't done yet")
+	var ret driver.CommandStatus
+	for _, chunk := range tipChunks {
+		positionS := make([]string, 0, multi)
+		platetypeS := make([]string, 0, multi)
+		reference := make([]int, 0, multi)
+		offsetXY := make([]float64, 0, multi)
+		offsetZ := make([]float64, 0, multi)
+		wellcoords := make([]string, 0, multi)
+		channels := make([]int, 0, multi)
+		for i := 0; i < multi; i++ {
+			positionS = append(positionS, position)
+			platetypeS = append(platetypeS, platetype)
+			reference = append(reference, wtype.TopReference)
+			offsetXY = append(offsetXY, 0.0)
+			offsetX = append(offsetZ, 4.0)
+			wellcoords = append(wellcoords, chunk[i].FormatA1())
+		}
+
+		ret = self.Move(positionS, wellcoords, reference, offsetXY, offsetXY, offsetZ, platetypeS, head)
+		//ret = self.LoadTips(channels []int, head, multi int, platetypeS, positionS, well []string)
 	}
 
 	return ret

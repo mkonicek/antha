@@ -379,28 +379,3 @@ func TestTickingIteratorLarger(t *testing.T) {
 	}
 
 }
-
-func writeTITest(plate *LHPlate, multi, wellsPerTick, ticksPerWell int) {
-
-	call := fmt.Sprintf("NewTickingIterator(&testAddressable{%d, %d}, ColumnWise, TopToBottom, LeftToRight, false, %d, %d, %d)", plate.NRows(), plate.NCols(), multi, wellsPerTick, ticksPerWell)
-
-	it := NewTickingColVectorIterator(plate, multi, ticksPerWell, wellsPerTick)
-
-	var exS []string
-	for wcS := it.Curr(); it.Valid(); wcS = it.Next() {
-		wcSS := make([]string, 0, len(wcS))
-		for _, wc := range wcS {
-			wcSS = append(wcSS, wc.FormatA1())
-		}
-		exS = append(exS, strings.Join(wcSS, ","))
-	}
-	expected := "[" + strings.Join(exS, "],[") + "]"
-
-	fmt.Println("{")
-	fmt.Printf("  TestName: \"Test %s\",\n", call)
-	fmt.Printf("  It: %s,\n", call)
-	fmt.Printf("  Expected: \"%s\",\n", expected)
-	fmt.Printf("  CallLimit: %d,\n", plate.NRows()*plate.NCols()+10)
-
-	fmt.Println("},")
-}

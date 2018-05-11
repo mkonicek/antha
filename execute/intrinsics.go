@@ -362,7 +362,10 @@ func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.LHComp
 	inst := mix(ctx, generic)
 	trace.Issue(ctx, inst)
 	if generic.Welladdress != "" {
-		inst.result[0].SetWellLocation(generic.Welladdress)
+		err := inst.result[0].SetWellLocation(generic.Welladdress)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return inst.result[0]
 }

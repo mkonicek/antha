@@ -313,7 +313,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 		} else if p.Orientation == wtype.LHHChannel {
 			spacing.X = 9.
 		}
-		vlh.state.AddAdaptor(NewAdaptorState(head.Adaptor.Name, p.Independent, p.Multi, spacing, p))
+		vlh.state.AddAdaptor(NewAdaptorState(head.Adaptor.Name, p.Independent, p.Multi, spacing, p, head.TipLoading))
 	}
 
 	//Make the deck

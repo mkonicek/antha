@@ -480,12 +480,14 @@ const (
 type TipLoadingBehaviour struct {
 	//OverrideLoadTipsCommand true it the liquid handler will override which tips are loaded
 	OverrideLoadTipsCommand bool
+	//AutoRefillTipboxes are tipboxes automaticall refilled
+	AutoRefillTipboxes bool
 	//LoadingOrder are tips loaded ColumnWise or RowWise
 	LoadingOrder MajorOrder
 	//VerticalLoadingDirection the direction along which columns are loaded
 	VerticalLoadingDirection VerticalDirection
 	//HorizontalLoadingDirection the direction along which rows are loaded
-	HorizonalLoadingDirection HorizontalDirection
+	HorizontalLoadingDirection HorizontalDirection
 	//ChunkingBehaviour how to load tips when the requested number aren't available contiguously
 	ChunkingBehaviour SequentialTipLoadingBehaviour
 }

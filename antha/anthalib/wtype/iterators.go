@@ -63,9 +63,9 @@ func NewRowIterator(addr Addressable, ver VerticalDirection, hor HorizontalDirec
 
 //NewTickingIterator return an iterator which chunks the output of an iterator which repeats and skips the output of
 //an AddressIterator
-func NewTickingIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, repeat bool, chunkSize, wellsPerTick, ticksPerWell int) AddressSliceIterator {
-	it := newSimpleIterator(addr, order, ver, hor, repeat)
-	tick := newStepIterator(it, ticksPerWell, wellsPerTick, 0)
+func NewTickingIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, repeat bool, chunkSize, stepSize, repeatAddresses int) AddressSliceIterator {
+	it := newSteppingIterator(addr, order, ver, hor, repeat, stepSize)
+	tick := newRepeatingIterator(it, repeatAddresses)
 	chunk := newChunkedIterator(tick, chunkSize)
 	return chunk
 }
@@ -96,51 +96,82 @@ func newSimpleIterator(addr Addressable, order MajorOrder, ver VerticalDirection
 		addr:  addr,
 	}
 	if order == RowWise {
-		it.update = getRowWiseUpdate(hor, ver, addr)
+		it.update = getRowWiseUpdate(int(hor), int(ver), addr)
 	} else {
-		it.update = getColWiseUpdate(hor, ver, addr)
+		it.update = getColWiseUpdate(int(hor), int(ver), addr)
 	}
 	return &it
 }
 
-func getRowWiseUpdate(hor HorizontalDirection, ver VerticalDirection, a Addressable) updateFn {
-	dx := int(hor)
-	dy := int(ver)
+func newSteppingIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, repeat bool, stepSize int) *simpleIterator {
+	start := WellCoords{}
+	if ver == BottomToTop {
+		start.Y = addr.NRows() - 1
+	}
+	if hor == RightToLeft {
+		start.X = addr.NCols() - 1
+	}
+
+	it := simpleIterator{
+		curr:  start,
+		first: start,
+		reset: repeat,
+		addr:  addr,
+	}
+	if order == RowWise {
+		it.update = getRowWiseUpdate(int(hor)*stepSize, int(ver), addr)
+	} else {
+		it.update = getColWiseUpdate(int(hor), int(ver)*stepSize, addr)
+	}
+	return &it
+}
+
+func getRowWiseUpdate(dx, dy int, a Addressable) updateFn {
 	nCols := a.NCols()
 
 	if dx > 0 {
 		ret := func(wc WellCoords) WellCoords {
-			wc.X += dx
-			if wc.X >= nCols {
-				wc.X -= nCols
+			if wc.X == nCols-1 {
+				wc.X = 0
 				wc.Y += dy
+			} else {
+				wc.X += dx
+				if wc.X >= nCols {
+					wc.X = wc.X%nCols + 1
+				}
 			}
 			return wc
 		}
 		return ret
 	}
 	ret := func(wc WellCoords) WellCoords {
-		wc.X += dx
-		if wc.X < 0 {
-			wc.X += nCols
+		if wc.X == 0 {
+			wc.X = nCols - 1
 			wc.Y += dy
+		} else {
+			wc.X += dx
+			if wc.X < 0 {
+				wc.X += nCols - 1
+			}
 		}
 		return wc
 	}
 	return ret
 }
 
-func getColWiseUpdate(hor HorizontalDirection, ver VerticalDirection, a Addressable) updateFn {
-	dx := int(hor)
-	dy := int(ver)
+func getColWiseUpdate(dx, dy int, a Addressable) updateFn {
 	nRows := a.NRows()
 
 	if dy > 0 {
 		ret := func(wc WellCoords) WellCoords {
-			wc.Y += dy
-			if wc.Y >= nRows {
-				wc.Y -= nRows
+			if wc.Y == nRows-1 {
+				wc.Y = 0
 				wc.X += dx
+			} else {
+				wc.Y += dy
+				if wc.Y >= nRows {
+					wc.Y = wc.Y%nRows + 1
+				}
 			}
 			return wc
 		}
@@ -241,50 +272,44 @@ func newChunkedIterator(it AddressIterator, chunkLen int) *chunkedIterator {
 	}
 }
 
-type stepIterator struct {
+type repeatingIterator struct {
 	it         AddressIterator
 	repeats    int
-	stepSize   int
 	currRepeat int
 }
 
-func newStepIterator(it AddressIterator, repeats, stepSize, currRepeat int) *stepIterator {
-	return &stepIterator{
-		it:         it,
-		repeats:    repeats,
-		stepSize:   stepSize,
-		currRepeat: currRepeat,
+func newRepeatingIterator(it AddressIterator, repeats int) *repeatingIterator {
+	return &repeatingIterator{
+		it:      it,
+		repeats: repeats,
 	}
 }
 
-func (self *stepIterator) Next() WellCoords {
+func (self *repeatingIterator) Next() WellCoords {
 	self.currRepeat += 1
 	if self.currRepeat < self.repeats {
 		return self.it.Curr()
 	}
 	self.currRepeat = 0
-	for step := 0; step < self.stepSize; step += 1 {
-		self.it.Next()
-	}
+	return self.it.Next()
+}
+
+func (self *repeatingIterator) Curr() WellCoords {
 	return self.it.Curr()
 }
 
-func (self *stepIterator) Curr() WellCoords {
-	return self.it.Curr()
-}
-
-func (self *stepIterator) MoveTo(wc WellCoords) {
+func (self *repeatingIterator) MoveTo(wc WellCoords) {
 	self.it.MoveTo(wc)
 }
 
-func (self *stepIterator) Reset() {
+func (self *repeatingIterator) Reset() {
 	self.it.Reset()
 }
 
-func (self *stepIterator) GetAddressable() Addressable {
+func (self *repeatingIterator) GetAddressable() Addressable {
 	return self.it.GetAddressable()
 }
 
-func (self *stepIterator) Valid() bool {
+func (self *repeatingIterator) Valid() bool {
 	return self.it.Valid()
 }

@@ -43,7 +43,7 @@ const (
 	ColumnWise
 )
 
-//GetAddressIterator which iterates through the addresses in addr in order order, moving in directions ver and hor
+//NewAddressIterator iterates through the addresses in addr in order order, moving in directions ver and hor
 //when all addresses are returned, resets to the first address if repeat is true, otherwise Valid() returns false
 func NewAddressIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, repeat bool) AddressIterator {
 	return newSimpleIterator(addr, order, ver, hor, repeat)
@@ -61,8 +61,13 @@ func NewRowIterator(addr Addressable, ver VerticalDirection, hor HorizontalDirec
 	return newChunkedIterator(it, addr.NCols())
 }
 
-//NewTickingIterator return an iterator which chunks the output of an iterator which repeats and skips the output of
-//an AddressIterator
+//GetTickingIterator iterates through the addresses in addr in order order, moving in directions ver and hor, returning the output in slices of length chunkSize.
+//In the direction specified by order, steps are of size stepSize (which is assumed to a factor of the number of adresses in that direction), and repeat such that
+//every address is returned. Each address is repeated repeatAddresses times.
+//For example, if addr is of size 4x4, then the iterator returned by
+//  NewTickingIterator(addr, RowOrder, TopToBottom, LeftToRight, false, 4, 2, 2)
+//returns
+//  [[A1,A1,C1,C2],[B1,B1,D1,D1],[A2,A2, ...
 func NewTickingIterator(addr Addressable, order MajorOrder, ver VerticalDirection, hor HorizontalDirection, repeat bool, chunkSize, stepSize, repeatAddresses int) AddressSliceIterator {
 	it := newSteppingIterator(addr, order, ver, hor, repeat, stepSize)
 	tick := newRepeatingIterator(it, repeatAddresses)

@@ -23,7 +23,7 @@
 package liquidhandling
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"

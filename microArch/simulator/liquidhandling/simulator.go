@@ -34,6 +34,8 @@ import (
 	"strings"
 )
 
+const arbitraryZOffset = 4.0
+
 func pTips(N int) string {
 	if N == 1 {
 		return "tip"
@@ -1371,8 +1373,8 @@ func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi i
 			platetypeS[ch] = platetype
 			reference[ch] = int(wtype.TopReference)
 			offsetXY[ch] = 0.0
-			//4mm chosen arbitrarily as we don't know the exact height and it won't affect collision detection
-			offsetZ[ch] = 4.0
+			//arbitrary since we don't know the exact height and it won't affect collision detection
+			offsetZ[ch] = arbitraryZOffset
 			wellcoords[ch] = chunk[i].FormatA1()
 		}
 

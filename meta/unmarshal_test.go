@@ -115,6 +115,30 @@ func TestMapCustomStringTypeKey(t *testing.T) {
 	}
 }
 
+func TestMapIntKey(t *testing.T) {
+
+	type Elem struct {
+		A string
+		B int
+	}
+
+	type Value map[int]Elem
+
+	var x Value
+	golden := Value{
+		1: Elem{A: "hello", B: 1},
+		2: Elem{A: "hello", B: 2},
+	}
+
+	var u Unmarshaler
+
+	if err := u.Unmarshal([]byte(`{1: {"A": "hello", "B": 1}, 2: {"A": "hello", "B": 2} }`), &x); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(golden, x) {
+		t.Errorf("expecting %v but got %v instead", golden, x)
+	}
+}
+
 func TestSlice(t *testing.T) {
 	type Elem struct {
 		A string

@@ -229,7 +229,7 @@ func (self *AdaptorState) SetOverridesLoadTipsCommand(v bool) {
 }
 
 func (self *AdaptorState) AutoRefillsTipboxes() bool {
-	return self.tipBehaviour.AutoRefillsTipboxes
+	return self.tipBehaviour.AutoRefillTipboxes
 }
 
 func isVAligned(lhs wtype.WellCoords, rhs wtype.WellCoords) bool {

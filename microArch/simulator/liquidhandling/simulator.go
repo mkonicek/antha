@@ -1139,6 +1139,13 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	}
 	position := firstNonEmpty(positionS)
 
+	//get the individual position
+	if countUnique(platetypeS, true) != 1 {
+		self.AddErrorf("LoadTips", "invalid platetype slice \"%v\", only one platetype supported", positionS)
+		return ret
+	}
+	platetype := firstNonEmpty(platetypeS)
+
 	//get the actual tipbox
 	var tipbox *wtype.LHTipbox
 	if o, ok := deck.GetChild(position); !ok {
@@ -1163,9 +1170,13 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	}
 
 	//if the adaptor might override what we tell it
-	if adaptor.OverridesLoadTipsCommand() {
+	if adaptor.OverridesLoadTipsCommand() && self.settings.IsTipLoadingOverrideEnabled() {
 		//a list of tip locations that will be loaded
-		tipChunks := adaptor.GetTipCoordsToLoad(tipbox, multi)
+		tipChunks, err := adaptor.GetTipCoordsToLoad(tipbox, multi)
+		if err != nil {
+			self.AddErrorf("LoadTips", "unexpected error while loading tips : %s", err.Error())
+			return ret
+		}
 		if !coordsMatch(tipChunks, wc) {
 			return self.overrideLoadTips(channels, head, multi, platetype, position, tipChunks)
 		}
@@ -1337,28 +1348,50 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	return ret
 }
 
-func (self *VirtualLiquidHandlet) overrideLoadTips(channels []int, head, multi int, platetype, position string, tipChunks [][]wtype.WellCoords) driver.CommandStatus {
-	panic("this isn't done yet")
+func (self *VirtualLiquidHandler) disableLoadTipsOverride() func() {
+	ret := func() {
+		self.settings.EnableTipLoadingOverride(true)
+	}
+	self.settings.EnableTipLoadingOverride(false)
+	return ret
+}
+
+//overrideLoadTips sequentially load the given series of tips onto the given channels
+func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi int, platetype, position string, tipChunks [][]wtype.WellCoords) driver.CommandStatus {
+	defer self.disableLoadTipsOverride()
+
 	var ret driver.CommandStatus
+	loadedChannels := make([]int, 0, len(channels))
+
 	for _, chunk := range tipChunks {
-		positionS := make([]string, 0, multi)
-		platetypeS := make([]string, 0, multi)
-		reference := make([]int, 0, multi)
-		offsetXY := make([]float64, 0, multi)
-		offsetZ := make([]float64, 0, multi)
-		wellcoords := make([]string, 0, multi)
-		channels := make([]int, 0, multi)
-		for i := 0; i < multi; i++ {
-			positionS = append(positionS, position)
-			platetypeS = append(platetypeS, platetype)
-			reference = append(reference, wtype.TopReference)
-			offsetXY = append(offsetXY, 0.0)
-			offsetX = append(offsetZ, 4.0)
-			wellcoords = append(wellcoords, chunk[i].FormatA1())
+		width := len(chunk)
+		channelsToLoad := channels[len(loadedChannels) : len(loadedChannels)+width]
+		positionS := make([]string, multi)
+		platetypeS := make([]string, multi)
+		reference := make([]int, multi)
+		offsetXY := make([]float64, multi)
+		offsetZ := make([]float64, multi)
+		wellcoords := make([]string, multi)
+		for i, ch := range channelsToLoad {
+			positionS[ch] = position
+			platetypeS[ch] = platetype
+			reference[ch] = int(wtype.TopReference)
+			offsetXY[ch] = 0.0
+			//4mm chosen arbitrarily as we don't know the exact height and it won't affect collision detection
+			offsetZ[ch] = 4.0
+			wellcoords[ch] = chunk[i].FormatA1()
 		}
 
 		ret = self.Move(positionS, wellcoords, reference, offsetXY, offsetXY, offsetZ, platetypeS, head)
-		//ret = self.LoadTips(channels []int, head, multi int, platetypeS, positionS, well []string)
+		if self.HasError() {
+			return ret
+		}
+		ret = self.LoadTips(channelsToLoad, head, width, platetypeS, positionS, wellcoords)
+		if self.HasError() {
+			return ret
+		}
+
+		loadedChannels = append(loadedChannels, channelsToLoad...)
 	}
 
 	return ret

@@ -213,16 +213,6 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	settings := simulator_lh.DefaultSimulatorSettings()
 
-	//Enable simulation of trilution like behaviour
-	//in reality this happens anyway when using trilution, irrespective of whether tipTracking is requested
-	tipTracking := false
-	if iTipTracking, ok := request.Policies().Options["USE_DRIVER_TIP_TRACKING"]; ok {
-		tipTracking, _ = iTipTracking.(bool)
-	}
-	if tipTracking && this.Properties.HasTipTracking() {
-		settings.SetTipTrackingBehaviour(simulator_lh.TrilutionTipTracking)
-	}
-
 	//Make this warning less noisy since it's not really important
 	settings.EnablePipetteSpeedWarning(simulator_lh.WarnOnce)
 	//again, something we should fix, but not important to users to quieten

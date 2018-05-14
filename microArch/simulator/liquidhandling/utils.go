@@ -116,12 +116,18 @@ func coordsMatch(tc [][]wtype.WellCoords, wc []wtype.WellCoords) bool {
 		return false
 	}
 
-	if len(tc[0]) != len(wc) {
+	wc2 := make([]wtype.WellCoords, 0, len(wc))
+	for _, well := range wc {
+		if !well.IsZero() {
+			wc2 = append(wc2, well)
+		}
+	}
+	if len(tc[0]) != len(wc2) {
 		return false
 	}
 
-	for i := 0; i < len(wc); i++ {
-		if !tc[0][i].Equals(wc[0]) {
+	for i := 0; i < len(wc2); i++ {
+		if !tc[0][i].Equals(wc2[i]) {
 			return false
 		}
 	}

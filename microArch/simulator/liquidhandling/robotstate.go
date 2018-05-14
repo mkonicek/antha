@@ -272,10 +272,15 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 			}
 			currChunk = make([]wtype.WellCoords, 0, tipsRemaining)
 		}
+		//if we have all the chunks we need
 		if len(currChunk) >= tipsRemaining {
-			ret = append(ret, currChunk)
+			if len(currChunk) > 0 {
+				ret = append(ret, currChunk)
+				tipsRemaining -= len(currChunk)
+			}
 			break
 		}
+		//add the next tip
 		if tb.HasTipAt(wc) {
 			currChunk = append(currChunk, wc)
 			lastTipCoord = wc

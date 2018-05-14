@@ -1348,17 +1348,11 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	return ret
 }
 
-func (self *VirtualLiquidHandler) disableLoadTipsOverride() func() {
-	ret := func() {
-		self.settings.EnableTipLoadingOverride(true)
-	}
-	self.settings.EnableTipLoadingOverride(false)
-	return ret
-}
-
 //overrideLoadTips sequentially load the given series of tips onto the given channels
 func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi int, platetype, position string, tipChunks [][]wtype.WellCoords) driver.CommandStatus {
-	defer self.disableLoadTipsOverride()
+	//make certain that any load tips we generate don't get overridden again
+	self.settings.EnableTipLoadingOverride(false)
+	defer self.settings.EnableTipLoadingOverride(true)
 
 	var ret driver.CommandStatus
 	loadedChannels := make([]int, 0, len(channels))

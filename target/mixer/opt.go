@@ -15,10 +15,6 @@ var (
 		MaxPlates:            &defaultMaxPlates,
 		MaxWells:             &defaultMaxWells,
 		ResidualVolumeWeight: &defaultResidualVolumeWeight,
-		InputPlateTypes:      []string{},
-		OutputPlateTypes:     []string{},
-		InputPlates:          []*wtype.LHPlate{},
-		OutputPlates:         []*wtype.LHPlate{},
 		PlanningVersion:      "ep2",
 		LegacyVolume:         true,
 		FixVolumes:           true,
@@ -35,11 +31,11 @@ type Opt struct {
 	TipTypes             []string
 	PlanningVersion      string
 
-	// Two methods of populating Opt.InputPlates
+	// Two methods of populating input plates
 	InputPlateData [][]byte         // From contents of files
 	InputPlates    []*wtype.LHPlate // Directly
 
-	// Direct specification of Output plates
+	// Direct specification of output plates
 	OutputPlates []*wtype.LHPlate
 
 	// Specify file name in the instruction stream of any driver generated file
@@ -57,10 +53,13 @@ type Opt struct {
 	OutputSort           bool
 	PrintInstructions    bool
 	UseDriverTipTracking bool
-	UseLLF               bool // allow the use of LLF
-	LegacyVolume         bool // don't track volumes for intermediates
-	FixVolumes           bool // aim to revise requested volumes to service requirements
-	CustomPolicyData     map[string]wtype.LHPolicy
+	UseLLF               bool // Use liquid level following
+	LegacyVolume         bool // Don't track volumes for intermediates
+	FixVolumes           bool // Aim to revise requested volumes to service requirements
+
+	// Two ways to set user liquid policies rule set
+	CustomPolicyData    map[string]wtype.LHPolicy // Set rule set from policies
+	CustomPolicyRuleSet *wtype.LHPolicyRuleSet    // Directly
 }
 
 // Merge two configs together and return the result. Values in the argument

@@ -88,6 +88,13 @@ func (lhc *LHComponent) WellLocation() string {
 	return lhc.PlateLocation().Coords.FormatA1()
 }
 
+// SetWellLocation sets the well location to an LHComponent in A1 format.
+func (lhc *LHComponent) SetWellLocation(wellLocation string) error {
+	location := lhc.PlateLocation()
+	lhc.Loc = location.ID + ":" + wellLocation
+	return nil
+}
+
 //GetClass return the class of the object
 func (lhc *LHComponent) GetClass() string {
 	return "component"

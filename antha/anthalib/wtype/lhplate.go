@@ -560,7 +560,6 @@ func (lhp *LHPlate) IsEmpty() bool {
 	return true
 }
 
-
 //Clean empty all the wells of the plate so that IsEmpty returns true
 func (lhp *LHPlate) Clean() {
 

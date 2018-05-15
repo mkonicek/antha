@@ -32,18 +32,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/cache"
 )
-
-func firstInArray(a []*wtype.LHPlate) *wtype.LHPlate {
-	for _, v := range a {
-		if v != nil {
-			return v
-		}
-	}
-
-	return nil
-}
 
 type TransferInstruction struct {
 	GenericRobotInstruction
@@ -237,19 +227,14 @@ func (ins *TransferInstruction) CheckMultiPolicies(which int) bool {
 	return nwhat == 1
 }
 
-func plateTypeArray(ctx context.Context, types []string) ([]*wtype.LHPlate, error) {
-	plates := make([]*wtype.LHPlate, len(types))
-	for i, typ := range types {
+func firstNonEmpty(types []string) string {
+	for _, typ := range types {
 		if typ == "" {
 			continue
 		}
-		p, err := inventory.NewPlate(ctx, typ)
-		if err != nil {
-			return nil, err
-		}
-		plates[i] = p
+		return typ
 	}
-	return plates, nil
+	return ""
 }
 
 // add policies as argument to GetParallelSetsFor to check multichannelability
@@ -298,57 +283,51 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 		return false
 	}
 
-	pa, err := plateTypeArray(ctx, ins.Transfers[which].FPlateType())
-
+	fromPlateType := firstNonEmpty(ins.Transfers[which].FPlateType())
+	fromPlate, err := cache.NewPlate(ctx, fromPlateType)
 	if err != nil {
 		panic(err)
 	}
-
-	// check source / tip alignment
-
-	plate := firstInArray(pa)
-
-	if plate == nil {
+	if fromPlate == nil {
 		panic("No from plates in instruction")
 	}
 
-	if !TipsWellsAligned(robot, head, plate, ins.Transfers[which].WellFrom()) {
+	// check source / tip alignment
+	if !TipsWellsAligned(robot, head, fromPlate, ins.Transfers[which].WellFrom()) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
 	}
 
-	pa, err = plateTypeArray(ctx, ins.Transfers[which].TPlateType())
-
+	err = cache.ReturnObject(ctx, fromPlate)
 	if err != nil {
 		panic(err)
 	}
 
-	plate = firstInArray(pa)
-
-	if plate == nil {
+	toPlateType := firstNonEmpty(ins.Transfers[which].TPlateType())
+	toPlate, err := cache.NewPlate(ctx, toPlateType)
+	if err != nil {
+		panic(err)
+	}
+	if toPlate == nil {
 		panic("No to plates in instruction")
 	}
 
 	// for safety, check dest / tip alignment
-
-	if !TipsWellsAligned(robot, head, plate, ins.Transfers[which].WellTo()) {
+	if !TipsWellsAligned(robot, head, toPlate, ins.Transfers[which].WellTo()) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
+	}
+
+	err = cache.ReturnObject(ctx, toPlate)
+	if err != nil {
+		panic(err)
 	}
 
 	// check that we will not require different policies
 
-	if !ins.CheckMultiPolicies(which) {
-		// fall back to single-channel
-		// TODO -- find a subset we CAN do
-		return false
-	}
-
-	// looks OK
-
-	return true
+	return ins.CheckMultiPolicies(which)
 }
 
 func GetMultiSet(a []string, channelmulti int, fromplatemulti int, toplatemulti int) [][]int {

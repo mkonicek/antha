@@ -36,9 +36,16 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
+
+func GetContextForTest() context.Context {
+	ctx := testinventory.NewContext(context.Background())
+	ctx = plateCache.NewContext(ctx)
+	return ctx
+}
 
 func GetPlateForTest() *wtype.LHPlate {
 
@@ -170,7 +177,7 @@ func configureMultiChannelTestRequest(ctx context.Context, rq *LHRequest) {
 func configureTransferRequestForZTest(policyName string, transferVol wunit.Volume, numberOfTransfers int) (rq *LHRequest, err error) {
 
 	// set up ctx
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// make liquid handler
 	lh := GetLiquidHandlerForTest(ctx)
@@ -249,7 +256,7 @@ func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
 func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wtype.LHComponent) (rq *LHRequest, err error) {
 
 	// set up ctx
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// make liquid handler
 	lh := GetLiquidHandlerForTest(ctx)
@@ -296,7 +303,7 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 
 func TestToWellVolume(t *testing.T) {
 	// set up ctx
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
 	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
 	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
@@ -517,7 +524,7 @@ func TestMultiZOffset2(t *testing.T) {
 
 func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 	// set up ctx
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// make liquid handler
 	lh := GetLiquidHandlerForTest(ctx)
@@ -557,7 +564,7 @@ func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 
 func makeSingleTestRequest() (singleRq *LHRequest, err error) {
 	// set up ctx
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// make liquid handler
 	lh := GetLiquidHandlerForTest(ctx)
@@ -700,7 +707,7 @@ func TestMultiZOffset(t *testing.T) {
 }
 
 func TestTipOverridePositive(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
@@ -725,7 +732,7 @@ func TestTipOverridePositive(t *testing.T) {
 
 }
 func TestTipOverrideNegative(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
@@ -751,7 +758,7 @@ func TestTipOverrideNegative(t *testing.T) {
 }
 
 func TestPlateReuse(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
@@ -854,7 +861,7 @@ func TestPlateReuse(t *testing.T) {
 }
 
 func TestBeforeVsAfter(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
@@ -948,7 +955,7 @@ func TestBeforeVsAfter(t *testing.T) {
 }
 
 func TestEP3(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	lh.ExecutionPlanner = ExecutionPlanner3
@@ -967,7 +974,7 @@ func TestEP3(t *testing.T) {
 }
 
 func TestEP3TotalVolume(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	lh.ExecutionPlanner = ExecutionPlanner3
@@ -986,7 +993,7 @@ func TestEP3TotalVolume(t *testing.T) {
 }
 
 func TestEP3Overfilled(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	lh.ExecutionPlanner = ExecutionPlanner3
@@ -1004,7 +1011,7 @@ func TestEP3Overfilled(t *testing.T) {
 }
 
 func TestEP3Negative(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	lh.ExecutionPlanner = ExecutionPlanner3
@@ -1029,7 +1036,7 @@ func TestEP3Negative(t *testing.T) {
 }
 
 func TestEP3WrongResult(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	lh.ExecutionPlanner = ExecutionPlanner3
@@ -1053,7 +1060,7 @@ func TestEP3WrongResult(t *testing.T) {
 }
 
 func TestEP3WrongTotalVolume(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	lh := GetLiquidHandlerForTest(ctx)
 	lh.ExecutionPlanner = ExecutionPlanner3
@@ -1125,7 +1132,7 @@ func assertCoordsEq(lhs, rhs []wtype.Coordinates) bool {
 
 func TestAddWellTargets(t *testing.T) {
 
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	lh := GetLiquidHandlerForTest(ctx)
 
 	plate := GetPlateForTest()

@@ -35,6 +35,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/cache"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
@@ -828,6 +829,18 @@ func forceSanity(request *LHRequest) {
 	}
 }
 
+//check that none of the plates we're returning came from the cache
+func assertNoTemporaryPlates(ctx context.Context, request *LHRequest) error {
+
+	for id, plate := range request.Plates {
+		if cache.IsFromCache(ctx, plate) {
+			return wtype.LHErrorf(wtype.LH_ERR_DIRE, "found a temporary plate (id=%s) being returned in the request", id)
+		}
+	}
+
+	return nil
+}
+
 func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// figure out the output order
 
@@ -1004,7 +1017,14 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 	// ensure the after state is correct
 	this.fix_post_ids()
-	return this.fix_post_names(request)
+	err = this.fix_post_names(request)
+	if err != nil {
+		return err
+	}
+
+	err = assertNoTemporaryPlates(ctx, request)
+
+	return err
 }
 
 // resolve question of where something is requested to go

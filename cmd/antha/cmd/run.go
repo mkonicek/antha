@@ -34,6 +34,7 @@ import (
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
@@ -123,7 +124,9 @@ func makeContext() (context.Context, error) {
 			return nil, fmt.Errorf("adding protocol %q: %s", desc.Name, err)
 		}
 	}
-	return testinventory.NewContext(ctx), nil
+	ctx = testinventory.NewContext(ctx)
+	ctx = plateCache.NewContext(ctx)
+	return ctx, nil
 }
 
 type runOpt struct {
@@ -312,6 +315,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 	}
 
 	ctx := testinventory.NewContext(context.Background())
+	ctx = plateCache.NewContext(ctx)
 
 	var drivers []string
 	for idx, uri := range GetStringSlice("driver") {

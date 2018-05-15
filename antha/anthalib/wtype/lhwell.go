@@ -435,6 +435,13 @@ func (w *LHWell) IsEmpty() bool {
 	return w.CurrentVolume().LessThan(tolerance)
 }
 
+//Clean reset the volume in the well so that it's empty
+func (w *LHWell) Clean() {
+	w.WContents.Clean()
+	w.WContents.Loc = w.Plate.(*LHPlate).ID + ":" + w.Crds.FormatA1()
+	w.Extra = make(map[string]interface{})
+}
+
 // copy of instance
 func (lhw *LHWell) Dup() *LHWell {
 	return lhw.dup(false)

@@ -439,8 +439,7 @@ const (
 )
 
 func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
-
-	wellpositionarray = make([]string, 0)
+	wellpositionarray = make([]string, 0, lhp.WlsX*lhp.WlsY)
 
 	if byrow {
 
@@ -559,6 +558,15 @@ func (lhp *LHPlate) IsEmpty() bool {
 		}
 	}
 	return true
+}
+
+//Clean empty all the wells of the plate so that IsEmpty returns true
+func (lhp *LHPlate) Clean() {
+
+	for _, w := range lhp.Wellcoords {
+		w.Clean()
+	}
+	lhp.Welltype.Clean()
 }
 
 func (lhp *LHPlate) NextEmptyWell(it PlateIterator) WellCoords {

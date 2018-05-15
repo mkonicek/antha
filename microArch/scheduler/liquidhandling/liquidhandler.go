@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -161,10 +162,10 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	err = this.Simulate(request)
 	if err != nil {
 		//since the simulator is... tender right now, let's take this with a pinch of salt
-		logger.Info("Ignoring simulation error")
+		logger.Info("ignoring physical simulation error, user disgretion advised")
 		//return err
 	} else {
-		logger.Info("Simulation completed successfully")
+		logger.Info("physical simulation completed successfully")
 	}
 
 	err = this.Execute(request)
@@ -213,16 +214,6 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	settings := simulator_lh.DefaultSimulatorSettings()
 
-	//Enable simulation of trilution like behaviour
-	//in reality this happens anyway when using trilution, irrespective of whether tipTracking is requested
-	tipTracking := false
-	if iTipTracking, ok := request.Policies().Options["USE_DRIVER_TIP_TRACKING"]; ok {
-		tipTracking, _ = iTipTracking.(bool)
-	}
-	if tipTracking && this.Properties.HasTipTracking() {
-		settings.SetTipTrackingBehaviour(simulator_lh.TrilutionTipTracking)
-	}
-
 	//Make this warning less noisy since it's not really important
 	settings.EnablePipetteSpeedWarning(simulator_lh.WarnOnce)
 	//again, something we should fix, but not important to users to quieten
@@ -240,7 +231,6 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 		return vlh.GetWorstError()
 	}
 
-	fmt.Printf("Simulating %d instructions...\n", len(instructions))
 	for _, ins := range instructions {
 		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh) //nolint
 		if vlh.HasError() {
@@ -248,9 +238,27 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 		}
 	}
 
-	for _, err := range vlh.GetErrors() {
-		err.WriteToLog()
+	//if there were no errors or warnings
+	numErrors := len(vlh.GetErrors())
+	if numErrors == 0 {
+		return nil
 	}
+
+	//Output all the messages from the simulator in one logger call
+	pMessage := func(n int) string {
+		if n == 1 {
+			return "message"
+		}
+		return "messages"
+	}
+	logLines := make([]string, 0, numErrors+1)
+	logLines = append(logLines, fmt.Sprintf("showing %d %s from physical simulation:", numErrors, pMessage(numErrors)))
+	//Format numbers at consistent width so messages line up
+	fmtString := fmt.Sprintf("  %%%dd : simulator : %%s", 1+int(math.Floor(math.Log10(float64(numErrors)))))
+	for i, err := range vlh.GetErrors() {
+		logLines = append(logLines, fmt.Sprintf(fmtString, i+1, err.Error()))
+	}
+	logger.Info(strings.Join(logLines, "\n"))
 
 	//return the worst error if it's actually an error
 	if vlh.HasError() {

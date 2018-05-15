@@ -55,7 +55,7 @@ type LHRequest struct {
 	PolicyManager         *LHPolicyManager
 	Input_order           []string
 	Output_order          []string
-	OutputIteratorFactory func(*wtype.LHPlate) wtype.PlateIterator `json:"-"`
+	OutputIteratorFactory func(wtype.Addressable) wtype.AddressIterator `json:"-"`
 	InstructionChain      *IChain
 	Input_vols_supplied   map[string]wunit.Volume
 	Input_vols_required   map[string]wunit.Volume
@@ -172,6 +172,10 @@ func ValidateLHRequest(rq *LHRequest) (bool, string) {
 	return true, "OK"
 }
 
+func columnWiseIterator(a wtype.Addressable) wtype.AddressIterator {
+	return wtype.NewAddressIterator(a, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
+}
+
 func NewLHRequest() *LHRequest {
 	var lhr LHRequest
 	lhr.ID = wtype.GetUUID()
@@ -189,7 +193,7 @@ func NewLHRequest() *LHRequest {
 	lhr.Stockconcs = make(map[string]wunit.Concentration)
 	lhr.Input_order = make([]string, 0)
 	lhr.Output_order = make([]string, 0)
-	lhr.OutputIteratorFactory = wtype.NewOneTimeColumnWiseIterator
+	lhr.OutputIteratorFactory = columnWiseIterator
 	lhr.Output_assignments = make(map[string][]string)
 	lhr.Input_assignments = make(map[string][]string)
 	lhr.InstructionSet = liquidhandling.NewRobotInstructionSet(nil)

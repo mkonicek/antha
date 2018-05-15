@@ -907,7 +907,7 @@ func TestBeforeVsAfter(t *testing.T) {
 			if pp1.Type != pp2.Type {
 				t.Fatal(fmt.Sprintf("Plates at %s not same type: %s %s", pos, pp1.Type, pp2.Type))
 			}
-			it := wtype.NewOneTimeColumnWiseIterator(pp1)
+			it := wtype.NewAddressIterator(pp1, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
 
 			for {
 				if !it.Valid() {

@@ -348,6 +348,7 @@ type LHHead struct {
 	ID           string
 	Adaptor      *LHAdaptor
 	Params       *LHChannelParameter
+	TipLoading   TipLoadingBehaviour
 }
 
 func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
@@ -462,4 +463,31 @@ func (lha *LHAdaptor) GetParams() *LHChannelParameter {
 		}
 		return &params
 	}
+}
+
+type SequentialTipLoadingBehaviour int
+
+const (
+	//NoSequentialTipLoading tips are loaded all at once, an error is raised if not possible
+	NoSequentialTipLoading SequentialTipLoadingBehaviour = iota
+	//ForwardSequentialTipLoading chunks of contiguous tips are loaded sequentially in the order encountered
+	ForwardSequentialTipLoading
+	//ReverseSequentialTipLoading chunks of contiguous tips are loaded sequentially in reverse order
+	ReverseSequentialTipLoading
+)
+
+//TipLoadingBehaviour describe the way in which tips are loaded
+type TipLoadingBehaviour struct {
+	//OverrideLoadTipsCommand true it the liquid handler will override which tips are loaded
+	OverrideLoadTipsCommand bool
+	//AutoRefillTipboxes are tipboxes automaticall refilled
+	AutoRefillTipboxes bool
+	//LoadingOrder are tips loaded ColumnWise or RowWise
+	LoadingOrder MajorOrder
+	//VerticalLoadingDirection the direction along which columns are loaded
+	VerticalLoadingDirection VerticalDirection
+	//HorizontalLoadingDirection the direction along which rows are loaded
+	HorizontalLoadingDirection HorizontalDirection
+	//ChunkingBehaviour how to load tips when the requested number aren't available contiguously
+	ChunkingBehaviour SequentialTipLoadingBehaviour
 }

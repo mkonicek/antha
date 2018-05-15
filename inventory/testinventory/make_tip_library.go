@@ -110,7 +110,6 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 	ret = append(ret, tb)
 
 	// this is the low volume version of the high-volume tip.
-	effectiveHeightCorrectionLVHV := 1.5 // PB uses the height below, we seem to need a corrected version
 	w = wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6

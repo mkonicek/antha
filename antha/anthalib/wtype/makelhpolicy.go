@@ -23,10 +23,7 @@
 package wtype
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"sort"
 	"strings"
 
@@ -1135,28 +1132,4 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	return lhpr, nil
 
-}
-
-func LoadLHPoliciesFromFile() (*LHPolicyRuleSet, error) {
-	lhPoliciesFileName := os.Getenv("ANTHA_LHPOLICIES_FILE")
-	if lhPoliciesFileName == "" {
-		return nil, fmt.Errorf("Env variable ANTHA_LHPOLICIES_FILE not set")
-	}
-	contents, err := ioutil.ReadFile(lhPoliciesFileName)
-	if err != nil {
-		return nil, err
-	}
-	lhprs := NewLHPolicyRuleSet()
-	lhprs.Policies = make(map[string]LHPolicy)
-	lhprs.Rules = make(map[string]LHPolicyRule)
-	//	err = readYAML(contents, lhprs)
-	err = readJSON(contents, lhprs)
-	if err != nil {
-		return nil, err
-	}
-	return lhprs, nil
-}
-
-func readJSON(fileContents []byte, ruleSet *LHPolicyRuleSet) error {
-	return json.Unmarshal(fileContents, ruleSet)
 }

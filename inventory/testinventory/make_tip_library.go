@@ -77,6 +77,16 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 	tb := wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "D200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
 	ret = append(ret, tb)
 
+	// this is the low volume version of the high-volume tip.
+	effectiveHeightCorrectionLVHV := 1.5 // PB uses the height below, we seem to need a corrected version
+	w = wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w.Extra["InnerL"] = 5.6
+	w.Extra["InnerW"] = 5.6
+	w.Extra["Tipeffectiveheight"] = 39.3 + effectiveHeightCorrectionLVHV
+	tip = wtype.NewLHTip("gilson", "LVGilson200", 1.0, 20.0, "ul", false, shp)
+	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "D200 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
+
+	ret = append(ret, tb)
 	w = wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	w.Extra["InnerL"] = 5.5
 	w.Extra["InnerW"] = 5.5

@@ -364,6 +364,7 @@ func (head *LHHead) Dup() *LHHead {
 	if head.Adaptor != nil {
 		h.Adaptor = head.Adaptor.Dup()
 	}
+	h.TipLoading = head.TipLoading
 
 	return h
 }

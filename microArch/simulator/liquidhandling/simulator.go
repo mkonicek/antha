@@ -1172,7 +1172,9 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	}
 
 	//if the adaptor might override what we tell it
+	fmt.Printf("Simulator: if %t && %t\n", adaptor.OverridesLoadTipsCommand(), self.settings.IsTipLoadingOverrideEnabled())
 	if adaptor.OverridesLoadTipsCommand() && self.settings.IsTipLoadingOverrideEnabled() {
+		fmt.Printf("Simulator: considering overriding loadtips from %s %v\n", position, well)
 		//a list of tip locations that will be loaded
 		tipChunks, err := adaptor.GetTipCoordsToLoad(tipbox, multi)
 		if err != nil {
@@ -1180,6 +1182,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 			return ret
 		}
 		if !coordsMatch(tipChunks, wc) {
+			fmt.Println("  Simulator: overriding")
 			return self.overrideLoadTips(channels, head, multi, platetype, position, tipChunks)
 		}
 	}

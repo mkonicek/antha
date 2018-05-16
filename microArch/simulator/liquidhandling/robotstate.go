@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -142,6 +143,7 @@ func NewAdaptorState(name string,
 	channel_offset wtype.Coordinates,
 	params *wtype.LHChannelParameter,
 	tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
+	fmt.Printf("AdaptorState(%s) tipBehaviour: %v\n", name, tipBehaviour)
 	as := AdaptorState{
 		name,
 		make([]*ChannelState, 0, channels),

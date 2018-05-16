@@ -486,7 +486,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			if change_tips {
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters
-				tipdrp, err := DropTips(newtiptypes, prms, channels)
+				tipdrp, err := DropTips(tiptypes, prms, channels)
 
 				if err != nil {
 					return ret, err

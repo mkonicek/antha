@@ -674,7 +674,7 @@ message LHComponentMessage {
 	string Arg_5 = 5;
 	int64 Arg_6 = 6;
 	string Arg_7 = 7;
-	int64 Arg_8 = 8;
+	string Arg_8 = 8;
 	double Arg_9 = 9;
 	double Arg_10 = 10;
 	string Arg_11 = 11;
@@ -686,6 +686,7 @@ message LHComponentMessage {
 	MapstringAnyMessageMessage Arg_17 = 17;
 	string Arg_18 = 18;
 	string Arg_19 = 19;
+    MapstringAnyMessageMessage Arg_20 = 20;
 }
 message GenericPrefixedUnitMessage {
 	GenericUnitMessage Arg_1 = 1;

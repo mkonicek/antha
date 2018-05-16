@@ -562,6 +562,15 @@ message LHHeadMessage {
 	string Arg_3 = 3;
 	PtrToLHAdaptorMessage Arg_4 = 4;
 	PtrToLHChannelParameterMessage Arg_5 = 5;
+    TipLoadingBehaviourMessage Arg_6 = 6;
+}
+message TipLoadingBehaviourMessage {
+    bool Arg_1 = 1; //OverrideLoadTipsCommand
+    bool Arg_2 = 2; //AutoRefillTipBoxes
+    int64 Arg_3 = 3; //Loading Order: 0 = RowWise, 1 = ColumnWise
+    int64 Arg_4 = 4; //VerticalDiection: 1 = top to bottom, -1 = bottom to top
+    int64 Arg_5 = 5; //HorizontalDirection: 1 = left to right, -1 = bottom to top
+    int64 Arg_6 = 6; //chunking behaviour: 0 = none, 1: forward, 2: reverse
 }
 message ArrayOfPtrToLHAdaptorMessage{
 	repeated PtrToLHAdaptorMessage arg_1=1;

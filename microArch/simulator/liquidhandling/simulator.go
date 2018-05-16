@@ -1170,13 +1170,6 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		return fmt.Sprintf("from %s@%s at position \"%s\" to head %d %s", summariseWellCoords(wc), tipbox.GetName(), position, head, summariseChannels(channels))
 	}
 
-	//check that channels we want to load to are empty
-	if tipFound := checkTipPresence(false, adaptor, channels); len(tipFound) != 0 {
-		self.AddErrorf("LoadTips", "%s : %s already loaded to %s",
-			describe(), pTips(len(tipFound)), summariseChannels(tipFound))
-		return ret
-	}
-
 	if len(channels) == 0 {
 		for ch, pt := range platetypeS {
 			if pt != "" {
@@ -1206,6 +1199,13 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	if multi != len(channels) {
 		self.AddErrorf("LoadTips", "%s : multi should equal %d, not %d",
 			describe(), len(channels), multi)
+		return ret
+	}
+
+	//check that channels we want to load to are empty
+	if tipFound := checkTipPresence(false, adaptor, channels); len(tipFound) != 0 {
+		self.AddErrorf("LoadTips", "%s : %s already loaded to %s",
+			describe(), pTips(len(tipFound)), summariseChannels(tipFound))
 		return ret
 	}
 
@@ -1419,7 +1419,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 		}
 		sort.Ints(channels)
 		if len(channels) == 0 {
-			self.AddWarning("UnloadTips", "'channel' argument empty and no tips are loaded, ignoring")
+			self.AddWarningf("UnloadTips", "'channel' argument empty and no tips are loaded to head %d, ignoring", head)
 		} else if self.settings.IsAutoChannelWarningEnabled() {
 			self.AddWarningf("UnloadTips", "'channel' argument empty, unloading all tips (%s)", summariseChannels(channels))
 		}

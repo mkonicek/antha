@@ -231,9 +231,10 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 		return vlh.GetWorstError()
 	}
 
-	for _, ins := range instructions {
+	for i, ins := range instructions {
 		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh) //nolint
 		if vlh.HasError() {
+			fmt.Printf("simulator error detected at instruction %d\n", i)
 			break
 		}
 	}

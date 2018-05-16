@@ -1433,7 +1433,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 	if multi != len(channels) {
 		self.AddWarningf("UnloadTips", "While unloading %s from %s, multi should equal %d, not %d",
 			pTips(len(channels)), summariseChannels(channels), len(channels), multi)
-		multi = len(channels)
+		//multi = len(channels) - multi is unused
 	}
 
 	deck := self.state.GetDeck()

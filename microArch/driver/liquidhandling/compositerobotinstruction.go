@@ -225,7 +225,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 				}
 				ret = append(ret, tipdrp)
 
-				tt, chanA := tipArrays(newchannel.Multi)
+				tt, chanA = tipArrays(newchannel.Multi)
 				tt[0] = newtiptype
 				chanA[0] = newchannel
 				tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)

@@ -303,7 +303,7 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 	}
 
 	if tipsRemaining > 0 {
-		return ret, errors.Errorf("not enough tips in tipbox")
+		return ret, errors.New("not enough tips in tipbox")
 	}
 
 	return ret, nil

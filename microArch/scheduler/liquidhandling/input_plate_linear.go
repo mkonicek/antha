@@ -24,16 +24,15 @@ package liquidhandling
 
 import (
 	"fmt"
-
-	"github.com/Synthace/go-glpk/glpk"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	//"github.com/antha-lang/antha/microArch/logger"
+	"github.com/gonum.org/v1/gonum/mat"
+	"github.com/gonum.org/v1/gonum/optimize/convex/lp"
 )
 
 func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.LHPlate, weight_constraint map[string]float64) map[string]map[*wtype.LHPlate]int {
-
+	// 	v2.0: modified to use gonum/optimize/convex/lp
 	//
 	//	optimization is set up as follows:
 	//
@@ -51,11 +50,15 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	//
 	//	Subject to:
 	//			sum of Xk Vy 	>= TVz	for each component Z
+	//				- which we express as -XkVy <= -TVz
+	//
 	//			sum of WRy Xk 	<= PMax
 	//			sum of Xk	<= WMax
 	//
+	//
 
 	// defense
+	//
 
 	ppt := make([]*wtype.LHPlate, 0, len(plate_types))
 	h := make(map[string]bool, len(plate_types))
@@ -70,171 +73,249 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	plate_types = ppt
 
-	// setup
+	assignments := make(map[string]map[*wtype.LHPlate]int, len(component_volumes))
 
-	lp := glpk.New()
-	defer lp.Delete()
+	// func Simplex(c []float64, A mat.Matrix, b []float64, tol float64, initialBasic []int) (optF float64, optX []float64, err error)
 
-	lp.SetProbName("Assignments")
-	lp.SetObjName("Z")
-
-	// CHECK THIS
-
-	lp.SetObjDir(glpk.MIN)
-
-	// constraints:
-	// 		total component volume
-	//		number of plates
-	//		number of wells
+	n_cols := len(component_volumes) * len(plate_types)
 	n_rows := len(component_volumes) + 2
 
-	lp.AddRows(n_rows)
-
-	cur := 1
+	constraintMatrix := make([]float64, n_cols*n_rows)
+	constraintBounds := make([]float64, n_rows)
+	objectiveCoefs := make([]float64, n_cols)
 
 	component_order := make([]string, len(component_volumes))
+	cur := 0
 
-	// volume constraints
 	for cmp, vol := range component_volumes {
-		component_order[cur-1] = cmp
+		component_order[cur] = cmp
 		v := vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
-		lp.SetRowBnds(cur, glpk.LO, v, 9999999999999.0)
-		cur += 1
-	}
+		constraintBounds[cur] = -1.0 * v
 
-	// from now on we always have to use component_order
-
-	// plate number constraints
-
-	max_n_plates := weight_constraint["MAX_N_PLATES"] - 1.0
-	fmt.Println("Autoallocate: max plates ", max_n_plates)
-	//debug
-	//fmt.Println("Max_n_plates: ", max_n_plates)
-	lp.SetRowBnds(cur, glpk.UP, -99999.0, max_n_plates)
-	cur += 1
-
-	// well number constraints
-	max_n_wells := weight_constraint["MAX_N_WELLS"]
-	//debug
-	fmt.Println("Autoallocate: Max_n_wells: ", max_n_wells)
-	lp.SetRowBnds(cur, glpk.UP, -99999.0, max_n_wells)
-	cur += 1 // nolint
-	fmt.Println("Autoallocate: Residual volume weight: ", weight_constraint["RESIDUAL_VOLUME_WEIGHT"])
-
-	// set up the matrix columns
-
-	num_cols := len(component_order) * len(plate_types)
-	lp.AddCols(num_cols)
-	cur = 1
-
-	for _, component := range component_order {
-		for _, plate := range plate_types {
+		for pindex, plate := range plate_types {
 			// set up objective coefficient, column name and lower bound
 			rv := plate.Welltype.ResidualVolume()
 			coef := rv.ConvertTo(wunit.ParsePrefixedUnit("ul"))*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
-			lp.SetObjCoef(cur, coef)
-			lp.SetColName(cur, component+"_"+plate.Type)
-			lp.SetColBnds(cur, glpk.LO, 0.0, 0.0)
-			lp.SetColKind(cur, glpk.IV)
-			cur += 1
-			// debug
-			//fmt.Println("\tObjective for ", plate.Type, " coefficient: ", coef
+			//objectiveCoefs = append(objectiveCoefs, coef)
+			objectiveCoefs[cur*len(plate_types)+pindex] = coef
 		}
-	}
 
-	// now set up the constraint coefficients
-	cur = 1
-
-	ind := wutil.Series(0, num_cols)
-
-	for c := range component_order {
-		row := make([]float64, num_cols+1)
-		col := 0
-		for i := 0; i < len(component_order); i++ {
-			for j := 0; j < len(plate_types); j++ {
-				vc := 0.0
-				// pick out a set of columns according to which row we're on
-				// volume constraints are the working volumes of the wells
-				if c == i {
-					vol := plate_types[j].Welltype.MaxVolume()       //wunit.NewVolume(plate_types[j].Welltype.Vol, plate_types[j].Welltype.Vunit)
-					rvol := plate_types[j].Welltype.ResidualVolume() //wunit.NewVolume(plate_types[j].Welltype.Rvol, plate_types[j].Welltype.Vunit)
-					vol.Subtract(&rvol)
-					vc = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
-					//debug
-				}
-				row[col+1] = vc
-				col += 1
-			}
-		}
-		lp.SetMatRow(cur, ind, row)
 		cur += 1
 	}
 
-	//
-
-	fmt.Println("Autoallocate plates available:")
-	for _, p := range plate_types {
-		fmt.Println(p.Type)
+	// make the objective function rows
+	for row := range component_order {
+		setRowFor(constraintMatrix, row, n_cols)
 	}
 
-	// now the plate constraint
+	// plate constraint
+	constraintBounds[cur] = weight_constraint["MAX_N_PLATES"] - 1.0
 
-	row := make([]float64, num_cols+1)
-	col := 1
-	for i := 0; i < len(component_order); i++ {
+	for i := range component_order {
 		for j := 0; j < len(plate_types); j++ {
 			// the coefficient here is 1/the number of this well type per plate
-			r := 1.0 / float64(plate_types[j].Nwells)
-			row[col] = r
-			col += 1
+			coef := 1.0 / float64(plate_types[j].Nwells)
+			constraintMatrix[cur+(i*len(plate_types)+j)] = coef
 		}
 	}
 
-	lp.SetMatRow(cur, ind, row)
 	cur += 1
 
-	// finally the well constraint
+	// well constraint
+	constraintBounds[cur] = weight_constraint["MAX_N_WELLS"]
 
-	row = make([]float64, num_cols+1)
-	col = 1
-	for i := 0; i < len(component_order); i++ {
-		for j := 0; j < len(plate_types); j++ {
-			// the number of wells is constrained so we just count
-			row[col] = 1.0
+	// for the matrix we just add a row of 1s
+	for i := 0; i < n_cols; i++ {
+		constraintMatrix[cur*n_cols+i] = 1.0
+	}
+
+	cur += 1
+
+	matConstraintMatrix := NewDense(n_rows, n_cols, constraintMatrix)
+
+	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrix, constraintBounds, aOld, bOld)
+
+	// add constraints on wells
+
+	// setup
+
+	/*
+
+		// constraints:
+		// 		total component volume
+		//		number of plates
+		//		number of wells
+		//
+		n_rows := len(component_volumes) + 2
+
+		lp.AddRows(n_rows)
+
+		cur := 1
+
+		component_order := make([]string, len(component_volumes))
+
+		// volume constraints
+		for cmp, vol := range component_volumes {
+			component_order[cur-1] = cmp
+			v := vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+			lp.SetRowBnds(cur, glpk.LO, v, 9999999999999.0)
+			cur += 1
+		}
+
+		// from now on we always have to use component_order
+
+		// plate number constraints
+
+		max_n_plates := weight_constraint["MAX_N_PLATES"] - 1.0
+		fmt.Println("Autoallocate: max plates ", max_n_plates)
+		//debug
+		//fmt.Println("Max_n_plates: ", max_n_plates)
+		lp.SetRowBnds(cur, glpk.UP, -99999.0, max_n_plates)
+		cur += 1
+
+		// well number constraints
+		max_n_wells := weight_constraint["MAX_N_WELLS"]
+		//debug
+		fmt.Println("Autoallocate: Max_n_wells: ", max_n_wells)
+		lp.SetRowBnds(cur, glpk.UP, -99999.0, max_n_wells)
+		cur += 1 // nolint
+		fmt.Println("Autoallocate: Residual volume weight: ", weight_constraint["RESIDUAL_VOLUME_WEIGHT"])
+
+		// set up the matrix columns
+
+		num_cols := len(component_order) * len(plate_types)
+		lp.AddCols(num_cols)
+		cur = 1
+
+		for _, component := range component_order {
+			for _, plate := range plate_types {
+				// set up objective coefficient, column name and lower bound
+				rv := plate.Welltype.ResidualVolume()
+				coef := rv.ConvertTo(wunit.ParsePrefixedUnit("ul"))*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
+				lp.SetObjCoef(cur, coef)
+				lp.SetColName(cur, component+"_"+plate.Type)
+				lp.SetColBnds(cur, glpk.LO, 0.0, 0.0)
+				lp.SetColKind(cur, glpk.IV)
+				cur += 1
+				// debug
+				//fmt.Println("\tObjective for ", plate.Type, " coefficient: ", coef
+			}
+		}
+
+		// now set up the constraint coefficients
+		cur = 1
+
+		ind := wutil.Series(0, num_cols)
+
+		for c := range component_order {
+			row := make([]float64, num_cols+1)
+			col := 0
+			for i := 0; i < len(component_order); i++ {
+				for j := 0; j < len(plate_types); j++ {
+					vc := 0.0
+					// pick out a set of columns according to which row we're on
+					// volume constraints are the working volumes of the wells
+					if c == i {
+						vol := plate_types[j].Welltype.MaxVolume()       //wunit.NewVolume(plate_types[j].Welltype.Vol, plate_types[j].Welltype.Vunit)
+						rvol := plate_types[j].Welltype.ResidualVolume() //wunit.NewVolume(plate_types[j].Welltype.Rvol, plate_types[j].Welltype.Vunit)
+						vol.Subtract(&rvol)
+						vc = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+						//debug
+					}
+					row[col+1] = vc
+					col += 1
+				}
+			}
+			lp.SetMatRow(cur, ind, row)
+			cur += 1
+		}
+
+		//
+
+		fmt.Println("Autoallocate plates available:")
+		for _, p := range plate_types {
+			fmt.Println(p.Type)
+		}
+
+		// now the plate constraint
+
+		row := make([]float64, num_cols+1)
+		col := 1
+		for i := 0; i < len(component_order); i++ {
+			for j := 0; j < len(plate_types); j++ {
+				// the coefficient here is 1/the number of this well type per plate
+				r := 1.0 / float64(plate_types[j].Nwells)
+				row[col] = r
+				col += 1
+			}
+		}
+
+		lp.SetMatRow(cur, ind, row)
+		cur += 1
+
+		// finally the well constraint
+
+		row = make([]float64, num_cols+1)
+		col = 1
+		for i := 0; i < len(component_order); i++ {
+			for j := 0; j < len(plate_types); j++ {
+				// the number of wells is constrained so we just count
+				row[col] = 1.0
+				col += 1
+			}
+		}
+
+		lp.SetMatRow(cur, ind, row)
+
+		iocp := glpk.NewIocp()
+		iocp.SetPresolve(true)
+		iocp.SetMsgLev(0)
+		err := lp.Intopt(iocp)
+		if err != nil {
+			panic(err)
+		}
+
+
+		cur = 1
+
+		for i := 0; i < len(component_order); i++ {
+			nAss := 0
+			cmap := make(map[*wtype.LHPlate]int)
+			for j := 0; j < len(plate_types); j++ {
+				nwells := lp.MipColVal(cur)
+				if nwells > 0 {
+					cmap[plate_types[j]] = int(nwells)
+					nAss += int(nwells)
+				}
+				cur += 1
+			}
+			if nAss == 0 {
+				panic(fmt.Sprintf("No auto assignment found for %s ", component_order[i]))
+			}
+			assignments[component_order[i]] = cmap
+		}
+
+	*/
+	return assignments
+}
+
+func setRowFor(mtx []float64, rowN, n_cols int, component_order []*wtype.LHComponent, plate_types []*wtype.LHPlate) {
+	row := make([]float64, n_cols)
+
+	for i := range component_order {
+		for j := range plate_types {
+			vc := 0.0
+			// pick out a set of columns according to which row we're on
+			// volume constraints are the working volumes of the wells
+			if i == rowN {
+				vc = plate_types[j].Welltype.MaxWorkingVolume().ConvertTo(wunit.ParsePrefixedUnit("ul"))
+			}
+			row[col+1] = vc
 			col += 1
 		}
 	}
 
-	lp.SetMatRow(cur, ind, row)
-
-	iocp := glpk.NewIocp()
-	iocp.SetPresolve(true)
-	iocp.SetMsgLev(0)
-	err := lp.Intopt(iocp)
-	if err != nil {
-		panic(err)
+	for c, v := range row {
+		mtx[rowN*n_cols+c] = v
 	}
-
-	assignments := make(map[string]map[*wtype.LHPlate]int, len(component_volumes))
-
-	cur = 1
-
-	for i := 0; i < len(component_order); i++ {
-		nAss := 0
-		cmap := make(map[*wtype.LHPlate]int)
-		for j := 0; j < len(plate_types); j++ {
-			nwells := lp.MipColVal(cur)
-			if nwells > 0 {
-				cmap[plate_types[j]] = int(nwells)
-				nAss += int(nwells)
-			}
-			cur += 1
-		}
-		if nAss == 0 {
-			panic(fmt.Sprintf("No auto assignment found for %s ", component_order[i]))
-		}
-		assignments[component_order[i]] = cmap
-	}
-
-	return assignments
 }

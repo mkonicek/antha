@@ -33,7 +33,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache"
 	"github.com/antha-lang/antha/microArch/driver"
@@ -288,7 +287,6 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 		if (*request).Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
-			text.Print("End of Instruction")
 
 		}
 		_, ok := ins.(liquidhandling.TerminalRobotInstruction)

@@ -1219,7 +1219,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		//a list of tip locations that will be loaded
 		tipChunks, err := adaptor.GetTipCoordsToLoad(tipbox, multi)
 		if err != nil {
-			self.AddErrorf("LoadTips", "%s : unexpected error : %s (%t && %t) multi = %d, tb.N_clean_tips() = %d", describe(), err.Error(), adaptor.AutoRefillsTipboxes(), !tipbox.HasEnoughTips(multi), multi, tipbox.N_clean_tips())
+			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
 			return ret
 		}
 		if !coordsMatch(tipChunks, wc) {

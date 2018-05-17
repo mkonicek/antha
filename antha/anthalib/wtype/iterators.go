@@ -29,6 +29,16 @@ const (
 	TopToBottom                   = 1
 )
 
+func (s VerticalDirection) String() string {
+	switch s {
+	case BottomToTop:
+		return "bottom to top"
+	case TopToBottom:
+		return "top to bottom"
+	}
+	return ""
+}
+
 type HorizontalDirection int
 
 const (
@@ -36,12 +46,31 @@ const (
 	RightToLeft                     = -1
 )
 
+func (s HorizontalDirection) String() string {
+	switch s {
+	case LeftToRight:
+		return "left to right"
+	case RightToLeft:
+		return "right to left"
+	}
+	return ""
+}
+
 type MajorOrder int
 
 const (
 	RowWise MajorOrder = iota
 	ColumnWise
 )
+
+var majorOrderNames = map[MajorOrder]string{
+	RowWise:    "row wise",
+	ColumnWise: "column wise",
+}
+
+func (s MajorOrder) String() string {
+	return majorOrderNames[s]
+}
 
 //NewAddressIterator iterates through the addresses in addr in order order, moving in directions ver and hor
 //when all addresses are returned, resets to the first address if repeat is true, otherwise Valid() returns false

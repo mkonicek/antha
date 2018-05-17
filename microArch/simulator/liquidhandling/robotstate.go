@@ -27,6 +27,9 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+
+	"fmt"
+	"strings"
 )
 
 // -------------------------------------------------------------------------------
@@ -243,6 +246,7 @@ func isHAligned(lhs wtype.WellCoords, rhs wtype.WellCoords) bool {
 //GetTipsToLoad get which tips would be loaded by the adaptor given the tiploading behaviour
 //returns an error if OverridesLoadTipsCommand is false or there aren't enough tips
 func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]wtype.WellCoords, error) {
+	fmt.Printf("GetTipCoordsToLoad(tb, %d) tb = \n\t%s\n", num, strings.Replace(tb.Output(), "\n", "\n\t", -1))
 	var ret [][]wtype.WellCoords
 	if !self.tipBehaviour.OverrideLoadTipsCommand {
 		return ret, errors.New("Tried to get tips when override is false")
@@ -303,7 +307,7 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 	}
 
 	if tipsRemaining > 0 {
-		return ret, errors.New("not enough tips in tipbox")
+		return ret, errors.Errorf("not enough tips in tipbox, missing %d, ret = %v", tipsRemaining, ret)
 	}
 
 	return ret, nil

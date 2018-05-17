@@ -454,3 +454,45 @@ func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
 		t.Error("Got no error when several wells overfilled")
 	}
 }
+
+func TestSpecialRetention(t *testing.T) {
+	p := makeplatefortest()
+
+	p.DeclareSpecial()
+
+	// dup must do this
+	d := p.Dup()
+
+	if !d.IsSpecial() {
+		t.Error("Duplicated plates must retain specialness")
+	}
+
+	// so must serialization
+
+	dat, err := json.Marshal(d)
+
+	if err != nil {
+		t.Errorf("Marshal error: %v", err)
+	}
+
+	var e *LHPlate
+
+	err = json.Unmarshal(dat, &e)
+
+	if err != nil {
+		t.Errorf("Unmarshal error: %v", err)
+	}
+
+	if !e.IsSpecial() {
+		t.Error("Specialness must be retained after serialize/deserialize")
+	}
+
+	// and cleaning
+
+	e.Clean()
+
+	if !e.IsSpecial() {
+		t.Error("Specialness must be retained after cleaning")
+	}
+
+}

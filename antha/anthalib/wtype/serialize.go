@@ -119,6 +119,7 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 		plate.HWells[w.ID] = w
 		w.Plate = plate
 	}
+	plate.Welltype.Plate = plate
 }
 
 func makeRows(p *LHPlate) {

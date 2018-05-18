@@ -968,12 +968,20 @@ func (self *LHPlate) GetSize() Coordinates {
 	return self.Bounds.GetSize()
 }
 
+func (self *LHPlate) GetWellOffset() Coordinates {
+	return Coordinates{self.WellXStart, self.WellYStart, self.WellZStart}
+}
+
+func (self *LHPlate) GetWellSize() Coordinates {
+	return Coordinates{self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
+		self.WellYOffset*float64(self.NRows()-1) + self.Welltype.GetSize().Y,
+		self.Welltype.GetSize().Z}
+}
+
 func (self *LHPlate) GetWellBounds() BBox {
 	return BBox{
-		self.Bounds.GetPosition().Add(Coordinates{self.WellXStart, self.WellYStart, self.WellZStart}),
-		Coordinates{self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
-			self.WellYOffset*float64(self.NRows()-1) + self.Welltype.GetSize().Y,
-			self.Welltype.GetSize().Z},
+		self.Bounds.GetPosition().Add(self.GetWellOffset()),
+		self.GetWellSize(),
 	}
 }
 
@@ -1056,6 +1064,13 @@ func (self *LHPlate) DimensionsString() string {
 	ret := make([]string, 0, 1+len(self.Wellcoords))
 	ret = append(ret, fmt.Sprintf("Plate %s at %v+%v, with %dx%d wells bounded by %v",
 		self.GetName(), self.GetPosition(), self.GetSize(), self.NCols(), self.NRows(), wb))
+
+	for _, adaptorName := range self.ListAdaptorsWithTargets() {
+		ret = append(ret, fmt.Sprintf("\tTargets for adaptor \"%s\":", adaptorName))
+		for i, t := range self.GetTargets(adaptorName) {
+			ret = append(ret, fmt.Sprintf("\t\t%d: %v", i, t))
+		}
+	}
 
 	for _, wellrow := range self.Rows {
 		for _, well := range wellrow {
@@ -1395,4 +1410,9 @@ func (p *LHPlate) GetTargetOffset(adaptorName string, channel int) Coordinates {
 //GetTargets return all the defined targets for the named adaptor
 func (p *LHPlate) GetTargets(adaptorName string) []Coordinates {
 	return p.Welltype.GetWellTargets(adaptorName)
+}
+
+//ListAdaptorsWithTargets get a list of the names of all the adaptors with targets set
+func (p *LHPlate) ListAdaptorsWithTargets() []string {
+	return p.Welltype.ListAdaptorsWithTargets()
 }

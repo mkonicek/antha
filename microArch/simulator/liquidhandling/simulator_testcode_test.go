@@ -377,11 +377,11 @@ func default_lhplate_props() *LHPlateParams {
 			1.4,               // bottomh         float64
 			"mm",              // dunit           string
 		},
-		9.,   // wellXOffset     float64
-		9.,   // wellYOffset     float64
-		0.,   // wellXStart      float64
-		0.,   // wellYStart      float64
-		18.5, // wellZStart      float64
+		9.,  // wellXOffset     float64
+		9.,  // wellYOffset     float64
+		0.,  // wellXStart      float64
+		0.,  // wellYStart      float64
+		5.3, // wellZStart      float64
 	}
 
 	return &params
@@ -405,7 +405,7 @@ func lhplate_trough_props() *LHPlateParams {
 		"test_trough_mfr", // mfr             string
 		1,                 // nrows           int
 		12,                // ncols           int
-		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7}, // size          float64
+		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 45.8}, // size          float64
 		LHWellParams{ // welltype
 			wtype.ZeroWellCoords(), // crds            string
 			"ul",  // vunit           string
@@ -425,11 +425,11 @@ func lhplate_trough_props() *LHPlateParams {
 			4.7,                  // bottomh         float64
 			"mm",                 // dunit           string
 		},
-		9.,   // wellXOffset     float64
-		9.,   // wellYOffset     float64
-		0.,   // wellXStart      float64
-		30.0, // wellYStart      float64
-		4.5,  // wellZStart      float64
+		9.,  // wellXOffset     float64
+		9.,  // wellYOffset     float64
+		0.,  // wellXStart      float64
+		7.,  // wellYStart      float64
+		4.5, // wellZStart      float64
 	}
 
 	return &params

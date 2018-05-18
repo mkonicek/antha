@@ -793,7 +793,7 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 			}
 			self.AddErrorf("Move", "Cannot move channel %d to (\"%s\", %s, %s) + (%.1f,%.1f,%.1f)mm as this collides with %s\n",
 				ch, deckposition[ch], wellcoords[ch], refs[ch], offsetX[ch], offsetY[ch], offsetZ[ch], strings.Join(o_str, " and "))
-			return ret
+			//instead of returning, continue on to get all collisions and leave the virtual robot in the collided state
 		}
 	}
 
@@ -1777,6 +1777,36 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 					"Tipbox \"%s\" is taller than the tips it holds (%.2fmm > %.2fmm), disabling tipbox collision detection",
 					tb.GetName(), tb.GetSize().Z, tb.TipZStart+tb.Tiptype.GetSize().Z)
 				self.settings.EnableTipboxCollision(false)
+			}
+		}
+
+		//check that the wells are within the bounds of the plate
+		if plate, ok := obj.(*wtype.LHPlate); ok {
+			plateSize := plate.GetSize()
+			wellOff := plate.GetWellOffset()
+			wellLim := wellOff.Add(plate.GetWellSize())
+
+			if wellOff.X < 0.0 || wellOff.Y < 0.0 || wellOff.Z < 0.0 {
+				self.AddErrorf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" has negative well offsets %v",
+					position, wtype.TypeOf(plate), wellOff)
+			}
+
+			overSpill := wtype.Coordinates{
+				X: math.Max(wellLim.X-plateSize.X, 0.0),
+				Y: math.Max(wellLim.Y-plateSize.Y, 0.0),
+				Z: math.Max(wellLim.Z-plateSize.Z, 0.0),
+			}
+
+			if overSpill.Z > 0.0 {
+				self.AddWarningf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" : increasing height by %0.1f mm to match well height",
+					position, wtype.TypeOf(plate), overSpill.Z)
+				plateSize.Z += overSpill.Z
+				plate.Bounds.SetSize(plateSize)
+			}
+
+			if overSpill.X > 0.0 || overSpill.Y > 0.0 {
+				self.AddErrorf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" wells extend beyond plate bounds by %s",
+					position, wtype.TypeOf(plate), overSpill.StringXY())
 			}
 		}
 

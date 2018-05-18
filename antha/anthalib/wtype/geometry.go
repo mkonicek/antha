@@ -43,6 +43,10 @@ func (self Coordinates) String() string {
 	return fmt.Sprintf("%vx%vx%vmm", self.X, self.Y, self.Z)
 }
 
+func (self Coordinates) StringXY() string {
+	return fmt.Sprintf("%0.1fx%0.1f mm", self.X, self.Y)
+}
+
 //Dim Value for dimension
 func (a Coordinates) Dim(x int) float64 {
 	switch x {

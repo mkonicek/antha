@@ -428,7 +428,7 @@ func lhplate_trough_props() *LHPlateParams {
 		9.,  // wellXOffset     float64
 		9.,  // wellYOffset     float64
 		0.,  // wellXStart      float64
-		7.,  // wellYStart      float64
+		0.,  // wellYStart      float64
 		4.5, // wellZStart      float64
 	}
 
@@ -1059,8 +1059,9 @@ func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
 	var ret AssertionFn = func(name string, t *testing.T, vlh *lh.VirtualLiquidHandler) {
 		adaptor := vlh.GetAdaptorState(head)
 		or := adaptor.GetChannel(0).GetAbsolutePosition()
-		if or.X != origin.X || or.Y != origin.Y || or.Z != origin.Z {
-			t.Errorf("PositionAssertion failed in \"%s\", adaptor should be at %s, was actually at %s", name, origin, or)
+		//use string comparison to avoid precision errors (string printed with %.1f)
+		if g, e := or.String(), origin.String(); g != e {
+			t.Errorf("PositionAssertion failed in \"%s\", adaptor should be at %s, was actually at %s", name, e, g)
 		}
 	}
 	return &ret

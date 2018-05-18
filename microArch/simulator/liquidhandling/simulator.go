@@ -1754,6 +1754,12 @@ func (self *VirtualLiquidHandler) ResetPistons(head, channel int) driver.Command
 	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "RESETPISTONS ACK"}
 }
 
+//These values correct for the Glison Driver offset and will eventually be removed
+const (
+	XCorrection = 14.38
+	YCorrection = 11.24
+)
+
 //AddPlateTo - used
 func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
 
@@ -1763,11 +1769,6 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 		obj = obj.Duplicate(true)
 		if n, nok := obj.(wtype.Named); nok && n.GetName() != name {
 			self.AddWarningf("AddPlateTo", "Object name(=%s) doesn't match argument name(=%s)", n.GetName(), name)
-		}
-
-		if err := self.state.GetDeck().SetChild(position, obj); err != nil {
-			self.AddError("AddPlateTo", err.Error())
-			return ret
 		}
 
 		if tb, ok := obj.(*wtype.LHTipbox); ok {
@@ -1782,6 +1783,14 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 
 		//check that the wells are within the bounds of the plate
 		if plate, ok := obj.(*wtype.LHPlate); ok {
+			//apply the well position correction
+			plate.WellXStart += XCorrection
+			plate.WellYStart += YCorrection
+			corr := wtype.Coordinates{X: XCorrection, Y: YCorrection, Z: 0.0}
+			for _, w := range plate.Wellcoords {
+				w.SetOffset(w.Bounds.GetPosition().Add(corr)) //nolint
+			}
+
 			plateSize := plate.GetSize()
 			wellOff := plate.GetWellOffset()
 			wellLim := wellOff.Add(plate.GetWellSize())
@@ -1808,6 +1817,11 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 				self.AddErrorf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" wells extend beyond plate bounds by %s",
 					position, wtype.TypeOf(plate), overSpill.StringXY())
 			}
+		}
+
+		if err := self.state.GetDeck().SetChild(position, obj); err != nil {
+			self.AddError("AddPlateTo", err.Error())
+			return ret
 		}
 
 	} else {

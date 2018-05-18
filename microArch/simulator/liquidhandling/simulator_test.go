@@ -419,7 +419,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 402.75, Y: 65.75, Z: 25.7}),
+				positionAssertion(0, wtype.Coordinates{X: 417.1, Y: 77.0, Z: 25.7}),
 			},
 		},
 		{
@@ -442,7 +442,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 402.75, Y: 29.75, Z: 25.7}),
+				positionAssertion(0, wtype.Coordinates{X: 417.1, Y: 41.0, Z: 25.7}),
 			},
 		},
 		{
@@ -465,7 +465,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 404.1, Y: 11.5, Z: 46.8}),
+				positionAssertion(0, wtype.Coordinates{X: 418.5, Y: 15.7, Z: 46.8}),
 			},
 		},
 		{

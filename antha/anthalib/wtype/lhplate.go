@@ -973,9 +973,11 @@ func (self *LHPlate) GetWellOffset() Coordinates {
 }
 
 func (self *LHPlate) GetWellSize() Coordinates {
-	return Coordinates{self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
+	return Coordinates{
+		self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
 		self.WellYOffset*float64(self.NRows()-1) + self.Welltype.GetSize().Y,
-		self.Welltype.GetSize().Z}
+		self.Welltype.GetSize().Z,
+	}
 }
 
 func (self *LHPlate) GetWellBounds() BBox {

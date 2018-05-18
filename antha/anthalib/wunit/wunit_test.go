@@ -577,6 +577,12 @@ func TestDivideConcentrationPrecision(t *testing.T) {
 			ExpectedConcentration: NewConcentration(0.03125, "X"),
 			Factor:                2.0000000000000000000,
 		},
+
+		{
+			StockConcentration:    NewConcentration(22.0/7.0, "X"),
+			ExpectedConcentration: NewConcentration(3.14285714285714, "X"),
+			Factor:                1.0000000000000000000,
+		},
 	}
 
 	for _, test := range tests {

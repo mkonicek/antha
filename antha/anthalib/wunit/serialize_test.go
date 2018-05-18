@@ -57,8 +57,8 @@ func TestVolumeMarshal(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(v, v3) {
-		fmt.Println(v.ToString())
-		fmt.Println(v3.ToString())
+		fmt.Println(v.Summary())
+		fmt.Println(v3.Summary())
 		t.Fatalf("volumes not equal, expecting %v, got %v", v, v3)
 	}
 }

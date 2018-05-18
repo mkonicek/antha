@@ -100,11 +100,11 @@ func (lhcp LHChannelParameter) CanMove(v wunit.Volume, oneshot bool) bool {
 }
 
 func (lhcp LHChannelParameter) VolumeLimitString() string {
-	return fmt.Sprintf("Min: %s Max: %s", lhcp.Minvol.ToString(), lhcp.Maxvol.ToString())
+	return fmt.Sprintf("Min: %s Max: %s", lhcp.Minvol.Summary(), lhcp.Maxvol.Summary())
 }
 
 func (lhcp LHChannelParameter) String() string {
-	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %d Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.ToString(), lhcp.Maxvol.ToString(), lhcp.Minspd.ToString(), lhcp.Maxspd.ToString(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
+	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %d Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.Summary(), lhcp.Maxvol.Summary(), lhcp.Minspd.Summary(), lhcp.Maxspd.Summary(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
 }
 
 // given the dimension of the plate, what is the constraint

@@ -124,11 +124,11 @@ func ExampleConcreteMeasurement() {
 	meas2 := ConcreteMeasurement{50, pu2}
 	meas3 := ConcreteMeasurement{10, pu3}
 
-	fmt.Println(meas.ToString(), " is ", meas.ConvertTo(meas.Unit()), " ", pu.PrefixedSymbol())
-	fmt.Println(meas2.ToString(), " is ", meas2.ConvertTo(meas.Unit()), " ", pu.PrefixedSymbol())
-	fmt.Println(meas2.ToString(), " is ", meas2.ConvertTo(meas2.Unit()), " ", pu2.PrefixedSymbol())
-	fmt.Println(meas.ToString(), " is ", meas.ConvertTo(meas2.Unit()), " ", pu2.PrefixedSymbol())
-	fmt.Println(meas3.ToString())
+	fmt.Println(meas.Summary(), " is ", meas.ConvertTo(meas.Unit()), " ", pu.PrefixedSymbol())
+	fmt.Println(meas2.Summary(), " is ", meas2.ConvertTo(meas.Unit()), " ", pu.PrefixedSymbol())
+	fmt.Println(meas2.Summary(), " is ", meas2.ConvertTo(meas2.Unit()), " ", pu2.PrefixedSymbol())
+	fmt.Println(meas.Summary(), " is ", meas.ConvertTo(meas2.Unit()), " ", pu2.PrefixedSymbol())
+	fmt.Println(meas3.Summary())
 	fmt.Println(meas3.Unit().ToString())
 	fmt.Println(pu3.PrefixedSymbol())
 	// Output:
@@ -473,11 +473,11 @@ func TestNewConcentration(t *testing.T) {
 				"got", r.SIValue(), "\n",
 			)
 		}
-		if r.ToString() != testunit.toSIString {
+		if r.Summary() != testunit.toSIString {
 			t.Error(
 				"For", testunit.value, testunit.prefixedunit, "\n",
 				"expected", testunit.toSIString, "\n",
-				"got", r.ToString(), "\n",
+				"got", r.Summary(), "\n",
 			)
 		}
 	}
@@ -626,7 +626,7 @@ func TestRoundedComparisons(t *testing.T) {
 
 	if !vrai {
 		t.Error(
-			"For", v1.ToString(), " >_7 ", v2.ToString(), "\n",
+			"For", v1.Summary(), " >_7 ", v2.Summary(), "\n",
 			"expected true\n",
 			"got false\n",
 		)
@@ -636,7 +636,7 @@ func TestRoundedComparisons(t *testing.T) {
 
 	if faux {
 		t.Error(
-			"For", v1.ToString(), " <_7 ", v2.ToString(), "\n",
+			"For", v1.Summary(), " <_7 ", v2.Summary(), "\n",
 			"expected false\n",
 			"got true\n",
 		)
@@ -646,7 +646,7 @@ func TestRoundedComparisons(t *testing.T) {
 
 	if faux {
 		t.Error(
-			"For", v1.ToString(), " ==_7 ", v2.ToString(), "\n",
+			"For", v1.Summary(), " ==_7 ", v2.Summary(), "\n",
 			"expected false\n",
 			"got true\n",
 		)
@@ -657,7 +657,7 @@ func TestRoundedComparisons(t *testing.T) {
 
 	if !vrai {
 		t.Error(
-			"For", v1.ToString(), " ==_6 ", v2.ToString(), "\n",
+			"For", v1.Summary(), " ==_6 ", v2.Summary(), "\n",
 			"expected true\n",
 			"got false\n",
 		)
@@ -668,7 +668,7 @@ func TestRoundedComparisons(t *testing.T) {
 
 	if faux {
 		t.Error(
-			"For", v1.ToString(), " <_6 ", v2.ToString(), "\n",
+			"For", v1.Summary(), " <_6 ", v2.Summary(), "\n",
 			"expected false\n",
 			"got true\n",
 		)
@@ -678,7 +678,7 @@ func TestRoundedComparisons(t *testing.T) {
 
 	if faux {
 		t.Error(
-			"For", v1.ToString(), " >_6 ", v2.ToString(), "\n",
+			"For", v1.Summary(), " >_6 ", v2.Summary(), "\n",
 			"expected false\n",
 			"got true\n",
 		)

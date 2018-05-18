@@ -156,17 +156,17 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 // An error is returned if the volume is infinity or not a number.
 func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
 	if vol1.Unit().BaseSIUnit() != vol2.Unit().BaseSIUnit() {
-		return -1, fmt.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.ToString(), vol2.ToString())
+		return -1, fmt.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.Summary(), vol2.Summary())
 	}
 	factor = vol1.SIValue() / vol2.SIValue()
 
 	if math.IsInf(factor, 0) {
-		err = fmt.Errorf("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		err = fmt.Errorf("infinity value found dividing volumes %s and %s", vol1.Summary(), vol2.Summary())
 		return
 	}
 
 	if math.IsNaN(factor) {
-		err = fmt.Errorf("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		err = fmt.Errorf("NaN value found dividing volumes %s and %s", vol1.Summary(), vol2.Summary())
 		return
 	}
 
@@ -198,17 +198,17 @@ func DivideConcentration(v Concentration, factor float64) (newconc Concentration
 // An error is returned if the concentration unit is not dividable or the number generated is infinity.
 func DivideConcentrations(conc1, conc2 Concentration) (factor float64, err error) {
 	if conc1.Unit().BaseSIUnit() != conc2.Unit().BaseSIUnit() {
-		return -1, fmt.Errorf("cannot divide concentrations: units of %s and %s unequal.", conc1.ToString(), conc2.ToString())
+		return -1, fmt.Errorf("cannot divide concentrations: units of %s and %s unequal.", conc1.Summary(), conc2.Summary())
 	}
 	factor = conc1.SIValue() / conc2.SIValue()
 
 	if math.IsInf(factor, 0) {
-		err = fmt.Errorf("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
+		err = fmt.Errorf("infinity value found dividing concentrations %s and %s", conc1.Summary(), conc2.Summary())
 		return
 	}
 
 	if math.IsNaN(factor) {
-		err = fmt.Errorf("NaN value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
+		err = fmt.Errorf("NaN value found dividing concentrations %s and %s", conc1.Summary(), conc2.Summary())
 		return
 	}
 
@@ -319,7 +319,7 @@ func (t Time) Seconds() float64 {
 func (t Time) AsDuration() time.Duration {
 	// simply use the parser
 
-	d, e := time.ParseDuration(t.ToString())
+	d, e := time.ParseDuration(t.Summary())
 
 	if e != nil {
 		logger.Fatal(e.Error())

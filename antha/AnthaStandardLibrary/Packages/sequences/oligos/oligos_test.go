@@ -130,11 +130,11 @@ var overlaptests = []testpair{
 func TestBasicMeltingTemp(t *testing.T) {
 	for _, oligo := range meltingtemptests {
 		result := BasicMeltingTemp(oligo.sequence)
-		if result.ToString() != oligo.meltingtemp.ToString() {
+		if result.Summary() != oligo.meltingtemp.Summary() {
 			t.Error(
 				"For", oligo.sequence, "\n",
-				"expected", oligo.meltingtemp.ToString(), "\n",
-				"got", result.ToString(), "\n",
+				"expected", oligo.meltingtemp.Summary(), "\n",
+				"got", result.Summary(), "\n",
 			)
 		}
 	}

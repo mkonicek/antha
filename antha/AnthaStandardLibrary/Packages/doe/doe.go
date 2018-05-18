@@ -943,7 +943,7 @@ func (m MergedLevel) EqualToMergeConcs(e MergedLevel) (bool, error) {
 		}
 
 		if !concsEqual(vconc, econc) {
-			return false, fmt.Errorf("original factor %s level %s not equal to %s in merged level being evaluated", k, vconc.ToString(), econc.ToString())
+			return false, fmt.Errorf("original factor %s level %s not equal to %s in merged level being evaluated", k, vconc.Summary(), econc.Summary())
 		}
 	}
 	return true, nil

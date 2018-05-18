@@ -328,7 +328,7 @@ func (c ComponentList) List(options ...bool) string {
 		if verbose {
 			message = fmt.Sprintln("Component: ", k, "Conc: ", v)
 		} else {
-			message = v.ToString() + " " + k
+			message = v.Summary() + " " + k
 		}
 
 		s = append(s, message)

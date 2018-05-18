@@ -378,8 +378,8 @@ func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
 	v := make([]wunit.Volume, 0, 1)
 	seen := make(map[string]bool)
 	for _, vv := range ins.Volume[0] {
-		if !vv.IsZero() && !seen[vv.ToString()] {
-			seen[vv.ToString()] = true
+		if !vv.IsZero() && !seen[vv.Summary()] {
+			seen[vv.Summary()] = true
 			v = append(v, vv)
 		}
 	}
@@ -1844,7 +1844,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {
 				// this is an error in channel choice but the user has to deal... needs modificationst
-				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.ToString(), ins.Prms.VolumeLimitString()))
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.Summary(), ins.Prms.VolumeLimitString()))
 			}
 		}
 
@@ -2373,7 +2373,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			if override || tb.Tiptype.Filtered {
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {
-				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.Summary(), ins.TipType, ins.Prms))
 			}
 		}
 

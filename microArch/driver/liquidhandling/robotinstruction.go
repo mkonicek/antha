@@ -380,7 +380,7 @@ func concatstringarray(a []string) string {
 func concatvolarray(a []wunit.Volume) string {
 	r := ""
 	for i, s := range a {
-		r += s.ToString()
+		r += s.Summary()
 		if i < len(a)-1 {
 			r += ","
 		}

@@ -3,6 +3,7 @@ package human
 import (
 	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
@@ -98,7 +99,7 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 		insts = append(insts, &target.Manual{
 			Dev:     a,
 			Label:   "incubate",
-			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
+			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.Summary(), cmd.Time.Summary()),
 		})
 
 	case *ast.HandleInst:

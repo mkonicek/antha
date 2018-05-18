@@ -7,7 +7,7 @@ import (
 )
 
 func TipChosenError(v wunit.Volume, prms *LHProperties) error {
-	return wtype.LHErrorf(wtype.LH_ERR_VOL, "No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
+	return wtype.LHErrorf(wtype.LH_ERR_VOL, "No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.Summary(), prms.MinPossibleVolume().Summary(), prms.MinCurrentVolume().Summary())
 }
 
 // it would probably make more sense for this to be a method of the robot

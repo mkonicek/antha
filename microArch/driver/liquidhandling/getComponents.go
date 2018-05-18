@@ -199,7 +199,7 @@ func collateDifference(a, b, c map[string]wunit.Volume) string {
 
 		if v.LessThanFloat(0.0) {
 			v.M(-1.0)
-			s += fmt.Sprintf("%s - missing %s; ", k, v.ToString())
+			s += fmt.Sprintf("%s - missing %s; ", k, v.Summary())
 		}
 	}
 

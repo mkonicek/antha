@@ -80,12 +80,12 @@ func summariseVolumes(vols []float64) string {
 	}
 
 	if equal {
-		return wunit.NewVolume(vols[0], "ul").ToString()
+		return wunit.NewVolume(vols[0], "ul").Summary()
 	}
 
 	s_vols := make([]string, len(vols))
 	for i, v := range vols {
-		s_vols[i] = wunit.NewVolume(v, "ul").ToString()
+		s_vols[i] = wunit.NewVolume(v, "ul").Summary()
 		s_vols[i] = s_vols[i][:len(s_vols[i])-3]
 	}
 	return fmt.Sprintf("{%s} ul", strings.Join(s_vols, ","))
@@ -94,7 +94,7 @@ func summariseVolumes(vols []float64) string {
 func summariseRates(rates []wunit.FlowRate) string {
 	asString := make([]string, 0, len(rates))
 	for _, r := range rates {
-		asString = append(asString, r.ToString())
+		asString = append(asString, r.Summary())
 	}
 	return summariseStrings(asString)
 }

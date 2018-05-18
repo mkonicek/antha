@@ -88,7 +88,7 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 						return true, i, nil
 					}
 				} else {
-					errs = append(errs, comp.CName+"concentration "+comp.Concentration().ToString()+" not equal to "+component.CName+" "+component.Concentration().ToString())
+					errs = append(errs, comp.CName+"concentration "+comp.Concentration().Summary()+" not equal to "+component.CName+" "+component.Concentration().Summary())
 				}
 			} else {
 				if lookForSubComponents {
@@ -169,7 +169,7 @@ func componentSummary(component *wtype.LHComponent) string {
 	conc := "No concentration found"
 
 	if component.HasConcentration() {
-		conc = component.Concentration().ToString()
+		conc = component.Concentration().Summary()
 	}
 
 	return fmt.Sprint("Component Name: ", component.CName, "Conc: ", conc, ". SubComponents: ", message)

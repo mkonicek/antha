@@ -29,7 +29,7 @@ type TransferParams struct {
 }
 
 func (tp TransferParams) ToString() string {
-	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s %d %d %d %d %s %+v", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType, tp.FPlateWX, tp.FPlateWY, tp.TPlateWX, tp.TPlateWY, tp.Component, tp.Policy)
+	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s %d %d %d %d %s %+v", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.Summary(), tp.FPlateType, tp.TPlateType, tp.FVolume.Summary(), tp.TVolume.Summary(), tp.Channel, tp.TipType, tp.FPlateWX, tp.FPlateWY, tp.TPlateWX, tp.TPlateWY, tp.Component, tp.Policy)
 }
 
 func (tp TransferParams) Zero() bool {

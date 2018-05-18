@@ -124,7 +124,7 @@ func (it *IChain) Print() {
 			if it.Values[j].Type == wtype.LHIMIX {
 				fmt.Printf("MIX    %2d: %s ", j, it.Values[j].ID)
 				for i := 0; i < len(it.Values[j].Components); i++ {
-					fmt.Print(" ", it.Values[j].Components[i].ID, ":", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().ToString(), " ")
+					fmt.Print(" ", it.Values[j].Components[i].ID, ":", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().Summary(), " ")
 				}
 				fmt.Print(":", it.Values[j].Results[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Printf("-- ")
@@ -136,8 +136,8 @@ func (it *IChain) Print() {
 			} else if it.Values[j].Type == wtype.LHISPL {
 				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)
 				fmt.Print(" ", it.Values[j].Components[0].ID, ":", it.Values[j].Components[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress, " ")
-				fmt.Print(" MOVE:", it.Values[j].Results[0].ID, ":", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().ToString())
-				fmt.Print(" STAY:", it.Values[j].Results[1].ID, ":", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().ToString())
+				fmt.Print(" MOVE:", it.Values[j].Results[0].ID, ":", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().Summary())
+				fmt.Print(" STAY:", it.Values[j].Results[1].ID, ":", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().Summary())
 				fmt.Printf("-- ")
 			} else {
 				fmt.Print("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")

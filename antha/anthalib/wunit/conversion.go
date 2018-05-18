@@ -66,7 +66,7 @@ func VolumeForTargetMass(targetmass Mass, stockConc Concentration) (v Volume, er
 
 	if stockConc.RawValue() == 0.0 {
 		v = NewVolume(0.0, "ul")
-		return v, fmt.Errorf("Zero value found when converting concentration and mass to new volume so new volume set to zero: target mass: %s; starting concentration: %s", targetmass.ToString(), stockConc.ToString())
+		return v, fmt.Errorf("Zero value found when converting concentration and mass to new volume so new volume set to zero: target mass: %s; starting concentration: %s", targetmass.Summary(), stockConc.Summary())
 	}
 
 	if targetmass.RawValue() == 0.0 {
@@ -90,7 +90,7 @@ func VolumeForTargetMass(targetmass Mass, stockConc Concentration) (v Volume, er
 		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
 	} else {
 		fmt.Println("Base units ", stockConc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit(), " not compatible with this function")
-		err = fmt.Errorf("Convert %s to g and %s to g/l", targetmass.ToString(), stockConc.ToString())
+		err = fmt.Errorf("Convert %s to g and %s to g/l", targetmass.Summary(), stockConc.Summary())
 	}
 
 	return
@@ -103,7 +103,7 @@ func VolumeForTargetMass(targetmass Mass, stockConc Concentration) (v Volume, er
 func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentration, totalVol Volume) (v Volume, err error) {
 
 	if stockConc.RawValue() == 0.0 {
-		return NewVolume(0.0, "ul"), fmt.Errorf("Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", stockConc.ToString(), targetConc.ToString(), totalVol.ToString())
+		return NewVolume(0.0, "ul"), fmt.Errorf("Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", stockConc.Summary(), targetConc.Summary(), totalVol.Summary())
 	}
 
 	if targetConc.RawValue() == 0.0 || totalVol.RawValue() == 0.0 {
@@ -113,13 +113,13 @@ func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentrat
 	factor, err := DivideConcentrations(targetConc, stockConc)
 
 	if err != nil {
-		return NewVolume(0.0, "ul"), fmt.Errorf("Error converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s. Error: %s", stockConc.ToString(), targetConc.ToString(), totalVol.ToString(), err.Error())
+		return NewVolume(0.0, "ul"), fmt.Errorf("Error converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s. Error: %s", stockConc.Summary(), targetConc.Summary(), totalVol.Summary(), err.Error())
 	}
 
 	v = MultiplyVolume(totalVol, factor)
 
 	if v.GreaterThan(totalVol) {
-		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration ", stockConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
+		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.Summary(), " is higher than stock concentration ", stockConc.Summary(), " so volume calculated ", v.Summary(), " is larger than total volume ", totalVol.Summary()))
 	}
 
 	return
@@ -149,7 +149,7 @@ func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Ma
 		multiplier = 1
 		unit = "mg"
 	} else {
-		err = fmt.Errorf("target conc %s must in g/l to convert to a mass", targetconc.ToString())
+		err = fmt.Errorf("target conc %s must in g/l to convert to a mass", targetconc.Summary())
 	}
 
 	m = NewMass(float64((targetconc.RawValue()*multiplier)*(totalvol.SIValue()/litre.SIValue())), unit)

@@ -717,7 +717,7 @@ func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *LHComponent {
 	w := p.Wellcoords[well]
 
 	if w == nil {
-		logger.Debug(fmt.Sprint("RemoveComponent (plate) ERROR: ", well, " ", vol.ToString(), " Can't find well"))
+		logger.Debug(fmt.Sprint("RemoveComponent (plate) ERROR: ", well, " ", vol.Summary(), " Can't find well"))
 		return nil
 	}
 

@@ -78,7 +78,7 @@ func EstimatePathLength(plate *wtype.LHPlate, volume wunit.Volume) (pathlength w
 			pathlength = wunit.NewLength(pathlengthinmm, "mm")
 
 		} else {
-			fmt.Println(volume.Unit().PrefixedSymbol(), wellvol.Unit().PrefixedSymbol(), wellarea.Unit().PrefixedSymbol(), wellarea.ToString())
+			fmt.Println(volume.Unit().PrefixedSymbol(), wellvol.Unit().PrefixedSymbol(), wellarea.Unit().PrefixedSymbol(), wellarea.Summary())
 		}
 	} else {
 		err = errors.New(fmt.Sprint("Can't yet estimate pathlength for this welltype shape unit ", plate.Welltype.Shape().LengthUnit, "or non flat bottom type"))

@@ -44,7 +44,7 @@ func NormaliseName(name string) (normalised string) {
 
 	if containsConc {
 		if conc.RawValue() > 0 {
-			return conc.ToString() + " " + nameonly
+			return conc.Summary() + " " + nameonly
 		} else {
 			return nameonly
 		}
@@ -73,7 +73,7 @@ func ReturnNormalisedComponentName(component *wtype.LHComponent) string {
 	compList := originalcompList.removeConcsFromSubComponentNames()
 
 	if component.HasConcentration() && len(compList.Components) == 0 {
-		name := component.Concentration().ToString() + " " + removeConcUnitFromName(component.Name()) + " " + compList.List(false)
+		name := component.Concentration().Summary() + " " + removeConcUnitFromName(component.Name()) + " " + compList.List(false)
 		return name
 	}
 

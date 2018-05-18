@@ -97,7 +97,7 @@ type Measurement interface {
 	EqualTo(m Measurement) bool
 
 	// A nice string representation
-	ToString() string
+	Summary() string
 }
 
 // structure implementing the Measurement interface
@@ -172,6 +172,9 @@ func (cm *ConcreteMeasurement) ConvertToString(s string) float64 {
 	return cm.ConvertTo(ppu)
 }
 
+// String will return a summary of the ConcreteMeasurement Value and prefixed unit as a string.
+// The value will be formatted in scientific notation for large exponents and the value unbounded.
+// The Summary() method should be used to return a rounded string.
 func (cm *ConcreteMeasurement) String() string {
 	return fmt.Sprintf("%g %s", cm.RawValue(), cm.Unit().PrefixedSymbol())
 }
@@ -362,7 +365,10 @@ func (cm *ConcreteMeasurement) EqualToFloat(f float64) bool {
 	return f == cm.RawValue()
 }
 
-func (cm *ConcreteMeasurement) ToString() string {
+// Summary will return a summary of the ConcreteMeasurement Value and prefixed unit as a string.
+// The value will be formatted in scientific notation for large exponents and will be bounded to 3 decimal places.
+// The String() method should be used to use the unbounded value.
+func (cm *ConcreteMeasurement) Summary() string {
 	return fmt.Sprintf("%.3g %s", cm.RawValue(), cm.Unit().PrefixedSymbol())
 }
 

@@ -88,8 +88,8 @@ func TestVolumeForTargetConcentration(t *testing.T) {
 		if !vol.EqualTo(test.VolumeNeeded) {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected Vol:", test.VolumeNeeded.ToString(), "\n",
-				"Got Vol:", vol.ToString(), "\n",
+				"Expected Vol:", test.VolumeNeeded.Summary(), "\n",
+				"Got Vol:", vol.Summary(), "\n",
 			)
 		}
 
@@ -112,8 +112,8 @@ func TestMassForTargetConcentration(t *testing.T) {
 		if !mass.EqualTo(test.Mass) {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected mass:", test.Mass.ToString(), "\n",
-				"Got mass:", mass.ToString(), "\n",
+				"Expected mass:", test.Mass.Summary(), "\n",
+				"Got mass:", mass.Summary(), "\n",
 			)
 		}
 
@@ -141,8 +141,8 @@ func TestVolumeForTargetMass(t *testing.T) {
 		if !vol.EqualTo(test.Vol) && !test.Error {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected vol:", test.Vol.ToString(), "\n",
-				"Got vol:", vol.ToString(), "\n",
+				"Expected vol:", test.Vol.Summary(), "\n",
+				"Got vol:", vol.Summary(), "\n",
 			)
 		}
 
@@ -158,8 +158,8 @@ func TestMasstoVolume(t *testing.T) {
 		if !vol.EqualTo(test.Vol) {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected vol:", test.Vol.ToString(), "\n",
-				"Got vol:", vol.ToString(), "\n",
+				"Expected vol:", test.Vol.Summary(), "\n",
+				"Got vol:", vol.Summary(), "\n",
 			)
 		}
 
@@ -175,8 +175,8 @@ func TestVolumetoMass(t *testing.T) {
 		if !mass.EqualTo(test.Mass) {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected mass:", test.Mass.ToString(), "\n",
-				"Got mass:", mass.ToString(), "\n",
+				"Expected mass:", test.Mass.Summary(), "\n",
+				"Got mass:", mass.Summary(), "\n",
 			)
 		}
 

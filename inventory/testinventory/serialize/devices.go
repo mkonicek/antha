@@ -419,7 +419,7 @@ type plateWithConstraint struct {
 	// Any plate specific offset, in mm, which should be added to the riser height.
 	// For example, if the riser is a tube rack and the specified plate
 	// has very narrow tubes which sit low in the riser then a special offset can be added here to adjust for this.
-	// In the example case a negative number would be used to reduce the effectie riser height.
+	// In the example case a negative number would be used to reduce the effective riser height.
 	SpecialOffset float64
 }
 

@@ -236,7 +236,7 @@ func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts
 	}
 
 	if opts&CompareVolumes != 0 {
-		volume = wellIn.CurrentVolume().ToString()
+		volume = wellIn.CurrentVolume().Summary()
 	}
 
 	if opts&ComparePlateNames != 0 {

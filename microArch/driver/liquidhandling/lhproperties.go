@@ -751,7 +751,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 		}
 
 		if !foundIt {
-			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("749: NO SOURCE FOR ", cmp.CName, " at volume ", cmp.Volume().ToString()))
+			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("749: NO SOURCE FOR ", cmp.CName, " at volume ", cmp.Volume().Summary()))
 			return plateIDs, wellCoords, vols, err
 		}
 	}
@@ -930,14 +930,14 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 	p := lhp.Plates[lhp.PlateIDLookup[plateID]]
 
 	if p == nil {
-		logger.Info(fmt.Sprint("RemoveComponent ", plateID, " ", well, " ", volume.ToString(), " can't find plate"))
+		logger.Info(fmt.Sprint("RemoveComponent ", plateID, " ", well, " ", volume.Summary(), " can't find plate"))
 		return false
 	}
 
 	r := p.RemoveComponent(well, volume)
 
 	if r == nil {
-		logger.Info(fmt.Sprint("CAN'T REMOVE COMPONENT ", plateID, " ", well, " ", volume.ToString()))
+		logger.Info(fmt.Sprint("CAN'T REMOVE COMPONENT ", plateID, " ", well, " ", volume.Summary()))
 		return false
 	}
 

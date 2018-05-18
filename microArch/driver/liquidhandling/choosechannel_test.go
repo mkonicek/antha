@@ -74,11 +74,11 @@ func TestDefaultChooser(t *testing.T) {
 
 		if prm == nil {
 			if !mxr.IsZero() || !mnr.IsZero() || tpr != tiptype {
-				t.Errorf(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), " Got nil want: ", mnr.ToString(), " ", tpr))
+				t.Errorf(fmt.Sprint("Incorrect channel choice for volume ", vol.Summary(), " Got nil want: ", mnr.Summary(), " ", tpr))
 			}
 
 		} else if !prm.Maxvol.EqualTo(mxr) || !prm.Minvol.EqualTo(mnr) || tiptype != tpr {
-			t.Errorf(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), "\n\tGot ", prm.Minvol.ToString(), " ", prm.Maxvol.ToString(), " ", tiptype, " \n\tWANT: ", mnr.ToString(), " ", mxr.ToString(), " ", tpr))
+			t.Errorf(fmt.Sprint("Incorrect channel choice for volume ", vol.Summary(), "\n\tGot ", prm.Minvol.Summary(), " ", prm.Maxvol.Summary(), " ", tiptype, " \n\tWANT: ", mnr.Summary(), " ", mxr.Summary(), " ", tpr))
 		}
 	}
 }
@@ -186,7 +186,7 @@ func SetUpTipsFor(lhp *LHProperties) *LHProperties {
 				continue
 			}
 			tip := tb.Tips[0][0]
-			str := tip.Mnfr + tip.Type + tip.MinVol.ToString() + tip.MaxVol.ToString()
+			str := tip.Mnfr + tip.Type + tip.MinVol.Summary() + tip.MaxVol.Summary()
 			if seen[str] {
 				continue
 			}

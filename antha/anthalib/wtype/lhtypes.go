@@ -348,6 +348,7 @@ type LHHead struct {
 	ID           string
 	Adaptor      *LHAdaptor
 	Params       *LHChannelParameter
+	TipLoading   TipLoadingBehaviour
 }
 
 func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
@@ -363,6 +364,7 @@ func (head *LHHead) Dup() *LHHead {
 	if head.Adaptor != nil {
 		h.Adaptor = head.Adaptor.Dup()
 	}
+	h.TipLoading = head.TipLoading
 
 	return h
 }
@@ -462,4 +464,56 @@ func (lha *LHAdaptor) GetParams() *LHChannelParameter {
 		}
 		return &params
 	}
+}
+
+type SequentialTipLoadingBehaviour int
+
+const (
+	//NoSequentialTipLoading tips are loaded all at once, an error is raised if not possible
+	NoSequentialTipLoading SequentialTipLoadingBehaviour = iota
+	//ForwardSequentialTipLoading chunks of contiguous tips are loaded sequentially in the order encountered
+	ForwardSequentialTipLoading
+	//ReverseSequentialTipLoading chunks of contiguous tips are loaded sequentially in reverse order
+	ReverseSequentialTipLoading
+)
+
+var sequentialTipLoadingBehaviourNames = map[SequentialTipLoadingBehaviour]string{
+	NoSequentialTipLoading:      "no sequential tip loading",
+	ForwardSequentialTipLoading: "forward sequential tip loading",
+	ReverseSequentialTipLoading: "reverse sequential tip loading",
+}
+
+func (s SequentialTipLoadingBehaviour) String() string {
+	return sequentialTipLoadingBehaviourNames[s]
+}
+
+//TipLoadingBehaviour describe the way in which tips are loaded
+type TipLoadingBehaviour struct {
+	//OverrideLoadTipsCommand true it the liquid handler will override which tips are loaded
+	OverrideLoadTipsCommand bool
+	//AutoRefillTipboxes are tipboxes automaticall refilled
+	AutoRefillTipboxes bool
+	//LoadingOrder are tips loaded ColumnWise or RowWise
+	LoadingOrder MajorOrder
+	//VerticalLoadingDirection the direction along which columns are loaded
+	VerticalLoadingDirection VerticalDirection
+	//HorizontalLoadingDirection the direction along which rows are loaded
+	HorizontalLoadingDirection HorizontalDirection
+	//ChunkingBehaviour how to load tips when the requested number aren't available contiguously
+	ChunkingBehaviour SequentialTipLoadingBehaviour
+}
+
+//String get a string description for debuggin
+func (s TipLoadingBehaviour) String() string {
+
+	autoRefill := ""
+	if !s.AutoRefillTipboxes {
+		autoRefill = "no "
+	}
+
+	if !s.OverrideLoadTipsCommand {
+		return fmt.Sprintf("%sauto-refilling, no loading override", autoRefill)
+	}
+
+	return fmt.Sprintf("%sauto-refilling, loading order: %v, %v, %v, %v", autoRefill, s.LoadingOrder, s.VerticalLoadingDirection, s.HorizontalLoadingDirection, s.ChunkingBehaviour)
 }

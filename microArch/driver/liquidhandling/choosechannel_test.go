@@ -74,20 +74,12 @@ func TestDefaultChooser(t *testing.T) {
 
 		if prm == nil {
 			if !mxr.IsZero() || !mnr.IsZero() || tpr != tiptype {
-				t.Fatal(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), " Got nil want: ", mnr.ToString(), " ", tpr))
+				t.Errorf(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), " Got nil want: ", mnr.ToString(), " ", tpr))
 			}
 
 		} else if !prm.Maxvol.EqualTo(mxr) || !prm.Minvol.EqualTo(mnr) || tiptype != tpr {
-			t.Fatal(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), "\n\tGot ", prm.Minvol.ToString(), " ", prm.Maxvol.ToString(), " ", tiptype, " \n\tWANT: ", mnr.ToString(), " ", mxr.ToString(), " ", tpr))
+			t.Errorf(fmt.Sprint("Incorrect channel choice for volume ", vol.ToString(), "\n\tGot ", prm.Minvol.ToString(), " ", prm.Maxvol.ToString(), " ", tiptype, " \n\tWANT: ", mnr.ToString(), " ", mxr.ToString(), " ", tpr))
 		}
-		/*
-			if prm == nil {
-				fmt.Println("V: ", vol.ToString(), " NO SOLUTION")
-			} else {
-				fmt.Println("V: ", vol.ToString(), " Mn: ", prm.Minvol.ToString(), " Mx: ", prm.Maxvol.ToString(), " TIP: ", tiptype)
-			}
-		*/
-
 	}
 }
 
@@ -189,8 +181,8 @@ func SetUpTipsFor(lhp *LHProperties) *LHProperties {
 
 	for _, tb := range testinventory.GetTipboxes(ctx) {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
-			//ignore filter tips
-			if tb.Tiptype.Filtered {
+			//ignore filter tips and the hacky "low volume high volume" ones
+			if tb.Tiptype.Filtered || tb.Tiptype.Type == "LVGilson200" {
 				continue
 			}
 			tip := tb.Tips[0][0]

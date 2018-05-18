@@ -78,23 +78,24 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 		if _, seen := req.Input_plates[ip.ID]; seen {
 			return fmt.Errorf("plate %q already added", ip.ID)
 		}
-		//req.Input_plates[ip.ID] = ip
 		req.AddUserPlate(ip)
 		return nil
 	}
 
 	req := planner.NewLHRequest()
 
-	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
-	if len(a.opt.CustomPolicyData) > 0 {
+	if data := a.opt.CustomPolicyData; len(data) > 0 {
 		lhpr := wtype.NewLHPolicyRuleSet()
 
-		lhpr, err := wtype.AddUniversalRules(lhpr, a.opt.CustomPolicyData)
-
+		lhpr, err := wtype.AddUniversalRules(lhpr, data)
 		if err != nil {
 			return nil, err
 		}
 		req.AddUserPolicies(lhpr)
+	}
+
+	if set := a.opt.CustomPolicyRuleSet; set != nil {
+		req.AddUserPolicies(set)
 	}
 
 	if err := req.PolicyManager.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
@@ -361,9 +362,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 
 	// any customised user policies are added to the LHRequest PolicyManager here
 	// Any component type names with modified policies are iterated until unique i.e. SmartMix_modified_1
-	err = addCustomPolicies(mixes, r.LHRequest)
-
-	if err != nil {
+	if err := addCustomPolicies(mixes, r.LHRequest); err != nil {
 		return nil, err
 	}
 

@@ -739,6 +739,29 @@ func NewLHComponent() *LHComponent {
 	return &lhc
 }
 
+//Clean the component to its initial state
+func (cmp *LHComponent) Clean() {
+	cmp.Vunit = "ul"
+	cmp.DaughterID = ""
+	cmp.ParentID = ""
+	cmp.Inst = ""
+	cmp.Order = 0
+	cmp.CName = ""
+	cmp.Type = LiquidType("")
+	cmp.Vol = 0.0
+	cmp.Conc = 0.0
+	cmp.Vunit = "ul"
+	cmp.Cunit = ""
+	cmp.Tvol = 0.0
+	cmp.Smax = 0.0
+	cmp.Visc = 0.0
+	cmp.StockConcentration = 0.0
+	cmp.Extra = make(map[string]interface{})
+	cmp.Loc = ""
+	cmp.Destination = ""
+	cmp.Policy = make(map[string]interface{})
+}
+
 func (cmp *LHComponent) String() string {
 	id := cmp.ID
 

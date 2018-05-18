@@ -115,7 +115,7 @@ func findInPC(ass, w string, pc PlateChoice) int {
 func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
 	nm := p.PlateName
 
-	it := wtype.NewOneTimeColumnWiseIterator(p)
+	it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
 
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := p.Wellcoords[wc.FormatA1()]

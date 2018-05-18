@@ -219,13 +219,13 @@ func (tb *LHTipbox) HasEnoughTips(requested int) bool {
 		for _, tip := range tiprow {
 			if tip != nil && !tip.Dirty {
 				c += 1
-				if c > requested {
+				if c >= requested {
 					return true
 				}
 			}
 		}
 	}
-	return c > requested
+	return c >= requested
 }
 
 //##############################################

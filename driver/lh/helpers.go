@@ -653,11 +653,33 @@ func DecodeArrayOfPtrToLHTip(arg *pb.ArrayOfPtrToLHTipMessage) []*wtype.LHTip {
 	return ret
 }
 func EncodeLHHead(arg wtype.LHHead) *pb.LHHeadMessage {
-	ret := pb.LHHeadMessage{(string)(arg.Name), (string)(arg.Manufacturer), (string)(arg.ID), EncodePtrToLHAdaptor(arg.Adaptor), EncodePtrToLHChannelParameter(arg.Params)}
+	ret := pb.LHHeadMessage{(string)(arg.Name), (string)(arg.Manufacturer), (string)(arg.ID), EncodePtrToLHAdaptor(arg.Adaptor), EncodePtrToLHChannelParameter(arg.Params), EncodeTipLoadingBehaviour(arg.TipLoading)}
 	return &ret
 }
 func DecodeLHHead(arg *pb.LHHeadMessage) wtype.LHHead {
-	ret := wtype.LHHead{Name: (string)(arg.Arg_1), Manufacturer: (string)(arg.Arg_2), ID: (string)(arg.Arg_3), Adaptor: (*wtype.LHAdaptor)(DecodePtrToLHAdaptor(arg.Arg_4)), Params: (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_5))}
+	ret := wtype.LHHead{Name: (string)(arg.Arg_1), Manufacturer: (string)(arg.Arg_2), ID: (string)(arg.Arg_3), Adaptor: (*wtype.LHAdaptor)(DecodePtrToLHAdaptor(arg.Arg_4)), Params: (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_5)), TipLoading: DecodeTipLoadingBehaviour(arg.Arg_6)}
+	return ret
+}
+func EncodeTipLoadingBehaviour(arg wtype.TipLoadingBehaviour) *pb.TipLoadingBehaviourMessage {
+	ret := pb.TipLoadingBehaviourMessage{
+		arg.OverrideLoadTipsCommand,
+		arg.AutoRefillTipboxes,
+		int64(arg.LoadingOrder),
+		int64(arg.VerticalLoadingDirection),
+		int64(arg.HorizontalLoadingDirection),
+		int64(arg.ChunkingBehaviour),
+	}
+	return &ret
+}
+func DecodeTipLoadingBehaviour(arg *pb.TipLoadingBehaviourMessage) wtype.TipLoadingBehaviour {
+	ret := wtype.TipLoadingBehaviour{
+		OverrideLoadTipsCommand:    arg.Arg_1,
+		AutoRefillTipboxes:         arg.Arg_2,
+		LoadingOrder:               wtype.MajorOrder(arg.Arg_3),
+		VerticalLoadingDirection:   wtype.VerticalDirection(arg.Arg_4),
+		HorizontalLoadingDirection: wtype.HorizontalDirection(arg.Arg_5),
+		ChunkingBehaviour:          wtype.SequentialTipLoadingBehaviour(arg.Arg_6),
+	}
 	return ret
 }
 func EncodeMapstringstringMessage(arg map[string]string) *pb.MapstringstringMessage {

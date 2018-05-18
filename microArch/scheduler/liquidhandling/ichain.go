@@ -143,8 +143,7 @@ func (it *IChain) Print() {
 				fmt.Print("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
 			}
 		}
-
-		fmt.Println("End of Instruction")
+		fmt.Println()
 	}
 	if it.Child != nil {
 		it.Child.Print()

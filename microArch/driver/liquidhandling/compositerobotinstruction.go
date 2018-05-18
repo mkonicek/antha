@@ -1726,6 +1726,10 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		}
 	}
 
+	// set the defaults
+	ret = append(ret, setDefaults(ins.Head, pol)...)
+	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
+
 	// offsets
 	ofx := SafeGetF64(pol, "ASPXOFFSET")
 	ofy := SafeGetF64(pol, "ASPYOFFSET")
@@ -1776,8 +1780,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		//override ofz
 		ofz = -SafeGetF64(pol, "LLFBELOWSURFACE")
 	}
-
-	pspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
 
 	// do we need to enter slowly?
 	entryspeed, gentlynow := pol["ASPENTRYSPEED"]
@@ -1881,7 +1883,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		mixrate := SafeGetF64(pol, "PRE_MIX_RATE")
 
-		changepipspeed := (mixrate == pspeed) && (mixrate > 0.0)
+		changepipspeed := (mixrate == defaultpspeed) && (mixrate > 0.0)
 
 		if changepipspeed {
 			setspd := NewSetPipetteSpeedInstruction()
@@ -1898,7 +1900,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			sps := NewSetPipetteSpeedInstruction()
 			sps.Head = ins.Head
 			sps.Channel = -1 // all channels
-			sps.Speed = pspeed
+			sps.Speed = defaultpspeed
 			ret = append(ret, sps)
 		}
 	}
@@ -1936,7 +1938,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	apspeed := SafeGetF64(pol, "ASPSPEED")
 
-	changepspeed := (apspeed == pspeed) && (apspeed > 0.0)
+	changepspeed := (apspeed == defaultpspeed) && (apspeed > 0.0)
 
 	if changepspeed {
 		sps := NewSetPipetteSpeedInstruction()
@@ -1977,7 +1979,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		sps := NewSetPipetteSpeedInstruction()
 		sps.Head = ins.Head
 		sps.Channel = -1 // all channels
-		sps.Speed = pspeed
+		sps.Speed = defaultpspeed
 		ret = append(ret, sps)
 	}
 
@@ -2113,6 +2115,26 @@ func (scti *BlowInstruction) Params() MultiTransferParams {
 	return tp
 }
 
+func setDefaults(head int, pol wtype.LHPolicy) []RobotInstruction {
+	ret := make([]RobotInstruction, 0)
+
+	// pipetting speed
+	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
+	setspd := NewSetPipetteSpeedInstruction()
+	setspd.Head = head
+	setspd.Channel = -1 // all channels
+	setspd.Speed = defaultpspeed
+	ret = append(ret, setspd)
+
+	// Z move speed
+	spd := NewSetDriveSpeedInstruction()
+	spd.Drive = "Z"
+	spd.Speed = pol["DEFAULTZSPEED"].(float64)
+	ret = append(ret, spd)
+
+	return ret
+}
+
 func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 	// apply policies here
@@ -2126,6 +2148,10 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			return []RobotInstruction{}, err
 		}
 	}
+
+	// set the defaults
+	ret = append(ret, setDefaults(ins.Head, pol)...)
+
 	// first, are we breaking up the move?
 
 	ofx := SafeGetF64(pol, "DSPXOFFSET")
@@ -2150,7 +2176,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	var gentlydoesit bool
 
-	if entryspeed != defaultspeed {
+	if entryspeed > 0.0 && entryspeed != defaultspeed {
 		gentlydoesit = true
 	}
 
@@ -2216,12 +2242,12 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ret = append(ret, mov)
 
 	// change pipette speed?
-	pspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
+	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
 	dpspeed := SafeGetF64(pol, "DSPSPEED")
 
 	var setpspeed bool
 
-	if pspeed != dpspeed && dpspeed != 0.0 {
+	if defaultpspeed != dpspeed && dpspeed != 0.0 {
 		setpspeed = true
 	}
 
@@ -2238,8 +2264,6 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	weneedtoreset := true
 
 	justblowout := SafeGetBool(pol, "JUSTBLOWOUT")
-
-	// bit of a horrible hack... we need to fix this soon
 
 	if justblowout {
 		blowoutvolume := SafeGetF64(pol, "BLOWOUTVOLUME")
@@ -2293,7 +2317,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		sps := NewSetPipetteSpeedInstruction()
 		sps.Head = ins.Head
 		sps.Channel = -1 // all channels
-		sps.Speed = pspeed
+		sps.Speed = defaultpspeed
 		ret = append(ret, sps)
 	}
 
@@ -2397,7 +2421,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		//mixrate, changespeed := pol["POST_MIX_RATE"]
 		var changespeed bool
 		mixrate := SafeGetF64(pol, "POST_MIX_RATE")
-		if mixrate != pspeed && mixrate != 0.0 {
+		if mixrate != defaultpspeed && mixrate != 0.0 {
 			changespeed = true
 		}
 
@@ -2416,7 +2440,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			sps := NewSetPipetteSpeedInstruction()
 			sps.Head = ins.Head
 			sps.Channel = -1 // all channels
-			sps.Speed = pspeed
+			sps.Speed = defaultpspeed
 			ret = append(ret, sps)
 		}
 
@@ -2457,6 +2481,15 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		mov.OffsetY = oy
 		mov.OffsetZ = off
 		ret = append(ret, mov)
+	}
+
+	if gentlydoesit {
+		// reset the drive speed
+		spd := NewSetDriveSpeedInstruction()
+		spd.Drive = "Z"
+		spd.Speed = pol["DEFAULTZSPEED"].(float64)
+		ret = append(ret, spd)
+
 	}
 
 	// now do we reset?

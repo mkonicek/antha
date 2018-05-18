@@ -473,8 +473,10 @@ func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
 
 // ModifyLHPolicyParameter specifies that this LHComponent or instance of the LHComponent should be handled with a modified
 // LHPolicy parameter.
+// e.g. to Change number of post mixes to 5:
+// lhc.ModifyLHPolicyParameter("POST_MIX", 5)
 // Valid parameters and value types are specified in aparam.go
-// An error is returned if an invalid parameter or value type for that parameter are specified.
+// An error is returned if an invalid parameter or value type for that parameter is specified.
 func (lhc *LHComponent) ModifyLHPolicyParameter(parameter string, value interface{}) error {
 	if lhc.Policy == nil || len(lhc.Policy) == 0 {
 		lhc.Policy = make(LHPolicy)

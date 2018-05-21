@@ -1803,7 +1803,7 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 			wellLim := wellOff.Add(plate.GetWellSize())
 
 			if wellOff.X < 0.0 || wellOff.Y < 0.0 || wellOff.Z < 0.0 {
-				self.AddErrorf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" has negative well offsets %v",
+				self.AddWarningf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" has negative well offsets %v",
 					position, wtype.TypeOf(plate), wellOff)
 			}
 

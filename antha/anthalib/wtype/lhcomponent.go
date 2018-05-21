@@ -461,15 +461,20 @@ func (lhc *LHComponent) PolicyName() PolicyName {
 }
 
 // SetPolicyName adds the LiquidType associated with a PolicyName to the LHComponent.
-// If the PolicyName is invalid an error is returned.
-func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
-	liquidType, err := LiquidTypeFromString(policy)
-	if err != nil {
-		return err
-	}
+// If the PolicyName is invalid and the DoNotPermitCustomPolicies option is used as an argument then an error is returned.
+// By default, custom policyNames may be added and the validity of these will be checked later when robot instructions are generated, rather than in the element.
+func (lhc *LHComponent) SetPolicyName(policy PolicyName, options ...PolicyOption) error {
+	liquidType, err := LiquidTypeFromString(policy, options...)
 	lhc.Type = liquidType
-	return nil
+	return err
 }
+
+// PolicyOption allows specification of advanced options to feed into the SetPolicyName method.
+type PolicyOption string
+
+// DoNotPermitCustomPolicies is an option to pass into SetPolicyName to ensure only valid system policies are specified.
+// With this flag set, custom user policies are not permitted.
+var DoNotPermitCustomPolicies PolicyOption = "DoNotPermitCustomPolicies"
 
 // ModifyLHPolicyParameter specifies that this LHComponent or instance of the LHComponent should be handled with a modified
 // LHPolicy parameter.

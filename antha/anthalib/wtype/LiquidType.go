@@ -70,9 +70,16 @@ const (
 )
 
 // LiquidTypeFromString returns a LiquidType from a PolicyName
-func LiquidTypeFromString(s PolicyName) (LiquidType, error) {
+// If the PolicyName is invalid and the DoNotPermitCustomPolicies option is used as an argument then an error is returned.
+// By default, custom policyNames may be added and the validity of these will be checked later when robot instructions are generated, rather than in the element.
+func LiquidTypeFromString(s PolicyName, options ...PolicyOption) (LiquidType, error) {
 	_, err := GetPolicyByName(PolicyName(s))
-	return LiquidType(s), err
+	for _, option := range options {
+		if string(option) == string(DoNotPermitCustomPolicies) {
+			return LiquidType(s), err
+		}
+	}
+	return LiquidType(s), nil
 }
 
 // LiquidTypeName returns a PolicyName from a LiquidType

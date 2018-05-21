@@ -357,7 +357,7 @@ func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
 	lhh.Manufacturer = mf
 	lhh.Name = name
 	lhh.Params = params
-	lhh.Constraints = make([]MotionConstraint)
+	lhh.Constraints = make([]MotionConstraint, 2)
 	return &lhh
 }
 
@@ -367,8 +367,12 @@ func (head *LHHead) Dup() *LHHead {
 		h.Adaptor = head.Adaptor.Dup()
 	}
 	h.TipLoading = head.TipLoading
-
+	copy(h.Constraints, head.Constraints)
 	return h
+}
+
+func (head *LHHead) AddConstraint(mc MotionConstraint) {
+	head.Constraints = append(head.Constraints, mc)
 }
 
 func (lhh *LHHead) GetParams() *LHChannelParameter {

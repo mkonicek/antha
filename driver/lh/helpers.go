@@ -653,11 +653,11 @@ func DecodeArrayOfPtrToLHTip(arg *pb.ArrayOfPtrToLHTipMessage) []*wtype.LHTip {
 	return ret
 }
 func EncodeLHHead(arg wtype.LHHead) *pb.LHHeadMessage {
-	ret := pb.LHHeadMessage{(string)(arg.Name), (string)(arg.Manufacturer), (string)(arg.ID), EncodePtrToLHAdaptor(arg.Adaptor), EncodePtrToLHChannelParameter(arg.Params), EncodeTipLoadingBehaviour(arg.TipLoading)}
+	ret := pb.LHHeadMessage{(string)(arg.Name), (string)(arg.Manufacturer), (string)(arg.ID), EncodePtrToLHAdaptor(arg.Adaptor), EncodePtrToLHChannelParameter(arg.Params), EncodeTipLoadingBehaviour(arg.TipLoading), EncodeArrayOfMotionConstraintMessage(arg.Constraints)}
 	return &ret
 }
 func DecodeLHHead(arg *pb.LHHeadMessage) wtype.LHHead {
-	ret := wtype.LHHead{Name: (string)(arg.Arg_1), Manufacturer: (string)(arg.Arg_2), ID: (string)(arg.Arg_3), Adaptor: (*wtype.LHAdaptor)(DecodePtrToLHAdaptor(arg.Arg_4)), Params: (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_5)), TipLoading: DecodeTipLoadingBehaviour(arg.Arg_6)}
+	ret := wtype.LHHead{Name: (string)(arg.Arg_1), Manufacturer: (string)(arg.Arg_2), ID: (string)(arg.Arg_3), Adaptor: (*wtype.LHAdaptor)(DecodePtrToLHAdaptor(arg.Arg_4)), Params: (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_5)), TipLoading: DecodeTipLoadingBehaviour(arg.Arg_6), Constraints: DecodeArrayOfMotionConstraints(arg.Arg_7)}
 	return ret
 }
 func EncodeTipLoadingBehaviour(arg wtype.TipLoadingBehaviour) *pb.TipLoadingBehaviourMessage {
@@ -703,7 +703,7 @@ func EncodeMotionConstraint(arg wtype.MotionConstraint) *pb.MotionConstraintMess
 	ret := pb.MotionConstraintMessage{
 		int64(arg.Type),
 		EncodeBBox(arg.Bounds),
-		int64(arg.Arg_3),
+		int64(arg.RelativeTo),
 	}
 	return &ret
 }

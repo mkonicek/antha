@@ -464,7 +464,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
-		if _, ok := err.(ErrNoMatchingLiquidType); ok {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
 			return []RobotInstruction{}, err
 		}
 		pol, err = GetDefaultPolicy(policy, ins)

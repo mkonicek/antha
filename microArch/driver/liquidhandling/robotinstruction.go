@@ -472,18 +472,20 @@ func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol w
 }
 */
 
-// ErrNoMatchingLiquidType is returned when no matching liquid policy is found.
-type ErrNoMatchingLiquidType struct {
+// ErrInvalidLiquidType is returned when no matching liquid policy is found.
+type ErrInvalidLiquidType struct {
 	PolicyNames []string
 }
 
-func (err ErrNoMatchingLiquidType) Error() string {
+func (err ErrInvalidLiquidType) Error() string {
 	return fmt.Sprintf("invalid LiquidType specified in instruction: %v ", err.PolicyNames)
 }
 
 var (
 	// ErrNoMatchingRules is returned when no matching LHPolicyRules are found when evaluating a rule set against a RobotInsturction.
 	ErrNoMatchingRules = errors.New("no matching rules found")
+	// ErrNoLiquidType is returned when no liquid policy is found.
+	ErrNoLiquidType = errors.New("no LiquidType in instruction")
 )
 
 func matchesLiquidClass(rule wtype.LHPolicyRule) (match bool) {
@@ -505,7 +507,7 @@ func GetDefaultPolicy(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.
 
 func same(strings []string) bool {
 	for _, str := range strings {
-		if str != strings[0] {
+		if str != strings[0] && str != "" {
 			return false
 		}
 	}
@@ -542,20 +544,27 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPo
 		return ppl, ErrNoMatchingRules
 	}
 
-	if !lhpolicyFound {
-		policy := ins.GetParameter("LIQUIDCLASS")
-		var policyNames []string
-		if policies, ok := policy.([]string); ok {
-			if same(policies) {
-				policyNames = append(policyNames, policies[0])
-			} else {
-				policyNames = policies
+	policy := ins.GetParameter("LIQUIDCLASS")
+	var invalidPolicyNames []string
+	if policies, ok := policy.([]string); ok {
+		for _, policy := range policies {
+			if _, found := lhpr.Policies[policy]; !found && policy != "" {
+				invalidPolicyNames = append(invalidPolicyNames, policy)
 			}
-
-		} else if policyString, ok := policy.(string); ok {
-			policyNames = append(policyNames, policyString)
 		}
-		return ppl, ErrNoMatchingLiquidType{PolicyNames: policyNames}
+
+	} else if policyString, ok := policy.(string); ok {
+		if _, found := lhpr.Policies[policyString]; !found && policyString != "" {
+			invalidPolicyNames = append(invalidPolicyNames, policyString)
+		}
+	}
+
+	if len(invalidPolicyNames) > 0 {
+		return ppl, ErrInvalidLiquidType{PolicyNames: invalidPolicyNames}
+	}
+
+	if !lhpolicyFound {
+		return ppl, ErrNoLiquidType
 	}
 	//printPolicyForDebug(ins, rules, ppl)
 	return ppl, nil

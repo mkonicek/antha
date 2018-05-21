@@ -24,6 +24,8 @@ package cmd
 
 import (
 	"encoding/json"
+	"encoding/csv"
+	"os"
 	"fmt"
 	"sort"
 	"strings"
@@ -92,12 +94,26 @@ func listPolicyCommands(cmd *cobra.Command, args []string) error {
 		}
 		_, err = fmt.Print(string(bs))
 		return err
+	case csvOutput:
+		var lines [][]string
+		lines = append(lines, []string{"name","type","description"})
+
+		for _, c := range cs {
+			lines = append(lines, []string{c.Name, c.Type, c.Desc})
+		}
+
+		w := csv.NewWriter(os.Stdout)
+		w.WriteAll(lines) // calls Flush internally
+
+		err := w.Error()
+		
+		return err
 	case textOutput:
 		var lines []string
 		lines = append(lines, "name,type,description")
 
 		for _, c := range cs {
-			lines = append(lines, fmt.Sprintf("%s,%s,%s", c.Name, c.Type, c.Desc))
+			lines = append(lines, fmt.Sprintf("%s, %s, %s", c.Name, c.Type, c.Desc))
 		}
 
 		_, err := fmt.Println(strings.Join(lines, "\n"))

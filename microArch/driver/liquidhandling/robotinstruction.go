@@ -471,11 +471,19 @@ func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol w
 
 }
 */
+
+// ErrNoMatchingLiquidType is returned when no matching liquid policy is found.
+type ErrNoMatchingLiquidType struct {
+	PolicyNames []string
+}
+
+func (err ErrNoMatchingLiquidType) Error() string {
+	return fmt.Sprintf("invalid LiquidType specified in instruction: %v ", err.PolicyNames)
+}
+
 var (
 	// ErrNoMatchingRules is returned when no matching LHPolicyRules are found when evaluating a rule set against a RobotInsturction.
 	ErrNoMatchingRules = errors.New("no matching rules found")
-	// ErrNoMatchingLiquidType is returned when no matching liquid policy is found.
-	ErrNoMatchingLiquidType = errors.New("no matching LiquidType")
 )
 
 func matchesLiquidClass(rule wtype.LHPolicyRule) (match bool) {
@@ -489,10 +497,19 @@ func matchesLiquidClass(rule wtype.LHPolicyRule) (match bool) {
 	return false
 }
 
-// GetDefaultPolicyq currently returns the default policy
+// GetDefaultPolicy currently returns the default policy
 func GetDefaultPolicy(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPolicy, error) {
 	defaultPolicy := wtype.DupLHPolicy(lhpr.Policies["default"])
 	return defaultPolicy, nil
+}
+
+func same(strings []string) bool {
+	for _, str := range strings {
+		if str != strings[0] {
+			return false
+		}
+	}
+	return true
 }
 
 // GetPolicyFor will return a matching LHPolicy for a RobotInstruction.
@@ -526,7 +543,19 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPo
 	}
 
 	if !lhpolicyFound {
-		return ppl, ErrNoMatchingLiquidType
+		policy := ins.GetParameter("LIQUIDCLASS")
+		var policyNames []string
+		if policies, ok := policy.([]string); ok {
+			if same(policies) {
+				policyNames = append(policyNames, policies[0])
+			} else {
+				policyNames = policies
+			}
+
+		} else if policyString, ok := policy.(string); ok {
+			policyNames = append(policyNames, policyString)
+		}
+		return ppl, ErrNoMatchingLiquidType{PolicyNames: policyNames}
 	}
 	//printPolicyForDebug(ins, rules, ppl)
 	return ppl, nil

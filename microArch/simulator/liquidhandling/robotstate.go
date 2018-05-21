@@ -274,10 +274,6 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 		}
 		//if we have all the chunks we need
 		if len(currChunk) >= tipsRemaining {
-			if len(currChunk) > 0 {
-				ret = append(ret, currChunk)
-				tipsRemaining -= len(currChunk)
-			}
 			break
 		}
 		//add the next tip
@@ -285,6 +281,10 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 			currChunk = append(currChunk, wc)
 			lastTipCoord = wc
 		}
+	}
+	if len(currChunk) > 0 {
+		ret = append(ret, currChunk)
+		tipsRemaining -= len(currChunk)
 	}
 
 	if self.tipBehaviour.ChunkingBehaviour == wtype.ReverseSequentialTipLoading {

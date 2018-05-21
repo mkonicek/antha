@@ -33,7 +33,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache"
 	"github.com/antha-lang/antha/microArch/driver"
@@ -231,9 +230,10 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 		return vlh.GetWorstError()
 	}
 
-	for _, ins := range instructions {
+	for i, ins := range instructions {
 		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh) //nolint
 		if vlh.HasError() {
+			fmt.Printf("simulator error detected at instruction %d\n", i)
 			break
 		}
 	}
@@ -287,7 +287,6 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 		if (*request).Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
-			text.Print("End of Instruction")
 
 		}
 		_, ok := ins.(liquidhandling.TerminalRobotInstruction)

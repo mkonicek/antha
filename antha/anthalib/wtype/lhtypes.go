@@ -349,6 +349,7 @@ type LHHead struct {
 	Adaptor      *LHAdaptor
 	Params       *LHChannelParameter
 	TipLoading   TipLoadingBehaviour
+	Constraints  []MotionConstraint
 }
 
 func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
@@ -516,4 +517,34 @@ func (s TipLoadingBehaviour) String() string {
 	}
 
 	return fmt.Sprintf("%sauto-refilling, loading order: %v, %v, %v, %v", autoRefill, s.LoadingOrder, s.VerticalLoadingDirection, s.HorizontalLoadingDirection, s.ChunkingBehaviour)
+}
+
+//MotionConstraintType
+type MotionConstraintType int
+
+const (
+	//NoMotionConstraint movement of the head is not constrained
+	NoMotionConstraint MotionConstraintType = iota
+	//LimitedMovementConstraint constrain the movement of the head to the given box, index is ignored
+	LimitedMovementConstraint
+	//ConstantRelativeConstraint indicate that the head moves relative to another head given by index, size of the bbox is ignored
+	ConstantRelativeConstraint
+)
+
+type MotionConstraint struct {
+	Type       MotionConstraintType
+	Bounds     BBox
+	RelativeTo int
+}
+
+func (self MotionConstraint) String() string {
+	switch self.Type {
+	case NoMotionConstraint:
+		return "nil constraint"
+	case LimitedMovementConstraint:
+		return fmt.Sprintf("movement constrained to %v", self.Bounds)
+	case ConstantRelativeConstraint:
+		return fmt.Sprintf("constrained to %v relative to head %d", self.Bounds.GetPosition(), self.RelativeTo)
+	}
+	return ""
 }

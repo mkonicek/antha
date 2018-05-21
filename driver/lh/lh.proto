@@ -563,6 +563,7 @@ message LHHeadMessage {
 	PtrToLHAdaptorMessage Arg_4 = 4;
 	PtrToLHChannelParameterMessage Arg_5 = 5;
     TipLoadingBehaviourMessage Arg_6 = 6;
+    ArrayOfMotionConstraintsMessage Arg_7 = 7;
 }
 message TipLoadingBehaviourMessage {
     bool Arg_1 = 1; //OverrideLoadTipsCommand
@@ -571,6 +572,14 @@ message TipLoadingBehaviourMessage {
     int64 Arg_4 = 4; //VerticalDiection: 1 = top to bottom, -1 = bottom to top
     int64 Arg_5 = 5; //HorizontalDirection: 1 = left to right, -1 = bottom to top
     int64 Arg_6 = 6; //chunking behaviour: 0 = none, 1: forward, 2: reverse
+}
+message MotionConstraintMessage {
+    int64 Arg_1 = 1; //Type
+    BBoxMessage Arg_2 = 2; //bounds
+    int64 Arg_3 = 3; //RelativeTo
+}
+message ArrayOfMotionConstraintsMessage {
+    repeated MotionConstraintMessage Arg_1 = 1;
 }
 message ArrayOfPtrToLHAdaptorMessage{
 	repeated PtrToLHAdaptorMessage arg_1=1;

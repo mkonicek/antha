@@ -682,6 +682,39 @@ func DecodeTipLoadingBehaviour(arg *pb.TipLoadingBehaviourMessage) wtype.TipLoad
 	}
 	return ret
 }
+func EncodeArrayOfMotionConstraintMessage(arg []wtype.MotionConstraint) *pb.ArrayOfMotionConstraintsMessage {
+	a := make([]*pb.MotionConstraintMessage, len(arg))
+	for i, v := range arg {
+		a[i] = EncodeMotionConstraint(v)
+	}
+	ret := pb.ArrayOfMotionConstraintsMessage{
+		a,
+	}
+	return &ret
+}
+func DecodeArrayOfMotionConstraints(arg *pb.ArrayOfMotionConstraintsMessage) []wtype.MotionConstraint {
+	ret := make([]wtype.MotionConstraint, len(arg.Arg_1))
+	for i, v := range arg.Arg_1 {
+		ret[i] = DecodeMotionConstraint(v)
+	}
+	return ret
+}
+func EncodeMotionConstraint(arg wtype.MotionConstraint) *pb.MotionConstraintMessage {
+	ret := pb.MotionConstraintMessage{
+		int64(arg.Type),
+		EncodeBBox(arg.Bounds),
+		int64(arg.Arg_3),
+	}
+	return &ret
+}
+func DecodeMotionConstraint(arg *pb.MotionConstraintMessage) wtype.MotionConstraint {
+	ret := wtype.MotionConstraint{
+		Type:       wtype.MotionConstraintType(arg.Arg_1),
+		Bounds:     DecodeBBox(arg.Arg_2),
+		RelativeTo: int(arg.Arg_3),
+	}
+	return ret
+}
 func EncodeMapstringstringMessage(arg map[string]string) *pb.MapstringstringMessage {
 	a := make([]*pb.MapstringstringMessageFieldEntry, 0, len(arg))
 	for k, v := range arg {

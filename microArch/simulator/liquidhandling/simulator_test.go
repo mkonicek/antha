@@ -688,6 +688,66 @@ func Test_Move(t *testing.T) {
 	}
 }
 
+func Test_MoveConstraints(t *testing.T) {
+
+	tests := []SimulatorTest{
+		{
+			"OK_1",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2"}, //deckposition
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					0, //head
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 204.5, Y: 4.5, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 204.5, Y: 22.5, Z: 62.2}),
+			},
+		},
+		{
+			"outside limits",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2"}, //deckposition
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					1, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move: head 1 channels 0-7 to A1-H1@tipbox at position tipbox_2 : movement limits prevent moving into position",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 204.5, Y: -13.5, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 204.5, Y: 4.5, Z: 62.2}),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.run(t)
+	}
+}
+
 // ########################################################################################################################
 // ########################################################## Tip Loading/Unloading
 // ########################################################################################################################

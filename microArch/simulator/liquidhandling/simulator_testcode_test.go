@@ -94,12 +94,14 @@ type HeadParams struct {
 	Channel      ChannelParams
 	Adaptor      AdaptorParams
 	TipBehaviour wtype.TipLoadingBehaviour
+	Constraints  []wtype.MotionConstraint
 }
 
 func makeLHHead(hp HeadParams) *wtype.LHHead {
 	ret := wtype.NewLHHead(hp.Name, hp.Mfg, makeLHChannelParameter(hp.Channel))
 	ret.Adaptor = makeLHAdaptor(hp.Adaptor)
 	ret.TipLoading = hp.TipBehaviour
+	ret.Constraints = hp.Constraints
 	return ret
 }
 
@@ -634,6 +636,125 @@ func default_lhproperties() *liquidhandling.LHProperties {
 					},
 				},
 				wtype.TipLoadingBehaviour{},
+				[]wtype.MotionConstraint{},
+			},
+		},
+		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
+		[]string{"input_1", "input_2"},   //Input_preferences
+		[]string{"output_1", "output_2"}, //Output_preferences
+		[]string{"tipwaste"},             //Tipwaste_preferences
+		[]string{"wash"},                 //Wash_preferences
+		[]string{"waste"},                //Waste_preferences
+	}
+
+	return makeLHProperties(&valid_props)
+}
+
+func multihead_lhproperties() *liquidhandling.LHProperties {
+	valid_props := LHPropertiesParams{
+		"Device Name",
+		"Device Manufacturer",
+		[]LayoutParams{
+			{"tipbox_1", 0.0, 0.0, 0.0},
+			{"tipbox_2", 200.0, 0.0, 0.0},
+			{"input_1", 400.0, 0.0, 0.0},
+			{"input_2", 0.0, 200.0, 0.0},
+			{"output_1", 200.0, 200.0, 0.0},
+			{"output_2", 400.0, 200.0, 0.0},
+			{"tipwaste", 0.0, 400.0, 0.0},
+			{"wash", 200.0, 400.0, 0.0},
+			{"waste", 400.0, 400.0, 0.0},
+		},
+		[]HeadParams{
+			{
+				"Head0 Name",
+				"Head0 Manufacturer",
+				ChannelParams{
+					"Head0 ChannelParams",     //Name
+					"Head0 Platform",          //Platform
+					UnitParams{0.1, "ul"},     //min volume
+					UnitParams{1., "ml"},      //max volume
+					UnitParams{0.1, "ml/min"}, //min flowrate
+					UnitParams{10., "ml/min"}, //max flowrate
+					8,     //multi
+					false, //independent
+					0,     //orientation
+					0,     //head
+				},
+				AdaptorParams{
+					"Head0 Adaptor",
+					"Head0 Adaptor Manufacturer",
+					ChannelParams{
+						"Head0 Adaptor ChannelParams", //Name
+						"Head0 Adaptor Platform",      //Platform
+						UnitParams{0.1, "ul"},         //min volume
+						UnitParams{1., "ml"},          //max volume
+						UnitParams{0.1, "ml/min"},     //min flowrate
+						UnitParams{10., "ml/min"},     //max flowrate
+						8,     //multi
+						false, //independent
+						0,     //orientation
+						0,     //head
+					},
+				},
+				wtype.TipLoadingBehaviour{},
+				[]wtype.MotionConstraint{
+					{
+						wtype.ConstantRelativeConstraint,
+						*wtype.NewBBox6f(0.0, -18.0, 0.0, 0.0, 0.0, 0.0),
+						1,
+					},
+					{
+						wtype.LimitedMovementConstraint,
+						*wtype.NewBBox6f(0., 0., 0., 600, 600, 500),
+						0,
+					},
+				},
+			},
+			{
+				"Head1 Name",
+				"Head1 Manufacturer",
+				ChannelParams{
+					"Head1 ChannelParams",     //Name
+					"Head1 Platform",          //Platform
+					UnitParams{0.1, "ul"},     //min volume
+					UnitParams{1., "ml"},      //max volume
+					UnitParams{0.1, "ml/min"}, //min flowrate
+					UnitParams{10., "ml/min"}, //max flowrate
+					8,     //multi
+					false, //independent
+					0,     //orientation
+					0,     //head
+				},
+				AdaptorParams{
+					"Head1 Adaptor",
+					"Head1 Adaptor Manufacturer",
+					ChannelParams{
+						"Head1 Adaptor ChannelParams", //Name
+						"Head1 Adaptor Platform",      //Platform
+						UnitParams{0.1, "ul"},         //min volume
+						UnitParams{1., "ml"},          //max volume
+						UnitParams{0.1, "ml/min"},     //min flowrate
+						UnitParams{10., "ml/min"},     //max flowrate
+						8,     //multi
+						false, //independent
+						0,     //orientation
+						0,     //head
+					},
+				},
+				wtype.TipLoadingBehaviour{},
+				[]wtype.MotionConstraint{
+					{
+						wtype.ConstantRelativeConstraint,
+						*wtype.NewBBox6f(0.0, 18.0, 0.0, 0.0, 0.0, 0.0),
+						1,
+					},
+					{
+						wtype.LimitedMovementConstraint,
+						*wtype.NewBBox6f(0., 18., 0., 600, 618, 500),
+						0,
+					},
+				},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
@@ -695,6 +816,7 @@ func independent_lhproperties() *liquidhandling.LHProperties {
 					},
 				},
 				wtype.TipLoadingBehaviour{},
+				[]wtype.MotionConstraint{},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
@@ -1061,7 +1183,7 @@ func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
 		or := adaptor.GetChannel(0).GetAbsolutePosition()
 		//use string comparison to avoid precision errors (string printed with %.1f)
 		if g, e := or.String(), origin.String(); g != e {
-			t.Errorf("PositionAssertion failed in \"%s\", adaptor should be at %s, was actually at %s", name, e, g)
+			t.Errorf("PositionAssertion failed in \"%s\", head %d should be at %s, was actually at %s", name, head, e, g)
 		}
 	}
 	return &ret

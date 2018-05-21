@@ -505,15 +505,6 @@ func GetDefaultPolicy(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.
 	return defaultPolicy, nil
 }
 
-func same(strings []string) bool {
-	for _, str := range strings {
-		if str != strings[0] && str != "" {
-			return false
-		}
-	}
-	return true
-}
-
 // GetPolicyFor will return a matching LHPolicy for a RobotInstruction.
 // If a common policy cannot be found for instances of the instruction then an error will be returned.
 func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPolicy, error) {

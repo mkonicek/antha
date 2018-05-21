@@ -89,15 +89,17 @@ func makeLHAdaptor(ap AdaptorParams) *wtype.LHAdaptor {
 }
 
 type HeadParams struct {
-	Name    string
-	Mfg     string
-	Channel ChannelParams
-	Adaptor AdaptorParams
+	Name         string
+	Mfg          string
+	Channel      ChannelParams
+	Adaptor      AdaptorParams
+	TipBehaviour wtype.TipLoadingBehaviour
 }
 
 func makeLHHead(hp HeadParams) *wtype.LHHead {
 	ret := wtype.NewLHHead(hp.Name, hp.Mfg, makeLHChannelParameter(hp.Channel))
 	ret.Adaptor = makeLHAdaptor(hp.Adaptor)
+	ret.TipLoading = hp.TipBehaviour
 	return ret
 }
 
@@ -631,6 +633,7 @@ func default_lhproperties() *liquidhandling.LHProperties {
 						0,     //head
 					},
 				},
+				wtype.TipLoadingBehaviour{},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
@@ -691,6 +694,7 @@ func independent_lhproperties() *liquidhandling.LHProperties {
 						0,    //head
 					},
 				},
+				wtype.TipLoadingBehaviour{},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences

@@ -23,10 +23,7 @@
 package wtype
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"sort"
 	"strings"
 
@@ -828,6 +825,7 @@ var (
 	OnPostMix   = categoricCondition{"LIQUIDCLASS", "PostMix"}
 	OnPreMix    = categoricCondition{"LIQUIDCLASS", "PreMix"}
 	OnNeedToMix = categoricCondition{"LIQUIDCLASS", "NeedToMix"}
+	OnMegaMix   = categoricCondition{"LIQUIDCLASS", "MegaMix"}
 )
 
 // Conditions to apply to LHpolicyRules based on volume of liquid that a sample is being pipetted into at the destination well
@@ -937,16 +935,16 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	}
 
 	// don't mix AND turn off tip reuse limit if destination well is empty and SmartMix
-	turnOffPostMixAndTipReuseIfEmpty, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptySmartMix", IntoEmpty, OnSmartMix)
+	turnOffPostMixAndTipReuseIfEmptySmartMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptySmartMix", IntoEmpty, OnSmartMix)
 
 	if err != nil {
 		return lhpr, err
 	}
 
-	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmpty, TurnOffPostMixAndPermitTipReUse())
+	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptySmartMix, TurnOffPostMixAndPermitTipReUse())
 
 	// don't mix AND turn off tip reuse limit if destination well is empty and PostMix
-	turnOffPostMixAndTipReuseIfEmptyPostMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyPostMix", IntoEmpty, OnSmartMix)
+	turnOffPostMixAndTipReuseIfEmptyPostMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyPostMix", IntoEmpty, OnPostMix)
 
 	if err != nil {
 		return lhpr, err
@@ -955,7 +953,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptyPostMix, TurnOffPostMixAndPermitTipReUse())
 
 	// don't mix AND turn off tip reuse limit if destination well is empty and MegaMix
-	turnOffPostMixAndTipReuseIfEmptyMegaMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyMegaMix", IntoEmpty, OnSmartMix)
+	turnOffPostMixAndTipReuseIfEmptyMegaMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyMegaMix", IntoEmpty, OnMegaMix)
 
 	if err != nil {
 		return lhpr, err
@@ -964,7 +962,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	lhpr.AddRule(turnOffPostMixAndTipReuseIfEmptyMegaMix, TurnOffPostMixAndPermitTipReUse())
 
 	// don't mix AND turn off tip reuse limit if destination well is empty and NeedToMix
-	turnOffPostMixAndTipReuseIfEmptyNeedToMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyNeedToMix", IntoEmpty, OnSmartMix)
+	turnOffPostMixAndTipReuseIfEmptyNeedToMix, err := newConditionalRule("doNotMixDoNotChangeTipsIfEmptyNeedToMix", IntoEmpty, OnNeedToMix)
 
 	if err != nil {
 		return lhpr, err
@@ -1134,28 +1132,4 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	return lhpr, nil
 
-}
-
-func LoadLHPoliciesFromFile() (*LHPolicyRuleSet, error) {
-	lhPoliciesFileName := os.Getenv("ANTHA_LHPOLICIES_FILE")
-	if lhPoliciesFileName == "" {
-		return nil, fmt.Errorf("Env variable ANTHA_LHPOLICIES_FILE not set")
-	}
-	contents, err := ioutil.ReadFile(lhPoliciesFileName)
-	if err != nil {
-		return nil, err
-	}
-	lhprs := NewLHPolicyRuleSet()
-	lhprs.Policies = make(map[string]LHPolicy)
-	lhprs.Rules = make(map[string]LHPolicyRule)
-	//	err = readYAML(contents, lhprs)
-	err = readJSON(contents, lhprs)
-	if err != nil {
-		return nil, err
-	}
-	return lhprs, nil
-}
-
-func readJSON(fileContents []byte, ruleSet *LHPolicyRuleSet) error {
-	return json.Unmarshal(fileContents, ruleSet)
 }

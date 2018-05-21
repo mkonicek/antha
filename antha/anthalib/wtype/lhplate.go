@@ -267,7 +267,7 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legac
 	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
-	it := NewOneTimeColumnWiseIterator(lhp)
+	it := NewAddressIterator(lhp, ColumnWise, TopToBottom, LeftToRight, false)
 
 	volGot := wunit.NewVolume(0.0, "ul")
 	volWant := cmp.Volume().Dup()
@@ -326,7 +326,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 		return ret, fmt.Errorf("Too much to put in a single well of this type")
 	}
 
-	it := NewOneTimeColumnWiseIterator(lhp)
+	it := NewAddressIterator(lhp, ColumnWise, TopToBottom, LeftToRight, false)
 
 	vt := wunit.ZeroVolume()
 
@@ -364,7 +364,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
-	it := NewOneTimeColumnWiseIterator(lhp)
+	it := NewAddressIterator(lhp, ColumnWise, TopToBottom, LeftToRight, false)
 
 	volGot := wunit.NewVolume(0.0, "ul")
 	volWant := cmp.Volume().Dup()
@@ -439,8 +439,7 @@ const (
 )
 
 func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
-
-	wellpositionarray = make([]string, 0)
+	wellpositionarray = make([]string, 0, lhp.WlsX*lhp.WlsY)
 
 	if byrow {
 
@@ -561,7 +560,16 @@ func (lhp *LHPlate) IsEmpty() bool {
 	return true
 }
 
-func (lhp *LHPlate) NextEmptyWell(it PlateIterator) WellCoords {
+//Clean empty all the wells of the plate so that IsEmpty returns true
+func (lhp *LHPlate) Clean() {
+
+	for _, w := range lhp.Wellcoords {
+		w.Clean()
+	}
+	lhp.Welltype.Clean()
+}
+
+func (lhp *LHPlate) NextEmptyWell(it AddressIterator) WellCoords {
 	c := 0
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		if c == lhp.Nwells {
@@ -1161,7 +1169,7 @@ func (p *LHPlate) MergeWith(p2 *LHPlate) {
 
 	// transfer any non-User-Allocated wells in here
 
-	it := NewOneTimeColumnWiseIterator(p)
+	it := NewAddressIterator(p, ColumnWise, TopToBottom, LeftToRight, false)
 
 	for ; it.Valid(); it.Next() {
 		wc := it.Curr()
@@ -1190,7 +1198,7 @@ func (p *LHPlate) MarkNonEmptyWellsUserAllocated() {
 func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 	ret := make([]*LHWell, 0, p.Nwells)
 
-	it := NewOneTimeColumnWiseIterator(p)
+	it := NewAddressIterator(p, ColumnWise, TopToBottom, LeftToRight, false)
 
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := p.Wellcoords[wc.FormatA1()]

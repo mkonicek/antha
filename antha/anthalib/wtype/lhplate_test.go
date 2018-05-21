@@ -17,6 +17,7 @@ func makeplatefortest() *LHPlate {
 	return p
 }
 
+/* -- these aren't used, but might be useful again in the future?
 func make384platefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
 	welltype := NewLHWell("ul", 50, 5, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
@@ -44,6 +45,15 @@ func make6platefortest() *LHPlate {
 	p := NewLHPlate("6wellplate", "none", 2, 3, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
+
+func maketroughfortest() *LHPlate {
+	stshp := NewShape("box", "mm", 8.2, 72, 41.3)
+	trough12 := NewLHWell("ul", 15000, 5000, stshp, VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
+	plate := NewLHPlate("DWST12", "Unknown", 1, 12, Coordinates{127.76, 85.48, 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
+	return plate
+}
+
+*/
 
 func TestPlateCreation(t *testing.T) {
 	p := makeplatefortest()
@@ -443,4 +453,46 @@ func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
 	if err := p.ValidateVolumes(); err == nil {
 		t.Error("Got no error when several wells overfilled")
 	}
+}
+
+func TestSpecialRetention(t *testing.T) {
+	p := makeplatefortest()
+
+	p.DeclareSpecial()
+
+	// dup must do this
+	d := p.Dup()
+
+	if !d.IsSpecial() {
+		t.Error("Duplicated plates must retain specialness")
+	}
+
+	// so must serialization
+
+	dat, err := json.Marshal(d)
+
+	if err != nil {
+		t.Errorf("Marshal error: %v", err)
+	}
+
+	var e *LHPlate
+
+	err = json.Unmarshal(dat, &e)
+
+	if err != nil {
+		t.Errorf("Unmarshal error: %v", err)
+	}
+
+	if !e.IsSpecial() {
+		t.Error("Specialness must be retained after serialize/deserialize")
+	}
+
+	// and cleaning
+
+	e.Clean()
+
+	if !e.IsSpecial() {
+		t.Error("Specialness must be retained after cleaning")
+	}
+
 }

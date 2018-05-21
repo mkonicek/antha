@@ -24,15 +24,18 @@ package liquidhandling
 
 import (
 	"fmt"
+	"math"
+	"sort"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
-	"math"
-	"sort"
-	"strings"
 )
+
+const arbitraryZOffset = 4.0
 
 func pTips(N int) string {
 	if N == 1 {
@@ -46,14 +49,6 @@ func pWells(N int) string {
 		return "well"
 	}
 	return "wells"
-}
-
-func summariseWell2Channel(well []string, channels []int) string {
-	ret := make([]string, 0, len(channels))
-	for ch := range channels {
-		ret = append(ret, fmt.Sprintf("%s->channel%v", well[ch], ch))
-	}
-	return strings.Join(ret, ", ")
 }
 
 func summariseChannels(channels []int) string {
@@ -85,12 +80,12 @@ func summariseVolumes(vols []float64) string {
 	}
 
 	if equal {
-		return wunit.NewVolume(vols[0], "ul").String()
+		return wunit.NewVolume(vols[0], "ul").ToString()
 	}
 
 	s_vols := make([]string, len(vols))
 	for i, v := range vols {
-		s_vols[i] = wunit.NewVolume(v, "ul").String()
+		s_vols[i] = wunit.NewVolume(v, "ul").ToString()
 		s_vols[i] = s_vols[i][:len(s_vols[i])-3]
 	}
 	return fmt.Sprintf("{%s} ul", strings.Join(s_vols, ","))
@@ -99,7 +94,7 @@ func summariseVolumes(vols []float64) string {
 func summariseRates(rates []wunit.FlowRate) string {
 	asString := make([]string, 0, len(rates))
 	for _, r := range rates {
-		asString = append(asString, r.String())
+		asString = append(asString, r.ToString())
 	}
 	return summariseStrings(asString)
 }
@@ -108,7 +103,7 @@ func summariseStrings(s []string) string {
 	if countUnique(s, true) == 1 {
 		return firstNonEmpty(s)
 	}
-	return "{" + strings.Join(s, ",") + "}"
+	return "{" + strings.Join(getUnique(s, true), ",") + "}"
 }
 
 func summariseCycles(cycles []int, elems []int) string {
@@ -321,7 +316,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 		} else if p.Orientation == wtype.LHHChannel {
 			spacing.X = 9.
 		}
-		vlh.state.AddAdaptor(NewAdaptorState(head.Adaptor.Name, p.Independent, p.Multi, spacing, p))
+		vlh.state.AddAdaptor(NewAdaptorState(head.Adaptor.Name, p.Independent, p.Multi, spacing, p, head.TipLoading))
 	}
 
 	//Make the deck
@@ -1147,6 +1142,13 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	}
 	position := firstNonEmpty(positionS)
 
+	//get the individual position
+	if countUnique(platetypeS, true) != 1 {
+		self.AddErrorf("LoadTips", "invalid platetype slice \"%v\", only one platetype supported", positionS)
+		return ret
+	}
+	platetype := firstNonEmpty(platetypeS)
+
 	//get the actual tipbox
 	var tipbox *wtype.LHTipbox
 	if o, ok := deck.GetChild(position); !ok {
@@ -1165,25 +1167,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		return ret
 	}
 
-	if self.settings.GetTipTrackingBehaviour() == TrilutionTipTracking {
-		//refil the tipbox if there aren't enough tips to service the instruction
-		if !tipbox.HasEnoughTips(multi) {
-			tipbox.Refill()
-		}
-		//HJK: we should also check that we're picking up tip in the way trilution is know to (e.g. splitting over rows etc)
-		//but this requires more information about the geometry of the head and so on
-
-	}
-
 	describe := func() string {
 		return fmt.Sprintf("from %s@%s at position \"%s\" to head %d %s", summariseWellCoords(wc), tipbox.GetName(), position, head, summariseChannels(channels))
-	}
-
-	//check that channels we want to load to are empty
-	if tipFound := checkTipPresence(false, adaptor, channels); len(tipFound) != 0 {
-		self.AddErrorf("LoadTips", "%s : %s already loaded to %s",
-			describe(), pTips(len(tipFound)), summariseChannels(tipFound))
-		return ret
 	}
 
 	if len(channels) == 0 {
@@ -1216,6 +1201,31 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		self.AddErrorf("LoadTips", "%s : multi should equal %d, not %d",
 			describe(), len(channels), multi)
 		return ret
+	}
+
+	//check that channels we want to load to are empty
+	if tipFound := checkTipPresence(false, adaptor, channels); len(tipFound) != 0 {
+		self.AddErrorf("LoadTips", "%s : %s already loaded to %s",
+			describe(), pTips(len(tipFound)), summariseChannels(tipFound))
+		return ret
+	}
+
+	//refill the tipbox if there aren't enough tips to service the instruction
+	if adaptor.AutoRefillsTipboxes() && !tipbox.HasEnoughTips(multi) {
+		tipbox.Refill()
+	}
+
+	//if the adaptor might override what we tell it
+	if adaptor.OverridesLoadTipsCommand() && self.settings.IsTipLoadingOverrideEnabled() {
+		//a list of tip locations that will be loaded
+		tipChunks, err := adaptor.GetTipCoordsToLoad(tipbox, multi)
+		if err != nil {
+			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
+			return ret
+		}
+		if !coordsMatch(tipChunks, wc) {
+			return self.overrideLoadTips(channels, head, multi, platetype, position, tipChunks)
+		}
 	}
 
 	//Get the tip at each requested location
@@ -1267,17 +1277,17 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		}
 		z_off[ch] = delta.Z
 		if delta.Z < 0. {
-			self.AddErrorf("LoadTips", "Request to load tip at location %s to channel %d at %s, channel is %.1f below tip", tip_p, ch, ch_p, -delta.Z)
+			self.AddErrorf("LoadTips", "%s : channel is %.1f below tip", describe(), -delta.Z)
 			return ret
 		}
 	}
 	if len(misaligned) == 1 {
-		self.AddErrorf("LoadTips", "Channel %s is misaligned with tip at %s by %smm",
-			misaligned[0], target[0], amount[0])
+		self.AddErrorf("LoadTips", "%s : channel %s is misaligned with tip at %s by %smm",
+			describe(), misaligned[0], target[0], amount[0])
 		return ret
 	} else if len(misaligned) > 1 {
-		self.AddErrorf("LoadTips", "Channels %s are misaligned with tips at %s by %s mm respectively",
-			strings.Join(misaligned, ","), strings.Join(target, ","), strings.Join(amount, ","))
+		self.AddErrorf("LoadTips", "%s : channels %s are misaligned with tips at %s by %s mm respectively",
+			describe(), strings.Join(misaligned, ","), strings.Join(target, ","), strings.Join(amount, ","))
 		return ret
 	}
 
@@ -1295,8 +1305,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 			}
 		}
 		if zo_max != zo_min {
-			self.AddErrorf("LoadTips", "Distance between channels and tips varies from %v to %v mm in non-independent head",
-				zo_min, zo_max)
+			self.AddErrorf("LoadTips", "%s : distance between channels and tips varies from %v to %v mm in non-independent head",
+				describe(), zo_min, zo_max)
 			return ret
 		}
 		for i := 0; i < adaptor.GetChannelCount(); i++ {
@@ -1324,8 +1334,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		}
 
 		if len(collisions) > 0 {
-			self.AddErrorf("LoadTips", "Cannot load %s, %v (Head%d not independent)",
-				summariseWell2Channel(well, channels), collisions, head)
+			self.AddErrorf("LoadTips", "%s : %v (head not independent)",
+				describe(), collisions)
 		}
 	}
 
@@ -1334,8 +1344,51 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		tips[ch].GetParent().(*wtype.LHTipbox).RemoveTip(wc[ch])
 		adaptor.GetChannel(ch).LoadTip(tips[ch])
 		if err := tips[ch].SetParent((*wtype.LHTipbox)(nil)); err != nil {
-			self.AddError("LoadTips", err.Error())
+			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
 		}
+	}
+
+	return ret
+}
+
+//overrideLoadTips sequentially load the given series of tips onto the given channels
+func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi int, platetype, position string, tipChunks [][]wtype.WellCoords) driver.CommandStatus {
+	//make certain that any load tips we generate don't get overridden again
+	self.settings.EnableTipLoadingOverride(false)
+	defer self.settings.EnableTipLoadingOverride(true)
+
+	var ret driver.CommandStatus
+	loadedChannels := make([]int, 0, len(channels))
+
+	for _, chunk := range tipChunks {
+		width := len(chunk)
+		channelsToLoad := channels[len(loadedChannels) : len(loadedChannels)+width]
+		positionS := make([]string, multi)
+		platetypeS := make([]string, multi)
+		reference := make([]int, multi)
+		offsetXY := make([]float64, multi)
+		offsetZ := make([]float64, multi)
+		wellcoords := make([]string, multi)
+		for i, ch := range channelsToLoad {
+			positionS[ch] = position
+			platetypeS[ch] = platetype
+			reference[ch] = int(wtype.TopReference)
+			offsetXY[ch] = 0.0
+			//arbitrary since we don't know the exact height and it won't affect collision detection
+			offsetZ[ch] = arbitraryZOffset
+			wellcoords[ch] = chunk[i].FormatA1()
+		}
+
+		ret = self.Move(positionS, wellcoords, reference, offsetXY, offsetXY, offsetZ, platetypeS, head)
+		if self.HasError() {
+			return ret
+		}
+		ret = self.LoadTips(channelsToLoad, head, width, platetypeS, positionS, wellcoords)
+		if self.HasError() {
+			return ret
+		}
+
+		loadedChannels = append(loadedChannels, channelsToLoad...)
 	}
 
 	return ret
@@ -1367,7 +1420,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 		}
 		sort.Ints(channels)
 		if len(channels) == 0 {
-			self.AddWarning("UnloadTips", "'channel' argument empty and no tips are loaded, ignoring")
+			self.AddWarningf("UnloadTips", "'channel' argument empty and no tips are loaded to head %d, ignoring", head)
 		} else if self.settings.IsAutoChannelWarningEnabled() {
 			self.AddWarningf("UnloadTips", "'channel' argument empty, unloading all tips (%s)", summariseChannels(channels))
 		}
@@ -1379,9 +1432,9 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 	}
 
 	if multi != len(channels) {
-		self.AddErrorf("UnloadTips", "While unloading %s from %s, multi should equal %d, not %d",
+		self.AddWarningf("UnloadTips", "While unloading %s from %s, multi should equal %d, not %d",
 			pTips(len(channels)), summariseChannels(channels), len(channels), multi)
-		return ret
+		//multi = len(channels) - multi is unused
 	}
 
 	deck := self.state.GetDeck()

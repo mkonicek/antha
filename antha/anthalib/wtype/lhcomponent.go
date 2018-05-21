@@ -88,6 +88,13 @@ func (lhc *LHComponent) WellLocation() string {
 	return lhc.PlateLocation().Coords.FormatA1()
 }
 
+// SetWellLocation sets the well location to an LHComponent in A1 format.
+func (lhc *LHComponent) SetWellLocation(wellLocation string) error {
+	location := lhc.PlateLocation()
+	lhc.Loc = location.ID + ":" + wellLocation
+	return nil
+}
+
 //GetClass return the class of the object
 func (lhc *LHComponent) GetClass() string {
 	return "component"
@@ -464,6 +471,20 @@ func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
 	return nil
 }
 
+// ModifyLHPolicyParameter specifies that this LHComponent or instance of the LHComponent should be handled with a modified
+// LHPolicy parameter.
+// e.g. to Change number of post mixes to 5:
+// lhc.ModifyLHPolicyParameter("POST_MIX", 5)
+// Valid parameters and value types are specified in aparam.go
+// An error is returned if an invalid parameter or value type for that parameter is specified.
+func (lhc *LHComponent) ModifyLHPolicyParameter(parameter string, value interface{}) error {
+	if lhc.Policy == nil || len(lhc.Policy) == 0 {
+		lhc.Policy = make(LHPolicy)
+	}
+
+	return lhc.Policy.Set(parameter, value)
+}
+
 // Volume returns the Volume of the LHComponent
 func (lhc *LHComponent) Volume() wunit.Volume {
 	if lhc == nil || (lhc.Vunit == "" && lhc.Vol == 0.0) {
@@ -730,6 +751,29 @@ func NewLHComponent() *LHComponent {
 	lhc.Policy = make(map[string]interface{})
 	lhc.Extra = make(map[string]interface{})
 	return &lhc
+}
+
+//Clean the component to its initial state
+func (cmp *LHComponent) Clean() {
+	cmp.Vunit = "ul"
+	cmp.DaughterID = ""
+	cmp.ParentID = ""
+	cmp.Inst = ""
+	cmp.Order = 0
+	cmp.CName = ""
+	cmp.Type = LiquidType("")
+	cmp.Vol = 0.0
+	cmp.Conc = 0.0
+	cmp.Vunit = "ul"
+	cmp.Cunit = ""
+	cmp.Tvol = 0.0
+	cmp.Smax = 0.0
+	cmp.Visc = 0.0
+	cmp.StockConcentration = 0.0
+	cmp.Extra = make(map[string]interface{})
+	cmp.Loc = ""
+	cmp.Destination = ""
+	cmp.Policy = make(map[string]interface{})
 }
 
 func (cmp *LHComponent) String() string {

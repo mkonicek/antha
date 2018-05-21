@@ -435,6 +435,23 @@ func (w *LHWell) IsEmpty() bool {
 	return w.CurrentVolume().LessThan(tolerance)
 }
 
+//Clean resets the volume in the well so that it's empty
+func (w *LHWell) Clean() {
+	w.WContents.Clean()
+	w.WContents.Loc = w.Plate.(*LHPlate).ID + ":" + w.Crds.FormatA1()
+	newExtra := make(map[string]interface{})
+
+	// some keys must be retained
+
+	for k, v := range w.Extra {
+		if isConstraintKey(k) || k == "IMSPECIAL" || k == "afvfunc" || k == "ll_model" {
+			newExtra[k] = v
+		}
+	}
+
+	w.Extra = newExtra
+}
+
 // copy of instance
 func (lhw *LHWell) Dup() *LHWell {
 	return lhw.dup(false)
@@ -629,7 +646,7 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LHWell, bool) {
 	vol := component.Vol
 
-	it := NewOneTimeColumnWiseIterator(plate)
+	it := NewAddressIterator(plate, ColumnWise, TopToBottom, LeftToRight, false)
 
 	if curwell != nil {
 		// quick check to see if we have room
@@ -641,9 +658,7 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 		}
 
 		startcoords := curwell.Crds
-		it.SetStartTo(startcoords)
-		it.Rewind()
-		it.Next()
+		it.MoveTo(startcoords)
 	}
 
 	var new_well *LHWell

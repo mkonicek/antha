@@ -23,6 +23,8 @@
 package liquidhandling
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -125,19 +127,21 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 
 //AdaptorState Represent the physical state and layout of the adaptor
 type AdaptorState struct {
-	name        string
-	channels    []*ChannelState
-	position    wtype.Coordinates
-	independent bool
-	params      *wtype.LHChannelParameter
-	robot       *RobotState
+	name         string
+	channels     []*ChannelState
+	position     wtype.Coordinates
+	independent  bool
+	params       *wtype.LHChannelParameter
+	robot        *RobotState
+	tipBehaviour wtype.TipLoadingBehaviour
 }
 
 func NewAdaptorState(name string,
 	independent bool,
 	channels int,
 	channel_offset wtype.Coordinates,
-	params *wtype.LHChannelParameter) *AdaptorState {
+	params *wtype.LHChannelParameter,
+	tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
 	as := AdaptorState{
 		name,
 		make([]*ChannelState, 0, channels),
@@ -145,6 +149,7 @@ func NewAdaptorState(name string,
 		independent,
 		params.Dup(),
 		nil,
+		tipBehaviour,
 	}
 
 	for i := 0; i < channels; i++ {
@@ -213,6 +218,95 @@ func (self *AdaptorState) SetRobot(r *RobotState) {
 
 func (self *AdaptorState) SetPosition(p wtype.Coordinates) {
 	self.position = p
+}
+
+func (self *AdaptorState) OverridesLoadTipsCommand() bool {
+	return self.tipBehaviour.OverrideLoadTipsCommand
+}
+
+func (self *AdaptorState) SetOverridesLoadTipsCommand(v bool) {
+	self.tipBehaviour.OverrideLoadTipsCommand = v
+}
+
+func (self *AdaptorState) AutoRefillsTipboxes() bool {
+	return self.tipBehaviour.AutoRefillTipboxes
+}
+
+func isVAligned(lhs wtype.WellCoords, rhs wtype.WellCoords) bool {
+	return lhs.X == rhs.X
+}
+
+func isHAligned(lhs wtype.WellCoords, rhs wtype.WellCoords) bool {
+	return lhs.Y == rhs.Y
+}
+
+//GetTipsToLoad get which tips would be loaded by the adaptor given the tiploading behaviour
+//returns an error if OverridesLoadTipsCommand is false or there aren't enough tips
+func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]wtype.WellCoords, error) {
+	var ret [][]wtype.WellCoords
+	if !self.tipBehaviour.OverrideLoadTipsCommand {
+		return ret, errors.New("Tried to get tips when override is false")
+	}
+
+	it := wtype.NewAddressIterator(tb,
+		self.tipBehaviour.LoadingOrder,
+		self.tipBehaviour.VerticalLoadingDirection,
+		self.tipBehaviour.HorizontalLoadingDirection,
+		false)
+
+	isInline := isVAligned
+	if self.params.Orientation == wtype.LHHChannel {
+		isInline = isHAligned
+	}
+
+	tipsRemaining := num
+	var lastTipCoord wtype.WellCoords
+	currChunk := make([]wtype.WellCoords, 0, num)
+	for wc := it.Curr(); it.Valid(); wc = it.Next() {
+		//start a new chunk if this chunk has something in it AND (we found an empty position OR we changed row/column)
+		if len(currChunk) > 0 && (!tb.HasTipAt(wc) || !isInline(lastTipCoord, wc)) {
+			//keep the chunk if either this chunk provides all the tips we need or we can load it sequentially
+			if !(self.tipBehaviour.ChunkingBehaviour == wtype.NoSequentialTipLoading && len(currChunk) < tipsRemaining) {
+				ret = append(ret, currChunk)
+				tipsRemaining -= len(currChunk)
+			}
+			currChunk = make([]wtype.WellCoords, 0, tipsRemaining)
+		}
+		//if we have all the chunks we need
+		if len(currChunk) >= tipsRemaining {
+			break
+		}
+		//add the next tip
+		if tb.HasTipAt(wc) {
+			currChunk = append(currChunk, wc)
+			lastTipCoord = wc
+		}
+	}
+	if len(currChunk) > 0 {
+		ret = append(ret, currChunk)
+		tipsRemaining -= len(currChunk)
+	}
+
+	if self.tipBehaviour.ChunkingBehaviour == wtype.ReverseSequentialTipLoading {
+		//apparently this is actually the recommended way to reverse a list in place
+		for i := len(ret)/2 - 1; i >= 0; i-- {
+			opp := len(ret) - 1 - i
+			ret[i], ret[opp] = ret[opp], ret[i]
+		}
+
+		for _, chunk := range ret {
+			for i := len(chunk)/2 - 1; i >= 0; i-- {
+				opp := len(chunk) - 1 - i
+				chunk[i], chunk[opp] = chunk[opp], chunk[i]
+			}
+		}
+	}
+
+	if tipsRemaining > 0 {
+		return ret, errors.New("not enough tips in tipbox")
+	}
+
+	return ret, nil
 }
 
 // -------------------------------------------------------------------------------

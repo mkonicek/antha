@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -140,6 +141,12 @@ func TestParsePlate(t *testing.T) {
 
 	ctx := testinventory.NewContext(context.Background())
 
+	// Read external file with carriage returns for that specific test.
+	fileCarriage, err := ioutil.ReadFile("test_carriage.csv")
+	if err != nil {
+		t.Errorf("Failed to read test_carriage.csv: %s ", err.Error())
+	}
+
 	suite := []testCase{
 		{
 			File: []byte(
@@ -150,6 +157,7 @@ A4,tea,water,50.0,ul,10.0,mM/l,
 A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),
+			NoWarnings: false,
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
@@ -215,6 +223,46 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 							Vunit: "ul",
 							Conc:  0,
 							Cunit: "mg/l",
+						},
+					},
+				},
+			},
+		},
+		{
+			// This is to test carriage returns.
+			File:       fileCarriage,
+			NoWarnings: false,
+			Expected: &wtype.LHPlate{
+				Type: "pcrplate_with_cooler",
+				Wellcoords: map[string]*wtype.LHWell{
+					"A1": {
+						WContents: &wtype.LHComponent{
+							CName: "water",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  0.0,
+							Cunit: "g/l",
+						},
+					},
+					"A4": {
+						WContents: &wtype.LHComponent{
+							CName: "tea",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "mM/l",
+						},
+					},
+					"A5": {
+						WContents: &wtype.LHComponent{
+							CName: "milk",
+							Type:  wtype.LTWater,
+							Vol:   100.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "g/l",
 						},
 					},
 				},

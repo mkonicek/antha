@@ -30,6 +30,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 // BASEPolicy is the policy to use as a starting point to produce custom LHPolicies
@@ -122,10 +123,34 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 			policyCommand, ok := policyitemmap[desc]
 			if ok {
 				if reflect.TypeOf(run.Setpoints[j]) != policyCommand.Type {
-					err = fmt.Errorf("invalid value (%s) of type (%T) for LHPolicy command (%s) in run %d expecting value of type %s", run.Setpoints[j], run.Setpoints[j], desc, i+1, policyCommand.Type.Name())
-					return policies, names, err
+					if policyCommand.TypeName() == "Volume" {
+
+						if rawVolString, found := run.Setpoints[j].(string); found {
+
+							vol, err := wunit.ParseVolume(rawVolString)
+
+							if err != nil {
+								return policies, names, err
+							}
+
+							policy[desc] = vol
+
+							// assume ul
+						} else if rawVolFloat, found := run.Setpoints[j].(float64); found {
+							policy[desc] = wunit.NewVolume(rawVolFloat, "ul")
+						} else if rawVolInt, found := run.Setpoints[j].(int); found {
+							policy[desc] = wunit.NewVolume(float64(rawVolInt), "ul")
+						} else {
+							err = fmt.Errorf("invalid value (%s) of type (%T) for LHPolicy command (%s) in run %d expecting value of type %s", run.Setpoints[j], run.Setpoints[j], desc, i+1, policyCommand.Type.Name())
+							return policies, names, err
+						}
+					} else {
+						err = fmt.Errorf("invalid value (%s) of type (%T) for LHPolicy command (%s) in run %d expecting value of type %s", run.Setpoints[j], run.Setpoints[j], desc, i+1, policyCommand.Type.Name())
+						return policies, names, err
+					}
+				} else {
+					policy[desc] = run.Setpoints[j]
 				}
-				policy[desc] = run.Setpoints[j]
 			} else if i == 0 {
 				warnings = append(warnings, "Invalid PolicyCommand specified in design file: "+desc)
 			}

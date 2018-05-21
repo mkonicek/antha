@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -32,8 +33,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/cache"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
@@ -160,10 +161,10 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	err = this.Simulate(request)
 	if err != nil {
 		//since the simulator is... tender right now, let's take this with a pinch of salt
-		logger.Info("Ignoring simulation error")
+		logger.Info("ignoring physical simulation error, user disgretion advised")
 		//return err
 	} else {
-		logger.Info("Simulation completed successfully")
+		logger.Info("physical simulation completed successfully")
 	}
 
 	err = this.Execute(request)
@@ -212,16 +213,6 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	settings := simulator_lh.DefaultSimulatorSettings()
 
-	//Enable simulation of trilution like behaviour
-	//in reality this happens anyway when using trilution, irrespective of whether tipTracking is requested
-	tipTracking := false
-	if iTipTracking, ok := request.Policies().Options["USE_DRIVER_TIP_TRACKING"]; ok {
-		tipTracking, _ = iTipTracking.(bool)
-	}
-	if tipTracking && this.Properties.HasTipTracking() {
-		settings.SetTipTrackingBehaviour(simulator_lh.TrilutionTipTracking)
-	}
-
 	//Make this warning less noisy since it's not really important
 	settings.EnablePipetteSpeedWarning(simulator_lh.WarnOnce)
 	//again, something we should fix, but not important to users to quieten
@@ -239,17 +230,35 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 		return vlh.GetWorstError()
 	}
 
-	fmt.Printf("Simulating %d instructions...\n", len(instructions))
-	for _, ins := range instructions {
+	for i, ins := range instructions {
 		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh) //nolint
 		if vlh.HasError() {
+			fmt.Printf("simulator error detected at instruction %d\n", i)
 			break
 		}
 	}
 
-	for _, err := range vlh.GetErrors() {
-		err.WriteToLog()
+	//if there were no errors or warnings
+	numErrors := len(vlh.GetErrors())
+	if numErrors == 0 {
+		return nil
 	}
+
+	//Output all the messages from the simulator in one logger call
+	pMessage := func(n int) string {
+		if n == 1 {
+			return "message"
+		}
+		return "messages"
+	}
+	logLines := make([]string, 0, numErrors+1)
+	logLines = append(logLines, fmt.Sprintf("showing %d %s from physical simulation:", numErrors, pMessage(numErrors)))
+	//Format numbers at consistent width so messages line up
+	fmtString := fmt.Sprintf("  %%%dd : simulator : %%s", 1+int(math.Floor(math.Log10(float64(numErrors)))))
+	for i, err := range vlh.GetErrors() {
+		logLines = append(logLines, fmt.Sprintf(fmtString, i+1, err.Error()))
+	}
+	logger.Info(strings.Join(logLines, "\n"))
 
 	//return the worst error if it's actually an error
 	if vlh.HasError() {
@@ -278,7 +287,6 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 		if (*request).Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
-			text.Print("End of Instruction")
 
 		}
 		_, ok := ins.(liquidhandling.TerminalRobotInstruction)
@@ -779,8 +787,8 @@ func checkDestinationSanity(request *LHRequest) {
 		}
 
 		if ins.PlateID == "" || ins.Platetype == "" || ins.Welladdress == "" {
-			fmt.Println("INS ", ins, " NOT WELL FORMED: HAS PlateID ", ins.PlateID != "", " HAS platetype ", ins.Platetype != "", " HAS WELLADDRESS ", ins.Welladdress != "")
-			panic(fmt.Errorf("After layout all mix instructions must have plate IDs, plate types and well addresses"))
+			found := fmt.Sprintln("INS ", ins, " NOT WELL FORMED: HAS PlateID ", ins.PlateID != "", " HAS platetype ", ins.Platetype != "", " HAS WELLADDRESS ", ins.Welladdress != "")
+			panic(fmt.Errorf("After layout all mix instructions must have plate IDs, plate types and well addresses, Found: \n %s", found))
 		}
 	}
 }
@@ -818,6 +826,18 @@ func forceSanity(request *LHRequest) {
 
 		ins.Results[0] = ins.Results[0].Dup()
 	}
+}
+
+//check that none of the plates we're returning came from the cache
+func assertNoTemporaryPlates(ctx context.Context, request *LHRequest) error {
+
+	for id, plate := range request.Plates {
+		if cache.IsFromCache(ctx, plate) {
+			return wtype.LHErrorf(wtype.LH_ERR_DIRE, "found a temporary plate (id=%s) being returned in the request", id)
+		}
+	}
+
+	return nil
 }
 
 func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
@@ -996,7 +1016,14 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 	// ensure the after state is correct
 	this.fix_post_ids()
-	return this.fix_post_names(request)
+	err = this.fix_post_names(request)
+	if err != nil {
+		return err
+	}
+
+	err = assertNoTemporaryPlates(ctx, request)
+
+	return err
 }
 
 // resolve question of where something is requested to go

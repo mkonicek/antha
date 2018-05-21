@@ -23,9 +23,10 @@
 package liquidhandling_test
 
 import (
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
-	"testing"
 )
 
 func TestUnknownLocations(t *testing.T) {
@@ -1257,7 +1258,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Cannot load G12->channel0, channel 1 collides with tip \"H12@tipbox1\" (Head0 not independent)",
+				"(err) LoadTips: from G12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : channel 1 collides with tip \"H12@tipbox1\" (head not independent)",
 			},
 			nil, //assertions
 		},
@@ -1279,7 +1280,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Channel 0 is misaligned with tip at E12 by 9mm",
+				"(err) LoadTips: from {E12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channel 0 is misaligned with tip at E12 by 9mm",
 			},
 			nil, //assertions
 		},
@@ -1301,7 +1302,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Channels 0,1 are misaligned with tips at G12,F12 by 9,9 mm respectively",
+				"(err) LoadTips: from {G12,F12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channels 0,1 are misaligned with tips at G12,F12 by 9,9 mm respectively",
 			},
 			nil, //assertions
 		},
@@ -1323,7 +1324,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Channel 0 is misaligned with tip at H12 by 2mm",
+				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : channel 0 is misaligned with tip at H12 by 2mm",
 			},
 			nil, //assertions
 		},
@@ -1345,9 +1346,345 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Channels 0,1,2 are misaligned with tips at F12,G12,H12 by 2,2,2 mm respectively",
+				"(err) LoadTips: from {F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channels 0,1,2 are misaligned with tips at F12,G12,H12 by 2,2,2 mm respectively",
 			},
 			nil, //assertions
+		},
+	}
+
+	for _, test := range tests {
+		test.run(t)
+	}
+}
+
+func TestLoadTipsOverride(t *testing.T) {
+
+	mtp := moveToParams{
+		8,                     //Multi           int
+		0,                     //Head            int
+		1,                     //Reference       int
+		"tipbox_1",            //Deckposition    string
+		"tipbox",              //Platetype       string
+		[]float64{0., 0., 5.}, //Offset          wtype.Coords
+		12, //Cols            int
+		8,  //Rows            int
+	}
+
+	propsLTR := default_lhproperties()
+	propsLTR.Heads[0].TipLoading = wtype.TipLoadingBehaviour{
+		OverrideLoadTipsCommand:    true,
+		AutoRefillTipboxes:         true,
+		LoadingOrder:               wtype.ColumnWise,
+		VerticalLoadingDirection:   wtype.BottomToTop,
+		HorizontalLoadingDirection: wtype.LeftToRight,
+		ChunkingBehaviour:          wtype.ReverseSequentialTipLoading,
+	}
+
+	propsRTL := default_lhproperties()
+	propsRTL.Heads[0].TipLoading = wtype.TipLoadingBehaviour{
+		OverrideLoadTipsCommand:    true,
+		AutoRefillTipboxes:         true,
+		LoadingOrder:               wtype.ColumnWise,
+		VerticalLoadingDirection:   wtype.BottomToTop,
+		HorizontalLoadingDirection: wtype.RightToLeft,
+		ChunkingBehaviour:          wtype.ReverseSequentialTipLoading,
+	}
+
+	tests := []SimulatorTest{
+		{
+			"OK - single tip LTR override (A1 -> H1)",
+			propsLTR,
+			[]*SetupFn{
+				testLayout(),
+				moveTo(0, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0}, //channels
+					0,        //head
+					1,        //multi
+					[]string{"tipbox", "", "", "", "", "", "", ""},   //tipbox
+					[]string{"tipbox_1", "", "", "", "", "", "", ""}, //location
+					[]string{"A1", "", "", "", "", "", "", ""},       //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"H1"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"OK - single tip RTL override (A12 -> H12)",
+			propsRTL,
+			[]*SetupFn{
+				testLayout(),
+				moveTo(0, 11, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0}, //channels
+					0,        //head
+					1,        //multi
+					[]string{"tipbox", "", "", "", "", "", "", ""},   //tipbox
+					[]string{"tipbox_1", "", "", "", "", "", "", ""}, //location
+					[]string{"A12", "", "", "", "", "", "", ""},      //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"H12"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"OK - single tip LTR override (A1 -> D1)",
+			propsLTR,
+			[]*SetupFn{
+				testLayout(),
+				removeTipboxTips("tipbox_1", []string{"E1", "F1", "G1", "H1"}),
+				moveTo(0, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0}, //channels
+					0,        //head
+					1,        //multi
+					[]string{"tipbox", "", "", "", "", "", "", ""},   //tipbox
+					[]string{"tipbox_1", "", "", "", "", "", "", ""}, //location
+					[]string{"A1", "", "", "", "", "", "", ""},       //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"D1", "E1", "F1", "G1", "H1"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"OK - single tip RTL override (A12 -> D12)",
+			propsRTL,
+			[]*SetupFn{
+				testLayout(),
+				removeTipboxTips("tipbox_1", []string{"E12", "F12", "G12", "H12"}),
+				moveTo(0, 11, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0}, //channels
+					0,        //head
+					1,        //multi
+					[]string{"tipbox", "", "", "", "", "", "", ""},   //tipbox
+					[]string{"tipbox_1", "", "", "", "", "", "", ""}, //location
+					[]string{"A12", "", "", "", "", "", "", ""},      //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"D12", "E12", "F12", "G12", "H12"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"8 tips LTR",
+			propsLTR,
+			[]*SetupFn{
+				testLayout(),
+				moveTo(0, 11, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A11", "B11", "C11", "D11", "E11", "F11", "G11", "H11"},                                         //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"8 tips RTL",
+			propsRTL,
+			[]*SetupFn{
+				testLayout(),
+				moveTo(0, 11, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"8 tips LTR override with split",
+			propsLTR,
+			[]*SetupFn{
+				testLayout(),
+				removeTipboxTips("tipbox_1", []string{"E1", "F1", "G1", "H1"}),
+				moveTo(0, 11, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E2", "F2", "G2", "H2", "E1", "F1", "G1", "H1"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"8 tips RTL override with split",
+			propsRTL,
+			[]*SetupFn{
+				testLayout(),
+				removeTipboxTips("tipbox_1", []string{"E12", "F12", "G12", "H12"}),
+				moveTo(0, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E11", "F11", "G11", "H11", "E12", "F12", "G12", "H12"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"8 tips LTR override with boxchange",
+			propsLTR,
+			[]*SetupFn{
+				testLayout(),
+				removeTipboxTips("tipbox_1", []string{
+					"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
+					"A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
+					"A3", "B3", "C3", "D3", "E3", "F3", "G3", "H3",
+					"A4", "B4", "C4", "D4", "E4", "F4", "G4", "H4",
+					"A5", "B5", "C5", "D5", "E5", "F5", "G5", "H5",
+					"A6", "B6", "C6", "D6", "E6", "F6", "G6", "H6",
+					"A7", "B7", "C7", "D7", "E7", "F7", "G7", "H7",
+					"A8", "B8", "C8", "D8", "E8", "F8", "G8", "H8",
+					"A9", "B9", "C9", "D9", "E9", "F9", "G9", "H9",
+					"A10", "B10", "C10", "D10", "E10", "F10", "G10", "H10",
+					"A11", "B11", "C11", "D11", "E11", "F11", "G11", "H11",
+					"A12", "B12", "C12", "D12",
+				}),
+				moveTo(0, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			"8 tips LTR override without boxchange",
+			propsLTR,
+			[]*SetupFn{
+				testLayout(),
+				removeTipboxTips("tipbox_1", []string{
+					"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
+					"A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
+					"A3", "B3", "C3", "D3", "E3", "F3", "G3", "H3",
+					"A4", "B4", "C4", "D4", "E4", "F4", "G4", "H4",
+					"A5", "B5", "C5", "D5", "E5", "F5", "G5", "H5",
+					"A6", "B6", "C6", "D6", "E6", "F6", "G6", "H6",
+					"A7", "B7", "C7", "D7", "E7", "F7", "G7", "H7",
+					"A8", "B8", "C8", "D8", "E8", "F8", "G8", "H8",
+					"A9", "B9", "C9", "D9", "E9", "F9", "G9", "H9",
+					"A10", "B10", "C10", "D10", "E10", "F10", "G10", "H10",
+					"E11", "F11", "G11", "H11",
+					"A12", "B12", "C12", "D12",
+				}),
+				moveTo(0, 0, mtp),
+			},
+			[]TestRobotInstruction{
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //well
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{
+					"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
+					"A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
+					"A3", "B3", "C3", "D3", "E3", "F3", "G3", "H3",
+					"A4", "B4", "C4", "D4", "E4", "F4", "G4", "H4",
+					"A5", "B5", "C5", "D5", "E5", "F5", "G5", "H5",
+					"A6", "B6", "C6", "D6", "E6", "F6", "G6", "H6",
+					"A7", "B7", "C7", "D7", "E7", "F7", "G7", "H7",
+					"A8", "B8", "C8", "D8", "E8", "F8", "G8", "H8",
+					"A9", "B9", "C9", "D9", "E9", "F9", "G9", "H9",
+					"A10", "B10", "C10", "D10", "E10", "F10", "G10", "H10",
+					"A11", "B11", "C11", "D11", "E11", "F11", "G11", "H11",
+					"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12",
+				}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
 		},
 	}
 
@@ -1957,7 +2294,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 175 ul of water to head 0 channel 0 - channel 0 contains 875 ul, command exceeds maximum volume 1e+03 ul",
+				"(err) Aspirate: While aspirating 175 ul of water to head 0 channel 0 - channel 0 contains 875 ul, command exceeds maximum volume 1000 ul",
 			},
 			nil, //assertions
 		},

@@ -1,5 +1,0 @@
-FROM antha-build
-
-COPY .build/imports /root
-
-RUN cat /root/imports | xargs -n 1 go get -d -v

@@ -24,14 +24,15 @@ package liquidhandling
 
 import (
 	"fmt"
+	"math"
+	"sort"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
-	"math"
-	"sort"
-	"strings"
 )
 
 const arbitraryZOffset = 4.0
@@ -79,12 +80,12 @@ func summariseVolumes(vols []float64) string {
 	}
 
 	if equal {
-		return wunit.NewVolume(vols[0], "ul").String()
+		return wunit.NewVolume(vols[0], "ul").ToString()
 	}
 
 	s_vols := make([]string, len(vols))
 	for i, v := range vols {
-		s_vols[i] = wunit.NewVolume(v, "ul").String()
+		s_vols[i] = wunit.NewVolume(v, "ul").ToString()
 		s_vols[i] = s_vols[i][:len(s_vols[i])-3]
 	}
 	return fmt.Sprintf("{%s} ul", strings.Join(s_vols, ","))
@@ -93,7 +94,7 @@ func summariseVolumes(vols []float64) string {
 func summariseRates(rates []wunit.FlowRate) string {
 	asString := make([]string, 0, len(rates))
 	for _, r := range rates {
-		asString = append(asString, r.String())
+		asString = append(asString, r.ToString())
 	}
 	return summariseStrings(asString)
 }

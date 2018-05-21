@@ -367,6 +367,15 @@ var concarithmetictests = []ConcArithmetic{
 		Product:    NewConcentration(10, "Mol/l"),
 		Quotient:   NewConcentration(0.1, "Mol/l"),
 	},
+	{
+		ValueA:     NewConcentration(2, "ng/ul"),
+		ValueB:     NewConcentration(1, "ng/ul"),
+		Sum:        NewConcentration(3, "ng/ul"),
+		Difference: NewConcentration(1, "ng/ul"),
+		Factor:     2.0,
+		Product:    NewConcentration(4, "ng/ul"),
+		Quotient:   NewConcentration(1, "ng/ul"),
+	},
 }
 
 func TestMultiplyConcentrations(t *testing.T) {
@@ -469,6 +478,121 @@ func TestNewConcentration(t *testing.T) {
 				"For", testunit.value, testunit.prefixedunit, "\n",
 				"expected", testunit.toSIString, "\n",
 				"got", r.ToString(), "\n",
+			)
+		}
+	}
+
+}
+
+// test precision
+func TestDivideConcentrationsPrecision(t *testing.T) {
+
+	type divideTest struct {
+		StockConc, TargetConc Concentration
+		ExpectedFactor        float64
+		ExpectedErr           error
+	}
+
+	tests := []divideTest{
+		{
+			StockConc:      NewConcentration(15, "X"),
+			TargetConc:     NewConcentration(7.5, "X"),
+			ExpectedFactor: 2.0000000000000000000,
+		},
+	}
+
+	for _, test := range tests {
+		r, err := DivideConcentrations(test.StockConc, test.TargetConc)
+
+		if err != test.ExpectedErr {
+			t.Error("expected: ", err, "\n",
+				"got: ", test.ExpectedErr,
+			)
+		}
+
+		if r != test.ExpectedFactor {
+			t.Error(
+				"For", fmt.Sprintf("+%v", test), "\n",
+				"expected factor: ", test.ExpectedFactor, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+}
+
+// test precision
+func TestDivideVolumePrecision(t *testing.T) {
+
+	type divideTest struct {
+		StockVolume, ExpectedVolume Volume
+		Factor                      float64
+		ExpectedErr                 error
+	}
+
+	tests := []divideTest{
+		{
+			StockVolume:    NewVolume(100, "ul"),
+			ExpectedVolume: NewVolume(50.0, "ul"),
+			Factor:         2.0000000000000000000,
+		},
+	}
+
+	for _, test := range tests {
+		r := DivideVolume(test.StockVolume, test.Factor)
+		fmt.Println(r)
+		if !r.EqualTo(test.ExpectedVolume) {
+			t.Error(
+				"For", fmt.Sprintf("+%v", test), "\n",
+				"expected: ", test.ExpectedVolume, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+}
+
+// test precision
+func TestDivideConcentrationPrecision(t *testing.T) {
+
+	type divideTest struct {
+		StockConcentration, ExpectedConcentration Concentration
+		Factor                                    float64
+		ExpectedErr                               error
+	}
+
+	tests := []divideTest{
+		{
+			StockConcentration:    NewConcentration(0.00012207, "X"),
+			ExpectedConcentration: NewConcentration(6.1035e-05, "X"),
+			Factor:                2.0,
+		},
+		{
+			StockConcentration:    NewConcentration(0.000125, "X"),
+			ExpectedConcentration: NewConcentration(0.0000625, "X"),
+			Factor:                2.0000000000000000000,
+		},
+		{
+			StockConcentration:    NewConcentration(0.0625, "X"),
+			ExpectedConcentration: NewConcentration(0.03125, "X"),
+			Factor:                2.0000000000000000000,
+		},
+
+		{
+			StockConcentration:    NewConcentration(22.0/7.0, "X"),
+			ExpectedConcentration: NewConcentration(3.14285714285714, "X"),
+			Factor:                1.0000000000000000000,
+		},
+	}
+
+	for _, test := range tests {
+		r := DivideConcentration(test.StockConcentration, test.Factor)
+		fmt.Println(r)
+		if !r.EqualTo(test.ExpectedConcentration) {
+			t.Error(
+				"For", fmt.Sprintf("+%v", test), "\n",
+				"expected: ", test.ExpectedConcentration, "\n",
+				"got", r, "\n",
 			)
 		}
 	}

@@ -177,10 +177,11 @@ func TestBlowNoTipChange(t *testing.T) {
 
 	rule := wtype.NewLHPolicyRule("TESTRULE1")
 	rule.AddCategoryConditionOn("LIQUIDCLASS", "soup")
-	pols := make(wtype.LHPolicy, 2)
-	pols["POST_MIX"] = 5
-	pols["POST_MIX_VOLUME"] = 10.0
-	pol.AddRule(rule, pols)
+	soupPolicy := make(wtype.LHPolicy, 2)
+	soupPolicy["POST_MIX"] = 5
+	soupPolicy["POST_MIX_VOLUME"] = 10.0
+	pol.Policies["soup"] = soupPolicy
+	pol.AddRule(rule, soupPolicy)
 	set := NewRobotInstructionSet(bi)
 
 	ris, err := set.Generate(ctx, pol, robot)

@@ -161,6 +161,9 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return ret, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
@@ -410,6 +413,9 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
@@ -1719,6 +1725,9 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
@@ -2142,6 +2151,9 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
@@ -3105,6 +3117,9 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {

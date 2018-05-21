@@ -23,10 +23,10 @@
 package cmd
 
 import (
-	"encoding/json"
 	"encoding/csv"
-	"os"
+	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -96,17 +96,15 @@ func listPolicyCommands(cmd *cobra.Command, args []string) error {
 		return err
 	case csvOutput:
 		var lines [][]string
-		lines = append(lines, []string{"name","type","description"})
+		lines = append(lines, []string{"name", "type", "description"})
 
 		for _, c := range cs {
 			lines = append(lines, []string{c.Name, c.Type, c.Desc})
 		}
 
 		w := csv.NewWriter(os.Stdout)
-		w.WriteAll(lines) // calls Flush internally
+		err := w.WriteAll(lines) // calls Flush internally
 
-		err := w.Error()
-		
 		return err
 	case textOutput:
 		var lines []string

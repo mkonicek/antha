@@ -357,6 +357,7 @@ func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
 	lhh.Manufacturer = mf
 	lhh.Name = name
 	lhh.Params = params
+	lhh.Constraints = make([]MotionConstraint)
 	return &lhh
 }
 

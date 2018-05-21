@@ -2071,7 +2071,7 @@ func Test_Aspirate(t *testing.T) {
 			nil,
 			[]*SetupFn{
 				testTroughLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 5500.),
+				prefillWells("input_1", []string{"A1"}, "water", 5400.),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			[]TestRobotInstruction{
@@ -2096,9 +2096,23 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1,2,3,4,5,6,7 - well A1@trough1 only contains 500 ul working volume",
+				"(warn) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1,2,3,4,5,6,7 - well A1@trough1 only contains 400 ul working volume, reducing aspirated volume by 50 ul",
 			},
-			nil, //assertions
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{
+					{0, "water", 50},
+					{1, "water", 50},
+					{2, "water", 50},
+					{3, "water", 50},
+					{4, "water", 50},
+					{5, "water", 50},
+					{6, "water", 50},
+					{7, "water", 50},
+				}),
+				tipwasteAssertion("tipwaste", 0),
+			},
 		},
 		{
 			"Fail - Aspirate with no tip",
@@ -2385,7 +2399,7 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{535.12135, 0., 0., 0., 0., 0., 0., 0.},               //volume     []float64
+					[]float64{535, 0., 0., 0., 0., 0., 0., 0.},                     //volume     []float64
 					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
 					0, //head       int
 					1, //multi      int
@@ -2395,9 +2409,16 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 535 ul of water to head 0 channel 0 - well A1@plate1 only contains 195 ul working volume",
+				"(warn) Aspirate: While aspirating 535 ul of water to head 0 channel 0 - well A1@plate1 only contains 195 ul working volume, reducing aspirated volume by 340 ul",
 			},
-			nil, //assertions
+			[]*AssertionFn{ //assertions
+				tipboxAssertion("tipbox_1", []string{}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{
+					{0, "water", 195},
+				}),
+				tipwasteAssertion("tipwaste", 0),
+			},
 		},
 		/*		{
 				"Fail - wrong liquid type",

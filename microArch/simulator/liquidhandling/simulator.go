@@ -898,6 +898,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	//check total volumes taken from each unique well
 	uniqueWells := make(map[string]*wtype.LHWell)
 	uniqueWellVolumes := make(map[string]float64)
+	uniqueWellVolumeIndexes := make(map[string][]int)
 	for i := 0; i < len(wells); i++ {
 		if wells[i] == nil {
 			continue
@@ -905,18 +906,24 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 		if _, ok := uniqueWells[wells[i].ID]; !ok {
 			uniqueWells[wells[i].ID] = wells[i]
 			uniqueWellVolumes[wells[i].ID] = 0.0
+			uniqueWellVolumeIndexes[wells[i].ID] = make([]int, 0, len(wells))
 		}
 		uniqueWellVolumes[wells[i].ID] += volume[i]
+		uniqueWellVolumeIndexes[wells[i].ID] = append(uniqueWellVolumeIndexes[wells[i].ID], i)
 	}
 	for id, well := range uniqueWells {
 		v := wunit.NewVolume(uniqueWellVolumes[id], "ul")
+		//vol.IsZero() checks whether vol is within a small tolerance of zero
 		if d := wunit.SubtractVolumes(v, well.CurrentWorkingVolume()); v.GreaterThan(well.CurrentWorkingVolume()) && !d.IsZero() {
-			self.AddErrorf("Aspirate", "While %s - well %s only contains %s working volume",
-				describe(), well.GetName(), well.CurrentWorkingVolume())
+			//the volume is taken from len(uniqueWellVolumeIndexes[id]) wells, so the delta is split equally between them
+			reduction := wunit.DivideVolume(d, float64(len(uniqueWellVolumeIndexes[id])))
+			reductionUl := reduction.ConvertToString("ul")
+			for _, i := range uniqueWellVolumeIndexes[id] {
+				volume[i] -= reductionUl
+			}
+			self.AddWarningf("Aspirate", "While %s - well %s only contains %s working volume, reducing aspirated volume by %v",
+				describe(), well.GetName(), well.CurrentWorkingVolume(), reduction)
 		}
-	}
-	if self.HasError() {
-		return ret
 	}
 
 	//move liquid

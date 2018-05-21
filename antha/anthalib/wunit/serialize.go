@@ -33,7 +33,28 @@ type stringer interface {
 	String() string
 }
 
-func marshal(x stringer) ([]byte, error) {
+func marshal(cm *ConcreteMeasurement) ([]byte, error) {
+	return json.Marshal(cm)
+}
+
+func unmarshal(b []byte) (value float64, unit string, err error) {
+	var cm *ConcreteMeasurement
+
+	if err = json.Unmarshal(b, &cm); err != nil {
+		// support legacy marshal/unmarshal using string interface
+		return unmarshalBad(b)
+	}
+
+	if cm != nil {
+		value = cm.Mvalue
+		if cm.Munit != nil {
+			unit = cm.Munit.StrSymbol + cm.Munit.StrName
+		}
+	}
+	return
+}
+
+func marshalBad(x stringer) ([]byte, error) {
 	var s *string
 	if x != nil {
 		r := x.String()
@@ -42,7 +63,7 @@ func marshal(x stringer) ([]byte, error) {
 	return json.Marshal(s)
 }
 
-func unmarshal(b []byte) (value float64, unit string, err error) {
+func unmarshalBad(b []byte) (value float64, unit string, err error) {
 	var s *string
 	if err = json.Unmarshal(b, &s); err != nil {
 		return
@@ -59,7 +80,7 @@ func unmarshal(b []byte) (value float64, unit string, err error) {
 }
 
 func (m Volume) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Volume) UnmarshalJSON(b []byte) error {
@@ -75,7 +96,7 @@ func (m *Volume) UnmarshalJSON(b []byte) error {
 }
 
 func (m Temperature) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Temperature) UnmarshalJSON(b []byte) error {
@@ -91,7 +112,7 @@ func (m *Temperature) UnmarshalJSON(b []byte) error {
 }
 
 func (m Concentration) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Concentration) UnmarshalJSON(b []byte) error {
@@ -107,7 +128,7 @@ func (m *Concentration) UnmarshalJSON(b []byte) error {
 }
 
 func (m Time) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Time) UnmarshalJSON(b []byte) error {
@@ -123,7 +144,7 @@ func (m *Time) UnmarshalJSON(b []byte) error {
 }
 
 func (m Density) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Density) UnmarshalJSON(b []byte) error {
@@ -139,7 +160,7 @@ func (m *Density) UnmarshalJSON(b []byte) error {
 }
 
 func (m Mass) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Mass) UnmarshalJSON(b []byte) error {
@@ -156,7 +177,7 @@ func (m *Mass) UnmarshalJSON(b []byte) error {
 }
 
 func (m FlowRate) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *FlowRate) UnmarshalJSON(b []byte) error {
@@ -173,7 +194,7 @@ func (m *FlowRate) UnmarshalJSON(b []byte) error {
 }
 
 func (m Moles) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Moles) UnmarshalJSON(b []byte) error {
@@ -189,7 +210,7 @@ func (m *Moles) UnmarshalJSON(b []byte) error {
 }
 
 func (m Pressure) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Pressure) UnmarshalJSON(b []byte) error {
@@ -205,7 +226,7 @@ func (m *Pressure) UnmarshalJSON(b []byte) error {
 }
 
 func (m Length) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Length) UnmarshalJSON(b []byte) error {
@@ -221,7 +242,7 @@ func (m *Length) UnmarshalJSON(b []byte) error {
 }
 
 func (m Area) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Area) UnmarshalJSON(b []byte) error {
@@ -237,7 +258,7 @@ func (m *Area) UnmarshalJSON(b []byte) error {
 }
 
 func (m Angle) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Angle) UnmarshalJSON(b []byte) error {
@@ -253,7 +274,7 @@ func (m *Angle) UnmarshalJSON(b []byte) error {
 }
 
 func (m Energy) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Energy) UnmarshalJSON(b []byte) error {
@@ -269,7 +290,7 @@ func (m *Energy) UnmarshalJSON(b []byte) error {
 }
 
 func (m Force) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Force) UnmarshalJSON(b []byte) error {
@@ -285,7 +306,7 @@ func (m *Force) UnmarshalJSON(b []byte) error {
 }
 
 func (m Velocity) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Velocity) UnmarshalJSON(b []byte) error {
@@ -301,7 +322,7 @@ func (m *Velocity) UnmarshalJSON(b []byte) error {
 }
 
 func (m Rate) MarshalJSON() ([]byte, error) {
-	return marshal(m)
+	return marshal(m.ConcreteMeasurement)
 }
 
 func (m *Rate) UnmarshalJSON(b []byte) error {

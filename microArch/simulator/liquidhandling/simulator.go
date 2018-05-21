@@ -1814,7 +1814,7 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 			}
 
 			if overSpill.X > 0.0 || overSpill.Y > 0.0 {
-				self.AddErrorf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" wells extend beyond plate bounds by %s",
+				self.AddWarningf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" wells extend beyond plate bounds by %s",
 					position, wtype.TypeOf(plate), overSpill.StringXY())
 			}
 		}

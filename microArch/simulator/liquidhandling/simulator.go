@@ -1591,7 +1591,6 @@ func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float6
 
 //SetDriveSpeed - used
 func (self *VirtualLiquidHandler) SetDriveSpeed(drive string, rate float64) driver.CommandStatus {
-	self.AddWarningf("SetDriveSpeed", "Not yet implemented: SetDriveSpeed(%s, %f)", drive, rate)
 	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETDRIVESPEED ACK"}
 }
 

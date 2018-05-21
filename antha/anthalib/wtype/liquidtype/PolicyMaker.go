@@ -241,14 +241,19 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 		}
 		return newPolicy
 	}
-
 	for i, run := range runs {
 		policy := make(wtype.LHPolicy)
 		policy = copyPolicy(basePolicy)
 		var warnings []string
+		var policyName string
 		for j, desc := range run.Factordescriptors {
 			policyCommand, ok := policyitemmap[desc]
 			if ok {
+
+				if desc == "POLICYNAME" {
+					policyName = fmt.Sprint(run.Setpoints[j])
+				}
+
 				if reflect.TypeOf(run.Setpoints[j]) != policyCommand.Type {
 					if policyCommand.TypeName() == "Volume" {
 
@@ -284,7 +289,10 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 		}
 
 		var name string
-		if concatfactorlevelsinname {
+
+		if policyName != "" {
+			name = policyName
+		} else if concatfactorlevelsinname {
 			name = nameprepend
 			for key, value := range policy {
 				name = fmt.Sprint(name, "_", key, ":", value)

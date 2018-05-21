@@ -562,6 +562,15 @@ message LHHeadMessage {
 	string Arg_3 = 3;
 	PtrToLHAdaptorMessage Arg_4 = 4;
 	PtrToLHChannelParameterMessage Arg_5 = 5;
+    TipLoadingBehaviourMessage Arg_6 = 6;
+}
+message TipLoadingBehaviourMessage {
+    bool Arg_1 = 1; //OverrideLoadTipsCommand
+    bool Arg_2 = 2; //AutoRefillTipBoxes
+    int64 Arg_3 = 3; //Loading Order: 0 = RowWise, 1 = ColumnWise
+    int64 Arg_4 = 4; //VerticalDiection: 1 = top to bottom, -1 = bottom to top
+    int64 Arg_5 = 5; //HorizontalDirection: 1 = left to right, -1 = bottom to top
+    int64 Arg_6 = 6; //chunking behaviour: 0 = none, 1: forward, 2: reverse
 }
 message ArrayOfPtrToLHAdaptorMessage{
 	repeated PtrToLHAdaptorMessage arg_1=1;
@@ -665,7 +674,7 @@ message LHComponentMessage {
 	string Arg_5 = 5;
 	int64 Arg_6 = 6;
 	string Arg_7 = 7;
-	int64 Arg_8 = 8;
+	string Arg_8 = 8;
 	double Arg_9 = 9;
 	double Arg_10 = 10;
 	string Arg_11 = 11;
@@ -677,6 +686,7 @@ message LHComponentMessage {
 	MapstringAnyMessageMessage Arg_17 = 17;
 	string Arg_18 = 18;
 	string Arg_19 = 19;
+    MapstringAnyMessageMessage Arg_20 = 20;
 }
 message GenericPrefixedUnitMessage {
 	GenericUnitMessage Arg_1 = 1;

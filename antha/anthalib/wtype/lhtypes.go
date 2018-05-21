@@ -364,6 +364,7 @@ func (head *LHHead) Dup() *LHHead {
 	if head.Adaptor != nil {
 		h.Adaptor = head.Adaptor.Dup()
 	}
+	h.TipLoading = head.TipLoading
 
 	return h
 }
@@ -476,6 +477,16 @@ const (
 	ReverseSequentialTipLoading
 )
 
+var sequentialTipLoadingBehaviourNames = map[SequentialTipLoadingBehaviour]string{
+	NoSequentialTipLoading:      "no sequential tip loading",
+	ForwardSequentialTipLoading: "forward sequential tip loading",
+	ReverseSequentialTipLoading: "reverse sequential tip loading",
+}
+
+func (s SequentialTipLoadingBehaviour) String() string {
+	return sequentialTipLoadingBehaviourNames[s]
+}
+
 //TipLoadingBehaviour describe the way in which tips are loaded
 type TipLoadingBehaviour struct {
 	//OverrideLoadTipsCommand true it the liquid handler will override which tips are loaded
@@ -490,4 +501,19 @@ type TipLoadingBehaviour struct {
 	HorizontalLoadingDirection HorizontalDirection
 	//ChunkingBehaviour how to load tips when the requested number aren't available contiguously
 	ChunkingBehaviour SequentialTipLoadingBehaviour
+}
+
+//String get a string description for debuggin
+func (s TipLoadingBehaviour) String() string {
+
+	autoRefill := ""
+	if !s.AutoRefillTipboxes {
+		autoRefill = "no "
+	}
+
+	if !s.OverrideLoadTipsCommand {
+		return fmt.Sprintf("%sauto-refilling, no loading override", autoRefill)
+	}
+
+	return fmt.Sprintf("%sauto-refilling, loading order: %v, %v, %v, %v", autoRefill, s.LoadingOrder, s.VerticalLoadingDirection, s.HorizontalLoadingDirection, s.ChunkingBehaviour)
 }

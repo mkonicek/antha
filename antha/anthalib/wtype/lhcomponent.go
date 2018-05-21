@@ -461,14 +461,33 @@ func (lhc *LHComponent) PolicyName() PolicyName {
 }
 
 // SetPolicyName adds the LiquidType associated with a PolicyName to the LHComponent.
-// If the PolicyName is invalid an error is returned.
-func (lhc *LHComponent) SetPolicyName(policy PolicyName) error {
-	liquidType, err := LiquidTypeFromString(policy)
-	if err != nil {
-		return err
-	}
+// If the PolicyName is invalid and the DoNotPermitCustomPolicies option is used as an argument then an error is returned.
+// By default, custom policyNames may be added and the validity of these will be checked later when robot instructions are generated, rather than in the element.
+func (lhc *LHComponent) SetPolicyName(policy PolicyName, options ...PolicyOption) error {
+	liquidType, err := LiquidTypeFromString(policy, options...)
 	lhc.Type = liquidType
-	return nil
+	return err
+}
+
+// PolicyOption allows specification of advanced options to feed into the SetPolicyName method.
+type PolicyOption string
+
+// DoNotPermitCustomPolicies is an option to pass into SetPolicyName to ensure only valid system policies are specified.
+// With this flag set, custom user policies are not permitted.
+var DoNotPermitCustomPolicies PolicyOption = "DoNotPermitCustomPolicies"
+
+// ModifyLHPolicyParameter specifies that this LHComponent or instance of the LHComponent should be handled with a modified
+// LHPolicy parameter.
+// e.g. to Change number of post mixes to 5:
+// lhc.ModifyLHPolicyParameter("POST_MIX", 5)
+// Valid parameters and value types are specified in aparam.go
+// An error is returned if an invalid parameter or value type for that parameter is specified.
+func (lhc *LHComponent) ModifyLHPolicyParameter(parameter string, value interface{}) error {
+	if lhc.Policy == nil || len(lhc.Policy) == 0 {
+		lhc.Policy = make(LHPolicy)
+	}
+
+	return lhc.Policy.Set(parameter, value)
 }
 
 // Volume returns the Volume of the LHComponent

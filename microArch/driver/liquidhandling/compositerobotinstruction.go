@@ -161,6 +161,9 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return ret, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
@@ -225,7 +228,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 				}
 				ret = append(ret, tipdrp)
 
-				tt, chanA := tipArrays(newchannel.Multi)
+				tt, chanA = tipArrays(newchannel.Multi)
 				tt[0] = newtiptype
 				chanA[0] = newchannel
 				tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
@@ -410,6 +413,9 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
@@ -486,7 +492,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			if change_tips {
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters
-				tipdrp, err := DropTips(newtiptypes, prms, channels)
+				tipdrp, err := DropTips(tiptypes, prms, channels)
 
 				if err != nil {
 					return ret, err
@@ -1719,6 +1725,9 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
@@ -2120,6 +2129,9 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {
@@ -3072,6 +3084,9 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
 		pol, err = GetDefaultPolicy(policy, ins)
 
 		if err != nil {

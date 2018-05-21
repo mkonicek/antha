@@ -23,9 +23,10 @@
 package liquidhandling_test
 
 import (
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
-	"testing"
 )
 
 func TestUnknownLocations(t *testing.T) {
@@ -2307,7 +2308,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 175 ul of water to head 0 channel 0 - channel 0 contains 875 ul, command exceeds maximum volume 1e+03 ul",
+				"(err) Aspirate: While aspirating 175 ul of water to head 0 channel 0 - channel 0 contains 875 ul, command exceeds maximum volume 1000 ul",
 			},
 			nil, //assertions
 		},

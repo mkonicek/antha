@@ -460,8 +460,8 @@ func TestUpdateComponentDetails(t *testing.T) {
 			expectedProductName: "0.312 mM/l IPTG+0.0625 X LB+0.312 g/l glycerol+0.312 v/v water",
 			expectedProductComponentList: ComponentList{
 				Components: map[string]wunit.Concentration{
-					"glycerol": wunit.NewConcentration(0.312, "g/l"),
-					"IPTG":     wunit.NewConcentration(0.312, "mM/l"),
+					"glycerol": wunit.NewConcentration(0.3125, "g/l"),
+					"IPTG":     wunit.NewConcentration(0.3125, "mM/l"),
 					"water":    wunit.NewConcentration(0.312, "v/v"),
 					"LB":       wunit.NewConcentration(0.0625, "X"),
 				},

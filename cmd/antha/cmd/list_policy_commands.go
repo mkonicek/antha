@@ -103,7 +103,7 @@ func listPolicyCommands(cmd *cobra.Command, args []string) error {
 		}
 
 		w := csv.NewWriter(os.Stdout)
-		err := w.WriteAll(lines) // calls Flush internally
+		err := w.WriteAll(lines)
 
 		return err
 	case textOutput:

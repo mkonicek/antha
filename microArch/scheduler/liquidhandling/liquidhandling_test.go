@@ -33,7 +33,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
@@ -74,6 +73,7 @@ func GetTroughForTest() *wtype.LHPlate {
 	return plate
 }
 
+/*
 func TestStockConcs(*testing.T) {
 	rand := wutil.GetRandom()
 	names := []string{"tea", "milk", "sugar"}
@@ -98,6 +98,7 @@ func TestStockConcs(*testing.T) {
 	choose_stock_concentrations(minrequired, maxrequired, Smax, vmin, T)
 
 }
+*/
 
 func configure_request_simple(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))

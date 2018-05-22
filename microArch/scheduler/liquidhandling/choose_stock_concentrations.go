@@ -19,9 +19,9 @@
 // contact license@antha-lang.org or write to the Antha team c/o
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
-
 package liquidhandling
 
+/*
 import (
 	"fmt"
 
@@ -150,3 +150,5 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 
 	return concentrations
 }
+
+*/

@@ -43,25 +43,26 @@ import (
 // probably needs splitting up to separate out the state information
 // from the properties information
 type LHProperties struct {
-	ID                   string
-	Nposns               int
-	Positions            map[string]*wtype.LHPosition
-	PlateLookup          map[string]interface{}
-	PosLookup            map[string]string
-	PlateIDLookup        map[string]string
-	Plates               map[string]*wtype.LHPlate
-	Tipboxes             map[string]*wtype.LHTipbox
-	Tipwastes            map[string]*wtype.LHTipwaste
-	Wastes               map[string]*wtype.LHPlate
-	Washes               map[string]*wtype.LHPlate
-	Devices              map[string]string
-	Model                string
-	Mnfr                 string
-	LHType               string
-	TipType              string
-	Heads                []*wtype.LHHead
-	HeadsAssemblies      []*wtype.LHHeadAssembly
-	Adaptors             []*wtype.LHAdaptor
+	ID            string
+	Nposns        int
+	Positions     map[string]*wtype.LHPosition
+	PlateLookup   map[string]interface{}
+	PosLookup     map[string]string
+	PlateIDLookup map[string]string
+	Plates        map[string]*wtype.LHPlate
+	Tipboxes      map[string]*wtype.LHTipbox
+	Tipwastes     map[string]*wtype.LHTipwaste
+	Wastes        map[string]*wtype.LHPlate
+	Washes        map[string]*wtype.LHPlate
+	Devices       map[string]string
+	Model         string
+	Mnfr          string
+	LHType        string
+	TipType       string
+	//Heads lists every head (whether loaded or not) that is available for the machine
+	Heads []*wtype.LHHead
+	//HeadAssemblies describes how each loaded head is loaded into the machine
+	HeadAssemblies       []*wtype.LHHeadAssembly
 	Tips                 []*wtype.LHTip
 	Tip_preferences      []string
 	Input_preferences    []string
@@ -219,8 +220,17 @@ func ValidateLHProperties(props *LHProperties) (bool, string) {
 //CountHeadsLoaded return the total number of heads loaded into the machine
 func (lhp *LHProperties) CountHeadsLoaded() int {
 	var ret int
-	for _, assembly := range lhp.HeadsAssemblies {
+	for _, assembly := range lhp.HeadAssemblies {
 		ret += assembly.CountHeadsLoaded()
+	}
+	return ret
+}
+
+//GetHeadsLoaded get a slice of all the heads loaded in the machine
+func (lhp *LHProperties) GetHeadsLoaded() []*wtype.LHHead {
+	ret := make([]*wtype.LHHead, 0, lhp.CountHeadsLoaded())
+	for _, assembly := range lhp.HeadAssemblies {
+		ret = append(ret, assembly.GetHeadsLoaded()...)
 	}
 	return ret
 }
@@ -241,14 +251,6 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	}
 	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
 
-	for _, a := range lhp.Adaptors {
-		ad := a.Dup()
-		if keepIDs {
-			ad.ID = a.ID
-		}
-		r.Adaptors = append(r.Adaptors, ad)
-	}
-
 	headMap := make(map[string]*wtype.LHHead)
 	for _, h := range lhp.Heads {
 		hd := h.Dup()
@@ -260,14 +262,10 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	}
 
 	for _, assembly := range lhp.HeadAssemblies {
-		//newAssembly := assembly.
-
-		//WORKING HERE
-		hld := hl.Dup()
-		if keepIDs {
-			hld.ID = hl.ID
+		newAssembly := assembly.DupWithoutHeads()
+		for _, oldHead := range assembly.GetHeadsLoaded() {
+			newAssembly.LoadHead(headMap[oldHead.ID]) //nolint - assemblies have the same number of positions
 		}
-		r.HeadsLoaded = append(r.HeadsLoaded, hld)
 	}
 
 	// plate lookup can contain anything
@@ -330,28 +328,6 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		r.Devices[name] = dev
 	}
 
-	for name, head := range lhp.Heads {
-		r.Heads[name] = head.Dup()
-		if keepIDs {
-			r.Heads[name].ID = head.ID
-		}
-	}
-
-	for i, hl := range lhp.HeadsLoaded {
-		r.HeadsLoaded[i] = hl.Dup()
-		if keepIDs {
-			r.HeadsLoaded[i].ID = hl.ID
-		}
-	}
-
-	for i, ad := range lhp.Adaptors {
-		r.Adaptors[i] = ad.Dup()
-
-		if keepIDs {
-			r.Adaptors[i].ID = ad.ID
-		}
-	}
-
 	for _, tip := range lhp.Tips {
 		newtip := tip.Dup()
 		if keepIDs {
@@ -409,9 +385,8 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	lhp.LHType = lhtype
 	lhp.TipType = tiptype
 
-	lhp.Adaptors = make([]*wtype.LHAdaptor, 0, 2)
 	lhp.Heads = make([]*wtype.LHHead, 0, 2)
-	lhp.HeadsLoaded = make([]*wtype.LHHead, 0, 2)
+	lhp.HeadAssemblies = make([]*wtype.LHHeadAssembly, 0, 2)
 
 	positions := make(map[string]*wtype.LHPosition, num_positions)
 
@@ -1121,35 +1096,12 @@ func (p *LHProperties) RestoreUserPlates(up UserPlates) {
 }
 
 func (p *LHProperties) MinPossibleVolume() wunit.Volume {
-	if len(p.HeadsLoaded) == 0 {
+	headsLoaded := p.GetHeadsLoaded()
+	if len(headsLoaded) == 0 {
 		return wunit.ZeroVolume()
 	}
-	minvol := p.HeadsLoaded[0].GetParams().Minvol
-	for _, head := range p.HeadsLoaded {
-		for _, tip := range p.Tips {
-			lhcp := head.Params.MergeWithTip(tip)
-			v := lhcp.Minvol
-			if v.LessThan(minvol) {
-				minvol = v
-			}
-		}
-
-	}
-
-	return minvol
-}
-
-func (p *LHProperties) MinCurrentVolume() wunit.Volume {
-	if len(p.HeadsLoaded) == 0 {
-		return wunit.ZeroVolume()
-	}
-
-	if len(p.Tips) == 0 {
-		return p.MinPossibleVolume()
-	}
-
-	minvol := p.HeadsLoaded[0].GetParams().Maxvol
-	for _, head := range p.HeadsLoaded {
+	minvol := headsLoaded[0].GetParams().Minvol
+	for _, head := range headsLoaded {
 		for _, tip := range p.Tips {
 			lhcp := head.Params.MergeWithTip(tip)
 			v := lhcp.Minvol

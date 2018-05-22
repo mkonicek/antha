@@ -25,6 +25,7 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -366,12 +367,7 @@ func (head *LHHead) Dup() *LHHead {
 		h.Adaptor = head.Adaptor.Dup()
 	}
 	h.TipLoading = head.TipLoading
-	copy(h.Constraints, head.Constraints)
 	return h
-}
-
-func (head *LHHead) AddConstraint(mc MotionConstraint) {
-	head.Constraints = append(head.Constraints, mc)
 }
 
 func (lhh *LHHead) GetParams() *LHChannelParameter {

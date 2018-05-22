@@ -1421,18 +1421,18 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 
 //addWellTargets for all the adaptors and plates available
 func (lh *Liquidhandler) addWellTargets() error {
-	for _, adaptor := range lh.Properties.Adaptors {
+	for _, head := range lh.Properties.GetHeadsLoaded() {
 		for _, plate := range lh.Properties.Plates {
-			addWellTargetsPlate(adaptor, plate)
+			addWellTargetsPlate(head.Adaptor, plate)
 		}
 		for _, plate := range lh.Properties.Wastes {
-			addWellTargetsPlate(adaptor, plate)
+			addWellTargetsPlate(head.Adaptor, plate)
 		}
 		for _, plate := range lh.Properties.Washes {
-			addWellTargetsPlate(adaptor, plate)
+			addWellTargetsPlate(head.Adaptor, plate)
 		}
 		for _, tipWaste := range lh.Properties.Tipwastes {
-			addWellTargetsTipWaste(adaptor, tipWaste)
+			addWellTargetsTipWaste(head.Adaptor, tipWaste)
 		}
 	}
 	return nil

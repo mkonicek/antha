@@ -474,11 +474,12 @@ func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol w
 
 // ErrInvalidLiquidType is returned when no matching liquid policy is found.
 type ErrInvalidLiquidType struct {
-	PolicyNames []string
+	PolicyNames      []string
+	ValidPolicyNames []string
 }
 
 func (err ErrInvalidLiquidType) Error() string {
-	return fmt.Sprintf("invalid LiquidType specified in instruction: %v ", err.PolicyNames)
+	return fmt.Sprintf("invalid LiquidType specified.\nValid Liquid Policies found: \n%s \n invalid LiquidType specified in instruction: %v \n ", strings.Join(err.ValidPolicyNames, " \n"), err.PolicyNames)
 }
 
 var (
@@ -551,7 +552,13 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPo
 	}
 
 	if len(invalidPolicyNames) > 0 {
-		return ppl, ErrInvalidLiquidType{PolicyNames: invalidPolicyNames}
+		var validPolicies []string
+		for key := range lhpr.Policies {
+			validPolicies = append(validPolicies, key)
+		}
+
+		sort.Strings(validPolicies)
+		return ppl, ErrInvalidLiquidType{PolicyNames: invalidPolicyNames, ValidPolicyNames: validPolicies}
 	}
 
 	if !lhpolicyFound {

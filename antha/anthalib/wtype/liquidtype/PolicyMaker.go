@@ -272,11 +272,11 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 							policy[desc] = wunit.NewVolume(rawVolFloat, "ul")
 						} else if rawVolInt, found := run.Setpoints[j].(int); found {
 							policy[desc] = wunit.NewVolume(float64(rawVolInt), "ul")
-						} else {
+						} else if fmt.Sprint(run.Setpoints[j]) != "" {
 							err = fmt.Errorf("invalid value (%s) of type (%T) for LHPolicy command (%s) in run %d expecting value of type %s", run.Setpoints[j], run.Setpoints[j], desc, i+1, policyCommand.Type.Name())
 							return policies, names, err
 						}
-					} else {
+					} else if fmt.Sprint(run.Setpoints[j]) != "" {
 						err = fmt.Errorf("invalid value (%s) of type (%T) for LHPolicy command (%s) in run %d expecting value of type %s", run.Setpoints[j], run.Setpoints[j], desc, i+1, policyCommand.Type.Name())
 						return policies, names, err
 					}

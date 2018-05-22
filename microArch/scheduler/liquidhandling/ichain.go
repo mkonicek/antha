@@ -345,7 +345,6 @@ func maxGen(inss []*wtype.LHInstruction, componentGen map[string]int) int {
 }
 
 func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[graph.Node]interface{}, map[graph.Node]bool) {
-	fmt.Println("GET NODE COLOUR MAP")
 	ret := make(map[graph.Node]interface{})
 	hc := make(map[graph.Node]bool)
 

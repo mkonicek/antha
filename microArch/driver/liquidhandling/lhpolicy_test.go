@@ -57,7 +57,7 @@ func TestPEGPolicy(t *testing.T) {
 	pft, _ := wtype.GetLHPolicyForTest()
 
 	tp := TransferParams{
-		What:    "PEG",
+		What:    "peg",
 		Volume:  wunit.NewVolume(190.0, "ul"),
 		Channel: getChannelForTest(),
 	}
@@ -98,7 +98,7 @@ func TestPPPolicy(t *testing.T) {
 	pft, _ := wtype.GetLHPolicyForTest()
 
 	tp := TransferParams{
-		What:    "Protoplasts",
+		What:    "protoplasts",
 		Volume:  wunit.NewVolume(10.0, "ul"),
 		Channel: getChannelForTest(),
 	}

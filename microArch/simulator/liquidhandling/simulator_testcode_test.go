@@ -377,11 +377,11 @@ func default_lhplate_props() *LHPlateParams {
 			1.4,               // bottomh         float64
 			"mm",              // dunit           string
 		},
-		9.,   // wellXOffset     float64
-		9.,   // wellYOffset     float64
-		0.,   // wellXStart      float64
-		0.,   // wellYStart      float64
-		18.5, // wellZStart      float64
+		9.,  // wellXOffset     float64
+		9.,  // wellYOffset     float64
+		0.,  // wellXStart      float64
+		0.,  // wellYStart      float64
+		5.3, // wellZStart      float64
 	}
 
 	return &params
@@ -405,7 +405,7 @@ func lhplate_trough_props() *LHPlateParams {
 		"test_trough_mfr", // mfr             string
 		1,                 // nrows           int
 		12,                // ncols           int
-		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7}, // size          float64
+		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 45.8}, // size          float64
 		LHWellParams{ // welltype
 			wtype.ZeroWellCoords(), // crds            string
 			"ul",  // vunit           string
@@ -425,11 +425,11 @@ func lhplate_trough_props() *LHPlateParams {
 			4.7,                  // bottomh         float64
 			"mm",                 // dunit           string
 		},
-		9.,   // wellXOffset     float64
-		9.,   // wellYOffset     float64
-		0.,   // wellXStart      float64
-		30.0, // wellYStart      float64
-		4.5,  // wellZStart      float64
+		9.,  // wellXOffset     float64
+		9.,  // wellYOffset     float64
+		0.,  // wellXStart      float64
+		0.,  // wellYStart      float64
+		4.5, // wellZStart      float64
 	}
 
 	return &params
@@ -1059,8 +1059,9 @@ func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
 	var ret AssertionFn = func(name string, t *testing.T, vlh *lh.VirtualLiquidHandler) {
 		adaptor := vlh.GetAdaptorState(head)
 		or := adaptor.GetChannel(0).GetAbsolutePosition()
-		if or.X != origin.X || or.Y != origin.Y || or.Z != origin.Z {
-			t.Errorf("PositionAssertion failed in \"%s\", adaptor should be at %s, was actually at %s", name, origin, or)
+		//use string comparison to avoid precision errors (string printed with %.1f)
+		if g, e := or.String(), origin.String(); g != e {
+			t.Errorf("PositionAssertion failed in \"%s\", adaptor should be at %s, was actually at %s", name, e, g)
 		}
 	}
 	return &ret

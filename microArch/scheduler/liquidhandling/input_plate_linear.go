@@ -139,8 +139,6 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		constraintMatrix[cur*n_cols+i] = 1.0
 	}
 
-	cur += 1
-
 	matUBConstraintMatrix := mat.NewDense(n_rows, n_cols, constraintMatrix)
 
 	//	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrix, constraintBounds, aOld, bOld)

@@ -60,7 +60,7 @@ type LHProperties struct {
 	LHType               string
 	TipType              string
 	Heads                []*wtype.LHHead
-	HeadsLoaded          []*wtype.LHHead
+	HeadsAssemblies      []*wtype.LHHeadAssembly
 	Adaptors             []*wtype.LHAdaptor
 	Tips                 []*wtype.LHTip
 	Tip_preferences      []string
@@ -207,13 +207,22 @@ func ValidateLHProperties(props *LHProperties) (bool, string) {
 		return be, se
 	}
 
-	se = "LHProperties Error: No headsloaded array"
+	se = "LHProperties Error: No heads loaded"
 
-	if props.HeadsLoaded == nil {
+	if props.CountHeadsLoaded() == 0 {
 		return be, se
 	}
 
 	return bo, so
+}
+
+//CountHeadsLoaded return the total number of heads loaded into the machine
+func (lhp *LHProperties) CountHeadsLoaded() int {
+	var ret int
+	for _, assembly := range lhp.HeadsAssemblies {
+		ret += assembly.CountHeadsLoaded()
+	}
+	return ret
 }
 
 // copy constructor
@@ -240,15 +249,20 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		r.Adaptors = append(r.Adaptors, ad)
 	}
 
+	headMap := make(map[string]*wtype.LHHead)
 	for _, h := range lhp.Heads {
 		hd := h.Dup()
 		if keepIDs {
 			hd.ID = h.ID
 		}
 		r.Heads = append(r.Heads, hd)
+		headMap[h.ID] = hd
 	}
 
-	for _, hl := range lhp.HeadsLoaded {
+	for _, assembly := range lhp.HeadAssemblies {
+		//newAssembly := assembly.
+
+		//WORKING HERE
 		hld := hl.Dup()
 		if keepIDs {
 			hld.ID = hl.ID

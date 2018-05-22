@@ -40,7 +40,11 @@ func (c Coordinates) Equals(c2 Coordinates) bool {
 
 //String implements Stringer
 func (self Coordinates) String() string {
-	return fmt.Sprintf("%vx%vx%vmm", self.X, self.Y, self.Z)
+	return fmt.Sprintf("%.1fx%.1fx%.1f mm", self.X, self.Y, self.Z)
+}
+
+func (self Coordinates) StringXY() string {
+	return fmt.Sprintf("%.1fx%.1f mm", self.X, self.Y)
 }
 
 //Dim Value for dimension

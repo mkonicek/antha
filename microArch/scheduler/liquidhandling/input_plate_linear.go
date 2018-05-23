@@ -159,6 +159,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		for _, p := range plate_types {
 			if optX[cur] > tolerance {
 				pmap[p.Dup()] = int(math.Ceil(optX[cur]))
+				fmt.Println("COMPONENT ", c, " HAS ", int(math.Ceil(optX[cur])), " WELLS IN PLATE TYPE ", p.Type)
 			}
 			cur += 1
 		}

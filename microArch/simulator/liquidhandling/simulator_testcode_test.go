@@ -94,14 +94,12 @@ type HeadParams struct {
 	Channel      ChannelParams
 	Adaptor      AdaptorParams
 	TipBehaviour wtype.TipLoadingBehaviour
-	Constraints  []wtype.MotionConstraint
 }
 
 func makeLHHead(hp HeadParams) *wtype.LHHead {
 	ret := wtype.NewLHHead(hp.Name, hp.Mfg, makeLHChannelParameter(hp.Channel))
 	ret.Adaptor = makeLHAdaptor(hp.Adaptor)
 	ret.TipLoading = hp.TipBehaviour
-	ret.Constraints = hp.Constraints
 	return ret
 }
 
@@ -636,7 +634,6 @@ func default_lhproperties() *liquidhandling.LHProperties {
 					},
 				},
 				wtype.TipLoadingBehaviour{},
-				[]wtype.MotionConstraint{},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
@@ -698,18 +695,6 @@ func multihead_lhproperties() *liquidhandling.LHProperties {
 					},
 				},
 				wtype.TipLoadingBehaviour{},
-				[]wtype.MotionConstraint{
-					{
-						wtype.ConstantRelativeConstraint,
-						*wtype.NewBBox6f(0.0, -18.0, 0.0, 0.0, 0.0, 0.0),
-						1,
-					},
-					{
-						wtype.LimitedMovementConstraint,
-						*wtype.NewBBox6f(0., 0., 0., 600, 600, 500),
-						0,
-					},
-				},
 			},
 			{
 				"Head1 Name",
@@ -743,18 +728,6 @@ func multihead_lhproperties() *liquidhandling.LHProperties {
 					},
 				},
 				wtype.TipLoadingBehaviour{},
-				[]wtype.MotionConstraint{
-					{
-						wtype.ConstantRelativeConstraint,
-						*wtype.NewBBox6f(0.0, 18.0, 0.0, 0.0, 0.0, 0.0),
-						1,
-					},
-					{
-						wtype.LimitedMovementConstraint,
-						*wtype.NewBBox6f(0., 18., 0., 600, 618, 500),
-						0,
-					},
-				},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
@@ -816,7 +789,6 @@ func independent_lhproperties() *liquidhandling.LHProperties {
 					},
 				},
 				wtype.TipLoadingBehaviour{},
-				[]wtype.MotionConstraint{},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences

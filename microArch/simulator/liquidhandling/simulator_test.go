@@ -692,7 +692,7 @@ func Test_MoveConstraints(t *testing.T) {
 
 	tests := []SimulatorTest{
 		{
-			"OK_1",
+			"constrained heads",
 			multihead_lhproperties(),
 			[]*SetupFn{
 				testLayout(),

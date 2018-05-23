@@ -904,6 +904,8 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 
 	lhpr.AddRule(turnOffPostMixIfEmpty, TurnOffPostMix())
 
+	// for Gilson, add some sensible default pipette speeds
+
 	return lhpr, nil
 }
 

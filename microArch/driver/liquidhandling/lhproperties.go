@@ -251,11 +251,20 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	}
 	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
 
+	if keepIDs {
+		r.ID = lhp.ID
+		for name, pos := range lhp.Positions {
+			r.Positions[name].ID = pos.ID
+		}
+	}
+
 	headMap := make(map[*wtype.LHHead]*wtype.LHHead)
 	for _, h := range lhp.Heads {
-		hd := h.Dup()
+		var hd *wtype.LHHead
 		if keepIDs {
-			hd.ID = h.ID
+			hd = h.DupKeepIDs()
+		} else {
+			hd = h.Dup()
 		}
 		r.Heads = append(r.Heads, hd)
 		headMap[h] = hd

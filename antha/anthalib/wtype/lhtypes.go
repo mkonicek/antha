@@ -161,10 +161,21 @@ func (lhcp LHChannelParameter) MarshalJSON() ([]byte, error) {
 }
 
 func (lhcp *LHChannelParameter) Dup() *LHChannelParameter {
+	return lhcp.dup(false)
+}
+
+func (lhcp *LHChannelParameter) DupKeepIDs() *LHChannelParameter {
+	return lhcp.dup(true)
+}
+
+func (lhcp *LHChannelParameter) dup(keepIDs bool) *LHChannelParameter {
 	if lhcp == nil {
 		return nil
 	}
 	r := NewLHChannelParameter(lhcp.Name, lhcp.Platform, lhcp.Minvol, lhcp.Maxvol, lhcp.Minspd, lhcp.Maxspd, lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
+	if keepIDs {
+		r.ID = lhcp.ID
+	}
 
 	return r
 }
@@ -362,12 +373,34 @@ func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
 }
 
 func (head *LHHead) Dup() *LHHead {
-	h := NewLHHead(head.Name, head.Manufacturer, head.Params.Dup())
-	if head.Adaptor != nil {
-		h.Adaptor = head.Adaptor.Dup()
+	return head.dup(false)
+}
+
+func (head *LHHead) DupKeepIDs() *LHHead {
+	return head.dup(true)
+}
+
+func (head *LHHead) dup(keepIDs bool) *LHHead {
+	if head == nil {
+		return nil
 	}
+	var params *LHChannelParameter
+	var adaptor *LHAdaptor
+	if keepIDs {
+		params = head.Params.DupKeepIDs()
+		adaptor = head.Adaptor.DupKeepIDs()
+	} else {
+		params = head.Params.Dup()
+		adaptor = head.Adaptor.Dup()
+	}
+	h := NewLHHead(head.Name, head.Manufacturer, params)
+	h.Adaptor = adaptor
 	h.TipLoading = head.TipLoading
 	return h
+}
+
+func (head *LHHead) Equal(rhs *LHHead) bool {
+	return head.Name == rhs.Name
 }
 
 func (lhh *LHHead) GetParams() *LHChannelParameter {
@@ -397,11 +430,30 @@ func NewLHAdaptor(name, mf string, params *LHChannelParameter) *LHAdaptor {
 }
 
 func (lha *LHAdaptor) Dup() *LHAdaptor {
-	ad := NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.Dup())
+	return lha.dup(false)
+}
+
+func (lha *LHAdaptor) DupKeepIDs() *LHAdaptor {
+	return lha.dup(true)
+}
+
+func (lha *LHAdaptor) dup(keepIDs bool) *LHAdaptor {
+	var params *LHChannelParameter
+	if keepIDs {
+		params = lha.Params.DupKeepIDs()
+	} else {
+		params = lha.Params.Dup()
+	}
+
+	ad := NewLHAdaptor(lha.Name, lha.Manufacturer, params)
 
 	for i, tip := range lha.Tips {
 		if tip != nil {
-			ad.AddTip(i, tip.Dup())
+			if keepIDs {
+				ad.AddTip(i, tip.DupKeepID())
+			} else {
+				ad.AddTip(i, tip.Dup())
+			}
 		}
 	}
 

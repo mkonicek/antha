@@ -192,9 +192,9 @@ func DecodeLHProperties(arg *pb.LHPropertiesMessage) liquidhandling.LHProperties
 	return ret
 }
 func EncodeArrayOfPtrToLHHeadAssemblies(assemblies []*wtype.LHHeadAssembly, heads []*wtype.LHHead) *pb.ArrayOfPtrToLHHeadAssembliesMessage {
-	headMap := make(map[string]int)
+	headMap := make(map[*wtype.LHHead]int)
 	for i, h := range heads {
-		headMap[h.ID] = i
+		headMap[h] = i
 	}
 	a := make([]*pb.PtrToLHHeadAssemblyMessage, len(assemblies))
 	for i, v := range assemblies {
@@ -205,7 +205,7 @@ func EncodeArrayOfPtrToLHHeadAssemblies(assemblies []*wtype.LHHeadAssembly, head
 	}
 	return &ret
 }
-func EncodePtrToLHHeadAssembly(assembly *wtype.LHHeadAssembly, headMap map[string]int) *pb.PtrToLHHeadAssemblyMessage {
+func EncodePtrToLHHeadAssembly(assembly *wtype.LHHeadAssembly, headMap map[*wtype.LHHead]int) *pb.PtrToLHHeadAssemblyMessage {
 	ret := pb.PtrToLHHeadAssemblyMessage{}
 	if assembly != nil {
 		ret.Val = EncodeLHHeadAssemblyMessage(assembly, headMap)
@@ -213,14 +213,14 @@ func EncodePtrToLHHeadAssembly(assembly *wtype.LHHeadAssembly, headMap map[strin
 
 	return &ret
 }
-func EncodeLHHeadAssemblyMessage(assembly *wtype.LHHeadAssembly, headMap map[string]int) *pb.LHHeadAssemblyMessage {
+func EncodeLHHeadAssemblyMessage(assembly *wtype.LHHeadAssembly, headMap map[*wtype.LHHead]int) *pb.LHHeadAssemblyMessage {
 	ret := pb.LHHeadAssemblyMessage{
-		Positions:    EncodeArrayOfPtrToLHHeadAssemblyPositionMessage(assembly.Positions, headMap),
+		Positions:    EncodeArrayOfPtrToLHHeadAssemblyPosition(assembly.Positions, headMap),
 		MotionLimits: EncodePtrToBBox(assembly.MotionLimits),
 	}
 	return &ret
 }
-func EncodeArrayOfPtrToLHHeadAssemblyPositionMessage(ap []*wtype.LHHeadAssemblyPosition, headMap map[string]int) *pb.ArrayOfPtrToLHHeadAssemblyPositionMessage {
+func EncodeArrayOfPtrToLHHeadAssemblyPosition(ap []*wtype.LHHeadAssemblyPosition, headMap map[*wtype.LHHead]int) *pb.ArrayOfPtrToLHHeadAssemblyPositionMessage {
 	a := make([]*pb.PtrToLHHeadAssemblyPositionMessage, len(ap))
 	for i, v := range ap {
 		a[i] = EncodePtrToLHHeadAssemblyPosition(v, headMap)
@@ -230,17 +230,18 @@ func EncodeArrayOfPtrToLHHeadAssemblyPositionMessage(ap []*wtype.LHHeadAssemblyP
 	}
 	return &ret
 }
-func EncodePtrToLHHeadAssemblyPosition(pos *wtype.LHHeadAssemblyPosition, headMap map[string]int) *pb.PtrToLHHeadAssemblyPositionMessage {
+func EncodePtrToLHHeadAssemblyPosition(pos *wtype.LHHeadAssemblyPosition, headMap map[*wtype.LHHead]int) *pb.PtrToLHHeadAssemblyPositionMessage {
 	ret := pb.PtrToLHHeadAssemblyPositionMessage{}
 	if pos != nil {
 		ret.Val = EncodeLHHeadAssemblyPosition(pos, headMap)
 	}
 	return &ret
 }
-func EncodeLHHeadAssemblyPosition(pos *wtype.LHHeadAssemblyPosition, headMap map[string]int) *pb.LHHeadAssemblyPositionMessage {
+func EncodeLHHeadAssemblyPosition(pos *wtype.LHHeadAssemblyPosition, headMap map[*wtype.LHHead]int) *pb.LHHeadAssemblyPositionMessage {
 	index := -1
 	if pos.Head != nil {
-		index = headMap[pos.Head.ID]
+		fmt.Printf("HeadMap = %v\n", headMap)
+		index = headMap[pos.Head]
 	}
 	ret := pb.LHHeadAssemblyPositionMessage{
 		Offset: EncodeCoordinates(pos.Offset),
@@ -722,7 +723,9 @@ func DecodePtrToLHChannelParameter(arg *pb.PtrToLHChannelParameterMessage) *wtyp
 		log.Println("Arg for PtrToLHChannelParameter was nil")
 		return nil
 	}
-
+	if arg.Arg_1 == nil {
+		return nil
+	}
 	ret := DecodeLHChannelParameter(arg.Arg_1)
 	return &ret
 }

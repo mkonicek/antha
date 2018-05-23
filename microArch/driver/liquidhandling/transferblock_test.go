@@ -166,6 +166,7 @@ func TestMultichannelFailPolicy(t *testing.T) {
 	// policy disallows
 	tb, dstp := getTransferBlock2Component(ctx)
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)

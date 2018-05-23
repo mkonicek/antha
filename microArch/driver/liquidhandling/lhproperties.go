@@ -251,21 +251,24 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	}
 	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
 
-	headMap := make(map[string]*wtype.LHHead)
+	headMap := make(map[*wtype.LHHead]*wtype.LHHead)
 	for _, h := range lhp.Heads {
 		hd := h.Dup()
 		if keepIDs {
 			hd.ID = h.ID
 		}
 		r.Heads = append(r.Heads, hd)
-		headMap[h.ID] = hd
+		headMap[h] = hd
 	}
 
 	for _, assembly := range lhp.HeadAssemblies {
+		//duplicate the assmebly
 		newAssembly := assembly.DupWithoutHeads()
+		//now add the heads - this way r.HeadAssemblies and r.Heads refer to the same underlying LHHead
 		for _, oldHead := range assembly.GetHeadsLoaded() {
-			newAssembly.LoadHead(headMap[oldHead.ID]) //nolint - assemblies have the same number of positions
+			newAssembly.LoadHead(headMap[oldHead]) //nolint - assemblies have the same number of positions
 		}
+		r.HeadAssemblies = append(r.HeadAssemblies, newAssembly)
 	}
 
 	// plate lookup can contain anything

@@ -81,6 +81,7 @@ func MakeGilsonForTest() *LHProperties {
 	ha.AddPosition(wtype.Coordinates{0, 0, 0})
 	ha.LoadHead(hvhead)
 	ha.LoadHead(lvhead)
+	lhp.Heads = append(lhp.Heads, hvhead, lvhead)
 	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)
 
 	return lhp

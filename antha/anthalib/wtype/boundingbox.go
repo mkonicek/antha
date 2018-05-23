@@ -96,14 +96,23 @@ func (self BBox) String() string {
 
 //Dup duplicate the bounding box
 func (self *BBox) Dup() *BBox {
+	if self == nil {
+		return nil
+	}
 	return &BBox{self.Position, self.Size}
 }
 
 func (self *BBox) SetPosition(c Coordinates) {
+	if self == nil {
+		return
+	}
 	self.Position = c
 }
 
 func (self *BBox) SetSize(c Coordinates) {
+	if self == nil {
+		return
+	}
 	self.Size = c
 }
 

@@ -52,7 +52,14 @@ func (lh Liquidhandler) countTipsUsed(rq *LHRequest) (*LHRequest, error) {
 		}
 		// above we have recorded the total number of tips in a box of lh type
 		// in NTipBoxes, here we use it to determine how many boxes are needed
-		te.NTipBoxes = 1 + te.NTips/te.NTipBoxes
+		dv := te.NTips / te.NTipBoxes
+		mod := te.NTips % te.NTipBoxes
+
+		te.NTipBoxes = dv
+
+		if mod != 0 {
+			te.NTipBoxes += 1
+		}
 
 		rq.TipsUsed = append(rq.TipsUsed, te)
 	}

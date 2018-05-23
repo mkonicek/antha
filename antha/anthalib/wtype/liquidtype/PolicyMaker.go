@@ -241,14 +241,19 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 		}
 		return newPolicy
 	}
-
 	for i, run := range runs {
 		policy := make(wtype.LHPolicy)
 		policy = copyPolicy(basePolicy)
 		var warnings []string
+		var policyName string
 		for j, desc := range run.Factordescriptors {
 			policyCommand, ok := policyitemmap[desc]
 			if ok {
+
+				if desc == "POLICYNAME" {
+					policyName = fmt.Sprint(run.Setpoints[j])
+				}
+
 				if reflect.TypeOf(run.Setpoints[j]) != policyCommand.Type {
 					if policyCommand.TypeName() == "Volume" {
 
@@ -267,11 +272,11 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 							policy[desc] = wunit.NewVolume(rawVolFloat, "ul")
 						} else if rawVolInt, found := run.Setpoints[j].(int); found {
 							policy[desc] = wunit.NewVolume(float64(rawVolInt), "ul")
-						} else {
+						} else if fmt.Sprint(run.Setpoints[j]) != "" {
 							err = fmt.Errorf("invalid value (%s) of type (%T) for LHPolicy command (%s) in run %d expecting value of type %s", run.Setpoints[j], run.Setpoints[j], desc, i+1, policyCommand.Type.Name())
 							return policies, names, err
 						}
-					} else {
+					} else if fmt.Sprint(run.Setpoints[j]) != "" {
 						err = fmt.Errorf("invalid value (%s) of type (%T) for LHPolicy command (%s) in run %d expecting value of type %s", run.Setpoints[j], run.Setpoints[j], desc, i+1, policyCommand.Type.Name())
 						return policies, names, err
 					}
@@ -284,7 +289,10 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 		}
 
 		var name string
-		if concatfactorlevelsinname {
+
+		if policyName != "" {
+			name = policyName
+		} else if concatfactorlevelsinname {
 			name = nameprepend
 			for key, value := range policy {
 				name = fmt.Sprint(name, "_", key, ":", value)

@@ -91,7 +91,7 @@ func (self *ChannelState) GetAbsolutePosition() wtype.Coordinates {
 
 //GetTarget get the LHObject below the adaptor
 func (self *ChannelState) GetTarget() wtype.LHObject {
-	return self.adaptor.GetRobot().GetDeck().GetChildBelow(self.GetAbsolutePosition())
+	return self.adaptor.GetGroup().GetRobot().GetDeck().GetChildBelow(self.GetAbsolutePosition())
 }
 
 //                            Actions
@@ -129,10 +129,10 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 type AdaptorState struct {
 	name         string
 	channels     []*ChannelState
-	position     wtype.Coordinates
+	offset       wtype.Coordinates
 	independent  bool
 	params       *wtype.LHChannelParameter
-	robot        *RobotState
+	group        *AdaptorGroup
 	tipBehaviour wtype.TipLoadingBehaviour
 }
 
@@ -169,7 +169,7 @@ func (self *AdaptorState) GetName() string {
 
 //GetPosition
 func (self *AdaptorState) GetPosition() wtype.Coordinates {
-	return self.position
+	return self.offset.Add(self.group.GetPosition())
 }
 
 //GetChannelCount
@@ -206,18 +206,22 @@ func (self *AdaptorState) IsIndependent() bool {
 	return self.independent
 }
 
-//GetRobot
-func (self *AdaptorState) GetRobot() *RobotState {
-	return self.robot
+//GetGroup
+func (self *AdaptorState) GetGroup() *AdaptorGroup {
+	return self.group
 }
 
-//SetRobot
-func (self *AdaptorState) SetRobot(r *RobotState) {
-	self.robot = r
+//SetGroup
+func (self *AdaptorState) SetGroup(g *AdaptorGroup) {
+	self.group = g
 }
 
-func (self *AdaptorState) SetPosition(p wtype.Coordinates) {
-	self.position = p
+func (self *AdaptorState) SetPosition(p wtype.Coordinates) error {
+	return self.group.SetPosition(p.Subtract(self.offset))
+}
+
+func (self *AdaptorState) SetOffset(p wtype.Coordinates) {
+	self.offset = p
 }
 
 func (self *AdaptorState) OverridesLoadTipsCommand() bool {
@@ -310,21 +314,84 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 }
 
 // -------------------------------------------------------------------------------
+//                            AdaptorGroup
+// -------------------------------------------------------------------------------
+
+//Represent a set of adaptors which are physically attached
+type AdaptorGroup struct {
+	adaptors       []*AdaptorState
+	offsets        []wtype.Coordinates
+	adaptorOffsets map[*AdaptorState]wtype.Coordinates
+	motionLimits   *wtype.BBox
+	position       wtype.Coordinates
+	robot          *RobotState
+}
+
+func NewAdaptorGroup(offsets []wtype.Coordinates, motionLimits *wtype.BBox) *AdaptorGroup {
+	ret := AdaptorGroup{
+		adaptors:     make([]*AdaptorState, len(offsets)),
+		offsets:      offsets,
+		motionLimits: motionLimits,
+	}
+
+	return &ret
+}
+
+//GetAdaptor get an adaptor state
+func (self *AdaptorGroup) GetAdaptor(i int) (*AdaptorState, error) {
+	if i < 0 || i >= len(self.adaptors) {
+		return nil, errors.Errorf("unknown head %d", i)
+	}
+	return self.adaptors[i], nil
+}
+
+//CountAdaptors count the adaptors
+func (self *AdaptorGroup) NumAdaptors() int {
+	return len(self.adaptors)
+}
+
+func (self *AdaptorGroup) LoadAdaptor(pos int, adaptor *AdaptorState) {
+	self.adaptors[pos] = adaptor
+	adaptor.SetGroup(self)
+	adaptor.SetOffset(self.offsets[pos])
+}
+
+func (self *AdaptorGroup) GetPosition() wtype.Coordinates {
+	return self.position
+}
+
+func (self *AdaptorGroup) SetPosition(p wtype.Coordinates) error {
+	self.position = p
+	if self.motionLimits != nil && !self.motionLimits.Contains(p) {
+		return errors.New("position outside motion limits")
+	}
+	return nil
+}
+
+func (self *AdaptorGroup) GetRobot() *RobotState {
+	return self.robot
+}
+
+func (self *AdaptorGroup) SetRobot(r *RobotState) {
+	self.robot = r
+}
+
+// -------------------------------------------------------------------------------
 //                            RobotState
 // -------------------------------------------------------------------------------
 
 //RobotState Represent the physical state of a liquidhandling robot
 type RobotState struct {
-	deck        *wtype.LHDeck
-	adaptors    []*AdaptorState
-	initialized bool
-	finalized   bool
+	deck          *wtype.LHDeck
+	adaptorGroups []*AdaptorGroup
+	initialized   bool
+	finalized     bool
 }
 
 func NewRobotState() *RobotState {
 	rs := RobotState{
 		nil,
-		make([]*AdaptorState, 0),
+		make([]*AdaptorGroup, 0),
 		false,
 		false,
 	}
@@ -334,20 +401,35 @@ func NewRobotState() *RobotState {
 //                            Accessors
 //                            ---------
 
-//GetAdaptor
-func (self *RobotState) GetAdaptor(num int) *AdaptorState {
-	return self.adaptors[num]
+//GetAdaptorGroup
+func (self *RobotState) GetAdaptorGroup(num int) (*AdaptorGroup, error) {
+	if num < 0 || num >= len(self.adaptorGroups) {
+		return nil, errors.Errorf("unknown head assembly %d", num)
+	}
+	return self.adaptorGroups[num], nil
 }
 
-//GetNumberOfAdaptors
-func (self *RobotState) GetNumberOfAdaptors() int {
-	return len(self.adaptors)
+func (self *RobotState) GetAdaptor(groupIndex int, adaptorIndex int) (*AdaptorState, error) {
+	group, err := self.GetAdaptorGroup(groupIndex)
+	if err != nil {
+		return nil, err
+	}
+	adaptor, err := group.GetAdaptor(adaptorIndex)
+	if err != nil {
+		return nil, errors.Wrapf(err, "head assembly %d", groupIndex)
+	}
+	return adaptor, nil
 }
 
-//AddAdaptor
-func (self *RobotState) AddAdaptor(a *AdaptorState) {
+//GetNumberOfAdaptorGroups
+func (self *RobotState) CountAdaptorGroups() int {
+	return len(self.adaptorGroups)
+}
+
+//AddAdaptorGroup
+func (self *RobotState) AddAdaptorGroup(a *AdaptorGroup) {
 	a.SetRobot(self)
-	self.adaptors = append(self.adaptors, a)
+	self.adaptorGroups = append(self.adaptorGroups, a)
 }
 
 //GetDeck

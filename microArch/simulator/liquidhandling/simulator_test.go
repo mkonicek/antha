@@ -539,8 +539,8 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Unknown head 1",
-				"(err) Move: Unknown head -1",
+				"(err) Move: head assembly 0: unknown head 1",
+				"(err) Move: head assembly 0: unknown head -1",
 			},
 			nil, //assertions
 		},
@@ -1135,7 +1135,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Unknown head 1",
+				"(err) LoadTips: head assembly 0: unknown head 1",
 			},
 			nil, //assertions
 		},
@@ -1157,7 +1157,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Unknown head -1",
+				"(err) LoadTips: head assembly 0: unknown head -1",
 			},
 			nil, //assertions
 		},

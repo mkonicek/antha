@@ -305,18 +305,31 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 	vlh.state = NewRobotState()
 
 	//add the adaptors
-	for _, head := range props.Heads {
-		p := head.Adaptor.Params
-		//9mm spacing currently hardcoded.
-		//At some point we'll either need to fetch this from the driver or
-		//infer it from the type of tipboxes/plates accepted
-		spacing := wtype.Coordinates{X: 0, Y: 0, Z: 0}
-		if p.Orientation == wtype.LHVChannel {
-			spacing.Y = 9.
-		} else if p.Orientation == wtype.LHHChannel {
-			spacing.X = 9.
+	for _, assembly := range props.HeadAssemblies {
+		offsets := make([]wtype.Coordinates, len(assembly.Positions))
+		for i, pos := range assembly.Positions {
+			offsets[i] = pos.Offset
 		}
-		vlh.state.AddAdaptor(NewAdaptorState(head.Adaptor.Name, p.Independent, p.Multi, spacing, p, head.TipLoading))
+		group := NewAdaptorGroup(offsets, assembly.MotionLimits)
+
+		for i, pos := range assembly.Positions {
+			if pos.Head == nil {
+				continue
+			}
+			p := pos.Head.Adaptor.Params
+			//9mm spacing currently hardcoded.
+			//At some point we'll either need to fetch this from the driver or
+			//infer it from the type of tipboxes/plates accepted
+			spacing := wtype.Coordinates{X: 0, Y: 0, Z: 0}
+			if p.Orientation == wtype.LHVChannel {
+				spacing.Y = 9.
+			} else if p.Orientation == wtype.LHHChannel {
+				spacing.X = 9.
+			}
+			adaptor := NewAdaptorState(pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, p, pos.Head.TipLoading)
+			group.LoadAdaptor(i, adaptor)
+		}
+		vlh.state.AddAdaptorGroup(group)
 	}
 
 	//Make the deck
@@ -400,16 +413,9 @@ func contains(v int, s []int) bool {
 	return false
 }
 
-//getAdaptorState
-func (self *VirtualLiquidHandler) getAdaptorState(h int) (*AdaptorState, error) {
-	if h < 0 || h >= self.state.GetNumberOfAdaptors() {
-		return nil, fmt.Errorf("Unknown head %d", h)
-	}
-	return self.state.GetAdaptor(h), nil
-}
-
-func (self *VirtualLiquidHandler) GetAdaptorState(head int) *AdaptorState {
-	return self.state.GetAdaptor(head)
+//GetAdaptorState Currently we only support one adaptor group
+func (self *VirtualLiquidHandler) GetAdaptorState(adaptor int) (*AdaptorState, error) {
+	return self.state.GetAdaptor(0, adaptor)
 }
 
 func (self *VirtualLiquidHandler) GetObjectAt(slot string) wtype.LHObject {
@@ -420,7 +426,7 @@ func (self *VirtualLiquidHandler) GetObjectAt(slot string) wtype.LHObject {
 //testTipArgs check that load/unload tip arguments are valid insofar as they won't crash in RobotState
 func (self *VirtualLiquidHandler) testTipArgs(f_name string, channels []int, head int, platetype, position, well []string) bool {
 	//head should exist
-	adaptor, err := self.getAdaptorState(head)
+	adaptor, err := self.GetAdaptorState(head)
 	if err != nil {
 		self.AddError(f_name, err.Error())
 		return false
@@ -505,7 +511,7 @@ func (self *VirtualLiquidHandler) validateLHArgs(head, multi int, platetype, wha
 		nil,
 	}
 
-	ret.adaptor, err = self.getAdaptorState(head)
+	ret.adaptor, err = self.GetAdaptorState(head)
 	if err != nil {
 		return nil, err
 	}
@@ -652,7 +658,7 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MOVE ACK"}
 
 	//get the adaptor
-	adaptor, err := self.getAdaptorState(head)
+	adaptor, err := self.GetAdaptorState(head)
 	if err != nil {
 		self.AddError("Move", err.Error())
 		return ret
@@ -820,7 +826,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "ASPIRATE ACK"}
 
 	//extend arguments - at some point shortform slices might become illegal
-	if adaptor, err := self.getAdaptorState(head); err == nil {
+	if adaptor, err := self.GetAdaptorState(head); err == nil {
 		nc := adaptor.GetChannelCount()
 		volume = extend_floats(nc, volume)
 		overstroke = extend_bools(nc, overstroke)
@@ -969,7 +975,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "DISPENSE ACK"}
 
 	//extend arguments - at some point shortform slices might become illegal
-	if adaptor, err := self.getAdaptorState(head); err == nil {
+	if adaptor, err := self.GetAdaptorState(head); err == nil {
 		volume = extend_floats(adaptor.GetChannelCount(), volume)
 		blowout = extend_bools(adaptor.GetChannelCount(), blowout)
 		platetype = extend_strings(adaptor.GetChannelCount(), platetype)
@@ -1119,7 +1125,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	deck := self.state.GetDeck()
 
 	//get the adaptor
-	adaptor, err := self.getAdaptorState(head)
+	adaptor, err := self.GetAdaptorState(head)
 	if err != nil {
 		self.AddError("LoadTips", err.Error())
 		return ret
@@ -1407,7 +1413,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "UNLOADTIPS ACK"}
 
 	//get the adaptor
-	adaptor, err := self.getAdaptorState(head)
+	adaptor, err := self.GetAdaptorState(head)
 	if err != nil {
 		self.AddError("UnloadTips", err.Error())
 		return ret
@@ -1557,7 +1563,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float64) driver.CommandStatus {
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETPIPETTESPEED ACK"}
 
-	adaptor, err := self.getAdaptorState(head)
+	adaptor, err := self.GetAdaptorState(head)
 	if err != nil {
 		self.AddError("SetPipetteSpeed", err.Error())
 		return ret
@@ -1648,7 +1654,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MIX ACK"}
 
 	//extend arguments - at some point shortform slices might become illegal
-	if adaptor, err := self.getAdaptorState(head); err == nil {
+	if adaptor, err := self.GetAdaptorState(head); err == nil {
 		volume = extend_floats(adaptor.GetChannelCount(), volume)
 		platetype = extend_strings(adaptor.GetChannelCount(), platetype)
 		cycles = extend_ints(adaptor.GetChannelCount(), cycles)

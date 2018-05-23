@@ -958,7 +958,10 @@ func removeTipboxTips(tipbox_loc string, wells []string) *SetupFn {
 
 func preloadAdaptorTips(head int, tipbox_loc string, channels []int) *SetupFn {
 	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
-		adaptor := vlh.GetAdaptorState(head)
+		adaptor, err := vlh.GetAdaptorState(head)
+		if err != nil {
+			panic(err)
+		}
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
 
 		for _, ch := range channels {
@@ -982,7 +985,10 @@ func getLHComponent(what string, vol_ul float64) *wtype.LHComponent {
 
 func preloadFilledTips(head int, tipbox_loc string, channels []int, what string, volume float64) *SetupFn {
 	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
-		adaptor := vlh.GetAdaptorState(head)
+		adaptor, err := vlh.GetAdaptorState(head)
+		if err != nil {
+			panic(err)
+		}
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
 		tip := tipbox.Tiptype.Dup()
 		c := getLHComponent(what, volume)
@@ -1114,7 +1120,10 @@ func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
 			mtips[td.channel] = true
 		}
 
-		adaptor := vlh.GetAdaptorState(head)
+		adaptor, err := vlh.GetAdaptorState(head)
+		if err != nil {
+			panic(err)
+		}
 		errors := []string{}
 		for ch := 0; ch < adaptor.GetChannelCount(); ch++ {
 			if itl, et := adaptor.GetChannel(ch).HasTip(), mtips[ch]; itl && !et {
@@ -1145,7 +1154,10 @@ func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
 //adaptorPositionAssertion assert that the adaptor has tips in the given positions
 func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
 	var ret AssertionFn = func(name string, t *testing.T, vlh *lh.VirtualLiquidHandler) {
-		adaptor := vlh.GetAdaptorState(head)
+		adaptor, err := vlh.GetAdaptorState(head)
+		if err != nil {
+			panic(err)
+		}
 		or := adaptor.GetChannel(0).GetAbsolutePosition()
 		//use string comparison to avoid precision errors (string printed with %.1f)
 		if g, e := or.String(), origin.String(); g != e {

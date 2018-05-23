@@ -103,11 +103,28 @@ func makeLHHead(hp HeadParams) *wtype.LHHead {
 	return ret
 }
 
+type HeadAssemblyParams struct {
+	MotionLimits    *wtype.BBox
+	PositionOffsets []wtype.Coordinates
+	Heads           []HeadParams
+}
+
+func makeLHHeadAssembly(ha HeadAssemblyParams) *wtype.LHHeadAssembly {
+	ret := wtype.NewLHHeadAssembly(ha.MotionLimits)
+	for _, pos := range ha.PositionOffsets {
+		ret.AddPosition(pos)
+	}
+	for _, h := range ha.Heads {
+		ret.LoadHead(makeLHHead(h))
+	}
+	return ret
+}
+
 type LHPropertiesParams struct {
 	Name                 string
 	Mfg                  string
 	Layouts              []LayoutParams
-	Heads                []HeadParams
+	HeadAssemblies       []HeadAssemblyParams
 	Tip_preferences      []string
 	Input_preferences    []string
 	Output_preferences   []string
@@ -125,10 +142,11 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
 	lhp := liquidhandling.NewLHProperties(len(layout), p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 
-	lhp.Heads = make([]*wtype.LHHead, 0)
-	for _, hp := range p.Heads {
-		lhp.Heads = append(lhp.Heads, makeLHHead(hp))
+	lhp.HeadAssemblies = make([]*wtype.LHHeadAssembly, 0, len(p.HeadAssemblies))
+	for _, ha := range p.HeadAssemblies {
+		lhp.HeadAssemblies = append(lhp.HeadAssemblies, makeLHHeadAssembly(ha))
 	}
+	lhp.Heads = lhp.GetHeadsLoaded()
 
 	lhp.Tip_preferences = p.Tip_preferences
 	lhp.Input_preferences = p.Input_preferences
@@ -601,39 +619,45 @@ func default_lhproperties() *liquidhandling.LHProperties {
 			{"wash", 200.0, 400.0, 0.0},
 			{"waste", 400.0, 400.0, 0.0},
 		},
-		[]HeadParams{
+		[]HeadAssemblyParams{
 			{
-				"Head0 Name",
-				"Head0 Manufacturer",
-				ChannelParams{
-					"Head0 ChannelParams",     //Name
-					"Head0 Platform",          //Platform
-					UnitParams{0.1, "ul"},     //min volume
-					UnitParams{1., "ml"},      //max volume
-					UnitParams{0.1, "ml/min"}, //min flowrate
-					UnitParams{10., "ml/min"}, //max flowrate
-					8,     //multi
-					false, //independent
-					0,     //orientation
-					0,     //head
-				},
-				AdaptorParams{
-					"Head0 Adaptor",
-					"Head0 Adaptor Manufacturer",
-					ChannelParams{
-						"Head0 Adaptor ChannelParams", //Name
-						"Head0 Adaptor Platform",      //Platform
-						UnitParams{0.1, "ul"},         //min volume
-						UnitParams{1., "ml"},          //max volume
-						UnitParams{0.1, "ml/min"},     //min flowrate
-						UnitParams{10., "ml/min"},     //max flowrate
-						8,     //multi
-						false, //independent
-						0,     //orientation
-						0,     //head
+				nil, //MotionLimits
+				[]wtype.Coordinates{{0, 0, 0}}, //Offset
+				[]HeadParams{
+					{
+						"Head0 Name",
+						"Head0 Manufacturer",
+						ChannelParams{
+							"Head0 ChannelParams",     //Name
+							"Head0 Platform",          //Platform
+							UnitParams{0.1, "ul"},     //min volume
+							UnitParams{1., "ml"},      //max volume
+							UnitParams{0.1, "ml/min"}, //min flowrate
+							UnitParams{10., "ml/min"}, //max flowrate
+							8,     //multi
+							false, //independent
+							0,     //orientation
+							0,     //head
+						},
+						AdaptorParams{
+							"Head0 Adaptor",
+							"Head0 Adaptor Manufacturer",
+							ChannelParams{
+								"Head0 Adaptor ChannelParams", //Name
+								"Head0 Adaptor Platform",      //Platform
+								UnitParams{0.1, "ul"},         //min volume
+								UnitParams{1., "ml"},          //max volume
+								UnitParams{0.1, "ml/min"},     //min flowrate
+								UnitParams{10., "ml/min"},     //max flowrate
+								8,     //multi
+								false, //independent
+								0,     //orientation
+								0,     //head
+							},
+						},
+						wtype.TipLoadingBehaviour{},
 					},
 				},
-				wtype.TipLoadingBehaviour{},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
@@ -662,72 +686,92 @@ func multihead_lhproperties() *liquidhandling.LHProperties {
 			{"wash", 200.0, 400.0, 0.0},
 			{"waste", 400.0, 400.0, 0.0},
 		},
-		[]HeadParams{
+		[]HeadAssemblyParams{
 			{
-				"Head0 Name",
-				"Head0 Manufacturer",
-				ChannelParams{
-					"Head0 ChannelParams",     //Name
-					"Head0 Platform",          //Platform
-					UnitParams{0.1, "ul"},     //min volume
-					UnitParams{1., "ml"},      //max volume
-					UnitParams{0.1, "ml/min"}, //min flowrate
-					UnitParams{10., "ml/min"}, //max flowrate
-					8,     //multi
-					false, //independent
-					0,     //orientation
-					0,     //head
-				},
-				AdaptorParams{
-					"Head0 Adaptor",
-					"Head0 Adaptor Manufacturer",
-					ChannelParams{
-						"Head0 Adaptor ChannelParams", //Name
-						"Head0 Adaptor Platform",      //Platform
-						UnitParams{0.1, "ul"},         //min volume
-						UnitParams{1., "ml"},          //max volume
-						UnitParams{0.1, "ml/min"},     //min flowrate
-						UnitParams{10., "ml/min"},     //max flowrate
-						8,     //multi
-						false, //independent
-						0,     //orientation
-						0,     //head
+				nil, //MotionLimits
+				[]wtype.Coordinates{{0, 0, 0}, {0, 18.0, 0}}, //Offset
+				[]HeadParams{
+					{
+						"Head0 Name",
+						"Head0 Manufacturer",
+						ChannelParams{
+							"Head0 ChannelParams",     //Name
+							"Head0 Platform",          //Platform
+							UnitParams{0.1, "ul"},     //min volume
+							UnitParams{1., "ml"},      //max volume
+							UnitParams{0.1, "ml/min"}, //min flowrate
+							UnitParams{10., "ml/min"}, //max flowrate
+							8,     //multi
+							false, //independent
+							0,     //orientation
+							0,     //head
+						},
+						AdaptorParams{
+							"Head0 Adaptor",
+							"Head0 Adaptor Manufacturer",
+							ChannelParams{
+								"Head0 Adaptor ChannelParams", //Name
+								"Head0 Adaptor Platform",      //Platform
+								UnitParams{0.1, "ul"},         //min volume
+								UnitParams{1., "ml"},          //max volume
+								UnitParams{0.1, "ml/min"},     //min flowrate
+								UnitParams{10., "ml/min"},     //max flowrate
+								8,     //multi
+								false, //independent
+								0,     //orientation
+								0,     //head
+							},
+						},
+						wtype.TipLoadingBehaviour{
+							OverrideLoadTipsCommand:    true,
+							AutoRefillTipboxes:         true,
+							LoadingOrder:               wtype.ColumnWise,
+							VerticalLoadingDirection:   wtype.BottomToTop,
+							HorizontalLoadingDirection: wtype.RightToLeft,
+							ChunkingBehaviour:          wtype.ReverseSequentialTipLoading,
+						},
+					},
+					{
+						"Head1 Name",
+						"Head1 Manufacturer",
+						ChannelParams{
+							"Head1 ChannelParams",     //Name
+							"Head1 Platform",          //Platform
+							UnitParams{0.1, "ul"},     //min volume
+							UnitParams{1., "ml"},      //max volume
+							UnitParams{0.1, "ml/min"}, //min flowrate
+							UnitParams{10., "ml/min"}, //max flowrate
+							8,     //multi
+							false, //independent
+							0,     //orientation
+							0,     //head
+						},
+						AdaptorParams{
+							"Head1 Adaptor",
+							"Head1 Adaptor Manufacturer",
+							ChannelParams{
+								"Head1 Adaptor ChannelParams", //Name
+								"Head1 Adaptor Platform",      //Platform
+								UnitParams{0.1, "ul"},         //min volume
+								UnitParams{1., "ml"},          //max volume
+								UnitParams{0.1, "ml/min"},     //min flowrate
+								UnitParams{10., "ml/min"},     //max flowrate
+								8,     //multi
+								false, //independent
+								0,     //orientation
+								0,     //head
+							},
+						},
+						wtype.TipLoadingBehaviour{
+							OverrideLoadTipsCommand:    true,
+							AutoRefillTipboxes:         true,
+							LoadingOrder:               wtype.ColumnWise,
+							VerticalLoadingDirection:   wtype.BottomToTop,
+							HorizontalLoadingDirection: wtype.LeftToRight,
+							ChunkingBehaviour:          wtype.ReverseSequentialTipLoading,
+						},
 					},
 				},
-				wtype.TipLoadingBehaviour{},
-			},
-			{
-				"Head1 Name",
-				"Head1 Manufacturer",
-				ChannelParams{
-					"Head1 ChannelParams",     //Name
-					"Head1 Platform",          //Platform
-					UnitParams{0.1, "ul"},     //min volume
-					UnitParams{1., "ml"},      //max volume
-					UnitParams{0.1, "ml/min"}, //min flowrate
-					UnitParams{10., "ml/min"}, //max flowrate
-					8,     //multi
-					false, //independent
-					0,     //orientation
-					0,     //head
-				},
-				AdaptorParams{
-					"Head1 Adaptor",
-					"Head1 Adaptor Manufacturer",
-					ChannelParams{
-						"Head1 Adaptor ChannelParams", //Name
-						"Head1 Adaptor Platform",      //Platform
-						UnitParams{0.1, "ul"},         //min volume
-						UnitParams{1., "ml"},          //max volume
-						UnitParams{0.1, "ml/min"},     //min flowrate
-						UnitParams{10., "ml/min"},     //max flowrate
-						8,     //multi
-						false, //independent
-						0,     //orientation
-						0,     //head
-					},
-				},
-				wtype.TipLoadingBehaviour{},
 			},
 		},
 		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
@@ -742,64 +786,14 @@ func multihead_lhproperties() *liquidhandling.LHProperties {
 }
 
 func independent_lhproperties() *liquidhandling.LHProperties {
-	valid_props := LHPropertiesParams{
-		"Device Name",
-		"Device Manufacturer",
-		[]LayoutParams{
-			{"tipbox_1", 0.0, 0.0, 0.0},
-			{"tipbox_2", 200.0, 0.0, 0.0},
-			{"input_1", 400.0, 0.0, 0.0},
-			{"input_2", 0.0, 200.0, 0.0},
-			{"output_1", 200.0, 200.0, 0.0},
-			{"output_2", 400.0, 200.0, 0.0},
-			{"tipwaste", 0.0, 400.0, 0.0},
-			{"wash", 200.0, 400.0, 0.0},
-			{"waste", 400.0, 400.0, 0.0},
-		},
-		[]HeadParams{
-			{
-				"Head0 Name",
-				"Head0 Manufacturer",
-				ChannelParams{
-					"Head0 ChannelParams",     //Name
-					"Head0 Platform",          //Platform
-					UnitParams{0.1, "ul"},     //min volume
-					UnitParams{1., "ml"},      //max volume
-					UnitParams{0.1, "ml/min"}, //min flowrate
-					UnitParams{10., "ml/min"}, //max flowrate
-					8,    //multi
-					true, //independent
-					0,    //orientation
-					0,    //head
-				},
-				AdaptorParams{
-					"Head0 Adaptor",
-					"Head0 Adaptor Manufacturer",
-					ChannelParams{
-						"Head0 Adaptor ChannelParams", //Name
-						"Head0 Adaptor Platform",      //Platform
-						UnitParams{0.1, "ul"},         //min volume
-						UnitParams{1., "ml"},          //max volume
-						UnitParams{0.1, "ml/min"},     //min flowrate
-						UnitParams{10., "ml/min"},     //max flowrate
-						8,    //multi
-						true, //independent
-						0,    //orientation
-						0,    //head
-					},
-				},
-				wtype.TipLoadingBehaviour{},
-			},
-		},
-		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
-		[]string{"input_1", "input_2"},   //Input_preferences
-		[]string{"output_1", "output_2"}, //Output_preferences
-		[]string{"tipwaste"},             //Tipwaste_preferences
-		[]string{"wash"},                 //Wash_preferences
-		[]string{"waste"},                //Waste_preferences
+	ret := default_lhproperties()
+
+	for _, head := range ret.Heads {
+		head.Params.Independent = true
+		head.Adaptor.Params.Independent = true
 	}
 
-	return makeLHProperties(&valid_props)
+	return ret
 }
 
 /* -- remove for linting

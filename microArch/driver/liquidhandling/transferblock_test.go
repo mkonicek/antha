@@ -106,7 +106,7 @@ func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, 
 }
 
 func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *LHProperties {
-	rbt, err := makeTestGilson(ctx)
+	rbt, err := MakeGilsonWithPlatesForTest(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -381,7 +381,8 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 
 	// allow independent multichannel activity
-	rbt.HeadsLoaded[0].Params.Independent = true
+	headsLoaded := rbt.GetHeadsLoaded()
+	headsLoaded[0].Params.Independent = true
 
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 )
 
 func TestSavePlates(t *testing.T) {
-	lhp := makeTestLH()
+	lhp := MakeGilsonForTest()
 	ctx := testinventory.NewContext(context.Background())
 
 	p, err := inventory.NewPlate(ctx, "pcrplate_skirted")

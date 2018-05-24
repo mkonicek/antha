@@ -741,6 +741,39 @@ func Test_MoveConstraints(t *testing.T) {
 				positionAssertion(1, wtype.Coordinates{X: 204.5, Y: 4.5, Z: 62.2}),
 			},
 		},
+		{
+			"tips on other head",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(1, "tipbox_1", []int{0}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					1, //head
+				},
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //well
+				},
+			},
+			[]string{ //errors
+				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7: tips already loaded on head 1 channel 0",
+			},
+			[]*AssertionFn{ //assertions
+			},
+		},
 	}
 
 	for _, test := range tests {

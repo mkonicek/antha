@@ -182,6 +182,9 @@ func (self *LHDeck) SetParent(o LHObject) error {
 		self.GetName(), ClassOf(o), NameOf(o))
 }
 
+//@implement LHObject
+func (self *LHDeck) ClearParent() {}
+
 func (self *LHDeck) GetParent() LHObject {
 	return nil
 }

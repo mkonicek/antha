@@ -1051,6 +1051,11 @@ func (self *LHPlate) SetParent(p LHObject) error {
 	return nil
 }
 
+//@implement LHObject
+func (self *LHPlate) ClearParent() {
+	self.parent = nil
+}
+
 func (self *LHPlate) GetParent() LHObject {
 	return self.parent
 }

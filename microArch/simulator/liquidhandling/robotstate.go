@@ -319,12 +319,11 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 
 //Represent a set of adaptors which are physically attached
 type AdaptorGroup struct {
-	adaptors       []*AdaptorState
-	offsets        []wtype.Coordinates
-	adaptorOffsets map[*AdaptorState]wtype.Coordinates
-	motionLimits   *wtype.BBox
-	position       wtype.Coordinates
-	robot          *RobotState
+	adaptors     []*AdaptorState
+	offsets      []wtype.Coordinates
+	motionLimits *wtype.BBox
+	position     wtype.Coordinates
+	robot        *RobotState
 }
 
 func NewAdaptorGroup(offsets []wtype.Coordinates, motionLimits *wtype.BBox) *AdaptorGroup {
@@ -363,7 +362,7 @@ func (self *AdaptorGroup) GetPosition() wtype.Coordinates {
 func (self *AdaptorGroup) SetPosition(p wtype.Coordinates) error {
 	self.position = p
 	if self.motionLimits != nil && !self.motionLimits.Contains(p) {
-		return errors.New("position outside motion limits")
+		return errors.New("motion limits prevent moving into position")
 	}
 	return nil
 }

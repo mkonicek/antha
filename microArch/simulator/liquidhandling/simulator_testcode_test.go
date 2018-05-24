@@ -688,8 +688,8 @@ func multihead_lhproperties() *liquidhandling.LHProperties {
 		},
 		[]HeadAssemblyParams{
 			{
-				nil, //MotionLimits
-				[]wtype.Coordinates{{0, 0, 0}, {0, 18.0, 0}}, //Offset
+				wtype.NewBBox6f(0, 0, 0, 600., 600., 600.),
+				[]wtype.Coordinates{{0, -9, 0}, {0, 9, 0}}, //Offset
 				[]HeadParams{
 					{
 						"Head0 Name",

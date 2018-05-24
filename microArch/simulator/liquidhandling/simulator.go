@@ -805,7 +805,10 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 	}
 
 	//update the head position accordingly
-	adaptor.SetPosition(origin)
+	err = adaptor.SetPosition(origin)
+	if err != nil {
+		self.AddError("Move", err.Error())
+	}
 	for i, rc := range rel_coords {
 		adaptor.GetChannel(i).SetRelativePosition(rc)
 	}

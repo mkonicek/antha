@@ -201,3 +201,33 @@ func TestBlowNoTipChange(t *testing.T) {
 		}
 	}
 }
+
+func TestBlowNoTipChangeV2(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	robot, err := makeTestGilson(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	test := &PolicyTest{
+		Name: "blow no tip change",
+		Rules: []*Rule{
+			{
+				Name: "TESTRULE1",
+				Conditions: []Condition{
+					&CategoryCondition{
+						Attribute: "LIQUIDCLASS",
+						Value:     "soup",
+					},
+				},
+			},
+		},
+		Instruction:          getTestBlowout(robot),
+		Robot:                robot,
+		ExpectedInstructions: "",
+		Assertions:           []*InstructionAssertion{},
+	}
+
+	test.Run(t)
+}

@@ -2196,6 +2196,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	// set the defaults
 	ret = append(ret, setDefaults(ins.Head, pol)...)
+	fmt.Printf("defaultpspeed = %v\n", defaultpspeed)
 
 	// first, are we breaking up the move?
 
@@ -2367,6 +2368,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		sps.Head = ins.Head
 		sps.Channel = -1 // all channels
 		sps.Speed = defaultpspeed
+		fmt.Printf("defaultpspeed = %v\n", defaultpspeed)
 		ret = append(ret, sps)
 	}
 

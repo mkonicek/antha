@@ -58,11 +58,8 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		}
 
 		if ch.Values[0].Type == wtype.LHIPRM {
-			// suppress empty messages
-			if ch.Values[0].Message != "" {
-				prm := liquidhandling.NewMessageInstruction(ch.Values[0])
-				request.InstructionSet.Add(prm)
-			}
+			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
+			request.InstructionSet.Add(prm)
 		} else if hasSplit(ch.Values) {
 			if !allSplits(ch.Values) {
 				insTypes := func(inss []*wtype.LHInstruction) string {

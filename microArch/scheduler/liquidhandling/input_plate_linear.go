@@ -117,7 +117,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	}
 
 	// plate constraint
-	constraintBounds[cur] = weight_constraint["MAX_N_PLATES"] - 1.0
+	constraintBounds[cur] = 1.0 * (weight_constraint["MAX_N_PLATES"] - 1.0)
 
 	for i := range component_order {
 		for j := 0; j < len(plate_types); j++ {
@@ -132,7 +132,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	cur += 1
 
 	// well constraint
-	constraintBounds[cur] = weight_constraint["MAX_N_WELLS"]
+	constraintBounds[cur] = 1.0 * weight_constraint["MAX_N_WELLS"]
 
 	// for the matrix we just add a row of 1s
 	for i := 0; i < n_cols; i++ {
@@ -141,15 +141,21 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	matUBConstraintMatrix := mat.NewDense(n_rows, n_cols, constraintMatrix)
 
+	fmt.Println("C: ", objectiveCoefs)
+	fmt.Println(mat.Formatted(matUBConstraintMatrix))
+	fmt.Println("B: ", constraintBounds)
+
 	//	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrix, constraintBounds, aOld, bOld)
 	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matUBConstraintMatrix, constraintBounds, nil, nil)
 
-	tolerance := 1e-6
+	tolerance := 0.1
 	_, optX, err := lp.Simplex(cNew, aNew, bNew, tolerance, nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("RAW OPTX: ", optX)
 
 	// now create the assignment outputs
 
@@ -157,9 +163,9 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	for _, c := range component_order {
 		pmap := make(map[*wtype.LHPlate]int)
 		for _, p := range plate_types {
-			if optX[cur] > tolerance {
+			if optX[cur] > 0.0 {
 				pmap[p.Dup()] = int(math.Ceil(optX[cur]))
-				fmt.Println("COMPONENT ", c, " HAS ", int(math.Ceil(optX[cur])), " WELLS IN PLATE TYPE ", p.Type)
+				fmt.Println("COMPONENT ", c, " WANT ", component_volumes[c], " HAS ", int(math.Ceil(optX[cur])), " WELLS IN PLATE TYPE ", p.Type, " WHICH GIVES US ", p.Welltype.MaxWorkingVolume().RawValue()*(math.Ceil(optX[cur])), " TOTAL")
 			}
 			cur += 1
 		}

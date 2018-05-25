@@ -28,7 +28,7 @@ func (self *CategoryCondition) ApplyTo(rule *wtype.LHPolicyRule) {
 	rule.AddCategoryConditionOn(self.Attribute, self.Value)
 }
 
-type NumericCondition struct {
+type NumericCondition struct { //nolint
 	Attribute string
 	Low       float64
 	High      float64

@@ -367,6 +367,32 @@ func TestZOffset(t *testing.T) {
 			},
 		},
 		{
+			Name: "blow z-offset unset",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 2, //the move before the dispense
+					Values: map[string]interface{}{
+						"OFFSETZ": []float64{defaultZOffset},
+					},
+				},
+			},
+		},
+		{
 			Name: "suck z-offset",
 			Rules: []*Rule{
 				{
@@ -390,6 +416,32 @@ func TestZOffset(t *testing.T) {
 					Instruction: 2, //the move before the dispense
 					Values: map[string]interface{}{
 						"OFFSETZ": []float64{5.4},
+					},
+				},
+			},
+		},
+		{
+			Name: "suck z-offset unset",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 2, //the move before the dispense
+					Values: map[string]interface{}{
+						"OFFSETZ": []float64{defaultZOffset},
 					},
 				},
 			},

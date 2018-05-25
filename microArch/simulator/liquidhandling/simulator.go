@@ -1950,7 +1950,7 @@ func (self *VirtualLiquidHandler) Message(level int, title, text string, showcan
 }
 
 //GetOutputFile - used, but not in instruction stream
-func (self *VirtualLiquidHandler) GetOutputFile() (string, driver.CommandStatus) {
+func (self *VirtualLiquidHandler) GetOutputFile() ([]byte, driver.CommandStatus) {
 	self.AddWarning("GetOutputFile", "Not yet implemented")
-	return "You forgot to say 'please'", driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETOUTPUTFILE ACK"}
+	return []byte("You forgot to say 'please'"), driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETOUTPUTFILE ACK"}
 }

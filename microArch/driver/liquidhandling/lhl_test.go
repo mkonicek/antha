@@ -7,7 +7,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-func getTestBlowout(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
+func getTestBlow(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
 	bi := NewBlowInstruction()
 	bi.Multi = multi
 	bi.TipType = tipType
@@ -47,7 +47,7 @@ func TestBlowMixing(t *testing.T) {
 
 	tests := []*PolicyTest{
 		{
-			Name: "blow no tip change single channel",
+			Name: "single channel",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -63,7 +63,7 @@ func TestBlowMixing(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MIX,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
@@ -77,7 +77,7 @@ func TestBlowMixing(t *testing.T) {
 			},
 		},
 		{
-			Name: "blow no tip change eight channel",
+			Name: "eight channel",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -93,7 +93,7 @@ func TestBlowMixing(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 8, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 8, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MIX,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
@@ -106,6 +106,82 @@ func TestBlowMixing(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "set post mix rate",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"POST_MIX":        5,
+						"POST_MIX_VOLUME": 10.0,
+						"POST_MIX_RATE":   1.5,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,SPS,MOV,MIX,SPS,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 0,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+				{
+					Instruction: 4,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   1.5,
+					},
+				},
+				{
+					Instruction: 6, //the Mix
+					Values: map[string]interface{}{
+						"CYCLES": []int{5},
+						"VOLUME": []wunit.Volume{tenUl},
+					},
+				},
+				{
+					Instruction: 7,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+			},
+		},
+		{
+			Name: "set post mix out of range",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"POST_MIX":        5,
+						"POST_MIX_VOLUME": 10.0,
+						"POST_MIX_RATE":   150.,
+					},
+				},
+			},
+			Instruction: getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Error:       "setting post mix pipetting speed: value 150.000000 out of range 0.022500 - 3.750000",
+		},
 	}
 
 	for _, test := range tests {
@@ -113,11 +189,157 @@ func TestBlowMixing(t *testing.T) {
 	}
 }
 
-func TestBlowNoMixing(t *testing.T) {
+func TestSuckMixing(t *testing.T) {
+
+	tenUl := wunit.NewVolume(10.0, "ul")
 
 	tests := []*PolicyTest{
 		{
-			Name: "z-offset single channel",
+			Name: "single channel",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"PRE_MIX":        5,
+						"PRE_MIX_VOLUME": 10.0,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			ExpectedInstructions: "[SPS,SDS,MOV,MIX,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, //the Mix
+					Values: map[string]interface{}{
+						"CYCLES": []int{5},
+						"VOLUME": []wunit.Volume{tenUl},
+					},
+				},
+			},
+		},
+		{
+			Name: "eight channel",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"PRE_MIX":        5,
+						"PRE_MIX_VOLUME": 10.0,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,MIX,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, //the Mix
+					Values: map[string]interface{}{
+						"CYCLES": []int{5, 5, 5, 5, 5, 5, 5, 5},
+						"VOLUME": []wunit.Volume{tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl},
+					},
+				},
+			},
+		},
+		{
+			Name: "set pre mix rate",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"PRE_MIX":        5,
+						"PRE_MIX_VOLUME": 10.0,
+						"PRE_MIX_RATE":   1.5,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			ExpectedInstructions: "[SPS,SDS,SPS,MOV,MIX,SPS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 0,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+				{
+					Instruction: 2,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   1.5,
+					},
+				},
+				{
+					Instruction: 4, //the Mix
+					Values: map[string]interface{}{
+						"CYCLES": []int{5},
+						"VOLUME": []wunit.Volume{tenUl},
+					},
+				},
+				{
+					Instruction: 5,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+			},
+		},
+		{
+			Name: "set pre mix out of range",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"PRE_MIX":        5,
+						"PRE_MIX_VOLUME": 10.0,
+						"PRE_MIX_RATE":   150.,
+					},
+				},
+			},
+			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Error:       "setting pre mix pipetting speed: value 150.000000 out of range 0.022500 - 3.750000",
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestZOffset(t *testing.T) {
+
+	tests := []*PolicyTest{
+		{
+			Name: "blow z-offset",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -132,25 +354,10 @@ func TestBlowNoMixing(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
-				{
-					Instruction: 0,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-				{
-					Instruction: 1,
-					Values: map[string]interface{}{
-						"DRIVE": "Z",
-						"SPEED": defaultZSpeed,
-					},
-				},
 				{
 					Instruction: 2, //the move before the dispense
 					Values: map[string]interface{}{
@@ -160,7 +367,45 @@ func TestBlowNoMixing(t *testing.T) {
 			},
 		},
 		{
-			Name: "entry speed single channel",
+			Name: "suck z-offset",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"ASPZOFFSET": 5.4,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 2, //the move before the dispense
+					Values: map[string]interface{}{
+						"OFFSETZ": []float64{5.4},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestEntrySpeed(t *testing.T) {
+
+	tests := []*PolicyTest{
+		{
+			Name: "blow entry speed",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -175,18 +420,46 @@ func TestBlowNoMixing(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,SDS,MOV,DSP,SDS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
-					Instruction: 0,
+					Instruction: 1,
 					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
+						"DRIVE": "Z",
+						"SPEED": defaultZSpeed,
 					},
 				},
+				{
+					Instruction: 3,
+					Values: map[string]interface{}{
+						"DRIVE": "Z",
+						"SPEED": 50.0,
+					},
+				},
+			},
+		},
+		{
+			Name: "suck entry speed",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"ASPENTRYSPEED": 50.0,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,SDS,MOV,ASP,MOV,SDS]",
+			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 1,
 					Values: map[string]interface{}{
@@ -202,9 +475,10 @@ func TestBlowNoMixing(t *testing.T) {
 					},
 				},
 				{
-					Instruction: 4,
+					Instruction: 7,
 					Values: map[string]interface{}{
-						"OFFSETZ": []float64{defaultZOffset},
+						"DRIVE": "Z",
+						"SPEED": defaultZSpeed,
 					},
 				},
 			},
@@ -233,7 +507,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 					Policy: map[string]interface{}{},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
@@ -263,7 +537,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
@@ -293,7 +567,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
@@ -340,7 +614,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
@@ -387,7 +661,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
@@ -434,7 +708,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction: getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction: getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Error:       "setting pipette dispense speed: value 4.750000 out of range 0.022500 - 3.750000",
 		},
 		{
@@ -454,7 +728,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction: getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Instruction: getTestBlow(getLVConfig(), 1, "Gilson20"),
 			Error:       "setting pipette dispense speed: value 0.010000 out of range 0.022500 - 3.750000",
 		},
 	}

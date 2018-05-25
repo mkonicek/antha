@@ -1901,14 +1901,14 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		mixrate := SafeGetF64(pol, "PRE_MIX_RATE")
 
-		changepipspeed := (mixrate == defaultpspeed) && (mixrate > 0.0)
+		changepipspeed := (mixrate != defaultpspeed) && (mixrate > 0.0)
 
 		if changepipspeed {
 			mixrate, err = checkAndSaften(mixrate, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
-
 			if err != nil {
-				return []RobotInstruction{}, errors.Wrap(err, "setting pipette dispense speed")
+				return []RobotInstruction{}, errors.Wrap(err, "setting pre mix pipetting speed")
 			}
+
 			setspd := NewSetPipetteSpeedInstruction()
 			setspd.Head = ins.Head
 			setspd.Channel = -1 // all channels
@@ -2474,7 +2474,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			mixrate, err = checkAndSaften(mixrate, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 			if err != nil {
-				return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
+				return []RobotInstruction{}, errors.Wrap(err, "setting post mix pipetting speed")
 			}
 			setspd := NewSetPipetteSpeedInstruction()
 			setspd.Head = ins.Head

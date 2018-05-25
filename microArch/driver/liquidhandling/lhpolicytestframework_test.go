@@ -64,6 +64,10 @@ type InstructionAssertion struct {
 }
 
 func (self *InstructionAssertion) Assert(t *testing.T, ris []RobotInstruction, name string) {
+	if self.Instruction < 0 || self.Instruction >= len(ris) {
+		t.Errorf("%s: test error: assertion on instruction %d, but only %d instructions", name, self.Instruction, len(ris))
+		return
+	}
 	ins := ris[self.Instruction]
 
 	for param, e := range self.Values {
@@ -121,7 +125,7 @@ func (self *PolicyTest) Run(t *testing.T) {
 			err = errors.Wrapf(err, "%s: unexpected error", self.Name)
 			t.Error(err)
 		} else if self.Error != err.Error() {
-			t.Errorf("%s: errors don't match: expected \"%s\", got \"%s\"", self.Name, self.Error, err.Error())
+			t.Errorf("%s: errors don't match:\ne: \"%s\",\ng: \"%s\"", self.Name, self.Error, err.Error())
 		}
 		return
 	}

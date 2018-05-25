@@ -31,10 +31,11 @@ import (
 	"strings"
 	"time"
 
+	"math"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/logger"
-	"math"
 )
 
 // structure describing a microplate
@@ -418,8 +419,8 @@ func (lhp *LHPlate) ValidateVolumes() error {
 	if len(errCoords) == 1 {
 		return lastErr
 	} else if len(errCoords) > 1 {
-		return LHError(LH_ERR_VOL, fmt.Sprintf("invalid volumes found in %d wells in plate %s at well coordinates %s",
-			len(errCoords), lhp.GetName(), strings.Join(errCoords, ", ")))
+		return LHError(LH_ERR_VOL, fmt.Sprintf("invalid volumes found in %d wells in plate %s at well coordinates %s. Well Capacity on plate type %s: %s",
+			len(errCoords), lhp.GetName(), strings.Join(errCoords, ", "), lhp.Type, lhp.Welltype.MaxVolume().ToString()))
 	}
 
 	return nil
@@ -1387,6 +1388,18 @@ func (p *LHPlate) AllContents() []*LHComponent {
 	for _, c := range p.Cols {
 		for _, w := range c {
 			ret = append(ret, w.WContents)
+		}
+	}
+
+	return ret
+}
+
+// AllContents returns all the components on the plate
+func (p *LHPlate) AllWellContents() map[string]string {
+	ret := make(map[string]string)
+	for wellLocation, well := range p.HWells {
+		if well.WContents.Name() != "" {
+			ret[wellLocation] = well.WContents.Name()
 		}
 	}
 

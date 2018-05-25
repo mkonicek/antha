@@ -1359,9 +1359,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	for _, ch := range channels {
 		tips[ch].GetParent().(*wtype.LHTipbox).RemoveTip(wc[ch])
 		adaptor.GetChannel(ch).LoadTip(tips[ch])
-		if err := tips[ch].SetParent((*wtype.LHTipbox)(nil)); err != nil {
-			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
-		}
+		tips[ch].ClearParent()
 	}
 
 	return ret
@@ -1607,7 +1605,6 @@ func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float6
 
 //SetDriveSpeed - used
 func (self *VirtualLiquidHandler) SetDriveSpeed(drive string, rate float64) driver.CommandStatus {
-	self.AddWarningf("SetDriveSpeed", "Not yet implemented: SetDriveSpeed(%s, %f)", drive, rate)
 	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETDRIVESPEED ACK"}
 }
 

@@ -22,6 +22,31 @@ func setUpTipsFor(ctx context.Context, lhp *liquidhandling.LHProperties) *liquid
 	return lhp
 }
 
+const (
+	HVMinRate = 0.225
+	HVMaxRate = 37.5
+	LVMinRate = 0.0225
+	LVMaxRate = 3.75
+)
+
+func getHVConfig() *wtype.LHChannelParameter {
+	minvol := wunit.NewVolume(10, "ul")
+	maxvol := wunit.NewVolume(250, "ul")
+	minspd := wunit.NewFlowRate(HVMinRate, "ml/min")
+	maxspd := wunit.NewFlowRate(HVMaxRate, "ml/min")
+
+	return wtype.NewLHChannelParameter("HVconfig", "GilsonPipetmax", minvol, maxvol, minspd, maxspd, 8, false, wtype.LHVChannel, 0)
+}
+
+func getLVConfig() *wtype.LHChannelParameter {
+	newminvol := wunit.NewVolume(0.5, "ul")
+	newmaxvol := wunit.NewVolume(20, "ul")
+	newminspd := wunit.NewFlowRate(LVMinRate, "ml/min")
+	newmaxspd := wunit.NewFlowRate(LVMaxRate, "ml/min")
+
+	return wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
+}
+
 func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	// gilson pipetmax
 
@@ -69,21 +94,13 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	//	lhp.Tip_preferences = []int{2, 3, 6, 9, 5, 8, 4, 7}
 	//	lhp.Input_preferences = []int{24, 25, 26, 29, 28, 23}
 	//	lhp.Output_preferences = []int{10, 11, 12, 13, 14, 15}
-	minvol := wunit.NewVolume(10, "ul")
-	maxvol := wunit.NewVolume(250, "ul")
-	minspd := wunit.NewFlowRate(0.5, "ml/min")
-	maxspd := wunit.NewFlowRate(2, "ml/min")
 
-	hvconfig := wtype.NewLHChannelParameter("HVconfig", "GilsonPipetmax", minvol, maxvol, minspd, maxspd, 8, false, wtype.LHVChannel, 0)
+	hvconfig := getHVConfig()
 	hvadaptor := wtype.NewLHAdaptor("DummyAdaptor", "Gilson", hvconfig)
 	hvhead := wtype.NewLHHead("HVHead", "Gilson", hvconfig)
 	hvhead.Adaptor = hvadaptor
-	newminvol := wunit.NewVolume(0.5, "ul")
-	newmaxvol := wunit.NewVolume(20, "ul")
-	newminspd := wunit.NewFlowRate(0.1, "ml/min")
-	newmaxspd := wunit.NewFlowRate(0.5, "ml/min")
 
-	lvconfig := wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
+	lvconfig := getLVConfig()
 	lvadaptor := wtype.NewLHAdaptor("DummyAdaptor", "Gilson", lvconfig)
 	lvhead := wtype.NewLHHead("LVHead", "Gilson", lvconfig)
 	lvhead.Adaptor = lvadaptor

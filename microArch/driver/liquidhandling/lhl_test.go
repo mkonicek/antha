@@ -248,6 +248,36 @@ func TestDSPPipetSpeed(t *testing.T) {
 			},
 		},
 		{
+			Name: "blow pipette speed unset, different default",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DEFAULTPIPETTESPEED": 1.82,
+					},
+				},
+			},
+			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 0,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   1.82,
+					},
+				},
+			},
+		},
+		{
 			Name: "blow pipette speed OK",
 			Rules: []*Rule{
 				{
@@ -461,6 +491,36 @@ func TestASPPipetSpeed(t *testing.T) {
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+			},
+		},
+		{
+			Name: "suck pipette speed unset, different default",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DEFAULTPIPETTESPEED": 1.56,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 0,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   1.56,
 					},
 				},
 			},

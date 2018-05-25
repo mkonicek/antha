@@ -96,7 +96,8 @@ func validWell(well wtype.WellCoords, plate *wtype.LHPlate) error {
 	return nil
 }
 
-// ParsePlateCSV parses a plate, validation options may be added which either:
+// ParsePlateCSV parses a csv file into a plate.
+// ValidationConfig options may be added which either:
 // (i) define sets of valid and invalid characters which may be used in the component names.
 // (ii) define fields in the Plate csv which may be replaced.
 // If no config is set for case (i) a default config will be used.

@@ -1394,18 +1394,6 @@ func (p *LHPlate) AllContents() []*LHComponent {
 	return ret
 }
 
-// AllContents returns all the components on the plate
-func (p *LHPlate) AllWellContents() map[string]string {
-	ret := make(map[string]string)
-	for wellLocation, well := range p.HWells {
-		if well.WContents.Name() != "" {
-			ret[wellLocation] = well.WContents.Name()
-		}
-	}
-
-	return ret
-}
-
 func (p *LHPlate) ColVol() wunit.Volume {
 	if p == nil {
 		return wunit.ZeroVolume()

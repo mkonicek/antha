@@ -354,6 +354,11 @@ func (self *LHTipbox) SetParent(p LHObject) error {
 	return nil
 }
 
+//@implement LHObject
+func (self *LHTipbox) ClearParent() {
+	self.parent = nil
+}
+
 func (self *LHTipbox) GetParent() LHObject {
 	return self.parent
 }

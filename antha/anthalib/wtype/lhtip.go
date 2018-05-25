@@ -118,6 +118,11 @@ func (self *LHTip) SetParent(o LHObject) error {
 }
 
 //@implement LHObject
+func (self *LHTip) ClearParent() {
+	self.parent = nil
+}
+
+//@implement LHObject
 func (self *LHTip) GetParent() LHObject {
 	return self.parent
 }

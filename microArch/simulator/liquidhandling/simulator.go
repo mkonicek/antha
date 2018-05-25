@@ -1350,9 +1350,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	for _, ch := range channels {
 		tips[ch].GetParent().(*wtype.LHTipbox).RemoveTip(wc[ch])
 		adaptor.GetChannel(ch).LoadTip(tips[ch])
-		if err := tips[ch].SetParent((*wtype.LHTipbox)(nil)); err != nil {
-			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
-		}
+		tips[ch].ClearParent()
 	}
 
 	return ret

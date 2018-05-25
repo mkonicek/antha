@@ -1064,6 +1064,16 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 		}
 	}
 
+	//for each blowout channel
+	for i := range arg.channels {
+		if !blowout[i] {
+			continue
+		}
+		//reduce the volume to the total volume in the tip (assume blowout removes residual volume as well)
+		cv := arg.adaptor.GetChannel(i).GetTip().CurrentVolume().ConvertToString("ul")
+		volume[i] = math.Min(volume[i], cv)
+	}
+
 	//check volumes -- currently only warnings due to poor volume tracking
 	finalVolumes := make([]float64, 0, len(arg.channels))
 	maxVolumes := make([]float64, 0, len(arg.channels))

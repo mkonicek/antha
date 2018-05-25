@@ -1064,6 +1064,16 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 		}
 	}
 
+	//for each blowout channel
+	for i := range arg.channels {
+		if !blowout[i] {
+			continue
+		}
+		//reduce the volume to the total volume in the tip (assume blowout removes residual volume as well)
+		cv := arg.adaptor.GetChannel(i).GetTip().CurrentVolume().ConvertToString("ul")
+		volume[i] = math.Min(volume[i], cv)
+	}
+
 	//check volumes -- currently only warnings due to poor volume tracking
 	finalVolumes := make([]float64, 0, len(arg.channels))
 	maxVolumes := make([]float64, 0, len(arg.channels))
@@ -1350,9 +1360,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	for _, ch := range channels {
 		tips[ch].GetParent().(*wtype.LHTipbox).RemoveTip(wc[ch])
 		adaptor.GetChannel(ch).LoadTip(tips[ch])
-		if err := tips[ch].SetParent((*wtype.LHTipbox)(nil)); err != nil {
-			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
-		}
+		tips[ch].ClearParent()
 	}
 
 	return ret

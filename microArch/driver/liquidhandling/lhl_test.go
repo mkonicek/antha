@@ -220,7 +220,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 
 	tests := []*PolicyTest{
 		{
-			Name: "blow pipette speed OK",
+			Name: "blow pipette speed unset",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -230,14 +230,12 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
-						"DSPSPEED": 1.5,
-					},
+					Policy: map[string]interface{}{},
 				},
 			},
 			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
 			Robot:                nil,
-			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
@@ -247,158 +245,188 @@ func TestDSPPipetSpeed(t *testing.T) {
 						"SPEED":   defaultPipetteSpeed,
 					},
 				},
-				{
-					Instruction: 3,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   1.5,
-					},
-				},
-				{
-					Instruction: 5,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
 			},
 		},
-		{
-			Name: "blow pipette speed too large, made safe",
-			Rules: []*Rule{
-				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+		/*	{
+				Name: "blow pipette speed OK",
+				Rules: []*Rule{
+					{
+						Name: "soup",
+						Conditions: []Condition{
+							&CategoryCondition{
+								Attribute: "LIQUIDCLASS",
+								Value:     "soup",
+							},
+						},
+						Policy: map[string]interface{}{
+							"DSPSPEED": 1.5,
 						},
 					},
-					Policy: map[string]interface{}{
-						"DSPSPEED":             LVMaxRate + 1.0,
-						"OVERRIDEPIPETTESPEED": true,
-					},
 				},
-			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
-			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
-			Assertions: []*InstructionAssertion{
-				{
-					Instruction: 0,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-				{
-					Instruction: 3,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   LVMaxRate,
-					},
-				},
-				{
-					Instruction: 5,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-			},
-		},
-		{
-			Name: "blow pipette speed too small, made safe",
-			Rules: []*Rule{
-				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+				Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+				Robot:                nil,
+				ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
+				Assertions: []*InstructionAssertion{
+					{
+						Instruction: 0,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   defaultPipetteSpeed,
 						},
 					},
-					Policy: map[string]interface{}{
-						"DSPSPEED":             LVMinRate * 0.5,
-						"OVERRIDEPIPETTESPEED": true,
-					},
-				},
-			},
-			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
-			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
-			Assertions: []*InstructionAssertion{
-				{
-					Instruction: 0,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-				{
-					Instruction: 3,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   LVMinRate,
-					},
-				},
-				{
-					Instruction: 5,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-			},
-		},
-		{
-			Name: "blow pipette speed too large, error",
-			Rules: []*Rule{
-				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+					{
+						Instruction: 3,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   1.5,
 						},
 					},
-					Policy: map[string]interface{}{
-						"DSPSPEED":             4.75,
-						"OVERRIDEPIPETTESPEED": false,
-					},
-				},
-			},
-			Instruction: getTestBlowout(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pipette dispense speed: value 4.750000 out of range 0.022500 - 3.750000",
-		},
-		{
-			Name: "blow pipette speed too small, error",
-			Rules: []*Rule{
-				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+					{
+						Instruction: 5,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   defaultPipetteSpeed,
 						},
 					},
-					Policy: map[string]interface{}{
-						"DSPSPEED":             0.01,
-						"OVERRIDEPIPETTESPEED": false,
+				},
+			},
+			{
+				Name: "blow pipette speed too large, made safe",
+				Rules: []*Rule{
+					{
+						Name: "soup",
+						Conditions: []Condition{
+							&CategoryCondition{
+								Attribute: "LIQUIDCLASS",
+								Value:     "soup",
+							},
+						},
+						Policy: map[string]interface{}{
+							"DSPSPEED":             LVMaxRate + 1.0,
+							"OVERRIDEPIPETTESPEED": true,
+						},
+					},
+				},
+				Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+				Robot:                nil,
+				ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
+				Assertions: []*InstructionAssertion{
+					{
+						Instruction: 0,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   defaultPipetteSpeed,
+						},
+					},
+					{
+						Instruction: 3,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   LVMaxRate,
+						},
+					},
+					{
+						Instruction: 5,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   defaultPipetteSpeed,
+						},
 					},
 				},
 			},
-			Instruction: getTestBlowout(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pipette dispense speed: value 0.010000 out of range 0.022500 - 3.750000",
-		},
+			{
+				Name: "blow pipette speed too small, made safe",
+				Rules: []*Rule{
+					{
+						Name: "soup",
+						Conditions: []Condition{
+							&CategoryCondition{
+								Attribute: "LIQUIDCLASS",
+								Value:     "soup",
+							},
+						},
+						Policy: map[string]interface{}{
+							"DSPSPEED":             LVMinRate * 0.5,
+							"OVERRIDEPIPETTESPEED": true,
+						},
+					},
+				},
+				Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+				Robot:                nil,
+				ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
+				Assertions: []*InstructionAssertion{
+					{
+						Instruction: 0,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   defaultPipetteSpeed,
+						},
+					},
+					{
+						Instruction: 3,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   LVMinRate,
+						},
+					},
+					{
+						Instruction: 5,
+						Values: map[string]interface{}{
+							"HEAD":    1,
+							"CHANNEL": -1,
+							"SPEED":   defaultPipetteSpeed,
+						},
+					},
+				},
+			},
+			{
+				Name: "blow pipette speed too large, error",
+				Rules: []*Rule{
+					{
+						Name: "soup",
+						Conditions: []Condition{
+							&CategoryCondition{
+								Attribute: "LIQUIDCLASS",
+								Value:     "soup",
+							},
+						},
+						Policy: map[string]interface{}{
+							"DSPSPEED":             4.75,
+							"OVERRIDEPIPETTESPEED": false,
+						},
+					},
+				},
+				Instruction: getTestBlowout(getLVConfig(), 1, "Gilson20"),
+				Error:       "setting pipette dispense speed: value 4.750000 out of range 0.022500 - 3.750000",
+			},
+			{
+				Name: "blow pipette speed too small, error",
+				Rules: []*Rule{
+					{
+						Name: "soup",
+						Conditions: []Condition{
+							&CategoryCondition{
+								Attribute: "LIQUIDCLASS",
+								Value:     "soup",
+							},
+						},
+						Policy: map[string]interface{}{
+							"DSPSPEED":             0.01,
+							"OVERRIDEPIPETTESPEED": false,
+						},
+					},
+				},
+				Instruction: getTestBlowout(getLVConfig(), 1, "Gilson20"),
+				Error:       "setting pipette dispense speed: value 0.010000 out of range 0.022500 - 3.750000",
+			},*/
 	}
 
 	for _, test := range tests {
@@ -437,186 +465,186 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 			},
 		},
-		{
-			Name: "suck pipette speed OK",
-			Rules: []*Rule{
-				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+		/*		{
+					Name: "suck pipette speed OK",
+					Rules: []*Rule{
+						{
+							Name: "soup",
+							Conditions: []Condition{
+								&CategoryCondition{
+									Attribute: "LIQUIDCLASS",
+									Value:     "soup",
+								},
+							},
+							Policy: map[string]interface{}{
+								"ASPSPEED": 1.5,
+							},
 						},
 					},
-					Policy: map[string]interface{}{
-						"ASPSPEED": 1.5,
-					},
-				},
-			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
-			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
-			Assertions: []*InstructionAssertion{
-				{
-					Instruction: 0,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-				{
-					Instruction: 3,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   1.5,
-					},
-				},
-				{
-					Instruction: 5,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-			},
-		},
-		{
-			Name: "suck pipette speed too large, made safe",
-			Rules: []*Rule{
-				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+					Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+					Robot:                nil,
+					ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
+					Assertions: []*InstructionAssertion{
+						{
+							Instruction: 0,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   defaultPipetteSpeed,
+							},
+						},
+						{
+							Instruction: 3,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   1.5,
+							},
+						},
+						{
+							Instruction: 5,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   defaultPipetteSpeed,
+							},
 						},
 					},
-					Policy: map[string]interface{}{
-						"ASPSPEED":             LVMaxRate + 1.0,
-						"OVERRIDEPIPETTESPEED": true,
-					},
-				},
-			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
-			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
-			Assertions: []*InstructionAssertion{
-				{
-					Instruction: 0,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
 				},
 				{
-					Instruction: 3,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   LVMaxRate,
-					},
-				},
-				{
-					Instruction: 5,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-			},
-		},
-		{
-			Name: "suck pipette speed too small, made safe",
-			Rules: []*Rule{
-				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+					Name: "suck pipette speed too large, made safe",
+					Rules: []*Rule{
+						{
+							Name: "soup",
+							Conditions: []Condition{
+								&CategoryCondition{
+									Attribute: "LIQUIDCLASS",
+									Value:     "soup",
+								},
+							},
+							Policy: map[string]interface{}{
+								"ASPSPEED":             LVMaxRate + 1.0,
+								"OVERRIDEPIPETTESPEED": true,
+							},
 						},
 					},
-					Policy: map[string]interface{}{
-						"ASPSPEED":             LVMinRate * 0.5,
-						"OVERRIDEPIPETTESPEED": true,
-					},
-				},
-			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
-			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
-			Assertions: []*InstructionAssertion{
-				{
-					Instruction: 0,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-				{
-					Instruction: 3,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   LVMinRate,
-					},
-				},
-				{
-					Instruction: 5,
-					Values: map[string]interface{}{
-						"HEAD":    1,
-						"CHANNEL": -1,
-						"SPEED":   defaultPipetteSpeed,
-					},
-				},
-			},
-		},
-		{
-			Name: "suck pipette speed too large, error",
-			Rules: []*Rule{
-				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+					Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+					Robot:                nil,
+					ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
+					Assertions: []*InstructionAssertion{
+						{
+							Instruction: 0,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   defaultPipetteSpeed,
+							},
+						},
+						{
+							Instruction: 3,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   LVMaxRate,
+							},
+						},
+						{
+							Instruction: 5,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   defaultPipetteSpeed,
+							},
 						},
 					},
-					Policy: map[string]interface{}{
-						"ASPSPEED":             4.75,
-						"OVERRIDEPIPETTESPEED": false,
-					},
 				},
-			},
-			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pipette aspirate speed: value 4.750000 out of range 0.022500 - 3.750000",
-		},
-		{
-			Name: "suck pipette speed too small, error",
-			Rules: []*Rule{
 				{
-					Name: "soup",
-					Conditions: []Condition{
-						&CategoryCondition{
-							Attribute: "LIQUIDCLASS",
-							Value:     "soup",
+					Name: "suck pipette speed too small, made safe",
+					Rules: []*Rule{
+						{
+							Name: "soup",
+							Conditions: []Condition{
+								&CategoryCondition{
+									Attribute: "LIQUIDCLASS",
+									Value:     "soup",
+								},
+							},
+							Policy: map[string]interface{}{
+								"ASPSPEED":             LVMinRate * 0.5,
+								"OVERRIDEPIPETTESPEED": true,
+							},
 						},
 					},
-					Policy: map[string]interface{}{
-						"ASPSPEED":             0.01,
-						"OVERRIDEPIPETTESPEED": false,
+					Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+					Robot:                nil,
+					ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
+					Assertions: []*InstructionAssertion{
+						{
+							Instruction: 0,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   defaultPipetteSpeed,
+							},
+						},
+						{
+							Instruction: 3,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   LVMinRate,
+							},
+						},
+						{
+							Instruction: 5,
+							Values: map[string]interface{}{
+								"HEAD":    1,
+								"CHANNEL": -1,
+								"SPEED":   defaultPipetteSpeed,
+							},
+						},
 					},
 				},
-			},
-			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pipette aspirate speed: value 0.010000 out of range 0.022500 - 3.750000",
-		},
+				{
+					Name: "suck pipette speed too large, error",
+					Rules: []*Rule{
+						{
+							Name: "soup",
+							Conditions: []Condition{
+								&CategoryCondition{
+									Attribute: "LIQUIDCLASS",
+									Value:     "soup",
+								},
+							},
+							Policy: map[string]interface{}{
+								"ASPSPEED":             4.75,
+								"OVERRIDEPIPETTESPEED": false,
+							},
+						},
+					},
+					Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
+					Error:       "setting pipette aspirate speed: value 4.750000 out of range 0.022500 - 3.750000",
+				},
+				{
+					Name: "suck pipette speed too small, error",
+					Rules: []*Rule{
+						{
+							Name: "soup",
+							Conditions: []Condition{
+								&CategoryCondition{
+									Attribute: "LIQUIDCLASS",
+									Value:     "soup",
+								},
+							},
+							Policy: map[string]interface{}{
+								"ASPSPEED":             0.01,
+								"OVERRIDEPIPETTESPEED": false,
+							},
+						},
+					},
+					Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
+					Error:       "setting pipette aspirate speed: value 0.010000 out of range 0.022500 - 3.750000",
+				},*/
 	}
 
 	for _, test := range tests {

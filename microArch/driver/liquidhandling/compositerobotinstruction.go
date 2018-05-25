@@ -1962,11 +1962,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	apspeed := SafeGetF64(pol, "ASPSPEED")
 
 	changepspeed := (apspeed != defaultpspeed) && (apspeed > 0.0)
-	apspeed, err = checkAndSaften(apspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
-
-	if err != nil {
-		return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
-	}
 
 	if changepspeed {
 		apspeed, err = checkAndSaften(apspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)

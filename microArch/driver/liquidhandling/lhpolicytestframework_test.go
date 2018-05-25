@@ -81,6 +81,7 @@ type PolicyTest struct {
 	Robot                *LHProperties
 	ExpectedInstructions string
 	Assertions           []*InstructionAssertion
+	Error                string
 }
 
 func stringInstructions(inss []RobotInstruction) string {
@@ -116,8 +117,17 @@ func (self *PolicyTest) Run(t *testing.T) {
 	set := NewRobotInstructionSet(self.Instruction)
 	ris, err := set.Generate(ctx, policySet, self.Robot)
 	if err != nil {
-		err = errors.Wrap(err, self.Name)
-		t.Error(err)
+		if self.Error == "" {
+			err = errors.Wrapf(err, "%s: unexpected error", self.Name)
+			t.Error(err)
+		} else if self.Error != err.Error() {
+			t.Errorf("%s: errors don't match: expected \"%s\", got \"%s\"", self.Name, self.Error, err.Error())
+		}
+		return
+	}
+
+	if self.Error != "" {
+		t.Errorf("%s: error not generated: expected \"%s\"", self.Name, self.Error)
 		return
 	}
 
@@ -129,6 +139,34 @@ func (self *PolicyTest) Run(t *testing.T) {
 	for _, a := range self.Assertions {
 		a.Assert(t, ris, self.Name)
 	}
+}
+
+const (
+	HVMinRate           = 0.225
+	HVMaxRate           = 37.5
+	LVMinRate           = 0.0225
+	LVMaxRate           = 3.75
+	defaultZSpeed       = 120.0
+	defaultZOffset      = 0.5
+	defaultPipetteSpeed = 3.0
+)
+
+func getHVConfig() *wtype.LHChannelParameter {
+	minvol := wunit.NewVolume(10, "ul")
+	maxvol := wunit.NewVolume(250, "ul")
+	minspd := wunit.NewFlowRate(HVMinRate, "ml/min")
+	maxspd := wunit.NewFlowRate(HVMaxRate, "ml/min")
+
+	return wtype.NewLHChannelParameter("HVconfig", "GilsonPipetmax", minvol, maxvol, minspd, maxspd, 8, false, wtype.LHVChannel, 0)
+}
+
+func getLVConfig() *wtype.LHChannelParameter {
+	newminvol := wunit.NewVolume(0.5, "ul")
+	newmaxvol := wunit.NewVolume(20, "ul")
+	newminspd := wunit.NewFlowRate(LVMinRate, "ml/min")
+	newmaxspd := wunit.NewFlowRate(LVMaxRate, "ml/min")
+
+	return wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
 }
 
 func makeGilson() *LHProperties {
@@ -178,21 +216,12 @@ func makeGilson() *LHProperties {
 	//	lhp.Tip_preferences = []int{2, 3, 6, 9, 5, 8, 4, 7}
 	//	lhp.Input_preferences = []int{24, 25, 26, 29, 28, 23}
 	//	lhp.Output_preferences = []int{10, 11, 12, 13, 14, 15}
-	minvol := wunit.NewVolume(10, "ul")
-	maxvol := wunit.NewVolume(250, "ul")
-	minspd := wunit.NewFlowRate(0.5, "ml/min")
-	maxspd := wunit.NewFlowRate(2, "ml/min")
-
-	hvconfig := wtype.NewLHChannelParameter("HVconfig", "GilsonPipetmax", minvol, maxvol, minspd, maxspd, 8, false, wtype.LHVChannel, 0)
+	hvconfig := getHVConfig()
 	hvadaptor := wtype.NewLHAdaptor("DummyAdaptor", "Gilson", hvconfig)
 	hvhead := wtype.NewLHHead("HVHead", "Gilson", hvconfig)
 	hvhead.Adaptor = hvadaptor
-	newminvol := wunit.NewVolume(0.5, "ul")
-	newmaxvol := wunit.NewVolume(20, "ul")
-	newminspd := wunit.NewFlowRate(0.1, "ml/min")
-	newmaxspd := wunit.NewFlowRate(0.5, "ml/min")
 
-	lvconfig := wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
+	lvconfig := getLVConfig()
 	lvadaptor := wtype.NewLHAdaptor("DummyAdaptor", "Gilson", lvconfig)
 	lvhead := wtype.NewLHHead("LVHead", "Gilson", lvconfig)
 	lvhead.Adaptor = lvadaptor

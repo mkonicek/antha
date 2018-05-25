@@ -7,24 +7,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-func getHVConfig() *wtype.LHChannelParameter {
-	minvol := wunit.NewVolume(10, "ul")
-	maxvol := wunit.NewVolume(250, "ul")
-	minspd := wunit.NewFlowRate(0.5, "ml/min")
-	maxspd := wunit.NewFlowRate(2, "ml/min")
-
-	return wtype.NewLHChannelParameter("HVconfig", "GilsonPipetmax", minvol, maxvol, minspd, maxspd, 8, false, wtype.LHVChannel, 0)
-}
-
-func getLVConfig() *wtype.LHChannelParameter {
-	newminvol := wunit.NewVolume(0.5, "ul")
-	newmaxvol := wunit.NewVolume(20, "ul")
-	newminspd := wunit.NewFlowRate(0.1, "ml/min")
-	newmaxspd := wunit.NewFlowRate(0.5, "ml/min")
-
-	return wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
-}
-
 func getTestBlowout(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
 	bi := NewBlowInstruction()
 	bi.Multi = multi
@@ -115,10 +97,6 @@ func TestBlowMixing(t *testing.T) {
 }
 
 func TestBlowNoMixing(t *testing.T) {
-
-	defaultZSpeed := 120.0
-	defaultZOffset := 0.5
-	defaultPipetteSpeed := 3.0
 
 	tests := []*PolicyTest{
 		{
@@ -214,8 +192,18 @@ func TestBlowNoMixing(t *testing.T) {
 				},
 			},
 		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestPipetSpeed(t *testing.T) {
+
+	tests := []*PolicyTest{
 		{
-			Name: "pipette speed single channel",
+			Name: "blow pipette speed OK",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -272,6 +260,166 @@ func TestBlowNoMixing(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			Name: "blow pipette speed too large, made safe",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DSPSPEED":             LVMaxRate + 1.0,
+						"OVERRIDEPIPETTESPEED": true,
+					},
+				},
+			},
+			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 0,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+				{
+					Instruction: 1,
+					Values: map[string]interface{}{
+						"DRIVE": "Z",
+						"SPEED": defaultZSpeed,
+					},
+				},
+				{
+					Instruction: 2, //the move before the dispense
+					Values: map[string]interface{}{
+						"OFFSETZ": []float64{defaultZOffset},
+					},
+				},
+				{
+					Instruction: 3,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   LVMaxRate,
+					},
+				},
+				{
+					Instruction: 5,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+			},
+		},
+		{
+			Name: "blow pipette speed too small, made safe",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DSPSPEED":             LVMinRate * 0.5,
+						"OVERRIDEPIPETTESPEED": true,
+					},
+				},
+			},
+			Instruction:          getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 0,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+				{
+					Instruction: 1,
+					Values: map[string]interface{}{
+						"DRIVE": "Z",
+						"SPEED": defaultZSpeed,
+					},
+				},
+				{
+					Instruction: 2, //the move before the dispense
+					Values: map[string]interface{}{
+						"OFFSETZ": []float64{defaultZOffset},
+					},
+				},
+				{
+					Instruction: 3,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   LVMinRate,
+					},
+				},
+				{
+					Instruction: 5,
+					Values: map[string]interface{}{
+						"HEAD":    1,
+						"CHANNEL": -1,
+						"SPEED":   defaultPipetteSpeed,
+					},
+				},
+			},
+		},
+		{
+			Name: "blow pipette speed too large, error",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DSPSPEED":             4.75,
+						"OVERRIDEPIPETTESPEED": false,
+					},
+				},
+			},
+			Instruction: getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Error:       "error setting pipette dispense speed: value 4.75 out of range 0.0225000 - 3.7500000",
+		},
+		{
+			Name: "blow pipette speed too small, error",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DSPSPEED":             0.01,
+						"OVERRIDEPIPETTESPEED": false,
+					},
+				},
+			},
+			Instruction: getTestBlowout(getLVConfig(), 1, "Gilson20"),
+			Error:       "error setting pipette dispense speed: value 0.01 out of range 0.0225000 - 3.7500000",
 		},
 	}
 

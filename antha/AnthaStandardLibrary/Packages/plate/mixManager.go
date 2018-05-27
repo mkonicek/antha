@@ -68,10 +68,7 @@ type MixPreferences struct {
 
 // HasSamplesOn evaluates whether the plate has any samples on it.
 func HasSamplesOn(plate *wtype.LHPlate) bool {
-	if len(plate.AllNonEmptyWells()) > 0 {
-		return true
-	}
-	return false
+	return len(plate.AllNonEmptyWells()) > 0
 }
 
 // NewMixPreferences creates a new MixPreferences object.
@@ -131,7 +128,7 @@ func (platePreferences *MixPreferences) SetCurrentPlateNumber(platenumber int) e
 			_, err := search.NextFreeWell(plate, platePreferences.UsedWells[plate.Name()].String(), []string{}, platePreferences.ByRow)
 			// plate full so return error
 			if err != nil {
-				return fmt.Errorf("cannot change to plate number %d: %s", err.Error())
+				return fmt.Errorf("cannot change to plate number %d: %s", platenumber, err.Error())
 			}
 			// looks like there's space so adjust platenumber and return nil
 			platePreferences.CurrentPlateNumber = platenumber

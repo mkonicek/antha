@@ -1262,7 +1262,7 @@ func TestTouchoff(t *testing.T) {
 					},
 					Policy: map[string]interface{}{
 						"TOUCHOFF":    true,
-						"TOUCHOFFSET": 0.5,
+						"TOUCHOFFSET": 2.37,
 					},
 				},
 			},
@@ -1273,8 +1273,8 @@ func TestTouchoff(t *testing.T) {
 				{
 					Instruction: 4, //touchoff move
 					Values: map[string]interface{}{
-						"REFERENCE": []int{0},       // well bottom
-						"OFFSETZ":   []float64{0.5}, // as set
+						"REFERENCE": []int{0},        // well bottom
+						"OFFSETZ":   []float64{2.37}, // as set
 					},
 				},
 			},

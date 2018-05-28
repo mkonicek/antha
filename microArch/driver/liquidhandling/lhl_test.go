@@ -1285,3 +1285,68 @@ func TestTouchoff(t *testing.T) {
 		test.Run(t)
 	}
 }
+
+func TestExtraVolumes(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "extra asp volume ",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"EXTRA_ASP_VOLUME": wunit.NewVolume(2.0, "ul"),
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, // ASP
+					Values: map[string]interface{}{
+						"VOLUME": []wunit.Volume{wunit.NewVolume(12.0, "ul")},
+					},
+				},
+			},
+		},
+		{
+			Name: "extra dsp volume ",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"EXTRA_DISP_VOLUME": wunit.NewVolume(2.0, "ul"),
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, // dispense
+					Values: map[string]interface{}{
+						"VOLUME": []wunit.Volume{wunit.NewVolume(12.0, "ul")},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}

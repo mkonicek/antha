@@ -41,6 +41,30 @@ func getTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotI
 	return ret
 }
 
+// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy
+func getTestTransfer(vol wunit.Volume) RobotInstruction {
+	v2 := wunit.NewVolume(5000.0, "ul")
+	v3 := wunit.NewVolume(0.0, "ul")
+	return NewTransferInstruction(
+		[]string{"water"},
+		[]string{"position_4"},
+		[]string{"position_8"},
+		[]string{"A1"},
+		[]string{"G5"},
+		[]string{"DWST12"},
+		[]string{"DSW96"},
+		[]wunit.Volume{vol},
+		[]wunit.Volume{v2},
+		[]wunit.Volume{v3},
+		[]int{8},
+		[]int{12},
+		[]int{8},
+		[]int{12},
+		[]string{"notsure"},
+		[]wtype.LHPolicy{nil},
+	)
+}
+
 func TestBlowMixing(t *testing.T) {
 
 	tenUl := wunit.NewVolume(10.0, "ul")
@@ -1030,6 +1054,61 @@ func TestASPPipetSpeed(t *testing.T) {
 			},
 			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
 			Error:       "setting pipette aspirate speed: value 0.010000 out of range 0.022500 - 3.750000",
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestTipReuse(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "no tip reuse allowed ",
+			Rules: []*Rule{
+				{
+					Name: "water",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "water",
+						},
+					},
+					Policy: map[string]interface{}{
+						"TIP_REUSE_LIMIT": 0,
+					},
+				},
+			},
+			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
+			Robot:                nil,
+			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD,MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
+			Assertions: []*InstructionAssertion{
+				{},
+			},
+		},
+		{
+			Name: "tip reuse allowed ",
+			Rules: []*Rule{
+				{
+					Name: "water",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "water",
+						},
+					},
+					Policy: map[string]interface{}{
+						"TIP_REUSE_LIMIT": 100,
+					},
+				},
+			},
+			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
+			Robot:                nil,
+			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
+			Assertions: []*InstructionAssertion{
+				{},
+			},
 		},
 	}
 

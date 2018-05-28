@@ -554,7 +554,32 @@ func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) e
 	return nil
 }
 
-func (lhp *LHProperties) AddPlate(pos string, plate *wtype.LHPlate) error {
+func (lhp *LHProperties) AddInputPlate(plate *wtype.LHPlate) error {
+	for _, pref := range lhp.Input_preferences {
+		if lhp.PosLookup[pref] != "" {
+			continue
+		}
+
+		err := lhp.AddPlateTo(pref, plate)
+		return err
+	}
+
+	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add input plate %s, type %s", plate.PlateName, plate.Type))
+}
+func (lhp *LHProperties) AddOutputPlate(plate *wtype.LHPlate) error {
+	for _, pref := range lhp.Output_preferences {
+		if lhp.PosLookup[pref] != "" {
+			continue
+		}
+
+		err := lhp.AddPlateTo(pref, plate)
+		return err
+	}
+
+	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add output plate %s, type %s", plate.PlateName, plate.Type))
+}
+
+func (lhp *LHProperties) AddPlateTo(pos string, plate *wtype.LHPlate) error {
 	if lhp.PosLookup[pos] != "" {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add plate to full position %s", pos))
 	}
@@ -1099,7 +1124,7 @@ func (p *LHProperties) RestoreUserPlates(up UserPlates) {
 		// merge these
 		plate.Plate.MergeWith(oldPlate)
 
-		err := p.AddPlate(plate.Position, plate.Plate)
+		err := p.AddPlateTo(plate.Position, plate.Plate)
 		if err != nil {
 			panic(err)
 		}

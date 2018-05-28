@@ -151,10 +151,10 @@ func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *L
 
 	p.AddComponent(c, true)
 
-	rbt.AddPlate("position_4", p)
+	rbt.AddPlateTo("position_4", p)
 
 	// dst
-	rbt.AddPlate("position_8", dstp)
+	rbt.AddPlateTo("position_8", dstp)
 
 	return rbt
 

@@ -118,6 +118,12 @@ func ansiPrint(options ...printOption) bool {
 	return false
 }
 
+func printInstructionArray(inss []RobotInstruction) {
+	for _, ins := range inss {
+		fmt.Println(InsToString(ins))
+	}
+}
+
 func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 
 	s := InstructionTypeName(ins) + " "
@@ -501,6 +507,7 @@ func matchesLiquidClass(rule wtype.LHPolicyRule) (match bool) {
 }
 
 // GetDefaultPolicy currently returns the default policy
+// this REALLY should not be necessary... ever
 func GetDefaultPolicy(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPolicy, error) {
 	defaultPolicy := wtype.DupLHPolicy(lhpr.Policies["default"])
 	return defaultPolicy, nil
@@ -512,6 +519,7 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPo
 	// find the set of matching rules
 	rules := make([]wtype.LHPolicyRule, 0, len(lhpr.Rules))
 	var lhpolicyFound bool
+
 	for _, rule := range lhpr.Rules {
 
 		if ins.Check(rule) {

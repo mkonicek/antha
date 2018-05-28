@@ -1116,3 +1116,133 @@ func TestTipReuse(t *testing.T) {
 		test.Run(t)
 	}
 }
+
+func TestAspWait(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "wait 3s, multi 1",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"ASP_WAIT": 3.0,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP,WAI]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //Wait
+					Values: map[string]interface{}{
+						"TIME": 3.0,
+					},
+				},
+			},
+		},
+		{
+			Name: "wait 3s, multi 8",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"ASP_WAIT": 3.0,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP,WAI]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //Wait
+					Values: map[string]interface{}{
+						"TIME": 3.0,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestDspWait(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "wait 3s, multi 1",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DSP_WAIT": 3.0,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,WAI,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //Wait
+					Values: map[string]interface{}{
+						"TIME": 3.0,
+					},
+				},
+			},
+		},
+		{
+			Name: "wait 3s, multi 8",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DSP_WAIT": 3.0,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 8, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,WAI,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //Wait
+					Values: map[string]interface{}{
+						"TIME": 3.0,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}

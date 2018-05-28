@@ -1120,7 +1120,7 @@ func TestTipReuse(t *testing.T) {
 func TestAspWait(t *testing.T) {
 	tests := []*PolicyTest{
 		{
-			Name: "wait 3s, multi 1",
+			Name: "asp wait 3s, multi 1",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -1148,7 +1148,7 @@ func TestAspWait(t *testing.T) {
 			},
 		},
 		{
-			Name: "wait 3s, multi 8",
+			Name: "asp wait 3s, multi 8",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -1185,7 +1185,7 @@ func TestAspWait(t *testing.T) {
 func TestDspWait(t *testing.T) {
 	tests := []*PolicyTest{
 		{
-			Name: "wait 3s, multi 1",
+			Name: "dsp wait 3s, multi 1",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -1213,7 +1213,7 @@ func TestDspWait(t *testing.T) {
 			},
 		},
 		{
-			Name: "wait 3s, multi 8",
+			Name: "dsp wait 3s, multi 8",
 			Rules: []*Rule{
 				{
 					Name: "soup",
@@ -1236,6 +1236,45 @@ func TestDspWait(t *testing.T) {
 					Instruction: 4, //Wait
 					Values: map[string]interface{}{
 						"TIME": 3.0,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestTouchoff(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "test touchoff ",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"TOUCHOFF":    true,
+						"TOUCHOFFSET": 0.5,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //touchoff move
+					Values: map[string]interface{}{
+						"REFERENCE": []int{0},       // well bottom
+						"OFFSETZ":   []float64{0.5}, // as set
 					},
 				},
 			},

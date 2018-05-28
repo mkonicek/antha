@@ -118,11 +118,13 @@ func ansiPrint(options ...printOption) bool {
 	return false
 }
 
+/*
 func printInstructionArray(inss []RobotInstruction) {
 	for _, ins := range inss {
 		fmt.Println(InsToString(ins))
 	}
 }
+*/
 
 func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 

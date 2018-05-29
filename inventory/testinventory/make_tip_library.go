@@ -101,11 +101,11 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 	//however, physical testing showed that the offset below was required to avoid collision with the bottom of the well
 	filterHeightOffset := 0.75
 
-	w = wtype.NewLHWell("ul", 200.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell("ul", 200.0, 20.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 	w.Extra["Tipeffectiveheight"] = 44.7 + filterHeightOffset
-	tip = wtype.NewLHTip("gilson", "GilsonFilter200", 10.0, 200.0, "ul", true, shp)
+	tip = wtype.NewLHTip("gilson", "GilsonFilter200", 20.0, 200.0, "ul", true, shp)
 	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "DF200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, 0.0, 0.0, 24.78)
 	ret = append(ret, tb)
 

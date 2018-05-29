@@ -662,6 +662,7 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["PTZOFFSET"] = -0.5
 	defaultpolicy["NO_AIR_DISPENSE"] = true // SERIOUSLY??
 	defaultpolicy["DEFAULTPIPETTESPEED"] = 3.0
+	defaultpolicy["DEFAULTZSPEED"] = 120.0
 	defaultpolicy["MANUALPTZ"] = false
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
@@ -902,6 +903,8 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	}
 
 	lhpr.AddRule(turnOffPostMixIfEmpty, TurnOffPostMix())
+
+	// for Gilson, add some sensible default pipette speeds
 
 	return lhpr, nil
 }

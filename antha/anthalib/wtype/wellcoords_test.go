@@ -90,14 +90,16 @@ func (self *HWellCoordsTest) Run(t *testing.T) {
 func TestHumanizeWellCoords(t *testing.T) {
 	tests := []*HWellCoordsTest{
 		{"A1,B1,C1,D1,E1,F1,G1,H1", "A1-H1"},
-		//		{"A1,B1,C1,E1,F1,G1,H1", "A1-C1,E1-H1"},
-		//		{"A1,C1,E1,G1", "A1,C1,E1,G1"},
-		//		{"A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,", "A1-A12"},
-		//		{"A1,A2,A3,A4,A5,A7,A8,A9,A10,A11,A12,", "A1-A5,A7-A12"},
-		//		{"A1,A2,A3,A4,A5,B5,C5,D5,E5,F5,G5,H5", "A1-A5,B5-H5"},
-		//		{"H1,G1,F1,E1,D1,C1,B1,A1", "H1,G1,F1,E1,D1,C1,B1,A1"},
-		//		{"A1", "A1"},
-		//		{"A1,B1", "A1,B1"},
+		{"A1,B1,C1,E1,F1,G1,H1", "A1-C1,E1-H1"},
+		{"A1,C1,E1,G1", "A1,C1,E1,G1"},
+		{"A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,", "A1-A12"},
+		{"A1,A2,A3,A4,A5,A7,A8,A9,A10,A11,A12,", "A1-A5,A7-A12"},
+		{"A1,A2,A3,A4,A5,B5,C5,D5,E5,F5,G5,H5", "A1-A5,B5-H5"},
+		{"H1,G1,F1,E1,D1,C1,B1,A1", "H1,G1,F1,E1,D1,C1,B1,A1"},
+		{"A1", "A1"},
+		{"A1,B2", "A1,B2"},
+		{"A1,-,-,-,-,-,-", "A1"},
+		{"-,-,-,-", ""},
 	}
 
 	for _, test := range tests {

@@ -324,7 +324,7 @@ func canAdd(coords []WellCoords, c WellCoords) bool {
 		return true
 	}
 	if len(coords) == 1 {
-		return c.X-coords[0].X == 1 || c.Y-coords[0].Y == 1
+		return (c.Y == coords[0].Y && c.X-coords[0].X == 1) || (c.X == coords[0].X && c.Y-coords[0].Y == 1)
 	}
 	//if vertical run
 	if coords[0].X == coords[len(coords)-1].X {
@@ -335,6 +335,9 @@ func canAdd(coords []WellCoords, c WellCoords) bool {
 }
 
 func runToString(coords []WellCoords) string {
+	if len(coords) == 0 {
+		return ""
+	}
 	if len(coords) == 1 {
 		return coords[0].FormatA1()
 	}
@@ -346,12 +349,14 @@ func HumanizeWellCoords(coords []WellCoords) string {
 	s := make([]string, 0, len(coords))
 	run := make([]WellCoords, 0, len(coords))
 	for _, coord := range coords {
-		if canAdd(run, coord) {
-			run = append(run, coord)
-		} else {
+		if coord.IsZero() {
+			continue
+		}
+		if !canAdd(run, coord) {
 			s = append(s, runToString(run))
 			run = make([]WellCoords, 0, len(coords))
 		}
+		run = append(run, coord)
 	}
 	s = append(s, runToString(run))
 	return strings.Join(s, ",")

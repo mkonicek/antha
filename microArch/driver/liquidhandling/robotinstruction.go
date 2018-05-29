@@ -88,8 +88,8 @@ const (
 	MVM            // MOV MIX           ""       ""
 	MBL            // MOV BLO	    ""       ""
 	RAP            // RemoveAllPlates
-	RPA            // Remove Plate At
 	APT            // AddPlateTo
+	RPA            // Remove Plate At
 	SPB            // SplitBlock
 )
 
@@ -659,7 +659,7 @@ func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 		case FIN:
 			ins = NewFinalizeInstruction()
 		default:
-			return fmt.Errorf("Unknown instruction type: %d", t)
+			return fmt.Errorf("Unknown instruction type: %d (%s)", t, Robotinstructionnames[t])
 		}
 
 		// finally unmarshal

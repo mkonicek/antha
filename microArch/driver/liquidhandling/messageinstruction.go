@@ -45,9 +45,11 @@ func (msi *MessageInstruction) InstructionType() int {
 func (msi *MessageInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	//level int, title, text string, showcancel bool
 
-	ret := driver.Message(0, "", msi.Message, false)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+	if msi.Message != wtype.MAGICBARRIERPROMPTSTRING {
+		ret := driver.Message(0, "", msi.Message, false)
+		if !ret.OK {
+			return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
+		}
 	}
 	return nil
 }

@@ -794,7 +794,7 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 			}
 			self.AddErrorf("Move", "Cannot move channel %d to (\"%s\", %s, %s) + (%.1f,%.1f,%.1f)mm as this collides with %s\n",
 				ch, deckposition[ch], wellcoords[ch], refs[ch], offsetX[ch], offsetY[ch], offsetZ[ch], strings.Join(o_str, " and "))
-			return ret
+			//instead of returning, continue on to get all collisions and leave the virtual robot in the collided state
 		}
 	}
 
@@ -899,6 +899,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	//check total volumes taken from each unique well
 	uniqueWells := make(map[string]*wtype.LHWell)
 	uniqueWellVolumes := make(map[string]float64)
+	uniqueWellVolumeIndexes := make(map[string][]int)
 	for i := 0; i < len(wells); i++ {
 		if wells[i] == nil {
 			continue
@@ -906,18 +907,24 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 		if _, ok := uniqueWells[wells[i].ID]; !ok {
 			uniqueWells[wells[i].ID] = wells[i]
 			uniqueWellVolumes[wells[i].ID] = 0.0
+			uniqueWellVolumeIndexes[wells[i].ID] = make([]int, 0, len(wells))
 		}
 		uniqueWellVolumes[wells[i].ID] += volume[i]
+		uniqueWellVolumeIndexes[wells[i].ID] = append(uniqueWellVolumeIndexes[wells[i].ID], i)
 	}
 	for id, well := range uniqueWells {
 		v := wunit.NewVolume(uniqueWellVolumes[id], "ul")
+		//vol.IsZero() checks whether vol is within a small tolerance of zero
 		if d := wunit.SubtractVolumes(v, well.CurrentWorkingVolume()); v.GreaterThan(well.CurrentWorkingVolume()) && !d.IsZero() {
-			self.AddErrorf("Aspirate", "While %s - well %s only contains %s working volume",
-				describe(), well.GetName(), well.CurrentWorkingVolume())
+			//the volume is taken from len(uniqueWellVolumeIndexes[id]) wells, so the delta is split equally between them
+			reduction := wunit.DivideVolume(d, float64(len(uniqueWellVolumeIndexes[id])))
+			reductionUl := reduction.ConvertToString("ul")
+			for _, i := range uniqueWellVolumeIndexes[id] {
+				volume[i] -= reductionUl
+			}
+			self.AddWarningf("Aspirate", "While %s - well %s only contains %s working volume, reducing aspirated volume by %v",
+				describe(), well.GetName(), well.CurrentWorkingVolume(), reduction)
 		}
-	}
-	if self.HasError() {
-		return ret
 	}
 
 	//move liquid
@@ -1055,6 +1062,16 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 					describe(), i, tip.Contents().GetType(), what[i])
 			}
 		}
+	}
+
+	//for each blowout channel
+	for i := range arg.channels {
+		if !blowout[i] {
+			continue
+		}
+		//reduce the volume to the total volume in the tip (assume blowout removes residual volume as well)
+		cv := arg.adaptor.GetChannel(i).GetTip().CurrentVolume().ConvertToString("ul")
+		volume[i] = math.Min(volume[i], cv)
 	}
 
 	//check volumes -- currently only warnings due to poor volume tracking
@@ -1343,9 +1360,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	for _, ch := range channels {
 		tips[ch].GetParent().(*wtype.LHTipbox).RemoveTip(wc[ch])
 		adaptor.GetChannel(ch).LoadTip(tips[ch])
-		if err := tips[ch].SetParent((*wtype.LHTipbox)(nil)); err != nil {
-			self.AddErrorf("LoadTips", "%s : unexpected error : %s", describe(), err.Error())
-		}
+		tips[ch].ClearParent()
 	}
 
 	return ret
@@ -1591,7 +1606,6 @@ func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float6
 
 //SetDriveSpeed - used
 func (self *VirtualLiquidHandler) SetDriveSpeed(drive string, rate float64) driver.CommandStatus {
-	self.AddWarningf("SetDriveSpeed", "Not yet implemented: SetDriveSpeed(%s, %f)", drive, rate)
 	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETDRIVESPEED ACK"}
 }
 
@@ -1755,6 +1769,12 @@ func (self *VirtualLiquidHandler) ResetPistons(head, channel int) driver.Command
 	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "RESETPISTONS ACK"}
 }
 
+//These values correct for the Glison Driver offset and will eventually be removed
+const (
+	XCorrection = 14.38
+	YCorrection = 11.24
+)
+
 //AddPlateTo - used
 func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
 
@@ -1766,11 +1786,6 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 			self.AddWarningf("AddPlateTo", "Object name(=%s) doesn't match argument name(=%s)", n.GetName(), name)
 		}
 
-		if err := self.state.GetDeck().SetChild(position, obj); err != nil {
-			self.AddError("AddPlateTo", err.Error())
-			return ret
-		}
-
 		if tb, ok := obj.(*wtype.LHTipbox); ok {
 			//check that the height of the tips is greater than the height of the tipbox
 			if tb.GetSize().Z >= (tb.TipZStart+tb.Tiptype.GetSize().Z) && self.settings.IsTipboxCheckEnabled() {
@@ -1779,6 +1794,49 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 					tb.GetName(), tb.GetSize().Z, tb.TipZStart+tb.Tiptype.GetSize().Z)
 				self.settings.EnableTipboxCollision(false)
 			}
+		}
+
+		//check that the wells are within the bounds of the plate
+		if plate, ok := obj.(*wtype.LHPlate); ok {
+			//apply the well position correction
+			plate.WellXStart += XCorrection
+			plate.WellYStart += YCorrection
+			corr := wtype.Coordinates{X: XCorrection, Y: YCorrection, Z: 0.0}
+			for _, w := range plate.Wellcoords {
+				w.SetOffset(w.Bounds.GetPosition().Add(corr)) //nolint
+			}
+
+			plateSize := plate.GetSize()
+			wellOff := plate.GetWellOffset()
+			wellLim := wellOff.Add(plate.GetWellSize())
+
+			if wellOff.X < 0.0 || wellOff.Y < 0.0 || wellOff.Z < 0.0 {
+				self.AddWarningf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" has negative well offsets %v",
+					position, wtype.TypeOf(plate), wellOff)
+			}
+
+			overSpill := wtype.Coordinates{
+				X: math.Max(wellLim.X-plateSize.X, 0.0),
+				Y: math.Max(wellLim.Y-plateSize.Y, 0.0),
+				Z: math.Max(wellLim.Z-plateSize.Z, 0.0),
+			}
+
+			if overSpill.Z > 0.0 {
+				self.AddWarningf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" : increasing height by %0.1f mm to match well height",
+					position, wtype.TypeOf(plate), overSpill.Z)
+				plateSize.Z += overSpill.Z
+				plate.Bounds.SetSize(plateSize)
+			}
+
+			if overSpill.X > 0.0 || overSpill.Y > 0.0 {
+				self.AddWarningf("AddPlateTo", "position \"%s\" : invalid plate type \"%s\" wells extend beyond plate bounds by %s",
+					position, wtype.TypeOf(plate), overSpill.StringXY())
+			}
+		}
+
+		if err := self.state.GetDeck().SetChild(position, obj); err != nil {
+			self.AddError("AddPlateTo", err.Error())
+			return ret
 		}
 
 	} else {
@@ -1900,7 +1958,7 @@ func (self *VirtualLiquidHandler) Message(level int, title, text string, showcan
 }
 
 //GetOutputFile - used, but not in instruction stream
-func (self *VirtualLiquidHandler) GetOutputFile() (string, driver.CommandStatus) {
+func (self *VirtualLiquidHandler) GetOutputFile() ([]byte, driver.CommandStatus) {
 	self.AddWarning("GetOutputFile", "Not yet implemented")
-	return "You forgot to say 'please'", driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETOUTPUTFILE ACK"}
+	return []byte("You forgot to say 'please'"), driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETOUTPUTFILE ACK"}
 }

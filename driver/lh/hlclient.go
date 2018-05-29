@@ -51,11 +51,11 @@ func (d *HLLHDriver) GetCapabilities() (liquidhandling.LHProperties, driver.Comm
 	return (liquidhandling.LHProperties)(DecodeLHProperties(ret.Ret_1)), (driver.CommandStatus)(DecodeCommandStatus(ret.Ret_2))
 }
 
-func (d *HLLHDriver) GetOutputFile() (string, driver.CommandStatus) {
+func (d *HLLHDriver) GetOutputFile() ([]byte, driver.CommandStatus) {
 	req := pb.GetOutputFileRequest{}
 
 	ret, _ := d.C.GetOutputFile(context.Background(), &req)
-	return (string)(ret.Ret_1), (driver.CommandStatus)(DecodeCommandStatus(ret.Ret_2))
+	return ret.Ret_1, (driver.CommandStatus)(DecodeCommandStatus(ret.Ret_2))
 }
 func (d *HLLHDriver) Initialize() driver.CommandStatus {
 	req := pb.InitializeRequest{}

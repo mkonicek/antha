@@ -89,6 +89,8 @@ type LHObject interface {
 	SetOffset(Coordinates) error
 	//SetParent Store the offset of the object
 	SetParent(LHObject) error
+	//ClearParent Clear the parent of the object
+	ClearParent()
 	//GetParent
 	GetParent() LHObject
 	//GetID

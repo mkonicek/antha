@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"sort"
@@ -133,4 +134,219 @@ func coordsMatch(tc [][]wtype.WellCoords, wc []wtype.WellCoords) bool {
 	}
 
 	return true
+}
+
+func pTips(N int) string {
+	if N == 1 {
+		return "tip"
+	}
+	return "tips"
+}
+
+func pWells(N int) string {
+	if N == 1 {
+		return "well"
+	}
+	return "wells"
+}
+
+func intsContiguous(lhs, rhs int) bool {
+	return rhs-lhs == 1
+}
+
+func appendContiguous(s []string, channels []int, start, length int) []string {
+	if length == 1 {
+		return append(s, fmt.Sprintf("%d", channels[start]))
+	}
+	return append(s, fmt.Sprintf("%d-%d", channels[start], channels[start+length-1]))
+}
+
+func summariseChannels(channels []int) string {
+	if len(channels) == 1 {
+		return fmt.Sprintf("channel %d", channels[0])
+	}
+	sch := make([]string, 0, len(channels))
+	start, length := 0, 1
+	for start+length < len(channels) {
+		if intsContiguous(channels[start+length-1], channels[start+length]) {
+			length += 1
+		} else {
+			sch = appendContiguous(sch, channels, start, length)
+			start = start + length
+			length = 1
+		}
+	}
+	sch = appendContiguous(sch, channels, start, length)
+
+	return fmt.Sprintf("channels %s", strings.Join(sch, ","))
+}
+
+func summariseVolumes(vols []float64) string {
+	equal := true
+	for _, v := range vols {
+		if v != vols[0] {
+			equal = false
+			break
+		}
+	}
+
+	if equal {
+		return wunit.NewVolume(vols[0], "ul").ToString()
+	}
+
+	s_vols := make([]string, len(vols))
+	for i, v := range vols {
+		s_vols[i] = wunit.NewVolume(v, "ul").ToString()
+		s_vols[i] = s_vols[i][:len(s_vols[i])-3]
+	}
+	return fmt.Sprintf("{%s} ul", strings.Join(s_vols, ","))
+}
+
+func summariseRates(rates []wunit.FlowRate) string {
+	asString := make([]string, 0, len(rates))
+	for _, r := range rates {
+		asString = append(asString, r.ToString())
+	}
+	return summariseStrings(asString)
+}
+
+func summariseStrings(s []string) string {
+	if countUnique(s, true) == 1 {
+		return firstNonEmpty(s)
+	}
+	return "{" + strings.Join(getUnique(s, true), ",") + "}"
+}
+
+func summariseCycles(cycles []int, elems []int) string {
+	if iElemsEqual(cycles, elems) {
+		if cycles[0] == 1 {
+			return "once"
+		} else {
+			return fmt.Sprintf("%d times", cycles[0])
+		}
+	}
+	sc := make([]string, 0, len(elems))
+	for _, i := range elems {
+		sc = append(sc, fmt.Sprintf("%d", cycles[i]))
+	}
+	return fmt.Sprintf("{%s} times", strings.Join(sc, ","))
+}
+
+func summariseWells(wells []*wtype.LHWell, elems []int) string {
+	w := make([]string, 0, len(elems))
+	for _, i := range elems {
+		w = append(w, wells[i].Crds.FormatA1())
+	}
+	uw := getUnique(w, true)
+
+	if len(uw) == 1 {
+		return fmt.Sprintf("well %s", uw[0])
+	}
+	return fmt.Sprintf("wells %s", strings.Join(uw, ","))
+}
+
+func summarisePlates(wells []*wtype.LHWell, elems []int) string {
+	p := make([]string, 0, len(elems))
+	for _, i := range elems {
+		p = append(p, wtype.NameOf(wells[i].Plate))
+	}
+	up := getUnique(p, true)
+
+	if len(up) == 1 {
+		return fmt.Sprintf("plate \"%s\"", up[0])
+	}
+	return fmt.Sprintf("plates \"%s\"", strings.Join(up, "\",\""))
+
+}
+
+//summarisePlateWells list wells for each plate preserving order
+func summarisePlateWells(wells []*wtype.LHWell, elems []int) string {
+	var lastWell *wtype.LHWell
+	currentChunk := make([]string, 0, len(elems))
+	var chunkedWells [][]string
+	var plateNames []string
+
+	for _, i := range elems {
+		well := wells[i]
+		if lastWell != nil && lastWell.GetParent() != well.GetParent() {
+			chunkedWells = append(chunkedWells, currentChunk)
+			currentChunk = make([]string, 0, len(elems))
+			plateNames = append(plateNames, wtype.NameOf(well.GetParent()))
+		}
+		lastWell = well
+		if well != nil {
+			currentChunk = append(currentChunk, well.Crds.FormatA1())
+		}
+	}
+	chunkedWells = append(chunkedWells, currentChunk)
+	plateNames = append(plateNames, wtype.NameOf(lastWell.GetParent()))
+
+	var ret []string
+	for i, name := range plateNames {
+		if len(chunkedWells[i]) > 1 {
+			ret = append(ret, fmt.Sprintf("{%s}@%s", strings.Join(chunkedWells[i], ","), name))
+		} else if len(chunkedWells[i]) == 1 {
+			ret = append(ret, fmt.Sprintf("%s@%s", chunkedWells[i][0], name))
+		}
+	}
+
+	if len(ret) == 0 {
+		return "nil"
+	}
+
+	return strings.Join(ret, ", ")
+}
+
+func iElemsEqual(sl []int, elems []int) bool {
+	for _, i := range elems {
+		if sl[i] != sl[elems[0]] {
+			return false
+		}
+	}
+	return true
+}
+
+func fElemsEqual(sl []float64, elems []int) bool {
+	for _, i := range elems {
+		if sl[i] != sl[elems[0]] {
+			return false
+		}
+	}
+	return true
+}
+
+func extend_ints(l int, sl []int) []int {
+	if len(sl) < l {
+		r := make([]int, l)
+		copy(r, sl)
+		return r
+	}
+	return sl
+}
+
+func extend_floats(l int, sl []float64) []float64 {
+	if len(sl) < l {
+		r := make([]float64, l)
+		copy(r, sl)
+		return r
+	}
+	return sl
+}
+
+func extend_strings(l int, sl []string) []string {
+	if len(sl) < l {
+		r := make([]string, l)
+		copy(r, sl)
+		return r
+	}
+	return sl
+}
+
+func extend_bools(l int, sl []bool) []bool {
+	if len(sl) < l {
+		r := make([]bool, l)
+		copy(r, sl)
+		return r
+	}
+	return sl
 }

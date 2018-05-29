@@ -362,7 +362,7 @@ func (self *AdaptorGroup) GetPosition() wtype.Coordinates {
 func (self *AdaptorGroup) SetPosition(p wtype.Coordinates) error {
 	self.position = p
 	if self.motionLimits != nil && !self.motionLimits.Contains(p) {
-		return errors.New("motion limits prevent moving into position")
+		return errors.New("movement limits prevent moving into position")
 	}
 	return nil
 }

@@ -37,209 +37,6 @@ import (
 
 const arbitraryZOffset = 4.0
 
-func pTips(N int) string {
-	if N == 1 {
-		return "tip"
-	}
-	return "tips"
-}
-
-func pWells(N int) string {
-	if N == 1 {
-		return "well"
-	}
-	return "wells"
-}
-
-func summariseChannels(channels []int) string {
-	if len(channels) == 1 {
-		return fmt.Sprintf("channel %d", channels[0])
-	}
-	sch := make([]string, 0, len(channels))
-	for _, ch := range channels {
-		sch = append(sch, fmt.Sprintf("%d", ch))
-	}
-	return fmt.Sprintf("channels %s", strings.Join(sch, ","))
-}
-
-func summariseWellCoords(wellCoords []wtype.WellCoords) string {
-	ss := make([]string, 0, len(wellCoords))
-	for _, wc := range wellCoords {
-		ss = append(ss, wc.FormatA1())
-	}
-	return summariseStrings(ss)
-}
-
-func summariseVolumes(vols []float64) string {
-	equal := true
-	for _, v := range vols {
-		if v != vols[0] {
-			equal = false
-			break
-		}
-	}
-
-	if equal {
-		return wunit.NewVolume(vols[0], "ul").ToString()
-	}
-
-	s_vols := make([]string, len(vols))
-	for i, v := range vols {
-		s_vols[i] = wunit.NewVolume(v, "ul").ToString()
-		s_vols[i] = s_vols[i][:len(s_vols[i])-3]
-	}
-	return fmt.Sprintf("{%s} ul", strings.Join(s_vols, ","))
-}
-
-func summariseRates(rates []wunit.FlowRate) string {
-	asString := make([]string, 0, len(rates))
-	for _, r := range rates {
-		asString = append(asString, r.ToString())
-	}
-	return summariseStrings(asString)
-}
-
-func summariseStrings(s []string) string {
-	if countUnique(s, true) == 1 {
-		return firstNonEmpty(s)
-	}
-	return "{" + strings.Join(getUnique(s, true), ",") + "}"
-}
-
-func summariseCycles(cycles []int, elems []int) string {
-	if iElemsEqual(cycles, elems) {
-		if cycles[0] == 1 {
-			return "once"
-		} else {
-			return fmt.Sprintf("%d times", cycles[0])
-		}
-	}
-	sc := make([]string, 0, len(elems))
-	for _, i := range elems {
-		sc = append(sc, fmt.Sprintf("%d", cycles[i]))
-	}
-	return fmt.Sprintf("{%s} times", strings.Join(sc, ","))
-}
-
-func summariseWells(wells []*wtype.LHWell, elems []int) string {
-	w := make([]string, 0, len(elems))
-	for _, i := range elems {
-		w = append(w, wells[i].Crds.FormatA1())
-	}
-	uw := getUnique(w, true)
-
-	if len(uw) == 1 {
-		return fmt.Sprintf("well %s", uw[0])
-	}
-	return fmt.Sprintf("wells %s", strings.Join(uw, ","))
-}
-
-func summarisePlates(wells []*wtype.LHWell, elems []int) string {
-	p := make([]string, 0, len(elems))
-	for _, i := range elems {
-		p = append(p, wtype.NameOf(wells[i].Plate))
-	}
-	up := getUnique(p, true)
-
-	if len(up) == 1 {
-		return fmt.Sprintf("plate \"%s\"", up[0])
-	}
-	return fmt.Sprintf("plates \"%s\"", strings.Join(up, "\",\""))
-
-}
-
-//summarisePlateWells list wells for each plate preserving order
-func summarisePlateWells(wells []*wtype.LHWell, elems []int) string {
-	var lastWell *wtype.LHWell
-	currentChunk := make([]string, 0, len(elems))
-	var chunkedWells [][]string
-	var plateNames []string
-
-	for _, i := range elems {
-		well := wells[i]
-		if lastWell != nil && lastWell.GetParent() != well.GetParent() {
-			chunkedWells = append(chunkedWells, currentChunk)
-			currentChunk = make([]string, 0, len(elems))
-			plateNames = append(plateNames, wtype.NameOf(well.GetParent()))
-		}
-		lastWell = well
-		if well != nil {
-			currentChunk = append(currentChunk, well.Crds.FormatA1())
-		}
-	}
-	chunkedWells = append(chunkedWells, currentChunk)
-	plateNames = append(plateNames, wtype.NameOf(lastWell.GetParent()))
-
-	var ret []string
-	for i, name := range plateNames {
-		if len(chunkedWells[i]) > 1 {
-			ret = append(ret, fmt.Sprintf("{%s}@%s", strings.Join(chunkedWells[i], ","), name))
-		} else if len(chunkedWells[i]) == 1 {
-			ret = append(ret, fmt.Sprintf("%s@%s", chunkedWells[i][0], name))
-		}
-	}
-
-	if len(ret) == 0 {
-		return "nil"
-	}
-
-	return strings.Join(ret, ", ")
-}
-
-func iElemsEqual(sl []int, elems []int) bool {
-	for _, i := range elems {
-		if sl[i] != sl[elems[0]] {
-			return false
-		}
-	}
-	return true
-}
-
-func fElemsEqual(sl []float64, elems []int) bool {
-	for _, i := range elems {
-		if sl[i] != sl[elems[0]] {
-			return false
-		}
-	}
-	return true
-}
-
-func extend_ints(l int, sl []int) []int {
-	if len(sl) < l {
-		r := make([]int, l)
-		copy(r, sl)
-		return r
-	}
-	return sl
-}
-
-func extend_floats(l int, sl []float64) []float64 {
-	if len(sl) < l {
-		r := make([]float64, l)
-		copy(r, sl)
-		return r
-	}
-	return sl
-}
-
-func extend_strings(l int, sl []string) []string {
-	if len(sl) < l {
-		r := make([]string, l)
-		copy(r, sl)
-		return r
-	}
-	return sl
-}
-
-func extend_bools(l int, sl []bool) []bool {
-	if len(sl) < l {
-		r := make([]bool, l)
-		copy(r, sl)
-		return r
-	}
-	return sl
-}
-
 type adaptorCollision struct {
 	channel int
 	objects []wtype.LHObject
@@ -563,7 +360,7 @@ func (self *VirtualLiquidHandler) validateLHArgs(head, multi int, platetype, wha
 
 //getTargetPosition get a position within the liquidhandler, adding any errors as neccessary
 //bool is false if the instruction shouldn't continue (e.g. missing deckposition e.t.c)
-func (self *VirtualLiquidHandler) getTargetPosition(fname, adaptorName string, channelIndex int, deckposition, platetype, well string, ref wtype.WellReference) (wtype.Coordinates, bool) {
+func (self *VirtualLiquidHandler) getTargetPosition(fname, adaptorName string, channelIndex int, deckposition, platetype string, wc wtype.WellCoords, ref wtype.WellReference) (wtype.Coordinates, bool) {
 	ret := wtype.Coordinates{}
 
 	target, ok := self.state.GetDeck().GetChild(deckposition)
@@ -585,12 +382,6 @@ func (self *VirtualLiquidHandler) getTargetPosition(fname, adaptorName string, c
 	addr, ok := target.(wtype.Addressable)
 	if !ok {
 		self.AddErrorf(fname, "Object \"%s\" at \"%s\" is not addressable", wtype.NameOf(target), deckposition)
-		return ret, false
-	}
-
-	wc := wtype.MakeWellCoords(well)
-	if wc.IsZero() {
-		self.AddErrorf(fname, "Couldn't parse well \"%s\"", well)
 		return ret, false
 	}
 
@@ -703,10 +494,17 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 		}
 	}
 
+	//get slice of well coords
+	wc := make([]wtype.WellCoords, len(wellcoords))
+	for i := range wellcoords {
+		wc[i] = wtype.MakeWellCoords(wellcoords[i])
+	}
+
 	//find the coordinates of each explicitly requested position
 	coords := make([]wtype.Coordinates, adaptor.GetChannelCount())
 	offsets := makeOffsets(offsetX, offsetY, offsetZ)
 	explicit := make([]bool, adaptor.GetChannelCount())
+	channels := make([]int, 0, adaptor.GetChannelCount())
 	exp_count := 0
 	for i := range deckposition {
 		if deckposition[i] == "" {
@@ -718,7 +516,11 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 			}
 			explicit[i] = false
 		} else {
-			c, ok := self.getTargetPosition("Move", adaptor.GetName(), i, deckposition[i], platetype[i], wellcoords[i], refs[i])
+			if wc[i].IsZero() {
+				self.AddErrorf("Move", "couldn't parse well coordinates \"%s\"", wellcoords[i])
+				continue
+			}
+			c, ok := self.getTargetPosition("Move", adaptor.GetName(), i, deckposition[i], platetype[i], wc[i], refs[i])
 			if !ok {
 				return ret
 			}
@@ -729,11 +531,17 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 				coords[i] = coords[i].Add(wtype.Coordinates{X: 0., Y: 0., Z: tip.GetSize().Z})
 			}
 			explicit[i] = true
+			channels = append(channels, i)
 			exp_count++
 		}
 	}
 	if exp_count == 0 {
-		self.AddWarning("Move", "Ignoring blank move command")
+		self.AddWarning("Move", "ignoring blank move command")
+	}
+
+	describe := func() string {
+		return fmt.Sprintf("head %d %s to %s@%s at position %s",
+			head, summariseChannels(channels), wtype.HumanizeWellCoords(wc), summariseStrings(platetype), summariseStrings(deckposition))
 	}
 
 	//find the head location, origin
@@ -772,13 +580,8 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 			}
 		}
 		if len(moved) > 0 {
-			//get slice of well coords
-			wc := make([]wtype.WellCoords, len(wellcoords))
-			for i := range wellcoords {
-				wc[i] = wtype.MakeWellCoords(wellcoords[i])
-			}
-			self.AddErrorf("Move", "Non-independent head '%d' can't move adaptors to \"%s\" positions %s, layout mismatch",
-				head, strings.Join(getUnique(platetype, true), "\",\""), wtype.HumanizeWellCoords(wc))
+			self.AddErrorf("Move", "%s: can't move adaptors to %v, requires moving adaptors %s relative to non-independent head",
+				describe(), rel_coords, strings.Join(moved, ","))
 			return ret
 		}
 	}
@@ -807,7 +610,7 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 	//update the head position accordingly
 	err = adaptor.SetPosition(origin)
 	if err != nil {
-		self.AddError("Move", err.Error())
+		self.AddErrorf("Move", "%s: %s", describe(), err.Error())
 	}
 	for i, rc := range rel_coords {
 		adaptor.GetChannel(i).SetRelativePosition(rc)
@@ -1194,7 +997,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	}
 
 	describe := func() string {
-		return fmt.Sprintf("from %s@%s at position \"%s\" to head %d %s", summariseWellCoords(wc), tipbox.GetName(), position, head, summariseChannels(channels))
+		return fmt.Sprintf("from %s@%s at position \"%s\" to head %d %s", wtype.HumanizeWellCoords(wc), tipbox.GetName(), position, head, summariseChannels(channels))
 	}
 
 	if len(channels) == 0 {
@@ -1282,7 +1085,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	}
 	if len(missingTips) > 0 {
 		self.AddErrorf("LoadTips", "%s : no %s at %s",
-			describe(), pTips(len(missingTips)), summariseWellCoords(missingTips))
+			describe(), pTips(len(missingTips)), wtype.HumanizeWellCoords(missingTips))
 		return ret
 	}
 

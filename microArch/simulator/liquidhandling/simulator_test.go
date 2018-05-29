@@ -757,7 +757,7 @@ func Test_MoveConstraints(t *testing.T) {
 					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
 					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
 					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
-					1, //head
+					0, //head
 				},
 				&LoadTips{
 					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels

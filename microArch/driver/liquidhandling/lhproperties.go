@@ -235,6 +235,12 @@ func (lhp *LHProperties) GetHeadsLoaded() []*wtype.LHHead {
 	return ret
 }
 
+//GetHeadLoaded returns a specific head
+func (lhp *LHProperties) GetHeadLoaded(i int) *wtype.LHHead {
+	//inefficient implementation for now since we only have a small number of heads
+	return lhp.GetHeadsLoaded()[i]
+}
+
 // copy constructor
 func (lhp *LHProperties) Dup() *LHProperties {
 	return lhp.dup(false)

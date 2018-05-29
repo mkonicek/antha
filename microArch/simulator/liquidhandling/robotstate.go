@@ -344,6 +344,10 @@ func (self *AdaptorGroup) GetAdaptor(i int) (*AdaptorState, error) {
 	return self.adaptors[i], nil
 }
 
+func (self *AdaptorGroup) GetAdaptors() []*AdaptorState {
+	return self.adaptors
+}
+
 //CountAdaptors count the adaptors
 func (self *AdaptorGroup) NumAdaptors() int {
 	return len(self.adaptors)
@@ -420,8 +424,25 @@ func (self *RobotState) GetAdaptor(groupIndex int, adaptorIndex int) (*AdaptorSt
 	return adaptor, nil
 }
 
+func (self *RobotState) NumAdaptors() int {
+	r := 0
+	for _, ag := range self.adaptorGroups {
+		r += ag.NumAdaptors()
+	}
+	return r
+}
+
+func (self *RobotState) GetAdaptors() []*AdaptorState {
+	r := make([]*AdaptorState, 0, self.NumAdaptors())
+	for _, ag := range self.adaptorGroups {
+		r = append(r, ag.GetAdaptors()...)
+	}
+
+	return r
+}
+
 //GetNumberOfAdaptorGroups
-func (self *RobotState) CountAdaptorGroups() int {
+func (self *RobotState) NumAdaptorGroups() int {
 	return len(self.adaptorGroups)
 }
 

@@ -1034,9 +1034,21 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 
 	//check that channels we want to load to are empty
 	if tipFound := checkTipPresence(false, adaptor, channels); len(tipFound) != 0 {
-		self.AddErrorf("LoadTips", "%s : %s already loaded to %s",
-			describe(), pTips(len(tipFound)), summariseChannels(tipFound))
+		self.AddErrorf("LoadTips", "%s: %s already loaded on head %d %s",
+			describe(), pTips(len(tipFound)), head, summariseChannels(tipFound))
 		return ret
+	}
+
+	//check that there aren't any tips loaded on any other heads
+	for i, ad := range self.state.GetAdaptors() {
+		if i == head {
+			continue
+		}
+		if tipFound := checkTipPresence(false, ad, nil); len(tipFound) != 0 {
+			self.AddErrorf("LoadTips", "%s: %s already loaded on head %d %s",
+				describe(), pTips(len(tipFound)), i, summariseChannels(tipFound))
+
+		}
 	}
 
 	//refill the tipbox if there aren't enough tips to service the instruction

@@ -769,7 +769,7 @@ func Test_MoveConstraints(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: tips already loaded on head 1 channel 0",
+				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: tip already loaded on head 1 channel 0",
 			},
 			[]*AssertionFn{ //assertions
 			},
@@ -1306,7 +1306,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : tip already loaded to channel 0",
+				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: tip already loaded on head 0 channel 0",
 			},
 			nil, //assertions
 		},
@@ -1329,7 +1329,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7 : tips already loaded to channels 0-7",
+				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: tips already loaded on head 0 channels 0-7",
 			},
 			nil, //assertions
 		},

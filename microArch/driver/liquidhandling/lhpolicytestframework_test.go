@@ -2,15 +2,12 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
 	"github.com/pkg/errors"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/inventory/testinventory"
 )

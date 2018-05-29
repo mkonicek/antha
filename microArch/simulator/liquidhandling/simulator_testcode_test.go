@@ -672,19 +672,21 @@ func default_lhproperties() *liquidhandling.LHProperties {
 }
 
 func multihead_lhproperties() *liquidhandling.LHProperties {
+	x_step := 128.0
+	y_step := 86.0
 	valid_props := LHPropertiesParams{
 		"Device Name",
 		"Device Manufacturer",
 		[]LayoutParams{
-			{"tipbox_1", 0.0, 0.0, 0.0},
-			{"tipbox_2", 200.0, 0.0, 0.0},
-			{"input_1", 400.0, 0.0, 0.0},
-			{"input_2", 0.0, 200.0, 0.0},
-			{"output_1", 200.0, 200.0, 0.0},
-			{"output_2", 400.0, 200.0, 0.0},
-			{"tipwaste", 0.0, 400.0, 0.0},
-			{"wash", 200.0, 400.0, 0.0},
-			{"waste", 400.0, 400.0, 0.0},
+			{"tipbox_1", 0.0 * x_step, 0.0 * y_step, 0.0},
+			{"tipbox_2", 1.0 * x_step, 0.0 * y_step, 0.0},
+			{"input_1", 2.0 * x_step, 0.0 * y_step, 0.0},
+			{"input_2", 0.0 * x_step, 1.0 * y_step, 0.0},
+			{"output_1", 1.0 * x_step, 1.0 * y_step, 0.0},
+			{"output_2", 2.0 * x_step, 1.0 * y_step, 0.0},
+			{"tipwaste", 0.0 * x_step, 2.0 * y_step, 0.0},
+			{"wash", 1.0 * x_step, 2.0 * y_step, 0.0},
+			{"waste", 2.0 * x_step, 2.0 * y_step, 0.0},
 		},
 		[]HeadAssemblyParams{
 			{

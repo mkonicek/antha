@@ -711,8 +711,8 @@ func Test_MoveConstraints(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 204.5, Y: 4.5, Z: 62.2}),
-				positionAssertion(1, wtype.Coordinates{X: 204.5, Y: 22.5, Z: 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 132.5, Y: 4.5, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 132.5, Y: 22.5, Z: 62.2}),
 			},
 		},
 		{
@@ -737,8 +737,8 @@ func Test_MoveConstraints(t *testing.T) {
 				"(err) Move: head 1 channels 0-7 to A1-H1@tipbox at position tipbox_2: movement limits prevent moving into position",
 			},
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 204.5, Y: -13.5, Z: 62.2}),
-				positionAssertion(1, wtype.Coordinates{X: 204.5, Y: 4.5, Z: 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 132.5, Y: -13.5, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 132.5, Y: 4.5, Z: 62.2}),
 			},
 		},
 		{

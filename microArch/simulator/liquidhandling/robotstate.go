@@ -121,6 +121,40 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 	return tip
 }
 
+//ClearCollisions clear out any collisions
+func (self *ChannelState) GetCollision() wtype.LHObject {
+	deck := self.adaptor.GetGroup().GetRobot().GetDeck()
+
+	var ret []LHObject
+	if !self.HasTip() {
+		ret = deck.GetPointIntersections(self.position)
+	} else {
+		tipSize := wtype.Coordinates{0.0, 0.0, self.tip.GetSize().Z}
+		tipBottom := self.position.Subtract(tipSize)
+		box := wtype.NewBBox(tipBottom, tipSize)
+		objects := deck.GetBoxIntersections(box)
+		ret = make([]LHObject, 0, len(objects))
+		//only add plates if the tip intersects a well but extends below the bottom
+		for _, obj := range objects {
+			if well, ok := obj.(*wtype.LHWell); ok {
+				if len(well.GetPointIntersections(tipBottom)) > 0 {
+					ret = append(ret, well.GetParent())
+				}
+			} else if _, ok := obj.(*wtype.LHPlate); !ok {
+				ret = append(ret, obj)
+			}
+		}
+
+	}
+
+	if len(ret) == 0 {
+		return nil
+	}
+
+	//return the smallest item (e.g. the tip, not the tipbox)
+	return ret[len(ret)-1]
+}
+
 // -------------------------------------------------------------------------------
 //                            AdaptorState
 // -------------------------------------------------------------------------------

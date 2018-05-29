@@ -262,20 +262,20 @@ func summarisePlates(wells []*wtype.LHWell, elems []int) string {
 //summarisePlateWells list wells for each plate preserving order
 func summarisePlateWells(wells []*wtype.LHWell, elems []int) string {
 	var lastWell *wtype.LHWell
-	currentChunk := make([]string, 0, len(elems))
-	var chunkedWells [][]string
+	currentChunk := make([]wtype.WellCoords, 0, len(elems))
+	var chunkedWells [][]wtype.WellCoords
 	var plateNames []string
 
 	for _, i := range elems {
 		well := wells[i]
 		if lastWell != nil && lastWell.GetParent() != well.GetParent() {
 			chunkedWells = append(chunkedWells, currentChunk)
-			currentChunk = make([]string, 0, len(elems))
+			currentChunk = make([]wtype.WellCoords, 0, len(elems))
 			plateNames = append(plateNames, wtype.NameOf(well.GetParent()))
 		}
 		lastWell = well
 		if well != nil {
-			currentChunk = append(currentChunk, well.Crds.FormatA1())
+			currentChunk = append(currentChunk, well.Crds)
 		}
 	}
 	chunkedWells = append(chunkedWells, currentChunk)
@@ -283,11 +283,7 @@ func summarisePlateWells(wells []*wtype.LHWell, elems []int) string {
 
 	var ret []string
 	for i, name := range plateNames {
-		if len(chunkedWells[i]) > 1 {
-			ret = append(ret, fmt.Sprintf("{%s}@%s", strings.Join(chunkedWells[i], ","), name))
-		} else if len(chunkedWells[i]) == 1 {
-			ret = append(ret, fmt.Sprintf("%s@%s", chunkedWells[i][0], name))
-		}
+		ret = append(ret, fmt.Sprintf("%s@%s", wtype.HumanizeWellCoords(chunkedWells[i]), name))
 	}
 
 	if len(ret) == 0 {

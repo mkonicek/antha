@@ -239,7 +239,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 0.001},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channels 0,1,2,3,4,5,6,7 speed to 0.001 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channels 0-7 speed to 0.001 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -252,7 +252,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 15.},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channels 0,1,2,3,4,5,6,7 speed to 15 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed: Setting Head 0 channels 0-7 speed to 15 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -574,7 +574,7 @@ func Test_Move(t *testing.T) {
 			},
 			[]string{ //errors
 				"(err) Move: Request for well I1 in object \"tipbox1\" at \"tipbox_1\" which is of size [8x12]",
-				"(err) Move: Couldn't parse well \"not_a_well\"",
+				"(err) Move: couldn't parse well coordinates \"not_a_well\"",
 			},
 			nil, //assertions
 		},
@@ -631,7 +631,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Non-independent head '0' can't move adaptors to \"plate\" positions A1,B1,C1,D1,E1,F1,G1,H1, layout mismatch",
+				"(err) Move: head 0 channels 0-7 to A1-H1@plate at position input_1: requires moving channels 4-7 relative to non-independent head",
 			},
 			nil, //assertions
 		},
@@ -654,7 +654,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Non-independent head '0' can't move adaptors to \"tipbox\" positions A1,B1,C1,D1,E1,F1,G1,H1, layout mismatch",
+				"(err) Move: head 0 channels 0-7 to A1-H1@tipbox at position tipbox_1: requires moving channels 3-5 relative to non-independent head",
 			},
 			nil, //assertions
 		},
@@ -677,7 +677,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Non-independent head '0' can't move adaptors to \"tipbox\" positions A1,B2,C1,D2,E1,F2,G1,H2, layout mismatch",
+				"(err) Move: head 0 channels 0-7 to A1,B2,C1,D2,E1,F2,G1,H2@tipbox at position tipbox_1: requires moving channels 1,3,5,7 relative to non-independent head",
 			},
 			nil, //assertions
 		},
@@ -734,7 +734,7 @@ func Test_MoveConstraints(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: head 1 channels 0-7 to A1-H1@tipbox at position tipbox_2 : movement limits prevent moving into position",
+				"(err) Move: head 1 channels 0-7 to A1-H1@tipbox at position tipbox_2: movement limits prevent moving into position",
 			},
 			[]*AssertionFn{ //assertions
 				positionAssertion(0, wtype.Coordinates{X: 204.5, Y: -13.5, Z: 62.2}),
@@ -769,7 +769,7 @@ func Test_MoveConstraints(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7: tips already loaded on head 1 channel 0",
+				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: tips already loaded on head 1 channel 0",
 			},
 			[]*AssertionFn{ //assertions
 			},
@@ -1283,7 +1283,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7 : no tips at {A12,B12,C12,D12,E12,F12,G12,H12}",
+				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7 : no tips at A12-H12",
 			},
 			nil, //assertions
 		},
@@ -1329,7 +1329,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7 : tips already loaded to channels 0,1,2,3,4,5,6,7",
+				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7 : tips already loaded to channels 0-7",
 			},
 			nil, //assertions
 		},
@@ -1373,7 +1373,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {E12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channel 0 is misaligned with tip at E12 by 9mm",
+				"(err) LoadTips: from E12,G12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2 : channel 0 is misaligned with tip at E12 by 9mm",
 			},
 			nil, //assertions
 		},
@@ -1395,7 +1395,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {G12,F12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channels 0,1 are misaligned with tips at G12,F12 by 9,9 mm respectively",
+				"(err) LoadTips: from G12,F12,H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2 : channels 0-1 are misaligned with tips at G12,F12 by 9,9mm respectively",
 			},
 			nil, //assertions
 		},
@@ -1439,7 +1439,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channels 0,1,2 are misaligned with tips at F12,G12,H12 by 2,2,2 mm respectively",
+				"(err) LoadTips: from F12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2 : channels 0-2 are misaligned with tips at F12-H12 by 2,2,2mm respectively",
 			},
 			nil, //assertions
 		},
@@ -2190,7 +2190,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1,2,3,4,5,6,7 - well A1@trough1 only contains 400 ul working volume, reducing aspirated volume by 50 ul",
+				"(warn) Aspirate: While aspirating 100 ul of water to head 0 channels 0-7 - well A1@trough1 only contains 400 ul working volume, reducing aspirated volume by 50 ul",
 			},
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
@@ -2238,7 +2238,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1 - missing tip on channel 1",
+				"(err) Aspirate: While aspirating 100 ul of water to head 0 channels 0-1 - missing tip on channel 1",
 			},
 			nil, //assertions
 		},
@@ -2435,7 +2435,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating {50,60,70,80,90,100,110,120} ul of water to head 0 channels 0,1,2,3,4,5,6,7 - channels cannot aspirate different volumes in non-independent head",
+				"(err) Aspirate: While aspirating {50,60,70,80,90,100,110,120} ul of water to head 0 channels 0-7 - channels cannot aspirate different volumes in non-independent head",
 			},
 			nil, //assertions
 		},
@@ -2887,7 +2887,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: 50 ul of water from head 0 channel 0 to nil : no well within 5 mm below tip on channel 0",
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to @<unnamed> : no well within 5 mm below tip on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2953,7 +2953,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : must also dispense 50 ul from channels 1,2,3,4,5,6,7 as head is not independent",
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : must also dispense 50 ul from channels 1-7 as head is not independent",
 			},
 			nil, //assertions
 		},
@@ -2986,7 +2986,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0,1,2,3,4,5,6,7 to {A1,B1,C1,D1,E1,F1,G1,H1}@plate1 : channels cannot dispense different volumes in non-independent head",
+				"(err) Dispense: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0-7 to A1-H1@plate1 : channels cannot dispense different volumes in non-independent head",
 			},
 			nil, //assertions
 		},

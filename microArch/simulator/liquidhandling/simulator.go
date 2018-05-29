@@ -571,17 +571,17 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 	//check that the requested position is possible given the head/adaptor capabilities
 	if !adaptor.IsIndependent() {
 		//i.e. the channels can't move relative to each other or the head, so relative locations must remain the same
-		moved := []string{}
+		moved := []int{}
 		for i, rc := range rel_coords {
 			//check that adaptor relative position remains the same
 			//arbitrary 0.01mm to avoid numerical instability
 			if rc.Subtract(adaptor.GetChannel(i).GetRelativePosition()).Abs() > 0.01 {
-				moved = append(moved, fmt.Sprintf("%d", i))
+				moved = append(moved, i)
 			}
 		}
 		if len(moved) > 0 {
-			self.AddErrorf("Move", "%s: can't move adaptors to %v, requires moving adaptors %s relative to non-independent head",
-				describe(), rel_coords, strings.Join(moved, ","))
+			self.AddErrorf("Move", "%s: requires moving %s relative to non-independent head",
+				describe(), summariseChannels(moved))
 			return ret
 		}
 	}
@@ -1091,8 +1091,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 
 	//check alignment
 	z_off := make([]float64, n_channels)
-	misaligned := []string{}
-	target := []string{}
+	misaligned := []int{}
+	target := []wtype.WellCoords{}
 	amount := []string{}
 	for _, ch := range channels {
 		tip_s := tips[ch].GetSize()
@@ -1100,8 +1100,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		ch_p := adaptor.GetChannel(ch).GetAbsolutePosition()
 		delta := ch_p.Subtract(tip_p)
 		if xy := delta.AbsXY(); xy > 0.5 {
-			misaligned = append(misaligned, fmt.Sprintf("%d", ch))
-			target = append(target, wc[ch].FormatA1())
+			misaligned = append(misaligned, ch)
+			target = append(target, wc[ch])
 			amount = append(amount, fmt.Sprintf("%v", xy))
 		}
 		z_off[ch] = delta.Z
@@ -1110,13 +1110,15 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 			return ret
 		}
 	}
-	if len(misaligned) == 1 {
-		self.AddErrorf("LoadTips", "%s : channel %s is misaligned with tip at %s by %smm",
-			describe(), misaligned[0], target[0], amount[0])
-		return ret
-	} else if len(misaligned) > 1 {
-		self.AddErrorf("LoadTips", "%s : channels %s are misaligned with tips at %s by %s mm respectively",
-			describe(), strings.Join(misaligned, ","), strings.Join(target, ","), strings.Join(amount, ","))
+	if len(misaligned) != 0 {
+		is := "is"
+		res := ""
+		if len(misaligned) != 1 {
+			is = "are"
+			res = " respectively"
+		}
+		self.AddErrorf("LoadTips", "%s : %s %s misaligned with %s at %s by %smm%s",
+			describe(), summariseChannels(misaligned), is, pTips(len(misaligned)), wtype.HumanizeWellCoords(target), strings.Join(amount, ","), res)
 		return ret
 	}
 

@@ -321,7 +321,7 @@ CommandStatusMessage Ret_2 = 2;
 message GetOutputFileRequest {
 }
 message GetOutputFileReply {
-string Ret_1 = 1;
+bytes Ret_1 = 1;
 CommandStatusMessage Ret_2 = 2;
 }
 message GetStatusRequest {

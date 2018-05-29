@@ -1073,6 +1073,16 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 		}
 	}
 
+	//for each blowout channel
+	for i := range arg.channels {
+		if !blowout[i] {
+			continue
+		}
+		//reduce the volume to the total volume in the tip (assume blowout removes residual volume as well)
+		cv := arg.adaptor.GetChannel(i).GetTip().CurrentVolume().ConvertToString("ul")
+		volume[i] = math.Min(volume[i], cv)
+	}
+
 	//check volumes -- currently only warnings due to poor volume tracking
 	finalVolumes := make([]float64, 0, len(arg.channels))
 	maxVolumes := make([]float64, 0, len(arg.channels))
@@ -1957,7 +1967,7 @@ func (self *VirtualLiquidHandler) Message(level int, title, text string, showcan
 }
 
 //GetOutputFile - used, but not in instruction stream
-func (self *VirtualLiquidHandler) GetOutputFile() (string, driver.CommandStatus) {
+func (self *VirtualLiquidHandler) GetOutputFile() ([]byte, driver.CommandStatus) {
 	self.AddWarning("GetOutputFile", "Not yet implemented")
-	return "You forgot to say 'please'", driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETOUTPUTFILE ACK"}
+	return []byte("You forgot to say 'please'"), driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETOUTPUTFILE ACK"}
 }

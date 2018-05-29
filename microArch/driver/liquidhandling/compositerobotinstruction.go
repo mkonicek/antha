@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"math"
 
 	"reflect"
@@ -1744,7 +1745,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	defaultpspeed, err = checkAndSaften(defaultpspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 	if err != nil {
-		return []RobotInstruction{}, fmt.Errorf("Error setting default pipette speed: %s", err.Error())
+		return []RobotInstruction{}, errors.Wrap(err, "setting default pipette speed")
 	}
 
 	// offsets
@@ -1900,14 +1901,14 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		mixrate := SafeGetF64(pol, "PRE_MIX_RATE")
 
-		changepipspeed := (mixrate == defaultpspeed) && (mixrate > 0.0)
+		changepipspeed := (mixrate != defaultpspeed) && (mixrate > 0.0)
 
 		if changepipspeed {
 			mixrate, err = checkAndSaften(mixrate, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
-
 			if err != nil {
-				return []RobotInstruction{}, fmt.Errorf("Error setting pipette dispense speed: %s", err.Error())
+				return []RobotInstruction{}, errors.Wrap(err, "setting pre mix pipetting speed")
 			}
+
 			setspd := NewSetPipetteSpeedInstruction()
 			setspd.Head = ins.Head
 			setspd.Channel = -1 // all channels
@@ -1960,18 +1961,13 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	apspeed := SafeGetF64(pol, "ASPSPEED")
 
-	changepspeed := (apspeed == defaultpspeed) && (apspeed > 0.0)
-	apspeed, err = checkAndSaften(apspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
-
-	if err != nil {
-		return []RobotInstruction{}, fmt.Errorf("Error setting pipette aspirate speed: %s", err.Error())
-	}
+	changepspeed := (apspeed != defaultpspeed) && (apspeed > 0.0)
 
 	if changepspeed {
 		apspeed, err = checkAndSaften(apspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 		if err != nil {
-			return []RobotInstruction{}, fmt.Errorf("Error setting pipette aspirate speed: %s", err.Error())
+			return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
 		}
 		sps := NewSetPipetteSpeedInstruction()
 		sps.Head = ins.Head
@@ -2191,7 +2187,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	defaultpspeed, err = checkAndSaften(defaultpspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 	if err != nil {
-		return []RobotInstruction{}, fmt.Errorf("Error setting pipette aspirate speed: %s", err.Error())
+		return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
 	}
 
 	// set the defaults
@@ -2298,7 +2294,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dpspeed, err = checkAndSaften(dpspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 		if err != nil {
-			return []RobotInstruction{}, fmt.Errorf("Error setting pipette dispense speed: %s", err.Error())
+			return []RobotInstruction{}, errors.Wrap(err, "setting pipette dispense speed")
 		}
 
 		sps := NewSetPipetteSpeedInstruction()
@@ -2478,7 +2474,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			mixrate, err = checkAndSaften(mixrate, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 			if err != nil {
-				return []RobotInstruction{}, fmt.Errorf("Error setting pipette aspirate speed: %s", err.Error())
+				return []RobotInstruction{}, errors.Wrap(err, "setting post mix pipetting speed")
 			}
 			setspd := NewSetPipetteSpeedInstruction()
 			setspd.Head = ins.Head
@@ -3548,14 +3544,14 @@ func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms
 // return an error otherwise
 func checkAndSaften(proposed, min, max float64, overrideIfOutOfRange bool) (float64, error) {
 	if proposed < min {
-		if overrideIfOutOfRange {
-			return proposed, fmt.Errorf("Value %f out of range %f - %f", proposed, min, max)
+		if !overrideIfOutOfRange {
+			return proposed, fmt.Errorf("value %f out of range %f - %f", proposed, min, max)
 		} else {
 			return min, nil
 		}
 	} else if proposed > max {
-		if overrideIfOutOfRange {
-			return proposed, fmt.Errorf("Value %f out of range %f - %f", proposed, min, max)
+		if !overrideIfOutOfRange {
+			return proposed, fmt.Errorf("value %f out of range %f - %f", proposed, min, max)
 		} else {
 			return max, nil
 		}

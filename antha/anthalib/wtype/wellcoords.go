@@ -319,13 +319,40 @@ func (wca WellCoordArrayRow) Len() int           { return len(wca) }
 func (wca WellCoordArrayRow) Swap(i, j int)      { t := wca[i]; wca[i] = wca[j]; wca[j] = t }
 func (wca WellCoordArrayRow) Less(i, j int) bool { return wca[i].ColLessThan(wca[j]) }
 
+func canAdd(coords []WellCoords, c WellCoords) bool {
+	if len(coords) == 0 {
+		return true
+	}
+	if len(coords) == 1 {
+		return c.X-coords[0].X == 1 || c.Y-coords[0].Y == 1
+	}
+	//if vertical run
+	if coords[0].X == coords[len(coords)-1].X {
+		return c.X == coords[0].X && c.Y == coords[len(coords)-1].Y+1
+	}
+	//if horizontal run
+	return c.Y == coords[0].Y && c.X == coords[len(coords)-1].X+1
+}
+
+func runToString(coords []WellCoords) string {
+	if len(coords) == 1 {
+		return coords[0].FormatA1()
+	}
+	return coords[0].FormatA1() + "-" + coords[len(coords)-1].FormatA1()
+}
+
 //HumanizeWellCoords convenience function to make displaying a slice of WellCoords more human readable
 func HumanizeWellCoords(coords []WellCoords) string {
-	s := []string{}
-	for i := range coords {
-		if !coords[i].IsZero() {
-			s = append(s, coords[i].FormatA1())
+	s := make([]string, 0, len(coords))
+	run := make([]WellCoords, 0, len(coords))
+	for _, coord := range coords {
+		if canAdd(run, coord) {
+			run = append(run, coord)
+		} else {
+			s = append(s, runToString(run))
+			run = make([]WellCoords, 0, len(coords))
 		}
 	}
+	s = append(s, runToString(run))
 	return strings.Join(s, ",")
 }

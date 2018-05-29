@@ -631,7 +631,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: head 0 channels 0-7 to A1-H1@plate at position input_1: requires moving channels 4-7 relative to non-independent head",
+				"(err) Move: head 0 channels 0-7 to A1-H1@input_1: requires moving channels 4-7 relative to non-independent head",
 			},
 			nil, //assertions
 		},
@@ -654,7 +654,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: head 0 channels 0-7 to A1-H1@tipbox at position tipbox_1: requires moving channels 3-5 relative to non-independent head",
+				"(err) Move: head 0 channels 0-7 to A1-H1@tipbox_1: requires moving channels 3-5 relative to non-independent head",
 			},
 			nil, //assertions
 		},
@@ -677,7 +677,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: head 0 channels 0-7 to A1,B2,C1,D2,E1,F2,G1,H2@tipbox at position tipbox_1: requires moving channels 1,3,5,7 relative to non-independent head",
+				"(err) Move: head 0 channels 0-7 to A1,B2,C1,D2,E1,F2,G1,H2@tipbox_1: requires moving channels 1,3,5,7 relative to non-independent head",
 			},
 			nil, //assertions
 		},
@@ -734,7 +734,7 @@ func Test_MoveConstraints(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: head 1 channels 0-7 to A1-H1@tipbox at position tipbox_2: movement limits prevent moving into position",
+				"(err) Move: head 1 channels 0-7 to A1-H1@tipbox_2: movement limits prevent moving into position",
 			},
 			[]*AssertionFn{ //assertions
 				positionAssertion(0, wtype.Coordinates{X: 132.5, Y: -13.5, Z: 62.2}),
@@ -747,6 +747,63 @@ func Test_MoveConstraints(t *testing.T) {
 			[]*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(1, "tipbox_1", []int{0}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2"}, //deckposition
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					0, //head
+				},
+				&LoadTips{
+					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
+					0, //head
+					8, //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
+					[]string{"tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2"}, //location
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //well
+				},
+			},
+			[]string{ //errors
+				"(err) LoadTips: from A12-H12@tipbox2 at position \"tipbox_2\" to head 0 channels 0-7: tip already loaded on head 1 channel 0",
+			},
+			[]*AssertionFn{ //assertions
+			},
+		},
+		{
+			"collision with tip on other head",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(1, "tipbox_1", []int{0}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move: head 0 channels 0-7 to A1-H1@tipbox_1: tip on head 1 channel 0 collides with tip A1@tipbox2 at position tipbox_2",
+			},
+			[]*AssertionFn{ //assertions
+			},
+		},
+		{
+			"other head collides with a different tipbox",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
 			},
 			[]TestRobotInstruction{
 				&Move{
@@ -769,7 +826,7 @@ func Test_MoveConstraints(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: tip already loaded on head 1 channel 0",
+				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: head 1 channels 0-7 collide with tips at A1-H1@tipbox2 at position \"tipbox_2\"",
 			},
 			[]*AssertionFn{ //assertions
 			},

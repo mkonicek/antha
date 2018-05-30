@@ -260,8 +260,9 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ig
 				wc, _ := addr.CoordsToWellCoords(pos)
 				wellcoords = append(wellcoords, wc)
 			}
+			sort.Sort(wtype.WellCoordArrayCol(wellcoords))
 
-			s = fmt.Sprintf("%s %s@%s at position %s", wtype.ClassOf(children[0]), wtype.HumanizeWellCoords(wellcoords), wtype.NameOf(parent), deck.GetSlotContaining(parent))
+			s = fmt.Sprintf("%s %s@%s at position %s", pluralClassOf(children[0], len(wellcoords)), wtype.HumanizeWellCoords(wellcoords), wtype.NameOf(parent), deck.GetSlotContaining(parent))
 			objectStrings = append(objectStrings, s)
 		} else {
 			for _, child := range children {
@@ -275,6 +276,26 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ig
 	}
 
 	return errors.Errorf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
+}
+
+var pluralMap = map[string]string{
+	"well":     "wells",
+	"tip":      "tips",
+	"plate":    "plates",
+	"tipbox":   "tipboxes",
+	"tipwaste": "tipwastes",
+}
+
+//pluralise the things we care about
+func pluralClassOf(o interface{}, num int) string {
+	r := wtype.ClassOf(o)
+	if num == 1 {
+		return r
+	}
+	if p, ok := pluralMap[r]; ok {
+		return p
+	}
+	return r
 }
 
 //addComponent add a component to the container without storing component history

@@ -589,7 +589,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	}
 
 	//check for collisions in the new location
-	if err := assertNoCollisionsInGroup(adaptor, nil, !self.settings.IsTipboxCollisionEnabled()); err != nil {
+	if err := assertNoCollisionsInGroup(adaptor, nil, !self.settings.IsTipboxCollisionEnabled(), 0.0); err != nil {
 		self.AddErrorf("Move", "%s: collision detected: %s", describe(), err.Error())
 	}
 	return ret
@@ -941,18 +941,14 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	}
 
 	//get the individual position
-	if countUnique(positionS, true) != 1 {
-		self.AddErrorf("LoadTips", "invalid position slice \"%v\", only one position supported", positionS)
-		return ret
+	position, err := getSingle(positionS)
+	if err != nil {
+		self.AddErrorf("LoadTips", "invalid argument position: %s", err.Error())
 	}
-	position := firstNonEmpty(positionS)
-
-	//get the individual position
-	if countUnique(platetypeS, true) != 1 {
-		self.AddErrorf("LoadTips", "invalid platetype slice \"%v\", only one platetype supported", positionS)
-		return ret
+	platetype, err := getSingle(platetypeS)
+	if err != nil {
+		self.AddErrorf("LoadTips", "invalid argument platetype: %s", err.Error())
 	}
-	platetype := firstNonEmpty(platetypeS)
 
 	//get the actual tipbox
 	var tipbox *wtype.LHTipbox
@@ -1105,7 +1101,6 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 
 	//if not independent, check there are no other tips in the way
 	if !adaptor.IsIndependent() {
-		collisions := adaptorCollisions{}
 		zo_max := 0.
 		zo_min := math.MaxFloat64
 		for _, ch := range channels {
@@ -1121,33 +1116,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 				describe(), zo_min, zo_max)
 			return ret
 		}
-		for i := 0; i < adaptor.GetChannelCount(); i++ {
-			if contains(i, channels) {
-				continue
-			}
-			ch_pos := adaptor.GetChannel(i).GetAbsolutePosition()
-			size := wtype.Coordinates{X: 0., Y: 0., Z: zo_max + 0.5}
-			box := wtype.NewBBox(ch_pos.Subtract(size), size)
-			objects := deck.GetBoxIntersections(*box)
-			//filter out tipboxes if we're meant to be ignoring them
-			//(hack to prevent dubious tipbox geometry messing this up)
-			if !self.settings.IsTipboxCollisionEnabled() {
-				no_tipboxes := objects[:0]
-				for _, o := range objects {
-					if _, ok := o.(*wtype.LHTipbox); !ok {
-						no_tipboxes = append(no_tipboxes, o)
-					}
-				}
-				objects = no_tipboxes
-			}
-			if len(objects) > 0 {
-				collisions = append(collisions, adaptorCollision{i, objects})
-			}
-		}
-
-		if len(collisions) > 0 {
-			self.AddErrorf("LoadTips", "%s : %v (head not independent)",
-				describe(), collisions)
+		if err := assertNoCollisionsInGroup(adaptor, channels, !self.settings.IsTipboxCollisionEnabled(), zo_max+0.5); err != nil {
+			self.AddErrorf("LoadTips", "%s: collision detected: %s", describe(), err.Error())
 		}
 	}
 

@@ -122,12 +122,14 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 }
 
 //ClearCollisions clear out any collisions
-func (self *ChannelState) GetCollisions(ignoreTipboxes bool) []wtype.LHObject {
+func (self *ChannelState) GetCollisions(ignoreTipboxes bool, channelClearance float64) []wtype.LHObject {
 	deck := self.adaptor.GetGroup().GetRobot().GetDeck()
 
 	var ret []wtype.LHObject
 	if !self.HasTip() {
-		ret = deck.GetPointIntersections(self.GetAbsolutePosition())
+		pos := self.GetAbsolutePosition()
+		pos.Z -= channelClearance
+		ret = deck.GetPointIntersections(pos)
 	} else {
 		tipSize := wtype.Coordinates{0.0, 0.0, self.tip.GetSize().Z}
 		tipBottom := self.GetAbsolutePosition().Subtract(tipSize)

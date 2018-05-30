@@ -189,7 +189,7 @@ func assertNoTipsOnOthersInGroup(adaptor *AdaptorState) error {
 }
 
 //assertNoCollisionsInGroup check that there are no collisions, ignoring the specified channels on the given adaptor
-func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ignoreTipboxes bool) error {
+func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ignoreTipboxes bool, channelClearance float64) error {
 
 	var maxChannels int
 	for _, ad := range adaptor.GetGroup().GetAdaptors() {
@@ -211,7 +211,7 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ig
 			if ad == adaptor && ignore[i] {
 				continue
 			}
-			objects := ad.GetChannel(i).GetCollisions(ignoreTipboxes)
+			objects := ad.GetChannel(i).GetCollisions(ignoreTipboxes, channelClearance)
 			for _, o := range objects {
 				objectMap[o] = true
 			}
@@ -260,7 +260,8 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ig
 				wc, _ := addr.CoordsToWellCoords(pos)
 				wellcoords = append(wellcoords, wc)
 			}
-			sort.Sort(wtype.WellCoordArrayCol(wellcoords))
+			//WellCoordArrayRow sorts by col then row
+			sort.Sort(wtype.WellCoordArrayRow(wellcoords))
 
 			s = fmt.Sprintf("%s %s@%s at position %s", pluralClassOf(children[0], len(wellcoords)), wtype.HumanizeWellCoords(wellcoords), wtype.NameOf(parent), deck.GetSlotContaining(parent))
 			objectStrings = append(objectStrings, s)

@@ -100,7 +100,10 @@ func (self *LHTip) GetBoxIntersections(box BBox) []LHObject {
 
 //@implement LHObject
 func (self *LHTip) GetPointIntersections(point Coordinates) []LHObject {
-	point = point.Subtract(point)
+	if self == nil {
+		return nil
+	}
+	point = point.Subtract(OriginOf(self))
 	//TODO more accurate intersection detection with Shape
 	if self.Bounds.IntersectsPoint(point) {
 		return []LHObject{self}

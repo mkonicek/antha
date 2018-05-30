@@ -294,7 +294,7 @@ func (wc WellCoords) RowLettString() string {
 
 func (wc WellCoords) RowLessThan(wc2 WellCoords) bool {
 	if wc.Y == wc2.Y {
-		return wc.X < wc2.Y
+		return wc.X < wc2.X
 	}
 	return wc.Y < wc2.Y
 }

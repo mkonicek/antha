@@ -332,12 +332,7 @@ func (self *LHTipbox) GetPointIntersections(point Coordinates) []LHObject {
 	if self.GetTipBounds().IntersectsPoint(point) {
 		for _, tiprow := range self.Tips {
 			for _, tip := range tiprow {
-				if tip != nil {
-					c := tip.GetPointIntersections(point)
-					if c != nil {
-						ret = append(ret, c...)
-					}
-				}
+				ret = append(ret, tip.GetPointIntersections(point)...)
 			}
 		}
 	}

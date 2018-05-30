@@ -776,12 +776,12 @@ func multihead_lhproperties() *liquidhandling.LHProperties {
 				},
 			},
 		},
-		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
-		[]string{"input_1", "input_2"},   //Input_preferences
-		[]string{"output_1", "output_2"}, //Output_preferences
-		[]string{"tipwaste"},             //Tipwaste_preferences
-		[]string{"wash"},                 //Wash_preferences
-		[]string{"waste"},                //Waste_preferences
+		[]string{"tipbox_1", "tipbox_2", "input_1", "input_2"},             //Tip_preferences
+		[]string{"input_1", "input_2", "tipbox_1", "tipbox_2", "tipwaste"}, //Input_preferences
+		[]string{"output_1", "output_2"},                                   //Output_preferences
+		[]string{"tipwaste", "input_1"},                                    //Tipwaste_preferences
+		[]string{"wash"},                                                   //Wash_preferences
+		[]string{"waste"},                                                  //Waste_preferences
 	}
 
 	return makeLHProperties(&valid_props)

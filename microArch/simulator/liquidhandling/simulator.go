@@ -576,7 +576,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 
 	//check that there are no tips loaded on any other heads
 	if err = assertNoTipsOnOthersInGroup(adaptor); err != nil {
-		self.AddErrorf("Move", "%s: while %s", describe(), err.Error())
+		self.AddErrorf("Move", "%s: cannot move head %d while %s", describe(), head, err.Error())
 	}
 
 	//move the head to the new position

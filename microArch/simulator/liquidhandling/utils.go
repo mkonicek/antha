@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/pkg/errors"
 	"sort"
 	"strings"
 )
@@ -88,6 +89,187 @@ func firstNonEmpty(slice []string) string {
 		}
 	}
 	return ""
+}
+
+//getSingle given an array of strings, test that each value is either equal to each other or empty
+//and return the value, or an error if this is not the case
+func getSingle(slice []string) (string, error) {
+	u := getUnique(slice, true)
+	if len(u) == 0 {
+		return "", errors.New("no value specified")
+	}
+	if len(u) > 1 {
+		return "", errors.Errorf("multiple values specified: \"%s\"", strings.Join(u, "\", \""))
+	}
+	return u[0], nil
+}
+
+var refMap = map[int]wtype.WellReference{
+	0: wtype.BottomReference,
+	1: wtype.TopReference,
+	2: wtype.LiquidReference,
+}
+
+//convertReferences from an slice of ints into enum values, returning an error for unknown references
+func convertReferences(slice []int) ([]wtype.WellReference, error) {
+	refs := make([]wtype.WellReference, len(slice))
+	unknown := make(map[int]bool)
+	for i, r := range slice {
+		if v, ok := refMap[r]; ok {
+			refs[i] = v
+		} else {
+			unknown[r] = true
+		}
+	}
+
+	if len(unknown) > 0 {
+		uk := make([]string, 0, len(unknown))
+		for v := range unknown {
+			uk = append(uk, fmt.Sprintf("%d", v))
+		}
+		value := "value"
+		if len(unknown) > 1 {
+			value = "values"
+		}
+		return refs, errors.Errorf("unknown %s %s", value, strings.Join(uk, ", "))
+	}
+	return refs, nil
+}
+
+//convertWellCoords convert a list of string wellcoords to wtype.WellCoords returning
+//errors for non-empty strings which can't be parsed
+func convertWellCoords(slice []string) ([]wtype.WellCoords, error) {
+	ret := make([]wtype.WellCoords, len(slice))
+	unknown := make([]string, 0, len(slice))
+	for i, s := range slice {
+		if s == "" {
+			ret[i] = wtype.ZeroWellCoords()
+			continue
+		}
+		ret[i] = wtype.MakeWellCoords(s)
+		if ret[i].IsZero() {
+			unknown = append(unknown, s)
+		}
+	}
+
+	if len(unknown) > 0 {
+		return ret, errors.Errorf("couldn't parse \"%s\"", strings.Join(unknown, "\", \""))
+	}
+	return ret, nil
+}
+
+//assertNoTipsOnOthersInGroup check that there are no tips loaded on any other adaptors in the adaptor group
+func assertNoTipsOnOthersInGroup(adaptor *AdaptorState) error {
+	adaptors := make([]int, 0, adaptor.GetGroup().NumAdaptors())
+	foundTips := make(map[int][]int)
+	numTips := 0
+	for _, ad := range adaptor.GetGroup().GetAdaptors() {
+		if ad == adaptor {
+			continue
+		}
+		if tipFound := checkTipPresence(false, ad, nil); len(tipFound) != 0 {
+			idx := ad.GetIndex()
+			adaptors = append(adaptors, idx)
+			foundTips[idx] = tipFound
+			numTips += len(tipFound)
+		}
+	}
+
+	if len(foundTips) > 0 {
+		s := make([]string, 0, len(foundTips))
+		for _, idx := range adaptors {
+			s = append(s, fmt.Sprintf("head %d %s", idx, summariseChannels(foundTips[idx])))
+		}
+		return errors.Errorf("%s loaded on %s", pTips(numTips), strings.Join(s, " and "))
+	}
+
+	return nil
+}
+
+//assertNoCollisionsInGroup check that there are no collisions, ignoring the specified channels on the given adaptor
+func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ignoreTipboxes bool) error {
+
+	var maxChannels int
+	for _, ad := range adaptor.GetGroup().GetAdaptors() {
+		if c := ad.GetChannelCount(); c > maxChannels {
+			maxChannels = c
+		}
+	}
+	ignore := make([]bool, maxChannels)
+	for _, ch := range channelsToIgnore {
+		ignore[ch] = true
+	}
+
+	adaptors := make([]int, 0, adaptor.GetGroup().NumAdaptors())
+	channelMap := make(map[int][]int)
+	objectMap := make(map[wtype.LHObject]bool)
+	for _, ad := range adaptor.GetGroup().GetAdaptors() {
+		channels := make([]int, 0, ad.GetChannelCount())
+		for i := 0; i < ad.GetChannelCount(); i++ {
+			if ad == adaptor && ignore[i] {
+				continue
+			}
+			objects := ad.GetChannel(i).GetCollisions(ignoreTipboxes)
+			for _, o := range objects {
+				objectMap[o] = true
+			}
+			if len(objects) > 0 {
+				channels = append(channels, i)
+			}
+		}
+		if len(channels) > 0 {
+			idx := ad.GetIndex()
+			adaptors = append(adaptors, idx)
+			channelMap[idx] = channels
+		}
+	}
+
+	//no collisions
+	if len(adaptors) == 0 {
+		return nil
+	}
+
+	//rest of the fn is just organising things so the error message can be more easily interpreted
+
+	adaptorStrings := make([]string, 0, len(adaptors))
+	for _, idx := range adaptors {
+		adaptorStrings = append(adaptorStrings, fmt.Sprintf("head %d %s", idx, summariseChannels(channelMap[idx])))
+	}
+
+	//group objects by parent
+	parentMap := make(map[wtype.LHObject][]wtype.LHObject, len(objectMap))
+	for object := range objectMap {
+		p := object.GetParent()
+		if _, ok := parentMap[p]; !ok {
+			parentMap[p] = make([]wtype.LHObject, 0, len(objectMap))
+		}
+		parentMap[p] = append(parentMap[p], object)
+	}
+
+	objectStrings := make([]string, 0, len(objectMap))
+	deck := adaptor.GetGroup().GetRobot().GetDeck()
+	for parent, children := range parentMap {
+		//if the parent is addressable, refer to the children compactly using their addresses
+		var s string
+		if addr, ok := parent.(wtype.Addressable); ok {
+			wellcoords := make([]wtype.WellCoords, 0, len(children))
+			for _, child := range children {
+				pos := child.GetPosition().Add(child.GetSize().Multiply(0.5))
+				wc, _ := addr.CoordsToWellCoords(pos)
+				wellcoords = append(wellcoords, wc)
+			}
+
+			s = fmt.Sprintf("%s %s@%s at position %s", wtype.ClassOf(children[0]), wtype.HumanizeWellCoords(wellcoords), wtype.NameOf(parent), deck.GetSlotContaining(parent))
+			objectStrings = append(objectStrings, s)
+		} else {
+			for _, child := range children {
+				s = fmt.Sprintf("%s %s", wtype.ClassOf(child), wtype.NameOf(child))
+				objectStrings = append(objectStrings, s)
+			}
+		}
+	}
+
+	return errors.Errorf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
 }
 
 //addComponent add a component to the container without storing component history

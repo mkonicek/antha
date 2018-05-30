@@ -82,6 +82,13 @@ func (self *LHTip) GetSize() Coordinates {
 	return self.Bounds.GetSize()
 }
 
+//GetEffectiveHeight get the height of the tip when actually loaded onto a channel
+//this is broken at the moment, as this value is acutally stored in the tipbox, which we might
+//not have access to. Still, GetSize().Z provides an upper bound for now
+func (self *LHTip) GetEffectiveHeight() float64 {
+	return self.GetSize().Z
+}
+
 //@implement LHObject
 func (self *LHTip) GetBoxIntersections(box BBox) []LHObject {
 	box.SetPosition(box.GetPosition().Subtract(OriginOf(self)))

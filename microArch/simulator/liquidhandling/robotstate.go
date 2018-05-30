@@ -122,7 +122,7 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 }
 
 //ClearCollisions clear out any collisions
-func (self *ChannelState) GetCollision() wtype.LHObject {
+func (self *ChannelState) GetCollisions(ignoreTipboxes bool) []wtype.LHObject {
 	deck := self.adaptor.GetGroup().GetRobot().GetDeck()
 
 	var ret []wtype.LHObject
@@ -134,7 +134,7 @@ func (self *ChannelState) GetCollision() wtype.LHObject {
 		box := wtype.NewBBox(tipBottom, tipSize)
 		objects := deck.GetBoxIntersections(*box)
 		ret = make([]wtype.LHObject, 0, len(objects))
-		//only add plates if the tip intersects a well but extends below the bottom
+		//don't add wells and only add plates if the tip extends below the bottom of a plate
 		for _, obj := range objects {
 			if well, ok := obj.(*wtype.LHWell); ok {
 				if len(well.GetPointIntersections(tipBottom)) > 0 {
@@ -147,12 +147,17 @@ func (self *ChannelState) GetCollision() wtype.LHObject {
 
 	}
 
-	if len(ret) == 0 {
-		return nil
+	if ignoreTipboxes {
+		f := make([]wtype.LHObject, 0, len(ret))
+		for _, r := range ret {
+			if _, ok := r.(*wtype.LHTipbox); !ok {
+				f = append(f, r)
+			}
+		}
+		ret = f
 	}
 
-	//return the smallest item (e.g. the tip, not the tipbox)
-	return ret[len(ret)-1]
+	return ret
 }
 
 // -------------------------------------------------------------------------------
@@ -168,6 +173,7 @@ type AdaptorState struct {
 	params       *wtype.LHChannelParameter
 	group        *AdaptorGroup
 	tipBehaviour wtype.TipLoadingBehaviour
+	index        int
 }
 
 func NewAdaptorState(name string,
@@ -184,6 +190,7 @@ func NewAdaptorState(name string,
 		params.Dup(),
 		nil,
 		tipBehaviour,
+		-1,
 	}
 
 	for i := 0; i < channels; i++ {
@@ -238,6 +245,14 @@ func (self *AdaptorState) GetTipCount() int {
 //IsIndependent
 func (self *AdaptorState) IsIndependent() bool {
 	return self.independent
+}
+
+func (self *AdaptorState) GetIndex() int {
+	return self.index
+}
+
+func (self *AdaptorState) setIndex(i int) {
+	self.index = i
 }
 
 //GetGroup
@@ -391,6 +406,9 @@ func (self *AdaptorGroup) LoadAdaptor(pos int, adaptor *AdaptorState) {
 	self.adaptors[pos] = adaptor
 	adaptor.SetGroup(self)
 	adaptor.SetOffset(self.offsets[pos])
+	if self.robot != nil {
+		self.robot.updateAdaptorIndexes()
+	}
 }
 
 func (self *AdaptorGroup) GetPosition() wtype.Coordinates {
@@ -484,6 +502,13 @@ func (self *RobotState) NumAdaptorGroups() int {
 func (self *RobotState) AddAdaptorGroup(a *AdaptorGroup) {
 	a.SetRobot(self)
 	self.adaptorGroups = append(self.adaptorGroups, a)
+	self.updateAdaptorIndexes()
+}
+
+func (self *RobotState) updateAdaptorIndexes() {
+	for i, ad := range self.GetAdaptors() {
+		ad.setIndex(i)
+	}
 }
 
 //GetDeck

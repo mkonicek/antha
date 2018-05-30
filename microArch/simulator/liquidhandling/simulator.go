@@ -414,7 +414,7 @@ func (self *VirtualLiquidHandler) getWellsBelow(height float64, adaptor *Adaptor
 	deck := self.state.GetDeck()
 	for i := 0; i < adaptor.GetChannelCount(); i++ {
 		if ch := adaptor.GetChannel(i); ch.HasTip() {
-			tip_pos[i] = ch.GetAbsolutePosition().Subtract(wtype.Coordinates{X: 0., Y: 0., Z: ch.GetTip().GetSize().Z})
+			tip_pos[i] = ch.GetAbsolutePosition().Subtract(wtype.Coordinates{X: 0., Y: 0., Z: ch.GetTip().GetEffectiveHeight()})
 		} else {
 			tip_pos[i] = ch.GetAbsolutePosition()
 		}
@@ -443,8 +443,8 @@ func makeOffsets(Xs, Ys, Zs []float64) []wtype.Coordinates {
 // ------------------------------------------------------------------------ ExtendedLHDriver
 
 //Move command - used
-func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []string, reference []int,
-	offsetX, offsetY, offsetZ []float64, platetype []string,
+func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []string, reference []int,
+	offsetX, offsetY, offsetZ []float64, platetypeS []string,
 	head int) driver.CommandStatus {
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MOVE ACK"}
 
@@ -455,114 +455,102 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 		return ret
 	}
 
+	//only support a single deckposition or platetype
+	deckposition, err := getSingle(deckpositionS)
+	if err != nil {
+		self.AddErrorf("Move", "invalid argument deckposition: %s", err.Error())
+	}
+	platetype, err := getSingle(platetypeS)
+	if err != nil {
+		self.AddErrorf("Move", "invalid argument platetype: %s", err.Error())
+	}
+
 	//extend args
-	deckposition = extend_strings(adaptor.GetChannelCount(), deckposition)
 	wellcoords = extend_strings(adaptor.GetChannelCount(), wellcoords)
 	reference = extend_ints(adaptor.GetChannelCount(), reference)
 	offsetX = extend_floats(adaptor.GetChannelCount(), offsetX)
 	offsetY = extend_floats(adaptor.GetChannelCount(), offsetY)
 	offsetZ = extend_floats(adaptor.GetChannelCount(), offsetZ)
-	platetype = extend_strings(adaptor.GetChannelCount(), platetype)
 
 	//check slice length
 	if err := self.testSliceLength(map[string]int{
-		"deckposition": len(deckposition),
-		"wellcoords":   len(wellcoords),
-		"reference":    len(reference),
-		"offsetX":      len(offsetX),
-		"offsetY":      len(offsetY),
-		"offsetZ":      len(offsetZ),
-		"plate_type":   len(platetype)},
+		"wellcoords": len(wellcoords),
+		"reference":  len(reference),
+		"offsetX":    len(offsetX),
+		"offsetY":    len(offsetY),
+		"offsetZ":    len(offsetZ),
+	},
 		adaptor.GetChannelCount()); err != nil {
 
 		self.AddError("Move", err.Error())
 		return ret
 	}
 
-	refs := make([]wtype.WellReference, adaptor.GetChannelCount())
-	for i, r := range reference {
-		switch r {
-		case 0:
-			refs[i] = wtype.BottomReference
-		case 1:
-			refs[i] = wtype.TopReference
-		case 2:
-			refs[i] = wtype.LiquidReference
-		default:
-			self.AddErrorf("Move", "Invalid reference %d", r)
-			return ret
-		}
+	refs, err := convertReferences(reference)
+	if err != nil {
+		self.AddErrorf("Move", "invalid argument reference: %s", err.Error())
 	}
 
 	//get slice of well coords
-	wc := make([]wtype.WellCoords, len(wellcoords))
-	for i := range wellcoords {
-		wc[i] = wtype.MakeWellCoords(wellcoords[i])
+	wc, err := convertWellCoords(wellcoords)
+	if err != nil {
+		self.AddErrorf("Move", "invalid argument wellcoords: %s", err.Error())
 	}
+
+	//get the channels from the well coords
+	channels := make([]int, 0, len(wc))
+	implicitChannels := make([]int, 0, len(wc))
+	for i, w := range wc {
+		if !w.IsZero() {
+			channels = append(channels, i)
+		} else {
+			implicitChannels = append(implicitChannels, i)
+		}
+	}
+	if len(channels) == 0 {
+		self.AddWarning("Move", "ignoring blank move command: no wellcoords specified")
+		return ret
+	}
+
+	//combine floats into wtype.Coordinates
+	offsets := makeOffsets(offsetX, offsetY, offsetZ)
 
 	//find the coordinates of each explicitly requested position
 	coords := make([]wtype.Coordinates, adaptor.GetChannelCount())
-	offsets := makeOffsets(offsetX, offsetY, offsetZ)
-	explicit := make([]bool, adaptor.GetChannelCount())
-	channels := make([]int, 0, adaptor.GetChannelCount())
-	exp_count := 0
-	for i := range deckposition {
-		if deckposition[i] == "" {
-			if wellcoords[i] != "" {
-				self.AddWarningf("Move", "deckposition was blank, but well was \"%s\"", wellcoords[i])
-			}
-			if platetype[i] != "" {
-				self.AddWarningf("Move", "deckposition was blank, but platetype was \"%s\"", platetype[i])
-			}
-			explicit[i] = false
-		} else {
-			if wc[i].IsZero() {
-				self.AddErrorf("Move", "couldn't parse well coordinates \"%s\"", wellcoords[i])
-				continue
-			}
-			c, ok := self.getTargetPosition("Move", adaptor.GetName(), i, deckposition[i], platetype[i], wc[i], refs[i])
-			if !ok {
-				return ret
-			}
-			coords[i] = c
-			coords[i] = coords[i].Add(offsets[i])
-			//if there's a tip, take account of it
-			if tip := adaptor.GetChannel(i).GetTip(); tip != nil {
-				coords[i] = coords[i].Add(wtype.Coordinates{X: 0., Y: 0., Z: tip.GetSize().Z})
-			}
-			explicit[i] = true
-			channels = append(channels, i)
-			exp_count++
+	for _, ch := range channels {
+		c, ok := self.getTargetPosition("Move", adaptor.GetName(), ch, deckposition, platetype, wc[ch], refs[ch])
+		if !ok {
+			return ret
+		}
+		coords[ch] = c
+		coords[ch] = coords[ch].Add(offsets[ch])
+		//if there's a tip, raise the coortinates to the top of the tip to take account of it
+		if tip := adaptor.GetChannel(ch).GetTip(); tip != nil {
+			coords[ch] = coords[ch].Add(wtype.Coordinates{X: 0., Y: 0., Z: tip.GetEffectiveHeight()})
 		}
 	}
-	if exp_count == 0 {
-		self.AddWarning("Move", "ignoring blank move command")
+
+	target, ok := self.state.GetDeck().GetChild(deckposition)
+	if !ok {
+		self.AddErrorf("Move", "unable to get object at position \"%s\"", deckposition)
 	}
 
 	describe := func() string {
 		return fmt.Sprintf("head %d %s to %s@%s at position %s",
-			head, summariseChannels(channels), wtype.HumanizeWellCoords(wc), summariseStrings(platetype), summariseStrings(deckposition))
+			head, summariseChannels(channels), wtype.HumanizeWellCoords(wc), wtype.NameOf(target), deckposition)
 	}
 
-	//find the head location, origin
-	origin := wtype.Coordinates{}
+	//find the head location
 	//for now, assuming that the relative position of the first explicitly provided channel and the head stay
 	//the same. This seems sensible for the Glison, but might turn out not to be how other robots with independent channels work
-	for i, c := range coords {
-		if explicit[i] {
-			origin = c.Subtract(adaptor.GetChannel(i).GetRelativePosition())
-			break
-		}
-	}
+	origin := coords[channels[0]].Subtract(adaptor.GetChannel(channels[0]).GetRelativePosition())
 
 	//fill in implicit locations
-	for i := range coords {
-		if !explicit[i] {
-			coords[i] = origin.Add(adaptor.GetChannel(i).GetRelativePosition())
-		}
+	for _, ch := range implicitChannels {
+		coords[ch] = origin.Add(adaptor.GetChannel(ch).GetRelativePosition())
 	}
 
-	//Get relative locations
+	//Get the locations of each channel relative to the head
 	rel_coords := make([]wtype.Coordinates, adaptor.GetChannelCount())
 	for i := range coords {
 		rel_coords[i] = coords[i].Subtract(origin)
@@ -571,7 +559,7 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 	//check that the requested position is possible given the head/adaptor capabilities
 	if !adaptor.IsIndependent() {
 		//i.e. the channels can't move relative to each other or the head, so relative locations must remain the same
-		moved := []int{}
+		moved := make([]int, 0, len(rel_coords))
 		for i, rc := range rel_coords {
 			//check that adaptor relative position remains the same
 			//arbitrary 0.01mm to avoid numerical instability
@@ -586,28 +574,12 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 		}
 	}
 
-	//check for collisions in the new location
-	for ch, rc := range rel_coords {
-		pos := origin.Add(rc)
-		obj := self.state.GetDeck().GetPointIntersections(pos)
-		in_well := false
-		for _, o := range obj {
-			if _, ok := o.(*wtype.LHWell); ok {
-				in_well = true
-			}
-		}
-		if !in_well && len(obj) > 0 {
-			o_str := make([]string, len(obj))
-			for i, o := range obj {
-				o_str[i] = wtype.NameOf(o)
-			}
-			self.AddErrorf("Move", "Cannot move channel %d to (\"%s\", %s, %s) + (%.1f,%.1f,%.1f)mm as this collides with %s\n",
-				ch, deckposition[ch], wellcoords[ch], refs[ch], offsetX[ch], offsetY[ch], offsetZ[ch], strings.Join(o_str, " and "))
-			//instead of returning, continue on to get all collisions and leave the virtual robot in the collided state
-		}
+	//check that there are no tips loaded on any other heads
+	if err = assertNoTipsOnOthersInGroup(adaptor); err != nil {
+		self.AddErrorf("Move", "%s: while %s", describe(), err.Error())
 	}
 
-	//update the head position accordingly
+	//move the head to the new position
 	err = adaptor.SetPosition(origin)
 	if err != nil {
 		self.AddErrorf("Move", "%s: %s", describe(), err.Error())
@@ -616,6 +588,10 @@ func (self *VirtualLiquidHandler) Move(deckposition []string, wellcoords []strin
 		adaptor.GetChannel(i).SetRelativePosition(rc)
 	}
 
+	//check for collisions in the new location
+	if err := assertNoCollisionsInGroup(adaptor, nil, self.settings.IsTipboxCheckEnabled()); err != nil {
+		self.AddErrorf("Move", "%s: collision detected: %s", describe(), err.Error())
+	}
 	return ret
 }
 
@@ -1040,15 +1016,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	}
 
 	//check that there aren't any tips loaded on any other heads
-	for i, ad := range self.state.GetAdaptors() {
-		if i == head {
-			continue
-		}
-		if tipFound := checkTipPresence(false, ad, nil); len(tipFound) != 0 {
-			self.AddErrorf("LoadTips", "%s: %s already loaded on head %d %s",
-				describe(), pTips(len(tipFound)), i, summariseChannels(tipFound))
-
-		}
+	if err := assertNoTipsOnOthersInGroup(adaptor); err != nil {
+		self.AddErrorf("LoadTips", "%s: while %s", describe(), err.Error())
 	}
 
 	//refill the tipbox if there aren't enough tips to service the instruction

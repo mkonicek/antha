@@ -80,13 +80,14 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	assignments := make(map[string]map[*wtype.LHPlate]int, len(component_volumes))
 
-	// func Simplex(c []float64, A mat.Matrix, b []float64, tol float64, initialBasic []int) (optF float64, optX []float64, err error)
-
 	n_cols := len(component_volumes) * len(plate_types)
-	n_rows := len(component_volumes) + 2
+	n_rows := len(component_volumes)
+	n_constraint_rows := 1
 
-	constraintMatrix := make([]float64, n_cols*n_rows)
-	constraintBounds := make([]float64, n_rows)
+	constraintMatrixG := make([]float64, n_cols*n_constraint_rows)
+	constraintMatrixA := make([]float64, n_cols*n_rows)
+	constraintBoundsH := make([]float64, n_constraint_rows)
+	constraintBoundsB := make([]float64, n_rows)
 	objectiveCoefs := make([]float64, n_cols)
 
 	component_order := make([]string, len(component_volumes))
@@ -95,7 +96,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	for cmp, vol := range component_volumes {
 		component_order[cur] = cmp
 		v := vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
-		constraintBounds[cur] = -1.0 * v
+		constraintBoundsB[cur] = -1.0 * v
 
 		for pindex, plate := range plate_types {
 			// set up objective coefficient, column name and lower bound
@@ -112,50 +113,59 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	// make constraint rows
 	for row := range component_order {
-		setRowFor(constraintMatrix, row, n_cols, component_order, plate_types)
+		setRowFor(constraintMatrixA, row, n_cols, component_order, plate_types)
 		cur += 1
 	}
+	/*
+		// plate constraint
+		// -- requires MIP to work... deprecated to start off with
+		constraintBounds[cur] = 1.0 * (weight_constraint["MAX_N_PLATES"] - 1.0)
 
-	// plate constraint
-	constraintBounds[cur] = 1.0 * (weight_constraint["MAX_N_PLATES"] - 1.0)
+		for i := range component_order {
+			for j := 0; j < len(plate_types); j++ {
+				// the coefficient here is 1/the number of this well type per plate
+				coef := 1.0 / float64(plate_types[j].Nwells)
+				//constraintMatrix[cur+(i*len(plate_types)+j)] = coef
 
-	for i := range component_order {
-		for j := 0; j < len(plate_types); j++ {
-			// the coefficient here is 1/the number of this well type per plate
-			coef := 1.0 / float64(plate_types[j].Nwells)
-			//constraintMatrix[cur+(i*len(plate_types)+j)] = coef
-
-			constraintMatrix[cur*n_cols+(i*len(plate_types))+j] = coef
+				constraintMatrix[cur*n_cols+(i*len(plate_types))+j] = coef
+			}
 		}
-	}
 
-	cur += 1
+		cur += 1
 
+	*/
+
+	cur = 0
 	// well constraint
-	constraintBounds[cur] = 1.0 * weight_constraint["MAX_N_WELLS"]
+	constraintBoundsH[cur] = 1.0 * weight_constraint["MAX_N_WELLS"]
 
 	// for the matrix we just add a row of 1s
 	for i := 0; i < n_cols; i++ {
-		constraintMatrix[cur*n_cols+i] = 1.0
+		constraintMatrixG[cur*n_cols+i] = 1.0
 	}
 
-	matUBConstraintMatrix := mat.NewDense(n_rows, n_cols, constraintMatrix)
+	matConstraintMatrixG := mat.NewDense(n_constraint_rows, n_cols, constraintMatrixG)
+	matConstraintMatrixA := mat.NewDense(n_rows, n_cols, constraintMatrixA)
 
 	fmt.Println("C: ", objectiveCoefs)
-	fmt.Println(mat.Formatted(matUBConstraintMatrix))
-	fmt.Println("B: ", constraintBounds)
+	fmt.Println(mat.Formatted(matConstraintMatrixG))
+	fmt.Println("H: ", constraintBoundsH)
+	fmt.Println(mat.Formatted(matConstraintMatrixA))
+	fmt.Println("B: ", constraintBoundsB)
 
 	//	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrix, constraintBounds, aOld, bOld)
-	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matUBConstraintMatrix, constraintBounds, nil, nil)
+	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrixG, constraintBoundsH, matConstraintMatrixA, constraintBoundsB)
 
-	tolerance := 0.1
-	_, optX, err := lp.Simplex(cNew, aNew, bNew, tolerance, nil)
+	fmt.Println("C NEW: ", cNew)
+
+	tolerance := 0.0
+	optF, optX, err := lp.Simplex(cNew, aNew, bNew, tolerance, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("RAW OPTX: ", optX)
+	fmt.Println("OPTF: ", optF)
 
 	// now create the assignment outputs
 
@@ -165,7 +175,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		for _, p := range plate_types {
 			if optX[cur] > 0.0 {
 				pmap[p.Dup()] = int(math.Ceil(optX[cur]))
-				fmt.Println("COMPONENT ", c, " WANT ", component_volumes[c], " HAS ", int(math.Ceil(optX[cur])), " WELLS IN PLATE TYPE ", p.Type, " WHICH GIVES US ", p.Welltype.MaxWorkingVolume().RawValue()*(math.Ceil(optX[cur])), " TOTAL")
+				fmt.Println("COMPONENT ", c, " WANT ", component_volumes[c], " HAS ", optX[cur], " ABS: ", int(math.Ceil(optX[cur])), " WELLS IN PLATE TYPE ", p.Type, " WHICH GIVES US ", p.Welltype.MaxWorkingVolume().RawValue()*(math.Ceil(optX[cur])), " TOTAL")
 			}
 			cur += 1
 		}

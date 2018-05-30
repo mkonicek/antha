@@ -40,24 +40,24 @@ func TestIPL1(t *testing.T) {
 		t.Errorf("Can't get pcrplate_skirted")
 	}
 
-	/*
-		DSW96, err := inventory.NewPlate(ctx, "DSW96")
-		if err != nil {
-			t.Errorf("Can't get DSW96")
-		}
+	DWST12, err := inventory.NewPlate(ctx, "DWST12")
+	if err != nil {
+		t.Errorf("Can't get DWST12")
+	}
+	DSW96, err := inventory.NewPlate(ctx, "DSW96")
+	if err != nil {
+		t.Errorf("Can't get DSW96")
+	}
 
-		DWST12, err := inventory.NewPlate(ctx, "DWST12")
+	/*
+
+		reservoir, err := inventory.NewPlate(ctx, "reservoir")
 		if err != nil {
-			t.Errorf("Can't get DWST12")
+			t.Errorf("Can't get reservoir")
 		}
 	*/
 
-	reservoir, err := inventory.NewPlate(ctx, "reservoir")
-	if err != nil {
-		t.Errorf("Can't get reservoir")
-	}
-
-	weightConstraint := map[string]float64{"MAX_N_PLATES": 2.5, "MAX_N_WELLS": 128, "RESIDUAL_VOLUME_WEIGHT": 1.0}
+	weightConstraint := map[string]float64{"MAX_N_WELLS": 98, "RESIDUAL_VOLUME_WEIGHT": 1.0}
 
 	type testCase struct {
 		Name              string
@@ -97,11 +97,18 @@ func TestIPL1(t *testing.T) {
 			Expected:          map[string]map[string]int{"FAIL": {}},
 		},
 		{
-			Name:              "failPlateConstraint3plates",
-			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(20000, "ul"), "scotch": wunit.NewVolume(20000, "ul"), "consomme": wunit.NewVolume(20000, "ul"), "soup": wunit.NewVolume(20000, "ul")},
-			Plate_types:       []*wtype.LHPlate{reservoir},
+			Name:              "simplechoiceforabigwell",
+			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(7000, "ul")},
+			Plate_types:       []*wtype.LHPlate{DSW96, DWST12},
 			Weight_constraint: weightConstraint,
-			Expected:          map[string]map[string]int{"FAIL": {}},
+			Expected:          map[string]map[string]int{"water": {"DWST12": 1}},
+		},
+		{
+			Name:              "2things2plates",
+			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(25155, "ul"), "milk": wunit.NewVolume(300, "ul")},
+			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12},
+			Weight_constraint: weightConstraint,
+			Expected:          map[string]map[string]int{"water": {"DWST12": 3}, "milk": {"pcrplate_skirted": 2}},
 		},
 	}
 

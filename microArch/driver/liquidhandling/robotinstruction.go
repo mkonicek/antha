@@ -88,8 +88,8 @@ const (
 	MVM            // MOV MIX           ""       ""
 	MBL            // MOV BLO	    ""       ""
 	RAP            // RemoveAllPlates
-	RPA            // Remove Plate At
 	APT            // AddPlateTo
+	RPA            // Remove Plate At
 	SPB            // SplitBlock
 )
 
@@ -471,11 +471,22 @@ func printPolicyForDebug(ins RobotInstruction, rules []wtype.LHPolicyRule, pol w
 
 }
 */
+
+// ErrInvalidLiquidType is returned when no matching liquid policy is found.
+type ErrInvalidLiquidType struct {
+	PolicyNames      []string
+	ValidPolicyNames []string
+}
+
+func (err ErrInvalidLiquidType) Error() string {
+	return fmt.Sprintf("invalid LiquidType specified.\nValid Liquid Policies found: \n%s \n invalid LiquidType specified in instruction: %v \n ", strings.Join(err.ValidPolicyNames, " \n"), err.PolicyNames)
+}
+
 var (
 	// ErrNoMatchingRules is returned when no matching LHPolicyRules are found when evaluating a rule set against a RobotInsturction.
 	ErrNoMatchingRules = errors.New("no matching rules found")
-	// ErrNoMatchingLiquidType is returned when no matching liquid policy is found.
-	ErrNoMatchingLiquidType = errors.New("no matching LiquidType")
+	// ErrNoLiquidType is returned when no liquid policy is found.
+	ErrNoLiquidType = errors.New("no LiquidType in instruction")
 )
 
 func matchesLiquidClass(rule wtype.LHPolicyRule) (match bool) {
@@ -489,7 +500,7 @@ func matchesLiquidClass(rule wtype.LHPolicyRule) (match bool) {
 	return false
 }
 
-// GetDefaultPolicyq currently returns the default policy
+// GetDefaultPolicy currently returns the default policy
 func GetDefaultPolicy(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPolicy, error) {
 	defaultPolicy := wtype.DupLHPolicy(lhpr.Policies["default"])
 	return defaultPolicy, nil
@@ -525,8 +536,33 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPo
 		return ppl, ErrNoMatchingRules
 	}
 
+	policy := ins.GetParameter("LIQUIDCLASS")
+	var invalidPolicyNames []string
+	if policies, ok := policy.([]string); ok {
+		for _, policy := range policies {
+			if _, found := lhpr.Policies[policy]; !found && policy != "" {
+				invalidPolicyNames = append(invalidPolicyNames, policy)
+			}
+		}
+
+	} else if policyString, ok := policy.(string); ok {
+		if _, found := lhpr.Policies[policyString]; !found && policyString != "" {
+			invalidPolicyNames = append(invalidPolicyNames, policyString)
+		}
+	}
+
+	if len(invalidPolicyNames) > 0 {
+		var validPolicies []string
+		for key := range lhpr.Policies {
+			validPolicies = append(validPolicies, key)
+		}
+
+		sort.Strings(validPolicies)
+		return ppl, ErrInvalidLiquidType{PolicyNames: invalidPolicyNames, ValidPolicyNames: validPolicies}
+	}
+
 	if !lhpolicyFound {
-		return ppl, ErrNoMatchingLiquidType
+		return ppl, ErrNoLiquidType
 	}
 	//printPolicyForDebug(ins, rules, ppl)
 	return ppl, nil
@@ -623,7 +659,7 @@ func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 		case FIN:
 			ins = NewFinalizeInstruction()
 		default:
-			return fmt.Errorf("Unknown instruction type: %d", t)
+			return fmt.Errorf("Unknown instruction type: %d (%s)", t, Robotinstructionnames[t])
 		}
 
 		// finally unmarshal

@@ -89,6 +89,7 @@ func MakePolicyItems() AParamSet {
 	alhpis["EXTRA_DISP_VOLUME"] = AParam{Name: "EXTRA_DISP_VOLUME", Type: typemap["Volume"], Desc: "additional volume to dispense"}
 	alhpis["JUSTBLOWOUT"] = AParam{Name: "JUSTBLOWOUT", Type: typemap["bool"], Desc: "shortcut to get single transfer"}
 	alhpis["OFFSETZADJUST"] = AParam{Name: "OFFSETZADJUST", Type: typemap["float64"], Desc: "Added to z offset"}
+	alhpis["OVERRIDEPIPETTESPEED"] = AParam{Name: "OVERRIDEPIPETTESPEED", Type: typemap["bool"], Desc: "If true, out of range values will be set to the nearest acceptable value. If false, out of range values will generate errors"}
 	alhpis["POST_MIX"] = AParam{Name: "POST_MIX", Type: typemap["int"], Desc: "number of mix cycles to do after dispense"}
 	alhpis["MIX_VOLUME_OVERRIDE_TIP_MAX"] = AParam{Name: "MIX_VOLUME_OVERRIDE_TIP_MAX", Type: typemap["bool"], Desc: "Default to using the maximum volume for the current tip type if the specified post mix volume is too high"}
 	alhpis["POST_MIX_RATE"] = AParam{Name: "POST_MIX_RATE", Type: typemap["float64"], Desc: "pipetting rate when post mixing"}
@@ -107,6 +108,7 @@ func MakePolicyItems() AParamSet {
 	alhpis["TOUCHOFF"] = AParam{Name: "TOUCHOFF", Type: typemap["bool"], Desc: "whether to move to TOUCHOFFSET after dispense"}
 	alhpis["TOUCHOFFSET"] = AParam{Name: "TOUCHOFFSET", Type: typemap["float64"], Desc: "mm above wb to touch off at"}
 	alhpis["DEFAULTPIPETTESPEED"] = AParam{Name: "DEFAULTPIPETTESPEED", Type: typemap["float64"], Desc: "Default pipette speed in ml/min"}
+	alhpis["DEFAULTZSPEED"] = AParam{Name: "DEFAULTZSPEED", Type: typemap["float64"], Desc: "Default z movement speed in mm/s"}
 	alhpis["PTZOFFSET"] = AParam{Name: "PTZOFFSET", Type: typemap["float64"], Desc: "Z offset for pistons to zero"}
 	alhpis["PTZREFERENCE"] = AParam{Name: "PTZREFERENCE", Type: typemap["int"], Desc: "Well reference for piston to zero: 0 = well bottom, 1 = well top, 2 = liquid level"}
 	alhpis["CAN_SDD"] = AParam{Name: "CAN_SDD", Type: typemap["bool"], Desc: "Is it permissible just to do a one-shot transfer"}

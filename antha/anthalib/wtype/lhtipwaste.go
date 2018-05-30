@@ -215,6 +215,11 @@ func (self *LHTipwaste) SetParent(p LHObject) error {
 	return nil
 }
 
+//@implement LHObject
+func (self *LHTipwaste) ClearParent() {
+	self.parent = nil
+}
+
 func (self *LHTipwaste) GetParent() LHObject {
 	return self.parent
 }

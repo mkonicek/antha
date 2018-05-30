@@ -30,13 +30,13 @@ import (
 )
 
 type stringer interface {
-	ToString() string
+	String() string
 }
 
 func marshal(x stringer) ([]byte, error) {
 	var s *string
 	if x != nil {
-		r := x.ToString()
+		r := x.String()
 		s = &r
 	}
 	return json.Marshal(s)

@@ -305,7 +305,9 @@ func TestMultiChannelFailComponent(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	// swap CAN_MULTI parameter of water and multiwater
 	pol.Policies["water"]["CAN_MULTI"] = true
+	pol.Policies["multiwater"]["CAN_MULTI"] = false
 	ris, err := tb.Generate(ctx, pol, rbt)
 	if err != nil {
 		t.Error(err)
@@ -321,8 +323,8 @@ func TestMultiChannelFailComponent(t *testing.T) {
 		t.Errorf("Error expected 2 transfers got %d", len(tf.Transfers))
 	}
 
-	ris[0].(*TransferInstruction).Transfers[0].Transfers[3].What = "lemonade"
-	ris[0].(*TransferInstruction).Transfers[1].Transfers[3].What = "lemonade"
+	ris[0].(*TransferInstruction).Transfers[0].Transfers[3].What = "multiwater"
+	ris[0].(*TransferInstruction).Transfers[1].Transfers[3].What = "multiwater"
 
 	testNegative(ctx, ris, pol, rbt, t)
 }

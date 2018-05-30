@@ -113,7 +113,7 @@ A1,water+soil,water,50.0,ul,0,g/l,
 A4,tea,water,50.0,ul,0,g/l,
 A5,milk,water,100.0,ul,0,g/l,
 `)
-	r, err := ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
+	r, err := parsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
 
 	if err != nil {
 		t.Errorf("Failed to parse plate: %s ", err.Error())
@@ -121,7 +121,7 @@ A5,milk,water,100.0,ul,0,g/l,
 	if !containsInvalidCharWarning(r.Warnings) {
 		t.Errorf("Default validation config must forbid + signs in component names")
 	}
-	r, err = ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), PermissiveValidationConfig())
+	r, err = parsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), PermissiveValidationConfig())
 
 	if err != nil {
 		t.Errorf("Failed to parse plate: %s ", err.Error())
@@ -134,9 +134,10 @@ A5,milk,water,100.0,ul,0,g/l,
 
 func TestParsePlate(t *testing.T) {
 	type testCase struct {
-		File       []byte
-		Expected   *wtype.LHPlate
-		NoWarnings bool
+		File              []byte
+		Expected          *wtype.LHPlate
+		NoWarnings        bool
+		ReplacementConfig ValidationConfig
 	}
 
 	ctx := testinventory.NewContext(context.Background())
@@ -160,6 +161,57 @@ A6,,,0,ul,0,g/l,
 			NoWarnings: false,
 			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
+				Wellcoords: map[string]*wtype.LHWell{
+					"A1": {
+						WContents: &wtype.LHComponent{
+							CName: "water",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  0.0,
+							Cunit: "g/l",
+						},
+					},
+					"A4": {
+						WContents: &wtype.LHComponent{
+							CName: "tea",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "mM/l",
+						},
+					},
+					"A5": {
+						WContents: &wtype.LHComponent{
+							CName: "milk",
+							Type:  wtype.LTWater,
+							Vol:   100.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "g/l",
+						},
+					},
+				},
+			},
+		},
+		{
+			File: []byte(
+				`
+pcrplate_with_cooler,
+A1,water,water,50.0,ul,0,g/l,
+A4,tea,water,50.0,ul,10.0,mM/l,
+A5,milk,water,100.0,ul,10.0,g/l,
+A6,,,0,ul,0,g/l,
+`),
+			NoWarnings: false,
+			ReplacementConfig: ValidationConfig{
+				replaceField: map[string]string{
+					plateTypeReplacementKey: "pcrplate_skirted",
+				},
+			},
+			Expected: &wtype.LHPlate{
+				Type: "pcrplate_skirted",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
 						WContents: &wtype.LHComponent{
@@ -305,7 +357,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 	}
 
 	for _, tc := range suite {
-		p, err := ParsePlateCSV(ctx, bytes.NewBuffer(tc.File))
+		p, err := ParsePlateCSV(ctx, bytes.NewBuffer(tc.File), tc.ReplacementConfig)
 		if err != nil {
 			t.Error(err)
 		}
@@ -332,7 +384,7 @@ A1,water,water,50.0,ul,0,g/l,
 A4,tea,water,50.0,ul,0,g/l,
 A5,milk,water,500.0,ul,0,g/l,
 `)
-	_, err := ParsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
+	_, err := parsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
 
 	if err == nil {
 		t.Error("Overfull well A5 failed to generate error")

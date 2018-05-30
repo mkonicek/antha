@@ -141,6 +141,11 @@ func (self *LHWell) SetParent(p LHObject) error {
 }
 
 //@implement LHObject
+func (self *LHWell) ClearParent() {
+	self.Plate = nil
+}
+
+//@implement LHObject
 func (self *LHWell) GetParent() LHObject {
 	if self == nil {
 		return nil

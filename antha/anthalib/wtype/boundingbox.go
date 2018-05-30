@@ -113,6 +113,10 @@ func (self BBox) Contains(rhs Coordinates) bool {
 		rhs.Z >= self.Position.Z && rhs.Z < self.Position.Z+self.Size.Z)
 }
 
+func (self BBox) ContainsBox(rhs BBox) bool {
+	return self.Contains(rhs.GetPosition()) && self.Contains(rhs.GetPosition().Add(rhs.GetSize()))
+}
+
 //IntersectsBox checks for bounding box intersection
 func (self BBox) IntersectsBox(rhs BBox) bool {
 	//test a single dimension.

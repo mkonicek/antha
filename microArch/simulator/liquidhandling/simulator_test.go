@@ -2829,7 +2829,7 @@ func Test_Dispense(t *testing.T) {
 				&Move{
 					[]string{"input_1", "", "", "", "", "", "", ""}, //deckposition
 					[]string{"A1", "", "", "", "", "", "", ""},      //wellcoords
-					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                   //reference
 					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
 					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
 					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ

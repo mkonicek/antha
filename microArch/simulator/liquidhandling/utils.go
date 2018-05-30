@@ -119,6 +119,8 @@ func convertReferences(slice []int) ([]wtype.WellReference, error) {
 			refs[i] = v
 		} else {
 			unknown[r] = true
+			//default to TopReference as it's safest
+			refs[i] = wtype.TopReference
 		}
 	}
 
@@ -263,7 +265,10 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ig
 			objectStrings = append(objectStrings, s)
 		} else {
 			for _, child := range children {
-				s = fmt.Sprintf("%s %s", wtype.ClassOf(child), wtype.NameOf(child))
+				s = fmt.Sprintf("%s \"%s\"", wtype.ClassOf(child), wtype.NameOf(child))
+				if pos := deck.GetSlotContaining(child); pos != "" {
+					s += fmt.Sprintf(" at position %s", pos)
+				}
 				objectStrings = append(objectStrings, s)
 			}
 		}

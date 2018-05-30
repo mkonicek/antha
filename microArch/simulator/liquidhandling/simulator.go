@@ -589,7 +589,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	}
 
 	//check for collisions in the new location
-	if err := assertNoCollisionsInGroup(adaptor, nil, self.settings.IsTipboxCheckEnabled()); err != nil {
+	if err := assertNoCollisionsInGroup(adaptor, nil, !self.settings.IsTipboxCollisionEnabled()); err != nil {
 		self.AddErrorf("Move", "%s: collision detected: %s", describe(), err.Error())
 	}
 	return ret

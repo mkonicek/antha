@@ -127,17 +127,17 @@ func (self *ChannelState) GetCollisions(ignoreTipboxes bool) []wtype.LHObject {
 
 	var ret []wtype.LHObject
 	if !self.HasTip() {
-		ret = deck.GetPointIntersections(self.position)
+		ret = deck.GetPointIntersections(self.GetAbsolutePosition())
 	} else {
 		tipSize := wtype.Coordinates{0.0, 0.0, self.tip.GetSize().Z}
-		tipBottom := self.position.Subtract(tipSize)
+		tipBottom := self.GetAbsolutePosition().Subtract(tipSize)
 		box := wtype.NewBBox(tipBottom, tipSize)
 		objects := deck.GetBoxIntersections(*box)
 		ret = make([]wtype.LHObject, 0, len(objects))
-		//don't add wells and only add plates if the tip extends below the bottom of a plate
 		for _, obj := range objects {
+			//if the tip is in a well, only add the plate only if the tip is below the well bottom
 			if well, ok := obj.(*wtype.LHWell); ok {
-				if len(well.GetPointIntersections(tipBottom)) > 0 {
+				if len(well.GetPointIntersections(tipBottom)) == 0 {
 					ret = append(ret, well.GetParent())
 				}
 			} else if _, ok := obj.(*wtype.LHPlate); !ok {

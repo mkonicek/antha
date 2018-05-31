@@ -12,6 +12,12 @@ import (
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
+const (
+	defaultZSpeed       = 120.0
+	defaultZOffset      = 0.5
+	defaultPipetteSpeed = 3.0
+)
+
 type Condition interface {
 	ApplyTo(*wtype.LHPolicyRule)
 }
@@ -141,13 +147,3 @@ func (self *PolicyTest) Run(t *testing.T) {
 		a.Assert(t, ris, self.Name)
 	}
 }
-
-const (
-	HVMinRate           = 0.225
-	HVMaxRate           = 37.5
-	LVMinRate           = 0.0225
-	LVMaxRate           = 3.75
-	defaultZSpeed       = 120.0
-	defaultZOffset      = 0.5
-	defaultPipetteSpeed = 3.0
-)

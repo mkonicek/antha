@@ -1136,13 +1136,13 @@ func TestAddWellTargets(t *testing.T) {
 	lh := GetLiquidHandlerForTest(ctx)
 
 	plate := GetPlateForTest()
-	lh.Properties.AddPlate("position_4", plate)
+	lh.Properties.AddPlateTo("position_4", plate)
 
 	tipwaste := GetTipwasteForTest()
 	lh.Properties.AddTipWasteTo("position_1", tipwaste)
 
 	trough := GetTroughForTest()
-	lh.Properties.AddPlate("position_5", trough)
+	lh.Properties.AddPlateTo("position_5", trough)
 
 	lh.addWellTargets()
 

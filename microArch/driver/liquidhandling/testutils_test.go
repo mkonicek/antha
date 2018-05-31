@@ -10,6 +10,13 @@ import (
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
+const (
+	HVMinRate = 0.225
+	HVMaxRate = 37.5
+	LVMinRate = 0.0225
+	LVMaxRate = 3.75
+)
+
 func getHVConfig() *wtype.LHChannelParameter {
 	minvol := wunit.NewVolume(10, "ul")
 	maxvol := wunit.NewVolume(250, "ul")

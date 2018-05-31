@@ -202,13 +202,7 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				}
 			}
 
-			fmt.Println("SEQ TO AVOID: ", seqstoavoid, "  TEMPOLIGOSEQ: ", tempoligoseq)
-
-			if search.InStrings(seqstoavoid, tempoligoseq) {
-				fmt.Println("HERE")
-			}
-
-			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.InStrings(seqstoavoid, tempoligoseq) && !overlapthresholdfail {
+			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.PartialInStrings(seqstoavoid, tempoligoseq) && !overlapthresholdfail {
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -229,7 +223,7 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "maximum", meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
 				case bindingsites > 1:
 					combinedErrors = append(combinedErrors, bindingSiteErrorString(primerType, seqName, bindingsites))
-				case search.InStrings(seqstoavoid, tempoligoseq):
+				case search.PartialInStrings(seqstoavoid, tempoligoseq):
 					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that contain the specified sequences to avoid.", " removing these from the parameters."))
 				case overlapthresholdfail:
 					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that violate the overlap threshold.", " adjusting this parameter."))
@@ -238,11 +232,6 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 			}
 		}
 	}
-
-	//}else {
-	//	// fmt.Println("no oligos")
-	//	}
-
 	return
 }
 
@@ -286,7 +275,7 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				}
 			}
 
-			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.InStrings(seqstoavoid, tempoligoseq) && !overlapthresholdfail {
+			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.PartialInStrings(seqstoavoid, tempoligoseq) && !overlapthresholdfail {
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -307,7 +296,7 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "maximum", meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
 				case bindingsites > 1:
 					combinedErrors = append(combinedErrors, bindingSiteErrorString(primerType, seqName, bindingsites))
-				case search.InStrings(seqstoavoid, tempoligoseq):
+				case search.PartialInStrings(seqstoavoid, tempoligoseq):
 					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that contain the specified sequences to avoid.", " removing these from the parameters."))
 				case overlapthresholdfail:
 					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that violate the overlap threshold.", " adjusting this parameter."))
@@ -320,16 +309,22 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 	return
 }
 
+// primerErrorString formats a textual message in the form of an erorr related to primerdesign.
+// primerorientation and sequence name are inputted, along with the error message i.e. "X not found in Y".
+// and a proposed resolution i.e. "Please put X in Y".
 func primerErrorString(primerOrientation, sequenceName, erorrString, resolutionString string) string {
 	errorBeginning := fmt.Sprintf(" For %s could only generate %s primers", sequenceName, primerOrientation)
 	resolutionBeginning := " Please try"
 	return fmt.Sprintf("%s%s%s%s", errorBeginning, erorrString, resolutionBeginning, resolutionString)
 }
 
+// gcContentErrorString formats a textual message in the form of an error related to a primer exceeding the maximum specified GC content.
 func gcContentErrorString(primerOrientation, sequenceName string, gcContent, maxGC float64) string {
 	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with GC Content (%f) greater than the maximum GC Content specified (%f).", gcContent, maxGC), " lowering this parameter, or selecting a less-GC rich region.")
 }
 
+// meltingTempErrorString formats a textual message in the form of an error related to a primer being higher or lower than the temptype ("minimum" or "maximum")
+// values specified (mt and specifiedmt).
 func meltingTempErrorString(primerOrientation, sequenceName, tempType string, mt, specifiedmt float64) string {
 	var sign, indication string
 	if mt > specifiedmt {
@@ -340,6 +335,7 @@ func meltingTempErrorString(primerOrientation, sequenceName, tempType string, mt
 	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with melting temperature (%f) %s than the %s melting temperature specified (%f).", mt, sign, tempType, specifiedmt), fmt.Sprintf(" %s this parameter.", indication))
 }
 
+// meltingTempErrorString formats a textual message if a primer has more than one binding site.
 func bindingSiteErrorString(primerOrientation, sequenceName string, bindingSites int) string {
 	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with more than one (%d) binding sites.", bindingSites), " selecting another region.")
 }
@@ -553,8 +549,6 @@ func MakeOutwardFacingPrimers(sequence wtype.DNASequence, maxGCcontent float64, 
 
 	// now reverse
 	reversesequence := wtype.RevComp(sequence.Sequence())
-
-	// fmt.Println("rev:", reversesequence)
 
 	endstartingpoint = wtype.MakeLinearDNASequence("endprimer", reversesequence[len(reversesequence)-100:len(reversesequence)-1])
 

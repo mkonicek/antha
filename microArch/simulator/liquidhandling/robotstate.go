@@ -40,13 +40,15 @@ type ChannelState struct {
 	contents *wtype.LHComponent //What's in the tip?
 	position wtype.Coordinates  //position relative to the adaptor
 	adaptor  *AdaptorState      //the channel's adaptor
+	radius   float64
 }
 
-func NewChannelState(number int, adaptor *AdaptorState, position wtype.Coordinates) *ChannelState {
+func NewChannelState(number int, adaptor *AdaptorState, position wtype.Coordinates, radius float64) *ChannelState {
 	r := ChannelState{}
 	r.number = number
 	r.position = position
 	r.adaptor = adaptor
+	r.radius = radius
 
 	return &r
 }
@@ -72,6 +74,24 @@ func (self *ChannelState) IsEmpty() bool {
 //GetContents get the contents of the loaded tip, retuns nil if no contents or no tip
 func (self *ChannelState) GetContents() *wtype.LHComponent {
 	return self.contents
+}
+
+func (self *ChannelState) GetRadius() float64 {
+	return self.radius
+}
+
+func (self *ChannelState) GetBounds(channelClearance float64) wtype.BBox {
+	var r float64
+	h := self.tip.GetEffectiveHeight() + channelClearance
+	if !self.HasTip() {
+		r = self.radius
+	}
+
+	ret := wtype.NewBBox(
+		self.GetAbsolutePosition().Subtract(wtype.Coordinates{X: r, Y: r, Z: h}),
+		wtype.Coordinates{X: 2.0 * r, Y: 2.0 * r, Z: h})
+
+	return *ret
 }
 
 //GetRelativePosition get the channel's position relative to the head
@@ -122,22 +142,20 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 }
 
 //ClearCollisions clear out any collisions
-func (self *ChannelState) GetCollisions(ignoreTipboxes bool, channelClearance float64) []wtype.LHObject {
+func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObject {
 	deck := self.adaptor.GetGroup().GetRobot().GetDeck()
 
 	var ret []wtype.LHObject
-	if !self.HasTip() {
-		pos := self.GetAbsolutePosition()
-		pos.Z -= channelClearance
-		ret = deck.GetPointIntersections(pos)
-	} else {
-		tipSize := wtype.Coordinates{0.0, 0.0, self.tip.GetSize().Z}
-		tipBottom := self.GetAbsolutePosition().Subtract(tipSize)
-		box := wtype.NewBBox(tipBottom, tipSize)
-		objects := deck.GetBoxIntersections(*box)
-		ret = make([]wtype.LHObject, 0, len(objects))
+
+	box := self.GetBounds(channelClearance)
+	objects := deck.GetBoxIntersections(box)
+
+	//tips are allowed in wells
+	ret = make([]wtype.LHObject, 0, len(objects))
+	if self.HasTip() {
+		tipBottom := box.GetPosition()
 		for _, obj := range objects {
-			//if the tip is in a well, only add the plate only if the tip is below the well bottom
+			//don't add wells, instead add the plate if the tip bottom has hit the plate
 			if well, ok := obj.(*wtype.LHWell); ok {
 				if len(well.GetPointIntersections(tipBottom)) == 0 {
 					ret = append(ret, well.GetParent())
@@ -146,17 +164,16 @@ func (self *ChannelState) GetCollisions(ignoreTipboxes bool, channelClearance fl
 				ret = append(ret, obj)
 			}
 		}
-
-	}
-
-	if ignoreTipboxes {
-		f := make([]wtype.LHObject, 0, len(ret))
-		for _, r := range ret {
-			if _, ok := r.(*wtype.LHTipbox); !ok {
-				f = append(f, r)
+	} else {
+		//reporting that we've collided with a well is a bit silly since wells are empty space
+		//but since channels shouldn't be inside wells, report collision with the plate instead
+		for _, obj := range objects {
+			if well, ok := obj.(*wtype.LHWell); ok {
+				ret = append(ret, well.GetParent())
+			} else {
+				ret = append(ret, obj)
 			}
 		}
-		ret = f
 	}
 
 	return ret
@@ -182,6 +199,7 @@ func NewAdaptorState(name string,
 	independent bool,
 	channels int,
 	channel_offset wtype.Coordinates,
+	coneRadius float64,
 	params *wtype.LHChannelParameter,
 	tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
 	as := AdaptorState{
@@ -196,7 +214,7 @@ func NewAdaptorState(name string,
 	}
 
 	for i := 0; i < channels; i++ {
-		as.channels = append(as.channels, NewChannelState(i, &as, channel_offset.Multiply(float64(i))))
+		as.channels = append(as.channels, NewChannelState(i, &as, channel_offset.Multiply(float64(i)), coneRadius))
 	}
 
 	return &as

@@ -189,7 +189,7 @@ func assertNoTipsOnOthersInGroup(adaptor *AdaptorState) error {
 }
 
 //assertNoCollisionsInGroup check that there are no collisions, ignoring the specified channels on the given adaptor
-func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ignoreTipboxes bool, channelClearance float64) error {
+func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, channelClearance float64) error {
 
 	var maxChannels int
 	for _, ad := range adaptor.GetGroup().GetAdaptors() {
@@ -211,7 +211,7 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ig
 			if ad == adaptor && ignore[i] {
 				continue
 			}
-			objects := ad.GetChannel(i).GetCollisions(ignoreTipboxes, channelClearance)
+			objects := ad.GetChannel(i).GetCollisions(channelClearance)
 			for _, o := range objects {
 				objectMap[o] = true
 			}

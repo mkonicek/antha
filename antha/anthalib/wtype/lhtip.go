@@ -86,6 +86,9 @@ func (self *LHTip) GetSize() Coordinates {
 //this is broken at the moment, as this value is acutally stored in the tipbox, which we might
 //not have access to. Still, GetSize().Z provides an upper bound for now
 func (self *LHTip) GetEffectiveHeight() float64 {
+	if self == nil {
+		return 0.0
+	}
 	return self.GetSize().Z
 }
 

@@ -46,7 +46,7 @@ func (self *tipCoordsTest) run(t *testing.T) {
 		tb.RemoveTip(wc)
 	}
 
-	adaptor := lh.NewAdaptorState("", false, 8, wtype.Coordinates{}, &wtype.LHChannelParameter{Orientation: self.orientation}, self.tipBehaviour)
+	adaptor := lh.NewAdaptorState("", false, 8, wtype.Coordinates{}, 0.0, &wtype.LHChannelParameter{Orientation: self.orientation}, self.tipBehaviour)
 
 	out, err := adaptor.GetTipCoordsToLoad(tb, self.num)
 	if err != nil {

@@ -84,6 +84,9 @@ type VirtualLiquidHandler struct {
 	settings *SimulatorSettings
 }
 
+//coneRadius hardcoded radius to assume for cones
+const coneRadius = 3.6
+
 //Create a new VirtualLiquidHandler which mimics an LHDriver
 func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *SimulatorSettings) *VirtualLiquidHandler {
 	var vlh VirtualLiquidHandler
@@ -123,7 +126,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 			} else if p.Orientation == wtype.LHHChannel {
 				spacing.X = 9.
 			}
-			adaptor := NewAdaptorState(pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, p, pos.Head.TipLoading)
+			adaptor := NewAdaptorState(pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, coneRadius, p, pos.Head.TipLoading)
 			group.LoadAdaptor(i, adaptor)
 		}
 		vlh.state.AddAdaptorGroup(group)
@@ -589,7 +592,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	}
 
 	//check for collisions in the new location
-	if err := assertNoCollisionsInGroup(adaptor, nil, !self.settings.IsTipboxCollisionEnabled(), 0.0); err != nil {
+	if err := assertNoCollisionsInGroup(adaptor, nil, 0.0); err != nil {
 		self.AddErrorf("Move", "%s: collision detected: %s", describe(), err.Error())
 	}
 	return ret
@@ -934,12 +937,6 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		return ret
 	}
 
-	//make well coords
-	wc := make([]wtype.WellCoords, n_channels)
-	for i := range well {
-		wc[i] = wtype.MakeWellCoords(well[i])
-	}
-
 	//get the individual position
 	position, err := getSingle(positionS)
 	if err != nil {
@@ -948,6 +945,35 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	platetype, err := getSingle(platetypeS)
 	if err != nil {
 		self.AddErrorf("LoadTips", "invalid argument platetype: %s", err.Error())
+	}
+
+	if len(channels) == 0 {
+		//inver channels from well argument
+		channels = make([]int, 0, n_channels)
+		for i, w := range well {
+			if w != "" {
+				channels = append(channels, i)
+			}
+		}
+	}
+
+	//make well coords
+	invalidWells := make([]int, 0, n_channels)
+	wc, err := convertWellCoords(well)
+	if err != nil {
+		self.AddErrorf("LoadTips", "invalid argument well: %s", err.Error())
+	}
+	for _, ch := range channels {
+		if wc[ch].IsZero() {
+			invalidWells = append(invalidWells, ch)
+		}
+	}
+	if len(invalidWells) > 0 {
+		values := make([]string, 0, len(invalidWells))
+		for _, ch := range invalidWells {
+			values = append(values, well[ch])
+		}
+		self.AddErrorf("LoadTips", "invalid argument well: couldn't parse \"%s\" for %s", strings.Join(values, "\", \""), summariseChannels(invalidWells))
 	}
 
 	//get the actual tipbox
@@ -972,32 +998,6 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 		return fmt.Sprintf("from %s@%s at position \"%s\" to head %d %s", wtype.HumanizeWellCoords(wc), tipbox.GetName(), position, head, summariseChannels(channels))
 	}
 
-	if len(channels) == 0 {
-		for ch, pt := range platetypeS {
-			if pt != "" {
-				channels = append(channels, ch)
-			}
-		}
-
-		//best to order the channels sensibly
-		sort.Ints(channels)
-
-		if len(channels) == 0 {
-			self.AddWarning("LoadTips", "'channel' argument empty and no platetype specified ignoring")
-			return ret
-		} else if self.settings.IsAutoChannelWarningEnabled() {
-			self.AddWarningf("LoadTips", "%s : channels weren't specified in instruction, inferring %s from platetype", describe(), summariseChannels(channels))
-		}
-
-		//check if multi is wrong
-		if multi != len(channels) {
-			self.AddErrorf("LoadTips", "%s : 'channel' argument inferred as %s, but 'multi' is %d",
-				describe(),
-				summariseChannels(channels),
-				multi)
-			return ret
-		}
-	}
 	if multi != len(channels) {
 		self.AddErrorf("LoadTips", "%s : multi should equal %d, not %d",
 			describe(), len(channels), multi)
@@ -1116,7 +1116,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 				describe(), zo_min, zo_max)
 			return ret
 		}
-		if err := assertNoCollisionsInGroup(adaptor, channels, !self.settings.IsTipboxCollisionEnabled(), zo_max+0.5); err != nil {
+		if err := assertNoCollisionsInGroup(adaptor, channels, zo_max+0.5); err != nil {
 			self.AddErrorf("LoadTips", "%s: collision detected: %s", describe(), err.Error())
 		}
 	}

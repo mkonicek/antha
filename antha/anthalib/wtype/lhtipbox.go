@@ -252,14 +252,14 @@ func (self *LHTipbox) GetTipBounds() BBox {
 
 func (self *LHTipbox) GetBoxIntersections(box BBox) []LHObject {
 	//relative box
-	box.SetPosition(box.GetPosition().Subtract(OriginOf(self)))
+	relBox := NewBBox(box.GetPosition().Subtract(OriginOf(self)), box.GetSize())
 	ret := []LHObject{}
-	if self.Bounds.IntersectsBox(box) {
+	if self.Bounds.IntersectsBox(*relBox) {
 		ret = append(ret, self)
 	}
 
 	//if it's possible the this box might intersect with some tips
-	if self.GetTipBounds().IntersectsBox(box) {
+	if self.GetTipBounds().IntersectsBox(*relBox) {
 		for _, tiprow := range self.Tips {
 			for _, tip := range tiprow {
 				if tip != nil {
@@ -322,14 +322,14 @@ func trimToMask(wells []string, mask []bool) []string {
 
 func (self *LHTipbox) GetPointIntersections(point Coordinates) []LHObject {
 	//relative point
-	point = point.Subtract(OriginOf(self))
+	relPoint := point.Subtract(OriginOf(self))
 	ret := []LHObject{}
-	if self.Bounds.IntersectsPoint(point) {
+	if self.Bounds.IntersectsPoint(relPoint) {
 		ret = append(ret, self)
 	}
 
 	//if it's possible the this point might intersect with some tips
-	if self.GetTipBounds().IntersectsPoint(point) {
+	if self.GetTipBounds().IntersectsPoint(relPoint) {
 		for _, tiprow := range self.Tips {
 			for _, tip := range tiprow {
 				ret = append(ret, tip.GetPointIntersections(point)...)

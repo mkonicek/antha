@@ -737,26 +737,26 @@ func TestCrashes(t *testing.T) {
 			},
 			[]TestRobotInstruction{
 				&Move{
-					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
-					[]string{"E12", "F12", "G12", "H12", "", "", "", ""},                                                     //wellcoords
-					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
-					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
-					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"E12", "F12", "G12", "H12"},                     //wellcoords
+					[]int{1, 1, 1, 1},                                        //reference
+					[]float64{0., 0., 0., 0.},                                //offsetX
+					[]float64{0., 0., 0., 0.},                                //offsetY
+					[]float64{1., 1., 1., 1.},                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox"},         //plate_type
 					0, //head
 				},
 				&LoadTips{
-					[]int{0, 1, 2, 3, 4, 5, 6, 7}, //channels
-					0, //head
-					8, //multi
-					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //tipbox
-					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
-					[]string{"E12", "F12", "G12", "H12", "", "", "", ""},                                                     //wellcoords
+					[]int{0, 1, 2, 3}, //channels
+					0,                 //head
+					4,                 //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox"},         //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"E12", "F12", "G12", "H12"},                     //wellcoords
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: head 0 channels 4-7 collide with tips at A12-c12@tipbox2 at position \"input_2\"",
+				"(err) LoadTips: from E12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-3: collision detected: head 0 channels 5-7 and tips A12-C12@tipbox2 at position input_2",
 			},
 			[]*AssertionFn{ //assertions
 			},
@@ -781,7 +781,7 @@ func TestCrashes(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: head 0 channel 0 to A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and wells A1-H1@plate1 at position input_1",
+				"(err) Move: head 0 channel 0 to A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and plate \"plate1\" at position input_1",
 			},
 			nil, //assertionsi
 		},

@@ -1780,8 +1780,8 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "ADDPLATETO ACK"}
 
-	if obj, ok := plate.(wtype.LHObject); ok {
-		obj = obj.Duplicate(true)
+	if original, ok := plate.(wtype.LHObject); ok {
+		obj := original.Duplicate(true)
 		if n, nok := obj.(wtype.Named); nok && n.GetName() != name {
 			self.AddWarningf("AddPlateTo", "Object name(=%s) doesn't match argument name(=%s)", n.GetName(), name)
 		}

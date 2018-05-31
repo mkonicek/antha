@@ -449,7 +449,7 @@ func (w *LHWell) Clean() {
 	// some keys must be retained
 
 	for k, v := range w.Extra {
-		if isConstraintKey(k) || k == "IMSPECIAL" || k == "afvfunc" || k == "ll_model" {
+		if isConstraintKey(k) || k == wellTargetKey || k == "IMSPECIAL" || k == "afvfunc" || k == "ll_model" {
 			newExtra[k] = v
 		}
 	}

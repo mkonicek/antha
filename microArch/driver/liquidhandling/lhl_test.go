@@ -41,6 +41,30 @@ func getTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotI
 	return ret
 }
 
+// what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy
+func getTestTransfer(vol wunit.Volume) RobotInstruction {
+	v2 := wunit.NewVolume(5000.0, "ul")
+	v3 := wunit.NewVolume(0.0, "ul")
+	return NewTransferInstruction(
+		[]string{"water"},
+		[]string{"position_4"},
+		[]string{"position_8"},
+		[]string{"A1"},
+		[]string{"G5"},
+		[]string{"DWST12"},
+		[]string{"DSW96"},
+		[]wunit.Volume{vol},
+		[]wunit.Volume{v2},
+		[]wunit.Volume{v3},
+		[]int{8},
+		[]int{12},
+		[]int{8},
+		[]int{12},
+		[]string{"notsure"},
+		[]wtype.LHPolicy{nil},
+	)
+}
+
 func TestBlowMixing(t *testing.T) {
 
 	tenUl := wunit.NewVolume(10.0, "ul")
@@ -1030,6 +1054,295 @@ func TestASPPipetSpeed(t *testing.T) {
 			},
 			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
 			Error:       "setting pipette aspirate speed: value 0.010000 out of range 0.022500 - 3.750000",
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestTipReuse(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "no tip reuse allowed ",
+			Rules: []*Rule{
+				{
+					Name: "water",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "water",
+						},
+					},
+					Policy: map[string]interface{}{
+						"TIP_REUSE_LIMIT": 0,
+					},
+				},
+			},
+			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
+			Robot:                nil,
+			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD,MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
+			Assertions: []*InstructionAssertion{
+				{},
+			},
+		},
+		{
+			Name: "tip reuse allowed ",
+			Rules: []*Rule{
+				{
+					Name: "water",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "water",
+						},
+					},
+					Policy: map[string]interface{}{
+						"TIP_REUSE_LIMIT": 100,
+					},
+				},
+			},
+			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
+			Robot:                nil,
+			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
+			Assertions: []*InstructionAssertion{
+				{},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestAspWait(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "asp wait 3s, multi 1",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"ASP_WAIT": 3.0,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP,WAI]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //Wait
+					Values: map[string]interface{}{
+						"TIME": 3.0,
+					},
+				},
+			},
+		},
+		{
+			Name: "asp wait 3s, multi 8",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"ASP_WAIT": 3.0,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP,WAI]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //Wait
+					Values: map[string]interface{}{
+						"TIME": 3.0,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestDspWait(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "dsp wait 3s, multi 1",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DSP_WAIT": 3.0,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,WAI,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //Wait
+					Values: map[string]interface{}{
+						"TIME": 3.0,
+					},
+				},
+			},
+		},
+		{
+			Name: "dsp wait 3s, multi 8",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"DSP_WAIT": 3.0,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 8, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,WAI,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //Wait
+					Values: map[string]interface{}{
+						"TIME": 3.0,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestTouchoff(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "test touchoff ",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"TOUCHOFF":    true,
+						"TOUCHOFFSET": 2.37,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 4, //touchoff move
+					Values: map[string]interface{}{
+						"REFERENCE": []int{0},        // well bottom
+						"OFFSETZ":   []float64{2.37}, // as set
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestExtraVolumes(t *testing.T) {
+	tests := []*PolicyTest{
+		{
+			Name: "extra asp volume ",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"EXTRA_ASP_VOLUME": wunit.NewVolume(2.0, "ul"),
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, // ASP
+					Values: map[string]interface{}{
+						"VOLUME": []wunit.Volume{wunit.NewVolume(12.0, "ul")},
+					},
+				},
+			},
+		},
+		{
+			Name: "extra dsp volume ",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"EXTRA_DISP_VOLUME": wunit.NewVolume(2.0, "ul"),
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, // dispense
+					Values: map[string]interface{}{
+						"VOLUME": []wunit.Volume{wunit.NewVolume(12.0, "ul")},
+					},
+				},
+			},
 		},
 	}
 

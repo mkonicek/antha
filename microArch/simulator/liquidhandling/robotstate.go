@@ -141,7 +141,7 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 	return tip
 }
 
-//ClearCollisions clear out any collisions
+//GetCollisions get collisions with this channel. channelClearance defined a height below the channel/tip to include
 func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObject {
 	deck := self.adaptor.GetGroup().GetRobot().GetDeck()
 

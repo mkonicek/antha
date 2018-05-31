@@ -2013,11 +2013,13 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	// do we wait
 
-	wait_time, wait := pol["ASP_WAIT"]
+	_, wait := pol["ASP_WAIT"]
 
-	if wait {
+	wait_time := SafeGetF64(pol, "ASP_WAIT")
+
+	if wait && wait_time > 0.0 {
 		waitins := NewWaitInstruction()
-		waitins.Time = wait_time.(float64)
+		waitins.Time = wait_time
 		ret = append(ret, waitins)
 	}
 

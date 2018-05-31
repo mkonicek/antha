@@ -37,46 +37,6 @@ import (
 
 const arbitraryZOffset = 4.0
 
-type adaptorCollision struct {
-	channel int
-	objects []wtype.LHObject
-}
-
-type adaptorCollisions []adaptorCollision
-
-func (self adaptorCollisions) String() string {
-	channels := make([]string, 0, len(self))
-	objects := []wtype.LHObject{}
-
-	seen := func(o wtype.LHObject) bool {
-		for _, O := range objects {
-			if o == O {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, ac := range self {
-		channels = append(channels, fmt.Sprintf("%d", ac.channel))
-		for _, obj := range ac.objects {
-			if !seen(obj) {
-				objects = append(objects, obj)
-			}
-		}
-	}
-
-	s_obj := make([]string, 0, len(objects))
-	for _, o := range objects {
-		s_obj = append(s_obj, fmt.Sprintf("%s \"%s\"", wtype.ClassOf(o), wtype.NameOf(o)))
-	}
-
-	if len(self) == 1 {
-		return fmt.Sprintf("channel %s collides with %s", channels[0], strings.Join(s_obj, " and "))
-	}
-	return fmt.Sprintf("channels %s collide with %s", strings.Join(channels, ","), strings.Join(s_obj, " and "))
-}
-
 // Simulate a liquid handler Driver
 type VirtualLiquidHandler struct {
 	simulator.ErrorReporter

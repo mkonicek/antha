@@ -87,8 +87,8 @@ func MakeGilsonForTest() *LHProperties {
 	lvhead.Adaptor = lvadaptor
 
 	ha := wtype.NewLHHeadAssembly(nil)
-	ha.AddPosition(wtype.Coordinates{0, -18.08, 0})
-	ha.AddPosition(wtype.Coordinates{0, 0, 0})
+	ha.AddPosition(wtype.Coordinates{X: 0, Y: -18.08, Z: 0})
+	ha.AddPosition(wtype.Coordinates{X: 0, Y: 0, Z: 0})
 	ha.LoadHead(hvhead)
 	ha.LoadHead(lvhead)
 	lhp.Heads = append(lhp.Heads, hvhead, lvhead)

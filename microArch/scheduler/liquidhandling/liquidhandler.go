@@ -1439,6 +1439,7 @@ func (lh *Liquidhandler) addWellTargets() error {
 }
 
 func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
+	fmt.Println("ADD WELL TARGETS TO PLATE OF TYPE ", plate.Type)
 	if adaptor.Manufacturer != "Gilson" {
 		logger.Info("Not adding well target data for non-gilson adaptor")
 		return
@@ -1452,19 +1453,30 @@ func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
 	}
 
 	if plate.NRows() >= 8 || plate.IsSpecial() {
+		fmt.Println("RETURNING HERE: Either this >=8 ", plate.NRows(), " OR this is true: ", plate.IsSpecial())
 		return
 	}
 
 	//ystart and count should come from some geometric calculation between channelPositions and well size
 	ystart, count := getWellTargetYStart(plate.NRows())
 
+	fmt.Println("GOT ", count, " TARGETS TO ADD STARTING ", ystart)
+
 	targets := make([]wtype.Coordinates, count)
 	copy(targets, channelPositions)
+
+	fmt.Println("COPYING TARGETS : ", targets)
+	fmt.Println("SHOULD EQUAL: ", channelPositions)
+
 	for i := 0; i < count; i++ {
 		targets[i].Y += ystart
 	}
 
+	fmt.Println("SETTING WELL TARGETS ", adaptor.Name, " ", targets)
 	plate.Welltype.SetWellTargets(adaptor.Name, targets)
+
+	fmt.Println("FINAL RESULT: ", plate.Welltype.Extra)
+	fmt.Println(plate.Welltype.GetWellTargets(adaptor.Name))
 }
 
 func addWellTargetsTipWaste(adaptor *wtype.LHAdaptor, waste *wtype.LHTipwaste) {

@@ -204,7 +204,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		setup[position] = p
 		plate_lookup[p.ID] = position
 
-		err := params.AddPlate(position, p)
+		err := params.AddPlateTo(position, p)
 		if err != nil {
 			return request, err
 		}
@@ -232,7 +232,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 		setup[position] = p
 		plate_lookup[p.ID] = position
-		err := params.AddPlate(position, p)
+		err := params.AddPlateTo(position, p)
 		if err != nil {
 			return request, err
 		}

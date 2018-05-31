@@ -1080,7 +1080,6 @@ func TestTipReuse(t *testing.T) {
 				},
 			},
 			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
-			Robot:                nil,
 			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD,MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
 			Assertions: []*InstructionAssertion{
 				{},
@@ -1103,7 +1102,6 @@ func TestTipReuse(t *testing.T) {
 				},
 			},
 			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
-			Robot:                nil,
 			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
 			Assertions: []*InstructionAssertion{
 				{},

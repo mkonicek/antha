@@ -106,7 +106,7 @@ func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, 
 }
 
 func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *LHProperties {
-	rbt, err := MakeGilsonWithPlatesForTest(ctx)
+	rbt, err := makeGilsonWithTipboxesForTest(ctx)
 	if err != nil {
 		panic(err)
 	}

@@ -17,6 +17,29 @@ const (
 	LVMaxRate = 3.75
 )
 
+func MakeGilsonForTest() *LHProperties {
+	ctx := testinventory.NewContext(context.Background())
+	return makeGilsonForTest(ctx)
+}
+
+func MakeGilsonWithPlatesAndTipboxesForTest() *LHProperties {
+	ctx := testinventory.NewContext(context.Background())
+	ret, err := makeGilsonWithPlatesAndTipboxesForTest(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return ret
+}
+
+func MakeGilsonWithTipboxesForTest() *LHProperties {
+	ctx := testinventory.NewContext(context.Background())
+	ret, err := makeGilsonWithTipboxesForTest(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return ret
+}
+
 func getHVConfig() *wtype.LHChannelParameter {
 	minvol := wunit.NewVolume(10, "ul")
 	maxvol := wunit.NewVolume(250, "ul")
@@ -35,7 +58,7 @@ func getLVConfig() *wtype.LHChannelParameter {
 	return wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
 }
 
-func MakeGilsonForTest() *LHProperties {
+func makeGilsonForTest(ctx context.Context) *LHProperties {
 	// gilson pipetmax
 
 	layout := make(map[string]wtype.Coordinates)
@@ -61,7 +84,7 @@ func MakeGilsonForTest() *LHProperties {
 	}
 	lhp := NewLHProperties(9, "Pipetmax", "Gilson", LLLiquidHandler, DisposableTips, layout)
 	// get tips permissible from the factory
-	SetUpTipsFor(lhp)
+	SetUpTipsFor(ctx, lhp)
 
 	lhp.Tip_preferences = []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"}
 	//lhp.Tip_preferences = []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_7"}
@@ -104,8 +127,7 @@ func MakeGilsonForTest() *LHProperties {
 	return lhp
 }
 
-func SetUpTipsFor(lhp *LHProperties) *LHProperties {
-	ctx := testinventory.NewContext(context.Background())
+func SetUpTipsFor(ctx context.Context, lhp *LHProperties) *LHProperties {
 
 	seen := make(map[string]bool)
 
@@ -128,8 +150,8 @@ func SetUpTipsFor(lhp *LHProperties) *LHProperties {
 	return lhp
 }
 
-func MakeGilsonWithPlatesForTest(ctx context.Context) (*LHProperties, error) {
-	params := MakeGilsonForTest()
+func makeGilsonWithTipboxesForTest(ctx context.Context) (*LHProperties, error) {
+	params := makeGilsonForTest(ctx)
 
 	tw, err := inventory.NewTipwaste(ctx, "Gilsontipwaste")
 	if err != nil {
@@ -150,4 +172,66 @@ func MakeGilsonWithPlatesForTest(ctx context.Context) (*LHProperties, error) {
 	params.AddTipBox(tb)
 
 	return params, nil
+}
+
+func makeGilsonWithPlatesAndTipboxesForTest(ctx context.Context) (*LHProperties, error) {
+	params, err := makeGilsonWithTipboxesForTest(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	inputPlate, err := makeTestInputPlate(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = params.AddInputPlate(inputPlate)
+
+	if err != nil {
+		return nil, err
+	}
+
+	outputPlate, err := makeTestOutputPlate(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = params.AddOutputPlate(outputPlate)
+
+	if err != nil {
+		return nil, err
+	}
+	return params, nil
+}
+
+func makeTestInputPlate(ctx context.Context) (*wtype.LHPlate, error) {
+	p, err := inventory.NewPlate(ctx, "DWST12")
+
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := inventory.NewComponent(ctx, "water")
+
+	if err != nil {
+		return nil, err
+	}
+
+	c.Vol = 5000.0 // ul
+
+	p.AddComponent(c, true)
+
+	return p, nil
+}
+
+func makeTestOutputPlate(ctx context.Context) (*wtype.LHPlate, error) {
+	p, err := inventory.NewPlate(ctx, "DSW96")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }

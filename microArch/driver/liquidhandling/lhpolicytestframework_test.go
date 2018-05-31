@@ -103,7 +103,7 @@ func (self *PolicyTest) Run(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 	ctx = plateCache.NewContext(ctx)
 	if self.Robot == nil {
-		robot, err := MakeGilsonWithPlatesForTest(ctx)
+		robot, err := makeGilsonWithPlatesAndTipboxesForTest(ctx)
 		if err != nil {
 			err = errors.Wrap(err, self.Name)
 			t.Fatal(err)

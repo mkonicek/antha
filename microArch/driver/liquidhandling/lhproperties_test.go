@@ -87,16 +87,9 @@ func TestGetFirstDefined(t *testing.T) {
 }
 
 func TestLHPropertiesDup(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-	props, err := MakeGilsonWithPlatesForTest(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	props := MakeGilsonWithPlatesAndTipboxesForTest()
 	dprops := props.DupKeepIDs()
-
 	AssertLHPropertiesEqual(t, props, dprops, "LHProperties")
-
 }
 
 func AssertLHPropertiesEqual(t *testing.T, e, g *LHProperties, msg string) {

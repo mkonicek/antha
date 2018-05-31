@@ -17,12 +17,12 @@ const (
 	LVMaxRate = 3.75
 )
 
-func MakeGilsonForTest() *LHProperties {
+func MakeGilsonForTest() *LHProperties { //nolint
 	ctx := testinventory.NewContext(context.Background())
 	return makeGilsonForTest(ctx)
 }
 
-func MakeGilsonWithPlatesAndTipboxesForTest() *LHProperties {
+func MakeGilsonWithPlatesAndTipboxesForTest() *LHProperties { //nolint
 	ctx := testinventory.NewContext(context.Background())
 	ret, err := makeGilsonWithPlatesAndTipboxesForTest(ctx)
 	if err != nil {
@@ -31,7 +31,7 @@ func MakeGilsonWithPlatesAndTipboxesForTest() *LHProperties {
 	return ret
 }
 
-func MakeGilsonWithTipboxesForTest() *LHProperties {
+func MakeGilsonWithTipboxesForTest() *LHProperties { //nolint
 	ctx := testinventory.NewContext(context.Background())
 	ret, err := makeGilsonWithTipboxesForTest(ctx)
 	if err != nil {

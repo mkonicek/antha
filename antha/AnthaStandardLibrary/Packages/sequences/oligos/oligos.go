@@ -202,6 +202,12 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				}
 			}
 
+			fmt.Println("SEQ TO AVOID: ", seqstoavoid, "  TEMPOLIGOSEQ: ", tempoligoseq)
+
+			if search.InStrings(seqstoavoid, tempoligoseq) {
+				fmt.Println("HERE")
+			}
+
 			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.InStrings(seqstoavoid, tempoligoseq) && !overlapthresholdfail {
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
@@ -213,23 +219,22 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 			} else {
 				var combinedErrors []string
 				var i bool = true
+				var primerType, seqName string = "FORWARD", seq.Name()
 				switch i {
 				case temppercentage >= maxGCcontent:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primer with GC Content (%f) greater than the maximum GC Content specified (%f). Please try lowering this parameter, or selecting a less-GC rich region.", seq.Name(), temppercentage, maxGCcontent))
+					combinedErrors = append(combinedErrors, gcContentErrorString(primerType, seqName, temppercentage, maxGCcontent))
 				case minmeltingtemp.SIValue() > meltingtemp.SIValue():
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try lowering this parameter.", seq.Name(), meltingtemp.SIValue(), minmeltingtemp.SIValue()))
+					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "minimum", meltingtemp.SIValue(), minmeltingtemp.SIValue()))
 				case maxmeltingtemp.SIValue() < meltingtemp.SIValue():
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers with melting temperature (%f) greater than the maximum melting temperature specified (%f). Please try increasing this parameter.", seq.Name(), meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
+					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "maximum", meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
 				case bindingsites > 1:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers with more than one (%d) binding sites. Pleaser try selecting another region.", seq.Name(), bindingsites))
+					combinedErrors = append(combinedErrors, bindingSiteErrorString(primerType, seqName, bindingsites))
 				case search.InStrings(seqstoavoid, tempoligoseq):
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers that contain the specified sequences to avoid. Pleaser try removing these from the parameters.", seq.Name()))
+					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that contain the specified sequences to avoid.", " removing these from the parameters."))
 				case overlapthresholdfail:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate FORWARD primers that violate the overlap threshold.", seq.Name()))
+					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that violate the overlap threshold.", " adjusting this parameter."))
 				}
-
 				err = fmt.Errorf(strings.Join(combinedErrors, "\n"))
-
 			}
 		}
 	}
@@ -292,28 +297,51 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 			} else {
 				var combinedErrors []string
 				var i bool = true
+				var primerType, seqName string = "REVERSE", seq.Name()
 				switch i {
 				case temppercentage >= maxGCcontent:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers with GC Content (%f) greater than the maximum GC Content specified (%f). Please try lowering this parameter, or selecting a less-GC rich region.", seq.Name(), temppercentage, maxGCcontent))
+					combinedErrors = append(combinedErrors, gcContentErrorString(primerType, seqName, temppercentage, maxGCcontent))
 				case minmeltingtemp.SIValue() > meltingtemp.SIValue():
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try lowering this parameter.", seq.Name(), meltingtemp.SIValue(), minmeltingtemp.SIValue()))
+					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "minimum", meltingtemp.SIValue(), minmeltingtemp.SIValue()))
 				case maxmeltingtemp.SIValue() < meltingtemp.SIValue():
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers with melting temperature (%f) greater than the maximum melting temperature specified (%f). Please try increasing this parameter.", seq.Name(), meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
+					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "maximum", meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
 				case bindingsites > 1:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers with more than one (%d) binding sites. Pleaser try selecting another region.", seq.Name(), bindingsites))
+					combinedErrors = append(combinedErrors, bindingSiteErrorString(primerType, seqName, bindingsites))
 				case search.InStrings(seqstoavoid, tempoligoseq):
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers that contain the specified sequences to avoid. Pleaser try removing these from the parameters.", seq.Name()))
+					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that contain the specified sequences to avoid.", " removing these from the parameters."))
 				case overlapthresholdfail:
-					combinedErrors = append(combinedErrors, fmt.Sprintf("For sequence %s could only generate REVERSE primers that violate the overlap threshold.", seq.Name()))
+					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that violate the overlap threshold.", " adjusting this parameter."))
 				}
-
 				err = fmt.Errorf(strings.Join(combinedErrors, "\n"))
-
 			}
 		}
 	}
 
 	return
+}
+
+func primerErrorString(primerOrientation, sequenceName, erorrString, resolutionString string) string {
+	errorBeginning := fmt.Sprintf(" For %s could only generate %s primers", sequenceName, primerOrientation)
+	resolutionBeginning := " Please try"
+	return fmt.Sprintf("%s%s%s%s", errorBeginning, erorrString, resolutionBeginning, resolutionString)
+}
+
+func gcContentErrorString(primerOrientation, sequenceName string, gcContent, maxGC float64) string {
+	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with GC Content (%f) greater than the maximum GC Content specified (%f).", gcContent, maxGC), " lowering this parameter, or selecting a less-GC rich region.")
+}
+
+func meltingTempErrorString(primerOrientation, sequenceName, tempType string, mt, specifiedmt float64) string {
+	var sign, indication string
+	if mt > specifiedmt {
+		sign, indication = "greater", "lowering"
+	} else {
+		sign, indication = "lower", "increasing"
+	}
+	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with melting temperature (%f) %s than the %s melting temperature specified (%f).", mt, sign, tempType, specifiedmt), fmt.Sprintf(" %s this parameter.", indication))
+}
+
+func bindingSiteErrorString(primerOrientation, sequenceName string, bindingSites int) string {
+	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with more than one (%d) binding sites.", bindingSites), " selecting another region.")
 }
 
 func DesignFWDPRimerstoCoverFullSequence(seq wtype.DNASequence, sequenceinterval int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers []Primer) {

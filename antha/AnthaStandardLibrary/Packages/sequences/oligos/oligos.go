@@ -328,9 +328,9 @@ func gcContentErrorString(primerOrientation, sequenceName string, gcContent, max
 func meltingTempErrorString(primerOrientation, sequenceName, tempType string, mt, specifiedmt float64) string {
 	var sign, indication string
 	if mt > specifiedmt {
-		sign, indication = "greater", "lowering"
+		sign, indication = "greater", "increasing"
 	} else {
-		sign, indication = "lower", "increasing"
+		sign, indication = "lower", "lowering"
 	}
 	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with melting temperature (%f) %s than the %s melting temperature specified (%f).", mt, sign, tempType, specifiedmt), fmt.Sprintf(" %s this parameter.", indication))
 }

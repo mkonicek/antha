@@ -1176,9 +1176,6 @@ func TestShouldSetWellTargets(t *testing.T) {
 
 	for _, plate := range testinventory.GetPlates(ctx) {
 		if e, g := plate.IsSpecial(), !shouldSetWellTargets(plate, 9.0); e != g {
-			if plate.NRows() == 2 {
-				t.Logf("platetype %s has 2 rows", plate.GetName())
-			}
 			//IsSpecial is irrelevant for plates with 8 rows or more
 			if plate.NRows() >= 8 {
 				continue

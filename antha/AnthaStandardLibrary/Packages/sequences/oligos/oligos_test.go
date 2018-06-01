@@ -69,7 +69,7 @@ var primerErrorTests = []testpair{
 		seqstoavoid:         []string{""},
 		overlapthreshold:    45,
 		calculatedGCcontent: 0.355556,
-		expectedError:       fmt.Errorf("For sequence %s could only generate FORWARD primer with GC Content (%f) greater than the maximum GC Content specified (%f). Please try lowering this parameter, or selecting a less-GC rich region.", "SGAP-004b-001-SacO1_partial", 0.355556, 0.100000),
+		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers with GC Content (%f) greater than the maximum GC Content specified (%f). Please try lowering this parameter, or selecting a less-GC rich region.", "SGAP-004b-001-SacO1_partial", 0.355556, 0.100000),
 	},
 	{
 		sequence:            wtype.MakeSingleStrandedDNASequence("SGAP-004b-001-SacO1_partial", "GTTTAAATCAAAACTGGTGAAACTCACCCAGGGATTGGCTGACACGAAAAACATATTCTCAATAAATCCTTTAGGGAAATAGGCCAGGTTTTCACCGTAACACGCCACATCTTGCGAATATATGTGTAGAAACTGCCGGAAATCGTCGTGGTATTCACTCCAGAGCGATGAAAACGTTTCAGTTTGCTCATGGAAAACGGTGTA."),
@@ -82,7 +82,7 @@ var primerErrorTests = []testpair{
 		seqstoavoid:         []string{""},
 		overlapthreshold:    45,
 		calculatedGCcontent: 0.36,
-		expectedError:       fmt.Errorf("For sequence %s could only generate FORWARD primers with melting temperature (%f) less than the minimum melting temperature specified (%f). Please try lowering this parameter.", "SGAP-004b-001-SacO1_partial", 28.000000, 50.000000),
+		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers with melting temperature (%f) lower than the minimum melting temperature specified (%f). Please try lowering this parameter.", "SGAP-004b-001-SacO1_partial", 28.000000, 50.000000),
 	},
 	{
 		sequence:            wtype.MakeSingleStrandedDNASequence("MultipleBindingSites", "ACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAATGGGATATATCAACGGTGGTATATCCAGTGATTTTTTTCTCCATATTCTTCCTTTTTCA."),
@@ -94,7 +94,7 @@ var primerErrorTests = []testpair{
 		seqstoavoid:         []string{""},
 		overlapthreshold:    45,
 		calculatedGCcontent: 0.36,
-		expectedError:       fmt.Errorf("For sequence %s could only generate FORWARD primers with more than one (%d) binding sites. Pleaser try selecting another region.", "MultipleBindingSites", 4),
+		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers with more than one (%d) binding sites. Please try selecting another region.", "MultipleBindingSites", 4),
 	},
 }
 

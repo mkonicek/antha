@@ -1440,23 +1440,6 @@ func (lh *Liquidhandler) addWellTargets() error {
 
 const adaptorSpacing = 9.0
 
-func shouldSetWellTargets(plate *wtype.LHPlate, spacing float64) bool {
-
-	if plate.NRows() != 1 {
-		return false
-	}
-
-	if plate.Welltype.Shape().ShapeName != "box" {
-		return false
-	}
-
-	_, numTargets := getWellTargetYStart(1)
-	spaceNeeded := float64(numTargets-1)*spacing + 2.0
-
-	return plate.Welltype.GetSize().Y >= spaceNeeded
-
-}
-
 func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
 	if adaptor.Manufacturer != "Gilson" {
 		logger.Info("Not adding well target data for non-gilson adaptor")
@@ -1467,7 +1450,7 @@ func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
 		return
 	}
 
-	if !shouldSetWellTargets(plate, adaptorSpacing) {
+	if !plate.EnableWellTargets(adaptor.Params.Multi, adaptorSpacing) {
 		plate.DeclareSpecial()
 		return
 	}

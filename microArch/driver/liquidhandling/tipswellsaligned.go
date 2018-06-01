@@ -18,8 +18,13 @@ func CopyComponentArray(arin []*wtype.LHComponent) []*wtype.LHComponent {
 
 // are tips going to align to wells?
 func TipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsfrom []string) bool {
-	// heads which can do independent multichanneling are dealt with separately
 
+	//can't multi channel with 2-7 wells per column
+	if plt.NRows() > 1 && plt.NRows() < 8 {
+		return false
+	}
+
+	// heads which can do independent multichanneling are dealt with separately
 	if head.Adaptor.Params.Independent {
 		return disContiguousTipsWellsAligned(robot, head, plt, wellsfrom)
 	} else {
@@ -139,7 +144,7 @@ func contiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wt
 
 	// if this is not a standard plate we need to check
 
-	if plt.IsSpecial() {
+	if plt.NRows() < 8 && !plt.EnableWellTargets(head.GetParams().Multi, 9.0) {
 		return physicalTipCheck(robot, head, plt, wellsfrom)
 	}
 

@@ -1175,7 +1175,7 @@ func TestShouldSetWellTargets(t *testing.T) {
 	ctx := GetContextForTest()
 
 	for _, plate := range testinventory.GetPlates(ctx) {
-		if e, g := plate.IsSpecial(), !shouldSetWellTargets(plate, 9.0); e != g {
+		if e, g := plate.IsSpecial(), !plate.EnableWellTargets(8, 9.0); e != g {
 			//IsSpecial is irrelevant for plates with 8 rows or more
 			if plate.NRows() >= 8 {
 				continue

@@ -1463,7 +1463,12 @@ func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
 		return
 	}
 
+	if plate.NRows() >= 8 {
+		return
+	}
+
 	if !shouldSetWellTargets(plate, adaptorSpacing) {
+		plate.DeclareSpecial()
 		return
 	}
 

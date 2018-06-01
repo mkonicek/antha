@@ -1446,12 +1446,11 @@ func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
 		return
 	}
 
-	if plate.NRows() >= 8 {
-		return
-	}
-
-	if !plate.EnableWellTargets(adaptor.Params.Multi, adaptorSpacing) {
-		plate.DeclareSpecial()
+	if !plate.AreWellTargetsEnabled(adaptor.Params.Multi, adaptorSpacing) {
+		if plate.NRows() < 8 {
+			//declare special so that the driver knows not to expect well targets
+			plate.DeclareSpecial()
+		}
 		return
 	}
 

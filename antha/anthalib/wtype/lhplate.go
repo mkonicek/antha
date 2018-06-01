@@ -1242,9 +1242,9 @@ func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 	return ret
 }
 
-//EnableWellTargets should well targets be set with this plate?
+//AreaWellTargetsEnabled should well targets be set with this plate?
 //aim is to deprecate IsSpecial
-func (p *LHPlate) EnableWellTargets(adaptorChannels int, channelSpacing float64) bool {
+func (p *LHPlate) AreWellTargetsEnabled(adaptorChannels int, channelSpacing float64) bool {
 
 	if p.NRows() != 1 {
 		return false

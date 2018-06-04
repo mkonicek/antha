@@ -18,8 +18,8 @@ func CopyComponentArray(arin []*wtype.LHComponent) []*wtype.LHComponent {
 
 // are tips going to align to wells?
 func TipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsfrom []string) bool {
-	// heads which can do independent multichanneling are dealt with separately
 
+	// heads which can do independent multichanneling are dealt with separately
 	if head.Adaptor.Params.Independent {
 		return disContiguousTipsWellsAligned(robot, head, plt, wellsfrom)
 	} else {
@@ -131,16 +131,20 @@ func assertWFContiguousNonEmpty(sa []string) bool {
 }
 
 func contiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsfrom []string) bool {
+
+	//can't multi channel with 2-7 wells per column
+	if plt.NRows() != 1 && plt.NRows()%8 != 0 {
+		return false
+	}
 	// guarantee wellsfrom is contiguous and has at least one non-""
 	// trailing "" are OK
 	if !assertWFContiguousNonEmpty(wellsfrom) {
 		return false
 	}
 
-	// if this is not a standard plate we need to check
-
-	if plt.IsSpecial() {
-		return physicalTipCheck(robot, head, plt, wellsfrom)
+	// if we've only got one row, check that there are well targets for us to move into
+	if plt.NRows() == 1 {
+		return plt.AreWellTargetsEnabled(head.GetParams().Multi, 9.0)
 	}
 
 	// if this is something like a standard sbs-format plate, i.e. wells in a single, continuous space
@@ -279,7 +283,7 @@ func FirstIndexInStrArray(s string, a []string) int {
 	return -1
 }
 
-func physicalTipCheck(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsFrom []string) bool {
+func physicalTipCheck(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsFrom []string) bool { //nolint used by tests
 	// assumptions
 	// 1 - first tip is aligned with the middle of first well
 	// 2 - each subsequent tip is a constant (9mm) distance from the first in whichever orientation

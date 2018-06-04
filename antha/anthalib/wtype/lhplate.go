@@ -1242,6 +1242,24 @@ func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 	return ret
 }
 
+//AreaWellTargetsEnabled should well targets be set with this plate?
+//aim is to deprecate IsSpecial
+func (p *LHPlate) AreWellTargetsEnabled(adaptorChannels int, channelSpacing float64) bool {
+
+	if p.NRows() != 1 {
+		return false
+	}
+
+	if p.Welltype.Shape().ShapeName != "box" {
+		return false
+	}
+
+	spaceNeeded := float64(adaptorChannels-1)*channelSpacing + 2.0
+
+	return p.Welltype.GetSize().Y >= spaceNeeded
+
+}
+
 func (p *LHPlate) IsSpecial() bool {
 	if p == nil || p.Welltype.Extra == nil {
 		return false

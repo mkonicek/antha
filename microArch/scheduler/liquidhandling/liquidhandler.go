@@ -1438,21 +1438,26 @@ func (lh *Liquidhandler) addWellTargets() error {
 	return nil
 }
 
+const adaptorSpacing = 9.0
+
 func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
 	if adaptor.Manufacturer != "Gilson" {
 		logger.Info("Not adding well target data for non-gilson adaptor")
 		return
 	}
 
-	//channelPositions should come from the adaptor
-	yOffset := 9.0
-	channelPositions := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
-	for i := 0; i < adaptor.Params.Multi; i++ {
-		channelPositions = append(channelPositions, wtype.Coordinates{Y: float64(i) * yOffset})
+	if !plate.AreWellTargetsEnabled(adaptor.Params.Multi, adaptorSpacing) {
+		if plate.NRows() < 8 {
+			//declare special so that the driver knows not to expect well targets
+			plate.DeclareSpecial()
+		}
+		return
 	}
 
-	if plate.NRows() >= 8 || plate.IsSpecial() {
-		return
+	//channelPositions should come from the adaptor
+	channelPositions := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	for i := 0; i < adaptor.Params.Multi; i++ {
+		channelPositions = append(channelPositions, wtype.Coordinates{Y: float64(i) * adaptorSpacing})
 	}
 
 	//ystart and count should come from some geometric calculation between channelPositions and well size

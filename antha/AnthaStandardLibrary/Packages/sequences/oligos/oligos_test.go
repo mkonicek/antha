@@ -96,6 +96,18 @@ var primerErrorTests = []testpair{
 		calculatedGCcontent: 0.36,
 		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers with more than one (%d) binding sites. Please try selecting another region.", "MultipleBindingSites", 4),
 	},
+	{
+		sequence:            wtype.MakeSingleStrandedDNASequence("SeqsToAvoid", "GTTTAAATCAAAACTGGTGAAACTCACCCAGGGATTGGCTGACACGAAAAACATATTCTCAATAAATCCTTTAGGGAAATAGGCCAGGTTTTCACCGTAACACGCCACATCTTGCGAATATATGTGTAGAAACTGCCGGAAATCGTCGTGGTATTCACTCCAGAGCGATGAAAACGTTTCAGTTTGCTCATGGAAAACGGTGTA"),
+		mintemp:             wunit.NewTemperature(45, "C"),
+		maxtemp:             wunit.NewTemperature(85, "C"),
+		maxGCcontent:        0.6,
+		minlength:           9,
+		maxlength:           21,
+		seqstoavoid:         []string{"GTTTAAATCAAAACTGGTGAAACTCACCCAGGGATTGGCTGACACGAAAAACATATTCTCAATAAATCCTTTAGGGAAATAGGCCAGGTTTTCACCGTAACACGCCACATCTTGCGAATATATGTGTAGAAACTGCCGGAAATCGTCGTGGTATTCACTCCAGAGCGATGAAAACGTTTCAGTTTGCTCATGGAAAACGGTGTA"},
+		overlapthreshold:    45,
+		calculatedGCcontent: 0.36,
+		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers that contain the specified sequences to avoid. Please try removing these from the parameters.", "SeqsToAvoid"),
+	},
 }
 
 var overlaptests = []testpair{

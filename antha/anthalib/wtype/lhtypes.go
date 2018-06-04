@@ -632,8 +632,8 @@ func (self *LHHeadAssembly) CountHeadsLoaded() int {
 	return r
 }
 
-//GetHeadsLoaded get an ordered slice of all the heads that have been loaded into the assembly
-func (self *LHHeadAssembly) GetHeadsLoaded() []*LHHead {
+//GetLoadedHeads get an ordered slice of all the heads that have been loaded into the assembly
+func (self *LHHeadAssembly) GetLoadedHeads() []*LHHead {
 	if self == nil {
 		return make([]*LHHead, 0)
 	}

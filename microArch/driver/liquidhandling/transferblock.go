@@ -151,7 +151,7 @@ func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, ro
 	// part of the model here is just to make things possible, so that later
 	// on we can at least make this choice
 
-	headsLoaded := robot.GetHeadsLoaded()
+	headsLoaded := robot.GetLoadedHeads()
 	possible_sets := make([]SetOfIDSets, 0, len(headsLoaded))
 	corresponding_params := make([]*wtype.LHChannelParameter, 0, 1)
 

@@ -31,7 +31,7 @@ func TestAssertWFContiguousNonEmpty(t *testing.T) {
 func TestPhysicalTipCheck(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 	robot := MakeGilsonForTest()
-	head := robot.GetHeadsLoaded()[0]
+	head := robot.GetLoadedHead(0)
 
 	names := []string{"No", "No", "No", "No", "No", "Yes", "No"}
 	things := []string{"eppendorfrack425_1.5ml", "eppendorfrack425_1.5ml", "EGEL48", "eppendorfrack425_2ml", "eppendorfrack425_2ml", "falcon6wellAgar", "falcon6wellAgar"}

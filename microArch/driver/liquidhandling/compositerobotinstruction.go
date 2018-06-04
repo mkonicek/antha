@@ -1742,7 +1742,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	allowOutOfRangePipetteSpeeds := SafeGetBool(pol, "OVERRIDEPIPETTESPEED")
 
-	head := prms.GetHeadLoaded(ins.Head)
+	head := prms.GetLoadedHead(ins.Head)
 
 	defaultpspeed, err = checkAndSaften(defaultpspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
@@ -2186,7 +2186,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	allowOutOfRangePipetteSpeeds := SafeGetBool(pol, "OVERRIDEPIPETTESPEED")
 
-	head := prms.GetHeadLoaded(ins.Head)
+	head := prms.GetLoadedHead(ins.Head)
 
 	// change pipette speed?
 	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")

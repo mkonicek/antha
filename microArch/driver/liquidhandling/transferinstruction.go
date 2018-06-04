@@ -243,7 +243,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *L
 	for i := 0; i < len(ins.Transfers); i++ {
 		// a parallel transfer is valid if any robot head can do it
 		// TODO --> support head/adaptor changes. Maybe.
-		for _, head := range robot.GetHeadsLoaded() {
+		for _, head := range robot.GetLoadedHeads() {
 			if ins.validateParallelSet(ctx, robot, head, i, policy) {
 				r = append(r, i)
 			}
@@ -475,7 +475,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	ret := make([]RobotInstruction, 0)
 
-	headsLoaded := prms.GetHeadsLoaded()
+	headsLoaded := prms.GetLoadedHeads()
 
 	// if we can multi we do this first
 	if pol["CAN_MULTI"].(bool) {
@@ -594,7 +594,7 @@ func safeTransfers(tp TransferParams, prms *LHProperties) ([]TransferParams, err
 		return []TransferParams{tp}, nil
 	}
 
-	headsLoaded := prms.GetHeadsLoaded()
+	headsLoaded := prms.GetLoadedHeads()
 
 	tvs, err := TransferVolumes(tp.Volume, headsLoaded[0].Params.Minvol, headsLoaded[0].Params.Maxvol)
 

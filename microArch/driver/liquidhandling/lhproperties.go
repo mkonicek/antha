@@ -61,7 +61,9 @@ type LHProperties struct {
 	TipType       string
 	//Heads lists every head (whether loaded or not) that is available for the machine
 	Heads []*wtype.LHHead
-	//HeadAssemblies describes how each loaded head is loaded into the machine
+	//Adaptors lists every adaptor (whether loaded or not) that is available for the machine
+	Adaptors []*wtype.LHAdaptor
+	//HeadAssemblies describes how each loaded head and adaptor is loaded into the machine
 	HeadAssemblies       []*wtype.LHHeadAssembly
 	Tips                 []*wtype.LHTip
 	Tip_preferences      []string
@@ -226,19 +228,34 @@ func (lhp *LHProperties) CountHeadsLoaded() int {
 	return ret
 }
 
-//GetHeadsLoaded get a slice of all the heads loaded in the machine
-func (lhp *LHProperties) GetHeadsLoaded() []*wtype.LHHead {
+//GetLoadedHeads get a slice of all the heads loaded in the machine
+func (lhp *LHProperties) GetLoadedHeads() []*wtype.LHHead {
 	ret := make([]*wtype.LHHead, 0, lhp.CountHeadsLoaded())
 	for _, assembly := range lhp.HeadAssemblies {
-		ret = append(ret, assembly.GetHeadsLoaded()...)
+		ret = append(ret, assembly.GetLoadedHeads()...)
 	}
 	return ret
 }
 
-//GetHeadLoaded returns a specific head
-func (lhp *LHProperties) GetHeadLoaded(i int) *wtype.LHHead {
+//GetLoadedHead returns a specific head
+func (lhp *LHProperties) GetLoadedHead(i int) *wtype.LHHead {
 	//inefficient implementation for now since we only have a small number of heads
-	return lhp.GetHeadsLoaded()[i]
+	return lhp.GetLoadedHeads()[i]
+}
+
+//GetLoadedAdaptors get a slice of all the adaptors loaded in the machine
+func (lhp *LHProperties) GetLoadedAdaptors() []*wtype.LHAdaptor {
+	heads := lhp.GetLoadedHeads()
+	ret := make([]*wtype.LHAdaptor, 0, len(heads))
+	for _, head := range heads {
+		ret = append(ret, head.Adaptor)
+	}
+	return ret
+}
+
+//GetLoadedAdaptor get the adaptor loaded to the i^th head
+func (lhp *LHProperties) GetLoadedAdaptor(i int) *wtype.LHAdaptor {
+	return lhp.GetLoadedAdaptors()[i]
 }
 
 // copy constructor
@@ -280,7 +297,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		//duplicate the assmebly
 		newAssembly := assembly.DupWithoutHeads()
 		//now add the heads - this way r.HeadAssemblies and r.Heads refer to the same underlying LHHead
-		for _, oldHead := range assembly.GetHeadsLoaded() {
+		for _, oldHead := range assembly.GetLoadedHeads() {
 			newAssembly.LoadHead(headMap[oldHead]) //nolint - assemblies have the same number of positions
 		}
 		r.HeadAssemblies = append(r.HeadAssemblies, newAssembly)
@@ -1139,7 +1156,7 @@ func (p *LHProperties) RestoreUserPlates(up UserPlates) {
 }
 
 func (p *LHProperties) MinPossibleVolume() wunit.Volume {
-	headsLoaded := p.GetHeadsLoaded()
+	headsLoaded := p.GetLoadedHeads()
 	if len(headsLoaded) == 0 {
 		return wunit.ZeroVolume()
 	}

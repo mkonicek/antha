@@ -146,7 +146,7 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 	for _, ha := range p.HeadAssemblies {
 		lhp.HeadAssemblies = append(lhp.HeadAssemblies, makeLHHeadAssembly(ha))
 	}
-	lhp.Heads = lhp.GetHeadsLoaded()
+	lhp.Heads = lhp.GetLoadedHeads()
 
 	lhp.Tip_preferences = p.Tip_preferences
 	lhp.Input_preferences = p.Input_preferences

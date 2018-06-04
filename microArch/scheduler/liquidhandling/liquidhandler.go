@@ -1421,7 +1421,7 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 
 //addWellTargets for all the adaptors and plates available
 func (lh *Liquidhandler) addWellTargets() error {
-	for _, head := range lh.Properties.GetHeadsLoaded() {
+	for _, head := range lh.Properties.Heads {
 		for _, plate := range lh.Properties.Plates {
 			addWellTargetsPlate(head.Adaptor, plate)
 		}

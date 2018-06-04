@@ -382,7 +382,7 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 
 	// allow independent multichannel activity
-	headsLoaded := rbt.GetHeadsLoaded()
+	headsLoaded := rbt.GetLoadedHeads()
 	headsLoaded[0].Params.Independent = true
 
 	pol, err := wtype.GetLHPolicyForTest()

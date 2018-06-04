@@ -165,6 +165,7 @@ func MakeGilsonForTest() *liquidhandling.LHProperties {
 	ha.LoadHead(hvhead)
 	ha.LoadHead(lvhead)
 	lhp.Heads = append(lhp.Heads, hvhead, lvhead)
+	lhp.Adaptors = append(lhp.Adaptors, hvadaptor, lvadaptor)
 	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)
 
 	return lhp
@@ -364,5 +365,6 @@ func AssertLHPropertiesEqual(t *testing.T, e, g *liquidhandling.LHProperties, ms
 	assert.Equalf(t, e.Layout, g.Layout, "%s: Layout", msg)
 	assert.Equalf(t, e.MaterialType, g.MaterialType, "%s: MaterialType", msg)
 	assert.Equalf(t, e.Heads, g.Heads, "%s: Heads", msg)
+	assert.Equalf(t, e.Adaptors, g.Adaptors, "%s: Adaptors", msg)
 	assert.Equalf(t, e.HeadAssemblies, g.HeadAssemblies, "%s: HeadAssemblies", msg)
 }

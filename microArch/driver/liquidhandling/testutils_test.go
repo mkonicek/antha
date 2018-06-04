@@ -122,6 +122,7 @@ func makeGilsonForTest(ctx context.Context) *LHProperties {
 	ha.LoadHead(hvhead)
 	ha.LoadHead(lvhead)
 	lhp.Heads = append(lhp.Heads, hvhead, lvhead)
+	lhp.Adaptors = append(lhp.Adaptors, hvadaptor, lvadaptor)
 	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)
 
 	return lhp

@@ -369,7 +369,7 @@ message MapstringAnyMessageMessage{
 repeated MapstringAnyMessageMessageFieldEntry map_field =1;
 }
 message LHPropertiesMessage {
-    reserved 18, 19;
+    reserved 18;
 	string Arg_1 = 1;
 	int64 Arg_2 = 2;
 	MapstringPtrToLHPositionMessageMessage Arg_3 = 3;
@@ -387,8 +387,8 @@ message LHPropertiesMessage {
 	string Arg_15 = 15;
 	string Arg_16 = 16;
 	ArrayOfPtrToLHHeadMessage Arg_17 = 17;
-	//ArrayOfPtrToLHHeadMessage Arg_18 = 18;
-	//ArrayOfPtrToLHAdaptorMessage Arg_19 = 19;
+	//ArrayOfPtrToLHHeadMessage Arg_18 = 18; //headsloaded replaced by head assemblies
+	ArrayOfPtrToLHAdaptorMessage Arg_19 = 19;
 	ArrayOfPtrToLHTipMessage Arg_20 = 20;
 	ArrayOfstring Arg_21 = 21;
 	ArrayOfstring Arg_22 = 22;
@@ -559,12 +559,14 @@ message LHTipwasteMessage {
 	BBoxMessage Arg_12 = 12;
 }
 message LHHeadMessage {
+    reserved 4;
 	string Arg_1 = 1;
 	string Arg_2 = 2;
 	string Arg_3 = 3;
-	PtrToLHAdaptorMessage Arg_4 = 4;
+	//PtrToLHAdaptorMessage Arg_4 = 4;
 	PtrToLHChannelParameterMessage Arg_5 = 5;
     TipLoadingBehaviourMessage Arg_6 = 6;
+    int64 Arg_7 = 7; //index of the adaptor in the machine
 }
 message TipLoadingBehaviourMessage {
     bool Arg_1 = 1; //OverrideLoadTipsCommand

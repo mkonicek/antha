@@ -139,7 +139,8 @@ func EncodeLHProperties(arg liquidhandling.LHProperties) *pb.LHPropertiesMessage
 		(string)(arg.Mnfr),
 		(string)(arg.LHType),
 		(string)(arg.TipType),
-		EncodeArrayOfPtrToLHHead(arg.Heads),
+		EncodeArrayOfPtrToLHHead(arg.Heads, arg.Adaptors),
+		EncodeArrayOfPtrToLHAdaptor(arg.Adaptors),
 		EncodeArrayOfPtrToLHTip(arg.Tips),
 		EncodeArrayOfstring(arg.Tip_preferences),
 		EncodeArrayOfstring(arg.Input_preferences),
@@ -156,7 +157,10 @@ func EncodeLHProperties(arg liquidhandling.LHProperties) *pb.LHPropertiesMessage
 	return &ret
 }
 func DecodeLHProperties(arg *pb.LHPropertiesMessage) liquidhandling.LHProperties {
-	heads := DecodeArrayOfPtrToLHHead(arg.Arg_17)
+	adaptors := DecodeArrayOfPtrToLHAdaptor(arg.GetArg_19())
+	heads := DecodeArrayOfPtrToLHHead(arg.GetArg_17(), adaptors)
+	headAssemblies := DecodeArrayOfPtrToLHHeadAssemblies(arg.GetArg_31(), heads)
+
 	ret := liquidhandling.LHProperties{
 		ID:                   (string)(arg.Arg_1),
 		Nposns:               (int)(arg.Arg_2),
@@ -175,7 +179,8 @@ func DecodeLHProperties(arg *pb.LHPropertiesMessage) liquidhandling.LHProperties
 		LHType:               (string)(arg.Arg_15),
 		TipType:              (string)(arg.Arg_16),
 		Heads:                heads,
-		HeadAssemblies:       ([]*wtype.LHHeadAssembly)(DecodeArrayOfPtrToLHHeadAssemblies(arg.Arg_31, heads)),
+		Adaptors:             adaptors,
+		HeadAssemblies:       headAssemblies,
 		Tips:                 ([]*wtype.LHTip)(DecodeArrayOfPtrToLHTip(arg.Arg_20)),
 		Tip_preferences:      ([]string)(DecodeArrayOfstring(arg.Arg_21)),
 		Input_preferences:    ([]string)(DecodeArrayOfstring(arg.Arg_22)),
@@ -192,10 +197,11 @@ func DecodeLHProperties(arg *pb.LHPropertiesMessage) liquidhandling.LHProperties
 	return ret
 }
 func EncodeArrayOfPtrToLHHeadAssemblies(assemblies []*wtype.LHHeadAssembly, heads []*wtype.LHHead) *pb.ArrayOfPtrToLHHeadAssembliesMessage {
-	headMap := make(map[*wtype.LHHead]int)
+	headMap := make(map[*wtype.LHHead]int, len(heads))
 	for i, h := range heads {
 		headMap[h] = i
 	}
+
 	a := make([]*pb.PtrToLHHeadAssemblyMessage, len(assemblies))
 	for i, v := range assemblies {
 		a[i] = EncodePtrToLHHeadAssembly(v, headMap)
@@ -240,7 +246,6 @@ func EncodePtrToLHHeadAssemblyPosition(pos *wtype.LHHeadAssemblyPosition, headMa
 func EncodeLHHeadAssemblyPosition(pos *wtype.LHHeadAssemblyPosition, headMap map[*wtype.LHHead]int) *pb.LHHeadAssemblyPositionMessage {
 	index := -1
 	if pos.Head != nil {
-		fmt.Printf("HeadMap = %v\n", headMap)
 		index = headMap[pos.Head]
 	}
 	ret := pb.LHHeadAssemblyPositionMessage{
@@ -497,7 +502,7 @@ func DecodeMapstringPtrToLHTipwasteMessageFieldEntry(arg *pb.MapstringPtrToLHTip
 	v := DecodePtrToLHTipwaste(arg.Value)
 	return k, v
 }
-func EncodePtrToLHHead(arg *wtype.LHHead) *pb.PtrToLHHeadMessage {
+func EncodePtrToLHHead(arg *wtype.LHHead, adaptorMap map[*wtype.LHAdaptor]int) *pb.PtrToLHHeadMessage {
 	var ret pb.PtrToLHHeadMessage
 	if arg == nil {
 		ret = pb.PtrToLHHeadMessage{
@@ -505,18 +510,18 @@ func EncodePtrToLHHead(arg *wtype.LHHead) *pb.PtrToLHHeadMessage {
 		}
 	} else {
 		ret = pb.PtrToLHHeadMessage{
-			EncodeLHHead(*arg),
+			EncodeLHHead(*arg, adaptorMap),
 		}
 	}
 	return &ret
 }
-func DecodePtrToLHHead(arg *pb.PtrToLHHeadMessage) *wtype.LHHead {
+func DecodePtrToLHHead(arg *pb.PtrToLHHeadMessage, adaptors []*wtype.LHAdaptor) *wtype.LHHead {
 	if arg == nil {
 		log.Println("Arg for PtrToLHHead was nil")
 		return nil
 	}
 
-	ret := DecodeLHHead(arg.Arg_1)
+	ret := DecodeLHHead(arg.Arg_1, adaptors)
 	return &ret
 }
 func EncodeArrayOfPtrToLHAdaptor(arg []*wtype.LHAdaptor) *pb.ArrayOfPtrToLHAdaptorMessage {
@@ -569,20 +574,25 @@ func DecodeLHPlate(arg *pb.LHPlateMessage) wtype.LHPlate {
 	ret := wtype.LHPlate{ID: (string)(arg.Arg_1), Inst: (string)(arg.Arg_2), Loc: (string)(arg.Arg_3), PlateName: (string)(arg.Arg_4), Type: (string)(arg.Arg_5), Mnfr: (string)(arg.Arg_6), WlsX: (int)(arg.Arg_7), WlsY: (int)(arg.Arg_8), Nwells: (int)(arg.Arg_9), HWells: (map[string]*wtype.LHWell)(DecodeMapstringPtrToLHWellMessage(arg.Arg_10)), Rows: ([][]*wtype.LHWell)(DecodeArrayOfArrayOfPtrToLHWell(arg.Arg_11)), Cols: ([][]*wtype.LHWell)(DecodeArrayOfArrayOfPtrToLHWell(arg.Arg_12)), Welltype: (*wtype.LHWell)(DecodePtrToLHWell(arg.Arg_13)), Wellcoords: (map[string]*wtype.LHWell)(DecodeMapstringPtrToLHWellMessage(arg.Arg_14)), WellXOffset: (float64)(arg.Arg_15), WellYOffset: (float64)(arg.Arg_16), WellXStart: (float64)(arg.Arg_17), WellYStart: (float64)(arg.Arg_18), WellZStart: (float64)(arg.Arg_19), Bounds: (wtype.BBox)(DecodeBBox(arg.Arg_20))}
 	return ret
 }
-func EncodeArrayOfPtrToLHHead(arg []*wtype.LHHead) *pb.ArrayOfPtrToLHHeadMessage {
+func EncodeArrayOfPtrToLHHead(arg []*wtype.LHHead, adaptors []*wtype.LHAdaptor) *pb.ArrayOfPtrToLHHeadMessage {
+	adaptorMap := make(map[*wtype.LHAdaptor]int, len(adaptors))
+	for i, a := range adaptors {
+		adaptorMap[a] = i
+	}
+
 	a := make([]*pb.PtrToLHHeadMessage, len(arg))
 	for i, v := range arg {
-		a[i] = EncodePtrToLHHead(v)
+		a[i] = EncodePtrToLHHead(v, adaptorMap)
 	}
 	ret := pb.ArrayOfPtrToLHHeadMessage{
 		a,
 	}
 	return &ret
 }
-func DecodeArrayOfPtrToLHHead(arg *pb.ArrayOfPtrToLHHeadMessage) []*wtype.LHHead {
+func DecodeArrayOfPtrToLHHead(arg *pb.ArrayOfPtrToLHHeadMessage, adaptors []*wtype.LHAdaptor) []*wtype.LHHead {
 	ret := make(([]*wtype.LHHead), len(arg.Arg_1))
 	for i, v := range arg.Arg_1 {
-		ret[i] = DecodePtrToLHHead(v)
+		ret[i] = DecodePtrToLHHead(v, adaptors)
 	}
 	return ret
 }
@@ -821,23 +831,37 @@ func DecodeArrayOfPtrToLHTip(arg *pb.ArrayOfPtrToLHTipMessage) []*wtype.LHTip {
 	}
 	return ret
 }
-func EncodeLHHead(arg wtype.LHHead) *pb.LHHeadMessage {
+func EncodeLHHead(arg wtype.LHHead, adaptorMap map[*wtype.LHAdaptor]int) *pb.LHHeadMessage {
+	adaptorIndex := -1
+	if i, ok := adaptorMap[arg.Adaptor]; ok {
+		adaptorIndex = i
+	} else {
+		if arg.Adaptor != nil {
+			panic("cannot serialise head with unknown adaptor loaded")
+		}
+	}
+
 	ret := pb.LHHeadMessage{
 		(string)(arg.Name),
 		(string)(arg.Manufacturer),
 		(string)(arg.ID),
-		EncodePtrToLHAdaptor(arg.Adaptor),
 		EncodePtrToLHChannelParameter(arg.Params),
 		EncodeTipLoadingBehaviour(arg.TipLoading),
+		int64(adaptorIndex),
 	}
 	return &ret
 }
-func DecodeLHHead(arg *pb.LHHeadMessage) wtype.LHHead {
+func DecodeLHHead(arg *pb.LHHeadMessage, adaptors []*wtype.LHAdaptor) wtype.LHHead {
+	var adaptor *wtype.LHAdaptor
+	if arg.Arg_7 >= 0 && int(arg.Arg_7) < len(adaptors) {
+		adaptor = adaptors[int(arg.Arg_7)]
+	}
+
 	ret := wtype.LHHead{
 		Name:         (string)(arg.Arg_1),
 		Manufacturer: (string)(arg.Arg_2),
 		ID:           (string)(arg.Arg_3),
-		Adaptor:      (*wtype.LHAdaptor)(DecodePtrToLHAdaptor(arg.Arg_4)),
+		Adaptor:      adaptor,
 		Params:       (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_5)),
 		TipLoading:   DecodeTipLoadingBehaviour(arg.Arg_6),
 	}

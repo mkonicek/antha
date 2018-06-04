@@ -281,14 +281,28 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		}
 	}
 
-	headMap := make(map[*wtype.LHHead]*wtype.LHHead)
+	adaptorMap := make(map[*wtype.LHAdaptor]*wtype.LHAdaptor, len(lhp.Adaptors))
+	for _, a := range lhp.Adaptors {
+		var ad *wtype.LHAdaptor
+		if keepIDs {
+			ad = a.DupKeepIDs()
+		} else {
+			ad = a.Dup()
+		}
+		r.Adaptors = append(r.Adaptors, ad)
+		adaptorMap[a] = ad
+	}
+
+	headMap := make(map[*wtype.LHHead]*wtype.LHHead, len(lhp.Heads))
 	for _, h := range lhp.Heads {
 		var hd *wtype.LHHead
+		adaptor := adaptorMap[h.Adaptor]
 		if keepIDs {
 			hd = h.DupKeepIDs()
 		} else {
 			hd = h.Dup()
 		}
+		hd.Adaptor = adaptor
 		r.Heads = append(r.Heads, hd)
 		headMap[h] = hd
 	}
@@ -421,6 +435,7 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	lhp.TipType = tiptype
 
 	lhp.Heads = make([]*wtype.LHHead, 0, 2)
+	lhp.Adaptors = make([]*wtype.LHAdaptor, 0, 2)
 	lhp.HeadAssemblies = make([]*wtype.LHHeadAssembly, 0, 2)
 
 	positions := make(map[string]*wtype.LHPosition, num_positions)

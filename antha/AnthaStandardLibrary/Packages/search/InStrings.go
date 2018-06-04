@@ -73,3 +73,24 @@ func PositionsInStrings(list []string, target string, options ...Option) []int {
 	}
 	return positions
 }
+
+// PartialInStrings seaches for a target string in a slice of strings and returns a boolean.
+// True is returned if the target is a subset of a value in the slice of strings (i.e. value "foobar", target "bar" will return True).
+// If the IgnoreCase option is specified the strings will be compared ignoring case.
+func PartialInStrings(list []string, target string, options ...Option) bool {
+
+	ignore := containsIgnoreCase(options...)
+
+	for _, entry := range list {
+		if ignore {
+			if strings.Contains(strings.ToUpper(strings.TrimSpace(entry)), strings.ToUpper(strings.TrimSpace(target))) {
+				return true
+			}
+		} else {
+			if strings.Contains(entry, target) {
+				return true
+			}
+		}
+	}
+	return false
+}

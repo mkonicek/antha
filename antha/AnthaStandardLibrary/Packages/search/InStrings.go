@@ -83,11 +83,11 @@ func PartialInStrings(list []string, target string, options ...Option) bool {
 
 	for _, entry := range list {
 		if ignore {
-			if strings.Contains(entry, target) {
+			if strings.Contains(strings.ToUpper(strings.TrimSpace(entry)), strings.ToUpper(strings.TrimSpace(target))) {
 				return true
 			}
 		} else {
-			if strings.Contains(strings.ToUpper(strings.TrimSpace(entry)), strings.ToUpper(strings.TrimSpace(target))) {
+			if strings.Contains(entry, target) {
 				return true
 			}
 		}

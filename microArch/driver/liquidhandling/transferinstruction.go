@@ -220,7 +220,6 @@ func (ins *TransferInstruction) getPoliciesForTransfer(which int, ruleSet wtype.
 func (ins *TransferInstruction) CheckMultiPolicies(which int) bool {
 	// first iteration: ensure all the WHAT prms are the same
 	// later	  : actually check the policies per channel
-	// is it later yet?
 
 	nwhat := wutil.NUniqueStringsInArray(ins.Transfers[which].What(), true)
 

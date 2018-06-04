@@ -176,7 +176,7 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 
 	OutputSetup(this.Properties)
 
-	// and afer
+	// and after
 
 	fmt.Println("SETUP AFTER: ")
 	OutputSetup(this.FinalProperties)
@@ -1460,6 +1460,7 @@ func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
 
 	targets := make([]wtype.Coordinates, count)
 	copy(targets, channelPositions)
+
 	for i := 0; i < count; i++ {
 		targets[i].Y += ystart
 	}

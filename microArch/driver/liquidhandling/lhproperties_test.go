@@ -29,7 +29,7 @@ func TestSavePlates(t *testing.T) {
 		t.Fatal(err)
 	}
 	p.Wellcoords["A1"].SetUserAllocated()
-	lhp.AddPlate(pos, p)
+	lhp.AddPlateTo(pos, p)
 	pl := lhp.SaveUserPlates()
 
 	if len(pl) != 1 {

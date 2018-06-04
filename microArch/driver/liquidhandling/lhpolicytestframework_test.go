@@ -100,7 +100,7 @@ func (self *PolicyTest) Run(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 	ctx = plateCache.NewContext(ctx)
 	if self.Robot == nil {
-		robot, err := makeTestGilson(ctx)
+		robot, err := makeTestGilsonWithPlates(ctx)
 		if err != nil {
 			err = errors.Wrap(err, self.Name)
 			t.Fatal(err)
@@ -238,6 +238,38 @@ func makeGilson() *LHProperties {
 	return lhp
 }
 
+func makeTestGilsonWithPlates(ctx context.Context) (*LHProperties, error) {
+	params, err := makeTestGilson(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	inputPlate, err := makeTestInputPlate(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = params.AddInputPlate(inputPlate)
+
+	if err != nil {
+		return nil, err
+	}
+
+	outputPlate, err := makeTestOutputPlate(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = params.AddOutputPlate(outputPlate)
+
+	if err != nil {
+		return nil, err
+	}
+	return params, nil
+}
 func makeTestGilson(ctx context.Context) (*LHProperties, error) {
 	params := makeGilson()
 
@@ -260,4 +292,34 @@ func makeTestGilson(ctx context.Context) (*LHProperties, error) {
 	params.AddTipBox(tb)
 
 	return params, nil
+}
+
+func makeTestInputPlate(ctx context.Context) (*wtype.LHPlate, error) {
+	p, err := inventory.NewPlate(ctx, "DWST12")
+
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := inventory.NewComponent(ctx, "water")
+
+	if err != nil {
+		return nil, err
+	}
+
+	c.Vol = 5000.0 // ul
+
+	p.AddComponent(c, true)
+
+	return p, nil
+}
+
+func makeTestOutputPlate(ctx context.Context) (*wtype.LHPlate, error) {
+	p, err := inventory.NewPlate(ctx, "DSW96")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }

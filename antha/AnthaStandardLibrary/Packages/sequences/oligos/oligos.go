@@ -202,7 +202,7 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				}
 			}
 
-			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.PartialInStrings(seqstoavoid, tempoligoseq) && !overlapthresholdfail {
+			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.PartialInStrings(seqstoavoid, tempoligoseq, search.IgnoreCase) && !overlapthresholdfail {
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -223,7 +223,7 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "maximum", meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
 				case bindingsites > 1:
 					combinedErrors = append(combinedErrors, bindingSiteErrorString(primerType, seqName, bindingsites))
-				case search.PartialInStrings(seqstoavoid, tempoligoseq):
+				case search.PartialInStrings(seqstoavoid, tempoligoseq, search.IgnoreCase):
 					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that contain the specified sequences to avoid.", " removing these from the parameters."))
 				case overlapthresholdfail:
 					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that violate the overlap threshold.", " adjusting this parameter."))
@@ -275,7 +275,7 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				}
 			}
 
-			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.PartialInStrings(seqstoavoid, tempoligoseq) && !overlapthresholdfail {
+			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.PartialInStrings(seqstoavoid, tempoligoseq, search.IgnoreCase) && !overlapthresholdfail {
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -296,7 +296,7 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "maximum", meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
 				case bindingsites > 1:
 					combinedErrors = append(combinedErrors, bindingSiteErrorString(primerType, seqName, bindingsites))
-				case search.PartialInStrings(seqstoavoid, tempoligoseq):
+				case search.PartialInStrings(seqstoavoid, tempoligoseq, search.IgnoreCase):
 					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that contain the specified sequences to avoid.", " removing these from the parameters."))
 				case overlapthresholdfail:
 					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that violate the overlap threshold.", " adjusting this parameter."))

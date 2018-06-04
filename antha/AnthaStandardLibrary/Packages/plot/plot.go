@@ -49,12 +49,12 @@ func Export(plt *plot.Plot, heightstr string, lengthstr string, filename string)
 
 	length, err := vg.ParseLength(lengthstr)
 	if err != nil {
-		length = 100 * vg.Centimeter
+		length = 10 * vg.Centimeter
 		errtoreturn = err
 	}
 	height, err := vg.ParseLength(heightstr)
 	if err != nil {
-		height = 100 * vg.Centimeter
+		height = 10 * vg.Centimeter
 		if errtoreturn != nil {
 			errtoreturn = fmt.Errorf(errtoreturn.Error(), " + ", err.Error())
 		}
@@ -160,56 +160,6 @@ func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error
 	plt.Legend.Left = true
 
 	return
-}
-
-type FormatFont struct {
-	style string
-	size  vg.Length
-}
-
-func (f FormatFont) Style() string {
-	return f.style
-}
-
-func (f FormatFont) Size() vg.Length {
-	return f.size
-}
-
-func AdjustFontAndSize(font vg.Font, style string, size vg.Length) (vg.Font, error) {
-	var err error
-	if style == "" {
-		style = font.Name()
-	}
-	font, err = adjustFontSize(font, size)
-	if err != nil {
-		return font, err
-	}
-	if size == 0 {
-		size = font.Size
-	}
-	font, err = adjustFont(font, style)
-	if err != nil {
-		return font, err
-	}
-	return font, nil
-}
-
-func adjustFontSize(font vg.Font, size vg.Length) (vg.Font, error) {
-	var err error
-	font, err = vg.MakeFont(font.Name(), size)
-	if err != nil {
-		return font, err
-	}
-	return font, nil
-}
-
-func adjustFont(font vg.Font, style string) (vg.Font, error) {
-	var err error
-	font, err = vg.MakeFont(style, font.Size)
-	if err != nil {
-		return font, err
-	}
-	return font, nil
 }
 
 // AddAxisTitles adds axis titles to the plot

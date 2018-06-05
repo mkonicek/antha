@@ -99,7 +99,7 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 
 	//Tipeffectiveheight values below are consistent with the values supplied by gilson
 	//however, physical testing showed that the offset below was required to avoid collision with the bottom of the well
-	filterHeightOffset := 0.75
+	filterHeightOffset := 1.75 //0.75
 
 	w = wtype.NewLHWell("ul", 200.0, 20.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6

@@ -93,7 +93,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&Initialize{},
 				&AddPlateTo{"tipbox_1", "my plate's gone stringy", "not_a_plate"},
 			},
-			[]string{"(err) AddPlateTo: Couldn't add object of type string to tipbox_1"},
+			[]string{"(err) AddPlateTo[1]: Couldn't add object of type string to tipbox_1"},
 			nil, //no assertions
 		},
 		{
@@ -105,7 +105,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&AddPlateTo{"tipbox_1", default_lhtipbox("p0"), "p0"},
 				&AddPlateTo{"tipbox_1", default_lhtipbox("p1"), "p1"},
 			},
-			[]string{"(err) AddPlateTo: Couldn't add tipbox \"p1\" to location \"tipbox_1\" which already contains tipbox \"p0\""},
+			[]string{"(err) AddPlateTo[2]: Couldn't add tipbox \"p1\" to location \"tipbox_1\" which already contains tipbox \"p0\""},
 			nil, //no assertions
 		},
 		{
@@ -116,7 +116,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&Initialize{},
 				&AddPlateTo{"tipwaste", default_lhtipbox("tipbox"), "tipbox"},
 			},
-			[]string{"(err) AddPlateTo: Slot \"tipwaste\" can't accept tipbox \"tipbox\", only tipwaste allowed"},
+			[]string{"(err) AddPlateTo[1]: Slot \"tipwaste\" can't accept tipbox \"tipbox\", only tipwaste allowed"},
 			nil, //no assertions
 		},
 		{
@@ -127,7 +127,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&Initialize{},
 				&AddPlateTo{"tipbox_1", default_lhtipwaste("tipwaste"), "tipwaste"},
 			},
-			[]string{"(err) AddPlateTo: Slot \"tipbox_1\" can't accept tipwaste \"tipwaste\", only tipbox allowed"},
+			[]string{"(err) AddPlateTo[1]: Slot \"tipbox_1\" can't accept tipwaste \"tipwaste\", only tipbox allowed"},
 			nil, //no assertions
 		},
 		{
@@ -138,7 +138,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&Initialize{},
 				&AddPlateTo{"ruritania", default_lhtipbox("aTipbox"), "aTipbox"},
 			},
-			[]string{"(err) AddPlateTo: Cannot put tipbox \"aTipbox\" at unknown slot \"ruritania\""},
+			[]string{"(err) AddPlateTo[1]: Cannot put tipbox \"aTipbox\" at unknown slot \"ruritania\""},
 			nil, //no assertions
 		},
 		{
@@ -150,7 +150,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&AddPlateTo{"output_1", wide_lhplate("plate1"), "plate1"},
 			},
 			[]string{ //errors
-				"(err) AddPlateTo: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
+				"(err) AddPlateTo[1]: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
 			},
 			nil, //no assertions
 		},
@@ -183,7 +183,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 0.001},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channels 0-7 speed to 0.001 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed[1]: Setting Head 0 channels 0-7 speed to 0.001 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -196,7 +196,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 15.},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channels 0-7 speed to 15 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed[1]: Setting Head 0 channels 0-7 speed to 15 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -209,7 +209,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, 3, 5.},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Head 0 is not independent, setting pipette speed for channel 3 sets all other channels as well",
+				"(warn) SetPipetteSpeed[1]: Head 0 is not independent, setting pipette speed for channel 3 sets all other channels as well",
 			},
 			nil, //no assertions
 		},
@@ -455,15 +455,15 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Unknown location \"tipbox7\"",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(err) Move[0]: Unknown location \"tipbox7\"",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
 			},
 			nil, //assertions
 		},
@@ -496,8 +496,8 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: head assembly 0: unknown head 1",
-				"(err) Move: head assembly 0: unknown head -1",
+				"(err) Move[0]: head assembly 0: unknown head 1",
+				"(err) Move[1]: head assembly 0: unknown head -1",
 			},
 			nil, //assertions
 		},

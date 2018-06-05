@@ -36,14 +36,12 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 func GetContextForTest() context.Context {
 	ctx := testinventory.NewContext(context.Background())
-	ctx = plateCache.NewContext(ctx)
 	return ctx
 }
 

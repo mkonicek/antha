@@ -101,6 +101,62 @@ var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
 
+func HumanInstructionName(ins RobotInstruction) string {
+	if ins == nil {
+		return "no instruction"
+	}
+	if ret, ok := humanRobotInstructionNames[ins.InstructionType()]; ok {
+		return ret
+	}
+	return "unknown"
+}
+
+var humanRobotInstructionNames = map[int]string{
+	TFR: "transfer",
+	TFB: "transfer block",
+	SCB: "single channel transfer block",
+	MCB: "multi channel transfer block",
+	SCT: "single channel transfer",
+	MCT: "multi channel transfer",
+	CCC: "change channel characteristics",
+	LDT: "load tips + move",
+	UDT: "unload tips + move",
+	RST: "reset",
+	CHA: "change adaptor",
+	ASP: "aspirate",
+	DSP: "dispense",
+	BLO: "blowout",
+	PTZ: "reset pistons",
+	MOV: "move",
+	MRW: "move raw",
+	LOD: "load tips",
+	ULD: "unload uips",
+	SUK: "suck",
+	BLW: "blow",
+	SPS: "set pipette speed",
+	SDS: "set drive speed",
+	INI: "initialize",
+	FIN: "finalize",
+	WAI: "wait",
+	LON: "lights on",
+	LOF: "lights off",
+	OPN: "open",
+	CLS: "close",
+	LAD: "load adaptor",
+	UAD: "unload adaptor",
+	MMX: "move and mix",
+	MIX: "mix",
+	MSG: "message",
+	MAS: "move + aspirate",
+	MDS: "move + dispense",
+	MVM: "move + mix",
+	MBL: "move + blowout",
+	RAP: "remove all plates",
+	APT: "add plate to",
+	RPA: "remove plate at",
+	SPB: "split block",
+}
+
 // option to feed into InsToString function
 type printOption string
 

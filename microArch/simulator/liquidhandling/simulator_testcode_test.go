@@ -20,7 +20,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package liquidhandling_test
+package liquidhandling
 
 import (
 	"fmt"
@@ -31,7 +31,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
-	lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 )
 
 //
@@ -342,7 +341,7 @@ func get_not_in(a, b []string) []string {
 	return ret
 }
 
-func compare_errors(t *testing.T, desc string, expected []string, actual []*simulator.SimulationError) {
+func compare_errors(t *testing.T, desc string, expected []string, actual []simulator.SimulationError) {
 	string_errors := make([]string, 0)
 	for _, err := range actual {
 		string_errors = append(string_errors, err.Error())
@@ -799,8 +798,8 @@ func independent_lhproperties() *liquidhandling.LHProperties {
 }
 
 /* -- remove for linting
-func default_vlh() *lh.VirtualLiquidHandler {
-	vlh := lh.NewVirtualLiquidHandler(default_lhproperties(), nil)
+func default_vlh() *VirtualLiquidHandler {
+	vlh := NewVirtualLiquidHandler(default_lhproperties(), nil)
 	return vlh
 }
 */
@@ -810,21 +809,21 @@ func default_vlh() *lh.VirtualLiquidHandler {
  */
 
 type TestRobotInstruction interface {
-	Apply(*lh.VirtualLiquidHandler)
+	Convert() liquidhandling.TerminalRobotInstruction
 }
 
 //Initialize
 type Initialize struct{}
 
-func (self *Initialize) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.Initialize()
+func (self *Initialize) Convert() liquidhandling.TerminalRobotInstruction {
+	return liquidhandling.NewInitializeInstruction()
 }
 
 //Finalize
 type Finalize struct{}
 
-func (self *Finalize) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.Finalize()
+func (self *Finalize) Convert() liquidhandling.TerminalRobotInstruction {
+	return liquidhandling.NewFinalizeInstruction()
 }
 
 //SetPipetteSpeed
@@ -834,8 +833,12 @@ type SetPipetteSpeed struct {
 	speed   float64
 }
 
-func (self *SetPipetteSpeed) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.SetPipetteSpeed(self.head, self.channel, self.speed)
+func (self *SetPipetteSpeed) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewSetPipetteSpeedInstruction()
+	ret.Head = self.head
+	ret.Channel = self.channel
+	ret.Speed = self.speed
+	return ret
 }
 
 //AddPlateTo
@@ -845,8 +848,8 @@ type AddPlateTo struct {
 	name     string
 }
 
-func (self *AddPlateTo) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.AddPlateTo(self.position, self.plate, self.name)
+func (self *AddPlateTo) Convert() liquidhandling.TerminalRobotInstruction {
+	return liquidhandling.NewAddPlateToInstruction(self.position, self.name, self.plate)
 }
 
 //LoadTips
@@ -859,8 +862,15 @@ type LoadTips struct {
 	well      []string
 }
 
-func (self *LoadTips) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.LoadTips(self.channels, self.head, self.multi, self.platetype, self.position, self.well)
+func (self *LoadTips) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewLoadTipsInstruction()
+	ret.Head = self.head
+	ret.Multi = self.multi
+	ret.Channels = self.channels
+	ret.HolderType = self.platetype
+	ret.Pos = self.position
+	ret.Well = self.well
+	return ret
 }
 
 //UnloadTips
@@ -873,8 +883,14 @@ type UnloadTips struct {
 	well      []string
 }
 
-func (self *UnloadTips) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.UnloadTips(self.channels, self.head, self.multi, self.platetype, self.position, self.well)
+func (self *UnloadTips) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewUnloadTipsInstruction()
+	ret.Head = self.head
+	ret.Multi = self.multi
+	ret.HolderType = self.platetype
+	ret.Pos = self.position
+	ret.Well = self.well
+	return ret
 }
 
 //Move
@@ -889,14 +905,23 @@ type Move struct {
 	head         int
 }
 
-func (self *Move) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.Move(self.deckposition, self.wellcoords, self.reference, self.offsetX, self.offsetY, self.offsetZ, self.plate_type, self.head)
+func (self *Move) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewMoveInstruction()
+	ret.Head = self.head
+	ret.Pos = self.deckposition
+	ret.Well = self.wellcoords
+	ret.Reference = self.reference
+	ret.OffsetX = self.offsetX
+	ret.OffsetY = self.offsetY
+	ret.OffsetZ = self.offsetZ
+	ret.Plt = self.plate_type
+	return ret
 }
 
 //Aspirate
 type Aspirate struct {
 	volume     []float64
-	overstroke []bool
+	overstroke bool
 	head       int
 	multi      int
 	platetype  []string
@@ -904,9 +929,20 @@ type Aspirate struct {
 	llf        []bool
 }
 
-func (self *Aspirate) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.Aspirate(self.volume, self.overstroke, self.head, self.multi,
-		self.platetype, self.what, self.llf)
+func (self *Aspirate) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewAspirateInstruction()
+	volume := make([]wunit.Volume, 0, len(self.volume))
+	for _, v := range self.volume {
+		volume = append(volume, wunit.NewVolume(v, "ul"))
+	}
+	ret.Head = self.head
+	ret.Volume = volume
+	ret.Overstroke = self.overstroke
+	ret.Multi = self.multi
+	ret.Plt = self.platetype
+	ret.What = self.what
+	ret.LLF = self.llf
+	return ret
 }
 
 //Dispense
@@ -920,9 +956,19 @@ type Dispense struct {
 	llf       []bool
 }
 
-func (self *Dispense) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.Dispense(self.volume, self.blowout, self.head, self.multi,
-		self.platetype, self.what, self.llf)
+func (self *Dispense) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewDispenseInstruction()
+	volume := make([]wunit.Volume, 0, len(self.volume))
+	for _, v := range self.volume {
+		volume = append(volume, wunit.NewVolume(v, "ul"))
+	}
+	ret.Head = self.head
+	ret.Volume = volume
+	ret.Multi = self.multi
+	ret.Plt = self.platetype
+	ret.What = self.what
+	ret.LLF = self.llf
+	return ret
 }
 
 //Mix
@@ -936,19 +982,30 @@ type Mix struct {
 	blowout   []bool
 }
 
-func (self *Mix) Apply(vlh *lh.VirtualLiquidHandler) {
-	vlh.Mix(self.head, self.volume, self.platetype, self.cycles,
-		self.multi, self.what, self.blowout)
+func (self *Mix) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewMixInstruction()
+	volume := make([]wunit.Volume, 0, len(self.volume))
+	for _, v := range self.volume {
+		volume = append(volume, wunit.NewVolume(v, "ul"))
+	}
+	ret.Head = self.head
+	ret.Volume = volume
+	ret.PlateType = self.platetype
+	ret.What = self.what
+	ret.Blowout = self.blowout
+	ret.Multi = self.multi
+	ret.Cycles = self.cycles
+	return ret
 }
 
 /*
  * ######################################## Setup
  */
 
-type SetupFn func(*lh.VirtualLiquidHandler)
+type SetupFn func(*VirtualLiquidHandler)
 
 func removeTipboxTips(tipbox_loc string, wells []string) *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
 		for _, well := range wells {
 			wc := wtype.MakeWellCoords(well)
@@ -959,7 +1016,7 @@ func removeTipboxTips(tipbox_loc string, wells []string) *SetupFn {
 }
 
 func preloadAdaptorTips(head int, tipbox_loc string, channels []int) *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		adaptor, err := vlh.GetAdaptorState(head)
 		if err != nil {
 			panic(err)
@@ -986,7 +1043,7 @@ func getLHComponent(what string, vol_ul float64) *wtype.LHComponent {
 }
 
 func preloadFilledTips(head int, tipbox_loc string, channels []int, what string, volume float64) *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		adaptor, err := vlh.GetAdaptorState(head)
 		if err != nil {
 			panic(err)
@@ -1005,7 +1062,7 @@ func preloadFilledTips(head int, tipbox_loc string, channels []int, what string,
 
 /* -- remove for linting
 func fillTipwaste(tipwaste_loc string, count int) *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		tipwaste := vlh.GetObjectAt(tipwaste_loc).(*wtype.LHTipwaste)
 		tipwaste.Contents += count
 	}
@@ -1014,7 +1071,7 @@ func fillTipwaste(tipwaste_loc string, count int) *SetupFn {
 */
 
 func prefillWells(plate_loc string, wells_to_fill []string, liquid_name string, volume float64) *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		plate := vlh.GetObjectAt(plate_loc).(*wtype.LHPlate)
 		for _, well_name := range wells_to_fill {
 			wc := wtype.MakeWellCoords(well_name)
@@ -1064,7 +1121,7 @@ func moveTo(row, col int, p moveToParams) *SetupFn {
 		}
 	}
 
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Move(s_dp, s_wc, s_rf, s_ox, s_oy, s_oz, s_pt, p.Head)
 	}
 
@@ -1075,11 +1132,11 @@ func moveTo(row, col int, p moveToParams) *SetupFn {
  * ######################################## Assertions (about the final state)
  */
 
-type AssertionFn func(string, *testing.T, *lh.VirtualLiquidHandler)
+type AssertionFn func(string, *testing.T, *VirtualLiquidHandler)
 
 //tipboxAssertion assert that the tipbox has tips missing in the given locations only
 func tipboxAssertion(tipbox_loc string, missing_tips []string) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *lh.VirtualLiquidHandler) {
+	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
 		mmissing_tips := make(map[string]bool)
 		for _, tl := range missing_tips {
 			mmissing_tips[tl] = true
@@ -1116,7 +1173,7 @@ type tipDesc struct {
 
 //adaptorAssertion assert that the adaptor has tips in the given positions
 func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *lh.VirtualLiquidHandler) {
+	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
 		mtips := make(map[int]bool)
 		for _, td := range tips {
 			mtips[td.channel] = true
@@ -1155,7 +1212,7 @@ func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
 
 //adaptorPositionAssertion assert that the adaptor has tips in the given positions
 func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *lh.VirtualLiquidHandler) {
+	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
 		adaptor, err := vlh.GetAdaptorState(head)
 		if err != nil {
 			panic(err)
@@ -1171,7 +1228,7 @@ func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
 
 //tipwasteAssertion assert the number of tips which should be in the tipwaste
 func tipwasteAssertion(tipwaste_loc string, expected_contents int) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *lh.VirtualLiquidHandler) {
+	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
 		if tipwaste, ok := vlh.GetObjectAt(tipwaste_loc).(*wtype.LHTipwaste); !ok {
 			t.Errorf("TipWasteAssertion failed in \"%s\", no Tipwaste found at %s", name, tipwaste_loc)
 		} else {
@@ -1191,7 +1248,7 @@ type wellDesc struct {
 }
 
 func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *lh.VirtualLiquidHandler) {
+	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
 		m := map[string]bool{}
 		plate := vlh.GetObjectAt(plate_loc).(*wtype.LHPlate)
 		errs := []string{}
@@ -1240,7 +1297,10 @@ func (self *SimulatorTest) run(t *testing.T) {
 	if self.Props == nil {
 		self.Props = default_lhproperties()
 	}
-	vlh := lh.NewVirtualLiquidHandler(self.Props, nil)
+	vlh, err := NewVirtualLiquidHandler(self.Props, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	//do setup
 	if self.Setup != nil {
@@ -1251,9 +1311,11 @@ func (self *SimulatorTest) run(t *testing.T) {
 
 	//run the instructions
 	if self.Instructions != nil {
+		instructions := make([]liquidhandling.TerminalRobotInstruction, 0, len(self.Instructions))
 		for _, inst := range self.Instructions {
-			inst.Apply(vlh)
+			instructions = append(instructions, inst.Convert())
 		}
+		vlh.Simulate(instructions)
 	}
 
 	//check errors

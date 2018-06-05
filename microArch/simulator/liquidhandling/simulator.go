@@ -129,12 +129,7 @@ func (self *VirtualLiquidHandler) Simulate(instructions []liquidhandling.Termina
 			errors.Wrap(err, "while writing instructions to virtual device")
 		}
 
-		for _, err := range self.errors {
-			if mErr, ok := err.(mutableLHError); ok {
-				mErr.setInstruction(i, ins)
-			}
-		}
-		self.saveState(i)
+		self.saveState(i, ins)
 	}
 
 	return nil
@@ -146,7 +141,7 @@ func (self *VirtualLiquidHandler) CountErrors() int {
 	for _, state := range self.errorHistory {
 		ret += len(state)
 	}
-	return ret
+	return ret + len(self.errors)
 }
 
 //GetErrors
@@ -157,12 +152,21 @@ func (self *VirtualLiquidHandler) GetErrors() []simulator.SimulationError {
 			ret = append(ret, err)
 		}
 	}
+
+	for _, err := range self.errors {
+		ret = append(ret, err)
+	}
 	return ret
 }
 
 // ------------------------------------------------------------------------------- Useful Utilities
 
-func (self *VirtualLiquidHandler) saveState(index int) {
+func (self *VirtualLiquidHandler) saveState(index int, ins liquidhandling.TerminalRobotInstruction) {
+	for _, err := range self.errors {
+		if mErr, ok := err.(mutableLHError); ok {
+			mErr.setInstruction(index, ins)
+		}
+	}
 	self.errorHistory[index] = self.errors
 	self.errors = make([]LiquidhandlingError, 0)
 }

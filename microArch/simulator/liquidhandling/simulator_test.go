@@ -20,101 +20,45 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package liquidhandling_test
+package liquidhandling
 
 import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 func TestUnknownLocations(t *testing.T) {
-	tests := make([]SimulatorTest, 0)
+	assertPropsInvalid := func(t *testing.T, props *liquidhandling.LHProperties, message string) {
+		if _, err := NewVirtualLiquidHandler(props, nil); err == nil {
+			t.Errorf("missing error in %s", message)
+		}
+	}
 
 	lhp := default_lhproperties()
 	lhp.Tip_preferences = append(lhp.Tip_preferences, "undefined_tip_pref")
-	tests = append(tests, SimulatorTest{"Undefined Tip_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_tip_pref\" referenced in tip preferences"},
-		nil})
+	assertPropsInvalid(t, lhp, "Undefined Tip_preference")
 
 	lhp = default_lhproperties()
-	lhp.Input_preferences = append(lhp.Tip_preferences, "undefined_input_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Input_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_input_pref\" referenced in input preferences"},
-		nil})
+	lhp.Input_preferences = append(lhp.Input_preferences, "undefined_input_pref")
+	assertPropsInvalid(t, lhp, "Undefined Input_preference")
 
 	lhp = default_lhproperties()
-	lhp.Output_preferences = append(lhp.Tip_preferences, "undefined_output_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Output_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_output_pref\" referenced in output preferences"},
-		nil})
+	lhp.Output_preferences = append(lhp.Output_preferences, "undefined_output_pref")
+	assertPropsInvalid(t, lhp, "Undefined Output_preference")
 
 	lhp = default_lhproperties()
-	lhp.Tipwaste_preferences = append(lhp.Tip_preferences, "undefined_tipwaste_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Tipwaste_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_tipwaste_pref\" referenced in tipwaste preferences"},
-		nil})
+	lhp.Tipwaste_preferences = append(lhp.Tipwaste_preferences, "undefined_tipwaste_pref")
+	assertPropsInvalid(t, lhp, "Undefined Tipwaste_preference")
 
 	lhp = default_lhproperties()
-	lhp.Wash_preferences = append(lhp.Tip_preferences, "undefined_wash_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Wash_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_wash_pref\" referenced in wash preferences"},
-		nil})
+	lhp.Wash_preferences = append(lhp.Wash_preferences, "undefined_wash_pref")
+	assertPropsInvalid(t, lhp, "Undefined Wash_preference")
 
 	lhp = default_lhproperties()
-	lhp.Waste_preferences = append(lhp.Tip_preferences, "undefined_waste_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Waste_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_waste_pref\" referenced in waste preferences"},
-		nil})
-
-	for _, test := range tests {
-		test.run(t)
-	}
-}
-
-func TestMissingPrefs(t *testing.T) {
-	tests := make([]SimulatorTest, 0)
-
-	lhp := default_lhproperties()
-	lhp.Tip_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Tip_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No tip preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Input_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Input_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No input preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Output_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Output_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No output preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Tipwaste_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing TipWaste_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No tipwaste preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Wash_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Wash_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No wash preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Waste_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Waste_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No waste preferences specified"},
-		nil})
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	lhp.Waste_preferences = append(lhp.Waste_preferences, "undefined_waste_pref")
+	assertPropsInvalid(t, lhp, "Undefined Waste_preference")
 }
 
 func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {
@@ -280,7 +224,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 // ########################################################## Move
 // ########################################################################################################################
 func testLayout() *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
 		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
 		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
@@ -293,7 +237,7 @@ func testLayout() *SetupFn {
 }
 
 func testLayoutTransposed() *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
 		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
 		vlh.AddPlateTo("input_2", default_lhtipbox("tipbox2"), "tipbox2")
@@ -306,7 +250,7 @@ func testLayoutTransposed() *SetupFn {
 }
 
 func testTroughLayout() *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
 		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
 		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
@@ -2148,10 +2092,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{100., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2185,10 +2129,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					8, //multi      int
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					8,     //multi      int
 					[]string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"}, //platetype  []string
 					[]string{"water", "water", "water", "water", "water", "water", "water", "water"}, //what       []string
 					[]bool{false, false, false, false, false, false, false, false},                   //llf        []bool
@@ -2231,10 +2175,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					8, //multi      int
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					8,     //multi      int
 					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"}, //platetype  []string
 					[]string{"water", "water", "water", "water", "water", "water", "water", "water"},         //what       []string
 					[]bool{false, false, false, false, false, false, false, false},                           //llf        []bool
@@ -2277,10 +2221,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					8, //multi      int
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					8,     //multi      int
 					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"}, //platetype  []string
 					[]string{"water", "water", "water", "water", "water", "water", "water", "water"},         //what       []string
 					[]bool{false, false, false, false, false, false, false, false},                           //llf        []bool
@@ -2325,10 +2269,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 100., 0., 0., 0., 0., 0., 0.},                  //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					2, //multi      int
+					[]float64{100., 100., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					2,     //multi      int
 					[]string{"plate", "plate", "", "", "", "", "", ""},             //platetype  []string
 					[]string{"water", "water", "", "", "", "", "", ""},             //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2359,10 +2303,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{20., 0., 0., 0., 0., 0., 0., 0.},                     //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{20., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2393,10 +2337,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2412,10 +2356,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2431,10 +2375,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2450,10 +2394,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2469,10 +2413,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2488,10 +2432,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2522,10 +2466,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{50., 60., 70., 80., 90., 100., 110., 120.},           //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					8, //multi      int
+					[]float64{50., 60., 70., 80., 90., 100., 110., 120.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					8,     //multi      int
 					[]string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"}, //platetype  []string
 					[]string{"water", "water", "water", "water", "water", "water", "water", "water"}, //what       []string
 					[]bool{false, false, false, false, false, false, false, false},                   //llf        []bool
@@ -2556,10 +2500,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{100., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2590,10 +2534,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{535, 0., 0., 0., 0., 0., 0., 0.},                     //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{535, 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2632,7 +2576,7 @@ func Test_Aspirate(t *testing.T) {
 					},
 					&Aspirate{
 						[]float64{102.1, 0., 0., 0., 0., 0., 0., 0.},                   //volume     []float64
-						[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
+						false, //overstroke bool
 						0, //head       int
 						1, //multi      int
 						[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
@@ -2665,10 +2609,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{98.6, 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{98.6, 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -3388,7 +3332,7 @@ func Test_Workflow(t *testing.T) {
 			},
 			&Aspirate{
 				v,
-				[]bool{false, false, false, false, false, false, false, false},
+				false,
 				0,
 				multi,
 				pt,

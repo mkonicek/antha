@@ -1,8 +1,7 @@
-package liquidhandling_test
+package liquidhandling
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 	"strings"
 	"testing"
 )
@@ -46,7 +45,7 @@ func (self *tipCoordsTest) run(t *testing.T) {
 		tb.RemoveTip(wc)
 	}
 
-	adaptor := lh.NewAdaptorState("", false, 8, wtype.Coordinates{}, 0.0, &wtype.LHChannelParameter{Orientation: self.orientation}, self.tipBehaviour)
+	adaptor := NewAdaptorState("", false, 8, wtype.Coordinates{}, 0.0, &wtype.LHChannelParameter{Orientation: self.orientation}, self.tipBehaviour)
 
 	out, err := adaptor.GetTipCoordsToLoad(tb, self.num)
 	if err != nil {

@@ -23,9 +23,10 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"strings"
 )
 
 // The height below which an error will be generated
@@ -612,6 +613,8 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plates = append(plates, make96DeepWellLowVolumePlate())
 	plates = append(plates, makeLabcyte384PPStdV())
 	plates = append(plates, make384wellplateAppliedBiosystems())
+	plates = append(plates, makeAcroPrep384NoFilter())
+	plates = append(plates, makeAcroPrep384WithFilter())
 
 	return
 }
@@ -952,6 +955,103 @@ func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 	ystart := 7.415 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
 	zstart := 0.65 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
 	overallHeight := 9.7                      // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// Pall, Catalogue # 5076.
+// AcroPrep™ 384-well Filter Plates, 100 µL
+// AcroPrep 384 x 100ul-well collection plate, without top filter plate.
+// Source of dimensions: https://shop.pall.com/us/en/laboratory/dna-rna-purification/plant-genomic-dna-purification/acroprep-384-well-filter-plates-100-l-zidgri78lbr
+func makeAcroPrep384NoFilter() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 14.38
+	ystartOffsetCorrection := 11.24
+
+	plateName := "AcroPrep384NoFilter"
+	manufacturer := "Pall"
+
+	numberOfRows := 16
+	numberOfColumns := 24
+
+	wellShape := "box"
+	bottomtype := wtype.VWellBottom
+
+	dimensionUnit := "mm"
+
+	xdim := 4.0  // G1: diameter at top of well
+	ydim := 4.0  // G1: diameter at top of well
+	zdim := 11.4 // L: depth of well from top to bottom
+
+	bottomh := 0.5 // N: bottom of well to resting plane
+
+	minVolume := 4.0
+	maxVolume := 80.0
+
+	volUnit := "ul"
+
+	wellxoffset := 4.5                       // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5                       // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 12.15 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 9 - ystartOffsetCorrection     // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 2.5                            // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 14.4                    // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// Pall, Catalogue # 5076.
+// AcroPrep™ 384-well Filter Plates, 100 µL
+// AcroPrep 384-well protein filter plate--omega membrane,
+// long tip--stacked on top of a 384 x 100ul-well collection plate.
+// Source of dimensions: https://shop.pall.com/us/en/laboratory/dna-rna-purification/plant-genomic-dna-purification/acroprep-384-well-filter-plates-100-l-zidgri78lbr
+func makeAcroPrep384WithFilter() *wtype.LHPlate {
+
+	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
+	xstartOffsetCorrection := 14.38
+	ystartOffsetCorrection := 11.24
+
+	plateName := "AcroPrep384WithFilter"
+	manufacturer := "Pall"
+
+	numberOfRows := 16
+	numberOfColumns := 24
+
+	wellShape := "box"
+	bottomtype := wtype.FlatWellBottom
+
+	dimensionUnit := "mm"
+
+	xdim := 4.0 // G1: diameter at top of well
+	ydim := 4.0 // G1: diameter at top of well
+	zdim := 9.0 // L: depth of well from top to bottom
+
+	bottomh := 0.5 // N: bottom of well to resting plane
+
+	minVolume := 80.0
+	maxVolume := 80.0
+
+	volUnit := "ul"
+
+	wellxoffset := 4.5                       // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5                       // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 12.15 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 9 - ystartOffsetCorrection     // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 18.0                           // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 27.5                    // F: height of plate
 
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 

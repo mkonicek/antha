@@ -280,6 +280,22 @@ func (a *Mixer) saveFile(name string) ([]byte, error) {
 	}
 }
 
+func mergePolicies(basePolicy, priorityPolicy wtype.LHPolicy) (newPolicy wtype.LHPolicy) {
+
+	newPolicy = make(wtype.LHPolicy)
+
+	for key, value := range priorityPolicy {
+		newPolicy[key] = value
+	}
+
+	for key, value := range basePolicy {
+		if _, found := priorityPolicy[key]; !found {
+			newPolicy[key] = value
+		}
+	}
+	return newPolicy
+}
+
 // any customised user policies are added to the LHRequest PolicyManager here
 // Any component type names with modified policies are iterated until unique i.e. SmartMix_modified_1
 func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) error {
@@ -297,17 +313,25 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 		for _, component := range mixInstruction.Components {
 			if len(component.Policy) > 0 {
 				if matchingSystemPolicy, found := allPolicies[string(component.Type)]; found {
-					if !wtype.EquivalentPolicies(component.Policy, matchingSystemPolicy) {
+					mergedPolicy := mergePolicies(matchingSystemPolicy, component.Policy)
+					if !wtype.EquivalentPolicies(mergedPolicy, matchingSystemPolicy) {
 						num := 1
 						newPolicyName := makemodifiedTypeName(component.Type, num)
-						_, found := allPolicies[newPolicyName]
+						existingCustomPolicy, found := allPolicies[newPolicyName]
 						for found {
-							num++
-							newPolicyName = makemodifiedTypeName(component.Type, num)
-							_, found = allPolicies[newPolicyName]
+							// check if existing policy with modified name is the same
+							if !wtype.EquivalentPolicies(mergedPolicy, existingCustomPolicy) {
+								// if not increase number and try again
+								num++
+								newPolicyName = makemodifiedTypeName(component.Type, num)
+								existingCustomPolicy, found = allPolicies[newPolicyName]
+							} else {
+								// otherwise use existing modified policy
+								found = true
+							}
 						}
-						allPolicies[newPolicyName] = component.Policy
-						userPolicies[newPolicyName] = component.Policy
+						allPolicies[newPolicyName] = mergedPolicy
+						userPolicies[newPolicyName] = mergedPolicy
 						component.Type = wtype.LiquidType(newPolicyName)
 					}
 				} else {
@@ -370,8 +394,36 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 		if m.OutPlate != nil {
 			p, ok := r.LHRequest.Output_plates[m.OutPlate.ID]
 			if ok && p != m.OutPlate {
-				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state", p.ID)
+				fix := func(p, p2 *wtype.LHPlate) {
+					// do nothing if these are not same type
+
+					if p.Type != p2.Type {
+						return
+					}
+
+					// transfer any non-User-Allocated wells in here
+
+					it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
+
+					for ; it.Valid(); it.Next() {
+						wc := it.Curr()
+
+						if !it.Valid() {
+							break
+						}
+
+						w1 := p.Wellcoords[wc.FormatA1()]
+						w2 := p2.Wellcoords[wc.FormatA1()]
+
+						//if !w1.IsUserAllocated() {
+						w1.WContents = w2.WContents
+						//}
+					}
+				}
+				fix(m.OutPlate, p)
+				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix: %+v, %+v", p.ID, p.AllWellContents(), m.OutPlate.AllWellContents())
 			}
+
 			r.LHRequest.Output_plates[m.OutPlate.ID] = m.OutPlate
 		}
 	}

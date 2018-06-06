@@ -327,7 +327,7 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 								existingCustomPolicy, found = allPolicies[newPolicyName]
 							} else {
 								// otherwise use existing modified policy
-								found = true
+								found = false
 							}
 						}
 						allPolicies[newPolicyName] = mergedPolicy

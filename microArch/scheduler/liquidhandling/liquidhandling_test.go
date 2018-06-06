@@ -1185,3 +1185,50 @@ func TestShouldSetWellTargets(t *testing.T) {
 		}
 	}
 }
+
+func TestPlateIDMap(t *testing.T) {
+	ctx := GetContextForTest()
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got planning error: ", err))
+	}
+
+	beforePlates := lh.Properties.PlateLookup
+	afterPlates := lh.FinalProperties.PlateLookup
+	idMap := lh.PlateIDMap()
+
+	//check that idMap refers to things that exist
+	for beforeID, afterID := range idMap {
+		beforeObj, ok := beforePlates[beforeID]
+		if !ok {
+			t.Errorf("idMap key \"%s\" doesn't exist in initial LHProperties.PlateLookup", beforeID)
+			continue
+		}
+		afterObj, ok := afterPlates[afterID]
+		if !ok {
+			t.Errorf("idMap value \"%s\" doesn't exist in final LHProperties.PlateLookup", afterID)
+			continue
+		}
+		//check that you don't have tipboxes turning into plates, for example
+		if beforeClass, afterClass := wtype.ClassOf(beforeObj), wtype.ClassOf(afterObj); beforeClass != afterClass {
+			t.Errorf("planner has turned a %s into a %s", beforeClass, afterClass)
+		}
+	}
+
+	//check that everything in before exists is mapped to something
+	for id, obj := range beforePlates {
+		if _, ok := idMap[id]; !ok {
+			t.Errorf("%s with id %s exists in initial LHProperties, but isn't mapped to final LHProperties", wtype.ClassOf(obj), id)
+		}
+	}
+}

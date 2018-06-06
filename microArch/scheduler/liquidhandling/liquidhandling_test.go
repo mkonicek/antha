@@ -1225,7 +1225,7 @@ func TestPlateIDMap(t *testing.T) {
 		}
 	}
 
-	//check that everything in before exists is mapped to something
+	//check that everything in beforePlates is mapped to something
 	for id, obj := range beforePlates {
 		if _, ok := idMap[id]; !ok {
 			t.Errorf("%s with id %s exists in initial LHProperties, but isn't mapped to final LHProperties", wtype.ClassOf(obj), id)

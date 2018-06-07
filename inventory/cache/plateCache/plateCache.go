@@ -3,7 +3,6 @@ package plateCache
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
@@ -13,7 +12,6 @@ import (
 type plateCache struct {
 	platesByType    map[string][]*wtype.LHPlate
 	platesFromCache map[string]bool
-	mutex           *sync.Mutex
 }
 
 func (p *plateCache) NewComponent(ctx context.Context, name string) (*wtype.LHComponent, error) {
@@ -29,9 +27,6 @@ func (p *plateCache) NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipw
 }
 
 func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
 	plateList, ok := p.platesByType[typ]
 	if !ok {
 		plateList = make([]*wtype.LHPlate, 0)
@@ -54,9 +49,6 @@ func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, 
 }
 
 func (p *plateCache) ReturnObject(ctx context.Context, obj interface{}) error {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
 	if !p.IsFromCache(ctx, obj) {
 		return fmt.Errorf("cannont return non cache object %s", wtype.NameOf(obj))
 	}
@@ -79,9 +71,6 @@ func (p *plateCache) ReturnObject(ctx context.Context, obj interface{}) error {
 }
 
 func (p *plateCache) IsFromCache(ctx context.Context, obj interface{}) bool {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
 	_, ok := p.platesFromCache[wtype.IDOf(obj)]
 	return ok
 }
@@ -91,7 +80,6 @@ func NewContext(ctx context.Context) context.Context {
 	pc := &plateCache{
 		platesByType:    make(map[string][]*wtype.LHPlate),
 		platesFromCache: make(map[string]bool),
-		mutex:           &sync.Mutex{},
 	}
 
 	return cache.NewContext(ctx, pc)

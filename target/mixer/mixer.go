@@ -394,36 +394,8 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 		if m.OutPlate != nil {
 			p, ok := r.LHRequest.Output_plates[m.OutPlate.ID]
 			if ok && p != m.OutPlate {
-				fix := func(p, p2 *wtype.LHPlate) {
-					// do nothing if these are not same type
-
-					if p.Type != p2.Type {
-						return
-					}
-
-					// transfer any non-User-Allocated wells in here
-
-					it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
-
-					for ; it.Valid(); it.Next() {
-						wc := it.Curr()
-
-						if !it.Valid() {
-							break
-						}
-
-						w1 := p.Wellcoords[wc.FormatA1()]
-						w2 := p2.Wellcoords[wc.FormatA1()]
-
-						//if !w1.IsUserAllocated() {
-						w1.WContents = w2.WContents
-						//}
-					}
-				}
-				fix(m.OutPlate, p)
-				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix: %+v, %+v", p.ID, p.AllWellContents(), m.OutPlate.AllWellContents())
+				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
 			}
-
 			r.LHRequest.Output_plates[m.OutPlate.ID] = m.OutPlate
 		}
 	}

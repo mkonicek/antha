@@ -14,6 +14,7 @@ import (
 
 func GetContextForTest() context.Context {
 	ctx := testinventory.NewContext(context.Background())
+	//also need to add a plateCache as we're not using the liquidhandler.Plan interface
 	ctx = plateCache.NewContext(ctx)
 	return ctx
 }

@@ -1,15 +1,12 @@
 package liquidhandling
 
 import (
-	"context"
 	"github.com/pkg/errors"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/inventory/cache/plateCache"
-	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 const (
@@ -100,8 +97,8 @@ func stringInstructions(inss []RobotInstruction) string {
 }
 
 func (self *PolicyTest) Run(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-	ctx = plateCache.NewContext(ctx)
+	ctx := GetContextForTest()
+
 	if self.Robot == nil {
 		robot, err := makeGilsonWithPlatesAndTipboxesForTest(ctx)
 		if err != nil {

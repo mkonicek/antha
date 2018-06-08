@@ -11,7 +11,9 @@ func (lh *Liquidhandler) Refresh_tipboxes_tipwastes(rq *LHRequest) {
 		tb, ok := lh.Properties.Tipboxes[pos]
 
 		if ok {
-			lh.FinalProperties.AddTipBoxTo(pos, tb.Dup())
+			newTb := tb.Dup()
+			lh.FinalProperties.AddTipBoxTo(pos, newTb)
+			lh.plateIDMap[tb.ID] = newTb.ID
 			tb.Refresh()
 			continue
 		}
@@ -23,6 +25,7 @@ func (lh *Liquidhandler) Refresh_tipboxes_tipwastes(rq *LHRequest) {
 			tw2 := lh.FinalProperties.Tipwastes[pos]
 			tw2.Contents = tw.Contents
 			tw.Empty()
+			lh.plateIDMap[tw.ID] = tw2.ID
 		}
 	}
 }

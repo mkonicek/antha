@@ -35,6 +35,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache"
+	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
@@ -837,8 +838,11 @@ func assertNoTemporaryPlates(ctx context.Context, request *LHRequest) error {
 }
 
 func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
-	// figure out the output order
 
+	//add in a plateCache for instruction generation
+	ctx = plateCache.NewContext(ctx)
+
+	// figure out the output order
 	err := set_output_order(request)
 
 	if err != nil {

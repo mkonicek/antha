@@ -2832,7 +2832,7 @@ func Test_Dispense(t *testing.T) {
 			nil, //assertionsi
 		},
 		{
-			"fail - independence",
+			"fail - independence other tips in wells",
 			nil,
 			[]*SetupFn{
 				testLayout(),
@@ -2861,6 +2861,39 @@ func Test_Dispense(t *testing.T) {
 			},
 			[]string{ //errors
 				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : must also dispense 50 ul from channels 1,2,3,4,5,6,7 as head is not independent",
+			},
+			nil, //assertions
+		},
+		{
+			"fail - independence other tip not in a well",
+			nil,
+			[]*SetupFn{
+				testLayout(),
+				preloadFilledTips(0, "tipbox_1", []int{0, 1}, "water", 100.),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "", "", "", "", "", "", ""}, //deckposition
+					[]string{"H1", "", "", "", "", "", "", ""},      //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
+					[]string{"plate", "", "", "", "", "", "", ""},   //plate_type
+					0, //head
+				},
+				&Dispense{
+					[]float64{50., 0, 0, 0, 0, 0, 0, 0},                            //volume    []float64
+					[]bool{false, false, false, false, false, false, false, false}, //blowout   []bool
+					0, //head      int
+					1, //multi     int
+					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype []string
+					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
+					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
+				},
+			},
+			[]string{ //errors
+				"(err) Dispense: 50 ul of water from head 0 channel 0 to H1@plate1 : must also dispense 50 ul from channel 1 as head is not independent",
 			},
 			nil, //assertions
 		},

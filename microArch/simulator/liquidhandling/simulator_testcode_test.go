@@ -890,6 +890,7 @@ func (self *UnloadTips) Convert() liquidhandling.TerminalRobotInstruction {
 	ret.HolderType = self.platetype
 	ret.Pos = self.position
 	ret.Well = self.well
+	ret.Channels = self.channels
 	return ret
 }
 

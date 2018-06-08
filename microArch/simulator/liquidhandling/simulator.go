@@ -40,7 +40,7 @@ const arbitraryZOffset = 4.0
 
 // Simulate a liquid handler Driver
 type VirtualLiquidHandler struct {
-	errorHistory map[int][]LiquidhandlingError
+	errorHistory [][]LiquidhandlingError
 	errors       []LiquidhandlingError
 	state        *RobotState
 	settings     *SimulatorSettings
@@ -53,7 +53,7 @@ const coneRadius = 3.6
 func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *SimulatorSettings) (*VirtualLiquidHandler, error) {
 	var vlh VirtualLiquidHandler
 	vlh.errors = make([]LiquidhandlingError, 0)
-	vlh.errorHistory = make(map[int][]LiquidhandlingError)
+	vlh.errorHistory = make([][]LiquidhandlingError, 0)
 
 	if settings == nil {
 		vlh.settings = DefaultSimulatorSettings()
@@ -123,13 +123,15 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 //Simulate simulate the list of instructions
 func (self *VirtualLiquidHandler) Simulate(instructions []liquidhandling.TerminalRobotInstruction) error {
 
-	for i, ins := range instructions {
+	self.resetState()
+
+	for _, ins := range instructions {
 		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(self)
 		if err != nil {
 			errors.Wrap(err, "while writing instructions to virtual device")
 		}
 
-		self.saveState(i, ins)
+		self.saveState(ins)
 	}
 
 	return nil
@@ -161,13 +163,26 @@ func (self *VirtualLiquidHandler) GetErrors() []simulator.SimulationError {
 
 // ------------------------------------------------------------------------------- Useful Utilities
 
-func (self *VirtualLiquidHandler) saveState(index int, ins liquidhandling.TerminalRobotInstruction) {
+func (self *VirtualLiquidHandler) resetState() {
+	self.errorHistory = make([][]LiquidhandlingError, 0)
+	self.errors = make([]LiquidhandlingError, 0)
+}
+
+func (self *VirtualLiquidHandler) undoLastState() {
+	if len(self.errorHistory) <= 0 {
+		return
+	}
+
+	self.errorHistory = self.errorHistory[:len(self.errorHistory)-1]
+}
+
+func (self *VirtualLiquidHandler) saveState(ins liquidhandling.TerminalRobotInstruction) {
 	for _, err := range self.errors {
 		if mErr, ok := err.(mutableLHError); ok {
-			mErr.setInstruction(index, ins)
+			mErr.setInstruction(len(self.errorHistory), ins)
 		}
 	}
-	self.errorHistory[index] = self.errors
+	self.errorHistory = append(self.errorHistory, self.errors)
 	self.errors = make([]LiquidhandlingError, 0)
 }
 
@@ -1185,6 +1200,10 @@ func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi i
 	//make certain that any load tips we generate don't get overridden again
 	self.settings.EnableTipLoadingOverride(false)
 	defer self.settings.EnableTipLoadingOverride(true)
+
+	//undo the last command that moved us into position
+	//assumption is that last command was a move...
+	self.undoLastState()
 
 	var ret driver.CommandStatus
 	loadedChannels := make([]int, 0, len(channels))

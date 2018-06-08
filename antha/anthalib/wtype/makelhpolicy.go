@@ -661,8 +661,8 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["PTZREFERENCE"] = 1
 	defaultpolicy["PTZOFFSET"] = -0.5
 	defaultpolicy["NO_AIR_DISPENSE"] = true // SERIOUSLY??
-	defaultpolicy["DEFAULTPIPETTESPEED"] = 3.0
-	defaultpolicy["DEFAULTZSPEED"] = 120.0
+	defaultpolicy["DEFAULTPIPETTESPEED"] = 3.74
+	defaultpolicy["DEFAULTZSPEED"] = 140.0
 	defaultpolicy["MANUALPTZ"] = false
 	defaultpolicy["JUSTBLOWOUT"] = false
 	defaultpolicy["DONT_BE_DIRTY"] = true
@@ -715,10 +715,11 @@ func TurnOffBlowoutPolicy() LHPolicy {
 func MakeHVOffsetPolicy() LHPolicy {
 	lvop := make(LHPolicy, 6)
 	lvop["OFFSETZADJUST"] = 0.75
-	lvop["POST_MIX_RATE"] = 37
-	lvop["PRE_MIX_RATE"] = 37
-	lvop["ASPSPEED"] = 37
-	lvop["DSPSPEED"] = 37
+	lvop["DEFAULTPIPETTESPEED"] = 37.0
+	lvop["POST_MIX_RATE"] = 37.0
+	lvop["PRE_MIX_RATE"] = 37.0
+	lvop["ASPSPEED"] = 37.0
+	lvop["DSPSPEED"] = 37.0
 	return lvop
 }
 
@@ -868,16 +869,17 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	// hack to fix plate type problems
 	// this really should be removed asap
 	rule := NewLHPolicyRule("HVOffsetFix")
-	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
-
-	err = rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
-	if err != nil {
-		return nil, err
-	}
-	err = rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
-	if err != nil {
-		return nil, err
-	}
+	checkErr(rule.AddNumericConditionOn("VOLUME", 20.1, 200.0)) // what about higher? // set specifically for openPlant configuration
+	/*
+		err = rule.AddCategoryConditionOn("TIPTYPE", "Gilson200")
+		if err != nil {
+			return nil, err
+		}
+		err = rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax")
+		if err != nil {
+			return nil, err
+		}
+	*/
 	// don't get overridden
 	rule.Priority = 100
 	pol := MakeHVOffsetPolicy()
@@ -1093,10 +1095,10 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	// hack to fix plate type problems
 	// this really should be removed asap
 	rule := NewLHPolicyRule("HVOffsetFix")
-	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+	checkErr(rule.AddNumericConditionOn("VOLUME", 20.1, 200.0)) // what about higher? // set specifically for openPlant configuration
 
-	checkErr(rule.AddCategoryConditionOn("TIPTYPE", "Gilson200"))
-	checkErr(rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax"))
+	//checkErr(rule.AddCategoryConditionOn("TIPTYPE", "Gilson200"))
+	//checkErr(rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax"))
 	// don't get overridden
 	rule.Priority = 100
 	pol := MakeHVOffsetPolicy()

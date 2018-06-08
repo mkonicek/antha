@@ -221,6 +221,9 @@ func (self *LHTip) DimensionsString() string {
 
 //@implement LHContainer
 func (self *LHTip) Contents() *LHComponent {
+	if self == nil {
+		return nil
+	}
 	//Only happens with dodgy tip initialization
 	if self.contents == nil {
 		self.contents = NewLHComponent()

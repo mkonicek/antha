@@ -1037,7 +1037,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 					v = volume[ch]
 				}
 			} else if wells[ch] != nil {
-				//a non-explicitly requested tip is in a well. If the well has stuff in it, it'll get aspirated
+				//a non-explicitly requested tip is in a well. If the tip has stuff in it, it'll get dispensed
 				if c := arg.adaptor.GetChannel(ch).GetTip().Contents(); !c.IsZero() {
 					extra = append(extra, ch)
 				}

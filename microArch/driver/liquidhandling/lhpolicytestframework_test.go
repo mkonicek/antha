@@ -11,8 +11,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/cache/plateCache"
-	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 type Condition interface {
@@ -97,8 +95,8 @@ func stringInstructions(inss []RobotInstruction) string {
 }
 
 func (self *PolicyTest) Run(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-	ctx = plateCache.NewContext(ctx)
+	ctx := GetContextForTest()
+
 	if self.Robot == nil {
 		robot, err := makeTestGilsonWithPlates(ctx)
 		if err != nil {

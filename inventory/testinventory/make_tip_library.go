@@ -90,7 +90,7 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 	w = wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	w.Extra["InnerL"] = 5.5
 	w.Extra["InnerW"] = 5.5
-	w.Extra["Tipeffectiveheight"] = 34.6
+	w.Extra["Tipeffectiveheight"] = 34.6 // MIS OUT by 0.7mm!!! (33.9) --> is this where our LV/HV offset policy comes from???
 	tip = wtype.NewLHTip("gilson", "Gilson20", 0.5, 20.0, "ul", false, shp)
 	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "DL10 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 	ret = append(ret, tb)
@@ -99,7 +99,7 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 
 	//Tipeffectiveheight values below are consistent with the values supplied by gilson
 	//however, physical testing showed that the offset below was required to avoid collision with the bottom of the well
-	filterHeightOffset := 1.75 //0.75
+	filterHeightOffset := 0.75
 
 	w = wtype.NewLHWell("ul", 200.0, 20.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6

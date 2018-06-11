@@ -613,6 +613,10 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 	arr := make([][]*LHWell, nrows)
 	wellmap := make(map[string]*LHWell, ncols*nrows)
 
+	//offsets to corner of wells
+	xOff := welltype.GetSize().X * 0.5
+	yOff := welltype.GetSize().Y * 0.5
+
 	for i := 0; i < nrows; i++ {
 		arr[i] = make([]*LHWell, ncols)
 		rowarr[i] = make([]*LHWell, ncols)
@@ -632,8 +636,8 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 			arr[i][j].Crds = crds
 			arr[i][j].WContents.Loc = lhp.ID + ":" + crds.FormatA1()
 			arr[i][j].SetOffset(Coordinates{ //nolint
-				wellXStart + float64(j)*wellXOffset,
-				wellYStart + float64(i)*wellYOffset,
+				wellXStart + float64(j)*wellXOffset - xOff,
+				wellYStart + float64(i)*wellYOffset - yOff,
 				wellZStart,
 			})
 		}
@@ -981,6 +985,11 @@ func (self *LHPlate) GetWellOffset() Coordinates {
 	return Coordinates{self.WellXStart, self.WellYStart, self.WellZStart}
 }
 
+func (self *LHPlate) GetWellCorner() Coordinates {
+	size := self.Welltype.GetSize()
+	return Coordinates{self.WellXStart - 0.5*size.X, self.WellYStart - 0.5*size.Y, self.WellZStart}
+}
+
 func (self *LHPlate) GetWellSize() Coordinates {
 	return Coordinates{
 		self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
@@ -991,7 +1000,7 @@ func (self *LHPlate) GetWellSize() Coordinates {
 
 func (self *LHPlate) GetWellBounds() BBox {
 	return BBox{
-		self.Bounds.GetPosition().Add(self.GetWellOffset()),
+		self.Bounds.GetPosition().Add(self.GetWellCorner()),
 		self.GetWellSize(),
 	}
 }
@@ -1127,8 +1136,8 @@ func (self *LHPlate) GetChildByAddress(c WellCoords) LHObject {
 func (self *LHPlate) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
 	rel := r.Subtract(self.GetPosition())
 	wc := WellCoords{
-		int(math.Floor(((rel.X - self.WellXStart) / self.WellXOffset))), // + 0.5), Don't need to add .5 because
-		int(math.Floor(((rel.Y - self.WellYStart) / self.WellYOffset))), // + 0.5), WellXStart is to edge, not center
+		int(math.Floor(((rel.X - self.WellXStart) / self.WellXOffset) + 0.5)),
+		int(math.Floor(((rel.Y - self.WellYStart) / self.WellYOffset) + 0.5)),
 	}
 	if wc.X < 0 {
 		wc.X = 0

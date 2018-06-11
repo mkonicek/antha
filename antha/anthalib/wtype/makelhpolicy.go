@@ -181,8 +181,7 @@ TOUCHOFFSET,                         ,float64,          ,mm above wb to touch of
 
 func MakePEGPolicy() LHPolicy {
 	policy := make(LHPolicy, 10)
-	policy["ASPSPEED"] = 1.5
-	policy["DSPSPEED"] = 1.5
+	policy["DEFAULTPIPETTESPEED"] = 1.5
 	policy["ASP_WAIT"] = 2.0
 	policy["DSP_WAIT"] = 2.0
 	policy["ASPZOFFSET"] = 1.0
@@ -201,8 +200,7 @@ func MakePEGPolicy() LHPolicy {
 
 func MakeProtoplastPolicy() LHPolicy {
 	policy := make(LHPolicy, 8)
-	policy["ASPSPEED"] = 0.5
-	policy["DSPSPEED"] = 0.5
+	policy["DEFAULTPIPETTESPEED"] = 0.5
 	policy["ASPZOFFSET"] = 1.0
 	policy["DSPZOFFSET"] = 1.0
 	policy["BLOWOUTVOLUME"] = 100.0
@@ -218,8 +216,7 @@ func MakePaintPolicy() LHPolicy {
 	policy := make(LHPolicy, 14)
 	policy["DSPREFERENCE"] = 0
 	policy["DSPZOFFSET"] = 0.5
-	policy["ASPSPEED"] = 1.5
-	policy["DSPSPEED"] = 1.5
+	policy["DEFAULTPIPETTESPEED"] = 1.5
 	policy["ASP_WAIT"] = 1.0
 	policy["DSP_WAIT"] = 1.0
 	//policy["PRE_MIX"] = 3
@@ -323,8 +320,7 @@ func MakeCulturePolicy() LHPolicy {
 	checkErr(culturepolicy.Set("PRE_MIX", 2))
 	checkErr(culturepolicy.Set("PRE_MIX_VOLUME", 19.0))
 	checkErr(culturepolicy.Set("PRE_MIX_RATE", 3.74))
-	checkErr(culturepolicy.Set("ASPSPEED", 2.0))
-	checkErr(culturepolicy.Set("DSPSPEED", 2.0))
+	checkErr(culturepolicy.Set("DEFAULTPIPETTESPEED", 2.0))
 	checkErr(culturepolicy.Set("CAN_MULTI", true))
 	checkErr(culturepolicy.Set("CAN_MSA", false))
 	checkErr(culturepolicy.Set("CAN_SDD", false))
@@ -358,8 +354,7 @@ func MakeCultureReusePolicy() LHPolicy {
 	checkErr(culturepolicy.Set("PRE_MIX", 2))
 	checkErr(culturepolicy.Set("PRE_MIX_VOLUME", 19.0))
 	checkErr(culturepolicy.Set("PRE_MIX_RATE", 3.74))
-	checkErr(culturepolicy.Set("ASPSPEED", 2.0))
-	checkErr(culturepolicy.Set("DSPSPEED", 2.0))
+	checkErr(culturepolicy.Set("DEFAULTPIPETTESPEED", 2.0))
 	checkErr(culturepolicy.Set("CAN_MULTI", true))
 	checkErr(culturepolicy.Set("CAN_MSA", true))
 	checkErr(culturepolicy.Set("CAN_SDD", true))
@@ -375,8 +370,7 @@ func MakeCultureReusePolicy() LHPolicy {
 
 func MakeGlycerolPolicy() LHPolicy {
 	glycerolpolicy := make(LHPolicy, 9)
-	glycerolpolicy["ASPSPEED"] = 1.5
-	glycerolpolicy["DSPSPEED"] = 1.5
+	glycerolpolicy["DEFAULTPIPETTESPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["TIP_REUSE_LIMIT"] = 0
@@ -390,8 +384,7 @@ func MakeGlycerolPolicy() LHPolicy {
 
 func MakeViscousPolicy() LHPolicy {
 	glycerolpolicy := make(LHPolicy, 7)
-	glycerolpolicy["ASPSPEED"] = 1.5
-	glycerolpolicy["DSPSPEED"] = 1.5
+	glycerolpolicy["DEFAULTPIPETTESPEED"] = 1.5
 	glycerolpolicy["ASP_WAIT"] = 1.0
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["CAN_MULTI"] = true
@@ -414,8 +407,7 @@ func MakeSolventPolicy() LHPolicy {
 
 func MakeDNAPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 12)
-	dnapolicy["ASPSPEED"] = 2.0
-	dnapolicy["DSPSPEED"] = 2.0
+	dnapolicy["DEFAULTPIPETTESPEED"] = 2.0
 	dnapolicy["CAN_MULTI"] = false
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
@@ -474,8 +466,7 @@ func MakeDNACELLSMixMultiPolicy() LHPolicy {
 func MakeDetergentPolicy() LHPolicy {
 	detergentpolicy := make(LHPolicy, 9)
 	//        detergentpolicy["POST_MIX"] = 3
-	detergentpolicy["ASPSPEED"] = 1.0
-	detergentpolicy["DSPSPEED"] = 1.0
+	detergentpolicy["DEFAULTPIPETTESPEED"] = 1.0
 	detergentpolicy["CAN_MSA"] = false
 	detergentpolicy["CAN_SDD"] = false
 	detergentpolicy["DSPREFERENCE"] = 0
@@ -489,8 +480,7 @@ func MakeProteinPolicy() LHPolicy {
 	proteinpolicy := make(LHPolicy, 12)
 	proteinpolicy["POST_MIX"] = 5
 	proteinpolicy["POST_MIX_VOLUME"] = 50.0
-	proteinpolicy["ASPSPEED"] = 2.0
-	proteinpolicy["DSPSPEED"] = 2.0
+	proteinpolicy["DEFAULTPIPETTESPEED"] = 2.0
 	proteinpolicy["CAN_MSA"] = false
 	proteinpolicy["CAN_SDD"] = false
 	proteinpolicy["DSPREFERENCE"] = 0
@@ -544,8 +534,7 @@ func MakeNeedToMixPolicy() LHPolicy {
 	dnapolicy["PRE_MIX"] = 3
 	dnapolicy["PRE_MIX_VOLUME"] = 20.0
 	dnapolicy["PRE_MIX_RATE"] = 3.74
-	dnapolicy["ASPSPEED"] = 3.74
-	dnapolicy["DSPSPEED"] = 3.74
+	dnapolicy["DEFAULTPIPETTESPEED"] = 3.74
 	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
@@ -586,8 +575,7 @@ func PostMixPolicy() LHPolicy {
 	//dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
-	dnapolicy["ASPSPEED"] = 3.74
-	dnapolicy["DSPSPEED"] = 3.74
+	dnapolicy["DEFAULTPIPETTESPEED"] = 3.74
 	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
@@ -608,8 +596,7 @@ func SmartMixPolicy() LHPolicy {
 	policy["POST_MIX"] = 3
 	policy["POST_MIX_RATE"] = 3.74
 	policy["POST_MIX_VOLUME"] = 19.0
-	policy["ASPSPEED"] = 3.74
-	policy["DSPSPEED"] = 3.74
+	policy["DEFAULTPIPETTESPEED"] = 3.74
 	policy["CAN_MULTI"] = true
 	policy["CAN_MSA"] = false
 	policy["CAN_SDD"] = false
@@ -626,8 +613,7 @@ func MegaMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 10
 	dnapolicy["POST_MIX_RATE"] = 3.74
-	dnapolicy["ASPSPEED"] = 3.74
-	dnapolicy["DSPSPEED"] = 3.74
+	dnapolicy["DEFAULTPIPETTESPEED"] = 3.74
 	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false

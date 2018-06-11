@@ -40,10 +40,11 @@ const arbitraryZOffset = 4.0
 
 // Simulate a liquid handler Driver
 type VirtualLiquidHandler struct {
-	errorHistory [][]LiquidhandlingError
-	errors       []LiquidhandlingError
-	state        *RobotState
-	settings     *SimulatorSettings
+	errorHistory       [][]LiquidhandlingError
+	instructionHistory []liquidhandling.TerminalRobotInstruction
+	errors             []LiquidhandlingError
+	state              *RobotState
+	settings           *SimulatorSettings
 }
 
 //coneRadius hardcoded radius to assume for cones
@@ -54,6 +55,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 	var vlh VirtualLiquidHandler
 	vlh.errors = make([]LiquidhandlingError, 0)
 	vlh.errorHistory = make([][]LiquidhandlingError, 0)
+	vlh.instructionHistory = make([]liquidhandling.TerminalRobotInstruction, 0)
 
 	if settings == nil {
 		vlh.settings = DefaultSimulatorSettings()
@@ -165,15 +167,21 @@ func (self *VirtualLiquidHandler) GetErrors() []simulator.SimulationError {
 
 func (self *VirtualLiquidHandler) resetState() {
 	self.errorHistory = make([][]LiquidhandlingError, 0)
+	self.instructionHistory = make([]liquidhandling.TerminalRobotInstruction, 0)
 	self.errors = make([]LiquidhandlingError, 0)
 }
 
-func (self *VirtualLiquidHandler) undoLastState() {
+func (self *VirtualLiquidHandler) popLastState() (liquidhandling.TerminalRobotInstruction, []LiquidhandlingError) {
 	if len(self.errorHistory) <= 0 {
-		return
+		return nil, nil
 	}
 
+	err := self.errorHistory[len(self.errorHistory)-1]
+	ins := self.instructionHistory[len(self.instructionHistory)-1]
 	self.errorHistory = self.errorHistory[:len(self.errorHistory)-1]
+	self.instructionHistory = self.instructionHistory[:len(self.instructionHistory)-1]
+
+	return ins, err
 }
 
 func (self *VirtualLiquidHandler) saveState(ins liquidhandling.TerminalRobotInstruction) {
@@ -182,6 +190,7 @@ func (self *VirtualLiquidHandler) saveState(ins liquidhandling.TerminalRobotInst
 			mErr.setInstruction(len(self.errorHistory), ins)
 		}
 	}
+	self.instructionHistory = append(self.instructionHistory, ins)
 	self.errorHistory = append(self.errorHistory, self.errors)
 	self.errors = make([]LiquidhandlingError, 0)
 }
@@ -655,6 +664,9 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	for i, rc := range rel_coords {
 		adaptor.GetChannel(i).SetRelativePosition(rc)
 	}
+
+	pos := adaptor.GetGroup().GetPosition()
+	self.AddInfof("%s: moved adaptor group to: %f, %f, %f", describe(), pos.X, pos.Y, pos.Z)
 
 	//check for collisions in the new location
 	if err := assertNoCollisionsInGroup(adaptor, nil, 0.0); err != nil {
@@ -1203,12 +1215,14 @@ func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi i
 
 	//undo the last command that moved us into position
 	//assumption is that last command was a move...
-	self.undoLastState()
+	ins, _ := self.popLastState()
 
 	var ret driver.CommandStatus
 	loadedChannels := make([]int, 0, len(channels))
 
-	for _, chunk := range tipChunks {
+	self.AddInfo("Overriding last move command")
+
+	for i, chunk := range tipChunks {
 		width := len(chunk)
 		channelsToLoad := channels[len(loadedChannels) : len(loadedChannels)+width]
 		positionS := make([]string, multi)
@@ -1228,6 +1242,10 @@ func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi i
 		}
 
 		self.Move(positionS, wellcoords, reference, offsetXY, offsetXY, offsetZ, platetypeS, head)
+		if i == 0 {
+			//save the state of the first move, so the instruction counting matches
+			self.saveState(ins)
+		}
 		ret = self.LoadTips(channelsToLoad, head, width, platetypeS, positionS, wellcoords)
 		loadedChannels = append(loadedChannels, channelsToLoad...)
 	}

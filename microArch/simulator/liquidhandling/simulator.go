@@ -1467,7 +1467,9 @@ func (self *VirtualLiquidHandler) Finalize() driver.CommandStatus {
 
 //Wait - used
 func (self *VirtualLiquidHandler) Wait(time float64) driver.CommandStatus {
-	self.AddWarning("not yet implemented")
+	if time < 0.0 {
+		self.AddWarning("waiting for negative time")
+	}
 	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "WAIT ACK"}
 }
 

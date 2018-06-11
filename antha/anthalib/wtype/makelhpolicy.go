@@ -216,7 +216,6 @@ func MakePaintPolicy() LHPolicy {
 	policy := make(LHPolicy, 14)
 	policy["DSPREFERENCE"] = 0
 	policy["DSPZOFFSET"] = 0.5
-	policy["POST_MIX_Z"] = 0.5
 	policy["DEFAULTPIPETTESPEED"] = 1.5
 	policy["ASP_WAIT"] = 1.0
 	policy["DSP_WAIT"] = 1.0

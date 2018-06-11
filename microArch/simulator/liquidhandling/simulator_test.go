@@ -782,7 +782,7 @@ func Test_Multihead(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: movement limits prevent moving into position",
+				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: position -4.5x4.5x62.2 mm outside motion limits [0.0x0.0x0.0 mm+600.0x600.0x600.0 mm]",
 			},
 			[]*AssertionFn{ //assertions
 				positionAssertion(0, wtype.Coordinates{X: -13.5, Y: 4.5, Z: 62.2}),
@@ -3027,7 +3027,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: 50 ul of water from head 0 channel 0 to H1@plate1 : must also dispense 50 ul from channel 1 as head is not independent",
+				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to H1@plate1: must also dispense 50 ul from channel 1 as head is not independent",
 			},
 			nil, //assertions
 		},

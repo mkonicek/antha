@@ -128,7 +128,7 @@ func (self *VirtualLiquidHandler) Simulate(instructions []liquidhandling.Termina
 	for _, ins := range instructions {
 		err := ins.(liquidhandling.TerminalRobotInstruction).OutputTo(self)
 		if err != nil {
-			errors.Wrap(err, "while writing instructions to virtual device")
+			return errors.Wrap(err, "while writing instructions to virtual device")
 		}
 
 		self.saveState(ins)
@@ -1227,7 +1227,7 @@ func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi i
 			wellcoords[ch] = chunk[i].FormatA1()
 		}
 
-		ret = self.Move(positionS, wellcoords, reference, offsetXY, offsetXY, offsetZ, platetypeS, head)
+		self.Move(positionS, wellcoords, reference, offsetXY, offsetXY, offsetZ, platetypeS, head)
 		ret = self.LoadTips(channelsToLoad, head, width, platetypeS, positionS, wellcoords)
 		loadedChannels = append(loadedChannels, channelsToLoad...)
 	}

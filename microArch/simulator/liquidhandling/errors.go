@@ -69,7 +69,7 @@ func (self *GenericError) InstructionIndex() int {
 }
 
 func (self *GenericError) Error() string {
-	return fmt.Sprintf("(%s) %s[%d]: %s",
+	return fmt.Sprintf("(%v) %s[%d]: %s",
 		self.severity,
 		driver.HumanInstructionName(self.instruction),
 		self.instructionIndex,

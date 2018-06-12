@@ -408,6 +408,15 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 	}))
 }
 
+// MixInPlace will mix the component at the specified volume, additional post mixes may occur according to the Liquid Type of the component.
+// The location of the solution will remain the same.
+func MixInPlace(ctx context.Context, component *wtype.LHComponent, volume wunit.Volume) *wtype.LHComponent {
+	sampled, remaining := SplitSample(ctx, component, volume)
+	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
+		Components: []wtype.LHComponent{remaining, sampled},
+	}))
+}
+
 // SplitSample is essentially an inverse mix: takes one component and a volume and returns two
 // the question is then over what happens subsequently.. unlike mix this does not have a
 // destination as it's intrinsically a source operation

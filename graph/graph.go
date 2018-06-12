@@ -2,6 +2,7 @@
 package graph
 
 import "errors"
+import "github.com/antha-lang/antha/antha/anthalib/wutil/text"
 
 var (
 	errDuplicateNode = errors.New("duplicate node")
@@ -10,6 +11,10 @@ var (
 
 // A Node is a node in a graph
 type Node interface{}
+
+func summary(n Node) string {
+	return text.PrettyPrint(n)
+}
 
 // A Graph is a relation between nodes
 type Graph interface {

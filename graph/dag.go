@@ -41,7 +41,7 @@ func (a *topoOrder) cycleError() error {
 	if len(a.Cycle) == 0 {
 		return nil
 	}
-	return fmt.Errorf("cycle containing %p", a.Cycle[0])
+	return fmt.Errorf("topoOrder cycle containing %p", summary(a.Cycle[0]))
 }
 
 // Run topographic sort
@@ -80,9 +80,10 @@ type TopoSortOpt struct {
 // a in the resulting order.  Returns an error if graph contains a cycle.
 func TopoSort(opt TopoSortOpt) ([]Node, error) {
 	to := topoSort(opt)
-	if err := to.cycleError(); err != nil {
-		return nil, err
-	}
+	/*
+		if err := to.cycleError(); err != nil {
+			return nil, fmt.Errorf("topoSort error: %s", err.Error())
+		}*/
 	return to.Order, nil
 }
 

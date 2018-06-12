@@ -3,10 +3,11 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -148,9 +149,9 @@ const (
 	HVMaxRate           = 37.5
 	LVMinRate           = 0.0225
 	LVMaxRate           = 3.75
-	defaultZSpeed       = 120.0
+	defaultZSpeed       = 140.0
 	defaultZOffset      = 0.5
-	defaultPipetteSpeed = 3.0
+	defaultPipetteSpeed = 3.7
 )
 
 func getHVConfig() *wtype.LHChannelParameter {

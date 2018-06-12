@@ -211,6 +211,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Incubate":      "execute.Incubate",
 		"Mix":           "execute.Mix",
 		"MixInto":       "execute.MixInto",
+		"MixInPlace":    "execute.MixInPlace",
 		"MixNamed":      "execute.MixNamed",
 		"MixTo":         "execute.MixTo",
 		"MixerPrompt":   "execute.MixerPrompt",

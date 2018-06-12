@@ -13,10 +13,9 @@ const (
 	PolicyNameField string = "POLICYNAME"
 
 	// LiquidClass is the name of the liquid type checked at instruction generation.
-	// Currently this is analagous to the POLICYNAME
+	// Currently this is analogous to the POLICYNAME
 	LiquidClass string = "LIQUIDCLASS"
 
-	// DefaultPipetteSpeed is the key used to modify the default pipettte speed in a liquid policy.
 	// This value will be used for aspirating, dispensing and mixing.
 	DefaultPipetteSpeed string = "DEFAULTPIPETTESPEED"
 )

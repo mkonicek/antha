@@ -8,7 +8,17 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-const PolicyNameField string = "POLICYNAME"
+const (
+	// PolicyNameField returns the map entry of a liquid policy corresponding to the name of the policy.
+	PolicyNameField string = "POLICYNAME"
+
+	// LiquidClass is the name of the liquid type checked at instruction generation.
+	// Currently this is analogous to the POLICYNAME
+	LiquidClass string = "LIQUIDCLASS"
+
+	// This value will be used for aspirating, dispensing and mixing.
+	DefaultPipetteSpeed string = "DEFAULTPIPETTESPEED"
+)
 
 func GetPolicyConsequents() AParamSet {
 	return MakePolicyItems()
@@ -27,7 +37,7 @@ func MakeInstructionParameters() AParamSet {
 	params["FROMPLATETYPE"] = AParam{Name: "FROMPLATETYPE", Type: typemap["string"]}
 	params["HEAD"] = AParam{Name: "HEAD", Type: typemap["float64"]}
 	params["INSTRUCTIONTYPE"] = AParam{Name: "INSTRUCTIONTYPE", Type: typemap["string"]}
-	params["LIQUIDCLASS"] = AParam{Name: "LIQUIDCLASS", Type: typemap["string"]}
+	params[LiquidClass] = AParam{Name: LiquidClass, Type: typemap["string"]}
 	params["LLF"] = AParam{Name: "LLF", Type: typemap["string"]} // actually bool but no checks on that yet
 	params["MULTI"] = AParam{Name: "MULTI", Type: typemap["float64"]}
 	params["NEWADAPTOR"] = AParam{Name: "NEWADAPTOR", Type: typemap["string"]}
@@ -107,7 +117,7 @@ func MakePolicyItems() AParamSet {
 	alhpis["TIP_REUSE_LIMIT"] = AParam{Name: "TIP_REUSE_LIMIT", Type: typemap["int"], Desc: "number of times tips can be reused for asp/dsp cycles"}
 	alhpis["TOUCHOFF"] = AParam{Name: "TOUCHOFF", Type: typemap["bool"], Desc: "whether to move to TOUCHOFFSET after dispense"}
 	alhpis["TOUCHOFFSET"] = AParam{Name: "TOUCHOFFSET", Type: typemap["float64"], Desc: "mm above wb to touch off at"}
-	alhpis["DEFAULTPIPETTESPEED"] = AParam{Name: "DEFAULTPIPETTESPEED", Type: typemap["float64"], Desc: "Default pipette speed in ml/min"}
+	alhpis[DefaultPipetteSpeed] = AParam{Name: DefaultPipetteSpeed, Type: typemap["float64"], Desc: "Default pipette speed in ml/min"}
 	alhpis["DEFAULTZSPEED"] = AParam{Name: "DEFAULTZSPEED", Type: typemap["float64"], Desc: "Default z movement speed in mm/s"}
 	alhpis["PTZOFFSET"] = AParam{Name: "PTZOFFSET", Type: typemap["float64"], Desc: "Z offset for pistons to zero"}
 	alhpis["PTZREFERENCE"] = AParam{Name: "PTZREFERENCE", Type: typemap["int"], Desc: "Well reference for piston to zero: 0 = well bottom, 1 = well top, 2 = liquid level"}

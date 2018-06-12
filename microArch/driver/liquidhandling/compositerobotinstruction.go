@@ -25,14 +25,16 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
+
+	"github.com/pkg/errors"
 
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
@@ -1748,7 +1750,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	defaultpspeed, err = checkAndSaften(defaultpspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 	if err != nil {
-		return []RobotInstruction{}, errors.Wrap(err, "setting default pipette speed")
+		return []RobotInstruction{}, errors.Wrap(err, fmt.Sprintf("setting default pipette speed for policy %s", text.PrettyPrint(pol)))
 	}
 
 	// offsets
@@ -2447,7 +2449,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			if override || tb.Tiptype.Filtered {
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {
-				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLUME to %s cannot be achieved with current tip (type %s) volume limits %v, instruction details: %s", vmixvol.ToString(), ins.TipType, ins.Prms, text.PrettyPrint(ins)))
 			}
 		}
 

@@ -51,6 +51,9 @@ const (
 	// WELLTOVOLUME refers to the volume of liquid already present in the well location for which
 	// a sample is due to be transferred to.
 	WELLTOVOLUME = "WELLTOVOLUME"
+
+	//maxTouchOffset maximum value for TOUCHOFFSET which makes sense - values larger than this are capped to this value
+	maxTouchOffset = 5.0
 )
 
 type SingleChannelBlockInstruction struct {
@@ -2512,6 +2515,9 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	if touch_off {
 		touch_offset := SafeGetF64(pol, "TOUCHOFFSET")
+		if touch_offset > maxTouchOffset {
+			touch_offset = maxTouchOffset
+		}
 		mov := NewMoveInstruction()
 		mov.Head = ins.Head
 		mov.Pos = ins.PltTo

@@ -413,7 +413,7 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 func MixInPlace(ctx context.Context, component *wtype.LHComponent, volume wunit.Volume) *wtype.LHComponent {
 	sampled, remaining := SplitSample(ctx, component, volume)
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []wtype.LHComponent{remaining, sampled},
+		Components: []*wtype.LHComponent{remaining, sampled},
 	}))
 }
 

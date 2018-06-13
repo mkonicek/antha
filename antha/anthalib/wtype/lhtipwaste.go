@@ -126,7 +126,7 @@ func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, w
 		Y: wellystart - 0.5*w.GetSize().Y,
 		Z: wellzstart,
 	}
-	w.SetOffset(offset)
+	w.SetOffset(offset) //nolint
 	w.Crds = WellCoords{0, 0}
 
 	return &lht

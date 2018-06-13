@@ -45,6 +45,7 @@ func make6platefortest() *LHPlate {
 	p := NewLHPlate("6wellplate", "none", 2, 3, Coordinates{127.76, 85.48, 44.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
 	return p
 }
+*/
 
 func maketroughfortest() *LHPlate {
 	stshp := NewShape("box", "mm", 8.2, 72, 41.3)
@@ -52,8 +53,6 @@ func maketroughfortest() *LHPlate {
 	plate := NewLHPlate("DWST12", "Unknown", 1, 12, Coordinates{127.76, 85.48, 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
 	return plate
 }
-
-*/
 
 func TestPlateCreation(t *testing.T) {
 	p := makeplatefortest()

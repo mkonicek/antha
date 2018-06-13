@@ -963,14 +963,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// looks at components, determines what inputs are required
 	request, err = this.GetInputs(request)
 
-	fmt.Println("----")
-	fmt.Println("After GetInputs:")
-	//fmt.Printf("  Input_solutions: %v\n", request.Input_solutions)
-	fmt.Printf("  Input_vols_supplied: %v\n", request.Input_vols_supplied)
-	fmt.Printf("  Input_vols_required: %v\n", request.Input_vols_required)
-	fmt.Printf("  Input_vols_wanting: %v\n", request.Input_vols_wanting)
-	fmt.Println("----")
-
 	if err != nil {
 		return err
 	}
@@ -981,26 +973,12 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("----")
-	fmt.Println("After input_plate_setup:")
-	//fmt.Printf("  Input_solutions: %v\n", request.Input_solutions)
-	fmt.Printf("  Input_vols_supplied: %v\n", request.Input_vols_supplied)
-	fmt.Printf("  Input_vols_required: %v\n", request.Input_vols_required)
-	fmt.Printf("  Input_vols_wanting: %v\n", request.Input_vols_wanting)
-	fmt.Println("----")
 
 	// next we need to determine the liquid handler setup
 	request, err = this.Setup(ctx, request)
 	if err != nil {
 		return err
 	}
-	fmt.Println("----")
-	fmt.Println("After Setup:")
-	//fmt.Printf("  Input_solutions: %v\n", request.Input_solutions)
-	fmt.Printf("  Input_vols_supplied: %v\n", request.Input_vols_supplied)
-	fmt.Printf("  Input_vols_required: %v\n", request.Input_vols_required)
-	fmt.Printf("  Input_vols_wanting: %v\n", request.Input_vols_wanting)
-	fmt.Println("----")
 
 	// final insurance that plate names will be safe
 
@@ -1015,13 +993,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("----")
-	fmt.Println("After addWellTargets:")
-	//fmt.Printf("  Input_solutions: %v\n", request.Input_solutions)
-	fmt.Printf("  Input_vols_supplied: %v\n", request.Input_vols_supplied)
-	fmt.Printf("  Input_vols_required: %v\n", request.Input_vols_required)
-	fmt.Printf("  Input_vols_wanting: %v\n", request.Input_vols_wanting)
-	fmt.Println("----")
 
 	// now make instructions
 	request, err = this.ExecutionPlan(ctx, request)

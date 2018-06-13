@@ -121,6 +121,12 @@ func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, w
 	lht.WellZStart = wellzstart
 
 	w.SetParent(&lht) //nolint
+	offset := Coordinates{
+		X: wellxstart - 0.5*w.GetSize().X,
+		Y: wellystart - 0.5*w.GetSize().Y,
+		Z: wellzstart,
+	}
+	w.SetOffset(offset)
 	w.Crds = WellCoords{0, 0}
 
 	return &lht
@@ -284,8 +290,8 @@ func (self *LHTipwaste) WellCoordsToCoords(wc WellCoords, r WellReference) (Coor
 	}
 
 	return self.GetPosition().Add(Coordinates{
-		self.WellXStart + 0.5*self.AsWell.GetSize().X,
-		self.WellYStart + 0.5*self.AsWell.GetSize().Y,
+		self.WellXStart,
+		self.WellYStart,
 		z}), true
 }
 

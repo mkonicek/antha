@@ -244,10 +244,19 @@ func (self *LHTipbox) GetSize() Coordinates {
 }
 
 func (self *LHTipbox) GetTipBounds() BBox {
-	return BBox{
-		self.Bounds.GetPosition().Add(Coordinates{self.TipXStart, self.TipYStart, self.TipZStart}),
-		Coordinates{self.TipXOffset * float64(self.NCols()), self.TipYOffset * float64(self.NRows()), self.Tiptype.GetSize().Z},
+	tipSize := self.Tiptype.GetSize()
+
+	pos := self.Bounds.GetPosition().Add(Coordinates{
+		X: self.TipXStart - 0.5*tipSize.X,
+		Y: self.TipYStart - 0.5*tipSize.Y,
+		Z: self.TipZStart})
+
+	size := Coordinates{
+		X: self.TipXOffset*float64(self.NCols()-1) + tipSize.X,
+		Y: self.TipYOffset*float64(self.NRows()-1) + tipSize.Y,
+		Z: tipSize.Z,
 	}
+	return BBox{pos, size}
 }
 
 func (self *LHTipbox) GetBoxIntersections(box BBox) []LHObject {
@@ -413,9 +422,10 @@ func (tb *LHTipbox) GetChildByAddress(c WellCoords) LHObject {
 func (tb *LHTipbox) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
 	//get relative Coordinates
 	rel := r.Subtract(tb.GetPosition())
+	tipSize := tb.Tiptype.GetSize()
 	wc := WellCoords{
-		int(math.Floor(((rel.X - tb.TipXStart) / tb.TipXOffset))), // + 0.5)), Don't have to add .5 because
-		int(math.Floor(((rel.Y - tb.TipYStart) / tb.TipYOffset))), // + 0.5)), TipX/YStart is to TL corner, not center
+		int(math.Floor(((rel.X - tb.TipXStart + 0.5*tipSize.X) / tb.TipXOffset))),
+		int(math.Floor(((rel.Y - tb.TipYStart + 0.5*tipSize.Y) / tb.TipYOffset))),
 	}
 	if wc.X < 0 {
 		wc.X = 0
@@ -448,8 +458,8 @@ func (tb *LHTipbox) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordina
 	}
 
 	return tb.GetPosition().Add(Coordinates{
-		tb.TipXStart + (float64(wc.X)+0.5)*tb.TipXOffset,
-		tb.TipYStart + (float64(wc.Y)+0.5)*tb.TipYOffset,
+		tb.TipXStart + float64(wc.X)*tb.TipXOffset,
+		tb.TipYStart + float64(wc.Y)*tb.TipYOffset,
 		z}), true
 }
 
@@ -749,8 +759,8 @@ func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	nr := tipbox.Nrows
 	nc := tipbox.Ncols
 	//make sure tips are in the center of the address
-	x_off := (tipbox.TipXOffset - tiptype.GetSize().X) / 2.
-	y_off := (tipbox.TipYOffset - tiptype.GetSize().Y) / 2.
+	x_off := -tiptype.GetSize().X / 2.
+	y_off := -tiptype.GetSize().Y / 2.
 	for i := 0; i < nc; i++ {
 		for j := 0; j < nr; j++ {
 			tipbox.Tips[i][j] = tiptype.Dup()

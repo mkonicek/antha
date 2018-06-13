@@ -1135,9 +1135,10 @@ func (self *LHPlate) GetChildByAddress(c WellCoords) LHObject {
 
 func (self *LHPlate) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
 	rel := r.Subtract(self.GetPosition())
+	wellSize := self.Welltype.GetSize()
 	wc := WellCoords{
-		int(math.Floor(((rel.X - self.WellXStart) / self.WellXOffset) + 0.5)),
-		int(math.Floor(((rel.Y - self.WellYStart) / self.WellYOffset) + 0.5)),
+		int(math.Floor((rel.X - self.WellXStart + 0.5*wellSize.X) / self.WellXOffset)),
+		int(math.Floor((rel.Y - self.WellYStart + 0.5*wellSize.Y) / self.WellYOffset)),
 	}
 	if wc.X < 0 {
 		wc.X = 0

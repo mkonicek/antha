@@ -178,14 +178,14 @@ func TestTipboxGetWellBounds(t *testing.T) {
 	tb := maketipboxfortest()
 
 	eStart := Coordinates{
-		X: 0.5 - 0.5*8.2,
-		Y: 0.5 - 0.5*8.2,
-		Z: 0.5,
+		X: 0.5 - 0.5*7.3,
+		Y: 0.5 - 0.5*7.3,
+		Z: 0.0,
 	}
 	eSize := Coordinates{
-		X: 9.0*11 + 8.2,
-		Y: 9.0*7 + 8.2,
-		Z: 41.3,
+		X: 9.0*11 + 7.3,
+		Y: 9.0*7 + 7.3,
+		Z: 51.2,
 	}
 	eBounds := NewBBox(eStart, eSize)
 	bounds := tb.GetTipBounds()

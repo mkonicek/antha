@@ -328,7 +328,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 204.5, Y: 4.5, Z: 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 200.0, Y: 0.0, Z: 62.2}),
 			},
 		},
 		{
@@ -351,7 +351,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 111., Y: 440., Z: 93.}),
+				positionAssertion(0, wtype.Coordinates{X: 49.5, Y: 400., Z: 93.}),
 			},
 		},
 		{
@@ -374,7 +374,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 111., Y: 440., Z: 93}),
+				positionAssertion(0, wtype.Coordinates{X: 49.5, Y: 400., Z: 93}),
 			},
 		},
 		{
@@ -397,7 +397,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 4.5, Y: -22.5, Z: 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 0.0, Y: -27.0, Z: 62.2}),
 			},
 		},
 		{
@@ -420,7 +420,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 417.1, Y: 77.0, Z: 25.7}),
+				positionAssertion(0, wtype.Coordinates{X: 414.4, Y: 74.2, Z: 25.7}),
 			},
 		},
 		{
@@ -443,7 +443,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 417.1, Y: 41.0, Z: 25.7}),
+				positionAssertion(0, wtype.Coordinates{X: 414.4, Y: 38.2, Z: 25.7}),
 			},
 		},
 		{
@@ -466,7 +466,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 418.5, Y: 15.7, Z: 46.8}),
+				positionAssertion(0, wtype.Coordinates{X: 414.4, Y: -20.3, Z: 46.8}),
 			},
 		},
 		{

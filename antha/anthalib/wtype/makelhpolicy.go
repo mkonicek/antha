@@ -490,7 +490,7 @@ func MakeLoadPolicy() LHPolicy {
 
 	loadpolicy := make(LHPolicy, 14)
 	loadpolicy["ASPSPEED"] = 1.0
-	loadpolicy["DSPSPEED"] = 0.1
+	loadpolicy["DSPSPEED"] = 0.225
 	loadpolicy["CAN_MSA"] = false
 	loadpolicy["CAN_SDD"] = false
 	loadpolicy["TOUCHOFF"] = false
@@ -508,7 +508,7 @@ func MakeLoadPolicy() LHPolicy {
 func MakeLoadWaterPolicy() LHPolicy {
 	loadpolicy := make(LHPolicy)
 	loadpolicy["ASPSPEED"] = 1.0
-	loadpolicy["DSPSPEED"] = 0.1
+	loadpolicy["DSPSPEED"] = 0.225
 	loadpolicy["CAN_MSA"] = false
 	//loadpolicy["CAN_SDD"] = false
 	loadpolicy["TOUCHOFF"] = false

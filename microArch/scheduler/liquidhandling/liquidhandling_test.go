@@ -1241,7 +1241,7 @@ func TestPlateIDMap(t *testing.T) {
 	}
 }
 
-//four mixes into a colum with 2 different volumes
+//four mixes into a column with 2 different volumes
 //expected behaviour - each pair of samples with equal volume is pipetted together
 //original failure - a set of 3 1ul volumes are pipetted together, then the rest of the volume is made up with single channel operations
 func TestOveractiveMultichannel(t *testing.T) {
@@ -1290,10 +1290,4 @@ func TestOveractiveMultichannel(t *testing.T) {
 		}
 	}
 
-	//for i, ins := range rq.Instructions {
-	//	fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
-	//}
-
-	//fmt.Printf("input_plates: %v\n", rq.Input_plates)
-	//fmt.Printf("output_plates: %v\n", rq.Output_plates)
 }

@@ -120,6 +120,9 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	}
 
 	fmt.Printf("for i := 0; i < l = %d; i++\n", l)
+	//make lists of components to attempt to transfer simultaneously
+	var componentsToMove [][]*wtype.LHComponent
+	var instructionsToUse []LHIVector
 	for i := 0; i < l; i++ {
 		fmt.Printf("  i := %d\n", i)
 		var inssToUse LHIVector
@@ -153,15 +156,34 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			continue
 		}
 
-		orientation := wtype.LHVChannel
-		independent := false
+		componentsToMove = append(componentsToMove, cmps)
+		instructionsToUse = append(instructionsToUse, inssToUse)
+	}
 
-		if channelprms != nil {
-			orientation = channelprms.Orientation
-			independent = channelprms.Independent
-		}
+	orientation := wtype.LHVChannel
+	independent := false
 
-		parallelTransfers, err := robot.GetComponents(GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: orientation, Multi: multi, Independent: independent, LegacyVolume: legacyVolume})
+	if channelprms != nil {
+		orientation = channelprms.Orientation
+		independent = channelprms.Independent
+	}
+
+	if !independent {
+		//volumes in each parallel set must be the same, so segment groups of compoents such that this is the case
+		componentsToMove, instructionsToUse = segmentAllByVolume(componentsToMove, instructionsToUse)
+	}
+
+	for i := 0; i < len(componentsToMove); i++ {
+
+		parallelTransfers, err := robot.GetComponents(
+			GetComponentsOptions{
+				Cmps:         componentsToMove[i],
+				Carryvol:     carryvol,
+				Ori:          orientation,
+				Multi:        multi,
+				Independent:  independent,
+				LegacyVolume: legacyVolume,
+			})
 
 		if err != nil {
 			return nil, err
@@ -175,7 +197,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		}
 
 		for _, t := range parallelTransfers.Transfers {
-			transfers, err := makeTransfers(t, cmps, robot, inssToUse, carryvol)
+			transfers, err := makeTransfers(t, componentsToMove[i], robot, instructionsToUse[i], carryvol)
 
 			if err != nil {
 				return nil, err
@@ -187,6 +209,50 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	}
 
 	return insOut, nil
+}
+
+func segmentAllByVolume(inComponentsByVolume [][]*wtype.LHComponent, inInstructionsToUse []LHIVector) ([][]*wtype.LHComponent, []LHIVector) {
+	var retComponentsToMove [][]*wtype.LHComponent
+	var retInstructionsToUse []LHIVector
+
+	for i := 0; i < len(inComponentsByVolume); i++ {
+		c, ins := segmentByVolume(inComponentsByVolume[i], inInstructionsToUse[i])
+		retComponentsToMove = append(retComponentsToMove, c...)
+		retInstructionsToUse = append(retInstructionsToUse, ins...)
+	}
+
+	return retComponentsToMove, retInstructionsToUse
+}
+
+//split up the idsets such that each instruction in the set has the same volume
+func segmentByVolume(components []*wtype.LHComponent, instructions LHIVector) ([][]*wtype.LHComponent, []LHIVector) {
+
+	var retComponents [][]*wtype.LHComponent
+	var retInstructions []LHIVector
+
+	var currComponents []*wtype.LHComponent
+	var currInstructions LHIVector
+
+	lastVolume := wunit.ZeroVolume()
+	for i, component := range components {
+
+		if len(currComponents) > 0 && !component.Volume().EqualTo(lastVolume) {
+			retComponents = append(retComponents, currComponents)
+			retInstructions = append(retInstructions, currInstructions)
+			currComponents = make([]*wtype.LHComponent, 0)
+			currInstructions = make(LHIVector, 0)
+		}
+
+		currComponents = append(currComponents, component)
+		currInstructions = append(currInstructions, instructions[i])
+		lastVolume = component.Volume()
+	}
+	if len(currComponents) > 0 {
+		retComponents = append(retComponents, currComponents)
+		retInstructions = append(retInstructions, currInstructions)
+	}
+
+	return retComponents, retInstructions
 }
 
 func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {

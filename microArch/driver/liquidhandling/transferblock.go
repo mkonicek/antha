@@ -311,55 +311,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 		}
 	}
 
-	if !prm.Independent {
-		//volumes in each parallel set must be the same, segment so this is the case
-		ret = segmentByVolume(ret, ins)
-	}
-
 	return ret, nil
-}
-
-//split up the idsets such that each instruction in the set has the same volume
-func segmentByVolume(inSets SetOfIDSets, instructions []*wtype.LHInstruction) SetOfIDSets {
-	fmt.Println("\n\nsegmentByVolume")
-
-	fmt.Printf("inSets: %v\n", inSets)
-	instructionByID := make(map[string]*wtype.LHInstruction, len(instructions))
-	for _, instruction := range instructions {
-		instructionByID[instruction.ID] = instruction
-		fmt.Printf("  instructionByID[\"%s\"] = %p\n", instruction.ID, instruction)
-	}
-
-	var ret SetOfIDSets
-	var lastVolume float64
-	for _, inSet := range inSets {
-		var outSets []IDSet
-		var currSet IDSet
-		for _, id := range inSet {
-			instruction, ok := instructionByID[id]
-			if !ok { //needed because IDSets sometimes contain empty strings
-				continue
-			}
-
-			fmt.Printf("  if %d > 0 && %f != %f\n", len(currSet), instruction.Vol, lastVolume)
-			if len(currSet) > 0 && instruction.Vol != lastVolume {
-				outSets = append(outSets, currSet)
-				currSet = make(IDSet, 0)
-			}
-
-			currSet = append(currSet, id)
-			lastVolume = instruction.Vol
-		}
-		if len(currSet) > 0 {
-			outSets = append(outSets, currSet)
-		}
-		ret = append(ret, outSets...)
-	}
-
-	fmt.Printf("return %v\n", ret)
-	fmt.Println("")
-
-	return ret
 }
 
 func get_rows(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) SetOfIDSets {

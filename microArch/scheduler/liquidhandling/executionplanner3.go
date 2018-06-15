@@ -59,6 +59,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 
 		if ch.Values[0].Type == wtype.LHIPRM {
 			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
+			fmt.Printf("prm := liquidhandling.NewMessageInstruction(ch.Values[0])")
 			request.InstructionSet.Add(prm)
 		} else if hasSplit(ch.Values) {
 			if !allSplits(ch.Values) {
@@ -74,6 +75,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			}
 
 			splitBlock := liquidhandling.NewSplitBlockInstruction(ch.Values)
+			fmt.Println("splitBlock := liquidhandling.NewSplitBlockInstruction(ch.Values)")
 			request.InstructionSet.Add(splitBlock)
 		} else {
 			// otherwise...
@@ -81,6 +83,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			// -- essentially each node of the topological graph is passed wholesale
 			// into the instruction generator to be teased apart as appropriate
 
+			fmt.Println("tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)")
 			tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
 
 			request.InstructionSet.Add(tfb)

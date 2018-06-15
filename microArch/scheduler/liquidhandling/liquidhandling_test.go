@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 	"strconv"
 	"strings"
@@ -274,6 +275,14 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 	//initialise request
 	rq = GetLHRequestForTest()
 
+	// add plates and tip boxes
+	inPlate := GetPlateForTest()
+	rq.Input_platetypes = append(rq.Input_platetypes, inPlate)
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.Tips = tipBoxes
+
+	it := wtype.NewAddressIterator(inPlate, wtype.RowWise, wtype.TopToBottom, wtype.LeftToRight, false)
+
 	for k := 0; k < len(samples); k++ {
 		ins := wtype.NewLHMixInstruction()
 
@@ -282,19 +291,20 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 		ins.AddComponent(samples[k])
 		ins.AddProduct(GetComponentForTest(ctx, "water", samples[k].Volume()))
 
+		if !it.Valid() {
+			return nil, errors.New("out of space on input plate")
+		}
+
+		ins.Welladdress = it.Curr().FormatA1()
+		it.Next()
+
 		rq.Add_instruction(ins)
 	}
-
-	// add plates and tip boxes
-	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
-
-	rq.Tips = tipBoxes
 
 	rq.ConfigureYourself()
 
 	if err := lh.Plan(ctx, rq); err != nil {
-		return rq, fmt.Errorf("Got an error planning: %s", err.Error())
+		return rq, errors.WithMessage(err, "while planning")
 	}
 	return rq, nil
 }
@@ -1229,4 +1239,61 @@ func TestPlateIDMap(t *testing.T) {
 			t.Errorf("%s with id %s exists in initial LHProperties, but isn't mapped to final LHProperties", wtype.ClassOf(obj), id)
 		}
 	}
+}
+
+//four mixes into a colum with 2 different volumes
+//expected behaviour - each pair of samples with equal volume is pipetted together
+//original failure - a set of 3 1ul volumes are pipetted together, then the rest of the volume is made up with single channel operations
+func TestOveractiveMultichannel(t *testing.T) {
+
+	ctx := GetContextForTest()
+
+	source := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
+
+	samples := make([]*wtype.LHComponent, 4)
+
+	samples[0] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
+	samples[1] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
+	samples[2] = mixer.Sample(source, wunit.NewVolume(100.0, "ul"))
+	samples[3] = mixer.Sample(source, wunit.NewVolume(100.0, "ul"))
+
+	rq, err := configureTransferRequestMutliSamplesTest("multiwater", samples...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(rq.Instructions) == 0 {
+		t.Fatal("No instructions generated")
+	}
+
+	volOK := func(volumes []wunit.Volume) bool {
+		for _, v := range volumes {
+			if v.IsZero() {
+				continue
+			}
+			if vol := v.ConvertToString("ul"); vol != 1.0 && vol != 100 {
+				return false
+			}
+		}
+		return true
+	}
+
+	for i, ins := range rq.Instructions {
+		//assertion 1: multi should equal 2 in all cases
+		if multi, ok := ins.GetParameter("MULTI").(int); ok && multi != 2 {
+			t.Errorf("multi was %d not 2 for instruction %d", multi, i) //, liquidhandling.InsToString(ins))
+		}
+
+		//assertion 2: dispenses should be of 1 or 100 ul only
+		if dsp, ok := ins.(*liquidhandling.DispenseInstruction); ok && !volOK(dsp.Volume) {
+			t.Errorf("expected volumes of 1 or 100 ul only: got %v", dsp.Volume)
+		}
+	}
+
+	//for i, ins := range rq.Instructions {
+	//	fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
+	//}
+
+	//fmt.Printf("input_plates: %v\n", rq.Input_plates)
+	//fmt.Printf("output_plates: %v\n", rq.Output_plates)
 }

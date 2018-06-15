@@ -34,6 +34,11 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	var tfr []*TransferInstruction
 	var err error
 
+	fmt.Println("TI.Generate(...) ti.Inss = ")
+	for i, ins := range ti.Inss {
+		fmt.Printf("  %d: %s\n", i, ins)
+	}
+
 	// assessing evaporation with this potentially
 	//timer := robot.GetTimer()
 	inss := make([]RobotInstruction, 0, 1)
@@ -47,16 +52,29 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	// list of ids
 	parallel_sets, prm, err := get_parallel_sets_robot(ctx, ti.Inss, robot, policy)
 
+	fmt.Printf("parallel_sets : %v\n", parallel_sets)
+	fmt.Printf("prm : %v\n", prm)
+
 	// what if prm is nil?
 
 	if err != nil {
 		return inss, err
 	}
+	// XXX HJK delete dont' merge
+	//	tPSet := make([]IDSet, 2)
+	//	tPSet[0] = parallel_sets[0][:2]
+	//	tPSet[1] = parallel_sets[0][2:]
+	//	parallel_sets = tPSet
+
+	fmt.Printf("parallel_sets : %v\n", parallel_sets)
+	fmt.Printf("prm : %v\n", prm)
 
 	for _, set := range parallel_sets {
+		fmt.Printf("set := %v\n", set)
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
 
+		fmt.Println("  insset = ")
 		for i, id := range set {
 			// parallel sets are arranged in accordance with destination layout
 			// hence can include gaps
@@ -65,6 +83,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 			}
 			seen[id] = true
 			insset[i] = insm[id]
+			fmt.Printf("    %d: %v\n", i, insm[id])
 		}
 
 		// aggregates across components
@@ -72,6 +91,10 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		// in fact we do not return a different robot now... but we might
 		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
+		fmt.Printf("  ConvertInstructions(...) -> %d\n", len(tfr))
+		for _, tf := range tfr {
+			fmt.Printf("    %s\n", InsToString(RobotInstruction(tf)))
+		}
 
 		if err != nil {
 			//panic(err)
@@ -178,6 +201,7 @@ func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, ro
 		return SetOfIDSets{}, &wtype.LHChannelParameter{}, nil
 	}
 
+	fmt.Printf("  possible_sets = %s\n", possible_sets)
 	// now we make our choice
 	return choose_parallel_sets(possible_sets, corresponding_params, ins)
 }
@@ -287,9 +311,55 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 		}
 	}
 
-	// ret here is just splurged straight out
+	if !prm.Independent {
+		//volumes in each parallel set must be the same, segment so this is the case
+		ret = segmentByVolume(ret, ins)
+	}
 
 	return ret, nil
+}
+
+//split up the idsets such that each instruction in the set has the same volume
+func segmentByVolume(inSets SetOfIDSets, instructions []*wtype.LHInstruction) SetOfIDSets {
+	fmt.Println("\n\nsegmentByVolume")
+
+	fmt.Printf("inSets: %v\n", inSets)
+	instructionByID := make(map[string]*wtype.LHInstruction, len(instructions))
+	for _, instruction := range instructions {
+		instructionByID[instruction.ID] = instruction
+		fmt.Printf("  instructionByID[\"%s\"] = %p\n", instruction.ID, instruction)
+	}
+
+	var ret SetOfIDSets
+	var lastVolume float64
+	for _, inSet := range inSets {
+		var outSets []IDSet
+		var currSet IDSet
+		for _, id := range inSet {
+			instruction, ok := instructionByID[id]
+			if !ok { //needed because IDSets sometimes contain empty strings
+				continue
+			}
+
+			fmt.Printf("  if %d > 0 && %f != %f\n", len(currSet), instruction.Vol, lastVolume)
+			if len(currSet) > 0 && instruction.Vol != lastVolume {
+				outSets = append(outSets, currSet)
+				currSet = make(IDSet, 0)
+			}
+
+			currSet = append(currSet, id)
+			lastVolume = instruction.Vol
+		}
+		if len(currSet) > 0 {
+			outSets = append(outSets, currSet)
+		}
+		ret = append(ret, outSets...)
+	}
+
+	fmt.Printf("return %v\n", ret)
+	fmt.Println("")
+
+	return ret
 }
 
 func get_rows(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) SetOfIDSets {

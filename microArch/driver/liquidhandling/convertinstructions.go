@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -118,7 +119,9 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		l = inssIn.MaxLen()
 	}
 
+	fmt.Printf("for i := 0; i < l = %d; i++\n", l)
 	for i := 0; i < l; i++ {
+		fmt.Printf("  i := %d\n", i)
 		var inssToUse LHIVector
 		var cmps []*wtype.LHComponent
 		if horiz {
@@ -162,6 +165,13 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 		if err != nil {
 			return nil, err
+		}
+		fmt.Printf("\n  parallelTransfers.Transfers = (len %d)\n", len(parallelTransfers.Transfers))
+		for i, t := range parallelTransfers.Transfers {
+			fmt.Printf("    %d: multi = %d\n", i, len(t.PlateIDs))
+			for j := range t.PlateIDs {
+				fmt.Printf("      %d: %s %s %v\n", j, t.PlateIDs[j], t.WellCoords[j], t.Vols[j])
+			}
 		}
 
 		for _, t := range parallelTransfers.Transfers {

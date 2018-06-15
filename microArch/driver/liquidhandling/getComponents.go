@@ -256,6 +256,7 @@ func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
 }
 
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
+	fmt.Println("\nGetComponents")
 	rep := newReply()
 	// build list of possible sources -- this is a list of ComponentVectors
 

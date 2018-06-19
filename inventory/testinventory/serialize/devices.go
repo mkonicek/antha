@@ -3,7 +3,10 @@ package main
 import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory/testinventory"
 )
+
+const MinimumZHeightPermissableForLVPipetMax = testinventory.MinimumZHeightPermissableForLVPipetMax
 
 // heights in mm
 const (

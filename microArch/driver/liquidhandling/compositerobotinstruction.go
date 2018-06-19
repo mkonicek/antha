@@ -36,6 +36,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
 )
@@ -151,6 +152,33 @@ func tipArrays(multi int) ([]string, []*wtype.LHChannelParameter) {
 	return tt, chanA
 }
 
+func minimumPermissableTipSizeForUsingRiserFreeWithLowPlate(ctx context.Context) float64 {
+	tipbox, err := inventory.NewTipbox(ctx, "Gilson200")
+	if err != nil {
+		panic(err)
+	}
+
+	tip := tipbox.Tiptype
+	return tip.GetSize().Z
+}
+
+// The height below which an error will be generated
+// when attempting to perform transfers with low volume head and tips (0.5 - 20ul) on the Gilson PipetMax.
+const MinimumZHeightPermissableForLVPipetMax = testinventory.MinimumZHeightPermissableForLVPipetMax
+
+func validTipTypeForPlate(ctx context.Context, tiptype *wtype.LHTip, plateType string) error {
+	plate, err := inventory.NewPlate(ctx, plateType)
+	if err != nil {
+		return err
+	}
+	if plate.WellZStart < MinimumZHeightPermissableForLVPipetMax {
+		if tiptype.GetSize().Z < minimumPermissableTipSizeForUsingRiserFreeWithLowPlate(ctx) {
+			return fmt.Errorf("invalid tip type (%s) and plate combination (%s). Please use a plate with a higher Z start position, put the plate on a riser or use a larger tip type.", tiptype.GetType(), plate.Type)
+		}
+	}
+	return nil
+}
+
 func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 
@@ -213,6 +241,14 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || channel != newchannel
 			change_tips = change_tips || newtiptype != tiptype
+
+			if err := validTipTypeForPlate(ctx, newtipp, ins.FPlateType[t]); err != nil {
+				return ret, err
+			}
+
+			if err := validTipTypeForPlate(ctx, newtipp, ins.TPlateType[t]); err != nil {
+				return ret, err
+			}
 
 			this_thing := prms.Plates[ins.PltFrom[t]].Wellcoords[ins.WellFrom[t]].Contents()
 
@@ -483,6 +519,14 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 
 			// big dangerous assumption here: we need to check if anything is different
 			this_thing := prms.Plates[ins.PltFrom[t][0]].Wellcoords[ins.WellFrom[t][0]].Contents()
+
+			if err := validTipTypeForPlate(ctx, newtips[0], ins.FPlateType[t][0]); err != nil {
+				return ret, err
+			}
+
+			if err := validTipTypeForPlate(ctx, newtips[0], ins.TPlateType[t][0]); err != nil {
+				return ret, err
+			}
 
 			if last_thing != nil {
 				if this_thing.CName != last_thing.CName {
@@ -1722,6 +1766,7 @@ func (ins *SuckInstruction) GetParameter(name string) interface{} {
 	return nil
 }
 
+// why no reference to tip type here?
 func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// MIS XXX -- separate out channel-level parameters from head-level ones
 	ret := make([]RobotInstruction, 0, 1)
@@ -2451,6 +2496,11 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			} else {
 				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLUME to %s cannot be achieved with current tip (type %s) volume limits %v, instruction details: %s", vmixvol.ToString(), ins.TipType, ins.Prms, text.PrettyPrint(ins)))
 			}
+
+			if err := validTipTypeForPlate(ctx, tb.Tiptype, ins.PltTo[0]); err != nil {
+				return ret, err
+			}
+
 		}
 
 		if ok {

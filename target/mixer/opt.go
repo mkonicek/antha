@@ -49,13 +49,14 @@ type Opt struct {
 	DriverSpecificTipWastePreferences []string
 	DriverSpecificWashPreferences     []string
 
-	ModelEvaporation     bool
-	OutputSort           bool
-	PrintInstructions    bool
-	UseDriverTipTracking bool
-	UseLLF               bool // Use liquid level following
-	LegacyVolume         bool // Don't track volumes for intermediates
-	FixVolumes           bool // Aim to revise requested volumes to service requirements
+	ModelEvaporation          bool
+	OutputSort                bool
+	PrintInstructions         bool
+	UseDriverTipTracking      bool
+	UseLLF                    bool // Use liquid level following
+	LegacyVolume              bool // Don't track volumes for intermediates
+	FixVolumes                bool // Aim to revise requested volumes to service requirements
+	DisablePhysicalSimulation bool //bypass physical simulation in the case of false errors
 
 	// Two ways to set user liquid policies rule set
 	CustomPolicyData    map[string]wtype.LHPolicy // Set rule set from policies

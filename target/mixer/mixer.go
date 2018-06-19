@@ -221,6 +221,10 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	req.Options.FixVolumes = a.opt.FixVolumes
 
+	//physical simulation override
+
+	req.Options.DisablePhysicalSimulation = a.opt.DisablePhysicalSimulation
+
 	return &lhreq{
 		LHRequest:     req,
 		LHProperties:  prop,

@@ -104,6 +104,7 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 	opt.PrintInstructions = viper.GetBool("printInstructions")
 
 	opt.UseDriverTipTracking = viper.GetBool("useDriverTipTracking")
+	opt.DisablePhysicalSimulation = viper.GetBool("disablePhysicalSimulation")
 	opt.LegacyVolume = viper.GetBool("legacyVolumeTracking")
 
 	opt.FixVolumes = viper.GetBool("fixVolumes")
@@ -374,6 +375,7 @@ func init() {
 	flags.Bool("outputSort", false, "Sort execution by output - improves tip usage")
 	flags.Bool("printInstructions", false, "Output the raw instructions sent to the driver")
 	flags.Bool("useDriverTipTracking", false, "If the driver has tip tracking available, use it")
+	flags.Bool("disablePhysicalSimulation", false, "Do not physically simulate the workflow - use to suppress issues cased by bugs in physical simulations")
 	flags.Bool("withMulti", false, "Allow use of new multichannel planning - deprecated")
 	flags.Float64("residualVolumeWeight", 0.0, "Residual volume weight")
 	flags.Int("maxPlates", 0, "Maximum number of plates")

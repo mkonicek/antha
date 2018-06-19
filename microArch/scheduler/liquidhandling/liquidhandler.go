@@ -161,9 +161,7 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 
 	err = this.Simulate(request)
 	if err != nil {
-		//since the simulator is... tender right now, let's take this with a pinch of salt
-		logger.Info("ignoring physical simulation error, user disgretion advised")
-		//return err
+		return err
 	} else {
 		logger.Info("physical simulation completed successfully")
 	}
@@ -201,12 +199,16 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 	return nil
 }
 
-// run the request via the simulator
+// run the request via the physical simulator
 func (this *Liquidhandler) Simulate(request *LHRequest) error {
+
+	if request.Options.DisablePhysicalSimulation {
+		return nil
+	}
 
 	instructions := (*request).Instructions
 	if instructions == nil {
-		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
+		return wtype.LHError(wtype.LH_ERR_OTHER, "cannot simulate request: no instructions")
 	}
 
 	// set up the simulator with default settings

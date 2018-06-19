@@ -1243,59 +1243,23 @@ func getTestSplitSample(component *wtype.LHComponent, volume float64) *wtype.LHI
 	return ret
 }
 
-func TestNonSplitSampleMultichannel(t *testing.T) {
+func getTestMix(components []*wtype.LHComponent, address string) *wtype.LHInstruction {
+	mix := mixer.GenericMix(mixer.MixOptions{
+		Components: components,
+		Address:    address,
+	})
 
-	ctx := GetContextForTest()
-
-	var instructions []*wtype.LHInstruction
-
-	diluent := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
-	stock := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000, "ul"))
-	stock.Type = wtype.LTMultiWater
-
-	wc := wtype.MakeWellCoords("A1")
-
-	for y := 0; y < 8; y++ {
-		wc.Y = y
-		wc.X = 0
-		instA := mixer.GenericMix(mixer.MixOptions{
-			Components: []*wtype.LHComponent{
-				mixer.Sample(stock, wunit.NewVolume(20.0, "ul")),
-				mixer.Sample(diluent, wunit.NewVolume(20.0, "ul")),
-			},
-			Address: wc.FormatA1(),
-		})
-
-		move := mixer.Sample(instA.Results[0], wunit.NewVolume(20.0, "ul"))
-		move.DeclareInstance()
-		wc.X = 1
-		instB := mixer.GenericMix(mixer.MixOptions{
-			Components: []*wtype.LHComponent{
-				move,
-			},
-			Address: wc.FormatA1(),
-		})
-
-		instructions = append(instructions, instA, instB)
-	}
-
-	_, rq, err := runPlan(ctx, instructions)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	//assert that there is some 8-way multi channel
-	seenMultiEight := false
-	for _, ins := range rq.Instructions {
-		if multi, ok := ins.GetParameter("MULTI").(int); ok && multi == 8 {
-			seenMultiEight = true
+	mx := 0
+	for _, c := range components {
+		if c.Generation() > mx {
+			mx = c.Generation()
 		}
 	}
+	mix.SetGeneration(mx)
+	mix.Results[0].SetGeneration(mx + 1)
+	mix.Results[0].DeclareInstance()
 
-	if !seenMultiEight {
-		t.Error("Expected 8-way multichanneling but none seen")
-	}
-
+	return mix
 }
 
 func TestSplitSampleMultichannel(t *testing.T) {
@@ -1311,31 +1275,23 @@ func TestSplitSampleMultichannel(t *testing.T) {
 	wc := wtype.MakeWellCoords("A1")
 
 	for y := 0; y < 8; y++ {
+		lastStock := stock
 		wc.Y = y
-		wc.X = 0
-		instA := mixer.GenericMix(mixer.MixOptions{
-			Components: []*wtype.LHComponent{
-				mixer.Sample(stock, wunit.NewVolume(20.0, "ul")),
-				mixer.Sample(diluent, wunit.NewVolume(20.0, "ul")),
-			},
-			Address: wc.FormatA1(),
-		})
+		for x := 0; x < 2; x++ {
+			wc.X = x
+			diluentSample := mixer.Sample(diluent, wunit.NewVolume(20.0, "ul"))
 
-		split := getTestSplitSample(instA.Results[0], 20.0)
-		//move := mixer.Sample(instA.Results[0], wunit.NewVolume(20.0, "ul"))
-		split.Results[0].DeclareInstance()
-		wc.X = 1
-		instB := mixer.GenericMix(mixer.MixOptions{
-			Components: []*wtype.LHComponent{
-				split.Results[0],
-			},
-			Address: wc.FormatA1(),
-		})
+			split := getTestSplitSample(lastStock, 20.0)
 
-		instructions = append(instructions, instA, instB)
+			mix := getTestMix([]*wtype.LHComponent{split.Results[0], diluentSample}, wc.FormatA1())
+
+			lastStock = mix.Results[0]
+
+			instructions = append(instructions, mix, split)
+		}
 	}
 
-	_, rq, err := runPlan(ctx, instructions)
+	lh, rq, err := runPlan(ctx, instructions)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1343,7 +1299,6 @@ func TestSplitSampleMultichannel(t *testing.T) {
 	//assert that there is some 8-way multi channel
 	seenMultiEight := false
 	for _, ins := range rq.Instructions {
-		fmt.Println(liquidhandling.InsToString(ins))
 		if multi, ok := ins.GetParameter("MULTI").(int); ok && multi == 8 {
 			seenMultiEight = true
 		}
@@ -1352,6 +1307,8 @@ func TestSplitSampleMultichannel(t *testing.T) {
 	if !seenMultiEight {
 		t.Error("Expected 8-way multichanneling but none seen")
 	}
+
+	OutputSetup(lh.FinalProperties)
 
 }
 

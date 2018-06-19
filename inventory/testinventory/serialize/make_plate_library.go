@@ -36,12 +36,8 @@ const MinimumZHeightPermissableForLVPipetMax = 0.636
 //var commonwelltypes
 
 var platespecificoffset = map[string]float64{
-	"pcrplate_skirted": gilsonoffsetpcrplate,
-	"greiner384":       gilsonoffsetgreiner,
-	"costar48well":     3.0,
 	"Nuncon12well":     11.0, // this must be wrong!! check z start without riser properly
 	"Nuncon12wellAgar": 11.0, // this must be wrong!! check z start without riser properly
-	"VWR12well":        3.0,
 }
 
 // function to check if a platename already contains a riser
@@ -238,7 +234,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	wellyoffset = 13.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 3.0       // distance from top left side of plate to first well
 	ystart = -1.0      // distance from top left side of plate to first well
-	zstart = 2.0       // offset of bottom of deck to bottom of well (this includes agar estimate)
+	zstart = -1.0      // offset of bottom of deck to bottom of well (this includes agar estimate)
 
 	wellsperrow = 8
 	wellspercolumn = 6
@@ -329,7 +325,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	wellyoffset = 4.5 //centre of well to centre of neighbouring well in y direction
 	xstart = -2.5     // distance from top left side of plate to first well
 	ystart = -2.5     // distance from top left side of plate to first well
-	zstart = 2.5      // offset of bottom of deck to bottom of well
+	zstart = 0.5      // offset of bottom of deck to bottom of well
 
 	square := wtype.NewShape("box", "mm", xdim, ydim, zdim)
 	welltype384 := wtype.NewLHWell("ul", 125, 10, square, bottomtype, xdim, ydim, zdim, bottomh, "mm")
@@ -553,7 +549,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	wellyoffset = 27.0 //centre of well to centre of neighbouring well in y direction
 	xstart = 11.0      // distance from top left side of plate to first well
 	ystart = 4.0       // distance from top left side of plate to first well
-	zstart = 1.0       // offset of bottom of deck to bottom of well (this includes agar estimate)
+	zstart = -2.0      // offset of bottom of deck to bottom of well (this includes agar estimate)
 
 	wellsperrow = 4
 	wellspercolumn = 3
@@ -663,7 +659,7 @@ func makeStripTube() *wtype.LHPlate {
 
 // pcr plate skirted
 func makeSkirtedPCRPlate() *wtype.LHPlate {
-	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
+	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax-2.0)
 }
 
 func makeGreinerVBottomPlate() *wtype.LHPlate {

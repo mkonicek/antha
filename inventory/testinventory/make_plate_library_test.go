@@ -2,10 +2,11 @@ package testinventory
 
 import (
 	"context"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"strings"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/inventory"
@@ -19,9 +20,9 @@ type platetest struct {
 
 var tests = []platetest{
 	{TestPlateName: "reservoir", ExpectedZStart: 0.0, ExpectedHeight: 40.0},
-	{TestPlateName: "pcrplate_skirted", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
+	{TestPlateName: "pcrplate_skirted", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax - 2.0, ExpectedHeight: 15.5},
 	{TestPlateName: "pcrplate", ExpectedZStart: MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
-	{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
+	{TestPlateName: "greiner384", ExpectedZStart: 0.5, ExpectedHeight: 14.0},
 	{TestPlateName: "Nuncon12well", ExpectedZStart: 4.0, ExpectedHeight: 19.0},
 	{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9.0, ExpectedHeight: 19.0},
 }

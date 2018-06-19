@@ -7107,7 +7107,7 @@ var plateBytes = []byte(`
   "WellYOffset": 27,
   "WellXStart": 11,
   "WellYStart": 4,
-  "WellZStart": 1,
+  "WellZStart": -2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7347,7 +7347,7 @@ var plateBytes = []byte(`
   "WellYOffset": 13,
   "WellXStart": 3,
   "WellYStart": -1,
-  "WellZStart": 2,
+  "WellZStart": -1,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8787,7 +8787,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": -2.5,
   "WellYStart": -2.5,
-  "WellZStart": 2.5,
+  "WellZStart": 0.5,
   "Extra": {}
  },
  {
@@ -10118,7 +10118,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 0,
   "WellYStart": 0,
-  "WellZStart": 0.636,
+  "WellZStart": -1.364,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"

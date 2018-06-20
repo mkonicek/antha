@@ -857,10 +857,6 @@ func (i incubator) GetName() string {
 
 // was plateAccessories.go
 
-// The height below which an error will be generated
-// when attempting to perform transfers with low volume head and tips (0.5 - 20ul) on the Gilson PipetMax.
-const MinimumZHeightPermissableForLVPipetMax = 0.636
-
 //var commonwelltypes
 
 var platespecificoffset = map[string]float64{

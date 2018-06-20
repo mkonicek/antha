@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"math"
 	"reflect"
 	"strings"
@@ -161,9 +162,7 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 
 	err = this.Simulate(request)
 	if err != nil {
-		return err
-	} else {
-		logger.Info("physical simulation completed successfully")
+		return errors.WithMessage(err, "during physical simulation")
 	}
 
 	err = this.Execute(request)
@@ -265,7 +264,8 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	//return the worst error if it's actually an error
 	if vlh.HasError() {
-		return vlh.GetWorstError()
+		simErr := vlh.GetWorstError()
+		return errors.Errorf("%s: %s\nPhysical simulation can be disabled using the \"DisablePhysicalSimulation\" configuration option.", simErr.FunctionName(), simErr.Message())
 	}
 	return nil
 }

@@ -96,6 +96,10 @@ func (self *SimulationError) FunctionName() string {
 	return self.fname
 }
 
+func (self *SimulationError) Message() string {
+	return self.message
+}
+
 func (self *SimulationError) SetFunctionName(fname string) {
 	self.fname = fname
 }

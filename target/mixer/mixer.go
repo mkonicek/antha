@@ -304,10 +304,13 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 	systemPolicies := systemPolicyRuleSet.Policies
 	var userPolicies = make(map[string]wtype.LHPolicy)
 	var allPolicies = make(map[string]wtype.LHPolicy)
+	var liquidClassConversionMap = make(map[string]string)
 
 	for key, value := range systemPolicies {
 		allPolicies[key] = value
 	}
+
+	userPolicyRuleSet := wtype.NewLHPolicyRuleSet()
 
 	for _, mixInstruction := range mixes {
 		for _, component := range mixInstruction.Components {
@@ -333,6 +336,7 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 						allPolicies[newPolicyName] = mergedPolicy
 						userPolicies[newPolicyName] = mergedPolicy
 						component.Type = wtype.LiquidType(newPolicyName)
+						liquidClassConversionMap[newPolicyName] = matchingSystemPolicy.Name()
 					}
 				} else {
 					allPolicies[string(component.Type)] = component.Policy
@@ -341,11 +345,17 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 			}
 		}
 	}
-	userPolicyRuleSet := wtype.NewLHPolicyRuleSet()
+
 	if len(userPolicies) > 0 {
 		userPolicyRuleSet, err := wtype.AddUniversalRules(userPolicyRuleSet, userPolicies)
 		if err != nil {
 			return err
+		}
+		for newClass, original := range liquidClassConversionMap {
+			err := wtype.CopyRulesFromPolicy(userPolicyRuleSet, original, newClass)
+			if err != nil {
+				return err
+			}
 		}
 		lhreq.AddUserPolicies(userPolicyRuleSet)
 	}

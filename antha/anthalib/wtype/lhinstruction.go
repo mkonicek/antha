@@ -100,6 +100,14 @@ func (lhi *LHInstruction) ProductIDs() []string {
 	return r
 }
 
+func (lhi *LHInstruction) InputIDs() []string {
+	r := make([]string, 0, len(lhi.Components))
+	for _, c := range lhi.Components {
+		r = append(r, c.ID)
+	}
+	return r
+}
+
 func (lhi *LHInstruction) GetPlateType() string {
 	if lhi.OutPlate != nil {
 		return lhi.OutPlate.Type

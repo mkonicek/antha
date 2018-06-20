@@ -45,7 +45,7 @@ xcode-select --install
 
 # Install some external dependencies
 brew update
-brew install mercurial pkg-config glpk sqlite3 opencv
+brew install mercurial pkg-config glpk
 
 # Install antha
 mkdir -p $GOPATH/src/github.com/antha-lang
@@ -76,7 +76,7 @@ sudo tar -C /usr/local -xzf go1.7.3.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 
 # Install antha external dependencies
-sudo apt-get install -y libglpk-dev libopencv-dev libsqlite3-dev git
+sudo apt-get install -y libglpk-dev git
 
 # Install antha
 mkdir -p $GOPATH/src/github.com/antha-lang

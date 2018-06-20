@@ -61,7 +61,7 @@ func (sh *Shape) Dup() *Shape {
 }
 
 func (sh *Shape) String() string {
-	return fmt.Sprintf("Generic Shape [%fx%fx%f]", sh.H, sh.W, sh.D)
+	return fmt.Sprintf("%s [%fx%fx%f]", sh.ShapeName, sh.H, sh.W, sh.D)
 }
 
 func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {

@@ -83,6 +83,13 @@ func (self *LHWell) GetClass() string {
 	return "well"
 }
 
+func (self *LHWell) GetWellCoords() WellCoords {
+	if self == nil {
+		return ZeroWellCoords()
+	}
+	return self.Crds
+}
+
 //@implement LHObject
 func (self *LHWell) GetPosition() Coordinates {
 	return OriginOf(self).Add(self.Bounds.GetPosition())
@@ -670,9 +677,7 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 
-		crds := wc.FormatA1()
-
-		new_well = plate.Wellcoords[crds]
+		new_well = plate.GetChildByAddress(wc).(*LHWell)
 
 		if new_well.IsEmpty() {
 			break
@@ -687,12 +692,15 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 			}
 		*/
 		if !new_well.Contains(component) {
+			new_well = nil
 			continue
 		}
 		vol_left := get_vol_left(new_well)
 
 		if vol < vol_left {
 			break
+		} else {
+			new_well = nil
 		}
 	}
 

@@ -214,7 +214,6 @@ func TestBlowMixing(t *testing.T) {
 }
 
 func TestSuckMixing(t *testing.T) {
-
 	tenUl := wunit.NewVolume(10.0, "ul")
 
 	tests := []*PolicyTest{
@@ -1081,7 +1080,6 @@ func TestTipReuse(t *testing.T) {
 				},
 			},
 			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
-			Robot:                nil,
 			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD,MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
 			Assertions: []*InstructionAssertion{
 				{},
@@ -1104,7 +1102,6 @@ func TestTipReuse(t *testing.T) {
 				},
 			},
 			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
-			Robot:                nil,
 			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
 			Assertions: []*InstructionAssertion{
 				{},
@@ -1271,10 +1268,54 @@ func TestTouchoff(t *testing.T) {
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
+					Instruction: 2, //move prior to dispense
+					Values: map[string]interface{}{
+						"REFERENCE": []int{0},
+						"OFFSETZ":   []float64{0.5},
+					},
+				},
+				{
 					Instruction: 4, //touchoff move
 					Values: map[string]interface{}{
 						"REFERENCE": []int{0},        // well bottom
 						"OFFSETZ":   []float64{2.37}, // as set
+					},
+				},
+			},
+		},
+		{
+			Name: "test large touchoff",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"TOUCHOFF":    true,
+						"TOUCHOFFSET": maxTouchOffset + 5.0,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                nil,
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 2, //move prior to dispense
+					Values: map[string]interface{}{
+						"REFERENCE": []int{0},
+						"OFFSETZ":   []float64{0.5},
+					},
+				},
+				{
+					Instruction: 4, //touchoff move
+					Values: map[string]interface{}{
+						"REFERENCE": []int{0},                  // well bottom
+						"OFFSETZ":   []float64{maxTouchOffset}, // as set
 					},
 				},
 			},

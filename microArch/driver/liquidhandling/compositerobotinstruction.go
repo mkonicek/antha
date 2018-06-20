@@ -25,14 +25,16 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
+
+	"github.com/pkg/errors"
 
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
@@ -49,6 +51,9 @@ const (
 	// WELLTOVOLUME refers to the volume of liquid already present in the well location for which
 	// a sample is due to be transferred to.
 	WELLTOVOLUME = "WELLTOVOLUME"
+
+	//maxTouchOffset maximum value for TOUCHOFFSET which makes sense - values larger than this are capped to this value
+	maxTouchOffset = 5.0
 )
 
 type SingleChannelBlockInstruction struct {
@@ -1742,10 +1747,12 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	allowOutOfRangePipetteSpeeds := SafeGetBool(pol, "OVERRIDEPIPETTESPEED")
 
-	defaultpspeed, err = checkAndSaften(defaultpspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+	head := prms.GetLoadedHead(ins.Head)
+
+	defaultpspeed, err = checkAndSaften(defaultpspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 	if err != nil {
-		return []RobotInstruction{}, errors.Wrap(err, "setting default pipette speed")
+		return []RobotInstruction{}, errors.Wrap(err, fmt.Sprintf("setting default pipette speed for policy %s", text.PrettyPrint(pol)))
 	}
 
 	// offsets
@@ -1904,7 +1911,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		changepipspeed := (mixrate != defaultpspeed) && (mixrate > 0.0)
 
 		if changepipspeed {
-			mixrate, err = checkAndSaften(mixrate, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+			mixrate, err = checkAndSaften(mixrate, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 			if err != nil {
 				return []RobotInstruction{}, errors.Wrap(err, "setting pre mix pipetting speed")
 			}
@@ -1964,7 +1971,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	changepspeed := (apspeed != defaultpspeed) && (apspeed > 0.0)
 
 	if changepspeed {
-		apspeed, err = checkAndSaften(apspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+		apspeed, err = checkAndSaften(apspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 		if err != nil {
 			return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
@@ -2184,9 +2191,11 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	allowOutOfRangePipetteSpeeds := SafeGetBool(pol, "OVERRIDEPIPETTESPEED")
 
+	head := prms.GetLoadedHead(ins.Head)
+
 	// change pipette speed?
 	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
-	defaultpspeed, err = checkAndSaften(defaultpspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+	defaultpspeed, err = checkAndSaften(defaultpspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 	if err != nil {
 		return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
@@ -2293,7 +2302,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	}
 
 	if setpspeed {
-		dpspeed, err = checkAndSaften(dpspeed, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+		dpspeed, err = checkAndSaften(dpspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 		if err != nil {
 			return []RobotInstruction{}, errors.Wrap(err, "setting pipette dispense speed")
@@ -2444,7 +2453,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			if override || tb.Tiptype.Filtered {
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {
-				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLUME to %s cannot be achieved with current tip (type %s) volume limits %v, instruction details: %s", vmixvol.ToString(), ins.TipType, ins.Prms, text.PrettyPrint(ins)))
 			}
 		}
 
@@ -2473,7 +2482,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		}
 
 		if changespeed {
-			mixrate, err = checkAndSaften(mixrate, prms.HeadsLoaded[ins.Head].Params.Minspd.RawValue(), prms.HeadsLoaded[ins.Head].Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+			mixrate, err = checkAndSaften(mixrate, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
 
 			if err != nil {
 				return []RobotInstruction{}, errors.Wrap(err, "setting post mix pipetting speed")
@@ -2510,6 +2519,9 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	if touch_off {
 		touch_offset := SafeGetF64(pol, "TOUCHOFFSET")
+		if touch_offset > maxTouchOffset {
+			touch_offset = maxTouchOffset
+		}
 		mov := NewMoveInstruction()
 		mov.Head = ins.Head
 		mov.Pos = ins.PltTo

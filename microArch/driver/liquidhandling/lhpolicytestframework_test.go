@@ -9,8 +9,12 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
+)
+
+const (
+	defaultZSpeed       = 120.0
+	defaultZOffset      = 0.5
+	defaultPipetteSpeed = 3.0
 )
 
 type Condition interface {
@@ -98,7 +102,7 @@ func (self *PolicyTest) Run(t *testing.T) {
 	ctx := GetContextForTest()
 
 	if self.Robot == nil {
-		robot, err := makeTestGilsonWithPlates(ctx)
+		robot, err := makeGilsonWithPlatesAndTipboxesForTest(ctx)
 		if err != nil {
 			err = errors.Wrap(err, self.Name)
 			t.Fatal(err)
@@ -148,9 +152,9 @@ const (
 	HVMaxRate           = 37.5
 	LVMinRate           = 0.0225
 	LVMaxRate           = 3.75
-	defaultZSpeed       = 120.0
+	defaultZSpeed       = 140.0
 	defaultZOffset      = 0.5
-	defaultPipetteSpeed = 3.0
+	defaultPipetteSpeed = 3.7
 )
 
 func getHVConfig() *wtype.LHChannelParameter {

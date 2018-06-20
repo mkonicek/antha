@@ -1164,13 +1164,13 @@ func (self *LHPlate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordin
 	child := self.GetChildByAddress(wc)
 
 	var z float64
-	if r == BottomReference {
+	//return the bottom as a lower bound for liquid reference
+	if r == BottomReference || r == LiquidReference {
 		z = child.GetPosition().Z
 	} else if r == TopReference {
 		z = child.GetPosition().Z + child.GetSize().Z
-	} else if r == LiquidReference {
-		panic("Haven't implemented liquid level yet")
 	}
+
 	center := child.GetPosition().Add(child.GetSize().Multiply(0.5))
 
 	return Coordinates{center.X, center.Y, z}, true

@@ -29,8 +29,16 @@ package search
 
 import "strings"
 
-func equalFold(a, b string) bool {
+// EqualFold performs case insensitive evaluation of the equality of two strings.
+// The strings will both be trimmed of leading and trailing space prior to evaluation.
+func EqualFold(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
+}
+
+// ContainsEqualFold performs case insensitive evaluation of whether the substr value is present in str.
+// The strings will both be trimmed of leading and trailing space prior to evaluation.
+func ContainsEqualFold(str, substr string) bool {
+	return strings.Contains(strings.ToUpper(strings.TrimSpace(str)), strings.ToUpper(strings.TrimSpace(substr)))
 }
 
 // InStrings searchs for a target string in a slice of strings and returns a boolean.
@@ -41,7 +49,7 @@ func InStrings(list []string, target string, options ...Option) bool {
 
 	for _, entry := range list {
 		if ignore {
-			if equalFold(entry, target) {
+			if EqualFold(entry, target) {
 				return true
 			}
 		} else {
@@ -62,7 +70,7 @@ func PositionsInStrings(list []string, target string, options ...Option) []int {
 	var positions []int
 	for i, entry := range list {
 		if ignore {
-			if equalFold(entry, target) {
+			if EqualFold(entry, target) {
 				positions = append(positions, i)
 			}
 		} else {
@@ -83,7 +91,7 @@ func PartialInStrings(list []string, target string, options ...Option) bool {
 
 	for _, entry := range list {
 		if ignore {
-			if strings.Contains(strings.ToUpper(strings.TrimSpace(entry)), strings.ToUpper(strings.TrimSpace(target))) {
+			if ContainsEqualFold(entry, target) {
 				return true
 			}
 		} else {

@@ -369,6 +369,7 @@ message MapstringAnyMessageMessage{
 repeated MapstringAnyMessageMessageFieldEntry map_field =1;
 }
 message LHPropertiesMessage {
+    reserved 18;
 	string Arg_1 = 1;
 	int64 Arg_2 = 2;
 	MapstringPtrToLHPositionMessageMessage Arg_3 = 3;
@@ -386,7 +387,7 @@ message LHPropertiesMessage {
 	string Arg_15 = 15;
 	string Arg_16 = 16;
 	ArrayOfPtrToLHHeadMessage Arg_17 = 17;
-	ArrayOfPtrToLHHeadMessage Arg_18 = 18;
+	//ArrayOfPtrToLHHeadMessage Arg_18 = 18; //headsloaded replaced by head assemblies
 	ArrayOfPtrToLHAdaptorMessage Arg_19 = 19;
 	ArrayOfPtrToLHTipMessage Arg_20 = 20;
 	ArrayOfstring Arg_21 = 21;
@@ -399,6 +400,7 @@ message LHPropertiesMessage {
 	ArrayOfPtrToLHChannelParameterMessage Arg_28 = 28;
 	MapstringCoordinatesMessageMessage Arg_29 = 29;
 	int64 Arg_30 = 30;
+    ArrayOfPtrToLHHeadAssembliesMessage Arg_31 = 31;
 }
 message ArrayOfPtrToLHHeadMessage{
 	repeated PtrToLHHeadMessage arg_1=1;
@@ -557,12 +559,14 @@ message LHTipwasteMessage {
 	BBoxMessage Arg_12 = 12;
 }
 message LHHeadMessage {
+    reserved 4;
 	string Arg_1 = 1;
 	string Arg_2 = 2;
 	string Arg_3 = 3;
-	PtrToLHAdaptorMessage Arg_4 = 4;
+	//PtrToLHAdaptorMessage Arg_4 = 4;
 	PtrToLHChannelParameterMessage Arg_5 = 5;
     TipLoadingBehaviourMessage Arg_6 = 6;
+    int64 Arg_7 = 7; //index of the adaptor in the machine
 }
 message TipLoadingBehaviourMessage {
     bool Arg_1 = 1; //OverrideLoadTipsCommand
@@ -571,6 +575,26 @@ message TipLoadingBehaviourMessage {
     int64 Arg_4 = 4; //VerticalDiection: 1 = top to bottom, -1 = bottom to top
     int64 Arg_5 = 5; //HorizontalDirection: 1 = left to right, -1 = bottom to top
     int64 Arg_6 = 6; //chunking behaviour: 0 = none, 1: forward, 2: reverse
+}
+message LHHeadAssemblyPositionMessage {
+    CoordinatesMessage Offset = 1;
+    int64 HeadIndex = 2;
+}
+message PtrToLHHeadAssemblyPositionMessage {
+    LHHeadAssemblyPositionMessage val = 1;
+}
+message ArrayOfPtrToLHHeadAssemblyPositionMessage {
+    repeated PtrToLHHeadAssemblyPositionMessage val = 1;
+}
+message LHHeadAssemblyMessage {
+    ArrayOfPtrToLHHeadAssemblyPositionMessage Positions = 1;
+    PtrToBBoxMessage MotionLimits = 2;
+}
+message PtrToLHHeadAssemblyMessage {
+    LHHeadAssemblyMessage val = 1;
+}
+message ArrayOfPtrToLHHeadAssembliesMessage {
+    repeated PtrToLHHeadAssemblyMessage val = 1;
 }
 message ArrayOfPtrToLHAdaptorMessage{
 	repeated PtrToLHAdaptorMessage arg_1=1;
@@ -631,6 +655,9 @@ message PtrToLHWellMessage{
 message BBoxMessage {
 	CoordinatesMessage Arg_1 = 1;
 	CoordinatesMessage Arg_2 = 2;
+}
+message PtrToBBoxMessage {
+    BBoxMessage val = 1;
 }
 message ArrayOfPtrToLHWellMessage{
 	repeated PtrToLHWellMessage arg_1=1;

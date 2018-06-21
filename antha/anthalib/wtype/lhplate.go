@@ -1161,12 +1161,12 @@ func (self *LHPlate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordin
 		return Coordinates{}, false
 	}
 
-	child := self.GetChildByAddress(wc)
+	child := self.GetChildByAddress(wc).(*LHWell)
 
 	var z float64
 	//return the bottom as a lower bound for liquid reference
 	if r == BottomReference || r == LiquidReference {
-		z = child.GetPosition().Z
+		z = child.GetPosition().Z + child.Bottomh
 	} else if r == TopReference {
 		z = child.GetPosition().Z + child.GetSize().Z
 	}

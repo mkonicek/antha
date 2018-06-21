@@ -85,8 +85,7 @@ func makeTipboxForTest() *wtype.LHTipbox {
 	w := wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	w.Extra["InnerL"] = 5.5
 	w.Extra["InnerW"] = 5.5
-	w.Extra["Tipeffectiveheight"] = 34.6
-	tip := wtype.NewLHTip("gilson", "Gilson20", 0.5, 20.0, "ul", false, shp)
+	tip := wtype.NewLHTip("gilson", "Gilson20", 0.5, 20.0, "ul", false, shp, 34.6)
 	tb := wtype.NewLHTipbox(8, 12, wtype.Coordinates{127.76, 85.48, 60.13}, "Gilson", "DL10 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, 0.0, 0.0, 28.93)
 
 	return tb

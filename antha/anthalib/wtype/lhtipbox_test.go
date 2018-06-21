@@ -8,7 +8,7 @@ import (
 func maketipboxfortest() *LHTipbox {
 	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
 	w := NewLHWell("ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp)
+	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
 	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)
 	return tb
 }
@@ -53,10 +53,7 @@ func TestMaskToWellCoords(t *testing.T) {
 
 // func NewLHTipbox(nrows, ncols int, height float64, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64)
 func TestGetTipsMasked(t *testing.T) {
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp)
-	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+	tb := maketipboxfortest()
 
 	mask := []bool{true}
 
@@ -74,10 +71,7 @@ func TestGetTipsMasked(t *testing.T) {
 }
 
 func TestGetTipsMasked2(t *testing.T) {
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp)
-	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+	tb := maketipboxfortest()
 
 	mask := make([]bool, 8)
 	mask[2] = true
@@ -95,10 +89,7 @@ func TestGetTipsMasked2(t *testing.T) {
 }
 
 func TestHasCleanTips(t *testing.T) {
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp)
-	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+	tb := maketipboxfortest()
 
 	m := make([]bool, 8)
 

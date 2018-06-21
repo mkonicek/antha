@@ -665,9 +665,6 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 		adaptor.GetChannel(i).SetRelativePosition(rc)
 	}
 
-	pos := adaptor.GetGroup().GetPosition()
-	self.AddInfof("%s: moved adaptor group to: %f, %f, %f", describe(), pos.X, pos.Y, pos.Z)
-
 	//check for collisions in the new location
 	if err := assertNoCollisionsInGroup(adaptor, nil, 0.0); err != nil {
 		self.AddErrorf("%s: collision detected: %s", describe(), err.Error())

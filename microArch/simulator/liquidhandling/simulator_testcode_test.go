@@ -230,13 +230,14 @@ func makeLHPlate(p *LHPlateParams, name string) *wtype.LHPlate {
 }
 
 type LHTipParams struct {
-	mfr      string
-	ttype    string
-	minvol   float64
-	maxvol   float64
-	volunit  string
-	filtered bool
-	shape    ShapeParams
+	mfr             string
+	ttype           string
+	minvol          float64
+	maxvol          float64
+	volunit         string
+	filtered        bool
+	shape           ShapeParams
+	effectiveHeight float64
 }
 
 func makeLHTip(p *LHTipParams) *wtype.LHTip {
@@ -246,7 +247,8 @@ func makeLHTip(p *LHTipParams) *wtype.LHTip {
 		p.maxvol,
 		p.volunit,
 		p.filtered,
-		makeShape(&p.shape))
+		makeShape(&p.shape),
+		p.effectiveHeight)
 }
 
 type LHTipboxParams struct {
@@ -490,6 +492,7 @@ func default_lhtipbox(name string) *wtype.LHTipbox {
 				7.3,          // w               float64
 				51.2,         // d               float64
 			},
+			44.7, //effectiveHeight
 		},
 		LHWellParams{ // well
 			wtype.ZeroWellCoords(), // crds            string
@@ -541,6 +544,7 @@ func small_lhtipbox(name string) *wtype.LHTipbox {
 				7.3,          // w               float64
 				51.2,         // d               float64
 			},
+			44.7, //effectiveHeight
 		},
 		LHWellParams{ // well
 			wtype.ZeroWellCoords(), // crds            string

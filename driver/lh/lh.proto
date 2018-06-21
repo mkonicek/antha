@@ -624,6 +624,7 @@ message LHTipMessage {
     bool Arg_7 = 7;
     PtrToShapeMessage Arg_8 = 8;
     BBoxMessage Arg_9 = 9;
+    double EffectiveHeight = 10; 
 }
 message LHDeviceMessage {
 	string Arg_1 = 1;

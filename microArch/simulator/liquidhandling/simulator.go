@@ -740,7 +740,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 				}
 			} else if wells[ch] != nil {
 				//a non-explicitly requested tip is in a well. If the well has stuff in it, it'll get aspirated
-				if c := wells[ch].Contents(); !c.IsZero() {
+				if c := wells[ch].Contents(); !c.IsZero() && arg.adaptor.GetChannel(ch).HasTip() {
 					self.AddErrorf(
 						"%s: channel %d will inadvertantly aspirate %s from well %s as head is not independent",
 						describe(), ch, c.Name(), wells[ch].GetName())
@@ -1641,14 +1641,6 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 
 		//check that the wells are within the bounds of the plate
 		if plate, ok := obj.(*wtype.LHPlate); ok {
-			//apply the well position correction
-			plate.WellXStart += XCorrection
-			plate.WellYStart += YCorrection
-			corr := wtype.Coordinates{X: XCorrection, Y: YCorrection, Z: 0.0}
-			for _, w := range plate.Wellcoords {
-				w.SetOffset(w.Bounds.GetPosition().Add(corr)) //nolint
-			}
-
 			plateSize := plate.GetSize()
 			wellOff := plate.GetWellOffset()
 			wellLim := wellOff.Add(plate.GetWellSize())
@@ -1665,10 +1657,14 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 			}
 
 			if overSpill.Z > 0.0 {
-				self.AddWarningf("position \"%s\": invalid plate type \"%s\" : increasing height by %0.1f mm to match well height",
+				self.AddWarningf("position \"%s\": invalid plate type \"%s\": wells extend above plate, reducing well height by %0.1f mm",
 					position, wtype.TypeOf(plate), overSpill.Z)
-				plateSize.Z += overSpill.Z
-				plate.Bounds.SetSize(plateSize)
+				wellSize := plate.Welltype.GetSize()
+				wellSize.Z -= overSpill.Z
+				plate.Welltype.Bounds.Size = wellSize
+				for _, well := range plate.Wellcoords {
+					well.Bounds.Size = wellSize
+				}
 			}
 
 			if overSpill.X > 0.0 || overSpill.Y > 0.0 {

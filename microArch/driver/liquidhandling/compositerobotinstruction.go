@@ -152,6 +152,8 @@ func tipArrays(multi int) ([]string, []*wtype.LHChannelParameter) {
 	return tt, chanA
 }
 
+// we know the Gilson200 tips should work with no riser so let's take that as the minimum height for now.
+// This should be deleted and replaced with the simulator anyway.
 func minimumPermissableTipSizeForUsingRiserFreeWithLowPlate(ctx context.Context) float64 {
 	tipbox, err := inventory.NewTipbox(ctx, "Gilson200")
 	if err != nil {

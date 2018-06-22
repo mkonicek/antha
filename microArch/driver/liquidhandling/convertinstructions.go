@@ -214,7 +214,7 @@ func segmentAllByVolume(inComponentsByVolume [][]*wtype.LHComponent, inInstructi
 	return retComponentsToMove, retInstructionsToUse
 }
 
-//split up the idsets such that each instruction in the set has the same volume
+//split up the idsets such that each instruction in the set has the same volume. incoming instructions are sorted in channel order
 func segmentByVolume(components []*wtype.LHComponent, instructions LHIVector) ([][]*wtype.LHComponent, []LHIVector) {
 
 	var retComponents [][]*wtype.LHComponent
@@ -224,7 +224,9 @@ func segmentByVolume(components []*wtype.LHComponent, instructions LHIVector) ([
 	var currInstructions LHIVector
 
 	lastVolume := wunit.ZeroVolume()
-	for i, component := range components {
+	for i := range components {
+		component := components[i]
+		instruction := instructions[i]
 
 		if len(currComponents) > 0 && !component.Volume().EqualTo(lastVolume) {
 			retComponents = append(retComponents, currComponents)
@@ -234,7 +236,7 @@ func segmentByVolume(components []*wtype.LHComponent, instructions LHIVector) ([
 		}
 
 		currComponents = append(currComponents, component)
-		currInstructions = append(currInstructions, instructions[i])
+		currInstructions = append(currInstructions, instruction)
 		lastVolume = component.Volume()
 	}
 	if len(currComponents) > 0 {

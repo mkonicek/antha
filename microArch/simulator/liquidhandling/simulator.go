@@ -1217,8 +1217,6 @@ func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi i
 	var ret driver.CommandStatus
 	loadedChannels := make([]int, 0, len(channels))
 
-	self.AddInfo("Overriding last move command")
-
 	for i, chunk := range tipChunks {
 		width := len(chunk)
 		channelsToLoad := channels[len(loadedChannels) : len(loadedChannels)+width]

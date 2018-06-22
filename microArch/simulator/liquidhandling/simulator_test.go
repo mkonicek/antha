@@ -377,7 +377,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 414.4, Y: 74.2, Z: 25.7}),
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: 63.0, Z: 25.7}),
 			},
 		},
 		{
@@ -400,7 +400,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 414.4, Y: 38.2, Z: 25.7}),
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: 27.0, Z: 25.7}),
 			},
 		},
 		{
@@ -423,7 +423,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 414.4, Y: -20.3, Z: 46.8}),
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: -31.5, Z: 46.8}),
 			},
 		},
 		{
@@ -670,7 +670,7 @@ func TestCrashes(t *testing.T) {
 				"(err) Move[0]: head 0 channels 0-7 to A1-H1@tipbox2 at position tipbox_2: collision detected: head 0 channels 0-7 and head 1 channels 0-7 and tips A1-H1,A3-H3@tipbox2 at position tipbox_2",
 			},
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 132.5, Y: 4.5, Z: 60.2}),
+				positionAssertion(0, wtype.Coordinates{X: 128.0, Y: 0.0, Z: 60.2}),
 			},
 		},
 		{
@@ -759,8 +759,8 @@ func Test_Multihead(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 132.5, Y: 4.5, Z: 62.2}),
-				positionAssertion(1, wtype.Coordinates{X: 150.5, Y: 4.5, Z: 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 128.0, Y: 0.0, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 146.0, Y: 0.0, Z: 62.2}),
 			},
 		},
 		{
@@ -782,7 +782,7 @@ func Test_Multihead(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: position -4.5x4.5x62.2 mm outside motion limits [0.0x0.0x0.0 mm+600.0x600.0x600.0 mm]",
+				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: position -9.0x0.0x62.2 mm outside motion limits [0.0x0.0x0.0 mm+600.0x600.0x600.0 mm]",
 			},
 			[]*AssertionFn{ //assertions
 				positionAssertion(0, wtype.Coordinates{X: -13.5, Y: 4.5, Z: 62.2}),

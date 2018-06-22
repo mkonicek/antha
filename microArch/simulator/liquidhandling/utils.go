@@ -444,7 +444,7 @@ func summariseCycles(cycles []int, elems []int) string {
 func summariseWells(wells []*wtype.LHWell, elems []int) string {
 	w := make([]string, 0, len(elems))
 	for _, i := range elems {
-		w = append(w, wells[i].Crds.FormatA1())
+		w = append(w, wells[i].GetWellCoords().FormatA1())
 	}
 	uw := getUnique(w, true)
 
@@ -484,7 +484,7 @@ func summarisePlateWells(wells []*wtype.LHWell, elems []int) string {
 		}
 		lastWell = well
 		if well != nil {
-			currentChunk = append(currentChunk, well.Crds)
+			currentChunk = append(currentChunk, well.GetWellCoords())
 		}
 	}
 	chunkedWells = append(chunkedWells, currentChunk)

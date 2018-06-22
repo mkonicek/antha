@@ -457,7 +457,9 @@ func summariseWells(wells []*wtype.LHWell, elems []int) string {
 func summarisePlates(wells []*wtype.LHWell, elems []int) string {
 	p := make([]string, 0, len(elems))
 	for _, i := range elems {
-		p = append(p, wtype.NameOf(wells[i].Plate))
+		if wells[i] != nil {
+			p = append(p, wtype.NameOf(wells[i].Plate))
+		}
 	}
 	up := getUnique(p, true)
 

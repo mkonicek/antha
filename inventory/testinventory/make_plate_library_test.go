@@ -30,8 +30,8 @@ var tests = []platetest{
 
 var testsofPlateWithRiser = []platetest{
 	{TestPlateName: "pcrplate_with_cooler", ExpectedZStart: coolerheight + MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5 + coolerheight},
-	{TestPlateName: "pcrplate_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5 - gilsonoffsetpcrplate + isofreezecoolerheight - MinimumZHeightPermissableForLVPipetMax},
-	{TestPlateName: "pcrplate_skirted_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5 + isofreezecoolerheight + 3.4 - 0.036},
+	{TestPlateName: "pcrplate_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5 + isofreezecoolerheight - MinimumZHeightPermissableForLVPipetMax},
+	{TestPlateName: "pcrplate_skirted_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5 - gilsonoffsetpcrplate + isofreezecoolerheight + 3.4 - 0.036},
 	{TestPlateName: "pcrplate_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5 + pcrtuberack496HeightInmm - MinimumZHeightPermissableForLVPipetMax},
 	{TestPlateName: "pcrplate_semi_skirted_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm + 1.0, ExpectedHeight: 15.5 + pcrtuberack496HeightInmm},
 	{TestPlateName: "strip_tubes_0.2ml_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm - 2.5, ExpectedHeight: 15.5 + pcrtuberack496HeightInmm - 2.5},

@@ -785,8 +785,8 @@ func Test_Multihead(t *testing.T) {
 				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: position -9.0x0.0x62.2 mm outside motion limits [0.0x0.0x0.0 mm+600.0x600.0x600.0 mm]",
 			},
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: -13.5, Y: 4.5, Z: 62.2}),
-				positionAssertion(1, wtype.Coordinates{X: 4.5, Y: 4.5, Z: 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: -18.0, Y: 0.0, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 0.0, Y: 0.0, Z: 62.2}),
 			},
 		},
 		{
@@ -810,7 +810,6 @@ func Test_Multihead(t *testing.T) {
 			},
 			[]string{ //errors
 				"(err) Move[0]: head 0 channels 0-7 to A12-H12@tipbox1 at position tipbox_1: cannot move head 0 while tip loaded on head 1 channel 0",
-				"(err) Move[0]: head 0 channels 0-7 to A12-H12@tipbox1 at position tipbox_1: collision detected: head 1 channel 0 and tipbox \"tipbox1\" at position tipbox_1",
 			},
 			[]*AssertionFn{ //assertions
 			},
@@ -2259,13 +2258,13 @@ func Test_Aspirate(t *testing.T) {
 			},
 			[]TestRobotInstruction{
 				&Move{
-					[]string{"input_1", "input_1", "", "", "", "", "", ""}, //deckposition
-					[]string{"A1", "B1", "", "", "", "", "", ""},           //wellcoords
-					[]int{0, 0, 0, 0, 0, 0, 0, 0},                          //reference
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},              //offsetX
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},              //offsetY
-					[]float64{1., 52.2, 1., 1., 1., 1., 1., 1.},            //offsetZ
-					[]string{"plate", "plate", "", "", "", "", "", ""},     //plate_type
+					[]string{"input_1", "", "", "", "", "", "", ""}, //deckposition
+					[]string{"A1", "", "", "", "", "", "", ""},      //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
+					[]string{"plate", "", "", "", "", "", "", ""},   //plate_type
 					0, //head
 				},
 				&Aspirate{

@@ -448,32 +448,39 @@ func oneDP(v float64) string {
 func (self *AdaptorGroup) SetPosition(p wtype.Coordinates) error {
 	self.position = p
 	if self.motionLimits != nil && !self.motionLimits.Contains(p) {
-		template := "%smm too %s, please try %v"
+		template := "%smm too %s"
 		rearranging := "rearranging the deck"
 		var failures []string
+		var advice []string
 
 		start := self.motionLimits.GetPosition()
 		extent := self.motionLimits.GetPosition().Add(self.motionLimits.GetSize())
 
 		if p.X < start.X {
-			failures = append(failures, fmt.Sprintf(template, oneDP(start.X-p.X), "far left", rearranging))
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.X-p.X), "far left"))
+			advice = append(advice, rearranging)
 		} else if p.X > extent.X {
-			failures = append(failures, fmt.Sprintf(template, oneDP(p.X-extent.X), "far right", rearranging))
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.X-extent.X), "far right"))
+			advice = append(advice, rearranging)
 		}
 
 		if p.Y < start.Y {
-			failures = append(failures, fmt.Sprintf(template, oneDP(start.Y-p.Y), "far backwards", rearranging))
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.Y-p.Y), "far backwards"))
+			advice = append(advice, rearranging)
 		} else if p.Y > extent.Y {
-			failures = append(failures, fmt.Sprintf(template, oneDP(p.Y-extent.Y), "far forwards", rearranging))
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.Y-extent.Y), "far forwards"))
+			advice = append(advice, rearranging)
 		}
 
 		if p.Z < start.Z {
-			failures = append(failures, fmt.Sprintf(template, oneDP(start.Z-p.Z), "low", "adding a riser to the object on the deck"))
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.Z-p.Z), "low"))
+			advice = append(advice, "adding a riser to the object on the deck")
 		} else if p.Z > extent.Z {
-			failures = append(failures, fmt.Sprintf(template, oneDP(p.Z-extent.Z), "high", "lowering the object on the deck"))
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.Z-extent.Z), "high"))
+			advice = append(advice, "lowering the object on the deck")
 		}
 
-		return errors.Errorf("head cannot reach position: position is %s", strings.Join(failures, " and "))
+		return errors.Errorf("head cannot reach position: position is %s, please try %s", strings.Join(failures, " and "), strings.Join(advice, " and "))
 	}
 	return nil
 }

@@ -956,6 +956,33 @@ func TestMotionLimits(t *testing.T) {
 				positionAssertion(1, wtype.Coordinates{X: 301.0, Y: 0.0, Z: 51.9}),
 			},
 		},
+		{
+			"outside limits too low and far back",
+			multihead_constrained_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{7}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"", "", "", "", "", "", "", "input_1"}, //deckposition
+					[]string{"", "", "", "", "", "", "", "A4"},      //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+					[]float64{0, 0, 0, 0, 0, 0, 0, 0.},              //offsetX
+					[]float64{0, 0, 0, 0, 0, 0, 0, 0.},              //offsetY
+					[]float64{0, 0, 0, 0, 0, 0, 0, 0.5},             //offsetZ
+					[]string{"", "", "", "", "", "", "", "plate"},   //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 7 to A4@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards and 8.1mm too low, please try rearranging the deck and adding a riser to the object on the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 283.0, Y: -63.0, Z: 51.9}),
+				positionAssertion(1, wtype.Coordinates{X: 301.0, Y: -63.0, Z: 51.9}),
+			},
+		},
 	}
 
 	for _, test := range tests {

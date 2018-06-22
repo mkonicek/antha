@@ -480,7 +480,9 @@ func (self *AdaptorGroup) SetPosition(p wtype.Coordinates) error {
 			advice = append(advice, "lowering the object on the deck")
 		}
 
-		return errors.Errorf("head cannot reach position: position is %s, please try %s", strings.Join(failures, " and "), strings.Join(advice, " and "))
+		return errors.Errorf("head cannot reach position: position is %s, please try %s",
+			strings.Join(failures, " and "),
+			strings.Join(getUnique(advice, true), " and "))
 	}
 	return nil
 }

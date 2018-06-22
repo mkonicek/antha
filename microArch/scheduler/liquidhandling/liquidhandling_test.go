@@ -1289,5 +1289,103 @@ func TestOveractiveMultichannel(t *testing.T) {
 			t.Errorf("expected volumes of 1 or 100 ul only: got %v", dsp.Volume)
 		}
 	}
+}
 
+func getTestSplitSample(component *wtype.LHComponent, volume float64) *wtype.LHInstruction {
+	ret := wtype.NewLHSplitInstruction()
+
+	ret.Components = append(ret.Components, component.Dup())
+	cmpMoving, cmpStaying := mixer.SplitSample(component, wunit.NewVolume(volume, "ul"))
+
+	ret.Results = append(ret.Results, cmpMoving, cmpStaying)
+
+	return ret
+}
+
+func getTestMix(components []*wtype.LHComponent, address string) *wtype.LHInstruction {
+	mix := mixer.GenericMix(mixer.MixOptions{
+		Components: components,
+		Address:    address,
+	})
+
+	mx := 0
+	for _, c := range components {
+		if c.Generation() > mx {
+			mx = c.Generation()
+		}
+	}
+	mix.SetGeneration(mx)
+	mix.Results[0].SetGeneration(mx + 1)
+	mix.Results[0].DeclareInstance()
+
+	return mix
+}
+
+func TestSplitSampleMultichannel(t *testing.T) {
+
+	ctx := GetContextForTest()
+
+	var instructions []*wtype.LHInstruction
+
+	diluent := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
+	stock := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000, "ul"))
+	stock.Type = wtype.LTMultiWater
+
+	wc := wtype.MakeWellCoords("A1")
+
+	for y := 0; y < 8; y++ {
+		lastStock := stock
+		wc.Y = y
+		for x := 0; x < 2; x++ {
+			wc.X = x
+			diluentSample := mixer.Sample(diluent, wunit.NewVolume(20.0, "ul"))
+
+			split := getTestSplitSample(lastStock, 20.0)
+
+			mix := getTestMix([]*wtype.LHComponent{split.Results[0], diluentSample}, wc.FormatA1())
+
+			lastStock = mix.Results[0]
+
+			instructions = append(instructions, mix, split)
+		}
+	}
+
+	lh, rq, err := runPlan(ctx, instructions)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//assert that there is some 8-way multi channel
+	seenMultiEight := false
+	for _, ins := range rq.Instructions {
+		if multi, ok := ins.GetParameter("MULTI").(int); ok && multi == 8 {
+			seenMultiEight = true
+		}
+	}
+
+	if !seenMultiEight {
+		t.Error("Expected 8-way multichanneling but none seen")
+	}
+
+	OutputSetup(lh.FinalProperties)
+
+}
+
+func runPlan(ctx context.Context, instructions []*wtype.LHInstruction) (*Liquidhandler, *LHRequest, error) {
+
+	lh := GetLiquidHandlerForTest(ctx)
+	rq := GetLHRequestForTest()
+	for _, ins := range instructions {
+		rq.Add_instruction(ins)
+	}
+	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
+	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+
+	rq.ConfigureYourself()
+	err := lh.Plan(ctx, rq)
+	if err != nil {
+		return nil, nil, errors.WithMessage(err, "while planning")
+	}
+
+	return lh, rq, nil
 }

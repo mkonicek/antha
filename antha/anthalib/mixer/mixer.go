@@ -25,6 +25,8 @@ package mixer
 
 import (
 	"fmt"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/solutions"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/sampletracker"
@@ -195,6 +197,11 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 			if c.Generation() > mx {
 				mx = c.Generation()
 			}
+		}
+
+		err := solutions.UpdateComponentDetails(r.Results[0], opt.Components...)
+		if err != nil {
+			fmt.Println(err)
 		}
 
 		r.Results[0].SetGeneration(mx)

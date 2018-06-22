@@ -30,7 +30,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pubchem"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -178,7 +177,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 				} else {
 					newComponentList.Components[sample.Name()] = sample.Concentration()
 				}
-				mixSteps = append(mixSteps, ComponentListSample{newComponentList, volToAdd})
+				mixSteps = append(mixSteps, ComponentListSample{ComponentList: newComponentList, Volume: volToAdd})
 			}
 			volsSoFar = append(volsSoFar, volToAdd)
 		}
@@ -203,7 +202,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 
 			volOfPreviousSamples := wunit.AddVolumes(volsSoFar...)
 
-			previousMixStep := ComponentListSample{newComponentList, volOfPreviousSamples}
+			previousMixStep := ComponentListSample{ComponentList: newComponentList, Volume: volOfPreviousSamples}
 
 			var nexSampleVolToAdd wunit.Volume
 
@@ -212,7 +211,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 			} else {
 				nexSampleVolToAdd = nextSample.Volume()
 			}
-			nextMixStep := ComponentListSample{nextList, nexSampleVolToAdd}
+			nextMixStep := ComponentListSample{ComponentList: nextList, Volume: nexSampleVolToAdd}
 			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
 			if err != nil {
 				warnings = append(warnings, err.Error())
@@ -459,6 +458,13 @@ func AddSubComponents(component *wtype.LHComponent, allsubComponents ComponentLi
 		}
 	}
 
+	return component, nil
+}
+
+// Add a component list to a component.
+// Any existing component list will be overwritten
+func OverwriteSubComponents(component *wtype.LHComponent, allsubComponents ComponentList) (*wtype.LHComponent, error) {
+	component.Extra["History"] = allsubComponents
 	return component, nil
 }
 

@@ -674,7 +674,7 @@ func default_lhproperties() *liquidhandling.LHProperties {
 	return makeLHProperties(&valid_props)
 }
 
-func multihead_lhproperties() *liquidhandling.LHProperties {
+func multihead_lhproperties_props() *LHPropertiesParams {
 	x_step := 128.0
 	y_step := 86.0
 	valid_props := LHPropertiesParams{
@@ -693,7 +693,7 @@ func multihead_lhproperties() *liquidhandling.LHProperties {
 		},
 		[]HeadAssemblyParams{
 			{
-				wtype.NewBBox6f(0, 0, 0, 600., 600., 600.),
+				wtype.NewBBox6f(0, 0, 0, 3*x_step, 3*y_step, 600.),
 				[]wtype.Coordinates{{X: -9}, {X: 9}}, //Offset
 				[]HeadParams{
 					{
@@ -779,15 +779,25 @@ func multihead_lhproperties() *liquidhandling.LHProperties {
 				},
 			},
 		},
-		[]string{"tipbox_1", "tipbox_2", "input_1", "input_2"},             //Tip_preferences
-		[]string{"input_1", "input_2", "tipbox_1", "tipbox_2", "tipwaste"}, //Input_preferences
-		[]string{"output_1", "output_2"},                                   //Output_preferences
-		[]string{"tipwaste", "input_1"},                                    //Tipwaste_preferences
-		[]string{"wash"},                                                   //Wash_preferences
-		[]string{"waste"},                                                  //Waste_preferences
+		[]string{"tipbox_1", "tipbox_2", "input_1", "input_2"},                      //Tip_preferences
+		[]string{"input_1", "input_2", "tipbox_1", "tipbox_2", "tipwaste", "waste"}, //Input_preferences
+		[]string{"output_1", "output_2"},                                            //Output_preferences
+		[]string{"tipwaste", "input_1"},                                             //Tipwaste_preferences
+		[]string{"wash"},                                                            //Wash_preferences
+		[]string{"waste"},                                                           //Waste_preferences
 	}
 
-	return makeLHProperties(&valid_props)
+	return &valid_props
+}
+
+func multihead_lhproperties() *liquidhandling.LHProperties {
+	return makeLHProperties(multihead_lhproperties_props())
+}
+
+func multihead_constrained_lhproperties() *liquidhandling.LHProperties {
+	lhp := multihead_lhproperties_props()
+	lhp.HeadAssemblies[0].MotionLimits.Position.Z = 60
+	return makeLHProperties(lhp)
 }
 
 func independent_lhproperties() *liquidhandling.LHProperties {

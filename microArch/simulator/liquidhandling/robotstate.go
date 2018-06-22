@@ -23,7 +23,9 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -435,10 +437,43 @@ func (self *AdaptorGroup) GetPosition() wtype.Coordinates {
 	return self.position
 }
 
+func oneDP(v float64) string {
+	ret := fmt.Sprintf("%.1f", v)
+	if ret[len(ret)-2:] == ".0" {
+		return ret[:len(ret)-2]
+	}
+	return ret
+}
+
 func (self *AdaptorGroup) SetPosition(p wtype.Coordinates) error {
 	self.position = p
 	if self.motionLimits != nil && !self.motionLimits.Contains(p) {
-		return errors.Errorf("position %v outside motion limits %v", p, self.motionLimits)
+		template := "%smm too %s, please try %v"
+		rearranging := "rearranging the deck"
+		var failures []string
+
+		start := self.motionLimits.GetPosition()
+		extent := self.motionLimits.GetPosition().Add(self.motionLimits.GetSize())
+
+		if p.X < start.X {
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.X-p.X), "far left", rearranging))
+		} else if p.X > extent.X {
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.X-extent.X), "far right", rearranging))
+		}
+
+		if p.Y < start.Y {
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.Y-p.Y), "far backwards", rearranging))
+		} else if p.Y > extent.Y {
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.Y-extent.Y), "far forwards", rearranging))
+		}
+
+		if p.Z < start.Z {
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.Z-p.Z), "low", "adding a riser to the object on the deck"))
+		} else if p.Z > extent.Z {
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.Z-extent.Z), "high", "lowering the object on the deck"))
+		}
+
+		return errors.Errorf("head cannot reach position: position is %s", strings.Join(failures, " and "))
 	}
 	return nil
 }

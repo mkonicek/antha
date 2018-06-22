@@ -231,6 +231,7 @@ func testLayout() *SetupFn {
 		vlh.AddPlateTo("input_1", default_lhplate("plate1"), "plate1")
 		vlh.AddPlateTo("input_2", default_lhplate("plate2"), "plate2")
 		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
+		vlh.AddPlateTo("waste", default_lhplate("wasteplate"), "wasteplate")
 		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
 	}
 	return &ret
@@ -764,32 +765,6 @@ func Test_Multihead(t *testing.T) {
 			},
 		},
 		{
-			"outside limits",
-			multihead_lhproperties(),
-			[]*SetupFn{
-				testLayout(),
-			},
-			[]TestRobotInstruction{
-				&Move{
-					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
-					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //wellcoords
-					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
-					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
-					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
-					1, //head
-				},
-			},
-			[]string{ //errors
-				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: position -9.0x0.0x62.2 mm outside motion limits [0.0x0.0x0.0 mm+600.0x600.0x600.0 mm]",
-			},
-			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: -18.0, Y: 0.0, Z: 62.2}),
-				positionAssertion(1, wtype.Coordinates{X: 0.0, Y: 0.0, Z: 62.2}),
-			},
-		},
-		{
 			"can't move while a tip is loaded on another head in the same assembly",
 			multihead_lhproperties(),
 			[]*SetupFn{
@@ -812,6 +787,173 @@ func Test_Multihead(t *testing.T) {
 				"(err) Move[0]: head 0 channels 0-7 to A12-H12@tipbox1 at position tipbox_1: cannot move head 0 while tip loaded on head 1 channel 0",
 			},
 			[]*AssertionFn{ //assertions
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.run(t)
+	}
+}
+
+func TestMotionLimits(t *testing.T) {
+
+	tests := []SimulatorTest{
+		{
+			"outside limits left",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					1, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: head cannot reach position: position is 9mm too far left, please try rearranging the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: -18.0, Y: 0.0, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 0.0, Y: 0.0, Z: 62.2}),
+			},
+		},
+		{
+			"outside limits right",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                 //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                    //reference
+					[]float64{50., 50., 50., 50., 50., 50., 50., 50.},                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
+					[]string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"},                 //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channels 0-7 to A12-H12@plate1 at position input_1: head cannot reach position: position is 30mm too far right, please try rearranging the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 405.0, Y: 0.0, Z: 26.7}),
+				positionAssertion(1, wtype.Coordinates{X: 423.0, Y: 0.0, Z: 26.7}),
+			},
+		},
+		{
+			"outside limits forward",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"waste"}, //deckposition
+					[]string{"H12"},   //wellcoords
+					[]int{1},          //reference
+					[]float64{0.},     //offsetX
+					[]float64{30.},    //offsetY
+					[]float64{1.},     //offsetZ
+					[]string{"plate"}, //plate_type
+					0,                 //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 0 to H12@wasteplate at position waste: head cannot reach position: position is 7mm too far forwards, please try rearranging the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 355.0, Y: 265.0, Z: 26.7}),
+				positionAssertion(1, wtype.Coordinates{X: 373.0, Y: 265.0, Z: 26.7}),
+			},
+		},
+		{
+			"outside limits backwards",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"", "", "", "", "", "", "", "input_1"}, //deckposition
+					[]string{"", "", "", "", "", "", "", "A12"},     //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                   //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
+					[]string{"", "", "", "", "", "", "", "plate"},   //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 7 to A12@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards, please try rearranging the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 355.0, Y: -63.0, Z: 26.7}),
+				positionAssertion(1, wtype.Coordinates{X: 373.0, Y: -63.0, Z: 26.7}),
+			},
+		},
+		{
+			"outside limits too high",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1"}, //deckposition
+					[]string{"A1"},      //wellcoords
+					[]int{1},            //reference
+					[]float64{0.},       //offsetX
+					[]float64{0.},       //offsetY
+					[]float64{600.},     //offsetZ
+					[]string{"plate"},   //plate_type
+					0,                   //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 0 to A1@plate1 at position input_1: head cannot reach position: position is 25.7mm too high, please try lowering the object on the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 256.0, Y: 0.0, Z: 625.7}),
+				positionAssertion(1, wtype.Coordinates{X: 274.0, Y: 0.0, Z: 625.7}),
+			},
+		},
+		{
+			"outside limits too low",
+			multihead_constrained_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1"}, //deckposition
+					[]string{"A4"},      //wellcoords
+					[]int{0},            //reference
+					[]float64{0.},       //offsetX
+					[]float64{0.},       //offsetY
+					[]float64{0.5},      //offsetZ
+					[]string{"plate"},   //plate_type
+					0,                   //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 0 to A4@plate1 at position input_1: head cannot reach position: position is 8.1mm too low, please try adding a riser to the object on the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 283.0, Y: 0.0, Z: 51.9}),
+				positionAssertion(1, wtype.Coordinates{X: 301.0, Y: 0.0, Z: 51.9}),
 			},
 		},
 	}

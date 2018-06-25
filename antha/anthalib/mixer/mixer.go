@@ -199,11 +199,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 			}
 		}
 
-		err := solutions.UpdateComponentDetails(r.Results[0], opt.Components...)
-		if err != nil {
-			fmt.Println(err)
-		}
-
+		solutions.UpdateComponentDetails(r.Results[0], opt.Components...) //nolint
 		r.Results[0].SetGeneration(mx)
 	}
 

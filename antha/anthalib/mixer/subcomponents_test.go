@@ -1,12 +1,12 @@
 // solutions
-package solutions
+package mixer
 
 import (
 	"errors"
 	"fmt"
 	"testing"
 
-	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	. "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/solutions"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -201,7 +201,7 @@ var serialTests []serialComponentlistTest = []serialComponentlistTest{
 
 func TestSimulateMix(t *testing.T) {
 	for _, test := range tests {
-		mixed, err := mixComponentLists(test.sample1, test.sample2)
+		mixed, err := MixComponentLists(test.sample1, test.sample2)
 
 		if err != nil {
 			t.Error(
@@ -228,7 +228,7 @@ func TestSimulateMix(t *testing.T) {
 
 func TestSerialMix(t *testing.T) {
 	for _, test := range serialTests {
-		intermediate, err := mixComponentLists(test.sample1, test.sample2)
+		intermediate, err := MixComponentLists(test.sample1, test.sample2)
 
 		if err != nil {
 			t.Error(
@@ -242,7 +242,7 @@ func TestSerialMix(t *testing.T) {
 			Volume:        wunit.AddVolumes(test.sample1.Volume, test.sample2.Volume),
 		}
 
-		mixed, err := mixComponentLists(intermediateSample, test.sample3)
+		mixed, err := MixComponentLists(intermediateSample, test.sample3)
 		if err != nil {
 			t.Error(err)
 		}
@@ -331,10 +331,10 @@ func TestUpdateComponentDetails(t *testing.T) {
 	mediaMixture := newTestComponent("LB", wtype.LTWater, 9999, wunit.NewConcentration(1, "X"), wunit.NewVolume(2000.0, "ul"), someComponents)
 	anotherMediaMixture := newTestComponent("LB", wtype.LTWater, 9999, wunit.NewConcentration(1, "X"), wunit.NewVolume(2000.0, "ul"), someOtherComponents)
 
-	ws := mixer.Sample(water, wunit.NewVolume(65.0, "ul"))
-	wsTotal := mixer.SampleForTotalVolume(water, wunit.NewVolume(100.0, "ul"))
-	mmxs := mixer.Sample(mmx, wunit.NewVolume(25.0, "ul"))
-	ps := mixer.Sample(part, wunit.NewVolume(10.0, "ul"))
+	ws := Sample(water, wunit.NewVolume(65.0, "ul"))
+	wsTotal := SampleForTotalVolume(water, wunit.NewVolume(100.0, "ul"))
+	mmxs := Sample(mmx, wunit.NewVolume(25.0, "ul"))
+	ps := Sample(part, wunit.NewVolume(10.0, "ul"))
 
 	var mixTests = []mixTest{
 		{
@@ -370,10 +370,10 @@ func TestUpdateComponentDetails(t *testing.T) {
 			name:    "SampleWithConcsTest",
 			product: water,
 			mixes: []*wtype.LHComponent{
-				mixer.Sample(water, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(glycerol, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(iptg, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(lb, wunit.NewVolume(65.0, "ul")),
+				Sample(water, wunit.NewVolume(65.0, "ul")),
+				Sample(glycerol, wunit.NewVolume(65.0, "ul")),
+				Sample(iptg, wunit.NewVolume(65.0, "ul")),
+				Sample(lb, wunit.NewVolume(65.0, "ul")),
 			},
 			expectedProductName: "0.25 mM/l IPTG+0.25 X LB+0.25 g/l glycerol+0.25 v/v water",
 			expectedProductComponentList: ComponentList{
@@ -391,11 +391,11 @@ func TestUpdateComponentDetails(t *testing.T) {
 			name:    "InvalidTotalVolumeTest",
 			product: water,
 			mixes: []*wtype.LHComponent{
-				mixer.SampleForTotalVolume(water, wunit.NewVolume(100.0, "ul")),
-				mixer.Sample(water, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(glycerol, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(iptg, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(lb, wunit.NewVolume(65.0, "ul")),
+				SampleForTotalVolume(water, wunit.NewVolume(100.0, "ul")),
+				Sample(water, wunit.NewVolume(65.0, "ul")),
+				Sample(glycerol, wunit.NewVolume(65.0, "ul")),
+				Sample(iptg, wunit.NewVolume(65.0, "ul")),
+				Sample(lb, wunit.NewVolume(65.0, "ul")),
 			},
 			expectedProductName: "water",
 			expectedProductComponentList: ComponentList{
@@ -408,9 +408,9 @@ func TestUpdateComponentDetails(t *testing.T) {
 			name:    "renamedComponentTest",
 			product: water,
 			mixes: []*wtype.LHComponent{
-				mixer.Sample(lbWithSubComponents, wunit.NewVolume(400.0, "ul")),
-				mixer.Sample(glycerol, wunit.NewVolume(50, "ul")),
-				mixer.Sample(iptg, wunit.NewVolume(50, "ul")),
+				Sample(lbWithSubComponents, wunit.NewVolume(400.0, "ul")),
+				Sample(glycerol, wunit.NewVolume(50, "ul")),
+				Sample(iptg, wunit.NewVolume(50, "ul")),
 			},
 			expectedProductName: "0.1 mM/l IPTG+8 g/l Sodium Chloride+8 g/l Tryptone+4 g/l Yeast Extract+0.1 g/l glycerol",
 			expectedProductComponentList: ComponentList{
@@ -429,11 +429,11 @@ func TestUpdateComponentDetails(t *testing.T) {
 			name:    "SampleWithTwoComponentListsTest",
 			product: water,
 			mixes: []*wtype.LHComponent{
-				mixer.Sample(water, wunit.NewVolume(600.0, "ul")),
-				mixer.Sample(glycerol, wunit.NewVolume(100.0, "ul")),
-				mixer.Sample(iptg, wunit.NewVolume(100.0, "ul")),
-				mixer.Sample(mediaMixture, wunit.NewVolume(100.0, "ul")),
-				mixer.Sample(anotherMediaMixture, wunit.NewVolume(100.0, "ul")),
+				Sample(water, wunit.NewVolume(600.0, "ul")),
+				Sample(glycerol, wunit.NewVolume(100.0, "ul")),
+				Sample(iptg, wunit.NewVolume(100.0, "ul")),
+				Sample(mediaMixture, wunit.NewVolume(100.0, "ul")),
+				Sample(anotherMediaMixture, wunit.NewVolume(100.0, "ul")),
 			},
 			expectedProductName: "0.1 X Extra Thing+0.175 mM/l IPTG+0.05 X LB+0.175 g/l glycerol+0.675 v/v water",
 			expectedProductComponentList: ComponentList{
@@ -452,10 +452,10 @@ func TestUpdateComponentDetails(t *testing.T) {
 			name:    "SampleWithComponentListsTest",
 			product: water,
 			mixes: []*wtype.LHComponent{
-				mixer.Sample(water, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(glycerol, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(iptg, wunit.NewVolume(65.0, "ul")),
-				mixer.Sample(mediaMixture, wunit.NewVolume(65.0, "ul")),
+				Sample(water, wunit.NewVolume(65.0, "ul")),
+				Sample(glycerol, wunit.NewVolume(65.0, "ul")),
+				Sample(iptg, wunit.NewVolume(65.0, "ul")),
+				Sample(mediaMixture, wunit.NewVolume(65.0, "ul")),
 			},
 			expectedProductName: "0.312 mM/l IPTG+0.0625 X LB+0.312 g/l glycerol+0.312 v/v water",
 			expectedProductComponentList: ComponentList{

@@ -47,7 +47,7 @@ type ComponentListSample struct {
 // An error may be generated if two components with the same name exist within the two lists with incompatible concentration units.
 // In this instance, the molecular weight for that component will be looked up in pubchem in order to change the units in both lists to g/l,
 // which will be able to be added.
-func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
+func MixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
 
 	var errs []string
 
@@ -212,7 +212,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 				nexSampleVolToAdd = nextSample.Volume()
 			}
 			nextMixStep := ComponentListSample{ComponentList: nextList, Volume: nexSampleVolToAdd}
-			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
+			newComponentList, err = MixComponentLists(previousMixStep, nextMixStep)
 			if err != nil {
 				warnings = append(warnings, err.Error())
 			}

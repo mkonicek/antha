@@ -22,9 +22,9 @@ func MakeGilsonForTest() *LHProperties { //nolint
 	return makeGilsonForTest(ctx)
 }
 
-func MakeGilsonWithPlatesAndTipboxesForTest() *LHProperties { //nolint
+func MakeGilsonWithPlatesAndTipboxesForTest(inputPlateType string) *LHProperties { //nolint
 	ctx := testinventory.NewContext(context.Background())
-	ret, err := makeGilsonWithPlatesAndTipboxesForTest(ctx)
+	ret, err := makeGilsonWithPlatesAndTipboxesForTest(ctx, inputPlateType)
 	if err != nil {
 		panic(err)
 	}
@@ -175,13 +175,13 @@ func makeGilsonWithTipboxesForTest(ctx context.Context) (*LHProperties, error) {
 	return params, nil
 }
 
-func makeGilsonWithPlatesAndTipboxesForTest(ctx context.Context) (*LHProperties, error) {
+func makeGilsonWithPlatesAndTipboxesForTest(ctx context.Context, inputPlateType string) (*LHProperties, error) {
 	params, err := makeGilsonWithTipboxesForTest(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	inputPlate, err := makeTestInputPlate(ctx)
+	inputPlate, err := makeTestInputPlate(ctx, inputPlateType)
 
 	if err != nil {
 		return nil, err
@@ -207,8 +207,12 @@ func makeGilsonWithPlatesAndTipboxesForTest(ctx context.Context) (*LHProperties,
 	return params, nil
 }
 
-func makeTestInputPlate(ctx context.Context) (*wtype.LHPlate, error) {
-	p, err := inventory.NewPlate(ctx, "DWST12")
+func makeTestInputPlate(ctx context.Context, inputPlateType string) (*wtype.LHPlate, error) {
+	if inputPlateType == "" {
+		inputPlateType = "DWST12"
+	}
+
+	p, err := inventory.NewPlate(ctx, inputPlateType)
 
 	if err != nil {
 		return nil, err

@@ -115,7 +115,7 @@ func assertPropsSane(t *testing.T, props *LHProperties) {
 }
 
 func TestLHPropertiesDup(t *testing.T) {
-	props := MakeGilsonWithPlatesAndTipboxesForTest()
+	props := MakeGilsonWithPlatesAndTipboxesForTest("")
 	dprops := props.DupKeepIDs()
 	assertPropsSane(t, dprops)
 	AssertLHPropertiesEqual(t, props, dprops, "LHProperties")

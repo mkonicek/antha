@@ -99,12 +99,7 @@ func (self *PolicyTest) Run(t *testing.T) {
 	ctx := GetContextForTest()
 
 	if self.Robot == nil {
-		robot, err := makeTestGilsonWithPlates(ctx)
-		if err != nil {
-			err = errors.Wrap(err, self.Name)
-			t.Fatal(err)
-		}
-		self.Robot = robot
+		self.Robot = makeTestGilsonWithPlates(ctx, false)
 	}
 
 	policySet, err := wtype.GetLHPolicyForTest()
@@ -237,37 +232,37 @@ func makeGilson() *LHProperties {
 	return lhp
 }
 
-func makeTestGilsonWithPlates(ctx context.Context) (*LHProperties, error) {
+func makeTestGilsonWithPlates(ctx context.Context, llfPlate bool) *LHProperties {
 	params, err := makeTestGilson(ctx)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	inputPlate, err := makeTestInputPlate(ctx)
+	inputPlate, err := makeTestInputPlate(ctx, llfPlate)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	err = params.AddInputPlate(inputPlate)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	outputPlate, err := makeTestOutputPlate(ctx)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	err = params.AddOutputPlate(outputPlate)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return params, nil
+	return params
 }
 func makeTestGilson(ctx context.Context) (*LHProperties, error) {
 	params := makeGilson()
@@ -293,9 +288,15 @@ func makeTestGilson(ctx context.Context) (*LHProperties, error) {
 	return params, nil
 }
 
-func makeTestInputPlate(ctx context.Context) (*wtype.LHPlate, error) {
-	p, err := inventory.NewPlate(ctx, "DWST12")
+func makeTestInputPlate(ctx context.Context, llfPlate bool) (*wtype.LHPlate, error) {
+	var p *wtype.LHPlate
+	var err error
 
+	if llfPlate {
+		p, err = inventory.NewPlate(ctx, "pcrplate_skirted_riser18")
+	} else {
+		p, err = inventory.NewPlate(ctx, "DWST12")
+	}
 	if err != nil {
 		return nil, err
 	}

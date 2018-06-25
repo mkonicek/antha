@@ -3539,6 +3539,7 @@ func get_use_llf(pol wtype.LHPolicy, multi int, plates []string, prms *LHPropert
 	for i := 0; i < multi; i++ {
 		//probably just fetching the same plate each time
 		plate := prms.Plates[plates[i]]
+
 		//do LLF if the well has a volumemodel
 		use_llf[i] = enable_llf && plate.Welltype.HasLiquidLevelModel()
 

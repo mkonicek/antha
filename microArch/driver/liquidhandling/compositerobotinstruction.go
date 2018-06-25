@@ -1769,7 +1769,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	final_asp_ref := SafeGetInt(pol, "ASPREFERENCE")
 
 	//LLF
-	use_llf, any_llf := get_use_llf(policy, ins.Multi, ins.PltFrom, prms)
+	use_llf, any_llf := get_use_llf(pol, ins.Multi, ins.PltFrom, prms)
 	if any_llf {
 		below_surface := SafeGetF64(pol, "LLFBELOWSURFACE")
 		//Is the liquid height in each well higher than below_surface
@@ -2218,7 +2218,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	defaultspeed := SafeGetF64(pol, "DEFAULTZSPEED")
 
 	//LLF
-	use_llf, any_llf := get_use_llf(policy, ins.Multi, ins.PltTo, prms)
+	use_llf, any_llf := get_use_llf(pol, ins.Multi, ins.PltTo, prms)
 	if any_llf {
 		//override reference
 		ref = 2 //liquid level
@@ -3530,10 +3530,10 @@ func getMulti(w []string) int {
 	return c
 }
 
-func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
+func get_use_llf(pol wtype.LHPolicy, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
 	use_llf := make([]bool, multi)
 	any_llf := false
-	enable_llf := SafeGetBool(policy.Options, "USE_LLF")
+	enable_llf := SafeGetBool(pol, "USE_LLF")
 
 	//save a few ms
 	if !enable_llf {
@@ -3543,6 +3543,7 @@ func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms
 	for i := 0; i < multi; i++ {
 		//probably just fetching the same plate each time
 		plate := prms.Plates[plates[i]]
+
 		//do LLF if the well has a volumemodel
 		use_llf[i] = enable_llf && plate.Welltype.HasLiquidLevelModel()
 

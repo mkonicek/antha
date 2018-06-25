@@ -22,7 +22,19 @@
 
 package liquidhandling
 
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+)
+
 //autoGenerateLLModel attempt to generate a liquidlevel model and add it to the plate
 func autoGenerateLLModel(well *wtype.LHWell) {
+
+	//we really don't know very much about the well geometry, just go with a linear model
+	//this might be OK for straight sided wells, but is likely to require a constant offset
+	area := well.MaxCrossSectionalArea()
+
+	model := wutil.Quadratic{B: area}
+	well.SetLiquidLevelModel(model)
 
 }

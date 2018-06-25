@@ -108,6 +108,8 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 
 	opt.FixVolumes = viper.GetBool("fixVolumes")
 
+	opt.UseAutoLLF = viper.GetBool("autoLLF")
+
 	return opt, nil
 }
 
@@ -392,5 +394,6 @@ func init() {
 	flags.StringSlice("tipTypes", nil, "Names of permitted tip types")
 	flags.Bool("runTest", false, "run tests")
 	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
+	flags.Bool("autoLLF", false, "Auto-generate a liquid level model for performing liquid level following on plates without an ll model")
 	flags.String("policyFile", "", "Design file of custom liquid policies in format of .xlsx JMP file")
 }

@@ -104,6 +104,9 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	if err := req.PolicyManager.SetOption("USE_LLF", a.opt.UseLLF); err != nil {
 		return nil, err
 	}
+	if err := req.PolicyManager.SetOption("AUTO_LLF", a.opt.UseAutoLLF); err != nil {
+		return nil, err
+	}
 
 	prop := a.properties.Dup()
 	prop.Driver = a.properties.Driver

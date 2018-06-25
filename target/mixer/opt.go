@@ -54,6 +54,7 @@ type Opt struct {
 	PrintInstructions    bool
 	UseDriverTipTracking bool
 	UseLLF               bool // Use liquid level following
+	UseAutoLLF           bool // Use auto generated Liquid Level models for LLF
 	LegacyVolume         bool // Don't track volumes for intermediates
 	FixVolumes           bool // Aim to revise requested volumes to service requirements
 

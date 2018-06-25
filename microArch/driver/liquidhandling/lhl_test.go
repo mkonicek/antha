@@ -33,8 +33,27 @@ func getTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotI
 		ret.PltFrom = append(ret.PltFrom, "position_4")
 		ret.WellFrom = append(ret.WellFrom, "A1")
 		ret.Volume = append(ret.Volume, wunit.NewVolume(10.0, "ul"))
-		ret.FPlateType = append(ret.FPlateType, "pcrplate_skirted_riser40")
+		ret.FPlateType = append(ret.FPlateType, "DWST12")
 		ret.FVolume = append(ret.FVolume, wunit.NewVolume(20.0, "ul"))
+	}
+	ret.Prms = ch
+	ret.Head = ch.Head
+	return ret
+}
+
+func getLLFTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
+	ret := NewSuckInstruction()
+	ret.Multi = multi
+	ret.TipType = tipType
+	wc := wtype.MakeWellCoords("A1")
+	for i := 0; i < multi; i++ {
+		ret.What = append(ret.What, "soup")
+		ret.PltFrom = append(ret.PltFrom, "position_4")
+		wc.Y = i
+		ret.WellFrom = append(ret.WellFrom, wc.FormatA1())
+		ret.Volume = append(ret.Volume, wunit.NewVolume(10.0, "ul"))
+		ret.FPlateType = append(ret.FPlateType, "pcrplate_skirted_riser18")
+		ret.FVolume = append(ret.FVolume, wunit.NewVolume(100.0, "ul"))
 	}
 	ret.Prms = ch
 	ret.Head = ch.Head
@@ -1116,7 +1135,6 @@ func TestTipReuse(t *testing.T) {
 		test.Run(t)
 	}
 }
-
 func TestAspWait(t *testing.T) {
 	tests := []*PolicyTest{
 		{
@@ -1171,6 +1189,165 @@ func TestAspWait(t *testing.T) {
 					Instruction: 4, //Wait
 					Values: map[string]interface{}{
 						"TIME": 3.0,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestAspLLF(t *testing.T) {
+	ctx := GetContextForTest()
+	tests := []*PolicyTest{
+		{
+			Name: "asp withLLF",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"USE_LLF": true,
+					},
+				},
+			},
+			Instruction:          getLLFTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                makeTestGilsonWithPlates(ctx, true),
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, //Asp
+					Values: map[string]interface{}{
+						"LLF": []bool{true},
+					},
+				},
+			},
+		},
+		{
+			Name: "asp withLLF multi",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"USE_LLF": true,
+					},
+				},
+			},
+			Instruction:          getLLFTestSuck(getLVConfig(), 8, "Gilson20"),
+			Robot:                makeTestGilsonWithPlates(ctx, true),
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, //Asp
+					Values: map[string]interface{}{
+						"LLF": []bool{true, true, true, true, true, true, true, true},
+					},
+				},
+			},
+		},
+		{
+			Name: "asp withLLF but plate doesn't support",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"USE_LLF": true,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, //Asp
+					Values: map[string]interface{}{
+						"LLF": []bool{false},
+					},
+				},
+			},
+		},
+		{
+			Name: "asp withLLF f volume too small",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"USE_LLF": true,
+					},
+				},
+			},
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Robot:                makeTestGilsonWithPlates(ctx, true),
+			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, //Asp
+					Values: map[string]interface{}{
+						"LLF": []bool{false},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestDspLLF(t *testing.T) {
+	ctx := GetContextForTest()
+	tests := []*PolicyTest{
+		{
+			Name: "dsp with LLF",
+			Rules: []*Rule{
+				{
+					Name: "soup",
+					Conditions: []Condition{
+						&CategoryCondition{
+							Attribute: "LIQUIDCLASS",
+							Value:     "soup",
+						},
+					},
+					Policy: map[string]interface{}{
+						"USE_LLF": true,
+					},
+				},
+			},
+			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
+			Robot:                makeTestGilsonWithPlates(ctx, true),
+			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
+			Assertions: []*InstructionAssertion{
+				{
+					Instruction: 3, //Dispense
+					Values: map[string]interface{}{
+						"LLF": []bool{true},
 					},
 				},
 			},

@@ -7,7 +7,6 @@ type LHOptions struct {
 	PrintInstructions         bool
 	LegacyVolume              bool
 	FixVolumes                bool
-	UseLLF                    bool
 	DisablePhysicalSimulation bool
 }
 

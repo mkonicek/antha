@@ -23,8 +23,11 @@
 package liquidhandling
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/microArch/logger"
 )
 
 //autoGenerateLLModel attempt to generate a liquidlevel model and add it to the plate
@@ -32,9 +35,13 @@ func autoGenerateLLModel(well *wtype.LHWell) {
 
 	//we really don't know very much about the well geometry, just go with a linear model
 	//this might be OK for straight sided wells, but is likely to require a constant offset
-	area := well.MaxCrossSectionalArea()
+	area, err := well.CalculateMaxCrossSectionArea()
+	if err != nil {
+		return
+	}
 
-	model := wutil.Quadratic{B: area}
+	model := wutil.Quadratic{B: area.ConvertToString("mm^2")}
 	well.SetLiquidLevelModel(model)
 
+	logger.Info(fmt.Sprintf("Auto-generated Liquid Level Model (A, B = 0.0, %f) for plate type \"%s\"", area.ConvertToString("mm^2")))
 }

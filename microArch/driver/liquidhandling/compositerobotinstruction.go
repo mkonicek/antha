@@ -3530,7 +3530,7 @@ func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms
 	use_llf := make([]bool, multi)
 	any_llf := false
 	enable_llf := SafeGetBool(policy.Options, "USE_LLF")
-	autoLLF := SafeGetBool(Policy.Options, "AUTO_LLF")
+	autoLLF := SafeGetBool(policy.Options, "AUTO_LLF")
 
 	//save a few ms
 	if !enable_llf {
@@ -3542,8 +3542,8 @@ func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms
 		plate := prms.Plates[plates[i]]
 
 		//autogenerate an LLF model if necessary
-		if autoLLF && !plate.WellType.HasLiquidLevelModel() {
-			autoGenerateLLModel(plate)
+		if autoLLF && !plate.Welltype.HasLiquidLevelModel() {
+			autoGenerateLLModel(plate.Welltype)
 		}
 
 		//do LLF if the well has a volumemodel

@@ -72,9 +72,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		// in fact we do not return a different robot now... but we might
 		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
-
 		if err != nil {
-			//panic(err)
 			return inss, err
 		}
 
@@ -287,8 +285,6 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			}
 		}
 	}
-
-	// ret here is just splurged straight out
 
 	return ret, nil
 }

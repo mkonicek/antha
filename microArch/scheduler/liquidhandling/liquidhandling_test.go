@@ -760,7 +760,7 @@ func TestTipOverrideNegative(t *testing.T) {
 
 	err = lh.Plan(ctx, rq)
 
-	if e, f := "7 (LH_ERR_VOL) : volume error : No tip chosen: Volume 8 ul is too low to be accurately moved by the liquid handler (configured minimum 10 ul, tip minimum 10 ul). Low volume tips may not be available and / or the robot may need to be configured differently", err.Error(); e != f {
+	if e, f := "7 (LH_ERR_VOL) : volume error : No tip chosen: Volume 8 ul is too low to be accurately moved by the liquid handler (configured minimum 10 ul). Low volume tips may not be available and / or the robot may need to be configured differently", err.Error(); e != f {
 		t.Fatalf("expecting error %q found %q", e, f)
 	}
 }

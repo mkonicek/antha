@@ -13,7 +13,7 @@ import (
 func makeplatefortest() *LHPlate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
 	welltype := NewLHWell("ul", 200, 10, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates{127.76, 85.48, 43.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
+	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates{127.76, 85.48, 43.1}, welltype, 9.0, 9.0, 0.5, 0.5, 0.5)
 	return p
 }
 
@@ -494,4 +494,66 @@ func TestSpecialRetention(t *testing.T) {
 		t.Error("Specialness must be retained after cleaning")
 	}
 
+}
+
+func TestWellCoordsToCoords(t *testing.T) {
+
+	plate := makeplatefortest()
+
+	pos, ok := plate.WellCoordsToCoords(MakeWellCoords("A1"), BottomReference)
+	if !ok {
+		t.Fatal("well A1 doesn't exist!")
+	}
+
+	xExpected := plate.WellXStart
+	yExpected := plate.WellYStart
+
+	if pos.X != xExpected || pos.Y != yExpected {
+		t.Errorf("position was wrong: expected (%f, %f) got (%f, %f)", xExpected, yExpected, pos.X, pos.Y)
+	}
+
+}
+
+func TestCoordsToWellCoords(t *testing.T) {
+
+	plate := makeplatefortest()
+
+	pos := Coordinates{
+		X: plate.WellXStart + 0.75*plate.WellXOffset,
+		Y: plate.WellYStart + 0.75*plate.WellYOffset,
+	}
+
+	wc, delta := plate.CoordsToWellCoords(pos)
+
+	if e, g := "B2", wc.FormatA1(); e != g {
+		t.Errorf("Wrong well coordinates: expected %s, got %s", e, g)
+	}
+
+	eDelta := -0.25 * plate.WellXOffset
+	if delta.X != eDelta || delta.Y != eDelta {
+		t.Errorf("Delta incorrect: expected (%f, %f), got (%f, %f)", eDelta, eDelta, delta.X, delta.Y)
+	}
+
+}
+
+func TestGetWellBounds(t *testing.T) {
+
+	plate := makeplatefortest()
+
+	eStart := Coordinates{
+		X: 0.5 - 0.5*8.2,
+		Y: 0.5 - 0.5*8.2,
+		Z: 0.5,
+	}
+	eSize := Coordinates{
+		X: 9.0*11 + 8.2,
+		Y: 9.0*7 + 8.2,
+		Z: 41.3,
+	}
+	eBounds := NewBBox(eStart, eSize)
+	bounds := plate.GetWellBounds()
+
+	if e, g := eBounds.String(), bounds.String(); e != g {
+		t.Errorf("GetWellBounds incorrect: expected %v, got %v", eBounds, bounds)
+	}
 }

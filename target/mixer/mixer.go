@@ -216,7 +216,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	//physical simulation override
 
-	req.Options.DisablePhysicalSimulation = a.opt.DisablePhysicalSimulation
+	req.Options.IgnorePhysicalSimulation = a.opt.IgnorePhysicalSimulation
 
 	return &lhreq{
 		LHRequest:     req,

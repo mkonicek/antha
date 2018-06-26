@@ -162,7 +162,7 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	}
 
 	err = this.Simulate(request)
-	if err != nil {
+	if err != nil && !request.Options.IgnorePhysicalSimulation {
 		return errors.WithMessage(err, "during physical simulation")
 	}
 
@@ -201,10 +201,6 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 
 // run the request via the physical simulator
 func (this *Liquidhandler) Simulate(request *LHRequest) error {
-
-	if request.Options.DisablePhysicalSimulation {
-		return nil
-	}
 
 	instructions := (*request).Instructions
 	if instructions == nil {
@@ -270,7 +266,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 			//include physical 'stack'
 			errMsg += "\n\t" + strings.Replace(dErr.GetStateAtError(), "\n", "\n\t", -1)
 		}
-		return errors.Errorf("%s\n\tPhysical simulation can be disabled using the \"DisablePhysicalSimulation\" configuration option.",
+		return errors.Errorf("%s\n\tPhysical simulation can be overridden using the \"IgnorePhysicalSimulation\" configuration option.",
 			errMsg)
 	}
 

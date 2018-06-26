@@ -21,12 +21,11 @@
 // 2 Royal College St, London NW1 0NH UK
 
 // solutions is a utility package for working with solutions of LHComponents
-package solutions
+package wtype
 
 import (
 	"strings"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -67,8 +66,8 @@ func removeConcUnitFromName(name string) string {
 // e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
 // An LB solution with concentration 1 X and no components is returned as 1X LB.
 // An LB solution with no concentration and no components is returned as LB.
-func ReturnNormalisedComponentName(component *wtype.LHComponent) string {
-	originalcompList, _ := component.GetSubComponents()
+func ReturnNormalisedComponentName(component *LHComponent) string {
+	originalcompList, _ := GetSubComponents(component)
 
 	compList := originalcompList.RemoveConcsFromSubComponentNames()
 
@@ -87,7 +86,7 @@ func ReturnNormalisedComponentName(component *wtype.LHComponent) string {
 // e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
 // An LB solution with concentration 1 X and no components is returned as 1X LB.
 // An LB solution with no concentration and no components is returned as LB.
-func NormaliseComponentName(component *wtype.LHComponent) error {
+func NormaliseComponentName(component *LHComponent) error {
 
 	newName := ReturnNormalisedComponentName(component)
 

@@ -53,10 +53,39 @@ type LHComponent struct {
 	Smax               float64 // maximum solubility
 	Visc               float64
 	StockConcentration float64
+	SubComponents      ComponentList // List of all sub components in the LHComponent.
 	Extra              map[string]interface{}
 	Loc                string // refactor to PlateLocation
 	Destination        string
 	Policy             LHPolicy // Policy is where a custom liquid policy is stored
+}
+
+// AddSubComponent adds a subcomponent with concentration to a component.
+// An error is returned if subcomponent is already found.
+func (cmp *LHComponent) AddSubComponent(subcomponent *LHComponent, conc wunit.Concentration) error {
+	cmp, err := AddSubComponent(cmp, subcomponent, conc)
+	return err
+}
+
+// AddSubComponents adds a component list to a component.
+// If a conflicting sub component concentration is already present then an error will be returned.
+// To overwrite all subcomponents ignoring conficts, use OverWriteSubComponents.
+func (cmp *LHComponent) AddSubComponents(allsubComponents ComponentList) error {
+	cmp, err := AddSubComponents(cmp, allsubComponents)
+	return err
+}
+
+// OverwriteSubComponents Adds a component list to a component.
+// Any existing component list will be overwritten.
+// To add a ComponentList checking for duplicate entries, use AddSubComponents.
+func (cmp *LHComponent) OverwriteSubComponents(allsubComponents ComponentList) error {
+	cmp, err := setHistory(cmp, allsubComponents)
+	return err
+}
+
+// GetSubComponents returns a component list from a component
+func (cmp *LHComponent) GetSubComponents() (ComponentList, error) {
+	return GetSubComponents(cmp)
 }
 
 func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {

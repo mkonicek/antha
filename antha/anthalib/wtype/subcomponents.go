@@ -20,17 +20,14 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// solutions is a utility package for working with solutions of LHComponents
-package solutions
+package wtype
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pubchem"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -47,7 +44,7 @@ type ComponentListSample struct {
 // An error may be generated if two components with the same name exist within the two lists with incompatible concentration units.
 // In this instance, the molecular weight for that component will be looked up in pubchem in order to change the units in both lists to g/l,
 // which will be able to be added.
-func MixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
+func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
 
 	var errs []string
 
@@ -124,7 +121,7 @@ func MixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 // this is to prevent potential duplication since if a component has a list of sub components the name
 // is considered to be an alias and the component list the true meaning of what the component is.
 // If any sample concentration of zero is found the component list will be made but an error returned.
-func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, warning error) {
+func SimulateMix(samples ...*LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, warning error) {
 
 	var warnings []string
 	var nonZeroVols []wunit.Volume
@@ -212,7 +209,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 				nexSampleVolToAdd = nextSample.Volume()
 			}
 			nextMixStep := ComponentListSample{ComponentList: nextList, Volume: nexSampleVolToAdd}
-			newComponentList, err = MixComponentLists(previousMixStep, nextMixStep)
+			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
 			if err != nil {
 				warnings = append(warnings, err.Error())
 			}
@@ -224,7 +221,7 @@ func SimulateMix(samples ...*wtype.LHComponent) (newComponentList ComponentList,
 	}
 
 	if len(warnings) > 0 {
-		warning = wtype.NewWarningf(strings.Join(warnings, "; "))
+		warning = NewWarningf(strings.Join(warnings, "; "))
 		return newComponentList, mixSteps, warning
 	}
 	return newComponentList, mixSteps, nil
@@ -236,7 +233,7 @@ type ComponentList struct {
 }
 
 // add a single entry to a component list
-func (c ComponentList) Add(component *wtype.LHComponent, conc wunit.Concentration) (newlist ComponentList) {
+func (c ComponentList) Add(component *LHComponent, conc wunit.Concentration) (newlist ComponentList) {
 
 	componentName := NormaliseName(component.Name())
 
@@ -254,7 +251,7 @@ func (c ComponentList) Add(component *wtype.LHComponent, conc wunit.Concentratio
 
 // Get a single concentration set point for a named component present in a component list.
 // An error will be returned if the component is not present.
-func (c ComponentList) Get(component *wtype.LHComponent) (conc wunit.Concentration, err error) {
+func (c ComponentList) Get(component *LHComponent) (conc wunit.Concentration, err error) {
 
 	componentName := NormaliseName(component.Name())
 
@@ -282,7 +279,7 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 	return conc, &notFound{Name: component, All: c.AllComponents()}
 }
 
-func (c ComponentList) removeConcsFromSubComponentNames() (nc ComponentList) {
+func (c ComponentList) RemoveConcsFromSubComponentNames() (nc ComponentList) {
 	newComponentList := make(map[string]wunit.Concentration)
 	for compName, conc := range c.Components {
 		newCompName := removeConcUnitFromName(compName)
@@ -373,8 +370,9 @@ func (a *notFound) Error() string {
 	return "component " + a.Name + " not found. Found: " + strings.Join(a.All, ";")
 }
 
-// returns error if component already found
-func AddSubComponent(component *wtype.LHComponent, subcomponent *wtype.LHComponent, conc wunit.Concentration) (*wtype.LHComponent, error) {
+// AddSubComponent adds a subcomponent with concentration to a component.
+// An error is returned if subcomponent is already found.
+func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wunit.Concentration) (*LHComponent, error) {
 	var err error
 
 	if component == nil {
@@ -436,12 +434,13 @@ func AddSubComponent(component *wtype.LHComponent, subcomponent *wtype.LHCompone
 	}
 }
 
-// Add a component list to a component.
-// Any existing component list will be overwritten
-func AddSubComponents(component *wtype.LHComponent, allsubComponents ComponentList) (*wtype.LHComponent, error) {
+// AddSubComponents adds a component list to a component.
+// If a conflicting sub component concentration is already present then an error will be returned.
+// To overwrite all subcomponents ignoring conficts, use OverWriteSubComponents.
+func AddSubComponents(component *LHComponent, allsubComponents ComponentList) (*LHComponent, error) {
 
 	for _, compName := range allsubComponents.AllComponents() {
-		var comp wtype.LHComponent
+		var comp LHComponent
 
 		comp.CName = compName
 
@@ -461,15 +460,8 @@ func AddSubComponents(component *wtype.LHComponent, allsubComponents ComponentLi
 	return component, nil
 }
 
-// Add a component list to a component.
-// Any existing component list will be overwritten
-func OverwriteSubComponents(component *wtype.LHComponent, allsubComponents ComponentList) (*wtype.LHComponent, error) {
-	component.Extra["History"] = allsubComponents
-	return component, nil
-}
-
-// return a component list from a component
-func GetSubComponents(component *wtype.LHComponent) (componentMap ComponentList, err error) {
+// GetSubComponents returns a component list from a component
+func GetSubComponents(component *LHComponent) (componentMap ComponentList, err error) {
 
 	components, err := getHistory(component)
 
@@ -486,36 +478,21 @@ func GetSubComponents(component *wtype.LHComponent) (componentMap ComponentList,
 
 // Return a component list from a component.
 // Users should use getSubComponents function.
-func getHistory(comp *wtype.LHComponent) (compList ComponentList, err error) {
+func getHistory(comp *LHComponent) (compList ComponentList, err error) {
 
-	history, found := comp.Extra["History"]
-
-	if !found {
-		return compList, fmt.Errorf("No component list found")
+	if len(comp.SubComponents.Components) > 0 {
+		return comp.SubComponents, nil
 	}
 
-	var bts []byte
-
-	bts, err = json.Marshal(history)
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(bts, &compList)
-
-	if err != nil {
-		err = fmt.Errorf("Problem getting %s history. History found: %+v; error: %s", comp.Name(), history, err.Error())
-	}
-
-	return
+	return ComponentList{}, fmt.Errorf("no component list found for %s", comp.Name())
 }
 
 // Add a component list to a component.
 // Any existing component list will be overwritten.
 // Users should use add SubComponents function
-func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHComponent, error) {
+func setHistory(comp *LHComponent, compList ComponentList) (*LHComponent, error) {
 
-	comp.Extra["History"] = compList // serialisedList
+	comp.SubComponents = compList
 
 	return comp, nil
 }
@@ -523,21 +500,21 @@ func setHistory(comp *wtype.LHComponent, compList ComponentList) (*wtype.LHCompo
 // UpdateComponentDetails corrects the sub component list and normalises the name of a component with the details
 // of all sample mixes which are specified to be the source of that component.
 // This must currently be updated manually using this function.
-func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.LHComponent) error {
+func UpdateComponentDetails(productOfMixes *LHComponent, mixes ...*LHComponent) error {
 	var warnings []string
 
 	subComponents, _, err := SimulateMix(mixes...)
 
 	if err != nil {
 		switch err.(type) {
-		case wtype.Warning:
+		case Warning:
 			warnings = append(warnings, err.Error())
 		default:
 			return err
 		}
 	}
 
-	subComponents = subComponents.removeConcsFromSubComponentNames()
+	subComponents = subComponents.RemoveConcsFromSubComponentNames()
 
 	productOfMixes, err = AddSubComponents(productOfMixes, subComponents)
 
@@ -552,7 +529,7 @@ func UpdateComponentDetails(productOfMixes *wtype.LHComponent, mixes ...*wtype.L
 	}
 
 	if len(warnings) > 0 {
-		return wtype.NewWarningf(strings.Join(warnings, "/n"))
+		return NewWarningf(strings.Join(warnings, "/n"))
 	}
 
 	return nil

@@ -68,12 +68,12 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 
 					if lookForSubComponents {
 
-						compsubcomponents, err := GetSubComponents(comp)
+						compsubcomponents, err := comp.GetSubComponents()
 						if err != nil {
 							return false, -1, err
 						}
 
-						componentSubcomponents, err := GetSubComponents(component)
+						componentSubcomponents, err := component.GetSubComponents()
 						if err != nil {
 							return false, -1, err
 						}
@@ -93,12 +93,12 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 			} else {
 				if lookForSubComponents {
 
-					compsubcomponents, err := GetSubComponents(comp)
+					compsubcomponents, err := comp.GetSubComponents()
 					if err != nil {
 						return false, -1, err
 					}
 
-					componentSubcomponents, err := GetSubComponents(component)
+					componentSubcomponents, err := component.GetSubComponents()
 					if err != nil {
 						return false, -1, err
 					}
@@ -120,7 +120,7 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 	return false, -1, fmt.Errorf("component %s not found in list: %s. : Errors for each: %s", componentSummary(component), componentNames(components), strings.Join(errs, "\n"))
 }
 
-func nonZeroComponents(compList ComponentList) int {
+func nonZeroComponents(compList wtype.ComponentList) int {
 	var nonZero int
 	for _, conc := range compList.Components {
 		if conc.RawValue() > 0 {
@@ -131,7 +131,7 @@ func nonZeroComponents(compList ComponentList) int {
 }
 
 // EqualLists compares two ComponentLists and returns an error if the lists are not identical.
-func EqualLists(list1, list2 ComponentList) error {
+func EqualLists(list1, list2 wtype.ComponentList) error {
 	var notEqual []string
 
 	if nonZeroComponents(list1) == 0 && nonZeroComponents(list2) == 0 {
@@ -158,7 +158,7 @@ func EqualLists(list1, list2 ComponentList) error {
 }
 
 func componentSummary(component *wtype.LHComponent) string {
-	subComps, err := GetSubComponents(component)
+	subComps, err := component.GetSubComponents()
 	var message string
 	if err != nil {
 		message = err.Error()

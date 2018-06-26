@@ -681,7 +681,8 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 
 	//check for collisions in the new location
 	if err := assertNoCollisionsInGroup(adaptor, nil, 0.0); err != nil {
-		self.AddErrorf("%s: collision detected: %s", describe(), err.Error())
+		err.SetInstructionDescription(describe())
+		self.addLHError(err)
 	}
 	return ret
 }
@@ -1204,7 +1205,8 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 			return ret
 		}
 		if err := assertNoCollisionsInGroup(adaptor, channels, zo_max+0.5); err != nil {
-			self.AddErrorf("%s: collision detected: %s", describe(), err.Error())
+			err.SetInstructionDescription(describe())
+			self.addLHError(err)
 		}
 	}
 

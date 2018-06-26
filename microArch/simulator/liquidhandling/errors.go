@@ -24,6 +24,10 @@ package liquidhandling
 
 import (
 	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
 )
@@ -79,4 +83,104 @@ func (self *GenericError) Error() string {
 func (self *GenericError) setInstruction(index int, ins driver.TerminalRobotInstruction) {
 	self.instruction = ins
 	self.instructionIndex = index
+}
+
+//CollisionError generated when a physical collision occurs
+type CollisionError struct {
+	description       string
+	channelsColliding map[int][]int //maps adaptors to a list of channels involved in collision
+	objectsColliding  []wtype.LHObject
+	instruction       driver.TerminalRobotInstruction
+	instructionIndex  int
+}
+
+//NewCollisionError make a new collision. Description is the description of what the move instruction was doing
+func NewCollisionError(channelsColliding map[int][]int, objectsColliding []wtype.LHObject) *CollisionError {
+	return &CollisionError{
+		channelsColliding: channelsColliding,
+		objectsColliding:  objectsColliding,
+	}
+}
+
+func (self *CollisionError) Severity() simulator.ErrorSeverity {
+	return simulator.SeverityError
+}
+
+func (self *CollisionError) Instruction() driver.TerminalRobotInstruction {
+	return self.instruction
+}
+
+func (self *CollisionError) InstructionIndex() int {
+	return self.instructionIndex
+}
+
+func (self *CollisionError) Error() string {
+	return fmt.Sprintf("(%v) %s[%d]: %s: collision detected: %s",
+		self.Severity(),
+		driver.HumanInstructionName(self.instruction),
+		self.InstructionIndex(),
+		self.InstructionDescription(),
+		self.CollisionDescription())
+}
+
+func (self *CollisionError) setInstruction(index int, ins driver.TerminalRobotInstruction) {
+	self.instruction = ins
+	self.instructionIndex = index
+}
+
+func (self *CollisionError) InstructionDescription() string {
+	return self.description
+}
+
+func (self *CollisionError) SetInstructionDescription(d string) {
+	self.description = d
+}
+
+func (self *CollisionError) CollisionDescription() string {
+	adaptorStrings := make([]string, 0, len(self.channelsColliding))
+	for adaptorIndex, channels := range self.channelsColliding {
+		adaptorStrings = append(adaptorStrings, fmt.Sprintf("head %d %s", adaptorIndex, summariseChannels(channels)))
+	}
+
+	//group objects by parent
+	parentMap := make(map[wtype.LHObject][]wtype.LHObject, len(self.objectsColliding))
+	for _, object := range self.objectsColliding {
+		p := object.GetParent()
+		if _, ok := parentMap[p]; !ok {
+			parentMap[p] = make([]wtype.LHObject, 0, len(self.objectsColliding))
+		}
+		parentMap[p] = append(parentMap[p], object)
+	}
+
+	objectStrings := make([]string, 0, len(self.objectsColliding))
+	for parent, children := range parentMap {
+		deck := wtype.GetObjectRoot(parent).(*wtype.LHDeck)
+
+		//if the parent is addressable, refer to the children compactly using their addresses
+		var s string
+		if addr, ok := parent.(wtype.Addressable); ok {
+			wellcoords := make([]wtype.WellCoords, 0, len(children))
+			for _, child := range children {
+				pos := child.GetPosition().Add(child.GetSize().Multiply(0.5))
+				wc, _ := addr.CoordsToWellCoords(pos)
+				wellcoords = append(wellcoords, wc)
+			}
+			//WellCoordArrayRow sorts by col then row
+			sort.Sort(wtype.WellCoordArrayRow(wellcoords))
+
+			s = fmt.Sprintf("%s %s@%s at position %s", pluralClassOf(children[0], len(wellcoords)), wtype.HumanizeWellCoords(wellcoords), wtype.NameOf(parent), deck.GetSlotContaining(parent))
+			objectStrings = append(objectStrings, s)
+		} else {
+			for _, child := range children {
+				s = fmt.Sprintf("%s \"%s\" of type %s", wtype.ClassOf(child), wtype.NameOf(child), wtype.TypeOf(child))
+				if pos := deck.GetSlotContaining(child); pos != "" {
+					s += fmt.Sprintf(" at position %s", pos)
+				}
+				objectStrings = append(objectStrings, s)
+			}
+		}
+	}
+
+	return fmt.Sprintf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
+
 }

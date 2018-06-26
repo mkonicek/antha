@@ -223,6 +223,9 @@ func (self *LHDeck) GetSlotNames() []string {
 }
 
 func (self *LHDeck) GetSlotContaining(obj LHObject) string {
+	if self == nil {
+		return ""
+	}
 	for n, sl := range self.slots {
 		if IDOf(sl.contents) == IDOf(obj) {
 			return n

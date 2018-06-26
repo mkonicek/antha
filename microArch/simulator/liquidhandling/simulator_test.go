@@ -726,7 +726,7 @@ func TestCrashes(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move[0]: head 0 channel 0 to A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and plate \"plate1\" at position input_1",
+				"(err) Move[0]: head 0 channel 0 to A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and plate \"plate1\" of type plate at position input_1",
 			},
 			nil, //assertionsi
 		},

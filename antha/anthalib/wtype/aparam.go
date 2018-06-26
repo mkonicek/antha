@@ -75,7 +75,7 @@ func MakeInstructionParameters() AParamSet {
 
 func MakePolicyItems() AParamSet {
 	typemap = maketypemap()
-	alhpis := make(AParamSet, 30)
+	alhpis := make(AParamSet)
 	alhpis["ASPENTRYSPEED"] = AParam{Name: "ASPENTRYSPEED", Type: typemap["float64"], Desc: "allows slow moves into liquids"}
 	alhpis["ASPREFERENCE"] = AParam{Name: "ASPREFERENCE", Type: typemap["int"], Desc: "where to be when aspirating: 0 well bottom, 1 well top, 2 liquid level (if known)"}
 	alhpis["ASPSPEED"] = AParam{Name: "ASPSPEED", Type: typemap["float64"], Desc: "aspirate pipetting rate"}
@@ -131,6 +131,7 @@ func MakePolicyItems() AParamSet {
 	alhpis["LLFBELOWSURFACE"] = AParam{Name: "LLFBELOWSURFACE", Type: typemap["float64"], Desc: "Distance below surface for Liquid Level Following (LLF) when aspirating"}
 	alhpis["LLFABOVESURFACE"] = AParam{Name: "LLFABOVESURFACE", Type: typemap["float64"], Desc: "Distance below surface for Liquid Level Following (LLF) when dispensing"}
 	alhpis[PolicyNameField] = AParam{Name: PolicyNameField, Type: typemap["string"], Desc: "Name of the Liquid Policy"}
+	alhpis["USE_LLF"] = AParam{Name: "USE_LLF", Type: typemap["bool"], Desc: "Use Liquid-level following if plate has a model for liquid height-volume relations and the driver can use it."}
 
 	return alhpis
 }
@@ -140,8 +141,6 @@ func GetLHPolicyOptions() AParamSet {
 	tm := maketypemap()
 
 	ps["USE_DRIVER_TIP_TRACKING"] = AParam{Name: "USE_DRIVER_TIP_TRACKING", Type: tm["bool"], Desc: "If driver has the option to use its own tip tracking, do so"}
-
-	ps["USE_LLF"] = AParam{Name: "USE_LLF", Type: tm["bool"], Desc: "Use Liquid-level following if plate has a model for liquid height-volume relations and the driver can use it."}
 
 	return ps
 }

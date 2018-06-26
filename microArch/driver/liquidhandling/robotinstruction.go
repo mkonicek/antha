@@ -97,9 +97,65 @@ func InstructionTypeName(ins RobotInstruction) string {
 	return Robotinstructionnames[ins.InstructionType()]
 }
 
-var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "RPA", "APT", "SPB"}
+var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT", "RPA", "SPB"}
 
 var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
+
+func HumanInstructionName(ins RobotInstruction) string {
+	if ins == nil {
+		return "no instruction"
+	}
+	if ret, ok := humanRobotInstructionNames[ins.InstructionType()]; ok {
+		return ret
+	}
+	return "unknown"
+}
+
+var humanRobotInstructionNames = map[int]string{
+	TFR: "Transfer",
+	TFB: "TransferBlock",
+	SCB: "SingleChannelTransferBlock",
+	MCB: "MultiChannelTransferBlock",
+	SCT: "SingleChannelTransfer",
+	MCT: "MultiChannelTransfer",
+	CCC: "ChangeChannelCharacteristics",
+	LDT: "LoadTipsMove",
+	UDT: "UnloadTipsMove",
+	RST: "Reset",
+	CHA: "ChangeAdaptor",
+	ASP: "Aspirate",
+	DSP: "Dispense",
+	BLO: "Blowout",
+	PTZ: "ResetPistons",
+	MOV: "Move",
+	MRW: "MoveRaw",
+	LOD: "LoadTips",
+	ULD: "UnloadTips",
+	SUK: "Suck",
+	BLW: "Blow",
+	SPS: "SetPipetteSpeed",
+	SDS: "SetDriveSpeed",
+	INI: "Initialize",
+	FIN: "Finalize",
+	WAI: "Wait",
+	LON: "LightsOn",
+	LOF: "LightsOff",
+	OPN: "Open",
+	CLS: "Close",
+	LAD: "LoadAdaptor",
+	UAD: "UnloadAdaptor",
+	MMX: "MoveMix",
+	MIX: "Mix",
+	MSG: "Message",
+	MAS: "MoveAspirate",
+	MDS: "MoveDispense",
+	MVM: "MoveMix",
+	MBL: "MoveBlowout",
+	RAP: "RemoveAllPlates",
+	APT: "AddPlateTo",
+	RPA: "RemovePlateAt",
+	SPB: "SplitBlock",
+}
 
 // option to feed into InsToString function
 type printOption string
@@ -129,6 +185,11 @@ func printInstructionArray(inss []RobotInstruction) {
 func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 
 	s := InstructionTypeName(ins) + " "
+
+	if apt, ok := ins.(*AddPlateToInstruction); ok {
+		s += fmt.Sprintf("NAME: %s POSITION: %s PLATE: %s", apt.Name, apt.Position, wtype.NameOf(apt.Plate))
+		return s
+	}
 
 	var changeColour func(string) string
 

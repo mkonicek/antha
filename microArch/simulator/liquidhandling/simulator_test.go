@@ -20,101 +20,45 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package liquidhandling_test
+package liquidhandling
 
 import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 func TestUnknownLocations(t *testing.T) {
-	tests := make([]SimulatorTest, 0)
+	assertPropsInvalid := func(t *testing.T, props *liquidhandling.LHProperties, message string) {
+		if _, err := NewVirtualLiquidHandler(props, nil); err == nil {
+			t.Errorf("missing error in %s", message)
+		}
+	}
 
 	lhp := default_lhproperties()
 	lhp.Tip_preferences = append(lhp.Tip_preferences, "undefined_tip_pref")
-	tests = append(tests, SimulatorTest{"Undefined Tip_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_tip_pref\" referenced in tip preferences"},
-		nil})
+	assertPropsInvalid(t, lhp, "Undefined Tip_preference")
 
 	lhp = default_lhproperties()
-	lhp.Input_preferences = append(lhp.Tip_preferences, "undefined_input_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Input_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_input_pref\" referenced in input preferences"},
-		nil})
+	lhp.Input_preferences = append(lhp.Input_preferences, "undefined_input_pref")
+	assertPropsInvalid(t, lhp, "Undefined Input_preference")
 
 	lhp = default_lhproperties()
-	lhp.Output_preferences = append(lhp.Tip_preferences, "undefined_output_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Output_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_output_pref\" referenced in output preferences"},
-		nil})
+	lhp.Output_preferences = append(lhp.Output_preferences, "undefined_output_pref")
+	assertPropsInvalid(t, lhp, "Undefined Output_preference")
 
 	lhp = default_lhproperties()
-	lhp.Tipwaste_preferences = append(lhp.Tip_preferences, "undefined_tipwaste_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Tipwaste_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_tipwaste_pref\" referenced in tipwaste preferences"},
-		nil})
+	lhp.Tipwaste_preferences = append(lhp.Tipwaste_preferences, "undefined_tipwaste_pref")
+	assertPropsInvalid(t, lhp, "Undefined Tipwaste_preference")
 
 	lhp = default_lhproperties()
-	lhp.Wash_preferences = append(lhp.Tip_preferences, "undefined_wash_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Wash_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_wash_pref\" referenced in wash preferences"},
-		nil})
+	lhp.Wash_preferences = append(lhp.Wash_preferences, "undefined_wash_pref")
+	assertPropsInvalid(t, lhp, "Undefined Wash_preference")
 
 	lhp = default_lhproperties()
-	lhp.Waste_preferences = append(lhp.Tip_preferences, "undefined_waste_pref")
-	tests = append(tests, SimulatorTest{"passing undefined Waste_preference", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: Undefined location \"undefined_waste_pref\" referenced in waste preferences"},
-		nil})
-
-	for _, test := range tests {
-		test.run(t)
-	}
-}
-
-func TestMissingPrefs(t *testing.T) {
-	tests := make([]SimulatorTest, 0)
-
-	lhp := default_lhproperties()
-	lhp.Tip_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Tip_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No tip preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Input_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Input_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No input preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Output_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Output_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No output preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Tipwaste_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing TipWaste_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No tipwaste preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Wash_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Wash_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No wash preferences specified"},
-		nil})
-
-	lhp = default_lhproperties()
-	lhp.Waste_preferences = make([]string, 0)
-	tests = append(tests, SimulatorTest{"passing missing Waste_preferences", lhp, nil, nil,
-		[]string{"(warn) NewVirtualLiquidHandler: No waste preferences specified"},
-		nil})
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	lhp.Waste_preferences = append(lhp.Waste_preferences, "undefined_waste_pref")
+	assertPropsInvalid(t, lhp, "Undefined Waste_preference")
 }
 
 func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {
@@ -149,7 +93,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&Initialize{},
 				&AddPlateTo{"tipbox_1", "my plate's gone stringy", "not_a_plate"},
 			},
-			[]string{"(err) AddPlateTo: Couldn't add object of type string to tipbox_1"},
+			[]string{"(err) AddPlateTo[1]: Couldn't add object of type string to tipbox_1"},
 			nil, //no assertions
 		},
 		{
@@ -161,7 +105,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&AddPlateTo{"tipbox_1", default_lhtipbox("p0"), "p0"},
 				&AddPlateTo{"tipbox_1", default_lhtipbox("p1"), "p1"},
 			},
-			[]string{"(err) AddPlateTo: Couldn't add tipbox \"p1\" to location \"tipbox_1\" which already contains tipbox \"p0\""},
+			[]string{"(err) AddPlateTo[2]: Couldn't add tipbox \"p1\" to location \"tipbox_1\" which already contains tipbox \"p0\""},
 			nil, //no assertions
 		},
 		{
@@ -172,7 +116,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&Initialize{},
 				&AddPlateTo{"tipwaste", default_lhtipbox("tipbox"), "tipbox"},
 			},
-			[]string{"(err) AddPlateTo: Slot \"tipwaste\" can't accept tipbox \"tipbox\", only tipwaste allowed"},
+			[]string{"(err) AddPlateTo[1]: Slot \"tipwaste\" can't accept tipbox \"tipbox\", only tipwaste allowed"},
 			nil, //no assertions
 		},
 		{
@@ -183,7 +127,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&Initialize{},
 				&AddPlateTo{"tipbox_1", default_lhtipwaste("tipwaste"), "tipwaste"},
 			},
-			[]string{"(err) AddPlateTo: Slot \"tipbox_1\" can't accept tipwaste \"tipwaste\", only tipbox allowed"},
+			[]string{"(err) AddPlateTo[1]: Slot \"tipbox_1\" can't accept tipwaste \"tipwaste\", only tipbox allowed"},
 			nil, //no assertions
 		},
 		{
@@ -194,7 +138,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&Initialize{},
 				&AddPlateTo{"ruritania", default_lhtipbox("aTipbox"), "aTipbox"},
 			},
-			[]string{"(err) AddPlateTo: Cannot put tipbox \"aTipbox\" at unknown slot \"ruritania\""},
+			[]string{"(err) AddPlateTo[1]: Cannot put tipbox \"aTipbox\" at unknown slot \"ruritania\""},
 			nil, //no assertions
 		},
 		{
@@ -206,7 +150,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&AddPlateTo{"output_1", wide_lhplate("plate1"), "plate1"},
 			},
 			[]string{ //errors
-				"(err) AddPlateTo: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
+				"(err) AddPlateTo[1]: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
 			},
 			nil, //no assertions
 		},
@@ -239,7 +183,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 0.001},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channels 0,1,2,3,4,5,6,7 speed to 0.001 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed[1]: Setting Head 0 channels 0-7 speed to 0.001 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -252,7 +196,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, -1, 15.},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Setting Head 0 channels 0,1,2,3,4,5,6,7 speed to 15 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
+				"(warn) SetPipetteSpeed[1]: Setting Head 0 channels 0-7 speed to 15 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
 			nil, //no assertions
 		},
@@ -265,7 +209,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				&SetPipetteSpeed{0, 3, 5.},
 			},
 			[]string{
-				"(warn) SetPipetteSpeed: Head 0 is not independent, setting pipette speed for channel 3 sets all other channels as well",
+				"(warn) SetPipetteSpeed[1]: Head 0 is not independent, setting pipette speed for channel 3 sets all other channels as well",
 			},
 			nil, //no assertions
 		},
@@ -280,20 +224,34 @@ func Test_SetPippetteSpeed(t *testing.T) {
 // ########################################################## Move
 // ########################################################################################################################
 func testLayout() *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
 		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
 		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
 		vlh.AddPlateTo("input_1", default_lhplate("plate1"), "plate1")
 		vlh.AddPlateTo("input_2", default_lhplate("plate2"), "plate2")
 		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
+		vlh.AddPlateTo("waste", default_lhplate("wasteplate"), "wasteplate")
 		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
 	}
 	return &ret
 }
 
+func testLayoutTransposed() *SetupFn {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+		vlh.Initialize()
+		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
+		vlh.AddPlateTo("input_2", default_lhtipbox("tipbox2"), "tipbox2")
+		vlh.AddPlateTo("tipwaste", default_lhplate("plate1"), "plate1")
+		vlh.AddPlateTo("tipbox_2", default_lhplate("plate2"), "plate2")
+		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
+		vlh.AddPlateTo("input_1", default_lhtipwaste("tipwaste"), "tipwaste")
+	}
+	return &ret
+}
+
 func testTroughLayout() *SetupFn {
-	var ret SetupFn = func(vlh *lh.VirtualLiquidHandler) {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
 		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
 		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
@@ -328,7 +286,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 204.5, Y: 4.5, Z: 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 200.0, Y: 0.0, Z: 62.2}),
 			},
 		},
 		{
@@ -351,7 +309,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 111., Y: 440., Z: 93.}),
+				positionAssertion(0, wtype.Coordinates{X: 49.5, Y: 400., Z: 93.}),
 			},
 		},
 		{
@@ -374,7 +332,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 111., Y: 440., Z: 93}),
+				positionAssertion(0, wtype.Coordinates{X: 49.5, Y: 400., Z: 93}),
 			},
 		},
 		{
@@ -397,7 +355,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 4.5, Y: -22.5, Z: 62.2}),
+				positionAssertion(0, wtype.Coordinates{X: 0.0, Y: -27.0, Z: 62.2}),
 			},
 		},
 		{
@@ -420,7 +378,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 417.1, Y: 77.0, Z: 25.7}),
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: 63.0, Z: 25.7}),
 			},
 		},
 		{
@@ -443,7 +401,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 417.1, Y: 41.0, Z: 25.7}),
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: 27.0, Z: 25.7}),
 			},
 		},
 		{
@@ -466,7 +424,7 @@ func Test_Move(t *testing.T) {
 			},
 			nil, //errors
 			[]*AssertionFn{ //assertions
-				positionAssertion(0, wtype.Coordinates{X: 418.5, Y: 15.7, Z: 46.8}),
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: -31.5, Z: 46.8}),
 			},
 		},
 		{
@@ -498,15 +456,15 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Unknown location \"tipbox7\"",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
-				"(warn) Move: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(err) Move[0]: Unknown location \"tipbox7\"",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
+				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
 			},
 			nil, //assertions
 		},
@@ -539,8 +497,8 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Unknown head 1",
-				"(err) Move: Unknown head -1",
+				"(err) Move[0]: head assembly 0: unknown head 1",
+				"(err) Move[1]: head assembly 0: unknown head -1",
 			},
 			nil, //assertions
 		},
@@ -573,8 +531,8 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Request for well I1 in object \"tipbox1\" at \"tipbox_1\" which is of size [8x12]",
-				"(err) Move: Couldn't parse well \"not_a_well\"",
+				"(err) Move[0]: Request for well I1 in object \"tipbox1\" at \"tipbox_1\" which is of size [8x12]",
+				"(err) Move[1]: invalid argument wellcoords: couldn't parse \"not_a_well\"",
 			},
 			nil, //assertions
 		},
@@ -607,8 +565,8 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Invalid reference -1",
-				"(err) Move: Invalid reference 3",
+				"(err) Move[0]: invalid argument reference: unknown value -1",
+				"(err) Move[1]: invalid argument reference: unknown value 3",
 			},
 			nil, //assertions
 		},
@@ -631,7 +589,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Non-independent head '0' can't move adaptors to \"plate\" positions A1,B1,C1,D1,E1,F1,G1,H1, layout mismatch",
+				"(err) Move[0]: head 0 channels 0-7 to A1-H1@plate1 at position input_1: requires moving channels 4-7 relative to non-independent head",
 			},
 			nil, //assertions
 		},
@@ -654,7 +612,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Non-independent head '0' can't move adaptors to \"tipbox\" positions A1,B1,C1,D1,E1,F1,G1,H1, layout mismatch",
+				"(err) Move[0]: head 0 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: requires moving channels 3-5 relative to non-independent head",
 			},
 			nil, //assertions
 		},
@@ -677,9 +635,353 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Move: Non-independent head '0' can't move adaptors to \"tipbox\" positions A1,B2,C1,D2,E1,F2,G1,H2, layout mismatch",
+				"(err) Move[0]: head 0 channels 0-7 to A1,B2,C1,D2,E1,F2,G1,H2@tipbox1 at position tipbox_1: requires moving channels 1,3,5,7 relative to non-independent head",
 			},
 			nil, //assertions
+		},
+	}
+
+	for _, test := range tests {
+		test.run(t)
+	}
+}
+
+func TestCrashes(t *testing.T) {
+
+	tests := []SimulatorTest{
+		{
+			"crash into tipbox",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2"}, //deckposition
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{-1., -1., -1., -1., -1., -1., -1., -1.},                                                        //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channels 0-7 to A1-H1@tipbox2 at position tipbox_2: collision detected: head 0 channels 0-7 and head 1 channels 0-7 and tips A1-H1,A3-H3@tipbox2 at position tipbox_2",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 128.0, Y: 0.0, Z: 60.2}),
+			},
+		},
+		{
+			"collides with tipbox in front",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayoutTransposed(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"E12", "F12", "G12", "H12"},                     //wellcoords
+					[]int{1, 1, 1, 1},                                        //reference
+					[]float64{0., 0., 0., 0.},                                //offsetX
+					[]float64{0., 0., 0., 0.},                                //offsetY
+					[]float64{1., 1., 1., 1.},                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox"},         //plate_type
+					0, //head
+				},
+				&LoadTips{
+					[]int{0, 1, 2, 3}, //channels
+					0,                 //head
+					4,                 //multi
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox"},         //tipbox
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //location
+					[]string{"E12", "F12", "G12", "H12"},                     //wellcoords
+				},
+			},
+			[]string{ //errors
+				"(err) LoadTips[1]: from E12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-3: collision detected: head 0 channels 5-7 and tips A12-C12@tipbox2 at position input_2",
+			},
+			[]*AssertionFn{ //assertions
+			},
+		},
+		{
+			"trying to move channel cones into a well",
+			nil,
+			[]*SetupFn{
+				testLayout(),
+				//preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "", "", "", "", "", "", ""}, //deckposition
+					[]string{"A1", "", "", "", "", "", "", ""},      //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
+					[]string{"plate", "", "", "", "", "", "", ""},   //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 0 to A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and plate \"plate1\" at position input_1",
+			},
+			nil, //assertionsi
+		},
+	}
+
+	for _, test := range tests {
+		test.run(t)
+	}
+}
+
+func Test_Multihead(t *testing.T) {
+
+	tests := []SimulatorTest{
+		{
+			"constrained heads",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2", "tipbox_2"}, //deckposition
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					0, //head
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 128.0, Y: 0.0, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 146.0, Y: 0.0, Z: 62.2}),
+			},
+		},
+		{
+			"can't move while a tip is loaded on another head in the same assembly",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(1, "tipbox_1", []int{0}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channels 0-7 to A12-H12@tipbox1 at position tipbox_1: cannot move head 0 while tip loaded on head 1 channel 0",
+			},
+			[]*AssertionFn{ //assertions
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.run(t)
+	}
+}
+
+func TestMotionLimits(t *testing.T) {
+
+	tests := []SimulatorTest{
+		{
+			"outside limits left",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"}, //deckposition
+					[]string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},                                                 //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                            //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                                //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                                //offsetZ
+					[]string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},                 //plate_type
+					1, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: head cannot reach position: position is 9mm too far left, please try rearranging the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: -18.0, Y: 0.0, Z: 62.2}),
+				positionAssertion(1, wtype.Coordinates{X: 0.0, Y: 0.0, Z: 62.2}),
+			},
+		},
+		{
+			"outside limits right",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},                                 //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                    //reference
+					[]float64{50., 50., 50., 50., 50., 50., 50., 50.},                                                //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},                                                        //offsetZ
+					[]string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"},                 //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channels 0-7 to A12-H12@plate1 at position input_1: head cannot reach position: position is 30mm too far right, please try rearranging the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 405.0, Y: 0.0, Z: 26.7}),
+				positionAssertion(1, wtype.Coordinates{X: 423.0, Y: 0.0, Z: 26.7}),
+			},
+		},
+		{
+			"outside limits forward",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"waste"}, //deckposition
+					[]string{"H12"},   //wellcoords
+					[]int{1},          //reference
+					[]float64{0.},     //offsetX
+					[]float64{30.},    //offsetY
+					[]float64{1.},     //offsetZ
+					[]string{"plate"}, //plate_type
+					0,                 //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 0 to H12@wasteplate at position waste: head cannot reach position: position is 7mm too far forwards, please try rearranging the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 355.0, Y: 265.0, Z: 26.7}),
+				positionAssertion(1, wtype.Coordinates{X: 373.0, Y: 265.0, Z: 26.7}),
+			},
+		},
+		{
+			"outside limits backwards",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"", "", "", "", "", "", "", "input_1"}, //deckposition
+					[]string{"", "", "", "", "", "", "", "A12"},     //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                   //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
+					[]string{"", "", "", "", "", "", "", "plate"},   //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 7 to A12@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards, please try rearranging the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 355.0, Y: -63.0, Z: 26.7}),
+				positionAssertion(1, wtype.Coordinates{X: 373.0, Y: -63.0, Z: 26.7}),
+			},
+		},
+		{
+			"outside limits too high",
+			multihead_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1"}, //deckposition
+					[]string{"A1"},      //wellcoords
+					[]int{1},            //reference
+					[]float64{0.},       //offsetX
+					[]float64{0.},       //offsetY
+					[]float64{600.},     //offsetZ
+					[]string{"plate"},   //plate_type
+					0,                   //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 0 to A1@plate1 at position input_1: head cannot reach position: position is 25.7mm too high, please try lowering the object on the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 256.0, Y: 0.0, Z: 625.7}),
+				positionAssertion(1, wtype.Coordinates{X: 274.0, Y: 0.0, Z: 625.7}),
+			},
+		},
+		{
+			"outside limits too low",
+			multihead_constrained_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1"}, //deckposition
+					[]string{"A4"},      //wellcoords
+					[]int{0},            //reference
+					[]float64{0.},       //offsetX
+					[]float64{0.},       //offsetY
+					[]float64{0.5},      //offsetZ
+					[]string{"plate"},   //plate_type
+					0,                   //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 0 to A4@plate1 at position input_1: head cannot reach position: position is 8.1mm too low, please try adding a riser to the object on the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 283.0, Y: 0.0, Z: 51.9}),
+				positionAssertion(1, wtype.Coordinates{X: 301.0, Y: 0.0, Z: 51.9}),
+			},
+		},
+		{
+			"outside limits too low and far back",
+			multihead_constrained_lhproperties(),
+			[]*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{7}),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"", "", "", "", "", "", "", "input_1"}, //deckposition
+					[]string{"", "", "", "", "", "", "", "A4"},      //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+					[]float64{0, 0, 0, 0, 0, 0, 0, 0.},              //offsetX
+					[]float64{0, 0, 0, 0, 0, 0, 0, 0.},              //offsetY
+					[]float64{0, 0, 0, 0, 0, 0, 0, 0.5},             //offsetZ
+					[]string{"", "", "", "", "", "", "", "plate"},   //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channel 7 to A4@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards and 8.1mm too low, please try rearranging the deck and adding a riser to the object on the deck",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 283.0, Y: -63.0, Z: 51.9}),
+				positionAssertion(1, wtype.Coordinates{X: 301.0, Y: -63.0, Z: 51.9}),
+			},
 		},
 	}
 
@@ -692,7 +994,7 @@ func Test_Move(t *testing.T) {
 // ########################################################## Tip Loading/Unloading
 // ########################################################################################################################
 
-func TestLoadTips(t *testing.T) {
+func TestLoadTipsNoOverride(t *testing.T) {
 
 	mtp := moveToParams{
 		8,                     //Multi           int
@@ -1009,7 +1311,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Unknown channel \"8\"",
+				"(err) LoadTips[0]: Unknown channel \"8\"",
 			},
 			nil, //assertions
 		},
@@ -1031,7 +1333,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Unknown channel \"-1\"",
+				"(err) LoadTips[0]: Unknown channel \"-1\"",
 			},
 			nil, //assertions
 		},
@@ -1053,7 +1355,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Channel3 appears more than once",
+				"(err) LoadTips[0]: Channel3 appears more than once",
 			},
 			nil, //assertions
 		},
@@ -1075,7 +1377,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Unknown head 1",
+				"(err) LoadTips[0]: head assembly 0: unknown head 1",
 			},
 			nil, //assertions
 		},
@@ -1097,7 +1399,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: Unknown head -1",
+				"(err) LoadTips[0]: head assembly 0: unknown head -1",
 			},
 			nil, //assertions
 		},
@@ -1144,7 +1446,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : multi should equal 1, not 4",
+				"(err) LoadTips[0]: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: multi should equal 1, not 4",
 			},
 			nil, //assertions
 		},
@@ -1167,7 +1469,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : no tip at H12",
+				"(err) LoadTips[0]: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: no tip at H12",
 			},
 			nil, //assertions
 		},
@@ -1190,7 +1492,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7 : no tips at {A12,B12,C12,D12,E12,F12,G12,H12}",
+				"(err) LoadTips[0]: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: no tips at A12-H12",
 			},
 			nil, //assertions
 		},
@@ -1213,7 +1515,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : tip already loaded to channel 0",
+				"(err) LoadTips[0]: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: tip already loaded on head 0 channel 0",
 			},
 			nil, //assertions
 		},
@@ -1236,7 +1538,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {A12,B12,C12,D12,E12,F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2,3,4,5,6,7 : tips already loaded to channels 0,1,2,3,4,5,6,7",
+				"(err) LoadTips[0]: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: tips already loaded on head 0 channels 0-7",
 			},
 			nil, //assertions
 		},
@@ -1258,7 +1560,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from G12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : channel 1 collides with tip \"H12@tipbox1\" (head not independent)",
+				"(err) LoadTips[0]: from G12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: collision detected: head 0 channel 1 and tip H12@tipbox1 at position tipbox_1",
 			},
 			nil, //assertions
 		},
@@ -1280,7 +1582,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {E12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channel 0 is misaligned with tip at E12 by 9mm",
+				"(err) LoadTips[0]: from E12,G12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2: channel 0 is misaligned with tip at E12 by 9mm",
 			},
 			nil, //assertions
 		},
@@ -1302,7 +1604,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {G12,F12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channels 0,1 are misaligned with tips at G12,F12 by 9,9 mm respectively",
+				"(err) LoadTips[0]: from G12,F12,H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2: channels 0-1 are misaligned with tips at G12,F12 by 9,9mm respectively",
 			},
 			nil, //assertions
 		},
@@ -1324,7 +1626,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0 : channel 0 is misaligned with tip at H12 by 2mm",
+				"(err) LoadTips[0]: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: channel 0 is misaligned with tip at H12 by 2mm",
 			},
 			nil, //assertions
 		},
@@ -1346,7 +1648,7 @@ func TestLoadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) LoadTips: from {F12,G12,H12}@tipbox1 at position \"tipbox_1\" to head 0 channels 0,1,2 : channels 0,1,2 are misaligned with tips at F12,G12,H12 by 2,2,2 mm respectively",
+				"(err) LoadTips[0]: from F12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2: channels 0-2 are misaligned with tips at F12-H12 by 2,2,2mm respectively",
 			},
 			nil, //assertions
 		},
@@ -1766,7 +2068,7 @@ func Test_UnloadTips(t *testing.T) {
 				tipwasteAssertion("tipwaste", 8),
 			},
 		},
-		{
+		/*	commented out due to tips colliding with tipbox	{
 			"OK - 8 tips back to a tipbox",
 			nil,
 			[]*SetupFn{
@@ -1801,7 +2103,7 @@ func Test_UnloadTips(t *testing.T) {
 				adaptorAssertion(0, []tipDesc{}),
 				tipwasteAssertion("tipwaste", 0),
 			},
-		},
+		},*/
 		{
 			"OK - independent tips",
 			independent_lhproperties(),
@@ -1860,7 +2162,7 @@ func Test_UnloadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) UnloadTips: Cannot unload tips from head0 channels 0,2,4,6 without unloading tips from channels 1,3,5,7 (head isn't independent)",
+				"(err) UnloadTips[1]: Cannot unload tips from head0 channels 0,2,4,6 without unloading tips from channels 1,3,5,7 (head isn't independent)",
 			},
 			nil, //assertions
 		},
@@ -1892,7 +2194,7 @@ func Test_UnloadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) UnloadTips: Cannot unload tips to plate \"plate1\" at location input_1",
+				"(err) UnloadTips[1]: Cannot unload tips to plate \"plate1\" at location input_1",
 			},
 			nil,
 		},
@@ -1924,7 +2226,7 @@ func Test_UnloadTips(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) UnloadTips: Cannot unload to address B1 in tipwaste \"tipwaste\" size [1x1]",
+				"(err) UnloadTips[1]: Cannot unload to address B1 in tipwaste \"tipwaste\" size [1x1]",
 			},
 			nil,
 		},
@@ -1958,10 +2260,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{100., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -1995,10 +2297,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					8, //multi      int
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					8,     //multi      int
 					[]string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"}, //platetype  []string
 					[]string{"water", "water", "water", "water", "water", "water", "water", "water"}, //what       []string
 					[]bool{false, false, false, false, false, false, false, false},                   //llf        []bool
@@ -2041,10 +2343,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					8, //multi      int
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					8,     //multi      int
 					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"}, //platetype  []string
 					[]string{"water", "water", "water", "water", "water", "water", "water", "water"},         //what       []string
 					[]bool{false, false, false, false, false, false, false, false},                           //llf        []bool
@@ -2087,17 +2389,17 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 100., 100., 100., 100., 100., 100., 100.},      //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					8, //multi      int
+					[]float64{100., 100., 100., 100., 100., 100., 100., 100.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					8,     //multi      int
 					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"}, //platetype  []string
 					[]string{"water", "water", "water", "water", "water", "water", "water", "water"},         //what       []string
 					[]bool{false, false, false, false, false, false, false, false},                           //llf        []bool
 				},
 			},
 			[]string{ //errors
-				"(warn) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1,2,3,4,5,6,7 - well A1@trough1 only contains 400 ul working volume, reducing aspirated volume by 50 ul",
+				"(warn) Aspirate[1]: 100 ul of water to head 0 channels 0-7: well A1@trough1 only contains 400 ul working volume, reducing aspirated volume by 50 ul",
 			},
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
@@ -2125,27 +2427,27 @@ func Test_Aspirate(t *testing.T) {
 			},
 			[]TestRobotInstruction{
 				&Move{
-					[]string{"input_1", "input_1", "", "", "", "", "", ""}, //deckposition
-					[]string{"A1", "B1", "", "", "", "", "", ""},           //wellcoords
-					[]int{0, 0, 0, 0, 0, 0, 0, 0},                          //reference
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},              //offsetX
-					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},              //offsetY
-					[]float64{1., 52.2, 1., 1., 1., 1., 1., 1.},            //offsetZ
-					[]string{"plate", "plate", "", "", "", "", "", ""},     //plate_type
+					[]string{"input_1", "", "", "", "", "", "", ""}, //deckposition
+					[]string{"A1", "", "", "", "", "", "", ""},      //wellcoords
+					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
+					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
+					[]string{"plate", "", "", "", "", "", "", ""},   //plate_type
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 100., 0., 0., 0., 0., 0., 0.},                  //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					2, //multi      int
+					[]float64{100., 100., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					2,     //multi      int
 					[]string{"plate", "plate", "", "", "", "", "", ""},             //platetype  []string
 					[]string{"water", "water", "", "", "", "", "", ""},             //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 100 ul of water to head 0 channels 0,1 - missing tip on channel 1",
+				"(err) Aspirate[1]: 100 ul of water to head 0 channels 0-1: missing tip on channel 1",
 			},
 			nil, //assertions
 		},
@@ -2169,17 +2471,17 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{20., 0., 0., 0., 0., 0., 0., 0.},                     //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{20., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
 				},
 			},
 			[]string{ //errors
-				"(warn) Aspirate: While aspirating 20 ul of water to head 0 channel 0 - minimum tip volume is 50 ul",
+				"(warn) Aspirate[1]: 20 ul of water to head 0 channel 0: minimum tip volume is 50 ul",
 			},
 			nil, //assertions
 		},
@@ -2203,10 +2505,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2222,10 +2524,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2241,10 +2543,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2260,10 +2562,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2279,10 +2581,10 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
@@ -2298,17 +2600,17 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{175., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{175., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 175 ul of water to head 0 channel 0 - channel 0 contains 875 ul, command exceeds maximum volume 1000 ul",
+				"(err) Aspirate[11]: 175 ul of water to head 0 channel 0: channel 0 contains 875 ul, command exceeds maximum volume 1000 ul",
 			},
 			nil, //assertions
 		},
@@ -2332,17 +2634,17 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{50., 60., 70., 80., 90., 100., 110., 120.},           //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					8, //multi      int
+					[]float64{50., 60., 70., 80., 90., 100., 110., 120.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					8,     //multi      int
 					[]string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"}, //platetype  []string
 					[]string{"water", "water", "water", "water", "water", "water", "water", "water"}, //what       []string
 					[]bool{false, false, false, false, false, false, false, false},                   //llf        []bool
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating {50,60,70,80,90,100,110,120} ul of water to head 0 channels 0,1,2,3,4,5,6,7 - channels cannot aspirate different volumes in non-independent head",
+				"(err) Aspirate[1]: {50,60,70,80,90,100,110,120} ul of water to head 0 channels 0-7: channels cannot aspirate different volumes in non-independent head",
 			},
 			nil, //assertions
 		},
@@ -2366,17 +2668,17 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{100., 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{100., 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 100 ul of water to head 0 channel 0 - tip on channel 0 not in a well",
+				"(err) Aspirate[1]: 100 ul of water to head 0 channel 0: tip on channel 0 not in a well",
 			},
 			nil, //assertions
 		},
@@ -2400,17 +2702,17 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{535, 0., 0., 0., 0., 0., 0., 0.},                     //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{535, 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
 				},
 			},
 			[]string{ //errors
-				"(warn) Aspirate: While aspirating 535 ul of water to head 0 channel 0 - well A1@plate1 only contains 195 ul working volume, reducing aspirated volume by 340 ul",
+				"(warn) Aspirate[1]: 535 ul of water to head 0 channel 0: well A1@plate1 only contains 195 ul working volume, reducing aspirated volume by 340 ul",
 			},
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
@@ -2442,7 +2744,7 @@ func Test_Aspirate(t *testing.T) {
 					},
 					&Aspirate{
 						[]float64{102.1, 0., 0., 0., 0., 0., 0., 0.},                   //volume     []float64
-						[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
+						false, //overstroke bool
 						0, //head       int
 						1, //multi      int
 						[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
@@ -2451,7 +2753,7 @@ func Test_Aspirate(t *testing.T) {
 					},
 				},
 				[]string{ //errors
-					"(warn) Aspirate: While aspirating 102 ul of ethanol to head 0 channel 0 - well A1@plate1 contains water, not ethanol",
+					"(warn) Aspirate[1]: 102 ul of ethanol to head 0 channel 0 - well A1@plate1 contains water, not ethanol",
 				},
 				nil, //assertions
 			},*/
@@ -2475,17 +2777,17 @@ func Test_Aspirate(t *testing.T) {
 					0, //head
 				},
 				&Aspirate{
-					[]float64{98.6, 0., 0., 0., 0., 0., 0., 0.},                    //volume     []float64
-					[]bool{false, false, false, false, false, false, false, false}, //overstroke []bool
-					0, //head       int
-					1, //multi      int
+					[]float64{98.6, 0., 0., 0., 0., 0., 0., 0.}, //volume     []float64
+					false, //overstroke bool
+					0,     //head       int
+					1,     //multi      int
 					[]string{"plate", "", "", "", "", "", "", ""},                  //platetype  []string
 					[]string{"water", "", "", "", "", "", "", ""},                  //what       []string
 					[]bool{false, false, false, false, false, false, false, false}, //llf        []bool
 				},
 			},
 			[]string{ //errors
-				"(err) Aspirate: While aspirating 98.6 ul of water to head 0 channel 0 - channel 1 will inadvertantly aspirate water from well B1@plate1 as head is not independent",
+				"(err) Aspirate[1]: 98.6 ul of water to head 0 channel 0: channel 1 will inadvertantly aspirate water from well B1@plate1 as head is not independent",
 			},
 			nil, //assertions
 		},
@@ -2677,7 +2979,7 @@ func Test_Dispense(t *testing.T) {
 				&Move{
 					[]string{"input_1", "", "", "", "", "", "", ""}, //deckposition
 					[]string{"A1", "", "", "", "", "", "", ""},      //wellcoords
-					[]int{0, 0, 0, 0, 0, 0, 0, 0},                   //reference
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                   //reference
 					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetX
 					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},       //offsetY
 					[]float64{1., 1., 1., 1., 1., 1., 1., 1.},       //offsetZ
@@ -2695,7 +2997,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : no tip loaded on channel 0",
+				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to A1@plate1: no tip loaded on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2728,7 +3030,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: 150 ul of water from head 0 channel 0 to A1@plate1 : tip on channel 0 contains only 100 ul, but blowout flag is false",
+				"(warn) Dispense[1]: 150 ul of water from head 0 channel 0 to A1@plate1: tip on channel 0 contains only 100 ul, but blowout flag is false",
 			},
 			nil, //assertionsi
 		},
@@ -2761,7 +3063,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: 500 ul of water from head 0 channel 0 to A1@plate1 : overfilling well A1@plate1 to 500 ul of 200 ul max volume",
+				"(warn) Dispense[1]: 500 ul of water from head 0 channel 0 to A1@plate1: overfilling well A1@plate1 to 500 ul of 200 ul max volume",
 			},
 			nil, //assertionsi
 		},
@@ -2794,7 +3096,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: 50 ul of water from head 0 channel 0 to nil : no well within 5 mm below tip on channel 0",
+				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to @<unnamed>: no well within 5 mm below tip on channel 0",
 			},
 			nil, //assertionsi
 		},
@@ -2827,7 +3129,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Dispense: 50 ul of water from head 0 channel 0 to A1@tipwaste : dispensing to tipwaste",
+				"(warn) Dispense[1]: 50 ul of water from head 0 channel 0 to A1@tipwaste: dispensing to tipwaste",
 			},
 			nil, //assertionsi
 		},
@@ -2860,7 +3162,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: 50 ul of water from head 0 channel 0 to A1@plate1 : must also dispense 50 ul from channels 1,2,3,4,5,6,7 as head is not independent",
+				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to A1@plate1: must also dispense 50 ul from channels 1-7 as head is not independent",
 			},
 			nil, //assertions
 		},
@@ -2893,7 +3195,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: 50 ul of water from head 0 channel 0 to H1@plate1 : must also dispense 50 ul from channel 1 as head is not independent",
+				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to H1@plate1: must also dispense 50 ul from channel 1 as head is not independent",
 			},
 			nil, //assertions
 		},
@@ -2926,7 +3228,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Dispense: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0,1,2,3,4,5,6,7 to {A1,B1,C1,D1,E1,F1,G1,H1}@plate1 : channels cannot dispense different volumes in non-independent head",
+				"(err) Dispense[1]: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0-7 to A1-H1@plate1: channels cannot dispense different volumes in non-independent head",
 			},
 			nil, //assertions
 		},
@@ -3064,8 +3366,8 @@ func Test_Mix(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(err) Mix: While mixing {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\" - cannot manipulate different volumes with non-independent head",
-				"(err) Mix: While mixing {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\" - cannot vary number of mix cycles with non-independent head",
+				"(err) Mix[1]: {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\": cannot manipulate different volumes with non-independent head",
+				"(err) Mix[1]: {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\": cannot vary number of mix cycles with non-independent head",
 			},
 			nil, //assertions
 		},
@@ -3099,7 +3401,7 @@ func Test_Mix(t *testing.T) {
 				},
 			},
 			[]string{ //errors
-				"(warn) Mix: While mixing 50 ul 5 times in well A1 of plate \"plate1\" - plate \"plate1\" is of type \"plate\", not \"notaplate\"",
+				"(warn) Mix[1]: 50 ul 5 times in well A1 of plate \"plate1\": plate \"plate1\" is of type \"plate\", not \"notaplate\"",
 			},
 			[]*AssertionFn{ //assertions
 				tipboxAssertion("tipbox_1", []string{}),
@@ -3231,7 +3533,7 @@ func Test_Workflow(t *testing.T) {
 			},
 			&Aspirate{
 				v,
-				[]bool{false, false, false, false, false, false, false, false},
+				false,
 				0,
 				multi,
 				pt,

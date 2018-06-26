@@ -72,9 +72,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		// in fact we do not return a different robot now... but we might
 		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
-
 		if err != nil {
-			//panic(err)
 			return inss, err
 		}
 
@@ -151,10 +149,11 @@ func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, ro
 	// part of the model here is just to make things possible, so that later
 	// on we can at least make this choice
 
-	possible_sets := make([]SetOfIDSets, 0, len(robot.HeadsLoaded))
+	headsLoaded := robot.GetLoadedHeads()
+	possible_sets := make([]SetOfIDSets, 0, len(headsLoaded))
 	corresponding_params := make([]*wtype.LHChannelParameter, 0, 1)
 
-	for _, head := range robot.HeadsLoaded {
+	for _, head := range headsLoaded {
 		// ignore heads which do not have multi
 
 		if head.GetParams().Multi == 1 {
@@ -286,8 +285,6 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			}
 		}
 	}
-
-	// ret here is just splurged straight out
 
 	return ret, nil
 }

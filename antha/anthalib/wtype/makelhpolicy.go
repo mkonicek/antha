@@ -646,6 +646,7 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["LLFABOVESURFACE"] = 3.0 //distance above liquid level for dispensing with LiqudLevelFollowing
 	defaultpolicy["LLFBELOWSURFACE"] = 3.0 //distance below liquid level for aspirating with LLF
 	defaultpolicy["DESCRIPTION"] = "Default mix Policy. Blowout performed, no touch off, no mixing, tip reuse permitted for the same solution."
+	defaultpolicy["USE_LLF"] = false
 
 	return defaultpolicy
 }

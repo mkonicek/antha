@@ -29,7 +29,8 @@ func TestParallelSetGeneration(t *testing.T) {
 	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
 
 	// allow independent multichannel activity
-	rbt.HeadsLoaded[0].Params.Independent = true
+	headsLoaded := rbt.GetLoadedHeads()
+	headsLoaded[0].Params.Independent = true
 
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
@@ -42,7 +43,7 @@ func TestParallelSetGeneration(t *testing.T) {
 
 	//get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtype.LHInstruction)
 
-	insIds, err := get_parallel_sets_head(ctx, rbt.HeadsLoaded[0], ins)
+	insIds, err := get_parallel_sets_head(ctx, headsLoaded[0], ins)
 
 	if err != nil {
 		t.Errorf("Parallel set generation error: %s\n", err)

@@ -7,7 +7,7 @@ import (
 )
 
 func TipChosenError(v wunit.Volume, prms *LHProperties) error {
-	return wtype.LHErrorf(wtype.LH_ERR_VOL, "No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
+	return wtype.LHErrorf(wtype.LH_ERR_VOL, "No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString())
 }
 
 // it would probably make more sense for this to be a method of the robot
@@ -113,9 +113,9 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	// just choose the best... need to iterate on this sometime though
 	// we don't consider head or adaptor changes now
 
-	//fmt.Println("There are ", len(prms.HeadsLoaded), " heads loaded and ", len(prms.Tips), " Tip types available ")
+	//fmt.Println("There are ", len(prms.CountHeadsLoaded()), " heads loaded and ", len(prms.Tips), " Tip types available ")
 
-	for _, head := range prms.HeadsLoaded {
+	for _, head := range prms.GetLoadedHeads() {
 		for _, tip := range prms.Tips {
 			sc := scorer.ScoreCombinedChannel(vol, head, head.Adaptor, tip)
 			if sc > bestscore {

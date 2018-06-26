@@ -243,7 +243,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *L
 	for i := 0; i < len(ins.Transfers); i++ {
 		// a parallel transfer is valid if any robot head can do it
 		// TODO --> support head/adaptor changes. Maybe.
-		for _, head := range robot.HeadsLoaded {
+		for _, head := range robot.GetLoadedHeads() {
 			if ins.validateParallelSet(ctx, robot, head, i, policy) {
 				r = append(r, i)
 			}
@@ -475,13 +475,15 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	ret := make([]RobotInstruction, 0)
 
+	headsLoaded := prms.GetLoadedHeads()
+
 	// if we can multi we do this first
 	if pol["CAN_MULTI"].(bool) {
 		// add policies as argument to GetParallelSetsFor to check multichannelability
 		parallelsets := ins.GetParallelSetsFor(ctx, prms, pol)
 
 		mci := NewMultiChannelBlockInstruction()
-		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here
+		mci.Prms = headsLoaded[0].Params // TODO Remove Hard code here
 
 		// to do below
 		//
@@ -530,7 +532,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	// mop up all the single instructions which are left
 	sci := NewSingleChannelBlockInstruction()
-	sci.Prms = prms.HeadsLoaded[0].Params // TODO Fix Hard Code Here
+	sci.Prms = headsLoaded[0].Params // TODO Fix Hard Code Here
 
 	lastWhat := ""
 	for _, t := range ins.Transfers {
@@ -545,7 +547,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 					ret = append(ret, sci)
 				}
 				sci = NewSingleChannelBlockInstruction()
-				sci.Prms = prms.HeadsLoaded[0].Params
+				sci.Prms = headsLoaded[0].Params
 			}
 
 			sci.AddTransferParams(tp)
@@ -592,7 +594,9 @@ func safeTransfers(tp TransferParams, prms *LHProperties) ([]TransferParams, err
 		return []TransferParams{tp}, nil
 	}
 
-	tvs, err := TransferVolumes(tp.Volume, prms.HeadsLoaded[0].Params.Minvol, prms.HeadsLoaded[0].Params.Maxvol)
+	headsLoaded := prms.GetLoadedHeads()
+
+	tvs, err := TransferVolumes(tp.Volume, headsLoaded[0].Params.Minvol, headsLoaded[0].Params.Maxvol)
 
 	ret := []TransferParams{}
 

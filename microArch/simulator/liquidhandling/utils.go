@@ -231,11 +231,13 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ch
 		return nil
 	}
 
+	robotState := adaptor.GetGroup().GetRobot()
+
 	uniqueObjects := make([]wtype.LHObject, 0, len(objectMap))
 	for obj := range objectMap {
 		uniqueObjects = append(uniqueObjects, obj)
 	}
-	return NewCollisionError(channelMap, uniqueObjects)
+	return NewCollisionError(robotState, channelMap, uniqueObjects)
 }
 
 var pluralMap = map[string]string{

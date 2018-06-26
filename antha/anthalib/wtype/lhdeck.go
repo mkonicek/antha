@@ -222,6 +222,16 @@ func (self *LHDeck) GetSlotNames() []string {
 	return ret
 }
 
+func (self *LHDeck) GetSlotPosition(name string) Coordinates {
+	if self == nil {
+		return Coordinates{}
+	}
+	if ds, ok := self.slots[name]; ok {
+		return ds.position
+	}
+	return Coordinates{}
+}
+
 func (self *LHDeck) GetSlotContaining(obj LHObject) string {
 	if self == nil {
 		return ""

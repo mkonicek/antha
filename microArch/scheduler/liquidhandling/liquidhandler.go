@@ -265,9 +265,13 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	//return the worst error if it's actually an error
 	if simErr := vlh.GetFirstError(simulator.SeverityError); simErr != nil {
-		return errors.Errorf("%s\nPhysical simulation can be disabled using the \"DisablePhysicalSimulation\" configuration option.",
-			simErr.Error())
-
+		errMsg := simErr.Error()
+		if dErr, ok := simErr.(simulator_lh.DetailedLHError); ok {
+			//include physical 'stack'
+			errMsg += "\n\t" + strings.Replace(dErr.GetStateAtError(), "\n", "\n\t", -1)
+		}
+		return errors.Errorf("%s\n\tPhysical simulation can be disabled using the \"DisablePhysicalSimulation\" configuration option.",
+			errMsg)
 	}
 
 	return nil

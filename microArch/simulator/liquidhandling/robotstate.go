@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -220,6 +221,28 @@ func NewAdaptorState(name string,
 	}
 
 	return &as
+}
+
+//String summarize the state of the adaptor
+func (self *AdaptorState) String() string {
+	tipTypes := make([]string, 0, len(self.channels))
+	loaded := make([]int, 0, len(self.channels))
+
+	for i, channel := range self.channels {
+		if channel.HasTip() {
+			loaded = append(loaded, i)
+			tipTypes = append(tipTypes, channel.GetTip().GetType())
+		}
+	}
+
+	if len(loaded) > 0 {
+		return fmt.Sprintf("%s: %s %s loaded on %s",
+			self.name,
+			pTips(len(loaded)),
+			strings.Join(getUnique(tipTypes, true), ","),
+			summariseChannels(loaded))
+	}
+	return fmt.Sprintf("%s: <no tips>", self.name)
 }
 
 //                            Accessors
@@ -515,6 +538,42 @@ func NewRobotState() *RobotState {
 		false,
 	}
 	return &rs
+}
+
+func (self *RobotState) SummariseState() string {
+	return fmt.Sprintf("Adaptors:\n\t%s\nDeck:\n\t%s",
+		strings.Replace(self.SummariseAdaptors(), "\n", "\n\t", -1),
+		strings.Replace(self.SummariseDeck(), "\n", "\n\t", -1))
+}
+
+func (self *RobotState) SummariseAdaptors() string {
+	adaptors := self.GetAdaptors()
+	lines := make([]string, 0, len(adaptors))
+
+	for i, adaptor := range adaptors {
+		lines = append(lines, fmt.Sprintf("Head %d: %v", i, adaptor))
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func (self *RobotState) SummariseDeck() string {
+	slotNames := self.deck.GetSlotNames()
+	sort.Strings(slotNames)
+
+	ret := make([]string, 0, len(slotNames))
+	for _, name := range slotNames {
+		object, _ := self.deck.GetChild(name)
+		var oStr string
+		if object != nil {
+			oStr = fmt.Sprintf("%s \"%s\" of type %s with size %v", wtype.ClassOf(object), wtype.NameOf(object), wtype.TypeOf(object), object.GetSize())
+		} else {
+			oStr = "<empty>"
+		}
+		ret = append(ret, fmt.Sprintf("%s: %s", name, oStr))
+	}
+
+	return strings.Join(ret, "\n")
 }
 
 //                            Accessors

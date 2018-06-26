@@ -38,6 +38,10 @@ type LiquidhandlingError interface {
 	InstructionIndex() int
 }
 
+type DetailedLHError interface {
+	GetStateAtError() string
+}
+
 type mutableLHError interface {
 	setInstruction(int, driver.TerminalRobotInstruction)
 }
@@ -92,13 +96,15 @@ type CollisionError struct {
 	objectsColliding  []wtype.LHObject
 	instruction       driver.TerminalRobotInstruction
 	instructionIndex  int
+	stateAtError      string
 }
 
-//NewCollisionError make a new collision. Description is the description of what the move instruction was doing
-func NewCollisionError(channelsColliding map[int][]int, objectsColliding []wtype.LHObject) *CollisionError {
+//NewCollisionError make a new collision
+func NewCollisionError(state *RobotState, channelsColliding map[int][]int, objectsColliding []wtype.LHObject) *CollisionError {
 	return &CollisionError{
 		channelsColliding: channelsColliding,
 		objectsColliding:  objectsColliding,
+		stateAtError:      state.SummariseState(),
 	}
 }
 
@@ -134,6 +140,10 @@ func (self *CollisionError) InstructionDescription() string {
 
 func (self *CollisionError) SetInstructionDescription(d string) {
 	self.description = d
+}
+
+func (self *CollisionError) GetStateAtError() string {
+	return self.stateAtError
 }
 
 func (self *CollisionError) CollisionDescription() string {

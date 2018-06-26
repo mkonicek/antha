@@ -163,6 +163,20 @@ func (self *VirtualLiquidHandler) GetErrors() []simulator.SimulationError {
 	return ret
 }
 
+//GetFirstError get the first error that's at least as bad as minimum severity
+func (self *VirtualLiquidHandler) GetFirstError(minimumSeverity simulator.ErrorSeverity) simulator.SimulationError {
+
+	for _, state := range self.errorHistory {
+		for _, err := range state {
+			if err.Severity() >= minimumSeverity {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // ------------------------------------------------------------------------------- Useful Utilities
 
 func (self *VirtualLiquidHandler) resetState() {

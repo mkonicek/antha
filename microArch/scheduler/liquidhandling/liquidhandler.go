@@ -40,6 +40,7 @@ import (
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
+	"github.com/antha-lang/antha/microArch/simulator"
 	simulator_lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 )
 
@@ -263,9 +264,10 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	logger.Info(strings.Join(logLines, "\n"))
 
 	//return the worst error if it's actually an error
-	if vlh.HasError() {
-		simErr := vlh.GetWorstError()
-		return errors.Errorf("%s: %s\nPhysical simulation can be disabled using the \"DisablePhysicalSimulation\" configuration option.", simErr.FunctionName(), simErr.Message())
+	if simErr := vlh.GetFirstError(simulator.SeverityError); simErr != nil {
+		return errors.Errorf("%s\nPhysical simulation can be disabled using the \"DisablePhysicalSimulation\" configuration option.",
+			simErr.Error())
+
 	}
 
 	return nil

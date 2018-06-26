@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"math"
 	"strings"
 	"testing"
 
@@ -24,16 +25,17 @@ var tests = []platetest{
 	{TestPlateName: "greiner384", ExpectedZStart: 2.5, ExpectedHeight: 14.0},
 	{TestPlateName: "Nuncon12well", ExpectedZStart: 4.0, ExpectedHeight: 19.0},
 	{TestPlateName: "Nuncon12wellAgar", ExpectedZStart: 9.0, ExpectedHeight: 19.0},
+	{TestPlateName: "strip_tubes_0.2ml", ExpectedZStart: 0.0, ExpectedHeight: 15.5},
 }
 
 var testsofPlateWithRiser = []platetest{
-	{TestPlateName: "pcrplate_with_cooler", ExpectedZStart: coolerheight + MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5},
-	{TestPlateName: "pcrplate_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5},
-	{TestPlateName: "pcrplate_skirted_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5},
-	{TestPlateName: "pcrplate_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5},
-	{TestPlateName: "pcrplate_semi_skirted_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm + 1.0, ExpectedHeight: 15.5},
-	{TestPlateName: "strip_tubes_0.2ml_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm - 2.5, ExpectedHeight: 15.5},
-	{TestPlateName: "FluidX700ulTubes_with_FluidX_high_profile_rack", ExpectedZStart: 2, ExpectedHeight: 26.736},
+	{TestPlateName: "pcrplate_with_cooler", ExpectedZStart: coolerheight + MinimumZHeightPermissableForLVPipetMax, ExpectedHeight: 15.5 + coolerheight},
+	{TestPlateName: "pcrplate_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight, ExpectedHeight: 15.5 + isofreezecoolerheight - MinimumZHeightPermissableForLVPipetMax},
+	{TestPlateName: "pcrplate_skirted_with_isofreeze_cooler", ExpectedZStart: isofreezecoolerheight + 2.0, ExpectedHeight: 15.5 - gilsonoffsetpcrplate + isofreezecoolerheight + 3.4 - 0.036},
+	{TestPlateName: "pcrplate_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm, ExpectedHeight: 15.5 + pcrtuberack496HeightInmm - MinimumZHeightPermissableForLVPipetMax},
+	{TestPlateName: "pcrplate_semi_skirted_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm + 1.0, ExpectedHeight: 15.5 + pcrtuberack496HeightInmm},
+	{TestPlateName: "strip_tubes_0.2ml_with_496rack", ExpectedZStart: pcrtuberack496HeightInmm - 2.5, ExpectedHeight: 15.5 + pcrtuberack496HeightInmm - 2.5},
+	{TestPlateName: "FluidX700ulTubes_with_FluidX_high_profile_rack", ExpectedZStart: 2, ExpectedHeight: 26.736 + fluidXhighProfileRackHeight},
 }
 
 func TestAddRiser(t *testing.T) {
@@ -87,7 +89,7 @@ func TestAddRiser(t *testing.T) {
 			if testPlate.WellZStart != test.ExpectedZStart {
 				t.Error(
 					"for", test.TestPlateName, "\n",
-					"Expected plate height:", test.ExpectedZStart, "\n",
+					"Expected plate ZStart:", test.ExpectedZStart, "\n",
 					"got:", testPlate.WellZStart, "\n",
 				)
 			}
@@ -96,7 +98,7 @@ func TestAddRiser(t *testing.T) {
 				t.Error(
 					"for", device, "\n",
 					"testname", testname, "\n",
-					"Expected plate height:", test.ExpectedZStart, "+",
+					"Expected plate ZStart:", test.ExpectedZStart, "+",
 					"device:", device.GetHeightInmm(), "=", e, "\n",
 					"got:", f, "\n",
 				)
@@ -312,13 +314,13 @@ func TestPlateZs(t *testing.T) {
 		if testplate.WellZStart != test.ExpectedZStart {
 			t.Error(
 				"for", test.TestPlateName, "\n",
-				"expected height: ", test.ExpectedZStart, "\n",
-				"got height :", testplate.WellZStart, "\n",
+				"expected ZStart: ", test.ExpectedZStart, "\n",
+				"got ZStart:", testplate.WellZStart, "\n",
 			)
 		}
 
 		// check that the height is as expected using default inventory
-		if testplate.Height() != test.ExpectedHeight {
+		if math.Abs(testplate.Height()-test.ExpectedHeight) > 0.001 {
 			t.Error(
 				"for", test.TestPlateName, "\n",
 				"Expected plate height:", test.ExpectedHeight, "\n",

@@ -206,6 +206,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 	p.intrinsics = map[string]string{
 		"Centrifuge":    "execute.Centrifuge",
 		"Electroshock":  "execute.Electroshock",
+		"ExecuteMixes":  "execute.ExecuteMixes",
 		"Errorf":        "execute.Errorf",
 		"Handle":        "execute.Handle",
 		"Incubate":      "execute.Incubate",

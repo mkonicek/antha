@@ -222,26 +222,26 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	//this is probably not even an error as liquid types are more about LHPolicies than what's actually in the well
 	settings.EnableLiquidTypeWarning(simulator_lh.WarnNever)
 
-	vlh := simulator_lh.NewVirtualLiquidHandler(props, settings)
-	for _, err := range vlh.GetErrors() {
-		err.WriteToLog()
+	vlh, err := simulator_lh.NewVirtualLiquidHandler(props, settings)
+	if err != nil {
+		return err
 	}
 
-	//check we didn't hit a catastrophic error
-	if vlh.HasError() {
-		return vlh.GetWorstError()
-	}
-
+	triS := make([]liquidhandling.TerminalRobotInstruction, 0, len(instructions))
 	for i, ins := range instructions {
-		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh) //nolint
-		if vlh.HasError() {
-			fmt.Printf("simulator error detected at instruction %d\n", i)
-			break
+		tri, ok := ins.(liquidhandling.TerminalRobotInstruction)
+		if !ok {
+			return fmt.Errorf("instruction %d not terminal", i)
 		}
+		triS = append(triS, tri)
+	}
+
+	if err := vlh.Simulate(triS); err != nil {
+		return err
 	}
 
 	//if there were no errors or warnings
-	numErrors := len(vlh.GetErrors())
+	numErrors := vlh.CountErrors()
 	if numErrors == 0 {
 		return nil
 	}
@@ -256,7 +256,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	logLines := make([]string, 0, numErrors+1)
 	logLines = append(logLines, fmt.Sprintf("showing %d %s from physical simulation:", numErrors, pMessage(numErrors)))
 	//Format numbers at consistent width so messages line up
-	fmtString := fmt.Sprintf("  %%%dd : simulator : %%s", 1+int(math.Floor(math.Log10(float64(numErrors)))))
+	fmtString := fmt.Sprintf("  %%%dd: simulator: %%s", 1+int(math.Floor(math.Log10(float64(numErrors)))))
 	for i, err := range vlh.GetErrors() {
 		logLines = append(logLines, fmt.Sprintf(fmtString, i+1, err.Error()))
 	}
@@ -267,6 +267,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 		simErr := vlh.GetWorstError()
 		return errors.Errorf("%s: %s\nPhysical simulation can be disabled using the \"DisablePhysicalSimulation\" configuration option.", simErr.FunctionName(), simErr.Message())
 	}
+
 	return nil
 }
 
@@ -1427,18 +1428,18 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 
 //addWellTargets for all the adaptors and plates available
 func (lh *Liquidhandler) addWellTargets() error {
-	for _, adaptor := range lh.Properties.Adaptors {
+	for _, head := range lh.Properties.Heads {
 		for _, plate := range lh.Properties.Plates {
-			addWellTargetsPlate(adaptor, plate)
+			addWellTargetsPlate(head.Adaptor, plate)
 		}
 		for _, plate := range lh.Properties.Wastes {
-			addWellTargetsPlate(adaptor, plate)
+			addWellTargetsPlate(head.Adaptor, plate)
 		}
 		for _, plate := range lh.Properties.Washes {
-			addWellTargetsPlate(adaptor, plate)
+			addWellTargetsPlate(head.Adaptor, plate)
 		}
 		for _, tipWaste := range lh.Properties.Tipwastes {
-			addWellTargetsTipWaste(adaptor, tipWaste)
+			addWellTargetsTipWaste(head.Adaptor, tipWaste)
 		}
 	}
 	return nil

@@ -74,6 +74,7 @@ func addRiser(plate *wtype.LHPlate, riser device) (plates []*wtype.LHPlate) {
 		riserheight = riserheight + plateRiserSpecificOffset(plate, riser)
 
 		newplate.WellZStart = plate.WellZStart + riserheight
+		newplate.Bounds.SetSize(plate.GetSize().Add(wtype.Coordinates{X: 0.0, Y: 0.0, Z: riserheight}))
 		newname := plate.Type + "_" + risername
 		newplate.Type = newname
 		if riser.GetConstraints() != nil {

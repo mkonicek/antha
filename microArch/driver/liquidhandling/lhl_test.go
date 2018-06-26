@@ -233,7 +233,6 @@ func TestBlowMixing(t *testing.T) {
 }
 
 func TestSuckMixing(t *testing.T) {
-
 	tenUl := wunit.NewVolume(10.0, "ul")
 
 	tests := []*PolicyTest{
@@ -1100,7 +1099,6 @@ func TestTipReuse(t *testing.T) {
 				},
 			},
 			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
-			Robot:                nil,
 			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD,MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
 			Assertions: []*InstructionAssertion{
 				{},
@@ -1123,7 +1121,6 @@ func TestTipReuse(t *testing.T) {
 				},
 			},
 			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
-			Robot:                nil,
 			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
 			Assertions: []*InstructionAssertion{
 				{},
@@ -1201,7 +1198,6 @@ func TestAspWait(t *testing.T) {
 }
 
 func TestAspLLF(t *testing.T) {
-	ctx := GetContextForTest()
 	tests := []*PolicyTest{
 		{
 			Name: "asp withLLF",
@@ -1220,7 +1216,7 @@ func TestAspLLF(t *testing.T) {
 				},
 			},
 			Instruction:          getLLFTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                makeTestGilsonWithPlates(ctx, true),
+			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -1248,7 +1244,7 @@ func TestAspLLF(t *testing.T) {
 				},
 			},
 			Instruction:          getLLFTestSuck(getLVConfig(), 8, "Gilson20"),
-			Robot:                makeTestGilsonWithPlates(ctx, true),
+			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -1303,7 +1299,7 @@ func TestAspLLF(t *testing.T) {
 				},
 			},
 			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                makeTestGilsonWithPlates(ctx, true),
+			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -1322,7 +1318,6 @@ func TestAspLLF(t *testing.T) {
 }
 
 func TestDspLLF(t *testing.T) {
-	ctx := GetContextForTest()
 	tests := []*PolicyTest{
 		{
 			Name: "dsp with LLF",
@@ -1341,7 +1336,7 @@ func TestDspLLF(t *testing.T) {
 				},
 			},
 			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                makeTestGilsonWithPlates(ctx, true),
+			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{

@@ -418,7 +418,6 @@ func MakeViscousPolicy() LHPolicy {
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["CAN_MULTI"] = true
 	glycerolpolicy["POST_MIX"] = 3
-	glycerolpolicy["POST_MIX_RATE"] = 1.5
 	glycerolpolicy["DESCRIPTION"] = "Designed for viscous samples. 3 post-mixes of the volume of the sample being transferred will be performed. No tip reuse limit."
 	return glycerolpolicy
 }
@@ -559,10 +558,8 @@ func MakeLoadWaterPolicy() LHPolicy {
 func MakeNeedToMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 16)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
 	dnapolicy["PRE_MIX_VOLUME"] = 20.0
-	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
@@ -596,7 +593,6 @@ func PreMixPolicy() LHPolicy {
 func PostMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_RATE"] = 3.74
 	//dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
@@ -618,7 +614,6 @@ func PostMixPolicy() LHPolicy {
 func SmartMixPolicy() LHPolicy {
 	policy := make(LHPolicy, 12)
 	policy["POST_MIX"] = 3
-	policy["POST_MIX_RATE"] = 3.74
 	policy["POST_MIX_VOLUME"] = 19.0
 	policy["CAN_MULTI"] = true
 	policy["CAN_MSA"] = false
@@ -635,7 +630,6 @@ func SmartMixPolicy() LHPolicy {
 func MegaMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 10
-	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false

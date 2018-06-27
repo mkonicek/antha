@@ -25,10 +25,12 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/dustinkirkland/golang-petname"
 	"sort"
 	"strings"
 
+	"github.com/dustinkirkland/golang-petname"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
@@ -287,6 +289,13 @@ func getSafePlateName(request *LHRequest, prefix, sep string, curplaten int) str
 }
 
 func randomPlateName(prefix, sep string, order int) string {
-	tox := []string{prefix, fmt.Sprintf("%d", order), petname.Generate(1, "")}
+
+	blackListed := []string{"crappie", "titmouse", "stinkbug"}
+
+	randomName := petname.Generate(1, "")
+	for search.InStrings(blackListed, randomName) {
+		randomName = petname.Generate(1, "")
+	}
+	tox := []string{prefix, fmt.Sprintf("%d", order), randomName}
 	return strings.Join(tox, sep)
 }

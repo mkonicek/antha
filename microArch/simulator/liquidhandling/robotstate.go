@@ -224,7 +224,7 @@ func NewAdaptorState(name string,
 }
 
 //String summarize the state of the adaptor
-func (self *AdaptorState) String() string {
+func (self *AdaptorState) SummariseTips() string {
 	tipTypes := make([]string, 0, len(self.channels))
 	loaded := make([]int, 0, len(self.channels))
 
@@ -243,6 +243,41 @@ func (self *AdaptorState) String() string {
 			summariseChannels(loaded))
 	}
 	return fmt.Sprintf("%s: <no tips>", self.name)
+}
+
+func (self *AdaptorState) SummarisePositions() string {
+
+	var places int
+	for _, channel := range self.channels {
+		pos := channel.GetAbsolutePosition()
+		if p := fmt.Sprintf("%.1f", pos.X); len(p) > places {
+			places = len(p)
+		}
+		if p := fmt.Sprintf("%.1f", pos.Y); len(p) > places {
+			places = len(p)
+		}
+		if p := fmt.Sprintf("%.1f", pos.Z); len(p) > places {
+			places = len(p)
+		}
+	}
+
+	floatTemplate := fmt.Sprintf("%%%d.1f", places)
+	intTemplate := fmt.Sprintf("%%%dd", places)
+
+	var head, lineX, lineY, lineZ []string
+	head = append(head, "channel:")
+	lineX = append(lineX, "      X:")
+	lineY = append(lineY, "      Y:")
+	lineZ = append(lineZ, "      Z:")
+	for i, channel := range self.channels {
+		head = append(head, fmt.Sprintf(intTemplate, i))
+		pos := channel.GetAbsolutePosition()
+		lineX = append(lineX, fmt.Sprintf(floatTemplate, pos.X))
+		lineY = append(lineY, fmt.Sprintf(floatTemplate, pos.Y))
+		lineZ = append(lineZ, fmt.Sprintf(floatTemplate, pos.Z))
+	}
+
+	return strings.Join([]string{strings.Join(head, " "), strings.Join(lineX, " "), strings.Join(lineY, " "), strings.Join(lineZ, " ")}, "\n")
 }
 
 //                            Accessors
@@ -551,7 +586,7 @@ func (self *RobotState) SummariseAdaptors() string {
 	lines := make([]string, 0, len(adaptors))
 
 	for i, adaptor := range adaptors {
-		lines = append(lines, fmt.Sprintf("Head %d: %v", i, adaptor))
+		lines = append(lines, fmt.Sprintf("Head %d: %s\n\t%s", i, adaptor.SummariseTips(), strings.Replace(adaptor.SummarisePositions(), "\n", "\n\t", -1)))
 	}
 
 	return strings.Join(lines, "\n")

@@ -1179,5 +1179,4 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 		return lhpr, err
 	}
 	return lhpr, nil
-
 }

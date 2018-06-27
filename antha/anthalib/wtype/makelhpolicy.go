@@ -1180,7 +1180,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	if err != nil {
 		return lhpr, err
 	}
-	CopyRulesFromPolicy(lhpr, "SmartMix", "SmartMixLiquidLevel")
+	err = CopyRulesFromPolicy(lhpr, "SmartMix", "SmartMixLiquidLevel")
 	if err != nil {
 		return lhpr, err
 	}

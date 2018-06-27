@@ -461,11 +461,11 @@ func GetSubComponents(component *LHComponent) (componentMap ComponentList, err e
 	components, err := getHistory(component)
 
 	if err != nil {
-		return componentMap, fmt.Errorf("Error getting componentList for %s: %s", component.CName, err.Error())
+		return componentMap, NewWarningf("Error getting componentList for %s: %s", component.Name(), err.Error())
 	}
 
 	if len(components.Components) == 0 {
-		return components, fmt.Errorf("No sub components found for %s", component.CName)
+		return components, NewWarningf("No sub components found for %s", component.Name())
 	}
 
 	return components, nil

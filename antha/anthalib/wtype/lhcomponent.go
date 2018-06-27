@@ -63,24 +63,22 @@ type LHComponent struct {
 // AddSubComponent adds a subcomponent with concentration to a component.
 // An error is returned if subcomponent is already found.
 func (cmp *LHComponent) AddSubComponent(subcomponent *LHComponent, conc wunit.Concentration) error {
-	cmp, err := AddSubComponent(cmp, subcomponent, conc)
-	return err
+	return AddSubComponent(cmp, subcomponent, conc)
 }
 
 // AddSubComponents adds a component list to a component.
 // If a conflicting sub component concentration is already present then an error will be returned.
 // To overwrite all subcomponents ignoring conficts, use OverWriteSubComponents.
 func (cmp *LHComponent) AddSubComponents(allsubComponents ComponentList) error {
-	cmp, err := AddSubComponents(cmp, allsubComponents)
-	return err
+	return AddSubComponents(cmp, allsubComponents)
 }
 
 // OverwriteSubComponents Adds a component list to a component.
 // Any existing component list will be overwritten.
 // To add a ComponentList checking for duplicate entries, use AddSubComponents.
 func (cmp *LHComponent) OverwriteSubComponents(allsubComponents ComponentList) error {
-	cmp, err := setHistory(cmp, allsubComponents)
-	return err
+	cmp.SubComponents = allsubComponents
+	return nil
 }
 
 // GetSubComponents returns a component list from a component

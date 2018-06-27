@@ -39,12 +39,12 @@ type ComponentListSample struct {
 	Volume wunit.Volume
 }
 
-// mixComponentLists merges two componentListSamples.
+// MixComponentLists merges two componentListSamples.
 // When two ComponentListSamples are mixed a new diluted ComponentList is generated.
 // An error may be generated if two components with the same name exist within the two lists with incompatible concentration units.
 // In this instance, the molecular weight for that component will be looked up in pubchem in order to change the units in both lists to g/l,
 // which will be able to be added.
-func mixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
+func MixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentList, err error) {
 
 	var errs []string
 
@@ -209,7 +209,7 @@ func SimulateMix(samples ...*LHComponent) (newComponentList ComponentList, mixSt
 				nexSampleVolToAdd = nextSample.Volume()
 			}
 			nextMixStep := ComponentListSample{ComponentList: nextList, Volume: nexSampleVolToAdd}
-			newComponentList, err = mixComponentLists(previousMixStep, nextMixStep)
+			newComponentList, err = MixComponentLists(previousMixStep, nextMixStep)
 			if err != nil {
 				warnings = append(warnings, err.Error())
 			}
@@ -372,16 +372,15 @@ func (a *notFound) Error() string {
 
 // AddSubComponent adds a subcomponent with concentration to a component.
 // An error is returned if subcomponent is already found.
-func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wunit.Concentration) (*LHComponent, error) {
-	var err error
+func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wunit.Concentration) error {
 
 	if component == nil {
-		return nil, fmt.Errorf("No component specified so cannot add subcomponent")
+		return fmt.Errorf("No component specified so cannot add subcomponent")
 	}
 	if subcomponent == nil {
-		return nil, fmt.Errorf("No subcomponent specified so cannot add subcomponent")
+		return fmt.Errorf("No subcomponent specified so cannot add subcomponent")
 	}
-	if _, found := component.Extra["History"]; !found {
+	if len(component.SubComponents.Components) == 0 {
 		complist := make(map[string]wunit.Concentration)
 
 		complist[subcomponent.CName] = conc
@@ -392,44 +391,40 @@ func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wun
 
 		if len(newlist.Components) == 0 {
 
-			return component, fmt.Errorf("No subcomponent added! list still empty")
+			return fmt.Errorf("No subcomponent added! list still empty")
 		}
 
 		if _, err := newlist.Get(subcomponent); err != nil {
-			return component, fmt.Errorf("No subcomponent added, no subcomponent to get: %s!", err.Error())
+			return fmt.Errorf("No subcomponent added, no subcomponent to get: %s!", err.Error())
 
 		}
-
-		component, err = setHistory(component, newlist)
-
-		if err != nil {
-			return component, err
-		}
+		component.SubComponents = newlist
 
 		history, err := getHistory(component)
 
 		if err != nil {
-			return component, fmt.Errorf("Error getting History for %s: %s", component.CName, err.Error())
+			return fmt.Errorf("Error getting History for %s: %s", component.CName, err.Error())
 		}
 
 		if len(history.Components) == 0 {
-			return component, fmt.Errorf("No history added!")
+			return fmt.Errorf("No history added!")
 		}
-		return component, nil
+		return nil
 	} else {
 
 		history, err := getHistory(component)
 
 		if err != nil {
-			return component, err
+			return err
 		}
 
 		if _, found := history.Components[subcomponent.CName]; !found {
 			history = history.Add(subcomponent, conc)
-			component, err = setHistory(component, history)
-			return component, err
+
+			component.SubComponents = history
+			return nil
 		} else {
-			return component, &alreadyAdded{Name: subcomponent.CName}
+			return &alreadyAdded{Name: subcomponent.CName}
 		}
 	}
 }
@@ -437,7 +432,7 @@ func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wun
 // AddSubComponents adds a component list to a component.
 // If a conflicting sub component concentration is already present then an error will be returned.
 // To overwrite all subcomponents ignoring conficts, use OverWriteSubComponents.
-func AddSubComponents(component *LHComponent, allsubComponents ComponentList) (*LHComponent, error) {
+func AddSubComponents(component *LHComponent, allsubComponents ComponentList) error {
 
 	for _, compName := range allsubComponents.AllComponents() {
 		var comp LHComponent
@@ -447,17 +442,17 @@ func AddSubComponents(component *LHComponent, allsubComponents ComponentList) (*
 		conc, err := allsubComponents.Get(&comp)
 
 		if err != nil {
-			return component, err
+			return err
 		}
 
-		component, err = AddSubComponent(component, &comp, conc)
+		err = AddSubComponent(component, &comp, conc)
 
 		if err != nil {
-			return component, err
+			return err
 		}
 	}
 
-	return component, nil
+	return nil
 }
 
 // GetSubComponents returns a component list from a component
@@ -487,16 +482,6 @@ func getHistory(comp *LHComponent) (compList ComponentList, err error) {
 	return ComponentList{}, fmt.Errorf("no component list found for %s", comp.Name())
 }
 
-// Add a component list to a component.
-// Any existing component list will be overwritten.
-// Users should use add SubComponents function
-func setHistory(comp *LHComponent, compList ComponentList) (*LHComponent, error) {
-
-	comp.SubComponents = compList
-
-	return comp, nil
-}
-
 // UpdateComponentDetails corrects the sub component list and normalises the name of a component with the details
 // of all sample mixes which are specified to be the source of that component.
 // This must currently be updated manually using this function.
@@ -516,7 +501,7 @@ func UpdateComponentDetails(productOfMixes *LHComponent, mixes ...*LHComponent) 
 
 	subComponents = subComponents.RemoveConcsFromSubComponentNames()
 
-	productOfMixes, err = AddSubComponents(productOfMixes, subComponents)
+	err = AddSubComponents(productOfMixes, subComponents)
 
 	if err != nil {
 		warnings = append(warnings, err.Error())
@@ -533,4 +518,41 @@ func UpdateComponentDetails(productOfMixes *LHComponent, mixes ...*LHComponent) 
 	}
 
 	return nil
+}
+
+// EqualLists compares two ComponentLists and returns an error if the lists are not identical.
+func EqualLists(list1, list2 ComponentList) error {
+	var notEqual []string
+
+	if nonZeroComponents(list1) == 0 && nonZeroComponents(list2) == 0 {
+		return nil
+	}
+
+	if nonZeroComponents(list1) != nonZeroComponents(list2) {
+		return fmt.Errorf("componentlists unequal length: %d, %d", nonZeroComponents(list1), nonZeroComponents(list2))
+	}
+
+	for key, value1 := range list1.Components {
+		if value2, found := list2.Components[key]; found {
+			if fmt.Sprintf("%.2e", value1.SIValue()) != fmt.Sprintf("%.2e", value2.SIValue()) {
+				notEqual = append(notEqual, key+" "+fmt.Sprint(value1)+" in list 1 and "+fmt.Sprint(value2)+" in list 2.")
+			}
+		} else {
+			notEqual = append(notEqual, key+" not found in list2. ")
+		}
+	}
+	if len(notEqual) > 0 {
+		return fmt.Errorf(strings.Join(notEqual, ". \n"))
+	}
+	return nil
+}
+
+func nonZeroComponents(compList ComponentList) int {
+	var nonZero int
+	for _, conc := range compList.Components {
+		if conc.RawValue() > 0 {
+			nonZero++
+		}
+	}
+	return nonZero
 }

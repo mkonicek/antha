@@ -47,6 +47,7 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret.Vol = v.RawValue()
 	ret.Vunit = v.Unit().PrefixedSymbol()
 	ret.Extra = l.GetExtra()
+	ret.SubComponents = l.SubComponents
 	ret.Smax = l.GetSmax()
 	ret.Visc = l.GetVisc()
 	if l.Conc > 0 && len(l.Cunit) > 0 {

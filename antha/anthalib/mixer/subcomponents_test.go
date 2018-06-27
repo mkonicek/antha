@@ -13,23 +13,23 @@ import (
 
 type mixComponentlistTest struct {
 	name      string
-	sample1   ComponentListSample
-	sample2   ComponentListSample
-	mixedList ComponentList
+	sample1   wtype.ComponentListSample
+	sample2   wtype.ComponentListSample
+	mixedList wtype.ComponentList
 }
 
 var tests []mixComponentlistTest = []mixComponentlistTest{
 	{
-		sample1: ComponentListSample{
-			ComponentList: ComponentList{
+		sample1: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"water": wunit.NewConcentration(1, "g/L"),
 				},
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		sample2: ComponentListSample{
-			ComponentList: ComponentList{
+		sample2: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"dna":  wunit.NewConcentration(1, "g/L"),
 					"dna2": wunit.NewConcentration(2, "X"),
@@ -37,7 +37,7 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		mixedList: ComponentList{
+		mixedList: wtype.ComponentList{
 			Components: map[string]wunit.Concentration{
 				"water": wunit.NewConcentration(0.5, "g/L"),
 				"dna":   wunit.NewConcentration(0.5, "g/L"),
@@ -46,8 +46,8 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 		},
 	},
 	{
-		sample1: ComponentListSample{
-			ComponentList: ComponentList{
+		sample1: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"water": wunit.NewConcentration(1, "g/L"),
 					"dna":   wunit.NewConcentration(1, "g/L"),
@@ -55,15 +55,15 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		sample2: ComponentListSample{
-			ComponentList: ComponentList{
+		sample2: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"dna": wunit.NewConcentration(1, "g/L"),
 				},
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		mixedList: ComponentList{
+		mixedList: wtype.ComponentList{
 			Components: map[string]wunit.Concentration{
 				"water": wunit.NewConcentration(0.5, "g/L"),
 				"dna":   wunit.NewConcentration(1, "g/L"),
@@ -71,8 +71,8 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 		},
 	},
 	{
-		sample1: ComponentListSample{
-			ComponentList: ComponentList{
+		sample1: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"water": wunit.NewConcentration(1, "g/l"),
 					"dna":   wunit.NewConcentration(1, "g/l"),
@@ -80,15 +80,15 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		sample2: ComponentListSample{
-			ComponentList: ComponentList{
+		sample2: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"dna": wunit.NewConcentration(1000, "mg/l"),
 				},
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		mixedList: ComponentList{
+		mixedList: wtype.ComponentList{
 			Components: map[string]wunit.Concentration{
 				"water": wunit.NewConcentration(0.5, "g/l"),
 				"dna":   wunit.NewConcentration(1, "g/l"),
@@ -96,8 +96,8 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 		},
 	},
 	{
-		sample1: ComponentListSample{
-			ComponentList: ComponentList{
+		sample1: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"water":    wunit.NewConcentration(1, "g/L"),
 					"glycerol": wunit.NewConcentration(1, "M"),
@@ -105,15 +105,15 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		sample2: ComponentListSample{
-			ComponentList: ComponentList{
+		sample2: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol": wunit.NewConcentration(1, "g/L"),
 				},
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		mixedList: ComponentList{
+		mixedList: wtype.ComponentList{
 			Components: map[string]wunit.Concentration{
 				"water":    wunit.NewConcentration(0.5, "g/L"),
 				"glycerol": wunit.NewConcentration(46.5, "g/L"),
@@ -124,39 +124,39 @@ var tests []mixComponentlistTest = []mixComponentlistTest{
 
 type serialComponentlistTest struct {
 	name      string
-	sample1   ComponentListSample
-	sample2   ComponentListSample
-	sample3   ComponentListSample
-	mixedList ComponentList
+	sample1   wtype.ComponentListSample
+	sample2   wtype.ComponentListSample
+	sample3   wtype.ComponentListSample
+	mixedList wtype.ComponentList
 }
 
 var serialTests []serialComponentlistTest = []serialComponentlistTest{
 	{
-		sample1: ComponentListSample{
-			ComponentList: ComponentList{
+		sample1: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"water": wunit.NewConcentration(0, "g/L"),
 				},
 			},
 			Volume: wunit.NewVolume(8, "ul"),
 		},
-		sample2: ComponentListSample{
-			ComponentList: ComponentList{
+		sample2: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"dna": wunit.NewConcentration(1, "g/L"),
 				},
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		sample3: ComponentListSample{
-			ComponentList: ComponentList{
+		sample3: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"dna2": wunit.NewConcentration(1, "g/L"),
 				},
 			},
 			Volume: wunit.NewVolume(1, "ul"),
 		},
-		mixedList: ComponentList{
+		mixedList: wtype.ComponentList{
 			Components: map[string]wunit.Concentration{
 				"water": wunit.NewConcentration(0, "g/L"),
 				"dna":   wunit.NewConcentration(0.1, "g/L"),
@@ -165,31 +165,31 @@ var serialTests []serialComponentlistTest = []serialComponentlistTest{
 		},
 	},
 	{
-		sample1: ComponentListSample{
-			ComponentList: ComponentList{
+		sample1: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"LB": wunit.NewConcentration(0, "g/L"),
 				},
 			},
 			Volume: wunit.NewVolume(1.05e+04-(5.26e+03+351), "ul"),
 		},
-		sample2: ComponentListSample{
-			ComponentList: ComponentList{
+		sample2: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"Ferric Chloride (uM)": wunit.NewConcentration(20, "mM"),
 				},
 			},
 			Volume: wunit.NewVolume(5.26e+03, "ul"),
 		},
-		sample3: ComponentListSample{
-			ComponentList: ComponentList{
+		sample3: wtype.ComponentListSample{
+			ComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"Glucose (g/L)": wunit.NewConcentration(150, "g/L"),
 				},
 			},
 			Volume: wunit.NewVolume(351, "ul"),
 		},
-		mixedList: ComponentList{
+		mixedList: wtype.ComponentList{
 			Components: map[string]wunit.Concentration{
 				"LB": wunit.NewConcentration(0, "g/L"),
 				"Ferric Chloride (uM)": wunit.NewConcentration(10, "mM"),
@@ -201,7 +201,7 @@ var serialTests []serialComponentlistTest = []serialComponentlistTest{
 
 func TestSimulateMix(t *testing.T) {
 	for _, test := range tests {
-		mixed, err := MixComponentLists(test.sample1, test.sample2)
+		mixed, err := wtype.MixComponentLists(test.sample1, test.sample2)
 
 		if err != nil {
 			t.Error(
@@ -228,7 +228,7 @@ func TestSimulateMix(t *testing.T) {
 
 func TestSerialMix(t *testing.T) {
 	for _, test := range serialTests {
-		intermediate, err := MixComponentLists(test.sample1, test.sample2)
+		intermediate, err := wtype.MixComponentLists(test.sample1, test.sample2)
 
 		if err != nil {
 			t.Error(
@@ -237,12 +237,12 @@ func TestSerialMix(t *testing.T) {
 			)
 		}
 
-		intermediateSample := ComponentListSample{
+		intermediateSample := wtype.ComponentListSample{
 			ComponentList: intermediate,
 			Volume:        wunit.AddVolumes(test.sample1.Volume, test.sample2.Volume),
 		}
 
-		mixed, err := MixComponentLists(intermediateSample, test.sample3)
+		mixed, err := wtype.MixComponentLists(intermediateSample, test.sample3)
 		if err != nil {
 			t.Error(err)
 		}
@@ -270,14 +270,14 @@ func TestUpdateComponentDetails(t *testing.T) {
 		product                      *wtype.LHComponent
 		mixes                        []*wtype.LHComponent
 		expectedProductName          string
-		expectedProductComponentList ComponentList
+		expectedProductComponentList wtype.ComponentList
 		expectedProductConc          wunit.Concentration
 		expectedError                error
 	}
 
 	var defaultConc wunit.Concentration
 
-	newTestComponent := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration, vol wunit.Volume, componentList ComponentList) *wtype.LHComponent {
+	newTestComponent := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration, vol wunit.Volume, componentList wtype.ComponentList) *wtype.LHComponent {
 		c := wtype.NewLHComponent()
 		c.SetName(name)
 		c.Type = typ
@@ -285,16 +285,17 @@ func TestUpdateComponentDetails(t *testing.T) {
 		if conc != defaultConc {
 			c.SetConcentration(conc)
 		}
-		AddSubComponents(c, componentList)
+		c.AddSubComponents(componentList)
+
 		return c
 	}
 
 	gPerL0 := wunit.NewConcentration(0.0, "g/L")
 	gPerL1 := wunit.NewConcentration(1, "g/L")
 
-	var nilComponentList ComponentList
+	var nilComponentList wtype.ComponentList
 
-	someComponents := ComponentList{Components: map[string]wunit.Concentration{
+	someComponents := wtype.ComponentList{Components: map[string]wunit.Concentration{
 		"glycerol": wunit.NewConcentration(0.25, "g/l"),
 		"IPTG":     wunit.NewConcentration(0.25, "mM/l"),
 		"water":    wunit.NewConcentration(0.25, "v/v"),
@@ -302,7 +303,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 	},
 	}
 
-	someOtherComponents := ComponentList{Components: map[string]wunit.Concentration{
+	someOtherComponents := wtype.ComponentList{Components: map[string]wunit.Concentration{
 		"glycerol":    wunit.NewConcentration(0.5, "g/l"),
 		"IPTG":        wunit.NewConcentration(0.5, "mM/l"),
 		"water":       wunit.NewConcentration(0.5, "v/v"),
@@ -311,7 +312,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 	},
 	}
 
-	lbComponents := ComponentList{Components: map[string]wunit.Concentration{
+	lbComponents := wtype.ComponentList{Components: map[string]wunit.Concentration{
 		"Yeast Extract":   wunit.NewConcentration(5, "g/l"),
 		"Tryptone":        wunit.NewConcentration(10, "g/l"),
 		"Sodium Chloride": wunit.NewConcentration(10, "g/l"),
@@ -342,7 +343,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 			product:             water,
 			mixes:               []*wtype.LHComponent{ws, ps, mmxs},
 			expectedProductName: "0.1 v/v dna+0.25 v/v mastermix_sapI+0.65 v/v water",
-			expectedProductComponentList: ComponentList{
+			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"dna":            wunit.NewConcentration(0.1, "v/v"),
 					"mastermix_sapI": wunit.NewConcentration(0.25, "v/v"),
@@ -356,7 +357,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 			product:             water,
 			mixes:               []*wtype.LHComponent{wsTotal, ps, mmxs},
 			expectedProductName: "0.1 v/v dna+0.25 v/v mastermix_sapI+0.65 v/v water",
-			expectedProductComponentList: ComponentList{
+			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"dna":            wunit.NewConcentration(0.1, "v/v"),
 					"mastermix_sapI": wunit.NewConcentration(0.25, "v/v"),
@@ -376,7 +377,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(lb, wunit.NewVolume(65.0, "ul")),
 			},
 			expectedProductName: "0.25 mM/l IPTG+0.25 X LB+0.25 g/l glycerol+0.25 v/v water",
-			expectedProductComponentList: ComponentList{
+			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol": wunit.NewConcentration(0.25, "g/l"),
 					"IPTG":     wunit.NewConcentration(0.25, "mM/l"),
@@ -398,7 +399,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(lb, wunit.NewVolume(65.0, "ul")),
 			},
 			expectedProductName: "water",
-			expectedProductComponentList: ComponentList{
+			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{},
 			},
 			expectedProductConc: gPerL0,
@@ -413,7 +414,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(iptg, wunit.NewVolume(50, "ul")),
 			},
 			expectedProductName: "0.1 mM/l IPTG+8 g/l Sodium Chloride+8 g/l Tryptone+4 g/l Yeast Extract+0.1 g/l glycerol",
-			expectedProductComponentList: ComponentList{
+			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol":        wunit.NewConcentration(0.1, "g/l"),
 					"IPTG":            wunit.NewConcentration(0.1, "mM/l"),
@@ -436,7 +437,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(anotherMediaMixture, wunit.NewVolume(100.0, "ul")),
 			},
 			expectedProductName: "0.1 X Extra Thing+0.175 mM/l IPTG+0.05 X LB+0.175 g/l glycerol+0.675 v/v water",
-			expectedProductComponentList: ComponentList{
+			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol":    wunit.NewConcentration(0.175, "g/l"),
 					"IPTG":        wunit.NewConcentration(0.175, "mM/l"),
@@ -458,7 +459,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(mediaMixture, wunit.NewVolume(65.0, "ul")),
 			},
 			expectedProductName: "0.312 mM/l IPTG+0.0625 X LB+0.312 g/l glycerol+0.312 v/v water",
-			expectedProductComponentList: ComponentList{
+			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol": wunit.NewConcentration(0.3125, "g/l"),
 					"IPTG":     wunit.NewConcentration(0.3125, "mM/l"),
@@ -473,7 +474,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 
 	for _, test := range mixTests {
 		duplicatedProduct := test.product.Dup()
-		err := UpdateComponentDetails(duplicatedProduct, test.mixes...)
+		err := wtype.UpdateComponentDetails(duplicatedProduct, test.mixes...)
 
 		if err != nil {
 			if err.Error() != test.expectedError.Error() {
@@ -499,7 +500,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 			)
 		}
 
-		testCompList, err := GetSubComponents(duplicatedProduct)
+		testCompList, err := duplicatedProduct.GetSubComponents()
 
 		if err != nil {
 			fmt.Println(err.Error())

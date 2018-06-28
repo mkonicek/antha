@@ -147,9 +147,17 @@ func (self *CollisionError) GetStateAtError() string {
 }
 
 func (self *CollisionError) CollisionDescription() string {
+
+	//list adaptors in order for consistent errors
+	adaptorIndexes := make([]int, 0, len(self.channelsColliding))
+	for i := range self.channelsColliding {
+		adaptorIndexes = append(adaptorIndexes, i)
+	}
+	sort.Ints(adaptorIndexes)
+
 	adaptorStrings := make([]string, 0, len(self.channelsColliding))
-	for adaptorIndex, channels := range self.channelsColliding {
-		adaptorStrings = append(adaptorStrings, fmt.Sprintf("head %d %s", adaptorIndex, summariseChannels(channels)))
+	for adaptorIndex := range adaptorIndexes {
+		adaptorStrings = append(adaptorStrings, fmt.Sprintf("head %d %s", adaptorIndex, summariseChannels(self.channelsColliding[adaptorIndex])))
 	}
 
 	//group objects by parent

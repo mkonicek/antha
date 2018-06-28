@@ -50,7 +50,7 @@ func makeComponents() []*wtype.LHComponent {
 	gPerL10 := wunit.NewConcentration(10, "g/L")
 	gPerL100 := wunit.NewConcentration(100, "g/L")
 
-	add("water", wtype.LTWater, 9999, defaultConc)
+	add("water", wtype.LTSingleChannel, 9999, defaultConc)
 	add("multiwater", wtype.LTMultiWater, 9999, defaultConc)
 	add("PBS", wtype.LTWater, 9999, defaultConc)
 	add("DNA_ladder", wtype.LTload, 9999, defaultConc)

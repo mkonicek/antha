@@ -269,19 +269,32 @@ func (self *AdaptorState) SummarisePositions() string {
 	floatTemplate := fmt.Sprintf("%%%d.1f", places-2)
 	intTemplate := fmt.Sprintf("%%%dd", places)
 
-	var head, lineX, lineY, lineZ []string
+	var head, lineX, lineY, lineZ, lineTips []string
 	head = append(head, "channel:")
 	lineX = append(lineX, "      X:")
 	lineY = append(lineY, "      Y:")
 	lineZ = append(lineZ, "      Z:")
+	lineTips = append(lineTips, "   tips:")
 	for i, pos := range positions {
 		head = append(head, fmt.Sprintf(intTemplate, i))
 		lineX = append(lineX, fmt.Sprintf(floatTemplate, pos.X))
 		lineY = append(lineY, fmt.Sprintf(floatTemplate, pos.Y))
 		lineZ = append(lineZ, fmt.Sprintf(floatTemplate, pos.Z))
+		if self.channels[i].HasTip() {
+			lineTips = append(lineTips, strings.Repeat(" ", places-1)+"X")
+		} else {
+			lineTips = append(lineTips, strings.Repeat(" ", places))
+		}
 	}
 
-	return strings.Join([]string{strings.Join(head, " "), strings.Join(lineX, " "), strings.Join(lineY, " "), strings.Join(lineZ, " ")}, "\n")
+	return strings.Join(
+		[]string{
+			strings.Join(head, " "),
+			strings.Join(lineX, " "),
+			strings.Join(lineY, " "),
+			strings.Join(lineZ, " "),
+			strings.Join(lineTips, " "),
+		}, "\n")
 }
 
 //                            Accessors

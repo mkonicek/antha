@@ -156,7 +156,7 @@ func (self *CollisionError) CollisionDescription() string {
 	sort.Ints(adaptorIndexes)
 
 	adaptorStrings := make([]string, 0, len(self.channelsColliding))
-	for adaptorIndex := range adaptorIndexes {
+	for _, adaptorIndex := range adaptorIndexes {
 		adaptorStrings = append(adaptorStrings, fmt.Sprintf("head %d %s", adaptorIndex, summariseChannels(self.channelsColliding[adaptorIndex])))
 	}
 

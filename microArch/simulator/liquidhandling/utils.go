@@ -332,6 +332,9 @@ func appendContiguous(s []string, channels []int, start, length int) []string {
 }
 
 func summariseChannels(channels []int) string {
+	if len(channels) == 0 {
+		return "no channels"
+	}
 	if len(channels) == 1 {
 		return fmt.Sprintf("channel %d", channels[0])
 	}

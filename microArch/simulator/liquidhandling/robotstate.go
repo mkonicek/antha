@@ -247,9 +247,14 @@ func (self *AdaptorState) SummariseTips() string {
 
 func (self *AdaptorState) SummarisePositions() string {
 
+	positions := make([]wtype.Coordinates, len(self.channels))
+	for i, channel := range self.channels {
+		positions[i] = channel.GetAbsolutePosition()
+		positions[i].Z -= channel.GetTip().GetEffectiveHeight()
+	}
+
 	var places int
-	for _, channel := range self.channels {
-		pos := channel.GetAbsolutePosition()
+	for _, pos := range positions {
 		if p := fmt.Sprintf("%.1f", pos.X); len(p) > places {
 			places = len(p)
 		}
@@ -261,7 +266,7 @@ func (self *AdaptorState) SummarisePositions() string {
 		}
 	}
 
-	floatTemplate := fmt.Sprintf("%%%d.1f", places)
+	floatTemplate := fmt.Sprintf("%%%d.1f", places-2)
 	intTemplate := fmt.Sprintf("%%%dd", places)
 
 	var head, lineX, lineY, lineZ []string
@@ -269,9 +274,8 @@ func (self *AdaptorState) SummarisePositions() string {
 	lineX = append(lineX, "      X:")
 	lineY = append(lineY, "      Y:")
 	lineZ = append(lineZ, "      Z:")
-	for i, channel := range self.channels {
+	for i, pos := range positions {
 		head = append(head, fmt.Sprintf(intTemplate, i))
-		pos := channel.GetAbsolutePosition()
 		lineX = append(lineX, fmt.Sprintf(floatTemplate, pos.X))
 		lineY = append(lineY, fmt.Sprintf(floatTemplate, pos.Y))
 		lineZ = append(lineZ, fmt.Sprintf(floatTemplate, pos.Z))

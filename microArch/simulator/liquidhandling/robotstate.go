@@ -245,12 +245,17 @@ func (self *AdaptorState) SummariseTips() string {
 	return fmt.Sprintf("%s: <no tips>", self.name)
 }
 
-func (self *AdaptorState) SummarisePositions() string {
+func (self *AdaptorState) SummarisePositions(channelsColliding []int) string {
 
 	positions := make([]wtype.Coordinates, len(self.channels))
 	for i, channel := range self.channels {
 		positions[i] = channel.GetAbsolutePosition()
 		positions[i].Z -= channel.GetTip().GetEffectiveHeight()
+	}
+
+	collisions := make([]bool, len(self.channels))
+	for _, ch := range channelsColliding {
+		collisions[ch] = true
 	}
 
 	var places int
@@ -269,22 +274,29 @@ func (self *AdaptorState) SummarisePositions() string {
 	floatTemplate := fmt.Sprintf("%%%d.1f", places-2)
 	intTemplate := fmt.Sprintf("%%%dd", places)
 
-	var head, lineX, lineY, lineZ, lineTips []string
+	var head, lineX, lineY, lineZ []string
 	head = append(head, "channel:")
 	lineX = append(lineX, "      X:")
 	lineY = append(lineY, "      Y:")
 	lineZ = append(lineZ, "      Z:")
-	lineTips = append(lineTips, "   tips:")
+	lineState := make([]string, len(positions)+1)
+	lineState[0] = "  state:"
 	for i, pos := range positions {
 		head = append(head, fmt.Sprintf(intTemplate, i))
 		lineX = append(lineX, fmt.Sprintf(floatTemplate, pos.X))
 		lineY = append(lineY, fmt.Sprintf(floatTemplate, pos.Y))
 		lineZ = append(lineZ, fmt.Sprintf(floatTemplate, pos.Z))
-		if self.channels[i].HasTip() {
-			lineTips = append(lineTips, strings.Repeat(" ", places-1)+"X")
-		} else {
-			lineTips = append(lineTips, strings.Repeat(" ", places))
+
+		if collisions[i] {
+			lineState[i+1] += "C"
 		}
+		if self.channels[i].HasTip() {
+			lineState[i+1] += "T"
+		}
+	}
+
+	for i := 1; i < len(lineState); i++ {
+		lineState[i] = strings.Repeat(" ", places-len(lineState[i])) + lineState[i]
 	}
 
 	return strings.Join(
@@ -293,7 +305,7 @@ func (self *AdaptorState) SummarisePositions() string {
 			strings.Join(lineX, " "),
 			strings.Join(lineY, " "),
 			strings.Join(lineZ, " "),
-			strings.Join(lineTips, " "),
+			strings.Join(lineState, " "),
 		}, "\n")
 }
 
@@ -592,18 +604,20 @@ func NewRobotState() *RobotState {
 	return &rs
 }
 
-func (self *RobotState) SummariseState() string {
-	return fmt.Sprintf("Adaptors:\n\t%s\nDeck:\n\t%s",
-		strings.Replace(self.SummariseAdaptors(), "\n", "\n\t", -1),
+func (self *RobotState) SummariseState(channelsColliding map[int][]int) string {
+	return fmt.Sprintf("Adaptors: key = {T: Tip loaded, C: involved in Collision}\n\t%s\nDeck:\n\t%s",
+		strings.Replace(self.SummariseAdaptors(channelsColliding), "\n", "\n\t", -1),
 		strings.Replace(self.SummariseDeck(), "\n", "\n\t", -1))
 }
 
-func (self *RobotState) SummariseAdaptors() string {
-	adaptors := self.GetAdaptors()
-	lines := make([]string, 0, len(adaptors))
+func (self *RobotState) SummariseAdaptors(channelsColliding map[int][]int) string {
+	var lines []string
+	for i, group := range self.adaptorGroups {
+		lines = append(lines, fmt.Sprintf("AdaptorGroup %d: position %v", i, group.GetPosition()))
+	}
 
-	for i, adaptor := range adaptors {
-		lines = append(lines, fmt.Sprintf("Head %d: %s\n\t%s", i, adaptor.SummariseTips(), strings.Replace(adaptor.SummarisePositions(), "\n", "\n\t", -1)))
+	for i, adaptor := range self.GetAdaptors() {
+		lines = append(lines, fmt.Sprintf("Head %d: %s\n\t%s", i, adaptor.SummariseTips(), strings.Replace(adaptor.SummarisePositions(channelsColliding[i]), "\n", "\n\t", -1)))
 	}
 
 	return strings.Join(lines, "\n")
@@ -613,16 +627,25 @@ func (self *RobotState) SummariseDeck() string {
 	slotNames := self.deck.GetSlotNames()
 	sort.Strings(slotNames)
 
-	ret := make([]string, 0, len(slotNames))
+	var nameLen int
+	for _, name := range slotNames {
+		if len(name) > nameLen {
+			nameLen = len(name)
+		}
+	}
+
+	var ret []string
 	for _, name := range slotNames {
 		object, _ := self.deck.GetChild(name)
-		var oStr string
+		paddedName := strings.Repeat(" ", nameLen-len(name)) + name
 		if object != nil {
-			oStr = fmt.Sprintf("%s \"%s\" of type %s with size %v", wtype.ClassOf(object), wtype.NameOf(object), wtype.TypeOf(object), object.GetSize())
+			ret = append(ret, fmt.Sprintf("%s: %s \"%s\" of type %s with size %v",
+				paddedName, wtype.ClassOf(object), wtype.NameOf(object), wtype.TypeOf(object), object.GetSize()))
+			ret = append(ret, fmt.Sprintf("%s  bounds: [%v - %v]",
+				strings.Repeat(" ", nameLen), object.GetPosition(), object.GetPosition().Add(object.GetSize())))
 		} else {
-			oStr = "<empty>"
+			ret = append(ret, fmt.Sprintf("%s: <empty>", paddedName))
 		}
-		ret = append(ret, fmt.Sprintf("%s: %s", name, oStr))
 	}
 
 	return strings.Join(ret, "\n")

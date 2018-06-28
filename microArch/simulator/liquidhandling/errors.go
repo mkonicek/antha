@@ -104,7 +104,7 @@ func NewCollisionError(state *RobotState, channelsColliding map[int][]int, objec
 	return &CollisionError{
 		channelsColliding: channelsColliding,
 		objectsColliding:  objectsColliding,
-		stateAtError:      state.SummariseState(),
+		stateAtError:      state.SummariseState(channelsColliding),
 	}
 }
 

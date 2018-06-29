@@ -45,6 +45,8 @@ type VirtualLiquidHandler struct {
 	errors             []LiquidhandlingError
 	state              *RobotState
 	settings           *SimulatorSettings
+	lastMove           string
+	lastTarget         wtype.LHObject
 }
 
 //coneRadius hardcoded radius to assume for cones
@@ -137,6 +139,27 @@ func (self *VirtualLiquidHandler) Simulate(instructions []liquidhandling.Termina
 	}
 
 	return nil
+}
+
+func (self *VirtualLiquidHandler) getState() *RobotState {
+	if self == nil {
+		return nil
+	}
+	return self.state
+}
+
+func (self *VirtualLiquidHandler) GetLastMove() string {
+	if self == nil {
+		return ""
+	}
+	return self.lastMove
+}
+
+func (self *VirtualLiquidHandler) GetLastTarget() wtype.LHObject {
+	if self == nil {
+		return nil
+	}
+	return self.lastTarget
 }
 
 //CountErrors
@@ -482,6 +505,8 @@ func (self *VirtualLiquidHandler) getTargetPosition(adaptorName string, channelI
 		return ret, false
 	}
 
+	self.lastTarget = addr.GetChildByAddress(wc)
+
 	ret, ok = addr.WellCoordsToCoords(wc, ref)
 	if !ok {
 		//since we already checked that the address exists, this must be a bad reference
@@ -627,9 +652,12 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	}
 
 	describe := func() string {
-		return fmt.Sprintf("head %d %s to %s@%s at position %s",
-			head, summariseChannels(channels), wtype.HumanizeWellCoords(wc), wtype.NameOf(target), deckposition)
+		return fmt.Sprintf("head %d %s to %s of %s@%s at position %s",
+			head, summariseChannels(channels), summariseWellReferences(offsetZ, refs), wtype.HumanizeWellCoords(wc), wtype.NameOf(target), deckposition)
 	}
+
+	//store a description of the move for posterity (and future errors)
+	self.lastMove = describe()
 
 	//find the head location
 	//for now, assuming that the relative position of the first explicitly provided channel and the head stay
@@ -836,7 +864,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	}
 
 	if len(no_well) > 0 {
-		self.AddErrorf("%s: %s on %s not in a well", describe(), pTips(len(no_well)), summariseChannels(no_well))
+		self.addLHError(NewTipsNotInWellError(self, describe(), no_well))
 	}
 
 	return ret

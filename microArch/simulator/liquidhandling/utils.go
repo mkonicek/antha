@@ -390,6 +390,28 @@ func summariseStrings(s []string) string {
 	return "{" + strings.Join(getUnique(s, true), ",") + "}"
 }
 
+func summariseWellReferences(offsetZ []float64, references []wtype.WellReference) string {
+	o := make([]string, len(offsetZ))
+	for i, offset := range offsetZ {
+		direction := "above"
+		if offset < 0 {
+			direction = "below"
+			offset = -offset
+		}
+		offsetU := wunit.NewLength(offset, "mm")
+		if offsetU.IsZero() {
+			continue
+		}
+		o[i] = fmt.Sprintf("%v %s", offsetU, direction)
+	}
+
+	s := make([]string, 0, len(references))
+	for _, r := range references {
+		s = append(s, r.String())
+	}
+	return summariseStrings(o) + " " + summariseStrings(s)
+}
+
 func summariseCycles(cycles []int, elems []int) string {
 	if iElemsEqual(cycles, elems) {
 		if cycles[0] == 1 {

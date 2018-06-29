@@ -95,6 +95,60 @@ func (self *GenericError) setInstruction(index int, ins driver.TerminalRobotInst
 	self.instructionIndex = index
 }
 
+//TipsNotInWellError generated when aspirate is called and there are no tips in a well
+type TipsNotInWellError struct {
+	*GenericError
+	lastMove   string
+	lastTarget wtype.LHObject
+}
+
+func NewTipsNotInWellError(vlh *VirtualLiquidHandler, description string, channels []int) LiquidhandlingError {
+	ge := NewGenericError(
+		vlh.getState(),
+		simulator.SeverityError,
+		fmt.Sprintf("%s: %s on %s not in a well", description, pTips(len(channels)), summariseChannels(channels)))
+	return &TipsNotInWellError{
+		GenericError: ge.(*GenericError),
+		lastMove:     vlh.GetLastMove(),
+		lastTarget:   vlh.GetLastTarget(),
+	}
+}
+
+func (self *TipsNotInWellError) GetStateAtError() string {
+	lm := self.lastMove
+	if lm == "" {
+		lm = "unknown"
+	}
+	return fmt.Sprintf("last move: %s\nlast target: %s\n%s", lm, self.lastTargetString(), self.stateAtError)
+}
+
+func (self *TipsNotInWellError) lastTargetString() string {
+	if self == nil {
+		return ""
+	}
+	if self.lastTarget == nil {
+		return "<nil>"
+	}
+
+	ret := fmt.Sprintf("%s \"%s\" of type %s",
+		wtype.ClassOf(self.lastTarget),
+		wtype.NameOf(self.lastTarget),
+		wtype.TypeOf(self.lastTarget))
+
+	if well, ok := self.lastTarget.(*wtype.LHWell); ok {
+		var zStart, pHeight float64
+		if plate, ok := well.GetParent().(*wtype.LHPlate); ok && plate != nil {
+			zStart = plate.WellZStart
+			pHeight = plate.GetSize().Z
+		}
+		ret += fmt.Sprintf(" zStart = %f, bottomH = %f, wellHeight = %f, plateHeight = %f, (zStart+bottomH+wellHeight) = %f",
+			zStart, well.Bottomh, well.GetSize().Z, pHeight, zStart+well.Bottomh+well.GetSize().Z)
+	}
+
+	return ret
+
+}
+
 //CollisionError generated when a physical collision occurs
 type CollisionError struct {
 	description       string

@@ -616,7 +616,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plates = append(plates, make384wellplateAppliedBiosystems())
 	plates = append(plates, makeAcroPrep384NoFilter())
 	plates = append(plates, makeAcroPrep384WithFilter())
-
+	plates = append(plates, makeGreinerVFromSpec())
 	return
 }
 
@@ -1053,6 +1053,46 @@ func makeAcroPrep384WithFilter() *wtype.LHPlate {
 	ystart := 9 - ystartOffsetCorrection     // measure the distance from the edge of plate to beginning of first well in x-axis
 	zstart := 18.0                           // F - L: offset of bottom of deck to bottom of well
 	overallHeight := 27.5                    // F: height of plate
+
+	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
+
+	newWelltype := wtype.NewLHWell(volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+
+	return plate
+}
+
+// VbottomGreiner
+func makeGreinerVFromSpec() *wtype.LHPlate {
+	plateName := "GreinerV96FromSpec"
+	manufacturer := "Greiner"
+
+	numberOfRows := 8
+	numberOfColumns := 12
+
+	wellShape := "cylinder"
+	bottomtype := wtype.VWellBottom
+
+	dimensionUnit := "mm"
+
+	xdim := 6.96 // G1: diameter at top of well
+	ydim := 6.96 // G1: diameter at top of well
+	zdim := 9.0  // L: depth of well from top to bottom
+
+	bottomh := 0.0 // distance between top and bottom of well bottom (i.e. thickness of bottom wall)
+
+	minVolume := 50.0
+	maxVolume := 335.0
+
+	volUnit := "ul"
+
+	wellxoffset := 9.0 // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 9.0 // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 14.38
+	ystart := 11.24
+	zstart := 4.7         // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 14.6 // F: height of plate
 
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 

@@ -385,7 +385,6 @@ func MakeViscousPolicy() LHPolicy {
 	glycerolpolicy["DSP_WAIT"] = 1.0
 	glycerolpolicy["CAN_MULTI"] = true
 	glycerolpolicy["POST_MIX"] = 3
-	glycerolpolicy["POST_MIX_RATE"] = 1.5
 	glycerolpolicy["DESCRIPTION"] = "Designed for viscous samples. 3 post-mixes of the volume of the sample being transferred will be performed. No tip reuse limit."
 	return glycerolpolicy
 }
@@ -526,10 +525,8 @@ func MakeLoadWaterPolicy() LHPolicy {
 func MakeNeedToMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 16)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["PRE_MIX"] = 3
 	dnapolicy["PRE_MIX_VOLUME"] = 20.0
-	dnapolicy["PRE_MIX_RATE"] = 3.74
 	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
@@ -563,7 +560,6 @@ func PreMixPolicy() LHPolicy {
 func PostMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 3
-	dnapolicy["POST_MIX_RATE"] = 3.74
 	//dnapolicy["PRE_MIX"] = 3
 	//dnapolicy["PRE_MIX_VOLUME"] = 10
 	//dnapolicy["PRE_MIX_RATE"] = 3.74
@@ -585,7 +581,6 @@ func PostMixPolicy() LHPolicy {
 func SmartMixPolicy() LHPolicy {
 	policy := make(LHPolicy, 12)
 	policy["POST_MIX"] = 3
-	policy["POST_MIX_RATE"] = 3.74
 	policy["POST_MIX_VOLUME"] = 19.0
 	policy["CAN_MULTI"] = true
 	policy["CAN_MSA"] = false
@@ -602,7 +597,6 @@ func SmartMixPolicy() LHPolicy {
 func MegaMixPolicy() LHPolicy {
 	dnapolicy := make(LHPolicy, 12)
 	dnapolicy["POST_MIX"] = 10
-	dnapolicy["POST_MIX_RATE"] = 3.74
 	dnapolicy["CAN_MULTI"] = true
 	dnapolicy["CAN_MSA"] = false
 	dnapolicy["CAN_SDD"] = false
@@ -834,24 +828,27 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 		lhpr.AddRule(rule, policy)
 	}
 
-	// hack to fix plate type problems
-	// this really should be removed asap
-	rule := NewLHPolicyRule("HVOffsetFix")
+	// FINALLY it is 'p' (sadly this was not also 's' by ANY STRETCH OF THE IMAGINATION :( )
+	/*
+		// hack to fix plate type problems
+		// this really should be removed asap
+		rule := NewLHPolicyRule("HVOffsetFix")
 
-	OnGilson := categoricCondition{"PLATFORM", "GilsonPipetmax"}
+		OnGilson := categoricCondition{"PLATFORM", "GilsonPipetmax"}
 
-	// to fix: This offset fix is not consistent with other tip types (e.g. filter tips)
-	highVolumeTips := categoricCondition{"TIPTYPE", "Gilson200"}
+		// to fix: This offset fix is not consistent with other tip types (e.g. filter tips)
+		highVolumeTips := categoricCondition{"TIPTYPE", "Gilson200"}
 
-	hvOffsetFix, err := newConditionalRule("HVOffsetFix", OnGilson, highVolumeTips)
+		hvOffsetFix, err := newConditionalRule("HVOffsetFix", OnGilson, highVolumeTips)
 
-	if err != nil {
-		return nil, err
-	}
-	// don't get overridden
-	hvOffsetFix.Priority = 100
-	pol := MakeHVOffsetPolicy()
-	lhpr.AddRule(hvOffsetFix, pol)
+		if err != nil {
+			return nil, err
+		}
+		// don't get overridden
+		hvOffsetFix.Priority = 100
+		pol := MakeHVOffsetPolicy()
+		lhpr.AddRule(hvOffsetFix, pol)
+	*/
 
 	// unless a policy has a default speed explicitely set we'll increase to max for high volumes
 	for name, policy := range policies {
@@ -865,7 +862,7 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 		}
 	}
 
-	rule = NewLHPolicyRule("DNALV")
+	rule := NewLHPolicyRule("DNALV")
 	err = rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
 	if err != nil {
 		return nil, err
@@ -874,7 +871,7 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	if err != nil {
 		return nil, err
 	}
-	pol = MakeLVDNAMixPolicy()
+	pol := MakeLVDNAMixPolicy()
 	lhpr.AddRule(rule, pol)
 
 	// don't mix if destination well is empty

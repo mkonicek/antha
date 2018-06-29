@@ -28,30 +28,12 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 // NormaliseName evaluates whether a string contains a concentration and attempts to normalise the name in a standardised format.
 // e.g. 10ng/ul glucose will be normalised to 10 mg/l glucose or 10mM glucose to 10 mM/l glucose or 10mM/l glucose to 10 mM/l glucose or glucose 10mM/l to 10 mM/l glucose
 // A concatanenated name such as 10g/L glucose + 10g/L yeast extract will be returned with no modifications
-func NormaliseName(name string) (normalised string) {
-
-	if strings.Contains(name, wutil.MIXDELIMITER) {
-		return name
-	}
-
-	containsConc, conc, nameonly := wunit.ParseConcentration(strings.TrimSpace(name))
-
-	if containsConc {
-		if conc.RawValue() > 0 {
-			return conc.ToString() + " " + nameonly
-		} else {
-			return nameonly
-		}
-	} else {
-		return name
-	}
-}
+var NormaliseName = wtype.NormaliseName
 
 func removeConcUnitFromName(name string) string {
 
@@ -67,31 +49,11 @@ func removeConcUnitFromName(name string) string {
 // e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
 // An LB solution with concentration 1 X and no components is returned as 1X LB.
 // An LB solution with no concentration and no components is returned as LB.
-func ReturnNormalisedComponentName(component *wtype.LHComponent) string {
-	originalcompList, _ := component.GetSubComponents()
-
-	compList := originalcompList.RemoveConcsFromSubComponentNames()
-
-	if component.HasConcentration() && len(compList.Components) == 0 {
-		name := component.Concentration().ToString() + " " + removeConcUnitFromName(component.Name()) + " " + compList.List(false)
-		return name
-	}
-
-	name := compList.List(false, true)
-
-	return name
-}
+var ReturnNormalisedComponentName = wtype.ReturnNormalisedComponentName
 
 // NormaliseComponentName will change the name of the component to the normalised form returned by ReturnNormalisedComponentName.
 // If sub components exist the name will be changed to the list of sub components with concentrations.
 // e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
 // An LB solution with concentration 1 X and no components is returned as 1X LB.
 // An LB solution with no concentration and no components is returned as LB.
-func NormaliseComponentName(component *wtype.LHComponent) error {
-
-	newName := ReturnNormalisedComponentName(component)
-
-	component.SetName(newName)
-
-	return nil
-}
+var NormaliseComponentName = wtype.NormaliseComponentName

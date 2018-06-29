@@ -390,9 +390,10 @@ func summariseStrings(s []string) string {
 	return "{" + strings.Join(getUnique(s, true), ",") + "}"
 }
 
-func summariseWellReferences(offsetZ []float64, references []wtype.WellReference) string {
-	o := make([]string, len(offsetZ))
-	for i, offset := range offsetZ {
+func summariseWellReferences(channels []int, offsetZ []float64, references []wtype.WellReference) string {
+	o := make([]string, 0, len(channels))
+	for _, i := range channels {
+		offset := offsetZ[i]
 		direction := "above"
 		if offset < 0 {
 			direction = "below"
@@ -402,14 +403,18 @@ func summariseWellReferences(offsetZ []float64, references []wtype.WellReference
 		if offsetU.IsZero() {
 			continue
 		}
-		o[i] = fmt.Sprintf("%v %s", offsetU, direction)
+		o = append(o, fmt.Sprintf("%v %s", offsetU, direction))
 	}
 
-	s := make([]string, 0, len(references))
-	for _, r := range references {
-		s = append(s, r.String())
+	s := make([]string, 0, len(channels))
+	for _, i := range channels {
+		s = append(s, references[i].String())
 	}
-	return summariseStrings(o) + " " + summariseStrings(s)
+
+	if len(o) > 0 {
+		return summariseStrings(o) + " " + summariseStrings(s)
+	}
+	return summariseStrings(s)
 }
 
 func summariseCycles(cycles []int, elems []int) string {

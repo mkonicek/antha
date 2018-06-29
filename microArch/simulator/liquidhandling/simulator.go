@@ -653,7 +653,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 
 	describe := func() string {
 		return fmt.Sprintf("head %d %s to %s of %s@%s at position %s",
-			head, summariseChannels(channels), summariseWellReferences(offsetZ, refs), wtype.HumanizeWellCoords(wc), wtype.NameOf(target), deckposition)
+			head, summariseChannels(channels), summariseWellReferences(channels, offsetZ, refs), wtype.HumanizeWellCoords(wc), wtype.NameOf(target), deckposition)
 	}
 
 	//store a description of the move for posterity (and future errors)

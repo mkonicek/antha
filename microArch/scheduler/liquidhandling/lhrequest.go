@@ -229,8 +229,12 @@ func (lhr *LHRequest) SetPolicies(systemPolicies *wtype.LHPolicyRuleSet) {
 
 // AddUserPolicies allows policies specified in elements to be added to the PolicyManager.
 func (lhr *LHRequest) AddUserPolicies(userPolicies *wtype.LHPolicyRuleSet) {
-
-	lhr.PolicyManager.UserPolicies = userPolicies
+	// things coming in take precedence over things already there
+	if lhr.PolicyManager.UserPolicies == nil {
+		lhr.PolicyManager.UserPolicies = userPolicies
+	} else {
+		lhr.PolicyManager.UserPolicies.MergeWith(userPolicies)
+	}
 }
 
 func (lhr *LHRequest) Add_instruction(ins *wtype.LHInstruction) {

@@ -1596,7 +1596,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 		}
 	}
 	if len(no_well) > 0 {
-		self.AddErrorf("%s: %s not in %s", describe(), summariseChannels(no_well), pWells(len(no_well)))
+		self.addLHError(NewTipsNotInWellError(self, describe(), no_well))
 		return ret
 	}
 

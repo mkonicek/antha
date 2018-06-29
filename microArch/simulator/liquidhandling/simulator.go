@@ -214,27 +214,27 @@ func (self *VirtualLiquidHandler) addLHError(err LiquidhandlingError) {
 }
 
 func (self *VirtualLiquidHandler) AddInfo(message string) {
-	self.addLHError(NewGenericError(simulator.SeverityInfo, message))
+	self.addLHError(NewGenericError(self.state, simulator.SeverityInfo, message))
 }
 
 func (self *VirtualLiquidHandler) AddInfof(format string, a ...interface{}) {
-	self.addLHError(NewGenericErrorf(simulator.SeverityInfo, format, a...))
+	self.addLHError(NewGenericErrorf(self.state, simulator.SeverityInfo, format, a...))
 }
 
 func (self *VirtualLiquidHandler) AddWarning(message string) {
-	self.addLHError(NewGenericError(simulator.SeverityWarning, message))
+	self.addLHError(NewGenericError(self.state, simulator.SeverityWarning, message))
 }
 
 func (self *VirtualLiquidHandler) AddWarningf(format string, a ...interface{}) {
-	self.addLHError(NewGenericErrorf(simulator.SeverityWarning, format, a...))
+	self.addLHError(NewGenericErrorf(self.state, simulator.SeverityWarning, format, a...))
 }
 
 func (self *VirtualLiquidHandler) AddError(message string) {
-	self.addLHError(NewGenericError(simulator.SeverityError, message))
+	self.addLHError(NewGenericError(self.state, simulator.SeverityError, message))
 }
 
 func (self *VirtualLiquidHandler) AddErrorf(format string, a ...interface{}) {
-	self.addLHError(NewGenericErrorf(simulator.SeverityError, format, a...))
+	self.addLHError(NewGenericErrorf(self.state, simulator.SeverityError, format, a...))
 }
 
 func (self *VirtualLiquidHandler) validateProperties(props *liquidhandling.LHProperties) error {

@@ -51,17 +51,19 @@ type GenericError struct {
 	message          string
 	instruction      driver.TerminalRobotInstruction
 	instructionIndex int
+	stateAtError     string
 }
 
-func NewGenericError(severity simulator.ErrorSeverity, message string) LiquidhandlingError {
+func NewGenericError(state *RobotState, severity simulator.ErrorSeverity, message string) LiquidhandlingError {
 	return &GenericError{
-		severity: severity,
-		message:  message,
+		severity:     severity,
+		message:      message,
+		stateAtError: state.SummariseState(nil),
 	}
 }
 
-func NewGenericErrorf(severity simulator.ErrorSeverity, format string, a ...interface{}) LiquidhandlingError {
-	return NewGenericError(severity, fmt.Sprintf(format, a...))
+func NewGenericErrorf(state *RobotState, severity simulator.ErrorSeverity, format string, a ...interface{}) LiquidhandlingError {
+	return NewGenericError(state, severity, fmt.Sprintf(format, a...))
 }
 
 func (self *GenericError) Severity() simulator.ErrorSeverity {
@@ -74,6 +76,10 @@ func (self *GenericError) Instruction() driver.TerminalRobotInstruction {
 
 func (self *GenericError) InstructionIndex() int {
 	return self.instructionIndex
+}
+
+func (self *GenericError) GetStateAtError() string {
+	return self.stateAtError
 }
 
 func (self *GenericError) Error() string {

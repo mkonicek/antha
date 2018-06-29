@@ -6,6 +6,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"sort"
+	"strings"
 )
 
 const (
@@ -57,8 +58,10 @@ func main() {
 			Extra:        plate.Welltype.Extra,
 		}
 
-		// add offset values to WellX,Y,ZStart
-		sPlate = reviseWellStarts(sPlate, xStartOffset, yStartOffset, zStartOffset)
+		if !strings.Contains(sPlate.PlateType, "FromSpec") {
+			// add offset values to WellX,Y,ZStart
+			sPlate = reviseWellStarts(sPlate, xStartOffset, yStartOffset, zStartOffset)
+		}
 		platesForSerializing = append(platesForSerializing, sPlate)
 	}
 

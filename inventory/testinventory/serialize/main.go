@@ -8,6 +8,12 @@ import (
 	"sort"
 )
 
+const (
+	xStartOffset = 14.28
+	yStartOffset = 11.24
+	zStartOffset = -0.7
+)
+
 func main() {
 	platesForSerializing := make([]testinventory.PlateForSerializing, 0, 1)
 
@@ -50,6 +56,9 @@ func main() {
 			WellZStart:   plate.WellZStart,
 			Extra:        plate.Welltype.Extra,
 		}
+
+		// add offset values to WellX,Y,ZStart
+		sPlate = reviseWellStarts(sPlate, xStartOffset, yStartOffset, zStartOffset)
 		platesForSerializing = append(platesForSerializing, sPlate)
 	}
 
@@ -64,4 +73,13 @@ func main() {
 	fmt.Println("var plateBytes = []byte(`")
 	fmt.Println(string(s))
 	fmt.Println("`)")
+}
+
+//		sPlate = reviseWellStarts(sPlate, xStartOffset, yStartOffset, zStartOffset)
+func reviseWellStarts(sPlate testinventory.PlateForSerializing, xStartOffset, yStartOffset, zStartOffset float64) testinventory.PlateForSerializing {
+	sPlate.WellXStart += xStartOffset
+	sPlate.WellYStart += yStartOffset
+	sPlate.WellZStart += zStartOffset
+
+	return sPlate
 }

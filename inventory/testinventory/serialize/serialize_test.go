@@ -10,8 +10,7 @@ import (
 )
 
 // TODO
-// ANYTHING ELSE
-
+// FIX post offsets
 func TestInventoryLHPlateSerialize(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 	newPlates, err := inventory.XXXNewPlates(ctx)

@@ -31,7 +31,7 @@ func makeTipwastes() (tipwastes []*wtype.LHTipwaste) {
 func makeGilsonTipWaste() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 123.0, 80.0, 92.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(6000, "Gilsontipwaste", "gilson", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
+	lht := wtype.NewLHTipwaste(6000, "Gilsontipwaste", "gilson", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5+xOffset, 31.5+yOffset, 0.0)
 	return lht
 }
 
@@ -39,7 +39,7 @@ func makeGilsonTipWaste() *wtype.LHTipwaste {
 func makeCyBioTipwaste() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 90.5, 171.0, 90.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 90.5, 171.0, 90.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(700, "CyBiotipwaste", "cybio", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 90.5}, w, 85.5, 45.0, 0.0)
+	lht := wtype.NewLHTipwaste(700, "CyBiotipwaste", "cybio", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 90.5}, w, 85.5+xOffset, 45.0+yOffset, 0.0)
 	return lht
 }
 
@@ -47,13 +47,13 @@ func makeCyBioTipwaste() *wtype.LHTipwaste {
 func makeManualTipwaste() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 90.5, 171.0, 90.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 90.5, 171.0, 90.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(1000000, "Manualtipwaste", "ACMEBagsInc", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 90.5}, w, 85.5, 45.0, 0.0)
+	lht := wtype.NewLHTipwaste(1000000, "Manualtipwaste", "ACMEBagsInc", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 90.5}, w, 85.5+xOffset, 45.0+yOffset, 0.0)
 	return lht
 }
 
 func makeTecanTipwaste() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 90.5, 171.0, 90.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 90.5, 171.0, 90.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(2000, "Tecantipwaste", "Tecan", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 90.5}, w, 85.5, 45.0, 0.0)
+	lht := wtype.NewLHTipwaste(2000, "Tecantipwaste", "Tecan", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 90.5}, w, 85.5+xOffset, 45.0+yOffset, 0.0)
 	return lht
 }

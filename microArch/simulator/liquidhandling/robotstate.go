@@ -271,7 +271,7 @@ func (self *AdaptorState) SummarisePositions(channelsColliding []int) string {
 		}
 	}
 
-	floatTemplate := fmt.Sprintf("%%%d.1f", places-2)
+	floatTemplate := fmt.Sprintf("%%%d.1f", places)
 	intTemplate := fmt.Sprintf("%%%dd", places)
 
 	var head, lineX, lineY, lineZ []string

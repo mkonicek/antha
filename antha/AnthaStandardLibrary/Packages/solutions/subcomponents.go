@@ -274,10 +274,10 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 
 	component = NormaliseName(component)
 
-	conc, found := c.Components[component]
-
-	if found {
-		return conc, nil
+	for name, conc := range c.Components {
+		if strings.EqualFold(strings.TrimSpace(name), strings.TrimSpace(component)) {
+			return conc, nil
+		}
 	}
 
 	return conc, &notFound{Name: component, All: c.AllComponents()}

@@ -714,11 +714,11 @@ message LHComponentMessage {
 	double Arg_14 = 14;
 	double Arg_15 = 15;
 	double Arg_16 = 16;
-	SubComponentMessage Arg_17 = 17;
-	MapstringAnyMessageMessage Arg_18 = 18;
+	MapstringAnyMessageMessage Arg_17 = 17;
+	string Arg_18 = 18;
 	string Arg_19 = 19;
-	string Arg_20 = 20;
-    MapstringAnyMessageMessage Arg_21 = 21;
+    MapstringAnyMessageMessage Arg_20 = 20;
+	SubComponentMessage Arg_21 = 21;
 }
 message GenericPrefixedUnitMessage {
 	GenericUnitMessage Arg_1 = 1;
@@ -755,10 +755,5 @@ message TransferReply{
 }
 
 message SubComponentMessage{
-	MapstringConcentrationMessageEntry Arg_1 = 1;
-}
-
-message MapstringConcentrationMessageEntry{
-	string key = 1;
-	ConcentrationMessage value = 2;
+	AnyMessage Arg_1 = 1;
 }

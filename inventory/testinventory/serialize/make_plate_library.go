@@ -282,15 +282,23 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	// Eppendorfrack 425 for 1.5ml tubes
 
-	wellxoffset = 18.0 // centre of well to centre of neighbouring well in x direction
-	wellyoffset = 18.0 //centre of well to centre of neighbouring well in y direction
-	xstart = 4.5       // distance from top left side of plate to first well
-	ystart = 5.0       // distance from top left side of plate to first well
-	zstart = 5.0       // offset of bottom of deck to bottom of well
+	//values from physical measurements, HJK 2/7/18
+	wellRadius := 9.2
+	wellHeight := 39.5
+	outerRadius := 10.55
+	plateHeight := 45.75 //up to lip of eppendorf
 
-	welltypesmallereppy := wtype.NewLHWell("ul", 1500, 50, eppy, wtype.VWellBottom, 8.2, 8.2, 45, 4.7, "mm")
+	bottomH := (outerRadius - wellRadius) * 0.5
 
-	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, makePlateCoords(45), welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	wellxoffset = 18.0                // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 18.0                // centre of well to centre of neighbouring well in y direction
+	xstart = 4.5                      // distance from top left side of plate to first well
+	ystart = 5.0                      // distance from top left side of plate to first well
+	zstart = plateHeight - wellHeight // offset of bottom of deck to bottom of well
+
+	welltypesmallereppy := wtype.NewLHWell("ul", 1500, 50, eppy, wtype.VWellBottom, wellRadius, wellRadius, wellHeight, bottomH, "mm")
+
+	plate = wtype.NewLHPlate("eppendorfrack425_1.5ml", "Unknown", 4, 6, makePlateCoords(plateHeight), welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 

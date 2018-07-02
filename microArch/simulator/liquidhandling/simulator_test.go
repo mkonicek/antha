@@ -428,6 +428,54 @@ func Test_Move(t *testing.T) {
 			},
 		},
 		{
+			"OK allow cones in trough",
+			nil,
+			[]*SetupFn{
+				testTroughLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},                                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                    //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetY
+					[]float64{-1., -1., -1., -1., -1., -1., -1., -1.},                                                //offsetZ
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},         //plate_type
+					0, //head
+				},
+			},
+			nil, //errors
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: -31.5, Z: 44.8}),
+			},
+		},
+		{
+			"cones collide with plate",
+			nil,
+			[]*SetupFn{
+				testTroughLayout(),
+			},
+			[]TestRobotInstruction{
+				&Move{
+					[]string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"}, //deckposition
+					[]string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},                                         //wellcoords
+					[]int{1, 1, 1, 1, 1, 1, 1, 1},                                                                    //reference
+					[]float64{0., 0., 0., 0., 0., 0., 0., 0.},                                                        //offsetX
+					[]float64{4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0},                                                //offsetY
+					[]float64{-1., -1., -1., -1., -1., -1., -1., -1.},                                                //offsetZ
+					[]string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},         //plate_type
+					0, //head
+				},
+			},
+			[]string{ //errors
+				"(err) Move[0]: head 0 channels 0-7 to 1 mm below TopReference of A1,A1,A1,A1,A1,A1,A1,A1@trough1 at position input_1: collision detected: head 0 channel 7 and plate \"trough1\" of type trough at position input_1",
+			},
+			[]*AssertionFn{ //assertions
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: -27.5, Z: 44.8}),
+			},
+		},
+		{
 			"unknown location",
 			nil,
 			[]*SetupFn{

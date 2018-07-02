@@ -168,11 +168,13 @@ func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObje
 			}
 		}
 	} else {
-		//reporting that we've collided with a well is a bit silly since wells are empty space
-		//but since channels shouldn't be inside wells, report collision with the plate instead
 		for _, obj := range objects {
 			if well, ok := obj.(*wtype.LHWell); ok {
-				ret = append(ret, well.GetParent())
+				//wells are empty space, so we can't collide with them, but we could collide with the parent
+				//if we aren't fully in the well
+				if !coneInWell(box, well) {
+					ret = append(ret, well.GetParent())
+				}
 			} else {
 				ret = append(ret, obj)
 			}
@@ -180,6 +182,21 @@ func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObje
 	}
 
 	return ret
+}
+
+//coneInWell is the cone contained in the well
+func coneInWell(cone wtype.BBox, well *wtype.LHWell) bool {
+	wellStart := well.GetPosition()
+	wellEnd := wellStart.Add(well.GetSize())
+
+	coneStart := cone.GetPosition()
+	coneEnd := cone.GetPosition().Add(cone.GetSize())
+
+	if coneStart.X < wellStart.X || coneEnd.X > wellEnd.X || coneStart.Y < wellStart.Y || coneEnd.Y > wellEnd.Y {
+		return false
+	}
+
+	return !(coneStart.Z < (wellStart.Z + well.Bottomh))
 }
 
 // -------------------------------------------------------------------------------
@@ -643,6 +660,10 @@ func (self *RobotState) SummariseDeck() string {
 				paddedName, wtype.ClassOf(object), wtype.NameOf(object), wtype.TypeOf(object), object.GetSize()))
 			ret = append(ret, fmt.Sprintf("%s  bounds: [%v - %v]",
 				strings.Repeat(" ", nameLen), object.GetPosition(), object.GetPosition().Add(object.GetSize())))
+			if plate, ok := object.(*wtype.LHPlate); ok {
+				ret = append(ret, fmt.Sprintf("%s  well geometry: (zStart, bottomH, height, radius) = (%f, %f, %f, %f)\n",
+					strings.Repeat(" ", nameLen), plate.WellZStart, plate.Welltype.Bottomh, plate.Welltype.GetSize().Z, plate.Welltype.GetSize().X))
+			}
 		} else {
 			ret = append(ret, fmt.Sprintf("%s: <empty>", paddedName))
 		}

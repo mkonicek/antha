@@ -41,7 +41,7 @@ func (sc DefaultChannelScoreFunc) ScoreCombinedChannel(vol wunit.Volume, head *w
 		return 0
 	}
 
-	// clearly now vol >= Minvol
+	// clearly now vol >= MinVol
 
 	// the main idea is to estimate the error from each source: head, adaptor, tip
 	// and make the choice on that basis
@@ -97,7 +97,6 @@ func (sc DefaultChannelScoreFunc) ScoreChannel(vol wunit.Volume, lhcp *wtype.LHC
 }
 
 func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParameter, *wtype.LHTip, error) {
-
 	if mpv := prms.MinPossibleVolume(); vol.LessThan(mpv) {
 		//accept values within rounding error
 		if delta := wunit.SubtractVolumes(mpv, vol); !delta.IsZero() {
@@ -117,11 +116,13 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 
 	for _, head := range prms.GetLoadedHeads() {
 		for _, tip := range prms.Tips {
-			sc := scorer.ScoreCombinedChannel(vol, head, head.Adaptor, tip)
-			if sc > bestscore {
-				headchosen = head
-				tipchosen = tip
-				bestscore = sc
+			if tipHeadCompatible(tip, head) {
+				sc := scorer.ScoreCombinedChannel(vol, head, head.Adaptor, tip)
+				if sc > bestscore {
+					headchosen = head
+					tipchosen = tip
+					bestscore = sc
+				}
 			}
 		}
 
@@ -135,6 +136,12 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	// and probably the whole head rather than just its channel parameters
 
 	return headchosen.GetParams(), tipchosen, nil
+}
+
+func tipHeadCompatible(tip *wtype.LHTip, head *wtype.LHHead) bool {
+	//v1 - tip range must be contained entirely within head range
+
+	return !(tip.MinVol.LessThan(head.Params.Minvol) || tip.MaxVol.GreaterThan(head.Params.Maxvol))
 }
 
 func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []*wtype.LHTip, []string, error) {

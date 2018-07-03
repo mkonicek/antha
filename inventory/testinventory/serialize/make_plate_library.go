@@ -1091,7 +1091,7 @@ func makeGreinerVFromSpec() *wtype.LHPlate {
 	wellyoffset := 9.0 // K?: centre of well to centre of neighbouring well in y direction
 	xstart := 14.38
 	ystart := 11.24
-	zstart := 4.7         // F - L: offset of bottom of deck to bottom of well
+	zstart := 3.7         // F - L: offset of bottom of deck to bottom of well
 	overallHeight := 14.6 // F: height of plate
 
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)

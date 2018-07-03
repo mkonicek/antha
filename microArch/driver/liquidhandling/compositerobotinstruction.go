@@ -54,6 +54,9 @@ const (
 
 	//maxTouchOffset maximum value for TOUCHOFFSET which makes sense - values larger than this are capped to this value
 	maxTouchOffset = 5.0
+
+	//added to avoid floating point issues with heights in simulator
+	safetyZHeight = 0.05
 )
 
 type SingleChannelBlockInstruction struct {
@@ -1761,12 +1764,20 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ofz := SafeGetF64(pol, "ASPZOFFSET")
 	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
 	ofz += ofzadj
+	ofz, err = makeZOffsetSafe(ctx, prms, ofz, ins.Head, ins.PltFrom, ins.TipType)
+	if err != nil {
+		return nil, err
+	}
 
 	mixofx := SafeGetF64(pol, "PRE_MIX_X")
 	mixofy := SafeGetF64(pol, "PRE_MIX_Y")
 	mixofz := SafeGetF64(pol, "PRE_MIX_Z")
 	mixofz += ofzadj
 	final_asp_ref := SafeGetInt(pol, "ASPREFERENCE")
+	mixofz, err = makeZOffsetSafe(ctx, prms, mixofz, ins.Head, ins.PltFrom, ins.TipType)
+	if err != nil {
+		return nil, err
+	}
 
 	//LLF
 	use_llf, any_llf := get_use_llf(pol, ins.Multi, ins.PltFrom, prms)
@@ -2210,8 +2221,11 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ofy := SafeGetF64(pol, "DSPYOFFSET")
 	ofz := SafeGetF64(pol, "DSPZOFFSET")
 	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
-
 	ofz += ofzadj
+	ofz, err = makeZOffsetSafe(ctx, prms, ofz, ins.Head, ins.PltTo, ins.TipType)
+	if err != nil {
+		return nil, err
+	}
 
 	ref := SafeGetInt(pol, "DSPREFERENCE")
 	entryspeed := SafeGetF64(pol, "DSPENTRYSPEED")
@@ -3574,4 +3588,49 @@ func checkAndSaften(proposed, min, max float64, overrideIfOutOfRange bool) (floa
 	}
 
 	return proposed, nil
+}
+
+//make ZOffset safe
+func makeZOffsetSafe(ctx context.Context, prms *LHProperties, zoffset float64, headIndex int, plates []string, tiptype string) (float64, error) {
+	platename := ""
+	for _, p := range plates {
+		if p != "" {
+			platename = p
+			break
+		}
+	}
+
+	plate := prms.Plates[platename]
+
+	//get the size of all the channels together
+	adaptor := prms.GetLoadedAdaptor(headIndex)
+	channelSpacing := 9.0 //get this from adaptor in future
+	coneDiameter := 5.5   //get this from adaptor in future
+	adaptorSize := wtype.Coordinates{X: coneDiameter, Y: coneDiameter}
+	adaptorWidth := channelSpacing*float64(adaptor.Params.Multi-1) + coneDiameter
+	if adaptor.Params.Orientation == wtype.LHVChannel {
+		adaptorSize.Y = adaptorWidth
+	} else {
+		adaptorSize.X = adaptorWidth
+	}
+
+	//if all the channels can fit in the well, don't add offset
+	//this means we can still reach the bottom of troughs and reservoirs
+	if s := plate.Welltype.GetSize(); s.X > adaptorSize.X && s.Y > adaptorSize.Y {
+		return zoffset, nil
+	}
+
+	tipbox, err := inventory.NewTipbox(ctx, tiptype)
+	if err != nil {
+		return zoffset, err
+	}
+
+	//safetyZHeight is a small offset to avoid predicted collisions due to numerical error
+	minZ := plate.Welltype.GetSize().Z - tipbox.Tiptype.GetEffectiveHeight() - plate.Welltype.Bottomh + safetyZHeight
+
+	if minZ > zoffset {
+		return minZ, nil
+	}
+
+	return zoffset, nil
 }

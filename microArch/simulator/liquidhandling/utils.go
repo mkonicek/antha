@@ -320,6 +320,13 @@ func pWells(N int) string {
 	return "wells"
 }
 
+func pLengths(N int) string {
+	if N == 1 {
+		return "length"
+	}
+	return "lengths"
+}
+
 func intsContiguous(lhs, rhs int) bool {
 	return rhs-lhs == 1
 }

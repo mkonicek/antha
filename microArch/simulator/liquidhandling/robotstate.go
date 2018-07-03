@@ -243,20 +243,27 @@ func NewAdaptorState(name string,
 //String summarize the state of the adaptor
 func (self *AdaptorState) SummariseTips() string {
 	tipTypes := make([]string, 0, len(self.channels))
+	tipLengths := make([]string, 0, len(self.channels))
 	loaded := make([]int, 0, len(self.channels))
 
 	for i, channel := range self.channels {
 		if channel.HasTip() {
 			loaded = append(loaded, i)
 			tipTypes = append(tipTypes, channel.GetTip().GetType())
+			tipLengths = append(tipLengths, wunit.NewLength(channel.GetTip().GetEffectiveHeight(), "mm").String())
 		}
 	}
 
+	tipTypes = getUnique(tipTypes, true)
+	tipLengths = getUnique(tipLengths, true)
+
 	if len(loaded) > 0 {
-		return fmt.Sprintf("%s: %s %s loaded on %s",
+		return fmt.Sprintf("%s: %s %s (effective %s %s) loaded on %s",
 			self.name,
 			pTips(len(loaded)),
-			strings.Join(getUnique(tipTypes, true), ","),
+			strings.Join(tipTypes, ","),
+			pLengths(len(tipLengths)),
+			strings.Join(tipLengths, ","),
 			summariseChannels(loaded))
 	}
 	return fmt.Sprintf("%s: <no tips>", self.name)

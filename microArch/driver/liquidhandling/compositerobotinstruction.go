@@ -2435,6 +2435,11 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		pmzoff := SafeGetF64(pol, "POST_MIX_Z")
 		pmzoff += ofzadj
 
+		pmzoff, err = makeZOffsetSafe(ctx, prms, pmzoff, ins.Head, ins.PltTo, ins.TipType)
+		if err != nil {
+			return nil, err
+		}
+
 		for k := 0; k < ins.Multi; k++ {
 			mix.OffsetZ = append(mix.OffsetZ, pmzoff)
 		}

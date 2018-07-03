@@ -325,7 +325,6 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 								found = false
 							}
 						}
-						mergedPolicy.SetName(newPolicyName) // nolint
 						allPolicies[newPolicyName] = mergedPolicy
 						userPolicies[newPolicyName] = mergedPolicy
 						component.Type = wtype.LiquidType(newPolicyName)

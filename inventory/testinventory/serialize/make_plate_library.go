@@ -474,22 +474,25 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plates = append(plates, plate)
 
 	////// E gel dimensions
-	xdim = 2
-	ydim = 4
-	zdim = 2
-	bottomh = 2
 
 	wellxoffset = 4.5              // centre of well to centre of neighbouring well in x direction
 	wellyoffset = 33.75            //centre of well to centre of neighbouring well in y direction
 	xstart = -1.0                  // distance from top left side of plate to first well
 	ystart = 18.25                 // distance from top left side of plate to first well
 	zstart = riserheightinmm + 4.5 // offset of bottom of deck to bottom of well
+	eplateheight := 48.5
+
+	xdim = 2
+	ydim = 4
+	//wells extend up to the top of the plate
+	zdim = eplateheight - (zstart + zStartOffset) //zStartOffset will get added to the zstart later
+	bottomh = 2
 
 	//E-PAGE 48 (reverse) position
 	ep48g := wtype.NewShape("trapezoid", "mm", xdim, ydim, zdim)
 	//can't reach all wells; change to 24 wells per row? yes!
 	egelwell := wtype.NewLHWell("ul", 20, 0, ep48g, wtype.FlatWellBottom, xdim, ydim, zdim, bottomh, "mm")
-	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 24, makePlateCoords(48.5), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 24, makePlateCoords(eplateheight), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	gelconsar := []string{"position_9"}
 	gelplate.SetConstrained("Pipetmax", gelconsar)
@@ -498,7 +501,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	plates = append(plates, gelplate)
 
 	//E-GEL 48 (reverse) position
-	gelplate = wtype.NewLHPlate("EGEL48", "Invitrogen", 2, 24, makePlateCoords(48.5), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	gelplate = wtype.NewLHPlate("EGEL48", "Invitrogen", 2, 24, makePlateCoords(eplateheight), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	gelplate.SetConstrained("Pipetmax", gelconsar)
 	gelplate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, gelplate)

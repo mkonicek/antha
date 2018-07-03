@@ -819,6 +819,13 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	lhpr = originalRuleSet
 
 	for name, policy := range policies {
+
+		err = policy.SetName(name)
+
+		if err != nil {
+			return nil, err
+		}
+
 		rule := NewLHPolicyRule(name)
 		err := rule.AddCategoryConditionOn("LIQUIDCLASS", name)
 

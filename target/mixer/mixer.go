@@ -293,7 +293,6 @@ func mergePolicies(basePolicy, priorityPolicy wtype.LHPolicy) (newPolicy wtype.L
 // Any component type names with modified policies are iterated until unique i.e. SmartMix_modified_1
 func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) error {
 	systemPolicyRuleSet := lhreq.GetPolicyManager().Policies()
-
 	systemPolicies := systemPolicyRuleSet.Policies
 	var userPolicies = make(map[string]wtype.LHPolicy)
 	var allPolicies = make(map[string]wtype.LHPolicy)
@@ -326,6 +325,7 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 								found = false
 							}
 						}
+						mergedPolicy.SetName(newPolicyName) // nolint
 						allPolicies[newPolicyName] = mergedPolicy
 						userPolicies[newPolicyName] = mergedPolicy
 						component.Type = wtype.LiquidType(newPolicyName)

@@ -556,3 +556,40 @@ func nonZeroComponents(compList ComponentList) int {
 	}
 	return nonZero
 }
+
+func equalFold(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
+}
+
+// getComponentConc attempts to retrieve the concentration of subComponentName in component.
+// If the component name is equal to subComponentName, the concentration of the component itself is returned.
+func getComponentConc(component *LHComponent, subComponentName string) (wunit.Concentration, error) {
+	subComponents, _ := GetSubComponents(component) // nolint
+	conc, err := subComponents.GetByName(subComponentName)
+	if err == nil {
+		return conc, nil
+	}
+	if equalFold(component.Name(), subComponentName) {
+		if component.HasConcentration() {
+			return component.Concentration(), nil
+		}
+		return component.Concentration(), fmt.Errorf("subcomponent %s matches component name %s but no concentration found. Error looking up sub component conc: %s", subComponentName, component.Name(), err.Error())
+	}
+	return wunit.NewConcentration(0.0, "X"), fmt.Errorf("no concentration found for sub component %s in %s. Error looking up sub component conc: %s", subComponentName, component.Name(), err.Error())
+}
+
+// hasSubComponent evaluates if a sub component with subComponentName is found in component.
+// If the component name is equal to subComponentName, true will be returned.
+func hasSubComponent(component *LHComponent, subComponentName string) bool {
+	if equalFold(component.Name(), subComponentName) {
+		return true
+	}
+
+	subComponents, _ := GetSubComponents(component) // nolint
+	_, err := subComponents.GetByName(subComponentName)
+	//text.Print(component.Name(), subComponentName, err, subComponents)
+	if err == nil {
+		return true
+	}
+	return false
+}

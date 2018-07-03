@@ -86,6 +86,18 @@ func (cmp *LHComponent) GetSubComponents() (ComponentList, error) {
 	return GetSubComponents(cmp)
 }
 
+// GetConcentrationOf attempts to retrieve the concentration of subComponentName in component.
+// If the component name is equal to subComponentName, the concentration of the component itself is returned.
+func (c *LHComponent) GetConcentrationOf(subComponentName string) (wunit.Concentration, error) {
+	return getComponentConc(c, subComponentName)
+}
+
+// HasSubComponent evaluates if a sub component with subComponentName is found in component.
+// If the component name is equal to subComponentName, true will be returned.
+func (c *LHComponent) HasSubComponent(subComponentName string) bool {
+	return hasSubComponent(c, subComponentName)
+}
+
 func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {
 	// request for a specific component
 	if cmp.IsInstance() {

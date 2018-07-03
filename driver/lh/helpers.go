@@ -1330,7 +1330,12 @@ func DecodeSubComponentMessage(arg *pb.SubComponentMessage) wtype.ComponentList 
 	cl, ok := ifc.(wtype.ComponentList)
 
 	if !ok {
-		panic(fmt.Errorf("Cannot decode %v into componentlist", ifc))
+		// if Components field is nil return empty ComponentList
+		if cl.Components == nil {
+			return wtype.ComponentList{}
+		} else {
+			panic(fmt.Errorf("Cannot decode %v into componentlist", ifc))
+		}
 	}
 
 	return cl

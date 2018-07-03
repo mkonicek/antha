@@ -23,26 +23,12 @@
 // solutions is a utility package for working with solutions of LHComponents
 package solutions
 
-import (
-	"strings"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-)
+import "github.com/antha-lang/antha/antha/anthalib/wtype"
 
 // NormaliseName evaluates whether a string contains a concentration and attempts to normalise the name in a standardised format.
 // e.g. 10ng/ul glucose will be normalised to 10 mg/l glucose or 10mM glucose to 10 mM/l glucose or 10mM/l glucose to 10 mM/l glucose or glucose 10mM/l to 10 mM/l glucose
 // A concatanenated name such as 10g/L glucose + 10g/L yeast extract will be returned with no modifications
 var NormaliseName = wtype.NormaliseName
-
-func removeConcUnitFromName(name string) string {
-
-	for n := 0; n < 9; n++ {
-		_, _, name = wunit.ParseConcentration(strings.TrimSpace(name))
-	}
-	newName := name
-	return newName
-}
 
 // ReturnNormalisedComponentName will return the component name in a normalised form.
 // If sub components exist the name will be changed to the list of sub components with concentrations.

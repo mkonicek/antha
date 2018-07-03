@@ -218,6 +218,9 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	settings.EnableAutoChannelWarning(simulator_lh.WarnOnce)
 	//this is probably not even an error as liquid types are more about LHPolicies than what's actually in the well
 	settings.EnableLiquidTypeWarning(simulator_lh.WarnNever)
+	//disable tipbox collision. Tipboxes are narrower at the top than the bottom, so bounding box collision falsely predicts
+	//collisions when when tips are picked up sequentially
+	settings.EnableTipboxCollision(false)
 
 	vlh, err := simulator_lh.NewVirtualLiquidHandler(props, settings)
 	if err != nil {

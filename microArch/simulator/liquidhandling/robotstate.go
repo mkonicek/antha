@@ -145,7 +145,7 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 }
 
 //GetCollisions get collisions with this channel. channelClearance defined a height below the channel/tip to include
-func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObject {
+func (self *ChannelState) GetCollisions(settings *SimulatorSettings, channelClearance float64) []wtype.LHObject {
 	deck := self.adaptor.GetGroup().GetRobot().GetDeck()
 
 	var ret []wtype.LHObject
@@ -158,6 +158,10 @@ func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObje
 	if self.HasTip() {
 		tipBottom := box.GetPosition()
 		for _, obj := range objects {
+			//ignore tipboxes if told to
+			if _, ok := obj.(*wtype.LHTipbox); !settings.IsTipboxCollisionEnabled() && ok {
+				continue
+			}
 			//don't add wells, instead add the plate if the tip bottom has hit the plate
 			if well, ok := obj.(*wtype.LHWell); ok {
 				if len(well.GetPointIntersections(tipBottom)) == 0 {

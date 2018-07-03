@@ -290,11 +290,12 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 
 	bottomH := (outerRadius - wellRadius) * 0.5
 
-	wellxoffset = 18.0                // centre of well to centre of neighbouring well in x direction
-	wellyoffset = 18.0                // centre of well to centre of neighbouring well in y direction
-	xstart = 4.5                      // distance from top left side of plate to first well
-	ystart = 5.0                      // distance from top left side of plate to first well
-	zstart = plateHeight - wellHeight // offset of bottom of deck to bottom of well
+	wellxoffset = 18.0                               // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 18.0                               // centre of well to centre of neighbouring well in y direction
+	xstart = 4.5                                     // distance from top left side of plate to first well
+	ystart = 5.0                                     // distance from top left side of plate to first well
+	zstart = plateHeight - wellHeight - zStartOffset // offset of bottom of deck to bottom of well
+	//zStartOffset gets added later
 
 	welltypesmallereppy := wtype.NewLHWell("ul", 1500, 50, eppy, wtype.VWellBottom, wellRadius, wellRadius, wellHeight, bottomH, "mm")
 

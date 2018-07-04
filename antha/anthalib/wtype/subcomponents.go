@@ -584,12 +584,7 @@ func hasSubComponent(component *LHComponent, subComponentName string) bool {
 	if equalFold(component.Name(), subComponentName) {
 		return true
 	}
-
 	subComponents, _ := GetSubComponents(component) // nolint
 	_, err := subComponents.GetByName(subComponentName)
-	//text.Print(component.Name(), subComponentName, err, subComponents)
-	if err == nil {
-		return true
-	}
-	return false
+	return err == nil
 }

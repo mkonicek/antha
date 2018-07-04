@@ -25,6 +25,7 @@ package mixer
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/sampletracker"
@@ -46,6 +47,7 @@ func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret.Vol = v.RawValue()
 	ret.Vunit = v.Unit().PrefixedSymbol()
 	ret.Extra = l.GetExtra()
+	ret.SubComponents = l.SubComponents
 	ret.Smax = l.GetSmax()
 	ret.Visc = l.GetVisc()
 	if l.Conc > 0 && len(l.Cunit) > 0 {
@@ -197,6 +199,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 			}
 		}
 
+		wtype.UpdateComponentDetails(r.Results[0], opt.Components...) //nolint
 		r.Results[0].SetGeneration(mx)
 	}
 

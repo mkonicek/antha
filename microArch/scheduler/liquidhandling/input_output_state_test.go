@@ -2,13 +2,14 @@ package liquidhandling
 
 import (
 	"context"
+	"reflect"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
-	"reflect"
-	"testing"
 )
 
 type initFinalCmp struct {
@@ -154,7 +155,7 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["0.286 v/v dna_part+0.714 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.286 v/v dna_part+0.714 v/v water", VolI: 0.0, VolF: 35.0}}
 
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
@@ -214,7 +215,7 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["0.286 v/v dna_part+0.714 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.286 v/v dna_part+0.714 v/v water", VolI: 0.0, VolF: 35.0}}
 
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
@@ -278,7 +279,7 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["0.286 v/v dna_part+0.714 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.286 v/v dna_part+0.714 v/v water", VolI: 0.0, VolF: 35.0}}
 
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
@@ -369,7 +370,7 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
+	expected["0.333 v/v dna_part+0.667 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.333 v/v dna_part+0.667 v/v water", VolI: 0.0, VolF: 75.0}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -411,7 +412,7 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
+	expected["0.333 v/v dna_part+0.667 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.333 v/v dna_part+0.667 v/v water", VolI: 0.0, VolF: 75.0}}
 
 	compareInitFinalStates(t, lh, expected)
 }

@@ -53,10 +53,49 @@ type LHComponent struct {
 	Smax               float64 // maximum solubility
 	Visc               float64
 	StockConcentration float64
+	SubComponents      ComponentList // List of all sub components in the LHComponent.
 	Extra              map[string]interface{}
 	Loc                string // refactor to PlateLocation
 	Destination        string
 	Policy             LHPolicy // Policy is where a custom liquid policy is stored
+}
+
+// AddSubComponent adds a subcomponent with concentration to a component.
+// An error is returned if subcomponent is already found.
+func (cmp *LHComponent) AddSubComponent(subcomponent *LHComponent, conc wunit.Concentration) error {
+	return AddSubComponent(cmp, subcomponent, conc)
+}
+
+// AddSubComponents adds a component list to a component.
+// If a conflicting sub component concentration is already present then an error will be returned.
+// To overwrite all subcomponents ignoring conficts, use OverWriteSubComponents.
+func (cmp *LHComponent) AddSubComponents(allsubComponents ComponentList) error {
+	return AddSubComponents(cmp, allsubComponents)
+}
+
+// OverwriteSubComponents Adds a component list to a component.
+// Any existing component list will be overwritten.
+// To add a ComponentList checking for duplicate entries, use AddSubComponents.
+func (cmp *LHComponent) OverwriteSubComponents(allsubComponents ComponentList) error {
+	cmp.SubComponents = allsubComponents
+	return nil
+}
+
+// GetSubComponents returns a component list from a component
+func (cmp *LHComponent) GetSubComponents() (ComponentList, error) {
+	return GetSubComponents(cmp)
+}
+
+// GetConcentrationOf attempts to retrieve the concentration of subComponentName in component.
+// If the component name is equal to subComponentName, the concentration of the component itself is returned.
+func (c *LHComponent) GetConcentrationOf(subComponentName string) (wunit.Concentration, error) {
+	return getComponentConc(c, subComponentName)
+}
+
+// HasSubComponent evaluates if a sub component with subComponentName is found in component.
+// If the component name is equal to subComponentName, true will be returned.
+func (c *LHComponent) HasSubComponent(subComponentName string) bool {
+	return hasSubComponent(c, subComponentName)
 }
 
 func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {

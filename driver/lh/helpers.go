@@ -1157,11 +1157,11 @@ func DecodeLHDevice(arg *pb.LHDeviceMessage) wtype.LHDevice {
 	return ret
 }
 func EncodeLHComponent(arg wtype.LHComponent) *pb.LHComponentMessage {
-	ret := pb.LHComponentMessage{(string)(arg.ID), EncodeBlockID(arg.BlockID), (string)(arg.DaughterID), (string)(arg.ParentID), (string)(arg.Inst), int64(arg.Order), (string)(arg.CName), string(arg.Type), (float64)(arg.Vol), (float64)(arg.Conc), (string)(arg.Vunit), (string)(arg.Cunit), (float64)(arg.Tvol), (float64)(arg.Smax), (float64)(arg.Visc), (float64)(arg.StockConcentration), EncodeMapstringinterfaceMessage(arg.Extra), (string)(arg.Loc), (string)(arg.Destination), EncodeMapstringinterfaceMessage(arg.Policy)}
+	ret := pb.LHComponentMessage{(string)(arg.ID), EncodeBlockID(arg.BlockID), (string)(arg.DaughterID), (string)(arg.ParentID), (string)(arg.Inst), int64(arg.Order), (string)(arg.CName), string(arg.Type), (float64)(arg.Vol), (float64)(arg.Conc), (string)(arg.Vunit), (string)(arg.Cunit), (float64)(arg.Tvol), (float64)(arg.Smax), (float64)(arg.Visc), (float64)(arg.StockConcentration), EncodeMapstringinterfaceMessage(arg.Extra), (string)(arg.Loc), (string)(arg.Destination), EncodeMapstringinterfaceMessage(arg.Policy), EncodeSubComponentMessage(arg.SubComponents)}
 	return &ret
 }
 func DecodeLHComponent(arg *pb.LHComponentMessage) wtype.LHComponent {
-	ret := wtype.LHComponent{ID: (string)(arg.Arg_1), BlockID: (wtype.BlockID)(DecodeBlockID(arg.Arg_2)), DaughterID: (string)(arg.Arg_3), ParentID: (string)(arg.Arg_4), Inst: (string)(arg.Arg_5), Order: (int)(arg.Arg_6), CName: (string)(arg.Arg_7), Type: (wtype.LiquidType)(arg.Arg_8), Vol: (float64)(arg.Arg_9), Conc: (float64)(arg.Arg_10), Vunit: (string)(arg.Arg_11), Cunit: (string)(arg.Arg_12), Tvol: (float64)(arg.Arg_13), Smax: (float64)(arg.Arg_14), Visc: (float64)(arg.Arg_15), StockConcentration: (float64)(arg.Arg_16), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_17)), Loc: (string)(arg.Arg_18), Destination: (string)(arg.Arg_19), Policy: DecodeMapstringinterfaceMessage(arg.Arg_20)}
+	ret := wtype.LHComponent{ID: (string)(arg.Arg_1), BlockID: (wtype.BlockID)(DecodeBlockID(arg.Arg_2)), DaughterID: (string)(arg.Arg_3), ParentID: (string)(arg.Arg_4), Inst: (string)(arg.Arg_5), Order: (int)(arg.Arg_6), CName: (string)(arg.Arg_7), Type: (wtype.LiquidType)(arg.Arg_8), Vol: (float64)(arg.Arg_9), Conc: (float64)(arg.Arg_10), Vunit: (string)(arg.Arg_11), Cunit: (string)(arg.Arg_12), Tvol: (float64)(arg.Arg_13), Smax: (float64)(arg.Arg_14), Visc: (float64)(arg.Arg_15), StockConcentration: (float64)(arg.Arg_16), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_17)), Loc: (string)(arg.Arg_18), Destination: (string)(arg.Arg_19), Policy: DecodeMapstringinterfaceMessage(arg.Arg_20), SubComponents: DecodeSubComponentMessage(arg.Arg_21)}
 	return ret
 }
 func EncodeShape(arg wtype.Shape) *pb.ShapeMessage {
@@ -1310,4 +1310,33 @@ func EncodeSIPrefix(arg wunit.SIPrefix) *pb.SIPrefixMessage {
 func DecodeSIPrefix(arg *pb.SIPrefixMessage) wunit.SIPrefix {
 	ret := wunit.SIPrefix{Name: (string)(arg.Arg_1), Value: (float64)(arg.Arg_2)}
 	return ret
+}
+
+func EncodeSubComponentMessage(arg wtype.ComponentList) *pb.SubComponentMessage {
+	bytes, err := json.Marshal(arg)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return &pb.SubComponentMessage{
+		Arg_1: &pb.AnyMessage{Arg_1: string(bytes)},
+	}
+}
+
+func DecodeSubComponentMessage(arg *pb.SubComponentMessage) wtype.ComponentList {
+	ifc := Decodeinterface(arg.Arg_1)
+
+	cl, ok := ifc.(wtype.ComponentList)
+
+	if !ok {
+		// if Components field is nil return empty ComponentList
+		if cl.Components == nil {
+			return wtype.ComponentList{}
+		} else {
+			panic(fmt.Errorf("Cannot decode %v into componentlist", ifc))
+		}
+	}
+
+	return cl
 }

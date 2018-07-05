@@ -137,12 +137,12 @@ func (it *IChain) Print() {
 				}
 			} else if it.Values[j].Type == wtype.LHISPL {
 				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)
-				fmt.Println(" ", it.Values[j].Components[0].ID, ":", it.Values[j].Components[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress, " \n")
-				fmt.Println(" MOVE:", it.Values[j].Results[0].ID, ":", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().ToString(), " \n")
-				fmt.Println(" STAY:", it.Values[j].Results[1].ID, ":", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().ToString(), " \n")
+				fmt.Println(" ", it.Values[j].Components[0].ID, ":", it.Values[j].Components[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
+				fmt.Println(" MOVE:", it.Values[j].Results[0].ID, ":", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().ToString())
+				fmt.Println(" STAY:", it.Values[j].Results[1].ID, ":", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().ToString())
 				fmt.Printf("-- \n")
 			} else {
-				fmt.Println("WTF?   ", wtype.InsType(it.Values[j].Type), "-- \n")
+				fmt.Println("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
 			}
 		}
 		fmt.Println()

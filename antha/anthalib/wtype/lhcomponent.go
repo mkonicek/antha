@@ -35,7 +35,6 @@ import (
 
 const InPlaceMarker = "-INPLACE"
 
-
 // LHComponent is an alias for Liquid to preserve backwards compatibility
 // Liquid describes a liquid component and its desired properties
 type LHComponent = Liquid

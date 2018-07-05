@@ -38,10 +38,10 @@ import (
 //ChannelState Represent the physical state of a single channel
 type ChannelState struct {
 	number   int
-	tip      *wtype.LHTip       //Nil if no tip loaded, otherwise the tip that's loaded
-	contents *wtype.Liquid //What's in the tip?
-	position wtype.Coordinates  //position relative to the adaptor
-	adaptor  *AdaptorState      //the channel's adaptor
+	tip      *wtype.LHTip      //Nil if no tip loaded, otherwise the tip that's loaded
+	contents *wtype.Liquid     //What's in the tip?
+	position wtype.Coordinates //position relative to the adaptor
+	adaptor  *AdaptorState     //the channel's adaptor
 	radius   float64
 }
 

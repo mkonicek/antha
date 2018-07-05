@@ -32,7 +32,7 @@ type Opt struct {
 	PlanningVersion      string
 
 	// Two methods of populating input plates
-	InputPlateData [][]byte         // From contents of files
+	InputPlateData [][]byte       // From contents of files
 	InputPlates    []*wtype.Plate // Directly
 
 	// Direct specification of output plates

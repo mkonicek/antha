@@ -54,7 +54,7 @@ type LHWell struct {
 	Inst      string
 	Crds      WellCoords
 	MaxVol    float64 //Maximum total capacity of the well
-	WContents *LHComponent
+	WContents *Liquid
 	Rvol      float64 //Residual volume which can't be removed from the well
 	WShape    *Shape
 	Bottom    WellBottomType
@@ -233,7 +233,7 @@ func (w *LHWell) UnProtect() {
 	w.Extra["protected"] = false
 }
 
-func (w *LHWell) Contents() *LHComponent {
+func (w *LHWell) Contents() *Liquid {
 	if w == nil {
 		logger.Debug("CONTENTS OF NIL WELL REQUESTED")
 		return nil
@@ -246,7 +246,7 @@ func (w *LHWell) Contents() *LHComponent {
 	return w.WContents
 }
 
-func (w *LHWell) SetContents(newContents *LHComponent) error {
+func (w *LHWell) SetContents(newContents *Liquid) error {
 	if w == nil {
 		return nil
 	}
@@ -313,7 +313,7 @@ func (w *LHWell) MaxWorkingVolume() wunit.Volume {
 }
 
 //AddComponent add some liquid to the well
-func (w *LHWell) AddComponent(c *LHComponent) error {
+func (w *LHWell) AddComponent(c *Liquid) error {
 	if w == nil {
 		return nil
 	}
@@ -334,7 +334,7 @@ func (w *LHWell) AddComponent(c *LHComponent) error {
 }
 
 //RemoveVolume remove some liquid from the well
-func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
+func (w *LHWell) RemoveVolume(v wunit.Volume) (*Liquid, error) {
 	if w == nil {
 		return nil, nil
 	}
@@ -655,7 +655,7 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 }
 
 // this function is somewhat buggy... need to define its responsibilities better
-func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LHWell, bool) {
+func Get_Next_Well(plate *LHPlate, component *Liquid, curwell *LHWell) (*LHWell, bool) {
 	vol := component.Vol
 
 	it := NewAddressIterator(plate, ColumnWise, TopToBottom, LeftToRight, false)
@@ -903,7 +903,7 @@ func (w *LHWell) ClearUserAllocated() {
 	w.Extra["UserAllocated"] = false
 }
 
-func (w *LHWell) Contains(cmp *LHComponent) bool {
+func (w *LHWell) Contains(cmp *Liquid) bool {
 	// obviously empty wells don't contain anything
 	if w.IsEmpty() || cmp == nil {
 		return false
@@ -912,7 +912,7 @@ func (w *LHWell) Contains(cmp *LHComponent) bool {
 	return cmp.Matches(w.WContents)
 }
 
-func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
+func (w *LHWell) UpdateContentID(IDBefore string, after *Liquid) bool {
 	if w.WContents.ID == IDBefore {
 		/*
 			previous := w.WContents

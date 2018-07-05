@@ -24,7 +24,7 @@ func (ifc initFinalCmp) IsZero() bool {
 	return reflect.DeepEqual(v, ifc)
 }
 
-func getComponents(ctx context.Context, t *testing.T) (cmp1, cmp2 *wtype.LHComponent) {
+func getComponents(ctx context.Context, t *testing.T) (cmp1, cmp2 *wtype.Liquid) {
 	cmp1, err := inventory.NewComponent(ctx, inventory.WaterType)
 	if err != nil {
 		t.Fatal(err)
@@ -128,7 +128,7 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components:  []*wtype.LHComponent{s1, s2},
+		Components:  []*wtype.Liquid{s1, s2},
 		PlateType:   "pcrplate_skirted_riser20",
 		Address:     "C1",
 		Destination: pl2,
@@ -175,7 +175,7 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
+		Components: []*wtype.Liquid{s1, s2},
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -236,7 +236,7 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
+		Components: []*wtype.Liquid{s1, s2},
 		PlateType:  "pcrplate_skirted_riser20",
 		Address:    "C1",
 		PlateNum:   1,
@@ -346,7 +346,7 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
+		Components: []*wtype.Liquid{s1, s2},
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -386,7 +386,7 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
+		Components: []*wtype.Liquid{s1, s2},
 		PlateType:  "pcrplate_skirted_riser20",
 		Address:    "A1",
 		PlateNum:   1,

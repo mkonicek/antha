@@ -686,7 +686,7 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
-func GetLocTox(cmp *wtype.LHComponent) ([]string, error) {
+func GetLocTox(cmp *wtype.Liquid) ([]string, error) {
 	// try the cmp's own loc
 
 	if cmp.Loc != "" {
@@ -763,7 +763,7 @@ func (lhp *LHProperties) mergeInputOutputPreferences() []string {
 // the ID may or may not refer to an instance which is previously made
 // but by this point we must have concrete locations for everything
 
-func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
+func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
 	plateIDs := make([][]string, len(cmps))
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
@@ -1240,13 +1240,13 @@ func (p LHProperties) HasTipTracking() bool {
 	return false
 }
 
-func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.LHComponent) {
+func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.Liquid) {
 	for s, c := range updates {
 		p.UpdateComponentID(s, c)
 	}
 }
 
-func (p *LHProperties) UpdateComponentID(from string, to *wtype.LHComponent) bool {
+func (p *LHProperties) UpdateComponentID(from string, to *wtype.Liquid) bool {
 	for _, p := range p.Plates {
 		if p.FindAndUpdateID(from, to) {
 			return true

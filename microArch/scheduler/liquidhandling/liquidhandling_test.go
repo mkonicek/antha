@@ -252,7 +252,7 @@ func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
 
 }
 
-func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wtype.LHComponent) (rq *LHRequest, err error) {
+func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wtype.Liquid) (rq *LHRequest, err error) {
 
 	// set up ctx
 	ctx := GetContextForTest()
@@ -1250,7 +1250,7 @@ func TestOveractiveMultichannel(t *testing.T) {
 
 	source := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
 
-	samples := make([]*wtype.LHComponent, 4)
+	samples := make([]*wtype.Liquid, 4)
 
 	samples[0] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
 	samples[1] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
@@ -1291,7 +1291,7 @@ func TestOveractiveMultichannel(t *testing.T) {
 	}
 }
 
-func getTestSplitSample(component *wtype.LHComponent, volume float64) *wtype.LHInstruction {
+func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstruction {
 	ret := wtype.NewLHSplitInstruction()
 
 	ret.Components = append(ret.Components, component.Dup())
@@ -1302,7 +1302,7 @@ func getTestSplitSample(component *wtype.LHComponent, volume float64) *wtype.LHI
 	return ret
 }
 
-func getTestMix(components []*wtype.LHComponent, address string) *wtype.LHInstruction {
+func getTestMix(components []*wtype.Liquid, address string) *wtype.LHInstruction {
 	mix := mixer.GenericMix(mixer.MixOptions{
 		Components: components,
 		Address:    address,
@@ -1342,7 +1342,7 @@ func TestSplitSampleMultichannel(t *testing.T) {
 
 			split := getTestSplitSample(lastStock, 20.0)
 
-			mix := getTestMix([]*wtype.LHComponent{split.Results[0], diluentSample}, wc.FormatA1())
+			mix := getTestMix([]*wtype.Liquid{split.Results[0], diluentSample}, wc.FormatA1())
 
 			lastStock = mix.Results[0]
 

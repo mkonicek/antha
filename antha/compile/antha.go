@@ -245,6 +245,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"LHTipbox":             "wtype.LHTipbox",
 		"LHWell":               "wtype.LHWell",
 		"Length":               "wunit.Length",
+		"LHComponent":          "wtype.Liquid",
 		"LiquidType":           "wtype.LiquidType",
 		"Mass":                 "wunit.Mass",
 		"Moles":                "wunit.Moles",

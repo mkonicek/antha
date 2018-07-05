@@ -164,7 +164,7 @@ func (lhp LHPlate) String() string {
 }
 
 func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
-	ret := make([]*LHComponent, len(wv))
+	ret := make([]*Liquid, len(wv))
 
 	for i, wc := range wv {
 		ret[i] = lhp.Wellcoords[wc.FormatA1()].WContents.Dup()
@@ -263,7 +263,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 */
 
 // this gets ONE component... possibly from several wells
-func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) BetterGetComponent(cmp *Liquid, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
@@ -317,7 +317,7 @@ func (lhp *LHPlate) BetterGetComponent(cmp *LHComponent, mpv wunit.Volume, legac
 
 // convenience method
 
-func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoords, err error) {
+func (lhp *LHPlate) AddComponent(cmp *Liquid, overflow bool) (wc []WellCoords, err error) {
 	ret := make([]WellCoords, 0, 1)
 
 	v := wunit.NewVolume(cmp.Vol, cmp.Vunit)
@@ -362,7 +362,7 @@ func (lhp *LHPlate) AddComponent(cmp *LHComponent, overflow bool) (wc []WellCoor
 
 // convenience method
 
-func (lhp *LHPlate) GetComponent(cmp *LHComponent, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *LHPlate) GetComponent(cmp *Liquid, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
 	it := NewAddressIterator(lhp, ColumnWise, TopToBottom, LeftToRight, false)
@@ -726,7 +726,7 @@ func Initialize_Wells(plate *LHPlate) {
 	(*plate).Wellcoords = wellcrds
 }
 
-func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *LHComponent {
+func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *Liquid {
 	w := p.Wellcoords[well]
 
 	if w == nil {
@@ -773,7 +773,7 @@ func (p *LHPlate) IsAutoallocated() bool {
 
 // ExportPlateCSV a exports an LHPlate and its contents as a csv file.
 // The caller is required to set the well locations and volumes explicitely with this function.
-func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wells []string, liquids []*LHComponent, volumes []wunit.Volume) (file File, err error) {
+func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wells []string, liquids []*Liquid, volumes []wunit.Volume) (file File, err error) {
 	if len(wells) != len(liquids) || len(liquids) != len(volumes) {
 		return File{}, fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
@@ -807,12 +807,12 @@ func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err e
 
 	var platename string = plate.PlateName
 	var wells = make([]string, 0)
-	var liquids = make([]*LHComponent, 0)
+	var liquids = make([]*Liquid, 0)
 	var volumes = make([]wunit.Volume, 0)
 	var concs = make([]wunit.Concentration, 0)
 	allpositions := plate.AllWellPositions(false)
 
-	var nilComponent *LHComponent
+	var nilComponent *Liquid
 
 	for _, position := range allpositions {
 		well := plate.WellMap()[position]
@@ -1314,7 +1314,7 @@ func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector
 
 	cv := p.GetContentVector(wv)
 
-	fcv := make([]*LHComponent, len(cv))
+	fcv := make([]*Liquid, len(cv))
 
 	for i := 0; i < len(cv); i++ {
 		identifier := cv[i].IDOrName()
@@ -1331,7 +1331,7 @@ func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector
 
 	return fcv
 }
-func (p *LHPlate) FindAndUpdateID(before string, after *LHComponent) bool {
+func (p *LHPlate) FindAndUpdateID(before string, after *Liquid) bool {
 	for _, w := range p.Wellcoords {
 		if w.UpdateContentID(before, after) {
 			return true
@@ -1419,8 +1419,8 @@ func (p LHPlate) CheckExtraKey(k string) error {
 }
 
 // AllContents returns all the components on the plate
-func (p *LHPlate) AllContents() []*LHComponent {
-	ret := make([]*LHComponent, 0, len(p.Wellcoords))
+func (p *LHPlate) AllContents() []*Liquid {
+	ret := make([]*Liquid, 0, len(p.Wellcoords))
 	for _, c := range p.Cols {
 		for _, w := range c {
 			ret = append(ret, w.WContents)

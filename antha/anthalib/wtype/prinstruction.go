@@ -8,8 +8,8 @@ import (
 // sample
 type PRInstruction struct {
 	ID           string
-	ComponentIn  *LHComponent
-	ComponentOut *LHComponent
+	ComponentIn  *Liquid
+	ComponentOut *Liquid
 	Options      string
 }
 

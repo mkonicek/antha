@@ -34,7 +34,7 @@ func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
 	}
 }
 
-func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wtype.LHComponent {
+func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wtype.Liquid {
 	c, err := inventory.NewComponent(ctx, name)
 	if err != nil {
 		panic(err)

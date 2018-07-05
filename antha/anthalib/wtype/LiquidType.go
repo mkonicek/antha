@@ -88,7 +88,7 @@ func LiquidTypeName(lt LiquidType) (PolicyName, error) {
 	return PolicyName(lt), err
 }
 
-func mergeSolubilities(c1, c2 *LHComponent) float64 {
+func mergeSolubilities(c1, c2 *Liquid) float64 {
 	if c1.Smax < c2.Smax {
 		return c1.Smax
 	}
@@ -98,7 +98,7 @@ func mergeSolubilities(c1, c2 *LHComponent) float64 {
 
 // helper functions... will need extending eventually
 
-func mergeTypes(c1, c2 *LHComponent) LiquidType {
+func mergeTypes(c1, c2 *Liquid) LiquidType {
 	// couple of mixing rules: protein, dna etc. are basically
 	// special water so we retain that characteristic whatever happens
 	// ditto culture... otherwise we look for the majority

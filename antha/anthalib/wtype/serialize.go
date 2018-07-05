@@ -181,7 +181,7 @@ type SLHWell struct {
 	ID       string
 	Inst     string
 	Coords   WellCoords
-	Contents *LHComponent
+	Contents *Liquid
 }
 
 func (slw SLHWell) FillWell(lw *LHWell) {

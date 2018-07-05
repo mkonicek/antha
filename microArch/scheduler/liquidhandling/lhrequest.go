@@ -35,7 +35,7 @@ type LHRequest struct {
 	BlockID               wtype.BlockID
 	BlockName             string
 	LHInstructions        map[string]*wtype.LHInstruction
-	Input_solutions       map[string][]*wtype.LHComponent
+	Input_solutions       map[string][]*wtype.Liquid
 	Plates                map[string]*wtype.LHPlate
 	Tips                  []*wtype.LHTipbox
 	InstructionSet        *liquidhandling.RobotInstructionSet
@@ -99,14 +99,14 @@ func (req *LHRequest) ConfigureYourself() error {
 	inputs := req.Input_solutions
 
 	if inputs == nil {
-		inputs = make(map[string][]*wtype.LHComponent)
+		inputs = make(map[string][]*wtype.Liquid)
 	}
 
 	// we need to make an exception of components which are used literally
 	// i.e. anything used in a mix-in-place; these don't add to the general
 	// store of anonymous components to be sampled from
 
-	uniques := make(map[wtype.PlateLocation]*wtype.LHComponent, len(req.LHInstructions))
+	uniques := make(map[wtype.PlateLocation]*wtype.Liquid, len(req.LHInstructions))
 
 	for _, ins := range req.LHInstructions {
 		if ins.InsType() != "MIX" {
@@ -180,7 +180,7 @@ func NewLHRequest() *LHRequest {
 	var lhr LHRequest
 	lhr.ID = wtype.GetUUID()
 	lhr.LHInstructions = make(map[string]*wtype.LHInstruction)
-	lhr.Input_solutions = make(map[string][]*wtype.LHComponent)
+	lhr.Input_solutions = make(map[string][]*wtype.Liquid)
 	lhr.Plates = make(map[string]*wtype.LHPlate)
 	lhr.Tips = make([]*wtype.LHTipbox, 0, 1)
 	lhr.Input_plates = make(map[string]*wtype.LHPlate)

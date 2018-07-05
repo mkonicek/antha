@@ -52,7 +52,7 @@ A5,milk,water,100,ul,10,g/l
 				Type:      "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -62,7 +62,7 @@ A5,milk,water,100,ul,10,g/l
 						},
 					},
 					"A4": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "tea",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -72,7 +72,7 @@ A5,milk,water,100,ul,10,g/l
 						},
 					},
 					"A5": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "milk",
 							Type:  wtype.LTWater,
 							Vol:   100.0,
@@ -96,7 +96,7 @@ C1,neb5compcells,culture,20.5,ul,0,g/l
 				Type:      "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   140.5,
@@ -106,7 +106,7 @@ C1,neb5compcells,culture,20.5,ul,0,g/l
 						},
 					},
 					"C1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "neb5compcells",
 							Type:  wtype.LTCulture,
 							Vol:   20.5,

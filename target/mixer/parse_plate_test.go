@@ -12,8 +12,8 @@ import (
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
-func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.LHComponent {
-	r := make(map[string]*wtype.LHComponent)
+func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.Liquid {
+	r := make(map[string]*wtype.Liquid)
 	for addr, c := range m {
 		if c.WContents.IsZero() {
 			continue
@@ -23,9 +23,9 @@ func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.LHComponent {
 	return r
 }
 
-func getComponentsFromPlate(plate *wtype.LHPlate) []*wtype.LHComponent {
+func getComponentsFromPlate(plate *wtype.LHPlate) []*wtype.Liquid {
 
-	var components []*wtype.LHComponent
+	var components []*wtype.Liquid
 	allWellPositions := plate.AllWellPositions(false)
 
 	for _, wellcontents := range allWellPositions {
@@ -163,7 +163,7 @@ A6,,,0,ul,0,g/l,
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -173,7 +173,7 @@ A6,,,0,ul,0,g/l,
 						},
 					},
 					"A4": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "tea",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -183,7 +183,7 @@ A6,,,0,ul,0,g/l,
 						},
 					},
 					"A5": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "milk",
 							Type:  wtype.LTWater,
 							Vol:   100.0,
@@ -214,7 +214,7 @@ A6,,,0,ul,0,g/l,
 				Type: "pcrplate_skirted",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -224,7 +224,7 @@ A6,,,0,ul,0,g/l,
 						},
 					},
 					"A4": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "tea",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -234,7 +234,7 @@ A6,,,0,ul,0,g/l,
 						},
 					},
 					"A5": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "milk",
 							Type:  wtype.LTWater,
 							Vol:   100.0,
@@ -258,7 +258,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 				Type: "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   140.5,
@@ -268,7 +268,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 						},
 					},
 					"C1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "neb5compcells",
 							Type:  wtype.LTCulture,
 							Vol:   20.5,
@@ -288,7 +288,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -298,7 +298,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 						},
 					},
 					"A4": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "tea",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -308,7 +308,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 						},
 					},
 					"A5": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "milk",
 							Type:  wtype.LTWater,
 							Vol:   100.0,
@@ -332,7 +332,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 				Type: "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LiquidType("randomType"),
 							Vol:   140.5,
@@ -342,7 +342,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 						},
 					},
 					"C1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "neb5compcells",
 							Type:  wtype.LTCulture,
 							Vol:   20.5,

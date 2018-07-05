@@ -206,7 +206,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 				location := curr_plate.ID + ":" + curr_well.Crds.FormatA1()
 				assignments = append(assignments, location)
 
-				var newcomponent *wtype.LHComponent
+				var newcomponent *wtype.Liquid
 
 				if isInstance(cname) {
 					newcomponent = component

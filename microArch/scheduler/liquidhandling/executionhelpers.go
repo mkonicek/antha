@@ -153,7 +153,7 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 }
 
-func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.LHComponent) *IChain {
+func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.Liquid) *IChain {
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations

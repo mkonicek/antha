@@ -157,7 +157,7 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 	assertWellsEqual("Cols != Wellcoords", ws3, ws4)
 
 	// Check pointer-ID equality
-	comp := make(map[string]*LHComponent)
+	comp := make(map[string]*Liquid)
 	for _, w := range append(append(ws1, ws2...), ws3...) {
 		c := w.WContents
 		if c == nil || c.Vol == 0.0 {

@@ -6,8 +6,8 @@ import (
 	"reflect"
 )
 
-func CopyComponentArray(arin []*wtype.LHComponent) []*wtype.LHComponent {
-	r := make([]*wtype.LHComponent, len(arin))
+func CopyComponentArray(arin []*wtype.Liquid) []*wtype.Liquid {
+	r := make([]*wtype.Liquid, len(arin))
 
 	for i, v := range arin {
 		r[i] = v.Dup()

@@ -1128,7 +1128,7 @@ func EncodeLHWell(arg wtype.LHWell) *pb.LHWellMessage {
 	return &ret
 }
 func DecodeLHWell(arg *pb.LHWellMessage) wtype.LHWell {
-	ret := wtype.LHWell{ID: (string)(arg.Arg_1), Inst: (string)(arg.Arg_2), Crds: (wtype.WellCoords)(DecodeWellCoords(arg.Arg_3)), MaxVol: (float64)(arg.Arg_4), WContents: (*wtype.LHComponent)(DecodePtrToLHComponent(arg.Arg_5)), Rvol: (float64)(arg.Arg_6), WShape: (*wtype.Shape)(DecodePtrToShape(arg.Arg_7)), Bottom: (wtype.WellBottomType)(arg.Arg_8), Bounds: (wtype.BBox)(DecodeBBox(arg.Arg_9)), Bottomh: (float64)(arg.Arg_10), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_11)), Plate: nil}
+	ret := wtype.LHWell{ID: (string)(arg.Arg_1), Inst: (string)(arg.Arg_2), Crds: (wtype.WellCoords)(DecodeWellCoords(arg.Arg_3)), MaxVol: (float64)(arg.Arg_4), WContents: (*wtype.Liquid)(DecodePtrToLHComponent(arg.Arg_5)), Rvol: (float64)(arg.Arg_6), WShape: (*wtype.Shape)(DecodePtrToShape(arg.Arg_7)), Bottom: (wtype.WellBottomType)(arg.Arg_8), Bounds: (wtype.BBox)(DecodeBBox(arg.Arg_9)), Bottomh: (float64)(arg.Arg_10), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_11)), Plate: nil}
 	return ret
 }
 func EncodeArrayOfPtrToLHWell(arg []*wtype.LHWell) *pb.ArrayOfPtrToLHWellMessage {
@@ -1156,12 +1156,12 @@ func DecodeLHDevice(arg *pb.LHDeviceMessage) wtype.LHDevice {
 	ret := wtype.LHDevice{ID: (string)(arg.Arg_1), Name: (string)(arg.Arg_2), Mnfr: (string)(arg.Arg_3)}
 	return ret
 }
-func EncodeLHComponent(arg wtype.LHComponent) *pb.LHComponentMessage {
+func EncodeLHComponent(arg wtype.Liquid) *pb.LHComponentMessage {
 	ret := pb.LHComponentMessage{(string)(arg.ID), EncodeBlockID(arg.BlockID), (string)(arg.DaughterID), (string)(arg.ParentID), (string)(arg.Inst), int64(arg.Order), (string)(arg.CName), string(arg.Type), (float64)(arg.Vol), (float64)(arg.Conc), (string)(arg.Vunit), (string)(arg.Cunit), (float64)(arg.Tvol), (float64)(arg.Smax), (float64)(arg.Visc), (float64)(arg.StockConcentration), EncodeMapstringinterfaceMessage(arg.Extra), (string)(arg.Loc), (string)(arg.Destination), EncodeMapstringinterfaceMessage(arg.Policy), EncodeSubComponentMessage(arg.SubComponents)}
 	return &ret
 }
-func DecodeLHComponent(arg *pb.LHComponentMessage) wtype.LHComponent {
-	ret := wtype.LHComponent{ID: (string)(arg.Arg_1), BlockID: (wtype.BlockID)(DecodeBlockID(arg.Arg_2)), DaughterID: (string)(arg.Arg_3), ParentID: (string)(arg.Arg_4), Inst: (string)(arg.Arg_5), Order: (int)(arg.Arg_6), CName: (string)(arg.Arg_7), Type: (wtype.LiquidType)(arg.Arg_8), Vol: (float64)(arg.Arg_9), Conc: (float64)(arg.Arg_10), Vunit: (string)(arg.Arg_11), Cunit: (string)(arg.Arg_12), Tvol: (float64)(arg.Arg_13), Smax: (float64)(arg.Arg_14), Visc: (float64)(arg.Arg_15), StockConcentration: (float64)(arg.Arg_16), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_17)), Loc: (string)(arg.Arg_18), Destination: (string)(arg.Arg_19), Policy: DecodeMapstringinterfaceMessage(arg.Arg_20), SubComponents: DecodeSubComponentMessage(arg.Arg_21)}
+func DecodeLHComponent(arg *pb.LHComponentMessage) wtype.Liquid {
+	ret := wtype.Liquid{ID: (string)(arg.Arg_1), BlockID: (wtype.BlockID)(DecodeBlockID(arg.Arg_2)), DaughterID: (string)(arg.Arg_3), ParentID: (string)(arg.Arg_4), Inst: (string)(arg.Arg_5), Order: (int)(arg.Arg_6), CName: (string)(arg.Arg_7), Type: (wtype.LiquidType)(arg.Arg_8), Vol: (float64)(arg.Arg_9), Conc: (float64)(arg.Arg_10), Vunit: (string)(arg.Arg_11), Cunit: (string)(arg.Arg_12), Tvol: (float64)(arg.Arg_13), Smax: (float64)(arg.Arg_14), Visc: (float64)(arg.Arg_15), StockConcentration: (float64)(arg.Arg_16), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_17)), Loc: (string)(arg.Arg_18), Destination: (string)(arg.Arg_19), Policy: DecodeMapstringinterfaceMessage(arg.Arg_20), SubComponents: DecodeSubComponentMessage(arg.Arg_21)}
 	return ret
 }
 func EncodeShape(arg wtype.Shape) *pb.ShapeMessage {
@@ -1227,7 +1227,7 @@ func DecodePtrToConcreteMeasurement(arg *pb.PtrToConcreteMeasurementMessage) *wu
 	ret := DecodeConcreteMeasurement(arg.Arg_1)
 	return &ret
 }
-func EncodePtrToLHComponent(arg *wtype.LHComponent) *pb.PtrToLHComponentMessage {
+func EncodePtrToLHComponent(arg *wtype.Liquid) *pb.PtrToLHComponentMessage {
 	var ret pb.PtrToLHComponentMessage
 	if arg == nil {
 		ret = pb.PtrToLHComponentMessage{
@@ -1240,7 +1240,7 @@ func EncodePtrToLHComponent(arg *wtype.LHComponent) *pb.PtrToLHComponentMessage 
 	}
 	return &ret
 }
-func DecodePtrToLHComponent(arg *pb.PtrToLHComponentMessage) *wtype.LHComponent {
+func DecodePtrToLHComponent(arg *pb.PtrToLHComponentMessage) *wtype.Liquid {
 	if arg == nil {
 		log.Println("Arg for PtrToLHComponent was nil")
 		return nil

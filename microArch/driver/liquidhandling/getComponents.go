@@ -251,7 +251,7 @@ func cmpVecsEqual(v1, v2 wtype.ComponentVector) bool {
 	return true
 }
 
-func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
+func cmpsEqual(c1, c2 *wtype.Liquid) bool {
 	return c1.ID == c2.ID && c1.Vol == c2.Vol
 }
 

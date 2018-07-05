@@ -247,7 +247,7 @@ type LivingColor struct {
 	ID        string
 	Color     color.NRGBA
 	Seq       wtype.DNASequence
-	Component *wtype.LHComponent
+	Component *wtype.Liquid
 }
 
 // A LivingPalette holds an array of LivingColors
@@ -394,7 +394,7 @@ func (g1 LivingGIF) GetStates() [][]string {
 
 // MakeAnthaPalette will make a palette of Colors linked to LHcomponents. They
 // are merged according to their order in the slice
-func MakeAnthaPalette(palette color.Palette, components []*wtype.LHComponent) *AnthaPalette {
+func MakeAnthaPalette(palette color.Palette, components []*wtype.Liquid) *AnthaPalette {
 
 	//global placeholders
 	var anthaColor AnthaColor
@@ -485,7 +485,7 @@ func MakeLivingColor(ctx context.Context, ID string, color *color.NRGBA, seq str
 }
 
 // MakeLivingPalette will make a palette of LivingColors linked to LHcomponents. They are merged according to their order in the slice
-func MakeLivingPalette(palette LivingPalette, components []*wtype.LHComponent) *LivingPalette {
+func MakeLivingPalette(palette LivingPalette, components []*wtype.Liquid) *LivingPalette {
 
 	//checking that there are enough LHComponents to make the Palette
 	if len(palette.LivingColors) != len(components) {

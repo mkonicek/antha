@@ -19,7 +19,7 @@ func GetContextForTest() context.Context {
 	return ctx
 }
 
-func getComponent(ctx context.Context, name string, volume float64) (*wtype.LHComponent, error) {
+func getComponent(ctx context.Context, name string, volume float64) (*wtype.Liquid, error) {
 	c, err := inventory.NewComponent(ctx, name)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func getMixInstructions(ctx context.Context, numInstructions int, componentNames
 
 	for i := 0; i < numInstructions; i++ {
 
-		components := make([]*wtype.LHComponent, 0, numComponents)
+		components := make([]*wtype.Liquid, 0, numComponents)
 		for j := 0; j < numComponents; j++ {
 			c, err := getComponent(ctx, componentNames[j], componentVolumes[j])
 			if err != nil {

@@ -31,7 +31,7 @@ func fromContext(ctx context.Context) Inventory {
 
 // An Inventory returns items by name
 type Inventory interface {
-	NewComponent(ctx context.Context, typ string) (*wtype.LHComponent, error)
+	NewComponent(ctx context.Context, typ string) (*wtype.Liquid, error)
 	NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error)
 	NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipwaste, error)
 	NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error)
@@ -52,7 +52,7 @@ func GetInventory(ctx context.Context) Inventory {
 }
 
 // NewComponent returns a new component of the given type
-func NewComponent(ctx context.Context, typ string) (*wtype.LHComponent, error) {
+func NewComponent(ctx context.Context, typ string) (*wtype.Liquid, error) {
 	return fromContext(ctx).NewComponent(ctx, typ)
 }
 

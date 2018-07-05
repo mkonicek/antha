@@ -116,7 +116,7 @@ func (s StorageConditions) String() string {
 }
 
 // GetOrderDetails returns order Details for a component.
-func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) {
+func GetOrderDetails(comp *wtype.Liquid) (orderDetails Details, err error) {
 
 	order, found := comp.Extra[OrderDetails]
 
@@ -143,7 +143,7 @@ func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) 
 // SetOrderDetails adds order details to a wtype.LHComponent.
 // An error will be returned if order details are already encountered unless the ForceUpdate option is used as an Option argument in the function.
 // In which case any existing order details will be overwritten.
-func SetOrderDetails(comp *wtype.LHComponent, orderDetails Details, options ...Option) (*wtype.LHComponent, error) {
+func SetOrderDetails(comp *wtype.Liquid, orderDetails Details, options ...Option) (*wtype.Liquid, error) {
 
 	// look for existing order details
 	existingDetails, err := GetOrderDetails(comp)

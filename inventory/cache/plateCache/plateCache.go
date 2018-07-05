@@ -14,7 +14,7 @@ type plateCache struct {
 	platesFromCache map[string]bool
 }
 
-func (p *plateCache) NewComponent(ctx context.Context, name string) (*wtype.LHComponent, error) {
+func (p *plateCache) NewComponent(ctx context.Context, name string) (*wtype.Liquid, error) {
 	return inventory.NewComponent(ctx, name)
 }
 

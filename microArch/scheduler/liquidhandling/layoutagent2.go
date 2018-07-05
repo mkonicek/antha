@@ -209,7 +209,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		return nil, nil, nil, err
 	}
 
-	lkp := make(map[string][]*wtype.LHComponent)
+	lkp := make(map[string][]*wtype.Liquid)
 	lk2 := make(map[string]string)
 	// fix the output locations correctly
 
@@ -234,7 +234,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 			v.Results[1].Loc = v.Components[0].Loc
 		}
 
-		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
+		lkp[v.ID] = make([]*wtype.Liquid, 0, 1) //v.Result
 		lk2[v.Results[0].ID] = v.ID
 	}
 

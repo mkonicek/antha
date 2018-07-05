@@ -1,7 +1,7 @@
 package wtype
 
-func CopyComponentArray(arin []*LHComponent) []*LHComponent {
-	r := make([]*LHComponent, len(arin))
+func CopyComponentArray(arin []*Liquid) []*Liquid {
+	r := make([]*Liquid, len(arin))
 
 	for i, v := range arin {
 		r[i] = v.Dup()

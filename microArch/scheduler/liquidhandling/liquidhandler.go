@@ -791,7 +791,7 @@ func checkDestinationSanity(request *LHRequest) {
 }
 
 func anotherSanityCheck(request *LHRequest) {
-	p := map[*wtype.LHComponent]*wtype.LHInstruction{}
+	p := map[*wtype.Liquid]*wtype.LHInstruction{}
 
 	for _, ins := range request.LHInstructions {
 		// we must not share pointers
@@ -1056,7 +1056,7 @@ func assembleLoc(ins *wtype.LHInstruction) string {
 func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	instructions := (*request).LHInstructions
 
-	inputs := make(map[string][]*wtype.LHComponent, 3)
+	inputs := make(map[string][]*wtype.Liquid, 3)
 	vmap := make(map[string]wunit.Volume)
 
 	allinputs := make([]string, 0, 10)
@@ -1088,7 +1088,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			if ix == 0 && !component.IsSample() {
 				// these components come in as instances -- hence 1 per well
 				// but if not allocated we need to do so
-				inputs[component.CNID()] = make([]*wtype.LHComponent, 0, 1)
+				inputs[component.CNID()] = make([]*wtype.Liquid, 0, 1)
 				inputs[component.CNID()] = append(inputs[component.CNID()], component)
 				allinputs = append(allinputs, component.CNID())
 				vmap[component.CNID()] = component.Volume()
@@ -1107,7 +1107,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			} else {
 				cmps, ok := inputs[component.Kind()]
 				if !ok {
-					cmps = make([]*wtype.LHComponent, 0, 3)
+					cmps = make([]*wtype.Liquid, 0, 3)
 					allinputs = append(allinputs, component.Kind())
 				}
 
@@ -1155,7 +1155,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	requestinputs := request.Input_solutions
 
 	if len(requestinputs) == 0 {
-		requestinputs = make(map[string][]*wtype.LHComponent, 5)
+		requestinputs = make(map[string][]*wtype.Liquid, 5)
 	}
 
 	vmap2 := make(map[string]wunit.Volume, len(vmap))

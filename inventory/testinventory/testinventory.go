@@ -11,13 +11,13 @@ import (
 )
 
 type testInventory struct {
-	componentByName map[string]*wtype.LHComponent
+	componentByName map[string]*wtype.Liquid
 	plateByType     map[string]PlateForSerializing
 	tipboxByType    map[string]*wtype.LHTipbox
 	tipwasteByType  map[string]*wtype.LHTipwaste
 }
 
-func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.LHComponent, error) {
+func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.Liquid, error) {
 	c, ok := i.componentByName[name]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid solution: %s", inventory.ErrUnknownType, name)
@@ -57,7 +57,7 @@ func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.LHPlate, err
 // NewContext creates a new test inventory context
 func NewContext(ctx context.Context) context.Context {
 	inv := &testInventory{
-		componentByName: make(map[string]*wtype.LHComponent),
+		componentByName: make(map[string]*wtype.Liquid),
 		plateByType:     make(map[string]PlateForSerializing),
 		tipboxByType:    make(map[string]*wtype.LHTipbox),
 		tipwasteByType:  make(map[string]*wtype.LHTipwaste),
@@ -135,9 +135,9 @@ func GetPlates(ctx context.Context) []*wtype.LHPlate {
 }
 
 // GetComponents returns the components in a test inventory context
-func GetComponents(ctx context.Context) []*wtype.LHComponent {
+func GetComponents(ctx context.Context) []*wtype.Liquid {
 	inv := inventory.GetInventory(ctx).(*testInventory)
-	var cs []*wtype.LHComponent
+	var cs []*wtype.Liquid
 	for _, c := range inv.componentByName {
 		cs = append(cs, c)
 	}

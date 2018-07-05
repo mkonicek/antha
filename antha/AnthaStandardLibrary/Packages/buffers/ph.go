@@ -65,7 +65,7 @@ func (ph *PHMeasurement) TempCompensation(reftemp wunit.Temperature, tempcoeffic
 
 // placeholder
 
-/*func MeasurePH(*wtype.LHComponent) (measurement float64) {
+/*func MeasurePH(*wtype.Liquid) (measurement float64) {
 	return 7.0
 }*/
 
@@ -81,7 +81,7 @@ func (ph *PHMeasurement) AdjustpH(ph_setpoint float64, ph_tolerance float64, ph_
 	pHmax := ph_setpoint + ph_tolerance
 	pHmin := ph_setpoint - ph_tolerance
 
-	//sammake([]wtype.LHComponent,0)
+	//sammake([]wtype.Liquid,0)
 
 	if ph.PHValue > pHmax {
 		// calculate concentration of solution needed first, for now we'll add 10ul at a time until adjusted

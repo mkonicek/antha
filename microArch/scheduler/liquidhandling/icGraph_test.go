@@ -558,8 +558,8 @@ func cullDeadNodes(in []*IChain) (out []*IChain) {
 	return out
 }
 
-// getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[graph.Node]interface{}, map[graph.Node]bool)
-// getAnInstruction(in, out []*wtype.LHComponent, whatType int) *wtype.LHInstruction {
+// getNodeColourMap(ic *IChain, inputs map[string][]*wtype.Liquid) (map[graph.Node]interface{}, map[graph.Node]bool)
+// getAnInstruction(in, out []*wtype.Liquid, whatType int) *wtype.LHInstruction {
 // getComponentsWithIDsParents(IDs, parents []string)
 // getIChain([][]*wtype.LHInstruction)
 

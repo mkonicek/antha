@@ -166,7 +166,6 @@ type printOption string
 const colouredTerminalOutput printOption = "colouredTerminalOutput"
 
 func ansiPrint(options ...printOption) bool {
-	return true
 	for _, option := range options {
 		if option == colouredTerminalOutput {
 			return true

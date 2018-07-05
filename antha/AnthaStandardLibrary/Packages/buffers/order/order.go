@@ -37,18 +37,18 @@ import (
 type Option string
 
 const (
-	// Force overwriting of Order Details of a wtype.LHComponent in the SetOrderInfo function.
+	// Force overwriting of Order Details of a wtype.Liquid in the SetOrderInfo function.
 	ForceUpdate Option = "FORCEUPDATE"
 )
 
-// Key to look up order details from a wtype.LHComponent.
+// Key to look up order details from a wtype.Liquid.
 const OrderDetails = "ORDERDETAILS"
 
 var (
 	errNotFound = errors.New("no order info found")
 )
 
-// Details stores the order details of a wtype.LHComponent
+// Details stores the order details of a wtype.Liquid
 type Details struct {
 
 	// Name of Manufacturer.
@@ -140,7 +140,7 @@ func GetOrderDetails(comp *wtype.Liquid) (orderDetails Details, err error) {
 	return
 }
 
-// SetOrderDetails adds order details to a wtype.LHComponent.
+// SetOrderDetails adds order details to a wtype.Liquid.
 // An error will be returned if order details are already encountered unless the ForceUpdate option is used as an Option argument in the function.
 // In which case any existing order details will be overwritten.
 func SetOrderDetails(comp *wtype.Liquid, orderDetails Details, options ...Option) (*wtype.Liquid, error) {

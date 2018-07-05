@@ -88,7 +88,7 @@ func Dispense(column Column, mixture *wtype.Liquid, volume wunit.Volume, aspirat
 }
 
 /*
-func PhysicaltoComponent(pellet *wtype.Physical) (component *wtype.LHComponent) {
+func PhysicaltoComponent(pellet *wtype.Physical) (component *wtype.Liquid) {
 	// placeholder
 	return
 }
@@ -99,12 +99,12 @@ func PelletToComponent(p Pellet) *wtype.Liquid {
 }
 
 /*
-func Resuspend(pellet Pellet, step Chromstep, column Column) (output_c *wtype.LHComponent, processedcolumn Column) {
+func Resuspend(pellet Pellet, step Chromstep, column Column) (output_c *wtype.Liquid, processedcolumn Column) {
 
-	var output *wtype.LHComponent
+	var output *wtype.Liquid
 	//input := PhysicaltoComponent(pellet)
 	input := PelletToComponent(pellet)
-	samples := make([]*wtype.LHComponent, 0)
+	samples := make([]*wtype.Liquid, 0)
 	samples = append(samples, step.Buffer, input)
 	mixture := mixer.Mix(samples...)
 	for i := 0; i < step.Pipetstep.Cycles; i++ {

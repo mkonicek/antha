@@ -1,6 +1,6 @@
 package liquidhandling
 
-// func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error)
+// func (lhp *LHProperties) GetComponents(cmps []*wtype.Liquid, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error)
 
 import (
 	"fmt"

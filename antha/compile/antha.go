@@ -239,7 +239,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"HandleOpt":            "execute.HandleOpt",
 		"JobID":                "jobfile.JobID",
 		"IncubateOpt":          "execute.IncubateOpt",
-		"LHComponent":          "wtype.LHComponent",
+		"LHComponent":          "wtype.Liquid",
 		"LHPlate":              "wtype.LHPlate",
 		"LHTip":                "wtype.LHTip",
 		"LHTipbox":             "wtype.LHTipbox",

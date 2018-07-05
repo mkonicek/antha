@@ -57,7 +57,7 @@ func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 	pl2.Cols[0][1].AddComponent(cmp2)
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{cmp1, cmp2},
+		Components: []*wtype.Liquid{cmp1, cmp2},
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -298,7 +298,7 @@ func TestBeforeVsAfterMixInPlace(t *testing.T) {
 	cmp2.Vol = 50.0
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{cmp1, cmp2},
+		Components: []*wtype.Liquid{cmp1, cmp2},
 	}
 
 	ins := mixer.GenericMix(mo)

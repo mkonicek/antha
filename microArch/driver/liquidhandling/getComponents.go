@@ -68,7 +68,7 @@ func matchToParallelTransfer(m wtype.Match) ParallelTransfer {
 }
 
 // returns a vector iterator for a plate given the multichannel capabilites of the head (ori, multi)
-func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.AddressSliceIterator {
+func getPlateIterator(lhp *wtype.Plate, ori, multi int) wtype.AddressSliceIterator {
 	if ori == wtype.LHVChannel {
 		//it = NewColVectorIterator(lhp, multi)
 

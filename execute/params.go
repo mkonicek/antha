@@ -63,7 +63,7 @@ func (a *unmarshaler) unmarshalLHTipbox(ctx context.Context, data []byte, obj *w
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wtype.LHPlate) error {
+func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wtype.Plate) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
@@ -124,7 +124,7 @@ func (a *unmarshaler) unmarshalStruct(ctx context.Context, data []byte, obj inte
 	switch obj := obj.(type) {
 	case *wtype.LHTipbox:
 		err = a.unmarshalLHTipbox(ctx, data, obj)
-	case *wtype.LHPlate:
+	case *wtype.Plate:
 		err = a.unmarshalLHPlate(ctx, data, obj)
 	case *wtype.Liquid:
 		err = a.unmarshalLHComponent(ctx, data, obj)

@@ -104,7 +104,7 @@ func TestFixVolumes2(t *testing.T) {
 
 	want[c3.FullyQualifiedName()] = wunit.NewVolume(150.0, "ul")
 
-	newWant, _ := findUpdateInstructionVolumes(ch, want, make(map[string]*wtype.LHPlate), wunit.NewVolume(0.5, "ul"))
+	newWant, _ := findUpdateInstructionVolumes(ch, want, make(map[string]*wtype.Plate), wunit.NewVolume(0.5, "ul"))
 
 	v := newWant["water"+wtype.InPlaceMarker]
 	if !v.EqualTo(wunit.NewVolume(75.0, "ul")) {

@@ -218,7 +218,7 @@ func HandleLHComponentFactor(ctx context.Context, header string, value interface
 // LHComponent.
 //
 // If the value cannot be converted to a valid component an error is returned.
-func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) (*wtype.LHPlate, error) {
+func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) (*wtype.Plate, error) {
 	str, found := value.(string)
 	if !found {
 		return nil, fmt.Errorf("value %T is not a string", value)

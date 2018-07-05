@@ -112,7 +112,7 @@ func findInPC(ass, w string, pc PlateChoice) int {
 	return i
 }
 
-func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
+func map_in_user_plate(p *wtype.Plate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
 	nm := p.PlateName
 
 	it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)

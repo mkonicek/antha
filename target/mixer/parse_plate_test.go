@@ -23,7 +23,7 @@ func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.Liquid {
 	return r
 }
 
-func getComponentsFromPlate(plate *wtype.LHPlate) []*wtype.Liquid {
+func getComponentsFromPlate(plate *wtype.Plate) []*wtype.Liquid {
 
 	var components []*wtype.Liquid
 	allWellPositions := plate.AllWellPositions(false)
@@ -40,7 +40,7 @@ func getComponentsFromPlate(plate *wtype.LHPlate) []*wtype.Liquid {
 	return components
 }
 
-func allComponentsHaveWellLocation(plate *wtype.LHPlate) error {
+func allComponentsHaveWellLocation(plate *wtype.Plate) error {
 	components := getComponentsFromPlate(plate)
 	var errs []string
 	for _, component := range components {
@@ -54,7 +54,7 @@ func allComponentsHaveWellLocation(plate *wtype.LHPlate) error {
 	return nil
 }
 
-func samePlate(a, b *wtype.LHPlate) error {
+func samePlate(a, b *wtype.Plate) error {
 	if a.Type != b.Type {
 		return fmt.Errorf("different types %q != %q", a.Type, b.Type)
 	}
@@ -135,7 +135,7 @@ A5,milk,water,100.0,ul,0,g/l,
 func TestParsePlate(t *testing.T) {
 	type testCase struct {
 		File              []byte
-		Expected          *wtype.LHPlate
+		Expected          *wtype.Plate
 		NoWarnings        bool
 		ReplacementConfig ValidationConfig
 	}
@@ -159,7 +159,7 @@ A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),
 			NoWarnings: false,
-			Expected: &wtype.LHPlate{
+			Expected: &wtype.Plate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
@@ -210,7 +210,7 @@ A6,,,0,ul,0,g/l,
 					plateTypeReplacementKey: "pcrplate_skirted",
 				},
 			},
-			Expected: &wtype.LHPlate{
+			Expected: &wtype.Plate{
 				Type: "pcrplate_skirted",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
@@ -254,7 +254,7 @@ A1,water,water,140.5,ul,0,mg/l
 C1,neb5compcells,culture,20.5,ul,0,ng/ul
 `),
 			NoWarnings: true,
-			Expected: &wtype.LHPlate{
+			Expected: &wtype.Plate{
 				Type: "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
@@ -284,7 +284,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 			// This is to test carriage returns.
 			File:       fileCarriage,
 			NoWarnings: false,
-			Expected: &wtype.LHPlate{
+			Expected: &wtype.Plate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
@@ -328,7 +328,7 @@ A1,water,randomType,140.5,ul,0,mg/l
 C1,neb5compcells,culture,20.5,ul,0,ng/ul
 `),
 			NoWarnings: false,
-			Expected: &wtype.LHPlate{
+			Expected: &wtype.Plate{
 				Type: "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {

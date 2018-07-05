@@ -36,19 +36,19 @@ type LHRequest struct {
 	BlockName             string
 	LHInstructions        map[string]*wtype.LHInstruction
 	Input_solutions       map[string][]*wtype.Liquid
-	Plates                map[string]*wtype.LHPlate
+	Plates                map[string]*wtype.Plate
 	Tips                  []*wtype.LHTipbox
 	InstructionSet        *liquidhandling.RobotInstructionSet
 	Instructions          []liquidhandling.TerminalRobotInstruction
 	InstructionText       string
 	Input_assignments     map[string][]string
 	Output_assignments    map[string][]string
-	Input_plates          map[string]*wtype.LHPlate
-	Output_plates         map[string]*wtype.LHPlate
-	Input_platetypes      []*wtype.LHPlate
+	Input_plates          map[string]*wtype.Plate
+	Output_plates         map[string]*wtype.Plate
+	Input_platetypes      []*wtype.Plate
 	Input_plate_order     []string
 	Input_setup_weights   map[string]float64
-	Output_platetypes     []*wtype.LHPlate
+	Output_platetypes     []*wtype.Plate
 	Output_plate_order    []string
 	Plate_lookup          map[string]string
 	Stockconcs            map[string]wunit.Concentration
@@ -70,7 +70,7 @@ type LHRequest struct {
 	TipsUsed              []wtype.TipEstimate
 }
 
-func (req *LHRequest) GetPlate(id string) (*wtype.LHPlate, bool) {
+func (req *LHRequest) GetPlate(id string) (*wtype.Plate, bool) {
 	p, ok := req.Plates[id]
 
 	if ok {
@@ -181,12 +181,12 @@ func NewLHRequest() *LHRequest {
 	lhr.ID = wtype.GetUUID()
 	lhr.LHInstructions = make(map[string]*wtype.LHInstruction)
 	lhr.Input_solutions = make(map[string][]*wtype.Liquid)
-	lhr.Plates = make(map[string]*wtype.LHPlate)
+	lhr.Plates = make(map[string]*wtype.Plate)
 	lhr.Tips = make([]*wtype.LHTipbox, 0, 1)
-	lhr.Input_plates = make(map[string]*wtype.LHPlate)
-	lhr.Input_platetypes = make([]*wtype.LHPlate, 0, 2)
+	lhr.Input_plates = make(map[string]*wtype.Plate)
+	lhr.Input_platetypes = make([]*wtype.Plate, 0, 2)
 	lhr.Input_setup_weights = make(map[string]float64)
-	lhr.Output_plates = make(map[string]*wtype.LHPlate)
+	lhr.Output_plates = make(map[string]*wtype.Plate)
 	lhr.Output_plate_order = make([]string, 0, 1)
 	lhr.Input_plate_order = make([]string, 0, 1)
 	lhr.Plate_lookup = make(map[string]string)
@@ -248,7 +248,7 @@ func (lhr *LHRequest) NewComponentsAdded() bool {
 	return len(lhr.Input_vols_wanting) != 0
 }
 
-func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
+func (lhr *LHRequest) AddUserPlate(p *wtype.Plate) {
 	// impose sanity
 
 	if p.PlateName == "" {
@@ -311,7 +311,7 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 
 // HasPlateNamed checks if the request already contains a plate with the specified name
 func (request *LHRequest) HasPlateNamed(name string) bool {
-	checkForPlateNamed := func(query string, subject map[string]*wtype.LHPlate) bool {
+	checkForPlateNamed := func(query string, subject map[string]*wtype.Plate) bool {
 		for _, plate := range subject {
 			if plate.PlateName == query {
 				return true
@@ -331,8 +331,8 @@ func (request *LHRequest) HasPlateNamed(name string) bool {
 }
 
 // OrderedInputPlates returns the list of input plates in order
-func (request *LHRequest) OrderedInputPlates() []*wtype.LHPlate {
-	ret := make([]*wtype.LHPlate, 0, len(request.Input_plates))
+func (request *LHRequest) OrderedInputPlates() []*wtype.Plate {
+	ret := make([]*wtype.Plate, 0, len(request.Input_plates))
 	for _, id := range request.Input_plate_order {
 		ret = append(ret, request.Input_plates[id])
 	}
@@ -341,8 +341,8 @@ func (request *LHRequest) OrderedInputPlates() []*wtype.LHPlate {
 }
 
 // OrderedOutputPlates returns the list of input plates in order
-func (request *LHRequest) OrderedOutputPlates() []*wtype.LHPlate {
-	ret := make([]*wtype.LHPlate, 0, len(request.Output_plates))
+func (request *LHRequest) OrderedOutputPlates() []*wtype.Plate {
+	ret := make([]*wtype.Plate, 0, len(request.Output_plates))
 	for _, id := range request.Output_plate_order {
 		ret = append(ret, request.Output_plates[id])
 	}
@@ -352,8 +352,8 @@ func (request *LHRequest) OrderedOutputPlates() []*wtype.LHPlate {
 
 // AllPlates returns a list of all known plates, in the order input plates, output plates
 // ordering will be as within the stated orders of each
-func (request *LHRequest) AllPlates() []*wtype.LHPlate {
-	r := make([]*wtype.LHPlate, 0, len(request.Input_plates)+len(request.Output_plates))
+func (request *LHRequest) AllPlates() []*wtype.Plate {
+	r := make([]*wtype.Plate, 0, len(request.Input_plates)+len(request.Output_plates))
 
 	r = append(r, request.OrderedInputPlates()...)
 	r = append(r, request.OrderedOutputPlates()...)

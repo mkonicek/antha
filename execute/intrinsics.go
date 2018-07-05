@@ -28,7 +28,7 @@ type commandInst struct {
 }
 
 // SetInputPlate notifies the planner about an input plate
-func SetInputPlate(ctx context.Context, plate *wtype.LHPlate) {
+func SetInputPlate(ctx context.Context, plate *wtype.Plate) {
 	st := sampletracker.GetSampleTracker()
 	st.SetInputPlate(plate)
 }
@@ -309,7 +309,7 @@ func NewComponent(ctx context.Context, typ string) *wtype.Liquid {
 }
 
 // NewPlate returns a new plate given a plate type
-func NewPlate(ctx context.Context, typ string) *wtype.LHPlate {
+func NewPlate(ctx context.Context, typ string) *wtype.Plate {
 	p, err := inventory.NewPlate(ctx, typ)
 	if err != nil {
 		Errorf(ctx, "cannot make plate %s: %s", typ, err)
@@ -378,7 +378,7 @@ func Mix(ctx context.Context, components ...*wtype.Liquid) *wtype.Liquid {
 }
 
 // MixInto mixes components
-func MixInto(ctx context.Context, outplate *wtype.LHPlate, address string, components ...*wtype.Liquid) *wtype.Liquid {
+func MixInto(ctx context.Context, outplate *wtype.Plate, address string, components ...*wtype.Liquid) *wtype.Liquid {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
 		Components:  components,
 		Destination: outplate,
@@ -484,7 +484,7 @@ func awaitData(
 	nextInput, currentOutput inject.Value) error {
 
 	switch t := object.(type) {
-	case *wtype.LHPlate:
+	case *wtype.Plate:
 	default:
 		return fmt.Errorf("cannot wait for data on %v type, only LHPlate allowed", t)
 	}
@@ -507,7 +507,7 @@ func awaitData(
 	}
 
 	// Update all components
-	plate := object.(*wtype.LHPlate)
+	plate := object.(*wtype.Plate)
 
 	allComp := plate.AllContents()
 

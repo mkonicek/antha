@@ -136,7 +136,7 @@ func (self *LHWell) SetOffset(point Coordinates) error {
 func (self *LHWell) SetParent(p LHObject) error {
 	//Seems unlikely, but I suppose wells that you can take from one plate and insert
 	//into another could be feasible with some funky labware
-	if plate, ok := p.(*LHPlate); ok {
+	if plate, ok := p.(*Plate); ok {
 		self.Plate = plate
 		return nil
 	}
@@ -432,7 +432,7 @@ func (w *LHWell) Clear() {
 	}
 	w.WContents = NewLHComponent()
 	//death if this well is actually in a tipwaste
-	w.WContents.Loc = w.Plate.(*LHPlate).ID + ":" + w.Crds.FormatA1()
+	w.WContents.Loc = w.Plate.(*Plate).ID + ":" + w.Crds.FormatA1()
 }
 
 //IsEmpty returns true if the well contains nothing, though this does not mean that the working volume is greater than zero
@@ -450,7 +450,7 @@ func (w *LHWell) IsEmpty() bool {
 //Clean resets the volume in the well so that it's empty
 func (w *LHWell) Clean() {
 	w.WContents.Clean()
-	w.WContents.Loc = w.Plate.(*LHPlate).ID + ":" + w.Crds.FormatA1()
+	w.WContents.Loc = w.Plate.(*Plate).ID + ":" + w.Crds.FormatA1()
 	newExtra := make(map[string]interface{})
 
 	// some keys must be retained
@@ -655,7 +655,7 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 }
 
 // this function is somewhat buggy... need to define its responsibilities better
-func Get_Next_Well(plate *LHPlate, component *Liquid, curwell *LHWell) (*LHWell, bool) {
+func Get_Next_Well(plate *Plate, component *Liquid, curwell *LHWell) (*LHWell, bool) {
 	vol := component.Vol
 
 	it := NewAddressIterator(plate, ColumnWise, TopToBottom, LeftToRight, false)

@@ -354,7 +354,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 					continue
 				}
 
-				ppp := this.Properties.PlateLookup[lp].(*wtype.LHPlate)
+				ppp := this.Properties.PlateLookup[lp].(*wtype.Plate)
 
 				lwl := ppp.Wellcoords[lw]
 
@@ -387,7 +387,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 					lpos, lw := tf.PltFrom, tf.WellFrom
 
 					lp := this.Properties.PosLookup[lpos]
-					ppp := this.Properties.PlateLookup[lp].(*wtype.LHPlate)
+					ppp := this.Properties.PlateLookup[lp].(*wtype.Plate)
 					lwl := ppp.Wellcoords[lw]
 
 					if !lwl.IsAutoallocated() {
@@ -711,7 +711,7 @@ func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
 
 		resultVolume := ins.Results[0].Volume()
 
-		var plate *wtype.LHPlate
+		var plate *wtype.Plate
 		if ins.OutPlate != nil {
 			plate = ins.OutPlate
 		} else if ins.PlateID != "" {
@@ -1218,9 +1218,9 @@ func OrdinalFromHash(m map[string]int) ([]string, error) {
 }
 
 // define which labware to use
-func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wtype.LHPlate, major_layouts map[int][]string, ptype *wtype.LHPlate) (map[string]*wtype.LHPlate, error) {
+func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wtype.Plate, major_layouts map[int][]string, ptype *wtype.Plate) (map[string]*wtype.Plate, error) {
 	if plates == nil {
-		plates = make(map[string]*wtype.LHPlate, len(major_layouts))
+		plates = make(map[string]*wtype.Plate, len(major_layouts))
 
 		// assign new plates
 		for i := 0; i < len(major_layouts); i++ {
@@ -1348,7 +1348,7 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate %s", newid))
 		}
 
-		p, ok := ip.(*wtype.LHPlate)
+		p, ok := ip.(*wtype.Plate)
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Got %s, should have *wtype.LHPlate", reflect.TypeOf(ip)))
 		}
@@ -1440,7 +1440,7 @@ func (lh *Liquidhandler) addWellTargets() error {
 
 const adaptorSpacing = 9.0
 
-func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.LHPlate) {
+func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.Plate) {
 	if adaptor.Manufacturer != "Gilson" {
 		logger.Info("Not adding well target data for non-gilson adaptor")
 		return
@@ -1510,14 +1510,14 @@ func getWellTargetYStart(wy int) (float64, int) {
 	return 0.0, 0
 }
 
-func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.LHPlate {
-	m := make(map[string]*wtype.LHPlate, len(req.Input_plates)+len(req.Output_plates))
+func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.Plate {
+	m := make(map[string]*wtype.Plate, len(req.Input_plates)+len(req.Output_plates))
 	addToMap(m, req.Input_plates)
 	addToMap(m, req.Output_plates)
 	return m
 }
 
-func addToMap(m, a map[string]*wtype.LHPlate) {
+func addToMap(m, a map[string]*wtype.Plate) {
 	for k, v := range a {
 		m[k] = v
 	}
@@ -1525,7 +1525,7 @@ func addToMap(m, a map[string]*wtype.LHPlate) {
 
 func fixDuplicatePlateNames(rq *LHRequest) *LHRequest {
 	seen := make(map[string]int, 1)
-	fixNames := func(sa []string, pm map[string]*wtype.LHPlate) {
+	fixNames := func(sa []string, pm map[string]*wtype.Plate) {
 		for _, id := range sa {
 			p, foundPlate := pm[id]
 

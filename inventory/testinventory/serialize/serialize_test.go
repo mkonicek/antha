@@ -26,12 +26,12 @@ func TestInventoryLHPlateSerialize(t *testing.T) {
 		t.Errorf("Serialization error: %d plates made, only %d available from inventory (update the library in ../plate_library.go)", len(oldPlates), len(newPlates))
 	}
 
-	newPlateMap := make(map[string]*wtype.LHPlate)
+	newPlateMap := make(map[string]*wtype.Plate)
 	for _, p := range newPlates {
 		newPlateMap[p.Type] = p
 	}
 
-	oldPlateMap := make(map[string]*wtype.LHPlate)
+	oldPlateMap := make(map[string]*wtype.Plate)
 	for _, p := range oldPlates {
 		oldPlateMap[p.Type] = p
 	}
@@ -126,7 +126,7 @@ func wellTypeEqual(self, w2 *wtype.LHWell) bool {
 }
 
 // note order of arguments here... this will incorrectly fail if order is disregarded
-func compareExtra(nonSerializedP, previouslySerializedP *wtype.LHPlate) bool {
+func compareExtra(nonSerializedP, previouslySerializedP *wtype.Plate) bool {
 	ex1 := nonSerializedP.Welltype.Extra
 	ex2 := previouslySerializedP.Welltype.Extra
 

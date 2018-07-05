@@ -49,7 +49,7 @@ type LHInstruction struct {
 	Results          []*Liquid
 	gen              int
 	PlateName        string
-	OutPlate         *LHPlate
+	OutPlate         *Plate
 	Message          string
 	PassThrough      map[string]*Liquid // 1:1 pass through, only applies to prompts
 }

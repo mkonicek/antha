@@ -38,8 +38,14 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
-// structure describing a microplate
-type LHPlate struct {
+// LHPlate is an alias for Plate to preserve backwards compatibility.
+// Plate is the principle type for Liquid handling Plates in Antha.
+// The structure describing a microplate.
+type LHPlate = Plate
+
+// Plate is the principle type for Liquid handling Plates in Antha.
+// The structure describing a microplate.
+type Plate struct {
 	ID          string
 	Inst        string
 	Loc         string             // location of plate
@@ -67,11 +73,11 @@ var (
 	CONSTRAINTMARKER = "constraint-"
 )
 
-func (plate LHPlate) OutputLayout() {
+func (plate Plate) OutputLayout() {
 	fmt.Println(plate.GetLayout())
 }
 
-func (plate LHPlate) GetLayout() string {
+func (plate Plate) GetLayout() string {
 	s := ""
 	for x := 0; x < plate.WellsX(); x += 1 {
 		for y := 0; y < plate.WellsY(); y += 1 {
@@ -100,21 +106,21 @@ func (plate LHPlate) GetLayout() string {
 	return s
 }
 
-func (lhp *LHPlate) GetID() string {
+func (lhp *Plate) GetID() string {
 	return lhp.ID
 }
 
 // Name returns the name of the plate.
-func (lhp LHPlate) Name() string {
+func (lhp Plate) Name() string {
 	return lhp.PlateName
 }
 
 // Set name sets the name of the plate.
-func (lhp *LHPlate) SetName(name string) {
+func (lhp *Plate) SetName(name string) {
 	lhp.PlateName = strings.TrimSpace(name)
 }
 
-func (lhp LHPlate) String() string {
+func (lhp Plate) String() string {
 	return fmt.Sprintf(
 		`LHPlate {
 	ID          : %s, 
@@ -163,7 +169,7 @@ func (lhp LHPlate) String() string {
 	)
 }
 
-func (lhp *LHPlate) GetContentVector(wv []WellCoords) ComponentVector {
+func (lhp *Plate) GetContentVector(wv []WellCoords) ComponentVector {
 	ret := make([]*Liquid, len(wv))
 
 	for i, wc := range wv {
@@ -263,7 +269,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 */
 
 // this gets ONE component... possibly from several wells
-func (lhp *LHPlate) BetterGetComponent(cmp *Liquid, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *Plate) BetterGetComponent(cmp *Liquid, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
@@ -317,7 +323,7 @@ func (lhp *LHPlate) BetterGetComponent(cmp *Liquid, mpv wunit.Volume, legacyVolu
 
 // convenience method
 
-func (lhp *LHPlate) AddComponent(cmp *Liquid, overflow bool) (wc []WellCoords, err error) {
+func (lhp *Plate) AddComponent(cmp *Liquid, overflow bool) (wc []WellCoords, err error) {
 	ret := make([]WellCoords, 0, 1)
 
 	v := wunit.NewVolume(cmp.Vol, cmp.Vunit)
@@ -362,7 +368,7 @@ func (lhp *LHPlate) AddComponent(cmp *Liquid, overflow bool) (wc []WellCoords, e
 
 // convenience method
 
-func (lhp *LHPlate) GetComponent(cmp *Liquid, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *Plate) GetComponent(cmp *Liquid, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
 	it := NewAddressIterator(lhp, ColumnWise, TopToBottom, LeftToRight, false)
@@ -404,7 +410,7 @@ func (lhp *LHPlate) GetComponent(cmp *Liquid, mpv wunit.Volume) ([]WellCoords, [
 	return ret, vols, true
 }
 
-func (lhp *LHPlate) ValidateVolumes() error {
+func (lhp *Plate) ValidateVolumes() error {
 	var lastErr error
 	var errCoords []string
 
@@ -427,10 +433,10 @@ func (lhp *LHPlate) ValidateVolumes() error {
 
 }
 
-func (lhp *LHPlate) Wells() [][]*LHWell {
+func (lhp *Plate) Wells() [][]*LHWell {
 	return lhp.Rows
 }
-func (lhp *LHPlate) WellMap() map[string]*LHWell {
+func (lhp *Plate) WellMap() map[string]*LHWell {
 	return lhp.Wellcoords
 }
 
@@ -439,7 +445,7 @@ const (
 	BYCOLUMN = false
 )
 
-func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
+func (lhp *Plate) AllWellPositions(byrow bool) (wellpositionarray []string) {
 	wellpositionarray = make([]string, 0, lhp.WlsX*lhp.WlsY)
 
 	if byrow {
@@ -466,12 +472,12 @@ func (lhp *LHPlate) AllWellPositions(byrow bool) (wellpositionarray []string) {
 	return
 }
 
-func (lhp *LHPlate) GetWellCoordsFromOrdering(ordinals []int, byrow bool) []WellCoords {
+func (lhp *Plate) GetWellCoordsFromOrdering(ordinals []int, byrow bool) []WellCoords {
 	wc := lhp.GetA1WellCoordsFromOrdering(ordinals, byrow)
 	return WCArrayFromStrings(wc)
 }
 
-func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []string {
+func (lhp *Plate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []string {
 	wps := lhp.AllWellPositions(byrow)
 
 	ret := make([]string, 0, len(wps))
@@ -489,12 +495,12 @@ func (lhp *LHPlate) GetA1WellCoordsFromOrdering(ordinals []int, byrow bool) []st
 
 	return ret
 }
-func (lhp *LHPlate) GetOrderingFromWellCoords(wc []WellCoords, byrow bool) []int {
+func (lhp *Plate) GetOrderingFromWellCoords(wc []WellCoords, byrow bool) []int {
 	wa1 := A1ArrayFromWellCoords(wc)
 	return lhp.GetOrderingFromA1WellCoords(wa1, byrow)
 }
 
-func (lhp *LHPlate) GetOrderingFromA1WellCoords(wa1 []string, byrow bool) []int {
+func (lhp *Plate) GetOrderingFromA1WellCoords(wa1 []string, byrow bool) []int {
 	wps := lhp.AllWellPositions(byrow)
 
 	ret := make([]int, len(wa1))
@@ -508,7 +514,7 @@ func (lhp *LHPlate) GetOrderingFromA1WellCoords(wa1 []string, byrow bool) []int 
 
 // @implement named
 
-func (lhp *LHPlate) GetName() string {
+func (lhp *Plate) GetName() string {
 	if lhp == nil {
 		return "<nil>"
 	}
@@ -516,23 +522,23 @@ func (lhp *LHPlate) GetName() string {
 }
 
 // @implement Typed
-func (lhp *LHPlate) GetType() string {
+func (lhp *Plate) GetType() string {
 	if lhp == nil {
 		return "<nil>"
 	}
 	return lhp.Type
 }
 
-func (self *LHPlate) GetClass() string {
+func (self *Plate) GetClass() string {
 	return "plate"
 }
 
-func (lhp *LHPlate) WellAt(wc WellCoords) (*LHWell, bool) {
+func (lhp *Plate) WellAt(wc WellCoords) (*LHWell, bool) {
 	w, ok := lhp.Wellcoords[wc.FormatA1()]
 	return w, ok
 }
 
-func (lhp *LHPlate) WellAtString(s string) (*LHWell, bool) {
+func (lhp *Plate) WellAtString(s string) (*LHWell, bool) {
 
 	//parse well coords, guessing the format
 	wc := MakeWellCoords(s)
@@ -544,15 +550,15 @@ func (lhp *LHPlate) WellAtString(s string) (*LHWell, bool) {
 	return lhp.WellAt(wc)
 }
 
-func (lhp *LHPlate) WellsX() int {
+func (lhp *Plate) WellsX() int {
 	return lhp.WlsX
 }
 
-func (lhp *LHPlate) WellsY() int {
+func (lhp *Plate) WellsY() int {
 	return lhp.WlsY
 }
 
-func (lhp *LHPlate) IsEmpty() bool {
+func (lhp *Plate) IsEmpty() bool {
 	for _, w := range lhp.Wellcoords {
 		if !w.IsEmpty() {
 			return false
@@ -562,7 +568,7 @@ func (lhp *LHPlate) IsEmpty() bool {
 }
 
 //Clean empty all the wells of the plate so that IsEmpty returns true
-func (lhp *LHPlate) Clean() {
+func (lhp *Plate) Clean() {
 
 	for _, w := range lhp.Wellcoords {
 		w.Clean()
@@ -570,7 +576,7 @@ func (lhp *LHPlate) Clean() {
 	lhp.Welltype.Clean()
 }
 
-func (lhp *LHPlate) NextEmptyWell(it AddressIterator) WellCoords {
+func (lhp *Plate) NextEmptyWell(it AddressIterator) WellCoords {
 	c := 0
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		if c == lhp.Nwells {
@@ -586,8 +592,8 @@ func (lhp *LHPlate) NextEmptyWell(it AddressIterator) WellCoords {
 	return ZeroWellCoords()
 }
 
-func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
-	var lhp LHPlate
+func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
+	var lhp Plate
 	lhp.Type = platetype
 	//lhp.ID = "plate-" + GetUUID()
 	lhp.ID = GetUUID()
@@ -651,15 +657,15 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 	return &lhp
 }
 
-func (lhp *LHPlate) Dup() *LHPlate {
+func (lhp *Plate) Dup() *Plate {
 	return lhp.dup(false)
 }
 
-func (lhp *LHPlate) DupKeepIDs() *LHPlate {
+func (lhp *Plate) DupKeepIDs() *Plate {
 	return lhp.dup(true)
 }
 
-func (lhp *LHPlate) dup(keep_ids bool) *LHPlate {
+func (lhp *Plate) dup(keep_ids bool) *Plate {
 	// protect yourself fgs
 	if lhp == nil {
 		logger.Fatal(fmt.Sprintln("Can't dup nonexistent plate"))
@@ -701,19 +707,19 @@ func (lhp *LHPlate) dup(keep_ids bool) *LHPlate {
 	return ret
 }
 
-func (p *LHPlate) ProtectAllWells() {
+func (p *Plate) ProtectAllWells() {
 	for _, v := range p.Wellcoords {
 		v.Protect()
 	}
 }
 
-func (p *LHPlate) UnProtectAllWells() {
+func (p *Plate) UnProtectAllWells() {
 	for _, v := range p.Wellcoords {
 		v.UnProtect()
 	}
 }
 
-func Initialize_Wells(plate *LHPlate) {
+func Initialize_Wells(plate *Plate) {
 	wells := (*plate).HWells
 	newwells := make(map[string]*LHWell, len(wells))
 	wellcrds := (*plate).Wellcoords
@@ -726,7 +732,7 @@ func Initialize_Wells(plate *LHPlate) {
 	(*plate).Wellcoords = wellcrds
 }
 
-func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *Liquid {
+func (p *Plate) RemoveComponent(well string, vol wunit.Volume) *Liquid {
 	w := p.Wellcoords[well]
 
 	if w == nil {
@@ -739,13 +745,13 @@ func (p *LHPlate) RemoveComponent(well string, vol wunit.Volume) *Liquid {
 	return cmp
 }
 
-func (p *LHPlate) DeclareTemporary() {
+func (p *Plate) DeclareTemporary() {
 	for _, w := range p.Wellcoords {
 		w.DeclareTemporary()
 	}
 }
 
-func (p *LHPlate) IsTemporary() bool {
+func (p *Plate) IsTemporary() bool {
 	for _, w := range p.Wellcoords {
 		if !w.IsTemporary() {
 			return false
@@ -755,13 +761,13 @@ func (p *LHPlate) IsTemporary() bool {
 	return true
 }
 
-func (p *LHPlate) DeclareAutoallocated() {
+func (p *Plate) DeclareAutoallocated() {
 	for _, w := range p.Wellcoords {
 		w.DeclareAutoallocated()
 	}
 }
 
-func (p *LHPlate) IsAutoallocated() bool {
+func (p *Plate) IsAutoallocated() bool {
 	for _, w := range p.Wellcoords {
 		if !w.IsAutoallocated() {
 			return false
@@ -773,7 +779,7 @@ func (p *LHPlate) IsAutoallocated() bool {
 
 // ExportPlateCSV a exports an LHPlate and its contents as a csv file.
 // The caller is required to set the well locations and volumes explicitely with this function.
-func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wells []string, liquids []*Liquid, volumes []wunit.Volume) (file File, err error) {
+func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells []string, liquids []*Liquid, volumes []wunit.Volume) (file File, err error) {
 	if len(wells) != len(liquids) || len(liquids) != len(volumes) {
 		return File{}, fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
@@ -803,7 +809,7 @@ func ExportPlateCSV(outputFileName string, plate *LHPlate, plateName string, wel
 // at the time of running an element, the scheduler  will not have allocated positions
 // for the components so, for example, accurate well information cannot currently be obtained with this function.
 // If allocating wells manually use the ExportPlateCSV function and explicitely set the sample locations and volumes.
-func AutoExportPlateCSV(outputFileName string, plate *LHPlate) (file File, err error) {
+func AutoExportPlateCSV(outputFileName string, plate *Plate) (file File, err error) {
 
 	var platename string = plate.PlateName
 	var wells = make([]string, 0)
@@ -923,13 +929,13 @@ func isConstraintKey(s string) bool {
 	return strings.HasPrefix(s, CONSTRAINTMARKER)
 }
 
-func (p *LHPlate) SetConstrained(platform string, positions []string) {
+func (p *Plate) SetConstrained(platform string, positions []string) {
 
 	cstrKey := makeConstraintKeyFor(platform)
 	p.Welltype.Extra[cstrKey] = positions
 }
 
-func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
+func (p *Plate) IsConstrainedOn(platform string) ([]string, bool) {
 	cstrKey := makeConstraintKeyFor(platform)
 	par, ok := p.Welltype.Extra[cstrKey]
 	if !ok {
@@ -953,7 +959,7 @@ func (p *LHPlate) IsConstrainedOn(platform string) ([]string, bool) {
 	}
 }
 
-func (p *LHPlate) GetAllConstraints() map[string][]string {
+func (p *Plate) GetAllConstraints() map[string][]string {
 	ret := make(map[string][]string)
 	for k, v := range p.Welltype.Extra {
 		if isConstraintKey(k) {
@@ -970,27 +976,27 @@ func (p *LHPlate) GetAllConstraints() map[string][]string {
 //@implement LHObject
 //##############################################
 
-func (self *LHPlate) GetPosition() Coordinates {
+func (self *Plate) GetPosition() Coordinates {
 	if self.parent != nil {
 		return self.parent.GetPosition().Add(self.Bounds.GetPosition())
 	}
 	return self.Bounds.GetPosition()
 }
 
-func (self *LHPlate) GetSize() Coordinates {
+func (self *Plate) GetSize() Coordinates {
 	return self.Bounds.GetSize()
 }
 
-func (self *LHPlate) GetWellOffset() Coordinates {
+func (self *Plate) GetWellOffset() Coordinates {
 	return Coordinates{self.WellXStart, self.WellYStart, self.WellZStart}
 }
 
-func (self *LHPlate) GetWellCorner() Coordinates {
+func (self *Plate) GetWellCorner() Coordinates {
 	size := self.Welltype.GetSize()
 	return Coordinates{self.WellXStart - 0.5*size.X, self.WellYStart - 0.5*size.Y, self.WellZStart}
 }
 
-func (self *LHPlate) GetWellSize() Coordinates {
+func (self *Plate) GetWellSize() Coordinates {
 	return Coordinates{
 		self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
 		self.WellYOffset*float64(self.NRows()-1) + self.Welltype.GetSize().Y,
@@ -998,14 +1004,14 @@ func (self *LHPlate) GetWellSize() Coordinates {
 	}
 }
 
-func (self *LHPlate) GetWellBounds() BBox {
+func (self *Plate) GetWellBounds() BBox {
 	return BBox{
 		self.Bounds.GetPosition().Add(self.GetWellCorner()),
 		self.GetWellSize(),
 	}
 }
 
-func (self *LHPlate) GetBoxIntersections(box BBox) []LHObject {
+func (self *Plate) GetBoxIntersections(box BBox) []LHObject {
 	//relative to me
 	box.SetPosition(box.GetPosition().Subtract(OriginOf(self)))
 	ret := []LHObject{}
@@ -1024,7 +1030,7 @@ func (self *LHPlate) GetBoxIntersections(box BBox) []LHObject {
 	return ret
 }
 
-func (self *LHPlate) GetPointIntersections(point Coordinates) []LHObject {
+func (self *Plate) GetPointIntersections(point Coordinates) []LHObject {
 	//relative
 	point = point.Subtract(OriginOf(self))
 	ret := []LHObject{}
@@ -1043,7 +1049,7 @@ func (self *LHPlate) GetPointIntersections(point Coordinates) []LHObject {
 	return ret
 }
 
-func (p *LHPlate) Evaporate(time time.Duration, env Environment) []VolumeCorrection {
+func (p *Plate) Evaporate(time time.Duration, env Environment) []VolumeCorrection {
 	ret := make([]VolumeCorrection, 0, 10)
 	if p == nil {
 		return ret
@@ -1059,32 +1065,32 @@ func (p *LHPlate) Evaporate(time time.Duration, env Environment) []VolumeCorrect
 	return ret
 }
 
-func (self *LHPlate) SetOffset(o Coordinates) error {
+func (self *Plate) SetOffset(o Coordinates) error {
 	self.Bounds.SetPosition(o)
 	return nil
 }
 
-func (self *LHPlate) SetParent(p LHObject) error {
+func (self *Plate) SetParent(p LHObject) error {
 	self.parent = p
 	return nil
 }
 
 //@implement LHObject
-func (self *LHPlate) ClearParent() {
+func (self *Plate) ClearParent() {
 	self.parent = nil
 }
 
-func (self *LHPlate) GetParent() LHObject {
+func (self *Plate) GetParent() LHObject {
 	return self.parent
 }
 
 //Duplicate copies an LHObject
-func (self *LHPlate) Duplicate(keepIDs bool) LHObject {
+func (self *Plate) Duplicate(keepIDs bool) LHObject {
 	return self.dup(keepIDs)
 }
 
 //DimensionsString returns a string description of the position and size of the object and its children.
-func (self *LHPlate) DimensionsString() string {
+func (self *Plate) DimensionsString() string {
 	wb := self.GetWellBounds()
 	ret := make([]string, 0, 1+len(self.Wellcoords))
 	ret = append(ret, fmt.Sprintf("Plate %s at %v+%v, with %dx%d wells bounded by %v",
@@ -1110,22 +1116,22 @@ func (self *LHPlate) DimensionsString() string {
 //@implement Addressable
 //##############################################
 
-func (self *LHPlate) AddressExists(c WellCoords) bool {
+func (self *Plate) AddressExists(c WellCoords) bool {
 	return c.X >= 0 &&
 		c.Y >= 0 &&
 		c.X < self.WlsX &&
 		c.Y < self.WlsY
 }
 
-func (lhp *LHPlate) NCols() int {
+func (lhp *Plate) NCols() int {
 	return lhp.WlsX
 }
 
-func (lhp *LHPlate) NRows() int {
+func (lhp *Plate) NRows() int {
 	return lhp.WlsY
 }
 
-func (self *LHPlate) GetChildByAddress(c WellCoords) LHObject {
+func (self *Plate) GetChildByAddress(c WellCoords) LHObject {
 	if !self.AddressExists(c) {
 		return nil
 	}
@@ -1133,7 +1139,7 @@ func (self *LHPlate) GetChildByAddress(c WellCoords) LHObject {
 	return self.Cols[c.X][c.Y]
 }
 
-func (self *LHPlate) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
+func (self *Plate) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
 	rel := r.Subtract(self.GetPosition())
 	wellSize := self.Welltype.GetSize()
 	wc := WellCoords{
@@ -1156,7 +1162,7 @@ func (self *LHPlate) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates)
 	return wc, r.Subtract(r2)
 }
 
-func (self *LHPlate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates, bool) {
+func (self *Plate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates, bool) {
 	if !self.AddressExists(wc) {
 		return Coordinates{}, false
 	}
@@ -1176,18 +1182,18 @@ func (self *LHPlate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordin
 	return Coordinates{center.X, center.Y, z}, true
 }
 
-func (p *LHPlate) ResetID(newID string) {
+func (p *Plate) ResetID(newID string) {
 	for _, w := range p.Wellcoords {
 		w.ResetPlateID(newID)
 	}
 	p.ID = newID
 }
 
-func (p *LHPlate) Height() float64 {
+func (p *Plate) Height() float64 {
 	return p.Bounds.GetSize().Z
 }
 
-func (p *LHPlate) IsUserAllocated() bool {
+func (p *Plate) IsUserAllocated() bool {
 	// true if any wells are user allocated
 
 	for _, w := range p.Wellcoords {
@@ -1201,7 +1207,7 @@ func (p *LHPlate) IsUserAllocated() bool {
 
 // semantics are: put stuff from p2 into p unless
 // the well in p is declared as user allocated
-func (p *LHPlate) MergeWith(p2 *LHPlate) {
+func (p *Plate) MergeWith(p2 *Plate) {
 	// do nothing if these are not same type
 
 	if p.Type != p2.Type {
@@ -1228,7 +1234,7 @@ func (p *LHPlate) MergeWith(p2 *LHPlate) {
 	}
 }
 
-func (p *LHPlate) MarkNonEmptyWellsUserAllocated() {
+func (p *Plate) MarkNonEmptyWellsUserAllocated() {
 	for _, w := range p.Wellcoords {
 		if !w.IsEmpty() {
 			w.SetUserAllocated()
@@ -1236,7 +1242,7 @@ func (p *LHPlate) MarkNonEmptyWellsUserAllocated() {
 	}
 }
 
-func (p *LHPlate) AllNonEmptyWells() []*LHWell {
+func (p *Plate) AllNonEmptyWells() []*LHWell {
 	ret := make([]*LHWell, 0, p.Nwells)
 
 	it := NewAddressIterator(p, ColumnWise, TopToBottom, LeftToRight, false)
@@ -1254,7 +1260,7 @@ func (p *LHPlate) AllNonEmptyWells() []*LHWell {
 
 //AreaWellTargetsEnabled should well targets be set with this plate?
 //aim is to deprecate IsSpecial
-func (p *LHPlate) AreWellTargetsEnabled(adaptorChannels int, channelSpacing float64) bool {
+func (p *Plate) AreWellTargetsEnabled(adaptorChannels int, channelSpacing float64) bool {
 
 	if p.NRows() != 1 {
 		return false
@@ -1270,7 +1276,7 @@ func (p *LHPlate) AreWellTargetsEnabled(adaptorChannels int, channelSpacing floa
 
 }
 
-func (p *LHPlate) IsSpecial() bool {
+func (p *Plate) IsSpecial() bool {
 	if p == nil || p.Welltype.Extra == nil {
 		return false
 	}
@@ -1284,7 +1290,7 @@ func (p *LHPlate) IsSpecial() bool {
 	return true
 }
 
-func (p *LHPlate) DeclareSpecial() {
+func (p *Plate) DeclareSpecial() {
 	if p != nil && p.Welltype.Extra != nil {
 		p.Welltype.Extra["IMSPECIAL"] = true
 	}
@@ -1303,13 +1309,13 @@ func componentList(vec ComponentVector) map[string]bool {
 	return r
 }
 
-func (p *LHPlate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume, ignoreInstances bool) ComponentVector {
+func (p *Plate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume, ignoreInstances bool) ComponentVector {
 	cv := p.GetFilteredContentVector(wv, cmps, ignoreInstances)
 	cv.DeleteAllBelowVolume(mpv)
 	return cv
 }
 
-func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector, ignoreInstances bool) ComponentVector {
+func (p *Plate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector, ignoreInstances bool) ComponentVector {
 	wants := componentList(cmps)
 
 	cv := p.GetContentVector(wv)
@@ -1331,7 +1337,7 @@ func (p *LHPlate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector
 
 	return fcv
 }
-func (p *LHPlate) FindAndUpdateID(before string, after *Liquid) bool {
+func (p *Plate) FindAndUpdateID(before string, after *Liquid) bool {
 	for _, w := range p.Wellcoords {
 		if w.UpdateContentID(before, after) {
 			return true
@@ -1341,7 +1347,7 @@ func (p *LHPlate) FindAndUpdateID(before string, after *Liquid) bool {
 }
 
 // SetData implements Annotatable
-func (p *LHPlate) SetData(key string, data []byte) error {
+func (p *Plate) SetData(key string, data []byte) error {
 	if err := p.checkExtra(fmt.Sprintf("cannot add data %s", key)); err != nil {
 		return err
 	}
@@ -1358,7 +1364,7 @@ func (p *LHPlate) SetData(key string, data []byte) error {
 }
 
 // ClearData removes data with the given name
-func (p *LHPlate) ClearData(k string) error {
+func (p *Plate) ClearData(k string) error {
 	err := p.checkExtra(fmt.Sprintf("cannot clear data %s", k))
 
 	if err != nil {
@@ -1370,7 +1376,7 @@ func (p *LHPlate) ClearData(k string) error {
 	return nil
 }
 
-func (p *LHPlate) checkExtra(s string) error {
+func (p *Plate) checkExtra(s string) error {
 	if p == nil {
 		return fmt.Errorf("nil plate: %s", s)
 	}
@@ -1386,7 +1392,7 @@ func (p *LHPlate) checkExtra(s string) error {
 	return nil
 }
 
-func (p LHPlate) GetData(key string) ([]byte, error) {
+func (p Plate) GetData(key string) ([]byte, error) {
 	if err := p.checkExtra(fmt.Sprintf("cannot get key %s", key)); err != nil {
 		return nil, err
 	}
@@ -1404,7 +1410,7 @@ func (p LHPlate) GetData(key string) ([]byte, error) {
 }
 
 // CheckExtraKey checks if the key is a reserved name
-func (p LHPlate) CheckExtraKey(k string) error {
+func (p Plate) CheckExtraKey(k string) error {
 	reserved := []string{"IMSPECIAL", "Pipetmax"}
 
 	if wutil.StrInStrArray(k, reserved) {
@@ -1419,7 +1425,7 @@ func (p LHPlate) CheckExtraKey(k string) error {
 }
 
 // AllContents returns all the components on the plate
-func (p *LHPlate) AllContents() []*Liquid {
+func (p *Plate) AllContents() []*Liquid {
 	ret := make([]*Liquid, 0, len(p.Wellcoords))
 	for _, c := range p.Cols {
 		for _, w := range c {
@@ -1430,7 +1436,7 @@ func (p *LHPlate) AllContents() []*Liquid {
 	return ret
 }
 
-func (p *LHPlate) ColVol() wunit.Volume {
+func (p *Plate) ColVol() wunit.Volume {
 	if p == nil {
 		return wunit.ZeroVolume()
 	}
@@ -1443,7 +1449,7 @@ func (p *LHPlate) ColVol() wunit.Volume {
 }
 
 //GetTargetOffset get the offset for addressing a well with the named adaptor and channel
-func (p *LHPlate) GetTargetOffset(adaptorName string, channel int) Coordinates {
+func (p *Plate) GetTargetOffset(adaptorName string, channel int) Coordinates {
 	targets := p.Welltype.GetWellTargets(adaptorName)
 	if channel < 0 || channel >= len(targets) {
 		return Coordinates{}
@@ -1452,11 +1458,11 @@ func (p *LHPlate) GetTargetOffset(adaptorName string, channel int) Coordinates {
 }
 
 //GetTargets return all the defined targets for the named adaptor
-func (p *LHPlate) GetTargets(adaptorName string) []Coordinates {
+func (p *Plate) GetTargets(adaptorName string) []Coordinates {
 	return p.Welltype.GetWellTargets(adaptorName)
 }
 
 //ListAdaptorsWithTargets get a list of the names of all the adaptors with targets set
-func (p *LHPlate) ListAdaptorsWithTargets() []string {
+func (p *Plate) ListAdaptorsWithTargets() []string {
 	return p.Welltype.ListAdaptorsWithTargets()
 }

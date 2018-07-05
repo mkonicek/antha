@@ -26,7 +26,7 @@ func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.L
 	return c.Cp(), nil
 }
 
-func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
+func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
 	p, ok := i.plateByType[typ]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid plate: %s", inventory.ErrUnknownType, typ)
@@ -49,7 +49,7 @@ func (i *testInventory) NewTipwaste(ctx context.Context, typ string) (*wtype.LHT
 	return tw.Dup(), nil
 }
 
-func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.LHPlate, error) {
+func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.Plate, error) {
 	plates := GetPlates(ctx)
 	return plates, nil
 }
@@ -120,9 +120,9 @@ func GetTipboxes(ctx context.Context) []*wtype.LHTipbox {
 }
 
 // GetPlates returns the plates in a test inventory context
-func GetPlates(ctx context.Context) []*wtype.LHPlate {
+func GetPlates(ctx context.Context) []*wtype.Plate {
 	inv := inventory.GetInventory(ctx).(*testInventory)
-	var ps []*wtype.LHPlate
+	var ps []*wtype.Plate
 	for _, p := range inv.plateByType {
 		ps = append(ps, p.LHPlate())
 	}

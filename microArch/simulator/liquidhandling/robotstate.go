@@ -162,7 +162,7 @@ func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObje
 				if len(well.GetPointIntersections(tipBottom)) == 0 {
 					ret = append(ret, well.GetParent())
 				}
-			} else if _, ok := obj.(*wtype.LHPlate); !ok {
+			} else if _, ok := obj.(*wtype.Plate); !ok {
 				ret = append(ret, obj)
 			}
 		}

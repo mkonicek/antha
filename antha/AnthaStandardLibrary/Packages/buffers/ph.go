@@ -36,7 +36,7 @@ type PHperdegC float64
 
 type PHMeasurement struct {
 	Component       *wtype.Liquid
-	Location        *wtype.LHPlate
+	Location        *wtype.Plate
 	PHValue         float64
 	Temp            wunit.Temperature
 	TempCorrected   *float64

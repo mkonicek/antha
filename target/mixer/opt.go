@@ -33,10 +33,10 @@ type Opt struct {
 
 	// Two methods of populating input plates
 	InputPlateData [][]byte         // From contents of files
-	InputPlates    []*wtype.LHPlate // Directly
+	InputPlates    []*wtype.Plate // Directly
 
 	// Direct specification of output plates
-	OutputPlates []*wtype.LHPlate
+	OutputPlates []*wtype.Plate
 
 	// Specify file name in the instruction stream of any driver generated file
 	DriverOutputFileName string

@@ -22,7 +22,7 @@ func ChannelsUsed(wf []string) []bool {
 	return ret
 }
 
-func ChannelWells(prm LHChannelParameter, plt LHPlate, wellsfrom []string) []string {
+func ChannelWells(prm LHChannelParameter, plt Plate, wellsfrom []string) []string {
 	channelsused := ChannelsUsed(wellsfrom)
 
 	firstwell := ""
@@ -69,7 +69,7 @@ func ChannelWells(prm LHChannelParameter, plt LHPlate, wellsfrom []string) []str
 	return tipwells
 }
 
-func TipsPerWell(prm LHChannelParameter, p LHPlate) (int, int) {
+func TipsPerWell(prm LHChannelParameter, p Plate) (int, int) {
 	// assumptions:
 
 	// 1) sbs format plate

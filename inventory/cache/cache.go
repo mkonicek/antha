@@ -38,7 +38,7 @@ func NewComponent(ctx context.Context, typ string) (*wtype.Liquid, error) {
 }
 
 // NewPlate returns a new plate of the given type
-func NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
+func NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
 	return fromContext(ctx).NewPlate(ctx, typ)
 }
 

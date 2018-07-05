@@ -87,12 +87,12 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	input_plates := (*request).Input_plates
 
 	if len(input_plates) == 0 {
-		input_plates = make(map[string]*wtype.LHPlate, 3)
+		input_plates = make(map[string]*wtype.Plate, 3)
 	}
 
 	// need to fill each plate type
 
-	var curr_plate *wtype.LHPlate
+	var curr_plate *wtype.Plate
 
 	inputs := (*request).Input_solutions
 
@@ -117,7 +117,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	// get the assignment
 
-	var well_count_assignments map[string]map[*wtype.LHPlate]int
+	var well_count_assignments map[string]map[*wtype.Plate]int
 
 	if len(input_volumes) != 0 {
 		// If any input solutions need to be set up then we now check if there any input plate types set.
@@ -129,7 +129,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	input_assignments := make(map[string][]string, len(well_count_assignments))
 
-	plates_in_play := make(map[string]*wtype.LHPlate)
+	plates_in_play := make(map[string]*wtype.Plate)
 
 	curplaten := 1
 	for _, cname := range input_order {

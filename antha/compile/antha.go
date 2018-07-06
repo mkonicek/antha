@@ -218,6 +218,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"NewPlate":      "execute.NewPlate",
 		"Prompt":        "execute.Prompt",
 		"ReadEM":        "execute.ReadEM",
+		"Sample":        "execute.Sample",
 		"SetInputPlate": "execute.SetInputPlate",
 		"SplitSample":   "execute.SplitSample",
 	}

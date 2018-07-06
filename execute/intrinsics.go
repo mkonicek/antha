@@ -423,6 +423,11 @@ func SplitSample(ctx context.Context, component *wtype.LHComponent, volume wunit
 	return inst.result[0].Dup(), inst.result[1].Dup()
 }
 
+// Sample takes a sample of volume v from this liquid
+func Sample(ctx context.Context, liquid *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
+	return mixer.Sample(liquid, v)
+}
+
 func splitSample(ctx context.Context, component *wtype.LHComponent, volume wunit.Volume) *commandInst {
 	split := wtype.NewLHSplitInstruction()
 

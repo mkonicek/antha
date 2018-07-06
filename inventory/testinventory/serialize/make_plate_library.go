@@ -45,7 +45,7 @@ var platespecificoffset = map[string]float64{
 }
 
 // function to check if a platename already contains a riser
-func containsRiser(plate *wtype.LHPlate) bool {
+func containsRiser(plate *wtype.Plate) bool {
 	for _, dev := range defaultDevices {
 		for _, synonym := range dev.GetSynonyms() {
 			if strings.Contains(plate.Type, "_"+synonym) {
@@ -57,7 +57,7 @@ func containsRiser(plate *wtype.LHPlate) bool {
 	return false
 }
 
-func addRiser(plate *wtype.LHPlate, riser device) (plates []*wtype.LHPlate) {
+func addRiser(plate *wtype.Plate, riser device) (plates []*wtype.Plate) {
 	if containsRiser(plate) || doNotAddThisRiserToThisPlate(plate, riser) {
 		return
 	}
@@ -101,7 +101,7 @@ func addRiser(plate *wtype.LHPlate, riser device) (plates []*wtype.LHPlate) {
 	return
 }
 
-func addAllDevices(plates []*wtype.LHPlate) (ret []*wtype.LHPlate) {
+func addAllDevices(plates []*wtype.Plate) (ret []*wtype.Plate) {
 	for _, plate := range plates {
 		for _, dev := range defaultDevices {
 			ret = append(ret, addRiser(plate, dev)...)
@@ -110,13 +110,13 @@ func addAllDevices(plates []*wtype.LHPlate) (ret []*wtype.LHPlate) {
 	return
 }
 
-func makePlates() (plates []*wtype.LHPlate) {
+func makePlates() (plates []*wtype.Plate) {
 	plates = makeBasicPlates()
 	additional := addAllDevices(plates)
 	return append(plates, additional...)
 }
 
-func makeBasicPlates() (plates []*wtype.LHPlate) {
+func makeBasicPlates() (plates []*wtype.Plate) {
 	// deep square well 96
 	swshp := wtype.NewShape("box", "mm", 8.2, 8.2, 41.3)
 	deepsquarewell := wtype.NewLHWell("ul", 2000, 420, swshp, wtype.VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
@@ -648,26 +648,26 @@ func makePlateCoords(height float64) wtype.Coordinates {
 	return wtype.Coordinates{X: 127.76, Y: 85.48, Z: height}
 }
 
-func makePCRPlate() *wtype.LHPlate {
+func makePCRPlate() *wtype.Plate {
 	return wtype.NewLHPlate("pcrplate", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
 // pcr plate semi-skirted
-func makeSemiSkirtedPCRPlate() *wtype.LHPlate {
+func makeSemiSkirtedPCRPlate() *wtype.Plate {
 	return wtype.NewLHPlate("pcrplate_semi_skirted", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(), 9, 9, 0.0, 0.0, 1.0)
 }
 
 // 0.2ml strip tubes
-func makeStripTube() *wtype.LHPlate {
+func makeStripTube() *wtype.Plate {
 	return wtype.NewLHPlate("strip_tubes_0.2ml", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(), 9, 9, 0.0, 0.0, 0.0)
 }
 
 // pcr plate skirted
-func makeSkirtedPCRPlate() *wtype.LHPlate {
+func makeSkirtedPCRPlate() *wtype.Plate {
 	return wtype.NewLHPlate("pcrplate_skirted", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
-func makeGreinerVBottomPlate() *wtype.LHPlate {
+func makeGreinerVBottomPlate() *wtype.Plate {
 	// greiner V96 Microplate PS V-Bottom, Clear, Cat Num: 651161
 
 	bottomtype := wtype.VWellBottom
@@ -692,7 +692,7 @@ func makeGreinerVBottomPlate() *wtype.LHPlate {
 
 // Nunc U96 Microplate PolyStyrene Sterile U-Bottom, Clear, Cat Num: 262162
 // Source of dimensions: https://www.thermofisher.com/order/catalog/product/262162
-func makeNunc96UPlate() *wtype.LHPlate {
+func makeNunc96UPlate() *wtype.Plate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
 	xstartOffsetCorrection := 11.25
@@ -761,7 +761,7 @@ func makeFluidX700ulTube() *wtype.LHWell {
 }
 
 // http://fluidx.eu/0.7ml%2c-96-well-format-2d-barcoded-jacket-tube-with-external-thread.html
-func makeFluidX700ulPlate() *wtype.LHPlate {
+func makeFluidX700ulPlate() *wtype.Plate {
 
 	// no literature values for these
 
@@ -790,7 +790,7 @@ func makeFluidX700ulPlate() *wtype.LHPlate {
 	return plate
 }
 
-func makeGreinerFlatBottomBlackPlate() *wtype.LHPlate {
+func makeGreinerFlatBottomBlackPlate() *wtype.Plate {
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape("cylinder", "mm", 8.2, 8.2, 11)
 	roundwell96 := wtype.NewLHWell("ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
@@ -799,7 +799,7 @@ func makeGreinerFlatBottomBlackPlate() *wtype.LHPlate {
 }
 
 // Onewell SBS format Agarplate with colonies on shallowriser (50ml agar) very high res
-func makeHighResplateforPicking() *wtype.LHPlate {
+func makeHighResplateforPicking() *wtype.Plate {
 
 	bottomtype := wtype.FlatWellBottom
 	xdim := 1.4 // of well
@@ -824,7 +824,7 @@ func makeHighResplateforPicking() *wtype.LHPlate {
 
 // Nunc™ 1.0 ml DeepWell™ Plates with Shared-Wall Technology Cat Num: 260251
 // Source of dimensions: https://www.thermofisher.com/order/catalog/product/260251
-func make96DeepWellLowVolumePlate() *wtype.LHPlate {
+func make96DeepWellLowVolumePlate() *wtype.Plate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
 	xstartOffsetCorrection := 14.50
@@ -874,7 +874,7 @@ func make96DeepWellLowVolumePlate() *wtype.LHPlate {
 // Part number P-05525
 // Specs retrieved from
 // https://www.labcyte.com/media/pdf/SPC-Qualified-Microplate-384PP.pdf
-func makeLabcyte384PPStdV() *wtype.LHPlate {
+func makeLabcyte384PPStdV() *wtype.Plate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
 	xstartOffsetCorrection := 14.50
@@ -921,7 +921,7 @@ func makeLabcyte384PPStdV() *wtype.LHPlate {
 
 // Applied Biosystems, MicroAmp Optical 384-well Reaction Plate; Cat Num: 4309849
 // Source of dimensions: https://www.thermofisher.com/order/catalog/product/4309849
-func make384wellplateAppliedBiosystems() *wtype.LHPlate {
+func make384wellplateAppliedBiosystems() *wtype.Plate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
 	xstartOffsetCorrection := 13.0
@@ -970,7 +970,7 @@ func make384wellplateAppliedBiosystems() *wtype.LHPlate {
 // AcroPrep™ 384-well Filter Plates, 100 µL
 // AcroPrep 384 x 100ul-well collection plate, without top filter plate.
 // Source of dimensions: https://shop.pall.com/us/en/laboratory/dna-rna-purification/plant-genomic-dna-purification/acroprep-384-well-filter-plates-100-l-zidgri78lbr
-func makeAcroPrep384NoFilter() *wtype.LHPlate {
+func makeAcroPrep384NoFilter() *wtype.Plate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
 	xstartOffsetCorrection := 14.38
@@ -1019,7 +1019,7 @@ func makeAcroPrep384NoFilter() *wtype.LHPlate {
 // AcroPrep 384-well protein filter plate--omega membrane,
 // long tip--stacked on top of a 384 x 100ul-well collection plate.
 // Source of dimensions: https://shop.pall.com/us/en/laboratory/dna-rna-purification/plant-genomic-dna-purification/acroprep-384-well-filter-plates-100-l-zidgri78lbr
-func makeAcroPrep384WithFilter() *wtype.LHPlate {
+func makeAcroPrep384WithFilter() *wtype.Plate {
 
 	// These corrections are necessary to subtract from the official (correct) dimensions in order obtain correct pipetting behaviour.
 	xstartOffsetCorrection := 14.38

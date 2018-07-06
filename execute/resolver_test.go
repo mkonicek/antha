@@ -24,13 +24,13 @@ func TestUseCompChainThroughSample(t *testing.T) {
 	cmp := wtype.NewLHComponent()
 	cmp.CName = "thiscannotbeomitted"
 	a1 := mix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []*wtype.LHComponent{cmp},
+		Components: []*wtype.Liquid{cmp},
 	}))
 	a2 := mix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []*wtype.LHComponent{mixer.Sample(a1.result[0], vol)},
+		Components: []*wtype.Liquid{mixer.Sample(a1.result[0], vol)},
 	}))
 	a3 := mix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: []*wtype.LHComponent{mixer.Sample(a2.result[0], vol)},
+		Components: []*wtype.Liquid{mixer.Sample(a2.result[0], vol)},
 	}))
 
 	var insts []interface{}

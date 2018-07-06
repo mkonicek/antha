@@ -49,11 +49,11 @@ type LHProperties struct {
 	PlateLookup   map[string]interface{}
 	PosLookup     map[string]string
 	PlateIDLookup map[string]string
-	Plates        map[string]*wtype.LHPlate
+	Plates        map[string]*wtype.Plate
 	Tipboxes      map[string]*wtype.LHTipbox
 	Tipwastes     map[string]*wtype.LHTipwaste
-	Wastes        map[string]*wtype.LHPlate
-	Washes        map[string]*wtype.LHPlate
+	Wastes        map[string]*wtype.Plate
+	Washes        map[string]*wtype.Plate
 	Devices       map[string]string
 	Model         string
 	Mnfr          string
@@ -101,8 +101,8 @@ func (p LHProperties) GetLayout() string {
 			lw := p.PlateLookup[plateID]
 
 			switch lw.(type) {
-			case *wtype.LHPlate:
-				plt := lw.(*wtype.LHPlate)
+			case *wtype.Plate:
+				plt := lw.(*wtype.Plate)
 				s += fmt.Sprintln("Plate ", plt.PlateName, " type ", plt.Mnfr, " ", plt.Type, " Contents:")
 				s += plt.GetLayout()
 			case *wtype.LHTipbox:
@@ -336,12 +336,12 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 			newid = tmp.ID
 			pos = lhp.PlateIDLookup[name]
 			r.Tipwastes[pos] = tmp
-		case *wtype.LHPlate:
-			var tmp *wtype.LHPlate
+		case *wtype.Plate:
+			var tmp *wtype.Plate
 			if keepIDs {
-				tmp = pt.(*wtype.LHPlate).DupKeepIDs()
+				tmp = pt.(*wtype.Plate).DupKeepIDs()
 			} else {
-				tmp = pt.(*wtype.LHPlate).Dup()
+				tmp = pt.(*wtype.Plate).Dup()
 			}
 			pt2 = tmp
 			newid = tmp.ID
@@ -451,11 +451,11 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	lhp.PosLookup = make(map[string]string, lhp.Nposns)
 	lhp.PlateLookup = make(map[string]interface{}, lhp.Nposns)
 	lhp.PlateIDLookup = make(map[string]string, lhp.Nposns)
-	lhp.Plates = make(map[string]*wtype.LHPlate, lhp.Nposns)
+	lhp.Plates = make(map[string]*wtype.Plate, lhp.Nposns)
 	lhp.Tipboxes = make(map[string]*wtype.LHTipbox, lhp.Nposns)
 	lhp.Tipwastes = make(map[string]*wtype.LHTipwaste, lhp.Nposns)
-	lhp.Wastes = make(map[string]*wtype.LHPlate, lhp.Nposns)
-	lhp.Washes = make(map[string]*wtype.LHPlate, lhp.Nposns)
+	lhp.Wastes = make(map[string]*wtype.Plate, lhp.Nposns)
+	lhp.Washes = make(map[string]*wtype.Plate, lhp.Nposns)
 	lhp.Devices = make(map[string]string, lhp.Nposns)
 	lhp.Heads = make([]*wtype.LHHead, 0, 2)
 	lhp.Tips = make([]*wtype.LHTip, 0, 3)
@@ -593,7 +593,7 @@ func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) e
 	return nil
 }
 
-func (lhp *LHProperties) AddInputPlate(plate *wtype.LHPlate) error {
+func (lhp *LHProperties) AddInputPlate(plate *wtype.Plate) error {
 	for _, pref := range lhp.Input_preferences {
 		if lhp.PosLookup[pref] != "" {
 			continue
@@ -605,7 +605,7 @@ func (lhp *LHProperties) AddInputPlate(plate *wtype.LHPlate) error {
 
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add input plate %s, type %s", plate.PlateName, plate.Type))
 }
-func (lhp *LHProperties) AddOutputPlate(plate *wtype.LHPlate) error {
+func (lhp *LHProperties) AddOutputPlate(plate *wtype.Plate) error {
 	for _, pref := range lhp.Output_preferences {
 		if lhp.PosLookup[pref] != "" {
 			continue
@@ -618,7 +618,7 @@ func (lhp *LHProperties) AddOutputPlate(plate *wtype.LHPlate) error {
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add output plate %s, type %s", plate.PlateName, plate.Type))
 }
 
-func (lhp *LHProperties) AddPlateTo(pos string, plate *wtype.LHPlate) error {
+func (lhp *LHProperties) AddPlateTo(pos string, plate *wtype.Plate) error {
 	if lhp.PosLookup[pos] != "" {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add plate to full position %s", pos))
 	}
@@ -647,7 +647,7 @@ func (lhp *LHProperties) RemovePlateAtPosition(pos string) {
 	delete(lhp.Plates, pos)
 }
 
-func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.LHPlate) bool {
+func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.Plate) bool {
 	if lhp.PosLookup[pos] != "" {
 		logger.Debug("CAN'T ADD WASTE TO FULL POSITION")
 		return false
@@ -659,7 +659,7 @@ func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.LHPlate) bool {
 	return true
 }
 
-func (lhp *LHProperties) AddWash(wash *wtype.LHPlate) bool {
+func (lhp *LHProperties) AddWash(wash *wtype.Plate) bool {
 	for _, pref := range lhp.Wash_preferences {
 		if lhp.PosLookup[pref] != "" {
 			continue
@@ -673,7 +673,7 @@ func (lhp *LHProperties) AddWash(wash *wtype.LHPlate) bool {
 	return false
 }
 
-func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
+func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.Plate) bool {
 	if lhp.PosLookup[pos] != "" {
 
 		logger.Debug("CAN'T ADD WASH TO FULL POSITION")
@@ -686,7 +686,7 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
-func GetLocTox(cmp *wtype.LHComponent) ([]string, error) {
+func GetLocTox(cmp *wtype.Liquid) ([]string, error) {
 	// try the cmp's own loc
 
 	if cmp.Loc != "" {
@@ -763,14 +763,14 @@ func (lhp *LHProperties) mergeInputOutputPreferences() []string {
 // the ID may or may not refer to an instance which is previously made
 // but by this point we must have concrete locations for everything
 
-func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
+func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
 	plateIDs := make([][]string, len(cmps))
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
 
 	// locally keep volumes straight
 
-	localplates := make(map[string]*wtype.LHPlate, len(lhp.Plates))
+	localplates := make(map[string]*wtype.Plate, len(lhp.Plates))
 
 	for k, v := range lhp.Plates {
 		localplates[k] = v.DupKeepIDs()
@@ -1139,7 +1139,7 @@ func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
 }
 
 type UserPlate struct {
-	Plate    *wtype.LHPlate
+	Plate    *wtype.Plate
 	Position string
 }
 type UserPlates []UserPlate
@@ -1240,13 +1240,13 @@ func (p LHProperties) HasTipTracking() bool {
 	return false
 }
 
-func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.LHComponent) {
+func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.Liquid) {
 	for s, c := range updates {
 		p.UpdateComponentID(s, c)
 	}
 }
 
-func (p *LHProperties) UpdateComponentID(from string, to *wtype.LHComponent) bool {
+func (p *LHProperties) UpdateComponentID(from string, to *wtype.Liquid) bool {
 	for _, p := range p.Plates {
 		if p.FindAndUpdateID(from, to) {
 			return true

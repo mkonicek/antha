@@ -23,7 +23,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 14.8,
+  "WellZStart": 16.2,
   "Extra": {}
  },
  {
@@ -47,7 +47,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 70.72,
+  "WellZStart": 72.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -75,7 +75,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 75.72,
+  "WellZStart": 77.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -98,12 +98,12 @@ var plateBytes = []byte(`
   "WellZ": 40,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 65.45,
+  "Height": 65.7,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 54.55,
+  "WellZStart": 56.2,
   "Extra": {}
  },
  {
@@ -122,12 +122,12 @@ var plateBytes = []byte(`
   "WellZ": 40,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 44.2,
+  "Height": 43.7,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 33.3,
+  "WellZStart": 34.2,
   "Extra": {}
  },
  {
@@ -151,7 +151,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 34.8,
+  "WellZStart": 36.2,
   "Extra": {}
  },
  {
@@ -170,12 +170,12 @@ var plateBytes = []byte(`
   "WellZ": 40,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 65.45,
+  "Height": 65.7,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 54.55,
+  "WellZStart": 56.2,
   "Extra": {}
  },
  {
@@ -199,7 +199,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 34.8,
+  "WellZStart": 36.2,
   "Extra": {}
  },
  {
@@ -218,12 +218,12 @@ var plateBytes = []byte(`
   "WellZ": 40,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 44.2,
+  "Height": 43.7,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 33.3,
+  "WellZStart": 34.2,
   "Extra": {}
  },
  {
@@ -234,7 +234,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -247,7 +247,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 0.30000000000000004,
+  "WellZStart": 1.7,
   "Extra": {}
  },
  {
@@ -258,7 +258,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -271,7 +271,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 56.22,
+  "WellZStart": 57.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -286,7 +286,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -299,7 +299,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 61.22,
+  "WellZStart": 62.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -314,7 +314,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -322,12 +322,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 40.05,
+  "WellZStart": 41.7,
   "Extra": {}
  },
  {
@@ -338,7 +338,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -346,12 +346,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 18.8,
+  "WellZStart": 19.7,
   "Extra": {}
  },
  {
@@ -362,7 +362,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -375,7 +375,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 20.3,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -386,7 +386,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -394,12 +394,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 40.05,
+  "WellZStart": 41.7,
   "Extra": {}
  },
  {
@@ -410,7 +410,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -423,7 +423,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 20.3,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -434,7 +434,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -442,12 +442,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 18.8,
+  "WellZStart": 19.7,
   "Extra": {}
  },
  {
@@ -471,7 +471,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 1.8,
+  "WellZStart": 2.5,
   "Extra": {}
  },
  {
@@ -495,7 +495,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 57.72,
+  "WellZStart": 58.42,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -523,7 +523,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 62.72,
+  "WellZStart": 63.42,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -546,12 +546,12 @@ var plateBytes = []byte(`
   "WellZ": 11.4,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 54.15,
+  "Height": 54.4,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 41.55,
+  "WellZStart": 42.5,
   "Extra": {}
  },
  {
@@ -570,12 +570,12 @@ var plateBytes = []byte(`
   "WellZ": 11.4,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32.9,
+  "Height": 32.4,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 20.3,
+  "WellZStart": 20.5,
   "Extra": {}
  },
  {
@@ -599,7 +599,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 21.8,
+  "WellZStart": 22.5,
   "Extra": {}
  },
  {
@@ -618,12 +618,12 @@ var plateBytes = []byte(`
   "WellZ": 11.4,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 54.15,
+  "Height": 54.4,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 41.55,
+  "WellZStart": 42.5,
   "Extra": {}
  },
  {
@@ -647,7 +647,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 21.8,
+  "WellZStart": 22.5,
   "Extra": {}
  },
  {
@@ -666,12 +666,12 @@ var plateBytes = []byte(`
   "WellZ": 11.4,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32.9,
+  "Height": 32.4,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 20.3,
+  "WellZStart": 20.5,
   "Extra": {}
  },
  {
@@ -695,7 +695,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 17.3,
+  "WellZStart": 18,
   "Extra": {}
  },
  {
@@ -719,7 +719,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 73.22,
+  "WellZStart": 73.92,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -747,7 +747,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 78.22,
+  "WellZStart": 78.92,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -770,12 +770,12 @@ var plateBytes = []byte(`
   "WellZ": 9,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 67.25,
+  "Height": 67.5,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 57.05,
+  "WellZStart": 58,
   "Extra": {}
  },
  {
@@ -794,12 +794,12 @@ var plateBytes = []byte(`
   "WellZ": 9,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 46,
+  "Height": 45.5,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 35.8,
+  "WellZStart": 36,
   "Extra": {}
  },
  {
@@ -823,7 +823,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 37.3,
+  "WellZStart": 38,
   "Extra": {}
  },
  {
@@ -842,12 +842,12 @@ var plateBytes = []byte(`
   "WellZ": 9,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 67.25,
+  "Height": 67.5,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 57.05,
+  "WellZStart": 58,
   "Extra": {}
  },
  {
@@ -871,7 +871,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 37.3,
+  "WellZStart": 38,
   "Extra": {}
  },
  {
@@ -890,12 +890,12 @@ var plateBytes = []byte(`
   "WellZ": 9,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 46,
+  "Height": 45.5,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.049999999999999,
   "WellYStart": 9,
-  "WellZStart": 35.8,
+  "WellZStart": 36,
   "Extra": {}
  },
  {
@@ -919,7 +919,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 2.3,
+  "WellZStart": 3.7,
   "Extra": {}
  },
  {
@@ -943,7 +943,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 58.22,
+  "WellZStart": 59.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -971,7 +971,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 63.22,
+  "WellZStart": 64.62,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -994,12 +994,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 32,
   "RowSize": 48,
-  "Height": 46.75,
+  "Height": 47,
   "WellXOffset": 2.25,
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -1018,12 +1018,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 32,
   "RowSize": 48,
-  "Height": 25.5,
+  "Height": 25,
   "WellXOffset": 2.25,
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -1047,7 +1047,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {}
  },
  {
@@ -1066,12 +1066,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 32,
   "RowSize": 48,
-  "Height": 46.75,
+  "Height": 47,
   "WellXOffset": 2.25,
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -1095,7 +1095,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {}
  },
  {
@@ -1114,12 +1114,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 32,
   "RowSize": 48,
-  "Height": 25.5,
+  "Height": 25,
   "WellXOffset": 2.25,
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -1143,7 +1143,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 2.55,
+  "WellZStart": 3.95,
   "Extra": {}
  },
  {
@@ -1167,7 +1167,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 58.47,
+  "WellZStart": 59.870000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -1195,7 +1195,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 63.47,
+  "WellZStart": 64.87,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -1218,12 +1218,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 45,
   "RowSize": 70,
-  "Height": 46.75,
+  "Height": 47,
   "WellXOffset": 1.55,
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 42.3,
+  "WellZStart": 43.95,
   "Extra": {}
  },
  {
@@ -1242,12 +1242,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 45,
   "RowSize": 70,
-  "Height": 25.5,
+  "Height": 25,
   "WellXOffset": 1.55,
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 21.05,
+  "WellZStart": 21.95,
   "Extra": {}
  },
  {
@@ -1271,7 +1271,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 22.55,
+  "WellZStart": 23.95,
   "Extra": {}
  },
  {
@@ -1290,12 +1290,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 45,
   "RowSize": 70,
-  "Height": 46.75,
+  "Height": 47,
   "WellXOffset": 1.55,
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 42.3,
+  "WellZStart": 43.95,
   "Extra": {}
  },
  {
@@ -1319,7 +1319,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 22.55,
+  "WellZStart": 23.95,
   "Extra": {}
  },
  {
@@ -1338,12 +1338,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 45,
   "RowSize": 70,
-  "Height": 25.5,
+  "Height": 25,
   "WellXOffset": 1.55,
   "WellYOffset": 1.55,
   "WellXStart": 10.395,
   "WellYStart": 8.24,
-  "WellZStart": 21.05,
+  "WellZStart": 21.95,
   "Extra": {}
  },
  {
@@ -1354,7 +1354,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1367,7 +1367,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 2.8,
+  "WellZStart": 4.2,
   "Extra": {}
  },
  {
@@ -1378,7 +1378,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1391,7 +1391,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 58.72,
+  "WellZStart": 60.120000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -1406,7 +1406,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1419,7 +1419,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 63.72,
+  "WellZStart": 65.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -1434,7 +1434,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1442,12 +1442,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 42.55,
+  "WellZStart": 44.2,
   "Extra": {}
  },
  {
@@ -1458,7 +1458,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1466,12 +1466,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 21.3,
+  "WellZStart": 22.2,
   "Extra": {}
  },
  {
@@ -1482,7 +1482,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1495,7 +1495,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 22.8,
+  "WellZStart": 24.2,
   "Extra": {}
  },
  {
@@ -1506,7 +1506,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1514,12 +1514,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 42.55,
+  "WellZStart": 44.2,
   "Extra": {}
  },
  {
@@ -1530,7 +1530,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1543,7 +1543,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 22.8,
+  "WellZStart": 24.2,
   "Extra": {}
  },
  {
@@ -1554,7 +1554,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -1562,12 +1562,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 21.3,
+  "WellZStart": 22.2,
   "Extra": {}
  },
  {
@@ -1591,7 +1591,7 @@ var plateBytes = []byte(`
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 2.8,
+  "WellZStart": 4.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -1617,7 +1617,7 @@ var plateBytes = []byte(`
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 58.72,
+  "WellZStart": 60.120000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -1646,7 +1646,7 @@ var plateBytes = []byte(`
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 63.72,
+  "WellZStart": 65.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -1670,12 +1670,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 42.55,
+  "WellZStart": 44.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -1696,12 +1696,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 21.3,
+  "WellZStart": 22.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -1727,7 +1727,7 @@ var plateBytes = []byte(`
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 22.8,
+  "WellZStart": 24.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -1748,12 +1748,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 42.55,
+  "WellZStart": 44.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -1779,7 +1779,7 @@ var plateBytes = []byte(`
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 22.8,
+  "WellZStart": 24.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -1800,12 +1800,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 21.3,
+  "WellZStart": 22.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -1831,7 +1831,7 @@ var plateBytes = []byte(`
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 2.8,
+  "WellZStart": 4.2,
   "Extra": {}
  },
  {
@@ -1855,7 +1855,7 @@ var plateBytes = []byte(`
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 58.72,
+  "WellZStart": 60.120000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -1883,7 +1883,7 @@ var plateBytes = []byte(`
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 63.72,
+  "WellZStart": 65.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -1906,12 +1906,12 @@ var plateBytes = []byte(`
   "WellZ": 14,
   "ColSize": 24,
   "RowSize": 32,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 3.1,
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 42.55,
+  "WellZStart": 44.2,
   "Extra": {}
  },
  {
@@ -1930,12 +1930,12 @@ var plateBytes = []byte(`
   "WellZ": 14,
   "ColSize": 24,
   "RowSize": 32,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 3.1,
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 21.3,
+  "WellZStart": 22.2,
   "Extra": {}
  },
  {
@@ -1959,7 +1959,7 @@ var plateBytes = []byte(`
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 22.8,
+  "WellZStart": 24.2,
   "Extra": {}
  },
  {
@@ -1978,12 +1978,12 @@ var plateBytes = []byte(`
   "WellZ": 14,
   "ColSize": 24,
   "RowSize": 32,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 3.1,
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 42.55,
+  "WellZStart": 44.2,
   "Extra": {}
  },
  {
@@ -2007,7 +2007,7 @@ var plateBytes = []byte(`
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 22.8,
+  "WellZStart": 24.2,
   "Extra": {}
  },
  {
@@ -2026,12 +2026,12 @@ var plateBytes = []byte(`
   "WellZ": 14,
   "ColSize": 24,
   "RowSize": 32,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 3.1,
   "WellYOffset": 3.1,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 21.3,
+  "WellZStart": 22.2,
   "Extra": {}
  },
  {
@@ -2055,7 +2055,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 2.8,
+  "WellZStart": 4.2,
   "Extra": {}
  },
  {
@@ -2079,7 +2079,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 58.72,
+  "WellZStart": 60.120000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -2107,7 +2107,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 63.72,
+  "WellZStart": 65.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -2130,12 +2130,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 42.55,
+  "WellZStart": 44.2,
   "Extra": {}
  },
  {
@@ -2154,12 +2154,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 21.3,
+  "WellZStart": 22.2,
   "Extra": {}
  },
  {
@@ -2183,7 +2183,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 22.8,
+  "WellZStart": 24.2,
   "Extra": {}
  },
  {
@@ -2202,12 +2202,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 53.75,
+  "Height": 54,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 42.55,
+  "WellZStart": 44.2,
   "Extra": {}
  },
  {
@@ -2231,7 +2231,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 22.8,
+  "WellZStart": 24.2,
   "Extra": {}
  },
  {
@@ -2250,12 +2250,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32.5,
+  "Height": 32,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 21.3,
+  "WellZStart": 22.2,
   "Extra": {}
  },
  {
@@ -2279,7 +2279,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": -2.3,
+  "WellZStart": 0.65,
   "Extra": {}
  },
  {
@@ -2303,7 +2303,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": 53.62,
+  "WellZStart": 56.57000000000001,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -2331,7 +2331,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": 58.62,
+  "WellZStart": 61.57000000000001,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -2354,12 +2354,12 @@ var plateBytes = []byte(`
   "WellZ": 9.09,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 49.45,
+  "Height": 49.7,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": 37.449999999999996,
+  "WellZStart": 40.650000000000006,
   "Extra": {}
  },
  {
@@ -2378,12 +2378,12 @@ var plateBytes = []byte(`
   "WellZ": 9.09,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 28.2,
+  "Height": 27.7,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": 16.2,
+  "WellZStart": 18.65,
   "Extra": {}
  },
  {
@@ -2407,7 +2407,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": 17.7,
+  "WellZStart": 20.65,
   "Extra": {}
  },
  {
@@ -2426,12 +2426,12 @@ var plateBytes = []byte(`
   "WellZ": 9.09,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 49.45,
+  "Height": 49.7,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": 37.449999999999996,
+  "WellZStart": 40.650000000000006,
   "Extra": {}
  },
  {
@@ -2455,7 +2455,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": 17.7,
+  "WellZStart": 20.65,
   "Extra": {}
  },
  {
@@ -2474,12 +2474,12 @@ var plateBytes = []byte(`
   "WellZ": 9.09,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 28.2,
+  "Height": 27.7,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 12.205,
   "WellYStart": 8.655000000000001,
-  "WellZStart": 16.2,
+  "WellZStart": 18.65,
   "Extra": {}
  },
  {
@@ -2503,7 +2503,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": -1.7,
+  "WellZStart": 0.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -2529,7 +2529,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": 54.22,
+  "WellZStart": 56.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -2558,7 +2558,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": 59.22,
+  "WellZStart": 61.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -2582,12 +2582,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 83.85,
+  "Height": 84.1,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": 38.05,
+  "WellZStart": 40.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -2608,12 +2608,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 62.6,
+  "Height": 62.1,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": 16.8,
+  "WellZStart": 18.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -2639,7 +2639,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": 18.3,
+  "WellZStart": 20.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -2660,12 +2660,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 83.85,
+  "Height": 84.1,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": 38.05,
+  "WellZStart": 40.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -2691,7 +2691,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": 18.3,
+  "WellZStart": 20.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -2712,12 +2712,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 62.6,
+  "Height": 62.1,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 15.74,
-  "WellZStart": 16.8,
+  "WellZStart": 18.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -2743,7 +2743,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 3.8,
+  "WellZStart": 5.2,
   "Extra": {}
  },
  {
@@ -2767,7 +2767,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 59.72,
+  "WellZStart": 61.120000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -2795,7 +2795,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 64.72,
+  "WellZStart": 66.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -2818,12 +2818,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 83.85,
+  "Height": 84.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 43.55,
+  "WellZStart": 45.2,
   "Extra": {}
  },
  {
@@ -2842,12 +2842,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 62.6,
+  "Height": 62.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.2,
   "Extra": {}
  },
  {
@@ -2871,7 +2871,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 23.8,
+  "WellZStart": 25.2,
   "Extra": {}
  },
  {
@@ -2890,12 +2890,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 83.85,
+  "Height": 84.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 43.55,
+  "WellZStart": 45.2,
   "Extra": {}
  },
  {
@@ -2919,7 +2919,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 23.8,
+  "WellZStart": 25.2,
   "Extra": {}
  },
  {
@@ -2938,12 +2938,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 62.6,
+  "Height": 62.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.2,
   "Extra": {}
  },
  {
@@ -2967,7 +2967,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 3.8,
+  "WellZStart": 5.2,
   "Extra": {}
  },
  {
@@ -2991,7 +2991,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 59.72,
+  "WellZStart": 61.120000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -3019,7 +3019,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 64.72,
+  "WellZStart": 66.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -3042,12 +3042,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 1,
   "RowSize": 12,
-  "Height": 83.85,
+  "Height": 84.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 43.55,
+  "WellZStart": 45.2,
   "Extra": {}
  },
  {
@@ -3066,12 +3066,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 1,
   "RowSize": 12,
-  "Height": 62.6,
+  "Height": 62.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.2,
   "Extra": {}
  },
  {
@@ -3095,7 +3095,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 23.8,
+  "WellZStart": 25.2,
   "Extra": {}
  },
  {
@@ -3114,12 +3114,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 1,
   "RowSize": 12,
-  "Height": 83.85,
+  "Height": 84.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 43.55,
+  "WellZStart": 45.2,
   "Extra": {}
  },
  {
@@ -3143,7 +3143,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 23.8,
+  "WellZStart": 25.2,
   "Extra": {}
  },
  {
@@ -3162,12 +3162,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 1,
   "RowSize": 12,
-  "Height": 62.6,
+  "Height": 62.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 41.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.2,
   "Extra": {}
  },
  {
@@ -3191,7 +3191,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": -0.7,
+  "WellZStart": 0.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -3217,7 +3217,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": 55.22,
+  "WellZStart": 56.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3246,7 +3246,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": 60.22,
+  "WellZStart": 61.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3270,12 +3270,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 1,
-  "Height": 83.85,
+  "Height": 84.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": 39.05,
+  "WellZStart": 40.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -3296,12 +3296,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 1,
-  "Height": 62.6,
+  "Height": 62.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": 17.8,
+  "WellZStart": 18.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -3327,7 +3327,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": 19.3,
+  "WellZStart": 20.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -3348,12 +3348,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 1,
-  "Height": 83.85,
+  "Height": 84.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": 39.05,
+  "WellZStart": 40.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -3379,7 +3379,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": 19.3,
+  "WellZStart": 20.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -3400,12 +3400,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 1,
-  "Height": 62.6,
+  "Height": 62.1,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 63.78,
   "WellYStart": 11.24,
-  "WellZStart": 17.8,
+  "WellZStart": 18.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -3431,7 +3431,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 43.55,
+  "WellZStart": 45.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3460,7 +3460,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 99.47,
+  "WellZStart": 101.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3489,7 +3489,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 104.47,
+  "WellZStart": 106.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3513,12 +3513,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 2,
   "RowSize": 24,
-  "Height": 88.25,
+  "Height": 88.5,
   "WellXOffset": 4.5,
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 83.3,
+  "WellZStart": 85.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3542,12 +3542,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 2,
   "RowSize": 24,
-  "Height": 67,
+  "Height": 66.5,
   "WellXOffset": 4.5,
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 62.05,
+  "WellZStart": 63.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3576,7 +3576,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 63.55,
+  "WellZStart": 65.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3600,12 +3600,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 2,
   "RowSize": 24,
-  "Height": 88.25,
+  "Height": 88.5,
   "WellXOffset": 4.5,
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 83.3,
+  "WellZStart": 85.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3634,7 +3634,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 63.55,
+  "WellZStart": 65.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3658,12 +3658,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 2,
   "RowSize": 24,
-  "Height": 67,
+  "Height": 66.5,
   "WellXOffset": 4.5,
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 62.05,
+  "WellZStart": 63.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3692,7 +3692,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 44.55,
+  "WellZStart": 46.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3721,7 +3721,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 100.47,
+  "WellZStart": 102.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3750,7 +3750,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 105.47,
+  "WellZStart": 107.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3774,12 +3774,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 4,
   "RowSize": 13,
-  "Height": 88.25,
+  "Height": 88.5,
   "WellXOffset": 9,
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 84.3,
+  "WellZStart": 86.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3803,12 +3803,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 4,
   "RowSize": 13,
-  "Height": 67,
+  "Height": 66.5,
   "WellXOffset": 9,
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 63.05,
+  "WellZStart": 64.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3837,7 +3837,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 64.55,
+  "WellZStart": 66.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3861,12 +3861,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 4,
   "RowSize": 13,
-  "Height": 88.25,
+  "Height": 88.5,
   "WellXOffset": 9,
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 84.3,
+  "WellZStart": 86.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3895,7 +3895,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 64.55,
+  "WellZStart": 66.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3919,12 +3919,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 4,
   "RowSize": 13,
-  "Height": 67,
+  "Height": 66.5,
   "WellXOffset": 9,
   "WellYOffset": 18,
   "WellXStart": 5.279999999999999,
   "WellYStart": 10.74,
-  "WellZStart": 63.05,
+  "WellZStart": 64.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3953,7 +3953,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 44.55,
+  "WellZStart": 46.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -3982,7 +3982,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 100.47,
+  "WellZStart": 102.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4011,7 +4011,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 105.47,
+  "WellZStart": 107.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4035,12 +4035,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 4,
   "RowSize": 13,
-  "Height": 88.25,
+  "Height": 88.5,
   "WellXOffset": 9,
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 84.3,
+  "WellZStart": 86.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4064,12 +4064,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 4,
   "RowSize": 13,
-  "Height": 67,
+  "Height": 66.5,
   "WellXOffset": 9,
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 63.05,
+  "WellZStart": 64.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4098,7 +4098,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 64.55,
+  "WellZStart": 66.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4122,12 +4122,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 4,
   "RowSize": 13,
-  "Height": 88.25,
+  "Height": 88.5,
   "WellXOffset": 9,
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 84.3,
+  "WellZStart": 86.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4156,7 +4156,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 64.55,
+  "WellZStart": 66.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4180,12 +4180,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 4,
   "RowSize": 13,
-  "Height": 67,
+  "Height": 66.5,
   "WellXOffset": 9,
   "WellYOffset": 18,
   "WellXStart": 9.28,
   "WellYStart": 20.240000000000002,
-  "WellZStart": 63.05,
+  "WellZStart": 64.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4214,7 +4214,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 43.55,
+  "WellZStart": 45.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4243,7 +4243,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 99.47,
+  "WellZStart": 101.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4272,7 +4272,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 104.47,
+  "WellZStart": 106.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4296,12 +4296,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 2,
   "RowSize": 24,
-  "Height": 88.25,
+  "Height": 88.5,
   "WellXOffset": 4.5,
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 83.3,
+  "WellZStart": 85.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4325,12 +4325,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 2,
   "RowSize": 24,
-  "Height": 67,
+  "Height": 66.5,
   "WellXOffset": 4.5,
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 62.05,
+  "WellZStart": 63.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4359,7 +4359,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 63.55,
+  "WellZStart": 65.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4383,12 +4383,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 2,
   "RowSize": 24,
-  "Height": 88.25,
+  "Height": 88.5,
   "WellXOffset": 4.5,
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 83.3,
+  "WellZStart": 85.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4417,7 +4417,7 @@ var plateBytes = []byte(`
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 63.55,
+  "WellZStart": 65.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4441,12 +4441,12 @@ var plateBytes = []byte(`
   "WellZ": 2,
   "ColSize": 2,
   "RowSize": 24,
-  "Height": 67,
+  "Height": 66.5,
   "WellXOffset": 4.5,
   "WellYOffset": 33.75,
   "WellXStart": 13.28,
   "WellYStart": 29.490000000000002,
-  "WellZStart": 62.05,
+  "WellZStart": 63.2,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -4475,7 +4475,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": -0.06399999999999995,
+  "WellZStart": 1.3359999999999999,
   "Extra": {}
  },
  {
@@ -4499,7 +4499,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 1.3,
+  "WellZStart": 2.7,
   "Extra": {}
  },
  {
@@ -4523,7 +4523,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 0.30000000000000004,
+  "WellZStart": 1.7,
   "Extra": {}
  },
  {
@@ -4547,7 +4547,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 56.22,
+  "WellZStart": 57.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -4575,7 +4575,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 61.22,
+  "WellZStart": 62.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -4598,12 +4598,12 @@ var plateBytes = []byte(`
   "WellZ": 42,
   "ColSize": 1,
   "RowSize": 4,
-  "Height": 83.75,
+  "Height": 84,
   "WellXOffset": 26,
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 40.05,
+  "WellZStart": 41.7,
   "Extra": {}
  },
  {
@@ -4622,12 +4622,12 @@ var plateBytes = []byte(`
   "WellZ": 42,
   "ColSize": 1,
   "RowSize": 4,
-  "Height": 62.5,
+  "Height": 62,
   "WellXOffset": 26,
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 18.8,
+  "WellZStart": 19.7,
   "Extra": {}
  },
  {
@@ -4651,7 +4651,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 20.3,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -4670,12 +4670,12 @@ var plateBytes = []byte(`
   "WellZ": 42,
   "ColSize": 1,
   "RowSize": 4,
-  "Height": 83.75,
+  "Height": 84,
   "WellXOffset": 26,
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 40.05,
+  "WellZStart": 41.7,
   "Extra": {}
  },
  {
@@ -4699,7 +4699,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 20.3,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -4718,12 +4718,12 @@ var plateBytes = []byte(`
   "WellZ": 42,
   "ColSize": 1,
   "RowSize": 4,
-  "Height": 62.5,
+  "Height": 62,
   "WellXOffset": 26,
   "WellYOffset": 1,
   "WellXStart": 23.78,
   "WellYStart": 42.24,
-  "WellZStart": 18.8,
+  "WellZStart": 19.7,
   "Extra": {}
  },
  {
@@ -4747,7 +4747,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 2.3,
+  "WellZStart": 3.7,
   "Extra": {}
  },
  {
@@ -4771,7 +4771,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 58.22,
+  "WellZStart": 59.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -4799,7 +4799,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 63.22,
+  "WellZStart": 64.62,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -4822,12 +4822,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.75,
+  "Height": 55,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -4846,12 +4846,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.5,
+  "Height": 33,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -4875,7 +4875,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {}
  },
  {
@@ -4894,12 +4894,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.75,
+  "Height": 55,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -4923,7 +4923,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {}
  },
  {
@@ -4942,12 +4942,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.5,
+  "Height": 33,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -4971,7 +4971,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.53,
   "WellYStart": 11.24,
-  "WellZStart": 14.55,
+  "WellZStart": 15.95,
   "Extra": {}
  },
  {
@@ -5070,12 +5070,12 @@ var plateBytes = []byte(`
   "WellZ": 9,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.35,
+  "Height": 54.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.38,
   "WellYStart": 11.24,
-  "WellZStart": 43.45,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -5094,12 +5094,12 @@ var plateBytes = []byte(`
   "WellZ": 9,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.1,
+  "Height": 32.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.38,
   "WellYStart": 11.24,
-  "WellZStart": 22.2,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -5142,12 +5142,12 @@ var plateBytes = []byte(`
   "WellZ": 9,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.35,
+  "Height": 54.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.38,
   "WellYStart": 11.24,
-  "WellZStart": 43.45,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -5190,12 +5190,12 @@ var plateBytes = []byte(`
   "WellZ": 9,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.1,
+  "Height": 32.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.38,
   "WellYStart": 11.24,
-  "WellZStart": 22.2,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -5219,7 +5219,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 2.3,
+  "WellZStart": 3.7,
   "Extra": {}
  },
  {
@@ -5243,7 +5243,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 58.22,
+  "WellZStart": 59.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -5271,7 +5271,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 63.22,
+  "WellZStart": 64.62,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -5294,12 +5294,12 @@ var plateBytes = []byte(`
   "WellZ": 39.35,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 82.25,
+  "Height": 82.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -5318,12 +5318,12 @@ var plateBytes = []byte(`
   "WellZ": 39.35,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 61,
+  "Height": 60.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -5347,7 +5347,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {}
  },
  {
@@ -5366,12 +5366,12 @@ var plateBytes = []byte(`
   "WellZ": 39.35,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 82.25,
+  "Height": 82.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -5395,7 +5395,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {}
  },
  {
@@ -5414,12 +5414,12 @@ var plateBytes = []byte(`
   "WellZ": 39.35,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 61,
+  "Height": 60.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -5443,7 +5443,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 5.3,
+  "WellZStart": 6.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -5469,7 +5469,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 61.22,
+  "WellZStart": 62.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -5498,7 +5498,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 66.22,
+  "WellZStart": 67.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -5522,12 +5522,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 2,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 45.05,
+  "WellZStart": 46.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -5548,12 +5548,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 2,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 23.8,
+  "WellZStart": 24.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -5579,7 +5579,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 25.3,
+  "WellZStart": 26.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -5600,12 +5600,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 2,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 45.05,
+  "WellZStart": 46.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -5631,7 +5631,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 25.3,
+  "WellZStart": 26.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -5652,12 +5652,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 2,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 19.28,
   "WellYStart": 21.240000000000002,
-  "WellZStart": 23.8,
+  "WellZStart": 24.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -5683,7 +5683,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": -0.7,
+  "WellZStart": 0.7,
   "Extra": {}
  },
  {
@@ -5707,7 +5707,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": 55.22,
+  "WellZStart": 56.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -5735,7 +5735,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": 60.22,
+  "WellZStart": 61.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -5758,12 +5758,12 @@ var plateBytes = []byte(`
   "WellZ": 11.99,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 54.15,
+  "Height": 54.4,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": 39.05,
+  "WellZStart": 40.7,
   "Extra": {}
  },
  {
@@ -5782,12 +5782,12 @@ var plateBytes = []byte(`
   "WellZ": 11.99,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32.9,
+  "Height": 32.4,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": 17.8,
+  "WellZStart": 18.7,
   "Extra": {}
  },
  {
@@ -5811,7 +5811,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": 19.3,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -5830,12 +5830,12 @@ var plateBytes = []byte(`
   "WellZ": 11.99,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 54.15,
+  "Height": 54.4,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": 39.05,
+  "WellZStart": 40.7,
   "Extra": {}
  },
  {
@@ -5859,7 +5859,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": 19.3,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -5878,12 +5878,12 @@ var plateBytes = []byte(`
   "WellZ": 11.99,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32.9,
+  "Height": 32.4,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.91,
   "WellYStart": 10.94,
-  "WellZStart": 17.8,
+  "WellZStart": 18.7,
   "Extra": {}
  },
  {
@@ -5907,7 +5907,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 5.8,
+  "WellZStart": 7.2,
   "Extra": {}
  },
  {
@@ -5931,7 +5931,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 61.72,
+  "WellZStart": 63.120000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -5959,7 +5959,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 66.72,
+  "WellZStart": 68.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -5982,12 +5982,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 83.35,
+  "Height": 83.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 45.55,
+  "WellZStart": 47.2,
   "Extra": {}
  },
  {
@@ -6006,12 +6006,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 62.1,
+  "Height": 61.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 24.3,
+  "WellZStart": 25.2,
   "Extra": {}
  },
  {
@@ -6035,7 +6035,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 25.8,
+  "WellZStart": 27.2,
   "Extra": {}
  },
  {
@@ -6054,12 +6054,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 83.35,
+  "Height": 83.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 45.55,
+  "WellZStart": 47.2,
   "Extra": {}
  },
  {
@@ -6083,7 +6083,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 25.8,
+  "WellZStart": 27.2,
   "Extra": {}
  },
  {
@@ -6102,12 +6102,12 @@ var plateBytes = []byte(`
   "WellZ": 41.3,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 62.1,
+  "Height": 61.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 13.28,
   "WellYStart": 11.24,
-  "WellZStart": 24.3,
+  "WellZStart": 25.2,
   "Extra": {}
  },
  {
@@ -6131,7 +6131,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": -0.7,
+  "WellZStart": 0.7,
   "Extra": {}
  },
  {
@@ -6155,7 +6155,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 55.22,
+  "WellZStart": 56.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -6183,7 +6183,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 60.22,
+  "WellZStart": 61.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -6206,12 +6206,12 @@ var plateBytes = []byte(`
   "WellZ": 29.1,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 71.35,
+  "Height": 71.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 39.05,
+  "WellZStart": 40.7,
   "Extra": {}
  },
  {
@@ -6230,12 +6230,12 @@ var plateBytes = []byte(`
   "WellZ": 29.1,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 50.1,
+  "Height": 49.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 17.8,
+  "WellZStart": 18.7,
   "Extra": {}
  },
  {
@@ -6259,7 +6259,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 19.3,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -6278,12 +6278,12 @@ var plateBytes = []byte(`
   "WellZ": 29.1,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 71.35,
+  "Height": 71.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 39.05,
+  "WellZStart": 40.7,
   "Extra": {}
  },
  {
@@ -6307,7 +6307,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 19.3,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -6326,12 +6326,12 @@ var plateBytes = []byte(`
   "WellZ": 29.1,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 50.1,
+  "Height": 49.6,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 17.8,
+  "WellZStart": 18.7,
   "Extra": {}
  },
  {
@@ -6355,7 +6355,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.18,
   "WellYStart": 10.94,
-  "WellZStart": 14.600000000000001,
+  "WellZStart": 16,
   "Extra": {}
  },
  {
@@ -6379,7 +6379,7 @@ var plateBytes = []byte(`
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 3.3,
+  "WellZStart": 4.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6405,7 +6405,7 @@ var plateBytes = []byte(`
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 8.3,
+  "WellZStart": 9.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6426,12 +6426,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 63.92,
+  "Height": 74.92,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 53.22,
+  "WellZStart": 65.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -6455,12 +6455,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 68.92,
+  "Height": 79.92,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 58.22,
+  "WellZStart": 70.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -6484,12 +6484,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 47.75,
+  "Height": 59,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 37.05,
+  "WellZStart": 49.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6510,12 +6510,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 26.5,
+  "Height": 37,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 15.8,
+  "WellZStart": 27.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6536,12 +6536,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 28,
+  "Height": 39,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 17.3,
+  "WellZStart": 29.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6562,12 +6562,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 47.75,
+  "Height": 59,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 37.05,
+  "WellZStart": 49.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6588,12 +6588,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 28,
+  "Height": 39,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 17.3,
+  "WellZStart": 29.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6614,12 +6614,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 26.5,
+  "Height": 37,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 15.8,
+  "WellZStart": 27.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6640,12 +6640,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 63.92,
+  "Height": 74.92,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 48.22,
+  "WellZStart": 60.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -6669,12 +6669,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 68.92,
+  "Height": 79.92,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 53.22,
+  "WellZStart": 65.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -6698,12 +6698,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 47.75,
+  "Height": 59,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 32.05,
+  "WellZStart": 44.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6724,12 +6724,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 26.5,
+  "Height": 37,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 10.8,
+  "WellZStart": 22.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6750,12 +6750,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 28,
+  "Height": 39,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 12.3,
+  "WellZStart": 24.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6776,12 +6776,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 47.75,
+  "Height": 59,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 32.05,
+  "WellZStart": 44.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6802,12 +6802,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 28,
+  "Height": 39,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 12.3,
+  "WellZStart": 24.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6828,12 +6828,12 @@ var plateBytes = []byte(`
   "WellZ": 17,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 26.5,
+  "Height": 37,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 10.8,
+  "WellZStart": 22.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -6859,7 +6859,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 1.5000000000000002,
+  "WellZStart": 2.9000000000000004,
   "Extra": {}
  },
  {
@@ -6883,7 +6883,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 57.42,
+  "WellZStart": 58.82000000000001,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -6911,7 +6911,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 62.42,
+  "WellZStart": 63.82000000000001,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -6934,12 +6934,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.75,
+  "Height": 55,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 41.25,
+  "WellZStart": 42.900000000000006,
   "Extra": {}
  },
  {
@@ -6958,12 +6958,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.5,
+  "Height": 33,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 20,
+  "WellZStart": 20.9,
   "Extra": {}
  },
  {
@@ -6987,7 +6987,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 21.5,
+  "WellZStart": 22.9,
   "Extra": {}
  },
  {
@@ -7006,12 +7006,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.75,
+  "Height": 55,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 41.25,
+  "WellZStart": 42.900000000000006,
   "Extra": {}
  },
  {
@@ -7035,7 +7035,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 21.5,
+  "WellZStart": 22.9,
   "Extra": {}
  },
  {
@@ -7054,12 +7054,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.5,
+  "Height": 33,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 20,
+  "WellZStart": 20.9,
   "Extra": {}
  },
  {
@@ -7083,7 +7083,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": -2.5999999999999996,
+  "WellZStart": -1.2,
   "Extra": {}
  },
  {
@@ -7107,7 +7107,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 53.32,
+  "WellZStart": 54.720000000000006,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -7135,7 +7135,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 58.32,
+  "WellZStart": 59.720000000000006,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -7158,12 +7158,12 @@ var plateBytes = []byte(`
   "WellZ": 9.8,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.15,
+  "Height": 54.4,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 37.15,
+  "WellZStart": 38.800000000000004,
   "Extra": {}
  },
  {
@@ -7182,12 +7182,12 @@ var plateBytes = []byte(`
   "WellZ": 9.8,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32.9,
+  "Height": 32.4,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 15.900000000000002,
+  "WellZStart": 16.8,
   "Extra": {}
  },
  {
@@ -7211,7 +7211,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 17.400000000000002,
+  "WellZStart": 18.8,
   "Extra": {}
  },
  {
@@ -7230,12 +7230,12 @@ var plateBytes = []byte(`
   "WellZ": 9.8,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.15,
+  "Height": 54.4,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 37.15,
+  "WellZStart": 38.800000000000004,
   "Extra": {}
  },
  {
@@ -7259,7 +7259,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 17.400000000000002,
+  "WellZStart": 18.8,
   "Extra": {}
  },
  {
@@ -7278,12 +7278,12 @@ var plateBytes = []byte(`
   "WellZ": 9.8,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32.9,
+  "Height": 32.4,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 15.900000000000002,
+  "WellZStart": 16.8,
   "Extra": {}
  },
  {
@@ -7307,7 +7307,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 10.15,
+  "WellZStart": 11.549999999999999,
   "Extra": {}
  },
  {
@@ -7331,7 +7331,7 @@ var plateBytes = []byte(`
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 0.30000000000000004,
+  "WellZStart": 1.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7352,12 +7352,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 72.92,
+  "Height": 75.92,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 53.22,
+  "WellZStart": 57.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -7381,12 +7381,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 77.92,
+  "Height": 80.92,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 58.22,
+  "WellZStart": 62.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -7410,12 +7410,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 56.75,
+  "Height": 60,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 37.05,
+  "WellZStart": 41.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7436,12 +7436,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 35.5,
+  "Height": 38,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 15.8,
+  "WellZStart": 19.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7462,12 +7462,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 37,
+  "Height": 40,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 17.3,
+  "WellZStart": 21.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7488,12 +7488,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 56.75,
+  "Height": 60,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 37.05,
+  "WellZStart": 41.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7514,12 +7514,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 37,
+  "Height": 40,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 17.3,
+  "WellZStart": 21.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7540,12 +7540,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 3,
   "RowSize": 4,
-  "Height": 35.5,
+  "Height": 38,
   "WellXOffset": 27,
   "WellYOffset": 27,
   "WellXStart": 25.28,
   "WellYStart": 15.24,
-  "WellZStart": 15.8,
+  "WellZStart": 19.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7571,7 +7571,7 @@ var plateBytes = []byte(`
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 1.3,
+  "WellZStart": 2.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7592,12 +7592,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 72.92,
+  "Height": 75.92,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 54.22,
+  "WellZStart": 58.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -7621,12 +7621,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 77.92,
+  "Height": 80.92,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 59.22,
+  "WellZStart": 63.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -7650,12 +7650,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 56.75,
+  "Height": 60,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 38.05,
+  "WellZStart": 42.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7676,12 +7676,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 35.5,
+  "Height": 38,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 16.8,
+  "WellZStart": 20.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7702,12 +7702,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 37,
+  "Height": 40,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 18.3,
+  "WellZStart": 22.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7728,12 +7728,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 56.75,
+  "Height": 60,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 38.05,
+  "WellZStart": 42.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7754,12 +7754,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 37,
+  "Height": 40,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 18.3,
+  "WellZStart": 22.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7780,12 +7780,12 @@ var plateBytes = []byte(`
   "WellZ": 19,
   "ColSize": 6,
   "RowSize": 8,
-  "Height": 35.5,
+  "Height": 38,
   "WellXOffset": 13,
   "WellYOffset": 13,
   "WellXStart": 17.28,
   "WellYStart": 10.24,
-  "WellZStart": 16.8,
+  "WellZStart": 20.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7811,7 +7811,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 3.8,
+  "WellZStart": 5.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7837,7 +7837,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 59.72,
+  "WellZStart": 61.120000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -7866,7 +7866,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 64.72,
+  "WellZStart": 66.12,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -7890,12 +7890,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 3,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 36,
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 43.55,
+  "WellZStart": 45.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7916,12 +7916,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 3,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 36,
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 22.3,
+  "WellZStart": 23.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7947,7 +7947,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 23.8,
+  "WellZStart": 25.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7968,12 +7968,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 3,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 36,
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 43.55,
+  "WellZStart": 45.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -7999,7 +7999,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 23.8,
+  "WellZStart": 25.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8020,12 +8020,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 3,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 36,
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 22.3,
+  "WellZStart": 23.2,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8051,7 +8051,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 4.3,
+  "WellZStart": 5.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8077,7 +8077,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 60.22,
+  "WellZStart": 61.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -8106,7 +8106,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 65.22,
+  "WellZStart": 66.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -8130,12 +8130,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 3,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 36,
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 44.05,
+  "WellZStart": 45.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8156,12 +8156,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 3,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 36,
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 22.8,
+  "WellZStart": 23.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8187,7 +8187,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 24.3,
+  "WellZStart": 25.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8208,12 +8208,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 3,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 36,
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 44.05,
+  "WellZStart": 45.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8239,7 +8239,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 24.3,
+  "WellZStart": 25.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8260,12 +8260,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 3,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 36,
   "WellYOffset": 18,
   "WellXStart": 28.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 22.8,
+  "WellZStart": 23.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8291,7 +8291,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 4.3,
+  "WellZStart": 5.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8317,7 +8317,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 60.22,
+  "WellZStart": 61.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -8346,7 +8346,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 65.22,
+  "WellZStart": 66.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -8370,12 +8370,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 44.05,
+  "WellZStart": 45.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8396,12 +8396,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 22.8,
+  "WellZStart": 23.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8427,7 +8427,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 24.3,
+  "WellZStart": 25.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8448,12 +8448,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 44.05,
+  "WellZStart": 45.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8479,7 +8479,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 24.3,
+  "WellZStart": 25.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8500,12 +8500,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 22.8,
+  "WellZStart": 23.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8531,7 +8531,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 4.3,
+  "WellZStart": 5.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8557,7 +8557,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 60.22,
+  "WellZStart": 61.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -8586,7 +8586,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 65.22,
+  "WellZStart": 66.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -8610,12 +8610,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 44.05,
+  "WellZStart": 45.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8636,12 +8636,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 22.8,
+  "WellZStart": 23.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8667,7 +8667,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 24.3,
+  "WellZStart": 25.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8688,12 +8688,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 84.75,
+  "Height": 85,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 44.05,
+  "WellZStart": 45.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8719,7 +8719,7 @@ var plateBytes = []byte(`
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 24.3,
+  "WellZStart": 25.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8740,12 +8740,12 @@ var plateBytes = []byte(`
   "WellZ": 45,
   "ColSize": 4,
   "RowSize": 6,
-  "Height": 63.5,
+  "Height": 63,
   "WellXOffset": 18,
   "WellYOffset": 18,
   "WellXStart": 18.78,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 22.8,
+  "WellZStart": 23.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8771,7 +8771,7 @@ var plateBytes = []byte(`
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 8.3,
+  "WellZStart": 9.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8797,7 +8797,7 @@ var plateBytes = []byte(`
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 64.22,
+  "WellZStart": 65.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -8826,7 +8826,7 @@ var plateBytes = []byte(`
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 69.22,
+  "WellZStart": 70.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -8850,12 +8850,12 @@ var plateBytes = []byte(`
   "WellZ": 20,
   "ColSize": 2,
   "RowSize": 3,
-  "Height": 59.75,
+  "Height": 60,
   "WellXOffset": 39,
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 48.05,
+  "WellZStart": 49.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8876,12 +8876,12 @@ var plateBytes = []byte(`
   "WellZ": 20,
   "ColSize": 2,
   "RowSize": 3,
-  "Height": 38.5,
+  "Height": 38,
   "WellXOffset": 39,
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 26.8,
+  "WellZStart": 27.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8907,7 +8907,7 @@ var plateBytes = []byte(`
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 28.3,
+  "WellZStart": 29.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8928,12 +8928,12 @@ var plateBytes = []byte(`
   "WellZ": 20,
   "ColSize": 2,
   "RowSize": 3,
-  "Height": 59.75,
+  "Height": 60,
   "WellXOffset": 39,
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 48.05,
+  "WellZStart": 49.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8959,7 +8959,7 @@ var plateBytes = []byte(`
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 28.3,
+  "WellZStart": 29.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8980,12 +8980,12 @@ var plateBytes = []byte(`
   "WellZ": 20,
   "ColSize": 2,
   "RowSize": 3,
-  "Height": 38.5,
+  "Height": 38,
   "WellXOffset": 39,
   "WellYOffset": 39,
   "WellXStart": 19.28,
   "WellYStart": 16.240000000000002,
-  "WellZStart": 26.8,
+  "WellZStart": 27.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -8998,7 +8998,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -9011,7 +9011,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 1.8,
+  "WellZStart": 3.2,
   "Extra": {}
  },
  {
@@ -9022,7 +9022,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -9030,12 +9030,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 67.92,
+  "Height": 69.92,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 55.72,
+  "WellZStart": 59.120000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -9050,7 +9050,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -9058,12 +9058,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 72.92,
+  "Height": 74.92,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 60.72,
+  "WellZStart": 64.12,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -9078,7 +9078,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -9086,12 +9086,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 51.75,
+  "Height": 54,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 39.55,
+  "WellZStart": 43.2,
   "Extra": {}
  },
  {
@@ -9102,7 +9102,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -9110,12 +9110,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 30.5,
+  "Height": 32,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 18.3,
+  "WellZStart": 21.2,
   "Extra": {}
  },
  {
@@ -9126,7 +9126,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -9134,12 +9134,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 32,
+  "Height": 34,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 19.8,
+  "WellZStart": 23.2,
   "Extra": {}
  },
  {
@@ -9150,7 +9150,7 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -9158,12 +9158,12 @@ var plateBytes = []byte(`
   "WellZ": 12,
   "ColSize": 16,
   "RowSize": 24,
-  "Height": 51.75,
+  "Height": 54,
   "WellXOffset": 4.5,
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 39.55,
+  "WellZStart": 43.2,
   "Extra": {}
  },
  {
@@ -9174,7 +9174,31 @@ var plateBytes = []byte(`
   "WellW": 4,
   "WellD": 12,
   "MaxVol": 125,
-  "MinVol": 10,
+  "MinVol": 20,
+  "BottomType": 0,
+  "BottomH": 1,
+  "WellX": 4,
+  "WellY": 4,
+  "WellZ": 12,
+  "ColSize": 16,
+  "RowSize": 24,
+  "Height": 34,
+  "WellXOffset": 4.5,
+  "WellYOffset": 4.5,
+  "WellXStart": 11.78,
+  "WellYStart": 8.74,
+  "WellZStart": 23.2,
+  "Extra": {}
+ },
+ {
+  "PlateType": "greiner384_shallowriser18",
+  "Manufacturer": "Unknown",
+  "WellShape": "box",
+  "WellH": 4,
+  "WellW": 4,
+  "WellD": 12,
+  "MaxVol": 125,
+  "MinVol": 20,
   "BottomType": 0,
   "BottomH": 1,
   "WellX": 4,
@@ -9187,31 +9211,7 @@ var plateBytes = []byte(`
   "WellYOffset": 4.5,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 19.8,
-  "Extra": {}
- },
- {
-  "PlateType": "greiner384_shallowriser18",
-  "Manufacturer": "Unknown",
-  "WellShape": "box",
-  "WellH": 4,
-  "WellW": 4,
-  "WellD": 12,
-  "MaxVol": 125,
-  "MinVol": 10,
-  "BottomType": 0,
-  "BottomH": 1,
-  "WellX": 4,
-  "WellY": 4,
-  "WellZ": 12,
-  "ColSize": 16,
-  "RowSize": 24,
-  "Height": 30.5,
-  "WellXOffset": 4.5,
-  "WellYOffset": 4.5,
-  "WellXStart": 11.78,
-  "WellYStart": 8.74,
-  "WellZStart": 18.3,
+  "WellZStart": 21.2,
   "Extra": {}
  },
  {
@@ -9235,7 +9235,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 0.30000000000000004,
+  "WellZStart": 2.7,
   "Extra": {}
  },
  {
@@ -9259,7 +9259,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 56.22,
+  "WellZStart": 58.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -9287,7 +9287,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 61.22,
+  "WellZStart": 63.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -9310,12 +9310,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.75,
+  "Height": 55,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 40.05,
+  "WellZStart": 42.7,
   "Extra": {}
  },
  {
@@ -9334,12 +9334,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.5,
+  "Height": 33,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 18.8,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -9363,7 +9363,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 20.3,
+  "WellZStart": 22.7,
   "Extra": {}
  },
  {
@@ -9382,12 +9382,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.75,
+  "Height": 55,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 40.05,
+  "WellZStart": 42.7,
   "Extra": {}
  },
  {
@@ -9411,7 +9411,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 20.3,
+  "WellZStart": 22.7,
   "Extra": {}
  },
  {
@@ -9430,12 +9430,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.5,
+  "Height": 33,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 18.8,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -9459,7 +9459,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 1.3,
+  "WellZStart": 2.7,
   "Extra": {}
  },
  {
@@ -9483,7 +9483,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 57.22,
+  "WellZStart": 58.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -9511,7 +9511,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 62.22,
+  "WellZStart": 63.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -9534,12 +9534,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 32,
   "RowSize": 48,
-  "Height": 46.75,
+  "Height": 47,
   "WellXOffset": 2.25,
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 41.05,
+  "WellZStart": 42.7,
   "Extra": {}
  },
  {
@@ -9558,12 +9558,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 32,
   "RowSize": 48,
-  "Height": 25.5,
+  "Height": 25,
   "WellXOffset": 2.25,
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 19.8,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -9587,7 +9587,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 21.3,
+  "WellZStart": 22.7,
   "Extra": {}
  },
  {
@@ -9606,12 +9606,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 32,
   "RowSize": 48,
-  "Height": 46.75,
+  "Height": 47,
   "WellXOffset": 2.25,
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 41.05,
+  "WellZStart": 42.7,
   "Extra": {}
  },
  {
@@ -9635,7 +9635,7 @@ var plateBytes = []byte(`
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 21.3,
+  "WellZStart": 22.7,
   "Extra": {}
  },
  {
@@ -9654,12 +9654,12 @@ var plateBytes = []byte(`
   "WellZ": 7,
   "ColSize": 32,
   "RowSize": 48,
-  "Height": 25.5,
+  "Height": 25,
   "WellXOffset": 2.25,
   "WellYOffset": 2.25,
   "WellXStart": 11.78,
   "WellYStart": 8.74,
-  "WellZStart": 19.8,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -9683,7 +9683,7 @@ var plateBytes = []byte(`
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 2.3,
+  "WellZStart": 3.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -9709,7 +9709,7 @@ var plateBytes = []byte(`
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 58.22,
+  "WellZStart": 59.620000000000005,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -9738,7 +9738,7 @@ var plateBytes = []byte(`
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 63.22,
+  "WellZStart": 64.62,
   "Extra": {
    "IMSPECIAL": true,
    "constraint-Pipetmax": [
@@ -9762,12 +9762,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 2,
   "RowSize": 4,
-  "Height": 50.75,
+  "Height": 51,
   "WellXOffset": 30,
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -9788,12 +9788,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 2,
   "RowSize": 4,
-  "Height": 29.5,
+  "Height": 29,
   "WellXOffset": 30,
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -9819,7 +9819,7 @@ var plateBytes = []byte(`
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -9840,12 +9840,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 2,
   "RowSize": 4,
-  "Height": 50.75,
+  "Height": 51,
   "WellXOffset": 30,
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -9871,7 +9871,7 @@ var plateBytes = []byte(`
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -9892,12 +9892,12 @@ var plateBytes = []byte(`
   "WellZ": 11,
   "ColSize": 2,
   "RowSize": 4,
-  "Height": 29.5,
+  "Height": 29,
   "WellXOffset": 30,
   "WellYOffset": 40,
   "WellXStart": 19.28,
   "WellYStart": 21.740000000000002,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {
    "IMSPECIAL": true
   }
@@ -9923,7 +9923,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 2.3,
+  "WellZStart": 3.7,
   "Extra": {}
  },
  {
@@ -9947,7 +9947,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 58.22,
+  "WellZStart": 59.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -9975,7 +9975,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 63.22,
+  "WellZStart": 64.62,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -9998,12 +9998,12 @@ var plateBytes = []byte(`
   "WellZ": 10.2,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.15,
+  "Height": 54.4,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -10022,12 +10022,12 @@ var plateBytes = []byte(`
   "WellZ": 10.2,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32.9,
+  "Height": 32.4,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -10051,7 +10051,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {}
  },
  {
@@ -10070,12 +10070,12 @@ var plateBytes = []byte(`
   "WellZ": 10.2,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 54.15,
+  "Height": 54.4,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 42.05,
+  "WellZStart": 43.7,
   "Extra": {}
  },
  {
@@ -10099,7 +10099,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 22.3,
+  "WellZStart": 23.7,
   "Extra": {}
  },
  {
@@ -10118,12 +10118,12 @@ var plateBytes = []byte(`
   "WellZ": 10.2,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32.9,
+  "Height": 32.4,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 13.78,
   "WellYStart": 11.24,
-  "WellZStart": 20.8,
+  "WellZStart": 21.7,
   "Extra": {}
  },
  {
@@ -10147,7 +10147,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": -0.06399999999999995,
+  "WellZStart": 1.3359999999999999,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10174,7 +10174,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 60.356,
+  "WellZStart": 61.75600000000001,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "constraint-Pipetmax": [
@@ -10204,7 +10204,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 0.30000000000000004,
+  "WellZStart": 1.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10231,7 +10231,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 60.72,
+  "WellZStart": 62.120000000000005,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "constraint-Pipetmax": [
@@ -10261,7 +10261,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 28.3,
+  "WellZStart": 29.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10288,7 +10288,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 16.3,
+  "WellZStart": 17.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10315,7 +10315,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 10.3,
+  "WellZStart": 11.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10342,11 +10342,235 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": -0.06399999999999995,
+  "WellZStart": 1.3359999999999999,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 16.1,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 0.5,
+  "Extra": {}
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec_bioshake",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 72.02000000000001,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 56.42,
+  "Extra": {
+   "constraint-Pipetmax": [
+    "position_1"
+   ]
+  }
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec_bioshake_standard_adaptor",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 77.02000000000001,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 61.42,
+  "Extra": {
+   "constraint-Pipetmax": [
+    "position_1"
+   ]
+  }
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec_riser",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 56.1,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 40.5,
+  "Extra": {}
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec_riser18",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 34.1,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 18.5,
+  "Extra": {}
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec_riser20",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 36.1,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 20.5,
+  "Extra": {}
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec_riser40",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 56.1,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 40.5,
+  "Extra": {}
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec_shallowriser",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 36.1,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 20.5,
+  "Extra": {}
+ },
+ {
+  "PlateType": "pcrplate_skirted_FromSpec_shallowriser18",
+  "Manufacturer": "4titude",
+  "WellShape": "cylinder",
+  "WellH": 5.5,
+  "WellW": 5.5,
+  "WellD": 15.1,
+  "MaxVol": 200,
+  "MinVol": 5,
+  "BottomType": 1,
+  "BottomH": 0.5,
+  "WellX": 5.5,
+  "WellY": 5.5,
+  "WellZ": 15.1,
+  "ColSize": 8,
+  "RowSize": 12,
+  "Height": 34.1,
+  "WellXOffset": 9,
+  "WellYOffset": 9,
+  "WellXStart": 14.38,
+  "WellYStart": 11.24,
+  "WellZStart": 18.5,
+  "Extra": {}
  },
  {
   "PlateType": "pcrplate_skirted_bioshake",
@@ -10364,12 +10588,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 69.42,
+  "Height": 71.42,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 53.856,
+  "WellZStart": 57.25600000000001,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "constraint-Pipetmax": [
@@ -10394,12 +10618,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 73.92,
+  "Height": 75.92,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 58.356,
+  "WellZStart": 61.75600000000001,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "constraint-Pipetmax": [
@@ -10424,12 +10648,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 74.42,
+  "Height": 76.42,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 58.856,
+  "WellZStart": 62.25600000000001,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "constraint-Pipetmax": [
@@ -10454,12 +10678,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 53.25,
+  "Height": 55.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 37.686,
+  "WellZStart": 41.336000000000006,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10481,12 +10705,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32,
+  "Height": 33.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 16.436,
+  "WellZStart": 19.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10508,12 +10732,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.5,
+  "Height": 35.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 17.936,
+  "WellZStart": 21.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10535,12 +10759,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 53.25,
+  "Height": 55.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 37.686,
+  "WellZStart": 41.336000000000006,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10562,12 +10786,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 33.5,
+  "Height": 35.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 17.936,
+  "WellZStart": 21.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10589,12 +10813,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32,
+  "Height": 33.5,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 16.436,
+  "WellZStart": 19.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10616,12 +10840,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 32.9,
+  "Height": 34.9,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 17.336,
+  "WellZStart": 20.735999999999997,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10643,12 +10867,12 @@ var plateBytes = []byte(`
   "WellZ": 15,
   "ColSize": 8,
   "RowSize": 12,
-  "Height": 26.864,
+  "Height": 28.864,
   "WellXOffset": 9,
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 11.3,
+  "WellZStart": 14.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10675,7 +10899,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 27.3,
+  "WellZStart": 28.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10702,7 +10926,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 15.936,
+  "WellZStart": 17.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10729,7 +10953,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 9.3,
+  "WellZStart": 10.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -10756,7 +10980,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": -0.7,
+  "WellZStart": 0.7,
   "Extra": {}
  },
  {
@@ -10780,7 +11004,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": 55.22,
+  "WellZStart": 56.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -10808,7 +11032,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": 60.22,
+  "WellZStart": 61.620000000000005,
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
@@ -10831,12 +11055,12 @@ var plateBytes = []byte(`
   "WellZ": 40,
   "ColSize": 1,
   "RowSize": 1,
-  "Height": 79.75,
+  "Height": 80,
   "WellXOffset": 1,
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": 39.05,
+  "WellZStart": 40.7,
   "Extra": {}
  },
  {
@@ -10855,12 +11079,12 @@ var plateBytes = []byte(`
   "WellZ": 40,
   "ColSize": 1,
   "RowSize": 1,
-  "Height": 58.5,
+  "Height": 58,
   "WellXOffset": 1,
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": 17.8,
+  "WellZStart": 18.7,
   "Extra": {}
  },
  {
@@ -10884,7 +11108,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": 19.3,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -10903,12 +11127,12 @@ var plateBytes = []byte(`
   "WellZ": 40,
   "ColSize": 1,
   "RowSize": 1,
-  "Height": 79.75,
+  "Height": 80,
   "WellXOffset": 1,
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": 39.05,
+  "WellZStart": 40.7,
   "Extra": {}
  },
  {
@@ -10932,7 +11156,7 @@ var plateBytes = []byte(`
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": 19.3,
+  "WellZStart": 20.7,
   "Extra": {}
  },
  {
@@ -10951,12 +11175,12 @@ var plateBytes = []byte(`
   "WellZ": 40,
   "ColSize": 1,
   "RowSize": 1,
-  "Height": 58.5,
+  "Height": 58,
   "WellXOffset": 1,
   "WellYOffset": 1,
   "WellXStart": 63.78,
   "WellYStart": 42.24,
-  "WellZStart": 17.8,
+  "WellZStart": 18.7,
   "Extra": {}
  },
  {
@@ -10980,7 +11204,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": -0.7,
+  "WellZStart": 0.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -11007,7 +11231,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 59.72,
+  "WellZStart": 61.120000000000005,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "constraint-Pipetmax": [
@@ -11037,7 +11261,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 24.8,
+  "WellZStart": 26.2,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -11064,7 +11288,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 15.3,
+  "WellZStart": 16.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
@@ -11091,7 +11315,7 @@ var plateBytes = []byte(`
   "WellYOffset": 9,
   "WellXStart": 14.28,
   "WellYStart": 11.24,
-  "WellZStart": 9.3,
+  "WellZStart": 10.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
    "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"

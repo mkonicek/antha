@@ -474,10 +474,11 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	zdim = 2
 	bottomh = 2
 
-	wellxoffset = 4.5              // centre of well to centre of neighbouring well in x direction
-	wellyoffset = 33.75            //centre of well to centre of neighbouring well in y direction
-	xstart = -1.0                  // distance from top left side of plate to first well
-	ystart = 18.25                 // distance from top left side of plate to first well
+	wellxoffset = 4.5   // centre of well to centre of neighbouring well in x direction
+	wellyoffset = 33.75 //centre of well to centre of neighbouring well in y direction
+	xstart = -1.0       // distance from top left side of plate to first well
+	//ystart = 18.25                 // distance from top left side of plate to first well
+	ystart = 17.75                 // distance from top left side of plate to first well MIS -- revised from above after physical test
 	zstart = riserheightinmm + 4.5 // offset of bottom of deck to bottom of well
 
 	//E-PAGE 48 (reverse) position

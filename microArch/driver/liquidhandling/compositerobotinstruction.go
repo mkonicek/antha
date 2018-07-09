@@ -190,7 +190,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	ret = append(ret, tipget...)
 	n_tip_uses := 0
 
-	var last_thing *wtype.LHComponent
+	var last_thing *wtype.Liquid
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
@@ -446,7 +446,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	}
 	ret = append(ret, tipget...)
 	n_tip_uses := 0
-	var last_thing *wtype.LHComponent
+	var last_thing *wtype.Liquid
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {

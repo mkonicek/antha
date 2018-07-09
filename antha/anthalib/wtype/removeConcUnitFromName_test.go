@@ -21,7 +21,7 @@
 // 2 Royal College St, London NW1 0NH UK
 
 // solutions is a utility package for working with solutions of LHComponents
-package solutions
+package wtype
 
 import "testing"
 

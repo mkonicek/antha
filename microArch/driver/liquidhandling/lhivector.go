@@ -34,8 +34,8 @@ func (lhiv LHIVector) MaxLen() int {
 	return l
 }
 
-func (lhiv LHIVector) CompsAt(i int) []*wtype.LHComponent {
-	ret := make([]*wtype.LHComponent, len(lhiv))
+func (lhiv LHIVector) CompsAt(i int) []*wtype.Liquid {
+	ret := make([]*wtype.Liquid, len(lhiv))
 
 	for ix, ins := range lhiv {
 		if i == 0 && ins.IsMixInPlace() {

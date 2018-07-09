@@ -19,7 +19,7 @@ func GetContextForTest() context.Context {
 	return ctx
 }
 
-func getComponent(ctx context.Context, name string, volume float64) (*wtype.LHComponent, error) {
+func getComponent(ctx context.Context, name string, volume float64) (*wtype.Liquid, error) {
 	c, err := inventory.NewComponent(ctx, name)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func getMixInstructions(ctx context.Context, numInstructions int, componentNames
 
 	for i := 0; i < numInstructions; i++ {
 
-		components := make([]*wtype.LHComponent, 0, numComponents)
+		components := make([]*wtype.Liquid, 0, numComponents)
 		for j := 0; j < numComponents; j++ {
 			c, err := getComponent(ctx, componentNames[j], componentVolumes[j])
 			if err != nil {
@@ -67,7 +67,7 @@ func getMixInstructions(ctx context.Context, numInstructions int, componentNames
 	return ret, nil
 }
 
-func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlateType string) (TransferBlockInstruction, *wtype.LHPlate) {
+func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlateType string) (TransferBlockInstruction, *wtype.Plate) {
 	if destPlateType == "" {
 		destPlateType = "pcrplate_skirted_riser40"
 	}
@@ -88,7 +88,7 @@ func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlat
 	return tb, dstp
 }
 
-func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
+func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.Plate) {
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine"}, []float64{100.0, 64.0})
 	if err != nil {
 		panic(err)
@@ -97,7 +97,7 @@ func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, 
 	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 }
 
-func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.LHPlate) {
+func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.Plate) {
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine", "ethanol"}, []float64{100.0, 64.0, 12.0})
 	if err != nil {
 		panic(err)
@@ -106,7 +106,7 @@ func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, 
 	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 }
 
-func getTestRobot(ctx context.Context, dstp *wtype.LHPlate, platetype string) *LHProperties {
+func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHProperties {
 	rbt, err := makeGilsonWithTipboxesForTest(ctx)
 	if err != nil {
 		panic(err)

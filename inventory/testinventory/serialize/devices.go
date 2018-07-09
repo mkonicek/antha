@@ -342,7 +342,7 @@ var defaultDevices = map[string]device{
 	},
 }
 
-func doNotAddThisRiserToThisPlate(plate *wtype.LHPlate, riser device) bool {
+func doNotAddThisRiserToThisPlate(plate *wtype.Plate, riser device) bool {
 
 	if plate == nil {
 		return true
@@ -369,7 +369,7 @@ func doNotAddThisRiserToThisPlate(plate *wtype.LHPlate, riser device) bool {
 	return false
 }
 
-func plateRiserSpecificOffset(plate *wtype.LHPlate, riser device) float64 {
+func plateRiserSpecificOffset(plate *wtype.Plate, riser device) float64 {
 
 	if plate == nil {
 		return 0.0

@@ -6,14 +6,14 @@ import (
 )
 
 func TestUniquePlateName(t *testing.T) {
-	mswl := func(s string) map[string]*wtype.LHPlate {
-		return map[string]*wtype.LHPlate{s: {}}
+	mswl := func(s string) map[string]*wtype.Plate {
+		return map[string]*wtype.Plate{s: {}}
 	}
 
 	type testData struct {
 		Name         string
-		InputPlates  map[string]*wtype.LHPlate
-		OutputPlates map[string]*wtype.LHPlate
+		InputPlates  map[string]*wtype.Plate
+		OutputPlates map[string]*wtype.Plate
 	}
 
 	tests := []testData{
@@ -37,7 +37,7 @@ func TestUniquePlateName(t *testing.T) {
 					t.Errorf("Plate named %s returned by getSafePlateName - already defined by request", nom)
 				}
 
-				rq.AddUserPlate(&wtype.LHPlate{PlateName: nom})
+				rq.AddUserPlate(&wtype.Plate{PlateName: nom})
 
 				if !rq.HasPlateNamed(nom) {
 					t.Errorf("Plate named %s not recognised by request after addition", nom)

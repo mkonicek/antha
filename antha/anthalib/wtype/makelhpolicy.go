@@ -948,8 +948,26 @@ func CopyRulesFromPolicy(ruleSet *LHPolicyRuleSet, policyToCopyRulesFrom, policy
 	return nil
 }
 
-// GetLHPolicyForTest is used to set the default System Policies.
+// GetLHPolicyForTest gets a set of Test LHPolicies for unit tests.
+// This is not guaranteed to be consistent with the default system policies returned from GetSystemLHPolicies().
 func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
+	lhpr, err := GetSystemLHPolicies()
+	if err != nil {
+		return lhpr, err
+	}
+	// Current tests rely on water policy being single channel.
+	policy := lhpr.Policies["water"]
+
+	err = policy.Set("CAN_MULTI", false)
+	if err != nil {
+		return lhpr, err
+	}
+	lhpr.Policies["water"] = policy
+	return lhpr, err
+}
+
+// GetSystemLHPolicies is used to set the default System Policies.
+func GetSystemLHPolicies() (*LHPolicyRuleSet, error) {
 	// make some policies
 
 	policies := MakePolicies()

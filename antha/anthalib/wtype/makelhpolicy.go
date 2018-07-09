@@ -955,7 +955,7 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 	if err != nil {
 		return lhpr, err
 	}
-	// Current tests rely on water policy being single channel.
+	// Current tests rely on water policy being single channel.g
 	policy := lhpr.Policies["water"]
 
 	err = policy.Set("CAN_MULTI", false)
@@ -1193,8 +1193,5 @@ func GetSystemLHPolicies() (*LHPolicyRuleSet, error) {
 		return lhpr, err
 	}
 	err = CopyRulesFromPolicy(lhpr, "SmartMix", "SmartMixLiquidLevel")
-	if err != nil {
-		return lhpr, err
-	}
-	return lhpr, nil
+	return lhpr, err
 }

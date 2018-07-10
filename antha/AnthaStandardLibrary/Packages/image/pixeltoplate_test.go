@@ -40,7 +40,7 @@ func TestMakeAnthaImg(t *testing.T) {
 	palette := SelectLibrary("UV")
 
 	//initiating components
-	var components []*wtype.Liquid
+	var components []*wtype.LHComponent
 	component, err := inventory.NewComponent(ctx, "Gluc")
 	if err != nil {
 		t.Fatal(err)
@@ -71,7 +71,7 @@ func TestMakeAnthaPalette(t *testing.T) {
 	palette := SelectLibrary("UV")
 
 	//initiating component
-	var components []*wtype.Liquid
+	var components []*wtype.LHComponent
 	component, err := inventory.NewComponent(ctx, "Gluc")
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +117,7 @@ func TestMakeLivingImg(t *testing.T) {
 	}
 
 	//initiating components
-	var components []*wtype.Liquid
+	var components []*wtype.LHComponent
 	component, err := inventory.NewComponent(ctx, "Gluc")
 	if err != nil {
 		t.Fatal(err)
@@ -165,7 +165,7 @@ func TestMakeLivingGIF(t *testing.T) {
 	}
 
 	//initiating components
-	var components []*wtype.Liquid
+	var components []*wtype.LHComponent
 	component, err := inventory.NewComponent(ctx, "Gluc")
 	if err != nil {
 		t.Fatal(err)
@@ -225,7 +225,7 @@ func TestAnthaPrintWorkflow(t *testing.T) {
 	palette := SelectLibrary("UV")
 
 	//initiating components
-	var components []*wtype.Liquid
+	var components []*wtype.LHComponent
 	component, err := inventory.NewComponent(ctx, "Gluc")
 	if err != nil {
 		t.Fatal(err)

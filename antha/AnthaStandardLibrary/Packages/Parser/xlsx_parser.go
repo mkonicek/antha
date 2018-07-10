@@ -154,7 +154,7 @@ func ParseExcelBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 // concentration column is present in the parts list.  If no concentrations are
 // found the parts list will be created with no concentrations and an error
 // returned.
-func MakePartsFromXLSXPartsList(data []byte) (parts []*wtype.Liquid, concMap map[string]wunit.Concentration, err error) {
+func MakePartsFromXLSXPartsList(data []byte) (parts []*wtype.LHComponent, concMap map[string]wunit.Concentration, err error) {
 	pl, err := xlsxparserBinary(data, 0, "partslist")
 	if err != nil {
 		return nil, nil, err

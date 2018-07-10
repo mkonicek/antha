@@ -213,7 +213,7 @@ type LHPlateParams struct {
 	wellZStart  float64
 }
 
-func makeLHPlate(p *LHPlateParams, name string) *wtype.Plate {
+func makeLHPlate(p *LHPlateParams, name string) *wtype.LHPlate {
 	r := wtype.NewLHPlate(p.platetype,
 		p.mfr,
 		p.nrows,
@@ -406,13 +406,13 @@ func default_lhplate_props() *LHPlateParams {
 	return &params
 }
 
-func default_lhplate(name string) *wtype.Plate {
+func default_lhplate(name string) *wtype.LHPlate {
 	params := default_lhplate_props()
 	return makeLHPlate(params, name)
 }
 
 //This plate will fill into the next door position on the robot
-func wide_lhplate(name string) *wtype.Plate {
+func wide_lhplate(name string) *wtype.LHPlate {
 	params := default_lhplate_props()
 	params.size.X = 300.
 	return makeLHPlate(params, name)
@@ -454,7 +454,7 @@ func lhplate_trough_props() *LHPlateParams {
 	return &params
 }
 
-func lhplate_trough12(name string) *wtype.Plate {
+func lhplate_trough12(name string) *wtype.LHPlate {
 	params := lhplate_trough_props()
 	plate := makeLHPlate(params, name)
 	targets := []wtype.Coordinates{
@@ -1045,7 +1045,7 @@ func preloadAdaptorTips(head int, tipbox_loc string, channels []int) *SetupFn {
 	return &ret
 }
 
-func getLHComponent(what string, vol_ul float64) *wtype.Liquid {
+func getLHComponent(what string, vol_ul float64) *wtype.LHComponent {
 	c := wtype.NewLHComponent()
 	c.CName = what
 	//madness?
@@ -1087,7 +1087,7 @@ func fillTipwaste(tipwaste_loc string, count int) *SetupFn {
 
 func prefillWells(plate_loc string, wells_to_fill []string, liquid_name string, volume float64) *SetupFn {
 	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
-		plate := vlh.GetObjectAt(plate_loc).(*wtype.Plate)
+		plate := vlh.GetObjectAt(plate_loc).(*wtype.LHPlate)
 		for _, well_name := range wells_to_fill {
 			wc := wtype.MakeWellCoords(well_name)
 			well := plate.GetChildByAddress(wc).(*wtype.LHWell)
@@ -1265,7 +1265,7 @@ type wellDesc struct {
 func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
 	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
 		m := map[string]bool{}
-		plate := vlh.GetObjectAt(plate_loc).(*wtype.Plate)
+		plate := vlh.GetObjectAt(plate_loc).(*wtype.LHPlate)
 		errs := []string{}
 		for _, wd := range wells {
 			m[wd.position] = true

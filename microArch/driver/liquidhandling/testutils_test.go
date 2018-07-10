@@ -207,7 +207,7 @@ func makeGilsonWithPlatesAndTipboxesForTest(ctx context.Context, inputPlateType 
 	return params, nil
 }
 
-func makeTestInputPlate(ctx context.Context, inputPlateType string) (*wtype.Plate, error) {
+func makeTestInputPlate(ctx context.Context, inputPlateType string) (*wtype.LHPlate, error) {
 	if inputPlateType == "" {
 		inputPlateType = "DWST12"
 	}
@@ -231,7 +231,7 @@ func makeTestInputPlate(ctx context.Context, inputPlateType string) (*wtype.Plat
 	return p, nil
 }
 
-func makeTestOutputPlate(ctx context.Context) (*wtype.Plate, error) {
+func makeTestOutputPlate(ctx context.Context) (*wtype.LHPlate, error) {
 	p, err := inventory.NewPlate(ctx, "DSW96")
 
 	if err != nil {

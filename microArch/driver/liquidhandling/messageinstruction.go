@@ -10,7 +10,7 @@ type MessageInstruction struct {
 	GenericRobotInstruction
 	Type        int
 	Message     string
-	PassThrough map[string]*wtype.Liquid
+	PassThrough map[string]*wtype.LHComponent
 }
 
 func NewMessageInstruction(lhi *wtype.LHInstruction) *MessageInstruction {

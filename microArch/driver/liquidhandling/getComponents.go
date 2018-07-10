@@ -1,6 +1,6 @@
 package liquidhandling
 
-// func (lhp *LHProperties) GetComponents(cmps []*wtype.Liquid, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error)
+// func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error)
 
 import (
 	"fmt"
@@ -68,7 +68,7 @@ func matchToParallelTransfer(m wtype.Match) ParallelTransfer {
 }
 
 // returns a vector iterator for a plate given the multichannel capabilites of the head (ori, multi)
-func getPlateIterator(lhp *wtype.Plate, ori, multi int) wtype.AddressSliceIterator {
+func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.AddressSliceIterator {
 	if ori == wtype.LHVChannel {
 		//it = NewColVectorIterator(lhp, multi)
 
@@ -251,7 +251,7 @@ func cmpVecsEqual(v1, v2 wtype.ComponentVector) bool {
 	return true
 }
 
-func cmpsEqual(c1, c2 *wtype.Liquid) bool {
+func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
 	return c1.ID == c2.ID && c1.Vol == c2.Vol
 }
 

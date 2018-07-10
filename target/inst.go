@@ -86,7 +86,7 @@ type SetupIncubator struct {
 	Manual
 	// Corresponding mix
 	Mix              *Mix
-	IncubationPlates []*wtype.Plate
+	IncubationPlates []*wtype.LHPlate
 }
 
 var (

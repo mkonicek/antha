@@ -90,7 +90,7 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 
 // HandleComponentWithConcentration returns both LHComponent and Concentration from a component name with concentration in a DOE design.
 // If no valid concentration is found or an invalid component name is specifed an error is returned.
-func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.Liquid, concentration wunit.Concentration, err error) {
+func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.LHComponent, concentration wunit.Concentration, err error) {
 
 	concentration, err = HandleConcFactor(header, value)
 
@@ -188,7 +188,7 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 // LHComponent.
 //
 // If the value cannot be converted to a valid component an error is returned.
-func HandleLHComponentFactor(ctx context.Context, header string, value interface{}) (*wtype.Liquid, error) {
+func HandleLHComponentFactor(ctx context.Context, header string, value interface{}) (*wtype.LHComponent, error) {
 	str, found := value.(string)
 	if !found {
 		return nil, fmt.Errorf("value %T is not a string", value)
@@ -218,7 +218,7 @@ func HandleLHComponentFactor(ctx context.Context, header string, value interface
 // LHComponent.
 //
 // If the value cannot be converted to a valid component an error is returned.
-func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) (*wtype.Plate, error) {
+func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) (*wtype.LHPlate, error) {
 	str, found := value.(string)
 	if !found {
 		return nil, fmt.Errorf("value %T is not a string", value)

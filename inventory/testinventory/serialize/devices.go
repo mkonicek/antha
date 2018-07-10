@@ -18,7 +18,7 @@ const (
 	shallowriser18heightinmm                    = 18.00
 	coolerheight                                = 16.0
 	isofreezecoolerheight                       = 10.0
-	pcrtuberack496HeightInmm                    = 28.0
+	pcrtuberack496HeightInmm                    = 29.0 // MIS was 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips = 4.5
 	bioshake96welladaptorheight                 = 4.5
 	bioshakestandardadaptorheight               = 5.0

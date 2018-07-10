@@ -25,7 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	//"math"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -246,8 +246,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	}
 
 	//Output all the messages from the simulator in one logger call
-	//HJK: remove logging messages in preparation for fatal simulator errors
-	/*pMessage := func(n int) string {
+	pMessage := func(n int) string {
 		if n == 1 {
 			return "message"
 		}
@@ -261,7 +260,6 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 		logLines = append(logLines, fmt.Sprintf(fmtString, i+1, err.Error()))
 	}
 	logger.Info(strings.Join(logLines, "\n"))
-	*/
 
 	return nil
 }

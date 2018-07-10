@@ -20,7 +20,6 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-// solutions is a utility package for working with solutions of LHComponents
 package solutions
 
 import (
@@ -71,9 +70,9 @@ func Equal(component1, component2 *wtype.LHComponent) error {
 			}
 			if math.Abs(factor-1) <= precision {
 				return nil
-			} else {
-				return fmt.Errorf("dilution factor of components not equal to 1 +/- 1%: %f", factor)
 			}
+
+			return fmt.Errorf("dilution factor of components not equal to 1 +/- 1%%: %f", factor)
 		}
 
 		if _, factor, err := DilutableComponentLists(compList1, compList2); math.Abs(factor-1) <= precision && err == nil {
@@ -81,7 +80,7 @@ func Equal(component1, component2 *wtype.LHComponent) error {
 		} else if err != nil {
 			return err
 		} else if math.Abs(factor-1) > precision {
-			return fmt.Errorf("dilution factor of components not equal to 1 +/- 1%: %f", factor)
+			return fmt.Errorf("dilution factor of components not equal to 1 +/- 1%%: %f", factor)
 		}
 
 	}
@@ -103,36 +102,39 @@ func Equivalent(sourceComponent *wtype.LHComponent, targetComponent *wtype.LHCom
 
 		if lookForSubComponents {
 
-			if equal, _, err := DilutableComponentLists(sourceCompList, targetCompList); equal {
+			equal, _, err := DilutableComponentLists(sourceCompList, targetCompList)
+			if equal {
 				return nil
-			} else {
-				return err
 			}
-		} else {
-			return nil
+			return err
 		}
+
+		return nil
 
 	} else if search.EqualFold(sourceComponentName, targetComponentName) && sourceComponent.HasConcentration() && targetComponent.HasConcentration() {
 		if lookForSubComponents {
 
-			if equal, _, err := DilutableComponentLists(sourceCompList, targetCompList); equal {
+			equal, _, err := DilutableComponentLists(sourceCompList, targetCompList)
+			if equal {
 				return nil
-			} else {
-				return err
 			}
-		} else {
-			return nil
+
+			return err
+
 		}
+		return nil
 	}
 
 	// don't look at name of component if sub component list is found for both: evaluate component lists
 	if lookForSubComponents && nonZeroComponents(sourceCompList) > 0 && nonZeroComponents(targetCompList) > 0 {
 
-		if equal, _, err := DilutableComponentLists(sourceCompList, targetCompList); equal {
+		equal, _, err := DilutableComponentLists(sourceCompList, targetCompList)
+
+		if equal {
 			return nil
-		} else {
-			return err
 		}
+		return err
+
 	}
 	if search.EqualFold(sourceComponentName, targetComponentName) {
 		return nil

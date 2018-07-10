@@ -32,7 +32,7 @@ import (
 	//"github.com/antha-lang/antha/microArch/logger"
 )
 
-func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) map[string]map[*wtype.Plate]int {
+func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.LHPlate, weight_constraint map[string]float64) map[string]map[*wtype.LHPlate]int {
 
 	//
 	//	optimization is set up as follows:
@@ -57,7 +57,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	// defense
 
-	ppt := make([]*wtype.Plate, 0, len(plate_types))
+	ppt := make([]*wtype.LHPlate, 0, len(plate_types))
 	h := make(map[string]bool, len(plate_types))
 
 	for _, p := range plate_types {
@@ -215,13 +215,13 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		panic(err)
 	}
 
-	assignments := make(map[string]map[*wtype.Plate]int, len(component_volumes))
+	assignments := make(map[string]map[*wtype.LHPlate]int, len(component_volumes))
 
 	cur = 1
 
 	for i := 0; i < len(component_order); i++ {
 		nAss := 0
-		cmap := make(map[*wtype.Plate]int)
+		cmap := make(map[*wtype.LHPlate]int)
 		for j := 0; j < len(plate_types); j++ {
 			nwells := lp.MipColVal(cur)
 			if nwells > 0 {

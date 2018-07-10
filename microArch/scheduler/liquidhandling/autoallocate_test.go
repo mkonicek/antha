@@ -31,7 +31,7 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.Liquid{s1, s2},
+		Components: []*wtype.LHComponent{s1, s2},
 		PlateType:  "pcrplate_skirted_riser20",
 		Address:    "A1",
 		PlateNum:   1,
@@ -105,7 +105,7 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 	cmp2.Vol = 50.0
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.Liquid{cmp1, cmp2},
+		Components: []*wtype.LHComponent{cmp1, cmp2},
 		PlateType:  "pcrplate_skirted_riser20",
 		Address:    "A1",
 		PlateNum:   1,

@@ -9,7 +9,7 @@ import (
 )
 
 // MarshalPlateCSV writes a plate to a CSV file
-func MarshalPlateCSV(plate *wtype.Plate) ([]byte, error) {
+func MarshalPlateCSV(plate *wtype.LHPlate) ([]byte, error) {
 	var records [][]string
 	records = append(records, []string{
 		plate.Type,

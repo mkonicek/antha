@@ -14,7 +14,7 @@ func TestMatchComponent(t *testing.T) {
 	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = c.Dup()
@@ -28,7 +28,7 @@ func TestMatchComponent(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -73,7 +73,7 @@ func seq(start, length, increment int) []int {
 	return r
 }
 
-func updateSrcs(m Match, ca []*Liquid) {
+func updateSrcs(m Match, ca []*LHComponent) {
 	for i, v := range m.Vols {
 		if m.M[i] == -1 {
 			continue
@@ -84,7 +84,7 @@ func updateSrcs(m Match, ca []*Liquid) {
 		}
 	}
 }
-func updateDsts(m Match, ca []*Liquid) {
+func updateDsts(m Match, ca []*LHComponent) {
 	for i, v := range m.Vols {
 		if m.M[i] == -1 {
 			continue
@@ -96,7 +96,7 @@ func updateDsts(m Match, ca []*Liquid) {
 	}
 }
 
-func dstsDone(ca []*Liquid) bool {
+func dstsDone(ca []*LHComponent) bool {
 	for _, c := range ca {
 		if c.Vol > 0.0 {
 			return false
@@ -117,7 +117,7 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 	CIDs := []string{"A1", "B1", "C1", "D1"}
 	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1"}
 
-	got := make([]*Liquid, 4)
+	got := make([]*LHComponent, 4)
 
 	for i := 0; i < 4; i++ {
 		got[i] = c.Dup()
@@ -132,7 +132,7 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 	CID2s := []string{"A1", "B1", "F1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 3)
+	want := make([]*LHComponent, 3)
 	for i := 0; i < 3; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -165,7 +165,7 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 	CIDs := []string{"", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PIDs := []string{"", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		if i == 0 {
@@ -183,7 +183,7 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -214,7 +214,7 @@ func TestMatchComponent2(t *testing.T) {
 	CIDs := []string{"A1", "", "", "", "", "", "", ""}
 	PIDs := []string{"Plate1", "", "", "", "", "", "", ""}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = NewLHComponent()
@@ -230,7 +230,7 @@ func TestMatchComponent2(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -261,7 +261,7 @@ func TestMatchComponent2b(t *testing.T) {
 	CIDs := []string{"A1", "", "", "", "", "", "", ""}
 	PIDs := []string{"Plate1", "", "", "", "", "", "", ""}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = NewLHComponent()
@@ -277,7 +277,7 @@ func TestMatchComponent2b(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -308,7 +308,7 @@ func TestMatchComponent3(t *testing.T) {
 	CIDs := []string{"A1", "", "D1", "", "", "", "", ""}
 	PIDs := []string{"Plate1", "", "Plate1", "", "", "", "", ""}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = NewLHComponent()
@@ -324,7 +324,7 @@ func TestMatchComponent3(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -356,7 +356,7 @@ func TestMatchComponentIndependent(t *testing.T) {
 	CIDs := []string{"A1", "", "D1", "", "", "", "", ""}
 	PIDs := []string{"Plate1", "", "Plate1", "", "", "", "", ""}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = NewLHComponent()
@@ -372,7 +372,7 @@ func TestMatchComponentIndependent(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -404,7 +404,7 @@ func TestMatch7Subcomponents(t *testing.T) {
 	CIDs := []string{"", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PIDs := []string{"", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = c.Dup()
@@ -421,7 +421,7 @@ func TestMatch7Subcomponents(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", ""}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", ""}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		if i == 7 {
@@ -456,7 +456,7 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 	CIDs := []string{"", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PIDs := []string{"", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = c.Dup()
@@ -473,7 +473,7 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -502,7 +502,7 @@ func TestNonMatchComponent(t *testing.T) {
 	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = c.Dup()
@@ -516,7 +516,7 @@ func TestNonMatchComponent(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -544,7 +544,7 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PIDs := []string{"Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1", "Plate1"}
 
-	got := make([]*Liquid, 8)
+	got := make([]*LHComponent, 8)
 
 	for i := 0; i < 8; i++ {
 		got[i] = c.Dup()
@@ -559,7 +559,7 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 	CID2s := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	PID2s := []string{"Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2", "Plate2"}
 
-	want := make([]*Liquid, 8)
+	want := make([]*LHComponent, 8)
 	for i := 0; i < 8; i++ {
 		want[i] = d.Dup()
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
@@ -582,8 +582,8 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 }
 
 func TestAlignIndependent(t *testing.T) {
-	w := make([]*Liquid, 3)
-	g := make([]*Liquid, 3)
+	w := make([]*LHComponent, 3)
+	g := make([]*LHComponent, 3)
 
 	CIDs := []string{"A1", "B1", "C1"}
 	p1 := "Plate1"
@@ -631,8 +631,8 @@ func TestAlignIndependent(t *testing.T) {
 }
 
 func TestAlignIndependent2(t *testing.T) {
-	w := make([]*Liquid, 8)
-	g := make([]*Liquid, 8)
+	w := make([]*LHComponent, 8)
+	g := make([]*LHComponent, 8)
 
 	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	p1 := "Plate1"
@@ -678,8 +678,8 @@ func TestAlignIndependent2(t *testing.T) {
 }
 
 func TestAlignIndependent3(t *testing.T) {
-	w := make([]*Liquid, 0, 8)
-	g := make([]*Liquid, 8)
+	w := make([]*LHComponent, 0, 8)
+	g := make([]*LHComponent, 8)
 
 	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	p1 := "Plate1"

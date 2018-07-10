@@ -31,7 +31,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-func ReadAbsorbance(plate *wtype.Plate, solution *wtype.Liquid, wavelength float64) (abs wtype.Absorbance) {
+func ReadAbsorbance(plate *wtype.LHPlate, solution *wtype.LHComponent, wavelength float64) (abs wtype.Absorbance) {
 	abs.Reading = 0.0 // obviously placeholder
 	abs.Wavelength = wavelength
 	// add calculation to work out pathlength from volume and well geometry abs.Pathlength
@@ -55,7 +55,7 @@ func Blankcorrect(blank wtype.Absorbance, sample wtype.Absorbance) (blankcorrect
 	return
 }
 
-func EstimatePathLength(plate *wtype.Plate, volume wunit.Volume) (pathlength wunit.Length, err error) {
+func EstimatePathLength(plate *wtype.LHPlate, volume wunit.Volume) (pathlength wunit.Length, err error) {
 
 	if plate.Welltype.Bottom == 0 /* i.e. flat */ && plate.Welltype.Shape().LengthUnit == "mm" {
 		wellarea, err := plate.Welltype.CalculateMaxCrossSectionArea()

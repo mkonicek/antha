@@ -12,8 +12,8 @@ import (
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
-func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.Liquid {
-	r := make(map[string]*wtype.Liquid)
+func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.LHComponent {
+	r := make(map[string]*wtype.LHComponent)
 	for addr, c := range m {
 		if c.WContents.IsZero() {
 			continue
@@ -23,9 +23,9 @@ func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.Liquid {
 	return r
 }
 
-func getComponentsFromPlate(plate *wtype.Plate) []*wtype.Liquid {
+func getComponentsFromPlate(plate *wtype.LHPlate) []*wtype.LHComponent {
 
-	var components []*wtype.Liquid
+	var components []*wtype.LHComponent
 	allWellPositions := plate.AllWellPositions(false)
 
 	for _, wellcontents := range allWellPositions {
@@ -40,7 +40,7 @@ func getComponentsFromPlate(plate *wtype.Plate) []*wtype.Liquid {
 	return components
 }
 
-func allComponentsHaveWellLocation(plate *wtype.Plate) error {
+func allComponentsHaveWellLocation(plate *wtype.LHPlate) error {
 	components := getComponentsFromPlate(plate)
 	var errs []string
 	for _, component := range components {
@@ -54,7 +54,7 @@ func allComponentsHaveWellLocation(plate *wtype.Plate) error {
 	return nil
 }
 
-func samePlate(a, b *wtype.Plate) error {
+func samePlate(a, b *wtype.LHPlate) error {
 	if a.Type != b.Type {
 		return fmt.Errorf("different types %q != %q", a.Type, b.Type)
 	}
@@ -135,7 +135,7 @@ A5,milk,water,100.0,ul,0,g/l,
 func TestParsePlate(t *testing.T) {
 	type testCase struct {
 		File              []byte
-		Expected          *wtype.Plate
+		Expected          *wtype.LHPlate
 		NoWarnings        bool
 		ReplacementConfig ValidationConfig
 	}
@@ -159,11 +159,11 @@ A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),
 			NoWarnings: false,
-			Expected: &wtype.Plate{
+			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -173,7 +173,7 @@ A6,,,0,ul,0,g/l,
 						},
 					},
 					"A4": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "tea",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -183,7 +183,7 @@ A6,,,0,ul,0,g/l,
 						},
 					},
 					"A5": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "milk",
 							Type:  wtype.LTWater,
 							Vol:   100.0,
@@ -210,11 +210,11 @@ A6,,,0,ul,0,g/l,
 					plateTypeReplacementKey: "pcrplate_skirted",
 				},
 			},
-			Expected: &wtype.Plate{
+			Expected: &wtype.LHPlate{
 				Type: "pcrplate_skirted",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -224,7 +224,7 @@ A6,,,0,ul,0,g/l,
 						},
 					},
 					"A4": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "tea",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -234,7 +234,7 @@ A6,,,0,ul,0,g/l,
 						},
 					},
 					"A5": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "milk",
 							Type:  wtype.LTWater,
 							Vol:   100.0,
@@ -254,11 +254,11 @@ A1,water,water,140.5,ul,0,mg/l
 C1,neb5compcells,culture,20.5,ul,0,ng/ul
 `),
 			NoWarnings: true,
-			Expected: &wtype.Plate{
+			Expected: &wtype.LHPlate{
 				Type: "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   140.5,
@@ -268,7 +268,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 						},
 					},
 					"C1": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "neb5compcells",
 							Type:  wtype.LTCulture,
 							Vol:   20.5,
@@ -284,11 +284,11 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 			// This is to test carriage returns.
 			File:       fileCarriage,
 			NoWarnings: false,
-			Expected: &wtype.Plate{
+			Expected: &wtype.LHPlate{
 				Type: "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -298,7 +298,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 						},
 					},
 					"A4": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "tea",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -308,7 +308,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 						},
 					},
 					"A5": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "milk",
 							Type:  wtype.LTWater,
 							Vol:   100.0,
@@ -328,11 +328,11 @@ A1,water,randomType,140.5,ul,0,mg/l
 C1,neb5compcells,culture,20.5,ul,0,ng/ul
 `),
 			NoWarnings: false,
-			Expected: &wtype.Plate{
+			Expected: &wtype.LHPlate{
 				Type: "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "water",
 							Type:  wtype.LiquidType("randomType"),
 							Vol:   140.5,
@@ -342,7 +342,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 						},
 					},
 					"C1": {
-						WContents: &wtype.Liquid{
+						WContents: &wtype.LHComponent{
 							CName: "neb5compcells",
 							Type:  wtype.LTCulture,
 							Vol:   20.5,

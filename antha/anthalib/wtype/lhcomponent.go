@@ -35,13 +35,8 @@ import (
 
 const InPlaceMarker = "-INPLACE"
 
-// LHComponent is an alias for Liquid to preserve backwards compatibility
-// Liquid describes a liquid component and its desired properties
-type LHComponent = Liquid
-
-// Liquid is the principle liquid handling type in Antha.
-// A liquid describes a liquid component and its desired properties
-type Liquid struct {
+// structure describing a liquid component and its desired properties
+type LHComponent struct {
 	ID                 string
 	BlockID            BlockID
 	DaughterID         string
@@ -67,43 +62,43 @@ type Liquid struct {
 
 // AddSubComponent adds a subcomponent with concentration to a component.
 // An error is returned if subcomponent is already found.
-func (cmp *Liquid) AddSubComponent(subcomponent *Liquid, conc wunit.Concentration) error {
+func (cmp *LHComponent) AddSubComponent(subcomponent *LHComponent, conc wunit.Concentration) error {
 	return AddSubComponent(cmp, subcomponent, conc)
 }
 
 // AddSubComponents adds a component list to a component.
 // If a conflicting sub component concentration is already present then an error will be returned.
 // To overwrite all subcomponents ignoring conficts, use OverWriteSubComponents.
-func (cmp *Liquid) AddSubComponents(allsubComponents ComponentList) error {
+func (cmp *LHComponent) AddSubComponents(allsubComponents ComponentList) error {
 	return AddSubComponents(cmp, allsubComponents)
 }
 
 // OverwriteSubComponents Adds a component list to a component.
 // Any existing component list will be overwritten.
 // To add a ComponentList checking for duplicate entries, use AddSubComponents.
-func (cmp *Liquid) OverwriteSubComponents(allsubComponents ComponentList) error {
+func (cmp *LHComponent) OverwriteSubComponents(allsubComponents ComponentList) error {
 	cmp.SubComponents = allsubComponents
 	return nil
 }
 
 // GetSubComponents returns a component list from a component
-func (cmp *Liquid) GetSubComponents() (ComponentList, error) {
+func (cmp *LHComponent) GetSubComponents() (ComponentList, error) {
 	return GetSubComponents(cmp)
 }
 
 // GetConcentrationOf attempts to retrieve the concentration of subComponentName in component.
 // If the component name is equal to subComponentName, the concentration of the component itself is returned.
-func (c *Liquid) GetConcentrationOf(subComponentName string) (wunit.Concentration, error) {
+func (c *LHComponent) GetConcentrationOf(subComponentName string) (wunit.Concentration, error) {
 	return getComponentConc(c, subComponentName)
 }
 
 // HasSubComponent evaluates if a sub component with subComponentName is found in component.
 // If the component name is equal to subComponentName, true will be returned.
-func (c *Liquid) HasSubComponent(subComponentName string) bool {
+func (c *LHComponent) HasSubComponent(subComponentName string) bool {
 	return hasSubComponent(c, subComponentName)
 }
 
-func (cmp *Liquid) Matches(cmp2 *Liquid) bool {
+func (cmp *LHComponent) Matches(cmp2 *LHComponent) bool {
 	// request for a specific component
 	if cmp.IsInstance() {
 		if cmp.IsSample() {
@@ -119,33 +114,33 @@ func (cmp *Liquid) Matches(cmp2 *Liquid) bool {
 	}
 }
 
-func (lhc Liquid) GetID() string {
+func (lhc LHComponent) GetID() string {
 	return lhc.ID
 }
 
-func (lhc *Liquid) PlateLocation() PlateLocation {
+func (lhc *LHComponent) PlateLocation() PlateLocation {
 	return PlateLocationFromString(lhc.Loc)
 }
 
 // WellLocation returns the well location in A1 format.
-func (lhc *Liquid) WellLocation() string {
+func (lhc *LHComponent) WellLocation() string {
 	return lhc.PlateLocation().Coords.FormatA1()
 }
 
 // SetWellLocation sets the well location to an LHComponent in A1 format.
-func (lhc *Liquid) SetWellLocation(wellLocation string) error {
+func (lhc *LHComponent) SetWellLocation(wellLocation string) error {
 	location := lhc.PlateLocation()
 	lhc.Loc = location.ID + ":" + wellLocation
 	return nil
 }
 
 //GetClass return the class of the object
-func (lhc *Liquid) GetClass() string {
+func (lhc *LHComponent) GetClass() string {
 	return "component"
 }
 
 //GetName the component's name
-func (lhc *Liquid) GetName() string {
+func (lhc *LHComponent) GetName() string {
 	if lhc == nil {
 		return "nil"
 	}
@@ -153,7 +148,7 @@ func (lhc *Liquid) GetName() string {
 }
 
 //Summarize describe the component in a user friendly manner
-func (lhc *Liquid) Summarize() string {
+func (lhc *LHComponent) Summarize() string {
 	if lhc == nil {
 		return "nil"
 	}
@@ -173,7 +168,7 @@ func (lhc *Liquid) Summarize() string {
 }
 
 // PlateID returns the id of a plate or the empty string
-func (lhc *Liquid) PlateID() string {
+func (lhc *LHComponent) PlateID() string {
 	loc := lhc.PlateLocation()
 
 	if !loc.IsZero() {
@@ -183,11 +178,11 @@ func (lhc *Liquid) PlateID() string {
 	return ""
 }
 
-func (lhc *Liquid) CNID() string {
+func (lhc *LHComponent) CNID() string {
 	return fmt.Sprintf("CNID:%s:%s", lhc.ID, lhc.CName)
 }
 
-func (lhc *Liquid) Generation() int {
+func (lhc *LHComponent) Generation() int {
 	gen, ok := lhc.Extra["Generation"]
 	if !ok {
 		return 0
@@ -205,11 +200,11 @@ func (lhc *Liquid) Generation() int {
 	return 0
 }
 
-func (lhc *Liquid) SetGeneration(i int) {
+func (lhc *LHComponent) SetGeneration(i int) {
 	lhc.Extra["Generation"] = i
 }
 
-func (lhc *Liquid) IsZero() bool {
+func (lhc *LHComponent) IsZero() bool {
 	if lhc == nil || lhc.Type == "" || lhc.CName == "" || lhc.Vol < 0.0000001 {
 		return true
 	}
@@ -220,7 +215,7 @@ const SEQSKEY = "DNASequences"
 
 // Return a sequence list from a component.
 // Users should use GetDNASequences method.
-func (lhc *Liquid) getDNASequences() (seqs []DNASequence, err error) {
+func (lhc *LHComponent) getDNASequences() (seqs []DNASequence, err error) {
 
 	seqsValue, found := lhc.Extra[SEQSKEY]
 
@@ -247,7 +242,7 @@ func (lhc *Liquid) getDNASequences() (seqs []DNASequence, err error) {
 // Add a sequence list to a component.
 // Any existing component list will be overwritten.
 // Users should use addDNASequence and UpdateDNASequence methods
-func (lhc *Liquid) setDNASequences(seqList []DNASequence) {
+func (lhc *LHComponent) setDNASequences(seqList []DNASequence) {
 	lhc.Extra[SEQSKEY] = seqList
 }
 
@@ -287,7 +282,7 @@ const (
 // If a Sequence already exists an error is returned and the sequence is not added
 // unless an additional boolean argument (FORCEADD or true) is specified to ignore duplicates.
 // A warning will be returned in either case if a duplicate sequence is already found.
-func (lhc *Liquid) AddDNASequence(seq DNASequence, options ...bool) error {
+func (lhc *LHComponent) AddDNASequence(seq DNASequence, options ...bool) error {
 	var err error
 	// skip error checking: if no sequence list is present one will be created later anyway
 	seqList, _ := lhc.getDNASequences() // nolint
@@ -316,7 +311,7 @@ func (lhc *Liquid) AddDNASequence(seq DNASequence, options ...bool) error {
 // If a Sequence already exists an error is returned and the sequence is not added
 // unless an additional boolean argument (FORCEADD or true) is specified to ignore duplicates.
 // A warning will be returned in either case if a duplicate sequence is already found.
-func (lhc *Liquid) SetDNASequences(seqs []DNASequence, options ...bool) error {
+func (lhc *LHComponent) SetDNASequences(seqs []DNASequence, options ...bool) error {
 	var errs []string
 
 	for _, seq := range seqs {
@@ -335,7 +330,7 @@ func (lhc *Liquid) SetDNASequences(seqs []DNASequence, options ...bool) error {
 // Search is based upon both name of the sequence and sequence.
 // If multiple copies of the sequence exists and error is returned.
 // If a Sequence does not exist, the sequence is added and an error is returned.
-func (lhc *Liquid) FindDNASequence(seq DNASequence) (seqs []DNASequence, positions []int, err error) {
+func (lhc *LHComponent) FindDNASequence(seq DNASequence) (seqs []DNASequence, positions []int, err error) {
 
 	seqList, err := lhc.getDNASequences()
 
@@ -360,7 +355,7 @@ func (lhc *Liquid) FindDNASequence(seq DNASequence) (seqs []DNASequence, positio
 // Search is based upon both name of the sequence and sequence.
 // If multiple copies of the sequence exists and error is returned.
 // If a Sequence does not exist, the sequence is added and an error is returned.
-func (lhc *Liquid) UpdateDNASequence(seq DNASequence) error {
+func (lhc *LHComponent) UpdateDNASequence(seq DNASequence) error {
 
 	seqList, err := lhc.getDNASequences()
 
@@ -414,7 +409,7 @@ func deleteSeq(seqList []DNASequence, position int) (newseqList []DNASequence, e
 // Search is based upon both name of the sequence and sequence.
 // If multiple copies of the sequence exists and error is returned.
 // If a Sequence does not exist, the sequence is added and an error is returned.
-func (lhc *Liquid) RemoveDNASequence(seq DNASequence) error {
+func (lhc *LHComponent) RemoveDNASequence(seq DNASequence) error {
 
 	seqList, err := lhc.getDNASequences()
 
@@ -440,7 +435,7 @@ func (lhc *Liquid) RemoveDNASequence(seq DNASequence) error {
 
 // RemoveDNASequenceAtPosition removes a DNA sequence from a specific position.
 // Designed for cases where FindDNASequnce() method returns multiple instances of the dna sequence.
-func (lhc *Liquid) RemoveDNASequenceAtPosition(position int) error {
+func (lhc *LHComponent) RemoveDNASequenceAtPosition(position int) error {
 
 	seqList, err := lhc.getDNASequences()
 
@@ -459,55 +454,55 @@ func (lhc *Liquid) RemoveDNASequenceAtPosition(position int) error {
 }
 
 // RemoveDNASequences removes all DNASequences from the component.
-func (lhc *Liquid) RemoveDNASequences() error {
+func (lhc *LHComponent) RemoveDNASequences() error {
 	lhc.setDNASequences([]DNASequence{})
 	return nil
 }
 
 // DNASequences returns DNA Sequences asociated with an LHComponent.
 // An error is also returned indicating whether a sequence was found.
-func (lhc *Liquid) DNASequences() ([]DNASequence, error) {
+func (lhc *LHComponent) DNASequences() ([]DNASequence, error) {
 	return lhc.getDNASequences()
 }
 
 // SetVolume adds a volume to the component
-func (lhc *Liquid) SetVolume(v wunit.Volume) {
+func (lhc *LHComponent) SetVolume(v wunit.Volume) {
 	lhc.Vol = v.RawValue()
 	lhc.Vunit = v.Unit().PrefixedSymbol()
 }
 
-func (lhc *Liquid) HasParent(s string) bool {
+func (lhc *LHComponent) HasParent(s string) bool {
 	return strings.Contains(lhc.ParentID, s)
 }
 
-func (lhc *Liquid) HasDaughter(s string) bool {
+func (lhc *LHComponent) HasDaughter(s string) bool {
 	return strings.Contains(lhc.DaughterID, s)
 }
 
 // Name returns the component name as a string
-func (lhc *Liquid) Name() string {
+func (lhc *LHComponent) Name() string {
 	return lhc.CName
 }
 
 // SetName adds the specified component name to the component.
-func (lhc *Liquid) SetName(name string) {
+func (lhc *LHComponent) SetName(name string) {
 	lhc.CName = trimString(name)
 }
 
 // TypeName returns the PolicyName of the LHComponent's LiquidType as a string
-func (lhc *Liquid) TypeName() string {
+func (lhc *LHComponent) TypeName() string {
 	return string(lhc.Type)
 }
 
 // PolicyName returns the PolicyName of the LHComponent's LiquidType
-func (lhc *Liquid) PolicyName() PolicyName {
+func (lhc *LHComponent) PolicyName() PolicyName {
 	return PolicyName(lhc.TypeName())
 }
 
 // SetPolicyName adds the LiquidType associated with a PolicyName to the LHComponent.
 // If the PolicyName is invalid and the DoNotPermitCustomPolicies option is used as an argument then an error is returned.
 // By default, custom policyNames may be added and the validity of these will be checked later when robot instructions are generated, rather than in the element.
-func (lhc *Liquid) SetPolicyName(policy PolicyName, options ...PolicyOption) error {
+func (lhc *LHComponent) SetPolicyName(policy PolicyName, options ...PolicyOption) error {
 	liquidType, err := LiquidTypeFromString(policy, options...)
 	lhc.Type = liquidType
 	return err
@@ -526,7 +521,7 @@ var DoNotPermitCustomPolicies PolicyOption = "DoNotPermitCustomPolicies"
 // lhc.ModifyLHPolicyParameter("POST_MIX", 5)
 // Valid parameters and value types are specified in aparam.go
 // An error is returned if an invalid parameter or value type for that parameter is specified.
-func (lhc *Liquid) ModifyLHPolicyParameter(parameter string, value interface{}) error {
+func (lhc *LHComponent) ModifyLHPolicyParameter(parameter string, value interface{}) error {
 	if lhc.Policy == nil || len(lhc.Policy) == 0 {
 		lhc.Policy = make(LHPolicy)
 	}
@@ -535,21 +530,21 @@ func (lhc *Liquid) ModifyLHPolicyParameter(parameter string, value interface{}) 
 }
 
 // Volume returns the Volume of the LHComponent
-func (lhc *Liquid) Volume() wunit.Volume {
+func (lhc *LHComponent) Volume() wunit.Volume {
 	if lhc == nil || (lhc.Vunit == "" && lhc.Vol == 0.0) {
 		return wunit.NewVolume(0.0, "ul")
 	}
 	return wunit.NewVolume(lhc.Vol, lhc.Vunit)
 }
 
-func (lhc *Liquid) TotalVolume() wunit.Volume {
+func (lhc *LHComponent) TotalVolume() wunit.Volume {
 	if lhc.Vunit == "" && lhc.Tvol == 0.0 {
 		return wunit.NewVolume(0.0, "ul")
 	}
 	return wunit.NewVolume(lhc.Tvol, lhc.Vunit)
 }
 
-func (lhc *Liquid) Remove(v wunit.Volume) wunit.Volume {
+func (lhc *LHComponent) Remove(v wunit.Volume) wunit.Volume {
 	v2 := lhc.Volume()
 
 	if v2.LessThan(v) {
@@ -562,7 +557,7 @@ func (lhc *Liquid) Remove(v wunit.Volume) wunit.Volume {
 	return v
 }
 
-func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
+func (lhc *LHComponent) Sample(v wunit.Volume) (*LHComponent, error) {
 	if lhc.IsZero() {
 		return nil, fmt.Errorf("Cannot sample empty component")
 	} else if lhc.Volume().EqualTo(v) {
@@ -584,13 +579,13 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 	return c, nil
 }
 
-func (lhc *Liquid) Cp() *Liquid {
+func (lhc *LHComponent) Cp() *LHComponent {
 	c := lhc.Dup()
 	c.ID = GetUUID()
 	return c
 }
 
-func (lhc *Liquid) Dup() *Liquid {
+func (lhc *LHComponent) Dup() *LHComponent {
 	c := NewLHComponent()
 	if lhc != nil {
 		c.ID = lhc.ID
@@ -618,7 +613,7 @@ func (lhc *Liquid) Dup() *Liquid {
 	return c
 }
 
-func (cmp *Liquid) SetSample(flag bool) bool {
+func (cmp *LHComponent) SetSample(flag bool) bool {
 	if cmp == nil {
 		return false
 	}
@@ -632,7 +627,7 @@ func (cmp *Liquid) SetSample(flag bool) bool {
 	return true
 }
 
-func (cmp *Liquid) IsSample() bool {
+func (cmp *LHComponent) IsSample() bool {
 	if cmp == nil {
 		return false
 	}
@@ -646,7 +641,7 @@ func (cmp *Liquid) IsSample() bool {
 	return true
 }
 
-func (cmp *Liquid) HasAnyParent() bool {
+func (cmp *LHComponent) HasAnyParent() bool {
 	return cmp.ParentID != ""
 }
 
@@ -660,11 +655,11 @@ func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 }
 */
 
-func (cmp *Liquid) AddParentComponent(cmp2 *Liquid) {
+func (cmp *LHComponent) AddParentComponent(cmp2 *LHComponent) {
 	cmp.ParentID = cmp2.ID
 }
 
-func (cmp *Liquid) AddDaughterComponent(cmp2 *Liquid) {
+func (cmp *LHComponent) AddDaughterComponent(cmp2 *LHComponent) {
 	if cmp.DaughterID != "" {
 		cmp.DaughterID += "_"
 	}
@@ -674,13 +669,13 @@ func (cmp *Liquid) AddDaughterComponent(cmp2 *Liquid) {
 	cmp.DaughterID += cmp2.ID
 }
 
-func (cmp *Liquid) ReplaceDaughterID(ID1, ID2 string) {
+func (cmp *LHComponent) ReplaceDaughterID(ID1, ID2 string) {
 	if cmp.DaughterID != "" {
 		cmp.DaughterID = strings.Replace(cmp.DaughterID, ID1, ID2, 1)
 	}
 }
 
-func (cmp *Liquid) MixPreserveTvol(cmp2 *Liquid) {
+func (cmp *LHComponent) MixPreserveTvol(cmp2 *LHComponent) {
 	cmp.Mix(cmp2)
 	if cmp2.Vol == 0.00 && cmp2.Tvol > 0.00 {
 		vcmp := wunit.NewVolume(cmp.Vol, cmp.Vunit)
@@ -694,7 +689,7 @@ func (cmp *Liquid) MixPreserveTvol(cmp2 *Liquid) {
 }
 
 // add cmp2 to cmp
-func (cmp *Liquid) Mix(cmp2 *Liquid) {
+func (cmp *LHComponent) Mix(cmp2 *LHComponent) {
 	wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
 	// determine type of final
@@ -734,15 +729,15 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 // @implement Liquid
 // @deprecate Liquid
 
-func (lhc *Liquid) GetSmax() float64 {
+func (lhc *LHComponent) GetSmax() float64 {
 	return lhc.Smax
 }
 
-func (lhc *Liquid) GetVisc() float64 {
+func (lhc *LHComponent) GetVisc() float64 {
 	return lhc.Visc
 }
 
-func (lhc *Liquid) GetExtra() map[string]interface{} {
+func (lhc *LHComponent) GetExtra() map[string]interface{} {
 	x := make(map[string]interface{}, len(lhc.Extra))
 
 	// shallow copy only...
@@ -753,16 +748,16 @@ func (lhc *Liquid) GetExtra() map[string]interface{} {
 	return x
 }
 
-func (lhc *Liquid) GetConc() float64 {
+func (lhc *LHComponent) GetConc() float64 {
 	return lhc.Conc
 }
 
-func (lhc *Liquid) GetCunit() string {
+func (lhc *LHComponent) GetCunit() string {
 	return lhc.Cunit
 }
 
 // Concentration returns the Concentration of the LHComponent
-func (lhc *Liquid) Concentration() (conc wunit.Concentration) {
+func (lhc *LHComponent) Concentration() (conc wunit.Concentration) {
 	if lhc.Conc == 0.0 && lhc.Cunit == "" {
 		return wunit.NewConcentration(0.0, "g/L")
 	}
@@ -770,7 +765,7 @@ func (lhc *Liquid) Concentration() (conc wunit.Concentration) {
 }
 
 // HasConcentration checks whether a Concentration is set for the LHComponent
-func (lhc *Liquid) HasConcentration() bool {
+func (lhc *LHComponent) HasConcentration() bool {
 	if lhc.Conc != 0.0 && lhc.Cunit != "" {
 		return true
 	}
@@ -778,22 +773,22 @@ func (lhc *Liquid) HasConcentration() bool {
 }
 
 // SetConcentration sets a concentration to an LHComponent; assumes conc is valid; overwrites existing concentration
-func (lhc *Liquid) SetConcentration(conc wunit.Concentration) {
+func (lhc *LHComponent) SetConcentration(conc wunit.Concentration) {
 	lhc.Conc = conc.RawValue()
 	lhc.Cunit = conc.Unit().PrefixedSymbol()
 }
 
-func (lhc *Liquid) GetVunit() string {
+func (lhc *LHComponent) GetVunit() string {
 	return lhc.Vunit
 }
 
-func (lhc *Liquid) GetType() string {
+func (lhc *LHComponent) GetType() string {
 	typeName, _ := LiquidTypeName(lhc.Type)
 	return typeName.String()
 }
 
-func NewLHComponent() *Liquid {
-	var lhc Liquid
+func NewLHComponent() *LHComponent {
+	var lhc LHComponent
 	//lhc.ID = "component-" + GetUUID()
 	lhc.ID = GetUUID()
 	lhc.Vunit = "ul"
@@ -803,7 +798,7 @@ func NewLHComponent() *Liquid {
 }
 
 //Clean the component to its initial state
-func (cmp *Liquid) Clean() {
+func (cmp *LHComponent) Clean() {
 	cmp.Vunit = "ul"
 	cmp.DaughterID = ""
 	cmp.ParentID = ""
@@ -825,7 +820,7 @@ func (cmp *Liquid) Clean() {
 	cmp.Policy = make(map[string]interface{})
 }
 
-func (cmp *Liquid) String() string {
+func (cmp *LHComponent) String() string {
 	id := cmp.ID
 
 	l := cmp.Loc
@@ -839,14 +834,14 @@ func (cmp *Liquid) String() string {
 	return id + ":" + cmp.CName + ":" + l + ":" + v
 }
 
-func (cmp *Liquid) ParentTree() graph.StringGraph {
+func (cmp *LHComponent) ParentTree() graph.StringGraph {
 	g := graph.StringGraph{Nodes: make([]string, 0, 3), Outs: make(map[string][]string)}
 	parseTree(cmp.ID+"("+cmp.ParentID+")", &g)
 	return g
 }
 
 // graphviz format
-func (cmp *Liquid) ParentTreeString() string {
+func (cmp *LHComponent) ParentTreeString() string {
 	g := cmp.ParentTree()
 	s := graph.Print(graph.PrintOpt{Graph: &g})
 	return s
@@ -916,7 +911,7 @@ func parseTree(p string, g *graph.StringGraph) []string {
 	return newnodes
 }
 
-func (lhc *Liquid) AddVolumeRule(minvol, maxvol float64, pol LHPolicy) error {
+func (lhc *LHComponent) AddVolumeRule(minvol, maxvol float64, pol LHPolicy) error {
 	lhpr, err := lhc.GetPolicies()
 
 	if err != nil {
@@ -944,7 +939,7 @@ func (lhc *Liquid) AddVolumeRule(minvol, maxvol float64, pol LHPolicy) error {
 	return err
 }
 
-func (lhc *Liquid) AddPolicy(pol LHPolicy) error {
+func (lhc *LHComponent) AddPolicy(pol LHPolicy) error {
 	lhpr, err := lhc.GetPolicies()
 
 	if err != nil {
@@ -969,7 +964,7 @@ func (lhc *Liquid) AddPolicy(pol LHPolicy) error {
 }
 
 // in future this will be deprecated... should not let user completely reset policies
-func (lhc *Liquid) SetPolicies(rs *LHPolicyRuleSet) error {
+func (lhc *LHComponent) SetPolicies(rs *LHPolicyRuleSet) error {
 	buf, err := json.Marshal(rs)
 
 	if err == nil {
@@ -979,7 +974,7 @@ func (lhc *Liquid) SetPolicies(rs *LHPolicyRuleSet) error {
 	return err
 }
 
-func (lhc *Liquid) GetPolicies() (*LHPolicyRuleSet, error) {
+func (lhc *LHComponent) GetPolicies() (*LHPolicyRuleSet, error) {
 	var rs LHPolicyRuleSet
 	var err error
 
@@ -1006,7 +1001,7 @@ func (lhc *Liquid) GetPolicies() (*LHPolicyRuleSet, error) {
 	return &rs, err
 }
 
-func (lhc *Liquid) IsValuable() bool {
+func (lhc *LHComponent) IsValuable() bool {
 	if lhc.Extra == nil {
 		return false
 	}
@@ -1026,7 +1021,7 @@ func (lhc *Liquid) IsValuable() bool {
 	return b
 }
 
-func (lhc *Liquid) SetValue(b bool) {
+func (lhc *LHComponent) SetValue(b bool) {
 	if lhc.Extra == nil {
 		lhc.Extra = make(map[string]interface{})
 	}
@@ -1036,7 +1031,7 @@ func (lhc *Liquid) SetValue(b bool) {
 
 const instanceMarker = "INSTANCE"
 
-func (lhc *Liquid) DeclareInstance() {
+func (lhc *LHComponent) DeclareInstance() {
 	// everything starts off as a Type
 	// instancehood must inherit
 
@@ -1049,7 +1044,7 @@ func (lhc *Liquid) DeclareInstance() {
 	}
 }
 
-func (lhc *Liquid) IsInstance() bool {
+func (lhc *LHComponent) IsInstance() bool {
 	if lhc == nil || lhc.Extra == nil {
 		return false
 	}
@@ -1069,14 +1064,14 @@ func (lhc *Liquid) IsInstance() bool {
 	return b
 }
 
-func (lhc *Liquid) DeclareNotInstance() {
+func (lhc *LHComponent) DeclareNotInstance() {
 	// explicitly set instance status to false
 
 	lhc.DeclareInstance() // lazy: make sure instance status is initialised
 	lhc.Extra[instanceMarker] = false
 }
 
-func (lhc *Liquid) IsSameKindAs(c2 *Liquid) bool {
+func (lhc *LHComponent) IsSameKindAs(c2 *LHComponent) bool {
 	// v0: amounts to same CName
 
 	return lhc.Kind() == c2.Kind()
@@ -1084,14 +1079,14 @@ func (lhc *Liquid) IsSameKindAs(c2 *Liquid) bool {
 	// v1: Explicit kind IDs separate from names (TODO)
 }
 
-func (lhc *Liquid) Kind() string {
+func (lhc *LHComponent) Kind() string {
 	// v0: it's the name
 	return lhc.CName
 
 	// v1: distinct IDs for underlying liquid types
 }
 
-func (cmp Liquid) IDOrName() string {
+func (cmp LHComponent) IDOrName() string {
 	// as below but omits kind name to allow users to reset
 
 	if cmp.IsInstance() {
@@ -1107,7 +1102,7 @@ func (cmp Liquid) IDOrName() string {
 
 }
 
-func (cmp Liquid) FullyQualifiedName() string {
+func (cmp LHComponent) FullyQualifiedName() string {
 	// this should be equivalent to the checks done by LHWell.Contains()
 
 	if cmp.IsInstance() {

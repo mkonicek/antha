@@ -112,7 +112,7 @@ func findInPC(ass, w string, pc PlateChoice) int {
 	return i
 }
 
-func map_in_user_plate(p *wtype.Plate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
+func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
 	nm := p.PlateName
 
 	it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
@@ -209,7 +209,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		return nil, nil, nil, err
 	}
 
-	lkp := make(map[string][]*wtype.Liquid)
+	lkp := make(map[string][]*wtype.LHComponent)
 	lk2 := make(map[string]string)
 	// fix the output locations correctly
 
@@ -234,7 +234,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 			v.Results[1].Loc = v.Components[0].Loc
 		}
 
-		lkp[v.ID] = make([]*wtype.Liquid, 0, 1) //v.Result
+		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
 		lk2[v.Results[0].ID] = v.ID
 	}
 

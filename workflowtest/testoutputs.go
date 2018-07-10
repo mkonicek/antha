@@ -27,7 +27,7 @@ type TestResults struct {
 // A MixTaskResult is the result if running a mix task
 type MixTaskResult struct {
 	Instructions liquidhandling.SetOfRobotInstructions
-	Outputs      map[string]*wtype.Plate
+	Outputs      map[string]*wtype.LHPlate
 }
 
 func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []liquidhandling.RobotInstruction {
@@ -41,7 +41,7 @@ func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []l
 	return insOut
 }
 
-func compareOutputs(outputs1, outputs2 map[string]*wtype.Plate, opt TestOpt) string {
+func compareOutputs(outputs1, outputs2 map[string]*wtype.LHPlate, opt TestOpt) string {
 	return joinErrors(CompareMixOutputs(outputs1, outputs2, unpackOutputComparisonOptions(opt.ComparisonOptions)).Errors)
 }
 
@@ -89,8 +89,8 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 	return nil
 }
 
-func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.Plate {
-	outputs := make(map[string]*wtype.Plate)
+func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.LHPlate {
+	outputs := make(map[string]*wtype.LHPlate)
 
 	// get output plates (ONLY)
 

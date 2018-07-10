@@ -32,11 +32,11 @@ type Opt struct {
 	PlanningVersion      string
 
 	// Two methods of populating input plates
-	InputPlateData [][]byte       // From contents of files
-	InputPlates    []*wtype.Plate // Directly
+	InputPlateData [][]byte         // From contents of files
+	InputPlates    []*wtype.LHPlate // Directly
 
 	// Direct specification of output plates
-	OutputPlates []*wtype.Plate
+	OutputPlates []*wtype.LHPlate
 
 	// Specify file name in the instruction stream of any driver generated file
 	DriverOutputFileName string

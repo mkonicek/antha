@@ -19,7 +19,7 @@ const plateTypeReplacementKey string = "PlateType"
 
 // ParsePlateResult is the result of parsing a plate
 type ParsePlateResult struct {
-	Plate    *wtype.Plate
+	Plate    *wtype.LHPlate
 	Warnings []string
 }
 
@@ -89,7 +89,7 @@ func validWellCoord(coord string) (wtype.WellCoords, error) {
 	return well, nil
 }
 
-func validWell(well wtype.WellCoords, plate *wtype.Plate) error {
+func validWell(well wtype.WellCoords, plate *wtype.LHPlate) error {
 	if well.X >= plate.WellsX() || well.Y >= plate.WellsY() {
 		return fmt.Errorf("well coord %q does not exist on plate type %q", well.FormatA1(), plate.Type)
 	}
@@ -309,7 +309,7 @@ func parsePlateFile(ctx context.Context, filename string) (*ParsePlateResult, er
 
 // ParseInputPlateFile is convenience function for parsing a plate from file.
 // Will splat out warnings to stdout.
-func ParseInputPlateFile(ctx context.Context, filename string) (*wtype.Plate, error) {
+func ParseInputPlateFile(ctx context.Context, filename string) (*wtype.LHPlate, error) {
 	r, err := parsePlateFile(ctx, filename)
 	if err != nil {
 		return nil, err

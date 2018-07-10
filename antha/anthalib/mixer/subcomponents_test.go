@@ -267,8 +267,8 @@ func TestUpdateComponentDetails(t *testing.T) {
 
 	type mixTest struct {
 		name                         string
-		product                      *wtype.Liquid
-		mixes                        []*wtype.Liquid
+		product                      *wtype.LHComponent
+		mixes                        []*wtype.LHComponent
 		expectedProductName          string
 		expectedProductComponentList wtype.ComponentList
 		expectedProductConc          wunit.Concentration
@@ -277,7 +277,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 
 	var defaultConc wunit.Concentration
 
-	newTestComponent := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration, vol wunit.Volume, componentList wtype.ComponentList) *wtype.Liquid {
+	newTestComponent := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration, vol wunit.Volume, componentList wtype.ComponentList) *wtype.LHComponent {
 		c := wtype.NewLHComponent()
 		c.SetName(name)
 		c.Type = typ
@@ -341,7 +341,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 		{
 			name:                "noConcsTest",
 			product:             water,
-			mixes:               []*wtype.Liquid{ws, ps, mmxs},
+			mixes:               []*wtype.LHComponent{ws, ps, mmxs},
 			expectedProductName: "0.1 v/v dna+0.25 v/v mastermix_sapI+0.65 v/v water",
 			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
@@ -355,7 +355,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 		}, {
 			name:                "SampleForTotalVolumeTest",
 			product:             water,
-			mixes:               []*wtype.Liquid{wsTotal, ps, mmxs},
+			mixes:               []*wtype.LHComponent{wsTotal, ps, mmxs},
 			expectedProductName: "0.1 v/v dna+0.25 v/v mastermix_sapI+0.65 v/v water",
 			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
@@ -370,7 +370,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 		{
 			name:    "SampleWithConcsTest",
 			product: water,
-			mixes: []*wtype.Liquid{
+			mixes: []*wtype.LHComponent{
 				Sample(water, wunit.NewVolume(65.0, "ul")),
 				Sample(glycerol, wunit.NewVolume(65.0, "ul")),
 				Sample(iptg, wunit.NewVolume(65.0, "ul")),
@@ -391,7 +391,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 		{
 			name:    "InvalidTotalVolumeTest",
 			product: water,
-			mixes: []*wtype.Liquid{
+			mixes: []*wtype.LHComponent{
 				SampleForTotalVolume(water, wunit.NewVolume(100.0, "ul")),
 				Sample(water, wunit.NewVolume(65.0, "ul")),
 				Sample(glycerol, wunit.NewVolume(65.0, "ul")),
@@ -408,7 +408,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 		{
 			name:    "renamedComponentTest",
 			product: water,
-			mixes: []*wtype.Liquid{
+			mixes: []*wtype.LHComponent{
 				Sample(lbWithSubComponents, wunit.NewVolume(400.0, "ul")),
 				Sample(glycerol, wunit.NewVolume(50, "ul")),
 				Sample(iptg, wunit.NewVolume(50, "ul")),
@@ -429,7 +429,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 		{
 			name:    "SampleWithTwoComponentListsTest",
 			product: water,
-			mixes: []*wtype.Liquid{
+			mixes: []*wtype.LHComponent{
 				Sample(water, wunit.NewVolume(600.0, "ul")),
 				Sample(glycerol, wunit.NewVolume(100.0, "ul")),
 				Sample(iptg, wunit.NewVolume(100.0, "ul")),
@@ -452,7 +452,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 		{
 			name:    "SampleWithComponentListsTest",
 			product: water,
-			mixes: []*wtype.Liquid{
+			mixes: []*wtype.LHComponent{
 				Sample(water, wunit.NewVolume(65.0, "ul")),
 				Sample(glycerol, wunit.NewVolume(65.0, "ul")),
 				Sample(iptg, wunit.NewVolume(65.0, "ul")),

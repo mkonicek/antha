@@ -71,9 +71,13 @@ func ReturnNormalisedComponentName(component *LHComponent) string {
 
 	compList := originalcompList.RemoveConcsFromSubComponentNames()
 
-	if component.HasConcentration() && len(compList.Components) == 0 {
-		name := component.Concentration().ToString() + " " + removeConcUnitFromName(component.Name()) + " " + compList.List(false)
-		return name
+	if len(compList.Components) == 0 {
+		if component.HasConcentration() {
+			name := component.Concentration().ToString() + " " + removeConcUnitFromName(component.Name()) + " " + compList.List(false)
+			return name
+		} else {
+			return removeConcUnitFromName(component.Name())
+		}
 	}
 
 	name := compList.List(false, true)

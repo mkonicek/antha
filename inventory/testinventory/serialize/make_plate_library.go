@@ -265,7 +265,7 @@ func makeBasicPlates() (plates []*wtype.LHPlate) {
 	ystart = 10.0      // distance from top left side of plate to first well
 	zstart = 6.0       // offset of bottom of deck to bottom of well
 
-	welltype2mleppy := wtype.NewLHWell("ul", 2000, 25, eppy, wtype.VWellBottom, 8.2, 8.2, 45, 4.7, "mm")
+	welltype2mleppy := wtype.NewLHWell("ul", 2000, 50, eppy, wtype.VWellBottom, 8.2, 8.2, 45, 4.7, "mm")
 
 	plate = wtype.NewLHPlate("Kombi2mlEpp", "Unknown", 4, 2, makePlateCoords(45), welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)

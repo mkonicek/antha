@@ -69,7 +69,7 @@ func GetTipwasteForTest() *wtype.LHTipwaste {
 
 func GetTroughForTest() *wtype.Plate {
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
-	trough12 := wtype.NewLHWell("ul", 15000, 5000, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
+	trough12 := wtype.NewLHWell("ul", 1500, 500, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
 	plate := wtype.NewLHPlate("DWST12", "Unknown", 1, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
 	return plate
 }
@@ -364,15 +364,15 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 		liquidType:              "multiwater",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.7500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "1.0000",
 	},
 	{
 		liquidType:              "multiwater",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500,1.2500",
-		expectedDispenseZOffset: "1.7500,1.7500",
+		expectedAspirateZOffset: "0.5000,0.5000",
+		expectedDispenseZOffset: "1.0000,1.0000",
 	},
 	{
 		liquidType:              "multiwater",
@@ -402,15 +402,15 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 		liquidType:              "SingleChannel",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.7500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "1.0000",
 	},
 	{
 		liquidType:              "SingleChannel",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.7500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "1.0000",
 	},
 	{
 		liquidType:              "SingleChannel",
@@ -430,57 +430,57 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 		liquidType:              "SmartMix",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.2500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "0.5000",
 	},
 	{
 		liquidType:              "SmartMix",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500,1.2500",
-		expectedDispenseZOffset: "1.2500,1.2500",
+		expectedAspirateZOffset: "0.5000,0.5000",
+		expectedDispenseZOffset: "0.5000,0.5000",
 	}, /*
 		zOffsetTest{
 			liquidType:              "SmartMix",
 			numberOfTransfers:       1,
 			volume:                  wunit.NewVolume(5, "ul"),
-			expectedAspirateZOffset: "0.5000",
-			expectedDispenseZOffset: "0.5000",
+			expectedAspirateZOffset: "0.500",
+			expectedDispenseZOffset: "0.500",
 		},
 		zOffsetTest{
 			liquidType:              "SmartMix",
 			numberOfTransfers:       2,
 			volume:                  wunit.NewVolume(5, "ul"),
-			expectedAspirateZOffset: "0.5000,0.5000",
-			expectedDispenseZOffset: "0.5000,0.5000",
+			expectedAspirateZOffset: "0.500,0.500",
+			expectedDispenseZOffset: "0.500,0.500",
 		},*/
 	{
 		liquidType:              "NeedToMix",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.2500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "0.5000",
 	},
 	{
 		liquidType:              "NeedToMix",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500,1.2500",
-		expectedDispenseZOffset: "1.2500,1.2500",
+		expectedAspirateZOffset: "0.5000,0.5000",
+		expectedDispenseZOffset: "0.5000,0.5000",
 	}, /*
 		zOffsetTest{
 			liquidType:              "NeedToMix",
 			numberOfTransfers:       1,
 			volume:                  wunit.NewVolume(5, "ul"),
-			expectedAspirateZOffset: "0.5000",
-			expectedDispenseZOffset: "0.5000",
+			expectedAspirateZOffset: "0.500",
+			expectedDispenseZOffset: "0.500",
 		},
 		zOffsetTest{
 			liquidType:              "NeedToMix",
 			numberOfTransfers:       2,
 			volume:                  wunit.NewVolume(5, "ul"),
-			expectedAspirateZOffset: "0.5000,0.5000",
-			expectedDispenseZOffset: "0.5000,0.5000",
+			expectedAspirateZOffset: "0.500,0.500",
+			expectedDispenseZOffset: "0.500,0.500",
 		},*/
 }
 

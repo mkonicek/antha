@@ -7,15 +7,18 @@ import (
 
 // heights in mm
 const (
-	offset                                      = 0.25
-	gilsonoffsetpcrplate                        = 2.0 // 2.136
-	gilsonoffsetgreiner                         = 2.0
-	riserheightinmm                             = 40.0 - offset
-	shallowriserheightinmm                      = 20.25 - offset
-	shallowriser18heightinmm                    = 18.75 - offset
+	//	offset               = 0.25
+	//	gilsonoffsetpcrplate = 2.0 // 2.136
+	//	gilsonoffsetgreiner  = 2.0
+	//riserheightinmm                             = 40.0 - offset
+	//shallowriserheightinmm                      = 20.25 - offset
+	//shallowriser18heightinmm                    = 18.75 - offset
+	riserheightinmm                             = 40.0
+	shallowriserheightinmm                      = 20.00
+	shallowriser18heightinmm                    = 18.00
 	coolerheight                                = 16.0
 	isofreezecoolerheight                       = 10.0
-	pcrtuberack496HeightInmm                    = 28.0
+	pcrtuberack496HeightInmm                    = 29.0 // MIS was 28.0
 	valueformaxheadtonotintoDSWplatewithp20tips = 4.5
 	bioshake96welladaptorheight                 = 4.5
 	bioshakestandardadaptorheight               = 5.0

@@ -36,7 +36,7 @@ type LHInstruction struct {
 	BlockID          BlockID
 	SName            string
 	Order            int
-	Components       []*Liquid
+	Components       []*LHComponent
 	ContainerType    string
 	Welladdress      string
 	PlateID          string
@@ -46,12 +46,12 @@ type LHInstruction struct {
 	Conc             float64
 	Tvol             float64
 	Majorlayoutgroup int
-	Results          []*Liquid
+	Results          []*LHComponent
 	gen              int
 	PlateName        string
-	OutPlate         *Plate
+	OutPlate         *LHPlate
 	Message          string
-	PassThrough      map[string]*Liquid // 1:1 pass through, only applies to prompts
+	PassThrough      map[string]*LHComponent // 1:1 pass through, only applies to prompts
 }
 
 func (ins LHInstruction) String() string {
@@ -121,7 +121,7 @@ func newLHInstruction() *LHInstruction {
 	var lhi LHInstruction
 	lhi.ID = GetUUID()
 	lhi.Majorlayoutgroup = -1
-	lhi.PassThrough = make(map[string]*Liquid, 1)
+	lhi.PassThrough = make(map[string]*LHComponent, 1)
 	return &lhi
 }
 
@@ -153,15 +153,15 @@ func (inst *LHInstruction) GetID() string {
 	return inst.ID
 }
 
-func (ins *LHInstruction) AddResult(cmp *Liquid) {
+func (ins *LHInstruction) AddResult(cmp *LHComponent) {
 	ins.AddProduct(cmp)
 }
 
-func (inst *LHInstruction) AddProduct(cmp *Liquid) {
+func (inst *LHInstruction) AddProduct(cmp *LHComponent) {
 	inst.Results = append(inst.Results, cmp)
 }
 
-func (inst *LHInstruction) AddComponent(cmp *Liquid) {
+func (inst *LHInstruction) AddComponent(cmp *LHComponent) {
 	if inst == nil {
 		return
 	}
@@ -253,8 +253,8 @@ func (ins *LHInstruction) NamesOfComponentsMoving() string {
 	return strings.Join(sa, "+")
 }
 
-func (ins *LHInstruction) ComponentsMoving() []*Liquid {
-	ca := make([]*Liquid, 0)
+func (ins *LHInstruction) ComponentsMoving() []*LHComponent {
+	ca := make([]*LHComponent, 0)
 	for i, v := range ins.Components {
 		// ignore component 1 if this is a mix-in-place
 		if i == 0 && ins.IsMixInPlace() {

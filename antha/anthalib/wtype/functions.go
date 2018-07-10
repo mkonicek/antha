@@ -1,7 +1,7 @@
 package wtype
 
-func CopyComponentArray(arin []*Liquid) []*Liquid {
-	r := make([]*Liquid, len(arin))
+func CopyComponentArray(arin []*LHComponent) []*LHComponent {
+	r := make([]*LHComponent, len(arin))
 
 	for i, v := range arin {
 		r[i] = v.Dup()
@@ -22,7 +22,7 @@ func ChannelsUsed(wf []string) []bool {
 	return ret
 }
 
-func ChannelWells(prm LHChannelParameter, plt Plate, wellsfrom []string) []string {
+func ChannelWells(prm LHChannelParameter, plt LHPlate, wellsfrom []string) []string {
 	channelsused := ChannelsUsed(wellsfrom)
 
 	firstwell := ""
@@ -69,7 +69,7 @@ func ChannelWells(prm LHChannelParameter, plt Plate, wellsfrom []string) []strin
 	return tipwells
 }
 
-func TipsPerWell(prm LHChannelParameter, p Plate) (int, int) {
+func TipsPerWell(prm LHChannelParameter, p LHPlate) (int, int) {
 	// assumptions:
 
 	// 1) sbs format plate

@@ -47,7 +47,7 @@ func GetContextForTest() context.Context {
 	return ctx
 }
 
-func GetPlateForTest() *wtype.Plate {
+func GetPlateForTest() *wtype.LHPlate {
 
 	offset := 0.25
 	riserheightinmm := 40.0 - offset
@@ -67,7 +67,7 @@ func GetTipwasteForTest() *wtype.LHTipwaste {
 	return lht
 }
 
-func GetTroughForTest() *wtype.Plate {
+func GetTroughForTest() *wtype.LHPlate {
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
 	trough12 := wtype.NewLHWell("ul", 15000, 5000, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
 	plate := wtype.NewLHPlate("DWST12", "Unknown", 1, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
@@ -256,7 +256,7 @@ func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
 
 }
 
-func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wtype.Liquid) (rq *LHRequest, err error) {
+func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wtype.LHComponent) (rq *LHRequest, err error) {
 
 	// set up ctx
 	ctx := GetContextForTest()
@@ -796,7 +796,7 @@ func TestPlateReuse(t *testing.T) {
 		}
 		thing := lh.Properties.PlateLookup[plateid]
 
-		plate, ok := thing.(*wtype.Plate)
+		plate, ok := thing.(*wtype.LHPlate)
 		if !ok {
 			continue
 		}
@@ -838,7 +838,7 @@ func TestPlateReuse(t *testing.T) {
 		}
 		thing := lh.Properties.PlateLookup[plateid]
 
-		plate, ok := thing.(*wtype.Plate)
+		plate, ok := thing.(*wtype.LHPlate)
 		if !ok {
 			continue
 		}
@@ -913,9 +913,9 @@ func TestBeforeVsAfter(t *testing.T) {
 		// ok nice we have some sort of consistency
 
 		switch p1.(type) {
-		case *wtype.Plate:
-			pp1 := p1.(*wtype.Plate)
-			pp2 := p2.(*wtype.Plate)
+		case *wtype.LHPlate:
+			pp1 := p1.(*wtype.LHPlate)
+			pp2 := p2.(*wtype.LHPlate)
 			if pp1.Type != pp2.Type {
 				t.Fatal(fmt.Sprintf("Plates at %s not same type: %s %s", pos, pp1.Type, pp2.Type))
 			}
@@ -1102,12 +1102,12 @@ func TestEP3WrongTotalVolume(t *testing.T) {
 func TestDistinctPlateNames(t *testing.T) {
 	rq := NewLHRequest()
 	for i := 0; i < 100; i++ {
-		p := &wtype.Plate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
+		p := &wtype.LHPlate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
 		rq.Input_plate_order = append(rq.Input_plate_order, p.ID)
 		rq.Input_plates[p.ID] = p
 	}
 	for i := 100; i < 200; i++ {
-		p := &wtype.Plate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
+		p := &wtype.LHPlate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
 		rq.Output_plate_order = append(rq.Output_plate_order, p.ID)
 		rq.Output_plates[p.ID] = p
 	}
@@ -1254,7 +1254,7 @@ func TestOveractiveMultichannel(t *testing.T) {
 
 	source := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
 
-	samples := make([]*wtype.Liquid, 4)
+	samples := make([]*wtype.LHComponent, 4)
 
 	samples[0] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
 	samples[1] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
@@ -1295,7 +1295,7 @@ func TestOveractiveMultichannel(t *testing.T) {
 	}
 }
 
-func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstruction {
+func getTestSplitSample(component *wtype.LHComponent, volume float64) *wtype.LHInstruction {
 	ret := wtype.NewLHSplitInstruction()
 
 	ret.Components = append(ret.Components, component.Dup())
@@ -1306,7 +1306,7 @@ func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstru
 	return ret
 }
 
-func getTestMix(components []*wtype.Liquid, address string) *wtype.LHInstruction {
+func getTestMix(components []*wtype.LHComponent, address string) *wtype.LHInstruction {
 	mix := mixer.GenericMix(mixer.MixOptions{
 		Components: components,
 		Address:    address,
@@ -1346,7 +1346,7 @@ func TestSplitSampleMultichannel(t *testing.T) {
 
 			split := getTestSplitSample(lastStock, 20.0)
 
-			mix := getTestMix([]*wtype.Liquid{split.Results[0], diluentSample}, wc.FormatA1())
+			mix := getTestMix([]*wtype.LHComponent{split.Results[0], diluentSample}, wc.FormatA1())
 
 			lastStock = mix.Results[0]
 

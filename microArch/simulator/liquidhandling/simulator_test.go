@@ -3418,7 +3418,7 @@ func Test_Mix(t *testing.T) {
 	}
 }
 
-func component(name string) *wtype.Liquid {
+func component(name string) *wtype.LHComponent {
 	A := wtype.NewLHComponent()
 	A.CName = name
 	A.Type = wtype.LTWater
@@ -3594,7 +3594,7 @@ func Test_Workflow(t *testing.T) {
 
 	//setup the input plate
 	wc := wtype.MakeWellCoords("A1")
-	comp := []*wtype.Liquid{
+	comp := []*wtype.LHComponent{
 		component("water"),
 		component("red"),
 		component("green"),

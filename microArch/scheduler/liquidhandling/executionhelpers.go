@@ -153,7 +153,7 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 }
 
-func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.Liquid) *IChain {
+func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.LHComponent) *IChain {
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations
@@ -514,12 +514,12 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			// get dem big ole plates out
 			// TODO -- pass them in instead of all this nonsense
 
-			var flhp, tlhp *wtype.Plate
+			var flhp, tlhp *wtype.LHPlate
 
 			flhif := robot.PlateLookup[tfrs[i].PlateIDs[xx]] //[fromPlateIDs[i][xx]]
 
 			if flhif != nil {
-				flhp = flhif.(*wtype.Plate)
+				flhp = flhif.(*wtype.LHPlate)
 			} else {
 				s := fmt.Sprint("NO SRC PLATE FOUND : ", i, " ", xx, " ", tfrs[i].PlateIDs[xx]) //fromPlateIDs[i][xx])
 				err := wtype.LHError(wtype.LH_ERR_DIRE, s)
@@ -530,7 +530,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			tlhif := robot.PlateLookup[insIn.PlateID]
 
 			if tlhif != nil {
-				tlhp = tlhif.(*wtype.Plate)
+				tlhp = tlhif.(*wtype.LHPlate)
 			} else {
 				s := fmt.Sprint("NO DST PLATE FOUND : ", i, " ", xx, " ", insIn.PlateID)
 				err := wtype.LHError(wtype.LH_ERR_DIRE, s)

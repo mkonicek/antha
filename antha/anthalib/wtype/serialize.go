@@ -27,13 +27,13 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-func (lhp *Plate) MarshalJSON() ([]byte, error) {
+func (lhp *LHPlate) MarshalJSON() ([]byte, error) {
 	slhp := lhp.ToSLHPLate()
 
 	return json.Marshal(slhp)
 }
 
-func (lhp *Plate) UnmarshalJSON(b []byte) error {
+func (lhp *LHPlate) UnmarshalJSON(b []byte) error {
 	var slhp SLHPlate
 
 	err := json.Unmarshal(b, &slhp)
@@ -68,7 +68,7 @@ type SLHPlate struct {
 	WellZStart  float64 // offset (mm) to bottom of well in Z direction
 }
 
-func (p *Plate) ToSLHPLate() SLHPlate {
+func (p *LHPlate) ToSLHPLate() SLHPlate {
 	return SLHPlate{
 		ID:          p.ID,
 		Inst:        p.Inst,
@@ -90,7 +90,7 @@ func (p *Plate) ToSLHPLate() SLHPlate {
 	}
 }
 
-func (slhp SLHPlate) FillPlate(plate *Plate) {
+func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 	plate.ID = slhp.ID
 	plate.Inst = slhp.Inst
 	plate.Loc = slhp.Loc
@@ -122,7 +122,7 @@ func (slhp SLHPlate) FillPlate(plate *Plate) {
 	plate.Welltype.Plate = plate
 }
 
-func makeRows(p *Plate) {
+func makeRows(p *LHPlate) {
 	p.Rows = make([][]*LHWell, p.WlsY)
 	for i := 0; i < p.WlsY; i++ {
 		p.Rows[i] = make([]*LHWell, p.WlsX)
@@ -132,7 +132,7 @@ func makeRows(p *Plate) {
 		}
 	}
 }
-func makeCols(p *Plate) {
+func makeCols(p *LHPlate) {
 	p.Cols = make([][]*LHWell, p.WlsX)
 	for i := 0; i < p.WlsX; i++ {
 		p.Cols[i] = make([]*LHWell, p.WlsY)
@@ -171,7 +171,7 @@ func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 	w.Bottomh = wunit.NewLength(lhwt.Bottomh, lhwt.Dunit).ConvertToString("mm")
 }
 
-func (plate *Plate) Welldimensions() *LHWellType {
+func (plate *LHPlate) Welldimensions() *LHWellType {
 	t := plate.Welltype
 	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, t.WShape.ShapeName, t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
 	return &lhwt
@@ -181,7 +181,7 @@ type SLHWell struct {
 	ID       string
 	Inst     string
 	Coords   WellCoords
-	Contents *Liquid
+	Contents *LHComponent
 }
 
 func (slw SLHWell) FillWell(lw *LHWell) {

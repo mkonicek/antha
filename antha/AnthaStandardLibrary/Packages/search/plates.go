@@ -81,7 +81,7 @@ func checkWellValidity(plate *wtype.LHPlate, well string) error {
 
 // IsFreeWell checks for whether a well on a plate is free.
 // An error is returned if the well is not found on the plate or is occupied.
-func IsFreeWell(plate *wtype.Plate, well string) error {
+func IsFreeWell(plate *wtype.LHPlate, well string) error {
 	if err := checkWellValidity(plate, well); err != nil {
 		return err
 	}

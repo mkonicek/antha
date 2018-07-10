@@ -126,6 +126,28 @@ func listPolicies(cmd *cobra.Command, args []string) error {
 		}
 		_, err := fmt.Println(strings.Join(lines, "\n"))
 		return err
+	case descriptionsOutput:
+		type descriptionOnly struct {
+			Description string `json:"description"`
+			Id          string `json:"id"`
+			Name        string `json:"name"`
+		}
+		var uiJson []descriptionOnly
+		for _, p := range ps {
+
+			uiJson = append(uiJson, descriptionOnly{
+				Description: p.Properties["DESCRIPTION"].(string),
+				Id:          p.Name,
+				Name:        p.Name,
+			})
+		}
+
+		bs, err := json.MarshalIndent(uiJson, "", "  ")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Println(string(bs))
+		return err
 	default:
 		return fmt.Errorf("unknown output format %q", output)
 	}

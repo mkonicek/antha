@@ -297,7 +297,7 @@ func MakeWaterPolicy() LHPolicy {
 	waterpolicy["CAN_MULTI"] = true
 	waterpolicy["DSPZOFFSET"] = 1.0
 	waterpolicy["BLOWOUTVOLUME"] = 50.0
-	waterpolicy["DESCRIPTION"] = "Default policy designed for pipetting water, permitting multi-channel use. Includes a blowout step for added accuracy and no post-mixing, no multi channel."
+	waterpolicy["DESCRIPTION"] = "Default policy designed for pipetting water, permitting multi-channel use. Includes a blowout step for added accuracy and no post-mixing."
 	return waterpolicy
 }
 

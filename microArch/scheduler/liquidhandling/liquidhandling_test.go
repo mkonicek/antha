@@ -25,11 +25,12 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -100,8 +101,11 @@ func TestStockConcs(*testing.T) {
 
 func configure_request_simple(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
+	water.Type = wtype.LTSingleChannel
 	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
+	mmx.Type = wtype.LTSingleChannel
 	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
+	part.Type = wtype.LTSingleChannel
 
 	for k := 0; k < 9; k++ {
 		ins := wtype.NewLHMixInstruction()
@@ -395,28 +399,28 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 			expectedDispenseZOffset: "1.7500,1.7500,1.7500,1.7500,1.7500,1.7500,1.7500,1.7500",
 		},*/
 	{
-		liquidType:              "water",
+		liquidType:              "SingleChannel",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
 		expectedAspirateZOffset: "1.2500",
 		expectedDispenseZOffset: "1.7500",
 	},
 	{
-		liquidType:              "water",
+		liquidType:              "SingleChannel",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
 		expectedAspirateZOffset: "1.2500",
 		expectedDispenseZOffset: "1.7500",
 	},
 	{
-		liquidType:              "water",
+		liquidType:              "SingleChannel",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(5, "ul"),
 		expectedAspirateZOffset: "0.5000",
 		expectedDispenseZOffset: "1.0000",
 	},
 	{
-		liquidType:              "water",
+		liquidType:              "SingleChannel",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(5, "ul"),
 		expectedAspirateZOffset: "0.5000",

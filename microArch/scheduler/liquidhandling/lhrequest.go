@@ -207,7 +207,7 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = 1.0
 	lhr.Options = NewLHOptions()
 	lhr.TipsUsed = make([]wtype.TipEstimate, 0)
-	systemPolicies, _ := wtype.GetLHPolicyForTest()
+	systemPolicies, _ := wtype.GetSystemLHPolicies()
 	lhr.SetPolicies(systemPolicies)
 	return &lhr
 }

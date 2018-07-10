@@ -47,7 +47,7 @@ func TestNextFreeWell(t *testing.T) {
 	type nextWellTest struct {
 		avoidWells     []string
 		preferredWells []string
-		plateType      *wtype.LHPlate
+		plateType      *wtype.Plate
 		byRow          bool
 		expectedResult string
 		expectedError  error

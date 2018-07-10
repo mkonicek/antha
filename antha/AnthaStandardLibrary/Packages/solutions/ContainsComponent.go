@@ -38,7 +38,7 @@ func equalFold(a, b string) bool {
 // A position of -1 is returned if no match found.
 // If the component does not contain a concentration, the name will be matched only
 // if multiple matches are found the first will be returned
-func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHComponent, lookForSubComponents bool) (found bool, position int, err error) {
+func ContainsComponent(components []*wtype.Liquid, component *wtype.Liquid, lookForSubComponents bool) (found bool, position int, err error) {
 
 	var errs []string
 
@@ -68,12 +68,12 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 
 					if lookForSubComponents {
 
-						compsubcomponents, err := GetSubComponents(comp)
+						compsubcomponents, err := comp.GetSubComponents()
 						if err != nil {
 							return false, -1, err
 						}
 
-						componentSubcomponents, err := GetSubComponents(component)
+						componentSubcomponents, err := component.GetSubComponents()
 						if err != nil {
 							return false, -1, err
 						}
@@ -93,12 +93,12 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 			} else {
 				if lookForSubComponents {
 
-					compsubcomponents, err := GetSubComponents(comp)
+					compsubcomponents, err := comp.GetSubComponents()
 					if err != nil {
 						return false, -1, err
 					}
 
-					componentSubcomponents, err := GetSubComponents(component)
+					componentSubcomponents, err := component.GetSubComponents()
 					if err != nil {
 						return false, -1, err
 					}
@@ -120,45 +120,11 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 	return false, -1, fmt.Errorf("component %s not found in list: %s. : Errors for each: %s", componentSummary(component), componentNames(components), strings.Join(errs, "\n"))
 }
 
-func nonZeroComponents(compList ComponentList) int {
-	var nonZero int
-	for _, conc := range compList.Components {
-		if conc.RawValue() > 0 {
-			nonZero++
-		}
-	}
-	return nonZero
-}
-
 // EqualLists compares two ComponentLists and returns an error if the lists are not identical.
-func EqualLists(list1, list2 ComponentList) error {
-	var notEqual []string
+var EqualLists = wtype.EqualLists
 
-	if nonZeroComponents(list1) == 0 && nonZeroComponents(list2) == 0 {
-		return nil
-	}
-
-	if nonZeroComponents(list1) != nonZeroComponents(list2) {
-		return fmt.Errorf("componentlists unequal length: %d, %d", nonZeroComponents(list1), nonZeroComponents(list2))
-	}
-
-	for key, value1 := range list1.Components {
-		if value2, found := list2.Components[key]; found {
-			if fmt.Sprintf("%.2e", value1.SIValue()) != fmt.Sprintf("%.2e", value2.SIValue()) {
-				notEqual = append(notEqual, key+" "+fmt.Sprint(value1)+" in list 1 and "+fmt.Sprint(value2)+" in list 2.")
-			}
-		} else {
-			notEqual = append(notEqual, key+" not found in list2. ")
-		}
-	}
-	if len(notEqual) > 0 {
-		return fmt.Errorf(strings.Join(notEqual, ". \n"))
-	}
-	return nil
-}
-
-func componentSummary(component *wtype.LHComponent) string {
-	subComps, err := GetSubComponents(component)
+func componentSummary(component *wtype.Liquid) string {
+	subComps, err := component.GetSubComponents()
 	var message string
 	if err != nil {
 		message = err.Error()
@@ -175,7 +141,7 @@ func componentSummary(component *wtype.LHComponent) string {
 	return fmt.Sprint("Component Name: ", component.CName, "Conc: ", conc, ". SubComponents: ", message)
 }
 
-func componentNames(components []*wtype.LHComponent) (names []string) {
+func componentNames(components []*wtype.Liquid) (names []string) {
 	for _, component := range components {
 		names = append(names, component.CName)
 	}

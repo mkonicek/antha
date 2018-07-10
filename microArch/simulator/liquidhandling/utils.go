@@ -262,7 +262,7 @@ func pluralClassOf(o interface{}, num int) string {
 
 //addComponent add a component to the container without storing component history
 //all we care about are the volume and Cname
-func addComponent(container wtype.LHContainer, rhs *wtype.LHComponent) error {
+func addComponent(container wtype.LHContainer, rhs *wtype.Liquid) error {
 
 	lhs := container.Contents()
 

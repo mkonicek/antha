@@ -30,43 +30,47 @@ const DefaultLHPolicy = LTDefault
 
 // Valid default LiquidTypes
 const (
-	LTNIL                LiquidType = "nil"
-	LTWater              LiquidType = "water"
-	LTDefault            LiquidType = "default"
-	LTCulture            LiquidType = "culture"
-	LTProtoplasts        LiquidType = "protoplasts"
-	LTDNA                LiquidType = "dna"
-	LTDNAMIX             LiquidType = "dna_mix"
-	LTProtein            LiquidType = "protein"
-	LTMultiWater         LiquidType = "multiwater"
-	LTLoad               LiquidType = "load"
-	LTVISCOUS            LiquidType = "viscous"
-	LTPEG                LiquidType = "peg"
-	LTPAINT              LiquidType = "paint"
-	LTNeedToMix          LiquidType = "NeedToMix"
-	LTPostMix            LiquidType = "PostMix"
-	LTload               LiquidType = "load"
-	LTGlycerol           LiquidType = "glycerol"
-	LTPLATEOUT           LiquidType = "plateout"
-	LTDetergent          LiquidType = "detergent"
-	LTCOLONY             LiquidType = "colony"
-	LTNSrc               LiquidType = "nitrogen_source"
-	InvalidPolicyName    LiquidType = "InvalidPolicyName"
-	LTEthanol            LiquidType = "ethanol"
-	LTDoNotMix           LiquidType = "DoNotMix"
-	LTloadwater          LiquidType = "loadwater"
-	LTPreMix             LiquidType = "PreMix"
-	LTDISPENSEABOVE      LiquidType = "DispenseAboveLiquid"
-	LTDISPENSEABOVEMULTI LiquidType = "DispenseAboveLiquidMulti"
-	LTCulutureReuse      LiquidType = "culturereuse"
-	LTDNAMIXMULTI        LiquidType = "dna_mix_multi"
-	LTCOLONYMIX          LiquidType = "colonymix"
-	LTDNACELLSMIX        LiquidType = "dna_cells_mix"
-	LTDNACELLSMIXMULTI   LiquidType = "dna_cells_mix_multi"
-	LTCSrc               LiquidType = "carbon_source"
-	LTMegaMix            LiquidType = "MegaMix"
-	LTSolvent            LiquidType = "solvent"
-	LTSmartMix           LiquidType = "SmartMix"
+	LTNIL                   LiquidType = "nil"
+	LTWater                 LiquidType = "water"
+	LTDefault               LiquidType = "default"
+	LTCulture               LiquidType = "culture"
+	LTProtoplasts           LiquidType = "protoplasts"
+	LTDNA                   LiquidType = "dna"
+	LTDNAMIX                LiquidType = "dna_mix"
+	LTProtein               LiquidType = "protein"
+	LTMultiWater            LiquidType = "multiwater"
+	LTLoad                  LiquidType = "load"
+	LTVISCOUS               LiquidType = "viscous"
+	LTPEG                   LiquidType = "peg"
+	LTPAINT                 LiquidType = "paint"
+	LTNeedToMix             LiquidType = "NeedToMix"
+	LTPostMix               LiquidType = "PostMix"
+	LTload                  LiquidType = "load"
+	LTGlycerol              LiquidType = "glycerol"
+	LTPLATEOUT              LiquidType = "plateout"
+	LTDetergent             LiquidType = "detergent"
+	LTCOLONY                LiquidType = "colony"
+	LTNSrc                  LiquidType = "nitrogen_source"
+	InvalidPolicyName       LiquidType = "InvalidPolicyName"
+	LTEthanol               LiquidType = "ethanol"
+	LTDoNotMix              LiquidType = "DoNotMix"
+	LTloadwater             LiquidType = "loadwater"
+	LTPreMix                LiquidType = "PreMix"
+	LTDISPENSEABOVE         LiquidType = "DispenseAboveLiquid"
+	LTDISPENSEABOVEMULTI    LiquidType = "DispenseAboveLiquidMulti"
+	LTCulutureReuse         LiquidType = "culturereuse"
+	LTDNAMIXMULTI           LiquidType = "dna_mix_multi"
+	LTCOLONYMIX             LiquidType = "colonymix"
+	LTDNACELLSMIX           LiquidType = "dna_cells_mix"
+	LTDNACELLSMIXMULTI      LiquidType = "dna_cells_mix_multi"
+	LTCSrc                  LiquidType = "carbon_source"
+	LTMegaMix               LiquidType = "MegaMix"
+	LTSolvent               LiquidType = "solvent"
+	LTSmartMix              LiquidType = "SmartMix"
+	LTSingleChannel         LiquidType = "SingleChannel"
+	LTSmartMixSingleChannel LiquidType = "SmartMixSingleChannel"
+	LTLiquidLevel           LiquidType = "LiquidLevel"
+	LTSmartMixLiquidLevel   LiquidType = "SmartMixLiquidLevel"
 )
 
 // LiquidTypeFromString returns a LiquidType from a PolicyName
@@ -88,7 +92,7 @@ func LiquidTypeName(lt LiquidType) (PolicyName, error) {
 	return PolicyName(lt), err
 }
 
-func mergeSolubilities(c1, c2 *LHComponent) float64 {
+func mergeSolubilities(c1, c2 *Liquid) float64 {
 	if c1.Smax < c2.Smax {
 		return c1.Smax
 	}
@@ -98,7 +102,7 @@ func mergeSolubilities(c1, c2 *LHComponent) float64 {
 
 // helper functions... will need extending eventually
 
-func mergeTypes(c1, c2 *LHComponent) LiquidType {
+func mergeTypes(c1, c2 *Liquid) LiquidType {
 	// couple of mixing rules: protein, dna etc. are basically
 	// special water so we retain that characteristic whatever happens
 	// ditto culture... otherwise we look for the majority

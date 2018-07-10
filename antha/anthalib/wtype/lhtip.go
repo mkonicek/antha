@@ -39,7 +39,7 @@ type LHTip struct {
 	Bounds          BBox
 	EffectiveHeight float64
 	parent          LHObject `gotopb:"-"`
-	contents        *LHComponent
+	contents        *Liquid
 	Filtered        bool
 }
 
@@ -223,7 +223,7 @@ func (self *LHTip) DimensionsString() string {
 }
 
 //@implement LHContainer
-func (self *LHTip) Contents() *LHComponent {
+func (self *LHTip) Contents() *Liquid {
 	if self == nil {
 		return nil
 	}
@@ -251,7 +251,7 @@ func (self *LHTip) CurrentWorkingVolume() wunit.Volume {
 }
 
 //@implement LHContainer
-func (self *LHTip) AddComponent(v *LHComponent) error {
+func (self *LHTip) AddComponent(v *Liquid) error {
 	fv := self.CurrentVolume()
 	fv.Add(v.Volume())
 
@@ -267,7 +267,7 @@ func (self *LHTip) AddComponent(v *LHComponent) error {
 }
 
 //SetContents set the contents of the tip, returns an error if the tip is overfilled
-func (self *LHTip) SetContents(v *LHComponent) error {
+func (self *LHTip) SetContents(v *Liquid) error {
 	if v.Volume().GreaterThan(self.MaxVol) {
 		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), v.Volume(), self.MaxVol)
 	}
@@ -280,7 +280,7 @@ func (self *LHTip) SetContents(v *LHComponent) error {
 }
 
 //@implement LHContainer
-func (self *LHTip) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
+func (self *LHTip) RemoveVolume(v wunit.Volume) (*Liquid, error) {
 	if v.GreaterThan(self.CurrentWorkingVolume()) {
 		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(), self.CurrentWorkingVolume())
 	}

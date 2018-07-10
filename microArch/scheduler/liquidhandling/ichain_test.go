@@ -28,7 +28,7 @@ func TestIChain2(t *testing.T) {
 
 	s := []string{"A", "B", "C", "D", "E", "F"}
 
-	cmps := make([]*wtype.LHComponent, 0, 1)
+	cmps := make([]*wtype.Liquid, 0, 1)
 
 	for _, k := range s {
 
@@ -63,7 +63,7 @@ func TestIChain3(t *testing.T) {
 
 	s := []string{"A", "B", "C", "D", "E", "F"}
 
-	cmps := make([]*wtype.LHComponent, 0, 1)
+	cmps := make([]*wtype.Liquid, 0, 1)
 
 	for _, k := range s {
 

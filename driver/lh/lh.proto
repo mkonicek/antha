@@ -608,6 +608,9 @@ message PtrToLHTipboxMessage{
 message VolumeMessage {
 	PtrToConcreteMeasurementMessage Arg_1 = 1;
 }
+message ConcentrationMessage {
+	PtrToConcreteMeasurementMessage Arg_1 = 1;
+}
 message FlowRateMessage {
 	PtrToConcreteMeasurementMessage Arg_1 = 1;
 }
@@ -715,6 +718,7 @@ message LHComponentMessage {
 	string Arg_18 = 18;
 	string Arg_19 = 19;
     MapstringAnyMessageMessage Arg_20 = 20;
+	SubComponentMessage Arg_21 = 21;
 }
 message GenericPrefixedUnitMessage {
 	GenericUnitMessage Arg_1 = 1;
@@ -750,3 +754,6 @@ message TransferReply{
 	CommandStatusMessage Ret_1 = 1;
 }
 
+message SubComponentMessage{
+	AnyMessage Arg_1 = 1;
+}

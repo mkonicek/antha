@@ -19,7 +19,7 @@ import (
 // An AnthaColor represents a color linked to an LHComponent
 type AnthaColor struct {
 	Color     color.NRGBA
-	Component *wtype.LHComponent
+	Component *wtype.Liquid
 }
 
 // An AnthaPalette is an array of anthaColors

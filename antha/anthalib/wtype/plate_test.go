@@ -10,7 +10,7 @@ import (
 
 // platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64
 
-func makeplatefortest() *LHPlate {
+func makeplatefortest() *Plate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
 	welltype := NewLHWell("ul", 200, 10, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates{127.76, 85.48, 43.1}, welltype, 9.0, 9.0, 0.5, 0.5, 0.5)
@@ -47,7 +47,7 @@ func make6platefortest() *LHPlate {
 }
 */
 
-func maketroughfortest() *LHPlate {
+func maketroughfortest() *Plate {
 	stshp := NewShape("box", "mm", 8.2, 72, 41.3)
 	trough12 := NewLHWell("ul", 15000, 5000, stshp, VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
 	plate := NewLHPlate("DWST12", "Unknown", 1, 12, Coordinates{127.76, 85.48, 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
@@ -98,7 +98,7 @@ func TestPlateDupKeepIDs(t *testing.T) {
 
 }
 
-func validatePlate(t *testing.T, plate *LHPlate) {
+func validatePlate(t *testing.T, plate *Plate) {
 	assertWellsEqual := func(what string, as, bs []*LHWell) {
 		seen := make(map[*LHWell]int)
 		for _, w := range as {
@@ -136,8 +136,8 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent -- %s != %s", ltx[0], plate.ID))
 		}
 
-		if ltx[0] != w.Plate.(*LHPlate).ID {
-			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent with well -- %s != %s", ltx[0], w.Plate.(*LHPlate).ID))
+		if ltx[0] != w.Plate.(*Plate).ID {
+			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent with well -- %s != %s", ltx[0], w.Plate.(*Plate).ID))
 		}
 
 		if ltx[1] != crds {
@@ -157,7 +157,7 @@ func validatePlate(t *testing.T, plate *LHPlate) {
 	assertWellsEqual("Cols != Wellcoords", ws3, ws4)
 
 	// Check pointer-ID equality
-	comp := make(map[string]*LHComponent)
+	comp := make(map[string]*Liquid)
 	for _, w := range append(append(ws1, ws2...), ws3...) {
 		c := w.WContents
 		if c == nil || c.Vol == 0.0 {
@@ -252,7 +252,7 @@ func TestLHPlateSerialize(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	var p2 *LHPlate
+	var p2 *Plate
 
 	if err = json.Unmarshal(b, &p2); err != nil {
 		t.Errorf(err.Error())
@@ -474,7 +474,7 @@ func TestSpecialRetention(t *testing.T) {
 		t.Errorf("Marshal error: %v", err)
 	}
 
-	var e *LHPlate
+	var e *Plate
 
 	err = json.Unmarshal(dat, &e)
 

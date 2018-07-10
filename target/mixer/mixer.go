@@ -74,7 +74,7 @@ type lhreq struct {
 
 func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	// MIS -- this might be a hole. We probably need to invoke the sample tracker here
-	addPlate := func(req *planner.LHRequest, ip *wtype.LHPlate) error {
+	addPlate := func(req *planner.LHRequest, ip *wtype.Plate) error {
 		if _, seen := req.Input_plates[ip.ID]; seen {
 			return fmt.Errorf("plate %q already added", ip.ID)
 		}
@@ -293,7 +293,6 @@ func mergePolicies(basePolicy, priorityPolicy wtype.LHPolicy) (newPolicy wtype.L
 // Any component type names with modified policies are iterated until unique i.e. SmartMix_modified_1
 func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) error {
 	systemPolicyRuleSet := lhreq.GetPolicyManager().Policies()
-
 	systemPolicies := systemPolicyRuleSet.Policies
 	var userPolicies = make(map[string]wtype.LHPolicy)
 	var allPolicies = make(map[string]wtype.LHPolicy)
@@ -361,7 +360,7 @@ func makemodifiedTypeName(componentType wtype.LiquidType, number int) string {
 }
 
 func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*target.Mix, error) {
-	hasPlate := func(plates []*wtype.LHPlate, typ, id string) bool {
+	hasPlate := func(plates []*wtype.Plate, typ, id string) bool {
 		for _, p := range plates {
 			if p.Type == typ && (id == "" || p.ID == id) {
 				return true

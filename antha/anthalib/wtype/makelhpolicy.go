@@ -65,6 +65,10 @@ func MakePolicies() map[string]LHPolicy {
 	// what policies do we need?
 	add(SmartMixPolicy(), "SmartMix")
 	add(MakeWaterPolicy(), "water")
+	add(MakeSingleChannelPolicy(), "SingleChannel")
+	add(MakeSmartMixSingleChannelPolicy(), "SmartMixSingleChannel")
+	add(MakeLLFPolicy(), "LiquidLevel")
+	add(MakeSmartMixLLFPolicy(), "SmartMixLiquidLevel")
 	add(MakeMultiWaterPolicy(), "multiwater")
 	add(MakeCulturePolicy(), "culture")
 	add(MakeCultureReusePolicy(), "culturereuse")
@@ -290,17 +294,44 @@ func MakeWaterPolicy() LHPolicy {
 	waterpolicy["DSPREFERENCE"] = 0
 	waterpolicy["CAN_MSA"] = true
 	waterpolicy["CAN_SDD"] = true
-	waterpolicy["CAN_MULTI"] = false
+	waterpolicy["CAN_MULTI"] = true
 	waterpolicy["DSPZOFFSET"] = 1.0
 	waterpolicy["BLOWOUTVOLUME"] = 50.0
-	waterpolicy["DESCRIPTION"] = "Default policy designed for pipetting water. Includes a blowout step for added accuracy and no post-mixing, no multi channel."
+	waterpolicy["DESCRIPTION"] = "Default policy designed for pipetting water, permitting multi-channel use. Includes a blowout step for added accuracy and no post-mixing."
 	return waterpolicy
 }
 
 func MakeMultiWaterPolicy() LHPolicy {
 	pol := MakeWaterPolicy()
-	pol["CAN_MULTI"] = true
-	pol["DESCRIPTION"] = "Default policy designed for pipetting water but permitting multi-channel use. Includes a blowout step for added accuracy and no post-mixing."
+	pol["DESCRIPTION"] = "Default policy designed for pipetting water, permitting multi-channel use. Includes a blowout step for added accuracy and no post-mixing."
+	return pol
+}
+
+func MakeSingleChannelPolicy() LHPolicy {
+	pol := MakeWaterPolicy()
+	pol["CAN_MULTI"] = false
+	pol["DESCRIPTION"] = "Default policy designed for pipetting water but prohibiting multi-channel use. Includes a blowout step for added accuracy and no post-mixing."
+	return pol
+}
+
+func MakeLLFPolicy() LHPolicy {
+	pol := MakeWaterPolicy()
+	pol["USE_LLF"] = true
+	pol["DESCRIPTION"] = "Default policy designed for pipetting water, permitting multi-channel use and aspirating and dispensing at the liquid level. Includes a blowout step for added accuracy and no post-mixing."
+	return pol
+}
+
+func MakeSmartMixLLFPolicy() LHPolicy {
+	pol := SmartMixPolicy()
+	pol["USE_LLF"] = true
+	pol["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Aspirate and dispense at liquid height. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
+	return pol
+}
+
+func MakeSmartMixSingleChannelPolicy() LHPolicy {
+	pol := SmartMixPolicy()
+	pol["CAN_MULTI"] = false
+	pol["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Single channel only. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
 	return pol
 }
 
@@ -819,6 +850,13 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	lhpr = originalRuleSet
 
 	for name, policy := range policies {
+
+		err = policy.SetName(name)
+
+		if err != nil {
+			return nil, err
+		}
+
 		rule := NewLHPolicyRule(name)
 		err := rule.AddCategoryConditionOn("LIQUIDCLASS", name)
 
@@ -918,8 +956,26 @@ func CopyRulesFromPolicy(ruleSet *LHPolicyRuleSet, policyToCopyRulesFrom, policy
 	return nil
 }
 
-// GetLHPolicyForTest is used to set the default System Policies.
+// GetLHPolicyForTest gets a set of Test LHPolicies for unit tests.
+// This is not guaranteed to be consistent with the default system policies returned from GetSystemLHPolicies().
 func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
+	lhpr, err := GetSystemLHPolicies()
+	if err != nil {
+		return lhpr, err
+	}
+	// Current tests rely on water policy being single channel.g
+	policy := lhpr.Policies["water"]
+
+	err = policy.Set("CAN_MULTI", false)
+	if err != nil {
+		return lhpr, err
+	}
+	lhpr.Policies["water"] = policy
+	return lhpr, err
+}
+
+// GetSystemLHPolicies is used to set the default System Policies.
+func GetSystemLHPolicies() (*LHPolicyRuleSet, error) {
 	// make some policies
 
 	policies := MakePolicies()
@@ -1141,6 +1197,10 @@ func GetLHPolicyForTest() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(rule, pol)
 
-	return lhpr, nil
-
+	err = CopyRulesFromPolicy(lhpr, "SmartMix", "SmartMixSingleChannel")
+	if err != nil {
+		return lhpr, err
+	}
+	err = CopyRulesFromPolicy(lhpr, "SmartMix", "SmartMixLiquidLevel")
+	return lhpr, err
 }

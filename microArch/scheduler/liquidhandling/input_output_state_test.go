@@ -2,13 +2,14 @@ package liquidhandling
 
 import (
 	"context"
+	"reflect"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
-	"reflect"
-	"testing"
 )
 
 type initFinalCmp struct {
@@ -23,7 +24,7 @@ func (ifc initFinalCmp) IsZero() bool {
 	return reflect.DeepEqual(v, ifc)
 }
 
-func getComponents(ctx context.Context, t *testing.T) (cmp1, cmp2 *wtype.LHComponent) {
+func getComponents(ctx context.Context, t *testing.T) (cmp1, cmp2 *wtype.Liquid) {
 	cmp1, err := inventory.NewComponent(ctx, inventory.WaterType)
 	if err != nil {
 		t.Fatal(err)
@@ -56,7 +57,7 @@ func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 	pl2.Cols[0][1].AddComponent(cmp2)
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{cmp1, cmp2},
+		Components: []*wtype.Liquid{cmp1, cmp2},
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -127,7 +128,7 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components:  []*wtype.LHComponent{s1, s2},
+		Components:  []*wtype.Liquid{s1, s2},
 		PlateType:   "pcrplate_skirted_riser20",
 		Address:     "C1",
 		Destination: pl2,
@@ -154,7 +155,7 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["0.286 v/v dna_part+0.714 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.286 v/v dna_part+0.714 v/v water", VolI: 0.0, VolF: 35.0}}
 
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
@@ -174,7 +175,7 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
+		Components: []*wtype.Liquid{s1, s2},
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -214,7 +215,7 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["0.286 v/v dna_part+0.714 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.286 v/v dna_part+0.714 v/v water", VolI: 0.0, VolF: 35.0}}
 
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
@@ -235,7 +236,7 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(10.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
+		Components: []*wtype.Liquid{s1, s2},
 		PlateType:  "pcrplate_skirted_riser20",
 		Address:    "C1",
 		PlateNum:   1,
@@ -278,7 +279,7 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 50.0, VolF: 39.5}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 35.0}}
+	expected["0.286 v/v dna_part+0.714 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.286 v/v dna_part+0.714 v/v water", VolI: 0.0, VolF: 35.0}}
 
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 100.0, VolF: 74.5}}
 
@@ -297,7 +298,7 @@ func TestBeforeVsAfterMixInPlace(t *testing.T) {
 	cmp2.Vol = 50.0
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{cmp1, cmp2},
+		Components: []*wtype.Liquid{cmp1, cmp2},
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -345,7 +346,7 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
+		Components: []*wtype.Liquid{s1, s2},
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -369,7 +370,7 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
+	expected["0.333 v/v dna_part+0.667 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.333 v/v dna_part+0.667 v/v water", VolI: 0.0, VolF: 75.0}}
 
 	compareInitFinalStates(t, lh, expected)
 }
@@ -385,7 +386,7 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
+		Components: []*wtype.Liquid{s1, s2},
 		PlateType:  "pcrplate_skirted_riser20",
 		Address:    "A1",
 		PlateNum:   1,
@@ -411,7 +412,7 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
 	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
 
-	expected["water+dna_part"] = []initFinalCmp{{CNameI: "", CNameF: "water+dna_part", VolI: 0.0, VolF: 75.0}}
+	expected["0.333 v/v dna_part+0.667 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.333 v/v dna_part+0.667 v/v water", VolI: 0.0, VolF: 75.0}}
 
 	compareInitFinalStates(t, lh, expected)
 }

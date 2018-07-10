@@ -32,12 +32,12 @@ import (
 )
 
 // SampleAll takes all of this liquid
-func SampleAll(l *wtype.Liquid) *wtype.Liquid {
+func SampleAll(l *wtype.LHComponent) *wtype.LHComponent {
 	return Sample(l, l.Volume())
 }
 
 // Sample takes a sample of volume v from this liquid
-func Sample(l *wtype.Liquid, v wunit.Volume) *wtype.Liquid {
+func Sample(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
 	//	ret.ID = l.ID
 	l.AddDaughterComponent(ret)
@@ -60,7 +60,7 @@ func Sample(l *wtype.Liquid, v wunit.Volume) *wtype.Liquid {
 }
 
 // SplitSample is a two-return version of sample
-func SplitSample(l *wtype.Liquid, v wunit.Volume) (moving, remaining *wtype.Liquid) {
+func SplitSample(l *wtype.LHComponent, v wunit.Volume) (moving, remaining *wtype.LHComponent) {
 	remaining = l.Dup()
 
 	moving = Sample(remaining, v)
@@ -77,8 +77,8 @@ func SplitSample(l *wtype.Liquid, v wunit.Volume) (moving, remaining *wtype.Liqu
 
 // MultiSample takes an array of samples and array of corresponding volumes and
 // sample them all
-func MultiSample(l []*wtype.Liquid, v []wunit.Volume) []*wtype.Liquid {
-	reta := make([]*wtype.Liquid, 0)
+func MultiSample(l []*wtype.LHComponent, v []wunit.Volume) []*wtype.LHComponent {
+	reta := make([]*wtype.LHComponent, 0)
 
 	for i, j := range l {
 		ret := wtype.NewLHComponent()
@@ -102,7 +102,7 @@ func MultiSample(l []*wtype.Liquid, v []wunit.Volume) []*wtype.Liquid {
 
 // SampleForConcentration takes a sample of this liquid and aims for a
 // particular concentration
-func SampleForConcentration(l *wtype.Liquid, c wunit.Concentration) *wtype.Liquid {
+func SampleForConcentration(l *wtype.LHComponent, c wunit.Concentration) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
 	//	ret.ID = l.ID
 	l.AddDaughterComponent(ret)
@@ -120,7 +120,7 @@ func SampleForConcentration(l *wtype.Liquid, c wunit.Concentration) *wtype.Liqui
 }
 
 // SampleMass takes a sample of this liquid and aims for a particular mass
-func SampleMass(s *wtype.Liquid, m wunit.Mass, d wunit.Density) *wtype.Liquid {
+func SampleMass(s *wtype.LHComponent, m wunit.Mass, d wunit.Density) *wtype.LHComponent {
 
 	// calculate volume to add from density
 	v := wunit.MasstoVolume(m, d)
@@ -143,7 +143,7 @@ func SampleMass(s *wtype.Liquid, m wunit.Mass, d wunit.Density) *wtype.Liquid {
 // SampleForTotalVolume takes a sample of this liquid to be used to make the
 // solution up to a particular total volume edited to take into account the
 // volume of the other solution components
-func SampleForTotalVolume(l *wtype.Liquid, v wunit.Volume) *wtype.Liquid {
+func SampleForTotalVolume(l *wtype.LHComponent, v wunit.Volume) *wtype.LHComponent {
 	ret := wtype.NewLHComponent()
 	l.AddDaughterComponent(ret)
 	ret.ParentID = l.ID
@@ -162,10 +162,10 @@ func SampleForTotalVolume(l *wtype.Liquid, v wunit.Volume) *wtype.Liquid {
 
 // MixOptions are options to GenericMix
 type MixOptions struct {
-	Components  []*wtype.Liquid      // Components to mix (required)
+	Components  []*wtype.LHComponent // Components to mix (required)
 	Instruction *wtype.LHInstruction // used to be LHSolution
-	Result      *wtype.Liquid        // the resultant component
-	Destination *wtype.Plate         // Destination plate; if nil, select one later
+	Result      *wtype.LHComponent   // the resultant component
+	Destination *wtype.LHPlate       // Destination plate; if nil, select one later
 	PlateType   string               // type of destination plate
 	Address     string               // Well in destination to place result; if nil, select one later
 	PlateNum    int                  // which plate to stick these on
@@ -228,7 +228,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 
 				}
 				// we also need to make sure the instruction explicitly mentions the component
-				cmps := make([]*wtype.Liquid, 0, len(opt.Components)+1)
+				cmps := make([]*wtype.LHComponent, 0, len(opt.Components)+1)
 				cmps = append(cmps, w.WContents.Dup())
 				cmps = append(cmps, opt.Components...)
 				opt.Components = cmps
@@ -269,7 +269,7 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	return r
 }
 
-func findTVolOrPanic(components []*wtype.Liquid) wunit.Volume {
+func findTVolOrPanic(components []*wtype.LHComponent) wunit.Volume {
 	tv := wunit.NewVolume(0.0, "ul")
 
 	for _, c := range components {
@@ -291,7 +291,7 @@ func findTVolOrPanic(components []*wtype.Liquid) wunit.Volume {
 // handling instructions
 
 // Mix the specified wtype.LHComponents together and leave the destination TBD
-func Mix(components ...*wtype.Liquid) *wtype.Liquid {
+func Mix(components ...*wtype.LHComponent) *wtype.LHComponent {
 	r := GenericMix(MixOptions{
 		Components: components,
 	})
@@ -299,7 +299,7 @@ func Mix(components ...*wtype.Liquid) *wtype.Liquid {
 }
 
 // MixInto the specified wtype.LHComponents together into a specific plate
-func MixInto(destination *wtype.Plate, address string, components ...*wtype.Liquid) *wtype.Liquid {
+func MixInto(destination *wtype.LHPlate, address string, components ...*wtype.LHComponent) *wtype.LHComponent {
 	r := GenericMix(MixOptions{
 		Components:  components,
 		Destination: destination,
@@ -310,7 +310,7 @@ func MixInto(destination *wtype.Plate, address string, components ...*wtype.Liqu
 }
 
 // MixTo the specified wtype.LHComponents together into a plate of a particular type
-func MixTo(platetype string, address string, platenum int, components ...*wtype.Liquid) *wtype.Liquid {
+func MixTo(platetype string, address string, platenum int, components ...*wtype.LHComponent) *wtype.LHComponent {
 	r := GenericMix(MixOptions{
 		Components: components,
 		PlateType:  platetype,

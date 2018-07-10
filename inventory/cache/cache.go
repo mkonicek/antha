@@ -33,12 +33,12 @@ func GetCache(ctx context.Context) Cache {
 }
 
 // NewComponent returns a new component of the given type
-func NewComponent(ctx context.Context, typ string) (*wtype.Liquid, error) {
+func NewComponent(ctx context.Context, typ string) (*wtype.LHComponent, error) {
 	return fromContext(ctx).NewComponent(ctx, typ)
 }
 
 // NewPlate returns a new plate of the given type
-func NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
+func NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
 	return fromContext(ctx).NewPlate(ctx, typ)
 }
 

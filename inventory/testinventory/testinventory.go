@@ -11,13 +11,13 @@ import (
 )
 
 type testInventory struct {
-	componentByName map[string]*wtype.Liquid
+	componentByName map[string]*wtype.LHComponent
 	plateByType     map[string]PlateForSerializing
 	tipboxByType    map[string]*wtype.LHTipbox
 	tipwasteByType  map[string]*wtype.LHTipwaste
 }
 
-func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.Liquid, error) {
+func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.LHComponent, error) {
 	c, ok := i.componentByName[name]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid solution: %s", inventory.ErrUnknownType, name)
@@ -26,7 +26,7 @@ func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.L
 	return c.Cp(), nil
 }
 
-func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
+func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
 	p, ok := i.plateByType[typ]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid plate: %s", inventory.ErrUnknownType, typ)
@@ -49,7 +49,7 @@ func (i *testInventory) NewTipwaste(ctx context.Context, typ string) (*wtype.LHT
 	return tw.Dup(), nil
 }
 
-func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.Plate, error) {
+func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.LHPlate, error) {
 	plates := GetPlates(ctx)
 	return plates, nil
 }
@@ -57,7 +57,7 @@ func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.Plate, error
 // NewContext creates a new test inventory context
 func NewContext(ctx context.Context) context.Context {
 	inv := &testInventory{
-		componentByName: make(map[string]*wtype.Liquid),
+		componentByName: make(map[string]*wtype.LHComponent),
 		plateByType:     make(map[string]PlateForSerializing),
 		tipboxByType:    make(map[string]*wtype.LHTipbox),
 		tipwasteByType:  make(map[string]*wtype.LHTipwaste),
@@ -120,9 +120,9 @@ func GetTipboxes(ctx context.Context) []*wtype.LHTipbox {
 }
 
 // GetPlates returns the plates in a test inventory context
-func GetPlates(ctx context.Context) []*wtype.Plate {
+func GetPlates(ctx context.Context) []*wtype.LHPlate {
 	inv := inventory.GetInventory(ctx).(*testInventory)
-	var ps []*wtype.Plate
+	var ps []*wtype.LHPlate
 	for _, p := range inv.plateByType {
 		ps = append(ps, p.LHPlate())
 	}
@@ -135,9 +135,9 @@ func GetPlates(ctx context.Context) []*wtype.Plate {
 }
 
 // GetComponents returns the components in a test inventory context
-func GetComponents(ctx context.Context) []*wtype.Liquid {
+func GetComponents(ctx context.Context) []*wtype.LHComponent {
 	inv := inventory.GetInventory(ctx).(*testInventory)
-	var cs []*wtype.Liquid
+	var cs []*wtype.LHComponent
 	for _, c := range inv.componentByName {
 		cs = append(cs, c)
 	}

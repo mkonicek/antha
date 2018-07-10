@@ -265,8 +265,8 @@ func newElement(cmd *cobra.Command, args []string) error {
 	type input struct {
 		A           float64
 		B           float64
-		ComponentA  *wtype.Liquid
-		ComponentB  *wtype.Liquid
+		ComponentA  *wtype.LHComponent
+		ComponentB  *wtype.LHComponent
 		Option      bool
 		String      string
 		StringArray []string
@@ -275,7 +275,7 @@ func newElement(cmd *cobra.Command, args []string) error {
 	}
 
 	type output struct {
-		MixedComponent *wtype.Liquid
+		MixedComponent *wtype.LHComponent
 		Sum            float64
 	}
 

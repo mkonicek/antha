@@ -11,7 +11,7 @@ func getTestWell(volUL, residualUL float64) *LHWell {
 	return well
 }
 
-func getTestComponent(volUL float64) *Liquid {
+func getTestComponent(volUL float64) *LHComponent {
 	cmp := NewLHComponent()
 	cmp.Vol = volUL
 	return cmp

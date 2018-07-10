@@ -6,8 +6,8 @@ import (
 	"reflect"
 )
 
-func CopyComponentArray(arin []*wtype.Liquid) []*wtype.Liquid {
-	r := make([]*wtype.Liquid, len(arin))
+func CopyComponentArray(arin []*wtype.LHComponent) []*wtype.LHComponent {
+	r := make([]*wtype.LHComponent, len(arin))
 
 	for i, v := range arin {
 		r[i] = v.Dup()
@@ -17,7 +17,7 @@ func CopyComponentArray(arin []*wtype.Liquid) []*wtype.Liquid {
 }
 
 // are tips going to align to wells?
-func TipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
+func TipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsfrom []string) bool {
 
 	// heads which can do independent multichanneling are dealt with separately
 	if head.Adaptor.Params.Independent {
@@ -27,7 +27,7 @@ func TipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate,
 	}
 }
 
-func disContiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
+func disContiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsfrom []string) bool {
 	prm := head.Adaptor.Params
 	// inflate wellsfrom to full multichannel size
 	fullWellsFrom, ok := expandWellsFrom(prm.Orientation, *plt, wellsfrom)
@@ -56,7 +56,7 @@ func isInArr(s string, sa []string) bool {
 	return false
 }
 
-func expandWellsFrom(orientation int, plt wtype.Plate, wellsfrom []string) ([]string, bool) {
+func expandWellsFrom(orientation int, plt wtype.LHPlate, wellsfrom []string) ([]string, bool) {
 	wcArr := wtype.WCArrayFromStrings(wellsfrom)
 
 	var wells []*wtype.LHWell
@@ -130,7 +130,7 @@ func assertWFContiguousNonEmpty(sa []string) bool {
 	return found
 }
 
-func contiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
+func contiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsfrom []string) bool {
 
 	//can't multi channel with 2-7 wells per column
 	if plt.NRows() != 1 && plt.NRows()%8 != 0 {
@@ -171,7 +171,7 @@ func ChannelsUsed(wf []string) []bool {
 	return ret
 }
 
-func ChannelWells(prm *wtype.LHChannelParameter, plt *wtype.Plate, wellsfrom []string) []string {
+func ChannelWells(prm *wtype.LHChannelParameter, plt *wtype.LHPlate, wellsfrom []string) []string {
 	channelsused := ChannelsUsed(wellsfrom)
 
 	firstwell := ""
@@ -218,7 +218,7 @@ func ChannelWells(prm *wtype.LHChannelParameter, plt *wtype.Plate, wellsfrom []s
 	return tipwells
 }
 
-func TipsPerWell(prm wtype.LHChannelParameter, p wtype.Plate) (int, int) {
+func TipsPerWell(prm wtype.LHChannelParameter, p wtype.LHPlate) (int, int) {
 	// assumptions:
 
 	// 1) sbs format plate
@@ -283,7 +283,7 @@ func FirstIndexInStrArray(s string, a []string) int {
 	return -1
 }
 
-func physicalTipCheck(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate, wellsFrom []string) bool { //nolint used by tests
+func physicalTipCheck(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsFrom []string) bool { //nolint used by tests
 	// assumptions
 	// 1 - first tip is aligned with the middle of first well
 	// 2 - each subsequent tip is a constant (9mm) distance from the first in whichever orientation

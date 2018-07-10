@@ -194,15 +194,15 @@ type Targetted interface {
 
 //LHContainer a tip or a well or something that holds liquids
 type LHContainer interface {
-	Contents() *Liquid
+	Contents() *LHComponent
 	CurrentVolume() wunit.Volume
 	ResidualVolume() wunit.Volume
 	//WorkingVolume = CurrentVolume - ResidualVolume
 	CurrentWorkingVolume() wunit.Volume
 	//Add to the container
-	AddComponent(*Liquid) error
+	AddComponent(*LHComponent) error
 	//Set the contents of the container
-	SetContents(*Liquid) error
+	SetContents(*LHComponent) error
 	//Remove from the container
-	RemoveVolume(wunit.Volume) (*Liquid, error)
+	RemoveVolume(wunit.Volume) (*LHComponent, error)
 }

@@ -63,7 +63,7 @@ type ComparisonResult struct {
 type outputMap map[string][]componentInfo
 
 // CompareMixOutputs compares mix outputs
-func CompareMixOutputs(want, got map[string]*wtype.Plate, opts ComparisonMode) ComparisonResult {
+func CompareMixOutputs(want, got map[string]*wtype.LHPlate, opts ComparisonMode) ComparisonResult {
 	// do we have the same number of things coming out at the
 	// same volumes or whatever
 
@@ -184,7 +184,7 @@ func missingExtra(cpWant, cpGot []componentInfo) (missing, extra []componentInfo
 	return
 }
 
-func getOutputMap(res map[string]*wtype.Plate, opts ComparisonMode) outputMap {
+func getOutputMap(res map[string]*wtype.LHPlate, opts ComparisonMode) outputMap {
 	outputMap := make(map[string][]componentInfo)
 	instM := make(map[string]int)
 

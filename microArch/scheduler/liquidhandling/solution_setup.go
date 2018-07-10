@@ -49,7 +49,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	// index of components with concentration targets, along with the target concentrations
 	mconcs := make(map[string][]wunit.Concentration, 10)
 	// keep a list of components which have fixed stock concentrations
-	fixconcs := make([]*wtype.Liquid, 0)
+	fixconcs := make([]*wtype.LHComponent, 0)
 	// maximum solubilities of each component
 	Smax := make(map[string]float64, 10)
 	// maximum total volume of any instruction containing each component
@@ -67,8 +67,8 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 		// concentrations but no tvols we have to return
 		// an error
 
-		arrCncs := make([]*wtype.Liquid, 0, len(components))
-		arrTvol := make([]*wtype.Liquid, 0, len(components))
+		arrCncs := make([]*wtype.LHComponent, 0, len(components))
+		arrTvol := make([]*wtype.LHComponent, 0, len(components))
 		cmpvol := wunit.NewVolume(0.0, "ul")
 		totalvol := wunit.NewVolume(0.0, "ul")
 
@@ -224,9 +224,9 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 	for _, instruction := range instructions {
 		components := instruction.Components
-		arrCncs := make([]*wtype.Liquid, 0, len(components))
-		arrTvol := make([]*wtype.Liquid, 0, len(components))
-		arrSvol := make([]*wtype.Liquid, 0, len(components))
+		arrCncs := make([]*wtype.LHComponent, 0, len(components))
+		arrTvol := make([]*wtype.LHComponent, 0, len(components))
+		arrSvol := make([]*wtype.LHComponent, 0, len(components))
 		cmpvol := wunit.NewVolume(0.0, "ul")
 		totalvol := wunit.NewVolume(0.0, "ul")
 
@@ -252,7 +252,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 		// first we add the volumes to the concentration components
 
-		arrFinalComponents := make([]*wtype.Liquid, 0, len(components))
+		arrFinalComponents := make([]*wtype.LHComponent, 0, len(components))
 
 		for _, component := range arrCncs {
 			name := component.CName

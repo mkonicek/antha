@@ -54,7 +54,7 @@ func (a *Command) NodeString() string {
 // A UseComp is a use of a liquid component
 type UseComp struct {
 	From  []Node
-	Value *wtype.Liquid
+	Value *wtype.LHComponent
 }
 
 // NodeString implements graph pretty printing

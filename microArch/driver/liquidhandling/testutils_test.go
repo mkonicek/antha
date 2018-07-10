@@ -17,9 +17,9 @@ const (
 	LVMaxRate = 3.75
 )
 
-func MakeGilsonForTest() *LHProperties { //nolint
+func MakeGilsonForTest(tipList []string) *LHProperties { //nolint
 	ctx := testinventory.NewContext(context.Background())
-	return makeGilsonForTest(ctx)
+	return makeGilsonForTest(ctx, tipList)
 }
 
 func MakeGilsonWithPlatesAndTipboxesForTest(inputPlateType string) *LHProperties { //nolint
@@ -41,8 +41,8 @@ func MakeGilsonWithTipboxesForTest() *LHProperties { //nolint
 }
 
 func getHVConfig() *wtype.LHChannelParameter {
-	minvol := wunit.NewVolume(10, "ul")
-	maxvol := wunit.NewVolume(250, "ul")
+	minvol := wunit.NewVolume(20, "ul")
+	maxvol := wunit.NewVolume(200, "ul")
 	minspd := wunit.NewFlowRate(HVMinRate, "ml/min")
 	maxspd := wunit.NewFlowRate(HVMaxRate, "ml/min")
 
@@ -58,7 +58,7 @@ func getLVConfig() *wtype.LHChannelParameter {
 	return wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
 }
 
-func makeGilsonForTest(ctx context.Context) *LHProperties {
+func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	// gilson pipetmax
 
 	layout := make(map[string]wtype.Coordinates)
@@ -84,7 +84,7 @@ func makeGilsonForTest(ctx context.Context) *LHProperties {
 	}
 	lhp := NewLHProperties(9, "Pipetmax", "Gilson", LLLiquidHandler, DisposableTips, layout)
 	// get tips permissible from the factory
-	SetUpTipsFor(ctx, lhp)
+	SetUpTipsFor(ctx, lhp, tipList)
 
 	lhp.Tip_preferences = []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"}
 	//lhp.Tip_preferences = []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_7"}
@@ -128,14 +128,28 @@ func makeGilsonForTest(ctx context.Context) *LHProperties {
 	return lhp
 }
 
-func SetUpTipsFor(ctx context.Context, lhp *LHProperties) *LHProperties {
+func SetUpTipsFor(ctx context.Context, lhp *LHProperties, tipList []string) *LHProperties {
+	inList := func(s string, sa []string) bool {
+		for _, ss := range sa {
+			if s == ss {
+				return true
+			}
+		}
+		return false
+	}
 
 	seen := make(map[string]bool)
 
 	for _, tb := range testinventory.GetTipboxes(ctx) {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
 			//ignore filter tips and the hacky "low volume high volume" ones
-			if tb.Tiptype.Filtered || tb.Tiptype.Type == "LVGilson200" {
+			//		if tb.Tiptype.Filtered || tb.Tiptype.Type == "LVGilson200" {
+			//			continue
+			//		}
+
+			// ignore tips not in the list
+
+			if !inList(tb.Tiptype.Type, tipList) {
 				continue
 			}
 			tip := tb.Tips[0][0]
@@ -152,7 +166,7 @@ func SetUpTipsFor(ctx context.Context, lhp *LHProperties) *LHProperties {
 }
 
 func makeGilsonWithTipboxesForTest(ctx context.Context) (*LHProperties, error) {
-	params := makeGilsonForTest(ctx)
+	params := makeGilsonForTest(ctx, defaultTipList())
 
 	tw, err := inventory.NewTipwaste(ctx, "Gilsontipwaste")
 	if err != nil {
@@ -207,7 +221,7 @@ func makeGilsonWithPlatesAndTipboxesForTest(ctx context.Context, inputPlateType 
 	return params, nil
 }
 
-func makeTestInputPlate(ctx context.Context, inputPlateType string) (*wtype.Plate, error) {
+func makeTestInputPlate(ctx context.Context, inputPlateType string) (*wtype.LHPlate, error) {
 	if inputPlateType == "" {
 		inputPlateType = "DWST12"
 	}
@@ -231,7 +245,7 @@ func makeTestInputPlate(ctx context.Context, inputPlateType string) (*wtype.Plat
 	return p, nil
 }
 
-func makeTestOutputPlate(ctx context.Context) (*wtype.Plate, error) {
+func makeTestOutputPlate(ctx context.Context) (*wtype.LHPlate, error) {
 	p, err := inventory.NewPlate(ctx, "DSW96")
 
 	if err != nil {

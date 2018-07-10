@@ -6,9 +6,9 @@ import (
 
 func getLHObjects() map[string]interface{} {
 	ret := map[string]interface{}{
-		"LHComponent": &Liquid{},
+		"LHComponent": &LHComponent{},
 		"LHDeck":      &LHDeck{},
-		"LHPlate":     &Plate{},
+		"LHPlate":     &LHPlate{},
 		"LHTip":       &LHTip{},
 		"LHTipbox":    &LHTipbox{},
 		"LHTipwaste":  &LHTipwaste{},

@@ -119,11 +119,11 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	}
 
 	//make lists of components to attempt to transfer simultaneously
-	var componentsToMove [][]*wtype.Liquid
+	var componentsToMove [][]*wtype.LHComponent
 	var instructionsToUse []LHIVector
 	for i := 0; i < l; i++ {
 		var inssToUse LHIVector
-		var cmps []*wtype.Liquid
+		var cmps []*wtype.LHComponent
 		if horiz {
 			if inssIn[i] == nil {
 				continue
@@ -201,8 +201,8 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	return insOut, nil
 }
 
-func segmentAllByVolume(inComponentsByVolume [][]*wtype.Liquid, inInstructionsToUse []LHIVector) ([][]*wtype.Liquid, []LHIVector) {
-	var retComponentsToMove [][]*wtype.Liquid
+func segmentAllByVolume(inComponentsByVolume [][]*wtype.LHComponent, inInstructionsToUse []LHIVector) ([][]*wtype.LHComponent, []LHIVector) {
+	var retComponentsToMove [][]*wtype.LHComponent
 	var retInstructionsToUse []LHIVector
 
 	for i := 0; i < len(inComponentsByVolume); i++ {
@@ -215,12 +215,12 @@ func segmentAllByVolume(inComponentsByVolume [][]*wtype.Liquid, inInstructionsTo
 }
 
 //split up the idsets such that each instruction in the set has the same volume. incoming instructions are sorted in channel order
-func segmentByVolume(components []*wtype.Liquid, instructions LHIVector) ([][]*wtype.Liquid, []LHIVector) {
+func segmentByVolume(components []*wtype.LHComponent, instructions LHIVector) ([][]*wtype.LHComponent, []LHIVector) {
 
-	var retComponents [][]*wtype.Liquid
+	var retComponents [][]*wtype.LHComponent
 	var retInstructions []LHIVector
 
-	var currComponents []*wtype.Liquid
+	var currComponents []*wtype.LHComponent
 	var currInstructions LHIVector
 
 	lastVolume := wunit.ZeroVolume()
@@ -231,7 +231,7 @@ func segmentByVolume(components []*wtype.Liquid, instructions LHIVector) ([][]*w
 		if len(currComponents) > 0 && !component.Volume().EqualTo(lastVolume) {
 			retComponents = append(retComponents, currComponents)
 			retInstructions = append(retInstructions, currInstructions)
-			currComponents = make([]*wtype.Liquid, 0)
+			currComponents = make([]*wtype.LHComponent, 0)
 			currInstructions = make(LHIVector, 0)
 		}
 
@@ -247,7 +247,7 @@ func segmentByVolume(components []*wtype.Liquid, instructions LHIVector) ([][]*w
 	return retComponents, retInstructions
 }
 
-func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
+func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
 	fromPlateIDs := parallelTransfer.PlateIDs
 	fromWells := parallelTransfer.WellCoords
 	vols := parallelTransfer.Vols

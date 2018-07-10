@@ -3,11 +3,9 @@ package liquidhandling
 import (
 	"fmt"
 
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/graph"
+	"strings"
 )
 
 type IChain struct {
@@ -124,25 +122,25 @@ func (it *IChain) Print() {
 	if len(it.Values) > 0 {
 		for j := 0; j < len(it.Values); j++ {
 			if it.Values[j].Type == wtype.LHIMIX {
-				fmt.Printf("MIX    %2d: %s \n", j, it.Values[j].ID)
+				fmt.Printf("MIX    %2d: %s ", j, it.Values[j].ID)
 				for i := 0; i < len(it.Values[j].Components); i++ {
-					fmt.Print(" ", it.Values[j].Components[i].ID, ":", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().ToString(), " \n")
+					fmt.Print(" ", it.Values[j].Components[i].ID, ":", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().ToString(), " ")
 				}
-				fmt.Println(":", it.Values[j].Results[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
+				fmt.Print(":", it.Values[j].Results[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Printf("-- ")
 			} else if it.Values[j].Type == wtype.LHIPRM {
-				fmt.Println("PROMPT ", it.Values[j].Message, "-- ")
+				fmt.Print("PROMPT ", it.Values[j].Message, "-- ")
 				for in, out := range it.Values[j].PassThrough {
-					fmt.Println(in, ":::", out.ID, " --")
+					fmt.Print(in, ":::", out.ID, " --")
 				}
 			} else if it.Values[j].Type == wtype.LHISPL {
 				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)
-				fmt.Println(" ", it.Values[j].Components[0].ID, ":", it.Values[j].Components[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
-				fmt.Println(" MOVE:", it.Values[j].Results[0].ID, ":", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().ToString())
-				fmt.Println(" STAY:", it.Values[j].Results[1].ID, ":", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().ToString())
-				fmt.Printf("-- \n")
+				fmt.Print(" ", it.Values[j].Components[0].ID, ":", it.Values[j].Components[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress, " ")
+				fmt.Print(" MOVE:", it.Values[j].Results[0].ID, ":", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().ToString())
+				fmt.Print(" STAY:", it.Values[j].Results[1].ID, ":", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().ToString())
+				fmt.Printf("-- ")
 			} else {
-				fmt.Println("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
+				fmt.Print("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
 			}
 		}
 		fmt.Println()
@@ -226,9 +224,6 @@ func (it *IChain) splitMixedNode() {
 	ch := NewIChain(it)
 	ch.Values = splitValues
 	ch.Child = it.Child
-	text.Print("I chain family status", ch, it.Child)
-	it.Print()
-
 	ch.Child.Parent = ch
 	it.Child = ch
 }
@@ -297,7 +292,7 @@ func hasAnySplitNodes(ic *IChain) bool {
 
 	return hasAnySplitNodes(ic.Child)
 }
-func simplifyIChain(ic *IChain, inputs map[string][]*wtype.Liquid) *IChain {
+func simplifyIChain(ic *IChain, inputs map[string][]*wtype.LHComponent) *IChain {
 
 	if !hasAnySplitNodes(ic) {
 		return ic
@@ -349,7 +344,7 @@ func maxGen(inss []*wtype.LHInstruction, componentGen map[string]int) int {
 	return max
 }
 
-func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.Liquid) (map[graph.Node]interface{}, map[graph.Node]bool) {
+func getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[graph.Node]interface{}, map[graph.Node]bool) {
 	ret := make(map[graph.Node]interface{})
 	hc := make(map[graph.Node]bool)
 

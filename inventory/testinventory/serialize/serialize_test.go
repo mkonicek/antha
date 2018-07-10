@@ -6,12 +6,11 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"strings"
 	"testing"
 )
 
 // TODO
-// ANYTHING ELSE
-
 func TestInventoryLHPlateSerialize(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 	newPlates, err := inventory.XXXNewPlates(ctx)
@@ -26,12 +25,12 @@ func TestInventoryLHPlateSerialize(t *testing.T) {
 		t.Errorf("Serialization error: %d plates made, only %d available from inventory (update the library in ../plate_library.go)", len(oldPlates), len(newPlates))
 	}
 
-	newPlateMap := make(map[string]*wtype.Plate)
+	newPlateMap := make(map[string]*wtype.LHPlate)
 	for _, p := range newPlates {
 		newPlateMap[p.Type] = p
 	}
 
-	oldPlateMap := make(map[string]*wtype.Plate)
+	oldPlateMap := make(map[string]*wtype.LHPlate)
 	for _, p := range oldPlates {
 		oldPlateMap[p.Type] = p
 	}
@@ -42,6 +41,12 @@ func TestInventoryLHPlateSerialize(t *testing.T) {
 
 		if !ok {
 			t.Errorf("No plate %s in new plate library", name)
+		}
+
+		if !strings.Contains(p.Type, "FromSpec") {
+			p.WellXStart += xStartOffset
+			p.WellYStart += yStartOffset
+			p.WellZStart += zStartOffset
 		}
 
 		fMErr := func(s string, want, got interface{}) string {
@@ -126,7 +131,7 @@ func wellTypeEqual(self, w2 *wtype.LHWell) bool {
 }
 
 // note order of arguments here... this will incorrectly fail if order is disregarded
-func compareExtra(nonSerializedP, previouslySerializedP *wtype.Plate) bool {
+func compareExtra(nonSerializedP, previouslySerializedP *wtype.LHPlate) bool {
 	ex1 := nonSerializedP.Welltype.Extra
 	ex2 := previouslySerializedP.Welltype.Extra
 

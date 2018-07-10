@@ -35,15 +35,15 @@ import (
 type PHperdegC float64
 
 type PHMeasurement struct {
-	Component       *wtype.Liquid
-	Location        *wtype.Plate
+	Component       *wtype.LHComponent
+	Location        *wtype.LHPlate
 	PHValue         float64
 	Temp            wunit.Temperature
 	TempCorrected   *float64
 	RefTemp         *wunit.Temperature
 	TempCoefficient *PHperdegC
 	Adjusted        *float64
-	Adjustedwith    *wtype.Liquid
+	Adjustedwith    *wtype.LHComponent
 }
 
 type PH struct {
@@ -65,23 +65,23 @@ func (ph *PHMeasurement) TempCompensation(reftemp wunit.Temperature, tempcoeffic
 
 // placeholder
 
-/*func MeasurePH(*wtype.Liquid) (measurement float64) {
+/*func MeasurePH(*wtype.LHComponent) (measurement float64) {
 	return 7.0
 }*/
 
-func MeasurePH(*wtype.Liquid) (measured PHMeasurement) {
+func MeasurePH(*wtype.LHComponent) (measured PHMeasurement) {
 	measured = PHMeasurement{nil, nil, 0.0, wunit.NewTemperature(0.0, "C"), nil, nil, nil, nil, nil}
 	return
 }
 
 // this should be performed on an LHComponent
 // currently (wrongly) assumes only acid or base will be needed
-func (ph *PHMeasurement) AdjustpH(ph_setpoint float64, ph_tolerance float64, ph_setPointTemp wunit.Temperature, Acid *wtype.Liquid, Base *wtype.Liquid) (adjustedsol wtype.Liquid, newph PHMeasurement, componentadded wtype.Liquid, err error) {
+func (ph *PHMeasurement) AdjustpH(ph_setpoint float64, ph_tolerance float64, ph_setPointTemp wunit.Temperature, Acid *wtype.LHComponent, Base *wtype.LHComponent) (adjustedsol wtype.LHComponent, newph PHMeasurement, componentadded wtype.LHComponent, err error) {
 
 	pHmax := ph_setpoint + ph_tolerance
 	pHmin := ph_setpoint - ph_tolerance
 
-	//sammake([]wtype.Liquid,0)
+	//sammake([]wtype.LHComponent,0)
 
 	if ph.PHValue > pHmax {
 		// calculate concentration of solution needed first, for now we'll add 10ul at a time until adjusted

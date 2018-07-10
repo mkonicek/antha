@@ -37,18 +37,18 @@ import (
 type Option string
 
 const (
-	// Force overwriting of Order Details of a wtype.Liquid in the SetOrderInfo function.
+	// Force overwriting of Order Details of a wtype.LHComponent in the SetOrderInfo function.
 	ForceUpdate Option = "FORCEUPDATE"
 )
 
-// Key to look up order details from a wtype.Liquid.
+// Key to look up order details from a wtype.LHComponent.
 const OrderDetails = "ORDERDETAILS"
 
 var (
 	errNotFound = errors.New("no order info found")
 )
 
-// Details stores the order details of a wtype.Liquid
+// Details stores the order details of a wtype.LHComponent
 type Details struct {
 
 	// Name of Manufacturer.
@@ -116,7 +116,7 @@ func (s StorageConditions) String() string {
 }
 
 // GetOrderDetails returns order Details for a component.
-func GetOrderDetails(comp *wtype.Liquid) (orderDetails Details, err error) {
+func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) {
 
 	order, found := comp.Extra[OrderDetails]
 
@@ -140,10 +140,10 @@ func GetOrderDetails(comp *wtype.Liquid) (orderDetails Details, err error) {
 	return
 }
 
-// SetOrderDetails adds order details to a wtype.Liquid.
+// SetOrderDetails adds order details to a wtype.LHComponent.
 // An error will be returned if order details are already encountered unless the ForceUpdate option is used as an Option argument in the function.
 // In which case any existing order details will be overwritten.
-func SetOrderDetails(comp *wtype.Liquid, orderDetails Details, options ...Option) (*wtype.Liquid, error) {
+func SetOrderDetails(comp *wtype.LHComponent, orderDetails Details, options ...Option) (*wtype.LHComponent, error) {
 
 	// look for existing order details
 	existingDetails, err := GetOrderDetails(comp)

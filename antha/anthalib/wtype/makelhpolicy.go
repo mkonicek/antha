@@ -866,24 +866,27 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 		lhpr.AddRule(rule, policy)
 	}
 
-	// hack to fix plate type problems
-	// this really should be removed asap
-	rule := NewLHPolicyRule("HVOffsetFix")
+	// FINALLY it is 'p' (sadly this was not also 's' by ANY STRETCH OF THE IMAGINATION :( )
+	/*
+		// hack to fix plate type problems
+		// this really should be removed asap
+		rule := NewLHPolicyRule("HVOffsetFix")
 
-	OnGilson := categoricCondition{"PLATFORM", "GilsonPipetmax"}
+		OnGilson := categoricCondition{"PLATFORM", "GilsonPipetmax"}
 
-	// to fix: This offset fix is not consistent with other tip types (e.g. filter tips)
-	highVolumeTips := categoricCondition{"TIPTYPE", "Gilson200"}
+		// to fix: This offset fix is not consistent with other tip types (e.g. filter tips)
+		highVolumeTips := categoricCondition{"TIPTYPE", "Gilson200"}
 
-	hvOffsetFix, err := newConditionalRule("HVOffsetFix", OnGilson, highVolumeTips)
+		hvOffsetFix, err := newConditionalRule("HVOffsetFix", OnGilson, highVolumeTips)
 
-	if err != nil {
-		return nil, err
-	}
-	// don't get overridden
-	hvOffsetFix.Priority = 100
-	pol := MakeHVOffsetPolicy()
-	lhpr.AddRule(hvOffsetFix, pol)
+		if err != nil {
+			return nil, err
+		}
+		// don't get overridden
+		hvOffsetFix.Priority = 100
+		pol := MakeHVOffsetPolicy()
+		lhpr.AddRule(hvOffsetFix, pol)
+	*/
 
 	// unless a policy has a default speed explicitely set we'll increase to max for high volumes
 	for name, policy := range policies {
@@ -897,7 +900,7 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 		}
 	}
 
-	rule = NewLHPolicyRule("DNALV")
+	rule := NewLHPolicyRule("DNALV")
 	err = rule.AddNumericConditionOn("VOLUME", 0.0, 1.99)
 	if err != nil {
 		return nil, err
@@ -906,7 +909,7 @@ func AddUniversalRules(originalRuleSet *LHPolicyRuleSet, policies map[string]LHP
 	if err != nil {
 		return nil, err
 	}
-	pol = MakeLVDNAMixPolicy()
+	pol := MakeLVDNAMixPolicy()
 	lhpr.AddRule(rule, pol)
 
 	// don't mix if destination well is empty
@@ -1150,22 +1153,23 @@ func GetSystemLHPolicies() (*LHPolicyRuleSet, error) {
 
 	lhpr.AddRule(adjustNeedToMix200ul, adjustPreMixVol200)
 
-	// hack to fix plate type problems
-	// this really should be removed asap
-	rule := NewLHPolicyRule("HVOffsetFix")
-	//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
+	/*
+		// hack to fix plate type problems
+		// this really should be removed asap
+		rule := NewLHPolicyRule("HVOffsetFix")
+		//rule.AddNumericConditionOn("VOLUME", 20.1, 300.0) // what about higher? // set specifically for openPlant configuration
 
-	checkErr(rule.AddCategoryConditionOn("TIPTYPE", "Gilson200"))
-	checkErr(rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax"))
-	// don't get overridden
-	rule.Priority = 100
-	pol := MakeHVOffsetPolicy()
-	lhpr.AddRule(rule, pol)
-
-	rule = NewLHPolicyRule("DNALV")
+		checkErr(rule.AddCategoryConditionOn("TIPTYPE", "Gilson200"))
+		checkErr(rule.AddCategoryConditionOn("PLATFORM", "GilsonPipetmax"))
+		// don't get overridden
+		rule.Priority = 100
+		pol := MakeHVOffsetPolicy()
+		lhpr.AddRule(rule, pol)
+	*/
+	rule := NewLHPolicyRule("DNALV")
 	checkErr(rule.AddNumericConditionOn("VOLUME", 0.0, 1.99))
 	checkErr(rule.AddCategoryConditionOn("LIQUIDCLASS", "dna"))
-	pol = MakeLVDNAMixPolicy()
+	pol := MakeLVDNAMixPolicy()
 	lhpr.AddRule(rule, pol)
 
 	//fix for removing blowout in DNA only if EGEL 48 plate type is used

@@ -54,7 +54,7 @@ type LHWell struct {
 	Inst      string
 	Crds      WellCoords
 	MaxVol    float64 //Maximum total capacity of the well
-	WContents *Liquid
+	WContents *LHComponent
 	Rvol      float64 //Residual volume which can't be removed from the well
 	WShape    *Shape
 	Bottom    WellBottomType
@@ -136,7 +136,7 @@ func (self *LHWell) SetOffset(point Coordinates) error {
 func (self *LHWell) SetParent(p LHObject) error {
 	//Seems unlikely, but I suppose wells that you can take from one plate and insert
 	//into another could be feasible with some funky labware
-	if plate, ok := p.(*Plate); ok {
+	if plate, ok := p.(*LHPlate); ok {
 		self.Plate = plate
 		return nil
 	}
@@ -233,7 +233,7 @@ func (w *LHWell) UnProtect() {
 	w.Extra["protected"] = false
 }
 
-func (w *LHWell) Contents() *Liquid {
+func (w *LHWell) Contents() *LHComponent {
 	if w == nil {
 		logger.Debug("CONTENTS OF NIL WELL REQUESTED")
 		return nil
@@ -246,7 +246,7 @@ func (w *LHWell) Contents() *Liquid {
 	return w.WContents
 }
 
-func (w *LHWell) SetContents(newContents *Liquid) error {
+func (w *LHWell) SetContents(newContents *LHComponent) error {
 	if w == nil {
 		return nil
 	}
@@ -313,7 +313,7 @@ func (w *LHWell) MaxWorkingVolume() wunit.Volume {
 }
 
 //AddComponent add some liquid to the well
-func (w *LHWell) AddComponent(c *Liquid) error {
+func (w *LHWell) AddComponent(c *LHComponent) error {
 	if w == nil {
 		return nil
 	}
@@ -334,7 +334,7 @@ func (w *LHWell) AddComponent(c *Liquid) error {
 }
 
 //RemoveVolume remove some liquid from the well
-func (w *LHWell) RemoveVolume(v wunit.Volume) (*Liquid, error) {
+func (w *LHWell) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
 	if w == nil {
 		return nil, nil
 	}
@@ -432,7 +432,7 @@ func (w *LHWell) Clear() {
 	}
 	w.WContents = NewLHComponent()
 	//death if this well is actually in a tipwaste
-	w.WContents.Loc = w.Plate.(*Plate).ID + ":" + w.Crds.FormatA1()
+	w.WContents.Loc = w.Plate.(*LHPlate).ID + ":" + w.Crds.FormatA1()
 }
 
 //IsEmpty returns true if the well contains nothing, though this does not mean that the working volume is greater than zero
@@ -450,7 +450,7 @@ func (w *LHWell) IsEmpty() bool {
 //Clean resets the volume in the well so that it's empty
 func (w *LHWell) Clean() {
 	w.WContents.Clean()
-	w.WContents.Loc = w.Plate.(*Plate).ID + ":" + w.Crds.FormatA1()
+	w.WContents.Loc = w.Plate.(*LHPlate).ID + ":" + w.Crds.FormatA1()
 	newExtra := make(map[string]interface{})
 
 	// some keys must be retained
@@ -655,7 +655,7 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 }
 
 // this function is somewhat buggy... need to define its responsibilities better
-func Get_Next_Well(plate *Plate, component *Liquid, curwell *LHWell) (*LHWell, bool) {
+func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LHWell, bool) {
 	vol := component.Vol
 
 	it := NewAddressIterator(plate, ColumnWise, TopToBottom, LeftToRight, false)
@@ -903,7 +903,7 @@ func (w *LHWell) ClearUserAllocated() {
 	w.Extra["UserAllocated"] = false
 }
 
-func (w *LHWell) Contains(cmp *Liquid) bool {
+func (w *LHWell) Contains(cmp *LHComponent) bool {
 	// obviously empty wells don't contain anything
 	if w.IsEmpty() || cmp == nil {
 		return false
@@ -912,7 +912,7 @@ func (w *LHWell) Contains(cmp *Liquid) bool {
 	return cmp.Matches(w.WContents)
 }
 
-func (w *LHWell) UpdateContentID(IDBefore string, after *Liquid) bool {
+func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 	if w.WContents.ID == IDBefore {
 		/*
 			previous := w.WContents

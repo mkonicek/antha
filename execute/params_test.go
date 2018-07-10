@@ -169,7 +169,7 @@ func TestConstructSlice(t *testing.T) {
 	type Value []interface{}
 	x := Value{
 		&wtype.LHTipbox{},
-		&wtype.Plate{},
+		&wtype.LHPlate{},
 	}
 	tb1, err := inventory.NewTipbox(ctx, "CyBio250Tipbox")
 	if err != nil {
@@ -193,9 +193,9 @@ func TestConstructSlice(t *testing.T) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
 	} else if aa.Type != bb.Type {
 		t.Errorf("expecting %v but got %v instead", golden, x)
-	} else if aa, ok := golden[1].(*wtype.Plate); !ok {
+	} else if aa, ok := golden[1].(*wtype.LHPlate); !ok {
 		t.Errorf("expecting %v but got %v instead", golden, x)
-	} else if bb, ok := x[1].(*wtype.Plate); !ok {
+	} else if bb, ok := x[1].(*wtype.LHPlate); !ok {
 		t.Errorf("expecting %v but got %v instead", golden, x)
 	} else if aa.Type != bb.Type {
 		t.Errorf("expecting %v but got %v instead", golden, x)

@@ -38,10 +38,10 @@ import (
 //ChannelState Represent the physical state of a single channel
 type ChannelState struct {
 	number   int
-	tip      *wtype.LHTip      //Nil if no tip loaded, otherwise the tip that's loaded
-	contents *wtype.Liquid     //What's in the tip?
-	position wtype.Coordinates //position relative to the adaptor
-	adaptor  *AdaptorState     //the channel's adaptor
+	tip      *wtype.LHTip       //Nil if no tip loaded, otherwise the tip that's loaded
+	contents *wtype.LHComponent //What's in the tip?
+	position wtype.Coordinates  //position relative to the adaptor
+	adaptor  *AdaptorState      //the channel's adaptor
 	radius   float64
 }
 
@@ -74,7 +74,7 @@ func (self *ChannelState) IsEmpty() bool {
 }
 
 //GetContents get the contents of the loaded tip, retuns nil if no contents or no tip
-func (self *ChannelState) GetContents() *wtype.Liquid {
+func (self *ChannelState) GetContents() *wtype.LHComponent {
 	return self.contents
 }
 
@@ -162,7 +162,7 @@ func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObje
 				if len(well.GetPointIntersections(tipBottom)) == 0 {
 					ret = append(ret, well.GetParent())
 				}
-			} else if _, ok := obj.(*wtype.Plate); !ok {
+			} else if _, ok := obj.(*wtype.LHPlate); !ok {
 				ret = append(ret, obj)
 			}
 		}

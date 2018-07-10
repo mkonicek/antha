@@ -66,7 +66,7 @@ func removeConcUnitFromName(name string) string {
 // e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
 // An LB solution with concentration 1 X and no components is returned as 1X LB.
 // An LB solution with no concentration and no components is returned as LB.
-func ReturnNormalisedComponentName(component *Liquid) string {
+func ReturnNormalisedComponentName(component *LHComponent) string {
 	originalcompList, _ := GetSubComponents(component)
 
 	compList := originalcompList.RemoveConcsFromSubComponentNames()
@@ -86,7 +86,7 @@ func ReturnNormalisedComponentName(component *Liquid) string {
 // e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
 // An LB solution with concentration 1 X and no components is returned as 1X LB.
 // An LB solution with no concentration and no components is returned as LB.
-func NormaliseComponentName(component *Liquid) error {
+func NormaliseComponentName(component *LHComponent) error {
 
 	newName := ReturnNormalisedComponentName(component)
 

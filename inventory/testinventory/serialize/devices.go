@@ -7,9 +7,9 @@ import (
 
 // heights in mm
 const (
-	offset               = 0.25
-	gilsonoffsetpcrplate = 2.0 // 2.136
-	gilsonoffsetgreiner  = 2.0
+	//	offset               = 0.25
+	//	gilsonoffsetpcrplate = 2.0 // 2.136
+	//	gilsonoffsetgreiner  = 2.0
 	//riserheightinmm                             = 40.0 - offset
 	//shallowriserheightinmm                      = 20.25 - offset
 	//shallowriser18heightinmm                    = 18.75 - offset

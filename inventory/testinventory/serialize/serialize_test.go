@@ -6,11 +6,11 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"strings"
 	"testing"
 )
 
 // TODO
-// FIX post offsets
 func TestInventoryLHPlateSerialize(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 	newPlates, err := inventory.XXXNewPlates(ctx)
@@ -41,6 +41,12 @@ func TestInventoryLHPlateSerialize(t *testing.T) {
 
 		if !ok {
 			t.Errorf("No plate %s in new plate library", name)
+		}
+
+		if !strings.Contains(p.Type, "FromSpec") {
+			p.WellXStart += xStartOffset
+			p.WellYStart += yStartOffset
+			p.WellZStart += zStartOffset
 		}
 
 		fMErr := func(s string, want, got interface{}) string {

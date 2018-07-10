@@ -30,10 +30,10 @@ import (
 )
 
 const (
-	jsonOutput = "json"
-	yamlOutput = "yaml"
-	textOutput = "text"
-	csvOutput  = "csv"
+	jsonOutput         = "json"
+	yamlOutput         = "yaml"
+	textOutput         = "text"
+	csvOutput          = "csv"
 	descriptionsOutput = "descriptions"
 )
 

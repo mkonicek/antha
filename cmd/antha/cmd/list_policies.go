@@ -129,19 +129,19 @@ func listPolicies(cmd *cobra.Command, args []string) error {
 	case descriptionsOutput:
 		type descriptionOnly struct {
 			Description string `json:"description"`
-			Id string `json:"id"`
-			Name string `json:"name"`
+			Id          string `json:"id"`
+			Name        string `json:"name"`
 		}
 		var uiJson []descriptionOnly
 		for _, p := range ps {
-	
+
 			uiJson = append(uiJson, descriptionOnly{
 				Description: p.Properties["DESCRIPTION"].(string),
-				Id: 		p.Name,
-				Name:       p.Name,
+				Id:          p.Name,
+				Name:        p.Name,
 			})
 		}
-	
+
 		bs, err := json.MarshalIndent(uiJson, "", "  ")
 		if err != nil {
 			return err

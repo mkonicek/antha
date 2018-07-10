@@ -316,16 +316,14 @@ func MakeSingleChannelPolicy() LHPolicy {
 
 func MakeLLFPolicy() LHPolicy {
 	pol := MakeWaterPolicy()
-	pol["ASPREFERENCE"] = 2
-	pol["DSPREFERENCE"] = 2
+	pol["USE_LLF"] = true
 	pol["DESCRIPTION"] = "Default policy designed for pipetting water, permitting multi-channel use and aspirating and dispensing at the liquid level. Includes a blowout step for added accuracy and no post-mixing."
 	return pol
 }
 
 func MakeSmartMixLLFPolicy() LHPolicy {
 	pol := SmartMixPolicy()
-	pol["ASPREFERENCE"] = 2
-	pol["DSPREFERENCE"] = 2
+	pol["USE_LLF"] = true
 	pol["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Aspirate and dispense at liquid height. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
 	return pol
 }

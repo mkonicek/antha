@@ -667,7 +667,6 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 
 	//check for collisions in the new location
 	if err := assertNoCollisionsInGroup(adaptor, nil, 0.0); err != nil {
-		fmt.Println(self.state.GetDeck().DimensionsString())
 		self.AddErrorf("%s: collision detected: %s", describe(), err.Error())
 	}
 	return ret

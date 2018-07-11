@@ -26,7 +26,7 @@ func TestPlateSerializeDeserialize(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	plate, ok := decodedP.(*wtype.LHPlate)
+	plate, ok := decodedP.(*wtype.Plate)
 
 	if !ok {
 		t.Errorf("WANT *wtype.LHPlate got %T", decodedP)
@@ -71,7 +71,7 @@ func TestLHPropertiesSerialiseDeserialise(t *testing.T) {
 	AssertLHPropertiesEqual(t, lhp, dec, "LHProperties")
 }
 
-func makeplatefortest() *wtype.LHPlate {
+func makeplatefortest() *wtype.Plate {
 	swshp := wtype.NewShape("box", "mm", 8.2, 8.2, 41.3)
 	welltype := wtype.NewLHWell("ul", 200, 10, swshp, wtype.VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	p := wtype.NewLHPlate("DSW96", "none", 8, 12, wtype.Coordinates{127.76, 85.48, 43.1}, welltype, 0.5, 0.5, 0.5, 0.5, 0.5)
@@ -218,7 +218,7 @@ func MakeGilsonWithPlatesForTest(ctx context.Context) (*liquidhandling.LHPropert
 	return params, nil
 }
 
-func validatePlate(t *testing.T, plate *wtype.LHPlate) {
+func validatePlate(t *testing.T, plate *wtype.Plate) {
 	assertWellsEqual := func(what string, as, bs []*wtype.LHWell) {
 		seen := make(map[*wtype.LHWell]int)
 		for _, w := range as {
@@ -256,8 +256,8 @@ func validatePlate(t *testing.T, plate *wtype.LHPlate) {
 			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent -- %s != %s", ltx[0], plate.ID))
 		}
 
-		if w.Plate != nil && ltx[0] != w.Plate.(*wtype.LHPlate).ID {
-			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent with well -- %s != %s", ltx[0], w.Plate.(*wtype.LHPlate).ID))
+		if w.Plate != nil && ltx[0] != w.Plate.(*wtype.Plate).ID {
+			t.Fatal(fmt.Sprintf("ERROR: Plate ID for component not consistent with well -- %s != %s", ltx[0], w.Plate.(*wtype.Plate).ID))
 		}
 
 		if ltx[1] != crds {
@@ -277,7 +277,7 @@ func validatePlate(t *testing.T, plate *wtype.LHPlate) {
 	assertWellsEqual("Cols != Wellcoords", ws3, ws4)
 
 	// Check pointer-ID equality
-	comp := make(map[string]*wtype.LHComponent)
+	comp := make(map[string]*wtype.Liquid)
 	for _, w := range append(append(ws1, ws2...), ws3...) {
 		c := w.WContents
 		if c == nil || c.Vol == 0.0 {

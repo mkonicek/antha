@@ -38,7 +38,7 @@ func equalFold(a, b string) bool {
 // A position of -1 is returned if no match found.
 // If the component does not contain a concentration, the name will be matched only
 // if multiple matches are found the first will be returned
-func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHComponent, lookForSubComponents bool) (found bool, position int, err error) {
+func ContainsComponent(components []*wtype.Liquid, component *wtype.Liquid, lookForSubComponents bool) (found bool, position int, err error) {
 
 	var errs []string
 
@@ -123,7 +123,7 @@ func ContainsComponent(components []*wtype.LHComponent, component *wtype.LHCompo
 // EqualLists compares two ComponentLists and returns an error if the lists are not identical.
 var EqualLists = wtype.EqualLists
 
-func componentSummary(component *wtype.LHComponent) string {
+func componentSummary(component *wtype.Liquid) string {
 	subComps, err := component.GetSubComponents()
 	var message string
 	if err != nil {
@@ -141,7 +141,7 @@ func componentSummary(component *wtype.LHComponent) string {
 	return fmt.Sprint("Component Name: ", component.CName, "Conc: ", conc, ". SubComponents: ", message)
 }
 
-func componentNames(components []*wtype.LHComponent) (names []string) {
+func componentNames(components []*wtype.Liquid) (names []string) {
 	for _, component := range components {
 		names = append(names, component.CName)
 	}

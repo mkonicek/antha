@@ -1635,7 +1635,7 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 		}
 
 		//check that the wells are within the bounds of the plate
-		if plate, ok := obj.(*wtype.LHPlate); ok {
+		if plate, ok := obj.(*wtype.Plate); ok {
 			plateSize := plate.GetSize()
 			wellOff := plate.GetWellOffset()
 			wellLim := wellOff.Add(plate.GetWellSize())

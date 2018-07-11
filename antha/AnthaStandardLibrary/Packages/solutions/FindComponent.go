@@ -32,7 +32,7 @@ import (
 // FindComponentByName is a utility function which looks for a component matching on name only.
 // If more than one component present the first component will be returned with no error
 // This will ignore concentrations if only a unit is specified.
-func FindComponentByName(components []*wtype.LHComponent, componentName string) (component *wtype.LHComponent, err error) {
+func FindComponentByName(components []*wtype.Liquid, componentName string) (component *wtype.Liquid, err error) {
 	for _, comp := range components {
 		if comp.CName == componentName || NormaliseName(componentName) == NormaliseName(comp.CName) {
 			return comp, nil

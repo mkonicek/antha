@@ -14,7 +14,7 @@ func makeWell() *LHWell {
 	return welltype
 }
 
-func makeComponent() *LHComponent {
+func makeComponent() *Liquid {
 	rand := wutil.GetRandom()
 	A := NewLHComponent()
 	A.Type = LTWater

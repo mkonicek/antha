@@ -25,11 +25,12 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -46,7 +47,7 @@ func GetContextForTest() context.Context {
 	return ctx
 }
 
-func GetPlateForTest() *wtype.LHPlate {
+func GetPlateForTest() *wtype.Plate {
 
 	offset := 0.25
 	riserheightinmm := 40.0 - offset
@@ -66,9 +67,9 @@ func GetTipwasteForTest() *wtype.LHTipwaste {
 	return lht
 }
 
-func GetTroughForTest() *wtype.LHPlate {
+func GetTroughForTest() *wtype.Plate {
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
-	trough12 := wtype.NewLHWell("ul", 15000, 5000, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
+	trough12 := wtype.NewLHWell("ul", 1500, 500, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
 	plate := wtype.NewLHPlate("DWST12", "Unknown", 1, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
 	return plate
 }
@@ -100,8 +101,11 @@ func TestStockConcs(*testing.T) {
 
 func configure_request_simple(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
+	water.Type = wtype.LTSingleChannel
 	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
+	mmx.Type = wtype.LTSingleChannel
 	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
+	part.Type = wtype.LTSingleChannel
 
 	for k := 0; k < 9; k++ {
 		ins := wtype.NewLHMixInstruction()
@@ -252,7 +256,7 @@ func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
 
 }
 
-func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wtype.LHComponent) (rq *LHRequest, err error) {
+func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wtype.Liquid) (rq *LHRequest, err error) {
 
 	// set up ctx
 	ctx := GetContextForTest()
@@ -360,15 +364,15 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 		liquidType:              "multiwater",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.7500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "1.0000",
 	},
 	{
 		liquidType:              "multiwater",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500,1.2500",
-		expectedDispenseZOffset: "1.7500,1.7500",
+		expectedAspirateZOffset: "0.5000,0.5000",
+		expectedDispenseZOffset: "1.0000,1.0000",
 	},
 	{
 		liquidType:              "multiwater",
@@ -395,28 +399,28 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 			expectedDispenseZOffset: "1.7500,1.7500,1.7500,1.7500,1.7500,1.7500,1.7500,1.7500",
 		},*/
 	{
-		liquidType:              "water",
+		liquidType:              "SingleChannel",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.7500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "1.0000",
 	},
 	{
-		liquidType:              "water",
+		liquidType:              "SingleChannel",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.7500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "1.0000",
 	},
 	{
-		liquidType:              "water",
+		liquidType:              "SingleChannel",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(5, "ul"),
 		expectedAspirateZOffset: "0.5000",
 		expectedDispenseZOffset: "1.0000",
 	},
 	{
-		liquidType:              "water",
+		liquidType:              "SingleChannel",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(5, "ul"),
 		expectedAspirateZOffset: "0.5000",
@@ -426,57 +430,57 @@ var offsetTests []zOffsetTest = []zOffsetTest{
 		liquidType:              "SmartMix",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.2500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "0.5000",
 	},
 	{
 		liquidType:              "SmartMix",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500,1.2500",
-		expectedDispenseZOffset: "1.2500,1.2500",
+		expectedAspirateZOffset: "0.5000,0.5000",
+		expectedDispenseZOffset: "0.5000,0.5000",
 	}, /*
 		zOffsetTest{
 			liquidType:              "SmartMix",
 			numberOfTransfers:       1,
 			volume:                  wunit.NewVolume(5, "ul"),
-			expectedAspirateZOffset: "0.5000",
-			expectedDispenseZOffset: "0.5000",
+			expectedAspirateZOffset: "0.500",
+			expectedDispenseZOffset: "0.500",
 		},
 		zOffsetTest{
 			liquidType:              "SmartMix",
 			numberOfTransfers:       2,
 			volume:                  wunit.NewVolume(5, "ul"),
-			expectedAspirateZOffset: "0.5000,0.5000",
-			expectedDispenseZOffset: "0.5000,0.5000",
+			expectedAspirateZOffset: "0.500,0.500",
+			expectedDispenseZOffset: "0.500,0.500",
 		},*/
 	{
 		liquidType:              "NeedToMix",
 		numberOfTransfers:       1,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500",
-		expectedDispenseZOffset: "1.2500",
+		expectedAspirateZOffset: "0.5000",
+		expectedDispenseZOffset: "0.5000",
 	},
 	{
 		liquidType:              "NeedToMix",
 		numberOfTransfers:       2,
 		volume:                  wunit.NewVolume(50, "ul"),
-		expectedAspirateZOffset: "1.2500,1.2500",
-		expectedDispenseZOffset: "1.2500,1.2500",
+		expectedAspirateZOffset: "0.5000,0.5000",
+		expectedDispenseZOffset: "0.5000,0.5000",
 	}, /*
 		zOffsetTest{
 			liquidType:              "NeedToMix",
 			numberOfTransfers:       1,
 			volume:                  wunit.NewVolume(5, "ul"),
-			expectedAspirateZOffset: "0.5000",
-			expectedDispenseZOffset: "0.5000",
+			expectedAspirateZOffset: "0.500",
+			expectedDispenseZOffset: "0.500",
 		},
 		zOffsetTest{
 			liquidType:              "NeedToMix",
 			numberOfTransfers:       2,
 			volume:                  wunit.NewVolume(5, "ul"),
-			expectedAspirateZOffset: "0.5000,0.5000",
-			expectedDispenseZOffset: "0.5000,0.5000",
+			expectedAspirateZOffset: "0.500,0.500",
+			expectedDispenseZOffset: "0.500,0.500",
 		},*/
 }
 
@@ -792,7 +796,7 @@ func TestPlateReuse(t *testing.T) {
 		}
 		thing := lh.Properties.PlateLookup[plateid]
 
-		plate, ok := thing.(*wtype.LHPlate)
+		plate, ok := thing.(*wtype.Plate)
 		if !ok {
 			continue
 		}
@@ -834,7 +838,7 @@ func TestPlateReuse(t *testing.T) {
 		}
 		thing := lh.Properties.PlateLookup[plateid]
 
-		plate, ok := thing.(*wtype.LHPlate)
+		plate, ok := thing.(*wtype.Plate)
 		if !ok {
 			continue
 		}
@@ -909,9 +913,9 @@ func TestBeforeVsAfter(t *testing.T) {
 		// ok nice we have some sort of consistency
 
 		switch p1.(type) {
-		case *wtype.LHPlate:
-			pp1 := p1.(*wtype.LHPlate)
-			pp2 := p2.(*wtype.LHPlate)
+		case *wtype.Plate:
+			pp1 := p1.(*wtype.Plate)
+			pp2 := p2.(*wtype.Plate)
 			if pp1.Type != pp2.Type {
 				t.Fatal(fmt.Sprintf("Plates at %s not same type: %s %s", pos, pp1.Type, pp2.Type))
 			}
@@ -1098,12 +1102,12 @@ func TestEP3WrongTotalVolume(t *testing.T) {
 func TestDistinctPlateNames(t *testing.T) {
 	rq := NewLHRequest()
 	for i := 0; i < 100; i++ {
-		p := &wtype.LHPlate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
+		p := &wtype.Plate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
 		rq.Input_plate_order = append(rq.Input_plate_order, p.ID)
 		rq.Input_plates[p.ID] = p
 	}
 	for i := 100; i < 200; i++ {
-		p := &wtype.LHPlate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
+		p := &wtype.Plate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
 		rq.Output_plate_order = append(rq.Output_plate_order, p.ID)
 		rq.Output_plates[p.ID] = p
 	}
@@ -1250,7 +1254,7 @@ func TestOveractiveMultichannel(t *testing.T) {
 
 	source := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
 
-	samples := make([]*wtype.LHComponent, 4)
+	samples := make([]*wtype.Liquid, 4)
 
 	samples[0] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
 	samples[1] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
@@ -1291,7 +1295,7 @@ func TestOveractiveMultichannel(t *testing.T) {
 	}
 }
 
-func getTestSplitSample(component *wtype.LHComponent, volume float64) *wtype.LHInstruction {
+func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstruction {
 	ret := wtype.NewLHSplitInstruction()
 
 	ret.Components = append(ret.Components, component.Dup())
@@ -1302,7 +1306,7 @@ func getTestSplitSample(component *wtype.LHComponent, volume float64) *wtype.LHI
 	return ret
 }
 
-func getTestMix(components []*wtype.LHComponent, address string) *wtype.LHInstruction {
+func getTestMix(components []*wtype.Liquid, address string) *wtype.LHInstruction {
 	mix := mixer.GenericMix(mixer.MixOptions{
 		Components: components,
 		Address:    address,
@@ -1342,7 +1346,7 @@ func TestSplitSampleMultichannel(t *testing.T) {
 
 			split := getTestSplitSample(lastStock, 20.0)
 
-			mix := getTestMix([]*wtype.LHComponent{split.Results[0], diluentSample}, wc.FormatA1())
+			mix := getTestMix([]*wtype.Liquid{split.Results[0], diluentSample}, wc.FormatA1())
 
 			lastStock = mix.Results[0]
 

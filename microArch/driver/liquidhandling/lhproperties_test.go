@@ -13,7 +13,7 @@ import (
 )
 
 func TestSavePlates(t *testing.T) {
-	lhp := MakeGilsonForTest()
+	lhp := MakeGilsonForTest(defaultTipList())
 	ctx := testinventory.NewContext(context.Background())
 
 	p, err := inventory.NewPlate(ctx, "pcrplate_skirted")
@@ -87,7 +87,7 @@ func TestGetFirstDefined(t *testing.T) {
 }
 
 func TestLHPropertiesSane(t *testing.T) {
-	props := MakeGilsonForTest()
+	props := MakeGilsonForTest(defaultTipList())
 
 	assertPropsSane(t, props)
 }

@@ -34,7 +34,7 @@ func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
 	}
 }
 
-func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wtype.LHComponent {
+func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wtype.Liquid {
 	c, err := inventory.NewComponent(ctx, name)
 	if err != nil {
 		panic(err)
@@ -70,7 +70,7 @@ func whereISthatplate(name string, robot *liquidhandling.LHProperties) string {
 	return "notheremate"
 }
 
-func itshere(name string, plate *wtype.LHPlate) bool {
+func itshere(name string, plate *wtype.Plate) bool {
 	for _, w := range plate.Wellcoords {
 		if w.IsEmpty() {
 			continue

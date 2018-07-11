@@ -26,8 +26,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-func makeComponents() []*wtype.LHComponent {
-	var components []*wtype.LHComponent
+func makeComponents() []*wtype.Liquid {
+	var components []*wtype.Liquid
 	var defaultConc wunit.Concentration
 
 	add := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration) {

@@ -667,7 +667,6 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 
 	//check for collisions in the new location
 	if err := assertNoCollisionsInGroup(adaptor, nil, 0.0); err != nil {
-		fmt.Println(self.state.GetDeck().DimensionsString())
 		self.AddErrorf("%s: collision detected: %s", describe(), err.Error())
 	}
 	return ret
@@ -1636,7 +1635,7 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 		}
 
 		//check that the wells are within the bounds of the plate
-		if plate, ok := obj.(*wtype.LHPlate); ok {
+		if plate, ok := obj.(*wtype.Plate); ok {
 			plateSize := plate.GetSize()
 			wellOff := plate.GetWellOffset()
 			wellLim := wellOff.Add(plate.GetWellSize())

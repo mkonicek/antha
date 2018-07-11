@@ -13,14 +13,14 @@ type SampleTracker struct {
 	lock     sync.Mutex
 	records  map[string]string
 	forwards map[string]string
-	plates   map[string]*wtype.LHPlate
+	plates   map[string]*wtype.Plate
 }
 
 func newSampleTracker() *SampleTracker {
 	st := SampleTracker{
 		records:  make(map[string]string),
 		forwards: make(map[string]string),
-		plates:   make(map[string]*wtype.LHPlate),
+		plates:   make(map[string]*wtype.Plate),
 	}
 	return &st
 }
@@ -36,7 +36,7 @@ func GetSampleTracker() *SampleTracker {
 	return st
 }
 
-func (st *SampleTracker) SetInputPlate(p *wtype.LHPlate) {
+func (st *SampleTracker) SetInputPlate(p *wtype.Plate) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 
@@ -52,21 +52,21 @@ func (st *SampleTracker) SetInputPlate(p *wtype.LHPlate) {
 
 // this is destructive, i.e. once asked for that's it
 // that's one way to make it thread-safe...
-func (st *SampleTracker) GetInputPlates() []*wtype.LHPlate {
+func (st *SampleTracker) GetInputPlates() []*wtype.Plate {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 
-	var ret []*wtype.LHPlate
+	var ret []*wtype.Plate
 	if len(st.plates) == 0 {
 		return ret
 	}
-	ret = make([]*wtype.LHPlate, 0, len(st.plates))
+	ret = make([]*wtype.Plate, 0, len(st.plates))
 
 	for _, p := range st.plates {
 		ret = append(ret, p)
 	}
 
-	st.plates = make(map[string]*wtype.LHPlate)
+	st.plates = make(map[string]*wtype.Plate)
 
 	return ret
 }

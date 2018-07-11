@@ -121,7 +121,7 @@ func MixComponentLists(sample1, sample2 ComponentListSample) (newList ComponentL
 // this is to prevent potential duplication since if a component has a list of sub components the name
 // is considered to be an alias and the component list the true meaning of what the component is.
 // If any sample concentration of zero is found the component list will be made but an error returned.
-func SimulateMix(samples ...*LHComponent) (newComponentList ComponentList, mixSteps []ComponentListSample, warning error) {
+func SimulateMix(samples ...*Liquid) (newComponentList ComponentList, mixSteps []ComponentListSample, warning error) {
 
 	var warnings []string
 	var nonZeroVols []wunit.Volume
@@ -233,7 +233,7 @@ type ComponentList struct {
 }
 
 // add a single entry to a component list
-func (c ComponentList) Add(component *LHComponent, conc wunit.Concentration) (newlist ComponentList) {
+func (c ComponentList) Add(component *Liquid, conc wunit.Concentration) (newlist ComponentList) {
 
 	componentName := removeConcUnitFromName(NormaliseName(component.Name()))
 
@@ -251,7 +251,7 @@ func (c ComponentList) Add(component *LHComponent, conc wunit.Concentration) (ne
 
 // Get a single concentration set point for a named component present in a component list.
 // An error will be returned if the component is not present.
-func (c ComponentList) Get(component *LHComponent) (conc wunit.Concentration, err error) {
+func (c ComponentList) Get(component *Liquid) (conc wunit.Concentration, err error) {
 
 	componentName := NormaliseName(component.Name())
 
@@ -372,7 +372,7 @@ func (a *notFound) Error() string {
 
 // AddSubComponent adds a subcomponent with concentration to a component.
 // An error is returned if subcomponent is already found.
-func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wunit.Concentration) error {
+func AddSubComponent(component *Liquid, subcomponent *Liquid, conc wunit.Concentration) error {
 
 	if component == nil {
 		return fmt.Errorf("No component specified so cannot add subcomponent")
@@ -432,10 +432,10 @@ func AddSubComponent(component *LHComponent, subcomponent *LHComponent, conc wun
 // AddSubComponents adds a component list to a component.
 // If a conflicting sub component concentration is already present then an error will be returned.
 // To overwrite all subcomponents ignoring conficts, use OverWriteSubComponents.
-func AddSubComponents(component *LHComponent, allsubComponents ComponentList) error {
+func AddSubComponents(component *Liquid, allsubComponents ComponentList) error {
 
 	for _, compName := range allsubComponents.AllComponents() {
-		var comp LHComponent
+		var comp Liquid
 
 		comp.CName = compName
 
@@ -456,7 +456,7 @@ func AddSubComponents(component *LHComponent, allsubComponents ComponentList) er
 }
 
 // GetSubComponents returns a component list from a component
-func GetSubComponents(component *LHComponent) (componentMap ComponentList, err error) {
+func GetSubComponents(component *Liquid) (componentMap ComponentList, err error) {
 
 	components, err := getHistory(component)
 
@@ -473,7 +473,7 @@ func GetSubComponents(component *LHComponent) (componentMap ComponentList, err e
 
 // Return a component list from a component.
 // Users should use getSubComponents function.
-func getHistory(comp *LHComponent) (compList ComponentList, err error) {
+func getHistory(comp *Liquid) (compList ComponentList, err error) {
 
 	if len(comp.SubComponents.Components) > 0 {
 		return comp.SubComponents, nil
@@ -485,7 +485,7 @@ func getHistory(comp *LHComponent) (compList ComponentList, err error) {
 // UpdateComponentDetails corrects the sub component list and normalises the name of a component with the details
 // of all sample mixes which are specified to be the source of that component.
 // This must currently be updated manually using this function.
-func UpdateComponentDetails(productOfMixes *LHComponent, mixes ...*LHComponent) error {
+func UpdateComponentDetails(productOfMixes *Liquid, mixes ...*Liquid) error {
 	var warnings []string
 
 	subComponents, _, err := SimulateMix(mixes...)
@@ -563,7 +563,7 @@ func equalFold(a, b string) bool {
 
 // getComponentConc attempts to retrieve the concentration of subComponentName in component.
 // If the component name is equal to subComponentName, the concentration of the component itself is returned.
-func getComponentConc(component *LHComponent, subComponentName string) (wunit.Concentration, error) {
+func getComponentConc(component *Liquid, subComponentName string) (wunit.Concentration, error) {
 	subComponents, _ := GetSubComponents(component) // nolint
 	conc, err := subComponents.GetByName(subComponentName)
 	if err == nil {
@@ -580,7 +580,7 @@ func getComponentConc(component *LHComponent, subComponentName string) (wunit.Co
 
 // hasSubComponent evaluates if a sub component with subComponentName is found in component.
 // If the component name is equal to subComponentName, true will be returned.
-func hasSubComponent(component *LHComponent, subComponentName string) bool {
+func hasSubComponent(component *Liquid, subComponentName string) bool {
 	if equalFold(component.Name(), subComponentName) {
 		return true
 	}

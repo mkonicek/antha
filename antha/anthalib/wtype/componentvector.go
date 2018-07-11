@@ -7,7 +7,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-type ComponentVector []*LHComponent
+type ComponentVector []*Liquid
 
 func (cv ComponentVector) String() string {
 	s := fmt.Sprintf("%v %v %v", cv.GetNames(), cv.GetVols(), cv.GetWellCoords())

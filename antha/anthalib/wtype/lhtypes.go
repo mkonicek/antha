@@ -282,7 +282,7 @@ type LHSolution struct {
 	Inst             string
 	SName            string
 	Order            int
-	Components       []*LHComponent
+	Components       []*Liquid
 	ContainerType    string
 	Welladdress      string
 	Plateaddress     string
@@ -349,7 +349,7 @@ func (lhs *LHSolution) GetAssignment() string {
 func New_Solution() *LHSolution {
 	var solution LHSolution
 	solution.ID = GetUUID()
-	solution.Components = make([]*LHComponent, 0, 4)
+	solution.Components = make([]*Liquid, 0, 4)
 	return &solution
 }
 

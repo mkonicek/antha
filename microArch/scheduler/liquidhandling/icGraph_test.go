@@ -144,16 +144,16 @@ func TestNodesMixedOK(t *testing.T) {
 func TestUpdateCmpMap(t *testing.T) {
 	componentsLive := map[string]bool{"A": true, "B": true, "C": true, "D": true, "E": true}
 	mix := wtype.NewLHMixInstruction()
-	mix.Components = []*wtype.LHComponent{{ID: "A"}}
-	mix.Results = []*wtype.LHComponent{{ID: "W"}}
+	mix.Components = []*wtype.Liquid{{ID: "A"}}
+	mix.Results = []*wtype.Liquid{{ID: "W"}}
 
 	split := wtype.NewLHSplitInstruction()
 
-	split.Components = []*wtype.LHComponent{{ID: "B"}}
-	split.Results = []*wtype.LHComponent{{ID: "S"}, {ID: "X"}}
+	split.Components = []*wtype.Liquid{{ID: "B"}}
+	split.Results = []*wtype.Liquid{{ID: "S"}, {ID: "X"}}
 
 	prompt := wtype.NewLHPromptInstruction()
-	prompt.PassThrough = map[string]*wtype.LHComponent{"C": {ID: "Y"}, "D": {ID: "Z"}}
+	prompt.PassThrough = map[string]*wtype.Liquid{"C": {ID: "Y"}, "D": {ID: "Z"}}
 
 	expected := map[string]bool{"W": true, "X": true, "Y": true, "Z": true, "E": true}
 
@@ -201,17 +201,17 @@ func TestIcAsGraph(t *testing.T) {
 	}
 }
 
-func getComponentsWithIDs(IDs []string) []*wtype.LHComponent {
-	r := make([]*wtype.LHComponent, 0, len(IDs))
+func getComponentsWithIDs(IDs []string) []*wtype.Liquid {
+	r := make([]*wtype.Liquid, 0, len(IDs))
 
 	for _, id := range IDs {
-		r = append(r, &wtype.LHComponent{ID: id})
+		r = append(r, &wtype.Liquid{ID: id})
 	}
 
 	return r
 }
 
-func getComponentsWithIDsParents(IDs, parents []string) []*wtype.LHComponent {
+func getComponentsWithIDsParents(IDs, parents []string) []*wtype.Liquid {
 	if len(IDs) != len(parents) {
 		panic(fmt.Sprintf("IDS and parents not same lengths: %d vs %d", len(IDs), len(parents)))
 	}
@@ -239,7 +239,7 @@ func getIChain(inss [][]*wtype.LHInstruction) *IChain {
 }
 
 func TestGetNodeColourMapSimple(t *testing.T) {
-	inputs := map[string][]*wtype.LHComponent{"whyisthisamapanyway": getComponentsWithIDs([]string{"A1", "B1"})}
+	inputs := map[string][]*wtype.Liquid{"whyisthisamapanyway": getComponentsWithIDs([]string{"A1", "B1"})}
 
 	mix1 := wtype.NewLHMixInstruction()
 	mix1.Components = getComponentsWithIDs([]string{"S1", "T1"})
@@ -288,7 +288,7 @@ func TestGetNodeColourMapSimple(t *testing.T) {
 func TestgetNodeColourMap2(t *testing.T)
 */
 
-func getAnInstruction(in, out []*wtype.LHComponent, whatType int) *wtype.LHInstruction {
+func getAnInstruction(in, out []*wtype.Liquid, whatType int) *wtype.LHInstruction {
 	var ins *wtype.LHInstruction
 	if whatType == wtype.LHIMIX {
 		ins = wtype.NewLHMixInstruction()
@@ -558,8 +558,8 @@ func cullDeadNodes(in []*IChain) (out []*IChain) {
 	return out
 }
 
-// getNodeColourMap(ic *IChain, inputs map[string][]*wtype.LHComponent) (map[graph.Node]interface{}, map[graph.Node]bool)
-// getAnInstruction(in, out []*wtype.LHComponent, whatType int) *wtype.LHInstruction {
+// getNodeColourMap(ic *IChain, inputs map[string][]*wtype.Liquid) (map[graph.Node]interface{}, map[graph.Node]bool)
+// getAnInstruction(in, out []*wtype.Liquid, whatType int) *wtype.LHInstruction {
 // getComponentsWithIDsParents(IDs, parents []string)
 // getIChain([][]*wtype.LHInstruction)
 
@@ -568,7 +568,7 @@ func getMixChainWithIDsParents(IDs, parents []string) *IChain {
 	cmps := getComponentsWithIDsParents(IDs, parents)
 	inss := make([][]*wtype.LHInstruction, len(IDs)-1)
 	for i := 0; i < len(IDs)-1; i++ {
-		inss[i] = []*wtype.LHInstruction{getAnInstruction([]*wtype.LHComponent{cmps[i]}, []*wtype.LHComponent{cmps[i+1]}, wtype.LHIMIX)}
+		inss[i] = []*wtype.LHInstruction{getAnInstruction([]*wtype.Liquid{cmps[i]}, []*wtype.Liquid{cmps[i+1]}, wtype.LHIMIX)}
 	}
 
 	return getIChain(inss)
@@ -579,7 +579,7 @@ func getMixChainWithIDsParentsProducts(IDs, parents, products []string) *IChain 
 	prds := getComponentsWithIDs(products)
 	inss := make([][]*wtype.LHInstruction, len(IDs))
 	for i := 0; i < len(IDs); i++ {
-		inss[i] = []*wtype.LHInstruction{getAnInstruction([]*wtype.LHComponent{cmps[i]}, []*wtype.LHComponent{prds[i]}, wtype.LHIMIX)}
+		inss[i] = []*wtype.LHInstruction{getAnInstruction([]*wtype.Liquid{cmps[i]}, []*wtype.Liquid{prds[i]}, wtype.LHIMIX)}
 	}
 
 	return getIChain(inss)
@@ -588,7 +588,7 @@ func getMixChainWithIDsParentsProducts(IDs, parents, products []string) *IChain 
 func TestColourMapNoSplits(t *testing.T) {
 	mixChain := getMixChainWithIDsParents([]string{"A", "B", "C", "D", "E"}, []string{"", "", "", "", ""})
 
-	inputs := map[string][]*wtype.LHComponent{"A": getComponentsWithIDsParents([]string{"A"}, []string{""})}
+	inputs := map[string][]*wtype.Liquid{"A": getComponentsWithIDsParents([]string{"A"}, []string{""})}
 
 	colourMap, hasColour := getNodeColourMap(mixChain, inputs)
 
@@ -615,7 +615,7 @@ func TestColourMapNoSplits(t *testing.T) {
 func TestColourMapNoSplits2(t *testing.T) {
 	mixChain := getMixChainWithIDsParentsProducts([]string{"A", "B", "C", "D", "E"}, []string{"U", "V", "W", "X", "Y"}, []string{"V", "W", "X", "Y", "Z"})
 
-	inputs := map[string][]*wtype.LHComponent{"U": getComponentsWithIDsParents([]string{"U"}, []string{""})}
+	inputs := map[string][]*wtype.Liquid{"U": getComponentsWithIDsParents([]string{"U"}, []string{""})}
 
 	colourMap, hasColour := getNodeColourMap(mixChain, inputs)
 

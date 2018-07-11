@@ -132,7 +132,7 @@ func updateIDAfterSplit(ins *wtype.LHInstruction, in, out map[string]wunit.Volum
 
 }
 
-func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.LHPlate, carryVol wunit.Volume) (map[string]wunit.Volume, error) {
+func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.Plate, carryVol wunit.Volume) (map[string]wunit.Volume, error) {
 
 	newWanted := make(map[string]wunit.Volume)
 	for _, ins := range ch.Values {

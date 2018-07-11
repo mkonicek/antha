@@ -39,7 +39,7 @@ type Culture struct {
 	wtype.Organism
 }
 
-func Separate(culture Culture) (supernatant *wtype.LHComponent, pellet Pellet) {
+func Separate(culture Culture) (supernatant *wtype.Liquid, pellet Pellet) {
 
 	return
 }
@@ -47,7 +47,7 @@ func Separate(culture Culture) (supernatant *wtype.LHComponent, pellet Pellet) {
 type Chromstep struct {
 	Pipetstep
 	Column
-	Buffer *wtype.LHComponent
+	Buffer *wtype.Liquid
 	//Mobilephase ... this is really the buffer; should separate out chromstep from pipette step
 }
 
@@ -77,34 +77,34 @@ type Phytips struct { // interface?
 }
 
 // may already be functions for aspirate and dispense in anthalib
-func Aspirate(column Column, mixture *wtype.LHComponent, volume wunit.Volume, aspiraterate wunit.FlowRate) (aspiratedcolumn Column, aspiratedsolution *wtype.LHComponent) {
+func Aspirate(column Column, mixture *wtype.Liquid, volume wunit.Volume, aspiraterate wunit.FlowRate) (aspiratedcolumn Column, aspiratedsolution *wtype.Liquid) {
 
 	return
 }
 
-func Dispense(column Column, mixture *wtype.LHComponent, volume wunit.Volume, aspiraterate wunit.FlowRate) (dispensedcolumn Column, dispensedsolution *wtype.LHComponent) {
+func Dispense(column Column, mixture *wtype.Liquid, volume wunit.Volume, aspiraterate wunit.FlowRate) (dispensedcolumn Column, dispensedsolution *wtype.Liquid) {
 
 	return
 }
 
 /*
-func PhysicaltoComponent(pellet *wtype.Physical) (component *wtype.LHComponent) {
+func PhysicaltoComponent(pellet *wtype.Physical) (component *wtype.Liquid) {
 	// placeholder
 	return
 }
 */
 
-func PelletToComponent(p Pellet) *wtype.LHComponent {
+func PelletToComponent(p Pellet) *wtype.Liquid {
 	return wtype.NewLHComponent()
 }
 
 /*
-func Resuspend(pellet Pellet, step Chromstep, column Column) (output_c *wtype.LHComponent, processedcolumn Column) {
+func Resuspend(pellet Pellet, step Chromstep, column Column) (output_c *wtype.Liquid, processedcolumn Column) {
 
-	var output *wtype.LHComponent
+	var output *wtype.Liquid
 	//input := PhysicaltoComponent(pellet)
 	input := PelletToComponent(pellet)
-	samples := make([]*wtype.LHComponent, 0)
+	samples := make([]*wtype.Liquid, 0)
 	samples = append(samples, step.Buffer, input)
 	mixture := mixer.Mix(samples...)
 	for i := 0; i < step.Pipetstep.Cycles; i++ {
@@ -120,10 +120,10 @@ func Resuspend(pellet Pellet, step Chromstep, column Column) (output_c *wtype.LH
 	return output_c, processedcolumn
 }
 */
-func Chromatography(input *wtype.LHComponent, step Chromstep, column Column) (output_c *wtype.LHComponent, processedcolumn Column) {
+func Chromatography(input *wtype.Liquid, step Chromstep, column Column) (output_c *wtype.Liquid, processedcolumn Column) {
 
-	var output *wtype.LHComponent
-	samples := make([]*wtype.LHComponent, 0)
+	var output *wtype.Liquid
+	samples := make([]*wtype.Liquid, 0)
 	samples = append(samples, input, step.Buffer)
 	mixture := mixer.Mix(samples...)
 	for i := 0; i < step.Pipetstep.Cycles; i++ {

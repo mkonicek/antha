@@ -22,7 +22,7 @@ func main() {
 
 	plateNames := make([]string, 0, len(thePlates))
 
-	thePlateMap := make(map[string]*wtype.LHPlate)
+	thePlateMap := make(map[string]*wtype.Plate)
 
 	for _, p := range thePlates {
 		plateNames = append(plateNames, p.Type)

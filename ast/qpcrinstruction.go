@@ -8,8 +8,8 @@ import (
 // QPCRInstruction is a high-level instruction to perform a QPCR analysis.
 type QPCRInstruction struct {
 	ID           string
-	ComponentIn  []*wtype.LHComponent
-	ComponentOut []*wtype.LHComponent
+	ComponentIn  []*wtype.Liquid
+	ComponentOut []*wtype.Liquid
 	Definition   string
 	Barcode      string
 	Command      string

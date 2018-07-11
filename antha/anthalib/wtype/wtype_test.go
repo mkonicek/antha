@@ -79,7 +79,7 @@ func TestWellCoords(*testing.T) {
 */
 
 func TestLHComponentSampleStuff(t *testing.T) {
-	var c LHComponent
+	var c Liquid
 
 	faux := c.IsSample()
 

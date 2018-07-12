@@ -30,7 +30,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"sort"
 	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -784,8 +784,8 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 		return File{}, fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
 
-	records := make([][]string, 0)
-	headerrecord := []string{plate.Type, plateName, "", "", "", "", ""}
+	records := make([][]string, 0) //LiquidType	Vol	Vol Unit	Conc	Conc Unit
+	headerrecord := []string{plate.Type, plateName, "LiquidType", "Vol", "Vol Unit", "Conc", "Conc Unit", "SubComponents"}
 	records = append(records, headerrecord)
 
 	for i, well := range wells {
@@ -798,6 +798,20 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 		}
 
 		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
+
+
+		var subComponents []string
+		
+		for componentName := range liquids[i].SubComponents.Components{
+			subComponents = append(subComponents, componentName)
+		}
+		
+		sort.Strings(subComponents)
+
+		for _, componentName := range subComponents {
+			record = append(record,componentName + ":", liquids[i].SubComponents.Components[componentName].ToString())
+		}
+		
 		records = append(records, record)
 	}
 

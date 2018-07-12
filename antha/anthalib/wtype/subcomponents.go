@@ -235,7 +235,7 @@ type ComponentList struct {
 // add a single entry to a component list
 func (c ComponentList) Add(component *Liquid, conc wunit.Concentration) (newlist ComponentList) {
 
-	componentName := NormaliseName(component.Name())
+	componentName := removeConcUnitFromName(NormaliseName(component.Name()))
 
 	complist := make(map[string]wunit.Concentration)
 	for k, v := range c.Components {

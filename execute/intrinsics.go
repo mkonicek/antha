@@ -124,6 +124,12 @@ func MixerPrompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.L
 	return inst.result[0]
 }
 
+// ExecuteMixes will ensure that all mix activities
+// in a workflow prior to this point must be completed before Mix instructions after this point.
+func ExecuteMixes(ctx context.Context, liquid *wtype.LHComponent) *wtype.LHComponent {
+	return MixerPrompt(ctx, liquid, wtype.MAGICBARRIERPROMPTSTRING)
+}
+
 // Prompt prompts user with a message
 func Prompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid {
 	inst := &commandInst{

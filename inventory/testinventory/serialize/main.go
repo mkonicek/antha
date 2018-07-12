@@ -12,7 +12,7 @@ import (
 const (
 	xStartOffset = 14.28
 	yStartOffset = 11.24
-	zStartOffset = -0.7
+	zStartOffset = 0.7
 )
 
 func main() {

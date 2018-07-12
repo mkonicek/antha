@@ -23,6 +23,7 @@
 package wunit
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -129,7 +130,7 @@ func SubtractVolumes(OriginalVol Volume, subtractvols ...Volume) (newvolume Volu
 	newvolume.Subtract(volToSubtract)
 
 	if math.IsInf(newvolume.RawValue(), 0) {
-		panic(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols))
+		panic(errors.New(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols)))
 	}
 
 	return
@@ -284,7 +285,7 @@ func NewTemperature(v float64, unit string) Temperature {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Sprintf("unapproved temperature unit %q, approved units are %s", unit, approved))
+		panic(fmt.Errorf("unapproved temperature unit %q, approved units are %s", unit, approved))
 	}
 
 	return Temperature{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -306,7 +307,7 @@ func NewTime(v float64, unit string) (t Time) {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Sprintf("unapproved time unit %q, approved units are %s", unit, approved))
+		panic(fmt.Errorf("unapproved time unit %q, approved units are %s", unit, approved))
 	}
 
 	return Time{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -385,7 +386,7 @@ func NewMoles(v float64, unit string) Moles {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Sprintf("unapproved Amount unit %q, approved units are %s", unit, approved))
+		panic(fmt.Errorf("unapproved Amount unit %q, approved units are %s", unit, approved))
 	}
 
 	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -403,7 +404,7 @@ func NewAmount(v float64, unit string) Moles {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Sprintf("unapproved Amount unit %q, approved units are %s", unit, approved))
+		panic(fmt.Errorf("unapproved Amount unit %q, approved units are %s", unit, approved))
 	}
 
 	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -696,7 +697,7 @@ func NewConcentration(v float64, unit string) Concentration {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Sprintf("unapproved concentration unit %q, approved units are %s", unit, approved))
+		panic(fmt.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved))
 	}
 
 	return Concentration{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}

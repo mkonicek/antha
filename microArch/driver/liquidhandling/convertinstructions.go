@@ -78,8 +78,6 @@ func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHPropert
 }
 
 func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
-	hasMulti := false
-
 	for _, tfr := range tfrs {
 		instrx, err := tfr.Generate(ctx, policy, rbt)
 
@@ -89,17 +87,12 @@ func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties,
 
 		for _, ins := range instrx {
 			if ins.InstructionType() == MCB {
-				hasMulti = true
-				break
+				return true, nil
 			}
-		}
-
-		if hasMulti {
-			break
 		}
 	}
 
-	return hasMulti, nil
+	return false, nil
 }
 
 func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {

@@ -107,7 +107,7 @@ func (ri *RobotInstructionSet) ToString(level int) string {
 	name := ""
 
 	if ri.parent != nil {
-		name = Robotinstructionnames[ri.parent.InstructionType()]
+		name = ri.parent.Type().MachineName
 	}
 	s := ""
 	for i := 0; i < level-1; i++ {

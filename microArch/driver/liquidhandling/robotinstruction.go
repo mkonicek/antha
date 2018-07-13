@@ -36,9 +36,10 @@ import (
 )
 
 type RobotInstruction interface {
-	InstructionType() int
-	GetParameter(name string) interface{}
+	Type() *InstructionType
+	GetParameter(name InstructionParameter) interface{}
 	Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	MaybeMerge(next RobotInstruction) RobotInstruction
 	Check(lhpr wtype.LHPolicyRule) bool
 }
 
@@ -47,115 +48,171 @@ type TerminalRobotInstruction interface {
 	OutputTo(driver LiquidhandlingDriver) error
 }
 
-const (
-	TFR int = iota // Transfer
-	TFB            // Transfer block
-	SCB            // Single channel transfer block
-	MCB            // Multi channel transfer block
-	SCT            // Single channel transfer
-	MCT            // multi channel transfer
-	CCC            // ChangeChannelCharacteristics
-	LDT            // Load Tips + Move
-	UDT            // Unload Tips + Move
-	RST            // Reset
-	CHA            // ChangeAdaptor
-	ASP            // Aspirate
-	DSP            // Dispense
-	BLO            // Blowout
-	PTZ            // Reset pistons
-	MOV            // Move
-	MRW            // Move Raw
-	LOD            // Load Tips
-	ULD            // Unload Tips
-	SUK            // Suck
-	BLW            // Blow
-	SPS            // Set Pipette Speed
-	SDS            // Set Drive Speed
-	INI            // Initialize
-	FIN            // Finalize
-	WAI            // Wait
-	LON            // Lights On
-	LOF            // Lights Off
-	OPN            // Open
-	CLS            // Close
-	LAD            // Load Adaptor
-	UAD            // Unload Adaptor
-	MMX            // Move and Mix
-	MIX            // Mix
-	MSG            // Message
-	MAS            // MOV ASP	-- used by tests
-	MDS            // MOV DSP	    ""       ""
-	MVM            // MOV MIX           ""       ""
-	MBL            // MOV BLO	    ""       ""
-	RAP            // RemoveAllPlates
-	APT            // AddPlateTo
-	RPA            // Remove Plate At
-	SPB            // SplitBlock
+var (
+	TFR = NewInstructionType("TFR", "Transfer")
+	TFB = NewInstructionType("TFB", "TransferBlock")
+	SCB = NewInstructionType("SCB", "SingleChannelTransferBlock")
+	MCB = NewInstructionType("MCB", "MultiChannelTransferBlock")
+	SCT = NewInstructionType("SCT", "SingleChannelTransfer")
+	MCT = NewInstructionType("MCT", "MultiChannelTransfer")
+	CCC = NewInstructionType("CCC", "ChangeChannelCharacteristics")
+	LDT = NewInstructionType("LDT", "LoadTipsMove")
+	UDT = NewInstructionType("UDT", "UnloadTipsMove")
+	RST = NewInstructionType("RST", "Reset")
+	CHA = NewInstructionType("CHA", "ChangeAdaptor")
+	ASP = NewInstructionType("ASP", "Aspirate")
+	DSP = NewInstructionType("DSP", "Dispense")
+	BLO = NewInstructionType("BLO", "Blowout")
+	PTZ = NewInstructionType("PTZ", "ResetPistons")
+	MOV = NewInstructionType("MOV", "Move")
+	MRW = NewInstructionType("MRW", "MoveRaw")
+	LOD = NewInstructionType("LOD", "LoadTips")
+	ULD = NewInstructionType("ULD", "UnloadTips")
+	SUK = NewInstructionType("SUK", "Suck")
+	BLW = NewInstructionType("BLW", "Blow")
+	SPS = NewInstructionType("SPS", "SetPipetteSpeed")
+	SDS = NewInstructionType("SDS", "SetDriveSpeed")
+	INI = NewInstructionType("INI", "Initialize")
+	FIN = NewInstructionType("FIN", "Finalize")
+	WAI = NewInstructionType("WAI", "Wait")
+	LON = NewInstructionType("LON", "LightsOn")
+	LOF = NewInstructionType("LOF", "LightsOff")
+	OPN = NewInstructionType("OPN", "Open")
+	CLS = NewInstructionType("CLS", "Close")
+	LAD = NewInstructionType("LAD", "LoadAdaptor")
+	UAD = NewInstructionType("UAD", "UnloadAdaptor")
+	MMX = NewInstructionType("MMX", "MoveMix")
+	MIX = NewInstructionType("MIX", "Mix")
+	MSG = NewInstructionType("MSG", "Message")
+	MAS = NewInstructionType("MAS", "MoveAspirate")
+	MDS = NewInstructionType("MDS", "MoveDispense")
+	MVM = NewInstructionType("MVM", "MoveMix")
+	MBL = NewInstructionType("MBL", "MoveBlowout")
+	RAP = NewInstructionType("RAP", "RemoveAllPlates")
+	APT = NewInstructionType("APT", "AddPlateTo")
+	RPA = NewInstructionType("RPA", "RemovePlateAt")
+	SPB = NewInstructionType("SPB", "SplitBlock")
 )
 
-func InstructionTypeName(ins RobotInstruction) string {
-	return Robotinstructionnames[ins.InstructionType()]
+type InstructionType struct {
+	MachineName string `json:"Type"`
+	HumanName   string `json:"-"`
 }
 
-var Robotinstructionnames = []string{"TFR", "TFB", "SCB", "MCB", "SCT", "MCT", "CCC", "LDT", "UDT", "RST", "CHA", "ASP", "DSP", "BLO", "PTZ", "MOV", "MRW", "LOD", "ULD", "SUK", "BLW", "SPS", "SDS", "INI", "FIN", "WAI", "LON", "LOF", "OPN", "CLS", "LAD", "UAD", "MMX", "MIX", "MSG", "MOVASP", "MOVDSP", "MOVMIX", "MOVBLO", "RAP", "APT", "RPA", "SPB"}
+// This exists so that when InstructionType is embedded within other
+// instructions, we can satisfy the RobotInstruction interface with a
+// minimum amount of boilerplate.
+func (it *InstructionType) Type() *InstructionType {
+	return it
+}
 
-var RobotParameters = []string{"HEAD", "CHANNEL", "LIQUIDCLASS", "POSTO", "WELLFROM", "WELLTO", "REFERENCE", "VOLUME", "VOLUNT", "FROMPLATETYPE", "WELLFROMVOLUME", "POSFROM", "WELLTOVOLUME", "TOPLATETYPE", "MULTI", "WHAT", "LLF", "PLT", "OFFSETX", "OFFSETY", "OFFSETZ", "TIME", "SPEED", "MESSAGE", "COMPONENT"}
-
-func HumanInstructionName(ins RobotInstruction) string {
-	if ins == nil {
-		return "no instruction"
+func NewInstructionType(machine, human string) *InstructionType {
+	return &InstructionType{
+		MachineName: machine,
+		HumanName:   human,
 	}
-	if ret, ok := humanRobotInstructionNames[ins.InstructionType()]; ok {
-		return ret
-	}
-	return "unknown"
 }
 
-var humanRobotInstructionNames = map[int]string{
-	TFR: "Transfer",
-	TFB: "TransferBlock",
-	SCB: "SingleChannelTransferBlock",
-	MCB: "MultiChannelTransferBlock",
-	SCT: "SingleChannelTransfer",
-	MCT: "MultiChannelTransfer",
-	CCC: "ChangeChannelCharacteristics",
-	LDT: "LoadTipsMove",
-	UDT: "UnloadTipsMove",
-	RST: "Reset",
-	CHA: "ChangeAdaptor",
-	ASP: "Aspirate",
-	DSP: "Dispense",
-	BLO: "Blowout",
-	PTZ: "ResetPistons",
-	MOV: "Move",
-	MRW: "MoveRaw",
-	LOD: "LoadTips",
-	ULD: "UnloadTips",
-	SUK: "Suck",
-	BLW: "Blow",
-	SPS: "SetPipetteSpeed",
-	SDS: "SetDriveSpeed",
-	INI: "Initialize",
-	FIN: "Finalize",
-	WAI: "Wait",
-	LON: "LightsOn",
-	LOF: "LightsOff",
-	OPN: "Open",
-	CLS: "Close",
-	LAD: "LoadAdaptor",
-	UAD: "UnloadAdaptor",
-	MMX: "MoveMix",
-	MIX: "Mix",
-	MSG: "Message",
-	MAS: "MoveAspirate",
-	MDS: "MoveDispense",
-	MVM: "MoveMix",
-	MBL: "MoveBlowout",
-	RAP: "RemoveAllPlates",
-	APT: "AddPlateTo",
-	RPA: "RemovePlateAt",
-	SPB: "SplitBlock",
+type InstructionParameter string
+
+func (name InstructionParameter) String() string {
+	return string(name)
 }
+
+const (
+	BLOWOUT         InstructionParameter = "BLOWOUT"
+	CHANNEL                              = "CHANNEL"
+	COMPONENT                            = "COMPONENT"
+	CYCLES                               = "CYCLES"
+	DRIVE                                = "DRIVE"
+	FPLATEWX                             = "FPLATEWX"
+	FPLATEWY                             = "FPLATEWY"
+	FROMPLATETYPE                        = "FROMPLATETYPE"
+	HEAD                                 = "HEAD"
+	INSTRUCTIONTYPE                      = "INSTRUCTIONTYPE"
+	LIQUIDCLASS                          = "LIQUIDCLASS" // LIQUIDCLASS refers to the Component Type, This is currently used to look up the corresponding LHPolicy from an LHPolicyRuleSet
+	LLF                                  = "LLF"
+	MESSAGE                              = "MESSAGE"
+	MULTI                                = "MULTI"
+	NAME                                 = "NAME"
+	NEWSTATE                             = "NEWSTATE"
+	OFFSETX                              = "OFFSETX"
+	OFFSETY                              = "OFFSETY"
+	OFFSETZ                              = "OFFSETZ"
+	OLDSTATE                             = "OLDSTATE"
+	OVERSTROKE                           = "OVERSTROKE"
+	PARAMS                               = "PARAMS"
+	PLATE                                = "PLATE"
+	PLATETYPE                            = "PLATETYPE"
+	PLATFORM                             = "PLATFORM"
+	PLT                                  = "PLT"
+	POS                                  = "POS"
+	POSFROM                              = "POSFROM"
+	POSITION                             = "POSITION"
+	POSTO                                = "POSTO"
+	REFERENCE                            = "REFERENCE"
+	SPEED                                = "SPEED"
+	TIME                                 = "TIME"
+	TIPTYPE                              = "TIPTYPE"
+	TOPLATETYPE                          = "TOPLATETYPE"
+	TPLATEWX                             = "TPLATEWX"
+	TPLATEWY                             = "TPLATEWY"
+	VOLUME                               = "VOLUME"
+	VOLUNT                               = "VOLUNT"
+	WELL                                 = "WELL"
+	WELLFROM                             = "WELLFROM"
+	WELLFROMVOLUME                       = "WELLFROMVOLUME"
+	WELLTO                               = "WELLTO"
+	WELLTOVOLUME                         = "WELLTOVOLUME" // WELLTOVOLUME refers to the volume of liquid already present in the well location for which a sample is due to be transferred to.
+	WELLVOLUME                           = "WELLVOLUME"
+	WHAT                                 = "WHAT"
+	WHICH                                = "WHICH" // WHICH returns the Component IDs, i.e. representing the specific instance of an LHComponent not currently implemented.
+)
+
+// we want set semantics, so it's much nicer in Go to use a map for
+// this with the empty value, than it is to use a slice.
+type InstructionParameters map[InstructionParameter]struct{}
+
+func (a InstructionParameters) clone() InstructionParameters {
+	b := make(InstructionParameters, len(a))
+	for param, v := range a {
+		b[param] = v
+	}
+	return b
+}
+
+func (a InstructionParameters) merge(b InstructionParameters) InstructionParameters {
+	result := a.clone()
+	for param, v := range b {
+		result[param] = v
+	}
+	return result
+}
+
+// convenience construct
+func NewInstructionParameters(params ...InstructionParameter) InstructionParameters {
+	empty := struct{}{}
+	result := make(InstructionParameters, len(params))
+	for _, param := range params {
+		result[param] = empty
+	}
+	return result
+}
+
+var RobotParameters = NewInstructionParameters(
+	HEAD, CHANNEL, LIQUIDCLASS, POSTO, WELLFROM, WELLTO, REFERENCE, VOLUME, VOLUNT,
+	FROMPLATETYPE, WELLFROMVOLUME, POSFROM, WELLTOVOLUME, TOPLATETYPE, MULTI, WHAT,
+	LLF, PLT, OFFSETX, OFFSETY, OFFSETZ, TIME, SPEED, MESSAGE, COMPONENT)
+
+// func HumanInstructionName(ins RobotInstruction) string {
+// 	if ins == nil {
+// 		return "no instruction"
+// 	}
+// 	if ret, ok := humanRobotInstructionNames[ins.InstructionType()]; ok {
+// 		return ret
+// 	}
+// 	return "unknown"
+// }
 
 // option to feed into InsToString function
 type printOption string
@@ -184,7 +241,7 @@ func printInstructionArray(inss []RobotInstruction) {
 
 func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 
-	s := InstructionTypeName(ins) + " "
+	s := ins.Type().MachineName + " "
 
 	if apt, ok := ins.(*AddPlateToInstruction); ok {
 		s += fmt.Sprintf("NAME: %s POSITION: %s PLATE: %s", apt.Name, apt.Position, wtype.NameOf(apt.Plate))
@@ -205,8 +262,8 @@ func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 	if ansiPrint(ansiPrintOptions...) {
 		s = changeColour(s)
 	}
-	for _, str := range RobotParameters {
-		p := ins.GetParameter(str)
+	for name := range RobotParameters {
+		p := ins.GetParameter(name)
 
 		if p == nil {
 			continue
@@ -248,55 +305,24 @@ func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 			}
 			ss = concatboolarray(p.([]bool))
 		}
-		if ansiPrint(ansiPrintOptions...) {
-			if str == "WHAT" {
+		if str := name.String(); ansiPrint(ansiPrintOptions...) {
+			if name == WHAT {
 				s += str + ": " + text.Yellow(ss) + " "
-			} else if str == "MULTI" {
+			} else if name == MULTI {
 				s += text.Blue(str+": ") + ss + " "
-			} else if str == "OFFSETZ" {
+			} else if name == OFFSETZ {
 				s += str + ": " + changeColour(ss) + " "
-			} else if str == "TOPLATETYPE" {
+			} else if name == TOPLATETYPE {
 				s += str + ": " + text.Cyan(ss) + " "
 			} else {
 				s += str + ": " + ss + " "
 			}
 		} else {
-			if str == "WHAT" {
-				s += str + ": " + ss + " "
-			} else if str == "MULTI" {
-				s += str + ": " + ss + " "
-			} else if str == "OFFSETZ" {
-				s += str + ": " + ss + " "
-			} else if str == "TOPLATETYPE" {
-				s += str + ": " + ss + " "
-			} else {
-				s += str + ": " + ss + " "
-			}
+			s += str + ": " + ss + " "
 		}
 	}
 
 	return s
-}
-
-func isAspirate(ins RobotInstruction) bool {
-
-	s := InstructionTypeName(ins)
-
-	return strings.TrimSpace(s) == "ASP"
-}
-
-func isDispense(ins RobotInstruction) bool {
-
-	s := InstructionTypeName(ins)
-
-	return strings.TrimSpace(s) == "DSP"
-}
-
-func isMove(ins RobotInstruction) bool {
-
-	s := InstructionTypeName(ins)
-
-	return strings.TrimSpace(s) == "MOV"
 }
 
 // StepSummary summarises the instruction for
@@ -348,17 +374,17 @@ func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) 
 		return StepSummary{}, err
 	}
 
-	if !isMove(moveInstruction) {
-		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction: found %s", InstructionTypeName(moveInstruction))
+	if moveInstruction.Type() != MOV {
+		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction: found %s", moveInstruction.Type().MachineName)
 	}
 
-	if isAspirate(dspOrAspInstruction) {
+	if dspOrAspInstruction.Type() == ASP {
 		return mergeSummaries(step1summary, step2summary, string(Aspirate)), nil
-	} else if isDispense(dspOrAspInstruction) {
+	} else if dspOrAspInstruction.Type() == DSP {
 		return mergeSummaries(step1summary, step2summary, string(Dispense)), nil
+	} else {
+		return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense: found %s", dspOrAspInstruction.Type().MachineName)
 	}
-
-	return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense: found %s", InstructionTypeName(dspOrAspInstruction))
 
 }
 
@@ -366,8 +392,8 @@ func summarise(ins RobotInstruction) (StepSummary, error) {
 
 	var summaryOfMoveOperation StepSummary
 
-	for _, str := range RobotParameters {
-		p := ins.GetParameter(str)
+	for name := range RobotParameters {
+		p := ins.GetParameter(name)
 
 		if p == nil {
 			continue
@@ -409,17 +435,17 @@ func summarise(ins RobotInstruction) (StepSummary, error) {
 			}
 			ss = concatboolarray(p.([]bool))
 		}
-		if str == "WHAT" {
+		if name == WHAT {
 			summaryOfMoveOperation.LiquidType = ss
-		} else if str == "MULTI" {
+		} else if name == MULTI {
 			summaryOfMoveOperation.Multi = ss
-		} else if str == "OFFSETZ" {
+		} else if name == OFFSETZ {
 			summaryOfMoveOperation.OffsetZ = ss
-		} else if str == "TOPLATETYPE" {
+		} else if name == TOPLATETYPE {
 			summaryOfMoveOperation.PlateType = ss
-		} else if str == WELLTOVOLUME {
+		} else if name == WELLTOVOLUME {
 			summaryOfMoveOperation.WellToVolume = ss
-		} else if str == "VOLUME" {
+		} else if name == VOLUME {
 			summaryOfMoveOperation.Volume = ss
 		}
 	}
@@ -501,20 +527,41 @@ func concatboolarray(a []bool) string {
 
 }
 
-// empty struct to hang methods on
-type GenericRobotInstruction struct {
+type BaseRobotInstruction struct {
 	Ins RobotInstruction `json:"-"`
 }
 
-func (gri GenericRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
+func NewBaseRobotInstruction(ins RobotInstruction) BaseRobotInstruction {
+	return BaseRobotInstruction{
+		Ins: ins,
+	}
+}
+
+func (bri BaseRobotInstruction) Check(rule wtype.LHPolicyRule) bool {
 	for _, vcondition := range rule.Conditions {
-		v := gri.Ins.GetParameter(vcondition.TestVariable)
+		// todo - this cast to InstructionParameter is gross, but we're
+		// going to have to tidy types with LHPolicy work later on.
+		v := bri.Ins.GetParameter(InstructionParameter(vcondition.TestVariable))
 		vrai := vcondition.Condition.Match(v)
 		if !vrai {
 			return false
 		}
 	}
 	return true
+}
+
+// fall-through implementation to simplify instructions that have no parameters
+func (bri BaseRobotInstruction) GetParameter(p InstructionParameter) interface{} {
+	switch p {
+	case INSTRUCTIONTYPE:
+		return bri.Ins.Type()
+	default:
+		return nil
+	}
+}
+
+func (bri BaseRobotInstruction) MaybeMerge(next RobotInstruction) RobotInstruction {
+	return bri.Ins
 }
 
 /*
@@ -607,7 +654,7 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPo
 		return ppl, ErrNoMatchingRules
 	}
 
-	policy := ins.GetParameter("LIQUIDCLASS")
+	policy := ins.GetParameter(LIQUIDCLASS)
 	var invalidPolicyNames []string
 	if policies, ok := policy.([]string); ok {
 		for _, policy := range policies {
@@ -639,10 +686,6 @@ func GetPolicyFor(lhpr *wtype.LHPolicyRuleSet, ins RobotInstruction) (wtype.LHPo
 	return ppl, nil
 }
 
-func HasParameter(s string, ins RobotInstruction) bool {
-	return ins.GetParameter(s) != nil
-}
-
 type SetOfRobotInstructions struct {
 	RobotInstructions []RobotInstruction
 }
@@ -650,94 +693,72 @@ type SetOfRobotInstructions struct {
 func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 	// first stage -- find the instructions
 
-	var objectMap map[string]*json.RawMessage
+	soj := struct {
+		RobotInstructions []json.RawMessage
+	}{}
 
-	err := json.Unmarshal(b, &objectMap)
-
-	if err != nil {
+	if err := json.Unmarshal(b, &soj); err != nil {
 		return err
 	}
 
 	// second stage -- unpack into an array
-
-	var arrI []*json.RawMessage
-	mess := objectMap["RobotInstructions"]
-	err = json.Unmarshal(*mess, &arrI)
-
-	if err != nil {
-		return err
-	}
-
-	sori.RobotInstructions = make([]RobotInstruction, len(arrI))
-	mapForTypeCheck := make(map[string]interface{}, 10)
-	for i := 0; i < len(arrI); i++ {
-		mess := arrI[i]
-		err = json.Unmarshal(*mess, &mapForTypeCheck)
-
-		if err != nil {
+	sori.RobotInstructions = make([]RobotInstruction, len(soj.RobotInstructions))
+	for i, raw := range soj.RobotInstructions {
+		tId := struct {
+			Type string
+		}{}
+		if err := json.Unmarshal(raw, &tId); err != nil {
 			return err
 		}
 
-		_, ok := mapForTypeCheck["Type"]
-
-		if !ok {
-			return fmt.Errorf("Malformed instruction")
-		}
-
-		tf64, ok := mapForTypeCheck["Type"].(float64)
-
-		if !ok {
-			return fmt.Errorf("Malformed instruction - Type field must be numeric, got %T", mapForTypeCheck["Type"])
+		if tId.Type == "" {
+			return fmt.Errorf("Malformed instruction - no Type field field")
 		}
 
 		//motherofallswitches ugh
 
-		t := int(tf64)
-
 		var ins RobotInstruction
 
-		switch t {
-		case RAP:
+		switch tId.Type {
+		case "RAP":
 			ins = NewRemoveAllPlatesInstruction()
-		case APT:
+		case "APT":
 			ins = NewAddPlateToInstruction("", "", nil)
-		case INI:
+		case "INI":
 			ins = NewInitializeInstruction()
-		case ASP:
+		case "ASP":
 			ins = NewAspirateInstruction()
-		case DSP:
+		case "DSP":
 			ins = NewDispenseInstruction()
-		case MIX:
+		case "MIX":
 			ins = NewMixInstruction()
-		case SPS:
+		case "SPS":
 			ins = NewSetPipetteSpeedInstruction()
-		case SDS:
+		case "SDS":
 			ins = NewSetDriveSpeedInstruction()
-		case BLO:
+		case "BLO":
 			ins = NewBlowoutInstruction()
-		case LOD:
+		case "LOD":
 			ins = NewLoadTipsInstruction()
-		case MOV:
+		case "MOV":
 			ins = NewMoveInstruction()
-		case PTZ:
+		case "PTZ":
 			ins = NewPTZInstruction()
-		case ULD:
+		case "ULD":
 			ins = NewUnloadTipsInstruction()
-		case MSG:
+		case "MSG":
 			ins = NewMessageInstruction(nil)
-		case WAI:
+		case "WAI":
 			ins = NewWaitInstruction()
-		case FIN:
+		case "FIN":
 			ins = NewFinalizeInstruction()
 		default:
-			return fmt.Errorf("Unknown instruction type: %d (%s)", t, Robotinstructionnames[t])
+			return fmt.Errorf("Unknown instruction type: %s", tId.Type)
 		}
 
 		// finally unmarshal
 
-		err = json.Unmarshal(*mess, &ins)
-
-		if err != nil {
+		if err := json.Unmarshal(raw, ins); err != nil {
 			return err
 		}
 

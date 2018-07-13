@@ -36,14 +36,14 @@ import (
 )
 
 type TransferInstruction struct {
-	GenericRobotInstruction
-	Type      int
+	BaseRobotInstruction
+	*InstructionType
 	Platform  string
 	Transfers []MultiTransferParams
 }
 
 func (ti *TransferInstruction) ToString() string {
-	s := fmt.Sprintf("%s ", Robotinstructionnames[ti.Type])
+	s := ti.Type().MachineName
 	for i := 0; i < len(ti.Transfers); i++ {
 		s += ti.ParamSet(i).ToString()
 		s += "\n"
@@ -57,9 +57,10 @@ func (ti *TransferInstruction) ParamSet(n int) MultiTransferParams {
 }
 
 func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy) *TransferInstruction {
-	var tfri TransferInstruction
-	tfri.Type = TFR
-	tfri.Transfers = make([]MultiTransferParams, 0, 1)
+	tfri := &TransferInstruction{
+		InstructionType: TFR,
+		Transfers:       make([]MultiTransferParams, 0, 1),
+	}
 
 	/*
 		v := MultiTransferParams{
@@ -84,8 +85,8 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	v := MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype, volume, fvolume, tvolume, FPlateWX, FPlateWY, TPlateWX, TPlateWY, Components, policies)
 
 	tfri.Add(v)
-	tfri.GenericRobotInstruction.Ins = RobotInstruction(&tfri)
-	return &tfri
+	tfri.BaseRobotInstruction = NewBaseRobotInstruction(tfri)
+	return tfri
 }
 
 func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
@@ -96,7 +97,7 @@ func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 	}
 
 	// make sure we disable the RobotInstruction pointer
-	ins.GenericRobotInstruction = GenericRobotInstruction{}
+	ins.BaseRobotInstruction = BaseRobotInstruction{}
 
 	volumes := make([]float64, len(SetOfMultiTransferParams(ins.Transfers).Volume()))
 	for i, vol := range SetOfMultiTransferParams(ins.Transfers).Volume() {
@@ -116,23 +117,20 @@ func (tfri *TransferInstruction) Add(tp MultiTransferParams) {
 	tfri.Transfers = append(tfri.Transfers, tp)
 }
 
-func (ins *TransferInstruction) InstructionType() int {
-	return ins.Type
-}
-
 //what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string
 func (ins *TransferInstruction) Dup() *TransferInstruction {
-	var tfri TransferInstruction
-	tfri.Type = TFR
-	tfri.Transfers = make([]MultiTransferParams, 0, 1)
-	tfri.Platform = ins.Platform
+	tfri := &TransferInstruction{
+		InstructionType: TFR,
+		Transfers:       make([]MultiTransferParams, 0, 1),
+		Platform:        ins.Platform,
+	}
+	tfri.BaseRobotInstruction = NewBaseRobotInstruction(tfri)
 
-	for i := 0; i < len(ins.Transfers); i++ {
-		tfri.Add(ins.Transfers[i].Dup())
+	for _, tfr := range ins.Transfers {
+		tfri.Add(tfr.Dup())
 	}
 
-	tfri.GenericRobotInstruction.Ins = RobotInstruction(&tfri)
-	return &tfri
+	return tfri
 }
 
 func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) *TransferInstruction {
@@ -145,44 +143,43 @@ func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) *TransferIn
 	return ret
 }
 
-func (ins *TransferInstruction) GetParameter(name string) interface{} {
+func (ins *TransferInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return SetOfMultiTransferParams(ins.Transfers).What()
-	case "VOLUME":
+	case VOLUME:
 		return SetOfMultiTransferParams(ins.Transfers).Volume()
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return SetOfMultiTransferParams(ins.Transfers).FPlateType()
-	case "WELLFROMVOLUME":
+	case WELLFROMVOLUME:
 		return SetOfMultiTransferParams(ins.Transfers).FVolume()
-	case "POSFROM":
+	case POSFROM:
 		return SetOfMultiTransferParams(ins.Transfers).PltFrom()
-	case "POSTO":
+	case POSTO:
 		return SetOfMultiTransferParams(ins.Transfers).PltTo()
-	case "WELLFROM":
+	case WELLFROM:
 		return SetOfMultiTransferParams(ins.Transfers).WellFrom()
-	case "WELLTO":
+	case WELLTO:
 		return SetOfMultiTransferParams(ins.Transfers).WellTo()
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return SetOfMultiTransferParams(ins.Transfers).TVolume()
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return SetOfMultiTransferParams(ins.Transfers).TPlateType()
-	case "FPLATEWX":
+	case FPLATEWX:
 		return SetOfMultiTransferParams(ins.Transfers).FPlateWX()
-	case "FPLATEWY":
+	case FPLATEWY:
 		return SetOfMultiTransferParams(ins.Transfers).FPlateWY()
-	case "TPLATEWX":
+	case TPLATEWX:
 		return SetOfMultiTransferParams(ins.Transfers).TPlateWX()
-	case "TPLATEWY":
+	case TPLATEWY:
 		return SetOfMultiTransferParams(ins.Transfers).TPlateWY()
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
-	case "COMPONENT":
+	case COMPONENT:
 		return SetOfMultiTransferParams(ins.Transfers).Component()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {

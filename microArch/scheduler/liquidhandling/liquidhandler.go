@@ -193,7 +193,7 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 	}
 
 	setup_insts := this.get_setup_instructions(request)
-	if request.Instructions[0].InstructionType() == liquidhandling.INI {
+	if request.Instructions[0].Type() == liquidhandling.INI {
 		request.Instructions = append(request.Instructions[:1], append(setup_insts, request.Instructions[1:]...)...)
 	} else {
 		request.Instructions = append(setup_insts, request.Instructions...)
@@ -301,7 +301,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 		// The graph view depends on the string generated in this step
 		str := ""
-		if ins.InstructionType() == liquidhandling.TFR {
+		if ins.Type() == liquidhandling.TFR {
 			mocks := liquidhandling.MockAspDsp(ins)
 			for _, ii := range mocks {
 				str += liquidhandling.InsToString2(ii) + "\n"
@@ -333,16 +333,16 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	vols := make(map[string]map[string]wunit.Volume)
 
 	for _, ins := range rq.Instructions {
-		if ins.InstructionType() == liquidhandling.MOV {
+		if ins.Type() == liquidhandling.MOV {
 			lastPlate = make([]string, 8)
-			lastPos := ins.GetParameter("POSTO").([]string)
+			lastPos := ins.GetParameter(liquidhandling.POSTO).([]string)
 
 			for i, p := range lastPos {
 				lastPlate[i] = this.Properties.PosLookup[p]
 			}
 
-			lastWell = ins.GetParameter("WELLTO").([]string)
-		} else if ins.InstructionType() == liquidhandling.ASP {
+			lastWell = ins.GetParameter(liquidhandling.WELLTO).([]string)
+		} else if ins.Type() == liquidhandling.ASP {
 			for i := range lastPlate {
 				if i >= len(lastWell) {
 					break
@@ -376,11 +376,11 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				}
 				//v.Add(ins.Volume[i])
 
-				insvols := ins.GetParameter("VOLUME").([]wunit.Volume)
+				insvols := ins.GetParameter(liquidhandling.VOLUME).([]wunit.Volume)
 				v.Add(insvols[i])
 				v.Add(rq.CarryVolume)
 			}
-		} else if ins.InstructionType() == liquidhandling.TFR {
+		} else if ins.Type() == liquidhandling.TFR {
 			tfr := ins.(*liquidhandling.TransferInstruction)
 			for _, mtf := range tfr.Transfers {
 				for _, tf := range mtf.Transfers {

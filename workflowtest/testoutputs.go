@@ -134,7 +134,7 @@ func unpackOutputComparisonOptions(optIn string) ComparisonMode {
 	return ComparePlateTypesVolumes
 }
 
-func unpackInstructionComparisonOptions(optIn string) map[string][]string {
+func unpackInstructionComparisonOptions(optIn string) liquidhandling.InstructionParametersMap {
 	// v0 --> just compare everything
 	return liquidhandling.CompareAllParameters()
 }

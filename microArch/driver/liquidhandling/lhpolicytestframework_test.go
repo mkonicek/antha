@@ -41,7 +41,7 @@ func (self *NumericCondition) ApplyTo(rule *wtype.LHPolicyRule) {
 type Rule struct {
 	Name       string
 	Conditions []Condition
-	Policy     map[string]interface{}
+	Policy     map[InstructionParameter]interface{}
 }
 
 func (self *Rule) AddToPolicy(pol *wtype.LHPolicyRuleSet) {
@@ -52,7 +52,7 @@ func (self *Rule) AddToPolicy(pol *wtype.LHPolicyRuleSet) {
 
 	policy := make(wtype.LHPolicy, len(self.Policy))
 	for k, v := range self.Policy {
-		policy[k] = v
+		policy[string(k)] = v
 	}
 
 	pol.AddRule(rule, policy)
@@ -60,7 +60,7 @@ func (self *Rule) AddToPolicy(pol *wtype.LHPolicyRuleSet) {
 
 type InstructionAssertion struct {
 	Instruction int
-	Values      map[string]interface{}
+	Values      map[InstructionParameter]interface{}
 }
 
 func (self *InstructionAssertion) Assert(t *testing.T, ris []RobotInstruction) {
@@ -91,7 +91,7 @@ type PolicyTest struct {
 func stringInstructions(inss []RobotInstruction) string {
 	s := make([]string, len(inss))
 	for i, ins := range inss {
-		s[i] = InstructionTypeName(ins)
+		s[i] = ins.Type().MachineName
 	}
 	return "[" + strings.Join(s, ",") + "]"
 }

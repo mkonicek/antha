@@ -496,13 +496,13 @@ func TestMultiZOffset2(t *testing.T) {
 
 		for i, instruction := range request.Instructions {
 			if i > 0 {
-				if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+				if instruction.Type() == liquidhandling.ASP {
 					aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(request.Instructions[i-1], instruction)
 					if err != nil {
 						fmt.Println(err.Error())
 					}
 					aspirateInstructions = append(aspirateInstructions, aspirateSummary)
-				} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+				} else if instruction.Type() == liquidhandling.DSP {
 					dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(request.Instructions[i-1], instruction)
 					if err != nil {
 						fmt.Println(err.Error())
@@ -651,13 +651,13 @@ func TestMultiZOffset(t *testing.T) {
 
 	for i, instruction := range singleRq.Instructions {
 		if i > 0 {
-			if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+			if instruction.Type() == liquidhandling.ASP {
 				aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(singleRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
 				singleAspirateInstructions = append(singleAspirateInstructions, aspirateSummary)
-			} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+			} else if instruction.Type() == liquidhandling.DSP {
 				dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(singleRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -669,13 +669,13 @@ func TestMultiZOffset(t *testing.T) {
 
 	for i, instruction := range multiRq.Instructions {
 		if i > 0 {
-			if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+			if instruction.Type() == liquidhandling.ASP {
 				aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(multiRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
 				multiAspirateInstructions = append(multiAspirateInstructions, aspirateSummary)
-			} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+			} else if instruction.Type() == liquidhandling.DSP {
 				dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(multiRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -1284,7 +1284,7 @@ func TestOveractiveMultichannel(t *testing.T) {
 
 	for i, ins := range rq.Instructions {
 		//assertion 1: multi should equal 2 in all cases
-		if multi, ok := ins.GetParameter("MULTI").(int); ok && multi != 2 {
+		if multi, ok := ins.GetParameter(liquidhandling.MULTI).(int); ok && multi != 2 {
 			t.Errorf("multi was %d not 2 for instruction %d", multi, i) //, liquidhandling.InsToString(ins))
 		}
 
@@ -1362,7 +1362,7 @@ func TestSplitSampleMultichannel(t *testing.T) {
 	//assert that there is some 8-way multi channel
 	seenMultiEight := false
 	for _, ins := range rq.Instructions {
-		if multi, ok := ins.GetParameter("MULTI").(int); ok && multi == 8 {
+		if multi, ok := ins.GetParameter(liquidhandling.MULTI).(int); ok && multi == 8 {
 			seenMultiEight = true
 		}
 	}

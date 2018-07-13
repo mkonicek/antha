@@ -8,8 +8,29 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
+// which instruction parameters for each instruction type
+type InstructionParametersMap map[*InstructionType]InstructionParameters
+
+func (a InstructionParametersMap) merge(b InstructionParametersMap) InstructionParametersMap {
+	if len(a) == 0 {
+		return b
+	} else if len(b) == 0 {
+		return a
+	} else {
+		result := make(InstructionParametersMap)
+		for ins, params := range a {
+			result[ins] = params.clone()
+		}
+		for ins, params := range b {
+			// this is safe even when result[ins] is nil
+			result[ins] = result[ins].merge(params)
+		}
+		return result
+	}
+}
+
 type ComparisonOpt struct {
-	InstructionParameters map[string][]string // which instruction parameters for each instruction type
+	InstructionParameters InstructionParametersMap
 }
 
 type ComparisonResult struct {
@@ -19,26 +40,18 @@ type ComparisonResult struct {
 func mergeMovs(ris []RobotInstruction) []RobotInstruction {
 	insOut := make([]RobotInstruction, 0, len(ris))
 	for i := 0; i < len(ris); i++ {
-		ins := ris[i]
-		if InstructionTypeName(ins) == "MOV" && (i != len(ris)-1) {
-			next := ris[i+1]
-			if InstructionTypeName(next) == "ASP" {
-				insOut = append(insOut, MovAsp{Asp: next.(*AspirateInstruction), Mov: ins.(*MoveInstruction)})
-				i += 1 // skip
-			} else if InstructionTypeName(next) == "DSP" {
-				insOut = append(insOut, MovDsp{Dsp: next.(*DispenseInstruction), Mov: ins.(*MoveInstruction)})
-				i += 1 // skip
-			} else if InstructionTypeName(next) == "MIX" {
-				insOut = append(insOut, MovMix{Mix: next.(*MixInstruction), Mov: ins.(*MoveInstruction)})
-				i += 1 // skip
-			} else if InstructionTypeName(next) == "BLO" {
-				insOut = append(insOut, MovBlo{Blo: next.(*BlowoutInstruction), Mov: ins.(*MoveInstruction)})
-				i += 1 // skip
-			} else {
-				insOut = append(insOut, ins)
-			}
+		cur := ris[i]
+		if i+1 == len(ris) { // last instruction so can't merge
+			insOut = append(insOut, cur)
 		} else {
-			insOut = append(insOut, ins)
+			next := ris[i+1]
+			merged := cur.MaybeMerge(next)
+			if merged == cur { // it didn't merge
+				insOut = append(insOut, cur)
+			} else { // merged, so only append the merged instruction and skip over next
+				insOut = append(insOut, merged)
+				i++
+			}
 		}
 	}
 
@@ -69,18 +82,19 @@ func orderedInstructionComparison(setA, setB []RobotInstruction, opt ComparisonO
 	errors := make([]error, 0, len(setA))
 	// v0 is just barrel through
 	// v1 is aligning the instruction sets
-	lenToCompare := len(setA)
 
-	if len(setB) != len(setA) {
-		errors = append(errors, fmt.Errorf("Instruction set lengths differ (%d %d)", len(setA), len(setB)))
+	lenA, lenB := len(setA), len(setB)
+	lenToCompare := lenA
+	if lenA != lenB {
+		errors = append(errors, fmt.Errorf("Instruction set lengths differ (%d %d)", lenA, lenB))
 
-		if len(setB) < len(setA) {
-			lenToCompare = len(setB)
+		if lenB < lenA {
+			lenToCompare = lenB
 		}
 	}
 
 	for i := 0; i < lenToCompare; i++ {
-		errs := compareInstructions(i, setA[i], setB[i], opt.InstructionParameters[InstructionTypeName(setA[i])])
+		errs := compareInstructions(i, setA[i], setB[i], opt.InstructionParameters[setA[i].Type()])
 		errors = append(errors, errs...)
 	}
 
@@ -89,23 +103,9 @@ func orderedInstructionComparison(setA, setB []RobotInstruction, opt ComparisonO
 
 // merge move and asp / move and dsp / mov and mix
 
-/*
+var moveParams = []InstructionParameter{POSTO, WELLTO, REFERENCE, OFFSETX, OFFSETY, OFFSETZ}
 
-   InstructionType() int
-   GetParameter(name string) interface{}
-   Generate(ctx context.Context,policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
-   Check(lhpr wtype.LHPolicyRule) bool
-
-*/
-
-type MovAsp struct {
-	Mov *MoveInstruction
-	Asp *AspirateInstruction
-}
-
-var moveParams = []string{"POSTO", "WELLTO", "REFERENCE", "OFFSETX", "OFFSETY", "OFFSETZ"}
-
-func isIn(s string, ar []string) bool {
+func isIn(s InstructionParameter, ar []InstructionParameter) bool {
 	for _, s2 := range ar {
 		if s2 == s {
 			return true
@@ -115,7 +115,7 @@ func isIn(s string, ar []string) bool {
 	return false
 }
 
-func getParameter(name string, movIns *MoveInstruction, otherIns RobotInstruction) interface{} {
+func getParameter(name InstructionParameter, movIns *MoveInstruction, otherIns RobotInstruction) interface{} {
 	// indirect calls appropriately
 	if isIn(name, moveParams) {
 		return movIns.GetParameter(name)
@@ -124,11 +124,24 @@ func getParameter(name string, movIns *MoveInstruction, otherIns RobotInstructio
 	}
 }
 
-func (ma MovAsp) InstructionType() int {
-	return MAS
+type MovAsp struct {
+	*InstructionType
+	BaseRobotInstruction
+	Mov *MoveInstruction
+	Asp *AspirateInstruction
 }
 
-func (ma MovAsp) GetParameter(name string) interface{} {
+func NewMovAsp(mov *MoveInstruction, asp *AspirateInstruction) *MovAsp {
+	ma := &MovAsp{
+		InstructionType: MAS,
+		Mov:             mov,
+		Asp:             asp,
+	}
+	ma.BaseRobotInstruction = NewBaseRobotInstruction(ma)
+	return ma
+}
+
+func (ma MovAsp) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, ma.Mov, ma.Asp)
 }
 
@@ -141,15 +154,23 @@ func (ma MovAsp) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 type MovDsp struct {
+	*InstructionType
+	BaseRobotInstruction
 	Mov *MoveInstruction
 	Dsp *DispenseInstruction
 }
 
-func (md MovDsp) InstructionType() int {
-	return MDS
+func NewMovDsp(mov *MoveInstruction, dsp *DispenseInstruction) *MovDsp {
+	md := &MovDsp{
+		InstructionType: MDS,
+		Mov:             mov,
+		Dsp:             dsp,
+	}
+	md.BaseRobotInstruction = NewBaseRobotInstruction(md)
+	return md
 }
 
-func (md MovDsp) GetParameter(name string) interface{} {
+func (md MovDsp) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, md.Mov, md.Dsp)
 }
 
@@ -162,15 +183,23 @@ func (md MovDsp) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 type MovBlo struct {
+	*InstructionType
+	BaseRobotInstruction
 	Mov *MoveInstruction
 	Blo *BlowoutInstruction
 }
 
-func (mb MovBlo) InstructionType() int {
-	return MBL
+func NewMovBlo(mov *MoveInstruction, blo *BlowoutInstruction) *MovBlo {
+	mb := &MovBlo{
+		InstructionType: MBL,
+		Mov:             mov,
+		Blo:             blo,
+	}
+	mb.BaseRobotInstruction = NewBaseRobotInstruction(mb)
+	return mb
 }
 
-func (mb MovBlo) GetParameter(name string) interface{} {
+func (mb MovBlo) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, mb.Mov, mb.Blo)
 }
 
@@ -183,15 +212,23 @@ func (mb MovBlo) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 type MovMix struct {
+	*InstructionType
+	BaseRobotInstruction
 	Mov *MoveInstruction
 	Mix *MixInstruction
 }
 
-func (mm MovMix) InstructionType() int {
-	return MVM
+func NewMovMix(mov *MoveInstruction, mix *MixInstruction) *MovMix {
+	mm := &MovMix{
+		InstructionType: MVM,
+		Mov:             mov,
+		Mix:             mix,
+	}
+	mm.BaseRobotInstruction = NewBaseRobotInstruction(mm)
+	return mm
 }
 
-func (mm MovMix) GetParameter(name string) interface{} {
+func (mm MovMix) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, mm.Mov, mm.Mix)
 }
 
@@ -203,205 +240,168 @@ func (mm MovMix) Check(lhpr wtype.LHPolicyRule) bool {
 	return false
 }
 
-func compareInstructions(index int, ins1, ins2 RobotInstruction, paramsToCompare []string) []error {
+func compareInstructions(index int, ins1, ins2 RobotInstruction, paramsToCompare InstructionParameters) []error {
 	// if instructions are not the same type we just return that error
 
-	if ins1.InstructionType() != ins2.InstructionType() {
-		return []error{fmt.Errorf("Instructions at %d different types (%s %s)", index, InstructionTypeName(ins1), InstructionTypeName(ins2))}
+	if ins1.Type() != ins2.Type() {
+		return []error{fmt.Errorf("Instructions at %d different types (%s %s)", index, ins1.Type().MachineName, ins2.Type().MachineName)}
 	}
 
 	errors := make([]error, 0, 1)
 
-	for _, prm := range paramsToCompare {
+	for prm := range paramsToCompare {
 		p1 := ins1.GetParameter(prm)
 		p2 := ins2.GetParameter(prm)
 
 		if !reflect.DeepEqual(p1, p2) {
-			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameter %s differ (%v %v)", index, InstructionTypeName(ins1), prm, p1, p2))
+			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameter %s differ (%v %v)", index, ins1.Type().MachineName, prm, p1, p2))
 		}
 	}
 
 	return errors
 }
 
-func dupV(a []string) []string {
-	r := make([]string, 0, len(a))
-	r = append(r, a...)
-
-	return r
-}
-
-func mergeStringSets(a, b []string) []string {
-	r := dupV(a)
-
-	for _, s := range b {
-		if !isIn(s, r) {
-			r = append(r, s)
-		}
-	}
-
-	return r
-}
-
-func mergeSets(s1, s2 map[string][]string) map[string][]string {
-	r := make(map[string][]string, len(s1))
-
-	for k, v := range s1 {
-		r[k] = dupV(v)
-	}
-
-	for k, v := range s2 {
-		v2, ok := r[k]
-
-		if ok {
-			r[k] = mergeStringSets(v, v2)
-		} else {
-			r[k] = v
-		}
-	}
-	return r
-}
-
 // convenience sets of parameters to compare
 
-func CompareAllParameters() map[string][]string {
-	r := make(map[string][]string, 3)
-	r = mergeSets(r, CompareVolumes())
-	r = mergeSets(r, ComparePositions())
-	r = mergeSets(r, CompareWells())
-	r = mergeSets(r, CompareOffsets())
-	r = mergeSets(r, CompareReferences())
-	r = mergeSets(r, ComparePlateTypes())
-	return r
+func CompareAllParameters() InstructionParametersMap {
+	m := make(InstructionParametersMap)
+	m = m.merge(CompareVolumes())
+	m = m.merge(ComparePositions())
+	m = m.merge(CompareWells())
+	m = m.merge(CompareOffsets())
+	m = m.merge(CompareReferences())
+	m = m.merge(ComparePlateTypes())
+	return m
 }
 
-func CompareReferences() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareAspReference())
-	ret = mergeSets(ret, CompareDspReference())
-	ret = mergeSets(ret, CompareMixReference())
-	return ret
+func CompareReferences() InstructionParametersMap {
+	m := make(InstructionParametersMap)
+	m = m.merge(CompareAspReference())
+	m = m.merge(CompareDspReference())
+	m = m.merge(CompareMixReference())
+	return m
 }
 
-func CompareAspReference() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"REFERENCE", "WHAT"}
-	return ret
+func CompareAspReference() InstructionParametersMap {
+	return InstructionParametersMap{
+		MAS: NewInstructionParameters(REFERENCE, WHAT),
+	}
 }
 
-func CompareDspReference() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"REFERENCE", "WHAT"}
-	ret["MOVBLO"] = []string{"REFERENCE", "WHAT"}
-	return ret
+func CompareDspReference() InstructionParametersMap {
+	return InstructionParametersMap{
+		MDS: NewInstructionParameters(REFERENCE, WHAT),
+		MBL: NewInstructionParameters(REFERENCE, WHAT),
+	}
 }
 
-func CompareMixReference() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVMIX"] = []string{"REFERENCE", "WHAT"}
-	return ret
+func CompareMixReference() InstructionParametersMap {
+	return InstructionParametersMap{
+		MVM: NewInstructionParameters(REFERENCE, WHAT),
+	}
 }
 
-func CompareOffsets() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareSourceOffsets())
-	ret = mergeSets(ret, CompareDestOffsets())
-	ret = mergeSets(ret, CompareMixOffsets())
-	return ret
+func CompareOffsets() InstructionParametersMap {
+	m := make(InstructionParametersMap)
+	m = m.merge(CompareSourceOffsets())
+	m = m.merge(CompareDestOffsets())
+	m = m.merge(CompareMixOffsets())
+	return m
 }
 
-func CompareSourceOffsets() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
-	return ret
+func CompareSourceOffsets() InstructionParametersMap {
+	return InstructionParametersMap{
+		MAS: NewInstructionParameters(OFFSETX, OFFSETY, OFFSETZ, WHAT),
+	}
 }
-func CompareDestOffsets() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
-	ret["MOVBLO"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
-	return ret
+func CompareDestOffsets() InstructionParametersMap {
+	return InstructionParametersMap{
+		MDS: NewInstructionParameters(OFFSETX, OFFSETY, OFFSETZ, WHAT),
+		MBL: NewInstructionParameters(OFFSETX, OFFSETY, OFFSETZ, WHAT),
+	}
 }
-func CompareMixOffsets() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVMIX"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
-	return ret
+func CompareMixOffsets() InstructionParametersMap {
+	return InstructionParametersMap{
+		MVM: NewInstructionParameters(OFFSETX, OFFSETY, OFFSETZ, WHAT),
+	}
 }
-func CompareVolumes() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["ASP"] = []string{"VOLUME", "WHAT"}
-	ret["MOVASP"] = []string{"VOLUME", "WHAT"}
-	ret["DSP"] = []string{"VOLUME", "WHAT"}
-	ret["MOVDSP"] = []string{"VOLUME", "WHAT"}
-	ret["BLO"] = []string{"VOLUME", "WHAT"}
-	ret["MOVBLO"] = []string{"VOLUME", "WHAT"}
-	ret["MIX"] = []string{"VOLUME", "WHAT"}
-	ret["MOVMIX"] = []string{"VOLUME", "WHAT"}
-	return ret
-}
-
-func ComparePositions() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareSourcePosition())
-	ret = mergeSets(ret, CompareDestPosition())
-	ret = mergeSets(ret, CompareMixPosition())
-	return ret
+func CompareVolumes() InstructionParametersMap {
+	vw := NewInstructionParameters(VOLUME, WHAT)
+	return InstructionParametersMap{
+		ASP: vw.clone(),
+		MAS: vw.clone(),
+		DSP: vw.clone(),
+		MDS: vw.clone(),
+		BLO: vw.clone(),
+		MBL: vw.clone(),
+		MIX: vw.clone(),
+		MVM: vw.clone(),
+	}
 }
 
-func CompareSourcePosition() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"POSTO", "WHAT"}
-	return ret
+func ComparePositions() InstructionParametersMap {
+	m := make(InstructionParametersMap)
+	m = m.merge(CompareSourcePosition())
+	m = m.merge(CompareDestPosition())
+	m = m.merge(CompareMixPosition())
+	return m
 }
 
-func CompareDestPosition() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"POSTO", "WHAT"}
-	ret["MOVBLO"] = []string{"POSTO", "WHAT"}
-	return ret
+func CompareSourcePosition() InstructionParametersMap {
+	return InstructionParametersMap{
+		MAS: NewInstructionParameters(POSTO, WHAT),
+	}
 }
 
-func CompareMixPosition() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVMIX"] = []string{"POSTO", "WHAT"}
-	return ret
+func CompareDestPosition() InstructionParametersMap {
+	return InstructionParametersMap{
+		MDS: NewInstructionParameters(POSTO, WHAT),
+		MBL: NewInstructionParameters(POSTO, WHAT),
+	}
 }
 
-func CompareWells() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareSourceWell())
-	ret = mergeSets(ret, CompareDestWell())
-	return ret
+func CompareMixPosition() InstructionParametersMap {
+	return InstructionParametersMap{
+		MVM: NewInstructionParameters(POSTO, WHAT),
+	}
 }
 
-func CompareSourceWell() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"WELLTO", "WHAT"}
-	return ret
+func CompareWells() InstructionParametersMap {
+	m := make(InstructionParametersMap)
+	m = m.merge(CompareSourceWell())
+	m = m.merge(CompareDestWell())
+	return m
 }
 
-func CompareDestWell() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"WELLTO", "WHAT"}
-	ret["MOVBLO"] = []string{"WELLTO", "WHAT"}
-	return ret
+func CompareSourceWell() InstructionParametersMap {
+	return InstructionParametersMap{
+		MAS: NewInstructionParameters(WELLTO, WHAT),
+	}
 }
 
-func ComparePlateTypes() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareSourcePlateType())
-	ret = mergeSets(ret, CompareDestPlateType())
-	return ret
+func CompareDestWell() InstructionParametersMap {
+	return InstructionParametersMap{
+		MDS: NewInstructionParameters(WELLTO, WHAT),
+		MBL: NewInstructionParameters(WELLTO, WHAT),
+	}
 }
 
-func CompareSourcePlateType() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"PLATE", "WHAT"}
-	return ret
+func ComparePlateTypes() InstructionParametersMap {
+	m := make(InstructionParametersMap)
+	m = m.merge(CompareSourcePlateType())
+	m = m.merge(CompareDestPlateType())
+	return m
 }
 
-func CompareDestPlateType() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"PLATE", "WHAT"}
-	ret["MOVBLO"] = []string{"PLATE", "WHAT"}
-	return ret
+func CompareSourcePlateType() InstructionParametersMap {
+	return InstructionParametersMap{
+		MAS: NewInstructionParameters(PLATE, WHAT),
+	}
+}
+
+func CompareDestPlateType() InstructionParametersMap {
+	return InstructionParametersMap{
+		MDS: NewInstructionParameters(PLATE, WHAT),
+		MBL: NewInstructionParameters(PLATE, WHAT),
+	}
 }

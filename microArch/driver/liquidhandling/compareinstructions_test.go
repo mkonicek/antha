@@ -88,19 +88,6 @@ func testInstructions2() []RobotInstruction {
 	return []RobotInstruction{_1_mov, _2_asp, _3_mov, _4_dsp, _5_mov, _6_mix, _7_mov, _8_mov}
 }
 
-func stringArrsSame(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := 0; i < len(a); i++ {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func insTypeArr(arr []RobotInstruction) []*InstructionType {
 	ret := make([]*InstructionType, len(arr))
 	for i, inst := range arr {

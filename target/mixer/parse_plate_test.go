@@ -205,7 +205,7 @@ A6,,,0,ul,0,g/l,
 				`
 pcrplate_with_cooler,
 A1,water,water,50.0,ul,0,g/l,
-A4,tea,water,50.0,ul,10.0,mM/l,tea leaves:,5g/l,sugar:,1X,
+A4,tea,water,50.0,ul,10.0,mM/l,tea leaves: ,5g/l,sugar:,1X,
 A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),

@@ -271,18 +271,18 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		if len(rec) > 7 {
 			for k := 7; k < len(rec); k = k + 2 {
 				subCompName := get(rec, k)
+				// sub component names may contain a : which must be removed
+				trimmedSubCompName := strings.TrimRight(subCompName, ":")
 				if k+1 < len(rec) {
 					subCompConc := get(rec, k+1)
 					subCmp := wtype.NewLHComponent()
-					// sub component names may contain a : which must be removed
-					trimmedSubCompName := strings.TrimRight(subCompName, ":")
 					subCmp.SetName(trimmedSubCompName)
 					cmp.AddSubComponent(subCmp, wunit.NewConcentration(wunit.SplitValueAndUnit(subCompConc)))
 					if err != nil {
 						return nil, err
 					}
-				} else {
-					return nil, fmt.Errorf("no concentration set on sub component %s for well %s")
+				} else if len(subCompName) != 0 {
+					return nil, fmt.Errorf("no concentration set on sub component %s for well %s", trimmedSubCompName, well)
 				}
 			}
 		}

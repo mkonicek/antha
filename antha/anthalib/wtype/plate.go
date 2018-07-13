@@ -26,12 +26,12 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"sort"
-	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -799,19 +799,18 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 
 		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
 
-
 		var subComponents []string
-		
-		for componentName := range liquids[i].SubComponents.Components{
+
+		for componentName := range liquids[i].SubComponents.Components {
 			subComponents = append(subComponents, componentName)
 		}
-		
+
 		sort.Strings(subComponents)
 
 		for _, componentName := range subComponents {
-			record = append(record,componentName + ":", liquids[i].SubComponents.Components[componentName].ToString())
+			record = append(record, componentName+":", liquids[i].SubComponents.Components[componentName].ToString())
 		}
-		
+
 		records = append(records, record)
 	}
 

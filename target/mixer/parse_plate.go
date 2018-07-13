@@ -277,12 +277,12 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 					subCompConc := get(rec, k+1)
 					subCmp := wtype.NewLHComponent()
 					subCmp.SetName(trimmedSubCompName)
-					cmp.AddSubComponent(subCmp, wunit.NewConcentration(wunit.SplitValueAndUnit(subCompConc)))
+					err := cmp.AddSubComponent(subCmp, wunit.NewConcentration(wunit.SplitValueAndUnit(subCompConc)))
 					if err != nil {
 						return nil, err
 					}
 				} else if len(subCompName) != 0 {
-					return nil, fmt.Errorf("no concentration set on sub component %s for well %s", trimmedSubCompName, well)
+					return nil, fmt.Errorf("no concentration set on sub component %s for well %s", trimmedSubCompName, well.FormatA1())
 				}
 			}
 		}

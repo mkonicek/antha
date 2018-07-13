@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/graph"
 )
 
@@ -226,8 +225,6 @@ func (it *IChain) splitMixedNode() {
 	ch := NewIChain(it)
 	ch.Values = splitValues
 	ch.Child = it.Child
-	text.Print("I chain family status", ch, it.Child)
-	it.Print()
 
 	if ch.Child != nil {
 		ch.Child.Parent = ch

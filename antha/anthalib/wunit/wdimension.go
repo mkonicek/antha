@@ -23,12 +23,13 @@
 package wunit
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/microArch/logger"
 )
@@ -130,7 +131,7 @@ func SubtractVolumes(OriginalVol Volume, subtractvols ...Volume) (newvolume Volu
 	newvolume.Subtract(volToSubtract)
 
 	if math.IsInf(newvolume.RawValue(), 0) {
-		panic(errors.New(fmt.Sprintln("Infinity value found subtracting volumes. Original: ", OriginalVol, ". Vols to subtract:", subtractvols)))
+		panic(errors.Errorf("Infinity value found subtracting volumes. Original: %s. Vols to subtract: %s", OriginalVol, subtractvols))
 	}
 
 	return
@@ -157,17 +158,17 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 // An error is returned if the volume is infinity or not a number.
 func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
 	if vol1.Unit().BaseSIUnit() != vol2.Unit().BaseSIUnit() {
-		return -1, fmt.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.ToString(), vol2.ToString())
+		return -1, errors.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.ToString(), vol2.ToString())
 	}
 	factor = vol1.SIValue() / vol2.SIValue()
 
 	if math.IsInf(factor, 0) {
-		err = fmt.Errorf("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		err = errors.Errorf("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
 		return
 	}
 
 	if math.IsNaN(factor) {
-		err = fmt.Errorf("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		err = errors.Errorf("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
 		return
 	}
 
@@ -199,17 +200,17 @@ func DivideConcentration(v Concentration, factor float64) (newconc Concentration
 // An error is returned if the concentration unit is not dividable or the number generated is infinity.
 func DivideConcentrations(conc1, conc2 Concentration) (factor float64, err error) {
 	if conc1.Unit().BaseSIUnit() != conc2.Unit().BaseSIUnit() {
-		return -1, fmt.Errorf("cannot divide concentrations: units of %s and %s unequal.", conc1.ToString(), conc2.ToString())
+		return -1, errors.Errorf("cannot divide concentrations: units of %s and %s unequal.", conc1.ToString(), conc2.ToString())
 	}
 	factor = conc1.SIValue() / conc2.SIValue()
 
 	if math.IsInf(factor, 0) {
-		err = fmt.Errorf("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
+		err = errors.Errorf("infinity value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
 		return
 	}
 
 	if math.IsNaN(factor) {
-		err = fmt.Errorf("NaN value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
+		err = errors.Errorf("NaN value found dividing concentrations %s and %s", conc1.ToString(), conc2.ToString())
 		return
 	}
 
@@ -221,7 +222,7 @@ func DivideConcentrations(conc1, conc2 Concentration) (factor float64, err error
 func AddConcentrations(concs ...Concentration) (newconc Concentration, err error) {
 
 	if len(concs) == 0 {
-		err = fmt.Errorf("Array of concentrations empty, nil value returned")
+		err = errors.Errorf("Array of concentrations empty, nil value returned")
 	}
 	var tempconc Concentration
 	unit := concs[0].Unit().PrefixedSymbol()
@@ -232,7 +233,7 @@ func AddConcentrations(concs ...Concentration) (newconc Concentration, err error
 			tempconc = NewConcentration(tempconc.RawValue()+conc.RawValue(), tempconc.Unit().PrefixedSymbol())
 			newconc = tempconc
 		} else if tempconc.Unit().BaseSISymbol() != conc.Unit().BaseSISymbol() {
-			err = fmt.Errorf("Cannot add units with base %s to %s, please bring concs to same base. ", tempconc.Unit().BaseSISymbol(), conc.Unit().BaseSISymbol())
+			err = errors.Errorf("Cannot add units with base %s to %s, please bring concs to same base. ", tempconc.Unit().BaseSISymbol(), conc.Unit().BaseSISymbol())
 		} else {
 			tempconc = NewConcentration(tempconc.SIValue()+conc.SIValue(), tempconc.Unit().BaseSISymbol())
 			newconc = tempconc
@@ -255,7 +256,7 @@ func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concent
 	newConcentration.Subtract(concToSubtract)
 
 	if math.IsInf(newConcentration.RawValue(), 0) {
-		err = fmt.Errorf(fmt.Sprintln("Infinity value found subtracting concentrations. Original: ", originalConc, ". Vols to subtract:", subtractConcs))
+		err = errors.Errorf(fmt.Sprintln("Infinity value found subtracting concentrations. Original: ", originalConc, ". Vols to subtract:", subtractConcs))
 		return
 	}
 
@@ -285,7 +286,7 @@ func NewTemperature(v float64, unit string) Temperature {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Errorf("unapproved temperature unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved temperature unit %q, approved units are %s", unit, approved))
 	}
 
 	return Temperature{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -307,7 +308,7 @@ func NewTime(v float64, unit string) (t Time) {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Errorf("unapproved time unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved time unit %q, approved units are %s", unit, approved))
 	}
 
 	return Time{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -386,7 +387,7 @@ func NewMoles(v float64, unit string) Moles {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Errorf("unapproved Amount unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved Amount unit %q, approved units are %s", unit, approved))
 	}
 
 	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -404,7 +405,7 @@ func NewAmount(v float64, unit string) Moles {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Errorf("unapproved Amount unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved Amount unit %q, approved units are %s", unit, approved))
 	}
 
 	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -648,7 +649,7 @@ func ValidMeasurementUnit(measureMentType, unit string) error {
 			validMeasurementTypes = append(validMeasurementTypes, key)
 		}
 		sort.Strings(validMeasurementTypes)
-		return fmt.Errorf("No measurement type %s listed in UnitMap found these: %v", measureMentType, validMeasurementTypes)
+		return errors.Errorf("No measurement type %s listed in UnitMap found these: %v", measureMentType, validMeasurementTypes)
 	}
 
 	_, unitFound := validUnits[unit]
@@ -659,7 +660,7 @@ func ValidMeasurementUnit(measureMentType, unit string) error {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		return fmt.Errorf("No unit %s found for %s in UnitMap found these: %v", unit, measureMentType, approved)
+		return errors.Errorf("No unit %s found for %s in UnitMap found these: %v", unit, measureMentType, approved)
 	}
 
 	return nil
@@ -678,7 +679,7 @@ func ValidConcentrationUnit(unit string) error {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		return fmt.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved)
+		return errors.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved)
 	}
 	return nil
 }
@@ -697,7 +698,7 @@ func NewConcentration(v float64, unit string) Concentration {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		panic(fmt.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved))
 	}
 
 	return Concentration{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -807,7 +808,7 @@ func NewRate(v float64, unit string) (r Rate, err error) {
 			approved = append(approved, u)
 		}
 		sort.Strings(approved)
-		return r, fmt.Errorf("unapproved rate unit %q, approved units are %s", unit, approved)
+		return r, errors.Errorf("unapproved rate unit %q, approved units are %s", unit, approved)
 	}
 
 	return Rate{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}, nil

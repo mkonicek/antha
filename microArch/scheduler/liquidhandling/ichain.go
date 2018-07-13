@@ -229,7 +229,9 @@ func (it *IChain) splitMixedNode() {
 	text.Print("I chain family status", ch, it.Child)
 	it.Print()
 
-	ch.Child.Parent = ch
+	if ch.Child != nil {
+		ch.Child.Parent = ch
+	}
 	it.Child = ch
 }
 

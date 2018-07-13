@@ -1,11 +1,10 @@
 package liquidhandling
 
 import (
-	"testing"
-
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"testing"
 )
 
 func GetMixForTest(id string, input ...*wtype.Liquid) (*wtype.LHInstruction, *wtype.Liquid) {
@@ -110,8 +109,30 @@ func TestSetOutputOrdering_SplitMixes(t *testing.T) {
 	test := setOutputOrderTest{
 		Instructions:  []*wtype.LHInstruction{split, mixShot, mixSquash},
 		OutputSort:    true,
-		ExpectedOrder: []string{"mixShot", "mixSquash", "theSplit"},
+		ExpectedOrder: []string{"mixSquash", "mixShot", "theSplit"},
 		ChainHeight:   3,
+	}
+
+	test.Run(t)
+}
+
+func TestSetOutputOrdering_SplitMixes2(t *testing.T) {
+
+	water := GetLiquidForTest("water", 250.0)
+	concentrate := GetLiquidForTest("concentratedSquash", 5000.0)
+	vodka := GetLiquidForTest("vodka", 50.0)
+	milk := GetLiquidForTest("milk", 200.0)
+
+	split, concentrateSample, concentrateRemainder := GetSplitForTest("theSplit", concentrate, 25.0)
+	mixSquash, squash := GetMixForTest("mixSquash", concentrateSample, water)
+	mixShot, _ := GetMixForTest("mixShot", vodka, squash)
+	mixLumpy, _ := GetMixForTest("mixLumpy", milk, concentrateRemainder)
+
+	test := setOutputOrderTest{
+		Instructions:  []*wtype.LHInstruction{split, mixShot, mixSquash, mixLumpy},
+		OutputSort:    true,
+		ExpectedOrder: []string{"mixSquash", "mixShot", "theSplit", "mixLumpy"},
+		ChainHeight:   4,
 	}
 
 	test.Run(t)

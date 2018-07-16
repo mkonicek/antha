@@ -23,15 +23,15 @@
 package cmd
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"os"
-	"encoding/csv"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/ghodss/yaml"
 	"github.com/mgutz/ansi"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"os"
 	"sort"
 	"strings"
 )
@@ -116,58 +116,60 @@ func listPolicies(cmd *cobra.Command, args []string) error {
 	case csvOutput:
 		var lines [][]string
 		policyItemMap := wtype.MakePolicyItems()
-		
+
 		var headers []string
-		
+
 		for key := range policyItemMap {
-			if key != wtype.PolicyNameField && key != wtype.PolicyDescriptionField{
+			if key != wtype.PolicyNameField && key != wtype.PolicyDescriptionField {
 				headers = append(headers, key)
 			}
 		}
-		
+
 		sort.Strings(headers)
-		
-		headers = append([]string{wtype.PolicyNameField,wtype.PolicyDescriptionField},headers...)
+
+		headers = append([]string{wtype.PolicyNameField, wtype.PolicyDescriptionField}, headers...)
 		lines = append(lines, headers)
-		
+
 		for _, policy := range ps {
 			var policyValues []string
 			for _, policyParameter := range headers {
-				
+
 				policyValue, found := policy.Properties[policyParameter]
-				
+
 				if !found {
 					policyValue = ""
 				}
-				
+
 				policyValues = append(policyValues, fmt.Sprint(policyValue))
 			}
-			lines = append(lines,policyValues)
+			lines = append(lines, policyValues)
 		}
-		
+
 		w := csv.NewWriter(os.Stdout)
-		
-		w.WriteAll(lines) // calls Flush internally
-	
-		err := w.Error()
-		
+
+		err := w.WriteAll(lines) // calls Flush internally
+		if err != nil {
+			return err
+		}
+		err = w.Error()
+
 		return err
 	case descriptionsOutput:
 		type descriptionOnly struct {
 			Description string `json:"description"`
-			Id string `json:"id"`
-			Name string `json:"name"`
+			Id          string `json:"id"`
+			Name        string `json:"name"`
 		}
 		var uiJson []descriptionOnly
 		for _, p := range ps {
-	
+
 			uiJson = append(uiJson, descriptionOnly{
 				Description: p.Properties["DESCRIPTION"].(string),
-				Id: 		p.Name,
-				Name:       p.Name,
+				Id:          p.Name,
+				Name:        p.Name,
 			})
 		}
-	
+
 		bs, err := json.MarshalIndent(uiJson, "", "  ")
 		if err != nil {
 			return err

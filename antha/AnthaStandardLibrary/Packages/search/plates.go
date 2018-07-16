@@ -64,15 +64,23 @@ func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []stri
 	return "", fmt.Errorf("no empty wells on plate %s of type %s", plate.Name(), plate.Type)
 }
 
+// InvalidWell is an error type for when an well is requested from a plate which is invalid.
+type InvalidWell string
+
+// Error returns an error message.
+func (err InvalidWell) Error() string {
+	return string(err)
+}
+
 func checkWellValidity(plate *wtype.Plate, well string) error {
 
 	if well != "" {
 		wc := wtype.MakeWellCoords(well)
 		if wc.X >= len(plate.Cols) {
-			return fmt.Errorf("well (%s) specified is out of range of available wells for plate type %s", well, plate.Type)
+			return InvalidWell(fmt.Sprintf("well (%s) specified is out of range of available wells for plate type %s", well, plate.Type))
 		}
 		if wc.Y >= len(plate.Cols[wc.X]) {
-			return fmt.Errorf("well (%s) specified is out of range of available wells for plate type %s", well, plate.Type)
+			return InvalidWell(fmt.Sprintf("well (%s) specified is out of range of available wells for plate type %s", well, plate.Type))
 		}
 
 	}

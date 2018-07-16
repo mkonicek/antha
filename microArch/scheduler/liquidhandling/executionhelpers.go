@@ -356,7 +356,7 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	return insOut
 }
 
-func set_output_order(rq *LHRequest) error {
+func setOutputOrder(rq *LHRequest) error {
 	// guarantee all nodes are dependency-ordered
 	// in order to aggregate without introducing cycles
 

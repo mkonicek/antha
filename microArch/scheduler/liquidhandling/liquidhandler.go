@@ -843,7 +843,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	ctx = plateCache.NewContext(ctx)
 
 	// figure out the output order
-	err := set_output_order(request)
+	err := setOutputOrder(request)
 
 	if err != nil {
 		return err

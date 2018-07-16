@@ -75,7 +75,7 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 
 	rq.Options.OutputSort = self.OutputSort
 
-	if err := set_output_order(rq); err != nil {
+	if err := setOutputOrder(rq); err != nil {
 		t.Fatal(err)
 	}
 

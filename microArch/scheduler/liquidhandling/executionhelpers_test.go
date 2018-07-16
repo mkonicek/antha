@@ -86,18 +86,19 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 		t.Fatalf("Expected Order length mismatch:\n\te: %v\n\tg: %v", self.ExpectedOrder, rq.Output_order)
 	}
 
-	outputIDs := make([]string, 0, len(rq.Output_order))
+	outputOrder := make([]string, 0, len(rq.Output_order))
 	for _, id := range rq.Output_order {
 		//for promts check the message as the ID is overwritten
 		if ins, ok := rq.LHInstructions[id]; ok && ins.Type == wtype.LHIPRM { //LHIPRM == prompt instruction
-			id = ins.Message
+			outputOrder = append(outputOrder, ins.Message)
+		} else {
+			outputOrder = append(outputOrder, id)
 		}
-		outputIDs = append(outputIDs, id)
 	}
 
 	for i := range self.ExpectedOrder {
-		if e, g := self.ExpectedOrder[i], outputIDs[i]; e != g {
-			t.Fatalf("Expected Order mismatch in item %d:\n\te: %v\n\tg: %v", i, self.ExpectedOrder, outputIDs)
+		if e, g := self.ExpectedOrder[i], outputOrder[i]; e != g {
+			t.Fatalf("Expected Order mismatch in item %d:\n\te: %v\n\tg: %v", i, self.ExpectedOrder, outputOrder)
 		}
 	}
 

@@ -167,42 +167,26 @@ func TestSetOutputOrdering_SplitMixes2(t *testing.T) {
 
 func TestSetOutputOrder_Prompt(t *testing.T) {
 	// we go mix, prompt, split, mix
-	var instructions []*wtype.LHInstruction
-	var expectedIDOrder []string
 
 	c1 := GetLiquidForTest("water", 10.0)
 	c2 := GetLiquidForTest("washBuffer", 20.0)
 	mix1, c3 := GetMixForTest("mix1", c1, c2)
 
-	expectedIDOrder = append(expectedIDOrder, mix1.ID)
-	instructions = append(instructions, mix1)
-
 	prompt, promptResults := GetPromptForTest("prompt1", c3)
+
 	c4 := promptResults[0]
-
-	expectedIDOrder = append(expectedIDOrder, prompt.ID)
-	instructions = append(instructions, prompt)
-
 	split, c5, c4a := GetSplitForTest("split", c4, 10.0)
-	instructions = append(instructions, split)
 
 	c6 := GetLiquidForTest("turps", 100.0)
 	mix2, _ := GetMixForTest("mix2", c6, c5)
-
-	expectedIDOrder = append(expectedIDOrder, mix2.ID)
-	expectedIDOrder = append(expectedIDOrder, split.ID)
-	instructions = append(instructions, mix2)
 
 	// mix the static component with some more water
 	c7 := GetLiquidForTest("water", 200.0)
 	mix3, _ := GetMixForTest("mix3", c4a, c7)
 
-	expectedIDOrder = append(expectedIDOrder, mix3.ID)
-	instructions = append(instructions, mix3)
-
 	test := &setOutputOrderTest{
-		Instructions:  instructions,
-		ExpectedOrder: expectedIDOrder,
+		Instructions:  []*wtype.LHInstruction{mix1, prompt, split, mix2, mix3},
+		ExpectedOrder: []string{mix1.ID, prompt.ID, mix2.ID, split.ID, mix3.ID},
 		ChainHeight:   5,
 	}
 

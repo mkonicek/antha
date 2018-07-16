@@ -777,6 +777,9 @@ func (p *Plate) IsAutoallocated() bool {
 	return true
 }
 
+// SubComponentsHeader is the header found to be used in the plate CSV files to specify Sub components of liquids.
+const SubComponentsHeader  = "SubComponents"
+
 // ExportPlateCSV a exports an LHPlate and its contents as a csv file.
 // The caller is required to set the well locations and volumes explicitely with this function.
 func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells []string, liquids []*Liquid, volumes []wunit.Volume) (file File, err error) {

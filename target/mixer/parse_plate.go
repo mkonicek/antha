@@ -13,6 +13,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/toolbox/csvutil"
+	"github.com/pkg/errors"
 )
 
 const plateTypeReplacementKey string = "PlateType"
@@ -144,6 +145,18 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		}
 		return strings.TrimSpace(xs[idx])
 	}
+
+	// returns first index of value in xs which matches equal fold comparison for header.
+	// if no value is found, -1 and error will be returned
+	getIndexForColumnHeader := func(xs []string, header string) (int, error) {
+		for i, str := range xs {
+			if strings.EqualFold(strings.TrimSpace(str), strings.TrimSpace(header)) {
+				return i, nil
+			}
+		}
+		return -1, errors.Errorf("header %s not found in list %v", header, xs)
+	}
+
 	var validationConfigs []ValidationConfig
 	var replaceConfigs []ValidationConfig
 	var vc ValidationConfig
@@ -213,6 +226,23 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 
 	var warnings []string
 	var fatalErrors []string
+
+	var lookForSubComponents bool
+
+	// expectation is that there are 7 static columns in the plate csv file,
+	// after that, a Sub components column header will be looked for.
+	const numberOfStaticCSVColumns = 7
+
+	subComponentsStart, err := getIndexForColumnHeader(rec, wtype.SubComponentsHeader)
+
+	if err == nil {
+		lookForSubComponents = true
+
+		if subComponentsStart < numberOfStaticCSVColumns {
+			return nil, errors.Errorf("%s header cannot be specified in the first %d column headers. Found at position %d", wtype.SubComponentsHeader, numberOfStaticCSVColumns, subComponentsStart+1)
+		}
+	}
+
 	for lineNo := 1; true; lineNo++ {
 		rec, err := csvr.Read()
 		if err == io.EOF {
@@ -268,12 +298,8 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		cmp.Conc = concentration.RawValue()
 		cmp.Cunit = concentration.Unit().PrefixedSymbol()
 
-		// expectation is that there are 7 static columns in the plate csv file,
-		// after that, sub components columns start at column 8
-		const numberOfStaticCSVColumns = 7
-
-		if len(rec) > numberOfStaticCSVColumns {
-			for k := numberOfStaticCSVColumns; k < len(rec); k = k + 2 {
+		if len(rec) > numberOfStaticCSVColumns && lookForSubComponents {
+			for k := subComponentsStart; k < len(rec); k = k + 2 {
 				subCompName := get(rec, k)
 				// sub component names may contain a : which must be removed
 				trimmedSubCompName := strings.TrimRight(subCompName, ":")

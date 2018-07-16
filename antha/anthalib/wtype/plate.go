@@ -784,7 +784,7 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 		return File{}, fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
 
-	records := make([][]string, 0) //LiquidType	Vol	Vol Unit	Conc	Conc Unit
+	records := make([][]string, 0)
 	headerrecord := []string{plate.Type, plateName, "LiquidType", "Vol", "Vol Unit", "Conc", "Conc Unit", "SubComponents"}
 	records = append(records, headerrecord)
 
@@ -796,8 +796,14 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 		if liquids[i].Conc == 0 && liquids[i].Cunit == "" {
 			liquids[i].Cunit = "mg/l"
 		}
+		var componentName string
+		var liquidType string
+		if liquids[i] != nil {
+			componentName = liquids[i].Name()
+			liquidType = liquids[i].TypeName()
+		}
 
-		record := []string{well, liquids[i].CName, liquids[i].TypeName(), volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
+		record := []string{well, componentName, liquidType, volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
 
 		var subComponents []string
 
@@ -828,7 +834,6 @@ func AutoExportPlateCSV(outputFileName string, plate *Plate) (file File, err err
 	var wells = make([]string, 0)
 	var liquids = make([]*Liquid, 0)
 	var volumes = make([]wunit.Volume, 0)
-	var concs = make([]wunit.Concentration, 0)
 	allpositions := plate.AllWellPositions(false)
 
 	var nilComponent *Liquid
@@ -840,45 +845,13 @@ func AutoExportPlateCSV(outputFileName string, plate *Plate) (file File, err err
 			wells = append(wells, position)
 			liquids = append(liquids, well.Contents())
 			volumes = append(volumes, well.CurrentVolume())
-			if well.Contents().Cunit != "" {
-				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, well.Contents().Cunit))
-			} else {
-				concs = append(concs, wunit.NewConcentration(well.Contents().Conc, "mg/l"))
-			}
 		} else {
 			wells = append(wells, position)
 			liquids = append(liquids, nilComponent)
 			volumes = append(volumes, wunit.NewVolume(0.0, "ul"))
-			concs = append(concs, wunit.NewConcentration(0.0, "g/l"))
 		}
 	}
-
-	records := make([][]string, 0)
-
-	headerrecord := []string{plate.Type, platename, "LiquidType ", "Vol", "Vol Unit", "Conc", "Conc Unit"}
-
-	records = append(records, headerrecord)
-
-	for i, well := range wells {
-
-		volfloat := volumes[i].RawValue()
-		concfloat := concs[i].RawValue()
-
-		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
-		concstr := strconv.FormatFloat(concfloat, 'G', -1, 64)
-
-		var componentName string
-		var liquidType string
-		if liquids[i] != nil {
-			componentName = liquids[i].Name()
-			liquidType = liquids[i].TypeName()
-		}
-
-		record := []string{well, componentName, liquidType, volstr, volumes[i].Unit().PrefixedSymbol(), concstr, concs[i].Unit().PrefixedSymbol()}
-		records = append(records, record)
-	}
-
-	return exportCSV(records, outputFileName)
+	return ExportPlateCSV(outputFileName, plate, platename, wells, liquids, volumes)
 }
 
 // Export a 2D array of string data as a csv file

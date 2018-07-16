@@ -848,17 +848,17 @@ func NewChangeAdaptorInstruction(head int, droppos, getpos, oldad, newad, platfo
 
 func (ins *ChangeAdaptorInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "POSFROM":
+	case POSFROM:
 		return ins.DropPosition
-	case "POSTO":
+	case POSTO:
 		return ins.GetPosition
-	case "OLDADAPTOR":
+	case OLDADAPTOR:
 		return ins.OldAdaptorType
-	case "NEWADAPTOR":
+	case NEWADAPTOR:
 		return ins.NewAdaptorType
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)

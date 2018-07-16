@@ -104,9 +104,9 @@ func validWell(well wtype.WellCoords, plate *wtype.Plate) error {
 //
 // CSV plate format: (? denotes optional, whitespace for clarity)
 //
-//   <plate type> , <plate name ?>
-//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>
-//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>
+//   <plate type ?> , <plate name ?>
+//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
+//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
 //   ...
 //
 func ParsePlateCSV(ctx context.Context, inData io.Reader, validationOptions ...ValidationConfig) (*ParsePlateResult, error) {
@@ -130,9 +130,9 @@ func ParsePlateCSV(ctx context.Context, inData io.Reader, validationOptions ...V
 //
 // CSV plate format: (? denotes optional, whitespace for clarity)
 //
-//   <plate type> , <plate name ?>
-//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>
-//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>
+//   <plate type ?> , <plate name ?>
+//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
+//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
 //   ...
 //
 // TODO: refactor if/when Opt loses raw []byte and file as InputPlate options
@@ -268,8 +268,12 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		cmp.Conc = concentration.RawValue()
 		cmp.Cunit = concentration.Unit().PrefixedSymbol()
 
-		if len(rec) > 7 {
-			for k := 7; k < len(rec); k = k + 2 {
+		// expectation is that there are 7 static columns in the plate csv file,
+		// after that, sub components columns start at column 8
+		const numberOfStaticCSVColumns = 7
+
+		if len(rec) > numberOfStaticCSVColumns {
+			for k := numberOfStaticCSVColumns; k < len(rec); k = k + 2 {
 				subCompName := get(rec, k)
 				// sub component names may contain a : which must be removed
 				trimmedSubCompName := strings.TrimRight(subCompName, ":")

@@ -8,8 +8,9 @@ import (
 )
 
 func GetMixForTest(id string, input ...*wtype.Liquid) (*wtype.LHInstruction, *wtype.Liquid) {
-	output := input[0].Dup()
-	for _, ip := range input[1:] {
+	output := wtype.NewLHComponent()
+	output.Type = wtype.LTNIL
+	for _, ip := range input {
 		output.Mix(ip)
 	}
 

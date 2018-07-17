@@ -77,14 +77,9 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 	rq.Options.OutputSort = self.OutputSort
 
 	err := setOutputOrder(rq)
-	if self.ExpectingError {
-		if err == nil {
-			t.Fatal("expecting an error but got none")
-		}
+	if encounteredError := err != nil; self.ExpectingError != encounteredError {
+		t.Fatalf("ExpectingError: %t, Encountered Error: %v", self.ExpectingError, err)
 		return
-	}
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	if e, g := self.ChainHeight, rq.InstructionChain.Height(); e != g {
@@ -138,8 +133,8 @@ func TestSetOutputOrdering_SplitUnused(t *testing.T) {
 	test := setOutputOrderTest{
 		Instructions:   []*wtype.LHInstruction{split},
 		OutputSort:     true,
-		ExpectedOrder:  []string{"theSplit"},
-		ChainHeight:    1,
+		ExpectedOrder:  []string{},
+		ChainHeight:    0,
 		ExpectingError: true,
 	}
 

@@ -296,6 +296,7 @@ func (c ComponentList) RemoveConcsFromSubComponentNames() (nc ComponentList) {
 func (c ComponentList) List(options ...bool) string {
 	var verbose bool
 	var mixDelimiter bool
+	var ignoreWater bool = true
 	if len(options) > 0 {
 		if options[0] {
 			verbose = true
@@ -311,7 +312,11 @@ func (c ComponentList) List(options ...bool) string {
 	var sortedKeys []string
 
 	for key := range c.Components {
-		sortedKeys = append(sortedKeys, key)
+		if strings.EqualFold(key, "water") && ignoreWater && len(c.Components) > 1 {
+			// skip
+		} else {
+			sortedKeys = append(sortedKeys, key)
+		}
 	}
 
 	sort.Strings(sortedKeys)

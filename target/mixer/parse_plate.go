@@ -13,6 +13,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/toolbox/csvutil"
+	"github.com/pkg/errors"
 )
 
 const plateTypeReplacementKey string = "PlateType"
@@ -104,9 +105,9 @@ func validWell(well wtype.WellCoords, plate *wtype.Plate) error {
 //
 // CSV plate format: (? denotes optional, whitespace for clarity)
 //
-//   <plate type> , <plate name ?>
-//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>
-//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>
+//   <plate type ?> , <plate name ?>
+//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
+//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
 //   ...
 //
 func ParsePlateCSV(ctx context.Context, inData io.Reader, validationOptions ...ValidationConfig) (*ParsePlateResult, error) {
@@ -130,9 +131,9 @@ func ParsePlateCSV(ctx context.Context, inData io.Reader, validationOptions ...V
 //
 // CSV plate format: (? denotes optional, whitespace for clarity)
 //
-//   <plate type> , <plate name ?>
-//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>
-//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>
+//   <plate type ?> , <plate name ?>
+//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
+//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
 //   ...
 //
 // TODO: refactor if/when Opt loses raw []byte and file as InputPlate options
@@ -144,6 +145,18 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		}
 		return strings.TrimSpace(xs[idx])
 	}
+
+	// returns first index of value in xs which matches equal fold comparison for header.
+	// if no value is found, -1 and error will be returned
+	getIndexForColumnHeader := func(xs []string, header string) (int, error) {
+		for i, str := range xs {
+			if strings.EqualFold(strings.TrimSpace(str), strings.TrimSpace(header)) {
+				return i, nil
+			}
+		}
+		return -1, errors.Errorf("header %s not found in list %v", header, xs)
+	}
+
 	var validationConfigs []ValidationConfig
 	var replaceConfigs []ValidationConfig
 	var vc ValidationConfig
@@ -213,6 +226,23 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 
 	var warnings []string
 	var fatalErrors []string
+
+	var lookForSubComponents bool
+
+	// expectation is that there are 7 static columns in the plate csv file,
+	// after that, a Sub components column header will be looked for.
+	const numberOfStaticCSVColumns = 7
+
+	subComponentsStart, err := getIndexForColumnHeader(rec, wtype.SubComponentsHeader)
+
+	if err == nil {
+		lookForSubComponents = true
+
+		if subComponentsStart < numberOfStaticCSVColumns {
+			return nil, errors.Errorf("%s header cannot be specified in the first %d column headers. Found at position %d", wtype.SubComponentsHeader, numberOfStaticCSVColumns, subComponentsStart+1)
+		}
+	}
+
 	for lineNo := 1; true; lineNo++ {
 		rec, err := csvr.Read()
 		if err == io.EOF {
@@ -268,6 +298,24 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		cmp.Conc = concentration.RawValue()
 		cmp.Cunit = concentration.Unit().PrefixedSymbol()
 
+		if len(rec) > numberOfStaticCSVColumns && lookForSubComponents {
+			for k := subComponentsStart; k < len(rec); k = k + 2 {
+				subCompName := get(rec, k)
+				// sub component names may contain a : which must be removed
+				trimmedSubCompName := strings.TrimRight(subCompName, ":")
+				if k+1 < len(rec) {
+					subCompConc := get(rec, k+1)
+					subCmp := wtype.NewLHComponent()
+					subCmp.SetName(trimmedSubCompName)
+					err := cmp.AddSubComponent(subCmp, wunit.NewConcentration(wunit.SplitValueAndUnit(subCompConc)))
+					if err != nil {
+						return nil, err
+					}
+				} else if len(subCompName) != 0 {
+					return nil, fmt.Errorf("no concentration set on sub component %s for well %s", trimmedSubCompName, well.FormatA1())
+				}
+			}
+		}
 		if wa, ok := plate.WellAt(well); ok {
 			err = wa.AddComponent(cmp)
 			if err != nil {

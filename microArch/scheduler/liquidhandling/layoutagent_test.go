@@ -31,7 +31,7 @@ func TestLayoutAgent1(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	set_output_order(req)
+	setOutputOrder(req)
 	params := makeGilson(ctx)
 
 	req, err = ImprovedLayoutAgent(ctx, req, params)
@@ -73,7 +73,7 @@ func TestLayoutAgent2(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	set_output_order(req)
+	setOutputOrder(req)
 	params := makeGilson(ctx)
 
 	for _, ins := range req.LHInstructions {
@@ -135,7 +135,7 @@ func TestLayoutAgent3(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	set_output_order(req)
+	setOutputOrder(req)
 	params := makeGilson(ctx)
 
 	for _, ins := range req.LHInstructions {
@@ -194,7 +194,7 @@ func TestLayoutAgent4(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	set_output_order(req)
+	setOutputOrder(req)
 	params := makeGilson(ctx)
 
 	req, err = ImprovedLayoutAgent(ctx, req, params)
@@ -243,7 +243,7 @@ func TestLayoutAgent5(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	set_output_order(req)
+	setOutputOrder(req)
 	params := makeGilson(ctx)
 
 	req, err = ImprovedLayoutAgent(ctx, req, params)
@@ -286,7 +286,7 @@ func TestLayoutAgent6(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	set_output_order(req)
+	setOutputOrder(req)
 	params := makeGilson(ctx)
 
 	req, err = ImprovedLayoutAgent(ctx, req, params)
@@ -328,7 +328,7 @@ func TestLayoutAgent7(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	set_output_order(req)
+	setOutputOrder(req)
 	params := makeGilson(ctx)
 
 	req, err = ImprovedLayoutAgent(ctx, req, params)

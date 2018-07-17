@@ -842,24 +842,18 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	//add in a plateCache for instruction generation
 	ctx = plateCache.NewContext(ctx)
 
-	if request.Options.PrintInstructions {
-		fmt.Println("Unordered Instructions:")
-		for _, ins := range request.LHInstructions {
-			fmt.Printf("  %v\n", ins)
-		}
-	}
-
 	// figure out the output order
 	err := setOutputOrder(request)
+
 	if err != nil {
 		return err
 	}
 
 	if request.Options.PrintInstructions {
-		fmt.Println("Ordered Instructions")
 		for _, insID := range request.Output_order {
 			ins := request.LHInstructions[insID]
-			fmt.Print(ins.String())
+			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
+
 			if ins.IsMixInPlace() {
 				fmt.Print(" INPLACE")
 			}

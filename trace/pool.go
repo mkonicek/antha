@@ -126,10 +126,9 @@ func (pctx *poolCtx) decrement(tr *trace, delta int, err error) {
 		pctx.cancelWithLock(err)
 	} else {
 		pctx.tryUnblockWithLock(tr)
-	}
-
-	if pctx.alive == 0 {
-		pctx.cancelWithLock(errPoolDone)
+		if pctx.alive == 0 {
+			pctx.cancelWithLock(errPoolDone)
+		}
 	}
 }
 

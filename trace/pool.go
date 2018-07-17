@@ -110,7 +110,11 @@ func getPool(ctx context.Context) *poolCtx {
 	return c
 }
 
-func tryUnblock(tr *trace, pctx *poolCtx) {
+//tryUnblockWithLock will attempt to compile any LHInstructions in the trace
+func (pctx *poolCtx) tryUnblockWithLock(tr *trace) {
+	if pctx == nil {
+		return
+	}
 	if err := tr.signal(pctx); err != nil {
 		pctx.cancelWithLock(err)
 	}
@@ -127,8 +131,7 @@ func (pctx *poolCtx) decrement(tr *trace, delta int, err error) {
 	if err != nil {
 		pctx.cancelWithLock(err)
 	} else {
-		//tryUnblock will attempt to compile any LHInstructions in the trace
-		tryUnblock(tr, pctx)
+		pctx.tryUnblockWithLock(tr)
 	}
 
 	if pctx.alive == 0 {

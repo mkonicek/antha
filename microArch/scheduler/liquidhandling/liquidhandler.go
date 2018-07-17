@@ -844,7 +844,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// figure out the output order
 	err := setOutputOrder(request)
-
 	if err != nil {
 		return err
 	}

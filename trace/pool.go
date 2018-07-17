@@ -97,7 +97,7 @@ func WithPool(parent context.Context) (context.Context, context.CancelFunc, Done
 		func() { pctx.cancel(context.Canceled) },
 		func() <-chan struct{} {
 			pctx.remove(rootPromise)
-			decrement(pctx, tr, 1, nil)
+			pctx.decrement(tr, 1, nil)
 			return done
 		}
 }
@@ -116,7 +116,10 @@ func tryUnblock(tr *trace, pctx *poolCtx) {
 	}
 }
 
-func decrement(pctx *poolCtx, tr *trace, delta int, err error) {
+func (pctx *poolCtx) decrement(tr *trace, delta int, err error) {
+	if pctx == nil {
+		return
+	}
 	pctx.lock.Lock()
 	defer pctx.lock.Unlock()
 	pctx.alive -= delta
@@ -147,7 +150,7 @@ func Go(parent context.Context, fn func(ctx context.Context) error) {
 	go func() {
 		var err error
 		defer func() {
-			decrement(pctx, tr, 1, err)
+			pctx.decrement(tr, 1, err)
 		}()
 		defer func() {
 			if res := recover(); res != nil {

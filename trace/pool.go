@@ -120,17 +120,16 @@ func decrement(pctx *poolCtx, tr *trace, delta int, err error) {
 	pctx.lock.Lock()
 	defer pctx.lock.Unlock()
 	pctx.alive -= delta
-	tryUnblock(tr, pctx)
 
-	var cancel error
 	if err != nil {
-		cancel = err
+		pctx.cancelWithLock(err)
+	} else {
+		//tryUnblock will attempt to compile any LHInstructions in the trace
+		tryUnblock(tr, pctx)
 	}
-	if pctx.alive == 0 && cancel == nil {
-		cancel = errPoolDone
-	}
-	if cancel != nil {
-		pctx.cancelWithLock(cancel)
+
+	if pctx.alive == 0 {
+		pctx.cancelWithLock(errPoolDone)
 	}
 }
 

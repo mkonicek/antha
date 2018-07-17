@@ -1,26 +1,21 @@
 package liquidhandling
 
 import (
-	"github.com/pkg/errors"
-
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
 )
 
-func MakeTGraph(inss []*wtype.LHInstruction) (tGraph, error) {
+func MakeTGraph(inss []*wtype.LHInstruction) tGraph {
 	edges := make(map[*wtype.LHInstruction][]*wtype.LHInstruction, len(inss))
 	rcm := resultCmpMap(inss)
 	ccm := cmpInsMap(inss)
 
-	var err error
 	for _, ins := range inss {
-		edges[ins], err = getEdges(ins, rcm, ccm)
-		if err != nil {
-			return tGraph{}, err
-		}
+		edges[ins] = getEdges(ins, rcm, ccm)
 	}
 
-	return tGraph{Nodes: inss, Edges: edges}, nil
+	return tGraph{Nodes: inss, Edges: edges}
 }
 
 type tGraph struct {
@@ -98,7 +93,7 @@ func cmpInsMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 }
 
 // inss maps result (i.e. component) IDs to instructions
-func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInstruction) ([]*wtype.LHInstruction, error) {
+func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInstruction) []*wtype.LHInstruction {
 	ret := make([]*wtype.LHInstruction, 0, 1)
 
 	// don't make cycles containing split instructions
@@ -115,9 +110,9 @@ func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInst
 		if ok {
 			ret = append(ret, lhi)
 		} else {
-			return nil, errors.Errorf("SplitSample called without use of component. Moving components must be moved using Mix. Component name %s ID %s", cmp.CName, cmp.ID)
+			panic(fmt.Sprintf("Split called without use of component. Moving components must be moved using Mix. Component name %s ID %s", cmp.CName, cmp.ID))
 		}
-		return ret, nil
+		return ret
 	}
 
 	// we make this backwards since it's easier to say where something's coming from than where
@@ -138,7 +133,7 @@ func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInst
 		}
 	}
 
-	return ret, nil
+	return ret
 }
 
 func uniqueIn(n *wtype.LHInstruction, s []*wtype.LHInstruction) bool {

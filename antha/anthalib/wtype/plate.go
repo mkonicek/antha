@@ -808,17 +808,15 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 			if liquids[i].Conc == 0 && liquids[i].Cunit == "" {
 				concUnit = "mg/l"
 			}
-			
+
 			for componentName := range liquids[i].SubComponents.Components {
 				subComponents = append(subComponents, componentName)
 			}
-	
+
 			sort.Strings(subComponents)
 		}
 
 		record := []string{well, componentName, liquidType, volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(conc), concUnit}
-
-		
 
 		for _, componentName := range subComponents {
 			record = append(record, componentName+":", liquids[i].SubComponents.Components[componentName].ToString())

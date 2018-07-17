@@ -795,26 +795,28 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 		volfloat := volumes[i].RawValue()
 		volstr := strconv.FormatFloat(volfloat, 'G', -1, 64)
 
-		// if no conc unit and conc is zero use a default concentration unit
-		if liquids[i].Conc == 0 && liquids[i].Cunit == "" {
-			liquids[i].Cunit = "mg/l"
-		}
 		var componentName string
 		var liquidType string
+		var conc float64
+		var concUnit string
+		var subComponents []string
 		if liquids[i] != nil {
 			componentName = liquids[i].Name()
 			liquidType = liquids[i].TypeName()
+			conc = liquids[i].Conc
+			concUnit = liquids[i].Cunit
+			if liquids[i].Conc == 0 && liquids[i].Cunit == "" {
+				concUnit = "mg/l"
+			}
+
+			for componentName := range liquids[i].SubComponents.Components {
+				subComponents = append(subComponents, componentName)
+			}
+
+			sort.Strings(subComponents)
 		}
 
-		record := []string{well, componentName, liquidType, volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(liquids[i].Conc), liquids[i].Cunit}
-
-		var subComponents []string
-
-		for componentName := range liquids[i].SubComponents.Components {
-			subComponents = append(subComponents, componentName)
-		}
-
-		sort.Strings(subComponents)
+		record := []string{well, componentName, liquidType, volstr, volumes[i].Unit().PrefixedSymbol(), fmt.Sprint(conc), concUnit}
 
 		for _, componentName := range subComponents {
 			record = append(record, componentName+":", liquids[i].SubComponents.Components[componentName].ToString())

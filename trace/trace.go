@@ -56,7 +56,7 @@ func Read(ctx context.Context, p *Promise) (Value, error) {
 
 	pctx.lock.Lock()
 	pctx.blocked[p] = true
-	tryUnblock(tr, pctx)
+	pctx.tryUnblockWithLock(tr)
 	pctx.lock.Unlock()
 
 	var err error

@@ -728,6 +728,7 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 
 	if wasEmpty {
 		cmp.SetConcentration(cmp2.Concentration())
+		cmp.SubComponents = cmp2.SubComponents
 	}
 }
 

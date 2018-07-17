@@ -60,10 +60,11 @@ func GetLiquidForTest(name string, volume float64) *wtype.Liquid {
 }
 
 type setOutputOrderTest struct {
-	Instructions  []*wtype.LHInstruction
-	OutputSort    bool
-	ExpectedOrder []string
-	ChainHeight   int
+	Instructions   []*wtype.LHInstruction
+	OutputSort     bool
+	ExpectedOrder  []string
+	ChainHeight    int
+	ExpectingError bool
 }
 
 func (self *setOutputOrderTest) Run(t *testing.T) {
@@ -75,7 +76,14 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 
 	rq.Options.OutputSort = self.OutputSort
 
-	if err := setOutputOrder(rq); err != nil {
+	err := setOutputOrder(rq)
+	if self.ExpectingError {
+		if err == nil {
+			t.Fatal("expecting an error but got none")
+		}
+		return
+	}
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -118,6 +126,21 @@ func TestSetOutputOrdering_Splits(t *testing.T) {
 		OutputSort:    true,
 		ExpectedOrder: []string{"firstMix", "theSplit"},
 		ChainHeight:   2,
+	}
+
+	test.Run(t)
+}
+
+func TestSetOutputOrdering_SplitUnused(t *testing.T) {
+	water := GetLiquidForTest("water", 50.0)
+	split, _, _ := GetSplitForTest("theSplit", water, 20.0)
+
+	test := setOutputOrderTest{
+		Instructions:   []*wtype.LHInstruction{split},
+		OutputSort:     true,
+		ExpectedOrder:  []string{"theSplit"},
+		ChainHeight:    1,
+		ExpectingError: true,
 	}
 
 	test.Run(t)

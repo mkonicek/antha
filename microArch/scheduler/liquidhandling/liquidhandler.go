@@ -1118,8 +1118,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	// invert the Hash
 
 	var err error
-	(*request).Input_order, err = OrdinalFromHash(ordH)
-
+	request.Input_order, err = OrdinalFromHash(ordH)
 	if err != nil {
 		return request, err
 	}
@@ -1153,9 +1152,9 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		}
 	}
 
-	(*request).Input_vols_required = volsRequired
-	(*request).Input_vols_supplied = volsSupplied
-	(*request).Input_vols_wanting = volsWanting
+	request.Input_vols_required = volsRequired
+	request.Input_vols_supplied = volsSupplied
+	request.Input_vols_wanting = volsWanting
 
 	// add any new inputs
 
@@ -1165,7 +1164,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		}
 	}
 
-	(*request).Input_solutions = requestinputs
+	request.Input_solutions = requestinputs
 
 	return request, nil
 }

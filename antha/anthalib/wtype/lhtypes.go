@@ -30,11 +30,11 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-type ChannelOrientation int
+type ChannelOrientation bool
 
 const (
-	LHVChannel ChannelOrientation = iota // vertical orientation
-	LHHChannel                           // horizontal orientation
+	LHVChannel ChannelOrientation = iota%2 == 1 // vertical orientation
+	LHHChannel                                  // horizontal orientation
 )
 
 // what constraints apply to adjacent channels
@@ -107,7 +107,7 @@ func (lhcp LHChannelParameter) VolumeLimitString() string {
 }
 
 func (lhcp LHChannelParameter) String() string {
-	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %d Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.ToString(), lhcp.Maxvol.ToString(), lhcp.Minspd.ToString(), lhcp.Maxspd.ToString(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
+	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %v Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.ToString(), lhcp.Maxvol.ToString(), lhcp.Minspd.ToString(), lhcp.Maxspd.ToString(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
 }
 
 // given the dimension of the plate, what is the constraint

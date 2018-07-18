@@ -726,8 +726,32 @@ func DecodePtrToLHTip(arg *pb.PtrToLHTipMessage) *wtype.LHTip {
 	ret := DecodeLHTip(arg.Arg_1)
 	return &ret
 }
+func EncodeChannelOrientation(arg wtype.ChannelOrientation) int64 {
+	if arg == wtype.LHVChannel {
+		return 0
+	}
+	return 1
+}
+func DecodeChannelOrientation(arg int64) wtype.ChannelOrientation {
+	if arg == 0 {
+		return wtype.LHVChannel
+	}
+	return wtype.LHHChannel
+}
 func EncodeLHChannelParameter(arg wtype.LHChannelParameter) *pb.LHChannelParameterMessage {
-	ret := pb.LHChannelParameterMessage{(string)(arg.ID), (string)(arg.Platform), (string)(arg.Name), EncodeVolume(arg.Minvol), EncodeVolume(arg.Maxvol), EncodeFlowRate(arg.Minspd), EncodeFlowRate(arg.Maxspd), int64(arg.Multi), (bool)(arg.Independent), int64(arg.Orientation), int64(arg.Head)}
+	ret := pb.LHChannelParameterMessage{
+		arg.ID,
+		arg.Platform,
+		arg.Name,
+		EncodeVolume(arg.Minvol),
+		EncodeVolume(arg.Maxvol),
+		EncodeFlowRate(arg.Minspd),
+		EncodeFlowRate(arg.Maxspd),
+		int64(arg.Multi),
+		arg.Independent,
+		EncodeChannelOrientation(arg.Orientation),
+		int64(arg.Head),
+	}
 	return &ret
 }
 func DecodeLHChannelParameter(arg *pb.LHChannelParameterMessage) wtype.LHChannelParameter {
@@ -744,7 +768,7 @@ func DecodeLHChannelParameter(arg *pb.LHChannelParameterMessage) wtype.LHChannel
 		Maxspd:      DecodeFlowRate(arg.Arg_7),
 		Multi:       (int)(arg.Arg_8),
 		Independent: arg.Arg_9,
-		Orientation: wtype.ChannelOrientation(arg.Arg_10),
+		Orientation: DecodeChannelOrientation(arg.Arg_10),
 		Head:        (int)(arg.Arg_11),
 	}
 	return ret

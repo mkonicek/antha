@@ -637,10 +637,10 @@ func default_lhproperties() *liquidhandling.LHProperties {
 							UnitParams{1., "ml"},      //max volume
 							UnitParams{0.1, "ml/min"}, //min flowrate
 							UnitParams{10., "ml/min"}, //max flowrate
-							8,     //multi
-							false, //independent
-							0,     //orientation
-							0,     //head
+							8,                //multi
+							false,            //independent
+							wtype.LHVChannel, //orientation
+							0,                //head
 						},
 						AdaptorParams{
 							"Head0 Adaptor",
@@ -652,10 +652,10 @@ func default_lhproperties() *liquidhandling.LHProperties {
 								UnitParams{1., "ml"},          //max volume
 								UnitParams{0.1, "ml/min"},     //min flowrate
 								UnitParams{10., "ml/min"},     //max flowrate
-								8,     //multi
-								false, //independent
-								0,     //orientation
-								0,     //head
+								8,                //multi
+								false,            //independent
+								wtype.LHVChannel, //orientation
+								0,                //head
 							},
 						},
 						wtype.TipLoadingBehaviour{},
@@ -706,10 +706,10 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 							UnitParams{1., "ml"},      //max volume
 							UnitParams{0.1, "ml/min"}, //min flowrate
 							UnitParams{10., "ml/min"}, //max flowrate
-							8,     //multi
-							false, //independent
-							0,     //orientation
-							0,     //head
+							8,                //multi
+							false,            //independent
+							wtype.LHVChannel, //orientation
+							0,                //head
 						},
 						AdaptorParams{
 							"Head0 Adaptor",
@@ -721,10 +721,10 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 								UnitParams{1., "ml"},          //max volume
 								UnitParams{0.1, "ml/min"},     //min flowrate
 								UnitParams{10., "ml/min"},     //max flowrate
-								8,     //multi
-								false, //independent
-								0,     //orientation
-								0,     //head
+								8,                //multi
+								false,            //independent
+								wtype.LHVChannel, //orientation
+								0,                //head
 							},
 						},
 						wtype.TipLoadingBehaviour{
@@ -746,10 +746,10 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 							UnitParams{1., "ml"},      //max volume
 							UnitParams{0.1, "ml/min"}, //min flowrate
 							UnitParams{10., "ml/min"}, //max flowrate
-							8,     //multi
-							false, //independent
-							0,     //orientation
-							0,     //head
+							8,                //multi
+							false,            //independent
+							wtype.LHVChannel, //orientation
+							0,                //head
 						},
 						AdaptorParams{
 							"Head1 Adaptor",
@@ -761,10 +761,10 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 								UnitParams{1., "ml"},          //max volume
 								UnitParams{0.1, "ml/min"},     //min flowrate
 								UnitParams{10., "ml/min"},     //max flowrate
-								8,     //multi
-								false, //independent
-								0,     //orientation
-								0,     //head
+								8,                //multi
+								false,            //independent
+								wtype.LHVChannel, //orientation
+								0,                //head
 							},
 						},
 						wtype.TipLoadingBehaviour{

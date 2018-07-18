@@ -464,6 +464,8 @@ func (lha *LHAdaptor) dup(keepIDs bool) *LHAdaptor {
 
 	if keepIDs {
 		ad.ID = lha.ID
+	} else {
+		ad.ID = GetUUID()
 	}
 
 	return ad

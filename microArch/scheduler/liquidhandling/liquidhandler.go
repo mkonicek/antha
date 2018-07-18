@@ -1056,7 +1056,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	instructions := (*request).LHInstructions
 
 	inputs := make(map[string][]*wtype.Liquid, 3)
-	vmap := make(map[string]wunit.Volume)
+	volsRequired := make(map[string]wunit.Volume)
 
 	allinputs := make([]string, 0, 10)
 
@@ -1090,7 +1090,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 				inputs[component.CNID()] = make([]*wtype.Liquid, 0, 1)
 				inputs[component.CNID()] = append(inputs[component.CNID()], component)
 				allinputs = append(allinputs, component.CNID())
-				vmap[component.CNID()] = component.Volume()
+				volsRequired[component.CNID()] = component.Volume()
 				component.DeclareInstance()
 
 				// if this already exists do nothing
@@ -1121,7 +1121,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 
 				// similarly add the volumes up
 
-				vol := vmap[component.Kind()]
+				vol := volsRequired[component.Kind()]
 
 				if vol.IsNil() {
 					vol = wunit.NewVolume(0.0, "ul")
@@ -1134,7 +1134,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 				v2a.Add(request.CarryVolume)
 				vol.Add(v2a)
 
-				vmap[component.Kind()] = vol
+				volsRequired[component.Kind()] = vol
 			}
 		}
 	}
@@ -1157,8 +1157,8 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		requestinputs = make(map[string][]*wtype.Liquid, 5)
 	}
 
-	vmap2 := make(map[string]wunit.Volume, len(vmap))
-	vmap3 := make(map[string]wunit.Volume, len(vmap))
+	volsSupplied := make(map[string]wunit.Volume, len(volsRequired))
+	volsWanting := make(map[string]wunit.Volume, len(volsRequired))
 
 	for _, k := range allinputs {
 		// vola: how much comes in
@@ -1169,23 +1169,23 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 			vola.Add(vold)
 		}
 		// volb: how much we asked for
-		volb := vmap[k].Dup()
+		volb := volsRequired[k].Dup()
 		volb.Subtract(vola)
-		vmap2[k] = vola
+		volsSupplied[k] = vola
 
 		if volb.GreaterThanFloat(0.0001) {
-			vmap3[k] = volb
+			volsWanting[k] = volb
 		}
 		// toggle HERE for DEBUG
 		if false {
-			volc := vmap[k]
+			volc := volsRequired[k]
 			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
 		}
 	}
 
-	(*request).Input_vols_required = vmap
-	(*request).Input_vols_supplied = vmap2
-	(*request).Input_vols_wanting = vmap3
+	(*request).Input_vols_required = volsRequired
+	(*request).Input_vols_supplied = volsSupplied
+	(*request).Input_vols_wanting = volsWanting
 
 	// add any new inputs
 

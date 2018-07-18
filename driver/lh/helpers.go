@@ -734,7 +734,7 @@ func DecodeLHChannelParameter(arg *pb.LHChannelParameterMessage) wtype.LHChannel
 	if arg == nil {
 		return wtype.LHChannelParameter{}
 	}
-	ret := wtype.LHChannelParameter{ID: (string)(arg.Arg_1), Platform: (string)(arg.Arg_2), Name: (string)(arg.Arg_3), Minvol: (wunit.Volume)(DecodeVolume(arg.Arg_4)), Maxvol: (wunit.Volume)(DecodeVolume(arg.Arg_5)), Minspd: (wunit.FlowRate)(DecodeFlowRate(arg.Arg_6)), Maxspd: (wunit.FlowRate)(DecodeFlowRate(arg.Arg_7)), Multi: (int)(arg.Arg_8), Independent: (bool)(arg.Arg_9), Orientation: (int)(arg.Arg_10), Head: (int)(arg.Arg_11)}
+	ret := wtype.LHChannelParameter{ID: (string)(arg.Arg_1), Platform: (string)(arg.Arg_2), Name: (string)(arg.Arg_3), Minvol: (wunit.Volume)(DecodeVolume(arg.Arg_4)), Maxvol: (wunit.Volume)(DecodeVolume(arg.Arg_5)), Minspd: (wunit.FlowRate)(DecodeFlowRate(arg.Arg_6)), Maxspd: (wunit.FlowRate)(DecodeFlowRate(arg.Arg_7)), Multi: (int)(arg.Arg_8), Independent: (bool)(arg.Arg_9), Orientation: wtype.ChannelOrientation(arg.Arg_10), Head: (int)(arg.Arg_11)}
 	return ret
 }
 func EncodePtrToLHChannelParameter(arg *wtype.LHChannelParameter) *pb.PtrToLHChannelParameterMessage {

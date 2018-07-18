@@ -58,7 +58,7 @@ type ChannelParams struct {
 	Maxrate     UnitParams
 	multi       int
 	Independent bool
-	Orientation int
+	Orientation wtype.ChannelOrientation
 	Head        int
 }
 

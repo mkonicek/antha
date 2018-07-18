@@ -30,9 +30,11 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+type ChannelOrientation int
+
 const (
-	LHVChannel = iota // vertical orientation
-	LHHChannel        // horizontal orientation
+	LHVChannel ChannelOrientation = iota // vertical orientation
+	LHHChannel                           // horizontal orientation
 )
 
 // what constraints apply to adjacent channels
@@ -82,7 +84,7 @@ type LHChannelParameter struct {
 	Maxspd      wunit.FlowRate
 	Multi       int
 	Independent bool
-	Orientation int
+	Orientation ChannelOrientation
 	Head        int
 }
 
@@ -144,7 +146,7 @@ func (lhcp LHChannelParameter) MarshalJSON() ([]byte, error) {
 		Maxspd      wunit.FlowRate
 		Multi       int
 		Independent bool
-		Orientation int
+		Orientation ChannelOrientation
 		Head        int
 	}{
 		lhcp.ID,
@@ -180,7 +182,7 @@ func (lhcp *LHChannelParameter) dup(keepIDs bool) *LHChannelParameter {
 	return r
 }
 
-func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, minspd, maxspd wunit.FlowRate, multi int, independent bool, orientation int, head int) *LHChannelParameter {
+func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, minspd, maxspd wunit.FlowRate, multi int, independent bool, orientation ChannelOrientation, head int) *LHChannelParameter {
 	var lhp LHChannelParameter
 	lhp.ID = GetUUID()
 	lhp.Name = name

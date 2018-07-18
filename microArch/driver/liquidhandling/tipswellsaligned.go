@@ -56,7 +56,7 @@ func isInArr(s string, sa []string) bool {
 	return false
 }
 
-func expandWellsFrom(orientation int, plt wtype.Plate, wellsfrom []string) ([]string, bool) {
+func expandWellsFrom(orientation wtype.ChannelOrientation, plt wtype.Plate, wellsfrom []string) ([]string, bool) {
 	wcArr := wtype.WCArrayFromStrings(wellsfrom)
 
 	var wells []*wtype.LHWell

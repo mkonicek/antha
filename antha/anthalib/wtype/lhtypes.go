@@ -37,6 +37,13 @@ const (
 	LHHChannel                                  // horizontal orientation
 )
 
+func (o ChannelOrientation) String() string {
+	if o == LHVChannel {
+		return "vertical"
+	}
+	return "horizontal"
+}
+
 // what constraints apply to adjacent channels
 type LHMultiChannelConstraint struct {
 	X int

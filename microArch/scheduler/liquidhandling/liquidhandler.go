@@ -1161,25 +1161,22 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	volsWanting := make(map[string]wunit.Volume, len(volsRequired))
 
 	for _, k := range allinputs {
-		// vola: how much comes in
-		ar := requestinputs[k]
-		vola := wunit.NewVolume(0.00, "ul")
-		for _, cmp := range ar {
-			vold := wunit.NewVolume(cmp.Vol, cmp.Vunit)
-			vola.Add(vold)
+		// volSupplied: how much comes in
+		volSupplied := wunit.NewVolume(0.00, "ul")
+		for _, cmp := range requestinputs[k] {
+			volSupplied.Add(cmp.Volume())
 		}
-		// volb: how much we asked for
-		volb := volsRequired[k].Dup()
-		volb.Subtract(vola)
-		volsSupplied[k] = vola
+		volsSupplied[k] = volSupplied
 
-		if volb.GreaterThanFloat(0.0001) {
-			volsWanting[k] = volb
+		// volWanted: how much extra we wanted
+		volWanted := wunit.SubtractVolumes(volsRequired[k], volSupplied)
+
+		if volWanted.GreaterThanFloat(0.0001) {
+			volsWanting[k] = volWanted
 		}
 		// toggle HERE for DEBUG
 		if false {
-			volc := volsRequired[k]
-			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
+			logger.Debug(fmt.Sprintf("COMPONENT %s HAVE : %v WANT: %v DIFF: %v", k, volSupplied.ToString(), volsRequired[k].ToString(), volWanted.ToString()))
 		}
 	}
 

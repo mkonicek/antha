@@ -1030,27 +1030,6 @@ const NoID = "NOID"
 const NoName = "NONAME"
 const NoWell = "NOWELL"
 
-func assembleLoc(ins *wtype.LHInstruction) string {
-	id := NoID
-	if ins.PlateID != "" {
-		id = ins.PlateID
-	}
-
-	name := NoName
-
-	if ins.PlateName != "" {
-		name = ins.PlateName
-	}
-
-	well := NoWell
-
-	if ins.Welladdress != "" {
-		well = ins.Welladdress
-	}
-
-	return strings.Join([]string{id, name, well}, ":")
-}
-
 // sort out inputs
 func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	instructions := (*request).LHInstructions
@@ -1061,8 +1040,6 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	allinputs := make([]string, 0, 10)
 
 	ordH := make(map[string]int, len(instructions))
-
-	inPlaceLocations := make(map[string]string, len(instructions))
 
 	//	for _, instruction := range instructions {
 	for _, insID := range request.Output_order {
@@ -1098,10 +1075,6 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 
 				if !ok {
 					ordH[component.CNID()] = len(ordH)
-					// assign like this: ID:NAME:WELL
-					// if ID is blank we call it NOID
-					loc := assembleLoc(instruction)
-					inPlaceLocations[component.CNID()] = loc
 				}
 			} else {
 				cmps, ok := inputs[component.Kind()]

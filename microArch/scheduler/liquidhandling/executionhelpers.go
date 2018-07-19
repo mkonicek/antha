@@ -356,13 +356,16 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	return insOut
 }
 
-func set_output_order(rq *LHRequest) error {
+func setOutputOrder(rq *LHRequest) error {
 	// guarantee all nodes are dependency-ordered
 	// in order to aggregate without introducing cycles
 
 	unsorted := getInstructionSet(rq)
 
-	tg := MakeTGraph(unsorted)
+	tg, err := MakeTGraph(unsorted)
+	if err != nil {
+		return err
+	}
 
 	sorted, err := graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
@@ -389,7 +392,10 @@ func set_output_order(rq *LHRequest) error {
 	rq = updateRequestWithNewInstructions(rq, sortedAsIns)
 
 	// sort again post aggregation
-	tg = MakeTGraph(sortedAsIns)
+	tg, err = MakeTGraph(sortedAsIns)
+	if err != nil {
+		return err
+	}
 
 	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 

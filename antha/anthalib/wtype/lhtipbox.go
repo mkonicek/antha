@@ -504,7 +504,7 @@ func (tb *LHTipbox) PutTip(c WellCoords, tip *LHTip) bool {
 */
 
 // find tips that fit the pattern and return in the same format
-func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string, error) {
+func (tb *LHTipbox) GetTipsMasked(mask []bool, ori ChannelOrientation, canTrim bool) ([]string, error) {
 	possiblyTrimmedMask := mask
 
 	if canTrim {
@@ -538,7 +538,7 @@ func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string,
 	return []string{}, fmt.Errorf("Not found or unknown orientation")
 }
 
-func checkLen(mask []bool, ori int, tb *LHTipbox) error {
+func checkLen(mask []bool, ori ChannelOrientation, tb *LHTipbox) error {
 	if ori == LHHChannel {
 		if len(mask) != tb.NCols() {
 			return fmt.Errorf("Error: CanTrim=false only applies if mask length is identical to tipbox block size")
@@ -583,7 +583,7 @@ func inflateMask(mask []bool, offset, size int) []bool {
 	return r
 }
 
-func maskToWellCoords(mask []bool, offset, ori int) []string {
+func maskToWellCoords(mask []bool, offset int, ori ChannelOrientation) []string {
 	wc := make([]WellCoords, len(mask))
 
 	for i := 0; i < len(mask); i++ {
@@ -613,7 +613,7 @@ func maskToWellCoords(mask []bool, offset, ori int) []string {
 	return r
 }
 
-func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori int) []string {
+func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori ChannelOrientation) []string {
 	r := make([]string, 0, 1)
 
 	if ori == LHVChannel {
@@ -639,7 +639,7 @@ func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori int) []string {
 }
 
 // fails iff for true mask[i] there is no corresponding clean tip
-func (tb *LHTipbox) hasCleanTips(offset int, mask []bool, ori int) bool {
+func (tb *LHTipbox) hasCleanTips(offset int, mask []bool, ori ChannelOrientation) bool {
 	if ori == LHVChannel {
 		for i := 0; i < len(mask); i++ {
 			if mask[i] && (tb.Tips[offset][i] == nil || tb.Tips[offset][i].Dirty) {
@@ -662,7 +662,7 @@ func (tb *LHTipbox) hasCleanTips(offset int, mask []bool, ori int) bool {
 }
 
 // deprecated shortly
-func (tb *LHTipbox) GetTips(mirror bool, multi, orient int) []string {
+func (tb *LHTipbox) GetTips(mirror bool, multi int, orient ChannelOrientation) []string {
 	// this removes the tips as well
 	var ret []string = nil
 	if orient == LHHChannel {

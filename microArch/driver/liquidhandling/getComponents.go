@@ -32,7 +32,7 @@ func (h ComponentVolumeHash) Dup() ComponentVolumeHash {
 type GetComponentsOptions struct {
 	Cmps            wtype.ComponentVector
 	Carryvol        wunit.Volume
-	Ori             int
+	Ori             wtype.ChannelOrientation
 	Multi           int
 	Independent     bool
 	LegacyVolume    bool
@@ -68,7 +68,7 @@ func matchToParallelTransfer(m wtype.Match) ParallelTransfer {
 }
 
 // returns a vector iterator for a plate given the multichannel capabilites of the head (ori, multi)
-func getPlateIterator(lhp *wtype.Plate, ori, multi int) wtype.AddressSliceIterator {
+func getPlateIterator(lhp *wtype.Plate, ori wtype.ChannelOrientation, multi int) wtype.AddressSliceIterator {
 	if ori == wtype.LHVChannel {
 		//it = NewColVectorIterator(lhp, multi)
 
@@ -100,7 +100,7 @@ func getPlateIterator(lhp *wtype.Plate, ori, multi int) wtype.AddressSliceIterat
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {

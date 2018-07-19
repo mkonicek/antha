@@ -1245,56 +1245,6 @@ func TestPlateIDMap(t *testing.T) {
 	}
 }
 
-//four mixes into a column with 2 different volumes
-//expected behaviour - each pair of samples with equal volume is pipetted together
-//original failure - a set of 3 1ul volumes are pipetted together, then the rest of the volume is made up with single channel operations
-func TestOveractiveMultichannel(t *testing.T) {
-
-	ctx := GetContextForTest()
-
-	source := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
-
-	samples := make([]*wtype.Liquid, 4)
-
-	samples[0] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
-	samples[1] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
-	samples[2] = mixer.Sample(source, wunit.NewVolume(100.0, "ul"))
-	samples[3] = mixer.Sample(source, wunit.NewVolume(100.0, "ul"))
-
-	rq, err := configureTransferRequestMutliSamplesTest("multiwater", samples...)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(rq.Instructions) == 0 {
-		t.Fatal("No instructions generated")
-	}
-
-	volOK := func(volumes []wunit.Volume) bool {
-		for _, v := range volumes {
-			if v.IsZero() {
-				continue
-			}
-			if vol := v.ConvertToString("ul"); vol != 1.0 && vol != 100 {
-				return false
-			}
-		}
-		return true
-	}
-
-	for i, ins := range rq.Instructions {
-		//assertion 1: multi should equal 2 in all cases
-		if multi, ok := ins.GetParameter(liquidhandling.MULTI).(int); ok && multi != 2 {
-			t.Errorf("multi was %d not 2 for instruction %d", multi, i) //, liquidhandling.InsToString(ins))
-		}
-
-		//assertion 2: dispenses should be of 1 or 100 ul only
-		if dsp, ok := ins.(*liquidhandling.DispenseInstruction); ok && !volOK(dsp.Volume) {
-			t.Errorf("expected volumes of 1 or 100 ul only: got %v", dsp.Volume)
-		}
-	}
-}
-
 func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstruction {
 	ret := wtype.NewLHSplitInstruction()
 

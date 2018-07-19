@@ -1937,41 +1937,43 @@ func Test_UnloadTips(t *testing.T) {
 				tipwasteAssertion("tipwaste", 8),
 			},
 		},
-		/*	commented out due to tips colliding with tipbox	{
-			"OK - 8 tips back to a tipbox",
-			nil,
-			[]*SetupFn{
-				testLayout(),
-				removeTipboxTips("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
-			},
-			Instructions: []TestRobotInstruction{
-				&Move{
-					deckposition: []string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"},
-					wellcoords: []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},
-					reference: []int{0, 0, 0, 0, 0, 0, 0, 0},
-					offsetX: []float64{0., 0., 0., 0., 0., 0., 0., 0.},
-					offsetY: []float64{0., 0., 0., 0., 0., 0., 0., 0.},
-					offsetZ: []float64{1., 1., 1., 1., 1., 1., 1., 1.},
-					plate_type: []string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},
-					head: 0,
+		//		commented out due to tips colliding with tipbox
+		/*		{
+					Name:  "OK - 8 tips back to a tipbox",
+					Props: nil,
+					Setup: []*SetupFn{
+						testLayout(),
+						removeTipboxTips("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
+						preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+					},
+					Instructions: []TestRobotInstruction{
+						&Move{
+							deckposition: []string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"},
+							wellcoords:   []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},
+							reference:    []int{0, 0, 0, 0, 0, 0, 0, 0},
+							offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+							offsetY:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+							offsetZ:      []float64{1., 1., 1., 1., 1., 1., 1., 1.},
+							plate_type:   []string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},
+							head:         0,
+						},
+						&UnloadTips{
+							channels:  []int{0, 1, 2, 3, 4, 5, 6, 7},
+							head:      0,
+							multi:     8,
+							platetype: []string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},
+							position:  []string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"},
+							well:      []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},
+						},
+					},
+					Assertions: []*AssertionFn{
+						tipboxAssertion("tipbox_1", []string{}),
+						tipboxAssertion("tipbox_2", []string{}),
+						adaptorAssertion(0, []tipDesc{}),
+						tipwasteAssertion("tipwaste", 0),
+					},
 				},
-				&UnloadTips{
-					channels: []int{0, 1, 2, 3, 4, 5, 6, 7},
-					head: 0,
-					multi: 8,
-					platetype: []string{"tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox", "tipbox"},
-					position: []string{"tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1", "tipbox_1"},
-					well: []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},
-				},
-			},
-			Assertions: []*AssertionFn{
-				tipboxAssertion("tipbox_1", []string{}),
-				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{}),
-				tipwasteAssertion("tipwaste", 0),
-			},
-		},*/
+		*/
 		{
 			Name:  "OK - independent tips",
 			Props: independent_lhproperties(),
@@ -2566,39 +2568,6 @@ func Test_Aspirate(t *testing.T) {
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-		/*		{
-								"Fail - wrong liquid type",
-								nil,
-								[]*SetupFn{
-									testLayout(),
-									prefillWells("input_1", []string{"A1"}, "water", 200.),
-									preloadAdaptorTips(0, "tipbox_1", []int{0}),
-								},
-								Instructions: []TestRobotInstruction{
-									&Move{
-										deckposition: []string{"input_1", "", "", "", "", "", "", ""},
-										wellcoords: []string{"A1", "", "", "", "", "", "", ""},
-										reference: []int{0, 0, 0, 0, 0, 0, 0, 0},
-										offsetX: []float64{0., 0., 0., 0., 0., 0., 0., 0.},
-										offsetY: []float64{0., 0., 0., 0., 0., 0., 0., 0.},
-										offsetZ: []float64{1., 1., 1., 1., 1., 1., 1., 1.},
-										plate_type: []string{"plate", "", "", "", "", "", "", ""},
-										head: 0,
-									},
-									&Aspirate{
-										volume     : []float64{102.1, 0., 0., 0., 0., 0., 0., 0.},
-				overstroke: 						false,
-										head       : 0,
-										multi      : 1,
-										platetype  : []string{"plate", "", "", "", "", "", "", ""},
-										what       : []string{"ethanol", "", "", "", "", "", "", ""},
-										llf        :[]bool{false, false, false, false, false, false, false, false},
-									},
-								},
-								ExpectedErrors: []string{
-									"(warn) Aspirate[1]: 102 ul of ethanol to head 0 channel 0 - well A1@plate1 contains water, not ethanol",
-								},
-							},*/
 		{
 			Name: "Fail - inadvertant aspiration",
 			Setup: []*SetupFn{

@@ -12,28 +12,32 @@ import (
 // changes to the code generation of elements.
 
 type Trace struct {
-	lock   sync.Mutex
-	instrs []*commandInst
+	lock         sync.Mutex
+	instructions []*commandInst
 }
 
-func (tr *Trace) Issue(instr *commandInst) {
+// Issue an instruction - this records the instruction into the trace.
+func (tr *Trace) Issue(instruction *commandInst) {
 	tr.lock.Lock()
 	defer tr.lock.Unlock()
 
-	tr.instrs = append(tr.instrs, instr)
+	tr.instructions = append(tr.instructions, instruction)
 }
 
-func (tr *Trace) Instrs() []*commandInst {
+// Returns a (shallow) copy (to avoid data races) of the issued
+// instructions.
+func (tr *Trace) Instructions() []*commandInst {
 	tr.lock.Lock()
 	defer tr.lock.Unlock()
 
-	clone := make([]*commandInst, len(tr.instrs))
-	copy(clone, tr.instrs)
+	clone := make([]*commandInst, len(tr.instructions))
+	copy(clone, tr.instructions)
 	return clone
 }
 
-func Issue(ctx context.Context, instr *commandInst) {
-	getTrace(ctx).Issue(instr)
+// Issue an instruction - this records the instruction into the trace.
+func Issue(ctx context.Context, instruction *commandInst) {
+	getTrace(ctx).Issue(instruction)
 }
 
 type traceKey int

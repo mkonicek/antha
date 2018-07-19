@@ -57,7 +57,7 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 		return nil, err
 	}
 
-	nodes, err := getMaker(ctx).MakeNodes(tr.Instrs())
+	nodes, err := getMaker(ctx).MakeNodes(tr.Instructions())
 	if err != nil {
 		return nil, err
 	}

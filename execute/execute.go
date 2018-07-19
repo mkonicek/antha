@@ -6,8 +6,8 @@ import (
 	"context"
 
 	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -47,26 +47,29 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 		return nil, err
 	}
 
-	r := &resolver{}
-
-	err = w.Run(trace.WithResolver(ctx, func(ctx context.Context, insts []interface{}) (map[int]interface{}, error) {
-		return r.resolve(ctx, insts)
-	}))
-
-	if err == nil {
-		return &Result{
-			Workflow: w,
-			Input:    r.nodes,
-			Insts:    r.insts,
-		}, nil
+	ctxTr, tr := WithTrace(ctx)
+	if err := w.Run(ctxTr); err != nil {
+		return nil, err
 	}
 
-	// Unwrap execute.Error
-	if terr, ok := err.(*trace.Error); ok {
-		if unwrapped, ok := unwrapError(terr.BaseError); ok {
-			err = unwrapped
-		}
+	t, err := target.GetTarget(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, err
+	nodes, err := getMaker(ctx).MakeNodes(tr.Instrs())
+	if err != nil {
+		return nil, err
+	}
+
+	instrs, err := codegen.Compile(ctx, t, nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Result{
+		Workflow: w,
+		Input:    nodes,
+		Insts:    instrs,
+	}, nil
 }

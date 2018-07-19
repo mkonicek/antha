@@ -308,7 +308,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 
 	// inconsistent plate types will be assigned randomly!
 	//	for k, v := range request.LHInstructions {
-	//for _, k := range request.Output_order {
+	//for _, k := range request.OutputOrder {
 	x := 0
 	for _, k := range order {
 		x += 1

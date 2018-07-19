@@ -849,7 +849,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	if request.Options.PrintInstructions {
-		for _, insID := range request.Output_order {
+		for _, insID := range request.OutputOrder {
 			ins := request.LHInstructions[insID]
 			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
 
@@ -864,8 +864,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// assert we should have some instruction ordering
 
-	if len(request.Output_order) == 0 {
-		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
+	if len(request.OutputOrder) == 0 {
+		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.OutputOrder), len(request.LHInstructions))
 	}
 
 	// assert that we must keep prompts and splits separate from mixes
@@ -929,7 +929,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 			fmt.Println("")
 			fmt.Println("POST VOLUME FIX")
 			fmt.Println("")
-			for _, insID := range request.Output_order {
+			for _, insID := range request.OutputOrder {
 				ins := request.LHInstructions[insID]
 				fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
 
@@ -1042,7 +1042,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	ordH := make(map[string]int, len(instructions))
 
 	//	for _, instruction := range instructions {
-	for _, insID := range request.Output_order {
+	for _, insID := range request.OutputOrder {
 		// ignore non-mixes
 
 		instruction := instructions[insID]
@@ -1118,12 +1118,12 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	// invert the Hash
 
 	var err error
-	request.Input_order, err = OrdinalFromHash(ordH)
+	request.InputOrder, err = OrdinalFromHash(ordH)
 	if err != nil {
 		return request, err
 	}
 
-	requestinputs := request.Input_solutions
+	requestinputs := request.InputSolutions
 
 	if len(requestinputs) == 0 {
 		requestinputs = make(map[string][]*wtype.Liquid, 5)
@@ -1152,9 +1152,9 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		}
 	}
 
-	request.Input_vols_required = volsRequired
-	request.Input_vols_supplied = volsSupplied
-	request.Input_vols_wanting = volsWanting
+	request.InputVolsRequired = volsRequired
+	request.InputVolsSupplied = volsSupplied
+	request.InputVolsWanting = volsWanting
 
 	// add any new inputs
 
@@ -1164,7 +1164,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		}
 	}
 
-	request.Input_solutions = requestinputs
+	request.InputSolutions = requestinputs
 
 	return request, nil
 }
@@ -1364,9 +1364,9 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 		return rq
 	}
 
-	oo := make([]string, 0, len(rq.Output_order)-len(toRemove))
+	oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
 
-	for _, ins := range rq.Output_order {
+	for _, ins := range rq.OutputOrder {
 		if toRemove[ins] {
 			continue
 		} else {
@@ -1374,11 +1374,11 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 		}
 	}
 
-	if len(oo) != len(rq.Output_order)-len(toRemove) {
-		panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.Output_order), len(toRemove), len(oo)))
+	if len(oo) != len(rq.OutputOrder)-len(toRemove) {
+		panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.OutputOrder), len(toRemove), len(oo)))
 	}
 
-	rq.Output_order = oo
+	rq.OutputOrder = oo
 
 	// prune instructionChain
 

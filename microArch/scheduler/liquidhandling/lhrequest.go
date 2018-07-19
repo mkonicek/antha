@@ -35,7 +35,7 @@ type LHRequest struct {
 	BlockID               wtype.BlockID
 	BlockName             string
 	LHInstructions        map[string]*wtype.LHInstruction
-	Input_solutions       map[string][]*wtype.Liquid
+	InputSolutions        map[string][]*wtype.Liquid
 	Plates                map[string]*wtype.Plate
 	Tips                  []*wtype.LHTipbox
 	InstructionSet        *liquidhandling.RobotInstructionSet
@@ -53,13 +53,13 @@ type LHRequest struct {
 	Plate_lookup          map[string]string
 	Stockconcs            map[string]wunit.Concentration
 	PolicyManager         *LHPolicyManager
-	Input_order           []string
-	Output_order          []string
+	InputOrder            []string
+	OutputOrder           []string
 	OutputIteratorFactory func(wtype.Addressable) wtype.AddressIterator `json:"-"`
 	InstructionChain      *IChain
-	Input_vols_supplied   map[string]wunit.Volume
-	Input_vols_required   map[string]wunit.Volume
-	Input_vols_wanting    map[string]wunit.Volume
+	InputVolsSupplied     map[string]wunit.Volume
+	InputVolsRequired     map[string]wunit.Volume
+	InputVolsWanting      map[string]wunit.Volume
 	TimeEstimate          float64
 	CarryVolume           wunit.Volume
 	InstructionSets       [][]*wtype.LHInstruction
@@ -96,7 +96,7 @@ func (req *LHRequest) ConfigureYourself() error {
 	// ensures input solutions is populated
 	// once input plates are specified
 	// more to happen later
-	inputs := req.Input_solutions
+	inputs := req.InputSolutions
 
 	if inputs == nil {
 		inputs = make(map[string][]*wtype.Liquid)
@@ -150,7 +150,7 @@ func (req *LHRequest) ConfigureYourself() error {
 		}
 	}
 
-	req.Input_solutions = inputs
+	req.InputSolutions = inputs
 	return nil
 }
 
@@ -180,7 +180,7 @@ func NewLHRequest() *LHRequest {
 	var lhr LHRequest
 	lhr.ID = wtype.GetUUID()
 	lhr.LHInstructions = make(map[string]*wtype.LHInstruction)
-	lhr.Input_solutions = make(map[string][]*wtype.Liquid)
+	lhr.InputSolutions = make(map[string][]*wtype.Liquid)
 	lhr.Plates = make(map[string]*wtype.Plate)
 	lhr.Tips = make([]*wtype.LHTipbox, 0, 1)
 	lhr.Input_plates = make(map[string]*wtype.Plate)
@@ -191,16 +191,16 @@ func NewLHRequest() *LHRequest {
 	lhr.Input_plate_order = make([]string, 0, 1)
 	lhr.Plate_lookup = make(map[string]string)
 	lhr.Stockconcs = make(map[string]wunit.Concentration)
-	lhr.Input_order = make([]string, 0)
-	lhr.Output_order = make([]string, 0)
+	lhr.InputOrder = make([]string, 0)
+	lhr.OutputOrder = make([]string, 0)
 	lhr.OutputIteratorFactory = columnWiseIterator
 	lhr.Output_assignments = make(map[string][]string)
 	lhr.Input_assignments = make(map[string][]string)
 	lhr.InstructionSet = liquidhandling.NewRobotInstructionSet(nil)
 	lhr.InstructionText = ""
-	lhr.Input_vols_required = make(map[string]wunit.Volume)
-	lhr.Input_vols_supplied = make(map[string]wunit.Volume)
-	lhr.Input_vols_wanting = make(map[string]wunit.Volume)
+	lhr.InputVolsRequired = make(map[string]wunit.Volume)
+	lhr.InputVolsSupplied = make(map[string]wunit.Volume)
+	lhr.InputVolsWanting = make(map[string]wunit.Volume)
 	lhr.CarryVolume = wunit.NewVolume(0.5, "ul")
 	lhr.Input_setup_weights["MAX_N_PLATES"] = 2
 	lhr.Input_setup_weights["MAX_N_WELLS"] = 96
@@ -245,7 +245,7 @@ func (lhr *LHRequest) NewComponentsAdded() bool {
 	// run this after Plan to determine if anything
 	// new was added to the inputs
 
-	return len(lhr.Input_vols_wanting) != 0
+	return len(lhr.InputVolsWanting) != 0
 }
 
 func (lhr *LHRequest) AddUserPlate(p *wtype.Plate) {

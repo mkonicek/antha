@@ -94,15 +94,15 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	var curr_plate *wtype.Plate
 
-	inputs := (*request).Input_solutions
+	inputs := (*request).InputSolutions
 
-	input_order := make([]string, len((*request).Input_order))
-	copy(input_order, (*request).Input_order)
+	input_order := make([]string, len((*request).InputOrder))
+	copy(input_order, (*request).InputOrder)
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in
 
-	input_volumes := request.Input_vols_wanting
+	input_volumes := request.InputVolsWanting
 
 	// sort to make deterministic
 	// we sort by a) volume (descending) b) name (alphabetically)

@@ -85,12 +85,12 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 	if e, g := self.ChainHeight, rq.InstructionChain.Height(); e != g {
 		t.Fatalf("Instruction chain length mismatch, e: %d, g: %d", e, g)
 	}
-	if e, g := len(self.ExpectedOrder), len(rq.Output_order); e != g {
-		t.Fatalf("Expected Order length mismatch:\n\te: %v\n\tg: %v", self.ExpectedOrder, rq.Output_order)
+	if e, g := len(self.ExpectedOrder), len(rq.OutputOrder); e != g {
+		t.Fatalf("Expected Order length mismatch:\n\te: %v\n\tg: %v", self.ExpectedOrder, rq.OutputOrder)
 	}
 
-	outputOrder := make([]string, 0, len(rq.Output_order))
-	for _, id := range rq.Output_order {
+	outputOrder := make([]string, 0, len(rq.OutputOrder))
+	for _, id := range rq.OutputOrder {
 		//for promts check the message as the ID is overwritten
 		if ins, ok := rq.LHInstructions[id]; ok && ins.Type == wtype.LHIPRM { //LHIPRM == prompt instruction
 			outputOrder = append(outputOrder, ins.Message)

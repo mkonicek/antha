@@ -108,7 +108,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 				sort.Strings(output_plate_order)
 		*/
 		// order them according to when they are first used
-		for _, insID := range request.Output_order {
+		for _, insID := range request.OutputOrder {
 
 			ins := request.LHInstructions[insID]
 			// ignore non-mixes

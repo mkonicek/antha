@@ -48,7 +48,7 @@ func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *li
 	instrx := make([]liquidhandling.RobotInstruction, 0, len(request.LHInstructions))
 	evaps := make([]wtype.VolumeCorrection, 0, 10)
 
-	for ix, insID := range request.Output_order {
+	for ix, insID := range request.OutputOrder {
 		//	request.InstructionSet.Add(ConvertInstruction(request.LHInstructions[insID], robot))
 
 		ins := request.LHInstructions[insID]
@@ -79,7 +79,7 @@ func ImprovedExecutionPlanner(ctx context.Context, request *LHRequest, robot *li
 			cmp = request.LHInstructions[insID].Message
 		}
 
-		if canaggregate(curragg, cmp, request.Output_order, request.LHInstructions) {
+		if canaggregate(curragg, cmp, request.OutputOrder, request.LHInstructions) {
 			// true if either curragg empty or cmp is same
 			curragg = append(curragg, ix)
 		} else {

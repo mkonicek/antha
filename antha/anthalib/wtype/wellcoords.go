@@ -277,13 +277,17 @@ func (wc WellCoords) FormatA1() string {
 // if byRow == true: A1 = 0, A2 = 1, A12 = 11
 // if byRow == false: A1 = 0, B1 = 2, E1 = 5
 func (wc WellCoords) WellNumber(platetype *Plate, byRow bool) int {
+	return wc.wellNumber(platetype.WlsX, platetype.WlsY, byRow)
+}
+
+func (wc WellCoords) wellNumber(xLength, yLength int, byRow bool) int {
 	if wc.X < 0 || wc.Y < 0 {
 		return -1
 	}
 	if byRow {
-		return (platetype.WlsY*(wc.Y-1) + wc.X)
+		return (yLength*(wc.Y) + wc.X)
 	}
-	return (platetype.WlsX*(wc.X-1) + wc.Y)
+	return (xLength*(wc.X) + wc.Y)
 }
 
 func (wc WellCoords) ColNumString() string {

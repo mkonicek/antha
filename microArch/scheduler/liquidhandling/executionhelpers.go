@@ -404,7 +404,7 @@ func setOutputOrder(rq *LHRequest) error {
 	}
 
 	// make into equivalence classes and sort according to defined order
-	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort, rq.InputSolutions)
+	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort, rq.InputSolutions.Solutions)
 
 	// populate the request
 	rq.InstructionChain = it

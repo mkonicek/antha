@@ -81,10 +81,10 @@ func (is InputSorter) Less(i, j int) bool {
 func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
-	input_platetypes := (*request).Input_platetypes
+	input_platetypes := request.Input_platetypes
 
 	// we assume that input_plates is set if any locs are set
-	input_plates := (*request).Input_plates
+	input_plates := request.Input_plates
 
 	if len(input_plates) == 0 {
 		input_plates = make(map[string]*wtype.Plate, 3)
@@ -94,15 +94,15 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	var curr_plate *wtype.Plate
 
-	inputs := (*request).InputSolutions
+	inputs := request.InputSolutions.Solutions
 
-	input_order := make([]string, len((*request).InputOrder))
-	copy(input_order, (*request).InputOrder)
+	input_order := make([]string, len(request.InputSolutions.Order))
+	copy(input_order, request.InputSolutions.Order)
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in
 
-	input_volumes := request.InputVolsWanting
+	input_volumes := request.InputSolutions.VolumesWanting
 
 	// sort to make deterministic
 	// we sort by a) volume (descending) b) name (alphabetically)
@@ -252,8 +252,8 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		}
 	}
 
-	(*request).Input_plates = input_plates
-	(*request).Input_assignments = input_assignments
+	request.Input_plates = input_plates
+	request.Input_assignments = input_assignments
 
 	//return input_plates, input_assignments
 	return request, nil

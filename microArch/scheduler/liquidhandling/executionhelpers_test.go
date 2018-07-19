@@ -76,6 +76,8 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 
 	rq.Options.OutputSort = self.OutputSort
 
+	rq.ConfigureYourself()
+
 	err := setOutputOrder(rq)
 	if encounteredError := err != nil; self.ExpectingError != encounteredError {
 		t.Fatalf("ExpectingError: %t, Encountered Error: %v", self.ExpectingError, err)

@@ -740,17 +740,17 @@ func DecodeChannelOrientation(arg int64) wtype.ChannelOrientation {
 }
 func EncodeLHChannelParameter(arg wtype.LHChannelParameter) *pb.LHChannelParameterMessage {
 	ret := pb.LHChannelParameterMessage{
-		arg.ID,
-		arg.Platform,
-		arg.Name,
-		EncodeVolume(arg.Minvol),
-		EncodeVolume(arg.Maxvol),
-		EncodeFlowRate(arg.Minspd),
-		EncodeFlowRate(arg.Maxspd),
-		int64(arg.Multi),
-		arg.Independent,
-		EncodeChannelOrientation(arg.Orientation),
-		int64(arg.Head),
+		Arg_1:  arg.ID,
+		Arg_2:  arg.Platform,
+		Arg_3:  arg.Name,
+		Arg_4:  EncodeVolume(arg.Minvol),
+		Arg_5:  EncodeVolume(arg.Maxvol),
+		Arg_6:  EncodeFlowRate(arg.Minspd),
+		Arg_7:  EncodeFlowRate(arg.Maxspd),
+		Arg_8:  int64(arg.Multi),
+		Arg_9:  arg.Independent,
+		Arg_10: EncodeChannelOrientation(arg.Orientation),
+		Arg_11: int64(arg.Head),
 	}
 	return &ret
 }

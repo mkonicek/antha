@@ -91,7 +91,7 @@ type PolicyTest struct {
 func stringInstructions(inss []RobotInstruction) string {
 	s := make([]string, len(inss))
 	for i, ins := range inss {
-		s[i] = ins.Type().MachineName
+		s[i] = ins.Type().Name
 	}
 	return "[" + strings.Join(s, ",") + "]"
 }

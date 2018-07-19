@@ -146,6 +146,20 @@ func TestWellNumber(t *testing.T) {
 			ExpectedWellNumber: 8,
 		},
 		{
+			Well:               MakeWellCoordsA1("B1"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              true,
+			ExpectedWellNumber: 12,
+		},
+		{
+			Well:               MakeWellCoordsA1("B1"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              false,
+			ExpectedWellNumber: 1,
+		},
+		{
 			Well:               MakeWellCoordsA1("H12"),
 			WellsX:             8,
 			WellsY:             12,

@@ -275,7 +275,7 @@ func (wc WellCoords) FormatA1() string {
 // Setting byRow to true will count along each sequential row rather down each sequential column.
 // e.g.
 // if byRow == true: A1 = 0, A2 = 1, A12 = 11
-// if byRow == false: A1 = 0, B1 = 2, E1 = 5
+// if byRow == false: A1 = 0, B1 = 1, E1 = 4
 func (wc WellCoords) WellNumber(platetype *Plate, byRow bool) int {
 	return wc.wellNumber(platetype.WlsX, platetype.WlsY, byRow)
 }

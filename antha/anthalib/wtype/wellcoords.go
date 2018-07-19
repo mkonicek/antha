@@ -1,10 +1,11 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func A1ArrayFromWells(wells []*LHWell) []string {
@@ -269,11 +270,20 @@ func (wc WellCoords) FormatA1() string {
 	return wutil.NumToAlpha(wc.Y+1) + strconv.Itoa(wc.X+1)
 }
 
-func (wc WellCoords) WellNumber() int {
+// WellNumber returns the index of the well coordinates on a platetype based on
+// looking up the number of wells in the X, Y directions of the platetype.
+// Setting byRow to true will count along each sequential row rather down each sequential column.
+// e.g.
+// if byRow == true: A1 = 0, A2 = 1, A12 = 11
+// if byRow == false: A1 = 0, B1 = 2, E1 = 5
+func (wc WellCoords) WellNumber(platetype *Plate, byRow bool) int {
 	if wc.X < 0 || wc.Y < 0 {
 		return -1
 	}
-	return (8*(wc.X-1) + wc.Y)
+	if byRow {
+		return (platetype.WlsY*(wc.Y-1) + wc.X)
+	}
+	return (platetype.WlsX*(wc.X-1) + wc.Y)
 }
 
 func (wc WellCoords) ColNumString() string {

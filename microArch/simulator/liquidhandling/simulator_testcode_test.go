@@ -624,7 +624,6 @@ func default_lhproperties() *liquidhandling.LHProperties {
 		},
 		HeadAssemblies: []HeadAssemblyParams{
 			{
-				MotionLimits:    nil,
 				PositionOffsets: []wtype.Coordinates{{X: 0, Y: 0, Z: 0}},
 				Heads: []HeadParams{
 					{

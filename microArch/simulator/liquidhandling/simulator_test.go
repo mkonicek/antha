@@ -69,9 +69,7 @@ func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {
 func TestVLH_AddPlateTo(t *testing.T) {
 	tests := []SimulatorTest{
 		{
-			Name:  "OK",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "OK",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&AddPlateTo{"tipbox_1", default_lhtipbox("tipbox1"), "tipbox1"},
@@ -82,69 +80,50 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				&AddPlateTo{"output_2", default_lhplate("output2"), "output2"},
 				&AddPlateTo{"tipwaste", default_lhtipwaste("tipwaste"), "tipwaste"},
 			},
-			ExpectedErrors: nil,
-			Assertions:     nil,
 		},
 		{
-			Name:  "non plate type",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "non plate type",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&AddPlateTo{"tipbox_1", "my plate's gone stringy", "not_a_plate"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Couldn't add object of type string to tipbox_1"},
-			Assertions:     nil,
 		},
 		{
-			Name:  "location full",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "location full",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&AddPlateTo{"tipbox_1", default_lhtipbox("p0"), "p0"},
 				&AddPlateTo{"tipbox_1", default_lhtipbox("p1"), "p1"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[2]: Couldn't add tipbox \"p1\" to location \"tipbox_1\" which already contains tipbox \"p0\""},
-			Assertions:     nil,
 		},
 		{
-			Name:  "tipbox on tipwaste location",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "tipbox on tipwaste location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&AddPlateTo{"tipwaste", default_lhtipbox("tipbox"), "tipbox"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Slot \"tipwaste\" can't accept tipbox \"tipbox\", only tipwaste allowed"},
-			Assertions:     nil,
 		},
 		{
-			Name:  "tipwaste on tipbox location",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "tipwaste on tipbox location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&AddPlateTo{"tipbox_1", default_lhtipwaste("tipwaste"), "tipwaste"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Slot \"tipbox_1\" can't accept tipwaste \"tipwaste\", only tipbox allowed"},
-			Assertions:     nil,
 		},
 		{
-			Name:  "unknown location",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "unknown location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&AddPlateTo{"ruritania", default_lhtipbox("aTipbox"), "aTipbox"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Cannot put tipbox \"aTipbox\" at unknown slot \"ruritania\""},
-			Assertions:     nil,
 		},
 		{
-			Name:  "too big",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "too big",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&AddPlateTo{"output_1", wide_lhplate("plate1"), "plate1"},
@@ -152,7 +131,6 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) AddPlateTo[1]: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
 			},
-			Assertions: nil,
 		},
 	}
 
@@ -164,20 +142,14 @@ func TestVLH_AddPlateTo(t *testing.T) {
 func Test_SetPippetteSpeed(t *testing.T) {
 	tests := []SimulatorTest{
 		{
-			Name:  "OK",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "OK",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&SetPipetteSpeed{0, -1, 5.},
 			},
-			ExpectedErrors: nil,
-			Assertions:     nil,
 		},
 		{
-			Name:  "too low",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "too low",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&SetPipetteSpeed{0, -1, 0.001},
@@ -185,12 +157,9 @@ func Test_SetPippetteSpeed(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) SetPipetteSpeed[1]: Setting Head 0 channels 0-7 speed to 0.001 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "too high",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "too high",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&SetPipetteSpeed{0, -1, 15.},
@@ -198,12 +167,9 @@ func Test_SetPippetteSpeed(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) SetPipetteSpeed[1]: Setting Head 0 channels 0-7 speed to 15 ml/min is outside allowable range [0.1 ml/min:10 ml/min]",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Independent",
-			Props: nil, //default params
-			Setup: nil, //no setup
+			Name: "Independent",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
 				&SetPipetteSpeed{0, 3, 5.},
@@ -211,7 +177,6 @@ func Test_SetPippetteSpeed(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) SetPipetteSpeed[1]: Head 0 is not independent, setting pipette speed for channel 3 sets all other channels as well",
 			},
-			Assertions: nil,
 		},
 	}
 
@@ -267,8 +232,7 @@ func Test_Move(t *testing.T) {
 
 	tests := []SimulatorTest{
 		{
-			Name:  "OK_1",
-			Props: nil,
+			Name: "OK_1",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -284,14 +248,12 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 200.0, Y: 0.0, Z: 62.2}),
 			},
 		},
 		{
-			Name:  "OK_2",
-			Props: nil,
+			Name: "OK_2",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -307,14 +269,12 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 49.5, Y: 400., Z: 93.}),
 			},
 		},
 		{
-			Name:  "OK_2.5",
-			Props: nil,
+			Name: "OK_2.5",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -330,14 +290,12 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 49.5, Y: 400., Z: 93}),
 			},
 		},
 		{
-			Name:  "OK_3",
-			Props: nil,
+			Name: "OK_3",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -353,14 +311,12 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 0.0, Y: -27.0, Z: 62.2}),
 			},
 		},
 		{
-			Name:  "OK_4",
-			Props: nil,
+			Name: "OK_4",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -376,14 +332,12 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: 63.0, Z: 25.7}),
 			},
 		},
 		{
-			Name:  "OK_5",
-			Props: nil,
+			Name: "OK_5",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -399,14 +353,12 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: 27.0, Z: 25.7}),
 			},
 		},
 		{
-			Name:  "OK_trough",
-			Props: nil,
+			Name: "OK_trough",
 			Setup: []*SetupFn{
 				testTroughLayout(),
 			},
@@ -422,14 +374,12 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: -31.5, Z: 46.8}),
 			},
 		},
 		{
-			Name:  "unknown location",
-			Props: nil,
+			Name: "unknown location",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -466,11 +416,9 @@ func Test_Move(t *testing.T) {
 				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
 				"(warn) Move[1]: Object found at tipbox_1 was type \"tipbox\", named \"tipbox1\", not \"tipwaste\" as expected",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "unknown head",
-			Props: nil,
+			Name: "unknown head",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -500,11 +448,9 @@ func Test_Move(t *testing.T) {
 				"(err) Move[0]: head assembly 0: unknown head 1",
 				"(err) Move[1]: head assembly 0: unknown head -1",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "invalid wellcoords",
-			Props: nil,
+			Name: "invalid wellcoords",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -534,11 +480,9 @@ func Test_Move(t *testing.T) {
 				"(err) Move[0]: Request for well I1 in object \"tipbox1\" at \"tipbox_1\" which is of size [8x12]",
 				"(err) Move[1]: invalid argument wellcoords: couldn't parse \"not_a_well\"",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Invalid reference",
-			Props: nil,
+			Name: "Invalid reference",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -568,11 +512,9 @@ func Test_Move(t *testing.T) {
 				"(err) Move[0]: invalid argument reference: unknown value -1",
 				"(err) Move[1]: invalid argument reference: unknown value 3",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Inconsistent references",
-			Props: nil,
+			Name: "Inconsistent references",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -591,11 +533,9 @@ func Test_Move(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channels 0-7 to A1-H1@plate1 at position input_1: requires moving channels 4-7 relative to non-independent head",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "offsets differ",
-			Props: nil,
+			Name: "offsets differ",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -614,11 +554,9 @@ func Test_Move(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: requires moving channels 3-5 relative to non-independent head",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "layout mismatch",
-			Props: nil,
+			Name: "layout mismatch",
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -637,7 +575,6 @@ func Test_Move(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channels 0-7 to A1,B2,C1,D2,E1,F2,G1,H2@tipbox1 at position tipbox_1: requires moving channels 1,3,5,7 relative to non-independent head",
 			},
-			Assertions: nil,
 		},
 	}
 
@@ -706,8 +643,7 @@ func TestCrashes(t *testing.T) {
 			Assertions: []*AssertionFn{},
 		},
 		{
-			Name:  "trying to move channel cones into a well",
-			Props: nil,
+			Name: "trying to move channel cones into a well",
 			Setup: []*SetupFn{
 				testLayout(),
 				//preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
@@ -727,7 +663,6 @@ func TestCrashes(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channel 0 to A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and plate \"plate1\" at position input_1",
 			},
-			Assertions: nil,
 		},
 	}
 
@@ -757,7 +692,6 @@ func Test_Multihead(t *testing.T) {
 					head:         0,
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 128.0, Y: 0.0, Z: 62.2}),
 				positionAssertion(1, wtype.Coordinates{X: 146.0, Y: 0.0, Z: 62.2}),
@@ -1017,8 +951,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 
 	tests := []SimulatorTest{
 		{
-			Name:  "OK - single tip",
-			Props: nil,
+			Name: "OK - single tip",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(7, 11, mtp),
@@ -1033,7 +966,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"H12", "", "", "", "", "", "", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1042,8 +974,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - single tip (alt)",
-			Props: nil,
+			Name: "OK - single tip (alt)",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(-7, 0, mtp),
@@ -1058,7 +989,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"", "", "", "", "", "", "", "A1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1067,8 +997,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - single tip above space",
-			Props: nil,
+			Name: "OK - single tip above space",
 			Setup: []*SetupFn{
 				testLayout(),
 				removeTipboxTips("tipbox_1", []string{"H12"}),
@@ -1084,7 +1013,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"G12", "", "", "", "", "", "", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H12", "G12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1093,8 +1021,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - single tip below space (alt)",
-			Props: nil,
+			Name: "OK - single tip below space (alt)",
 			Setup: []*SetupFn{
 				testLayout(),
 				removeTipboxTips("tipbox_1", []string{"A1"}),
@@ -1110,7 +1037,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"", "", "", "", "", "", "", "B1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1119,8 +1045,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 3 tips at once",
-			Props: nil,
+			Name: "OK - 3 tips at once",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(5, 11, mtp),
@@ -1135,7 +1060,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"F12", "G12", "H12", "", "", "", "", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1148,8 +1072,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 3 tips at once (alt)",
-			Props: nil,
+			Name: "OK - 3 tips at once (alt)",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(-5, 0, mtp),
@@ -1164,7 +1087,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"", "", "", "", "", "A1", "B1", "C1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1193,7 +1115,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"A1", "", "", "", "E1", "", "", "H1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "E1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1206,8 +1127,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 8 tips at once",
-			Props: nil,
+			Name: "OK - 8 tips at once",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(0, 11, mtp),
@@ -1222,7 +1142,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1240,8 +1159,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 2 groups of 4",
-			Props: nil,
+			Name: "OK - 2 groups of 4",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(4, 0, mtp),
@@ -1274,7 +1192,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"", "", "", "", "A1", "B1", "C1", "D1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1292,8 +1209,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "unknown channel 8",
-			Props: nil,
+			Name: "unknown channel 8",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(0, 0, mtp),
@@ -1311,11 +1227,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: Unknown channel \"8\"",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "unknown channel -1",
-			Props: nil,
+			Name: "unknown channel -1",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(0, 0, mtp),
@@ -1333,11 +1247,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: Unknown channel \"-1\"",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "duplicate channels",
-			Props: nil,
+			Name: "duplicate channels",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(0, 11, mtp),
@@ -1355,11 +1267,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: Channel3 appears more than once",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "unknown head",
-			Props: nil,
+			Name: "unknown head",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(7, 11, mtp),
@@ -1377,11 +1287,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: head assembly 0: unknown head 1",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "unknown head -1",
-			Props: nil,
+			Name: "unknown head -1",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(7, 11, mtp),
@@ -1399,11 +1307,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: head assembly 0: unknown head -1",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "OK - argument expansion",
-			Props: nil,
+			Name: "OK - argument expansion",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(7, 11, mtp),
@@ -1418,7 +1324,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"H12"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1427,8 +1332,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			},
 		},
 		{
-			Name:  "mismatching multi",
-			Props: nil,
+			Name: "mismatching multi",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(7, 11, mtp),
@@ -1446,11 +1350,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: multi should equal 1, not 4",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "tip missing",
-			Props: nil,
+			Name: "tip missing",
 			Setup: []*SetupFn{
 				testLayout(),
 				removeTipboxTips("tipbox_1", []string{"H12"}),
@@ -1469,11 +1371,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: no tip at H12",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "8 tips missing",
-			Props: nil,
+			Name: "8 tips missing",
 			Setup: []*SetupFn{
 				testLayout(),
 				removeTipboxTips("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
@@ -1492,11 +1392,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: no tips at A12-H12",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "tip already loaded",
-			Props: nil,
+			Name: "tip already loaded",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0}),
@@ -1515,11 +1413,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: tip already loaded on head 0 channel 0",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "tips already loaded",
-			Props: nil,
+			Name: "tips already loaded",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
@@ -1538,11 +1434,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from A12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-7: tips already loaded on head 0 channels 0-7",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "extra tip in the way",
-			Props: nil,
+			Name: "extra tip in the way",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(6, 11, mtp),
@@ -1560,11 +1454,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from G12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: collision detected: head 0 channel 1 and tip H12@tipbox1 at position tipbox_1",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "not aligned to move",
-			Props: nil,
+			Name: "not aligned to move",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(5, 11, mtp),
@@ -1582,11 +1474,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from E12,G12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2: channel 0 is misaligned with tip at E12 by 9mm",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "multiple not aligned to move",
-			Props: nil,
+			Name: "multiple not aligned to move",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(5, 11, mtp),
@@ -1604,11 +1494,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from G12,F12,H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2: channels 0-1 are misaligned with tips at G12,F12 by 9,9mm respectively",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "misalignment single",
-			Props: nil,
+			Name: "misalignment single",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(7, 11, misaligned_mtp),
@@ -1626,11 +1514,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from H12@tipbox1 at position \"tipbox_1\" to head 0 channel 0: channel 0 is misaligned with tip at H12 by 2mm",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "misalignment multi",
-			Props: nil,
+			Name: "misalignment multi",
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(5, 11, misaligned_mtp),
@@ -1648,7 +1534,6 @@ func TestLoadTipsNoOverride(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[0]: from F12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2: channels 0-2 are misaligned with tips at F12-H12 by 2,2,2mm respectively",
 			},
-			Assertions: nil,
 		},
 	}
 
@@ -1708,7 +1593,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "", "", "", "", "", "", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1733,7 +1617,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A12", "", "", "", "", "", "", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1759,7 +1642,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "", "", "", "", "", "", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"D1", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1785,7 +1667,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A12", "", "", "", "", "", "", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"D12", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1810,7 +1691,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A11", "B11", "C11", "D11", "E11", "F11", "G11", "H11"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1835,7 +1715,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1861,7 +1740,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E2", "F2", "G2", "H2", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1887,7 +1765,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E11", "F11", "G11", "H11", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1926,7 +1803,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -1965,7 +1841,6 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{
 					"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
@@ -1997,8 +1872,7 @@ func Test_UnloadTips(t *testing.T) {
 
 	tests := []SimulatorTest{
 		{
-			Name:  "OK - single tip",
-			Props: nil,
+			Name: "OK - single tip",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0}),
@@ -2023,7 +1897,6 @@ func Test_UnloadTips(t *testing.T) {
 					well:      []string{"A1", "", "", "", "", "", "", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2032,8 +1905,7 @@ func Test_UnloadTips(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 8 tips",
-			Props: nil,
+			Name: "OK - 8 tips",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
@@ -2058,7 +1930,6 @@ func Test_UnloadTips(t *testing.T) {
 					well:      []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2094,7 +1965,6 @@ func Test_UnloadTips(t *testing.T) {
 					well: []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2119,7 +1989,6 @@ func Test_UnloadTips(t *testing.T) {
 					well:      []string{"A1", "", "A1", "", "A1", "", "A1", ""},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2133,8 +2002,7 @@ func Test_UnloadTips(t *testing.T) {
 			},
 		},
 		{
-			Name:  "can only unload all tips",
-			Props: nil,
+			Name: "can only unload all tips",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
@@ -2162,11 +2030,9 @@ func Test_UnloadTips(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) UnloadTips[1]: Cannot unload tips from head0 channels 0,2,4,6 without unloading tips from channels 1,3,5,7 (head isn't independent)",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "can't unload to a plate",
-			Props: nil,
+			Name: "can't unload to a plate",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0}),
@@ -2194,11 +2060,9 @@ func Test_UnloadTips(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) UnloadTips[1]: Cannot unload tips to plate \"plate1\" at location input_1",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "wrong well",
-			Props: nil,
+			Name: "wrong well",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0}),
@@ -2226,7 +2090,6 @@ func Test_UnloadTips(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) UnloadTips[1]: Cannot unload to address B1 in tipwaste \"tipwaste\" size [1x1]",
 			},
-			Assertions: nil,
 		},
 	}
 
@@ -2239,8 +2102,7 @@ func Test_Aspirate(t *testing.T) {
 
 	tests := []SimulatorTest{
 		{
-			Name:  "OK - single channel",
-			Props: nil,
+			Name: "OK - single channel",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1"}, "water", 200.),
@@ -2267,7 +2129,6 @@ func Test_Aspirate(t *testing.T) {
 					llf:        []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2276,8 +2137,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 8 channel",
-			Props: nil,
+			Name: "OK - 8 channel",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
@@ -2304,7 +2164,6 @@ func Test_Aspirate(t *testing.T) {
 					llf:        []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2322,8 +2181,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 8 channel trough",
-			Props: nil,
+			Name: "OK - 8 channel trough",
 			Setup: []*SetupFn{
 				testTroughLayout(),
 				prefillWells("input_1", []string{"A1"}, "water", 10000.),
@@ -2350,7 +2208,6 @@ func Test_Aspirate(t *testing.T) {
 					llf:        []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2368,8 +2225,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 		},
 		{
-			Name:  "Fail - take too much from trough",
-			Props: nil,
+			Name: "Fail - take too much from trough",
 			Setup: []*SetupFn{
 				testTroughLayout(),
 				prefillWells("input_1", []string{"A1"}, "water", 5400.),
@@ -2416,8 +2272,7 @@ func Test_Aspirate(t *testing.T) {
 			},
 		},
 		{
-			Name:  "Fail - Aspirate with no tip",
-			Props: nil,
+			Name: "Fail - Aspirate with no tip",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1", "B1"}, "water", 200.),
@@ -2447,11 +2302,9 @@ func Test_Aspirate(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Aspirate[1]: 100 ul of water to head 0 channels 0-1: missing tip on channel 1",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - Underfull tip",
-			Props: nil,
+			Name: "Fail - Underfull tip",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1"}, "water", 200.),
@@ -2481,11 +2334,9 @@ func Test_Aspirate(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) Aspirate[1]: 20 ul of water to head 0 channel 0: minimum tip volume is 50 ul",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - Overfull tip",
-			Props: nil,
+			Name: "Fail - Overfull tip",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1"}, "water", 200.),
@@ -2610,11 +2461,9 @@ func Test_Aspirate(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Aspirate[11]: 175 ul of water to head 0 channel 0: channel 0 contains 875 ul, command exceeds maximum volume 1000 ul",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - non-independent head can only aspirate equal volumes",
-			Props: nil,
+			Name: "Fail - non-independent head can only aspirate equal volumes",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
@@ -2644,11 +2493,9 @@ func Test_Aspirate(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Aspirate[1]: {50,60,70,80,90,100,110,120} ul of water to head 0 channels 0-7: channels cannot aspirate different volumes in non-independent head",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - tip not in well",
-			Props: nil,
+			Name: "Fail - tip not in well",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1"}, "water", 200.),
@@ -2678,11 +2525,9 @@ func Test_Aspirate(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Aspirate[1]: 100 ul of water to head 0 channel 0: tip on channel 0 not in a well",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - Well doesn't contain enough",
-			Props: nil,
+			Name: "Fail - Well doesn't contain enough",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1"}, "water", 200.),
@@ -2753,11 +2598,9 @@ func Test_Aspirate(t *testing.T) {
 								ExpectedErrors: []string{
 									"(warn) Aspirate[1]: 102 ul of ethanol to head 0 channel 0 - well A1@plate1 contains water, not ethanol",
 								},
-								Assertions: nil,
 							},*/
 		{
-			Name:  "Fail - inadvertant aspiration",
-			Props: nil,
+			Name: "Fail - inadvertant aspiration",
 			Setup: []*SetupFn{
 				testLayout(),
 				prefillWells("input_1", []string{"A1", "B1"}, "water", 200.),
@@ -2787,7 +2630,6 @@ func Test_Aspirate(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Aspirate[1]: 98.6 ul of water to head 0 channel 0: channel 1 will inadvertantly aspirate water from well B1@plate1 as head is not independent",
 			},
-			Assertions: nil,
 		},
 	}
 
@@ -2800,8 +2642,7 @@ func Test_Dispense(t *testing.T) {
 
 	tests := []SimulatorTest{
 		{
-			Name:  "OK - single channel",
-			Props: nil,
+			Name: "OK - single channel",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
@@ -2827,7 +2668,6 @@ func Test_Dispense(t *testing.T) {
 					llf:       []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2837,8 +2677,7 @@ func Test_Dispense(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - mixing",
-			Props: nil,
+			Name: "OK - mixing",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
@@ -2865,7 +2704,6 @@ func Test_Dispense(t *testing.T) {
 					llf:       []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2875,8 +2713,7 @@ func Test_Dispense(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - single channel slightly above well",
-			Props: nil,
+			Name: "OK - single channel slightly above well",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
@@ -2902,7 +2739,6 @@ func Test_Dispense(t *testing.T) {
 					llf:       []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2912,8 +2748,7 @@ func Test_Dispense(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 8 channel",
-			Props: nil,
+			Name: "OK - 8 channel",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
@@ -2939,7 +2774,6 @@ func Test_Dispense(t *testing.T) {
 					llf:       []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -2967,8 +2801,7 @@ func Test_Dispense(t *testing.T) {
 			},
 		},
 		{
-			Name:  "Fail - no tips",
-			Props: nil,
+			Name: "Fail - no tips",
 			Setup: []*SetupFn{
 				testLayout(),
 				//preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
@@ -2997,11 +2830,9 @@ func Test_Dispense(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to A1@plate1: no tip loaded on channel 0",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - not enough in tip",
-			Props: nil,
+			Name: "Fail - not enough in tip",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
@@ -3030,11 +2861,9 @@ func Test_Dispense(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) Dispense[1]: 150 ul of water from head 0 channel 0 to A1@plate1: tip on channel 0 contains only 100 ul, but blowout flag is false",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - well over-full",
-			Props: nil,
+			Name: "Fail - well over-full",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 1000.),
@@ -3063,11 +2892,9 @@ func Test_Dispense(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) Dispense[1]: 500 ul of water from head 0 channel 0 to A1@plate1: overfilling well A1@plate1 to 500 ul of 200 ul max volume",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - not in a well",
-			Props: nil,
+			Name: "Fail - not in a well",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
@@ -3096,11 +2923,9 @@ func Test_Dispense(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to @<unnamed>: no well within 5 mm below tip on channel 0",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - dispensing to tipwaste",
-			Props: nil,
+			Name: "Fail - dispensing to tipwaste",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
@@ -3129,11 +2954,9 @@ func Test_Dispense(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) Dispense[1]: 50 ul of water from head 0 channel 0 to A1@tipwaste: dispensing to tipwaste",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "fail - independence other tips in wells",
-			Props: nil,
+			Name: "fail - independence other tips in wells",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
@@ -3162,11 +2985,9 @@ func Test_Dispense(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to A1@plate1: must also dispense 50 ul from channels 1-7 as head is not independent",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "fail - independence other tip not in a well",
-			Props: nil,
+			Name: "fail - independence other tip not in a well",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0, 1}, "water", 100.),
@@ -3195,11 +3016,9 @@ func Test_Dispense(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Dispense[1]: 50 ul of water from head 0 channel 0 to H1@plate1: must also dispense 50 ul from channel 1 as head is not independent",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - independence, different volumes",
-			Props: nil,
+			Name: "Fail - independence, different volumes",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadFilledTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
@@ -3228,7 +3047,6 @@ func Test_Dispense(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Dispense[1]: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0-7 to A1-H1@plate1: channels cannot dispense different volumes in non-independent head",
 			},
-			Assertions: nil,
 		},
 	}
 
@@ -3241,8 +3059,7 @@ func Test_Mix(t *testing.T) {
 
 	tests := []SimulatorTest{
 		{
-			Name:  "OK - single channel",
-			Props: nil,
+			Name: "OK - single channel",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0}),
@@ -3269,7 +3086,6 @@ func Test_Mix(t *testing.T) {
 					blowout:   []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -3279,8 +3095,7 @@ func Test_Mix(t *testing.T) {
 			},
 		},
 		{
-			Name:  "OK - 8 channel",
-			Props: nil,
+			Name: "OK - 8 channel",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
@@ -3307,7 +3122,6 @@ func Test_Mix(t *testing.T) {
 					blowout:   []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			ExpectedErrors: nil,
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
@@ -3335,8 +3149,7 @@ func Test_Mix(t *testing.T) {
 			},
 		},
 		{
-			Name:  "Fail - independece problems",
-			Props: nil,
+			Name: "Fail - independece problems",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
@@ -3367,11 +3180,9 @@ func Test_Mix(t *testing.T) {
 				"(err) Mix[1]: {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\": cannot manipulate different volumes with non-independent head",
 				"(err) Mix[1]: {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\": cannot vary number of mix cycles with non-independent head",
 			},
-			Assertions: nil,
 		},
 		{
-			Name:  "Fail - wrong platetype",
-			Props: nil,
+			Name: "Fail - wrong platetype",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0}),
@@ -3755,11 +3566,9 @@ func Test_Workflow(t *testing.T) {
 	inst = append(inst, &Finalize{})
 
 	st := SimulatorTest{
-		Name:           "Run Workflow",
-		Props:          nil,
-		Setup:          []*SetupFn{},
-		Instructions:   inst,
-		ExpectedErrors: nil,
+		Name:         "Run Workflow",
+		Setup:        []*SetupFn{},
+		Instructions: inst,
 		Assertions: []*AssertionFn{
 			tipboxAssertion("tipbox_1", []string{
 				"H12", "G12",

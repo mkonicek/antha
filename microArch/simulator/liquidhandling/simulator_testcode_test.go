@@ -372,35 +372,35 @@ func compare_errors(t *testing.T, desc string, expected []string, actual []simul
 
 func default_lhplate_props() *LHPlateParams {
 	params := LHPlateParams{
-		"plate",          // platetype       string
-		"test_plate_mfr", // mfr             string
-		8,                // nrows           int
-		12,               // ncols           int
-		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7}, // size          float64
-		LHWellParams{ // welltype
-			wtype.ZeroWellCoords(), // crds            string
-			"ul", // vunit           string
-			200,  // vol             float64
-			5,    // rvol            float64
-			ShapeParams{ // shape           ShapeParams struct {
-				"test_shape", // name            string
-				"mm",         // lengthunit      string
-				5.5,          // h               float64
-				5.5,          // w               float64
-				20.4,         // d               float64
+		platetype: "plate",
+		mfr:       "test_plate_mfr",
+		nrows:     8,
+		ncols:     12,
+		size:      wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7},
+		welltype: LHWellParams{
+			crds:  wtype.ZeroWellCoords(),
+			vunit: "ul",
+			vol:   200,
+			rvol:  5,
+			shape: ShapeParams{
+				name:       "test_shape",
+				lengthunit: "mm",
+				h:          5.5,
+				w:          5.5,
+				d:          20.4,
 			},
-			wtype.VWellBottom, // bott            int
-			5.5,               // xdim            float64
-			5.5,               // ydim            float64
-			20.4,              // zdim            float64
-			1.4,               // bottomh         float64
-			"mm",              // dunit           string
+			bott:    wtype.VWellBottom,
+			xdim:    5.5,
+			ydim:    5.5,
+			zdim:    20.4,
+			bottomh: 1.4,
+			dunit:   "mm",
 		},
-		9.,  // wellXOffset     float64
-		9.,  // wellYOffset     float64
-		0.,  // wellXStart      float64
-		0.,  // wellYStart      float64
-		5.3, // wellZStart      float64
+		wellXOffset: 9.,
+		wellYOffset: 9.,
+		wellXStart:  0.,
+		wellYStart:  0.,
+		wellZStart:  5.3,
 	}
 
 	return &params
@@ -420,35 +420,35 @@ func wide_lhplate(name string) *wtype.Plate {
 
 func lhplate_trough_props() *LHPlateParams {
 	params := LHPlateParams{
-		"trough",          // platetype       string
-		"test_trough_mfr", // mfr             string
-		1,                 // nrows           int
-		12,                // ncols           int
-		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 45.8}, // size          float64
-		LHWellParams{ // welltype
-			wtype.ZeroWellCoords(), // crds            string
-			"ul",  // vunit           string
-			15000, // vol             float64
-			5000,  // rvol            float64
-			ShapeParams{ // shape           ShapeParams struct {
-				"test_shape", // name            string
-				"mm",         // lengthunit      string
-				8.2,          // h               float64
-				72.0,         // w               float64
-				41.3,         // d               float64
+		platetype: "trough",
+		mfr:       "test_trough_mfr",
+		nrows:     1,
+		ncols:     12,
+		size:      wtype.Coordinates{X: 127.76, Y: 85.48, Z: 45.8},
+		welltype: LHWellParams{
+			crds:  wtype.ZeroWellCoords(),
+			vunit: "ul",
+			vol:   15000,
+			rvol:  5000,
+			shape: ShapeParams{
+				name:       "test_shape",
+				lengthunit: "mm",
+				h:          8.2,
+				w:          72.0,
+				d:          41.3,
 			},
-			wtype.FlatWellBottom, // bott            int
-			8.2,                  // xdim            float64
-			72.0,                 // ydim            float64
-			41.3,                 // zdim            float64
-			4.7,                  // bottomh         float64
-			"mm",                 // dunit           string
+			bott:    wtype.FlatWellBottom,
+			xdim:    8.2,
+			ydim:    72.0,
+			zdim:    41.3,
+			bottomh: 4.7,
+			dunit:   "mm",
 		},
-		9.,  // wellXOffset     float64
-		9.,  // wellYOffset     float64
-		0.,  // wellXStart      float64
-		0.,  // wellYStart      float64
-		4.5, // wellZStart      float64
+		wellXOffset: 9.,
+		wellYOffset: 9.,
+		wellXStart:  0.,
+		wellYStart:  0.,
+		wellZStart:  4.5,
 	}
 
 	return &params
@@ -473,51 +473,51 @@ func lhplate_trough12(name string) *wtype.Plate {
 
 func default_lhtipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
-		8,  //nrows           int
-		12, //ncols           int
-		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13}, //size         float64
-		"test Tipbox mfg",                                //manufacturer    string
-		"tipbox",                                         //boxtype         string
-		LHTipParams{ //tiptype
-			"test_tip mfg",  //mfr         string
-			"test_tip type", //ttype       string
-			50,              //minvol      float64
-			1000,            //maxvol      float64
-			"ul",            //volunit     string
-			false,           //filtered    bool
-			ShapeParams{ // shape           ShapeParams struct {
-				"test_shape", // name            string
-				"mm",         // lengthunit      string
-				7.3,          // h               float64
-				7.3,          // w               float64
-				51.2,         // d               float64
+		nrows:        8,
+		ncols:        12,
+		size:         wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13},
+		manufacturer: "test Tipbox mfg",
+		boxtype:      "tipbox",
+		tiptype: LHTipParams{
+			mfr:      "test_tip mfg",
+			ttype:    "test_tip type",
+			minvol:   50,
+			maxvol:   1000,
+			volunit:  "ul",
+			filtered: false,
+			shape: ShapeParams{
+				name:       "test_shape",
+				lengthunit: "mm",
+				h:          7.3,
+				w:          7.3,
+				d:          51.2,
 			},
-			44.7, //effectiveHeight
+			effectiveHeight: 44.7,
 		},
-		LHWellParams{ // well
-			wtype.ZeroWellCoords(), // crds            string
-			"ul", // vunit           string
-			1000, // vol             float64
-			50,   // rvol            float64
-			ShapeParams{ // shape           ShapeParams struct {
-				"test_shape", // name            string
-				"mm",         // lengthunit      string
-				7.3,          // h               float64
-				7.3,          // w               float64
-				51.2,         // d               float64
+		well: LHWellParams{
+			crds:  wtype.ZeroWellCoords(),
+			vunit: "ul",
+			vol:   1000,
+			rvol:  50,
+			shape: ShapeParams{
+				name:       "test_shape",
+				lengthunit: "mm",
+				h:          7.3,
+				w:          7.3,
+				d:          51.2,
 			},
-			wtype.VWellBottom, // bott            int
-			7.3,               // xdim            float64
-			7.3,               // ydim            float64
-			51.2,              // zdim            float64
-			0.0,               // bottomh         float64
-			"mm",              // dunit           string
+			bott:    wtype.VWellBottom,
+			xdim:    7.3,
+			ydim:    7.3,
+			zdim:    51.2,
+			bottomh: 0.0,
+			dunit:   "mm",
 		},
-		9.,  //tipxoffset      float64
-		9.,  //tipyoffset      float64
-		0.,  //tipxstart       float64
-		0.,  //tipystart       float64
-		10., //tipzstart       float64
+		tipxoffset: 9.,
+		tipyoffset: 9.,
+		tipxstart:  0.,
+		tipystart:  0.,
+		tipzstart:  10.,
 	}
 
 	return makeLHTipbox(&params, name)
@@ -525,51 +525,51 @@ func default_lhtipbox(name string) *wtype.LHTipbox {
 
 func small_lhtipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
-		8,  //nrows           int
-		12, //ncols           int
-		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13}, //size         float64
-		"test Tipbox mfg",                                //manufacturer    string
-		"tipbox",                                         //boxtype         string
-		LHTipParams{ //tiptype
-			"test_tip mfg",  //mfr         string
-			"test_tip type", //ttype       string
-			0,               //minvol      float64
-			200,             //maxvol      float64
-			"ul",            //volunit     string
-			false,           //filtered    bool
-			ShapeParams{ // shape           ShapeParams struct {
-				"test_shape", // name            string
-				"mm",         // lengthunit      string
-				7.3,          // h               float64
-				7.3,          // w               float64
-				51.2,         // d               float64
+		nrows:        8,
+		ncols:        12,
+		size:         wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13},
+		manufacturer: "test Tipbox mfg",
+		boxtype:      "tipbox",
+		tiptype: LHTipParams{
+			mfr:      "test_tip mfg",
+			ttype:    "test_tip type",
+			minvol:   0,
+			maxvol:   200,
+			volunit:  "ul",
+			filtered: false,
+			shape: ShapeParams{
+				name:       "test_shape",
+				lengthunit: "mm",
+				h:          7.3,
+				w:          7.3,
+				d:          51.2,
 			},
-			44.7, //effectiveHeight
+			effectiveHeight: 44.7,
 		},
-		LHWellParams{ // well
-			wtype.ZeroWellCoords(), // crds            string
-			"ul", // vunit           string
-			1000, // vol             float64
-			50,   // rvol            float64
-			ShapeParams{ // shape           ShapeParams struct {
-				"test_shape", // name            string
-				"mm",         // lengthunit      string
-				7.3,          // h               float64
-				7.3,          // w               float64
-				51.2,         // d               float64
+		well: LHWellParams{
+			crds:  wtype.ZeroWellCoords(),
+			vunit: "ul",
+			vol:   1000,
+			rvol:  50,
+			shape: ShapeParams{
+				name:       "test_shape",
+				lengthunit: "mm",
+				h:          7.3,
+				w:          7.3,
+				d:          51.2,
 			},
-			wtype.VWellBottom, // bott            int
-			7.3,               // xdim            float64
-			7.3,               // ydim            float64
-			51.2,              // zdim            float64
-			0.0,               // bottomh         float64
-			"mm",              // dunit           string
+			bott:    wtype.VWellBottom,
+			xdim:    7.3,
+			ydim:    7.3,
+			zdim:    51.2,
+			bottomh: 0.0,
+			dunit:   "mm",
 		},
-		9.,  //tipxoffset      float64
-		9.,  //tipyoffset      float64
-		0.,  //tipxstart       float64
-		0.,  //tipystart       float64
-		10., //tipzstart       float64
+		tipxoffset: 9.,
+		tipyoffset: 9.,
+		tipxstart:  0.,
+		tipystart:  0.,
+		tipzstart:  10.,
 	}
 
 	return makeLHTipbox(&params, name)
@@ -577,41 +577,41 @@ func small_lhtipbox(name string) *wtype.LHTipbox {
 
 func default_lhtipwaste(name string) *wtype.LHTipwaste {
 	params := LHTipwasteParams{
-		700,                                             //capacity        int
-		"tipwaste",                                      //typ             string
-		"testTipwaste mfr",                              //mfr             string
-		wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, //height          float64
-		LHWellParams{ // w               LHWellParams
-			wtype.ZeroWellCoords(), // crds            string
-			"ul",     // vunit           string
-			800000.0, // vol             float64
-			800000.0, // rvol            float64
-			ShapeParams{ // shape           ShapeParams struct {
-				"test_tipbox", // name            string
-				"mm",          // lengthunit      string
-				123.0,         // h               float64
-				80.0,          // w               float64
-				92.0,          // d               float64
+		capacity: 700,
+		typ:      "tipwaste",
+		mfr:      "testTipwaste mfr",
+		size:     wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0},
+		w: LHWellParams{
+			crds:  wtype.ZeroWellCoords(),
+			vunit: "ul",
+			vol:   800000.0,
+			rvol:  800000.0,
+			shape: ShapeParams{
+				name:       "test_tipbox",
+				lengthunit: "mm",
+				h:          123.0,
+				w:          80.0,
+				d:          92.0,
 			},
-			wtype.VWellBottom, // bott            int
-			123.0,             // xdim            float64
-			80.0,              // ydim            float64
-			92.0,              // zdim            float64
-			0.0,               // bottomh         float64
-			"mm",              // dunit           string
+			bott:    wtype.VWellBottom,
+			xdim:    123.0,
+			ydim:    80.0,
+			zdim:    92.0,
+			bottomh: 0.0,
+			dunit:   "mm",
 		},
-		49.5, //wellxstart      float64
-		31.5, //wellystart      float64
-		0.0,  //wellzstart      float64
+		wellxstart: 49.5,
+		wellystart: 31.5,
+		wellzstart: 0.0,
 	}
 	return makeLHTipWaste(&params, name)
 }
 
 func default_lhproperties() *liquidhandling.LHProperties {
 	valid_props := LHPropertiesParams{
-		"Device Name",
-		"Device Manufacturer",
-		[]LayoutParams{
+		Name: "Device Name",
+		Mfg:  "Device Manufaturer",
+		Layouts: []LayoutParams{
 			{"tipbox_1", 0.0, 0.0, 0.0},
 			{"tipbox_2", 200.0, 0.0, 0.0},
 			{"input_1", 400.0, 0.0, 0.0},
@@ -622,53 +622,53 @@ func default_lhproperties() *liquidhandling.LHProperties {
 			{"wash", 200.0, 400.0, 0.0},
 			{"waste", 400.0, 400.0, 0.0},
 		},
-		[]HeadAssemblyParams{
+		HeadAssemblies: []HeadAssemblyParams{
 			{
-				nil, //MotionLimits
-				[]wtype.Coordinates{{X: 0, Y: 0, Z: 0}}, //Offset
-				[]HeadParams{
+				MotionLimits:    nil,
+				PositionOffsets: []wtype.Coordinates{{X: 0, Y: 0, Z: 0}},
+				Heads: []HeadParams{
 					{
-						"Head0 Name",
-						"Head0 Manufacturer",
-						ChannelParams{
-							"Head0 ChannelParams",     //Name
-							"Head0 Platform",          //Platform
-							UnitParams{0.1, "ul"},     //min volume
-							UnitParams{1., "ml"},      //max volume
-							UnitParams{0.1, "ml/min"}, //min flowrate
-							UnitParams{10., "ml/min"}, //max flowrate
-							8,                //multi
-							false,            //independent
-							wtype.LHVChannel, //orientation
-							0,                //head
+						Name: "Head0 Name",
+						Mfg:  "Head0 Manufacturer",
+						Channel: ChannelParams{
+							Name:        "Head0 ChannelParams",
+							Platform:    "Head0 Platform",
+							Minvol:      UnitParams{0.1, "ul"},
+							Maxvol:      UnitParams{1., "ml"},
+							Minrate:     UnitParams{0.1, "ml/min"},
+							Maxrate:     UnitParams{10., "ml/min"},
+							multi:       8,
+							Independent: false,
+							Orientation: wtype.LHVChannel,
+							Head:        0,
 						},
-						AdaptorParams{
-							"Head0 Adaptor",
-							"Head0 Adaptor Manufacturer",
-							ChannelParams{
-								"Head0 Adaptor ChannelParams", //Name
-								"Head0 Adaptor Platform",      //Platform
-								UnitParams{0.1, "ul"},         //min volume
-								UnitParams{1., "ml"},          //max volume
-								UnitParams{0.1, "ml/min"},     //min flowrate
-								UnitParams{10., "ml/min"},     //max flowrate
-								8,                //multi
-								false,            //independent
-								wtype.LHVChannel, //orientation
-								0,                //head
+						Adaptor: AdaptorParams{
+							Name: "Head0 Adaptor",
+							Mfg:  "Head0 Adaptor Manufacturer",
+							Channel: ChannelParams{
+								Name:        "Head0 Adaptor ChannelParams",
+								Platform:    "Head0 Adaptor Platform",
+								Minvol:      UnitParams{0.1, "ul"},
+								Maxvol:      UnitParams{1., "ml"},
+								Minrate:     UnitParams{0.1, "ml/min"},
+								Maxrate:     UnitParams{10., "ml/min"},
+								multi:       8,
+								Independent: false,
+								Orientation: wtype.LHVChannel,
+								Head:        0,
 							},
 						},
-						wtype.TipLoadingBehaviour{},
+						TipBehaviour: wtype.TipLoadingBehaviour{},
 					},
 				},
 			},
 		},
-		[]string{"tipbox_1", "tipbox_2"}, //Tip_preferences
-		[]string{"input_1", "input_2"},   //Input_preferences
-		[]string{"output_1", "output_2"}, //Output_preferences
-		[]string{"tipwaste"},             //Tipwaste_preferences
-		[]string{"wash"},                 //Wash_preferences
-		[]string{"waste"},                //Waste_preferences
+		Tip_preferences:      []string{"tipbox_1", "tipbox_2"},
+		Input_preferences:    []string{"input_1", "input_2"},
+		Output_preferences:   []string{"output_1", "output_2"},
+		Tipwaste_preferences: []string{"tipwaste"},
+		Wash_preferences:     []string{"wash"},
+		Waste_preferences:    []string{"waste"},
 	}
 
 	return makeLHProperties(&valid_props)
@@ -678,9 +678,9 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 	x_step := 128.0
 	y_step := 86.0
 	valid_props := LHPropertiesParams{
-		"Device Name",
-		"Device Manufacturer",
-		[]LayoutParams{
+		Name: "Device Name",
+		Mfg:  "Device Manufaturer",
+		Layouts: []LayoutParams{
 			{"tipbox_1", 0.0 * x_step, 0.0 * y_step, 0.0},
 			{"tipbox_2", 1.0 * x_step, 0.0 * y_step, 0.0},
 			{"input_1", 2.0 * x_step, 0.0 * y_step, 0.0},
@@ -691,43 +691,43 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 			{"wash", 1.0 * x_step, 2.0 * y_step, 0.0},
 			{"waste", 2.0 * x_step, 2.0 * y_step, 0.0},
 		},
-		[]HeadAssemblyParams{
+		HeadAssemblies: []HeadAssemblyParams{
 			{
-				wtype.NewBBox6f(0, 0, 0, 3*x_step, 3*y_step, 600.),
-				[]wtype.Coordinates{{X: -9}, {X: 9}}, //Offset
-				[]HeadParams{
+				MotionLimits:    wtype.NewBBox6f(0, 0, 0, 3*x_step, 3*y_step, 600.),
+				PositionOffsets: []wtype.Coordinates{{X: -9}, {X: 9}},
+				Heads: []HeadParams{
 					{
-						"Head0 Name",
-						"Head0 Manufacturer",
-						ChannelParams{
-							"Head0 ChannelParams",     //Name
-							"Head0 Platform",          //Platform
-							UnitParams{0.1, "ul"},     //min volume
-							UnitParams{1., "ml"},      //max volume
-							UnitParams{0.1, "ml/min"}, //min flowrate
-							UnitParams{10., "ml/min"}, //max flowrate
-							8,                //multi
-							false,            //independent
-							wtype.LHVChannel, //orientation
-							0,                //head
+						Name: "Head0 Name",
+						Mfg:  "Head0 Manufacturer",
+						Channel: ChannelParams{
+							Name:        "Head0 ChannelParams",
+							Platform:    "Head0 Platform",
+							Minvol:      UnitParams{0.1, "ul"},
+							Maxvol:      UnitParams{1., "ml"},
+							Minrate:     UnitParams{0.1, "ml/min"},
+							Maxrate:     UnitParams{10., "ml/min"},
+							multi:       8,
+							Independent: false,
+							Orientation: wtype.LHVChannel,
+							Head:        0,
 						},
-						AdaptorParams{
-							"Head0 Adaptor",
-							"Head0 Adaptor Manufacturer",
-							ChannelParams{
-								"Head0 Adaptor ChannelParams", //Name
-								"Head0 Adaptor Platform",      //Platform
-								UnitParams{0.1, "ul"},         //min volume
-								UnitParams{1., "ml"},          //max volume
-								UnitParams{0.1, "ml/min"},     //min flowrate
-								UnitParams{10., "ml/min"},     //max flowrate
-								8,                //multi
-								false,            //independent
-								wtype.LHVChannel, //orientation
-								0,                //head
+						Adaptor: AdaptorParams{
+							Name: "Head0 Adaptor",
+							Mfg:  "Head0 Adaptor Manufacturer",
+							Channel: ChannelParams{
+								Name:        "Head0 Adaptor ChannelParams",
+								Platform:    "Head0 Adaptor Platform",
+								Minvol:      UnitParams{0.1, "ul"},
+								Maxvol:      UnitParams{1., "ml"},
+								Minrate:     UnitParams{0.1, "ml/min"},
+								Maxrate:     UnitParams{10., "ml/min"},
+								multi:       8,
+								Independent: false,
+								Orientation: wtype.LHVChannel,
+								Head:        0,
 							},
 						},
-						wtype.TipLoadingBehaviour{
+						TipBehaviour: wtype.TipLoadingBehaviour{
 							OverrideLoadTipsCommand:    true,
 							AutoRefillTipboxes:         true,
 							LoadingOrder:               wtype.ColumnWise,
@@ -737,37 +737,37 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 						},
 					},
 					{
-						"Head1 Name",
-						"Head1 Manufacturer",
-						ChannelParams{
-							"Head1 ChannelParams",     //Name
-							"Head1 Platform",          //Platform
-							UnitParams{0.1, "ul"},     //min volume
-							UnitParams{1., "ml"},      //max volume
-							UnitParams{0.1, "ml/min"}, //min flowrate
-							UnitParams{10., "ml/min"}, //max flowrate
-							8,                //multi
-							false,            //independent
-							wtype.LHVChannel, //orientation
-							0,                //head
+						Name: "Head1 Name",
+						Mfg:  "Head1 Manufacturer",
+						Channel: ChannelParams{
+							Name:        "Head1 ChannelParams",
+							Platform:    "Head1 Platform",
+							Minvol:      UnitParams{0.1, "ul"},
+							Maxvol:      UnitParams{1., "ml"},
+							Minrate:     UnitParams{0.1, "ml/min"},
+							Maxrate:     UnitParams{10., "ml/min"},
+							multi:       8,
+							Independent: false,
+							Orientation: wtype.LHVChannel,
+							Head:        0,
 						},
-						AdaptorParams{
-							"Head1 Adaptor",
-							"Head1 Adaptor Manufacturer",
-							ChannelParams{
-								"Head1 Adaptor ChannelParams", //Name
-								"Head1 Adaptor Platform",      //Platform
-								UnitParams{0.1, "ul"},         //min volume
-								UnitParams{1., "ml"},          //max volume
-								UnitParams{0.1, "ml/min"},     //min flowrate
-								UnitParams{10., "ml/min"},     //max flowrate
-								8,                //multi
-								false,            //independent
-								wtype.LHVChannel, //orientation
-								0,                //head
+						Adaptor: AdaptorParams{
+							Name: "Head1 Adaptor",
+							Mfg:  "Head1 Adaptor Manufacturer",
+							Channel: ChannelParams{
+								Name:        "Head1 Adaptor ChannelParams",
+								Platform:    "Head1 Adaptor Platform",
+								Minvol:      UnitParams{0.1, "ul"},
+								Maxvol:      UnitParams{1., "ml"},
+								Minrate:     UnitParams{0.1, "ml/min"},
+								Maxrate:     UnitParams{10., "ml/min"},
+								multi:       8,
+								Independent: false,
+								Orientation: wtype.LHVChannel,
+								Head:        0,
 							},
 						},
-						wtype.TipLoadingBehaviour{
+						TipBehaviour: wtype.TipLoadingBehaviour{
 							OverrideLoadTipsCommand:    true,
 							AutoRefillTipboxes:         true,
 							LoadingOrder:               wtype.ColumnWise,
@@ -779,12 +779,12 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 				},
 			},
 		},
-		[]string{"tipbox_1", "tipbox_2", "input_1", "input_2"},                      //Tip_preferences
-		[]string{"input_1", "input_2", "tipbox_1", "tipbox_2", "tipwaste", "waste"}, //Input_preferences
-		[]string{"output_1", "output_2"},                                            //Output_preferences
-		[]string{"tipwaste", "input_1"},                                             //Tipwaste_preferences
-		[]string{"wash"},                                                            //Wash_preferences
-		[]string{"waste"},                                                           //Waste_preferences
+		Tip_preferences:      []string{"tipbox_1", "tipbox_2", "input_1", "input_2"},
+		Input_preferences:    []string{"input_1", "input_2", "tipbox_1", "tipbox_2", "tipwaste", "waste"},
+		Output_preferences:   []string{"output_1", "output_2"},
+		Tipwaste_preferences: []string{"tipwaste", "input_1"},
+		Wash_preferences:     []string{"wash"},
+		Waste_preferences:    []string{"waste"},
 	}
 
 	return &valid_props

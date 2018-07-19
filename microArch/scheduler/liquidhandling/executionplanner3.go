@@ -99,7 +99,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		_, ok := inx[i].(liquidhandling.TerminalRobotInstruction)
 
 		if !ok {
-			fmt.Println("ERROR: Instruction wrong type (", inx[i].Type().MachineName, ")")
+			fmt.Println("ERROR: Instruction wrong type (", inx[i].Type().Name, ")")
 			continue
 		}
 

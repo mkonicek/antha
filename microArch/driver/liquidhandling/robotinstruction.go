@@ -95,8 +95,8 @@ var (
 )
 
 type InstructionType struct {
-	MachineName string `json:"Type"`
-	HumanName   string `json:"-"`
+	Name      string `json:"Type"`
+	HumanName string `json:"-"`
 }
 
 // This exists so that when InstructionType is embedded within other
@@ -108,8 +108,8 @@ func (it *InstructionType) Type() *InstructionType {
 
 func NewInstructionType(machine, human string) *InstructionType {
 	return &InstructionType{
-		MachineName: machine,
-		HumanName:   human,
+		Name:      machine,
+		HumanName: human,
 	}
 }
 
@@ -243,7 +243,7 @@ func printInstructionArray(inss []RobotInstruction) {
 
 func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 
-	s := ins.Type().MachineName + " "
+	s := ins.Type().Name + " "
 
 	if apt, ok := ins.(*AddPlateToInstruction); ok {
 		s += fmt.Sprintf("NAME: %s POSITION: %s PLATE: %s", apt.Name, apt.Position, wtype.NameOf(apt.Plate))
@@ -377,7 +377,7 @@ func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) 
 	}
 
 	if moveInstruction.Type() != MOV {
-		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction: found %s", moveInstruction.Type().MachineName)
+		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction: found %s", moveInstruction.Type().Name)
 	}
 
 	if dspOrAspInstruction.Type() == ASP {
@@ -385,7 +385,7 @@ func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) 
 	} else if dspOrAspInstruction.Type() == DSP {
 		return mergeSummaries(step1summary, step2summary, string(Dispense)), nil
 	} else {
-		return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense: found %s", dspOrAspInstruction.Type().MachineName)
+		return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense: found %s", dspOrAspInstruction.Type().Name)
 	}
 
 }

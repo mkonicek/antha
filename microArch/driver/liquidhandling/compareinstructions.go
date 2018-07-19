@@ -244,7 +244,7 @@ func compareInstructions(index int, ins1, ins2 RobotInstruction, paramsToCompare
 	// if instructions are not the same type we just return that error
 
 	if ins1.Type() != ins2.Type() {
-		return []error{fmt.Errorf("Instructions at %d different types (%s %s)", index, ins1.Type().MachineName, ins2.Type().MachineName)}
+		return []error{fmt.Errorf("Instructions at %d different types (%s %s)", index, ins1.Type().Name, ins2.Type().Name)}
 	}
 
 	errors := make([]error, 0, 1)
@@ -254,7 +254,7 @@ func compareInstructions(index int, ins1, ins2 RobotInstruction, paramsToCompare
 		p2 := ins2.GetParameter(prm)
 
 		if !reflect.DeepEqual(p1, p2) {
-			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameter %s differ (%v %v)", index, ins1.Type().MachineName, prm, p1, p2))
+			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameter %s differ (%v %v)", index, ins1.Type().Name, prm, p1, p2))
 		}
 	}
 

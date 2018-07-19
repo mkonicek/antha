@@ -43,7 +43,7 @@ type TransferInstruction struct {
 }
 
 func (ti *TransferInstruction) ToString() string {
-	s := ti.Type().MachineName
+	s := ti.Type().Name
 	for i := 0; i < len(ti.Transfers); i++ {
 		s += ti.ParamSet(i).ToString()
 		s += "\n"

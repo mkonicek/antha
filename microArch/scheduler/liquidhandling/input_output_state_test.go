@@ -73,8 +73,6 @@ func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 
 	rq.AddUserPlate(pl2)
 
-	rq.ConfigureYourself()
-
 	lh.Plan(ctx, rq)
 
 	expected := make(map[string][]initFinalCmp)
@@ -147,8 +145,6 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
 
-	rq.ConfigureYourself()
-
 	lh.Plan(ctx, rq)
 
 	expected := make(map[string][]initFinalCmp)
@@ -206,8 +202,6 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 	}
 
 	rq.AddUserPlate(pl2)
-
-	rq.ConfigureYourself()
 
 	lh.Plan(ctx, rq)
 
@@ -271,8 +265,6 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 
 	rq.AddUserPlate(pl2)
 
-	rq.ConfigureYourself()
-
 	lh.Plan(ctx, rq)
 
 	expected := make(map[string][]initFinalCmp)
@@ -311,8 +303,6 @@ func TestBeforeVsAfterMixInPlace(t *testing.T) {
 	}
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
 
 	lh.Plan(ctx, rq)
 
@@ -361,8 +351,6 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
 	rq.Output_platetypes = append(rq.Output_platetypes, pl.Dup())
 
-	rq.ConfigureYourself()
-
 	lh.Plan(ctx, rq)
 
 	expected := make(map[string][]initFinalCmp)
@@ -402,8 +390,6 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 	}
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
 
 	lh.Plan(ctx, rq)
 

@@ -31,7 +31,6 @@ func TestLayoutAgent1(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	req.ConfigureYourself()
 	setOutputOrder(req)
 	params := makeGilson(ctx)
 
@@ -74,7 +73,6 @@ func TestLayoutAgent2(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	req.ConfigureYourself()
 	setOutputOrder(req)
 	params := makeGilson(ctx)
 
@@ -137,7 +135,6 @@ func TestLayoutAgent3(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	req.ConfigureYourself()
 	setOutputOrder(req)
 	params := makeGilson(ctx)
 
@@ -197,7 +194,6 @@ func TestLayoutAgent4(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	req.ConfigureYourself()
 	setOutputOrder(req)
 	params := makeGilson(ctx)
 
@@ -247,7 +243,6 @@ func TestLayoutAgent5(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	req.ConfigureYourself()
 	setOutputOrder(req)
 	params := makeGilson(ctx)
 
@@ -291,7 +286,6 @@ func TestLayoutAgent6(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	req.ConfigureYourself()
 	setOutputOrder(req)
 	params := makeGilson(ctx)
 
@@ -334,7 +328,6 @@ func TestLayoutAgent7(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	req.ConfigureYourself()
 	setOutputOrder(req)
 	params := makeGilson(ctx)
 

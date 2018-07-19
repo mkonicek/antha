@@ -90,18 +90,11 @@ func (req *LHRequest) GetPlate(id string) (*wtype.Plate, bool) {
 	return nil, false
 }
 
-func (req *LHRequest) ConfigureYourself() error {
-	if req.InputSolutions == nil {
-		req.InputSolutions = &InputSolutions{}
-	}
-	// ensures input solutions is populated
-	// once input plates are specified
-	// more to happen later
-	inputs := req.InputSolutions.Solutions
+//GetSolutionsFromInputPlates get all the solutions available to the mix task
+//in the input plates
+func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid, error) {
 
-	if inputs == nil {
-		inputs = make(map[string][]*wtype.Liquid)
-	}
+	inputs := make(map[string][]*wtype.Liquid)
 
 	// we need to make an exception of components which are used literally
 	// i.e. anything used in a mix-in-place; these don't add to the general
@@ -130,7 +123,6 @@ func (req *LHRequest) ConfigureYourself() error {
 			}
 
 			// special case for components treated literally
-
 			cmp, ok := uniques[w.PlateLocation()]
 
 			if ok {
@@ -141,18 +133,14 @@ func (req *LHRequest) ConfigureYourself() error {
 				// bulk components (where instances don't matter) are
 				// identified using just CName
 				c := w.Contents().Dup()
-				vvvvvv := c.Volume()
-				vvvvvv.Subtract(w.ResidualVolume())
-				c.SetVolume(vvvvvv)
-				ar := inputs[c.CName]
-				ar = append(ar, c)
-				inputs[c.CName] = ar
+				//get the amount available
+				c.SetVolume(w.CurrentWorkingVolume())
+				inputs[c.CName] = append(inputs[c.CName], c)
 			}
 		}
 	}
 
-	req.InputSolutions.Solutions = inputs
-	return nil
+	return inputs, nil
 }
 
 // this function checks requests so we can see early on whether or not they

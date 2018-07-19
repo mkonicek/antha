@@ -233,8 +233,6 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 
 	rq.Tips = tipBoxes
 
-	rq.ConfigureYourself()
-
 	if err := lh.Plan(ctx, rq); err != nil {
 		return rq, fmt.Errorf("Got an error planning with no inputs: %s", err.Error())
 	}
@@ -304,8 +302,6 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 
 		rq.Add_instruction(ins)
 	}
-
-	rq.ConfigureYourself()
 
 	if err := lh.Plan(ctx, rq); err != nil {
 		return rq, errors.WithMessage(err, "while planning")
@@ -566,8 +562,6 @@ func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 
 	multiRq.Tips = tipBoxes
 
-	multiRq.ConfigureYourself()
-
 	if err := lh.Plan(ctx, multiRq); err != nil {
 		return multiRq, fmt.Errorf("Got an error planning with no inputs: %s", err)
 	}
@@ -605,8 +599,6 @@ func makeSingleTestRequest() (singleRq *LHRequest, err error) {
 	singleRq.Output_platetypes = append(singleRq.Output_platetypes, GetPlateForTest())
 
 	singleRq.Tips = tipBoxes
-
-	singleRq.ConfigureYourself()
 
 	if err := lh.Plan(ctx, singleRq); err != nil {
 		return singleRq, fmt.Errorf("Got an error planning with no inputs: %s", err)
@@ -736,8 +728,6 @@ func TestTipOverridePositive(t *testing.T) {
 
 	rq.Tips = tpz
 
-	rq.ConfigureYourself()
-
 	if err := lh.Plan(ctx, rq); err != nil {
 		t.Fatalf("Got an error planning with no inputs: %s", err)
 	}
@@ -760,8 +750,6 @@ func TestTipOverrideNegative(t *testing.T) {
 
 	rq.Tips = tpz
 
-	rq.ConfigureYourself()
-
 	err = lh.Plan(ctx, rq)
 
 	if e, f := "7 (LH_ERR_VOL) : volume error : No tip chosen: Volume 8 ul is too low to be accurately moved by the liquid handler (configured minimum 10 ul). Low volume tips may not be available and / or the robot may need to be configured differently", err.Error(); e != f {
@@ -777,8 +765,6 @@ func TestPlateReuse(t *testing.T) {
 	configure_request_simple(ctx, rq)
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
-
-	rq.ConfigureYourself()
 
 	err := lh.Plan(ctx, rq)
 
@@ -810,8 +796,6 @@ func TestPlateReuse(t *testing.T) {
 	}
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
-
-	rq.ConfigureYourself()
 
 	lh = GetLiquidHandlerForTest(ctx)
 	err = lh.Plan(ctx, rq)
@@ -857,8 +841,6 @@ func TestPlateReuse(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
-
 	lh = GetLiquidHandlerForTest(ctx)
 	err = lh.Plan(ctx, rq)
 
@@ -880,8 +862,6 @@ func TestBeforeVsAfter(t *testing.T) {
 	configure_request_simple(ctx, rq)
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
-
-	rq.ConfigureYourself()
 
 	err := lh.Plan(ctx, rq)
 
@@ -976,7 +956,6 @@ func TestEP3(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 
 	if err != nil {
@@ -995,7 +974,6 @@ func TestEP3TotalVolume(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 
 	if err != nil {
@@ -1014,7 +992,6 @@ func TestEP3Overfilled(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 
 	if err == nil {
@@ -1039,7 +1016,6 @@ func TestEP3Negative(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 
 	if err == nil {
@@ -1063,7 +1039,6 @@ func TestEP3WrongResult(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 
 	if err == nil {
@@ -1091,7 +1066,6 @@ func TestEP3WrongTotalVolume(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 
 	if err == nil {
@@ -1208,7 +1182,6 @@ func TestPlateIDMap(t *testing.T) {
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 
 	if err != nil {
@@ -1385,7 +1358,6 @@ func runPlan(ctx context.Context, instructions []*wtype.LHInstruction) (*Liquidh
 	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
 	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 	if err != nil {
 		return nil, nil, errors.WithMessage(err, "while planning")

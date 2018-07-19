@@ -48,8 +48,6 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
 
-	rq.ConfigureYourself()
-
 	lh := Init(rbt)
 
 	lh.Plan(ctx, rq)
@@ -121,8 +119,6 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 	}
 
 	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
 
 	lh := Init(rbt)
 

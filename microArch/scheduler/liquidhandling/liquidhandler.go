@@ -143,12 +143,6 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	err = request.ConfigureYourself()
-	if err != nil {
-		return err
-	}
-
-	//f := func() {
 	err = this.Plan(ctx, request)
 	if err != nil {
 		return err
@@ -959,13 +953,17 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if err != nil {
 		return err
 	}
-
-	// looks at components, determines what inputs are required
-	inputs, err := GetInputs(orderedInstructions, request.InputSolutions.Solutions, request.CarryVolume)
+	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
 	if err != nil {
 		return err
 	}
-	request.InputSolutions = inputs
+
+	// looks at liquids provided, calculates liquids required
+	if inputSolutions, err := GetInputs(orderedInstructions, solutionsFromPlates, request.CarryVolume); err != nil {
+		return err
+	} else {
+		request.InputSolutions = inputSolutions
+	}
 
 	// define the input plates
 	// should be merged with the above

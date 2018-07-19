@@ -97,7 +97,7 @@ func WithPool(parent context.Context) (context.Context, context.CancelFunc, Done
 		func() { pctx.cancel(context.Canceled) },
 		func() <-chan struct{} {
 			pctx.remove(rootPromise)
-			decrement(pctx, tr, 1, nil)
+			pctx.decrement(tr, 1, nil)
 			return done
 		}
 }
@@ -110,27 +110,25 @@ func getPool(ctx context.Context) *poolCtx {
 	return c
 }
 
-func tryUnblock(tr *trace, pctx *poolCtx) {
+//tryUnblockWithLock will attempt to compile any LHInstructions in the trace
+func (pctx *poolCtx) tryUnblockWithLock(tr *trace) {
 	if err := tr.signal(pctx); err != nil {
 		pctx.cancelWithLock(err)
 	}
 }
 
-func decrement(pctx *poolCtx, tr *trace, delta int, err error) {
+func (pctx *poolCtx) decrement(tr *trace, delta int, err error) {
 	pctx.lock.Lock()
 	defer pctx.lock.Unlock()
 	pctx.alive -= delta
-	tryUnblock(tr, pctx)
 
-	var cancel error
 	if err != nil {
-		cancel = err
-	}
-	if pctx.alive == 0 && cancel == nil {
-		cancel = errPoolDone
-	}
-	if cancel != nil {
-		pctx.cancelWithLock(cancel)
+		pctx.cancelWithLock(err)
+	} else {
+		pctx.tryUnblockWithLock(tr)
+		if pctx.alive == 0 {
+			pctx.cancelWithLock(errPoolDone)
+		}
 	}
 }
 
@@ -148,7 +146,7 @@ func Go(parent context.Context, fn func(ctx context.Context) error) {
 	go func() {
 		var err error
 		defer func() {
-			decrement(pctx, tr, 1, err)
+			pctx.decrement(tr, 1, err)
 		}()
 		defer func() {
 			if res := recover(); res != nil {

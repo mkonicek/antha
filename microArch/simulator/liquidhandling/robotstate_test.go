@@ -11,7 +11,7 @@ type tipCoordsTest struct {
 	tipsMissing  []string
 	num          int
 	tipBehaviour wtype.TipLoadingBehaviour
-	orientation  int
+	orientation  wtype.ChannelOrientation
 	expected     string
 }
 

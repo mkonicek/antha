@@ -30,10 +30,19 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+type ChannelOrientation bool
+
 const (
-	LHVChannel = iota // vertical orientation
-	LHHChannel        // horizontal orientation
+	LHVChannel ChannelOrientation = iota%2 == 1 // vertical orientation
+	LHHChannel                                  // horizontal orientation
 )
+
+func (o ChannelOrientation) String() string {
+	if o == LHVChannel {
+		return "vertical"
+	}
+	return "horizontal"
+}
 
 // what constraints apply to adjacent channels
 type LHMultiChannelConstraint struct {
@@ -82,7 +91,7 @@ type LHChannelParameter struct {
 	Maxspd      wunit.FlowRate
 	Multi       int
 	Independent bool
-	Orientation int
+	Orientation ChannelOrientation
 	Head        int
 }
 
@@ -105,7 +114,7 @@ func (lhcp LHChannelParameter) VolumeLimitString() string {
 }
 
 func (lhcp LHChannelParameter) String() string {
-	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %d Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.ToString(), lhcp.Maxvol.ToString(), lhcp.Minspd.ToString(), lhcp.Maxspd.ToString(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
+	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %v Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.ToString(), lhcp.Maxvol.ToString(), lhcp.Minspd.ToString(), lhcp.Maxspd.ToString(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
 }
 
 // given the dimension of the plate, what is the constraint
@@ -144,7 +153,7 @@ func (lhcp LHChannelParameter) MarshalJSON() ([]byte, error) {
 		Maxspd      wunit.FlowRate
 		Multi       int
 		Independent bool
-		Orientation int
+		Orientation ChannelOrientation
 		Head        int
 	}{
 		lhcp.ID,
@@ -180,7 +189,7 @@ func (lhcp *LHChannelParameter) dup(keepIDs bool) *LHChannelParameter {
 	return r
 }
 
-func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, minspd, maxspd wunit.FlowRate, multi int, independent bool, orientation int, head int) *LHChannelParameter {
+func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, minspd, maxspd wunit.FlowRate, multi int, independent bool, orientation ChannelOrientation, head int) *LHChannelParameter {
 	var lhp LHChannelParameter
 	lhp.ID = GetUUID()
 	lhp.Name = name
@@ -426,11 +435,16 @@ func NewLHAdaptor(name, mf string, params *LHChannelParameter) *LHAdaptor {
 	lha.Manufacturer = mf
 	lha.Params = params
 	lha.Tips = make([]*LHTip, params.Multi)
+	lha.ID = GetUUID()
 	return &lha
 }
 
 func (lha *LHAdaptor) Dup() *LHAdaptor {
 	return lha.dup(false)
+}
+
+func (lha *LHAdaptor) AdaptorType() string {
+	return lha.Manufacturer + lha.Name
 }
 
 func (lha *LHAdaptor) DupKeepIDs() *LHAdaptor {
@@ -455,6 +469,12 @@ func (lha *LHAdaptor) dup(keepIDs bool) *LHAdaptor {
 				ad.AddTip(i, tip.Dup())
 			}
 		}
+	}
+
+	if keepIDs {
+		ad.ID = lha.ID
+	} else {
+		ad.ID = GetUUID()
 	}
 
 	return ad

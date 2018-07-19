@@ -8,32 +8,30 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
+//InputSolutions properties to do with the input Liquids required for the mix
+type InputSolutions struct {
+	Solutions       map[string][]*wtype.Liquid
+	Order           []string
+	VolumesSupplied map[string]wunit.Volume
+	VolumesRequired map[string]wunit.Volume
+	VolumesWanting  map[string]wunit.Volume
+}
+
 // sort out inputs
-func GetInputs(request *LHRequest) (*LHRequest, error) {
-	instructions := (*request).LHInstructions
-
-	inputs := make(map[string][]*wtype.Liquid, 3)
+func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[string][]*wtype.Liquid, carryVolume wunit.Volume) (*InputSolutions, error) {
+	inputs := make(map[string][]*wtype.Liquid)
 	volsRequired := make(map[string]wunit.Volume)
+	var allinputs []string
+	ordH := make(map[string]int, len(orderedInstructions))
 
-	allinputs := make([]string, 0, 10)
-
-	ordH := make(map[string]int, len(instructions))
-
-	//	for _, instruction := range instructions {
-	for _, insID := range request.OutputOrder {
+	for _, instruction := range orderedInstructions {
 		// ignore non-mixes
-
-		instruction := instructions[insID]
-
 		if instruction.InsType() != "MIX" {
 			continue
 		}
 
-		components := instruction.Components
-
-		for ix, component := range components {
+		for ix, component := range instruction.Components {
 			// Ignore components which already exist
-
 			if component.IsInstance() {
 				continue
 			}
@@ -82,7 +80,7 @@ func GetInputs(request *LHRequest) (*LHRequest, error) {
 
 				// we have to add the carry volume here
 				// this is roughly per transfer so should be OK
-				v2a.Add(request.CarryVolume)
+				v2a.Add(carryVolume)
 				vol.Add(v2a)
 
 				volsRequired[component.Kind()] = vol
@@ -95,16 +93,13 @@ func GetInputs(request *LHRequest) (*LHRequest, error) {
 
 	// invert the Hash
 
-	var err error
-	request.InputOrder, err = OrdinalFromHash(ordH)
+	inputOrder, err := OrdinalFromHash(ordH)
 	if err != nil {
-		return request, err
+		return nil, err
 	}
 
-	requestinputs := request.InputSolutions
-
-	if len(requestinputs) == 0 {
-		requestinputs = make(map[string][]*wtype.Liquid, 5)
+	if len(inputSolutions) == 0 {
+		inputSolutions = make(map[string][]*wtype.Liquid, 5)
 	}
 
 	volsSupplied := make(map[string]wunit.Volume, len(volsRequired))
@@ -113,7 +108,7 @@ func GetInputs(request *LHRequest) (*LHRequest, error) {
 	for _, k := range allinputs {
 		// volSupplied: how much comes in
 		volSupplied := wunit.NewVolume(0.00, "ul")
-		for _, cmp := range requestinputs[k] {
+		for _, cmp := range inputSolutions[k] {
 			volSupplied.Add(cmp.Volume())
 		}
 		volsSupplied[k] = volSupplied
@@ -130,21 +125,20 @@ func GetInputs(request *LHRequest) (*LHRequest, error) {
 		}
 	}
 
-	request.InputVolsRequired = volsRequired
-	request.InputVolsSupplied = volsSupplied
-	request.InputVolsWanting = volsWanting
-
 	// add any new inputs
-
 	for k, v := range inputs {
-		if requestinputs[k] == nil {
-			requestinputs[k] = v
+		if inputSolutions[k] == nil {
+			inputSolutions[k] = v
 		}
 	}
 
-	request.InputSolutions = requestinputs
-
-	return request, nil
+	return &InputSolutions{
+		Solutions:       inputSolutions,
+		Order:           inputOrder,
+		VolumesSupplied: volsSupplied,
+		VolumesRequired: volsRequired,
+		VolumesWanting:  volsWanting,
+	}, nil
 }
 
 func OrdinalFromHash(m map[string]int) ([]string, error) {

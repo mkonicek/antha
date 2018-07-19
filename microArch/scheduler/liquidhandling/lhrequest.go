@@ -24,6 +24,8 @@
 package liquidhandling
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -359,4 +361,23 @@ func (request *LHRequest) AllPlates() []*wtype.Plate {
 	r = append(r, request.OrderedOutputPlates()...)
 
 	return r
+}
+
+//GetOrderedLHInstructions get the LHInstructions in the order which should have
+//previously been detrmined by setOutputOrder
+func (request *LHRequest) GetOrderedLHInstructions() ([]*wtype.LHInstruction, error) {
+	//if these aren't the same length then there was probably an issue with setOutputOrder
+	if len(request.OutputOrder) != len(request.LHInstructions) {
+		return nil, errors.Errorf("request OutputOrder has length %d but %d LHInstructions", len(request.OutputOrder), len(request.LHInstructions))
+	}
+
+	ret := make([]*wtype.LHInstruction, 0, len(request.OutputOrder))
+	for _, instructionID := range request.OutputOrder {
+		instruction, ok := request.LHInstructions[instructionID]
+		if !ok {
+			return ret, errors.Errorf("request has invalid OutputOrder, no instruction with id %s", instructionID)
+		}
+		ret = append(ret, instruction)
+	}
+	return ret, nil
 }

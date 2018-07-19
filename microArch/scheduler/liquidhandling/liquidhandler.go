@@ -955,12 +955,22 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	// looks at components, determines what inputs are required
-	request, err = GetInputs(request)
-
+	orderedInstructions, err := request.GetOrderedLHInstructions()
 	if err != nil {
 		return err
 	}
+
+	// looks at components, determines what inputs are required
+	inputs, err := GetInputs(orderedInstructions, request.InputSolutions, request.CarryVolume)
+	if err != nil {
+		return err
+	}
+	request.InputSolutions = inputs.Solutions
+	request.InputOrder = inputs.Order
+	request.InputVolsRequired = inputs.VolumesRequired
+	request.InputVolsSupplied = inputs.VolumesSupplied
+	request.InputVolsWanting = inputs.VolumesWanting
+
 	// define the input plates
 	// should be merged with the above
 	request, err = input_plate_setup(ctx, request)

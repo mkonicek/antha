@@ -3595,7 +3595,11 @@ func checkAndSaften(proposed, min, max float64, overrideIfOutOfRange bool) (floa
 	return proposed, nil
 }
 
-//make ZOffset safe
+//makeZOffsetSafe increase the zoffset to prevent the robot head from colliding
+//with the top of the plate when accessing the bottom of particularly deep wells
+//with shorter tips.
+//Does not affect behaviour with troughs and other wells that are big enough for
+//the entire head to fit inside.
 func makeZOffsetSafe(ctx context.Context, prms *LHProperties, zoffset float64, headIndex int, plates []string, tiptype string) (float64, error) {
 	platename := ""
 	for _, p := range plates {

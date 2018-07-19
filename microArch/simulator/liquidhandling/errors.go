@@ -206,6 +206,8 @@ func (self *CollisionError) GetStateAtError() string {
 	return self.stateAtError
 }
 
+//CollisionDescription get a human readable description of the collision,
+//group objects involved in the collision as much as possible
 func (self *CollisionError) CollisionDescription() string {
 
 	//list adaptors in order for consistent errors

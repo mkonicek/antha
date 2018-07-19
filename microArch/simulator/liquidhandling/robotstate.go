@@ -273,6 +273,11 @@ func (self *AdaptorState) SummariseTips() string {
 	return fmt.Sprintf("%s: <no tips>", self.name)
 }
 
+//SummarisePositions get a human readable description of the X,Y,Z position of
+//the adaptor, as well as which type of tips are loaded on which channels.
+//channelsColliding provides an optional list of channel indexes which
+//have been detected as being involved in a collision, which will also be
+//displayed in the output.
 func (self *AdaptorState) SummarisePositions(channelsColliding []int) string {
 
 	positions := make([]wtype.Coordinates, len(self.channels))

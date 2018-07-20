@@ -206,7 +206,7 @@ func (it *IChain) GetOrderedLHInstructions() []*wtype.LHInstruction {
 }
 
 func (it *IChain) SplitMixedNodes() {
-	if nodesMixedOK(it.Values) {
+	if it.hasMixAndSplitOnly() {
 		it.splitMixedNode()
 	}
 
@@ -294,9 +294,9 @@ func (ic *IChain) AsGraph() graph.Graph {
 	}
 }
 
-func nodesMixedOK(values []*wtype.LHInstruction) bool {
+func (ic *IChain) hasMixAndSplitOnly() bool {
 	/// true iff we have exactly two types of node: split and mix
-	insTypes := countInstructionTypes(values)
+	insTypes := ic.getInstructionTypes()
 
 	return len(insTypes) == 2 && insTypes[wtype.InsNames[wtype.LHIMIX]] && insTypes[wtype.InsNames[wtype.LHISPL]]
 }
@@ -840,4 +840,29 @@ func addNewNodesTo(ic *IChain, newNodes *IChain) *IChain {
 	}
 
 	return ic
+}
+
+func (self *IChain) getInstructionTypes() map[string]bool {
+	types := make(map[string]bool, len(self.Values))
+	for _, v := range self.Values {
+		types[v.InsType()] = true
+	}
+
+	return types
+}
+
+//assertInstructionsSeparate check that there's only one type of instruction
+//in each link of the chain
+func (self *IChain) assertInstructionsSeparate() error {
+	if self == nil {
+		return nil
+	}
+
+	types := self.getInstructionTypes()
+
+	if len(types) != 1 {
+		return fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", len(types), self.Depth)
+	}
+
+	return self.Child.assertInstructionsSeparate()
 }

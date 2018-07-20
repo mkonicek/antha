@@ -738,38 +738,6 @@ func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
 	return nil
 }
 
-func checkInstructionOrdering(request *LHRequest) {
-	ch := request.InstructionChain
-
-	for {
-		if ch == nil {
-			break
-		}
-
-		onlyAllowOneInstructionType(ch)
-
-		ch = ch.Child
-	}
-}
-
-func countInstructionTypes(inss []*wtype.LHInstruction) map[string]bool {
-	m := make(map[string]bool)
-
-	for _, i := range inss {
-		m[i.InsType()] = true
-	}
-
-	return m
-}
-
-func onlyAllowOneInstructionType(c *IChain) {
-	m := countInstructionTypes(c.Values)
-
-	if len(m) != 1 {
-		panic(fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", m, c.Depth))
-	}
-}
-
 func checkDestinationSanity(request *LHRequest) {
 	for _, ins := range request.LHInstructions {
 		// non-mix instructions are fine
@@ -836,12 +804,13 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	//add in a plateCache for instruction generation
 	ctx = plateCache.NewContext(ctx)
 
+	//find what liquids are explicitely provided by the user
 	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
 	if err != nil {
 		return err
 	}
 
-	// figure out the output order
+	// figure out the ordering for the high level instructions
 	if ichain, err := getLHInstructionOrder(request.GetUnorderedLHInstructions(), solutionsFromPlates, request.Options.OutputSort); err != nil {
 		return err
 	} else {
@@ -865,7 +834,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// assert that we must keep prompts and splits separate from mixes
-	checkInstructionOrdering(request)
+	if err := request.InstructionChain.assertInstructionsSeparate(); err != nil {
+		return err
+	}
 
 	forceSanity(request)
 	// convert requests to volumes and determine required stock concentrations

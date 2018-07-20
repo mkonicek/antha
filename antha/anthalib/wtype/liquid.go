@@ -123,8 +123,14 @@ func (lhc Liquid) GetID() string {
 	return lhc.ID
 }
 
-func (lhc *Liquid) PlateLocation() PlateLocation {
-	return PlateLocationFromString(lhc.Loc)
+func (lhc *Liquid) PlateLocation(optionalPlateType ...*Plate) PlateLocation {
+	
+	plateLoc := PlateLocationFromString(lhc.Loc)
+	
+	if len(optionalPlateType) == 1 {
+		plateLoc.Coords.MaxX, plateLoc.Coords.MaxY = optionalPlateType[0].WlsX, optionalPlateType[0].WlsY 
+	}
+	return plateLoc
 }
 
 // WellLocation returns the well location in A1 format.
@@ -133,7 +139,7 @@ func (lhc *Liquid) WellLocation() string {
 }
 
 // SetWellLocation sets the well location to an LHComponent in A1 format.
-func (lhc *Liquid) SetWellLocation(wellLocation string) error {
+func (lhc *Liquid) SetWellLocation(wellLocation string, plateType *Plate) error {
 	location := lhc.PlateLocation()
 	lhc.Loc = location.ID + ":" + wellLocation
 	return nil

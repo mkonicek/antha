@@ -419,8 +419,8 @@ func (tb *LHTipbox) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) 
 	rel := r.Subtract(tb.GetPosition())
 	tipSize := tb.Tiptype.GetSize()
 	wc := WellCoords{
-		int(math.Floor(((rel.X - tb.TipXStart + 0.5*tipSize.X) / tb.TipXOffset))),
-		int(math.Floor(((rel.Y - tb.TipYStart + 0.5*tipSize.Y) / tb.TipYOffset))),
+		X: int(math.Floor(((rel.X - tb.TipXStart + 0.5*tipSize.X) / tb.TipXOffset))),
+		Y: int(math.Floor(((rel.Y - tb.TipYStart + 0.5*tipSize.Y) / tb.TipYOffset))),
 	}
 	if wc.X < 0 {
 		wc.X = 0
@@ -682,7 +682,7 @@ func (tb *LHTipbox) GetTips(mirror bool, multi int, orient ChannelOrientation) [
 				ret = make([]string, multi)
 				for i := 0; i < multi; i++ {
 					tb.Tips[i+s][j] = nil
-					wc := WellCoords{i + s, j}
+					wc := WellCoords{X: i + s, Y: j}
 					ret[i] = wc.FormatA1()
 				}
 				break
@@ -715,7 +715,7 @@ func (tb *LHTipbox) GetTips(mirror bool, multi int, orient ChannelOrientation) [
 				n := 0
 				for j := s; j >= 0; j-- {
 					tb.Tips[i][j] = nil
-					wc := WellCoords{i, j}
+					wc := WellCoords{X: i, Y: j}
 					//fmt.Println(j, "Getting TIP from ", wc.FormatA1())
 					ret = append(ret, wc.FormatA1())
 					n += 1

@@ -633,7 +633,7 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 			arr[i][j] = welltype.CDup()
 
 			//crds := wutil.NumToAlpha(i+1) + ":" + strconv.Itoa(j+1)
-			crds := WellCoords{j, i}
+			crds := WellCoords{X: j,Y: i}
 			wellcoords[crds.FormatA1()] = arr[i][j]
 			colarr[j][i] = arr[i][j]
 			rowarr[i][j] = arr[i][j]
@@ -1134,8 +1134,8 @@ func (self *Plate) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
 	rel := r.Subtract(self.GetPosition())
 	wellSize := self.Welltype.GetSize()
 	wc := WellCoords{
-		int(math.Floor((rel.X - self.WellXStart + 0.5*wellSize.X) / self.WellXOffset)),
-		int(math.Floor((rel.Y - self.WellYStart + 0.5*wellSize.Y) / self.WellYOffset)),
+		X: int(math.Floor((rel.X - self.WellXStart + 0.5*wellSize.X) / self.WellXOffset)),
+		Y: int(math.Floor((rel.Y - self.WellYStart + 0.5*wellSize.Y) / self.WellYOffset)),
 	}
 	if wc.X < 0 {
 		wc.X = 0

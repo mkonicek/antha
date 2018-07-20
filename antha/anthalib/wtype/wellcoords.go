@@ -1,10 +1,11 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func A1ArrayFromWells(wells []*LHWell) []string {
@@ -148,10 +149,12 @@ func CompareWellCoordsRow(w1, w2 WellCoords) int {
 type WellCoords struct {
 	X int
 	Y int
+	// Maximum number of wells in x and y direction based on plate type
+	MaxX, MaxY int
 }
 
 func ZeroWellCoords() WellCoords {
-	return WellCoords{-1, -1}
+	return WellCoords{X: -1, Y: -1}
 }
 func (wc WellCoords) IsZero() bool {
 	return wc.Equals(ZeroWellCoords())
@@ -175,7 +178,7 @@ func MakeWellCoords(wc string) WellCoords {
 
 	r := MakeWellCoordsA1(wc)
 
-	zero := WellCoords{-1, -1}
+	zero := WellCoords{X: -1, Y: -1}
 
 	if !r.Equals(zero) {
 		return r
@@ -198,7 +201,7 @@ func MakeWellCoordsA1(a1 string) WellCoords {
 	matches := re.FindStringSubmatch(a1)
 
 	if matches == nil {
-		return WellCoords{-1, -1}
+		return WellCoords{X: -1, Y: -1}
 	}
 	/*
 		re, _ := regexp.Compile("[A-Z]{1,}")
@@ -206,10 +209,7 @@ func MakeWellCoordsA1(a1 string) WellCoords {
 		endC := ix[1]
 	*/
 
-	X := wutil.ParseInt(matches[2]) - 1
-	Y := wutil.AlphaToNum(matches[1]) - 1
-
-	return WellCoords{X, Y}
+	return WellCoords{X: wutil.ParseInt(matches[2]) - 1, Y: wutil.AlphaToNum(matches[1]) - 1}
 }
 
 // make well coordinates in the "1A" convention
@@ -218,20 +218,18 @@ func MakeWellCoords1A(a1 string) WellCoords {
 	matches := re.FindStringSubmatch(a1)
 
 	if matches == nil {
-		return WellCoords{-1, -1}
+		return WellCoords{X: -1, Y: -1}
 	}
 
-	Y := wutil.AlphaToNum(matches[2]) - 1
-	X := wutil.ParseInt(matches[1]) - 1
-	return WellCoords{X, Y}
+	return WellCoords{X: wutil.AlphaToNum(matches[2]) - 1, Y: wutil.ParseInt(matches[1]) - 1}
 }
 
 // make well coordinates in a manner compatble with "X1,Y1" etc.
 func MakeWellCoordsXYsep(x, y string) WellCoords {
-	r := WellCoords{wutil.ParseInt(y[1:]) - 1, wutil.ParseInt(x[1:]) - 1}
+	r := WellCoords{X: wutil.ParseInt(y[1:]) - 1, Y: wutil.ParseInt(x[1:]) - 1}
 
 	if r.X < 0 || r.Y < 0 {
-		return WellCoords{-1, -1}
+		return WellCoords{X: -1, Y: -1}
 	}
 
 	return r
@@ -240,11 +238,11 @@ func MakeWellCoordsXYsep(x, y string) WellCoords {
 func MakeWellCoordsXY(xy string) WellCoords {
 	tx := strings.Split(xy, "Y")
 	if tx == nil || len(tx) != 2 || len(tx[0]) == 0 || len(tx[1]) == 0 {
-		return WellCoords{-1, -1}
+		return WellCoords{X: -1, Y: -1}
 	}
 	x := wutil.ParseInt(tx[0][1:len(tx[0])]) - 1
 	y := wutil.ParseInt(tx[1]) - 1
-	return WellCoords{x, y}
+	return WellCoords{X: x, Y: y}
 }
 
 // return well coordinates in "X1Y1" format

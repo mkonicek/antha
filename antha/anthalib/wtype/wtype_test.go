@@ -261,13 +261,13 @@ func TestLHMultiConstraint(t *testing.T) {
 func TestWCSorting(t *testing.T) {
 	v := make([]WellCoords, 0, 1)
 
-	v = append(v, WellCoords{0, 2})
-	v = append(v, WellCoords{4, 2})
-	v = append(v, WellCoords{0, 1})
-	v = append(v, WellCoords{8, 9})
-	v = append(v, WellCoords{1, 3})
-	v = append(v, WellCoords{3, 6})
-	v = append(v, WellCoords{8, 0})
+	v = append(v, WellCoords{X: 0, Y: 2})
+	v = append(v, WellCoords{X: 4, Y: 2})
+	v = append(v, WellCoords{X: 0, Y: 1})
+	v = append(v, WellCoords{X: 8, Y: 9})
+	v = append(v, WellCoords{X: 1, Y: 3})
+	v = append(v, WellCoords{X: 3, Y: 6})
+	v = append(v, WellCoords{X: 8, Y: 0})
 
 	sort.Sort(WellCoordArrayRow(v))
 

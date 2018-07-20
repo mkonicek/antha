@@ -127,7 +127,7 @@ func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, w
 		Z: wellzstart,
 	}
 	w.SetOffset(offset) //nolint
-	w.Crds = WellCoords{0, 0}
+	w.Crds = WellCoords{X: 0, Y: 0}
 
 	return &lht
 }
@@ -148,7 +148,7 @@ func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) ([]WellCoords, bo
 
 	//currently tipwastes only ever have one well
 	wcS := make([]WellCoords, 0, n)
-	wc := WellCoords{0, 0}
+	wc := WellCoords{X: 0, Y: 0}
 	for i := 0; i < n; i++ {
 		wcS = append(wcS, wc)
 	}
@@ -268,7 +268,7 @@ func (self *LHTipwaste) GetChildByAddress(c WellCoords) LHObject {
 }
 
 func (self *LHTipwaste) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
-	wc := WellCoords{0, 0}
+	wc := WellCoords{X: 0, Y: 0}
 
 	c, _ := self.WellCoordsToCoords(wc, TopReference)
 

@@ -15,7 +15,6 @@ import (
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/trace"
 )
 
 // a commandInst is a generic intrinsic instruction
@@ -97,7 +96,7 @@ func Incubate(ctx context.Context, in *wtype.Liquid, opt IncubateOpt) *wtype.Liq
 		},
 	})
 
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	return inst.result[0]
 }
 
@@ -120,7 +119,7 @@ func MixerPrompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.L
 			Message:     message,
 		},
 	)
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	return inst.result[0]
 }
 
@@ -148,7 +147,7 @@ func Prompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid
 		},
 	})
 
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	return inst.result[0]
 }
 
@@ -213,7 +212,7 @@ type HandleOpt struct {
 // Handle performs a low level instruction on a component
 func Handle(ctx context.Context, opt HandleOpt) *wtype.Liquid {
 	inst := handle(ctx, opt)
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	return inst.result[0]
 }
 
@@ -250,7 +249,7 @@ func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 // PlateRead reads absorbance of a component
 func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.Liquid {
 	inst := readPlate(ctx, opt)
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	return inst.result[0]
 }
 
@@ -294,14 +293,14 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 // RunQPCRExperiment starts a new QPCR experiment, using an experiment input file.
 func RunQPCRExperiment(ctx context.Context, opt QPCROptions) []*wtype.Liquid {
 	inst := runQPCR(ctx, opt, "RunExperiment")
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	return inst.result
 }
 
 // RunQPCRFromTemplate starts a new QPCR experiment, using a template input file.
 func RunQPCRFromTemplate(ctx context.Context, opt QPCROptions) []*wtype.Liquid {
 	inst := runQPCR(ctx, opt, "RunExperimentFromTemplate")
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	return inst.result
 }
 
@@ -366,7 +365,7 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 
 func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.Liquid {
 	inst := mix(ctx, generic)
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	if generic.Welladdress != "" {
 		err := inst.result[0].SetWellLocation(generic.Welladdress)
 		if err != nil {
@@ -423,7 +422,7 @@ func SplitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volu
 
 	inst := splitSample(ctx, component, volume)
 
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 
 	// protocol world must not be able to modify the copies seen here
 	return inst.result[0].Dup(), inst.result[1].Dup()
@@ -552,6 +551,6 @@ func awaitData(
 		result: updatedComp,
 	}
 
-	trace.Issue(ctx, inst)
+	Issue(ctx, inst)
 	return nil
 }

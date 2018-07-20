@@ -368,7 +368,14 @@ func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.Liquid
 	inst := mix(ctx, generic)
 	trace.Issue(ctx, inst)
 	if generic.Welladdress != "" {
-		err := inst.result[0].SetWellLocation(generic.Welladdress)
+		var plateType []*wtype.Plate
+
+		if generic.OutPlate != nil {
+			plateType = append(plateType, generic.OutPlate)
+		}
+
+		err := inst.result[0].SetWellLocation(generic.Welladdress, plateType...)
+
 		if err != nil {
 			panic(err)
 		}

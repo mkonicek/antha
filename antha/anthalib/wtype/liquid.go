@@ -139,8 +139,8 @@ func (lhc *Liquid) WellLocation() string {
 }
 
 // SetWellLocation sets the well location to an LHComponent in A1 format.
-func (lhc *Liquid) SetWellLocation(wellLocation string, plateType *Plate) error {
-	location := lhc.PlateLocation()
+func (lhc *Liquid) SetWellLocation(wellLocation string, plateType ...*Plate) error {
+	location := lhc.PlateLocation(plateType...)
 	lhc.Loc = location.ID + ":" + wellLocation
 	return nil
 }

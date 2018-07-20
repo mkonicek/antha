@@ -357,3 +357,24 @@ func (request *LHRequest) GetOrderedLHInstructions() ([]*wtype.LHInstruction, er
 	}
 	return ret, nil
 }
+
+//GetUnorderedLHInstructions get a slice containing all the LHInstructions in
+//arbitrary order
+func (request *LHRequest) GetUnorderedLHInstructions() []*wtype.LHInstruction {
+	ret := make([]*wtype.LHInstruction, 0, len(request.LHInstructions))
+	for _, v := range request.LHInstructions {
+		ret = append(ret, v)
+	}
+
+	return ret
+}
+
+//updateWithNewLHInstructions make sure the request contains the new instructions if aggregation has occurred
+func (rq *LHRequest) updateWithNewLHInstructions(sorted []*wtype.LHInstruction) {
+	for _, ins := range sorted {
+		_, ok := rq.LHInstructions[ins.ID]
+		if !ok {
+			rq.LHInstructions[ins.ID] = ins
+		}
+	}
+}

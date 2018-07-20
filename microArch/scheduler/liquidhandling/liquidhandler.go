@@ -836,10 +836,18 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	//add in a plateCache for instruction generation
 	ctx = plateCache.NewContext(ctx)
 
-	// figure out the output order
-	err := setOutputOrder(request)
+	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
 	if err != nil {
 		return err
+	}
+
+	// figure out the output order
+	if sorted, ichain, err := getLHInstructionOrder(request.GetUnorderedLHInstructions(), solutionsFromPlates, request.Options.OutputSort); err != nil {
+		return err
+	} else {
+		request.updateWithNewLHInstructions(sorted)
+		request.InstructionChain = ichain
+		request.OutputOrder = ichain.Flatten()
 	}
 
 	if request.Options.PrintInstructions {
@@ -852,7 +860,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// assert we should have some instruction ordering
-
 	if len(request.OutputOrder) == 0 {
 		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.OutputOrder), len(request.LHInstructions))
 	}
@@ -937,10 +944,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	orderedInstructions, err := request.GetOrderedLHInstructions()
-	if err != nil {
-		return err
-	}
-	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
 	if err != nil {
 		return err
 	}

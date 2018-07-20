@@ -242,15 +242,6 @@ func thisNode(ic *IChain, n graph.Node, tg graph.Graph, deps map[graph.Node]bool
 	return false
 }
 
-func getInstructionSet(rq *LHRequest) []*wtype.LHInstruction {
-	ret := make([]*wtype.LHInstruction, 0, len(rq.LHInstructions))
-	for _, v := range rq.LHInstructions {
-		ret = append(ret, v)
-	}
-
-	return ret
-}
-
 // is n1 an ancestor of n2?
 func ancestor(n1, n2 graph.Node, topolGraph graph.Graph) bool {
 	if n1 == n2 {
@@ -356,21 +347,19 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	return insOut
 }
 
-func setOutputOrder(rq *LHRequest) error {
-	// guarantee all nodes are dependency-ordered
-	// in order to aggregate without introducing cycles
-
-	unsorted := getInstructionSet(rq)
+//getLHInstructionOrder guarantee all nodes are dependency-ordered
+//in order to aggregate without introducing cycles
+func getLHInstructionOrder(unsorted []*wtype.LHInstruction, solutionsFromPlates map[string][]*wtype.Liquid, outputSort bool) ([]*wtype.LHInstruction, *IChain, error) {
 
 	tg, err := MakeTGraph(unsorted)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	sorted, err := graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	sortedAsIns := make([]*wtype.LHInstruction, len(sorted))
@@ -388,47 +377,21 @@ func setOutputOrder(rq *LHRequest) error {
 		sortedAsIns[i] = ins
 	}
 
-	// update request to be consistent with new instructions
-	rq = updateRequestWithNewInstructions(rq, sortedAsIns)
-
 	// sort again post aggregation
 	tg, err = MakeTGraph(sortedAsIns)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
-
 	if err != nil {
-		return err
-	}
-
-	//this is currently a duplicate of effort as this is run again later in liquidhandler.Plan
-	//need to refactor the call signature of this method
-	solutionsFromPlates, err := rq.GetSolutionsFromInputPlates()
-	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	// make into equivalence classes and sort according to defined order
-	it := convertToInstructionChain(sorted, tg, rq.Options.OutputSort, solutionsFromPlates)
+	ic := convertToInstructionChain(sorted, tg, outputSort, solutionsFromPlates)
 
-	// populate the request
-	rq.InstructionChain = it
-	rq.OutputOrder = it.Flatten()
-
-	return nil
-}
-
-func updateRequestWithNewInstructions(rq *LHRequest, sorted []*wtype.LHInstruction) *LHRequest {
-	// make sure the request contains the new instructions if aggregation has occurred here
-	for _, ins := range sorted {
-		_, ok := rq.LHInstructions[ins.ID]
-		if !ok {
-			rq.LHInstructions[ins.ID] = ins
-		}
-	}
-	return rq
+	return sortedAsIns, ic, nil
 }
 
 type ByOrdinal [][]int

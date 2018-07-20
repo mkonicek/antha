@@ -4,9 +4,11 @@ package execute
 
 import (
 	"context"
+	"errors"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/codegen"
+	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -35,7 +37,7 @@ type Opt struct {
 }
 
 // Run is a simple entrypoint for one-shot execution of workflows.
-func Run(parent context.Context, opt Opt) (*Result, error) {
+func Run(parent context.Context, opt Opt) (res *Result, err error) {
 	ctx := target.WithTarget(withID(parent, opt.ID), opt.Target)
 
 	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
@@ -48,6 +50,11 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 	}
 
 	ctxTr, tr := WithTrace(ctx)
+	defer func() {
+		if res := recover(); res != nil {
+			err = errors.New(inject.ElementStackTrace())
+		}
+	}()
 	if err := w.Run(ctxTr); err != nil {
 		return nil, err
 	}

@@ -85,7 +85,7 @@ func (self *GenericError) GetStateAtError() string {
 func (self *GenericError) Error() string {
 	return fmt.Sprintf("(%v) %s[%d]: %s",
 		self.severity,
-		driver.HumanInstructionName(self.instruction),
+		self.instruction.Type().HumanName,
 		self.instructionIndex,
 		self.message)
 }

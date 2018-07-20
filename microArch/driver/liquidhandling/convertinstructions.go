@@ -86,7 +86,7 @@ func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties,
 		}
 
 		for _, ins := range instrx {
-			if ins.InstructionType() == MCB {
+			if ins.Type() == MCB {
 				return true, nil
 			}
 		}

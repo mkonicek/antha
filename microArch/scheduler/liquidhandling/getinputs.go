@@ -17,7 +17,7 @@ type InputSolutions struct {
 	VolumesWanting  map[string]wunit.Volume
 }
 
-// sort out inputs
+//GetInputs
 func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[string][]*wtype.Liquid, carryVolume wunit.Volume) (*InputSolutions, error) {
 	inputs := make(map[string][]*wtype.Liquid)
 	volsRequired := make(map[string]wunit.Volume)
@@ -96,10 +96,6 @@ func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[st
 	inputOrder, err := OrdinalFromHash(ordH)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(inputSolutions) == 0 {
-		inputSolutions = make(map[string][]*wtype.Liquid, 5)
 	}
 
 	volsSupplied := make(map[string]wunit.Volume, len(volsRequired))

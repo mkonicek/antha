@@ -843,15 +843,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	if request.Options.PrintInstructions {
+		fmt.Println("")
+		fmt.Printf("Ordered Instructions:")
 		for _, insID := range request.OutputOrder {
-			ins := request.LHInstructions[insID]
-			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
-
-			if ins.IsMixInPlace() {
-				fmt.Print(" INPLACE")
-			}
-
-			fmt.Println()
+			fmt.Println(request.LHInstructions[insID])
 		}
 		request.InstructionChain.Print()
 	}
@@ -921,17 +916,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		}
 		if request.Options.PrintInstructions {
 			fmt.Println("")
-			fmt.Println("POST VOLUME FIX")
-			fmt.Println("")
+			fmt.Println("Instructions Post Volume Fix")
 			for _, insID := range request.OutputOrder {
-				ins := request.LHInstructions[insID]
-				fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
-
-				if ins.IsMixInPlace() {
-					fmt.Print(" INPLACE")
-				}
-
-				fmt.Println()
+				fmt.Println(request.LHInstructions[insID])
 			}
 		}
 	}
@@ -995,7 +982,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// now make instructions
 	request, err = this.ExecutionPlan(ctx, request)
-
 	if err != nil {
 		return err
 	}
@@ -1003,7 +989,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// counts tips used in this run -- reads instructions generated above so must happen
 	// after execution planning
 	request, err = this.countTipsUsed(request)
-
 	if err != nil {
 		return err
 	}

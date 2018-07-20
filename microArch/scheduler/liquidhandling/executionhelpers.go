@@ -349,21 +349,19 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 
 //getLHInstructionOrder guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
-func getLHInstructionOrder(unsorted []*wtype.LHInstruction, solutionsFromPlates map[string][]*wtype.Liquid, outputSort bool) ([]*wtype.LHInstruction, *IChain, error) {
+func getLHInstructionOrder(unsorted []*wtype.LHInstruction, solutionsFromPlates map[string][]*wtype.Liquid, outputSort bool) (*IChain, error) {
 
 	tg, err := MakeTGraph(unsorted)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	sorted, err := graph.TopoSort(graph.TopoSortOpt{Graph: tg})
-
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	sortedAsIns := make([]*wtype.LHInstruction, len(sorted))
-
 	for i := 0; i < len(sorted); i++ {
 		sortedAsIns[i] = sorted[i].(*wtype.LHInstruction)
 	}
@@ -373,25 +371,24 @@ func getLHInstructionOrder(unsorted []*wtype.LHInstruction, solutionsFromPlates 
 	// aggregate sorted again
 	sortedAsIns = make([]*wtype.LHInstruction, len(sorted))
 	for i, nIns := range sorted {
-		ins := nIns.(*wtype.LHInstruction)
-		sortedAsIns[i] = ins
+		sortedAsIns[i] = nIns.(*wtype.LHInstruction)
 	}
 
 	// sort again post aggregation
 	tg, err = MakeTGraph(sortedAsIns)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	sorted, err = graph.TopoSort(graph.TopoSortOpt{Graph: tg})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// make into equivalence classes and sort according to defined order
 	ic := convertToInstructionChain(sorted, tg, outputSort, solutionsFromPlates)
 
-	return sortedAsIns, ic, nil
+	return ic, nil
 }
 
 type ByOrdinal [][]int

@@ -173,6 +173,7 @@ func (it *IChain) ProductIDs() string {
 	return s
 }
 
+//Flatten get the instruction IDs in order
 func (it *IChain) Flatten() []string {
 	var ret []string
 
@@ -185,6 +186,21 @@ func (it *IChain) Flatten() []string {
 	}
 
 	ret = append(ret, it.Child.Flatten()...)
+
+	return ret
+}
+
+//GetOrderedLHInstructions get the instructions in order
+func (it *IChain) GetOrderedLHInstructions() []*wtype.LHInstruction {
+	var ret []*wtype.LHInstruction
+
+	if it == nil {
+		return ret
+	}
+
+	ret = append(ret, it.Values...)
+
+	ret = append(ret, it.Child.GetOrderedLHInstructions()...)
 
 	return ret
 }

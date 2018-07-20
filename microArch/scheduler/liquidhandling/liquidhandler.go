@@ -842,11 +842,11 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// figure out the output order
-	if sorted, ichain, err := getLHInstructionOrder(request.GetUnorderedLHInstructions(), solutionsFromPlates, request.Options.OutputSort); err != nil {
+	if ichain, err := getLHInstructionOrder(request.GetUnorderedLHInstructions(), solutionsFromPlates, request.Options.OutputSort); err != nil {
 		return err
 	} else {
-		request.updateWithNewLHInstructions(sorted)
 		request.InstructionChain = ichain
+		request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
 		request.OutputOrder = ichain.Flatten()
 	}
 

@@ -2,13 +2,58 @@ package liquidhandling
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"testing"
 )
+
+type layoutAgentTest struct {
+	Request     *LHRequest
+	TestFn      func(*testing.T, *LHRequest)
+	TestPlateID bool
+}
+
+func (self layoutAgentTest) Run(ctx context.Context, t *testing.T) {
+	solutionsFromPlates, err := self.Request.GetSolutionsFromInputPlates()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if ichain, err := getLHInstructionOrder(self.Request.GetUnorderedLHInstructions(), solutionsFromPlates, self.Request.Options.OutputSort); err != nil {
+		t.Fatal(err)
+	} else {
+		self.Request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
+		self.Request.InstructionChain = ichain
+		self.Request.OutputOrder = ichain.Flatten()
+	}
+	params := makeGilson(ctx)
+
+	if self.TestPlateID {
+		for _, ins := range self.Request.LHInstructions {
+			if ins.PlateID != "" && (ins.OutPlate == nil || ins.PlateID != ins.OutPlate.ID) {
+				t.Errorf("EARLY MixInto ID mismatch: expected %s got %s", ins.PlateID, ins.OutPlate.ID)
+			}
+		}
+	}
+
+	req, err := ImprovedLayoutAgent(ctx, self.Request, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	self.TestFn(t, req)
+
+	if self.TestPlateID {
+		for _, ins := range req.LHInstructions {
+			if ins.OutPlate != nil && ins.PlateID != ins.OutPlate.ID {
+				t.Errorf("MixInto ID mismatch: expected %s got %s", ins.PlateID, ins.OutPlate.ID)
+			}
+		}
+	}
+
+}
 
 func TestLayoutAgent1(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
@@ -18,29 +63,11 @@ func TestLayoutAgent1(t *testing.T) {
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
 	req.Output_platetypes = append(req.Output_platetypes, pt)
 
-	// marshal / unmarshal
-
-	b, err := json.Marshal(req)
-
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	err = json.Unmarshal(b, &req)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	setOutputOrder(req)
-	params := makeGilson(ctx)
-
-	req, err = ImprovedLayoutAgent(ctx, req, params)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testReq(t, req)
+	layoutAgentTest{
+		Request:     req,
+		TestFn:      testReq,
+		TestPlateID: true,
+	}.Run(ctx, t)
 }
 
 func TestLayoutAgent2(t *testing.T) {
@@ -48,9 +75,6 @@ func TestLayoutAgent2(t *testing.T) {
 
 	req := GetLHRequestForTest()
 	configure_request_simple(ctx, req)
-
-	// add a destination plate (i.e. MixInto)
-
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
 	req.Output_platetypes = append(req.Output_platetypes, pt)
 	req.Output_plates[pt.ID] = pt
@@ -60,43 +84,11 @@ func TestLayoutAgent2(t *testing.T) {
 		ins.SetPlateID(pt.ID)
 	}
 
-	// marshal / unmarshal
-
-	b, err := json.Marshal(req)
-
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	err = json.Unmarshal(b, &req)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	setOutputOrder(req)
-	params := makeGilson(ctx)
-
-	for _, ins := range req.LHInstructions {
-		if ins.PlateID != ins.OutPlate.ID {
-			t.Errorf("EARLY MixInto ID mismatch: expected %s got %s", ins.PlateID, ins.OutPlate.ID)
-		}
-	}
-
-	req, err = ImprovedLayoutAgent(ctx, req, params)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testReq(t, req)
-
-	// we additionally need to verify that the ID set in the instructions corresponds to that in the plate
-
-	for _, ins := range req.LHInstructions {
-		if ins.PlateID != ins.OutPlate.ID {
-			t.Errorf("MixInto ID mismatch: expected %s got %s", ins.PlateID, ins.OutPlate.ID)
-		}
-	}
+	layoutAgentTest{
+		Request:     req,
+		TestFn:      testReq,
+		TestPlateID: true,
+	}.Run(ctx, t)
 }
 
 // a mix of specific dests and no dest
@@ -122,47 +114,12 @@ func TestLayoutAgent3(t *testing.T) {
 		ins.SetPlateID(pt.ID)
 	}
 
-	// marshal / unmarshal
+	layoutAgentTest{
+		Request:     req,
+		TestFn:      testReq,
+		TestPlateID: true,
+	}.Run(ctx, t)
 
-	b, err := json.Marshal(req)
-
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	err = json.Unmarshal(b, &req)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	setOutputOrder(req)
-	params := makeGilson(ctx)
-
-	for _, ins := range req.LHInstructions {
-		if ins.PlateID != "" {
-			if ins.OutPlate == nil || ins.PlateID != ins.OutPlate.ID {
-				t.Errorf("EARLY MixInto ID mismatch: expected %s got %s", ins.PlateID, ins.OutPlate.ID)
-			}
-		}
-	}
-
-	req, err = ImprovedLayoutAgent(ctx, req, params)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testReq(t, req)
-
-	// we additionally need to verify that the ID set in the instructions corresponds to that in the plate
-
-	for _, ins := range req.LHInstructions {
-		if ins.PlateID != "" {
-			if ins.OutPlate != nil && ins.PlateID != ins.OutPlate.ID {
-				t.Errorf("MixInto ID mismatch: expected %s got %s", ins.PlateID, ins.OutPlate.ID)
-			}
-		}
-	}
 }
 
 func TestLayoutAgent4(t *testing.T) {
@@ -181,36 +138,20 @@ func TestLayoutAgent4(t *testing.T) {
 		ins.PlateName = "Funk Plate"
 	}
 
-	// marshal / unmarshal
+	layoutAgentTest{
+		Request: req,
+		TestFn: func(t *testing.T, req *LHRequest) {
+			testReq(t, req)
+			// test the plate name is OK
+			for _, ins := range req.LHInstructions {
+				if ins.PlateName != "Funk Plate" {
+					t.Errorf("Plate name issue - expected %s got %s", "Funk plate", ins.PlateName)
+				}
+			}
+		},
+		TestPlateID: true,
+	}.Run(ctx, t)
 
-	b, err := json.Marshal(req)
-
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	err = json.Unmarshal(b, &req)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	setOutputOrder(req)
-	params := makeGilson(ctx)
-
-	req, err = ImprovedLayoutAgent(ctx, req, params)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testReq(t, req)
-
-	// test the plate name is OK
-	for _, ins := range req.LHInstructions {
-		if ins.PlateName != "Funk Plate" {
-			t.Errorf("Plate name issue - expected %s got %s", "Funk plate", ins.PlateName)
-		}
-	}
 }
 
 // bigger tests
@@ -230,29 +171,12 @@ func TestLayoutAgent5(t *testing.T) {
 		ins.PlateName = "Funk Plate"
 	}
 
-	// marshal / unmarshal
+	layoutAgentTest{
+		Request:     req,
+		TestFn:      testReqBig,
+		TestPlateID: true,
+	}.Run(ctx, t)
 
-	b, err := json.Marshal(req)
-
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	err = json.Unmarshal(b, &req)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	setOutputOrder(req)
-	params := makeGilson(ctx)
-
-	req, err = ImprovedLayoutAgent(ctx, req, params)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testReqBig(t, req)
 }
 
 func TestLayoutAgent6(t *testing.T) {
@@ -273,29 +197,11 @@ func TestLayoutAgent6(t *testing.T) {
 		ins.PlateID = pt.ID
 	}
 
-	// marshal / unmarshal
+	layoutAgentTest{
+		Request: req,
+		TestFn:  testReqBig,
+	}.Run(ctx, t)
 
-	b, err := json.Marshal(req)
-
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	err = json.Unmarshal(b, &req)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	setOutputOrder(req)
-	params := makeGilson(ctx)
-
-	req, err = ImprovedLayoutAgent(ctx, req, params)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testReqBig(t, req)
 }
 
 func TestLayoutAgent7(t *testing.T) {
@@ -315,43 +221,28 @@ func TestLayoutAgent7(t *testing.T) {
 		ins.Welladdress = "A1"
 	}
 
-	// marshal / unmarshal
+	layoutAgentTest{
+		Request: req,
+		TestFn: func(t *testing.T, req *LHRequest) {
+			plateIDs := make([]string, 0, 1)
+			wells := make([]string, 0, 9)
+			for _, ins := range req.LHInstructions {
+				// we expect them all to end up on one plate, in 9 distinct wells going down a column
+				plateIDs = append(plateIDs, ins.PlateID)
+				wells = append(wells, ins.Welladdress)
+			}
 
-	b, err := json.Marshal(req)
+			if len(wutil.SADistinct(plateIDs)) != 9 {
+				t.Errorf("Expected 9 plate IDs but got %d", len(wutil.SADistinct(plateIDs)))
+			}
 
-	if err != nil {
-		t.Errorf(err.Error())
-	}
+			if len(wutil.SADistinct(wells)) != 1 {
+				t.Errorf("Expected 1 distinct well but got %d", len(wutil.SADistinct(wells)))
+			}
+		},
+		TestPlateID: true,
+	}.Run(ctx, t)
 
-	err = json.Unmarshal(b, &req)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-
-	setOutputOrder(req)
-	params := makeGilson(ctx)
-
-	req, err = ImprovedLayoutAgent(ctx, req, params)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	plateIDs := make([]string, 0, 1)
-	wells := make([]string, 0, 9)
-	for _, ins := range req.LHInstructions {
-		// we expect them all to end up on one plate, in 9 distinct wells going down a column
-		plateIDs = append(plateIDs, ins.PlateID)
-		wells = append(wells, ins.Welladdress)
-	}
-
-	if len(wutil.SADistinct(plateIDs)) != 9 {
-		t.Errorf("Expected 9 plate IDs but got %d", len(wutil.SADistinct(plateIDs)))
-	}
-
-	if len(wutil.SADistinct(wells)) != 1 {
-		t.Errorf("Expected 1 distinct well but got %d", len(wutil.SADistinct(wells)))
-	}
 }
 
 func testReq(t *testing.T, req *LHRequest) {

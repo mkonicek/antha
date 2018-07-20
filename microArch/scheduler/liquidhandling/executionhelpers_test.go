@@ -68,34 +68,28 @@ type setOutputOrderTest struct {
 }
 
 func (self *setOutputOrderTest) Run(t *testing.T) {
-	rq := GetLHRequestForTest()
 
-	for _, ins := range self.Instructions {
-		rq.LHInstructions[ins.ID] = ins
-	}
-
-	rq.Options.OutputSort = self.OutputSort
-
-	sorted, ichain, err := getLHInstructionOrder(self.Instructions, nil, self.OutputSort)
+	ichain, err := getLHInstructionOrder(self.Instructions, nil, self.OutputSort)
 	if encounteredError := err != nil; self.ExpectingError != encounteredError {
 		t.Fatalf("ExpectingError: %t, Encountered Error: %v", self.ExpectingError, err)
 		return
 	}
 
-	if e, g := self.ChainHeight, rq.InstructionChain.Height(); e != g {
+	if e, g := self.ChainHeight, ichain.Height(); e != g {
 		t.Fatalf("Instruction chain length mismatch, e: %d, g: %d", e, g)
 	}
-	if e, g := len(self.ExpectedOrder), len(rq.OutputOrder); e != g {
-		t.Fatalf("Expected Order length mismatch:\n\te: %v\n\tg: %v", self.ExpectedOrder, rq.OutputOrder)
+	if e, g := len(self.ExpectedOrder), len(ichain.Flatten()); e != g {
+		t.Fatalf("Expected Order length mismatch:\n\te: %v\n\tg: %v", e, g)
 	}
 
-	outputOrder := make([]string, 0, len(rq.OutputOrder))
-	for _, id := range rq.OutputOrder {
+	sorted := ichain.GetOrderedLHInstructions()
+	outputOrder := make([]string, 0, len(sorted))
+	for _, ins := range sorted {
 		//for promts check the message as the ID is overwritten
-		if ins, ok := rq.LHInstructions[id]; ok && ins.Type == wtype.LHIPRM { //LHIPRM == prompt instruction
+		if ins.Type == wtype.LHIPRM { //LHIPRM == prompt instruction
 			outputOrder = append(outputOrder, ins.Message)
 		} else {
-			outputOrder = append(outputOrder, id)
+			outputOrder = append(outputOrder, ins.ID)
 		}
 	}
 

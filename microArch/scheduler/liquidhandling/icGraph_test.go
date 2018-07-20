@@ -131,8 +131,8 @@ func TestNodesMixedOK(t *testing.T) {
 
 	for i := range tests {
 		doTheTest := func(t *testing.T) {
-			got := nodesMixedOK(tests[i])
-			if got != wants[i] {
+			ic := &IChain{Values: tests[i]}
+			if got := ic.hasMixAndSplitOnly(); got != wants[i] {
 				t.Errorf("Expected %t got %t", wants[i], got)
 			}
 		}

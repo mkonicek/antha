@@ -189,7 +189,7 @@ func assertNoTipsOnOthersInGroup(adaptor *AdaptorState) error {
 }
 
 //assertNoCollisionsInGroup check that there are no collisions, ignoring the specified channels on the given adaptor
-func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, channelClearance float64) error {
+func assertNoCollisionsInGroup(settings *SimulatorSettings, adaptor *AdaptorState, channelsToIgnore []int, channelClearance float64) *CollisionError {
 
 	var maxChannels int
 	for _, ad := range adaptor.GetGroup().GetAdaptors() {
@@ -211,7 +211,7 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ch
 			if ad == adaptor && ignore[i] {
 				continue
 			}
-			objects := ad.GetChannel(i).GetCollisions(channelClearance)
+			objects := ad.GetChannel(i).GetCollisions(settings, channelClearance)
 			for _, o := range objects {
 				objectMap[o] = true
 			}
@@ -231,52 +231,13 @@ func assertNoCollisionsInGroup(adaptor *AdaptorState, channelsToIgnore []int, ch
 		return nil
 	}
 
-	//rest of the fn is just organising things so the error message can be more easily interpreted
+	robotState := adaptor.GetGroup().GetRobot()
 
-	adaptorStrings := make([]string, 0, len(adaptors))
-	for _, idx := range adaptors {
-		adaptorStrings = append(adaptorStrings, fmt.Sprintf("head %d %s", idx, summariseChannels(channelMap[idx])))
+	uniqueObjects := make([]wtype.LHObject, 0, len(objectMap))
+	for obj := range objectMap {
+		uniqueObjects = append(uniqueObjects, obj)
 	}
-
-	//group objects by parent
-	parentMap := make(map[wtype.LHObject][]wtype.LHObject, len(objectMap))
-	for object := range objectMap {
-		p := object.GetParent()
-		if _, ok := parentMap[p]; !ok {
-			parentMap[p] = make([]wtype.LHObject, 0, len(objectMap))
-		}
-		parentMap[p] = append(parentMap[p], object)
-	}
-
-	objectStrings := make([]string, 0, len(objectMap))
-	deck := adaptor.GetGroup().GetRobot().GetDeck()
-	for parent, children := range parentMap {
-		//if the parent is addressable, refer to the children compactly using their addresses
-		var s string
-		if addr, ok := parent.(wtype.Addressable); ok {
-			wellcoords := make([]wtype.WellCoords, 0, len(children))
-			for _, child := range children {
-				pos := child.GetPosition().Add(child.GetSize().Multiply(0.5))
-				wc, _ := addr.CoordsToWellCoords(pos)
-				wellcoords = append(wellcoords, wc)
-			}
-			//WellCoordArrayRow sorts by col then row
-			sort.Sort(wtype.WellCoordArrayRow(wellcoords))
-
-			s = fmt.Sprintf("%s %s@%s at position %s", pluralClassOf(children[0], len(wellcoords)), wtype.HumanizeWellCoords(wellcoords), wtype.NameOf(parent), deck.GetSlotContaining(parent))
-			objectStrings = append(objectStrings, s)
-		} else {
-			for _, child := range children {
-				s = fmt.Sprintf("%s \"%s\"", wtype.ClassOf(child), wtype.NameOf(child))
-				if pos := deck.GetSlotContaining(child); pos != "" {
-					s += fmt.Sprintf(" at position %s", pos)
-				}
-				objectStrings = append(objectStrings, s)
-			}
-		}
-	}
-
-	return errors.Errorf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
+	return NewCollisionError(robotState, channelMap, uniqueObjects)
 }
 
 var pluralMap = map[string]string{
@@ -359,6 +320,13 @@ func pWells(N int) string {
 	return "wells"
 }
 
+func pLengths(N int) string {
+	if N == 1 {
+		return "length"
+	}
+	return "lengths"
+}
+
 func intsContiguous(lhs, rhs int) bool {
 	return rhs-lhs == 1
 }
@@ -371,6 +339,9 @@ func appendContiguous(s []string, channels []int, start, length int) []string {
 }
 
 func summariseChannels(channels []int) string {
+	if len(channels) == 0 {
+		return "no channels"
+	}
 	if len(channels) == 1 {
 		return fmt.Sprintf("channel %d", channels[0])
 	}
@@ -424,6 +395,33 @@ func summariseStrings(s []string) string {
 		return firstNonEmpty(s)
 	}
 	return "{" + strings.Join(getUnique(s, true), ",") + "}"
+}
+
+func summariseWellReferences(channels []int, offsetZ []float64, references []wtype.WellReference) string {
+	o := make([]string, 0, len(channels))
+	for _, i := range channels {
+		offset := offsetZ[i]
+		direction := "above"
+		if offset < 0 {
+			direction = "below"
+			offset = -offset
+		}
+		offsetU := wunit.NewLength(offset, "mm")
+		if offsetU.IsZero() {
+			continue
+		}
+		o = append(o, fmt.Sprintf("%v %s", offsetU, direction))
+	}
+
+	s := make([]string, 0, len(channels))
+	for _, i := range channels {
+		s = append(s, references[i].String())
+	}
+
+	if len(o) > 0 {
+		return summariseStrings(o) + " " + summariseStrings(s)
+	}
+	return summariseStrings(s)
 }
 
 func summariseCycles(cycles []int, elems []int) string {

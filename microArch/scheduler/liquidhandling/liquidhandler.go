@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"math"
 	"reflect"
 	"strings"
@@ -39,6 +40,7 @@ import (
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
+	"github.com/antha-lang/antha/microArch/simulator"
 	simulator_lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 )
 
@@ -160,12 +162,8 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	}
 
 	err = this.Simulate(request)
-	if err != nil {
-		//since the simulator is... tender right now, let's take this with a pinch of salt
-		logger.Info("ignoring physical simulation error, user disgretion advised")
-		//return err
-	} else {
-		logger.Info("physical simulation completed successfully")
+	if err != nil && !request.Options.IgnorePhysicalSimulation {
+		return errors.WithMessage(err, "during physical simulation")
 	}
 
 	err = this.Execute(request)
@@ -201,12 +199,12 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 	return nil
 }
 
-// run the request via the simulator
+// run the request via the physical simulator
 func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	instructions := (*request).Instructions
 	if instructions == nil {
-		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
+		return wtype.LHError(wtype.LH_ERR_OTHER, "cannot simulate request: no instructions")
 	}
 
 	// set up the simulator with default settings
@@ -220,6 +218,9 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	settings.EnableAutoChannelWarning(simulator_lh.WarnOnce)
 	//this is probably not even an error as liquid types are more about LHPolicies than what's actually in the well
 	settings.EnableLiquidTypeWarning(simulator_lh.WarnNever)
+	//disable tipbox collision. Tipboxes are narrower at the top than the bottom, so bounding box collision falsely predicts
+	//collisions when when tips are picked up sequentially
+	settings.EnableTipboxCollision(false)
 
 	vlh, err := simulator_lh.NewVirtualLiquidHandler(props, settings)
 	if err != nil {
@@ -260,6 +261,17 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 		logLines = append(logLines, fmt.Sprintf(fmtString, i+1, err.Error()))
 	}
 	logger.Info(strings.Join(logLines, "\n"))
+
+	//return the worst error if it's actually an error
+	if simErr := vlh.GetFirstError(simulator.SeverityError); simErr != nil {
+		errMsg := simErr.Error()
+		if dErr, ok := simErr.(simulator_lh.DetailedLHError); ok {
+			//include physical 'stack'
+			errMsg += "\n\t" + strings.Replace(dErr.GetStateAtError(), "\n", "\n\t", -1)
+		}
+		return errors.Errorf("%s\n\tPhysical simulation can be overridden using the \"IgnorePhysicalSimulation\" configuration option.",
+			errMsg)
+	}
 
 	return nil
 }

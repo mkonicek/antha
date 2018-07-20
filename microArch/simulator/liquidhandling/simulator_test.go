@@ -379,6 +379,51 @@ func Test_Move(t *testing.T) {
 			},
 		},
 		{
+			Name: "OK allow cones in trough",
+			Setup: []*SetupFn{
+				testTroughLayout(),
+			},
+			Instructions: []TestRobotInstruction{
+				&Move{
+					deckposition: []string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"},
+					wellcoords:   []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
+					reference:    []int{1, 1, 1, 1, 1, 1, 1, 1},
+					offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetY:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetZ:      []float64{-1., -1., -1., -1., -1., -1., -1., -1.},
+					plate_type:   []string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},
+					head:         0,
+				},
+			},
+			Assertions: []*AssertionFn{
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: -31.5, Z: 44.8}),
+			},
+		},
+		{
+			Name: "cones collide with plate",
+			Setup: []*SetupFn{
+				testTroughLayout(),
+			},
+			Instructions: []TestRobotInstruction{
+				&Move{
+					deckposition: []string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"},
+					wellcoords:   []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
+					reference:    []int{1, 1, 1, 1, 1, 1, 1, 1},
+					offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetY:      []float64{4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0},
+					offsetZ:      []float64{-1., -1., -1., -1., -1., -1., -1., -1.},
+					plate_type:   []string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},
+					head:         0,
+				},
+			},
+			ExpectedErrors: []string{
+				"(err) Move[0]: head 0 channels 0-7 to 1 mm below TopReference of A1,A1,A1,A1,A1,A1,A1,A1@trough1 at position input_1: collision detected: head 0 channel 7 and plate \"trough1\" of type trough at position input_1",
+			},
+			Assertions: []*AssertionFn{
+				positionAssertion(0, wtype.Coordinates{X: 400.0, Y: -27.5, Z: 44.8}),
+			},
+		},
+		{
 			Name: "unknown location",
 			Setup: []*SetupFn{
 				testLayout(),
@@ -531,7 +576,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channels 0-7 to A1-H1@plate1 at position input_1: requires moving channels 4-7 relative to non-independent head",
+				"(err) Move[0]: head 0 channels 0-7 to 5 mm below {BottomReference,TopReference} of A1-H1@plate1 at position input_1: requires moving channels 4-7 relative to non-independent head",
 			},
 		},
 		{
@@ -552,7 +597,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: requires moving channels 3-5 relative to non-independent head",
+				"(err) Move[0]: head 0 channels 0-7 to 1 mm above TopReference of A1-H1@tipbox1 at position tipbox_1: requires moving channels 3-5 relative to non-independent head",
 			},
 		},
 		{
@@ -573,7 +618,7 @@ func Test_Move(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channels 0-7 to A1,B2,C1,D2,E1,F2,G1,H2@tipbox1 at position tipbox_1: requires moving channels 1,3,5,7 relative to non-independent head",
+				"(err) Move[0]: head 0 channels 0-7 to TopReference of A1,B2,C1,D2,E1,F2,G1,H2@tipbox1 at position tipbox_1: requires moving channels 1,3,5,7 relative to non-independent head",
 			},
 		},
 	}
@@ -605,7 +650,7 @@ func TestCrashes(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channels 0-7 to A1-H1@tipbox2 at position tipbox_2: collision detected: head 0 channels 0-7 and head 1 channels 0-7 and tips A1-H1,A3-H3@tipbox2 at position tipbox_2",
+				"(err) Move[0]: head 0 channels 0-7 to 1 mm below TopReference of A1-H1@tipbox2 at position tipbox_2: collision detected: head 0 channels 0-7 and head 1 channels 0-7 and tips A1-H1,A3-H3@tipbox2 at position tipbox_2",
 			},
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 128.0, Y: 0.0, Z: 60.2}),
@@ -661,7 +706,7 @@ func TestCrashes(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channel 0 to A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and plate \"plate1\" at position input_1",
+				"(err) Move[0]: head 0 channel 0 to 1 mm above BottomReference of A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and plate \"plate1\" of type plate at position input_1",
 			},
 		},
 	}
@@ -717,7 +762,7 @@ func Test_Multihead(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channels 0-7 to A12-H12@tipbox1 at position tipbox_1: cannot move head 0 while tip loaded on head 1 channel 0",
+				"(err) Move[0]: head 0 channels 0-7 to 1 mm above TopReference of A12-H12@tipbox1 at position tipbox_1: cannot move head 0 while tip loaded on head 1 channel 0",
 			},
 			Assertions: []*AssertionFn{},
 		},
@@ -750,7 +795,7 @@ func TestMotionLimits(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 1 channels 0-7 to A1-H1@tipbox1 at position tipbox_1: head cannot reach position: position is 9mm too far left, please try rearranging the deck",
+				"(err) Move[0]: head 1 channels 0-7 to 1 mm above TopReference of A1-H1@tipbox1 at position tipbox_1: head cannot reach position: position is 9mm too far left, please try rearranging the deck",
 			},
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: -18.0, Y: 0.0, Z: 62.2}),
@@ -776,7 +821,7 @@ func TestMotionLimits(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channels 0-7 to A12-H12@plate1 at position input_1: head cannot reach position: position is 30mm too far right, please try rearranging the deck",
+				"(err) Move[0]: head 0 channels 0-7 to 1 mm above TopReference of A12-H12@plate1 at position input_1: head cannot reach position: position is 30mm too far right, please try rearranging the deck",
 			},
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 405.0, Y: 0.0, Z: 26.7}),
@@ -802,7 +847,7 @@ func TestMotionLimits(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channel 0 to H12@wasteplate at position waste: head cannot reach position: position is 7mm too far forwards, please try rearranging the deck",
+				"(err) Move[0]: head 0 channel 0 to 1 mm above TopReference of H12@wasteplate at position waste: head cannot reach position: position is 7mm too far forwards, please try rearranging the deck",
 			},
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 355.0, Y: 265.0, Z: 26.7}),
@@ -828,7 +873,7 @@ func TestMotionLimits(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channel 7 to A12@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards, please try rearranging the deck",
+				"(err) Move[0]: head 0 channel 7 to 1 mm above TopReference of A12@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards, please try rearranging the deck",
 			},
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 355.0, Y: -63.0, Z: 26.7}),
@@ -854,7 +899,7 @@ func TestMotionLimits(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channel 0 to A1@plate1 at position input_1: head cannot reach position: position is 25.7mm too high, please try lowering the object on the deck",
+				"(err) Move[0]: head 0 channel 0 to 600 mm above TopReference of A1@plate1 at position input_1: head cannot reach position: position is 25.7mm too high, please try lowering the object on the deck",
 			},
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 256.0, Y: 0.0, Z: 625.7}),
@@ -881,7 +926,7 @@ func TestMotionLimits(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channel 0 to A4@plate1 at position input_1: head cannot reach position: position is 8.1mm too low, please try adding a riser to the object on the deck",
+				"(err) Move[0]: head 0 channel 0 to 0.5 mm above BottomReference of A4@plate1 at position input_1: head cannot reach position: position is 8.1mm too low, please try adding a riser to the object on the deck",
 			},
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 283.0, Y: 0.0, Z: 51.9}),
@@ -908,7 +953,7 @@ func TestMotionLimits(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Move[0]: head 0 channel 7 to A4@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards and 8.1mm too low, please try rearranging the deck and adding a riser to the object on the deck",
+				"(err) Move[0]: head 0 channel 7 to 0.5 mm above BottomReference of A4@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards and 8.1mm too low, please try rearranging the deck and adding a riser to the object on the deck",
 			},
 			Assertions: []*AssertionFn{
 				positionAssertion(0, wtype.Coordinates{X: 283.0, Y: -63.0, Z: 51.9}),

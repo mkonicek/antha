@@ -183,7 +183,7 @@ func (self *CollisionError) InstructionIndex() int {
 func (self *CollisionError) Error() string {
 	return fmt.Sprintf("(%v) %s[%d]: %s: collision detected: %s",
 		self.Severity(),
-		driver.HumanInstructionName(self.instruction),
+		self.instruction.Type().HumanName,
 		self.InstructionIndex(),
 		self.InstructionDescription(),
 		self.CollisionDescription())

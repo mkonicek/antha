@@ -17,7 +17,7 @@ func TestTipCounting(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 

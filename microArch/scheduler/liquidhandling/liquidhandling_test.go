@@ -229,7 +229,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 
 	// add plates and tip boxes
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	rq.Tips = tipBoxes
 
@@ -280,7 +280,7 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 	// add plates and tip boxes
 	inPlate := GetPlateForTest()
 	rq.InputPlatetypes = append(rq.InputPlatetypes, inPlate)
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 	rq.Tips = tipBoxes
 
 	it := wtype.NewAddressIterator(inPlate, wtype.RowWise, wtype.TopToBottom, wtype.LeftToRight, false)
@@ -558,7 +558,7 @@ func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 	configureMultiChannelTestRequest(ctx, multiRq)
 	// add plates and tip boxes
 	multiRq.InputPlatetypes = append(multiRq.InputPlatetypes, GetPlateForTest())
-	multiRq.Output_platetypes = append(multiRq.Output_platetypes, GetPlateForTest())
+	multiRq.OutputPlatetypes = append(multiRq.OutputPlatetypes, GetPlateForTest())
 
 	multiRq.Tips = tipBoxes
 
@@ -596,7 +596,7 @@ func makeSingleTestRequest() (singleRq *LHRequest, err error) {
 	configureSingleChannelTestRequest(ctx, singleRq)
 	// add plates and tip boxes
 	singleRq.InputPlatetypes = append(singleRq.InputPlatetypes, GetPlateForTest())
-	singleRq.Output_platetypes = append(singleRq.Output_platetypes, GetPlateForTest())
+	singleRq.OutputPlatetypes = append(singleRq.OutputPlatetypes, GetPlateForTest())
 
 	singleRq.Tips = tipBoxes
 
@@ -717,7 +717,7 @@ func TestTipOverridePositive(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	var tpz []*wtype.LHTipbox
 	tp, err := inventory.NewTipbox(ctx, "Gilson20")
@@ -740,7 +740,7 @@ func TestTipOverrideNegative(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 	var tpz []*wtype.LHTipbox
 	tp, err := inventory.NewTipbox(ctx, "Gilson200")
 	if err != nil {
@@ -764,7 +764,7 @@ func TestPlateReuse(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -792,10 +792,10 @@ func TestPlateReuse(t *testing.T) {
 			continue
 		}
 
-		rq.Input_plates[plateid] = plate
+		rq.InputPlates[plateid] = plate
 	}
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	lh = GetLiquidHandlerForTest(ctx)
 	err = lh.Plan(ctx, rq)
@@ -836,10 +836,10 @@ func TestPlateReuse(t *testing.T) {
 			}
 		}
 
-		rq.Input_plates[plateid] = plate
+		rq.InputPlates[plateid] = plate
 	}
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	lh = GetLiquidHandlerForTest(ctx)
 	err = lh.Plan(ctx, rq)
@@ -849,8 +849,8 @@ func TestPlateReuse(t *testing.T) {
 	}
 
 	// this time we should have added some components again
-	if len(rq.Input_assignments) != 3 {
-		t.Fatal(fmt.Sprintf("Error resimulating, should have added 3 components, instead added %d", len(rq.Input_assignments)))
+	if len(rq.InputAssignments) != 3 {
+		t.Fatal(fmt.Sprintf("Error resimulating, should have added 3 components, instead added %d", len(rq.InputAssignments)))
 	}
 }
 
@@ -861,7 +861,7 @@ func TestBeforeVsAfter(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -954,7 +954,7 @@ func TestEP3(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -972,7 +972,7 @@ func TestEP3TotalVolume(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_total_volume(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -990,7 +990,7 @@ func TestEP3Overfilled(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_overfilled(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -1014,7 +1014,7 @@ func TestEP3Negative(t *testing.T) {
 		break
 	}
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -1037,7 +1037,7 @@ func TestEP3WrongResult(t *testing.T) {
 		break
 	}
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -1064,7 +1064,7 @@ func TestEP3WrongTotalVolume(t *testing.T) {
 		break
 	}
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -1077,13 +1077,13 @@ func TestDistinctPlateNames(t *testing.T) {
 	rq := NewLHRequest()
 	for i := 0; i < 100; i++ {
 		p := &wtype.Plate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
-		rq.Input_plate_order = append(rq.Input_plate_order, p.ID)
-		rq.Input_plates[p.ID] = p
+		rq.InputPlateOrder = append(rq.InputPlateOrder, p.ID)
+		rq.InputPlates[p.ID] = p
 	}
 	for i := 100; i < 200; i++ {
 		p := &wtype.Plate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
-		rq.Output_plate_order = append(rq.Output_plate_order, p.ID)
-		rq.Output_plates[p.ID] = p
+		rq.OutputPlateOrder = append(rq.OutputPlateOrder, p.ID)
+		rq.OutputPlates[p.ID] = p
 	}
 
 	rq = fixDuplicatePlateNames(rq)
@@ -1180,7 +1180,7 @@ func TestPlateIDMap(t *testing.T) {
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 
@@ -1306,7 +1306,7 @@ func runPlan(ctx context.Context, instructions []*wtype.LHInstruction) (*Liquidh
 		rq.Add_instruction(ins)
 	}
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 	if err != nil {

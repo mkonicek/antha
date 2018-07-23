@@ -349,7 +349,7 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	}
 
 	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
-	rq.Output_platetypes = append(rq.Output_platetypes, pl.Dup())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, pl.Dup())
 
 	lh.Plan(ctx, rq)
 

@@ -56,7 +56,7 @@ func TestLayoutAgent1(t *testing.T) {
 	req := GetLHRequestForTest()
 	configure_request_simple(ctx, req)
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
-	req.Output_platetypes = append(req.Output_platetypes, pt)
+	req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
 
 	layoutAgentTest{
 		Request:     req,
@@ -71,8 +71,8 @@ func TestLayoutAgent2(t *testing.T) {
 	req := GetLHRequestForTest()
 	configure_request_simple(ctx, req)
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
-	req.Output_platetypes = append(req.Output_platetypes, pt)
-	req.Output_plates[pt.ID] = pt
+	req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+	req.OutputPlates[pt.ID] = pt
 
 	for _, ins := range req.LHInstructions {
 		ins.OutPlate = pt
@@ -96,8 +96,8 @@ func TestLayoutAgent3(t *testing.T) {
 	// add a destination plate (i.e. MixInto)
 
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
-	req.Output_platetypes = append(req.Output_platetypes, pt)
-	req.Output_plates[pt.ID] = pt
+	req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+	req.OutputPlates[pt.ID] = pt
 
 	i := -1
 	for _, ins := range req.LHInstructions {
@@ -126,8 +126,8 @@ func TestLayoutAgent4(t *testing.T) {
 	// add a destination plate (i.e. MixInto)
 
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
-	req.Output_platetypes = append(req.Output_platetypes, pt)
-	req.Output_plates[pt.ID] = pt
+	req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+	req.OutputPlates[pt.ID] = pt
 
 	for _, ins := range req.LHInstructions {
 		ins.PlateName = "Funk Plate"
@@ -159,8 +159,8 @@ func TestLayoutAgent5(t *testing.T) {
 	// add a destination plate (i.e. MixInto)
 
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
-	req.Output_platetypes = append(req.Output_platetypes, pt)
-	req.Output_plates[pt.ID] = pt
+	req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+	req.OutputPlates[pt.ID] = pt
 
 	for _, ins := range req.LHInstructions {
 		ins.PlateName = "Funk Plate"
@@ -183,8 +183,8 @@ func TestLayoutAgent6(t *testing.T) {
 	// add a destination plate (i.e. MixInto)
 
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
-	req.Output_platetypes = append(req.Output_platetypes, pt)
-	req.Output_plates[pt.ID] = pt
+	req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+	req.OutputPlates[pt.ID] = pt
 
 	// bogus mixInto with too many samples for the wells
 	for _, ins := range req.LHInstructions {
@@ -208,8 +208,8 @@ func TestLayoutAgent7(t *testing.T) {
 	// add a destination plate (i.e. MixInto)
 
 	pt, _ := inventory.NewPlate(ctx, "pcrplate_skirted")
-	req.Output_platetypes = append(req.Output_platetypes, pt)
-	req.Output_plates[pt.ID] = pt
+	req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+	req.OutputPlates[pt.ID] = pt
 
 	for _, ins := range req.LHInstructions {
 		ins.PlateName = "Funk plate"

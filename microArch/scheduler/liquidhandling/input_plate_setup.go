@@ -84,7 +84,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	input_platetypes := request.InputPlatetypes
 
 	// we assume that input_plates is set if any locs are set
-	input_plates := request.Input_plates
+	input_plates := request.InputPlates
 
 	if len(input_plates) == 0 {
 		input_plates = make(map[string]*wtype.Plate, 3)
@@ -113,7 +113,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	input_order = isrt.Ordered
 
-	weights_constraints := request.Input_setup_weights
+	weights_constraints := request.InputSetupWeights
 
 	// get the assignment
 
@@ -252,8 +252,8 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		}
 	}
 
-	request.Input_plates = input_plates
-	request.Input_assignments = input_assignments
+	request.InputPlates = input_plates
+	request.InputAssignments = input_assignments
 
 	//return input_plates, input_assignments
 	return request, nil

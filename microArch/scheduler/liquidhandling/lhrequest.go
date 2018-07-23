@@ -42,16 +42,16 @@ type LHRequest struct {
 	InstructionSet        *liquidhandling.RobotInstructionSet
 	Instructions          []liquidhandling.TerminalRobotInstruction
 	InstructionText       string
-	Input_assignments     map[string][]string
-	Output_assignments    map[string][]string
-	Input_plates          map[string]*wtype.Plate
-	Output_plates         map[string]*wtype.Plate
+	InputAssignments      map[string][]string
+	OutputAssignments     map[string][]string
+	InputPlates           map[string]*wtype.Plate
+	OutputPlates          map[string]*wtype.Plate
 	InputPlatetypes       []*wtype.Plate
-	Input_plate_order     []string
-	Input_setup_weights   map[string]float64
-	Output_platetypes     []*wtype.Plate
-	Output_plate_order    []string
-	Plate_lookup          map[string]string
+	InputPlateOrder       []string
+	InputSetupWeights     map[string]float64
+	OutputPlatetypes      []*wtype.Plate
+	OutputPlateOrder      []string
+	PlateLookup           map[string]string
 	Stockconcs            map[string]wunit.Concentration
 	PolicyManager         *LHPolicyManager
 	OutputOrder           []string
@@ -63,7 +63,7 @@ type LHRequest struct {
 	Evaps                 []wtype.VolumeCorrection
 	Options               LHOptions
 	NUserPlates           int
-	Output_sort           bool
+	OutputSort            bool
 	TipsUsed              []wtype.TipEstimate
 	InputSolutions        *InputSolutions //store properties related to the Liquids for the request
 }
@@ -75,13 +75,13 @@ func (req *LHRequest) GetPlate(id string) (*wtype.Plate, bool) {
 		return p, true
 	}
 
-	p, ok = req.Input_plates[id]
+	p, ok = req.InputPlates[id]
 
 	if ok {
 		return p, true
 	}
 
-	p, ok = req.Output_plates[id]
+	p, ok = req.OutputPlates[id]
 
 	if ok {
 		return p, true
@@ -116,7 +116,7 @@ func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid,
 		}
 	}
 
-	for _, v := range req.Input_plates {
+	for _, v := range req.InputPlates {
 		for _, w := range v.Wellcoords {
 			if w.IsEmpty() {
 				continue
@@ -146,7 +146,7 @@ func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid,
 // this function checks requests so we can see early on whether or not they
 // are going to cause problems
 func ValidateLHRequest(rq *LHRequest) (bool, string) {
-	if rq.Output_platetypes == nil || len(rq.Output_platetypes) == 0 {
+	if rq.OutputPlatetypes == nil || len(rq.OutputPlatetypes) == 0 {
 		return false, "No output plate type specified"
 	}
 
@@ -167,20 +167,20 @@ func columnWiseIterator(a wtype.Addressable) wtype.AddressIterator {
 
 func NewLHRequest() *LHRequest {
 	lhr := &LHRequest{
-		ID:                 wtype.GetUUID(),
-		LHInstructions:     make(map[string]*wtype.LHInstruction),
-		Plates:             make(map[string]*wtype.Plate),
-		InstructionSet:     liquidhandling.NewRobotInstructionSet(nil),
-		Input_assignments:  make(map[string][]string),
-		Output_assignments: make(map[string][]string),
-		Input_plates:       make(map[string]*wtype.Plate),
-		Output_plates:      make(map[string]*wtype.Plate),
-		Input_setup_weights: map[string]float64{
+		ID:                wtype.GetUUID(),
+		LHInstructions:    make(map[string]*wtype.LHInstruction),
+		Plates:            make(map[string]*wtype.Plate),
+		InstructionSet:    liquidhandling.NewRobotInstructionSet(nil),
+		InputAssignments:  make(map[string][]string),
+		OutputAssignments: make(map[string][]string),
+		InputPlates:       make(map[string]*wtype.Plate),
+		OutputPlates:      make(map[string]*wtype.Plate),
+		InputSetupWeights: map[string]float64{
 			"MAX_N_PLATES":           2,
 			"MAX_N_WELLS":            96,
 			"RESIDUAL_VOLUME_WEIGHT": 1.0,
 		},
-		Plate_lookup:          make(map[string]string),
+		PlateLookup:           make(map[string]string),
 		Stockconcs:            make(map[string]wunit.Concentration),
 		OutputIteratorFactory: columnWiseIterator,
 		CarryVolume:           wunit.NewVolume(0.5, "ul"),
@@ -236,7 +236,7 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.Plate) {
 
 	p.MarkNonEmptyWellsUserAllocated()
 
-	lhr.Input_plates[p.ID] = p
+	lhr.InputPlates[p.ID] = p
 }
 
 func (lhr *LHRequest) UseLegacyVolume() bool {
@@ -298,10 +298,10 @@ func (request *LHRequest) HasPlateNamed(name string) bool {
 		return false
 	}
 
-	if checkForPlateNamed(name, request.Input_plates) {
+	if checkForPlateNamed(name, request.InputPlates) {
 		return true
 	}
-	if checkForPlateNamed(name, request.Output_plates) {
+	if checkForPlateNamed(name, request.OutputPlates) {
 		return true
 	}
 
@@ -310,9 +310,9 @@ func (request *LHRequest) HasPlateNamed(name string) bool {
 
 // OrderedInputPlates returns the list of input plates in order
 func (request *LHRequest) OrderedInputPlates() []*wtype.Plate {
-	ret := make([]*wtype.Plate, 0, len(request.Input_plates))
-	for _, id := range request.Input_plate_order {
-		ret = append(ret, request.Input_plates[id])
+	ret := make([]*wtype.Plate, 0, len(request.InputPlates))
+	for _, id := range request.InputPlateOrder {
+		ret = append(ret, request.InputPlates[id])
 	}
 
 	return ret
@@ -320,9 +320,9 @@ func (request *LHRequest) OrderedInputPlates() []*wtype.Plate {
 
 // OrderedOutputPlates returns the list of input plates in order
 func (request *LHRequest) OrderedOutputPlates() []*wtype.Plate {
-	ret := make([]*wtype.Plate, 0, len(request.Output_plates))
-	for _, id := range request.Output_plate_order {
-		ret = append(ret, request.Output_plates[id])
+	ret := make([]*wtype.Plate, 0, len(request.OutputPlates))
+	for _, id := range request.OutputPlateOrder {
+		ret = append(ret, request.OutputPlates[id])
 	}
 
 	return ret
@@ -331,7 +331,7 @@ func (request *LHRequest) OrderedOutputPlates() []*wtype.Plate {
 // AllPlates returns a list of all known plates, in the order input plates, output plates
 // ordering will be as within the stated orders of each
 func (request *LHRequest) AllPlates() []*wtype.Plate {
-	r := make([]*wtype.Plate, 0, len(request.Input_plates)+len(request.Output_plates))
+	r := make([]*wtype.Plate, 0, len(request.InputPlates)+len(request.OutputPlates))
 
 	r = append(r, request.OrderedInputPlates()...)
 	r = append(r, request.OrderedOutputPlates()...)

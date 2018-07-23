@@ -49,7 +49,7 @@ func GetItHere(ctx context.Context) (*Liquidhandler, *LHRequest, error) {
 	rq := GetLHRequestForTest()
 	configure_request_quitebig(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 	if err != nil {

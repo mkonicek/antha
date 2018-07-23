@@ -1294,9 +1294,9 @@ func getWellTargetYStart(wy int) (float64, int) {
 }
 
 func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.Plate {
-	m := make(map[string]*wtype.Plate, len(req.Input_plates)+len(req.Output_plates))
-	addToMap(m, req.Input_plates)
-	addToMap(m, req.Output_plates)
+	m := make(map[string]*wtype.Plate, len(req.InputPlates)+len(req.OutputPlates))
+	addToMap(m, req.InputPlates)
+	addToMap(m, req.OutputPlates)
 	return m
 }
 
@@ -1328,8 +1328,8 @@ func fixDuplicatePlateNames(rq *LHRequest) *LHRequest {
 		}
 	}
 
-	fixNames(rq.Input_plate_order, rq.Input_plates)
-	fixNames(rq.Output_plate_order, rq.Output_plates)
+	fixNames(rq.InputPlateOrder, rq.InputPlates)
+	fixNames(rq.OutputPlateOrder, rq.OutputPlates)
 
 	return rq
 }

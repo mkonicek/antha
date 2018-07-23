@@ -46,7 +46,7 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh := Init(rbt)
 
@@ -118,7 +118,7 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh := Init(rbt)
 

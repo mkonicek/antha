@@ -127,7 +127,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 				return nil, err
 			}
 
-			req.Input_platetypes = append(req.Input_platetypes, p)
+			req.InputPlatetypes = append(req.InputPlatetypes, p)
 		}
 	}
 

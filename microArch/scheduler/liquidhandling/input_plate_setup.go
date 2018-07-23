@@ -81,7 +81,7 @@ func (is InputSorter) Less(i, j int) bool {
 func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
-	input_platetypes := request.Input_platetypes
+	input_platetypes := request.InputPlatetypes
 
 	// we assume that input_plates is set if any locs are set
 	input_plates := request.Input_plates

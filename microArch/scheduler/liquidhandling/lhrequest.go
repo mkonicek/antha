@@ -46,7 +46,7 @@ type LHRequest struct {
 	Output_assignments    map[string][]string
 	Input_plates          map[string]*wtype.Plate
 	Output_plates         map[string]*wtype.Plate
-	Input_platetypes      []*wtype.Plate
+	InputPlatetypes       []*wtype.Plate
 	Input_plate_order     []string
 	Input_setup_weights   map[string]float64
 	Output_platetypes     []*wtype.Plate
@@ -150,7 +150,7 @@ func ValidateLHRequest(rq *LHRequest) (bool, string) {
 		return false, "No output plate type specified"
 	}
 
-	if len(rq.Input_platetypes) == 0 {
+	if len(rq.InputPlatetypes) == 0 {
 		return false, "No input plate types specified"
 	}
 

@@ -5,6 +5,7 @@ package execute
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/codegen"
@@ -52,7 +53,7 @@ func Run(parent context.Context, opt Opt) (res *Result, err error) {
 	ctxTr, tr := WithTrace(ctx)
 	defer func() {
 		if res := recover(); res != nil {
-			err = errors.New(inject.ElementStackTrace())
+			err = errors.New(fmt.Sprintf("%s\n%s", res, inject.ElementStackTrace()))
 		}
 	}()
 	if err := w.Run(ctxTr); err != nil {

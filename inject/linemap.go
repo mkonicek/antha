@@ -54,6 +54,9 @@ func ElementStackTrace() string {
 	// recover is invoked in a sub-frame:
 	//
 	// - Frame of defer-with-recover func
+	// - Frame of runtime.gopanic
+	// - (optional) One or more frames of panic detail, eg
+	//     runtime.panicdivide, runtime.panicmem, runtime.sigpanic
 	// - Frame of function that panicked
 	// - ... rest of call stack ...
 	//
@@ -65,24 +68,49 @@ func ElementStackTrace() string {
 	// - Frame of runtime.Callers
 	// - Frame of ElementStackTrace
 	// - Frame of defer-with-recover func
-	// - Frame of panic itself
+	// - Frame of runtime.gopanic
+	// - (optional) One or more frames of panic detail, eg
+	//     runtime.panicdivide, runtime.panicmem, runtime.sigpanic
 	// - Frame of function that panicked
 	// - ... rest of call stack ...
 	//
-	// Therefore, we have to skip over the first 5 items at the top of
-	// the call stack in order to find the entry we're interested in.
-	num := runtime.Callers(5, cs)
+	// Now we want to find if the the panic happened within an
+	// element. To do that, we walk down until we find
+	// runtime.gopanic. We then keep walking until we find the first
+	// thing that doesn't start with runtime, and we inspect that!
+	num := runtime.Callers(0, cs)
 	if num < 0 {
 		return standard
 	}
 	frames := runtime.CallersFrames(cs[:num])
-	// if we can find the first frame, then we treat it entirely as an
-	// antha stack trace:
-	first := true
+	// skip over everything until we find the runtime.gopanic entry
+	frame, more := frames.Next()
+	for {
+		if !more {
+			return standard
+		} else if frame.Function == "runtime.gopanic" {
+			break
+		} else {
+			frame, more = frames.Next()
+		}
+	}
+	// now keep going until we find the first thing that is _not_ runtime.:
+	for {
+		if !more {
+			return standard
+		} else if !strings.HasPrefix(frame.Function, "runtime.") {
+			break
+		} else {
+			frame, more = frames.Next()
+		}
+	}
 
+	// For each of the remaining frames, we need to detect whether they
+	// are within an element or not. If the first of these remaining
+	// frames is *not* within an element, then strs will remain empty,
+	// and we will revert to using the standard stack trace.
 	var strs []string
 	for {
-		frame, more := frames.Next()
 		foundElement := false
 		for suffix, em := range elementMaps {
 			if strings.HasSuffix(frame.File, suffix) {
@@ -97,10 +125,9 @@ func ElementStackTrace() string {
 				break
 			}
 		}
-		if first && len(strs) == 0 { // was the first frame, and we failed to match an element, so abandon, and use standard
+		if len(strs) == 0 { // we haven't been able to find any matching element, so use standard stack
 			return standard
 		}
-		first = false
 		if !foundElement {
 			strs = append(strs, fmt.Sprintf("- [Go] %s", frame.Function))
 			strs = append(strs, fmt.Sprintf("       %s:%d", frame.File, frame.Line))
@@ -108,6 +135,7 @@ func ElementStackTrace() string {
 		if !more {
 			break
 		}
+		frame, more = frames.Next()
 	}
-	return "Panic in Element\n" + strings.Join(strs, "\n")
+	return strings.Join(strs, "\n")
 }

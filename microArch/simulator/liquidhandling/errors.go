@@ -24,7 +24,6 @@ package liquidhandling
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"sort"
 	"strings"
 
@@ -152,21 +151,22 @@ func (self *TipsNotInWellError) lastTargetString() string {
 
 //CollisionError generated when a physical collision occurs
 type CollisionError struct {
-	description       string
-	channelsColliding map[int][]int //maps adaptors to a list of channels involved in collision
-	objectsColliding  []wtype.LHObject
-	instruction       driver.TerminalRobotInstruction
-	instructionIndex  int
-	stateAtError      string
+	description          string
+	channelsColliding    map[int][]int //maps adaptors to a list of channels involved in collision
+	collisionDescription string
+	instruction          driver.TerminalRobotInstruction
+	instructionIndex     int
+	stateAtError         string
 }
 
 //NewCollisionError make a new collision
 func NewCollisionError(state *RobotState, channelsColliding map[int][]int, objectsColliding []wtype.LHObject) *CollisionError {
-	return &CollisionError{
+	ret := &CollisionError{
 		channelsColliding: channelsColliding,
-		objectsColliding:  objectsColliding,
 		stateAtError:      state.SummariseState(channelsColliding),
 	}
+	ret.setCollisionDescription(objectsColliding)
+	return ret
 }
 
 func (self *CollisionError) Severity() simulator.ErrorSeverity {
@@ -182,16 +182,12 @@ func (self *CollisionError) InstructionIndex() int {
 }
 
 func (self *CollisionError) Error() string {
-	desc, err := self.CollisionDescription()
-	if err != nil {
-		desc += "\nAdditional error while describing collision: " + err.Error()
-	}
 	return fmt.Sprintf("(%v) %s[%d]: %s: collision detected: %s",
 		self.Severity(),
 		self.instruction.Type().HumanName,
 		self.InstructionIndex(),
 		self.InstructionDescription(),
-		desc)
+		self.CollisionDescription())
 }
 
 func (self *CollisionError) setInstruction(index int, ins driver.TerminalRobotInstruction) {
@@ -211,10 +207,13 @@ func (self *CollisionError) GetStateAtError() string {
 	return self.stateAtError
 }
 
+func (self *CollisionError) CollisionDescription() string {
+	return self.collisionDescription
+}
+
 //CollisionDescription get a human readable description of the collision,
 //group objects involved in the collision as much as possible
-func (self *CollisionError) CollisionDescription() (string, error) {
-	var errorStrings []string
+func (self *CollisionError) setCollisionDescription(objectsColliding []wtype.LHObject) {
 
 	//list adaptors in order for consistent errors
 	adaptorIndexes := make([]int, 0, len(self.channelsColliding))
@@ -229,18 +228,17 @@ func (self *CollisionError) CollisionDescription() (string, error) {
 	}
 
 	//group objects by parent
-	parentMap := make(map[wtype.LHObject][]wtype.LHObject, len(self.objectsColliding))
-	for _, object := range self.objectsColliding {
-		if p := object.GetParent(); p == nil {
-			errorStrings = append(errorStrings, fmt.Sprintf("%s \"%s\" of type %s has a nil parent", wtype.ClassOf(object), wtype.NameOf(object), wtype.TypeOf(object)))
-		} else if _, ok := parentMap[p]; !ok {
+	parentMap := make(map[wtype.LHObject][]wtype.LHObject, len(objectsColliding))
+	for _, object := range objectsColliding {
+		p := object.GetParent()
+		if _, ok := parentMap[p]; !ok {
 			parentMap[p] = []wtype.LHObject{object}
 		} else {
 			parentMap[p] = append(parentMap[p], object)
 		}
 	}
 
-	objectStrings := make([]string, 0, len(self.objectsColliding))
+	objectStrings := make([]string, 0, len(objectsColliding))
 	for parent, children := range parentMap {
 		deck := wtype.GetObjectRoot(parent).(*wtype.LHDeck)
 
@@ -269,9 +267,5 @@ func (self *CollisionError) CollisionDescription() (string, error) {
 		}
 	}
 
-	ret := fmt.Sprintf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
-	if len(errorStrings) > 0 {
-		return ret, errors.New(strings.Join(errorStrings, " and "))
-	}
-	return ret, nil
+	self.collisionDescription = fmt.Sprintf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
 }

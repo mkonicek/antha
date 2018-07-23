@@ -266,46 +266,6 @@ func (bo ByOrdinal) Less(i, j int) bool {
 	return bo[i][0] < bo[j][0]
 }
 
-func merge_instructions(insIn []driver.RobotInstruction, aggregates [][]int) []driver.RobotInstruction {
-	ret := make([]driver.RobotInstruction, 0, len(insIn))
-
-	for _, ar := range aggregates {
-		if len(ar) == 1 {
-			// just push it in and move on
-			ret = append(ret, insIn[ar[0]])
-			continue
-		}
-
-		// otherwise more than one here
-
-		newtfr, ok := insIn[ar[0]].(*driver.TransferInstruction)
-
-		if ok {
-			for k := 1; k < len(ar); k++ {
-				newtfr.MergeWith(insIn[ar[k]].(*driver.TransferInstruction))
-			}
-
-			ret = append(ret, newtfr)
-		} else {
-			// must be a message
-			ins1 := insIn[ar[0]]
-			ret = append(ret, ins1)
-
-			// put in any distinct instructions
-
-			for i := 1; i < len(ar); i++ {
-				if insIn[ar[i]].(*driver.MessageInstruction).Message != ins1.(*driver.MessageInstruction).Message {
-					ret = append(ret, insIn[ar[i]])
-					ins1 = insIn[ar[i]]
-				}
-			}
-
-		}
-	}
-
-	return ret
-}
-
 // TODO -- refactor this to pass robot through
 func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, carryvol wunit.Volume, legacyVolume bool) (insOut *driver.TransferInstruction, err error) {
 	cmps := insIn.Components

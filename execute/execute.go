@@ -53,7 +53,7 @@ func Run(parent context.Context, opt Opt) (res *Result, err error) {
 	ctxTr, tr := WithTrace(ctx)
 	defer func() {
 		if res := recover(); res != nil {
-			err = errors.New(fmt.Sprintf("%s\n%s", res, inject.ElementStackTrace()))
+			err = fmt.Errorf("%s\n%s", res, inject.ElementStackTrace())
 		}
 	}()
 	if err := w.Run(ctxTr); err != nil {

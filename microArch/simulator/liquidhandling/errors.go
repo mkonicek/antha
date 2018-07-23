@@ -211,8 +211,8 @@ func (self *CollisionError) CollisionDescription() string {
 	return self.collisionDescription
 }
 
-//CollisionDescription get a human readable description of the collision,
-//group objects involved in the collision as much as possible
+//setCollisionDescription store a human readable description of the collision,
+//grouping objects involved in the collision as much as possible
 func (self *CollisionError) setCollisionDescription(objectsColliding []wtype.LHObject) {
 
 	//list adaptors in order for consistent errors

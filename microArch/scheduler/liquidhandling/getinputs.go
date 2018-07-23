@@ -10,14 +10,17 @@ import (
 
 //InputSolutions properties to do with the input Liquids required for the mix
 type InputSolutions struct {
-	Solutions       map[string][]*wtype.Liquid
-	Order           []string
-	VolumesSupplied map[string]wunit.Volume
-	VolumesRequired map[string]wunit.Volume
-	VolumesWanting  map[string]wunit.Volume
+	Solutions       map[string][]*wtype.Liquid //the solutions explicitly supplied to the protocol
+	Order           []string                   //the order in which liquids are required in the ordered LH instructions
+	VolumesSupplied map[string]wunit.Volume    //the volumes of the solutions explicitly supplied to the protocol
+	VolumesRequired map[string]wunit.Volume    //the estimated volumes of solutions required to carry out the protocol
+	VolumesWanting  map[string]wunit.Volume    //the estimated shortfall between the supplied and required volumes which must be auto-allocated
 }
 
-//GetInputs
+//GetInputs calculate the volumes required for each input solution by looking
+//through the high level liquidhandling (LH) instructions.
+//inputSolutions gives the solutions explicitly provided to the protocol, and
+//is used to calculate the shortfall, i.e how much of each must be auto-allocated
 func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[string][]*wtype.Liquid, carryVolume wunit.Volume) (*InputSolutions, error) {
 	inputs := make(map[string][]*wtype.Liquid)
 	volsRequired := make(map[string]wunit.Volume)

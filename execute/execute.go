@@ -4,7 +4,6 @@ package execute
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/antha-lang/antha/ast"

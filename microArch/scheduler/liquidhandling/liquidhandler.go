@@ -817,7 +817,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	ctx = plateCache.NewContext(ctx)
 
 	// figure out the ordering for the high level instructions
-	if ichain, err := getLHInstructionOrder(request.GetUnorderedLHInstructions(), request.Options.OutputSort); err != nil {
+	if ichain, err := getLHInstructionOrder(request.LHInstructions, request.Options.OutputSort); err != nil {
 		return err
 	} else {
 		request.InstructionChain = ichain

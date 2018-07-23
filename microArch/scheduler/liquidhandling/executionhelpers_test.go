@@ -69,7 +69,12 @@ type setOutputOrderTest struct {
 
 func (self *setOutputOrderTest) Run(t *testing.T) {
 
-	ichain, err := getLHInstructionOrder(self.Instructions, self.OutputSort)
+	insMap := make(map[string]*wtype.LHInstruction, len(self.Instructions))
+	for _, instruction := range self.Instructions {
+		insMap[instruction.ID] = instruction
+	}
+
+	ichain, err := getLHInstructionOrder(insMap, self.OutputSort)
 	if encounteredError := err != nil; self.ExpectingError != encounteredError {
 		t.Fatalf("ExpectingError: %t, Encountered Error: %v", self.ExpectingError, err)
 		return

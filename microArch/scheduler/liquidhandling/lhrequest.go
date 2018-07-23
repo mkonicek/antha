@@ -340,33 +340,22 @@ func (request *LHRequest) AllPlates() []*wtype.Plate {
 }
 
 //GetOrderedLHInstructions get the LHInstructions in the order which should have
-//previously been detrmined by setOutputOrder
-func (request *LHRequest) GetOrderedLHInstructions() ([]*wtype.LHInstruction, error) {
-	//if these aren't the same length then there was probably an issue with setOutputOrder
-	if len(request.OutputOrder) != len(request.LHInstructions) {
-		return nil, errors.Errorf("request OutputOrder has length %d but %d LHInstructions", len(request.OutputOrder), len(request.LHInstructions))
+//previously been detrmined
+func (self *LHRequest) GetOrderedLHInstructions() ([]*wtype.LHInstruction, error) {
+	//if these aren't the same length then there was probably an issue determining the output order
+	if len(self.OutputOrder) != len(self.LHInstructions) {
+		return nil, errors.Errorf("self OutputOrder has length %d but %d LHInstructions", len(self.OutputOrder), len(self.LHInstructions))
 	}
 
-	ret := make([]*wtype.LHInstruction, 0, len(request.OutputOrder))
-	for _, instructionID := range request.OutputOrder {
-		instruction, ok := request.LHInstructions[instructionID]
+	ret := make([]*wtype.LHInstruction, 0, len(self.OutputOrder))
+	for _, instructionID := range self.OutputOrder {
+		instruction, ok := self.LHInstructions[instructionID]
 		if !ok {
 			return ret, errors.Errorf("request has invalid OutputOrder, no instruction with id %s", instructionID)
 		}
 		ret = append(ret, instruction)
 	}
 	return ret, nil
-}
-
-//GetUnorderedLHInstructions get a slice containing all the LHInstructions in
-//arbitrary order
-func (request *LHRequest) GetUnorderedLHInstructions() []*wtype.LHInstruction {
-	ret := make([]*wtype.LHInstruction, 0, len(request.LHInstructions))
-	for _, v := range request.LHInstructions {
-		ret = append(ret, v)
-	}
-
-	return ret
 }
 
 //updateWithNewLHInstructions make sure the request contains the new instructions if aggregation has occurred

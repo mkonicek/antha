@@ -343,9 +343,14 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 
 //getLHInstructionOrder guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
-func getLHInstructionOrder(unsorted []*wtype.LHInstruction, outputSort bool) (*IChain, error) {
+func getLHInstructionOrder(unsorted map[string]*wtype.LHInstruction, outputSort bool) (*IChain, error) {
 
-	tg, err := MakeTGraph(unsorted)
+	unsortedSlice := make([]*wtype.LHInstruction, 0, len(unsorted))
+	for _, instruction := range unsorted {
+		unsortedSlice = append(unsortedSlice, instruction)
+	}
+
+	tg, err := MakeTGraph(unsortedSlice)
 	if err != nil {
 		return nil, err
 	}

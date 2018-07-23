@@ -203,6 +203,17 @@ func (ins *LHInstruction) IsMixInPlace() bool {
 	return !smp
 }
 
+//IsDummy return true if the instruction has no effect
+func (ins *LHInstruction) IsDummy() bool {
+	if ins.Type == LHIMIX && ins.IsMixInPlace() && len(ins.Components) == 1 {
+		// instructions of this form generally mean "do nothing"
+		// but have very useful side-effects
+		return true
+	}
+
+	return false
+}
+
 func (ins *LHInstruction) HasAnyParent() bool {
 	for _, v := range ins.Components {
 		if v.HasAnyParent() {

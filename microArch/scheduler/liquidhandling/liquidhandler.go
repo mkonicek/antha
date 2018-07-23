@@ -1156,20 +1156,10 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 	return nil
 }
 
-func dummy(ins *wtype.LHInstruction) bool {
-	if wtype.InsType(ins.Type) == "MIX" && ins.IsMixInPlace() && len(ins.Components) == 1 {
-		// instructions of this form generally mean "do nothing"
-		// but have very useful side-effects
-		return true
-	}
-
-	return false
-}
-
 func removeDummyInstructions(rq *LHRequest) *LHRequest {
 	toRemove := make(map[string]bool, len(rq.LHInstructions))
 	for _, ins := range rq.LHInstructions {
-		if dummy(ins) {
+		if ins.IsDummy() {
 			toRemove[ins.ID] = true
 		}
 	}

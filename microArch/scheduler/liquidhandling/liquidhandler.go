@@ -822,7 +822,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	} else {
 		request.InstructionChain = ichain
 		request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
-		request.OutputOrder = ichain.Flatten()
+		request.OutputOrder = ichain.FlattenInstructionIDs()
 	}
 
 	if request.Options.PrintInstructions {

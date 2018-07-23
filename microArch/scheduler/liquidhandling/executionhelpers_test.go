@@ -78,7 +78,7 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 	if e, g := self.ChainHeight, ichain.Height(); e != g {
 		t.Fatalf("Instruction chain length mismatch, e: %d, g: %d", e, g)
 	}
-	if e, g := len(self.ExpectedOrder), len(ichain.Flatten()); e != g {
+	if e, g := len(self.ExpectedOrder), len(ichain.FlattenInstructionIDs()); e != g {
 		t.Fatalf("Expected Order length mismatch:\n\te: %v\n\tg: %v", e, g)
 	}
 

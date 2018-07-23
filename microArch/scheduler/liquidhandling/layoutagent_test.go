@@ -21,7 +21,7 @@ func (self layoutAgentTest) Run(ctx context.Context, t *testing.T) {
 	} else {
 		self.Request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
 		self.Request.InstructionChain = ichain
-		self.Request.OutputOrder = ichain.Flatten()
+		self.Request.OutputOrder = ichain.FlattenInstructionIDs()
 	}
 	params := makeGilson(ctx)
 

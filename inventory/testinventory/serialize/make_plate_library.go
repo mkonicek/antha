@@ -941,8 +941,8 @@ func make384wellplateAppliedBiosystems() *wtype.Plate {
 	numberOfRows := 16
 	numberOfColumns := 24
 
-	wellShape := "cylinder"
-	bottomtype := wtype.VWellBottom
+	wellShape := "CIRCLE"
+	bottomtype := wtype.FlatWellBottom
 
 	dimensionUnit := "mm"
 
@@ -952,17 +952,17 @@ func make384wellplateAppliedBiosystems() *wtype.Plate {
 
 	bottomh := 0.61 // N: bottom of well to resting plane
 
-	minVolume := 4.0
-	maxVolume := 40.0
+	minVolume := 10.0
+	maxVolume := 45.0
 
 	volUnit := "ul"
 
-	wellxoffset := 4.5                        // K: centre of well to centre of neighbouring well in x direction
-	wellyoffset := 4.5                        // K?: centre of well to centre of neighbouring well in y direction
-	xstart := 10.925 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
-	ystart := 7.415 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
-	zstart := 0.65 - zstartOffsetCorrection   // F - L: offset of bottom of deck to bottom of well
-	overallHeight := 9.7                      // F: height of plate
+	wellxoffset := 4.5                       // K: centre of well to centre of neighbouring well in x direction
+	wellyoffset := 4.5                       // K?: centre of well to centre of neighbouring well in y direction
+	xstart := 12.13 - xstartOffsetCorrection // measure the distance from the edge of plate to beginning of first well in x-axis
+	ystart := 8.99 - ystartOffsetCorrection  // measure the distance from the edge of plate to beginning of first well in x-axis
+	zstart := 0 - zstartOffsetCorrection     // F - L: offset of bottom of deck to bottom of well
+	overallHeight := 9.7                     // F: height of plate
 
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 

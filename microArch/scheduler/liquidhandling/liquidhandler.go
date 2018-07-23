@@ -816,14 +816,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	//add in a plateCache for instruction generation
 	ctx = plateCache.NewContext(ctx)
 
-	//find what liquids are explicitely provided by the user
-	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
-	if err != nil {
-		return err
-	}
-
 	// figure out the ordering for the high level instructions
-	if ichain, err := getLHInstructionOrder(request.GetUnorderedLHInstructions(), solutionsFromPlates, request.Options.OutputSort); err != nil {
+	if ichain, err := getLHInstructionOrder(request.GetUnorderedLHInstructions(), request.Options.OutputSort); err != nil {
 		return err
 	} else {
 		request.InstructionChain = ichain
@@ -927,6 +921,12 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	orderedInstructions, err := request.GetOrderedLHInstructions()
+	if err != nil {
+		return err
+	}
+
+	//find what liquids are explicitely provided by the user
+	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
 	if err != nil {
 		return err
 	}

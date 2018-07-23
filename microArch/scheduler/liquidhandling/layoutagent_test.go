@@ -16,12 +16,7 @@ type layoutAgentTest struct {
 }
 
 func (self layoutAgentTest) Run(ctx context.Context, t *testing.T) {
-	solutionsFromPlates, err := self.Request.GetSolutionsFromInputPlates()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if ichain, err := getLHInstructionOrder(self.Request.GetUnorderedLHInstructions(), solutionsFromPlates, self.Request.Options.OutputSort); err != nil {
+	if ichain, err := getLHInstructionOrder(self.Request.GetUnorderedLHInstructions(), self.Request.Options.OutputSort); err != nil {
 		t.Fatal(err)
 	} else {
 		self.Request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())

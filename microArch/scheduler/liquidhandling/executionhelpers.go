@@ -153,7 +153,7 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 }
 
-func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool, inputs map[string][]*wtype.Liquid) *IChain {
+func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool) *IChain {
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations
@@ -168,12 +168,6 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 	// we need to ensure that splits and mixes are kept separate by fissioning nodes
 
 	ic.SplitMixedNodes()
-
-	// this routine ensures that instructions can be executed in parallel
-
-	if ic == nil {
-		ic = simplifyIChain(ic, inputs)
-	}
 
 	sortOutputs(ic, sort)
 
@@ -349,7 +343,7 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 
 //getLHInstructionOrder guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
-func getLHInstructionOrder(unsorted []*wtype.LHInstruction, solutionsFromPlates map[string][]*wtype.Liquid, outputSort bool) (*IChain, error) {
+func getLHInstructionOrder(unsorted []*wtype.LHInstruction, outputSort bool) (*IChain, error) {
 
 	tg, err := MakeTGraph(unsorted)
 	if err != nil {
@@ -386,7 +380,7 @@ func getLHInstructionOrder(unsorted []*wtype.LHInstruction, solutionsFromPlates 
 	}
 
 	// make into equivalence classes and sort according to defined order
-	ic := convertToInstructionChain(sorted, tg, outputSort, solutionsFromPlates)
+	ic := convertToInstructionChain(sorted, tg, outputSort)
 
 	return ic, nil
 }

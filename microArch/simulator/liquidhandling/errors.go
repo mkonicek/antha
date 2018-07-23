@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"sort"
 	"strings"
 
@@ -181,12 +182,16 @@ func (self *CollisionError) InstructionIndex() int {
 }
 
 func (self *CollisionError) Error() string {
+	desc, err := self.CollisionDescription()
+	if err != nil {
+		desc += "\nAdditional error while describing collision: " + err.Error()
+	}
 	return fmt.Sprintf("(%v) %s[%d]: %s: collision detected: %s",
 		self.Severity(),
 		self.instruction.Type().HumanName,
 		self.InstructionIndex(),
 		self.InstructionDescription(),
-		self.CollisionDescription())
+		desc)
 }
 
 func (self *CollisionError) setInstruction(index int, ins driver.TerminalRobotInstruction) {
@@ -208,7 +213,8 @@ func (self *CollisionError) GetStateAtError() string {
 
 //CollisionDescription get a human readable description of the collision,
 //group objects involved in the collision as much as possible
-func (self *CollisionError) CollisionDescription() string {
+func (self *CollisionError) CollisionDescription() (string, error) {
+	var errorStrings []string
 
 	//list adaptors in order for consistent errors
 	adaptorIndexes := make([]int, 0, len(self.channelsColliding))
@@ -225,11 +231,13 @@ func (self *CollisionError) CollisionDescription() string {
 	//group objects by parent
 	parentMap := make(map[wtype.LHObject][]wtype.LHObject, len(self.objectsColliding))
 	for _, object := range self.objectsColliding {
-		p := object.GetParent()
-		if _, ok := parentMap[p]; !ok {
-			parentMap[p] = make([]wtype.LHObject, 0, len(self.objectsColliding))
+		if p := object.GetParent(); p == nil {
+			errorStrings = append(errorStrings, fmt.Sprintf("%s \"%s\" of type %s has a nil parent", wtype.ClassOf(object), wtype.NameOf(object), wtype.TypeOf(object)))
+		} else if _, ok := parentMap[p]; !ok {
+			parentMap[p] = []wtype.LHObject{object}
+		} else {
+			parentMap[p] = append(parentMap[p], object)
 		}
-		parentMap[p] = append(parentMap[p], object)
 	}
 
 	objectStrings := make([]string, 0, len(self.objectsColliding))
@@ -261,6 +269,9 @@ func (self *CollisionError) CollisionDescription() string {
 		}
 	}
 
-	return fmt.Sprintf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
-
+	ret := fmt.Sprintf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
+	if len(errorStrings) > 0 {
+		return ret, errors.New(strings.Join(errorStrings, " and "))
+	}
+	return ret, nil
 }

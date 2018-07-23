@@ -43,16 +43,12 @@ func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[st
 			if ix == 0 && !component.IsSample() {
 				// these components come in as instances -- hence 1 per well
 				// but if not allocated we need to do so
-				inputs[component.CNID()] = make([]*wtype.Liquid, 0, 1)
-				inputs[component.CNID()] = append(inputs[component.CNID()], component)
+				inputs[component.CNID()] = []*wtype.Liquid{component}
 				allinputs = append(allinputs, component.CNID())
 				volsRequired[component.CNID()] = component.Volume()
 				component.DeclareInstance()
 
-				// if this already exists do nothing
-				_, ok := ordH[component.CNID()]
-
-				if !ok {
+				if _, ok := ordH[component.CNID()]; !ok {
 					ordH[component.CNID()] = len(ordH)
 				}
 			} else {
@@ -62,14 +58,12 @@ func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[st
 					allinputs = append(allinputs, component.Kind())
 				}
 
-				_, ok = ordH[component.Kind()]
-
-				if !ok {
-					ordH[component.Kind()] = len(ordH)
-				}
-
 				cmps = append(cmps, component)
 				inputs[component.Kind()] = cmps
+
+				if _, ok = ordH[component.Kind()]; !ok {
+					ordH[component.Kind()] = len(ordH)
+				}
 
 				// similarly add the volumes up
 
@@ -106,7 +100,7 @@ func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[st
 
 	for _, k := range allinputs {
 		// volSupplied: how much comes in
-		volSupplied := wunit.NewVolume(0.00, "ul")
+		volSupplied := wunit.NewVolume(0.0, "ul")
 		for _, cmp := range inputSolutions[k] {
 			volSupplied.Add(cmp.Volume())
 		}
@@ -115,7 +109,8 @@ func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[st
 		// volWanted: how much extra we wanted
 		volWanted := wunit.SubtractVolumes(volsRequired[k], volSupplied)
 
-		if volWanted.GreaterThanFloat(0.0001) {
+		//IsZero is true if volWanted is very close to zero
+		if !volWanted.IsZero() {
 			volsWanting[k] = volWanted
 		}
 		// toggle HERE for DEBUG

@@ -192,17 +192,16 @@ func (it *IChain) flattenInstructionIDs(acc []string) []string {
 
 //GetOrderedLHInstructions get the instructions in order
 func (it *IChain) GetOrderedLHInstructions() []*wtype.LHInstruction {
-	var ret []*wtype.LHInstruction
+	return it.getOrderedLHInstructions(nil)
+}
 
+func (it *IChain) getOrderedLHInstructions(acc []*wtype.LHInstruction) []*wtype.LHInstruction {
 	if it == nil {
-		return ret
+		return acc
+	} else {
+		acc = append(acc, it.Values...)
+		return it.Child.getOrderedLHInstructions(acc)
 	}
-
-	ret = append(ret, it.Values...)
-
-	ret = append(ret, it.Child.GetOrderedLHInstructions()...)
-
-	return ret
 }
 
 func (it *IChain) SplitMixedNodes() {

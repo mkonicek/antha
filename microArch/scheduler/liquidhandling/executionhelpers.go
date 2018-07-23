@@ -24,8 +24,6 @@ package liquidhandling
 
 import (
 	"fmt"
-	"sort"
-	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -39,121 +37,7 @@ const (
 	RANDOM
 )
 
-type ByGeneration []*wtype.LHInstruction
-
-func (bg ByGeneration) Len() int      { return len(bg) }
-func (bg ByGeneration) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
-func (bg ByGeneration) Less(i, j int) bool {
-	if bg[i].Generation() == bg[j].Generation() {
-
-		// compare the plate names (which must exist now)
-		//	 -- oops, I think this has ben violated by moving the sort
-		// 	 TODO check and fix
-
-		c := strings.Compare(bg[i].PlateName, bg[j].PlateName)
-
-		if c != 0 {
-			return c < 0
-		}
-
-		// finally go down columns (nb need to add option)
-
-		return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
-	}
-
-	return bg[i].Generation() < bg[j].Generation()
-}
-
-// Optimally - order by component.
-type ByGenerationOpt []*wtype.LHInstruction
-
-func (bg ByGenerationOpt) Len() int      { return len(bg) }
-func (bg ByGenerationOpt) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
-func (bg ByGenerationOpt) Less(i, j int) bool {
-	if bg[i].Generation() == bg[j].Generation() {
-
-		// compare the names of the resultant components
-		c := strings.Compare(bg[i].Results[0].CName, bg[j].Results[0].CName)
-
-		if c != 0 {
-			return c < 0
-		}
-
-		// if two components names are equal, then compare the plates
-		c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
-
-		if c != 0 {
-			return c < 0
-		}
-
-		// finally go down columns (nb need to add option)
-
-		return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
-	}
-
-	return bg[i].Generation() < bg[j].Generation()
-}
-
-type ByColumn []*wtype.LHInstruction
-
-func (bg ByColumn) Len() int      { return len(bg) }
-func (bg ByColumn) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
-func (bg ByColumn) Less(i, j int) bool {
-	// compare any messages present (only really applies to prompts)
-	c := strings.Compare(bg[i].Message, bg[j].Message)
-
-	if c != 0 {
-		return c < 0
-	}
-	// compare the plate names (which must exist now)
-	//	 -- oops, I think this has ben violated by moving the sort
-	// 	 TODO check and fix
-
-	c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
-
-	if c != 0 {
-		return c < 0
-	}
-
-	// Go Down Columns
-
-	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
-}
-
-// Optimally - order by component.
-type ByResultComponent []*wtype.LHInstruction
-
-func (bg ByResultComponent) Len() int      { return len(bg) }
-func (bg ByResultComponent) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
-func (bg ByResultComponent) Less(i, j int) bool {
-	// compare any messages present
-
-	c := strings.Compare(bg[i].Message, bg[j].Message)
-
-	if c != 0 {
-		return c < 0
-	}
-
-	// compare the names of the resultant components
-	c = strings.Compare(bg[i].Results[0].CName, bg[j].Results[0].CName)
-
-	if c != 0 {
-		return c < 0
-	}
-
-	// if two components names are equal, then compare the plates
-	c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
-
-	if c != 0 {
-		return c < 0
-	}
-
-	// finally go down columns (nb need to add option)
-
-	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
-}
-
-func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bool) *IChain {
+func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph) *IChain {
 	ic := NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations
@@ -169,25 +53,7 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph, sort bo
 
 	ic.SplitMixedNodes()
 
-	sortOutputs(ic, sort)
-
 	return ic
-}
-
-func sortOutputs(ic *IChain, byComponent bool) {
-	// recursively progress through the chain, sorting values as we go
-
-	if ic == nil {
-		return
-	}
-
-	if byComponent {
-		sort.Sort(ByResultComponent(ic.Values))
-	} else {
-		sort.Sort(ByColumn(ic.Values))
-	}
-
-	sortOutputs(ic.Child, byComponent)
 }
 
 func addToIChain(ic *IChain, n graph.Node, tg graph.Graph) {
@@ -341,9 +207,9 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	return insOut
 }
 
-//getLHInstructionOrder guarantee all nodes are dependency-ordered
+//buildInstructionChain guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
-func getLHInstructionOrder(unsorted map[string]*wtype.LHInstruction, outputSort bool) (*IChain, error) {
+func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*IChain, error) {
 
 	unsortedSlice := make([]*wtype.LHInstruction, 0, len(unsorted))
 	for _, instruction := range unsorted {
@@ -385,7 +251,7 @@ func getLHInstructionOrder(unsorted map[string]*wtype.LHInstruction, outputSort 
 	}
 
 	// make into equivalence classes and sort according to defined order
-	ic := convertToInstructionChain(sorted, tg, outputSort)
+	ic := convertToInstructionChain(sorted, tg)
 
 	return ic, nil
 }

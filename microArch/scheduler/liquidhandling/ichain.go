@@ -2,7 +2,7 @@ package liquidhandling
 
 import (
 	"fmt"
-
+	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -323,4 +323,78 @@ func (self *IChain) assertInstructionsSeparate() error {
 	}
 
 	return self.Child.assertInstructionsSeparate()
+}
+
+type ByColumn []*wtype.LHInstruction
+
+func (bg ByColumn) Len() int      { return len(bg) }
+func (bg ByColumn) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
+func (bg ByColumn) Less(i, j int) bool {
+	// compare any messages present (only really applies to prompts)
+	c := strings.Compare(bg[i].Message, bg[j].Message)
+
+	if c != 0 {
+		return c < 0
+	}
+	// compare the plate names (which must exist now)
+	//	 -- oops, I think this has ben violated by moving the sort
+	// 	 TODO check and fix
+
+	c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
+
+	if c != 0 {
+		return c < 0
+	}
+
+	// Go Down Columns
+
+	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
+}
+
+// Optimally - order by component.
+type ByResultComponent []*wtype.LHInstruction
+
+func (bg ByResultComponent) Len() int      { return len(bg) }
+func (bg ByResultComponent) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
+func (bg ByResultComponent) Less(i, j int) bool {
+	// compare any messages present
+
+	c := strings.Compare(bg[i].Message, bg[j].Message)
+
+	if c != 0 {
+		return c < 0
+	}
+
+	// compare the names of the resultant components
+	c = strings.Compare(bg[i].Results[0].CName, bg[j].Results[0].CName)
+
+	if c != 0 {
+		return c < 0
+	}
+
+	// if two components names are equal, then compare the plates
+	c = strings.Compare(bg[i].PlateName, bg[j].PlateName)
+
+	if c != 0 {
+		return c < 0
+	}
+
+	// finally go down columns (nb need to add option)
+
+	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
+}
+
+//sortInstructions sort the instructions within each link of the chain
+func (ic *IChain) sortInstructions(byComponent bool) {
+	if ic == nil {
+		return
+	}
+
+	if byComponent {
+		sort.Sort(ByResultComponent(ic.Values))
+	} else {
+		sort.Sort(ByColumn(ic.Values))
+	}
+
+	ic.Child.sortInstructions(byComponent)
 }

@@ -250,7 +250,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			// representation of the liquid handler
 			switch params.Model {
 			case "Pipetmax":
-				waste, err = inventory.NewTipwaste(ctx, "Gilsontipwaste")
+				waste, err = inventory.NewTipwaste(ctx, "GilsonTipChute")
 			case "GeneTheatre":
 				fallthrough
 			case "Felix":

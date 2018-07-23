@@ -67,7 +67,7 @@ func getMixInstructions(ctx context.Context, numInstructions int, componentNames
 	return ret, nil
 }
 
-func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlateType string) (TransferBlockInstruction, *wtype.Plate) {
+func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlateType string) (*TransferBlockInstruction, *wtype.Plate) {
 	if destPlateType == "" {
 		destPlateType = "pcrplate_skirted_riser40"
 	}
@@ -88,7 +88,7 @@ func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlat
 	return tb, dstp
 }
 
-func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, *wtype.Plate) {
+func getTransferBlock2Component(ctx context.Context) (*TransferBlockInstruction, *wtype.Plate) {
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine"}, []float64{100.0, 64.0})
 	if err != nil {
 		panic(err)
@@ -97,7 +97,7 @@ func getTransferBlock2Component(ctx context.Context) (TransferBlockInstruction, 
 	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 }
 
-func getTransferBlock3Component(ctx context.Context) (TransferBlockInstruction, *wtype.Plate) {
+func getTransferBlock3Component(ctx context.Context) (*TransferBlockInstruction, *wtype.Plate) {
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine", "ethanol"}, []float64{100.0, 64.0, 12.0})
 	if err != nil {
 		panic(err)
@@ -604,11 +604,11 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	multi := 0
 	single := 0
 	for _, ri := range ri2 {
-		if ri.InstructionType() == MCB {
+		if ri.Type() == MCB {
 			multi += 1
-		} else if ri.InstructionType() == SCB {
+		} else if ri.Type() == SCB {
 			single += 1
-		} else if ri.InstructionType() == TFR {
+		} else if ri.Type() == TFR {
 			t.Error("ERROR: Transfer generated from Transfer")
 		}
 	}
@@ -634,8 +634,8 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 		}
 
 		for _, ri := range ri2 {
-			if ri.InstructionType() != SCB {
-				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter("LIQUIDCLASS"), ri.GetParameter("WELLFROM"), ri.GetParameter("WELLTO"))
+			if ri.Type() != SCB {
+				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter(LIQUIDCLASS), ri.GetParameter(WELLFROM), ri.GetParameter(WELLTO))
 			}
 		}
 

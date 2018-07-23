@@ -11,19 +11,18 @@ import (
 )
 
 type TransferBlockInstruction struct {
-	GenericRobotInstruction
+	BaseRobotInstruction
+	*InstructionType
 	Inss []*wtype.LHInstruction
 }
 
-func NewTransferBlockInstruction(inss []*wtype.LHInstruction) TransferBlockInstruction {
-	tb := TransferBlockInstruction{}
-	tb.Inss = inss
-	tb.GenericRobotInstruction.Ins = RobotInstruction(&tb)
+func NewTransferBlockInstruction(inss []*wtype.LHInstruction) *TransferBlockInstruction {
+	tb := &TransferBlockInstruction{
+		InstructionType: TFB,
+		Inss:            inss,
+	}
+	tb.BaseRobotInstruction = NewBaseRobotInstruction(tb)
 	return tb
-}
-
-func (ti TransferBlockInstruction) InstructionType() int {
-	return TFB
 }
 
 // this attempts to find arrays of destinations which can potentially be done simultaneously
@@ -497,8 +496,8 @@ func choose_parallel_sets(sets []SetOfIDSets, params []*wtype.LHChannelParameter
 	return ret, retp, nil
 }
 
-func (ti TransferBlockInstruction) GetParameter(p string) interface{} {
-	return nil
+func (ti TransferBlockInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ti.BaseRobotInstruction.GetParameter(name)
 }
 
 func mergeTransfers(tfrs []*TransferInstruction, policy *wtype.LHPolicyRuleSet) []*TransferInstruction {

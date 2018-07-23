@@ -58,9 +58,9 @@ func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) 
 	//
 
 	for _, ins := range instrx {
-		if ins.InstructionType() == lhdriver.LOD {
-			ttype := ins.GetParameter("TIPTYPE").([]string)[0]
-			ntips[ttype] += ins.GetParameter("MULTI").(int)
+		if ins.Type() == lhdriver.LOD {
+			ttype := ins.GetParameter(lhdriver.TIPTYPE).([]string)[0]
+			ntips[ttype] += ins.GetParameter(lhdriver.MULTI).(int)
 			hs, ok := tiplocs[ttype]
 
 			if !ok {
@@ -68,7 +68,7 @@ func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) 
 				tiplocs[ttype] = hs
 			}
 
-			hs[ins.GetParameter("POS").([]string)[0]] += ins.GetParameter("MULTI").(int)
+			hs[ins.GetParameter(lhdriver.POS).([]string)[0]] += ins.GetParameter(lhdriver.MULTI).(int)
 		}
 	}
 

@@ -100,7 +100,7 @@ func TestBlowMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"POST_MIX":        5,
 						"POST_MIX_VOLUME": 10.0,
 					},
@@ -112,7 +112,7 @@ func TestBlowMixing(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 5, //the Mix
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"CYCLES": []int{5},
 						"VOLUME": []wunit.Volume{tenUl},
 					},
@@ -130,7 +130,7 @@ func TestBlowMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"POST_MIX":        5,
 						"POST_MIX_VOLUME": 10.0,
 					},
@@ -142,7 +142,7 @@ func TestBlowMixing(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 5, //the Mix
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"CYCLES": []int{5, 5, 5, 5, 5, 5, 5, 5},
 						"VOLUME": []wunit.Volume{tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl},
 					},
@@ -160,7 +160,7 @@ func TestBlowMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"POST_MIX":        5,
 						"POST_MIX_VOLUME": 10.0,
 						"POST_MIX_RATE":   1.5,
@@ -173,7 +173,7 @@ func TestBlowMixing(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -181,7 +181,7 @@ func TestBlowMixing(t *testing.T) {
 				},
 				{
 					Instruction: 4,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.5,
@@ -189,14 +189,14 @@ func TestBlowMixing(t *testing.T) {
 				},
 				{
 					Instruction: 6, //the Mix
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"CYCLES": []int{5},
 						"VOLUME": []wunit.Volume{tenUl},
 					},
 				},
 				{
 					Instruction: 7,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -215,7 +215,7 @@ func TestBlowMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"POST_MIX":        5,
 						"POST_MIX_VOLUME": 10.0,
 						"POST_MIX_RATE":   150.,
@@ -247,7 +247,7 @@ func TestSuckMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"PRE_MIX":        5,
 						"PRE_MIX_VOLUME": 10.0,
 					},
@@ -258,7 +258,7 @@ func TestSuckMixing(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //the Mix
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"CYCLES": []int{5},
 						"VOLUME": []wunit.Volume{tenUl},
 					},
@@ -276,7 +276,7 @@ func TestSuckMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"PRE_MIX":        5,
 						"PRE_MIX_VOLUME": 10.0,
 					},
@@ -288,7 +288,7 @@ func TestSuckMixing(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //the Mix
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"CYCLES": []int{5, 5, 5, 5, 5, 5, 5, 5},
 						"VOLUME": []wunit.Volume{tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl},
 					},
@@ -306,7 +306,7 @@ func TestSuckMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"PRE_MIX":        5,
 						"PRE_MIX_VOLUME": 10.0,
 						"PRE_MIX_RATE":   1.5,
@@ -318,7 +318,7 @@ func TestSuckMixing(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -326,7 +326,7 @@ func TestSuckMixing(t *testing.T) {
 				},
 				{
 					Instruction: 2,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.5,
@@ -334,14 +334,14 @@ func TestSuckMixing(t *testing.T) {
 				},
 				{
 					Instruction: 4, //the Mix
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"CYCLES": []int{5},
 						"VOLUME": []wunit.Volume{tenUl},
 					},
 				},
 				{
 					Instruction: 5,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -360,7 +360,7 @@ func TestSuckMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"PRE_MIX":        5,
 						"PRE_MIX_VOLUME": 10.0,
 						"PRE_MIX_RATE":   150.,
@@ -391,7 +391,7 @@ func TestZOffset(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSPZOFFSET": 5.4,
 					},
 				},
@@ -402,7 +402,7 @@ func TestZOffset(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //the move before the dispense
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"OFFSETZ": []float64{5.4},
 					},
 				},
@@ -419,7 +419,7 @@ func TestZOffset(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{},
+					Policy: map[InstructionParameter]interface{}{},
 				},
 			},
 			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
@@ -428,7 +428,7 @@ func TestZOffset(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //the move before the dispense
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"OFFSETZ": []float64{defaultZOffset},
 					},
 				},
@@ -445,7 +445,7 @@ func TestZOffset(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASPZOFFSET": 5.4,
 					},
 				},
@@ -456,7 +456,7 @@ func TestZOffset(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //the move before the dispense
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"OFFSETZ": []float64{5.4},
 					},
 				},
@@ -473,7 +473,7 @@ func TestZOffset(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{},
+					Policy: map[InstructionParameter]interface{}{},
 				},
 			},
 			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
@@ -482,7 +482,7 @@ func TestZOffset(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //the move before the dispense
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"OFFSETZ": []float64{defaultZOffset},
 					},
 				},
@@ -509,7 +509,7 @@ func TestEntrySpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSPENTRYSPEED": 50.0,
 					},
 				},
@@ -520,14 +520,14 @@ func TestEntrySpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 1,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": defaultZSpeed,
 					},
 				},
 				{
 					Instruction: 3,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": 50.0,
 					},
@@ -545,7 +545,7 @@ func TestEntrySpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASPENTRYSPEED": 50.0,
 					},
 				},
@@ -556,21 +556,21 @@ func TestEntrySpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 1,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": defaultZSpeed,
 					},
 				},
 				{
 					Instruction: 3,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": 50.0,
 					},
 				},
 				{
 					Instruction: 7,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": defaultZSpeed,
 					},
@@ -598,7 +598,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{},
+					Policy: map[InstructionParameter]interface{}{},
 				},
 			},
 			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
@@ -607,7 +607,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -626,7 +626,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DEFAULTPIPETTESPEED": 1.82,
 					},
 				},
@@ -637,7 +637,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.82,
@@ -656,7 +656,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSPSPEED": 1.5,
 					},
 				},
@@ -667,7 +667,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -675,7 +675,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.5,
@@ -683,7 +683,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -702,7 +702,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSPSPEED":             LVMaxRate + 1.0,
 						"OVERRIDEPIPETTESPEED": true,
 					},
@@ -714,7 +714,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -722,7 +722,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   LVMaxRate,
@@ -730,7 +730,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -749,7 +749,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSPSPEED":             LVMinRate * 0.5,
 						"OVERRIDEPIPETTESPEED": true,
 					},
@@ -761,7 +761,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -769,7 +769,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   LVMinRate,
@@ -777,7 +777,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -796,7 +796,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSPSPEED":             4.75,
 						"OVERRIDEPIPETTESPEED": false,
 					},
@@ -816,7 +816,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSPSPEED":             0.01,
 						"OVERRIDEPIPETTESPEED": false,
 					},
@@ -846,7 +846,7 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{},
+					Policy: map[InstructionParameter]interface{}{},
 				},
 			},
 			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
@@ -855,7 +855,7 @@ func TestASPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -874,7 +874,7 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DEFAULTPIPETTESPEED": 1.56,
 					},
 				},
@@ -885,7 +885,7 @@ func TestASPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.56,
@@ -904,7 +904,7 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASPSPEED": 1.5,
 					},
 				},
@@ -915,7 +915,7 @@ func TestASPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -923,7 +923,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.5,
@@ -931,7 +931,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -950,7 +950,7 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASPSPEED":             LVMaxRate + 1.0,
 						"OVERRIDEPIPETTESPEED": true,
 					},
@@ -962,7 +962,7 @@ func TestASPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -970,7 +970,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   LVMaxRate,
@@ -978,7 +978,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -997,7 +997,7 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASPSPEED":             LVMinRate * 0.5,
 						"OVERRIDEPIPETTESPEED": true,
 					},
@@ -1009,7 +1009,7 @@ func TestASPPipetSpeed(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -1017,7 +1017,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   LVMinRate,
@@ -1025,7 +1025,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -1044,7 +1044,7 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASPSPEED":             4.75,
 						"OVERRIDEPIPETTESPEED": false,
 					},
@@ -1064,7 +1064,7 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASPSPEED":             0.01,
 						"OVERRIDEPIPETTESPEED": false,
 					},
@@ -1093,7 +1093,7 @@ func TestTipReuse(t *testing.T) {
 							Value:     "water",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"TIP_REUSE_LIMIT": 0,
 					},
 				},
@@ -1115,7 +1115,7 @@ func TestTipReuse(t *testing.T) {
 							Value:     "water",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"TIP_REUSE_LIMIT": 100,
 					},
 				},
@@ -1145,7 +1145,7 @@ func TestAspWait(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASP_WAIT": 3.0,
 					},
 				},
@@ -1156,7 +1156,7 @@ func TestAspWait(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 4, //Wait
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"TIME": 3.0,
 					},
 				},
@@ -1173,7 +1173,7 @@ func TestAspWait(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"ASP_WAIT": 3.0,
 					},
 				},
@@ -1184,7 +1184,7 @@ func TestAspWait(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 4, //Wait
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"TIME": 3.0,
 					},
 				},
@@ -1210,7 +1210,7 @@ func TestAspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
@@ -1221,7 +1221,7 @@ func TestAspLLF(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Asp
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"LLF": []bool{true},
 					},
 				},
@@ -1238,7 +1238,7 @@ func TestAspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
@@ -1249,7 +1249,7 @@ func TestAspLLF(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Asp
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"LLF": []bool{true, true, true, true, true, true, true, true},
 					},
 				},
@@ -1266,7 +1266,7 @@ func TestAspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
@@ -1276,7 +1276,7 @@ func TestAspLLF(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Asp
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"LLF": []bool{false},
 					},
 				},
@@ -1293,7 +1293,7 @@ func TestAspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
@@ -1304,7 +1304,7 @@ func TestAspLLF(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Asp
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"LLF": []bool{false},
 					},
 				},
@@ -1330,7 +1330,7 @@ func TestDspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
@@ -1341,7 +1341,7 @@ func TestDspLLF(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Dispense
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"LLF": []bool{true},
 					},
 				},
@@ -1367,7 +1367,7 @@ func TestDspWait(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSP_WAIT": 3.0,
 					},
 				},
@@ -1378,7 +1378,7 @@ func TestDspWait(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 4, //Wait
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"TIME": 3.0,
 					},
 				},
@@ -1395,7 +1395,7 @@ func TestDspWait(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"DSP_WAIT": 3.0,
 					},
 				},
@@ -1406,7 +1406,7 @@ func TestDspWait(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 4, //Wait
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"TIME": 3.0,
 					},
 				},
@@ -1432,7 +1432,7 @@ func TestTouchoff(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"TOUCHOFF":    true,
 						"TOUCHOFFSET": 2.37,
 					},
@@ -1444,14 +1444,14 @@ func TestTouchoff(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //move prior to dispense
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"REFERENCE": []int{0},
 						"OFFSETZ":   []float64{0.5},
 					},
 				},
 				{
 					Instruction: 4, //touchoff move
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"REFERENCE": []int{0},        // well bottom
 						"OFFSETZ":   []float64{2.37}, // as set
 					},
@@ -1469,7 +1469,7 @@ func TestTouchoff(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"TOUCHOFF":    true,
 						"TOUCHOFFSET": maxTouchOffset + 5.0,
 					},
@@ -1481,14 +1481,14 @@ func TestTouchoff(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //move prior to dispense
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"REFERENCE": []int{0},
 						"OFFSETZ":   []float64{0.5},
 					},
 				},
 				{
 					Instruction: 4, //touchoff move
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"REFERENCE": []int{0},                  // well bottom
 						"OFFSETZ":   []float64{maxTouchOffset}, // as set
 					},
@@ -1515,7 +1515,7 @@ func TestExtraVolumes(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"EXTRA_ASP_VOLUME": wunit.NewVolume(2.0, "ul"),
 					},
 				},
@@ -1526,7 +1526,7 @@ func TestExtraVolumes(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, // ASP
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"VOLUME": []wunit.Volume{wunit.NewVolume(12.0, "ul")},
 					},
 				},
@@ -1543,7 +1543,7 @@ func TestExtraVolumes(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[string]interface{}{
+					Policy: map[InstructionParameter]interface{}{
 						"EXTRA_DISP_VOLUME": wunit.NewVolume(2.0, "ul"),
 					},
 				},
@@ -1554,7 +1554,7 @@ func TestExtraVolumes(t *testing.T) {
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, // dispense
-					Values: map[string]interface{}{
+					Values: map[InstructionParameter]interface{}{
 						"VOLUME": []wunit.Volume{wunit.NewVolume(12.0, "ul")},
 					},
 				},

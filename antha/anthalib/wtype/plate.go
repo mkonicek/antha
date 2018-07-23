@@ -1006,9 +1006,6 @@ func (self *Plate) GetBoxIntersections(box BBox) []LHObject {
 	//relative to me
 	box.SetPosition(box.GetPosition().Subtract(OriginOf(self)))
 	ret := []LHObject{}
-	if self.Bounds.IntersectsBox(box) {
-		ret = append(ret, self)
-	}
 
 	if self.GetWellBounds().IntersectsBox(box) {
 		for _, row := range self.Rows {
@@ -1016,6 +1013,10 @@ func (self *Plate) GetBoxIntersections(box BBox) []LHObject {
 				ret = append(ret, well.GetBoxIntersections(box)...)
 			}
 		}
+	}
+
+	if len(ret) == 0 && self.Bounds.IntersectsBox(box) {
+		ret = append(ret, self)
 	}
 	//todo, scan through wells
 	return ret

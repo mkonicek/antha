@@ -218,8 +218,8 @@ func TestRobotInstructionCheckLiquidClass(t *testing.T) {
 
 		if !ins.Check(waterRule) {
 			t.Errorf("Instruction \"%s\" didn't match water rule, LIQUIDCLASS=%s",
-				InstructionTypeName(ins),
-				ins.GetParameter("LIQUIDCLASS"))
+				ins.Type().Name,
+				ins.GetParameter(LIQUIDCLASS))
 		}
 	}
 }

@@ -13,43 +13,38 @@ type LHTimer interface {
 
 // deprecate this mess
 type OldLHTimer struct {
-	Times []time.Duration
+	Times map[*InstructionType]time.Duration
 }
 
 func NewTimer() *OldLHTimer {
-	var t OldLHTimer
-	t.Times = make([]time.Duration, 50)
-	return &t
+	return &OldLHTimer{
+		Times: make(map[*InstructionType]time.Duration),
+	}
 }
 
 func (t *OldLHTimer) TimeFor(r RobotInstruction) time.Duration {
-	var d time.Duration
+	d := t.Times[r.Type()]
+	if r.Type() == MIX {
+		// get cycles
 
-	if r.InstructionType() > 0 && r.InstructionType() < len(t.Times) {
-		d = t.Times[r.InstructionType()]
-		max := func(a []int) int {
-			m := a[0]
-			for i := 1; i < len(a); i++ {
-				if m < a[i] {
-					m = a[i]
+		prm := r.GetParameter(CYCLES)
+
+		cyc, ok := prm.([]int)
+
+		if ok {
+			max := func(ds []int) int {
+				res := 0
+				for _, elem := range ds {
+					if elem > res {
+						res = elem
+					}
 				}
+				return res
 			}
-
-			return m
+			d = time.Duration(int64(max(cyc)) * int64(d))
 		}
-		if r.InstructionType() == 34 { // MIX
-			// get cycles
-
-			prm := r.GetParameter("CYCLES")
-
-			cyc, ok := prm.([]int)
-
-			if ok {
-				d = time.Duration(int64(max(cyc)) * int64(d))
-			}
-		}
-
 	}
+
 	return d
 }
 
@@ -64,7 +59,7 @@ type highLeveltimer struct {
 func (hlt highLeveltimer) TimeFor(ins RobotInstruction) time.Duration {
 	var totaltime float64
 
-	if InstructionTypeName(ins) == "TFR" {
+	if ins.Type() == TFR {
 		tfr := ins.(*TransferInstruction)
 		lastFrom := wtype.WellCoords{}
 		lastTo := wtype.WellCoords{}

@@ -7,23 +7,18 @@ import (
 )
 
 type SplitBlockInstruction struct {
-	GenericRobotInstruction
+	BaseRobotInstruction
+	*InstructionType
 	Inss []*wtype.LHInstruction
 }
 
-func NewSplitBlockInstruction(inss []*wtype.LHInstruction) SplitBlockInstruction {
-	sb := SplitBlockInstruction{}
-	sb.Inss = inss
-	sb.GenericRobotInstruction.Ins = RobotInstruction(&sb)
+func NewSplitBlockInstruction(inss []*wtype.LHInstruction) *SplitBlockInstruction {
+	sb := &SplitBlockInstruction{
+		InstructionType: SPB,
+		Inss:            inss,
+	}
+	sb.BaseRobotInstruction = NewBaseRobotInstruction(sb)
 	return sb
-}
-
-func (sp SplitBlockInstruction) InstructionType() int {
-	return SPB
-}
-
-func (sp SplitBlockInstruction) GetParameter(p string) interface{} {
-	return nil
 }
 
 // this instruction does not generate anything

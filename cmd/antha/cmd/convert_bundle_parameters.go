@@ -25,6 +25,33 @@ type ConversionDetails struct {
 	NewParameterMapping map[string]string `json:"new-parameter-mapping"`
 }
 
+// expected structure of a bundle file including possible optional fields from UI generated fields
+type customAnthaBundle struct {
+	// current fields for Compare instructions tool
+	// these are liable to change/deletion
+	CompareInstructions bool
+	CompareOutputs      bool
+	ComparisonOptions   string
+	Results             results
+	
+	// core bundle file fields, including a generic Config field to support both UI and command line generated bundles.
+	workflow.Desc
+	customParams
+	
+	// fields generated from UI
+	Properties interface{}
+	Version string `json:"version"`
+}
+
+type results struct {
+	MixTaskResults interface{}
+}
+
+type customParams struct {
+	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
+	Config     map[string]json.RawMessage            `json:"config"`
+}
+
 // replaces old parameter names with new; this must be done after changing parameter names
 func convertProcesses(in map[string]workflow.Process, newElementNames ConversionDetails) map[string]workflow.Process {
 	ret := make(map[string]workflow.Process)
@@ -39,13 +66,14 @@ func convertProcesses(in map[string]workflow.Process, newElementNames Conversion
 		}
 		ret[k] = workflow.Process{
 			Component: comp,
+			Metadata: v.Metadata,
 		}
 	}
 
 	return ret
 }
 
-func convertParametersAndConnections(in anthaBundle, newElementNames ConversionDetails) (map[string]map[string]json.RawMessage, []workflow.Connection) {
+func convertParametersAndConnections(in customAnthaBundle, newElementNames ConversionDetails) (map[string]map[string]json.RawMessage, []workflow.Connection) {
 
 	parameters := make(map[string]map[string]json.RawMessage)
 	connections := in.Connections
@@ -108,24 +136,21 @@ func replaceConnection(connection workflow.Connection, processToReplace, paramet
 }
 
 //
-func convertBundle(cmd *cobra.Command, args []string) error {
-	if err := viper.BindPFlags(cmd.Flags()); err != nil {
-		return err
-	}
 
-	inFile, err := os.Open(viper.GetString("bundle"))
+func convertBundleWithArgs(conversionMapFileName, bundleFileName, outPutFileName string) error {
+	inFile, err := os.Open(bundleFileName)
 	if err != nil {
 		return err
 	}
 	defer inFile.Close() // nolint
 
-	var original anthaBundle
+	var original customAnthaBundle
 	dec := json.NewDecoder(inFile)
 	if err := dec.Decode(&original); err != nil {
 		return err
 	}
 
-	cFile, err := os.Open(viper.GetString("conversionMap"))
+	cFile, err := os.Open(conversionMapFileName)
 
 	if err != nil {
 		return err
@@ -138,12 +163,10 @@ func convertBundle(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var bundle anthaBundle
+	var bundle customAnthaBundle = original
 	bundle.Parameters, bundle.Connections = convertParametersAndConnections(original, c.ConversionDetails)
 	bundle.Processes = convertProcesses(original.Processes, c.ConversionDetails)
-	bundle.Config = original.Config
-
-	outFile, err := os.Create(viper.GetString("output"))
+	outFile, err := os.Create(outPutFileName)
 	if err != nil {
 		return err
 	}
@@ -152,6 +175,13 @@ func convertBundle(cmd *cobra.Command, args []string) error {
 	enc := json.NewEncoder(outFile)
 	enc.SetIndent("", "  ")
 	return enc.Encode(bundle)
+}
+
+func convertBundle(cmd *cobra.Command, args []string) error {
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
+	return convertBundleWithArgs(viper.GetString("conversionMap"), viper.GetString("bundle"), viper.GetString("output"))
 }
 
 func init() {

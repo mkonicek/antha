@@ -151,21 +151,22 @@ func (self *TipsNotInWellError) lastTargetString() string {
 
 //CollisionError generated when a physical collision occurs
 type CollisionError struct {
-	description       string
-	channelsColliding map[int][]int //maps adaptors to a list of channels involved in collision
-	objectsColliding  []wtype.LHObject
-	instruction       driver.TerminalRobotInstruction
-	instructionIndex  int
-	stateAtError      string
+	description          string
+	channelsColliding    map[int][]int //maps adaptors to a list of channels involved in collision
+	collisionDescription string
+	instruction          driver.TerminalRobotInstruction
+	instructionIndex     int
+	stateAtError         string
 }
 
 //NewCollisionError make a new collision
 func NewCollisionError(state *RobotState, channelsColliding map[int][]int, objectsColliding []wtype.LHObject) *CollisionError {
-	return &CollisionError{
+	ret := &CollisionError{
 		channelsColliding: channelsColliding,
-		objectsColliding:  objectsColliding,
 		stateAtError:      state.SummariseState(channelsColliding),
 	}
+	ret.setCollisionDescription(objectsColliding)
+	return ret
 }
 
 func (self *CollisionError) Severity() simulator.ErrorSeverity {
@@ -206,9 +207,13 @@ func (self *CollisionError) GetStateAtError() string {
 	return self.stateAtError
 }
 
-//CollisionDescription get a human readable description of the collision,
-//group objects involved in the collision as much as possible
 func (self *CollisionError) CollisionDescription() string {
+	return self.collisionDescription
+}
+
+//setCollisionDescription store a human readable description of the collision,
+//grouping objects involved in the collision as much as possible
+func (self *CollisionError) setCollisionDescription(objectsColliding []wtype.LHObject) {
 
 	//list adaptors in order for consistent errors
 	adaptorIndexes := make([]int, 0, len(self.channelsColliding))
@@ -223,16 +228,17 @@ func (self *CollisionError) CollisionDescription() string {
 	}
 
 	//group objects by parent
-	parentMap := make(map[wtype.LHObject][]wtype.LHObject, len(self.objectsColliding))
-	for _, object := range self.objectsColliding {
+	parentMap := make(map[wtype.LHObject][]wtype.LHObject, len(objectsColliding))
+	for _, object := range objectsColliding {
 		p := object.GetParent()
 		if _, ok := parentMap[p]; !ok {
-			parentMap[p] = make([]wtype.LHObject, 0, len(self.objectsColliding))
+			parentMap[p] = []wtype.LHObject{object}
+		} else {
+			parentMap[p] = append(parentMap[p], object)
 		}
-		parentMap[p] = append(parentMap[p], object)
 	}
 
-	objectStrings := make([]string, 0, len(self.objectsColliding))
+	objectStrings := make([]string, 0, len(objectsColliding))
 	for parent, children := range parentMap {
 		deck := wtype.GetObjectRoot(parent).(*wtype.LHDeck)
 
@@ -261,6 +267,5 @@ func (self *CollisionError) CollisionDescription() string {
 		}
 	}
 
-	return fmt.Sprintf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
-
+	self.collisionDescription = fmt.Sprintf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
 }

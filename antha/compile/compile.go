@@ -114,6 +114,8 @@ type compiler struct {
 	// Cache of most recently computed line position.
 	cachedPos  token.Pos
 	cachedLine int // line corresponding to cachedPos
+
+	lineMap map[int]int // maps output line to source line
 }
 
 func (p *compiler) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node]int) {
@@ -124,6 +126,7 @@ func (p *compiler) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node
 	p.wsbuf = make([]whiteSpace, 0, 16) // whitespace sequences are short
 	p.nodeSizes = nodeSizes
 	p.cachedPos = -1
+	p.lineMap = make(map[int]int)
 }
 
 func (p *compiler) internalError(msg ...interface{}) {
@@ -271,6 +274,7 @@ func (p *compiler) writeByte(ch byte, n int) {
 		p.out.Line += n
 		p.pos.Column = 1
 		p.out.Column = 1
+		p.lineMap[p.out.Line] = p.pos.Line
 		return
 	}
 	p.pos.Column += n
@@ -1261,7 +1265,7 @@ type Config struct {
 }
 
 // fprint implements Fprint and takes a nodesSizes map for setting up the compiler state.
-func (cfg *Config) fprint(output io.Writer, fset *token.FileSet, node interface{}, nodeSizes map[ast.Node]int) (err error) {
+func (cfg *Config) fprint(output io.Writer, fset *token.FileSet, node interface{}, nodeSizes map[ast.Node]int) (lineMap map[int]int, err error) {
 	// print node
 	var p compiler
 	p.init(cfg, fset, nodeSizes)
@@ -1271,6 +1275,7 @@ func (cfg *Config) fprint(output io.Writer, fset *token.FileSet, node interface{
 	// print outstanding comments
 	p.impliedSemi = false // EOF acts like a newline
 	p.flush(token.Position{Offset: infinity, Line: infinity}, token.EOF)
+	lineMap = p.lineMap
 
 	// redirect output through a trimmer to eliminate trailing whitespace
 	// (Input to a tabwriter must be untrimmed since trailing tabs provide
@@ -1322,7 +1327,7 @@ type CommentedNode struct {
 // The node type must be *ast.File, *CommentedNode, []ast.Decl, []ast.Stmt,
 // or assignment-compatible to ast.Expr, ast.Decl, ast.Spec, or ast.Stmt.
 //
-func (cfg *Config) Fprint(output io.Writer, fset *token.FileSet, node interface{}) error {
+func (cfg *Config) Fprint(output io.Writer, fset *token.FileSet, node interface{}) (map[int]int, error) {
 	return cfg.fprint(output, fset, node, make(map[ast.Node]int))
 }
 
@@ -1330,5 +1335,6 @@ func (cfg *Config) Fprint(output io.Writer, fset *token.FileSet, node interface{
 // It calls Config.Fprint with default settings.
 //
 func Fprint(output io.Writer, fset *token.FileSet, node interface{}) error {
-	return (&Config{Tabwidth: 8}).Fprint(output, fset, node)
+	_, err := (&Config{Tabwidth: 8}).Fprint(output, fset, node)
+	return err
 }

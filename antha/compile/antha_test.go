@@ -52,10 +52,10 @@ func TestTypeSugaring(t *testing.T) {
 
 	ast.Inspect(expr, antha.inspectTypes)
 	var buf1, buf2 bytes.Buffer
-	if err := compiler.Fprint(&buf1, fset, expr); err != nil {
+	if _, err := compiler.Fprint(&buf1, fset, expr); err != nil {
 		t.Fatal(err)
 	}
-	if err := compiler.Fprint(&buf2, fset, desired); err != nil {
+	if _, err := compiler.Fprint(&buf2, fset, desired); err != nil {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(buf1.Bytes(), buf2.Bytes()) {

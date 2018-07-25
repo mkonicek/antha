@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -23,6 +24,13 @@ type ConversionDetails struct {
 	OldElementName      string            `json:"old-element-name"`
 	NewElementName      string            `json:"new-element-name"`
 	NewParameterMapping map[string]string `json:"new-parameter-mapping"`
+}
+
+func (c NewElementMappingDetails) Empty() bool {
+	if c.ConversionDetails.OldElementName != "" || c.ConversionDetails.NewElementName != "" || len(c.ConversionDetails.NewParameterMapping) > 0 {
+		return false
+	}
+	return true
 }
 
 // expected structure of a bundle file including possible optional fields from UI generated fields
@@ -73,6 +81,15 @@ func convertProcesses(in map[string]workflow.Process, newElementNames Conversion
 	return ret
 }
 
+func containsSomethingToConvert(in customAnthaBundle, newElementNames ConversionDetails) bool {
+	for _, element := range in.Processes {
+		if element.Component == newElementNames.OldElementName {
+			return true
+		}
+	}
+	return false
+}
+
 func convertParametersAndConnections(in customAnthaBundle, newElementNames ConversionDetails) (map[string]map[string]json.RawMessage, []workflow.Connection) {
 
 	parameters := make(map[string]map[string]json.RawMessage)
@@ -108,7 +125,6 @@ func convertParametersAndConnections(in customAnthaBundle, newElementNames Conve
 			parameters[processName] = in.Parameters[processName]
 		}
 	}
-
 	return parameters, connections
 }
 
@@ -138,17 +154,6 @@ func replaceConnection(connection workflow.Connection, processToReplace, paramet
 //
 
 func convertBundleWithArgs(conversionMapFileName, bundleFileName, outPutFileName string) error {
-	inFile, err := os.Open(bundleFileName)
-	if err != nil {
-		return err
-	}
-	defer inFile.Close() // nolint
-
-	var original customAnthaBundle
-	dec := json.NewDecoder(inFile)
-	if err := dec.Decode(&original); err != nil {
-		return err
-	}
 
 	cFile, err := os.Open(conversionMapFileName)
 
@@ -163,7 +168,28 @@ func convertBundleWithArgs(conversionMapFileName, bundleFileName, outPutFileName
 		return err
 	}
 
+	if c.Empty() {
+		return errors.New("empty conversion map")
+	}
+
+	inFile, err := os.Open(bundleFileName)
+	if err != nil {
+		return err
+	}
+	defer inFile.Close() // nolint
+
+	var original customAnthaBundle
+	dec := json.NewDecoder(inFile)
+	if err := dec.Decode(&original); err != nil {
+		return err
+	}
+
 	var bundle customAnthaBundle = original
+
+	if !containsSomethingToConvert(original, c.ConversionDetails) {
+		return errors.Errorf("nothing to convert in bundle file")
+	}
+
 	bundle.Parameters, bundle.Connections = convertParametersAndConnections(original, c.ConversionDetails)
 	bundle.Processes = convertProcesses(original.Processes, c.ConversionDetails)
 	outFile, err := os.Create(outPutFileName)

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"encoding/json"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -76,10 +78,38 @@ func convertAllBundles(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	var errs []string
+
 	for _, elem := range elements.Elements {
-		for _, bundle := range bundles.Bundles {
-			convertBundleWithArgs(filepath.Join(elem.Dir, "metadata.json"), bundle.Path, bundle.Path)
+
+		metadataFileName := filepath.Join(elem.Dir, "metadata.json")
+
+		cFile, err := os.Open(metadataFileName)
+
+		if err != nil {
+			errs = append(errs, metadataFileName+": ", err.Error())
+			cFile.Close()
+		} else {
+			var c NewElementMappingDetails
+			decConv := json.NewDecoder(cFile)
+			if err := decConv.Decode(&c); err != nil {
+				errs = append(errs, "error decoding to NewElementMappingDetails for "+metadataFileName+": ", err.Error())
+			}
+			cFile.Close()
+
+			if !c.Empty() {
+				for _, bundle := range bundles.Bundles {
+					err := convertBundleWithArgs(metadataFileName, bundle.Path, bundle.Path)
+					if err != nil {
+						errs = append(errs, metadataFileName+" + "+bundle.Path+": "+err.Error())
+					}
+				}
+			}
 		}
+	}
+
+	if len(errs) > 0 {
+		return errors.Errorf(strings.Join(errs, "\n"))
 	}
 
 	return nil

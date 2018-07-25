@@ -99,7 +99,7 @@ func convertAllBundles(cmd *cobra.Command, args []string) error {
 
 			if !c.Empty() {
 				for _, bundle := range bundles.Bundles {
-					err := convertBundleWithArgs(metadataFileName, bundle.Path, bundle.Path)
+					err := convertBundleWithArgs(metadataFileName, bundle.Path, filepath.Join(bundle.Dir, viper.GetString("addPrefix")+bundle.FileName))
 					if err != nil {
 						errs = append(errs, metadataFileName+" + "+bundle.Path+": "+err.Error())
 					}
@@ -121,4 +121,5 @@ func init() {
 
 	flags := c.Flags()
 	flags.String("rootDir", ".", "root directory to search for metadata files with new element mapping and test bundles to update")
+	flags.String("addPrefix", "", "adds a common prefix to the start of all updated bundle files")
 }

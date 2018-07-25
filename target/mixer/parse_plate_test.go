@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
@@ -87,6 +88,10 @@ func samePlate(a, b *wtype.Plate) error {
 		cunitA, cunitB := compA.Cunit, compB.Cunit
 		if cunitA != cunitB && concA != 0.0 {
 			return fmt.Errorf("different concetration unit in well %q: expected: %s; found: %s", addr, cunitA, cunitB)
+		}
+
+		if err := wtype.EqualLists(compA.SubComponents, compB.SubComponents); err != nil {
+			return err
 		}
 	}
 
@@ -180,6 +185,110 @@ A6,,,0,ul,0,g/l,
 							Vunit: "ul",
 							Conc:  10.0,
 							Cunit: "mM/l",
+						},
+					},
+					"A5": {
+						WContents: &wtype.Liquid{
+							CName: "milk",
+							Type:  wtype.LTWater,
+							Vol:   100.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "g/l",
+						},
+					},
+				},
+			},
+		},
+		{
+			File: []byte(
+				`
+pcrplate_with_cooler, afternoon tea tray, LiquidType, Vol,Vol Unit,Conc,Conc Unit, SubComponents
+A1,water,water,50.0,ul,0,g/l,
+A4,tea,water,50.0,ul,10.0,mM/l,tea leaves: ,5g/l,sugar:,1X,
+A5,milk,water,100.0,ul,10.0,g/l,
+A6,,,0,ul,0,g/l,
+`),
+			NoWarnings: false,
+			Expected: &wtype.Plate{
+				Type: "pcrplate_with_cooler",
+				Wellcoords: map[string]*wtype.LHWell{
+					"A1": {
+						WContents: &wtype.Liquid{
+							CName: "water",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  0.0,
+							Cunit: "g/l",
+						},
+					},
+					"A4": {
+						WContents: &wtype.Liquid{
+							CName: "tea",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "mM/l",
+							SubComponents: wtype.ComponentList{
+								Components: map[string]wunit.Concentration{
+									"tea leaves": wunit.NewConcentration(5.0, "g/L"),
+									"sugar":      wunit.NewConcentration(1.0, "X"),
+								},
+							},
+						},
+					},
+					"A5": {
+						WContents: &wtype.Liquid{
+							CName: "milk",
+							Type:  wtype.LTWater,
+							Vol:   100.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "g/l",
+						},
+					},
+				},
+			},
+		},
+		{
+			File: []byte(
+				`
+pcrplate_with_cooler, afternoon tea tray, LiquidType, Vol,Vol Unit,Conc,Conc Unit, , ,SubComponents
+A1,water,water,50.0,ul,0,g/l,
+A4,tea,water,50.0,ul,10.0,mM/l, some random user text, ,tea leaves: ,5g/l,sugar:,1X,
+A5,milk,water,100.0,ul,10.0,g/l,
+A6,,,0,ul,0,g/l,
+`),
+			NoWarnings: false,
+			Expected: &wtype.Plate{
+				Type: "pcrplate_with_cooler",
+				Wellcoords: map[string]*wtype.LHWell{
+					"A1": {
+						WContents: &wtype.Liquid{
+							CName: "water",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  0.0,
+							Cunit: "g/l",
+						},
+					},
+					"A4": {
+						WContents: &wtype.Liquid{
+							CName: "tea",
+							Type:  wtype.LTWater,
+							Vol:   50.0,
+							Vunit: "ul",
+							Conc:  10.0,
+							Cunit: "mM/l",
+							SubComponents: wtype.ComponentList{
+								Components: map[string]wunit.Concentration{
+									"tea leaves": wunit.NewConcentration(5.0, "g/L"),
+									"sugar":      wunit.NewConcentration(1.0, "X"),
+								},
+							},
 						},
 					},
 					"A5": {

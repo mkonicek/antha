@@ -78,8 +78,6 @@ func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHPropert
 }
 
 func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
-	hasMulti := false
-
 	for _, tfr := range tfrs {
 		instrx, err := tfr.Generate(ctx, policy, rbt)
 
@@ -88,18 +86,13 @@ func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties,
 		}
 
 		for _, ins := range instrx {
-			if ins.InstructionType() == MCB {
-				hasMulti = true
-				break
+			if ins.Type() == MCB {
+				return true, nil
 			}
-		}
-
-		if hasMulti {
-			break
 		}
 	}
 
-	return hasMulti, nil
+	return false, nil
 }
 
 func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
@@ -165,11 +158,6 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		independent = channelprms.Independent
 	}
 
-	if !independent {
-		//volumes in each parallel set must be the same, so segment groups of compoents such that this is the case
-		componentsToMove, instructionsToUse = segmentAllByVolume(componentsToMove, instructionsToUse)
-	}
-
 	for i := 0; i < len(componentsToMove); i++ {
 
 		parallelTransfers, err := robot.GetComponents(
@@ -199,52 +187,6 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	}
 
 	return insOut, nil
-}
-
-func segmentAllByVolume(inComponentsByVolume [][]*wtype.Liquid, inInstructionsToUse []LHIVector) ([][]*wtype.Liquid, []LHIVector) {
-	var retComponentsToMove [][]*wtype.Liquid
-	var retInstructionsToUse []LHIVector
-
-	for i := 0; i < len(inComponentsByVolume); i++ {
-		c, ins := segmentByVolume(inComponentsByVolume[i], inInstructionsToUse[i])
-		retComponentsToMove = append(retComponentsToMove, c...)
-		retInstructionsToUse = append(retInstructionsToUse, ins...)
-	}
-
-	return retComponentsToMove, retInstructionsToUse
-}
-
-//split up the idsets such that each instruction in the set has the same volume. incoming instructions are sorted in channel order
-func segmentByVolume(components []*wtype.Liquid, instructions LHIVector) ([][]*wtype.Liquid, []LHIVector) {
-
-	var retComponents [][]*wtype.Liquid
-	var retInstructions []LHIVector
-
-	var currComponents []*wtype.Liquid
-	var currInstructions LHIVector
-
-	lastVolume := wunit.ZeroVolume()
-	for i := range components {
-		component := components[i]
-		instruction := instructions[i]
-
-		if len(currComponents) > 0 && !component.Volume().EqualTo(lastVolume) {
-			retComponents = append(retComponents, currComponents)
-			retInstructions = append(retInstructions, currInstructions)
-			currComponents = make([]*wtype.Liquid, 0)
-			currInstructions = make(LHIVector, 0)
-		}
-
-		currComponents = append(currComponents, component)
-		currInstructions = append(currInstructions, instruction)
-		lastVolume = component.Volume()
-	}
-	if len(currComponents) > 0 {
-		retComponents = append(retComponents, currComponents)
-		retInstructions = append(retInstructions, currInstructions)
-	}
-
-	return retComponents, retInstructions
 }
 
 func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {

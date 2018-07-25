@@ -30,122 +30,118 @@ func GetPolicyConsequents() AParamSet {
 func MakeInstructionParameters() AParamSet {
 	typemap := maketypemap()
 
-	params := make(AParamSet, 30)
-
 	// TODO -- make parameter/instruction relation explicit
-	params["BLOWOUT"] = AParam{Name: "BLOWOUT", Type: typemap["float64"]}
-	params["CHANNEL"] = AParam{Name: "CHANNEL", Type: typemap["float64"]}
-	params["CYCLES"] = AParam{Name: "CYCLES", Type: typemap["float64"]}
-	params["DRIVE"] = AParam{Name: "DRIVE", Type: typemap["string"]}
-	params["FROMPLATETYPE"] = AParam{Name: "FROMPLATETYPE", Type: typemap["string"]}
-	params["HEAD"] = AParam{Name: "HEAD", Type: typemap["float64"]}
-	params["INSTRUCTIONTYPE"] = AParam{Name: "INSTRUCTIONTYPE", Type: typemap["string"]}
-	params[LiquidClass] = AParam{Name: LiquidClass, Type: typemap["string"]}
-	params["LLF"] = AParam{Name: "LLF", Type: typemap["string"]} // actually bool but no checks on that yet
-	params["MULTI"] = AParam{Name: "MULTI", Type: typemap["float64"]}
-	params["NEWADAPTOR"] = AParam{Name: "NEWADAPTOR", Type: typemap["string"]}
-	params["NEWSTATE"] = AParam{Name: "NEWSTATE", Type: typemap["string"]}
-	params["OFFSETX"] = AParam{Name: "OFFSETX", Type: typemap["float64"]}
-	params["OFFSETY"] = AParam{Name: "OFFSETY", Type: typemap["float64"]}
-	params["OFFSETZ"] = AParam{Name: "OFFSETZ", Type: typemap["float64"]}
-	params["OLDADAPTOR"] = AParam{Name: "OLDADAPTOR", Type: typemap["string"]}
-	params["OLDSTATE"] = AParam{Name: "OLDSTATE", Type: typemap["string"]}
-	params["OVERSTROKE"] = AParam{Name: "OVERSTROKE", Type: typemap["string"]} // bool
-	params["PARAMS"] = AParam{Name: "PARAMS", Type: typemap["float64"]}
-	params["PLATE"] = AParam{Name: "PLATE", Type: typemap["string"]}
-	params["PLATETYPE"] = AParam{Name: "PLATETYPE", Type: typemap["string"]}
-	params["PLATFORM"] = AParam{Name: "PLATFORM", Type: typemap["string"]}
-	params["PLT"] = AParam{Name: "PLT", Type: typemap["string"]}
-	params["POS"] = AParam{Name: "POS", Type: typemap["string"]}
-	params["POSFROM"] = AParam{Name: "POSFROM", Type: typemap["string"]}
-	params["POSTO"] = AParam{Name: "POSTO", Type: typemap["string"]}
-	params["REFERENCE"] = AParam{Name: "REFERENCE", Type: typemap["float64"]}
-	params["SPEED"] = AParam{Name: "SPEED", Type: typemap["float64"]}
-	params["TIME"] = AParam{Name: "TIME", Type: typemap["float64"]}
-	params["TIPTYPE"] = AParam{Name: "TIPTYPE", Type: typemap["string"]}
-	params["TOPLATETYPE"] = AParam{Name: "TOPLATETYPE", Type: typemap["string"]}
-	params["VOLUME"] = AParam{Name: "VOLUME", Type: typemap["float64"]}
-	params["VOLUNT"] = AParam{Name: "VOLUNT", Type: typemap["float64"]}
-	params["WELL"] = AParam{Name: "WELL", Type: typemap["float64"]}
-	params["WELLFROM"] = AParam{Name: "WELLFROM", Type: typemap["string"]}
-	params["WELLFROMVOLUME"] = AParam{Name: "WELLFROMVOLUME", Type: typemap["float64"]}
-	params["WELLTO"] = AParam{Name: "WELLTO", Type: typemap["string"]}
-	params["WELLTOVOLUME"] = AParam{Name: "WELLTOVOLUME", Type: typemap["float64"]}
-	params["WELLVOLUME"] = AParam{Name: "WELLVOLUME", Type: typemap["float64"]}
-	params["WHAT"] = AParam{Name: "WHAT", Type: typemap["string"]}
-	return params
+	return AParamSet{
+		"BLOWOUT":         AParam{Name: "BLOWOUT", Type: typemap[Float64]},
+		"CHANNEL":         AParam{Name: "CHANNEL", Type: typemap[Float64]},
+		"CYCLES":          AParam{Name: "CYCLES", Type: typemap[Float64]},
+		"DRIVE":           AParam{Name: "DRIVE", Type: typemap[String]},
+		"FROMPLATETYPE":   AParam{Name: "FROMPLATETYPE", Type: typemap[String]},
+		"HEAD":            AParam{Name: "HEAD", Type: typemap[Float64]},
+		"INSTRUCTIONTYPE": AParam{Name: "INSTRUCTIONTYPE", Type: typemap[String]},
+		LiquidClass:       AParam{Name: LiquidClass, Type: typemap[String]},
+		"LLF":             AParam{Name: "LLF", Type: typemap[String]}, // actually bool but no checks on that yet
+		"MULTI":           AParam{Name: "MULTI", Type: typemap[Float64]},
+		"NEWADAPTOR":      AParam{Name: "NEWADAPTOR", Type: typemap[String]},
+		"NEWSTATE":        AParam{Name: "NEWSTATE", Type: typemap[String]},
+		"OFFSETX":         AParam{Name: "OFFSETX", Type: typemap[Float64]},
+		"OFFSETY":         AParam{Name: "OFFSETY", Type: typemap[Float64]},
+		"OFFSETZ":         AParam{Name: "OFFSETZ", Type: typemap[Float64]},
+		"OLDADAPTOR":      AParam{Name: "OLDADAPTOR", Type: typemap[String]},
+		"OLDSTATE":        AParam{Name: "OLDSTATE", Type: typemap[String]},
+		"OVERSTROKE":      AParam{Name: "OVERSTROKE", Type: typemap[String]}, // bool
+		"PARAMS":          AParam{Name: "PARAMS", Type: typemap[Float64]},
+		"PLATE":           AParam{Name: "PLATE", Type: typemap[String]},
+		"PLATETYPE":       AParam{Name: "PLATETYPE", Type: typemap[String]},
+		"PLATFORM":        AParam{Name: "PLATFORM", Type: typemap[String]},
+		"PLT":             AParam{Name: "PLT", Type: typemap[String]},
+		"POS":             AParam{Name: "POS", Type: typemap[String]},
+		"POSFROM":         AParam{Name: "POSFROM", Type: typemap[String]},
+		"POSTO":           AParam{Name: "POSTO", Type: typemap[String]},
+		"REFERENCE":       AParam{Name: "REFERENCE", Type: typemap[Float64]},
+		"SPEED":           AParam{Name: "SPEED", Type: typemap[Float64]},
+		"TIME":            AParam{Name: "TIME", Type: typemap[Float64]},
+		"TIPTYPE":         AParam{Name: "TIPTYPE", Type: typemap[String]},
+		"TOPLATETYPE":     AParam{Name: "TOPLATETYPE", Type: typemap[String]},
+		"VOLUME":          AParam{Name: "VOLUME", Type: typemap[Float64]},
+		"VOLUNT":          AParam{Name: "VOLUNT", Type: typemap[Float64]},
+		"WELL":            AParam{Name: "WELL", Type: typemap[Float64]},
+		"WELLFROM":        AParam{Name: "WELLFROM", Type: typemap[String]},
+		"WELLFROMVOLUME":  AParam{Name: "WELLFROMVOLUME", Type: typemap[Float64]},
+		"WELLTO":          AParam{Name: "WELLTO", Type: typemap[String]},
+		"WELLTOVOLUME":    AParam{Name: "WELLTOVOLUME", Type: typemap[Float64]},
+		"WELLVOLUME":      AParam{Name: "WELLVOLUME", Type: typemap[Float64]},
+		"WHAT":            AParam{Name: "WHAT", Type: typemap[String]},
+	}
 }
 
 func MakePolicyItems() AParamSet {
-	typemap = maketypemap()
-	alhpis := make(AParamSet)
-	alhpis["ASPENTRYSPEED"] = AParam{Name: "ASPENTRYSPEED", Type: typemap["float64"], Desc: "allows slow moves into liquids"}
-	alhpis["ASPREFERENCE"] = AParam{Name: "ASPREFERENCE", Type: typemap["int"], Desc: "where to be when aspirating: 0 well bottom, 1 well top, 2 liquid level (if known)"}
-	alhpis["ASPSPEED"] = AParam{Name: "ASPSPEED", Type: typemap["float64"], Desc: "aspirate pipetting rate"}
-	alhpis["ASPXOFFSET"] = AParam{Name: "ASPXOFFSET", Type: typemap["float64"], Desc: "mm east of well target when aspirating"}
-	alhpis["ASPYOFFSET"] = AParam{Name: "ASPYOFFSET", Type: typemap["float64"], Desc: "mm south of well target  when aspirating"}
-	alhpis["ASPZOFFSET"] = AParam{Name: "ASPZOFFSET", Type: typemap["float64"], Desc: "mm above ASPREFERENCE when aspirating"}
-	alhpis["ASP_WAIT"] = AParam{Name: "ASP_WAIT", Type: typemap["float64"], Desc: "wait time in seconds post aspirate"}
-	alhpis["BLOWOUTOFFSET"] = AParam{Name: "BLOWOUTOFFSET", Type: typemap["float64"], Desc: "mm above BLOWOUTREFERENCE"}
-	alhpis["BLOWOUTREFERENCE"] = AParam{Name: "BLOWOUTREFERENCE", Type: typemap["int"], Desc: "where to be when blowing out: 0 well bottom"}
-	alhpis["BLOWOUTVOLUME"] = AParam{Name: "BLOWOUTVOLUME", Type: typemap["float64"], Desc: "how much to blow out"}
-	alhpis["BLOWOUTVOLUMEUNIT"] = AParam{Name: "BLOWOUTVOLUMEUNIT", Type: typemap["string"], Desc: "volume unit for blowout volume"}
-	alhpis["CAN_MULTI"] = AParam{Name: "CAN_MULTI", Type: typemap["bool"], Desc: "is multichannel operation allowed?"}
-	alhpis["DSPENTRYSPEED"] = AParam{Name: "DSPENTRYSPEED", Type: typemap["float64"], Desc: "allows slow moves into liquids"}
-	alhpis["DSPREFERENCE"] = AParam{Name: "DSPREFERENCE", Type: typemap["int"], Desc: "where to be when dispensing: 0 well bottom, 1 well top, 2 liquid level (if known)"}
-	alhpis["DSPSPEED"] = AParam{Name: "DSPSPEED", Type: typemap["float64"], Desc: "dispense pipetting rate"}
-	alhpis["DSPXOFFSET"] = AParam{Name: "DSPXOFFSET", Type: typemap["float64"], Desc: "mm east of well target when dispensing"}
-	alhpis["DSPYOFFSET"] = AParam{Name: "DSPYOFFSET", Type: typemap["float64"], Desc: "mm south of well target  when dispensing"}
-	alhpis["DSPZOFFSET"] = AParam{Name: "DSPZOFFSET", Type: typemap["float64"], Desc: "mm above DSPREFERENCE"}
-	alhpis["DSP_WAIT"] = AParam{Name: "DSP_WAIT", Type: typemap["float64"], Desc: "wait time in seconds post dispense"}
-	alhpis["EXTRA_ASP_VOLUME"] = AParam{Name: "EXTRA_ASP_VOLUME", Type: typemap["Volume"], Desc: "additional volume to take up when aspirating"}
-	alhpis["EXTRA_DISP_VOLUME"] = AParam{Name: "EXTRA_DISP_VOLUME", Type: typemap["Volume"], Desc: "additional volume to dispense"}
-	alhpis["JUSTBLOWOUT"] = AParam{Name: "JUSTBLOWOUT", Type: typemap["bool"], Desc: "shortcut to get single transfer"}
-	alhpis["OFFSETZADJUST"] = AParam{Name: "OFFSETZADJUST", Type: typemap["float64"], Desc: "Added to z offset"}
-	alhpis["OVERRIDEPIPETTESPEED"] = AParam{Name: "OVERRIDEPIPETTESPEED", Type: typemap["bool"], Desc: "If true, out of range values will be set to the nearest acceptable value. If false, out of range values will generate errors"}
-	alhpis["POST_MIX"] = AParam{Name: "POST_MIX", Type: typemap["int"], Desc: "number of mix cycles to do after dispense"}
-	alhpis["MIX_VOLUME_OVERRIDE_TIP_MAX"] = AParam{Name: "MIX_VOLUME_OVERRIDE_TIP_MAX", Type: typemap["bool"], Desc: "Default to using the maximum volume for the current tip type if the specified post mix volume is too high"}
-	alhpis["POST_MIX_RATE"] = AParam{Name: "POST_MIX_RATE", Type: typemap["float64"], Desc: "pipetting rate when post mixing"}
-	alhpis["POST_MIX_VOLUME"] = AParam{Name: "POST_MIX_VOLUME", Type: typemap["float64"], Desc: "volume to post mix (ul)"}
-	alhpis["POST_MIX_X"] = AParam{Name: "POST_MIX_X", Type: typemap["float64"], Desc: "x offset from centre of well (mm) when post-mixing"}
-	alhpis["POST_MIX_Y"] = AParam{Name: "POST_MIX_Y", Type: typemap["float64"], Desc: "y offset from centre of well (mm) when post-mixing"}
-	alhpis["POST_MIX_Z"] = AParam{Name: "POST_MIX_Z", Type: typemap["float64"], Desc: "z offset from centre of well (mm) when post-mixing"}
-	alhpis["PRE_MIX"] = AParam{Name: "PRE_MIX", Type: typemap["int"], Desc: "number of mix cycles to do before aspirating"}
-	alhpis["PRE_MIX_RATE"] = AParam{Name: "PRE_MIX_RATE", Type: typemap["float64"], Desc: "pipetting rate when pre mixing"}
-	alhpis["PRE_MIX_VOLUME"] = AParam{Name: "PRE_MIX_VOLUME", Type: typemap["float64"], Desc: "volume to pre mix (ul)"}
-	alhpis["PRE_MIX_X"] = AParam{Name: "PRE_MIX_X", Type: typemap["float64"], Desc: "x offset from centre of well (mm) when pre-mixing"}
-	alhpis["PRE_MIX_Y"] = AParam{Name: "PRE_MIX_Y", Type: typemap["float64"], Desc: "y offset from centre of well (mm) when pre-mixing"}
-	alhpis["PRE_MIX_Z"] = AParam{Name: "PRE_MIX_Z", Type: typemap["float64"], Desc: "z offset from centre of well (mm) when pre-mixing"}
-	alhpis["RESET_OVERRIDE"] = AParam{Name: "RESET_OVERRIDE", Type: typemap["bool"], Desc: "Do not generate reset commands"}
-	alhpis["TIP_REUSE_LIMIT"] = AParam{Name: "TIP_REUSE_LIMIT", Type: typemap["int"], Desc: "number of times tips can be reused for asp/dsp cycles"}
-	alhpis["TOUCHOFF"] = AParam{Name: "TOUCHOFF", Type: typemap["bool"], Desc: "whether to move to TOUCHOFFSET after dispense"}
-	alhpis["TOUCHOFFSET"] = AParam{Name: "TOUCHOFFSET", Type: typemap["float64"], Desc: "mm above wb to touch off at"}
-	alhpis[DefaultPipetteSpeed] = AParam{Name: DefaultPipetteSpeed, Type: typemap["float64"], Desc: "Default pipette speed in ml/min"}
-	alhpis["DEFAULTZSPEED"] = AParam{Name: "DEFAULTZSPEED", Type: typemap["float64"], Desc: "Default z movement speed in mm/s"}
-	alhpis["PTZOFFSET"] = AParam{Name: "PTZOFFSET", Type: typemap["float64"], Desc: "Z offset for pistons to zero"}
-	alhpis["PTZREFERENCE"] = AParam{Name: "PTZREFERENCE", Type: typemap["int"], Desc: "Well reference for piston to zero: 0 = well bottom, 1 = well top, 2 = liquid level"}
-	alhpis["CAN_SDD"] = AParam{Name: "CAN_SDD", Type: typemap["bool"], Desc: "Is it permissible just to do a one-shot transfer"}
-	alhpis["ASPREFERENCE"] = AParam{Name: "ASPREFERENCE", Type: typemap["int"], Desc: "Reference point for aspirate: 0 = well bottom, 1 = well top, 2 = liquid level"}
-	alhpis["MANUALPTZ"] = AParam{Name: "MANUALPTZ", Type: typemap["bool"], Desc: "Is explicit piston reset required? "}
-	alhpis["DONT_BE_DIRTY"] = AParam{Name: "DONT_BE_DIRTY", Type: typemap["bool"], Desc: "Don't switch this off"}
-	alhpis["NO_AIR_DISPENSE"] = AParam{Name: "NO_AIR_DISPENSE", Type: typemap["bool"], Desc: "Prevent dispensing anywhere other than under liquid?"}
-	alhpis["CAN_MSA"] = AParam{Name: "CAN_MSA", Type: typemap["bool"], Desc: "Permissible to aspirate from multiple sources? -- currently non functional"}
-	alhpis["DESCRIPTION"] = AParam{Name: "DESCRIPTION", Type: typemap["string"], Desc: "Summary of LHPolicy to present to the user"}
-	alhpis["LLFBELOWSURFACE"] = AParam{Name: "LLFBELOWSURFACE", Type: typemap["float64"], Desc: "Distance below surface for Liquid Level Following (LLF) when aspirating"}
-	alhpis["LLFABOVESURFACE"] = AParam{Name: "LLFABOVESURFACE", Type: typemap["float64"], Desc: "Distance below surface for Liquid Level Following (LLF) when dispensing"}
-	alhpis[PolicyNameField] = AParam{Name: PolicyNameField, Type: typemap["string"], Desc: "Name of the Liquid Policy"}
-	alhpis["USE_LLF"] = AParam{Name: "USE_LLF", Type: typemap["bool"], Desc: "Use Liquid-level following if plate has a model for liquid height-volume relations and the driver can use it."}
-
-	return alhpis
+	typemap := maketypemap()
+	return AParamSet{
+		"ASPENTRYSPEED":               AParam{Name: "ASPENTRYSPEED", Type: typemap[Float64], Desc: "allows slow moves into liquids"},
+		"ASPREFERENCE":                AParam{Name: "ASPREFERENCE", Type: typemap[Int], Desc: "where to be when aspirating: 0 well bottom, 1 well top, 2 liquid level (if known)"},
+		"ASPSPEED":                    AParam{Name: "ASPSPEED", Type: typemap[Float64], Desc: "aspirate pipetting rate"},
+		"ASPXOFFSET":                  AParam{Name: "ASPXOFFSET", Type: typemap[Float64], Desc: "mm east of well target when aspirating"},
+		"ASPYOFFSET":                  AParam{Name: "ASPYOFFSET", Type: typemap[Float64], Desc: "mm south of well target  when aspirating"},
+		"ASPZOFFSET":                  AParam{Name: "ASPZOFFSET", Type: typemap[Float64], Desc: "mm above ASPREFERENCE when aspirating"},
+		"ASP_WAIT":                    AParam{Name: "ASP_WAIT", Type: typemap[Float64], Desc: "wait time in seconds post aspirate"},
+		"BLOWOUTOFFSET":               AParam{Name: "BLOWOUTOFFSET", Type: typemap[Float64], Desc: "mm above BLOWOUTREFERENCE"},
+		"BLOWOUTREFERENCE":            AParam{Name: "BLOWOUTREFERENCE", Type: typemap[Int], Desc: "where to be when blowing out: 0 well bottom"},
+		"BLOWOUTVOLUME":               AParam{Name: "BLOWOUTVOLUME", Type: typemap[Float64], Desc: "how much to blow out"},
+		"BLOWOUTVOLUMEUNIT":           AParam{Name: "BLOWOUTVOLUMEUNIT", Type: typemap[String], Desc: "volume unit for blowout volume"},
+		"CAN_MULTI":                   AParam{Name: "CAN_MULTI", Type: typemap[Bool], Desc: "is multichannel operation allowed?"},
+		"DSPENTRYSPEED":               AParam{Name: "DSPENTRYSPEED", Type: typemap[Float64], Desc: "allows slow moves into liquids"},
+		"DSPREFERENCE":                AParam{Name: "DSPREFERENCE", Type: typemap[Int], Desc: "where to be when dispensing: 0 well bottom, 1 well top, 2 liquid level (if known)"},
+		"DSPSPEED":                    AParam{Name: "DSPSPEED", Type: typemap[Float64], Desc: "dispense pipetting rate"},
+		"DSPXOFFSET":                  AParam{Name: "DSPXOFFSET", Type: typemap[Float64], Desc: "mm east of well target when dispensing"},
+		"DSPYOFFSET":                  AParam{Name: "DSPYOFFSET", Type: typemap[Float64], Desc: "mm south of well target  when dispensing"},
+		"DSPZOFFSET":                  AParam{Name: "DSPZOFFSET", Type: typemap[Float64], Desc: "mm above DSPREFERENCE"},
+		"DSP_WAIT":                    AParam{Name: "DSP_WAIT", Type: typemap[Float64], Desc: "wait time in seconds post dispense"},
+		"EXTRA_ASP_VOLUME":            AParam{Name: "EXTRA_ASP_VOLUME", Type: typemap[Volume], Desc: "additional volume to take up when aspirating"},
+		"EXTRA_DISP_VOLUME":           AParam{Name: "EXTRA_DISP_VOLUME", Type: typemap[Volume], Desc: "additional volume to dispense"},
+		"JUSTBLOWOUT":                 AParam{Name: "JUSTBLOWOUT", Type: typemap[Bool], Desc: "shortcut to get single transfer"},
+		"OFFSETZADJUST":               AParam{Name: "OFFSETZADJUST", Type: typemap[Float64], Desc: "Added to z offset"},
+		"OVERRIDEPIPETTESPEED":        AParam{Name: "OVERRIDEPIPETTESPEED", Type: typemap[Bool], Desc: "If true, out of range values will be set to the nearest acceptable value. If false, out of range values will generate errors"},
+		"POST_MIX":                    AParam{Name: "POST_MIX", Type: typemap[Int], Desc: "number of mix cycles to do after dispense"},
+		"MIX_VOLUME_OVERRIDE_TIP_MAX": AParam{Name: "MIX_VOLUME_OVERRIDE_TIP_MAX", Type: typemap[Bool], Desc: "Default to using the maximum volume for the current tip type if the specified post mix volume is too high"},
+		"POST_MIX_RATE":               AParam{Name: "POST_MIX_RATE", Type: typemap[Float64], Desc: "pipetting rate when post mixing"},
+		"POST_MIX_VOLUME":             AParam{Name: "POST_MIX_VOLUME", Type: typemap[Float64], Desc: "volume to post mix (ul)"},
+		"POST_MIX_X":                  AParam{Name: "POST_MIX_X", Type: typemap[Float64], Desc: "x offset from centre of well (mm) when post-mixing"},
+		"POST_MIX_Y":                  AParam{Name: "POST_MIX_Y", Type: typemap[Float64], Desc: "y offset from centre of well (mm) when post-mixing"},
+		"POST_MIX_Z":                  AParam{Name: "POST_MIX_Z", Type: typemap[Float64], Desc: "z offset from centre of well (mm) when post-mixing"},
+		"PRE_MIX":                     AParam{Name: "PRE_MIX", Type: typemap[Int], Desc: "number of mix cycles to do before aspirating"},
+		"PRE_MIX_RATE":                AParam{Name: "PRE_MIX_RATE", Type: typemap[Float64], Desc: "pipetting rate when pre mixing"},
+		"PRE_MIX_VOLUME":              AParam{Name: "PRE_MIX_VOLUME", Type: typemap[Float64], Desc: "volume to pre mix (ul)"},
+		"PRE_MIX_X":                   AParam{Name: "PRE_MIX_X", Type: typemap[Float64], Desc: "x offset from centre of well (mm) when pre-mixing"},
+		"PRE_MIX_Y":                   AParam{Name: "PRE_MIX_Y", Type: typemap[Float64], Desc: "y offset from centre of well (mm) when pre-mixing"},
+		"PRE_MIX_Z":                   AParam{Name: "PRE_MIX_Z", Type: typemap[Float64], Desc: "z offset from centre of well (mm) when pre-mixing"},
+		"RESET_OVERRIDE":              AParam{Name: "RESET_OVERRIDE", Type: typemap[Bool], Desc: "Do not generate reset commands"},
+		"TIP_REUSE_LIMIT":             AParam{Name: "TIP_REUSE_LIMIT", Type: typemap[Int], Desc: "number of times tips can be reused for asp/dsp cycles"},
+		"TOUCHOFF":                    AParam{Name: "TOUCHOFF", Type: typemap[Bool], Desc: "whether to move to TOUCHOFFSET after dispense"},
+		"TOUCHOFFSET":                 AParam{Name: "TOUCHOFFSET", Type: typemap[Float64], Desc: "mm above wb to touch off at"},
+		DefaultPipetteSpeed:           AParam{Name: DefaultPipetteSpeed, Type: typemap[Float64], Desc: "Default pipette speed in ml/min"},
+		"DEFAULTZSPEED":               AParam{Name: "DEFAULTZSPEED", Type: typemap[Float64], Desc: "Default z movement speed in mm/s"},
+		"PTZOFFSET":                   AParam{Name: "PTZOFFSET", Type: typemap[Float64], Desc: "Z offset for pistons to zero"},
+		"PTZREFERENCE":                AParam{Name: "PTZREFERENCE", Type: typemap[Int], Desc: "Well reference for piston to zero: 0 = well bottom, 1 = well top, 2 = liquid level"},
+		"CAN_SDD":                     AParam{Name: "CAN_SDD", Type: typemap[Bool], Desc: "Is it permissible just to do a one-shot transfer"},
+		"MANUALPTZ":                   AParam{Name: "MANUALPTZ", Type: typemap[Bool], Desc: "Is explicit piston reset required? "},
+		"DONT_BE_DIRTY":               AParam{Name: "DONT_BE_DIRTY", Type: typemap[Bool], Desc: "Don't switch this off"},
+		"NO_AIR_DISPENSE":             AParam{Name: "NO_AIR_DISPENSE", Type: typemap[Bool], Desc: "Prevent dispensing anywhere other than under liquid?"},
+		"CAN_MSA":                     AParam{Name: "CAN_MSA", Type: typemap[Bool], Desc: "Permissible to aspirate from multiple sources? -- currently non functional"},
+		"DESCRIPTION":                 AParam{Name: "DESCRIPTION", Type: typemap[String], Desc: "Summary of LHPolicy to present to the user"},
+		"LLFBELOWSURFACE":             AParam{Name: "LLFBELOWSURFACE", Type: typemap[Float64], Desc: "Distance below surface for Liquid Level Following (LLF) when aspirating"},
+		"LLFABOVESURFACE":             AParam{Name: "LLFABOVESURFACE", Type: typemap[Float64], Desc: "Distance below surface for Liquid Level Following (LLF) when dispensing"},
+		PolicyNameField:               AParam{Name: PolicyNameField, Type: typemap[String], Desc: "Name of the Liquid Policy"},
+		"USE_LLF":                     AParam{Name: "USE_LLF", Type: typemap[Bool], Desc: "Use Liquid-level following if plate has a model for liquid height-volume relations and the driver can use it."},
+	}
 }
 
 func GetLHPolicyOptions() AParamSet {
-	ps := make(AParamSet, 5)
 	tm := maketypemap()
 
-	ps["USE_DRIVER_TIP_TRACKING"] = AParam{Name: "USE_DRIVER_TIP_TRACKING", Type: tm["bool"], Desc: "If driver has the option to use its own tip tracking, do so"}
-
-	return ps
+	return AParamSet{
+		"USE_DRIVER_TIP_TRACKING": AParam{Name: "USE_DRIVER_TIP_TRACKING", Type: tm[Bool], Desc: "If driver has the option to use its own tip tracking, do so"},
+	}
 }
 
 // a typed parameter, with description
@@ -159,9 +155,18 @@ func (alhpi AParam) TypeName() string {
 	return alhpi.Type.Name()
 }
 
-var typemap map[string]reflect.Type
+type Kind uint8
 
-func maketypemap() map[string]reflect.Type {
+const (
+	Float64 Kind = iota
+	Int
+	String
+	Volume
+	Bool
+	_Max_Kind
+)
+
+func maketypemap() map[Kind]reflect.Type {
 	// prototypical types for map
 	var f float64
 	var i int
@@ -169,12 +174,17 @@ func maketypemap() map[string]reflect.Type {
 	var v wunit.Volume
 	var b bool
 
-	ret := make(map[string]reflect.Type, 4)
-	ret["float64"] = reflect.TypeOf(f)
-	ret["int"] = reflect.TypeOf(i)
-	ret["string"] = reflect.TypeOf(s)
-	ret["Volume"] = reflect.TypeOf(v)
-	ret["bool"] = reflect.TypeOf(b)
+	ret := map[Kind]reflect.Type{
+		Float64: reflect.TypeOf(f),
+		Int:     reflect.TypeOf(i),
+		String:  reflect.TypeOf(s),
+		Volume:  reflect.TypeOf(v),
+		Bool:    reflect.TypeOf(b),
+	}
+
+	if len(ret) != int(_Max_Kind) {
+		panic("We forgot to add full support for a type!")
+	}
 
 	return ret
 }

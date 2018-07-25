@@ -2,112 +2,96 @@ package liquidhandling
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"reflect"
 	"testing"
 )
 
 func testInstructions1() []RobotInstruction {
-	insS := make([]RobotInstruction, 0, 1)
-	var ins RobotInstruction // nolint
-	ins = NewMoveInstruction()
-	ins.(*MoveInstruction).OffsetZ = append(ins.(*MoveInstruction).OffsetZ, 0.5)
-	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 0)
-	ins.(*MoveInstruction).Pos = append(ins.(*MoveInstruction).Pos, "position_1")
-	ins.(*MoveInstruction).Plt = append(ins.(*MoveInstruction).Plt, "DWST12")
-	ins.(*MoveInstruction).Well = append(ins.(*MoveInstruction).Well, "A1")
-	insS = append(insS, ins)
-	ins = NewAspirateInstruction()
-	ins.(*AspirateInstruction).What = append(ins.(*AspirateInstruction).What, "string")
-	ins.(*AspirateInstruction).Volume = append(ins.(*AspirateInstruction).Volume, wunit.NewVolume(100.0, "ul"))
-	insS = append(insS, ins)
-	ins = NewMoveInstruction()
-	ins.(*MoveInstruction).OffsetX = append(ins.(*MoveInstruction).OffsetZ, 1.5)
-	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 1)
-	ins.(*MoveInstruction).Pos = append(ins.(*MoveInstruction).Pos, "position_2")
-	ins.(*MoveInstruction).Plt = append(ins.(*MoveInstruction).Plt, "DSW96")
-	ins.(*MoveInstruction).Well = append(ins.(*MoveInstruction).Well, "C3")
-	insS = append(insS, ins)
-	ins = NewDispenseInstruction()
-	ins.(*DispenseInstruction).What = append(ins.(*DispenseInstruction).What, "string")
-	ins.(*DispenseInstruction).Volume = append(ins.(*DispenseInstruction).Volume, wunit.NewVolume(100.0, "ul"))
-	insS = append(insS, ins)
-	ins = NewMoveInstruction()
-	ins.(*MoveInstruction).OffsetX = append(ins.(*MoveInstruction).OffsetZ, 0.5)
-	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 0)
-	ins.(*MoveInstruction).Pos = append(ins.(*MoveInstruction).Pos, "position_2")
-	ins.(*MoveInstruction).Plt = append(ins.(*MoveInstruction).Plt, "DSW96")
-	ins.(*MoveInstruction).Well = append(ins.(*MoveInstruction).Well, "C3")
-	insS = append(insS, ins)
-	ins = NewMixInstruction()
-	ins.(*MixInstruction).What = append(ins.(*MixInstruction).What, "string")
-	ins.(*MixInstruction).Volume = append(ins.(*MixInstruction).Volume, wunit.NewVolume(100.0, "ul"))
-	insS = append(insS, ins)
-	ins = NewMoveInstruction()
-	insS = append(insS, ins)
-	ins = NewMoveInstruction()
-	insS = append(insS, ins)
-	return insS
+	_1_mov := NewMoveInstruction()
+	_1_mov.OffsetZ = append(_1_mov.OffsetZ, 0.5)
+	_1_mov.Reference = append(_1_mov.Reference, 0)
+	_1_mov.Pos = append(_1_mov.Pos, "position_1")
+	_1_mov.Plt = append(_1_mov.Plt, "DWST12")
+	_1_mov.Well = append(_1_mov.Well, "A1")
+
+	_2_asp := NewAspirateInstruction()
+	_2_asp.What = append(_2_asp.What, "string")
+	_2_asp.Volume = append(_2_asp.Volume, wunit.NewVolume(100.0, "ul"))
+
+	_3_mov := NewMoveInstruction()
+	_3_mov.OffsetX = append(_3_mov.OffsetZ, 1.5)
+	_3_mov.Reference = append(_3_mov.Reference, 1)
+	_3_mov.Pos = append(_3_mov.Pos, "position_2")
+	_3_mov.Plt = append(_3_mov.Plt, "DSW96")
+	_3_mov.Well = append(_3_mov.Well, "C3")
+
+	_4_dsp := NewDispenseInstruction()
+	_4_dsp.What = append(_4_dsp.What, "string")
+	_4_dsp.Volume = append(_4_dsp.Volume, wunit.NewVolume(100.0, "ul"))
+
+	_5_mov := NewMoveInstruction()
+	_5_mov.OffsetX = append(_5_mov.OffsetZ, 0.5)
+	_5_mov.Reference = append(_5_mov.Reference, 0)
+	_5_mov.Pos = append(_5_mov.Pos, "position_2")
+	_5_mov.Plt = append(_5_mov.Plt, "DSW96")
+	_5_mov.Well = append(_5_mov.Well, "C3")
+
+	_6_mix := NewMixInstruction()
+	_6_mix.What = append(_6_mix.What, "string")
+	_6_mix.Volume = append(_6_mix.Volume, wunit.NewVolume(100.0, "ul"))
+
+	_7_mov := NewMoveInstruction()
+	_8_mov := NewMoveInstruction()
+
+	return []RobotInstruction{_1_mov, _2_asp, _3_mov, _4_dsp, _5_mov, _6_mix, _7_mov, _8_mov}
 }
 
 func testInstructions2() []RobotInstruction {
-	insS := make([]RobotInstruction, 0, 1)
-	var ins RobotInstruction //nolint
-	ins = NewMoveInstruction()
-	ins.(*MoveInstruction).OffsetZ = append(ins.(*MoveInstruction).OffsetZ, 0.5)
-	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 0)
-	ins.(*MoveInstruction).Pos = append(ins.(*MoveInstruction).Pos, "position_2")
-	ins.(*MoveInstruction).Plt = append(ins.(*MoveInstruction).Plt, "DWST12")
-	ins.(*MoveInstruction).Well = append(ins.(*MoveInstruction).Well, "A1")
-	insS = append(insS, ins)
-	ins = NewAspirateInstruction()
-	ins.(*AspirateInstruction).What = append(ins.(*AspirateInstruction).What, "string")
-	ins.(*AspirateInstruction).Volume = append(ins.(*AspirateInstruction).Volume, wunit.NewVolume(50.0, "ul"))
-	insS = append(insS, ins)
-	ins = NewMoveInstruction()
-	ins.(*MoveInstruction).OffsetX = append(ins.(*MoveInstruction).OffsetZ, 1.5)
-	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 1)
-	ins.(*MoveInstruction).Pos = append(ins.(*MoveInstruction).Pos, "position_1")
-	ins.(*MoveInstruction).Plt = append(ins.(*MoveInstruction).Plt, "DSW96")
-	ins.(*MoveInstruction).Well = append(ins.(*MoveInstruction).Well, "C3")
-	insS = append(insS, ins)
-	ins = NewDispenseInstruction()
-	ins.(*DispenseInstruction).What = append(ins.(*DispenseInstruction).What, "string")
-	ins.(*DispenseInstruction).Volume = append(ins.(*DispenseInstruction).Volume, wunit.NewVolume(50.0, "ul"))
-	insS = append(insS, ins)
-	ins = NewMoveInstruction()
-	ins.(*MoveInstruction).OffsetX = append(ins.(*MoveInstruction).OffsetZ, 0.5)
-	ins.(*MoveInstruction).Reference = append(ins.(*MoveInstruction).Reference, 0)
-	ins.(*MoveInstruction).Pos = append(ins.(*MoveInstruction).Pos, "position_1")
-	ins.(*MoveInstruction).Plt = append(ins.(*MoveInstruction).Plt, "DSW96")
-	ins.(*MoveInstruction).Well = append(ins.(*MoveInstruction).Well, "C3")
-	insS = append(insS, ins)
-	ins = NewMixInstruction()
-	ins.(*MixInstruction).What = append(ins.(*MixInstruction).What, "string")
-	ins.(*MixInstruction).Volume = append(ins.(*MixInstruction).Volume, wunit.NewVolume(50.0, "ul"))
-	insS = append(insS, ins)
-	ins = NewMoveInstruction()
-	insS = append(insS, ins)
-	ins = NewMoveInstruction()
-	insS = append(insS, ins)
-	return insS
+
+	_1_mov := NewMoveInstruction()
+	_1_mov.OffsetZ = append(_1_mov.OffsetZ, 0.5)
+	_1_mov.Reference = append(_1_mov.Reference, 0)
+	_1_mov.Pos = append(_1_mov.Pos, "position_2")
+	_1_mov.Plt = append(_1_mov.Plt, "DWST12")
+	_1_mov.Well = append(_1_mov.Well, "A1")
+
+	_2_asp := NewAspirateInstruction()
+	_2_asp.What = append(_2_asp.What, "string")
+	_2_asp.Volume = append(_2_asp.Volume, wunit.NewVolume(50.0, "ul"))
+
+	_3_mov := NewMoveInstruction()
+	_3_mov.OffsetX = append(_3_mov.OffsetZ, 1.5)
+	_3_mov.Reference = append(_3_mov.Reference, 1)
+	_3_mov.Pos = append(_3_mov.Pos, "position_1")
+	_3_mov.Plt = append(_3_mov.Plt, "DSW96")
+	_3_mov.Well = append(_3_mov.Well, "C3")
+
+	_4_dsp := NewDispenseInstruction()
+	_4_dsp.What = append(_4_dsp.What, "string")
+	_4_dsp.Volume = append(_4_dsp.Volume, wunit.NewVolume(50.0, "ul"))
+
+	_5_mov := NewMoveInstruction()
+	_5_mov.OffsetX = append(_5_mov.OffsetZ, 0.5)
+	_5_mov.Reference = append(_5_mov.Reference, 0)
+	_5_mov.Pos = append(_5_mov.Pos, "position_1")
+	_5_mov.Plt = append(_5_mov.Plt, "DSW96")
+	_5_mov.Well = append(_5_mov.Well, "C3")
+
+	_6_mix := NewMixInstruction()
+	_6_mix.What = append(_6_mix.What, "string")
+	_6_mix.Volume = append(_6_mix.Volume, wunit.NewVolume(50.0, "ul"))
+
+	_7_mov := NewMoveInstruction()
+
+	_8_mov := NewMoveInstruction()
+
+	return []RobotInstruction{_1_mov, _2_asp, _3_mov, _4_dsp, _5_mov, _6_mix, _7_mov, _8_mov}
 }
 
-func stringArrsSame(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := 0; i < len(a); i++ {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func insTypeArr(arr []RobotInstruction) []string {
-	ret := make([]string, len(arr))
-	for i := 0; i < len(arr); i++ {
-		ret[i] = InstructionTypeName(arr[i])
+func insTypeArr(arr []RobotInstruction) []*InstructionType {
+	ret := make([]*InstructionType, len(arr))
+	for i, inst := range arr {
+		ret[i] = inst.Type()
 	}
 	return ret
 }
@@ -116,10 +100,10 @@ func TestMerger(t *testing.T) {
 	inss := testInstructions1()
 	merged := mergeMovs(inss)
 
-	expected := []string{"MOVASP", "MOVDSP", "MOVMIX", "MOV", "MOV"}
+	expected := []*InstructionType{MAS, MDS, MVM, MOV, MOV}
 	got := insTypeArr(merged)
 
-	if !stringArrsSame(expected, got) {
+	if !reflect.DeepEqual(expected, got) {
 		t.Errorf("Merge fail: expected %v got %v", expected, got)
 	}
 }
@@ -148,7 +132,7 @@ func TestComparisonoptions(t *testing.T) {
 	inss2 := testInstructions2()
 
 	expected := []int{0, 0, 0, 0, 3, 3}
-	prms := []map[string][]string{CompareReferences(), CompareOffsets(), CompareWells(), ComparePlateTypes(), CompareVolumes(), ComparePositions()}
+	prms := []InstructionParametersMap{CompareReferences(), CompareOffsets(), CompareWells(), ComparePlateTypes(), CompareVolumes(), ComparePositions()}
 	names := []string{"References", "Offsets", "Wells", "PlateTypes", "Volumes", "Positions"}
 
 	for i := 0; i < len(expected); i++ {

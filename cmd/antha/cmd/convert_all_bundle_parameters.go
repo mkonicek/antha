@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"encoding/json"
-	"strings"
-	"path/filepath"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
-	"github.com/pkg/errors"
+	"path/filepath"
+	"strings"
 )
 
 var convertAllBundlesCmd = &cobra.Command{
@@ -17,15 +17,14 @@ var convertAllBundlesCmd = &cobra.Command{
 }
 
 type bundle struct {
-	Dir  string
-	Path string
+	Dir      string
+	Path     string
 	FileName string
 }
 
-
 type bundles struct {
 	Bundles []*bundle
-	seen     map[string]bool
+	seen    map[string]bool
 }
 
 func newBundles() *bundles {
@@ -54,8 +53,8 @@ func (b *bundles) Walk(path string, fi os.FileInfo, err error) error {
 	b.seen[dir] = true
 
 	b.Bundles = append(b.Bundles, &bundle{
-		Dir:  dir,
-		Path: path,
+		Dir:      dir,
+		Path:     path,
 		FileName: fileName,
 	})
 
@@ -78,41 +77,41 @@ func convertAllBundles(cmd *cobra.Command, args []string) error {
 	if err := filepath.Walk(viper.GetString("rootDir"), bundles.Walk); err != nil {
 		return err
 	}
-	
+
 	var errs []string
 
 	for _, elem := range elements.Elements {
-		
-		metadataFileName := filepath.Join(elem.Dir,"metadata.json")
-		
+
+		metadataFileName := filepath.Join(elem.Dir, "metadata.json")
+
 		cFile, err := os.Open(metadataFileName)
 
 		if err != nil {
-			errs = append(errs, metadataFileName + ": ", err.Error())
+			errs = append(errs, metadataFileName+": ", err.Error())
 			cFile.Close() //nolint
-		} else {		
+		} else {
 			var c NewElementMappingDetails
 			decConv := json.NewDecoder(cFile)
 			if err := decConv.Decode(&c); err != nil {
-				errs = append(errs, "error decoding to NewElementMappingDetails for " + metadataFileName + ": ", err.Error())
+				errs = append(errs, "error decoding to NewElementMappingDetails for "+metadataFileName+": ", err.Error())
 			}
 			cFile.Close() //nolint
-			
-			if !c.Empty(){
+
+			if !c.Empty() {
 				for _, bundle := range bundles.Bundles {
 					err := convertBundleWithArgs(metadataFileName, bundle.Path, bundle.Path)
 					if err != nil {
-						errs = append(errs, metadataFileName + " + " + bundle.Path + ": " + err.Error())
+						errs = append(errs, metadataFileName+" + "+bundle.Path+": "+err.Error())
 					}
 				}
 			}
 		}
 	}
-	
-	if len(errs) > 0{
-		return errors.Errorf(strings.Join(errs,"\n"))
+
+	if len(errs) > 0 {
+		return errors.Errorf(strings.Join(errs, "\n"))
 	}
-	
+
 	return nil
 }
 

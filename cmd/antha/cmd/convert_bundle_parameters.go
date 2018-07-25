@@ -33,14 +33,14 @@ type customAnthaBundle struct {
 	CompareOutputs      bool
 	ComparisonOptions   string
 	Results             results
-	
+
 	// core bundle file fields, including a generic Config field to support both UI and command line generated bundles.
 	workflow.Desc
 	customParams
-	
+
 	// fields generated from UI
 	Properties interface{}
-	Version string `json:"version"`
+	Version    string `json:"version"`
 }
 
 type results struct {
@@ -66,7 +66,7 @@ func convertProcesses(in map[string]workflow.Process, newElementNames Conversion
 		}
 		ret[k] = workflow.Process{
 			Component: comp,
-			Metadata: v.Metadata,
+			Metadata:  v.Metadata,
 		}
 	}
 

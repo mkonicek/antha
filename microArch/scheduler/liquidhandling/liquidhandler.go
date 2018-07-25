@@ -234,6 +234,16 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 			return fmt.Errorf("instruction %d not terminal", i)
 		}
 		triS = append(triS, tri)
+
+	}
+
+	if request.Options.PrintInstructions {
+		fmt.Println("Simulating instructions")
+		for i, ins := range instructions {
+			if (*request).Options.PrintInstructions {
+				fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
+			}
+		}
 	}
 
 	if err := vlh.Simulate(triS); err != nil {

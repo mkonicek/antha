@@ -36,7 +36,13 @@ func (a Port) String() string {
 
 // A Process is an instance of a component / element execution
 type Process struct {
-	Component string `json:"component"`
+	Component string         `json:"component"`
+	Metadata  screenPosition `json:"metadata"`
+}
+
+type screenPosition struct {
+	X int `json:"x"`
+	Y int `json:"y"`
 }
 
 // A Connection connects the output of one Process to the input of another

@@ -12,6 +12,9 @@ const (
 	// PolicyNameField returns the map entry of a liquid policy corresponding to the name of the policy.
 	PolicyNameField string = "POLICYNAME"
 
+	// PolicyNameField returns the map entry of a liquid policy corresponding to the name of the policy.
+	PolicyDescriptionField string = "DESCRIPTION"
+
 	// LiquidClass is the name of the liquid type checked at instruction generation.
 	// Currently this is analogous to the POLICYNAME
 	LiquidClass string = "LIQUIDCLASS"

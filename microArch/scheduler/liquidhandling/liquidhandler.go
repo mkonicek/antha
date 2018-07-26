@@ -161,9 +161,9 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
-	fmt.Println("Tip Usage:")
-	for _, te := range request.TipsUsed {
-		fmt.Printf("  %s\n", te)
+	fmt.Println("Tip Usage Summary:")
+	for _, tipEstimate := range request.TipsUsed {
+		fmt.Printf("  %v\n", tipEstimate)
 	}
 
 	err = this.Simulate(request)

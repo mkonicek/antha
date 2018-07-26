@@ -7,21 +7,24 @@ import (
 )
 
 type MessageInstruction struct {
-	GenericRobotInstruction
-	Type        int
+	BaseRobotInstruction
+	*InstructionType
 	Message     string
 	PassThrough map[string]*wtype.Liquid
 }
 
 func NewMessageInstruction(lhi *wtype.LHInstruction) *MessageInstruction {
-	msi := MessageInstruction{}
-	msi.Type = MSG
+	msi := &MessageInstruction{
+		InstructionType: MSG,
+	}
+	msi.BaseRobotInstruction = NewBaseRobotInstruction(msi)
+
 	if lhi != nil {
 		msi.Message = lhi.Message
 		msi.PassThrough = lhi.PassThrough
 	}
 
-	return &msi
+	return msi
 }
 
 func (msi *MessageInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -31,15 +34,13 @@ func (msi *MessageInstruction) Generate(ctx context.Context, policy *wtype.LHPol
 	return nil, nil
 }
 
-func (msi *MessageInstruction) GetParameter(name string) interface{} {
-	if name == "MESSAGE" {
+func (msi *MessageInstruction) GetParameter(name InstructionParameter) interface{} {
+	switch name {
+	case MESSAGE:
 		return msi.Message
+	default:
+		return msi.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
-}
-
-func (msi *MessageInstruction) InstructionType() int {
-	return msi.Type
 }
 
 func (msi *MessageInstruction) OutputTo(driver LiquidhandlingDriver) error {

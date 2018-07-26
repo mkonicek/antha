@@ -4,10 +4,12 @@ package execute
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/codegen"
+	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -35,7 +37,7 @@ type Opt struct {
 }
 
 // Run is a simple entrypoint for one-shot execution of workflows.
-func Run(parent context.Context, opt Opt) (*Result, error) {
+func Run(parent context.Context, opt Opt) (res *Result, err error) {
 	ctx := target.WithTarget(withID(parent, opt.ID), opt.Target)
 
 	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
@@ -47,26 +49,34 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 		return nil, err
 	}
 
-	r := &resolver{}
-
-	err = w.Run(trace.WithResolver(ctx, func(ctx context.Context, insts []interface{}) (map[int]interface{}, error) {
-		return r.resolve(ctx, insts)
-	}))
-
-	if err == nil {
-		return &Result{
-			Workflow: w,
-			Input:    r.nodes,
-			Insts:    r.insts,
-		}, nil
-	}
-
-	// Unwrap execute.Error
-	if terr, ok := err.(*trace.Error); ok {
-		if unwrapped, ok := unwrapError(terr.BaseError); ok {
-			err = unwrapped
+	ctxTr, tr := WithTrace(ctx)
+	defer func() {
+		if res := recover(); res != nil {
+			err = fmt.Errorf("%s\n%s", res, inject.ElementStackTrace())
 		}
+	}()
+	if err := w.Run(ctxTr); err != nil {
+		return nil, err
 	}
 
-	return nil, err
+	t, err := target.GetTarget(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes, err := getMaker(ctx).MakeNodes(tr.Instructions())
+	if err != nil {
+		return nil, err
+	}
+
+	instrs, err := codegen.Compile(ctx, t, nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Result{
+		Workflow: w,
+		Input:    nodes,
+		Insts:    instrs,
+	}, nil
 }

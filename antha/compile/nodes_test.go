@@ -228,7 +228,7 @@ func (t *t) foo(a, b, c int) int {
 
 	// pretty-print original
 	var buf bytes.Buffer
-	err = (&Config{Mode: UseSpaces | SourcePos, Tabwidth: 8}).Fprint(&buf, fset, f1)
+	_, err = (&Config{Mode: UseSpaces | SourcePos, Tabwidth: 8}).Fprint(&buf, fset, f1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -290,7 +290,7 @@ func _() {}
 
 	// pretty-print original
 	var buf bytes.Buffer
-	if err = (&Config{Mode: UseSpaces, Tabwidth: 8}).Fprint(&buf, fset, f); err != nil {
+	if _, err = (&Config{Mode: UseSpaces, Tabwidth: 8}).Fprint(&buf, fset, f); err != nil {
 		t.Fatal(err)
 	}
 

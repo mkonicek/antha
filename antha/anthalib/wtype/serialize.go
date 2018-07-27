@@ -161,7 +161,7 @@ type LHWellType struct {
 func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 	w.MaxVol = wunit.NewVolume(lhwt.Vol, lhwt.Vunit).ConvertToString("ul")
 	w.Rvol = wunit.NewVolume(lhwt.Rvol, lhwt.Vunit).ConvertToString("ul")
-	w.WShape = NewShape(lhwt.ShapeName, lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
+	w.WShape = NewShape(ShapeTypeID(lhwt.ShapeName), lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
 	w.Bottom = lhwt.Bottom
 	w.Bounds.SetSize(Coordinates{
 		wunit.NewLength(lhwt.Xdim, lhwt.Dunit).ConvertToString("mm"),
@@ -173,7 +173,7 @@ func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 
 func (plate *Plate) Welldimensions() *LHWellType {
 	t := plate.Welltype
-	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, t.WShape.ShapeName, t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
+	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, string(t.WShape.ShapeName), t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
 	return &lhwt
 }
 

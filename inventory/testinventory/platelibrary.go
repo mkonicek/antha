@@ -2261,7 +2261,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,
@@ -2285,7 +2285,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical_bioshake",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,
@@ -2313,7 +2313,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical_bioshake_standard_adaptor",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,
@@ -2341,7 +2341,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical_riser",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,
@@ -2365,7 +2365,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical_riser18",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,
@@ -2389,7 +2389,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical_riser20",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,
@@ -2413,7 +2413,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical_riser40",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,
@@ -2437,7 +2437,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical_shallowriser",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,
@@ -2461,7 +2461,7 @@ var plateBytes = []byte(`
  {
   "PlateType": "AppliedBiosystems_384_MicroAmp_Optical_shallowriser18",
   "Manufacturer": "Applied Biosystems",
-  "WellShape": "CIRCLE",
+  "WellShape": "cylinder",
   "WellH": 3.17,
   "WellW": 3.17,
   "WellD": 9.09,

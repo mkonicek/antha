@@ -45,6 +45,8 @@ type VirtualLiquidHandler struct {
 	errors             []LiquidhandlingError
 	state              *RobotState
 	settings           *SimulatorSettings
+	lastMove           string
+	lastTarget         wtype.LHObject
 }
 
 //coneRadius hardcoded radius to assume for cones
@@ -139,6 +141,27 @@ func (self *VirtualLiquidHandler) Simulate(instructions []liquidhandling.Termina
 	return nil
 }
 
+func (self *VirtualLiquidHandler) getState() *RobotState {
+	if self == nil {
+		return nil
+	}
+	return self.state
+}
+
+func (self *VirtualLiquidHandler) GetLastMove() string {
+	if self == nil {
+		return ""
+	}
+	return self.lastMove
+}
+
+func (self *VirtualLiquidHandler) GetLastTarget() wtype.LHObject {
+	if self == nil {
+		return nil
+	}
+	return self.lastTarget
+}
+
 //CountErrors
 func (self *VirtualLiquidHandler) CountErrors() int {
 	ret := 0
@@ -161,6 +184,20 @@ func (self *VirtualLiquidHandler) GetErrors() []simulator.SimulationError {
 		ret = append(ret, err)
 	}
 	return ret
+}
+
+//GetFirstError get the first error that's at least as bad as minimum severity
+func (self *VirtualLiquidHandler) GetFirstError(minimumSeverity simulator.ErrorSeverity) simulator.SimulationError {
+
+	for _, state := range self.errorHistory {
+		for _, err := range state {
+			if err.Severity() >= minimumSeverity {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // ------------------------------------------------------------------------------- Useful Utilities
@@ -200,27 +237,27 @@ func (self *VirtualLiquidHandler) addLHError(err LiquidhandlingError) {
 }
 
 func (self *VirtualLiquidHandler) AddInfo(message string) {
-	self.addLHError(NewGenericError(simulator.SeverityInfo, message))
+	self.addLHError(NewGenericError(self.state, simulator.SeverityInfo, message))
 }
 
 func (self *VirtualLiquidHandler) AddInfof(format string, a ...interface{}) {
-	self.addLHError(NewGenericErrorf(simulator.SeverityInfo, format, a...))
+	self.addLHError(NewGenericErrorf(self.state, simulator.SeverityInfo, format, a...))
 }
 
 func (self *VirtualLiquidHandler) AddWarning(message string) {
-	self.addLHError(NewGenericError(simulator.SeverityWarning, message))
+	self.addLHError(NewGenericError(self.state, simulator.SeverityWarning, message))
 }
 
 func (self *VirtualLiquidHandler) AddWarningf(format string, a ...interface{}) {
-	self.addLHError(NewGenericErrorf(simulator.SeverityWarning, format, a...))
+	self.addLHError(NewGenericErrorf(self.state, simulator.SeverityWarning, format, a...))
 }
 
 func (self *VirtualLiquidHandler) AddError(message string) {
-	self.addLHError(NewGenericError(simulator.SeverityError, message))
+	self.addLHError(NewGenericError(self.state, simulator.SeverityError, message))
 }
 
 func (self *VirtualLiquidHandler) AddErrorf(format string, a ...interface{}) {
-	self.addLHError(NewGenericErrorf(simulator.SeverityError, format, a...))
+	self.addLHError(NewGenericErrorf(self.state, simulator.SeverityError, format, a...))
 }
 
 func (self *VirtualLiquidHandler) validateProperties(props *liquidhandling.LHProperties) error {
@@ -468,6 +505,8 @@ func (self *VirtualLiquidHandler) getTargetPosition(adaptorName string, channelI
 		return ret, false
 	}
 
+	self.lastTarget = addr.GetChildByAddress(wc)
+
 	ret, ok = addr.WellCoordsToCoords(wc, ref)
 	if !ok {
 		//since we already checked that the address exists, this must be a bad reference
@@ -613,9 +652,12 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	}
 
 	describe := func() string {
-		return fmt.Sprintf("head %d %s to %s@%s at position %s",
-			head, summariseChannels(channels), wtype.HumanizeWellCoords(wc), wtype.NameOf(target), deckposition)
+		return fmt.Sprintf("head %d %s to %s of %s@%s at position %s",
+			head, summariseChannels(channels), summariseWellReferences(channels, offsetZ, refs), wtype.HumanizeWellCoords(wc), wtype.NameOf(target), deckposition)
 	}
+
+	//store a description of the move for posterity (and future errors)
+	self.lastMove = describe()
 
 	//find the head location
 	//for now, assuming that the relative position of the first explicitly provided channel and the head stay
@@ -666,8 +708,9 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	}
 
 	//check for collisions in the new location
-	if err := assertNoCollisionsInGroup(adaptor, nil, 0.0); err != nil {
-		self.AddErrorf("%s: collision detected: %s", describe(), err.Error())
+	if err := assertNoCollisionsInGroup(self.settings, adaptor, nil, 0.0); err != nil {
+		err.SetInstructionDescription(describe())
+		self.addLHError(err)
 	}
 	return ret
 }
@@ -821,7 +864,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	}
 
 	if len(no_well) > 0 {
-		self.AddErrorf("%s: %s on %s not in a well", describe(), pTips(len(no_well)), summariseChannels(no_well))
+		self.addLHError(NewTipsNotInWellError(self, describe(), no_well))
 	}
 
 	return ret
@@ -1189,8 +1232,9 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 				describe(), zo_min, zo_max)
 			return ret
 		}
-		if err := assertNoCollisionsInGroup(adaptor, channels, zo_max+0.5); err != nil {
-			self.AddErrorf("%s: collision detected: %s", describe(), err.Error())
+		if err := assertNoCollisionsInGroup(self.settings, adaptor, channels, zo_max+0.5); err != nil {
+			err.SetInstructionDescription(describe())
+			self.addLHError(err)
 		}
 	}
 
@@ -1552,7 +1596,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 		}
 	}
 	if len(no_well) > 0 {
-		self.AddErrorf("%s: %s not in %s", describe(), summariseChannels(no_well), pWells(len(no_well)))
+		self.addLHError(NewTipsNotInWellError(self, describe(), no_well))
 		return ret
 	}
 

@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -144,7 +145,7 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 }
 
 //GetCollisions get collisions with this channel. channelClearance defined a height below the channel/tip to include
-func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObject {
+func (self *ChannelState) GetCollisions(settings *SimulatorSettings, channelClearance float64) []wtype.LHObject {
 	deck := self.adaptor.GetGroup().GetRobot().GetDeck()
 
 	var ret []wtype.LHObject
@@ -157,6 +158,10 @@ func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObje
 	if self.HasTip() {
 		tipBottom := box.GetPosition()
 		for _, obj := range objects {
+			//ignore tipboxes if told to
+			if _, ok := obj.(*wtype.LHTipbox); !settings.IsTipboxCollisionEnabled() && ok {
+				continue
+			}
 			//don't add wells, instead add the plate if the tip bottom has hit the plate
 			if well, ok := obj.(*wtype.LHWell); ok {
 				if len(well.GetPointIntersections(tipBottom)) == 0 {
@@ -167,11 +172,13 @@ func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObje
 			}
 		}
 	} else {
-		//reporting that we've collided with a well is a bit silly since wells are empty space
-		//but since channels shouldn't be inside wells, report collision with the plate instead
 		for _, obj := range objects {
 			if well, ok := obj.(*wtype.LHWell); ok {
-				ret = append(ret, well.GetParent())
+				//wells are empty space, so we can't collide with them, but we could collide with the parent
+				//if we aren't fully in the well
+				if !coneInWell(box, well) {
+					ret = append(ret, well.GetParent())
+				}
 			} else {
 				ret = append(ret, obj)
 			}
@@ -179,6 +186,21 @@ func (self *ChannelState) GetCollisions(channelClearance float64) []wtype.LHObje
 	}
 
 	return ret
+}
+
+//coneInWell is the cone contained in the well
+func coneInWell(cone wtype.BBox, well *wtype.LHWell) bool {
+	wellStart := well.GetPosition()
+	wellEnd := wellStart.Add(well.GetSize())
+
+	coneStart := cone.GetPosition()
+	coneEnd := cone.GetPosition().Add(cone.GetSize())
+
+	if coneStart.X < wellStart.X || coneEnd.X > wellEnd.X || coneStart.Y < wellStart.Y || coneEnd.Y > wellEnd.Y {
+		return false
+	}
+
+	return !(coneStart.Z < (wellStart.Z + well.Bottomh))
 }
 
 // -------------------------------------------------------------------------------
@@ -220,6 +242,104 @@ func NewAdaptorState(name string,
 	}
 
 	return &as
+}
+
+//String summarize the state of the adaptor
+func (self *AdaptorState) SummariseTips() string {
+	tipTypes := make([]string, 0, len(self.channels))
+	tipLengths := make([]string, 0, len(self.channels))
+	loaded := make([]int, 0, len(self.channels))
+
+	for i, channel := range self.channels {
+		if channel.HasTip() {
+			loaded = append(loaded, i)
+			tipTypes = append(tipTypes, channel.GetTip().GetType())
+			tipLengths = append(tipLengths, wunit.NewLength(channel.GetTip().GetEffectiveHeight(), "mm").String())
+		}
+	}
+
+	tipTypes = getUnique(tipTypes, true)
+	tipLengths = getUnique(tipLengths, true)
+
+	if len(loaded) > 0 {
+		return fmt.Sprintf("%s: %s %s (effective %s %s) loaded on %s",
+			self.name,
+			pTips(len(loaded)),
+			strings.Join(tipTypes, ","),
+			pLengths(len(tipLengths)),
+			strings.Join(tipLengths, ","),
+			summariseChannels(loaded))
+	}
+	return fmt.Sprintf("%s: <no tips>", self.name)
+}
+
+//SummarisePositions get a human readable description of the X,Y,Z position of
+//the adaptor, as well as which type of tips are loaded on which channels.
+//channelsColliding provides an optional list of channel indexes which
+//have been detected as being involved in a collision, which will also be
+//displayed in the output.
+func (self *AdaptorState) SummarisePositions(channelsColliding []int) string {
+
+	positions := make([]wtype.Coordinates, len(self.channels))
+	for i, channel := range self.channels {
+		positions[i] = channel.GetAbsolutePosition()
+		positions[i].Z -= channel.GetTip().GetEffectiveHeight()
+	}
+
+	collisions := make([]bool, len(self.channels))
+	for _, ch := range channelsColliding {
+		collisions[ch] = true
+	}
+
+	var places int
+	for _, pos := range positions {
+		if p := fmt.Sprintf("%.1f", pos.X); len(p) > places {
+			places = len(p)
+		}
+		if p := fmt.Sprintf("%.1f", pos.Y); len(p) > places {
+			places = len(p)
+		}
+		if p := fmt.Sprintf("%.1f", pos.Z); len(p) > places {
+			places = len(p)
+		}
+	}
+
+	floatTemplate := fmt.Sprintf("%%%d.1f", places)
+	intTemplate := fmt.Sprintf("%%%dd", places)
+
+	var head, lineX, lineY, lineZ []string
+	head = append(head, "channel:")
+	lineX = append(lineX, "      X:")
+	lineY = append(lineY, "      Y:")
+	lineZ = append(lineZ, "      Z:")
+	lineState := make([]string, len(positions)+1)
+	lineState[0] = "  state:"
+	for i, pos := range positions {
+		head = append(head, fmt.Sprintf(intTemplate, i))
+		lineX = append(lineX, fmt.Sprintf(floatTemplate, pos.X))
+		lineY = append(lineY, fmt.Sprintf(floatTemplate, pos.Y))
+		lineZ = append(lineZ, fmt.Sprintf(floatTemplate, pos.Z))
+
+		if collisions[i] {
+			lineState[i+1] += "C"
+		}
+		if self.channels[i].HasTip() {
+			lineState[i+1] += "T"
+		}
+	}
+
+	for i := 1; i < len(lineState); i++ {
+		lineState[i] = strings.Repeat(" ", places-len(lineState[i])) + lineState[i]
+	}
+
+	return strings.Join(
+		[]string{
+			strings.Join(head, " "),
+			strings.Join(lineX, " "),
+			strings.Join(lineY, " "),
+			strings.Join(lineZ, " "),
+			strings.Join(lineState, " "),
+		}, "\n")
 }
 
 //                            Accessors
@@ -515,6 +635,57 @@ func NewRobotState() *RobotState {
 		false,
 	}
 	return &rs
+}
+
+func (self *RobotState) SummariseState(channelsColliding map[int][]int) string {
+	return fmt.Sprintf("Adaptors: key = {T: Tip loaded, C: involved in Collision}\n\t%s\nDeck:\n\t%s",
+		strings.Replace(self.SummariseAdaptors(channelsColliding), "\n", "\n\t", -1),
+		strings.Replace(self.SummariseDeck(), "\n", "\n\t", -1))
+}
+
+func (self *RobotState) SummariseAdaptors(channelsColliding map[int][]int) string {
+	var lines []string
+	for i, group := range self.adaptorGroups {
+		lines = append(lines, fmt.Sprintf("AdaptorGroup %d: position %v", i, group.GetPosition()))
+	}
+
+	for i, adaptor := range self.GetAdaptors() {
+		lines = append(lines, fmt.Sprintf("Head %d: %s\n\t%s", i, adaptor.SummariseTips(), strings.Replace(adaptor.SummarisePositions(channelsColliding[i]), "\n", "\n\t", -1)))
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func (self *RobotState) SummariseDeck() string {
+	slotNames := self.deck.GetSlotNames()
+	sort.Strings(slotNames)
+
+	var nameLen int
+	for _, name := range slotNames {
+		if len(name) > nameLen {
+			nameLen = len(name)
+		}
+	}
+
+	var ret []string
+	for _, name := range slotNames {
+		object, _ := self.deck.GetChild(name)
+		paddedName := strings.Repeat(" ", nameLen-len(name)) + name
+		if object != nil {
+			ret = append(ret, fmt.Sprintf("%s: %s \"%s\" of type %s with size %v",
+				paddedName, wtype.ClassOf(object), wtype.NameOf(object), wtype.TypeOf(object), object.GetSize()))
+			ret = append(ret, fmt.Sprintf("%s  bounds: [%v - %v]",
+				strings.Repeat(" ", nameLen), object.GetPosition(), object.GetPosition().Add(object.GetSize())))
+			if plate, ok := object.(*wtype.LHPlate); ok {
+				ret = append(ret, fmt.Sprintf("%s  well geometry: (zStart, bottomH, height, radius) = (%f, %f, %f, %f)\n",
+					strings.Repeat(" ", nameLen), plate.WellZStart, plate.Welltype.Bottomh, plate.Welltype.GetSize().Z, plate.Welltype.GetSize().X))
+			}
+		} else {
+			ret = append(ret, fmt.Sprintf("%s: <empty>", paddedName))
+		}
+	}
+
+	return strings.Join(ret, "\n")
 }
 
 //                            Accessors

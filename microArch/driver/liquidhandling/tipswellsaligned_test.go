@@ -8,12 +8,22 @@ import (
 	"testing"
 )
 
+//makeAlignmentTestPlate make a plate setting only the important things
+func makeTestPlate(wellsX, wellsY int, offsetX, offsetY float64) *wtype.LHPlate {
+	plateSize := wtype.Coordinates{X: 127.76, Y: 85.48, Z: 15.0}
+	wellSize := wtype.Coordinates{X: plateSize.X / float64(wellsX), Y: plateSize.Y / float64(wellsY), Z: 15.0}
+
+	shape := wtype.NewShape("box", "mm", wellSize.X, wellSize.Y, wellSize.Z)
+	well := wtype.NewLHWell("ul", 100.0, 10.0, shape, wtype.FlatWellBottom, wellSize.X, wellSize.Y, wellSize.Z, 0.0, "mm")
+	return wtype.NewLHPlate("testplate", "", wellsX, wellsY, plateSize, well, offsetX, offsetY, 0.0, 0.0, 0.0)
+}
+
 type tipsWellsAlignedTest struct {
 	Name          string                   //to identify the test
 	Independent   bool                     //is the head capable of independent multi channel
 	Orientation   wtype.ChannelOrientation //what orientation is the channel
 	Multi         int                      //number of channels
-	Platetype     string                   //the plate type to use from testinventory
+	Plate         *wtype.LHPlate           //the plate to use for the test
 	WellAddresses []string                 //well addresses that we want to move to
 	Expected      bool
 }
@@ -23,12 +33,6 @@ func (self *tipsWellsAlignedTest) Run(t *testing.T) {
 }
 
 func (self *tipsWellsAlignedTest) run(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-
-	plate, err := inventory.NewPlate(ctx, self.Platetype)
-	if err != nil {
-		t.Error(err)
-	}
 
 	head := &wtype.LHHead{
 		Adaptor: &wtype.LHAdaptor{
@@ -40,12 +44,14 @@ func (self *tipsWellsAlignedTest) run(t *testing.T) {
 		},
 	}
 
-	if g := TipsWellsAligned(nil, head, plate, self.WellAddresses); g != self.Expected {
+	if g := TipsWellsAligned(nil, head, self.Plate, self.WellAddresses); g != self.Expected {
 		t.Errorf("got %t, expected %t", g, self.Expected)
 	}
 }
 
-func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
+func TestTipsWellsAlignedVChannel96Plate(t *testing.T) {
+
+	plate := makeTestPlate(8, 12, 9.0, 9.0)
 
 	tests := []*tipsWellsAlignedTest{
 		{
@@ -53,7 +59,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
 		},
@@ -62,7 +68,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 			Expected:      true,
 		},
@@ -71,7 +77,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "C1"},
 			Expected:      false,
 		},
@@ -80,7 +86,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "B2"},
 			Expected:      false,
 		},
@@ -89,7 +95,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"B1", "A1"},
 			Expected:      false,
 		},
@@ -98,7 +104,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 			Independent:   true,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "C1"},
 			Expected:      true,
 		},
@@ -107,7 +113,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 			Independent:   true,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "B2"},
 			Expected:      false,
 		},
@@ -116,7 +122,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 			Independent:   true,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"B1", "A1"},
 			Expected:      false,
 		},
@@ -128,6 +134,7 @@ func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
 }
 
 func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
+	plate := makeTestPlate(8, 12, 9.0, 9.0)
 
 	tests := []*tipsWellsAlignedTest{
 		{
@@ -135,7 +142,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
 		},
@@ -144,7 +151,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"},
 			Expected:      true,
 		},
@@ -153,7 +160,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "B2"},
 			Expected:      false,
 		},
@@ -162,7 +169,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "B1"},
 			Expected:      false,
 		},
@@ -171,7 +178,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A2", "A1"},
 			Expected:      false,
 		},
@@ -180,7 +187,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Independent:   true,
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "A3"},
 			Expected:      true,
 		},
@@ -189,7 +196,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Independent:   true,
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "B2"},
 			Expected:      false,
 		},
@@ -198,7 +205,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Independent:   true,
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
-			Platetype:     "pcrplate",
+			Plate:         plate,
 			WellAddresses: []string{"A2", "A1"},
 			Expected:      false,
 		},
@@ -211,13 +218,15 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 
 func TestTipsWellsAligned384Plate(t *testing.T) {
 
+	plate := makeTestPlate(16, 24, 4.5, 4.5)
+
 	tests := []*tipsWellsAlignedTest{
 		{
 			Name:          "non-independent 8-well in A1",
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "greiner384",
+			Plate:         plate,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
 		},
@@ -226,7 +235,7 @@ func TestTipsWellsAligned384Plate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "greiner384",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "C1", "E1", "G1", "I1", "K1", "M1", "O1"},
 			Expected:      true,
 		},
@@ -235,7 +244,7 @@ func TestTipsWellsAligned384Plate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "greiner384",
+			Plate:         plate,
 			WellAddresses: []string{"B1", "D1", "F1", "H1", "J1", "L1", "N1", "P1"},
 			Expected:      true,
 		},
@@ -244,7 +253,7 @@ func TestTipsWellsAligned384Plate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "greiner384",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "C1", "E1", "I1", "K1", "M1", "O1"}, //missing G1
 			Expected:      false,
 		},
@@ -253,7 +262,7 @@ func TestTipsWellsAligned384Plate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "greiner384",
+			Plate:         plate,
 			WellAddresses: []string{"A1", "B1"},
 			Expected:      false,
 		},
@@ -264,7 +273,8 @@ func TestTipsWellsAligned384Plate(t *testing.T) {
 	}
 }
 
-func TestTipsWellsAligned768Plate(t *testing.T) {
+func TestTipsWellsAlignedWeirdPlate(t *testing.T) {
+	plate := makeTestPlate(16, 24, 4, 4)
 
 	tests := []*tipsWellsAlignedTest{
 		{
@@ -272,7 +282,7 @@ func TestTipsWellsAligned768Plate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "Agarplateforpicking768",
+			Plate:         plate,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
 		},
@@ -281,8 +291,17 @@ func TestTipsWellsAligned768Plate(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Platetype:     "Agarplateforpicking768",
-			WellAddresses: []string{"A1", "D1"}, //the wells are 3.1 mm apart so you can't actually do this
+			Plate:         plate,
+			WellAddresses: []string{"A1", "B1"}, //the wells are 4 mm apart so you can't actually do this
+			Expected:      false,
+		},
+		{
+			Name:          "non-independent can't spread adaptors",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Plate:         plate,
+			WellAddresses: []string{"A1", "C1"}, //the wells are 8 mm apart so you can't actually do this
 			Expected:      false,
 		},
 	}

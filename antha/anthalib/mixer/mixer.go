@@ -206,7 +206,6 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	if opt.Destination != nil {
 		r.ContainerType = opt.Destination.Type
 		r.Platetype = opt.Destination.Type
-		r.SetPlateID(opt.Destination.ID)
 		r.OutPlate = opt.Destination
 
 		// if we know the well as well we should ensure that non-empty wells are respected
@@ -233,6 +232,11 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 				cmps = append(cmps, opt.Components...)
 				opt.Components = cmps
 				r.Components = wtype.CopyComponentArray(cmps)
+
+			} else {
+				// only set the destination ID if it isn't a mix-in-place
+				r.SetPlateID(opt.Destination.ID)
+
 			}
 			// empty wells stay empty
 			//r.Result.Loc = r.OutPlate.ID + ":" + opt.Address

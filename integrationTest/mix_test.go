@@ -1,12 +1,19 @@
 package main
 
-import "testing"
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/microarch/driver/liquidhandling"
+	"github.com/antha-lang/antha/microarch/scheduler/liquidhandling"
+	"testing"
+)
 
-func TestMixInPlace(t *testing.T) {
+type TestCase struct {
+	Options mixer.MixOptions
 }
-func TestMixNamed(t *testing.T) {
-}
-func TestMix(t *testing.T) {
-}
-func TestMixInto(t *testing.T) {
+
+func Test(t *testing.T) {
+
+	test := func(name string, t *testing.T) {
+		robot := MakeGilsonWithPlatesAndTipboxForTest("pcrplate_skirted_riser20")
+	}
 }

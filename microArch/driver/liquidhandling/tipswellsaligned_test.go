@@ -2,10 +2,295 @@ package liquidhandling
 
 import (
 	"context"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"testing"
 )
+
+type tipsWellsAlignedTest struct {
+	Name          string                   //to identify the test
+	Independent   bool                     //is the head capable of independent multi channel
+	Orientation   wtype.ChannelOrientation //what orientation is the channel
+	Multi         int                      //number of channels
+	Platetype     string                   //the plate type to use from testinventory
+	WellAddresses []string                 //well addresses that we want to move to
+	Expected      bool
+}
+
+func (self *tipsWellsAlignedTest) Run(t *testing.T) {
+	t.Run(self.Name, self.run)
+}
+
+func (self *tipsWellsAlignedTest) run(t *testing.T) {
+	ctx := testinventory.NewContext(context.Background())
+
+	plate, err := inventory.NewPlate(ctx, self.Platetype)
+	if err != nil {
+		t.Error(err)
+	}
+
+	head := &wtype.LHHead{
+		Adaptor: &wtype.LHAdaptor{
+			Params: &wtype.LHChannelParameter{
+				Independent: self.Independent,
+				Orientation: self.Orientation,
+				Multi:       self.Multi,
+			},
+		},
+	}
+
+	if g := TipsWellsAligned(nil, head, plate, self.WellAddresses); g != self.Expected {
+		t.Errorf("got %t, expected %t", g, self.Expected)
+	}
+}
+
+func TestTipsWellsAlignedVChannelPCRPlate(t *testing.T) {
+
+	tests := []*tipsWellsAlignedTest{
+		{
+			Name:          "non-independent 8-well in A1",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent 8-well in A1-H1",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
+			Expected:      true,
+		},
+		{
+			Name:          "wrong rows",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "C1"},
+			Expected:      false,
+		},
+		{
+			Name:          "wrong columns",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "B2"},
+			Expected:      false,
+		},
+		{
+			Name:          "wrong order",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"B1", "A1"},
+			Expected:      false,
+		},
+		{
+			Name:          "independent rows",
+			Independent:   true,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "C1"},
+			Expected:      true,
+		},
+		{
+			Name:          "independent columns",
+			Independent:   true,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "B2"},
+			Expected:      false,
+		},
+		{
+			Name:          "independent wrong order",
+			Independent:   true,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"B1", "A1"},
+			Expected:      false,
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
+
+	tests := []*tipsWellsAlignedTest{
+		{
+			Name:          "non-independent 8-well in A1",
+			Independent:   false,
+			Orientation:   wtype.LHHChannel,
+			Multi:         12,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent 8-well in A1-H1",
+			Independent:   false,
+			Orientation:   wtype.LHHChannel,
+			Multi:         12,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"},
+			Expected:      true,
+		},
+		{
+			Name:          "wrong rows",
+			Independent:   false,
+			Orientation:   wtype.LHHChannel,
+			Multi:         12,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "B2"},
+			Expected:      false,
+		},
+		{
+			Name:          "wrong columns",
+			Independent:   false,
+			Orientation:   wtype.LHHChannel,
+			Multi:         12,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "B1"},
+			Expected:      false,
+		},
+		{
+			Name:          "wrong order",
+			Independent:   false,
+			Orientation:   wtype.LHHChannel,
+			Multi:         12,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A2", "A1"},
+			Expected:      false,
+		},
+		{
+			Name:          "independent rows",
+			Independent:   true,
+			Orientation:   wtype.LHHChannel,
+			Multi:         12,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "A3"},
+			Expected:      true,
+		},
+		{
+			Name:          "independent columns",
+			Independent:   true,
+			Orientation:   wtype.LHHChannel,
+			Multi:         12,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A1", "B2"},
+			Expected:      false,
+		},
+		{
+			Name:          "independent wrong order",
+			Independent:   true,
+			Orientation:   wtype.LHHChannel,
+			Multi:         12,
+			Platetype:     "pcrplate",
+			WellAddresses: []string{"A2", "A1"},
+			Expected:      false,
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestTipsWellsAligned384Plate(t *testing.T) {
+
+	tests := []*tipsWellsAlignedTest{
+		{
+			Name:          "non-independent 8-well in A1",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "greiner384",
+			WellAddresses: []string{"A1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent every other well",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "greiner384",
+			WellAddresses: []string{"A1", "C1", "E1", "G1", "I1", "K1", "M1", "O1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent every other well offset",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "greiner384",
+			WellAddresses: []string{"B1", "D1", "F1", "H1", "J1", "L1", "N1", "P1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent can't skip wells",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "greiner384",
+			WellAddresses: []string{"A1", "C1", "E1", "I1", "K1", "M1", "O1"}, //missing G1
+			Expected:      false,
+		},
+		{
+			Name:          "non-independent can't do adjacent wells",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "greiner384",
+			WellAddresses: []string{"A1", "B1"},
+			Expected:      false,
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestTipsWellsAligned768Plate(t *testing.T) {
+
+	tests := []*tipsWellsAlignedTest{
+		{
+			Name:          "non-independent 8-well in A1",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "Agarplateforpicking768",
+			WellAddresses: []string{"A1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent can't spread adaptors",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Platetype:     "Agarplateforpicking768",
+			WellAddresses: []string{"A1", "D1"}, //the wells are 3.1 mm apart so you can't actually do this
+			Expected:      false,
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
 
 func TestAssertWFContiguousNonEmpty(t *testing.T) {
 	names := []string{"Empty", "OneContiguous", "TwoContiguous", "TwoDiscontiguous", "TrailingSpaces"}

@@ -49,11 +49,6 @@ const (
 	parserMode = parser.ParseComments
 )
 
-// execution variables
-var (
-	fileSet = token.NewFileSet() // per process FileSet
-)
-
 var (
 	errNotAnthaFile = errors.New("not antha file")
 )
@@ -167,6 +162,7 @@ func processFile(root *compile.AnthaRoot, filename, outdir string) error {
 		return err
 	}
 
+	fileSet := token.NewFileSet() // per process FileSet
 	file, adjust, err := parse(fileSet, filename, src, false)
 	if err != nil {
 		return err

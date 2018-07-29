@@ -2,8 +2,8 @@ package ast
 
 // A NameValue is a name-value pair
 type NameValue struct {
-	Name  string
-	Value string
+	Name string
+	//	Value string
 }
 
 // A Request is set of required device capabilities

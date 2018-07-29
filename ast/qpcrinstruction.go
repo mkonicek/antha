@@ -22,7 +22,20 @@ func (ins QPCRInstruction) String() string {
 
 // NewQPCRInstruction creates a new QPCRInstruction
 func NewQPCRInstruction() *QPCRInstruction {
-	var inst QPCRInstruction
-	inst.ID = wtype.GetUUID()
-	return &inst
+	return &QPCRInstruction{
+		ID: wtype.GetUUID(),
+	}
+}
+
+type QPCRExpectDataInstruction struct {
+	*QPCRInstruction
+	ID      string
+	Options []string
+}
+
+func NewQPCRExpectDataInstruction(parent *QPCRInstruction) *QPCRExpectDataInstruction {
+	return &QPCRExpectDataInstruction{
+		QPCRInstruction: parent,
+		ID:              wtype.GetUUID(),
+	}
 }

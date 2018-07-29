@@ -22,32 +22,32 @@ const (
 // Well known device plugins (drivers) selectors
 var (
 	DriverSelectorV1Human = ast.NameValue{
-		Name:  DriverSelectorV1Name,
-		Value: "antha.human.v1.Human",
+		Name: DriverSelectorV1Name,
+		//		Value: "antha.human.v1.Human",
 	}
 	DriverSelectorV1ShakerIncubator = ast.NameValue{
-		Name:  DriverSelectorV1Name,
-		Value: "antha.shakerincubator.v1.ShakerIncubator",
+		Name: DriverSelectorV1Name,
+		//		Value: "antha.shakerincubator.v1.ShakerIncubator",
 	}
 	DriverSelectorV1Mixer = ast.NameValue{
-		Name:  DriverSelectorV1Name,
-		Value: "antha.mixer.v1.Mixer",
+		Name: DriverSelectorV1Name,
+		//		Value: "antha.mixer.v1.Mixer",
 	}
 	DriverSelectorV1Prompter = ast.NameValue{
-		Name:  DriverSelectorV1Name,
-		Value: "antha.prompter.v1.Prompter",
+		Name: DriverSelectorV1Name,
+		//		Value: "antha.prompter.v1.Prompter",
 	}
 	DriverSelectorV1DataSource = ast.NameValue{
-		Name:  DriverSelectorV1Name,
-		Value: "antha.datasource.v1.DataSource",
+		Name: DriverSelectorV1Name,
+		//		Value: "antha.datasource.v1.DataSource",
 	}
 	DriverSelectorV1WriteOnlyPlateReader = ast.NameValue{
-		Name:  DriverSelectorV1Name,
-		Value: "antha.platereader.v1.PlateReader",
+		Name: DriverSelectorV1Name,
+		//		Value: "antha.platereader.v1.PlateReader",
 	}
 	DriverSelectorV1QPCRDevice = ast.NameValue{
-		Name:  DriverSelectorV1Name,
-		Value: "antha.quantstudio.v1.QuantStudioService",
+		Name: DriverSelectorV1Name,
+		//		Value: "antha.quantstudio.v1.QuantStudioService",
 	}
 )
 

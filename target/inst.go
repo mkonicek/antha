@@ -230,7 +230,7 @@ func SequentialOrder(insts ...Inst) []Inst {
 type AwaitData struct {
 	dependsMixin
 	Dev  Device
-	Inst *ast.AwaitInst
+	Inst *ast.ExpectInst
 }
 
 // Device implements an Inst

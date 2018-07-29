@@ -45,7 +45,6 @@ import (
 
 const (
 	runStepsIntrinsic   = "RunSteps"
-	awaitDataIntrinsic  = "AwaitData"
 	lineNumberConstName = "_lineNumber"
 	elementProto        = "element.proto"
 	elementPackage      = "element"
@@ -208,6 +207,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Electroshock":  "execute.Electroshock",
 		"ExecuteMixes":  "execute.ExecuteMixes",
 		"Errorf":        "execute.Errorf",
+		"ExpectData":    "execute.ExpectData",
 		"Handle":        "execute.Handle",
 		"Incubate":      "execute.Incubate",
 		"Mix":           "execute.Mix",
@@ -1612,125 +1612,6 @@ func (p *Antha) inspectParamUses(node ast.Node) bool {
 	return true
 }
 
-type awaitDataPrototype struct {
-	Annotatee     *ast.Ident
-	Metadata      ast.Expr
-	NextElement   *ast.Ident
-	ReplacedParam *ast.Ident
-	Params        *ast.CompositeLit
-	Inputs        *ast.CompositeLit
-}
-
-func parseAwaitData(call *ast.CallExpr) *awaitDataPrototype {
-	if len(call.Args) != 6 {
-		return nil
-	}
-
-	annotatee, ok := call.Args[0].(*ast.Ident)
-	if !ok {
-		return nil
-	}
-
-	metadata := call.Args[1]
-
-	nextElement, ok := call.Args[2].(*ast.Ident)
-	if !ok {
-		return nil
-	}
-
-	replacedParam, ok := call.Args[3].(*ast.Ident)
-	if !ok {
-		return nil
-	}
-
-	params, ok := call.Args[4].(*ast.CompositeLit)
-	if !ok {
-		return nil
-	}
-
-	inputs, ok := call.Args[5].(*ast.CompositeLit)
-	if !ok {
-		return nil
-	}
-
-	return &awaitDataPrototype{
-		Annotatee:     annotatee,
-		Metadata:      metadata,
-		NextElement:   nextElement,
-		ReplacedParam: replacedParam,
-		Params:        params,
-		Inputs:        inputs,
-	}
-}
-
-// rewriteAwaitData transforms
-//   AwaitData(
-//   	annotatee,
-//      metadata,
-// 		nextElement,
-//      replacedParam,
-// 		nextParameters,
-// 		nextInput)
-// to
-//   execute.AwaitData(
-//		_ctx,
-//		annotatee,
-// 		metadata,
-//		nextElement,
-//      replacedParam,
-// 		inject.MakeValue(nextParams + nextInput),
-//      inject.MakeValue(_output))
-func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
-	proto := parseAwaitData(call)
-	if proto == nil {
-		var p awaitDataPrototype
-		throwErrorf(call.Pos(),
-			"expecting %s(%s) found %s(%s)",
-			awaitDataIntrinsic,
-			strings.Join(typesToString(p.Annotatee, p.Metadata, p.NextElement, p.ReplacedParam, p.Params, p.Inputs), ","),
-			awaitDataIntrinsic,
-			strings.Join(typesToString(call.Args...), ","),
-		)
-	}
-
-	nextElement := ""
-	nextElementArgs := &ast.CompositeLit{Type: mustParseExpr("model.Input"), Elts: []ast.Expr{}}
-
-	// indirect over next element stuff
-	if proto.NextElement.Name != "nil" {
-		modelPkg := path.Join(p.root.outputPackageBase, proto.NextElement.Name, modelPackage)
-		modelReq := p.addExternalPackage(modelPkg)
-		nextElement = proto.NextElement.Name
-		nextElementArgs = &ast.CompositeLit{
-			Type: mustParseExpr(modelReq.Name + ".Input"),
-			Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
-		}
-	}
-
-	call.Fun = mustParseExpr("execute." + awaitDataIntrinsic)
-
-	call.Args = []ast.Expr{
-		ast.NewIdent("_ctx"),
-		proto.Annotatee,
-		proto.Metadata,
-		&ast.BasicLit{
-			Kind:  token.STRING,
-			Value: strconv.Quote(nextElement),
-		},
-		&ast.BasicLit{
-			Kind:  token.STRING,
-			Value: strconv.Quote(proto.ReplacedParam.Name),
-		},
-		mustParseExpr("inject.MakeValue(_output)"),
-		&ast.CallExpr{
-			Fun: mustParseExpr("inject.MakeValue"),
-			Args: []ast.Expr{
-				nextElementArgs,
-			},
-		},
-	}
-}
-
 type runStepsPrototype struct {
 	Callee *ast.Ident
 	Params *ast.CompositeLit
@@ -1818,8 +1699,6 @@ func (p *Antha) inspectIntrinsics(node ast.Node) bool {
 
 		if ident.Name == runStepsIntrinsic {
 			p.rewriteRunSteps(n)
-		} else if ident.Name == awaitDataIntrinsic {
-			p.rewriteAwaitData(n)
 		} else if desugar, ok := p.intrinsics[ident.Name]; ok {
 			ident.Name = desugar
 			n.Args = append([]ast.Expr{ast.NewIdent("_ctx")}, n.Args...)

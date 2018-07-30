@@ -17,6 +17,10 @@ const (
 	LVMaxRate = 3.75
 )
 
+func defaultTipList() []string {
+	return []string{"Gilson20", "Gilson200"}
+}
+
 func MakeGilsonForTest(tipList []string) *LHProperties { //nolint
 	ctx := testinventory.NewContext(context.Background())
 	return makeGilsonForTest(ctx, tipList)

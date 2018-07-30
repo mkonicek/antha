@@ -83,10 +83,6 @@ func getTypes2() []string {
 	return ret
 }
 
-func defaultTipList() []string {
-	return []string{"Gilson20", "Gilson200"}
-}
-
 func TestDefaultChooser(t *testing.T) {
 	vols := getVols()
 	lhp := MakeGilsonForTest(defaultTipList())

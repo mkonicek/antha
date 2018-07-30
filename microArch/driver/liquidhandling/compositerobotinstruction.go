@@ -3374,6 +3374,7 @@ func getFirstDefined(sa []string) int {
 	return x
 }
 
+// GetTips finds clean tips of the specified types to fill up the non-empty slots in the channel array
 func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, channel []*wtype.LHChannelParameter, usetiptracking bool) ([]RobotInstruction, error) {
 	// GetCleanTips returns enough sets of tip boxes to get all distinct tip types
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(ctx, tiptypes, channel, usetiptracking)

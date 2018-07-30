@@ -498,6 +498,7 @@ func (lhp *LHProperties) TipsLeftOfType(tiptype string) int {
 
 func (lhp *LHProperties) AddTipBox(tipbox *wtype.LHTipbox) error {
 	for _, pref := range lhp.Tip_preferences {
+
 		if lhp.PosLookup[pref] != "" {
 			continue
 		}
@@ -824,7 +825,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wuni
 }
 
 func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
-
 	// these are merged into subsets with tip and channel types in common here
 	// each subset has a mask which is the same size as the number of channels available
 	subsets, err2 := makeChannelSubsets(tiptype, channel)
@@ -880,6 +880,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 
 	for _, pos := range lhp.Tip_preferences {
 		bx, ok := lhp.Tipboxes[pos]
+
 		if !ok || bx.Tiptype.Type != tipParams.TipType {
 			continue
 		}

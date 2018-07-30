@@ -39,7 +39,7 @@ const InPlaceMarker = "-INPLACE"
 // Liquid describes a liquid component and its desired properties
 type LHComponent = Liquid
 
-// Liquid is the principle liquid handling type in Antha.
+// Liquid is the principal liquid handling type in Antha.
 // A liquid describes a liquid component and its desired properties
 type Liquid struct {
 	ID                 string
@@ -793,6 +793,21 @@ func (lhc *Liquid) GetType() string {
 	return typeName.String()
 }
 
+// NewLiquid is a constructor for liquid
+// with specific properties
+func NewLiquid(name string, volume float64, vunit string, liquidType LiquidType) *Liquid {
+	l := NewLHComponent()
+
+	l.CName = name
+	l.Vol = volume
+	l.Vunit = vunit
+	l.Type = liquidType
+
+	return l
+}
+
+// New LHComponent is a constructor for liquid
+// maintained for backward compatibility
 func NewLHComponent() *Liquid {
 	var lhc Liquid
 	//lhc.ID = "component-" + GetUUID()

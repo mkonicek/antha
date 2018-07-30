@@ -927,6 +927,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	forceSanity(request)
 	anotherSanityCheck(request)
 
+	// check here
+
 	// assert: all instructions should now be assigned specific plate IDs, types and wells
 	checkDestinationSanity(request)
 

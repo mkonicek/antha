@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	xOffset = 14.38
+	xOffset = 14.28
 	yOffset = 11.24
 	sbsX    = 127.76
 	sbsY    = 85.48

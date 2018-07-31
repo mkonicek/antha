@@ -1,8 +1,6 @@
 package liquidhandling
 
 import (
-	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
@@ -18,15 +16,76 @@ func CopyComponentArray(arin []*wtype.Liquid) []*wtype.Liquid {
 	return r
 }
 
+//GetChannelOffset get the smallest possible distance between successive channels
+func GetSmallestChannelOffset(head *wtype.LHHead) wtype.Coordinates {
+
+	//hjk: currently assume a constant fixed offset between channels
+	//     this will need updating when we support better reporting of head
+	//     capabilities wrt. independent multi-channelling
+	channelStep := 9.0 //9mm between channels
+	channelOffset := wtype.Coordinates{}
+	if head.GetParams().Orientation == wtype.LHVChannel {
+		channelOffset.Y = channelStep
+	} else {
+		channelOffset.X = channelStep
+	}
+
+	return channelOffset
+}
+
+//GetMostCompactChannelPositions get the relative channel positions for the head
+//in the most tightly bunched layout supported
+func GetMostCompactChannelPositions(head *wtype.LHHead) []wtype.Coordinates {
+	ret := make([]wtype.Coordinates, head.GetParams().Multi)
+	offset := GetSmallestChannelOffset(head)
+	last := wtype.Coordinates{}
+
+	for i := range ret {
+		last = last.Add(offset)
+		ret[i] = last
+	}
+
+	return ret
+}
+
+//GetWellTargets get the offset from the center of the well for each channel that
+//can access the well simultaneously
+//returns nil if the well cannot fit multiple channels
+func GetWellTargets(head *wtype.LHHead, well *wtype.LHWell) []wtype.Coordinates {
+	channelPositions := GetMostCompactChannelPositions(head)
+	channelRadius := 3.0 //should come from head
+
+	//total size of channels, including radius
+	channelSize := channelPositions[len(channelPositions)-1].Add(wtype.Coordinates{X: 2 * channelRadius, Y: 2 * channelRadius})
+
+	if wellSize := well.GetSize(); wellSize.X < channelSize.X || wellSize.Y < channelSize.Y {
+		return nil
+	}
+
+	center := wtype.Coordinates{}
+	for _, pos := range channelPositions {
+		center = center.Add(pos)
+	}
+	center = center.Divide(float64(len(channelPositions)))
+
+	for i := range channelPositions {
+		channelPositions[i] = channelPositions[i].Subtract(center)
+	}
+
+	return channelPositions
+}
+
 //CanHeadReach return true if the head can service the given addresses in the given object
 //simultaneously.
 //addresses is a slice of well addresses which should be serviced by successive channels of
 //the head, eg. ["A1", "B1", "", "D1",] means channels 0, 1, and 3 should address wells
 //A1, B1, and D1 respectively and channels 2 and 4-7 should not be used
-func CanHeadReach(head *wtype.LHHead, target wtype.Addressable, addresses []wtype.WellCoords) bool {
+func CanHeadReach(head *wtype.LHHead, plate *wtype.LHPlate, addresses []wtype.WellCoords) bool {
 	if len(addresses) > head.GetParams().Multi {
 		return false
 	}
+
+	wellTargets := GetWellTargets(head, plate.Welltype)
 
 	//get the real world position of the addresses
 	coords := make([]*wtype.Coordinates, head.GetParams().Multi)
@@ -37,16 +96,15 @@ func CanHeadReach(head *wtype.LHHead, target wtype.Addressable, addresses []wtyp
 		}
 
 		//we're not particularly interested in the z dimension, so just use topreference
-		crd, ok := target.WellCoordsToCoords(address, wtype.TopReference)
+		crd, ok := plate.WellCoordsToCoords(address, wtype.TopReference)
 		if !ok {
 			//can't address a well which doesn't exist
 			return false
 		}
 
 		//add well target offset if the well supports multiple tips at once
-		if targetted, ok := target.(wtype.Targetted); ok {
-			fmt.Printf("Adding target offset: %v\n", targetted.GetTargetOffset(head.Adaptor.Name, channel))
-			crd = crd.Add(targetted.GetTargetOffset(head.Adaptor.Name, channel))
+		if wellTargets != nil {
+			crd = crd.Add(wellTargets[channel%len(wellTargets)])
 		}
 
 		coords[channel] = &crd
@@ -63,17 +121,8 @@ func CanHeadReach(head *wtype.LHHead, target wtype.Addressable, addresses []wtyp
 		}
 	}
 
-	//hjk: currently assume a constant fixed offset between channels
-	//     this will need updating when we support better reporting of head
-	//     capabilities wrt. independent multi-channelling
-	channelStep := 9.0 //9mm between channels
-	machineTol := 0.1  //should also come from the head
-	channelOffset := wtype.Coordinates{}
-	if head.GetParams().Orientation == wtype.LHVChannel {
-		channelOffset.Y = channelStep
-	} else {
-		channelOffset.X = channelStep
-	}
+	channelOffset := GetSmallestChannelOffset(head)
+	machineTol := 0.1 //should also come from the head
 
 	//check that the positioning requested for each channel is allowable
 	var lastPos *wtype.Coordinates

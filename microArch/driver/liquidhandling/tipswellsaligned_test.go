@@ -275,7 +275,8 @@ func TestCanHeadReach384Plate(t *testing.T) {
 }
 
 func TestCanHeadReachTrough(t *testing.T) {
-	plate := makeTestPlate(1, 12, 4, 4)
+	troughY := makeTestPlate(8, 1, 4, 4)
+	troughX := makeTestPlate(1, 12, 4, 4)
 
 	tests := []*canHeadReachTest{
 		{
@@ -283,7 +284,7 @@ func TestCanHeadReachTrough(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Plate:         plate,
+			Plate:         troughY,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
 		},
@@ -292,18 +293,27 @@ func TestCanHeadReachTrough(t *testing.T) {
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
-			Plate:         plate,
+			Plate:         troughY,
 			WellAddresses: []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
 			Expected:      true,
 		},
 		{
-			Name:          "non-independent can't skip channels",
+			Name:          "non-independent in A1",
 			Independent:   false,
-			Orientation:   wtype.LHVChannel,
+			Orientation:   wtype.LHHChannel,
 			Multi:         8,
-			Plate:         plate,
-			WellAddresses: []string{"A1", "A1", "A1", "", "A1", "A1", "A1", "A1"},
-			Expected:      false,
+			Plate:         troughX,
+			WellAddresses: []string{"A1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent all channels in A1",
+			Independent:   false,
+			Orientation:   wtype.LHHChannel,
+			Multi:         8,
+			Plate:         troughX,
+			WellAddresses: []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
+			Expected:      true,
 		},
 	}
 

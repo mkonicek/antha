@@ -18,7 +18,7 @@ func makeTestPlate(wellsX, wellsY int, offsetX, offsetY float64) *wtype.LHPlate 
 	return wtype.NewLHPlate("testplate", "", wellsX, wellsY, plateSize, well, offsetX, offsetY, 0.0, 0.0, 0.0)
 }
 
-type tipsWellsAlignedTest struct {
+type canHeadReachTest struct {
 	Name          string                   //to identify the test
 	Independent   bool                     //is the head capable of independent multi channel
 	Orientation   wtype.ChannelOrientation //what orientation is the channel
@@ -28,11 +28,11 @@ type tipsWellsAlignedTest struct {
 	Expected      bool
 }
 
-func (self *tipsWellsAlignedTest) Run(t *testing.T) {
+func (self *canHeadReachTest) Run(t *testing.T) {
 	t.Run(self.Name, self.run)
 }
 
-func (self *tipsWellsAlignedTest) run(t *testing.T) {
+func (self *canHeadReachTest) run(t *testing.T) {
 
 	head := &wtype.LHHead{
 		Adaptor: &wtype.LHAdaptor{
@@ -44,16 +44,17 @@ func (self *tipsWellsAlignedTest) run(t *testing.T) {
 		},
 	}
 
-	if g := TipsWellsAligned(head, self.Plate, self.WellAddresses); g != self.Expected {
+	wc := wtype.WCArrayFromStrings(self.WellAddresses)
+	if g := CanHeadReach(head, self.Plate, wc); g != self.Expected {
 		t.Errorf("got %t, expected %t", g, self.Expected)
 	}
 }
 
-func TestTipsWellsAlignedVChannel96Plate(t *testing.T) {
+func TestCanHeadReachVChannel96Plate(t *testing.T) {
 
 	plate := makeTestPlate(8, 12, 9.0, 9.0)
 
-	tests := []*tipsWellsAlignedTest{
+	tests := []*canHeadReachTest{
 		{
 			Name:          "non-independent 8-well in A1",
 			Independent:   false,
@@ -105,7 +106,7 @@ func TestTipsWellsAlignedVChannel96Plate(t *testing.T) {
 			Orientation:   wtype.LHVChannel,
 			Multi:         8,
 			Plate:         plate,
-			WellAddresses: []string{"A1", "C1"},
+			WellAddresses: []string{"A1", "", "C1"},
 			Expected:      true,
 		},
 		{
@@ -133,10 +134,10 @@ func TestTipsWellsAlignedVChannel96Plate(t *testing.T) {
 	}
 }
 
-func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
+func TestCanHeadReachHChannelPCRPlate(t *testing.T) {
 	plate := makeTestPlate(8, 12, 9.0, 9.0)
 
-	tests := []*tipsWellsAlignedTest{
+	tests := []*canHeadReachTest{
 		{
 			Name:          "non-independent 8-well in A1",
 			Independent:   false,
@@ -188,7 +189,7 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 			Orientation:   wtype.LHHChannel,
 			Multi:         12,
 			Plate:         plate,
-			WellAddresses: []string{"A1", "A3"},
+			WellAddresses: []string{"A1", "", "A3"},
 			Expected:      true,
 		},
 		{
@@ -216,11 +217,11 @@ func TestTipsWellsAlignedHChannelPCRPlate(t *testing.T) {
 	}
 }
 
-func TestTipsWellsAligned384Plate(t *testing.T) {
+func TestCanHeadReach384Plate(t *testing.T) {
 
 	plate := makeTestPlate(16, 24, 4.5, 4.5)
 
-	tests := []*tipsWellsAlignedTest{
+	tests := []*canHeadReachTest{
 		{
 			Name:          "non-independent 8-well in A1",
 			Independent:   false,
@@ -273,10 +274,10 @@ func TestTipsWellsAligned384Plate(t *testing.T) {
 	}
 }
 
-func TestTipsWellsAlignedWeirdPlate(t *testing.T) {
+func TestCanHeadReachWeirdPlate(t *testing.T) {
 	plate := makeTestPlate(16, 24, 4, 4)
 
-	tests := []*tipsWellsAlignedTest{
+	tests := []*canHeadReachTest{
 		{
 			Name:          "non-independent 8-well in A1",
 			Independent:   false,

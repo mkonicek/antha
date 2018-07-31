@@ -16,6 +16,85 @@ func CopyComponentArray(arin []*wtype.Liquid) []*wtype.Liquid {
 	return r
 }
 
+//CanHeadReach return true if the head can service the given addresses in the given object
+//simultaneously.
+//addresses is a slice of well addresses which should be serviced by successive channels of
+//the head, eg. ["A1", "B1", "", "D1",] means channels 0, 1, and 3 should address wells
+//A1, B1, and D1 respectively and channels 2 and 4-7 should not be used
+func CanHeadReach(head *wtype.LHHead, target wtype.Addressable, addresses []wtype.WellCoords) bool {
+	if len(addresses) > head.GetParams().Multi {
+		return false
+	}
+
+	//get the real world position of the addresses
+	coords := make([]*wtype.Coordinates, head.GetParams().Multi)
+	for channel, address := range addresses {
+		//indicates the channel should not be used
+		if address.IsZero() {
+			continue
+		}
+
+		//we're not particularly interested in the z dimension, so just use topreference
+		crd, ok := target.WellCoordsToCoords(address, wtype.TopReference)
+		if !ok {
+			//can't address a well which doesn't exist
+			return false
+		}
+
+		//add well target offset if the well supports multiple tips at once
+		if targetted, ok := target.(wtype.Targetted); ok {
+			crd = crd.Add(targetted.GetTargetOffset(head.Adaptor.Name, channel))
+		}
+
+		coords[channel] = &crd
+	}
+
+	if !head.GetParams().Independent {
+		//non-independent heads can only use contiguous channels
+		seenNil := false
+		for _, crd := range coords {
+			if seenNil && crd != nil {
+				return false
+			}
+			seenNil = seenNil || crd == nil
+		}
+	}
+
+	//hjk: currently assume a constant fixed offset between channels
+	//     this will need updating when we support better reporting of head
+	//     capabilities wrt. independent multi-channelling
+	channelStep := 9.0 //9mm between channels
+	machineTol := 0.1  //should also come from the head
+	channelOffset := wtype.Coordinates{}
+	if head.GetParams().Orientation == wtype.LHVChannel {
+		channelOffset.Y = channelStep
+	} else {
+		channelOffset.X = channelStep
+	}
+
+	//check that the positioning requested for each channel is allowable
+	var lastPos *wtype.Coordinates
+	var expectedOffset wtype.Coordinates
+	for _, pos := range coords {
+		if lastPos == nil {
+			lastPos = pos
+			continue
+		}
+		expectedOffset = expectedOffset.Add(channelOffset)
+		if pos != nil {
+			actualOffset := pos.Subtract(*lastPos)
+			//if the difference in the XY direction only is greater than machine error
+			if actualOffset.Subtract(expectedOffset).AbsXY() > machineTol {
+				return false
+			}
+			lastPos = pos
+			expectedOffset = wtype.Coordinates{}
+		}
+	}
+
+	return true
+}
+
 func TipsWellsAligned(head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
 
 	// heads which can do independent multichanneling are dealt with separately

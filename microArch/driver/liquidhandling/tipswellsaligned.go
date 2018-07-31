@@ -1,6 +1,8 @@
 package liquidhandling
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
@@ -81,7 +83,10 @@ func GetWellTargets(head *wtype.LHHead, well *wtype.LHWell) []wtype.Coordinates 
 //the head, eg. ["A1", "B1", "", "D1",] means channels 0, 1, and 3 should address wells
 //A1, B1, and D1 respectively and channels 2 and 4-7 should not be used
 func CanHeadReach(head *wtype.LHHead, plate *wtype.LHPlate, addresses []wtype.WellCoords) bool {
+	fmt.Printf("CanHeadReach(Head{Ind: %t, Multi: %d}, Plate{rows: %d, cols: %d, wellSize: %v}, %v)\n",
+		head.GetParams().Independent, head.GetParams().Multi, plate.NRows(), plate.NCols(), plate.Welltype.GetSize(), addresses)
 	if len(addresses) > head.GetParams().Multi {
+		fmt.Println("urch")
 		return false
 	}
 

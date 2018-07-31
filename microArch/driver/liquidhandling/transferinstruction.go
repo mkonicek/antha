@@ -289,7 +289,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	// check source / tip alignment
-	if !TipsWellsAligned(robot, head, fromPlate, ins.Transfers[which].WellFrom()) {
+	if !TipsWellsAligned(head, fromPlate, ins.Transfers[which].WellFrom()) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
@@ -310,7 +310,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	// for safety, check dest / tip alignment
-	if !TipsWellsAligned(robot, head, toPlate, ins.Transfers[which].WellTo()) {
+	if !TipsWellsAligned(head, toPlate, ins.Transfers[which].WellTo()) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false

@@ -16,18 +16,17 @@ func CopyComponentArray(arin []*wtype.Liquid) []*wtype.Liquid {
 	return r
 }
 
-// are tips going to align to wells?
-func TipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
+func TipsWellsAligned(head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
 
 	// heads which can do independent multichanneling are dealt with separately
 	if head.Adaptor.Params.Independent {
-		return disContiguousTipsWellsAligned(robot, head, plt, wellsfrom)
+		return disContiguousTipsWellsAligned(head, plt, wellsfrom)
 	} else {
-		return contiguousTipsWellsAligned(robot, head, plt, wellsfrom)
+		return contiguousTipsWellsAligned(head, plt, wellsfrom)
 	}
 }
 
-func disContiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
+func disContiguousTipsWellsAligned(head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
 	prm := head.Adaptor.Params
 	// inflate wellsfrom to full multichannel size
 	fullWellsFrom, ok := expandWellsFrom(prm.Orientation, *plt, wellsfrom)
@@ -130,7 +129,7 @@ func assertWFContiguousNonEmpty(sa []string) bool {
 	return found
 }
 
-func contiguousTipsWellsAligned(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
+func contiguousTipsWellsAligned(head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {
 
 	//can't multi channel with 2-7 wells per column
 	if plt.NRows() != 1 && plt.NRows()%8 != 0 {
@@ -283,7 +282,7 @@ func FirstIndexInStrArray(s string, a []string) int {
 	return -1
 }
 
-func physicalTipCheck(robot *LHProperties, head *wtype.LHHead, plt *wtype.Plate, wellsFrom []string) bool { //nolint used by tests
+func physicalTipCheck(head *wtype.LHHead, plt *wtype.Plate, wellsFrom []string) bool { //nolint used by tests
 	// assumptions
 	// 1 - first tip is aligned with the middle of first well
 	// 2 - each subsequent tip is a constant (9mm) distance from the first in whichever orientation

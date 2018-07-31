@@ -44,7 +44,7 @@ func (self *tipsWellsAlignedTest) run(t *testing.T) {
 		},
 	}
 
-	if g := TipsWellsAligned(nil, head, self.Plate, self.WellAddresses); g != self.Expected {
+	if g := TipsWellsAligned(head, self.Plate, self.WellAddresses); g != self.Expected {
 		t.Errorf("got %t, expected %t", g, self.Expected)
 	}
 }
@@ -355,9 +355,7 @@ func TestPhysicalTipCheck(t *testing.T) {
 		}
 
 		testFunc := func(t *testing.T) {
-			// func physicalTipCheck(robot *LHProperties, head *wtype.LHHead, plt *wtype.LHPlate, wellsFrom []string) bool
-
-			got := physicalTipCheck(robot, head, p, wf)
+			got := physicalTipCheck(head, p, wf)
 			if got != want {
 				t.Errorf("Expected %v got %v ", want, got)
 			}

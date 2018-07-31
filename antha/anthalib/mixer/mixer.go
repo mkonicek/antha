@@ -199,7 +199,6 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 			}
 		}
 
-		wtype.UpdateComponentDetails(r.Results[0], opt.Components...) //nolint
 		r.Results[0].SetGeneration(mx)
 	}
 

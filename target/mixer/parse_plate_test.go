@@ -11,6 +11,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/pkg/errors"
 )
 
 func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.Liquid {
@@ -91,7 +92,7 @@ func samePlate(a, b *wtype.Plate) error {
 		}
 
 		if err := wtype.EqualLists(compA.SubComponents, compB.SubComponents); err != nil {
-			return err
+			return errors.Errorf("%s: %+v != %+v", err.Error(), compA.SubComponents, compB.SubComponents)
 		}
 	}
 
@@ -255,7 +256,7 @@ A6,,,0,ul,0,g/l,
 		{
 			File: []byte(
 				`
-pcrplate_with_cooler, afternoon tea tray, LiquidType, Vol,Vol Unit,Conc,Conc Unit, , ,SubComponents
+pcrplate_with_cooler, afternoon tea tray, LiquidType, Vol,Vol Unit,Conc,Conc Unit, , ,SubComponents,
 A1,water,water,50.0,ul,0,g/l,
 A4,tea,water,50.0,ul,10.0,mM/l, some random user text, ,tea leaves: ,5g/l,sugar:,1X,
 A5,milk,water,100.0,ul,10.0,g/l,
@@ -465,13 +466,13 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 		},
 	}
 
-	for _, tc := range suite {
+	for i, tc := range suite {
 		p, err := ParsePlateCSV(ctx, bytes.NewBuffer(tc.File), tc.ReplacementConfig)
 		if err != nil {
 			t.Error(err)
 		}
 		if err := samePlate(tc.Expected, p.Plate); err != nil {
-			t.Error(err)
+			t.Error(fmt.Sprintf("error in test %d: %s", i, err))
 		}
 		if tc.NoWarnings && len(p.Warnings) != 0 {
 			t.Errorf("found warnings: %s", p.Warnings)

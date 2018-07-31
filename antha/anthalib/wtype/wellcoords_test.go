@@ -107,3 +107,83 @@ func TestHumanizeWellCoords(t *testing.T) {
 	}
 
 }
+
+func TestWellNumber(t *testing.T) {
+	type wellNumberTest struct {
+		Well               WellCoords
+		WellsX             int
+		WellsY             int
+		ByRow              bool
+		ExpectedWellNumber int
+	}
+	var tests = []wellNumberTest{
+		{
+			Well:               MakeWellCoordsA1("A1"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              false,
+			ExpectedWellNumber: 0,
+		},
+		{
+			Well:               MakeWellCoordsA1("A1"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              true,
+			ExpectedWellNumber: 0,
+		},
+		{
+			Well:               MakeWellCoordsA1("A2"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              true,
+			ExpectedWellNumber: 1,
+		},
+		{
+			Well:               MakeWellCoordsA1("A2"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              false,
+			ExpectedWellNumber: 8,
+		},
+		{
+			Well:               MakeWellCoordsA1("B1"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              true,
+			ExpectedWellNumber: 12,
+		},
+		{
+			Well:               MakeWellCoordsA1("B1"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              false,
+			ExpectedWellNumber: 1,
+		},
+		{
+			Well:               MakeWellCoordsA1("H12"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              false,
+			ExpectedWellNumber: 95,
+		},
+		{
+			Well:               MakeWellCoordsA1("H12"),
+			WellsX:             8,
+			WellsY:             12,
+			ByRow:              true,
+			ExpectedWellNumber: 95,
+		},
+	}
+
+	for _, test := range tests {
+		num := test.Well.wellNumber(test.WellsX, test.WellsY, test.ByRow)
+
+		if num != test.ExpectedWellNumber {
+			t.Error(
+				"expected: ", test.ExpectedWellNumber, "\n",
+				"got: ", num, "\n",
+			)
+		}
+	}
+
+}

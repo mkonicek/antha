@@ -274,6 +274,44 @@ func TestCanHeadReach384Plate(t *testing.T) {
 	}
 }
 
+func TestCanHeadReachTrough(t *testing.T) {
+	plate := makeTestPlate(1, 12, 4, 4)
+
+	tests := []*canHeadReachTest{
+		{
+			Name:          "non-independent in A1",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Plate:         plate,
+			WellAddresses: []string{"A1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent all channels in A1",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Plate:         plate,
+			WellAddresses: []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent can't skip channels",
+			Independent:   false,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Plate:         plate,
+			WellAddresses: []string{"A1", "A1", "A1", "", "A1", "A1", "A1", "A1"},
+			Expected:      false,
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
 func TestCanHeadReachWeirdPlate(t *testing.T) {
 	plate := makeTestPlate(16, 24, 4, 4)
 

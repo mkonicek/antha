@@ -1,6 +1,8 @@
 package liquidhandling
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
@@ -43,6 +45,7 @@ func CanHeadReach(head *wtype.LHHead, target wtype.Addressable, addresses []wtyp
 
 		//add well target offset if the well supports multiple tips at once
 		if targetted, ok := target.(wtype.Targetted); ok {
+			fmt.Printf("Adding target offset: %v\n", targetted.GetTargetOffset(head.Adaptor.Name, channel))
 			crd = crd.Add(targetted.GetTargetOffset(head.Adaptor.Name, channel))
 		}
 

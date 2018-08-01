@@ -49,10 +49,6 @@ func (head *LHHead) dup(keepIDs bool) *LHHead {
 	return h
 }
 
-func (head *LHHead) Equal(rhs *LHHead) bool {
-	return head.Name == rhs.Name
-}
-
 //GetParams get the channel parameters of the head or the adaptor if one is loaded
 func (lhh *LHHead) GetParams() *LHChannelParameter {
 	if lhh.Adaptor == nil {

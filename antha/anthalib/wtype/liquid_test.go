@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 func TestSampleBehaviour(t *testing.T) {
@@ -50,6 +52,58 @@ func TestSampleBehaviour(t *testing.T) {
 
 	if c2.IsSample() {
 		t.Errorf("Duplicates must not remain linked")
+	}
+}
+
+func TestDup(t *testing.T) {
+	newTestComponent := func(
+		name string,
+		typ LiquidType,
+		smax float64,
+		conc wunit.Concentration,
+		vol wunit.Volume,
+		componentList ComponentList,
+	) *Liquid {
+		c := NewLHComponent()
+		c.SetName(name)
+		c.Type = typ
+		c.Smax = smax
+		c.SetConcentration(conc)
+		c.AddSubComponents(componentList)
+
+		return c
+	}
+	someComponents := ComponentList{Components: map[string]wunit.Concentration{
+		"glycerol": wunit.NewConcentration(0.25, "g/l"),
+		"IPTG":     wunit.NewConcentration(0.25, "mM/l"),
+		"water":    wunit.NewConcentration(0.25, "v/v"),
+		"LB":       wunit.NewConcentration(0.25, "X"),
+	},
+	}
+	mediaMixture := newTestComponent("LB",
+		LTWater,
+		9999,
+		wunit.NewConcentration(1, "X"),
+		wunit.NewVolume(2000.0, "ul"),
+		someComponents)
+
+	newLiquid := newTestComponent("new thing",
+		LTWater,
+		9999,
+		wunit.NewConcentration(1, "X"),
+		wunit.NewVolume(2000.0, "ul"),
+		ComponentList{})
+
+	duplicated := mediaMixture.Dup()
+
+	if err := EqualLists(mediaMixture.SubComponents, duplicated.SubComponents); err != nil {
+		t.Error(err.Error())
+	}
+
+	duplicated.AddSubComponent(newLiquid, wunit.NewConcentration(0.25, "g/l"))
+
+	if err := EqualLists(mediaMixture.SubComponents, duplicated.SubComponents); err == nil {
+		t.Error("expecting lists to no longer be equal but this is not the case")
 	}
 }
 

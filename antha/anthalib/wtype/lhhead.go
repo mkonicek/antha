@@ -11,18 +11,21 @@ type LHHead struct {
 	TipLoading TipLoadingBehaviour
 }
 
+//NewLHHead constructor for liquid handling heads
 func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
-	var lhh LHHead
-	lhh.Manufacturer = mf
-	lhh.Name = name
-	lhh.Params = params
-	return &lhh
+	return &LHHead{
+		Name:         name,
+		Manufacturer: mf,
+		Params:       params,
+	}
 }
 
+//Dup duplicate the head and adaptor, changing the IDs
 func (head *LHHead) Dup() *LHHead {
 	return head.dup(false)
 }
 
+//DupKeepIDs duplicate the head and adaptor, keeping the IDs the same
 func (head *LHHead) DupKeepIDs() *LHHead {
 	return head.dup(true)
 }
@@ -50,6 +53,7 @@ func (head *LHHead) Equal(rhs *LHHead) bool {
 	return head.Name == rhs.Name
 }
 
+//GetParams get the channel parameters of the head or the adaptor if one is loaded
 func (lhh *LHHead) GetParams() *LHChannelParameter {
 	if lhh.Adaptor == nil {
 		return lhh.Params

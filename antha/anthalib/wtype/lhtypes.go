@@ -362,64 +362,6 @@ func New_Solution() *LHSolution {
 	return &solution
 }
 
-// head
-type LHHead struct {
-	Name         string
-	Manufacturer string
-	ID           string
-	Adaptor      *LHAdaptor
-	Params       *LHChannelParameter
-	//TipLoading defined the behaviour of the head when loading tips
-	TipLoading TipLoadingBehaviour
-}
-
-func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
-	var lhh LHHead
-	lhh.Manufacturer = mf
-	lhh.Name = name
-	lhh.Params = params
-	return &lhh
-}
-
-func (head *LHHead) Dup() *LHHead {
-	return head.dup(false)
-}
-
-func (head *LHHead) DupKeepIDs() *LHHead {
-	return head.dup(true)
-}
-
-func (head *LHHead) dup(keepIDs bool) *LHHead {
-	if head == nil {
-		return nil
-	}
-	var params *LHChannelParameter
-	var adaptor *LHAdaptor
-	if keepIDs {
-		params = head.Params.DupKeepIDs()
-		adaptor = head.Adaptor.DupKeepIDs()
-	} else {
-		params = head.Params.Dup()
-		adaptor = head.Adaptor.Dup()
-	}
-	h := NewLHHead(head.Name, head.Manufacturer, params)
-	h.Adaptor = adaptor
-	h.TipLoading = head.TipLoading
-	return h
-}
-
-func (head *LHHead) Equal(rhs *LHHead) bool {
-	return head.Name == rhs.Name
-}
-
-func (lhh *LHHead) GetParams() *LHChannelParameter {
-	if lhh.Adaptor == nil {
-		return lhh.Params
-	} else {
-		return lhh.Adaptor.GetParams()
-	}
-}
-
 // adaptor
 type LHAdaptor struct {
 	Name         string

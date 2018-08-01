@@ -289,7 +289,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	// check source / tip alignment
-	if !CanHeadReach(head, fromPlate, wtype.WCArrayFromStrings(ins.Transfers[which].WellFrom())) {
+	if !head.CanReach(fromPlate, wtype.WCArrayFromStrings(ins.Transfers[which].WellFrom())) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
@@ -310,7 +310,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	// for safety, check dest / tip alignment
-	if !CanHeadReach(head, toPlate, wtype.WCArrayFromStrings(ins.Transfers[which].WellTo())) {
+	if !head.CanReach(toPlate, wtype.WCArrayFromStrings(ins.Transfers[which].WellTo())) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false

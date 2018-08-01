@@ -9,6 +9,7 @@ import (
 
 // A Handler handles generic rpc calls
 type Handler struct {
+	target.NoDataIngestionDevice
 	*GenericHandler
 }
 

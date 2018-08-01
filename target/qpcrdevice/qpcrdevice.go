@@ -29,7 +29,7 @@ func NewQPCRDevice() *QPCRDevice {
 // CanCompile implements a Device
 func (a *QPCRDevice) CanCompile(req ast.Request) bool {
 	can := ast.Request{}
-	can.Selector = append(can.Selector, target.DriverSelectorV1QPCRDevice)
+	can.Selector = append(can.Selector, target.DriverSelectorV1QPCRDevice, target.DriverSelectorV1DataSource)
 	return can.Contains(req)
 }
 
@@ -175,4 +175,10 @@ func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.In
 	// Interpolate a prompt before each qPCR call.
 	promptedInstructions := interpolatePrompts(calls, a)
 	return target.SequentialOrder(promptedInstructions...), nil
+}
+
+func (q *QPCRDevice) ExpectDataTemplate() *ast.ExpectInst {
+	return &ast.ExpectInst{
+		ParserID: "myFirstQPCRParser",
+	}
 }

@@ -15,6 +15,7 @@ import (
 // A ShakerIncubator is a device that can shake and incubate things
 type ShakerIncubator struct {
 	handler.GenericHandler
+	target.NoDataIngestionDevice
 }
 
 // New returns a new shaker incubator

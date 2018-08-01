@@ -226,14 +226,15 @@ func SequentialOrder(insts ...Inst) []Inst {
 	return insts
 }
 
-// AwaitData is a raw data-getting request
-type AwaitData struct {
+// ExpectData indicates we expect a device to produce an output file,
+// and for that file to be stored and made available to us.
+type ExpectData struct {
 	dependsMixin
 	Dev  Device
 	Inst *ast.ExpectInst
 }
 
 // Device implements an Inst
-func (d *AwaitData) Device() Device {
+func (d *ExpectData) Device() Device {
 	return d.Dev
 }

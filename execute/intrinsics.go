@@ -2,16 +2,12 @@ package execute
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
-	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/target"
@@ -253,57 +249,6 @@ func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.Liquid {
 	return inst.result[0]
 }
 
-// QPCROptions are the options for a QPCR request.
-type QPCROptions struct {
-	Reactions  []*wtype.Liquid
-	Definition string
-	Barcode    string
-	TagAs      string
-}
-
-func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst {
-	inst := ast.NewQPCRInstruction()
-	inst.Command = command
-	inst.ComponentIn = opts.Reactions
-	inst.Definition = opts.Definition
-	inst.Barcode = opts.Barcode
-	inst.TagAs = opts.TagAs
-	inst.ComponentOut = []*wtype.Liquid{}
-
-	for _, r := range inst.ComponentIn {
-		inst.ComponentOut = append(inst.ComponentOut, newCompFromComp(ctx, r))
-	}
-
-	return &commandInst{
-		Args:   opts.Reactions,
-		result: inst.ComponentOut,
-		Command: &ast.Command{
-			Inst: inst,
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1QPCRDevice,
-					},
-				},
-			},
-		},
-	}
-}
-
-// RunQPCRExperiment starts a new QPCR experiment, using an experiment input file.
-func RunQPCRExperiment(ctx context.Context, opt QPCROptions) []*wtype.Liquid {
-	inst := runQPCR(ctx, opt, "RunExperiment")
-	Issue(ctx, inst)
-	return inst.result
-}
-
-// RunQPCRFromTemplate starts a new QPCR experiment, using a template input file.
-func RunQPCRFromTemplate(ctx context.Context, opt QPCROptions) []*wtype.Liquid {
-	inst := runQPCR(ctx, opt, "RunExperimentFromTemplate")
-	Issue(ctx, inst)
-	return inst.result
-}
-
 // NewComponent returns a new component given a component type
 func NewComponent(ctx context.Context, typ string) *wtype.Liquid {
 	c, err := inventory.NewComponent(ctx, typ)
@@ -460,40 +405,4 @@ func splitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volu
 	}
 
 	return inst
-}
-
-// ExpectData
-func ExpectData(ctx context.Context, object Annotatable, meta *api.DeviceMetadata) {
-	if err := expectData(ctx, object, meta); err != nil {
-		panic(err)
-	}
-}
-
-func expectData(ctx context.Context, object Annotatable, meta *api.DeviceMetadata) error {
-	// Get Data Request
-	req := ast.Request{
-		Selector: []ast.NameValue{
-			target.DriverSelectorV1DataSource,
-		},
-	}
-
-	expect := &ast.ExpectInst{
-		ID:      wtype.GetUUID(),
-		BlockID: wtype.NewBlockID(getID(ctx)),
-	}
-
-	if meta != nil && len(meta.Tags) != 0 {
-		expect.Tags = meta.Tags
-	}
-
-	// Create Instruction
-	inst := &commandInst{
-		Command: &ast.Command{
-			Requests: []ast.Request{req},
-			Inst:     expect,
-		},
-	}
-
-	Issue(ctx, inst)
-	return nil
 }

@@ -15,7 +15,9 @@ import (
 )
 
 // PlateReader defines the state of a plate-reader device
-type PlateReader struct{}
+type PlateReader struct {
+	target.NoDataIngestionDevice
+}
 
 // Ensure satisfies Device interface
 var _ target.Device = (*PlateReader)(nil)
@@ -23,8 +25,7 @@ var _ target.Device = (*PlateReader)(nil)
 // NewWOPlateReader returns a new Plate Reader
 // Used by antha-runner
 func NewWOPlateReader() *PlateReader {
-	ret := &PlateReader{}
-	return ret
+	return &PlateReader{}
 }
 
 // CanCompile implements a Device

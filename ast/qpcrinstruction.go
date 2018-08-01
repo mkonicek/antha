@@ -26,16 +26,3 @@ func NewQPCRInstruction() *QPCRInstruction {
 		ID: wtype.GetUUID(),
 	}
 }
-
-type QPCRExpectDataInstruction struct {
-	*QPCRInstruction
-	ID      string
-	Options []string
-}
-
-func NewQPCRExpectDataInstruction(parent *QPCRInstruction) *QPCRExpectDataInstruction {
-	return &QPCRExpectDataInstruction{
-		QPCRInstruction: parent,
-		ID:              wtype.GetUUID(),
-	}
-}

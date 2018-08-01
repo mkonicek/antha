@@ -46,8 +46,7 @@ type PromptInst struct {
 
 // An ExpectInst is a command that...
 type ExpectInst struct {
-	// user-definable device tags
-	Tags []string
-	// ID we are waiting on
-	ID string
+	JobID    string
+	ParserID string
+	Params   []byte
 }

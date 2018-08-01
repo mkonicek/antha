@@ -20,8 +20,13 @@ var (
 	_ target.Device = &Human{}
 )
 
-// A Human is a device that can do anything
+// A Human is a device that can do anything...apart from providing
+// data to ingest. This is because a human could create data in any
+// possible format, so we have no ability to write a parser to process
+// such data. Alternatively, we _could_ decide that a human can be a
+// data source with a noop parser.
 type Human struct {
+	target.NoDataIngestionDevice
 	opt  Opt
 	impl *handler.GenericHandler
 }
@@ -110,11 +115,6 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 	case *ast.PromptInst:
 		insts = append(insts, &target.Prompt{
 			Message: cmd.Message,
-		})
-
-	case *ast.ExpectInst:
-		insts = append(insts, &target.Prompt{
-			Message: fmt.Sprintf("Now get some data for %s %s", cmd.Tags, cmd.ID),
 		})
 
 	case *wtype.PRInstruction:

@@ -207,7 +207,6 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Electroshock":  "execute.Electroshock",
 		"ExecuteMixes":  "execute.ExecuteMixes",
 		"Errorf":        "execute.Errorf",
-		"ExpectData":    "execute.ExpectData",
 		"Handle":        "execute.Handle",
 		"Incubate":      "execute.Incubate",
 		"Mix":           "execute.Mix",

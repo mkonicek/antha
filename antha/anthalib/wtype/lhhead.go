@@ -31,9 +31,6 @@ func (head *LHHead) DupKeepIDs() *LHHead {
 }
 
 func (head *LHHead) dup(keepIDs bool) *LHHead {
-	if head == nil {
-		return nil
-	}
 	var params *LHChannelParameter
 	var adaptor *LHAdaptor
 	if keepIDs {

@@ -65,14 +65,10 @@ func (head *LHHead) GetSmallestChannelOffset() Coordinates {
 	//     this will need updating when we support better reporting of head
 	//     capabilities wrt. independent multi-channelling
 	channelStep := 9.0 //9mm between channels
-	channelOffset := Coordinates{}
 	if head.GetParams().Orientation == LHVChannel {
-		channelOffset.Y = channelStep
-	} else {
-		channelOffset.X = channelStep
+		return Coordinates{Y: channelStep}
 	}
-
-	return channelOffset
+	return Coordinates{X: channelStep}
 }
 
 //GetLargestChannelOffset get the largest possible distance between successive channels

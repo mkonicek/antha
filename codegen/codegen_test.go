@@ -27,7 +27,9 @@ func (a *incubateInst) SetDependsOn(xs []target.Inst) {
 	a.Depends = xs
 }
 
-type incubator struct{}
+type incubator struct {
+	target.NoDataIngestionDevice
+}
 
 func (a *incubator) CanCompile(req ast.Request) bool {
 	can := ast.Request{}

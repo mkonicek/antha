@@ -1,8 +1,6 @@
 package liquidhandling
 
 import (
-	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
@@ -18,7 +16,7 @@ func CopyComponentArray(arin []*wtype.Liquid) []*wtype.Liquid {
 	return r
 }
 
-//GetChannelOffset get the smallest possible distance between successive channels
+//GetSmallestChannelOffset get the smallest possible distance between successive channels
 func GetSmallestChannelOffset(head *wtype.LHHead) wtype.Coordinates {
 
 	//hjk: currently assume a constant fixed offset between channels
@@ -35,6 +33,17 @@ func GetSmallestChannelOffset(head *wtype.LHHead) wtype.Coordinates {
 	return channelOffset
 }
 
+//GetLargestChannelOffset get the largest possible distance between successive channels
+func GetLargestChannelOffset(head *wtype.LHHead) wtype.Coordinates {
+	//equal to smallest if independent
+	if !head.GetParams().Independent {
+		return GetSmallestChannelOffset(head)
+	}
+
+	//completely arbitrary for now since we don't report this
+	return GetSmallestChannelOffset(head).Multiply(2.0)
+}
+
 //GetMostCompactChannelPositions get the relative channel positions for the head
 //in the most tightly bunched layout supported
 func GetMostCompactChannelPositions(head *wtype.LHHead) []wtype.Coordinates {
@@ -43,8 +52,8 @@ func GetMostCompactChannelPositions(head *wtype.LHHead) []wtype.Coordinates {
 	last := wtype.Coordinates{}
 
 	for i := range ret {
-		last = last.Add(offset)
 		ret[i] = last
+		last = last.Add(offset)
 	}
 
 	return ret
@@ -83,10 +92,10 @@ func GetWellTargets(head *wtype.LHHead, well *wtype.LHWell) []wtype.Coordinates 
 //the head, eg. ["A1", "B1", "", "D1",] means channels 0, 1, and 3 should address wells
 //A1, B1, and D1 respectively and channels 2 and 4-7 should not be used
 func CanHeadReach(head *wtype.LHHead, plate *wtype.LHPlate, addresses []wtype.WellCoords) bool {
-	fmt.Printf("CanHeadReach(Head{Ind: %t, Multi: %d}, Plate{rows: %d, cols: %d, wellSize: %v}, %v)\n",
-		head.GetParams().Independent, head.GetParams().Multi, plate.NRows(), plate.NCols(), plate.Welltype.GetSize(), addresses)
 	if len(addresses) > head.GetParams().Multi {
-		fmt.Println("urch")
+		return false
+	}
+	if len(addresses) == 0 {
 		return false
 	}
 
@@ -126,30 +135,52 @@ func CanHeadReach(head *wtype.LHHead, plate *wtype.LHPlate, addresses []wtype.We
 		}
 	}
 
-	channelOffset := GetSmallestChannelOffset(head)
-	machineTol := 0.1 //should also come from the head
-
-	//check that the positioning requested for each channel is allowable
-	var lastPos *wtype.Coordinates
-	var expectedOffset wtype.Coordinates
-	for _, pos := range coords {
-		if lastPos == nil {
-			lastPos = pos
-			continue
-		}
-		expectedOffset = expectedOffset.Add(channelOffset)
-		if pos != nil {
-			actualOffset := pos.Subtract(*lastPos)
-			//if the difference in the XY direction only is greater than machine error
-			if actualOffset.Subtract(expectedOffset).AbsXY() > machineTol {
-				return false
+	//offsets[i] is the distance between the i-1th and the ith coordinate
+	offsets := make([]*wtype.Coordinates, len(coords)-1)
+	lastI := -1
+	for i, coord := range coords {
+		if coord != nil {
+			if lastI >= 0 {
+				//divide the total offset since lastI evenly evenly
+				offset := coord.Subtract(*coords[lastI]).Divide(float64(i - lastI))
+				offsets[i-1] = &offset
 			}
-			lastPos = pos
-			expectedOffset = wtype.Coordinates{}
+			lastI = i
 		}
 	}
 
+	//check that each offset is within the supported range of the machine
+	smallestOffset := GetSmallestChannelOffset(head)
+	largestOffset := GetLargestChannelOffset(head)
+	positionAccuracy := 0.1 //should be a property of the head
+	for _, offset := range offsets {
+		if offset != nil && distanceOutsideSquare(smallestOffset, largestOffset, *offset) > positionAccuracy {
+			return false
+		}
+	}
+
+	//hjk: TODO check that offsets are equal if the head suppots only uniform offsets
+
 	return true
+}
+
+//distanceOutsideSquare return a lower bound on how far position is outside the
+//square defined by the corners lowerLeft,topRight
+//where a is the bottom left and b is the top right corner
+//value will be negative if position is inside the square
+//z-value for all arguments is ignored
+func distanceOutsideSquare(lowerLeft, topRight, pos wtype.Coordinates) float64 {
+	ret := lowerLeft.X - pos.X
+	if r := pos.X - topRight.X; r > ret {
+		ret = r
+	}
+	if r := lowerLeft.Y - pos.Y; r > ret {
+		ret = r
+	}
+	if r := pos.Y - topRight.Y; r > ret {
+		ret = r
+	}
+	return ret
 }
 
 func TipsWellsAligned(head *wtype.LHHead, plt *wtype.Plate, wellsfrom []string) bool {

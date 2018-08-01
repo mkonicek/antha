@@ -74,6 +74,15 @@ func TestCanHeadReachVChannel96Plate(t *testing.T) {
 			Expected:      true,
 		},
 		{
+			Name:          "independent skipping a well",
+			Independent:   true,
+			Orientation:   wtype.LHVChannel,
+			Multi:         8,
+			Plate:         plate,
+			WellAddresses: []string{"A1", "B1", "D1", "E1", "F1", "G1", "H1"}, //double the gap between channels 1 and 2
+			Expected:      true,
+		},
+		{
 			Name:          "wrong rows",
 			Independent:   false,
 			Orientation:   wtype.LHVChannel,

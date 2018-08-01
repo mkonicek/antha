@@ -87,11 +87,11 @@ func (head *LHHead) GetLargestChannelOffset() Coordinates {
 func (head *LHHead) GetMostCompactChannelPositions() []Coordinates {
 	ret := make([]Coordinates, head.GetParams().Multi)
 	offset := head.GetSmallestChannelOffset()
-	last := Coordinates{}
+	current := Coordinates{}
 
 	for i := range ret {
-		ret[i] = last
-		last = last.Add(offset)
+		ret[i] = current
+		current = current.Add(offset)
 	}
 
 	return ret

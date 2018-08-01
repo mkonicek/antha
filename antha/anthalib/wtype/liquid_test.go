@@ -2,10 +2,9 @@ package wtype
 
 import (
 	"encoding/json"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"reflect"
 	"testing"
-
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 func TestSampleBehaviour(t *testing.T) {
@@ -127,5 +126,24 @@ func TestComponentSerialize(t *testing.T) {
 
 	if !reflect.DeepEqual(c, c2) {
 		t.Errorf("COMPONENTS NOT EQUAL AFTER MARSHAL/UNMARSHAL")
+	}
+}
+
+func TestLiquidSubComponentDup(t *testing.T) {
+	l := NewLHComponent()
+
+	sc := NewLHComponent()
+	sc.CName = "hither"
+
+	l.AddSubComponent(sc, wunit.NewConcentration(50.0, "g/l"))
+
+	l2 := l.Dup()
+
+	l.SubComponents.Components["FISH"] = wunit.NewConcentration(500.0, "g/l")
+
+	l2.SubComponents.Components["CHIPS"] = wunit.NewConcentration(1.0, "g/l")
+
+	if err := EqualLists(l.SubComponents, l2.SubComponents); err == nil {
+		t.Error("expecting lists to no longer be equal but this is not the case")
 	}
 }

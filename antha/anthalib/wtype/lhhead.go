@@ -128,13 +128,16 @@ func (head *LHHead) GetWellTargets(well *LHWell) []Coordinates {
 //simultaneously.
 //addresses is a slice of well addresses which should be serviced by successive channels of
 //the head, eg. ["A1", "B1", "", "D1",] means channels 0, 1, and 3 should address wells
-//A1, B1, and D1 respectively and channels 2 and 4-7 should not be used
+//A1, B1, and D1 respectively and channels 2 and 4-7 should not be used.
+//Repeated addresses (e.g. ["A1", "A1", "A1"]) imply multiple tips per well, with
+//exact positioning for each tip calculated with LHHead.GetWellTargets().
+//Addresses are not reordered, and so ["A1", "B1"] != ["B1", "A1"].
 func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 	if len(addresses) > head.GetParams().Multi {
 		return false
 	}
 	if len(addresses) == 0 {
-		return false
+		return true
 	}
 
 	wellTargets := head.GetWellTargets(plate.Welltype)

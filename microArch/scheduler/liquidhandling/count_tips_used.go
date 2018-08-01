@@ -11,7 +11,7 @@ func (lh Liquidhandler) countTipsUsed(rq *LHRequest) (*LHRequest, error) {
 	teHash := make(map[string]wtype.TipEstimate)
 
 	for _, ins := range rq.Instructions {
-		if ins.InstructionType() == driver.LOD {
+		if ins.Type() == driver.LOD {
 			ldt, ok := ins.(*driver.LoadTipsInstruction)
 
 			if !ok {

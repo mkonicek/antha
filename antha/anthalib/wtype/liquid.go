@@ -609,6 +609,7 @@ func (lhc *Liquid) Dup() *Liquid {
 		for k, v := range lhc.Extra {
 			c.Extra[k] = v
 		}
+		c.SubComponents = lhc.SubComponents
 
 		c.Loc = lhc.Loc
 		c.Destination = lhc.Destination
@@ -701,12 +702,6 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 	cmp.Type = mergeTypes(cmp, cmp2)
 	// add cmp2 to cmp
 
-	vcmp := wunit.NewVolume(cmp.Vol, cmp.Vunit)
-	vcmp2 := wunit.NewVolume(cmp2.Vol, cmp2.Vunit)
-	vcmp.Add(vcmp2)
-	cmp.Vol = vcmp.RawValue() // same units
-	cmp.CName = mergeNames(cmp.CName, cmp2.CName)
-
 	// allow trace back
 	//logger.Track(fmt.Sprintf("MIX %s %s %s", cmp.ID, cmp2.ID, vcmp.ToString()))
 
@@ -722,13 +717,27 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 	cmp.ID = GetUUID()
 	cmp2.AddDaughterComponent(cmp)
 
+	if wasEmpty {
+		if !cmp.HasConcentration() {
+			cmp.SetConcentration(cmp2.Concentration())
+		}
+		if len(cmp.SubComponents.Components) == 0 && len(cmp2.SubComponents.Components) > 0 {
+			updateSubComponentsOnly(cmp, cmp2) //nolint
+		}
+		cmp.SetName(cmp2.Name())
+	} else {
+		UpdateComponentDetails(cmp, cmp, cmp2) //nolint
+	}
+
+	vcmp := wunit.NewVolume(cmp.Vol, cmp.Vunit)
+	vcmp2 := wunit.NewVolume(cmp2.Vol, cmp2.Vunit)
+	vcmp.Add(vcmp2)
+	cmp.Vol = vcmp.RawValue() // same units
+
 	// result should not be a sample
 
 	cmp.SetSample(false)
 
-	if wasEmpty {
-		cmp.SetConcentration(cmp2.Concentration())
-	}
 }
 
 // @implement Liquid
@@ -819,6 +828,7 @@ func (cmp *Liquid) Clean() {
 	cmp.Smax = 0.0
 	cmp.Visc = 0.0
 	cmp.StockConcentration = 0.0
+	cmp.SubComponents = ComponentList{}
 	cmp.Extra = make(map[string]interface{})
 	cmp.Loc = ""
 	cmp.Destination = ""

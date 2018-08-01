@@ -22,7 +22,10 @@ func TestTGraph(t *testing.T) {
 		cmpIn = cmpOut
 	}
 
-	tgraph := MakeTGraph(tIns)
+	tgraph, err := MakeTGraph(tIns)
+	if err != nil {
+		t.Error(err)
+	}
 
 	arrEq := func(ar1 []*wtype.LHInstruction, ar2 []*wtype.LHInstruction) bool {
 		if len(ar1) != len(ar2) {
@@ -94,7 +97,10 @@ func TestTGraphSplit(t *testing.T) {
 	ins.AddProduct(wtype.NewLHComponent())
 	tIns = append(tIns, ins)
 
-	tgraph := MakeTGraph(tIns)
+	tgraph, err := MakeTGraph(tIns)
+	if err != nil {
+		t.Error(err)
+	}
 
 	arrEq := func(ar1 []*wtype.LHInstruction, ar2 []*wtype.LHInstruction) bool {
 		if len(ar1) != len(ar2) {

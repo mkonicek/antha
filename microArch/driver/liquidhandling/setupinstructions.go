@@ -9,26 +9,30 @@ import (
 // instructions to deal with robot setup
 
 type RemoveAllPlatesInstruction struct {
-	Type int
+	BaseRobotInstruction
+	*InstructionType
 }
 
 func NewRemoveAllPlatesInstruction() *RemoveAllPlatesInstruction {
-	rapi := RemoveAllPlatesInstruction{Type: RAP}
-	return &rapi
+	v := &RemoveAllPlatesInstruction{
+		InstructionType: RAP,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (rapi *RemoveAllPlatesInstruction) InstructionType() int {
-	return RAP
-}
 func (rapi *RemoveAllPlatesInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
-func (rapi *RemoveAllPlatesInstruction) GetParameter(name string) interface{} {
-	return nil
+
+func (rapi *RemoveAllPlatesInstruction) GetParameter(name InstructionParameter) interface{} {
+	return rapi.BaseRobotInstruction.GetParameter(name)
 }
+
 func (rapi *RemoveAllPlatesInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 	return false
 }
+
 func (rapi *RemoveAllPlatesInstruction) OutputTo(drv LiquidhandlingDriver) error {
 	stat := drv.RemoveAllPlates()
 
@@ -40,41 +44,45 @@ func (rapi *RemoveAllPlatesInstruction) OutputTo(drv LiquidhandlingDriver) error
 }
 
 type AddPlateToInstruction struct {
-	Type     int
+	BaseRobotInstruction
+	*InstructionType
 	Position string
 	Name     string
 	Plate    interface{}
 }
 
 func NewAddPlateToInstruction(position, name string, plate interface{}) *AddPlateToInstruction {
-	ins := AddPlateToInstruction{Type: APT, Position: position, Name: name, Plate: plate}
-	return &ins
-}
-
-func (apti *AddPlateToInstruction) InstructionType() int {
-	return APT
+	v := &AddPlateToInstruction{
+		InstructionType: APT,
+		Position:        position,
+		Name:            name,
+		Plate:           plate,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
 func (apti *AddPlateToInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
-func (apti *AddPlateToInstruction) GetParameter(name string) interface{} {
+
+func (apti *AddPlateToInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "POSITION":
+	case POSITION:
 		return apti.Position
-	case "NAME":
+	case NAME:
 		return apti.Name
-	case "PLATE":
+	case PLATE:
 		return apti.Plate
-	case "INSTRUCTIONTYPE":
-		return apti.InstructionType()
+	default:
+		return apti.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (apti *AddPlateToInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 	return false
 }
+
 func (apti *AddPlateToInstruction) OutputTo(drv LiquidhandlingDriver) error {
 	stat := drv.AddPlateTo(apti.Position, apti.Plate, apti.Name)
 

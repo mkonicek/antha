@@ -26,12 +26,14 @@ import (
 )
 
 const (
-	xOffset = 14.38
+	xOffset = 14.28
 	yOffset = 11.24
+	sbsX    = 127.76
+	sbsY    = 85.48
 )
 
 func getTipboxSize() wtype.Coordinates {
-	return wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13}
+	return wtype.Coordinates{X: sbsX, Y: sbsY, Z: 60.13}
 }
 
 func makeTipboxes() (tipboxes []*wtype.LHTipbox) {

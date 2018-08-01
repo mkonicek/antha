@@ -496,13 +496,13 @@ func TestMultiZOffset2(t *testing.T) {
 
 		for i, instruction := range request.Instructions {
 			if i > 0 {
-				if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+				if instruction.Type() == liquidhandling.ASP {
 					aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(request.Instructions[i-1], instruction)
 					if err != nil {
 						fmt.Println(err.Error())
 					}
 					aspirateInstructions = append(aspirateInstructions, aspirateSummary)
-				} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+				} else if instruction.Type() == liquidhandling.DSP {
 					dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(request.Instructions[i-1], instruction)
 					if err != nil {
 						fmt.Println(err.Error())
@@ -651,13 +651,13 @@ func TestMultiZOffset(t *testing.T) {
 
 	for i, instruction := range singleRq.Instructions {
 		if i > 0 {
-			if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+			if instruction.Type() == liquidhandling.ASP {
 				aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(singleRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
 				singleAspirateInstructions = append(singleAspirateInstructions, aspirateSummary)
-			} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+			} else if instruction.Type() == liquidhandling.DSP {
 				dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(singleRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -669,13 +669,13 @@ func TestMultiZOffset(t *testing.T) {
 
 	for i, instruction := range multiRq.Instructions {
 		if i > 0 {
-			if liquidhandling.InstructionTypeName(instruction) == "ASP" {
+			if instruction.Type() == liquidhandling.ASP {
 				aspirateSummary, err := liquidhandling.MakeAspOrDspSummary(multiRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
 				multiAspirateInstructions = append(multiAspirateInstructions, aspirateSummary)
-			} else if liquidhandling.InstructionTypeName(instruction) == "DSP" {
+			} else if instruction.Type() == liquidhandling.DSP {
 				dispenseSummary, err := liquidhandling.MakeAspOrDspSummary(multiRq.Instructions[i-1], instruction)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -1245,56 +1245,6 @@ func TestPlateIDMap(t *testing.T) {
 	}
 }
 
-//four mixes into a column with 2 different volumes
-//expected behaviour - each pair of samples with equal volume is pipetted together
-//original failure - a set of 3 1ul volumes are pipetted together, then the rest of the volume is made up with single channel operations
-func TestOveractiveMultichannel(t *testing.T) {
-
-	ctx := GetContextForTest()
-
-	source := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
-
-	samples := make([]*wtype.Liquid, 4)
-
-	samples[0] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
-	samples[1] = mixer.Sample(source, wunit.NewVolume(1.0, "ul"))
-	samples[2] = mixer.Sample(source, wunit.NewVolume(100.0, "ul"))
-	samples[3] = mixer.Sample(source, wunit.NewVolume(100.0, "ul"))
-
-	rq, err := configureTransferRequestMutliSamplesTest("multiwater", samples...)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(rq.Instructions) == 0 {
-		t.Fatal("No instructions generated")
-	}
-
-	volOK := func(volumes []wunit.Volume) bool {
-		for _, v := range volumes {
-			if v.IsZero() {
-				continue
-			}
-			if vol := v.ConvertToString("ul"); vol != 1.0 && vol != 100 {
-				return false
-			}
-		}
-		return true
-	}
-
-	for i, ins := range rq.Instructions {
-		//assertion 1: multi should equal 2 in all cases
-		if multi, ok := ins.GetParameter("MULTI").(int); ok && multi != 2 {
-			t.Errorf("multi was %d not 2 for instruction %d", multi, i) //, liquidhandling.InsToString(ins))
-		}
-
-		//assertion 2: dispenses should be of 1 or 100 ul only
-		if dsp, ok := ins.(*liquidhandling.DispenseInstruction); ok && !volOK(dsp.Volume) {
-			t.Errorf("expected volumes of 1 or 100 ul only: got %v", dsp.Volume)
-		}
-	}
-}
-
 func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstruction {
 	ret := wtype.NewLHSplitInstruction()
 
@@ -1362,7 +1312,7 @@ func TestSplitSampleMultichannel(t *testing.T) {
 	//assert that there is some 8-way multi channel
 	seenMultiEight := false
 	for _, ins := range rq.Instructions {
-		if multi, ok := ins.GetParameter("MULTI").(int); ok && multi == 8 {
+		if multi, ok := ins.GetParameter(liquidhandling.MULTI).(int); ok && multi == 8 {
 			seenMultiEight = true
 		}
 	}

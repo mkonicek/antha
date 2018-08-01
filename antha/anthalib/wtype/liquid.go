@@ -609,7 +609,10 @@ func (lhc *Liquid) Dup() *Liquid {
 		for k, v := range lhc.Extra {
 			c.Extra[k] = v
 		}
-		c.SubComponents = lhc.SubComponents
+		c.SubComponents.Components = make(map[string]wunit.Concentration, len(lhc.SubComponents.Components))
+		for k, v := range lhc.SubComponents.Components {
+			c.SubComponents.Components[k] = v
+		}
 
 		c.Loc = lhc.Loc
 		c.Destination = lhc.Destination

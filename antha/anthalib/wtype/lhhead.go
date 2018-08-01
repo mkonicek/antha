@@ -58,50 +58,15 @@ func (lhh *LHHead) GetParams() *LHChannelParameter {
 	}
 }
 
-//GetSmallestChannelOffset get the smallest possible distance between successive channels
-func (head *LHHead) GetSmallestChannelOffset() Coordinates {
-
-	//hjk: currently assume a constant fixed offset between channels
-	//     this will need updating when we support better reporting of head
-	//     capabilities wrt. independent multi-channelling
-	channelStep := 9.0 //9mm between channels
-	if head.GetParams().Orientation == LHVChannel {
-		return Coordinates{Y: channelStep}
-	}
-	return Coordinates{X: channelStep}
-}
-
-//GetLargestChannelOffset get the largest possible distance between successive channels
-func (head *LHHead) GetLargestChannelOffset() Coordinates {
-	//equal to smallest if independent
-	if !head.GetParams().Independent {
-		return head.GetSmallestChannelOffset()
-	}
-
-	//completely arbitrary for now since we don't report this
-	return head.GetSmallestChannelOffset().Multiply(2.0)
-}
-
-//GetMostCompactChannelPositions get the relative channel positions for the head
-//in the most tightly bunched layout supported
-func (head *LHHead) GetMostCompactChannelPositions() []Coordinates {
-	ret := make([]Coordinates, head.GetParams().Multi)
-	offset := head.GetSmallestChannelOffset()
-	current := Coordinates{}
-
-	for i := range ret {
-		ret[i] = current
-		current = current.Add(offset)
-	}
-
-	return ret
-}
-
 //GetWellTargets get the offset from the center of the well for each channel that
 //can access the well simultaneously
 //returns nil if the well cannot fit multiple channels
 func (head *LHHead) GetWellTargets(well *LHWell) []Coordinates {
-	channelPositions := head.GetMostCompactChannelPositions()
+	//no well targets if there's no adaptor loaded
+	if head.Adaptor == nil {
+		return nil
+	}
+	channelPositions := head.Adaptor.GetMostCompactChannelPositions()
 	channelRadius := 3.0 //should come from head
 
 	//total size of channels, including radius
@@ -133,6 +98,9 @@ func (head *LHHead) GetWellTargets(well *LHWell) []Coordinates {
 //exact positioning for each tip calculated with LHHead.GetWellTargets().
 //Addresses are not reordered, and so ["A1", "B1"] != ["B1", "A1"].
 func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
+	if head.Adaptor == nil {
+		return false
+	}
 	if len(addresses) > head.GetParams().Multi {
 		return false
 	}
@@ -191,8 +159,8 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 	}
 
 	//check that each offset is within the supported range of the machine
-	smallestOffset := head.GetSmallestChannelOffset()
-	largestOffset := head.GetLargestChannelOffset()
+	smallestOffset := head.Adaptor.GetSmallestChannelOffset()
+	largestOffset := head.Adaptor.GetLargestChannelOffset()
 	positionAccuracy := 0.1 //should be a property of the head
 	for _, offset := range offsets {
 		if offset != nil && distanceOutsideSquare(smallestOffset, largestOffset, *offset) > positionAccuracy {

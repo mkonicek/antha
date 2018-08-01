@@ -23,9 +23,10 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"strings"
 )
 
 // The height below which an error will be generated
@@ -190,6 +191,13 @@ func makeBasicPlates() (plates []*wtype.Plate) {
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
 	trough12 := wtype.NewLHWell("ul", 15000, 5000, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
 	plate = wtype.NewLHPlate("DWST12", "Unknown", 1, 12, makePlateCoords(44.1), trough12, 9, 9, 0, 30.0, valueformaxheadtonotintoDSWplatewithp20tips)
+	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
+	plates = append(plates, plate)
+
+	// shallow well strip trough 12
+	stshps := wtype.NewShape("box", "mm", 8.2, 72, 15)
+	trough12s := wtype.NewLHWell("ul", 4000, 1500, stshps, wtype.VWellBottom, 8.2, 72, 15, 4.7, "mm")
+	plate = wtype.NewLHPlate("SWST12", "Unknown", 1, 12, makePlateCoords(20), trough12s, 9, 9, 0, 30.0, 1)
 	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 

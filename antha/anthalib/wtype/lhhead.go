@@ -63,9 +63,12 @@ func (lhh *LHHead) GetParams() *LHChannelParameter {
 //Repeated addresses (e.g. ["A1", "A1", "A1"]) imply multiple tips per well, with
 //exact positioning for each tip calculated with LHHead.GetWellTargets().
 //Addresses are not reordered, and so ["A1", "B1"] != ["B1", "A1"].
-func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
+func (head *LHHead) CanReach(plate *LHPlate, addresses WellCoordSlice) bool {
 	if head.Adaptor == nil {
 		return false
+	}
+	if !head.Adaptor.Params.Independent {
+		addresses = addresses.Trim()
 	}
 	if len(addresses) > head.GetParams().Multi {
 		return false

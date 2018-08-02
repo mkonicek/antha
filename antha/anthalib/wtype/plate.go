@@ -788,8 +788,8 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 	}
 
 	records := make([][]string, 0)
-	headerrecord := []string{plate.Type, plateName, "LiquidType", "Vol", "Vol Unit", "Conc", "Conc Unit", "SubComponents"}
-	records = append(records, headerrecord)
+	headerrecord := []string{plate.Type, plateName, "LiquidType", "Vol", "Vol Unit", "Conc", "Conc Unit"}
+	var includeSubComponentsHeader bool
 
 	for i, well := range wells {
 		volfloat := volumes[i].RawValue()
@@ -809,8 +809,11 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 				concUnit = "mg/l"
 			}
 
-			for componentName := range liquids[i].SubComponents.Components {
-				subComponents = append(subComponents, componentName)
+			if liquids[i].SubComponents.Components != nil {
+				includeSubComponentsHeader = true
+				for componentName := range liquids[i].SubComponents.Components {
+					subComponents = append(subComponents, componentName)
+				}
 			}
 
 			sort.Strings(subComponents)
@@ -824,6 +827,11 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 
 		records = append(records, record)
 	}
+
+	if includeSubComponentsHeader {
+		headerrecord = append(headerrecord, SubComponentsHeader)
+	}
+	records = append([][]string{headerrecord}, records...)
 
 	return exportCSV(records, outputFileName)
 }

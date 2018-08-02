@@ -55,37 +55,6 @@ func (lhh *LHHead) GetParams() *LHChannelParameter {
 	}
 }
 
-//GetWellTargets get the offset from the center of the well for each channel that
-//can access the well simultaneously
-//returns nil if the well cannot fit multiple channels
-func (head *LHHead) GetWellTargets(well *LHWell) []Coordinates2D {
-	//no well targets if there's no adaptor loaded
-	if head.Adaptor == nil {
-		return nil
-	}
-	channelPositions := head.Adaptor.GetMostCompactChannelPositions()
-	channelRadius := 3.0 //should come from head
-
-	//total size of channels, including radius
-	channelSize := channelPositions[len(channelPositions)-1].Add(Coordinates2D{X: 2 * channelRadius, Y: 2 * channelRadius})
-
-	if wellSize := well.GetSize(); wellSize.X < channelSize.X || wellSize.Y < channelSize.Y {
-		return nil
-	}
-
-	center := Coordinates2D{}
-	for _, pos := range channelPositions {
-		center = center.Add(pos)
-	}
-	center = center.Divide(float64(len(channelPositions)))
-
-	for i := range channelPositions {
-		channelPositions[i] = channelPositions[i].Subtract(center)
-	}
-
-	return channelPositions
-}
-
 //CanReach return true if the head can service the given addresses in the given object
 //simultaneously.
 //addresses is a slice of well addresses which should be serviced by successive channels of
@@ -105,7 +74,7 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 		return true
 	}
 
-	wellTargets := head.GetWellTargets(plate.Welltype)
+	wellTargets := head.Adaptor.GetWellTargets(plate.Welltype)
 
 	//get the real world position of the addresses
 	coords := make([]*Coordinates2D, head.GetParams().Multi)

@@ -162,3 +162,34 @@ func (self *LHAdaptor) GetMostCompactChannelPositions() []Coordinates2D {
 
 	return ret
 }
+
+//GetWellTargets get the offset from the center of the well for each channel that
+//can access the well simultaneously
+//returns nil if the well cannot fit multiple channels
+func (self *LHAdaptor) GetWellTargets(well *LHWell) []Coordinates2D {
+	//no well targets if there's no adaptor loaded
+	if self == nil {
+		return nil
+	}
+	channelPositions := self.GetMostCompactChannelPositions()
+	channelRadius := 3.0 //should come from adaptor
+
+	//total size of channels, including radius
+	channelSize := channelPositions[len(channelPositions)-1].Add(Coordinates2D{X: 2 * channelRadius, Y: 2 * channelRadius})
+
+	if wellSize := well.GetSize(); wellSize.X < channelSize.X || wellSize.Y < channelSize.Y {
+		return nil
+	}
+
+	center := Coordinates2D{}
+	for _, pos := range channelPositions {
+		center = center.Add(pos)
+	}
+	center = center.Divide(float64(len(channelPositions)))
+
+	for i := range channelPositions {
+		channelPositions[i] = channelPositions[i].Subtract(center)
+	}
+
+	return channelPositions
+}

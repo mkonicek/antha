@@ -161,6 +161,11 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		return err
 	}
 
+	fmt.Println("Tip Usage Summary:")
+	for _, tipEstimate := range request.TipsUsed {
+		fmt.Printf("  %v\n", tipEstimate)
+	}
+
 	err = this.Simulate(request)
 	if err != nil && !request.Options.IgnorePhysicalSimulation {
 		return errors.WithMessage(err, "during physical simulation")
@@ -172,11 +177,9 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	}
 
 	// output some info on the final setup
-
 	OutputSetup(this.Properties)
 
 	// and after
-
 	fmt.Println("SETUP AFTER: ")
 	OutputSetup(this.FinalProperties)
 
@@ -234,6 +237,16 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 			return fmt.Errorf("instruction %d not terminal", i)
 		}
 		triS = append(triS, tri)
+
+	}
+
+	if request.Options.PrintInstructions {
+		fmt.Printf("Simulating %d instructions\n", len(instructions))
+		for i, ins := range instructions {
+			if (*request).Options.PrintInstructions {
+				fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
+			}
+		}
 	}
 
 	if err := vlh.Simulate(triS); err != nil {

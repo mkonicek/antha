@@ -148,7 +148,7 @@ func (self Coordinates2D) String() string {
 
 //Equals return true if the two coordinates are equal
 func (self Coordinates2D) Equals(rhs Coordinates2D) bool {
-	return self.X == rhs.X && self.Y == rhs.Y
+	return self == rhs
 }
 
 //Add return a new coordinate which is the sum of the two
@@ -190,18 +190,18 @@ func (self Coordinates2D) Abs() float64 {
 
 //a rectangle
 type Rectangle struct {
-	LowerLeft  Coordinates2D
-	UpperRight Coordinates2D
+	lowerLeft  Coordinates2D
+	upperRight Coordinates2D
 }
 
 //NewRectangle create a new rectangle from any two opposing corners
 func NewRectangle(firstCorner, secondCorner Coordinates2D) Rectangle {
 	return Rectangle{
-		LowerLeft: Coordinates2D{
+		lowerLeft: Coordinates2D{
 			X: math.Min(firstCorner.X, secondCorner.X),
 			Y: math.Min(firstCorner.Y, secondCorner.Y),
 		},
-		UpperRight: Coordinates2D{
+		upperRight: Coordinates2D{
 			X: math.Max(firstCorner.X, secondCorner.X),
 			Y: math.Max(firstCorner.Y, secondCorner.Y),
 		},
@@ -210,27 +210,25 @@ func NewRectangle(firstCorner, secondCorner Coordinates2D) Rectangle {
 
 //Width the width of the rectangle
 func (self Rectangle) Width() float64 {
-	return self.UpperRight.X - self.LowerLeft.X
+	return self.upperRight.X - self.lowerLeft.X
 }
 
 //Height the height of the rectangle
 func (self Rectangle) Height() float64 {
-	return self.UpperRight.Y - self.LowerLeft.Y
+	return self.upperRight.Y - self.lowerLeft.Y
 }
 
-//distanceOutside return a lower bound on how far position is outside the
-//rectangle.
-//The return value will be negative if position is inside the square
-func (self Rectangle) distanceOutside(pos Coordinates2D) float64 {
-	ret := self.LowerLeft.X - pos.X
-	if r := pos.X - self.UpperRight.X; r > ret {
-		ret = r
+//Expand return a new Rectangle with the same center point but whose width and
+//height is increased by the given positive amount
+func (self Rectangle) Expand(amount float64) Rectangle {
+	delta := Coordinates2D{X: amount / 2.0, Y: amount / 2.0}
+	return Rectangle{
+		lowerLeft:  self.lowerLeft.Subtract(delta),
+		upperRight: self.upperRight.Add(delta),
 	}
-	if r := self.LowerLeft.Y - pos.Y; r > ret {
-		ret = r
-	}
-	if r := pos.Y - self.UpperRight.Y; r > ret {
-		ret = r
-	}
-	return ret
+}
+
+//Contains return true if the given coordinate is within the rectangle
+func (self Rectangle) Contains(pos Coordinates2D) bool {
+	return pos.X > self.lowerLeft.X && pos.X < self.upperRight.X && pos.Y > self.lowerLeft.Y && pos.Y < self.upperRight.Y
 }

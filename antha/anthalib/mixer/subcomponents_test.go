@@ -319,6 +319,36 @@ func TestUpdateComponentDetails(t *testing.T) {
 	},
 	}
 
+	cutSmartComponents := wtype.ComponentList{Components: map[string]wunit.Concentration{
+		"BSA":               wunit.NewConcentration(1000, "mg/l"),
+		"Magnesium Acetate": wunit.NewConcentration(100, "mM"),
+		"Potassium Acetate": wunit.NewConcentration(500, "mM"),
+		"Tris-acetate":      wunit.NewConcentration(200, "mM"),
+	},
+	}
+
+	conc := func(s string) wunit.Concentration {
+		return wunit.NewConcentration(wunit.SplitValueAndUnit(s))
+	}
+	sapISubComponents := wtype.ComponentList{Components: map[string]wunit.Concentration{
+		"BSA":      conc("500mg/l"),
+		"DTT":      conc("1mM"),
+		"EDTA":     conc("0.1mM"),
+		"Glycerol": conc("500g/l"),
+		"NaCl":     conc("10mM"),
+		"Tris-HCl": conc("10mM"),
+	},
+	}
+
+	t4SubComponents := wtype.ComponentList{Components: map[string]wunit.Concentration{
+		"DTT":      conc("1mM"),
+		"EDTA":     conc("0.1mM"),
+		"Glycerol": conc("500g/l"),
+		"KCl":      conc("50mM"),
+		"Tris-HCl": conc("10mM"),
+	},
+	}
+
 	water := newTestComponent("water", wtype.LTWater, 9999, defaultConc, wunit.NewVolume(2000.0, "ul"), nilComponentList)
 
 	mmx := newTestComponent("mastermix_sapI", wtype.LTWater, 9999, defaultConc, wunit.NewVolume(2000.0, "ul"), nilComponentList)
@@ -337,7 +367,63 @@ func TestUpdateComponentDetails(t *testing.T) {
 	mmxs := Sample(mmx, wunit.NewVolume(25.0, "ul"))
 	ps := Sample(part, wunit.NewVolume(10.0, "ul"))
 
+	cutSmart := newTestComponent("CutsmartBuffer",
+		wtype.LTWater,
+		9999,
+		wunit.NewConcentration(10.0, "X"),
+		wunit.NewVolume(2000.0, "ul"),
+		cutSmartComponents)
+
+	sapI := newTestComponent("SapI",
+		wtype.LTWater,
+		9999,
+		wunit.NewConcentration(10000, "U/ml"),
+		wunit.NewVolume(2000.0, "ul"),
+		sapISubComponents)
+
+	t4 := newTestComponent("T4Ligase",
+		wtype.LTWater,
+		9999,
+		wunit.NewConcentration(400000, "U/ml"),
+		wunit.NewVolume(2000.0, "ul"),
+		t4SubComponents)
+
+	atp := newTestComponent("ATP",
+		wtype.LTWater,
+		9999,
+		wunit.NewConcentration(1, "mM"),
+		wunit.NewVolume(2000.0, "ul"),
+		nilComponentList)
+
 	var mixTests = []mixTest{
+		{
+			name:    "mmxTest",
+			product: water,
+			mixes: []*wtype.Liquid{
+				Sample(cutSmart, wunit.NewVolume(10.0, "ul")),
+				Sample(atp, wunit.NewVolume(5.0, "ul")),
+				Sample(sapI, wunit.NewVolume(5.0, "ul")),
+				Sample(t4, wunit.NewVolume(5.0, "ul")),
+			},
+			expectedProductName: "0.2 mM/l ATP+500 mg/l BSA+0.4 mM/l DTT+0.04 mM/l EDTA+200 g/l Glycerol+10 mM/l KCl+40 mM/l Magnesium Acetate+2 mM/l NaCl+200 mM/l Potassium Acetate+4 mM/l Tris-HCl+80 mM/l Tris-acetate",
+			expectedProductComponentList: wtype.ComponentList{
+				Components: map[string]wunit.Concentration{
+					"BSA":               conc("500mg/l"),
+					"DTT":               conc("0.4mM"),
+					"EDTA":              conc("0.04mM"),
+					"Glycerol":          conc("200g/l"),
+					"KCl":               conc("10mM"),
+					"NaCl":              conc("2mM"),
+					"Tris-HCl":          conc("4mM"),
+					"Magnesium Acetate": wunit.NewConcentration(40, "mM"),
+					"Potassium Acetate": wunit.NewConcentration(200, "mM"),
+					"Tris-acetate":      wunit.NewConcentration(80, "mM"),
+					"ATP":               wunit.NewConcentration(0.2, "mM"),
+				},
+			},
+			expectedProductConc: gPerL0,
+			expectedError:       nil,
+		},
 		{
 			name:                "noConcsTest",
 			product:             water,

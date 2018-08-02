@@ -232,6 +232,14 @@ type ComponentList struct {
 	Components map[string]wunit.Concentration `json:"Components"`
 }
 
+func (c ComponentList) Dup() ComponentList {
+	ret := make(map[string]wunit.Concentration, len(c.Components))
+	for k, v := range c.Components {
+		ret[k] = v.Dup()
+	}
+	return ComponentList{Components: ret}
+}
+
 // add a single entry to a component list
 func (c ComponentList) Add(component *Liquid, conc wunit.Concentration) (newlist ComponentList) {
 

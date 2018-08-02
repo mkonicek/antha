@@ -280,8 +280,8 @@ func TestHeadCanReach384Plate(t *testing.T) {
 }
 
 func TestHeadCanReachTrough(t *testing.T) {
-	troughY := makeTestPlate(8, 1, 4, 4)
-	troughX := makeTestPlate(1, 12, 4, 4)
+	troughY := makeTestPlate(8, 1, 9.0, 0.0)
+	troughX := makeTestPlate(1, 12, 0.0, 9.0)
 
 	tests := []*headCanReachTest{
 		{
@@ -319,6 +319,35 @@ func TestHeadCanReachTrough(t *testing.T) {
 			Plate:         troughX,
 			WellAddresses: []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
 			Expected:      true,
+		},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestHeadCanReachTwoRowTrough(t *testing.T) {
+	trough := makeTestPlate(2, 12, 36.0, 9.0)
+
+	tests := []*headCanReachTest{
+		{
+			Name:          "non-independent in A1",
+			Independent:   false,
+			Orientation:   LHHChannel,
+			Multi:         8,
+			Plate:         trough,
+			WellAddresses: []string{"A1"},
+			Expected:      true,
+		},
+		{
+			Name:          "non-independent all channels in A1 and B1",
+			Independent:   false,
+			Orientation:   LHHChannel,
+			Multi:         8,
+			Plate:         trough,
+			WellAddresses: []string{"A1", "A1", "A1", "A1", "B1", "B1", "B1", "B1"},
+			Expected:      false, //we don't support this functionality currently
 		},
 	}
 

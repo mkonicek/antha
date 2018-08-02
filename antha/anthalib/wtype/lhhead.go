@@ -78,6 +78,7 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 
 	//get the real world position of the addresses
 	coords := make([]*Coordinates2D, head.GetParams().Multi)
+	counter := make(addressCounter, len(addresses))
 	for channel, address := range addresses {
 		//indicates the channel should not be used
 		if address.IsZero() {
@@ -95,10 +96,12 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 
 		//add well target offset if the well supports multiple tips at once
 		if wellTargets != nil {
-			crd2D = crd2D.Add(wellTargets[channel%len(wellTargets)])
+			crd2D = crd2D.Add(wellTargets[counter.GetCount(address)%len(wellTargets)])
 		}
 
 		coords[channel] = &crd2D
+
+		counter.Increment(address)
 	}
 
 	if !head.GetParams().Independent {
@@ -138,4 +141,23 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 	//hjk: TODO check that offsets are equal if the head suppots only uniform offsets
 
 	return true
+}
+
+//count occrances of addresses
+type addressCounter map[WellCoords]int
+
+//GetCount how many times have we seen this address
+func (self addressCounter) GetCount(wc WellCoords) int {
+	if count, ok := self[wc]; ok {
+		return count
+	}
+	return 0
+}
+
+//Increment the counter for this address
+func (self addressCounter) Increment(wc WellCoords) {
+	if _, ok := self[wc]; !ok {
+		self[wc] = 0
+	}
+	self[wc] += 1
 }

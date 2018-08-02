@@ -175,6 +175,10 @@ func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
 	return factor, nil
 }
 
+func (c Concentration) Dup() Concentration {
+	return CopyConcentration(c)
+}
+
 func CopyConcentration(v Concentration) Concentration {
 	ret := NewConcentration(v.RawValue(), v.Unit().PrefixedSymbol())
 	return ret

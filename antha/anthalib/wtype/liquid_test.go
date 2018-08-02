@@ -129,3 +129,40 @@ func TestComponentSerialize(t *testing.T) {
 		t.Errorf("COMPONENTS NOT EQUAL AFTER MARSHAL/UNMARSHAL")
 	}
 }
+
+func TestDeepCopySubComponents(t *testing.T) {
+	l := NewLHComponent()
+	l.CName = "water"
+	sc := NewLHComponent()
+	sc.CName = "mush"
+	l.AddSubComponent(sc, wunit.NewConcentration(50.0, "g/l"))
+
+	l2 := l.Dup()
+
+	scMapEqual := func(m1, m2 map[string]wunit.Concentration) bool {
+		if len(m1) != len(m2) {
+			return false
+		}
+
+		for k, v := range m1 {
+			v2, ok := m2[k]
+
+			if !ok || !v.EqualTo(v2) {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	if !scMapEqual(l.SubComponents.Components, l2.SubComponents.Components) {
+		t.Errorf("Subcomponent Maps not identical in contents after Dup")
+	}
+
+	l.SubComponents.Components["fishpaste"] = wunit.NewConcentration(100.0, "g/l")
+
+	if scMapEqual(l.SubComponents.Components, l2.SubComponents.Components) {
+		t.Errorf("Subcomponent Maps still linked after dup")
+	}
+
+}

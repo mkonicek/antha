@@ -109,6 +109,14 @@ func (self Coordinates) Unit() Coordinates {
 	return self.Divide(self.Abs())
 }
 
+//To2D return a two dimensional coordinate by dropping z dimension
+func (self Coordinates) To2D() Coordinates2D {
+	return Coordinates2D{
+		X: self.X,
+		Y: self.Y,
+	}
+}
+
 //Geometry interface for 3D geometry
 type Geometry interface {
 	Height() wunit.Length
@@ -125,5 +133,104 @@ func (ps PointSet) CentreTo(c Coordinates) PointSet {
 		ret[i] = p.Subtract(c)
 	}
 
+	return ret
+}
+
+type Coordinates2D struct {
+	X float64
+	Y float64
+}
+
+//String string representation of the coordinate
+func (self Coordinates2D) String() string {
+	return fmt.Sprintf("%.1fx%.1f mm", self.X, self.Y)
+}
+
+//Equals return true if the two coordinates are equal
+func (self Coordinates2D) Equals(rhs Coordinates2D) bool {
+	return self.X == rhs.X && self.Y == rhs.Y
+}
+
+//Add return a new coordinate which is the sum of the two
+func (self Coordinates2D) Add(rhs Coordinates2D) Coordinates2D {
+	return Coordinates2D{
+		X: self.X + rhs.X,
+		Y: self.Y + rhs.Y,
+	}
+}
+
+//Subtract return a new coordinate which is self minus rhs
+func (self Coordinates2D) Subtract(rhs Coordinates2D) Coordinates2D {
+	return Coordinates2D{
+		X: self.X - rhs.X,
+		Y: self.Y - rhs.Y,
+	}
+}
+
+//Multiply return a new coordinate scaled by factor
+func (self Coordinates2D) Multiply(factor float64) Coordinates2D {
+	return Coordinates2D{
+		X: self.X * factor,
+		Y: self.Y * factor,
+	}
+}
+
+//Divide return a new coordinate scaled by the reciprocal of factor
+func (self Coordinates2D) Divide(factor float64) Coordinates2D {
+	return Coordinates2D{
+		X: self.X / factor,
+		Y: self.Y / factor,
+	}
+}
+
+//Abs return the L2 norm of the coordinate
+func (self Coordinates2D) Abs() float64 {
+	return math.Sqrt(self.X*self.X + self.Y*self.Y)
+}
+
+//a rectangle
+type Rectangle struct {
+	LowerLeft  Coordinates2D
+	UpperRight Coordinates2D
+}
+
+//NewRectangle create a new rectangle from any two opposing corners
+func NewRectangle(firstCorner, secondCorner Coordinates2D) Rectangle {
+	return Rectangle{
+		LowerLeft: Coordinates2D{
+			X: math.Min(firstCorner.X, secondCorner.X),
+			Y: math.Min(firstCorner.Y, secondCorner.Y),
+		},
+		UpperRight: Coordinates2D{
+			X: math.Max(firstCorner.X, secondCorner.X),
+			Y: math.Max(firstCorner.Y, secondCorner.Y),
+		},
+	}
+}
+
+//Width the width of the rectangle
+func (self Rectangle) Width() float64 {
+	return self.UpperRight.X - self.LowerLeft.X
+}
+
+//Height the height of the rectangle
+func (self Rectangle) Height() float64 {
+	return self.UpperRight.Y - self.LowerLeft.Y
+}
+
+//distanceOutside return a lower bound on how far position is outside the
+//rectangle.
+//The return value will be negative if position is inside the square
+func (self Rectangle) distanceOutside(pos Coordinates2D) float64 {
+	ret := self.LowerLeft.X - pos.X
+	if r := pos.X - self.UpperRight.X; r > ret {
+		ret = r
+	}
+	if r := self.LowerLeft.Y - pos.Y; r > ret {
+		ret = r
+	}
+	if r := pos.Y - self.UpperRight.Y; r > ret {
+		ret = r
+	}
 	return ret
 }

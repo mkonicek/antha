@@ -58,7 +58,7 @@ func (lhh *LHHead) GetParams() *LHChannelParameter {
 //GetWellTargets get the offset from the center of the well for each channel that
 //can access the well simultaneously
 //returns nil if the well cannot fit multiple channels
-func (head *LHHead) GetWellTargets(well *LHWell) []Coordinates {
+func (head *LHHead) GetWellTargets(well *LHWell) []Coordinates2D {
 	//no well targets if there's no adaptor loaded
 	if head.Adaptor == nil {
 		return nil
@@ -67,13 +67,13 @@ func (head *LHHead) GetWellTargets(well *LHWell) []Coordinates {
 	channelRadius := 3.0 //should come from head
 
 	//total size of channels, including radius
-	channelSize := channelPositions[len(channelPositions)-1].Add(Coordinates{X: 2 * channelRadius, Y: 2 * channelRadius})
+	channelSize := channelPositions[len(channelPositions)-1].Add(Coordinates2D{X: 2 * channelRadius, Y: 2 * channelRadius})
 
 	if wellSize := well.GetSize(); wellSize.X < channelSize.X || wellSize.Y < channelSize.Y {
 		return nil
 	}
 
-	center := Coordinates{}
+	center := Coordinates2D{}
 	for _, pos := range channelPositions {
 		center = center.Add(pos)
 	}
@@ -108,7 +108,7 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 	wellTargets := head.GetWellTargets(plate.Welltype)
 
 	//get the real world position of the addresses
-	coords := make([]*Coordinates, head.GetParams().Multi)
+	coords := make([]*Coordinates2D, head.GetParams().Multi)
 	for channel, address := range addresses {
 		//indicates the channel should not be used
 		if address.IsZero() {
@@ -122,12 +122,14 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 			return false
 		}
 
+		crd2D := crd.To2D()
+
 		//add well target offset if the well supports multiple tips at once
 		if wellTargets != nil {
-			crd = crd.Add(wellTargets[channel%len(wellTargets)])
+			crd2D = crd2D.Add(wellTargets[channel%len(wellTargets)])
 		}
 
-		coords[channel] = &crd
+		coords[channel] = &crd2D
 	}
 
 	if !head.GetParams().Independent {
@@ -142,7 +144,7 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 	}
 
 	//offsets[i] is the distance between the i-1th and the ith coordinate
-	offsets := make([]*Coordinates, len(coords)-1)
+	offsets := make([]*Coordinates2D, len(coords)-1)
 	lastI := -1
 	for i, coord := range coords {
 		if coord != nil {
@@ -156,11 +158,10 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 	}
 
 	//check that each offset is within the supported range of the machine
-	smallestOffset := head.Adaptor.GetSmallestChannelOffset()
-	largestOffset := head.Adaptor.GetLargestChannelOffset()
+	supportedRange := NewRectangle(head.Adaptor.GetSmallestChannelOffset(), head.Adaptor.GetLargestChannelOffset())
 	positionAccuracy := 0.1 //should be a property of the head
 	for _, offset := range offsets {
-		if offset != nil && distanceOutsideSquare(smallestOffset, largestOffset, *offset) > positionAccuracy {
+		if offset != nil && supportedRange.distanceOutside(*offset) > positionAccuracy {
 			return false
 		}
 	}
@@ -168,23 +169,4 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses []WellCoords) bool {
 	//hjk: TODO check that offsets are equal if the head suppots only uniform offsets
 
 	return true
-}
-
-//distanceOutsideSquare return a lower bound on how far position is outside the
-//square defined by the corners lowerLeft,topRight
-//where a is the bottom left and b is the top right corner
-//value will be negative if position is inside the square
-//z-value for all arguments is ignored
-func distanceOutsideSquare(lowerLeft, topRight, pos Coordinates) float64 {
-	ret := lowerLeft.X - pos.X
-	if r := pos.X - topRight.X; r > ret {
-		ret = r
-	}
-	if r := lowerLeft.Y - pos.Y; r > ret {
-		ret = r
-	}
-	if r := pos.Y - topRight.Y; r > ret {
-		ret = r
-	}
-	return ret
 }

@@ -195,7 +195,7 @@ func makeBasicPlates() (plates []*wtype.Plate) {
 	plates = append(plates, plate)
 
 	// shallow well strip trough 12
-	stshps := wtype.NewShape("box", "mm", 8.2, 72, 15)
+	stshps := wtype.NewShape(wtype.BoxShape, "mm", 8.2, 72, 15)
 	trough12s := wtype.NewLHWell("ul", 4000, 1500, stshps, wtype.VWellBottom, 8.2, 72, 15, 4.7, "mm")
 	plate = wtype.NewLHPlate("SWST12", "Unknown", 1, 12, makePlateCoords(20), trough12s, 9, 9, 0, 30.0, 1)
 	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types

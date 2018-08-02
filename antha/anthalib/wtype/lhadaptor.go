@@ -150,7 +150,7 @@ func (self *LHAdaptor) GetLargestChannelOffset() Coordinates2D {
 
 //GetMostCompactChannelPositions get the relative channel positions for the adaptor
 //in the most tightly bunched layout supported
-func (self *LHAdaptor) GetMostCompactChannelPositions() []Coordinates2D {
+func (self *LHAdaptor) GetMostCompactChannelPositions() ChannelPositions {
 	ret := make([]Coordinates2D, self.Params.Multi)
 	offset := self.GetSmallestChannelOffset()
 	current := Coordinates2D{}
@@ -175,21 +175,55 @@ func (self *LHAdaptor) GetWellTargets(well *LHWell) []Coordinates2D {
 	channelRadius := 3.0 //should come from adaptor
 
 	//total size of channels, including radius
-	channelSize := channelPositions[len(channelPositions)-1].Add(Coordinates2D{X: 2 * channelRadius, Y: 2 * channelRadius})
+	channelSize := channelPositions.Size(channelRadius)
 
 	if wellSize := well.GetSize(); wellSize.X < channelSize.X || wellSize.Y < channelSize.Y {
 		return nil
 	}
 
-	center := Coordinates2D{}
-	for _, pos := range channelPositions {
-		center = center.Add(pos)
-	}
-	center = center.Divide(float64(len(channelPositions)))
-
-	for i := range channelPositions {
-		channelPositions[i] = channelPositions[i].Subtract(center)
-	}
+	//set the channel positions center as their origin
+	channelPositions = channelPositions.Subtract(channelPositions.GetCenter())
 
 	return channelPositions
+}
+
+//A list of 2d coordinates of the channels of an adaptor in channel order
+type ChannelPositions []Coordinates2D
+
+//Size get the total footprint size of the channel positions including the radius
+func (self ChannelPositions) Size(channelRadius float64) Coordinates2D {
+	if len(self) <= 1 {
+		return Coordinates2D{}
+	}
+	return Coordinates2D{
+		X: self[len(self)-1].X - self[0].X + 2*channelRadius,
+		Y: self[len(self)-1].Y - self[0].Y + 2*channelRadius,
+	}
+}
+
+//Add return a new set of channel positions with the offset added
+func (self ChannelPositions) Add(rhs Coordinates2D) ChannelPositions {
+	ret := make([]Coordinates2D, len(self))
+	for i, crd := range self {
+		ret[i] = crd.Add(rhs)
+	}
+	return ret
+}
+
+//Subtract return a new set of channel positions with the offset subtracted
+func (self ChannelPositions) Subtract(rhs Coordinates2D) ChannelPositions {
+	ret := make([]Coordinates2D, len(self))
+	for i, crd := range self {
+		ret[i] = crd.Subtract(rhs)
+	}
+	return ret
+}
+
+//GetCenter return the mean of the channel coordinates
+func (self ChannelPositions) GetCenter() Coordinates2D {
+	ret := Coordinates2D{}
+	for _, crd := range self {
+		ret = ret.Add(crd)
+	}
+	return ret.Divide(float64(len(self)))
 }

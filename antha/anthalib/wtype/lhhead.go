@@ -31,18 +31,16 @@ func (head *LHHead) DupKeepIDs() *LHHead {
 }
 
 func (head *LHHead) dup(keepIDs bool) *LHHead {
-	var params *LHChannelParameter
-	var adaptor *LHAdaptor
-	if keepIDs {
-		params = head.Params.DupKeepIDs()
-		adaptor = head.Adaptor.DupKeepIDs()
-	} else {
-		params = head.Params.Dup()
-		adaptor = head.Adaptor.Dup()
-	}
-	h := NewLHHead(head.Name, head.Manufacturer, params)
-	h.Adaptor = adaptor
+	h := NewLHHead(head.Name, head.Manufacturer, nil)
 	h.TipLoading = head.TipLoading
+	if keepIDs {
+		h.ID = head.ID
+		h.Params = head.Params.DupKeepIDs()
+		h.Adaptor = head.Adaptor.DupKeepIDs()
+	} else {
+		h.Params = head.Params.Dup()
+		h.Adaptor = head.Adaptor.Dup()
+	}
 	return h
 }
 

@@ -41,14 +41,12 @@ func (lha *LHAdaptor) dup(keepIDs bool) *LHAdaptor {
 	if keepIDs {
 		ad = NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.DupKeepIDs())
 		ad.ID = lha.ID
+		for i, tip := range lha.Tips {
+			ad.AddTip(i, tip.DupKeepID())
+		}
 	} else {
 		ad = NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.Dup())
-	}
-
-	for i, tip := range lha.Tips {
-		if keepIDs {
-			ad.AddTip(i, tip.DupKeepID())
-		} else {
+		for i, tip := range lha.Tips {
 			ad.AddTip(i, tip.Dup())
 		}
 	}

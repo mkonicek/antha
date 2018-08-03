@@ -103,10 +103,10 @@ func TestLHAdaptorDup(t *testing.T) {
 
 	//removing tips shouldn't affect copies
 	adaptor.RemoveTips()
-	if g, e := newIDs.NTipsLoaded(), 4; g != e {
+	if g, e := newIDs.NumTipsLoaded(), 4; g != e {
 		t.Errorf("expected %d tips, got %d for newIds", e, g)
 	}
-	if g, e := oldIDs.NTipsLoaded(), 4; g != e {
+	if g, e := oldIDs.NumTipsLoaded(), 4; g != e {
 		t.Errorf("expected %d tips, got %d for oldIDs", e, g)
 	}
 

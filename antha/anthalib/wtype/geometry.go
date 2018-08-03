@@ -230,5 +230,6 @@ func (self Rectangle) Expand(amount float64) Rectangle {
 
 //Contains return true if the given coordinate is within the rectangle
 func (self Rectangle) Contains(pos Coordinates2D) bool {
-	return pos.X > self.lowerLeft.X && pos.X < self.upperRight.X && pos.Y > self.lowerLeft.Y && pos.Y < self.upperRight.Y
+	return pos.X > self.lowerLeft.X && pos.X < self.upperRight.X &&
+		pos.Y > self.lowerLeft.Y && pos.Y < self.upperRight.Y
 }

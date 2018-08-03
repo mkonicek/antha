@@ -16,7 +16,7 @@ func NewLHAdaptor(name, mf string, params *LHChannelParameter) *LHAdaptor {
 		Manufacturer: mf,
 		Params:       params,
 		ID:           GetUUID(),
-		Tips:         []*LHTip{},
+		Tips:         make([]*LHTip, params.Multi),
 	}
 }
 
@@ -36,29 +36,21 @@ func (lha *LHAdaptor) DupKeepIDs() *LHAdaptor {
 }
 
 func (lha *LHAdaptor) dup(keepIDs bool) *LHAdaptor {
-	var params *LHChannelParameter
+
+	var ad *LHAdaptor
 	if keepIDs {
-		params = lha.Params.DupKeepIDs()
-	} else {
-		params = lha.Params.Dup()
-	}
-
-	ad := NewLHAdaptor(lha.Name, lha.Manufacturer, params)
-
-	for i, tip := range lha.Tips {
-		if tip != nil {
-			if keepIDs {
-				ad.AddTip(i, tip.DupKeepID())
-			} else {
-				ad.AddTip(i, tip.Dup())
-			}
-		}
-	}
-
-	if keepIDs {
+		ad = NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.DupKeepIDs())
 		ad.ID = lha.ID
 	} else {
-		ad.ID = GetUUID()
+		ad = NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.Dup())
+	}
+
+	for i, tip := range lha.Tips {
+		if keepIDs {
+			ad.AddTip(i, tip.DupKeepID())
+		} else {
+			ad.AddTip(i, tip.Dup())
+		}
 	}
 
 	return ad

@@ -82,7 +82,7 @@ func (self Coordinates) Multiply(v float64) Coordinates {
 		self.Z * v}
 }
 
-//Divide returns a new wtype.Coordinates
+//Divide returns a new wtype.Coordinates divided by v. If v is zero, inf will be returned
 func (self Coordinates) Divide(v float64) Coordinates {
 	return Coordinates{self.X / v,
 		self.Y / v,
@@ -176,6 +176,7 @@ func (self Coordinates2D) Multiply(factor float64) Coordinates2D {
 }
 
 //Divide return a new coordinate scaled by the reciprocal of factor
+//if factor is zero, inf will be returned
 func (self Coordinates2D) Divide(factor float64) Coordinates2D {
 	return Coordinates2D{
 		X: self.X / factor,

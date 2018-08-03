@@ -65,25 +65,25 @@ func (lha *LHAdaptor) NumTipsLoaded() int {
 	return r
 }
 
-//IsTipLoaded Is there a tip loaded on channel_number
-func (lha *LHAdaptor) IsTipLoaded(channel_number int) bool {
-	return lha.Tips[channel_number] != nil
+//IsTipLoaded Is there a tip loaded on channelNumber
+func (lha *LHAdaptor) IsTipLoaded(channelNumber int) bool {
+	return lha.Tips[channelNumber] != nil
 }
 
-//GetTip Return the tip at channel_number, nil otherwise
-func (lha *LHAdaptor) GetTip(channel_number int) *LHTip {
-	return lha.Tips[channel_number]
+//GetTip Return the tip at channelNumber, nil otherwise
+func (lha *LHAdaptor) GetTip(channelNumber int) *LHTip {
+	return lha.Tips[channelNumber]
 }
 
-//AddTip Load a tip to the specified channel
-func (lha *LHAdaptor) AddTip(channel_number int, tip *LHTip) {
-	lha.Tips[channel_number] = tip
+//AddTip Load a tip to the specified channel, overwriting any tip already present
+func (lha *LHAdaptor) AddTip(channelNumber int, tip *LHTip) {
+	lha.Tips[channelNumber] = tip
 }
 
 //RemoveTip Remove a tip from the specified channel and return it
-func (lha *LHAdaptor) RemoveTip(channel_number int) *LHTip {
-	tip := lha.Tips[channel_number]
-	lha.Tips[channel_number] = nil
+func (lha *LHAdaptor) RemoveTip(channelNumber int) *LHTip {
+	tip := lha.Tips[channelNumber]
+	lha.Tips[channelNumber] = nil
 	return tip
 }
 

@@ -87,15 +87,15 @@ func (lha *LHAdaptor) RemoveTip(channel_number int) *LHTip {
 	return tip
 }
 
-//RemoveTips Remove every tip from the adaptor
+//RemoveTips Return all previously loaded tips, with nils removed
 func (lha *LHAdaptor) RemoveTips() []*LHTip {
 	ret := make([]*LHTip, 0, lha.NumTipsLoaded())
-	for i := range lha.Tips {
-		if lha.Tips[i] != nil {
-			ret = append(ret, lha.Tips[i])
-			lha.Tips[i] = nil
+	for _, tip := range lha.Tips {
+		if tip != nil {
+			ret = append(ret, tip)
 		}
 	}
+	lha.Tips = make([]*LHTip, lha.Params.Multi)
 	return ret
 }
 

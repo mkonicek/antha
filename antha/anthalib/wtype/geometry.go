@@ -209,6 +209,27 @@ func NewRectangle(firstCorner, secondCorner Coordinates2D) Rectangle {
 	}
 }
 
+//NewBoundingRectangle create a new rectangle which is the smallest rectangle to
+//include all the given coordinates
+func NewBoundingRectangle(coords []Coordinates2D) Rectangle {
+	if len(coords) == 0 {
+		return Rectangle{}
+	}
+	ret := Rectangle{
+		lowerLeft:  coords[0],
+		upperRight: coords[0],
+	}
+
+	for _, coord := range coords {
+		ret.upperRight.X = math.Max(ret.upperRight.X, coord.X)
+		ret.upperRight.Y = math.Max(ret.upperRight.Y, coord.Y)
+		ret.lowerLeft.X = math.Min(ret.lowerLeft.X, coord.X)
+		ret.lowerLeft.Y = math.Min(ret.lowerLeft.Y, coord.Y)
+	}
+
+	return ret
+}
+
 //Width the width of the rectangle
 func (self Rectangle) Width() float64 {
 	return self.upperRight.X - self.lowerLeft.X
@@ -217,6 +238,11 @@ func (self Rectangle) Width() float64 {
 //Height the height of the rectangle
 func (self Rectangle) Height() float64 {
 	return self.upperRight.Y - self.lowerLeft.Y
+}
+
+//Center the central point of the rectangle
+func (self Rectangle) Center() Coordinates2D {
+	return self.upperRight.Add(self.lowerLeft).Divide(2.0)
 }
 
 //Expand return a new Rectangle with the same center point but whose width and

@@ -172,9 +172,7 @@ func (self *LHAdaptor) GetWellTargets(well *LHWell) []Coordinates2D {
 	}
 
 	//set the channel positions center as their origin
-	channelPositions = channelPositions.Subtract(channelPositions.GetCenter())
-
-	return channelPositions
+	return channelPositions.Subtract(channelPositions.GetCenter())
 }
 
 //A list of 2d coordinates of the channels of an adaptor in channel order
@@ -182,7 +180,7 @@ type ChannelPositions []Coordinates2D
 
 //Size get the total footprint size of the channel positions including the radius
 func (self ChannelPositions) Size(channelRadius float64) Coordinates2D {
-	if len(self) <= 1 {
+	if len(self) == 0 {
 		return Coordinates2D{}
 	}
 	return Coordinates2D{
@@ -193,7 +191,7 @@ func (self ChannelPositions) Size(channelRadius float64) Coordinates2D {
 
 //Add return a new set of channel positions with the offset added
 func (self ChannelPositions) Add(rhs Coordinates2D) ChannelPositions {
-	ret := make([]Coordinates2D, len(self))
+	ret := make(ChannelPositions, len(self))
 	for i, crd := range self {
 		ret[i] = crd.Add(rhs)
 	}
@@ -202,18 +200,14 @@ func (self ChannelPositions) Add(rhs Coordinates2D) ChannelPositions {
 
 //Subtract return a new set of channel positions with the offset subtracted
 func (self ChannelPositions) Subtract(rhs Coordinates2D) ChannelPositions {
-	ret := make([]Coordinates2D, len(self))
+	ret := make(ChannelPositions, len(self))
 	for i, crd := range self {
 		ret[i] = crd.Subtract(rhs)
 	}
 	return ret
 }
 
-//GetCenter return the mean of the channel coordinates
+//GetCenter return the center of the channel coordinates
 func (self ChannelPositions) GetCenter() Coordinates2D {
-	ret := Coordinates2D{}
-	for _, crd := range self {
-		ret = ret.Add(crd)
-	}
-	return ret.Divide(float64(len(self)))
+	return NewBoundingRectangle(self).Center()
 }

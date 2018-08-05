@@ -691,12 +691,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	request.EnsureComponentsAreUnique()
-
-	if err := request.AssertInstructionVolumesOK(); err != nil {
-		return errors.WithMessage(err, "prior to solution setup")
-	}
-
 	//make sure instruction components aren't referred to elsewhere
 	request.EnsureComponentsAreUnique()
 

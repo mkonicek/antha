@@ -82,10 +82,10 @@ func (is InputSorter) Less(i, j int) bool {
 func (request *LHRequest) inputPlateSetup(ctx context.Context) error {
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
-	input_platetypes := request.Input_platetypes
+	input_platetypes := request.InputPlatetypes
 
 	// we assume that input_plates is set if any locs are set
-	input_plates := request.Input_plates
+	input_plates := request.InputPlates
 
 	if len(input_plates) == 0 {
 		input_plates = make(map[string]*wtype.Plate, 3)
@@ -95,15 +95,15 @@ func (request *LHRequest) inputPlateSetup(ctx context.Context) error {
 
 	var curr_plate *wtype.Plate
 
-	inputs := request.Input_solutions
+	inputs := request.InputSolutions.Solutions
 
-	input_order := make([]string, len(request.Input_order))
-	copy(input_order, request.Input_order)
+	input_order := make([]string, len(request.InputSolutions.Order))
+	copy(input_order, request.InputSolutions.Order)
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in
 
-	input_volumes := request.Input_vols_wanting
+	input_volumes := request.InputSolutions.VolumesWanting
 
 	// sort to make deterministic
 	// we sort by a) volume (descending) b) name (alphabetically)
@@ -114,7 +114,7 @@ func (request *LHRequest) inputPlateSetup(ctx context.Context) error {
 
 	input_order = isrt.Ordered
 
-	weights_constraints := request.Input_setup_weights
+	weights_constraints := request.InputSetupWeights
 
 	// get the assignment
 
@@ -253,8 +253,8 @@ func (request *LHRequest) inputPlateSetup(ctx context.Context) error {
 		}
 	}
 
-	request.Input_plates = input_plates
-	request.Input_assignments = input_assignments
+	request.InputPlates = input_plates
+	request.InputAssignments = input_assignments
 
 	return nil
 }

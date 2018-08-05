@@ -55,11 +55,23 @@ type LHInstruction struct {
 }
 
 func (ins LHInstruction) String() string {
-	inplace := ""
+	ret := fmt.Sprintf(
+		"%s G: %d %s %v %s ID(%s) %s: %s",
+		ins.InsType(),
+		ins.Generation(),
+		ins.ID,
+		ComponentVector(ins.Components),
+		ins.PlateName,
+		ins.PlateID,
+		ins.Welladdress,
+		ins.ProductIDs(),
+	)
+
 	if ins.IsMixInPlace() {
-		inplace = " INPLACE"
+		ret += " INPLACE"
 	}
-	return fmt.Sprint(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs(), inplace)
+
+	return ret
 }
 
 //Summarize get a string summary of the instruction for end users
@@ -199,6 +211,17 @@ func (ins *LHInstruction) IsMixInPlace() bool {
 
 	smp := ins.Components[0].IsSample()
 	return !smp
+}
+
+//IsDummy return true if the instruction has no effect
+func (ins *LHInstruction) IsDummy() bool {
+	if ins.Type == LHIMIX && ins.IsMixInPlace() && len(ins.Components) == 1 {
+		// instructions of this form generally mean "do nothing"
+		// but have very useful side-effects
+		return true
+	}
+
+	return false
 }
 
 func (ins *LHInstruction) HasAnyParent() bool {

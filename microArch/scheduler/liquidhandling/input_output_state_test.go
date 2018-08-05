@@ -69,11 +69,9 @@ func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	rq.AddUserPlate(pl2)
-
-	rq.ConfigureYourself()
 
 	lh.Plan(ctx, rq)
 
@@ -145,9 +143,7 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh.Plan(ctx, rq)
 
@@ -187,7 +183,7 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	pl2, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
 
@@ -206,8 +202,6 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 	}
 
 	rq.AddUserPlate(pl2)
-
-	rq.ConfigureYourself()
 
 	lh.Plan(ctx, rq)
 
@@ -251,7 +245,7 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	pl2, err := inventory.NewPlate(ctx, "pcrplate_skirted_riser20")
 
@@ -270,8 +264,6 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 	}
 
 	rq.AddUserPlate(pl2)
-
-	rq.ConfigureYourself()
 
 	lh.Plan(ctx, rq)
 
@@ -310,9 +302,7 @@ func TestBeforeVsAfterMixInPlace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh.Plan(ctx, rq)
 
@@ -358,10 +348,8 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-	rq.Output_platetypes = append(rq.Output_platetypes, pl.Dup())
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, pl.Dup())
 
 	lh.Plan(ctx, rq)
 
@@ -401,9 +389,7 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh.Plan(ctx, rq)
 

@@ -825,3 +825,27 @@ func addNewNodesTo(ic *IChain, newNodes *IChain) *IChain {
 
 	return ic
 }
+
+//CheckOneInstructionTypePerStage validate that splitting has been successful and
+//that only one type of instruction is present in each stage of the chain
+func (ic *IChain) CheckOneInstructionTypePerStage() error {
+	if ic == nil {
+		return nil
+	}
+
+	if instructionTypes := countInstructionTypes(ic.Values); len(instructionTypes) != 1 {
+		return fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", instructionTypes, ic.Depth)
+	}
+
+	return ic.Child.CheckOneInstructionTypePerStage()
+}
+
+func countInstructionTypes(inss []*wtype.LHInstruction) map[string]bool {
+	m := make(map[string]bool)
+
+	for _, i := range inss {
+		m[i.InsType()] = true
+	}
+
+	return m
+}

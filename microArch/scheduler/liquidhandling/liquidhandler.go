@@ -774,16 +774,16 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// final insurance that plate names will be safe
-
-	request = fixDuplicatePlateNames(request)
+	if err := request.EnsurePlateNamesUnique(); err != nil {
+		return err
+	}
 
 	// remove dummy mix-in-place instructions
 
 	request = removeDummyInstructions(request)
 
 	//set the well targets
-	err = this.addWellTargets()
-	if err != nil {
+	if err := this.addWellTargets(); err != nil {
 		return err
 	}
 
@@ -1115,32 +1115,4 @@ func addToMap(m, a map[string]*wtype.Plate) {
 	for k, v := range a {
 		m[k] = v
 	}
-}
-
-func fixDuplicatePlateNames(rq *LHRequest) *LHRequest {
-	seen := make(map[string]int, 1)
-	fixNames := func(sa []string, pm map[string]*wtype.Plate) {
-		for _, id := range sa {
-			p, foundPlate := pm[id]
-
-			if !foundPlate {
-				panic(fmt.Sprintf("Inconsistency in plate order / map for plate ID %s ", id))
-			}
-
-			n, ok := seen[p.PlateName]
-
-			if ok {
-				newName := fmt.Sprintf("%s_%d", p.PlateName, n)
-				seen[p.PlateName] += 1
-				p.PlateName = newName
-			} else {
-				seen[p.PlateName] = 1
-			}
-		}
-	}
-
-	fixNames(rq.InputPlateOrder, rq.InputPlates)
-	fixNames(rq.OutputPlateOrder, rq.OutputPlates)
-
-	return rq
 }

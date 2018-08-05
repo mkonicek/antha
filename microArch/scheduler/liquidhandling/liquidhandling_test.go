@@ -1086,7 +1086,9 @@ func TestDistinctPlateNames(t *testing.T) {
 		rq.OutputPlates[p.ID] = p
 	}
 
-	rq = fixDuplicatePlateNames(rq)
+	if err := rq.EnsurePlateNamesUnique(); err != nil {
+		t.Error(err)
+	}
 
 	found := make(map[string]int)
 

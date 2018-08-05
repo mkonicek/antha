@@ -24,6 +24,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -523,4 +524,39 @@ func (rq *LHRequest) updateWithNewLHInstructions(sorted []*wtype.LHInstruction) 
 			rq.LHInstructions[ins.ID] = ins
 		}
 	}
+}
+
+//EnsurePlateNamesUnique makes certain that plate names are unique by adding a
+//suffix to any duplcated plate names
+func (rq *LHRequest) EnsurePlateNamesUnique() error {
+	seen := make(map[string]int, 1)
+	fixNames := func(sa []string, pm map[string]*wtype.Plate) error {
+		for _, id := range sa {
+			p, foundPlate := pm[id]
+
+			if !foundPlate {
+				return errors.Errorf("inconsistency in plate order / map for plate ID %s ", id)
+			}
+
+			n, ok := seen[p.PlateName]
+
+			if ok {
+				newName := fmt.Sprintf("%s_%d", p.PlateName, n)
+				seen[p.PlateName] += 1
+				p.PlateName = newName
+			} else {
+				seen[p.PlateName] = 1
+			}
+		}
+		return nil
+	}
+
+	if err := fixNames(rq.InputPlateOrder, rq.InputPlates); err != nil {
+		return errors.WithMessage(err, "in input plates")
+	}
+	if err := fixNames(rq.OutputPlateOrder, rq.OutputPlates); err != nil {
+		return errors.WithMessage(err, "in output plates")
+	}
+
+	return nil
 }

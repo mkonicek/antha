@@ -24,8 +24,11 @@
 package liquidhandling
 
 import (
+	"context"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -371,4 +374,120 @@ func (request *LHRequest) EnsureComponentsAreUnique() {
 		}
 		ins.Results[0] = ins.Results[0].Dup()
 	}
+}
+
+//assertVolumesNonNegative tests that the volumes within the LHRequest are zero or positive
+func (request *LHRequest) assertVolumesNonNegative() error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		for _, cmp := range ins.Components {
+			if cmp.Volume().LessThan(wunit.ZeroVolume()) {
+				return wtype.LHErrorf(wtype.LH_ERR_VOL, "negative volume for component \"%s\" in instruction:\n%s", cmp.CName, ins.Summarize(1))
+			}
+		}
+	}
+	return nil
+}
+
+//assertTotalVolumesMatch checks that component total volumes are all the same in mix instructions
+func (request *LHRequest) assertTotalVolumesMatch() error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		totalVolume := wunit.ZeroVolume()
+
+		for _, cmp := range ins.Components {
+			if tV := cmp.TotalVolume(); !tV.IsZero() {
+				if !totalVolume.IsZero() && !tV.EqualTo(totalVolume) {
+					return wtype.LHErrorf(wtype.LH_ERR_VOL, "multiple distinct total volumes specified in instruction:\n%s", ins.Summarize(1))
+				}
+				totalVolume = tV
+			}
+		}
+	}
+	return nil
+}
+
+//assertMixResultsCorrect checks that volumes of the mix result matches either the sum of the input, or the total volume if specified
+func (request *LHRequest) assertMixResultsCorrect() error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		totalVolume := wunit.ZeroVolume()
+		volumeSum := wunit.ZeroVolume()
+
+		for _, cmp := range ins.Components {
+			if tV := cmp.TotalVolume(); !tV.IsZero() {
+				totalVolume = tV
+			} else if v := cmp.Volume(); !v.IsZero() {
+				volumeSum.Add(v)
+			}
+		}
+
+		if len(ins.Results) != 1 {
+			return wtype.LHErrorf(wtype.LH_ERR_DIRE, "mix instruction has %d results specified, expecting one at instruction:\n%s",
+				len(ins.Results), ins.Summarize(1))
+		}
+
+		resultVolume := ins.Results[0].Volume()
+
+		if !totalVolume.IsZero() && !totalVolume.EqualTo(resultVolume) {
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "total volume (%v) does not match resulting volume (%v) for instruction:\n%s",
+				totalVolume, resultVolume, ins.Summarize(1))
+		} else if totalVolume.IsZero() && !volumeSum.EqualTo(resultVolume) {
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "sum of requested volumes (%v) does not match result volume (%v) for instruction:\n%s",
+				volumeSum, resultVolume, ins.Summarize(1))
+		}
+	}
+	return nil
+}
+
+//assertWellNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
+//assumes assertMixResultsCorrect returns nil
+func (request *LHRequest) assertWellNotOverfilled(ctx context.Context) error {
+	for _, ins := range request.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		resultVolume := ins.Results[0].Volume()
+
+		var plate *wtype.Plate
+		if ins.OutPlate != nil {
+			plate = ins.OutPlate
+		} else if ins.PlateID != "" {
+			if p, ok := request.GetPlate(ins.PlateID); !ok {
+				continue
+			} else {
+				plate = p
+			}
+		} else if ins.Platetype != "" {
+			if p, err := inventory.NewPlate(ctx, ins.Platetype); err != nil {
+				continue
+			} else {
+				plate = p
+			}
+		} else {
+			//couldn't find an appropriate plate
+			continue
+		}
+
+		if maxVol := plate.Welltype.MaxVolume(); maxVol.LessThan(resultVolume) {
+			//ignore if this is just numerical precision (#campainforintegervolume)
+			delta := wunit.SubtractVolumes(resultVolume, maxVol)
+			if delta.IsZero() {
+				continue
+			}
+			return wtype.LHErrorf(wtype.LH_ERR_VOL, "volume of resulting mix (%v) exceeds the well maximum (%v) for instruction:\n%s",
+				resultVolume, maxVol, ins.Summarize(1))
+		}
+	}
+	return nil
 }

@@ -808,16 +808,6 @@ func anotherSanityCheck(request *LHRequest) {
 	}
 }
 
-func forceSanity(request *LHRequest) {
-	for _, ins := range request.LHInstructions {
-		for i := 0; i < len(ins.Components); i++ {
-			ins.Components[i] = ins.Components[i].Dup()
-		}
-
-		ins.Results[0] = ins.Results[0].Dup()
-	}
-}
-
 //check that none of the plates we're returning came from the cache
 func assertNoTemporaryPlates(ctx context.Context, request *LHRequest) error {
 
@@ -865,8 +855,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	forceSanity(request)
-	// convert requests to volumes and determine required stock concentrations
+	//make sure instruction components aren't referred to elsewhere
+	request.EnsureComponentsAreUnique()
 
 	if err := assertVolumesNonNegative(request); err != nil {
 		return err
@@ -902,11 +892,13 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// set up the mapping of the outputs
 	// tried moving here to see if we can use results in fixVolumes
 	request, err = this.Layout(ctx, request)
-
 	if err != nil {
 		return err
 	}
-	forceSanity(request)
+
+	//make certain we haven't introduced dependencies
+	request.EnsureComponentsAreUnique()
+
 	anotherSanityCheck(request)
 
 	// assert: all instructions should now be assigned specific plate IDs, types and wells

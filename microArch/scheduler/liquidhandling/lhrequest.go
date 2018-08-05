@@ -360,3 +360,15 @@ func (request *LHRequest) AllPlates() []*wtype.Plate {
 
 	return r
 }
+
+//EnsureInstructionComponentsAreUnique make certain that inputs and outputs to
+//LHInstructions are not referred to elsewhere, as could be the case with poor
+//element code
+func (request *LHRequest) EnsureComponentsAreUnique() {
+	for _, ins := range request.LHInstructions {
+		for i := 0; i < len(ins.Components); i++ {
+			ins.Components[i] = ins.Components[i].Dup()
+		}
+		ins.Results[0] = ins.Results[0].Dup()
+	}
+}

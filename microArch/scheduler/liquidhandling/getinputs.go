@@ -21,7 +21,11 @@ type InputSolutions struct {
 //through the high level liquidhandling (LH) instructions.
 //inputSolutions gives the solutions explicitly provided to the protocol, and
 //is used to calculate the shortfall, i.e how much of each must be auto-allocated
-func GetInputs(orderedInstructions []*wtype.LHInstruction, inputSolutions map[string][]*wtype.Liquid, carryVolume wunit.Volume) (*InputSolutions, error) {
+func GetInputs(
+	orderedInstructions []*wtype.LHInstruction,
+	inputSolutions map[string][]*wtype.Liquid,
+	carryVolume wunit.Volume,
+) (*InputSolutions, error) {
 	inputs := make(map[string][]*wtype.Liquid)
 	volsRequired := make(map[string]wunit.Volume)
 	var allinputs []string

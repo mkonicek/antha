@@ -55,7 +55,17 @@ type LHInstruction struct {
 }
 
 func (ins LHInstruction) String() string {
-	ret := fmt.Sprintf("%s G: %d %s %v %s ID(%s) %s: %s", ins.InsType(), ins.Generation(), ins.ID, ComponentVector(ins.Components), ins.PlateName, ins.PlateID, ins.Welladdress, ins.ProductIDs())
+	ret := fmt.Sprintf(
+		"%s G: %d %s %v %s ID(%s) %s: %s",
+		ins.InsType(),
+		ins.Generation(),
+		ins.ID,
+		ComponentVector(ins.Components),
+		ins.PlateName,
+		ins.PlateID,
+		ins.Welladdress,
+		ins.ProductIDs(),
+	)
 
 	if ins.IsMixInPlace() {
 		ret += " INPLACE"

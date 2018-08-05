@@ -667,31 +667,6 @@ func checkDestinationSanity(request *LHRequest) {
 	}
 }
 
-func anotherSanityCheck(request *LHRequest) {
-	p := map[*wtype.Liquid]*wtype.LHInstruction{}
-
-	for _, ins := range request.LHInstructions {
-		// we must not share pointers
-
-		for _, c := range ins.Components {
-			ins2, ok := p[c]
-			if ok {
-				panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, c.ID, c.CName))
-			}
-
-			p[c] = ins
-		}
-
-		ins2, ok := p[ins.Results[0]]
-
-		if ok {
-			panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, ins.Results[0].ID, ins.Results[0].CName))
-		}
-
-		p[ins.Results[0]] = ins
-	}
-}
-
 //check that none of the plates we're returning came from the cache
 func assertNoTemporaryPlates(ctx context.Context, request *LHRequest) error {
 
@@ -766,8 +741,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	//make certain we haven't introduced dependencies
 	request.EnsureComponentsAreUnique()
-
-	anotherSanityCheck(request)
 
 	// assert: all instructions should now be assigned specific plate IDs, types and wells
 	checkDestinationSanity(request)

@@ -739,8 +739,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// looks at components, determines what inputs are required
-	request, err = this.GetInputs(request)
-	if err != nil {
+	if err = this.GetInputs(request); err != nil {
 		return err
 	}
 
@@ -832,7 +831,7 @@ func assembleLoc(ins *wtype.LHInstruction) string {
 }
 
 // sort out inputs
-func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) GetInputs(request *LHRequest) error {
 	instructions := (*request).LHInstructions
 
 	inputs := make(map[string][]*wtype.Liquid, 3)
@@ -928,7 +927,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 	(*request).Input_order, err = OrdinalFromHash(ordH)
 
 	if err != nil {
-		return request, err
+		return err
 	}
 
 	requestinputs := request.Input_solutions
@@ -977,7 +976,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 
 	(*request).Input_solutions = requestinputs
 
-	return request, nil
+	return nil
 }
 
 func OrdinalFromHash(m map[string]int) ([]string, error) {

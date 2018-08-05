@@ -341,7 +341,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
+func (this *Liquidhandler) reviseVolumes(rq *LHRequest) error {
 	// XXX -- HARD CODE 8 here
 	lastPlate := make([]string, 8)
 	lastWell := make([]string, 8)
@@ -779,8 +779,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// remove dummy mix-in-place instructions
-
-	request = removeDummyInstructions(request)
+	if err := request.removeDummyInstructions(); err != nil {
+		return err
+	}
 
 	//set the well targets
 	if err := this.addWellTargets(); err != nil {
@@ -801,17 +802,16 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// Ensures tip boxes and wastes are correct for initial and final robot states
-	this.Refresh_tipboxes_tipwastes(request)
+	this.RefreshTipboxesTipwastes(request)
 
 	// revise the volumes - this makes sure the volumes requested are correct
-	err = this.revise_volumes(request)
-
-	if err != nil {
+	if err := this.reviseVolumes(request); err != nil {
 		return err
 	}
+
 	// ensure the after state is correct
-	this.fix_post_ids()
-	err = this.fix_post_names(request)
+	this.fixPostIds()
+	err = this.fixPostNames(request)
 	if err != nil {
 		return err
 	}
@@ -922,7 +922,7 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 }
 
 //ugly
-func (lh *Liquidhandler) fix_post_ids() {
+func (lh *Liquidhandler) fixPostIds() {
 	for _, p := range lh.FinalProperties.Plates {
 		for _, w := range p.Wellcoords {
 			if w.IsUserAllocated() {
@@ -932,7 +932,7 @@ func (lh *Liquidhandler) fix_post_ids() {
 	}
 }
 
-func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
+func (lh *Liquidhandler) fixPostNames(rq *LHRequest) error {
 	// Instructions updating a well
 	assignment := make(map[*wtype.LHWell]*wtype.LHInstruction)
 	for _, inst := range rq.LHInstructions {
@@ -975,42 +975,6 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 	}
 
 	return nil
-}
-
-func removeDummyInstructions(rq *LHRequest) *LHRequest {
-	toRemove := make(map[string]bool, len(rq.LHInstructions))
-	for _, ins := range rq.LHInstructions {
-		if ins.IsDummy() {
-			toRemove[ins.ID] = true
-		}
-	}
-
-	if len(toRemove) == 0 {
-		//no dummies
-		return rq
-	}
-
-	oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
-
-	for _, ins := range rq.OutputOrder {
-		if toRemove[ins] {
-			continue
-		} else {
-			oo = append(oo, ins)
-		}
-	}
-
-	if len(oo) != len(rq.OutputOrder)-len(toRemove) {
-		panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.OutputOrder), len(toRemove), len(oo)))
-	}
-
-	rq.OutputOrder = oo
-
-	// prune instructionChain
-
-	rq.InstructionChain.PruneOut(toRemove)
-
-	return rq
 }
 
 //addWellTargets for all the adaptors and plates available

@@ -560,3 +560,44 @@ func (rq *LHRequest) EnsurePlateNamesUnique() error {
 
 	return nil
 }
+
+func (rq *LHRequest) removeDummyInstructions() error {
+	toRemove := make(map[string]bool, len(rq.LHInstructions))
+	for _, ins := range rq.LHInstructions {
+		if ins.IsDummy() {
+			toRemove[ins.ID] = true
+		}
+	}
+
+	if len(toRemove) == 0 {
+		//no dummies
+		return nil
+	}
+
+	oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
+
+	for _, ins := range rq.OutputOrder {
+		if toRemove[ins] {
+			continue
+		} else {
+			oo = append(oo, ins)
+		}
+	}
+
+	if len(oo) != len(rq.OutputOrder)-len(toRemove) {
+		return errors.Errorf(
+			"dummy instruction prune failed: before %d dummies %d after %d",
+			len(rq.OutputOrder),
+			len(toRemove),
+			len(oo),
+		)
+	}
+
+	rq.OutputOrder = oo
+
+	// prune instructionChain
+
+	rq.InstructionChain.PruneOut(toRemove)
+
+	return nil
+}

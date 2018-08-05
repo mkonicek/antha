@@ -1,7 +1,7 @@
 package liquidhandling
 
 // no longer need to supply tipboxes after the fact
-func (lh *Liquidhandler) Refresh_tipboxes_tipwastes(rq *LHRequest) {
+func (lh *Liquidhandler) RefreshTipboxesTipwastes(rq *LHRequest) {
 
 	// dead simple
 

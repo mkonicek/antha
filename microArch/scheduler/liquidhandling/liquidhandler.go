@@ -723,11 +723,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	if request.Options.FixVolumes {
 		// see if volumes can be corrected
-		request, err = FixVolumes(request)
-
-		if err != nil {
+		if err := request.FixVolumes(); err != nil {
 			return err
 		}
+
 		if request.Options.PrintInstructions {
 			fmt.Println("")
 			fmt.Println("POST VOLUME FIX")
@@ -741,14 +740,12 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// looks at components, determines what inputs are required
 	request, err = this.GetInputs(request)
-
 	if err != nil {
 		return err
 	}
-	// define the input plates
-	// should be merged with the above
-	request, err = input_plate_setup(ctx, request)
 
+	// define the input plates
+	request, err = input_plate_setup(ctx, request)
 	if err != nil {
 		return err
 	}

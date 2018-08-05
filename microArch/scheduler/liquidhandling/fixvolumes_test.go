@@ -68,7 +68,7 @@ func TestFixVolumes(t *testing.T) {
 
 	// try fixing the volumes
 
-	req, err := FixVolumes(req)
+	err := req.FixVolumes()
 
 	if err != nil {
 		t.Errorf(err.Error())
@@ -186,7 +186,7 @@ func TestFixVolumes3(t *testing.T) {
 
 	// try fixing the volumes
 
-	req, err := FixVolumes(req)
+	err := req.FixVolumes()
 
 	if err != nil {
 		t.Errorf(err.Error())
@@ -252,7 +252,7 @@ func TestFixVolumes4(t *testing.T) {
 		Depth:  2,
 	}
 
-	_, err := FixVolumes(req)
+	err := req.FixVolumes()
 
 	if err != nil {
 		t.Errorf(err.Error())
@@ -322,7 +322,7 @@ func TestFixVolumesSplitSample(t *testing.T) {
 
 	// try fixing the volumes
 
-	req, err := FixVolumes(req)
+	err := req.FixVolumes()
 
 	if err != nil {
 		t.Errorf(err.Error())

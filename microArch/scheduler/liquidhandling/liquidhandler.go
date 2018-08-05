@@ -653,20 +653,6 @@ func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
 // paused, which should be tricky but possible.
 //
 
-func checkDestinationSanity(request *LHRequest) {
-	for _, ins := range request.LHInstructions {
-		// non-mix instructions are fine
-		if ins.Type != wtype.LHIMIX {
-			continue
-		}
-
-		if ins.PlateID == "" || ins.Platetype == "" || ins.Welladdress == "" {
-			found := fmt.Sprintln("INS ", ins, " NOT WELL FORMED: HAS PlateID ", ins.PlateID != "", " HAS platetype ", ins.Platetype != "", " HAS WELLADDRESS ", ins.Welladdress != "")
-			panic(fmt.Errorf("After layout all mix instructions must have plate IDs, plate types and well addresses, Found: \n %s", found))
-		}
-	}
-}
-
 //check that none of the plates we're returning came from the cache
 func assertNoTemporaryPlates(ctx context.Context, request *LHRequest) error {
 
@@ -743,7 +729,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	request.EnsureComponentsAreUnique()
 
 	// assert: all instructions should now be assigned specific plate IDs, types and wells
-	checkDestinationSanity(request)
+	if err := request.AssertInstructionsHaveDestinations(); err != nil {
+		return err
+	}
 
 	if request.Options.FixVolumes {
 		// see if volumes can be corrected

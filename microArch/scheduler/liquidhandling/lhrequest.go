@@ -24,6 +24,8 @@
 package liquidhandling
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -497,5 +499,23 @@ func (request *LHRequest) AssertInstructionVolumesOK() error {
 	} else if err = request.assertWellNotOverfilled(); err != nil {
 		return err
 	}
+	return nil
+}
+
+//AssertInstructionHaveDestinations make sure that destination plates have
+//been chosen for all mix instructions
+func (request *LHRequest) AssertInstructionsHaveDestinations() error {
+	for _, ins := range request.LHInstructions {
+		// non-mix instructions are fine
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		if ins.PlateID == "" || ins.Platetype == "" || ins.Welladdress == "" {
+			return errors.Errorf("after layout all mix instructions must have plate IDs, plate types and well addresses, Found: \n INS %v: HAS PlateID %t, HAS platetype %t HAS WELLADDRESS %t",
+				ins, ins.PlateID != "", ins.Platetype != "", ins.Welladdress != "")
+		}
+	}
+
 	return nil
 }

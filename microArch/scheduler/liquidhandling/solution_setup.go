@@ -33,11 +33,9 @@ import (
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-// determines how to
-// fulfil the requirements for making
-// instructions to specifications
-
-func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[string]*wtype.LHInstruction, map[string]wunit.Concentration, error) {
+//solutionSetup determines how to fulfil the requirements for making
+//instructions to specifications
+func solutionSetup(request *LHRequest, prms *liquidhandling.LHProperties) (map[string]*wtype.LHInstruction, map[string]wunit.Concentration, error) {
 
 	// set this from extra or calculate, but skip for now
 	var skipSampleForConcentrationCalc bool = true

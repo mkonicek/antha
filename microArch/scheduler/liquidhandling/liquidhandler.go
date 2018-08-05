@@ -746,7 +746,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return errors.WithMessage(err, "prior to solution setup")
 	}
 
-	if instructions, stockconcs, err := solution_setup(request, this.Properties); err != nil {
+	//figure out stock concentrations to use, convert instructions to volumes
+	if instructions, stockconcs, err := solutionSetup(request, this.Properties); err != nil {
 		return err
 	} else {
 		request.LHInstructions = instructions
@@ -758,7 +759,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// set up the mapping of the outputs
-	// tried moving here to see if we can use results in fixVolumes
 	request, err = this.Layout(ctx, request)
 	if err != nil {
 		return err

@@ -742,36 +742,20 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	//make sure instruction components aren't referred to elsewhere
 	request.EnsureComponentsAreUnique()
 
-	if err := request.assertVolumesNonNegative(); err != nil {
-		return err
-	}
-	if err := request.assertTotalVolumesMatch(); err != nil {
-		return err
-	}
-	if err := request.assertMixResultsCorrect(); err != nil {
-		return err
-	}
-	if err := request.assertWellNotOverfilled(ctx); err != nil {
-		return err
+	if err := request.AssertInstructionVolumesOK(); err != nil {
+		return errors.WithMessage(err, "prior to solution setup")
 	}
 
-	instructions, stockconcs, err := solution_setup(request, this.Properties)
-	if err != nil {
+	if instructions, stockconcs, err := solution_setup(request, this.Properties); err != nil {
 		return err
+	} else {
+		request.LHInstructions = instructions
+		request.Stockconcs = stockconcs
 	}
 
-	if err := request.assertVolumesNonNegative(); err != nil {
-		return err
+	if err := request.AssertInstructionVolumesOK(); err != nil {
+		return errors.WithMessage(err, "after solution setup")
 	}
-	if err := request.assertTotalVolumesMatch(); err != nil {
-		return err
-	}
-	if err := request.assertMixResultsCorrect(); err != nil {
-		return err
-	}
-
-	request.LHInstructions = instructions
-	request.Stockconcs = stockconcs
 
 	// set up the mapping of the outputs
 	// tried moving here to see if we can use results in fixVolumes
@@ -812,17 +796,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		}
 	}
 
-	if err := request.assertVolumesNonNegative(); err != nil {
-		return err
-	}
-	if err := request.assertTotalVolumesMatch(); err != nil {
-		return err
-	}
-	if err := request.assertMixResultsCorrect(); err != nil {
-		return err
-	}
-	if err := request.assertWellNotOverfilled(ctx); err != nil {
-		return err
+	if err := request.AssertInstructionVolumesOK(); err != nil {
+		return errors.WithMessage(err, "prior to getting inputs")
 	}
 
 	// looks at components, determines what inputs are required

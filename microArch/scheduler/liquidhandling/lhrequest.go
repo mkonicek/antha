@@ -24,11 +24,8 @@
 package liquidhandling
 
 import (
-	"context"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -449,9 +446,10 @@ func (request *LHRequest) assertMixResultsCorrect() error {
 	return nil
 }
 
-//assertWellNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
+//assertWellNotOverfilled checks that mix instructions aren't going to overfill
+//the wells when a plate has been chosen specified.
 //assumes assertMixResultsCorrect returns nil
-func (request *LHRequest) assertWellNotOverfilled(ctx context.Context) error {
+func (request *LHRequest) assertWellNotOverfilled() error {
 	for _, ins := range request.LHInstructions {
 		if ins.Type != wtype.LHIMIX {
 			continue
@@ -464,12 +462,6 @@ func (request *LHRequest) assertWellNotOverfilled(ctx context.Context) error {
 			plate = ins.OutPlate
 		} else if ins.PlateID != "" {
 			if p, ok := request.GetPlate(ins.PlateID); !ok {
-				continue
-			} else {
-				plate = p
-			}
-		} else if ins.Platetype != "" {
-			if p, err := inventory.NewPlate(ctx, ins.Platetype); err != nil {
 				continue
 			} else {
 				plate = p
@@ -488,6 +480,22 @@ func (request *LHRequest) assertWellNotOverfilled(ctx context.Context) error {
 			return wtype.LHErrorf(wtype.LH_ERR_VOL, "volume of resulting mix (%v) exceeds the well maximum (%v) for instruction:\n%s",
 				resultVolume, maxVol, ins.Summarize(1))
 		}
+	}
+	return nil
+}
+
+//AssertInstructionVolumesOK check that instruction volumes are non-negative,
+//that total and result volumes are consistent, and that wells are not
+//overfilled when a plate is specified
+func (request *LHRequest) AssertInstructionVolumesOK() error {
+	if err := request.assertVolumesNonNegative(); err != nil {
+		return err
+	} else if err = request.assertTotalVolumesMatch(); err != nil {
+		return err
+	} else if err = request.assertMixResultsCorrect(); err != nil {
+		return err
+	} else if err = request.assertWellNotOverfilled(); err != nil {
+		return err
 	}
 	return nil
 }

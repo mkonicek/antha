@@ -67,10 +67,14 @@ instructions follow. If you do not use a Debian based system or if you are not
 using an x86_64 machine, you will have to modify these instructions by
 replacing the go binary with one that corresponds to your platform and
 replacing ``apt-get`` with your package manager.
+
+Head to https://golang.org/dl/ to download the latest version of go.
+
+The example below assumes this is version go1.10
+
 ```bash
-# Install go
-curl -O https://storage.googleapis.com/golang/go1.7.3.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.7.3.linux-amd64.tar.gz
+# Install your downloaded version of go
+sudo tar -C /usr/local -xzf go1.10.3.linux-amd64.tar.gz
 
 # Add /usr/local/go/bin to the path
 export PATH=$PATH:/usr/local/go/bin

@@ -274,7 +274,6 @@ func (p *compiler) writeByte(ch byte, n int) {
 		p.out.Line += n
 		p.pos.Column = 1
 		p.out.Column = 1
-		p.lineMap[p.out.Line] = p.pos.Line
 		return
 	}
 	p.pos.Column += n
@@ -303,6 +302,7 @@ func (p *compiler) writeString(pos token.Position, s string, isLit bool) {
 		// atLineBegin updates p.pos if there's indentation, but p.pos
 		// is the position of s.
 		p.pos = pos
+		p.lineMap[p.out.Line] = pos.Line
 	}
 
 	if isLit {

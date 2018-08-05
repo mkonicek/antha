@@ -1205,7 +1205,7 @@ func EncodeShape(arg wtype.Shape) *pb.ShapeMessage {
 	return &ret
 }
 func DecodeShape(arg *pb.ShapeMessage) wtype.Shape {
-	ret := wtype.Shape{ShapeName: (string)(arg.Arg_1), LengthUnit: (string)(arg.Arg_2), H: (float64)(arg.Arg_3), W: (float64)(arg.Arg_4), D: (float64)(arg.Arg_5)}
+	ret := wtype.Shape{ShapeName: (wtype.ShapeTypeID)(arg.Arg_1), LengthUnit: (string)(arg.Arg_2), H: (float64)(arg.Arg_3), W: (float64)(arg.Arg_4), D: (float64)(arg.Arg_5)}
 	return ret
 }
 func EncodeConcreteMeasurement(arg wunit.ConcreteMeasurement) *pb.ConcreteMeasurementMessage {

@@ -243,9 +243,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	if request.Options.PrintInstructions {
 		fmt.Printf("Simulating %d instructions\n", len(instructions))
 		for i, ins := range instructions {
-			if (*request).Options.PrintInstructions {
-				fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
-			}
+			fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
 		}
 	}
 
@@ -309,7 +307,6 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 		if (*request).Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
-
 		}
 		_, ok := ins.(liquidhandling.TerminalRobotInstruction)
 
@@ -677,16 +674,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	if request.Options.PrintInstructions {
-		for _, insID := range request.Output_order {
-			ins := request.LHInstructions[insID]
-			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
-
-			if ins.IsMixInPlace() {
-				fmt.Print(" INPLACE")
-			}
-
-			fmt.Println()
-		}
+		fmt.Println(request.OrderedInstructionsString("  "))
 		request.InstructionChain.Print()
 	}
 
@@ -743,17 +731,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		if request.Options.PrintInstructions {
 			fmt.Println("")
 			fmt.Println("POST VOLUME FIX")
-			fmt.Println("")
-			for _, insID := range request.Output_order {
-				ins := request.LHInstructions[insID]
-				fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
-
-				if ins.IsMixInPlace() {
-					fmt.Print(" INPLACE")
-				}
-
-				fmt.Println()
-			}
+			fmt.Println(request.OrderedInstructionsString("  "))
 		}
 	}
 

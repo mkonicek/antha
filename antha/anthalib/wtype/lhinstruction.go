@@ -55,7 +55,11 @@ type LHInstruction struct {
 }
 
 func (ins LHInstruction) String() string {
-	return fmt.Sprint(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
+	inplace := ""
+	if ins.IsMixInPlace() {
+		inplace = " INPLACE"
+	}
+	return fmt.Sprint(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs(), inplace)
 }
 
 //Summarize get a string summary of the instruction for end users

@@ -25,6 +25,7 @@ package liquidhandling
 
 import (
 	"github.com/pkg/errors"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -518,4 +519,14 @@ func (request *LHRequest) AssertInstructionsHaveDestinations() error {
 	}
 
 	return nil
+}
+
+//OrderedInstructionsString return a string summary of the instructions in
+//final order
+func (request *LHRequest) OrderedInstructionsString(indent string) string {
+	lines := make([]string, 0, len(request.Output_order))
+	for _, insID := range request.Output_order {
+		lines = append(lines, request.LHInstructions[insID].String())
+	}
+	return indent + strings.Join(lines, "\n"+indent)
 }

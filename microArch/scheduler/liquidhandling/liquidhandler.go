@@ -745,8 +745,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// define the input plates
-	request, err = input_plate_setup(ctx, request)
-	if err != nil {
+	if err := request.inputPlateSetup(ctx); err != nil {
 		return err
 	}
 

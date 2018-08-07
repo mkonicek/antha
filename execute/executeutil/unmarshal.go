@@ -31,6 +31,7 @@ type Bundle struct {
 	workflow.Desc
 	execute.RawParams
 	workflowtest.TestOpt
+	version string
 }
 
 // Unmarshal parses parameters and workflow.

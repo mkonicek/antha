@@ -33,6 +33,11 @@ import (
 	"github.com/antha-lang/antha/microArch/simulator"
 )
 
+const (
+	testShape       wtype.ShapeTypeID = "test_shap3"
+	testTipboxShape wtype.ShapeTypeID = "test_tipb0x"
+)
+
 //
 // Code for specifying a VLH
 //
@@ -158,7 +163,7 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 }
 
 type ShapeParams struct {
-	name       string
+	name       wtype.ShapeTypeID
 	lengthunit string
 	h          float64
 	w          float64
@@ -383,7 +388,7 @@ func default_lhplate_props() *LHPlateParams {
 			vol:   200,
 			rvol:  5,
 			shape: ShapeParams{
-				name:       "test_shape",
+				name:       testShape,
 				lengthunit: "mm",
 				h:          5.5,
 				w:          5.5,
@@ -431,7 +436,7 @@ func lhplate_trough_props() *LHPlateParams {
 			vol:   15000,
 			rvol:  5000,
 			shape: ShapeParams{
-				name:       "test_shape",
+				name:       testShape,
 				lengthunit: "mm",
 				h:          8.2,
 				w:          72.0,
@@ -486,7 +491,7 @@ func default_lhtipbox(name string) *wtype.LHTipbox {
 			volunit:  "ul",
 			filtered: false,
 			shape: ShapeParams{
-				name:       "test_shape",
+				name:       testShape,
 				lengthunit: "mm",
 				h:          7.3,
 				w:          7.3,
@@ -500,7 +505,7 @@ func default_lhtipbox(name string) *wtype.LHTipbox {
 			vol:   1000,
 			rvol:  50,
 			shape: ShapeParams{
-				name:       "test_shape",
+				name:       testShape,
 				lengthunit: "mm",
 				h:          7.3,
 				w:          7.3,
@@ -538,7 +543,7 @@ func small_lhtipbox(name string) *wtype.LHTipbox {
 			volunit:  "ul",
 			filtered: false,
 			shape: ShapeParams{
-				name:       "test_shape",
+				name:       testShape,
 				lengthunit: "mm",
 				h:          7.3,
 				w:          7.3,
@@ -552,7 +557,7 @@ func small_lhtipbox(name string) *wtype.LHTipbox {
 			vol:   1000,
 			rvol:  50,
 			shape: ShapeParams{
-				name:       "test_shape",
+				name:       testShape,
 				lengthunit: "mm",
 				h:          7.3,
 				w:          7.3,
@@ -587,7 +592,7 @@ func default_lhtipwaste(name string) *wtype.LHTipwaste {
 			vol:   800000.0,
 			rvol:  800000.0,
 			shape: ShapeParams{
-				name:       "test_tipbox",
+				name:       testTipboxShape,
 				lengthunit: "mm",
 				h:          123.0,
 				w:          80.0,

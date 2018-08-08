@@ -274,7 +274,7 @@ func (a *runOpt) Run() error {
 			RawParams: *params,
 			TestOpt:   expected,
 		}
-		serializedOutputs, err := json.Marshal(bundleWithOutputs)
+		serializedOutputs, err := json.MarshalIndent(bundleWithOutputs, "", "  ")
 
 		if err != nil {
 			return err

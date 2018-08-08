@@ -137,13 +137,6 @@ func compareOutputMaps(outputMapWant, outputMapGot outputMap) ComparisonResult {
 func compareComponentInfo(cname string, cpWant, cpGot []componentInfo) []error {
 	errs := make([]error, 0, len(cpWant))
 
-	fmt.Println("WANT WANT WANT ")
-	fmt.Println(cpWant)
-	fmt.Println("---- ---- ---- ")
-	fmt.Println("GOT GOT GOT GOT")
-	fmt.Println(cpGot)
-	fmt.Println("--- --- --- ---")
-
 	missing, extra := missingExtra(cpWant, cpGot)
 
 	if len(missing) != 0 {
@@ -167,8 +160,6 @@ func match(cp componentInfo, cpArr []componentInfo) bool {
 }
 
 func missingExtra(cpWant, cpGot []componentInfo) (missing, extra []componentInfo) {
-	fmt.Println("TRY WANT: ", len(cpWant))
-	fmt.Println("TRY GOTT: ", len(cpGot))
 	for _, cp := range cpWant {
 		if !match(cp, cpGot) {
 			missing = append(missing, cp)

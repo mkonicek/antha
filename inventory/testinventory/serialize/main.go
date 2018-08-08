@@ -36,7 +36,7 @@ func main() {
 		sPlate := testinventory.PlateForSerializing{
 			PlateType:    p,
 			Manufacturer: plate.Mnfr,
-			WellShape:    plate.Welltype.Shape().ShapeName,
+			WellShape:    string(plate.Welltype.Shape().ShapeName),
 			WellH:        plate.Welltype.Shape().H,
 			WellW:        plate.Welltype.Shape().W,
 			WellD:        plate.Welltype.Shape().D,

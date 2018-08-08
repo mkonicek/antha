@@ -203,6 +203,9 @@ func (data MarsData) ReadingsAsAverage(well string, emexortime platereader.Filte
 	readings := make([]float64, 0)
 	readingtypes := make([]string, 0)
 	readingsforaverage := make([]float64, 0)
+
+	well = strings.TrimSpace(well)
+
 	if _, ok := data.Dataforeachwell[well]; !ok {
 		return 0.0, fmt.Errorf(fmt.Sprint("no data for well, ", well))
 	}

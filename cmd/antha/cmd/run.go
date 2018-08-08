@@ -270,9 +270,11 @@ func (a *runOpt) Run() error {
 	if a.TestBundleFileName != "" {
 		expected := workflowtest.SaveTestOutputs(rout, "")
 		bundleWithOutputs := executeutil.Bundle{
-			Desc:      *wdesc,
-			RawParams: *params,
-			TestOpt:   expected,
+			Desc:       *wdesc,
+			RawParams:  *params,
+			TestOpt:    expected,
+			Version:    "1.2.0", // other versions fail
+			Properties: bundle.Properties,
 		}
 		serializedOutputs, err := json.MarshalIndent(bundleWithOutputs, "", "  ")
 

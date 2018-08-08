@@ -229,7 +229,7 @@ func SimulateMix(samples ...*Liquid) (newComponentList ComponentList, mixSteps [
 
 // List of the components and corresponding concentrations contained within an LHComponent
 type ComponentList struct {
-	Components map[string]wunit.Concentration `json:"Components"`
+	Components map[string]wunit.Concentration `json:"Components,omitempty"`
 }
 
 func (c ComponentList) Dup() ComponentList {

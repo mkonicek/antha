@@ -2,7 +2,6 @@ package executeutil
 
 import (
 	"errors"
-
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflowtest"
@@ -31,7 +30,13 @@ type Bundle struct {
 	workflow.Desc
 	execute.RawParams
 	workflowtest.TestOpt
-	version string
+	Version    string             `json:"version"`
+	Properties workflowProperties `json:"Properties"`
+}
+
+type workflowProperties struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 // Unmarshal parses parameters and workflow.
@@ -44,6 +49,8 @@ func Unmarshal(opt UnmarshalOpt) (*Bundle, error) {
 	var param execute.RawParams
 	var bundle Bundle
 	var expected workflowtest.TestOpt
+	var version string
+	var properties workflowProperties
 
 	if len(opt.BundleData) != 0 {
 		if err := unmarshal(opt.BundleData, &bundle); err != nil {
@@ -54,6 +61,8 @@ func Unmarshal(opt UnmarshalOpt) (*Bundle, error) {
 		param.Config = bundle.Config
 		param.Parameters = bundle.Parameters
 		expected = bundle.TestOpt
+		version = bundle.Version
+		properties = bundle.Properties
 	} else {
 		if err := unmarshal(opt.WorkflowData, &desc); err != nil {
 			return nil, err
@@ -69,6 +78,6 @@ func Unmarshal(opt UnmarshalOpt) (*Bundle, error) {
 		return nil, errNoParameters
 	}
 
-	bdl := Bundle{desc, param, expected}
+	bdl := Bundle{desc, param, expected, version, properties}
 	return &bdl, nil
 }

@@ -232,6 +232,14 @@ type ComponentList struct {
 	Components map[string]wunit.Concentration `json:"Components"`
 }
 
+func (c ComponentList) Dup() ComponentList {
+	ret := make(map[string]wunit.Concentration, len(c.Components))
+	for k, v := range c.Components {
+		ret[k] = v.Dup()
+	}
+	return ComponentList{Components: ret}
+}
+
 // add a single entry to a component list
 func (c ComponentList) Add(component *Liquid, conc wunit.Concentration) (newlist ComponentList) {
 
@@ -488,6 +496,32 @@ func getHistory(comp *Liquid) (compList ComponentList, err error) {
 func UpdateComponentDetails(productOfMixes *Liquid, mixes ...*Liquid) error {
 	var warnings []string
 
+	err := updateSubComponentsOnly(productOfMixes, mixes...)
+	if err != nil {
+		switch err.(type) {
+		case Warning:
+			warnings = append(warnings, err.Error())
+		default:
+			return err
+		}
+	}
+
+	err = NormaliseComponentName(productOfMixes)
+
+	if err != nil {
+		warnings = append(warnings, err.Error())
+	}
+
+	if len(warnings) > 0 {
+		return NewWarningf(strings.Join(warnings, "/n"))
+	}
+
+	return nil
+}
+
+// updateSubComponentsOnly recalculates sub component concentrations without modifying the liquid name.
+func updateSubComponentsOnly(productOfMixes *Liquid, mixes ...*Liquid) error {
+	var warnings []string
 	subComponents, _, err := SimulateMix(mixes...)
 
 	if err != nil {
@@ -501,13 +535,7 @@ func UpdateComponentDetails(productOfMixes *Liquid, mixes ...*Liquid) error {
 
 	subComponents = subComponents.RemoveConcsFromSubComponentNames()
 
-	err = AddSubComponents(productOfMixes, subComponents)
-
-	if err != nil {
-		warnings = append(warnings, err.Error())
-	}
-
-	err = NormaliseComponentName(productOfMixes)
+	err = productOfMixes.OverwriteSubComponents(subComponents)
 
 	if err != nil {
 		warnings = append(warnings, err.Error())

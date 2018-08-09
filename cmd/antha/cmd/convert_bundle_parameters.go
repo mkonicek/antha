@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 )
 
 var convertBundleCmd = &cobra.Command{
@@ -21,9 +22,11 @@ type NewElementMappingDetails struct {
 }
 
 type ConversionDetails struct {
-	OldElementName      string            `json:"old-element-name"`
-	NewElementName      string            `json:"new-element-name"`
-	NewParameterMapping map[string]string `json:"new-parameter-mapping"`
+	OldElementName      	string            			`json:"old-element-name"`
+	NewElementName      	string            			`json:"new-element-name"`
+	NewParameterMapping 	map[string]string 			`json:"new-parameter-mapping"`
+	DeprecatedParameters 	[]string 					`json:"deprecated-parameters"`
+	NewParameters 			map[string]json.RawMessage 	`json:"new-parameters"`
 }
 
 func (c NewElementMappingDetails) Empty() bool {
@@ -110,7 +113,7 @@ func convertParametersAndConnections(in customAnthaBundle, newElementNames Conve
 				// check for replacement parameter names
 				if newParameterName, newParameterFound := newElementNames.NewParameterMapping[parameterName]; newParameterFound {
 					newParameters[newParameterName] = value
-				} else {
+				} else if !search.InStrings(newElementNames.DeprecatedParameters, parameterName){
 					newParameters[parameterName] = value
 				}
 			}

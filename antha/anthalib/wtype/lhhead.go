@@ -131,7 +131,7 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses WellCoordSlice) bool {
 	}
 
 	//check that each offset is within the supported range of the machine
-	supportedRange := NewRectangle(head.Adaptor.GetSmallestChannelOffset(), head.Adaptor.GetLargestChannelOffset())
+	supportedRange := NewRectangle(head.Adaptor.GetSmallestChannelSpacing(), head.Adaptor.GetLargestChannelSpacing())
 	positionAccuracy := 0.1 //should be a property of the head
 	supportedRange = supportedRange.Expand(positionAccuracy)
 

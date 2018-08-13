@@ -114,8 +114,8 @@ func (lha *LHAdaptor) GetParams() *LHChannelParameter {
 	}
 }
 
-//GetSmallestChannelOffset get the smallest possible distance between successive channels
-func (self *LHAdaptor) GetSmallestChannelOffset() Coordinates2D {
+//GetSmallestChannelSpacing get the smallest possible distance between successive channels
+func (self *LHAdaptor) GetSmallestChannelSpacing() Coordinates2D {
 
 	//hjk: currently assume a constant fixed offset between channels
 	//     this will need updating when we support better reporting of head
@@ -127,22 +127,22 @@ func (self *LHAdaptor) GetSmallestChannelOffset() Coordinates2D {
 	return Coordinates2D{X: channelStep}
 }
 
-//GetLargestChannelOffset get the largest possible distance between successive channels
-func (self *LHAdaptor) GetLargestChannelOffset() Coordinates2D {
+//GetLargestChannelSpacing get the largest possible distance between successive channels
+func (self *LHAdaptor) GetLargestChannelSpacing() Coordinates2D {
 	//equal to smallest if independent
 	if !self.Params.Independent {
-		return self.GetSmallestChannelOffset()
+		return self.GetSmallestChannelSpacing()
 	}
 
 	//completely arbitrary for now since we don't report this
-	return self.GetSmallestChannelOffset().Multiply(2.0)
+	return self.GetSmallestChannelSpacing().Multiply(2.0)
 }
 
 //GetMostCompactChannelPositions get the relative channel positions for the adaptor
 //in the most tightly bunched layout supported
 func (self *LHAdaptor) GetMostCompactChannelPositions() ChannelPositions {
 	ret := make([]Coordinates2D, self.Params.Multi)
-	offset := self.GetSmallestChannelOffset()
+	offset := self.GetSmallestChannelSpacing()
 	current := Coordinates2D{}
 
 	for i := range ret {

@@ -172,6 +172,9 @@ func (tip *LHTip) DupKeepID() *LHTip {
 }
 
 func (tip *LHTip) dup(keepIDs bool) *LHTip {
+	if tip == nil {
+		return nil
+	}
 	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup(), tip.GetEffectiveHeight())
 	t.Dirty = tip.Dirty
 	t.contents = tip.Contents().Dup()

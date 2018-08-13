@@ -389,8 +389,5 @@ func (self WellCoordSlice) Trim() WellCoordSlice {
 			end = i + 1
 		}
 	}
-	if start < 0 {
-		return nil
-	}
 	return self[start:end]
 }

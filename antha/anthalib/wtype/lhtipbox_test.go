@@ -5,10 +5,15 @@ import (
 	"testing"
 )
 
-func maketipboxfortest() *LHTipbox {
+func makeTipForTest() *LHTip {
+	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	return NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
+}
+
+func makeTipboxForTest() *LHTipbox {
 	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
 	w := NewLHWell("ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
+	tiptype := makeTipForTest()
 	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)
 	return tb
 }
@@ -53,7 +58,7 @@ func TestMaskToWellCoords(t *testing.T) {
 
 // func NewLHTipbox(nrows, ncols int, height float64, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64)
 func TestGetTipsMasked(t *testing.T) {
-	tb := maketipboxfortest()
+	tb := makeTipboxForTest()
 
 	mask := []bool{true}
 
@@ -71,7 +76,7 @@ func TestGetTipsMasked(t *testing.T) {
 }
 
 func TestGetTipsMasked2(t *testing.T) {
-	tb := maketipboxfortest()
+	tb := makeTipboxForTest()
 
 	mask := make([]bool, 8)
 	mask[2] = true
@@ -89,7 +94,7 @@ func TestGetTipsMasked2(t *testing.T) {
 }
 
 func TestHasCleanTips(t *testing.T) {
-	tb := maketipboxfortest()
+	tb := makeTipboxForTest()
 
 	m := make([]bool, 8)
 
@@ -126,7 +131,7 @@ func TestTrimToMask(t *testing.T) {
 
 func TestTipboxWellCoordsToCoords(t *testing.T) {
 
-	tb := maketipboxfortest()
+	tb := makeTipboxForTest()
 
 	pos, ok := tb.WellCoordsToCoords(MakeWellCoords("A1"), BottomReference)
 	if !ok {
@@ -144,7 +149,7 @@ func TestTipboxWellCoordsToCoords(t *testing.T) {
 
 func TestTipboxCoordsToWellCoords(t *testing.T) {
 
-	tb := maketipboxfortest()
+	tb := makeTipboxForTest()
 
 	pos := Coordinates{
 		X: tb.TipXStart + 0.75*tb.TipXOffset,
@@ -166,7 +171,7 @@ func TestTipboxCoordsToWellCoords(t *testing.T) {
 
 func TestTipboxGetWellBounds(t *testing.T) {
 
-	tb := maketipboxfortest()
+	tb := makeTipboxForTest()
 
 	eStart := Coordinates{
 		X: 0.5 - 0.5*7.3,

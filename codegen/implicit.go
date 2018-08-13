@@ -56,7 +56,7 @@ func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.Plate, er
 	}
 
 	if len(ret) == 0 {
-		return nil, fmt.Errorf("no incubation plates found")
+		return nil, fmt.Errorf("no incubation plates found. Only bioshake plates are currently supported")
 	}
 
 	return ret, nil

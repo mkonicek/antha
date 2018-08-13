@@ -32,6 +32,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -77,7 +78,10 @@ var availablePolicyfiles []policyFile = []policyFile{
 }
 
 // BASEPolicy is the policy to use as a starting point to produce custom LHPolicies
-var BASEPolicy = "default" //"dna"
+const BASEPolicy = "default" //"dna"
+
+// BasePolicyHeader is the expected factor name to specify the BasePolicy from a run in a design file.
+const BasePolicyHeader = "BasePolicy"
 
 // deprecate this
 func policyFilefromName(filename string) (pol policyFile, found bool) {
@@ -219,6 +223,17 @@ func PolicyMakerFromBytes(data []byte, basePolicy wtype.PolicyName) (policyMap m
 	return policyMap, nil
 }
 
+// FindBasePolicyInRun searches for a factor "BasePolicy" in the run of the doe design.
+// if none is found, an empty policy is returned along with an error.
+func FindBasePolicyInRun(run doe.Run) (wtype.LHPolicy, error) {
+	for i, factorName := range run.Factordescriptors {
+		if search.EqualFold(factorName, BasePolicyHeader) {
+			return wtype.GetPolicyByType(wtype.LiquidType(strings.TrimSpace(fmt.Sprint(run.Setpoints[i]))))
+		}
+	}
+	return wtype.LHPolicy{}, fmt.Errorf("no %s factor found in run", BasePolicyHeader)
+}
+
 // PolicyMakerfromRuns creates a policy map from a set of doe Runs in the format of a JMP design file.
 // Any valid parameter name and corresponding parameter type from aparam.go are valid entries.
 func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
@@ -243,9 +258,14 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 	}
 	for i, run := range runs {
 		policy := make(wtype.LHPolicy)
-		policy = copyPolicy(basePolicy)
 		var warnings []string
 		var policyName string
+		basePolicyFromDesign, err := FindBasePolicyInRun(run)
+		if err == nil {
+			policy = copyPolicy(basePolicyFromDesign)
+		} else {
+			policy = copyPolicy(basePolicy)
+		}
 		for j, desc := range run.Factordescriptors {
 			policyCommand, ok := policyitemmap[desc]
 			if ok {

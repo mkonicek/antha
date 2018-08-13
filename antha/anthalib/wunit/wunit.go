@@ -122,9 +122,19 @@ func AddMeasurements(a Measurement, b Measurement) (c Measurement) {
 	return c
 }*/
 
+func isNil(cm *ConcreteMeasurement) bool {
+	if cm == nil {
+		return true
+	}
+	if cm.Munit == nil {
+		return true
+	}
+	return false
+}
+
 // value when converted to SI units
 func (cm *ConcreteMeasurement) SIValue() float64 {
-	if cm == nil {
+	if isNil(cm) {
 		return 0.0
 	}
 	return cm.Mvalue * cm.Munit.BaseSIConversionFactor()
@@ -132,7 +142,7 @@ func (cm *ConcreteMeasurement) SIValue() float64 {
 
 // value without conversion
 func (cm *ConcreteMeasurement) RawValue() float64 {
-	if cm == nil {
+	if isNil(cm) {
 		return 0.0
 	}
 	return cm.Mvalue
@@ -140,7 +150,7 @@ func (cm *ConcreteMeasurement) RawValue() float64 {
 
 // get unit with prefix
 func (cm *ConcreteMeasurement) Unit() PrefixedUnit {
-	if cm == nil {
+	if isNil(cm) {
 		return NewGenericPrefixedUnit()
 	}
 	return cm.Munit
@@ -148,7 +158,7 @@ func (cm *ConcreteMeasurement) Unit() PrefixedUnit {
 
 // set the value of this measurement
 func (cm *ConcreteMeasurement) SetValue(v float64) float64 {
-	if cm == nil {
+	if isNil(cm) {
 		return 0.0
 	}
 	cm.Mvalue = v
@@ -158,14 +168,14 @@ func (cm *ConcreteMeasurement) SetValue(v float64) float64 {
 // convert to a different unit
 // nb this is NOT destructive
 func (cm *ConcreteMeasurement) ConvertTo(p PrefixedUnit) float64 {
-	if cm == nil {
+	if isNil(cm) {
 		return 0.0
 	}
 	return cm.Unit().ConvertTo(p) * cm.RawValue()
 }
 
 func (cm *ConcreteMeasurement) ConvertToString(s string) float64 {
-	if cm == nil {
+	if isNil(cm) {
 		return 0.0
 	}
 	ppu := ParsePrefixedUnit(s)
@@ -182,7 +192,7 @@ func (cm *ConcreteMeasurement) String() string {
 // add to this
 
 func (cm *ConcreteMeasurement) Add(m Measurement) {
-	if cm == nil {
+	if isNil(cm) {
 		return
 	}
 	// ideally should check these have the same Dimension
@@ -199,7 +209,7 @@ func (cm *ConcreteMeasurement) A(m Measurement) {
 // subtract
 
 func (cm *ConcreteMeasurement) Subtract(m Measurement) {
-	if cm == nil {
+	if isNil(cm) {
 		return
 	}
 	// ideally should check these have the same Dimension
@@ -214,7 +224,7 @@ func (cm *ConcreteMeasurement) S(m Measurement) {
 
 // multiply
 func (cm *ConcreteMeasurement) MultiplyBy(factor float64) {
-	if cm == nil {
+	if isNil(cm) {
 		return
 	}
 	// ideally should check these have the same Dimension
@@ -230,7 +240,7 @@ func (cm *ConcreteMeasurement) M(factor float64) {
 
 func (cm *ConcreteMeasurement) DivideBy(factor float64) {
 
-	if cm == nil {
+	if isNil(cm) {
 		return
 	}
 	// ideally should check these have the same Dimension
@@ -247,15 +257,11 @@ func (cm *ConcreteMeasurement) D(factor float64) {
 // define a zero
 
 func (cm *ConcreteMeasurement) IsNil() bool {
-	if cm == nil || cm.Munit == nil {
-		return true
-	}
-
-	return false
+	return isNil(cm)
 }
 
 func (cm *ConcreteMeasurement) IsZero() bool {
-	if cm == nil || cm.Munit == nil || cm.Mvalue < 0.00000000001 {
+	if isNil(cm) || cm.Mvalue < 0.00000000001 {
 		return true
 	}
 	return false
@@ -265,7 +271,7 @@ func (cm *ConcreteMeasurement) IsZero() bool {
 
 func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {
 	// nil means less than everything
-	if cm == nil {
+	if isNil(cm) {
 		return true
 	}
 	// returns true if this is less than m
@@ -276,7 +282,7 @@ func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {
 }
 
 func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
-	if cm == nil {
+	if isNil(cm) {
 		return false
 	}
 	// returns true if this is greater than m
@@ -288,7 +294,7 @@ func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
 
 func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
 	// this is not equal to anything
-	if cm == nil {
+	if isNil(cm) {
 		return false
 	}
 
@@ -303,7 +309,7 @@ func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
 
 func (cm *ConcreteMeasurement) LessThan(m Measurement) bool {
 	// nil means less than everything
-	if cm == nil {
+	if isNil(cm) {
 		return true
 	}
 	// returns true if this is less than m
@@ -313,7 +319,7 @@ func (cm *ConcreteMeasurement) LessThan(m Measurement) bool {
 }
 
 func (cm *ConcreteMeasurement) LessThanFloat(f float64) bool {
-	if cm == nil {
+	if isNil(cm) {
 		return true
 	}
 	// assumes the units work out
@@ -322,7 +328,7 @@ func (cm *ConcreteMeasurement) LessThanFloat(f float64) bool {
 }
 
 func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
-	if cm == nil {
+	if isNil(cm) {
 		return false
 	}
 	// returns true if this is greater than m
@@ -331,7 +337,7 @@ func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
 }
 
 func (cm *ConcreteMeasurement) GreaterThanFloat(f float64) bool {
-	if cm == nil {
+	if isNil(cm) {
 		return false
 	}
 	if cm.RawValue() > f {
@@ -345,7 +351,7 @@ func (cm *ConcreteMeasurement) GreaterThanFloat(f float64) bool {
 func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	// this is not equal to anything
 
-	if cm == nil {
+	if isNil(cm) {
 		return false
 	}
 	// returns true if this is equal to m
@@ -358,7 +364,7 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 }
 
 func (cm *ConcreteMeasurement) EqualToFloat(f float64) bool {
-	if cm == nil {
+	if isNil(cm) {
 		return false
 	}
 

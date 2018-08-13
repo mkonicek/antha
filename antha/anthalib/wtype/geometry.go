@@ -82,7 +82,7 @@ func (self Coordinates) Multiply(v float64) Coordinates {
 		self.Z * v}
 }
 
-//Divide returns a new wtype.Coordinates
+//Divide returns a new wtype.Coordinates divided by v. If v is zero, inf will be returned
 func (self Coordinates) Divide(v float64) Coordinates {
 	return Coordinates{self.X / v,
 		self.Y / v,
@@ -109,6 +109,14 @@ func (self Coordinates) Unit() Coordinates {
 	return self.Divide(self.Abs())
 }
 
+//To2D return a two dimensional coordinate by dropping z dimension
+func (self Coordinates) To2D() Coordinates2D {
+	return Coordinates2D{
+		X: self.X,
+		Y: self.Y,
+	}
+}
+
 //Geometry interface for 3D geometry
 type Geometry interface {
 	Height() wunit.Length
@@ -126,4 +134,129 @@ func (ps PointSet) CentreTo(c Coordinates) PointSet {
 	}
 
 	return ret
+}
+
+type Coordinates2D struct {
+	X float64
+	Y float64
+}
+
+//String string representation of the coordinate
+func (self Coordinates2D) String() string {
+	return fmt.Sprintf("%.1fx%.1f mm", self.X, self.Y)
+}
+
+//Equals return true if the two coordinates are equal
+func (self Coordinates2D) Equals(rhs Coordinates2D) bool {
+	return self == rhs
+}
+
+//Add return a new coordinate which is the sum of the two
+func (self Coordinates2D) Add(rhs Coordinates2D) Coordinates2D {
+	return Coordinates2D{
+		X: self.X + rhs.X,
+		Y: self.Y + rhs.Y,
+	}
+}
+
+//Subtract return a new coordinate which is self minus rhs
+func (self Coordinates2D) Subtract(rhs Coordinates2D) Coordinates2D {
+	return Coordinates2D{
+		X: self.X - rhs.X,
+		Y: self.Y - rhs.Y,
+	}
+}
+
+//Multiply return a new coordinate scaled by factor
+func (self Coordinates2D) Multiply(factor float64) Coordinates2D {
+	return Coordinates2D{
+		X: self.X * factor,
+		Y: self.Y * factor,
+	}
+}
+
+//Divide return a new coordinate scaled by the reciprocal of factor
+//if factor is zero, inf will be returned
+func (self Coordinates2D) Divide(factor float64) Coordinates2D {
+	return Coordinates2D{
+		X: self.X / factor,
+		Y: self.Y / factor,
+	}
+}
+
+//Abs return the L2 norm of the coordinate
+func (self Coordinates2D) Abs() float64 {
+	return math.Sqrt(self.X*self.X + self.Y*self.Y)
+}
+
+//a rectangle
+type Rectangle struct {
+	lowerLeft  Coordinates2D
+	upperRight Coordinates2D
+}
+
+//NewRectangle create a new rectangle from any two opposing corners
+func NewRectangle(firstCorner, secondCorner Coordinates2D) Rectangle {
+	return Rectangle{
+		lowerLeft: Coordinates2D{
+			X: math.Min(firstCorner.X, secondCorner.X),
+			Y: math.Min(firstCorner.Y, secondCorner.Y),
+		},
+		upperRight: Coordinates2D{
+			X: math.Max(firstCorner.X, secondCorner.X),
+			Y: math.Max(firstCorner.Y, secondCorner.Y),
+		},
+	}
+}
+
+//NewBoundingRectangle create a new rectangle which is the smallest rectangle to
+//include all the given coordinates
+func NewBoundingRectangle(coords []Coordinates2D) Rectangle {
+	if len(coords) == 0 {
+		return Rectangle{}
+	}
+	ret := Rectangle{
+		lowerLeft:  coords[0],
+		upperRight: coords[0],
+	}
+
+	for _, coord := range coords {
+		ret.upperRight.X = math.Max(ret.upperRight.X, coord.X)
+		ret.upperRight.Y = math.Max(ret.upperRight.Y, coord.Y)
+		ret.lowerLeft.X = math.Min(ret.lowerLeft.X, coord.X)
+		ret.lowerLeft.Y = math.Min(ret.lowerLeft.Y, coord.Y)
+	}
+
+	return ret
+}
+
+//Width the width of the rectangle
+func (self Rectangle) Width() float64 {
+	return self.upperRight.X - self.lowerLeft.X
+}
+
+//Height the height of the rectangle
+func (self Rectangle) Height() float64 {
+	return self.upperRight.Y - self.lowerLeft.Y
+}
+
+//Center the central point of the rectangle
+func (self Rectangle) Center() Coordinates2D {
+	return self.upperRight.Add(self.lowerLeft).Divide(2.0)
+}
+
+//Expand return a new Rectangle with the same center point but whose width and
+//height is increased by the given positive amount
+func (self Rectangle) Expand(amount float64) Rectangle {
+	delta := Coordinates2D{X: amount / 2.0, Y: amount / 2.0}
+	return Rectangle{
+		lowerLeft:  self.lowerLeft.Subtract(delta),
+		upperRight: self.upperRight.Add(delta),
+	}
+}
+
+//Contains return true if the given coordinate is within the rectangle
+func (self Rectangle) Contains(pos Coordinates2D) bool {
+	return pos.X > self.lowerLeft.X && pos.X < self.upperRight.X &&
+		pos.Y > self.lowerLeft.Y && pos.Y < self.upperRight.Y
 }

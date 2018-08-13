@@ -51,7 +51,15 @@ func Run(parent context.Context, opt Opt) (res *Result, err error) {
 
 	ctxTr, tr := WithTrace(ctx)
 	defer func() {
-		if res := recover(); res != nil {
+		if res := recover(); res == nil {
+			return
+		} else if uErr, ok := res.(UserError); ok {
+			// Errorf internally calls panic, which is *not* the Go
+			// way. But until we fix that, to avoid full stack traces
+			// popping out here, we catch this case, and we deliberately
+			// do not attach a stack trace to it.
+			err = uErr
+		} else {
 			err = fmt.Errorf("%s\n%s", res, inject.ElementStackTrace())
 		}
 	}()

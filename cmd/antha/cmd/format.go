@@ -64,7 +64,7 @@ func (w *walker) walk(path string, fi os.FileInfo, err error) error {
 	} else if out, err := format.Source(src); err != nil {
 		return err
 	} else if !w.WriteToFile {
-		os.Stdout.Write(out)
+		os.Stdout.Write(out) // nolint
 		return nil
 	} else if bytes.Equal(src, out) {
 		return nil

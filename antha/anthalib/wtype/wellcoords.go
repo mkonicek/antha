@@ -375,3 +375,19 @@ func HumanizeWellCoords(coords []WellCoords) string {
 	s = append(s, runToString(run))
 	return strings.Join(s, ",")
 }
+
+type WellCoordSlice []WellCoords
+
+//Trim remove nil well coords from begining and end of the slice
+func (self WellCoordSlice) Trim() WellCoordSlice {
+	var start, end int
+	for i, wc := range self {
+		if !wc.IsZero() {
+			if start == end { //only true if we've not seen a nil
+				start = i
+			}
+			end = i + 1
+		}
+	}
+	return self[start:end]
+}

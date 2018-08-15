@@ -25,6 +25,7 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -601,6 +602,26 @@ func (lhw *LHWell) GetLiquidLevelModel() wutil.Func1Prm {
 		}
 	}
 	return nil
+}
+
+//GetLiquidLevel estimate the height of the liquid in mm from the bottom of the
+//well based on the volume in the well. Returns zero if no liquidlevel model is
+//set
+func (lhw *LHWell) GetLiquidLevel(volume wunit.Volume) float64 {
+	//the only form of liquid level model we currently support is:
+	//  volume[ul] = A * (height[mm])^2 + B * (height[mm]) + C
+	vol := volume.ConvertToString("ul")
+	if f := lhw.GetLiquidLevelModel(); f == nil {
+		return 0.0
+	} else if quad, ok := f.(*wutil.Quadratic); !ok {
+		return 0.0
+	} else if quad.C > vol { //no negative or imaginary heights
+		return 0.0
+	} else if quad.A == 0 { //linear model
+		return (vol - quad.C) / quad.B
+	} else {
+		return (-quad.B + math.Sqrt(quad.B*quad.B-4.0*quad.A*(quad.C-vol))) / (2.0 * quad.A)
+	}
 }
 
 //HasLiquidLevelModel returns whether the well has a model for use with

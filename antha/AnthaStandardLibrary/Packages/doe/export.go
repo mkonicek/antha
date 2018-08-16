@@ -230,5 +230,42 @@ func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfi
 	} else {
 		panic(fmt.Sprintf("Unknown design file format %s when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)", dxorjmp))
 	}
+	autoFormatXLSX(xlsxfile)
 	return
+}
+
+func autoFormatXLSX(xlsxfile *xlsx.File) {
+	for _, sheet := range xlsxfile.Sheets {
+		autoFormatHeader(sheet)
+		autoColWidth(sheet)
+	}
+}
+
+const estimatedCharWidth = 9.5 / 10.0
+
+func autoColWidth(sheet *xlsx.Sheet) {
+	for _, row := range sheet.Rows {
+		for c, cell := range row.Cells {
+			v, err := cell.FormattedValue()
+			if err != nil {
+				continue
+			}
+			w := float64(len(v)+1) * estimatedCharWidth
+			if w > sheet.Col(c).Width {
+				sheet.Col(c).Width = w
+			}
+		}
+	}
+}
+
+func autoFormatHeader(sheet *xlsx.Sheet) {
+	for i, row := range sheet.Rows {
+		if i == 0 {
+			for _, cell := range row.Cells {
+				style := cell.GetStyle()
+				style.Border.Bottom = "thick"
+			}
+			return
+		}
+	}
 }

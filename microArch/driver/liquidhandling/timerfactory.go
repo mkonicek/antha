@@ -51,7 +51,7 @@ func makeGilsonPipetmaxTimer() LHTimer {
 	t.Times[DSP], _ = time.ParseDuration("0.7s") // DSP
 	t.Times[BLO], _ = time.ParseDuration("0.7s") // BLO
 	t.Times[PTZ], _ = time.ParseDuration("0s")   // PTZ
-	t.Times[MOV], _ = time.ParseDuration("0.9s") // MOV
+	t.Times[MOV], _ = time.ParseDuration("1.5s") // MOV	-- sum of horizontal (0.9) and vertical (0.6) movements
 	t.Times[LOD], _ = time.ParseDuration("5.6s") // LOAD
 	t.Times[ULD], _ = time.ParseDuration("5.4s") // UNLOAD
 	t.Times[MIX], _ = time.ParseDuration("1.5s") // MIX

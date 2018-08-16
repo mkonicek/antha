@@ -27,7 +27,7 @@ func (ds *DataSource) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a device
-func (ds *DataSource) MoveCost(from target.Device) int {
+func (ds *DataSource) MoveCost(from target.Device) int64 {
 	return human.HumanByXCost + 1 // same as a mixer
 }
 

@@ -51,7 +51,7 @@ func (a *Mixer) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *Mixer) MoveCost(from target.Device) int {
+func (a *Mixer) MoveCost(from target.Device) int64 {
 	if from == a {
 		return 0
 	}

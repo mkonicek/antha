@@ -41,7 +41,7 @@ func checkPartition(opt PartitionTreeOpt) (*TreePartition, error) {
 		}
 	}
 
-	sum := 0
+	sum := int64(0)
 	if err := VisitTree(VisitTreeOpt{
 		Tree: opt.Tree,
 		Root: opt.Root,
@@ -76,13 +76,13 @@ func BenchmarkMinWeightTree(b *testing.B) {
 		colors = append(colors, i+1)
 	}
 
-	weights := make(map[struct{ A, B int }]int)
+	weights := make(map[struct{ A, B int }]int64)
 	// Make weight space sparse enough for interesting patterns to occur
 	maxWeight := N.Color * N.Color * N.Color * N.Color
 	for i := 0; i < N.Color; i++ {
 		for j := 0; j < N.Color; j++ {
 			k := struct{ A, B int }{A: i + 1, B: j + 1}
-			weights[k] = rand.Intn(maxWeight) + 1
+			weights[k] = rand.Int63n(int64(maxWeight)) + 1
 		}
 	}
 
@@ -106,7 +106,7 @@ func BenchmarkMinWeightTree(b *testing.B) {
 		Colors: func(Node) []int {
 			return colors
 		},
-		EdgeWeight: func(x, y int) int {
+		EdgeWeight: func(x, y int) int64 {
 			if w, seen := weights[struct{ A, B int }{A: x, B: y}]; seen {
 				return w
 			}
@@ -148,7 +148,7 @@ func testMinWeightTree(t *testing.T, exact bool) {
 		Colors: makeTestColors(map[string][]int{
 			"root": {1},
 		}),
-		EdgeWeight: func(a, b int) int {
+		EdgeWeight: func(a, b int) int64 {
 			return 1
 		},
 	}); err != nil {
@@ -170,7 +170,7 @@ func testMinWeightTree(t *testing.T, exact bool) {
 			"b":    {1, 3},
 			"c":    {4},
 		}),
-		EdgeWeight: func(a, b int) int {
+		EdgeWeight: func(a, b int) int64 {
 			if a == b {
 				return 0
 			}
@@ -202,8 +202,8 @@ func testMinWeightTree(t *testing.T, exact bool) {
 			"e":    {1, 2, 3},
 			"f":    {1, 2, 3},
 		}),
-		EdgeWeight: func(a, b int) int {
-			return 100 - (a + b)
+		EdgeWeight: func(a, b int) int64 {
+			return 100 - int64(a+b)
 		},
 	}); err != nil {
 		t.Fatal(err)

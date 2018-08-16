@@ -35,7 +35,7 @@ func (a *PlateReader) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *PlateReader) MoveCost(from target.Device) int {
+func (a *PlateReader) MoveCost(from target.Device) int64 {
 	return 0
 }
 

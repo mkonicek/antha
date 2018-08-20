@@ -43,17 +43,18 @@ type ChannelState struct {
 	contents *wtype.Liquid     //What's in the tip?
 	position wtype.Coordinates //position relative to the adaptor
 	adaptor  *AdaptorState     //the channel's adaptor
+	speed    wunit.FlowRate    //the pipette speed of the channel
 	radius   float64
 }
 
-func NewChannelState(number int, adaptor *AdaptorState, position wtype.Coordinates, radius float64) *ChannelState {
-	r := ChannelState{}
-	r.number = number
-	r.position = position
-	r.adaptor = adaptor
-	r.radius = radius
-
-	return &r
+func NewChannelState(number int, adaptor *AdaptorState, position wtype.Coordinates, radius float64, speed wunit.FlowRate) *ChannelState {
+	return &ChannelState{
+		number:   number,
+		position: position,
+		adaptor:  adaptor,
+		radius:   radius,
+		speed:    speed,
+	}
 }
 
 //                            Accessors
@@ -115,6 +116,11 @@ func (self *ChannelState) GetAbsolutePosition() wtype.Coordinates {
 //GetTarget get the LHObject below the adaptor
 func (self *ChannelState) GetTarget() wtype.LHObject {
 	return self.adaptor.GetGroup().GetRobot().GetDeck().GetChildBelow(self.GetAbsolutePosition())
+}
+
+//GetSpeed get the pipetting speed
+func (self *ChannelState) GetSpeed() wunit.FlowRate {
+	return self.speed
 }
 
 //                            Actions
@@ -221,27 +227,30 @@ type AdaptorState struct {
 
 func NewAdaptorState(name string,
 	independent bool,
-	channels int,
+	numChannels int,
 	channel_offset wtype.Coordinates,
 	coneRadius float64,
 	params *wtype.LHChannelParameter,
 	tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
-	as := AdaptorState{
-		name,
-		make([]*ChannelState, 0, channels),
-		wtype.Coordinates{},
-		independent,
-		params.Dup(),
-		nil,
-		tipBehaviour,
-		-1,
+
+	as := &AdaptorState{
+		name:         name,
+		offset:       wtype.Coordinates{},
+		independent:  independent,
+		params:       params.Dup(),
+		tipBehaviour: tipBehaviour,
+		index:        -1,
 	}
 
-	for i := 0; i < channels; i++ {
-		as.channels = append(as.channels, NewChannelState(i, &as, channel_offset.Multiply(float64(i)), coneRadius))
+	channels := make([]*ChannelState, 0, numChannels)
+	for i := 0; i < numChannels; i++ {
+		//default pipette speed should come from the channel parameters
+		//but it will almost certainly get overwritten by a SetPipetteSpeed before and pipetting happens
+		channels = append(channels, NewChannelState(i, as, channel_offset.Multiply(float64(i)), coneRadius, wunit.NewFlowRate(1.0, "ml/min")))
 	}
+	as.channels = channels
 
-	return &as
+	return as
 }
 
 //String summarize the state of the adaptor
@@ -371,6 +380,17 @@ func (self *AdaptorState) GetParamsForChannel(ch int) *wtype.LHChannelParameter 
 		return self.params.MergeWithTip(tip)
 	}
 	return self.params
+}
+
+//SetPipetteSpeed returns true if the speed was within bounds, false otherwise
+func (self *AdaptorState) SetPipetteSpeed(channel int, speed wunit.FlowRate) bool {
+	p := self.GetParamsForChannel(channel)
+	if speed.GreaterThan(p.Maxspd) || speed.LessThan(p.Minspd) {
+		return false
+	} else {
+		self.GetChannel(channel).speed = speed
+		return true
+	}
 }
 
 //GetTipCount

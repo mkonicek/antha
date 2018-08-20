@@ -1176,7 +1176,7 @@ func (self *Plate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinat
 	} else if r == TopReference {
 		z = child.GetPosition().Z + child.GetSize().Z
 	} else if r == LiquidReference {
-		ll := self.Welltype.GetLiquidLevel(child.CurrentVolume().ConvertToString("ul"))
+		ll := self.Welltype.GetLiquidLevel(child.CurrentVolume())
 		z = child.GetPosition().Z + child.Bottomh + ll
 		fmt.Printf("LiquidLevel was %f\n", ll)
 	}

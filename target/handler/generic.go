@@ -99,10 +99,6 @@ func (a GenericHandler) merge(nodes []ast.Node) (*ast.Command, error) {
 
 // Compile implements a Device
 func (a *GenericHandler) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
-	addDep := func(in, dep target.Inst) {
-		in.SetDependsOn(append(in.DependsOn(), dep))
-	}
-
 	g := ast.Deps(nodes)
 
 	entry := &target.Wait{}
@@ -174,10 +170,10 @@ func (a *GenericHandler) Compile(ctx context.Context, nodes []ast.Node) ([]targe
 				continue
 			}
 
-			addDep(ins[0], kidIns[len(kidIns)-1])
+			ins[0].AppendDependsOn(kidIns[len(kidIns)-1])
 		}
-		addDep(ins[0], entry)
-		addDep(exit, ins[len(ins)-1])
+		ins[0].AppendDependsOn(entry)
+		exit.AppendDependsOn(ins[len(ins)-1])
 	}
 
 	return insts, nil

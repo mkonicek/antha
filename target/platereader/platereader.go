@@ -163,5 +163,6 @@ func (a *PlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[
 		Label: "use plate reader",
 		Calls: calls,
 	})
-	return target.SequentialOrder(insts...), nil
+	target.SequentialOrder(insts...)
+	return insts, nil
 }

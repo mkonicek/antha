@@ -73,10 +73,10 @@ func (a *instGraph) addInitializers(insts []target.Inst) {
 		return
 	}
 
-	insts = target.SequentialOrder(insts...)
+	target.SequentialOrder(insts...)
 	last := insts[len(insts)-1]
 	for _, inst := range a.entry {
-		appendToDepends(inst, last)
+		inst.AppendDependsOn(last)
 		// Unlike other cases, inst has already been added to graph, so update
 		// data explicitly
 		a.dependsOn[inst] = append(a.dependsOn[inst], last)
@@ -89,10 +89,10 @@ func (a *instGraph) addFinalizers(insts []target.Inst) {
 		return
 	}
 
-	insts = target.SequentialOrder(insts...)
+	target.SequentialOrder(insts...)
 	first := insts[0]
 	for _, inst := range a.exit {
-		appendToDepends(first, inst)
+		first.AppendDependsOn(inst)
 	}
 	a.addInsts(insts)
 }
@@ -109,8 +109,8 @@ func (a *instGraph) addRootedInsts(root graph.Node, insts []target.Inst) {
 		first := insts[0]
 		last := insts[len(insts)-1]
 
-		appendToDepends(first, entry)
-		appendToDepends(exit, last)
+		first.AppendDependsOn(entry)
+		exit.AppendDependsOn(last)
 	}
 
 	var newInsts []target.Inst

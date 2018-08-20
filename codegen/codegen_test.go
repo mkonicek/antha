@@ -23,8 +23,12 @@ func (a *incubateInst) DependsOn() []target.Inst {
 	return a.Depends
 }
 
-func (a *incubateInst) SetDependsOn(xs []target.Inst) {
+func (a *incubateInst) SetDependsOn(xs ...target.Inst) {
 	a.Depends = xs
+}
+
+func (a *incubateInst) AppendDependsOn(xs ...target.Inst) {
+	a.Depends = append(a.Depends, xs...)
 }
 
 type incubator struct{}

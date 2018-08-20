@@ -174,5 +174,6 @@ func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.In
 
 	// Interpolate a prompt before each qPCR call.
 	promptedInstructions := interpolatePrompts(calls, a)
-	return target.SequentialOrder(promptedInstructions...), nil
+	target.SequentialOrder(promptedInstructions...)
+	return promptedInstructions, nil
 }

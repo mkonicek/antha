@@ -166,5 +166,6 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 		})
 	}
 
-	return target.SequentialOrder(insts...), nil
+	target.SequentialOrder(insts...)
+	return insts, nil
 }

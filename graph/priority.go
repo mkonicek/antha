@@ -6,7 +6,7 @@ import (
 
 type nodeItem struct {
 	Node     Node
-	Priority int
+	Priority int64
 	Value    interface{}
 	Index    int
 }
@@ -42,7 +42,7 @@ func (a *priorityQueue) Pop() interface{} {
 	return item
 }
 
-func (a *priorityQueue) Update(item *nodeItem, priority int) {
+func (a *priorityQueue) Update(item *nodeItem, priority int64) {
 	item.Priority = priority
 	heap.Fix(a, item.Index)
 }

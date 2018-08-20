@@ -74,7 +74,7 @@ func (a *Human) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements target.device MoveCost
-func (a *Human) MoveCost(from target.Device) int {
+func (a *Human) MoveCost(from target.Device) int64 {
 	if _, ok := from.(*Human); ok {
 		return HumanByHumanCost
 	}

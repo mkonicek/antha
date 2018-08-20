@@ -33,7 +33,7 @@ func (a *GenericHandler) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *GenericHandler) MoveCost(target.Device) int {
+func (a *GenericHandler) MoveCost(target.Device) int64 {
 	return 0
 }
 

@@ -3,6 +3,7 @@ package graph
 import (
 	"container/heap"
 	"errors"
+	"math"
 )
 
 var (
@@ -13,16 +14,16 @@ var (
 type PartitionTreeOpt struct {
 	Tree       Graph
 	Root       Node
-	Colors     func(n Node) []int // Possible colors n may take; all nodes in graph must have at least one color
-	EdgeWeight func(a, b int) int // Weight between a and b (non-negative); depth(a) < depth(b)
-	NodeWeight func(a int) int    // Weight of a
+	Colors     func(n Node) []int   // Possible colors n may take; all nodes in graph must have at least one color
+	EdgeWeight func(a, b int) int64 // Weight between a and b (non-negative); depth(a) < depth(b)
+	NodeWeight func(a int) int      // Weight of a
 	exact      bool
 }
 
 // A TreePartition is a partition of the nodes of a tree
 type TreePartition struct {
 	Parts  map[Node]int
-	Weight int
+	Weight int64
 }
 
 // PartitionTree partitions a tree. Given a tree and a set of colors that each
@@ -51,14 +52,14 @@ func PartitionTree(opt PartitionTreeOpt) (*TreePartition, error) {
 }
 
 type partitionTree struct {
-	edgeWeight map[struct{ A, B int }]int
+	edgeWeight map[struct{ A, B int }]int64
 	colors     map[Node][]int
 }
 
 // Cache results of weight function. We'll be calling it a lot.
-func (a *partitionTree) getW(opt PartitionTreeOpt, x, y int) int {
+func (a *partitionTree) getW(opt PartitionTreeOpt, x, y int) int64 {
 	if a.edgeWeight == nil {
-		a.edgeWeight = make(map[struct{ A, B int }]int)
+		a.edgeWeight = make(map[struct{ A, B int }]int64)
 	}
 	p := struct{ A, B int }{A: x, B: y}
 	v, seen := a.edgeWeight[p]
@@ -96,13 +97,13 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 
 	nodes := make(map[Node][]*node)
 	item := make(map[*node]*nodeItem)
-	dist := make(map[*node]int)   // Best distance so far (zero means unvisited)
+	dist := make(map[*node]int64) // Best distance so far (zero means unvisited)
 	best := make(map[*node]*node) // Corresponding best parent
 	ret := &TreePartition{Parts: make(map[Node]int)}
 
 	var pq priorityQueue
 
-	enqueue := func(n *node, priority int) {
+	enqueue := func(n *node, priority int64) {
 		if ni, seen := item[n]; !seen {
 			ni := &nodeItem{
 				Priority: priority,
@@ -117,7 +118,7 @@ func (a *partitionTree) runSP(opt PartitionTreeOpt) *TreePartition {
 
 	// Node relaxation for shortest paths: update shortest path to here (kid)
 	// and update priority queue
-	visitKid := func(kid Node, parent *node, c, d int) {
+	visitKid := func(kid Node, parent *node, c int, d int64) {
 		for idx, kc := range a.colors[kid] {
 			kn := nodes[kid][idx]
 			kd := dist[kn]
@@ -269,13 +270,13 @@ func (a *partitionTree) runExact(opt PartitionTreeOpt) *TreePartition {
 	// children and vice versa.
 	type node struct {
 		Parent *node
-		Node   Node // Corresponding node in input tree
-		Weight int  // Tree Node: least weight subtree below here
-		Choice int  // Choice this represents
+		Node   Node  // Corresponding node in input tree
+		Weight int64 // Tree Node: least weight subtree below here
+		Choice int   // Choice this represents
 		Kids   []*node
 	}
 
-	weighCNode := func(cnode *node) (sum int) {
+	weighCNode := func(cnode *node) (sum int64) {
 		for _, tnode := range cnode.Kids {
 			sum += tnode.Weight
 		}
@@ -283,16 +284,16 @@ func (a *partitionTree) runExact(opt PartitionTreeOpt) *TreePartition {
 	}
 
 	// Compute lighest weight subtree rooted at a tree node
-	getBestColor := func(n *node) (idx int, weight int) {
+	getBestColor := func(n *node) (idx int, weight int64) {
 		parent := n.Parent
-		minW := -1
+		minW := int64(math.MaxInt64)
 		minKid := -1
 		for i, kid := range n.Kids {
 			w := weighCNode(kid)
 			if parent != nil {
 				w += a.getW(opt, parent.Choice, kid.Choice)
 			}
-			if minW == -1 || w < minW {
+			if w < minW {
 				minW = w
 				minKid = i
 			}

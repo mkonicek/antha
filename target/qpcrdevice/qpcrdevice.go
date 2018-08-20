@@ -34,7 +34,7 @@ func (a *QPCRDevice) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *QPCRDevice) MoveCost(from target.Device) int {
+func (a *QPCRDevice) MoveCost(from target.Device) int64 {
 	return 0
 }
 

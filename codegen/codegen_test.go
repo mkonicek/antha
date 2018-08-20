@@ -46,7 +46,7 @@ func (a *incubator) Compile(ctx context.Context, nodes []ast.Node) ([]target.Ins
 	return []target.Inst{&incubateInst{}}, nil
 }
 
-func (a *incubator) MoveCost(from target.Device) int {
+func (a *incubator) MoveCost(from target.Device) int64 {
 	if a == from {
 		return 0
 	}

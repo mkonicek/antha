@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"sort"
 	"strings"
 
@@ -237,7 +238,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 			}
 			return
 		},
-		EdgeWeight: func(a, b int) int {
+		EdgeWeight: func(a, b int) int64 {
 			return devices[a].MoveCost(devices[b])
 		},
 	})
@@ -370,11 +371,11 @@ func findBestMoveDevice(t *target.Target, from, to ast.Node, fromD, toD *drun) t
 	// TODO: add movement constraints
 	var req ast.Request
 	var minD target.Device
-	minC := -1
+	minC := int64(math.MaxInt64)
 
 	for _, d := range t.CanCompile(req) {
 		c := toD.Device.MoveCost(d) + d.MoveCost(fromD.Device)
-		if minC == -1 || c < minC {
+		if c < minC {
 			minC = c
 			minD = d
 		}

@@ -8,17 +8,17 @@ import (
 type ShortestPathOpt struct {
 	Graph   Graph
 	Sources []Node
-	Weight  func(x, y Node) int
+	Weight  func(x, y Node) int64
 }
 
 // ShortestPath implements Dijkstra's algorithm
-func ShortestPath(opt ShortestPathOpt) map[Node]int {
-	dist := make(map[Node]int)
+func ShortestPath(opt ShortestPathOpt) map[Node]int64 {
+	dist := make(map[Node]int64)
 	item := make(map[Node]*nodeItem)
 
 	var pq priorityQueue
 
-	enqueue := func(n Node, priority int) {
+	enqueue := func(n Node, priority int64) {
 		if ni, seen := item[n]; seen {
 			pq.Update(ni, priority)
 			return

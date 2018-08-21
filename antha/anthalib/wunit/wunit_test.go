@@ -40,25 +40,6 @@ type TestUnit struct {
 	toSIString   string
 }
 
-var units = []TestUnit{
-	{
-		value:        2.0000000000000003e-06,
-		prefix:       "",
-		unit:         "l",
-		prefixedunit: "l",
-		siresult:     2.0000000000000003e-06,
-		toSIString:   "0.000 l",
-	},
-	{
-		value:        2.05,
-		prefix:       "u",
-		unit:         "l",
-		prefixedunit: "ul",
-		siresult:     2.05e-6,
-		toSIString:   "2.000 ul",
-	},
-}
-
 var concs = []TestUnit{
 	{
 		value:        2.0000000000000003e-06,
@@ -375,34 +356,6 @@ func TestAddConcentrations(t *testing.T) {
 		t.Error(
 			"Expected Errorf but got nil. Adding of two different bases (g/l and M/l) should not be possible \n",
 		)
-	}
-
-}
-
-func TestNewMeasurement(t *testing.T) {
-	for _, testUnit := range units {
-		r := NewMeasurement(testUnit.value, testUnit.prefix, testUnit.unit)
-		if r.SIValue() != testUnit.siresult {
-			t.Error(
-				"For", testUnit.value, testUnit.prefix, testUnit.unit, "\n",
-				"expected", testUnit.siresult, "\n",
-				"got", r.SIValue(), "\n",
-			)
-		}
-	}
-
-}
-
-func TestNewVolume(t *testing.T) {
-	for _, testUnit := range units {
-		r := NewVolume(testUnit.value, testUnit.prefixedunit)
-		if r.SIValue() != testUnit.siresult {
-			t.Error(
-				"For", testUnit.value, testUnit.prefixedunit, "\n",
-				"expected", testUnit.siresult, "\n",
-				"got", r.SIValue(), "\n",
-			)
-		}
 	}
 
 }

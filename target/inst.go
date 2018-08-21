@@ -16,8 +16,10 @@ type Inst interface {
 	Device() Device
 	// DependsOn returns instructions that this instruction depends on
 	DependsOn() []Inst
-	// SetDependsOn updates DependsOn
-	SetDependsOn([]Inst)
+	// SetDependsOn sets to the list of dependencies to only the args
+	SetDependsOn(...Inst)
+	// AppendDependsOn adds to the args to the existing list of dependencies
+	AppendDependsOn(...Inst)
 }
 
 // An Initializer is an instruction with initialization instructions
@@ -52,8 +54,13 @@ func (a *dependsMixin) DependsOn() []Inst {
 }
 
 // SetDependsOn implements an Inst
-func (a *dependsMixin) SetDependsOn(x []Inst) {
+func (a *dependsMixin) SetDependsOn(x ...Inst) {
 	a.Depends = x
+}
+
+// AppendDependsOn implements an Inst
+func (a *dependsMixin) AppendDependsOn(x ...Inst) {
+	a.Depends = append(a.Depends, x...)
 }
 
 type noDeviceMixin struct{}
@@ -213,17 +220,18 @@ type TimedWait struct {
 	Duration time.Duration
 }
 
-// SequentialOrder takes a set of instructions with out any dependencies and
-// modifies them to follow sequential order
-func SequentialOrder(insts ...Inst) []Inst {
-	for idx, inst := range insts {
-		if idx == 0 {
-			continue
-		}
-		inst.SetDependsOn([]Inst{insts[idx-1]})
-	}
+type Insts []Inst
 
-	return insts
+// SequentialOrder takes a slice of instructions and modifies them
+// in-place, resetting to sequential dependencies.
+func (insts Insts) SequentialOrder() {
+	if len(insts) > 1 {
+		prev := insts[0]
+		for _, cur := range insts[1:] {
+			cur.SetDependsOn(prev)
+			prev = cur
+		}
+	}
 }
 
 // AwaitData is a raw data-getting request

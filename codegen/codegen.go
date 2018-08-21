@@ -383,13 +383,6 @@ func findBestMoveDevice(t *target.Target, from, to ast.Node, fromD, toD *drun) t
 	return minD
 }
 
-func appendToDepends(inst target.Inst, insts ...target.Inst) {
-	var next []target.Inst
-	next = append(next, inst.DependsOn()...)
-	next = append(next, insts...)
-	inst.SetDependsOn(next)
-}
-
 // NB(ddn): Could blindly add edges from insts to head, but would like
 // Compile() to be able to introduce instructions that just depend on the start
 // or end (or neither) of a device run.
@@ -402,18 +395,18 @@ func appendToDepends(inst target.Inst, insts ...target.Inst) {
 //   h <- a <-... <- b <- t
 func splice(head, tail target.Inst, insts []target.Inst) {
 	if len(insts) == 0 {
-		if head != nil && tail != nil {
-			appendToDepends(tail, head)
+		if head != nil && tail != nil && head != tail {
+			tail.AppendDependsOn(head)
 		}
-		return
-	}
-	oldH := insts[0]
-	oldT := insts[len(insts)-1]
-	if head != nil {
-		appendToDepends(oldH, head)
-	}
-	if tail != nil {
-		appendToDepends(tail, oldT)
+	} else {
+		oldH := insts[0]
+		oldT := insts[len(insts)-1]
+		if head != nil {
+			oldH.AppendDependsOn(head)
+		}
+		if tail != nil {
+			tail.AppendDependsOn(oldT)
+		}
 	}
 }
 
@@ -477,8 +470,7 @@ func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, ru
 
 	head := &target.Wait{}
 	tail := &target.Wait{}
-	var insts []target.Inst
-	insts = append(insts, head, tail)
+	insts := append([]target.Inst{}, head, tail)
 
 	splice(head, tail, nil)
 	splice(tail, nil, a.output[run])
@@ -586,14 +578,11 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 
 	var insts []target.Inst
 	for _, n := range order {
-		var depends []target.Inst
-		for j, jnum := 0, sg.NumOuts(n); j < jnum; j++ {
-			depends = append(depends, sg.Out(n, j).(target.Inst))
-		}
-
 		in := n.(target.Inst)
-		in.SetDependsOn(depends)
-
+		in.SetDependsOn() // reset to empty first
+		for j, jnum := 0, sg.NumOuts(n); j < jnum; j++ {
+			in.AppendDependsOn(sg.Out(n, j).(target.Inst))
+		}
 		insts = append(insts, in)
 	}
 

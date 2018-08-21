@@ -158,6 +158,11 @@ func TestSortConcentrations(t *testing.T) {
 			},
 			Error: true,
 		},
+		{
+			Name:  "zero length raises error",
+			Input: nil,
+			Error: true,
+		},
 	}.RunConcentrations(t)
 }
 
@@ -207,6 +212,11 @@ func TestSortVolumes(t *testing.T) {
 				NewVolume(2, "mg/ml"),
 				NewVolume(1, "rpm"),
 			},
+			Error: true,
+		},
+		{
+			Name:  "zero length raises error",
+			Input: nil,
 			Error: true,
 		},
 	}.RunVolumes(t)

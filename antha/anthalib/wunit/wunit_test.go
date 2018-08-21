@@ -31,7 +31,7 @@ import (
 
 // simple reverse complement check to test testing methodology initially
 
-type testunit struct {
+type TestUnit struct {
 	value        float64
 	prefix       string
 	unit         string
@@ -40,18 +40,74 @@ type testunit struct {
 	toSIString   string
 }
 
-var units = []testunit{
-	{2.0000000000000003e-06, "", "l", "l", 2.0000000000000003e-06, "0.000 l"},
-	{2.05, "u", "l", "ul", 2.05e-6, "2.000 ul"},
+var units = []TestUnit{
+	{
+		value:        2.0000000000000003e-06,
+		prefix:       "",
+		unit:         "l",
+		prefixedunit: "l",
+		siresult:     2.0000000000000003e-06,
+		toSIString:   "0.000 l",
+	},
+	{
+		value:        2.05,
+		prefix:       "u",
+		unit:         "l",
+		prefixedunit: "ul",
+		siresult:     2.05e-6,
+		toSIString:   "2.000 ul",
+	},
 }
 
-var concs = []testunit{
-	{value: 2.0000000000000003e-06, prefix: "", unit: "g/l", prefixedunit: "g/l", siresult: 2.0000000000000005e-09, toSIString: "2e-06 g/l"},
-	{value: 2.0000000000000003e-06, prefix: "k", unit: "g/l", prefixedunit: "kg/l", siresult: 2.0000000000000005e-06, toSIString: "2e-06 kg/l"},
-	{value: 2.05, prefix: "m", unit: "g/l", prefixedunit: "mg/l", siresult: 2.05e-06, toSIString: "2.05 mg/l"},
-	{value: 2.05, prefix: "m", unit: "Mol/l", prefixedunit: "mMol/l", siresult: 0.0020499999999999997, toSIString: "2.05 mM/l"},
-	{value: 2.05, prefix: "m", unit: "g/l", prefixedunit: "ng/ul", siresult: 2.05e-06, toSIString: "2.05 mg/l"},
-	{value: 10, prefix: "", unit: "X", prefixedunit: "X", siresult: 10, toSIString: "10 X"},
+var concs = []TestUnit{
+	{
+		value:        2.0000000000000003e-06,
+		prefix:       "",
+		unit:         "g/l",
+		prefixedunit: "g/l",
+		siresult:     2.0000000000000005e-09,
+		toSIString:   "2e-06 g/l",
+	},
+	{
+		value:        2.0000000000000003e-06,
+		prefix:       "k",
+		unit:         "g/l",
+		prefixedunit: "kg/l",
+		siresult:     2.0000000000000005e-06,
+		toSIString:   "2e-06 kg/l",
+	},
+	{
+		value:        2.05,
+		prefix:       "m",
+		unit:         "g/l",
+		prefixedunit: "mg/l",
+		siresult:     2.05e-06,
+		toSIString:   "2.05 mg/l",
+	},
+	{
+		value:        2.05,
+		prefix:       "m",
+		unit:         "Mol/l",
+		prefixedunit: "mMol/l",
+		siresult:     0.0020499999999999997,
+		toSIString:   "2.05 mM/l",
+	},
+	{
+		value:        2.05,
+		prefix:       "m",
+		unit:         "g/l",
+		prefixedunit: "ng/ul",
+		siresult:     2.05e-06,
+		toSIString:   "2.05 mg/l",
+	},
+	{
+		value:        10,
+		prefix:       "",
+		unit:         "X",
+		prefixedunit: "X",
+		siresult:     10,
+		toSIString:   "10 X",
+	},
 }
 
 type VolumeArithmetic struct {
@@ -140,14 +196,14 @@ var volumearithmetictests = []VolumeArithmetic{
 }
 
 func TestSubstractVolumes(t *testing.T) {
-	for _, testunit := range volumearithmetictests {
-		r := SubtractVolumes(testunit.VolumeA, testunit.VolumeB)
+	for _, testUnit := range volumearithmetictests {
+		r := SubtractVolumes(testUnit.VolumeA, testUnit.VolumeB)
 		rt, _ := wutil.Roundto(r.SIValue(), 4)
-		tt, _ := wutil.Roundto(testunit.Difference.SIValue(), 4)
+		tt, _ := wutil.Roundto(testUnit.Difference.SIValue(), 4)
 		if rt != tt {
 			t.Error(
-				"For", testunit.VolumeA, "-", testunit.VolumeB, "\n",
-				"expected", testunit.Difference, "\n",
+				"For", testUnit.VolumeA, "-", testUnit.VolumeB, "\n",
+				"expected", testUnit.Difference, "\n",
 				"got", r, "\n",
 			)
 		}
@@ -156,12 +212,12 @@ func TestSubstractVolumes(t *testing.T) {
 }
 
 func TestAddVolumes(t *testing.T) {
-	for _, testunit := range volumearithmetictests {
-		r := AddVolumes(testunit.VolumeA, testunit.VolumeB)
-		if r.SIValue() != testunit.Sum.SIValue() {
+	for _, testUnit := range volumearithmetictests {
+		r := AddVolumes(testUnit.VolumeA, testUnit.VolumeB)
+		if r.SIValue() != testUnit.Sum.SIValue() {
 			t.Error(
-				"For", testunit.VolumeA, "+", testunit.VolumeB, "\n",
-				"expected", testunit.Sum, "\n",
+				"For", testUnit.VolumeA, "+", testUnit.VolumeB, "\n",
+				"expected", testUnit.Sum, "\n",
 				"got", r, "\n",
 			)
 		}
@@ -170,12 +226,12 @@ func TestAddVolumes(t *testing.T) {
 }
 
 func TestMultiplyVolumes(t *testing.T) {
-	for _, testunit := range volumearithmetictests {
-		r := MultiplyVolume(testunit.VolumeA, testunit.Factor)
-		if r.SIValue() != testunit.Product.SIValue() {
+	for _, testUnit := range volumearithmetictests {
+		r := MultiplyVolume(testUnit.VolumeA, testUnit.Factor)
+		if r.SIValue() != testUnit.Product.SIValue() {
 			t.Error(
-				"For", testunit.VolumeA, " x ", testunit.Factor, "\n",
-				"expected", testunit.Product, "\n",
+				"For", testUnit.VolumeA, " x ", testUnit.Factor, "\n",
+				"expected", testUnit.Product, "\n",
 				"got", r, "\n",
 			)
 		}
@@ -184,14 +240,14 @@ func TestMultiplyVolumes(t *testing.T) {
 }
 
 func TestDivideVolumes(t *testing.T) {
-	for _, testunit := range volumearithmetictests {
-		r := DivideVolume(testunit.VolumeA, testunit.Factor)
+	for _, testUnit := range volumearithmetictests {
+		r := DivideVolume(testUnit.VolumeA, testUnit.Factor)
 		rt, _ := wutil.Roundto(r.SIValue(), 4)
-		tt, _ := wutil.Roundto(testunit.Quotient.SIValue(), 4)
+		tt, _ := wutil.Roundto(testUnit.Quotient.SIValue(), 4)
 		if rt != tt {
 			t.Error(
-				"For", testunit.VolumeA, " / ", testunit.Factor, "\n",
-				"expected", testunit.Quotient, "\n",
+				"For", testUnit.VolumeA, " / ", testUnit.Factor, "\n",
+				"expected", testUnit.Quotient, "\n",
 				"got", r, "\n",
 			)
 		}
@@ -267,12 +323,12 @@ var concarithmetictests = []ConcArithmetic{
 }
 
 func TestMultiplyConcentrations(t *testing.T) {
-	for _, testunit := range concarithmetictests {
-		r := MultiplyConcentration(testunit.ValueA, testunit.Factor)
-		if r.SIValue() != testunit.Product.SIValue() {
+	for _, testUnit := range concarithmetictests {
+		r := MultiplyConcentration(testUnit.ValueA, testUnit.Factor)
+		if r.SIValue() != testUnit.Product.SIValue() {
 			t.Error(
-				"For", testunit.ValueA, "\n",
-				"expected", testunit.Product, "\n",
+				"For", testUnit.ValueA, "\n",
+				"expected", testUnit.Product, "\n",
 				"got", r, "\n",
 			)
 		}
@@ -281,12 +337,12 @@ func TestMultiplyConcentrations(t *testing.T) {
 }
 
 func TestDivideConcentration(t *testing.T) {
-	for _, testunit := range concarithmetictests {
-		r := DivideConcentration(testunit.ValueA, testunit.Factor)
-		if r.SIValue() != testunit.Quotient.SIValue() {
+	for _, testUnit := range concarithmetictests {
+		r := DivideConcentration(testUnit.ValueA, testUnit.Factor)
+		if r.SIValue() != testUnit.Quotient.SIValue() {
 			t.Error(
-				"For", testunit.ValueA, "\n",
-				"expected", testunit.Quotient, "\n",
+				"For", testUnit.ValueA, "\n",
+				"expected", testUnit.Quotient, "\n",
 				"got", r, "\n",
 			)
 		}
@@ -295,20 +351,20 @@ func TestDivideConcentration(t *testing.T) {
 }
 
 func TestAddConcentrations(t *testing.T) {
-	for _, testunit := range concarithmetictests {
+	for _, testUnit := range concarithmetictests {
 		//var concs []Concentration
-		//concs = append(concs,testunit.ValueA)
-		//concs = append(concs,testunit.ValueB)
-		r, err := AddConcentrations(testunit.ValueA, testunit.ValueB)
+		//concs = append(concs,testUnit.ValueA)
+		//concs = append(concs,testUnit.ValueB)
+		r, err := AddConcentrations(testUnit.ValueA, testUnit.ValueB)
 		if err != nil {
 			t.Error(
 				"Add Concentration returns error ", err.Error(), "should return nil \n",
 			)
 		}
-		if r.SIValue() != testunit.Sum.SIValue() {
+		if r.SIValue() != testUnit.Sum.SIValue() {
 			t.Error(
-				"For addition of ", testunit.ValueA, "and", testunit.ValueB, "\n",
-				"expected", testunit.Sum, "\n",
+				"For addition of ", testUnit.ValueA, "and", testUnit.ValueB, "\n",
+				"expected", testUnit.Sum, "\n",
 				"got", r, "\n",
 			)
 		}
@@ -324,12 +380,12 @@ func TestAddConcentrations(t *testing.T) {
 }
 
 func TestNewMeasurement(t *testing.T) {
-	for _, testunit := range units {
-		r := NewMeasurement(testunit.value, testunit.prefix, testunit.unit)
-		if r.SIValue() != testunit.siresult {
+	for _, testUnit := range units {
+		r := NewMeasurement(testUnit.value, testUnit.prefix, testUnit.unit)
+		if r.SIValue() != testUnit.siresult {
 			t.Error(
-				"For", testunit.value, testunit.prefix, testunit.unit, "\n",
-				"expected", testunit.siresult, "\n",
+				"For", testUnit.value, testUnit.prefix, testUnit.unit, "\n",
+				"expected", testUnit.siresult, "\n",
 				"got", r.SIValue(), "\n",
 			)
 		}
@@ -338,12 +394,12 @@ func TestNewMeasurement(t *testing.T) {
 }
 
 func TestNewVolume(t *testing.T) {
-	for _, testunit := range units {
-		r := NewVolume(testunit.value, testunit.prefixedunit)
-		if r.SIValue() != testunit.siresult {
+	for _, testUnit := range units {
+		r := NewVolume(testUnit.value, testUnit.prefixedunit)
+		if r.SIValue() != testUnit.siresult {
 			t.Error(
-				"For", testunit.value, testunit.prefixedunit, "\n",
-				"expected", testunit.siresult, "\n",
+				"For", testUnit.value, testUnit.prefixedunit, "\n",
+				"expected", testUnit.siresult, "\n",
 				"got", r.SIValue(), "\n",
 			)
 		}
@@ -352,19 +408,19 @@ func TestNewVolume(t *testing.T) {
 }
 
 func TestNewConcentration(t *testing.T) {
-	for _, testunit := range concs {
-		r := NewConcentration(testunit.value, testunit.prefixedunit)
-		if r.SIValue() != testunit.siresult {
+	for _, testUnit := range concs {
+		r := NewConcentration(testUnit.value, testUnit.prefixedunit)
+		if r.SIValue() != testUnit.siresult {
 			t.Error(
-				"For", testunit.value, testunit.prefixedunit, "\n",
-				"expected", testunit.siresult, "\n",
+				"For", testUnit.value, testUnit.prefixedunit, "\n",
+				"expected", testUnit.siresult, "\n",
 				"got", r.SIValue(), "\n",
 			)
 		}
-		if r.ToString() != testunit.toSIString {
+		if r.ToString() != testUnit.toSIString {
 			t.Error(
-				"For", testunit.value, testunit.prefixedunit, "\n",
-				"expected", testunit.toSIString, "\n",
+				"For", testUnit.value, testUnit.prefixedunit, "\n",
+				"expected", testUnit.toSIString, "\n",
 				"got", r.ToString(), "\n",
 			)
 		}

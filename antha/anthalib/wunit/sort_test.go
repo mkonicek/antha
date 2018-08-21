@@ -9,8 +9,10 @@ import (
 type SortTest struct {
 	Name  string
 	Input []interface{}
-	Order []int //index of which concentration should be where
-	Error bool  //true if error is expected, in which case Order is ignored
+	Order []int //index of which should be where
+	Max   int   //index of which should be returned as maximum
+	Min   int   //index of which should be returned as minimum
+	Error bool  //true if error is expected, in which case Order, Max, and Min are ignored
 }
 
 func (self *SortTest) RunConcentrations(t *testing.T) {
@@ -25,7 +27,11 @@ func (self *SortTest) RunConcentrations(t *testing.T) {
 		for _, i := range sorted {
 			output = append(output, i)
 		}
-		self.Validate(t, output, err)
+
+		min, _ := MinConcentration(input) // nolint - error is the same as above
+		max, _ := MaxConcentration(input) // nolint - error is the same as above
+
+		self.Validate(t, output, min, max, err)
 	})
 }
 
@@ -41,11 +47,15 @@ func (self *SortTest) RunVolumes(t *testing.T) {
 		for _, i := range sorted {
 			output = append(output, i)
 		}
-		self.Validate(t, output, err)
+
+		min, _ := MinVolume(input) // nolint - error is the same as above
+		max, _ := MaxVolume(input) // nolint - error is the same as above
+
+		self.Validate(t, output, min, max, err)
 	})
 }
 
-func (self *SortTest) Validate(t *testing.T, sorted []interface{}, err error) {
+func (self *SortTest) Validate(t *testing.T, sorted []interface{}, min, max interface{}, err error) {
 	if hasErr := err != nil; self.Error != hasErr {
 		t.Errorf("expected error: %t, got error: %v", self.Error, err)
 		return
@@ -66,6 +76,14 @@ func (self *SortTest) Validate(t *testing.T, sorted []interface{}, err error) {
 		}
 		if len(mismatched) > 0 {
 			t.Errorf("sorted list doesn't match expected:\n\te: %v\n\tg: %v", expected, sorted)
+		}
+
+		if min != self.Input[self.Order[0]] {
+			t.Errorf("got min: %v, expected: %v", self.Input[self.Min], min)
+		}
+
+		if max != self.Input[self.Order[len(self.Order)-1]] {
+			t.Errorf("got max: %v, expected: %v", self.Input[self.Max], max)
 		}
 	}
 }

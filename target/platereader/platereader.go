@@ -154,15 +154,16 @@ func (a *PlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[
 		calls = append(calls, call)
 	}
 
-	var insts []target.Inst
-	insts = append(insts, &target.Prompt{
-		Message: "Please put plate(s) into plate reader and click ok to start plate reader",
-	})
-	insts = append(insts, &target.Run{
-		Dev:   a,
-		Label: "use plate reader",
-		Calls: calls,
-	})
-	target.SequentialOrder(insts...)
+	insts := target.Insts{
+		&target.Prompt{
+			Message: "Please put plate(s) into plate reader and click ok to start plate reader",
+		},
+		&target.Run{
+			Dev:   a,
+			Label: "use plate reader",
+			Calls: calls,
+		},
+	}
+	insts.SequentialOrder()
 	return insts, nil
 }

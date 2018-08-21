@@ -220,9 +220,11 @@ type TimedWait struct {
 	Duration time.Duration
 }
 
+type Insts []Inst
+
 // SequentialOrder takes a slice of instructions and modifies them
 // in-place, resetting to sequential dependencies.
-func SequentialOrder(insts ...Inst) {
+func (insts Insts) SequentialOrder() {
 	if len(insts) > 1 {
 		prev := insts[0]
 		for _, cur := range insts[1:] {

@@ -470,8 +470,7 @@ func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, ru
 
 	head := &target.Wait{}
 	tail := &target.Wait{}
-	var insts []target.Inst
-	insts = append(insts, head, tail)
+	insts := append([]target.Inst{}, head, tail)
 
 	splice(head, tail, nil)
 	splice(tail, nil, a.output[run])

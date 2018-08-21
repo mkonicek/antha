@@ -27,8 +27,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/montanaflynn/stats"
 )
 
 func ReadAbsorbance(plate *wtype.Plate, solution *wtype.Liquid, wavelength float64) (abs wtype.Absorbance) {
@@ -39,19 +41,40 @@ func ReadAbsorbance(plate *wtype.Plate, solution *wtype.Liquid, wavelength float
 	return abs
 }
 
-func Blankcorrect(blank wtype.Absorbance, sample wtype.Absorbance) (blankcorrected wtype.Absorbance, err error) {
+func BlankCorrect(sample wtype.Absorbance, blanks ...wtype.Absorbance) (blankcorrected wtype.Absorbance, err error) {
 
-	if sample.Wavelength == blank.Wavelength &&
-		sample.Pathlength == blank.Pathlength &&
-		sample.Reader == blank.Reader {
-		blankcorrected.Reading = sample.Reading - blank.Reading
-
-		blankcorrected.Status = append(blankcorrected.Status, sample.Status...)
-
-		blankcorrected.Status = append(blankcorrected.Status, "Blank Corrected")
-	} else {
-		err = fmt.Errorf("Cannot pathlength correct as Absorbance readings %+v and %+v are incompatible due to either wavelength, pathlength or reader differences", sample, blank)
+	if len(blanks) == 0 {
+		return sample, nil
 	}
+
+	var blankReadings []float64
+
+	blankcorrected = sample
+
+	for _, blank := range blanks {
+		if sample.Wavelength == blank.Wavelength &&
+			sample.Pathlength == blank.Pathlength &&
+			sample.Reader == blank.Reader {
+			blankReadings = append(blankReadings, blank.Reading)
+
+			blankcorrected.Status = append(blankcorrected.Status, sample.Status...)
+
+			blankcorrected.Status = append(blankcorrected.Status, "Blank Corrected")
+		} else {
+			return wtype.Absorbance{}, fmt.Errorf("Cannot pathlength correct as Absorbance readings %+v and %+v are incompatible due to either wavelength, pathlength or reader differences", sample, blank)
+		}
+	}
+
+	blankAverage, err := stats.Mean(blankReadings)
+
+	if err != nil {
+		return
+	}
+
+	blankcorrected.Reading = sample.Reading - blankAverage
+
+	blankcorrected.Status = search.RemoveDuplicateStrings(blankcorrected.Status)
+
 	return
 }
 

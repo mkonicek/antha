@@ -510,11 +510,12 @@ type SpecificHeatCapacity struct {
 
 // make a new specific heat capacity structure in SI units
 func NewSpecificHeatCapacity(v float64, unit string) SpecificHeatCapacity {
-	if unit != "J/kg" {
-		panic("Can't make specific heat capacities which aren't in J/kg")
+	if unit != "J/kg*C" {
+		panic("Can't make specific heat capacities which aren't in J/kg*C")
 	}
 
 	s := SpecificHeatCapacity{NewMeasurement(v, "", unit)}
+	fmt.Println(s.Unit().ToString())
 	return s
 }
 

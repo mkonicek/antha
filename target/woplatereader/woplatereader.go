@@ -1,4 +1,4 @@
-package platereader
+package woplatereader
 
 import (
 	"context"
@@ -14,34 +14,34 @@ import (
 	"github.com/antha-lang/antha/target"
 )
 
-// PlateReader defines the state of a plate-reader device
-type PlateReader struct {
+// WOPlateReader defines the state of a write only plate-reader device
+type WOPlateReader struct {
 	target.NoDataIngestionDevice
 }
 
 // Ensure satisfies Device interface
-var _ target.Device = (*PlateReader)(nil)
+var _ target.Device = (*WOPlateReader)(nil)
 
-// NewWOPlateReader returns a new Plate Reader
-// Used by antha-runner
-func NewWOPlateReader() *PlateReader {
-	return &PlateReader{}
+// NewWOPlateReader returns a new Write-Only Plate Reader Used by
+// antha-runner
+func NewWOPlateReader() *WOPlateReader {
+	return &WOPlateReader{}
 }
 
 // CanCompile implements a Device
-func (a *PlateReader) CanCompile(req ast.Request) bool {
+func (a *WOPlateReader) CanCompile(req ast.Request) bool {
 	can := ast.Request{}
 	can.Selector = append(can.Selector, target.DriverSelectorV1WriteOnlyPlateReader)
 	return can.Contains(req)
 }
 
 // MoveCost implements a Device
-func (a *PlateReader) MoveCost(from target.Device) int64 {
+func (a *WOPlateReader) MoveCost(from target.Device) int64 {
 	return 0
 }
 
 // Compile implements a Device
-func (a *PlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *WOPlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
 
 	// Find the LHComponentID for the samples to measure. We'll then search
 	// for these later.
@@ -105,7 +105,7 @@ func prKey(inst *wtype.PRInstruction) (string, error) {
 }
 
 // Merge PRInstructions
-func (a *PlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]target.Inst, error) {
+func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]target.Inst, error) {
 
 	// Simple case
 	if len(prInsts) == 0 {
@@ -155,14 +155,16 @@ func (a *PlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[
 		calls = append(calls, call)
 	}
 
-	var insts []target.Inst
-	insts = append(insts, &target.Prompt{
-		Message: "Please put plate(s) into plate reader and click ok to start plate reader",
-	})
-	insts = append(insts, &target.Run{
-		Dev:   a,
-		Label: "use plate reader",
-		Calls: calls,
-	})
-	return target.SequentialOrder(insts...), nil
+	insts := target.Insts{
+		&target.Prompt{
+			Message: "Please put plate(s) into plate reader and click ok to start plate reader",
+		},
+		&target.Run{
+			Dev:   a,
+			Label: "use plate reader",
+			Calls: calls,
+		},
+	}
+	insts.SequentialOrder()
+	return insts, nil
 }

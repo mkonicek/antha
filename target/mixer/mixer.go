@@ -244,7 +244,7 @@ func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, e
 		return nil, err
 	}
 
-	return target.SequentialOrder(mix), nil
+	return []target.Inst{mix}, nil
 }
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {

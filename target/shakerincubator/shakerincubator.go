@@ -98,7 +98,7 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 
 	var initializers []target.Inst
 	var finalizers []target.Inst
-	var insts []target.Inst
+	var insts target.Insts
 
 	initializers = append(initializers, &target.Run{
 		Dev:   a,
@@ -167,5 +167,6 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 		})
 	}
 
-	return target.SequentialOrder(insts...), nil
+	insts.SequentialOrder()
+	return insts, nil
 }

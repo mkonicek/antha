@@ -670,24 +670,6 @@ func ValidMeasurementUnit(measureMentType, unit string) error {
 	return nil
 }
 
-// ValidConcentrationUnit returns an error if an invalid Concentration unit is specified.
-func ValidConcentrationUnit(unit string) error {
-	// replace µ with u
-	unit = strings.Replace(unit, "µ", "u", -1)
-	// replace L with l
-	unit = strings.Replace(unit, "L", "l", -1)
-	_, ok := UnitMap["Concentration"][unit]
-	if !ok {
-		var approved []string
-		for u := range UnitMap["Concentration"] {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		return errors.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved)
-	}
-	return nil
-}
-
 // NewConcentration makes a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) Concentration {
 	// replace µ with u

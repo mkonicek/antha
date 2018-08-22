@@ -40,57 +40,6 @@ type TestUnit struct {
 	toSIString   string
 }
 
-var concs = []TestUnit{
-	{
-		value:        2.0000000000000003e-06,
-		prefix:       "",
-		unit:         "g/l",
-		prefixedunit: "g/l",
-		siresult:     2.0000000000000005e-09,
-		toSIString:   "2e-06 g/l",
-	},
-	{
-		value:        2.0000000000000003e-06,
-		prefix:       "k",
-		unit:         "g/l",
-		prefixedunit: "kg/l",
-		siresult:     2.0000000000000005e-06,
-		toSIString:   "2e-06 kg/l",
-	},
-	{
-		value:        2.05,
-		prefix:       "m",
-		unit:         "g/l",
-		prefixedunit: "mg/l",
-		siresult:     2.05e-06,
-		toSIString:   "2.05 mg/l",
-	},
-	{
-		value:        2.05,
-		prefix:       "m",
-		unit:         "Mol/l",
-		prefixedunit: "mMol/l",
-		siresult:     0.0020499999999999997,
-		toSIString:   "2.05 mM/l",
-	},
-	{
-		value:        2.05,
-		prefix:       "m",
-		unit:         "g/l",
-		prefixedunit: "ng/ul",
-		siresult:     2.05e-06,
-		toSIString:   "2.05 mg/l",
-	},
-	{
-		value:        10,
-		prefix:       "",
-		unit:         "X",
-		prefixedunit: "X",
-		siresult:     10,
-		toSIString:   "10 X",
-	},
-}
-
 type VolumeArithmetic struct {
 	VolumeA    Volume
 	VolumeB    Volume
@@ -356,27 +305,6 @@ func TestAddConcentrations(t *testing.T) {
 		t.Error(
 			"Expected Errorf but got nil. Adding of two different bases (g/l and M/l) should not be possible \n",
 		)
-	}
-
-}
-
-func TestNewConcentration(t *testing.T) {
-	for _, testUnit := range concs {
-		r := NewConcentration(testUnit.value, testUnit.prefixedunit)
-		if r.SIValue() != testUnit.siresult {
-			t.Error(
-				"For", testUnit.value, testUnit.prefixedunit, "\n",
-				"expected", testUnit.siresult, "\n",
-				"got", r.SIValue(), "\n",
-			)
-		}
-		if r.ToString() != testUnit.toSIString {
-			t.Error(
-				"For", testUnit.value, testUnit.prefixedunit, "\n",
-				"expected", testUnit.toSIString, "\n",
-				"got", r.ToString(), "\n",
-			)
-		}
 	}
 
 }

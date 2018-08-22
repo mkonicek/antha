@@ -74,29 +74,6 @@ func ReverseLookupPrefix(i int) string {
 	return seciferp[i]
 }
 
-// multiply two prefix values
-// take care: there are no checks for going out of bounds
-// e.g. Z*Z will generate an error!
-func PrefixMul(x string, y string) string {
-	//multiply x by y, what do you get?
-
-	l1 := RoundInt(math.Log10(prefices[x].Value))
-	l2 := RoundInt(math.Log10(prefices[y].Value))
-
-	return ReverseLookupPrefix(l1 + l2)
-}
-
-// divide one prefix by another
-// take care: there are no checks for going out of bounds
-// e.g. Z/z will give an error!
-func PrefixDiv(x string, y string) string {
-	// divide x by y, what do you get?
-
-	l1 := RoundInt(math.Log10(prefices[x].Value))
-	l2 := RoundInt(math.Log10(prefices[y].Value))
-	return ReverseLookupPrefix(l1 - l2)
-}
-
 // make the prefix structure
 func MakePrefices() map[string]SIPrefix {
 	pref_map := make(map[string]SIPrefix, 20)

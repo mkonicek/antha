@@ -23,62 +23,17 @@
 package wunit
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // units mapped by string
 var unitMap map[string]GenericUnit
-
-// deserialize JSON prefix library
-func GetPrefixLib(fn string) (*(map[string]SIPrefix), error) {
-	f, err := ioutil.ReadFile(fn)
-	if err != nil {
-		return nil, err
-	}
-
-	prefices := make(map[string]SIPrefix, 20)
-	err = json.Unmarshal(f, &prefices)
-	return &prefices, err
-}
-
-// deserialize JSON unit library
-func GetUnitLib(fn string) (*(map[string]GenericUnit), error) {
-	f, err := ioutil.ReadFile(fn)
-	if err != nil {
-		return nil, err
-	}
-	units := make(map[string]GenericUnit, 20)
-	e2 := json.Unmarshal(f, &units)
-
-	if e2 != nil {
-		logger.Fatal(e2.Error())
-		panic(e2)
-	}
-
-	for k, v := range units {
-		logger.Debug(fmt.Sprintln(k, " ", v))
-	}
-
-	return &units, err
-}
 
 // helper function to make it easier to
 // make a new unit with prefix directly
 func NewPrefixedUnit(prefix string, unit string) *GenericPrefixedUnit {
 	u := UnitBySymbol(unit)
 	p := SIPrefixBySymbol(prefix)
-
-	/*
-		if p==nil{
-			panic(fmt.Sprintf("Can't instantiate this prefix: %s", prefix))
-		}else if u==nil{
-			panic(fmt.Sprintf("Can't instantiate this unit: %s", unit))
-		}
-	*/
 
 	gpu := GenericPrefixedUnit{u, p}
 	return &gpu

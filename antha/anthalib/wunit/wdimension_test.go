@@ -13,11 +13,18 @@ type NewMeasurementTest struct {
 	ExpectedSIValue  float64
 	ExpectedBaseUnit string
 	ExpectedPrefix   string
+	ExpectError      bool
 }
 
 func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstructor) {
 
 	t.Run(fmt.Sprintf("%f_%s", self.Value, self.Unit), func(t *testing.T) {
+		defer func() {
+			if r := recover(); (r != nil) != self.ExpectError {
+				t.Errorf("error mismatch: expectError: %t, got error: \"%v\"", self.ExpectError, r)
+			}
+		}()
+
 		m := constructor(self.Value, self.Unit)
 
 		if m.SIValue() != self.ExpectedSIValue {
@@ -66,6 +73,11 @@ func TestNewLength(t *testing.T) {
 			ExpectedBaseUnit: "m",
 			ExpectedPrefix:   " ",
 		},
+		{
+			Value:       1.0,
+			Unit:        "parsec",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewLength(v, u)
 	})
@@ -86,6 +98,11 @@ func TestNewArea(t *testing.T) {
 			ExpectedSIValue:  1e-6,
 			ExpectedBaseUnit: "m^2",
 			ExpectedPrefix:   "m",
+		},
+		{
+			Value:       1.0,
+			Unit:        "hectare",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewArea(v, u)
@@ -114,6 +131,11 @@ func TestNewVolume(t *testing.T) {
 			ExpectedSIValue:  1e-3,
 			ExpectedBaseUnit: "l",
 			ExpectedPrefix:   "m",
+		},
+		{
+			Value:       1.0,
+			Unit:        "decibel",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewVolume(v, u)
@@ -149,6 +171,11 @@ func TestNewTemperature(t *testing.T) {
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "℃",
 			ExpectedPrefix:   " ",
+		},
+		{
+			Value:       1.0,
+			Unit:        "F",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewTemperature(v, u)
@@ -192,6 +219,11 @@ func TestNewTime(t *testing.T) {
 			ExpectedBaseUnit: "s",
 			ExpectedPrefix:   " ",
 		},
+		{
+			Value:       1.0,
+			Unit:        "aeon",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewTime(v, u)
 	})
@@ -212,6 +244,11 @@ func TestNewMass(t *testing.T) {
 			ExpectedSIValue:  1.0e-9,
 			ExpectedBaseUnit: "kg",
 			ExpectedPrefix:   "u",
+		},
+		{
+			Value:       1.0,
+			Unit:        "St.Bernard",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewMass(v, u)
@@ -234,6 +271,11 @@ func TestNewMoles(t *testing.T) {
 			ExpectedBaseUnit: "M",
 			ExpectedPrefix:   "u",
 		},
+		{
+			Value:       1.0,
+			Unit:        "CommonEuropean",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewMoles(v, u)
 	})
@@ -255,6 +297,11 @@ func TestNewAmount(t *testing.T) {
 			ExpectedBaseUnit: "M",
 			ExpectedPrefix:   "u",
 		},
+		{
+			Value:       1.0,
+			Unit:        "shedloads",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAmount(v, u)
 	})
@@ -268,6 +315,11 @@ func TestNewAngle(t *testing.T) {
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "radians",
 			ExpectedPrefix:   " ",
+		},
+		{
+			Value:       1.0,
+			Unit:        "gradians",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAngle(v, u)
@@ -283,6 +335,11 @@ func TestNewAnglularVelocity(t *testing.T) {
 			ExpectedBaseUnit: "rpm",
 			ExpectedPrefix:   " ",
 		},
+		{
+			Value:       1.0,
+			Unit:        "rad/s",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAngularVelocity(v, u)
 	})
@@ -296,6 +353,11 @@ func TestNewEnergy(t *testing.T) {
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "J",
 			ExpectedPrefix:   " ",
+		},
+		{
+			Value:       1.0,
+			Unit:        "eV",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewEnergy(v, u)
@@ -311,6 +373,11 @@ func TestNewForce(t *testing.T) {
 			ExpectedBaseUnit: "N",
 			ExpectedPrefix:   " ",
 		},
+		{
+			Value:       1.0,
+			Unit:        "DarkSides",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewForce(v, u)
 	})
@@ -324,6 +391,11 @@ func TestNewPressure(t *testing.T) {
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "Pa",
 			ExpectedPrefix:   " ",
+		},
+		{
+			Value:       2.7,
+			Unit:        "JobInterviews",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewPressure(v, u)
@@ -353,6 +425,11 @@ func TestNewConcentration(t *testing.T) {
 			ExpectedBaseUnit: "kg/l",
 			ExpectedPrefix:   "m",
 		},
+		{
+			Value:       1.0,
+			Unit:        "Eagles",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewConcentration(v, u)
 	})
@@ -362,10 +439,15 @@ func TestNewSpecificHeatCapacity(t *testing.T) {
 	NewMeasurementTests{
 		{
 			Value:            1.0,
-			Unit:             "J/kg",
+			Unit:             "J/kg*C",
 			ExpectedSIValue:  1.0,
-			ExpectedBaseUnit: "J/kg",
+			ExpectedBaseUnit: "J/kg*C",
 			ExpectedPrefix:   " ",
+		},
+		{
+			Value:       1.0,
+			Unit:        "J/kg",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewSpecificHeatCapacity(v, u)
@@ -381,6 +463,11 @@ func TestNewDensity(t *testing.T) {
 			ExpectedBaseUnit: "kg/m^3",
 			ExpectedPrefix:   " ",
 		},
+		{
+			Value:       1.0,
+			Unit:        "ducks",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewDensity(v, u)
 	})
@@ -389,11 +476,9 @@ func TestNewDensity(t *testing.T) {
 func TestNewFlowRate(t *testing.T) {
 	NewMeasurementTests{
 		{
-			Value:            1.0,
-			Unit:             "ml/min",
-			ExpectedSIValue:  1.0,
-			ExpectedBaseUnit: "ml/min",
-			ExpectedPrefix:   " ",
+			Value:       1.0,
+			Unit:        "TheNile",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewFlowRate(v, u)
@@ -408,6 +493,11 @@ func TestNewVelocity(t *testing.T) {
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "m/s",
 			ExpectedPrefix:   " ",
+		},
+		{
+			Value:       1.0,
+			Unit:        "BatsOuttaHell",
+			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewVelocity(v, u)
@@ -437,9 +527,17 @@ func TestNewRate(t *testing.T) {
 			ExpectedBaseUnit: "/s",
 			ExpectedPrefix:   " ",
 		},
+		{
+			Value:       1.0,
+			Unit:        "/loc",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
-		r, _ := NewRate(v, u)
-		return r
+		if r, err := NewRate(v, u); err != nil {
+			panic(err) //other NewX functions panic but this one returns error
+		} else {
+			return r
+		}
 	})
 }
 
@@ -452,8 +550,16 @@ func TestNewVoltage(t *testing.T) {
 			ExpectedBaseUnit: "V",
 			ExpectedPrefix:   " ",
 		},
+		{
+			Value:       1.0,
+			Unit:        "NylonShirts",
+			ExpectError: true,
+		},
 	}.Run(t, func(v float64, u string) Measurement {
-		r, _ := NewVoltage(v, u)
-		return r
+		if r, err := NewVoltage(v, u); err != nil {
+			panic(err)
+		} else {
+			return r
+		}
 	})
 }

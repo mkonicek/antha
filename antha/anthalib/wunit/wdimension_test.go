@@ -106,7 +106,7 @@ func TestNewArea(t *testing.T) {
 			Unit:             "mm^2",
 			ExpectedSIValue:  1e-6,
 			ExpectedBaseUnit: "m^2",
-			ExpectedPrefix:   "m",
+			ExpectedPrefix:   " ",
 		},
 		{
 			Value:       1.0,

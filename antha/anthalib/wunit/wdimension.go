@@ -25,7 +25,6 @@ package wunit
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 	"time"
 
@@ -62,18 +61,13 @@ type Area struct {
 }
 
 // make an area unit
-func NewArea(v float64, unit string) (a Area) {
-	if unit == "m^2" {
-		a = Area{NewMeasurement(v, "", unit)}
-	} else if unit == "mm^2" {
-		//a = Area{NewPMeasurement(v /**0.000001*/, unit)}
-		a = Area{NewMeasurement(v, "", unit)}
-		// should be OK
-	} else {
-		panic("Can't make areas which aren't square (milli)metres")
+func NewArea(v float64, unit string) Area {
+	details, ok := UnitMap["Area"][unit]
+	if !ok {
+		panic(errors.Errorf("unapproved area unit %q, approved units are %s", unit, ValidUnitsForType("Area")))
 	}
 
-	return
+	return Area{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
 }
 
 func ZeroArea() Area {
@@ -279,12 +273,7 @@ type Temperature struct {
 func NewTemperature(v float64, unit string) Temperature {
 	details, ok := UnitMap["Temperature"][unit]
 	if !ok {
-		var approved []string
-		for u := range UnitMap["Temperature"] {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		panic(errors.Errorf("unapproved temperature unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved temperature unit %q, approved units are %s", unit, ValidUnitsForType("Temperature")))
 	}
 
 	return Temperature{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -301,12 +290,7 @@ func NewTime(v float64, unit string) (t Time) {
 
 	details, ok := UnitMap["Time"][unit]
 	if !ok {
-		var approved []string
-		for u := range UnitMap["Time"] {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		panic(errors.Errorf("unapproved time unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved time unit %q, approved units are %s", unit, ValidUnitsForType("Time")))
 	}
 
 	return Time{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -339,29 +323,15 @@ type Mass struct {
 
 // make a mass unit
 
-func NewMass(v float64, unit string) (o Mass) {
+func NewMass(v float64, unit string) Mass {
 	unit = strings.Replace(unit, "µ", "u", -1)
 
-	approvedunits := UnitMap["Mass"]
-
-	var approved bool
-	for key := range approvedunits {
-
-		if unit == key {
-			approved = true
-			break
-		}
+	details, ok := UnitMap["Mass"][unit]
+	if !ok {
+		panic(errors.Errorf("Can't make masses with non approved unit of %s. Approved units are: %v", unit, ValidUnitsForType("Mass")))
 	}
 
-	if !approved {
-		panic("Can't make masses with non approved unit of " + unit + ". Approved units are: " + fmt.Sprint(approvedunits))
-	}
-
-	unitdetails := approvedunits[unit]
-
-	o = Mass{NewMeasurement((v * unitdetails.Multiplier), unitdetails.Prefix, unitdetails.Base)}
-
-	return
+	return Mass{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
 }
 
 // defines mass to be a SubstanceQuantity
@@ -380,12 +350,7 @@ func NewMoles(v float64, unit string) Moles {
 
 	details, ok := UnitMap["Moles"][unit]
 	if !ok {
-		var approved []string
-		for u := range UnitMap["Moles"] {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		panic(errors.Errorf("unapproved Amount unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved Amount unit %q, approved units are %s", unit, ValidUnitsForType("Moles")))
 	}
 
 	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -398,12 +363,7 @@ func NewAmount(v float64, unit string) Moles {
 
 	details, ok := UnitMap["Moles"][unit]
 	if !ok {
-		var approved []string
-		for u := range UnitMap["Moles"] {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		panic(errors.Errorf("unapproved Amount unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved Amount unit %q, approved units are %s", unit, ValidUnitsForType("Moles")))
 	}
 
 	return Moles{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -497,173 +457,6 @@ type Concentration struct {
 	//MolecularWeight *float64
 }
 
-// Unit is the form which units are stored in the UnitMap. This structure is not used beyond this.
-type Unit struct {
-	Base       string
-	Prefix     string
-	Multiplier float64
-}
-
-// UnitMap lists approved units to create new measurements.
-var UnitMap = map[string]map[string]Unit{
-	"Concentration": {
-		"kg/l":    {Base: "g/l", Prefix: "k", Multiplier: 1.0},
-		"g/l":     {Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"mg/l":    {Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ug/l":    {Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"ng/l":    {Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"mg/ml":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"ug/ml":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ug/ul":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"ng/ul":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ng/ml":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"pg/ul":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"pg/ml":   {Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"pg/l":    {Base: "g/l", Prefix: "p", Multiplier: 1.0},
-		"kg/L":    {Base: "g/l", Prefix: "k", Multiplier: 1.0},
-		"g/L":     {Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"mg/L":    {Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ug/L":    {Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"ng/L":    {Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"pg/L":    {Base: "g/l", Prefix: "p", Multiplier: 1.0},
-		"mg/mL":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"ug/mL":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ug/uL":   {Base: "g/l", Prefix: "", Multiplier: 1.0},
-		"ng/uL":   {Base: "g/l", Prefix: "m", Multiplier: 1.0},
-		"ng/mL":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"pg/uL":   {Base: "g/l", Prefix: "u", Multiplier: 1.0},
-		"pg/mL":   {Base: "g/l", Prefix: "n", Multiplier: 1.0},
-		"M":       {Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"M/l":     {Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"Mol/l":   {Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"M/L":     {Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"Mol/L":   {Base: "M/l", Prefix: "", Multiplier: 1.0},
-		"mM":      {Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mM/l":    {Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mMol/l":  {Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mM/L":    {Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"mMol/L":  {Base: "M/l", Prefix: "m", Multiplier: 1.0},
-		"uM":      {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"uM/l":    {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"uMol/l":  {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"uM/L":    {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"uMol/L":  {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"nM":      {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"nM/l":    {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"nMol/l":  {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"nM/L":    {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"nMol/L":  {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"pM":      {Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"pM/l":    {Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"pMol/l":  {Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"pM/L":    {Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"pMol/L":  {Base: "M/l", Prefix: "p", Multiplier: 1.0},
-		"pM/ul":   {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"pMol/ul": {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"pM/uL":   {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"pMol/uL": {Base: "M/l", Prefix: "u", Multiplier: 1.0},
-		"fM":      {Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"fM/l":    {Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"fMol/l":  {Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"fM/L":    {Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"fMol/L":  {Base: "M/l", Prefix: "f", Multiplier: 1.0},
-		"fM/ul":   {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"fMol/ul": {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"fM/uL":   {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"fMol/uL": {Base: "M/l", Prefix: "n", Multiplier: 1.0},
-		"X":       {Base: "X", Prefix: "", Multiplier: 1.0},
-		"x":       {Base: "X", Prefix: "", Multiplier: 1.0},
-		"U/l":     {Base: "U/l", Prefix: "", Multiplier: 1.0},
-		"U/L":     {Base: "U/l", Prefix: "", Multiplier: 1.0},
-		"U/ml":    {Base: "U/l", Prefix: "", Multiplier: 1000.0},
-		"U/mL":    {Base: "U/l", Prefix: "", Multiplier: 1000.0},
-		"v/v":     {Base: "v/v", Prefix: "", Multiplier: 1.0},
-		"w/v":     {Base: "g/l", Prefix: "k", Multiplier: 1.0},
-	},
-	"Mass": {
-		"ng": {Base: "g", Prefix: "n", Multiplier: 1.0},
-		"ug": {Base: "g", Prefix: "u", Multiplier: 1.0},
-		"mg": {Base: "g", Prefix: "m", Multiplier: 1.0},
-		"g":  {Base: "g", Prefix: "", Multiplier: 1.0},
-		"kg": {Base: "g", Prefix: "k", Multiplier: 1.0},
-	},
-	"Moles": {
-		"pMol": {Base: "M", Prefix: "p", Multiplier: 1.0},
-		"nMol": {Base: "M", Prefix: "n", Multiplier: 1.0},
-		"uMol": {Base: "M", Prefix: "u", Multiplier: 1.0},
-		"mMol": {Base: "M", Prefix: "m", Multiplier: 1.0},
-		"Mol":  {Base: "M", Prefix: "", Multiplier: 1.0},
-		"pM":   {Base: "M", Prefix: "p", Multiplier: 1.0},
-		"nM":   {Base: "M", Prefix: "n", Multiplier: 1.0},
-		"uM":   {Base: "M", Prefix: "u", Multiplier: 1.0},
-		"mM":   {Base: "M", Prefix: "m", Multiplier: 1.0},
-		"M":    {Base: "M", Prefix: "", Multiplier: 1.0},
-	},
-	"Volume": {
-		"pl": {Base: "l", Prefix: "p", Multiplier: 1.0},
-		"nl": {Base: "l", Prefix: "n", Multiplier: 1.0},
-		"ul": {Base: "l", Prefix: "u", Multiplier: 1.0},
-		"ml": {Base: "l", Prefix: "m", Multiplier: 1.0},
-		"l":  {Base: "l", Prefix: "", Multiplier: 1.0},
-		"pL": {Base: "l", Prefix: "p", Multiplier: 1.0},
-		"nL": {Base: "l", Prefix: "n", Multiplier: 1.0},
-		"uL": {Base: "l", Prefix: "u", Multiplier: 1.0},
-		"mL": {Base: "l", Prefix: "m", Multiplier: 1.0},
-		"L":  {Base: "l", Prefix: "", Multiplier: 1.0},
-	},
-	"Rate": {
-		"/s":   {Base: "/s", Prefix: "", Multiplier: 1.0},
-		"/min": {Base: "/s", Prefix: "", Multiplier: 60.0},
-		"/h":   {Base: "/s", Prefix: "", Multiplier: 3600.0},
-	},
-	"Time": {
-		"ms":   {Base: "s", Prefix: "m", Multiplier: 1.0},
-		"s":    {Base: "s", Prefix: "", Multiplier: 1.0},
-		"min":  {Base: "s", Prefix: "", Multiplier: 60.0},
-		"h":    {Base: "s", Prefix: "", Multiplier: 3600.0},
-		"days": {Base: "s", Prefix: "", Multiplier: 86400.0},
-	},
-	"Temperature": {
-		"C":  {Base: "℃", Prefix: "", Multiplier: 1.0}, // RING ABOVE, LATIN CAPITAL LETTER C
-		"˚C": {Base: "℃", Prefix: "", Multiplier: 1.0}, // LATIN CAPITAL LETTER C
-		"℃":  {Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE CELSIUS
-		"°C": {Base: "℃", Prefix: "", Multiplier: 1.0}, // DEGREE, LATIN CAPITAL LETTER C
-	},
-}
-
-// ValidMeasurementUnit checks the validity of a measurement type and unit within that measurement type.
-// An error is returned if an invalid measurement type or unit is specified.
-func ValidMeasurementUnit(measureMentType, unit string) error {
-	// replace µ with u
-	unit = strings.Replace(unit, "µ", "u", -1)
-	if measureMentType == "Concentration" {
-		// replace L with l
-		unit = strings.Replace(unit, "L", "l", -1)
-	}
-	validUnits, measurementFound := UnitMap[measureMentType]
-	if !measurementFound {
-		var validMeasurementTypes []string
-		for key := range UnitMap {
-			validMeasurementTypes = append(validMeasurementTypes, key)
-		}
-		sort.Strings(validMeasurementTypes)
-		return errors.Errorf("No measurement type %s listed in UnitMap found these: %v", measureMentType, validMeasurementTypes)
-	}
-
-	_, unitFound := validUnits[unit]
-
-	if !unitFound {
-		var approved []string
-		for u := range validUnits {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		return errors.Errorf("No unit %s found for %s in UnitMap found these: %v", unit, measureMentType, approved)
-	}
-
-	return nil
-}
-
 // NewConcentration makes a new concentration in SI units... either M/l or kg/l
 func NewConcentration(v float64, unit string) Concentration {
 	// replace µ with u
@@ -673,12 +466,7 @@ func NewConcentration(v float64, unit string) Concentration {
 
 	details, ok := UnitMap["Concentration"][unit]
 	if !ok {
-		var approved []string
-		for u := range UnitMap["Concentration"] {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		panic(errors.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved))
+		panic(errors.Errorf("unapproved concentration unit %q, approved units are %s", unit, ValidUnitsForType("Concentration")))
 	}
 
 	return Concentration{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}
@@ -783,12 +571,7 @@ type Rate struct {
 func NewRate(v float64, unit string) (r Rate, err error) {
 	details, ok := UnitMap["Rate"][unit]
 	if !ok {
-		var approved []string
-		for u := range UnitMap["Rate"] {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		return r, errors.Errorf("unapproved rate unit %q, approved units are %s", unit, approved)
+		return r, errors.Errorf("unapproved rate unit %q, approved units are %s", unit, ValidUnitsForType("Rate"))
 	}
 
 	return Rate{NewMeasurement((v * details.Multiplier), details.Prefix, details.Base)}, nil

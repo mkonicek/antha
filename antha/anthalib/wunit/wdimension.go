@@ -39,12 +39,8 @@ type Length struct {
 	*ConcreteMeasurement
 }
 
-func EZLength(v float64) Length {
-	return NewLength(v, "m")
-}
-
 func ZeroLength() Length {
-	return EZLength(0.0)
+	return NewLength(0.0, "m")
 }
 
 // make a length
@@ -156,20 +152,18 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 
 // DivideVolumes divides the SI Value of vol1 by vol2 to return a factor.
 // An error is returned if the volume is infinity or not a number.
-func DivideVolumes(vol1, vol2 Volume) (factor float64, err error) {
+func DivideVolumes(vol1, vol2 Volume) (float64, error) {
 	if vol1.Unit().BaseSIUnit() != vol2.Unit().BaseSIUnit() {
 		return -1, errors.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.ToString(), vol2.ToString())
 	}
-	factor = vol1.SIValue() / vol2.SIValue()
+	factor := vol1.SIValue() / vol2.SIValue()
 
 	if math.IsInf(factor, 0) {
-		err = errors.Errorf("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
-		return
+		return 0, errors.Errorf("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
 	}
 
 	if math.IsNaN(factor) {
-		err = errors.Errorf("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
-		return
+		return 0, errors.Errorf("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
 	}
 
 	return factor, nil

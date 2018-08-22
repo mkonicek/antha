@@ -169,7 +169,7 @@ func TestMultiplyVolumes(t *testing.T) {
 
 }
 
-func TestDivideVolumes(t *testing.T) {
+func TestDivideVolume(t *testing.T) {
 	for _, testUnit := range volumearithmetictests {
 		r := DivideVolume(testUnit.VolumeA, testUnit.Factor)
 		rt, _ := wutil.Roundto(r.SIValue(), 4)
@@ -181,6 +181,30 @@ func TestDivideVolumes(t *testing.T) {
 				"got", r, "\n",
 			)
 		}
+	}
+
+}
+
+func TestDivideVolumes(t *testing.T) {
+	for _, testUnit := range volumearithmetictests {
+		r, err := DivideVolumes(testUnit.Product, testUnit.VolumeA)
+		if err != nil {
+			t.Errorf("For DivideVolumes(%v, %v): got error: %v", testUnit.Product, testUnit.VolumeA, err)
+			continue
+		}
+		rt, _ := wutil.Roundto(r, 4)
+		tt, _ := wutil.Roundto(testUnit.Factor, 4)
+		if rt != tt {
+			t.Error(
+				"For DivideVolumes(", testUnit.Product, ", ", testUnit.VolumeA, ")\n",
+				"expected", testUnit.Factor, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+	if _, err := DivideVolumes(ZeroVolume(), ZeroVolume()); err == nil {
+		t.Error("divide by zero didn't cause error")
 	}
 
 }

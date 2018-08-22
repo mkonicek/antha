@@ -7,6 +7,8 @@ import (
 
 type MeasurementConstructor func(float64, string) Measurement
 
+type TestFn func(*testing.T, Measurement)
+
 type NewMeasurementTest struct {
 	Value            float64
 	Unit             string
@@ -39,6 +41,7 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 			if e, g := self.ExpectedPrefix, m.Unit().Prefix().Name; e != g {
 				t.Errorf("wrong base prefix: expected \"%s\", got \"%s\"", e, g)
 			}
+
 		}
 
 	})
@@ -600,5 +603,33 @@ func TestValidMeasurementUnit(t *testing.T) {
 		if err := ValidMeasurementUnit(test.Type, test.Unit); (err != nil) != test.Error {
 			t.Errorf("for (\"%s\", \"%s\"): expected error = %t, got error %v", test.Type, test.Unit, test.Error, err)
 		}
+	}
+}
+
+func TestConcentration_MolPerL(t *testing.T) {
+	conc := NewConcentration(1.0, "g/l")
+
+	concInMols := conc.MolPerL(2.0)
+
+	if concInMols.Munit.BaseSISymbol() != "M/l" {
+		t.Errorf("concentration was converted to %s not M/l", concInMols.Munit.BaseSISymbol())
+	}
+
+	if concInMols.SIValue() != 500.0 {
+		t.Errorf("expected concentration of 500 M/l, got %v", concInMols)
+	}
+}
+
+func TestConcentration_GramPerL(t *testing.T) {
+	conc := NewConcentration(1.0, "M/l")
+
+	concInGrams := conc.GramPerL(2.0)
+
+	if concInGrams.Munit.BaseSISymbol() != "g/l" {
+		t.Errorf("concentration was converted to %s not g/l", concInGrams.Munit.BaseSISymbol())
+	}
+
+	if concInGrams.SIValue() != 2.0 {
+		t.Errorf("expected concentration of 2 g/l, got %v", concInGrams)
 	}
 }

@@ -42,6 +42,10 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 				t.Errorf("wrong base prefix: expected \"%s\", got \"%s\"", e, g)
 			}
 
+			if e, g := self.Value, m.ConvertToString(self.Unit); e != g {
+				t.Errorf("(\"%s\" [%T]).ConvertToString(\"%s\") = %f, expected %f", m, m, self.Unit, g, e)
+			}
+
 		}
 
 	})

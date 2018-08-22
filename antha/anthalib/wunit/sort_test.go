@@ -206,15 +206,6 @@ func TestSortVolumes(t *testing.T) {
 			Order: []int{0, 2, 1},
 		},
 		{
-			Name: "invalid units",
-			Input: []interface{}{
-				NewVolume(3, "ul"),
-				NewVolume(2, "mg/ml"),
-				NewVolume(1, "rpm"),
-			},
-			Error: true,
-		},
-		{
 			Name:  "zero length raises error",
 			Input: nil,
 			Error: true,

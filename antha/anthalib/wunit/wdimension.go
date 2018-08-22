@@ -80,16 +80,14 @@ type Volume struct {
 }
 
 // make a volume
-func NewVolume(v float64, unit string) (o Volume) {
+func NewVolume(v float64, unit string) Volume {
 	unit = strings.Replace(unit, "µ", "u", -1)
 
-	if len(strings.TrimSpace(unit)) == 0 {
-		return ZeroVolume()
+	if details, ok := UnitMap["Volume"][unit]; !ok {
+		panic(fmt.Errorf("unknown volume unit %q, only the following units are supported: %v", unit, ValidUnitsForType("Volume")))
+	} else {
+		return Volume{NewMeasurement(v*details.Multiplier, details.Prefix, details.Base)}
 	}
-
-	o = Volume{NewPMeasurement(v, unit)}
-
-	return
 }
 
 func CopyVolume(v Volume) Volume {

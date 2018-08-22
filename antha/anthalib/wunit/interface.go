@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"strings"
 )
 
 // units mapped by string
@@ -42,6 +43,7 @@ func NewPrefixedUnit(prefix string, unit string) *GenericPrefixedUnit {
 // get a unit from a string
 
 func ParsePrefixedUnit(unit string) *GenericPrefixedUnit {
+	unit = strings.Replace(unit, "µ", "u", -1)
 	parser := &SIPrefixedUnitGrammar{}
 	parser.SIPrefixedUnit.Init([]byte(unit))
 

@@ -41,8 +41,8 @@ type Process struct {
 }
 
 type screenPosition struct {
-	X int `json:"x"`
-	Y int `json:"y"`
+	X string `json:"x"`
+	Y string `json:"y"`
 }
 
 // A Connection connects the output of one Process to the input of another

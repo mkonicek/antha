@@ -565,3 +565,40 @@ func TestNewVoltage(t *testing.T) {
 		}
 	})
 }
+
+func TestValidMeasurementUnit(t *testing.T) {
+
+	type TestCase struct {
+		Type  string
+		Unit  string
+		Error bool
+	}
+
+	tests := []TestCase{
+		{
+			Type:  "Length",
+			Unit:  "m",
+			Error: false,
+		},
+		{
+			Type: "Concentration",
+			Unit: "g/l",
+		},
+		{
+			Type:  "DarkMatter",
+			Unit:  "kg",
+			Error: true,
+		},
+		{
+			Type:  "Concentration",
+			Unit:  "SardinesInATin",
+			Error: true,
+		},
+	}
+
+	for _, test := range tests {
+		if err := ValidMeasurementUnit(test.Type, test.Unit); (err != nil) != test.Error {
+			t.Errorf("for (\"%s\", \"%s\"): expected error = %t, got error %v", test.Type, test.Unit, test.Error, err)
+		}
+	}
+}

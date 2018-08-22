@@ -40,6 +40,7 @@ func makeNullTimer() LHTimer {
 
 func makeGilsonPipetmaxTimer() LHTimer {
 	t := NewTimer()
+	t.Times[INI], _ = time.ParseDuration("5s") // INI
 	t.Times[LDT], _ = time.ParseDuration("7s") // LDT
 	t.Times[UDT], _ = time.ParseDuration("7s") // UDT
 	t.Times[SUK], _ = time.ParseDuration("4s") // SUK

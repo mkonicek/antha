@@ -227,7 +227,7 @@ var concarithmetictests = []ConcArithmetic{
 		ValueA:     NewConcentration(1000, "g/l"),
 		ValueB:     NewConcentration(10, "ng/ul"),
 		Sum:        NewConcentration(1000010, "ng/ul"),
-		Difference: NewConcentration(999990, "ng/ul"),
+		Difference: NewConcentration(999.99, "g/l"),
 		Factor:     10.0,
 		Product:    NewConcentration(10000000, "ng/ul"),
 		Quotient:   NewConcentration(100, "g/l"),
@@ -282,9 +282,6 @@ func TestDivideConcentration(t *testing.T) {
 
 func TestAddConcentrations(t *testing.T) {
 	for _, testUnit := range concarithmetictests {
-		//var concs []Concentration
-		//concs = append(concs,testUnit.ValueA)
-		//concs = append(concs,testUnit.ValueB)
 		r, err := AddConcentrations(testUnit.ValueA, testUnit.ValueB)
 		if err != nil {
 			t.Error(
@@ -304,6 +301,32 @@ func TestAddConcentrations(t *testing.T) {
 	if err == nil {
 		t.Error(
 			"Expected Errorf but got nil. Adding of two different bases (g/l and M/l) should not be possible \n",
+		)
+	}
+
+}
+
+func TestSubtractConcentrations(t *testing.T) {
+	for _, testUnit := range concarithmetictests {
+		r, err := SubtractConcentrations(testUnit.ValueA, testUnit.ValueB)
+		if err != nil {
+			t.Error(
+				"Subtract Concentration returns error ", err.Error(), "should return nil \n",
+			)
+		}
+		if r.SIValue() != testUnit.Difference.SIValue() {
+			t.Error(
+				"For subtraction of ", testUnit.ValueB, " from ", testUnit.ValueA, "\n",
+				"expected", testUnit.Difference, "\n",
+				"got", r, "\n",
+			)
+		}
+	}
+
+	_, err := SubtractConcentrations(concarithmetictests[0].ValueA, concarithmetictests[4].ValueA)
+	if err == nil {
+		t.Error(
+			"Expected Errorf but got nil. Subtracting of two different bases (g/l and M/l) should not be possible \n",
 		)
 	}
 

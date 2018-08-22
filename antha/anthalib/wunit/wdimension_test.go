@@ -27,16 +27,18 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 
 		m := constructor(self.Value, self.Unit)
 
-		if m.SIValue() != self.ExpectedSIValue {
-			t.Errorf("wrong SIValue: expected %e, got %e", self.ExpectedSIValue, m.SIValue())
-		}
+		if !self.ExpectError { //don't check these if we were expecting error, the defer statement will add one
+			if m.SIValue() != self.ExpectedSIValue {
+				t.Errorf("wrong SIValue: expected %e, got %e", self.ExpectedSIValue, m.SIValue())
+			}
 
-		if e, g := self.ExpectedBaseUnit, m.Unit().BaseSIUnit(); e != g {
-			t.Errorf("wrong base unit: expected \"%s\", got \"%s\"", e, g)
-		}
+			if e, g := self.ExpectedBaseUnit, m.Unit().BaseSIUnit(); e != g {
+				t.Errorf("wrong base unit: expected \"%s\", got \"%s\"", e, g)
+			}
 
-		if e, g := self.ExpectedPrefix, m.Unit().Prefix().Name; e != g {
-			t.Errorf("wrong base prefix: expected \"%s\", got \"%s\"", e, g)
+			if e, g := self.ExpectedPrefix, m.Unit().Prefix().Name; e != g {
+				t.Errorf("wrong base prefix: expected \"%s\", got \"%s\"", e, g)
+			}
 		}
 
 	})

@@ -1,0 +1,99 @@
+package wunit
+
+import (
+	"testing"
+)
+
+func TestUnitRegistry(t *testing.T) {
+	reg := NewUnitRegistry()
+
+	if err := reg.DeclareUnit("distance", "meters", "m", SIPrefixSymbols(), 1.0); err != nil {
+		t.Fatal(err)
+	}
+
+	//can't redeclare a unit
+	if err := reg.DeclareUnit("distance", "meters", "m", SIPrefixSymbols(), 1.0); err == nil {
+		t.Fatal("redeclaration of meter got no error")
+	}
+
+	//can retrieve the correct unit
+	if millimeters, err := reg.GetUnit("mm"); err != nil {
+		t.Error(err)
+	} else if e, g := "millimeters[mm]", millimeters.String(); e != g {
+		t.Fatalf("reg.GetUnit(\"mm\") returned %q, not %q", g, e)
+	}
+
+	//can't declare a derived unit across measurement types
+	if err := reg.DeclareDerivedUnit("volume", "meters cubed", "m^3", nil, "m", 1.0); err == nil {
+		t.Error("declaring derived unit across measurement types got no error")
+	}
+
+	if err := reg.DeclareDerivedUnit("distance", "yards", "yards", nil, "m", 0.9144); err != nil {
+		t.Error(err)
+	} else if err := reg.DeclareDerivedUnit("distance", "miles", "miles", nil, "km", 1609.34); err != nil {
+		t.Error(err)
+	}
+
+	//can't declare an alias if it already exists
+	if err := reg.DeclareAlias("distance", "yards", "miles", nil); err == nil {
+		t.Error("declared an alias which shadowed a symbol without error")
+	}
+
+	if err := reg.DeclareAlias("distance", "parsec", "Parsec", nil); err == nil {
+		t.Error("declared an alias for a symbol that doesn't exist without error")
+	}
+
+	if err := reg.DeclareAlias("volume", "m^3", "m", nil); err == nil {
+		t.Error("declaring an alias across measurement types got no error")
+	}
+
+	//successful aliassing
+	if err := reg.DeclareAlias("distance", "y", "yards", nil); err != nil {
+		t.Error(err)
+	}
+	if unit, err := reg.GetUnit("y"); err != nil {
+		t.Error(err)
+	} else if unit.symbol != "yards" {
+		t.Errorf("alias \"y\" mapped to %v, expected yards[yards]", unit)
+	}
+
+	//simple conversion
+	if measurement, err := reg.NewMeasurement(20.0, "km"); err != nil {
+		t.Error(err)
+	} else if meters, err := reg.GetUnit("m"); err != nil {
+		t.Error(err)
+	} else if e, g := "meters[m]", meters.String(); e != g {
+		t.Fatalf("reg.GetUnit(\"m\") returned %q, not %q", g, e)
+	} else if e, g := 20000.0, measurement.ConvertTo(meters); e != g {
+		t.Errorf("converting 20 km to %v: got %f", meters, g)
+	}
+
+	//simple addition
+	if a, err := reg.NewMeasurement(10, "m"); err != nil {
+		t.Error(err)
+	} else if b, err := reg.NewMeasurement(50.0, "cm"); err != nil {
+		t.Error(err)
+	} else if cm, err := reg.GetUnit("cm"); err != nil {
+		t.Error(err)
+	} else {
+		a.Add(b)
+		if a.ConvertTo(cm) != 1050.0 {
+			t.Errorf("added 50 cm to 10 m and expected 1050 cm, but got %v", a)
+		}
+	}
+
+	//simple subtraction
+	if a, err := reg.NewMeasurement(10, "m"); err != nil {
+		t.Error(err)
+	} else if b, err := reg.NewMeasurement(50.0, "cm"); err != nil {
+		t.Error(err)
+	} else if cm, err := reg.GetUnit("cm"); err != nil {
+		t.Error(err)
+	} else {
+		a.Subtract(b)
+		if a.ConvertTo(cm) != 950.0 {
+			t.Errorf("subtracted 50 cm from 10 m and expected 950 cm, but got %v", a)
+		}
+	}
+
+}

@@ -41,12 +41,68 @@ var prefices map[string]SIPrefix
 // maps log(prefix value) back to a symbol e.g. 2: c
 var seciferp map[int]string
 
+var allPrefixes = []string{
+	"y",
+	"z",
+	"a",
+	"f",
+	"p",
+	"n",
+	"u",
+	"m",
+	"c",
+	"d",
+	"h",
+	"k",
+	"M",
+	"G",
+	"T",
+	"P",
+	"E",
+	"Z",
+	"Y",
+}
+
+var longPrefixNames = map[string]string{
+	"y": "yocto",
+	"z": "zepto",
+	"a": "atto",
+	"f": "femto",
+	"p": "pico",
+	"n": "nano",
+	"u": "micro",
+	"m": "milli",
+	"c": "centi",
+	"d": "deci",
+	"":  "",
+	" ": "",
+	"h": "hecto",
+	"k": "kilo",
+	"M": "mega",
+	"G": "giga",
+	"T": "tera",
+	"P": "peta",
+	"E": "exa",
+	"Z": "zetta",
+	"Y": "yotta",
+}
+
 // structure defining an SI prefix
 type SIPrefix struct {
 	// prefix name
 	Name string
 	// meaning in base 10
 	Value float64
+}
+
+// LongName get the long name of the prefix (e.g. "mega" instead of "m")
+func (self SIPrefix) LongName() string {
+	return longPrefixNames[self.Name]
+}
+
+// ListSIPrefixSymbols returns a list of all valid SI prefixes
+func SIPrefixSymbols() []string {
+	return allPrefixes
 }
 
 // helper function to allow lookup of prefix

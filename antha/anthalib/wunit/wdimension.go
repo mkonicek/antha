@@ -81,8 +81,6 @@ type Volume struct {
 
 // make a volume
 func NewVolume(v float64, unit string) Volume {
-	unit = strings.Replace(unit, "µ", "u", -1)
-
 	if details, ok := UnitMap["Volume"][unit]; !ok {
 		panic(fmt.Errorf("unknown volume unit %q, only the following units are supported: %v", unit, ValidUnitsForType("Volume")))
 	} else {

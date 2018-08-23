@@ -127,7 +127,7 @@ func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentrat
 
 // MassForTargetConcentration multiplies a concentration (in g/l) by a volume (in l) to return the mass (in g).
 // if a concentration is not in a form convertable to g/l an error is returned.
-func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Mass, err error) {
+func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (Mass, error) {
 
 	litre := NewVolume(1.0, "l")
 
@@ -149,10 +149,8 @@ func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Ma
 		multiplier = 1
 		unit = "mg"
 	} else {
-		err = fmt.Errorf("target conc %s must in g/l to convert to a mass", targetconc.ToString())
+		return Mass{nil}, fmt.Errorf("target conc %s must in g/l to convert to a mass", targetconc.ToString())
 	}
 
-	m = NewMass(float64((targetconc.RawValue()*multiplier)*(totalvol.SIValue()/litre.SIValue())), unit)
-
-	return
+	return NewMass(float64((targetconc.RawValue()*multiplier)*(totalvol.SIValue()/litre.SIValue())), unit), nil
 }

@@ -105,7 +105,7 @@ type ConcreteMeasurement struct {
 	// the raw value
 	Mvalue float64
 	// the relevant units
-	Munit *GenericPrefixedUnit
+	Munit *Unit
 }
 
 /*
@@ -174,12 +174,19 @@ func (cm *ConcreteMeasurement) ConvertTo(p PrefixedUnit) float64 {
 	return cm.Unit().ConvertTo(p) * cm.RawValue()
 }
 
+// ConvertToString return the measurement to the units specified by symbol.
+// panic()s if symbol is not a known symbol
 func (cm *ConcreteMeasurement) ConvertToString(s string) float64 {
 	if isNil(cm) {
 		return 0.0
 	}
-	ppu := ParsePrefixedUnit(s)
-	return cm.ConvertTo(ppu)
+	reg := GetGlobalUnitRegistry()
+
+	if unit, err := reg.GetUnit(s); err != nil {
+		panic(err)
+	} else {
+		return cm.ConvertTo(unit)
+	}
 }
 
 // String will return a summary of the ConcreteMeasurement Value and prefixed unit as a string.
@@ -381,13 +388,14 @@ func (cm *ConcreteMeasurement) ToString() string {
 /**********/
 
 func NewPMeasurement(v float64, pu string) *ConcreteMeasurement {
-	cm := ConcreteMeasurement{v, ParsePrefixedUnit(pu)}
-	return &cm
+	if value, err := GetGlobalUnitRegistry().NewMeasurement(v, pu); err != nil {
+		panic(err)
+	} else {
+		return value
+	}
 }
 
 // helper function for creating a new measurement
 func NewMeasurement(v float64, prefix string, unit string) *ConcreteMeasurement {
-	gpu := NewPrefixedUnit(prefix, unit)
-	cm := ConcreteMeasurement{v, gpu}
-	return &cm
+	return NewPMeasurement(v, prefix+unit)
 }

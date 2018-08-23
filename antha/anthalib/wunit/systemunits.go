@@ -6,15 +6,242 @@ import (
 	"strings"
 )
 
-// Unit is the form which units are stored in the UnitMap. This structure is not used beyond this.
-type Unit struct {
+type unitDef struct {
+	Name             string
+	Symbol           string
+	Prefixes         []string
+	ExponentMinusOne int //such that default exponent is one
+}
+
+type unitDefs map[string][]unitDef
+
+func (self unitDefs) AddTo(reg *UnitRegistry) error {
+	for mType, defs := range self {
+		for _, unit := range defs {
+			if err := reg.DeclareUnit(mType, unit.Name, unit.Symbol, unit.Prefixes, unit.ExponentMinusOne+1); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+var systemUnits = unitDefs{
+	"Concentration": {
+		{
+			Name:     "grams per litre",
+			Symbol:   "g/l",
+			Prefixes: allPrefixes,
+		},
+		{
+			Name:     "moles per litre",
+			Symbol:   "Mol/l",
+			Prefixes: allPrefixes,
+		},
+		{
+			Name:   "relative concentration",
+			Symbol: "X",
+		},
+		{
+			Name:   "volume ratio",
+			Symbol: "v/v",
+		},
+	},
+	"Volume": {
+		{
+			Name:     "litre",
+			Symbol:   "l",
+			Prefixes: allPrefixes,
+		},
+	},
+	"Mass": {
+		{
+			Name:     "gram",
+			Symbol:   "g",
+			Prefixes: allPrefixes,
+		},
+	},
+	"Density": {
+		{
+			Name:     "grams per meter cubed",
+			Symbol:   "g/m^3",
+			Prefixes: allPrefixes,
+		},
+	},
+}
+
+type derivedUnitDef struct {
+	Name             string
+	Symbol           string
+	Prefixes         []string
+	TargetSymbol     string
+	NewUnitInTargets float64
+}
+
+type derivedUnitDefs map[string][]derivedUnitDef
+
+func (self derivedUnitDefs) AddTo(reg *UnitRegistry) error {
+	for mType, defs := range self {
+		for _, du := range defs {
+			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefixes, du.TargetSymbol, du.NewUnitInTargets); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+var systemDerivedUnits = derivedUnitDefs{
+	"Concentration": {
+		{
+			Name:             "grams per mililitre",
+			Symbol:           "g/ml",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "kg/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "grams per microlitre",
+			Symbol:           "g/ul",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "Mg/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "grams per nanolitre",
+			Symbol:           "g/nl",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "Gg/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "moles per mililitre",
+			Symbol:           "Mol/ml",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "kMol/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "moles per microlitre",
+			Symbol:           "Mol/ul",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "MMol/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "moles per nanolitre",
+			Symbol:           "Mol/nl",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "GMol/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "percentage weight of solution",
+			Symbol:           "% w/v",
+			TargetSymbol:     "g/l",
+			NewUnitInTargets: 10.0,
+		},
+	},
+}
+
+type aliasDef struct {
+	BaseSymbol string
+	BaseTarget string
+	Prefixes   []string
+}
+
+type aliasDefs map[string][]aliasDef
+
+func (self aliasDefs) AddTo(reg *UnitRegistry) error {
+	for mType, defs := range self {
+		for _, a := range defs {
+			if err := reg.DeclareAlias(mType, a.BaseSymbol, a.BaseTarget, a.Prefixes); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+var systemAliases = aliasDefs{
+	"Concentration": {
+		{
+			BaseSymbol: "M",
+			BaseTarget: "Mol/l",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "M/l",
+			BaseTarget: "Mol/l",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "M/ml",
+			BaseTarget: "Mol/ml",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "M/ul",
+			BaseTarget: "Mol/ul",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "Mol/L",
+			BaseTarget: "Mol/l",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "Mol/mL",
+			BaseTarget: "Mol/ml",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "Mol/uL",
+			BaseTarget: "Mol/ul",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "M/L",
+			BaseTarget: "Mol/l",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "M/mL",
+			BaseTarget: "Mol/ml",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "M/uL",
+			BaseTarget: "Mol/ul",
+			Prefixes:   allPrefixes,
+		},
+		{
+			BaseSymbol: "x",
+			BaseTarget: "X",
+		},
+		{
+			BaseSymbol: "w/v",
+			BaseTarget: "% w/v",
+		},
+	},
+	"Volume": {
+		{
+			BaseSymbol: "L",
+			BaseTarget: "l",
+			Prefixes:   allPrefixes,
+		},
+	},
+}
+
+// MapUnit is the form which units are stored in the UnitMap. This structure is not used beyond this.
+type MapUnit struct {
 	Base       string
 	Prefix     string
 	Multiplier float64
 }
 
 // UnitMap lists approved units to create new measurements.
-var UnitMap = map[string]map[string]Unit{
+var UnitMap = map[string]map[string]MapUnit{
 	"Concentration": {
 		"kg/l":    {Base: "g/l", Prefix: "k", Multiplier: 1.0},
 		"g/l":     {Base: "g/l", Prefix: "", Multiplier: 1.0},
@@ -144,15 +371,6 @@ var UnitMap = map[string]map[string]Unit{
 	},
 }
 
-func ValidUnitsForType(measurementType string) []string {
-	var ret []string
-	for key := range UnitMap[measurementType] {
-		ret = append(ret, key)
-	}
-	sort.Strings(ret)
-	return ret
-}
-
 // ValidMeasurementUnit checks the validity of a measurement type and unit within that measurement type.
 // An error is returned if an invalid measurement type or unit is specified.
 func ValidMeasurementUnit(measureMentType, unit string) error {
@@ -184,4 +402,13 @@ func ValidMeasurementUnit(measureMentType, unit string) error {
 	}
 
 	return nil
+}
+
+func ValidUnitsForType(mType string) []string {
+	symbols := UnitMap[mType]
+	ret := make([]string, 0, len(symbols))
+	for symbol := range symbols {
+		ret = append(ret, symbol)
+	}
+	return ret
 }

@@ -473,30 +473,24 @@ type SubstanceQuantity interface {
 	Quantity() Measurement
 }
 
-func (conc Concentration) GramPerL(molecularweight float64) (conc_g Concentration) {
-
-	if conc.Munit.BaseSISymbol() == "kg/l" {
-		conc_g = conc
+func (conc Concentration) GramPerL(molecularweight float64) Concentration {
+	if conc.Munit.BaseSISymbol() == "g/l" {
+		return conc
+	} else if conc.Munit.BaseSISymbol() == "Mol/l" {
+		return NewConcentration((conc.SIValue() * molecularweight), "g/l")
+	} else {
+		panic(errors.Errorf("cannot convert %v into g/l", conc.Munit))
 	}
-
-	if conc.Munit.BaseSISymbol() == "M/l" {
-		conc_g = NewConcentration((conc.SIValue() * molecularweight), "g/l")
-	}
-	return conc_g
 }
 
-func (conc Concentration) MolPerL(molecularweight float64) (conc_M Concentration) {
-
-	if conc.Munit.BaseSISymbol() == "kg/l" {
-		// convert from kg to g to work out g/mol
-		conversionFactor := 1000.0
-		conc_M = NewConcentration((conc.SIValue() * conversionFactor / molecularweight), "M/l")
+func (conc Concentration) MolPerL(molecularweight float64) Concentration {
+	if conc.Munit.BaseSISymbol() == "g/l" {
+		return NewConcentration((conc.SIValue() / molecularweight), "M/l")
+	} else if conc.Munit.BaseSISymbol() == "M/l" {
+		return conc
+	} else {
+		panic(errors.Errorf("cannot convert %v into Mol/l", conc.Munit))
 	}
-
-	if conc.Munit.BaseSISymbol() == "M/l" {
-		conc_M = conc
-	}
-	return conc_M
 }
 
 // a structure which defines a specific heat capacity

@@ -150,9 +150,6 @@ func (cm *ConcreteMeasurement) RawValue() float64 {
 
 // get unit with prefix
 func (cm *ConcreteMeasurement) Unit() PrefixedUnit {
-	if isNil(cm) {
-		return NewGenericPrefixedUnit()
-	}
 	return cm.Munit
 }
 

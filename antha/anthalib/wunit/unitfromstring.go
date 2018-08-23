@@ -31,14 +31,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
-func NormaliseUnit(unit string) (normalisedunit string) {
-
-	cm := NewPMeasurement(0, unit)
-
-	normalisedunit = cm.Unit().PrefixedSymbol()
-	return
-}
-
 // SplitValueAndUnit splits a joined value and unit in string format into seperate typed value and unit fields.
 // If the string input is not in the valid format of value followed by unit it will not be parsed correctly.
 // If a value on its own is given the unit will be returned blank, if the unit is given alone the value will be 0.0

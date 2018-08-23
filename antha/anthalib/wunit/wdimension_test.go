@@ -615,12 +615,12 @@ func TestConcentration_MolPerL(t *testing.T) {
 
 	concInMols := conc.MolPerL(2.0)
 
-	if concInMols.Munit.BaseSISymbol() != "M/l" {
-		t.Errorf("concentration was converted to %s not M/l", concInMols.Munit.BaseSISymbol())
+	if concInMols.Munit.BaseSISymbol() != "Mol/l" {
+		t.Errorf("concentration was converted to %s not Mol/l", concInMols.Munit.BaseSISymbol())
 	}
 
-	if concInMols.SIValue() != 500.0 {
-		t.Errorf("expected concentration of 500 M/l, got %v", concInMols)
+	if concInMols.SIValue() != 0.5 {
+		t.Errorf("expected concentration of 0.5 Mol/l, got %v", concInMols)
 	}
 }
 

@@ -141,6 +141,10 @@ func NewMovAsp(mov *MoveInstruction, asp *AspirateInstruction) *MovAsp {
 	return ma
 }
 
+func (ma *MovAsp) Visit(visitor RobotInstructionVisitor) {
+	visitor.MovAsp(ma)
+}
+
 func (ma MovAsp) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, ma.Mov, ma.Asp)
 }
@@ -168,6 +172,10 @@ func NewMovDsp(mov *MoveInstruction, dsp *DispenseInstruction) *MovDsp {
 	}
 	md.BaseRobotInstruction = NewBaseRobotInstruction(md)
 	return md
+}
+
+func (md *MovDsp) Visit(visitor RobotInstructionVisitor) {
+	visitor.MovDsp(md)
 }
 
 func (md MovDsp) GetParameter(name InstructionParameter) interface{} {
@@ -199,6 +207,10 @@ func NewMovBlo(mov *MoveInstruction, blo *BlowoutInstruction) *MovBlo {
 	return mb
 }
 
+func (mb *MovBlo) Visit(visitor RobotInstructionVisitor) {
+	visitor.MovBlo(mb)
+}
+
 func (mb MovBlo) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, mb.Mov, mb.Blo)
 }
@@ -226,6 +238,10 @@ func NewMovMix(mov *MoveInstruction, mix *MixInstruction) *MovMix {
 	}
 	mm.BaseRobotInstruction = NewBaseRobotInstruction(mm)
 	return mm
+}
+
+func (mm *MovMix) Visit(visitor RobotInstructionVisitor) {
+	visitor.MovMix(mm)
 }
 
 func (mm MovMix) GetParameter(name InstructionParameter) interface{} {

@@ -41,6 +41,7 @@ type RobotInstruction interface {
 	Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
 	MaybeMerge(next RobotInstruction) RobotInstruction
 	Check(lhpr wtype.LHPolicyRule) bool
+	Visit(RobotInstructionVisitor)
 }
 
 type TerminalRobotInstruction interface {
@@ -90,7 +91,6 @@ var (
 	MBL = NewInstructionType("MBL", "MoveBlowout")
 	RAP = NewInstructionType("RAP", "RemoveAllPlates")
 	APT = NewInstructionType("APT", "AddPlateTo")
-	RPA = NewInstructionType("RPA", "RemovePlateAt")
 	SPB = NewInstructionType("SPB", "SplitBlock")
 )
 

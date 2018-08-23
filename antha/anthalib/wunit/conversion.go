@@ -29,21 +29,7 @@ import (
 
 // MasstoVolume divides a mass (in kg) by a density (in kg/m^3) and returns the volume (in L).
 func MasstoVolume(m Mass, d Density) (v Volume) {
-
-	mass := m.SIValue()
-
-	if m.Unit().BaseSIUnit() == "g" {
-		// work out mass in kg
-		mass = mass / 1000
-	}
-
-	density := d.SIValue()
-	fmt.Println(mass, density)
-	volume := mass / density // in m^3
-	volume = volume * 1000   // in l
-	v = NewVolume(volume, "l")
-
-	return v
+	return NewVolume(m.ConvertToString("g")/d.ConvertToString("kg/m^3"), "l")
 }
 
 // VolumetoMass multiplies a volume (in L) by a density (in kg/m^3) and returns the mass (in kg).

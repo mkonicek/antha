@@ -138,7 +138,7 @@ func (self *UnitRegistry) ListValidUnitsForType(measurementType string) []string
 // The target should already exist in the Registry.
 // e.g. DeclareDerivedUnit("pint", nil, "l", 0.568) will cause the unit "1 pint" to be
 // understood as "0.568 l"
-func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbol string, validPrefixes []string, target string, symbolInTargets float64) error {
+func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbol string, validPrefixes []string, exponent int, target string, symbolInTargets float64) error {
 
 	unit, err := self.GetUnit(target)
 	if err != nil {
@@ -153,6 +153,7 @@ func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbo
 	unit.name = name
 	unit.multiplier = unit.BaseSIConversionFactor() * symbolInTargets
 	unit.prefix = SIPrefixBySymbol("")
+	unit.exponent = exponent
 
 	if err := self.declareUnit(measurementType, unit); err != nil {
 		return err

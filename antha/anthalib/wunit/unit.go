@@ -3,6 +3,7 @@ package wunit
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"math"
 )
 
 // Unit everything we need to know about a unit to support it
@@ -27,7 +28,7 @@ func (self *Unit) Symbol() string {
 
 // BaseSIConversionFactor factor to multiply by in order to convert to SI value including effect of prefix
 func (self *Unit) BaseSIConversionFactor() float64 {
-	return self.prefix.Value * self.multiplier
+	return math.Pow(self.prefix.Value, float64(self.exponent)) * self.multiplier
 }
 
 // BaseSIUnit Base SI or derived unit for this property, equivalent to BaseSISymbol

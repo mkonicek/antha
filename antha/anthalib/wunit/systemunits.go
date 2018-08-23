@@ -74,6 +74,7 @@ type derivedUnitDef struct {
 	Name             string
 	Symbol           string
 	Prefixes         []string
+	ExponentMinusOne int //such that default exponent is one
 	TargetSymbol     string
 	NewUnitInTargets float64
 }
@@ -83,7 +84,7 @@ type derivedUnitDefs map[string][]derivedUnitDef
 func (self derivedUnitDefs) AddTo(reg *UnitRegistry) error {
 	for mType, defs := range self {
 		for _, du := range defs {
-			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefixes, du.TargetSymbol, du.NewUnitInTargets); err != nil {
+			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefixes, du.ExponentMinusOne+1, du.TargetSymbol, du.NewUnitInTargets); err != nil {
 				return err
 			}
 		}
@@ -140,6 +141,16 @@ var systemDerivedUnits = derivedUnitDefs{
 			Symbol:           "% w/v",
 			TargetSymbol:     "g/l",
 			NewUnitInTargets: 10.0,
+		},
+	},
+	"Volume": {
+		{
+			Name:             "meters cubed",
+			Symbol:           "m^3",
+			Prefixes:         allPrefixes,
+			ExponentMinusOne: 2,
+			TargetSymbol:     "l",
+			NewUnitInTargets: 1000.0,
 		},
 	},
 }

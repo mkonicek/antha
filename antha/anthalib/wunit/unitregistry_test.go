@@ -24,13 +24,13 @@ func TestUnitRegistry(t *testing.T) {
 	}
 
 	//can't declare a derived unit across measurement types
-	if err := reg.DeclareDerivedUnit("volume", "meters cubed", "m^3", nil, "m", 1.0); err == nil {
+	if err := reg.DeclareDerivedUnit("volume", "meters cubed", "m^3", nil, 1, "m", 1.0); err == nil {
 		t.Error("declaring derived unit across measurement types got no error")
 	}
 
-	if err := reg.DeclareDerivedUnit("distance", "yards", "yards", nil, "m", 0.9144); err != nil {
+	if err := reg.DeclareDerivedUnit("distance", "yards", "yards", nil, 1, "m", 0.9144); err != nil {
 		t.Error(err)
-	} else if err := reg.DeclareDerivedUnit("distance", "miles", "miles", nil, "km", 1609.34); err != nil {
+	} else if err := reg.DeclareDerivedUnit("distance", "miles", "miles", nil, 1, "km", 1609.34); err != nil {
 		t.Error(err)
 	}
 

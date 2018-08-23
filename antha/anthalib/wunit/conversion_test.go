@@ -99,23 +99,13 @@ func TestVolumeForTargetConcentration(t *testing.T) {
 func TestMassForTargetConcentration(t *testing.T) {
 
 	for _, test := range tests2 {
-
-		mass, err := MassForTargetConcentration(test.Conc, test.Vol)
-
-		if err != nil {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"got error:", err.Error(), "\n",
-			)
-		}
-
-		if !mass.EqualTo(test.Mass) {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected mass:", test.Mass.ToString(), "\n",
-				"Got mass:", mass.ToString(), "\n",
-			)
-		}
+		t.Run(fmt.Sprintf("%+v", test), func(t *testing.T) {
+			if mass, err := MassForTargetConcentration(test.Conc, test.Vol); err != nil {
+				t.Error(err)
+			} else if !mass.EqualTo(test.Mass) {
+				t.Errorf("wrong result: expected %v, got %v", test.Mass, mass)
+			}
+		})
 
 	}
 }

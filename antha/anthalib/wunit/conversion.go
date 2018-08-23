@@ -127,30 +127,14 @@ func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentrat
 
 // MassForTargetConcentration multiplies a concentration (in g/l) by a volume (in l) to return the mass (in g).
 // if a concentration is not in a form convertable to g/l an error is returned.
-func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (Mass, error) {
-
-	litre := NewVolume(1.0, "l")
-
-	var multiplier float64 = 1
-	var unit string
-
-	if targetconc.Unit().PrefixedSymbol() == "kg/l" {
-		multiplier = 1000
-		unit = "g"
-		//fmt.Println("targetconc.Unit().BaseSISymbol() == kg/l")
-	} else if targetconc.Unit().PrefixedSymbol() == "g/l" {
-		multiplier = 1
-		unit = "g"
-		//fmt.Println("targetconc.Unit().BaseSISymbol() == g/l")
-	} else if targetconc.Unit().PrefixedSymbol() == "mg/l" {
-		multiplier = 1
-		unit = "mg"
-	} else if targetconc.Unit().PrefixedSymbol() == "ng/ul" {
-		multiplier = 1
-		unit = "mg"
+func MassForTargetConcentration(targetConc Concentration, totalVol Volume) (Mass, error) {
+	if targetConc.Unit().BaseSIUnit() != "g/l" {
+		return Mass{nil}, fmt.Errorf("cannot convert %v to mass: unit not based on g/l", targetConc)
+	} else if litres, err := GetGlobalUnitRegistry().GetUnit("l"); err != nil {
+		return Mass{nil}, err
+	} else if gramsPerLitre, err := GetGlobalUnitRegistry().GetUnit("g/l"); err != nil {
+		return Mass{nil}, err
 	} else {
-		return Mass{nil}, fmt.Errorf("target conc %s must in g/l to convert to a mass", targetconc.ToString())
+		return NewMass(targetConc.ConvertTo(gramsPerLitre)*totalVol.ConvertTo(litres), "g"), nil
 	}
-
-	return NewMass(float64((targetconc.RawValue()*multiplier)*(totalvol.SIValue()/litre.SIValue())), unit), nil
 }

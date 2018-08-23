@@ -28,20 +28,13 @@ import (
 )
 
 // MasstoVolume divides a mass (in kg) by a density (in kg/m^3) and returns the volume (in L).
-func MasstoVolume(m Mass, d Density) (v Volume) {
+func MasstoVolume(m Mass, d Density) Volume {
 	return NewVolume(m.ConvertToString("g")/d.ConvertToString("kg/m^3"), "l")
 }
 
 // VolumetoMass multiplies a volume (in L) by a density (in kg/m^3) and returns the mass (in kg).
-func VolumetoMass(v Volume, d Density) (m Mass) {
-	density := d.SIValue()
-
-	volume := v.SIValue() / 1000 // convert m^3 to l
-
-	mass := volume * density // in m^3
-
-	m = NewMass(mass, "kg")
-	return m
+func VolumetoMass(v Volume, d Density) Mass {
+	return NewMass(v.ConvertToString("m^3")*d.ConvertToString("kg/m^3"), "kg")
 }
 
 // VolumeForTargetMass returns the volume required to convert a starting stock concentration to a solution containing a target mass.

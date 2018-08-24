@@ -24,7 +24,6 @@ package wunit
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 )
 
@@ -35,211 +34,192 @@ type unitFromStringTest struct {
 	ComponentNameOnly string
 }
 
-var componentWithConcstests = []unitFromStringTest{
-	{
-		ComponentName:     "Glucose (M)",
-		ContainsConc:      true,
-		Conc:              NewConcentration(0.0, "M"),
-		ComponentNameOnly: "Glucose",
-	},
-	{
-		ComponentName:     "Glucose (mM)",
-		ContainsConc:      true,
-		Conc:              NewConcentration(0.0, "mM"),
-		ComponentNameOnly: "Glucose",
-	},
-	{
-		ComponentName:     "5g/L Glucose",
-		ContainsConc:      true,
-		Conc:              NewConcentration(5.0, "g/L"),
-		ComponentNameOnly: "Glucose",
-	},
-	{
-		ComponentName:     "5 g/L Glucose",
-		ContainsConc:      true,
-		Conc:              NewConcentration(5.0, "g/L"),
-		ComponentNameOnly: "Glucose",
-	},
-	{
-		ComponentName:     "Glucose 5g/L",
-		ContainsConc:      true,
-		Conc:              NewConcentration(5.0, "g/L"),
-		ComponentNameOnly: "Glucose",
-	},
-	{
-		ComponentName:     "1mM/l C6",
-		ContainsConc:      true,
-		Conc:              NewConcentration(1.0, "mM/l"),
-		ComponentNameOnly: "C6",
-	},
-	{
-		ComponentName:     "C6",
-		ContainsConc:      false,
-		Conc:              NewConcentration(0.0, "mM"),
-		ComponentNameOnly: "C6",
-	},
-	{
-		ComponentName:     "1 mM Ammonium Sulphate",
-		ContainsConc:      true,
-		Conc:              NewConcentration(1.0, "mM"),
-		ComponentNameOnly: "Ammonium Sulphate",
-	},
-	{
-		ComponentName:     "Ammonium Sulphate (mM)",
-		ContainsConc:      true,
-		Conc:              NewConcentration(0.0, "mM"),
-		ComponentNameOnly: "Ammonium Sulphate",
-	},
-	{
-		ComponentName:     "E.coli SuperFolder GFP (g/L)",
-		ContainsConc:      true,
-		Conc:              NewConcentration(0.0, "g/L"),
-		ComponentNameOnly: "E.coli SuperFolder GFP",
-	},
-	{
-		ComponentName:     "solutionX",
-		ContainsConc:      false,
-		Conc:              NewConcentration(0.0, "g/L"),
-		ComponentNameOnly: "solutionX",
-	},
-	{
-		ComponentName:     "1X solutionX",
-		ContainsConc:      true,
-		Conc:              NewConcentration(1.0, "X"),
-		ComponentNameOnly: "solutionX",
-	},
-	{
-		ComponentName:     "solutionX (X)",
-		ContainsConc:      true,
-		Conc:              NewConcentration(0.0, "X"),
-		ComponentNameOnly: "solutionX",
-	},
-	{
-		ComponentName:     "solutionX X",
-		ContainsConc:      true,
-		Conc:              NewConcentration(0.0, "X"),
-		ComponentNameOnly: "solutionX",
-	},
-	{
-		ComponentName:     "1mM rumm",
-		ContainsConc:      true,
-		Conc:              NewConcentration(1.0, "mM"),
-		ComponentNameOnly: "rumm",
-	},
-	{
-		ComponentName:     "rumm (mM)",
-		ContainsConc:      true,
-		Conc:              NewConcentration(0.0, "mM"),
-		ComponentNameOnly: "rumm",
-	},
-	{
-		ComponentName:     "X",
-		ContainsConc:      false,
-		Conc:              NewConcentration(0.0, "g/L"),
-		ComponentNameOnly: "X",
-	},
-	{
-		ComponentName:     "1X",
-		ContainsConc:      true,
-		Conc:              NewConcentration(1, "X"),
-		ComponentNameOnly: "1X",
-	},
-	{
-		ComponentName:     "(1X)",
-		ContainsConc:      true,
-		Conc:              NewConcentration(1, "X"),
-		ComponentNameOnly: "(1X)",
-	},
+func (test *unitFromStringTest) Run(t *testing.T) {
+
+	t.Run(test.ComponentName, func(t *testing.T) {
+		a, b, c := ParseConcentration(test.ComponentName)
+		if a != test.ContainsConc {
+			t.Errorf("ContainsConc: expected %t, got %t", test.ContainsConc, a)
+		}
+		if a && !b.EqualTo(test.Conc) {
+			t.Errorf("parsed concentration incorrect: expected %v, got %v", test.Conc, b)
+		}
+		if c != test.ComponentNameOnly {
+			t.Errorf("ComponentNameOnly: expected %q, got %q", test.ComponentNameOnly, c)
+		}
+	})
 }
 
-type volTest struct {
-	VolString    string
-	Volume       Volume
-	ErrorMessage string
-}
+type unitFromStringTests []unitFromStringTest
 
-var volTests = []volTest{
-	{
-		VolString:    "10ul",
-		Volume:       NewVolume(10, "ul"),
-		ErrorMessage: "",
-	},
-	{
-		VolString:    "10 ul",
-		Volume:       NewVolume(10, "ul"),
-		ErrorMessage: "",
-	},
-	{
-		VolString:    "10",
-		Volume:       Volume{},
-		ErrorMessage: "no valid unit found for 10: valid units are: [L l mL ml nL nl pL pl uL ul]",
-	},
-}
-
-func TestParseVolume(t *testing.T) {
-
-	for _, test := range volTests {
-		vol, err := ParseVolume(test.VolString)
-		if !reflect.DeepEqual(vol, test.Volume) {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected:", test.Volume, "\n",
-				"Got:", vol, "\n",
-			)
-		}
-		if err != nil {
-			if err.Error() != test.ErrorMessage {
-				t.Error(
-					"for", fmt.Sprintf("%+v", test), "\n",
-					"Expected error:", test.ErrorMessage, "\n",
-					"Got:", err.Error(), "\n",
-				)
-			}
-		}
-
-		if err == nil && test.ErrorMessage != "" {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected error:", test.ErrorMessage, "\n",
-				"Got:", "nil", "\n",
-			)
-		}
+func (self unitFromStringTests) Run(t *testing.T) {
+	for _, test := range self {
+		test.Run(t)
 	}
 }
 
 func TestParseConcentration(t *testing.T) {
+	unitFromStringTests{
+		{
+			ComponentName:     "Glucose (M)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "M"),
+			ComponentNameOnly: "Glucose",
+		},
+		{
+			ComponentName:     "Glucose (mM)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "mM"),
+			ComponentNameOnly: "Glucose",
+		},
+		{
+			ComponentName:     "5g/L Glucose",
+			ContainsConc:      true,
+			Conc:              NewConcentration(5.0, "g/L"),
+			ComponentNameOnly: "Glucose",
+		},
+		{
+			ComponentName:     "5 g/L Glucose",
+			ContainsConc:      true,
+			Conc:              NewConcentration(5.0, "g/L"),
+			ComponentNameOnly: "Glucose",
+		},
+		{
+			ComponentName:     "Glucose 5g/L",
+			ContainsConc:      true,
+			Conc:              NewConcentration(5.0, "g/L"),
+			ComponentNameOnly: "Glucose",
+		},
+		{
+			ComponentName:     "1mM/l C6",
+			ContainsConc:      true,
+			Conc:              NewConcentration(1.0, "mM/l"),
+			ComponentNameOnly: "C6",
+		},
+		{
+			ComponentName:     "C6",
+			ContainsConc:      false,
+			Conc:              NewConcentration(0.0, "mM"),
+			ComponentNameOnly: "C6",
+		},
+		{
+			ComponentName:     "1 mM Ammonium Sulphate",
+			ContainsConc:      true,
+			Conc:              NewConcentration(1.0, "mM"),
+			ComponentNameOnly: "Ammonium Sulphate",
+		},
+		{
+			ComponentName:     "Ammonium Sulphate (mM)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "mM"),
+			ComponentNameOnly: "Ammonium Sulphate",
+		},
+		{
+			ComponentName:     "E.coli SuperFolder GFP (g/L)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "g/L"),
+			ComponentNameOnly: "E.coli SuperFolder GFP",
+		},
+		{
+			ComponentName:     "solutionX",
+			ContainsConc:      false,
+			Conc:              NewConcentration(0.0, "g/L"),
+			ComponentNameOnly: "solutionX",
+		},
+		{
+			ComponentName:     "1X solutionX",
+			ContainsConc:      true,
+			Conc:              NewConcentration(1.0, "X"),
+			ComponentNameOnly: "solutionX",
+		},
+		{
+			ComponentName:     "solutionX (X)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "X"),
+			ComponentNameOnly: "solutionX",
+		},
+		{
+			ComponentName:     "solutionX X",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "X"),
+			ComponentNameOnly: "solutionX",
+		},
+		{
+			ComponentName:     "1mM rumm",
+			ContainsConc:      true,
+			Conc:              NewConcentration(1.0, "mM"),
+			ComponentNameOnly: "rumm",
+		},
+		{
+			ComponentName:     "rumm (mM)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "mM"),
+			ComponentNameOnly: "rumm",
+		},
+		{
+			ComponentName:     "X",
+			ContainsConc:      false,
+			Conc:              NewConcentration(0.0, "g/L"),
+			ComponentNameOnly: "X",
+		},
+		{
+			ComponentName:     "1X",
+			ContainsConc:      true,
+			Conc:              NewConcentration(1, "X"),
+			ComponentNameOnly: "1X",
+		},
+		{
+			ComponentName:     "(1X)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(1, "X"),
+			ComponentNameOnly: "(1X)",
+		},
+	}.Run(t)
+}
 
-	for _, test := range componentWithConcstests {
-		a, b, c := ParseConcentration(test.ComponentName)
-		if a != test.ContainsConc {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected:", test.ContainsConc, "\n",
-				"Got:", a, "\n",
-			)
+type volTest struct {
+	VolString string
+	Volume    Volume
+	Error     bool
+}
+
+func (test *volTest) Run(t *testing.T) {
+
+	t.Run(test.VolString, func(t *testing.T) {
+		vol, err := ParseVolume(test.VolString)
+		if !test.Error && !vol.EqualTo(test.Volume) {
+			t.Errorf("parsed volume incorrect: expected %v, got %v", test.Volume, vol)
 		}
-		if a && !b.EqualTo(test.Conc) {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected:", test.Conc, "\n",
-				"Got:", b, "\n",
-			)
+		if (err != nil) != test.Error {
+			t.Errorf("error mismatched: expected %t, got error %v", test.Error, err)
 		}
-		if a && b.Unit().PrefixedSymbol() != test.Conc.Unit().PrefixedSymbol() {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected:", test.Conc, "\n",
-				"Got:", b, "\n",
-			)
-		}
-		if c != test.ComponentNameOnly {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected:", test.ComponentNameOnly, "\n",
-				"Got:", c, "\n",
-			)
-		}
+	})
+}
+
+type volTests []volTest
+
+func (self volTests) Run(t *testing.T) {
+	for _, test := range self {
+		test.Run(t)
 	}
+}
+
+func TestParseVolume(t *testing.T) {
+	volTests{
+		{
+			VolString: "10ul",
+			Volume:    NewVolume(10, "ul"),
+		},
+		{
+			VolString: "10 ul",
+			Volume:    NewVolume(10, "ul"),
+		},
+		{
+			VolString: "10",
+			Volume:    Volume{},
+			Error:     true,
+		},
+	}.Run(t)
 }
 
 type valueAndUnitTest struct {

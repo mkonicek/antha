@@ -412,7 +412,6 @@ func TestDivideVolumePrecision(t *testing.T) {
 
 	for _, test := range tests {
 		r := DivideVolume(test.StockVolume, test.Factor)
-		fmt.Println(r)
 		if !r.EqualTo(test.ExpectedVolume) {
 			t.Error(
 				"For", fmt.Sprintf("+%v", test), "\n",
@@ -459,7 +458,6 @@ func TestDivideConcentrationPrecision(t *testing.T) {
 
 	for _, test := range tests {
 		r := DivideConcentration(test.StockConcentration, test.Factor)
-		fmt.Println(r)
 		if !r.EqualTo(test.ExpectedConcentration) {
 			t.Error(
 				"For", fmt.Sprintf("+%v", test), "\n",

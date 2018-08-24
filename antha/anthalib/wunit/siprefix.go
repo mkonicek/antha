@@ -26,20 +26,8 @@ import (
 	"math"
 )
 
-func RoundInt(v float64) int {
-	f := 1.0
-	if v < 0 {
-		f = -1.0
-	}
-
-	return int(f * (0.5 + (f * v)))
-}
-
 // prefix library
 var prefices map[string]SIPrefix
-
-// maps log(prefix value) back to a symbol e.g. 2: c
-var seciferp map[int]string
 
 var allPrefixes = []string{
 	"y",
@@ -116,18 +104,6 @@ func SIPrefixBySymbol(symbol string) SIPrefix {
 	}
 
 	return prefices[symbol]
-}
-
-// helper function for reverse lookup of prefix
-func ReverseLookupPrefix(i int) string {
-	if seciferp == nil {
-		seciferp = make(map[int]string, 26)
-		for k, v := range prefices {
-			lg := RoundInt(math.Log10(v.Value))
-			seciferp[lg] = k
-		}
-	}
-	return seciferp[i]
 }
 
 // make the prefix structure

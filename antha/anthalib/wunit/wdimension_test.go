@@ -2,6 +2,7 @@ package wunit
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
@@ -16,6 +17,7 @@ type NewMeasurementTest struct {
 	ExpectedBaseUnit string
 	ExpectedPrefix   string
 	ExpectError      bool
+	ConvertToString  map[string]float64
 }
 
 func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstructor) {
@@ -30,7 +32,7 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 		m := constructor(self.Value, self.Unit)
 
 		if !self.ExpectError { //don't check these if we were expecting error, the defer statement will add one
-			if m.SIValue() != self.ExpectedSIValue {
+			if math.Abs(m.SIValue()-self.ExpectedSIValue) > 1.0e-9 {
 				t.Errorf("wrong SIValue: expected %e, got %e", self.ExpectedSIValue, m.SIValue())
 			}
 
@@ -42,8 +44,14 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 				t.Errorf("wrong base prefix: expected \"%s\", got \"%s\"", e, g)
 			}
 
-			if e, g := self.Value, m.ConvertToString(self.Unit); e != g {
+			if e, g := self.Value, m.ConvertToString(self.Unit); math.Abs(e-g) > 1.0e-9 {
 				t.Errorf("(\"%s\" [%T]).ConvertToString(\"%s\") = %f, expected %f", m, m, self.Unit, g, e)
+			}
+
+			for unit, e := range self.ConvertToString {
+				if g := m.ConvertToString(unit); math.Abs(e-g) > 1.0e-9 {
+					t.Errorf("(\"%s\" [%T]).ConvertToString(\"%s\") = %f, expected %f", m, m, self.Unit, g, e)
+				}
 			}
 
 		}
@@ -106,7 +114,7 @@ func TestNewArea(t *testing.T) {
 			Unit:             "mm^2",
 			ExpectedSIValue:  1e-6,
 			ExpectedBaseUnit: "m^2",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "m",
 		},
 		{
 			Value:       1.0,
@@ -253,6 +261,9 @@ func TestNewMass(t *testing.T) {
 			ExpectedSIValue:  1.0e-9,
 			ExpectedBaseUnit: "kg",
 			ExpectedPrefix:   "u",
+			ConvertToString: map[string]float64{
+				"ng": 1000.0,
+			},
 		},
 		{
 			Value:       1.0,
@@ -268,16 +279,16 @@ func TestNewMoles(t *testing.T) {
 	NewMeasurementTests{
 		{
 			Value:            1.0,
-			Unit:             "uM",
-			ExpectedSIValue:  1.0e-6,
-			ExpectedBaseUnit: "M",
-			ExpectedPrefix:   "u",
+			Unit:             "nMol",
+			ExpectedSIValue:  1.0e-9,
+			ExpectedBaseUnit: "Mol",
+			ExpectedPrefix:   "n",
 		},
 		{
 			Value:            1.0,
 			Unit:             "uMol",
 			ExpectedSIValue:  1.0e-6,
-			ExpectedBaseUnit: "M",
+			ExpectedBaseUnit: "Mol",
 			ExpectedPrefix:   "u",
 		},
 		{
@@ -294,16 +305,16 @@ func TestNewAmount(t *testing.T) {
 	NewMeasurementTests{
 		{
 			Value:            1.0,
-			Unit:             "uM",
-			ExpectedSIValue:  1.0e-6,
-			ExpectedBaseUnit: "M",
-			ExpectedPrefix:   "u",
+			Unit:             "nMol",
+			ExpectedSIValue:  1.0e-9,
+			ExpectedBaseUnit: "Mol",
+			ExpectedPrefix:   "n",
 		},
 		{
 			Value:            1.0,
 			Unit:             "uMol",
 			ExpectedSIValue:  1.0e-6,
-			ExpectedBaseUnit: "M",
+			ExpectedBaseUnit: "Mol",
 			ExpectedPrefix:   "u",
 		},
 		{
@@ -322,8 +333,18 @@ func TestNewAngle(t *testing.T) {
 			Value:            1.0,
 			Unit:             "radians",
 			ExpectedSIValue:  1.0,
-			ExpectedBaseUnit: "radians",
+			ExpectedBaseUnit: "rad",
 			ExpectedPrefix:   " ",
+		},
+		{
+			Value:            180.0,
+			Unit:             "degrees",
+			ExpectedSIValue:  math.Pi,
+			ExpectedBaseUnit: "rad",
+			ExpectedPrefix:   " ",
+			ConvertToString: map[string]float64{
+				"deg": 180.0,
+			},
 		},
 		{
 			Value:       1.0,
@@ -340,13 +361,16 @@ func TestNewAnglularVelocity(t *testing.T) {
 		{
 			Value:            1.0,
 			Unit:             "rpm",
-			ExpectedSIValue:  1.0,
-			ExpectedBaseUnit: "rpm",
+			ExpectedSIValue:  math.Pi / 30.0,
+			ExpectedBaseUnit: "rad/s",
 			ExpectedPrefix:   " ",
+			ConvertToString: map[string]float64{
+				"rpm": 1.0,
+			},
 		},
 		{
 			Value:       1.0,
-			Unit:        "rad/s",
+			Unit:        "pulsar",
 			ExpectError: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
@@ -400,6 +424,16 @@ func TestNewPressure(t *testing.T) {
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "Pa",
 			ExpectedPrefix:   " ",
+			ConvertToString: map[string]float64{
+				"ubar": 10.0,
+			},
+		},
+		{
+			Value:            1.0,
+			Unit:             "bar",
+			ExpectedSIValue:  100000.0,
+			ExpectedBaseUnit: "Pa",
+			ExpectedPrefix:   " ",
 		},
 		{
 			Value:       2.7,
@@ -425,14 +459,14 @@ func TestNewConcentration(t *testing.T) {
 			Unit:             "ug/ul",
 			ExpectedSIValue:  1.0e-3,
 			ExpectedBaseUnit: "kg/l",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "u",
 		},
 		{
 			Value:            1.0,
 			Unit:             "ug/ml",
 			ExpectedSIValue:  1.0e-6,
 			ExpectedBaseUnit: "kg/l",
-			ExpectedPrefix:   "m",
+			ExpectedPrefix:   "u",
 		},
 		{
 			Value:       1.0,
@@ -470,7 +504,7 @@ func TestNewDensity(t *testing.T) {
 			Unit:             "kg/m^3",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "kg/m^3",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "k",
 		},
 		{
 			Value:       1.0,
@@ -484,6 +518,13 @@ func TestNewDensity(t *testing.T) {
 
 func TestNewFlowRate(t *testing.T) {
 	NewMeasurementTests{
+		{
+			Value:            60.0,
+			Unit:             "ml/min",
+			ExpectedSIValue:  0.001,
+			ExpectedBaseUnit: "l/s",
+			ExpectedPrefix:   "m",
+		},
 		{
 			Value:       1.0,
 			Unit:        "TheNile",
@@ -573,43 +614,6 @@ func TestNewVoltage(t *testing.T) {
 	})
 }
 
-func TestValidMeasurementUnit(t *testing.T) {
-
-	type TestCase struct {
-		Type  string
-		Unit  string
-		Error bool
-	}
-
-	tests := []TestCase{
-		{
-			Type:  "Length",
-			Unit:  "m",
-			Error: false,
-		},
-		{
-			Type: "Concentration",
-			Unit: "g/l",
-		},
-		{
-			Type:  "DarkMatter",
-			Unit:  "kg",
-			Error: true,
-		},
-		{
-			Type:  "Concentration",
-			Unit:  "SardinesInATin",
-			Error: true,
-		},
-	}
-
-	for _, test := range tests {
-		if err := ValidMeasurementUnit(test.Type, test.Unit); (err != nil) != test.Error {
-			t.Errorf("for (\"%s\", \"%s\"): expected error = %t, got error %v", test.Type, test.Unit, test.Error, err)
-		}
-	}
-}
-
 func TestConcentration_MolPerL(t *testing.T) {
 	conc := NewConcentration(1.0, "g/l")
 
@@ -629,11 +633,11 @@ func TestConcentration_GramPerL(t *testing.T) {
 
 	concInGrams := conc.GramPerL(2.0)
 
-	if concInGrams.Munit.BaseSISymbol() != "g/l" {
-		t.Errorf("concentration was converted to %s not g/l", concInGrams.Munit.BaseSISymbol())
+	if concInGrams.Munit.BaseSISymbol() != "kg/l" {
+		t.Errorf("concentration was converted to %s not kg/l", concInGrams.Munit.BaseSISymbol())
 	}
 
-	if concInGrams.SIValue() != 2.0 {
+	if concInGrams.ConvertToString("g/l") != 2.0 {
 		t.Errorf("expected concentration of 2 g/l, got %v", concInGrams)
 	}
 }

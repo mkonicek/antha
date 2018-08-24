@@ -7,12 +7,12 @@ import (
 func TestUnitRegistry(t *testing.T) {
 	reg := NewUnitRegistry()
 
-	if err := reg.DeclareUnit("distance", "meters", "m", SIPrefixSymbols(), 1.0); err != nil {
+	if err := reg.DeclareUnit("distance", "meters", "m", "m", SIPrefixSymbols(), 1.0); err != nil {
 		t.Fatal(err)
 	}
 
 	//can't redeclare a unit
-	if err := reg.DeclareUnit("distance", "meters", "m", SIPrefixSymbols(), 1.0); err == nil {
+	if err := reg.DeclareUnit("distance", "meters", "m", "m", SIPrefixSymbols(), 1.0); err == nil {
 		t.Fatal("redeclaration of meter got no error")
 	}
 
@@ -21,6 +21,11 @@ func TestUnitRegistry(t *testing.T) {
 		t.Error(err)
 	} else if e, g := "millimeters[mm]", millimeters.String(); e != g {
 		t.Fatalf("reg.GetUnit(\"mm\") returned %q, not %q", g, e)
+	}
+
+	//can't retrieve a unit that doesn't exist
+	if _, err := reg.GetUnit("miles"); err == nil {
+		t.Error("got no error getting a unit that doesn't exist")
 	}
 
 	//can't declare a derived unit across measurement types
@@ -50,11 +55,15 @@ func TestUnitRegistry(t *testing.T) {
 	//successful aliassing
 	if err := reg.DeclareAlias("distance", "y", "yards", nil); err != nil {
 		t.Error(err)
-	}
-	if unit, err := reg.GetUnit("y"); err != nil {
+	} else if unit, err := reg.GetUnit("y"); err != nil {
 		t.Error(err)
 	} else if unit.symbol != "yards" {
 		t.Errorf("alias \"y\" mapped to %v, expected yards[yards]", unit)
+	}
+
+	//cannot redeclare alias
+	if err := reg.DeclareAlias("distance", "y", "yards", nil); err == nil {
+		t.Error("redeclared alias with no error")
 	}
 
 	//simple conversion

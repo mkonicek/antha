@@ -87,7 +87,7 @@ func MaxConcentration(concs []Concentration) (max Concentration, err error) {
 }
 
 func sameUnit(unitA, unitB PrefixedUnit) error {
-	if unitA.BaseSISymbol() == unitB.BaseSISymbol() {
+	if unitA.CompatibleWith(unitB) {
 		return nil
 	}
 	return incompatibleUnits{unitA: unitA.BaseSISymbol(), unitB: unitB.BaseSISymbol()}
@@ -104,22 +104,7 @@ func (cs concentrationSet) Swap(i, j int) {
 }
 
 func (cs concentrationSet) Less(i, j int) bool {
-	iSIValue, iUnit := cs[i].SIValue(), cs[i].Unit().BaseSISymbol()
-	jSIValue, jUnit := cs[j].SIValue(), cs[j].Unit().BaseSISymbol()
-
-	if iUnit == jUnit {
-		return iSIValue < jSIValue
-	}
-
-	if iSIValue == 0.0 {
-		return iSIValue < jSIValue
-	}
-
-	if jSIValue == 0.0 {
-		return iSIValue < jSIValue
-	}
-
-	return false
+	return cs[i].SIValue() < cs[j].SIValue()
 }
 
 // SortVolumes sorts a set of Volume values.
@@ -175,12 +160,5 @@ func (cs volumeSet) Swap(i, j int) {
 }
 
 func (cs volumeSet) Less(i, j int) bool {
-	iSIValue, iUnit := cs[i].SIValue(), cs[i].Unit().BaseSISymbol()
-	jSIValue, jUnit := cs[j].SIValue(), cs[j].Unit().BaseSISymbol()
-
-	if iUnit == jUnit {
-		return iSIValue < jSIValue
-	}
-
-	return false
+	return cs[i].SIValue() < cs[j].SIValue()
 }

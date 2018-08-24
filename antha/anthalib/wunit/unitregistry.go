@@ -24,11 +24,11 @@ func NewUnitRegistry() *UnitRegistry {
 
 // DeclareUnit add a unit to the registry, as well as corresponding entries for valid prefixes
 // will cause a panic if any of validPrefixes are not SIPrefixes
-func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol string, validPrefixes []string, exponent int) error {
+func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbol string, validPrefixes []string, exponent int) error {
 	unit := &Unit{
 		name:       name,
 		symbol:     baseSymbol,
-		base:       baseSymbol,
+		base:       SISymbol,
 		prefix:     SIPrefixBySymbol(""),
 		multiplier: 1.0,
 		exponent:   exponent,
@@ -84,11 +84,8 @@ func (self *UnitRegistry) declareAlias(measurementType, symbol, target string) e
 
 // GetUnit return the unit referred to by symbol
 func (self *UnitRegistry) GetUnit(symbol string) (*Unit, error) {
-	symbol = strings.Replace(symbol, "µ", "u", -1)
 
-	if alias, ok := self.aliases[symbol]; ok {
-		symbol = alias
-	}
+	symbol = self.resolveAliasing(symbol)
 
 	if unit, ok := self.unitBySymbol[symbol]; !ok {
 		return nil, errors.Errorf("unknown unit symbol %q", symbol)
@@ -115,7 +112,7 @@ func (self *UnitRegistry) declareUnit(measurementType string, unit *Unit) error 
 // e.g. ValidUnitForType("Length", "m") -> true
 // and  ValidUnitForType("Area", "l") -> false
 func (self *UnitRegistry) ValidUnitForType(measurementType string, symbol string) bool {
-	return self.unitByType[measurementType][symbol]
+	return self.unitByType[measurementType][self.resolveAliasing(symbol)]
 }
 
 // ListValidUnitsForType returns a sorted list of all valid unit symbols for a given
@@ -169,6 +166,18 @@ func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbo
 	return nil
 }
 
+// resolveAliasing convert the given symbol into a known symbol if it is aliased
+// and also do any µ/u style conversions
+func (self *UnitRegistry) resolveAliasing(symbol string) string {
+	symbol = strings.Replace(symbol, "µ", "u", -1)
+	symbol = strings.Trim(symbol, " ")
+
+	if alias, ok := self.aliases[symbol]; ok {
+		return alias
+	}
+	return symbol
+}
+
 // NewMeasurement return a new typed measurement
 func (self *UnitRegistry) NewMeasurement(value float64, unitSymbol string) (*ConcreteMeasurement, error) {
 	if unit, err := self.GetUnit(unitSymbol); err != nil {
@@ -183,7 +192,6 @@ func (self *UnitRegistry) NewMeasurement(value float64, unitSymbol string) (*Con
 
 // makeGlobalUnitRegistry return a new registry pre-populated with system units
 func makeGlobalUnitRegistry() *UnitRegistry {
-
 	reg := NewUnitRegistry()
 
 	if err := systemUnits.AddTo(reg); err != nil {

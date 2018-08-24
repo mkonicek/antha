@@ -58,6 +58,9 @@ type PrefixedUnit interface {
 	BaseSISymbol() string
 	// returns conversion factor from *this* unit to the other
 	ConvertTo(pu PrefixedUnit) float64
+	// CompatibleWith returns true iff the PrefixedUnit can be converted to rhs
+	// if false then calling ConvertTo will cause a panic()
+	CompatibleWith(PrefixedUnit) bool
 }
 
 // fundamental representation of a value in the system
@@ -77,20 +80,12 @@ type Measurement interface {
 	ConvertToString(s string) float64
 	// add to this measurement
 	Add(m Measurement)
-	// add to this measurement - synonym for less typing
-	A(m Measurement)
 	// subtract from this measurement
 	Subtract(m Measurement)
-	// subtract - synonym for less typing
-	S(m Measurement)
 	// multiply measurement by a factor
 	MultiplyBy(factor float64)
-	// multiply by a factor - synonym for less typing
-	M(factor float64)
 	// divide measurement by a factor
 	DivideBy(factor float64)
-	// divide - synonym for less typing
-	D(factor float64)
 	// comparison operators
 	LessThan(m Measurement) bool
 	GreaterThan(m Measurement) bool
@@ -137,7 +132,7 @@ func (cm *ConcreteMeasurement) SIValue() float64 {
 	if isNil(cm) {
 		return 0.0
 	}
-	return cm.Mvalue * cm.Munit.BaseSIConversionFactor()
+	return cm.ConvertToString(cm.Unit().BaseSIUnit())
 }
 
 // value without conversion
@@ -206,10 +201,6 @@ func (cm *ConcreteMeasurement) Add(m Measurement) {
 
 }
 
-func (cm *ConcreteMeasurement) A(m Measurement) {
-	cm.Add(m)
-}
-
 // subtract
 
 func (cm *ConcreteMeasurement) Subtract(m Measurement) {
@@ -221,9 +212,6 @@ func (cm *ConcreteMeasurement) Subtract(m Measurement) {
 
 	cm.SetValue(cm.RawValue() - m.ConvertTo(cm.Unit()))
 
-}
-func (cm *ConcreteMeasurement) S(m Measurement) {
-	cm.Subtract(m)
 }
 
 // multiply
@@ -238,10 +226,6 @@ func (cm *ConcreteMeasurement) MultiplyBy(factor float64) {
 
 }
 
-func (cm *ConcreteMeasurement) M(factor float64) {
-	cm.MultiplyBy(factor)
-}
-
 func (cm *ConcreteMeasurement) DivideBy(factor float64) {
 
 	if isNil(cm) {
@@ -252,10 +236,6 @@ func (cm *ConcreteMeasurement) DivideBy(factor float64) {
 
 	cm.SetValue(cm.RawValue() / float64(factor))
 
-}
-
-func (cm *ConcreteMeasurement) D(factor float64) {
-	cm.DivideBy(factor)
 }
 
 // define a zero
@@ -322,15 +302,6 @@ func (cm *ConcreteMeasurement) LessThan(m Measurement) bool {
 	return v > cm.RawValue()
 }
 
-func (cm *ConcreteMeasurement) LessThanFloat(f float64) bool {
-	if isNil(cm) {
-		return true
-	}
-	// assumes the units work out
-
-	return cm.RawValue() < f
-}
-
 func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
 	if isNil(cm) {
 		return false
@@ -338,17 +309,6 @@ func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
 	// returns true if this is greater than m
 	v := m.ConvertTo(cm.Unit())
 	return v < cm.RawValue()
-}
-
-func (cm *ConcreteMeasurement) GreaterThanFloat(f float64) bool {
-	if isNil(cm) {
-		return false
-	}
-	if cm.RawValue() > f {
-		return true
-	}
-
-	return false
 }
 
 // XXX This should be made more literal and rounded behaviour explicitly called for by user
@@ -367,12 +327,14 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	return dif < (epsilon * 10000)
 }
 
-func (cm *ConcreteMeasurement) EqualToFloat(f float64) bool {
+// EqualToTolerance return true if m is within a small tolerace, tol, of the measurement
+// where tol is expressed in the same units are the receiver
+func (cm *ConcreteMeasurement) EqualToTolerance(m Measurement, tol float64) bool {
 	if isNil(cm) {
 		return false
 	}
 
-	return f == cm.RawValue()
+	return math.Abs(m.ConvertTo(cm.Unit())-cm.RawValue()) < tol
 }
 
 // ToString will return a summary of the ConcreteMeasurement Value and prefixed unit as a string.
@@ -384,15 +346,10 @@ func (cm *ConcreteMeasurement) ToString() string {
 
 /**********/
 
-func NewPMeasurement(v float64, pu string) *ConcreteMeasurement {
+func NewMeasurement(v float64, pu string) *ConcreteMeasurement {
 	if value, err := GetGlobalUnitRegistry().NewMeasurement(v, pu); err != nil {
 		panic(err)
 	} else {
 		return value
 	}
-}
-
-// helper function for creating a new measurement
-func NewMeasurement(v float64, prefix string, unit string) *ConcreteMeasurement {
-	return NewPMeasurement(v, prefix+unit)
 }
